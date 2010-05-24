@@ -1,0 +1,7 @@
+.sconsign.dblite
+*.eps
+*.aux
+*.blg
+*.dvi
+*.log
+auto
