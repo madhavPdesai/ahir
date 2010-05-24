@@ -1,4 +1,4 @@
 
 
 source_files = Glob("*.c")
-Library('io', source_files, LIBS='ds', LIBPATH='libds')
+Library('io', source_files)
