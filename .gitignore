@@ -5,3 +5,7 @@
 *.dvi
 *.log
 auto
+*.o
+*.a
+/iolib/demo/client
+/iolib/demo/server
