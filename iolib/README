@@ -1,0 +1,49 @@
+
+Inter-process communication in AHIR is implemented using
+point-to-point communication channels. Each channel must have exactly
+one reader and exactly one writer, which will be checked statically
+across all process specifications. The channels implement blocking
+access --- a reader or writer process must wait until the request is
+serviced by the channel (i.e., until there is space to accept data
+from a write request, or data available to return to a read request).
+
+The file iolib.h declares the IPC API as a set of functions for
+reading from and writing to the channels. This is the only file that
+must be included by the C programs that describe the communicating
+processes. In software, the API described in iolib.h is implemented
+using Unix named pipes (refer fifo.c). No attempt has been made yet
+to check the portability of this implementation. In hardware, the
+compiler replaces the API function calls by instances of suitable I/O
+elements defined in the AHIR VHDL library.
+
+The API consists of four functions: two for reading and two for
+writing, depending on the data-type --- either a 32-bit unsigned
+integer or a single precision float.
+  * read_uint32(id)
+  * read_float32(id)
+  * write_uint32(id, data)
+  * write_float32(id, data)
+
+Notes:
+======
+
+1) The API uses the special type ``uint32_t'' for the integer
+   functions as an explicit alternative to ``unsigned int'', since the
+   C language does not require the latter to be exactly 32 bits wide
+   (the standard only specifies a lower limit of 32). The use
+   ``uint32_t'' will result in a compiler error on platforms that do
+   not support an unsigned integer type that is exactly 32 bits wide.
+
+2) The parameter ``id'' is a simple unformatted character string, that
+   may be suitably interpreted by the implementation. For example, the
+   current software implementation of the API uses this id as the file
+   name when creating Unix named pipes. This implies a de facto
+   convention that the id should not contain characters that have
+   special meaning in Unix path names, such as forward-slash ('/') and
+   asterisk ('*').
+
+3) The current software implementation assumes that all the
+   communicating processes are running in the same directory. The
+   named pipes identified by the port id's are created in the same
+   directory. The user must ensure that these names do not clash with
+   other files existing in that directory.
