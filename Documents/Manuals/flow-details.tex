@@ -1,0 +1,488 @@
+\documentclass[12pt]{article}
+\usepackage{geometry}
+\geometry{verbose,a4paper,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+\usepackage[pdftex]{graphicx}
+%\usepackage{fancyvrb}
+\usepackage{epstopdf}
+%\usepackage{subfigure}
+%\usepackage{alltt}
+%\usepackage{amssymb}
+
+%\newbox\subfigbox
+%\makeatletter
+%\newenvironment{subfloat}
+%{\def\caption##1{\gdef\subcapsave{\relax##1}}%
+%\let\subcapsave\@empty
+%\setbox\subfigbox\hbox
+%\bgroup}
+%{\egroup
+%\subfigure[\subcapsave]{\box\subfigbox}}
+%\makeatother
+
+\title{Compiler flow for Program to Hardware using AHIR}
+\author{Sameer D. Sahasrabuddhe}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+
+The AHIR compiler flow involves a series of passes that result in the
+generation of an AHIR specification from a program initially written
+in C. The flow is divided into three main stages:
+
+\begin{enumerate}
+\item software compiler (LLVM)
+\item AHIR generator
+\item AHIR linker
+\end{enumerate}
+
+The implementation uses a number of freely available C++ software
+libraries:
+
+\begin{itemize}
+\item LLVM Compiler Framework
+\item Boost C++ libraries
+\begin{itemize}
+\item {\tt program\_options}
+\item {\tt string\_algo}
+\item {\tt lexical\_cast}
+\end{itemize}
+\item {\tt libxml++}, the C++ wrapper for the {\tt libxml} XML parser
+\end{itemize}
+
+\section{Calling conventions for C functions in AHIR}
+\label{sect:calling-conventions}
+
+AHIR, by definition, is independent of the input programming language. 
+A specification in AHIR describes a system only in terms of modules
+each made of a control and a data path, interacting through a link
+layer. In addition, the modules interact with each other through a
+separate link layer for control transfer, and pre-assigned memory
+locations for data transfer.
+
+A C program is a call-graph, where the vertices are functions and edges
+represent function calls. Functions pass data through a function call
+in the form of arguments and return values. When translating such a
+call-graph to an AHIR specification, each function is represented by a
+module, with its own control and data path. The function calls are
+translated to control and data interaction between these modules. For
+this inter-module communication, we need a mechanism that provides two
+services:
+
+\begin{itemize}
+\item passing arguments and return values through postboxes
+\item implementing a call by passing symbols through the inter-module
+      link layer
+\end{itemize}
+
+\subsection{A call-site in LLVM}
+\label{sect:call-site}
+
+In LLVM, a function call is represented by a {\tt call} instruction,
+that has the following properties:
+
+\begin{itemize}
+\item a pointer to the called function, or the {\it callee}
+\item a list of actual arguments, if present, and their types
+\item a return type if present, along with a register in
+      the calling function or {\it caller}, to which the return value
+      is assigned after the callee returns
+\end{itemize}
+
+The instance of a {\tt call} instruction in the body of a function is
+called a {\it call-site}. When a call is executed the following
+sequence of events happen, where $f$ is the caller and $g$ is the
+callee:
+
+\begin{enumerate}
+\item prepare actual arguments
+\item enter $g$
+\item read arguments
+\item execute body of $g$
+\item prepare return value
+\item exit $g$
+\item return to the call instruction in $f$
+\item read the return value
+\end{enumerate}
+
+The actual mechanism through which arguments and return values are
+transferred between the caller and the callee, is called the {\it
+calling convention} of the target platform. Typical examples are:
+
+\begin{itemize}
+\item register based, where the caller stores the arguments in a set
+      of registers known to the callee, and expects the return value
+      in some particular register.
+\item stack based, where the caller pushes arguments onto the stack,
+      and expects the return value on the stack after the callee
+      returns.
+\end{itemize}
+
+There are a number of finer details in these conventions - the order
+and locations where arguments occur on stack, for example. Or whether
+the callee makes any guarantees about the contents of registers after
+it returns.
+
+\subsection{The postbox model}
+
+We specify a similar convention meant for translating C call-graphs to
+AHIR modules, that uses {\it postboxes}, or memory locations assigned
+to each function, that are valid for the entire duration of execution.
+Each function is characterised by a set of input locations, output
+locations and internal static allocations:
+
+\begin{table}[htb]
+\small
+\begin{eqnarray*}
+S_F & : & (I_F, O_F, A_F) \mbox{ ... space for function F}\\
+I_F & : & \mbox{input locations or arguments}\\
+O_F & : & \mbox{output locations or return values (at most one in C)}\\
+A_F & : & \mbox{static allocations}
+\end{eqnarray*}
+\caption{Memory locations assigned to function F}
+\label{table:locations-f}
+\end{table}
+
+Note that the locations mentioned in Table~\ref{table:locations-f} are
+simply addresses that are {\it owned} by a function. They do not
+represent the actual data-space addressable by this function. This is
+because most of the heavy lifting in C is done by passing pointers as
+arguments. Predicting the address space accessed by a function during
+the execution of the program requires a detailed memory reference
+analysis to track down these argument pointers.
+
+\subsection{A function call in AHIR}
+\label{sect:ahir-function-call}
+
+A function call in a C program implies transfer of control and data
+across modules in the AHIR specification. To achieve this, a {\tt
+call} instruction in the input function is translated into a series of
+actions in the corresponding AHIR module. These correspond to the list
+of events described in Section~\ref{sect:call-site}, that occur in a
+function call. The equivalent AHIR actions are listed below:
+
+\begin{enumerate}
+\item a store operation for each actual argument, in the data-path for
+      function $f$, using a symbolic address label
+\item a transition in the control-path that sends a request symbol
+      from alphabet $\Lambda$ to the link layer
+\item a load operation for each formal argument in the data-path for
+      function $g$
+\item a transition in the control-path for function $g$ that waits for
+      an input symbol that represents this particular call-site
+\item a store operation for the return value in the data-path for
+      function $g$
+\item a transition that sends an acknowledge symbol for this
+      call-site, to the link layer
+\item a transition in the control-path for function $f$ that waits for
+      an acknowledge symbol from the function $g$
+\item a load operation for the return value in the data-path for
+      function $f$
+\end{enumerate}
+
+\section{Software Compiler}
+
+The LLVM compiler framework is used to provide the first stage of the
+flow - a C front-end and an optimising software compiler. LLVM uses
+the language front-end from the GCC project, modified to generate
+bytecode in the LLVM IR. The GCC front-end is capable of parsing a
+number of languages including C and C++. It produces {\tt .bc} files
+that contain native LLVM bytecode which can be processed further by
+various LLVM utilities.
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=4.5in,keepaspectratio]{images/llvm-gcc.eps}
+%\caption{LLVM-GCC front-end to translate C to native LLVM bytecode}
+%\label{fig:llvm-gcc}
+\end{figure}
+
+The LLVM tool ``{\tt opt}'' provides the main optimisation framework. 
+{\tt opt} is capable of scheduling various analyses and optmising
+passes, based on parameters provided by the user. These passes can
+work at the level of function, or the level of a compilation unit,
+called ``module'' in LLVM terminology.
+
+\subsection{XML Generator}
+
+An AHIR specification is generated as XML by a pass called {\tt
+ModuleGen} implemented in LLVM. This pass is invoked by passing the
+``{\tt -module-gen}'' argument to {\tt opt}.
+
+The {\tt ModuleGen} pass lowers a module in the LLVM bytecode to
+AHIR-XML in stages. The LLVM bytecode uses an instruction as the
+smallest unit of code, grouped into a CFG made of basic blocks, for
+each function. {\tt ModuleGen} computes control and data dependences
+for these instructions, and constructs a CDFG. This CDFG is translated
+to an AHIR specification. The AHIR specification is then printed to a
+file in XML format.
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=4.5in,keepaspectratio]{images/xml-gen.eps}
+%\caption{Generating AHIR-XML from LLVM bytecode}
+%\label{fig:xml-gen}
+\end{figure}
+
+The {\tt ModuleGen} pass treats each function in the program
+separately, generating a control-path, data-path and link layer for
+it. The XML consists of a callgraph of functions, and a collection of
+control-paths, data-paths and link layers. Each entry in the callgraph
+describes the following attributes of a function.
+
+\begin{itemize}
+\item number and types of arguments and return value
+\item init and fin symbols associated with the function
+\item list of callsites that describe other functions called by this
+      function
+\item labels of associated control path, data path and link layer
+\end{itemize}
+
+\subsection{XML Linker}
+
+The specification generated by {\tt ModuleGen} is not complete in
+itself. The inter-module link layer (Inter-LL) that translates symbols
+in the alphabet $\Omega$ is not present. Also, AHIR requires
+predetermined memory locations assigned to each function, to be used
+as post-boxes for argument passing, and for static allocations. The
+addresses used for these locations do not have actual numeric values
+assigned to them when the XML is first generated by {\tt ModuleGen}.
+
+These two details in the XML are filled out by a separate linker, that
+parses the generated XML and processes it further. The operations
+performed by the linker are described in further detail in
+Section~\ref{sect:calling-conventions}. The linked XML specification
+is complete in all respects, and represents an AHIR version of the
+original C program.
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=4.5in,keepaspectratio]{images/ir-link.eps}
+%\caption{Linker for functions in AHIR form}
+%\label{fig:ir-link}
+\end{figure}
+
+The linker produces two files - a linked version of the input AHIR-XML
+specification and a map of all the memory locations that have been
+assigned addresses while linking. This map is useful for the user,
+since it provides information about the location of ``postboxes'' used
+by the functions for passing arguments. It also serves as a
+description of the address space, that will be useful when designing a
+memory subsystem that attempts to optimize parallel accesses to memory
+locations.
+
+\section{Two-pass flow: Generate and Link}
+
+The input to the overall flow is a file containing all the C functions
+that make up a program. The use of precompiled C libraries may be
+enabled using suitable mechanisms in the C front-end. But when
+producing the final AHIR specification, the bodies for all the
+functions must be available.
+
+\subsection{AHIR-XML Generator}
+
+At the generator stage, each function is processed separately. The
+LLVM infrastructure presents the program as an LLVM {\tt module}, that
+contains all the functions. The generator iterates over the set of
+functions in no particular order, and generates a separate (CP,DP,LN)
+triplet from the body of each function.
+
+For each function, the generator produces a preamble in the AHIR-XML
+file that lists the following details, to be explained in later
+subsections:
+\begin{itemize}
+\item name of the CP, DP and LN
+\item values of the {\tt init} and {\tt fin} symbols
+\item static allocations - name, size and address-label
+\item formal arguments - name, type and address-label
+\item return value - name, type and address-label
+\item callsites - called function, req/ack symbol, actual arguments,
+      return value
+\end{itemize}
+
+A callsite is the occurence of a function call in the body of a
+function. The preamble of a function in AHIR-XML provides information
+about the callsites occuring in that function.
+
+\subsubsection{Passing data - labels for postboxes}
+
+A number of load-store operations are created at the generator stage,
+for passing arguments and return values, as described in
+Section~\ref{sect:ahir-function-call}. But the actual addresses for the
+corresponding postboxes are not known at this stage. Similarly, the
+static allocations within the function bodies do not have valid
+addresses as well. The operations involving all these memory locations
+use labels instead of numerical addresses.
+
+The address-labels mentioned in these preambles are used in the
+various data-paths, as inputs for the load/store operations. With such
+labels, each function essentially remains {\it relocatable}. The
+functions desribed in such a manner can be used in multiple programs
+provided they are eventually assigned valid address spaces.
+
+When a function calls other functions, corresponding callsites are
+included in the preamble of the caller. The callsite contains a list
+of actual arguments and return value, in the form of address labels,
+similar to the formal arguments and return value of a function. These
+labels are used within the body of the calling function to generate
+corresponding load/store operations. Thus, when a function $f$ calls a
+function $g$, store operations are included in the data-path for
+function $f$, that refer to the address-labels of the actual arguments
+for this callsite. Eventually, the address-labels for the actual
+arguments in a callsite and the address-labels for the formal
+arguments in the called function must match, so that data is
+transferred correctly.
+
+\subsubsection{Passing control}
+
+The control mechanisms of a function call are decoupled in a manner
+similar to the data transfer. Each function declares a pair of symbols
+that represent the start ({\tt init}) and completion ({\tt fin}) of
+execution. Similarly, every callsite declares a pair of symbols for
+the request and completion of a function call. The task of mapping a
+call request to a function-init and mapping a function-fin to a call
+completion symbol is done by the inter-module link layer.
+
+In order to keep function definitions reusable, this assignment of
+symbols is also deferred until link time. As a result, the
+inter-module link layer that uses the alphabet $\Lambda$ is left
+undefined in the AHIR-XML at this stage.
+
+\subsection{AHIR-XML Linker}
+
+The linker is responsible for linking together the functions in the
+call-graph of a program. It accepts an AHIR-XML description of
+functions, along with a call-graph.
+
+\subsubsection{Addresses for postboxes}
+
+The linker traverses the set of functions in no particular order, and
+gathers information about the address-space associated with each
+function - formal arguments, return values and static allocations. It
+then assigns numerical values to these addresses, keeping in mind the
+size of each data-type.
+
+When all the addresses have been assigned values, the linker traverses
+the list of callsites in each function. For each callsite, the actual
+arguments are assigned the same address as the formal arguments in the
+called function. This completes the allocation of memory space to the
+address spaces of the functions, which had remained undefined prior to
+linking.
+
+\subsubsection{Inter Module Link Layer}
+
+\begin{table}[htb]
+\small
+\begin{eqnarray*}
+inter\;module\;link\;layer & : & \{(function,\{callsite\})\}\\
+callsite & : & (req,ack)\\
+function & : & (init,fin)
+\end{eqnarray*}
+\caption{Inter Module Link Layer}
+\label{table:inter-ll}
+\end{table}
+
+The linker also generates the inter-module link layer, in order to
+allow control-transfer across functions. For each function, the linker
+generates a list of callsites and the req/ack symbols used by them.
+These are placed together to form the specification of the
+inter-module link layer. 
+
+As seen from Table~\ref{table:inter-ll}, the inter-module link layer
+provides a mapping between pairs of symbols, or {\tt handshakes}. A
+function can be called from multiple callsites, but this information
+is not available when the function is compiled. Since this information
+becomes available only at link time, the task of returning to the
+correct caller must be performed by a module mechanism the function. 
+Only the inter-module link layer is in a position to ``remember'' the
+calling function and return to it when the called function completes
+execution. Hence it has to be specified in terms of pairs of symbols,
+in order to retain the association within request-acknowledge
+handshakes.
+
+\section{Limitations}
+
+The C source code given as input to the frontend must conform to a
+number of restrictions. Some of these restrictions are inherent in
+AHIR, while others are a result of limitations in the current
+implementation.
+
+\subsubsection*{Constraints inherent in AHIR}
+\begin{itemize}
+\item pointers to functions are not allowed
+\item variable number of arguments to functions are not allowed
+\item recursion is not allowed; the call-graph must be a DAG
+\end{itemize}
+
+\subsubsection*{Limitations of the current implementation}
+\begin{itemize}
+\item structures are not supported
+\item only 32-bit data is supported - smaller widths are treated as
+      32-bit, and large widths will give undefined results, possibly a
+      compilation error
+\item the call-graph is further restricted to be a tree - one function
+      can have only one callsite in the entire program
+\item the {\tt underscore} ``{\tt \_}'' is not allowed in identifiers;
+      it is reserved for generating internal identifiers
+\item all the functions must be available in the same module when
+      generating the XML - separate compilation for libraries is not
+      supported yet
+\end{itemize}
+
+\section{SystemC Simulator}
+
+The simulator provides an event-driven model for AHIR, using the
+SystemC framework. The simulator is a single SystemC executable that
+includes an XML parser. When invoked, the simulator reads the
+specification and a memory map in XML format, and creates a SystemC
+model of the description.
+
+Typically, a SystemC model consists of a collection of classes
+describing various entities. Instances of these classes are created in
+the {\tt sc\_main} function, during the elaboration phase. After that,
+the simulation is started by the {\tt sc\_start} function.
+
+\begin{verbatim}
+int sc_main(int argc, char* argv[])
+{
+  IRParser parser;
+  parser.parse(ir.xml);
+  parser.parse(map.xml);
+
+  IrModel *ir = parser.get_ir();
+
+  sc_clock clk();
+
+  connect_signals(ir, clk);
+
+  sc_start(-1) // run indefinitely until some module calls sc_end()
+}
+\end{verbatim}
+
+The SystemC simulator is program-independent - no SystemC code is
+generated that is specific to the current C program. Instead, the
+simulator reads an AHIR-XML specification from a file and directly
+creates instance of predefined components. It then proceeds to
+simulate the components created, producing a trace of events during
+execution. The simulator expects two files at invocation:
+
+\begin{itemize}
+\item $\langle$program.xml$\rangle$ - an XML file containing the AHIR
+      specification
+\item $\langle$map.xml$\rangle$ - an XML file describing contents at
+      various memory locations
+\end{itemize}
+
+The memory map has to be created by hand, based on the list of
+locations generated by the linker. It contains test data that is used
+as input during simulation, and final data that is to be compared with
+the contents of the simulated memory after execution.
+
+%\section{VHDL Generation}
+
+
+
+\end{document}
+

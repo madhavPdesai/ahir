@@ -1,0 +1,374 @@
+# //  ModelSim SE-64 6.3a Jun 25 2007 Linux 2.6.25-14.fc9.x86_64
+# //
+# //  Copyright 1991-2007 Mentor Graphics Corporation
+# //              All Rights Reserved.
+# //
+# //  THIS WORK CONTAINS TRADE SECRET AND 
+# //  PROPRIETARY INFORMATION WHICH IS THE PROPERTY
+# //  OF MENTOR GRAPHICS CORPORATION OR ITS LICENSORS
+# //  AND IS SUBJECT TO LICENSE TERMS.
+# //
+# reading /cad/mentor/modelsim/modeltech/linux_x86_64/../modelsim.ini
+# Loading project exhaustive_test
+# Compile of start_cp.vhdl was successful.
+# Compile of start_ln.vhdl was successful.
+# Compile of system.vhdl was successful.
+# Compile of test_floats_cp.vhdl was successful.
+# Compile of test_floats_dp.vhdl was successful.
+# Compile of test_floats_dp_config.vhdl was successful.
+# Compile of test_floats_ln.vhdl was successful.
+# Compile of test_ints_cp.vhdl was successful.
+# Compile of test_ints_dp.vhdl was successful.
+# Compile of test_ints_dp_config.vhdl was successful.
+# Compile of test_ints_ln.vhdl was successful.
+# Compile of test_shorts_cp.vhdl was successful.
+# Compile of test_shorts_dp.vhdl was successful.
+# Compile of test_shorts_dp_config.vhdl was successful.
+# Compile of test_shorts_ln.vhdl was successful.
+# Compile of testbench.vhd was successful.
+# Compile of start_dp.vhdl was successful.
+# Compile of start_dp_config.vhdl was successful.
+# Compile of system_config.vhdl was successful.
+# Compile of testbench_config.vhd was successful.
+vsim work.testbench_config
+# vsim work.testbench_config 
+# ** Note: (vsim-3812) Design is being optimized...
+# Loading std.standard
+# Loading ieee.std_logic_1164(body)
+# Loading ieee.numeric_std(body)
+# Loading ahir.types
+# Loading ieee_proposed.math_utility_pkg
+# Loading std.textio(body)
+# Loading ieee.math_real(body)
+# Loading ieee_proposed.fixed_pkg(body)
+# Loading ieee_proposed.float_pkg(body)
+# Loading ahir.subprograms(body)
+# Loading ahir.components
+# Loading ahir.memory_subsystem_package
+# Loading ahir.utilities(body)
+# Loading ahir.loadstorepack
+# Loading ahir.basecomponents
+# Loading ahir.mem_component_pack
+# Loading ahir.mem_function_pack(body)
+# Loading ahir.merge_functions(body)
+# Loading work.testbench_config#1
+# Loading work.testbench(default_arch)#1
+# Loading work.system_config#1
+# Loading work.system(default_arch)#1
+# Loading work.start_cp(default_arch)#1
+# Loading ahir.place(default_arch)#1
+# Loading ahir.place(default_arch)#2
+# Loading ahir.place(default_arch)#3
+# Loading ahir.place(default_arch)#4
+# Loading ahir.transition(default_arch)#1
+# Loading ahir.transition(default_arch)#2
+# Loading ahir.transition(default_arch)#3
+# Loading work.start_dp_config#1
+# Loading work.start_dp(default_arch)#1
+# Loading ahir.apintadd#1
+# Loading ahir.apint_s_2(base)#1
+# Loading ahir.operatorshared(vanilla)#1
+# Loading ahir.inputmuxbase(behave)#1
+# Loading ahir.operatorpackage(body)
+# Loading ahir.operatorbase(vanilla)#1
+# Loading ahir.outputdemuxbase(behave)#1
+# Loading ahir.apintand#2
+# Loading ahir.apint_s_2(base)#2
+# Loading ahir.apintor#3
+# Loading ahir.apint_s_2(base)#3
+# Loading ahir.apintxor#4
+# Loading ahir.apint_s_2(base)#4
+# Loading ahir.apintxor#5
+# Loading ahir.apint_s_2(base)#5
+# Loading ahir.apinteq#6
+# Loading ahir.apint_s_2(base)#6
+# Loading ahir.apintshl#7
+# Loading ahir.apint_s_2(base)#7
+# Loading ahir.apintlshr#8
+# Loading ahir.apint_s_2(base)#8
+# Loading ahir.apinttoapintunsigned#1
+# Loading ahir.apint_s_1(base)#1
+# Loading ahir.apinttoapintunsigned#2
+# Loading ahir.apint_s_1(base)#2
+# Loading ahir.apstorereq(behave)#1
+# Loading ahir.apstorereqbase(behave)#1
+# Loading ahir.storereqbase(behave)
+# Loading ahir.apstorereq(behave)#2
+# Loading ahir.apstorereqbase(behave)#2
+# Loading ahir.apintmul#9
+# Loading ahir.apint_s_2(base)#9
+# Loading ahir.apintbranch(behave)#1
+# Loading ahir.apinttoapintunsigned#3
+# Loading ahir.apint_s_1(base)#3
+# Loading ahir.apintmul#10
+# Loading ahir.apint_s_2(base)#10
+# Loading ahir.apintmul#11
+# Loading ahir.apint_s_2(base)#11
+# Loading ahir.apintadd#12
+# Loading ahir.apint_s_2(base)#12
+# Loading ahir.apinttoapintunsigned#4
+# Loading ahir.apint_s_1(base)#4
+# Loading ahir.apstorereq(behave)#3
+# Loading ahir.apstorereqbase(behave)#3
+# Loading ahir.apinttoapintunsigned#5
+# Loading ahir.apint_s_1(base)#5
+# Loading ahir.apintmul#13
+# Loading ahir.apint_s_2(base)#13
+# Loading ahir.apintadd#14
+# Loading ahir.apint_s_2(base)#14
+# Loading ahir.apintmul#15
+# Loading ahir.apint_s_2(base)#15
+# Loading ahir.apintadd#16
+# Loading ahir.apint_s_2(base)#16
+# Loading ahir.apinttoapintunsigned#6
+# Loading ahir.apint_s_1(base)#6
+# Loading ahir.apstorereq(behave)#4
+# Loading ahir.apstorereqbase(behave)#4
+# Loading ahir.apinttoapintunsigned#7
+# Loading ahir.apint_s_1(base)#7
+# Loading ahir.apintmul#17
+# Loading ahir.apint_s_2(base)#17
+# Loading ahir.apintadd#18
+# Loading ahir.apint_s_2(base)#18
+# Loading ahir.apintmul#19
+# Loading ahir.apint_s_2(base)#19
+# Loading ahir.apintadd#20
+# Loading ahir.apint_s_2(base)#20
+# Loading ahir.apinttoapintunsigned#8
+# Loading ahir.apint_s_1(base)#8
+# Loading ahir.apstorereq(behave)#5
+# Loading ahir.apstorereqbase(behave)#5
+# Loading ahir.apinttoapintunsigned#9
+# Loading ahir.apint_s_1(base)#9
+# Loading ahir.apintmul#21
+# Loading ahir.apint_s_2(base)#21
+# Loading ahir.apintadd#22
+# Loading ahir.apint_s_2(base)#22
+# Loading ahir.apintmul#23
+# Loading ahir.apint_s_2(base)#23
+# Loading ahir.apintadd#24
+# Loading ahir.apint_s_2(base)#24
+# Loading ahir.apinttoapintunsigned#10
+# Loading ahir.apint_s_1(base)#10
+# Loading ahir.apstorereq(behave)#6
+# Loading ahir.apstorereqbase(behave)#6
+# Loading ahir.apinttoapintunsigned#11
+# Loading ahir.apint_s_1(base)#11
+# Loading ahir.apintmul#25
+# Loading ahir.apint_s_2(base)#25
+# Loading ahir.apintadd#26
+# Loading ahir.apint_s_2(base)#26
+# Loading ahir.apintmul#27
+# Loading ahir.apint_s_2(base)#27
+# Loading ahir.apintadd#28
+# Loading ahir.apint_s_2(base)#28
+# Loading ahir.apinttoapintunsigned#12
+# Loading ahir.apint_s_1(base)#12
+# Loading ahir.apstorereq(behave)#7
+# Loading ahir.apstorereqbase(behave)#7
+# Loading ahir.apinttoapintunsigned#13
+# Loading ahir.apint_s_1(base)#13
+# Loading ahir.apintmul#29
+# Loading ahir.apint_s_2(base)#29
+# Loading ahir.apintadd#30
+# Loading ahir.apint_s_2(base)#30
+# Loading ahir.apintmul#31
+# Loading ahir.apint_s_2(base)#31
+# Loading ahir.apintadd#32
+# Loading ahir.apint_s_2(base)#32
+# Loading ahir.apinttoapintunsigned#14
+# Loading ahir.apint_s_1(base)#14
+# Loading ahir.apstorereq(behave)#8
+# Loading ahir.apstorereqbase(behave)#8
+# Loading ahir.apinttoapintunsigned#15
+# Loading ahir.apint_s_1(base)#15
+# Loading ahir.apintmul#33
+# Loading ahir.apint_s_2(base)#33
+# Loading ahir.apintadd#34
+# Loading ahir.apint_s_2(base)#34
+# Loading ahir.apintmul#35
+# Loading ahir.apint_s_2(base)#35
+# Loading ahir.apintadd#36
+# Loading ahir.apint_s_2(base)#36
+# Loading ahir.apinttoapintunsigned#16
+# Loading ahir.apint_s_1(base)#16
+# Loading ahir.apstorereq(behave)#9
+# Loading ahir.apstorereqbase(behave)#9
+# Loading ahir.apinttoapintunsigned#17
+# Loading ahir.apint_s_1(base)#17
+# Loading ahir.apintmul#37
+# Loading ahir.apint_s_2(base)#37
+# Loading ahir.apintadd#38
+# Loading ahir.apint_s_2(base)#38
+# Loading ahir.apintmul#39
+# Loading ahir.apint_s_2(base)#39
+# Loading ahir.apintadd#40
+# Loading ahir.apint_s_2(base)#40
+# Loading ahir.apinttoapintunsigned#18
+# Loading ahir.apint_s_1(base)#18
+# Loading ahir.apstorereq(behave)#10
+# Loading ahir.apstorereqbase(behave)#10
+# Loading ahir.apinttoapintunsigned#19
+# Loading ahir.apint_s_1(base)#19
+# Loading ahir.apintmul#41
+# Loading ahir.apint_s_2(base)#41
+# Loading ahir.apintadd#42
+# Loading ahir.apint_s_2(base)#42
+# Loading ahir.apintmul#43
+# Loading ahir.apint_s_2(base)#43
+# Loading ahir.apintadd#44
+# Loading ahir.apint_s_2(base)#44
+# Loading ahir.apinttoapintunsigned#20
+# Loading ahir.apint_s_1(base)#20
+# Loading ahir.apstorereq(behave)#11
+# Loading ahir.apstorereqbase(behave)#11
+# Loading ahir.apinttoapintunsigned#21
+# Loading ahir.apint_s_1(base)#21
+# Loading ahir.apintmul#45
+# Loading ahir.apint_s_2(base)#45
+# Loading ahir.apintadd#46
+# Loading ahir.apint_s_2(base)#46
+# Loading ahir.apintmul#47
+# Loading ahir.apint_s_2(base)#47
+# Loading ahir.apintadd#48
+# Loading ahir.apint_s_2(base)#48
+# Loading ahir.apinttoapintunsigned#22
+# Loading ahir.apint_s_1(base)#22
+# Loading ahir.outputport(base)#1
+# Loading ahir.inputmuxbase(behave)#2
+# Loading ahir.inputport(base)#1
+# Loading ahir.outputport(base)#2
+# Loading ahir.inputmuxbase(behave)#3
+# Loading ahir.inputport(base)#2
+# Loading ahir.apfloattoapintsigned#1
+# Loading ahir.apfloattoapint_s_1(base)#1
+# Loading ahir.outputport(base)#3
+# Loading ahir.inputmuxbase(behave)#4
+# Loading ahir.inputport(base)#3
+# Loading ahir.apinttoapintsigned#23
+# Loading ahir.apint_s_1(base)#23
+# Loading ahir.outputport(base)#4
+# Loading ahir.inputmuxbase(behave)#5
+# Loading ahir.inputport(base)#4
+# Loading ahir.apintphi(arch)#1
+# Loading ahir.apinttoapintunsigned#24
+# Loading ahir.apint_s_1(base)#24
+# Loading ahir.apintshl#49
+# Loading ahir.apint_s_2(base)#49
+# Loading ahir.apinttoapintunsigned#25
+# Loading ahir.apint_s_1(base)#25
+# Loading work.start_ln(default_arch)
+# Loading work.test_floats_cp(default_arch)#1
+# Loading work.test_floats_dp_config#1
+# Loading work.test_floats_dp(default_arch)#1
+# Loading ahir.apfloatsub#1
+# Loading ahir.apfloat_s_2(base)#1
+# Loading ahir.aploadcomplete(behave)#1
+# Loading ahir.loadcompletebase(behave)#1
+# Loading ahir.aploadcomplete(behave)#2
+# Loading ahir.loadcompletebase(behave)#2
+# Loading ahir.apstorereq(behave)#12
+# Loading ahir.apstorereqbase(behave)#12
+# Loading ahir.aploadreq(behave)#1
+# Loading ahir.loadreqbase(behave)
+# Loading ahir.aploadreq(behave)#2
+# Loading ahir.inputport(base)#5
+# Loading ahir.apintadd#50
+# Loading ahir.apint_s_2(base)#50
+# Loading ahir.apinttoapintunsigned#26
+# Loading ahir.apint_s_1(base)#26
+# Loading ahir.apstorereq(behave)#13
+# Loading ahir.apstorereqbase(behave)#13
+# Loading ahir.apfloatolt#1
+# Loading ahir.apfloat_cmp_2(base)#1
+# Loading ahir.apinttoapintunsigned#27
+# Loading ahir.apint_s_1(base)#27
+# Loading ahir.apinttoapintunsigned#28
+# Loading ahir.apint_s_1(base)#28
+# Loading ahir.apintmul#51
+# Loading ahir.apint_s_2(base)#51
+# Loading ahir.apintadd#52
+# Loading ahir.apint_s_2(base)#52
+# Loading ahir.apintmul#53
+# Loading ahir.apint_s_2(base)#53
+# Loading ahir.apintadd#54
+# Loading ahir.apint_s_2(base)#54
+# Loading ahir.apinttoapintunsigned#29
+# Loading ahir.apint_s_1(base)#29
+# Loading ahir.apinttoapintunsigned#30
+# Loading ahir.apint_s_1(base)#30
+# Loading ahir.apstorereq(behave)#14
+# Loading ahir.apstorereqbase(behave)#14
+# Loading ahir.apinttoapintunsigned#31
+# Loading ahir.apint_s_1(base)#31
+# Loading ahir.apintmul#55
+# Loading ahir.apint_s_2(base)#55
+# Loading ahir.apintadd#56
+# Loading ahir.apint_s_2(base)#56
+# Loading ahir.apintmul#57
+# Loading ahir.apint_s_2(base)#57
+# Loading ahir.apintadd#58
+# Loading ahir.apint_s_2(base)#58
+# Loading ahir.apinttoapintunsigned#32
+# Loading ahir.apint_s_1(base)#32
+# Loading ahir.apinttoapintunsigned#33
+# Loading ahir.apint_s_1(base)#33
+# Loading ahir.apintmul#59
+# Loading ahir.apint_s_2(base)#59
+# Loading ahir.apintadd#60
+# Loading ahir.apint_s_2(base)#60
+# Loading ahir.apintmul#61
+# Loading ahir.apint_s_2(base)#61
+# Loading ahir.apintadd#62
+# Loading ahir.apint_s_2(base)#62
+# Loading ahir.apinttoapintunsigned#34
+# Loading ahir.apint_s_1(base)#34
+# Loading ahir.aploadreq(behave)#3
+# Loading ahir.aploadcomplete(behave)#3
+# Loading ahir.loadcompletebase(behave)#3
+# Loading ahir.apfloatole#2
+# Loading ahir.apfloat_cmp_2(base)#2
+# Loading ahir.apinttoapintunsigned#35
+# Loading ahir.apint_s_1(base)#35
+# Loading ahir.apinttoapintunsigned#36
+# Loading ahir.apint_s_1(base)#36
+# Loading ahir.apintmul#63
+# Loading ahir.apint_s_2(base)#63
+# Loading ahir.apintadd#64
+# Loading ahir.apint_s_2(base)#64
+# Loading ahir.apintmul#65
+# Loading ahir.apint_s_2(base)#65
+# Loading ahir.apintadd#66
+# Loading ahir.apint_s_2(base)#66
+# Loading ahir.apinttoapintunsigned#37
+# Loading ahir.apint_s_1(base)#37
+# Loading ahir.apstorereq(behave)#15
+# Loading ahir.apstorereqbase(behave)#15
+# Loading ahir.apinttoapintunsigned#38
+# Loading ahir.apint_s_1(base)#38
+# Loading ahir.apintmul#67
+# Loading ahir.apint_s_2(base)#67
+# Loading ahir.apintadd#68
+# Loading ahir.apint_s_2(base)#68
+# Loading ahir.apinttoapintunsigned#39
+# Loading ahir.apint_s_1(base)#39
+# Loading ahir.apintmul#69
+# Loading ahir.apint_s_2(base)#69
+# Loading ahir.apintadd#70
+# Loading ahir.apint_s_2(base)#70
+# Loading ahir.apinttoapintunsigned#40
+# Loading ahir.apint_s_1(base)#40
+# Loading ahir.aploadreq(behave)#4
+# Loading ahir.aploadcomplete(behave)#4
+# Loading ahir.loadcompletebase(behave)#4
+# Loading ahir.apinttoapintunsigned#41
+# Loading ahir.apint_s_1(base)#41
+# Loading ahir.apintmul#71
+# Loading ahir.apint_s_2(base)#71
+# Loading ahir.apintadd#72
+# Loading ahir.apint_s_2(base)#72
+# Loading ahir.apintmul#73
+# ** Fatal: (vsim-3385) Illegal circular dependency between packages '/home/users/sameerds/new_ahir/ahir.apintmul' and '/home/users/sameerds/new_ahir/ahir.basecomponents'.
+#    Time: 0 ns  Iteration: 0  Instance: /testbench/system_1/test_floats_dp_inst/dpe_148 File: UNKNOWN Line: 1264
+# FATAL ERROR while loading design
+# Error loading design

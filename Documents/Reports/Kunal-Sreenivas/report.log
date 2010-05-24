@@ -1,0 +1,608 @@
+This is pdfTeXk, Version 3.141592-1.40.3 (Web2C 7.5.6) (format=latex 2009.4.19)  29 APR 2009 11:09
+entering extended mode
+ %&-line parsing enabled.
+**report.tex
+(./report.tex
+LaTeX2e <2005/12/01>
+Babel <v3.8h> and hyphenation patterns for english, usenglishmax, dumylang, noh
+yphenation, loaded.
+(./IEEEtran.cls
+Document Class: IEEEtran 2005/09/13 revision V1.6c by Michael Shell
+-- See the "IEEEtran_HOWTO" manual for usage information.
+-- The source comments contain changelog notes.
+\@IEEEtrantmpdimenA=\dimen102
+\@IEEEtrantmpdimenB=\dimen103
+\@IEEEtrantmpcountA=\count79
+\@IEEEtrantmpcountB=\count80
+\@IEEEtrantmptoksA=\toks14
+LaTeX Font Info:    Try loading font information for OT1+ptm on input line 784.
+
+(/usr/share/texmf-texlive/tex/latex/psnfss/ot1ptm.fd
+File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
+)
+** ATTENTION: Single column mode is not normally used with IEEE publications.
+\@IEEEnormalsizefontbaselineskip=\skip41
+-- This is a 10 point document.
+\normalsizebaselineskip=\skip42
+\normaljot=\skip43
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <5> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1103.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <5> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1103.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <7> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1103.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <7> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1103.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <8> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1103.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <8> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1103.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <9> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1103.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <9> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1103.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1103.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <10> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1103.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <11> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1103.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <11> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1103.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <12> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1103.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <12> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1103.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <17> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1103.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <17> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1103.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <20> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1103.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <20> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1103.
+
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <24> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 1103.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/it' in size <24> not available
+(Font)              Font shape `OT1/ptm/b/it' tried instead on input line 1103.
+
+\IEEEilabelindentA=\dimen104
+\IEEEilabelindentB=\dimen105
+\IEEEilabelindent=\dimen106
+\IEEEelabelindent=\dimen107
+\IEEEdlabelindent=\dimen108
+\labelindent=\dimen109
+\IEEEiednormlabelsep=\dimen110
+\IEEEiedmathlabelsep=\dimen111
+\IEEEiedtopsep=\skip44
+\c@section=\count81
+\c@subsection=\count82
+\c@subsubsection=\count83
+\c@paragraph=\count84
+\c@IEEEsubequation=\count85
+\abovecaptionskip=\skip45
+\belowcaptionskip=\skip46
+\c@figure=\count86
+\c@table=\count87
+\@IEEEeqnnumcols=\count88
+\@IEEEeqncolcnt=\count89
+\@IEEEtmpitemindent=\dimen112
+\c@biography=\count90
+\@IEEEtranrubishbin=\box26
+) (/usr/share/texmf-texlive/tex/latex/amsmath/amsmath.sty
+Package: amsmath 2000/07/18 v2.13 AMS math features
+\@mathmargin=\skip47
+
+For additional information on amsmath, use the `?' option.
+(/usr/share/texmf-texlive/tex/latex/amsmath/amstext.sty
+Package: amstext 2000/06/29 v2.01
+
+(/usr/share/texmf-texlive/tex/latex/amsmath/amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0
+\@emptytoks=\toks15
+\ex@=\dimen113
+))
+(/usr/share/texmf-texlive/tex/latex/amsmath/amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d
+\pmbraise@=\dimen114
+)
+(/usr/share/texmf-texlive/tex/latex/amsmath/amsopn.sty
+Package: amsopn 1999/12/14 v2.01 operator names
+)
+\inf@bad=\count91
+LaTeX Info: Redefining \frac on input line 211.
+\uproot@=\count92
+\leftroot@=\count93
+LaTeX Info: Redefining \overline on input line 307.
+\classnum@=\count94
+\DOTSCASE@=\count95
+LaTeX Info: Redefining \ldots on input line 379.
+LaTeX Info: Redefining \dots on input line 382.
+LaTeX Info: Redefining \cdots on input line 467.
+\Mathstrutbox@=\box27
+\strutbox@=\box28
+\big@size=\dimen115
+LaTeX Font Info:    Redeclaring font encoding OML on input line 567.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 568.
+\macc@depth=\count96
+\c@MaxMatrixCols=\count97
+\dotsspace@=\muskip10
+\c@parentequation=\count98
+\dspbrk@lvl=\count99
+\tag@help=\toks16
+\row@=\count100
+\column@=\count101
+\maxfields@=\count102
+\andhelp@=\toks17
+\eqnshift@=\dimen116
+\alignsep@=\dimen117
+\tagshift@=\dimen118
+\tagwidth@=\dimen119
+\totwidth@=\dimen120
+\lineht@=\dimen121
+\@envbody=\toks18
+\multlinegap=\skip48
+\multlinetaggap=\skip49
+\mathdisplay@stack=\toks19
+LaTeX Info: Redefining \[ on input line 2666.
+LaTeX Info: Redefining \] on input line 2667.
+)
+(/usr/share/texmf-texlive/tex/latex/amsfonts/amssymb.sty
+Package: amssymb 2002/01/22 v2.2d
+
+(/usr/share/texmf-texlive/tex/latex/amsfonts/amsfonts.sty
+Package: amsfonts 2001/10/25 v2.2f
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 132.
+))
+(/usr/share/texmf-texlive/tex/latex/graphics/graphics.sty
+Package: graphics 2006/02/20 v1.0o Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf-texlive/tex/latex/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+(/etc/texmf/tex/latex/config/graphics.cfg
+File: graphics.cfg 2007/01/18 v1.5 graphics configuration of teTeX/TeXLive
+)
+Package graphics Info: Driver file: dvips.def on input line 90.
+
+(/usr/share/texmf-texlive/tex/latex/graphics/dvips.def
+File: dvips.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+))
+(/usr/share/texmf-texlive/tex/latex/graphics/color.sty
+Package: color 2005/11/14 v1.0j Standard LaTeX Color (DPC)
+
+(/etc/texmf/tex/latex/config/color.cfg
+File: color.cfg 2007/01/18 v1.5 color configuration of teTeX/TeXLive
+)
+Package color Info: Driver file: dvips.def on input line 130.
+
+(/usr/share/texmf-texlive/tex/latex/graphics/dvipsnam.def
+File: dvipsnam.def 1999/02/16 v3.0i Driver-dependant file (DPC,SPQR)
+))
+(/usr/share/texmf-texlive/tex/latex/hyperref/hyperref.sty
+Package: hyperref 2007/02/07 v6.75r Hypertext links for LaTeX
+
+(/usr/share/texmf-texlive/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks20
+)
+\@linkdim=\dimen122
+\Hy@linkcounter=\count103
+\Hy@pagecounter=\count104
+
+(/usr/share/texmf-texlive/tex/latex/hyperref/pd1enc.def
+File: pd1enc.def 2007/02/07 v6.75r Hyperref: PDFDocEncoding definition (HO)
+)
+(/etc/texmf/tex/latex/config/hyperref.cfg
+File: hyperref.cfg 2002/06/06 v1.2 hyperref configuration of TeXLive
+)
+(/usr/share/texmf-texlive/tex/latex/oberdiek/kvoptions.sty
+Package: kvoptions 2006/08/22 v2.4 Connects package keyval with LaTeX options (
+HO)
+)
+Package hyperref Info: Hyper figures OFF on input line 2288.
+Package hyperref Info: Link nesting OFF on input line 2293.
+Package hyperref Info: Hyper index ON on input line 2296.
+Package hyperref Info: Plain pages OFF on input line 2303.
+Package hyperref Info: Backreferencing OFF on input line 2308.
+
+Implicit mode ON; LaTeX internals redefined
+Package hyperref Info: Bookmarks ON on input line 2444.
+(/usr/share/texmf-texlive/tex/latex/ltxmisc/url.sty
+\Urlmuskip=\muskip11
+Package: url 2005/06/27  ver 3.2  Verb mode for urls, etc.
+)
+LaTeX Info: Redefining \url on input line 2599.
+\Fld@menulength=\count105
+\Field@Width=\dimen123
+\Fld@charsize=\dimen124
+\Choice@toks=\toks21
+\Field@toks=\toks22
+Package hyperref Info: Hyper figures OFF on input line 3102.
+Package hyperref Info: Link nesting OFF on input line 3107.
+Package hyperref Info: Hyper index ON on input line 3110.
+Package hyperref Info: backreferencing OFF on input line 3117.
+Package hyperref Info: Link coloring OFF on input line 3122.
+\Hy@abspage=\count106
+\c@Item=\count107
+\c@Hfootnote=\count108
+)
+*hyperref using default driver hdvips*
+(/usr/share/texmf-texlive/tex/latex/hyperref/hdvips.def
+File: hdvips.def 2007/02/07 v6.75r Hyperref driver for dvips
+
+(/usr/share/texmf-texlive/tex/latex/hyperref/pdfmark.def
+File: pdfmark.def 2007/02/07 v6.75r Hyperref definitions for pdfmark specials
+\pdf@docset=\toks23
+\pdf@box=\box29
+\pdf@toks=\toks24
+\pdf@defaulttoks=\toks25
+\Fld@listcount=\count109
+))
+! Undefined control sequence.
+<argument> \undefinedpagestyle 
+                               
+l.10 \pagestyle{myheadings}
+                                    % Option to put headers
+? 
+\c@theorem=\count110
+(./report.aux
+
+LaTeX Warning: Label `diffstruc' multiply defined.
+
+
+LaTeX Warning: Label `diffstruc' multiply defined.
+
+
+LaTeX Warning: Label `diffstruc' multiply defined.
+
+
+LaTeX Warning: Label `diffstruc' multiply defined.
+
+
+LaTeX Warning: Label `diffstruc' multiply defined.
+
+
+LaTeX Warning: Label `diffstruc' multiply defined.
+
+
+LaTeX Warning: Label `' multiply defined.
+
+)
+\openout1 = `report.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 63.
+LaTeX Font Info:    ... okay on input line 63.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 63.
+LaTeX Font Info:    ... okay on input line 63.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 63.
+LaTeX Font Info:    ... okay on input line 63.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 63.
+LaTeX Font Info:    ... okay on input line 63.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 63.
+LaTeX Font Info:    ... okay on input line 63.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 63.
+LaTeX Font Info:    ... okay on input line 63.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 63.
+LaTeX Font Info:    ... okay on input line 63.
+Package hyperref Info: Link coloring OFF on input line 63.
+ (/usr/share/texmf-texlive/tex/latex/hyperref/nameref.sty
+Package: nameref 2006/12/27 v2.28 Cross-referencing by name of section
+
+(/usr/share/texmf-texlive/tex/latex/oberdiek/refcount.sty
+Package: refcount 2006/02/20 v3.0 Data extraction from references (HO)
+)
+\c@section@level=\count111
+)
+LaTeX Info: Redefining \ref on input line 63.
+LaTeX Info: Redefining \pageref on input line 63.
+ (./report.out)
+(./report.out)
+\@outlinefile=\write3
+\openout3 = `report.out'.
+
+ (./introduction.tex
+File: list_of_figures1.ps Graphic file (type eps)
+ <list_of_figures1.ps>) (./memory.tex
+[1]
+! Missing $ inserted.
+<inserted text> 
+                $
+l.5 area(in mm2) = (0.001){ * }(tech)^
+                                      {2.07} { * } (bits)^{0.9} { * } (port)...
+
+? 
+LaTeX Font Info:    Try loading font information for U+msa on input line 5.
+(/usr/share/texmf-texlive/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2002/01/19 v2.2g AMS font definitions
+)
+LaTeX Font Info:    Try loading font information for U+msb on input line 5.
+
+(/usr/share/texmf-texlive/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2002/01/19 v2.2g AMS font definitions
+)
+! Missing $ inserted.
+<inserted text> 
+                $
+l.6 
+    
+? 
+) (./arch_choice.tex) (./a5.tex
+
+! LaTeX Error: There's no line here to end.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.6 T
+     he energy, delay and area estimates for each architecture / frequency c...
+
+? 
+! Missing $ inserted.
+<inserted text> 
+                $
+l.19 Area (mm^
+              2)& 1.45& 1.3& 1.77& 1.52& 2.3& 1.9\\[1ex]
+? 
+! Extra }, or forgotten $.
+<template> \unskip \hfil }
+                          \hskip \tabcolsep \hskip -.5\arrayrulewidth \vrule...
+l.19 Area (mm^2)&
+                  1.45& 1.3& 1.77& 1.52& 2.3& 1.9\\[1ex]
+? 
+! Missing $ inserted.
+<inserted text> 
+                $
+l.19 Area (mm^2)&
+                  1.45& 1.3& 1.77& 1.52& 2.3& 1.9\\[1ex]
+? 
+! Missing } inserted.
+<inserted text> 
+                }
+l.19 Area (mm^2)&
+                  1.45& 1.3& 1.77& 1.52& 2.3& 1.9\\[1ex]
+? 
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+File: a5p.ps Graphic file (type eps)
+<a5p.ps>
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+File: a5a.ps Graphic file (type eps)
+<a5a.ps>
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+) (./linpack.tex
+
+! LaTeX Error: There's no line here to end.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.3 T
+     he energy, delay and area estimates for each architecture / frequency c...
+
+? 
+! Missing $ inserted.
+<inserted text> 
+                $
+l.17 Area (mm^
+              2)& 27.5& 25.5& 30.8& 27& 36.2& 28.9\\[1ex]
+? 
+! Extra }, or forgotten $.
+<template> \unskip \hfil }
+                          \hskip \tabcolsep \hskip -.5\arrayrulewidth \vrule...
+l.17 Area (mm^2)&
+                  27.5& 25.5& 30.8& 27& 36.2& 28.9\\[1ex]
+? 
+! Missing $ inserted.
+<inserted text> 
+                $
+l.17 Area (mm^2)&
+                  27.5& 25.5& 30.8& 27& 36.2& 28.9\\[1ex]
+? 
+! Missing } inserted.
+<inserted text> 
+                }
+l.17 Area (mm^2)&
+                  27.5& 25.5& 30.8& 27& 36.2& 28.9\\[1ex]
+? 
+[2]
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+File: lpp.ps Graphic file (type eps)
+<lpp.ps>
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+File: lpa.ps Graphic file (type eps)
+<lpa.ps>
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+) (./rb_trees.tex
+
+! LaTeX Error: There's no line here to end.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.4 T
+     he energy, delay and area estimates for each architecture / frequency c...
+
+? 
+! Missing $ inserted.
+<inserted text> 
+                $
+l.18 Area (mm^
+              2)& 19 & 23& 18 & 21& 26& 22& 32& 25\\[1ex]
+? 
+! Extra }, or forgotten $.
+<template> \unskip \hfil }
+                          \hskip \tabcolsep \hskip -.5\arrayrulewidth \vrule...
+l.18 Area (mm^2)&
+                  19 & 23& 18 & 21& 26& 22& 32& 25\\[1ex]
+? 
+! Missing $ inserted.
+<inserted text> 
+                $
+l.18 Area (mm^2)&
+                  19 & 23& 18 & 21& 26& 22& 32& 25\\[1ex]
+? 
+! Missing } inserted.
+<inserted text> 
+                }
+l.18 Area (mm^2)&
+                  19 & 23& 18 & 21& 26& 22& 32& 25\\[1ex]
+? 
+[3]
+File: rbp.ps Graphic file (type eps)
+ <rbp.ps>
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+File: rba.ps Graphic file (type eps)
+<rba.ps>
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+) (./fft.tex
+
+! LaTeX Error: There's no line here to end.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.4 T
+     he energy, delay and area estimates for each architecture / frequency c...
+
+? 
+! Missing $ inserted.
+<inserted text> 
+                $
+l.18 Area (mm^
+              2)& 5.4& 5.07 & 6.6& 5.7& 9.2& 6.7\\[1ex]
+? 
+! Extra }, or forgotten $.
+<template> \unskip \hfil }
+                          \hskip \tabcolsep \hskip -.5\arrayrulewidth \vrule...
+l.18 Area (mm^2)&
+                  5.4& 5.07 & 6.6& 5.7& 9.2& 6.7\\[1ex]
+? 
+! Missing $ inserted.
+<inserted text> 
+                $
+l.18 Area (mm^2)&
+                  5.4& 5.07 & 6.6& 5.7& 9.2& 6.7\\[1ex]
+? 
+! Missing } inserted.
+<inserted text> 
+                }
+l.18 Area (mm^2)&
+                  5.4& 5.07 & 6.6& 5.7& 9.2& 6.7\\[1ex]
+? 
+! Extra }, or forgotten \endgroup.
+l.21 \end{tabular}}
+                   
+? 
+File: fftp.ps Graphic file (type eps)
+<fftp.ps>
+File: ffta.ps Graphic file (type eps)
+ <ffta.ps>) (./aes.tex
+
+! LaTeX Error: There's no line here to end.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.5 T
+     he energy, delay and area estimates for each architecture / frequency c...
+
+? 
+! Missing $ inserted.
+<inserted text> 
+                $
+l.19 Area (mm^
+              2)& 7.67 & 9.03& 6.63 & 6.5 & 13& 7.5& 20.25& 9.4\\[1ex]
+? 
+! Extra }, or forgotten $.
+<template> \unskip \hfil }
+                          \hskip \tabcolsep \hskip -.5\arrayrulewidth \vrule...
+l.19 Area (mm^2)&
+                  7.67 & 9.03& 6.63 & 6.5 & 13& 7.5& 20.25& 9.4\\[1ex]
+? 
+! Missing $ inserted.
+<inserted text> 
+                $
+l.19 Area (mm^2)&
+                  7.67 & 9.03& 6.63 & 6.5 & 13& 7.5& 20.25& 9.4\\[1ex]
+? 
+! Missing } inserted.
+<inserted text> 
+                }
+l.19 Area (mm^2)&
+                  7.67 & 9.03& 6.63 & 6.5 & 13& 7.5& 20.25& 9.4\\[1ex]
+? 
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+File: aesp.ps Graphic file (type eps)
+<aesp.ps>
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+File: aesa.ps Graphic file (type eps)
+<aesa.ps>
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+) (./conclusion.tex [4] [5] [6] [7] [8] [9]) (./ref.tex)
+
+** Conference Paper **
+Before submitting the final camera ready copy, remember to:
+
+ 1. Manually equalize the lengths of two columns on the last page
+ of your paper;
+
+ 2. Ensure that any PostScript and/or PDF output post-processing
+ uses only Type 1 fonts and that every step in the generation
+ process uses the US letter (8.5in X 11in) paper size.
+
+[10
+
+] (./report.aux)
+
+LaTeX Warning: There were multiply-defined labels.
+
+ ) 
+Here is how much of TeX's memory you used:
+ 4123 strings out of 95087
+ 57953 string characters out of 1183278
+ 121809 words of memory out of 1500000
+ 7230 multiletter control sequences out of 10000+50000
+ 30810 words of font info for 76 fonts, out of 1200000 for 2000
+ 28 hyphenation exceptions out of 8191
+ 27i,10n,36p,520b,361s stack positions out of 5000i,500n,6000p,200000b,5000s
+
+Output written on report.dvi (10 pages, 33828 bytes).

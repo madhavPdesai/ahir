@@ -1,0 +1,141 @@
+% Created 2010-02-14 Sun 14:27
+\documentclass[12pt,a4paper]{article}
+\usepackage{graphicx}
+\usepackage{times}
+\usepackage[margin=0.75in]{geometry}
+\newtheorem{lemma}{Lemma}
+\newtheorem{definition}{Definition}
+
+\title{Testing for compatibility in the LRG}
+%\author{Sameer D. Sahasrabuddhe}
+\date{[2010-02-14 Sun]}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Algorithm}
+\label{sec-1}
+
+
+Given two vertices $u$ and $v$ in an LRG $G$, we test whether they are
+compatible using the following algorithm.
+
+\begin{enumerate}
+\item Traverse depth-first starting from the vertex $u$, towards the
+    root. Mark every vertex $x$ encountered in the traversal and
+    record the fork indicated by the edges along which we reached the
+    vertex $x$. Every such edge either indicates the same fork, or
+    there is only one unlabelled edge along which $x$ is reachable as
+    shown in Lemma \ref{all-or-none}.
+\item Now traverse the LRG depth-first starting from $v$. When a marked
+    vertex $x$ is reached then:
+
+\begin{enumerate}
+\item Return true (the two nodes are compatible) in each of the
+       following cases:
+
+\begin{enumerate}
+\item The edge along which we reached $x$ is not labelled.
+\item No fork is recorded at $x$.
+\item The edge indicates a fork different from the one recorded at
+       $x$.
+\end{enumerate}
+
+\item If none of the above three cases holds, then retrace the edge
+       along which we reached $x$, and continue the depth-first
+       traversal. The edges reachable beyond $x$ are not examined
+       since they do not provide any conclusive information, as shown
+       in Lemma\ref{look-no-further}.
+\end{enumerate}
+
+\end{enumerate}
+\section{Details}
+\label{sec-2}
+
+
+Consider a Type-2 petri-net $P$ and its associated LRG $G$. Let $F$ be
+a canonical fork region in $P$, such that all the child Class $C$
+regions are replaced by simple places. $G'$ is the subgraph induced on
+LRG $G$ by the labels assigned to the forks, joins and simple places
+in the region $G$.
+
+\begin{definition}
+
+A transition $t_1\in F$ is said to be connected to a transition
+$t_2\in F$ {\bf through a simple place} $p \in F$ when there exist
+edges $(t_1,p),(p,t_2) \in F$.
+
+\end{definition}
+
+\begin{lemma}
+
+Two transitions $t_1, t_2 \in F$ have the same label $v \in G'$ iff
+one element is a join (say $t_1$) and the other element ($t_2$) such
+that $t_1$ is connected to $t_2$ through a simple place $p$.
+Consequently, the place $p$ is the only place in $F$ with label $v$.
+
+\end{lemma}
+
+\paragraph{Proof:}
+
+\begin{description}
+\item [Statement 1] Join $t_1$ is connected to fork $t_2$ through a
+   simple place $p$.
+
+   From the way labels are constructed in a Type-2 petri-net, the
+   label assigned to the place $p$ and the fork $t_2$ is the same as
+   the label assigned to join $t_1$.
+\item [Statement 2] Transitions $t_1$ and $t_2$ have the same label.
+
+   Consider transition $t_1\in F$ assigned a label $v_1\in G$. $t_1$
+   is either the entry $f'$ of the fork region, or its label is
+   derived from the label $v'$ assigned to $f'$. Every transition on
+   the path from $f'$ to $t_1$ is either a fork that extends the
+   label, or a join that creates a union with some other label. Let
+   $S=[t_1,t_2,\ldots]$ be the sequence of forks and joins that occur
+   along the path from $f$ to $t_1$.
+
+   If transition $t_2$ has the same label $v_1$, then the path from
+   $f$ to $t_2$ must pass through the same sequence $S$. At the end of
+   this sequence, let $t_1$ occur first on the path. Since no
+   modification occurs to the label when $t_2$ is encountered, the
+   following statements must be true:
+
+\begin{enumerate}
+\item $t_1$ is not a fork. If it were a fork, it would extend the
+      label on every outgoing edge. Hence, $t_1$ is a join.
+\item There is no intervening fork or join on the path from $t_1$ to
+      $t_2$, since this would also change the label that reaches
+      $t_2$. Hence $t_1$ is connected to $t_2$ only through a simple
+      place.
+\item $t_2$ is not a join. It it were a join, it would generate a new
+      label that is a union of the label at $p$ with other labels
+      assigned to its other predecessors. Hence $t_2$ is a fork.
+\end{enumerate}
+
+\end{description}
+\begin{lemma}
+
+If $y_2$ is a vertex in G' with
+unlabelled out-edges to distinct vertices $z_1,z_2,\ldots$, then at
+most one vertex $z_i$ has out-egdges in the subgraph G'.
+
+\end{lemma}
+
+For vertices $u$ and $v$ in the LRG, let
+\mbox{$E(u,v)=\{e_1,e_2,\ldots\}$} be the set of distinct out-edges at
+$u$ along which $v$ is reachable from $u$. The following properties
+hold for the set $E(u,v)$:
+
+\begin{lemma}
+\label{all-or-none}
+
+If an edge $e_{i_0} \in E(u,v)$ is unlabelled, then $E(u,v) =
+\{e_{i_0}\}$, else every edge $e_i \in E$ indicates the same fork $f$.
+
+\end{lemma}
+
+
+\end{document}

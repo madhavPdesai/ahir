@@ -1,0 +1,324 @@
+; ModuleID = 'lu.bc'
+target endian = little
+target pointersize = 32
+target triple = "i686-pc-linux-gnu"
+deplibs = [ "c", "crtend" ]
+
+implementation   ; Functions:
+
+float %divide(float %dividend, float %divisor) {
+entry:
+	%tmp.35 = setgt float %divisor, 5.000000e-01		; <bool> [#uses=1]
+	br bool %tmp.35, label %loopentry.1, label %no_exit.0
+
+no_exit.0:		; preds = %no_exit.0, %entry
+	%di.0.0 = phi float [ %tmp.6, %no_exit.0 ], [ %divisor, %entry ]		; <float> [#uses=1]
+	%ni.0.0 = phi float [ %tmp.8, %no_exit.0 ], [ %dividend, %entry ]		; <float> [#uses=1]
+	%tmp.6 = mul float %di.0.0, 2.000000e+00		; <float> [#uses=3]
+	%tmp.8 = mul float %ni.0.0, 2.000000e+00		; <float> [#uses=2]
+	%tmp.3 = setgt float %tmp.6, 5.000000e-01		; <bool> [#uses=1]
+	br bool %tmp.3, label %loopentry.1, label %no_exit.0
+
+loopentry.1:		; preds = %no_exit.0, %entry
+	%di.1 = phi float [ %divisor, %entry ], [ %tmp.6, %no_exit.0 ]		; <float> [#uses=3]
+	%ni.1 = phi float [ %dividend, %entry ], [ %tmp.8, %no_exit.0 ]		; <float> [#uses=2]
+	%tmp.11 = setgt float %di.1, 1.000000e+00		; <bool> [#uses=1]
+	br bool %tmp.11, label %no_exit.1, label %loopexit.1
+
+no_exit.1:		; preds = %no_exit.1, %loopentry.1
+	%di.1.0 = phi float [ %tmp.14, %no_exit.1 ], [ %di.1, %loopentry.1 ]		; <float> [#uses=1]
+	%ni.1.0 = phi float [ %tmp.16, %no_exit.1 ], [ %ni.1, %loopentry.1 ]		; <float> [#uses=1]
+	%tmp.14 = mul float %di.1.0, 5.000000e-01		; <float> [#uses=3]
+	%tmp.16 = mul float %ni.1.0, 5.000000e-01		; <float> [#uses=2]
+	%tmp.1114 = setgt float %tmp.14, 1.000000e+00		; <bool> [#uses=1]
+	br bool %tmp.1114, label %no_exit.1, label %loopexit.1
+
+loopexit.1:		; preds = %no_exit.1, %loopentry.1
+	%di.1.1 = phi float [ %di.1, %loopentry.1 ], [ %tmp.14, %no_exit.1 ]		; <float> [#uses=2]
+	%ni.1.1 = phi float [ %ni.1, %loopentry.1 ], [ %tmp.16, %no_exit.1 ]		; <float> [#uses=4]
+	%tmp.19 = sub float %ni.1.1, 1.000000e+00		; <float> [#uses=1]
+	%tmp.21 = sub float 2.000000e+00, %di.1.1		; <float> [#uses=1]
+	%tmp.2420 = sub float %ni.1.1, %tmp.19		; <float> [#uses=1]
+	%tmp.2621 = setgt float %tmp.2420, 0x3F50624DE0000000		; <bool> [#uses=1]
+	br bool %tmp.2621, label %no_exit.2, label %loopexit.2
+
+no_exit.2:		; preds = %no_exit.2, %loopexit.1
+	%di.2.0 = phi float [ %tmp.31, %no_exit.2 ], [ %di.1.1, %loopexit.1 ]		; <float> [#uses=1]
+	%ni.2.0 = phi float [ %tmp.34, %no_exit.2 ], [ %ni.1.1, %loopexit.1 ]		; <float> [#uses=2]
+	%ri.0.0 = phi float [ %tmp.36, %no_exit.2 ], [ %tmp.21, %loopexit.1 ]		; <float> [#uses=2]
+	%tmp.31 = mul float %di.2.0, %ri.0.0		; <float> [#uses=2]
+	%tmp.34 = mul float %ni.2.0, %ri.0.0		; <float> [#uses=3]
+	%tmp.36 = sub float 2.000000e+00, %tmp.31		; <float> [#uses=1]
+	%tmp.24 = sub float %tmp.34, %ni.2.0		; <float> [#uses=1]
+	%tmp.26 = setgt float %tmp.24, 0x3F50624DE0000000		; <bool> [#uses=1]
+	br bool %tmp.26, label %no_exit.2, label %loopexit.2
+
+loopexit.2:		; preds = %no_exit.2, %loopexit.1
+	%ni.2.1 = phi float [ %ni.1.1, %loopexit.1 ], [ %tmp.34, %no_exit.2 ]		; <float> [#uses=1]
+	ret float %ni.2.1
+}
+
+void %start(int %noofelem, float* %A, int* %rcoeff, int* %ccoeff, float* %l_array, float* %u_array) {
+entry:
+	%B = alloca [3 x [3 x float]]		; <[3 x [3 x float]]*> [#uses=13]
+	%L = alloca [3 x [3 x float]]		; <[3 x [3 x float]]*> [#uses=3]
+	%U = alloca [3 x [3 x float]]		; <[3 x [3 x float]]*> [#uses=4]
+	br label %no_exit.1
+
+no_exit.1:		; preds = %loopexit.1, %no_exit.1, %entry
+	%indvar118.ph = phi uint [ 0, %entry ], [ %indvar.next119, %loopexit.1 ], [ %indvar118.ph, %no_exit.1 ]		; <uint> [#uses=3]
+	%indvar = phi uint [ %indvar.next, %no_exit.1 ], [ 0, %loopexit.1 ], [ 0, %entry ]		; <uint> [#uses=2]
+	%tmp.11 = getelementptr [3 x [3 x float]]* %B, int 0, uint %indvar118.ph, uint %indvar		; <float*> [#uses=1]
+	store float 0.000000e+00, float* %tmp.11
+	%indvar.next = add uint %indvar, 1		; <uint> [#uses=2]
+	%exitcond = seteq uint %indvar.next, 3		; <bool> [#uses=1]
+	br bool %exitcond, label %loopexit.1, label %no_exit.1
+
+loopexit.1:		; preds = %no_exit.1
+	%indvar.next119 = add uint %indvar118.ph, 1		; <uint> [#uses=2]
+	%exitcond120 = seteq uint %indvar.next119, 3		; <bool> [#uses=1]
+	br bool %exitcond120, label %loopentry.2, label %no_exit.1
+
+loopentry.2:		; preds = %loopexit.1
+	%tmp.16 = setgt int %noofelem, 0		; <bool> [#uses=1]
+	br bool %tmp.16, label %no_exit.2, label %loopentry.4.outer
+
+no_exit.2:		; preds = %no_exit.2, %loopentry.2
+	%indvar121 = phi uint [ %indvar.next122, %no_exit.2 ], [ 0, %loopentry.2 ]		; <uint> [#uses=5]
+	%i.1.0 = cast uint %indvar121 to int		; <int> [#uses=1]
+	%tmp.20 = getelementptr int* %rcoeff, uint %indvar121		; <int*> [#uses=1]
+	%tmp.21 = load int* %tmp.20		; <int> [#uses=1]
+	%tmp.25 = getelementptr int* %ccoeff, uint %indvar121		; <int*> [#uses=1]
+	%tmp.26 = load int* %tmp.25		; <int> [#uses=1]
+	%tmp.27 = getelementptr [3 x [3 x float]]* %B, int 0, int %tmp.21, int %tmp.26		; <float*> [#uses=1]
+	%tmp.30 = getelementptr float* %A, uint %indvar121		; <float*> [#uses=1]
+	%tmp.31 = load float* %tmp.30		; <float> [#uses=1]
+	store float %tmp.31, float* %tmp.27
+	%inc.2 = add int %i.1.0, 1		; <int> [#uses=1]
+	%tmp.1614 = setlt int %inc.2, %noofelem		; <bool> [#uses=1]
+	%indvar.next122 = add uint %indvar121, 1		; <uint> [#uses=1]
+	br bool %tmp.1614, label %no_exit.2, label %loopentry.4.outer
+
+loopentry.4.outer:		; preds = %loopexit.5, %no_exit.2, %loopentry.2
+	%indvar129 = phi uint [ %indvar.next130, %loopexit.5 ], [ 0, %no_exit.2 ], [ 0, %loopentry.2 ]		; <uint> [#uses=6]
+	%j.3.in.ph = phi int [ %inc.5, %loopexit.5 ], [ 0, %no_exit.2 ], [ 0, %loopentry.2 ]		; <int> [#uses=1]
+	%maxcoeff.2.ph = phi int [ %inc.5, %loopexit.5 ], [ 0, %no_exit.2 ], [ 0, %loopentry.2 ]		; <int> [#uses=1]
+	%i.2.0.ph = cast uint %indvar129 to int		; <int> [#uses=1]
+	%tmp.52 = getelementptr [3 x [3 x float]]* %B, int 0, uint %indvar129, uint %indvar129		; <float*> [#uses=1]
+	br label %loopentry.4
+
+loopentry.4:		; preds = %no_exit.4, %loopentry.4.outer
+	%j.3.in = phi int [ %j.3.in.ph, %loopentry.4.outer ], [ %j.3.2, %no_exit.4 ]		; <int> [#uses=2]
+	%maxcoeff.2 = phi int [ %maxcoeff.2.ph, %loopentry.4.outer ], [ %maxcoeff.2.2, %no_exit.4 ]		; <int> [#uses=2]
+	%j.3 = add int %j.3.in, 1		; <int> [#uses=1]
+	%tmp.42 = setlt int %j.3, 3		; <bool> [#uses=1]
+	br bool %tmp.42, label %no_exit.4.preheader, label %no_exit.5
+
+no_exit.4.preheader:		; preds = %loopentry.4
+	%j.3.in = cast int %j.3.in to uint		; <uint> [#uses=1]
+	%tmp.53 = load float* %tmp.52		; <float> [#uses=1]
+	%tmp. = add uint %j.3.in, 1		; <uint> [#uses=1]
+	br label %no_exit.4
+
+no_exit.4:		; preds = %then.0, %no_exit.4.preheader
+	%indvar123 = phi uint [ 0, %no_exit.4.preheader ], [ %indvar.next124, %then.0 ]		; <uint> [#uses=2]
+	%maxcoeff.2.2 = phi int [ %maxcoeff.2, %no_exit.4.preheader ], [ %j.3.2, %then.0 ]		; <int> [#uses=1]
+	%tmp.125 = add uint %indvar123, %tmp.		; <uint> [#uses=2]
+	%j.3.2 = cast uint %tmp.125 to int		; <int> [#uses=4]
+	%tmp.47 = getelementptr [3 x [3 x float]]* %B, int 0, uint %tmp.125, uint %indvar129		; <float*> [#uses=1]
+	%tmp.48 = load float* %tmp.47		; <float> [#uses=1]
+	%tmp.54 = setgt float %tmp.48, %tmp.53		; <bool> [#uses=1]
+	br bool %tmp.54, label %then.0, label %loopentry.4
+
+then.0:		; preds = %no_exit.4
+	%j.321 = add int %j.3.2, 1		; <int> [#uses=1]
+	%tmp.4223 = setlt int %j.321, 3		; <bool> [#uses=1]
+	%indvar.next124 = add uint %indvar123, 1		; <uint> [#uses=1]
+	br bool %tmp.4223, label %no_exit.4, label %no_exit.5
+
+no_exit.5:		; preds = %no_exit.5, %then.0, %loopentry.4
+	%maxcoeff.2.3.ph.ph = phi int [ %maxcoeff.2, %loopentry.4 ], [ %j.3.2, %then.0 ], [ %maxcoeff.2.3.ph.ph, %no_exit.5 ]		; <int> [#uses=2]
+	%indvar126 = phi uint [ %indvar.next127, %no_exit.5 ], [ 0, %then.0 ], [ 0, %loopentry.4 ]		; <uint> [#uses=3]
+	%tmp.65 = getelementptr [3 x [3 x float]]* %B, int 0, uint %indvar129, uint %indvar126		; <float*> [#uses=2]
+	%tmp.66 = load float* %tmp.65		; <float> [#uses=1]
+	%tmp.74 = getelementptr [3 x [3 x float]]* %B, int 0, int %maxcoeff.2.3.ph.ph, uint %indvar126		; <float*> [#uses=2]
+	%tmp.75 = load float* %tmp.74		; <float> [#uses=1]
+	store float %tmp.75, float* %tmp.65
+	store float %tmp.66, float* %tmp.74
+	%indvar.next127 = add uint %indvar126, 1		; <uint> [#uses=2]
+	%exitcond128 = seteq uint %indvar.next127, 3		; <bool> [#uses=1]
+	br bool %exitcond128, label %loopexit.5, label %no_exit.5
+
+loopexit.5:		; preds = %no_exit.5
+	%inc.5 = add int %i.2.0.ph, 1		; <int> [#uses=2]
+	%indvar.next130 = add uint %indvar129, 1		; <uint> [#uses=2]
+	%exitcond131 = seteq uint %indvar.next130, 3		; <bool> [#uses=1]
+	br bool %exitcond131, label %loopentry.7.outer, label %loopentry.4.outer
+
+loopentry.7.outer:		; preds = %loopexit.7, %loopexit.5
+	%indvar134 = phi uint [ %tmp.136, %loopexit.7 ], [ 0, %loopexit.5 ]		; <uint> [#uses=6]
+	%k.1.in.ph = phi int [ %j.746, %loopexit.7 ], [ 0, %loopexit.5 ]		; <int> [#uses=1]
+	%p.0.0.ph = cast uint %indvar134 to int		; <int> [#uses=1]
+	%tmp.107 = getelementptr [3 x [3 x float]]* %B, int 0, uint %indvar134, uint %indvar134		; <float*> [#uses=1]
+	%j.746 = add int %p.0.0.ph, 1		; <int> [#uses=2]
+	%tmp.11348 = setlt int %j.746, 3		; <bool> [#uses=1]
+	%tmp.136 = add uint %indvar134, 1		; <uint> [#uses=3]
+	br label %loopentry.7
+
+loopentry.7:		; preds = %loopentry.7.backedge, %loopentry.7.outer
+	%indvar138 = phi uint [ 0, %loopentry.7.outer ], [ %indvar.next139, %loopentry.7.backedge ]		; <uint> [#uses=2]
+	%indvar138 = cast uint %indvar138 to int		; <int> [#uses=1]
+	%k.1.in = add int %indvar138, %k.1.in.ph		; <int> [#uses=1]
+	%k.1 = add int %k.1.in, 1		; <int> [#uses=3]
+	%tmp.92 = setlt int %k.1, 3		; <bool> [#uses=1]
+	br bool %tmp.92, label %no_exit.7, label %loopexit.7
+
+no_exit.7:		; preds = %loopentry.7
+	%tmp.97 = getelementptr [3 x [3 x float]]* %B, int 0, int %k.1, uint %indvar134		; <float*> [#uses=3]
+	%tmp.103 = load float* %tmp.97		; <float> [#uses=1]
+	%tmp.108 = load float* %tmp.107		; <float> [#uses=1]
+	%tmp.98 = call float %divide( float %tmp.103, float %tmp.108 )		; <float> [#uses=1]
+	store float %tmp.98, float* %tmp.97
+	br bool %tmp.11348, label %no_exit.8, label %loopentry.7.backedge
+
+loopentry.7.backedge:		; preds = %no_exit.8, %no_exit.7
+	%indvar.next139 = add uint %indvar138, 1		; <uint> [#uses=1]
+	br label %loopentry.7
+
+no_exit.8:		; preds = %no_exit.8, %no_exit.7
+	%indvar132 = phi uint [ %indvar.next133, %no_exit.8 ], [ 0, %no_exit.7 ]		; <uint> [#uses=2]
+	%tmp.137 = add uint %indvar132, %tmp.136		; <uint> [#uses=3]
+	%j.7.1 = cast uint %tmp.137 to int		; <int> [#uses=1]
+	%tmp.118 = getelementptr [3 x [3 x float]]* %B, int 0, int %k.1, uint %tmp.137		; <float*> [#uses=2]
+	%tmp.123 = load float* %tmp.118		; <float> [#uses=1]
+	%tmp.128 = load float* %tmp.97		; <float> [#uses=1]
+	%tmp.132 = getelementptr [3 x [3 x float]]* %B, int 0, uint %indvar134, uint %tmp.137		; <float*> [#uses=1]
+	%tmp.133 = load float* %tmp.132		; <float> [#uses=1]
+	%tmp.134 = mul float %tmp.128, %tmp.133		; <float> [#uses=1]
+	%tmp.135 = sub float %tmp.123, %tmp.134		; <float> [#uses=1]
+	store float %tmp.135, float* %tmp.118
+	%j.7 = add int %j.7.1, 1		; <int> [#uses=1]
+	%tmp.113 = setlt int %j.7, 3		; <bool> [#uses=1]
+	%indvar.next133 = add uint %indvar132, 1		; <uint> [#uses=1]
+	br bool %tmp.113, label %no_exit.8, label %loopentry.7.backedge
+
+loopexit.7:		; preds = %loopentry.7
+	%exitcond142 = seteq uint %tmp.136, 2		; <bool> [#uses=1]
+	br bool %exitcond142, label %no_exit.10.outer, label %loopentry.7.outer
+
+no_exit.10.outer:		; preds = %loopexit.10, %loopexit.7
+	%indvar143 = phi uint [ %indvar.next144, %loopexit.10 ], [ 0, %loopexit.7 ]		; <uint> [#uses=10]
+	%i.3.0.ph = cast uint %indvar143 to int		; <int> [#uses=2]
+	br label %no_exit.10
+
+no_exit.10:		; preds = %else.1, %then.2, %then.1, %no_exit.10.outer
+	%j.9.2 = phi int [ 0, %no_exit.10.outer ], [ %inc.960, %then.1 ], [ %inc.976, %then.2 ], [ %inc.9, %else.1 ]		; <int> [#uses=13]
+	%tmp.149 = setlt int %j.9.2, %i.3.0.ph		; <bool> [#uses=1]
+	br bool %tmp.149, label %then.1, label %else.0
+
+then.1:		; preds = %no_exit.10
+	%tmp.154 = getelementptr [3 x [3 x float]]* %L, int 0, uint %indvar143, int %j.9.2		; <float*> [#uses=1]
+	%tmp.158 = getelementptr [3 x [3 x float]]* %B, int 0, uint %indvar143, int %j.9.2		; <float*> [#uses=1]
+	%tmp.159 = load float* %tmp.158		; <float> [#uses=1]
+	store float %tmp.159, float* %tmp.154
+	%tmp.163 = getelementptr [3 x [3 x float]]* %U, int 0, uint %indvar143, int %j.9.2		; <float*> [#uses=1]
+	store float 0.000000e+00, float* %tmp.163
+	%inc.960 = add int %j.9.2, 1		; <int> [#uses=2]
+	%tmp.14574 = setlt int %inc.960, 3		; <bool> [#uses=1]
+	br bool %tmp.14574, label %no_exit.10, label %loopexit.10
+
+else.0:		; preds = %no_exit.10
+	%tmp.166 = seteq int %j.9.2, %i.3.0.ph		; <bool> [#uses=1]
+	%tmp.171 = getelementptr [3 x [3 x float]]* %L, int 0, uint %indvar143, int %j.9.2		; <float*> [#uses=2]
+	br bool %tmp.166, label %then.2, label %else.1
+
+then.2:		; preds = %else.0
+	store float 1.000000e+00, float* %tmp.171
+	%tmp.175 = getelementptr [3 x [3 x float]]* %U, int 0, uint %indvar143, int %j.9.2		; <float*> [#uses=1]
+	%tmp.179 = getelementptr [3 x [3 x float]]* %B, int 0, uint %indvar143, int %j.9.2		; <float*> [#uses=1]
+	%tmp.180 = load float* %tmp.179		; <float> [#uses=1]
+	store float %tmp.180, float* %tmp.175
+	%inc.976 = add int %j.9.2, 1		; <int> [#uses=2]
+	%tmp.14578 = setlt int %inc.976, 3		; <bool> [#uses=1]
+	br bool %tmp.14578, label %no_exit.10, label %loopexit.10
+
+else.1:		; preds = %else.0
+	store float 0.000000e+00, float* %tmp.171
+	%tmp.188 = getelementptr [3 x [3 x float]]* %U, int 0, uint %indvar143, int %j.9.2		; <float*> [#uses=1]
+	%tmp.192 = getelementptr [3 x [3 x float]]* %B, int 0, uint %indvar143, int %j.9.2		; <float*> [#uses=1]
+	%tmp.193 = load float* %tmp.192		; <float> [#uses=1]
+	store float %tmp.193, float* %tmp.188
+	%inc.9 = add int %j.9.2, 1		; <int> [#uses=2]
+	%tmp.14580 = setlt int %inc.9, 3		; <bool> [#uses=1]
+	br bool %tmp.14580, label %no_exit.10, label %loopexit.10
+
+loopexit.10:		; preds = %else.1, %then.2, %then.1
+	%indvar.next144 = add uint %indvar143, 1		; <uint> [#uses=2]
+	%exitcond145 = seteq uint %indvar.next144, 3		; <bool> [#uses=1]
+	br bool %exitcond145, label %loopentry.12, label %no_exit.10.outer
+
+loopentry.12:		; preds = %loopexit.12, %loopexit.10
+	%indvar148 = phi uint [ %indvar.next149, %loopexit.12 ], [ 0, %loopexit.10 ]		; <uint> [#uses=4]
+	%k.3.0 = phi int [ %k.2.3, %loopexit.12 ], [ 0, %loopexit.10 ]		; <int> [#uses=2]
+	%i.4.0 = cast uint %indvar148 to int		; <int> [#uses=1]
+	%tmp.202 = setgt uint %indvar148, 2147483647		; <bool> [#uses=1]
+	br bool %tmp.202, label %loopexit.12, label %no_exit.12
+
+no_exit.12:		; preds = %no_exit.12, %loopentry.12
+	%indvar146 = phi uint [ %indvar.next147, %no_exit.12 ], [ 0, %loopentry.12 ]		; <uint> [#uses=3]
+	%j.11.2 = cast uint %indvar146 to int		; <int> [#uses=2]
+	%k.2.2 = add int %j.11.2, %k.3.0		; <int> [#uses=2]
+	%tmp.206 = getelementptr float* %l_array, int %k.2.2		; <float*> [#uses=1]
+	%tmp.210 = getelementptr [3 x [3 x float]]* %L, int 0, uint %indvar148, uint %indvar146		; <float*> [#uses=1]
+	%tmp.211 = load float* %tmp.210		; <float> [#uses=1]
+	store float %tmp.211, float* %tmp.206
+	%inc.12 = add int %j.11.2, 1		; <int> [#uses=1]
+	%tmp.20299 = setgt int %inc.12, %i.4.0		; <bool> [#uses=1]
+	%indvar.next147 = add uint %indvar146, 1		; <uint> [#uses=1]
+	br bool %tmp.20299, label %loopexit.12.loopexit, label %no_exit.12
+
+loopexit.12.loopexit:		; preds = %no_exit.12
+	%inc.11 = add int %k.2.2, 1		; <int> [#uses=1]
+	br label %loopexit.12
+
+loopexit.12:		; preds = %loopexit.12.loopexit, %loopentry.12
+	%k.2.3 = phi int [ %k.3.0, %loopentry.12 ], [ %inc.11, %loopexit.12.loopexit ]		; <int> [#uses=1]
+	%indvar.next149 = add uint %indvar148, 1		; <uint> [#uses=2]
+	%exitcond150 = seteq uint %indvar.next149, 3		; <bool> [#uses=1]
+	br bool %exitcond150, label %loopentry.14, label %loopentry.12
+
+loopentry.14:		; preds = %loopexit.14, %loopexit.12
+	%indvar153 = phi uint [ %indvar.next157, %loopexit.14 ], [ 0, %loopexit.12 ]		; <uint> [#uses=4]
+	%k.5.0 = phi int [ %k.4.3, %loopexit.14 ], [ 0, %loopexit.12 ]		; <int> [#uses=2]
+	%i.5.0 = cast uint %indvar153 to int		; <int> [#uses=1]
+	%tmp.221 = setlt int %i.5.0, 3		; <bool> [#uses=1]
+	br bool %tmp.221, label %no_exit.14, label %loopexit.14
+
+no_exit.14:		; preds = %no_exit.14, %loopentry.14
+	%indvar151 = phi uint [ %indvar.next152, %no_exit.14 ], [ 0, %loopentry.14 ]		; <uint> [#uses=3]
+	%indvar151 = cast uint %indvar151 to int		; <int> [#uses=1]
+	%tmp.155 = add uint %indvar151, %indvar153		; <uint> [#uses=2]
+	%j.13.2 = cast uint %tmp.155 to int		; <int> [#uses=1]
+	%k.4.2 = add int %indvar151, %k.5.0		; <int> [#uses=2]
+	%tmp.225 = getelementptr float* %u_array, int %k.4.2		; <float*> [#uses=1]
+	%tmp.229 = getelementptr [3 x [3 x float]]* %U, int 0, uint %indvar153, uint %tmp.155		; <float*> [#uses=1]
+	%tmp.230 = load float* %tmp.229		; <float> [#uses=1]
+	store float %tmp.230, float* %tmp.225
+	%inc.15 = add int %j.13.2, 1		; <int> [#uses=1]
+	%tmp.221111 = setlt int %inc.15, 3		; <bool> [#uses=1]
+	%indvar.next152 = add uint %indvar151, 1		; <uint> [#uses=1]
+	br bool %tmp.221111, label %no_exit.14, label %loopexit.14.loopexit
+
+loopexit.14.loopexit:		; preds = %no_exit.14
+	%inc.14 = add int %k.4.2, 1		; <int> [#uses=1]
+	br label %loopexit.14
+
+loopexit.14:		; preds = %loopexit.14.loopexit, %loopentry.14
+	%k.4.3 = phi int [ %k.5.0, %loopentry.14 ], [ %inc.14, %loopexit.14.loopexit ]		; <int> [#uses=1]
+	%indvar.next157 = add uint %indvar153, 1		; <uint> [#uses=2]
+	%exitcond158 = seteq uint %indvar.next157, 3		; <bool> [#uses=1]
+	br bool %exitcond158, label %return, label %loopentry.14
+
+return:		; preds = %loopexit.14
+	ret void
+}

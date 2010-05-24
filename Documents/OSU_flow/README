@@ -1,0 +1,21 @@
+
+Copy the contents of this directory to your project directory.
+
+1) Synopsys DC for synthesis
+============================
+
+edit conf.dc.tcl
+dc_shell-t -f dc_compile.tcl
+
+The outputs of various commands are stored in the corresponding .log files.
+$toplevel.vh : Verilog netlist, also used by encounter as input
+$toplevel.db : Synthesised design readable by DC
+$toplevel.netlist.vhdl : VHDL netlist
+
+2) Cadence Encounter for layout
+===============================
+
+edit encounter.conf
+encounter -init encounter.tcl
+
+$toplevel.dat : contains the saved design, that can be restored in Encounter

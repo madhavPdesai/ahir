@@ -1,0 +1,25 @@
+a5 21
+fft 1224
+linpack 407 to factor and 322 to solve a 3x3 matrix
+aes 25353 for encryption and 1234 for key expansion 30555
+
+3196 slices
+
+For Gaj:
+1843 slices and 11 cycles
+
+redblack
+0.000245833 seconds for 1000 insertions on a P4 2.4GHz
+590k cycles
+
+388959 cycles on AHIR at 69.880MHz
+time = 0.005566 seconds
+
+linpack
+0.002862368 seconds for 100x100 on a P4 at 2.4GHz
+6870k cycles
+
+4006545 cycles on the AHIR circuit at 18.842MHz
+time = 0.212639 seconds
+
+cycles per second = 2400110999

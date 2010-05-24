@@ -1,0 +1,30 @@
+; ModuleID = 'globals.bc'
+target endian = little
+target pointersize = 32
+target triple = "i686-pc-linux-gnu"
+%a = global [3 x int] [ int 2, int 3, int 4 ]		; <[3 x int]*> [#uses=3]
+%b = global int 10		; <int*> [#uses=0]
+
+implementation   ; Functions:
+
+int %start(int %select) {
+entry:
+	%tmp = seteq int %select, 0		; <bool> [#uses=1]
+	%tmp2 = load int* getelementptr ([3 x int]* %a, int 0, int 0)		; <int> [#uses=1]
+	%tmp4 = load int* getelementptr ([3 x int]* %a, int 0, int 1)		; <int> [#uses=1]
+	%tmp5 = add int %tmp2, %tmp4		; <int> [#uses=2]
+	%tmp7 = load int* getelementptr ([3 x int]* %a, int 0, int 2)		; <int> [#uses=2]
+	br bool %tmp, label %cond_true, label %cond_false
+
+cond_true:		; preds = %entry
+	%tmp8 = add int %tmp5, %tmp7		; <int> [#uses=1]
+	br label %return
+
+cond_false:		; preds = %entry
+	%tmp17 = sub int %tmp5, %tmp7		; <int> [#uses=1]
+	br label %return
+
+return:		; preds = %cond_false, %cond_true
+	%retval.0 = phi int [ %tmp8, %cond_true ], [ %tmp17, %cond_false ]		; <int> [#uses=1]
+	ret int %retval.0
+}

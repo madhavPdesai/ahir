@@ -1,0 +1,50 @@
+\begin{table}[t]
+
+\caption{Architecture choices for each example}
+\begin{center}
+{\begin{tabular}{c  c | c  c  c}
+\hline
+ARCHITECTURE && \multicolumn{3}{c}{MEMORY BANK CHOICE} \\  
+CHOICES && 1& 2& 4 \\ [3ex] 
+\hline
+Example& Memory Size &&Base Bank Address Width \\ [1ex]
+\hline 
+A5& 16& 4& 4& 4\\[1ex]
+LINPACK& 16K& 12& 12& 12\\[1ex]
+R-B TREES& 16k& 12& 12& 12\\[1ex]
+FFT& 512& 8& 8& 8\\[1ex]
+AES& 1024& 8& 8& 8\\[1ex]
+\hline
+
+\end{tabular}}
+\label{diffstruc}
+\end{center}	
+\end{table}
+
+For each of memory architecture choices, deeply pipelined and non-pipelined was selected.
+The range of frequencies tried for each architecture is shown in TABLE II:
+
+
+\begin{table}[t]
+\caption{Range of Frequencies for Each Architecture}
+\begin{center}
+{\begin{tabular}{c | c  c  c  c  c  c}
+\hline
+ & \multicolumn{6}{c}{ARCHITECTURE CHOICES} \\[1ex]
+ &1x2 &1x0 &2x0 &2x2 &4x2 &4x0 \\ [1ex]
+\hline
+Example& \multicolumn{6}{c}{Frequency of Operation (in MHz)} \\ [1ex]
+\hline
+A5& 71.42& 71.42& 83.33& 71.42& 83.33& 71.43\\[1ex]
+LINPACK& 45.45& 41.67& 41.67& 41.67& 41.67& 38.4\\[1ex]
+R-B TREES& 41.67 and 62.5 & 41.67 and 55.56& 71.42& 50& 71.42& 38.36\\[1ex]
+FFT& 41.66& 41.66& 41.66& 45.45& 45.45& 45.45\\[1ex]
+AES& 45.45 and 71.42& 45.45 and 71.42& 71.42& 71.42& 71.42& 45.45\\[1ex]
+\hline
+
+\end{tabular}}
+\\[1ex]
+Note : Architecture choices are in the form [memory bank x deeply pipelined/non-pipelined degree]. For eg. 4 x 2 indicates an architecture with number of memory banks as 4. 2 and 0 indicates pipelined and non-pipelined memory, repectively.
+\label{diffstruc}
+\end{center}
+\end{table}

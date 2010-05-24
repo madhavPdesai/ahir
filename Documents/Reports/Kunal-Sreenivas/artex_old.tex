@@ -1,0 +1,275 @@
+\documentclass[a4paper,twoside]{article}      % Comments after  % are ignored
+\usepackage{amsmath,amssymb,amsfonts} % Typical maths resource packages
+\usepackage{graphics}                 % Packages to allow inclusion of graphics
+\usepackage{color}                    % For creating coloured text and background
+\usepackage{hyperref}                 % For creating hyperlinks in cross references
+
+\oddsidemargin 0cm
+\evensidemargin 0cm
+
+\pagestyle{myheadings}         % Option to put page headers
+                               % Needed \documentclass[a4paper,twoside]{article}
+\markboth{{\small\it PDF\ \LaTeX \ coloured text and graphics}}
+{{\small\it C.T.J. Dodson} }
+
+\textwidth 15.5cm
+\topmargin -1cm
+\parindent 0cm
+\textheight 24cm
+\parskip 1mm
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{definition}[theorem]{Definition}
+
+\def\R{\mathbb{ R}}
+\def\S{\mathbb{ S}}
+
+\date{\small\it May 16, 2000}
+\title{\fcolorbox{red}{blue}{\color{white}Including colour, pdf graphics and hyperlinks
+\footnote{A demonstration example including colored text and graphics}}}
+
+\author{ C.T.J. Dodson \\
+{\small Department of Mathematics, UMIST, Manchester M60 1QD, UK}
+ }
+
+\begin{document}
+\maketitle
+\begin{abstract}
+{\color{red}
+You are unlikely to want your research articles to use coloured text
+but this illustrates how it can be done}
+\end{abstract}
+
+{\color{green}{\sc keywords: dpa, zero-knowledge, information theory,
+distributions, metric}}
+
+\section{Introduction}
+Zero-Knowledge proofs allow verification of
+secret-based actions without revealing the secrets. Goldreich et
+al.~\cite{goldreich} discussed the class of promise problems in
+which interaction may give additional information in the context
+of Statistical Zero-Knowlege. They invoked two types of difference
+between distributions: the `statistical difference' and the
+`entropy difference' of two random variables. In this context,
+typically, one of the distributions is the uniform distribution.
+
+Thus, in the contexts of DPA and SZK tests, it is necessary to
+compare two nearby distributions on bounded domains.
+We describe the following result and discuss applications.
+{\color{cyan}
+\begin{proposition}\label{colour}
+The family of probability density functions for random variable
+$N\in [0,1]$ given by
+\begin{equation}
+g(N,\mu,\beta) = {\frac{{{{\frac{1}{N}}}^
+       {1 - {\frac{\beta }{\mu }}}}\,
+     ({{{\frac{\beta }{\mu }}})^{\beta }}\,
+     {{(\log {\frac{1}{N}})}^
+       { \beta -1}}}{
+      \Gamma(\beta )}} \ \ \ {\rm for} \  \mu \  > 0 \ {\rm and} \ \beta \geq 1
+  \label{loggamma}    \end{equation}
+determines a metric space of distributions with the following
+properties\\ $\bullet$ it contains the uniform distribution\\
+$\bullet$ it contains approximations to truncated Gaussian
+distributions\\ $\bullet$ the difference structure is given by the
+information-theoretic metric\\ $\bullet$ as a Riemannian
+2-manifold it is an isometric isomorph of the manifold of gamma
+distributions.
+\end{proposition} }
+
+\section{In this example}
+Examples are provided of
+\begin{enumerate}
+\item Coloured text~\pageref{colour}
+\item Graphics~\pageref{graphics}
+\item Tables~\pageref{table}
+\end{enumerate}
+
+\section{Proof of Proposition 1.1}
+\subsection{Log-gamma PDFs}
+By integration, it is easily checked that the family given by
+equation (\ref{loggamma}) consists of probability density
+functions for the random variable $N\in [0,1];$ some with central
+mean are shown in Figure~\ref{pdf}. The limiting densities are
+given by
+\begin{eqnarray}
+\lim_{\beta\rightarrow 1^+}g(N,\mu,\beta) =
+g(N,\mu,1)&=&\frac{1}{\mu}\left(\frac{1}{N}\right)^
+      {1 - \frac{1}{\mu }} \\
+     \lim_{\mu\rightarrow 1}g(N,\mu,1) = g(N,1,1) &=& 1 \ .
+\end{eqnarray}
+
+\subsection{Information metric structure} For the log-gamma
+densities, the Fisher information matrix determines a Riemannian
+information metric~\cite{amari} on the parameter space ${\cal
+S}=\{(\mu,\beta)\in (0,\infty)\times[1,\infty)\}.$ Its arc length
+function is given by
+\begin{equation}
+ds_{\cal{S}}^2=\sum_{ij} g_{ij} \, dx^i dx^j =\frac{\beta}{\mu^2}
+\, d\mu^2 +
+        \left(\psi'(\beta) -\frac{1}{\beta}\right)\, d\beta^2 , \label{gammametric}
+\end{equation}
+where $\psi(\beta)=\frac{\Gamma'(\beta)}{\Gamma(\beta)}$ is the
+logarithmic derivative of the gamma function, evaluated at
+$\beta.$
+
+In fact, (\ref{loggamma}) arises from the gamma family
+\begin{equation}
+f(x,\mu,\beta) = \frac{ x^{\beta -1} \,
+     (\frac{\beta }{\mu})^\beta    }
+     {\Gamma(\beta )} \,  e^{-\frac{V\,\beta }{\mu }}
+     \label{gamma}
+\end{equation}
+for the non-negative random variable $x=\log\frac{1}{N}.$ It is
+known that the gamma family (\ref{gamma}) has also the information
+metric (\ref{gammametric}) (cf \cite{lauritzen}) so the identity
+map on the space of coordinates $(\mu,\beta)$ is an isometry of
+Riemannian manifolds. \hfill $\Box$
+
+\section{Tables}\label{table}
+Table~\ref{diffstruc} lists the number of differentiable
+structures on spheres.
+\begin{table}
+\begin{center}
+\framebox[1.5in]{\begin{tabular}{c || c | c }
+$n$ & $\S^n$ & $\R^n$ \\ \hline
+1 & 1 & 1 \\
+2 & 1 & 1 \\
+3 & 1 & 1 \\
+4 & 1 & $\infty$ \\
+5 & 1 & 1 \\
+6 & 1 & 1 \\
+7 & 28 & 1 \\
+8 & 2 & 1 \\
+9 & 8 & 1 \\
+10 & 6 & 1 \\
+11 & 992 & 1 \\
+12 & 1 & 1 \\
+13 & 3 & 1 \\
+14 & 2 & 1 \\
+15 & 16256 & 1 \\
+\end{tabular}}
+\caption{Numbers of distinct differentiable structures on real $n$-space
+and $n$-spheres}
+\label{diffstruc}
+\end{center}
+\end{table}
+
+Here is how to set out a table in \LaTeX:
+\begin{verbatim}
+\begin{table}
+\begin{center}
+\framebox[1.5in]{\begin{tabular}{c | c | c }
+$n$ & $\S^n$ & $\R^n$ \\ \hline
+1 & 1 & 1 \\
+2 & 1 & 1 \\
+3 & 1 & 1 \\
+4 & 1 & $\infty$ \\
+5 & 1 & 1 \\
+6 & 1 & 1 \\
+7 & 28 & 1 \\
+8 & 2 & 1 \\
+9 & 8 & 1 \\
+10 & 6 & 1 \\
+11 & 992 & 1 \\
+12 & 1 & 1 \\
+13 & 3 & 1 \\
+14 & 2 & 1 \\
+15 & 16256 & 1 \\
+\end{tabular}}
+\caption{Numbers of distinct differentiable structures on real $n$-space
+and $n$-spheres}
+\label{diffstruc}
+\end{center}
+\end{table}
+\end{verbatim}
+This allowed us to cross-reference the Table via:
+\begin{verbatim}
+~\ref{diffstruc}
+\end{verbatim}
+
+
+
+\section{Graphics}\label{graphics}
+\begin{figure}
+\begin{picture}(300,220)(0,0)
+\put(-20,20){\resizebox{20 cm}{!}{\includegraphics{3dpdf}}}
+\put(260,30){\resizebox{15 cm}{!}{\includegraphics{contpdf}}}
+\put(210,100){$\beta$}
+\put(400,25){$N$}
+\put(260,200){$\beta$}
+\put(90,40){$N$}
+\end{picture}
+\caption{{\em The log-gamma family of densities with central mean
+$<N> \, = \frac{1}{2}$ as a surface and as a contour plot. }}
+\label{pdf}
+\end{figure}
+
+
+Figure~\ref{pdf} was created by calling in the two pdf graphics files
+{\tt 3dpdf.pdf} , {\tt contpdf.pdf}
+placed together in the following {\tt picture} environment
+inside a {\tt figure} environment with a caption and label:
+\begin{verbatim}
+\begin{figure}
+\begin{picture}(300,220)(0,0)
+\put(-20,20){\resizebox{20 cm}{!}{\includegraphics{3dpdf}}}
+\put(260,30){\resizebox{15 cm}{!}{\includegraphics{contpdf}}}
+\put(210,100){$\beta$}
+\put(400,25){$N$}
+\put(260,200){$\beta$}
+\put(90,40){$N$}
+\end{picture}
+\caption{{\em The log-gamma family of densities with central mean
+$<N> \, = \frac{1}{2}$ as a surface and as a contour plot. }}
+\label{pdf}
+\end{figure}
+\end{verbatim}
+
+
+
+
+
+
+\begin{thebibliography}{99}
+\bibitem{amari} S-I. Amari. {\bf Differential Geometrical Methods in
+Statistics}, Springer Lecture Notes in Statistics 28,
+Springer-Verlag, Berlin 1985.
+
+\bibitem{chari} S. Chari, C.S. Jutla, J.R. Rao and P. Rohatgi.
+Towards sound approaches to counteract power-analysis attacks. In
+{\bf Advances in Cryptology-CRYPTO '99}, Ed. M. Wiener, Lecture
+Notes in Computer Science 1666, Springer, Berlin 1999 pp 398-412.
+
+\bibitem{crescenzo} G. Di Crescenzo and R. Ostrovsky.
+On concurrent zero-knowledge with pre-processing. In {\bf Advances
+in Cryptology-CRYPTO '99}  Ed. M. Wiener, Lecture Notes in
+Computer Science 1666, Springer, Berlin 1999 pp 485-502.
+
+\bibitem{tg} C.T.J. Dodson and T. Poston. {\bf Tensor Geometry}, Graduate
+Texts in Mathematics 130, Second edition, Springer-Verlag, New
+York, 1991. \htmladdnormallink{http://www.ma.umist.ac.uk/kd/tg.html}
+{http://www.ma.umist.ac.uk/kd/tg.html}
+
+
+\bibitem{goldreich} O. Goldreich, A. Sahai and S. Vadham.
+Can Statistical Zero-Knowledge be made non-interactive? Or, on the
+relationship of SZK and NISZK. In {\bf Advances in
+Cryptology-CRYPTO '99},  Ed. M. Wiener, Lecture Notes in Computer
+Science 1666, Springer, Berlin 1999 pp 467-484.
+
+\bibitem{kocher} P. Kocher, J. Jaffe and B.Jun.
+Differential Power Analysis. In {\bf Advances in Cryptology-CRYPTO
+'99},  Ed. M. Wiener, Lecture Notes in Computer Science 1666,
+Springer, Berlin 1999 pp 388-397.
+
+\bibitem{lauritzen} S.L. Lauritzen. Statistical Manifolds. In {\bf
+Differential Geometry in Statistical Inference}, Institute of
+Mathematical Statistics Lecture Notes, Volume 10, Berkeley 1987,
+pp 163-218.
+
+\end{thebibliography}
+\end{document}

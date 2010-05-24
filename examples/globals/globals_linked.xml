@@ -1,0 +1,695 @@
+<program id="globals">
+
+
+<cp id="start_cp">
+
+<trans id="UnifiedRetVal_mux_1.ack">
+  <src>place_39</src>
+  <snk>place_40</snk>
+  <ack>14</ack>
+</trans>
+
+<trans id="UnifiedRetVal_mux_1.req0">
+  <src>place_34</src>
+  <snk>place_39</snk>
+  <req>14</req>
+</trans>
+
+<trans id="UnifiedRetVal_mux_1.req1">
+  <src>place_37</src>
+  <snk>place_39</snk>
+  <req>13</req>
+</trans>
+
+<trans id="cbr_0_oper_tmp.1_bool.req">
+  <src>place_23</src>
+  <src>place_29</src>
+  <src>place_30</src>
+  <snk>place_31</snk>
+  <req>10</req>
+</trans>
+
+<trans id="entry.entry">
+  <src>place_1</src>
+  <snk>place_12</snk>
+  <snk>place_14</snk>
+  <snk>place_16</snk>
+  <snk>place_25</snk>
+</trans>
+
+<trans id="entry_to_else_src">
+  <src>place_31</src>
+  <snk>place_5</snk>
+  <ack>11</ack>
+</trans>
+
+<trans id="entry_to_then_src">
+  <src>place_31</src>
+  <snk>place_3</snk>
+  <ack>10</ack>
+</trans>
+
+<trans id="fin">
+  <src>place_8</src>
+  <snk>place_7</snk>
+  <req>1</req>
+</trans>
+
+<trans id="init">
+  <src>place_7</src>
+  <snk>place_9</snk>
+  <ack>1</ack>
+</trans>
+
+<trans id="load_select.ack">
+  <src>place_10</src>
+  <snk>place_1</snk>
+  <ack>2</ack>
+</trans>
+
+<trans id="load_select.req">
+  <src>place_9</src>
+  <snk>place_10</snk>
+  <req>2</req>
+</trans>
+
+<trans id="load_tmp.4.ack">
+  <src>place_13</src>
+  <snk>place_19</snk>
+  <snk>place_21</snk>
+  <ack>4</ack>
+</trans>
+
+<trans id="load_tmp.4.req">
+  <src>place_14</src>
+  <snk>place_13</snk>
+  <req>4</req>
+</trans>
+
+<trans id="load_tmp.6.ack">
+  <src>place_17</src>
+  <snk>place_22</snk>
+  <snk>place_28</snk>
+  <ack>6</ack>
+</trans>
+
+<trans id="load_tmp.6.req">
+  <src>place_18</src>
+  <src>place_19</src>
+  <snk>place_17</snk>
+  <req>6</req>
+</trans>
+
+<trans id="load_tmp.9.ack">
+  <src>place_26</src>
+  <snk>place_29</snk>
+  <ack>9</ack>
+</trans>
+
+<trans id="load_tmp.9.req">
+  <src>place_27</src>
+  <src>place_28</src>
+  <snk>place_26</snk>
+  <req>9</req>
+</trans>
+
+<trans id="oper_tmp.10_int.ack">
+  <src>place_32</src>
+  <snk>place_34</snk>
+  <ack>12</ack>
+</trans>
+
+<trans id="oper_tmp.10_int.req">
+  <src>place_3</src>
+  <snk>place_32</snk>
+  <req>11</req>
+</trans>
+
+<trans id="oper_tmp.18_int.ack">
+  <src>place_35</src>
+  <snk>place_37</snk>
+  <ack>13</ack>
+</trans>
+
+<trans id="oper_tmp.18_int.req">
+  <src>place_5</src>
+  <snk>place_35</snk>
+  <req>12</req>
+</trans>
+
+<trans id="oper_tmp.1_bool.ack">
+  <src>place_11</src>
+  <snk>place_30</snk>
+  <ack>3</ack>
+</trans>
+
+<trans id="oper_tmp.1_bool.req">
+  <src>place_12</src>
+  <snk>place_11</snk>
+  <req>3</req>
+</trans>
+
+<trans id="oper_tmp.7_int.ack">
+  <src>place_20</src>
+  <snk>place_23</snk>
+  <ack>7</ack>
+</trans>
+
+<trans id="oper_tmp.7_int.req">
+  <src>place_21</src>
+  <src>place_22</src>
+  <snk>place_20</snk>
+  <req>7</req>
+</trans>
+
+<trans id="oper_unnamed_3_uint.ack">
+  <src>place_15</src>
+  <snk>place_18</snk>
+  <ack>5</ack>
+</trans>
+
+<trans id="oper_unnamed_3_uint.req">
+  <src>place_16</src>
+  <snk>place_15</snk>
+  <req>5</req>
+</trans>
+
+<trans id="oper_unnamed_6_uint.ack">
+  <src>place_24</src>
+  <snk>place_27</snk>
+  <ack>8</ack>
+</trans>
+
+<trans id="oper_unnamed_6_uint.req">
+  <src>place_25</src>
+  <snk>place_24</snk>
+  <req>8</req>
+</trans>
+
+<trans id="store_location_start_return.ack">
+  <src>place_42</src>
+  <snk>place_8</snk>
+  <ack>15</ack>
+</trans>
+
+<trans id="store_location_start_return.req">
+  <src>place_40</src>
+  <snk>place_42</snk>
+  <req>15</req>
+</trans>
+
+<place id="place_1">0</place>
+<place id="place_10">0</place>
+<place id="place_11">0</place>
+<place id="place_12">0</place>
+<place id="place_13">0</place>
+<place id="place_14">0</place>
+<place id="place_15">0</place>
+<place id="place_16">0</place>
+<place id="place_17">0</place>
+<place id="place_18">0</place>
+<place id="place_19">0</place>
+<place id="place_20">0</place>
+<place id="place_21">0</place>
+<place id="place_22">0</place>
+<place id="place_23">0</place>
+<place id="place_24">0</place>
+<place id="place_25">0</place>
+<place id="place_26">0</place>
+<place id="place_27">0</place>
+<place id="place_28">0</place>
+<place id="place_29">0</place>
+<place id="place_3">0</place>
+<place id="place_30">0</place>
+<place id="place_31">0</place>
+<place id="place_32">0</place>
+<place id="place_34">0</place>
+<place id="place_35">0</place>
+<place id="place_37">0</place>
+<place id="place_39">0</place>
+<place id="place_40">0</place>
+<place id="place_42">0</place>
+<place id="place_5">0</place>
+<place id="place_7">1</place>
+<place id="place_8">0</place>
+<place id="place_9">0</place>
+
+</cp>
+
+
+<dp id="start_dp">
+
+<wire id="UnifiedRetVal_mux_1.wire" type="int"/>
+
+<wire id="cst_0_int.wire" type="int"/>
+
+<wire id="cst_1_uint.wire" type="uint"/>
+
+<wire id="cst_2_uint.wire" type="uint"/>
+
+<wire id="load_select.wire" type="int"/>
+
+<wire id="load_tmp.4.wire" type="int"/>
+
+<wire id="load_tmp.6.wire" type="int"/>
+
+<wire id="load_tmp.9.wire" type="int"/>
+
+<wire id="location_global_start_dp_a_1.wire" type="uint"/>
+
+<wire id="location_global_start_dp_a_2.wire" type="uint"/>
+
+<wire id="location_global_start_dp_a_3.wire" type="uint"/>
+
+<wire id="location_global_start_dp_a_4.wire" type="uint"/>
+
+<wire id="location_global_start_dp_a_5.wire" type="uint"/>
+
+<wire id="location_global_start_dp_a_6.wire" type="uint"/>
+
+<wire id="location_start_formal_0.wire" type="uint"/>
+
+<wire id="location_start_return.wire" type="uint"/>
+
+<wire id="oper_tmp.10_int.wire" type="int"/>
+
+<wire id="oper_tmp.18_int.wire" type="int"/>
+
+<wire id="oper_tmp.1_bool.wire" type="bool"/>
+
+<wire id="oper_tmp.7_int.wire" type="int"/>
+
+<wire id="oper_unnamed_3_uint.wire" type="uint"/>
+
+<wire id="oper_unnamed_6_uint.wire" type="uint"/>
+
+<dpe id="UnifiedRetVal_mux_1" operation="MUX">
+  <pmap>
+  <port id="ip0" dir="in" type="int">oper_tmp.10_int.wire</port>
+  <port id="ip1" dir="in" type="int">oper_tmp.18_int.wire</port>
+  <port id="op" dir="out" type="int">UnifiedRetVal_mux_1.wire</port>
+  </pmap>
+
+  <smap>
+  <ack id="ack0">13</ack>
+  <req id="req0">12</req>
+  <req id="req1">13</req>
+  </smap>
+</dpe>
+
+<dpe id="cbr_0_oper_tmp.1_bool" operation="DEC">
+  <pmap>
+  <port id="ip" dir="in" type="bool">oper_tmp.1_bool.wire</port>
+  </pmap>
+
+  <smap>
+  <ack id="ack0">10</ack>
+  <ack id="ack1">9</ack>
+  <req id="req0">9</req>
+  </smap>
+</dpe>
+
+<dpe id="load_select" operation="LOD">
+  <pmap>
+  <port id="ap" dir="in" type="uint">location_start_formal_0.wire</port>
+  <port id="dp" dir="out" type="int">load_select.wire</port>
+  </pmap>
+
+  <smap>
+  <ack id="ack0">1</ack>
+  <req id="req0">1</req>
+  </smap>
+</dpe>
+
+<dpe id="load_tmp.4" operation="LOD">
+  <pmap>
+  <port id="ap" dir="in" type="uint">location_global_start_dp_a_2.wire</port>
+  <port id="dp" dir="out" type="int">load_tmp.4.wire</port>
+  </pmap>
+
+  <smap>
+  <ack id="ack0">3</ack>
+  <req id="req0">3</req>
+  </smap>
+</dpe>
+
+<dpe id="load_tmp.6" operation="LOD">
+  <pmap>
+  <port id="ap" dir="in" type="uint">oper_unnamed_3_uint.wire</port>
+  <port id="dp" dir="out" type="int">load_tmp.6.wire</port>
+  </pmap>
+
+  <smap>
+  <ack id="ack0">5</ack>
+  <req id="req0">5</req>
+  </smap>
+</dpe>
+
+<dpe id="load_tmp.9" operation="LOD">
+  <pmap>
+  <port id="ap" dir="in" type="uint">oper_unnamed_6_uint.wire</port>
+  <port id="dp" dir="out" type="int">load_tmp.9.wire</port>
+  </pmap>
+
+  <smap>
+  <ack id="ack0">8</ack>
+  <req id="req0">8</req>
+  </smap>
+</dpe>
+
+<dpe id="oper_tmp.10_int" operation="ADD">
+  <pmap>
+  <port id="ip0" dir="in" type="int">oper_tmp.7_int.wire</port>
+  <port id="ip1" dir="in" type="int">load_tmp.9.wire</port>
+  <port id="op" dir="out" type="int">oper_tmp.10_int.wire</port>
+  </pmap>
+
+  <smap>
+  <ack id="ack0">11</ack>
+  <req id="req0">10</req>
+  </smap>
+</dpe>
+
+<dpe id="oper_tmp.18_int" operation="SUB">
+  <pmap>
+  <port id="ip0" dir="in" type="int">oper_tmp.7_int.wire</port>
+  <port id="ip1" dir="in" type="int">load_tmp.9.wire</port>
+  <port id="op" dir="out" type="int">oper_tmp.18_int.wire</port>
+  </pmap>
+
+  <smap>
+  <ack id="ack0">12</ack>
+  <req id="req0">11</req>
+  </smap>
+</dpe>
+
+<dpe id="oper_tmp.1_bool" operation="EQ">
+  <pmap>
+  <port id="ip0" dir="in" type="int">load_select.wire</port>
+  <port id="ip1" dir="in" type="int">cst_0_int.wire</port>
+  <port id="op" dir="out" type="bool">oper_tmp.1_bool.wire</port>
+  </pmap>
+
+  <smap>
+  <ack id="ack0">2</ack>
+  <req id="req0">2</req>
+  </smap>
+</dpe>
+
+<dpe id="oper_tmp.7_int" operation="ADD">
+  <pmap>
+  <port id="ip0" dir="in" type="int">load_tmp.4.wire</port>
+  <port id="ip1" dir="in" type="int">load_tmp.6.wire</port>
+  <port id="op" dir="out" type="int">oper_tmp.7_int.wire</port>
+  </pmap>
+
+  <smap>
+  <ack id="ack0">6</ack>
+  <req id="req0">6</req>
+  </smap>
+</dpe>
+
+<dpe id="oper_unnamed_3_uint" operation="ADD">
+  <pmap>
+  <port id="ip0" dir="in" type="uint">location_global_start_dp_a_4.wire</port>
+  <port id="ip1" dir="in" type="uint">cst_1_uint.wire</port>
+  <port id="op" dir="out" type="uint">oper_unnamed_3_uint.wire</port>
+  </pmap>
+
+  <smap>
+  <ack id="ack0">4</ack>
+  <req id="req0">4</req>
+  </smap>
+</dpe>
+
+<dpe id="oper_unnamed_6_uint" operation="ADD">
+  <pmap>
+  <port id="ip0" dir="in" type="uint">location_global_start_dp_a_6.wire</port>
+  <port id="ip1" dir="in" type="uint">cst_2_uint.wire</port>
+  <port id="op" dir="out" type="uint">oper_unnamed_6_uint.wire</port>
+  </pmap>
+
+  <smap>
+  <ack id="ack0">7</ack>
+  <req id="req0">7</req>
+  </smap>
+</dpe>
+
+<dpe id="store_location_start_return" operation="STO">
+  <pmap>
+  <port id="ap" dir="in" type="uint">location_start_return.wire</port>
+  <port id="dp" dir="in" type="int">UnifiedRetVal_mux_1.wire</port>
+  </pmap>
+
+  <smap>
+  <ack id="ack0">14</ack>
+  <req id="req0">14</req>
+  </smap>
+</dpe>
+
+<constant id="cst_0_int" type="int">
+  <pmap>
+  <port id="op" dir="out" type="int">cst_0_int.wire</port>
+  </pmap>
+  <val>0</val>
+</constant>
+
+<constant id="cst_1_uint" type="uint">
+  <pmap>
+  <port id="op" dir="out" type="uint">cst_1_uint.wire</port>
+  </pmap>
+  <val>1</val>
+</constant>
+
+<constant id="cst_2_uint" type="uint">
+  <pmap>
+  <port id="op" dir="out" type="uint">cst_2_uint.wire</port>
+  </pmap>
+  <val>2</val>
+</constant>
+
+<address id="location_global_start_dp_a_1">
+  <pmap>
+  <port id="op" dir="out" type="uint">location_global_start_dp_a_1.wire</port>
+  </pmap>
+  <val>1</val>
+</address>
+
+<address id="location_global_start_dp_a_2">
+  <pmap>
+  <port id="op" dir="out" type="uint">location_global_start_dp_a_2.wire</port>
+  </pmap>
+  <val>1</val>
+</address>
+
+<address id="location_global_start_dp_a_3">
+  <pmap>
+  <port id="op" dir="out" type="uint">location_global_start_dp_a_3.wire</port>
+  </pmap>
+  <val>1</val>
+</address>
+
+<address id="location_global_start_dp_a_4">
+  <pmap>
+  <port id="op" dir="out" type="uint">location_global_start_dp_a_4.wire</port>
+  </pmap>
+  <val>1</val>
+</address>
+
+<address id="location_global_start_dp_a_5">
+  <pmap>
+  <port id="op" dir="out" type="uint">location_global_start_dp_a_5.wire</port>
+  </pmap>
+  <val>1</val>
+</address>
+
+<address id="location_global_start_dp_a_6">
+  <pmap>
+  <port id="op" dir="out" type="uint">location_global_start_dp_a_6.wire</port>
+  </pmap>
+  <val>1</val>
+</address>
+
+<address id="location_start_formal_0">
+  <pmap>
+  <port id="op" dir="out" type="uint">location_start_formal_0.wire</port>
+  </pmap>
+  <val>5</val>
+</address>
+
+<address id="location_start_return">
+  <pmap>
+  <port id="op" dir="out" type="uint">location_start_return.wire</port>
+  </pmap>
+  <val>6</val>
+</address>
+
+</dp>
+
+<ln id="start_ln">
+
+<map>
+  <from iface="omega" sym="1"/>
+  <to iface="start_cp" sym="1"/>
+</map>
+
+<map>
+  <from iface="start_cp" sym="1"/>
+  <to iface="omega" sym="1"/>
+</map>
+
+<map>
+  <from iface="start_cp" sym="2"/>
+  <to iface="start_dp" sym="1"/>
+</map>
+
+<map>
+  <from iface="start_cp" sym="3"/>
+  <to iface="start_dp" sym="2"/>
+</map>
+
+<map>
+  <from iface="start_cp" sym="4"/>
+  <to iface="start_dp" sym="3"/>
+</map>
+
+<map>
+  <from iface="start_cp" sym="5"/>
+  <to iface="start_dp" sym="4"/>
+</map>
+
+<map>
+  <from iface="start_cp" sym="6"/>
+  <to iface="start_dp" sym="5"/>
+</map>
+
+<map>
+  <from iface="start_cp" sym="7"/>
+  <to iface="start_dp" sym="6"/>
+</map>
+
+<map>
+  <from iface="start_cp" sym="8"/>
+  <to iface="start_dp" sym="7"/>
+</map>
+
+<map>
+  <from iface="start_cp" sym="9"/>
+  <to iface="start_dp" sym="8"/>
+</map>
+
+<map>
+  <from iface="start_cp" sym="10"/>
+  <to iface="start_dp" sym="9"/>
+</map>
+
+<map>
+  <from iface="start_cp" sym="11"/>
+  <to iface="start_dp" sym="10"/>
+</map>
+
+<map>
+  <from iface="start_cp" sym="12"/>
+  <to iface="start_dp" sym="11"/>
+</map>
+
+<map>
+  <from iface="start_cp" sym="13"/>
+  <to iface="start_dp" sym="13"/>
+</map>
+
+<map>
+  <from iface="start_cp" sym="14"/>
+  <to iface="start_dp" sym="12"/>
+</map>
+
+<map>
+  <from iface="start_cp" sym="15"/>
+  <to iface="start_dp" sym="14"/>
+</map>
+
+<map>
+  <from iface="start_dp" sym="1"/>
+  <to iface="start_cp" sym="2"/>
+</map>
+
+<map>
+  <from iface="start_dp" sym="2"/>
+  <to iface="start_cp" sym="3"/>
+</map>
+
+<map>
+  <from iface="start_dp" sym="3"/>
+  <to iface="start_cp" sym="4"/>
+</map>
+
+<map>
+  <from iface="start_dp" sym="4"/>
+  <to iface="start_cp" sym="5"/>
+</map>
+
+<map>
+  <from iface="start_dp" sym="5"/>
+  <to iface="start_cp" sym="6"/>
+</map>
+
+<map>
+  <from iface="start_dp" sym="6"/>
+  <to iface="start_cp" sym="7"/>
+</map>
+
+<map>
+  <from iface="start_dp" sym="7"/>
+  <to iface="start_cp" sym="8"/>
+</map>
+
+<map>
+  <from iface="start_dp" sym="8"/>
+  <to iface="start_cp" sym="9"/>
+</map>
+
+<map>
+  <from iface="start_dp" sym="9"/>
+  <to iface="start_cp" sym="10"/>
+</map>
+
+<map>
+  <from iface="start_dp" sym="10"/>
+  <to iface="start_cp" sym="11"/>
+</map>
+
+<map>
+  <from iface="start_dp" sym="11"/>
+  <to iface="start_cp" sym="12"/>
+</map>
+
+<map>
+  <from iface="start_dp" sym="12"/>
+  <to iface="start_cp" sym="13"/>
+</map>
+
+<map>
+  <from iface="start_dp" sym="13"/>
+  <to iface="start_cp" sym="14"/>
+</map>
+
+<map>
+  <from iface="start_dp" sym="14"/>
+  <to iface="start_cp" sym="15"/>
+</map>
+
+</ln>
+
+<omega id="omega">
+
+<server id="start_ln" req="1" ack="1">
+
+  <client id="env">
+    <callport id="env_start" req="1" ack="1"/>
+  </client>
+
+</server>
+
+</omega>
+
+</program>

@@ -1,0 +1,71 @@
+<map id="func" size="22">
+
+<init>
+
+<!-- globals: -->
+
+<location addr="1" id="a" type="array [10 x int]" size="10">
+  <composite type="array [10 x int]" size="10">
+    <scalar type="int" size="1">101</scalar>
+    <scalar type="int" size="1">102</scalar>
+    <scalar type="int" size="1">103</scalar>
+    <scalar type="int" size="1">104</scalar>
+    <scalar type="int" size="1">105</scalar>
+    <scalar type="int" size="1">106</scalar>
+    <scalar type="int" size="1">107</scalar>
+    <scalar type="int" size="1">108</scalar>
+    <scalar type="int" size="1">109</scalar>
+    <scalar type="int" size="1">110</scalar>
+  </composite>
+</location>
+
+
+<location addr="11" id="b" type="array [10 x int]" size="10">
+  <composite type="array [10 x int]" size="10">
+    <scalar type="int" size="1">201</scalar>
+    <scalar type="int" size="1">202</scalar>
+    <scalar type="int" size="1">203</scalar>
+    <scalar type="int" size="1">204</scalar>
+    <scalar type="int" size="1">205</scalar>
+    <scalar type="int" size="1">206</scalar>
+    <scalar type="int" size="1">207</scalar>
+    <scalar type="int" size="1">208</scalar>
+    <scalar type="int" size="1">209</scalar>
+    <scalar type="int" size="1">210</scalar>
+  </composite>
+</location>
+
+
+<location addr="21" id="x" type="int" size="1">
+  <scalar type="int" size="1">0</scalar>
+</location>
+
+
+<!-- Function bar-->
+
+
+<!-- allocations: -->
+<!-- Function foo-->
+
+
+<!-- allocations: -->
+<!-- Function start-->
+
+
+<!-- allocations: -->
+<!-- Function xxy-->
+
+
+<!-- allocations: -->
+
+<!-- first free address: 22
+ addresses from this value onwards can be used for external data. -->
+
+</init>
+
+<fin>
+
+
+</fin>
+
+</map>

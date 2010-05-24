@@ -1,0 +1,76 @@
+\documentclass{beamer}
+\usepackage{alltt}
+
+\begin{document}
+
+\begin{frame}[fragile]
+  \frametitle{Input Port}
+\begin{alltt}
+component InputPort
+  generic (colouring: NaturalArray);
+  port (
+    -- pulse interface with the data-path
+    ireq       : in  BooleanArray;
+    iack       : out BooleanArray;
+    idata      : out StdLogicArray2D;
+    
+    -- ready/ready interface with outside world
+    oreq       : out std_logic;
+    oack       : in  std_logic;
+    odata      : in  std_logic_vector;
+    
+    clk, reset : in  std_logic);
+end component;
+\end{alltt}
+\section{Notes}
+If colouring indicates that mutual 
+exclusion does not hold, then {\bf one} of the requesters
+will succeed.
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Output Port}
+\begin{alltt}
+component OutputPort
+  generic (colouring: NaturalArray);
+  port (
+    ireq       : in  BooleanArray;
+    iack       : out BooleanArray;
+    idata      : in  StdLogicArray2D;
+    oreq       : out std_logic;
+    oack       : in  std_logic;
+    odata      : out std_logic_vector;
+    clk, reset : in  std_logic);
+end component;
+\end{alltt}
+\section{Notes}
+If colouring indicates that mutual 
+exclusion does not hold, then {\bf one} of the requesters
+will succeed.
+\end{frame}
+
+\begin{frame}
+  \frametitle{Function Calls}
+  \begin{itemize}
+  \item CallRequest: Use ApStoreRequest.
+    \begin{itemize}
+    \item Data consists of arguments packed in an std\_logic\_vector.
+    \item Address indicates the identity of the called function (used
+      for implementing function pointers).
+    \end{itemize}
+  \item CallComplete: Use InputPort.
+    \begin{itemize}
+    \item Return-value packed in an std\_logic\_vector.
+    \end{itemize}
+  \item IncomingCallRequest: Use InputPort.
+  \item IncomingCallComplete: Use OutputPort.
+  \end{itemize}
+\end{frame}
+
+\end{document}
+
+
+% LocalWords:  StdLogicArray ApIntArray ApFloatArray ApInt ApFloat downto ireq
+% LocalWords:  InputPort iack idata oreq oack odata OutputPort addr mreq maddr
+% LocalWords:  mtag CallRequest CallComplete IncomingCallRequest
+% LocalWords:  IncomingCallComplete

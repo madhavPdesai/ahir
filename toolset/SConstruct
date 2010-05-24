@@ -1,0 +1,15 @@
+
+lower_dirs = Split('lib tools')
+
+lower_scripts = map(lambda x : x + '/SConscript', lower_dirs)
+
+env = Environment()
+env.ParseConfig("/usr/bin/pkg-config --cflags --libs libxml++-2.6")
+env.AppendUnique(LINKFLAGS = ['-lboost_program_options-mt', '-lboost_serialization-mt'])
+env.MergeFlags('-I#/lib')
+
+Export('env')
+
+SConscript(lower_scripts)
+
+env.Command('TAGS', env['all_sources'], "etags $SOURCES")

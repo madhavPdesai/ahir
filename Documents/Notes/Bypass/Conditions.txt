@@ -1,0 +1,43 @@
+Overview
+
+	What is the set of necessary and sufficient conditions
+	that are to be satisfied when selecting a set of
+	operators to insert a bypass?
+
+Background
+	
+	In the initial network, 
+	a. all operators in the datapath are registered (without 
+	   bypass).
+	b. all places in the control path are registered with bypass.
+
+
+Assumptions
+
+	In the data-path, there is a cycle containing operators A and B, 
+        only if, in the control path, there is a cycle containing 
+	the request-ack pairs for operators A and B.  This gets rids of 
+	certain pathological cases.
+
+	Every cycle in the control path contains at least one req-ack pair
+	corresponding to a data-path operator.
+
+Proposition
+	
+	Let S be the set of operators in the DP which have a bypass.
+
+	The following condition is necessary and sufficient:
+	If an operator A produces data to be used in Operator B,
+	then A,B cannot be in a zero-delay cycle in the union of
+	DP + CP.
+
+Proof
+	a. The condition implies that there is no combinational cycle
+	   in the union of the CP + DP.
+	b. It also implies that RAW and WAR hazards cannot occur.
+	   For, if B is using the result of A: 
+		if B is updated >0 cycles after A, there is no problem 
+		if A,B are updated in the same cycle, then the next
+		update of A can happen only >0 cycles later, thus no
+		problem
+		

@@ -1,0 +1,358 @@
+#+TITLE: The Pipeline Description Language
+#+OPTIONS: author:nil timestamp:nil toc:nil
+
+* Overview
+
+  The Pipeline Description Language (PDL) allows a user to describe a
+  pipeline based on hardware modules generated from higher-level
+  programs. The pipeline consists of stages connected by data-flow
+  edges. A stage is a wrapper around a function module coupled with a
+  local memory subsystem. An edge represents the flow of data produced
+  by the function module of a stage to other stages that will use it.
+  The data is specified in terms of program variables, and the
+  pipeline stage provides mechanisms that map these program names to
+  actual data items driven on the edges.
+  
+* Pipeline Stage
+
+  The pipeline stage acts as a wrapper that provides input data to the
+  internal function module and exports the resulting data to the
+  pipeline edges. The description of a pipeline stage identifies the
+  function module wrapped by that stage and the memory subsystem
+  associated with that function module. It specifies the layout of the
+  memory, to be used for translating symbolic addresses to numerical
+  addresses.
+
+  <stage id="bar" module="foo" memory="foo" map="foo">
+  </stage>
+
+** Function module
+
+   The function module is the actual computational element that is
+   invoked by the pipeline stage. A description of the function module
+   must declare the following attributes:
+
+   - The set of input arguments.
+   - The set of output arguments.
+   - The set of load and store ports for memory access.
+   - The pair of control ports used for invoking this module.
+     
+** Memory subsystem
+
+   The memory subsystem provides local read/write storage used by the
+   function module and also declares load/store ports to be used by
+   the function module when computing and by the pipeline stage when
+   exporting data to other stages.
+
+** Memory map
+
+   The memory map is a mapping between variable names and storage
+   locations. This allows external users to refer to storage locations
+   transparently using symbols instead of directly using numeric
+   addresses into the local memory subsystem. The memory map provides
+   the following details about the structure of the local memory:
+   
+   - Type definitions.
+   - Variable declarations.
+   - A mapping from each variable name to a continguous address range
+     used to store the contents of that variable.
+
+** Stage Inputs
+
+   The pipeline stage declares input ports used for accepting data
+   that is forwarded to the function module before invoking it. Each
+   input port has two attributes --- a sequence number, and a width in
+   bits. The data accepted at an input port is a simple bit-vector,
+   with no additional information about the data-type.
+
+   <stage id="foo" module="foo">
+     <input id="0" size="8"/>
+     <input id="1" size="16"/>
+   </stage>
+
+   Each input port is connected to an edge in the pipeline, along
+   which data arrives at that port. A stage "fires" when data is
+   available on all the input ports.
+
+** Stage Outputs
+  
+   In principle, the output of a stage is the state of all the
+   locations in the local memory subsystem. The set of values that is
+   actually exported by the stage is determined by the edges connected
+   to other stages in the pipeline. Each edge specifies an address in
+   the local address space of the AHIR module, whose contents will be
+   used by the destination stage. As a result, the stage description
+   has no explicit output port.
+
+* Pipeline Edges
+
+  An edge in the pipeline represents the flow of a value computed by
+  one stage to another stage that uses this value. It is a tuple that
+  identifies the source and destination of a single data item. The
+  implementation may choose a suitable mechanism for transmission of
+  data between pipeline stages.
+  
+  <edge id="e0">
+    <src>...</src>
+    <dst>...</dst>
+  </edge>
+
+** Destination
+
+   The destination of an edge is a tuple that identifies an input port
+   on some pipeline stage. There is a one-to-one correspondence
+   between pipeline edges and input ports across all pipeline stages.
+
+   <dst stage="foo" input=""/>
+
+** Source
+
+   The source of a pipeline edge is a tuple that identifies a memory
+   location in some pipeline stage. The source stage must read the
+   contents of that memory location and make the data available to the
+   destination stage. The mechanism used for accessing the data is
+   left to the implementation. The address may be specified using one
+   of the following ways:
+
+*** Direct addressing
+
+    In the direct addressing scheme, the edge directly specifies a
+    numerical address to be loaded from the local memory. This is an
+    opaque representation that has no information about that memory
+    location other than its address.
+
+    <address>42</address>
+
+*** Symbolic addressing
+
+    The symbolic addressing scheme is a transparent mechanism that uses
+    names of variables and their data-types instead of just plainly
+    specifying a memory address. For example, the address "42" is
+    meaningless by itself, but it can be replaced by a description such
+    as "variable a" or "index i in vector v" or "field f in struct s".
+    Some examples of symbolic addresses are given below:
+
+    1. An index into an array "a"
+       <address>
+         <base>a</base>
+	 <index>10</index>
+       </address>
+    2. An index that points to the 3rd field of a struct "s"
+       <address>
+         <base>s</base>
+	 <index>2</index>
+       </address>
+    3. An index into an array with four dimensions
+       <address>
+         <base>a</base>
+	 <index>6</index>
+	 <index>10</index>
+	 <index>3</index>
+	 <index>2</index>
+       </address>
+    4. An index into the 2nd field of a struct, which is itself a
+       one-dimensional array
+       <address>
+         <base>s</base>
+	 <index>1</index>
+	 <index>10</index>
+       </address>
+
+    In the above examples, the element "base" specifies the name of
+    the variable that is being accessed, while the sequence of "index"
+    elements provides an index into the structure of that variable.
+    Clearly, the address element by itself is not sufficient to
+    generate the memory address of the required data item. In order to
+    compute the numerical address, two additional pieces of
+    information are required, which are supplied by the memory map of
+    the source pipeline stage:
+
+    1. A mapping from the variable name to the base address.
+    2. Type information for the variable, so that the sequence of
+       indices can be translated to an arithmetic expression that
+       computes the offset from the base.
+   
+* Memory Map
+  
+  The memory map describes the layout of the data in the local memory
+  subsystem. The storage provided by the memory subsystem is visible
+  as a linear address space. The scalar and composite variables
+  (vectors and structures) used by the function module are
+  superimposed on this address space. The memory map relates each
+  variable to a contiguous address range, along with a mapping from
+  elements in the variable to address within the assigned address
+  range. This information consists of two parts:
+
+  * Address mapping :: The address mapping assigns a numerical address
+       to each named variable declared by the function module. In the
+       case of composite variables, the numerical address is the
+       start of a contiguous address range assigned to that variable.
+       The mapping must guarantee that all the named variables are
+       assigned non-overlapping address ranges.
+       
+  * Data types :: The address of an element in a composite variable
+       consists of a base followed by a sequence of indices. The base
+       is the starting address of the range assigned to that variable.
+       The indices must be translated to an offset into the address
+       range that starts at the base. This translation uses the
+       data-type of the variable, which superimposes the structure of
+       the variable on a linear address space.
+       
+       For example, in a single-dimensional array "a" starting at
+       address "42", the symbolic address "a[10]" is translated to the
+       numerical address "52" using the fact that every element in the
+       array occupies one memory location. This information about the
+       size of the elements in array "a" is provided by the data-type
+       associated with that array.
+
+** Variable types
+
+   The type system recognises three types of variables --- scalars,
+   vectors and structs. The purpose of the type system is to specify
+   the layout of the variables in memory, i.e., number of locations
+   occupied by that type. The size of the location is determined by
+   the data-width defined by the memory subsystem. When a stage drives
+   the contents of a particular location on an outgoing edge, it is
+   the responsibility of the output port driver to match the size of
+   the data with the size specified by the edge.
+
+*** Scalar type
+    
+    A scalar variable is a single bit-vector with a pre-defined width,
+    that may span one or more contiguous memory locations. The size of
+    the scalar is always an integer multiple of the memory data-width.
+
+    <scalar-type id="0" size="4"/>
+
+    Here, the "size" attribute defines the number of memory locations
+    that the type spans. When a variable of this type is read, all
+    these locations must be read, and in the correct sequence. The
+    attribute is optional --- if absent, the variable is assumed to
+    occupy a single memory location.
+
+*** Vector type
+    
+    A vector type is a sequence of elements of the same type. It has
+    two properties --- the length of the vector and the element type.
+    
+    <vector-type id="1" etype="0" length="10"/>
+    
+    A multi-dimensional vector is simply a vector of vectors, where
+    the attribute "etype" specifies a vector-type for the lower
+    dimension. The size of the vector is the product of its length and
+    the size of the element type. It is an error if a vector-type
+    specifies itself as its element type.
+
+*** Struct type
+
+    A struct type consists of a sequence of elements, where each element
+    may have a different type.
+
+    <struct-type id="1">
+      <element type="1"/>
+      <element type="0">
+    </struct-type>
+
+    The size of a struct type is the sum of the size of its elements.
+    It is an error if a struct-type is used as a type for any of its
+    elements or their descendent elements in turn.
+    
+*** Address specification
+
+    An address in the local memory subsystem is expressed as a tuple
+    that specifies the base variable, and a sequence of indices into
+    its type. 
+
+**** Scalar addressing
+
+     A scalar type has no index into it, since all the memory locations
+     that it spans must be loaded in sequence. Hence the address to a
+     scalar variable is simply the name of the variable.
+
+     <address id="0">
+       <base>a</base>
+     </address>
+
+**** Vector addressing
+
+     A vector is a sequence of elements with the same type. An address
+     of any element in the vector is the tuple (base, index) that
+     identifies the vector and the index of the element to be accessed.
+
+     <address id="0">
+       <base>v</base>
+       <index>3</index>
+     </address>
+
+     This is address is computed as an offset from the base "v", where
+     the offset is the product of the index and the size of the element
+     type in the vector v.
+
+     address 0 = v + index * size(t.etype)
+       where t is the type of the variable v
+     
+     In the case of multi-dimensional arrays, the address specifies a
+     sequence of indices that are used to index into the lower
+     dimensions or nested vector types of the array.
+
+     <scalar-type id="0" size="1"/>
+     <vector-type id="1" etype="0" length="10"/>
+     <vector-type id="5" etype="1" length="6"/>
+
+     The type "5" is a multi-dimensional array type, where a variable
+     "a" of this type may be written as "a[6][10]" in C-style syntax.
+     An address "a[i][j]" into this variable may be written as:
+
+     <address id="10">
+       <base>a</base>
+       <index>i</index>
+       <index>j</index>
+     </address>
+
+     address 10 = a + i * size(type 1) + j * size(type 0)
+
+**** Struct addressing
+     
+     Addressing in a structure uses indexing similar to that used in a
+     vector, but with the added complication that the elements of a
+     struct may have different types and hence different sizes. Thus
+     the offset for an index "i" cannot be calculated by a simple
+     multiplication of the index.
+
+     <scalar-type id="0" size="1"/>
+     <vector-type id="1" etype="0" length="10"/>
+     <struct-type id="9">
+       <element type="1"/>
+       <element type="0">
+     </struct-type>
+
+     This is similar to the following C struct:
+     
+     struct type9 {
+       int i[10];
+       int j;
+     };
+
+     For a variable "s" of this type, the C-style expression s.i[k]
+     represents an index into the k^{th} element of the array "i". This
+     is written as:
+
+     <address id="23">
+       <base>s</base>
+       <index>0</index>
+       <index>j</index>
+     </address>
+
+     address 23 = s + 0 + j * size(type 0)
+
+     But an index to the element "j" requires us to first calculate the
+     size of the array-type "1". In general, the offset to the i^{th}
+     element of a struct is the sum of the sizes of the first (i-1)
+     elements of the struct.
+
+     <address id="24">
+       <base>s</base>
+       <index>1</index>
+     </address>
+
+     address 24 = s + size(type 1)

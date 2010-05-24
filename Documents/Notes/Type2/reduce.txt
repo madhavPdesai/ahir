@@ -1,0 +1,47 @@
+#+TITLE: Verifying structure in a Type-2 petri-net
+#+OPTIONS: toc:nil author:nil
+#+DATE: 2010-02-09
+
+The structure of a Type-2 petri-net can be verified by progressively
+reducing with the following transformation, until a single transition
+remains, with no edges:
+
+ - Input :: A connected directed graph $G=(E, V)$ with the following
+           constraints:
+   1. Each vertex $x \in V$ has a colour from the set $C=\{P, T\}$.
+      This is represented by the function $colour : V \rightarrow C$.
+   2. The graph is bipartite: $\forall(u, v) \in E$, $colour(u) \ne
+      colour(v)$.
+   3. There is a single marked vertex $m \in V$ such that $colour(m) =
+      P$, with one incoming edge and one outgoing edge.
+ - Reduction :: Transform the graph $G$ as follows:
+   1. Replace all ``parallel-merge regions'' in the graph.
+   2. Remove the marked vertex $m$ from G, and also remove the two
+      edges incident on it. Let $init$ be the successor of m. We show
+      that the resulting graph $G'$ is a TPR.
+   3. Starting from $init$, traverse the graph in a depth-first
+      manner. Every back-edge must be incident on a merge, else $G'$
+      is not a TPR.
+   4. Perform the following reduction until no further reductions are
+      possible:
+      1. Locate a vertex $x$ with one incoming edge and one outgoing
+         edge. Let $a$ be the single predecessor of $x$ and let $b$ be
+         the single successor of $x$.
+      2. Delete $x$ and the two edges incident on $x$.
+      3. $colour(a) = colour(b)$. If $a \ne b$, merge $a$ and $b$ as
+         follows:
+         1. For every successor $s$ of vertex $b$, create an edge $(a,
+            s)$.
+         2. For every predecessor $p$ of $b$, create an edge $(p, a)$.
+            Note that these new edges preserve the bipartite nature of
+            the graph. Also, $p \ne a$ and $s \ne a$.
+         3. Delete $b$ and all edges incident on $b$.
+ - Statement :: The graph $G$ represents a Type-2 petri-net iff the
+                reduction results in a graph with no edges and a
+                single vertex $v \in V$ such that $colour(v) = T$.
+ - Proof :: The single transition that remains after the reduction is
+            the simplest TPR in this scenario. We can prove the
+            statement by proving that step 3 in the reduction does not
+            alter the ``Type-2-ness'' of the graph.
+   1. Show that performing step 3 in a TPR also produces a TPR.
+   2. Show that the same step does not convert a non-TPR into a TPR.

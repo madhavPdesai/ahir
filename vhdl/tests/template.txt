@@ -1,0 +1,148 @@
+#This file will be common for all operands apint(S2,S1) and apfloat(S2,S1)
+#The format for input is:
+#<input_file_name> <operator_id> --input <input1_high>,<input1_low> [<input2_high>,<input2_low>] ... --output-sizes <output1_high>,<output1_low> [<output2_high>,<output2_low>] ... --num-tests <number>
+#
+#eg. gen_apint_add_5.txt ApIntAdd --input 4,0 4,0 --output-sizes 4,0 --num-tests 10
+#gen_apint_not_5.txt ApIntNot --input-sizes 4,0 --output-sizes 4,0 --num-cases 9 #not in LLVM
+gen_apint_add_100.txt ApIntAdd	--input-sizes 99,0 99,0 --output-sizes 99,0 --num-tests 10
+gen_apint_add_15.txt ApIntAdd	--input-sizes 14,0 14,0 --output-sizes 14,0 --num-tests 10
+gen_apint_add_5.txt ApIntAdd 	--input-sizes 4,0 4,0 --output-sizes 4,0 --num-tests 10
+gen_apint_add_8.txt ApIntAdd	--input-sizes 7,0 7,0 --output-sizes 7,0 --num-tests 10
+gen_apint_and_100.txt ApIntAnd	--input-sizes 99,0 99,0 --output-sizes 99,0  --num-tests 10
+gen_apint_and_15.txt ApIntAnd   --input-sizes 14,0 14,0 --output-sizes 14,0 --num-tests 10
+gen_apint_and_5.txt ApIntAnd    --input-sizes 4,0 4,0 --output-sizes 4,0 --num-tests 10
+gen_apint_and_8.txt ApIntAnd    --input-sizes 7,0 7,0 --output-sizes 7,0 --num-tests 10
+gen_apint_ashr_100.txt ApIntASHR --input-sizes 99,0 99,0 --output-sizes 99,0  --num-tests 10
+gen_apint_ashr_15.txt ApIntASHR --input-sizes 14,0 14,0 --output-sizes 14,0 --num-tests 10
+gen_apint_ashr_5.txt ApIntASHR  --input-sizes 4,0 4,0 --output-sizes 4,0 --num-tests 10
+gen_apint_ashr_8.txt ApIntASHR  --input-sizes 7,0 7,0 --output-sizes 7,0 --num-tests 10
+gen_apint_lshr_100.txt ApIntLSHR --input-sizes 99,0 99,0 --output-sizes 99,0  --num-tests 10
+gen_apint_lshr_15.txt ApIntLSHR --input-sizes 14,0 14,0 --output-sizes 14,0 --num-tests 10
+gen_apint_lshr_5.txt ApIntLSHR  --input-sizes 4,0 4,0 --output-sizes 4,0 --num-tests 10
+gen_apint_lshr_8.txt ApIntLSHR  --input-sizes 7,0 7,0 --output-sizes 7,0 --num-tests 10
+gen_apint_mul_100.txt ApIntMul	--input-sizes 99,0 99,0 --output-sizes 99,0  --num-tests 10
+gen_apint_mul_15.txt ApIntMul   --input-sizes 14,0 14,0 --output-sizes 14,0 --num-tests 10
+gen_apint_mul_5.txt ApIntMul    --input-sizes 4,0 4,0 --output-sizes 4,0 --num-tests 10
+gen_apint_mul_8.txt ApIntMul    --input-sizes 7,0 7,0 --output-sizes 7,0    --num-tests 10
+gen_apint_or_100.txt ApIntOr	--input-sizes 99,0 99,0 --output-sizes 99,0  --num-tests 10
+gen_apint_or_15.txt ApIntOr     --input-sizes 14,0 14,0 --output-sizes 14,0 --num-tests 10
+gen_apint_or_5.txt ApIntOr      --input-sizes 4,0 4,0 --output-sizes 4,0 --num-tests 10
+gen_apint_or_8.txt ApIntOr      --input-sizes 7,0 7,0 --output-sizes 7,0 --num-tests 10
+#gen_apint_sdiv_100.txt
+#gen_apint_sdiv_15.txt
+#gen_apint_sdiv_5.txt
+#gen_apint_sdiv_8.txt
+gen_apint_shl_100.txt ApIntSHL	--input-sizes 99,0 99,0 --output-sizes 99,0  --num-tests 10
+gen_apint_shl_15.txt ApIntSHL   --input-sizes 14,0 14,0 --output-sizes 14,0 --num-tests 10
+gen_apint_shl_5.txt ApIntSHL    --input-sizes 4,0 4,0 --output-sizes 4,0 --num-tests 10
+gen_apint_shl_8.txt ApIntSHL    --input-sizes 7,0 7,0 --output-sizes 7,0 --num-tests 10
+#gen_apint_srem_100.txt 
+#gen_apint_srem_15.txt
+#gen_apint_srem_5.txt
+#gen_apint_srem_8.txt
+gen_apint_sub_100.txt ApIntSub	--input-sizes 99,0 99,0 --output-sizes 99,0  --num-tests 10
+gen_apint_sub_15.txt ApIntSub   --input-sizes 14,0 14,0 --output-sizes 14,0 --num-tests 10
+gen_apint_sub_5.txt ApIntSub    --input-sizes 4,0 4,0 --output-sizes 4,0 --num-tests 10
+gen_apint_sub_8.txt ApIntSub    --input-sizes 7,0 7,0 --output-sizes 7,0 --num-tests 10
+#gen_apint_udiv_100.txt
+#gen_apint_udiv_15.txt
+#gen_apint_udiv_5.txt
+#gen_apint_udiv_8.txt
+#gen_apint_urem_100.txt
+#gen_apint_urem_15.txt
+#gen_apint_urem_5.txt
+#gen_apint_urem_8.txt
+gen_apint_xor_100.txt ApIntXor	--input-sizes 99,0 99,0 --output-sizes 99,0  --num-tests 10
+gen_apint_xor_15.txt ApIntXor   --input-sizes 14,0 14,0 --output-sizes 14,0 --num-tests 10
+gen_apint_xor_5.txt ApIntXor    --input-sizes 4,0 4,0 --output-sizes 4,0 --num-tests 10
+gen_apint_xor_8.txt ApIntXor    --input-sizes 7,0 7,0 --output-sizes 7,0 --num-tests 10
+########     comparison operators     ###########
+gen_apint_eq_100.txt ApIntEq --input-sizes 99,0 99,0 --output-sizes 0,0 --num-tests 10
+gen_apint_eq_15.txt ApIntEq --input-sizes 14,0 14,0 --output-sizes 0,0 --num-tests 10
+gen_apint_eq_5.txt ApIntEq --input-sizes 4,0 4,0 --output-sizes 0,0 --num-tests 10
+gen_apint_eq_8.txt ApIntEq --input-sizes 7,0 7,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ne_100.txt ApIntNe --input-sizes 99,0 99,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ne_15.txt ApIntNe --input-sizes 14,0 14,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ne_5.txt ApIntNe --input-sizes 4,0 4,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ne_8.txt ApIntNe --input-sizes 7,0 7,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ugt_100.txt ApIntUgt --input-sizes 99,0 99,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ugt_15.txt ApIntUgt --input-sizes 14,0 14,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ugt_5.txt ApIntUgt --input-sizes 4,0 4,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ugt_8.txt ApIntUgt --input-sizes 7,0 7,0 --output-sizes 0,0 --num-tests 10
+gen_apint_uge_100.txt ApIntUge --input-sizes 99,0 99,0 --output-sizes 0,0 --num-tests 10
+gen_apint_uge_15.txt ApIntUge --input-sizes 14,0 14,0 --output-sizes 0,0 --num-tests 10
+gen_apint_uge_5.txt ApIntUge --input-sizes 4,0 4,0 --output-sizes 0,0 --num-tests 10
+gen_apint_uge_8.txt ApIntUge --input-sizes 7,0 7,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ult_100.txt ApIntUlt --input-sizes 99,0 99,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ult_15.txt ApIntUlt --input-sizes 14,0 14,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ult_5.txt ApIntUlt --input-sizes 4,0 4,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ult_8.txt ApIntUlt --input-sizes 7,0 7,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ule_100.txt ApIntUle --input-sizes 99,0 99,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ule_15.txt ApIntUle --input-sizes 14,0 14,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ule_5.txt ApIntUle --input-sizes 4,0 4,0 --output-sizes 0,0 --num-tests 10
+gen_apint_ule_8.txt ApIntUle --input-sizes 7,0 7,0 --output-sizes 0,0 --num-tests 10
+gen_apint_sgt_100.txt ApIntSgt --input-sizes 99,0 99,0 --output-sizes 0,0 --num-tests 10
+gen_apint_sgt_15.txt ApIntSgt --input-sizes 14,0 14,0 --output-sizes 0,0 --num-tests 10
+gen_apint_sgt_5.txt ApIntSgt --input-sizes 4,0 4,0 --output-sizes 0,0 --num-tests 10
+gen_apint_sgt_8.txt ApIntSgt --input-sizes 7,0 7,0 --output-sizes 0,0 --num-tests 10
+gen_apint_sge_100.txt ApIntSge --input-sizes 99,0 99,0 --output-sizes 0,0 --num-tests 10
+gen_apint_sge_15.txt ApIntSge --input-sizes 14,0 14,0 --output-sizes 0,0 --num-tests 10
+gen_apint_sge_5.txt ApIntSge --input-sizes 4,0 4,0 --output-sizes 0,0 --num-tests 10
+gen_apint_sge_8.txt ApIntSge --input-sizes 7,0 7,0 --output-sizes 0,0 --num-tests 10
+gen_apint_slt_100.txt ApIntSlt --input-sizes 99,0 99,0 --output-sizes 0,0 --num-tests 10
+gen_apint_slt_15.txt ApIntSlt --input-sizes 14,0 14,0 --output-sizes 0,0 --num-tests 10
+gen_apint_slt_5.txt ApIntSlt --input-sizes 4,0 4,0 --output-sizes 0,0 --num-tests 10
+gen_apint_slt_8.txt ApIntSlt --input-sizes 7,0 7,0 --output-sizes 0,0 --num-tests 10
+gen_apint_sle_100.txt ApIntSle --input-sizes 99,0 99,0 --output-sizes 0,0 --num-tests 10
+gen_apint_sle_15.txt ApIntSle --input-sizes 14,0 14,0 --output-sizes 0,0 --num-tests 10
+gen_apint_sle_5.txt ApIntSle --input-sizes 4,0 4,0 --output-sizes 0,0 --num-tests 10
+gen_apint_sle_8.txt ApIntSle --input-sizes 7,0 7,0 --output-sizes 0,0 --num-tests 10
+######################################################################################
+#################     APFloat components starts from here       #####################
+######################################################################################
+gen_apfloat_add_32.txt ApFloatAdd --input-sizes 8,-23 8,-23 --output-sizes 8,-23 --num-tests 10
+gen_apfloat_add_64.txt ApFloatAdd --input-sizes 11,-52 11,-52 --output-sizes 11,-52 --num-tests 10
+gen_apfloat_sub_32.txt ApFloatSub --input-sizes 8,-23 8,-23 --output-sizes 8,-23 --num-tests 10
+gen_apfloat_sub_64.txt ApFloatSub --input-sizes 11,-52 11,-52 --output-sizes 11,-52 --num-tests 10
+gen_apfloat_mul_32.txt ApFloatMul --input-sizes 8,-23 8,-23 --output-sizes 8,-23 --num-tests 10
+gen_apfloat_mul_64.txt ApFloatMul --input-sizes 11,-52 11,-52 --output-sizes 11,-52 --num-tests 10
+# Comparison
+gen_apfloat_Oeq_32.txt ApFloatOeq --input-sizes 8,-23 8,-23 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Oeq_64.txt ApFloatOeq --input-sizes 11,-52 11,-52 --output-sizes 0,0 --num-tests 10
+gen_apfloat_One_32.txt ApFloatOne --input-sizes 8,-23 8,-23 --output-sizes 0,0 --num-tests 10
+gen_apfloat_One_64.txt ApFloatOne --input-sizes 11,-52 11,-52 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Ogt_32.txt ApFloatOgt --input-sizes 8,-23 8,-23 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Ogt_64.txt ApFloatOgt --input-sizes 11,-52 11,-52 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Oge_32.txt ApFloatOge --input-sizes 8,-23 8,-23 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Oge_64.txt ApFloatOge --input-sizes 11,-52 11,-52 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Oge_32.txt ApFloatOge --input-sizes 8,-23 8,-23 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Oge_64.txt ApFloatOge --input-sizes 11,-52 11,-52 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Olt_32.txt ApFloatOlt --input-sizes 8,-23 8,-23 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Olt_64.txt ApFloatOlt --input-sizes 11,-52 11,-52 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Ole_32.txt ApFloatOle --input-sizes 8,-23 8,-23 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Ole_64.txt ApFloatOle --input-sizes 11,-52 11,-52 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Ord_32.txt ApFloatOrd --input-sizes 8,-23 8,-23 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Ord_64.txt ApFloatOrd --input-sizes 11,-52 11,-52 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Uno_32.txt ApFloatUno --input-sizes 8,-23 8,-23 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Uno_64.txt ApFloatUno --input-sizes 11,-52 11,-52 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Ueq_32.txt ApFloatUeq --input-sizes 8,-23 8,-23 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Ueq_64.txt ApFloatUeq --input-sizes 11,-52 11,-52 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Une_32.txt ApFloatUne --input-sizes 8,-23 8,-23 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Une_64.txt ApFloatUne --input-sizes 11,-52 11,-52 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Ugt_32.txt ApFloatUgt --input-sizes 8,-23 8,-23 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Ugt_64.txt ApFloatUgt --input-sizes 11,-52 11,-52 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Uge_32.txt ApFloatUge --input-sizes 8,-23 8,-23 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Uge_64.txt ApFloatUge --input-sizes 11,-52 11,-52 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Ult_32.txt ApFloatUlt --input-sizes 8,-23 8,-23 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Ult_64.txt ApFloatUlt --input-sizes 11,-52 11,-52 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Ule_32.txt ApFloatUle --input-sizes 8,-23 8,-23 --output-sizes 0,0 --num-tests 10
+gen_apfloat_Ule_64.txt ApFloatUle --input-sizes 11,-52 11,-52 --output-sizes 0,0 --num-tests 10
+## Type conversion operators
+gen_apfloat_f2u_32.txt ApFloatToApIntUnsigned --input-sizes 8,-23 --output-sizes 31,0 --num-tests 10
+gen_apfloat_f2u_64.txt ApFloatToApIntUnsigned --input-sizes 11,-52 --output-sizes 63,0 --num-tests 10
+gen_apfloat_f2i_32.txt ApFloatToApIntSigned --input-sizes 8,-23 --output-sizes 31,0 --num-tests 10
+gen_apfloat_f2i_64.txt ApFloatToApIntSigned --input-sizes 11,-52 --output-sizes 63,0 --num-tests 10
+gen_apint_i2f_32.txt ApIntToApFloatSigned --input-sizes 31,0 --output-sizes 8,-23 --num-tests 10
+gen_apint_i2f_64.txt ApIntToApFloatSigned --input-sizes 63,0 --output-sizes 11,-52 --num-tests 10
+gen_apint_u2f_32.txt ApIntToApFloatUnsigned --input-sizes 31,0 --output-sizes 8,-23 --num-tests 10
+gen_apint_u2f_64.txt ApIntToApFloatUnsigned --input-sizes 63,0 --output-sizes 11,-52 --num-tests 10

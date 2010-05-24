@@ -1,0 +1,197 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\usepackage{subfigure}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{times}
+\usepackage{tikz}
+
+\newtheorem{statement}{Statement}[section]
+\newtheorem{condition}{Condition}
+
+\newcommand{\SYM}[1]{$\operatorname{#1}$}
+
+\title{Eliminating registers at the outputs of data-path operators}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+Every operator in the data-path has a register at its output, that
+takes at least one clock cycle before signalling completion. In some
+cases it may be possible to eliminate this register. The result is a
+combinational path from the input of the operator to the output
+register of the next operator. For example,
+Figure~\ref{fig:operator-sequence} shows a sequence of operations
+($A\longrightarrow B\longrightarrow C$) where ovals represent
+combinational logic and boxes represent registers. If the register
+\SYM{reg\_B} is removed, the logic for \SYM{op\_B} and \SYM{op\_C} is
+combined into one large combinational path as shown in
+Figure~\ref{fig:combinational-short-circuit}.
+
+\begin{figure}[htb]
+  \centering
+  \subfigure[Operator logic separated by registers.]{
+    \label{fig:operator-sequence}
+    \includegraphics[scale=0.75]{images/operator-sequence.pdf}}\\
+  \vspace{0.25in}
+  \subfigure[Combinational path lengthened by eliminating register
+  reg\_B.]{
+    \label{fig:combinational-short-circuit}
+    \includegraphics[scale=0.75]{images/combinational-short-circuit.pdf}}
+  \caption{Eliminating registers at operator outputs.}
+  \label{fig:register-elimination}
+\end{figure}
+  
+For this transformation to be correct, we must guarantee that the
+absence of the register does not result in invalid data at the input
+of other nodes in the data-path. When  \SYM{reg\_A} is updated,
+the new value at the output of \SYM{op\_B} is immediately available at
+the input of \SYM{op\_C}, in the absence of  \SYM{reg\_B}. This
+may result in an incorrect computation at \SYM{C}, if the actual
+operation was meant to use the old value stored in \SYM{reg\_B}. In
+the following sections, we propose a set of necessary and/or
+sufficient conditions that guarantee that the output of all
+computations remains valid after eliminating a register.
+
+\section{Terminology}
+\label{sec:terminology}
+
+\begin{description}
+\item [Register definition:] An ``operation''(?) in the control-path
+  that results in updating the value of a register in the data-path is
+  called a \emph{definition} of that register. The set of such
+  definitions of a register $A$ is written as $D_A =
+  \{d^0_A,d^1_A,\ldots\}$.
+\item [Register use:] A definition $d^i_B$ is said to \emph{use}
+  register $A$ when the value assigned to $B$ is computed in a
+  ``non-trivial''(?) manner from the value of $A$. This is written as
+  $A\mapsto d^i_B$.
+\item[Predecessor:] A register $A$ is termed as the \emph{predecessor}
+  of a register $B$ if the value of $A$ is used in some definition of
+  $B$, denoted by the operator ``$\longrightarrow$''. Also, $B$ is
+  termed as a \textbf{successor} of $A$.
+  
+  \[A \longrightarrow B \iff \exists d^i_B \mbox{ such that } A\mapsto
+  d^i_B\]
+\end{description}
+
+\section{Values latched from external sources}
+\label{sec:external-data}
+
+Some operators in the data-path acquire values from the environment,
+such as memory access operators and input/output ports. The
+environment is free to change the value after that particular
+invocation of the operator is done --- the register at the output of
+the operator is required to maintain it until it has been used by
+other operations in the data-path. Hence that register cannot be
+eliminated.
+
+\begin{condition}
+  \label{condition:external-data}
+  Every definition of the candidate register must assign a value
+  computed from an expression that consists of only constants and
+  values stored in other registers in the data-path.
+\end{condition}
+
+\section{Registers with conditional definitions}
+\label{sec:conditional-definitions}
+
+In general, a data-path operator may have multiple control inputs and
+multiple data outputs (registers). When the operator is invoked by a
+particular control input, the state machine of the operator determines
+whether a particular register is defined. Each such definition may
+assign a different value to the same register. This behaviour results
+in a multiplexer that selects the result of multiple combinational
+circuits. If such a register is eliminated, the internal multiplexing
+(which is dynamic) will drive invalid data at the output.
+
+\begin{condition}
+  \label{condition:conditional-definitions}
+  Every definition of the candidate register must assign the same
+  value to the register.
+\end{condition}
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[scale=0.3]{images/phi-function.pdf}
+  \caption{Multiple definitions in a $\phi$-function.}
+  \label{fig:phi-function}
+\end{figure}
+
+For example, the $\phi$-function in the AHIR data-path has two control
+inputs, two data inputs and a single output register, as shown in
+Figure~\ref{fig:phi-function}. When definition $d^0_M$ (or
+respectively $d^1_M$) is invoked, the corresponding data-input $D_0$
+(respectively $D_1$) is assigned to the output register. Eliminating
+the output register will make it impossible to forward only one of the
+two data inputs to the output. Hence, the register at the output of a
+$\phi$-function cannot be eliminated.
+
+\section{Definition-Use sequences}
+\label{sec:def-use-chains}
+
+A register $R$ that satisfies
+Condition~\ref{condition:conditional-definitions} is assigned a value
+generated by a single combinational circuit. The output of the circuit
+changes when any of its input registers is updated. In the absence of
+the register $R$, this value is immediately visible to the uses of
+$R$. Hence $R$ can be eliminated only if the control-path guarantees
+that when any of the inputs change, $R$ is always updated before it is
+used.
+
+\begin{condition}
+  \label{condition:def-use-chains}
+  For every predecessor $P$ and successor $S$ of the candidate
+  register $B$, if there is a path from any definition of $P$ to any
+  definition of $S$ that uses the value of $B$, then that path must
+  pass through some definition of $B$.
+\end{condition}
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[scale=0.3]{images/branch-conditional-definition.pdf}
+  \caption{Conditional definitions in the presence of branches.}
+  \label{fig:branch-conditional-definition}
+\end{figure}
+
+For example, consider the output of operator $B$ shown in
+Figure~\ref{fig:branch-conditional-definition}. Definition $d^0_B$ is
+executed only if the appropriate branch is taken in the control-path
+after definition $d^0_P$. The value of $B$ is used by definition
+$d^1_M$, which occurs along the same path in the control-path. Thus,
+every path from a definition of $P$ to a definition of $M$ that uses
+$B$ (there is only one such path) passes through a definition of $B$.
+Hence $B$ satisfies this condition for elimination.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[scale=0.3]{images/elimination-in-a-pipeline.pdf}
+  \caption{Registers in a pipeline.}
+  \label{fig:pipeline-registers}
+\end{figure}
+
+Figure~\ref{fig:pipeline-registers} shows a pipeline that invokes
+$d_A$, $d_B$ and $d_C$ in parallel, where $A\mapsto d_B$ and $B\mapsto
+d_C$. Register $B$ does not satisfy
+Condition~\ref{condition:def-use-chains} since there is a path from
+$d_A$ to $d_C$ which does not pass through $d_B$. Hence register $B$
+cannot be eliminated.
+
+\section{Cycles in the data-path}
+\label{sec:data-path-cycles}
+
+Every cycle in the data-path must have at least one register in order
+to prevent a combinational loop.
+
+\begin{condition}
+  \label{condition:data-path-cycles}
+  If the candidate register occurs in a cycle in the data-path, then
+  it must not be the only register in that cycle.
+\end{condition}
+\end{document}

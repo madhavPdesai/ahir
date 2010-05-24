@@ -1,0 +1,53 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{graphicx}
+\usepackage{times}
+\usepackage[margin=0.75in]{geometry}
+
+\title{A class of live and safe petri-nets that supports scalable
+  concurrency analysis}
+
+\author{Sameer D. Sahasrabuddhe \\ Kavi Arya \\ Madhav P. Desai}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  \large
+
+  Petri-nets are a compact way of representing concurrent sequences of
+  events in a system, where events are represented as transitions in
+  the corresponding petri-net. Given two events in a system, it is
+  useful to determine whether they can occur simultaneously. But it is
+  difficult to make such a determination in an arbitrary petri-net. We
+  present a class of petri-nets called ``Type-2'' which restricts the
+  structure of the petri-net in order to enable a scalable analysis,
+  without severely affecting the expressive power of the petri-net.
+  Given a Type-2 petri-net, it is possible to determine in linear time
+  whether two transitions can fire simultaneously. In addition, it is
+  also possible to generate an exhaustive listing of sets of
+  transitions such that no two transitions in each set can fire
+  simultaneously.
+  
+  We first define the concept of a ``token-preserving region'' which
+  produces a live and safe petri-net when augmented by a marked place.
+  We further define a set of production rules to combine such regions
+  into larger token-preserving regions. The petri-net created by
+  augmenting such a region is said to be of the class ``Type-2''. The
+  initial marking of the petri-net is restricted to a single marked
+  place.
+
+  The restriction on the structure of the Type-2 petri-net allow a
+  simple labelling scheme to effectively simulates an execution of the
+  petri-net. These labels can be compared in linear time to determine
+  the concurrency of the labelled transitions. Despite the
+  restrictions imposed by the production rules, the Type-2 class of
+  petri-nets is powerful enough to represent synchronous systems. For
+  example, this class has been used as a transition step in
+  translating imperative programs to hardware descriptions.
+
+\end{abstract}
+
+\end{document}

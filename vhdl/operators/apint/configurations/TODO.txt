@@ -1,0 +1,2 @@
+complete template.txt
+and generate all configurations

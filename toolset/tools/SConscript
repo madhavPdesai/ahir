@@ -1,0 +1,6 @@
+
+lower_dirs = Split('llvm2cdfg cdfg2ahir link-ahir analyse-ahir cdfg2dot vhdl-testgen ahir2vhdl')
+
+lower_scripts = map(lambda x : x + '/SConscript', lower_dirs)
+
+SConscript(lower_scripts)

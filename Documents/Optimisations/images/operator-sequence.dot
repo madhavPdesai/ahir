@@ -1,0 +1,14 @@
+
+
+digraph {
+	rankdir = LR;
+	reg_A [shape=box];
+	reg_B [shape=box];
+	reg_C [shape=box];
+	reg_B [style=filled, fillcolor="#bbbbbb"];
+	op_A -> reg_A;
+	reg_A -> op_B;
+	op_B -> reg_B;
+	reg_B -> op_C;
+	op_C -> reg_C;
+}

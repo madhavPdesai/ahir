@@ -1,0 +1,35 @@
+
+The control-path is built using two building blocks --- place and
+transition.
+
+- place :: A bypassed SR flip-flop, where the reset has priority when
+           updating the flip-flop, while the set is bypassed directly
+           to the output. If the reset is sampled high on a clock
+           edge, the internal state is set to low, else it is set to
+           the output state. If the set signal is high, then the
+           output is high, else it is set to the internal state.
+
+- transition :: A simple AND over all the incoming tokens and a
+                separate symbol input. The symbol arrives as a pulse
+                of width one clock cycle, and the transition must be
+                enabled (all incomnig tokens are high) at that clock
+                edge. If the transition is not supposed to wait for a
+                symbol, then the input is tied high.
+
+- operator-stub :: A stub that accepts a request pulse and returns an
+                   acknowledgement pulse after a configurable delay.
+                   To be used in the testbench for the control-path.
+
+This results in a zero-delay implementation, since the token is
+forwarded as soon as it arrives at a place, and a transition fires as
+soon as it is enabled.
+
+ 1. The simplest petri-net consists of a single marked place and a
+    transition. When execution begins, both entities are "on" (their
+    outputs are high) forever, since a zero-delay cycle is created.
+
+ 2. The simplest Type-2 control-path consists of a req from the
+    environment and an ack sent back. The incoming req is acknowledged
+    immediately. This is relaxed if the control-path includes a
+    data-path operation with a non-zero delay.
+

@@ -1,0 +1,2 @@
+complete testing of ApFloat_S_1,_S_2, _S_2_C (with Add operation only),
+and also of Phi,Select versions for ApFloat

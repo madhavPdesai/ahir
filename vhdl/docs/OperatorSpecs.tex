@@ -1,0 +1,573 @@
+\documentclass{beamer}
+\usepackage{epsfig}
+\usepackage{alltt}
+\begin{document}
+
+\frame[containsverbatim]{\frametitle{Datatypes: type boolean}
+We will use the  VHDL boolean type to model control
+signals.  The following array type will also be
+needed
+\begin{verbatim}
+type BooleanArray is array(integer range <>) of boolean;
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{Datatypes: type natural, integer}
+We will use the VHDL {\bf integer} and {\bf natural} types
+to model generics.  The following array types will also
+be needed
+\begin{verbatim}
+type IntegerArray is array(integer range <>) of integer;
+type NaturalArray is array(integer range <>) of natural;
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{Datatypes:  2D std\_logic array {\bf StdLogicArray2D}}
+A two dimensional array of std\_logic, defined as
+\begin{verbatim}
+type StdLogicArray2D 
+  is 
+  array(integer range <>, integer range <>) 
+  of std_logic;
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{Datatypes: type {\bf ApInt}}
+The LLVM arbitrary precision integer. 
+The VHDL equivalent is
+\begin{verbatim}
+type ApInt is array(integer range <>) of std_logic;
+\end{verbatim}
+Object declarations will fix the width.  For example
+\begin{verbatim}
+signal a: ApInt(5 downto 0);
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{Datatypes: type {\bf ApIntArray}}
+An array of ApInt.  The VHDL equivalent is
+\begin{verbatim}
+type ApIntArray is 
+  array(integer range <>, integer range <>) 
+  of std_logic;
+  -- 8 ApInts, each of width 32.
+signal a: ApIntArray(0 to 7, 31 downto 0);
+\end{verbatim}
+The range for the second dimension will always be of the type
+"high downto low".
+}
+
+
+\frame[containsverbatim]{\frametitle{Functions: extract/insert on {\bf ApIntArray}}
+
+The following extract and insert functions will be used to
+access elements of the array.
+\begin{verbatim}
+function 
+  Extract (constant x: ApIntArray; 
+           constant idx: integer)
+  return ApInt;
+procedure
+  Insert (x: out ApIntArray; 
+          y: in ApInt; 
+          idx: in integer);
+\end{verbatim}
+
+The parameter idx must be an element of \begin{verbatim} x'range(1). \end{verbatim}
+
+}
+
+\frame[containsverbatim]{\frametitle{Operators: conversion operators on {\bf ApInt}}
+\begin{verbatim}
+component ApInt_S_1
+             port (x: in ApIntArray; 
+                   clk,reset: in std_logic; 
+                   req: in BooleanArray;
+                   ack: out booleanArray;
+                   z: out ApIntArray);
+end component;
+\end{verbatim}
+This is the component corresponding
+to single input shared operations.
+The component can be mapped using the following
+configurations:
+\begin{verbatim}
+ApIntToApIntSigned, ApIntToApIntUnsigned, ApIntNot.
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{Operators: {\bf ApInt} arithmetic/logical operators }
+\begin{verbatim}
+component ApInt_S_2
+	     generic (colouring: NaturalArray);
+             port (x,y: in ApIntArray; 
+                   clk,reset: in std_logic; 
+                   reqR,reqC: in BooleanArray;
+                   ackR,ackC: out BooleanArray;
+                   z: out ApIntArray);
+end component;
+\end{verbatim}
+This is the component corresponding
+to two input shared operations.
+The following configurations can be applied to this component:
+\begin{verbatim}
+ApIntAdd, ApIntSub, ApIntAnd, ApIntOr, ApIntXor, ApIntMul,
+ApIntSHL, ApIntLSHR, ApIntASHR (sign bit extension)
+ApIntEq, ApIntNe, ApIntUgt, ApIntUge, ApIntUlt,
+ApIntUle, ApIntSgt, ApIntSge, ApIntSlt, ApIntSle.
+\end{verbatim}
+For the shift operators, the argument y is interpreted as
+the shift-amount (assumed to be unsigned!).
+}
+
+\frame[containsverbatim]{Operators: \frametitle{{\bf ApInt} binary operators with one constant operand }
+If the second argument is statically known, then the following component should be
+used.
+\begin{verbatim}
+component ApInt_S_2_C
+                generic (y: ApInt; colouring : NaturalArray);
+                port ( x: in ApIntArray; 
+                   clk,reset: in std_logic; 
+                   reqR,reqC: in BooleanArray;
+                   ackR,ackC: out BooleanArray;
+                   z: out ApIntArray);
+end component;
+\end{verbatim}
+The following configurations are similarly defined for
+this component:
+\begin{verbatim}
+ApIntAddC, ApIntSubC, ApIntAndC, ApIntOrC, ApIntXorC, 
+ApIntMulC, ApIntSHLC, ApIntLSHRC, ApIntASHRC ApIntEqC, 
+ApIntNeC, ApIntUgtC, ApIntUgeC, ApIntUltC,ApIntUleC, 
+ApIntSgtC, ApIntSgeC, ApIntSltC,ApIntSleC.
+\end{verbatim}
+}
+
+
+\frame[containsverbatim]{Operators: \frametitle{Operators: {\bf ApInt} multiplexor operators }
+\begin{verbatim}
+component ApIntPhi 
+                   port(x,y: in  ApInt; 
+                        reqx,reqy: in boolean;
+                        z: out ApInt; 
+                        ack: out boolean;
+                        clk,reset: in bit);
+end component;
+component ApIntSelect 
+                   port(x,y,sel: in  ApInt; 
+                        req: in boolean;
+                        z: out ApInt; 
+                        ack: out boolean;
+                        clk,reset: in bit);
+end component;
+\end{verbatim}
+These operators are special, and are not shared.
+}
+
+\frame[containsverbatim]{\frametitle{Operators: {\bf ApInt} branch operator}
+\begin{verbatim}
+component ApIntBranch 
+             port (condition: in ApInt; 
+                   clk,reset: in std_logic; 
+                   req: in Boolean;
+                   ack0: out Boolean;
+                   ack1: out Boolean);
+end component;
+\end{verbatim}
+This operator is special and is not shared.
+}
+
+\frame[containsverbatim]{\frametitle{Operators: load components {\bf ApLoadReq} }
+\begin{verbatim}
+component ApLoadReq
+          generic(width: NaturalArray; 
+                  colouring : NaturalArray;
+                  suppress_immediate_ack: BooleanArray);
+          port(addr: in StdLogicArray2D;
+               req: in BooleanArray;
+               ack: out BooleanArray;
+               mreq: out std_logic_vector;
+               mack: in std_logic_vector;
+               maddr: out std_logic_vector;
+               mtag: out std_logic_vector;
+               clk,reset: in std_logic);
+end component;
+\end{verbatim}
+A shared Load-Request operator.  The generic colouring is used
+to implement interlock (a tag output is generated to
+identify requester if relevant).  
+ If suppress\_immediate\_ack(I) 
+is true, then requester I will not be acked immediately even if
+it is possible to do so.
+}
+
+\frame[containsverbatim]{\frametitle{Operators: load components {\bf ApLoadComplete}}
+\begin{verbatim}
+component ApLoadComplete
+          generic(width: NaturalArray; 
+                  colouring : NaturalArray);
+          port(req: in BooleanArray;
+               data: out StdLogicArray2D;
+               ack: out BooleanArray;
+               mreq: out std_logic_vector;
+               mack: in std_logic_vector;
+               mdata: in std_logic_vector;
+               mtag : in std_logic_vector;
+               clk,reset: in std_logic);
+end component;
+\end{verbatim}
+A shared Load-Complete operator.  The generic colouring is used
+to implement interlock (together with the tag input). 
+}
+
+\frame[containsverbatim]{\frametitle{Operators: store components {\bf ApStoreReq} }
+\begin{verbatim}
+component ApStoreReq 
+          generic(width: NaturalArray; 
+                  colouring: NaturalArray;
+                  suppress_immediate_ack: BooleanArray);
+          port(addr,data: in StdLogicArray2D;
+               req: in BooleanArray;
+               ack: out BooleanArray;
+               mreq: out std_logic_vector;
+               mack: in std_logic_vector;
+               maddr,
+                mdata: out std_logic_vector;
+               mtag: out std_logic_vector;
+               clk,reset: in std_logic);
+end component;
+\end{verbatim}
+A shared Store-Request operator.  The generic colouring is used
+to implement interlock (a tag output is generated to
+identify requester if relevant). 
+ If suppress\_immediate\_ack(I) 
+is true, then requester I will not be acked immediately even if
+it is possible to do so.
+}
+
+\frame[containsverbatim]{\frametitle{Operators: store components {\bf ApStoreComplete} }
+\begin{verbatim}
+component ApStoreComplete 
+          generic(width: NaturalArray; 
+                  colouring : NaturalArray);
+          port(req: in BooleanArray;
+               ack: out BooleanArray;
+               mreq: out std_logic_vector;
+               mack: in std_logic_vector;
+               mtag : in std_logic_vector;
+               clk,reset: in std_logic);
+end component;
+\end{verbatim}
+A shared Store-Complete operator.  The generic colouring is used
+to implement interlock (together with the tag input). 
+}
+
+\frame[containsverbatim]{\frametitle{Datatypes:  type {\bf ApFloat}}
+The LLVM float type has two primary parameters: the length of
+the characteristic and the length of the mantissa.
+The overall number is signbit-characteristic-mantissa.
+The equivalent VHDL type is 
+\begin{verbatim}
+type ApFloat is array(integer range <>)
+        of std_logic;
+\end{verbatim}
+Thus, a signal a with a characteristic of 5 bits
+and a mantissa of 3 bits will be represented as
+\begin{verbatim}
+signal a: ApFloat(5 downto -3);
+-- a(5) is the sign,
+-- a(4 downto 0) is the characteristic
+-- a(-1 downto -3) is the mantissa.
+\end{verbatim}
+Operations on the ApFloat follow the LLVM spec wherever applicable,
+and the IEEE spec where the LLVM spec is silent.
+}
+
+\frame[containsverbatim]{\frametitle{Datatypes: type {\bf ApFloatArray}}
+An array of floats.
+\begin{verbatim}
+type ApFloatArray is 
+  array(integer range <>, integer range <>) 
+  of std_logic;
+signal a: ApFloatArray(0 to 7, 5 downto -3);
+  -- 8 ApFloats, each with
+  -- characteristic of 5 bits, 
+  -- mantissa of 3 bits.
+\end{verbatim}
+}
+\frame[containsverbatim]{\frametitle{Functions: {\bf ApFloatArray} access functions }
+The following extract and insert functions will be used to access
+elements of the array.
+\begin{verbatim}
+function
+   Extract (constant x: ApFloatArray;
+              constant idx: integer)
+   return ApFloat;
+procedure
+   Insert (x: out ApFloatArray;
+            y: in ApFloat;
+            idx: in integer);
+   
+\end{verbatim}
+The parameter idx must be an element of \begin{verbatim} x'range(1). \end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{Operators: {\bf ApFloat $\leftrightarrow$ ApInt} conversion operators }
+\begin{verbatim}
+component ApIntUnsignedToApFloat
+             generic(colouring: NaturalArray);
+             port (x: in ApIntArray;
+                   clk,reset: in std_logic; 
+                   reqR,reqC: in BooleanArray;
+                   ackR,ackC: out BooleanArray;
+                   z: out ApFloatArray);
+end component;
+\end{verbatim}
+The operator  ApIntSignedToApFloat is similar to ApIntUnsignedToApFloat
+}
+
+\frame[containsverbatim]{\frametitle{Operators: {\bf ApFloat $\leftrightarrow$ ApInt} conversion operators }
+\begin{verbatim}
+component ApFloatToApIntUnsigned 
+             generic(colouring: NaturalArray);
+             port (x: in ApFloatArray; 
+                   clk,reset: in std_logic; 
+                   reqR,reqC: in BooleanArray;
+                   ackR,ackC: out BooleanArray;
+                   z: out ApIntArray);
+end component;
+\end{verbatim}
+The operator  ApFloatToApIntSigned is similar to ApFloatToApIntUnsigned.
+}
+\frame[containsverbatim]{\frametitle{Operators: {\bf ApFloat} conversion operators }
+
+\begin{verbatim}
+component ApFloat_S_1 
+             generic(colouring: NaturalArray);
+             port (x: in ApFloatArray;
+                   clk,reset: in std_logic; 
+                   reqR,reqC: in BooleanArray;
+                   ackR,ackC: out BooleanArray;
+                   z: out ApFloatArray);
+end component;
+\end{verbatim}
+The following configuration can be applied to
+ApFloat\_S\_1.
+\begin{verbatim}
+ApFloatResize
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{Operators: {\bf ApFloat} arithmetic operators }
+\begin{verbatim}
+component ApFloat_S_2
+             generic(colouring: NaturalArray);
+             port (x,y: in ApFloatArray; 
+                   clk,reset: in std_logic; 
+                   reqR,reqC: in BooleanArray;
+                   ackR,ackC: out BooleanArray;
+                   z: out ApFloatArray);
+end component;
+\end{verbatim}
+The following configurations can be applied:
+\begin{verbatim}
+ApFloatAdd, ApFloatSub, ApFloatMul.
+\end{verbatim}
+}
+\frame[containsverbatim]{\frametitle{Operators: {\bf ApFloat} comparison operators}
+\begin{verbatim}
+component ApFloat_Cmp_2
+             generic(colouring: NaturalArray);
+             port (x,y: in ApFloatArray; 
+                   clk,reset: in std_logic; 
+                   reqR,reqC: in BooleanArray;
+                   ackR,ackC: out BooleanArray;
+                   z: out ApIntArray);
+end component;
+\end{verbatim}
+The following configurations can be applied:
+\begin{verbatim}
+ApFloatOeq, ApFloatOne, ApFloatOrd 
+ApFloatUeq, ApFloatUne, ApFloatUno
+ApFloatOgt, ApFloatOge, ApFloatOlt,ApFloatOle
+ApFloatUgt, ApFloatUge, ApFloatUlt,ApFloatUle.
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{Operators: {\bf ApFloat} arithmetic operators with 
+one constant operand}
+\begin{verbatim}
+component ApFloat_S_2_C
+             generic (y: ApFloatArray; colouring: NaturalArray);
+             port (x: in ApFloatArray; 
+                   clk,reset: in std_logic; 
+                   reqR,reqC: in BooleanArray;
+                   ackR,ackC: out BooleanArray;
+                   z: out ApFloatArray);
+end component;
+\end{verbatim}
+The following configurations can be applied to ApFloat\_S\_2\_C:
+\begin{verbatim}
+ApFloatAddC, ApFloatSubC, ApFloatMulC.
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{Operators: {\bf ApFloat} comparison operators with 
+one constant operand}
+\begin{verbatim}
+component ApFloat_Cmp_2_C
+          generic (y: ApFloatArray; 
+                   colouring: NaturalArray);
+          port    (x: in ApFloatArray; 
+                   clk,reset: in std_logic; 
+                   reqR,reqC: in BooleanArray;
+                   ackR,ackC: out BooleanArray;
+                   z: out ApIntArray);
+end component;
+\end{verbatim}
+The following configurations can be used:
+\begin{verbatim}
+ApFloatOeqC, ApFloatOneC, ApFloatOrdC ApFloatUeqC, 
+ApFloatUneC, ApFloatUnoC ApFloatOgtC, ApFloatOgeC, 
+ApFloatOltC, ApFloatOleC ApFloatUgtC, ApFloatUgeC, 
+ApFloatUltC, ApFloatUleC.
+\end{verbatim}
+}
+
+
+\frame[containsverbatim]{\frametitle{Operators: {\bf ApFloat} multiplexor operators }
+\begin{verbatim}
+component ApFloatPhi 
+                   port(x,y: in  ApFloat; 
+                        reqx,reqy: in boolean;
+                        z: out ApFloat; 
+                        ack: out boolean;
+                        clk,reset: in bit);
+end component;
+component ApFloatSelect 
+                   port(x,y: in  ApFloat; 
+                        sel: in ApInt;
+                        req: in boolean;
+                        z: out ApFloat; 
+                        ack: out boolean;
+                        clk,reset: in bit);
+end component;
+\end{verbatim}
+These are special, unshared operators.
+}
+
+\begin{frame}[fragile]
+  \frametitle{Input Port}
+\begin{alltt}
+component InputPort
+  generic (colouring: NaturalArray);
+  port (
+    -- pulse interface with the data-path
+    req       : in  BooleanArray;
+    ack       : out BooleanArray;
+    data      : out StdLogicArray2D;
+    
+    -- ready/ready interface with outside world
+    oreq       : out std_logic;
+    oack       : in  std_logic;
+    odata      : in  std_logic_vector;
+    
+    clk, reset : in  std_logic);
+end component;
+\end{alltt}
+If colouring indicates that mutual 
+exclusion does not hold, then {\bf one} of the requesters
+will succeed.
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Output Port}
+\begin{alltt}
+component OutputPort
+  generic (colouring: NaturalArray);
+  port (
+    req       : in  BooleanArray;
+    ack       : out BooleanArray;
+    data      : in  StdLogicArray2D;
+    oreq       : out std_logic;
+    oack       : in  std_logic;
+    odata      : out std_logic_vector;
+    clk, reset : in  std_logic);
+end component;
+\end{alltt}
+If colouring indicates that mutual 
+exclusion does not hold, then {\bf one} of the requesters
+will succeed.
+\end{frame}
+
+\begin{frame}
+  \frametitle{Function Calls}
+  \begin{itemize}
+  \item {\bf Call} made to another module.
+    \begin{itemize}
+    \item Use OutputPort.
+      \begin{itemize}
+      \item Data port is  an std\_logic\_vector consisting of
+        arguments and address for the called module.
+      \end{itemize}
+    \end{itemize}
+  \item {\bf Response} received for the corresponding call.
+    \begin{itemize}
+      \item Use InputPort.
+        \begin{itemize}
+        \item Return-value packed in an std\_logic\_vector.
+        \end{itemize}
+    \end{itemize}
+  \item {\bf Accept} an incoming call.
+    \begin{itemize}
+    \item Use InputPort.
+      \begin{itemize}
+      \item Arguments packed in an std\_logic\_vector.
+      \end{itemize}
+    \end{itemize}
+  \item {\bf Return} an incoming call.
+    \begin{itemize}
+    \item Use OutputPort.
+      \begin{itemize}
+      \item Return value packed in an std\_logic\_vector.
+      \end{itemize}
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Arbiter for function calls}
+\small
+\begin{alltt}
+entity CallArbiter is
+  port ( -- ready/ready handshake on all ports
+    -- ports for the caller
+    call_reqs   : in  std_logic_vector;
+    call_acks   : out std_logic_vector;
+    call_data   : in  StdLogicArray2D;
+    -- call port connected to the called module
+    call_mreq   : out std_logic;
+    call_mack   : in  std_logic;
+    call_mdata  : out std_logic_vector;
+    call_mtag   : out std_logic_vector;
+    -- similarly for return, initiated by the caller
+    return_reqs : in  std_logic_vector;
+    return_acks : out std_logic_vector;
+    return_data : out StdLogicArray2D;
+    -- return from function 
+    return_mreq : in std_logic;
+    return_mack : out std_logic;
+    return_mdata : in  std_logic_vector;
+    return_mtag : in  std_logic_vector);
+end CallArbiter;
+\end{alltt}
+\end{frame}
+
+\end{document}
+
+
+% LocalWords:  StdLogicArray ApIntArray ApFloatArray ApInt ApFloat downto ireq
+% LocalWords:  InputPort iack idata oreq oack odata OutputPort addr mreq maddr
+% LocalWords:  mtag CallRequest CallComplete IncomingCallRequest
+% LocalWords:  IncomingCallComplete
+\end{document}

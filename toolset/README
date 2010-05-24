@@ -1,0 +1,28 @@
+
+Contents
+========
+
+Analysis      : functions for compatibility analysis
+Compatibility : structures for compatibility covers on the labels 
+GenIR         : LLVM backend that generates the AHIR XML
+GenVHDL       : generate VHDL
+Labels        : structures used to represent CP labels
+LinkIR        : AHIR linker
+ParseIR       : XML parser for AHIR
+Structures    : common structures representing AHIR
+SystemC       : old, broken SystemC code
+Type2         : functions to check for Type-2 CPs
+
+Building
+========
+
+Targets defined in the Makefile:
+
+build: compiles each directory
+clean: deletes object files, *.d, binaries, etc
+install: first calls build, then runs the ahir-install script
+
+IMPORTANT: Run the configure script in GenIR/ before calling make in this
+directory. GenIR is actually part of the LLVM framework, and the code inside it
+is not related to the rest of the code. Read GenIR/README for more information.
+

@@ -1,0 +1,91 @@
+; ModuleID = 'sqroot.bc'
+target endian = little
+target pointersize = 32
+target triple = "i686-pc-linux-gnu"
+deplibs = [ "c", "crtend" ]
+
+implementation   ; Functions:
+
+float %sqroot(float %number) {
+entry:
+	%tmp.1 = setgt float %number, 1.000000e+00		; <bool> [#uses=1]
+	br bool %tmp.1, label %loopentry, label %no_exit
+
+loopentry:		; preds = %no_exit.selectcont.selectcont, %entry
+	%mid.0 = phi float [ %tmp.11, %no_exit.selectcont.selectcont ], [ 0.000000e+00, %entry ]		; <float> [#uses=1]
+	%llimit.2 = phi float [ %llimit.1, %no_exit.selectcont.selectcont ], [ 0.000000e+00, %entry ]		; <float> [#uses=1]
+	%ulimit.2 = phi float [ %ulimit.1, %no_exit.selectcont.selectcont ], [ %number, %entry ]		; <float> [#uses=1]
+	%i.0 = phi int [ %inc, %no_exit.selectcont.selectcont ], [ 0, %entry ]		; <int> [#uses=2]
+	%tmp.6 = setlt int %i.0, 13		; <bool> [#uses=1]
+	br bool %tmp.6, label %no_exit, label %loopexit
+
+no_exit:		; preds = %loopentry, %entry
+	%llimit.2.0 = phi float [ %number, %entry ], [ %llimit.2, %loopentry ]		; <float> [#uses=2]
+	%ulimit.2.0 = phi float [ 1.000000e+00, %entry ], [ %ulimit.2, %loopentry ]		; <float> [#uses=2]
+	%i.0.0 = phi int [ 0, %entry ], [ %i.0, %loopentry ]		; <int> [#uses=1]
+	%tmp.10 = add float %ulimit.2.0, %llimit.2.0		; <float> [#uses=1]
+	%tmp.11 = mul float %tmp.10, 5.000000e-01		; <float> [#uses=5]
+	%tmp.14 = mul float %tmp.11, %tmp.11		; <float> [#uses=1]
+	%tmp.17 = setlt float %tmp.14, %number		; <bool> [#uses=2]
+	br bool %tmp.17, label %no_exit.selecttrue, label %no_exit.selectcont
+
+no_exit.selecttrue:		; preds = %no_exit
+	br label %no_exit.selectcont
+
+no_exit.selectcont:		; preds = %no_exit, %no_exit.selecttrue
+	%llimit.1 = phi float [ %tmp.11, %no_exit.selecttrue ], [ %llimit.2.0, %no_exit ]		; <float> [#uses=1]
+	br bool %tmp.17, label %no_exit.selectcont.selecttrue, label %no_exit.selectcont.selectcont
+
+no_exit.selectcont.selecttrue:		; preds = %no_exit.selectcont
+	br label %no_exit.selectcont.selectcont
+
+no_exit.selectcont.selectcont:		; preds = %no_exit.selectcont, %no_exit.selectcont.selecttrue
+	%ulimit.1 = phi float [ %ulimit.2.0, %no_exit.selectcont.selecttrue ], [ %tmp.11, %no_exit.selectcont ]		; <float> [#uses=1]
+	%inc = add int %i.0.0, 1		; <int> [#uses=1]
+	br label %loopentry
+
+loopexit:		; preds = %loopentry
+	ret float %mid.0
+}
+
+float %start(float %number) {
+entry:
+	%tmp.1.i = setgt float %number, 1.000000e+00		; <bool> [#uses=1]
+	br bool %tmp.1.i, label %loopentry.i, label %no_exit.i
+
+loopentry.i:		; preds = %no_exit.i.selectcont.selectcont, %entry
+	%mid.0.i = phi float [ %tmp.11.i, %no_exit.i.selectcont.selectcont ], [ 0.000000e+00, %entry ]		; <float> [#uses=1]
+	%llimit.2.i = phi float [ %llimit.1.i, %no_exit.i.selectcont.selectcont ], [ 0.000000e+00, %entry ]		; <float> [#uses=1]
+	%ulimit.2.i = phi float [ %ulimit.1.i, %no_exit.i.selectcont.selectcont ], [ %number, %entry ]		; <float> [#uses=1]
+	%i.0.i = phi int [ %inc.i, %no_exit.i.selectcont.selectcont ], [ 0, %entry ]		; <int> [#uses=2]
+	%tmp.6.i = setlt int %i.0.i, 13		; <bool> [#uses=1]
+	br bool %tmp.6.i, label %no_exit.i, label %sqroot.exit
+
+no_exit.i:		; preds = %loopentry.i, %entry
+	%llimit.2.i.0 = phi float [ %number, %entry ], [ %llimit.2.i, %loopentry.i ]		; <float> [#uses=2]
+	%ulimit.2.i.0 = phi float [ 1.000000e+00, %entry ], [ %ulimit.2.i, %loopentry.i ]		; <float> [#uses=2]
+	%i.0.i.0 = phi int [ 0, %entry ], [ %i.0.i, %loopentry.i ]		; <int> [#uses=1]
+	%tmp.10.i = add float %ulimit.2.i.0, %llimit.2.i.0		; <float> [#uses=1]
+	%tmp.11.i = mul float %tmp.10.i, 5.000000e-01		; <float> [#uses=5]
+	%tmp.14.i = mul float %tmp.11.i, %tmp.11.i		; <float> [#uses=1]
+	%tmp.17.i = setlt float %tmp.14.i, %number		; <bool> [#uses=2]
+	br bool %tmp.17.i, label %no_exit.i.selecttrue, label %no_exit.i.selectcont
+
+no_exit.i.selecttrue:		; preds = %no_exit.i
+	br label %no_exit.i.selectcont
+
+no_exit.i.selectcont:		; preds = %no_exit.i, %no_exit.i.selecttrue
+	%llimit.1.i = phi float [ %tmp.11.i, %no_exit.i.selecttrue ], [ %llimit.2.i.0, %no_exit.i ]		; <float> [#uses=1]
+	br bool %tmp.17.i, label %no_exit.i.selectcont.selecttrue, label %no_exit.i.selectcont.selectcont
+
+no_exit.i.selectcont.selecttrue:		; preds = %no_exit.i.selectcont
+	br label %no_exit.i.selectcont.selectcont
+
+no_exit.i.selectcont.selectcont:		; preds = %no_exit.i.selectcont, %no_exit.i.selectcont.selecttrue
+	%ulimit.1.i = phi float [ %ulimit.2.i.0, %no_exit.i.selectcont.selecttrue ], [ %tmp.11.i, %no_exit.i.selectcont ]		; <float> [#uses=1]
+	%inc.i = add int %i.0.i.0, 1		; <int> [#uses=1]
+	br label %loopentry.i
+
+sqroot.exit:		; preds = %loopentry.i
+	ret float %mid.0.i
+}

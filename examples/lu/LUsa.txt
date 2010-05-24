@@ -1,0 +1,124 @@
+; ModuleID = 'LUsa.bc'
+target endian = little
+target pointersize = 32
+target triple = "i686-pc-linux-gnu"
+deplibs = [ "c", "crtend" ]
+
+implementation   ; Functions:
+
+void %start(int %noofelem, float* %A, int* %rcoeff, int* %ccoeff) {
+entry:
+	%B = alloca [25 x float]		; <[25 x float]*> [#uses=6]
+	br label %no_exit.1.outer
+
+no_exit.1.outer:		; preds = %loopexit.1, %entry
+	%indvar43 = phi uint [ 0, %entry ], [ %indvar.next44, %loopexit.1 ]		; <uint> [#uses=2]
+	%i.0.0.ph = cast uint %indvar43 to int		; <int> [#uses=1]
+	%tmp.7 = mul int %i.0.0.ph, 5		; <int> [#uses=1]
+	br label %no_exit.1
+
+no_exit.1:		; preds = %no_exit.1, %no_exit.1.outer
+	%indvar = phi uint [ 0, %no_exit.1.outer ], [ %indvar.next, %no_exit.1 ]		; <uint> [#uses=2]
+	%j.1.2 = cast uint %indvar to int		; <int> [#uses=1]
+	%tmp.9 = add int %tmp.7, %j.1.2		; <int> [#uses=1]
+	%tmp.10 = getelementptr [25 x float]* %B, int 0, int %tmp.9		; <float*> [#uses=1]
+	store float 0.000000e+00, float* %tmp.10
+	%indvar.next = add uint %indvar, 1		; <uint> [#uses=2]
+	%exitcond = seteq uint %indvar.next, 5		; <bool> [#uses=1]
+	br bool %exitcond, label %loopexit.1, label %no_exit.1
+
+loopexit.1:		; preds = %no_exit.1
+	%indvar.next44 = add uint %indvar43, 1		; <uint> [#uses=2]
+	%exitcond45 = seteq uint %indvar.next44, 5		; <bool> [#uses=1]
+	br bool %exitcond45, label %loopentry.2, label %no_exit.1.outer
+
+loopentry.2:		; preds = %loopexit.1
+	%tmp.15 = setgt int %noofelem, 0		; <bool> [#uses=1]
+	br bool %tmp.15, label %no_exit.2, label %loopentry.4.outer
+
+no_exit.2:		; preds = %no_exit.2, %loopentry.2
+	%indvar46 = phi uint [ %indvar.next47, %no_exit.2 ], [ 0, %loopentry.2 ]		; <uint> [#uses=5]
+	%i.1.0 = cast uint %indvar46 to int		; <int> [#uses=1]
+	%tmp.19 = getelementptr int* %rcoeff, uint %indvar46		; <int*> [#uses=1]
+	%tmp.20 = load int* %tmp.19		; <int> [#uses=1]
+	%tmp.21 = mul int %tmp.20, 5		; <int> [#uses=1]
+	%tmp.24 = getelementptr int* %ccoeff, uint %indvar46		; <int*> [#uses=1]
+	%tmp.25 = load int* %tmp.24		; <int> [#uses=1]
+	%tmp.26 = add int %tmp.21, %tmp.25		; <int> [#uses=1]
+	%tmp.27 = getelementptr [25 x float]* %B, int 0, int %tmp.26		; <float*> [#uses=1]
+	%tmp.30 = getelementptr float* %A, uint %indvar46		; <float*> [#uses=1]
+	%tmp.31 = load float* %tmp.30		; <float> [#uses=1]
+	store float %tmp.31, float* %tmp.27
+	%inc.2 = add int %i.1.0, 1		; <int> [#uses=1]
+	%tmp.1514 = setlt int %inc.2, %noofelem		; <bool> [#uses=1]
+	%indvar.next47 = add uint %indvar46, 1		; <uint> [#uses=1]
+	br bool %tmp.1514, label %no_exit.2, label %loopentry.4.outer
+
+loopentry.4.outer:		; preds = %loopexit.5, %no_exit.2, %loopentry.2
+	%indvar54 = phi uint [ %indvar.next55, %loopexit.5 ], [ 0, %no_exit.2 ], [ 0, %loopentry.2 ]		; <uint> [#uses=2]
+	%maxcoeff.2.ph = phi int [ %inc.5, %loopexit.5 ], [ 0, %no_exit.2 ], [ 0, %loopentry.2 ]		; <int> [#uses=1]
+	%j.3.in.ph = phi int [ %inc.5, %loopexit.5 ], [ 0, %no_exit.2 ], [ 0, %loopentry.2 ]		; <int> [#uses=1]
+	%i.2.0.ph = cast uint %indvar54 to int		; <int> [#uses=4]
+	%tmp.51 = mul int %i.2.0.ph, 6		; <int> [#uses=1]
+	%tmp.52 = getelementptr [25 x float]* %B, int 0, int %tmp.51		; <float*> [#uses=1]
+	br label %loopentry.4
+
+loopentry.4:		; preds = %no_exit.4, %loopentry.4.outer
+	%maxcoeff.2 = phi int [ %maxcoeff.2.ph, %loopentry.4.outer ], [ %maxcoeff.2.2, %no_exit.4 ]		; <int> [#uses=2]
+	%j.3.in = phi int [ %j.3.in.ph, %loopentry.4.outer ], [ %j.3.2, %no_exit.4 ]		; <int> [#uses=1]
+	%j.3 = add int %j.3.in, 1		; <int> [#uses=2]
+	%tmp.40 = setlt int %j.3, 5		; <bool> [#uses=1]
+	br bool %tmp.40, label %no_exit.4.preheader, label %no_exit.5.loopexit
+
+no_exit.4.preheader:		; preds = %loopentry.4
+	%tmp.53 = load float* %tmp.52		; <float> [#uses=1]
+	br label %no_exit.4
+
+no_exit.4:		; preds = %then, %no_exit.4.preheader
+	%indvar48 = phi uint [ 0, %no_exit.4.preheader ], [ %indvar.next49, %then ]		; <uint> [#uses=2]
+	%maxcoeff.2.2 = phi int [ %maxcoeff.2, %no_exit.4.preheader ], [ %j.3.2, %then ]		; <int> [#uses=1]
+	%indvar48 = cast uint %indvar48 to int		; <int> [#uses=1]
+	%j.3.2 = add int %indvar48, %j.3		; <int> [#uses=5]
+	%tmp.43 = mul int %j.3.2, 5		; <int> [#uses=1]
+	%tmp.45 = add int %tmp.43, %i.2.0.ph		; <int> [#uses=1]
+	%tmp.46 = getelementptr [25 x float]* %B, int 0, int %tmp.45		; <float*> [#uses=1]
+	%tmp.47 = load float* %tmp.46		; <float> [#uses=1]
+	%tmp.54 = setgt float %tmp.47, %tmp.53		; <bool> [#uses=1]
+	br bool %tmp.54, label %then, label %loopentry.4
+
+then:		; preds = %no_exit.4
+	%j.321 = add int %j.3.2, 1		; <int> [#uses=1]
+	%tmp.4023 = setlt int %j.321, 5		; <bool> [#uses=1]
+	%indvar.next49 = add uint %indvar48, 1		; <uint> [#uses=1]
+	br bool %tmp.4023, label %no_exit.4, label %no_exit.5.loopexit
+
+no_exit.5.loopexit:		; preds = %then, %loopentry.4
+	%maxcoeff.2.3.ph = phi int [ %j.3.2, %then ], [ %maxcoeff.2, %loopentry.4 ]		; <int> [#uses=1]
+	%tmp.62 = mul int %i.2.0.ph, 5		; <int> [#uses=1]
+	%tmp.73 = mul int %maxcoeff.2.3.ph, 5		; <int> [#uses=1]
+	br label %no_exit.5
+
+no_exit.5:		; preds = %no_exit.5, %no_exit.5.loopexit
+	%indvar51 = phi uint [ 0, %no_exit.5.loopexit ], [ %indvar.next52, %no_exit.5 ]		; <uint> [#uses=2]
+	%j.4.2 = cast uint %indvar51 to int		; <int> [#uses=2]
+	%tmp.64 = add int %j.4.2, %tmp.62		; <int> [#uses=1]
+	%tmp.65 = getelementptr [25 x float]* %B, int 0, int %tmp.64		; <float*> [#uses=2]
+	%tmp.66 = load float* %tmp.65		; <float> [#uses=1]
+	%tmp.75 = add int %tmp.73, %j.4.2		; <int> [#uses=1]
+	%tmp.76 = getelementptr [25 x float]* %B, int 0, int %tmp.75		; <float*> [#uses=2]
+	%tmp.77 = load float* %tmp.76		; <float> [#uses=1]
+	store float %tmp.77, float* %tmp.65
+	store float %tmp.66, float* %tmp.76
+	%indvar.next52 = add uint %indvar51, 1		; <uint> [#uses=2]
+	%exitcond53 = seteq uint %indvar.next52, 5		; <bool> [#uses=1]
+	br bool %exitcond53, label %loopexit.5, label %no_exit.5
+
+loopexit.5:		; preds = %no_exit.5
+	%inc.5 = add int %i.2.0.ph, 1		; <int> [#uses=2]
+	%indvar.next55 = add uint %indvar54, 1		; <uint> [#uses=2]
+	%exitcond56 = seteq uint %indvar.next55, 5		; <bool> [#uses=1]
+	br bool %exitcond56, label %return, label %loopentry.4.outer
+
+return:		; preds = %loopexit.5
+	ret void
+}

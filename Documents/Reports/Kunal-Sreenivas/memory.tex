@@ -1,0 +1,23 @@
+\section{Memory Modelling}
+Memories has been treated as blackboxes due to the absence of SRAM cells in the OSU standard cell library.
+For SOC Encounter to estimate power, delay and area of the entire hardware, the memory black boxes must have the required information. We use Cacti 3.2[1] to estimate power and delay in the memory blackboxes. The area is modelled using the following expression[2].
+
+area(in mm2) = (0.001){ * }(tech)^{2.07} { * } (bits)^{0.9} { * } (port)^{0.7} + {0.0048}
+
+The values of power, area and delay obtained from the above models are used to generate the necessary information for the blackboxes in timing library file (TLF) and library exchange file (LEF) formats. The vital timing information is also obtained from delay models. 
+
+To describe a memory element as a black box, we instruct Synopsys DC to turn off its synthesis when it encounters the architecture for the memory.
+Thus for Synopsys DC, the memory is an entity definition with well defined input and output ports but a blank architecture.
+Similarly, Cadence SOC Encounter is made to infer black boxes whenever a memory component is instantiated from the TLF and LEF files.
+
+\section{Power Estimation}
+The layout being closest to the actual hardware is most suitable for estimation of power consumed in the design for a particular input sequence.
+Power has been calculated using SOC Encounter.
+
+Using the final gate level verilog netlist provided by SOC Encounter we perform a post -layout simulation and dump all the signal information to a vcd file. This vcd file is used by SOC Encounter to generate a power report. One is also required to mention the top level entity name for which power is to be estimated.
+
+Circuits like Linpack, Redblack have larger memory requirement and also take long time to simulate. For such examples, a sampling technique was followed, in order to reduce the size of VCD files (which was around 25Gb). In this technique, the final post layout netlist is simulated and the switching activities are captured at 10 random intervals of time. It was observed that, when power is calculated using these samples, the variance in power estimates for the samples is negligible.  
+
+\section{Results}
+Five examples viz. A5, AES, Red Black trees, Linpack and FFT were selected. 
+The memory architecture choices are shown TABLE I:

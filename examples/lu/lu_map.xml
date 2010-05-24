@@ -1,0 +1,87 @@
+<map id="lu" size="64">
+
+<!-- NOTE: all multi-dim arrays show up as a flat sequence of elements. -->
+
+<init>
+
+<!-- globals: -->
+
+<!-- Function start-->
+<!-- formals: -->
+<scalar addr="1" descr="start_formal_0" type="int">5</scalar>
+<scalar addr="2" descr="start_formal_1" type="uint">34</scalar>
+<scalar addr="3" descr="start_formal_2" type="uint">39</scalar>
+<scalar addr="4" descr="start_formal_3" type="uint">44</scalar>
+<scalar addr="5" descr="start_formal_4" type="uint">49</scalar>
+<scalar addr="6" descr="start_formal_5" type="uint">55</scalar>
+<!-- allocations: -->
+<array addr="7" descr="B" type="float" size="9">
+  <element index=""></element>
+</array>
+<array addr="16" descr="L" type="float" size="9">
+  <element index=""></element>
+</array>
+<array addr="25" descr="U" type="float" size="9">
+  <element index=""></element>
+</array>
+
+<!-- first free address: 34
+ addresses from this value onwards can be used for external data. -->
+
+<array addr="34" descr="A" type="float" size="5">
+  <element index="0">1</element>
+  <element index="1">1</element>
+  <element index="2">1</element>
+  <element index="3">3</element>
+  <element index="4">4</element>
+</array>
+
+<array addr="39" descr="rcoeff" type="int" size="5">
+  <element index="0">0</element>
+  <element index="1">0</element>
+  <element index="2">1</element>
+  <element index="3">2</element>
+  <element index="4">2</element>
+</array>
+
+<array addr="44" descr="ccoeff" type="int" size="5">
+  <element index="0">0</element>
+  <element index="1">2</element>
+  <element index="2">2</element>
+  <element index="3">1</element>
+  <element index="4">2</element>
+</array>
+
+<array addr="49" descr="l_array" type="float" size="6">
+</array>
+
+<array addr="55" descr="u_array" type="float" size="6">
+</array>
+
+
+</init>
+
+<fin>
+
+<array addr="49" descr="l_array" type="float" size="6">
+  <element index="0">1</element>
+  <element index="1">0</element>
+  <element index="2">1</element>
+  <element index="3">0</element>
+  <element index="4">0</element>
+  <element index="5">1</element>
+</array>
+
+<array addr="55" descr="u_array" type="float" size="6">
+  <element index="0">1</element>
+  <element index="1">0</element>
+  <element index="2">1</element>
+  <element index="3">3</element>
+  <element index="4">4</element>
+  <element index="5">1</element>
+</array>
+
+
+</fin>
+
+</map>

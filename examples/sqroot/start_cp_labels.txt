@@ -1,0 +1,494 @@
+
+
+cbr_4_oper_tmp.1.i_bool.req	
+
+	place: place_18 
+	oper_tmp.1.i_bool.ack	
+
+cbr_5_oper_tmp.6.i_bool.req	
+
+	place: place_24   1:(13,0-4)
+
+	loopentry.i.entry	
+
+	place: place_29   1:(13,1-4)
+
+	loopentry.i.entry	
+
+	place: place_34   1:(13,2-4)
+
+	loopentry.i.entry	
+
+	place: place_41   1:(13,3-4)
+
+	oper_tmp.6.i_bool.ack	  1:(13,3-4)
+
+
+cbr_6_oper_tmp.17.i_bool.req	
+
+	place: place_55   1:(12,0-2)
+
+	no_exit.i.entry	
+
+	place: place_65   1:(12,1-2)
+
+	oper_tmp.17.i_bool.ack	  1:(12,1-2)
+
+
+cbr_7_oper_tmp.17.i_bool.req	
+
+	place: place_72   1:(16,0-2)
+
+	no_exit.i.selectcont.entry	
+
+	place: place_73   1:(16,1-2)
+
+	no_exit.i.selectcont.entry	
+
+entry_to_loopentry.i_src	
+
+	place: place_19 
+	cbr_4_oper_tmp.1.i_bool.req	
+
+entry_to_no_exit.i_src	
+
+	place: place_19 
+	cbr_4_oper_tmp.1.i_bool.req	
+
+fin	
+
+	place: place_13 
+	store_location_start_return.ack	
+
+i.0.i.0_mux_1.ack	  1:(10,2-3)
+
+
+	place: place_52   1:(10,2-3)
+
+	i.0.i.0_mux_1.req0	  1:(10,2-3)
+
+	i.0.i.0_mux_1.req1	  1:(15,2-3)
+
+
+i.0.i.0_mux_1.req0	  1:(10,2-3)
+
+
+	place: place_54   1:(10,2-3)
+
+	entry_to_no_exit.i_src	
+
+i.0.i.0_mux_1.req1	  1:(15,2-3)
+
+
+	place: place_51   1:(15,2-3)
+
+	loopentry.i_to_no_exit.i_src	
+
+i.0.i_mux_1.ack	  1:(11,3-4)
+
+
+	place: place_36   1:(11,3-4)
+
+	i.0.i_mux_1.req0	  1:(18,3-4)
+
+	i.0.i_mux_1.req1	  1:(11,3-4)
+
+
+i.0.i_mux_1.req0	  1:(18,3-4)
+
+
+	place: place_38   1:(18,3-4)
+
+	no_exit.i.selectcont.selectcont_to_loopentry.i_src	
+
+i.0.i_mux_1.req1	  1:(11,3-4)
+
+
+	place: place_35   1:(11,3-4)
+
+	entry_to_loopentry.i_src	
+
+init	
+
+	place: place_12 
+	fin	
+
+llimit.1.i_mux_1.ack	
+
+	place: place_69 
+	llimit.1.i_mux_1.req0	
+	llimit.1.i_mux_1.req1	
+
+llimit.1.i_mux_1.req0	
+
+	place: place_7 
+	no_exit.i_to_no_exit.i.selecttrue_src	
+
+llimit.1.i_mux_1.req1	
+
+	place: place_68 
+	no_exit.i_to_no_exit.i.selectcont_src	
+
+llimit.2.i.0_mux_1.ack	  1:(10,0-3)
+
+
+	place: place_44   1:(10,0-3)
+
+	llimit.2.i.0_mux_1.req0	  1:(10,0-3)
+
+	llimit.2.i.0_mux_1.req1	  1:(15,0-3)
+
+
+llimit.2.i.0_mux_1.req0	  1:(10,0-3)
+
+
+	place: place_46   1:(10,0-3)
+
+	entry_to_no_exit.i_src	
+
+llimit.2.i.0_mux_1.req1	  1:(15,0-3)
+
+
+	place: place_43   1:(15,0-3)
+
+	loopentry.i_to_no_exit.i_src	
+
+llimit.2.i_mux_1.ack	  1:(11,1-4)
+
+
+	place: place_26   1:(11,1-4)
+
+	llimit.2.i_mux_1.req0	  1:(18,1-4)
+
+	llimit.2.i_mux_1.req1	  1:(11,1-4)
+
+
+llimit.2.i_mux_1.req0	  1:(18,1-4)
+
+
+	place: place_28   1:(18,1-4)
+
+	no_exit.i.selectcont.selectcont_to_loopentry.i_src	
+
+llimit.2.i_mux_1.req1	  1:(11,1-4)
+
+
+	place: place_25   1:(11,1-4)
+
+	entry_to_loopentry.i_src	
+
+load_number.ack	
+
+	place: place_15 
+	load_number.req	
+
+load_number.req	
+
+	place: place_14 
+	init	
+
+loopentry.i.entry	
+
+	place: place_2 
+	loopentry.i.pre	
+
+loopentry.i.pre	
+
+	place: place_22   1:(11,0-4)
+
+	mid.0.i_mux_1.ack	  1:(11,0-4)
+
+
+	place: place_27   1:(11,1-4)
+
+	llimit.2.i_mux_1.ack	  1:(11,1-4)
+
+
+	place: place_32   1:(11,2-4)
+
+	ulimit.2.i_mux_1.ack	  1:(11,2-4)
+
+
+	place: place_37   1:(11,3-4)
+
+	i.0.i_mux_1.ack	  1:(11,3-4)
+
+
+loopentry.i_to_no_exit.i_src	
+
+	place: place_42 
+	cbr_5_oper_tmp.6.i_bool.req	
+
+loopentry.i_to_sqroot.exit_src	
+
+	place: place_42 
+	cbr_5_oper_tmp.6.i_bool.req	
+
+mid.0.i_mux_1.ack	  1:(11,0-4)
+
+
+	place: place_21   1:(11,0-4)
+
+	mid.0.i_mux_1.req0	  1:(18,0-4)
+
+	mid.0.i_mux_1.req1	  1:(11,0-4)
+
+
+mid.0.i_mux_1.req0	  1:(18,0-4)
+
+
+	place: place_23   1:(18,0-4)
+
+	no_exit.i.selectcont.selectcont_to_loopentry.i_src	
+
+mid.0.i_mux_1.req1	  1:(11,0-4)
+
+
+	place: place_20   1:(11,0-4)
+
+	entry_to_loopentry.i_src	
+
+no_exit.i.entry	
+
+	place: place_3 
+	no_exit.i.pre	
+
+no_exit.i.pre	
+
+	place: place_45   1:(10,0-3)
+
+	llimit.2.i.0_mux_1.ack	  1:(10,0-3)
+
+
+	place: place_49   1:(10,1-3)
+
+	ulimit.2.i.0_mux_1.ack	  1:(10,1-3)
+
+
+	place: place_53   1:(10,2-3)
+
+	i.0.i.0_mux_1.ack	  1:(10,2-3)
+
+
+no_exit.i.selectcont.entry	
+
+	place: place_70 
+	llimit.1.i_mux_1.ack	
+
+no_exit.i.selectcont.selectcont.entry	
+
+	place: place_78 
+	ulimit.1.i_mux_1.ack	
+
+no_exit.i.selectcont.selectcont_to_loopentry.i_src	
+
+	place: place_80   1:(17,0-2)
+
+	no_exit.i.selectcont.selectcont.entry	
+
+	place: place_83   1:(17,1-2)
+
+	oper_inc.i_int.ack	  1:(17,1-2)
+
+
+no_exit.i.selectcont_to_no_exit.i.selectcont.selectcont_src	
+
+	place: place_74 
+	cbr_7_oper_tmp.17.i_bool.req	
+
+no_exit.i.selectcont_to_no_exit.i.selectcont.selecttrue_src	
+
+	place: place_74 
+	cbr_7_oper_tmp.17.i_bool.req	
+
+no_exit.i_to_no_exit.i.selectcont_src	
+
+	place: place_66 
+	cbr_6_oper_tmp.17.i_bool.req	
+
+no_exit.i_to_no_exit.i.selecttrue_src	
+
+	place: place_66 
+	cbr_6_oper_tmp.17.i_bool.req	
+
+oper_inc.i_int.ack	  1:(17,1-2)
+
+
+	place: place_81   1:(17,1-2)
+
+	oper_inc.i_int.req	  1:(17,1-2)
+
+
+oper_inc.i_int.req	  1:(17,1-2)
+
+
+	place: place_82   1:(17,1-2)
+
+	no_exit.i.selectcont.selectcont.entry	
+
+oper_tmp.1.i_bool.ack	
+
+	place: place_16 
+	oper_tmp.1.i_bool.req	
+
+oper_tmp.1.i_bool.req	
+
+	place: place_1 
+	load_number.ack	
+
+oper_tmp.10.i_float.ack	  1:(12,1-2)
+
+
+	place: place_56   1:(12,1-2)
+
+	oper_tmp.10.i_float.req	  1:(12,1-2)
+
+
+oper_tmp.10.i_float.req	  1:(12,1-2)
+
+
+	place: place_57   1:(12,1-2)
+
+	no_exit.i.entry	
+
+oper_tmp.11.i_float.ack	  1:(12,1-2)
+
+
+	place: place_58   1:(12,1-2)
+
+	oper_tmp.11.i_float.req	  1:(12,1-2)
+
+
+oper_tmp.11.i_float.req	  1:(12,1-2)
+
+
+	place: place_59   1:(12,1-2)
+
+	oper_tmp.10.i_float.ack	  1:(12,1-2)
+
+
+oper_tmp.14.i_float.ack	  1:(12,1-2)
+
+
+	place: place_60   1:(12,1-2)
+
+	oper_tmp.14.i_float.req	  1:(12,1-2)
+
+
+oper_tmp.14.i_float.req	  1:(12,1-2)
+
+
+	place: place_61   2:(12,1-2)(14,0-2)
+
+	oper_tmp.11.i_float.ack	  1:(12,1-2)
+
+
+	place: place_62   2:(12,1-2)(14,1-2)
+
+	oper_tmp.11.i_float.ack	  1:(12,1-2)
+
+
+oper_tmp.17.i_bool.ack	  1:(12,1-2)
+
+
+	place: place_63   1:(12,1-2)
+
+	oper_tmp.17.i_bool.req	  1:(12,1-2)
+
+
+oper_tmp.17.i_bool.req	  1:(12,1-2)
+
+
+	place: place_64   1:(12,1-2)
+
+	oper_tmp.14.i_float.ack	  1:(12,1-2)
+
+
+oper_tmp.6.i_bool.ack	  1:(13,3-4)
+
+
+	place: place_39   1:(13,3-4)
+
+	oper_tmp.6.i_bool.req	  1:(13,3-4)
+
+
+oper_tmp.6.i_bool.req	  1:(13,3-4)
+
+
+	place: place_40   1:(13,3-4)
+
+	loopentry.i.entry	
+
+store_location_start_return.ack	
+
+	place: place_84 
+	store_location_start_return.req	
+
+store_location_start_return.req	
+
+	place: place_5 
+	loopentry.i_to_sqroot.exit_src	
+
+ulimit.1.i_mux_1.ack	
+
+	place: place_77 
+	ulimit.1.i_mux_1.req0	
+	ulimit.1.i_mux_1.req1	
+
+ulimit.1.i_mux_1.req0	
+
+	place: place_10 
+	no_exit.i.selectcont_to_no_exit.i.selectcont.selecttrue_src	
+
+ulimit.1.i_mux_1.req1	
+
+	place: place_76 
+	no_exit.i.selectcont_to_no_exit.i.selectcont.selectcont_src	
+
+ulimit.2.i.0_mux_1.ack	  1:(10,1-3)
+
+
+	place: place_48   1:(10,1-3)
+
+	ulimit.2.i.0_mux_1.req0	  1:(10,1-3)
+
+	ulimit.2.i.0_mux_1.req1	  1:(15,1-3)
+
+
+ulimit.2.i.0_mux_1.req0	  1:(10,1-3)
+
+
+	place: place_50   1:(10,1-3)
+
+	entry_to_no_exit.i_src	
+
+ulimit.2.i.0_mux_1.req1	  1:(15,1-3)
+
+
+	place: place_47   1:(15,1-3)
+
+	loopentry.i_to_no_exit.i_src	
+
+ulimit.2.i_mux_1.ack	  1:(11,2-4)
+
+
+	place: place_31   1:(11,2-4)
+
+	ulimit.2.i_mux_1.req0	  1:(18,2-4)
+
+	ulimit.2.i_mux_1.req1	  1:(11,2-4)
+
+
+ulimit.2.i_mux_1.req0	  1:(18,2-4)
+
+
+	place: place_33   1:(18,2-4)
+
+	no_exit.i.selectcont.selectcont_to_loopentry.i_src	
+
+ulimit.2.i_mux_1.req1	  1:(11,2-4)
+
+
+	place: place_30   1:(11,2-4)
+
+	entry_to_loopentry.i_src	

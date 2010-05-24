@@ -1,0 +1,90 @@
+sqroot_linked.xml
+Parsing program sqroot
+  controlpath: sqroot_cp
+  controlpath: start_cp
+
+analysing sqroot_cp
+
+fork entry_to_no_exit_src:
+  snk place_46: (0,(0-3))
+  snk place_50: (0,(1-3))
+  snk place_54: (0,(2-3))
+
+fork entry_to_loopentry_src:
+  snk place_20: (1,(0-4))
+  snk place_25: (1,(1-4))
+  snk place_30: (1,(2-4))
+  snk place_35: (1,(3-4))
+
+join no_exit.pre
+  intial: (0,(0-3,1-3,2-3))
+  fork 0: 0 1 2 out of 3 ... eliminated.
+  final: 
+
+join loopentry.pre
+  intial: (1,(0-4,1-4,2-4,3-4))
+  fork 1: 0 1 2 3 out of 4 ... eliminated.
+  final: 
+
+fork no_exit.entry:
+  snk place_55: (2,(0-2))
+  snk place_57: (2,(1-2))
+
+fork loopentry.entry:
+  snk place_24: (3,(0-4))
+  snk place_29: (3,(1-4))
+  snk place_34: (3,(2-4))
+  snk place_40: (3,(3-4))
+
+join cbr_1_oper_tmp.6_bool.req
+  intial: (3,(0-4,1-4,2-4,3-4))
+  fork 3: 0 1 2 3 out of 4 ... eliminated.
+  final: 
+
+fork oper_tmp.11_float.ack:
+  snk place_61: (2,(1-2)),(4,(0-2))
+  snk place_62: (2,(1-2)),(4,(1-2))
+
+fork loopentry_to_no_exit_src:
+  snk place_43: (5,(0-3))
+  snk place_47: (5,(1-3))
+  snk place_51: (5,(2-3))
+
+join oper_tmp.14_float.req
+  intial: (2,(1-2)),(4,(0-2,1-2))
+  fork 2: 1 out of 2
+  fork 4: 0 1 out of 2 ... eliminated.
+  final: (2,(1-2))
+
+join cbr_2_oper_tmp.17_bool.req
+  intial: (2,(0-2,1-2))
+  fork 2: 0 1 out of 2 ... eliminated.
+  final: 
+
+fork no_exit.selectcont.entry:
+  snk place_72: (6,(0-2))
+  snk place_73: (6,(1-2))
+
+join cbr_3_oper_tmp.17_bool.req
+  intial: (6,(0-2,1-2))
+  fork 6: 0 1 out of 2 ... eliminated.
+  final: 
+
+fork no_exit.selectcont.selectcont.entry:
+  snk place_80: (7,(0-2))
+  snk place_82: (7,(1-2))
+
+join no_exit.selectcont.selectcont_to_loopentry_src
+  intial: (7,(0-2,1-2))
+  fork 7: 0 1 out of 2 ... eliminated.
+  final: 
+
+fork no_exit.selectcont.selectcont_to_loopentry_src:
+  snk place_23: (8,(0-4))
+  snk place_28: (8,(1-4))
+  snk place_33: (8,(2-4))
+  snk place_38: (8,(3-4))
+
+  5 loopentry_to_no_exit_src
+  8 no_exit.selectcont.selectcont_to_loopentry_src
+analyse: Analyser.cpp:242: void analysis::Analyser::analyse(parser::ControlPath*): Assertion `false && "some forks not eliminated"' failed.

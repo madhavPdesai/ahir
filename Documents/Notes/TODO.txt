@@ -1,0 +1,52 @@
+#+TITLE: AHIR TODO
+#+DATE: <2010-02-02 Tue>
+#+OPTIONS: toc:nil author:nil
+
+1. Implementation (AHIR v2)
+   1. VHDL library
+      1. Data-path operators
+      2. Load / Store operators
+      3. Library validation
+	 1. ApInt operators using random examples.
+	 2. ApFloat operators using random examples
+	    - Possibly use the LLVM APFloat library to generate examples in
+	      arbitrary-precision floating point arithmetic.
+   2. VHDL generator
+      1. Generate the following entities:
+	 1. Control Path
+	 2. Data Path
+	 3. Link Layer
+	 4. Arbiter
+	 5. System that instantiates all of the above along with memory
+      2. Flow validation
+   3. Operator reuse
+      1. Tool to generate compatibility labels from an AHIR specification.
+      2. Tool to choose shared operations using compatibility labels
+         and the AHIR specification.
+   4. Synthesis results
+      1. Reproduce work done by Kunal and Sreenivas.
+      2. Repeat the flow for AHIR v2.
+      3. Create flow to synthesise AHIR v2 on OSU/FreePDK 45nm library.
+2. Optimisations
+   1. Bypass registers: Analyse the control-path to identify registers
+      that can be bypassed. The required condition is that the value
+      of the register should not be used in the same cycle that it is
+      updated, since that will result in a combinational loop.
+   2. Pipelined operators: This will have two effects: reduce the
+      clock period, and improve utilisation.
+   3. Register sharing: Use a liveness analysis to determine whether
+      the outputs of two operations can be stored in the same
+      register.
+3. Extensions
+   1. I/O Ports: A C API for declaring I/O ports in a program. Provide
+      a suitable C library to implement them in software. The ports
+      will be instantiated in hardware as actual ports on the data-path.
+      1. Ports are strictly point-to-point; each port is declared as
+         an input port in exactly one process and as an output port in
+         exactly one process.
+      2. A common namespace for all the ports across all modules.
+         Connections between modules are implicit in the names of the
+         ports.
+4. Visualisation tool for CDFG, AHIR
+   1. Using GraphViz
+   2. Standalone graphical "AHIR explorer"

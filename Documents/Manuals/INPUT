@@ -1,0 +1,20 @@
+
+
+The ahir tool-chain is designed to produce AHIR-XML specifications
+from C source code. The C input has to follow constraints described
+below:
+
+1. The program's call-graph should be a DAG. This condition is
+   currently not checked, so the result will be undefined if a cyclic
+   call-graph is provided as input.
+
+2. Following C features are currently not supported:
+   a. data structures
+   b. function pointers
+
+3. The complete program must be present in a single file.
+
+4. The complete DAG must contain a function called "start", which
+   denotes the root of the call-graph. The function "main" should not
+   be used, since it will trigger internal modifications by the C
+   front-end, that are incompatible with the ahir tools.

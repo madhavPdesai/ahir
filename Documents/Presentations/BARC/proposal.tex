@@ -1,0 +1,918 @@
+\documentclass[12pt]{article}
+
+\usepackage{geometry}
+\geometry{verbose,a4paper,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+
+\usepackage{graphicx}
+\usepackage{multirow}
+
+\newenvironment{packed_enum}{
+\begin{enumerate}
+  \setlength{\itemsep}{1pt}
+  \setlength{\parskip}{0pt}
+  \setlength{\parsep}{0pt}
+  \setlength{\partopsep}{0pt}
+  \setlength{\topsep}{0pt}
+}{\end{enumerate}}
+
+\begin{document}
+
+\newcounter{srno}
+\newcommand{\setsr}[1]{\setcounter{srno}{#1}}
+
+\newcounter{srinc}
+\newcommand{\incten}[0]{\setcounter{srinc}{10}}
+\newcommand{\incone}[0]{\setcounter{srinc}{1}}
+
+\newcommand{\srno}[2][\arabic{srno}]{\noindent\paragraph{#1. #2}\addtocounter{srno}{\value{srinc}}}
+
+\incone
+\setsr{100}
+
+\newcommand{\mytitle}{Development of a high-level hardware synthesis
+  tool-chain}
+
+\begin{titlepage}
+\begin{large}
+\begin{center}
+\vspace{0.5cm}
+Project Proposal\\
+\vspace{0.5cm}
+for\\
+\vspace{0.5cm}
+{\Large \bf \mytitle}\\
+\vspace{2.5cm}
+\begin{tabular}{l}
+\hline
+{\bf Principal Investigator}\\
+\hline
+Prof. Kavi Arya\\
+Centre for Formal Design and Verification of Software, and\\
+Department of Computer Science and Engineering,\\
+Indian Institute of Technology - Bombay,\\
+Powai, Mumbai - 400076\\
+\\
+kavi@cse.iitb.ac.in\\
+\hline
+\end{tabular}
+\end{center}
+\end{large}
+\end{titlepage}
+
+
+\begin{center}
+  \bf \Large Section-A\\
+  \large Part I\\
+  \vspace{2ex}
+  Project Overview\\
+\end{center}
+
+\srno{Advisory Committee Code Number:} 34 (ATC)
+
+\srno{Title:}
+\begin{center}
+  \large\mytitle
+\end{center}
+
+\srno{Keywords: } high-level synthesis, hardware compilation, EDA
+
+\srno{Project Summary:}
+
+\paragraph{} High-level synthesis is the process of compiling
+high-level programs to hardware circuits. This reduces the cost of
+hardware design by providing two advantages. Firstly, it lowers the
+level of expertise required so that even programmers can generate
+hardware designs, and secondly, it significantly reduces the time and
+effort required to create efficient implementations. High-level
+synthesis is also relevant to safety-critical applications since it
+guarantees provably correct implementations of the input
+specification. The resulting hardware does not have to be verified;
+only the behaviour of the input program has to be functionally
+verified.
+
+Current work at IIT Bombay has established a scalable automated
+high-level synthesis flow that guarantees correctness, called AHIR. It
+has been tested on diverse examples such as cryptography, linear
+algebra, data structures and signal processing. The flow takes
+advantage of established compiler techniques to infer what the user
+meant when they wrote the program, and produce the most suitable
+hardware for it.
+
+The proposed project aims to make the ongoing research at IIT Bombay
+available to BARC in the form of a synthesis tool-chain based on AHIR.
+The tool-chain will also be demonstrated on a system currently being
+developed at BARC --- a hardware implementation of the TCP/IP network
+protocol stack. Such a system is being designed at BARC using the
+commercial high-level synthesis product called Handel-C. A second
+implementation will be created under the proposed project, using AHIR
+to synthesise a C implementation of TCP/IP to hardware. This will
+provide the basis for a practical evaluation of the tool-chain.
+
+The proposed project is a starting point for long-term development
+work on the use of high-level synthesis at BARC. Access to such an
+indigenous technology is of strategic importance to BARC in terms of
+self-reliance. The users at BARC will have direct access to the
+research group working on AHIR at IIT Bombay. This will allow BARC to
+keep pace with further developments in high-level synthesis including
+optimisations and the ability to target emerging hardware platforms.
+
+\newpage
+
+\srno{Principal Investigator}
+\paragraph{}
+\begin{tabular}{l}
+  Prof. Kavi Arya\\
+  \\
+  Centre for Formal Design \& Verification\\
+  of Software, and\\
+  Dept. of Computer Science and Engg.,\\
+  Indian Institute of Technology - Bombay,\\
+  Powai, Mumbai - 400076\\
+  \\
+  kavi@cse.iitb.ac.in\\
+\end{tabular}
+
+\srno{Co-Investigator}
+\paragraph{}
+\begin{tabular}{l}
+  Prof. Madhav P. Desai\\
+  \\
+  Dept. of Electrical Engineering,\\
+  Indian Institute of Technology - Bombay,\\
+  Powai, Mumbai - 400076\\
+  \\
+  madhav@ee.iitb.ac.in\\
+\end{tabular}
+
+\srno{Principal Collaborator}
+\paragraph{}
+
+\setsr{109}
+
+\newpage
+
+\srno{Budget Amounts in Rupees (Lakhs): }
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+\multicolumn{2}{|c|}{Particulars} & Year I & Year II & Year III & Total \\
+\hline
+\hline
+Equipment &  & 7.25 & -- & -- & 7.25 \\
+Salaries & JRF & 1.38 & 1.38 & 1.56 & 4.32 \\
+ & JRF & -- & 1.38 & 1.56 & 2.94 \\
+ & RA-III & 4.20 & 4.20 & 4.80 & 13.20 \\
+Consumables &  & 0.25 & 0.25 & 0.25 & 0.75 \\
+Travel Allowance & PI & 1.05 & 1.05 & 1.05 & 3.15 \\
+ & PC & 0.20 & 0.20 & 0.20 & 0.60 \\
+Technical Assistance &  & 0.15 & 0.15 & 0.15 & 0.45 \\
+Contingencies &  & 0.15 & 0.15 & 0.15 & 0.45 \\
+\hline
+Total &  & 14.63 & 8.76 & 9.72 & 33.11 \\
+\hline 
+Overheads &  & 2.19 & 1.31 & 1.46 & 4.97\\
+\hline
+Total &  & 16.82 & 10.07 & 11.18 & 38.08\\
+\hline
+\end{tabular}
+\end{center}
+
+\srno{Equipment Cost:}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\multicolumn{4}{l}{\bf Amounts in Rupees (Lakhs)}\\
+\hline
+Item & Quantity & Rate & Amount \\
+\hline
+Desktop PC & 3 & 0.50 & 1.50 \\
+External hard drives & 2 & 0.05 & 0.10 \\
+Laptop & 1 & 0.65 & 0.65 \\
+FPGA board & 2 & 1.00 & 2.00 \\
+\hline
+Total & & & 4.25 \\
+\hline
+\end{tabular}
+\end{center}
+
+\newpage
+
+\begin{center} {\bf \large Part-II\\
+\vspace{2ex}
+Project Objectives, Research Plan and Deliverables}
+\end{center}
+
+\setsr{200}
+\incten
+
+\srno{List of Objectives}
+
+The overall purpose of the project is to develop a high-level
+synthesis software suite to be used at BARC, based on the research
+being done at IIT Bombay. In particular there are two objectives:
+
+\begin{enumerate}
+\item Deliver a software tool-chain based on AHIR that provides the
+  following facilities:
+  \begin{enumerate}
+  \item Compile C programs to synthesisable RTL descriptions.
+  \item Run and evaluate the generated hardware on an FPGA board.
+  \item Test and debug the behaviour of the FPGA implementation with
+    respect to the input C programs.
+  \end{enumerate}
+
+\item Evaluate the effectiveness of the high-level synthesis flow by
+  automatically generating a hardware implementation of the TCP/IP
+  network protocol stack, starting from a behavioural description
+  written in C.
+\end{enumerate}
+
+\srno{Yearly Research Plan and Deliverables}
+
+\paragraph{} A high-level synthesis tool-chain based on AHIR was
+implemented as part of of ongoing research at IIT Bombay on high-level
+synthesis. The tool-chain consists of a set of tools that can
+translate a subset of the C programming language to hardware modules.
+It has been tried on a number of examples that represent various
+applications such as cryptography, digital signal processing,
+high-performance computing and high-level data structures. Work done
+under this project will result in a complete software bundle being
+delivered to BARC for regular use. This includes the implementation of
+on-going research work at IIT Bombay aimed at enabling the compilation
+of very large systems specified as C programs.
+
+We propose to use a C implementation of the TCP/IP network protocol
+stack as a working example during development. This will serve to
+demonstrate the effectiveness of the synthesis tool-chain. Insights
+gained during this exercise will also provide data for the on-going
+research at IIT Bombay.
+
+\subsubsection*{Developing the tool-chain}
+
+The existing implementation at IIT Bombay has been used successfully
+to demonstrate the potential gains of a high-level synthesis flow
+based on AHIR. The work under the proposed project will be aimed at
+realising these potential benefits and also packaging the prototype as
+a complete end-to-end solution. In particular, the work will be
+concentrated on following areas of development:
+
+\begin{enumerate}
+\item Support for a minimum set of features including the following:
+  \begin{enumerate}
+  \item Complete support for the ISO C language standard.
+  \item Input/Output ports.
+  \item Separate compilation and pre-compiled libraries.
+  \end{enumerate}
+\item Improvements in the hardware produced, including the following:
+  \begin{enumerate}
+  \item Improvements in the library of building blocks --- efficient
+    operators, multicycle operators, pipelined operators etc.
+  \item Efficient utilisation of hardware resources.
+  \item Improvements in throughput by automatically recognising and
+    eliminating unnecessary sequential delays when generating
+    hardware.
+  \item Support for sharing of pipelined multicycle operators.
+  \end{enumerate}
+\item Support for the design and implementation of large systems by
+  separately designing various modules and automatically composing
+  them into a single coherent system.
+\end{enumerate}
+
+The development work on these areas will involve a synergy between the
+proposed project and the ongoing research work on AHIR at IIT Bombay.
+Of the three areas of thrust highlighted here, the first two are
+largely concerned with improving the existing implementation of the
+AHIR tool-chain. The third area deals with extending the current
+implementation to include new features being developed at IIT Bombay.
+The current tool-chain takes a single C program and generates a
+hardware implementation for it. But in order to support a large
+system, the tool-chain must address the following issues:
+
+\begin{enumerate}
+\item Concurrent execution of modules in a system.
+\item Efficient communication channels between the modules.
+\item A memory subsystem for external storage of data, that can keep
+  up with the demands of the system modules.
+\item Facility to use a high-level description of the system
+  architecture. The entire system will be automatically generated from
+  this high-level description by combining the individual modules.
+\end{enumerate}
+
+Research work in this area being done at IIT Bombay will greatly
+benefit from experience in using the existing AHIR tool-chain in
+implementing a non-trivial system in hardware. The proposed project
+will assist in this respect through the development of a TCP/IP
+network protocol stack in hardware for use at BARC.
+
+\subsubsection*{TCP/IP implementation}
+
+The development of the TCP/IP implementation will begin in parallel
+with the work on the AHIR tool-chain. Initial work will largely focus
+on characterising the major components of such a system, and building
+an early version using the existing AHIR implementation. Each
+component will be implemented as a C program and compiled to hardware
+using AHIR. The components will be put together manually to produce
+the first prototype of the entire system.
+
+The first manual effort is important in terms of highlighting the
+automatic functionality expected from the AHIR tool-chain, that allows
+a user to describe a large system as a collection of C programs, and
+expect to automatically generated an efficient hardware
+implementation. The result will be a complete high-level specification
+of the TCP stack, that can be automatically compiled to competitive
+hardware using AHIR.
+
+\subsubsection*{Yearly Deliverables}
+
+  \renewcommand\arraystretch{1.2}
+\begin{tabular}{|c|p{0.45\textwidth}|p{0.45\textwidth}|}
+  \hline
+  Year & Activity & Deliverable\\
+  \hline
+  \hline
+  I & Identifying and implementing ISO C features
+  that are not  supported in the current implementation. &
+  \multirow{4}{0.45\textwidth}{Complete    support for the C language
+    in the AHIR tool-chain.}\\
+  \cline{2-2}
+  & Implementing I/O ports. & \\
+  \cline{2-3}
+  & Implementing multicycle and pipelined operators. & A library of
+  efficient hardware operators to be used by the generated circuit.\\
+  \cline{2-3}
+  & Improving parallelisation of operators and memory accesses. &
+  Improved throughput in the generated circuits. \\
+  \cline{2-3}
+  & \multirow{3}{0.45\textwidth}{Designing the overall architecture of
+    the TCP/IP hardware    implementation.} & A preliminary overview
+  of the system architecture,  along with expected performance and
+  hardware costs. \\
+  \hline
+  \hline
+  II & Implementing hardware optimisations including sharing of
+  pipelined operators, sharing of registers and system-level resource
+  reuse. & \multirow{4}{0.45\textwidth}{Hardware optimisation module
+    in the AHIR tool-chain.} \\
+  \cline{2-3}
+  & Implementing separate compilation and    library linking. &
+  Support  for pre-compiled libraries in the  AHIR  tool-chain.\\ 
+  \cline{2-3}
+  & \multirow{5}{0.45\textwidth}{Implementing the components in the
+    TCP/IP system as separate     programs and manually combining them
+    for a complete implementation.}   & A preliminary implementation
+  of the TCP/IP system.\\
+  \cline{3-3}
+  & & A characterisation of the meta-level information required for
+  automatic generation of entire systems. \\
+  \hline
+  \hline
+  III & Implementing a system-level synthesis tool
+  that combines  independent components using a high-level
+  architectural description  to produce a complete system. & A
+  complete high-level synthesis  tool-chain for generating complex
+  systems from large programs. \\ 
+  \cline{2-3}
+  & Automatically generating a hardware of the TCP/IP network protocol
+  stack using the AHIR tool-chain. & A complete high-level description
+  of the TCP/IP stack along with a  working implementation on an FPGA.\\
+  \hline
+\end{tabular}
+
+\newpage
+
+\begin{center} {\bf \large Part-III\\
+\vspace{2ex}
+Budget Estimates}
+\end{center}
+
+\setsr{290}
+\incten
+
+\srno{Details of Budget Requirements --- Amounts in Rupees (Lakhs)}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+\multicolumn{2}{|c|}{Particulars} & Year I & Year II & Year III & Total \\
+\hline
+\hline
+Equipment &  & 7.25 & -- & -- & 7.25 \\
+Salaries & JRF & 1.38 & 1.38 & 1.56 & 4.32 \\
+ & JRF & -- & 1.38 & 1.56 & 2.94 \\
+ & RA-III & 4.20 & 4.20 & 4.80 & 13.20 \\
+Consumables &  & 0.25 & 0.25 & 0.25 & 0.75 \\
+Travel Allowance & PI & 1.05 & 1.05 & 1.05 & 3.15 \\
+ & PC & 0.20 & 0.20 & 0.20 & 0.60 \\
+Technical Assistance &  & 0.15 & 0.15 & 0.15 & 0.45 \\
+Contingencies &  & 0.15 & 0.15 & 0.15 & 0.45 \\
+\hline
+Total &  & 14.63 & 8.76 & 9.72 & 33.11 \\
+\hline 
+Overheads &  & 2.19 & 1.31 & 1.46 & 4.97\\
+\hline
+Total &  & 16.82 & 10.07 & 11.18 & 38.08\\
+\hline
+\end{tabular}
+\end{center}
+
+\srno{Equipment}
+
+\paragraph{} The PI proposes to procure three desktop PCs along with
+two FPGA boards that will be used as the accelerator platform. The PI
+also proposes to provide a laptop to research staff at RA-III level
+for purposes of presentation of the technical work, progress reports
+and documentation during the duration of the project. In addition,
+this laptop will also carry the actual code of the tool for
+development, debugging and demonstration purposes. This will be
+important to ensure that there are no impediments to progress of the
+work even when the key persons are travelling and may not be present
+at the same physical location. Since the development work involves a
+large amount of data, the PI proposes to purchase external hard drives
+to be used with the desktop PC and the laptop. The budget requirements
+for this equipment are listed below:
+
+% \begin{enumerate}
+% \item \textbf{Desktop PC:} Intel Core 2 Duo processor, 4GB DDR2 RAM,
+%   2$\times$250GB SATA HDD, 19" TFT LCD monitor, DVD writer, keyboard,
+%   mouse.
+% \item \textbf{Laptop:} Intel Core 2 Duo processor, 2GB DDR2 RAM, 250GB
+%   SATA HDD, 14" WXGA LCD, 10/100 Ethernet, 802.11g, Bluetooth.
+% \item \textbf{FPGA board:} 
+% \end{enumerate}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\multicolumn{4}{l}{\bf Amounts in Rupees (Lakhs)}\\
+\hline
+Item & Quantity & Rate & Amount \\
+\hline
+Desktop PC & 3 & 0.50 & 1.50 \\
+External hard drives & 2 & 0.05 & 0.10 \\
+Laptop & 1 & 0.65 & 0.65 \\
+FPGA board & 1 & 5.00 & 5.00 \\
+\hline
+Total & & & 7.25 \\
+\hline
+\end{tabular}
+\end{center}
+
+\newpage
+\srno{Staff Salary --- Amounts in Rupees}
+
+\paragraph{}The PI proposes to recruit two research staff for
+undertaking the development work for the first year, and three
+research staff for the second and third year. One position will be at
+the level of RA-III for all three years, for a person with a PhD in
+CSE/EE. One position at the level of JRF will be created for the first
+year, with an additional position at the level of JRF for the second
+and third year. The JRF positions will be open for persons with a
+BTech in CSE/EE. The detailed budget estimate for staff salaries are
+given below.
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\multicolumn{5}{l}{\bf Amounts in Rupees (Lakhs)}\\
+\hline
+Staff & Year I & Year II & Year III & Total \\
+\hline
+JRF & 1.38 & 1.38 & 1.56 & 4.32 \\
+ & @Rs.11,500 p.m. & @Rs.11,500 p.m. & @Rs.13,000 p.m. & \\
+\hline
+JRF & -- & 1.38 & 1.56 & 2.94 \\
+ & & @Rs.11,500 p.m. & @Rs.13,000 p.m. & \\
+\hline
+RA-III & 4.20 & 4.20 & 4.80 & 13.20 \\
+ & @Rs.35,000 p.m. & @Rs.35,000 p.m. & @Rs.40,000 p.m. & \\
+\hline
+Total & 5.58 & 6.96 & 7.92 & 20.46 \\
+\hline
+\multicolumn{5}{l}{{\bf Note:} The HRA paid is 30\% of the consolidated salary.}
+\end{tabular}
+\end{center}
+
+\setsr{330}
+
+\srno{Consumables}
+
+\paragraph{} The budgetary requirement of consumables like printer
+cartridges, paper, backup CDs and other stationaries, is given below.
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\multicolumn{5}{l}{\bf Amounts in Rupees (Lakhs)}\\
+\hline
+Item & Year I & Year II & Year III & Total \\
+\hline
+Papers, Cartridges, CDs & 0.25 & 0.25 & 0.25 & 0.75 \\
+and other consumables & & & & \\
+\hline
+Total & 0.25 & 0.25 & 0.25 & 0.75 \\
+\hline
+\end{tabular}
+\end{center}
+
+\newpage
+
+\srno{Travel}
+
+\paragraph{} It is expected that the research and development work
+undertaken as part of this project will lead to at least two to three
+international publications. This will help in getting the work peer
+reviewed by the research community working in related areas of
+verification. This may require travelling within India and also abroad
+to present the research results in peer reviewed conferences. The
+travel budget shown below also includes the budget required for travel
+by the PC to PI's institute and by the PI to PC's institute for
+regular meetings.
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\multicolumn{5}{l}{\bf Amounts in Rupees (Lakhs)}\\
+\hline
+Item & \multicolumn{4}{c|}{Funds required} \\
+\cline{2-5}
+ & Year I & Year II & Year III & Total \\
+\hline
+Weekly visits by PC & 0.20 & 0.20 & 0.20 & 0.60 \\
+to PI's premises & & & & \\
+Monthly visits by PI & 0.05 & 0.05 & 0.05 & 0.15 \\
+to PC's premises & & & & \\
+Attending national \& & 1.00 & 1.00 & 1.00 & 3.00 \\
+international conferences & & & & \\
+\hline
+Total & 1.25 & 1.25 & 1.25 & 3.75 \\
+\hline
+\end{tabular}
+\end{center}
+
+% \srno{Contingency}
+
+% \srno{Overheads}
+
+% \srno{Grand Total}
+
+% \begin{center}
+%   \large
+%   \vspace{2ex}
+%   BUDGET DETAILS
+%   \vspace{2ex}
+% \end{center}
+
+% \srno[310]{Details of the budget for equipment to be procured by the
+%   PI (Amount in Rupees):}
+
+% \srno[320]{Details of staff salary (Amount in Rupees):}
+
+% \srno[340]{Details of budget for consumables to be procured by the PI
+%   (Amount in Rupees):}
+
+% \setsr{350}
+% \incone
+
+% \srno{Details of travel:}
+% \srno{Proposed number of visits of PC/DC to PI's institute}
+% \srno{Duration of stay during each visit (No. of days)}
+% \srno{Total funds required}
+% \srno{Proposed number of visits of PI to PC/DC's institute}
+% \srno{Duration of stay during each visit (No. of days)}
+% \srno{Total funds required}
+% \srno{Funds required by PI for travel to attend conferences within India.}
+% \srno{Funds for Other visits}
+
+
+% \begin{center}
+%   \large
+%   \vspace{2ex}
+%   BUDGET JUSTIFICATIONS
+%   \vspace{2ex}
+% \end{center}
+
+\newpage
+
+\begin{center}
+  \bf \Large Section-B\\
+  \vspace{2ex}
+\end{center}
+
+\incone
+\setsr{499}
+\srno{Technical Information}
+
+\section{Introduction}
+
+Given an algorithm, one can either implement it on a microprocessor,
+or design hardware with an equivalent behaviour. Although compiling a
+program to a microprocessor is convenient, a hardware implementation
+has a number of advantages:
+
+\begin{enumerate}
+  \item Higher performance.
+  \item Decreased power dissipation.
+  \item Reduced size.
+\end{enumerate}
+
+But hardware platforms continue to evolve, making it possible to
+integrate ever larger systems onto a single device. As the size
+increases, it becomes more and more difficulty to cope with the
+complexity of the design. In addition, it is important that the design
+be independent of the underlying hardware, so that the target platform
+may be changed without affecting the design itself. This can be only
+be addressed by making effective use of {\em high-level synthesis},
+the process of translating high-level programs into hardware.
+
+The use of high-level programs as the starting point makes hardware
+design accessible to a very large set of users. If the compiler is
+guaranteed to produce a correct implementation of the input
+specification, the resulting hardware does not have to be verified. 
+Only the behaviour of the input specification has to be verified,
+which can be done using existing software verification practices.
+
+A competitive high-level synthesis process must preserve common
+practices in software programming while providing a verifiable and
+optimisable path to a hardware implementation. This requires a
+compiler flow that can generate efficient circuits from complex
+high-level programs. Such a compiler flow must have the following
+features:
+
+\begin{enumerate}
+  \item It should be independent of the programming language
+        used.
+  \item It should guarantee a correct implementation of the
+        specified behaviour.
+  \item It should support optimisations that can scale to very
+        large systems.
+  \item It should be able to target new hardware platforms as
+        they emerge.
+\end{enumerate}
+
+AHIR is an attempt at implementing such a high-level synthesis flow. 
+AHIR uses an intermediate representation that makes it possible to
+decouple high-level issues encountered when writing programs, from
+low-level issues in the hardware implementation. An AHIR specification
+is factorised into three components: control-flow, data-flow and
+storage. The three components can be analysed and transformed
+separately without affecting each other, enabling optimisations that
+can scale with the size of the circuit. At the same time, AHIR
+captures sufficient information from the input program, so that it can
+be routinely mapped to a variety of hardware platforms.
+
+\section{AHIR}
+
+AHIR is a compact graph-based hardware representation that provides a
+delay-independent specification of the circuit. A specification in
+AHIR can be routinely translated to hardware. Features such as
+parallelism and resource sharing may be available in the input
+language, or introduced by the compiler. In either case, the
+intermediate representation is rich enough to describe them.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.25]{omega.pdf}
+  \caption{An AHIR system.}
+  \label{fig:system}
+\end{figure}
+
+A system in AHIR consists of a number of modules, each consisting of a
+control-path and a data-path. Typically, each function in an input
+program is translated to a module. Function calls are implemented by
+passing the call request along with the relevant arguments through an
+inter-module link layer. The modules can also share data through an
+external memory subsystem.
+
+AHIR does not include any details about the memory architecture; only
+a simple linear address space is assumed. Each module can specify an
+arbitrary number of memory access ports. The only requirement from the
+memory subsystem is that a request made on an access port must be
+served eventually.
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.3]{decouple.pdf}
+\caption{An AHIR module.}
+\end{figure}
+
+A module in AHIR consists of two closely interacting components: a
+control-path and a data-path. The data-path in a module is a pool of
+operators connected by wires. The control-path is a petri-net that
+specifies the ordering of events in the module. AHIR uses a subclass
+of petri-nets called {\em Type-2 petri-nets}, which has been defined
+to guarantee liveness and safety, while supporting scalable analyses.
+
+%\begin{figure}[h]
+%\centering
+%\includegraphics[scale=0.35]{alpha-schema.pdf}
+%\caption{Handshakes between control and data paths.}
+%\end{figure}
+
+The control-path and data-path interact through a link layer by
+exchanging request-acknowledge handshakes that encapsulate delays
+occurring in the implementation. AHIR specifies a set of constraints
+on the delays involved --- an implementation that satisfies these
+constraints is guaranteed to be correct.
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.3]{isochron.pdf}
+\caption{Delay constraints in AHIR.}
+\label{fig:isochron}
+\end{figure}
+
+Figure~\ref{fig:isochron} shows a hypothetical example with associated
+delays. The numbered delays $d_0$ to $d_5$ in this figure are not
+individual values, but representatives of their respective class of
+delays. The delays in the implementation must satisfy the following
+two inequalities in order to guarantee correctness:
+
+\[d_5 \le d_0 + d_1 + d_3\]
+\[d_2 \le d_3 + d_4 + d_0\]
+
+\subsection{Key innovations}
+
+\begin{enumerate}
+\item An orthogonal representation of the control, data and storage
+      aspects of the input program, that can be routinely translated
+      to a hardware implementation.
+\item Support for static analysis and optimisation procedures that can
+      scale with the size of the program.
+\item A verifiable compilation path from algorithms to digital
+      hardware, based on the intermediate representation.
+\end{enumerate}
+
+\subsection{High-level Synthesis using AHIR}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[scale=0.3]{flow.pdf}
+  \caption{High-level Synthesis using AHIR.}
+\end{figure}
+
+The high-level synthesis flow based on AHIR consists of two phases: a
+software phase that optimises and translates a high-level program to
+AHIR, and a hardware phase that optimises and translates an AHIR
+specification to a hardware implementation. The result is an
+end-to-end compiler flow that translates C programs to synthesisable
+VHDL descriptions.
+
+The software phase consists of existing software compilation
+techniques along with a backend that generates AHIR specifications. 
+The translation to AHIR uses a well-known intermediate form called a
+CDFG (Control Data Flow Graph). The CDFG is first derived from the
+optimised program and then translated to an AHIR specification using a
+simple piece-wise construction method. The method used guarantees
+correctness {\it by construction} --- the generated AHIR specification
+correctly implements the behaviour specified by the CDFG.
+
+The control, data and storage components of the AHIR specification  can
+now be implemented independently. The factorisation allows us to
+efficiently analyse and transform these components in order to
+optimise the circuit. We demonstrate this with an optimisation
+that improves resource utilisation by sharing resources in the
+data-path.
+
+The resource sharing is based on a static analysis of the control-path
+that identifies pairs of operations that cannot be active at the same
+time. The algorithms and supplementary data structures used by the
+analysis are very simple and close to linear in complexity. 
+Experimental results show that even this simple approach is quite
+effective in improving the resource utilisation of the circuit.
+
+The optimised AHIR specification is translated to a circuit
+implementation by the hardware phase. The compiler is free to explore
+various architectures in this phase, as long as the timing constraints
+in AHIR are satisfied. The constraints are easy to satisfy in practice
+by sufficiently padding the relevant circuit delays. The AHIR
+specification is then translated to a synchronous circuit
+implementation by directly replacing each component with an equivalent
+VHDL implementation.
+
+\subsection{Results}
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.8]{tpg.pdf}
+\caption{Comparison of an FPGA implementation with the P-4 and RTL}
+\label{figure:tput-area}
+\end{figure}
+
+The current implementation has been tested on a number of examples
+chosen from diverse application domains: LINPACK, Red-Black Trees,
+FFT, AES block cipher and A5/1 stream cipher. One set of experiments
+compares the performance of an FPGA implementation with two extremes:
+equivalent programs running on a microprocessor (Intel Pentium~IV),
+and hand-crafted circuits that implement the same behaviour (results
+obtained from third-party literature). The metric used for comparing
+performance is the ratio of the throughput in terms of jobs per second
+completed by the circuit to the area occupied by it in terms of
+equivalent gates. Figure~\ref{figure:tput-area} shows the performance
+of the different implementations on a logarithmic scale.
+
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.8]{ppw.pdf}
+\caption{Comparison of an ASIC implementation with the P-4
+(normalised to ``1'')}
+\label{figure:ppw}
+\end{figure}
+
+A second set of experiments uses an automated VHDL-to-ASIC flow based
+on commercially available tools. ASIC layouts were automatically
+generated for TSMC 180nm technology using this flow. Since actual SRAM
+cells were not available, the experiment uses SRAM models provided by
+the CACTI project. The estimated power dissipation and area were
+scaled to the 130nm technology used for the Pentium~IV. 
+Figure~\ref{figure:ppw} shows the ``performance~per~watt'' delivered
+by the ASIC implementation, normalised by the performance of the
+Pentium~IV.
+
+The synthesis results show that it is possible to translate complex
+programs to hardware circuits using AHIR. The generated circuits are
+competitive with equivalent programs running on a general-purpose
+microprocessor. But the performance is less than that of hand-crafted
+circuits by two orders of magnitude. This gap can be bridged by
+further work in three key areas: expressing parallelism in the
+high-level specification, introducing optimisations on the AHIR
+specification, and using customised memory subsystems that support
+parallel accesses.
+
+\subsection{Future work}
+
+AHIR can potentially be used as a universal design platform that
+unifies {\it software compilation} (translating programs to
+executables) with {\it hardware compilation} (synthesising circuits
+from programs). The expressive power of AHIR is evident at two levels:
+as a framework for exploring hardware architectures, and as a target
+for the implementation of high-level languages. A combination of these
+two aspects will result in a compiler flow that can map various
+classes of high-level languages to different low-level architectures.
+
+\subsubsection{Programming languages}
+
+Current work in translating C programs to hardware demonstrate that
+AHIR can support imperative languages, with suitable implementations
+for specific features. Further research should explore the possibility
+of supporting system-level languages such as SystemC and Esterel.
+
+\subsubsection{Hardware Platforms}
+
+AHIR has already been used for mapping C programs to FPGAs and ASICs.
+But AHIR itself is not limited to only these platforms. A circuit
+described in AHIR can result in a custom microprocessor, for example,
+by suitably modifying the data path. AHIR can also be used to
+target emerging platforms such as SoCs, arrays of functional units,
+ASIC-FPGA hybrids, etc.
+
+\subsubsection{Hardware optimisations}
+
+The synthesis of large systems starting from complex high-level
+programs requires further work towards improving performance at the
+system level. The compiler must be able to generate implementations
+that deliver good throughput while occupying acceptable amounts of
+resources. These two parameters are usually traded-off with each other
+since faster computations come at the cost of more hardware, and {\it
+vice versa}. AHIR provides many opportunities for creating
+transformations that improve the final circuit, such as pipelining for
+improved throughput and sharing resources across modules for reduction
+in area.
+
+\subsubsection{Memory subsystem}
+
+In addition to optimised hardware, the performance delivered by the
+memory subsystem is critical to the overall performance of the system. 
+High-level synthesis has to be coupled with an automated memory design
+flow to generate application-specific memory subsystems that can keep
+up with the hardware system.
+
+Some work has been done by related projects at IIT Bombay towards
+developing simple performance models for memory subsystems. Such
+models will support an integrated memory sub-system design procedure
+that can explore large areas of the design space in a feasible manner. 
+For a given application, the design process may be parameterised by
+the properties of the expected memory access trace.
+
+\subsection{Publications}
+
+\begin{enumerate}
+\item ``AHIR: A Hardware Intermediate Representation for Hardware
+      Generation from High-level Languages'' by Sameer D. 
+      Sahasrabuddhe, Hakim Raja, Kavi Arya and Madhav P. Desai,
+      presented at the 20th International Conference on VLSI Design,
+      January 2007.
+\item PhD Thesis entitled ``A competitive pathway from high-level
+      programs to hardware specifications'' by Sameer D. Sahasrabuddhe
+      (Dept. of CSE, IIT Bombay), submitted for review in October
+      2008.
+\end{enumerate}
+
+% \newpage
+
+% \begin{center} {\bf \large Part-V\\
+% \vspace{5ex}
+% Appendix}
+% \end{center}
+
+% \section{CV of Principal Investigator (PI)}
+
+% \section{CV of Principal Collaborator (PC)}
+
+\end{document}

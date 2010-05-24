@@ -1,0 +1,68 @@
+metal1		NET		49		0
+metal1		SPNET		49		0
+metal1		PIN		49		0
+metal1		FILL		49		0
+metal1		VIA		49		0
+metal1		VIAFILL		49		0
+NAME		metal1/PIN	49 		0
+NAME		metal1/SPNET	49 		0
+
+metal2		NET		51		0
+metal2		SPNET		51		0
+metal2		PIN		51		0
+metal2		FILL		51		0
+metal2		VIA		51		0
+metal2		VIAFILL		51		0
+NAME		metal2/PIN	51 		0
+NAME		metal2/SPNET	51 		0
+
+metal3		NET		62		0
+metal3		SPNET		62		0
+metal3		PIN		62		0
+metal3		FILL		62		0
+metal3		VIA		62		0
+metal3		VIAFILL		62		0
+NAME		metal3/PIN	62 		0
+NAME		metal3/SPNET	62 		0
+
+metal4		NET		31		0
+metal4		SPNET		31		0
+metal4		PIN		31 		0
+metal4		FILL		31 		0
+metal4		VIA		31		0
+metal4		VIAFILL		31		0
+NAME		metal4/PIN	31 		0
+NAME		metal4/SPNET	31 		0
+
+metal5		NET		33		0
+metal5		SPNET		33		0
+metal5		PIN		33		0
+metal5		FILL		33		0
+metal5		VIA		33		0
+metal5		VIAFILL		33		0
+NAME		metal5/PIN	33 		0
+NAME		metal5/SPNET	33 		0
+
+metal6		NET		37		0
+metal6		SPNET		37		0
+metal6		PIN		37		0
+metal6		FILL		37		0
+metal6		VIA		37		0
+metal6		VIAFILL		37		0
+NAME		metal6/PIN	37 		0
+NAME		metal6/SPNET	37 		0
+
+via 		VIA		50		0
+via 		VIAFILL		50		0
+
+via2 		VIA		61		0
+via2 		VIAFILL		61		0
+
+via3 		VIA		30		0
+via3 		VIAFILL		30		0
+
+via4 		VIA		32		0
+via4 		VIAFILL		32		0
+
+via5            VIA             36              0
+via5 		VIAFILL		36		0

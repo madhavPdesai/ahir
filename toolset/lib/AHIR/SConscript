@@ -1,0 +1,9 @@
+
+Import('env')
+
+source_files = Glob('*.cpp')
+env.Append(all_sources = Glob('*.[hc]pp'))
+
+local = env.Clone()
+local.MergeFlags("-Wno-deprecated")
+local.Library('AHIR', source_files)

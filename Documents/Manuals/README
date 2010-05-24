@@ -1,0 +1,32 @@
+
+Root directory for AHIR-tools - a set of command-line utilities that are
+used to generate hardware specifications in AHIR-XML format from C programs. 
+
+INSTALL:
+--------
+
+1. Copy this directory in a suitable location.
+
+2. Edit the ahir-evn.bash, and update the following variables:
+   a) AHIR_HOME is the absolute path of this directory.
+   b) LLVM_HOME is the absolute path of the directory where LLVM is
+      installed.
+
+3. Source ahir-env.bash to update the environment variables before
+   using the tools. Alternatively, this can be sourced form
+   $HOME/.bashrc, so that the variables are set on each login.
+
+TOOLS:
+------
+
+The tools are located in the bin/ directory. This directory is added
+to $PATH by ahir-env.bash.
+
+llvm-gcc : GCC-base front-end to generate the native LLVM bytecode
+irgen    : utility based on LLVM "opt", that generates AHIR-XML from LLVM
+           bytecode
+irlink   : Linker for AHIR-XML
+irsim    : SystemC simulator for a fully linked AHIR-XML specification
+irsyn    : generates synthesisable VHDL descriptions from a fully linked
+           AHIR-XML specification
+

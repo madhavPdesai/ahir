@@ -1,0 +1,33 @@
+<map id="globals" size="7">
+
+<!-- NOTE: all multi-dim arrays show up as a flat sequence of elements. -->
+
+<init>
+
+<!-- globals: -->
+<array addr="1" descr="a" type="int" size="3">
+  <element index="0">2</element>
+  <element index="1">3</element>
+  <element index="2">4</element>
+</array>
+<scalar addr="4" descr="b" type="int">10</scalar>
+
+<!-- Function start-->
+<!-- formals: -->
+<scalar addr="5" descr="start_formal_0" type="int"></scalar>
+<!-- allocations: -->
+
+<!-- first free address: 7
+ addresses from this value onwards can be used for external data. -->
+
+</init>
+
+<fin>
+
+<!--Function start-->
+<!-- retval: -->
+<scalar addr="6" descr="start_return" type="int"></scalar>
+
+</fin>
+
+</map>

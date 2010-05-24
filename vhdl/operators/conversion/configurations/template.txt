@@ -1,0 +1,42 @@
+# Each line contains the following sequence of strings
+# operator operator-id entity architecture op-entity op-architecture zero_delay 
+#
+# Corresponding to each line, a file <operator>.vhd is created.
+# The contents of this file are:
+#
+# configuration <operator> of <entity> is
+#    for <architecture>
+#       for op:<op-entity> use entity work.<op-entity>(<op-architecture>)
+#                               generic map(colouring => colouring,
+#                                           const_operand => const_operand,
+#                                           operator_id => "<operator-id>",
+#                                           suppress_immediate_ack => suppress_immediate_ack,
+#                                           zero_delay => <zero_delay>);
+#       end for;
+#    end for;
+# end configuration <operator>;
+#
+# e.g.
+ApIntToApFloatSigned   ApIntToApFloatSigned  ApIntToApFloat_S_1  Base OperatorShared Vanilla false 
+ApIntToApFloatUnsigned   ApIntToApFloatUnsigned  ApIntToApFloat_S_1  Base OperatorShared Vanilla false 
+# library ieee;
+# use ieee.std_logic_1164.all;
+# library ahir;
+# use ahir.Types.all;
+# use ahir.Components.all;
+# 
+# configuration ApIntToApFloat of ApIntToApFloat_S_1 is
+#   for Base
+# 	for op : OperatorShared
+# 		use entity ahir.OperatorShared(Vanilla)
+# 			generic map (
+# 					colouring => colouring,
+# 					const_operand => const_operand,
+# 					operator_id => "ApIntToApFloat",
+#                                       suppress_immediate_ack => suppress_immediate_ack,
+# 					zero_delay  => false);
+# 	end for;
+#   end for;
+# end ApIntToApFloat;
+ApFloatToApIntSigned   ApFloatToApIntSigned  ApFloatToApInt_S_1  Base OperatorShared Vanilla false 
+ApFloatToApIntUnsigned   ApFloatToApIntUnsigned  ApFloatToApInt_S_1  Base OperatorShared Vanilla false 

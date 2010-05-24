@@ -1,0 +1,77 @@
+# Each line contains the following sequence of strings
+# <operator-id> <assertion_status> --input <input_type_1> [input_type_2] --output <output_type_1> [output_type_2]  --<operator_type> <operator or string>
+#
+#assertion_status can be :-
+#	on 
+#		length matching of operands and results will be done.
+#	off 
+#		length matching will not be done.
+#
+# operator_type can be :- 
+#	operator 
+#		the string to be followed is just an operator
+#	string
+#		the string to be followed should be copied as it is.
+#
+# e.g. 
+#       ApIntAdd on --input apint apint --output IStdLogicVector --operator +  
+#
+###############################################
+#ApInts 
+###############################################
+# single input operators
+ApIntNot on --input apint --output IStdLogicVector --operator not
+ApIntToApIntSigned off --input apint --output IStdLogicVector --string     result := To_ISLV(to_apint(RESIZE(to_signed(l), result'length)));
+ApIntToApIntUnsigned off --input apint --output IStdLogicVector --string     result := To_ISLV(to_apint(RESIZE(to_unsigned(l), result'length)));
+# two inputs without constant 
+ApIntAdd 	 on --input apint apint --output IStdLogicVector --operator + 
+ApIntSub 	 on --input apint apint --output IStdLogicVector --operator -
+ApIntAnd 	 on --input apint apint --output IStdLogicVector --operator and
+ApIntOr  	 on --input apint apint --output IStdLogicVector --operator or
+ApIntXor 	 on --input apint apint --output IStdLogicVector --operator xor
+ApIntMul 	 on --input apint apint --output IStdLogicVector  --string     result := To_ISLV(to_apint(resize((to_unsigned(l)  * to_unsigned(r)),result'length)));
+ApIntSHL 	 off --input apint apint --output IStdLogicVector --string     result := To_ISLV(to_apint(to_unsigned(l)  sll to_integer(to_unsigned(r))));
+ApIntLSHR	 off --input apint apint --output IStdLogicVector --string     result := To_ISLV(to_apint(to_unsigned(l)  srl to_integer(to_unsigned(r))));
+ApIntASHR	 off --input apint apint --output IStdLogicVector --string     result := To_ISLV(to_apint(shift_right(to_signed(l), to_integer(to_unsigned(r))))); 
+ApIntEq  	 off --input apint apint --output IStdLogicVector --operator =
+ApIntNe 	 off --input apint apint --output IStdLogicVector --operator /=
+ApIntUgt 	 off --input apint apint --output IStdLogicVector --string    result := To_ISLV(to_apint(to_unsigned(l)  > to_unsigned(r)));
+ApIntUge 	 off --input apint apint --output IStdLogicVector --string    result := To_ISLV(to_apint(to_unsigned(l)  >= to_unsigned(r))); 
+ApIntUlt 	 off --input apint apint --output IStdLogicVector --string    result := To_ISLV(to_apint(to_unsigned(l)  < to_unsigned(r)));
+ApIntUle 	 off --input apint apint --output IStdLogicVector --string    result := To_ISLV(to_apint(to_unsigned(l)  <= to_unsigned(r))); 
+ApIntSgt 	 off --input apint apint --output IStdLogicVector --operator >
+ApIntSge 	 off --input apint apint --output IStdLogicVector --operator >=
+ApIntSlt 	 off --input apint apint --output IStdLogicVector --operator <
+ApIntSle 	 off --input apint apint --output IStdLogicVector --operator <=
+###############################################
+#ApFloats 
+###############################################
+# single input operators
+ApFloatResize off --input apfloat --output IStdLogicVector --string     result := To_ISLV(to_apfloat(RESIZE(to_float(l), result'high, -result'low)));
+# Arithmetic 
+ApFloatAdd on --input apfloat apfloat --output IStdLogicVector --string     result := To_ISLV(to_apfloat(to_float(l) + to_float(r)));  
+ApFloatSub on --input apfloat apfloat --output IStdLogicVector --string     result := To_ISLV(to_apfloat(to_float(l) - to_float(r)));  
+ApFloatMul on --input apfloat apfloat --output IStdLogicVector --string     result := To_ISLV(to_apfloat(to_float(l) * to_float(r)));  
+# Comparison
+ApFloatOeq off --input apfloat apfloat --output IStdLogicVector --string     result := To_ISLV(to_apint(to_float(l) = to_float(r)));  
+ApFloatOne off --input apfloat apfloat --output IStdLogicVector --string     result := To_ISLV(to_apint(to_float(l) /= to_float(r)));  
+ApFloatOgt off --input apfloat apfloat --output IStdLogicVector --string     result := To_ISLV(to_apint(to_float(l) > to_float(r)));  
+ApFloatOge off --input apfloat apfloat --output IStdLogicVector --string     result := To_ISLV(to_apint(to_float(l) >= to_float(r)));  
+ApFloatOlt off --input apfloat apfloat --output IStdLogicVector --string     result := To_ISLV(to_apint(to_float(l) < to_float(r)));  
+ApFloatOle off --input apfloat apfloat --output IStdLogicVector --string     result := To_ISLV(to_apint(to_float(l) <= to_float(r))); 
+ApFloatOrd off --input apfloat apfloat --output IStdLogicVector --string     result := To_ISLV(to_apint(not(Unordered (x => to_float(l),y => to_float(r))))); 
+ApFloatUno off --input apfloat apfloat --output IStdLogicVector --string     result := To_ISLV(to_apint( Unordered (x => to_float(l),y => to_float(r)))); 
+ApFloatUeq off --input apfloat apfloat --output IStdLogicVector --string     result := To_ISLV(to_apint(eq(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r)))); 
+ApFloatUne off --input apfloat apfloat --output IStdLogicVector --string     result :=  To_ISLV(to_apint(ne(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r))));
+ApFloatUgt off --input apfloat apfloat --output IStdLogicVector --string     result :=  To_ISLV(to_apint(gt(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r))));
+ApFloatUge off --input apfloat apfloat --output IStdLogicVector --string     result :=  To_ISLV(to_apint(ge(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r))));  
+ApFloatUlt off --input apfloat apfloat --output IStdLogicVector --string     result :=  To_ISLV(to_apint(lt(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r)))); 
+ApFloatUle off --input apfloat apfloat --output IStdLogicVector --string     result :=  To_ISLV(to_apint(le(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r))));  
+###############################################
+#ApFloat to ApInt conversion operators
+###############################################
+# single input operators
+ApFloatToApIntSigned off --input apfloat --output IStdLogicVector --string     result := To_ISLV(to_apint(to_signed(to_float(l),result'length)));
+ApFloatToApIntUnsigned off --input apfloat --output IStdLogicVector --string     result := To_ISLV(to_apint(to_unsigned(to_float(l),result'length)));
+ApIntToApFloatSigned off --input apint   --output IStdLogicVector --string   result := To_ISLV(to_apfloat(to_float(to_signed(l),result'high,-result'low,round_zero)));
+ApIntToApFloatUnsigned off --input apint   --output IStdLogicVector --string   result := To_ISLV(to_apfloat(to_float(to_unsigned(l),result'high,-result'low,round_zero)));

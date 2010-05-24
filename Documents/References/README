@@ -1,0 +1,2 @@
+ICCD-srammodel.pdf: a paper that provides an empirical area model for SRAM
+		    extracted from actual data.

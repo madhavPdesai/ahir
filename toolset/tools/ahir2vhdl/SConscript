@@ -1,0 +1,13 @@
+
+Import('env')
+
+source_files = Glob('*.cpp')
+env.Append(all_sources = Glob('*.[hc]pp'))
+
+local = env.Clone()
+
+local.Program('ahir2vhdl', source_files)
+
+local.AppendUnique(LIBS = ['Base', 'AHIR'])
+local.AppendUnique(LIBPATH = ['#/lib/Base', '#/lib/AHIR'])
+

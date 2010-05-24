@@ -1,0 +1,39 @@
+0README
+	this file
+combinational_merge.vhd
+	sub-design-unit 
+comb_merge
+	sub-design-unit 
+demerge_tree.vhd
+	sub-design-unit 
+mem_component_pack.vhd
+	component declaration package
+mem_demux.vhd
+	sub-design-unit 
+mem_function_pack.vhd
+	function package
+memory_bank.vhd
+	sub-design-unit 
+memory_bank_base.vhd
+	sub-design-unit 
+base_bank.vhd
+	sub-design-unit
+		(this is the basic memory bank)
+memory_subsystem_tb.vhd
+	test-bench (top-level)
+memory_subsystem.vhd
+	TOP-level
+mem_repeater.vhd
+	sub-design-unit 
+mem_shift_repeater.vhd
+	sub-design-unit 
+mem_test_block.vhd
+	test-bench component
+merge_box_with_repeater.vhd
+	sub-design-unit 
+merge_functions.vhd
+	function package
+merge_tree.vhd
+	sub-design-unit 
+memory_subsystem_package.vhd
+	component declaration of top-level memory-subsystem

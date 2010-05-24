@@ -1,0 +1,87 @@
+#+TITLE:     Issues encountered in the VHDL library
+
+1. Elaboration fails under certain conditions when addr_width is set
+   to 32 in memory_subsystem.
+
+   Tested with memory_subsystem_tb.vhdl.
+
+   When addr_width is set to 32 in the memory_subsystem, the following
+   problems are encountered.
+
+   1. Setting number_of_banks to 1 results in a failure. The error
+      reported is:
+
+      # Loading ahir.memory_bank(simmodel)#1
+      # ** Fatal: (vsim-3421) Value 0 is out of range 0 to -1 (null range).
+      #    Time: 0 ns  Iteration: 0  Instance:
+           /memory_subsystem_tb/memsys/core/bankgen__0/membank
+           File: /home/users/sameerds/new_ahir/memory_bank.vhd Line: 44
+      # FATAL ERROR while loading design
+      # Error loading design
+
+   2. With number_of_banks > 1, setting base_bank_addr_width to either
+      16 or 8 sends vsim into an infinite loop that eventually
+      terminates when the machine runs out of memory.
+
+   3. When addr_width = 32, elaboration succeeds if and only if
+      number_of_banks > 1 and base_bank_addr_width = 32.
+
+2. Integer limits encountered in the memory test-benches (both new and
+   old).
+
+   The use of exponentiation (2**data_width) overflows when data_width
+   is 32. This can be circumvented by simply replacing the exponent
+   with a constant, but it implies that the memory is not tested
+   thoroughly as intended.
+
+3. PortTB.vhd compiles with warnings.
+
+   Warning: /home/users/sameerds/new_ahir/PortTB.vhd(39): (vcom-1074)
+   Non-locally static OTHERS choice is allowed only if it is the only
+   choice of the only.
+
+4. Modelsim gets confused when extracting from ApIntArray or
+   ApFloatArray.
+   
+   The original implementation of Extract(x: ApIntArray; idx: integer)
+   first converts x into StdLogicArray2D and then extracts idx using a
+   composed call, as follows:
+
+   return To_ApInt(extract(To_StdLogicArray2D(x), idx))
+
+   This confuses ModelSim, which always x as if it had a range of the
+   form ('high downto 'low). In particular, if x is ApIntArray(0 to b,
+   w-1 to 0), then the call to extract for index i returns the element
+   at index b-i+1 instead of the one at index i. This is a bug in
+   ModelSim, since there is nothing wrong with the code.
+
+   Two ways to work around this:
+
+   1. Split the composed function call with a temporary variable of
+      type StdLogicArray2D. This indeed works with the extract
+      function, but does not solve the case where the user might have
+      composed the two functions on the fly.
+
+   2. Rewrite the function To_StdLogicArray2D to make it
+      entirely independent of ranges, using x'range(1) and x'range(2)
+      wherever appropriate. This is the approach taken, since the fix
+      is as deep as it can be. The change can be examined in SVN at
+      revision 1746, as follows:
+
+      svn diff -c 1746
+      svn diff -r 1745:1746
+
+   Update: This bug also surfaces in other places, and does not depend
+   on whether the argument has an ascending range or descending. Fixed
+   in one more place, to_apintarray(apint):
+   
+   svn diff -c 1773
+   svn diff -r 1772:1773
+
+   Note: It seems that using 'range wherever possible instead of local
+   variables will make this disappear entirely. But it is not known
+   whether is valid VHDL in all contexts and whether it is supported
+   by Synopsys DC.
+
+5. (Minor): In LoadReqBase.vhd, the type of the port 'width' should be
+   (1 to request_width) only.

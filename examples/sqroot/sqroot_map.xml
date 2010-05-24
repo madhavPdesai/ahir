@@ -1,0 +1,36 @@
+<map id="sqroot" size="5">
+
+<!-- NOTE: all multi-dim arrays show up as a flat sequence of elements. -->
+
+<init>
+
+<!-- globals: -->
+
+<!-- Function sqroot-->
+<!-- formals: -->
+<scalar addr="1" descr="sqroot_formal_0" type="float"></scalar>
+<!-- allocations: -->
+
+<!-- Function start-->
+<!-- formals: -->
+<scalar addr="3" descr="start_formal_0" type="float">1.21</scalar>
+<!-- allocations: -->
+
+<!-- first free address: 5
+ addresses from this value onwards can be used for external data. -->
+
+</init>
+
+<fin>
+
+<!--Function sqroot-->
+<!-- retval: -->
+<scalar addr="2" descr="sqroot_return" type="float"></scalar>
+
+<!--Function start-->
+<!-- retval: -->
+<scalar addr="4" descr="start_return" type="float">1.1</scalar>
+
+</fin>
+
+</map>

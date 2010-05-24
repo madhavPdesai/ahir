@@ -1,0 +1,38 @@
+; ModuleID = 'globals.bc'
+target endian = little
+target pointersize = 32
+target triple = "i686-pc-linux-gnu"
+%a = global [3 x int] [ int 2, int 3, int 4 ]		; <[3 x int]*> [#uses=7]
+%b = global int 10		; <int*> [#uses=0]
+
+implementation   ; Functions:
+
+int %start(int %select) {
+entry:
+	%tmp = seteq int %select, 0		; <bool> [#uses=1]
+	%unnamed_0 = cast [3 x int]* %a to uint		; <uint> [#uses=1]
+	%unnamed_1 = cast uint %unnamed_0 to int*		; <int*> [#uses=1]
+	%tmp2 = load int* %unnamed_1		; <int> [#uses=1]
+	%unnamed_2 = cast [3 x int]* %a to uint		; <uint> [#uses=1]
+	%unnamed_3 = add uint %unnamed_2, 1		; <uint> [#uses=1]
+	%unnamed_4 = cast uint %unnamed_3 to int*		; <int*> [#uses=1]
+	%tmp4 = load int* %unnamed_4		; <int> [#uses=1]
+	%tmp5 = add int %tmp4, %tmp2		; <int> [#uses=2]
+	%unnamed_5 = cast [3 x int]* %a to uint		; <uint> [#uses=1]
+	%unnamed_6 = add uint %unnamed_5, 2		; <uint> [#uses=1]
+	%unnamed_7 = cast uint %unnamed_6 to int*		; <int*> [#uses=1]
+	%tmp7 = load int* %unnamed_7		; <int> [#uses=2]
+	%unnamed_8 = br bool %tmp, label %cond_true, label %cond_false
+
+cond_true:		; preds = %entry
+	%tmp8 = add int %tmp5, %tmp7		; <int> [#uses=1]
+	%unnamed_9 = br label %UnifiedReturnBlock
+
+cond_false:		; preds = %entry
+	%tmp17 = sub int %tmp5, %tmp7		; <int> [#uses=1]
+	%unnamed_10 = br label %UnifiedReturnBlock
+
+UnifiedReturnBlock:		; preds = %cond_false, %cond_true
+	%UnifiedRetVal = phi int [ %tmp8, %cond_true ], [ %tmp17, %cond_false ]		; <int> [#uses=1]
+	%unnamed_11 = ret int %UnifiedRetVal
+}

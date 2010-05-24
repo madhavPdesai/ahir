@@ -1,0 +1,2509 @@
+<program id="func">
+
+  <callgraph id="func" start="start">
+    <function id="bar" cp="bar_cp" dp="bar_dp" ln="bar_ln" req="1" ack="1">
+
+    </function>
+
+    <function id="foo" cp="foo_cp" dp="foo_dp" ln="foo_ln" req="1" ack="1">
+
+      <callsite id="call_bar_0" callee="bar" req="17" ack="15" args_width="96" retval_width="0">
+      </callsite>
+
+    </function>
+
+    <function id="start" cp="start_cp" dp="start_dp" ln="start_ln" req="1" ack="1">
+
+      <callsite id="call_foo_0" callee="foo" req="5" ack="5" args_width="96" retval_width="32">
+      </callsite>
+      <callsite id="call_xxy_1" callee="xxy" req="17" ack="17" args_width="0" retval_width="0">
+      </callsite>
+
+    </function>
+
+    <function id="xxy" cp="xxy_cp" dp="xxy_dp" ln="xxy_ln" req="1" ack="1">
+
+    </function>
+
+  </callgraph>
+
+  <globals>
+
+    <global id="a" size="10" type="array [10 x int]">
+      <composite type="array [10 x int]" size="10">
+        <element index="0">
+          <scalar type="int" size="1">101</scalar>
+        </element>
+        <element index="1">
+          <scalar type="int" size="1">102</scalar>
+        </element>
+        <element index="2">
+          <scalar type="int" size="1">103</scalar>
+        </element>
+        <element index="3">
+          <scalar type="int" size="1">104</scalar>
+        </element>
+        <element index="4">
+          <scalar type="int" size="1">105</scalar>
+        </element>
+        <element index="5">
+          <scalar type="int" size="1">106</scalar>
+        </element>
+        <element index="6">
+          <scalar type="int" size="1">107</scalar>
+        </element>
+        <element index="7">
+          <scalar type="int" size="1">108</scalar>
+        </element>
+        <element index="8">
+          <scalar type="int" size="1">109</scalar>
+        </element>
+        <element index="9">
+          <scalar type="int" size="1">110</scalar>
+        </element>
+      </composite>
+
+      <address id="location_global_start_dp_a_3"/>
+      <address id="location_global_start_dp_a_5"/>
+      <address id="location_global_start_dp_a_8"/>
+      <address id="location_global_xxy_dp_a_2"/>
+    </global>
+
+    <global id="b" size="10" type="array [10 x int]">
+      <composite type="array [10 x int]" size="10">
+        <element index="0">
+          <scalar type="int" size="1">201</scalar>
+        </element>
+        <element index="1">
+          <scalar type="int" size="1">202</scalar>
+        </element>
+        <element index="2">
+          <scalar type="int" size="1">203</scalar>
+        </element>
+        <element index="3">
+          <scalar type="int" size="1">204</scalar>
+        </element>
+        <element index="4">
+          <scalar type="int" size="1">205</scalar>
+        </element>
+        <element index="5">
+          <scalar type="int" size="1">206</scalar>
+        </element>
+        <element index="6">
+          <scalar type="int" size="1">207</scalar>
+        </element>
+        <element index="7">
+          <scalar type="int" size="1">208</scalar>
+        </element>
+        <element index="8">
+          <scalar type="int" size="1">209</scalar>
+        </element>
+        <element index="9">
+          <scalar type="int" size="1">210</scalar>
+        </element>
+      </composite>
+
+      <address id="location_global_start_dp_b_4"/>
+      <address id="location_global_start_dp_b_6"/>
+      <address id="location_global_start_dp_b_9"/>
+      <address id="location_global_xxy_dp_b_1"/>
+    </global>
+
+    <global id="x" size="1" type="int">
+      <scalar type="int" size="1">0</scalar>
+
+      <address id="location_global_start_dp_x_1"/>
+      <address id="location_global_start_dp_x_2"/>
+      <address id="location_global_start_dp_x_7"/>
+      <address id="location_global_start_dp_x_10"/>
+    </global>
+
+  </globals>
+
+  <cp id="bar_cp">
+
+    <trans id="entry.entry">
+      <src>place_1</src>
+      <snk>place_4</snk>
+      <snk>place_6</snk>
+      <snk>place_15</snk>
+      <snk>place_17</snk>
+    </trans>
+
+    <trans id="init">
+      <src>place_2</src>
+      <snk>place_1</snk>
+      <ack>1</ack>
+    </trans>
+
+    <trans id="fin">
+      <src>place_36</src>
+      <src>place_30</src>
+      <src>place_35</src>
+      <snk>place_2</snk>
+      <req>1</req>
+    </trans>
+
+    <trans id="oper_tmp1.idx.0_int.req">
+      <src>place_4</src>
+      <snk>place_3</snk>
+      <req>2</req>
+    </trans>
+
+    <trans id="oper_tmp1.idx.0_int.ack">
+      <src>place_3</src>
+      <snk>place_9</snk>
+      <ack>2</ack>
+    </trans>
+
+    <trans id="tc_tmp1.base.cast.offset_cast_int.req">
+      <src>place_6</src>
+      <snk>place_5</snk>
+      <req>3</req>
+    </trans>
+
+    <trans id="tc_tmp1.base.cast.offset_cast_int.ack">
+      <src>place_5</src>
+      <snk>place_8</snk>
+      <ack>3</ack>
+    </trans>
+
+    <trans id="oper_tmp1.lvl.0_int.req">
+      <src>place_8</src>
+      <src>place_9</src>
+      <snk>place_7</snk>
+      <req>4</req>
+    </trans>
+
+    <trans id="oper_tmp1.lvl.0_int.ack">
+      <src>place_7</src>
+      <snk>place_11</snk>
+      <ack>4</ack>
+    </trans>
+
+    <trans id="tc_tmp1.lvl.0.uint_cast_uint.req">
+      <src>place_11</src>
+      <snk>place_10</snk>
+      <req>5</req>
+    </trans>
+
+    <trans id="tc_tmp1.lvl.0.uint_cast_uint.ack">
+      <src>place_10</src>
+      <snk>place_13</snk>
+      <snk>place_27</snk>
+      <ack>5</ack>
+    </trans>
+
+    <trans id="load_tmp2_int.req">
+      <src>place_13</src>
+      <snk>place_12</snk>
+      <req>6</req>
+    </trans>
+
+    <trans id="load_tmp2_int.ack">
+      <src>place_12</src>
+      <snk>place_25</snk>
+      <snk>place_33</snk>
+      <ack>6</ack>
+    </trans>
+
+    <trans id="oper_tmp5.idx.0_int.req">
+      <src>place_15</src>
+      <snk>place_14</snk>
+      <req>7</req>
+    </trans>
+
+    <trans id="oper_tmp5.idx.0_int.ack">
+      <src>place_14</src>
+      <snk>place_20</snk>
+      <ack>7</ack>
+    </trans>
+
+    <trans id="tc_tmp5.base.cast.offset_cast_int.req">
+      <src>place_17</src>
+      <snk>place_16</snk>
+      <req>8</req>
+    </trans>
+
+    <trans id="tc_tmp5.base.cast.offset_cast_int.ack">
+      <src>place_16</src>
+      <snk>place_19</snk>
+      <ack>8</ack>
+    </trans>
+
+    <trans id="oper_tmp5.lvl.0_int.req">
+      <src>place_19</src>
+      <src>place_20</src>
+      <snk>place_18</snk>
+      <req>9</req>
+    </trans>
+
+    <trans id="oper_tmp5.lvl.0_int.ack">
+      <src>place_18</src>
+      <snk>place_22</snk>
+      <ack>9</ack>
+    </trans>
+
+    <trans id="tc_tmp5.lvl.0.uint_cast_uint.req">
+      <src>place_22</src>
+      <snk>place_21</snk>
+      <req>10</req>
+    </trans>
+
+    <trans id="tc_tmp5.lvl.0.uint_cast_uint.ack">
+      <src>place_21</src>
+      <snk>place_24</snk>
+      <snk>place_32</snk>
+      <ack>10</ack>
+    </trans>
+
+    <trans id="load_tmp6_int.req">
+      <src>place_24</src>
+      <src>place_25</src>
+      <snk>place_23</snk>
+      <req>11</req>
+    </trans>
+
+    <trans id="load_tmp6_int.ack">
+      <src>place_23</src>
+      <snk>place_28</snk>
+      <snk>place_29</snk>
+      <ack>11</ack>
+    </trans>
+
+    <trans id="store_0.req">
+      <src>place_27</src>
+      <src>place_28</src>
+      <src>place_29</src>
+      <snk>place_26</snk>
+      <req>12</req>
+    </trans>
+
+    <trans id="store_0.ack">
+      <src>place_26</src>
+      <snk>place_30</snk>
+      <snk>place_34</snk>
+      <ack>12</ack>
+    </trans>
+
+    <trans id="store_1.req">
+      <src>place_32</src>
+      <src>place_33</src>
+      <src>place_34</src>
+      <snk>place_31</snk>
+      <req>13</req>
+    </trans>
+
+    <trans id="store_1.ack">
+      <src>place_31</src>
+      <snk>place_35</snk>
+      <snk>place_36</snk>
+      <ack>13</ack>
+    </trans>
+    
+
+    <place id="place_1">0</place>
+    <place id="place_2">1</place>
+    <place id="place_3">0</place>
+    <place id="place_4">0</place>
+    <place id="place_5">0</place>
+    <place id="place_6">0</place>
+    <place id="place_7">0</place>
+    <place id="place_8">0</place>
+    <place id="place_9">0</place>
+    <place id="place_10">0</place>
+    <place id="place_11">0</place>
+    <place id="place_12">0</place>
+    <place id="place_13">0</place>
+    <place id="place_14">0</place>
+    <place id="place_15">0</place>
+    <place id="place_16">0</place>
+    <place id="place_17">0</place>
+    <place id="place_18">0</place>
+    <place id="place_19">0</place>
+    <place id="place_20">0</place>
+    <place id="place_21">0</place>
+    <place id="place_22">0</place>
+    <place id="place_23">0</place>
+    <place id="place_24">0</place>
+    <place id="place_25">0</place>
+    <place id="place_26">0</place>
+    <place id="place_27">0</place>
+    <place id="place_28">0</place>
+    <place id="place_29">0</place>
+    <place id="place_30">0</place>
+    <place id="place_31">0</place>
+    <place id="place_32">0</place>
+    <place id="place_33">0</place>
+    <place id="place_34">0</place>
+    <place id="place_35">0</place>
+    <place id="place_36">0</place>
+  </cp>
+
+  <cp id="foo_cp">
+
+    <trans id="entry.entry">
+      <src>place_1</src>
+      <snk>place_8</snk>
+    </trans>
+
+    <trans id="bb18.entry">
+      <src>place_2</src>
+      <snk>place_18</snk>
+      <snk>place_20</snk>
+      <snk>place_22</snk>
+      <snk>place_31</snk>
+      <snk>place_33</snk>
+    </trans>
+
+    <trans id="entry_to_bb18_src">
+      <src>place_8</src>
+      <snk>place_12</snk>
+      <snk>place_16</snk>
+    </trans>
+
+    <trans id="bb18.pre">
+      <src>place_11</src>
+      <src>place_15</src>
+      <snk>place_2</snk>
+    </trans>
+
+    <trans id="bb20.entry">
+      <src>place_3</src>
+      <snk>place_55</snk>
+    </trans>
+
+    <trans id="bb18_to_bb20_src">
+      <src>place_54</src>
+      <snk>place_4</snk>
+      <ack>18</ack>
+    </trans>
+
+    <trans id="bb18_to_bb20_snk">
+      <src>place_4</src>
+      <snk>place_3</snk>
+    </trans>
+
+    <trans id="cond_true.entry">
+      <src>place_5</src>
+      <snk>place_57</snk>
+    </trans>
+
+    <trans id="bb18_to_cond_true_src">
+      <src>place_54</src>
+      <snk>place_6</snk>
+      <ack>19</ack>
+    </trans>
+
+    <trans id="bb18_to_cond_true_snk">
+      <src>place_6</src>
+      <snk>place_5</snk>
+    </trans>
+
+    <trans id="cond_true_to_bb18_src">
+      <src>place_58</src>
+      <snk>place_9</snk>
+      <snk>place_13</snk>
+    </trans>
+
+    <trans id="init">
+      <src>place_7</src>
+      <snk>place_1</snk>
+      <ack>1</ack>
+    </trans>
+
+    <trans id="fin">
+      <src>place_55</src>
+      <snk>place_7</snk>
+      <req>1</req>
+    </trans>
+
+    <trans id="i.0_int_mux_1.req1">
+      <src>place_9</src>
+      <snk>place_10</snk>
+      <req>2</req>
+    </trans>
+
+    <trans id="i.0_int_mux_1.ack">
+      <src>place_10</src>
+      <snk>place_11</snk>
+      <ack>2</ack>
+    </trans>
+
+    <trans id="i.0_int_mux_1.req0">
+      <src>place_12</src>
+      <snk>place_10</snk>
+      <req>3</req>
+    </trans>
+
+    <trans id="c.0_int_mux_1.req1">
+      <src>place_13</src>
+      <snk>place_14</snk>
+      <req>4</req>
+    </trans>
+
+    <trans id="c.0_int_mux_1.ack">
+      <src>place_14</src>
+      <snk>place_15</snk>
+      <ack>3</ack>
+    </trans>
+
+    <trans id="c.0_int_mux_1.req0">
+      <src>place_16</src>
+      <snk>place_14</snk>
+      <req>5</req>
+    </trans>
+
+    <trans id="oper_tmp_bool.req">
+      <src>place_18</src>
+      <snk>place_17</snk>
+      <req>6</req>
+    </trans>
+
+    <trans id="oper_tmp_bool.ack">
+      <src>place_17</src>
+      <snk>place_53</snk>
+      <ack>4</ack>
+    </trans>
+
+    <trans id="oper_tmp2.idx.0_int.req">
+      <src>place_20</src>
+      <snk>place_19</snk>
+      <req>7</req>
+    </trans>
+
+    <trans id="oper_tmp2.idx.0_int.ack">
+      <src>place_19</src>
+      <snk>place_25</snk>
+      <ack>5</ack>
+    </trans>
+
+    <trans id="tc_tmp2.base.cast.offset_cast_int.req">
+      <src>place_22</src>
+      <snk>place_21</snk>
+      <req>8</req>
+    </trans>
+
+    <trans id="tc_tmp2.base.cast.offset_cast_int.ack">
+      <src>place_21</src>
+      <snk>place_24</snk>
+      <ack>6</ack>
+    </trans>
+
+    <trans id="oper_tmp2.lvl.0_int.req">
+      <src>place_24</src>
+      <src>place_25</src>
+      <snk>place_23</snk>
+      <req>9</req>
+    </trans>
+
+    <trans id="oper_tmp2.lvl.0_int.ack">
+      <src>place_23</src>
+      <snk>place_27</snk>
+      <ack>7</ack>
+    </trans>
+
+    <trans id="tc_tmp2.lvl.0.uint_cast_uint.req">
+      <src>place_27</src>
+      <snk>place_26</snk>
+      <req>10</req>
+    </trans>
+
+    <trans id="tc_tmp2.lvl.0.uint_cast_uint.ack">
+      <src>place_26</src>
+      <snk>place_29</snk>
+      <ack>8</ack>
+    </trans>
+
+    <trans id="load_tmp3_int.req">
+      <src>place_29</src>
+      <snk>place_28</snk>
+      <req>11</req>
+    </trans>
+
+    <trans id="load_tmp3_int.ack">
+      <src>place_28</src>
+      <snk>place_41</snk>
+      <snk>place_42</snk>
+      <ack>9</ack>
+    </trans>
+
+    <trans id="oper_tmp6.idx.0_int.req">
+      <src>place_31</src>
+      <snk>place_30</snk>
+      <req>12</req>
+    </trans>
+
+    <trans id="oper_tmp6.idx.0_int.ack">
+      <src>place_30</src>
+      <snk>place_36</snk>
+      <ack>10</ack>
+    </trans>
+
+    <trans id="tc_tmp6.base.cast.offset_cast_int.req">
+      <src>place_33</src>
+      <snk>place_32</snk>
+      <req>13</req>
+    </trans>
+
+    <trans id="tc_tmp6.base.cast.offset_cast_int.ack">
+      <src>place_32</src>
+      <snk>place_35</snk>
+      <ack>11</ack>
+    </trans>
+
+    <trans id="oper_tmp6.lvl.0_int.req">
+      <src>place_35</src>
+      <src>place_36</src>
+      <snk>place_34</snk>
+      <req>14</req>
+    </trans>
+
+    <trans id="oper_tmp6.lvl.0_int.ack">
+      <src>place_34</src>
+      <snk>place_38</snk>
+      <ack>12</ack>
+    </trans>
+
+    <trans id="tc_tmp6.lvl.0.uint_cast_uint.req">
+      <src>place_38</src>
+      <snk>place_37</snk>
+      <req>15</req>
+    </trans>
+
+    <trans id="tc_tmp6.lvl.0.uint_cast_uint.ack">
+      <src>place_37</src>
+      <snk>place_40</snk>
+      <snk>place_48</snk>
+      <ack>13</ack>
+    </trans>
+
+    <trans id="store_0.req">
+      <src>place_40</src>
+      <src>place_41</src>
+      <src>place_42</src>
+      <snk>place_39</snk>
+      <req>16</req>
+    </trans>
+
+    <trans id="store_0.ack">
+      <src>place_39</src>
+      <snk>place_43</snk>
+      <snk>place_45</snk>
+      <ack>14</ack>
+    </trans>
+
+    <trans id="call_bar_0.req">
+      <src>place_45</src>
+      <snk>place_44</snk>
+      <req>17</req>
+    </trans>
+
+    <trans id="call_bar_0.ack">
+      <src>place_44</src>
+      <snk>place_46</snk>
+      <snk>place_49</snk>
+      <ack>15</ack>
+    </trans>
+
+    <trans id="load_tmp13_int.req">
+      <src>place_48</src>
+      <src>place_49</src>
+      <snk>place_47</snk>
+      <req>18</req>
+    </trans>
+
+    <trans id="load_tmp13_int.ack">
+      <src>place_47</src>
+      <snk>place_51</snk>
+      <ack>16</ack>
+    </trans>
+
+    <trans id="oper_tmp15_int.req">
+      <src>place_51</src>
+      <snk>place_50</snk>
+      <req>19</req>
+    </trans>
+
+    <trans id="oper_tmp15_int.ack">
+      <src>place_50</src>
+      <snk>place_52</snk>
+      <ack>17</ack>
+    </trans>
+
+    <trans id="cbr_0_oper_tmp_bool.req">
+      <src>place_53</src>
+      <src>place_43</src>
+      <src>place_46</src>
+      <src>place_52</src>
+      <snk>place_54</snk>
+      <req>20</req>
+    </trans>
+
+    <trans id="oper_tmp17_int.req">
+      <src>place_57</src>
+      <snk>place_56</snk>
+      <req>21</req>
+    </trans>
+
+    <trans id="oper_tmp17_int.ack">
+      <src>place_56</src>
+      <snk>place_58</snk>
+      <ack>20</ack>
+    </trans>
+    
+
+    <place id="place_1">0</place>
+    <place id="place_2">0</place>
+    <place id="place_3">0</place>
+    <place id="place_4">0</place>
+    <place id="place_5">0</place>
+    <place id="place_6">0</place>
+    <place id="place_7">1</place>
+    <place id="place_8">0</place>
+    <place id="place_9">0</place>
+    <place id="place_10">0</place>
+    <place id="place_11">0</place>
+    <place id="place_12">0</place>
+    <place id="place_13">0</place>
+    <place id="place_14">0</place>
+    <place id="place_15">0</place>
+    <place id="place_16">0</place>
+    <place id="place_17">0</place>
+    <place id="place_18">0</place>
+    <place id="place_19">0</place>
+    <place id="place_20">0</place>
+    <place id="place_21">0</place>
+    <place id="place_22">0</place>
+    <place id="place_23">0</place>
+    <place id="place_24">0</place>
+    <place id="place_25">0</place>
+    <place id="place_26">0</place>
+    <place id="place_27">0</place>
+    <place id="place_28">0</place>
+    <place id="place_29">0</place>
+    <place id="place_30">0</place>
+    <place id="place_31">0</place>
+    <place id="place_32">0</place>
+    <place id="place_33">0</place>
+    <place id="place_34">0</place>
+    <place id="place_35">0</place>
+    <place id="place_36">0</place>
+    <place id="place_37">0</place>
+    <place id="place_38">0</place>
+    <place id="place_39">0</place>
+    <place id="place_40">0</place>
+    <place id="place_41">0</place>
+    <place id="place_42">0</place>
+    <place id="place_43">0</place>
+    <place id="place_44">0</place>
+    <place id="place_45">0</place>
+    <place id="place_46">0</place>
+    <place id="place_47">0</place>
+    <place id="place_48">0</place>
+    <place id="place_49">0</place>
+    <place id="place_50">0</place>
+    <place id="place_51">0</place>
+    <place id="place_52">0</place>
+    <place id="place_53">0</place>
+    <place id="place_54">0</place>
+    <place id="place_55">0</place>
+    <place id="place_56">0</place>
+    <place id="place_57">0</place>
+    <place id="place_58">0</place>
+  </cp>
+
+  <cp id="start_cp">
+
+    <trans id="entry.entry">
+      <src>place_1</src>
+      <snk>place_4</snk>
+      <snk>place_19</snk>
+      <snk>place_28</snk>
+    </trans>
+
+    <trans id="init">
+      <src>place_2</src>
+      <snk>place_1</snk>
+      <ack>1</ack>
+    </trans>
+
+    <trans id="fin">
+      <src>place_46</src>
+      <src>place_17</src>
+      <src>place_42</src>
+      <src>place_45</src>
+      <src>place_10</src>
+      <snk>place_2</snk>
+      <req>1</req>
+    </trans>
+
+    <trans id="load_tmp_int.req">
+      <src>place_4</src>
+      <snk>place_3</snk>
+      <req>2</req>
+    </trans>
+
+    <trans id="load_tmp_int.ack">
+      <src>place_3</src>
+      <snk>place_6</snk>
+      <snk>place_9</snk>
+      <ack>2</ack>
+    </trans>
+
+    <trans id="oper_tmp1_int.req">
+      <src>place_6</src>
+      <snk>place_5</snk>
+      <req>3</req>
+    </trans>
+
+    <trans id="oper_tmp1_int.ack">
+      <src>place_5</src>
+      <snk>place_8</snk>
+      <snk>place_12</snk>
+      <ack>3</ack>
+    </trans>
+
+    <trans id="store_0.req">
+      <src>place_8</src>
+      <src>place_9</src>
+      <snk>place_7</snk>
+      <req>4</req>
+    </trans>
+
+    <trans id="store_0.ack">
+      <src>place_7</src>
+      <snk>place_10</snk>
+      <snk>place_13</snk>
+      <ack>4</ack>
+    </trans>
+
+    <trans id="call_foo_0.req">
+      <src>place_12</src>
+      <src>place_13</src>
+      <snk>place_11</snk>
+      <req>5</req>
+    </trans>
+
+    <trans id="call_foo_0.ack">
+      <src>place_11</src>
+      <snk>place_15</snk>
+      <snk>place_16</snk>
+      <ack>5</ack>
+    </trans>
+
+    <trans id="store_1.req">
+      <src>place_15</src>
+      <src>place_16</src>
+      <snk>place_14</snk>
+      <req>6</req>
+    </trans>
+
+    <trans id="store_1.ack">
+      <src>place_14</src>
+      <snk>place_17</snk>
+      <snk>place_26</snk>
+      <ack>6</ack>
+    </trans>
+
+    <trans id="tc_unnamed_25_int.req">
+      <src>place_19</src>
+      <snk>place_18</snk>
+      <req>7</req>
+    </trans>
+
+    <trans id="tc_unnamed_25_int.ack">
+      <src>place_18</src>
+      <snk>place_21</snk>
+      <ack>7</ack>
+    </trans>
+
+    <trans id="oper_unnamed_26_int.req">
+      <src>place_21</src>
+      <snk>place_20</snk>
+      <req>8</req>
+    </trans>
+
+    <trans id="oper_unnamed_26_int.ack">
+      <src>place_20</src>
+      <snk>place_23</snk>
+      <ack>8</ack>
+    </trans>
+
+    <trans id="tc_unnamed_27_uint.req">
+      <src>place_23</src>
+      <snk>place_22</snk>
+      <req>9</req>
+    </trans>
+
+    <trans id="tc_unnamed_27_uint.ack">
+      <src>place_22</src>
+      <snk>place_25</snk>
+      <ack>9</ack>
+    </trans>
+
+    <trans id="load_tmp4_int.req">
+      <src>place_25</src>
+      <src>place_26</src>
+      <snk>place_24</snk>
+      <req>10</req>
+    </trans>
+
+    <trans id="load_tmp4_int.ack">
+      <src>place_24</src>
+      <snk>place_35</snk>
+      <snk>place_38</snk>
+      <ack>10</ack>
+    </trans>
+
+    <trans id="tc_unnamed_29_int.req">
+      <src>place_28</src>
+      <snk>place_27</snk>
+      <req>11</req>
+    </trans>
+
+    <trans id="tc_unnamed_29_int.ack">
+      <src>place_27</src>
+      <snk>place_30</snk>
+      <ack>11</ack>
+    </trans>
+
+    <trans id="oper_unnamed_30_int.req">
+      <src>place_30</src>
+      <snk>place_29</snk>
+      <req>12</req>
+    </trans>
+
+    <trans id="oper_unnamed_30_int.ack">
+      <src>place_29</src>
+      <snk>place_32</snk>
+      <ack>12</ack>
+    </trans>
+
+    <trans id="tc_unnamed_31_uint.req">
+      <src>place_32</src>
+      <snk>place_31</snk>
+      <req>13</req>
+    </trans>
+
+    <trans id="tc_unnamed_31_uint.ack">
+      <src>place_31</src>
+      <snk>place_34</snk>
+      <ack>13</ack>
+    </trans>
+
+    <trans id="load_tmp6_int.req">
+      <src>place_34</src>
+      <src>place_35</src>
+      <snk>place_33</snk>
+      <req>14</req>
+    </trans>
+
+    <trans id="load_tmp6_int.ack">
+      <src>place_33</src>
+      <snk>place_37</snk>
+      <snk>place_41</snk>
+      <ack>14</ack>
+    </trans>
+
+    <trans id="oper_tmp7_int.req">
+      <src>place_37</src>
+      <src>place_38</src>
+      <snk>place_36</snk>
+      <req>15</req>
+    </trans>
+
+    <trans id="oper_tmp7_int.ack">
+      <src>place_36</src>
+      <snk>place_40</snk>
+      <ack>15</ack>
+    </trans>
+
+    <trans id="store_2.req">
+      <src>place_40</src>
+      <src>place_41</src>
+      <snk>place_39</snk>
+      <req>16</req>
+    </trans>
+
+    <trans id="store_2.ack">
+      <src>place_39</src>
+      <snk>place_42</snk>
+      <snk>place_44</snk>
+      <ack>16</ack>
+    </trans>
+
+    <trans id="call_xxy_1.req">
+      <src>place_44</src>
+      <snk>place_43</snk>
+      <req>17</req>
+    </trans>
+
+    <trans id="call_xxy_1.ack">
+      <src>place_43</src>
+      <snk>place_45</snk>
+      <snk>place_46</snk>
+      <ack>17</ack>
+    </trans>
+    
+
+    <place id="place_1">0</place>
+    <place id="place_2">1</place>
+    <place id="place_3">0</place>
+    <place id="place_4">0</place>
+    <place id="place_5">0</place>
+    <place id="place_6">0</place>
+    <place id="place_7">0</place>
+    <place id="place_8">0</place>
+    <place id="place_9">0</place>
+    <place id="place_10">0</place>
+    <place id="place_11">0</place>
+    <place id="place_12">0</place>
+    <place id="place_13">0</place>
+    <place id="place_14">0</place>
+    <place id="place_15">0</place>
+    <place id="place_16">0</place>
+    <place id="place_17">0</place>
+    <place id="place_18">0</place>
+    <place id="place_19">0</place>
+    <place id="place_20">0</place>
+    <place id="place_21">0</place>
+    <place id="place_22">0</place>
+    <place id="place_23">0</place>
+    <place id="place_24">0</place>
+    <place id="place_25">0</place>
+    <place id="place_26">0</place>
+    <place id="place_27">0</place>
+    <place id="place_28">0</place>
+    <place id="place_29">0</place>
+    <place id="place_30">0</place>
+    <place id="place_31">0</place>
+    <place id="place_32">0</place>
+    <place id="place_33">0</place>
+    <place id="place_34">0</place>
+    <place id="place_35">0</place>
+    <place id="place_36">0</place>
+    <place id="place_37">0</place>
+    <place id="place_38">0</place>
+    <place id="place_39">0</place>
+    <place id="place_40">0</place>
+    <place id="place_41">0</place>
+    <place id="place_42">0</place>
+    <place id="place_43">0</place>
+    <place id="place_44">0</place>
+    <place id="place_45">0</place>
+    <place id="place_46">0</place>
+  </cp>
+
+  <cp id="xxy_cp">
+
+    <trans id="entry.entry">
+      <src>place_1</src>
+      <snk>place_4</snk>
+      <snk>place_12</snk>
+    </trans>
+
+    <trans id="init">
+      <src>place_2</src>
+      <snk>place_1</snk>
+      <ack>1</ack>
+    </trans>
+
+    <trans id="fin">
+      <src>place_22</src>
+      <src>place_21</src>
+      <snk>place_2</snk>
+      <req>1</req>
+    </trans>
+
+    <trans id="tc_unnamed_0_int.req">
+      <src>place_4</src>
+      <snk>place_3</snk>
+      <req>2</req>
+    </trans>
+
+    <trans id="tc_unnamed_0_int.ack">
+      <src>place_3</src>
+      <snk>place_6</snk>
+      <ack>2</ack>
+    </trans>
+
+    <trans id="oper_unnamed_1_int.req">
+      <src>place_6</src>
+      <snk>place_5</snk>
+      <req>3</req>
+    </trans>
+
+    <trans id="oper_unnamed_1_int.ack">
+      <src>place_5</src>
+      <snk>place_8</snk>
+      <ack>3</ack>
+    </trans>
+
+    <trans id="tc_unnamed_2_uint.req">
+      <src>place_8</src>
+      <snk>place_7</snk>
+      <req>4</req>
+    </trans>
+
+    <trans id="tc_unnamed_2_uint.ack">
+      <src>place_7</src>
+      <snk>place_10</snk>
+      <ack>4</ack>
+    </trans>
+
+    <trans id="load_tmp_int.req">
+      <src>place_10</src>
+      <snk>place_9</snk>
+      <req>5</req>
+    </trans>
+
+    <trans id="load_tmp_int.ack">
+      <src>place_9</src>
+      <snk>place_19</snk>
+      <snk>place_20</snk>
+      <ack>5</ack>
+    </trans>
+
+    <trans id="tc_unnamed_4_int.req">
+      <src>place_12</src>
+      <snk>place_11</snk>
+      <req>6</req>
+    </trans>
+
+    <trans id="tc_unnamed_4_int.ack">
+      <src>place_11</src>
+      <snk>place_14</snk>
+      <ack>6</ack>
+    </trans>
+
+    <trans id="oper_unnamed_5_int.req">
+      <src>place_14</src>
+      <snk>place_13</snk>
+      <req>7</req>
+    </trans>
+
+    <trans id="oper_unnamed_5_int.ack">
+      <src>place_13</src>
+      <snk>place_16</snk>
+      <ack>7</ack>
+    </trans>
+
+    <trans id="tc_unnamed_6_uint.req">
+      <src>place_16</src>
+      <snk>place_15</snk>
+      <req>8</req>
+    </trans>
+
+    <trans id="tc_unnamed_6_uint.ack">
+      <src>place_15</src>
+      <snk>place_18</snk>
+      <ack>8</ack>
+    </trans>
+
+    <trans id="store_0.req">
+      <src>place_18</src>
+      <src>place_19</src>
+      <src>place_20</src>
+      <snk>place_17</snk>
+      <req>9</req>
+    </trans>
+
+    <trans id="store_0.ack">
+      <src>place_17</src>
+      <snk>place_21</snk>
+      <snk>place_22</snk>
+      <ack>9</ack>
+    </trans>
+    
+
+    <place id="place_1">0</place>
+    <place id="place_2">1</place>
+    <place id="place_3">0</place>
+    <place id="place_4">0</place>
+    <place id="place_5">0</place>
+    <place id="place_6">0</place>
+    <place id="place_7">0</place>
+    <place id="place_8">0</place>
+    <place id="place_9">0</place>
+    <place id="place_10">0</place>
+    <place id="place_11">0</place>
+    <place id="place_12">0</place>
+    <place id="place_13">0</place>
+    <place id="place_14">0</place>
+    <place id="place_15">0</place>
+    <place id="place_16">0</place>
+    <place id="place_17">0</place>
+    <place id="place_18">0</place>
+    <place id="place_19">0</place>
+    <place id="place_20">0</place>
+    <place id="place_21">0</place>
+    <place id="place_22">0</place>
+  </cp>
+
+  <dp id="bar_dp">
+
+    <wire id="formal_0.wire" type="int"/>
+    <wire id="formal_1.wire" type="uint"/>
+    <wire id="formal_2.wire" type="int"/>
+    <wire id="oper_tmp1.idx.0_int.wire" type="int"/>
+    <wire id="cst_0_int.wire" type="int"/>
+    <wire id="tc_tmp1.base.cast.offset_cast_int.wire" type="int"/>
+    <wire id="oper_tmp1.lvl.0_int.wire" type="int"/>
+    <wire id="tc_tmp1.lvl.0.uint_cast_uint.wire" type="uint"/>
+    <wire id="load_tmp2_int.wire" type="int"/>
+    <wire id="oper_tmp5.idx.0_int.wire" type="int"/>
+    <wire id="cst_1_int.wire" type="int"/>
+    <wire id="tc_tmp5.base.cast.offset_cast_int.wire" type="int"/>
+    <wire id="oper_tmp5.lvl.0_int.wire" type="int"/>
+    <wire id="tc_tmp5.lvl.0.uint_cast_uint.wire" type="uint"/>
+    <wire id="load_tmp6_int.wire" type="int"/>
+
+    <dpe id="oper_tmp1.idx.0_int" operation="mul" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">cst_0_int.wire</port>
+        <port id="ip1" dir="in" type="int">formal_2.wire</port>
+        <port id="op" dir="out" type="int">oper_tmp1.idx.0_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">1</req>
+        <ack id="ack">1</ack>
+      </smap>
+    </dpe>
+
+    <constant id="cst_0_int" type="int">
+      <pmap>
+        <port id="op" dir="out" type="int">cst_0_int.wire</port>
+      </pmap>
+      <val>1</val>
+    </constant>
+
+    <dpe id="tc_tmp1.base.cast.offset_cast_int" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="uint">formal_1.wire</port>
+        <port id="op" dir="out" type="int">tc_tmp1.base.cast.offset_cast_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">2</req>
+        <ack id="ack">2</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="oper_tmp1.lvl.0_int" operation="add" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">tc_tmp1.base.cast.offset_cast_int.wire</port>
+        <port id="ip1" dir="in" type="int">oper_tmp1.idx.0_int.wire</port>
+        <port id="op" dir="out" type="int">oper_tmp1.lvl.0_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">3</req>
+        <ack id="ack">3</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="tc_tmp1.lvl.0.uint_cast_uint" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="int">oper_tmp1.lvl.0_int.wire</port>
+        <port id="op" dir="out" type="uint">tc_tmp1.lvl.0.uint_cast_uint.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">4</req>
+        <ack id="ack">4</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="load_tmp2_int" operation="lod" type="int">
+      <pmap>
+        <port id="ap" dir="in" type="uint">tc_tmp1.lvl.0.uint_cast_uint.wire</port>
+        <port id="dp" dir="out" type="int">load_tmp2_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">5</req>
+        <ack id="ack">5</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="oper_tmp5.idx.0_int" operation="mul" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">cst_1_int.wire</port>
+        <port id="ip1" dir="in" type="int">formal_0.wire</port>
+        <port id="op" dir="out" type="int">oper_tmp5.idx.0_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">6</req>
+        <ack id="ack">6</ack>
+      </smap>
+    </dpe>
+
+    <constant id="cst_1_int" type="int">
+      <pmap>
+        <port id="op" dir="out" type="int">cst_1_int.wire</port>
+      </pmap>
+      <val>1</val>
+    </constant>
+
+    <dpe id="tc_tmp5.base.cast.offset_cast_int" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="uint">formal_1.wire</port>
+        <port id="op" dir="out" type="int">tc_tmp5.base.cast.offset_cast_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">7</req>
+        <ack id="ack">7</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="oper_tmp5.lvl.0_int" operation="add" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">tc_tmp5.base.cast.offset_cast_int.wire</port>
+        <port id="ip1" dir="in" type="int">oper_tmp5.idx.0_int.wire</port>
+        <port id="op" dir="out" type="int">oper_tmp5.lvl.0_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">8</req>
+        <ack id="ack">8</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="tc_tmp5.lvl.0.uint_cast_uint" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="int">oper_tmp5.lvl.0_int.wire</port>
+        <port id="op" dir="out" type="uint">tc_tmp5.lvl.0.uint_cast_uint.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">9</req>
+        <ack id="ack">9</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="load_tmp6_int" operation="lod" type="int">
+      <pmap>
+        <port id="ap" dir="in" type="uint">tc_tmp5.lvl.0.uint_cast_uint.wire</port>
+        <port id="dp" dir="out" type="int">load_tmp6_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">10</req>
+        <ack id="ack">10</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="store_0" operation="sto" type="int">
+      <pmap>
+        <port id="ap" dir="in" type="uint">tc_tmp1.lvl.0.uint_cast_uint.wire</port>
+        <port id="dp" dir="in" type="int">load_tmp6_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">11</req>
+        <ack id="ack">11</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="store_1" operation="sto" type="int">
+      <pmap>
+        <port id="ap" dir="in" type="uint">tc_tmp5.lvl.0.uint_cast_uint.wire</port>
+        <port id="dp" dir="in" type="int">load_tmp2_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">12</req>
+        <ack id="ack">12</ack>
+      </smap>
+    </dpe>
+
+    <iface>
+      <formal id="formal_0.wire" />
+      <formal id="formal_1.wire" />
+      <formal id="formal_2.wire" />
+    </iface>
+  </dp>
+
+  <dp id="foo_dp">
+
+    <wire id="formal_0.wire" type="int"/>
+    <wire id="formal_1.wire" type="uint"/>
+    <wire id="formal_2.wire" type="uint"/>
+    <wire id="i.0_int_mux_1.wire" type="int"/>
+    <wire id="cst_0_int.wire" type="int"/>
+    <wire id="c.0_int_mux_1.wire" type="int"/>
+    <wire id="cst_1_int.wire" type="int"/>
+    <wire id="oper_tmp_bool.wire" type="bool"/>
+    <wire id="cst_2_int.wire" type="int"/>
+    <wire id="oper_tmp2.idx.0_int.wire" type="int"/>
+    <wire id="cst_3_int.wire" type="int"/>
+    <wire id="tc_tmp2.base.cast.offset_cast_int.wire" type="int"/>
+    <wire id="oper_tmp2.lvl.0_int.wire" type="int"/>
+    <wire id="tc_tmp2.lvl.0.uint_cast_uint.wire" type="uint"/>
+    <wire id="load_tmp3_int.wire" type="int"/>
+    <wire id="oper_tmp6.idx.0_int.wire" type="int"/>
+    <wire id="cst_4_int.wire" type="int"/>
+    <wire id="tc_tmp6.base.cast.offset_cast_int.wire" type="int"/>
+    <wire id="oper_tmp6.lvl.0_int.wire" type="int"/>
+    <wire id="tc_tmp6.lvl.0.uint_cast_uint.wire" type="uint"/>
+    <wire id="load_tmp13_int.wire" type="int"/>
+    <wire id="oper_tmp15_int.wire" type="int"/>
+    <wire id="oper_tmp17_int.wire" type="int"/>
+    <wire id="cst_5_int.wire" type="int"/>
+
+    <dpe id="i.0_int_mux_1" operation="mux" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">cst_0_int.wire</port>
+        <port id="ip1" dir="in" type="int">oper_tmp17_int.wire</port>
+        <port id="op" dir="out" type="int">i.0_int_mux_1.wire</port>
+      </pmap>
+      <smap>
+        <req id="req0">1</req>
+        <req id="req1">2</req>
+        <ack id="ack">1</ack>
+      </smap>
+    </dpe>
+
+    <constant id="cst_0_int" type="int">
+      <pmap>
+        <port id="op" dir="out" type="int">cst_0_int.wire</port>
+      </pmap>
+      <val>0</val>
+    </constant>
+
+    <dpe id="c.0_int_mux_1" operation="mux" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">cst_1_int.wire</port>
+        <port id="ip1" dir="in" type="int">oper_tmp15_int.wire</port>
+        <port id="op" dir="out" type="int">c.0_int_mux_1.wire</port>
+      </pmap>
+      <smap>
+        <req id="req0">3</req>
+        <req id="req1">4</req>
+        <ack id="ack">2</ack>
+      </smap>
+    </dpe>
+
+    <constant id="cst_1_int" type="int">
+      <pmap>
+        <port id="op" dir="out" type="int">cst_1_int.wire</port>
+      </pmap>
+      <val>0</val>
+    </constant>
+
+    <dpe id="oper_tmp_bool" operation="gt" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">i.0_int_mux_1.wire</port>
+        <port id="ip1" dir="in" type="int">cst_2_int.wire</port>
+        <port id="op" dir="out" type="bool">oper_tmp_bool.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">5</req>
+        <ack id="ack">3</ack>
+      </smap>
+    </dpe>
+
+    <constant id="cst_2_int" type="int">
+      <pmap>
+        <port id="op" dir="out" type="int">cst_2_int.wire</port>
+      </pmap>
+      <val>8</val>
+    </constant>
+
+    <dpe id="oper_tmp2.idx.0_int" operation="mul" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">cst_3_int.wire</port>
+        <port id="ip1" dir="in" type="int">i.0_int_mux_1.wire</port>
+        <port id="op" dir="out" type="int">oper_tmp2.idx.0_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">6</req>
+        <ack id="ack">4</ack>
+      </smap>
+    </dpe>
+
+    <constant id="cst_3_int" type="int">
+      <pmap>
+        <port id="op" dir="out" type="int">cst_3_int.wire</port>
+      </pmap>
+      <val>1</val>
+    </constant>
+
+    <dpe id="tc_tmp2.base.cast.offset_cast_int" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="uint">formal_2.wire</port>
+        <port id="op" dir="out" type="int">tc_tmp2.base.cast.offset_cast_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">7</req>
+        <ack id="ack">5</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="oper_tmp2.lvl.0_int" operation="add" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">tc_tmp2.base.cast.offset_cast_int.wire</port>
+        <port id="ip1" dir="in" type="int">oper_tmp2.idx.0_int.wire</port>
+        <port id="op" dir="out" type="int">oper_tmp2.lvl.0_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">8</req>
+        <ack id="ack">6</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="tc_tmp2.lvl.0.uint_cast_uint" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="int">oper_tmp2.lvl.0_int.wire</port>
+        <port id="op" dir="out" type="uint">tc_tmp2.lvl.0.uint_cast_uint.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">9</req>
+        <ack id="ack">7</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="load_tmp3_int" operation="lod" type="int">
+      <pmap>
+        <port id="ap" dir="in" type="uint">tc_tmp2.lvl.0.uint_cast_uint.wire</port>
+        <port id="dp" dir="out" type="int">load_tmp3_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">10</req>
+        <ack id="ack">8</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="oper_tmp6.idx.0_int" operation="mul" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">cst_4_int.wire</port>
+        <port id="ip1" dir="in" type="int">i.0_int_mux_1.wire</port>
+        <port id="op" dir="out" type="int">oper_tmp6.idx.0_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">11</req>
+        <ack id="ack">9</ack>
+      </smap>
+    </dpe>
+
+    <constant id="cst_4_int" type="int">
+      <pmap>
+        <port id="op" dir="out" type="int">cst_4_int.wire</port>
+      </pmap>
+      <val>1</val>
+    </constant>
+
+    <dpe id="tc_tmp6.base.cast.offset_cast_int" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="uint">formal_1.wire</port>
+        <port id="op" dir="out" type="int">tc_tmp6.base.cast.offset_cast_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">12</req>
+        <ack id="ack">10</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="oper_tmp6.lvl.0_int" operation="add" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">tc_tmp6.base.cast.offset_cast_int.wire</port>
+        <port id="ip1" dir="in" type="int">oper_tmp6.idx.0_int.wire</port>
+        <port id="op" dir="out" type="int">oper_tmp6.lvl.0_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">13</req>
+        <ack id="ack">11</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="tc_tmp6.lvl.0.uint_cast_uint" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="int">oper_tmp6.lvl.0_int.wire</port>
+        <port id="op" dir="out" type="uint">tc_tmp6.lvl.0.uint_cast_uint.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">14</req>
+        <ack id="ack">12</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="store_0" operation="sto" type="int">
+      <pmap>
+        <port id="ap" dir="in" type="uint">tc_tmp6.lvl.0.uint_cast_uint.wire</port>
+        <port id="dp" dir="in" type="int">load_tmp3_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">15</req>
+        <ack id="ack">13</ack>
+      </smap>
+    </dpe>
+
+    <call id="call_bar_0" type="void" args_width="96" retval_width="0">
+      <pmap>
+        <port id="ip0" dir="in" type="int">formal_0.wire</port>
+        <port id="ip1" dir="in" type="uint">formal_2.wire</port>
+        <port id="ip2" dir="in" type="int">i.0_int_mux_1.wire</port>
+      </pmap>
+    </call>
+
+    <dpe id="load_tmp13_int" operation="lod" type="int">
+      <pmap>
+        <port id="ap" dir="in" type="uint">tc_tmp6.lvl.0.uint_cast_uint.wire</port>
+        <port id="dp" dir="out" type="int">load_tmp13_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">16</req>
+        <ack id="ack">14</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="oper_tmp15_int" operation="add" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">load_tmp13_int.wire</port>
+        <port id="ip1" dir="in" type="int">c.0_int_mux_1.wire</port>
+        <port id="op" dir="out" type="int">oper_tmp15_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">17</req>
+        <ack id="ack">15</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="cbr_0_oper_tmp_bool" operation="dec">
+      <pmap>
+        <port id="ip" dir="in" type="bool">oper_tmp_bool.wire</port>
+      </pmap>
+      <smap>
+        <ack id="ack0">17</ack>
+        <ack id="ack1">16</ack>
+        <req id="req">18</req>
+      </smap>
+    </dpe>
+
+    <dpe id="oper_tmp17_int" operation="add" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">i.0_int_mux_1.wire</port>
+        <port id="ip1" dir="in" type="int">cst_5_int.wire</port>
+        <port id="op" dir="out" type="int">oper_tmp17_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">19</req>
+        <ack id="ack">18</ack>
+      </smap>
+    </dpe>
+
+    <constant id="cst_5_int" type="int">
+      <pmap>
+        <port id="op" dir="out" type="int">cst_5_int.wire</port>
+      </pmap>
+      <val>1</val>
+    </constant>
+
+    <iface>
+      <formal id="formal_0.wire" />
+      <formal id="formal_1.wire" />
+      <formal id="formal_2.wire" />
+      <retval id="oper_tmp15_int.wire" />
+    </iface>
+  </dp>
+
+  <dp id="start_dp">
+
+    <wire id="load_tmp_int.wire" type="int"/>
+    <wire id="location_global_start_dp_x_1.wire" type="uint"/>
+    <wire id="oper_tmp1_int.wire" type="int"/>
+    <wire id="cst_0_int.wire" type="int"/>
+    <wire id="location_global_start_dp_x_2.wire" type="uint"/>
+    <wire id="location_global_start_dp_a_3.wire" type="uint"/>
+    <wire id="location_global_start_dp_b_4.wire" type="uint"/>
+    <wire id="call_foo_0.wire" type="int"/>
+    <wire id="location_global_start_dp_a_5.wire" type="uint"/>
+    <wire id="location_global_start_dp_b_6.wire" type="uint"/>
+    <wire id="location_global_start_dp_x_7.wire" type="uint"/>
+    <wire id="tc_unnamed_25_int.wire" type="int"/>
+    <wire id="location_global_start_dp_a_8.wire" type="uint"/>
+    <wire id="oper_unnamed_26_int.wire" type="int"/>
+    <wire id="cst_1_int.wire" type="int"/>
+    <wire id="tc_unnamed_27_uint.wire" type="uint"/>
+    <wire id="load_tmp4_int.wire" type="int"/>
+    <wire id="tc_unnamed_29_int.wire" type="int"/>
+    <wire id="location_global_start_dp_b_9.wire" type="uint"/>
+    <wire id="oper_unnamed_30_int.wire" type="int"/>
+    <wire id="cst_2_int.wire" type="int"/>
+    <wire id="tc_unnamed_31_uint.wire" type="uint"/>
+    <wire id="load_tmp6_int.wire" type="int"/>
+    <wire id="oper_tmp7_int.wire" type="int"/>
+    <wire id="location_global_start_dp_x_10.wire" type="uint"/>
+
+    <dpe id="load_tmp_int" operation="lod" type="int">
+      <pmap>
+        <port id="ap" dir="in" type="uint">location_global_start_dp_x_1.wire</port>
+        <port id="dp" dir="out" type="int">load_tmp_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">1</req>
+        <ack id="ack">1</ack>
+      </smap>
+    </dpe>
+
+    <address id="location_global_start_dp_x_1">
+      <pmap>
+        <port id="op" dir="out" type="uint">location_global_start_dp_x_1.wire</port>
+      </pmap>
+    </address>
+
+    <dpe id="oper_tmp1_int" operation="add" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">load_tmp_int.wire</port>
+        <port id="ip1" dir="in" type="int">cst_0_int.wire</port>
+        <port id="op" dir="out" type="int">oper_tmp1_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">2</req>
+        <ack id="ack">2</ack>
+      </smap>
+    </dpe>
+
+    <constant id="cst_0_int" type="int">
+      <pmap>
+        <port id="op" dir="out" type="int">cst_0_int.wire</port>
+      </pmap>
+      <val>3</val>
+    </constant>
+
+    <dpe id="store_0" operation="sto" type="int">
+      <pmap>
+        <port id="ap" dir="in" type="uint">location_global_start_dp_x_2.wire</port>
+        <port id="dp" dir="in" type="int">oper_tmp1_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">3</req>
+        <ack id="ack">3</ack>
+      </smap>
+    </dpe>
+
+    <address id="location_global_start_dp_x_2">
+      <pmap>
+        <port id="op" dir="out" type="uint">location_global_start_dp_x_2.wire</port>
+      </pmap>
+    </address>
+
+    <address id="location_global_start_dp_a_3">
+      <pmap>
+        <port id="op" dir="out" type="uint">location_global_start_dp_a_3.wire</port>
+      </pmap>
+    </address>
+
+    <address id="location_global_start_dp_b_4">
+      <pmap>
+        <port id="op" dir="out" type="uint">location_global_start_dp_b_4.wire</port>
+      </pmap>
+    </address>
+
+    <call id="call_foo_0" type="int" args_width="96" retval_width="32">
+      <pmap>
+        <port id="ip0" dir="in" type="int">oper_tmp1_int.wire</port>
+        <port id="ip1" dir="in" type="uint">location_global_start_dp_a_5.wire</port>
+        <port id="ip2" dir="in" type="uint">location_global_start_dp_b_6.wire</port>
+        <port id="op" dir="out" type="int">call_foo_0.wire</port>
+      </pmap>
+    </call>
+
+    <address id="location_global_start_dp_a_5">
+      <pmap>
+        <port id="op" dir="out" type="uint">location_global_start_dp_a_5.wire</port>
+      </pmap>
+    </address>
+
+    <address id="location_global_start_dp_b_6">
+      <pmap>
+        <port id="op" dir="out" type="uint">location_global_start_dp_b_6.wire</port>
+      </pmap>
+    </address>
+
+    <dpe id="store_1" operation="sto" type="int">
+      <pmap>
+        <port id="ap" dir="in" type="uint">location_global_start_dp_x_7.wire</port>
+        <port id="dp" dir="in" type="int">call_foo_0.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">4</req>
+        <ack id="ack">4</ack>
+      </smap>
+    </dpe>
+
+    <address id="location_global_start_dp_x_7">
+      <pmap>
+        <port id="op" dir="out" type="uint">location_global_start_dp_x_7.wire</port>
+      </pmap>
+    </address>
+
+    <dpe id="tc_unnamed_25_int" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="uint">location_global_start_dp_a_8.wire</port>
+        <port id="op" dir="out" type="int">tc_unnamed_25_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">5</req>
+        <ack id="ack">5</ack>
+      </smap>
+    </dpe>
+
+    <address id="location_global_start_dp_a_8">
+      <pmap>
+        <port id="op" dir="out" type="uint">location_global_start_dp_a_8.wire</port>
+      </pmap>
+    </address>
+
+    <dpe id="oper_unnamed_26_int" operation="add" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">tc_unnamed_25_int.wire</port>
+        <port id="ip1" dir="in" type="int">cst_1_int.wire</port>
+        <port id="op" dir="out" type="int">oper_unnamed_26_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">6</req>
+        <ack id="ack">6</ack>
+      </smap>
+    </dpe>
+
+    <constant id="cst_1_int" type="int">
+      <pmap>
+        <port id="op" dir="out" type="int">cst_1_int.wire</port>
+      </pmap>
+      <val>3</val>
+    </constant>
+
+    <dpe id="tc_unnamed_27_uint" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="int">oper_unnamed_26_int.wire</port>
+        <port id="op" dir="out" type="uint">tc_unnamed_27_uint.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">7</req>
+        <ack id="ack">7</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="load_tmp4_int" operation="lod" type="int">
+      <pmap>
+        <port id="ap" dir="in" type="uint">tc_unnamed_27_uint.wire</port>
+        <port id="dp" dir="out" type="int">load_tmp4_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">8</req>
+        <ack id="ack">8</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="tc_unnamed_29_int" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="uint">location_global_start_dp_b_9.wire</port>
+        <port id="op" dir="out" type="int">tc_unnamed_29_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">9</req>
+        <ack id="ack">9</ack>
+      </smap>
+    </dpe>
+
+    <address id="location_global_start_dp_b_9">
+      <pmap>
+        <port id="op" dir="out" type="uint">location_global_start_dp_b_9.wire</port>
+      </pmap>
+    </address>
+
+    <dpe id="oper_unnamed_30_int" operation="add" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">tc_unnamed_29_int.wire</port>
+        <port id="ip1" dir="in" type="int">cst_2_int.wire</port>
+        <port id="op" dir="out" type="int">oper_unnamed_30_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">10</req>
+        <ack id="ack">10</ack>
+      </smap>
+    </dpe>
+
+    <constant id="cst_2_int" type="int">
+      <pmap>
+        <port id="op" dir="out" type="int">cst_2_int.wire</port>
+      </pmap>
+      <val>3</val>
+    </constant>
+
+    <dpe id="tc_unnamed_31_uint" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="int">oper_unnamed_30_int.wire</port>
+        <port id="op" dir="out" type="uint">tc_unnamed_31_uint.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">11</req>
+        <ack id="ack">11</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="load_tmp6_int" operation="lod" type="int">
+      <pmap>
+        <port id="ap" dir="in" type="uint">tc_unnamed_31_uint.wire</port>
+        <port id="dp" dir="out" type="int">load_tmp6_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">12</req>
+        <ack id="ack">12</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="oper_tmp7_int" operation="add" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">load_tmp6_int.wire</port>
+        <port id="ip1" dir="in" type="int">load_tmp4_int.wire</port>
+        <port id="op" dir="out" type="int">oper_tmp7_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">13</req>
+        <ack id="ack">13</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="store_2" operation="sto" type="int">
+      <pmap>
+        <port id="ap" dir="in" type="uint">location_global_start_dp_x_10.wire</port>
+        <port id="dp" dir="in" type="int">oper_tmp7_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">14</req>
+        <ack id="ack">14</ack>
+      </smap>
+    </dpe>
+
+    <address id="location_global_start_dp_x_10">
+      <pmap>
+        <port id="op" dir="out" type="uint">location_global_start_dp_x_10.wire</port>
+      </pmap>
+    </address>
+
+    <call id="call_xxy_1" type="void" args_width="0" retval_width="0">
+      <pmap>
+      </pmap>
+    </call>
+
+    <iface>
+    </iface>
+  </dp>
+
+  <dp id="xxy_dp">
+
+    <wire id="tc_unnamed_0_int.wire" type="int"/>
+    <wire id="location_global_xxy_dp_b_1.wire" type="uint"/>
+    <wire id="oper_unnamed_1_int.wire" type="int"/>
+    <wire id="cst_0_int.wire" type="int"/>
+    <wire id="tc_unnamed_2_uint.wire" type="uint"/>
+    <wire id="load_tmp_int.wire" type="int"/>
+    <wire id="tc_unnamed_4_int.wire" type="int"/>
+    <wire id="location_global_xxy_dp_a_2.wire" type="uint"/>
+    <wire id="oper_unnamed_5_int.wire" type="int"/>
+    <wire id="cst_1_int.wire" type="int"/>
+    <wire id="tc_unnamed_6_uint.wire" type="uint"/>
+
+    <dpe id="tc_unnamed_0_int" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="uint">location_global_xxy_dp_b_1.wire</port>
+        <port id="op" dir="out" type="int">tc_unnamed_0_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">1</req>
+        <ack id="ack">1</ack>
+      </smap>
+    </dpe>
+
+    <address id="location_global_xxy_dp_b_1">
+      <pmap>
+        <port id="op" dir="out" type="uint">location_global_xxy_dp_b_1.wire</port>
+      </pmap>
+    </address>
+
+    <dpe id="oper_unnamed_1_int" operation="add" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">tc_unnamed_0_int.wire</port>
+        <port id="ip1" dir="in" type="int">cst_0_int.wire</port>
+        <port id="op" dir="out" type="int">oper_unnamed_1_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">2</req>
+        <ack id="ack">2</ack>
+      </smap>
+    </dpe>
+
+    <constant id="cst_0_int" type="int">
+      <pmap>
+        <port id="op" dir="out" type="int">cst_0_int.wire</port>
+      </pmap>
+      <val>5</val>
+    </constant>
+
+    <dpe id="tc_unnamed_2_uint" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="int">oper_unnamed_1_int.wire</port>
+        <port id="op" dir="out" type="uint">tc_unnamed_2_uint.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">3</req>
+        <ack id="ack">3</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="load_tmp_int" operation="lod" type="int">
+      <pmap>
+        <port id="ap" dir="in" type="uint">tc_unnamed_2_uint.wire</port>
+        <port id="dp" dir="out" type="int">load_tmp_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">4</req>
+        <ack id="ack">4</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="tc_unnamed_4_int" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="uint">location_global_xxy_dp_a_2.wire</port>
+        <port id="op" dir="out" type="int">tc_unnamed_4_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">5</req>
+        <ack id="ack">5</ack>
+      </smap>
+    </dpe>
+
+    <address id="location_global_xxy_dp_a_2">
+      <pmap>
+        <port id="op" dir="out" type="uint">location_global_xxy_dp_a_2.wire</port>
+      </pmap>
+    </address>
+
+    <dpe id="oper_unnamed_5_int" operation="add" type="int">
+      <pmap>
+        <port id="ip0" dir="in" type="int">tc_unnamed_4_int.wire</port>
+        <port id="ip1" dir="in" type="int">cst_1_int.wire</port>
+        <port id="op" dir="out" type="int">oper_unnamed_5_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">6</req>
+        <ack id="ack">6</ack>
+      </smap>
+    </dpe>
+
+    <constant id="cst_1_int" type="int">
+      <pmap>
+        <port id="op" dir="out" type="int">cst_1_int.wire</port>
+      </pmap>
+      <val>5</val>
+    </constant>
+
+    <dpe id="tc_unnamed_6_uint" operation="cast">
+      <pmap>
+        <port id="ip" dir="in" type="int">oper_unnamed_5_int.wire</port>
+        <port id="op" dir="out" type="uint">tc_unnamed_6_uint.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">7</req>
+        <ack id="ack">7</ack>
+      </smap>
+    </dpe>
+
+    <dpe id="store_0" operation="sto" type="int">
+      <pmap>
+        <port id="ap" dir="in" type="uint">tc_unnamed_6_uint.wire</port>
+        <port id="dp" dir="in" type="int">load_tmp_int.wire</port>
+      </pmap>
+      <smap>
+        <req id="req">8</req>
+        <ack id="ack">8</ack>
+      </smap>
+    </dpe>
+
+    <iface>
+    </iface>
+  </dp>
+
+  <ln id="bar_ln">
+    <map>
+      <from iface="bar_cp" sym="1"/>
+      <to iface="omega" sym="1"/>
+    </map>
+    <map>
+      <from iface="bar_cp" sym="2"/>
+      <to iface="bar_dp" sym="1"/>
+    </map>
+    <map>
+      <from iface="bar_cp" sym="3"/>
+      <to iface="bar_dp" sym="2"/>
+    </map>
+    <map>
+      <from iface="bar_cp" sym="4"/>
+      <to iface="bar_dp" sym="3"/>
+    </map>
+    <map>
+      <from iface="bar_cp" sym="5"/>
+      <to iface="bar_dp" sym="4"/>
+    </map>
+    <map>
+      <from iface="bar_cp" sym="6"/>
+      <to iface="bar_dp" sym="5"/>
+    </map>
+    <map>
+      <from iface="bar_cp" sym="7"/>
+      <to iface="bar_dp" sym="6"/>
+    </map>
+    <map>
+      <from iface="bar_cp" sym="8"/>
+      <to iface="bar_dp" sym="7"/>
+    </map>
+    <map>
+      <from iface="bar_cp" sym="9"/>
+      <to iface="bar_dp" sym="8"/>
+    </map>
+    <map>
+      <from iface="bar_cp" sym="10"/>
+      <to iface="bar_dp" sym="9"/>
+    </map>
+    <map>
+      <from iface="bar_cp" sym="11"/>
+      <to iface="bar_dp" sym="10"/>
+    </map>
+    <map>
+      <from iface="bar_cp" sym="12"/>
+      <to iface="bar_dp" sym="11"/>
+    </map>
+    <map>
+      <from iface="bar_cp" sym="13"/>
+      <to iface="bar_dp" sym="12"/>
+    </map>
+    <map>
+      <from iface="bar_dp" sym="1"/>
+      <to iface="bar_cp" sym="2"/>
+    </map>
+    <map>
+      <from iface="bar_dp" sym="2"/>
+      <to iface="bar_cp" sym="3"/>
+    </map>
+    <map>
+      <from iface="bar_dp" sym="3"/>
+      <to iface="bar_cp" sym="4"/>
+    </map>
+    <map>
+      <from iface="bar_dp" sym="4"/>
+      <to iface="bar_cp" sym="5"/>
+    </map>
+    <map>
+      <from iface="bar_dp" sym="5"/>
+      <to iface="bar_cp" sym="6"/>
+    </map>
+    <map>
+      <from iface="bar_dp" sym="6"/>
+      <to iface="bar_cp" sym="7"/>
+    </map>
+    <map>
+      <from iface="bar_dp" sym="7"/>
+      <to iface="bar_cp" sym="8"/>
+    </map>
+    <map>
+      <from iface="bar_dp" sym="8"/>
+      <to iface="bar_cp" sym="9"/>
+    </map>
+    <map>
+      <from iface="bar_dp" sym="9"/>
+      <to iface="bar_cp" sym="10"/>
+    </map>
+    <map>
+      <from iface="bar_dp" sym="10"/>
+      <to iface="bar_cp" sym="11"/>
+    </map>
+    <map>
+      <from iface="bar_dp" sym="11"/>
+      <to iface="bar_cp" sym="12"/>
+    </map>
+    <map>
+      <from iface="bar_dp" sym="12"/>
+      <to iface="bar_cp" sym="13"/>
+    </map>
+    <map>
+      <from iface="omega" sym="1"/>
+      <to iface="bar_cp" sym="1"/>
+    </map>
+  </ln>
+
+  <ln id="foo_ln">
+    <map>
+      <from iface="foo_cp" sym="1"/>
+      <to iface="omega" sym="1"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="2"/>
+      <to iface="foo_dp" sym="2"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="3"/>
+      <to iface="foo_dp" sym="1"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="4"/>
+      <to iface="foo_dp" sym="4"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="5"/>
+      <to iface="foo_dp" sym="3"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="6"/>
+      <to iface="foo_dp" sym="5"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="7"/>
+      <to iface="foo_dp" sym="6"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="8"/>
+      <to iface="foo_dp" sym="7"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="9"/>
+      <to iface="foo_dp" sym="8"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="10"/>
+      <to iface="foo_dp" sym="9"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="11"/>
+      <to iface="foo_dp" sym="10"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="12"/>
+      <to iface="foo_dp" sym="11"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="13"/>
+      <to iface="foo_dp" sym="12"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="14"/>
+      <to iface="foo_dp" sym="13"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="15"/>
+      <to iface="foo_dp" sym="14"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="16"/>
+      <to iface="foo_dp" sym="15"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="17"/>
+      <to iface="omega" sym="2"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="18"/>
+      <to iface="foo_dp" sym="16"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="19"/>
+      <to iface="foo_dp" sym="17"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="20"/>
+      <to iface="foo_dp" sym="18"/>
+    </map>
+    <map>
+      <from iface="foo_cp" sym="21"/>
+      <to iface="foo_dp" sym="19"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="1"/>
+      <to iface="foo_cp" sym="2"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="2"/>
+      <to iface="foo_cp" sym="3"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="3"/>
+      <to iface="foo_cp" sym="4"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="4"/>
+      <to iface="foo_cp" sym="5"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="5"/>
+      <to iface="foo_cp" sym="6"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="6"/>
+      <to iface="foo_cp" sym="7"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="7"/>
+      <to iface="foo_cp" sym="8"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="8"/>
+      <to iface="foo_cp" sym="9"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="9"/>
+      <to iface="foo_cp" sym="10"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="10"/>
+      <to iface="foo_cp" sym="11"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="11"/>
+      <to iface="foo_cp" sym="12"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="12"/>
+      <to iface="foo_cp" sym="13"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="13"/>
+      <to iface="foo_cp" sym="14"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="14"/>
+      <to iface="foo_cp" sym="16"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="15"/>
+      <to iface="foo_cp" sym="17"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="16"/>
+      <to iface="foo_cp" sym="18"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="17"/>
+      <to iface="foo_cp" sym="19"/>
+    </map>
+    <map>
+      <from iface="foo_dp" sym="18"/>
+      <to iface="foo_cp" sym="20"/>
+    </map>
+    <map>
+      <from iface="omega" sym="1"/>
+      <to iface="foo_cp" sym="1"/>
+    </map>
+    <map>
+      <from iface="omega" sym="2"/>
+      <to iface="foo_cp" sym="15"/>
+    </map>
+  </ln>
+
+  <ln id="start_ln">
+    <map>
+      <from iface="omega" sym="1"/>
+      <to iface="start_cp" sym="1"/>
+    </map>
+    <map>
+      <from iface="omega" sym="2"/>
+      <to iface="start_cp" sym="5"/>
+    </map>
+    <map>
+      <from iface="omega" sym="3"/>
+      <to iface="start_cp" sym="17"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="1"/>
+      <to iface="omega" sym="1"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="2"/>
+      <to iface="start_dp" sym="1"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="3"/>
+      <to iface="start_dp" sym="2"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="4"/>
+      <to iface="start_dp" sym="3"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="5"/>
+      <to iface="omega" sym="2"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="6"/>
+      <to iface="start_dp" sym="4"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="7"/>
+      <to iface="start_dp" sym="5"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="8"/>
+      <to iface="start_dp" sym="6"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="9"/>
+      <to iface="start_dp" sym="7"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="10"/>
+      <to iface="start_dp" sym="8"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="11"/>
+      <to iface="start_dp" sym="9"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="12"/>
+      <to iface="start_dp" sym="10"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="13"/>
+      <to iface="start_dp" sym="11"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="14"/>
+      <to iface="start_dp" sym="12"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="15"/>
+      <to iface="start_dp" sym="13"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="16"/>
+      <to iface="start_dp" sym="14"/>
+    </map>
+    <map>
+      <from iface="start_cp" sym="17"/>
+      <to iface="omega" sym="3"/>
+    </map>
+    <map>
+      <from iface="start_dp" sym="1"/>
+      <to iface="start_cp" sym="2"/>
+    </map>
+    <map>
+      <from iface="start_dp" sym="2"/>
+      <to iface="start_cp" sym="3"/>
+    </map>
+    <map>
+      <from iface="start_dp" sym="3"/>
+      <to iface="start_cp" sym="4"/>
+    </map>
+    <map>
+      <from iface="start_dp" sym="4"/>
+      <to iface="start_cp" sym="6"/>
+    </map>
+    <map>
+      <from iface="start_dp" sym="5"/>
+      <to iface="start_cp" sym="7"/>
+    </map>
+    <map>
+      <from iface="start_dp" sym="6"/>
+      <to iface="start_cp" sym="8"/>
+    </map>
+    <map>
+      <from iface="start_dp" sym="7"/>
+      <to iface="start_cp" sym="9"/>
+    </map>
+    <map>
+      <from iface="start_dp" sym="8"/>
+      <to iface="start_cp" sym="10"/>
+    </map>
+    <map>
+      <from iface="start_dp" sym="9"/>
+      <to iface="start_cp" sym="11"/>
+    </map>
+    <map>
+      <from iface="start_dp" sym="10"/>
+      <to iface="start_cp" sym="12"/>
+    </map>
+    <map>
+      <from iface="start_dp" sym="11"/>
+      <to iface="start_cp" sym="13"/>
+    </map>
+    <map>
+      <from iface="start_dp" sym="12"/>
+      <to iface="start_cp" sym="14"/>
+    </map>
+    <map>
+      <from iface="start_dp" sym="13"/>
+      <to iface="start_cp" sym="15"/>
+    </map>
+    <map>
+      <from iface="start_dp" sym="14"/>
+      <to iface="start_cp" sym="16"/>
+    </map>
+  </ln>
+
+  <ln id="xxy_ln">
+    <map>
+      <from iface="omega" sym="1"/>
+      <to iface="xxy_cp" sym="1"/>
+    </map>
+    <map>
+      <from iface="xxy_cp" sym="1"/>
+      <to iface="omega" sym="1"/>
+    </map>
+    <map>
+      <from iface="xxy_cp" sym="2"/>
+      <to iface="xxy_dp" sym="1"/>
+    </map>
+    <map>
+      <from iface="xxy_cp" sym="3"/>
+      <to iface="xxy_dp" sym="2"/>
+    </map>
+    <map>
+      <from iface="xxy_cp" sym="4"/>
+      <to iface="xxy_dp" sym="3"/>
+    </map>
+    <map>
+      <from iface="xxy_cp" sym="5"/>
+      <to iface="xxy_dp" sym="4"/>
+    </map>
+    <map>
+      <from iface="xxy_cp" sym="6"/>
+      <to iface="xxy_dp" sym="5"/>
+    </map>
+    <map>
+      <from iface="xxy_cp" sym="7"/>
+      <to iface="xxy_dp" sym="6"/>
+    </map>
+    <map>
+      <from iface="xxy_cp" sym="8"/>
+      <to iface="xxy_dp" sym="7"/>
+    </map>
+    <map>
+      <from iface="xxy_cp" sym="9"/>
+      <to iface="xxy_dp" sym="8"/>
+    </map>
+    <map>
+      <from iface="xxy_dp" sym="1"/>
+      <to iface="xxy_cp" sym="2"/>
+    </map>
+    <map>
+      <from iface="xxy_dp" sym="2"/>
+      <to iface="xxy_cp" sym="3"/>
+    </map>
+    <map>
+      <from iface="xxy_dp" sym="3"/>
+      <to iface="xxy_cp" sym="4"/>
+    </map>
+    <map>
+      <from iface="xxy_dp" sym="4"/>
+      <to iface="xxy_cp" sym="5"/>
+    </map>
+    <map>
+      <from iface="xxy_dp" sym="5"/>
+      <to iface="xxy_cp" sym="6"/>
+    </map>
+    <map>
+      <from iface="xxy_dp" sym="6"/>
+      <to iface="xxy_cp" sym="7"/>
+    </map>
+    <map>
+      <from iface="xxy_dp" sym="7"/>
+      <to iface="xxy_cp" sym="8"/>
+    </map>
+    <map>
+      <from iface="xxy_dp" sym="8"/>
+      <to iface="xxy_cp" sym="9"/>
+    </map>
+  </ln>
+
+</program>
