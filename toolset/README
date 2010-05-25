@@ -1,28 +1,36 @@
 
-Contents
-========
+The source code for the toolset is divided into two parts:
 
-Analysis      : functions for compatibility analysis
-Compatibility : structures for compatibility covers on the labels 
-GenIR         : LLVM backend that generates the AHIR XML
-GenVHDL       : generate VHDL
-Labels        : structures used to represent CP labels
-LinkIR        : AHIR linker
-ParseIR       : XML parser for AHIR
-Structures    : common structures representing AHIR
-SystemC       : old, broken SystemC code
-Type2         : functions to check for Type-2 CPs
+lib: C++ Data-structures that represent the CDFG and the AHIR modules,
+     along with the facilities for parsing and printing XML
+     representations.
 
-Building
-========
+tools: Source for the actual tools.
 
-Targets defined in the Makefile:
+   llvm2cdfg: LLVM backend that reads LLVM bytecode and produces a
+              CDFG for each function, in an XML file.
 
-build: compiles each directory
-clean: deletes object files, *.d, binaries, etc
-install: first calls build, then runs the ahir-install script
+   cdfg2ahir: Translate CDFG to AHIR (both input and output are XML
+              files)
 
-IMPORTANT: Run the configure script in GenIR/ before calling make in this
-directory. GenIR is actually part of the LLVM framework, and the code inside it
-is not related to the rest of the code. Read GenIR/README for more information.
+    cdfg2dot: Supplementary utility that prints a Graphviz-dot file
+              from a CDFG XML representation.
 
+   link-ahir: Link the modules in an AHIR system, producing a mapping
+              from variable names to numerical addresses, and a set of
+              arbiters that manage function calls between modules.
+
+analyse-ahir: A catch-all tool that can perform various analyses of an
+              input AHIR description. An important transformation is
+              the introduction of shared operators in the data-paths
+              using a compatibility analysis. See the output of
+              ``analyse-ahir --help'' for more information.
+
+    Note that the effects of the AHIR linker are orthogonal w.r.t.
+    the sharing introduced by the analysis tool.
+
+   ahir2vhdl: Translate an AHIR description to a VHDL implementation
+              based on the AHIR VHDL library.
+
+vhdl-testgen: Supplementary utility that generates random test-vectors
+              used for validating the operators in the AHIR VHDL library.
