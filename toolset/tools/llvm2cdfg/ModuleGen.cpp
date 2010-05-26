@@ -74,7 +74,6 @@ namespace {
                     << fi->getNameStr()
                     << "\n";
           ++fi;
-          f.eraseFromParent();
           continue;
         }
 

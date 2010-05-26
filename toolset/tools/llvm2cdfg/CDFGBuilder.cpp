@@ -25,6 +25,14 @@ namespace llvm {
   class AliasAnalysis;
 }
 
+namespace {
+  typedef enum {
+    NOT_IO
+    , READ_UINT32, WRITE_UINT32
+    , READ_FLOAT32, WRITE_FLOAT32
+  } IOCode;
+}
+
 namespace cdfg {
 
   CDFGBuilder::CDFGBuilder(llvm::TargetData *_TD, llvm::AliasAnalysis *_AA)
@@ -364,6 +372,17 @@ namespace {
     {
       llvm::Function *f = C.getCalledFunction();
       assert(f && "function pointers are not currently supported");
+
+      if (f->isDeclaration()) {
+        StringRef name = f->getName();
+        IOCode ioc = (name.equals("read_uint32") ? READ_UINT32
+                      : (name.equals("write_uint32") ? WRITE_UINT32
+                         : (name.equals("read_float32") ? READ_FLOAT32
+                            : (name.equals("write_float32") ? WRITE_FLOAT32
+                               : NOT_IO))));
+        assert(ioc != NOT_IO);
+        handle_io_port(C, ioc);
+      }
 
       CDFGNode *call = create_data_node(Call, NULL, C.getName());
       call->callee = f->getName();
