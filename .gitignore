@@ -7,5 +7,7 @@
 auto
 *.o
 *.a
+*.bc
 /iolib/demo/client
 /iolib/demo/server
+/toolset/tools/llvm2cdfg/llvm2cdfg
