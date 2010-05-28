@@ -57,6 +57,11 @@ namespace cdfg {
     program->register_addressable(addr);
   }
 
+  void CDFGBuilder::visitInstruction(llvm::Instruction &I)
+  {
+    assert(!isa<llvm::GetElementPtrInst>(&I) && "GEP should not reach here");
+    assert(false && "unsupported instruction");
+  }
 }
 
 namespace {
@@ -207,12 +212,6 @@ namespace {
         BasicBlock *taken_target = br->getSuccessor(0);
         connect_to_block(bbnode->exit, taken_target, "ack1");
       }
-    }
-
-    void visitInstruction(Instruction &I)
-    {
-      assert(!isa<GetElementPtrInst>(&I) && "GEP should not reach here");
-      assert(false && "unsupported instruction");
     }
 
     void visitBinaryOperator(BinaryOperator &I)
