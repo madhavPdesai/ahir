@@ -116,6 +116,7 @@ namespace {
     JoinMap joins;
 
     std::map<llvm::Value*, std::vector<Port*> > pendingUsers;
+    std::map<std::string, CDFGNode*> io_history;
     
     /* ---- Initialisation ---- */
     
@@ -205,6 +206,7 @@ namespace {
     {
       set_bb(BB);
       AA->clear();
+      io_history.clear();
 
       TerminatorInst *term = BB.getTerminator();
       if (!isa<BranchInst>(term))
@@ -368,6 +370,60 @@ namespace {
       phi_connect_input(prev_mux, phi_name, fval, "y", fbb, "reqy");
     }
 
+    void handle_io_port(CallInst &C, IOCode ioc)
+    {
+      const llvm::Type *type = NULL;
+      NodeType ntype = hls::Constant; // sentinel
+
+      switch (ioc) {
+        case READ_FLOAT32:
+          type = llvm::Type::getFloatTy(C.getContext());
+          ntype = Input;
+          break;
+
+        case READ_UINT32:
+          type = llvm::Type::getInt32Ty(C.getContext());
+          ntype = Input;
+          break;
+
+        case WRITE_FLOAT32:
+          type = llvm::Type::getFloatTy(C.getContext());
+          ntype = Output;
+          break;
+
+        case WRITE_UINT32:
+          type = llvm::Type::getInt32Ty(C.getContext());
+          ntype = Output;
+          break;
+
+        default:
+          assert(false);
+          break;
+      }
+
+      assert(type && ntype != hls::Constant);
+
+      llvm::ConstantArray *konst = cast<ConstantArray>(C.getOperand(1));
+      CDFGNode *node = create_data_node(ntype, type
+                                        , C.getCalledFunction()->getNameStr()
+                                        + ":" + konst->getAsString());
+      node->portname = konst->getAsString();
+
+      if (ntype == Output)
+        if (handleOperand(node, C.getOperand(2), "data"))
+          connect_entry_to_node(node);
+
+      register_node(C, node);
+      connect_to_exit(node, C);
+
+      if (io_history.find(node->portname) != io_history.end()) {
+        CDFGNode *prev = io_history[node->portname];
+        assert(prev->ntype == node->ntype);
+        control_flow(prev, node);
+      }
+      io_history[node->portname] = node;
+    }
+
     void visitCallInst(CallInst &C)
     {
       llvm::Function *f = C.getCalledFunction();
@@ -382,6 +438,7 @@ namespace {
                                : NOT_IO))));
         assert(ioc != NOT_IO);
         handle_io_port(C, ioc);
+        return;
       }
 
       CDFGNode *call = create_data_node(Call, NULL, C.getName());

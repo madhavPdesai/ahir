@@ -89,6 +89,7 @@ namespace cdfg {
     // big fat fingers in the eye of OOP
     std::string callee;
     std::string value; // used by Constant
+    std::string portname;
     hls::Addressable *addressable; // used by Address
     CDFGNode *counterpart;	   // LC <-> LR mapping
     
