@@ -6,7 +6,7 @@ BIBTEX := bibtex
 
 .PHONY : images
 
-paper : paper.dvi
+paper : paper.pdf
 
 paper.dvi : paper.tex images
 	$(LATEX) $(LATEX_OPTS) paper.tex
