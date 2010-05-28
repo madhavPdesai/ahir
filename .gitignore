@@ -11,3 +11,11 @@ auto
 /iolib/demo/client
 /iolib/demo/server
 /toolset/tools/llvm2cdfg/llvm2cdfg
+/toolset/TAGS
+/toolset/tools/ahir2vhdl/ahir2vhdl
+/toolset/tools/analyse-ahir/analyse-ahir
+/toolset/tools/cdfg2ahir/cdfg2ahir
+/toolset/tools/cdfg2dot/cdfg2dot
+/toolset/tools/link-ahir/link-ahir
+/toolset/tools/vhdl-testgen/vhdl-testgen
+
