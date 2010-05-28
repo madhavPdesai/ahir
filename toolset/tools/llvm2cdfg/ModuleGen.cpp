@@ -24,6 +24,7 @@ namespace llvm {
 }
 
 namespace cdfg {
+  class CDFG;
   void print(hls::Program *program);
 }
 
@@ -69,7 +70,7 @@ namespace {
   {
     TD = &getAnalysis<TargetData>();
     AA = &getAnalysis<AliasAnalysis>();
-    cbuilder = new CDFGBuilder(TD, AA);
+    cbuilder = cdfg_builder_new(TD, AA);
     cbuilder->create_program(M.getModuleIdentifier());
   
     for (llvm::Module::global_iterator gi = M.global_begin(), ge = M.global_end();
