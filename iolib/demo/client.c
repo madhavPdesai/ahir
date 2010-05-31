@@ -3,9 +3,11 @@
 #ifdef RUN
 #include <stdlib.h>
 #include <stdio.h>
-#endif
 
 int main (void)
+#else
+int start (void)
+#endif
 {
   uint32_t i, apl;
   float ong, my_ong;
@@ -14,7 +16,11 @@ int main (void)
   i = 0;
 
   while (i < 10) {
+    #ifdef RUN
     apl = rand();
+    #else
+    apl = i + 1;
+    #endif
     my_ong = (float)apl;
     
     write_uint32("apples", apl);
