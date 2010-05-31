@@ -143,3 +143,27 @@ const hls::Type* cdfg::get_type(Program *program, TargetData *TD, const llvm::Ty
   return retval;
 }
 
+IOCode cdfg::get_io_code(Use &u)
+{
+  if (CallInst *C = dyn_cast<CallInst>(u.getUser()))
+    return get_io_code(*C);
+  return NOT_IO;
+}
+
+IOCode cdfg::get_io_code(CallInst &C)
+{
+  llvm::Function *f = C.getCalledFunction();
+  assert(f && "function pointers are not currently supported");
+  
+  if (!f->isDeclaration())
+    return NOT_IO;
+
+  StringRef name = f->getName();
+  IOCode ioc = (name.equals("read_uint32") ? READ_UINT32
+                : (name.equals("write_uint32") ? WRITE_UINT32
+                   : (name.equals("read_float32") ? READ_FLOAT32
+                      : (name.equals("write_float32") ? WRITE_FLOAT32
+                         : NOT_IO))));
+  
+  return ioc;
+}
