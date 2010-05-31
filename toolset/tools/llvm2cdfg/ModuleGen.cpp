@@ -95,6 +95,11 @@ namespace {
     void runOnFunction(llvm::Function &F)
     {
       cbuilder->initialise_with_function(F);
+      
+      if (F.isDeclaration())
+        return;
+    
+      cbuilder->initialise_with_function(F);
 
       std::set<BasicBlock*> blocks_queued;
       std::list<BasicBlock*> queue;

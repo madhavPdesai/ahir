@@ -409,9 +409,12 @@ namespace {
                                         + ":" + konst->getAsString());
       node->portname = konst->getAsString();
 
-      if (ntype == Output)
-        if (handleOperand(node, C.getOperand(2), "data"))
+      if (ntype == Output) {
+        if (!handleOperand(node, C.getOperand(2), "data"))
           connect_entry_to_node(node);
+      } else {
+        connect_entry_to_node(node);
+      }
 
       register_node(C, node);
       connect_to_exit(node, C);
@@ -463,7 +466,7 @@ namespace {
       assert(fork && join);
       control_flow(fork, join);
   
-      connect_to_exit(NULL, C); // the CDFGNode doesn't matter.
+      connect_to_exit(NULL, C); // the NULL indicates that this is not an I/O operation.
 
       AA->handleCallInst(&C, !internalFlow);
     }
@@ -977,7 +980,7 @@ namespace {
         }
       }
 
-      if (isa<CallInst>(I)) {
+      if (isa<CallInst>(I) && !node) {
         AA->path_to_exit = !connect_exit;
       } else if (connect_exit) {
         assert(forks.find(node) != forks.end()
