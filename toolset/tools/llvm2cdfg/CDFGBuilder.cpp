@@ -11,6 +11,7 @@
 #include <llvm/Constants.h>
 #include <llvm/Function.h>
 #include <llvm/Target/TargetData.h>
+#include <llvm/User.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -362,6 +363,31 @@ namespace {
       phi_connect_input(prev_mux, phi_name, fval, "y", fbb, "reqy");
     }
 
+    ConstantArray* locate_portname_for_io_call(llvm::Value *strptr)
+    {
+      std::deque<llvm::Value*> queue;
+      queue.push_back(strptr);
+
+      while (!queue.empty()) {
+        llvm::Value *val = queue.front();
+        queue.pop_front();
+
+        if (ConstantArray *konst = dyn_cast<ConstantArray>(val))
+          return konst;
+
+        if (!isa<User>(val))
+          continue;
+
+        User *u = dyn_cast<User>(val);
+        for (User::op_iterator oi = u->op_begin(), oe = u->op_end(); oi != oe; ++oi) {
+          llvm::Value *opnd = oi->get();
+          queue.push_back(opnd);
+        }
+      }
+      
+      return NULL;
+    }
+
     void handle_io_port(CallInst &C, IOCode ioc)
     {
       const llvm::Type *type = NULL;
@@ -395,7 +421,8 @@ namespace {
 
       assert(type && ntype != hls::Constant);
 
-      llvm::ConstantArray *konst = cast<ConstantArray>(C.getOperand(1));
+      llvm::ConstantArray *konst = locate_portname_for_io_call(C.getOperand(1));
+      assert(konst);
       CDFGNode *node = create_data_node(ntype, type
                                         , C.getCalledFunction()->getNameStr()
                                         + ":" + konst->getAsString());
