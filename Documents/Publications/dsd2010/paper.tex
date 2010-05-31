@@ -75,7 +75,7 @@ low-power embedded microprocessors are used to implement complex
 algorithms in digital systems, so that the design and verification
 problems are moved to the software domain. A high-level synthesis flow
 which maps an algorithm directly to a hardware description can be a
-potential alternative if it provides a verifiable and optimisable path
+potential alternative if it provides a verifiable and optimizable path
 from executable specifications\cite{gajski-executable-specification}
 to hardware.   
 
@@ -118,13 +118,13 @@ with a heavily optimized processor.  Concrete data which throws light on these a
 
 Our high-level synthesis flow is based on a factored intermediate
 representation which guarantees the correctness of the implementation,
-and supports optimisations that can scale with the size of the
+and supports optimizations that can scale with the size of the
 program. The synthesis flow introduces an intermediate step in the
 form of a representation called AHIR (A Hardware Intermediate
 Representation). The representation is independent of the programming
 language used, and can be routinely translated to a hardware
 implementation, while also supporting scalable
-optimisations\cite{AHIR_sameerds_hakim_2007}\cite{ahir_thesis}.
+optimizations\cite{AHIR_sameerds_hakim_2007}\cite{ahir_thesis}.
 
 In order to characterize the energy efficiency of the resulting
 circuits, we select a wide range of applications (from stream ciphers
@@ -140,11 +140,9 @@ embedded processors in the design of complex systems.
 
 \section{Related work}
 
-There has been a great deal of activity in the field of 
-high-level synthesis in the context of converting a high
-level program to RTL.   Attempts at creating a path from 
-high-level programs to hardware descriptions can be loosely 
-categorised as follows:
+There have been several approaches to the creation of a path from 
+high-level programs to hardware descriptions, which
+can be loosely categorized as follows:
 
 \subsection{Improvements over RTL}
 
@@ -171,7 +169,7 @@ programming practices.
 
 \subsection{High-level programs as hardware specifications}
 
-Some efforts simply interpret a program as a behavioral
+Some efforts interpret a program as a behavioral
 specification, which is mapped to a hardware implementation using an
 intermediate representation.
 
@@ -189,12 +187,12 @@ scheduling and resource binding to produce efficient hardware.
 
 Our work is similar, since the goal is to transparently compile
 programs into hardware. AHIR differs from both Pegasus and SPARK since
-it factorises the system into three separate components: control flow,
-data flow and memory.  The components can be optimised and
+it factorizes the system into three separate components: control flow,
+data flow and memory.  The components can be optimized and
 implemented separately as long as specified constraints are satisfied.
 
 Several commercial tools which translate a C program to hardware are
-also available. For example,
+also available, such as 
 Catapult-C\footnote{\url{http://www.mentor.com/products/esl/high_level_synthesis/}}
 from Mentor Graphics,
 C-to-Silicon\footnote{\url{http://www.cadence.com/products/sd/silicon_compiler/}}
@@ -292,9 +290,9 @@ is associated with an output symbol (the output symbol is emitted
 when the transition fires).
 
 The control-path has a single marked place in the initial marking.
-This enables a single transition called \sym{init}, which responds to
+This enables a single transition called {\em init}, which responds to
 a request symbol in alphabet $\Omega$ and begins execution of the
-module. The end of execution is represented by the \sym{fin}
+module. The end of execution is represented by the {\em fin}
 transition that emits an acknowledgment symbol in $\Omega$ and marks
 the initially marked place.
 
@@ -397,9 +395,10 @@ called module.
 
 Control paths in AHIR are instances of Type-2 petri-nets (introduced
 in \cite{ahir_thesis}), which
-are defined using a set of standard construction rules. 
-The structure of a Type-2 petri-net is
-designed to enable analyses and transformations that are scalable with
+are defined using a set of standard construction rules, which
+ensure that the resulting petri-net is live and safe. 
+Further, the structure of a Type-2 petri-net  
+enables analyses and transformations that are scalable with
 the size of the petri-net.
 
 \begin{definition} A {\bf simple place (transition)} is a place
@@ -463,7 +462,7 @@ Fig.~\ref{figure:C-and-SSA}.
 We describe an optimization that reuses a data-path operator for
 multiple operations that are never active at the same time. This
 avoids arbitration overheads since there is no contention. The
-optimisation uses an almost linear static analysis of the control-path
+optimization uses an almost linear static analysis of the control-path
 to identify sharing opportunities.
 
 \begin{definition} An operator is said to be {\bf active} at a given
@@ -513,11 +512,8 @@ execute concurrently. But segments $1$ and $4$ are compatible, since a
 sequence is enforced by the path through segment $3$.
 
 \begin{definition} Two elements $e_1$ and $e_2$ in a Type-2 petri-net
-are compatible if and only if one of the following is true:
-\begin{enumerate}
-\item their NCA is {\em not} a fork region
-\item there is a path within the NCA fork region, joining the two elements
-\end{enumerate}
+are compatible if their NCA is {\em not} a fork region or if
+there is a directed path within the NCA region which joins the two elements.
 \end{definition}
 
 \subsection{Compatibility labeling}
@@ -590,12 +586,14 @@ disappear at the exit of a fork region\cite{ahir_thesis}. Finally, the
 \subsection{Label Representation Graph (LRG)}
 
 The compatibility label is a record of every path reaching that
-element from the $init$ transition, which results in an exponential
-size. Comparing two labels for compatibility also has exponential
+element from the $init$ transition, and can thus have an exponential
+size (the number of elements in the label set can be
+exponential in the size of the petri-net). 
+Comparing two labels for compatibility can also have exponential
 complexity, since every sequence in one label has to be compared with
 every sequence in the other label.
 
-We eliminate the complexity by using a {\em label representation
+We eliminate the exponential complexity by using a {\em label representation
   graph} (LRG) as shown in Fig.~\ref{figure:LRG}. The LRG represents
 labels as nodes, where edges represent the manner in which a label is
 constructed from other labels. The LRG is a directed acyclic graph
@@ -645,25 +643,27 @@ result is proved in \cite{ahir_thesis}.
 
 \subsection{Shared operators}
 
-We have used the LRG to implement arbiterless sharing in the AHIR
+We have used the LRG to implement arbiter-less sharing in the AHIR
 synthesis flow. We use a simple greedy algorithm to generate cliques
 of pair-wise compatible operations that are mapped to a single
 operator in the data-path. The incoming data-edges are routed through
 multiplexers; the registers for the outgoing data-edges are not
 shared.
 
-This scheme for arbiterless sharing is quite effective in reducing
-hardware costs, demonstrating support for scalable optimisations in
-AHIR. Synthesis results show improvements in the throughput-area ratio
+This scheme for arbiter-less sharing is quite effective in reducing
+hardware costs, demonstrating support for scalable optimizations in
+AHIR. Synthesis results (targeted at field programmable gate arrays)
+show improvements in the throughput-area ratio
 (measured in $\operatorname{Hz}/\operatorname{slice}$) in the range of
 15--190\% depending on the application\cite{ahir_thesis}.
 
 \section{The synthesis flow}
 
 The synthesis flow uses the LLVM Compiler
-Infrastructure\footnote{\url{http://llvm.org/}} to parse and optimise
-the input C program. This is translated to an AHIR specification using
-a CDFG as an intermediate step.
+Framework\footnote{\url{http://llvm.org/}} to parse and optimize the
+input C program. The resulting optimized LLVM bytecode is then
+translated to an AHIR specification using a CDFG as an intermediate
+step.
 
 \subsection{C to CDFG}
 
@@ -707,17 +707,17 @@ x = d3 + 2
 \label{figure:C-and-SSA}%
 \end{figure}
 
-The starting point is a C program.  In the current implementation,
-the only restrictions on the C program are that the call graph
-should not contain any cycles, and that function pointers should
-not be used (pointers to data can be used in the usual way)\footnote{These restrictions
-are not fundamental to the approach, but we have not gotten around to eliminating
-them so far.}.
-The C program is first converted to LLVM byte-code, which is based on
-the SSA form\cite{muchnick}. This is a purely functional form that
-removes the notion of individual {\it variables} from a program. Every
-assignment to a variable is a distinct value; multiple assignments
-that occur in branches are handled by a special instruction called the
+The starting point is a C program. In the current implementation, the
+only restrictions on the C program are that the call graph should not
+contain any cycles, and that function pointers should not be used
+(pointers to data can be used in the usual way)\footnote{These
+  restrictions are not fundamental to the approach, but we have not
+  gotten around to eliminating them so far.}. The C program is first
+converted to LLVM byte-code, which is based on the SSA
+form\cite{muchnick}. This is a purely functional form that removes the
+notion of individual {\it variables} from a program. Every assignment
+to a variable is a distinct value; multiple assignments that occur in
+branches are handled by a special instruction called the
 $\phi$-function, as shown in Fig.~\ref{figure:C-and-SSA}.
 
 \nocite{conditional_branches_rim_jain_1992}
@@ -729,15 +729,26 @@ $\phi$-function, as shown in Fig.~\ref{figure:C-and-SSA}.
 The LLVM bytecode is then translated to a control data flow graph
 (CDFG)\cite{conditional_branches_rim_jain_1992}-%
 \cite{functional_synthesis_TASS_amellal_kaminska_1994}, as shown in
-Fig.~\ref{fig:snippet-cdfg}. The CDFG represents instructions as
-nodes connected by control and data flow edges. The edges in the CDFG
-arise from three kinds of dependence in the original program:
+Fig.~\ref{fig:snippet-cdfg}. The CDFG is a hypergraph where the nodes
+represent instructions and edges represent control and data flow. A
+data edge is a hyperedge with a single tail and one or more heads,
+that represents a value in the program, defined by the tail and used
+by the heads. The control edge has a single tail and a single head,
+and represents the passing of control from the tail to the head.
 
-\begin{itemize}
-\item Data dependence that creates control and data flow.
-\item Control structures that create control flow.
-\item External dependence (in storage) that creates control flow.
-\end{itemize}
+Each value in the program that is defined by some instruction $u$ and
+used by a set of instructions $s_v$ is mapped a data edge in the CDFG
+where the tail $n_u$ corresponds to the instruction $u$ and the set of
+heads has a one to one correspondence with the set $s_v$. Control
+edges are created in a manner that exposes instruction-level
+parallelism in the program. Sequence is enforced only where the
+execution of a node may affect execution of some other node. For
+example, when a node $v$ uses the output of a node $u$, a control edge
+is introduced to ensure that $v$ is executed only when $u$ is
+finished. Similarly, control edges are used to eliminate hazards
+between pairs of load instructions, store instructions and function
+calls that may access the same memory location, as determined by a
+memory reference analysis.
 
 \subsection{Generating AHIR from a CDFG}
 
@@ -792,13 +803,12 @@ $G$ are in a one-to-one correspondence.
 
 \subsection{AHIR to VHDL}
 
-The conversion of an AHIR network to VHDL is straightforward.
-Currently, we produce a system which is synchronous and uses
-a single clock (positive edges only).  Each symbol that is
-exchanged between the control path and the data path is coded 
-by a pulse which is sampled high by exactly one clock
-edge.  Symbols are associated with transitions as indicated
-earlier.
+The conversion of an AHIR circuit to VHDL is straightforward.
+Currently, we produce a system which is synchronous and uses a single
+clock (positive edges only). Each symbol exchanged between the control
+path and the data path is coded by a pulse which is sampled high by
+exactly one clock edge. Symbols are associated with transitions as
+indicated earlier.
 
 Places in the AHIR control path are handled as follows:
 \begin{enumerate}
@@ -809,9 +819,9 @@ transition, then it is optimized away.
 an output transition, and if this successor transition is
 not a join, then the place is modeled by an OR gate whose inputs
 are its predecessor transitions.
-\item In the rest of the cases, the place is modeled as 
-a finite state machine with two states, with the state being
-set by any of its predecessors, and reset by any of its successors.
+\item In all other cases, the place is modeled as a finite state
+  machine with two states, with the state being set by any of its
+  predecessors, and reset by any of its successors.
 \end{enumerate}
 The number of places that need to be modeled by state machines is
 usually a small fraction of the total number of places.
@@ -820,18 +830,15 @@ to the transition providing an input to the AND gate.  The cost
 of implementing the control path is thus minimal in relation to
 the implementation of the data path and memory subsystem.
 
-Operators in the data path compute their results in a single
-clock cycle, and the outputs are registered.  Shared operators
-are constructed using multiplexers in a standard manner.
-The instantiation of operators in the data path, 
-and the interconnections within
-the data path and between the data path and the control path
-mirror those in the AHIR representation, except for the fact
-that several operators in the AHIR data path can be mapped
-to the same physical operator (as identified by arbiterless
-operating sharing).
-The inter module link layer is completed using the call graph
-corresponding to the source code.
+Operators in the data path compute their results in a single clock
+cycle, and the outputs are registered. Shared operators are
+constructed using multiplexers in a standard manner. The instantiation
+of operators in the data path, the interconnections within the data
+path and those between the data path and the control path mirror those
+in the AHIR representation, except for the fact that several operators
+in the AHIR data path can be mapped to the same physical operator
+(through arbiterless sharing). The inter module link layer is
+completed using the call graph corresponding to the source code.
 
 The memory sub-system is implemented as a multiple-bank (each
 bank is a single-cycle synchronous SRAM)
@@ -916,13 +923,12 @@ full floating point support, and is a part of many low power computing
 devices. The sample set of C programs was run on the processor $P$
 (exactly the same program used in the hardware generation was run on
 the processor). In each case, the number of cycles needed to finish
-one task (as described above) specific to that program was measured.
-The data sets for the programs were small enough to fit into the
-processor cache, and the cycle count was averaged across multiple
-runs. These cycle counts were then used to find the delay and energy
-consumption for the processor. All values for area, frequency and
-power dissipation for the processor were obtained from the
-corresponding data-sheet.
+one task (as described above) was measured. The data sets for the
+programs were small enough to fit into the processor cache, and the
+cycle count was averaged across multiple runs. These cycle counts were
+then used to find the delay and energy consumption for the processor.
+All values for area, frequency and power dissipation for the processor
+were obtained from the corresponding data-sheet.
 
 \begin{table}[htb]
   \centering
@@ -950,13 +956,11 @@ corresponding data-sheet.
 
 \end{table}
 
-If we compare the results for the $180nm$ AHIR circuits with
-the $45nm$ processor $P$, we find that except for the AES and
-RBT cases,
-the energy consumed per task by the AHIR circuit is appreciably
-lower than that for the processor $P$.  This is significant
-because the processor $P$ is implemented in a technology which
-is four generations ahead of the AHIR circuits.  
+We find that the energy consumed per task by the $180nm$ AHIR circuits
+is appreciably lower than that for the $45nm$ processor $P$ (except
+for AES and RBT). This is significant because the processor $P$ is
+implemented in a technology which is four generations ahead of the
+AHIR circuits.
 
 Now, suppose
 that  we scale the 
