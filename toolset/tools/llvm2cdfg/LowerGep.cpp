@@ -82,6 +82,19 @@ bool cdfg::LowerGepPass::runOnFunction(Function &F)
 	continue;
       }
 
+      for (llvm::Value::use_iterator ui = gep->use_begin(), ue = gep->use_end();
+           ui != ue; ++ui) {
+        Use &u = ui.getUse();
+        IOCode ioc = get_io_code(u);
+
+        if (ioc == NOT_IO)
+          continue;
+
+        u.set(CastInst::CreatePointerCast(gep->getPointerOperand()
+                                          , gep->getType()
+                                          , "", gep));
+      }
+
       assert(gep->hasIndices() && "GEP without indices??");
       llvm::Value *ptr = gep->getPointerOperand();
       const Type *ctype = ptr->getType();
