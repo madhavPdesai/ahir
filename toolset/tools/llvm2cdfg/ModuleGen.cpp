@@ -146,8 +146,6 @@ namespace {
 
     void runOnFunction(llvm::Function &F)
     {
-      cbuilder->initialise_with_function(F);
-      
       if (F.isDeclaration())
         return;
     
