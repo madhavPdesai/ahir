@@ -13,6 +13,7 @@ namespace cdfg {
     typedef enum {
       INIT, CDFG
       , NODE, PORT, CONSTANT, ADDRESSABLE_BACKREF, CALLEE, COUNTERPART
+      , PORTNAME
     } StateType;
     
     StateType state;

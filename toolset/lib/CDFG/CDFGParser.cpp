@@ -64,7 +64,9 @@ void CDFGParser::on_start_element(const Glib::ustring& name
       } else if (name == "counterpart") {
 	state = COUNTERPART;
 	factory->node_register_counterpart(id);
-      } else
+      } else if (name == "portname") {
+        state = PORTNAME;
+      } else 
 	assert(false && "unexpected element");
       break;
 
@@ -83,6 +85,10 @@ void CDFGParser::on_characters(const Glib::ustring &characters)
       
     case CALLEE:
       factory->node_register_callee(characters);
+      break;
+
+    case PORTNAME:
+      factory->node_register_io_portname(characters);
       break;
       
     default:

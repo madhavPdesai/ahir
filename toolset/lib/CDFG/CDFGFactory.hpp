@@ -41,6 +41,7 @@ namespace cdfg {
     void node_register_addressable(const std::string &id);
     void node_register_callee(const std::string &callee);
     void node_register_counterpart(const std::string &id);
+    void node_register_io_portname(const std::string &id);
 
     void node_set_constant(const std::string &characters);
   };
