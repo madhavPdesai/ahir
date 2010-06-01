@@ -524,6 +524,20 @@ namespace {
 
     void visitCastInst(CastInst& C)
     {
+      bool is_ioport_name = true;
+      
+      for (llvm::Value::use_iterator ui = C.use_begin(), ue = C.use_end();
+           ui != ue; ++ui) {
+        User *user = *ui;
+        if (get_io_code(user) != NOT_IO)
+          continue;
+        is_ioport_name = false;
+        break;
+      }
+
+      if (is_ioport_name)
+        return;
+      
       const llvm::Type *dest = C.getDestTy();
       llvm::Value *val = C.getOperand(0);
 
