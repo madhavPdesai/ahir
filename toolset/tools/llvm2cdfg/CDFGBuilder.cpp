@@ -14,6 +14,7 @@
 #include <llvm/User.h>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <iostream>
 #include <deque>
@@ -421,10 +422,13 @@ namespace {
 
       llvm::ConstantArray *konst = locate_portname_for_io_call(C.getOperand(1));
       assert(konst);
+      std::string portname = konst->getAsString();
+      assert(boost::ends_with(portname, "\0"));
+      portname.erase(portname.size() - 1);
       CDFGNode *node = create_data_node(ntype, type
                                         , C.getCalledFunction()->getNameStr()
-                                        + ":" + konst->getAsString());
-      node->portname = konst->getAsString();
+                                        + ":" + portname);
+      node->portname = portname;
 
       if (ntype == Output) {
         if (!handleOperand(node, C.getOperand(2), "data"))
