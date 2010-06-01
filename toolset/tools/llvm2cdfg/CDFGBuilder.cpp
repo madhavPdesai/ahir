@@ -405,12 +405,12 @@ namespace {
           break;
 
         case WRITE_FLOAT32:
-          type = llvm::Type::getFloatTy(C.getContext());
+          // type = llvm::Type::getFloatTy(C.getContext());
           ntype = Output;
           break;
 
         case WRITE_UINT32:
-          type = llvm::Type::getInt32Ty(C.getContext());
+          // type = llvm::Type::getInt32Ty(C.getContext());
           ntype = Output;
           break;
 
@@ -418,8 +418,6 @@ namespace {
           assert(false);
           break;
       }
-
-      assert(type && ntype != hls::Constant);
 
       llvm::ConstantArray *konst = locate_portname_for_io_call(C.getOperand(1));
       assert(konst);
