@@ -145,7 +145,12 @@ const hls::Type* cdfg::get_type(Program *program, TargetData *TD, const llvm::Ty
 
 IOCode cdfg::get_io_code(Use &u)
 {
-  if (CallInst *C = dyn_cast<CallInst>(u.getUser()))
+  return get_io_code(u.getUser());
+}
+
+IOCode cdfg::get_io_code(User *u) 
+{
+  if (CallInst *C = dyn_cast<CallInst>(u))
     return get_io_code(*C);
   return NOT_IO;
 }

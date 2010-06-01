@@ -15,6 +15,7 @@ namespace llvm {
   class TargetData;
   class Use;
   class CallInst;
+  class User;
 }
 
 namespace cdfg {
@@ -40,6 +41,7 @@ namespace cdfg {
                             , const llvm::Type *type);
 
   IOCode get_io_code(llvm::Use &u);
+  IOCode get_io_code(llvm::User *u);
   IOCode get_io_code(llvm::CallInst &C);
 }
 
