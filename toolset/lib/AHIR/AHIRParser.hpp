@@ -17,6 +17,7 @@ namespace ahir {
       , DP, CP, LN
       , DPE, DPE_REQ, DPE_ACK, DPE_PORT
       , DPE_CALLEE, DPE_VALUE, DPE_ADDRESSABLE, DPE_COUNTERPART
+      , DPE_PORTNAME
       , WRAPPER, MEMBER
       , PLACE, TRANS, TRANS_SRC, TRANS_SNK
       , LN_MAP

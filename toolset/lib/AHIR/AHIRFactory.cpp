@@ -88,6 +88,13 @@ void AHIRFactory::dpe_set_counterpart(const std::string &characters)
   }
 }
 
+void AHIRFactory::dpe_set_io_portname(const std::string &characters)
+{
+  assert(dpe->ntype == Input || dpe->ntype == Output);
+  assert(characters.size() > 0);
+  dpe->portname = characters;
+}
+
 void AHIRFactory::dpe_set_callee(const std::string &characters)
 {
   assert(dpe->ntype == Call);

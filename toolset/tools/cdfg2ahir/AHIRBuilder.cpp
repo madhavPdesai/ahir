@@ -375,6 +375,11 @@ namespace {
           break;
         }
 
+        case hls::Input:
+        case hls::Output:
+          dpe->portname = node->portname;
+          break;
+
         default:
           break;
       }

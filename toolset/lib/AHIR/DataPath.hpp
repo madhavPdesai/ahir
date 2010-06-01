@@ -82,6 +82,7 @@ namespace ahir {
     std::string value;		   // used by Constant
     hls::Addressable *addressable; // used by Address
     DPElement *counterpart;	   // LC <-> LR mapping
+    std::string portname;
 
     DPElement(unsigned _id, hls::NodeType t, const std::string &_d)
       : id(_id), ntype(t), description(_d), parent(NULL)
