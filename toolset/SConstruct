@@ -5,7 +5,19 @@ lower_scripts = map(lambda x : x + '/SConscript', lower_dirs)
 
 env = Environment()
 env.ParseConfig("/usr/bin/pkg-config --cflags --libs libxml++-2.6")
-env.AppendUnique(LINKFLAGS = ['-lboost_program_options-mt', '-lboost_serialization-mt'])
+
+conf = Configure(env)
+if not conf.CheckLib('boost_program_options-mt'):
+    if not conf.CheckLib('boost_program_options'):
+        print 'Did not find libboost_program_options'
+        Exit(1)
+
+if not conf.CheckLib('boost_serialization-mt'):
+    if not conf.CheckLib('boost_serialization'):
+        print 'Did not find libboost_serialization'
+        Exit(1)
+env = conf.Finish()
+
 env.MergeFlags('-I#/lib -ggdb')
 
 Export('env')

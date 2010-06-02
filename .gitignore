@@ -18,4 +18,4 @@ auto
 /toolset/tools/cdfg2dot/cdfg2dot
 /toolset/tools/link-ahir/link-ahir
 /toolset/tools/vhdl-testgen/vhdl-testgen
-
+/toolset/.sconf_temp/
