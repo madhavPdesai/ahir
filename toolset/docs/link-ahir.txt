@@ -1,0 +1,15 @@
+
+link-ahir - Link the modules in an AHIR program by instantiating
+            function-call arbiters and assigning numerical memory
+            locations to the symbolic address space.
+
+link-ahir <inputfile>
+
+Simply invoke the utility with a single argument specifying the name
+of the XML file describing an unlinked AHIR program. The linker
+updates locations in the address space to include numeric addresses,
+and creates an arbiter for each module, which is interfaced with all
+the modules that call this module. The result is stored in an output
+file called ``foo.linked_ahir.xml'', where ``foo'' is the name of the
+input AHIR program. The linking does not affect the structure of the
+AHIR modules in the program in any way.
