@@ -4,5 +4,9 @@ cdfg2ahir - Read a CDFG from an XML file and generate the equivalent
 
 cdfg2ahir <inputfile>
 
-For an input that describes a CDFG ``foo'', the output is a file
-called ``foo.ahir.xml'' (independent of the name of the input file).
+Simply invoke the utility with the name of the input CDFG file as the
+sole argument. For an input that describes a program entity ``foo'',
+the output is a file called ``foo.ahir.xml'' (independent of the name
+of the input file). Each CDFG in the program ``foo'' is replaced by an
+AHIR module with the same name. The symbolic address space declared by
+the program is not affected.

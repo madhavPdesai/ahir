@@ -1,0 +1,12 @@
+
+ahir2vhdl - Generate VHDL implementations from an AHIR description
+
+ahir2vhdl <inputfile>
+
+Simply invoke the utility with a single argument specifying the AHIR
+description. The result is a set of VHDL entities corresponding to the
+control-paths, data-paths and link layers in the AHIR modules. Each
+entity is described in a separate VHDL file. In addition, ``system''
+entity is generated in a separate file, that instantiates all the
+other entities along with function call arbiters and a memory
+subsystem.

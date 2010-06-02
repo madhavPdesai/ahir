@@ -9,6 +9,15 @@ number of optimisations and analyses provided by LLVM. See the output
 of ``llvm2cdfg --help'' for more details.
 
 For general use, simply invoke the command with the name of the
-bytecode file. For a file ``foo'', the output is produced in a file
-called ``foo.cdfg.xml''.
+bytecode file. For a file called ``foo'', the output is produced in a
+file called ``foo.cdfg.xml''. The contents of the XML file describe a
+``program'' entity with the name ``foo'', which is a collection of
+CDFGs, one for each function in the input input. This program entity
+also describes a symbolic address space that corresponds to the memory
+locations described by the input program. (For more information, refer
+to the documentation for the AHIR XML Schema.)
 
+The utility runs a number of standard simplification passes in order
+to ensure that the program structure conforms to implementation
+constraints. The resulting program is also printed as (human readable)
+LLVM assembly code in a file called ``foo.txt''.
