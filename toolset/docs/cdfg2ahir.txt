@@ -1,0 +1,8 @@
+
+cdfg2ahir - Read a CDFG from an XML file and generate the equivalent
+            AHIR description in an XML file.
+
+cdfg2ahir <inputfile>
+
+For an input that describes a CDFG ``foo'', the output is a file
+called ``foo.ahir.xml'' (independent of the name of the input file).

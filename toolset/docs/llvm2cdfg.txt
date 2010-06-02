@@ -1,0 +1,14 @@
+
+llvm2cdfg - translate an LLVM byte-code input to an XML description of
+            a CDFG
+
+llvm2cdfg [options] <inputfile>
+
+llvm2cdfg is compiled against the LLVM framework, and comes with a
+number of optimisations and analyses provided by LLVM. See the output
+of ``llvm2cdfg --help'' for more details.
+
+For general use, simply invoke the command with the name of the
+bytecode file. For a file ``foo'', the output is produced in a file
+called ``foo.cdfg.xml''.
+
