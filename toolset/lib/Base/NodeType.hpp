@@ -42,7 +42,7 @@ namespace hls {
   bool is_io(NodeType ntype);
   bool is_mapped_to_io(NodeType ntype);
   bool is_mem(NodeType ntype);
-  bool has_array_ports(NodeType ntype);
+  bool has_2D_ports(NodeType ntype);
 
   std::string get_output_port(NodeType ntype);
 }

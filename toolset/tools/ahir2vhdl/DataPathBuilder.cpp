@@ -73,6 +73,78 @@ namespace {
       }
     }
 
+    void create_dpe_ports(ahir::DPElement *adpe, DPElement *dpe, bool has_1D_ports)
+    {
+      hls::NodeType ntype = dpe->ntype;
+      
+      for (ahir::PortList::iterator pi = adpe->ports.begin(), pe = adpe->ports.end();
+           pi != pe; ++pi) {
+        ahir::Port *p = (*pi).second;
+        
+        const bool has_slv_proxy = (is_io(ntype) || is_mem(ntype)) && (p->id == "data");
+        const bool needs_proxy = has_slv_proxy || has_1D_ports;
+        const bool output_port = is_output(p);
+        
+        const std::string wire_id = vhdl_wire_name(p->wire);
+        const std::string proxy_id = dpe->id + "_" + p->id;
+
+        const std::string data_type = (has_1D_ports
+                                       ? str(p->type->type_id)
+                                       : vhdl_array_type_name(p->type));
+
+        // Use std_logic when creating a port that needs an SLV proxy,
+        // else use the actual data-type
+        Port *port = create_port(dpe->ports, p->id, p->io_type
+                                 , vhdl::Type((has_slv_proxy ? "StdLogicArray2D"
+                                               : data_type)
+                                              , (has_slv_proxy ? Range(DOWNTO, p->type->width())
+                                                 : create_range(p->type))));
+          
+        // Promote the port type to a two-dimensional array if appropriate.
+        if (!has_1D_ports)
+          port->type.ranges.push_front(Range(DOWNTO, 1));
+
+        port->mapping(WIRE, (needs_proxy ? proxy_id : wire_id));
+
+        // Normally, every wire is declared by the output wire it is
+        // connected to; but in case of a proxy, one wire remains
+        // undeclared. This is the proxy itself for an input port, and
+        // the actual wire for an output port. These wires need to be
+        // registered in the DP.
+        if (needs_proxy) {
+          if (output_port) {
+            Wire *wire = new Wire(wire_id, vhdl::Type(vhdl_array_type_name(p->type)
+                                                      , create_range(p->type)));
+            dp->register_wire(wire);
+            wire->type.ranges.push_front(Range(DOWNTO, 1));
+          } else {
+            dp->register_wire(new Wire(proxy_id, port->type));
+          }
+        }
+
+        // Connect the proxies by inserting assignment statements in
+        // the prelude.
+        if (has_slv_proxy) {
+          const std::string assign =
+            (output_port
+             ? wire_id + " <= To_" + data_type + "(" + proxy_id + ");"
+             : proxy_id + " <= To_StdLogicArray2D(" + wire_id + ");");
+          dpe->append_to_prelude(assign);
+          continue; // ensures mutual exclusion with the next
+                    // if-block.
+        }
+
+        if (has_1D_ports) {
+          const std::string assign =
+            (output_port
+             ? wire_id + " <= to_" + vhdl_array_type_name(p->type)
+             + "(" + port->mapping.name + ");"
+             : port->mapping.name + " <= extract(" + wire_id + ", 0);");
+          dpe->append_to_prelude(assign);
+        }
+      }
+    }
+    
     void create_elements()
     {
       for (ahir::DPEList::iterator di = adp->elements.begin(), de = adp->elements.end();
@@ -86,62 +158,15 @@ namespace {
                                        , vhdl_component_name(adpe)
                                        , adpe->description
                                        , vhdl_configuration_name(adpe));
-        
-        bool array_ports = has_array_ports(ntype);
-        
-        for (ahir::PortList::iterator pi = adpe->ports.begin(), pe = adpe->ports.end();
-             pi != pe; ++pi) {
-          ahir::Port *p = (*pi).second;
-        
-          const bool is_mem_data = is_mem(ntype) && (p->id == "data");
-          const bool output_port = is_output(p);
-        
-          const std::string wire_id = vhdl_wire_name(p->wire);
-          const std::string slv_id = dpe->id + "_" + p->id;
 
-          const std::string data_type = (array_ports ? vhdl_array_type_name(p->type)
-                                         : str(p->type->type_id));
+        // A few elemnts like multiplexers are never shared, and hence
+        // they do not have two-dimensional array ports.
+        bool has_1D_ports = !has_2D_ports(ntype);
 
-          Port *port = create_port(dpe->ports, p->id, p->io_type
-                                   , vhdl::Type((is_mem_data ? "StdLogicArray2D"
-                                                 : data_type)
-                                                , (is_mem_data ? Range(DOWNTO, p->type->width())
-                                                   : create_range(p->type))));
-          if (array_ports)
-            port->type.ranges.push_front(Range(DOWNTO, 1));
-          
-          port->mapping(WIRE, ((is_mem_data || (!array_ports)) ? slv_id : wire_id));
-
-          if (is_mem_data || (!array_ports)) {
-            if (output_port) {
-              Wire *wire = new Wire(wire_id, vhdl::Type(vhdl_array_type_name(p->type)
-                                                        , create_range(p->type)));
-              dp->register_wire(wire);
-              wire->type.ranges.push_front(Range(DOWNTO, 1));
-            } else {
-              dp->register_wire(new Wire(slv_id, port->type));
-            }
-            
-            if (is_mem_data) {
-              const std::string assign =
-                (output_port
-                 ? wire_id + " <= To_" + data_type + "(" + slv_id + ");"
-                 : slv_id + " <= To_StdLogicArray2D(" + wire_id + ");");
-              dpe->append_to_prelude(assign);
-            } else {
-              assert(!array_ports);
-              const std::string assign =
-                (output_port
-                 ? wire_id + " <= to_" + vhdl_array_type_name(p->type)
-                 + "(" + port->mapping.name + ");"
-                 : port->mapping.name + " <= extract(" + wire_id + ", 0);");
-              dpe->append_to_prelude(assign);
-            }
-          }
-        }
-
-        dpe_create_symbol_ports(dpe->ports, adpe->reqs, IN, "SigmaIn", array_ports);
-        dpe_create_symbol_ports(dpe->ports, adpe->acks, OUT, "SigmaOut", array_ports);
+        create_dpe_ports(adpe, dpe, has_1D_ports);
+        
+        dpe_create_symbol_ports(dpe->ports, adpe->reqs, IN, "SigmaIn", !has_1D_ports);
+        dpe_create_symbol_ports(dpe->ports, adpe->acks, OUT, "SigmaOut", !has_1D_ports);
       
         Port *rst = create_port(dpe->ports, "reset", IN, "std_logic", true);
         rst->mapping(SLICE, "reset");

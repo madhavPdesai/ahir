@@ -212,7 +212,7 @@ bool hls::is_mem(NodeType ntype)
   return false;
 }
 
-bool hls::has_array_ports(NodeType ntype)
+bool hls::has_2D_ports(NodeType ntype)
 {
   switch (ntype) {
     case Branch:
