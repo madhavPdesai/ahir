@@ -193,6 +193,9 @@ namespace {
       DPElement *w = new DPElement(id, dpe->ntype, dpe->cname, d
                                    , dpe->configuration);
       dp->register_wrapper(w);
+      if (is_io(w->ntype)) {
+        w->portname = dpe->portname;
+      }
 
       for (PortList::iterator pi = dpe->ports.begin(), pe = dpe->ports.end();
            pi != pe; ++pi) {
@@ -397,6 +400,11 @@ namespace {
           }
           break;
         }
+
+        case Input:
+        case Output:
+          dpe->portname = adpe->portname;
+          break;
       }
     }
     

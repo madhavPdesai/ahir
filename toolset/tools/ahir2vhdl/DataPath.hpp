@@ -25,6 +25,7 @@ namespace vhdl {
     std::string cname;
     std::string callee;
     std::string value;
+    std::string portname;
     const hls::Type *type;
     
     std::string component_name() { return cname; }
@@ -70,6 +71,9 @@ namespace vhdl {
     DPEList calls;
     DPElement *acceptor;
     DPElement *retval;
+
+    typedef std::map<std::string, std::vector<DPElement*> > IOPortRegister;
+    IOPortRegister io_ports;
 
     AssignMap assign;
     void register_assign(const std::string &lhs, const std::string &rhs);

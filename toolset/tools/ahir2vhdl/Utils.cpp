@@ -103,6 +103,8 @@ void vhdl::init_names()
       ComponentNames[Return] = "OutputPort";
       ComponentNames[Call] = "OutputPort";
       ComponentNames[Response] = "InputPort";
+      ComponentNames[Input] = "InputPort";
+      ComponentNames[Output] = "OutputPort";
     }
   }
 

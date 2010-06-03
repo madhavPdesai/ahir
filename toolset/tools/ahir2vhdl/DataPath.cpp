@@ -24,6 +24,10 @@ void DataPath::register_dpe(DPElement *dpe)
 {
   assert(elements.find(dpe->id) == elements.end());
   elements[dpe->id] = dpe;
+
+  if (is_io(dpe->ntype)) {
+    io_ports[dpe->portname].push_back(dpe);
+  }
 }
 
 void DataPath::remove_dpe(DPElement *dpe)
@@ -54,6 +58,9 @@ void DPElement::register_member(DPElement *dpe)
     assert(wport);
     wport->update_range(1, port->get_range(1));
   }
+
+  if (is_io(ntype))
+    assert(portname == dpe->portname);
 }
 
 void DataPath::register_assign(const std::string &lhs, const std::string &rhs)

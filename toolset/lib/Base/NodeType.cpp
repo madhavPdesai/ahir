@@ -96,6 +96,9 @@ bool hls::is_shared(NodeType ntype)
   if (is_constant(ntype))
     return false;
 
+  if (is_io(ntype))
+    return false;
+
   if (is_mem(ntype))
     return true;
 
