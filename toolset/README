@@ -1,3 +1,4 @@
+OVERVIEW
 
 The source code for the toolset is divided into two parts:
 
@@ -34,3 +35,8 @@ analyse-ahir: A catch-all tool that can perform various analyses of an
 
 vhdl-testgen: Supplementary utility that generates random test-vectors
               used for validating the operators in the AHIR VHDL library.
+
+
+DEPENDENCIES
+
+llvm 2.6, libxml++2.6, boost

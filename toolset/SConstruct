@@ -1,9 +1,9 @@
-
+import os
 lower_dirs = Split('lib tools')
 
 lower_scripts = map(lambda x : x + '/SConscript', lower_dirs)
 
-env = Environment()
+env = Environment(ENV = os.environ)
 env.ParseConfig("/usr/bin/pkg-config --cflags --libs libxml++-2.6")
 
 conf = Configure(env)
