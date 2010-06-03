@@ -864,7 +864,9 @@ namespace {
       CDFGNode *node = create_node(t, d);
       initialise_control_flow(node);
 
-      const std::string outd = (t == LoadComplete ? "data" : "z");
+      const std::string outd = ((t == LoadComplete || t == Input)
+                                ? "data"
+                                : "z");
 
       if (type && type->getTypeID() != llvm::Type::VoidTyID)
         create_output_data_port(node, outd, type);
@@ -915,6 +917,7 @@ namespace {
         }
 
         case LoadComplete:
+        case Input:
           vport = vnode->find_output_data_port("data");
           break;
 
