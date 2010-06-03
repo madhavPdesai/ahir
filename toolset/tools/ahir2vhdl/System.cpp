@@ -13,6 +13,13 @@
 #include <fstream>
 #include <sstream>
 
+#define SYSTEM_EXT_WIRE(name, width)                                    \
+  system.register_wire(new Wire((name), vhdl::Type("std_logic_vector",  \
+                                                   Range(DOWNTO, (width)))))
+    
+#define DP_PORT_MAP(name, width, high, low)                             \
+  port_map(dp, (name), SLICE, (name), DOWNTO, (high) * (width) - 1, (low) * (width))
+    
 using namespace vhdl;
 using namespace hls;
 
@@ -45,66 +52,27 @@ namespace {
       : Entity(id, SYSTEM, d), memory("memory_subsystem", "system memory")
     {} 
   };
-  
+
   void system_create_memory_wires(System &system
                                   , unsigned load_lines, unsigned store_lines)
   {
-    system.register_wire(new Wire("lr_req"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO, load_lines))));
-    system.register_wire(new Wire("lr_ack"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO, load_lines))));
-    system.register_wire(new Wire("lr_addr"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO
-                                                       , load_lines
-                                                       * memory::address_width))));
-    system.register_wire(new Wire("lr_tag"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO
-                                                       , load_lines
-                                                       * memory::tag_width))));
-    system.register_wire(new Wire("lc_req"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO, load_lines))));
-    system.register_wire(new Wire("lc_ack"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO, load_lines))));
-    system.register_wire(new Wire("lc_data"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO
-                                                       , load_lines
-                                                       * memory::data_width))));
-    system.register_wire(new Wire("lc_tag"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO
-                                                       , load_lines
-                                                       * memory::tag_width))));
-    system.register_wire(new Wire("sr_req"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO, store_lines))));
-    system.register_wire(new Wire("sr_ack"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO, store_lines))));
-    system.register_wire(new Wire("sr_addr"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO
-                                                       , store_lines
-                                                       * memory::address_width))));
-    system.register_wire(new Wire("sr_data"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO
-                                                       , store_lines
-                                                       * memory::data_width))));
-    system.register_wire(new Wire("sr_tag"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO
-                                                       , store_lines
-                                                       * memory::tag_width))));
-    system.register_wire(new Wire("sc_req"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO, store_lines))));
+    SYSTEM_EXT_WIRE("lr_req", load_lines);
+    SYSTEM_EXT_WIRE("lr_ack", load_lines);
+    SYSTEM_EXT_WIRE("lr_addr", load_lines * memory::address_width);
+    SYSTEM_EXT_WIRE("lr_tag", load_lines * memory::tag_width);
+    
+    SYSTEM_EXT_WIRE("lc_req", load_lines);
+    SYSTEM_EXT_WIRE("lc_ack", load_lines);
+    SYSTEM_EXT_WIRE("lc_data", load_lines * memory::data_width);
+    SYSTEM_EXT_WIRE("lc_tag", load_lines * memory::tag_width);
+    
+    SYSTEM_EXT_WIRE("sr_req", store_lines);
+    SYSTEM_EXT_WIRE("sr_ack", store_lines);
+    SYSTEM_EXT_WIRE("sr_addr", store_lines * memory::address_width);
+    SYSTEM_EXT_WIRE("sr_data", store_lines * memory::data_width);
+    SYSTEM_EXT_WIRE("sr_tag", store_lines * memory::tag_width);
+    
+    SYSTEM_EXT_WIRE("sc_req", store_lines);
   }
 
   void create_env_port(DataPath *dp, const std::string &port_id, System &system)
@@ -143,8 +111,8 @@ namespace {
     
     create_port(system.ports, "env_lr_req", IN
                 , "std_logic", true /* is_control */);
-    create_port(system.ports, "env_lr_ack"
-                , OUT, "std_logic", true /* is_control */);
+    create_port(system.ports, "env_lr_ack", OUT
+                , "std_logic", true /* is_control */);
     create_port(system.ports, "env_lr_addr", IN
                 , "std_logic_vector", Range(DOWNTO, memory::address_width));
     create_port(system.ports, "env_lr_tag", IN
@@ -160,8 +128,10 @@ namespace {
                                   % (memory::tag_width - 1)));
     system.register_statement("");
     
-    create_port(system.ports, "env_lc_req", IN, "std_logic", true /* is_control */);
-    create_port(system.ports, "env_lc_ack", OUT, "std_logic", true /* is_control */);
+    create_port(system.ports, "env_lc_req", IN
+                , "std_logic", true /* is_control */);
+    create_port(system.ports, "env_lc_ack", OUT
+                , "std_logic", true /* is_control */);
     create_port(system.ports, "env_lc_data", OUT
                 , "std_logic_vector", Range(DOWNTO, memory::data_width));
     create_port(system.ports, "env_lc_tag", OUT
@@ -175,8 +145,10 @@ namespace {
                                   % (memory::tag_width - 1)));
     system.register_statement("");
 
-    create_port(system.ports, "env_sr_req", IN, "std_logic", true /* is_control */);
-    create_port(system.ports, "env_sr_ack", OUT, "std_logic", true /* is_control */);
+    create_port(system.ports, "env_sr_req", IN
+                , "std_logic", true /* is_control */);
+    create_port(system.ports, "env_sr_ack", OUT
+                , "std_logic", true /* is_control */);
     create_port(system.ports, "env_sr_addr", IN
                 , "std_logic_vector", Range(DOWNTO, memory::address_width));
     create_port(system.ports, "env_sr_data", IN
@@ -199,37 +171,39 @@ namespace {
   void dp_map_memory_ports(System &system, DataPath *dp
                            , unsigned &load_lines, unsigned &store_lines)
   {
+#define DP_MEM_PORT_MAP(name, width)            \
+    DP_PORT_MAP((name), (width), high, low)         
+
     if (dp->load_lines > 0) {
       unsigned low = load_lines;
       unsigned high = load_lines + dp->load_lines;
-      port_map(dp, "lr_req", SLICE, "lr_req", DOWNTO, high - 1, low);
-      port_map(dp, "lr_ack", SLICE, "lr_ack", DOWNTO, high - 1, low);
-      port_map(dp, "lr_addr", SLICE, "lr_addr"
-               , DOWNTO, high * memory::address_width - 1, low * memory::address_width);
-      port_map(dp, "lr_tag", SLICE, "lr_tag"
-               , DOWNTO, high * memory::tag_width - 1, low * memory::tag_width);
-      port_map(dp, "lc_req", SLICE, "lc_req", DOWNTO, high - 1, low);
-      port_map(dp, "lc_ack", SLICE, "lc_ack", DOWNTO, high - 1, low);
-      port_map(dp, "lc_data", SLICE, "lc_data"
-               , DOWNTO, high * memory::data_width - 1, low * memory::data_width);
-      port_map(dp, "lc_tag", SLICE, "lc_tag"
-               , DOWNTO, high * memory::tag_width - 1, low * memory::tag_width);
+      
+      DP_MEM_PORT_MAP("lr_req", 1);
+      DP_MEM_PORT_MAP("lr_ack", 1);
+      DP_MEM_PORT_MAP("lr_addr", memory::address_width);
+      DP_MEM_PORT_MAP("lr_tag", memory::tag_width);
+      
+      DP_MEM_PORT_MAP("lc_req", 1);
+      DP_MEM_PORT_MAP("lc_ack", 1);
+      DP_MEM_PORT_MAP("lc_data", memory::data_width);
+      DP_MEM_PORT_MAP("lc_tag", memory::tag_width);
+      
       load_lines = high;
     }
 
     if (dp->store_lines > 0) {
       unsigned low = store_lines;
       unsigned high = store_lines + dp->store_lines;
-      port_map(dp, "sr_req", SLICE, "sr_req", DOWNTO, high - 1, low);
-      port_map(dp, "sr_ack", SLICE, "sr_ack", DOWNTO, high - 1, low);
-      port_map(dp, "sr_addr", SLICE, "sr_addr"
-               , DOWNTO, high * memory::address_width - 1, low * memory::address_width);
-      port_map(dp, "sr_data", SLICE, "sr_data"
-               , DOWNTO, high * memory::data_width - 1, low * memory::data_width);
-      port_map(dp, "sr_tag", SLICE, "sr_tag"
-               , DOWNTO, high * memory::tag_width - 1, low * memory::tag_width);
+      
+      DP_MEM_PORT_MAP("sr_req", 1);
+      DP_MEM_PORT_MAP("sr_ack", 1);
+      DP_MEM_PORT_MAP("sr_addr", memory::address_width);
+      DP_MEM_PORT_MAP("sr_data", memory::data_width);
+      DP_MEM_PORT_MAP("sr_tag", memory::tag_width);
+      
       store_lines = high;
     }
+#undef DP_MEM_PORT_MAP
   }
 
   void port_map_new_wire(Entity *ent, const std::string &port_id, System &system)
