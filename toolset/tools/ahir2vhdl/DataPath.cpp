@@ -66,6 +66,7 @@ void DataPath::register_dpe_ahir_id(unsigned id, DPElement *dpe)
 {
   assert(!find_dpe_from_ahir_id(id));
   dpe_map[id] = dpe;
+  register_dpe(dpe);
 }
 
 DPElement* DataPath::find_dpe_from_ahir_id(unsigned id)

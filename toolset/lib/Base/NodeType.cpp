@@ -154,6 +154,11 @@ bool hls::is_pipelined(NodeType ntype)
 
 bool hls::is_io(NodeType ntype)
 {
+  return ntype == Input || ntype == Output;
+}
+
+bool hls::is_mapped_to_io(NodeType ntype)
+{
   switch (ntype) {
     case Call:
     case Response:

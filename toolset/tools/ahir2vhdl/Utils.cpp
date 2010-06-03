@@ -224,7 +224,7 @@ std::string vhdl::vhdl_configuration_name(ahir::DPElement *dpe)
     // the load-request does not need a data-type
     return name;
 
-  if (is_io(ntype))
+  if (is_mapped_to_io(ntype))
     return name;
 
   if (is_data(ntype))

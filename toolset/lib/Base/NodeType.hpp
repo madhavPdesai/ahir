@@ -40,6 +40,7 @@ namespace hls {
   bool is_constant(NodeType ntype);
   bool is_pipelined(NodeType ntype);
   bool is_io(NodeType ntype);
+  bool is_mapped_to_io(NodeType ntype);
   bool is_mem(NodeType ntype);
   bool has_array_ports(NodeType ntype);
 

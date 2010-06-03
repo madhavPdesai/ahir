@@ -152,7 +152,6 @@ namespace {
         dpe_update_details(dpe, adpe);
       
         register_dpe(adpe, dpe);
-        dp->register_dpe(dpe);
       }
     }
     
@@ -347,7 +346,7 @@ namespace {
       unsigned members = (is_wrapper(dpe) ? dpe->members.size() : 1);
       assert(members > 0);
       
-      if (is_shared(ntype) || is_io(ntype)) {
+      if (is_shared(ntype) || is_mapped_to_io(ntype)) {
         switch (ntype) {
           case LoadRequest:
           case LoadComplete:
