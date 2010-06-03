@@ -217,11 +217,10 @@ namespace {
       return w;
     }
 
+    // Scan the DP for LoadComplete wrappers. The corresponding
+    // LoadRequest wrappers are implicit and need to be created here.
     void create_lr_wrappers(DataPath *dp, ahir::DataPath *adp)
     {
-      // Scan the DP for LoadComplete wrappers. The corresponding
-      // LoadRequest wrappers are implicit and need to be created here.
-    
       unsigned max_id = 0;	// used for creating new wrappers
       for (ahir::WrapperList::iterator wi = adp->wrappers.begin()
              , we = adp->wrappers.end(); wi != we; ++wi) {
