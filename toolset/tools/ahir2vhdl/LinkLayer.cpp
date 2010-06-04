@@ -29,19 +29,20 @@ vhdl::LinkLayer* vhdl::create_ln(ahir::LinkLayer *aln)
 
   PortList &plist = ln->ports;
 
-  create_port(plist, "clk", IN, "std_logic");
-  create_port(plist, "reset", IN, "std_logic");
-
+  entity_create_clk_ports(ln);
+  
   for (ahir::LinkLayer::IfaceMap::iterator lni = aln->maps.begin()
          , lne = aln->maps.end(); lni != lne; ++lni) {
-    create_port(plist, (*lni).first, IN
-                , Type("BooleanArray", Range(DOWNTO, (*lni).second.size(), 1)));
+    entity_create_port_with_map(ln, (*lni).first, IN
+                                , Type("BooleanArray" , Range(DOWNTO, (*lni).second.size(), 1))
+                                , SLICE);
   }
   
   for (ahir::LinkLayer::IfaceMap::iterator lni = aln->rmaps.begin()
          , lne = aln->rmaps.end(); lni != lne; ++lni) {
-    create_port(plist, (*lni).first, OUT
-                , Type("BooleanArray", Range(DOWNTO, (*lni).second.size(), 1)));
+    entity_create_port_with_map(ln, (*lni).first, OUT
+                                , Type("BooleanArray", Range(DOWNTO, (*lni).second.size(), 1))
+                                , SLICE);
   }
   
   return ln;

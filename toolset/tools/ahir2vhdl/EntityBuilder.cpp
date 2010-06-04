@@ -79,31 +79,11 @@ void vhdl::port_map(Entity *entity, const std::string &port_name
                 , Range(rtype, upper, lower));
 }
 
-void vhdl::port_map_slice(Entity *entity, const std::string &port_name
-                          , const std::string &mapping_name)
-{
-  Port *port = entity->find_port(port_name);
-  assert(port);
-  port->mapping(SLICE, mapping_name);
-}
-
 void vhdl::port_map_wire(Entity *entity, const std::string &port_name
-                          , const std::string &mapping_name)
+                         , const std::string &mapping_name)
 {
   Port *port = entity->find_port(port_name);
   assert(port);
   port->mapping(WIRE, mapping_name);
-}
-
-Port* vhdl::create_port_with_existing_wire(Entity *component
-                                           , const std::string &port_id, IOType dir
-                                           , Entity *container, const std::string &wire_id)
-{
-  Wire *wire = container->find_wire(wire_id);
-  assert(wire);
-  Port *port = create_port(component->ports, port_id, IN, wire->type);
-  port->mapping(WIRE, wire_id);
-
-  return port;
 }
 

@@ -167,13 +167,7 @@ namespace {
         
         dpe_create_symbol_ports(dpe->ports, adpe->reqs, IN, "SigmaIn", !has_1D_ports);
         dpe_create_symbol_ports(dpe->ports, adpe->acks, OUT, "SigmaOut", !has_1D_ports);
-      
-        Port *rst = create_port(dpe->ports, "reset", IN, "std_logic", true);
-        rst->mapping(SLICE, "reset");
-      
-        Port *clk = create_port(dpe->ports, "clk", IN, "std_logic", true);
-        clk->mapping(SLICE, "clk");
-      
+        entity_create_clk_ports(dpe);
         dpe_update_details(dpe, adpe);
       
         register_dpe(adpe, dpe);
@@ -236,12 +230,7 @@ namespace {
         wport->mapping(WIRE, w->id + "_" + port->id);
       }
 
-      Port *rst = create_port(w->ports, "reset", IN, "std_logic", true);
-      rst->mapping(SLICE, "reset");
-      
-      Port *clk = create_port(w->ports, "clk", IN, "std_logic", true);
-      clk->mapping(SLICE, "clk");
-
+      entity_create_clk_ports(w);
       return w;
     }
 
@@ -450,15 +439,15 @@ namespace {
 
     void dp_create_ports()
     {
-      PortList &plist = dp->ports;
-
-      create_port(plist, "SigmaIn", IN, "BooleanArray"
-                  , Range(DOWNTO, adp->reqs.size(), 1));
-      create_port(plist, "SigmaOut", OUT, "BooleanArray"
-                  , Range(DOWNTO, adp->acks.size(), 1));
-      create_port(plist, "reset", IN, "std_logic");
-      create_port(plist, "clk", IN, "std_logic");
-      
+      entity_create_port_with_map(dp, "SigmaIn", IN
+                                  , vhdl::Type("BooleanArray"
+                                               , Range(DOWNTO, adp->reqs.size(), 1))
+                                  , WIRE);
+      entity_create_port_with_map(dp, "SigmaOut", OUT
+                                  , vhdl::Type("BooleanArray"
+                                               , Range(DOWNTO, adp->acks.size(), 1))
+                                  , WIRE);
+      entity_create_clk_ports(dp);
       dp_create_incoming_call_ports();
       dp_create_outgoing_call_ports();
       dp_create_memory_ports();
@@ -468,7 +457,7 @@ namespace {
     // port_dir, using the list of ports registered on the DPE. In the
     // process, also generate the type-conversion statements that will
     // pack/unpack the data-port on the DP.
-    void dp_create_forwarded_port(PortList &plist, DPElement *dpe
+    void dp_create_forwarded_port(DPElement *dpe
                                   , const std::string &port_id
                                   , IOType port_dir)
     {
@@ -498,8 +487,10 @@ namespace {
       width++;
 
       // Create the port on the DP.
-      Port *ext = create_port(plist, port_id, port_dir
-                              , "std_logic_vector", Range(DOWNTO, width));
+      Port *ext = entity_create_port_with_map(dp, port_id, port_dir
+                                              , vhdl::Type("std_logic_vector"
+                                                           , Range(DOWNTO, width))
+                                              , WIRE);
       // Create the port on the DPE, and map the two.
       Port *mdata = create_port(dpe->ports, "odata", port_dir, ext->type);
       mdata->mapping(SLICE, port_id);
@@ -549,8 +540,6 @@ namespace {
 
     void dp_create_incoming_call_ports()
     {
-      PortList &plist = dp->ports;
-
       ahir::DPElement *adpe = adp->acceptor;
       assert(adpe);
       DPElement *acc = find_dpe(adpe);
@@ -558,45 +547,44 @@ namespace {
       dp->acceptor = acc;
 
       // Note the req/ack inversion here.
-      create_port(plist, "call_ack", OUT, "std_logic");
+      entity_create_port_with_map(dp, "call_ack", OUT, vhdl::Type("std_logic"), WIRE);
       Port *oack = create_port(acc->ports, "oreq", OUT, "std_logic", true);
       oack->mapping(WIRE, "call_ack_sig");
       
-      create_port(plist, "call_req", IN, "std_logic");
+      entity_create_port_with_map(dp, "call_req", IN, vhdl::Type("std_logic"), WIRE);
       Port *oreq = create_port(acc->ports, "oack", IN, "std_logic", true);
       oreq->mapping(SLICE, "call_req");
 
       // Note that the accept data port is not mapped to the DPE port.
       // Instead, the printer must generate a set of convertor
       // functions from SLV to the relevant data-type.
-      dp_create_forwarded_port(plist, acc, "call_data", IN);
+      dp_create_forwarded_port(acc, "call_data", IN);
 
-      create_port(plist, "call_tag", IN, "std_logic_vector");
+      entity_create_port_with_map(dp, "call_tag", IN, vhdl::Type("std_logic_vector"), WIRE);
       
       assert(adp->retval);
       DPElement *retval = find_dpe(adp->retval);
       assert(retval);
       dp->retval = retval;
 
-      create_port(plist, "return_ack", IN, "std_logic");
+      entity_create_port_with_map(dp, "return_ack", IN, vhdl::Type("std_logic"), WIRE);
       oack = create_port(retval->ports, "oack", IN, "std_logic", true);
       oack->mapping(SLICE, "return_ack");
       
-      create_port(plist, "return_req", OUT, "std_logic");
+      entity_create_port_with_map(dp, "return_req", OUT, vhdl::Type("std_logic"), WIRE);
       oreq = create_port(retval->ports, "oreq", OUT, "std_logic", true);
       oreq->mapping(SLICE, "return_req");
       
       // Note that the return data port is not mapped to the DPE port.
       // Instead, the printer must generate a set of convertor
       // functions from SLV to the relevant data-type.
-      dp_create_forwarded_port(plist, retval, "return_data", OUT);
+      dp_create_forwarded_port(retval, "return_data", OUT);
 
-      create_port(plist, "return_tag", OUT, "std_logic_vector");
+      entity_create_port_with_map(dp, "return_tag", OUT, vhdl::Type("std_logic_vector"), WIRE);
     }
 
     void dp_create_outgoing_call_ports()
     {
-      PortList &plist = dp->ports;
       for (DPEList::iterator ci = dp->calls.begin(), ce = dp->calls.end();
            ci != ce; ++ci) {
         DPElement *call = (*ci).second;
@@ -606,35 +594,35 @@ namespace {
         cid_str << "call_" << call->id;
         std::string cid = cid_str.str();
         
-        create_port(plist, cid + "_req", OUT, "std_logic");
+        entity_create_port_with_map(dp, cid + "_req", OUT, vhdl::Type("std_logic"), WIRE);
         Port *oreq = create_port(call->ports, "oreq", OUT, "std_logic", true);
         oreq->mapping(SLICE, cid + "_req");
         
-        create_port(plist, cid + "_ack", IN, "std_logic");
+        entity_create_port_with_map(dp, cid + "_ack", IN, vhdl::Type("std_logic"), WIRE);
         Port *oack = create_port(call->ports, "oack", IN, "std_logic", true);
         oack->mapping(SLICE, cid + "_ack");
         
         // Note that the call data port is not mapped to the DPE port.
         // Instead, the printer must generate a set of convertor
         // functions from SLV to the relevant data-type.
-        dp_create_forwarded_port(plist, call, cid + "_data", OUT);
+        dp_create_forwarded_port(call, cid + "_data", OUT);
 
         std::ostringstream rid_str;
         rid_str << "return_" << call->id; // note that we do NOT use resp->id here.
         std::string rid = rid_str.str();
         
-        create_port(plist, rid + "_req", OUT, "std_logic");
+        entity_create_port_with_map(dp, rid + "_req", OUT, vhdl::Type("std_logic"), WIRE);
         oreq = create_port(resp->ports, "oreq", OUT, "std_logic", true);
         oreq->mapping(SLICE, rid + "_req");
         
-        create_port(plist, rid + "_ack", IN, "std_logic");
+        entity_create_port_with_map(dp, rid + "_ack", IN, vhdl::Type("std_logic"), WIRE);
         oack = create_port(resp->ports, "oack", IN, "std_logic", true);
         oack->mapping(SLICE, rid + "_ack");
         
         // Note that the response data port is not mapped to the DPE
         // port. Instead, the printer must generate a set of convertor
         // functions from SLV to the relevant data-type.
-        dp_create_forwarded_port(plist, resp, rid + "_data", IN);
+        dp_create_forwarded_port(resp, rid + "_data", IN);
       }
     }
 
@@ -643,27 +631,21 @@ namespace {
       Entity *latch = new SimpleEntity("call_tag_latch", "TagLatch");
       dp->register_instance(latch);
 
-      // dp->register_wire(new Wire("call_ack_sig", vhdl::Type("std_logic")));
-
-      Port *port = create_port(latch->ports, "clk", IN, "std_logic");
-      port->mapping(SLICE, "clk");
+      entity_create_clk_ports(latch);
       
-      port = create_port(latch->ports, "reset", IN, "std_logic");
-      port->mapping(SLICE, "reset");
+      entity_create_port_with_map_name(latch, "r", IN, vhdl::Type("std_logic")
+                                       , SLICE, "call_req");
       
-      port = create_port(latch->ports, "r", IN, "std_logic");
-      port->mapping(SLICE, "call_req");
-      
-      port = create_port(latch->ports, "a", IN, "std_logic");
-      port->mapping(WIRE, "call_ack_sig");
-      
-      port = create_port(latch->ports, "tag_in", IN, "std_logic_vector");
-      port->mapping(SLICE, "call_tag");
-      
-      port = create_port(latch->ports, "tag_out", OUT, "std_logic_vector");
-      port->mapping(SLICE, "return_tag");
-
       latch->append_to_prelude("call_ack <= call_ack_sig;");
+      entity_create_port_with_map_name(latch, "a", IN, vhdl::Type("std_logic")
+                                       , WIRE, "call_ack_sig");
+      
+      entity_create_port_with_map_name(latch, "tag_in", IN, vhdl::Type("std_logic_vector")
+                                       , SLICE, "call_tag");
+      
+      entity_create_port_with_map_name(latch, "tag_out", OUT, vhdl::Type("std_logic_vector")
+                                       , SLICE, "return_tag");
+
     }
 
     /* ===== DPE external ports ===== */
@@ -839,43 +821,5 @@ DataPath* vhdl::create_dp(ahir::DataPath *dp)
   builder.reset();
 
   return builder.create_dp(dp);
-}
-
-void vhdl::dp_map_memory_ports(DataPath *dp
-                               , unsigned &load_lines, unsigned &store_lines)
-{
-#define DP_MEM_PORT_MAP(name, width)                                    \
-  port_map(dp, (name), SLICE, (name), DOWNTO, (high) * (width) - 1, (low) * (width))
-  
-  if (dp->load_lines > 0) {
-    unsigned low = load_lines;
-    unsigned high = load_lines + dp->load_lines;
-      
-    DP_MEM_PORT_MAP("lr_req", 1);
-    DP_MEM_PORT_MAP("lr_ack", 1);
-    DP_MEM_PORT_MAP("lr_addr", memory::address_width);
-    DP_MEM_PORT_MAP("lr_tag", memory::tag_width);
-      
-    DP_MEM_PORT_MAP("lc_req", 1);
-    DP_MEM_PORT_MAP("lc_ack", 1);
-    DP_MEM_PORT_MAP("lc_data", memory::data_width);
-    DP_MEM_PORT_MAP("lc_tag", memory::tag_width);
-      
-    load_lines = high;
-  }
-
-  if (dp->store_lines > 0) {
-    unsigned low = store_lines;
-    unsigned high = store_lines + dp->store_lines;
-      
-    DP_MEM_PORT_MAP("sr_req", 1);
-    DP_MEM_PORT_MAP("sr_ack", 1);
-    DP_MEM_PORT_MAP("sr_addr", memory::address_width);
-    DP_MEM_PORT_MAP("sr_data", memory::data_width);
-    DP_MEM_PORT_MAP("sr_tag", memory::tag_width);
-      
-    store_lines = high;
-  }
-#undef DP_MEM_PORT_MAP
 }
 

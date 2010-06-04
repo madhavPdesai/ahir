@@ -33,39 +33,67 @@ Arbiter* vhdl::create_arbiter(ahir::Arbiter *arb, vhdl::DataPath *dp)
   const Range all_tags = Range(DOWNTO, call_tag_width);
   
   Arbiter *arbiter = new Arbiter(arb->id, "");
-
-  create_port(arbiter->ports, "clk", hls::IN, "std_logic");
-  create_port(arbiter->ports, "reset", hls::IN, "std_logic");
+  entity_create_clk_ports(arbiter);
 
   DPElement *acceptor = dp->acceptor;
   Port *accept_data = acceptor->find_port("odata");
   assert(accept_data);
-  create_port(arbiter->ports, "call_mreq", hls::OUT, "std_logic");
-  create_port(arbiter->ports, "call_mack", hls::IN, "std_logic");
-  create_port(arbiter->ports, "call_mdata", hls::OUT, accept_data->type);
-  create_port(arbiter->ports, "call_mtag", hls::OUT, "std_logic_vector", all_tags);
+  
+  entity_create_port_with_map_name(arbiter, "call_mreq", hls::OUT
+                                   , vhdl::Type("std_logic")
+                                   , SLICE, dp->id + "_call_req");
+  entity_create_port_with_map_name(arbiter, "call_mack", hls::IN
+                                   , vhdl::Type("std_logic")
+                                   , SLICE, dp->id + "_call_ack");
+  entity_create_port_with_map_name(arbiter, "call_mdata", hls::OUT
+                                   , vhdl::Type("std_logic")
+                                   , SLICE, dp->id + "_call_data");
+  entity_create_port_with_map_name(arbiter, "call_mtag", hls::OUT
+                                   , vhdl::Type("std_logic")
+                                   , SLICE, dp->id + "_call_tag");
 
-  create_port(arbiter->ports, "call_reqs", hls::IN, "std_logic_vector", all_clients);
-  create_port(arbiter->ports, "call_acks", hls::OUT, "std_logic_vector", all_clients);
-  Port *call_data = create_port(arbiter->ports, "call_data", hls::IN
-                                , Type("StdLogicArray2D", accept_data->type.ranges));
+  entity_create_port_with_map(arbiter, "call_reqs", hls::IN
+                              , vhdl::Type("std_logic_vector", all_clients)
+                              , WIRE);
+  entity_create_port_with_map(arbiter, "call_acks", hls::OUT
+                              , vhdl::Type("std_logic_vector", all_clients)
+                              , WIRE);
+  Port *call_data = entity_create_port_with_map(arbiter, "call_data", hls::IN
+                                                , Type("StdLogicArray2D"
+                                                       , accept_data->type.ranges)
+                                                , WIRE);
   call_data->type.ranges.push_front(all_clients);
 
   DPElement *retval = dp->retval;
   Port *return_data = retval->find_port("odata");
   assert(return_data);
-  create_port(arbiter->ports, "return_mreq", hls::IN, "std_logic");
-  create_port(arbiter->ports, "return_mack", hls::OUT, "std_logic");
-  create_port(arbiter->ports, "return_mdata", hls::IN, return_data->type);
-  create_port(arbiter->ports, "return_mtag", hls::IN, "std_logic_vector", all_tags);
+  
+  entity_create_port_with_map_name(arbiter, "return_mreq", hls::IN
+                                   , vhdl::Type("std_logic")
+                                   , SLICE, dp->id + "_return_req");
+  entity_create_port_with_map_name(arbiter, "return_mack", hls::OUT
+                                   , vhdl::Type("std_logic")
+                                   , SLICE, dp->id + "_return_ack");
+  entity_create_port_with_map_name(arbiter, "return_mdata", hls::IN
+                                   , vhdl::Type("std_logic")
+                                   , SLICE, dp->id + "_return_data");
+  entity_create_port_with_map_name(arbiter, "return_mtag", hls::IN
+                                   , vhdl::Type("std_logic")
+                                   , SLICE, dp->id + "_return_tag");
 
-  create_port(arbiter->ports, "return_reqs", hls::IN, "std_logic_vector", all_clients);
-  create_port(arbiter->ports, "return_acks", hls::OUT, "std_logic_vector", all_clients);
-  Port *port = create_port(arbiter->ports, "return_data", hls::OUT
-                           , Type("StdLogicArray2D", return_data->type.ranges));
-  port->type.ranges.push_front(all_clients);
-
-  std::swap(arb->clients, arbiter->clients);
+  entity_create_port_with_map(arbiter, "return_reqs", hls::IN
+                              , vhdl::Type("std_logic_vector", all_clients)
+                              , WIRE);
+  entity_create_port_with_map(arbiter, "return_acks", hls::OUT
+                              , vhdl::Type("std_logic_vector", all_clients)
+                              , WIRE);
+  Port *response_data = entity_create_port_with_map(arbiter, "return_data", hls::OUT
+                                                    , Type("StdLogicArray2D"
+                                                           , accept_data->type.ranges)
+                                                    , WIRE);
+  response_data->type.ranges.push_front(all_clients);
+  
+  arbiter->clients = arb->clients;
 
   return arbiter;
 }
