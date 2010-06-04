@@ -1,5 +1,6 @@
 #include "Module.hpp"
 #include "EntityBuilder.hpp"
+#include "DataPathBuilder.hpp"
 #include "EntityPrinter.hpp"
 #include "ControlPath.hpp"
 #include "DataPath.hpp"
@@ -16,9 +17,6 @@
 #define SYSTEM_EXT_WIRE(name, width)                                    \
   system.register_wire(new Wire((name), vhdl::Type("std_logic_vector",  \
                                                    Range(DOWNTO, (width)))))
-    
-#define DP_PORT_MAP(name, width, high, low)                             \
-  port_map(dp, (name), SLICE, (name), DOWNTO, (high) * (width) - 1, (low) * (width))
     
 using namespace vhdl;
 using namespace hls;
@@ -168,44 +166,6 @@ namespace {
     system.register_statement("");
   }
 
-  void dp_map_memory_ports(System &system, DataPath *dp
-                           , unsigned &load_lines, unsigned &store_lines)
-  {
-#define DP_MEM_PORT_MAP(name, width)            \
-    DP_PORT_MAP((name), (width), high, low)         
-
-    if (dp->load_lines > 0) {
-      unsigned low = load_lines;
-      unsigned high = load_lines + dp->load_lines;
-      
-      DP_MEM_PORT_MAP("lr_req", 1);
-      DP_MEM_PORT_MAP("lr_ack", 1);
-      DP_MEM_PORT_MAP("lr_addr", memory::address_width);
-      DP_MEM_PORT_MAP("lr_tag", memory::tag_width);
-      
-      DP_MEM_PORT_MAP("lc_req", 1);
-      DP_MEM_PORT_MAP("lc_ack", 1);
-      DP_MEM_PORT_MAP("lc_data", memory::data_width);
-      DP_MEM_PORT_MAP("lc_tag", memory::tag_width);
-      
-      load_lines = high;
-    }
-
-    if (dp->store_lines > 0) {
-      unsigned low = store_lines;
-      unsigned high = store_lines + dp->store_lines;
-      
-      DP_MEM_PORT_MAP("sr_req", 1);
-      DP_MEM_PORT_MAP("sr_ack", 1);
-      DP_MEM_PORT_MAP("sr_addr", memory::address_width);
-      DP_MEM_PORT_MAP("sr_data", memory::data_width);
-      DP_MEM_PORT_MAP("sr_tag", memory::tag_width);
-      
-      store_lines = high;
-    }
-#undef DP_MEM_PORT_MAP
-  }
-
   void port_map_new_wire(Entity *ent, const std::string &port_id, System &system)
   {
     Port *port = ent->find_port(port_id);
@@ -219,26 +179,18 @@ namespace {
 
   void dp_map_call_ports(System &system, DataPath *dp, Arbiter *arbiter) 
   {
-    if (dp->id == "start_dp") {
-      port_map_slice(dp, "call_ack", "env_call_ack");
-      port_map_slice(dp, "call_req", "env_call_req");
-      port_map_slice(dp, "call_data", "env_call_data");
-      port_map_slice(dp, "call_tag", "env_call_tag");
-      port_map_slice(dp, "return_ack", "env_return_ack");
-      port_map_slice(dp, "return_req", "env_return_req");
-      port_map_slice(dp, "return_data", "env_return_data");
-      port_map_slice(dp, "return_tag", "env_return_tag");
-    } else {
-      assert(arbiter);
-      port_map_slice(dp, "call_ack", arbiter->id + "_call_mack");
-      port_map_slice(dp, "call_req", arbiter->id + "_call_mreq");
-      port_map_slice(dp, "call_data", arbiter->id + "_call_mdata"); 
-      port_map_slice(dp, "call_tag", arbiter->id + "_call_mtag"); 
-      port_map_slice(dp, "return_ack", arbiter->id + "_return_mack");
-      port_map_slice(dp, "return_req", arbiter->id + "_return_mreq");
-      port_map_slice(dp, "return_data", arbiter->id + "_return_mdata");
-      port_map_slice(dp, "return_tag", arbiter->id + "_return_mtag"); 
-    }
+    const std::string prefix = (dp->id == "start_dp" ? "env" : arbiter->id);
+    const std::string m_fix = (dp->id == "start_dp" ? "" : "m");
+    
+    port_map_slice(dp, "call_ack", prefix + "_call_" + m_fix + "ack");
+    port_map_slice(dp, "call_req", prefix + "_call_" + m_fix + "req");
+    port_map_slice(dp, "call_data", prefix + "_call_" + m_fix + "data");
+    port_map_slice(dp, "call_tag", prefix + "_call_" + m_fix + "tag");
+
+    port_map_slice(dp, "return_ack", prefix + "_return_" + m_fix + "ack");
+    port_map_slice(dp, "return_req", prefix + "_return_" + m_fix + "req");
+    port_map_slice(dp, "return_data", prefix + "_return_" + m_fix + "data");
+    port_map_slice(dp, "return_tag", prefix + "_return_" + m_fix + "tag");
 
     for (DPEList::iterator ci = dp->calls.begin(), ce = dp->calls.end();
          ci != ce; ++ci) {
@@ -263,7 +215,7 @@ namespace {
     port_map_new_wire(dp, "SigmaIn", system);
     port_map_new_wire(dp, "SigmaOut", system);
       
-    dp_map_memory_ports(system, dp, load_lines, store_lines);
+    dp_map_memory_ports(dp, load_lines, store_lines);
 
     dp_map_call_ports(system, dp, module->arbiter);
   }

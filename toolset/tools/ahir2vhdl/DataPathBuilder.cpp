@@ -843,3 +843,41 @@ DataPath* vhdl::create_dp(ahir::DataPath *dp)
   return builder.create_dp(dp);
 }
 
+void vhdl::dp_map_memory_ports(DataPath *dp
+                               , unsigned &load_lines, unsigned &store_lines)
+{
+#define DP_MEM_PORT_MAP(name, width)                                    \
+  port_map(dp, (name), SLICE, (name), DOWNTO, (high) * (width) - 1, (low) * (width))
+  
+  if (dp->load_lines > 0) {
+    unsigned low = load_lines;
+    unsigned high = load_lines + dp->load_lines;
+      
+    DP_MEM_PORT_MAP("lr_req", 1);
+    DP_MEM_PORT_MAP("lr_ack", 1);
+    DP_MEM_PORT_MAP("lr_addr", memory::address_width);
+    DP_MEM_PORT_MAP("lr_tag", memory::tag_width);
+      
+    DP_MEM_PORT_MAP("lc_req", 1);
+    DP_MEM_PORT_MAP("lc_ack", 1);
+    DP_MEM_PORT_MAP("lc_data", memory::data_width);
+    DP_MEM_PORT_MAP("lc_tag", memory::tag_width);
+      
+    load_lines = high;
+  }
+
+  if (dp->store_lines > 0) {
+    unsigned low = store_lines;
+    unsigned high = store_lines + dp->store_lines;
+      
+    DP_MEM_PORT_MAP("sr_req", 1);
+    DP_MEM_PORT_MAP("sr_ack", 1);
+    DP_MEM_PORT_MAP("sr_addr", memory::address_width);
+    DP_MEM_PORT_MAP("sr_data", memory::data_width);
+    DP_MEM_PORT_MAP("sr_tag", memory::tag_width);
+      
+    store_lines = high;
+  }
+#undef DP_MEM_PORT_MAP
+}
+
