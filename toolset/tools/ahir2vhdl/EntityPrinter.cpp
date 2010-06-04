@@ -140,3 +140,23 @@ void vhdl::print_instance(Entity *entity, hls::ostream &out)
       << "\n";
   out << indent_out;
 }
+
+bool vhdl::entity_declare_mapped_signals(Entity *ent, hls::ostream &out)
+{
+  bool retval = false;
+    
+  for (PortList::iterator pi = ent->ports.begin(), pe = ent->ports.end();
+       pi != pe; ++pi) {
+    Port *port = (*pi).second;
+      
+    if (port->mapping.type != WIRE)
+      continue;
+      
+    retval = true;
+    out << indent
+        << "signal " << port->mapping.name << " : " << port->type << ";";
+  }
+
+  return retval;
+}
+

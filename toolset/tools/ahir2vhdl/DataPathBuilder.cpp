@@ -104,21 +104,21 @@ namespace {
         if (!has_1D_ports)
           port->type.ranges.push_front(Range(DOWNTO, 1));
 
-        port->mapping(WIRE, (needs_proxy ? proxy_id : wire_id));
+        // The port declares the wire if it is a proxy, or it is an
+        // output port.
+        port->mapping(((needs_proxy || port->io_type == OUT) ? WIRE : SLICE)
+                      , (needs_proxy ? proxy_id : wire_id));
 
-        // Normally, every wire is declared by the output wire it is
-        // connected to; but in case of a proxy, one wire remains
-        // undeclared. This is the proxy itself for an input port, and
-        // the actual wire for an output port. These wires need to be
-        // registered in the DP.
+        // Normally, every output port also declares the attached
+        // wire; but in case of an output port with a proxy, the
+        // actual wire remains undeclared. Such wires need to be
+        // registered with the DP.
         if (needs_proxy) {
           if (output_port) {
             Wire *wire = new Wire(wire_id, vhdl::Type(vhdl_array_type_name(p->type)
                                                       , create_range(p->type)));
             dp->register_wire(wire);
             wire->type.ranges.push_front(Range(DOWNTO, 1));
-          } else {
-            dp->register_wire(new Wire(proxy_id, port->type));
           }
         }
 
@@ -483,7 +483,6 @@ namespace {
           continue;
         assert(port->io_type != port_dir);
         
-        assert(port->mapping.type == WIRE);
         RangeList &ranges = port->type.ranges;
         assert(ranges.size() == 2);
         Range &r = ranges.back();
@@ -542,7 +541,6 @@ namespace {
       }
       assert(low == width);
       if (data_port_dir == IN) {
-        dp->register_wire(new Wire(data->mapping.name, data->type));
         dpe->append_to_prelude(data->mapping.name
                                + " <= to_stdlogicarray2d(" + member->id + ");");
       } else

@@ -34,27 +34,14 @@ namespace {
     }
   }
 
-  void declare_mapped_signals(DPEList &list, hls::ostream &out)
+  void dpelist_declare_mapped_signals(DPEList &list, hls::ostream &out)
   {
     bool insert_line = false;
     for (DPEList::iterator wi = list.begin(), we = list.end();
 	 wi != we; ++wi) {
       DPElement *dpe = (*wi).second;
-      for (PortList::iterator pi = dpe->ports.begin(), pe = dpe->ports.end();
-	   pi != pe; ++pi) {
-	Port *port = (*pi).second;
-        if (!is_wrapper(dpe))
-          if (port->io_type != OUT)
-            continue;
-        
-	if (port->mapping.type != WIRE)
-	  continue;
-        
-	insert_line = true;
-	out << indent
-	    << "signal " << port->mapping.name << " : " << port->type << ";";
-      }
-      declare_mapped_signals(dpe->members, out);
+      insert_line |= entity_declare_mapped_signals(dpe, out);
+      dpelist_declare_mapped_signals(dpe->members, out);
     }
 
     if (insert_line)
@@ -64,9 +51,9 @@ namespace {
   void print_dp_signal_declarations(DataPath *dp, hls::ostream &out) 
   {
     out << indent << "-- wrapper wires";
-    declare_mapped_signals(dp->wrappers, out);
+    dpelist_declare_mapped_signals(dp->wrappers, out);
     out << indent << "-- element wires";
-    declare_mapped_signals(dp->elements, out);
+    dpelist_declare_mapped_signals(dp->elements, out);
     out << indent << "-- other wires";
     dp->declare_wires(out);
   }
