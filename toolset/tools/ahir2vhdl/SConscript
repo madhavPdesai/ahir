@@ -7,6 +7,7 @@ env.Append(all_sources = Glob('*.[hc]pp'))
 local = env.Clone()
 
 local.Program('ahir2vhdl', source_files)
+#Default(local.Install(directory='../bin/', source='ahir2vhdl'))
 
 local.AppendUnique(LIBS = ['Base', 'AHIR'])
 local.AppendUnique(LIBPATH = ['#/lib/Base', '#/lib/AHIR'])

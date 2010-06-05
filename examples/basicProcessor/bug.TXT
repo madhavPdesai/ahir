@@ -1,0 +1,22 @@
+BUG: UNSUPPORTED INSTR
+
+	make generates the following output
+
+rm -f *.bc *.ll
+llvmc -emit-llvm -c basicProcessor.c -o basicProcessor.raw.bc
+opt -std-compile-opts -disable-inlining basicProcessor.raw.bc -o basicProcessor.bc
+llvm-dis basicProcessor.bc
+llvm2cdfg basicProcessor.bc
+llvm2cdfg: tools/llvm2cdfg/CDFGBuilder.cpp:63: virtual void cdfg::CDFGBuilder::visitInstruction(llvm::Instruction&): Assertion `false && "unsupported instruction"' failed.
+0   llvm2cdfg 0x084d0318
+Stack dump:
+0.	Running pass 'Generates AHIR XML' on module 'basicProcessor.bc'.
+make: *** [cdfg] Aborted
+
+
+	llvm2cdfg does not seem to support an instruction ("insert value?").
+	
+
+	Also: note that the tools/llvm2cdfg/ folder contains a file irgen.o
+	but does not have the source from which this irgen.o was created.
+	
