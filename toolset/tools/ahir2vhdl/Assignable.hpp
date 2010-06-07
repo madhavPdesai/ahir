@@ -57,6 +57,13 @@ namespace vhdl {
     }
   };
 
+  inline bool operator== (Range &l, Range &r)
+  {
+    return l.rtype == r.rtype
+      && l.upper == r.upper
+      && l.lower == r.lower;
+  }
+
   hls::ostream& operator<< (hls::ostream &out, const Range &r);
   std::ostream& operator<< (std::ostream &out, const Range &r);
   
