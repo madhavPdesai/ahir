@@ -63,11 +63,13 @@ namespace vhdl {
   
   inline void entity_create_clk_ports(Entity *entity)
   {
-    Port *port = entity_create_port_with_map(entity, "clk", hls::IN
-                                             , vhdl::Type("std_logic"), SLICE);
+    Port *port = entity_create_port_with_map_name(entity, "clk", hls::IN
+                                                  , vhdl::Type("std_logic")
+                                                  , SLICE, "clk");
     port->is_control = true;
-    port = entity_create_port_with_map(entity, "reset", hls::IN
-                                       , vhdl::Type("std_logic"), SLICE);
+    port = entity_create_port_with_map_name(entity, "reset", hls::IN
+                                            , vhdl::Type("std_logic")
+                                            , SLICE, "reset");
     port->is_control = true;
   }
 }
