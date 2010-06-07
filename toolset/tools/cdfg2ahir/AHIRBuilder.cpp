@@ -95,8 +95,9 @@ namespace {
       NodeFragment* fragment = new NodeFragment();
       register_node_fragment(node, fragment);
       fragment->dpe = create_dpe(node);
-      visit_ports(node, fragment);
       assign_node_details(node, fragment->dpe);
+      dp->register_dpe(fragment->dpe);
+      visit_ports(node, fragment);
     }
 
     void visit_Fork(CDFGNode *node)
@@ -344,7 +345,6 @@ namespace {
     DPElement* create_dpe(CDFGNode *node)
     {
       DPElement *dpe = new DPElement(dp->elements.size() + 1, node->ntype, node->description);
-      dp->register_dpe(dpe);
       return dpe;
     }
 

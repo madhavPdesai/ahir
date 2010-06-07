@@ -49,6 +49,10 @@ void AHIRFactory::create_dpe(const std::string& _id
 {
   unsigned id = boost::lexical_cast<unsigned>(_id);
   dpe = new DPElement(id, hls::ntype(ntype), description);
+}
+
+void AHIRFactory::commit_dpe()
+{
   dp->register_dpe(dpe);
 }
 

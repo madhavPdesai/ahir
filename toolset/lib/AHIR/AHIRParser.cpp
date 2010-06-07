@@ -179,6 +179,11 @@ void AHIRParser::on_end_element(const Glib::ustring& name)
       factory->commit_dp();
       break;
 
+    case DPE:
+      assert(name == "dpe");
+      factory->commit_dpe();
+      break;
+
     default:
       break;
   }
