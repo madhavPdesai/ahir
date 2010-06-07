@@ -34,7 +34,8 @@ namespace {
     module->dp = create_dp(ahir->dp);
     module->cp = create_cp(ahir->cp);
     module->ln = create_ln(ahir->ln);
-    module->arbiter = create_arbiter(ahir->arbiter, module->dp);
+    if (ahir->arbiter)
+      module->arbiter = create_arbiter(ahir->arbiter, module->dp);
     return module;
   }
 
