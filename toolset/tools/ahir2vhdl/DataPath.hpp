@@ -67,6 +67,7 @@ namespace vhdl {
     DPElement* find_dpe_from_ahir_id(unsigned id);
 
     DPEList calls;
+    DPEList io_ports;
     DPElement *acceptor;
     DPElement *retval;
 

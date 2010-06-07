@@ -718,6 +718,10 @@ namespace {
     
     void create_io_ports(DataPath *dp, DPElement *dpe)
     {
+      assert(dp->io_ports.find(dpe->portname) == dp->io_ports.end()
+             && "A DPE already exists for this I/O port");
+      dp->io_ports[dpe->portname] = dpe;
+      
       Port *data = dpe->find_port("data");
       create_io_port_helper(dp, dpe, dpe->portname, "data"
                             , (dpe->ntype == Input ? IN : OUT)
