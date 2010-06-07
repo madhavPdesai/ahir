@@ -478,6 +478,7 @@ namespace {
       dp_create_incoming_call_ports();
       dp_create_outgoing_call_ports();
       dp_create_memory_ports();
+      dp_create_io_ports(dp);
     }
 
     // Create the I/O data port on the DP with given port_id and
@@ -675,52 +676,57 @@ namespace {
 
     }
 
-    /* ===== DPE external ports ===== */
-    
-    void dpe_create_memory_ports()
+    /* ===== I/O interface ===== */
+
+    void dp_create_io_ports(DataPath *dp)
     {
-      for (DPEList::iterator di = dp->elements.begin(), de = dp->elements.end();
-           di != de; ++di) {
-        DPElement *dpe = (*di).second;
+      dp_io_ports_helper(dp->elements, dp);
+      dp_io_ports_helper(dp->wrappers, dp);
+    }
+    
+    void dp_io_ports_helper(DPEList& elements, DataPath *dp)
+    {
+      for (DPEList::iterator pi = elements.begin(), pe = elements.end();
+           pi != pe; ++pi) {
+        DPElement *dpe = (*pi).second;
 
         switch (dpe->ntype) {
-          case Store:
-            dpe_create_store_mports(dpe);
-            break;
-
-          case LoadRequest:
-            dpe_create_load_mports(dpe);
-            break;
-
           default:
-            break;
-        }
-      }
-
-      for (DPEList::iterator di = dp->wrappers.begin(), de = dp->wrappers.end();
-           di != de; ++di) {
-        DPElement *dpe = (*di).second;
-
-        switch (dpe->ntype) {
-          case Store:
-            dpe_create_store_mports(dpe);
-            break;
-            
-          case LoadRequest:
-            dpe_create_load_mports(dpe);
+            continue;
             break;
 
           case Input:
           case Output:
-            assert(false);
-            break;
-
-          default:
+            assert(dpe->portname.size() > 0);
+            create_io_ports(dp, dpe);
             break;
         }
       }
     }
+
+    void create_io_port_helper(DataPath *dp, DPElement *dpe
+                               , const std::string &portname
+                               , const std::string &id
+                               , IOType io_type
+                               , const vhdl::Type &type)
+    {
+      Port *dp_port = create_port(dp->ports, "io_" + portname + "_" + id
+                                   , io_type, type);
+      Port *dpe_port = (create_port(dpe->ports, "o" + id, io_type, type));
+      dpe_port->mapping(SLICE, dp_port->id);
+    }
     
+    void create_io_ports(DataPath *dp, DPElement *dpe)
+    {
+      Port *data = dpe->find_port("data");
+      create_io_port_helper(dp, dpe, dpe->portname, "data"
+                            , (dpe->ntype == Input ? IN : OUT)
+                            , vhdl::Type("std_logic_vector", data->get_range(1)));
+      create_io_port_helper(dp, dpe, dpe->portname, "req", OUT
+                            , vhdl::Type("std_logic"));
+      create_io_port_helper(dp, dpe, dpe->portname, "ack", IN
+                               , vhdl::Type("std_logic"));
+    }
 
     /* ===== Datapath memory interface ===== */
 
@@ -777,6 +783,50 @@ namespace {
     }
 
     /* ===== DPE memory interface ===== */
+
+    void dpe_create_memory_ports()
+    {
+      for (DPEList::iterator di = dp->elements.begin(), de = dp->elements.end();
+           di != de; ++di) {
+        DPElement *dpe = (*di).second;
+
+        switch (dpe->ntype) {
+          case Store:
+            dpe_create_store_mports(dpe);
+            break;
+
+          case LoadRequest:
+            dpe_create_load_mports(dpe);
+            break;
+
+          default:
+            break;
+        }
+      }
+
+      for (DPEList::iterator di = dp->wrappers.begin(), de = dp->wrappers.end();
+           di != de; ++di) {
+        DPElement *dpe = (*di).second;
+
+        switch (dpe->ntype) {
+          case Store:
+            dpe_create_store_mports(dpe);
+            break;
+            
+          case LoadRequest:
+            dpe_create_load_mports(dpe);
+            break;
+
+          case Input:
+          case Output:
+            assert(false);
+            break;
+
+          default:
+            break;
+        }
+      }
+    }
 
     void dpe_create_store_mports(DPElement *store)
     {
