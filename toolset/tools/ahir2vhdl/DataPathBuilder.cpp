@@ -55,12 +55,16 @@ namespace {
     
       // create a vhdl::dpe for each ahir::dpe
       create_elements();
+
+      // create a single element to represent each I/O port, removing
+      // all the individual DPEs from DP.
+      collect_io_elements();
     
-      // create wrappers and consume dpe's created in the previous function
-      create_wrappers();
+      // create wrappers and remove members from the DP.
+      wrap_shared_elements();
     
-      // LC are created later in one bunch because we need to know the
-      // total number of wrappers.
+      // LR are created later in one bunch because we need to know the
+      // total number of wrappers when generating IDs for new members.
       create_lr_wrappers(dp, adp);
 
       for (DPEList::iterator di = dp->elements.begin(), de = dp->elements.end();
@@ -191,50 +195,72 @@ namespace {
         map_adpe_to_dpe(adpe, dpe);
       }
     }
+
+    /* ===== Wrappers ===== */
+
+    std::string wrapper_id(unsigned id)
+    {
+      return "wrapper_" + boost::lexical_cast<std::string>(id);
+    }
+
+    void collect_io_elements()
+    {
+      for (ahir::DataPath::IOPortList::iterator pi = adp->io_ports.begin()
+             , pe = adp->io_ports.end(); pi != pe; ++pi) {
+        ahir::DPEVector &dl = (*pi).second;
+        assert(dl.size() > 0);
+        if (dl.size() == 1)
+          continue;
+
+        ahir::DPElement *first_dpe = dl.front();
+        NodeType ntype = first_dpe->ntype;
+        assert(is_io(ntype));
+        assert((*pi).first == first_dpe->portname);
+        
+        create_wrapper("io_" + first_dpe->portname
+                       , (first_dpe->ntype == Input
+                          ? "InputPort" : "OutputPort")
+                       , dl, dp);
+      }
+    }
     
-    void create_wrappers()
+    void wrap_shared_elements()
     {
       for (ahir::WrapperList::iterator wi = adp->wrappers.begin()
              , we = adp->wrappers.end(); wi != we; ++wi) {
         ahir::Wrapper *aw = (*wi).second;
 
-        ahir::MemberList::iterator mi = aw->members.begin();
-        ahir::DPElement *first = adp->find_dpe(*mi);
-        assert(first);
-
-        DPElement *first_ve = find_dpe_for_adpe(first);
-        assert(first_ve);
-        DPElement *wrapper
-          = create_wrapper("wrapper_" + boost::lexical_cast<std::string>(aw->id)
-                           , aw->description, aw->members.size(), first_ve, dp);
-
+        ahir::DPEVector members;
+        
         for (ahir::MemberList::iterator mi = aw->members.begin()
                , me = aw->members.end(); mi != me; ++mi) {
           ahir::DPElement *adpe = adp->find_dpe(*mi);
           assert(adpe);
-
-          DPElement *dpe = find_dpe_for_adpe(adpe);
-          assert(dpe);
-          wrapper->register_member(dpe);
-          dp->remove_dpe(dpe);
+          members.push_back(adpe);
         }
-
-        dpe_add_generics(wrapper);
+      
+        create_wrapper(wrapper_id(aw->id), aw->description, members, dp);
       }
     }
   
     DPElement* create_wrapper(const std::string &id, const std::string &d
-                              , unsigned num_members
-                              , DPElement *dpe, DataPath *dp)
+                              , ahir::DPEVector &dv, DataPath *dp)
     {
-      DPElement *w = new DPElement(id, dpe->ntype, dpe->cname, d
-                                   , dpe->configuration);
+      ahir::DPElement *adpe = dv.front();
+      DPElement *vdpe = find_dpe_for_adpe(adpe);
+      assert(vdpe);
+      
+      unsigned num_members = dv.size();
+      
+      DPElement *w = new DPElement(id, vdpe->ntype, vdpe->cname, d
+                                   , vdpe->configuration);
       dp->register_wrapper(w);
+      
       if (is_io(w->ntype)) {
-        w->portname = dpe->portname;
+        w->portname = vdpe->portname;
       }
 
-      for (PortList::iterator pi = dpe->ports.begin(), pe = dpe->ports.end();
+      for (PortList::iterator pi = vdpe->ports.begin(), pe = vdpe->ports.end();
            pi != pe; ++pi) {
         Port *port = (*pi).second;
         
@@ -249,6 +275,18 @@ namespace {
       }
 
       entity_create_clk_ports(w);
+
+      for (ahir::DPEVector::iterator di = dv.begin(), de = dv.end();
+           di != de; ++di) {
+        ahir::DPElement *adpe = *di;
+        DPElement *vdpe = find_dpe_for_adpe(adpe);
+        assert(vdpe);
+        w->register_member(vdpe);
+        dp->remove_dpe(vdpe);
+      }
+
+      dpe_add_generics(w);
+      
       return w;
     }
 
@@ -264,47 +302,31 @@ namespace {
           max_id = aw->id;
       }
 
-      std::vector<DPElement*> worklist;
-      for (DPEList::iterator wi = dp->wrappers.begin(), we = dp->wrappers.end();
-           wi != we; ++wi) {
-        DPElement *lc = (*wi).second;
-      
+      for (ahir::WrapperList::iterator wi = adp->wrappers.begin()
+             , we = adp->wrappers.end(); wi != we; ++wi) {
+        ahir::Wrapper *aw = (*wi).second;
+
+        DPElement *lc = dp->find_wrapper(wrapper_id(aw->id));
         if (lc->ntype != LoadComplete)
           continue;
-      
-        worklist.push_back(lc);
+
         assert(!lc->counterpart);
-      }
+        
+        ahir::DPEVector members;
+        for (ahir::MemberList::iterator mi = aw->members.begin()
+               , me = aw->members.end(); mi != me; ++mi) {
+          ahir::DPElement *adpe = adp->find_dpe(*mi);
+          assert(adpe);
+          assert(adpe->counterpart);
+          members.push_back(adpe->counterpart);
+        }
 
-      for (std::vector<DPElement*>::iterator i = worklist.begin(), e = worklist.end();
-           i != e; ++i) {
-        DPElement *lc = *i;
-
-        DPEList::iterator mi = lc->members.begin();
-        DPElement *first = (*mi).second->counterpart;
-        assert(first);
-        assert(first->ntype == LoadRequest);
-      
         unsigned id = ++max_id;
-        DPElement *lr = create_wrapper("wrapper_" + boost::lexical_cast<std::string>(id)
+        DPElement *lr = create_wrapper(wrapper_id(id)
                                        , lc->description
-                                       , lc->members.size(), first, dp);
+                                       , members, dp);
         lr->counterpart = lc;
         lc->counterpart = lr;
-      
-        // Counterparts of the LoadComplete members get added to the
-        // LoadRequest.
-        for (DPEList::iterator mi = lc->members.begin(), me = lc->members.end();
-             mi != me; ++mi) {
-          DPElement *dpe = (*mi).second;
-          DPElement *cpart = dpe->counterpart;
-          assert(cpart);
-          assert(cpart->ntype == LoadRequest);
-          lr->register_member(cpart);
-          dp->remove_dpe(cpart);
-        }
-        
-        dpe_add_generics(lr);
       }
     }
 
