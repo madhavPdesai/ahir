@@ -33,16 +33,18 @@ vhdl::LinkLayer* vhdl::create_ln(ahir::LinkLayer *aln)
   
   for (ahir::LinkLayer::IfaceMap::iterator lni = aln->maps.begin()
          , lne = aln->maps.end(); lni != lne; ++lni) {
-    entity_create_port_with_map(ln, (*lni).first, IN
-                                , Type("BooleanArray" , Range(DOWNTO, (*lni).second.size(), 1))
-                                , SLICE);
+    entity_create_port_with_map_name(ln, (*lni).first, IN
+                                     , Type("BooleanArray"
+                                            , Range(DOWNTO, (*lni).second.size(), 1))
+                                     , SLICE, (*lni).first);
   }
   
   for (ahir::LinkLayer::IfaceMap::iterator lni = aln->rmaps.begin()
          , lne = aln->rmaps.end(); lni != lne; ++lni) {
-    entity_create_port_with_map(ln, (*lni).first, OUT
-                                , Type("BooleanArray", Range(DOWNTO, (*lni).second.size(), 1))
-                                , SLICE);
+    entity_create_port_with_map_name(ln, (*lni).first, OUT
+                                     , Type("BooleanArray"
+                                            , Range(DOWNTO, (*lni).second.size(), 1))
+                                     , SLICE, (*lni).first);
   }
   
   return ln;
