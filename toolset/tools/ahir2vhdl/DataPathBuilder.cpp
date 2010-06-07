@@ -2,6 +2,7 @@
 #include "Utils.hpp"
 #include "EntityBuilder.hpp"
 #include "SimpleEntity.hpp"
+#include "typedefs.hpp"
 
 #include <AHIR/AHIRModule.hpp>
 #include <Base/Type.hpp>
@@ -20,8 +21,8 @@ namespace {
     DataPath *dp;
     ahir::DataPath *adp;
 
-    // typedef std::map<ahir::DPElement*, DPElement*> DPEMap;
-    // DPEMap dpe_map;
+    typedef std::map<ahir::DPElement*, DPElement*> DPEMap;
+    DPEMap dpe_map;
 
     Builder() { reset(); }
     
@@ -29,8 +30,24 @@ namespace {
     {
       dp = NULL;
       adp = NULL;
+      dpe_map.clear();
     }
     
+    void map_adpe_to_dpe(ahir::DPElement *a, DPElement *d)
+    {
+      assert(!find_dpe_for_adpe(a));
+      dpe_map[a] = d;
+    }
+    
+    DPElement* find_dpe_for_adpe(ahir::DPElement *adpe)
+    {
+      if (!adpe)
+        return NULL;
+      if (dpe_map.find(adpe) == dpe_map.end())
+        return NULL;
+      return dpe_map[adpe];
+    }
+
     DataPath* create_dp(ahir::DataPath *ahir) 
     {
       adp = ahir;
@@ -169,8 +186,9 @@ namespace {
         dpe_create_symbol_ports(dpe->ports, adpe->acks, OUT, "SigmaOut", !has_1D_ports);
         entity_create_clk_ports(dpe);
         dpe_update_details(dpe, adpe);
-      
-        register_dpe(adpe, dpe);
+
+        dp->register_dpe(dpe);
+        map_adpe_to_dpe(adpe, dpe);
       }
     }
     
@@ -184,7 +202,7 @@ namespace {
         ahir::DPElement *first = adp->find_dpe(*mi);
         assert(first);
 
-        DPElement *first_ve = find_dpe(first);
+        DPElement *first_ve = find_dpe_for_adpe(first);
         assert(first_ve);
         DPElement *wrapper
           = create_wrapper("wrapper_" + boost::lexical_cast<std::string>(aw->id)
@@ -195,7 +213,7 @@ namespace {
           ahir::DPElement *adpe = adp->find_dpe(*mi);
           assert(adpe);
 
-          DPElement *dpe = find_dpe(adpe);
+          DPElement *dpe = find_dpe_for_adpe(adpe);
           assert(dpe);
           wrapper->register_member(dpe);
           dp->remove_dpe(dpe);
@@ -406,7 +424,7 @@ namespace {
         case LoadRequest:
         case LoadComplete: {
           assert(adpe->counterpart);
-          DPElement *cpart = find_dpe(adpe->counterpart);
+          DPElement *cpart = find_dpe_for_adpe(adpe->counterpart);
           if (cpart) {
             assert(!cpart->counterpart);
             cpart->counterpart = dpe;
@@ -422,19 +440,6 @@ namespace {
       }
     }
     
-    void register_dpe(ahir::DPElement *a, DPElement *d)
-    {
-      assert(!find_dpe(a));
-      dp->register_dpe_ahir_id(a->id, d);
-    }
-    
-    DPElement* find_dpe(ahir::DPElement *adpe)
-    {
-      if (!adpe)
-        return NULL;
-      return dp->find_dpe_from_ahir_id(adpe->id);
-    }
-
     /* ===== Datapath Ports ===== */
 
     void dp_create_ports()
@@ -542,7 +547,7 @@ namespace {
     {
       ahir::DPElement *adpe = adp->acceptor;
       assert(adpe);
-      DPElement *acc = find_dpe(adpe);
+      DPElement *acc = find_dpe_for_adpe(adpe);
       assert(acc);
       dp->acceptor = acc;
 
@@ -563,7 +568,7 @@ namespace {
       entity_create_port_with_map(dp, "call_tag", IN, vhdl::Type("std_logic_vector"), WIRE);
       
       assert(adp->retval);
-      DPElement *retval = find_dpe(adp->retval);
+      DPElement *retval = find_dpe_for_adpe(adp->retval);
       assert(retval);
       dp->retval = retval;
 

@@ -16,18 +16,32 @@ namespace {
 
 void DataPath::register_wrapper(DPElement *wrapper)
 {
-  assert(wrappers.find(wrapper->id) == wrappers.end());
+  assert(!find_wrapper(wrapper->id));
   wrappers[wrapper->id] = wrapper;
+}
+
+DPElement* DataPath::find_wrapper(const std::string &id)
+{
+  if (wrappers.find(id) == wrappers.end())
+    return NULL;
+  return wrappers[id];
 }
 
 void DataPath::register_dpe(DPElement *dpe)
 {
-  assert(elements.find(dpe->id) == elements.end());
+  assert(!find_dpe(dpe->id));
   elements[dpe->id] = dpe;
 
   if (is_io(dpe->ntype)) {
     io_ports[dpe->portname].push_back(dpe);
   }
+}
+
+DPElement* DataPath::find_dpe(const std::string &id)
+{
+  if (elements.find(id) == elements.end())
+    return NULL;
+  return elements[id];
 }
 
 void DataPath::remove_dpe(DPElement *dpe)
@@ -69,17 +83,7 @@ void DataPath::register_assign(const std::string &lhs, const std::string &rhs)
   assign[lhs] = rhs;
 }
 
-void DataPath::register_dpe_ahir_id(unsigned id, DPElement *dpe)
-{
-  assert(!find_dpe_from_ahir_id(id));
-  dpe_map[id] = dpe;
-  register_dpe(dpe);
-}
-
 DPElement* DataPath::find_dpe_from_ahir_id(unsigned id)
 {
-  if (dpe_map.find(id) != dpe_map.end())
-    return dpe_map[id];
-  return NULL;
+  return find_dpe("dpe_" + boost::lexical_cast<std::string>(id));
 }
-

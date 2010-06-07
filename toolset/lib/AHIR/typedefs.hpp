@@ -4,6 +4,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include <vector>
 
 namespace ahir {
 
@@ -23,7 +24,8 @@ namespace ahir {
 
   class DPElement;
   typedef std::map<unsigned, DPElement*> DPEList;
-  
+  typedef std::vector<DPElement*> DPEVector;
+
 }
 
 #endif

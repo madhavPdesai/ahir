@@ -58,14 +58,12 @@ namespace vhdl {
   {
     DPEList wrappers;
     void register_wrapper(vhdl::DPElement *wrapper);
+    DPElement* find_wrapper(const std::string &id);
 
     DPEList elements;
     void register_dpe(vhdl::DPElement *dpe);
     void remove_dpe(vhdl::DPElement *dpe);
-
-    typedef std::map<unsigned, DPElement*> AhirDpeMap;
-    AhirDpeMap dpe_map;
-    void register_dpe_ahir_id(unsigned id, DPElement *dpe);
+    DPElement* find_dpe(const std::string &id);
     DPElement* find_dpe_from_ahir_id(unsigned id);
 
     DPEList calls;

@@ -118,6 +118,9 @@ namespace ahir {
     DPEList calls;
     DPElement *retval;
     DPElement *acceptor;
+
+    typedef std::map<std::string, std::vector<DPElement*> > IOPortList;
+    IOPortList io_ports;
     
     void register_dpe(DPElement *dpe);
     DPElement* find_dpe(unsigned id);
