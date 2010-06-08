@@ -72,7 +72,7 @@ namespace {
     create_env_port(dp, "return_tag", system);
   }
 
-  void system_create_ports(System &system, Program *program)
+  void system_create_standard_ports(System &system, Program *program)
   {
     system_create_start_ports(system, program);
     entity_create_clk_ports(&system);
@@ -136,21 +136,22 @@ namespace {
     system.register_statement("");
   }
 
-  void memory_register_ports(System &system
-                             , unsigned &load_lines, unsigned &store_lines)
+  void memory_create_ports(Memory &memory
+                           , unsigned &load_lines
+                           , unsigned &store_lines)
   {
     // FIXME: The memory_subsystem uses a non-standard name for the
     // clk port.
-    entity_create_port_with_map_name(&system.memory, "clock", IN
+    entity_create_port_with_map_name(&memory, "clock", IN
                                      , vhdl::Type("std_logic"), SLICE, "clk");
-    entity_create_port_with_map(&system.memory, "reset", IN
+    entity_create_port_with_map(&memory, "reset", IN
                                 , vhdl::Type("std_logic"), SLICE);
 
     // FIXME: Notice how we take advantage of case-insensitive VHDL to
     // generate the port name. This should actually be fixed in the
     // VHDL library by removing the direction from the port names.
 #define MEM_PORT(name, dir, width)                                      \
-    entity_create_port_with_map_name(&system.memory, name"_"#dir, dir   \
+    entity_create_port_with_map_name(&memory, name"_"#dir, dir          \
                                      , vhdl::Type("std_logic_vector"    \
                                                   , Range(DOWNTO, (width))) \
                                      , WIRE, name)
@@ -175,33 +176,37 @@ namespace {
 #undef MEM_PORT
   }
   
-  void memory_register_generics(System &system
-                                , unsigned &load_lines, unsigned &store_lines)
+  void memory_register_generics(Memory &memory
+                                , unsigned load_lines
+                                , unsigned store_lines)
   {
-    system.memory.register_generic(new Generic("num_loads", "natural"
-                                               , str(boost::format("%s") % load_lines)));
-    system.memory.register_generic(new Generic("num_stores", "natural"
-                                               , str(boost::format("%s") % store_lines)));
-    system.memory.register_generic(new Generic("addr_width", "natural"
-                                               , str(boost::format("%s") % memory::address_width)));
-    system.memory.register_generic(new Generic("data_width", "natural"
-                                               , str(boost::format("%s") % memory::data_width)));
-    system.memory.register_generic(new Generic("tag_width", "natural"
-                                               , str(boost::format("%s") % memory::tag_width)));
-    system.memory.register_generic(new Generic("number_of_banks", "natural"
-                                               , str(boost::format("%s") % 1)));
-    system.memory.register_generic(new Generic("mux_degree", "natural"
-                                               , str(boost::format("%s") % 2)));
-    system.memory.register_generic(new Generic("demux_degree", "natural"
-                                               , str(boost::format("%s") % 2)));
-    system.memory.register_generic(new Generic("base_bank_addr_width"
-                                               , "natural", str(boost::format("%s") % 8)));
-    system.memory.register_generic(new Generic("base_bank_data_width", "natural"
-                                               , str(boost::format("%s") % 8)));
+    memory.register_generic(new Generic("num_loads", "natural"
+                                        , str(boost::format("%s") % load_lines)));
+    memory.register_generic(new Generic("num_stores", "natural"
+                                        , str(boost::format("%s") % store_lines)));
+    memory.register_generic(new Generic("addr_width", "natural"
+                                        , str(boost::format("%s") % memory::address_width)));
+    memory.register_generic(new Generic("data_width", "natural"
+                                        , str(boost::format("%s") % memory::data_width)));
+    memory.register_generic(new Generic("tag_width", "natural"
+                                        , str(boost::format("%s") % memory::tag_width)));
+    memory.register_generic(new Generic("number_of_banks", "natural"
+                                        , str(boost::format("%s") % 1)));
+    memory.register_generic(new Generic("mux_degree", "natural"
+                                        , str(boost::format("%s") % 2)));
+    memory.register_generic(new Generic("demux_degree", "natural"
+                                        , str(boost::format("%s") % 2)));
+    memory.register_generic(new Generic("base_bank_addr_width"
+                                        , "natural", str(boost::format("%s") % 8)));
+    memory.register_generic(new Generic("base_bank_data_width", "natural"
+                                        , str(boost::format("%s") % 8)));
   }
 
+  // Note that this function updates ``load_lines'' and
+  // ``store_lines'' (they are passed by reference)
   void dp_map_memory_ports(DataPath *dp
-                           , unsigned &load_lines, unsigned &store_lines)
+                           , unsigned &load_lines
+                           , unsigned &store_lines)
   {
 #define DP_MEM_PORT_MAP(name, width)                                    \
     port_map(dp, (name), SLICE, (name), DOWNTO, (high) * (width) - 1, (low) * (width))
@@ -238,7 +243,7 @@ namespace {
 #undef DP_MEM_PORT_MAP
   }
 
-  void system_map_memory_ports(Program *program, System &system)
+  void system_connect_memory(Program *program, System &system)
   {
     unsigned load_lines = 1;
     unsigned store_lines = 1;
@@ -343,13 +348,12 @@ namespace {
       store_lines += module->dp->store_lines;
     }
 
-    memory_register_generics(system, load_lines, store_lines);
 
-    system_create_ports(system, program);
+    system_create_standard_ports(system, program);
     
-    memory_register_ports(system, load_lines, store_lines);
-    
-    system_map_memory_ports(program, system);
+    memory_create_ports(system.memory, load_lines, store_lines);
+    system_connect_memory(program, system);
+    memory_register_generics(system.memory, load_lines, store_lines);
   }
 
   void print_components(Program *program, hls::ostream &out) 

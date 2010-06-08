@@ -67,12 +67,9 @@ namespace vhdl {
     DPElement* find_dpe_from_ahir_id(unsigned id);
 
     DPEList calls;
-    DPEList io_ports;
+    DPEList io_elements;
     DPElement *acceptor;
     DPElement *retval;
-
-    typedef std::map<std::string, std::vector<DPElement*> > IOPortRegister;
-    IOPortRegister io_ports;
 
     AssignMap assign;
     void register_assign(const std::string &lhs, const std::string &rhs);

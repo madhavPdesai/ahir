@@ -31,10 +31,6 @@ void DataPath::register_dpe(DPElement *dpe)
 {
   assert(!find_dpe(dpe->id));
   elements[dpe->id] = dpe;
-
-  if (is_io(dpe->ntype)) {
-    io_ports[dpe->portname].push_back(dpe);
-  }
 }
 
 DPElement* DataPath::find_dpe(const std::string &id)
