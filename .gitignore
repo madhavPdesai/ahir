@@ -22,3 +22,6 @@ auto
 /examples/*/*.vhdl
 /examples/*/*.xml
 /examples/*/*.txt
+/iolib/demo/*.vhdl
+/iolib/demo/*.xml
+/iolib/demo/*.txt
