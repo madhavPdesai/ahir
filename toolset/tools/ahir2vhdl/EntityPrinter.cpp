@@ -160,3 +160,24 @@ bool vhdl::entity_declare_mapped_signals(Entity *ent, hls::ostream &out)
   return retval;
 }
 
+void vhdl::entity_print_registered_instances(Entity *entity, hls::ostream &out)
+{
+  if (entity->instances.size() == 0)
+    return;
+  
+  for (EntityList::iterator ei = entity->instances.begin(), ee = entity->instances.end();
+       ei != ee; ++ei) {
+    Entity *inst = (*ei).second;
+    print_instance(inst, out);
+    out << "\n";
+  }
+}
+
+void vhdl::entity_declare_registered_wires(Entity *entity, hls::ostream &out)
+{
+  for (EntityList::iterator ii = entity->instances.begin()
+         , ie = entity->instances.end(); ii != ie; ++ii) {
+    Entity *inst = (*ii).second;
+    entity_declare_mapped_signals(inst, out);
+  }
+}
