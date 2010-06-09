@@ -528,13 +528,25 @@ namespace {
 
     void visitCastInst(CastInst& C)
     {
-      bool is_ioport_name = true;
+      // For an I/O function call, the first argument is a bitcast
+      // that points to a string identifier for the port. If this
+      // CastInst is in fact that bitcast, we have to skip it.
       
+      bool is_ioport_name = true;
+
       for (llvm::Value::use_iterator ui = C.use_begin(), ue = C.use_end();
            ui != ue; ++ui) {
         User *user = *ui;
-        if (get_io_code(user) != NOT_IO)
-          continue;
+        if (get_io_code(user) != NOT_IO) {
+          // The user is an I/O function call. We now check if this is
+          // the first operand to the called function.
+          CallInst *call = cast<CallInst>(user);
+          if (call->getOperand(1) == (llvm::Value*)(&C))
+            continue;
+        }
+
+        // We found a non-I/O use for this cast, so we go ahead and
+        // create a CDFGNode for it.
         is_ioport_name = false;
         break;
       }
