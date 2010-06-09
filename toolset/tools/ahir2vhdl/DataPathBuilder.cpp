@@ -704,18 +704,6 @@ namespace {
       }
     }
 
-    void create_io_port_helper(DataPath *dp, DPElement *dpe
-                               , const std::string &portname
-                               , const std::string &id
-                               , IOType io_type
-                               , const vhdl::Type &type)
-    {
-      Port *dp_port = create_port(dp->ports, "io_" + portname + "_" + id
-                                   , io_type, type);
-      Port *dpe_port = (create_port(dpe->ports, "o" + id, io_type, type));
-      dpe_port->mapping(SLICE, dp_port->id);
-    }
-    
     void create_io_ports(DataPath *dp, DPElement *dpe)
     {
       assert(dp->io_elements.find(dpe->portname) == dp->io_elements.end()
@@ -723,13 +711,13 @@ namespace {
       dp->io_elements[dpe->portname] = dpe;
       
       Port *data = dpe->find_port("data");
-      create_io_port_helper(dp, dpe, dpe->portname, "data"
-                            , (dpe->ntype == Input ? IN : OUT)
-                            , vhdl::Type("std_logic_vector", data->get_range(1)));
-      create_io_port_helper(dp, dpe, dpe->portname, "req", OUT
-                            , vhdl::Type("std_logic"));
-      create_io_port_helper(dp, dpe, dpe->portname, "ack", IN
-                               , vhdl::Type("std_logic"));
+      entity_create_forwarded_io_port(dp, dpe, dpe->portname, "data"
+                                      , (dpe->ntype == Input ? IN : OUT)
+                                      , vhdl::Type("std_logic_vector", data->get_range(1)));
+      entity_create_forwarded_io_port(dp, dpe, dpe->portname, "req", OUT
+                                      , vhdl::Type("std_logic"));
+      entity_create_forwarded_io_port(dp, dpe, dpe->portname, "ack", IN
+                                      , vhdl::Type("std_logic"));
     }
 
     /* ===== Datapath memory interface ===== */

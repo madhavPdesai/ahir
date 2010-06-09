@@ -72,6 +72,12 @@ namespace vhdl {
                                             , SLICE, "reset");
     port->is_control = true;
   }
+
+  void entity_create_forwarded_io_port(Entity *outer, Entity *inner
+                                       , const std::string &portname
+                                       , const std::string &id
+                                       , hls::IOType io_type
+                                       , const vhdl::Type &type);
 }
 
 #endif

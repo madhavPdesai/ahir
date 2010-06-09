@@ -87,3 +87,15 @@ void vhdl::port_map_wire(Entity *entity, const std::string &port_name
   port->mapping(WIRE, mapping_name);
 }
 
+void vhdl::entity_create_forwarded_io_port(Entity *outer, Entity *inner
+                                           , const std::string &portname
+                                           , const std::string &id
+                                           , IOType io_type
+                                           , const vhdl::Type &type)
+{
+  Port *outer_port = create_port(outer->ports, "io_" + portname + "_" + id
+                                 , io_type, type);
+  entity_create_port_with_map_name(inner, "o" + id, io_type, type
+                                   , SLICE, outer_port->id);
+}
+    
