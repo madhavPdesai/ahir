@@ -44,7 +44,7 @@ namespace ahir
 
 ahir::Module* get_ahir_module(hls::Program *program, const std::string &id);
 
-inline bool is_ahir(hls::Module *f) { return f->type == "ahir"; }
+inline bool is_ahir(hls::Module *f) { return f && f->type == "ahir"; }
 
 inline ahir::Module* to_ahir(hls::Module *m) 
 {

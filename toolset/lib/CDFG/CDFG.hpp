@@ -130,7 +130,7 @@ namespace cdfg {
 
 };
 
-inline bool is_cdfg(hls::Module *f) { return f->type == "cdfg"; }
+inline bool is_cdfg(hls::Module *f) { return f && f->type == "cdfg"; }
 
 cdfg::CDFG* get_cdfg(hls::Program *program, const std::string &id);
 
