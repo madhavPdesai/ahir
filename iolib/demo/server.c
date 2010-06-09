@@ -3,7 +3,7 @@
 #include <stdio.h>
 #endif
 
-int main (void)
+int start(void)
 {
   int i;
   uint32_t apl;
