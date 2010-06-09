@@ -525,7 +525,7 @@ namespace {
       print_instance(module->dp, out);
       print_instance(module->ln, out);
 
-      if (module->id == "start")
+      if (module->id == program->start->id)
         continue;
       
       system_connect_arbiter(program, module, out);

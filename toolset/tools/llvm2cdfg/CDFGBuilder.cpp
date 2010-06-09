@@ -15,6 +15,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 #include <iostream>
 #include <deque>
@@ -34,8 +35,9 @@ namespace cdfg {
     , program(NULL)
   {}
 
-  void CDFGBuilder::create_program(const std::string &id)
+  void CDFGBuilder::create_program(std::string id)
   {
+    boost::replace_last(id, ".bc", "");
     program = new Program(id);
   }
 
@@ -151,7 +153,7 @@ namespace {
 
     void initialise_with_function(llvm::Function &F)
     {
-      hls::Module *f = program->find_module(F.getName());
+      hls::Module *f = program->find_module(program->id + "_" + F.getNameStr());
       assert(is_cdfg(f));
       cdfg = static_cast<CDFG*>(f);
   
@@ -185,10 +187,10 @@ namespace {
       const llvm::FunctionType *ftype = F.getFunctionType();
       assert(!ftype->isVarArg() && "variable arguments not supported");
     
-      CDFG *cdfg = new CDFG(F.getName());
+      CDFG *cdfg = new CDFG(program->id + "_" + F.getNameStr());
       program->modules[cdfg->id] = cdfg;
 
-      if (cdfg->id == "start") {
+      if (cdfg->id == program->id + "_start") {
         assert(!program->start && "start function already defined");
         program->start = cdfg;
       }
