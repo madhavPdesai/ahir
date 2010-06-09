@@ -533,13 +533,10 @@ namespace {
     }
   }
 
-  void print_system_config(Program *program, System &system)
+  void print_system_config(Program *program, System &system, hls::ostream &out)
   {
-    std::ofstream file("system_config.vhdl");
-    hls::ostream out(file);
-
     out
-      << indent << "configuration system_config of system is"
+      << indent << "configuration " << system.id << "_config of " << system.id << " is"
       << indent << "  for default_arch"
       << "\n";
 
@@ -557,13 +554,15 @@ namespace {
       
     out
       << indent << "  end for;"
-      << indent << "end system_config;"
+      << indent << "end " << system.id << "_config;"
       << "\n";
   }
 
   void print_system(Program *program, System &system)
   {
-    std::ofstream file("system.vhdl");
+    const std::string filename = program->id + "_system.vhdl";
+    
+    std::ofstream file(filename.c_str());
     file <<
       "\nlibrary ieee;"
       "\nuse ieee.std_logic_1164.all;"
@@ -579,7 +578,7 @@ namespace {
 
     print_object_declaration(&system, "entity", out);
     out << "\n"
-        << indent << "architecture default_arch of system is"
+        << indent << "architecture default_arch of " << system.id << " is"
         << "\n" << indent_in;
 
     system.declare_wires(out);
@@ -602,16 +601,18 @@ namespace {
     print_instance(&system.memory, out);
     
     out << "\n" << indent_out
-        << indent << "end default_arch;";
+        << indent << "end default_arch;"
+        << "\n";
+
+    print_system_config(program, system, out);
   }
   
 } // end anonymous namespace
 
 void vhdl::generate_system(Program *program) 
 {
-  System system("system", "top-level entity");
+  System system(program->id + "_system", "top-level entity");
 
   create_system(program, system);
   print_system(program, system);
-  print_system_config(program, system);
 }
