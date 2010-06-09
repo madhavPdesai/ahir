@@ -95,6 +95,12 @@ namespace vhdl {
     void operator() (MappingType t, const std::string &n
 		     , const RangeList &r = RangeList());
     void operator() (MappingType t, const std::string &n, const Range &r);
+    void clear()
+    {
+      type = NONE;
+      name.clear();
+      ranges.clear();
+    }
 
     Mapping()
       : type(NONE)

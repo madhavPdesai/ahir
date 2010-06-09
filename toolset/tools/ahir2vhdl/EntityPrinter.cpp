@@ -154,7 +154,12 @@ bool vhdl::entity_declare_mapped_signals(Entity *ent, hls::ostream &out)
       
     retval = true;
     out << indent
-        << "signal " << port->mapping.name << " : " << port->type << ";";
+        << "signal " << port->mapping.name << " : " << port->type.name;
+    if (port->mapping.ranges.size() > 0)
+      out << port->mapping.ranges;
+    else
+      out << port->type.ranges;
+    out << ";";
   }
 
   return retval;

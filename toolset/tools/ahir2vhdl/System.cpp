@@ -63,7 +63,10 @@ namespace {
     Port *port = dp->find_port(port_id);
     assert(port);
 
-    create_port(system.ports, "env_" + port_id, port->io_type, port->type);
+    Port *env_port = create_port(system.ports, "env_" + port_id
+                                 , port->io_type, port->type);
+    port->mapping.clear();
+    port->mapping(SLICE, env_port->id);
   }
   
   void system_create_start_ports(System &system, Program *program)
