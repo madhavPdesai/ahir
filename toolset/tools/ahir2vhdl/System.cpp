@@ -7,6 +7,7 @@
 #include "Arbiter.hpp"
 #include "LinkLayer.hpp"
 #include "Utils.hpp"
+#include "SimpleEntity.hpp"
 
 #include <Base/ostream.hpp>
 #include <Base/Program.hpp>
@@ -42,6 +43,16 @@ namespace {
 
     Memory memory;
 
+    typedef std::map<std::string, std::set<DataPath*> > PortUserMap;
+    PortUserMap port_users;
+    void register_port_user(const std::string &io, DataPath *dp)
+    {
+      if (port_users.find(io) != port_users.end())
+        assert(port_users[io].count(dp) == 0
+               && "Expecting only one element per port in the DP.");
+      port_users[io].insert(dp);
+    }
+    
     System(const std::string &id, const std::string &d = "")
       : Entity(id, SYSTEM, d), memory("memory_subsystem", "system memory")
     {} 
@@ -335,6 +346,130 @@ namespace {
     out << ");" << indent_out;
   }
 
+  SimpleEntity* system_create_io_entity(System &system
+                                        , const std::string &pname
+                                        , DPElement *dpe)
+  {
+    SimpleEntity *entity = new SimpleEntity("io_" + pname, str(dpe->ntype) + "Port");
+    entity_create_clk_ports(entity);
+    system.register_instance(entity);
+    
+    Port *data = dpe->find_port("odata");
+    assert(data);
+    entity_create_forwarded_io_port(&system, entity, pname, "data"
+                                    , data->io_type, data->type);
+    entity_create_forwarded_io_port(&system, entity, pname, "req"
+                                    , OUT, vhdl::Type("std_logic"));
+    entity_create_forwarded_io_port(&system, entity, pname, "ack"
+                                    , IN, vhdl::Type("std_logic"));
+
+    entity_create_port_with_map_name(entity, "data", (data->io_type == IN ? OUT : IN)
+                                               , vhdl::Type("StdLogicArray2D"
+                                                            , data->type.ranges)
+                                               , WIRE, entity->id + "_data_sig");
+    entity_create_port_with_map_name(entity, "req", IN
+                                     , vhdl::Type("BooleanArray")
+                                     , WIRE, entity->id + "_req_sig");
+    entity_create_port_with_map_name(entity, "ack", OUT
+                                     , vhdl::Type("BooleanArray")
+                                     , WIRE, entity->id + "_ack_sig");
+    return entity;
+  }
+
+  void system_create_io_ports(System &system, Program *program)
+  {
+    for (Program::ModuleList::iterator mi = program->modules.begin()
+           , me = program->modules.end(); mi != me; ++mi) {
+      vhdl::Module *module = get_vhdl_module(program, (*mi).first);
+
+      DataPath *dp = module->dp;
+      for (DPEList::iterator di = dp->io_elements.begin(), de = dp->io_elements.end();
+           di != de; ++di) {
+        const std::string pname = (*di).first;
+        DPElement *dpe = (*di).second;
+        assert(is_io(dpe->ntype));
+        
+        if (!system.find_instance("io_" + pname))
+          system_create_io_entity(system, pname, dpe);
+        system.register_port_user(pname, dp);
+      }
+    }
+
+    for (System::PortUserMap::iterator pi = system.port_users.begin()
+           , pe = system.port_users.end(); pi != pe; ++pi) {
+      const std::string &pname = (*pi).first;
+
+      Entity *io = system.find_instance("io_" + pname);
+      assert(io);
+
+      unsigned count = (*pi).second.size();
+      io->find_port("data")->type.ranges.push_front(Range(DOWNTO, count));
+      io->find_port("req")->type.ranges.push_front(Range(DOWNTO, count));
+      io->find_port("ack")->type.ranges.push_front(Range(DOWNTO, count));
+      io->register_generic(new Generic("colouring", "NaturalArray"
+                                       , natural_array_all_same(0, count)));
+
+    }
+  }
+  
+  void system_print_io_connections(System &system, hls::ostream &out) 
+  {
+    for (System::PortUserMap::iterator pi = system.port_users.begin()
+           , pe = system.port_users.end(); pi != pe; ++pi) {
+      Entity *io = system.find_instance("io_" + (*pi).first);
+      assert(io);
+      const std::string &pname = io->id;
+      std::set<DataPath*> &dpset = (*pi).second;
+
+      std::vector<std::string> wires;
+      
+      unsigned count = 0;
+      for (std::set<DataPath*>::iterator di = dpset.begin(), de = dpset.end();
+           di != de; ++di) {
+        DataPath *dp = *di;
+
+        Port *data = dp->find_port(pname + "_data");
+        data->mapping(WIRE, dp->id + "_" + data->id);
+        wires.push_back(data->mapping.name);
+        
+        Port *req = dp->find_port(pname + "_req");
+        req->mapping(SLICE, req->id + "_sig", Range(INDEX, count));
+
+        Port *ack = dp->find_port(pname + "_ack");
+        ack->mapping(SLICE, ack->id + "_sig", Range(INDEX, count));
+
+        ++count;
+      }
+
+      if (io->component_name() == str(Input) + "Port") {
+        unsigned count = 0;
+        for (std::vector<std::string>::iterator si = wires.begin(), se = wires.end();
+             si != se; ++si) {
+          const std::string &name = (*si);
+          out << indent << name << " <= extract("
+              << pname << "_data_sig, " << count << ");"
+              << "\n";
+          ++count;
+        }
+      } else {
+        assert(io->component_name() == str(Output) + "Port");
+        unsigned count = 0;
+        out << indent << "unflatten(" << pname << "_data_sig, "
+            << indent_in;
+        for (std::vector<std::string>::iterator si = wires.begin(), se = wires.end();
+             si != se; ++si) {
+          const std::string &name = (*si);
+          if (count > 0)
+            out << "& ";
+          out << indent << name;
+          ++count;
+        }
+        out << ");"
+            << "\n" << indent_out;
+      }
+    }
+  }
+
   void create_system(Program *program, System &system)
   {
     unsigned load_lines = 1;    // line 0 is reserved for the test-bench.
@@ -348,8 +483,9 @@ namespace {
       store_lines += module->dp->store_lines;
     }
 
-
     system_create_standard_ports(system, program);
+
+    system_create_io_ports(system, program);
     
     memory_create_ports(system.memory, load_lines, store_lines);
     system_connect_memory(program, system);
@@ -445,6 +581,7 @@ namespace {
 
     system.declare_wires(out);
     entity_declare_mapped_signals(&system.memory, out);
+    entity_declare_registered_wires(&system, out);
     print_components(program, out);
   
     out << "\n" << indent_out
@@ -453,7 +590,12 @@ namespace {
     
     system.print_statements(out);
     
+    system_print_io_connections(system, out);
+    
     print_component_instances(program, out);
+    
+    entity_print_registered_instances(&system, out);
+    
     print_instance(&system.memory, out);
     
     out << "\n" << indent_out
