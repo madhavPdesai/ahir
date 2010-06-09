@@ -158,8 +158,8 @@ namespace {
     // clk port.
     entity_create_port_with_map_name(&memory, "clock", IN
                                      , vhdl::Type("std_logic"), SLICE, "clk");
-    entity_create_port_with_map(&memory, "reset", IN
-                                , vhdl::Type("std_logic"), SLICE);
+    entity_create_port_with_map_name(&memory, "reset", IN
+                                     , vhdl::Type("std_logic"), SLICE, "reset");
 
     // FIXME: Notice how we take advantage of case-insensitive VHDL to
     // generate the port name. This should actually be fixed in the
