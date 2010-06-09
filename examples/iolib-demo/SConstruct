@@ -1,0 +1,64 @@
+
+import re
+
+AHIR = '../..'
+TOOLS = AHIR + '/toolset/tools'
+
+env = Environment()
+
+_llvm = Builder(action = 'llvmc -emit-llvm -o $TARGET -c $SOURCE'
+                , suffix = '.bc.unopt'
+                , src_suffix = '.c')
+env.Append(BUILDERS = {'Llvm' : _llvm})
+
+_llvm_opt = Builder(action = 'opt -std-compile-opts -disable-inlining -lowerswitch $SOURCE -o $TARGET'
+                    , suffix = '.bc'
+                    , src_suffix = '.bc.unopt')
+env.Append(BUILDERS = {'LlvmOpt' : _llvm_opt})
+
+_cdfg = Builder(action = TOOLS + '/llvm2cdfg/llvm2cdfg $SOURCE'
+                , suffix = '.cdfg.xml'
+                , src_suffix = '.bc')
+env.Append(BUILDERS = {'Cdfg' : _cdfg})
+
+_ahir = Builder(action = TOOLS + '/cdfg2ahir/cdfg2ahir $SOURCE'
+                , suffix = '.ahir.xml'
+                , src_suffix = '.cdfg.xml')
+env.Append(BUILDERS = {'Ahir' : _ahir})
+
+_ahir_linker = Builder(action = TOOLS + '/link-ahir/link-ahir $SOURCE'
+                       , suffix = '.linked_ahir.xml'
+                       , src_suffix = '.ahir.xml')
+env.Append(BUILDERS = {'AhirLinker' : _ahir_linker})
+
+_ahir_reuse = Builder(action = TOOLS + '/analyse-ahir/analyse-ahir --reuse $SOURCE'
+                      , suffix = '.ahir_shared.xml'
+                      , src_suffix = '.linked_ahir.xml')
+env.Append(BUILDERS = {'AhirReuse' : _ahir_reuse})
+
+_vhdl = Builder(action = TOOLS + '/ahir2vhdl/ahir2vhdl $SOURCE')
+env.Append(BUILDERS = {'Vhdl' : _vhdl})
+
+def C2VHDL(env, source):
+    """Execute the entire flow from C program to VHDL netlists"""
+    env.Llvm(source)
+    env.LlvmOpt(source)
+    env.Cdfg(source)
+    env.Ahir(source)
+    env.AhirLinker(source)
+    env.AhirReuse(source)
+    env.Vhdl(source + '.ahir_shared.xml')
+
+AddMethod(Environment, C2VHDL)
+
+env.C2VHDL('server')
+env.C2VHDL('client')
+
+# cp_re = re.compile(r'id=\".*_[cp]\"')
+
+# def scan_for_cp(target, source, env):
+#     contents = source[0].get_text_contents()
+#     print cp_re.findall(contents)
+#     return 0
+
+# env.Command('dummy', 'server.ahir.xml', scan_for_cp)
