@@ -41,7 +41,6 @@ end entity memory_bank;
 architecture SimModel of memory_bank is
 
   signal write_ack_sig, read_ack_sig, write_has_priority: std_logic;
-  signal write_address_sig, read_address_sig : natural range 0 to (2**g_addr_width)-1;
   signal read_time_stamp, write_time_stamp: std_logic_vector(g_time_stamp_width-1 downto 0);
   signal state_sig: std_logic;
   signal enable_base,enable_sig, write_enable_base, read_enable_base: std_logic;
@@ -53,9 +52,6 @@ begin  -- behave
   read_time_stamp <= read_tag(g_time_stamp_width-1 downto 0);
   write_time_stamp <= write_tag(g_time_stamp_width-1 downto 0);
 
-  read_address_sig <= To_Integer(read_addr);
-  write_address_sig <= To_Integer(write_addr);
-  
   process(read_time_stamp,write_time_stamp, read_enable, write_enable)
   begin
       if(write_enable = '1' and read_enable = '1') then
