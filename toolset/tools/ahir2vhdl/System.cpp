@@ -372,10 +372,10 @@ namespace {
                                                , WIRE, entity->id + "_data_sig");
     entity_create_port_with_map_name(entity, "req", IN
                                      , vhdl::Type("BooleanArray")
-                                     , WIRE, entity->id + "_req_sig");
+                                     , WIRE, entity->id + "_req_bool");
     entity_create_port_with_map_name(entity, "ack", OUT
                                      , vhdl::Type("BooleanArray")
-                                     , WIRE, entity->id + "_ack_sig");
+                                     , WIRE, entity->id + "_ack_bool");
     return entity;
   }
 
@@ -401,6 +401,7 @@ namespace {
     for (System::PortUserMap::iterator pi = system.port_users.begin()
            , pe = system.port_users.end(); pi != pe; ++pi) {
       const std::string &pname = (*pi).first;
+      std::set<DataPath*> &dpset = (*pi).second;
 
       Entity *io = system.find_instance("io_" + pname);
       assert(io);
@@ -412,6 +413,19 @@ namespace {
       io->register_generic(new Generic("colouring", "NaturalArray"
                                        , natural_array_all_same(0, count)));
 
+      for (std::set<DataPath*>::iterator di = dpset.begin(), de = dpset.end();
+           di != de; ++di) {
+        DataPath *dp = *di;
+
+        Port *data = dp->find_port(io->id + "_data");
+        data->mapping(WIRE, dp->id + "_" + data->id);
+        
+        Port *req = dp->find_port(io->id + "_req");
+        req->mapping(WIRE, dp->id + "_" + req->id + "_std");
+        
+        Port *ack = dp->find_port(io->id + "_ack");
+        ack->mapping(WIRE, dp->id + "_" + ack->id + "_std");
+      }
     }
   }
   
@@ -432,14 +446,19 @@ namespace {
         DataPath *dp = *di;
 
         Port *data = dp->find_port(pname + "_data");
-        data->mapping(WIRE, dp->id + "_" + data->id);
         wires.push_back(data->mapping.name);
         
         Port *req = dp->find_port(pname + "_req");
-        req->mapping(SLICE, req->id + "_sig", Range(INDEX, count));
+        std::ostringstream req_stt;
+        req_stt << pname << "_req_bool(" << count << ") <= to_boolean("
+                << req->mapping.name << ");";
+        dp->append_to_prelude(req_stt.str());
 
         Port *ack = dp->find_port(pname + "_ack");
-        ack->mapping(SLICE, ack->id + "_sig", Range(INDEX, count));
+        std::ostringstream ack_stt;
+        ack_stt << ack->mapping.name << " <= to_std_logic(" << pname << "_ack_bool("
+                << count << "));";
+        dp->append_to_prelude(ack_stt.str());
 
         ++count;
       }
