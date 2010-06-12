@@ -68,7 +68,10 @@ def C2VHDL(env, source):
 
 AddMethod(Environment, C2VHDL)
 
-# for each file xyz.c, abc.c, etc., create an entry as follows:
+# First, ensure that you have edited the variable `AHIR' that appears
+# near the top of this file. Then, for each file xyz.c, abc.c, etc.,
+# create an entry as follows. Remember to drop the `.c' suffix, and
+# use only the basename of the file.
 env.C2VHDL('xyz')
 env.C2VHDL('abc')
 
