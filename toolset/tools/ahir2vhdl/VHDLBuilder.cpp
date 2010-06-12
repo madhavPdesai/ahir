@@ -72,7 +72,7 @@ void vhdl::ahir2vhdl(Program *program)
 
   print_vhdl(program);
 
-  dump_address_space(program, "memory_init.txt");
+  dump_address_space(program, program->id + "_memory_init.txt");
   
   generate_system(program);
 }
