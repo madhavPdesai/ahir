@@ -18,7 +18,6 @@ architecture SimModel of base_bank is
   type MemArray is array (natural range <>) of std_logic_vector(g_data_width-1 downto 0);
 begin  -- SimModel
 
-  -- synopsys translate_off
   -- read/write process
   process(clk,addrin,enable,writebar)
   	variable  mem_array : MemArray((2**g_addr_width)-1 downto 0);
@@ -36,5 +35,4 @@ begin  -- SimModel
     end if;
   end process;
 
-  -- synopsys translate_on
 end SimModel;

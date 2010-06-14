@@ -6,6 +6,7 @@ library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.LoadStorePack.all;
+use ahir.Components.all;
 
 entity ApFloatLoadComplete is
   generic (
