@@ -54,6 +54,28 @@ package BaseComponents is
                            clk, reset          : in std_logic);
   end  component InputMuxBase;
 
+  component InputMuxBase_32 is
+                           generic (
+                             colouring  : NaturalArray;
+                             suppress_immediate_ack : BooleanArray );
+                         port (
+                           -- req/ack follow pulse protocol
+                           -- arrays of length n
+                           reqL                 : in  BooleanArray;
+                           ackL                 : out BooleanArray;
+                           -- dataL is array(n,m) or array(2n,m)
+                           dataL                : in  StdLogicArray2D;
+                           -- reqR/ackR follow level protocol
+                           reqR                : out std_logic;
+                           ackR                : in  std_logic;
+                           -- dataR is array(1,m) or array(2,m)
+                           dataR               : out StdLogicArray2D;
+                           -- tag specifies the index of the
+                           -- operation which is selected
+                           tagR                : out std_logic_vector;
+                           clk, reset          : in std_logic);
+  end  component InputMuxBase_32;
+
   component OperatorBase is
                            generic
                            (
