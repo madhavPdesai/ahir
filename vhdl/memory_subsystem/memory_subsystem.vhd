@@ -139,7 +139,7 @@ begin
     
     Rptr : mem_shift_repeater generic map (
       g_data_width => time_stamp_width+ addr_width + tag_width,
-	g_number_of_stages => 1)
+	g_number_of_stages => 0)
       port map (
         clk      => clock,
         reset    => reset,
