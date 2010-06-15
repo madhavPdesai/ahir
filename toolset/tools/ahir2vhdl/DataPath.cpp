@@ -66,7 +66,7 @@ void DPElement::register_member(DPElement *dpe)
       continue;
     Port *wport = find_port(port->id);
     assert(wport);
-    if (is_io(dpe->ntype))
+    if (is_io(dpe->ntype) && wport->type.ranges.size() > 1) 
       assert(wport->get_range(1) == port->get_range(1)
              && "All requesters on an I/O port should have the same width.");
     else
