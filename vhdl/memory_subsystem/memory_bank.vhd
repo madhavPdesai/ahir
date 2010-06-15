@@ -54,9 +54,6 @@ begin  -- behave
   read_time_stamp <= read_tag(g_time_stamp_width-1 downto 0);
   write_time_stamp <= write_tag(g_time_stamp_width-1 downto 0);
 
-  read_address_sig <= To_Integer(read_addr);
-  write_address_sig <= To_Integer(write_addr);
-  
   process(read_time_stamp,write_time_stamp, read_enable, write_enable)
   begin
       if(write_enable = '1' and read_enable = '1') then

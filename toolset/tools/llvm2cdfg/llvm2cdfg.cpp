@@ -85,6 +85,9 @@ int main(int argc, char **argv)
 
     Passes.add(cdfg::createLowerConstantExprPass());
     Passes.add(cdfg::createLowerGepPass());
+    Passes.add(createReassociatePass());
+    Passes.add(createConstantPropagationPass());
+    Passes.add(createDeadCodeEliminationPass());
     Passes.add(createCFGSimplificationPass());
     Passes.add(createUnifyFunctionExitNodesPass());
     Passes.add(createPrintModulePass(&RawOut));

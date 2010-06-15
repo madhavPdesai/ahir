@@ -6,6 +6,7 @@ library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.LoadStorePack.all;
+use ahir.Components.all;
 
 entity ApIntStoreReq is
   generic (width: NaturalArray);
@@ -42,15 +43,16 @@ end ApIntStoreReq;
 architecture Behave of ApIntStoreReq is
     signal data_slv: StdLogicArray2D(data'range(1), data'range(2));
     signal addr_slv: StdLogicArray2D(addr'range(1), addr'range(2));
+    signal suppress_immediate_ack: BooleanArray(width'length - 1 downto 0) := (others => true);
+
 begin  -- Behave
     data_slv <= To_StdLogicArray2D(data);
-    addr_slv <= To_StdLogicArray2D(addr);
 
-    base: ApStoreReq generic map (width => width)
+    base: ApStoreReq generic map (width => width, suppress_immediate_ack => suppress_immediate_ack)
 	port map(req => req, 
 		 ack => ack,
 		 data => data_slv,
-		 addr => addr_slv,
+		 addr => addr,
 		 mreq => mreq,
 		 mack => mack,
 		 mtag => mtag,

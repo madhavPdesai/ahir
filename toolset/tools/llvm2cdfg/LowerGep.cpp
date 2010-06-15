@@ -52,7 +52,7 @@ LowerGepPass::LowerGepPass() : ModulePass((intptr_t)&ID)
 
 bool LowerGepPass::runOnModule(Module &M)
 {
-  TD = new TargetData(&M);
+  TD = &getAnalysis<TargetData>();
   
   for (Module::iterator fi = M.begin(), fe = M.end();
        fi != fe; ++fi) {
@@ -62,10 +62,15 @@ bool LowerGepPass::runOnModule(Module &M)
   return false; // we didn't touch anything
 }
 
-void cdfg::LowerGepPass::getAnalysisUsage(AnalysisUsage &AU) const {}
+void cdfg::LowerGepPass::getAnalysisUsage(AnalysisUsage &AU) const
+{
+  AU.addRequired<TargetData>();
+}
 
 bool cdfg::LowerGepPass::runOnFunction(Function &F)
 {
+  const llvm::Type *ptr_int_type = TD->getIntPtrType(F.getContext());
+
   for (Function::iterator bi = F.begin(), be = F.end(); bi != be; ++bi) {
     BasicBlock *bb = bi;
 
@@ -84,8 +89,7 @@ bool cdfg::LowerGepPass::runOnFunction(Function &F)
       // deal with the base pointer first
       llvm::Value *base = gep->getPointerOperand();
       std::string base_name = gep->getNameStr() + ".base";
-      llvm::Value *address = new PtrToIntInst(base, Type::getInt32Ty(base->getContext())
-					      , base_name + ".cast", gi);
+      llvm::Value *address = new PtrToIntInst(base, ptr_int_type, base_name + ".cast", gi);
       
       unsigned i = 0;
       for (User::op_iterator oi = gep->idx_begin(), oe = gep->idx_end();
@@ -115,7 +119,7 @@ bool cdfg::LowerGepPass::runOnFunction(Function &F)
 	  const StructLayout *layout = TD->getStructLayout(stype);
 	  unsigned idx = cast<ConstantInt>(index)->getValue().getZExtValue();
 	  unsigned struct_offset = layout->getElementOffset(idx);
-	  offset = ConstantInt::get(Type::getInt32Ty(index->getContext()), struct_offset);
+	  offset = ConstantInt::get(ptr_int_type, struct_offset);
 	  ctype = stype->getElementType(idx);
 	} else
 	  assert(false && "unhandled offset into composite type");
@@ -137,8 +141,8 @@ bool cdfg::LowerGepPass::runOnFunction(Function &F)
 					 , add_name.str(), gi);
       }
 
-      if (address->getType() != Type::getInt32Ty(address->getContext()))
-	address = CastInst::CreateIntegerCast(address, Type::getInt32Ty(address->getContext())
+      if (address->getType() != ptr_int_type)
+	address = CastInst::CreateIntegerCast(address, ptr_int_type
 					      , false, address->getName() + ".final", gi);
       Instruction *new_ptr = new IntToPtrInst(address, gep->getType()
 					  , gep->getName() + ".cast");
