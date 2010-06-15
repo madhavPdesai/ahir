@@ -23,7 +23,7 @@ cdfg: llvm
 llvm : $(SRC)
 	rm -f *.bc *.ll
 	llvmc -emit-llvm -c $(SRC) -o $(RAWBC)
-	opt -std-compile-opts -disable-inlining $(RAWBC) -o $(OPTBC)
+	opt -std-compile-opts -disable-inlining -lowerswitch $(RAWBC) -o $(OPTBC)
 	llvm-dis $(OPTBC)
 
 clean :

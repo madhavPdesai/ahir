@@ -1,11 +1,3 @@
-// system memory, of which first 2048 words
-// (each word = uint) reserved for instruction
-// and last 2048 words reserved for data.
-unsigned int system_memory[4096];
-unsigned int int_regs[32];
-
-// program counter.
-unsigned int pc;
 
 // instruction format
 // bits 31:28 opcode
@@ -45,6 +37,14 @@ unsigned int pc;
 #define HALT 15
 
 
+// system memory, of which first 2048 words
+// (each word = uint) reserved for instruction
+// and last 2048 words reserved for data.
+unsigned int system_memory[4096];
+unsigned int int_regs[32];
+
+// program counter.
+unsigned int pc;
 
 int Execute(unsigned int instr, unsigned int curr_pc, unsigned int* next_pc);
 

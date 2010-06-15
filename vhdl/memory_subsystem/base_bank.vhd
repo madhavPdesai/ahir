@@ -23,15 +23,13 @@ begin  -- SimModel
   process(clk,addrin,enable,writebar)
   	variable  mem_array : MemArray((2**g_addr_width)-1 downto 0);
   begin
-    if(enable = '1' and writebar = '1') then
-      dataout <= mem_array(To_Integer(unsigned(addrin)));
-    else
-      dataout <= (others => '0');
-    end if;
 
+    -- synch read-write memory
     if(clk'event and clk ='1') then
       if(enable = '1' and writebar = '0') then
         mem_array(To_Integer(unsigned(addrin))) := datain;
+      else
+      	dataout <= mem_array(To_Integer(unsigned(addrin)));
       end if;
     end if;
   end process;
