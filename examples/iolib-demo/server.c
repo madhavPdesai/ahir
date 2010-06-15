@@ -1,18 +1,21 @@
 #include "../../iolib/iolib.h"
+
 #ifdef RUN
 #include <stdio.h>
-#endif
 
+int main(void)
+
+#else
 int start(void)
+#endif
 {
-  int i;
   uint32_t apl;
   float ong;
   
-  for (i = 0; i < 10; ++i) {
+  while (1) {
     apl = read_uint32("apples");
     #ifdef RUN
-    fprintf(stderr, "\n(%d) got an apple: %d.", i, apl);
+    fprintf(stderr, "\ngot an apple: %d.", apl);
     #endif
     
     ong = (float)apl;

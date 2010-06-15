@@ -1,0 +1,6 @@
+
+env = DefaultEnvironment()
+env.AppendUnique(CFLAGS = ['-DRUN'])
+
+Program('client', ['client.c', '../../iolib/libio.a'])
+Program('server', ['server.c', '../../iolib/libio.a'])
