@@ -809,11 +809,6 @@ namespace {
             dpe_create_load_mports(dpe);
             break;
 
-          case Input:
-          case Output:
-            assert(false);
-            break;
-
           default:
             break;
         }
