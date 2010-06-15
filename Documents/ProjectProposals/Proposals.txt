@@ -1,0 +1,57 @@
+1. An API library to allow a user to create and manipulate Ahir XML
+   descriptions.
+
+	- to make a module
+	- add places, transitions and link them
+	- define datapath operators and connect them.
+	- link control-path transitions to datapath operators.
+	- add meta-information
+	- print xml
+	- read xml
+	- query modules, their interlinking
+	- query places, transitions, their connections
+	- query datapath operators and their connections
+	- query meta-information
+   
+  All Ahir -> Ahir tools should use only this API
+
+  (I think this is already in place but needs to be finalized)
+
+
+2. Allow multiple instances of a function in an AHIR description
+	(there can be many instances of foo, with the description
+	specifying the caller-callee linking).
+
+	(make visible to API)
+
+3. Allow multiple memory spaces in an AHIR description
+	(declare memory spaces with attributes and associate load/store
+	operators in datapaths with memory spaces)
+	
+	(make visible to API)
+
+4. A visualization tool for Ahir
+	- convert an  Ahir description to an html doc
+		- graphical view of control-path
+			(or linked html-view)
+		- graphical view of data-path
+			
+		- cross-links between control-path and data-path
+
+  (going to html is a good possibility, since indentation can be used
+   to identify TPR's. Also we get cross-linking very easily)
+
+5. Ahir link-layer should have generics which specify whether 
+   delay should be inserted in paths.
+	(should be visible from Ahir API)
+
+
+6. Ahir algorithm (Aa) description language and tools
+	- a languge to describe an algorithm so that the type-2 petri-net
+	  possibilities are saturated
+	- a tool to convert Aa descriptions to unlinked Ahir XML
+
+	(This will be necessary in order to design competitive hardware
+	wrt hand-crafted -- mpd).
+
+	(a tentative language spec is ready. TBD)

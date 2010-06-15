@@ -1,0 +1,439 @@
+OVERVIEW
+
+	The Aa language (Ahir algorithm language)
+
+	The language will be conformal with the definition
+	of a type-2 petri-net.
+
+	In particular, the language allows the user to describe
+	an algorithm by fully saturating the possibilities of
+	a type-2 petri-net.
+
+	An algorithm description in this language will be compiled
+	down to an AHIR description which can serve as a source
+	of downstream optimizations and mappings to RTL.
+
+	An algorithm description in this language can also be 
+	directly mapped to a single C/C++ program which can be compiled
+	and executed routinely.
+
+	The program is a collection of functions.
+
+	program := (function)+
+
+	function := <func-name> <func-in-arguments> <func-out-arguments> 
+			{
+				<declarations>
+				<tpr>
+			}
+	
+
+  	A tpr is the basic unit of description (token-preserving region)
+
+	tpr := (tpr-label colon)?  { <tpr-body> }
+
+
+	For example: the following is a tpr definition
+	tpr_main :
+		{
+			<declarations>
+			<tpr-body>
+		}
+
+
+	The tpr-body itself can be constructed by following
+	these rules
+
+
+	statement-block
+		(statement;)*
+
+		NOTE: see STATEMENTS section below
+
+	serial form
+		 (statement-block | <tpr>) (; statement-block | <tpr>)+
+
+		e.g.
+		tpr_main :
+			{
+				tpr_a:
+					{
+					}
+				;
+				tpr_b:
+					{
+					}
+			}
+
+	Each tpr defines a scope.  Thus, a scope
+	can contain additional scopes.  Within tpr_main,
+	the scope corresponding to tpr_main is referred
+	to by ./ and scopes inside tpr_main are identified
+	as ./tpr_a, ./tpr_b (and so on).
+
+
+	parallel-form
+		(statement-block | <tpr>) (|| statement-block | <tpr>)+
+	
+
+	NOTE: ';' has higher priority over "||"
+		Thus
+			a;b || c;d 
+		is interpreted as
+			{a;b} || {c;d}
+
+
+	fork form
+
+		fork-spec (:: join-fork-spec)* :: join-spec
+
+	fork-spec
+		fork  <tpr> (|| <tpr>)*
+
+	join-spec 
+		join (<tpr-label>)+
+
+
+	join-fork-spec 
+		join-spec  &&  fork-spec
+
+	e.g. 
+	parbase :  
+		{ fork 
+			a : {..} 
+			|| 
+		  	b : {..} 
+			|| 
+		  	c : {...} 
+			|| 
+		  	d : {...} 
+			::
+		  join b c && fork e : {...}
+			::
+		  join a d && fork f : {...}
+			::
+		  join e f 
+		}
+	Note:	there should be no cycles in the resulting tpr.
+		A fork which does not appear with a join is the entry point
+		and a join which does not appear with a fork is the exit point.
+	Note:   the entry point is the first spec which appears in the
+		region and the exit point must be the last spec which appears
+		in the region.
+
+	branch form
+		(branch-spec | merge-spec) (:: merge-branch-spec )* (branch-spec | merge-spec)
+
+
+	branch-spec
+		branch-switch-spec | branch-if-spec
+
+	branch-switch-spec
+		switch (when <cond-expression> then (<tpr> | exit-clause))+
+	
+	branch-if-spec
+		branch if <cond-expression> then <tpr> else <tpr>
+
+	exit-clause 
+		exit
+	
+	merge-spec
+		merge (<tpr-label> | entry-clause)+ (&& phi-spec)?
+
+
+	phi-spec 
+		(phi-statement) (, phi-statement)*
+
+	entry-clause
+		entry
+	
+
+	merge-branch-spec
+		merge-spec (&& phi-spec)? && branch-spec 
+
+
+		Note: targets of phi-spec are in the same scope as the
+		      parent branch region
+
+
+	e.g.
+		ifeg:{
+			switch when a then I: {...} 
+				when b then E: {...}
+			merge I E && q = phi I/u E/v 
+		 	} 
+
+		loop: {
+			merge entry B && u = phi B/a &&
+				   if 1 then 
+					F: { } 
+				   else 
+					G: { null}
+			merge F && if F/back then
+					B: { }  
+				   else 
+					exit
+			}
+
+	Notes: the exit point is either a merge without a branch or a branch
+		one of whose options is exit.  The entry point is either 
+		a branch  without a merge or a merge one of whose merge 
+		options is entry.
+	Notes: the entry point must be the first spec in the branch region
+		and the exit point must be the last spec in the branch region.
+			
+			
+	A scope can access variables in its successors by using ./a/b/c 
+
+	A scope CANNOT access variables from a scope
+	which is neither an ancestor nor a descendant
+	
+
+COMPILATION UNIT
+
+	function foo(a: _int<32>,b:  _int<32>) returns ( _int<32>,  _int<32>) 
+	{
+		<declarations>
+		<tpr-body>
+	}
+
+	foo is the label for the scope of the function.
+
+DECLARATIONS
+
+	<declarations> = list of variable, constant, pipe, foreign-function
+			 declarations.
+
+VARIABLES and CONSTANTS
+
+	global a: _uint<32>
+	local  b: _uint<32>
+	constant b: _uint<32> := 25
+	constant c: _float<8,3> := 0.25
+	constant z: _uint<32> := 0
+
+	constant values can be used in the program, but
+	they do not have type information.  For example
+	a = 0   will not determine the type of a, but
+	a = z   will determine that a is of type _uint<32>.
+
+	globals and locals are mapped to memory.
+
+	The variables corresponding to the input arguments of a
+	function are read-only.
+
+FOREIGN FUNCTIONS
+	
+	specify a line to be used when converting an Aa algorithm to C/C++.
+
+	foreign function "int foo(unsigned int, unsigned int)"
+
+PIPES
+
+	pipe :  can be of type integer or float.
+
+	e.g.
+	global pipe a: _uint<32>
+		a globally declared pipe which is used to
+		ship  _uint<32>'s around.
+
+TYPES
+
+   SCALAR
+	integers:  _uint<width>, _int<width>
+	float   :  _float<characteristic,mantissa>
+	pointer
+		Note: pointers are opaque objects handled entirely by
+		"foreign" functions.  They can only be checked for equality
+		and non-equality.
+
+   ARRAY
+	arrays: array<dimension>(<dimension>...) of <scalar-type>
+
+
+DIRECT SSA FORM
+
+	only input arguments, i/o ports, constants and global/local
+	variables are declared.  Global/local variable are mapped
+	to memory. Accesses to them result in implicit
+	load/store operations.  For direct load/store operations
+	you can use the direct assignment from a memory variable
+	for loads/stores
+
+	the rest are implicitly attached to statements.
+
+STATEMENTS
+
+	Most statements are of the form
+		lhs = rhs
+	
+	If the lhs of the statement is a global or
+	local variable or an outport, then the statement can
+	have an optional label and has the form
+	
+		label: lhs = rhs-expression
+
+	The call statement and the goto statement also have
+	an optional label.
+
+	Each statement in a particular scope is identified 
+	uniquely by its lhs variable or by its label.
+
+	EMPTY
+		null
+
+	UNARY RHS EXPRESSIONS
+
+        	h = s  (h gets type of s)
+
+		h = not s (h,s must be _int or _uint)
+
+		a = b[i] 
+			b must be a global array, the element 
+			b[i] is loaded into a
+			i must be a integer
+			
+		c = d 
+			if d is global this translates to a load.
+
+		c = <type> d
+			<type> must be integer/float and d must
+			be a scalar.
+
+		b[i] = a
+			b must be a global.
+			a is stored into b[i]
+			i must be of integer type.
+
+		a = b'width
+			a is _uint<32>
+
+		a = b'dimension(1)
+			a is _uint<32>
+			if b is array<10><100> then
+			b'dimension(1) = 10 and b'dimension(2)=100
+
+		p = & b
+			get the address of b.
+			b must be a global variable identifier.
+			p must be a pointer variable
+	
+	BINARY
+		q = a + b  (*,<<,>>,/,exp,|,&,xor,xnor)
+				a,b must have same type.
+				q gets type of a,b.
+
+		q = a < b  (==,>,!=,>=,<=)
+				a,b must have same type
+				q is _uint(1)
+
+
+	TERNARY
+
+		p = q ?  u : v 
+				q will be _uint<1>
+				u,v,p have the same type.
+
+	PHI
+
+		a = phi b1/v b2/u b3/w  (any number of arguments is allowed)
+				b1,b2,b3 must be tpr labels.
+				b1/v, b2/u, b3/w must have same type
+				a gets type of b1/v, b2/u, b3/w
+
+		Note: a phi function can be called only inside a 
+			merge specification in a branch region.
+
+	FUNCTION CALL
+		call foo (p,q) (r,s)
+		OR
+		label: call ....
+				x is _uint<1>
+				p,q treated as input arguments
+					must match function declaration
+				r,s treated as output arguments.
+					must match function declaration
+	RETURN STATEMENT
+		return (p,q)
+				p,q are values that will be returned.
+
+	JUMP
+		
+		goto q  
+			transfer control to statement with label q.
+			r is of type _uint<1>
+
+			the label q MUST be in the same scope as the
+			jump statement.	 A jump out of a scope is
+			NOT PERMITTED.
+
+	IO
+		q = b
+				b must be a declared pipe
+				q will have same type as b
+
+				Note: the statement will block if
+				the pipe is empty.
+
+		b = q
+				b must be a declared pipe
+				q must have the same type as b
+
+				Note: this statement can have an optional
+					label.
+				Note: the statement will block until the
+				pipe accepts data.
+
+GRAMMAR
+
+ * Grammar Production Rules 
+ 1  Aa_Program : (Aa_Function)*
+ 2  Aa_Function: FUNCTION IDENTIFIER Aa_Function_Args Aa_Function_Args (Aa_Declaration)* Aa_Tpr
+ 3  Aa_Tpr : LBRACE Aa_Tpr_Body RBRACE
+ 4  Aa_Tpr_Body: Aa_Statement_Block | Aa_Series_Tpr_Body | Aa_Parallel_Tpr_Body 
+ 	| Aa_Fork_Tpr_Body | Aa_Branch_Tpr_Body
+ 5  Aa_Statement_Block : (Aa_Statement)+
+ 6  Aa_Series_Tpr_Body : (Aa_Tpr) (SEMICOLON Aa_Tpr)+
+ 7  Aa_Parallel_Tpr_Body: (Aa_Tpr) (PARALLEL Aa_Tpr)+
+ 8  Aa_Fork_Tpr_Body: Aa_Fork_Spec (COLONCOLON Aa_Join_Fork_Spec)* 
+ 	COLONCOLON Aa_Join_Spec
+ 9  Aa_Fork_Spec: FORK Aa_Tpr (PARALLEL Aa_Tpr)*
+ 10 Aa_Join_Spec: JOIN (IDENTIFIER)+
+ 11 Aa_Join_Fork_Spec: Aa_Fork_Tpr_Join_Spec AMPAMP Aa_Fork_Tpr_Fork_Spec
+ 12 Aa_Branch_Tpr_Body :  (Aa_Branch_Spec | Aa_Merge_Spec)
+ 	(COLONCOLON Aa_Merge_Branch_Spec)*
+ 	(Aa_Branch_Spec | Aa_Merge_Spec)
+ 13 Aa_Branch_Spec : (Aa_Switch_Spec | Aa_If_Spec)
+ 14 Aa_Merge_Branch_Spec : Aa_Merge_Spec (AMPAMP Aa_Phi)? 
+ 	(AMPAMP Aa_Branch_Spec)
+ 15 Aa_Merge_Spec : MERGE (IDENTIFIER | ENTRY)+
+ 16 Aa_Phi : Aa_Simple_Scalar_Reference ASSIGN PHI (Aa_Hierarchical_Scalar_Reference)+ 
+ 17 Aa_Switch_Spec : SWITCH (WHEN Aa_Expression THEN (Aa_Tpr | EXIT) )+
+ 18 Aa_If_Spec:  IF Aa_Expression THEN (Aa_Tpr | EXIT) ELSE (Aa_Tpr | EXIT)
+ 19 Aa_Statement : Aa_Labeled_Statement | Aa_Unlabeled_Statement 
+ 20 Aa_Labeled_Statement: IDENTIFIER COLON Aa_Unlabeled_Statement
+ 21 Aa_Unlabeled_Statement : Aa_Null || Aa_Assignment || Aa_Call
+ 22 Aa_Null : NULL
+ 23 Aa_Assignment: Aa_Simple_Reference ASSIGN Aa_Expression
+ 24 Aa_Call: CALL IDENTIFIER Aa_Argv Aa_Argv
+ 25 Aa_Argv : (LPAREN RPAREN) | 
+	(LPAREN Aa_Hierarchical_Scalar_Reference (COMMA Aa_Hierarchical_Scalar_Reference)+ RPAREN)
+ 26 Aa_Expression : Aa_Unary_Expression | Aa_Binary_Expression | Aa_Ternary_Expression 
+ 27 Aa_Unary_Expression : Aa_Hierarchical_Scalar_Reference | NOT Aa_Expression
+ 28 Aa_Binary_Expression : Aa_Expression Aa_Binary_Op Aa_Expression
+ 29 Aa_Ternary_Expression: Aa_Expression QUESTION Aa_Expression COLON Aa_Expression
+ 30 Aa_Binary_Op : OR | AND | NOR | NAND | XOR | XNOR | SHL | SHR | PLUS | MINUS
+ 	| DIV | MUL | EQUAL | NOTEQUAL | LESS | LESSEQUAL
+ 	| GREATER | GREATEREQUAL 
+ 31 Aa_Declaration : Aa_Global_Declaration | Aa_Local_Declaration | Aa_Pipe_Declaration
+ 32 Aa_Global_Declaration : GLOBAL IDENTIFIER COLON Aa_Type_Spec 
+ 33 Aa_Local_Declaration: LOCAL IDENTIFIER COLON Aa_Type_Spec
+ 34 Aa_Pipe_Declaration: PIPE IDENTIFIER COLON Aa_Type_Spec
+ 35 Aa_Type_Spec : Aa_Array_Type_Spec | Aa_Scalar_Type_Spec
+ 36 Aa_Scalar_Type_Spec : Aa_Uint_Spec | Aa_Int_Spec | Aa_Float_Spec | Aa_Pointer_Spec
+ 37 Aa_Uint_Spec : UINT LESS NATURAL GREATER
+ 38 Aa_Int_Spec : INT LESS NATURAL GREATER
+ 39 Aa_Float_Spec : FLOAT LESS NATURAL COMMA NATURAL GREATER
+ 40 Aa_Pointer_Spec : POINTER
+ 41 Aa_Array_Type_Spec : ARRAY (Aa_Uint_Spec | Aa_Int_Spec | Aa_Float_Spec)
+		LESS NATURAL GREATER (LESS NATURAL GREATER)*
