@@ -112,7 +112,7 @@ namespace {
     JoinMap joins;
 
     std::map<llvm::Value*, std::vector<Port*> > pendingUsers;
-    std::map<std::string, CDFGNode*> io_history;
+    std::map<std::string, CallInst*> io_history;
     
     /* ---- Initialisation ---- */
     
@@ -443,11 +443,11 @@ namespace {
       connect_to_exit(node, C);
 
       if (io_history.find(node->portname) != io_history.end()) {
-        CDFGNode *prev = io_history[node->portname];
-        assert(prev->ntype == node->ntype);
-        control_flow(prev, node);
+        CallInst *prev = io_history[node->portname];
+        assert(get_io_code(prev) == ioc);
+        control_flow(prev, &C);
       }
-      io_history[node->portname] = node;
+      io_history[node->portname] = &C;
     }
 
     void visitCallInst(CallInst &C)
