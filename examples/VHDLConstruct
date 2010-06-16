@@ -58,20 +58,16 @@ env.Append(BUILDERS = {'Vhdl' : _vhdl})
 
 def C2VHDL(env, source):
     """Execute the entire flow from C program to VHDL netlists"""
-    env.Llvm(source)
-    env.LlvmOpt(source)
-    env.Cdfg(source)
-    env.Ahir(source)
-    env.AhirLinker(source)
-    env.AhirReuse(source)
-    env.Vhdl(source)
+    for x in map(lambda x : str(x).replace(".c", ""), source):
+        env.Llvm(x)
+        env.LlvmOpt(x)
+        env.Cdfg(x)
+        env.Ahir(x)
+        env.AhirLinker(x)
+        env.AhirReuse(x)
+        env.Vhdl(x)
 
 AddMethod(Environment, C2VHDL)
 
-# First, ensure that you have edited the variable `AHIR' that appears
-# near the top of this file. Then, for each file xyz.c, abc.c, etc.,
-# create an entry as follows. Remember to drop the `.c' suffix, and
-# use only the basename of the file.
-env.C2VHDL('xyz')
-env.C2VHDL('abc')
+env.C2VHDL(Glob('*.c'))
 
