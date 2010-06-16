@@ -1,22 +1,35 @@
-#####################################
-ERROR :-
---------------------------------------------------------------------------------------------------------
+
+1. llvm2cdfg complains about an external function called ``memset''
+
+The error looks something like this:
+
+--------------------------------------------
 llvm2cdfg opt.bc
 ModuleGen: dropping external function: llvm.memset.i64
 While deleting: void (i8*, i8, i64, i32)* %llvm.memset.i64
-Use still stuck around after Def is destroyed:  call void @llvm.memset.i64(i8* %tmp243, i8 0, i64 32, i32 4)
-llvm2cdfg: Value.cpp:81: virtual llvm::Value::~Value(): Assertion `use_empty() && "Uses remain when a value is destroyed!"' failed.
+Use still stuck around after Def is destroyed:  call void
+@llvm.memset.i64(i8* %tmp243, i8 0, i64 32, i32 4) 
+llvm2cdfg: Value.cpp:81: virtual llvm::Value::~Value(): Assertion
+`use_empty() && "Uses remain when a value is destroyed!"' failed. 
 0   llvm2cdfg 0x083d6db8
 Stack dump:
-0.	Running pass 'Generates AHIR XML' on module 'opt.bc'.
+0.	Running pass 'Generates AHIR XML' on module 'opt.bc'. 
 Aborted
 make: *** [opt.bc.cdfg.xml] Error 134
---------------------------------------------------------------------------------------------------------
-Reason :- This error comes up whenever we use an array with all the elements 0. 
-	eg: float a[] = {0,0,0,0,0,0,0,0};
-Workaround :- Donot initialize the array with all elements same. 
-	eg: float a[] = {0,0,0,1,0,0,0,0};
-	    a[3] = 0;
-#####################################
--> Use Global arrays as far as possible.
-#####################################
+--------------------------------------------
+
+This happens when an array declaration also initialises it with
+identical elements for the entire array. A typical compiler will
+replace the initialisation with a call to the system function ``memset''
+(so does LLVM). But this function cannot be translated to any suitable
+AHIR primitive yet.
+
+The work-around is to ensure that any array initialisation should
+contain at least one value which is different from all the others.
+
+For example, the statement:
+  float a[] = {0,0,0,0,0,0,0,0};
+may be replaced with:
+  float a[] = {0,0,0,1,0,0,0,0};
+  a[3] = 0;
+in order to avoid the call to ``memset''.

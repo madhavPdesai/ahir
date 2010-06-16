@@ -1,55 +1,30 @@
 
-ERROR:HDLCompiler:69 - "/home/kevin/GIT_AHIR/examples/vhdl_src/ahir/ApFloatLoadComplete.vhd" Line 52: <aploadcomplete> is not declared.
-solution : declare "use ahir.Components.all;" in library declaration
+1. The call and return tags on the system are unconstrained.
 
-ERROR:HDLCompiler:69 - "/home/kevin/GIT_AHIR/examples/vhdl_src/ahir/ApFloatStoreReq.vhd" Line 49: <apstorereq> is not declared.
-solution : declare "use ahir.Components.all;" in library declaration
+Since the size of these tags depends on the number of callers to the
+sytem itself, the tag ports are unconstrained std_logic_vectors. The
+result is a compiler error that looks like this:
 
-ERROR:HDLCompiler:841 - "/home/kevin/GIT_AHIR/examples/vhdl_src/ahir/ApFloatStoreReq.vhd" Line 54: Expecting type apintarray for <addr_slv>.
-solution : replaced "addr_slv with addr on line#54 of ApFloatStoreReq.vhd"
+--------------------------------------------
+ERROR:HDLCompiler:432 -
+"/home/kevin/GIT_AHIR/examples/memory_try/system.vhdl" Line 17: Formal
+<env_call_tag> has no actual or default value.
+--------------------------------------------
 
-ERROR:HDLCompiler:432 - "/home/kevin/GIT_AHIR/examples/vhdl_src/ahir/ApFloatStoreReq.vhd" Line 50: Formal <suppress_immediate_ack> has no actual or default value.
-solution : gave default value to suppress_immediate_ack in ApFloatStoreReq.vhd
+The solution is to connect constrained signals to these ports either
+in a wrapper entity for synthesis, or in the test-bench for
+simulation.
 
-ERROR:HDLCompiler:69 - "/home/kevin/GIT_AHIR/examples/vhdl_src/ahir/ApIntLoadComplete.vhd" Line 52: <aploadcomplete> is not declared.
-solution : declare "use ahir.Components.all;" in library declaration
+2. Xilinx XST has problems dealing with unconstrained ports ---
+whenever a component with unconstrained port is instantiated two times
+with different port widths, XST complains that the second instance is
+illegal. In particular, this problem is triggered by the instantiation
+of InputMuxBase inside OperatorShared.
 
-ERROR:HDLCompiler:69 - "/home/kevin/GIT_AHIR/examples/vhdl_src/ahir/ApIntStoreReq.vhd" Line 49: <apstorereq> is not declared.
-solution : declare "use ahir.Components.all;" in library declaration
-
-ERROR:HDLCompiler:841 - "/home/kevin/GIT_AHIR/examples/vhdl_src/ahir/ApIntStoreReq.vhd" Line 54: Expecting type apintarray for <addr_slv>.
-solution : replaced addr_slv with addr on line#54 of "ApIntStoreReq.vhd "
-           added suppress_immediate_ack as generic in "ApIntStoreReq.vhd "
-
-ERROR: few errors were coming in operaotor-stub.vhdl because of absence of library declaration
-solution : made the required library declaration.
-
-ERROR:HDLCompiler:432 - "/home/kevin/GIT_AHIR/examples/memory_try/system.vhdl" Line 17: Formal <env_call_tag> has no actual or default value.
-solution : unconstrained ports env_call_tag and env_return_tag has to be constrained in system.vhdl.
-
-Memory was synthesized as a black box 
-solution : In memory_subsystem/base_bank.vhd: 
-           removed the      
-           -- synopsys translate_off
-           -- synopsys translate_on
-
-
-========================== XILINX PROBLEM ====================================
-
-In Xilinx synthesis tools whenever a component with unconstrained port is instantiated 
-two times with different port width the following error comes up :-
-
-Here: OperatorShared.vhd has a component InputMuxBase which was previously synthesized 
-with its port dataL of width 16. So when we try instantiating it again with dataL of size 32 bits, 
-XST throws this error.
-
-ERROR:HDLCompiler:717 - "/home/kevin/GIT_AHIR/examples/vhdl_src/ahir/OperatorShared.vhd" Line 67: Port dataL[3] of width 16 cannot connect to 32 bit actual
-Netlist OperatorShared("ApIntAdd","00000000000000000000000000000000",false,false,(0,0),"aa",1,0,1,0,1,0,1,0,3,0,1,0)(Vanilla) remains a blackbox, due to errors in its contents
-
-HACK :- 
-->    In order to resolve it I made a new component InputMuxBase_32 whose internals
-      are same as InputMuxBase but only names are different.
-->    Then in OperatorShared.vhd based on the length of dataL it instantiates either 
-      InputMuxBase or InputMuxBase_32. 
-     
-============================================================================== 
+The current solution is the following hack, that is good enough for
+the fft_io being used by Kevin. A new component InputMuxBase_32 was
+introduced whose internals are same as InputMuxBase but uses a
+constrained type for its ports. OperatorShared.vhd has been modified
+to instantiated either this or the original InputMuxBase depending on
+the inferred port width. This is ``good enough'' for Kevin's work
+because only two widths are required --- 16 and 32.
