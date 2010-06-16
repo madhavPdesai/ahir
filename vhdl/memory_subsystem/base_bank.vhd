@@ -27,7 +27,7 @@ begin  -- SimModel
     if(clk'event and clk ='1') then
       if(enable = '1' and writebar = '0') then
         mem_array(To_Integer(unsigned(addrin))) := datain;
-      else
+      elsif (enable = '1' and writebar = '1') then
       	dataout <= mem_array(To_Integer(unsigned(addrin)));
       end if;
     end if;
