@@ -11,7 +11,7 @@ _llvm = Builder(action = 'llvmc -emit-llvm -o $TARGET -c $SOURCE'
                 , src_suffix = '.c')
 env.Append(BUILDERS = {'Llvm' : _llvm})
 
-_llvm_opt = Builder(action = 'opt -instnamer -std-compile-opts -disable-inlining -lowerswitch $SOURCE -o $TARGET'
+_llvm_opt = Builder(action = 'opt -std-compile-opts -disable-inlining -lowerswitch -instnamer $SOURCE -o $TARGET'
                     , suffix = '.bc'
                     , src_suffix = '.bc.unopt')
 env.Append(BUILDERS = {'LlvmOpt' : _llvm_opt})
