@@ -63,40 +63,21 @@ begin  -- Behave
   
   assert (not zero_delay) or use_zero_delay
     report "Zero delay flag ignored for shared operators which are not exclusive " severity warning;
-
-    generate_32: if dataL'length(2) = 32 generate
-      imux: InputMuxBase_32
-       generic map (
-         colouring  => colouring,
-         suppress_immediate_ack => suppress_immediate_ack)
-       port map(
-         reqL       => reqL,
-         ackL       => ackL,
-         reqR       => ireq,
-         ackR       => iack,
-         dataL      => dataL,
-         dataR      => idata,
-         tagR       => itag,
-         clk        => clk,
-         reset      => reset);
-    end generate generate_32;
-
-    generate_16 : if dataL'length(2) = 16 generate
-      imux: InputMuxBase
-       generic map (
-         colouring  => colouring,
-         suppress_immediate_ack => suppress_immediate_ack)
-       port map(
-         reqL       => reqL,
-         ackL       => ackL,
-         reqR       => ireq,
-         ackR       => iack,
-         dataL      => dataL,
-         dataR      => idata,
-         tagR       => itag,
-         clk        => clk,
-         reset      => reset);
-    end generate generate_16;
+  
+  imux: InputMuxBase
+    generic map (
+      colouring  => colouring,
+      suppress_immediate_ack => suppress_immediate_ack)
+    port map(
+      reqL       => reqL,
+      ackL       => ackL,
+      reqR       => ireq,
+      ackR       => iack,
+      dataL      => dataL,
+      dataR      => idata,
+      tagR       => itag,
+      clk        => clk,
+      reset      => reset);
 
   op: OperatorBase
     generic map (
