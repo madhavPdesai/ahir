@@ -31,12 +31,25 @@ architecture structural of memory_bank_base is
   
 
   type BankArrayControlArray is array (0 to bank_array_height-1, 0 to bank_array_width -1) of std_logic;
-  signal enable_array: BankArrayControlArray;
+  signal enable_array,enable_array_reg: BankArrayControlArray;
   
   signal padded_data_in,padded_data_out : std_logic_vector(bank_array_width*g_base_bank_data_width -1 downto 0);
   signal base_addr_in : std_logic_vector(g_base_bank_addr_width -1 downto 0);
   
+  signal write_bar_reg: std_logic;
 begin  -- structural
+
+   -- register write_bar_reg because memory read will finish after one clock.
+    process(clk,reset)
+    begin
+        if(clk'event and clk = '1') then
+		if(reset = '1') then
+			write_bar_reg <= '0';
+		else
+			write_bar_reg <= write_bar;
+		end if;
+	end if;
+    end process;
 
 process(addr_in)
         constant l_index: natural := Minimum(g_addr_width-1, g_base_bank_addr_width-1);
@@ -71,6 +84,17 @@ process(data_in)
         end if;
       end process;
 
+      process(clk,reset)
+      begin
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			enable_array_reg(ROW,COL) <= '0';
+		else
+			enable_array_reg(ROW,COL) <= enable_array(ROW,COL);
+		end if;
+	end if;
+      end process;
+
       process(padded_data_in)
       begin
         data_in_array(ROW,COL) <= padded_data_in((COL+1)*g_base_bank_data_width - 1 downto COL*g_base_bank_data_width);
@@ -94,7 +118,8 @@ process(data_in)
     begin
       padded_data_out((COL+1)*g_base_bank_data_width -1 downto (COL*g_base_bank_data_width)) <= (others => '0');
       for ROW in 0 to bank_array_height-1 loop
-        if(enable_array(ROW,COL) = '1' and write_bar = '1') then
+	-- use delayed version of enable and write_bar to pass read data
+        if(enable_array_reg(ROW,COL) = '1' and write_bar_reg = '1') then
           padded_data_out((COL+1)*g_base_bank_data_width -1 downto (COL*g_base_bank_data_width)) <= data_out_array(ROW,COL);
         end if;
       end loop;  -- ROW
