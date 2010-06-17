@@ -1,4 +1,23 @@
 
+# VHDLConstruct: An scons script that generates VHDL from one or more
+# C files containing the input program.
+
+# Usage: scons -f path/to/VHDLConstruct
+
+# To use this script, either make a copy of it in your directory, or
+# reference it from its original location. Remember to edit the script
+# so that the first variable ``AHIR'' points to the root of the AHIR
+# working copy (i.e., ``AHIR'' points to the directory that is the
+# parent of the ``toolset'' directory.)
+
+# For every .c file encountered in the current directory, the script
+# runs the entire toolchain, ending with various .bc, .txt, .xml,
+# .vhdl files. The script is aware of all the files being generated
+# and can clean them up when invoked with the usual `-c' argument to
+# scons. If the intention is to process only some selected .c files,
+# then replace the call to ``Glob'' in the last line of this script
+# with a list of the required files.
+
 import re
 
 AHIR = '../..'
