@@ -37,7 +37,7 @@ begin  -- XilinxBramInfer
       if(reset = '1') then
 	rd_enable_reg <= '0';
       else
-	rd_enable_reg <= enable and (not writebar);
+	rd_enable_reg <= enable and writebar;
       end if;
 
       if(enable = '1' and writebar = '0') then
