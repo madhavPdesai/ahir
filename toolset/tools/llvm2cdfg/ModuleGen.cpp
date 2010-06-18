@@ -76,25 +76,21 @@ namespace {
         
         if (BitCastInst *inst = dyn_cast<BitCastInst>(user)) {
           if (inst->getNumUses() > 1) {
-            std::cerr << "\nfound multiple uses.";
             is_ioport = false;
             break;
           }
           
           IOCode ioc = get_io_code(*(inst->use_begin()));
           if (ioc == NOT_IO) {
-            std::cerr << "\nfound a non-io bitcast.";
             is_ioport = false;
             break;
           }
         } else {
           if (Constant *konst = dyn_cast<Constant>(user)) {
-            std::cerr << "\nfound a constant.";
             if (!isConstantUsed(konst))
               continue;
           }
           
-          std::cerr << "\nfound a non-bitcast use: " << user->getNameStr();
           is_ioport = false;
           break;
         }

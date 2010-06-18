@@ -177,7 +177,6 @@ void dump_value_in_bytes(unsigned address, const std::string &value,
   for (unsigned count = 0; count < size; ++count) {
     unsigned pos = (size - 1 - count) * 8;
     unsigned actual = address + count;
-    std::cerr << "\n" << size << " " << count << " " << pos;
     out << "\n" << actual << " " << value.substr(pos, 8);
   }
 }

@@ -885,8 +885,6 @@ namespace {
       if (type && type->getTypeID() != llvm::Type::VoidTyID)
         create_output_data_port(node, outd, type);
 
-      std::cerr << "\ncreated node: " << node->id << "(" << node->description << ")";
-
       return node;
     }
 
@@ -999,7 +997,6 @@ namespace {
       bool connect_exit = true;
       std::deque<Instruction*> queue;
   
-      std::cerr << "\nfor node " << node->description << ": ";
       
       for (llvm::Value::use_iterator ui = I.use_begin(), ue = I.use_end();
            ui != ue; ++ui) {
@@ -1042,11 +1039,8 @@ namespace {
       } else if (connect_exit) {
         assert(forks.find(node) != forks.end()
                && "control node missing");
-        std::cerr << "connected to exit " << bbnode->join->description;
         control_flow(forks[node], bbnode->join);
-      } else
-        std::cerr << "not connected";
-
+      } 
     }
 
     void register_pending_user(llvm::Value *val, Port *port)
