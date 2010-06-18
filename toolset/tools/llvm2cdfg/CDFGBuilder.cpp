@@ -885,6 +885,8 @@ namespace {
       if (type && type->getTypeID() != llvm::Type::VoidTyID)
         create_output_data_port(node, outd, type);
 
+      std::cerr << "\ncreated node: " << node->id << "(" << node->description << ")";
+
       return node;
     }
 
@@ -949,7 +951,14 @@ namespace {
                        , const std::string &port_id)
     {
       Port *port = create_input_data_port(node, port_id, val->getType());
-  
+      
+      while (CastInst *C = dyn_cast<CastInst>(val)) {
+        if (C->isNoopCast(TD->getIntPtrType(C->getContext()))) {
+          val = C->getOperand(0);
+        } else
+          break;
+      }
+      
       CDFGNode *vnode = get_node(val);
 
       if (!vnode) {
@@ -990,6 +999,8 @@ namespace {
       bool connect_exit = true;
       std::deque<Instruction*> queue;
   
+      std::cerr << "\nfor node " << node->description << ": ";
+      
       for (llvm::Value::use_iterator ui = I.use_begin(), ue = I.use_end();
            ui != ue; ++ui) {
         User *user = *ui;
@@ -1031,8 +1042,11 @@ namespace {
       } else if (connect_exit) {
         assert(forks.find(node) != forks.end()
                && "control node missing");
+        std::cerr << "connected to exit " << bbnode->join->description;
         control_flow(forks[node], bbnode->join);
-      }
+      } else
+        std::cerr << "not connected";
+
     }
 
     void register_pending_user(llvm::Value *val, Port *port)
