@@ -217,7 +217,7 @@ namespace {
         assert(is_io(ntype));
         assert((*pi).first == first_dpe->portname);
         
-        create_wrapper("io_" + first_dpe->portname
+        create_wrapper("wrapper_" + first_dpe->portname
                        , (first_dpe->ntype == Input
                           ? "InputPort" : "OutputPort")
                        , dl, dp);
