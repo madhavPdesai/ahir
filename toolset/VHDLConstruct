@@ -24,6 +24,7 @@ AHIR = '../..'
 TOOLS = AHIR + '/toolset/tools'
 
 env = Environment()
+Decider('timestamp-newer')
 
 _llvm = Builder(action = 'llvmc -emit-llvm -o $TARGET -c $SOURCE'
                 , suffix = '.bc.unopt'
