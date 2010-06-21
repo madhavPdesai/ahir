@@ -363,11 +363,11 @@ namespace {
         width_str << "(0 => " << memory_get_num_lines(dpe) << ")";
       else {
         width_str << "(";
-        DPEList::iterator me = --dpe->members.end();
-        for (DPEList::iterator mi = dpe->members.begin(); mi != me; ++mi) {
-          width_str << memory_get_num_lines((*mi).second) << ", ";
+        MemberList::iterator me = --dpe->members.end();
+        for (MemberList::iterator mi = dpe->members.begin(); mi != me; ++mi) {
+          width_str << memory_get_num_lines(*mi) << ", ";
         }
-        width_str << memory_get_num_lines((*me).second);
+        width_str << memory_get_num_lines(*me);
         width_str << ")";
       }
       

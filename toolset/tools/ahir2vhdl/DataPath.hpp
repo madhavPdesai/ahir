@@ -4,6 +4,7 @@
 #include "Entity.hpp"
 #include "Assignable.hpp"
 #include <Base/ostream.hpp>
+#include <set>
 
 namespace hls {
   class Addressable;
@@ -13,11 +14,18 @@ namespace vhdl {
 
   class DataPath;
 
+  class DPElement;
+  typedef std::vector<DPElement*> MemberList;
+
   struct DPElement : public Entity 
   {
     hls::NodeType ntype;
 
-    DPEList members;
+    // The memberset is used to ensure that members are not repeated.
+    // Users should only use the ``members'' vector for accessing
+    // members.
+    MemberList members;
+    std::set<DPElement*> memberset;
     void register_member(vhdl::DPElement *dpe);
 
     DPElement *counterpart;

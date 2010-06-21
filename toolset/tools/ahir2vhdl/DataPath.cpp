@@ -56,8 +56,8 @@ void DPElement::register_member(DPElement *dpe)
 {
   assert(ntype == dpe->ntype);
     
-  assert(members.find(dpe->id) == members.end());
-  members[dpe->id] = dpe;
+  assert(memberset.find(dpe) == memberset.end());
+  members.push_back(dpe);
 
   for (PortList::iterator pi = dpe->ports.begin(), pe = dpe->ports.end();
        pi != pe; ++pi) {
