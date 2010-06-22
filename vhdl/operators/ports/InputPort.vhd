@@ -69,7 +69,7 @@ begin
 	 end if;
        end process;
 
-       req_pending(I) <= '1' when lreq(I) or (req_reg(I) = '1') else '0';
+       req_pending(I) <= '1' when (lreq(I) and (not oack = '1')) or (req_reg(I) = '1') else '0';
        ack_sig(I) <= req_active(I) and oack; 
  
        lack(I) <= true when ack_sig(I) = '1' else false;

@@ -21,38 +21,58 @@ entity OutputPort is
 end entity;
 
 architecture Base of OutputPort is
-  signal odata_array : StdLogicArray2D(0 downto 0, data'length(2)-1 downto 0);
-  alias lodata : std_logic_vector(odata'length-1 downto 0) is odata;
-  signal ftag: std_logic_vector(0 downto 0);
-  constant allow_imm_ack : BooleanArray(req'length-1 downto 0)  := (others => true);
-begin  -- Base
-
-  -----------------------------------------------------------------------------
-  -- base input mux provides the functionality
-  -----------------------------------------------------------------------------
-  imux: InputMuxBase
-    generic map (
-      colouring  => colouring,
-      suppress_immediate_ack => allow_imm_ack)
-    port map (
-      reqL  => req,
-      ackL  => ack,
-      dataL  => data,
-      reqR  => oreq,
-      ackR  => oack,
-      dataR => odata_array,
-      tagR  => ftag, -- this will be ignored
-      clk   => clk,
-      reset => reset);
-
-  -----------------------------------------------------------------------------
-  -- reformat
-  -----------------------------------------------------------------------------
-  process(odata_array)
-  begin
-    for I in lodata'range loop
-      lodata(I) <= odata_array(0,I);
-    end loop;  -- I
-  end process;
+  signal treq, tack : BooleanArray(req'length-1 downto 0);
+  alias lreq : BooleanArray(req'length-1 downto 0) is req;
+  alias lack : BooleanArray(req'length-1 downto 0) is ack;  
   
+  type OPWArray is array(integer range <>) of std_logic_vector(odata'range);
+  signal data_array : OPWArray(data'length(1)-1 downto 0);
+  signal req_pending,req_active, req_reg, ack_sig  : std_logic_vector(data'length(1)-1 downto 0); 
+  
+  constant no_arbitration: boolean := All_Entries_Same(colouring);
+  
+begin
+  
+  oreq <= OrReduce(req_pending);
+
+  NoArb: if no_arbitration generate
+     req_active <= req_pending;
+  end generate NoArb;
+
+  Arb: if not no_arbitration generate
+     req_active <= PriorityEncode(req_pending);
+  end generate Arb;
+
+  process (data_array)
+    variable var_odata : std_logic_vector(odata'range) := (others => '0');
+  begin  -- process
+    var_odata := (others => '0');
+    for I in 0 to data'length(1) - 1 loop
+      var_odata := data_array(I) or var_odata;
+    end loop;  -- I
+    odata <= var_odata;
+  end process;
+
+  gen: for I in data'length(1)-1 downto 0 generate
+
+      process(clk)
+      begin
+         if(clk'event and clk = '1') then
+                if(reset = '1' or ack_sig(I) = '1') then
+			req_reg(I) <= '0';
+		elsif lreq(I) then
+			req_reg(I) <= '1';
+		end if;
+	 end if;
+       end process;
+
+       req_pending(I) <= '1' when (lreq(I) and (not oack = '1')) or (req_reg(I) = '1') else '0';
+       ack_sig(I) <= req_active(I) and oack; 
+ 
+       lack(I) <= ack_sig(I) = '1';
+
+       data_array(I) <= Extract(data, I) when req_active(I) = '1' else (others => '0');
+         
+  end generate gen;
+
 end Base;
