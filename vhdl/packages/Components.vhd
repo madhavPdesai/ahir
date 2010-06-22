@@ -248,6 +248,19 @@ package Components is
     clk, reset : in  std_logic);
   end component;
 
+  component InputPortLevel
+    generic (
+      colouring : NaturalArray); 
+    port (
+      req        : in  std_logic_vector;
+      ack        : out std_logic_vector;
+      data       : out StdLogicArray2D;
+      oreq       : out std_logic;
+      oack       : in  std_logic;
+      odata      : in  std_logic_vector;
+      clk, reset : in  std_logic); 
+  end component;
+
   component OutputPort is
   generic(colouring: NaturalArray);
   port (
@@ -258,6 +271,19 @@ package Components is
     oack       : in  std_logic;
     odata      : out std_logic_vector;
     clk, reset : in  std_logic);
+  end component;
+
+  component OutputPortLevel
+    generic (
+      colouring : NaturalArray); 
+    port (
+      req        : in  std_logic_vector;
+      ack        : out std_logic_vector;
+      data       : in  StdLogicArray2D;
+      oreq       : out std_logic;
+      oack       : in  std_logic;
+      odata      : out std_logic_vector;
+      clk, reset : in  std_logic); 
   end component;
 
   component CallArbiter
