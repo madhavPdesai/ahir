@@ -353,7 +353,7 @@ namespace {
                                         , const std::string &pname
                                         , DPElement *dpe)
   {
-    SimpleEntity *entity = new SimpleEntity("io_" + pname, str(dpe->ntype) + "Port");
+    SimpleEntity *entity = new SimpleEntity("io_" + pname, str(dpe->ntype) + "PortLevel");
     entity_create_clk_ports(entity);
     system.register_instance(entity);
     
@@ -371,11 +371,11 @@ namespace {
                                                             , data->type.ranges)
                                                , WIRE, entity->id + "_data_sig");
     entity_create_port_with_map_name(entity, "req", IN
-                                     , vhdl::Type("BooleanArray")
-                                     , WIRE, entity->id + "_req_bool");
+                                     , vhdl::Type("std_logic_vector")
+                                     , WIRE, entity->id + "_req_sig");
     entity_create_port_with_map_name(entity, "ack", OUT
-                                     , vhdl::Type("BooleanArray")
-                                     , WIRE, entity->id + "_ack_bool");
+                                     , vhdl::Type("std_logic_vector")
+                                     , WIRE, entity->id + "_ack_sig");
     return entity;
   }
 
@@ -421,10 +421,10 @@ namespace {
         data->mapping(WIRE, dp->id + "_" + data->id);
         
         Port *req = dp->find_port(io->id + "_req");
-        req->mapping(WIRE, dp->id + "_" + req->id + "_std");
+        req->mapping(WIRE, dp->id + "_" + req->id);
         
         Port *ack = dp->find_port(io->id + "_ack");
-        ack->mapping(WIRE, dp->id + "_" + ack->id + "_std");
+        ack->mapping(WIRE, dp->id + "_" + ack->id);
       }
     }
   }
@@ -450,20 +450,19 @@ namespace {
         
         Port *req = dp->find_port(pname + "_req");
         std::ostringstream req_stt;
-        req_stt << pname << "_req_bool(" << count << ") <= to_boolean("
-                << req->mapping.name << ");";
+        req_stt << pname << "_req_sig(" << count << ") <= " << req->mapping.name << ";";
         dp->append_to_prelude(req_stt.str());
 
         Port *ack = dp->find_port(pname + "_ack");
         std::ostringstream ack_stt;
-        ack_stt << ack->mapping.name << " <= to_std_logic(" << pname << "_ack_bool("
-                << count << "));";
+        ack_stt << ack->mapping.name << " <= " << pname << "_ack_sig("
+                << count << ");";
         dp->append_to_prelude(ack_stt.str());
 
         ++count;
       }
 
-      if (io->component_name() == str(Input) + "Port") {
+      if (io->component_name() == str(Input) + "PortLevel") {
         unsigned count = 0;
         for (std::vector<std::string>::iterator si = wires.begin(), se = wires.end();
              si != se; ++si) {
@@ -474,7 +473,7 @@ namespace {
           ++count;
         }
       } else {
-        assert(io->component_name() == str(Output) + "Port");
+        assert(io->component_name() == str(Output) + "PortLevel");
         unsigned count = 0;
         out << indent << "unflatten(" << pname << "_data_sig, "
             << indent_in;
