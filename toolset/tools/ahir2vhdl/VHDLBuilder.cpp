@@ -39,7 +39,7 @@ namespace {
     return module;
   }
 
-  void print_vhdl(Program *program)
+  void print_vhdl(Program *program, bool clocked_ln)
   {
     for (Program::ModuleList::iterator mi = program->modules.begin()
            , me = program->modules.end(); mi != me; ++mi) {
@@ -47,13 +47,13 @@ namespace {
 
       print_cp(module->cp);
       print_dp(module->dp);
-      print_ln(module->ln);
+      print_ln(module->ln, clocked_ln);
     }
   }
 
 } // end anonymous namespace
 
-void vhdl::ahir2vhdl(Program *program)
+void vhdl::ahir2vhdl(Program *program, bool clocked_ln)
 {
   init_names();
   assert(program->start);
@@ -70,7 +70,7 @@ void vhdl::ahir2vhdl(Program *program)
   program->start = program->find_module(start_id);
   assert(program->start);
 
-  print_vhdl(program);
+  print_vhdl(program, clocked_ln);
 
   dump_address_space(program, program->id + "_memory_init.txt");
   

@@ -20,7 +20,7 @@ namespace vhdl {
 
   LinkLayer* create_ln(ahir::LinkLayer *aln);
 
-  void print_ln(LinkLayer *ln);
+  void print_ln(LinkLayer *ln, bool clocked);
 }
 
 #endif

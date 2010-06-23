@@ -52,7 +52,7 @@ vhdl::LinkLayer* vhdl::create_ln(ahir::LinkLayer *aln)
 
 namespace {
 
-  void print_ln_mappings(LinkLayer *ln, hls::ostream &out)
+  void print_ln_mappings(LinkLayer *ln, bool clocked, hls::ostream &out)
   {
     ahir::LinkLayer *aln = ln->aln;
     
@@ -67,27 +67,41 @@ namespace {
         const ahir::LinkLayer::Literal &lit = (*ii).second;
 
         out << indent << snk_id << "(" << snk_sym << ") <= "
-            << lit.iface << "(" << lit.sym << ");";
+            << lit.iface << "(" << lit.sym << ")"
+            << (clocked ? " when reset = '0' else false;" : ";");
       }
       out << "\n";
     }
   }
   
-  void print_ln_architecture(LinkLayer *ln, hls::ostream &out)
+  void print_ln_architecture(LinkLayer *ln, bool clocked, hls::ostream &out)
   {
     out << indent << "architecture default_arch of " << ln->id << " is";
     out << indent_in;
     out << indent_out;
     out << indent << "begin";
     out << indent_in;
-    print_ln_mappings(ln, out);
+
+    if (clocked) {
+      out << indent << "process (clk)"
+          << indent << "begin" << indent_in
+          << indent << "if clk'event and clk = '1' then" << indent_in;
+    }
+    
+    print_ln_mappings(ln, clocked, out);
     out << indent_out;
-    out << "end default_arch;";
+
+    if (clocked) {
+      out << indent << "end if;" << indent_out
+          << indent << "end process;" << indent_out;
+    }
+
+    out << indent << "end default_arch;";
   }
 
 } // end anonymous namespace
 
-void vhdl::print_ln(LinkLayer *ln)
+void vhdl::print_ln(LinkLayer *ln, bool clocked)
 {
   std::ofstream file;
   const std::string& filename = ln->id + ".vhdl";
@@ -104,5 +118,5 @@ void vhdl::print_ln(LinkLayer *ln)
   hls::ostream out(file);
   
   print_object_declaration(ln, "entity", out);
-  print_ln_architecture(ln, out);
+  print_ln_architecture(ln, clocked, out);
 }

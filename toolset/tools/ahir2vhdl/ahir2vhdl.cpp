@@ -11,10 +11,13 @@ int main(int argc, char *argv[])
 {
   po::positional_options_description pos;
   pos.add("ir", -1);
-  
+
+  bool clocked_ln;
   po::options_description desc("Allowed Options");
   desc.add_options()
     ("help", "produce help message")
+    ("clocked-ln", po::bool_switch(&clocked_ln)
+     , "link-layer should forward symbols on clock edge")
     ("ir", po::value<std::vector<std::string> >()->composing()
      , "input programs in IR form");
 
@@ -39,7 +42,7 @@ int main(int argc, char *argv[])
     parser->parse_file(fname);
   }
 
-  vhdl::ahir2vhdl(factory->program);
+  vhdl::ahir2vhdl(factory->program, clocked_ln);
   
   return 0;
 }
