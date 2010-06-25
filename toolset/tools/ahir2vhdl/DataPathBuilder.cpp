@@ -10,6 +10,7 @@
 #include <boost/lexical_cast.hpp>
 #include <string>
 #include <sstream>
+#include <fstream>
 
 using namespace vhdl;
 using namespace hls;
@@ -66,6 +67,8 @@ namespace {
       // LR are created later in one bunch because we need to know the
       // total number of wrappers when generating IDs for new members.
       create_lr_wrappers(dp, adp);
+
+      count_operators();
 
       for (DPEList::iterator di = dp->elements.begin(), de = dp->elements.end();
            di != de; ++di) {
@@ -874,6 +877,39 @@ namespace {
       p->mapping(SLICE, prefix + id, Range(DOWNTO, high * width - 1, low * width));
       return p;
     }
+
+    void count_operators()
+    {
+      const std::string filename = dp->id + "_count.txt";
+      std::ofstream out(filename.c_str());
+      
+      for (DPEList::iterator di = dp->elements.begin(), de = dp->elements.end();
+           di != de; ++di) {
+        DPElement *dpe = (*di).second;
+
+        out << dpe->id << ":" << str(dpe->ntype) << ":";
+
+        if (is_data(dpe->ntype))
+          if (Port *port = dpe->find_port(get_output_port(dpe->ntype)))
+            out << port->type;
+
+        out << ":1\n";
+      }
+      
+      for (DPEList::iterator di = dp->wrappers.begin(), de = dp->wrappers.end();
+           di != de; ++di) {
+        DPElement *dpe = (*di).second;
+        
+        out << dpe->id << ":" << str(dpe->ntype) << ":";
+
+        if (is_data(dpe->ntype))
+          if (Port *port = dpe->find_port(get_output_port(dpe->ntype)))
+            out << port->type;
+
+        out << ":" << dpe->members.size() << "\n";
+      }
+    }
+    
   };
   
 } // end anonymous namespace
