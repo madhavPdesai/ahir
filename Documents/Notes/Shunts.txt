@@ -1,0 +1,145 @@
+
+* Definition:
+
+  A simple place p that is directly connected to a fork f and join j
+  in a fork region R is called a ``shunt'' iff there exists a path
+  from f to j in R that does not pass through p.
+
+* Optimisation:
+
+  A shunt has no real effect on the sequences of events occuring in
+  the petri-net. Its presence indicates that the firing of join j must
+  follow the the firing of fork f. But this sequence is also enforced
+  by the other path (which may itself be a shunt) that exists from f
+  to j. Consequently, the shunt can be removed from the petri-net
+  without affecting the specified behaviour in any way.
+
+* Use:
+
+  When generating a petri-net from a higher-level specification, a
+  compiler may need to enforce a sequence between some pair of
+  operations. This is done by introducing a place that connects the
+  ack of the one operation to the req of the one that must follow it.
+  This additional place is redundant in some cases if there is already
+  a path that enforces the desired sequence. The number of such places
+  is sizeable, and checking for them while constructing the petri-net
+  is not feasible for two reasons:
+
+  1) The path might not have been created yet.
+  2) Checking for the path may not be feasible at that step in the
+     construction process, or the additional code may increase the
+     difficulty of maintaining that part of the compiler.
+
+  With the ability to identify and remove shunts, the compiler is free
+  to introduce places wherever it needs to, without checking for
+  existing paths. After the entire petri-net has been constructed and
+  optimised, all the shunts can be removed in a single pass.
+
+* Condition:
+
+  A place p is a shunt between fork f and join j iff one of the
+  following is true for the labels u, v and w assigned to f, j and p
+  respectively in the LRG G:
+
+  1) u = v
+
+  2) There is a path from u to v that does not pass through w.
+
+* Proof:
+
+  1) If the place p is a shunt, then there is a path from f to j that
+     does not pass through p (by definition). Two cases arise w.r.t.
+     whether j is the associate join of f:
+
+     1) If j is the associate join of f then one of the following is
+        true about the labels:
+
+        1) u = v iff f is also the associate fork of j, which
+           satisfies condition (1) of the definition.
+
+        2) v = u + x, where x is the label that arrives along a path
+           to j that does not pass through f. This means that v is a
+           join node with an unlabelled edge from u, which satisfies
+           condition (2).
+
+     2) If j is not the associate join of f, then every path from f to
+        j not passing through p results in a label reaching at j that
+        is derived from u, but is not derived from w. Hence v is a
+        join node reachable along one or more paths from u satisifying
+        condition (2).
+
+  2) If p is not a shunt, then there is no path from f to j that does
+     not pass through p (by definition). Neither f or j are associates
+     of each other, hence u = v cannot be true, nor can there be an
+     unlabelled edge from u to v. These two possibilities arise for a
+     fork and a join if and only if they are both associates of each
+     other. Similarly, there is no path from u to v that does not pass
+     through w, since there is no path along which such a label can
+     arrive at j from f. Thus, if p is not a shunt, it does not
+     satisfy any of the conditions stated above.
+
+* Complexity:
+
+  The algorithm to determine whether a place is a shunt only requires
+  a DFS from the label u in order to determine if v is reachable from
+  u. Hence the complexity is linear in terms of the size of the LRG,
+  for each place that is to be examined. Note that every place in the
+  petri-net need not be examined. A shunt always has a label that is
+  not assigned to any other element in the petri-net. Hence only those
+  places that have a unique label are candidates for removal.
+
+* Effect on the LRG:
+
+  The removal of a shunt removes its unique label from the LRG. This
+  label is a leaf, and hence does not affect the compatibility of any
+  pair of labels not containing it. However, the degree of the fork
+  that was a predecessor to the shunt is reduced by one, and hence the
+  labels indicating this fork are no longer valid. The LRG should be
+  recomputed to incorporate this change. It is also possible that the
+  fork is reduced to an ordinary transition when the shunt is removed,
+  thus removing its effect entirely from the labelling.
+
+* Implementation details:
+
+** Removing all shunts in a single pass
+
+   The result of removing a shunt is to eliminate one or more nodes in
+   the LRG, and to modify the labels on some edges. The same pass can
+   remove a second shunt only if the conditions for removal can be
+   safely checked despite these changes in the LRG.
+
+   Proof:
+
+   The removal of a shunt p only removes a leaf label w from the LRG
+   and has no effect on paths in the LRG. Also, w is assigned to only
+   the shunt and no other element in the petri-net. The conditions for
+   identifying another shunt p' involve two checks:
+
+   1) The equality of labels u' and v' assigned to the related fork
+      and join --- this is not affected by the removal of w, since it
+      is not assigned to either the fork or the join.
+
+   2) Existence of a path from u' to v' that does not pass through w'
+      --- this is not affected by the removal of the leaf w.
+
+   Thus, the removal of a shunt does not affect the identification of
+   other shunts in the petri-net. There is one exception as follows.
+      
+*** Degenerate case: a set of parallel shunts
+
+    It is possible that a fork f and join j are in fact connected by n
+    shunts, and no other path exists between them. In that case,
+    removing all the n shunts would disconnect the fork and join and
+    invalidate the the petri-net. Hence the removal must ensure that
+    at least one of all these shunts is retained:
+
+    1) If the removal removes only one shunt at a time and then
+       recomputes the LRG, then after removing the first n-1 shunts,
+       the last remaining shunt would no longer be identified as a
+       shunt. This ensures that the petri-net remains valid.
+
+    2) If multiple shunts are removed at the same time, then the
+       procedure must check that the removal of a shunt p does not
+       reduce the out-degree of the corresponding fork f to zero. This
+       is sufficient to ensure that the petri-net is preserved, since
+       every out-edge on the fork is in fact a path to j.
