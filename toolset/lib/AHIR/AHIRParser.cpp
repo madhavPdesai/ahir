@@ -74,6 +74,8 @@ void AHIRParser::on_start_element(const Glib::ustring& name,
 	state = DPE_ADDRESSABLE;
       } else if (name == "counterpart") {
 	state = DPE_COUNTERPART;
+      } else if (name == "portname") {
+        state = DPE_PORTNAME;
       } else
 	assert(false && "unexpected element");
       break;
@@ -155,6 +157,10 @@ void AHIRParser::on_characters(const Glib::ustring& characters)
       factory->dpe_set_counterpart(characters);
       break;
 
+    case DPE_PORTNAME:
+      factory->dpe_set_io_portname(characters);
+      break;
+
     default:
       break;
   }
@@ -171,6 +177,11 @@ void AHIRParser::on_end_element(const Glib::ustring& name)
     case DP:
       assert(name == "dp");
       factory->commit_dp();
+      break;
+
+    case DPE:
+      assert(name == "dpe");
+      factory->commit_dpe();
       break;
 
     default:

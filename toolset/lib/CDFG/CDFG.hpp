@@ -89,6 +89,7 @@ namespace cdfg {
     // big fat fingers in the eye of OOP
     std::string callee;
     std::string value; // used by Constant
+    std::string portname;
     hls::Addressable *addressable; // used by Address
     CDFGNode *counterpart;	   // LC <-> LR mapping
     
@@ -129,7 +130,7 @@ namespace cdfg {
 
 };
 
-inline bool is_cdfg(hls::Module *f) { return f->type == "cdfg"; }
+inline bool is_cdfg(hls::Module *f) { return f && f->type == "cdfg"; }
 
 cdfg::CDFG* get_cdfg(hls::Program *program, const std::string &id);
 

@@ -125,3 +125,10 @@ void CDFGFactory::node_register_callee(const std::string &callee)
   assert(node->ntype == Call);
   node->callee = callee;
 }
+
+void CDFGFactory::node_register_io_portname(const std::string &portname)
+{
+  assert(node->ntype == Input || node->ntype == Output);
+  assert(node->portname.size() == 0);
+  node->portname = portname;
+}

@@ -37,7 +37,7 @@ void Linker::create_arbiters(Program *program)
 	   , de = ahir->dp->calls.end(); di != de; ++di) {
       DPElement *dpe = (*di).second;
 
-      ahir::Module *callee = get_ahir_module(program, dpe->callee);
+      ahir::Module *callee = get_ahir_module(program, program->id + "_" + dpe->callee);
 
       // record this particular function call at a new call-port and
       // assign it to the client

@@ -11,8 +11,11 @@
 #include <llvm/Constants.h>
 #include <llvm/Function.h>
 #include <llvm/Target/TargetData.h>
+#include <llvm/User.h>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 #include <iostream>
 #include <deque>
@@ -32,8 +35,9 @@ namespace cdfg {
     , program(NULL)
   {}
 
-  void CDFGBuilder::create_program(const std::string &id)
+  void CDFGBuilder::create_program(std::string id)
   {
+    boost::replace_last(id, ".bc", "");
     program = new Program(id);
   }
 
@@ -108,6 +112,7 @@ namespace {
     JoinMap joins;
 
     std::map<llvm::Value*, std::vector<Port*> > pendingUsers;
+    std::map<std::string, CallInst*> io_history;
     
     /* ---- Initialisation ---- */
     
@@ -148,7 +153,7 @@ namespace {
 
     void initialise_with_function(llvm::Function &F)
     {
-      hls::Module *f = program->find_module(F.getName());
+      hls::Module *f = program->find_module(program->id + "_" + F.getNameStr());
       assert(is_cdfg(f));
       cdfg = static_cast<CDFG*>(f);
   
@@ -182,10 +187,10 @@ namespace {
       const llvm::FunctionType *ftype = F.getFunctionType();
       assert(!ftype->isVarArg() && "variable arguments not supported");
     
-      CDFG *cdfg = new CDFG(F.getName());
+      CDFG *cdfg = new CDFG(program->id + "_" + F.getNameStr());
       program->modules[cdfg->id] = cdfg;
 
-      if (cdfg->id == "start") {
+      if (cdfg->id == program->id + "_start") {
         assert(!program->start && "start function already defined");
         program->start = cdfg;
       }
@@ -197,6 +202,7 @@ namespace {
     {
       set_bb(BB);
       AA->clear();
+      io_history.clear();
 
       TerminatorInst *term = BB.getTerminator();
       if (!isa<BranchInst>(term))
@@ -360,8 +366,98 @@ namespace {
       phi_connect_input(prev_mux, phi_name, fval, "y", fbb, "reqy");
     }
 
+    ConstantArray* locate_portname_for_io_call(llvm::Value *strptr)
+    {
+      std::deque<llvm::Value*> queue;
+      queue.push_back(strptr);
+
+      while (!queue.empty()) {
+        llvm::Value *val = queue.front();
+        queue.pop_front();
+
+        if (ConstantArray *konst = dyn_cast<ConstantArray>(val))
+          return konst;
+
+        if (!isa<User>(val))
+          continue;
+
+        User *u = dyn_cast<User>(val);
+        for (User::op_iterator oi = u->op_begin(), oe = u->op_end(); oi != oe; ++oi) {
+          llvm::Value *opnd = oi->get();
+          queue.push_back(opnd);
+        }
+      }
+      
+      return NULL;
+    }
+
+    void handle_io_port(CallInst &C, IOCode ioc)
+    {
+      const llvm::Type *type = NULL;
+      NodeType ntype = hls::Constant; // sentinel
+
+      switch (ioc) {
+        case READ_FLOAT32:
+          type = llvm::Type::getFloatTy(C.getContext());
+          ntype = Input;
+          break;
+
+        case READ_UINT32:
+          type = llvm::Type::getInt32Ty(C.getContext());
+          ntype = Input;
+          break;
+
+        case WRITE_FLOAT32:
+          // type = llvm::Type::getFloatTy(C.getContext());
+          ntype = Output;
+          break;
+
+        case WRITE_UINT32:
+          // type = llvm::Type::getInt32Ty(C.getContext());
+          ntype = Output;
+          break;
+
+        default:
+          assert(false);
+          break;
+      }
+
+      llvm::ConstantArray *konst = locate_portname_for_io_call(C.getOperand(1));
+      assert(konst);
+      std::string portname = konst->getAsString();
+      assert(boost::ends_with(portname, "\0"));
+      portname.erase(portname.size() - 1);
+      CDFGNode *node = create_data_node(ntype, type
+                                        , C.getCalledFunction()->getNameStr()
+                                        + ":" + portname);
+      node->portname = portname;
+
+      if (ntype == Output) {
+        if (!handleOperand(node, C.getOperand(2), "data"))
+          connect_entry_to_node(node);
+      } else {
+        connect_entry_to_node(node);
+      }
+
+      register_node(C, node);
+      connect_to_exit(node, C);
+
+      if (io_history.find(node->portname) != io_history.end()) {
+        CallInst *prev = io_history[node->portname];
+        assert(get_io_code(prev) == ioc);
+        control_flow(prev, &C);
+      }
+      io_history[node->portname] = &C;
+    }
+
     void visitCallInst(CallInst &C)
     {
+      IOCode ioc = get_io_code(C);
+      if (ioc != NOT_IO) {
+        handle_io_port(C, ioc);
+        return;
+      }
+
       llvm::Function *f = C.getCalledFunction();
       assert(f && "function pointers are not currently supported");
 
@@ -387,7 +483,7 @@ namespace {
       assert(fork && join);
       control_flow(fork, join);
   
-      connect_to_exit(NULL, C); // the CDFGNode doesn't matter.
+      connect_to_exit(NULL, C); // the NULL indicates that this is not an I/O operation.
 
       AA->handleCallInst(&C, !internalFlow);
     }
@@ -432,6 +528,32 @@ namespace {
 
     void visitCastInst(CastInst& C)
     {
+      // For an I/O function call, the first argument is a bitcast
+      // that points to a string identifier for the port. If this
+      // CastInst is in fact that bitcast, we have to skip it.
+      
+      bool is_ioport_name = true;
+
+      for (llvm::Value::use_iterator ui = C.use_begin(), ue = C.use_end();
+           ui != ue; ++ui) {
+        User *user = *ui;
+        if (get_io_code(user) != NOT_IO) {
+          // The user is an I/O function call. We now check if this is
+          // the first operand to the called function.
+          CallInst *call = cast<CallInst>(user);
+          if (call->getOperand(1) == (llvm::Value*)(&C))
+            continue;
+        }
+
+        // We found a non-I/O use for this cast, so we go ahead and
+        // create a CDFGNode for it.
+        is_ioport_name = false;
+        break;
+      }
+
+      if (is_ioport_name)
+        return;
+      
       const llvm::Type *dest = C.getDestTy();
       llvm::Value *val = C.getOperand(0);
 
@@ -756,7 +878,9 @@ namespace {
       CDFGNode *node = create_node(t, d);
       initialise_control_flow(node);
 
-      const std::string outd = (t == LoadComplete ? "data" : "z");
+      const std::string outd = ((t == LoadComplete || t == Input)
+                                ? "data"
+                                : "z");
 
       if (type && type->getTypeID() != llvm::Type::VoidTyID)
         create_output_data_port(node, outd, type);
@@ -807,6 +931,7 @@ namespace {
         }
 
         case LoadComplete:
+        case Input:
           vport = vnode->find_output_data_port("data");
           break;
 
@@ -824,7 +949,14 @@ namespace {
                        , const std::string &port_id)
     {
       Port *port = create_input_data_port(node, port_id, val->getType());
-  
+      
+      while (CastInst *C = dyn_cast<CastInst>(val)) {
+        if (C->isNoopCast(TD->getIntPtrType(C->getContext()))) {
+          val = C->getOperand(0);
+        } else
+          break;
+      }
+      
       CDFGNode *vnode = get_node(val);
 
       if (!vnode) {
@@ -865,6 +997,7 @@ namespace {
       bool connect_exit = true;
       std::deque<Instruction*> queue;
   
+      
       for (llvm::Value::use_iterator ui = I.use_begin(), ue = I.use_end();
            ui != ue; ++ui) {
         User *user = *ui;
@@ -901,13 +1034,13 @@ namespace {
         }
       }
 
-      if (isa<CallInst>(I)) {
+      if (isa<CallInst>(I) && !node) {
         AA->path_to_exit = !connect_exit;
       } else if (connect_exit) {
         assert(forks.find(node) != forks.end()
                && "control node missing");
         control_flow(forks[node], bbnode->join);
-      }
+      } 
     }
 
     void register_pending_user(llvm::Value *val, Port *port)

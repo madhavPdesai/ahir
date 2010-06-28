@@ -53,6 +53,7 @@ namespace ahir
     void create_dpe(const std::string &id
 		    , const std::string& ntype
 		    , const std::string &description);
+    void commit_dpe();
     void dpe_new_req(const std::string &id) { dpe_req = id; };
     void dpe_new_ack(const std::string &id) { dpe_ack = id; };
     void dpe_set_req(const std::string &sym);
@@ -66,6 +67,7 @@ namespace ahir
     void dpe_set_value(const std::string &characters);
     void dpe_set_addressable(const std::string &characters);
     void dpe_set_counterpart(const std::string &characters);
+    void dpe_set_io_portname(const std::string &characters);
 
     void dpe_set_callee(const std::string &characters);
     

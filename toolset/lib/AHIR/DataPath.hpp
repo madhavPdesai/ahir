@@ -82,6 +82,7 @@ namespace ahir {
     std::string value;		   // used by Constant
     hls::Addressable *addressable; // used by Address
     DPElement *counterpart;	   // LC <-> LR mapping
+    std::string portname;
 
     DPElement(unsigned _id, hls::NodeType t, const std::string &_d)
       : id(_id), ntype(t), description(_d), parent(NULL)
@@ -117,6 +118,9 @@ namespace ahir {
     DPEList calls;
     DPElement *retval;
     DPElement *acceptor;
+
+    typedef std::map<std::string, std::vector<DPElement*> > IOPortList;
+    IOPortList io_ports;
     
     void register_dpe(DPElement *dpe);
     DPElement* find_dpe(unsigned id);

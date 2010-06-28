@@ -16,14 +16,28 @@ namespace {
 
 void DataPath::register_wrapper(DPElement *wrapper)
 {
-  assert(wrappers.find(wrapper->id) == wrappers.end());
+  assert(!find_wrapper(wrapper->id));
   wrappers[wrapper->id] = wrapper;
+}
+
+DPElement* DataPath::find_wrapper(const std::string &id)
+{
+  if (wrappers.find(id) == wrappers.end())
+    return NULL;
+  return wrappers[id];
 }
 
 void DataPath::register_dpe(DPElement *dpe)
 {
-  assert(elements.find(dpe->id) == elements.end());
+  assert(!find_dpe(dpe->id));
   elements[dpe->id] = dpe;
+}
+
+DPElement* DataPath::find_dpe(const std::string &id)
+{
+  if (elements.find(id) == elements.end())
+    return NULL;
+  return elements[id];
 }
 
 void DataPath::remove_dpe(DPElement *dpe)
@@ -42,8 +56,8 @@ void DPElement::register_member(DPElement *dpe)
 {
   assert(ntype == dpe->ntype);
     
-  assert(members.find(dpe->id) == members.end());
-  members[dpe->id] = dpe;
+  assert(memberset.find(dpe) == memberset.end());
+  members.push_back(dpe);
 
   for (PortList::iterator pi = dpe->ports.begin(), pe = dpe->ports.end();
        pi != pe; ++pi) {
@@ -52,8 +66,15 @@ void DPElement::register_member(DPElement *dpe)
       continue;
     Port *wport = find_port(port->id);
     assert(wport);
-    wport->update_range(1, port->get_range(1));
+    if (is_io(dpe->ntype) && wport->type.ranges.size() > 1) 
+      assert(wport->get_range(1) == port->get_range(1)
+             && "All requesters on an I/O port should have the same width.");
+    else
+      wport->update_range(1, port->get_range(1));
   }
+
+  if (is_io(ntype))
+    assert(portname == dpe->portname);
 }
 
 void DataPath::register_assign(const std::string &lhs, const std::string &rhs)
@@ -62,16 +83,7 @@ void DataPath::register_assign(const std::string &lhs, const std::string &rhs)
   assign[lhs] = rhs;
 }
 
-void DataPath::register_dpe_ahir_id(unsigned id, DPElement *dpe)
-{
-  assert(!find_dpe_from_ahir_id(id));
-  dpe_map[id] = dpe;
-}
-
 DPElement* DataPath::find_dpe_from_ahir_id(unsigned id)
 {
-  if (dpe_map.find(id) != dpe_map.end())
-    return dpe_map[id];
-  return NULL;
+  return find_dpe("dpe_" + boost::lexical_cast<std::string>(id));
 }
-

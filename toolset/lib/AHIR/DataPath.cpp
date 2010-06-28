@@ -39,6 +39,12 @@ void DataPath::register_dpe(DPElement *dpe)
       acceptor = dpe;
       break;
 
+    case Input:
+    case Output:
+      assert(dpe->portname.size() > 0);
+      io_ports[dpe->portname].push_back(dpe);
+      break;
+
     default:
       break;
   }

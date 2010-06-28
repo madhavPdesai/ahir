@@ -8,6 +8,8 @@ auto
 *.o
 *.a
 *.bc
+*.bc.unopt
+*.pdf
 /iolib/demo/client
 /iolib/demo/server
 /toolset/tools/llvm2cdfg/llvm2cdfg
@@ -22,3 +24,6 @@ auto
 /examples/*/*.vhdl
 /examples/*/*.xml
 /examples/*/*.txt
+/iolib/demo/*.vhdl
+/iolib/demo/*.xml
+/iolib/demo/*.txt

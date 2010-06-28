@@ -96,6 +96,9 @@ bool hls::is_shared(NodeType ntype)
   if (is_constant(ntype))
     return false;
 
+  if (is_io(ntype))
+    return false;
+
   if (is_mem(ntype))
     return true;
 
@@ -154,6 +157,11 @@ bool hls::is_pipelined(NodeType ntype)
 
 bool hls::is_io(NodeType ntype)
 {
+  return ntype == Input || ntype == Output;
+}
+
+bool hls::is_mapped_to_io(NodeType ntype)
+{
   switch (ntype) {
     case Call:
     case Response:
@@ -204,7 +212,7 @@ bool hls::is_mem(NodeType ntype)
   return false;
 }
 
-bool hls::has_array_ports(NodeType ntype)
+bool hls::has_2D_ports(NodeType ntype)
 {
   switch (ntype) {
     case Branch:

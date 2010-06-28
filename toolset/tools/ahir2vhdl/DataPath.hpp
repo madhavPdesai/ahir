@@ -4,6 +4,7 @@
 #include "Entity.hpp"
 #include "Assignable.hpp"
 #include <Base/ostream.hpp>
+#include <set>
 
 namespace hls {
   class Addressable;
@@ -13,11 +14,18 @@ namespace vhdl {
 
   class DataPath;
 
+  class DPElement;
+  typedef std::vector<DPElement*> MemberList;
+
   struct DPElement : public Entity 
   {
     hls::NodeType ntype;
 
-    DPEList members;
+    // The memberset is used to ensure that members are not repeated.
+    // Users should only use the ``members'' vector for accessing
+    // members.
+    MemberList members;
+    std::set<DPElement*> memberset;
     void register_member(vhdl::DPElement *dpe);
 
     DPElement *counterpart;
@@ -25,6 +33,7 @@ namespace vhdl {
     std::string cname;
     std::string callee;
     std::string value;
+    std::string portname;
     const hls::Type *type;
     
     std::string component_name() { return cname; }
@@ -57,17 +66,16 @@ namespace vhdl {
   {
     DPEList wrappers;
     void register_wrapper(vhdl::DPElement *wrapper);
+    DPElement* find_wrapper(const std::string &id);
 
     DPEList elements;
     void register_dpe(vhdl::DPElement *dpe);
     void remove_dpe(vhdl::DPElement *dpe);
-
-    typedef std::map<unsigned, DPElement*> AhirDpeMap;
-    AhirDpeMap dpe_map;
-    void register_dpe_ahir_id(unsigned id, DPElement *dpe);
+    DPElement* find_dpe(const std::string &id);
     DPElement* find_dpe_from_ahir_id(unsigned id);
 
     DPEList calls;
+    DPEList io_elements;
     DPElement *acceptor;
     DPElement *retval;
 

@@ -9,12 +9,10 @@ env.ParseConfig("/usr/bin/pkg-config --cflags --libs libxml++-2.6")
 conf = Configure(env)
 if not conf.CheckLib('boost_program_options-mt'):
     if not conf.CheckLib('boost_program_options'):
-        print 'Did not find libboost_program_options'
         Exit(1)
 
 if not conf.CheckLib('boost_serialization-mt'):
     if not conf.CheckLib('boost_serialization'):
-        print 'Did not find libboost_serialization'
         Exit(1)
 env = conf.Finish()
 

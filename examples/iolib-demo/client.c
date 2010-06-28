@@ -1,4 +1,4 @@
-#include "../iolib.h"
+#include "../../iolib/iolib.h"
 
 #ifdef RUN
 #include <stdlib.h>
@@ -13,9 +13,7 @@ int start (void)
   float ong, my_ong;
   int failure = 0;
 
-  i = 0;
-
-  while (i < 10) {
+  for (i = 0; i < 10; ++i) {
     #ifdef RUN
     apl = rand();
     #else
@@ -34,7 +32,21 @@ int start (void)
     #endif
     
     failure |= (my_ong != ong);
-    ++i;
+
+    apl = apl << 1;
+    my_ong = (float)apl;
+    
+    write_uint32("apples", apl);
+    #ifdef RUN
+    fprintf(stderr, "\n(%d) sent an apple: %d.", i, apl);
+    #endif
+    
+    ong = read_float32("oranges");
+    #ifdef RUN
+    fprintf(stderr, "\ngot an orange: %f.", ong);
+    #endif
+    
+    failure |= (my_ong != ong);
   }
 
   #ifdef RUN

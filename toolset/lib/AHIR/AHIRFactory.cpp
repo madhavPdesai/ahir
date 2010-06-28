@@ -49,6 +49,10 @@ void AHIRFactory::create_dpe(const std::string& _id
 {
   unsigned id = boost::lexical_cast<unsigned>(_id);
   dpe = new DPElement(id, hls::ntype(ntype), description);
+}
+
+void AHIRFactory::commit_dpe()
+{
   dp->register_dpe(dpe);
 }
 
@@ -86,6 +90,13 @@ void AHIRFactory::dpe_set_counterpart(const std::string &characters)
     cpart->counterpart = dpe;
     dpe->counterpart = cpart;
   }
+}
+
+void AHIRFactory::dpe_set_io_portname(const std::string &characters)
+{
+  assert(dpe->ntype == Input || dpe->ntype == Output);
+  assert(characters.size() > 0);
+  dpe->portname = characters;
 }
 
 void AHIRFactory::dpe_set_callee(const std::string &characters)

@@ -79,31 +79,23 @@ void vhdl::port_map(Entity *entity, const std::string &port_name
                 , Range(rtype, upper, lower));
 }
 
-void vhdl::port_map_slice(Entity *entity, const std::string &port_name
-                          , const std::string &mapping_name)
-{
-  Port *port = entity->find_port(port_name);
-  assert(port);
-  port->mapping(SLICE, mapping_name);
-}
-
 void vhdl::port_map_wire(Entity *entity, const std::string &port_name
-                          , const std::string &mapping_name)
+                         , const std::string &mapping_name)
 {
   Port *port = entity->find_port(port_name);
   assert(port);
   port->mapping(WIRE, mapping_name);
 }
 
-Port* vhdl::create_port_with_existing_wire(Entity *component
-                                           , const std::string &port_id, IOType dir
-                                           , Entity *container, const std::string &wire_id)
+void vhdl::entity_create_forwarded_io_port(Entity *outer, Entity *inner
+                                           , const std::string &portname
+                                           , const std::string &id
+                                           , IOType io_type
+                                           , const vhdl::Type &type)
 {
-  Wire *wire = container->find_wire(wire_id);
-  assert(wire);
-  Port *port = create_port(component->ports, port_id, IN, wire->type);
-  port->mapping(WIRE, wire_id);
-
-  return port;
+  Port *outer_port = create_port(outer->ports, "io_" + portname + "_" + id
+                                 , io_type, type);
+  entity_create_port_with_map_name(inner, "o" + id, io_type, type
+                                   , SLICE, outer_port->id);
 }
-
+    

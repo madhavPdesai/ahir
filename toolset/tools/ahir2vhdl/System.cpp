@@ -1,11 +1,13 @@
 #include "Module.hpp"
 #include "EntityBuilder.hpp"
+#include "DataPathBuilder.hpp"
 #include "EntityPrinter.hpp"
 #include "ControlPath.hpp"
 #include "DataPath.hpp"
 #include "Arbiter.hpp"
 #include "LinkLayer.hpp"
 #include "Utils.hpp"
+#include "SimpleEntity.hpp"
 
 #include <Base/ostream.hpp>
 #include <Base/Program.hpp>
@@ -41,78 +43,30 @@ namespace {
 
     Memory memory;
 
+    typedef std::map<std::string, std::set<DataPath*> > PortUserMap;
+    PortUserMap port_users;
+    void register_port_user(const std::string &io, DataPath *dp)
+    {
+      if (port_users.find(io) != port_users.end())
+        assert(port_users[io].count(dp) == 0
+               && "Expecting only one element per port in the DP.");
+      port_users[io].insert(dp);
+    }
+    
     System(const std::string &id, const std::string &d = "")
       : Entity(id, SYSTEM, d), memory("memory_subsystem", "system memory")
     {} 
   };
-  
-  void system_create_memory_wires(System &system
-                                  , unsigned load_lines, unsigned store_lines)
-  {
-    system.register_wire(new Wire("lr_req"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO, load_lines))));
-    system.register_wire(new Wire("lr_ack"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO, load_lines))));
-    system.register_wire(new Wire("lr_addr"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO
-                                                       , load_lines
-                                                       * memory::address_width))));
-    system.register_wire(new Wire("lr_tag"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO
-                                                       , load_lines
-                                                       * memory::tag_width))));
-    system.register_wire(new Wire("lc_req"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO, load_lines))));
-    system.register_wire(new Wire("lc_ack"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO, load_lines))));
-    system.register_wire(new Wire("lc_data"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO
-                                                       , load_lines
-                                                       * memory::data_width))));
-    system.register_wire(new Wire("lc_tag"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO
-                                                       , load_lines
-                                                       * memory::tag_width))));
-    system.register_wire(new Wire("sr_req"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO, store_lines))));
-    system.register_wire(new Wire("sr_ack"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO, store_lines))));
-    system.register_wire(new Wire("sr_addr"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO
-                                                       , store_lines
-                                                       * memory::address_width))));
-    system.register_wire(new Wire("sr_data"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO
-                                                       , store_lines
-                                                       * memory::data_width))));
-    system.register_wire(new Wire("sr_tag"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO
-                                                       , store_lines
-                                                       * memory::tag_width))));
-    system.register_wire(new Wire("sc_req"
-                                  , vhdl::Type("std_logic_vector"
-                                               , Range(DOWNTO, store_lines))));
-  }
 
   void create_env_port(DataPath *dp, const std::string &port_id, System &system)
   {
     Port *port = dp->find_port(port_id);
     assert(port);
 
-    create_port(system.ports, "env_" + port_id, port->io_type, port->type);
+    Port *env_port = create_port(system.ports, "env_" + port_id
+                                 , port->io_type, port->type);
+    port->mapping.clear();
+    port->mapping(SLICE, env_port->id);
   }
   
   void system_create_start_ports(System &system, Program *program)
@@ -132,19 +86,15 @@ namespace {
     create_env_port(dp, "return_tag", system);
   }
 
-  void system_create_ports(System &system, Program *program)
+  void system_create_standard_ports(System &system, Program *program)
   {
     system_create_start_ports(system, program);
-    create_port(system.ports, "clk", IN
-                , "std_logic", true /* is_control */);
-    
-    create_port(system.ports, "reset", IN
-                , "std_logic", true /* is_control */);
+    entity_create_clk_ports(&system);
     
     create_port(system.ports, "env_lr_req", IN
                 , "std_logic", true /* is_control */);
-    create_port(system.ports, "env_lr_ack"
-                , OUT, "std_logic", true /* is_control */);
+    create_port(system.ports, "env_lr_ack", OUT
+                , "std_logic", true /* is_control */);
     create_port(system.ports, "env_lr_addr", IN
                 , "std_logic_vector", Range(DOWNTO, memory::address_width));
     create_port(system.ports, "env_lr_tag", IN
@@ -160,8 +110,10 @@ namespace {
                                   % (memory::tag_width - 1)));
     system.register_statement("");
     
-    create_port(system.ports, "env_lc_req", IN, "std_logic", true /* is_control */);
-    create_port(system.ports, "env_lc_ack", OUT, "std_logic", true /* is_control */);
+    create_port(system.ports, "env_lc_req", IN
+                , "std_logic", true /* is_control */);
+    create_port(system.ports, "env_lc_ack", OUT
+                , "std_logic", true /* is_control */);
     create_port(system.ports, "env_lc_data", OUT
                 , "std_logic_vector", Range(DOWNTO, memory::data_width));
     create_port(system.ports, "env_lc_tag", OUT
@@ -175,8 +127,10 @@ namespace {
                                   % (memory::tag_width - 1)));
     system.register_statement("");
 
-    create_port(system.ports, "env_sr_req", IN, "std_logic", true /* is_control */);
-    create_port(system.ports, "env_sr_ack", OUT, "std_logic", true /* is_control */);
+    create_port(system.ports, "env_sr_req", IN
+                , "std_logic", true /* is_control */);
+    create_port(system.ports, "env_sr_ack", OUT
+                , "std_logic", true /* is_control */);
     create_port(system.ports, "env_sr_addr", IN
                 , "std_logic_vector", Range(DOWNTO, memory::address_width));
     create_port(system.ports, "env_sr_data", IN
@@ -196,159 +150,114 @@ namespace {
     system.register_statement("");
   }
 
-  void dp_map_memory_ports(System &system, DataPath *dp
-                           , unsigned &load_lines, unsigned &store_lines)
+  void memory_create_ports(Memory &memory
+                           , unsigned &load_lines
+                           , unsigned &store_lines)
   {
+    // FIXME: The memory_subsystem uses a non-standard name for the
+    // clk port.
+    entity_create_port_with_map_name(&memory, "clock", IN
+                                     , vhdl::Type("std_logic"), SLICE, "clk");
+    entity_create_port_with_map_name(&memory, "reset", IN
+                                     , vhdl::Type("std_logic"), SLICE, "reset");
+
+    // FIXME: Notice how we take advantage of case-insensitive VHDL to
+    // generate the port name. This should actually be fixed in the
+    // VHDL library by removing the direction from the port names.
+#define MEM_PORT(name, dir, width)                                      \
+    entity_create_port_with_map_name(&memory, name"_"#dir, dir          \
+                                     , vhdl::Type("std_logic_vector"    \
+                                                  , Range(DOWNTO, (width))) \
+                                     , WIRE, name)
+
+    MEM_PORT("lr_req", IN, load_lines);
+    MEM_PORT("lr_ack", OUT, load_lines);
+    MEM_PORT("lr_addr", IN, load_lines * memory::address_width);
+    MEM_PORT("lr_tag", IN, load_lines * memory::tag_width);
+    
+    MEM_PORT("lc_req", IN, load_lines);
+    MEM_PORT("lc_ack", OUT, load_lines);
+    MEM_PORT("lc_data", OUT, load_lines * memory::data_width);
+    MEM_PORT("lc_tag", OUT, load_lines * memory::tag_width);
+    
+    MEM_PORT("sr_req", IN, store_lines);
+    MEM_PORT("sr_ack", OUT, store_lines);
+    MEM_PORT("sr_addr", IN, store_lines * memory::address_width);
+    MEM_PORT("sr_data", IN, store_lines * memory::data_width);
+    MEM_PORT("sr_tag", IN, store_lines * memory::tag_width);
+    
+    MEM_PORT("sc_req", IN, store_lines);
+#undef MEM_PORT
+  }
+  
+  void memory_register_generics(Memory &memory
+                                , unsigned load_lines
+                                , unsigned store_lines)
+  {
+    memory.register_generic(new Generic("num_loads", "natural"
+                                        , str(boost::format("%s") % load_lines)));
+    memory.register_generic(new Generic("num_stores", "natural"
+                                        , str(boost::format("%s") % store_lines)));
+    memory.register_generic(new Generic("addr_width", "natural"
+                                        , str(boost::format("%s") % memory::address_width)));
+    memory.register_generic(new Generic("data_width", "natural"
+                                        , str(boost::format("%s") % memory::data_width)));
+    memory.register_generic(new Generic("tag_width", "natural"
+                                        , str(boost::format("%s") % memory::tag_width)));
+    memory.register_generic(new Generic("number_of_banks", "natural"
+                                        , str(boost::format("%s") % 1)));
+    memory.register_generic(new Generic("mux_degree", "natural"
+                                        , str(boost::format("%s") % 2)));
+    memory.register_generic(new Generic("demux_degree", "natural"
+                                        , str(boost::format("%s") % 2)));
+    memory.register_generic(new Generic("base_bank_addr_width"
+                                        , "natural", str(boost::format("%s") % 8)));
+    memory.register_generic(new Generic("base_bank_data_width", "natural"
+                                        , str(boost::format("%s") % 8)));
+  }
+
+  // Note that this function updates ``load_lines'' and
+  // ``store_lines'' (they are passed by reference)
+  void dp_map_memory_ports(DataPath *dp
+                           , unsigned &load_lines
+                           , unsigned &store_lines)
+  {
+#define DP_MEM_PORT_MAP(name, width)                                    \
+    port_map(dp, (name), SLICE, (name), DOWNTO, (high) * (width) - 1, (low) * (width))
+  
     if (dp->load_lines > 0) {
       unsigned low = load_lines;
       unsigned high = load_lines + dp->load_lines;
-      port_map(dp, "lr_req", SLICE, "lr_req", DOWNTO, high - 1, low);
-      port_map(dp, "lr_ack", SLICE, "lr_ack", DOWNTO, high - 1, low);
-      port_map(dp, "lr_addr", SLICE, "lr_addr"
-               , DOWNTO, high * memory::address_width - 1, low * memory::address_width);
-      port_map(dp, "lr_tag", SLICE, "lr_tag"
-               , DOWNTO, high * memory::tag_width - 1, low * memory::tag_width);
-      port_map(dp, "lc_req", SLICE, "lc_req", DOWNTO, high - 1, low);
-      port_map(dp, "lc_ack", SLICE, "lc_ack", DOWNTO, high - 1, low);
-      port_map(dp, "lc_data", SLICE, "lc_data"
-               , DOWNTO, high * memory::data_width - 1, low * memory::data_width);
-      port_map(dp, "lc_tag", SLICE, "lc_tag"
-               , DOWNTO, high * memory::tag_width - 1, low * memory::tag_width);
+      
+      DP_MEM_PORT_MAP("lr_req", 1);
+      DP_MEM_PORT_MAP("lr_ack", 1);
+      DP_MEM_PORT_MAP("lr_addr", memory::address_width);
+      DP_MEM_PORT_MAP("lr_tag", memory::tag_width);
+      
+      DP_MEM_PORT_MAP("lc_req", 1);
+      DP_MEM_PORT_MAP("lc_ack", 1);
+      DP_MEM_PORT_MAP("lc_data", memory::data_width);
+      DP_MEM_PORT_MAP("lc_tag", memory::tag_width);
+      
       load_lines = high;
     }
 
     if (dp->store_lines > 0) {
       unsigned low = store_lines;
       unsigned high = store_lines + dp->store_lines;
-      port_map(dp, "sr_req", SLICE, "sr_req", DOWNTO, high - 1, low);
-      port_map(dp, "sr_ack", SLICE, "sr_ack", DOWNTO, high - 1, low);
-      port_map(dp, "sr_addr", SLICE, "sr_addr"
-               , DOWNTO, high * memory::address_width - 1, low * memory::address_width);
-      port_map(dp, "sr_data", SLICE, "sr_data"
-               , DOWNTO, high * memory::data_width - 1, low * memory::data_width);
-      port_map(dp, "sr_tag", SLICE, "sr_tag"
-               , DOWNTO, high * memory::tag_width - 1, low * memory::tag_width);
+      
+      DP_MEM_PORT_MAP("sr_req", 1);
+      DP_MEM_PORT_MAP("sr_ack", 1);
+      DP_MEM_PORT_MAP("sr_addr", memory::address_width);
+      DP_MEM_PORT_MAP("sr_data", memory::data_width);
+      DP_MEM_PORT_MAP("sr_tag", memory::tag_width);
+      
       store_lines = high;
     }
+#undef DP_MEM_PORT_MAP
   }
 
-  void port_map_new_wire(Entity *ent, const std::string &port_id, System &system)
-  {
-    Port *port = ent->find_port(port_id);
-    assert(port);
-    
-    const std::string wire_id = ent->id + "_" + port_id;
-
-    system.register_wire(new Wire(wire_id, port->type));
-    port->mapping(WIRE, wire_id);
-  }
-
-  void dp_map_call_ports(System &system, DataPath *dp, Arbiter *arbiter) 
-  {
-    if (dp->id == "start_dp") {
-      port_map_slice(dp, "call_ack", "env_call_ack");
-      port_map_slice(dp, "call_req", "env_call_req");
-      port_map_slice(dp, "call_data", "env_call_data");
-      port_map_slice(dp, "call_tag", "env_call_tag");
-      port_map_slice(dp, "return_ack", "env_return_ack");
-      port_map_slice(dp, "return_req", "env_return_req");
-      port_map_slice(dp, "return_data", "env_return_data");
-      port_map_slice(dp, "return_tag", "env_return_tag");
-    } else {
-      assert(arbiter);
-      port_map_slice(dp, "call_ack", arbiter->id + "_call_mack");
-      port_map_slice(dp, "call_req", arbiter->id + "_call_mreq");
-      port_map_slice(dp, "call_data", arbiter->id + "_call_mdata"); 
-      port_map_slice(dp, "call_tag", arbiter->id + "_call_mtag"); 
-      port_map_slice(dp, "return_ack", arbiter->id + "_return_mack");
-      port_map_slice(dp, "return_req", arbiter->id + "_return_mreq");
-      port_map_slice(dp, "return_data", arbiter->id + "_return_mdata");
-      port_map_slice(dp, "return_tag", arbiter->id + "_return_mtag"); 
-    }
-
-    for (DPEList::iterator ci = dp->calls.begin(), ce = dp->calls.end();
-         ci != ce; ++ci) {
-      DPElement *call = (*ci).second;
-      port_map_new_wire(dp, "call_" + call->id + "_req", system);
-      port_map_new_wire(dp, "call_" + call->id + "_ack", system);
-      port_map_new_wire(dp, "call_" + call->id + "_data", system);
-      port_map_new_wire(dp, "return_" + call->id + "_req", system);
-      port_map_new_wire(dp, "return_" + call->id + "_ack", system);
-      port_map_new_wire(dp, "return_" + call->id + "_data", system);
-    }
-  }
-
-  void dp_map_ports(System &system, vhdl::Module *module
-                    , unsigned &load_lines, unsigned &store_lines)
-  {
-    DataPath *dp = module->dp;
-    
-    port_map_slice(dp, "clk", "clk");
-    port_map_slice(dp, "reset", "reset");
-
-    port_map_new_wire(dp, "SigmaIn", system);
-    port_map_new_wire(dp, "SigmaOut", system);
-      
-    dp_map_memory_ports(system, dp, load_lines, store_lines);
-
-    dp_map_call_ports(system, dp, module->arbiter);
-  }
-
-  void cp_map_ports(System &system, ControlPath *cp)
-  {
-    port_map_slice(cp, "clk", "clk");
-    port_map_slice(cp, "reset", "reset");
-
-    Port *reqs = cp->find_port("LambdaOut");
-    assert(reqs);
-    Wire *reqs_wire = new Wire(cp->id + "_" + reqs->id, reqs->type);
-    system.register_wire(reqs_wire);
-    reqs->mapping(WIRE, reqs_wire->id);
-      
-    Port *acks = cp->find_port("LambdaIn");
-    assert(acks);
-    Wire *acks_wire = new Wire(cp->id + "_" + acks->id, acks->type);
-    system.register_wire(acks_wire);
-    acks->mapping(WIRE, acks_wire->id);
-  }
-
-  void ln_map_ports(System &system, LinkLayer *ln) 
-  {
-    port_map_slice(ln, "clk", "clk");
-    port_map_slice(ln, "reset", "reset");
-
-    for (PortList::iterator pi = ln->ports.begin(), pe = ln->ports.end();
-         pi != pe; ++pi) {
-      Port *port = (*pi).second;
-      if (port->id == "clk" || port->id == "reset")
-        continue;
-      Wire *wire = system.find_wire(port->id);
-      assert(wire);
-      port->mapping(WIRE, wire->id);
-    }
-  }
-
-  void arbiter_map_ports(System &system, Arbiter *arbiter)
-  {
-    port_map_slice(arbiter, "clk", "clk");
-    port_map_slice(arbiter, "reset", "reset");
-    port_map_new_wire(arbiter, "call_mreq", system);
-    port_map_new_wire(arbiter, "call_mack", system);
-    port_map_new_wire(arbiter, "call_mdata", system);
-    port_map_new_wire(arbiter, "call_mtag", system);
-    port_map_new_wire(arbiter, "call_reqs", system);
-    port_map_new_wire(arbiter, "call_acks", system);
-    port_map_new_wire(arbiter, "call_data", system);
-    port_map_new_wire(arbiter, "return_mreq", system);
-    port_map_new_wire(arbiter, "return_mack", system);
-    port_map_new_wire(arbiter, "return_mdata", system);
-    port_map_new_wire(arbiter, "return_mtag", system);
-    port_map_new_wire(arbiter, "return_reqs", system);
-    port_map_new_wire(arbiter, "return_acks", system);
-    port_map_new_wire(arbiter, "return_data", system);
-  }
-  
-  void system_map_component_ports(Program *program, System &system)
+  void system_connect_memory(Program *program, System &system)
   {
     unsigned load_lines = 1;
     unsigned store_lines = 1;
@@ -357,64 +266,8 @@ namespace {
            , me = program->modules.end(); mi != me; ++mi) {
       vhdl::Module *module = get_vhdl_module(program, (*mi).first);
 
-      cp_map_ports(system, module->cp);
-      dp_map_ports(system, module, load_lines, store_lines);
-      ln_map_ports(system, module->ln);
-      if (module->id != "start")
-        arbiter_map_ports(system, module->arbiter);
+      dp_map_memory_ports(module->dp, load_lines, store_lines);
     }
-  }
-
-  void memory_register_ports(System &system
-                             , unsigned &load_lines, unsigned &store_lines)
-  {
-    create_port(system.memory.ports, "clock", IN, "std_logic");
-    port_map_slice(&system.memory, "clock", "clk");
-    create_port(system.memory.ports, "reset", IN, "std_logic");
-    port_map_slice(&system.memory, "reset", "reset");
-    
-    create_port_with_existing_wire(&system.memory, "lr_req_in", IN, &system, "lr_req");
-    create_port_with_existing_wire(&system.memory, "lr_ack_out", OUT, &system, "lr_ack");
-    create_port_with_existing_wire(&system.memory, "lr_addr_in", IN, &system, "lr_addr");
-    create_port_with_existing_wire(&system.memory, "lr_tag_in", IN, &system, "lr_tag");
-
-    create_port_with_existing_wire(&system.memory, "lc_req_in", IN, &system, "lc_req");
-    create_port_with_existing_wire(&system.memory, "lc_ack_out", OUT, &system, "lc_ack");
-    create_port_with_existing_wire(&system.memory, "lc_data_out", OUT, &system, "lc_data");
-    create_port_with_existing_wire(&system.memory, "lc_tag_out", OUT, &system, "lc_tag");
-    
-    create_port_with_existing_wire(&system.memory, "sr_req_in", IN, &system, "sr_req");
-    create_port_with_existing_wire(&system.memory, "sr_ack_out", OUT, &system, "sr_ack");
-    create_port_with_existing_wire(&system.memory, "sr_addr_in", IN, &system, "sr_addr");
-    create_port_with_existing_wire(&system.memory, "sr_data_in", IN, &system, "sr_data");
-    create_port_with_existing_wire(&system.memory, "sr_tag_in", IN, &system, "sr_tag");
-
-    create_port_with_existing_wire(&system.memory, "sc_req_in", IN, &system, "sc_req");
-  }
-  
-  void memory_register_generics(System &system
-                                , unsigned &load_lines, unsigned &store_lines)
-  {
-    system.memory.register_generic(new Generic("num_loads", "natural"
-                                               , str(boost::format("%s") % load_lines)));
-    system.memory.register_generic(new Generic("num_stores", "natural"
-                                               , str(boost::format("%s") % store_lines)));
-    system.memory.register_generic(new Generic("addr_width", "natural"
-                                               , str(boost::format("%s") % memory::address_width)));
-    system.memory.register_generic(new Generic("data_width", "natural"
-                                               , str(boost::format("%s") % memory::data_width)));
-    system.memory.register_generic(new Generic("tag_width", "natural"
-                                               , str(boost::format("%s") % memory::tag_width)));
-    system.memory.register_generic(new Generic("number_of_banks", "natural"
-                                               , str(boost::format("%s") % 1)));
-    system.memory.register_generic(new Generic("mux_degree", "natural"
-                                               , str(boost::format("%s") % 2)));
-    system.memory.register_generic(new Generic("demux_degree", "natural"
-                                               , str(boost::format("%s") % 2)));
-    system.memory.register_generic(new Generic("base_bank_addr_width"
-                                               , "natural", str(boost::format("%s") % 8)));
-    system.memory.register_generic(new Generic("base_bank_data_width", "natural"
-                                               , str(boost::format("%s") % 8)));
   }
 
   void arbiter_connect_client_port(Arbiter *arbiter, DataPath *dp
@@ -496,6 +349,148 @@ namespace {
     out << ");" << indent_out;
   }
 
+  SimpleEntity* system_create_io_entity(System &system
+                                        , const std::string &pname
+                                        , DPElement *dpe)
+  {
+    SimpleEntity *entity = new SimpleEntity("io_" + pname, str(dpe->ntype) + "PortLevel");
+    entity_create_clk_ports(entity);
+    system.register_instance(entity);
+    
+    Port *data = dpe->find_port("odata");
+    assert(data);
+    entity_create_forwarded_io_port(&system, entity, pname, "data"
+                                    , data->io_type, data->type);
+    entity_create_forwarded_io_port(&system, entity, pname, "req"
+                                    , OUT, vhdl::Type("std_logic"));
+    entity_create_forwarded_io_port(&system, entity, pname, "ack"
+                                    , IN, vhdl::Type("std_logic"));
+
+    entity_create_port_with_map_name(entity, "data", (data->io_type == IN ? OUT : IN)
+                                               , vhdl::Type("StdLogicArray2D"
+                                                            , data->type.ranges)
+                                               , WIRE, entity->id + "_data_sig");
+    entity_create_port_with_map_name(entity, "req", IN
+                                     , vhdl::Type("std_logic_vector")
+                                     , WIRE, entity->id + "_req_sig");
+    entity_create_port_with_map_name(entity, "ack", OUT
+                                     , vhdl::Type("std_logic_vector")
+                                     , WIRE, entity->id + "_ack_sig");
+    return entity;
+  }
+
+  void system_create_io_ports(System &system, Program *program)
+  {
+    for (Program::ModuleList::iterator mi = program->modules.begin()
+           , me = program->modules.end(); mi != me; ++mi) {
+      vhdl::Module *module = get_vhdl_module(program, (*mi).first);
+
+      DataPath *dp = module->dp;
+      for (DPEList::iterator di = dp->io_elements.begin(), de = dp->io_elements.end();
+           di != de; ++di) {
+        const std::string pname = (*di).first;
+        DPElement *dpe = (*di).second;
+        assert(is_io(dpe->ntype));
+        
+        if (!system.find_instance("io_" + pname))
+          system_create_io_entity(system, pname, dpe);
+        system.register_port_user(pname, dp);
+      }
+    }
+
+    for (System::PortUserMap::iterator pi = system.port_users.begin()
+           , pe = system.port_users.end(); pi != pe; ++pi) {
+      const std::string &pname = (*pi).first;
+      std::set<DataPath*> &dpset = (*pi).second;
+
+      Entity *io = system.find_instance("io_" + pname);
+      assert(io);
+
+      unsigned count = (*pi).second.size();
+      io->find_port("data")->type.ranges.push_front(Range(DOWNTO, count));
+      io->find_port("req")->type.ranges.push_front(Range(DOWNTO, count));
+      io->find_port("ack")->type.ranges.push_front(Range(DOWNTO, count));
+      io->register_generic(new Generic("colouring", "NaturalArray"
+                                       , natural_array_all_same(0, count)));
+
+      for (std::set<DataPath*>::iterator di = dpset.begin(), de = dpset.end();
+           di != de; ++di) {
+        DataPath *dp = *di;
+
+        Port *data = dp->find_port(io->id + "_data");
+        data->mapping(WIRE, dp->id + "_" + data->id);
+        
+        Port *req = dp->find_port(io->id + "_req");
+        req->mapping(WIRE, dp->id + "_" + req->id);
+        
+        Port *ack = dp->find_port(io->id + "_ack");
+        ack->mapping(WIRE, dp->id + "_" + ack->id);
+      }
+    }
+  }
+  
+  void system_print_io_connections(System &system, hls::ostream &out) 
+  {
+    for (System::PortUserMap::iterator pi = system.port_users.begin()
+           , pe = system.port_users.end(); pi != pe; ++pi) {
+      Entity *io = system.find_instance("io_" + (*pi).first);
+      assert(io);
+      const std::string &pname = io->id;
+      std::set<DataPath*> &dpset = (*pi).second;
+
+      std::vector<std::string> wires;
+      
+      unsigned count = 0;
+      for (std::set<DataPath*>::iterator di = dpset.begin(), de = dpset.end();
+           di != de; ++di) {
+        DataPath *dp = *di;
+
+        Port *data = dp->find_port(pname + "_data");
+        wires.push_back(data->mapping.name);
+        
+        Port *req = dp->find_port(pname + "_req");
+        std::ostringstream req_stt;
+        req_stt << pname << "_req_sig(" << count << ") <= " << req->mapping.name << ";";
+        dp->append_to_prelude(req_stt.str());
+
+        Port *ack = dp->find_port(pname + "_ack");
+        std::ostringstream ack_stt;
+        ack_stt << ack->mapping.name << " <= " << pname << "_ack_sig("
+                << count << ");";
+        dp->append_to_prelude(ack_stt.str());
+
+        ++count;
+      }
+
+      if (io->component_name() == str(Input) + "PortLevel") {
+        unsigned count = 0;
+        for (std::vector<std::string>::iterator si = wires.begin(), se = wires.end();
+             si != se; ++si) {
+          const std::string &name = (*si);
+          out << indent << name << " <= extract("
+              << pname << "_data_sig, " << count << ");"
+              << "\n";
+          ++count;
+        }
+      } else {
+        assert(io->component_name() == str(Output) + "PortLevel");
+        unsigned count = 0;
+        out << indent << "unflatten(" << pname << "_data_sig, "
+            << indent_in;
+        for (std::vector<std::string>::iterator si = wires.begin(), se = wires.end();
+             si != se; ++si) {
+          const std::string &name = (*si);
+          if (count > 0)
+            out << "& ";
+          out << indent << name;
+          ++count;
+        }
+        out << ");"
+            << "\n" << indent_out;
+      }
+    }
+  }
+
   void create_system(Program *program, System &system)
   {
     unsigned load_lines = 1;    // line 0 is reserved for the test-bench.
@@ -509,14 +504,13 @@ namespace {
       store_lines += module->dp->store_lines;
     }
 
-    memory_register_generics(system, load_lines, store_lines);
+    system_create_standard_ports(system, program);
 
-    system_create_ports(system, program);
+    system_create_io_ports(system, program);
     
-    system_create_memory_wires(system, load_lines, store_lines);
-    memory_register_ports(system, load_lines, store_lines);
-    
-    system_map_component_ports(program, system);
+    memory_create_ports(system.memory, load_lines, store_lines);
+    system_connect_memory(program, system);
+    memory_register_generics(system.memory, load_lines, store_lines);
   }
 
   void print_components(Program *program, hls::ostream &out) 
@@ -524,9 +518,19 @@ namespace {
     for (Program::ModuleList::iterator mi = program->modules.begin()
            , me = program->modules.end(); mi != me; ++mi) {
       vhdl::Module *module = get_vhdl_module(program, (*mi).first);
+      
+      entity_declare_mapped_signals(module->cp, out);
       print_object_declaration(module->cp, "component", out);
+      
+      entity_declare_mapped_signals(module->dp, out);
       print_object_declaration(module->dp, "component", out);
+      
+      entity_declare_mapped_signals(module->ln, out);
       print_object_declaration(module->ln, "component", out);
+
+      if (module->id != "start")
+        entity_declare_mapped_signals(module->arbiter, out);
+
     }
   }
 
@@ -539,7 +543,7 @@ namespace {
       print_instance(module->dp, out);
       print_instance(module->ln, out);
 
-      if (module->id == "start")
+      if (module->id == program->start->id)
         continue;
       
       system_connect_arbiter(program, module, out);
@@ -547,13 +551,10 @@ namespace {
     }
   }
 
-  void print_system_config(Program *program, System &system)
+  void print_system_config(Program *program, System &system, hls::ostream &out)
   {
-    std::ofstream file("system_config.vhdl");
-    hls::ostream out(file);
-
     out
-      << indent << "configuration system_config of system is"
+      << indent << "configuration " << system.id << "_config of " << system.id << " is"
       << indent << "  for default_arch"
       << "\n";
 
@@ -571,13 +572,15 @@ namespace {
       
     out
       << indent << "  end for;"
-      << indent << "end system_config;"
+      << indent << "end " << system.id << "_config;"
       << "\n";
   }
 
   void print_system(Program *program, System &system)
   {
-    std::ofstream file("system.vhdl");
+    const std::string filename = program->id + "_system.vhdl";
+    
+    std::ofstream file(filename.c_str());
     file <<
       "\nlibrary ieee;"
       "\nuse ieee.std_logic_1164.all;"
@@ -593,10 +596,12 @@ namespace {
 
     print_object_declaration(&system, "entity", out);
     out << "\n"
-        << indent << "architecture default_arch of system is"
+        << indent << "architecture default_arch of " << system.id << " is"
         << "\n" << indent_in;
 
     system.declare_wires(out);
+    entity_declare_mapped_signals(&system.memory, out);
+    entity_declare_registered_wires(&system, out);
     print_components(program, out);
   
     out << "\n" << indent_out
@@ -605,20 +610,27 @@ namespace {
     
     system.print_statements(out);
     
+    system_print_io_connections(system, out);
+    
     print_component_instances(program, out);
+    
+    entity_print_registered_instances(&system, out);
+    
     print_instance(&system.memory, out);
     
     out << "\n" << indent_out
-        << indent << "end default_arch;";
+        << indent << "end default_arch;"
+        << "\n";
+
+    print_system_config(program, system, out);
   }
   
 } // end anonymous namespace
 
 void vhdl::generate_system(Program *program) 
 {
-  System system("system", "top-level entity");
+  System system(program->id + "_system", "top-level entity");
 
   create_system(program, system);
   print_system(program, system);
-  print_system_config(program, system);
 }

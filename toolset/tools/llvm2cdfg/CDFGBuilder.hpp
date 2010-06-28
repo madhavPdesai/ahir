@@ -24,7 +24,7 @@ namespace cdfg {
     AccessAnalysis *AA;
     hls::Program *program;
     
-    void create_program(const std::string &id);
+    void create_program(std::string id);
     void create_addressable(llvm::GlobalVariable &G);
     virtual void create_cdfg(llvm::Function &F) = 0;
     

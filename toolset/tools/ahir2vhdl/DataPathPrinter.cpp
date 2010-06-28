@@ -34,27 +34,27 @@ namespace {
     }
   }
 
-  void declare_mapped_signals(DPEList &list, hls::ostream &out)
+  void memberlist_declare_mapped_signals(MemberList &list, hls::ostream &out)
+  {
+    bool insert_line = false;
+    for (MemberList::iterator mi = list.begin(), me = list.end();
+         mi != me; ++mi) {
+      DPElement *dpe = *mi;
+      insert_line |= entity_declare_mapped_signals(dpe, out);
+    }
+    
+    if (insert_line)
+      out << "\n";
+  }
+  
+  void dpelist_declare_mapped_signals(DPEList &list, hls::ostream &out)
   {
     bool insert_line = false;
     for (DPEList::iterator wi = list.begin(), we = list.end();
 	 wi != we; ++wi) {
       DPElement *dpe = (*wi).second;
-      for (PortList::iterator pi = dpe->ports.begin(), pe = dpe->ports.end();
-	   pi != pe; ++pi) {
-	Port *port = (*pi).second;
-        if (!is_wrapper(dpe))
-          if (port->io_type != OUT)
-            continue;
-        
-	if (port->mapping.type != WIRE)
-	  continue;
-        
-	insert_line = true;
-	out << indent
-	    << "signal " << port->mapping.name << " : " << port->type << ";";
-      }
-      declare_mapped_signals(dpe->members, out);
+      insert_line |= entity_declare_mapped_signals(dpe, out);
+      memberlist_declare_mapped_signals(dpe->members, out);
     }
 
     if (insert_line)
@@ -64,9 +64,9 @@ namespace {
   void print_dp_signal_declarations(DataPath *dp, hls::ostream &out) 
   {
     out << indent << "-- wrapper wires";
-    declare_mapped_signals(dp->wrappers, out);
+    dpelist_declare_mapped_signals(dp->wrappers, out);
     out << indent << "-- element wires";
-    declare_mapped_signals(dp->elements, out);
+    dpelist_declare_mapped_signals(dp->elements, out);
     out << indent << "-- other wires";
     dp->declare_wires(out);
   }
@@ -75,9 +75,9 @@ namespace {
   {
     assert(wrapper->members.size() > 0);
     out << indent << "--  wrapper: " << wrapper->id;
-    for (DPEList::iterator ci = wrapper->members.begin(), ce = wrapper->members.end();
+    for (MemberList::iterator ci = wrapper->members.begin(), ce = wrapper->members.end();
 	 ci != ce; ++ci) {
-      DPElement *dpe = (*ci).second;
+      DPElement *dpe = *ci;
       out << indent << "--    dpe: " << dpe->id;
       dpe->print_prelude(out);
     }
@@ -92,7 +92,7 @@ namespace {
   }
   
   void print_multidim_extract(Port *port
-			      , DPEList &members
+			      , MemberList &members
 			      , hls::ostream &out) 
   {
     const std::string &bulk_name = port->mapping.name;
@@ -100,9 +100,9 @@ namespace {
     assert(port->mapping.type == WIRE);
     
     unsigned count = members.size() - 1;
-    for (DPEList::iterator di = members.begin(), de = members.end();
+    for (MemberList::iterator di = members.begin(), de = members.end();
 	 di != de; ++di) {
-      DPElement *dpe = (*di).second;
+      DPElement *dpe = *di;
       Port *dpe_port = dpe->find_port(port->id);
       assert(dpe_port);
 
@@ -134,7 +134,7 @@ namespace {
   }
 
   void print_multidim_insert(Port *port
-			     , DPEList &members
+			     , MemberList &members
 			     , hls::ostream &out)
   {
     const std::string &bulk_name = port->mapping.name;
@@ -154,9 +154,9 @@ namespace {
 
       unsigned count = 0;
       unsigned last = members.size() - 1;
-      for (DPEList::iterator di = members.begin(), de = members.end();
+      for (MemberList::iterator di = members.begin(), de = members.end();
            di != de; ++di) {
-        DPElement *dpe = (*di).second;
+        DPElement *dpe = *di;
         Port *dpe_port = dpe->find_port(port->id);
         assert(dpe_port);
         
@@ -175,9 +175,9 @@ namespace {
       assert(bulk_ranges.size() == 1);
 
       unsigned count = members.size() - 1;
-      for (DPEList::iterator di = members.begin(), de = members.end();
+      for (MemberList::iterator di = members.begin(), de = members.end();
            di != de; ++di) {
-        DPElement *dpe = (*di).second;
+        DPElement *dpe = *di;
         Port *dpe_port = dpe->find_port(port->id);
         assert(dpe_port);
         assert(dpe_port->mapping.type == SLICE);

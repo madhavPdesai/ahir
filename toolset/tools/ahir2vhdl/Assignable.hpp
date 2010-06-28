@@ -57,6 +57,13 @@ namespace vhdl {
     }
   };
 
+  inline bool operator== (Range &l, Range &r)
+  {
+    return l.rtype == r.rtype
+      && l.upper == r.upper
+      && l.lower == r.lower;
+  }
+
   hls::ostream& operator<< (hls::ostream &out, const Range &r);
   std::ostream& operator<< (std::ostream &out, const Range &r);
   
@@ -88,6 +95,12 @@ namespace vhdl {
     void operator() (MappingType t, const std::string &n
 		     , const RangeList &r = RangeList());
     void operator() (MappingType t, const std::string &n, const Range &r);
+    void clear()
+    {
+      type = NONE;
+      name.clear();
+      ranges.clear();
+    }
 
     Mapping()
       : type(NONE)

@@ -79,6 +79,11 @@ namespace ahir {
       case LoadComplete:
 	out << indent << "<counterpart>" << dpe->counterpart->id << "</counterpart>";
 	break;
+
+      case Input:
+      case Output:
+        out << indent << "<portname>" << dpe->portname << "</portname>";
+        break;
 	
       default:
 	break;

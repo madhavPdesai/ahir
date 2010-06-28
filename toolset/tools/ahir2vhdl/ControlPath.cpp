@@ -30,12 +30,14 @@ vhdl::ControlPath* vhdl::create_cp(ahir::ControlPath *acp)
   ControlPath *cp = new ControlPath(acp->id, acp);
 
   PortList &plist = cp->ports;
-
-  create_port(plist, "clk", IN, "std_logic");
-  create_port(plist, "reset", IN, "std_logic");
   
-  create_port(plist, "LambdaIn", IN, "BooleanArray", Range(DOWNTO, acp->acks.size(), 1));
-  create_port(plist, "LambdaOut", OUT, "BooleanArray", Range(DOWNTO, acp->reqs.size(), 1));
+  entity_create_clk_ports(cp);
+  entity_create_port_with_map(cp, "LambdaIn", IN
+                              , vhdl::Type("BooleanArray", Range(DOWNTO, acp->acks.size(), 1))
+                              , WIRE);
+  entity_create_port_with_map(cp, "LambdaOut", OUT
+                              , vhdl::Type("BooleanArray", Range(DOWNTO, acp->reqs.size(), 1))
+                              , WIRE);
   
   return cp;
 }

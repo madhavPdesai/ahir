@@ -51,6 +51,12 @@ void cdfg::Printer::print_node_details(CDFGNode *node, hls::ostream &out)
 	  << "\"/>";
       break;
 
+    case Input:
+    case Output:
+      assert(node->portname.size());
+      out << indent << "<portname>" << node->portname << "</portname>";
+      break;
+
     default:
       break;
   }

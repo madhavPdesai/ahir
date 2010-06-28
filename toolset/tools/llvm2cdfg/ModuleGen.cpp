@@ -52,16 +52,64 @@ namespace {
     CDFG *cdfg;
     BasicBlock *curr_block;
 
+    bool isConstantUsed(const Constant *konst) const
+    {
+      for (llvm::Value::use_const_iterator UI = konst->use_begin(), E = konst->use_end();
+           UI != E; ++UI) {
+        const Constant *UC = dyn_cast<Constant>(*UI);
+        if (UC == 0 || isa<GlobalValue>(UC))
+          return true;
+        
+        if (isConstantUsed(UC))
+          return true;
+      }
+      return false;
+    }
+
+    bool is_ioport_identifier(GlobalVariable &G)
+    {
+      bool is_ioport = true;
+      
+      for (llvm::Value::use_iterator ui = G.use_begin(), ue = G.use_end();
+           ui != ue; ++ui) {
+        User *user = *ui;
+        
+        if (BitCastInst *inst = dyn_cast<BitCastInst>(user)) {
+          if (inst->getNumUses() > 1) {
+            is_ioport = false;
+            break;
+          }
+          
+          IOCode ioc = get_io_code(*(inst->use_begin()));
+          if (ioc == NOT_IO) {
+            is_ioport = false;
+            break;
+          }
+        } else {
+          if (Constant *konst = dyn_cast<Constant>(user)) {
+            if (!isConstantUsed(konst))
+              continue;
+          }
+          
+          is_ioport = false;
+          break;
+        }
+      }
+      
+      return is_ioport;
+    }
+
     bool runOnModule(llvm::Module &M)
     {
       TD = &getAnalysis<TargetData>();
       AA = &getAnalysis<AliasAnalysis>();
       cbuilder = cdfg_builder_new(TD, AA);
       cbuilder->create_program(M.getModuleIdentifier());
-  
+
       for (llvm::Module::global_iterator gi = M.global_begin(), ge = M.global_end();
            gi != ge; ++gi) {
-        cbuilder->create_addressable(*gi);
+        if (!is_ioport_identifier(*gi))
+          cbuilder->create_addressable(*gi);
       }
   
       for (llvm::Module::iterator fi = M.begin(), fe = M.end();
@@ -74,7 +122,6 @@ namespace {
                     << fi->getNameStr()
                     << "\n";
           ++fi;
-          f.eraseFromParent();
           continue;
         }
 
@@ -95,6 +142,9 @@ namespace {
 
     void runOnFunction(llvm::Function &F)
     {
+      if (F.isDeclaration())
+        return;
+    
       cbuilder->initialise_with_function(F);
 
       std::set<BasicBlock*> blocks_queued;

@@ -2,6 +2,7 @@
 #include "Utils.hpp"
 #include "EntityBuilder.hpp"
 #include "SimpleEntity.hpp"
+#include "typedefs.hpp"
 
 #include <AHIR/AHIRModule.hpp>
 #include <Base/Type.hpp>
@@ -9,6 +10,7 @@
 #include <boost/lexical_cast.hpp>
 #include <string>
 #include <sstream>
+#include <fstream>
 
 using namespace vhdl;
 using namespace hls;
@@ -20,8 +22,8 @@ namespace {
     DataPath *dp;
     ahir::DataPath *adp;
 
-    // typedef std::map<ahir::DPElement*, DPElement*> DPEMap;
-    // DPEMap dpe_map;
+    typedef std::map<ahir::DPElement*, DPElement*> DPEMap;
+    DPEMap dpe_map;
 
     Builder() { reset(); }
     
@@ -29,8 +31,24 @@ namespace {
     {
       dp = NULL;
       adp = NULL;
+      dpe_map.clear();
     }
     
+    void map_adpe_to_dpe(ahir::DPElement *a, DPElement *d)
+    {
+      assert(!find_dpe_for_adpe(a));
+      dpe_map[a] = d;
+    }
+    
+    DPElement* find_dpe_for_adpe(ahir::DPElement *adpe)
+    {
+      if (!adpe)
+        return NULL;
+      if (dpe_map.find(adpe) == dpe_map.end())
+        return NULL;
+      return dpe_map[adpe];
+    }
+
     DataPath* create_dp(ahir::DataPath *ahir) 
     {
       adp = ahir;
@@ -38,13 +56,19 @@ namespace {
     
       // create a vhdl::dpe for each ahir::dpe
       create_elements();
+
+      // create a single element to represent each I/O port, removing
+      // all the individual DPEs from DP.
+      collect_io_elements();
     
-      // create wrappers and consume dpe's created in the previous function
-      create_wrappers();
+      // create wrappers and remove members from the DP.
+      wrap_shared_elements();
     
-      // LC are created later in one bunch because we need to know the
-      // total number of wrappers.
+      // LR are created later in one bunch because we need to know the
+      // total number of wrappers when generating IDs for new members.
       create_lr_wrappers(dp, adp);
+
+      count_operators();
 
       for (DPEList::iterator di = dp->elements.begin(), de = dp->elements.end();
            di != de; ++di) {
@@ -73,6 +97,78 @@ namespace {
       }
     }
 
+    void create_dpe_ports(ahir::DPElement *adpe, DPElement *dpe, bool has_1D_ports)
+    {
+      hls::NodeType ntype = dpe->ntype;
+      
+      for (ahir::PortList::iterator pi = adpe->ports.begin(), pe = adpe->ports.end();
+           pi != pe; ++pi) {
+        ahir::Port *p = (*pi).second;
+        
+        const bool has_slv_proxy = (is_io(ntype) || is_mem(ntype)) && (p->id == "data");
+        const bool needs_proxy = has_slv_proxy || has_1D_ports;
+        const bool output_port = is_output(p);
+        
+        const std::string wire_id = vhdl_wire_name(p->wire);
+        const std::string proxy_id = dpe->id + "_" + p->id;
+
+        const std::string data_type = (has_1D_ports
+                                       ? str(p->type->type_id)
+                                       : vhdl_array_type_name(p->type));
+
+        // Use std_logic when creating a port that needs an SLV proxy,
+        // else use the actual data-type
+        Port *port = create_port(dpe->ports, p->id, p->io_type
+                                 , vhdl::Type((has_slv_proxy ? "StdLogicArray2D"
+                                               : data_type)
+                                              , (has_slv_proxy ? Range(DOWNTO, p->type->width())
+                                                 : create_range(p->type))));
+          
+        // Promote the port type to a two-dimensional array if appropriate.
+        if (!has_1D_ports)
+          port->type.ranges.push_front(Range(DOWNTO, 1));
+
+        // The port declares the wire if it is a proxy, or it is an
+        // output port.
+        port->mapping(((needs_proxy || port->io_type == OUT) ? WIRE : SLICE)
+                      , (needs_proxy ? proxy_id : wire_id));
+
+        // Normally, every output port also declares the attached
+        // wire; but in case of an output port with a proxy, the
+        // actual wire remains undeclared. Such wires need to be
+        // registered with the DP.
+        if (needs_proxy) {
+          if (output_port) {
+            Wire *wire = new Wire(wire_id, vhdl::Type(vhdl_array_type_name(p->type)
+                                                      , create_range(p->type)));
+            dp->register_wire(wire);
+            wire->type.ranges.push_front(Range(DOWNTO, 1));
+          }
+        }
+
+        // Connect the proxies by inserting assignment statements in
+        // the prelude.
+        if (has_slv_proxy) {
+          const std::string assign =
+            (output_port
+             ? wire_id + " <= To_" + data_type + "(" + proxy_id + ");"
+             : proxy_id + " <= To_StdLogicArray2D(" + wire_id + ");");
+          dpe->append_to_prelude(assign);
+          continue; // ensures mutual exclusion with the next
+                    // if-block.
+        }
+
+        if (has_1D_ports) {
+          const std::string assign =
+            (output_port
+             ? wire_id + " <= to_" + vhdl_array_type_name(p->type)
+             + "(" + port->mapping.name + ");"
+             : port->mapping.name + " <= extract(" + wire_id + ", 0);");
+          dpe->append_to_prelude(assign);
+        }
+      }
+    }
+    
     void create_elements()
     {
       for (ahir::DPEList::iterator di = adp->elements.begin(), de = adp->elements.end();
@@ -86,116 +182,88 @@ namespace {
                                        , vhdl_component_name(adpe)
                                        , adpe->description
                                        , vhdl_configuration_name(adpe));
-        
-        bool array_ports = has_array_ports(ntype);
-        
-        for (ahir::PortList::iterator pi = adpe->ports.begin(), pe = adpe->ports.end();
-             pi != pe; ++pi) {
-          ahir::Port *p = (*pi).second;
-        
-          const bool is_mem_data = is_mem(ntype) && (p->id == "data");
-          const bool output_port = is_output(p);
-        
-          const std::string wire_id = vhdl_wire_name(p->wire);
-          const std::string slv_id = dpe->id + "_" + p->id;
 
-          const std::string data_type = (array_ports ? vhdl_array_type_name(p->type)
-                                         : str(p->type->type_id));
+        // A few elemnts like multiplexers are never shared, and hence
+        // they do not have two-dimensional array ports.
+        bool has_1D_ports = !has_2D_ports(ntype);
 
-          Port *port = create_port(dpe->ports, p->id, p->io_type
-                                   , vhdl::Type((is_mem_data ? "StdLogicArray2D"
-                                                 : data_type)
-                                                , (is_mem_data ? Range(DOWNTO, p->type->width())
-                                                   : create_range(p->type))));
-          if (array_ports)
-            port->type.ranges.push_front(Range(DOWNTO, 1));
-          
-          port->mapping(WIRE, ((is_mem_data || (!array_ports)) ? slv_id : wire_id));
-
-          if (is_mem_data || (!array_ports)) {
-            if (output_port) {
-              Wire *wire = new Wire(wire_id, vhdl::Type(vhdl_array_type_name(p->type)
-                                                        , create_range(p->type)));
-              dp->register_wire(wire);
-              wire->type.ranges.push_front(Range(DOWNTO, 1));
-            } else {
-              dp->register_wire(new Wire(slv_id, port->type));
-            }
-            
-            if (is_mem_data) {
-              const std::string assign =
-                (output_port
-                 ? wire_id + " <= To_" + data_type + "(" + slv_id + ");"
-                 : slv_id + " <= To_StdLogicArray2D(" + wire_id + ");");
-              dpe->append_to_prelude(assign);
-            } else {
-              assert(!array_ports);
-              const std::string assign =
-                (output_port
-                 ? wire_id + " <= to_" + vhdl_array_type_name(p->type)
-                 + "(" + port->mapping.name + ");"
-                 : port->mapping.name + " <= extract(" + wire_id + ", 0);");
-              dpe->append_to_prelude(assign);
-            }
-          }
-        }
-
-        dpe_create_symbol_ports(dpe->ports, adpe->reqs, IN, "SigmaIn", array_ports);
-        dpe_create_symbol_ports(dpe->ports, adpe->acks, OUT, "SigmaOut", array_ports);
-      
-        Port *rst = create_port(dpe->ports, "reset", IN, "std_logic", true);
-        rst->mapping(SLICE, "reset");
-      
-        Port *clk = create_port(dpe->ports, "clk", IN, "std_logic", true);
-        clk->mapping(SLICE, "clk");
-      
+        create_dpe_ports(adpe, dpe, has_1D_ports);
+        
+        dpe_create_symbol_ports(dpe->ports, adpe->reqs, IN, "SigmaIn", !has_1D_ports);
+        dpe_create_symbol_ports(dpe->ports, adpe->acks, OUT, "SigmaOut", !has_1D_ports);
+        entity_create_clk_ports(dpe);
         dpe_update_details(dpe, adpe);
-      
-        register_dpe(adpe, dpe);
+
         dp->register_dpe(dpe);
+        map_adpe_to_dpe(adpe, dpe);
+      }
+    }
+
+    /* ===== Wrappers ===== */
+
+    std::string wrapper_id(unsigned id)
+    {
+      return "wrapper_" + boost::lexical_cast<std::string>(id);
+    }
+
+    void collect_io_elements()
+    {
+      for (ahir::DataPath::IOPortList::iterator pi = adp->io_ports.begin()
+             , pe = adp->io_ports.end(); pi != pe; ++pi) {
+        ahir::DPEVector &dl = (*pi).second;
+        assert(dl.size() > 0);
+        if (dl.size() == 1)
+          continue;
+
+        ahir::DPElement *first_dpe = dl.front();
+        NodeType ntype = first_dpe->ntype;
+        assert(is_io(ntype));
+        assert((*pi).first == first_dpe->portname);
+        
+        create_wrapper("wrapper_" + first_dpe->portname
+                       , (first_dpe->ntype == Input
+                          ? "InputPort" : "OutputPort")
+                       , dl, dp);
       }
     }
     
-    void create_wrappers()
+    void wrap_shared_elements()
     {
       for (ahir::WrapperList::iterator wi = adp->wrappers.begin()
              , we = adp->wrappers.end(); wi != we; ++wi) {
         ahir::Wrapper *aw = (*wi).second;
 
-        ahir::MemberList::iterator mi = aw->members.begin();
-        ahir::DPElement *first = adp->find_dpe(*mi);
-        assert(first);
-
-        DPElement *first_ve = find_dpe(first);
-        assert(first_ve);
-        DPElement *wrapper
-          = create_wrapper("wrapper_" + boost::lexical_cast<std::string>(aw->id)
-                           , aw->description, aw->members.size(), first_ve, dp);
-
+        ahir::DPEVector members;
+        
         for (ahir::MemberList::iterator mi = aw->members.begin()
                , me = aw->members.end(); mi != me; ++mi) {
           ahir::DPElement *adpe = adp->find_dpe(*mi);
           assert(adpe);
-
-          DPElement *dpe = find_dpe(adpe);
-          assert(dpe);
-          wrapper->register_member(dpe);
-          dp->remove_dpe(dpe);
+          members.push_back(adpe);
         }
-
-        dpe_add_generics(wrapper);
+      
+        create_wrapper(wrapper_id(aw->id), aw->description, members, dp);
       }
     }
   
     DPElement* create_wrapper(const std::string &id, const std::string &d
-                              , unsigned num_members
-                              , DPElement *dpe, DataPath *dp)
+                              , ahir::DPEVector &dv, DataPath *dp)
     {
-      DPElement *w = new DPElement(id, dpe->ntype, dpe->cname, d
-                                   , dpe->configuration);
+      ahir::DPElement *adpe = dv.front();
+      DPElement *vdpe = find_dpe_for_adpe(adpe);
+      assert(vdpe);
+      
+      unsigned num_members = dv.size();
+      
+      DPElement *w = new DPElement(id, vdpe->ntype, vdpe->cname, d
+                                   , vdpe->configuration);
       dp->register_wrapper(w);
+      
+      if (is_io(w->ntype)) {
+        w->portname = vdpe->portname;
+      }
 
-      for (PortList::iterator pi = dpe->ports.begin(), pe = dpe->ports.end();
+      for (PortList::iterator pi = vdpe->ports.begin(), pe = vdpe->ports.end();
            pi != pe; ++pi) {
         Port *port = (*pi).second;
         
@@ -209,20 +277,26 @@ namespace {
         wport->mapping(WIRE, w->id + "_" + port->id);
       }
 
-      Port *rst = create_port(w->ports, "reset", IN, "std_logic", true);
-      rst->mapping(SLICE, "reset");
-      
-      Port *clk = create_port(w->ports, "clk", IN, "std_logic", true);
-      clk->mapping(SLICE, "clk");
+      entity_create_clk_ports(w);
 
+      for (ahir::DPEVector::iterator di = dv.begin(), de = dv.end();
+           di != de; ++di) {
+        ahir::DPElement *adpe = *di;
+        DPElement *vdpe = find_dpe_for_adpe(adpe);
+        assert(vdpe);
+        w->register_member(vdpe);
+        dp->remove_dpe(vdpe);
+      }
+
+      dpe_add_generics(w);
+      
       return w;
     }
 
+    // Scan the DP for LoadComplete wrappers. The corresponding
+    // LoadRequest wrappers are implicit and need to be created here.
     void create_lr_wrappers(DataPath *dp, ahir::DataPath *adp)
     {
-      // Scan the DP for LoadComplete wrappers. The corresponding
-      // LoadRequest wrappers are implicit and need to be created here.
-    
       unsigned max_id = 0;	// used for creating new wrappers
       for (ahir::WrapperList::iterator wi = adp->wrappers.begin()
              , we = adp->wrappers.end(); wi != we; ++wi) {
@@ -231,47 +305,31 @@ namespace {
           max_id = aw->id;
       }
 
-      std::vector<DPElement*> worklist;
-      for (DPEList::iterator wi = dp->wrappers.begin(), we = dp->wrappers.end();
-           wi != we; ++wi) {
-        DPElement *lc = (*wi).second;
-      
+      for (ahir::WrapperList::iterator wi = adp->wrappers.begin()
+             , we = adp->wrappers.end(); wi != we; ++wi) {
+        ahir::Wrapper *aw = (*wi).second;
+
+        DPElement *lc = dp->find_wrapper(wrapper_id(aw->id));
         if (lc->ntype != LoadComplete)
           continue;
-      
-        worklist.push_back(lc);
+
         assert(!lc->counterpart);
-      }
+        
+        ahir::DPEVector members;
+        for (ahir::MemberList::iterator mi = aw->members.begin()
+               , me = aw->members.end(); mi != me; ++mi) {
+          ahir::DPElement *adpe = adp->find_dpe(*mi);
+          assert(adpe);
+          assert(adpe->counterpart);
+          members.push_back(adpe->counterpart);
+        }
 
-      for (std::vector<DPElement*>::iterator i = worklist.begin(), e = worklist.end();
-           i != e; ++i) {
-        DPElement *lc = *i;
-
-        DPEList::iterator mi = lc->members.begin();
-        DPElement *first = (*mi).second->counterpart;
-        assert(first);
-        assert(first->ntype == LoadRequest);
-      
         unsigned id = ++max_id;
-        DPElement *lr = create_wrapper("wrapper_" + boost::lexical_cast<std::string>(id)
+        DPElement *lr = create_wrapper(wrapper_id(id)
                                        , lc->description
-                                       , lc->members.size(), first, dp);
+                                       , members, dp);
         lr->counterpart = lc;
         lc->counterpart = lr;
-      
-        // Counterparts of the LoadComplete members get added to the
-        // LoadRequest.
-        for (DPEList::iterator mi = lc->members.begin(), me = lc->members.end();
-             mi != me; ++mi) {
-          DPElement *dpe = (*mi).second;
-          DPElement *cpart = dpe->counterpart;
-          assert(cpart);
-          assert(cpart->ntype == LoadRequest);
-          lr->register_member(cpart);
-          dp->remove_dpe(cpart);
-        }
-        
-        dpe_add_generics(lr);
       }
     }
 
@@ -308,11 +366,11 @@ namespace {
         width_str << "(0 => " << memory_get_num_lines(dpe) << ")";
       else {
         width_str << "(";
-        DPEList::iterator me = --dpe->members.end();
-        for (DPEList::iterator mi = dpe->members.begin(); mi != me; ++mi) {
-          width_str << memory_get_num_lines((*mi).second) << ", ";
+        MemberList::iterator me = --dpe->members.end();
+        for (MemberList::iterator mi = dpe->members.begin(); mi != me; ++mi) {
+          width_str << memory_get_num_lines(*mi) << ", ";
         }
-        width_str << memory_get_num_lines((*me).second);
+        width_str << memory_get_num_lines(*me);
         width_str << ")";
       }
       
@@ -347,7 +405,7 @@ namespace {
       unsigned members = (is_wrapper(dpe) ? dpe->members.size() : 1);
       assert(members > 0);
       
-      if (is_shared(ntype) || is_io(ntype)) {
+      if (is_shared(ntype) || is_mapped_to_io(ntype)) {
         switch (ntype) {
           case LoadRequest:
           case LoadComplete:
@@ -391,7 +449,7 @@ namespace {
         case LoadRequest:
         case LoadComplete: {
           assert(adpe->counterpart);
-          DPElement *cpart = find_dpe(adpe->counterpart);
+          DPElement *cpart = find_dpe_for_adpe(adpe->counterpart);
           if (cpart) {
             assert(!cpart->counterpart);
             cpart->counterpart = dpe;
@@ -399,45 +457,38 @@ namespace {
           }
           break;
         }
+
+        case Input:
+        case Output:
+          dpe->portname = adpe->portname;
+          break;
       }
     }
     
-    void register_dpe(ahir::DPElement *a, DPElement *d)
-    {
-      assert(!find_dpe(a));
-      dp->register_dpe_ahir_id(a->id, d);
-    }
-    
-    DPElement* find_dpe(ahir::DPElement *adpe)
-    {
-      if (!adpe)
-        return NULL;
-      return dp->find_dpe_from_ahir_id(adpe->id);
-    }
-
     /* ===== Datapath Ports ===== */
 
     void dp_create_ports()
     {
-      PortList &plist = dp->ports;
-
-      create_port(plist, "SigmaIn", IN, "BooleanArray"
-                  , Range(DOWNTO, adp->reqs.size(), 1));
-      create_port(plist, "SigmaOut", OUT, "BooleanArray"
-                  , Range(DOWNTO, adp->acks.size(), 1));
-      create_port(plist, "reset", IN, "std_logic");
-      create_port(plist, "clk", IN, "std_logic");
-      
+      entity_create_port_with_map(dp, "SigmaIn", IN
+                                  , vhdl::Type("BooleanArray"
+                                               , Range(DOWNTO, adp->reqs.size(), 1))
+                                  , WIRE);
+      entity_create_port_with_map(dp, "SigmaOut", OUT
+                                  , vhdl::Type("BooleanArray"
+                                               , Range(DOWNTO, adp->acks.size(), 1))
+                                  , WIRE);
+      entity_create_clk_ports(dp);
       dp_create_incoming_call_ports();
       dp_create_outgoing_call_ports();
       dp_create_memory_ports();
+      dp_create_io_ports(dp);
     }
 
     // Create the I/O data port on the DP with given port_id and
     // port_dir, using the list of ports registered on the DPE. In the
     // process, also generate the type-conversion statements that will
     // pack/unpack the data-port on the DP.
-    void dp_create_forwarded_port(PortList &plist, DPElement *dpe
+    void dp_create_forwarded_port(DPElement *dpe
                                   , const std::string &port_id
                                   , IOType port_dir)
     {
@@ -452,7 +503,6 @@ namespace {
           continue;
         assert(port->io_type != port_dir);
         
-        assert(port->mapping.type == WIRE);
         RangeList &ranges = port->type.ranges;
         assert(ranges.size() == 2);
         Range &r = ranges.back();
@@ -468,8 +518,10 @@ namespace {
       width++;
 
       // Create the port on the DP.
-      Port *ext = create_port(plist, port_id, port_dir
-                              , "std_logic_vector", Range(DOWNTO, width));
+      Port *ext = entity_create_port_with_map(dp, port_id, port_dir
+                                              , vhdl::Type("std_logic_vector"
+                                                           , Range(DOWNTO, width))
+                                              , WIRE);
       // Create the port on the DPE, and map the two.
       Port *mdata = create_port(dpe->ports, "odata", port_dir, ext->type);
       mdata->mapping(SLICE, port_id);
@@ -511,7 +563,6 @@ namespace {
       }
       assert(low == width);
       if (data_port_dir == IN) {
-        dp->register_wire(new Wire(data->mapping.name, data->type));
         dpe->append_to_prelude(data->mapping.name
                                + " <= to_stdlogicarray2d(" + member->id + ");");
       } else
@@ -520,54 +571,51 @@ namespace {
 
     void dp_create_incoming_call_ports()
     {
-      PortList &plist = dp->ports;
-
       ahir::DPElement *adpe = adp->acceptor;
       assert(adpe);
-      DPElement *acc = find_dpe(adpe);
+      DPElement *acc = find_dpe_for_adpe(adpe);
       assert(acc);
       dp->acceptor = acc;
 
       // Note the req/ack inversion here.
-      create_port(plist, "call_ack", OUT, "std_logic");
+      entity_create_port_with_map(dp, "call_ack", OUT, vhdl::Type("std_logic"), WIRE);
       Port *oack = create_port(acc->ports, "oreq", OUT, "std_logic", true);
       oack->mapping(WIRE, "call_ack_sig");
       
-      create_port(plist, "call_req", IN, "std_logic");
+      entity_create_port_with_map(dp, "call_req", IN, vhdl::Type("std_logic"), WIRE);
       Port *oreq = create_port(acc->ports, "oack", IN, "std_logic", true);
       oreq->mapping(SLICE, "call_req");
 
       // Note that the accept data port is not mapped to the DPE port.
       // Instead, the printer must generate a set of convertor
       // functions from SLV to the relevant data-type.
-      dp_create_forwarded_port(plist, acc, "call_data", IN);
+      dp_create_forwarded_port(acc, "call_data", IN);
 
-      create_port(plist, "call_tag", IN, "std_logic_vector");
+      entity_create_port_with_map(dp, "call_tag", IN, vhdl::Type("std_logic_vector"), WIRE);
       
       assert(adp->retval);
-      DPElement *retval = find_dpe(adp->retval);
+      DPElement *retval = find_dpe_for_adpe(adp->retval);
       assert(retval);
       dp->retval = retval;
 
-      create_port(plist, "return_ack", IN, "std_logic");
+      entity_create_port_with_map(dp, "return_ack", IN, vhdl::Type("std_logic"), WIRE);
       oack = create_port(retval->ports, "oack", IN, "std_logic", true);
       oack->mapping(SLICE, "return_ack");
       
-      create_port(plist, "return_req", OUT, "std_logic");
+      entity_create_port_with_map(dp, "return_req", OUT, vhdl::Type("std_logic"), WIRE);
       oreq = create_port(retval->ports, "oreq", OUT, "std_logic", true);
       oreq->mapping(SLICE, "return_req");
       
       // Note that the return data port is not mapped to the DPE port.
       // Instead, the printer must generate a set of convertor
       // functions from SLV to the relevant data-type.
-      dp_create_forwarded_port(plist, retval, "return_data", OUT);
+      dp_create_forwarded_port(retval, "return_data", OUT);
 
-      create_port(plist, "return_tag", OUT, "std_logic_vector");
+      entity_create_port_with_map(dp, "return_tag", OUT, vhdl::Type("std_logic_vector"), WIRE);
     }
 
     void dp_create_outgoing_call_ports()
     {
-      PortList &plist = dp->ports;
       for (DPEList::iterator ci = dp->calls.begin(), ce = dp->calls.end();
            ci != ce; ++ci) {
         DPElement *call = (*ci).second;
@@ -577,35 +625,35 @@ namespace {
         cid_str << "call_" << call->id;
         std::string cid = cid_str.str();
         
-        create_port(plist, cid + "_req", OUT, "std_logic");
+        entity_create_port_with_map(dp, cid + "_req", OUT, vhdl::Type("std_logic"), WIRE);
         Port *oreq = create_port(call->ports, "oreq", OUT, "std_logic", true);
         oreq->mapping(SLICE, cid + "_req");
         
-        create_port(plist, cid + "_ack", IN, "std_logic");
+        entity_create_port_with_map(dp, cid + "_ack", IN, vhdl::Type("std_logic"), WIRE);
         Port *oack = create_port(call->ports, "oack", IN, "std_logic", true);
         oack->mapping(SLICE, cid + "_ack");
         
         // Note that the call data port is not mapped to the DPE port.
         // Instead, the printer must generate a set of convertor
         // functions from SLV to the relevant data-type.
-        dp_create_forwarded_port(plist, call, cid + "_data", OUT);
+        dp_create_forwarded_port(call, cid + "_data", OUT);
 
         std::ostringstream rid_str;
         rid_str << "return_" << call->id; // note that we do NOT use resp->id here.
         std::string rid = rid_str.str();
         
-        create_port(plist, rid + "_req", OUT, "std_logic");
+        entity_create_port_with_map(dp, rid + "_req", OUT, vhdl::Type("std_logic"), WIRE);
         oreq = create_port(resp->ports, "oreq", OUT, "std_logic", true);
         oreq->mapping(SLICE, rid + "_req");
         
-        create_port(plist, rid + "_ack", IN, "std_logic");
+        entity_create_port_with_map(dp, rid + "_ack", IN, vhdl::Type("std_logic"), WIRE);
         oack = create_port(resp->ports, "oack", IN, "std_logic", true);
         oack->mapping(SLICE, rid + "_ack");
         
         // Note that the response data port is not mapped to the DPE
         // port. Instead, the printer must generate a set of convertor
         // functions from SLV to the relevant data-type.
-        dp_create_forwarded_port(plist, resp, rid + "_data", IN);
+        dp_create_forwarded_port(resp, rid + "_data", IN);
       }
     }
 
@@ -614,75 +662,66 @@ namespace {
       Entity *latch = new SimpleEntity("call_tag_latch", "TagLatch");
       dp->register_instance(latch);
 
-      // dp->register_wire(new Wire("call_ack_sig", vhdl::Type("std_logic")));
-
-      Port *port = create_port(latch->ports, "clk", IN, "std_logic");
-      port->mapping(SLICE, "clk");
+      entity_create_clk_ports(latch);
       
-      port = create_port(latch->ports, "reset", IN, "std_logic");
-      port->mapping(SLICE, "reset");
+      entity_create_port_with_map_name(latch, "r", IN, vhdl::Type("std_logic")
+                                       , SLICE, "call_req");
       
-      port = create_port(latch->ports, "r", IN, "std_logic");
-      port->mapping(SLICE, "call_req");
-      
-      port = create_port(latch->ports, "a", IN, "std_logic");
-      port->mapping(WIRE, "call_ack_sig");
-      
-      port = create_port(latch->ports, "tag_in", IN, "std_logic_vector");
-      port->mapping(SLICE, "call_tag");
-      
-      port = create_port(latch->ports, "tag_out", OUT, "std_logic_vector");
-      port->mapping(SLICE, "return_tag");
-
       latch->append_to_prelude("call_ack <= call_ack_sig;");
+      entity_create_port_with_map_name(latch, "a", IN, vhdl::Type("std_logic")
+                                       , WIRE, "call_ack_sig");
+      
+      entity_create_port_with_map_name(latch, "tag_in", IN, vhdl::Type("std_logic_vector")
+                                       , SLICE, "call_tag");
+      
+      entity_create_port_with_map_name(latch, "tag_out", OUT, vhdl::Type("std_logic_vector")
+                                       , SLICE, "return_tag");
+
     }
 
-    /* ===== DPE external ports ===== */
-    
-    void dpe_create_memory_ports()
+    /* ===== I/O interface ===== */
+
+    void dp_create_io_ports(DataPath *dp)
     {
-      for (DPEList::iterator di = dp->elements.begin(), de = dp->elements.end();
-           di != de; ++di) {
-        DPElement *dpe = (*di).second;
+      dp_io_ports_helper(dp->elements, dp);
+      dp_io_ports_helper(dp->wrappers, dp);
+    }
+    
+    void dp_io_ports_helper(DPEList& elements, DataPath *dp)
+    {
+      for (DPEList::iterator pi = elements.begin(), pe = elements.end();
+           pi != pe; ++pi) {
+        DPElement *dpe = (*pi).second;
 
         switch (dpe->ntype) {
-          case Store:
-            dpe_create_store_mports(dpe);
-            break;
-
-          case LoadRequest:
-            dpe_create_load_mports(dpe);
-            break;
-
           default:
-            break;
-        }
-      }
-
-      for (DPEList::iterator di = dp->wrappers.begin(), de = dp->wrappers.end();
-           di != de; ++di) {
-        DPElement *dpe = (*di).second;
-
-        switch (dpe->ntype) {
-          case Store:
-            dpe_create_store_mports(dpe);
-            break;
-            
-          case LoadRequest:
-            dpe_create_load_mports(dpe);
+            continue;
             break;
 
           case Input:
           case Output:
-            assert(false);
-            break;
-
-          default:
+            assert(dpe->portname.size() > 0);
+            create_io_ports(dp, dpe);
             break;
         }
       }
     }
-    
+
+    void create_io_ports(DataPath *dp, DPElement *dpe)
+    {
+      assert(dp->io_elements.find(dpe->portname) == dp->io_elements.end()
+             && "A DPE already exists for this I/O port");
+      dp->io_elements[dpe->portname] = dpe;
+      
+      Port *data = dpe->find_port("data");
+      entity_create_forwarded_io_port(dp, dpe, dpe->portname, "data"
+                                      , (dpe->ntype == Input ? IN : OUT)
+                                      , vhdl::Type("std_logic_vector", data->get_range(1)));
+      entity_create_forwarded_io_port(dp, dpe, dpe->portname, "req", OUT
+                                      , vhdl::Type("std_logic"));
+      entity_create_forwarded_io_port(dp, dpe, dpe->portname, "ack", IN
+                                      , vhdl::Type("std_logic"));
+    }
 
     /* ===== Datapath memory interface ===== */
 
@@ -739,6 +778,45 @@ namespace {
     }
 
     /* ===== DPE memory interface ===== */
+
+    void dpe_create_memory_ports()
+    {
+      for (DPEList::iterator di = dp->elements.begin(), de = dp->elements.end();
+           di != de; ++di) {
+        DPElement *dpe = (*di).second;
+
+        switch (dpe->ntype) {
+          case Store:
+            dpe_create_store_mports(dpe);
+            break;
+
+          case LoadRequest:
+            dpe_create_load_mports(dpe);
+            break;
+
+          default:
+            break;
+        }
+      }
+
+      for (DPEList::iterator di = dp->wrappers.begin(), de = dp->wrappers.end();
+           di != de; ++di) {
+        DPElement *dpe = (*di).second;
+
+        switch (dpe->ntype) {
+          case Store:
+            dpe_create_store_mports(dpe);
+            break;
+            
+          case LoadRequest:
+            dpe_create_load_mports(dpe);
+            break;
+
+          default:
+            break;
+        }
+      }
+    }
 
     void dpe_create_store_mports(DPElement *store)
     {
@@ -799,6 +877,39 @@ namespace {
       p->mapping(SLICE, prefix + id, Range(DOWNTO, high * width - 1, low * width));
       return p;
     }
+
+    void count_operators()
+    {
+      const std::string filename = dp->id + "_count.txt";
+      std::ofstream out(filename.c_str());
+      
+      for (DPEList::iterator di = dp->elements.begin(), de = dp->elements.end();
+           di != de; ++di) {
+        DPElement *dpe = (*di).second;
+
+        out << dpe->id << ":" << str(dpe->ntype) << ":";
+
+        if (is_data(dpe->ntype))
+          if (Port *port = dpe->find_port(get_output_port(dpe->ntype)))
+            out << port->type;
+
+        out << ":1\n";
+      }
+      
+      for (DPEList::iterator di = dp->wrappers.begin(), de = dp->wrappers.end();
+           di != de; ++di) {
+        DPElement *dpe = (*di).second;
+        
+        out << dpe->id << ":" << str(dpe->ntype) << ":";
+
+        if (is_data(dpe->ntype))
+          if (Port *port = dpe->find_port(get_output_port(dpe->ntype)))
+            out << port->type;
+
+        out << ":" << dpe->members.size() << "\n";
+      }
+    }
+    
   };
   
 } // end anonymous namespace

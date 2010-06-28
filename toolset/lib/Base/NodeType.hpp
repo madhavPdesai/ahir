@@ -28,20 +28,23 @@ namespace hls {
   std::string str(NodeType ntype);
   NodeType ntype(const std::string &str);
 
-  bool is_binary(NodeType ntype);
   bool has_one_operand(NodeType ntype);
   bool has_two_operands(NodeType ntype);
+  
   bool is_shared(NodeType ntype);
+  bool is_pipelined(NodeType ntype);
+  bool is_mapped_to_io(NodeType ntype);
+  bool has_2D_ports(NodeType ntype);
+  
+  bool is_binary(NodeType ntype);
   bool is_cast(NodeType ntype);
   bool is_rel(NodeType ntype);
   bool is_fcmp(NodeType ntype);
   bool is_data(NodeType ntype);
   bool is_control(NodeType ntype);
   bool is_constant(NodeType ntype);
-  bool is_pipelined(NodeType ntype);
   bool is_io(NodeType ntype);
   bool is_mem(NodeType ntype);
-  bool has_array_ports(NodeType ntype);
 
   std::string get_output_port(NodeType ntype);
 }

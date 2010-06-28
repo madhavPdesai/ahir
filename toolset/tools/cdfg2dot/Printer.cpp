@@ -16,8 +16,6 @@ namespace {
 
   void Printer::print(hls::Program *program) 
   {
-    std::ofstream out;
-
     for (Program::ModuleList::iterator mi = program->modules.begin(), me = program->modules.end();
 	 mi != me; ++mi) {
       Module *module = (*mi).second;
@@ -26,7 +24,8 @@ namespace {
       CDFG *cdfg = static_cast<CDFG*>(module);
       
       std::string filename = cdfg->id + ".dot";
-      out.open(filename.c_str());
+      std::ofstream file(filename.c_str());
+      hls::ostream out(file);
       
       out << indent << "digraph " << cdfg->id << " {";
       out << indent_in;
@@ -44,7 +43,7 @@ namespace {
 	   ei != ee; ++ei) {
 	CDFGEdge *edge = (*ei).second;
 	CDFGNode *src = edge->driver->parent;
-
+        
 	for (CDFGEdge::UserList::iterator ui = edge->users.begin(), ue = edge->users.end();
 	     ui != ue; ++ui) {
 	  CDFGNode *snk = (*ui)->parent;
@@ -57,10 +56,9 @@ namespace {
       out << indent_out;
       out << "}"
 	"\n";
-      out.close();
     }
   }
-
+  
 } // end anonymous namespace
 
 void print_dot(hls::Program *program)

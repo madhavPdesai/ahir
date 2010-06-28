@@ -7,7 +7,7 @@ namespace vhdl {
 
   struct SimpleEntity : Entity 
   {
-    SimpleEntity(const std::string instance, const std::string component)
+    SimpleEntity(const std::string &instance, const std::string &component)
       : Entity(instance, SIMPLE, component)
     {}
 

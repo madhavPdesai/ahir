@@ -59,11 +59,6 @@ void Entity::print_prelude(hls::ostream &out)
 
 void Entity::declare_wires(hls::ostream &out)
 {
-  if (wires.size() == 0) {
-    std::cerr << "\nno wires in entity " << id;
-    return;
-  }
-  
   for (WireList::const_iterator wi = wires.begin(), we = wires.end();
        wi != we; ++wi) {
     const Wire *wire = (*wi).second;

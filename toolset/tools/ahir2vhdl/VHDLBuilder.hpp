@@ -9,7 +9,7 @@ namespace hls {
 
 namespace vhdl {
 
-  void ahir2vhdl(hls::Program *program);
+  void ahir2vhdl(hls::Program *program, bool clocked_ln);
   
 }
 
