@@ -100,6 +100,11 @@ package Subprograms is
   function AndReduce(x: BooleanArray) return boolean;
   function AndReduce(x: std_logic_vector) return std_logic;
 
+  function MuxOneHot (
+    constant din : StdLogicArray2D;     -- input data
+    constant sel : std_logic_vector)    -- select vector (one hot)
+    return std_logic_vector;
+
 end package Subprograms;
 
 
@@ -943,6 +948,44 @@ package body Subprograms is
   end AndReduce;
 
   -----------------------------------------------------------------------------
+  -- sel is one-hot coded, build a balanced mux to
+  -- pick row indicated by sel from din
+  -----------------------------------------------------------------------------
+  -- a utility function.
+  function MuxOneHotBase (
+    constant din  : StdLogicArray2D;
+    constant sel  : std_logic_vector;
+    constant h, l : integer)
+    return std_logic_vector is
+    variable ret_val : std_logic_vector(din'length(2)-1 downto 0);
+    variable mid_point  : integer;
+  begin
+    ret_val := (others => '0');
+    if(h > l) then
+      mid_point := l + ((h-l)/2);
+      ret_val := MuxOneHotBase(din,sel,h,mid_point+1) or
+                 MuxOneHotBase(din,sel,mid_point,l);
+    else
+      if(sel(l) = '1') then 
+      	ret_val := Extract(din,l);
+      end if;
+    end if;
+    return(ret_val);
+  end MuxOneHotBase;
 
+
+  function MuxOneHot (
+      constant din : StdLogicArray2D;     -- input data
+      constant sel : std_logic_vector)    -- select vector (one hot)
+      return std_logic_vector is
+      variable ret_var : std_logic_vector(din'length(2)-1 downto 0);
+      variable dinv : StdLogicArray2D(din'length(1)-1 downto 0, din'length(2)-1 downto 0);
+      alias selv : std_logic_vector(sel'length-1 downto 0) is sel;
+    begin
+      dinv := din;
+      assert sel'length = din'length(1) report "mismatched select and data dimensions" severity failure;
+      ret_var := MuxOneHotBase(dinv,selv,dinv'high(1),dinv'low(1));
+      return(ret_var);
+    end MuxOneHot;
 
 end package body Subprograms;
