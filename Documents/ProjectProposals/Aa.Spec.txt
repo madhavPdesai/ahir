@@ -30,7 +30,7 @@ OVERVIEW
 
   	A tpr is the basic unit of description (token-preserving region)
 
-	tpr := (tpr-label colon)?  { <tpr-body> }
+	tpr := (tpr-label colon)?  { <declarations> <tpr-body> }
 
 
 	For example: the following is a tpr definition
@@ -51,7 +51,7 @@ OVERVIEW
 		NOTE: see STATEMENTS section below
 
 	serial form
-		 (statement-block | <tpr>) (; statement-block | <tpr>)+
+		 (<tpr>) (; <tpr>)+
 
 		e.g.
 		tpr_main :
@@ -73,15 +73,7 @@ OVERVIEW
 
 
 	parallel-form
-		(statement-block | <tpr>) (|| statement-block | <tpr>)+
-	
-
-	NOTE: ';' has higher priority over "||"
-		Thus
-			a;b || c;d 
-		is interpreted as
-			{a;b} || {c;d}
-
+		(<tpr>) (|| <tpr>)+
 
 	fork form
 
@@ -92,7 +84,6 @@ OVERVIEW
 
 	join-spec 
 		join (<tpr-label>)+
-
 
 	join-fork-spec 
 		join-spec  &&  fork-spec
@@ -139,7 +130,6 @@ OVERVIEW
 	
 	merge-spec
 		merge (<tpr-label> | entry-clause)+ (&& phi-spec)?
-
 
 	phi-spec 
 		(phi-statement) (, phi-statement)*
@@ -242,7 +232,7 @@ TYPES
    SCALAR
 	integers:  _uint<width>, _int<width>
 	float   :  _float<characteristic,mantissa>
-	pointer
+	pointer : _pointer<object_size>
 		Note: pointers are opaque objects handled entirely by
 		"foreign" functions.  They can only be checked for equality
 		and non-equality.
@@ -356,16 +346,6 @@ STATEMENTS
 	RETURN STATEMENT
 		return (p,q)
 				p,q are values that will be returned.
-
-	JUMP
-		
-		goto q  
-			transfer control to statement with label q.
-			r is of type _uint<1>
-
-			the label q MUST be in the same scope as the
-			jump statement.	 A jump out of a scope is
-			NOT PERMITTED.
 
 	IO
 		q = b
