@@ -3,8 +3,8 @@
 \usepackage{times}
 \usepackage[margin=0.75in]{geometry}
 
-\title{A class of live and safe petri-nets that supports scalable
-  concurrency analysis}
+\title{A class of untimed live and safe petri-nets that supports
+  scalable static analysis}
 
 \author{Sameer D. Sahasrabuddhe \\ Kavi Arya \\ Madhav P. Desai}
 
@@ -18,35 +18,39 @@
   \large
 
   Petri-nets are a compact way of representing concurrent sequences of
-  events in a system, where events are represented as transitions in
-  the corresponding petri-net. Given two events in a system, it is
-  useful to determine whether they can occur simultaneously. But it is
-  difficult to make such a determination in an arbitrary petri-net. We
-  present a class of petri-nets called ``Type-2'' which restricts the
-  structure of the petri-net in order to enable a scalable analysis,
-  without severely affecting the expressive power of the petri-net.
-  Given a Type-2 petri-net, it is possible to determine in linear time
-  whether two transitions can fire simultaneously. In addition, it is
-  also possible to generate an exhaustive listing of sets of
+  events in a system, where events are represented as transitions
+  connected to places that encode the state of the system. We present
+  a class of untimed live and safe petri-nets called ``Type-2'' that
+  allows a scalable static analysis, without severely affecting the
+  expressive power of the petri-net.
+  
+  The simplest Type-2 petri-net is a cycle consisting of a single
+  marked place and a single transition. Larger petri-nets are produced
+  by progressive application of production rules that replace an
+  unmarked place or a transition with a specific petri-net subgraph
+  with no marked places. The initial marking of a Type-2 petri-net is
+  thus restricted to the single marked place in the initial cycle. The
+  production rules also ensure that every Type-2 petri-net is live and
+  safe.
+
+  The restriction on the structure of the Type-2 petri-net
+  allows the definition of a simple labelling scheme that effectively
+  simulates an execution of the petri-net. The labels of any two
+  transitions can be compared in linear time to statically determine
+  their relation in the execution of the petri-net. For example, the
+  labels can be used determine whether two transitions can fire
+  concurrently, thus identifying concurrent events in the system. It
+  is also possible to generate an exhaustive listing of sets of
   transitions such that no two transitions in each set can fire
   simultaneously.
-  
-  We first define the concept of a ``token-preserving region'' which
-  produces a live and safe petri-net when augmented by a marked place.
-  We further define a set of production rules to combine such regions
-  into larger token-preserving regions. The petri-net created by
-  augmenting such a region is said to be of the class ``Type-2''. The
-  initial marking of the petri-net is restricted to a single marked
-  place.
 
-  The restriction on the structure of the Type-2 petri-net allow a
-  simple labelling scheme to effectively simulates an execution of the
-  petri-net. These labels can be compared in linear time to determine
-  the concurrency of the labelled transitions. Despite the
-  restrictions imposed by the production rules, the Type-2 class of
-  petri-nets is powerful enough to represent synchronous systems. For
-  example, this class has been used as a transition step in
-  translating imperative programs to hardware descriptions.
+  Despite the restrictions imposed by the production rules, the Type-2
+  class of petri-nets is powerful enough to represent synchronous
+  systems. It has been used as a transition step in translating
+  imperative programs to hardware descriptions\cite{ahir-thesis}. The
+  resulting high-level synthesis flow uses the labelling scheme to
+  optimise the generated hardware by identifying opportunities for
+  sharing hardware resources in the absence of timing information.
 
 \end{abstract}
 
