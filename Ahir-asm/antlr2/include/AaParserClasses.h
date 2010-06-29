@@ -24,10 +24,14 @@
 #include <ostream>
 #include <assert.h>
 
+
 using namespace std;
 /* Author: Madhav Desai                                  */
 /* This could have been auto-generated, but I did it the */
 /* brute force way.                                      */
+
+// IntToStr
+string IntToStr(int x);
 
 // string compare
 struct StringCompare:public binary_function
@@ -711,6 +715,7 @@ class AaProgram : public AaScope
   // perhaps we should also have declarations here?
 
   vector<AaModule*> _modules;
+  static map<string,AaType*,StringCompare> _type_map;
 
  public:
   AaProgram();
@@ -718,12 +723,82 @@ class AaProgram : public AaScope
 
   void Add_Module(AaModule* fn);
   virtual void Print(ostream& ofile);
+
+  static AaUintType* Make_Uinteger_Type(unsigned int w)
+  {
+    AaUintType* ret_type = NULL;
+    string tid = "uint<" + IntToStr(w) + ">";
+    map<string,AaType*,StringCompare>::iterator titer = AaProgram::_type_map.find(tid);
+    if(titer != AaProgram::_type_map.end())
+      ret_type = (AaUintType*) (*titer).second;
+    else
+      {
+	ret_type = new AaUintType((AaScope*) NULL, w);
+	AaProgram::_type_map[tid] = ret_type;
+      }
+    return(ret_type);
+  }
+  static AaIntType* Make_Integer_Type(unsigned int w)
+  {
+    AaIntType* ret_type = NULL;
+    string tid = "int<" + IntToStr(w) + ">";
+    map<string,AaType*,StringCompare>::iterator titer = AaProgram::_type_map.find(tid);
+    if(titer != AaProgram::_type_map.end())
+      ret_type = (AaIntType*) (*titer).second;
+    else
+      {
+	ret_type = new AaIntType((AaScope*) NULL, w);
+	AaProgram::_type_map[tid] = ret_type;
+      }
+    return(ret_type);
+  }
+  static AaFloatType* Make_Float_Type(unsigned int c, unsigned int m)
+  {
+    AaFloatType* ret_type = NULL;
+    string tid = "float<" + IntToStr(c) + "," + IntToStr(m) + ">";
+    map<string,AaType*,StringCompare>::iterator titer = AaProgram::_type_map.find(tid);
+    if(titer != AaProgram::_type_map.end())
+      ret_type = (AaFloatType*) (*titer).second;
+    else
+      {
+	ret_type = new AaFloatType((AaScope*) NULL, c,m);
+	AaProgram::_type_map[tid] = ret_type;
+      }
+    return(ret_type);
+  }
+  static AaArrayType* Make_Array_Type(AaScalarType* etype, vector<unsigned int>& dims)
+  {
+    AaArrayType* ret_type = NULL;
+    string tid = "array";
+    for(unsigned int i=0; i < dims.size(); i++)
+	tid += "<" + IntToStr(dims[i]) + ">";
+    tid += " of ";
+    etype->Print(tid);
+    map<string,AaType*,StringCompare>::iterator titer = AaProgram::_type_map.find(tid);
+    if(titer != AaProgram::_type_map.end())
+      ret_type = (AaArrayType*) (*titer).second;
+    else
+      {
+	ret_type = new AaArrayType((AaScope*) NULL,etype,dims);
+	AaProgram::_type_map[tid] = ret_type;
+      }
+    return(ret_type);
+  }
+  static AaPointerType* Make_Pointer_Type(unsigned int w)
+  {
+    AaPointerType* ret_type = NULL;
+    string tid = "pointer<" + IntToStr(w) + ">";
+    map<string,AaType*,StringCompare>::iterator titer = AaProgram::_type_map.find(tid);
+    if(titer != AaProgram::_type_map.end())
+      ret_type = (AaPointerType*) (*titer).second;
+    else
+      {
+	ret_type = new AaPointerType((AaScope*) NULL, w);
+	AaProgram::_type_map[tid] = ret_type;
+      }
+    return(ret_type);
+  }
 };
-
-
-
-
-
 
 
 #endif

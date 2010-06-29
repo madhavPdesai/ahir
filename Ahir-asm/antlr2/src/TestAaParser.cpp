@@ -1,6 +1,6 @@
 #include <AaParserClasses.h>
-#include <AaParser.h>
-#include <AaLexer.h>
+#include <AaParser.hpp>
+#include <AaLexer.hpp>
 
 using namespace std;
 using namespace antlr;
@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
       exit(1);
     }
 
-  AaLexer* lexer = new AaLexer(fin);
+  AaLexer* lexer = new AaLexer(infile);
   AaParser* parser = new AaParser(*lexer);
 
   lexer->setFilename(filename);
@@ -43,6 +43,7 @@ int main(int argc, char* argv[])
     exit(1); 
   }
 
+  infile.close();
   delete parser;
   delete lexer;
 

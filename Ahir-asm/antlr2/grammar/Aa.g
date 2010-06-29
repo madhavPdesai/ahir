@@ -49,7 +49,6 @@
  */
 
 header "post_include_cpp" {
-    static const char RCS_ID[] = "$Id:$";
 }
 
 header "post_include_hpp" {
@@ -65,80 +64,9 @@ class AaParser extends Parser;
 options {
 	// go with LL(2) grammar
 	k=2;
-	// no error handler for now
-	defaultErrorHandler=false;
+	defaultErrorHandler=true;
 } 
 
-tokens
-{
-
-// delimitation keywords
-MODULE = "$module";
-SERIESBLOCK   = "$series";
-PARALLELBLOCK = "$parallel";
-FORKBLOCK     = "$forkblock";
-BRANCHBLOCK   = "$branchblock";
-SWITCH        = "$switch";
-IF            = "$if";
-THEN          = "$then";
-ELSE          = "$else";
-FORK          = "$fork";
-JOIN          = "$join";
-MERGESPEC     = "$merge";
-WHEN          = "$when";
-ENTRY         = "$entry";
-EXIT          = "$exit";
-IN            = "$in";
-OUT           = "$out";
-IS            = "$is";
-
-// Special symbols
-COLON		 = ":" ; // label separator
-SEMICOLON	 = ";" ; // sequence
-COMMA        = "," ; // argument-separator, index-separator etc.
-DQOUTE           = "\""; // string marker
-ASSIGN           = ":=" ; // assignment
-EQUAL            = "=="; // equality 
-NOTEQUAL         = "!="; // not equal
-LESS             = "<" ; // less-than
-LESSEQUAL        = "<="; // less-than-or-equal
-QUESTION         = "?" ; // test in ternary statement
-GREATER          = ">" ; // greater-than
-GREATEREQUAL     = ">="; // greater-than-or-equal
-SHL              = "<<"; // shift-left
-SHR              = ">>"; // shift-right
-LBRACE           = "{" ; // scope open
-RBRACE           = "}" ; // scope close
-LBRACKET         = "[" ; // array index marker
-RBRACKET         = "]" ; // array index marker
-LPAREN           = "(" ; // argument-list
-RPAREN           = ")" ; // argument-list
-
-// arithmetic operators
-PLUS             = "+" ; // plus
-MINUS            = "-" ; // minus
-MULTIPLY         = "*" ; // multiply
-DIVIDE           = "/" ; // divide
-
-// logical operators
-NOT              = "not"  ;
-OR               = "or"   ;
-AND              = "and"  ;
-XOR              = "xor"  ;
-NOR              = "nor"  ;
-NAND             = "nand" ;
-XNOR             = "xnor" ;
-
-// phi symbol
-PHI            = "phi"     ;
-
-// types
-UINT           = "uint"    ;
-INT            = "int"     ;
-FLOAT          = "float"   ;
-POINTER        = "pointer" ;
-NuLL           = "null";
-}
 
 
 //-----------------------------------------------------------------------------------------------
@@ -169,12 +97,13 @@ aA_Module[AaProgram* aa_pgm] returns [AaModule* new_module]
     new_module = NULL;
     AaStatementSequence* stmts = NULL;
 }
-    : MODULE lbl = aA_Label 
+    : MODULE 
+        lbl = aA_Label 
         {
             new_module = new AaModule(aa_pgm,lbl);
         }
-        aA_In_Args[new_module] aA_Out_Args[new_module]
-        ( DECLARE aA_Object_Declarations[new_module])?
+        aA_In_Args[new_module] aA_Out_Args[new_module] IS
+        (DECLARE  aA_Object_Declarations[new_module])?
         LBRACE
             // every statement in the sequence specifies a set of
             // targets (possibly empty) which should be maintained
@@ -190,7 +119,7 @@ aA_Module[AaProgram* aa_pgm] returns [AaModule* new_module]
 // aA_Label : LBRACKET SIMPLE_IDENTIFIER RBRACKET
 //-----------------------------------------------------------------------------------------------
 aA_Label returns [string lbl]
-    : LBRACKET id:SIMPLE_IDENTIFIER  { lbl = id->getText(); } RBRACKET
+    :  (LBRACKET) (id:SIMPLE_IDENTIFIER  { lbl = id->getText(); })  (RBRACKET)
     ;
 
 //-----------------------------------------------------------------------------------------------
@@ -237,18 +166,17 @@ aA_Null[AaScope* scope] returns[AaStatement* new_stmt]
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Assignment: aA_Object_Reference ASSIGN aA_Expression
+// aA_Assignment: ASSIGN aA_Object_Reference  aA_Expression
 //-----------------------------------------------------------------------------------------------
 aA_Assignment[AaScope* scope] returns[AaStatement* new_stmt]
 {
     AaObjectReference* target = NULL;
     AaExpression* source = NULL;
 }
-    :   
-        // The target defines the label only if it is not
-        // a declared global/local/pipe
+    : 
+
         (target = aA_Object_Reference[scope]) 
-        ASSIGN
+        ASSIGNEQUAL
         (source = aA_Expression[scope])
         {
             new_stmt = new AaAssignmentStatement(scope,target,source);
@@ -256,7 +184,7 @@ aA_Assignment[AaScope* scope] returns[AaStatement* new_stmt]
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Call: aA_Argv_Out := SIMPLE_IDENTIFIER aA_Argv_In
+// aA_Call: CALL aA_Argv_Out  SIMPLE_IDENTIFIER aA_Argv_In
 //-----------------------------------------------------------------------------------------------
 aA_Call[AaScope* scope] returns[AaStatement* new_stmt]
 {
@@ -265,10 +193,10 @@ aA_Call[AaScope* scope] returns[AaStatement* new_stmt]
     string func_name = "";
 }
     : 
-        aA_Argv_Out[scope, output_args] 
-        ASSIGN
+        CALL
         id:SIMPLE_IDENTIFIER { func_name = id->getText(); }
         aA_Argv_In[scope, input_args] 
+        aA_Argv_Out[scope, output_args] 
         // the statement implicitly defines all variables in the output arg list
         // (except for a declared global/local/pipe)
         {
@@ -294,7 +222,7 @@ aA_Block_Statement[AaScope* scope] returns [AaStatement* stmt]
 //-----------------------------------------------------------------------------------------------
 // these are special statements which can occur only inside branchblocks
 // they are all unlabeled
-aA_Subatomic_Branch_Statement[AaScope* scope] returns [AaStatement* stmt]
+aA_Subatomic_Branch_Statement[AaBranchBlockStatement* scope] returns [AaStatement* stmt]
     : stmt = aA_Merge_Statement[scope] |
         stmt = aA_Switch_Statement[scope] |
         stmt = aA_If_Statement[scope]
@@ -303,7 +231,7 @@ aA_Subatomic_Branch_Statement[AaScope* scope] returns [AaStatement* stmt]
 //-----------------------------------------------------------------------------------------------
 // aA_Fork_Block_Statement_Sequence : (aA_Atomic_Statement | aA_Join_Fork_Statement)+
 //-----------------------------------------------------------------------------------------------
-aA_Fork_Block_Statement_Sequence[AaScope* scope] returns [AaStatementSequence* nsb]
+aA_Fork_Block_Statement_Sequence[AaForkBlockStatement* scope] returns [AaStatementSequence* nsb]
 {
 	AaStatement* new_statement = NULL;
 	vector<AaStatement*> slist;
@@ -323,7 +251,7 @@ aA_Fork_Block_Statement_Sequence[AaScope* scope] returns [AaStatementSequence* n
 //-----------------------------------------------------------------------------------------------
 // aA_Branch_Block_Statement_Sequence : (aA_Atomic_Statement | aA_Subatomic_Branch_Statement)+
 //-----------------------------------------------------------------------------------------------
-aA_Branch_Block_Statement_Sequence[AaScope* scope] returns [AaStatementSequence* nsb]
+aA_Branch_Block_Statement_Sequence[AaBranchBlockStatement* scope] returns [AaStatementSequence* nsb]
 {
 	AaStatement* new_statement = NULL;
 	vector<AaStatement*> slist;
@@ -480,7 +408,7 @@ aA_Branch_Block_Statement[AaScope* scope] returns [AaBranchBlockStatement* new_b
 // subsequent sequence defining the forked statements.
 //
 //-----------------------------------------------------------------------------------------------
-aA_Join_Fork_Statement[AaScope* scope] returns [AaJoinForkStatement* new_jfs]
+aA_Join_Fork_Statement[AaForkBlockStatement* scope] returns [AaJoinForkStatement* new_jfs]
 {
     new_jfs = new AaJoinForkStatement(scope);
     AaStatementSequence* sseq = NULL;
@@ -497,7 +425,7 @@ aA_Join_Fork_Statement[AaScope* scope] returns [AaJoinForkStatement* new_jfs]
 
 
 //--------------------------------------------------------------------------------------------------
-// aA_Merge_Statement: MERGE LPAREN (SIMPLE_IDENTIFIER)* RPAREN ASSIGN LPAREN (aA_Label COLON LPAREN (aA_Simple_Object_Reference)* RPAREN)+ RPAREN
+// aA_Merge_Statement: MERGE LPAREN (SIMPLE_IDENTIFIER)* RPAREN ASSIGN LPAREN (aA_Label COLON LPAREN (aA_Object_Reference)* RPAREN)+ RPAREN
 //--------------------------------------------------------------------------------------------------
 // The merge statement specifies a set of statements on which it waits.
 // exactly one of the statements is expected to be executed, and the merge
@@ -507,12 +435,12 @@ aA_Join_Fork_Statement[AaScope* scope] returns [AaJoinForkStatement* new_jfs]
 //
 // The merge statement can occur only inside branchblocks
 //--------------------------------------------------------------------------------------------------
-aA_Merge_Statement[AaScope* scope] returns [AaMergeStatement* new_mgs]
+aA_Merge_Statement[AaBranchBlockStatement* scope] returns [AaMergeStatement* new_mgs]
 {
 
     set<string,StringCompare> target_id_set;
     vector<AaObjectReference*> target_object_vector;
-
+    
     new_mgs = new AaMergeStatement(scope);
 
     set<string,StringCompare> source_label_set;
@@ -531,7 +459,7 @@ aA_Merge_Statement[AaScope* scope] returns [AaMergeStatement* new_mgs]
                 if(target_id_set.find(id->getText()) != target_id_set.end())
                 {
                     cerr << "Error: repeated targets in merge spec " << endl;
-                    AaRoot::Set_Error(true);
+                    AaRoot::Error();
                 }
                 else
                 {
@@ -543,14 +471,14 @@ aA_Merge_Statement[AaScope* scope] returns [AaMergeStatement* new_mgs]
          RPAREN
 
         // now get the sources.
-        ASSIGN LPAREN 
+        ASSIGNEQUAL LPAREN 
 
         (merged_stmt_label = aA_Label 
             {
                 if(source_label_set.find(merged_stmt_label) != source_label_set.end())
                 {
                     cerr << "Error: repeated statement labels in merge spec " << endl;
-                    AaRoot::Set_Error(true);
+                    AaRoot::Error();
                 }
                 else
                 {
@@ -560,18 +488,21 @@ aA_Merge_Statement[AaScope* scope] returns [AaMergeStatement* new_mgs]
             }
             COLON 
             LPAREN
-            (oref = aA_Simple_Object_Reference {object_vector->push_back(oref);})* 
+            (oid: SIMPLE_IDENTIFIER 
+                  { 
+                    oref = new AaSimpleObjectReference(new_mgs,oid->getText());
+                    object_vector->push_back(oref);
+                  } )* 
             RPAREN
             { 
                 if(object_vector->size() != target_id_set.size()) 
                     {
                         cerr << "Error: merge-sources from label " << merged_stmt_label << " do not match targets" << endl;
-                        AaRoot::Set_Error(true);
+                        AaRoot::Error();
                     }
                 else
                     {
                         new_mgs->Add_Source(merged_stmt_label,object_vector);
-                        object_vector.clear();
                     }
             }
         
@@ -582,6 +513,7 @@ aA_Merge_Statement[AaScope* scope] returns [AaMergeStatement* new_mgs]
 //----------------------------------------------------------------------------------------------------------
 // aA_Switch_Statement : SWITCHSPEC (WHEN aA_Expression THEN LBRACE aA_Atomic_Statement_Sequence RBRACE )+
 //----------------------------------------------------------------------------------------------------------
+//  --> change to $switch expr when literal then ... default ...
 // Incoming control flow is passed on to one of the sequences depending on the conditions.
 // A switch can occur only inside a branch statement.  
 //
@@ -589,7 +521,7 @@ aA_Merge_Statement[AaScope* scope] returns [AaMergeStatement* new_mgs]
 // If more than one alternative is taken this will result in a run-time error!
 // If no alternative is taken, the switch statement will never complete execution!!
 //----------------------------------------------------------------------------------------------------------
-aA_Switch_Statement[AaScope* scope] returns [AaSwitchStatement* new_ss]
+aA_Switch_Statement[AaBranchBlockStatement* scope] returns [AaSwitchStatement* new_ss]
 {
     new_ss = new AaSwitchStatement(scope);
     AaStatementSequence* sseq = NULL;
@@ -613,32 +545,33 @@ aA_Switch_Statement[AaScope* scope] returns [AaSwitchStatement* new_ss]
 
 
 //----------------------------------------------------------------------------------------------------------
-//  aA_If_Statement:  IFSPEC aA_Expression THEN LBRACE aA_Atomic_Statement_Sequence RBRACE  ELSE LBRACE aA_Atomic_Statement_Sequence RBRACE
+//  aA_If_Statement:  IFSPEC aA_Expression THEN LBRACE aA_Atomic_Statement_Sequence RBRACE  (ELSE LBRACE aA_Atomic_Statement_Sequence RBRACE)?
+// --> note
 //----------------------------------------------------------------------------------------------------------
 // Incoming control flow is passed on to one of the sequences depending on the conditions.
 // An IF can occur only inside a branch statement.  
 //----------------------------------------------------------------------------------------------------------
-aA_If_Statement[AaScope* scope] returns [AaIfStatement* new_is]
+aA_If_Statement[AaBranchBlockStatement* scope] returns [AaIfStatement* new_is]
 {
     AaExpression* if_expression = NULL;
-    new_mgs = new AaIfStatement(scope);
+    new_is = new AaIfStatement(scope);
     AaStatementSequence* sseq = NULL;
     AaExpression* select_expression = NULL;
 }: 
      IFSPEC 
-        (if_expression=aA_Expression[new_mgs]) { new_mgs->Set_Test_Expression(if_expression);}
+        (if_expression=aA_Expression[new_is]) { new_is->Set_Test_Expression(if_expression);}
      THEN 
      LBRACE
-        sseq = aA_Atomic_Statement_Sequence[new_mgs] 
+        sseq = aA_Atomic_Statement_Sequence[new_is] 
         {
-            new_mgs->Set_If_Sequence(sseq);
+            new_is->Set_If_Sequence(sseq);
         }
      RBRACE 
      ELSE 
      LBRACE
-        sseq = aA_Atomic_Statement_Sequence[new_mgs] 
+        sseq = aA_Atomic_Statement_Sequence[new_is] 
         {
-            new_mgs->Set_Else_Sequence(sseq);
+            new_is->Set_Else_Sequence(sseq);
         }
       RBRACE
     ;   
@@ -678,7 +611,7 @@ aA_Argv_Out[AaScope* scope, vector<AaObjectReference*>& args]
     AaObjectReference* obj = NULL;
 }       
     :LPAREN 
-            (id:SIMPLE_IDENTIFIER 
+            (id:SIMPLE_IDENTIFIER
                 {
                     obj = new AaSimpleObjectReference(scope,id->getText());
                     args.push_back(obj); 
@@ -717,25 +650,29 @@ aA_Unary_Expression[AaScope* scope] returns [AaExpression* expr]
 {       
     AaStringValue* op = NULL;
     AaExpression* rest = NULL;
-    AaExpression* to_type = NULL;
+    AaType* to_type = NULL;
 }   
     :   
         LPAREN 
+        (
             (
-                (NOT {op = new AaStringValue(scope,"not");})
+                (NOT {op = new AaStringValue(scope,"$not");})
                 (rest = aA_Expression[scope])
                 {
                     expr = new AaUnaryExpression(scope,op,rest); 
                 } 
              )   
                 |
-            ( 
+            (
+                CAST
+
                 LPAREN (to_type = aA_Type_Reference[scope]) RPAREN
                 (rest = aA_Expression[scope] )
                 {   
                     expr = new AaTypeCastExpression(scope,to_type,rest);
                 }
             )
+        )
         RPAREN
 ;
 
@@ -749,11 +686,13 @@ aA_Binary_Expression[AaScope* scope] returns [AaExpression* expr]
     AaExpression* first;
     AaExpression* second;
     AaStringValue* op;
+    string opid;
 }
     :   
         LPAREN         
         first = aA_Expression[scope]  
-        opid:aA_Binary_Op { op = new AaStringValue(scope,opid->getText()); }
+        opid = aA_Binary_Op 
+        { op = new AaStringValue(scope,opid); }
         second = aA_Expression[scope] 
         RPAREN 
         {
@@ -769,11 +708,13 @@ aA_Binary_Expression[AaScope* scope] returns [AaExpression* expr]
 //----------------------------------------------------------------------------------------------------------
 aA_Ternary_Expression[AaScope* scope] returns [AaExpression* expr]
 {
-    AaExpression* testexpr, iftrue, iffalse;
+    AaExpression* testexpr;
+    AaExpression* iftrue;
+    AaExpression* iffalse;
 }
 : LPAREN 
-        QUESTION testexpr = aA_Expression[scope] 
-        (iftrue = aA_Expression[scope])  COLON
+        MUX testexpr = aA_Expression[scope] 
+        (iftrue = aA_Expression[scope])  
         (iffalse = aA_Expression[scope])
   RPAREN
         {
@@ -784,7 +725,25 @@ aA_Ternary_Expression[AaScope* scope] returns [AaExpression* expr]
 //----------------------------------------------------------------------------------------------------------
 // aA_Binary_Op : OR | AND | NOR | NAND | XOR | XNOR | SHL | SHR | PLUS | MINUS | DIV | MUL | EQUAL | NOTEQUAL | LESS | LESSEQUAL | GREATER | GREATEREQUAL 
 //----------------------------------------------------------------------------------------------------------
-aA_Binary_Op : OR | AND | NOR | NAND | XOR | XNOR | SHL | SHR | PLUS | MINUS | DIV | MUL | EQUAL | NOTEQUAL | LESS | LESSEQUAL | GREATER | GREATEREQUAL ;
+aA_Binary_Op returns [string op] : 
+        ( id_or:OR {op = id_or->getText();} )  | 
+        ( id_and:AND {op = id_and->getText();}) | 
+        ( id_nor:NOR { op = id_nor->getText();}) | 
+        ( id_nand:NAND { op = id_nand->getText();}) | 
+        ( id_xor:XOR { op = id_xor->getText();}) | 
+        ( id_xnor:XNOR { op = id_xnor->getText();}) | 
+        ( id_shl:SHL { op = id_shl->getText();}) |
+        ( id_shr:SHR { op = id_shr->getText();}) | 
+        ( id_plus:PLUS { op = id_plus->getText();}) | 
+        ( id_minus:MINUS { op = id_minus->getText();}) | 
+        ( id_div:DIV { op = id_div->getText();}) | 
+        ( id_mul:MUL { op = id_mul->getText();}) | 
+        ( id_EQUAL:EQUAL { op = id_EQUAL->getText();}) | 
+        ( id_notequal:NOTEQUAL { op = id_notequal->getText();}) | 
+        ( id_less:LESS { op = id_less->getText();}) | 
+        ( id_lessequal:LESSEQUAL { op = id_lessequal->getText();}) | 
+        ( id_greater:GREATER { op = id_greater->getText();}) | 
+        ( id_greaterequal:GREATEREQUAL { op = id_greaterequal->getText();});
 
 //----------------------------------------------------------------------------------------------------------
 // aA_Object_Declarations : (aA_Object_Declaration)* 
@@ -811,7 +770,7 @@ aA_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Global_Object_Declaration:  GLOBAL SIMPLE_IDENTIFIER COLON aA_Type_Reference (COLONEQUAL aA_Constant_Literal_Reference)?
+// aA_Global_Object_Declaration:  GLOBAL SIMPLE_IDENTIFIER COLON aA_Type_Reference (ASSIGNEQUAL aA_Constant_Literal_Reference)?
 //----------------------------------------------------------------------------------------------------------
 aA_Global_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         {
@@ -826,12 +785,12 @@ aA_Global_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Object_Declaration_Base: SIMPLE_IDENTIFIER COLON aA_Type_Reference (COLONEQUAL aA_Constant_Literal_Reference)?
+// aA_Object_Declaration_Base: SIMPLE_IDENTIFIER COLON aA_Type_Reference (ASSIGNEQUAL aA_Constant_Literal_Reference)?
 //----------------------------------------------------------------------------------------------------------
-aA_Object_Declaration_Base[AaScope* scope, string& oname, AaType*& otype, AaExpression*& initial_value]
+aA_Object_Declaration_Base[AaScope* scope, string& oname, AaType*& otype, AaConstantLiteralReference*& initial_value]
         : (id:SIMPLE_IDENTIFIER { oname = id->getText(); })
             (otype = aA_Type_Reference[scope])
-            (COLONEQUAL initial_value = aA_Constant_Literal_Reference[scope])?
+            (ASSIGNEQUAL initial_value = aA_Constant_Literal_Reference[scope])?
         ;
 
 //----------------------------------------------------------------------------------------------------------
@@ -841,7 +800,7 @@ aA_Local_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         {
             string oname;
             AaType* otype = NULL;
-            AaExpression* initial_value = NULL;
+            AaConstantLiteralReference* initial_value = NULL;
         }
         : (LOCAL aA_Object_Declaration_Base[scope,oname,otype,initial_value])
         {
@@ -857,7 +816,7 @@ aA_Constant_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         {
             string oname;
             AaType* otype = NULL;
-            AaExpression* initial_value = NULL;
+            AaConstantLiteralReference* initial_value = NULL;
         }
         : (CONSTANT aA_Object_Declaration_Base[scope,oname,otype,initial_value])
         {
@@ -872,7 +831,7 @@ aA_Pipe_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         {
             string oname;
             AaType* otype = NULL;
-            AaExpression* initial_value = NULL;
+            AaConstantLiteralReference* initial_value = NULL;
         }
         : (PIPE aA_Object_Declaration_Base[scope,oname,otype,initial_value])
         {
@@ -885,11 +844,11 @@ aA_Pipe_Object_Declaration[AaScope* scope] returns [AaObject* obj]
 //----------------------------------------------------------------------------------------------------------
 // aA_Interface_Object_Declaration : aA_Object_Declaration_Base
 //----------------------------------------------------------------------------------------------------------
-aA_Interface_Object_Declaration[AaModule* scope, string mode] returns [AaObject* obj]
+aA_Interface_Object_Declaration[AaModule* scope, string mode] returns [AaInterfaceObject* obj]
     {       
             string oname;
             AaType* otype = NULL;
-            AaExpression* initial_value = NULL;
+            AaConstantLiteralReference* initial_value = NULL;
     }
     : ( aA_Object_Declaration_Base[scope,oname,otype,initial_value] )
         {
@@ -900,47 +859,54 @@ aA_Interface_Object_Declaration[AaModule* scope, string mode] returns [AaObject*
     ;
 
 //----------------------------------------------------------------------------------------------------------
+// aA_Scalar_Type_Reference : aA_Uint_Reference | aA_Int_Reference | aA_Float_Reference | aA_Pointer_Reference 
+//----------------------------------------------------------------------------------------------------------
+aA_Scalar_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
+     :  (ref_type = aA_Uint_Type_Reference[scope]) |
+      (ref_type = aA_Int_Type_Reference[scope]) |
+      (ref_type = aA_Float_Type_Reference[scope]) |
+      (ref_type = aA_Pointer_Type_Reference[scope]) 
+    ;
+    
+//----------------------------------------------------------------------------------------------------------
 // aA_Type_Reference : aA_Uint_Reference | aA_Int_Reference | aA_Float_Reference | aA_Pointer_Reference | aA_Array_Reference
 //----------------------------------------------------------------------------------------------------------
 aA_Type_Reference[AaScope* scope] returns [AaType* ref_type]
-     :  (ref_type = aA_Uint_Reference[scope]) |
-      (ref_type = aA_Int_Reference[scope]) |
-      (ref_type = aA_Float_Reference[scope]) |
-      (ref_type = aA_Pointer_Reference[scope]) |
-      (ref_type = aA_Array_Reference[scope])
+    :  (ref_type = aA_Scalar_Type_Reference[scope]) |
+        (ref_type = aA_Array_Type_Reference[scope])
     ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Uint_Reference : UINT LESS UINTEGER GREATER
+// aA_Uint_Type_Reference : UINT LESS UINTEGER GREATER
 //----------------------------------------------------------------------------------------------------------
-aA_Uint_Reference[AaScope* scope] returns [AaType* ref_type]
+aA_Uint_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 {
     unsigned int width;
 }
     : UINT LESS w:UINTEGER {width = atoi(w->getText().c_str());} GREATER 
         { 
-            ref_type = scope->Make_UInteger_Type(width);
+            ref_type = AaProgram::Make_Uinteger_Type(width);
         }
     ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Int_Reference: INT LESS UINTEGER GREATER
+// aA_Int_Type_Reference: INT LESS UINTEGER GREATER
 //----------------------------------------------------------------------------------------------------------
-aA_Int_Reference[AaScope* scope] returns [AaType* ref_type]
+aA_Int_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 {
     unsigned int width;
 }
     : INT LESS w:UINTEGER {width = atoi(w->getText().c_str());} GREATER 
         { 
-            ref_type = scope->Make_Integer_Type(width);
+            ref_type = AaProgram::Make_Integer_Type(width);
         }
     ;
 
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Float_Reference: FLOAT LESS UINTEGER COMMA UINTEGER GREATER
+// aA_Float_Type_Reference: FLOAT LESS UINTEGER COMMA UINTEGER GREATER
 //----------------------------------------------------------------------------------------------------------
-aA_Float_Reference[AaScope* scope] returns [AaType* ref_type]
+aA_Float_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 {
     unsigned int c,m;
 }
@@ -949,55 +915,77 @@ aA_Float_Reference[AaScope* scope] returns [AaType* ref_type]
         ms:UINTEGER {m = atoi(ms->getText().c_str()); }
         GREATER 
         { 
-            ref_type = scope->Make_Float_Type(c,m);
+            ref_type = AaProgram::Make_Float_Type(c,m);
         }
     ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Pointer_Reference: POINTER LESS UINTEGER GREATER
+// aA_Pointer_Type_Reference: POINTER LESS UINTEGER GREATER
 //----------------------------------------------------------------------------------------------------------
-aA_Pointer_Reference[AaScope* scope] returns [AaType* ref_type]
+aA_Pointer_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 {
     unsigned int width;
 }
     : POINTER LESS w:UINTEGER {width = atoi(w->getText().c_str());} GREATER 
         { 
-            ref_type = scope->Make_Pointer_Type(width);
+            ref_type = AaProgram::Make_Pointer_Type(width);
         }
     ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Array_Reference: ARRAY (LBRACKET UINTEGER RBRACKET)+ OF aA_Type_Reference
+// aA_Array_Type_Reference: ARRAY (LBRACKET UINTEGER RBRACKET)+ OF aA_Scalar_Type_Reference
 //----------------------------------------------------------------------------------------------------------
-aA_Array_Reference[AaScope* scope] returns [AaType* ref_type]
+aA_Array_Type_Reference[AaScope* scope] returns [AaType* ref_type]
 {
-    vector<int> dims;
-    AaType* element_type;
+    vector<unsigned int> dims;
+    AaScalarType* element_type;
 }
     : ARRAY 
-        (LESS ds:UINTEGER { dims.push_back(ds->getText().c_str()); } GREATER)+ 
+        (LESS ds:UINTEGER { dims.push_back(atoi(ds->getText().c_str())); } GREATER)+ 
         OF 
-        (element_type = aA_Type_Reference[scope])
+        (element_type = aA_Scalar_Type_Reference[scope])
         {
-            ref_type = scope->Make_Array_Type(element_type,dims);
+            ref_type = AaProgram::Make_Array_Type(element_type,dims);
         }
     ;           
 
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Object_Reference : aA_Simple_Object_Reference | aA_Array_Object_Reference 
+// aA_Object_Reference : HIEARCHICAL_IDENTIFIER (LBRACKET Aa_Object_Reference RBRACKET)*
 //----------------------------------------------------------------------------------------------------------
 aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
-    :
-            (obj_ref = aA_Simple_Object_Reference[scope]) |
-            (obj_ref = aA_Array_Object_Reference[scope])
+{
+    string full_name;
+    bool array_flag = false;
+    vector<AaExpression*> indices;
+    AaObjectReference* index_expr;
+}
+    : 
+
+        ((PERCENT {full_name += '%';} id:SIMPLE_IDENTIFIER {full_name += id->getText();})* 
+            COLON {full_name += ':';})?
+
+//      (hid:SCOPE_IDENTIFIER {full_name = hid->getText();})?
+        (sid:SIMPLE_IDENTIFIER {full_name += sid->getText();})
+        (LBRACKET index_expr = aA_Object_Reference[scope]  RBRACKET
+            {
+                array_flag = true; 
+                indices.push_back(index_expr); 
+            }
+        )*
+        {
+            if(array_flag)
+                obj_ref = new AaArrayObjectReference(scope,full_name,indices);
+            else
+                obj_ref = new AaSimpleObjectReference(scope,full_name);
+        }
     ;
 
          
 //----------------------------------------------------------------------------------------------------------
 // aA_Constant_Literal_Reference: (PLUS | MINUS)? ((INTEGER)+ | (FLOAT)+)
 //----------------------------------------------------------------------------------------------------------
-aA_Constant_Literal_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
+aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReference* obj_ref]
     {
         string full_name;
     }
@@ -1024,37 +1012,7 @@ aA_Constant_Literal_Reference[AaScope* scope] returns [AaObjectReference* obj_re
         }
     ;
 
-//----------------------------------------------------------------------------------------------------------
-// aA_Simple_Object_Reference : HIERARCHICAL_IDENTIFIER
-//----------------------------------------------------------------------------------------------------------
-aA_Simple_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
-{
-    string full_name;
-}
-    : 
-        (hid:HIERARCHICAL_IDENTIFIER {full_name = hid->getText();})
-        {
-            obj_ref = AaSimpleObjectReference(scope,full_name);
-        }
-    ;
 
-//----------------------------------------------------------------------------------------------------------
-// aA_Array_Object_Reference : HIERARCHICAL_IDENTIFIER (DOT aA_Expression)+ 
-//----------------------------------------------------------------------------------------------------------
-aA_Array_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
-{
-    string full_name;
-    vector<AaExpression*> indices;
-    AaExpression* index_expr;
-}
-    :
-        (hid:HIERARCHICAL_IDENTIFIER {full_name = hid->getText();})
-        ("#" index_expr = aA_Expression[scope] {indices.push_back(index_expr); })+
-
-        {
-            obj_ref = new AaArrayObjectReference(scope,full_name,indices);
-        }
-    ;
 
 //----------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------
@@ -1066,15 +1024,93 @@ aA_Array_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
 class AaLexer extends Lexer;
 
 options {
-	k = 1;
-	testLiterals = false;
+	k = 6;
+	testLiterals = true;
 	charVocabulary = '\3'..'\377';
 	defaultErrorHandler=true;
 }
 
+
+MODULE : "$module";
+DECLARE : "$declare";
+GLOBAL : "$global";
+LOCAL  : "$local";
+PIPE : "$pipe";
+SERIESBLOCK   : "$seriesblock";
+PARALLELBLOCK : "$parallelblock";
+FORKBLOCK     : "$forkblock";
+BRANCHBLOCK   : "$branchblock";
+SWITCH        : "$switch";
+IF            : "$if";
+THEN          : "$then";
+ELSE          : "$else";
+FORK          : "$fork";
+JOIN          : "$join";
+MERGESPEC     : "$merge";
+WHEN          : "$when";
+ENTRY         : "$entry";
+EXIT          : "$exit";
+IN            : "$in";
+OUT           : "$out";
+IS            : "$is";
+ASSIGN        : "$assign";
+CALL          : "$call";
+
+// Special symbols
+COLON		 : ':' ; // label separator
+SEMICOLON	 : ';' ; // sequence
+COMMA        : ',' ; // argument-separator, index-separator etc.
+DQOUTE           : '\"'; // string marker
+ASSIGNEQUAL      : ":=" ; // assignment
+EQUAL            : "=="; // equality 
+NOTEQUAL         : "!="; // not equal
+LESS             : '<' ; // less-than
+LESSEQUAL        : "<="; // less-than-or-equal
+QUESTION         : '?' ; // test in ternary statement
+GREATER          : ">" ; // greater-than
+GREATEREQUAL     : ">="; // greater-than-or-equal
+SHL              : "<<"; // shift-left
+SHR              : ">>"; // shift-right
+LBRACE           : '{' ; // scope open
+RBRACE           : '}' ; // scope close
+LBRACKET         : '[' ; // array index marker
+RBRACKET         : ']' ; // array index marker
+LPAREN           : '(' ; // argument-list
+RPAREN           : ')' ; // argument-list
+PERCENT          : '%' ;
+
+// arithmetic operators
+PLUS             : '+' ; // plus
+MINUS            : '-' ; // minus
+MULTIPLY         : '*' ; // multiply
+DIV           : '/' ; // divide
+
+// logical operators
+NOT              : "$not"  ;
+OR               : "$or"   ;
+AND              : "$and"  ;
+XOR              : "$xor"  ;
+NOR              : "$nor"  ;
+NAND             : "$nand" ;
+XNOR             : "$xnor" ;
+
+// Mux
+MUX : "$mux";
+
+// types
+UINT           : "$uint"    ;
+INT            : "$int"     ;
+FLOAT          : "$float"   ;
+POINTER        : "$pointer" ;
+NuLL           : "$null";
+
+// type cast
+CAST : "$cast";
+
+
 // data format
-UINTEGER          : (DIGIT)+;
-UFLOAT : "." UINTEGER 'E' ('+' | '-') UINTEGER;
+UINTEGER          : DIGIT (DIGIT)*;
+UFLOAT : '.' UINTEGER 'E' ('+' | '-') UINTEGER;
 
 // White spaces (only "\n" is newline)
 WHITESPACE: (	' ' |'\t' | '\f' | '\r' | '\n' { newline(); } ) 
@@ -1093,11 +1129,15 @@ SINGLELINECOMMENT:
 }
 ;
 
-// Hierarchy
-HIERARCHICAL_IDENTIFIER : (("../")+ | (SIMPLE_IDENTIFIER '/')*) '(' SIMPLE_IDENTIFIER ')';
+
+
+// Scope-id
+SCOPE_IDENTIFIER : '.' (SIMPLE_IDENTIFIER '.')* ;
 
 // Identifiers
 SIMPLE_IDENTIFIER options {testLiterals=true;} : ALPHA (ALPHA | DIGIT | '_')*; 
+
+
 
 // base
 protected ALPHA: 'a'..'z'|'A'..'Z';

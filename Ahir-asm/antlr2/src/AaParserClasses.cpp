@@ -1,5 +1,12 @@
 #include <AaParserClasses.h>
 
+string IntToStr(int x)
+{
+  ostringstream string_stream(ostringstream::out);
+  string_stream << x;
+  return(string_stream.str());
+}
+
 bool StringCompare::operator() (string s11, string s21) const
 {
   const char *s1 = s11.c_str ();
@@ -378,8 +385,9 @@ AaUnaryExpression::~AaUnaryExpression() {};
 void AaUnaryExpression::Print(ostream& ofile)
 {
   ofile << " ( ";
-  if(this->Get_Operation())
-    ofile << this->Get_Operation() << " ";
+  assert(this->Get_Operation());
+  this->Get_Operation()->Print(ofile);
+  ofile << " ";
   this->Get_Rest()->Print(ofile);
   ofile << " )";
 }
@@ -750,6 +758,8 @@ void AaModule::Print(ostream& ofile)
 //---------------------------------------------------------------------
 // AaProgram
 //---------------------------------------------------------------------
+map<string,AaType*,StringCompare> AaProgram::_type_map;
+
 AaProgram::AaProgram():AaScope((AaScope*) NULL) {};
 AaProgram::~AaProgram() {};
 

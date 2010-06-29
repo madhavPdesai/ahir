@@ -1,20 +1,21 @@
-AAHOME=./
+AAHOME=.
 SRC=$(AAHOME)/src
 INCL=$(AAHOME)/include
 OBJ=$(AAHOME)/obj
 GRMR=$(AAHOME)/grammar
 BIN=$(AAHOME)/bin
-ANTLR2=/home/madhav/antlr2/
+ANTLR2=/home/madhav/antlr2
 INCLUDES=-I$(AAHOME)/include -I$(GRMR) -I$(ANTLR2)
+LIBS=-L$(ANTLR2)
 OBJS=$(OBJ)/AaLexer.o $(OBJ)/AaParser.o $(OBJ)/TestAaParser.o $(OBJ)/AaParserClasses.o
 DEFS=-DDebug
 all = $(BIN)/TestAaParser
 
 $(BIN)/TestAaParser :$(OBJS)
-	g++ -g -o $(BIN)/TestAaParser $(OBJS)
+	g++ -g $(LIBS) $(OBJS) -lantlr-4.0.3 -o $(BIN)/TestAaParser 
 
 $(OBJ)/AaParserClasses.o: $(SRC)/AaParserClasses.cpp $(INCL)/AaParserClasses.h
-	g++ $(DEFS) $(INCLUDES) -g -c AaParserClasses.cpp -o $(OBJ)/AaParserClasses.o
+	g++ $(DEFS) $(INCLUDES) -g -c $(SRC)/AaParserClasses.cpp -o $(OBJ)/AaParserClasses.o
 
 $(OBJ)/TestAaParser.o: $(SRC)/TestAaParser.cpp
 	g++ $(DEFS) $(INCLUDES) -g -c $(SRC)/TestAaParser.cpp  -o $(OBJ)/TestAaParser.o
@@ -29,7 +30,7 @@ $(GRMR)/AaLexer.cpp: $(GRMR)/Aa.g
 	java -cp $(ANTLR2)/antlr.jar antlr.Tool -o $(GRMR) $(GRMR)/Aa.g
 
 clean:
-	rm -f $(OBJ)/*.o $(BIN)/TestAaParser $(GRMR)/*.hpp  $(GRMR)/*.cpp
+	rm -f $(OBJ)/*.o $(BIN)/TestAaParser $(GRMR)/*.hpp*  $(GRMR)/*.cpp*
 
 .PHONY: clean
 
