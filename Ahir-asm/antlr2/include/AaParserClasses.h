@@ -30,8 +30,11 @@ using namespace std;
 /* This could have been auto-generated, but I did it the */
 /* brute force way.                                      */
 
+// Tab string
+string Tab_(unsigned int n);
+
 // IntToStr
-string IntToStr(int x);
+string IntToStr(unsigned int x);
 
 // string compare
 struct StringCompare:public binary_function
@@ -58,13 +61,13 @@ class AaRoot
   // fill from the parser at some point.
   unsigned int _line_number;
 
+
  public:
 
   static void Increment_Root_Counter();// { _root_counter += 1; }
   static int Get_Root_Counter(); // { return _root_counter; }
   static void Error(); // {_error_flag = true;}
   static bool Get_Error_Flag(); // { return _error_flag; }
- 
   void Set_Line_Number(int n) { this->_line_number = n; }
   unsigned int Get_Line_Number() { return(this->_line_number); }
 
@@ -88,6 +91,7 @@ class AaScope : public AaRoot
 {
   // the containing scope of this scope!
   AaScope* _scope;
+  unsigned int _depth;
 
  private: 
 
@@ -100,6 +104,8 @@ class AaScope : public AaRoot
   map<string,AaRoot*,StringCompare> _child_map;
 
  public:
+
+  virtual unsigned int Get_Depth() {return this->_depth;}
 
   virtual void Set_Label(string s) {if(s != "") this->_label = s; else assert(0);}
   virtual string Get_Label() {return (this->_label);}
@@ -245,7 +251,7 @@ class AaExpression: public AaRoot
   AaScope* _scope;
 
  public:
-  AaScope* Get_Scope() { return(this->_scope);}
+  virtual AaScope* Get_Scope() { return(this->_scope);}
 
   AaExpression(AaScope* scope_tpr);
   ~AaExpression();
@@ -400,6 +406,8 @@ class AaStatement: public AaScope
     cerr << "Warning: Map_Target is not yet implemented" << endl;
   }
 
+  virtual string Tab();
+
   ~AaStatement();
 };
 
@@ -423,7 +431,17 @@ class AaNullStatement: public AaStatement
   AaNullStatement(AaScope* parent_tpr);
   ~AaNullStatement();
 
-  virtual void Print(ostream& ofile) { ofile << "null" << endl; }
+  virtual void Print(ostream& ofile) { ofile << this->Tab() << "$null" << endl; }
+};
+
+// exit statement
+class AaExitStatement: public AaStatement
+{
+ public:
+  AaExitStatement(AaScope* parent_tpr);
+  ~AaExitStatement();
+
+  virtual void Print(ostream& ofile) { ofile << this->Tab() << "$exit" << endl; }
 };
 
 // assignment statement
@@ -535,30 +553,60 @@ class AaJoinForkStatement: public AaBlockStatement
   ~AaJoinForkStatement();
 };
 
-class AaMergeStatement: public AaStatement
+class AaMergeStatement: public AaBlockStatement
 {
-  vector<AaObjectReference*> _targets;
- protected :
-  map<string,vector<AaObjectReference*>*,StringCompare> _source_map;
+  vector<string> _merge_label_vector; // to preserve the order
+  set<string,StringCompare> _merge_label_set;
+
  public:
-  virtual void Add_Target(AaObjectReference* obj) {this->_targets.push_back(obj); this->Map_Target(obj);}
-  virtual void Add_Source(string label, vector<AaObjectReference*>* obj_vector)
-  {
-    this->_source_map[label] = obj_vector;
+  void Add_Merge_Label(string lbl) 
+  { 
+    if(this->_merge_label_set.find(lbl) == this->_merge_label_set.end())
+      {
+	this->_merge_label_set.insert(lbl); 
+	this->_merge_label_vector.push_back(lbl);
+      }
   }
 
   AaMergeStatement(AaBranchBlockStatement* scope);
   ~AaMergeStatement();
+
+  virtual void Print(ostream& ofile);
+};
+
+class AaPhiStatement: public AaStatement
+{
+  AaSimpleObjectReference* _target;
+  vector<pair<string,AaObjectReference*> > _merged_objects;
+
+ public:
+  AaPhiStatement(AaMergeStatement* scope);
+  ~AaPhiStatement();
+  void Set_Target(AaSimpleObjectReference* tgt) { this->_target = tgt; }
+  void Add_Source_Pair(string label, AaObjectReference* obj)
+  {
+    this->_merged_objects.push_back(pair<string,AaObjectReference*>(label,obj));
+  }
   virtual void Print(ostream& ofile);
 };
 
 class AaSwitchStatement: public AaStatement
 {
-  vector<pair<AaExpression*, AaStatementSequence*> > _choice_pairs;
+  AaExpression* _select_expression;
+  vector<pair<AaConstantLiteralReference*, AaBlockStatement*> > _choice_pairs;
+  AaBlockStatement* _default_statement;
+
  public:
-  void Add_Choice(AaExpression* cond, AaStatementSequence* sseq)
+
+  void Set_Select_Expression(AaExpression* expr) {this->_select_expression = expr;}
+  void Add_Choice(AaConstantLiteralReference* cond, AaBlockStatement* sseq)
   {
-    this->_choice_pairs.push_back(pair<AaExpression*,AaStatementSequence*>(cond,sseq));
+    this->_choice_pairs.push_back(pair<AaConstantLiteralReference*,AaBlockStatement*>(cond,sseq));
+  }
+
+  void Set_Default_Statement(AaBlockStatement* sseq)
+  {
+    this->_default_statement = sseq;
   }
 
   AaSwitchStatement(AaBranchBlockStatement* scope);
@@ -570,12 +618,13 @@ class AaSwitchStatement: public AaStatement
 class AaIfStatement: public AaStatement
 {
   AaExpression* _test_expression;
-  AaStatementSequence* _if_sequence;
-  AaStatementSequence* _else_sequence;
+  AaBlockStatement* _if_statement;
+  AaBlockStatement* _else_statement;
  public:
+
   void Set_Test_Expression(AaExpression* te) { this->_test_expression = te; }
-  void Set_If_Sequence(AaStatementSequence* is) { this->_if_sequence = is; }
-  void Set_Else_Sequence(AaStatementSequence* es) { this->_else_sequence = es; }
+  void Set_If_Statement(AaBlockStatement* is) { this->_if_statement = is; }
+  void Set_Else_Statement(AaBlockStatement* es) { this->_else_statement = es; }
 
   AaIfStatement(AaBranchBlockStatement* scope);
   ~AaIfStatement();
@@ -602,6 +651,7 @@ class AaObject: public AaRoot
   void Set_Value(AaConstantLiteralReference* v) {this->_value = v;}
   virtual string Get_Name() {return(this->_name);}
   virtual AaScope* Get_Scope() {return(this->_scope);}
+  virtual string Tab();
 
   AaObject(AaScope* scope_tpr, string oname, AaType* object_type);
   ~AaObject();

@@ -1,6 +1,14 @@
 #include <AaParserClasses.h>
 
-string IntToStr(int x)
+string Tab_(unsigned int n)
+{
+  string ret_string = "";
+  for(unsigned int i=0; i < n; i++)
+    ret_string += '\t';
+  return(ret_string);
+}
+
+string IntToStr(unsigned int x)
 {
   ostringstream string_stream(ostringstream::out);
   string_stream << x;
@@ -65,7 +73,13 @@ void AaRoot::Print(string& ostring)
 //---------------------------------------------------------------------
 // AaScope
 //---------------------------------------------------------------------
-AaScope::AaScope(AaScope* p):AaRoot() {this->_scope = p;}
+AaScope::AaScope(AaScope* p):AaRoot() 
+{
+  this->_scope = p; 
+  if(p != NULL)
+    this->_depth = p->Get_Depth() + 1;
+}
+
 AaScope::~AaScope() {}
 
 
@@ -114,7 +128,7 @@ AaUintType::AaUintType(AaScope* p, unsigned int width):AaScalarType(p)
 AaUintType::~AaUintType() {};
 void AaUintType::Print(ostream& ofile)
 {
-  ofile << "_uint<" << this->Get_Width() << ">";
+  ofile << "$uint<" << this->Get_Width() << ">";
 }
 
 //---------------------------------------------------------------------
@@ -124,7 +138,7 @@ AaIntType::AaIntType(AaScope* p, unsigned int width):AaUintType(p, width) {};
 AaIntType::~AaIntType() {};
 void AaIntType::Print(ostream& ofile)
 {
-  ofile << "_int<" << this->Get_Width() << ">";
+  ofile << "$int<" << this->Get_Width() << ">";
 }
 
 //---------------------------------------------------------------------
@@ -134,7 +148,7 @@ AaPointerType::AaPointerType(AaScope* p, unsigned int object_width): AaUintType(
 AaPointerType::~AaPointerType() {};
 void AaPointerType::Print(ostream& ofile)
 {
-  ofile << " pointer<" << this->Get_Width() << "> ";
+  ofile << "$pointer<" << this->Get_Width() << "> ";
 }
 
 //---------------------------------------------------------------------
@@ -148,7 +162,7 @@ AaFloatType::AaFloatType(AaScope* p, unsigned int characteristic, unsigned int m
 AaFloatType::~AaFloatType() {};
 void AaFloatType::Print(ostream& ofile)
 {
-  ofile << "_float<" << this->Get_Characteristic() << "," << this->Get_Mantissa() << ">";
+  ofile << "$float<" << this->Get_Characteristic() << "," << this->Get_Mantissa() << ">";
 }
 
 //---------------------------------------------------------------------
@@ -172,10 +186,10 @@ unsigned int AaArrayType::Get_Dimension(unsigned int dim_id)
 }
 void AaArrayType::Print(ostream& ofile)
 {
-  ofile << "array";
+  ofile << "$array";
   for(unsigned int i = 0; i < this->Get_Number_Of_Dimensions(); i++)
     ofile << "<" << this->Get_Dimension(i) << ">";
-  ofile << " of ";
+  ofile << " $of ";
   this->Get_Element_Type()->Print(ofile);
 }
 
@@ -209,9 +223,13 @@ AaObject::AaObject(AaScope* parent_tpr, string oname, AaType* object_type):AaRoo
   this->_object_type = object_type;
 }
 AaObject::~AaObject() {};
+string AaObject::Tab()
+{
+  return((this->Get_Scope() != NULL) ? Tab_(this->Get_Scope()->Get_Depth()) : Tab_(0));
+}
 void AaObject::Print(ostream& ofile)
 {
-  ofile << " " << this->Get_Name() << ":";
+  ofile << " " << this->Get_Name() << " ";
   this->Get_Object_Type()->Print(ofile);
   if(this->_value != NULL)
     {
@@ -244,7 +262,8 @@ AaGlobal::AaGlobal(AaScope* parent_tpr,string oname, AaType* otype,
 AaGlobal::~AaGlobal() {};
 void AaGlobal::Print(ostream& ofile)
 {
-  ofile << "global ";
+  ofile << this->Tab();
+  ofile << "$global ";
   this->AaObject::Print(ofile);
 }
 
@@ -259,7 +278,8 @@ AaLocal::AaLocal(AaScope* parent_tpr, string oname, AaType* otype,
 AaLocal::~AaLocal() {};
 void AaLocal::Print(ostream& ofile)
 {
-  ofile << "local ";
+  ofile << this->Tab();
+  ofile << "$local ";
   this->AaObject::Print(ofile);
 }
 
@@ -270,7 +290,8 @@ AaPipe::AaPipe(AaScope* parent_tpr, string oname, AaType* otype):AaObject(parent
 AaPipe::~AaPipe() {};
 void AaPipe::Print(ostream& ofile)
 {
-  ofile << "pipe ";
+  ofile << this->Tab();
+  ofile << "$pipe ";
   this->AaObject::Print(ofile);
 }
 
@@ -285,7 +306,8 @@ AaConstant::AaConstant(AaScope* parent_tpr , string oname, AaType* otype,
 AaConstant::~AaConstant() {};
 void AaConstant::Print(ostream& ofile)
 {
-  ofile << "constant ";
+  ofile << this->Tab();
+  ofile << "$constant ";
   this->AaObject::Print(ofile);
 }
 
@@ -343,8 +365,9 @@ void AaArrayObjectReference::Print(ostream& ofile)
   ofile << this->Get_Object_Ref_String();
   for(unsigned int i = 0; i < this->Get_Number_Of_Indices(); i++)
     {
-      ofile << ".";
+      ofile << "[";
       this->Get_Array_Index(i)->Print(ofile);
+      ofile << "]";
     }
 }
 AaExpression*  AaArrayObjectReference::Get_Array_Index(unsigned int idx)
@@ -443,6 +466,11 @@ void AaTernaryExpression::Print(ostream& ofile)
 //---------------------------------------------------------------------
 AaStatement::AaStatement(AaScope* p): AaScope(p) {}
 AaStatement::~AaStatement() {};
+string AaStatement::Tab()
+{
+  return((this->Get_Scope() != NULL) ? Tab_(this->Get_Scope()->Get_Depth()) : Tab_(0));
+}
+
 
 //---------------------------------------------------------------------
 // AaStatementSequence
@@ -466,6 +494,12 @@ void AaStatementSequence::Print(ostream& ofile)
 AaNullStatement::AaNullStatement(AaScope* parent_tpr):AaStatement(parent_tpr) {};
 AaNullStatement::~AaNullStatement() {};
 
+//---------------------------------------------------------------------
+// AaExitStatement: public AaStatement
+//---------------------------------------------------------------------
+AaExitStatement::AaExitStatement(AaScope* parent_tpr):AaStatement(parent_tpr) {};
+AaExitStatement::~AaExitStatement() {};
+
 
 //---------------------------------------------------------------------
 // AaAssignmentStatement
@@ -480,9 +514,11 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaObjectRefere
 AaAssignmentStatement::~AaAssignmentStatement() {};
 void AaAssignmentStatement::Print(ostream& ofile)
 {
+  ofile << this->Tab();
   this->Get_Target()->Print(ofile);
   ofile << " := ";
   this->Get_Source()->Print(ofile);
+  ofile << endl;
 }
 
 //---------------------------------------------------------------------
@@ -526,15 +562,10 @@ AaObjectReference* AaCallStatement::Get_Output_Arg(unsigned int index)
 void AaCallStatement::Print(ostream& ofile)
 {
 
-  ofile << " (";
-  for(unsigned int i = 0; i < this->Get_Number_Of_Output_Args(); i++)
-    {
-      this->_output_args[i]->Print(ofile);
-      ofile << " ";
-    }
-  ofile << ")";
+  ofile << this->Tab();
+  ofile << "$call ";
 
-  ofile << " := ";
+
   ofile << this->Get_Function_Name();
 
   ofile << " (";
@@ -545,19 +576,36 @@ void AaCallStatement::Print(ostream& ofile)
     }
   ofile << ")";
 
+  ofile << " (";
+  for(unsigned int i = 0; i < this->Get_Number_Of_Output_Args(); i++)
+    {
+      this->_output_args[i]->Print(ofile);
+      ofile << " ";
+    }
+  ofile << ")" << endl;
+
 }
 
 //---------------------------------------------------------------------
 // AaBlockStatement: public AaStatement
 //---------------------------------------------------------------------
-AaBlockStatement::AaBlockStatement(AaScope* scope,string label):AaStatement(scope) {this->_label = label;}
+AaBlockStatement::AaBlockStatement(AaScope* scope,string label):AaStatement(scope) 
+{
+  this->_label = label;
+  this->_statement_sequence = NULL;
+}
+
 AaBlockStatement::~AaBlockStatement() {}
 
- void AaBlockStatement::Print(ostream& ofile)
+void AaBlockStatement::Print(ostream& ofile)
 {
-  ofile << this->Get_Label() << " {" << endl;
-  this->_statement_sequence->Print(ofile);
-  ofile << "}" << endl;
+
+  assert(this->_statement_sequence);
+  ofile << "[" << this->Get_Label() << "]" << endl;
+  ofile << this->Tab() << "{" << endl;
+  if(this->_statement_sequence)
+    this->_statement_sequence->Print(ofile);
+  ofile << this->Tab() << "}" << endl;
 }
 
 //---------------------------------------------------------------------
@@ -567,7 +615,8 @@ AaSeriesBlockStatement::AaSeriesBlockStatement(AaScope* scope,string label):AaBl
 AaSeriesBlockStatement::~AaSeriesBlockStatement() {}
  void AaSeriesBlockStatement::Print(ostream& ofile)
 {
-  ofile << " $seriesblock ";
+  ofile << this->Tab();
+  ofile << "$seriesblock";
   this->AaBlockStatement::Print(ofile);
 }
 
@@ -579,7 +628,8 @@ AaParallelBlockStatement::AaParallelBlockStatement(AaScope* scope,string label):
 AaParallelBlockStatement::~AaParallelBlockStatement() {}
  void AaParallelBlockStatement::Print(ostream& ofile)
 {
-  ofile << " $parallelblock ";
+  ofile << this->Tab();
+  ofile << "$parallelblock";
   this->AaBlockStatement::Print(ofile);
 }
 
@@ -590,7 +640,8 @@ AaForkBlockStatement::AaForkBlockStatement(AaScope* scope,string label):AaBlockS
 AaForkBlockStatement::~AaForkBlockStatement() {}
  void AaForkBlockStatement::Print(ostream& ofile)
 {
-  ofile << " $forkblock ";
+  ofile << this->Tab();
+  ofile << "$forkblock ";
   this->AaBlockStatement::Print(ofile);
 }
 
@@ -601,7 +652,8 @@ AaBranchBlockStatement::AaBranchBlockStatement(AaScope* scope,string label):AaBl
 AaBranchBlockStatement::~AaBranchBlockStatement() {}
 void AaBranchBlockStatement::Print(ostream& ofile)
 {
-  ofile << " $branchblock ";
+  ofile << this->Tab();
+  ofile << "$branchblock ";
   this->AaBlockStatement::Print(ofile);
 }
 
@@ -612,60 +664,100 @@ AaJoinForkStatement::AaJoinForkStatement(AaForkBlockStatement* scope):AaBlockSta
 AaJoinForkStatement::~AaJoinForkStatement() {}
 void AaJoinForkStatement::Print(ostream& ofile) 
 {
-  ofile << " $join " << "{ " ;
+  ofile << this->Tab();
+  ofile << "$join ";
   for(unsigned int i = 0; i < this->_join_labels.size(); i++)
     ofile << this->_join_labels[i] << " ";
-  ofile << "}";
   if(this->Get_Statement_Count() > 0)
     {
-      ofile << " $fork ";
-      this->AaBlockStatement::Print(ofile);
+      ofile << endl << this->Tab();
+      ofile << "$fork " << endl;
+      assert(this->_statement_sequence);
+      this->_statement_sequence->Print(ofile);
     }
 }
 
 //---------------------------------------------------------------------
 // AaMergeStatement: public AaStatement
 //---------------------------------------------------------------------
-AaMergeStatement::AaMergeStatement(AaBranchBlockStatement* scope):AaStatement(scope) {}
+AaMergeStatement::AaMergeStatement(AaBranchBlockStatement* scope):AaBlockStatement((AaScope*)scope,"") {}
 AaMergeStatement::~AaMergeStatement() {}
- void AaMergeStatement::Print(ostream& ofile)
+void AaMergeStatement::Print(ostream& ofile)
 {
-  ofile << "$merge (" ;
-  for(unsigned int i=0; i < this->_targets.size(); i++)
+  ofile << this->Tab();
+  ofile << "$merge " ;
+  for(unsigned int i=0; i < this->_merge_label_vector.size(); i++)
     { 
-      this->_targets[i]->Print(ofile);
-      ofile << " ";
+      ofile  << this->_merge_label_vector[i] << " ";
     }
-  ofile << " )  := ( ";
-  map<string,vector<AaObjectReference*>*,StringCompare>::iterator iter;
-  for(iter = this->_source_map.begin(); iter != this->_source_map.end(); iter++)
+  ofile << endl;
+
+  assert(this->_statement_sequence);
+  if(this->_statement_sequence != NULL)
     {
-      ofile << (*iter).first << " : ( ";
-      for(unsigned int i = 0; i < ((*iter).second)->size(); i++)
-	(*((*iter).second))[i]->Print(ofile);
-      ofile << ")" << endl;
+      ofile << this->Tab() << endl;
+      this->_statement_sequence->Print(ofile);
+      ofile << this->Tab() << endl;
     }
-	
-  ofile << " )" << endl;
 }
+
+// AaPhiStatement: public AaStatement
+AaPhiStatement::AaPhiStatement(AaMergeStatement* scope):AaStatement(scope) 
+{
+  this->_target = NULL;
+}
+AaPhiStatement::~AaPhiStatement() 
+{
+}
+
+void AaPhiStatement::Print(ostream& ofile)
+{
+  ofile << this->Tab() << "$phi ";
+  this->_target->Print(ofile);
+  ofile << " := " << endl;
+  for(unsigned int i=0; i < this->_merged_objects.size(); i++)
+    {
+      ofile << this->Tab() << "  ";
+      this->_merged_objects[i].second->Print(ofile);
+      ofile << " $on " << this->_merged_objects[i].first << endl;
+    }
+  ofile << endl;
+}
+
 
 //---------------------------------------------------------------------
 // AaSwitchStatement: public AaStatement
 //---------------------------------------------------------------------
-AaSwitchStatement::AaSwitchStatement(AaBranchBlockStatement* scope):AaStatement(scope) {}
+AaSwitchStatement::AaSwitchStatement(AaBranchBlockStatement* scope):AaStatement(scope) 
+{
+  this->_select_expression = NULL;
+  this->_default_statement = NULL;
+}
 AaSwitchStatement::~AaSwitchStatement() {}
 void AaSwitchStatement::Print(ostream& ofile)
 {
+  assert(this->_select_expression);
+
+  ofile << this->Tab();
+
   ofile << "$switch ";
+  this->_select_expression->Print(ofile);
+  ofile << endl;
+
   for(unsigned int i=0; i < this->_choice_pairs.size(); i++)
     {
-      ofile << " $when ";
+      ofile << this->Tab();
+      ofile << "  $when ";
       this->_choice_pairs[i].first->Print(ofile);
-      ofile << " $then  {";
+      ofile << " $then " << endl;
       this->_choice_pairs[i].second->Print(ofile);
-      ofile << " }" << endl;
       ofile << endl;
     }
+
+  assert(this->_default_statement);  
+  ofile << this->Tab() << "  $default " << endl;
+  this->_default_statement->Print(ofile);
+  ofile << endl;
 }
 
 
@@ -675,24 +767,25 @@ void AaSwitchStatement::Print(ostream& ofile)
 AaIfStatement::AaIfStatement(AaBranchBlockStatement* scope):AaStatement(scope) 
 {
   this->_test_expression = NULL;
-  this->_if_sequence = NULL;
-  this->_else_sequence = NULL;
+  this->_if_statement = NULL;
+  this->_else_statement = NULL;
 }
 AaIfStatement::~AaIfStatement() {}
 void AaIfStatement::Print(ostream& ofile)
 {
   assert(this->_test_expression);
-  assert(this->_if_sequence);
-  assert(this->_else_sequence);
+  assert(this->_if_statement);
+  assert(this->_else_statement);
 
-  ofile << " $if ";
+  ofile << this->Tab();
+  ofile << "$if ";
   this->_test_expression->Print(ofile);
-  ofile << " $then { ";
-  this->_if_sequence->Print(ofile);
-  ofile << " }" << endl;
-  ofile << " $else { ";
-  this->_else_sequence->Print(ofile);
-  ofile << " }" << endl;
+  ofile << " $then " << endl;
+  this->_if_statement->Print(ofile);
+  ofile << endl;
+  ofile << this->Tab() << "$else " << endl;
+  this->_else_statement->Print(ofile);
+  ofile << endl;
 }
 
 
@@ -730,16 +823,16 @@ void AaModule::Add_Argument(AaInterfaceObject* obj)
 
 void AaModule::Print(ostream& ofile)
 {
-  ofile << " $module [" << this->Get_Label() << "] ";
-  ofile << " (";
+  ofile << "$module [" << this->Get_Label() << "]" << endl;
+  ofile << "\t $in (";
   for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
     {
       this->_input_args[i]->Print(ofile);
       ofile << " ";
     }
-  ofile << ")";
+  ofile << ")" << endl;
 
-  ofile << " (";
+  ofile << "\t $out (";
   for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
     {
       this->_output_args[i]->Print(ofile);
@@ -747,9 +840,21 @@ void AaModule::Print(ostream& ofile)
     }
   ofile << ")";
   ofile << endl;
-  ofile << " { ";
+  ofile << "$is" << endl;
+  if(this->_objects.size() > 0)
+    {
+      ofile << "$declare " << endl;
+      for(unsigned int i = 0; i < this->_objects.size(); i++)
+	{
+	  this->_objects[i]->Print(ofile);
+	  ofile << endl;
+	}
+    }
+
+  assert(this->_statement_sequence);
+  ofile << "{" << endl;
   this->_statement_sequence->Print(ofile);
-  ofile << " } " << endl;
+  ofile << "}" << endl;
 }
 
 
