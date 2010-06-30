@@ -500,7 +500,9 @@ class AaBlockStatement: public AaStatement
 
  public:
   virtual string Get_Label() { return(this->_label);}
-  virtual unsigned int Get_Statement_Count() {return(this->_statement_sequence->Get_Statement_Count()); }
+  virtual unsigned int Get_Statement_Count() 
+  {
+    return((this->_statement_sequence ? this->_statement_sequence->Get_Statement_Count() : 0)); }
   virtual void Set_Statement_Sequence(AaStatementSequence* statement_sequence) 
   {
     this->_statement_sequence = statement_sequence;

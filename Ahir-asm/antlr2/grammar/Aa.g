@@ -616,7 +616,6 @@ aA_If_Statement[AaBranchBlockStatement* scope] returns [AaIfStatement* new_is]
         {
             new_is->Set_Else_Statement(elseseq);
         }
-        ENDIF
     ;   
 
 

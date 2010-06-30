@@ -600,7 +600,6 @@ AaBlockStatement::~AaBlockStatement() {}
 void AaBlockStatement::Print(ostream& ofile)
 {
 
-  assert(this->_statement_sequence);
   ofile << "[" << this->Get_Label() << "]" << endl;
   ofile << this->Tab() << "{" << endl;
   if(this->_statement_sequence)
@@ -672,7 +671,6 @@ void AaJoinForkStatement::Print(ostream& ofile)
     {
       ofile << endl << this->Tab();
       ofile << "$fork " << endl;
-      assert(this->_statement_sequence);
       this->_statement_sequence->Print(ofile);
     }
 }
@@ -692,7 +690,7 @@ void AaMergeStatement::Print(ostream& ofile)
     }
   ofile << endl;
 
-  assert(this->_statement_sequence);
+
   if(this->_statement_sequence != NULL)
     {
       ofile << this->Tab() << endl;
@@ -851,9 +849,10 @@ void AaModule::Print(ostream& ofile)
 	}
     }
 
-  assert(this->_statement_sequence);
+
   ofile << "{" << endl;
-  this->_statement_sequence->Print(ofile);
+  if(this->_statement_sequence != NULL)
+    this->_statement_sequence->Print(ofile);
   ofile << "}" << endl;
 }
 
