@@ -46,7 +46,11 @@
  statement introduces a new namespace which
  is hierarchically identified.
 
+ TODO: why not permit declarations of $storage,$pipe and $constant
+       in each statement block (instead of only in the modules and
+       the program)?
  */
+
 
 header "post_include_cpp" {
 }
@@ -70,32 +74,42 @@ options {
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Program : (aA_Module)*
+// aA_Program : (aA_Module | (DECLARE (aA_Object_Declaration)+) )*
 //-----------------------------------------------------------------------------------------------
 aA_Program[AaProgram* aa_pgm]
 {
     AaModule* nf = NULL;
+    AaObject* obj = NULL;
 }
     :
         (
-            nf = aA_Module[aa_pgm]
-            { 
-                aa_pgm->Add_Module(nf);
-            }
+            (nf = aA_Module[aa_pgm]
+                { 
+                    aa_pgm->Add_Module(nf);
+                }
+            )
+            |
+            
+            (  
+                DECLARE 
+                (
+                    obj = aA_Object_Declaration[aa_pgm] { aa_pgm->Add_Object(obj); }
+                )+
+            )
         )*
-
     ;
 
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Module: MODULE aA_Label aA_In_Args aA_Out_Args (aA_Object_Declarations)? LBRACE aA_Atomic_Statement_Sequence RBRACE
+// aA_Module: MODULE aA_Label aA_In_Args aA_Out_Args (DECLARE (aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 aA_Module[AaProgram* aa_pgm] returns [AaModule* new_module]
 {
     string lbl = "";
     new_module = NULL;
     AaStatementSequence* stmts = NULL;
+    AaObject* obj = NULL;
 }
     : MODULE 
         lbl = aA_Label 
@@ -103,8 +117,11 @@ aA_Module[AaProgram* aa_pgm] returns [AaModule* new_module]
             new_module = new AaModule(aa_pgm,lbl);
         }
         aA_In_Args[new_module] aA_Out_Args[new_module] IS
-        (DECLARE  aA_Object_Declarations[new_module])?
         LBRACE
+            // first the declarations in this scope
+            (DECLARE 
+                (obj = aA_Object_Declaration[new_module] { new_module->Add_Object(obj); })+)?
+
             // every statement in the sequence specifies a set of
             // targets (possibly empty) which should be maintained
             // by the containing scope as implicit variable 
@@ -147,7 +164,7 @@ aA_Out_Args[AaModule* parent]
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Atomic_Statement : aA_Assignment | aA_Call | aA_Block_Statement
+// aA_Atomic_Statement : aA_Assignment_Statement | aA_Call_Statemet | aA_Null_Statement | aA_Block_Statement
 //-----------------------------------------------------------------------------------------------
 aA_Atomic_Statement[AaScope* scope] returns [AaStatement* stmt]
     : stmt = aA_Assignment_Statement[scope] |
@@ -230,7 +247,9 @@ aA_Fork_Block_Statement_Sequence[AaForkBlockStatement* scope] returns [AaStateme
 } 
     :
         ( 
-            new_statement = aA_Join_Fork_Statement[scope] { slist.push_back(new_statement); }
+            ( new_statement = aA_Join_Fork_Statement[scope] { slist.push_back(new_statement); }) 
+            |
+            ( new_statement = aA_Atomic_Statement[scope] { slist.push_back(new_statement); }) 
         )+ 
         {
             nsb = new AaStatementSequence(scope,slist);
@@ -238,7 +257,7 @@ aA_Fork_Block_Statement_Sequence[AaForkBlockStatement* scope] returns [AaStateme
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Branch_Block_Statement_Sequence : (aA_Merge_Statement (aA_Switch_Statement | aA_If_Statement | aA_Exit_Statement)?)+
+// aA_Branch_Block_Statement_Sequence : (aA_Merge_Statement | aA_Switch_Statement | aA_If_Statement | aA_Atomic_Statement )+
 //-----------------------------------------------------------------------------------------------
 aA_Branch_Block_Statement_Sequence[AaBranchBlockStatement* scope] returns [AaStatementSequence* nsb]
 {
@@ -248,21 +267,29 @@ aA_Branch_Block_Statement_Sequence[AaBranchBlockStatement* scope] returns [AaSta
 } 
     :
         (
-            // Note: the merge statement is always paired with a switch/if/exit
-            //
-            ( new_statement = aA_Merge_Statement[scope]) 
+            (
+                (
+                    new_statement = aA_Merge_Statement[scope]
+                )   
+            |
+                (
+                    ( new_statement = aA_Switch_Statement[scope] |
+                        new_statement = aA_If_Statement[scope] )
+                )
+            |
+                (
+                    new_statement = aA_Atomic_Statement[scope]
+                )
+            |
+                (
+                    new_statement = aA_Branch_Statement[scope]
+                )
+            )
+                     
             { 
                 slist.push_back(new_statement); 
-            }
-        (
-            ( new_statement = aA_Switch_Statement[scope] |
-                new_statement = aA_If_Statement[scope] |
-                new_statement = aA_Exit_Statement[scope])
-            { 
-                slist.push_back(new_statement); 
-            }
-        )?
-    )+ 
+            }   
+        )+
         {
             nsb = new AaStatementSequence(scope,slist);
         }
@@ -311,16 +338,18 @@ aA_Series_Block_Statement[AaScope* scope] returns [AaSeriesBlockStatement* new_s
 
     string lbl = "";
     AaStatementSequence* sseq = NULL;
+    AaObject* obj = NULL;
 } :
         SERIESBLOCK
-            (
-        lbl = aA_Label 
+        ( lbl = aA_Label )?
         {
                 new_sbs = new AaSeriesBlockStatement(scope,lbl);
-            }       
+        }       
             
-        )
+
         LBRACE
+        (DECLARE 
+            (obj = aA_Object_Declaration[new_sbs] { new_sbs->Add_Object(obj); })+)?
         sseq = aA_Atomic_Statement_Sequence[new_sbs] 
         {
             new_sbs->Set_Statement_Sequence(sseq);
@@ -338,16 +367,17 @@ aA_Parallel_Block_Statement[AaScope* scope] returns [AaParallelBlockStatement* n
 {
     string lbl = "";
     AaStatementSequence* sseq = NULL;
-
+    AaObject* obj = NULL;
 } :
         PARALLELBLOCK 
-            (
-        lbl = aA_Label 
+        ( lbl = aA_Label )?
         {
-                new_pbs = new AaParallelBlockStatement(scope,lbl);
-            }
-        )
+            new_pbs = new AaParallelBlockStatement(scope,lbl);
+        }
         LBRACE
+        (DECLARE 
+            (obj = aA_Object_Declaration[new_pbs] { new_pbs->Add_Object(obj); })+)?
+
         sseq = aA_Atomic_Statement_Sequence[new_pbs] {new_pbs->Set_Statement_Sequence(sseq);}
         RBRACE
     ;
@@ -370,15 +400,16 @@ aA_Fork_Block_Statement[AaScope* scope] returns [AaForkBlockStatement* new_fbs]
 {
     string lbl = "";
     AaStatementSequence* sseq = NULL;
+    AaObject* obj = NULL;
 } :
         FORKBLOCK 
-            (
-        lbl = aA_Label 
+        ( lbl = aA_Label         )?
         {
-                new_fbs = new AaForkBlockStatement(scope,lbl);
-            }
-        )
+            new_fbs = new AaForkBlockStatement(scope,lbl);
+        }
         LBRACE
+        (DECLARE 
+            (obj = aA_Object_Declaration[new_fbs] { new_fbs->Add_Object(obj); })+)?
         sseq = aA_Fork_Block_Statement_Sequence[new_fbs] {new_fbs->Set_Statement_Sequence(sseq);}
         RBRACE
     ;
@@ -402,15 +433,17 @@ aA_Branch_Block_Statement[AaScope* scope] returns [AaBranchBlockStatement* new_b
 {
     string lbl = "";
     AaStatementSequence* sseq = NULL;
+    AaObject* obj = NULL;
 } :
         BRANCHBLOCK 
-            (
-        lbl = aA_Label 
+        ( lbl = aA_Label )?
         {
-                new_bbs = new AaBranchBlockStatement(scope,lbl);
-            }
-        )
+            new_bbs = new AaBranchBlockStatement(scope,lbl);
+        }
         LBRACE
+        (DECLARE 
+            (obj = aA_Object_Declaration[new_bbs] { new_bbs->Add_Object(obj); })+)?
+
         sseq = aA_Branch_Block_Statement_Sequence[new_bbs] {new_bbs->Set_Statement_Sequence(sseq);}
         RBRACE
     ;
@@ -432,10 +465,11 @@ aA_Join_Fork_Statement[AaForkBlockStatement* scope] returns [AaJoinForkStatement
     string lbl = "";
 }
     : JOIN 
-        (id: SIMPLE_IDENTIFIER { lbl = id->getText(); new_jfs->Add_Join_Label(lbl); })+  
-        (   FORK
-            sseq = aA_Block_Statement_Sequence[new_jfs] {new_jfs->Set_Statement_Sequence(sseq);}
+        (id: SIMPLE_IDENTIFIER { lbl = id->getText(); new_jfs->Add_Join_Label(lbl); })*
+        (AND FORK
+            sseq = aA_Atomic_Statement_Sequence[new_jfs] {new_jfs->Set_Statement_Sequence(sseq);}
         )?
+      ENDJOIN
     ;
 
 //-----------------------------------------------------------------------------------------------
@@ -487,13 +521,16 @@ aA_Phi_Statement[AaMergeStatement* scope, set<string,StringCompare>& lbl_set] re
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Exit_Statement : EXIT
+// aA_Branch_Statement : BRANCH
 //-----------------------------------------------------------------------------------------------
-aA_Exit_Statement[AaScope* scope] returns[AaStatement* new_stmt]
-    : EXIT 
+aA_Branch_Statement[AaBranchBlockStatement* scope] returns[AaStatement* new_stmt]
+{
+    string lbl = "";
+}
+    : BRANCH lbl = aA_Label 
         {
             // NuLL statements have no labels.
-            new_stmt = new AaExitStatement(scope);
+            new_stmt = new AaBranchStatement(scope,lbl);
         }
     ;
 
@@ -503,11 +540,8 @@ aA_Exit_Statement[AaScope* scope] returns[AaStatement* new_stmt]
 //--------------------------------------------------------------------------------------------------
 // This statement specifies a node in the directed graph in a branchblock. 
 //
-// The in-arcs are specified by the MERGE section and the out-arcs by 
-// the SWITCH/IF section
-//
-// The merge statement specifies a set of labels on which it waits.
-// The statement is triggered by the end of any of these statements.
+// The merge statement specifies a set of labels of branch statements 
+// on which it waits. The statement is triggered by the end of any of these statements.
 // (It should not be possible for the merge statement to be retriggered
 // while it is in progress).
 // 
@@ -515,8 +549,6 @@ aA_Exit_Statement[AaScope* scope] returns[AaStatement* new_stmt]
 // obtained by merging values from the different statements
 // which are being merged (specified by the phi statements)
 //
-// The merge is then followed by a (required) branch statement
-// (either a switch or an if).  
 //
 // The merge statement can occur only inside branchblocks
 //--------------------------------------------------------------------------------------------------
@@ -548,74 +580,81 @@ aA_Merge_Statement[AaBranchBlockStatement* scope] returns [AaMergeStatement* new
             new_mgs->Set_Statement_Sequence(new AaStatementSequence(new_mgs,slist));
         }
         )?
+    ENDMERGE
     ;
             
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Switch_Statement : SWITCH Aa_Expression (WHEN aA_Constant_Literal_Reference THEN  aA_Block_Statement )+ DEFAULT aA_Block_Statement 
+// aA_Switch_Statement : SWITCH Aa_Expression (WHEN aA_Constant_Literal_Reference THEN  aA_Branch_Block_Statement_Sequence )+ (DEFAULT aA_Branch_Block_Statement_Sequence)? ENDSWITCH
 //----------------------------------------------------------------------------------------------------------
 // Incoming control flow is passed on to one of the sequences depending on the conditions.
 // A switch can occur only inside a branch statement.  
 //
-// The default is necessary
+// A switch statement does not define a new scope.  All implicit variables
+// declared in statements in a switch belong to the parent scope of the switch
 //----------------------------------------------------------------------------------------------------------
 aA_Switch_Statement[AaBranchBlockStatement* scope] returns [AaSwitchStatement* new_ss]
 {
     new_ss = new AaSwitchStatement(scope);
-    AaBlockStatement* sseq = NULL;
-    AaBlockStatement* defseq = NULL;
+    AaStatementSequence* sseq = NULL;
+    AaStatementSequence* defseq = NULL;
     AaExpression* select_expression = NULL;
     AaConstantLiteralReference* choice_value = NULL;
 }
     : SWITCH 
-        select_expression=aA_Expression[new_ss] 
+        select_expression=aA_Expression[scope] 
         (
             WHEN 
-            choice_value = aA_Constant_Literal_Reference[new_ss]
+            choice_value = aA_Constant_Literal_Reference[scope]
             THEN 
-            sseq = aA_Block_Statement[new_ss]
+            sseq = aA_Branch_Block_Statement_Sequence[scope]
             {
                 new_ss->Add_Choice(choice_value,sseq);
             }
-        )+
+        )*
         (DEFAULT
-            defseq = aA_Block_Statement[new_ss]
+            defseq = aA_Branch_Block_Statement_Sequence[scope]
         )?
         {
             new_ss->Set_Select_Expression(select_expression);
-            new_ss->Set_Default_Statement(defseq);
+            new_ss->Set_Default_Sequence(defseq);
         }
+        ENDSWITCH
     ;
 
 
 //----------------------------------------------------------------------------------------------------------
-//  aA_If_Statement:  IFSPEC aA_Expression THEN aA_Block_Statement ELSE aA_Block_Statement
+//  aA_If_Statement:  IF aA_Expression THEN aA_Branch_Block_Statement_Sequence (ELSE aA_Branch_Block_Statement_Sequence)? ENDIF
 //----------------------------------------------------------------------------------------------------------
 // Incoming control flow is passed on to one of the sequences depending on the conditions.
 // An IF can occur only inside a branch statement.  
+//
+// An IF statement does not define a new scope.  All implicit variables
+// declared in statements in an IF belong to the parent scope of the IF
 //----------------------------------------------------------------------------------------------------------
 aA_If_Statement[AaBranchBlockStatement* scope] returns [AaIfStatement* new_is]
 {
     AaExpression* if_expression = NULL;
     new_is = new AaIfStatement(scope);
-    AaBlockStatement *ifseq = NULL;
-    AaBlockStatement *elseseq = NULL;
+    AaStatementSequence *ifseq = NULL;
+    AaStatementSequence *elseseq = NULL;
     AaExpression* select_expression = NULL;
 }: 
      IF
-        (if_expression=aA_Expression[new_is]) { new_is->Set_Test_Expression(if_expression);}
+        (if_expression=aA_Expression[scope]) { new_is->Set_Test_Expression(if_expression);}
      THEN 
-        ifseq = aA_Block_Statement[new_is] 
+        ifseq = aA_Branch_Block_Statement_Sequence[scope] 
         {
-            new_is->Set_If_Statement(ifseq);
+            new_is->Set_If_Sequence(ifseq);
         }
         (
             ELSE 
-            elseseq = aA_Block_Statement[new_is] 
-        )
-        {
-            new_is->Set_Else_Statement(elseseq);
-        }
+            elseseq = aA_Branch_Block_Statement_Sequence[scope] 
+            {
+                new_is->Set_Else_Sequence(elseseq);
+            }
+        )?
+     ENDIF
     ;   
 
 
@@ -674,12 +713,13 @@ aA_Argv_Out[AaScope* scope, vector<AaObjectReference*>& args]
 //----------------------------------------------------------------------------------------------------------
 aA_Expression[AaScope* scope] returns [AaExpression* expr]
 :       
-    ( 
+        ( 
+            (expr = aA_Constant_Literal_Reference[scope]) |
             (expr = aA_Object_Reference[scope]) |
-      (expr = aA_Unary_Expression[scope]) |
-      (expr = aA_Binary_Expression[scope]) |
-      (expr = aA_Ternary_Expression[scope]) 
-    )
+            (expr = aA_Unary_Expression[scope]) |
+            (expr = aA_Binary_Expression[scope]) |
+            (expr = aA_Ternary_Expression[scope]) 
+        )
 ;
 
 
@@ -787,42 +827,28 @@ aA_Binary_Op returns [string op] :
         ( id_greater:GREATER { op = id_greater->getText();}) | 
         ( id_greaterequal:GREATEREQUAL { op = id_greaterequal->getText();});
 
-//----------------------------------------------------------------------------------------------------------
-// aA_Object_Declarations : (aA_Object_Declaration)* 
-//----------------------------------------------------------------------------------------------------------
-// object declarations allowed only inside modules
-//----------------------------------------------------------------------------------------------------------
-aA_Object_Declarations[AaModule* scope]
-        {
-            AaObject* obj;
-        }
-    :
-        (obj = aA_Object_Declaration[scope] { scope->Add_Object(obj); })*
-    ;
-
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Object_Declaration : (aA_Global_Object_Declaration | aA_Local_Object_Declaration | aA_Constant_Object_Declaration | aA_Pipe_Object_Declaration)
+// aA_Object_Declaration : (aA_Storage_Object_Declaration | aA_Constant_Object_Declaration | aA_Pipe_Object_Declaration)
 //----------------------------------------------------------------------------------------------------------
 aA_Object_Declaration[AaScope* scope] returns [AaObject* obj]
-        : (obj = aA_Global_Object_Declaration[scope]) |
-            (obj = aA_Local_Object_Declaration[scope]) |
-                (obj = aA_Constant_Object_Declaration[scope]) |
-                    (obj = aA_Pipe_Object_Declaration[scope])
+        : (obj = aA_Storage_Object_Declaration[scope]) |
+        (obj = aA_Constant_Object_Declaration[scope]) |
+        (obj = aA_Pipe_Object_Declaration[scope])
         ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Global_Object_Declaration:  GLOBAL SIMPLE_IDENTIFIER COLON aA_Type_Reference (ASSIGNEQUAL aA_Constant_Literal_Reference)?
+// aA_Storage_Object_Declaration:  STORAGE SIMPLE_IDENTIFIER COLON aA_Type_Reference (ASSIGNEQUAL aA_Constant_Literal_Reference)?
 //----------------------------------------------------------------------------------------------------------
-aA_Global_Object_Declaration[AaScope* scope] returns [AaObject* obj]
+aA_Storage_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         {
             string oname;
             AaType* otype = NULL;
             AaConstantLiteralReference* initial_value = NULL;
         }
-        : (GLOBAL aA_Object_Declaration_Base[scope,oname,otype,initial_value])
+        : (STORAGE aA_Object_Declaration_Base[scope,oname,otype,initial_value])
         {
-            obj = new AaGlobal(scope,oname,otype,initial_value);
+            obj = new AaStorageObject(scope,oname,otype,initial_value);
         }
         ;
 
@@ -836,22 +862,6 @@ aA_Object_Declaration_Base[AaScope* scope, string& oname, AaType*& otype, AaCons
         ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Local_Object_Declaration: LOCAL aA_Object_Declaration_Base
-//----------------------------------------------------------------------------------------------------------
-aA_Local_Object_Declaration[AaScope* scope] returns [AaObject* obj]
-        {
-            string oname;
-            AaType* otype = NULL;
-            AaConstantLiteralReference* initial_value = NULL;
-        }
-        : (LOCAL aA_Object_Declaration_Base[scope,oname,otype,initial_value])
-        {
-            obj = new AaGlobal(scope,oname,otype,initial_value);
-        }
-        ;
-
-
-//----------------------------------------------------------------------------------------------------------
 // aA_Constant_Object_Declaration: CONSTANT aA_Object_Declaration_Base
 //----------------------------------------------------------------------------------------------------------
 aA_Constant_Object_Declaration[AaScope* scope] returns [AaObject* obj]
@@ -862,12 +872,12 @@ aA_Constant_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         }
         : (CONSTANT aA_Object_Declaration_Base[scope,oname,otype,initial_value])
         {
-            obj = new AaConstant(scope,oname,otype,initial_value);
+            obj = new AaConstantObject(scope,oname,otype,initial_value);
         }
         ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Pipe_Declaration: PIPE aA_Object_Declaration_Base
+// aA_Pipe_Object_Declaration: PIPE aA_Object_Declaration_Base
 //----------------------------------------------------------------------------------------------------------
 aA_Pipe_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         {
@@ -879,7 +889,7 @@ aA_Pipe_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         {
             if(initial_value != NULL)
                 cerr << "Warning: ignoring initial value for pipe " << oname << endl;
-            obj = new AaPipe(scope,oname,otype);
+            obj = new AaPipeObject(scope,oname,otype);
         }
         ;
 
@@ -1041,13 +1051,13 @@ aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReferenc
                 (fid: UFLOAT { full_name += fid->getText();} ) 
             )
             |
-            ( lp: LPAREN { full_name += lp->getText(); }
+            ( lp: LESS { full_name += lp->getText(); }
                 ( 
                     (iidv: UINTEGER { full_name += iidv->getText() + " ";} )+
                     |
                     (fidv: UFLOAT { full_name += fidv->getText() + " ";} )+
                 )
-              rp: RPAREN { full_name += rp->getText(); }
+              rp: GREATER { full_name += rp->getText(); }
             )
         )
 
@@ -1074,17 +1084,18 @@ options {
 	defaultErrorHandler=true;
 }
 
-
-MODULE : "$module";
-DECLARE : "$declare";
-DEFAULT : "$default";
-GLOBAL : "$global";
-LOCAL  : "$local";
-PIPE : "$pipe";
+// language keywords (all start with $)
+MODULE        : "$module";
+DECLARE       : "$declare";
+DEFAULT       : "$default";
+STORAGE       : "$storage";
+PIPE          : "$pipe";
+CONSTANT      : "$constant";
 SERIESBLOCK   : "$seriesblock";
 PARALLELBLOCK : "$parallelblock";
 FORKBLOCK     : "$forkblock";
 BRANCHBLOCK   : "$branchblock";
+BRANCH        : "$takeroute";
 SWITCH        : "$switch";
 ENDSWITCH     : "$endswitch";
 IF            : "$if";
@@ -1097,6 +1108,7 @@ FORK          : "$fork";
 JOIN          : "$join";
 MERGE         : "$merge";
 ENDMERGE      : "$endmerge";
+ENDJOIN       : "$endjoin";
 WHEN          : "$when";
 ENTRY         : "$entry";
 EXIT          : "$exit";
@@ -1138,8 +1150,8 @@ CARET            : '^';
 // arithmetic operators
 PLUS             : '+' ; // plus
 MINUS            : '-' ; // minus
-MULTIPLY         : '*' ; // multiply
-DIV           : '/' ; // divide
+MUL              : '*' ; // multiply
+DIV              : '/' ; // divide
 
 // logical operators
 NOT              : "$not"  ;

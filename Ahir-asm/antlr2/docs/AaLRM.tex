@@ -1,0 +1,553 @@
+\documentclass{article}
+
+\title{Aa Language Reference Manual}
+\author{Madhav Desai \\ Department of Electrical Engineering \\ Indian Institute of Technology \\
+	Mumbai 400076 India}
+
+\newcommand{\Aa}{{\bf Aa}~}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+The {\bf Aa} language is intended to be used to
+describe an algorithm so that the control flow
+in the description can be modeled by a petri net
+of a specific class (the type-2 petri-net as
+introduced in \cite{ref:SameerPhD}).  A program in
+\Aa is also a description of a system which reacts with 
+its environment through input and output ports and 
+through message queues.
+
+In the rest of this document, we outline the
+structure and the syntax of the \Aa language,
+and also describe the semantics of an \Aa
+program, especially the execution model and
+the behaviour of the equivalent system.
+
+
+\section{Program structure}
+
+
+A program in \Aa consists of a sequence of
+declarations and module definitions.  
+\begin{verbatim}
+program := ( module-definition | program-object-declaration )*
+\end{verbatim}
+Declarations at the program level 
+can belong to one of three classes:
+\begin{itemize}
+\item {\bf Storage} objects declared in the program
+are globally visible variables that can be read from
+anywhere in the program and can be written from anywhere
+in the program.
+\item {\bf Pipe} objects declared in the program are
+globally visible first-in-first-out queues that can 
+be read from anywhere in the program. 
+written into by at most one module in the program.
+\begin{itemize}
+\item A pipe can be written into by at most one module
+in the program, and can be read from by at most one module
+in the program.
+\item A pipe that is only written into in the program, but
+is not read from, is assumed to have a destination outside
+the program.
+\item A pipe that is only read from in a program but not
+written into, is assumed to have a source outside the program.
+\end{itemize}
+\item {\bf Constant} objects are globally visible and have
+initial values which can never be altered in the program.
+Thus, an assignment to a constant is an error.
+\end{itemize} 
+
+A module in \Aa is the basic unit of compilation, and
+has the following structure
+\begin{verbatim}
+module-definition :=  
+                 module-specifier module-name  
+                 module-input-arguments
+                 module-output-arguments
+                 module-object-declarations
+                 { <module-body> }
+\end{verbatim}
+Thus, a module has a name, has input and output arguments,
+declares objects and consists of a sequence of statements.
+Objects (storage/pipe/constant) declared in the module are visible only in the
+module body. 
+
+The module body itself is a sequence of statements.
+\begin{verbatim}
+module-body := (statement)+
+\end{verbatim}
+The control flow implied is serial in nature.  The
+module starts executing when it gets a token.
+This token is passed to the first statement in the
+list which executes and releases the token when it
+finishes execution, and the token  is passed serially down the
+list of statements.  When the last statement finishes 
+executing, the token passes out of the module.
+
+The region between \{ and \} is termed a {\bf scope}.  Thus, 
+the module description defines a scope.  In this case, 
+the scope has a label which is the same as the module name.
+As we shall see later, the statements in the statement sequence
+may in turn define scopes, which may be labeled or anonymous.
+Each scope defines a name-space.  The visibility
+rules and access mechanisms between scopes will be described
+in Section \ref{sec:Scopes}
+
+The control flow in an \Aa module can be visualized
+in terms of the flow of tokens.
+A module is invoked when it receives a token, and 
+this token flows down the sequence of statements.
+Whenever a statement receives a token, it executes,
+and when it has finished executing, the token is
+released to the next statement. 
+
+\section{Statements}
+ 
+Statements in the module-body can be simple statements
+or block statements.
+
+\subsection{Simple Statements}
+
+Simple statements can be one of the following:
+\begin{itemize}
+\item An {\bf assignment} statement is of the form
+\begin{verbatim}
+target-ref := expression
+\end{verbatim}
+where {\em target-ref} either specifies a declared object
+or an undeclared name.  If it is an undeclared name, then
+it is an implicit variable that is attached to the
+assignment statement.  No other statement can write to this
+variable, but any statement can read from this variable
+subject to scoping rules.  Thus, every implicit variable
+is such that exactly one statement defines its value.
+When control flow reaches an assignment statement, it
+evaluates the expression, updates the value of the target
+and passes the control flow forward (we will see what this
+means in the sequel).
+Some examples of simple statements are 
+\begin{verbatim}
+a  :=  ($not b)
+b  :=   (c + (d + e))
+\end{verbatim}
+etc.  
+More details of the syntax are provided in 
+Section \ref{sec:Syntax}.
+\item A {\bf call} statement is of the form
+\begin{verbatim}
+call-spec module-name input-argument-values output-argument-targets
+\end{verbatim}
+The call statement thus specifies a module to which control flow
+is to be passed.  The call statement may itself define new implicit
+variables through its specified targets (and thus is the only
+statement that can modify these newly defined implicit variables).
+When control flow reaches the call statement, it forwards the
+token to the called module, and finishes when the token exits
+the called module.  Recursive calls and cyclical dependencies between
+modules through call statements are not permitted in the \Aa language.
+Here is an example of a call statement
+\begin{verbatim}
+// pass control to a module named foo
+// foo has two inputs and three outputs
+$call foo (p,q)  (r,s,t)
+\end{verbatim}
+More details of the syntax are provided in 
+Section \ref{sec:Syntax}.
+\item The {\bf null} statement does nothing, and just passes the
+token onwards.  This is how it looks like
+\begin{verbatim}
+$null
+\end{verbatim}
+\end{itemize}
+
+\subsection{Block Statements}
+
+Block statements can be used to describe complex
+control flows, and consist of a sequence of statements.
+Block statements are of
+the following types:
+\begin{itemize}
+\item {\bf Series} block statements are of the form
+\begin{verbatim}
+series-block-statement :=
+             series-block-specifier block-name
+             { 
+                declarations
+                sequence-of-statements
+             }
+\end{verbatim}
+The behaviour is similar to the module, in that the control
+token flows serially down the sequence of statements.
+Here is an example:
+\begin{verbatim}
+$seriesblock [s1] 
+{
+   $declare $storage b $uint<32>
+   b := a
+   b := ( $mux (a > c)  (b+c) (b-c))
+   q := ( b * 2)
+}
+\end{verbatim}
+In this example, the variable $b$ was declared as
+a storage variable in scope s1, and hence was legally
+able to be the target of multiple assignment statements.
+\item {\bf Parallel} block statements are of the form
+\begin{verbatim}
+parallel-block-statement :=
+             parallel-block-specifier block-name
+             { 
+                declarations
+                sequence-of-statements
+             }
+\end{verbatim}
+When a token enters the parallel block statement, it
+is replicated into as many tokens as there are statements in
+the sequence, and all statements are started in parallel.
+When all statements have finished and released their token,
+the parallel block statement
+ends and a single token exits the parallel block statement (this
+is essentially a fork followed by a join).
+Here is an example
+\begin{verbatim}
+$parallelblock [p1] 
+{
+   b := a + c
+   d := a - c
+}
+\end{verbatim}
+The two statements will start in parallel, and the block 
+will finish when both have finished.  The
+order in which the two statements are executed
+is {\bf not} specified.
+\item {\bf Fork} block statements are generalizations of the
+parallel block region in the sense that they
+allow the programmer to express complex fork-join interactions.
+They have the following structure:
+\begin{verbatim}
+fork-block-statement :=
+             fork-block-specifier block-name
+             {
+                declarations
+                sequence-of-statements
+             }
+\end{verbatim}
+The control flow is similar to the parallel block region,
+in the sense that all statements in the sequence are started
+in parallel, and the fork block statement ends when all statements
+in the sequence have ended.  The difference is that
+fork blocks can have an additional statement which
+allows the programmer to provide additional synchronization
+points.  These statements are termed {\bf join} statements
+and have the form
+\begin{verbatim}
+join-statement :=
+         join-specifier list-of-labels 
+          fork-specifier  list-of-statements
+\end{verbatim}
+The meaning of this statement is that it waits until all statements
+in the list-of-labels have finished, then starts the list-of-statements
+(in parallel) and finishes.  This essentially defines a node in a directed graph,
+with the arcs corresponding to statements in the statement-lists.  
+The join indicates the arcs (or statements) 
+from whom tokens have to arrive.  When all tokens have arrived
+on the incoming arcs, tokens are sent along the outgoing arcs specified
+in the list of statements following the optional fork specifier.  There is an implicit fork
+at the entry point to the fork block statement and an implicit join at the
+end of the fork block statement.  It is thus easy to describe
+an arbitrary directed graph with arbitrary forks and joins.  The only
+restriction is that this directed graph must be acyclic!
+Here is an example:
+\begin{verbatim}
+$forkblock [f1] {
+  a := (b+c)
+  $seriesblock [s1] { ... }
+  $seriesblock [s2] { ... }
+  $seriesblock [s3] { ... }
+  $join s1 s2 $and $fork 
+      $seriesblock [s4] { ... }
+  $join s3 s4
+}
+\end{verbatim}
+In this example, the first assignment statement as well as s1, s2, s3 are 
+started in parallel. When both s1 and s2 have finished, s4 is started and
+when s3, s4 have joined and when the first assignment statement has
+finished, the forkblock f1 finishes execution.
+\item {\bf Branch} block statements are constructs which allow the programmer
+to describe arbitrary sequential branching behaviour.  They 
+describe a control flow in which a single token 
+is active within the block.  The movement of this token is
+controlled by special flow control statements.
+They are structured 
+as follows
+\begin{verbatim}
+branch-block-statement :=
+             branch-block-specifier block-name
+             { sequence-of-statements}
+\end{verbatim}
+The sequence of statements appearing in a branch block
+consist of
+\begin{itemize}
+\item Simple statements or Block statements.
+\item Switch statements: A switch statement has
+the form
+\begin{verbatim}
+switch-statement :=
+         switch-spec switch-expression
+           ( expr-value  statement-to-be-executed )*
+           ( default statement-to-be-executed )?
+            
+\end{verbatim}
+The switch-expression is checked, and depending on its
+value, one of the alternative statements is selected.
+Thus, the incoming token to the switch statement is 
+passed to one of the alternatives.  For example,
+\begin{verbatim}
+$switch a $when 0 $then a1 := (b + c)
+          $when 1 $then a2 := (b - c)
+          $default $null
+$endswitch
+\end{verbatim}
+The control token is routed to the appropriate
+choice and if the token is not routed out 
+of the block (by the {\bf takeroute} statement 
+described below), then the token passes to the
+statement following the switch. 
+\item If statements: An if statement has the form
+\begin{verbatim}
+if-statement :=
+       if-spec test-expression 
+           true-statement
+       (else
+           false-statement)?
+       
+\end{verbatim}
+For example, 
+\begin{verbatim}
+$if (a != 0) $then
+   q := (r + s)
+   t := 0
+$else
+   qdash :  (r - s)
+$endif
+\end{verbatim}
+\item Routing statement: The {\bf takeroute} statement
+defines a labeled path along which it sends the
+incoming control token.  For example,
+\begin{verbatim}
+$takeroute [fastpath]
+\end{verbatim}
+means that the incoming token is not sent out to the
+next statement in the sequence, but is sent out along
+a path labeled ``fastpath''.  The token will be captured
+either by a {\bf merge} statement, or will exit the
+containing branch block.
+\item Merge statements: A merge statement is
+specified as 
+\begin{verbatim}
+merge-statement :=
+          merge-spec label-list merge-assignments
+\end{verbatim}
+which is to be interpreted as follows.  The labels in the label list
+refer to paths defined by ``takeroute'' statements within the branch block.
+Whenever a token arrives along any of these paths,
+the merge statement starts and executes a series of special assignments
+which multiplex values into new variables based on which arc the
+token arrived from.  The merge statement then releases its token to
+the next statement. 
+\end{itemize}
+
+Here is an example of a branch block constructed in this manner
+\begin{verbatim}
+$branchblock [b1] 
+{
+  $merge loop $entry // $entry is the path 
+                     // into the block
+
+       $phi q := 0 on $entry r on loop 
+                    // q is defined by where 
+                    // the token came from
+  r := q + 1
+  $if r < 10 $then 
+       $takeroute [loop]
+  $endif
+}
+\end{verbatim}
+
+\end{itemize}
+
+Thus, the program is constructed as a collection of modules,
+each of which is a sequence of statements.  The use of series,
+parallel, fork and branch block
+statements enables the programmer to describe a highly concurrent
+structured system with complex branching behaviour.  
+The resulting control flow structure is a
+type-2 petri-net with provable liveness and safety properties \cite{ref:SameerPhD}.
+
+\section{Scoping Rules}
+
+An \Aa program is made of modules which in turn contain statements
+and so on.  The program thus has a hierarchy of scopes with each
+scope being contained in another (except for the program itself,
+which is not contained in any scope).
+
+The rules for scoping are as follows:
+\begin{enumerate}
+\item A variable (declared or implicit) defined in a scope is visible
+in all descendant scopes.
+\item A reference to a variable $b$ in a scope X is resolved by checking
+whether the variable is defined in that scope, and if not found there,
+by checking in the scope that contains the scope X, and so on.
+\item A scope can read from variables that are defined in descendant
+scopes.  
+\item A scope can read from variables that are defined in ancestor scopes.
+\end{enumerate}
+
+A variable which is to be read in a statement may be specified 
+as follows
+\begin{verbatim}
+a            look for variable a in current scope; 
+             if not found look in the parent.
+
+:a           same as the previous case
+
+^:a          look for variable a defined in the parent of
+             the current scope.
+
+%p:a         look for variable a defined in the child scope 
+	     with label p (child scope of the current scope).
+
+^^:a         look for variable a defined in the parent of
+             the parent of the current scope.
+
+%p%q:a       look for variable a defined in the child scope 
+             with label q of the child scope with label p of 
+             the current scope
+
+a[10]        look for a storage variable a defined in the 
+             current module.  If not found, look for it in
+             the program scope.  If found in either of the places,
+             access the corresponding element of the array.
+\end{verbatim}
+Thus, a generic variable reference has the form 
+\begin{verbatim} 
+    scope-id : variable-reference 
+\end{verbatim} 
+and the scoping rules forbid a scope from accessing variables
+which are not defined in either an ancestor or a descendant
+of the scope.
+
+\section{Syntax}
+
+The syntax for \Aa is described by the following lexical analysis and
+parsing rules (written as rules to be parsed by antlr2 \cite{ref:antlr2},
+a LL(k) parser).
+
+This is the set of tokens recognized by the lexical analyzer (or lexer).
+\input{AaLexer}
+As one can see, all keywords in the \Aa language begin with \$.
+
+The grammar for the parser is (using the EBNF notation) given below. 
+\input{AaParser}
+
+\section{Examples}
+
+Here is a very simple program
+\begin{verbatim}
+// an array of 32-bit unsigned integers.
+$storage mem $array<1024> of $uint<32> 
+$module [sel_mod]
+   $in (a $uint<32> b $uint<10>)
+   $out (c $uint<32>)
+$is
+{
+   c := (mem[b] + a)
+   mem[b] := c
+}
+\end{verbatim}
+This consists of a single module, which accumulates
+a value into an array position.
+
+
+A little bit more complicated:
+\begin{verbatim}
+// an array of 32-bit unsigned integers.
+$storage mem $array<1024> of $uint<32> 
+
+// module returns the sum of mem[I] from
+// I=low to I=high
+$module [sum_mod]
+    $in (low $uint<10> high $uint<10>)
+    $out (sum $uint<32>)
+$is
+    $storage I $uint<10>
+    $storage J $uint<10>
+    $storage sum1 $uint<32>
+    $storage sum2 $uint<32>
+{
+ 
+   d := (high-low)  
+   mp := ((high-low)/2)
+
+   I := low
+   J := (mp + 1)
+
+   \branchblock[trivcheck]
+    {
+       $merge $entry
+       $if (d > 0) $then
+           // do two summations in parallel
+           // parallel summations
+           \parallelblock[parsum]
+           {
+               \branchblock[sb1]{
+                    merge $entry loopback
+                       $phi s := 0 on $entry %forward:s on loopback
+                    $if (I < mp) $then
+                        \seriesblock[loopback]{
+                            I := (I+1)
+                            s := $mux (I == 0)  0 (s + mem[I])
+                         }
+               } 
+               \branchblock[sb2]{
+                    merge $entry loopback
+                       $phi s := 0 on $entry %forward:s on loopback
+                    $if (J < high) $then
+                        \seriesblock[loopback]{
+                            J := (J+1)
+                            s := $mux (J == (mp+1))  0 (s + mem[J])
+                         }
+               } 
+           }
+ 
+           // combine results from parallel statement above
+           snontriv := (%parsum%sb1:s  + %parsum%sb2:s)
+           $takeroute [nontrivsum]
+      $else
+
+           // summation is trivial 
+           striv := mem[low]
+           $takeroute [trivsum]
+      $merge nontrivsum trivsum
+         // which sum do you pick? depends on which path was taken
+         $phi sum := snontriv on nontrivsum strivsum on trivsum
+      $exit
+    }
+
+    // bring sum up to the surface.
+    sum := %trivcheck:sum
+}
+\end{verbatim}
+
+\end{document}
+ 
+
+
+
+
+
+
+

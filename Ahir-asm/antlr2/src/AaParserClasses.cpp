@@ -78,6 +78,8 @@ AaScope::AaScope(AaScope* p):AaRoot()
   this->_scope = p; 
   if(p != NULL)
     this->_depth = p->Get_Depth() + 1;
+  else
+    this->_depth = 0;
 }
 
 AaScope::~AaScope() {}
@@ -252,62 +254,46 @@ AaInterfaceObject::AaInterfaceObject(AaScope* parent_tpr,
 AaInterfaceObject::~AaInterfaceObject() {};
 
 //---------------------------------------------------------------------
-// AaGlobal
+// AaStorageObject
 //---------------------------------------------------------------------
-AaGlobal::AaGlobal(AaScope* parent_tpr,string oname, AaType* otype, 
+AaStorageObject::AaStorageObject(AaScope* parent_tpr,string oname, AaType* otype, 
 		   AaConstantLiteralReference* initial_value):AaObject(parent_tpr,oname,otype) 
 {
   this->Set_Value(initial_value);
 };
-AaGlobal::~AaGlobal() {};
-void AaGlobal::Print(ostream& ofile)
+AaStorageObject::~AaStorageObject() {};
+void AaStorageObject::Print(ostream& ofile)
 {
   ofile << this->Tab();
-  ofile << "$global ";
+  ofile << "\t$storage ";
   this->AaObject::Print(ofile);
 }
 
 //---------------------------------------------------------------------
-// AaLocal
+// AaPipeObject
 //---------------------------------------------------------------------
-AaLocal::AaLocal(AaScope* parent_tpr, string oname, AaType* otype, 
-		 AaConstantLiteralReference* initial_value):AaObject(parent_tpr,oname,otype) 
-{
-  this->Set_Value(initial_value);
-};
-AaLocal::~AaLocal() {};
-void AaLocal::Print(ostream& ofile)
+AaPipeObject::AaPipeObject(AaScope* parent_tpr, string oname, AaType* otype):AaObject(parent_tpr,oname,otype) {};
+AaPipeObject::~AaPipeObject() {};
+void AaPipeObject::Print(ostream& ofile)
 {
   ofile << this->Tab();
-  ofile << "$local ";
+  ofile << "\t$pipe ";
   this->AaObject::Print(ofile);
 }
 
 //---------------------------------------------------------------------
-// AaPipe
+// AaConstantObject
 //---------------------------------------------------------------------
-AaPipe::AaPipe(AaScope* parent_tpr, string oname, AaType* otype):AaObject(parent_tpr,oname,otype) {};
-AaPipe::~AaPipe() {};
-void AaPipe::Print(ostream& ofile)
-{
-  ofile << this->Tab();
-  ofile << "$pipe ";
-  this->AaObject::Print(ofile);
-}
-
-//---------------------------------------------------------------------
-// AaConstant
-//---------------------------------------------------------------------
-AaConstant::AaConstant(AaScope* parent_tpr , string oname, AaType* otype, 
+AaConstantObject::AaConstantObject(AaScope* parent_tpr , string oname, AaType* otype, 
 		       AaConstantLiteralReference* value):AaObject(parent_tpr, oname,otype)
 {
   this->Set_Value(value);
 }
-AaConstant::~AaConstant() {};
-void AaConstant::Print(ostream& ofile)
+AaConstantObject::~AaConstantObject() {};
+void AaConstantObject::Print(ostream& ofile)
 {
   ofile << this->Tab();
-  ofile << "$constant ";
+  ofile << "\t$constant ";
   this->AaObject::Print(ofile);
 }
 
@@ -494,12 +480,6 @@ void AaStatementSequence::Print(ostream& ofile)
 AaNullStatement::AaNullStatement(AaScope* parent_tpr):AaStatement(parent_tpr) {};
 AaNullStatement::~AaNullStatement() {};
 
-//---------------------------------------------------------------------
-// AaExitStatement: public AaStatement
-//---------------------------------------------------------------------
-AaExitStatement::AaExitStatement(AaScope* parent_tpr):AaStatement(parent_tpr) {};
-AaExitStatement::~AaExitStatement() {};
-
 
 //---------------------------------------------------------------------
 // AaAssignmentStatement
@@ -600,10 +580,14 @@ AaBlockStatement::~AaBlockStatement() {}
 void AaBlockStatement::Print(ostream& ofile)
 {
 
-  ofile << "[" << this->Get_Label() << "]" << endl;
+  if(this->Get_Label() != "")
+    ofile << "[" << this->Get_Label() << "]" << endl;
+  else
+    ofile << endl;
+
   ofile << this->Tab() << "{" << endl;
-  if(this->_statement_sequence)
-    this->_statement_sequence->Print(ofile);
+  this->Print_Objects(ofile);
+  this->Print_Statement_Sequence(ofile);
   ofile << this->Tab() << "}" << endl;
 }
 
@@ -670,9 +654,11 @@ void AaJoinForkStatement::Print(ostream& ofile)
   if(this->Get_Statement_Count() > 0)
     {
       ofile << endl << this->Tab();
-      ofile << "$fork " << endl;
+      ofile << "$and $fork " << endl;
       this->_statement_sequence->Print(ofile);
     }
+  ofile << this->Tab();
+  ofile << "$endjoin " << endl;
 }
 
 //---------------------------------------------------------------------
@@ -697,6 +683,8 @@ void AaMergeStatement::Print(ostream& ofile)
       this->_statement_sequence->Print(ofile);
       ofile << this->Tab() << endl;
     }
+  ofile << this->Tab();
+  ofile << "$endmerge" << endl ;
 }
 
 // AaPhiStatement: public AaStatement
@@ -729,7 +717,7 @@ void AaPhiStatement::Print(ostream& ofile)
 AaSwitchStatement::AaSwitchStatement(AaBranchBlockStatement* scope):AaStatement(scope) 
 {
   this->_select_expression = NULL;
-  this->_default_statement = NULL;
+  this->_default_sequence = NULL;
 }
 AaSwitchStatement::~AaSwitchStatement() {}
 void AaSwitchStatement::Print(ostream& ofile)
@@ -737,7 +725,6 @@ void AaSwitchStatement::Print(ostream& ofile)
   assert(this->_select_expression);
 
   ofile << this->Tab();
-
   ofile << "$switch ";
   this->_select_expression->Print(ofile);
   ofile << endl;
@@ -752,10 +739,14 @@ void AaSwitchStatement::Print(ostream& ofile)
       ofile << endl;
     }
 
-  assert(this->_default_statement);  
-  ofile << this->Tab() << "  $default " << endl;
-  this->_default_statement->Print(ofile);
-  ofile << endl;
+  if(this->_default_sequence)
+    {
+      ofile << this->Tab() << "  $default " << endl;
+      this->_default_sequence->Print(ofile);
+      ofile << endl;
+    }
+  ofile << this->Tab();
+  ofile << "$endswitch " << endl;
 }
 
 
@@ -765,26 +756,39 @@ void AaSwitchStatement::Print(ostream& ofile)
 AaIfStatement::AaIfStatement(AaBranchBlockStatement* scope):AaStatement(scope) 
 {
   this->_test_expression = NULL;
-  this->_if_statement = NULL;
-  this->_else_statement = NULL;
+  this->_if_sequence = NULL;
+  this->_else_sequence = NULL;
 }
 AaIfStatement::~AaIfStatement() {}
 void AaIfStatement::Print(ostream& ofile)
 {
   assert(this->_test_expression);
-  assert(this->_if_statement);
-  assert(this->_else_statement);
+  assert(this->_if_sequence);
 
   ofile << this->Tab();
   ofile << "$if ";
   this->_test_expression->Print(ofile);
   ofile << " $then " << endl;
-  this->_if_statement->Print(ofile);
+  this->_if_sequence->Print(ofile);
   ofile << endl;
-  ofile << this->Tab() << "$else " << endl;
-  this->_else_statement->Print(ofile);
-  ofile << endl;
+  if(this->_else_sequence)
+    {
+      ofile << this->Tab() << "$else " << endl;
+      this->_else_sequence->Print(ofile);
+      ofile << endl;
+    }
+  ofile << this->Tab() << "$endif" << endl;
 }
+
+//---------------------------------------------------------------------
+// AaBranchStatement: public AaStatement
+//---------------------------------------------------------------------
+AaBranchStatement::AaBranchStatement(AaBranchBlockStatement* parent_tpr,string lbl):AaStatement(parent_tpr) 
+{
+  this->_label = lbl;
+};
+AaBranchStatement::~AaBranchStatement() {};
+
 
 
 /***************************************** MODULE   ****************************/
@@ -839,20 +843,14 @@ void AaModule::Print(ostream& ofile)
   ofile << ")";
   ofile << endl;
   ofile << "$is" << endl;
-  if(this->_objects.size() > 0)
-    {
-      ofile << "$declare " << endl;
-      for(unsigned int i = 0; i < this->_objects.size(); i++)
-	{
-	  this->_objects[i]->Print(ofile);
-	  ofile << endl;
-	}
-    }
-
-
   ofile << "{" << endl;
-  if(this->_statement_sequence != NULL)
-    this->_statement_sequence->Print(ofile);
+
+  // print objects
+  this->Print_Objects(ofile);
+
+  // print statement sequence
+  this->Print_Statement_Sequence(ofile);
+
   ofile << "}" << endl;
 }
 
@@ -875,6 +873,17 @@ void AaProgram::Add_Module(AaModule* fn)
     
 void AaProgram::Print(ostream& ofile)
 {
+  if(this->_objects.size() > 0)
+    {
+      ofile << "$declare " << endl;
+      for(unsigned int i=0; i < this->_objects.size(); i++)
+	{
+	  ofile << "\t";
+	  this->_objects[i]->Print(ofile);
+	  ofile << endl;
+	}
+    }
+  
   for(unsigned int i=0; i < this->_modules.size(); i++)
     {
       this->_modules[i]->Print(ofile);

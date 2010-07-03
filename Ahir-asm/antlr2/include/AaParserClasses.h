@@ -378,6 +378,83 @@ class AaTernaryExpression: public AaExpression
   AaExpression* Get_If_False() {return(this->_if_false);}
 };
 
+/*****************************************  OBJECT  ****************************/
+// base object
+// Each object has a type, a name, a value and a parent
+
+class AaObject: public AaRoot
+{
+  string _name;
+  AaConstantLiteralReference* _value;
+  AaType* _object_type;
+  AaScope* _scope;
+
+ public:
+
+  AaType* Get_Object_Type() {return(this->_object_type);}
+  AaConstantLiteralReference* Get_Value() {return(this->_value);}
+  void Set_Value(AaConstantLiteralReference* v) {this->_value = v;}
+  virtual string Get_Name() {return(this->_name);}
+  virtual AaScope* Get_Scope() {return(this->_scope);}
+  virtual string Tab();
+
+  AaObject(AaScope* scope_tpr, string oname, AaType* object_type);
+  ~AaObject();
+
+  virtual void Print(ostream& ofile);
+
+};
+
+// interface object: function arguments
+class AaInterfaceObject: public AaObject
+{
+  // arguments can be input or output
+  string _mode; // IN or OUT?
+
+ public:
+  string Get_Mode() {return(this->_mode);}
+
+  AaInterfaceObject(AaScope* scope_tpr, string oname, AaType* otype, string mode);
+  ~AaInterfaceObject();
+
+  // uses AaObject::Print method
+};
+
+class AaConstantObject: public AaObject
+{
+  //
+  // constants are visible only in pure ancestors
+  // or pure descendants.
+  //
+ public:
+  AaConstantObject(AaScope* scope_tpr, string oname, AaType* otype, AaConstantLiteralReference* value);
+  ~AaConstantObject();
+
+  virtual void Print(ostream& ofile); 
+};
+
+class AaStorageObject: public AaObject
+{
+  // objects will be stored in memory
+  //
+ public:
+
+  AaStorageObject(AaScope* scope_tpr, string oname, AaType* otype, AaConstantLiteralReference* initial_value);
+  ~AaStorageObject();
+
+  virtual void Print(ostream& ofile); 
+};
+
+class AaPipeObject: public AaObject
+{
+  //
+ public:
+  AaPipeObject(AaScope* scope_tpr,string oname, AaType* otype);
+  ~AaPipeObject();
+
+  virtual void Print(ostream& ofile);
+};
+
 
 // *******************************************  STATEMENT etc. ************************************
 // base class for statements
@@ -434,15 +511,6 @@ class AaNullStatement: public AaStatement
   virtual void Print(ostream& ofile) { ofile << this->Tab() << "$null" << endl; }
 };
 
-// exit statement
-class AaExitStatement: public AaStatement
-{
- public:
-  AaExitStatement(AaScope* parent_tpr);
-  ~AaExitStatement();
-
-  virtual void Print(ostream& ofile) { ofile << this->Tab() << "$exit" << endl; }
-};
 
 // assignment statement
 class AaAssignmentStatement: public AaStatement
@@ -494,8 +562,9 @@ class AaCallStatement: public AaStatement
 
 class AaBlockStatement: public AaStatement
 {
-  string _label;
  protected:
+  string _label;
+  vector<AaObject*> _objects;
   AaStatementSequence* _statement_sequence;
 
  public:
@@ -507,6 +576,30 @@ class AaBlockStatement: public AaStatement
   {
     this->_statement_sequence = statement_sequence;
   }
+  virtual void Add_Object(AaObject* obj) 
+  { 
+    assert(this->Find_Child(obj->Get_Name()) == NULL); 
+    this->_objects.push_back(obj);
+    this->Map_Child(obj->Get_Name(),obj);
+  }
+  virtual void Print_Objects(ostream &ofile)
+  {
+    if(this->_objects.size() > 0)
+      {
+	ofile << this->Tab() << "\t$declare " << endl;
+	for(unsigned int i = 0; i < this->_objects.size(); i++)
+	  {
+	    this->_objects[i]->Print(ofile);
+	    ofile << endl;
+	  }
+      }
+  }
+  virtual void Print_Statement_Sequence(ostream& ofile)
+  {
+    if(this->_statement_sequence != NULL)
+      this->_statement_sequence->Print(ofile);
+  }
+
   AaBlockStatement(AaScope* scope, string label);
   ~AaBlockStatement();
   virtual void Print(ostream& ofile);
@@ -595,20 +688,20 @@ class AaPhiStatement: public AaStatement
 class AaSwitchStatement: public AaStatement
 {
   AaExpression* _select_expression;
-  vector<pair<AaConstantLiteralReference*, AaBlockStatement*> > _choice_pairs;
-  AaBlockStatement* _default_statement;
+  vector<pair<AaConstantLiteralReference*, AaStatementSequence*> > _choice_pairs;
+  AaStatementSequence* _default_sequence;
 
  public:
 
   void Set_Select_Expression(AaExpression* expr) {this->_select_expression = expr;}
-  void Add_Choice(AaConstantLiteralReference* cond, AaBlockStatement* sseq)
+  void Add_Choice(AaConstantLiteralReference* cond, AaStatementSequence* sseq)
   {
-    this->_choice_pairs.push_back(pair<AaConstantLiteralReference*,AaBlockStatement*>(cond,sseq));
+    this->_choice_pairs.push_back(pair<AaConstantLiteralReference*,AaStatementSequence*>(cond,sseq));
   }
 
-  void Set_Default_Statement(AaBlockStatement* sseq)
+  void Set_Default_Sequence(AaStatementSequence* sseq)
   {
-    this->_default_statement = sseq;
+    this->_default_sequence = sseq;
   }
 
   AaSwitchStatement(AaBranchBlockStatement* scope);
@@ -620,13 +713,13 @@ class AaSwitchStatement: public AaStatement
 class AaIfStatement: public AaStatement
 {
   AaExpression* _test_expression;
-  AaBlockStatement* _if_statement;
-  AaBlockStatement* _else_statement;
+  AaStatementSequence* _if_sequence;
+  AaStatementSequence* _else_sequence;
  public:
 
   void Set_Test_Expression(AaExpression* te) { this->_test_expression = te; }
-  void Set_If_Statement(AaBlockStatement* is) { this->_if_statement = is; }
-  void Set_Else_Statement(AaBlockStatement* es) { this->_else_statement = es; }
+  void Set_If_Sequence(AaStatementSequence* is) { this->_if_sequence = is; }
+  void Set_Else_Sequence(AaStatementSequence* es) { this->_else_sequence = es; }
 
   AaIfStatement(AaBranchBlockStatement* scope);
   ~AaIfStatement();
@@ -634,121 +727,33 @@ class AaIfStatement: public AaStatement
 };
 
 
-
-/*****************************************  OBJECT  ****************************/
-// base object
-// Each object has a type, a name, a value and a parent
-
-class AaObject: public AaRoot
+// branch statement
+class AaBranchStatement: public AaStatement
 {
-  string _name;
-  AaConstantLiteralReference* _value;
-  AaType* _object_type;
-  AaScope* _scope;
-
+  string _label;
  public:
+  AaBranchStatement(AaBranchBlockStatement* parent_tpr, string lbl);
+  ~AaBranchStatement();
+  virtual string Get_Label() {return(this->_label);}
 
-  AaType* Get_Object_Type() {return(this->_object_type);}
-  AaConstantLiteralReference* Get_Value() {return(this->_value);}
-  void Set_Value(AaConstantLiteralReference* v) {this->_value = v;}
-  virtual string Get_Name() {return(this->_name);}
-  virtual AaScope* Get_Scope() {return(this->_scope);}
-  virtual string Tab();
-
-  AaObject(AaScope* scope_tpr, string oname, AaType* object_type);
-  ~AaObject();
-
-  virtual void Print(ostream& ofile);
-
-};
-
-// interface object: function arguments
-class AaInterfaceObject: public AaObject
-{
-  // arguments can be input or output
-  string _mode; // IN or OUT?
-
- public:
-  string Get_Mode() {return(this->_mode);}
-
-  AaInterfaceObject(AaScope* scope_tpr, string oname, AaType* otype, string mode);
-  ~AaInterfaceObject();
-
-  // uses AaObject::Print method
-};
-
-class AaConstant: public AaObject
-{
-  //
-  // constants are visible only in pure ancestors
-  // or pure descendants.
-  //
- public:
-  AaConstant(AaScope* scope_tpr, string oname, AaType* otype, AaConstantLiteralReference* value);
-  ~AaConstant();
-
-  virtual void Print(ostream& ofile); 
-};
-
-class AaGlobal: public AaObject
-{
-  // globally declared objects will be
-  // stored in memory which is visible to
-  // entire program
-  //
-  // parent of global will always be AaProgram
-  //
- public:
-
-  AaGlobal(AaScope* scope_tpr, string oname, AaType* otype, AaConstantLiteralReference* initial_value);
-  ~AaGlobal();
-
-  virtual void Print(ostream& ofile); 
-};
-
-class AaLocal: public AaObject
-{
-  //
-  // locally declared memory is visible only
-  // in scope and pure descendants.
- public:
-  AaLocal(AaScope* scope_tpr, string oname, AaType* otype, AaConstantLiteralReference* initial_value);
-  ~AaLocal();
-  virtual void Print(ostream& ofile); 
-};
-
-class AaPipe: public AaObject
-{
-  // 
-  // A pipe is global 
-  //
- public:
-  AaPipe(AaScope* scope_tpr,string oname, AaType* otype);
-  ~AaPipe();
-
-  virtual void Print(ostream& ofile);
+  virtual void Print(ostream& ofile) { ofile << this->Tab() << "$takeroute[" << this->Get_Label() << "]"  << endl; }
 };
 
 
+// *******************************************  MODULE ************************************
 // compilation unit: a module is basically a block
 // statement, but with arguments
 class AaModule: public AaBlockStatement
 {
   vector<AaInterfaceObject*>  _input_args;
   vector<AaInterfaceObject*>  _output_args;
-  vector<AaObject*> _objects;
+
 
  public:
   AaModule(AaScope* scope, string fname);
   ~AaModule();
 
   void Add_Argument(AaInterfaceObject* obj);
-  void Add_Object(AaObject* obj) 
-  { 
-    assert(this->Find_Child(obj->Get_Name()) == NULL); 
-    this->_objects.push_back(obj);
-    this->Map_Child(obj->Get_Name(),obj);
-  }
 
   unsigned int Get_Number_Of_Input_Arguments() {return(this->_input_args.size());}
   AaInterfaceObject* Get_Input_Argument(unsigned int index);
@@ -760,13 +765,14 @@ class AaModule: public AaBlockStatement
 };
 
 
+// ******************************************* PROGRAM ************************************
 // The program, a list of modules
 class AaProgram : public AaScope
 {
 
-  // perhaps we should also have declarations here?
-
+  vector<AaObject*> _objects;
   vector<AaModule*> _modules;
+
   static map<string,AaType*,StringCompare> _type_map;
 
  public:
@@ -774,6 +780,14 @@ class AaProgram : public AaScope
   ~AaProgram();
 
   void Add_Module(AaModule* fn);
+
+  void Add_Object(AaObject* obj) 
+  { 
+    assert(this->Find_Child(obj->Get_Name()) == NULL); 
+    this->_objects.push_back(obj);
+    this->Map_Child(obj->Get_Name(),obj);
+  }
+
   virtual void Print(ostream& ofile);
 
   static AaUintType* Make_Uinteger_Type(unsigned int w)
