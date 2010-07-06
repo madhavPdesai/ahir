@@ -7,6 +7,7 @@ BIN=$(AAHOME)/bin
 DOC=$(AAHOME)/docs
 ANTLR2=/home/madhav/antlr2
 INCLUDES=-I$(AAHOME)/include -I$(GRMR) -I$(ANTLR2)
+HEADERS=$(INCL)/*.h
 LIBS=-L$(ANTLR2)
 OBJS=$(OBJ)/AaLexer.o $(OBJ)/AaParser.o $(OBJ)/TestAaParser.o $(OBJ)/AaParserClasses.o
 DEFS=-DDebug
@@ -18,10 +19,10 @@ $(GRMR)/AaParser.html: $(GRMR)/Aa.g
 $(BIN)/TestAaParser :$(OBJS)
 	g++ -g $(LIBS) $(OBJS) -lantlr-4.0.3 -o $(BIN)/TestAaParser 
 
-$(OBJ)/AaParserClasses.o: $(SRC)/AaParserClasses.cpp $(INCL)/AaParserClasses.h
+$(OBJ)/AaParserClasses.o: $(SRC)/AaParserClasses.cpp $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) -g -c $(SRC)/AaParserClasses.cpp -o $(OBJ)/AaParserClasses.o
 
-$(OBJ)/TestAaParser.o: $(SRC)/TestAaParser.cpp
+$(OBJ)/TestAaParser.o: $(SRC)/TestAaParser.cpp $(GRMR)/AaParser.cpp $(GRMR)/AaLexer.cpp
 	g++ $(DEFS) $(INCLUDES) -g -c $(SRC)/TestAaParser.cpp  -o $(OBJ)/TestAaParser.o
 
 $(OBJ)/AaLexer.o: $(GRMR)/AaLexer.cpp $(GRMR)/AaLexer.hpp

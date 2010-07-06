@@ -195,10 +195,11 @@ aA_Assignment_Statement[AaScope* scope] returns[AaStatement* new_stmt]
     : 
 
         (target = aA_Object_Reference[scope]) 
-        ASSIGNEQUAL
+        al: ASSIGNEQUAL 
         (source = aA_Expression[scope])
         {
-            new_stmt = new AaAssignmentStatement(scope,target,source);
+            new_stmt = new AaAssignmentStatement(scope,target,source, al->getLine());
+            new_stmt->Set_Line_Number(al->getLine());
         }
     ;
 
@@ -212,14 +213,14 @@ aA_Call_Statement[AaScope* scope] returns[AaStatement* new_stmt]
     string func_name = "";
 }
     : 
-        CALL
+        cl: CALL
         id:SIMPLE_IDENTIFIER { func_name = id->getText(); }
         aA_Argv_In[scope, input_args] 
         aA_Argv_Out[scope, output_args] 
         // the statement implicitly defines all variables in the output arg list
         // (except for a declared global/local/pipe)
         {
-            new_stmt = new AaCallStatement(scope,func_name,input_args,output_args);
+            new_stmt = new AaCallStatement(scope,func_name,input_args,output_args,cl->getLine());
         }
     ;
 
@@ -282,7 +283,7 @@ aA_Branch_Block_Statement_Sequence[AaBranchBlockStatement* scope] returns [AaSta
                 )
             |
                 (
-                    new_statement = aA_Branch_Statement[scope]
+                    new_statement = aA_Place_Statement[scope]
                 )
             )
                      
@@ -335,12 +336,12 @@ aA_Block_Statement_Sequence[AaScope* scope] returns [AaStatementSequence* nsb]
 // statement sequence
 aA_Series_Block_Statement[AaScope* scope] returns [AaSeriesBlockStatement* new_sbs]
 {
-
     string lbl = "";
     AaStatementSequence* sseq = NULL;
     AaObject* obj = NULL;
+    unsigned int line_number;
 } :
-        SERIESBLOCK
+        sb: SERIESBLOCK 
         ( lbl = aA_Label )?
         {
                 new_sbs = new AaSeriesBlockStatement(scope,lbl);
@@ -353,6 +354,7 @@ aA_Series_Block_Statement[AaScope* scope] returns [AaSeriesBlockStatement* new_s
         sseq = aA_Atomic_Statement_Sequence[new_sbs] 
         {
             new_sbs->Set_Statement_Sequence(sseq);
+            new_sbs->Set_Line_Number(sb->getLine());
         }
         RBRACE
     ;
@@ -368,11 +370,13 @@ aA_Parallel_Block_Statement[AaScope* scope] returns [AaParallelBlockStatement* n
     string lbl = "";
     AaStatementSequence* sseq = NULL;
     AaObject* obj = NULL;
+    unsigned int line_number;
 } :
-        PARALLELBLOCK 
+        pb: PARALLELBLOCK
         ( lbl = aA_Label )?
         {
             new_pbs = new AaParallelBlockStatement(scope,lbl);
+            new_pbs->Set_Line_Number(pb->getLine());
         }
         LBRACE
         (DECLARE 
@@ -402,10 +406,11 @@ aA_Fork_Block_Statement[AaScope* scope] returns [AaForkBlockStatement* new_fbs]
     AaStatementSequence* sseq = NULL;
     AaObject* obj = NULL;
 } :
-        FORKBLOCK 
+        fb: FORKBLOCK 
         ( lbl = aA_Label         )?
         {
             new_fbs = new AaForkBlockStatement(scope,lbl);
+            new_fbs->Set_Line_Number(fb->getLine());
         }
         LBRACE
         (DECLARE 
@@ -435,10 +440,11 @@ aA_Branch_Block_Statement[AaScope* scope] returns [AaBranchBlockStatement* new_b
     AaStatementSequence* sseq = NULL;
     AaObject* obj = NULL;
 } :
-        BRANCHBLOCK 
+        bb: BRANCHBLOCK 
         ( lbl = aA_Label )?
         {
             new_bbs = new AaBranchBlockStatement(scope,lbl);
+            new_bbs->Set_Line_Number(bb->getLine());
         }
         LBRACE
         (DECLARE 
@@ -457,6 +463,7 @@ aA_Branch_Block_Statement[AaScope* scope] returns [AaBranchBlockStatement* new_b
 // with incoming labels describing joined statements and the
 // subsequent sequence defining the forked statements.
 //
+// 
 //-----------------------------------------------------------------------------------------------
 aA_Join_Fork_Statement[AaForkBlockStatement* scope] returns [AaJoinForkStatement* new_jfs]
 {
@@ -464,10 +471,15 @@ aA_Join_Fork_Statement[AaForkBlockStatement* scope] returns [AaJoinForkStatement
     AaStatementSequence* sseq = NULL;
     string lbl = "";
 }
-    : JOIN 
+    : jl: JOIN 
         (id: SIMPLE_IDENTIFIER { lbl = id->getText(); new_jfs->Add_Join_Label(lbl); })*
         (AND FORK
-            sseq = aA_Atomic_Statement_Sequence[new_jfs] {new_jfs->Set_Statement_Sequence(sseq);}
+            // new_jfs is not a scope
+            sseq = aA_Atomic_Statement_Sequence[scope] 
+            {
+                new_jfs->Set_Statement_Sequence(sseq);
+                new_jfs->Set_Line_Number(jl->getLine());
+            }
         )?
       ENDJOIN
     ;
@@ -475,20 +487,24 @@ aA_Join_Fork_Statement[AaForkBlockStatement* scope] returns [AaJoinForkStatement
 //-----------------------------------------------------------------------------------------------
 // aA_Phi_Statement: PHI SIMPLE_IDENTIFIER  :=  ( aA_Object_Reference  ON  (SIMPLE_IDENTIFIER | ENTRY))+
 //-----------------------------------------------------------------------------------------------
-aA_Phi_Statement[AaMergeStatement* scope, set<string,StringCompare>& lbl_set] returns [AaPhiStatement* new_ps]
+aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_set] returns [AaPhiStatement* new_ps]
 {
     new_ps = new AaPhiStatement(scope);
     string label;
-    AaObjectReference* obj_ref;
+    AaExpression* expr;
+    AaSimpleObjectReference* target;
     set<string,StringCompare> tset;
 }
-    : PHI tgt:SIMPLE_IDENTIFIER 
+    : pl: PHI tgt:SIMPLE_IDENTIFIER 
         {
-            new_ps->Set_Target(new AaSimpleObjectReference(scope,tgt->getText()));
+            target = new AaSimpleObjectReference(scope,tgt->getText());
+            target->Set_Object_Root_Name(tgt->getText());
+            new_ps->Set_Target(target);
+            new_ps->Set_Line_Number(pl->getLine());
         }
         ASSIGNEQUAL
         ( 
-            obj_ref = aA_Object_Reference[scope]
+            expr = aA_Expression[scope]
             ON
             ( 
                 (sid: SIMPLE_IDENTIFIER {label = sid->getText(); }) |
@@ -513,7 +529,7 @@ aA_Phi_Statement[AaMergeStatement* scope, set<string,StringCompare>& lbl_set] re
 
                 if(!errflag)
                 { 
-                    new_ps->Add_Source_Pair(label,obj_ref); 
+                    new_ps->Add_Source_Pair(label,expr); 
                 }
             }
         )+ 
@@ -521,16 +537,20 @@ aA_Phi_Statement[AaMergeStatement* scope, set<string,StringCompare>& lbl_set] re
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Branch_Statement : BRANCH
+// aA_Place_Statement : PLACE aA_Label
+//          the token is not forwarded to the next statement in the sequence, but
+//          is instead put in the place "label".  It will be consumed by either
+//          a merge statement which is looking for the label, or by the exit
+//          of the containing branch-block statement if no such merge exists
 //-----------------------------------------------------------------------------------------------
-aA_Branch_Statement[AaBranchBlockStatement* scope] returns[AaStatement* new_stmt]
+aA_Place_Statement[AaBranchBlockStatement* scope] returns[AaStatement* new_stmt]
 {
     string lbl = "";
 }
-    : BRANCH lbl = aA_Label 
+    : pl: PLACE lbl = aA_Label 
         {
-            // NuLL statements have no labels.
-            new_stmt = new AaBranchStatement(scope,lbl);
+            new_stmt = new AaPlaceStatement(scope,lbl);
+            new_stmt->Set_Line_Number(pl->getLine());
         }
     ;
 
@@ -560,7 +580,7 @@ aA_Merge_Statement[AaBranchBlockStatement* scope] returns [AaMergeStatement* new
     set<string,StringCompare> lbl_set;
     string lbl;
 }
-    : MERGE
+    : ml: MERGE
         ( (id: SIMPLE_IDENTIFIER
             { 
                 lbl = id->getText();
@@ -575,9 +595,10 @@ aA_Merge_Statement[AaBranchBlockStatement* scope] returns [AaMergeStatement* new
             } ) | 
             (eid:ENTRY {lbl = eid->getText(); lbl_set.insert(lbl); new_mgs->Add_Merge_Label(lbl);}))+
         (
-            ( ns = aA_Phi_Statement[new_mgs,lbl_set] {  slist.push_back(ns); } )+
+            ( ns = aA_Phi_Statement[scope,lbl_set] {  slist.push_back(ns); } )+
         {
-            new_mgs->Set_Statement_Sequence(new AaStatementSequence(new_mgs,slist));
+            new_mgs->Set_Statement_Sequence(new AaStatementSequence(scope,slist));
+            new_mgs->Set_Line_Number(ml->getLine());
         }
         )?
     ENDMERGE
@@ -601,7 +622,7 @@ aA_Switch_Statement[AaBranchBlockStatement* scope] returns [AaSwitchStatement* n
     AaExpression* select_expression = NULL;
     AaConstantLiteralReference* choice_value = NULL;
 }
-    : SWITCH 
+    : sl:SWITCH 
         select_expression=aA_Expression[scope] 
         (
             WHEN 
@@ -618,6 +639,7 @@ aA_Switch_Statement[AaBranchBlockStatement* scope] returns [AaSwitchStatement* n
         {
             new_ss->Set_Select_Expression(select_expression);
             new_ss->Set_Default_Sequence(defseq);
+            new_ss->Set_Line_Number(sl->getLine());
         }
         ENDSWITCH
     ;
@@ -640,7 +662,7 @@ aA_If_Statement[AaBranchBlockStatement* scope] returns [AaIfStatement* new_is]
     AaStatementSequence *elseseq = NULL;
     AaExpression* select_expression = NULL;
 }: 
-     IF
+     il:IF
         (if_expression=aA_Expression[scope]) { new_is->Set_Test_Expression(if_expression);}
      THEN 
         ifseq = aA_Branch_Block_Statement_Sequence[scope] 
@@ -652,6 +674,7 @@ aA_If_Statement[AaBranchBlockStatement* scope] returns [AaIfStatement* new_is]
             elseseq = aA_Branch_Block_Statement_Sequence[scope] 
             {
                 new_is->Set_Else_Sequence(elseseq);
+                new_is->Set_Line_Number(il->getLine());
             }
         )?
      ENDIF
@@ -1011,14 +1034,35 @@ aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
     bool array_flag = false;
     vector<AaExpression*> indices;
     AaExpression* index_expr;
+    vector<string> hier_ids;
+    unsigned int search_ancestor_level = 0;
+    string root_name;
 }
     : 
-
-        (((PERCENT {full_name += '%';} id:SIMPLE_IDENTIFIER {full_name += id->getText();})* 
-        |
-            (cid: CARET {full_name += cid->getText();} )+ )
-            COLON {full_name += ':';})?
-        (sid:SIMPLE_IDENTIFIER {full_name += sid->getText();})
+        (
+            (
+                    (
+                        PERCENT {full_name += '%';} id:SIMPLE_IDENTIFIER 
+                        {
+                            full_name += id->getText();
+                            hier_ids.push_back(id->getText());
+                        }
+                    )* 
+            |
+                    (
+                        cid: CARET 
+                        {
+                            full_name += cid->getText();
+                            search_ancestor_level++;
+                        } 
+                    )+ 
+            )
+            COLON  
+                    {
+                        full_name += ':';
+                    }
+        )?
+        (sid:SIMPLE_IDENTIFIER {full_name += sid->getText(); root_name = sid->getText();})
         (LBRACKET index_expr = aA_Expression[scope]  RBRACKET
             {
                 array_flag = true; 
@@ -1030,6 +1074,11 @@ aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
                 obj_ref = new AaArrayObjectReference(scope,full_name,indices);
             else
                 obj_ref = new AaSimpleObjectReference(scope,full_name);
+
+            for(unsigned int i=0; i < hier_ids.size(); i++)
+                obj_ref->Add_Hier_Id(hier_ids[i]);
+
+            obj_ref->Set_Object_Root_Name(root_name);
         }
     ;
 
@@ -1095,7 +1144,7 @@ SERIESBLOCK   : "$seriesblock";
 PARALLELBLOCK : "$parallelblock";
 FORKBLOCK     : "$forkblock";
 BRANCHBLOCK   : "$branchblock";
-BRANCH        : "$takeroute";
+PLACE         : "$place";
 SWITCH        : "$switch";
 ENDSWITCH     : "$endswitch";
 IF            : "$if";

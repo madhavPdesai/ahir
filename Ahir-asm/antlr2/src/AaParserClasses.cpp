@@ -44,10 +44,13 @@ AaRoot::AaRoot()
   this->Increment_Root_Counter();
 }
 AaRoot::~AaRoot() {};
-bool AaRoot::Is(string& kinfo)
+string AaRoot::Kind()
+{
+  return("AaRoot");
+}
+bool AaRoot::Is(const string kinfo)
 { 
-  const std::type_info& info = typeid(this);
-  return(info.name() == kinfo);
+  return(this->Kind() == kinfo);
 }
 void AaRoot::Increment_Root_Counter() { AaRoot::_root_counter += 1; }
 int AaRoot::Get_Root_Counter() { return AaRoot::_root_counter; }
@@ -96,13 +99,23 @@ void AaScope::Map_Child(string lbl, AaRoot* tn)
     }
 }
 
-AaRoot* AaScope::Find_Child(string cname)
+AaRoot* AaScope::Find_Child_Here(string cname)
 {
   AaRoot* ret_child = NULL;
   map<string,AaRoot*,StringCompare>::iterator miter =
     this->_child_map.find(cname);
   if(miter != this->_child_map.end())
     ret_child = (*miter).second;
+  return(ret_child);
+}
+
+AaRoot* AaScope::Find_Child(string cname)
+{
+  AaRoot* ret_child = this->Find_Child_Here(cname);
+  if(!ret_child && this->Get_Scope())
+    {
+      ret_child = this->Get_Scope()->Find_Child(cname);
+    }
   return(ret_child);
 }
 
@@ -312,6 +325,7 @@ AaExpression::~AaExpression() {};
 AaObjectReference::AaObjectReference(AaScope* parent_tpr, string object_id):AaExpression(parent_tpr)
 {
   this->_object_ref_string = object_id;
+  this->_search_ancestor_level = 0; 
 }
 
 AaObjectReference::~AaObjectReference() {};
@@ -457,6 +471,52 @@ string AaStatement::Tab()
   return((this->Get_Scope() != NULL) ? Tab_(this->Get_Scope()->Get_Depth()) : Tab_(0));
 }
 
+// try to map the target of the statement in the scope hierarchy
+// rules
+//     
+//     found   search    storage/pipe   constant    action
+//              local
+//      yes      -            yes          -       nomap
+//      yes      -            -           yes      nomap,error
+//      no       no           -            -       nomap,error
+//      yes      yes          yes          -       nomap
+//      no       yes          -            -        map         
+//
+void AaStatement::Map_Target(AaObjectReference* obj_ref) 
+{
+  string obj_ref_root_name =obj_ref->Get_Object_Root_Name();
+
+  AaScope* search_scope = this->Get_Scope()->Get_Ancestor_Scope(obj_ref->Get_Search_Ancestor_Level());
+
+  AaRoot* child = search_scope->Find_Child(obj_ref_root_name);
+
+  bool map_flag = (child == NULL) && (search_scope == this->Get_Scope());
+  bool err_no_target_in_scope = ((child == NULL) && (search_scope != this->Get_Scope()));
+  bool err_redeclaration = ((child !=NULL) && 
+			    !(child->Is("AaStorageObject") 
+			      || child->Is("AaPipeObject")
+			      || child->Is("AaInterfaceObject")));
+
+  //\todo: interface objects need a ref-count.  they can be written to 
+  // exactly once in the module!
+			    
+
+
+  if(err_no_target_in_scope)
+    {
+      cerr << "Error: specified target not found in specified scope in statement: line " << this->Get_Line_Number() << endl;
+    }
+  if(err_redeclaration)
+    {
+      cerr << "Error: specified target redeclared or a constant: line " << this->Get_Line_Number() << endl;
+    }
+
+  if(map_flag)
+    {
+      this->Get_Scope()->Map_Child(obj_ref_root_name,this);
+    }
+}
+
 
 //---------------------------------------------------------------------
 // AaStatementSequence
@@ -484,11 +544,15 @@ AaNullStatement::~AaNullStatement() {};
 //---------------------------------------------------------------------
 // AaAssignmentStatement
 //---------------------------------------------------------------------
-AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaObjectReference* tgt, AaExpression* src):
+AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaObjectReference* tgt, AaExpression* src, int lineno):
   AaStatement(parent_tpr) 
 {
   assert(tgt); assert(src);
+
+  this->Set_Line_Number(lineno);
   this->_target = tgt;
+  this->Map_Target(tgt);
+
   this->_source = src;
 }
 AaAssignmentStatement::~AaAssignmentStatement() {};
@@ -507,10 +571,12 @@ void AaAssignmentStatement::Print(ostream& ofile)
 AaCallStatement::AaCallStatement(AaScope* parent_tpr,
 				 string func_name,
 				 vector<AaObjectReference*>& inargs, 
-				 vector<AaObjectReference*>& outargs): AaStatement(parent_tpr)
+				 vector<AaObjectReference*>& outargs,
+				 int lineno): AaStatement(parent_tpr)
 {
 
   this->_function_name = func_name;
+  this->Set_Line_Number(lineno);
 
   for(unsigned int i = 0; i < inargs.size(); i++)
     {
@@ -520,6 +586,7 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
   for(unsigned int i = 0; i < outargs.size(); i++)
     {
       this->_output_args.push_back(outargs[i]);
+      this->Map_Target(outargs[i]);
     }
 
   // \todo 
@@ -688,7 +755,7 @@ void AaMergeStatement::Print(ostream& ofile)
 }
 
 // AaPhiStatement: public AaStatement
-AaPhiStatement::AaPhiStatement(AaMergeStatement* scope):AaStatement(scope) 
+AaPhiStatement::AaPhiStatement(AaBranchBlockStatement* scope):AaStatement(scope) 
 {
   this->_target = NULL;
 }
@@ -701,11 +768,11 @@ void AaPhiStatement::Print(ostream& ofile)
   ofile << this->Tab() << "$phi ";
   this->_target->Print(ofile);
   ofile << " := " << endl;
-  for(unsigned int i=0; i < this->_merged_objects.size(); i++)
+  for(unsigned int i=0; i < this->_source_pairs.size(); i++)
     {
       ofile << this->Tab() << "  ";
-      this->_merged_objects[i].second->Print(ofile);
-      ofile << " $on " << this->_merged_objects[i].first << endl;
+      this->_source_pairs[i].second->Print(ofile);
+      ofile << " $on " << this->_source_pairs[i].first << endl;
     }
   ofile << endl;
 }
@@ -781,13 +848,13 @@ void AaIfStatement::Print(ostream& ofile)
 }
 
 //---------------------------------------------------------------------
-// AaBranchStatement: public AaStatement
+// AaPlaceStatement: public AaStatement
 //---------------------------------------------------------------------
-AaBranchStatement::AaBranchStatement(AaBranchBlockStatement* parent_tpr,string lbl):AaStatement(parent_tpr) 
+AaPlaceStatement::AaPlaceStatement(AaBranchBlockStatement* parent_tpr,string lbl):AaStatement(parent_tpr) 
 {
   this->_label = lbl;
 };
-AaBranchStatement::~AaBranchStatement() {};
+AaPlaceStatement::~AaPlaceStatement() {};
 
 
 
@@ -890,7 +957,7 @@ void AaProgram::Print(ostream& ofile)
       ofile << endl;
     }
 }
-  
+
 
 
 

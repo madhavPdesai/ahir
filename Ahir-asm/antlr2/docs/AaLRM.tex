@@ -11,14 +11,18 @@
 
 \section{Introduction}
 
-The {\bf Aa} language is intended to be used to
-describe an algorithm so that the control flow
-in the description can be modeled by a petri net
+{\bf Aa} is intended to be a low-level 
+programming language for the description
+of algorithms in which the control flow
+can be modeled by a petri net
 of a specific class (the type-2 petri-net as
 introduced in \cite{ref:SameerPhD}).  A program in
-\Aa is also a description of a system which reacts with 
+\Aa can also be viewed as a 
+description of a system which reacts with 
 its environment through input and output ports and 
-through message queues.
+through message queues.  Thus, an \Aa program
+can be directly executed on a computer, and
+can also be mapped to a logic circuit.
 
 In the rest of this document, we outline the
 structure and the syntax of the \Aa language,
@@ -80,13 +84,25 @@ The module body itself is a sequence of statements.
 \begin{verbatim}
 module-body := (statement)+
 \end{verbatim}
-The control flow implied is serial in nature.  The
-module starts executing when it gets a token.
-This token is passed to the first statement in the
-list which executes and releases the token when it
-finishes execution, and the token  is passed serially down the
-list of statements.  When the last statement finishes 
-executing, the token passes out of the module.
+Each statement can be viewed as a transition
+in a petri-net, and has a 
+set of input (or source) places  and a set of output
+(or sink)  places.  
+The execution of the statement is triggered when
+there is a token present in each of its source 
+places and when the statement finishes execution,
+a token is placed in each of its output places.
+The control flow in the sequence of statements
+in a module is serial in nature.  Thus each
+statement has a single source place and a single
+sink place, sink place of a statement being 
+the source place of its successor.
+The module as a whole can be viewed as having
+a single entry place and a single exit place.
+When a token appears in the entry place, the first
+statement can trigger, and when the last statement
+has finished, a token is placed in the exit
+place.  
 
 The region between \{ and \} is termed a {\bf scope}.  Thus, 
 the module description defines a scope.  In this case, 
@@ -97,18 +113,24 @@ Each scope defines a name-space.  The visibility
 rules and access mechanisms between scopes will be described
 in Section \ref{sec:Scopes}
 
-The control flow in an \Aa module can be visualized
-in terms of the flow of tokens.
-A module is invoked when it receives a token, and 
-this token flows down the sequence of statements.
-Whenever a statement receives a token, it executes,
-and when it has finished executing, the token is
-released to the next statement. 
 
 \section{Statements}
  
-Statements in the module-body can be simple statements
-or block statements.
+Statements in the module-body are can be of two kinds:
+\begin{itemize}
+\item Atomic statements: those that have a single
+entry place and a single exit place.  These are
+the only statements that can occur in a module body.
+These statements are further divided into 
+{\em simple} statements and {\em block} statements.
+\item Sub-atomic statements:  these statements
+can appear only inside block statements,  and they
+can have multiple sources and multiple sinks.
+Examples of these statements are statements for
+combining tokens (merge and join statements) and
+statements for redirecting tokens (the toss statement).
+\end{itemize}
+
 
 \subsection{Simple Statements}
 
@@ -177,7 +199,7 @@ series-block-statement :=
              series-block-specifier block-name
              { 
                 declarations
-                sequence-of-statements
+                sequence-of-atomic-statements
              }
 \end{verbatim}
 The behaviour is similar to the module, in that the control
@@ -201,7 +223,7 @@ parallel-block-statement :=
              parallel-block-specifier block-name
              { 
                 declarations
-                sequence-of-statements
+                sequence-of-atomic-statements
              }
 \end{verbatim}
 When a token enters the parallel block statement, it
@@ -259,7 +281,9 @@ in the list of statements following the optional fork specifier.  There is an im
 at the entry point to the fork block statement and an implicit join at the
 end of the fork block statement.  It is thus easy to describe
 an arbitrary directed graph with arbitrary forks and joins.  The only
-restriction is that this directed graph must be acyclic!
+restriction is that this directed graph must be acyclic!  This is enforced
+by requiring that a join statement refers only to labels of statements
+that appear before the join.
 Here is an example:
 \begin{verbatim}
 $forkblock [f1] {
@@ -297,8 +321,8 @@ the form
 \begin{verbatim}
 switch-statement :=
          switch-spec switch-expression
-           ( expr-value  statement-to-be-executed )*
-           ( default statement-to-be-executed )?
+           ( expr-value  serial-statement-sequence )*
+           ( default serial-statement-sequence )?
             
 \end{verbatim}
 The switch-expression is checked, and depending on its
@@ -312,20 +336,20 @@ $switch a $when 0 $then a1 := (b + c)
 $endswitch
 \end{verbatim}
 The control token is routed to the appropriate
-choice and if the token is not routed out 
-of the block (by the {\bf takeroute} statement 
+choice sequence and if the token is not routed out 
+of the block (by the {\bf place} statement 
 described below), then the token passes to the
 statement following the switch. 
 \item If statements: An if statement has the form
 \begin{verbatim}
 if-statement :=
        if-spec test-expression 
-           true-statement
+           serial-statement-sequence
        (else
-           false-statement)?
+           serial-statement-sequence)?
        
 \end{verbatim}
-For example, 
+For example:
 \begin{verbatim}
 $if (a != 0) $then
    q := (r + s)
@@ -334,17 +358,24 @@ $else
    qdash :  (r - s)
 $endif
 \end{verbatim}
-\item Routing statement: The {\bf takeroute} statement
-defines a labeled path along which it sends the
-incoming control token.  For example,
+If the control token reaches the end of a selected
+segment in the if statement (that is, without being
+rerouted by a place statement), then the control
+token is passed on to the statement immediately
+following the if statement.
+\item The place statement: The {\bf place} statement
+defines a place with a label  into which it places
+a token after it has executed.  For example,
 \begin{verbatim}
-$takeroute [fastpath]
+$place [fastpath]
 \end{verbatim}
-means that the incoming token is not sent out to the
-next statement in the sequence, but is sent out along
-a path labeled ``fastpath''.  The token will be captured
-either by a {\bf merge} statement, or will exit the
-containing branch block.
+means that the incoming token is placed in a labeled
+place ``fastpath''.  The token will either
+trigger a {\bf merge} statement which is required
+to depend on this labeled place in the same branch
+block, or if no such merge statement
+exists, then ``fastpath'' is identified
+with the exit place of the  containing branch block.
 \item Merge statements: A merge statement is
 specified as 
 \begin{verbatim}
@@ -352,8 +383,9 @@ merge-statement :=
           merge-spec label-list merge-assignments
 \end{verbatim}
 which is to be interpreted as follows.  The labels in the label list
-refer to paths defined by ``takeroute'' statements within the branch block.
-Whenever a token arrives along any of these paths,
+refer to token labels defined by ``toss'' statements within the branch block.
+Whenever a token labeled by any of the items in label-list arrives
+at the input of the merge,
 the merge statement starts and executes a series of special assignments
 which multiplex values into new variables based on which arc the
 token arrived from.  The merge statement then releases its token to
@@ -364,22 +396,34 @@ Here is an example of a branch block constructed in this manner
 \begin{verbatim}
 $branchblock [b1] 
 {
-  $merge loop $entry // $entry is the path 
+  $merge loop $entry // $entry is the place
                      // into the block
+                     // merge triggered by
+                     // token at entry or
+                     // by token in place "loop"
+
 
        $phi q := 0 on $entry r on loop 
                     // q is defined by where 
                     // the token came from
   r := q + 1
   $if r < 10 $then 
-       $takeroute [loop]
+       $place [loop] // put token in place "loop"
   $endif
 }
 \end{verbatim}
-
+This is to be interpreted as follows: the merge executes
+whenever a token is present  either in the entry place
+of the branch-block or in the place labeled ``loop''.
+The merge defines variable ``q'' with a value which is
+either 0 (if a token was present in the entry place)
+or r (if a token was present in the ``loop'' place).
+By the construction rules in an \Aa program, it is
+impossible for there to be a token present in more
+than one input place to a merge.
 \end{itemize}
 
-Thus, the program is constructed as a collection of modules,
+Thus, an \Aa program is constructed as a collection of modules,
 each of which is a sequence of statements.  The use of series,
 parallel, fork and branch block
 statements enables the programmer to describe a highly concurrent
@@ -387,7 +431,7 @@ structured system with complex branching behaviour.
 The resulting control flow structure is a
 type-2 petri-net with provable liveness and safety properties \cite{ref:SameerPhD}.
 
-\section{Scoping Rules}
+\section{Scoping Rules} \label{sec:Scopes}
 
 An \Aa program is made of modules which in turn contain statements
 and so on.  The program thus has a hierarchy of scopes with each
@@ -440,19 +484,6 @@ and the scoping rules forbid a scope from accessing variables
 which are not defined in either an ancestor or a descendant
 of the scope.
 
-\section{Syntax}
-
-The syntax for \Aa is described by the following lexical analysis and
-parsing rules (written as rules to be parsed by antlr2 \cite{ref:antlr2},
-a LL(k) parser).
-
-This is the set of tokens recognized by the lexical analyzer (or lexer).
-\input{AaLexer}
-As one can see, all keywords in the \Aa language begin with \$.
-
-The grammar for the parser is (using the EBNF notation) given below. 
-\input{AaParser}
-
 \section{Examples}
 
 Here is a very simple program
@@ -472,10 +503,10 @@ This consists of a single module, which accumulates
 a value into an array position.
 
 
-A little bit more complicated:
+An example which is a little bit more complicated:
 \begin{verbatim}
 // an array of 32-bit unsigned integers.
-$storage mem $array<1024> of $uint<32> 
+$declare $storage mem $array<1024> $of $uint<32> 
 
 // module returns the sum of mem[I] from
 // I=low to I=high
@@ -483,64 +514,98 @@ $module [sum_mod]
     $in (low $uint<10> high $uint<10>)
     $out (sum $uint<32>)
 $is
-    $storage I $uint<10>
-    $storage J $uint<10>
-    $storage sum1 $uint<32>
-    $storage sum2 $uint<32>
 {
  
    d := (high-low)  
    mp := ((high-low)/2)
 
-   I := low
-   J := (mp + 1)
 
-   \branchblock[trivcheck]
+   $branchblock[trivcheck]
     {
-       $merge $entry
-       $if (d > 0) $then
+       // d from parent scope
+       $if (d > 0) $then  
            // do two summations in parallel
            // parallel summations
-           \parallelblock[parsum]
+           $parallelblock[parsum]
            {
-               \branchblock[sb1]{
-                    merge $entry loopback
-                       $phi s := 0 on $entry %forward:s on loopback
+               $branchblock[sb1]{
+                    $declare $storage  I $uint<10> := 0
+                    $merge $entry loopback
+                       $phi s := 0 $on $entry  s1 $on loopback
+                    $endmerge
                     $if (I < mp) $then
-                        \seriesblock[loopback]{
-                            I := (I+1)
-                            s := $mux (I == 0)  0 (s + mem[I])
-                         }
+                       I := (I+1)
+                       s1 := ($mux (I == 0)  0 (s + mem[I]))
+                       $place [loopback]
+                    $endif
                } 
-               \branchblock[sb2]{
-                    merge $entry loopback
-                       $phi s := 0 on $entry %forward:s on loopback
+               $branchblock[sb2]{
+                    $declare $storage  J $uint<10> := 0
+                    J := (mp + 1)
+                    $merge $entry loopback
+                       $phi s := 0 $on $entry s1 $on loopback
+                    $endmerge
                     $if (J < high) $then
-                        \seriesblock[loopback]{
-                            J := (J+1)
-                            s := $mux (J == (mp+1))  0 (s + mem[J])
-                         }
+                         J := (J+1)
+                         s1 := ($mux (J == (mp+1))  0 (s + mem[J]))
+                         $place [loopback]
+                    $endif
                } 
            }
  
            // combine results from parallel statement above
            snontriv := (%parsum%sb1:s  + %parsum%sb2:s)
-           $takeroute [nontrivsum]
+           $place [nontrivsum]
       $else
 
            // summation is trivial 
            striv := mem[low]
-           $takeroute [trivsum]
+           $place [trivsum]
+      $endif
       $merge nontrivsum trivsum
          // which sum do you pick? depends on which path was taken
-         $phi sum := snontriv on nontrivsum strivsum on trivsum
-      $exit
+         $phi sum := snontriv $on nontrivsum strivsum $on trivsum
+      $endmerge
     }
 
     // bring sum up to the surface.
     sum := %trivcheck:sum
 }
 \end{verbatim}
+This example describes an algorithm which computes the sum of
+a section of an array by dividing the problem into two partial
+summations. 
+
+\section{Syntax} \label{sec:Syntax}
+
+The syntax for \Aa follows the following
+principles
+\begin{itemize}
+\item All keywords begin with the \$ sign.
+\item The region between \{ and \} defines a new scope.
+\item Statements are space separated (no semicolons at all).
+\item Expressions are fully parenthitized.  Thus
+$(a + b)$ is a legal expression, but $a+b$ is not.
+\end{itemize}
+
+
+The parser is implemented using 
+an LL(k) parser (written as rules to be parsed by antlr2 \cite{ref:antlr2}).
+The grammar for the parser is (using the EBNF notation) given below. 
+\input{AaParser}
+
+This is the set of tokens recognized by the lexical analyzer (or lexer).
+\input{AaLexer}
+
+\begin{thebibliography}{99}
+\bibitem{ref:SameerPhD}
+Sameer D. Sahasrabuddhe,
+``A competitive pathway from high-level programs to hardware,''
+Ph.D. thesis, IIT Bombay, 2009.
+
+\bibitem{ref:antlr2}
+http://www.antlr2.org.
+\end{thebibliography}
 
 \end{document}
  
