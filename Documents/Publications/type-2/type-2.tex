@@ -3,8 +3,7 @@
 \usepackage{times}
 \usepackage[margin=0.75in]{geometry}
 
-\title{A class of untimed live and safe petri-nets that supports
-  scalable static analysis}
+\title{On the use of petri-nets for modeling concurrent programs}
 
 \author{Sameer D. Sahasrabuddhe \\ Kavi Arya \\ Madhav P. Desai}
 
@@ -17,36 +16,30 @@
 \begin{abstract}
   \large
 
-  Petri-nets are a compact way of representing concurrent sequences of
-  events in a system, where events are represented as transitions
-  connected to places that encode the state of the system. We present
-  a class of untimed live and safe petri-nets called ``Type-2'' that
-  allows a scalable static analysis, without severely affecting the
-  expressive power of the petri-net.
-  
-  The simplest Type-2 petri-net is a cycle consisting of a single
-  marked place and a single transition. Larger petri-nets are produced
-  by progressive application of production rules that replace an
-  unmarked place or a transition with a specific petri-net subgraph
-  with no marked places. The initial marking of a Type-2 petri-net is
-  thus restricted to the single marked place in the initial cycle. The
-  production rules also ensure that every Type-2 petri-net is live and
-  safe.
-
-  The restriction on the structure of the Type-2 petri-net
-  allows the definition of a simple labelling scheme that effectively
-  simulates an execution of the petri-net. The labels of any two
-  transitions can be compared in linear time to statically determine
-  their relation in the execution of the petri-net. For example, the
-  labels can be used determine whether two transitions can fire
-  concurrently, thus identifying concurrent events in the system. It
-  is also possible to generate an exhaustive listing of sets of
-  transitions such that no two transitions in each set can fire
-  simultaneously.
-
+  Petri-nets provide a powerful mechanism for the modeling of
+  concurrent systems.   However, because of their generality, 
+  it is often difficulty to prove properties about petri-net
+  models unless some restrictions are placed on their construction.
+  We consider the use of petri-nets to model algorithms described
+  in high level programming languages.  In particular, we introduce
+  a class of live and safe petri-nets (which we term as {\em Type-2}
+  petri-nets) for this purpose.   This class is defined by a
+  set of production rules which ensure liveness and safety of
+  the resulting petri-net.  
+  Further, we show that concurrency
+  analysis of Type-2 petri-nets can be carried out very efficiently
+  using a labelling scheme which is analogous to a symbolic simulation
+  of the petri-net.
+  Thus, it is easy to determine the sets of events (or transitions)
+  which satisfy ordering relationships (two transitions are said to
+  be ordered if it is impossible for both of them to fire simultaneously).  
+  Such information is useful in identifying possibilities for conflict 
+  free resource sharing in the implementations of the programs being
+  modeled.
   Despite the restrictions imposed by the production rules, the Type-2
-  class of petri-nets is powerful enough to represent synchronous
-  systems. It has been used as a transition step in translating
+  class of petri-nets is powerful enough to represent programs
+  written in traditional imperative languages such as C/C++ as well in synchronous
+  languages such as Esterel. It has been used as a transition step in translating
   imperative programs to hardware descriptions\cite{ahir-thesis}. The
   resulting high-level synthesis flow uses the labelling scheme to
   optimise the generated hardware by identifying opportunities for
