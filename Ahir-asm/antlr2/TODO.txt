@@ -1,0 +1,7 @@
+1. map all targets into their respective scopes
+2. resolve all references.
+3. propagate types through the program.
+4. generate simulation model.
+	- multi-threaded simulation model?
+5. generate ahir.
+
