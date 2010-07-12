@@ -25,6 +25,12 @@ class AaScope : public AaRoot
   // 
   map<string,AaRoot*,StringCompare> _child_map;
 
+
+  // first is child
+  // second.first is vector of elements targetting first
+  // second.second is vector of elements using first
+  map<AaRoot*,pair<vector<AaRoot*>*, vector<AaRoot*>*> > _reference_map;
+
  public:
 
   virtual unsigned int Get_Depth() {return this->_depth;}
@@ -63,13 +69,13 @@ class AaScope : public AaRoot
   }
 
   // hierarchical identifier of a child.
-  virtual AaScope* Get_Descendant_Scope(vector<string>& desc_labels)
+  virtual AaScope* Get_Descendant_Scope(const vector<string>& desc_labels)
   {
     AaScope* ret_scope = this;
     for(unsigned int i= 0; i < desc_labels.size(); i++)
       {
 	AaRoot* child = ret_scope->Find_Child(desc_labels[i]);
-	if(child->Is_Scope())
+	if(child != NULL && child->Is_Scope())
 	  ret_scope = (AaScope*) child;
 	else
 	  ret_scope = NULL;
@@ -92,6 +98,7 @@ class AaScope : public AaRoot
   }
 
   virtual string Kind() {return("AaScope");}
+
 
 };
 

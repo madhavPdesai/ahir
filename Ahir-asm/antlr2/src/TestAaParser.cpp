@@ -15,8 +15,6 @@ int main(int argc, char* argv[])
       exit(1);
     }
 
-  // make the program
-  AaProgram* pgm = new AaProgram();
 
   ifstream infile;
   string filename = argv[1];
@@ -35,7 +33,7 @@ int main(int argc, char* argv[])
 
   try
   {
-    parser->aA_Program(pgm);
+    parser->aA_Program();
   }
   catch(ANTLR_USE_NAMESPACE(antlr)RecognitionException& re)
   {
@@ -48,7 +46,12 @@ int main(int argc, char* argv[])
   delete lexer;
 
 
-  pgm->Print(cout);
+  AaProgram::Map_Source_References();
 
+
+  if(AaRoot::Get_Error_Flag())
+    cerr << "Error: there were errors during parsing/elaboration, check the log" << endl;
+  else
+    AaProgram::Print(cout);
   return(0);
 }

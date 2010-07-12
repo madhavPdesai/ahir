@@ -1,4 +1,15 @@
-#include <AaParserClasses.h>
+using namespace std;
+#include <AaIncludes.h>
+#include <AaUtil.h>
+#include <AaRoot.h>
+#include <AaScope.h>
+#include <AaType.h>
+#include <AaValue.h>
+#include <AaExpression.h>
+#include <AaObject.h>
+#include <AaStatement.h>
+#include <AaModule.h>
+#include <AaProgram.h>
 
 string Tab_(unsigned int n)
 {
@@ -35,7 +46,6 @@ bool StringCompare::operator() (string s11, string s21) const
 //---------------------------------------------------------------------
 // AaRoot
 //---------------------------------------------------------------------
-
 int AaRoot::_root_counter = 0;
 bool AaRoot::_error_flag = false;
 
@@ -95,6 +105,7 @@ void AaScope::Map_Child(string lbl, AaRoot* tn)
       if(this->_child_map.find(lbl) == this->_child_map.end())
 	{
 	  this->_child_map[lbl] = tn;
+	  this->_reference_map[tn] = pair<vector<AaRoot*>*, vector<AaRoot*>*>(new vector<AaRoot*>, new vector<AaRoot*>);
 	}
     }
 }
@@ -334,6 +345,50 @@ void AaObjectReference::Print(ostream& ofile)
   ofile << this->Get_Object_Ref_String();
 }
 
+void AaObjectReference::Map_Source_References()
+{
+  AaScope* search_scope = NULL;
+  bool look_in_program = false;
+  if(this->Get_Search_Ancestor_Level() > 0)
+    {
+      search_scope = this->Get_Scope()->Get_Ancestor_Scope(this->Get_Search_Ancestor_Level());
+      look_in_program = true;
+    }
+  else if(this->_hier_ids.size() > 0)
+    search_scope = this->Get_Scope()->Get_Descendant_Scope(this->_hier_ids);
+  else
+    search_scope = this->Get_Scope();
+
+
+  AaRoot* child = NULL;
+  if(search_scope == NULL)
+    {
+      if(look_in_program)
+	{
+	  child = AaProgram::Find_Object(this->_object_root_name);
+	}
+      else
+	{
+	  cerr << "Error: did not find a scope for object reference " << this->Get_Object_Ref_String() << ": line " << this->Get_Line_Number() << endl;
+	  AaRoot::Error();
+	}
+    }
+  else
+    {
+      child = search_scope->Find_Child(this->_object_root_name);
+    }
+
+  if(child == NULL)
+    {
+      cerr << "Error: did not find object reference " << this->Get_Object_Ref_String() << ": line " << this->Get_Line_Number() << endl;
+      AaRoot::Error();
+    }
+  else
+    {
+      child->Add_Source_Reference(this);
+    }
+}
+
 //---------------------------------------------------------------------
 // AaConstantLiteralReference: public AaObjectReference
 //---------------------------------------------------------------------
@@ -451,11 +506,11 @@ AaTernaryExpression::AaTernaryExpression(AaScope* parent_tpr,
 AaTernaryExpression::~AaTernaryExpression() {};
 void AaTernaryExpression::Print(ostream& ofile)
 {
-  ofile << "( ";
+  ofile << "( $mux ";
   this->Get_Test()->Print(ofile);
-  ofile << " ? ";
+  ofile << " ";
   this->Get_If_True()->Print(ofile);
-  ofile << " : ";
+  ofile << "  ";
   this->Get_If_False()->Print(ofile);
   ofile << " ) ";
 }
@@ -464,51 +519,96 @@ void AaTernaryExpression::Print(ostream& ofile)
 //---------------------------------------------------------------------
 // AaStatement
 //---------------------------------------------------------------------
-AaStatement::AaStatement(AaScope* p): AaScope(p) {}
+AaStatement::AaStatement(AaScope* p): AaScope(p) 
+{
+  this->_tab_depth = ((p != NULL) ? p->Get_Depth() : 0);
+}
 AaStatement::~AaStatement() {};
 string AaStatement::Tab()
 {
-  return((this->Get_Scope() != NULL) ? Tab_(this->Get_Scope()->Get_Depth()) : Tab_(0));
+  return(Tab_(this->Get_Tab_Depth()));
 }
 
 // try to map the target of the statement in the scope hierarchy
 // rules
 //     
-//     found   search    storage/pipe   constant    action
-//              local
-//      yes      -            yes          -       nomap
-//      yes      -            -           yes      nomap,error
-//      no       no           -            -       nomap,error
-//      yes      yes          yes          -       nomap
-//      no       yes          -            -        map         
+//     found    here?    storage/pipe/io   constant    action
+//      yes      -            yes           -          nomap
+//      yes      -            -            yes         nomap,error
+//      no       no           -             -          nomap,error
+//      yes      yes          yes           -          nomap
+//      no       yes          -             -          map         
 //
+// \todo: this needs to be cleaned up... still not OK.
+//
+// 1. get search_scope
+// 2. find child starting from search_scope
+// 3. if child == NULL and reference is array ref throw error
+// 4. if child == NULL and if search_scope != this->Get_Scope() through error
+// 5. if child == NULL and reference is not array ref, map child
+// 6. if child != NULL and child is of storage/pipe type, dont map, and go on.
+// 7. if child != NULL and child is of interface type, check ref count and
+//     direction and throw error if appropriate
+// 8. if child != NULL and child is not an object declaration then
+//     warn and map
 void AaStatement::Map_Target(AaObjectReference* obj_ref) 
 {
   string obj_ref_root_name =obj_ref->Get_Object_Root_Name();
 
   AaScope* search_scope = this->Get_Scope()->Get_Ancestor_Scope(obj_ref->Get_Search_Ancestor_Level());
+  AaRoot* child = NULL;
 
-  AaRoot* child = search_scope->Find_Child(obj_ref_root_name);
+  if(search_scope != NULL)
+    child = search_scope->Find_Child(obj_ref_root_name);
+  else
+    child = AaProgram::Find_Object(obj_ref_root_name);
 
-  bool map_flag = (child == NULL) && (search_scope == this->Get_Scope());
-  bool err_no_target_in_scope = ((child == NULL) && (search_scope != this->Get_Scope()));
-  bool err_redeclaration = ((child !=NULL) && 
-			    !(child->Is("AaStorageObject") 
-			      || child->Is("AaPipeObject")
-			      || child->Is("AaInterfaceObject")));
+  if(child != NULL)
+    child->Add_Target_Reference(this);
+  
+  bool is_array_ref = obj_ref->Is("AaArrayObjectReference");
 
-  //\todo: interface objects need a ref-count.  they can be written to 
-  // exactly once in the module!
-			    
+  bool map_flag = ((child == NULL) && (search_scope == this->Get_Scope()) && !(is_array_ref));
 
+  bool err_no_target_in_scope = ((child == NULL) && (is_array_ref || (search_scope != this->Get_Scope())));
+  bool err_redeclaration = ((child !=NULL) && !(child->Is("AaStorageObject") || 
+						child->Is("AaPipeObject") ||
+						child->Is("AaConstantObject") ||
+						child->Is("AaInterfaceObject")));
+  bool err_write_to_constant = ((child !=NULL) && child->Is("AaConstantObject"));
+  bool err_write_to_input_port = ((child != NULL) &&
+				  (child->Is("AaInterfaceObject") && 
+				   (((AaInterfaceObject*)child)->Get_Mode() == "in")));
 
+  bool err_multiple_refs_to_ports =((child != NULL) &&  
+				    child->Is("AaInterfaceObject") && 
+				    (child->Get_Number_Of_Target_References() > 1));
+  
+  
   if(err_no_target_in_scope)
     {
-      cerr << "Error: specified target not found in specified scope in statement: line " << this->Get_Line_Number() << endl;
+      cerr << "Error: specified target " << obj_ref_root_name << " not found in specified scope: line " << this->Get_Line_Number() << endl;
+      AaRoot::Error();
     }
   if(err_redeclaration)
     {
-      cerr << "Error: specified target redeclared or a constant: line " << this->Get_Line_Number() << endl;
+      cerr << "Error: specified target " << obj_ref_root_name << " redeclared: line " << this->Get_Line_Number() << endl;
+      AaRoot::Error();
+    }
+  if(err_write_to_constant)
+    {
+      cerr << "Error: specified target " << obj_ref_root_name << " is a constant: line " << this->Get_Line_Number() << endl;
+      AaRoot::Error();
+    }
+  if(err_write_to_input_port)
+    {
+      cerr << "Error: attempted write to module input port " << obj_ref_root_name << " : line " << this->Get_Line_Number() << endl;      
+      AaRoot::Error();
+    }
+  if(err_multiple_refs_to_ports)
+    {
+      cerr << "Error: multiple writes to module port " << obj_ref_root_name << " : line " << this->Get_Line_Number() << endl;     
+      AaRoot::Error();
     }
 
   if(map_flag)
@@ -524,7 +624,10 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
 AaStatementSequence::AaStatementSequence(AaScope* scope, vector<AaStatement*>& statement_sequence):AaScope(scope)
 {
   for(unsigned int i=0; i < statement_sequence.size();i++)
-    this->_statement_sequence.push_back((statement_sequence[i]));
+    {
+      AaStatement* stmt = statement_sequence[i];
+      this->_statement_sequence.push_back(stmt);
+    }
 }
 AaStatementSequence::~AaStatementSequence() {}
   
@@ -588,10 +691,6 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
       this->_output_args.push_back(outargs[i]);
       this->Map_Target(outargs[i]);
     }
-
-  // \todo 
-  // map all targets!
-
 }
 AaCallStatement::~AaCallStatement() {};
   
@@ -640,6 +739,8 @@ AaBlockStatement::AaBlockStatement(AaScope* scope,string label):AaStatement(scop
 {
   this->_label = label;
   this->_statement_sequence = NULL;
+  if(label != "" && scope != NULL)
+    scope->Map_Child(label,this);
 }
 
 AaBlockStatement::~AaBlockStatement() {}
@@ -853,6 +954,7 @@ void AaIfStatement::Print(ostream& ofile)
 AaPlaceStatement::AaPlaceStatement(AaBranchBlockStatement* parent_tpr,string lbl):AaStatement(parent_tpr) 
 {
   this->_label = lbl;
+  parent_tpr->Map_Child(lbl,this);
 };
 AaPlaceStatement::~AaPlaceStatement() {};
 
@@ -863,10 +965,8 @@ AaPlaceStatement::~AaPlaceStatement() {};
 //---------------------------------------------------------------------
 // AaModule
 //---------------------------------------------------------------------
-AaModule::AaModule(AaScope* parent, string fname): AaBlockStatement(parent,fname)
+AaModule::AaModule(string fname): AaBlockStatement(NULL,fname)
 {
-  if(parent != NULL)
-    parent->Map_Child(fname,this);
 }
 
 void AaModule::Add_Argument(AaInterfaceObject* obj)
@@ -921,42 +1021,20 @@ void AaModule::Print(ostream& ofile)
   ofile << "}" << endl;
 }
 
+AaRoot* AaModule::Find_Child_Here(string tag)
+{
+  AaRoot* child = this->AaScope::Find_Child_Here(tag);
+  if(child == NULL)
+    {
+      child = AaProgram::Find_Object(tag);
+      if(child == NULL)
+	child = AaProgram::Find_Module(tag);
+    }
+  return(child);
+}
 
 /***************************************** PROGRAM   ****************************/
 
-//---------------------------------------------------------------------
-// AaProgram
-//---------------------------------------------------------------------
-map<string,AaType*,StringCompare> AaProgram::_type_map;
-
-AaProgram::AaProgram():AaScope((AaScope*) NULL) {};
-AaProgram::~AaProgram() {};
-
-void AaProgram::Add_Module(AaModule* fn)
-{
-  this->_modules.push_back(fn);
-  this->Map_Child(fn->Get_Label(), fn);
-}
-    
-void AaProgram::Print(ostream& ofile)
-{
-  if(this->_objects.size() > 0)
-    {
-      ofile << "$declare " << endl;
-      for(unsigned int i=0; i < this->_objects.size(); i++)
-	{
-	  ofile << "\t";
-	  this->_objects[i]->Print(ofile);
-	  ofile << endl;
-	}
-    }
-  
-  for(unsigned int i=0; i < this->_modules.size(); i++)
-    {
-      this->_modules[i]->Print(ofile);
-      ofile << endl;
-    }
-}
 
 
 

@@ -14,6 +14,9 @@ class AaExpression: public AaRoot
 {
   // the containing scope of this expression
   AaScope* _scope;
+  
+  // type of the expression
+  AaType* _type;
 
  public:
   virtual AaScope* Get_Scope() { return(this->_scope);}
@@ -21,6 +24,11 @@ class AaExpression: public AaRoot
   AaExpression(AaScope* scope_tpr);
   ~AaExpression();
   virtual string Kind() {return("AaExpression");}
+
+  virtual void Set_Type(AaType* t) { this->_type = t;}
+  virtual AaType* Get_Type() {return(this->_type);}
+
+  virtual void Map_Source_References() { assert(0); }
 };
 
 
@@ -71,6 +79,7 @@ class AaObjectReference: public AaExpression
     return((this->_hier_ids.size() > 0) || (this->_search_ancestor_level > 0));
   }
   virtual string Kind() {return("AaObjectReference");}
+  virtual void Map_Source_References(); // important
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
@@ -80,6 +89,7 @@ class AaConstantLiteralReference: public AaObjectReference
   AaConstantLiteralReference(AaScope* scope_tpr, string literal_string);
   ~AaConstantLiteralReference();
   virtual string Kind() {return("AaConstantLiteralReference");}
+  virtual void Map_Source_References() {} // do nothing
 };
 
 // simple reference (no array indices)
@@ -125,6 +135,7 @@ class AaTypeCastExpression: public AaExpression
   ~AaTypeCastExpression();
   void Print(ostream& ofile);
   virtual string Kind() {return("AaTypeCastExpression");}
+  virtual void Map_Source_References() {if(this->_rest) this->_rest->Map_Source_References();}
 };
 
 
@@ -144,6 +155,7 @@ class AaUnaryExpression: public AaExpression
   AaStringValue* Get_Operation() {return(this->_operation);}
   AaExpression* Get_Rest() {return(this->_rest);}
   virtual string Kind() {return("AaUnaryExpression");}
+  virtual void Map_Source_References() {if(this->_rest) this->_rest->Map_Source_References();}
 };
 
 // 
@@ -164,6 +176,11 @@ class AaBinaryExpression: public AaExpression
   AaExpression* Get_First() {return(this->_first);}
   AaExpression* Get_Second() {return(this->_second);}
   virtual string Kind() {return("AaBinaryExpression");}
+  virtual void Map_Source_References() 
+  {
+    if(this->_first) this->_first->Map_Source_References();
+    if(this->_second) this->_second->Map_Source_References();
+  }
 };
 
 // ternary expression: a ? b : c
@@ -182,6 +199,13 @@ class AaTernaryExpression: public AaExpression
   AaExpression* Get_If_True() {return(this->_if_true);}
   AaExpression* Get_If_False() {return(this->_if_false);}
   virtual string Kind() {return("AaTernaryExpression");}
+  virtual void Map_Source_References() 
+  {
+    if(this->_test) this->_test->Map_Source_References();
+    if(this->_if_true) this->_if_true->Map_Source_References();
+    if(this->_if_false) this->_if_false->Map_Source_References();
+  }
+
 };
 
 #endif

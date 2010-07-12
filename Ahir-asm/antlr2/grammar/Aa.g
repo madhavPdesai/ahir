@@ -76,24 +76,20 @@ options {
 //-----------------------------------------------------------------------------------------------
 // aA_Program : (aA_Module | (DECLARE (aA_Object_Declaration)+) )*
 //-----------------------------------------------------------------------------------------------
-aA_Program[AaProgram* aa_pgm]
+aA_Program
 {
     AaModule* nf = NULL;
     AaObject* obj = NULL;
+    AaScope* null_scope = NULL;
 }
     :
         (
-            (nf = aA_Module[aa_pgm]
-                { 
-                    aa_pgm->Add_Module(nf);
-                }
-            )
+            (nf = aA_Module {AaProgram::Add_Module(nf);} )
             |
-            
             (  
                 DECLARE 
                 (
-                    obj = aA_Object_Declaration[aa_pgm] { aa_pgm->Add_Object(obj); }
+                    obj = aA_Object_Declaration[null_scope]  {AaProgram::Add_Object(obj);}
                 )+
             )
         )*
@@ -104,7 +100,7 @@ aA_Program[AaProgram* aa_pgm]
 //-----------------------------------------------------------------------------------------------
 // aA_Module: MODULE aA_Label aA_In_Args aA_Out_Args (DECLARE (aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
-aA_Module[AaProgram* aa_pgm] returns [AaModule* new_module]
+aA_Module returns [AaModule* new_module]
 {
     string lbl = "";
     new_module = NULL;
@@ -114,7 +110,7 @@ aA_Module[AaProgram* aa_pgm] returns [AaModule* new_module]
     : MODULE 
         lbl = aA_Label 
         {
-            new_module = new AaModule(aa_pgm,lbl);
+            new_module = new AaModule(lbl);
         }
         aA_In_Args[new_module] aA_Out_Args[new_module] IS
         LBRACE
@@ -597,7 +593,9 @@ aA_Merge_Statement[AaBranchBlockStatement* scope] returns [AaMergeStatement* new
         (
             ( ns = aA_Phi_Statement[scope,lbl_set] {  slist.push_back(ns); } )+
         {
-            new_mgs->Set_Statement_Sequence(new AaStatementSequence(scope,slist));
+            AaStatementSequence* sseq = new AaStatementSequence(scope,slist);
+            sseq->Increment_Tab_Depth();
+            new_mgs->Set_Statement_Sequence(sseq);
             new_mgs->Set_Line_Number(ml->getLine());
         }
         )?
@@ -630,6 +628,7 @@ aA_Switch_Statement[AaBranchBlockStatement* scope] returns [AaSwitchStatement* n
             THEN 
             sseq = aA_Branch_Block_Statement_Sequence[scope]
             {
+                sseq->Increment_Tab_Depth();
                 new_ss->Add_Choice(choice_value,sseq);
             }
         )*
@@ -637,6 +636,8 @@ aA_Switch_Statement[AaBranchBlockStatement* scope] returns [AaSwitchStatement* n
             defseq = aA_Branch_Block_Statement_Sequence[scope]
         )?
         {
+            if(defseq)
+                defseq->Increment_Tab_Depth();
             new_ss->Set_Select_Expression(select_expression);
             new_ss->Set_Default_Sequence(defseq);
             new_ss->Set_Line_Number(sl->getLine());
@@ -668,11 +669,13 @@ aA_If_Statement[AaBranchBlockStatement* scope] returns [AaIfStatement* new_is]
         ifseq = aA_Branch_Block_Statement_Sequence[scope] 
         {
             new_is->Set_If_Sequence(ifseq);
+            ifseq->Increment_Tab_Depth();
         }
         (
             ELSE 
             elseseq = aA_Branch_Block_Statement_Sequence[scope] 
             {
+                elseseq->Increment_Tab_Depth();
                 new_is->Set_Else_Sequence(elseseq);
                 new_is->Set_Line_Number(il->getLine());
             }
@@ -1062,7 +1065,7 @@ aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
                         full_name += ':';
                     }
         )?
-        (sid:SIMPLE_IDENTIFIER {full_name += sid->getText(); root_name = sid->getText();})
+        (sid:SIMPLE_IDENTIFIER {full_name += sid->getText(); root_name = sid->getText(); })
         (LBRACKET index_expr = aA_Expression[scope]  RBRACKET
             {
                 array_flag = true; 
@@ -1079,6 +1082,7 @@ aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
                 obj_ref->Add_Hier_Id(hier_ids[i]);
 
             obj_ref->Set_Object_Root_Name(root_name);
+            obj_ref->Set_Line_Number(sid->getLine());
         }
     ;
 

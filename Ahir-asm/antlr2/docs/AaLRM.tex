@@ -440,17 +440,33 @@ which is not contained in any scope).
 
 The rules for scoping are as follows:
 \begin{enumerate}
-\item A variable (declared or implicit) defined in a scope is visible
-in all descendant scopes.
+\item A declared variable defined in a scope is visible
+in all descendant scopes. In addition
+\begin{itemize}
+\item If $x$ is a storage or pipe variable defined in a scope, then
+there can be no other variable named $x$ in any of the scopes
+contained in this scope.
+\item If $x$ is an input or output argument of a module, then
+there can be no other variable named $x$ declared in any of
+the descendant scopes of this module.
+\end{itemize}
 \item A reference to a variable $b$ in a scope X is resolved by checking
 whether the variable is defined in that scope, and if not found there,
 by checking in the scope that contains the scope X, and so on.
 \item A scope can read from variables that are defined in descendant
 scopes.  
 \item A scope can read from variables that are defined in ancestor scopes.
+\item A scope can only write to one of the following:
+\begin{itemize}
+\item a storage or pipe variable defined in the scope or an ancestor
+of the scope.
+\item an output argument of a module of which the scope is a descendant.
+In this case, there can be at most one statement in the entire module
+which writes to this output argument.
+\end{itemize}
 \end{enumerate}
 
-A variable which is to be read in a statement may be specified 
+A variable reference in a statement may be specified 
 as follows
 \begin{verbatim}
 a            look for variable a in current scope; 
@@ -458,22 +474,22 @@ a            look for variable a in current scope;
 
 :a           same as the previous case
 
-^:a          look for variable a defined in the parent of
+^:a          look for variable a starting from the parent of
              the current scope.
 
-%p:a         look for variable a defined in the child scope 
+%p:a         look for variable a starting from the child scope 
 	     with label p (child scope of the current scope).
 
-^^:a         look for variable a defined in the parent of
+^^:a         look for variable starting from the parent of
              the parent of the current scope.
 
-%p%q:a       look for variable a defined in the child scope 
+%p%q:a       look for variable starting from the child scope 
              with label q of the child scope with label p of 
              the current scope
 
 a[10]        look for a storage variable a defined in the 
-             current module.  If not found, look for it in
-             the program scope.  If found in either of the places,
+             current scope.  If not found, look for it in
+             the parent scope, and so on.  If eventually found, 
              access the corresponding element of the array.
 \end{verbatim}
 Thus, a generic variable reference has the form 
@@ -555,21 +571,26 @@ $is
  
            // combine results from parallel statement above
            snontriv := (%parsum%sb1:s  + %parsum%sb2:s)
+           // put token in place nontrivsum.  It will be picked
+           // up by succeeding merge
            $place [nontrivsum]
       $else
 
            // summation is trivial 
            striv := mem[low]
+           // put token in place trivsum.  It will be picked
+           // up by succeeding merge
            $place [trivsum]
       $endif
       $merge nontrivsum trivsum
          // which sum do you pick? depends on which path was taken
-         $phi sum := snontriv $on nontrivsum strivsum $on trivsum
+         // note that sum here refers to the output argument of 
+         // the parent module which is globally visible, but can
+         // be written into exactly once!
+         $phi sum := snontriv $on nontrivsum striv $on trivsum
       $endmerge
     }
 
-    // bring sum up to the surface.
-    sum := %trivcheck:sum
 }
 \end{verbatim}
 This example describes an algorithm which computes the sum of

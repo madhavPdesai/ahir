@@ -41,7 +41,7 @@ class AaObject: public AaRoot
 class AaInterfaceObject: public AaObject
 {
   // arguments can be input or output
-  string _mode; // IN or OUT?
+  string _mode; // "in" or "out"
 
  public:
   string Get_Mode() {return(this->_mode);}

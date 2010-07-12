@@ -23,6 +23,9 @@ class AaRoot
   // fill from the parser at some point.
   unsigned int _line_number;
 
+  // vector of references to this object from "anywhere"
+  set<AaRoot*> _target_references;
+  set<AaRoot*> _source_references;
 
  public:
 
@@ -36,8 +39,6 @@ class AaRoot
   AaRoot();
   ~AaRoot(); 
 
-
-
   // useful print versions
   virtual void Print(ostream& ofile); // override this in derived classes
   virtual void Print(ofstream& ofile);
@@ -49,6 +50,27 @@ class AaRoot
   // do we really need this? keep it for now
   virtual bool Is(string class_name);
   virtual string Kind();
+
+  virtual void Add_Target_Reference(AaRoot* referrer)
+  {
+    this->_target_references.insert(referrer);
+  }
+
+  virtual void Add_Source_Reference(AaRoot* referrer)
+  {
+    this->_source_references.insert(referrer);
+  }
+
+  virtual unsigned int Get_Number_Of_Target_References()
+  {
+    return(this->_target_references.size());
+  }
+
+  virtual unsigned int Get_Number_Of_Source_References()
+  {
+    return(this->_source_references.size());
+  }
+
 };
 
 #endif

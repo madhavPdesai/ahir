@@ -9,7 +9,7 @@ ANTLR2=/home/madhav/antlr2
 INCLUDES=-I$(AAHOME)/include -I$(GRMR) -I$(ANTLR2)
 HEADERS=$(INCL)/*.h
 LIBS=-L$(ANTLR2)
-OBJS=$(OBJ)/AaLexer.o $(OBJ)/AaParser.o $(OBJ)/TestAaParser.o $(OBJ)/AaParserClasses.o
+OBJS=$(OBJ)/AaLexer.o $(OBJ)/AaParser.o $(OBJ)/TestAaParser.o $(OBJ)/AaParserClasses.o $(OBJ)/AaProgram.o
 DEFS=-DDebug
 all : $(BIN)/TestAaParser $(GRMR)/AaParser.html
 
@@ -22,17 +22,22 @@ $(BIN)/TestAaParser :$(OBJS)
 $(OBJ)/AaParserClasses.o: $(SRC)/AaParserClasses.cpp $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) -g -c $(SRC)/AaParserClasses.cpp -o $(OBJ)/AaParserClasses.o
 
-$(OBJ)/TestAaParser.o: $(SRC)/TestAaParser.cpp $(GRMR)/AaParser.cpp $(GRMR)/AaLexer.cpp
+$(OBJ)/AaProgram.o: $(SRC)/AaProgram.cpp $(HEADERS)
+	g++ $(DEFS) $(INCLUDES) -g -c $(SRC)/AaProgram.cpp -o $(OBJ)/AaProgram.o
+
+$(OBJ)/TestAaParser.o: $(SRC)/TestAaParser.cpp $(GRMR)/AaParser.cpp $(GRMR)/AaLexer.cpp $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) -g -c $(SRC)/TestAaParser.cpp  -o $(OBJ)/TestAaParser.o
 
-$(OBJ)/AaLexer.o: $(GRMR)/AaLexer.cpp $(GRMR)/AaLexer.hpp
+$(OBJ)/AaLexer.o: $(GRMR)/AaLexer.cpp $(GRMR)/AaLexer.hpp $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) -g -c $(GRMR)/AaLexer.cpp -o $(OBJ)/AaLexer.o
 
-$(OBJ)/AaParser.o: $(GRMR)/AaParser.cpp $(GRMR)/AaParser.hpp
+$(OBJ)/AaParser.o: $(GRMR)/AaParser.cpp $(GRMR)/AaParser.hpp $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) -g -c $(GRMR)/AaParser.cpp -o $(OBJ)/AaParser.o
 
-$(GRMR)/AaLexer.cpp: $(GRMR)/Aa.g $(INCL)/AaParserClasses.h $(SRC)/AaParserClasses.cpp
+$(GRMR)/AaLexer.cpp: $(GRMR)/Aa.g $(HEADERS) 
 	java -cp $(ANTLR2)/antlr.jar antlr.Tool -o $(GRMR) $(GRMR)/Aa.g
+
+$(GRMR)/AaParser.cpp: $(GRMR)/AaLexer.cpp
 
 clean:
 	rm -f $(OBJ)/*.o $(BIN)/TestAaParser $(GRMR)/*.hpp*  $(GRMR)/*.cpp* $(GRMR)/*.html

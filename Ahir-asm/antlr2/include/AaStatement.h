@@ -18,6 +18,8 @@
 // mapped in the containing scope
 class AaStatement: public AaScope
 {
+  // for pretty printing..
+  unsigned int _tab_depth;
  public:
   AaStatement(AaScope* scope);
   
@@ -32,9 +34,15 @@ class AaStatement: public AaScope
   virtual void Map_Target(AaObjectReference* obj_ref);
   virtual string Tab();
 
+  virtual void Set_Tab_Depth(unsigned int td) { this->_tab_depth = td; }
+  virtual unsigned int Get_Tab_Depth() { return(this->_tab_depth); }
+  virtual void Increment_Tab_Depth() { this->_tab_depth += 1; }
+
+
   ~AaStatement();
 
   virtual string Kind() {return("AaStatement");}
+  virtual void Map_Source_References() { assert(0);}
 };
 
 // statement sequence (is used in block statements which lead to programs)
@@ -49,6 +57,16 @@ class AaStatementSequence: public AaScope
   unsigned int Get_Statement_Count() { return this->_statement_sequence.size(); }
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaStatementSequence");}
+  virtual void Map_Source_References() 
+  {
+    for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+      this->_statement_sequence[i]->Map_Source_References();
+  }
+  virtual void Increment_Tab_Depth()
+  {
+    for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+      this->_statement_sequence[i]->Increment_Tab_Depth();
+  }
 };
 
 // null statement
@@ -60,6 +78,7 @@ class AaNullStatement: public AaStatement
 
   virtual void Print(ostream& ofile) { ofile << this->Tab() << "$null" << endl; }
   virtual string Kind() {return("AaNullStatement");}
+  virtual void Map_Source_References() {} // do nothing
 };
 
 
@@ -84,6 +103,11 @@ class AaAssignmentStatement: public AaStatement
 
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaAssignmentStatement");}
+  virtual void Map_Source_References()
+  {
+    this->_target->Map_Source_References();
+    this->_source->Map_Source_References();
+  }
 };
 
 
@@ -111,6 +135,13 @@ class AaCallStatement: public AaStatement
   
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaCallStatement");}
+  virtual void Map_Source_References()
+  {
+    for(unsigned int i=0; i < this->_input_args.size(); i++)
+      this->_input_args[i]->Map_Source_References();
+    for(unsigned int i=0; i < this->_output_args.size(); i++)
+      this->_output_args[i]->Map_Source_References();
+  }
 };
 
 
@@ -158,6 +189,10 @@ class AaBlockStatement: public AaStatement
   ~AaBlockStatement();
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaBlockStatement");}
+  virtual void Map_Source_References()
+  {
+    this->_statement_sequence->Map_Source_References();
+  }
 };
 
 class AaSeriesBlockStatement: public AaBlockStatement
@@ -251,6 +286,30 @@ class AaPhiStatement: public AaStatement
   }
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaPhiStatement");}
+  virtual void Map_Source_References()
+  {
+    this->_target->Map_Source_References();
+    for(unsigned int i=0; i < this->_source_pairs.size(); i++)
+      {
+	this->_source_pairs[i].second->Map_Source_References();
+	if(this->_source_pairs[i].first != "$entry")
+	  {
+	    AaRoot* child = this->Get_Scope()->Find_Child(this->_source_pairs[i].first);
+	    if(child == NULL)
+	      {
+		AaRoot::Error();
+		cerr << "Error: could not find place statement with label " << (this->_source_pairs[i].first) 
+		     << " : line " << this->Get_Line_Number() << endl;
+	      }
+	    else if(!child->Is("AaPlaceStatement"))
+	      {
+		cerr << "Error: in phi statement, statement with label " << (this->_source_pairs[i].first) 
+		     << " is not a place statement : line " << this->Get_Line_Number() << endl;
+		AaRoot::Error();
+	      }
+	  }
+      }
+  }
 };
 
 class AaSwitchStatement: public AaStatement
@@ -276,6 +335,14 @@ class AaSwitchStatement: public AaStatement
   ~AaSwitchStatement();
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaSwitchStatement");}
+  virtual void Map_Source_References()
+  {
+    this->_select_expression->Map_Source_References();
+    for(unsigned int i=0; i < this->_choice_pairs.size(); i++)
+      this->_choice_pairs[i].second->Map_Source_References();
+    if(this->_default_sequence)
+      this->_default_sequence->Map_Source_References();
+  }
 };
 
 
@@ -294,6 +361,13 @@ class AaIfStatement: public AaStatement
   ~AaIfStatement();
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaIfStatement");}
+  virtual void Map_Source_References()
+  {
+    this->_test_expression->Map_Source_References();
+    this->_if_sequence->Map_Source_References();
+    if(this->_else_sequence)
+      this->_else_sequence->Map_Source_References();
+  }
 };
 
 
@@ -308,6 +382,7 @@ class AaPlaceStatement: public AaStatement
 
   virtual void Print(ostream& ofile) { ofile << this->Tab() << "$place[" << this->Get_Label() << "]"  << endl; }
   virtual string Kind() {return("AaPlaceStatement");}
+  virtual void Map_Source_References() {} // do nothing
 };
 
 #endif

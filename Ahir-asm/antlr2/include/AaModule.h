@@ -22,7 +22,7 @@ class AaModule: public AaBlockStatement
 
 
  public:
-  AaModule(AaScope* scope, string fname);
+  AaModule(string fname); // Modules have NULL parent (parent is the program)
   ~AaModule();
 
   void Add_Argument(AaInterfaceObject* obj);
@@ -35,6 +35,8 @@ class AaModule: public AaBlockStatement
 
   void Print(ostream& ofile);
   virtual string Kind() {return("AaModule");}
+
+  virtual AaRoot* Find_Child_Here(string tag);
 };
 
 #endif
