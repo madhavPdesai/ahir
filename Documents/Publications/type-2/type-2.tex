@@ -1,50 +1,208 @@
 \documentclass[12pt,a4paper]{article}
 \usepackage{graphicx}
 \usepackage{times}
+\usepackage{amsfonts}
 \usepackage[margin=0.75in]{geometry}
 
-\title{On the use of petri-nets for modeling concurrent programs}
+\title{On the use of petri nets for modelling high-level programs}
 
 \author{Sameer D. Sahasrabuddhe \\ Kavi Arya \\ Madhav P. Desai}
 
 \date{}
+
+\newtheorem{definition}{Definition}
+
+\newtheorem{srule}{Rule}
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-  \large
 
-  Petri-nets provide a powerful mechanism for the modeling of
-  concurrent systems.   However, because of their generality, 
-  it is often difficulty to prove properties about petri-net
-  models unless some restrictions are placed on their construction.
-  We consider the use of petri-nets to model algorithms described
-  in high level programming languages.  In particular, we introduce
-  a class of live and safe petri-nets (which we term as {\em Type-2}
-  petri-nets) for this purpose.   This class is defined by a
-  set of production rules which ensure liveness and safety of
-  the resulting petri-net.  
-  Further, we show that concurrency
-  analysis of Type-2 petri-nets can be carried out very efficiently
-  using a labelling scheme which is analogous to a symbolic simulation
-  of the petri-net.
-  Thus, it is easy to determine the sets of events (or transitions)
-  which satisfy ordering relationships (two transitions are said to
-  be ordered if it is impossible for both of them to fire simultaneously).  
-  Such information is useful in identifying possibilities for conflict 
-  free resource sharing in the implementations of the programs being
-  modeled.
+  Petri nets provide a powerful mechanism for the modelling of
+  concurrent systems. However, because of their generality, it is
+  often difficult to prove properties about petri net models unless
+  some restrictions are placed on their construction. We consider the
+  use of petri nets to model algorithms described in high level
+  programming languages. In particular, we introduce a class of live
+  and safe petri nets (which we term as {\em Type-2} petri nets) for
+  this purpose. This class is defined by a set of production rules
+  which ensure liveness and safety of the resulting petri net.
+  
+  Further, we show that Type-2 petri nets support an efficient method
+  for concurrency analysis that uses a labelling scheme which is
+  analogous to a symbolic simulation of the petri net. Thus, it is
+  easy to determine the sets of events (or transitions) which satisfy
+  ordering relationships (two transitions are said to be ordered if it
+  is impossible for both of them to fire simultaneously). This is
+  useful in identifying possibilities for conflict free resource
+  sharing when implementing the programs being modelled.
+
   Despite the restrictions imposed by the production rules, the Type-2
-  class of petri-nets is powerful enough to represent programs
-  written in traditional imperative languages such as C/C++ as well in synchronous
-  languages such as Esterel. It has been used as a transition step in translating
-  imperative programs to hardware descriptions\cite{ahir-thesis}. The
-  resulting high-level synthesis flow uses the labelling scheme to
-  optimise the generated hardware by identifying opportunities for
-  sharing hardware resources in the absence of timing information.
+  class of petri nets is powerful enough to represent programs written
+  in traditional imperative languages such as C/C++ and also in
+  synchronous languages such as Esterel. It has been used as a
+  transition step in translating imperative programs to hardware
+  descriptions\cite{ahir-thesis}. The resulting high-level synthesis
+  flow uses the labelling scheme to optimise the generated hardware by
+  identifying opportunities for sharing hardware resources in the
+  absence of timing information.
 
 \end{abstract}
 
+\section{Introduction}
+\label{sec:introduction}
+
+Petri nets provide a powerful formalism that has been used to model
+and analyse the behaviour of a large class of systems. We consider the
+use of petri nets to model the behaviour of algorithms described in
+high-level programming languages in order to derive efficient
+implementations. We use the petri net to capture the control flow in
+the program which is coupled with a data-path (a set of computational
+resources) in order to implement the intended behaviour. The petri net
+model can be analysed to unveil properties that are important when
+deriving an implementation, such as safety and boundedness. In
+addition, the analysis can also provide information for efficient
+utilisation of resources in the data-path.
+
+However, the complexity of analysing a petri net in general quickly
+increases with its size. We adopt the strategy of reducing this
+complexity by restricting the structure of the petri net itself. We
+propose a class of petri nets (that we call ``Type-2'') that is live
+and safe, and can be easily analysed to determine concurrency
+relationships between different computations in the program.
+
+The structure of the Type-2 petri net is well suited for representing
+the control flow observed in high-level programs --- in particular,
+the interaction between concurrency and choice (branches). Threads
+that are started within a branch must synchronise before exiting the
+branch, and conversely, the targets of a branch encountered in a
+thread must be restricted to that thread. A Type-2 petri net is built
+using a set of construction rules that restrict the structure of the
+petri net to ensure this behaviour. The same restrictions enable an
+efficient labelling scheme that can be used to analyse the concurrency
+of operations in the program. Note that the behaviour allowed by a
+Type-2 petri net is a generalised version of a series-parallel
+net\cite{something}, as can be seen in Section~\cite{sec:somewhere}.
+
+\section{Definitions}
+\label{sec:defintions}
+
+A petri net is a directed bipartite graph with two kinds of nodes ---
+\textit{places} and \textit{transitions}. A \textit{marking} is a
+function that assigns a non-negative number to each place, indicating
+the number of tokens in that place.
+
+\begin{eqnarray*}
+  N & = & (P, T, E, M)\\
+  \textrm{where } P & = & \textrm{finite set of places}\\
+  T & = & \textrm{finite set of transitions}\\
+  E & \subseteq & (P \times T) \cup (T \times P)\\
+  M & : & P \rightarrow \mathbb{N}
+\end{eqnarray*}
+
+The above defintion allows at most one edge from a place (transition)
+to a transition (place). A \textit{simple place (transition)} is a
+place (transition) with one incoming edge and one outgoing place. A
+\textit{branch (fork)} is a place (transition) with one incoming edge
+and multiple outgoing edges, while a \textit{merge (join)} is a place
+(transition) with multiple incoming edges and one outgoing edge.
+
+\section{Type-1 petri nets}
+\label{sec:type-1}
+
+We first define the class of Type-1 petri nets, which are constructed
+by a set of construction rules combined with the most basic Type-1
+petri net. The class of Type-2 petri net is a subclass that is defined
+by an additional construction rule introduced in
+Section~\ref{sec:type-2}.
+
+\begin{definition}
+  A \emph{simple cycle} is the petri net $N = (P, T, E, M_0)$ where $P
+  = \{p\}$, $T =\{t\}$, $E = \{(p,t), (t,p)\}$ and $M_0(p) = 1$.
+\end{definition}
+
+Clearly, a simple cycle is live and safe; and it is defined as the
+simplest type-1 petri net. A type-1 petri net is defined as the petri
+net obtained by repeatedly applying one more construction rules to the
+simple cycle. Each rule replaces a simple place or transition in a
+type-1 petri net with a petri net subgraph called a ``standard
+region''. There are three types of standard regions, defined below.
+The places occuring in a standard region are \textbf{not marked} in
+the initial marking.
+
+\begin{description}
+\item [Series region:]
+  A \emph{p-type series region} (t-type series region) is a petri net
+  consiting of a sequence of simple transitions and places, where the
+  first and the last elements are both places (transitions) with only
+  one edge within the region. The first and the last elements
+  are of the series region are called the \emph{entry} and the
+  \emph{exit} of the region respectively.
+
+\item [Branch region:]
+  A \emph{branch region} is a conected petri net where every
+  transition is simple, while every place is either a branch or a
+  merge. No place in the branch region has an edge incident on an
+  element outside the region, except the \emph{entry} which has one
+  incoming edge from outside the region and the \emph{exit} which has
+  one outgoing edge outside the region.
+
+\item [Fork region:]
+  A \emph{fork region} is a connected petri net where every place is
+  simple, while every transition is either a fork or a join. No
+  transition in a fork region has an edge incident on an element
+  outside the region, execep the \emph{entry} and \emph{exit}
+  transitions, analogous to the entry and exit of a branch region. In
+  addition, a fork region is required to be a DAG.
+\end{description}
+
+The construction rules of a Type-1 petri net can now be stated as the
+following replacements:
+
+\begin{srule}
+  The petri net obtained by replacing a simple place (transition) in a
+  Type-1 petri net by a p-type series region (t-type series region) is
+  a also a Type-1 petri net.
+\end{srule}
+
+\begin{srule}
+  The petri net obtained by replacing a simple place in a Type-1 petri
+  net by a branch region is also a Type-1 petri net.
+\end{srule}
+
+\begin{srule}
+  The petri net obtained by replacing a simple transition in a Type-1
+  petri net by a fork region is also a Type-1 petri net.
+\end{srule}
+
+\section{Liveness and Safety in a Type-1 petri net}
+\label{sec:live-safe}
+
+We prove that a Type-1 petri net is live and safe by induction over
+the structure of the petri net. In particular, we show that the
+replacement of a simple transition or place in a Type-1 petri net by
+applying any of the construction rules does not affect the liveness
+and safety of the rest of the petri net.
+
+\subsection{Series Region}
+\label{sec:series-live-and-safe}
+
+\subsection{Branch Region}
+\label{sec:branch-live-and-safe}
+
+A petri net formed by a branch region connected to simple marked place
+is a \emph{state machine} which is strongly connected and has exactly
+one token. Hence it is live and safe\ref{murata-tutorial}.
+
+\subsection{Fork Region}
+\label{sec:fork-live-and-safe}
+
+All cycles in a petri net formed by a fork region connected to a
+simple marked place $p_0$ pass through the place $p_0$. Thus every
+cycle in the petri net has a marked place (hence it is live) and every
+place is on a cycle with exactly one marked place (hence it is safe).
+
 \end{document}
+
