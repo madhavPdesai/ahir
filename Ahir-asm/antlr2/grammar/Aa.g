@@ -498,7 +498,7 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
             new_ps->Set_Target(target);
             new_ps->Set_Line_Number(pl->getLine());
         }
-        ASSIGNEQUAL
+        ASSIGNEQUAL 
         ( 
             expr = aA_Expression[scope]
             ON
@@ -759,9 +759,10 @@ aA_Unary_Expression[AaScope* scope] returns [AaExpression* expr]
     AaStringValue* op = NULL;
     AaExpression* rest = NULL;
     AaType* to_type = NULL;
+    expr = NULL;
 }   
     :   
-        LPAREN 
+        lpid: LPAREN 
         (
             (
                 (NOT {op = new AaStringValue(scope,"$not");})
@@ -782,6 +783,9 @@ aA_Unary_Expression[AaScope* scope] returns [AaExpression* expr]
             )
         )
         RPAREN
+        {
+            if(expr) expr->Set_Line_Number(lpid->getLine());
+        }
 ;
 
 //----------------------------------------------------------------------------------------------------------
@@ -797,7 +801,7 @@ aA_Binary_Expression[AaScope* scope] returns [AaExpression* expr]
     string opid;
 }
     :   
-        LPAREN         
+        lp: LPAREN         
         first = aA_Expression[scope]  
         opid = aA_Binary_Op 
         { op = new AaStringValue(scope,opid); }
@@ -805,6 +809,7 @@ aA_Binary_Expression[AaScope* scope] returns [AaExpression* expr]
         RPAREN 
         {
             expr = new AaBinaryExpression(scope,op,first,second);
+            expr->Set_Line_Number(lp->getLine());
         }
     ;   
 
@@ -820,13 +825,14 @@ aA_Ternary_Expression[AaScope* scope] returns [AaExpression* expr]
     AaExpression* iftrue;
     AaExpression* iffalse;
 }
-: LPAREN 
+: lp: LPAREN 
         MUX testexpr = aA_Expression[scope] 
         (iftrue = aA_Expression[scope])  
         (iffalse = aA_Expression[scope])
   RPAREN
         {
             expr = new AaTernaryExpression(scope,testexpr,iftrue,iffalse);
+            expr->Set_Line_Number(lp->getLine());
         }
 ;   
 
@@ -872,9 +878,10 @@ aA_Storage_Object_Declaration[AaScope* scope] returns [AaObject* obj]
             AaType* otype = NULL;
             AaConstantLiteralReference* initial_value = NULL;
         }
-        : (STORAGE aA_Object_Declaration_Base[scope,oname,otype,initial_value])
+        : (st:STORAGE aA_Object_Declaration_Base[scope,oname,otype,initial_value])
         {
             obj = new AaStorageObject(scope,oname,otype,initial_value);
+            obj->Set_Line_Number(st->getLine());
         }
         ;
 
@@ -896,9 +903,10 @@ aA_Constant_Object_Declaration[AaScope* scope] returns [AaObject* obj]
             AaType* otype = NULL;
             AaConstantLiteralReference* initial_value = NULL;
         }
-        : (CONSTANT aA_Object_Declaration_Base[scope,oname,otype,initial_value])
+        : (st: CONSTANT aA_Object_Declaration_Base[scope,oname,otype,initial_value])
         {
             obj = new AaConstantObject(scope,oname,otype,initial_value);
+            obj->Set_Line_Number(st->getLine());
         }
         ;
 
@@ -911,11 +919,12 @@ aA_Pipe_Object_Declaration[AaScope* scope] returns [AaObject* obj]
             AaType* otype = NULL;
             AaConstantLiteralReference* initial_value = NULL;
         }
-        : (PIPE aA_Object_Declaration_Base[scope,oname,otype,initial_value])
+        : (st:PIPE aA_Object_Declaration_Base[scope,oname,otype,initial_value])
         {
             if(initial_value != NULL)
                 cerr << "Warning: ignoring initial value for pipe " << oname << endl;
             obj = new AaPipeObject(scope,oname,otype);
+            obj->Set_Line_Number(st->getLine());
         }
         ;
 
@@ -933,6 +942,10 @@ aA_Interface_Object_Declaration[AaModule* scope, string mode] returns [AaInterfa
             if(initial_value != NULL)
                 cerr << "Warning: ignoring initial value for interface object " << oname << endl;
             obj = new AaInterfaceObject(scope,oname, otype, mode);
+
+            // this is not exact.. but better something than nothing.
+            if(scope != NULL)
+                obj->Set_Line_Number(scope->Get_Line_Number());
         }
     ;
 
@@ -1093,18 +1106,19 @@ aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
 aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReference* obj_ref]
     {
         string full_name;
+        unsigned int line_number;
     }
     : 
 
         (PLUS | MINUS {full_name += '-';})? 
         ( 
             ( 
-                (iid: UINTEGER { full_name += iid->getText();} ) 
+                (iid: UINTEGER { full_name += iid->getText(); line_number = iid->getLine();} ) 
                 |
-                (fid: UFLOAT { full_name += fid->getText();} ) 
+                (fid: UFLOAT { full_name += fid->getText(); line_number = fid->getLine(); } ) 
             )
             |
-            ( lp: LESS { full_name += lp->getText(); }
+            ( lp: LESS { full_name += lp->getText(); line_number=lp->getLine(); }
                 ( 
                     (iidv: UINTEGER { full_name += iidv->getText() + " ";} )+
                     |
@@ -1116,6 +1130,7 @@ aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReferenc
 
         {
                 obj_ref = new AaConstantLiteralReference(scope,full_name);
+                obj_ref->Set_Line_Number(line_number);
         }
     ;
 

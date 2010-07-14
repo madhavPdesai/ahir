@@ -16,4 +16,9 @@ struct StringCompare:public binary_function
   bool operator() (string, string) const;
 };
 
+
+bool Is_Compare_Operation(string op);
+
+bool Is_Shift_Operation(string op);
+
 #endif

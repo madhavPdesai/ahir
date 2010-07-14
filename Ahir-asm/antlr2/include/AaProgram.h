@@ -27,8 +27,11 @@ class AaProgram
   // the call graph
   static AaGraphBase _call_graph;
 
-  // expression dependency graph (for resolving types)
-  
+  // the type dependency graph
+  // (an undirected graph: connected components of this
+  // graph will correspond to unique types!)
+  static AaUGraphBase _type_dependency_graph;
+
  public:
 
   AaProgram();
@@ -55,6 +58,17 @@ class AaProgram
 
   // Check for cycles
   static void Check_For_Cycles_In_Call_Graph();
+  static void Init_Call_Graph();
+
+
+  // add type dependency
+  static void Add_Type_Dependency(AaRoot* u, AaRoot* v);
+  static bool Propagate_Types();
+  static void Print_Type_Dependency_Graph(ostream& ofile)
+  {
+    AaProgram::_type_dependency_graph.Print(ofile);
+  }
+
 };
 
 

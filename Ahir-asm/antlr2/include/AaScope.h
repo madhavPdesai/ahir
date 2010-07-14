@@ -39,6 +39,13 @@ class AaScope : public AaRoot
   virtual string Get_Label() {return (this->_label);}
 
   AaScope* Get_Scope() { return(this->_scope);}
+  AaScope* Get_Root_Scope() 
+  { 
+    if(this->Get_Scope() != NULL) 
+      return(this->Get_Scope()->Get_Root_Scope());
+    else
+      return(this);
+  }
 
   AaScope(AaScope* parent_scope);
   ~AaScope(); 

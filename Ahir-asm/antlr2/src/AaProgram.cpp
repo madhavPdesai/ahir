@@ -10,8 +10,8 @@
 std::map<string,AaType*,StringCompare>   AaProgram::_type_map;
 std::map<string,AaObject*,StringCompare> AaProgram::_objects;
 std::map<string,AaModule*,StringCompare> AaProgram::_modules;
-
 AaGraphBase AaProgram::_call_graph;
+AaUGraphBase AaProgram::_type_dependency_graph;
 
 AaProgram::AaProgram() {}
 AaProgram::~AaProgram() {};
@@ -66,10 +66,6 @@ AaModule* AaProgram::Find_Module(string obj_name)
 
 void AaProgram::Add_Call_Pair(AaModule* caller, AaModule* callee)
 {
-  string caller_label = caller->Get_Label();
-  string callee_label = callee->Get_Label();
-  AaProgram::_call_graph.Add_Vertex((AaRoot*)caller,caller_label);
-  AaProgram::_call_graph.Add_Vertex((AaRoot*)callee,callee_label);
   AaProgram::_call_graph.Add_Edge((AaRoot*)caller,(AaRoot*)callee);
 }
 
@@ -149,6 +145,20 @@ AaPointerType* AaProgram::Make_Pointer_Type(unsigned int w)
     }
   return(ret_type);
 }
+void AaProgram::Init_Call_Graph()
+{
+  string prog_name = "program";
+  AaProgram::_call_graph.Add_Vertex((AaRoot*)NULL,prog_name);
+
+  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+      miter != AaProgram::_modules.end();
+      miter++)
+    {
+      string mod_name = (*miter).first;
+      AaProgram::_call_graph.Add_Vertex((*miter).second, mod_name);
+      AaProgram::Add_Call_Pair((AaModule*) NULL, (*miter).second);
+    }
+}
 void AaProgram::Map_Source_References()
 {
   for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
@@ -158,6 +168,93 @@ void AaProgram::Map_Source_References()
 }
 void AaProgram::Check_For_Cycles_In_Call_Graph()
 {
-  if(!AaProgram::_call_graph.Cycle_Detect_Dfs())
-    std::cerr << "Error: cycle(s) in module call graph are not permitted" << std::endl;
+  // Assume that map source references has been called before...
+  if(AaProgram::_call_graph.Cycle_Detect_Dfs())
+    {
+      std::cerr << "Error: cycle(s) in module call graph are not permitted" << std::endl;
+      AaRoot::Error();
+    }
 }
+
+void AaProgram::Add_Type_Dependency(AaRoot* u, AaRoot* v)
+{
+  AaProgram::_type_dependency_graph.Add_Edge(u,v);
+}
+bool AaProgram::Propagate_Types()
+{
+  map<int,set<AaRoot*> > type_eq_class_map;
+  int num_comps = AaProgram::_type_dependency_graph.Connected_Components(type_eq_class_map);
+  bool err_flag = false;
+  assert(num_comps == type_eq_class_map.size());
+  for(unsigned int i = 0; i < num_comps; i++)
+    {
+      AaType* itype = NULL;
+
+      // two passes: first find the type and then set it
+      for(set<AaRoot*>::iterator siter = type_eq_class_map[i].begin();
+	  siter != type_eq_class_map[i].end();
+	  siter++)
+	{
+	  AaRoot* item = *siter;
+	  AaType* ntype = NULL;
+	  if(item->Is_Expression())
+	    {
+	      ntype = ((AaExpression*)item)->Get_Type();
+	    }
+	  else if(item->Is_Object())
+	    {
+	      ntype = ((AaObject*)item)->Get_Type();
+	    }
+	  else 
+	    {
+	      cerr << "Error: in type propagation, encountered an object which was not an expression or object : line " <<
+		item->Get_Line_Number() << endl;
+
+	      item->Print(cerr);
+	      cerr << endl;
+	      AaRoot::Error();
+	      err_flag = true;
+	    }
+
+	  if(ntype != NULL && itype != NULL && (itype != ntype))
+	    {
+	      cerr << "Error: in type propagation, found ambiguity in types : line " << item->Get_Line_Number() << endl;
+	      item->Print(cerr);
+	      cerr << endl;
+	      AaRoot::Error();
+	      err_flag = true;
+	    }
+	  else if(ntype != NULL && itype == NULL)
+	    itype = ntype;
+	}
+
+      if(itype == NULL)
+	{
+	  cerr << "Error: in type propagation, could not determine types of expressions/objects  "  << endl;
+	  for(set<AaRoot*>::iterator siter = type_eq_class_map[i].begin();
+	      siter != type_eq_class_map[i].end();
+	      siter++)
+	    {
+	      (*siter)->Print(cerr);
+	      cerr << "\t line " << (*siter)->Get_Line_Number() << endl;
+	    }
+	  AaRoot::Error();
+	  err_flag = true;
+	}
+
+      // second pass
+      for(set<AaRoot*>::iterator siter = type_eq_class_map[i].begin();
+	  siter != type_eq_class_map[i].end();
+	  siter++)
+	{
+	  AaRoot* item = *siter;
+	  if(item->Is_Expression())
+	    {
+	      if(((AaExpression*)item)->Get_Type() == NULL)
+		((AaExpression*)item)->Set_Type(itype);
+	    }
+	}
+    }
+  return(err_flag);
+}
+

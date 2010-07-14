@@ -1,6 +1,19 @@
-1. map all targets into their respective scopes 
-2. resolve all references.
-3. propagate types through the program.
+1. map all targets into their respective scopes  // done
+2. resolve all references. // done
+3. propagate types through the program. // done
+4. confirm that there are no cycles in
+   the call graph. // done
+5. Let S=set of statements from which there is 
+         a write to a pipe.
+       T=set of statements from which there is
+         a read from a pipe. 
+
+   Then: check the following
+       a. For all x in S U T, x is not a descendant
+          of a branch region.
+       b. There are no cycles in the petri-net which
+          is obtained by treating x in S as a fork and
+          y in T as a join. 
 4. generate simulation model.
 	- multi-threaded simulation model?
 5. generate ahir.

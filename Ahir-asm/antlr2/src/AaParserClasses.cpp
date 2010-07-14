@@ -42,6 +42,14 @@ bool StringCompare::operator() (string s11, string s21) const
   return false;
 };
 
+bool Is_Shift_Operation(string op)
+{
+  return(op == "<<" || op == ">>");
+}
+bool Is_Compare_Operation(string op)
+{
+  return(op == "<" || op == ">" || op == "<=" || op == ">=" || op == "==" || op == "!=");
+}
 
 //---------------------------------------------------------------------
 // AaRoot
@@ -80,6 +88,15 @@ void AaRoot::Print(string& ostring)
   ostringstream string_stream(ostringstream::out);
   this->Print(string_stream);
   ostring += string_stream.str();
+}
+
+void AaRoot::Add_Target_Reference(AaRoot* referrer)
+{
+  this->_target_references.insert(referrer);
+}
+void AaRoot::Add_Source_Reference(AaRoot* referrer)
+{
+  this->_source_references.insert(referrer);
 }
 
 
@@ -246,7 +263,7 @@ AaObject::AaObject(AaScope* parent_tpr, string oname, AaType* object_type):AaRoo
   this->_name = oname;
   this->_scope = parent_tpr;
   this->_value = NULL;
-  this->_object_type = object_type;
+  this->_type = object_type;
 }
 AaObject::~AaObject() {};
 string AaObject::Tab()
@@ -256,7 +273,7 @@ string AaObject::Tab()
 void AaObject::Print(ostream& ofile)
 {
   ofile << " " << this->Get_Name() << " ";
-  this->Get_Object_Type()->Print(ofile);
+  this->Get_Type()->Print(ofile);
   if(this->_value != NULL)
     {
       ofile << ":= ";
@@ -327,7 +344,11 @@ void AaConstantObject::Print(ostream& ofile)
 //---------------------------------------------------------------------
 // AaExpression
 //---------------------------------------------------------------------
-AaExpression::AaExpression(AaScope* parent_tpr):AaRoot() {this->_scope = parent_tpr;}
+AaExpression::AaExpression(AaScope* parent_tpr):AaRoot() 
+{
+  this->_scope = parent_tpr;
+  this->_type = NULL; // will be determined by dependency traversal
+}
 AaExpression::~AaExpression() {};
 
 //---------------------------------------------------------------------
@@ -348,11 +369,9 @@ void AaObjectReference::Print(ostream& ofile)
 void AaObjectReference::Map_Source_References()
 {
   AaScope* search_scope = NULL;
-  bool look_in_program = false;
   if(this->Get_Search_Ancestor_Level() > 0)
     {
       search_scope = this->Get_Scope()->Get_Ancestor_Scope(this->Get_Search_Ancestor_Level());
-      look_in_program = true;
     }
   else if(this->_hier_ids.size() > 0)
     search_scope = this->Get_Scope()->Get_Descendant_Scope(this->_hier_ids);
@@ -363,15 +382,7 @@ void AaObjectReference::Map_Source_References()
   AaRoot* child = NULL;
   if(search_scope == NULL)
     {
-      if(look_in_program)
-	{
-	  child = AaProgram::Find_Object(this->_object_root_name);
-	}
-      else
-	{
-	  cerr << "Error: did not find a scope for object reference " << this->Get_Object_Ref_String() << ": line " << this->Get_Line_Number() << endl;
-	  AaRoot::Error();
-	}
+      child = AaProgram::Find_Object(this->_object_root_name);
     }
   else
     {
@@ -385,7 +396,26 @@ void AaObjectReference::Map_Source_References()
     }
   else
     {
-      child->Add_Source_Reference(this);
+      this->Set_Object(child);
+      child->Add_Source_Reference(this);  // child -> this
+      this->Add_Target_Reference(child);  // this  -> child
+    }
+}
+
+void AaObjectReference::Add_Target_Reference(AaRoot* referrer)
+{
+  this->AaRoot::Add_Target_Reference(referrer);
+  if(referrer->Is("AaInterfaceObject"))
+    {
+      this->Set_Type(((AaInterfaceObject*)referrer)->Get_Type());
+    }
+}
+void AaObjectReference::Add_Source_Reference(AaRoot* referrer)
+{
+  this->AaRoot::Add_Source_Reference(referrer);
+  if(referrer->Is("AaInterfaceObject"))
+    {
+      this->Set_Type(((AaInterfaceObject*)referrer)->Get_Type());
     }
 }
 
@@ -401,6 +431,15 @@ AaConstantLiteralReference::~AaConstantLiteralReference() {};
 //---------------------------------------------------------------------
 AaSimpleObjectReference::AaSimpleObjectReference(AaScope* parent_tpr, string object_id):AaObjectReference(parent_tpr, object_id) {};
 AaSimpleObjectReference::~AaSimpleObjectReference() {};
+void AaSimpleObjectReference::Set_Object(AaRoot* obj)
+{
+  if(obj->Is_Object())
+    this->Set_Type(((AaObject*)obj)->Get_Type());
+  else if(obj->Is_Expression())
+    AaProgram::Add_Type_Dependency(this,obj);
+  this->_object = obj;
+}
+
 
 //---------------------------------------------------------------------
 // AaArrayObjectReference
@@ -431,12 +470,38 @@ AaExpression*  AaArrayObjectReference::Get_Array_Index(unsigned int idx)
   return(this->_indices[idx]);
 }
 
+void AaArrayObjectReference::Set_Object(AaRoot* obj) 
+{
+  bool ok_flag = false;
+  if(obj->Is_Object())
+    {
+      if(((AaObject*)obj)->Get_Type() && 
+	 ((AaObject*)obj)->Get_Type()->Is("AaArrayType"))
+	{
+	  if(((AaArrayType*)(((AaObject*)obj)->Get_Type()))->Get_Number_Of_Dimensions() == this->_indices.size())
+	    {
+	      this->_object = obj;
+	      this->Set_Type(((AaArrayType*)(((AaObject*)obj)->Get_Type()))->Get_Element_Type());
+	      ok_flag = true;
+	    }
+	}
+    }
+  if(!ok_flag)
+    {
+      cerr << "Error: type mismatch in object reference " << this->Get_Object_Ref_String() << " : line " <<
+	this->Get_Line_Number() << endl;
+      AaRoot::Error();
+    }
+}
+
+
 //---------------------------------------------------------------------
 // type cast expression (is unary)
 //---------------------------------------------------------------------
 AaTypeCastExpression::AaTypeCastExpression(AaScope* parent, AaType* ref_type,AaExpression* rest):AaExpression(parent)
 {
   this->_to_type = ref_type;
+  this->_type = ref_type;
   this->_rest = rest;
 }
 
@@ -458,6 +523,8 @@ AaUnaryExpression::AaUnaryExpression(AaScope* parent_tpr,AaStringValue* op, AaEx
 {
   this->_operation  = op;
   this->_rest       = rest;
+  
+  AaProgram::Add_Type_Dependency(this,rest);
 }
 AaUnaryExpression::~AaUnaryExpression() {};
 void AaUnaryExpression::Print(ostream& ofile)
@@ -476,6 +543,22 @@ void AaUnaryExpression::Print(ostream& ofile)
 AaBinaryExpression::AaBinaryExpression(AaScope* parent_tpr,AaStringValue* op, AaExpression* first, AaExpression* second):AaExpression(parent_tpr)
 {
   this->_operation = op;
+
+  if(Is_Compare_Operation(op->Get_Value_String()))
+    {
+      this->Set_Type(AaProgram::Make_Uinteger_Type(1));
+      AaProgram::Add_Type_Dependency(first,second);
+    }
+  else if(Is_Shift_Operation(op->Get_Value_String()))
+    {
+      AaProgram::Add_Type_Dependency(first,this);
+    }
+  else
+    {
+      AaProgram::Add_Type_Dependency(first,this);
+      AaProgram::Add_Type_Dependency(second,this);
+    }
+
   this->_first = first;
   this->_second = second;
 }
@@ -500,6 +583,14 @@ AaTernaryExpression::AaTernaryExpression(AaScope* parent_tpr,
 					 AaExpression* iffalse):AaExpression(parent_tpr)
 {
   this->_test = test;
+  assert(test->Get_Type() && test->Get_Type()->Is("AaUintType") &&
+	 (((AaUintType*)(test->Get_Type()))->Get_Width() == 1));
+
+  if(iftrue)
+    AaProgram::Add_Type_Dependency(iftrue,this);
+  if(iffalse)
+    AaProgram::Add_Type_Dependency(iffalse,this);
+
   this->_if_true = iftrue;
   this->_if_false = iffalse;
 }
@@ -564,7 +655,7 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
     child = AaProgram::Find_Object(obj_ref_root_name);
 
   if(child != NULL)
-    child->Add_Target_Reference(this);
+    child->Add_Target_Reference(obj_ref);
   
   bool is_array_ref = obj_ref->Is("AaArrayObjectReference");
 
@@ -613,7 +704,8 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
 
   if(map_flag)
     {
-      this->Get_Scope()->Map_Child(obj_ref_root_name,this);
+      this->Get_Scope()->Map_Child(obj_ref_root_name,obj_ref);
+      obj_ref->Set_Object(this);
     }
 }
 
@@ -665,8 +757,21 @@ void AaAssignmentStatement::Print(ostream& ofile)
   this->Get_Target()->Print(ofile);
   ofile << " := ";
   this->Get_Source()->Print(ofile);
+  if(this->Get_Target()->Get_Type())
+    {
+      ofile <<" // type of target is ";
+      this->Get_Target()->Get_Type()->Print(ofile);
+    }
   ofile << endl;
+
 }
+void AaAssignmentStatement::Map_Source_References()
+{
+  this->_target->Map_Source_References();
+  this->_source->Map_Source_References();
+  AaProgram::Add_Type_Dependency(this->_target,this->_source);
+}
+
 
 //---------------------------------------------------------------------
 // AaCallStatement
@@ -732,6 +837,55 @@ void AaCallStatement::Print(ostream& ofile)
 
 }
 
+
+void AaCallStatement::Map_Source_References()
+{
+  AaModule* called_module = AaProgram::Find_Module(this->_function_name);
+  if(called_module != NULL)
+    {
+      AaScope* root_scope = this->Get_Root_Scope();
+      assert(root_scope && root_scope->Is("AaModule"));
+      AaModule* caller_module = (AaModule*) root_scope;
+      AaProgram::Add_Call_Pair(caller_module,called_module);
+
+      if(called_module->Get_Number_Of_Input_Arguments() != this->_input_args.size())
+	{
+	  cerr << "Error: number of input arguments to called function does not match the number of declared arguments: line " << this->Get_Line_Number() << endl;
+	}
+
+
+      if(called_module->Get_Number_Of_Output_Arguments() != this->_output_args.size())
+	{
+	  cerr << "Error: number of output arguments to called function does not match the number of declared arguments: line " << this->Get_Line_Number() << endl;
+	}
+    }
+  else
+    {
+      cerr << "Warning: module " << this->_function_name << " not found, assuming that it is foreign!"<< endl;
+    }
+
+
+  for(unsigned int i=0; i < this->_input_args.size(); i++)
+    {
+      this->_input_args[i]->Map_Source_References();
+      if(called_module != NULL)
+	{
+	  called_module->Get_Input_Argument(i)->Add_Source_Reference(this->_input_args[i]);
+	  this->_input_args[i]->Add_Target_Reference(called_module->Get_Input_Argument(i));
+	}
+    }
+  for(unsigned int i=0; i < this->_output_args.size(); i++)
+    {
+      this->_output_args[i]->Map_Source_References();
+      if(called_module != NULL)
+	{
+	  called_module->Get_Output_Argument(i)->Add_Target_Reference(this->_output_args[i]);
+	  this->_output_args[i]->Add_Source_Reference(called_module->Get_Output_Argument(i));
+	}
+    }
+}
+
+
 //---------------------------------------------------------------------
 // AaBlockStatement: public AaStatement
 //---------------------------------------------------------------------
@@ -757,6 +911,11 @@ void AaBlockStatement::Print(ostream& ofile)
   this->Print_Objects(ofile);
   this->Print_Statement_Sequence(ofile);
   ofile << this->Tab() << "}" << endl;
+}
+
+void AaBlockStatement::Map_Source_References()
+{
+  this->_statement_sequence->Map_Source_References();
 }
 
 //---------------------------------------------------------------------
@@ -868,7 +1027,13 @@ void AaPhiStatement::Print(ostream& ofile)
 {
   ofile << this->Tab() << "$phi ";
   this->_target->Print(ofile);
-  ofile << " := " << endl;
+  ofile << " := ";
+  if(this->_target->Get_Type())
+    {
+      ofile <<" // type of target is ";
+      this->_target->Get_Type()->Print(ofile);
+      ofile << endl;
+    }
   for(unsigned int i=0; i < this->_source_pairs.size(); i++)
     {
       ofile << this->Tab() << "  ";
@@ -877,6 +1042,33 @@ void AaPhiStatement::Print(ostream& ofile)
     }
   ofile << endl;
 }
+void AaPhiStatement::Map_Source_References()
+{
+  this->_target->Map_Source_References();
+  for(unsigned int i=0; i < this->_source_pairs.size(); i++)
+    {
+      AaProgram::Add_Type_Dependency(this->_target, this->_source_pairs[i].second);
+
+      this->_source_pairs[i].second->Map_Source_References();
+      if(this->_source_pairs[i].first != "$entry")
+	{
+	  AaRoot* child = this->Get_Scope()->Find_Child(this->_source_pairs[i].first);
+	  if(child == NULL)
+	    {
+	      AaRoot::Error();
+	      cerr << "Error: could not find place statement with label " << (this->_source_pairs[i].first) 
+		   << " : line " << this->Get_Line_Number() << endl;
+	    }
+	  else if(!child->Is("AaPlaceStatement"))
+	    {
+	      cerr << "Error: in phi statement, statement with label " << (this->_source_pairs[i].first) 
+		   << " is not a place statement : line " << this->Get_Line_Number() << endl;
+	      AaRoot::Error();
+	    }
+	}
+    }
+}
+
 
 
 //---------------------------------------------------------------------
@@ -1033,8 +1225,11 @@ AaRoot* AaModule::Find_Child_Here(string tag)
   return(child);
 }
 
-/***************************************** PROGRAM   ****************************/
 
+void AaModule::Map_Source_References()
+{
+  this->AaBlockStatement::Map_Source_References();
+}
 
 
 

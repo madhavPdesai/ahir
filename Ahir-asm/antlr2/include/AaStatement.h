@@ -67,6 +67,7 @@ class AaStatementSequence: public AaScope
     for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
       this->_statement_sequence[i]->Increment_Tab_Depth();
   }
+
 };
 
 // null statement
@@ -103,11 +104,7 @@ class AaAssignmentStatement: public AaStatement
 
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaAssignmentStatement");}
-  virtual void Map_Source_References()
-  {
-    this->_target->Map_Source_References();
-    this->_source->Map_Source_References();
-  }
+  virtual void Map_Source_References();
 };
 
 
@@ -135,13 +132,7 @@ class AaCallStatement: public AaStatement
   
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaCallStatement");}
-  virtual void Map_Source_References()
-  {
-    for(unsigned int i=0; i < this->_input_args.size(); i++)
-      this->_input_args[i]->Map_Source_References();
-    for(unsigned int i=0; i < this->_output_args.size(); i++)
-      this->_output_args[i]->Map_Source_References();
-  }
+  virtual void Map_Source_References();
 };
 
 
@@ -189,10 +180,7 @@ class AaBlockStatement: public AaStatement
   ~AaBlockStatement();
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaBlockStatement");}
-  virtual void Map_Source_References()
-  {
-    this->_statement_sequence->Map_Source_References();
-  }
+  virtual void Map_Source_References();
 };
 
 class AaSeriesBlockStatement: public AaBlockStatement
@@ -286,30 +274,7 @@ class AaPhiStatement: public AaStatement
   }
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaPhiStatement");}
-  virtual void Map_Source_References()
-  {
-    this->_target->Map_Source_References();
-    for(unsigned int i=0; i < this->_source_pairs.size(); i++)
-      {
-	this->_source_pairs[i].second->Map_Source_References();
-	if(this->_source_pairs[i].first != "$entry")
-	  {
-	    AaRoot* child = this->Get_Scope()->Find_Child(this->_source_pairs[i].first);
-	    if(child == NULL)
-	      {
-		AaRoot::Error();
-		cerr << "Error: could not find place statement with label " << (this->_source_pairs[i].first) 
-		     << " : line " << this->Get_Line_Number() << endl;
-	      }
-	    else if(!child->Is("AaPlaceStatement"))
-	      {
-		cerr << "Error: in phi statement, statement with label " << (this->_source_pairs[i].first) 
-		     << " is not a place statement : line " << this->Get_Line_Number() << endl;
-		AaRoot::Error();
-	      }
-	  }
-      }
-  }
+  virtual void Map_Source_References();
 };
 
 class AaSwitchStatement: public AaStatement

@@ -9,6 +9,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/connected_components.hpp>
 
 
 using namespace boost;
@@ -20,25 +21,15 @@ struct AaBglVertexProperties
   std::string _aa_rep_name;
 };
 
-typedef adjacency_list<vecS, vecS, bidirectionalS,AaBglVertexProperties> Graph;
+// directed graph related stuff
+typedef adjacency_list<vecS, vecS, bidirectionalS, AaBglVertexProperties> Graph;
 typedef boost::graph_traits<Graph>::vertex_descriptor  Vertex;
 typedef boost::graph_traits<Graph>::vertex_iterator  VertexIterator;
 typedef boost::graph_traits<Graph>::edge_iterator EdgeIterator;
 typedef boost::graph_traits<Graph>::edge_descriptor Edge;
 typedef property_map<Graph, vertex_index_t>::type IndexMap;
 
-/* struct TypePropagationVisitor : public dfs_visitor<> */
-/* { */
-/*  TypePropagationVisitor()  : { } */
- 
-/*   // need to define these... */
-/*   template <class Vertex, class Graph> void discover_vertex(Vertex,Graph&) {} // todo */
-/*   template <class Vertex, class Graph> void finish_vertex(Vertex,Graph&) {} // todo */
-/*   template <class Edge, class Graph> void examine_edge(Vertex,Graph&) {} // todo */
-/* }; */
 
-
-// In progress
 struct CycleDetectionVisitor : public dfs_visitor<>
 {
 
@@ -154,4 +145,123 @@ class AaGraphBase
   }
 
 };
+
+
+// undirected graph related stuff
+typedef adjacency_list<vecS, vecS, undirectedS, AaBglVertexProperties> UGraph;
+typedef boost::graph_traits<UGraph>::vertex_descriptor  UVertex;
+typedef boost::graph_traits<UGraph>::vertex_iterator  UVertexIterator;
+typedef boost::graph_traits<UGraph>::edge_iterator UEdgeIterator;
+typedef boost::graph_traits<UGraph>::edge_descriptor UEdge;
+typedef property_map<UGraph, vertex_index_t>::type UIndexMap;
+
+class AaUGraphBase
+{
+  UGraph _bgl_graph;
+	
+  // from root to vertex
+  map<AaRoot*, UVertex> _aa_link_map;
+
+ public:
+  AaUGraphBase() {}
+  ~AaUGraphBase() {}
+  
+  UVertex Add_Vertex(AaRoot* u) 
+  {
+    UVertex uv;
+    if(_aa_link_map.find(u) == _aa_link_map.end())
+      {
+	uv = add_vertex(this->_bgl_graph);
+	this->_bgl_graph[uv]._aa_rep = u;
+	this->_aa_link_map[u] = uv;
+      }
+    else
+      uv = this->_aa_link_map[u];
+
+    return(uv);
+  }
+  
+  void Set_Rep_Name(UVertex v, string& repname)
+  {
+    this->_bgl_graph[v]._aa_rep_name = repname;
+  }
+
+  UVertex Add_Vertex(AaRoot* u, string& repname)
+  {
+    UVertex uv = this->Add_Vertex(u);
+    this->Set_Rep_Name(uv,repname);
+    return(uv);
+  }
+
+  
+  UEdge Add_Edge(AaRoot* u, AaRoot* v)
+  {
+    std::pair<UEdge,bool> e_b = add_edge(this->Add_Vertex(u), this->Add_Vertex(v), this->_bgl_graph);
+    return(e_b.first);
+  }
+
+  AaRoot* To_Aa(UVertex v)
+  {
+    return(this->_bgl_graph[v]._aa_rep);
+  }
+
+
+  int Connected_Components(std::map<int,set<AaRoot*> >& conn_comps)
+  {
+    // straight from boost connected components example.
+    std::vector<int> component(num_vertices(this->_bgl_graph));
+    int num = connected_components(this->_bgl_graph,&component[0]);
+
+    UVertexIterator uI, uE;
+
+    UIndexMap index_map = get(vertex_index,this->_bgl_graph);
+
+    for (tie(uI,uE) = vertices(this->_bgl_graph); uI != uE; ++uI)
+      {
+	int cindex = component[get(index_map,*uI)];
+	if(conn_comps.find(cindex) == conn_comps.end())
+	  {
+	    conn_comps[cindex] = set<AaRoot*>();
+	  }
+	conn_comps[cindex].insert(this->_bgl_graph[*uI]._aa_rep);
+	/* std::cerr << cindex << " "; */
+	/* this->_bgl_graph[*uI]._aa_rep->Print(std::cerr); */
+	/* std::cerr << endl; */
+      }
+    return(num);
+  }
+
+  void Print(ostream& ofile)
+  {
+    UVertexIterator uI, uE;
+    UEdgeIterator eI,eE;
+
+    ofile << "Vertices" << std::endl;
+    for (tie(uI,uE) = vertices(this->_bgl_graph); uI != uE; ++uI)
+      {
+	this->_bgl_graph[*uI]._aa_rep->Print(ofile);
+	ofile << " line " << this->_bgl_graph[*uI]._aa_rep->Get_Line_Number();
+	AaRoot* r = this->_bgl_graph[*uI]._aa_rep;
+	if(r->Is_Expression() && ((AaExpression*)r)->Get_Type())
+	  ((AaExpression*)r)->Get_Type()->Print(ofile);
+	if(r->Is_Object() && ((AaObject*)r)->Get_Type())
+	  ((AaObject*)r)->Get_Type()->Print(ofile);
+	  
+	ofile << std::endl;
+      }
+    
+    ofile << "Edges" << std::endl;
+    for (tie(eI, eE) = edges(this->_bgl_graph); eI != eE; eI++)
+      {
+	this->_bgl_graph[source(*eI,this->_bgl_graph)]._aa_rep->Print(ofile);
+	ofile << " line " << this->_bgl_graph[source(*eI,this->_bgl_graph)]._aa_rep->Get_Line_Number() << endl;
+	this->_bgl_graph[target(*eI,this->_bgl_graph)]._aa_rep->Print(ofile);
+	ofile << " line " << this->_bgl_graph[target(*eI,this->_bgl_graph)]._aa_rep->Get_Line_Number() << endl;
+	ofile << std::endl;
+      }
+  }
+
+};
+
+
 #endif

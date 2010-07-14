@@ -46,8 +46,12 @@ int main(int argc, char* argv[])
   delete lexer;
 
 
+  AaProgram::Init_Call_Graph();
   AaProgram::Map_Source_References();
+  AaProgram::Check_For_Cycles_In_Call_Graph();
 
+  //  AaProgram::Print_Type_Dependency_Graph(std::cerr);
+  AaProgram::Propagate_Types();
 
   if(AaRoot::Get_Error_Flag())
     cerr << "Error: there were errors during parsing/elaboration, check the log" << endl;

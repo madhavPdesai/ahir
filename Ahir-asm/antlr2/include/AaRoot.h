@@ -24,8 +24,8 @@ class AaRoot
   unsigned int _line_number;
 
   // vector of references to this object from "anywhere"
-  set<AaRoot*> _target_references;
-  set<AaRoot*> _source_references;
+  set<AaRoot*> _target_references; // objects that target this 
+  set<AaRoot*> _source_references; // objects that are targets of this
 
  public:
 
@@ -46,20 +46,15 @@ class AaRoot
   virtual string Get_Name() {assert(0);}
   virtual AaRoot* Find_Child() {return(NULL);}
   virtual bool Is_Scope() {return(false); }
+  virtual bool Is_Object() {return(false); }
+  virtual bool Is_Expression() {return(false); }
 
   // do we really need this? keep it for now
   virtual bool Is(string class_name);
   virtual string Kind();
 
-  virtual void Add_Target_Reference(AaRoot* referrer)
-  {
-    this->_target_references.insert(referrer);
-  }
-
-  virtual void Add_Source_Reference(AaRoot* referrer)
-  {
-    this->_source_references.insert(referrer);
-  }
+  virtual void Add_Target_Reference(AaRoot* referrer);
+  virtual void Add_Source_Reference(AaRoot* referrer);
 
   virtual unsigned int Get_Number_Of_Target_References()
   {
@@ -69,6 +64,13 @@ class AaRoot
   virtual unsigned int Get_Number_Of_Source_References()
   {
     return(this->_source_references.size());
+  }
+  
+  virtual string To_String() 
+  {
+    string ret_string;
+    this->Print(ret_string);
+    return(ret_string);
   }
 
 };

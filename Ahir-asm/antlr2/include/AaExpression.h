@@ -14,7 +14,8 @@ class AaExpression: public AaRoot
 {
   // the containing scope of this expression
   AaScope* _scope;
-  
+
+ protected:
   // type of the expression
   AaType* _type;
 
@@ -25,10 +26,24 @@ class AaExpression: public AaRoot
   ~AaExpression();
   virtual string Kind() {return("AaExpression");}
 
-  virtual void Set_Type(AaType* t) { this->_type = t;}
+  virtual void Set_Type(AaType* t) 
+  {
+    if(this->_type == NULL)
+      this->_type = t;
+    else
+      if(t != this->_type)
+	{
+	  cerr << "Error: expression has conflicting types : line " << 
+	    this->Get_Line_Number() << endl;
+	  this->Print(cerr);
+	  cerr << endl;
+	  AaRoot::Error();
+	}
+  }
   virtual AaType* Get_Type() {return(this->_type);}
 
   virtual void Map_Source_References() { assert(0); }
+  virtual bool Is_Expression() {return(true); }
 };
 
 
@@ -37,6 +52,8 @@ class AaExpression: public AaRoot
 // etc.
 class AaObjectReference: public AaExpression
 {
+
+ protected:
 
   // the original string which was 
   // in the source file.
@@ -57,9 +74,11 @@ class AaObjectReference: public AaExpression
   // root object.
   string _object_root_name;
 
-  
   // the object to which this reference points!
   // figure it out in the second pass.
+  // for an object reference which defines
+  // an implicit variable, _object points
+  // to the statement which defined it.
   AaRoot* _object;
 
  public:
@@ -80,6 +99,8 @@ class AaObjectReference: public AaExpression
   }
   virtual string Kind() {return("AaObjectReference");}
   virtual void Map_Source_References(); // important
+  virtual void Add_Target_Reference(AaRoot* referrer); 
+  virtual void Add_Source_Reference(AaRoot* referrer);
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
@@ -99,6 +120,7 @@ class AaSimpleObjectReference: public AaObjectReference
   AaSimpleObjectReference(AaScope* scope_tpr, string object_ref_string);
   ~AaSimpleObjectReference();
   virtual string Kind() {return("AaSimpleObjectReference");}
+  virtual void Set_Object(AaRoot* obj);
 };
 
 // array object reference
@@ -118,6 +140,8 @@ class AaArrayObjectReference: public AaObjectReference
 
   virtual void Print(ostream& ofile); 
   AaExpression* Get_Array_Index(unsigned int idx);
+  virtual void Set_Object(AaRoot* obj); 
+
   virtual string Kind() {return("AaArrayObjectReference");}
 };
 

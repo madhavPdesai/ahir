@@ -18,12 +18,13 @@ class AaObject: public AaRoot
 {
   string _name;
   AaConstantLiteralReference* _value;
-  AaType* _object_type;
+  AaType* _type;
   AaScope* _scope;
 
  public:
 
-  AaType* Get_Object_Type() {return(this->_object_type);}
+  AaType* Get_Type() {return(this->_type);}
+
   AaConstantLiteralReference* Get_Value() {return(this->_value);}
   void Set_Value(AaConstantLiteralReference* v) {this->_value = v;}
   virtual string Get_Name() {return(this->_name);}
@@ -33,8 +34,10 @@ class AaObject: public AaRoot
   AaObject(AaScope* scope_tpr, string oname, AaType* object_type);
   ~AaObject();
 
-  virtual void Print(ostream& ofile);
+  virtual void Print(ostream& ofile);  
   virtual string Kind() {return("AaObject");}
+  virtual bool Is_Object() {return(true); }
+
 };
 
 // interface object: function arguments
