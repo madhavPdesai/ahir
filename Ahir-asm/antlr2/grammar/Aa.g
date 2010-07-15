@@ -57,6 +57,8 @@ header "post_include_cpp" {
 
 header "post_include_hpp" {
 #include <AaParserClasses.h>
+#include <antlr/RecognitionException.hpp>
+ANTLR_USING_NAMESPACE(antlr)
 }
 
 options {
@@ -70,11 +72,17 @@ options {
 	k=2;
 	defaultErrorHandler=true;
 } 
-
+{
+    void reportError(RecognitionException &re )
+ 	{
+        cerr << "Error: Parsing Exception: " << re.toString() << endl;
+        AaRoot::Error();
+ 	}
+}
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Program : (aA_Module | (DECLARE (aA_Object_Declaration)+) )*
+// aA_Program : (aA_Module | (aA_Object_Declaration)+ )*
 //-----------------------------------------------------------------------------------------------
 aA_Program
 {
@@ -87,10 +95,7 @@ aA_Program
             (nf = aA_Module {AaProgram::Add_Module(nf);} )
             |
             (  
-                DECLARE 
-                (
                     obj = aA_Object_Declaration[null_scope]  {AaProgram::Add_Object(obj);}
-                )+
             )
         )*
     ;
@@ -98,7 +103,7 @@ aA_Program
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Module: MODULE aA_Label aA_In_Args aA_Out_Args (DECLARE (aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
+// aA_Module: MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 aA_Module returns [AaModule* new_module]
 {
@@ -115,8 +120,7 @@ aA_Module returns [AaModule* new_module]
         aA_In_Args[new_module] aA_Out_Args[new_module] IS
         LBRACE
             // first the declarations in this scope
-            (DECLARE 
-                (obj = aA_Object_Declaration[new_module] { new_module->Add_Object(obj); })+)?
+            (obj = aA_Object_Declaration[new_module] { new_module->Add_Object(obj); })*
 
             // every statement in the sequence specifies a set of
             // targets (possibly empty) which should be maintained
@@ -345,8 +349,7 @@ aA_Series_Block_Statement[AaScope* scope] returns [AaSeriesBlockStatement* new_s
             
 
         LBRACE
-        (DECLARE 
-            (obj = aA_Object_Declaration[new_sbs] { new_sbs->Add_Object(obj); })+)?
+        (obj = aA_Object_Declaration[new_sbs] { new_sbs->Add_Object(obj); })*
         sseq = aA_Atomic_Statement_Sequence[new_sbs] 
         {
             new_sbs->Set_Statement_Sequence(sseq);
@@ -375,9 +378,7 @@ aA_Parallel_Block_Statement[AaScope* scope] returns [AaParallelBlockStatement* n
             new_pbs->Set_Line_Number(pb->getLine());
         }
         LBRACE
-        (DECLARE 
-            (obj = aA_Object_Declaration[new_pbs] { new_pbs->Add_Object(obj); })+)?
-
+        (obj = aA_Object_Declaration[new_pbs] { new_pbs->Add_Object(obj); })*
         sseq = aA_Atomic_Statement_Sequence[new_pbs] {new_pbs->Set_Statement_Sequence(sseq);}
         RBRACE
     ;
@@ -409,8 +410,7 @@ aA_Fork_Block_Statement[AaScope* scope] returns [AaForkBlockStatement* new_fbs]
             new_fbs->Set_Line_Number(fb->getLine());
         }
         LBRACE
-        (DECLARE 
-            (obj = aA_Object_Declaration[new_fbs] { new_fbs->Add_Object(obj); })+)?
+        (obj = aA_Object_Declaration[new_fbs] { new_fbs->Add_Object(obj); })*
         sseq = aA_Fork_Block_Statement_Sequence[new_fbs] {new_fbs->Set_Statement_Sequence(sseq);}
         RBRACE
     ;
@@ -443,9 +443,7 @@ aA_Branch_Block_Statement[AaScope* scope] returns [AaBranchBlockStatement* new_b
             new_bbs->Set_Line_Number(bb->getLine());
         }
         LBRACE
-        (DECLARE 
-            (obj = aA_Object_Declaration[new_bbs] { new_bbs->Add_Object(obj); })+)?
-
+        (obj = aA_Object_Declaration[new_bbs] { new_bbs->Add_Object(obj); })*
         sseq = aA_Branch_Block_Statement_Sequence[new_bbs] {new_bbs->Set_Statement_Sequence(sseq);}
         RBRACE
     ;

@@ -1,0 +1,93 @@
+// an example to test the control-flow and scoping in the 
+// Aa language
+		
+$storage g $uint<32> // visible throughout program
+$module [abcd] 
+	$in (a $uint<32> b $uint<32> c $uint<32>) // in args must be scalars
+	$out (d $uint<32> e $uint<32>)  // out args must be scalars.
+	$is 
+	{ 
+		// statement block is to be considered like a serial block
+		$storage p $array<10><10> $of $uint<32> // visible only in this module
+
+		// :a  and a refer to variable named a visible 
+	        // in this scope (the input argument to the module in this case)
+		// %s1:a1 refers to the variable named a in child scope s1 (see below)
+		d := (:a + %s1:a1)  // expressions must be parenthized
+
+		// b is the input port, %s1%p1:a1,b1 from below
+		e := (b * (%s1%p1:a1 + %s1%p1:b1))
+		$seriesblock[s1]
+		{// new scope with label s1
+			
+			$storage a $uint<32>
+			a1 := (a + ^:a)  // a from here,  ^:a from parent
+			$parallelblock[p1] 
+			{
+				$storage b $uint<32>
+				b1 := (b + ^:b) // b from here, ^:b will be input
+                                                 // port of module
+				a1 := (a + (^:a + ^^:a)) // a from s1, ^:a from s1, ^^:a is
+	                                                 // input port of module. 
+			}
+		}
+		$branchblock[b1] 
+		{  // describe a directed graph (potentially cyclic)
+		   // using merge,switch,if,exit constructs.
+		   //
+                   // The control flow is sequential, but can be altered
+                   // using the $switch, $if,  $place and $merge statements.
+		   //
+		   //
+		   // Constraints
+		   //    a place can merge into at most one merge statement!
+		   // Notes
+		   // 1 An unmerged place is assumed to end at the exit point
+		   //   of the branchblock
+		   //
+		   // 2 The default case in the switch and the else clause in
+		   //   the if can be skipped.  In this case,  control flows
+		   //   to the next statement in the branchblock statement 
+		   //   sequence
+
+			$storage b $uint<32>	
+		   	// In this case blocks q,r and $entry are merged
+			$merge q r $entry  // merge from q or from entry of this block
+				$phi  b := q1 $on q  a $on $entry  ^:b $on r
+			$endmerge
+
+			$if (a > b) $then // a is input port, b is from here.
+				q1 := (a - b)
+			$endif
+
+			// switch MUST be preceded by a merge
+			$switch a $when 0 $then  
+				$seriesblock[s2]{ u := ($not a) }  
+				$place [q]
+			$when <0 0> $then  
+				$null
+			$default 
+				$null
+			$endswitch
+
+			$if (q1 != 0) $then 	
+				$place [r]
+			$endif
+		}
+		$forkblock[f1]
+		{
+			a1 := (b + c) // unlabeled, will join at exit
+			$seriesblock[s2]{ $null }
+			$parallelblock[p2]{ $null}
+			$parallelblock[p3]{ $null}
+
+			$join s2 p2 $and $fork 
+				$parallelblock[p4]{ $null}
+				$parallelblock[p5]{ $null}
+			$endjoin
+			$join p4 p5 $endjoin
+			// note: p3 will join at the exit
+		}
+	}
+
+

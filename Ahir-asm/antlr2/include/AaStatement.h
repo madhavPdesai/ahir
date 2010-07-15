@@ -18,6 +18,7 @@
 // mapped in the containing scope
 class AaStatement: public AaScope
 {
+ protected:
   // for pretty printing..
   unsigned int _tab_depth;
  public:
@@ -154,15 +155,21 @@ class AaBlockStatement: public AaStatement
   }
   virtual void Add_Object(AaObject* obj) 
   { 
-    assert(this->Find_Child(obj->Get_Name()) == NULL); 
-    this->_objects.push_back(obj);
-    this->Map_Child(obj->Get_Name(),obj);
+    if(this->Find_Child_Here(obj->Get_Name()) == NULL)
+    { 
+    	this->_objects.push_back(obj);
+    	this->Map_Child(obj->Get_Name(),obj);
+    }
+    else
+    {
+ 	cerr << "Error: object " << obj->Get_Name() << " already exists in " << this->Get_Label() << endl;
+	AaRoot::Error();
+    }
   }
   virtual void Print_Objects(ostream &ofile)
   {
     if(this->_objects.size() > 0)
       {
-	ofile << this->Tab() << "\t$declare " << endl;
 	for(unsigned int i = 0; i < this->_objects.size(); i++)
 	  {
 	    this->_objects[i]->Print(ofile);
@@ -176,6 +183,12 @@ class AaBlockStatement: public AaStatement
       this->_statement_sequence->Print(ofile);
   }
 
+  virtual void Increment_Tab_Depth() 
+  { 
+    this->_tab_depth += 1; 
+    if(this->_statement_sequence != NULL)
+      this->_statement_sequence->Increment_Tab_Depth();
+  }
   AaBlockStatement(AaScope* scope, string label);
   ~AaBlockStatement();
   virtual void Print(ostream& ofile);
@@ -302,7 +315,9 @@ class AaSwitchStatement: public AaStatement
   virtual string Kind() {return("AaSwitchStatement");}
   virtual void Map_Source_References()
   {
-    this->_select_expression->Map_Source_References();
+    if(this->_select_expression)
+      this->_select_expression->Map_Source_References();
+
     for(unsigned int i=0; i < this->_choice_pairs.size(); i++)
       this->_choice_pairs[i].second->Map_Source_References();
     if(this->_default_sequence)
@@ -328,7 +343,8 @@ class AaIfStatement: public AaStatement
   virtual string Kind() {return("AaIfStatement");}
   virtual void Map_Source_References()
   {
-    this->_test_expression->Map_Source_References();
+    if(this->_test_expression)
+      this->_test_expression->Map_Source_References();
     this->_if_sequence->Map_Source_References();
     if(this->_else_sequence)
       this->_else_sequence->Map_Source_References();

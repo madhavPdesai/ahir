@@ -143,6 +143,7 @@ class AaArrayObjectReference: public AaObjectReference
   virtual void Set_Object(AaRoot* obj); 
 
   virtual string Kind() {return("AaArrayObjectReference");}
+  virtual void Map_Source_References(); // important
 };
 
 // type cast expression (is unary)

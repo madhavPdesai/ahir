@@ -19,13 +19,13 @@ AaProgram::~AaProgram() {};
 
 void AaProgram::Print(ostream& ofile)
 {
-  if(AaProgram::_objects.size() > 0)
-    ofile << "$declare " << std::endl;
-
   for(std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.begin();
       miter != AaProgram::_objects.end();
       miter++)
-    (*miter).second->Print(ofile);
+    {
+      (*miter).second->Print(ofile);
+      ofile << endl;
+    }
 
   for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
       miter != AaProgram::_modules.end();

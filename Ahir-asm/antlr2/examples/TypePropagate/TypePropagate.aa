@@ -1,0 +1,16 @@
+// an array of 32-bit unsigned integers.
+$storage mem $array<1024> $of $uint<32> 
+
+// module returns the sum of mem[I] from
+// I=low to I=high
+$module [sum_mod]
+    $in (low $uint<10> high $uint<10>)
+    $out (sum $uint<32>)
+$is
+{
+	$storage I $uint<10>
+ 
+	a :=  (s + mem[I]) // s, a will have same type as element of mem
+	s := a     // s will have same type as a
+	q := (I + 1) // q,I will have same type
+}

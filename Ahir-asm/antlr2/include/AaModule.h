@@ -42,7 +42,7 @@ class AaModule: public AaBlockStatement
   void Print(ostream& ofile);
   virtual string Kind() {return("AaModule");}
 
-  virtual AaRoot* Find_Child_Here(string tag);
+  virtual AaRoot* Find_Child(string tag);
   virtual void Map_Source_References();
 };
 
