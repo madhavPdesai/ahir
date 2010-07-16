@@ -56,6 +56,7 @@ bool Is_Compare_Operation(string op)
 //---------------------------------------------------------------------
 int AaRoot::_root_counter = 0;
 bool AaRoot::_error_flag = false;
+bool AaRoot::_warning_flag = false;
 
 AaRoot::AaRoot() 
 {
@@ -72,8 +73,26 @@ bool AaRoot::Is(const string kinfo)
 }
 void AaRoot::Increment_Root_Counter() { AaRoot::_root_counter += 1; }
 int AaRoot::Get_Root_Counter() { return AaRoot::_root_counter; }
-void AaRoot::Error() { AaRoot::_error_flag = true;}
+void AaRoot::Error(string msg,AaRoot* r) 
+{ 
+  cerr << "Error: " << msg;
+  if(r != NULL)
+    cerr << " :line " << r->Get_Line_Number();
+  cerr << endl;
+  AaRoot::_error_flag = true;
+}
+void AaRoot::Warning(string msg,AaRoot* r) 
+{ 
+  cerr << "Warning: " << msg;
+  if(r != NULL)
+    cerr << " :line " << r->Get_Line_Number();
+  cerr << endl;
+  AaRoot::_warning_flag = true;
+}
+
 bool AaRoot::Get_Error_Flag() { return AaRoot::_error_flag; }
+bool AaRoot::Get_Warning_Flag() { return AaRoot::_warning_flag; }
+
 void AaRoot::Print(ostream& ofile)
 {
   assert(0);
@@ -391,14 +410,14 @@ void AaObjectReference::Map_Source_References()
 
   if(child == NULL)
     {
-      cerr << "Error: did not find object reference " << this->Get_Object_Ref_String() << ": line " << this->Get_Line_Number() << endl;
-      AaRoot::Error();
+      AaRoot::Error("did not find object reference " + this->Get_Object_Ref_String(), this);
     }
   else
     {
+      // child -> obj_ref
       this->Set_Object(child);
-      child->Add_Source_Reference(this);  // child -> this
-      this->Add_Target_Reference(child);  // this  -> child
+      child->Add_Source_Reference(this);  // child -> this (this uses child as a source)
+      this->Add_Target_Reference(child);  // this  -> child (child uses this as a target)
     }
 }
 
@@ -488,9 +507,7 @@ void AaArrayObjectReference::Set_Object(AaRoot* obj)
     }
   if(!ok_flag)
     {
-      cerr << "Error: type mismatch in object reference " << this->Get_Object_Ref_String() << " : line " <<
-	this->Get_Line_Number() << endl;
-      AaRoot::Error();
+      AaRoot::Error("type mismatch in object reference " + this->Get_Object_Ref_String(),this);
     }
 }
 
@@ -657,9 +674,7 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
   bool unsuitable_target = (child != NULL) && !(child->Is_Object() || child->Is_Expression());
   if(unsuitable_target)
     {
-      cerr << "Error: specified target " << obj_ref_root_name << " is not an object/expression: line " << this->Get_Line_Number() << endl;
-      AaRoot::Error();
-
+      AaRoot::Error( string("specified target ") + obj_ref_root_name + " is not an object/expression",this);
       err_flag = true;
     }
   
@@ -688,33 +703,27 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
   
   if(err_no_target_in_scope)
     {
-      cerr << "Error: specified target " << obj_ref_root_name << " not found in specified scope: line " << this->Get_Line_Number() << endl;
-      AaRoot::Error();
-
+      AaRoot::Error( string("specified target ") + obj_ref_root_name + " not found ",this);
       err_flag = true;
     }
   if(err_redeclaration)
     {
-      cerr << "Error: specified target " << obj_ref_root_name << " redeclared: line " << this->Get_Line_Number() << endl;
-      AaRoot::Error();
+      AaRoot::Error( string("specified target ") + obj_ref_root_name + " redeclared ",this);
       err_flag = true;
     }
   if(err_write_to_constant)
     {
-      cerr << "Error: specified target " << obj_ref_root_name << " is a constant: line " << this->Get_Line_Number() << endl;
-      AaRoot::Error();
+      AaRoot::Error( string("specified target ") + obj_ref_root_name + " is a constant, cannot be written to ",this);
       err_flag = true;
     }
   if(err_write_to_input_port)
     {
-      cerr << "Error: attempted write to module input port " << obj_ref_root_name << " : line " << this->Get_Line_Number() << endl;      
-      AaRoot::Error();
+      AaRoot::Error( string("specified target ") + obj_ref_root_name + " is a module input, cannot be written to ",this);
       err_flag = true;
     }
   if(err_multiple_refs_to_ports)
     {
-      cerr << "Error: multiple writes to module port " << obj_ref_root_name << " : line " << this->Get_Line_Number() << endl;     
-      AaRoot::Error();
+      AaRoot::Error( string("multiple writes to module port ") + obj_ref_root_name + " are not permitted",this);
       err_flag = true;
     }
 
@@ -724,7 +733,11 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
       obj_ref->Set_Object(this);
     }
   else if((child != NULL) && !err_flag)
-    child->Add_Target_Reference(obj_ref);
+    {
+      // obj_ref -> child
+      child->Add_Target_Reference(obj_ref); // obj_ref uses child as a target
+      obj_ref->Add_Source_Reference(child); // child uses obj_ref as a source
+    }
 
 }
 
@@ -869,18 +882,18 @@ void AaCallStatement::Map_Source_References()
 
       if(called_module->Get_Number_Of_Input_Arguments() != this->_input_args.size())
 	{
-	  cerr << "Error: number of input arguments to called function does not match the number of declared arguments: line " << this->Get_Line_Number() << endl;
+	  AaRoot::Error("incorrect number of input arguments in function call", this );
 	}
 
 
       if(called_module->Get_Number_Of_Output_Arguments() != this->_output_args.size())
 	{
-	  cerr << "Error: number of output arguments to called function does not match the number of declared arguments: line " << this->Get_Line_Number() << endl;
+	  AaRoot::Error("incorrect number of output arguments in function call", this );
 	}
     }
   else
     {
-      cerr << "Warning: module " << this->_function_name << " not found, assuming that it is foreign!"<< endl;
+      AaRoot::Warning("module " +  this->_function_name  + " not found, assuming that it is foreign!",this);
     }
 
 
@@ -889,17 +902,18 @@ void AaCallStatement::Map_Source_References()
       this->_input_args[i]->Map_Source_References();
       if(called_module != NULL)
 	{
-	  called_module->Get_Input_Argument(i)->Add_Source_Reference(this->_input_args[i]);
-	  this->_input_args[i]->Add_Target_Reference(called_module->Get_Input_Argument(i));
+	  // inarg -> inargument
+	  this->_input_args[i]->Add_Source_Reference(called_module->Get_Input_Argument(i));
+	  called_module->Get_Input_Argument(i)->Add_Target_Reference(this->_input_args[i]);
 	}
     }
   for(unsigned int i=0; i < this->_output_args.size(); i++)
     {
-      this->_output_args[i]->Map_Source_References();
       if(called_module != NULL)
 	{
-	  called_module->Get_Output_Argument(i)->Add_Target_Reference(this->_output_args[i]);
-	  this->_output_args[i]->Add_Source_Reference(called_module->Get_Output_Argument(i));
+	  // outarg <- outargument
+	  this->_output_args[i]->Add_Target_Reference(called_module->Get_Output_Argument(i));
+	  called_module->Get_Output_Argument(i)->Add_Source_Reference(this->_output_args[i]);
 	}
     }
 }
@@ -1075,15 +1089,13 @@ void AaPhiStatement::Map_Source_References()
 	  AaRoot* child = this->Get_Scope()->Find_Child(this->_source_pairs[i].first);
 	  if(child == NULL)
 	    {
-	      AaRoot::Error();
-	      cerr << "Error: could not find place statement with label " << (this->_source_pairs[i].first) 
-		   << " : line " << this->Get_Line_Number() << endl;
+	      AaRoot::Error("could not find place statement with label " + (this->_source_pairs[i].first),this);
 	    }
 	  else if(!child->Is("AaPlaceStatement"))
 	    {
-	      cerr << "Error: in phi statement, statement with label " << (this->_source_pairs[i].first) 
-		   << " is not a place statement : line " << this->Get_Line_Number() << endl;
-	      AaRoot::Error();
+	      AaRoot::Error("in phi statement, statement with label " + (this->_source_pairs[i].first) 
+			    + " is not a place statement : line " ,this);
+
 	    }
 	}
     }

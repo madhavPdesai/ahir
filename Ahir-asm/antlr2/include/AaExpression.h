@@ -33,11 +33,14 @@ class AaExpression: public AaRoot
     else
       if(t != this->_type)
 	{
-	  cerr << "Error: expression has conflicting types : line " << 
-	    this->Get_Line_Number() << endl;
-	  this->Print(cerr);
-	  cerr << endl;
-	  AaRoot::Error();
+	  string err_msg = "Error: type of expression ";
+	  this->Print(err_msg);
+	  err_msg += " is ambiguous, is it  ";
+	  this->_type->Print(err_msg);
+	  err_msg += " or ";
+	  t->Print(err_msg);
+	  err_msg += " ? ";
+	  AaRoot::Error(err_msg, this);
 	}
   }
   virtual AaType* Get_Type() {return(this->_type);}

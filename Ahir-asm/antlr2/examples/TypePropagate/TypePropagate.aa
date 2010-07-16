@@ -4,13 +4,27 @@ $storage mem $array<1024> $of $uint<32>
 // module returns the sum of mem[I] from
 // I=low to I=high
 $module [sum_mod]
-    $in (low $uint<10> high $uint<10>)
+    $in (low $uint<1> high $uint<2>)
     $out (sum $uint<32>)
 $is
 {
 	$storage I $uint<10>
- 
-	a :=  (s + mem[I]) // s, a will have same type as element of mem
-	s := a     // s will have same type as a
+	$storage ptr $pointer<16>
+
+	a := (($cast ($int<2>) low) + ($cast ($int<2>) high))
+	b :=  (s + mem[I]) // s, b will have same type as element of mem
+	s := b     // s will have same type as a
+	c := ($cast ($float<5,6>) low) 
 	q := (I + 1) // q,I will have same type
+	$call fetch(ptr) (q)
+
+}
+
+
+$module [fetch] 
+     $in (ptr $pointer<16>) 
+     $out (result $uint<16>)
+$is
+{
+   $call fetch_foreign (ptr) (result)
 }

@@ -21,4 +21,7 @@ bool Is_Compare_Operation(string op);
 
 bool Is_Shift_Operation(string op);
 
+// parse the file and update AaProgram
+void AaParse(string filename);
+
 #endif

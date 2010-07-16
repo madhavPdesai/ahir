@@ -69,6 +69,13 @@ class AaProgram
     AaProgram::_type_dependency_graph.Print(ofile);
   }
 
+  // check that there are no cycles 
+  // connections, infer types, etc. etc.
+  static void Elaborate();
+
+  // write a C model.
+  static void Write_C_Model();
+
 };
 
 

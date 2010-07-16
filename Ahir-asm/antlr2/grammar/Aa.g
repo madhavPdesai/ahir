@@ -75,8 +75,7 @@ options {
 {
     void reportError(RecognitionException &re )
  	{
-        cerr << "Error: Parsing Exception: " << re.toString() << endl;
-        AaRoot::Error();
+        AaRoot::Error("Parsing Exception: " + re.toString(),NULL);
  	}
 }
 
@@ -508,14 +507,12 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
                 bool errflag = false;
                 if(lbl_set.find(label) == lbl_set.end())
                 {
-                    cerr << "Error: statement label in phi not in merge label set" << endl;
-                    AaRoot::Error();
+                    AaRoot::Error("statement label in phi statement is  not in merge label set",new_ps);
                     errflag = true;
                 }
                 if(tset.find(label) != tset.end())
                 {
-                    cerr << "Error: statement label repeated in phi " << endl;
-                    AaRoot::Error();
+                    AaRoot::Error("statement label repeated in phi statement",new_ps);
                     errflag = true;
                 }
                 else

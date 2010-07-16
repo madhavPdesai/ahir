@@ -53,6 +53,15 @@ class AaInterfaceObject: public AaObject
   ~AaInterfaceObject();
   virtual string Kind() {return("AaInterfaceObject");}
   // uses AaObject::Print method
+
+  void Write_C(ofstream& header, ofstream& source)
+  {
+    this->Get_Type()->Write_C(header,source);
+    if(this->Get_Mode() == "out")
+      source << "*";
+    source << " " << this->Get_Name() << ";" << endl ;
+  }
+
 };
 
 class AaConstantObject: public AaObject
@@ -67,6 +76,14 @@ class AaConstantObject: public AaObject
 
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaConstantObject");}
+  void Write_C(ofstream& header, ofstream& source)
+  {
+     this->Get_Type()->Write_C(header,source);
+    source << " " << this->Get_Name() << " = ";
+    this->Get_Value()->Write_C(header,source);
+    source << ";" << endl;
+  }
+
 };
 
 class AaStorageObject: public AaObject
@@ -80,6 +97,13 @@ class AaStorageObject: public AaObject
 
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaStorageObject");}
+  void Write_C(ofstream& header, ofstream& source)
+  {
+    this->Get_Type()->Write_C(header,source);
+    source << " " << this->Get_Name() << " = ";
+    this->Get_Value()->Write_C(header,source);
+    source << ";" << endl;
+  }
 };
 
 class AaPipeObject: public AaObject
@@ -91,6 +115,15 @@ class AaPipeObject: public AaObject
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaPipeObject");}
+
+  void Write_C(ofstream& header, ofstream& source)
+  {
+     this->Get_Type()->Write_C(header,source);
+    source << " " << this->Get_Name() << " = ";
+    this->Get_Value()->Write_C(header,source);
+    source << ";" << endl;
+  }
+
 };
 
 #endif

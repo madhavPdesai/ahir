@@ -171,8 +171,7 @@ void AaProgram::Check_For_Cycles_In_Call_Graph()
   // Assume that map source references has been called before...
   if(AaProgram::_call_graph.Cycle_Detect_Dfs())
     {
-      std::cerr << "Error: cycle(s) in module call graph are not permitted" << std::endl;
-      AaRoot::Error();
+      AaRoot::Error("cycle(s) in module call graph are not permitted",NULL);
     }
 }
 
@@ -207,21 +206,19 @@ bool AaProgram::Propagate_Types()
 	    }
 	  else 
 	    {
-	      cerr << "Error: in type propagation, encountered an object which was not an expression or object : line " <<
-		item->Get_Line_Number() << endl;
 
+	      AaRoot::Error("in type propagation, encountered an object which was not an expression or object",item);
 	      item->Print(cerr);
 	      cerr << endl;
-	      AaRoot::Error();
 	      err_flag = true;
 	    }
 
 	  if(ntype != NULL && itype != NULL && (itype != ntype))
 	    {
-	      cerr << "Error: in type propagation, found ambiguity in types : line " << item->Get_Line_Number() << endl;
+	      AaRoot::Error("in type propagation, found ambiguity in types",item);
 	      item->Print(cerr);
 	      cerr << endl;
-	      AaRoot::Error();
+
 	      err_flag = true;
 	    }
 	  else if(ntype != NULL && itype == NULL)
@@ -230,7 +227,8 @@ bool AaProgram::Propagate_Types()
 
       if(itype == NULL)
 	{
-	  cerr << "Error: in type propagation, could not determine types of expressions/objects  "  << endl;
+	  string err_msg =  "in type propagation, could not determine types of the following expressions/objects ";
+	  AaRoot::Error(err_msg, NULL);
 	  for(set<AaRoot*>::iterator siter = type_eq_class_map[i].begin();
 	      siter != type_eq_class_map[i].end();
 	      siter++)
@@ -238,7 +236,6 @@ bool AaProgram::Propagate_Types()
 	      (*siter)->Print(cerr);
 	      cerr << "\t line " << (*siter)->Get_Line_Number() << endl;
 	    }
-	  AaRoot::Error();
 	  err_flag = true;
 	}
 
@@ -256,5 +253,43 @@ bool AaProgram::Propagate_Types()
 	}
     }
   return(err_flag);
+}
+
+
+void AaProgram::Elaborate()
+{
+  AaProgram::Init_Call_Graph();
+  AaProgram::Map_Source_References();
+  AaProgram::Check_For_Cycles_In_Call_Graph();
+  AaProgram::Propagate_Types();
+}
+
+void AaProgram::Write_C_Model()
+{
+
+  ofstream header_file;
+  string header = "aa_c_model.h";
+  header_file.open(header.c_str());
+  
+  ofstream source_file;
+  string source = "aa_c_model.cpp";
+  source_file.open(header.c_str());
+
+
+  source_file << "#include <Aa2C.h>" << endl;
+  source_file << "#include <" << header << ">" << endl;
+  for(std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.begin();
+      miter != AaProgram::_objects.end();
+      miter++)
+    {
+      (*miter).second->Write_C(header_file,source_file);
+    }
+
+  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+      miter != AaProgram::_modules.end();
+      miter++)
+    {
+      (*miter).second->Write_C(header_file,source_file);
+    }
 }
 

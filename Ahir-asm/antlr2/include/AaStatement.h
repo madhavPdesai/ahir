@@ -162,8 +162,7 @@ class AaBlockStatement: public AaStatement
     }
     else
     {
- 	cerr << "Error: object " << obj->Get_Name() << " already exists in " << this->Get_Label() << endl;
-	AaRoot::Error();
+      AaRoot::Error("object " + obj->Get_Name() + " already exists in " + this->Get_Label(),obj);
     }
   }
   virtual void Print_Objects(ostream &ofile)

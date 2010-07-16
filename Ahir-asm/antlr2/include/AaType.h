@@ -33,6 +33,8 @@ class AaScalarType: public AaType
 
 class AaUintType: public AaScalarType
 {
+
+ protected:
   // width > 0
   unsigned int _width;
 
@@ -42,6 +44,11 @@ class AaUintType: public AaScalarType
   AaUintType(AaScope* scope, unsigned int width);
   ~AaUintType();
   void Print(ostream& ofile);
+  void Write_C(ofstream& header, ofstream& source)
+  {
+    source << "uint_" << this->_width;
+  }
+
   virtual string Kind() {return("AaUintType");}
 };
 
@@ -54,6 +61,10 @@ class AaIntType: public AaUintType
   ~AaIntType();
   void Print(ostream& ofile);
   virtual string Kind() {return("AaIntType");}
+  void Write_C(ofstream& header, ofstream& source)
+  {
+    source << "int_" << this->_width;
+  }
 };
 
 class AaPointerType: public AaUintType
@@ -64,11 +75,18 @@ class AaPointerType: public AaUintType
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaPointerType");}
+
+  void Write_C(ofstream& header, ofstream& source)
+  {
+    source << "void*";
+  }
+
 };
 
 
 class AaFloatType : public AaScalarType
 {
+  protected:
   // both > 0
   unsigned int _characteristic;
   unsigned int _mantissa;
@@ -81,6 +99,12 @@ class AaFloatType : public AaScalarType
   ~AaFloatType();
   void Print(ostream& ofile);
   virtual string Kind() {return("AaFloatType");}
+
+  void Write_C(ofstream& header, ofstream& source)
+  {
+    source << "float_" << this->_characteristic << "_" << this->_mantissa;
+  }
+
 };
 
 class AaArrayType: public AaType
@@ -103,6 +127,13 @@ class AaArrayType: public AaType
   unsigned int Get_Dimension(unsigned int dim_id);
   void Print(ostream& ofile);
   virtual string Kind() {return("AaArrayType");}
+  void Write_C(ofstream& header, ofstream& source)
+  {
+    this->_element_type->Write_C(header,source);
+    for(unsigned int i=0; i < this->Get_Number_Of_Dimensions(); i++)
+      source << "[" << this->_dimension[i] << "]";
+  }
+
 };
 
 #endif
