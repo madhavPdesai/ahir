@@ -45,8 +45,8 @@
   synchronous languages such as Esterel. It has been used as a
   transition step in translating imperative programs to hardware
   descriptions\cite{ahir-thesis}. The resulting high-level synthesis
-  flow uses the labelling scheme to identify opportunities for sharing
-  hardware resources in the absence of timing information.
+  flow uses the labelling scheme to reuse hardware resources in the
+  absence of timing information.
 
 \end{abstract}
 
@@ -106,7 +106,12 @@ to a transition (place). A \textit{simple place (transition)} is a
 place (transition) with one incoming edge and one outgoing place. A
 \textit{branch (fork)} is a place (transition) with one incoming edge
 and multiple outgoing edges, while a \textit{merge (join)} is a place
-(transition) with multiple incoming edges and one outgoing edge.
+(transition) with multiple incoming edges and one outgoing edge. 
+
+A firing sequence is a sequence of transitions $\sigma = [t_{i_0},
+t_{i_1}, \ldots]$ in $T$ that may fire in the petri net $N$ starting
+at some marking $M$. $L(N)$ is the set of firing sequences possible in
+the petri net $N$ starting from the initial marking $M_0$.
 
 \section{Type-1 petri nets}
 \label{sec:type-1}
@@ -198,20 +203,24 @@ and safety of the rest of the petri net.
 
 Consider a simple place $p$ in a live and safe petri net $N =
 (P,T,E,M)$. Let $u,v$ be the predecessor and successor transitions of
-$p$ in $N$, i.e, $u,v \in T$ and $(u,p), (p,v)\in E$. Since $N$ is
-live and safe, it follows that when $u$ fires, $v$ must fire before
-$u$ may fire again (safety), and $v$ must eventually fire when $u$
-fires (liveness). Thus, any firing sequence of the petri net $N$ that
-includes the firing of $u$ (and consequently also $v$) effectively
-puts a token in $p$ and then eventually removes it. Thus, the petri
-net $N' = N - \{p,u,v\}$ can be modelled as an initially marked simple
-place $p_0$ that forms a cycle with $u$, $v$ and $p$. Similarly,
-relative to a simple transition $t$, the rest of the petri net can be
-modelled as an initially marked simple place $p_0$ that forms a simple
-cycle with $t$. Both replacements are valid if and only if the
-original petri net is live and safe; the resulting simple cycle is
-also live and safe. We use this simplification to examine the effect
-of applying a construction rule on a Type-1 petri net:
+$p$ in $N$, i.e, $u,v \in T$ and $(u,p), (p,v)\in E$. For any firing
+sequence $\sigma \in L(N)$, $u$ must occur before any occurence of
+$v$, and occurences of $u$ and $v$ must strictly alternate in the
+entire sequence.
+
+The petri net $N' = N - \{p,u,v\}$ can be modelled as an initially
+marked simple place $p_0$ that forms a cycle with $u$, $v$ and $p$.
+The cycle $N'$ is live and safe. Every sequence in $L(N)$ can be
+mapped to a sequence in $L(N')$ by simply deleting all transitions
+other than $u$ and $v$, if and only if the petri net $N$ is live and
+safe.
+
+Similarly, relative to a simple transition $t$, the rest of the petri
+net can be modelled as an initially marked simple place $p_0$ that
+forms a simple cycle with $t$. Both replacements are valid if and only
+if the original petri net is live and safe; the resulting simple cycle
+is also live and safe. We use this simplification to examine the
+effect of applying a construction rule on a Type-1 petri net:
 
 \begin{enumerate}
 \item When a rule replaces a simple place $p$, the rest of the petri
