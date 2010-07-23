@@ -203,7 +203,7 @@ aA_Assignment_Statement[AaScope* scope] returns[AaStatement* new_stmt]
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Call_Statement: CALL aA_Argv_Out  SIMPLE_IDENTIFIER aA_Argv_In
+// aA_Call_Statement: CALL aA_Argv_Out aA_Argv_In
 //-----------------------------------------------------------------------------------------------
 aA_Call_Statement[AaScope* scope] returns[AaStatement* new_stmt]
 {
@@ -716,6 +716,7 @@ aA_Argv_Out[AaScope* scope, vector<AaObjectReference*>& args]
             (id:SIMPLE_IDENTIFIER
                 {
                     obj = new AaSimpleObjectReference(scope,id->getText());
+                    obj->Set_Object_Root_Name(id->getText());
                     args.push_back(obj); 
                 }
         )* 

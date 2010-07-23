@@ -45,8 +45,10 @@ class AaExpression: public AaRoot
   }
   virtual AaType* Get_Type() {return(this->_type);}
 
-  virtual void Map_Source_References() { assert(0); }
+  virtual void Map_Source_References(set<AaRoot*>& source_objects) { assert(0); }
   virtual bool Is_Expression() {return(true); }
+
+  virtual void PrintC(ofstream& ofile, string tab_string) { assert(0); }
 };
 
 
@@ -91,6 +93,7 @@ class AaObjectReference: public AaExpression
   virtual string Get_Object_Ref_String() {return(this->_object_ref_string);}
 
   virtual void Set_Object(AaRoot* obj) {this->_object = obj;}
+  virtual AaRoot* Get_Object() { return(this->_object);}
   virtual void Add_Hier_Id(string hier_id) {this->_hier_ids.push_back(hier_id);}
   virtual void Set_Object_Root_Name(string orn) {this->_object_root_name = orn; }
   virtual string Get_Object_Root_Name() {return(this->_object_root_name);}
@@ -101,9 +104,10 @@ class AaObjectReference: public AaExpression
     return((this->_hier_ids.size() > 0) || (this->_search_ancestor_level > 0));
   }
   virtual string Kind() {return("AaObjectReference");}
-  virtual void Map_Source_References(); // important
+  virtual void Map_Source_References(set<AaRoot*>& source_objects); // important
   virtual void Add_Target_Reference(AaRoot* referrer); 
   virtual void Add_Source_Reference(AaRoot* referrer);
+
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
@@ -113,7 +117,7 @@ class AaConstantLiteralReference: public AaObjectReference
   AaConstantLiteralReference(AaScope* scope_tpr, string literal_string);
   ~AaConstantLiteralReference();
   virtual string Kind() {return("AaConstantLiteralReference");}
-  virtual void Map_Source_References() {} // do nothing
+  virtual void Map_Source_References(set<AaRoot*>& source_objects) {} // do nothing
 };
 
 // simple reference (no array indices)
@@ -146,7 +150,7 @@ class AaArrayObjectReference: public AaObjectReference
   virtual void Set_Object(AaRoot* obj); 
 
   virtual string Kind() {return("AaArrayObjectReference");}
-  virtual void Map_Source_References(); // important
+  virtual void Map_Source_References(set<AaRoot*>& source_objects); // important
 };
 
 // type cast expression (is unary)
@@ -163,7 +167,11 @@ class AaTypeCastExpression: public AaExpression
   ~AaTypeCastExpression();
   void Print(ostream& ofile);
   virtual string Kind() {return("AaTypeCastExpression");}
-  virtual void Map_Source_References() {if(this->_rest) this->_rest->Map_Source_References();}
+  virtual void Map_Source_References(set<AaRoot*>& source_objects) 
+  {
+    if(this->_rest) 
+      this->_rest->Map_Source_References(source_objects);
+  }
 };
 
 
@@ -183,7 +191,11 @@ class AaUnaryExpression: public AaExpression
   AaStringValue* Get_Operation() {return(this->_operation);}
   AaExpression* Get_Rest() {return(this->_rest);}
   virtual string Kind() {return("AaUnaryExpression");}
-  virtual void Map_Source_References() {if(this->_rest) this->_rest->Map_Source_References();}
+  virtual void Map_Source_References(set<AaRoot*>& source_objects) 
+  {
+    if(this->_rest) 
+      this->_rest->Map_Source_References(source_objects);
+  }
 };
 
 // 
@@ -204,10 +216,10 @@ class AaBinaryExpression: public AaExpression
   AaExpression* Get_First() {return(this->_first);}
   AaExpression* Get_Second() {return(this->_second);}
   virtual string Kind() {return("AaBinaryExpression");}
-  virtual void Map_Source_References() 
+  virtual void Map_Source_References(set<AaRoot*>& source_objects) 
   {
-    if(this->_first) this->_first->Map_Source_References();
-    if(this->_second) this->_second->Map_Source_References();
+    if(this->_first) this->_first->Map_Source_References(source_objects);
+    if(this->_second) this->_second->Map_Source_References(source_objects);
   }
 };
 
@@ -227,11 +239,11 @@ class AaTernaryExpression: public AaExpression
   AaExpression* Get_If_True() {return(this->_if_true);}
   AaExpression* Get_If_False() {return(this->_if_false);}
   virtual string Kind() {return("AaTernaryExpression");}
-  virtual void Map_Source_References() 
+  virtual void Map_Source_References(set<AaRoot*>& source_objects) 
   {
-    if(this->_test) this->_test->Map_Source_References();
-    if(this->_if_true) this->_if_true->Map_Source_References();
-    if(this->_if_false) this->_if_false->Map_Source_References();
+    if(this->_test) this->_test->Map_Source_References(source_objects);
+    if(this->_if_true) this->_if_true->Map_Source_References(source_objects);
+    if(this->_if_false) this->_if_false->Map_Source_References(source_objects);
   }
 
 };

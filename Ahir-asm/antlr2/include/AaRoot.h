@@ -77,11 +77,8 @@ class AaRoot
     return(ret_string);
   }
 
-  virtual void Write_C(ofstream& header, ofstream& source)
-  {
-    assert(0);
-  }
-
+  virtual string Get_C_Name() { assert(0); }
+  virtual string Get_Struct_Dereference() { assert(0); }
 };
 
 #endif

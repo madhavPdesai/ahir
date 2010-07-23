@@ -39,11 +39,20 @@ class AaModule: public AaBlockStatement
     return(this->_output_args[index]);
   }
 
+  virtual string Get_C_Name()
+  {
+    return(this->Get_Label());
+  }
+
   void Print(ostream& ofile);
   virtual string Kind() {return("AaModule");}
 
   virtual AaRoot* Find_Child(string tag);
   virtual void Map_Source_References();
+
+  string Get_Structure_Name() { return(this->Get_Label() + "_State"); }
+  void Write_Header(ofstream& ofile);
+  void Write_Source(ofstream& ofile);
 };
 
 #endif

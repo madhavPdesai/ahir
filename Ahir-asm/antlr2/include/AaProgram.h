@@ -75,7 +75,11 @@ class AaProgram
 
   // write a C model.
   static void Write_C_Model();
-
+  static string Get_Top_Struct_Variable_Name() 
+  { 
+    string r = "_top";
+    return (r);
+  }
 };
 
 

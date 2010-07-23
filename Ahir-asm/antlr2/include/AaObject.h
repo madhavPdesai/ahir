@@ -37,6 +37,26 @@ class AaObject: public AaRoot
   virtual void Print(ostream& ofile);  
   virtual string Kind() {return("AaObject");}
   virtual bool Is_Object() {return(true); }
+  virtual void PrintC(ofstream& ofile, string tab_string)
+  {
+    ofile << tab_string << this->Get_Type()->CName() 
+	  << " " 
+	  <<  this->Get_Name(); 
+    if(this->Get_Value())
+      {
+	ofile << " = ";
+	this->Get_Value()->PrintC(ofile,string(""));
+      }
+    ofile << ";" << endl;
+  }
+
+  virtual string CRef()
+  {
+    if(this->Get_Scope())
+      return(this->Get_Scope()->Get_Struct_Dereference() + "." + this->Get_Name());
+    else
+      return(this->Get_Name());
+  }
 
 };
 
@@ -54,14 +74,6 @@ class AaInterfaceObject: public AaObject
   virtual string Kind() {return("AaInterfaceObject");}
   // uses AaObject::Print method
 
-  void Write_C(ofstream& header, ofstream& source)
-  {
-    this->Get_Type()->Write_C(header,source);
-    if(this->Get_Mode() == "out")
-      source << "*";
-    source << " " << this->Get_Name() << ";" << endl ;
-  }
-
 };
 
 class AaConstantObject: public AaObject
@@ -76,13 +88,6 @@ class AaConstantObject: public AaObject
 
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaConstantObject");}
-  void Write_C(ofstream& header, ofstream& source)
-  {
-     this->Get_Type()->Write_C(header,source);
-    source << " " << this->Get_Name() << " = ";
-    this->Get_Value()->Write_C(header,source);
-    source << ";" << endl;
-  }
 
 };
 
@@ -97,13 +102,6 @@ class AaStorageObject: public AaObject
 
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaStorageObject");}
-  void Write_C(ofstream& header, ofstream& source)
-  {
-    this->Get_Type()->Write_C(header,source);
-    source << " " << this->Get_Name() << " = ";
-    this->Get_Value()->Write_C(header,source);
-    source << ";" << endl;
-  }
 };
 
 class AaPipeObject: public AaObject
@@ -115,14 +113,19 @@ class AaPipeObject: public AaObject
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaPipeObject");}
+  virtual string Get_Valid_Flag_Name() { return(this->Get_Name() + "_valid__");}
 
-  void Write_C(ofstream& header, ofstream& source)
+  virtual void PrintC(ofstream& ofile, string tab_string)
   {
-     this->Get_Type()->Write_C(header,source);
-    source << " " << this->Get_Name() << " = ";
-    this->Get_Value()->Write_C(header,source);
-    source << ";" << endl;
+    this->AaObject::PrintC(ofile,tab_string);
+    ofile << tab_string 
+	  << "unsigned int " 
+	  << this->Get_Valid_Flag_Name() 
+	  << " : 1; " 
+	  << endl;
   }
+
+
 
 };
 

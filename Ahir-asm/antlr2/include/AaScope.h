@@ -106,7 +106,7 @@ class AaScope : public AaRoot
 
   virtual string Kind() {return("AaScope");}
 
-
+  virtual string Get_Struct_Dereference();
 };
 
 #endif

@@ -53,7 +53,9 @@ $module [abcd]
 			$storage b $uint<32>	
 		   	// In this case blocks q,r and $entry are merged
 			$merge q r $entry  // merge from q or from entry of this block
-				$phi  b := q1 $on q  a $on $entry  ^:b $on r
+				$phi  b := q1 $on q  
+					   a  $on $entry  
+					   ^:b $on r
 			$endmerge
 
 			$if (a > b) $then // a is input port, b is from here.

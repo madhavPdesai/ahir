@@ -1,5 +1,4 @@
 #include <AaParserClasses.h>
-#include <AaBglWrap.h>
 #include <AaProgram.h>
 
 //---------------------------------------------------------------------
@@ -272,24 +271,28 @@ void AaProgram::Write_C_Model()
   header_file.open(header.c_str());
   
   ofstream source_file;
-  string source = "aa_c_model.cpp";
-  source_file.open(header.c_str());
+  string source = "aa_c_model.c";
+  source_file.open(source.c_str());
 
 
   source_file << "#include <Aa2C.h>" << endl;
   source_file << "#include <" << header << ">" << endl;
+  
+
   for(std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.begin();
       miter != AaProgram::_objects.end();
       miter++)
     {
-      (*miter).second->Write_C(header_file,source_file);
+      // these are global in the source file
+      (*miter).second->PrintC(source_file,"");
     }
 
   for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
       miter != AaProgram::_modules.end();
       miter++)
     {
-      (*miter).second->Write_C(header_file,source_file);
+      (*miter).second->Write_Header(header_file);
+      (*miter).second->Write_Source(source_file);
     }
 }
 

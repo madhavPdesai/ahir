@@ -19,6 +19,7 @@ class AaType: public AaRoot
   AaType(AaScope* parent);
   ~AaType();
   virtual string Kind() {return("AaType");}
+  virtual string CName() {assert(0);}
 };
 
 class AaScalarType: public AaType
@@ -44,12 +45,12 @@ class AaUintType: public AaScalarType
   AaUintType(AaScope* scope, unsigned int width);
   ~AaUintType();
   void Print(ostream& ofile);
-  void Write_C(ofstream& header, ofstream& source)
-  {
-    source << "uint_" << this->_width;
-  }
 
   virtual string Kind() {return("AaUintType");}
+  virtual string CName() 
+  {
+    return("uint_" + IntToStr(this->Get_Width()));
+  }
 };
 
 class AaIntType: public AaUintType
@@ -61,10 +62,11 @@ class AaIntType: public AaUintType
   ~AaIntType();
   void Print(ostream& ofile);
   virtual string Kind() {return("AaIntType");}
-  void Write_C(ofstream& header, ofstream& source)
+  virtual string CName() 
   {
-    source << "int_" << this->_width;
+    return("int_" + IntToStr(this->Get_Width()));
   }
+
 };
 
 class AaPointerType: public AaUintType
@@ -76,9 +78,9 @@ class AaPointerType: public AaUintType
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaPointerType");}
 
-  void Write_C(ofstream& header, ofstream& source)
+  virtual string CName()
   {
-    source << "void*";
+    return("void*");
   }
 
 };
@@ -100,9 +102,9 @@ class AaFloatType : public AaScalarType
   void Print(ostream& ofile);
   virtual string Kind() {return("AaFloatType");}
 
-  void Write_C(ofstream& header, ofstream& source)
+  virtual string CName()
   {
-    source << "float_" << this->_characteristic << "_" << this->_mantissa;
+    return(string("float_") + IntToStr(this->_characteristic) +  "_" + IntToStr(this->_mantissa));
   }
 
 };
@@ -127,13 +129,13 @@ class AaArrayType: public AaType
   unsigned int Get_Dimension(unsigned int dim_id);
   void Print(ostream& ofile);
   virtual string Kind() {return("AaArrayType");}
-  void Write_C(ofstream& header, ofstream& source)
+  virtual string CName(ofstream& header, ofstream& source)
   {
-    this->_element_type->Write_C(header,source);
+    string ret_string =  this->_element_type->CName();
     for(unsigned int i=0; i < this->Get_Number_Of_Dimensions(); i++)
-      source << "[" << this->_dimension[i] << "]";
+      ret_string +=  "[" + IntToStr(this->_dimension[i]) + "]";
+    return(ret_string);
   }
-
 };
 
 #endif
