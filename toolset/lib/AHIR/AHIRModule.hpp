@@ -33,6 +33,16 @@ namespace ahir
     void register_ln(LinkLayer *_ln);
     void register_arbiter(Arbiter *_arbiter);
 
+    void add_input_argument(const std::string &id, hls::Type &type);
+    void add_output_argument(const std::string &id, const hls::Type *type);
+
+    Transition& add_transition(const std::string &id, CPEType type);
+    Transition& add_place(const std::string &id);
+
+    void set_dependency(Transition &src, Place &snk);
+    void set_dependency(Place &src, Transition &snk);
+    void set_dependency(Transition &src, Transition &snk);
+
     DPElement* locate_dpe_from_cpe_id(unsigned id);
 
     Module(const std::string &_id)

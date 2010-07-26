@@ -57,7 +57,7 @@ namespace ahir {
   struct Transition : public CPElement {
     Symbol symbol;
     
-    Transition(unsigned _id, CPEType t, const std::string &d)
+    Transition(unsigned _id, CPEType t, const std::string &d = "")
       : CPElement(_id, t, d), symbol(0)
     { }
 

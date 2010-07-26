@@ -19,6 +19,11 @@ namespace ahir {
     , HIDDEN 
   } CPEType;
 
+  inline bool is_trans(CPEType t) 
+  {
+    return t != PLACE;
+  }
+
   class Port;
   typedef std::map<std::string, Port*> PortList;
 
