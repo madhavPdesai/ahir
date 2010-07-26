@@ -15,7 +15,7 @@
 //---------------------------------------------------------------------
 // AaModule
 //---------------------------------------------------------------------
-AaModule::AaModule(string fname): AaBlockStatement(NULL,fname)
+AaModule::AaModule(string fname): AaSeriesBlockStatement(NULL,fname)
 {
 }
 
@@ -90,9 +90,6 @@ void AaModule::Map_Source_References()
 }
 
 
-
-
-
 void AaModule::Write_Header(ofstream& ofile)
 {
   
@@ -116,8 +113,9 @@ void AaModule::Write_Header(ofstream& ofile)
     }
 
   // bit fields at the end whenever possible...
-  ofile << "\tunsigned _entry : 1;" << endl;
-  ofile << "\tunsigned _exit  : 1;" << endl;
+  ofile << "\tunsigned _entry        : 1;" << endl;
+  ofile << "\tunsigned _in_progress  : 1;" << endl;
+  ofile << "\tunsigned _exit         : 1;" << endl;
   ofile << "} "
 	<< this->Get_Structure_Name() 
 	<< ";" 
@@ -181,28 +179,67 @@ void AaModule::Write_Source(ofstream& ofile)
     }
   ofile << ")" << endl;
   ofile << "{" << endl;
-  ofile << "\t" 
-	<< this->Get_Structure_Name() 
-	<< "* __top = "
+  ofile << this->Get_Structure_Name() << "* "
+	<< AaProgram::Get_Top_Struct_Variable_Name()
+	<< " = "
 	<< "(" << this->Get_Structure_Name() << "*) calloc(1,sizeof(" 
 	<< this->Get_Structure_Name() << "));" << endl;
   ofile << "\t__top->_entry = 1;" <<  endl;
   for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
     {
-      ofile << "\t__top->" << this->_input_args[i]->Get_Name() << " = " 
+      ofile << "\t" << AaProgram::Get_Top_Struct_Variable_Name()
+	    << "->" << this->_input_args[i]->Get_Name() << " = " 
 	    << this->_input_args[i]->Get_Name() << ";" << endl;
     }
 
-  ofile << "\twhile(!__top->_exit) " << endl;
+  ofile << "\twhile(!" << AaProgram::Get_Top_Struct_Variable_Name() << "->_exit) " << endl;
   ofile << "\t{ " << endl;
-  ofile << "\t\t__top = " << this->Get_C_Function_Name() << "(__top);" << endl;
+  ofile << "\t\t" << AaProgram::Get_Top_Struct_Variable_Name() 
+	<< " = " << this->Get_C_Function_Name() 
+	<< "(" 
+	<< AaProgram::Get_Top_Struct_Variable_Name() 
+	<< ");" << endl;
   ofile << "\t} " << endl;
   for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
     {
       ofile << "\t*" << this->_output_args[i]->Get_Name() 
-	    << "= __top->" << this->_output_args[i]->Get_Name() << ";" << endl;
+	    << "= "
+	    << AaProgram::Get_Top_Struct_Variable_Name() 
+	    << "->" << this->_output_args[i]->Get_Name() << ";" << endl;
     }
 
+  ofile << "return AASUCCESS; " << endl;
+  ofile << "}" << endl;
+
+
+  // now the inner function.
+  // two function declarations associated with this statement.
+  ofile << this->Get_Structure_Name() << "* " 
+	<< this->Get_C_Function_Name() 
+	<< "(" 
+	<< this->Get_Structure_Name()
+	<< "* "
+	<< AaProgram::Get_Top_Struct_Variable_Name()
+	<< ")" 
+	<< endl;
+  ofile << "{" << endl;
+
+  ofile << "if " << AaProgram::Get_Top_Struct_Variable_Name() << "->_entry {" << endl;
+  ofile << AaProgram::Get_Top_Struct_Variable_Name() << "->_entry = 0;" << endl;
+  ofile << AaProgram::Get_Top_Struct_Variable_Name() << "->_in_progress = 1;" << endl;
+
+  this->Write_Entry_Transfer_Code(ofile);
+  ofile << "}" << endl;
+  this->Write_Statement_Invocations(ofile);
+
+  ofile << "if (";
+  this->Write_Exit_Check_Condition(ofile);
+  ofile << ") {" << endl;
+  this->Write_Cleanup_Code(ofile);
+  ofile << AaProgram::Get_Top_Struct_Variable_Name() << "->_in_progress = 0;" << endl;
+  ofile << AaProgram::Get_Top_Struct_Variable_Name() << "->_exit = 1;" << endl;
+  ofile << "} " << endl;
+  ofile << "return "<< AaProgram::Get_Top_Struct_Variable_Name() << ";" << endl;
   ofile << "}" << endl;
 
 }

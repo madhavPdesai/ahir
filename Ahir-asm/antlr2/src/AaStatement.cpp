@@ -103,6 +103,8 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
     }
   else if((child != NULL) && !err_flag)
     {
+      obj_ref->Set_Object(child);
+
       // obj_ref -> child
       child->Add_Target_Reference(obj_ref); // obj_ref uses child as a target
       obj_ref->Add_Source_Reference(child); // child uses obj_ref as a source
@@ -117,56 +119,62 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
 
 void AaStatement::Write_Pipe_Read_Condition_Check(ofstream& ofile , string tab_string)
 {
-  bool first_one = true;
+  ofile << tab_string << "(1";
   for(set<AaRoot*>::iterator siter = this->_source_objects.begin();
       siter != this->_source_objects.end();
       siter++)
     {
       if((*siter)->Is("AaPipeObject"))
 	{
-	  ofile << tab_string;
-	  if(!first_one)
-	    ofile << " && ";
-	  ofile << ((AaPipeObject*)(*siter))->Get_Valid_Flag_Name() << endl;
-	  first_one = false;
+	  ofile << " && ";
+	  ofile << ((AaPipeObject*)(*siter))->Get_Valid_Flag_Name_Ref();
 	}
     }
+  ofile << ")";
 }
 void AaStatement::Write_Pipe_Write_Condition_Check(ofstream& ofile , string tab_string)
 {
-  bool first_one = true;
+
+  ofile << tab_string << "(1";
   for(set<AaRoot*>::iterator siter = this->_target_objects.begin();
       siter != this->_target_objects.end();
       siter++)
     {
       if((*siter)->Is("AaPipeObject"))
 	{
-	  ofile << tab_string;
-	  if(!first_one)
-	    ofile << " && !";
-	  ofile << ((AaPipeObject*)(*siter))->Get_Valid_Flag_Name() << endl;
-	  first_one = false;
+	  ofile << " && !";
+	  ofile << ((AaPipeObject*)(*siter))->Get_Valid_Flag_Name_Ref();
 	}
     }
+
+  ofile << ")";
 
 }
 void AaStatement::Write_Pipe_Condition_Check(ofstream& ofile , string tab_string)
 {
-  bool first_one = true;
+  ofile << tab_string << "(1";
+  for(set<AaRoot*>::iterator siter = this->_source_objects.begin();
+      siter != this->_source_objects.end();
+      siter++)
+    {
+      if((*siter)->Is("AaPipeObject"))
+	{
+	  ofile << " && ";
+	  ofile << ((AaPipeObject*)(*siter))->Get_Valid_Flag_Name_Ref() << endl;
+	}
+    }
+
   for(set<AaRoot*>::iterator siter = this->_target_objects.begin();
       siter != this->_target_objects.end();
       siter++)
     {
       if((*siter)->Is("AaPipeObject"))
 	{
-	  ofile << tab_string;
-	  if(!first_one)
-	    ofile << " && !";
-	  ofile << ((AaPipeObject*)(*siter))->Get_Valid_Flag_Name() << endl;
-	  first_one = false;
+	  ofile << " && !";
+	  ofile << ((AaPipeObject*)(*siter))->Get_Valid_Flag_Name_Ref();
 	}
     }
-
+  ofile << ")";
 }
 
 
@@ -179,7 +187,7 @@ void AaStatement::Write_Pipe_Read_Condition_Update(ofstream& ofile , string tab_
       if((*siter)->Is("AaPipeObject"))
 	{
 	  ofile << tab_string;
-	  ofile << ((AaPipeObject*)(*siter))->Get_Valid_Flag_Name() << " = 0;" << endl;
+	  ofile << ((AaPipeObject*)(*siter))->Get_Valid_Flag_Name_Ref() << " = 0;" << endl;
 	}
     }
 }
@@ -192,7 +200,7 @@ void AaStatement::Write_Pipe_Write_Condition_Update(ofstream& ofile , string tab
       if((*siter)->Is("AaPipeObject"))
 	{
 	  ofile << tab_string;
-	  ofile << ((AaPipeObject*)(*siter))->Get_Valid_Flag_Name() << " = 1;" << endl;
+	  ofile << ((AaPipeObject*)(*siter))->Get_Valid_Flag_Name_Ref() << " = 1;" << endl;
 	}
     }
 }
@@ -205,7 +213,7 @@ void AaStatement::Write_Pipe_Condition_Update(ofstream& ofile, string tab_string
       if((*siter)->Is("AaPipeObject"))
 	{
 	  ofile << tab_string;
-	  ofile << ((AaPipeObject*)(*siter))->Get_Valid_Flag_Name() << " = 1;" << endl;
+	  ofile << ((AaPipeObject*)(*siter))->Get_Valid_Flag_Name_Ref() << " = 1;" << endl;
 	}
     }
 
@@ -216,7 +224,7 @@ void AaStatement::Write_Pipe_Condition_Update(ofstream& ofile, string tab_string
       if((*siter)->Is("AaPipeObject"))
 	{
 	  ofile << tab_string;
-	  ofile << ((AaPipeObject*)(*siter))->Get_Valid_Flag_Name() << " = 0;" << endl;
+	  ofile << ((AaPipeObject*)(*siter))->Get_Valid_Flag_Name_Ref() << " = 0;" << endl;
 	}
     }
 }
@@ -224,12 +232,10 @@ void AaStatement::Write_Pipe_Condition_Update(ofstream& ofile, string tab_string
 // no contribution unless instruction can block
 void AaStatement::Write_C_Struct(ofstream& ofile)
 {
-  if(this->Can_Block())
-    {
-      // the statement needs an entry flag and an exit flag!
-      ofile << this->Tab() << "unsigned int " << this->Get_Entry_Name() << ": 1; " << endl;
-      ofile << this->Tab() << "unsigned int " << this->Get_Exit_Name()  << ": 1; " << endl;
-    }
+  // the statement needs an entry flag and an exit flag!
+  ofile << this->Tab() << "unsigned int " << this->Get_Entry_Name() << ": 1; " << endl;
+  ofile << this->Tab() << "unsigned int " << this->Get_In_Progress_Name() << ": 1; " << endl;
+  ofile << this->Tab() << "unsigned int " << this->Get_Exit_Name()  << ": 1; " << endl;
 }
 
 void AaStatement::Write_C_Function_Header(ofstream& ofile)
@@ -241,32 +247,28 @@ void AaStatement::Write_C_Function_Header(ofstream& ofile)
 // call, block statements will redefine.
 void AaStatement::Write_C_Function_Body(ofstream& ofile)
 {
-  // if it can block, do the following...
   // if all the pipes needed to be accessed are available.
   // if yes, then execute the assignment, clear the entry flag
   // update the pipe flags, and set the exit flag.
   // if no, then dont do anything.
   // if entry flag is not set, dont do anything.
   // if it cannot block, just write the execution code.
-  if(this->Can_Block())
-    {
-      ofile << this->Tab() << "if " << this->Get_Entry_Name() << endl;
-      ofile << this->Tab() << "{" << endl;
-      ofile << this->Tab() << "\t" << endl;
-      ofile << this->Tab() << "\tif (" << endl;
-      // check condition flags (if they are ok for read and write)
-      this->Write_Pipe_Condition_Check(ofile,this->Tab() + "\t\t");
-      ofile << this->Tab() << "\t\t)" << endl;
-      ofile << this->Tab() << "\t{" << endl;
-      this->PrintC(ofile, this->Tab() + "\t\t");
-      this->Write_Pipe_Condition_Update(ofile,this->Tab() + "\t\t");
-      ofile << this->Tab() << "\t\t" << this->Get_Entry_Name() << " = 0;" << endl;
-      ofile << this->Tab() << "\t\t" << this->Get_Exit_Name() << " = 1;" << endl;
-      ofile << this->Tab() << "\t}" << endl;
-      ofile << this->Tab() << "}" << endl;
-    }
-  else
-    this->PrintC(ofile,this->Tab());
+  
+  // check if entry flag is set 
+  ofile << "if " << this->Get_Entry_Name_Ref() << endl;
+  ofile << "{" << endl;
+
+  // check if pipe read and write condition flags are set.
+  ofile << "if (" ;
+  // check condition flags (if they are ok for read and write)
+  this->Write_Pipe_Condition_Check(ofile,"");
+  ofile << ") {" << endl;
+  this->PrintC(ofile, "");
+  this->Write_Pipe_Condition_Update(ofile,"");
+  ofile << this->Get_Entry_Name_Ref() << " = 0;" << endl;
+  ofile << this->Get_Exit_Name_Ref()  << " = 1;" << endl;
+  ofile << "}" << endl;
+  ofile << "}" << endl;
 }
 
 //---------------------------------------------------------------------
@@ -561,76 +563,77 @@ void AaCallStatement::Write_C_Function_Body(ofstream& ofile)
     }
   */
   // if entry {
-  ofile << this->Tab() << "if " << this->Get_Entry_Name() << endl;
-  ofile << this->Tab() << "{" << endl;
+  ofile << "if " << this->Get_Entry_Name_Ref() << endl;
+  ofile << "{" << endl;
   //     if(called-fn-struct == NULL) {
-  ofile << this->Tab() << "\t";
   ofile <<  "if ("
-	<< this->Get_Called_Function_Struct_Pointer() 
+	<< this->Get_Called_Function_Struct_Pointer_Ref() 
 	<< " == NULL ) {" << endl;
   //          function being called for the "first time"... allocate
-  ofile << this->Tab() 
-	<< "\t\t"
+  ofile	<< this->Get_Called_Function_Struct_Pointer_Ref() 
+	<< " = ("
 	<< this->Get_Called_Module_Struct_Name()
-	<< "* " 
-	<< this->Get_Called_Function_Struct_Pointer() 
-	<< " = calloc(1,sizeof("
+	<< "*) calloc(1,sizeof("
 	<< this->Get_Called_Module_Struct_Name()
-	<< ");" << endl;
-  ofile << this->Tab() << "\t\t"
-	<< this->Get_Called_Function_Struct_Pointer() 
+	<< "));" << endl;
+  ofile << this->Get_Called_Function_Struct_Pointer_Ref() 
 	<< "->_entry = 1; " << endl;
-  ofile << this->Tab() << "\t}" << endl;
+  ofile << "// reset entry flag and set in progress flag" << endl;
+  ofile << this->Get_Entry_Name_Ref() << " = 0;" << endl;
+  ofile << this->Get_In_Progress_Name_Ref() << " = 1;" << endl;
+  ofile << "}" << endl;
   //     }
   
   //     if(called-fn-struct->_entry) {
-  ofile << this->Tab() << "\t"
-	<< "if " 
-	<< this->Get_Called_Function_Struct_Pointer()
-	<< "->_entry {" << endl;
+  ofile << "if " 
+	<< this->Get_Called_Function_Struct_Pointer_Ref()
+	<< "->_entry { // entry flag set?" << endl;
   //           if(pipe-read-flags-ok) {
-  ofile << this->Tab() << "\t\tif (" << endl;
-  this->Write_Pipe_Read_Condition_Check(ofile,this->Tab() + "\t\t\t");
-  ofile << this->Tab() << "\t\t\t)" << endl;
-  ofile << this->Tab() << "\t\t{" << endl;
+  ofile << "if (" ;
+  this->Write_Pipe_Read_Condition_Check(ofile,"");
+  ofile << ") { // check if pipes can be read from" << endl;
   //                copy input arguments
-  this->Write_Inarg_Copy_Code(ofile,this->Tab() + "\t\t\t");
+  this->Write_Inarg_Copy_Code(ofile,"");
   //                update read condition flags
-  this->Write_Pipe_Read_Condition_Update(ofile,this->Tab() + "\t\t\t");
-  ofile << this->Tab() << "\t\t}" << endl;
+  this->Write_Pipe_Read_Condition_Update(ofile,"");
+  ofile << "} // arguments copied to call structure" << endl;
   //           }
-  ofile << this->Tab() << "\t}" << endl;
+  ofile << "} // called function had entry flag set" << endl;
   //     }
   
   
   // if exit flag is not set on called function, call it again
-  ofile << this->Tab() << "\t"
-	<< "if (!" 
-	<< this->Get_Called_Function_Struct_Pointer()
-	<< "->_exit) {" << endl;
-  this->PrintC(ofile,this->Tab() + "\t\t");
-  ofile << this->Tab() << "\t}" << endl;
+  ofile << "if (" 
+	<< this->Get_Called_Function_Struct_Pointer_Ref() << "->_in_progress)  {// called function had not finished" << endl;
+
+  // call the function
+  ofile << "// call the function" << endl;
+  this->PrintC(ofile,"");
+
+  ofile << "}" << endl;
   
   // if exit flag is set on called function, try to write.
-  ofile << this->Tab() << "\t"
-	<< "if (" 
-	<< this->Get_Called_Function_Struct_Pointer()
-	<< "->_exit) {" << endl;
-  ofile << this->Tab() << "\t\t"
-	<< "if (";
-  this->Write_Pipe_Read_Condition_Update(ofile,this->Tab() + "\t\t\t");
-  ofile << this->Tab() << "\t\t\t) {"  << endl;
-  this->Write_Outarg_Copy_Code(ofile,this->Tab() + "\t\t\t");
-  this->Write_Pipe_Read_Condition_Update(ofile,this->Tab() + "\t\t\t");
+  ofile << "if (" 
+	<< this->Get_Called_Function_Struct_Pointer_Ref() << "->_exit) {" << endl;
+  ofile << "if (";
+  this->Write_Pipe_Write_Condition_Check(ofile,"");
+  ofile << ") {"  << endl;
+  this->Write_Outarg_Copy_Code(ofile,"");
+  this->Write_Pipe_Write_Condition_Update(ofile,"");
 
   // delete the foreign structure
-  ofile << this->Tab() << "\t\t\tcfree("<< this->Get_Called_Function_Struct_Pointer() << ");" << endl;
-  ofile << this->Tab() << "\t\t\t"<< this->Get_Called_Function_Struct_Pointer() << " = NULL;" << endl;
+  ofile << "cfree("<< this->Get_Called_Function_Struct_Pointer_Ref() << ");" << endl;
+  ofile << this->Get_Called_Function_Struct_Pointer_Ref() << " = NULL;" << endl;
+
+  // set the exit flag for this statement
+  ofile << "// reset in progress flag and set exit flag" << endl;
+  ofile << this->Get_Exit_Name_Ref() << " = 1;" << endl;
+  ofile << this->Get_In_Progress_Name_Ref() << " = 0;" << endl;
 
   // close the ifs
-  ofile << this->Tab() << "\t\t}"  << endl;
-  ofile << this->Tab() << "\t}" << endl;
-  ofile << this->Tab() << "}" << endl;
+  ofile << "}"  << endl;
+  ofile << "}" << endl;
+  ofile << "}" << endl;
 }
 
 // return true if one of the sources or targets is a pipe.
@@ -653,10 +656,10 @@ void AaCallStatement::PrintC(ofstream& ofile, string tab_string)
   //   struct = __foo(struct)
   // 
 
-  string struct_name =  this->Get_Called_Function_Struct_Pointer();
+  string struct_name =  this->Get_Called_Function_Struct_Pointer_Ref();
   if(this->Get_Called_Module() != NULL)
     {
-      ofile << tab_string << struct_name 
+      ofile << struct_name 
 	    << " = "
 	    << ((AaModule*)this->Get_Called_Module())->Get_C_Function_Name()
 	    << "(" << struct_name << ");" << endl;
@@ -664,14 +667,13 @@ void AaCallStatement::PrintC(ofstream& ofile, string tab_string)
   else
     {
       bool first_one = true;
-      ofile << tab_string;
       ofile << this->Get_Function_Name() // foreign function
 	    << "(" << endl;
       for(unsigned int i=0; i < this->_input_args.size(); i++)
 	{
 	  if(!first_one)
 	    ofile << "," << endl;
-	  ofile << tab_string << "\t" << struct_name << "->";
+	  ofile << struct_name << "->";
 	  ofile << "_in" << i;
 	  first_one = false;
 	}
@@ -680,15 +682,14 @@ void AaCallStatement::PrintC(ofstream& ofile, string tab_string)
 	{
 	  if(!first_one)
 	    ofile << "," << endl;
-	  ofile << tab_string << "\t";
 	  ofile << "&(" << struct_name << "->";
 	  ofile << "_out" << i;
 	  ofile << ")";
 	  first_one = false;
 	}
-      ofile << endl << tab_string << ");" << endl;
-      ofile << tab_string << struct_name << "->_entry  = 0;" << endl;
-      ofile << tab_string << struct_name << "->_exit   = 1;" << endl;
+      ofile << endl << ");" << endl;
+      ofile <<  struct_name << "->_entry  = 0;" << endl;
+      ofile <<  struct_name << "->_exit   = 1;" << endl;
     }
 }
 
@@ -703,7 +704,7 @@ string AaCallStatement::Get_Called_Module_Struct_Name()
 void AaCallStatement::Write_Inarg_Copy_Code(ofstream& ofile,string tab_string)
 {
   // copy inargs to struct
-  string struct_name =  this->Get_Called_Function_Struct_Pointer();
+  string struct_name =  this->Get_Called_Function_Struct_Pointer_Ref();
   for(unsigned int i=0; i < this->_input_args.size(); i++)
     {
       string input_argument;
@@ -722,7 +723,7 @@ void AaCallStatement::Write_Inarg_Copy_Code(ofstream& ofile,string tab_string)
 void AaCallStatement::Write_Outarg_Copy_Code(ofstream& ofile,string tab_string)
 {
   // copy inargs to struct
-  string struct_name =  this->Get_Called_Function_Struct_Pointer();
+  string struct_name =  this->Get_Called_Function_Struct_Pointer_Ref();
   for(unsigned int i=0; i < this->_output_args.size(); i++)
     {
       string output_argument;
@@ -781,12 +782,15 @@ void AaBlockStatement::Write_C_Struct(ofstream& ofile)
   string tab_string = this->Tab();
   ofile << tab_string <<  "struct " << this->Get_Structure_Name() << "__ {" << endl;
   this->PrintC_Objects(ofile,tab_string + "\t");
+
+  ofile << tab_string << "\tunsigned int " << this->Get_Entry_Name() << " : 1;" << endl;
+  ofile << tab_string << "\tunsigned int " << this->Get_Exit_Name() << " : 1;" << endl;
+  ofile << tab_string << "\tunsigned int " << this->Get_In_Progress_Name() << " : 1;" << endl;
+
   if(this->_statement_sequence != NULL)
     {
       this->_statement_sequence->Write_C_Struct(ofile);
     }
-  ofile << tab_string << "\tunsigned int _entry : 1;" << endl;
-  ofile << tab_string << "\tunsigned int _exit  : 1;" << endl;
   ofile << tab_string <<  "} " << this->Get_Label() << ";" << endl;
 }
 
@@ -794,20 +798,172 @@ void AaBlockStatement::Write_C_Struct(ofstream& ofile)
 void AaBlockStatement::Write_C_Function_Body(ofstream& ofile) 
 {
   string tab_string = this->Tab();
-  ofile << tab_string << this->Get_C_Name() << " : { " << endl;
-  ofile << tab_string 
-	<< "if " 
-	<< this->Get_Struct_Dereference() 
-	<< "._entry { " 
-	<< endl
-	<< tab_string << "\t"  << this->Get_Struct_Dereference() << "._entry = 0;"  << endl;
-  if(this->_statement_sequence != NULL)
+
+  if(this->Get_Label() != "")
     {
-      this->_statement_sequence->Write_C_Function_Body(ofile);
+      ofile  << this->Get_C_Name() << " : { " << endl;
     }
-  ofile << tab_string 	<< "\t" <<  this->Get_Struct_Dereference() << "._exit = 1;"  << endl;
-  ofile << tab_string << "\t} " << endl;
-  ofile << tab_string << "} " << endl;
+
+  // if entry flag is set, transfer entry to constituents.
+  ofile << "if ( " ;
+  this->Write_Entry_Condition(ofile);
+  ofile << ") " 	
+	<< " { " 
+	<< endl
+	<< this->Get_Entry_Name_Ref() << " = 0;"  << endl;
+  ofile << this->Get_In_Progress_Name_Ref() << " = 1;"  << endl;
+
+  this->Write_Entry_Transfer_Code(ofile);
+  ofile << "}";
+
+
+  this->Write_Statement_Invocations(ofile);
+
+  // check if all constituents have exited before setting _exit flag.
+  ofile << tab_string << "if (";
+  this->Write_Exit_Check_Condition(ofile);
+  ofile << ") {" << endl;
+  this->Write_Cleanup_Code(ofile);
+  ofile <<  this->Get_In_Progress_Name_Ref() << " = 0;"  << endl;
+  ofile <<  this->Get_Exit_Name_Ref() << " = 1;"  << endl;
+
+  ofile << "}" << endl;
+  if(this->Get_Label() != "")
+    ofile << "}" << endl;
+
+}
+
+void AaBlockStatement::Write_Entry_Condition(ofstream& ofile)
+{
+  ofile << this->Get_Entry_Name_Ref();
+}
+
+void AaBlockStatement::Write_Parallel_Entry_Transfer_Code(AaStatementSequence* sseq, ofstream& ofile)
+{
+  if(sseq != NULL)
+    {
+      for(unsigned int i= 0; i < sseq->Get_Statement_Count(); i++)
+	{
+	  if(!(sseq->Get_Statement(i)->Is("AaNullStatement")))
+	    {
+	      ofile << this->Tab() << "\t";
+	      // clear exit flags of subsidiaries
+	      ofile << sseq->Get_Statement(i)->Get_Exit_Name_Ref() << " = 0;"  << endl;	  
+	      
+
+	      ofile << this->Tab() << "\t";
+	      // set entry flag of all subsidiaries
+	      ofile << sseq->Get_Statement(i)->Get_Entry_Name_Ref() << " = 1;"  << endl;	  
+	    }
+	}
+    }
+}
+void AaBlockStatement::Write_Series_Entry_Transfer_Code(AaStatementSequence* sseq, ofstream& ofile)
+{
+  // look for first non-null statement
+  AaStatement* first_statement = NULL;
+  for(unsigned int i= 0; i < this->Get_Statement_Count(); i++)
+    {
+      if(!(this->Get_Statement(i)->Is("AaNullStatement")))
+	{
+	  if(first_statement == NULL)
+	    first_statement = this->Get_Statement(i);
+	  
+	  // clear exit flags of subsidiaries
+	  ofile << this->Get_Statement(i)->Get_Exit_Name_Ref() << " = 0;"  << endl;	  
+	}
+    }
+  if(first_statement != NULL)
+    {
+      // set entry flag of first statement
+      ofile << first_statement->Get_Entry_Name_Ref() << " = 1;"  << endl;
+    }
+}
+void AaBlockStatement::Write_Parallel_Statement_Invocations(AaStatementSequence* sseq, ofstream& ofile)
+{
+  AaStatement* curr_statement;
+  if(sseq != NULL)
+    {
+      for(unsigned int i= 0; i < sseq->Get_Statement_Count(); i++)
+	{
+	  curr_statement = sseq->Get_Statement(i);
+	  if(!curr_statement->Is("AaNullStatement"))
+	    {
+	      curr_statement->Write_C_Function_Body(ofile);
+	    }
+	}
+    }
+}
+void AaBlockStatement::Write_Series_Statement_Invocations(AaStatementSequence* sseq, ofstream& ofile)
+{
+  AaStatement* prev_statement = NULL;
+  AaStatement* curr_statement = NULL;
+  
+  if(sseq != NULL)
+    {
+      for(unsigned int i= 0; i < sseq->Get_Statement_Count(); i++)
+	{
+	  curr_statement = sseq->Get_Statement(i);
+	  
+	  if(!curr_statement->Is("AaNullStatement"))
+	    {
+	      if(prev_statement != NULL)
+		{
+		  // check if previous statement has finished before passing token
+		  // to next statement
+		  ofile << "if " << prev_statement->Get_Exit_Name_Ref() << " {" << endl;
+		  ofile << curr_statement->Get_Entry_Name_Ref() << " = 1;" << endl << "}" << endl;
+		  
+		  //Note: the exit flag is not reset here!
+		}
+	      curr_statement->Write_C_Function_Body(ofile);
+	      prev_statement = curr_statement;
+	    }
+	}
+    }
+
+}
+void AaBlockStatement::Write_Parallel_Exit_Check_Condition(AaStatementSequence* sseq, ofstream& ofile)
+{
+  ofile << "(1";
+  if(sseq && sseq->Get_Statement_Count() > 0)
+    {
+      for(unsigned int i=  sseq->Get_Statement_Count() - 1; i > 0 ; i--)
+	{
+	  if(!(sseq->Get_Statement(i)->Is("AaNullStatement")))
+	    {
+	      ofile << " && "
+		    << sseq->Get_Statement(i)->Get_Exit_Name_Ref() ;
+	    }
+	}
+
+    }
+  ofile << ")";
+}
+void AaBlockStatement::Write_Series_Exit_Check_Condition(AaStatementSequence* sseq, ofstream& ofile)
+{
+  AaStatement* last_statement = NULL;
+  if(this->Get_Statement_Count() > 0)
+    {
+      for(unsigned int i=  this->Get_Statement_Count() - 1; i > 0 ; i--)
+	{
+	  if(!(this->Get_Statement(i)->Is("AaNullStatement")))
+	    {
+	      last_statement = this->Get_Statement(i);
+	      break;
+	    }
+	}
+
+    }
+  if(last_statement != NULL)
+    {
+      if(last_statement->Is("AaPlaceStatement"))
+	ofile << "(0)";
+      else 
+	ofile << last_statement->Get_Exit_Name_Ref();
+    }
+  else
+    ofile << "(1)";
 }
 
 //---------------------------------------------------------------------
@@ -820,6 +976,20 @@ AaSeriesBlockStatement::~AaSeriesBlockStatement() {}
   ofile << this->Tab();
   ofile << "$seriesblock";
   this->AaBlockStatement::Print(ofile);
+}
+
+void AaSeriesBlockStatement::Write_Entry_Transfer_Code(ofstream& ofile)
+{
+  this->Write_Series_Entry_Transfer_Code(this->_statement_sequence,ofile);
+}
+void AaSeriesBlockStatement::Write_Statement_Invocations(ofstream& ofile)
+{
+  this->Write_Series_Statement_Invocations(this->_statement_sequence,ofile);
+}
+
+void AaSeriesBlockStatement::Write_Exit_Check_Condition(ofstream& ofile)
+{
+  this->Write_Series_Exit_Check_Condition(this->_statement_sequence, ofile);
 }
 
 
@@ -835,10 +1005,25 @@ AaParallelBlockStatement::~AaParallelBlockStatement() {}
   this->AaBlockStatement::Print(ofile);
 }
 
+void AaParallelBlockStatement::Write_Entry_Transfer_Code(ofstream& ofile) 
+{
+  this->Write_Parallel_Entry_Transfer_Code(this->_statement_sequence,ofile);
+}
+
+void AaParallelBlockStatement::Write_Statement_Invocations(ofstream& ofile) 
+{
+  this->Write_Parallel_Statement_Invocations(this->_statement_sequence,ofile);
+}
+void AaParallelBlockStatement::Write_Exit_Check_Condition(ofstream& ofile) 
+{
+  this->Write_Parallel_Exit_Check_Condition(this->_statement_sequence,ofile);
+}
+
+
 //---------------------------------------------------------------------
 // AaForkBlockStatement: public AaBlockStatement
 //---------------------------------------------------------------------
-AaForkBlockStatement::AaForkBlockStatement(AaScope* scope,string label):AaBlockStatement(scope,label) {}
+AaForkBlockStatement::AaForkBlockStatement(AaScope* scope,string label):AaParallelBlockStatement(scope,label) {}
 AaForkBlockStatement::~AaForkBlockStatement() {}
  void AaForkBlockStatement::Print(ostream& ofile)
 {
@@ -850,7 +1035,7 @@ AaForkBlockStatement::~AaForkBlockStatement() {}
 //---------------------------------------------------------------------
 // AaBranchBlockStatement: public AaBlockStatement
 //---------------------------------------------------------------------
-AaBranchBlockStatement::AaBranchBlockStatement(AaScope* scope,string label):AaBlockStatement(scope,label) {}
+AaBranchBlockStatement::AaBranchBlockStatement(AaScope* scope,string label):AaSeriesBlockStatement(scope,label) {}
 AaBranchBlockStatement::~AaBranchBlockStatement() {}
 void AaBranchBlockStatement::Print(ostream& ofile)
 {
@@ -862,7 +1047,7 @@ void AaBranchBlockStatement::Print(ostream& ofile)
 //---------------------------------------------------------------------
 //  AaJoinForkStatement: public AaBlockStatement
 //---------------------------------------------------------------------
-AaJoinForkStatement::AaJoinForkStatement(AaForkBlockStatement* scope):AaBlockStatement(scope,"") {}
+AaJoinForkStatement::AaJoinForkStatement(AaForkBlockStatement* scope):AaParallelBlockStatement(scope,"") {}
 AaJoinForkStatement::~AaJoinForkStatement() {}
 void AaJoinForkStatement::Print(ostream& ofile) 
 {
@@ -880,16 +1065,52 @@ void AaJoinForkStatement::Print(ostream& ofile)
   ofile << "$endjoin " << endl;
 }
 
-void AaJoinForkStatement::Write_C_Struct(ofstream& ofile)
+
+void AaJoinForkStatement::Map_Source_References()
 {
-  ofile << this->Tab() << "unsigned int " << this->Get_Entry_Name() << " : 1;" << endl; 
-  ofile << this->Tab() << "unsigned int " << this->Get_Exit_Name() << " : 1;" << endl; 
+  for(unsigned int i=0; i < this->_join_labels.size(); i++)
+    {
+      AaRoot* child = 
+	((AaScope*)this->Get_Scope())->Find_Child_Here(this->_join_labels[i]);
+      if(child != NULL)
+	{
+	  if(child->Is_Statement())
+	    {
+	      this->_wait_on_statements.push_back((AaStatement*)child);
+	    }
+	  else
+	    AaRoot::Error("did not find statement with label " + this->_join_labels[i],this);
+	}
+      else
+	{
+	    AaRoot::Error("did not find statement with label " + this->_join_labels[i],this);
+	}
+    }
+
+  this->AaBlockStatement::Map_Source_References();
+}
+
+void AaJoinForkStatement::Write_Entry_Transfer_Code(ofstream& ofile)
+{
+  ofile << this->Tab() << "if (1 ";
+  for(unsigned int i=0; i < this->_wait_on_statements.size(); i++)
+    {
+      ofile << "&& " << this->_wait_on_statements[i]->Get_Exit_Name_Ref() ;
+    }
+  ofile << ")" << endl;
+  ofile << this->Tab() << "{" << endl;
+  this->Write_Parallel_Entry_Transfer_Code(this->_statement_sequence,ofile);
+  ofile << this->Tab() << "}" << endl;
+
 }
 
 //---------------------------------------------------------------------
 // AaMergeStatement: public AaStatement
 //---------------------------------------------------------------------
-AaMergeStatement::AaMergeStatement(AaBranchBlockStatement* scope):AaBlockStatement((AaScope*)scope,"") {}
+AaMergeStatement::AaMergeStatement(AaBranchBlockStatement* scope):AaSeriesBlockStatement((AaScope*)scope,"") 
+{
+
+}
 AaMergeStatement::~AaMergeStatement() {}
 void AaMergeStatement::Print(ostream& ofile)
 {
@@ -912,11 +1133,49 @@ void AaMergeStatement::Print(ostream& ofile)
   ofile << "$endmerge" << endl ;
 }
 
-void AaMergeStatement::Write_C_Struct(ofstream& ofile)
+void AaMergeStatement::Map_Source_References()
 {
-  
-  ofile << this->Tab() << "unsigned int " << this->Get_Entry_Name() << " : 1;" << endl; 
-  ofile << this->Tab() << "unsigned int " << this->Get_Exit_Name() << " : 1;" << endl; 
+  for(unsigned int i=0; i < this->_merge_label_vector.size(); i++)
+    {
+      if(this->_merge_label_vector[i] != "$entry")
+	{
+	  AaRoot* child = 
+	    ((AaScope*)this->Get_Scope())->Find_Child_Here(this->_merge_label_vector[i]);
+	  if(child != NULL)
+	    {
+	      if(child->Is("AaPlaceStatement"))
+		{
+		  this->_wait_on_statements.push_back((AaPlaceStatement*)child);
+		}
+	      else
+		AaRoot::Error("did not find place statement with label " + this->_merge_label_vector[i],this);
+	    }
+	  else 
+	    {
+	      AaRoot::Error("did not find place statement with label " + this->_merge_label_vector[i],this);
+	    }
+	}
+    }
+}
+
+
+void AaMergeStatement::Write_Entry_Condition(ofstream& ofile)
+{
+  this->AaBlockStatement::Write_Entry_Condition(ofile);
+  for(unsigned int i=0; i < this->_wait_on_statements.size(); i++)
+    {
+      ofile << " || " << this->_wait_on_statements[i]->Get_Place_Name_Ref() ;
+    }
+}
+
+void AaMergeStatement::Write_Cleanup_Code(ofstream& ofile)
+{
+  // clear the places after you exit the merge..
+  for(unsigned int i=0; i < this->_wait_on_statements.size(); i++)
+    {
+      ofile << this->Tab() << "// clear the place flag " << endl;
+      ofile << this->Tab() << this->_wait_on_statements[i]->Get_Place_Name_Ref() << " = 0; " << endl;
+    }
 }
 
 //---------------------------------------------------------------------
@@ -1043,11 +1302,6 @@ void AaSwitchStatement::Print(ostream& ofile)
   ofile << "$endswitch " << endl;
 }
 
-void AaSwitchStatement::Write_C_Struct(ofstream& ofile)
-{
-  ofile << this->Tab() << "unsigned int " << this->Get_Entry_Name() << " : 1;" << endl; 
-  ofile << this->Tab() << "unsigned int " << this->Get_Exit_Name() << " : 1;" << endl; 
-}
 
 
 //---------------------------------------------------------------------
@@ -1080,11 +1334,6 @@ void AaIfStatement::Print(ostream& ofile)
   ofile << this->Tab() << "$endif" << endl;
 }
 
-void AaIfStatement::Write_C_Struct(ofstream& ofile)
-{
-  ofile << this->Tab() << "unsigned int " << this->Get_Entry_Name() << " : 1;" << endl; 
-  ofile << this->Tab() << "unsigned int " << this->Get_Exit_Name() << " : 1;" << endl; 
-}
 
 //---------------------------------------------------------------------
 // AaPlaceStatement: public AaStatement
@@ -1092,16 +1341,24 @@ void AaIfStatement::Write_C_Struct(ofstream& ofile)
 AaPlaceStatement::AaPlaceStatement(AaBranchBlockStatement* parent_tpr,string lbl):AaStatement(parent_tpr) 
 {
   this->_label = lbl;
+  this->_merge_count = 0;
   parent_tpr->Map_Child(lbl,this);
 };
 AaPlaceStatement::~AaPlaceStatement() {};
 void AaPlaceStatement::Write_C_Struct(ofstream& ofile)
 {
-  ofile << this->Tab() << "unsigned int " << this->Get_Label() << ": 1;" << endl;
+  ofile << this->Tab() << "unsigned int " << this->Get_Place_Name() << ": 1;" << endl;
+  ofile << this->Tab() << "unsigned int " << this->Get_Entry_Name() << ": 1;" << endl;
+  // NOTE: no exit flag!
+
 }
 void AaPlaceStatement::Write_C_Function_Body(ofstream& ofile) 
 {
-  ofile << this->Tab() << this->Get_Label() << "= 1;" << endl;
+  ofile << this->Get_Place_Name_Ref() << "= 1;" << endl;
+
+  ofile << this->Get_Entry_Name_Ref() << "= 1;" << endl;
+
+  // DO NOT SET THE EXIT FLAG!
 }
 
 

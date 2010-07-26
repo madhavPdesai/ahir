@@ -77,7 +77,7 @@ class AaProgram
   static void Write_C_Model();
   static string Get_Top_Struct_Variable_Name() 
   { 
-    string r = "_top";
+    string r = "__top";
     return (r);
   }
 };

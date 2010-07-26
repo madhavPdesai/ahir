@@ -114,6 +114,13 @@ class AaPipeObject: public AaObject
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaPipeObject");}
   virtual string Get_Valid_Flag_Name() { return(this->Get_Name() + "_valid__");}
+  virtual string Get_Valid_Flag_Name_Ref() 
+  {
+    if(this->Get_Scope() == NULL)
+      return(this->Get_Valid_Flag_Name());
+    else
+      return(this->Get_Scope()->Get_Struct_Dereference() + "." + this->Get_Valid_Flag_Name());
+  }
 
   virtual void PrintC(ofstream& ofile, string tab_string)
   {

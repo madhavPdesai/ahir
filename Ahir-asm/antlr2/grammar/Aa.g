@@ -571,7 +571,7 @@ aA_Merge_Statement[AaBranchBlockStatement* scope] returns [AaMergeStatement* new
     set<string,StringCompare> lbl_set;
     string lbl;
 }
-    : ml: MERGE
+    : ml: MERGE { new_mgs->Set_Line_Number(ml->getLine()); }
         ( (id: SIMPLE_IDENTIFIER
             { 
                 lbl = id->getText();
@@ -591,7 +591,7 @@ aA_Merge_Statement[AaBranchBlockStatement* scope] returns [AaMergeStatement* new
             AaStatementSequence* sseq = new AaStatementSequence(scope,slist);
             sseq->Increment_Tab_Depth();
             new_mgs->Set_Statement_Sequence(sseq);
-            new_mgs->Set_Line_Number(ml->getLine());
+
         }
         )?
     ENDMERGE
@@ -752,7 +752,7 @@ aA_Expression[AaScope* scope] returns [AaExpression* expr]
 //----------------------------------------------------------------------------------------------------------
 aA_Unary_Expression[AaScope* scope] returns [AaExpression* expr]
 {       
-    AaStringValue* op = NULL;
+    AaOperation op;
     AaExpression* rest = NULL;
     AaType* to_type = NULL;
     expr = NULL;
@@ -761,7 +761,7 @@ aA_Unary_Expression[AaScope* scope] returns [AaExpression* expr]
         lpid: LPAREN 
         (
             (
-                (NOT {op = new AaStringValue(scope,"$not");})
+                (NOT {op = __NOT;})
                 (rest = aA_Expression[scope])
                 {
                     expr = new AaUnaryExpression(scope,op,rest); 
@@ -793,18 +793,16 @@ aA_Binary_Expression[AaScope* scope] returns [AaExpression* expr]
 {
     AaExpression* first;
     AaExpression* second;
-    AaStringValue* op;
-    string opid;
+    AaOperation opid;
 }
     :   
         lp: LPAREN         
         first = aA_Expression[scope]  
         opid = aA_Binary_Op 
-        { op = new AaStringValue(scope,opid); }
         second = aA_Expression[scope] 
         RPAREN 
         {
-            expr = new AaBinaryExpression(scope,op,first,second);
+            expr = new AaBinaryExpression(scope,opid,first,second);
             expr->Set_Line_Number(lp->getLine());
         }
     ;   
@@ -835,25 +833,26 @@ aA_Ternary_Expression[AaScope* scope] returns [AaExpression* expr]
 //----------------------------------------------------------------------------------------------------------
 // aA_Binary_Op : OR | AND | NOR | NAND | XOR | XNOR | SHL | SHR | PLUS | MINUS | DIV | MUL | EQUAL | NOTEQUAL | LESS | LESSEQUAL | GREATER | GREATEREQUAL 
 //----------------------------------------------------------------------------------------------------------
-aA_Binary_Op returns [string op] : 
-        ( id_or:OR {op = id_or->getText();} )  | 
-        ( id_and:AND {op = id_and->getText();}) | 
-        ( id_nor:NOR { op = id_nor->getText();}) | 
-        ( id_nand:NAND { op = id_nand->getText();}) | 
-        ( id_xor:XOR { op = id_xor->getText();}) | 
-        ( id_xnor:XNOR { op = id_xnor->getText();}) | 
-        ( id_shl:SHL { op = id_shl->getText();}) |
-        ( id_shr:SHR { op = id_shr->getText();}) | 
-        ( id_plus:PLUS { op = id_plus->getText();}) | 
-        ( id_minus:MINUS { op = id_minus->getText();}) | 
-        ( id_div:DIV { op = id_div->getText();}) | 
-        ( id_mul:MUL { op = id_mul->getText();}) | 
-        ( id_EQUAL:EQUAL { op = id_EQUAL->getText();}) | 
-        ( id_notequal:NOTEQUAL { op = id_notequal->getText();}) | 
-        ( id_less:LESS { op = id_less->getText();}) | 
-        ( id_lessequal:LESSEQUAL { op = id_lessequal->getText();}) | 
-        ( id_greater:GREATER { op = id_greater->getText();}) | 
-        ( id_greaterequal:GREATEREQUAL { op = id_greaterequal->getText();});
+aA_Binary_Op returns [AaOperation op] : 
+        ( id_or:OR {op = __OR;})
+        ( id_and:AND {op = __AND;}) | 
+        ( id_nor:NOR { op = __NOR;}) | 
+        ( id_nand:NAND { op = __NAND;}) | 
+        ( id_xor:XOR { op = __XOR;}) | 
+        ( id_xnor:XNOR { op = __XNOR;}) | 
+        ( id_shl:SHL { op = __SHL;}) |
+        ( id_shr:SHR { op = __SHR;}) | 
+        ( id_plus:PLUS { op = __PLUS;}) | 
+        ( id_minus:MINUS { op = __MINUS;}) | 
+        ( id_div:DIV { op = __DIV;}) | 
+        ( id_mul:MUL { op = __MUL;}) | 
+        ( id_EQUAL:EQUAL { op = __EQUAL;}) | 
+        ( id_notequal:NOTEQUAL { op = __NOTEQUAL;}) | 
+        ( id_less:LESS { op = __LESS;}) | 
+        ( id_lessequal:LESSEQUAL { op = __LESSEQUAL;}) | 
+        ( id_greater:GREATER { op = __GREATER;}) | 
+        ( id_greaterequal:GREATEREQUAL { op = __GREATEREQUAL;})
+    ;
 
 
 //----------------------------------------------------------------------------------------------------------
@@ -1102,6 +1101,7 @@ aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
 aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReference* obj_ref]
     {
         string full_name;
+        vector<string> literals;
         unsigned int line_number;
     }
     : 
@@ -1116,16 +1116,16 @@ aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReferenc
             |
             ( lp: LESS { full_name += lp->getText(); line_number=lp->getLine(); }
                 ( 
-                    (iidv: UINTEGER { full_name += iidv->getText() + " ";} )+
+                    (iidv: UINTEGER { literals.push_back(iidv->getText()); full_name += iidv->getText() + " ";} )+
                     |
-                    (fidv: UFLOAT { full_name += fidv->getText() + " ";} )+
+                    (fidv: UFLOAT { literals.push_back(fidv->getText()); full_name += fidv->getText() + " ";} )+
                 )
               rp: GREATER { full_name += rp->getText(); }
             )
         )
 
         {
-                obj_ref = new AaConstantLiteralReference(scope,full_name);
+                obj_ref = new AaConstantLiteralReference(scope,full_name,literals);
                 obj_ref->Set_Line_Number(line_number);
         }
     ;

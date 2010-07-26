@@ -1,5 +1,6 @@
 using namespace std;
 #include <AaIncludes.h>
+#include <AaEnums.h>
 #include <AaUtil.h>
 #include <AaRoot.h>
 #include <AaScope.h>
@@ -42,13 +43,150 @@ bool StringCompare::operator() (string s11, string s21) const
   return false;
 };
 
-bool Is_Shift_Operation(string op)
+bool Is_Shift_Operation(AaOperation op)
 {
-  return(op == "<<" || op == ">>");
+  return(op == __SHL || op == __SHR);
 }
-bool Is_Compare_Operation(string op)
+bool Is_Compare_Operation(AaOperation op)
 {
-  return(op == "<" || op == ">" || op == "<=" || op == ">=" || op == "==" || op == "!=");
+  return(op == __LESS || op == __GREATER || op == __LESSEQUAL || op == __GREATEREQUAL 
+	 || op == __EQUAL || op == __NOTEQUAL);
+}
+
+string C_Name(AaOperation op)
+{
+  string ret_string = "__undefined";
+  switch(op)
+    {
+    case __OR:
+      ret_string = "__OR";
+      break;
+    case __AND:
+      ret_string = "__AND";
+      break;
+    case __NOR:
+      ret_string = "__NOR";
+      break;
+    case __NAND:
+      ret_string = "__NAND";
+      break;
+    case __XOR:
+      ret_string = "__XOR";
+      break;
+    case __XNOR:
+      ret_string = "__XNOR";
+      break;
+    case __SHL:
+      ret_string = "__SHL";
+      break;
+    case __SHR:
+      ret_string = "__SHL";
+      break;
+    case __PLUS:
+      ret_string = "__PLUS";
+      break;
+    case __MINUS:
+      ret_string = "__MINUS";
+      break;
+    case __DIV:
+      ret_string = "__DIV";
+      break;
+    case __MUL:
+      ret_string = "__MUL";
+      break;
+    case __EQUAL:
+      ret_string = "__EQUAL";
+      break;
+    case __NOTEQUAL:
+      ret_string = "__NOTEQUAL";
+      break;
+    case __LESS:
+      ret_string = "__LESS";
+      break;
+    case __LESSEQUAL:
+      ret_string = "__LESSEQUAL";
+      break;
+    case __GREATER:
+      ret_string = "__GREATER";
+      break;
+    case __GREATEREQUAL:
+      ret_string = "__GREATEREQUAL";
+      break;
+    case __NOT:
+      ret_string = "__NOT";
+      break;
+    default:
+      cerr << "Error: unrecognized operation" << endl;
+    }
+  return(ret_string);
+}
+
+string Aa_Name(AaOperation op)
+{
+  string ret_string = "__undefined";
+  switch(op)
+    {
+    case __OR:
+      ret_string = "$or";
+      break;
+    case __AND:
+      ret_string = "$and";
+      break;
+    case __NOR:
+      ret_string = "$nor";
+      break;
+    case __NAND:
+      ret_string = "$nand";
+      break;
+    case __XOR:
+      ret_string = "$xor";
+      break;
+    case __XNOR:
+      ret_string = "$xnor";
+      break;
+    case __SHL:
+      ret_string = ">>";
+      break;
+    case __SHR:
+      ret_string = "<<";
+      break;
+    case __PLUS:
+      ret_string = "+";
+      break;
+    case __MINUS:
+      ret_string = "-";
+      break;
+    case __DIV:
+      ret_string = "/";
+      break;
+    case __MUL:
+      ret_string = "*";
+      break;
+    case __EQUAL:
+      ret_string = "==";
+      break;
+    case __NOTEQUAL:
+      ret_string = "!=";
+      break;
+    case __LESS:
+      ret_string = "<";
+      break;
+    case __LESSEQUAL:
+      ret_string = "<=";
+      break;
+    case __GREATER:
+      ret_string = ">";
+      break;
+    case __GREATEREQUAL:
+      ret_string = ">=";
+      break;
+    case __NOT:
+      ret_string = "$not";
+      break;
+    default:
+      cerr << "Error: unrecognized operation" << endl;
+    }
+  return(ret_string);
 }
 
 //---------------------------------------------------------------------
@@ -170,10 +308,14 @@ AaRoot* AaScope::Find_Child(string cname)
 string AaScope::Get_Struct_Dereference()
 {
   string ret_string;
+
   if(this->Get_Scope() == NULL)
     ret_string = "(*" + AaProgram::Get_Top_Struct_Variable_Name() + ")";
-  else
+  else if (this->Get_Label() != "")
     ret_string = this->Get_Scope()->Get_Struct_Dereference() + "." + this->Get_Label();
+  else 
+    ret_string = this->Get_Scope()->Get_Struct_Dereference();
+
   return(ret_string);
 }
 
@@ -456,12 +598,44 @@ void AaObjectReference::Add_Source_Reference(AaRoot* referrer)
     }
 }
 
+void AaObjectReference::PrintC(ofstream& ofile, string tab_string)
+{
+  if(this->Get_Object()->Is_Object())
+    {
+      if(((AaObject*)(this->Get_Object()))->Get_Scope() != NULL)
+	ofile << tab_string 
+	      << ((AaObject*)this->Get_Object())->Get_Scope()->Get_Struct_Dereference()
+	      << ".";
+    }
+}
 //---------------------------------------------------------------------
 // AaConstantLiteralReference: public AaObjectReference
 //---------------------------------------------------------------------
-AaConstantLiteralReference::AaConstantLiteralReference(AaScope* parent_tpr, string literal_string):
-  AaObjectReference(parent_tpr,literal_string) {};
+AaConstantLiteralReference::AaConstantLiteralReference(AaScope* parent_tpr, 
+						       string literal_string,
+						       vector<string>& literals):
+  AaObjectReference(parent_tpr,literal_string) 
+{
+  for(unsigned int i= 0; i < literals.size(); i++)
+    this->_literals.push_back(literals[i]);
+};
 AaConstantLiteralReference::~AaConstantLiteralReference() {};
+void AaConstantLiteralReference::PrintC(ofstream& ofile, string tab_string)
+{
+  ofile << tab_string;
+  if(this->_literals.size() > 0)
+    {
+      ofile << "{ ";
+      ofile << this->_literals[0];
+      for(unsigned int i= 1; i < this->_literals.size(); i++)
+	ofile << ", " << this->_literals[i];
+      ofile << "} ";
+    }
+  else
+    {
+      ofile << this->Get_Object_Ref_String() << " ";
+    }
+}
 
 //---------------------------------------------------------------------
 //AaSimpleObjectReference
@@ -475,6 +649,11 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
   else if(obj->Is_Expression())
     AaProgram::Add_Type_Dependency(this,obj);
   this->_object = obj;
+}
+void AaSimpleObjectReference::PrintC(ofstream& ofile, string tab_string)
+{
+  this->AaObjectReference::PrintC(ofile,tab_string);
+  ofile << this->Get_Object_Root_Name();
 }
 
 
@@ -537,6 +716,18 @@ void AaArrayObjectReference::Map_Source_References(set<AaRoot*>& source_objects)
     this->_indices[i]->Map_Source_References(source_objects);
 }
 
+void AaArrayObjectReference::PrintC(ofstream& ofile, string tab_string)
+{
+  this->AaObjectReference::PrintC(ofile,tab_string);
+  ofile << this->Get_Object_Root_Name();
+  for(unsigned int i = 0; i < this->Get_Number_Of_Indices(); i++)
+    {
+      ofile << "[";
+      this->Get_Array_Index(i)->PrintC(ofile,"");
+      ofile << "]";
+    }
+}
+
 //---------------------------------------------------------------------
 // type cast expression (is unary)
 //---------------------------------------------------------------------
@@ -561,7 +752,7 @@ void AaTypeCastExpression::Print(ostream& ofile)
 //---------------------------------------------------------------------
 // AaUnaryExpression
 //---------------------------------------------------------------------
-AaUnaryExpression::AaUnaryExpression(AaScope* parent_tpr,AaStringValue* op, AaExpression* rest):AaExpression(parent_tpr)
+AaUnaryExpression::AaUnaryExpression(AaScope* parent_tpr,AaOperation op, AaExpression* rest):AaExpression(parent_tpr)
 {
   this->_operation  = op;
   this->_rest       = rest;
@@ -573,7 +764,7 @@ void AaUnaryExpression::Print(ostream& ofile)
 {
   ofile << " ( ";
   assert(this->Get_Operation());
-  this->Get_Operation()->Print(ofile);
+  ofile << Aa_Name(this->Get_Operation());
   ofile << " ";
   this->Get_Rest()->Print(ofile);
   ofile << " )";
@@ -582,16 +773,16 @@ void AaUnaryExpression::Print(ostream& ofile)
 //---------------------------------------------------------------------
 // AaBinaryExpression
 //---------------------------------------------------------------------
-AaBinaryExpression::AaBinaryExpression(AaScope* parent_tpr,AaStringValue* op, AaExpression* first, AaExpression* second):AaExpression(parent_tpr)
+AaBinaryExpression::AaBinaryExpression(AaScope* parent_tpr,AaOperation op, AaExpression* first, AaExpression* second):AaExpression(parent_tpr)
 {
   this->_operation = op;
 
-  if(Is_Compare_Operation(op->Get_Value_String()))
+  if(Is_Compare_Operation(op))
     {
       this->Set_Type(AaProgram::Make_Uinteger_Type(1));
       AaProgram::Add_Type_Dependency(first,second);
     }
-  else if(Is_Shift_Operation(op->Get_Value_String()))
+  else if(Is_Shift_Operation(op))
     {
       AaProgram::Add_Type_Dependency(first,this);
     }
@@ -610,7 +801,7 @@ void AaBinaryExpression::Print(ostream& ofile)
   ofile << "(" ;
   this->Get_First()->Print(ofile);
   ofile << " ";
-  this->Get_Operation()->Print(ofile);
+  ofile << Aa_Name(this->Get_Operation());
   ofile << " ";
   this->Get_Second()->Print(ofile);
   ofile << ")";

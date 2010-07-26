@@ -52,6 +52,7 @@ class AaRoot
   virtual bool Is_Scope() {return(false); }
   virtual bool Is_Object() {return(false); }
   virtual bool Is_Expression() {return(false); }
+  virtual bool Is_Statement() {return(false); }
 
   // do we really need this? keep it for now
   virtual bool Is(string class_name);

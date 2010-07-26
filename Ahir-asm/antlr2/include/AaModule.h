@@ -15,7 +15,7 @@
 // *******************************************  MODULE ************************************
 // compilation unit: a module is basically a block
 // statement, but with arguments
-class AaModule: public AaBlockStatement
+class AaModule: public AaSeriesBlockStatement
 {
   vector<AaInterfaceObject*>  _input_args;
   vector<AaInterfaceObject*>  _output_args;

@@ -2,6 +2,7 @@
 #define _Aa_Expression__
 
 #include <AaIncludes.h>
+#include <AaEnums.h>
 #include <AaUtil.h>
 #include <AaRoot.h>
 #include <AaScope.h>
@@ -107,17 +108,21 @@ class AaObjectReference: public AaExpression
   virtual void Map_Source_References(set<AaRoot*>& source_objects); // important
   virtual void Add_Target_Reference(AaRoot* referrer); 
   virtual void Add_Source_Reference(AaRoot* referrer);
-
+  virtual void PrintC(ofstream& ofile, string tab_string);
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
 class AaConstantLiteralReference: public AaObjectReference
 {
+  vector<string> _literals;
  public:
-  AaConstantLiteralReference(AaScope* scope_tpr, string literal_string);
+  AaConstantLiteralReference(AaScope* scope_tpr, 
+			     string literal_string,  
+			     vector<string>& literals);
   ~AaConstantLiteralReference();
   virtual string Kind() {return("AaConstantLiteralReference");}
   virtual void Map_Source_References(set<AaRoot*>& source_objects) {} // do nothing
+  virtual void PrintC(ofstream& ofile, string tab_string);
 };
 
 // simple reference (no array indices)
@@ -128,6 +133,7 @@ class AaSimpleObjectReference: public AaObjectReference
   ~AaSimpleObjectReference();
   virtual string Kind() {return("AaSimpleObjectReference");}
   virtual void Set_Object(AaRoot* obj);
+  virtual void PrintC(ofstream& ofile, string tab_string);
 };
 
 // array object reference
@@ -151,6 +157,7 @@ class AaArrayObjectReference: public AaObjectReference
 
   virtual string Kind() {return("AaArrayObjectReference");}
   virtual void Map_Source_References(set<AaRoot*>& source_objects); // important
+  virtual void PrintC(ofstream& ofile, string tab_string);
 };
 
 // type cast expression (is unary)
@@ -172,6 +179,11 @@ class AaTypeCastExpression: public AaExpression
     if(this->_rest) 
       this->_rest->Map_Source_References(source_objects);
   }
+  virtual void PrintC(ofstream& ofile, string tab_string)
+  {
+    ofile << tab_string << "(" << "(" << this->_to_type->CName() << ") ";
+    this->_rest->PrintC(ofile,"");
+  }
 };
 
 
@@ -181,20 +193,26 @@ class AaTypeCastExpression: public AaExpression
 //
 class AaUnaryExpression: public AaExpression
 {
-  AaStringValue* _operation;
+  AaOperation _operation;
   AaExpression* _rest;
  public:
-  AaUnaryExpression(AaScope* scope_tpr, AaStringValue* operation, AaExpression* rest);
+  AaUnaryExpression(AaScope* scope_tpr, AaOperation operation, AaExpression* rest);
   ~AaUnaryExpression();
   virtual void Print(ostream& ofile); 
 
-  AaStringValue* Get_Operation() {return(this->_operation);}
+  AaOperation Get_Operation() {return(this->_operation);}
   AaExpression* Get_Rest() {return(this->_rest);}
   virtual string Kind() {return("AaUnaryExpression");}
   virtual void Map_Source_References(set<AaRoot*>& source_objects) 
   {
     if(this->_rest) 
       this->_rest->Map_Source_References(source_objects);
+  }
+  virtual void PrintC(ofstream& ofile, string tab_string)
+  {
+    ofile << tab_string << C_Name(this->_operation) << "(";
+    this->_rest->PrintC(ofile,"");
+    ofile << ") ";
   }
 };
 
@@ -203,16 +221,16 @@ class AaUnaryExpression: public AaExpression
 //
 class AaBinaryExpression: public AaExpression
 {
-  AaStringValue* _operation;
+  AaOperation _operation;
   AaExpression* _first;
   AaExpression* _second;
 
  public:
-  AaBinaryExpression(AaScope* scope_tpr, AaStringValue* operation, AaExpression* first, AaExpression* second);
+  AaBinaryExpression(AaScope* scope_tpr, AaOperation operation, AaExpression* first, AaExpression* second);
   ~AaBinaryExpression();
   virtual void Print(ostream& ofile);
 
-  AaStringValue* Get_Operation() {return(this->_operation);}
+  AaOperation Get_Operation() {return(this->_operation);}
   AaExpression* Get_First() {return(this->_first);}
   AaExpression* Get_Second() {return(this->_second);}
   virtual string Kind() {return("AaBinaryExpression");}
@@ -220,6 +238,15 @@ class AaBinaryExpression: public AaExpression
   {
     if(this->_first) this->_first->Map_Source_References(source_objects);
     if(this->_second) this->_second->Map_Source_References(source_objects);
+  }
+  virtual void PrintC(ofstream& ofile, string tab_string)
+  {
+    ofile << tab_string 
+	  << C_Name(this->_operation) << "(";
+    this->_first->PrintC(ofile,"");
+    ofile << ", ";
+    this->_second->PrintC(ofile,"");
+    ofile << ")" ;
   }
 };
 
@@ -246,6 +273,17 @@ class AaTernaryExpression: public AaExpression
     if(this->_if_false) this->_if_false->Map_Source_References(source_objects);
   }
 
+  virtual void PrintC(ofstream& ofile, string tab_string)
+  {
+    ofile << tab_string ;
+    ofile << "( (";
+    this->_test->PrintC(ofile,tab_string);
+    ofile << ") ? (";
+    this->_if_true->PrintC(ofile,tab_string);
+    ofile << ") : (";
+    this->_if_false->PrintC(ofile,tab_string);
+    ofile << ") ";
+  }
 };
 
 #endif

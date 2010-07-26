@@ -43,6 +43,9 @@ class AaStatement: public AaScope
   virtual unsigned int Get_Tab_Depth() { return(this->_tab_depth); }
   virtual void Increment_Tab_Depth() { this->_tab_depth += 1; }
 
+  virtual bool Is_Statement() { return(true);}
+
+
 
   ~AaStatement();
 
@@ -55,7 +58,25 @@ class AaStatement: public AaScope
 
   virtual string Get_C_Name() {assert(0); }
   virtual string Get_Entry_Name() { return(this->Get_C_Name() + "_entry"); }
+  virtual string Get_In_Progress_Name() { return(this->Get_C_Name() + "_in_progress"); }
   virtual string Get_Exit_Name() { return(this->Get_C_Name() + "_exit"); }
+
+  virtual string Get_Entry_Name_Ref() 
+  {
+    return(this->Get_Struct_Dereference() + "." + this->Get_Entry_Name());
+  }
+
+  virtual string Get_In_Progress_Name_Ref() 
+  {
+    return(this->Get_Struct_Dereference() + "." + this->Get_In_Progress_Name());
+  }
+
+  virtual string Get_Exit_Name_Ref() 
+  {
+    return(this->Get_Struct_Dereference() + "." + this->Get_Exit_Name());
+  }
+
+
   virtual string Get_Structure_Name() { return("_" + this->Get_C_Name()); }
   virtual string Get_C_Function_Name() { return(this->Get_C_Name() + "_"); }
   virtual string Get_C_Wrap_Function_Name() { return(this->Get_C_Name()); }
@@ -81,6 +102,14 @@ class AaStatementSequence: public AaScope
   ~AaStatementSequence();
 
   unsigned int Get_Statement_Count() { return this->_statement_sequence.size(); }
+  AaStatement* Get_Statement(unsigned int indx) 
+  { 
+    if(indx < this->Get_Statement_Count())
+      return (this->_statement_sequence[indx]);
+    else
+      return(NULL);
+  }
+
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaStatementSequence");}
   virtual void Map_Source_References() 
@@ -117,6 +146,10 @@ class AaNullStatement: public AaStatement
   virtual void Print(ostream& ofile) { ofile << this->Tab() << "$null" << endl; }
   virtual string Kind() {return("AaNullStatement");}
   virtual void Map_Source_References() {} // do nothing
+
+  virtual void Write_C_Struct(ofstream& ofile)
+  {
+  }
 
   virtual void Write_C_Function_Body(ofstream& ofile)
   {
@@ -220,6 +253,11 @@ class AaCallStatement: public AaStatement
     return(this->Get_C_Name() + "_called_fn_struct");
   }
 
+  virtual string Get_Called_Function_Struct_Pointer_Ref()
+  {
+    return(this->Get_Struct_Dereference() + "." + this->Get_Called_Function_Struct_Pointer());
+  }
+
   virtual string Get_Called_Module_Struct_Name();
 
   virtual void PrintC(ofstream& ofile, string tab_string);
@@ -240,7 +278,12 @@ class AaBlockStatement: public AaStatement
   virtual string Get_Label() { return(this->_label);}
   virtual unsigned int Get_Statement_Count() 
   {
-    return((this->_statement_sequence ? this->_statement_sequence->Get_Statement_Count() : 0)); }
+    return((this->_statement_sequence ? this->_statement_sequence->Get_Statement_Count() : 0)); 
+  }
+  virtual AaStatement* Get_Statement(unsigned int indx)
+  {
+    return((this->_statement_sequence == NULL ? NULL : this->_statement_sequence->Get_Statement(indx)));
+  }
   virtual void Set_Statement_Sequence(AaStatementSequence* statement_sequence) 
   {
     this->_statement_sequence = statement_sequence;
@@ -301,6 +344,11 @@ class AaBlockStatement: public AaStatement
   // by this.
   virtual void Write_C_Struct(ofstream& ofile);
 
+  virtual void Write_Entry_Transfer_Code(ofstream& ofile) {assert(0);}
+  virtual void Write_Statement_Invocations(ofstream& ofile) {assert(0);}
+  virtual void Write_Exit_Check_Condition(ofstream& ofile) {assert(0);}
+  virtual void Write_Cleanup_Code(ofstream& ofile) {}
+
   // the block statement is always encased in a function!
   virtual void Write_C_Function_Body(ofstream& ofile);
 
@@ -313,6 +361,16 @@ class AaBlockStatement: public AaStatement
   virtual bool Can_Block() { return (true); }
 
 
+  virtual void  Write_Parallel_Entry_Transfer_Code(AaStatementSequence* sseq, ofstream& ofile);
+  virtual void  Write_Series_Entry_Transfer_Code(AaStatementSequence* sseq, ofstream& ofile);
+
+  virtual void Write_Parallel_Statement_Invocations(AaStatementSequence* sseq, ofstream& ofile);
+  virtual void Write_Series_Statement_Invocations(AaStatementSequence* sseq, ofstream& ofile);
+
+  virtual void  Write_Parallel_Exit_Check_Condition(AaStatementSequence* sseq, ofstream& ofile);
+  virtual void  Write_Series_Exit_Check_Condition(AaStatementSequence* sseq, ofstream& ofile);
+
+  virtual void Write_Entry_Condition(ofstream& ofile);
 };
 
 class AaSeriesBlockStatement: public AaBlockStatement
@@ -324,8 +382,12 @@ class AaSeriesBlockStatement: public AaBlockStatement
   virtual string Kind() {return("AaSeriesBlockStatement");}
 
   // series block stitches control-flow in a slightly different way.
-  virtual void Write_C_Function_Body(ofstream& ofile) { assert(0); }
+  virtual void Write_Entry_Transfer_Code(ofstream& ofile);
+  virtual void Write_Statement_Invocations(ofstream& ofile);
+  virtual void Write_Exit_Check_Condition(ofstream& ofile);
+
 };
+
 
 class AaParallelBlockStatement: public AaBlockStatement
 {
@@ -336,32 +398,34 @@ class AaParallelBlockStatement: public AaBlockStatement
   virtual string Kind() {return("AaParallelBlockStatement");}
 
   // inherits the C function stuff from block statement.
-  virtual void Write_C_Function_Body(ofstream& ofile) { assert(0); }
+  virtual void Write_Entry_Transfer_Code(ofstream& ofile);
+  virtual void Write_Statement_Invocations(ofstream& ofile);
+  virtual void Write_Exit_Check_Condition(ofstream& ofile);
 };
 
-class AaForkBlockStatement: public AaBlockStatement
+class AaForkBlockStatement: public AaParallelBlockStatement
 {
  public:
   AaForkBlockStatement(AaScope* scope , string label);
   ~AaForkBlockStatement();
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaForkBlockStatement");}
-  virtual void Write_C_Function_Body(ofstream& ofile) { assert(0); }
+
 };
 
-class AaBranchBlockStatement: public AaBlockStatement
+class AaBranchBlockStatement: public AaSeriesBlockStatement
 {
  public:
   AaBranchBlockStatement(AaScope* scope, string label);
   ~AaBranchBlockStatement();
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaBranchBlockStatement");}
-  virtual void Write_C_Function_Body(ofstream& ofile) { assert(0); }
 };
 
 
-class AaJoinForkStatement: public AaBlockStatement
+class AaJoinForkStatement: public AaParallelBlockStatement
 {
+  vector<AaStatement*> _wait_on_statements;
   vector<string> _join_labels;
  public:
   void Add_Join_Label(string jl) { this->_join_labels.push_back(jl); }
@@ -370,42 +434,67 @@ class AaJoinForkStatement: public AaBlockStatement
   AaJoinForkStatement(AaForkBlockStatement* scope);
   ~AaJoinForkStatement();
   virtual string Kind() {return("AaJoinForkStatement");}
+  virtual void Map_Source_References();
+  virtual void Write_Entry_Transfer_Code(ofstream& ofile);
 
 
-  virtual void Write_C_Struct(ofstream& ofile);
+  virtual string Get_C_Name()
+  {
+    return(this->Get_Scope()->Get_C_Name() + "$join$line_" +   IntToStr(this->Get_Line_Number()));
+  }
 
-  // join and fork needs special treatment.
-  virtual void Write_C_Function_Body(ofstream& ofile) {assert(0);}
+  virtual void Write_C_Struct(ofstream& ofile) 
+  {
+    this->AaStatement::Write_C_Struct(ofile);
+  }
 
+  virtual string Get_Struct_Dereference()
+  {
+    return(this->Get_Scope()->Get_Struct_Dereference());
+  }
 
 };
 
-class AaMergeStatement: public AaBlockStatement
-{
-  vector<string> _merge_label_vector; // to preserve the order
-  set<string,StringCompare> _merge_label_set;
 
+
+class AaPlaceStatement: public AaStatement
+{
+  string _label;
+  int _merge_count;
  public:
-  void Add_Merge_Label(string lbl) 
-  { 
-    if(this->_merge_label_set.find(lbl) == this->_merge_label_set.end())
+  AaPlaceStatement(AaBranchBlockStatement* parent_tpr, string lbl);
+  ~AaPlaceStatement();
+  virtual string Get_Label() {return(this->_label);}
+  void Increment_Merge_Count()
+  {
+    this->_merge_count++;
+    if(this->_merge_count > 0)
       {
-	this->_merge_label_set.insert(lbl); 
-	this->_merge_label_vector.push_back(lbl);
+	AaRoot::Error("place merges into more than one merge statement!",this);
       }
   }
 
-  AaMergeStatement(AaBranchBlockStatement* scope);
-  ~AaMergeStatement();
+  virtual string Get_Place_Name() { return(this->Get_Label()); }
+  virtual string Get_Place_Name_Ref() {return(this->Get_Struct_Dereference() + "." + this->Get_Place_Name()); }
 
-  virtual void Print(ostream& ofile);
-  virtual string Kind() {return("AaMergeStatement");}
+  virtual void Print(ostream& ofile) { ofile << this->Tab() << "$place[" << this->Get_Label() << "]"  << endl; }
+  virtual string Kind() {return("AaPlaceStatement");}
+  virtual void Map_Source_References() {} // do nothing
 
-  // merge statement just has entry and exit flag
-  virtual void Write_C_Struct(ofstream& ofile);
+  virtual string Get_C_Name()
+  {
+    return(this->Get_Scope()->Get_C_Name() + "$place$line_" +   IntToStr(this->Get_Line_Number()));
+  }
+  // cannot block, but will contribute a flag to the
+  // structure and will also contribute a line of code
+  // to the function body
+  virtual void Write_C_Struct(ofstream& ofile); 
+  virtual void Write_C_Function_Body(ofstream& ofile) ;
 
-  // branch and merge need some special treatment..
-  virtual void Write_C_Function_Body(ofstream& ofile) {assert(0);}
+  virtual string Get_Struct_Dereference()
+  {
+    return(this->Get_Scope()->Get_Struct_Dereference());
+  }
 
 };
 
@@ -435,9 +524,53 @@ class AaPhiStatement: public AaStatement
     return(this->Get_Scope()->Get_C_Name() + "$phi$line_" +   IntToStr(this->Get_Line_Number()));
   }
   virtual void PrintC(ofstream& ofile, string tab_string);
-  virtual void Write_C_Struct(ofstream& ofile);
+  void Write_C_Struct(ofstream& ofile);
+};
+
+class AaMergeStatement: public AaSeriesBlockStatement
+{
+  vector<string> _merge_label_vector; // to preserve the order
+  set<string,StringCompare> _merge_label_set;
+  vector<AaPlaceStatement*> _wait_on_statements;
+ public:
+  void Add_Merge_Label(string lbl) 
+  { 
+    if(this->_merge_label_set.find(lbl) == this->_merge_label_set.end())
+      {
+	this->_merge_label_set.insert(lbl); 
+	this->_merge_label_vector.push_back(lbl);
+      }
+  }
+
+  AaMergeStatement(AaBranchBlockStatement* scope);
+  ~AaMergeStatement();
+
+  virtual void Print(ostream& ofile);
+  virtual string Kind() {return("AaMergeStatement");}
+
+
+  virtual void Map_Source_References();
+
+  virtual string Get_C_Name()
+  {
+    return(this->Get_Scope()->Get_C_Name() + "$merge$line_" +   IntToStr(this->Get_Line_Number()));
+  }
+
+  void Write_C_Struct(ofstream& ofile) 
+  {
+    this->AaStatement::Write_C_Struct(ofile);
+  }
+
+  virtual void Write_Entry_Condition(ofstream& ofile);
+  virtual void Write_Cleanup_Code(ofstream& ofile);
+
+  virtual string Get_Struct_Dereference()
+  {
+    return(this->Get_Scope()->Get_Struct_Dereference());
+  }
 
 };
+
 
 class AaSwitchStatement: public AaStatement
 {
@@ -473,8 +606,24 @@ class AaSwitchStatement: public AaStatement
       this->_default_sequence->Map_Source_References();
   }
 
-  virtual void Write_C_Struct(ofstream& ofile);
+
+  virtual string Get_C_Name()
+  {
+    return(this->Get_Scope()->Get_C_Name() + "$switch$line_" +   IntToStr(this->Get_Line_Number()));
+  }
+
+  void Write_C_Struct(ofstream& ofile) 
+  {
+    this->AaStatement::Write_C_Struct(ofile);
+  }
+
   virtual void Write_C_Function_Body(ofstream& ofile) {assert(0);}
+
+  virtual string Get_Struct_Dereference()
+  {
+    return(this->Get_Scope()->Get_Struct_Dereference());
+  }
+
 };
 
 
@@ -502,29 +651,26 @@ class AaIfStatement: public AaStatement
       this->_else_sequence->Map_Source_References();
   }
 
-  virtual void Write_C_Struct(ofstream& ofile);
+
+  virtual string Get_C_Name()
+  {
+    return(this->Get_Scope()->Get_C_Name() + "$if$line_" +   IntToStr(this->Get_Line_Number()));
+  }
+
+  void Write_C_Struct(ofstream& ofile) 
+  {
+    this->AaStatement::Write_C_Struct(ofile);
+  }
+
   virtual void Write_C_Function_Body(ofstream& ofile) {assert(0);}
+
+  virtual string Get_Struct_Dereference()
+  {
+    return(this->Get_Scope()->Get_Struct_Dereference());
+  }
+
 };
 
 
-// branch statement
-class AaPlaceStatement: public AaStatement
-{
-  string _label;
- public:
-  AaPlaceStatement(AaBranchBlockStatement* parent_tpr, string lbl);
-  ~AaPlaceStatement();
-  virtual string Get_Label() {return(this->_label);}
-
-  virtual void Print(ostream& ofile) { ofile << this->Tab() << "$place[" << this->Get_Label() << "]"  << endl; }
-  virtual string Kind() {return("AaPlaceStatement");}
-  virtual void Map_Source_References() {} // do nothing
-
-  // cannot block, but will contribute a flag to the
-  // structure and will also contribute a line of code
-  // to the function body
-  virtual void Write_C_Struct(ofstream& ofile); 
-  virtual void Write_C_Function_Body(ofstream& ofile) ;
-};
 
 #endif
