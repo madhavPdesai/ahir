@@ -2,6 +2,7 @@
 #define __AHIRMODULE_HPP__
 
 #include <Base/Module.hpp>
+#include <AHIR/Storage.hpp>
 #include "Symbol.hpp"
 
 namespace hls
@@ -18,7 +19,7 @@ namespace ahir
   class Arbiter;
   class DPElement;
   
-  struct Module : public hls::Module
+  struct Module : public hls::Module, public Storage
   {
     ControlPath *cp;
     DataPath *dp;
@@ -35,7 +36,7 @@ namespace ahir
     DPElement* locate_dpe_from_cpe_id(unsigned id);
 
     Module(const std::string &_id)
-      : hls::Module(_id, "ahir")
+      : hls::Module(_id, "ahir"), Storage(_id)
       , cp(NULL), dp(NULL), ln(NULL), arbiter(NULL)
       , req(0), ack(0)
     {};
