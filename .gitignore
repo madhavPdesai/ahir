@@ -27,3 +27,6 @@ auto
 /iolib/demo/*.vhdl
 /iolib/demo/*.xml
 /iolib/demo/*.txt
+/Ahir-asm/antlr2/grammar/AaLexer.*
+/Ahir-asm/antlr2/grammar/AaParser.*
+/Ahir-asm/antlr2/grammar/AaParserTokenTypes.*
