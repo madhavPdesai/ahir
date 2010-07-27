@@ -1,6 +1,10 @@
 #ifndef STORAGE_HPP
 #define STORAGE_HPP
 
+#include <map>
+#include <string>
+#include <set>
+
 namespace ahir {
 
   struct MemoryLocation 
@@ -19,17 +23,18 @@ namespace ahir {
 
   class MemorySpace 
   {
-    // Use a vector for iteration, and a map for searching by id. The
+    // Use a set for iteration, and a map for searching by id. The
     // two are always in sync.
     //
-    // FIXME: Deletion is O(n) in this arrangement. We need a custom
-    // iterator class that encapsulates the map::iterator to behave
-    // like the vector::iterator!
+    // FIXME: We need a custom iterator class that encapsulates the
+    // map::iterator to behave like the set::iterator! Use the
+    // "map_values" iterator adaptor from Boost.Range 0.43 when it
+    // becomes available.
     typedef std::map<std::string, MemoryLocation*> _mapType;
     _mapType space_map;
 
-    typedef std::vector<MemoryLocation*> _vecType;
-    _vecType space;
+    typedef std::set<MemoryLocation*> _setType;
+    _setType space;
 
     // A memory space can only be created by a Storage object
     friend class Storage;
@@ -55,7 +60,7 @@ namespace ahir {
       assert(!find_location(id));
       MemoryLocation *m = new MemoryLocation(id, type, value);
       space_map[m->id] = m;
-      space.push_back(m);
+      space.insert(m);
       return m;
     }
     
@@ -66,7 +71,8 @@ namespace ahir {
       return NULL;
     }
 
-    typedef _vecType::iterator iterator;
+    // FIXME: Replace this with the boost::map_values
+    typedef _setType::iterator iterator;
 
     iterator begin()
     {
@@ -94,8 +100,9 @@ namespace ahir {
     typedef std::map<std::string, MemorySpace*> _mapType;
     _mapType storage_map;
 
-    typedef std::vector<MemorySpace*> _vecType;
-    _vecType storage;
+    // FIXME: Eliminate this with boost::map_values
+    typedef std::set<MemorySpace*> _setType;
+    _setType storage;
 
     void memory_clear()
     {
@@ -139,7 +146,7 @@ namespace ahir {
       assert(!find_memory_space(id));
       MemorySpace *m = new MemorySpace(id);
       storage_map[m->id] = m;
-      storage.push_back(m);
+      storage.insert(m);
       return m;
     }
 
@@ -151,7 +158,7 @@ namespace ahir {
     }
 
     // Prefix "memory_" to avoid confusion in derived classes.
-    typedef _vecType::iterator memory_iterator;
+    typedef _setType::iterator memory_iterator;
     
     memory_iterator memory_begin()
     {
