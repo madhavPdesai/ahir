@@ -27,7 +27,7 @@
   use of petri nets to model algorithms described in high level
   programming languages. In particular, we introduce a class of live
   and safe petri nets (which we term as {\em Type-2} petri nets) for
-  this purpose. This class is defined by a set of production rules
+  this purpose. This class is defined by a set of refinement rules
   which ensure liveness and safety of the resulting petri net.
   
   Further, we show that Type-2 petri nets support an efficient method
@@ -76,14 +76,14 @@ The structure of the Type-2 petri net is well suited for representing
 the control flow observed in high-level programs --- in particular,
 the interaction between concurrency and choice (branches). Threads
 that are started within a branch must synchronise before exiting the
-branch, and conversely, the targets of a branch that occurs in a
-thread must be restricted to that thread. A Type-2 petri net is built
-using a set of construction rules that restrict the structure of the
-petri net to ensure this behaviour. The same restrictions enable an
-efficient labelling scheme that can be used to analyse the concurrency
-of operations in the program. Note that the behaviour allowed by a
-Type-2 petri net is a generalised version of a series-parallel
-net\cite{something}, as can be seen in Section~\cite{sec:somewhere}.
+branch, and conversely, the targets of a branch encountered in a
+thread must be restricted to that thread. The structure of a Type-2
+petri net is restricted to guarantee this priority. The same
+restrictions enable an efficient labelling scheme that can be used to
+analyse the concurrency of operations in the program. Note that the
+behaviour allowed by a Type-2 petri net is a generalised version of a
+series-parallel net\cite{something}, as can be seen in
+Section~\cite{sec:somewhere}.
 
 \section{Definitions}
 \label{sec:defintions}
@@ -101,7 +101,7 @@ the number of tokens in that place.
   M & : & P \rightarrow \mathbb{N}
 \end{eqnarray*}
 
-The above defintion allows at most one edge from a place (transition)
+The above definition allows at most one edge from a place (transition)
 to a transition (place). A \textit{simple place (transition)} is a
 place (transition) with one incoming edge and one outgoing place. A
 \textit{branch (fork)} is a place (transition) with one incoming edge
@@ -116,11 +116,11 @@ the petri net $N$ starting from the initial marking $M_0$.
 \section{Type-1 petri nets}
 \label{sec:type-1}
 
-We first define the class of Type-1 petri nets, which are constructed
-by a set of construction rules combined with the most basic Type-1
-petri net. The class of Type-2 petri net is a subclass that is defined
-by an additional construction rule introduced in
-Section~\ref{sec:type-2}.
+We first define the class of Type-1 petri nets, in terms of a set of
+refinement rules (which we call \emph{standard refinements} combined
+with a pre-defined basic Type-1 petri net. The class of Type-2 petri
+net is a subclass that is defined by an additional refinement rule
+introduced in Section~\ref{sec:type-2}.
 
 \begin{definition}
   A \emph{simple cycle} is the petri net $N = (P, T, E, M_0)$ where $P
@@ -129,138 +129,189 @@ Section~\ref{sec:type-2}.
 \end{definition}
 
 Clearly, a simple cycle is live and safe. It is defined as the
-simplest type-1 petri net, and any petri net obtained by repeatedly
-applying one or more construction rules to the simple cycle is also a
-Type-1 petri net. Each rule replaces a simple place or transition in
-the original petri net with a subgraph called a ``standard region''.
-There are three types of standard regions, defined below. Places
-occuring in the standard regions are \textbf{not marked} in the
-initial marking.
+simplest Type-1 petri net --- any petri net obtained by a sequence of
+standard refinements starting with the simple cycle is also a Type-1
+petri net. Each standard refinement replaces a simple place or
+transition in the original petri net with a subgraph called a
+\emph{standard region}. There are two kinds of standard regions ---
+\emph{p-type} and \emph{t-type} --- with the following common
+properties:
 
-\begin{description}
-\item [Series region:] A \emph{p-type series region} (t-type series
-  region) is a petri net consiting of a sequence of simple transitions
-  and places, where the first and the last elements are both places
-  (transitions) with only one edge within the region. The first and
-  the last elements of the series region are called the \emph{entry}
-  and the \emph{exit} of the region respectively.
+  \begin{enumerate}
+  \item Every standard region has a unique \emph{entry} and a unique
+    \emph{exit} of the same kind (place or transition) such that:
+    \begin{enumerate}
+    \item All elements in the region are reachable from the entry.
+    \item The exit is reachable from all elements in the region.
+    \end{enumerate}
+  \item No element in a standard region has an edge incident outside
+    the region, with the following exceptions:
+    \begin{enumerate}
+    \item The entry has exactly one incoming edge incident outside.
+    \item The exit has exactly one outgoing edge incident outside.
+    \end{enumerate}
+  \item Places occuring in a standard region are \textbf{not
+      marked} in the initial marking.
+\end{enumerate}
 
-\item [Branch region:] A \emph{branch region} is a conected petri net
-  where every transition is simple, while every place is either a
-  branch or a merge. No place in the branch region has an edge
-  incident on an element outside the region, except the \emph{entry}
-  which has one incoming edge from outside the region and the
-  \emph{exit} which has one outgoing edge outside the region.
+\begin{definition} The two kinds of standard regions are as follows:
+  \begin{enumerate}
+  \item A \emph{p-type standard region} is a standard region where
+    every transition is simple, while the entry and exit are both
+    places.
+  \item A \emph{t-type standard region} is an \emph{acyclic} standard
+    region where every place is simple, while the entry and the exit
+    are both transitions.
+  \end{enumerate}
+\end{definition}
 
-\item [Fork region:] A \emph{fork region} is a connected petri net
-  where every place is simple, while every transition is either a fork
-  or a join. No transition in a fork region has an edge incident on an
-  element outside the region, execep the \emph{entry} and \emph{exit}
-  transitions, analogous to the entry and exit of a branch region. In
-  addition, a fork region is required to be a DAG.
-\end{description}
+A p-type standard region has a structure that allows branching and
+loops but not concurrency, while a t-type standard region allows
+concurrency but not branching or loops.
 
-The construction rules for obtaining a  Type-1 petri net can now be
-stated as follows:
+\begin{definition}
+  A Type-1 petri net is a petri net generated by the following
+  production rules:
 
 \setcounter{srule}{-1}
-
 \begin{srule}
   The simple cycle is a Type-1 petri net.
 \end{srule}
 
 \begin{srule}
-  The petri net obtained by replacing an unmarked simple place
-  (transition) in a Type-1 petri net by a p-type series region (t-type
-  series region) is a also a Type-1 petri net.
+  The petri net obtained from a Type-1 petri net by refining an
+  unmarked simple place as a p-type region is also a Type-1 petri net.
 \end{srule}
 
 \begin{srule}
-  The petri net obtained by replacing an unmarked simple place in a
-  Type-1 petri net by a branch region is also a Type-1 petri net.
+  The petri net obtained from a Type-1 petri net by refining a simple
+  transition as a t-type region is also a Type-1 petri net.
 \end{srule}
 
-\begin{srule}
-  The petri net obtained by replacing a simple transition in a Type-1
-  petri net by a fork region is also a Type-1 petri net.
-\end{srule}
+\end{definition}
 
-The above construction rules ensure that the place occuring in the
-original simple cycle is the only marked place and it is never
-replaced during the construction of the Type-1 petri net.
+These production rules imply that the place occuring in the original
+simple cycle is the only marked place in a Type-1 petri net.
 
 \section{Liveness and Safety in a Type-1 petri net}
 \label{sec:live-safe}
 
 We prove that a Type-1 petri net is live and safe by induction over
 the structure of the petri net. In particular, we show that the
-replacement of a simple transition or place in a Type-1 petri net by
-applying any of the construction rules does not affect the liveness
-and safety of the rest of the petri net.
+application of a standard refinement to a Type-1 petri net preserves
+liveness and safety in the resulting petri net.
 
-\subsection{Simplification}
-\label{sec:simplification-live-safe}
+\subsection{p-type standard region}
+\label{sec:refinement-place}
 
-Consider a simple place $p$ in a live and safe petri net $N =
+Consider a simple place $p \in P$ in a live and safe petri net $N =
 (P,T,E,M)$. Let $u,v$ be the predecessor and successor transitions of
-$p$ in $N$, i.e, $u,v \in T$ and $(u,p), (p,v)\in E$. For any firing
-sequence $\sigma \in L(N)$, $u$ must occur before any occurence of
-$v$, and occurences of $u$ and $v$ must strictly alternate in the
-entire sequence.
+$p$ in $N$, i.e, $u,v \in T$ and $(u,p), (p,v)\in E$. Safety implies
+that when $u$ fires, it may not fire again until $v$ has fired.
+Liveness implies that $u$ can eventually fire again after $v$ has
+fired (besides the first firing reachable from the initial marking
+$M_0$).
 
-The petri net $N' = N - \{p,u,v\}$ can be modelled as an initially
-marked simple place $p_0$ that forms a cycle with $u$, $v$ and $p$.
-The cycle $N'$ is live and safe. Every sequence in $L(N)$ can be
-mapped to a sequence in $L(N')$ by simply deleting all transitions
-other than $u$ and $v$, if and only if the petri net $N$ is live and
-safe.
+Let $N'$ be the petri net obtained by refining place $p$ as a p-type
+region $R$. Then $N'$ is safe if every place in $R$ has at most one
+token for any firing sequence starting from $u$. Also, $N'$ is live if
+a token that enters region $R$ via transition $u$ can eventually exit
+via transition $v$.
 
-Similarly, relative to a simple transition $t$, the rest of the petri
-net can be modelled as an initially marked simple place $p_0$ that
-forms a simple cycle with $t$. Both replacements are valid if and only
-if the original petri net is live and safe; the resulting simple cycle
-is also live and safe. We use this simplification to examine the
-effect of applying a construction rule on a Type-1 petri net:
+\paragraph{Proof:} When $u$ fires, a token is placed in the entry of
+the region $R$. Since there are no forks or joins in the region, the
+number of tokens within the region is exactly one for any sequence of
+firings within the region. Also, no token exits the region until $v$
+has fired, and hence $u$ cannot fire again before $v$ does. Hence the
+petri net $N'$ is safe. The single token circulates within the region
+and can eventually reach the exit, since the exit is reachable from
+every element in a standard region. Thus, transition $v$ can
+eventually fire after $u$ has fired and hence the petri net $N'$ is
+live.
 
-\begin{enumerate}
-\item When a rule replaces a simple place $p$, the rest of the petri
-  net is reduced to a simple marked place $p_0$ connected to $p$ by
-  simple transitions.
-\item When a rule replaces a simple transition $t$, the rest of the
-  petri net is first reduced to a single marked place $p_0$.
-\end{enumerate}
+\subsection{t-type standard region}
+\label{sec:refinement-transition}
 
-Thus, in each of the following subsections, we model an arbitrary
-Type-1 petri-net as a cycle consisting of a marked place $p_0$
-connected to the candidate simple place or transition through a
-suitable number of additional simple transitions. We refer to this
-cycle as the \emph{base petri net} in the rest of this section.
+Consider a simple transition $t \in T$ in a live and safe petri net $N
+= (P,T,E,M)$. Let $u,v$ be the predecessor and successor places of $t$
+in $N$, i.e, $u,v \in P$ and $(u,p), (p,v)\in E$. Safety implies that
+when $t$ fires, it will not be enabled again (no token will be placed
+$u$) until the token in $v$ has been removed. Liveness implies that
+$t$ can eventually be enabled again after the token has been removed
+from $v$ (besides the first time when $t$ is enabled in a marking
+reachable from $M_0$).
 
-\subsection{p-type Series Region}
-\label{sec:series-live-and-safe}
+Let $N'$ be the petri net obtained by refining a transition $t$ as a
+t-type region $R$. Then $N'$ is safe if every place in $R$ has at most
+one token for any firing sequence starting from the entry. Also, $N'$
+is live if a token that enters region $R$ via the entry transition
+eventually exit via transition the exit transition.
 
-When a simple place (transition) in the base petri net is replaced by
-p-type series region (t-type series region), the result is simply a
-larger cycle. The resulting petri net is live and safe, since it is a
-strongly connected \emph{state machine} with exactly one marked place.
+\paragraph{Proof:} The entry of the t-type region fires when a token
+is placed in place $u$. Since there are no branches in a t-type
+region, at least one token flows along every path starting from the
+entry. Thus every transition in the t-type region will fire at least
+once, including the exit and hence the petri net $N'$ is live. Since
+no new token will be placed in $u$ until a token is removed from $v$,
+at most one token (in fact, exactly one token) travels along every
+path in the region $R$ for any firing sequence starting with the entry
+transition. Hence the petri net $N'$ is safe.
 
-\subsection{Branch Region}
-\label{sec:branch-live-and-safe}
+\section{Type-2 petri nets}
+\label{sec:type-2}
 
-When a place in the base petri net is replaced by a branch region, the
-resulting petri net is a strongly connected \emph{state machine} which
-is that has exactly one marked place. Hence it is live and
-safe\ref{murata-tutorial}.
+The Type-1 petri net provides the basic framework for expressing
+concurrency and choice encountered in a high-level program. In
+addition to these features, a special pattern is required to
+represent the effect of branching on values in the program. This
+pattern is the \emph{parallel-merge} region that we describe below.
 
-\subsection{Fork Region}
-\label{sec:fork-live-and-safe}
+\begin{definition}
+  A \emph{Type-2 petri net} is a Type-1 petri net where some of the
+  merge places are refined as parallel-merge regions.
+\end{definition}
 
-When a transition in the base petri net is replaced by a fork region,
-the resulting petri net is a \emph{marked graph} such that every cycle
-in the marked graph pass through the single marked place $p_0$. Thus
-every cycle in the petri net has a marked place (hence it is live) and
-every place is on a cycle with exactly one marked place (hence it is
-safe).
+\subsection{Parallel-merge region}
+\label{sec:parallel-merge}
+
+When a branch occurs in a program, a variable may be assigned
+different values along each path in the branch. The actual value of
+the variable at the exit of the branch is decided by the path through
+the branch taken at run-time. This is represented by a multiplexer in
+the data-path with as many inputs as there are paths merging at a
+given merge. Thus, every merge in the control-path may be associated
+with one or more such multiplexers to be triggered in parallel. We
+represent the control-logic for these multiplexers as a petri net
+subgraph called the \emph{parallel-merge region} defined as follows.
+
+\begin{definition}
+  Parallel-merge region:
+  \begin{enumerate}
+  \item A {\em merge fragment} is an acyclic subgraph made of a single
+    place with two input edges and one output edge, with a simple
+    transition connected to each edge.
+  \item An {\em $m$-way merge tree} is a connected acyclic subgraph
+    made of $m-1$ merge fragments. The output edge of every merge
+    fragment except one is connected to the input edge of some other
+    merge fragment through a simple place. The subgraph has $m$ input
+    edges and a single output edge. A $2$-way merge tree is a merge
+    fragment.
+  \item A {\em $k \times m$ parallel-merge region} is a connected
+    acyclic subgraph made of the following components:
+    \begin{enumerate}
+    \item $k$ $m$-way merge trees
+    \item $m$ forks with fan-out $k$, such that each output edge of a
+      fork is connected to an input edge of a distinct merge tree
+      through a simple place
+    \item a single join with fan-in $k$, such that each input edge is
+      connected to the single output edge of a distinct merge tree
+      through a simple place
+    \end{enumerate}
+  \end{enumerate}
+\end{definition}
+
+\subsection{Refining a merge as a parallel-merge region}
+\label{sec:refine-merge}
 
 \end{document}
 
