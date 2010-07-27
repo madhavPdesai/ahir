@@ -12,7 +12,7 @@ LIBS=-L$(ANTLR2)
 OBJS=$(OBJ)/AaLexer.o $(OBJ)/AaParser.o $(OBJ)/AaParserClasses.o $(OBJ)/AaProgram.o $(OBJ)/AaParse.o $(OBJ)/AaStatement.o $(OBJ)/AaModule.o
 DEFS=-DDebug
 CXXFLAGS=-g
-all : $(BIN)/TestAaParser $(BIN)/Aa2C $(GRMR)/AaParser.html
+all : $(BIN)/TestAaParser $(BIN)/Aa2C $(GRMR)/AaParser.html $(BIN)/AaWriteCHeader
 
 $(GRMR)/AaParser.html: $(GRMR)/Aa.g
 	java -cp $(ANTLR2)/antlr.jar antlr.Tool -html -o $(GRMR) $(GRMR)/Aa.g
@@ -20,11 +20,17 @@ $(GRMR)/AaParser.html: $(GRMR)/Aa.g
 $(BIN)/TestAaParser : $(OBJS) $(OBJ)/TestAaParser.o
 	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/TestAaParser.o  $(OBJS) -lantlr-4.0.3 -o $(BIN)/TestAaParser 
 
+$(BIN)/AaWriteCHeader : $(OBJS) $(OBJ)/AaWriteCHeader.o
+	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/AaWriteCHeader.o  $(OBJS) -lantlr-4.0.3 -o $(BIN)/AaWriteCHeader
+
 $(BIN)/Aa2C : $(OBJS) $(OBJ)/Aa2C.o 
 	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/Aa2C.o  $(OBJS) -lantlr-4.0.3 -o $(BIN)/Aa2C
 
 $(OBJ)/Aa2C.o : $(SRC)/Aa2C.cpp  $(INCL)/Aa2C.h $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/Aa2C.cpp -o $(OBJ)/Aa2C.o
+
+$(OBJ)/AaWriteCHeader.o : $(SRC)/AaWriteCHeader.cpp  $(HEADERS)
+	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/AaWriteCHeader.cpp -o $(OBJ)/AaWriteCHeader.o
 
 $(OBJ)/AaParserClasses.o: $(SRC)/AaParserClasses.cpp $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/AaParserClasses.cpp -o $(OBJ)/AaParserClasses.o

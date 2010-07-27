@@ -29,6 +29,8 @@ class AaRoot
   set<AaRoot*> _target_references; // objects that use this as a target (in arcs)
   set<AaRoot*> _source_references; // objects that use this as a source (out arcs)
 
+  string _file_name;
+
  public:
 
   static void Increment_Root_Counter();// { _root_counter += 1; }
@@ -80,6 +82,8 @@ class AaRoot
 
   virtual string Get_C_Name() { assert(0); }
   virtual string Get_Struct_Dereference() { assert(0); }
+
+  virtual string Get_File_Name() { return(this->_file_name);}
 };
 
 #endif

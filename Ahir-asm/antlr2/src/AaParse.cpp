@@ -11,6 +11,8 @@ using namespace antlr;
 void AaParse(string filename)
 {
   ifstream infile;
+
+  AaProgram::_current_file_name = filename;
   
   infile.open(filename.c_str());
   if(!infile.is_open())

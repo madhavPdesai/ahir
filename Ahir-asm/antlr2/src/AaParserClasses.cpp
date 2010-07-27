@@ -80,7 +80,7 @@ string C_Name(AaOperation op)
       ret_string = "__SHL";
       break;
     case __SHR:
-      ret_string = "__SHL";
+      ret_string = "__SHR";
       break;
     case __PLUS:
       ret_string = "__PLUS";
@@ -145,10 +145,10 @@ string Aa_Name(AaOperation op)
       ret_string = "$xnor";
       break;
     case __SHL:
-      ret_string = ">>";
+      ret_string = "<<";
       break;
     case __SHR:
-      ret_string = "<<";
+      ret_string = ">>";
       break;
     case __PLUS:
       ret_string = "+";
@@ -199,6 +199,7 @@ bool AaRoot::_warning_flag = false;
 AaRoot::AaRoot() 
 {
   this->Increment_Root_Counter();
+  this->_file_name = AaProgram::_current_file_name;
 }
 AaRoot::~AaRoot() {};
 string AaRoot::Kind()
@@ -600,12 +601,21 @@ void AaObjectReference::Add_Source_Reference(AaRoot* referrer)
 
 void AaObjectReference::PrintC(ofstream& ofile, string tab_string)
 {
+  assert(this->Get_Object());
+
   if(this->Get_Object()->Is_Object())
-    {
+    {// this refers to an object
       if(((AaObject*)(this->Get_Object()))->Get_Scope() != NULL)
-	ofile << tab_string 
-	      << ((AaObject*)this->Get_Object())->Get_Scope()->Get_Struct_Dereference()
+	ofile << ((AaObject*)this->Get_Object())->Get_Scope()->Get_Struct_Dereference()
 	      << ".";
+    }
+  else if(this->Get_Object()->Is_Statement())
+    {// this refers to a statement
+      ofile << this->Get_Scope()->Get_Struct_Dereference() << ".";
+    }
+  else if(this->Get_Object()->Is_Expression())
+    { // this refers to an object reference?
+      ofile << ((AaExpression*)this->Get_Object())->Get_Scope()->Get_Struct_Dereference() << ".";
     }
 }
 //---------------------------------------------------------------------
@@ -652,8 +662,9 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 }
 void AaSimpleObjectReference::PrintC(ofstream& ofile, string tab_string)
 {
+  ofile << "(";
   this->AaObjectReference::PrintC(ofile,tab_string);
-  ofile << this->Get_Object_Root_Name();
+  ofile << this->Get_Object_Root_Name() << ").__val";
 }
 
 
@@ -672,6 +683,7 @@ AaArrayObjectReference::~AaArrayObjectReference()
 }
 void AaArrayObjectReference::Print(ostream& ofile)
 {
+  ofile << "(";
   ofile << this->Get_Object_Ref_String();
   for(unsigned int i = 0; i < this->Get_Number_Of_Indices(); i++)
     {
@@ -679,6 +691,7 @@ void AaArrayObjectReference::Print(ostream& ofile)
       this->Get_Array_Index(i)->Print(ofile);
       ofile << "]";
     }
+  ofile << ").__val";
 }
 AaExpression*  AaArrayObjectReference::Get_Array_Index(unsigned int idx)
 {

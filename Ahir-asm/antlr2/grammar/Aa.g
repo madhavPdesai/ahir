@@ -480,9 +480,9 @@ aA_Join_Fork_Statement[AaForkBlockStatement* scope] returns [AaJoinForkStatement
 //-----------------------------------------------------------------------------------------------
 // aA_Phi_Statement: PHI SIMPLE_IDENTIFIER  :=  ( aA_Object_Reference  ON  (SIMPLE_IDENTIFIER | ENTRY))+
 //-----------------------------------------------------------------------------------------------
-aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_set] returns [AaPhiStatement* new_ps]
+aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_set, AaMergeStatement* pm] returns [AaPhiStatement* new_ps]
 {
-    new_ps = new AaPhiStatement(scope);
+    new_ps = new AaPhiStatement(scope,pm);
     string label;
     AaExpression* expr;
     AaSimpleObjectReference* target;
@@ -586,7 +586,7 @@ aA_Merge_Statement[AaBranchBlockStatement* scope] returns [AaMergeStatement* new
             } ) | 
             (eid:ENTRY {lbl = eid->getText(); lbl_set.insert(lbl); new_mgs->Add_Merge_Label(lbl);}))+
         (
-            ( ns = aA_Phi_Statement[scope,lbl_set] {  slist.push_back(ns); } )+
+            ( ns = aA_Phi_Statement[scope,lbl_set,new_mgs] {  slist.push_back(ns); } )+
         {
             AaStatementSequence* sseq = new AaStatementSequence(scope,slist);
             sseq->Increment_Tab_Depth();

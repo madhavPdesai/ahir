@@ -18,7 +18,8 @@
 // all members are static since there is a single program
 class AaProgram
 {
-  
+
+
   // all kinds of std::maps.
   static std::map<string,AaObject*,StringCompare> _objects;
   static std::map<string,AaModule*,StringCompare> _modules;
@@ -33,6 +34,8 @@ class AaProgram
   static AaUGraphBase _type_dependency_graph;
 
  public:
+
+  static string _current_file_name;
 
   AaProgram();
   ~AaProgram();

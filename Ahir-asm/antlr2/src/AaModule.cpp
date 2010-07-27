@@ -113,9 +113,9 @@ void AaModule::Write_Header(ofstream& ofile)
     }
 
   // bit fields at the end whenever possible...
-  ofile << "\tunsigned _entry        : 1;" << endl;
-  ofile << "\tunsigned _in_progress  : 1;" << endl;
-  ofile << "\tunsigned _exit         : 1;" << endl;
+  ofile << "\tunsigned " << this->Get_Entry_Name() << " : 1;" << endl;
+  ofile << "\tunsigned " << this->Get_In_Progress_Name() << " : 1;" << endl;
+  ofile << "\tunsigned " << this->Get_Exit_Name() << " : 1;" << endl;
   ofile << "} "
 	<< this->Get_Structure_Name() 
 	<< ";" 
@@ -184,7 +184,7 @@ void AaModule::Write_Source(ofstream& ofile)
 	<< " = "
 	<< "(" << this->Get_Structure_Name() << "*) calloc(1,sizeof(" 
 	<< this->Get_Structure_Name() << "));" << endl;
-  ofile << "\t__top->_entry = 1;" <<  endl;
+  ofile << this->Get_Entry_Name_Ref() << " = 1;" <<  endl;
   for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
     {
       ofile << "\t" << AaProgram::Get_Top_Struct_Variable_Name()
@@ -192,7 +192,7 @@ void AaModule::Write_Source(ofstream& ofile)
 	    << this->_input_args[i]->Get_Name() << ";" << endl;
     }
 
-  ofile << "\twhile(!" << AaProgram::Get_Top_Struct_Variable_Name() << "->_exit) " << endl;
+  ofile << "\twhile(!" << this->Get_Exit_Name_Ref() << ") " << endl;
   ofile << "\t{ " << endl;
   ofile << "\t\t" << AaProgram::Get_Top_Struct_Variable_Name() 
 	<< " = " << this->Get_C_Function_Name() 
@@ -208,6 +208,7 @@ void AaModule::Write_Source(ofstream& ofile)
 	    << "->" << this->_output_args[i]->Get_Name() << ";" << endl;
     }
 
+  ofile << "cfree(" << AaProgram::Get_Top_Struct_Variable_Name() << ");" << endl;
   ofile << "return AASUCCESS; " << endl;
   ofile << "}" << endl;
 
@@ -224,9 +225,9 @@ void AaModule::Write_Source(ofstream& ofile)
 	<< endl;
   ofile << "{" << endl;
 
-  ofile << "if " << AaProgram::Get_Top_Struct_Variable_Name() << "->_entry {" << endl;
-  ofile << AaProgram::Get_Top_Struct_Variable_Name() << "->_entry = 0;" << endl;
-  ofile << AaProgram::Get_Top_Struct_Variable_Name() << "->_in_progress = 1;" << endl;
+  ofile << "if (" << this->Get_Entry_Name_Ref() <<") {" << endl;
+  ofile << this->Get_Entry_Name_Ref() << " = 0;" << endl;
+  ofile << this->Get_In_Progress_Name_Ref() <<" = 1;" << endl;
 
   this->Write_Entry_Transfer_Code(ofile);
   ofile << "}" << endl;
@@ -236,8 +237,10 @@ void AaModule::Write_Source(ofstream& ofile)
   this->Write_Exit_Check_Condition(ofile);
   ofile << ") {" << endl;
   this->Write_Cleanup_Code(ofile);
-  ofile << AaProgram::Get_Top_Struct_Variable_Name() << "->_in_progress = 0;" << endl;
-  ofile << AaProgram::Get_Top_Struct_Variable_Name() << "->_exit = 1;" << endl;
+
+  ofile << this->Get_In_Progress_Name_Ref() <<" = 0;" << endl;
+  ofile << this->Get_Exit_Name_Ref() << " = 1;" << endl;
+
   ofile << "} " << endl;
   ofile << "return "<< AaProgram::Get_Top_Struct_Variable_Name() << ";" << endl;
   ofile << "}" << endl;

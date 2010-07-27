@@ -90,6 +90,16 @@ class AaStatement: public AaScope
   virtual void Write_Pipe_Write_Condition_Update(ofstream& ofile , string tab_string);
 
   virtual void PrintC(ofstream& ofile, string tab_string) { assert(0); }
+
+  virtual string Get_Source_Info() 
+  { 
+    return(string(" file ") 
+	   + this->Get_File_Name() 
+	   + ", line " 
+	   + 
+	   IntToStr(this->Get_Line_Number())); 
+  }
+
 };
 
 // statement sequence (is used in block statements which lead to programs)
@@ -134,6 +144,16 @@ class AaStatementSequence: public AaScope
     for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
       this->_statement_sequence[i]->Write_C_Function_Body(ofile);
   }
+
+  virtual void  Write_Parallel_Entry_Transfer_Code(ofstream& ofile);
+  virtual void  Write_Series_Entry_Transfer_Code(ofstream& ofile);
+
+  virtual void Write_Parallel_Statement_Invocations(ofstream& ofile);
+  virtual void Write_Series_Statement_Invocations(ofstream& ofile);
+
+  virtual void  Write_Parallel_Exit_Check_Condition(ofstream& ofile);
+  virtual void  Write_Series_Exit_Check_Condition(ofstream& ofile);
+
 };
 
 // null statement
@@ -147,13 +167,9 @@ class AaNullStatement: public AaStatement
   virtual string Kind() {return("AaNullStatement");}
   virtual void Map_Source_References() {} // do nothing
 
-  virtual void Write_C_Struct(ofstream& ofile)
+  virtual void PrintC(ofstream& ofile, string tab_string)
   {
-  }
-
-  virtual void Write_C_Function_Body(ofstream& ofile)
-  {
-    ofile << ";" << endl;
+    ofile <<  tab_string << ";" << endl;
   }
   virtual string Get_C_Name()
   {
@@ -361,14 +377,6 @@ class AaBlockStatement: public AaStatement
   virtual bool Can_Block() { return (true); }
 
 
-  virtual void  Write_Parallel_Entry_Transfer_Code(AaStatementSequence* sseq, ofstream& ofile);
-  virtual void  Write_Series_Entry_Transfer_Code(AaStatementSequence* sseq, ofstream& ofile);
-
-  virtual void Write_Parallel_Statement_Invocations(AaStatementSequence* sseq, ofstream& ofile);
-  virtual void Write_Series_Statement_Invocations(AaStatementSequence* sseq, ofstream& ofile);
-
-  virtual void  Write_Parallel_Exit_Check_Condition(AaStatementSequence* sseq, ofstream& ofile);
-  virtual void  Write_Series_Exit_Check_Condition(AaStatementSequence* sseq, ofstream& ofile);
 
   virtual void Write_Entry_Condition(ofstream& ofile);
 };
@@ -437,21 +445,16 @@ class AaJoinForkStatement: public AaParallelBlockStatement
   virtual void Map_Source_References();
   virtual void Write_Entry_Transfer_Code(ofstream& ofile);
 
-
   virtual string Get_C_Name()
   {
     return(this->Get_Scope()->Get_C_Name() + "$join$line_" +   IntToStr(this->Get_Line_Number()));
-  }
-
-  virtual void Write_C_Struct(ofstream& ofile) 
-  {
-    this->AaStatement::Write_C_Struct(ofile);
   }
 
   virtual string Get_Struct_Dereference()
   {
     return(this->Get_Scope()->Get_Struct_Dereference());
   }
+
 
 };
 
@@ -498,34 +501,6 @@ class AaPlaceStatement: public AaStatement
 
 };
 
-class AaPhiStatement: public AaStatement
-{
-  AaSimpleObjectReference* _target;
-  vector<pair<string,AaExpression*> > _source_pairs;
-
- public:
-  AaPhiStatement(AaBranchBlockStatement* scope);
-  ~AaPhiStatement();
-  void Set_Target(AaSimpleObjectReference* tgt) 
-  { 
-    this->_target = tgt; 
-    this->Map_Target(tgt); 
-  }
-  void Add_Source_Pair(string label, AaExpression* expr)
-  {
-    this->_source_pairs.push_back(pair<string,AaExpression*>(label,expr));
-  }
-  virtual void Print(ostream& ofile);
-  virtual string Kind() {return("AaPhiStatement");}
-  virtual void Map_Source_References();
-
-  virtual string Get_C_Name()
-  {
-    return(this->Get_Scope()->Get_C_Name() + "$phi$line_" +   IntToStr(this->Get_Line_Number()));
-  }
-  virtual void PrintC(ofstream& ofile, string tab_string);
-  void Write_C_Struct(ofstream& ofile);
-};
 
 class AaMergeStatement: public AaSeriesBlockStatement
 {
@@ -556,19 +531,53 @@ class AaMergeStatement: public AaSeriesBlockStatement
     return(this->Get_Scope()->Get_C_Name() + "$merge$line_" +   IntToStr(this->Get_Line_Number()));
   }
 
-  void Write_C_Struct(ofstream& ofile) 
-  {
-    this->AaStatement::Write_C_Struct(ofile);
-  }
-
   virtual void Write_Entry_Condition(ofstream& ofile);
   virtual void Write_Cleanup_Code(ofstream& ofile);
+  virtual void Write_Entry_Transfer_Code(ofstream& ofile);
+
+  void Write_C_Struct(ofstream& ofile);
 
   virtual string Get_Struct_Dereference()
   {
     return(this->Get_Scope()->Get_Struct_Dereference());
   }
 
+  virtual string Get_Merge_From_Entry() { return(this->Get_C_Name() + "_from_entry"); }
+  virtual string Get_Merge_From_Entry_Ref() 
+  {
+    return(this->Get_Struct_Dereference() + "." +  this->Get_Merge_From_Entry());
+  }
+
+};
+
+class AaPhiStatement: public AaStatement
+{
+  AaMergeStatement* _parent_merge;
+  AaSimpleObjectReference* _target;
+  vector<pair<string,AaExpression*> > _source_pairs;
+
+ public:
+  AaPhiStatement(AaBranchBlockStatement* scope, AaMergeStatement* pm);
+  ~AaPhiStatement();
+  void Set_Target(AaSimpleObjectReference* tgt) 
+  { 
+    this->_target = tgt; 
+    this->Map_Target(tgt); 
+  }
+  void Add_Source_Pair(string label, AaExpression* expr)
+  {
+    this->_source_pairs.push_back(pair<string,AaExpression*>(label,expr));
+  }
+  virtual void Print(ostream& ofile);
+  virtual string Kind() {return("AaPhiStatement");}
+  virtual void Map_Source_References();
+
+  virtual string Get_C_Name()
+  {
+    return(this->Get_Scope()->Get_C_Name() + "$phi$line_" +   IntToStr(this->Get_Line_Number()));
+  }
+  virtual void PrintC(ofstream& ofile, string tab_string);
+  void Write_C_Struct(ofstream& ofile);
 };
 
 
@@ -612,12 +621,9 @@ class AaSwitchStatement: public AaStatement
     return(this->Get_Scope()->Get_C_Name() + "$switch$line_" +   IntToStr(this->Get_Line_Number()));
   }
 
-  void Write_C_Struct(ofstream& ofile) 
-  {
-    this->AaStatement::Write_C_Struct(ofile);
-  }
 
-  virtual void Write_C_Function_Body(ofstream& ofile) {assert(0);}
+  virtual void Write_C_Struct(ofstream& ofile);
+  virtual void Write_C_Function_Body(ofstream& ofile);
 
   virtual string Get_Struct_Dereference()
   {
@@ -657,12 +663,8 @@ class AaIfStatement: public AaStatement
     return(this->Get_Scope()->Get_C_Name() + "$if$line_" +   IntToStr(this->Get_Line_Number()));
   }
 
-  void Write_C_Struct(ofstream& ofile) 
-  {
-    this->AaStatement::Write_C_Struct(ofile);
-  }
-
-  virtual void Write_C_Function_Body(ofstream& ofile) {assert(0);}
+  virtual void Write_C_Struct(ofstream& ofile);
+  virtual void Write_C_Function_Body(ofstream& ofile);
 
   virtual string Get_Struct_Dereference()
   {

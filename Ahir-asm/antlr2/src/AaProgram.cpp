@@ -6,6 +6,7 @@
 //---------------------------------------------------------------------
 
 // static members of AaProgram..
+string AaProgram::_current_file_name;
 std::map<string,AaType*,StringCompare>   AaProgram::_type_map;
 std::map<string,AaObject*,StringCompare> AaProgram::_objects;
 std::map<string,AaModule*,StringCompare> AaProgram::_modules;
@@ -275,7 +276,7 @@ void AaProgram::Write_C_Model()
   source_file.open(source.c_str());
 
 
-  source_file << "#include <Aa2C.h>" << endl;
+  header_file << "#include <Aa2C.h>" << endl;
   source_file << "#include <" << header << ">" << endl;
   
 
