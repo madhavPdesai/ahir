@@ -63,17 +63,17 @@ class AaStatement: public AaScope
 
   virtual string Get_Entry_Name_Ref() 
   {
-    return(this->Get_Struct_Dereference() + "." + this->Get_Entry_Name());
+    return(this->Get_Struct_Dereference() + this->Get_Entry_Name());
   }
 
   virtual string Get_In_Progress_Name_Ref() 
   {
-    return(this->Get_Struct_Dereference() + "." + this->Get_In_Progress_Name());
+    return(this->Get_Struct_Dereference() + this->Get_In_Progress_Name());
   }
 
   virtual string Get_Exit_Name_Ref() 
   {
-    return(this->Get_Struct_Dereference() + "." + this->Get_Exit_Name());
+    return(this->Get_Struct_Dereference() + this->Get_Exit_Name());
   }
 
 
@@ -154,6 +154,8 @@ class AaStatementSequence: public AaScope
   virtual void  Write_Parallel_Exit_Check_Condition(ofstream& ofile);
   virtual void  Write_Series_Exit_Check_Condition(ofstream& ofile);
 
+  virtual void Write_Clear_Exit_Flags_Code(ostream& ofile);
+
 };
 
 // null statement
@@ -173,7 +175,7 @@ class AaNullStatement: public AaStatement
   }
   virtual string Get_C_Name()
   {
-    return(this->Get_Scope()->Get_Label() + "$null$line_" +   IntToStr(this->Get_Line_Number()));
+    return("_null_line_" +   IntToStr(this->Get_Line_Number()));
   }
 
   virtual bool Can_Block() { return(false); }
@@ -206,7 +208,7 @@ class AaAssignmentStatement: public AaStatement
 
   virtual string Get_C_Name()
   {
-    return(this->Get_Scope()->Get_C_Name() + "$assign$line_" +   IntToStr(this->Get_Line_Number()));
+    return("_assign_line_" +   IntToStr(this->Get_Line_Number()));
   }
 
   // return true if one of the sources or targets is a pipe.
@@ -261,7 +263,7 @@ class AaCallStatement: public AaStatement
 
   virtual string Get_C_Name()
   {
-    return(this->Get_Scope()->Get_C_Name() + "$call$line_" +   IntToStr(this->Get_Line_Number()));
+    return("_call_line_" +   IntToStr(this->Get_Line_Number()));
   }
 
   virtual string Get_Called_Function_Struct_Pointer()
@@ -271,7 +273,7 @@ class AaCallStatement: public AaStatement
 
   virtual string Get_Called_Function_Struct_Pointer_Ref()
   {
-    return(this->Get_Struct_Dereference() + "." + this->Get_Called_Function_Struct_Pointer());
+    return(this->Get_Struct_Dereference() + this->Get_Called_Function_Struct_Pointer());
   }
 
   virtual string Get_Called_Module_Struct_Name();
@@ -337,6 +339,14 @@ class AaBlockStatement: public AaStatement
 	  }
       }
   }
+
+  virtual void Write_Object_Initializations(ofstream& ofile)
+  {
+    for(unsigned int i = 0; i < this->_objects.size(); i++)
+      {
+	this->_objects[i]->Write_Initialization(ofile);
+      }
+  }
   virtual void Print_Statement_Sequence(ostream& ofile)
   {
     if(this->_statement_sequence != NULL)
@@ -363,7 +373,11 @@ class AaBlockStatement: public AaStatement
   virtual void Write_Entry_Transfer_Code(ofstream& ofile) {assert(0);}
   virtual void Write_Statement_Invocations(ofstream& ofile) {assert(0);}
   virtual void Write_Exit_Check_Condition(ofstream& ofile) {assert(0);}
-  virtual void Write_Cleanup_Code(ofstream& ofile) {}
+  virtual void Write_Cleanup_Code(ofstream& ofile) 
+  {
+    if(this->_statement_sequence)
+      this->_statement_sequence->Write_Clear_Exit_Flags_Code(ofile);
+  }
 
   // the block statement is always encased in a function!
   virtual void Write_C_Function_Body(ofstream& ofile);
@@ -447,7 +461,7 @@ class AaJoinForkStatement: public AaParallelBlockStatement
 
   virtual string Get_C_Name()
   {
-    return(this->Get_Scope()->Get_C_Name() + "$join$line_" +   IntToStr(this->Get_Line_Number()));
+    return("_join_line_" +   IntToStr(this->Get_Line_Number()));
   }
 
   virtual string Get_Struct_Dereference()
@@ -478,7 +492,7 @@ class AaPlaceStatement: public AaStatement
   }
 
   virtual string Get_Place_Name() { return(this->Get_Label()); }
-  virtual string Get_Place_Name_Ref() {return(this->Get_Struct_Dereference() + "." + this->Get_Place_Name()); }
+  virtual string Get_Place_Name_Ref() {return(this->Get_Struct_Dereference() + this->Get_Place_Name()); }
 
   virtual void Print(ostream& ofile) { ofile << this->Tab() << "$place[" << this->Get_Label() << "]"  << endl; }
   virtual string Kind() {return("AaPlaceStatement");}
@@ -486,7 +500,7 @@ class AaPlaceStatement: public AaStatement
 
   virtual string Get_C_Name()
   {
-    return(this->Get_Scope()->Get_C_Name() + "$place$line_" +   IntToStr(this->Get_Line_Number()));
+    return("_place_line_" +   IntToStr(this->Get_Line_Number()));
   }
   // cannot block, but will contribute a flag to the
   // structure and will also contribute a line of code
@@ -528,7 +542,7 @@ class AaMergeStatement: public AaSeriesBlockStatement
 
   virtual string Get_C_Name()
   {
-    return(this->Get_Scope()->Get_C_Name() + "$merge$line_" +   IntToStr(this->Get_Line_Number()));
+    return("_merge_line_" +   IntToStr(this->Get_Line_Number()));
   }
 
   virtual void Write_Entry_Condition(ofstream& ofile);
@@ -545,7 +559,7 @@ class AaMergeStatement: public AaSeriesBlockStatement
   virtual string Get_Merge_From_Entry() { return(this->Get_C_Name() + "_from_entry"); }
   virtual string Get_Merge_From_Entry_Ref() 
   {
-    return(this->Get_Struct_Dereference() + "." +  this->Get_Merge_From_Entry());
+    return(this->Get_Struct_Dereference() +  this->Get_Merge_From_Entry());
   }
 
 };
@@ -574,7 +588,7 @@ class AaPhiStatement: public AaStatement
 
   virtual string Get_C_Name()
   {
-    return(this->Get_Scope()->Get_C_Name() + "$phi$line_" +   IntToStr(this->Get_Line_Number()));
+    return("_phi_line_" +   IntToStr(this->Get_Line_Number()));
   }
   virtual void PrintC(ofstream& ofile, string tab_string);
   void Write_C_Struct(ofstream& ofile);
@@ -618,7 +632,7 @@ class AaSwitchStatement: public AaStatement
 
   virtual string Get_C_Name()
   {
-    return(this->Get_Scope()->Get_C_Name() + "$switch$line_" +   IntToStr(this->Get_Line_Number()));
+    return("_switch_line_" +   IntToStr(this->Get_Line_Number()));
   }
 
 
@@ -660,7 +674,7 @@ class AaIfStatement: public AaStatement
 
   virtual string Get_C_Name()
   {
-    return(this->Get_Scope()->Get_C_Name() + "$if$line_" +   IntToStr(this->Get_Line_Number()));
+    return("_if_line_" +   IntToStr(this->Get_Line_Number()));
   }
 
   virtual void Write_C_Struct(ofstream& ofile);
@@ -670,6 +684,7 @@ class AaIfStatement: public AaStatement
   {
     return(this->Get_Scope()->Get_Struct_Dereference());
   }
+
 
 };
 

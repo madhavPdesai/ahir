@@ -513,6 +513,9 @@ typedef struct _int_64 {
 	int64_t __val : 64;
 } int_64;
 
+typedef struct _pointer_ { 
+	 void*  __val ;
+} pointer;
 
 typedef struct _float_8_23 { float __val; }  float_8_23;
 typedef struct _float_11_52 { double __val; } float_11_52;

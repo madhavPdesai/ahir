@@ -22,6 +22,7 @@ $(BIN)/TestAaParser : $(OBJS) $(OBJ)/TestAaParser.o
 
 $(BIN)/AaWriteCHeader : $(OBJS) $(OBJ)/AaWriteCHeader.o
 	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/AaWriteCHeader.o  $(OBJS) -lantlr-4.0.3 -o $(BIN)/AaWriteCHeader
+	$(BIN)/AaWriteCHeader > $(INCL)/Aa2C.h
 
 $(BIN)/Aa2C : $(OBJS) $(OBJ)/Aa2C.o 
 	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/Aa2C.o  $(OBJS) -lantlr-4.0.3 -o $(BIN)/Aa2C

@@ -127,22 +127,22 @@ string Aa_Name(AaOperation op)
   switch(op)
     {
     case __OR:
-      ret_string = "$or";
+      ret_string = "|";
       break;
     case __AND:
-      ret_string = "$and";
+      ret_string = "&";
       break;
     case __NOR:
-      ret_string = "$nor";
+      ret_string = "~|";
       break;
     case __NAND:
-      ret_string = "$nand";
+      ret_string = "~&";
       break;
     case __XOR:
-      ret_string = "$xor";
+      ret_string = "^";
       break;
     case __XNOR:
-      ret_string = "$xnor";
+      ret_string = "~^";
       break;
     case __SHL:
       ret_string = "<<";
@@ -181,7 +181,7 @@ string Aa_Name(AaOperation op)
       ret_string = ">=";
       break;
     case __NOT:
-      ret_string = "$not";
+      ret_string = "~";
       break;
     default:
       cerr << "Error: unrecognized operation" << endl;
@@ -311,9 +311,9 @@ string AaScope::Get_Struct_Dereference()
   string ret_string;
 
   if(this->Get_Scope() == NULL)
-    ret_string = "(*" + AaProgram::Get_Top_Struct_Variable_Name() + ")";
+    ret_string = AaProgram::Get_Top_Struct_Variable_Name() + "->";
   else if (this->Get_Label() != "")
-    ret_string = this->Get_Scope()->Get_Struct_Dereference() + "." + this->Get_Label();
+    ret_string = this->Get_Scope()->Get_Struct_Dereference() + this->Get_Label() + ".";
   else 
     ret_string = this->Get_Scope()->Get_Struct_Dereference();
 
@@ -606,16 +606,15 @@ void AaObjectReference::PrintC(ofstream& ofile, string tab_string)
   if(this->Get_Object()->Is_Object())
     {// this refers to an object
       if(((AaObject*)(this->Get_Object()))->Get_Scope() != NULL)
-	ofile << ((AaObject*)this->Get_Object())->Get_Scope()->Get_Struct_Dereference()
-	      << ".";
+	ofile << ((AaObject*)this->Get_Object())->Get_Scope()->Get_Struct_Dereference();
     }
   else if(this->Get_Object()->Is_Statement())
     {// this refers to a statement
-      ofile << this->Get_Scope()->Get_Struct_Dereference() << ".";
+      ofile << this->Get_Scope()->Get_Struct_Dereference();
     }
   else if(this->Get_Object()->Is_Expression())
     { // this refers to an object reference?
-      ofile << ((AaExpression*)this->Get_Object())->Get_Scope()->Get_Struct_Dereference() << ".";
+      ofile << ((AaExpression*)this->Get_Object())->Get_Scope()->Get_Struct_Dereference();
     }
 }
 //---------------------------------------------------------------------
@@ -731,6 +730,7 @@ void AaArrayObjectReference::Map_Source_References(set<AaRoot*>& source_objects)
 
 void AaArrayObjectReference::PrintC(ofstream& ofile, string tab_string)
 {
+  ofile << "(";
   this->AaObjectReference::PrintC(ofile,tab_string);
   ofile << this->Get_Object_Root_Name();
   for(unsigned int i = 0; i < this->Get_Number_Of_Indices(); i++)
@@ -739,6 +739,7 @@ void AaArrayObjectReference::PrintC(ofstream& ofile, string tab_string)
       this->Get_Array_Index(i)->PrintC(ofile,"");
       ofile << "]";
     }
+  ofile << ").__val";
 }
 
 //---------------------------------------------------------------------

@@ -102,7 +102,7 @@ aA_Program
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Module: MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
+// aA_Module: (FOREIGN)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 aA_Module returns [AaModule* new_module]
 {
@@ -110,24 +110,38 @@ aA_Module returns [AaModule* new_module]
     new_module = NULL;
     AaStatementSequence* stmts = NULL;
     AaObject* obj = NULL;
+    bool foreign_flag = false;
 }
-    : MODULE 
+    : (FOREIGN {foreign_flag = true;})? mt: MODULE 
         lbl = aA_Label 
         {
             new_module = new AaModule(lbl);
+            new_module->Set_Foreign_Flag(foreign_flag);
+            new_module->Set_Line_Number(mt->getLine());
         }
-        aA_In_Args[new_module] aA_Out_Args[new_module] IS
+        aA_In_Args[new_module] aA_Out_Args[new_module] (IS
         LBRACE
             // first the declarations in this scope
-            (obj = aA_Object_Declaration[new_module] { new_module->Add_Object(obj); })*
+            (obj = aA_Object_Declaration[new_module] 
+            { 
+                if(!foreign_flag) 
+                    new_module->Add_Object(obj);
+                else
+                    AaRoot::Error("foreign module cannot have object declarations",new_module);
+            })*
 
             // every statement in the sequence specifies a set of
             // targets (possibly empty) which should be maintained
             // by the containing scope as implicit variable 
             // definitions
             stmts = aA_Atomic_Statement_Sequence[new_module] 
-            {new_module->Set_Statement_Sequence(stmts);}
-        RBRACE
+            {
+                if(!foreign_flag)
+                    new_module->Set_Statement_Sequence(stmts);
+                else
+                    AaRoot::Error("foreign module cannot have body",new_module);
+            }
+        RBRACE)?
     ;
 
 
@@ -466,7 +480,7 @@ aA_Join_Fork_Statement[AaForkBlockStatement* scope] returns [AaJoinForkStatement
 }
     : jl: JOIN 
         (id: SIMPLE_IDENTIFIER { lbl = id->getText(); new_jfs->Add_Join_Label(lbl); })*
-        (AND FORK
+        (FORK
             // new_jfs is not a scope
             sseq = aA_Atomic_Statement_Sequence[scope] 
             {
@@ -834,7 +848,7 @@ aA_Ternary_Expression[AaScope* scope] returns [AaExpression* expr]
 // aA_Binary_Op : OR | AND | NOR | NAND | XOR | XNOR | SHL | SHR | PLUS | MINUS | DIV | MUL | EQUAL | NOTEQUAL | LESS | LESSEQUAL | GREATER | GREATEREQUAL 
 //----------------------------------------------------------------------------------------------------------
 aA_Binary_Op returns [AaOperation op] : 
-        ( id_or:OR {op = __OR;})
+        ( id_or:OR {op = __OR;}) |
         ( id_and:AND {op = __AND;}) | 
         ( id_nor:NOR { op = __NOR;}) | 
         ( id_nand:NAND { op = __NAND;}) | 
@@ -1061,7 +1075,7 @@ aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
                     )* 
             |
                     (
-                        cid: CARET 
+                        cid: HASH
                         {
                             full_name += cid->getText();
                             search_ancestor_level++;
@@ -1149,6 +1163,7 @@ options {
 }
 
 // language keywords (all start with $)
+FOREIGN       : "$foreign";
 MODULE        : "$module";
 DECLARE       : "$declare";
 DEFAULT       : "$default";
@@ -1209,7 +1224,7 @@ RBRACKET         : ']' ; // array index marker
 LPAREN           : '(' ; // argument-list
 RPAREN           : ')' ; // argument-list
 PERCENT          : '%' ;
-CARET            : '^';
+
 
 // arithmetic operators
 PLUS             : '+' ; // plus
@@ -1218,13 +1233,13 @@ MUL              : '*' ; // multiply
 DIV              : '/' ; // divide
 
 // logical operators
-NOT              : "$not"  ;
-OR               : "$or"   ;
-AND              : "$and"  ;
-XOR              : "$xor"  ;
-NOR              : "$nor"  ;
-NAND             : "$nand" ;
-XNOR             : "$xnor" ;
+NOT              : '~'     ;
+OR               : '|'     ;
+AND              : '&'     ;
+XOR              : '^'     ;
+NOR              : "~|"    ;
+NAND             : "~&"    ;
+XNOR             : "~^"    ;
 
 // Mux
 MUX : "$mux";

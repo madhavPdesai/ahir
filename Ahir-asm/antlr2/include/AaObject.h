@@ -37,27 +37,33 @@ class AaObject: public AaRoot
   virtual void Print(ostream& ofile);  
   virtual string Kind() {return("AaObject");}
   virtual bool Is_Object() {return(true); }
+
   virtual void PrintC(ofstream& ofile, string tab_string)
   {
     ofile << tab_string << this->Get_Type()->CName() 
 	  << " " 
-	  <<  this->Get_Name(); 
-    if(this->Get_Value())
-      {
-	ofile << " = ";
-	this->Get_Value()->PrintC(ofile,string(""));
-      }
+	  <<  this->Get_Name()
+	  << this->Get_Type()->CDim();
     ofile << ";" << endl;
   }
 
   virtual string CRef()
   {
     if(this->Get_Scope())
-      return(this->Get_Scope()->Get_Struct_Dereference() + "." + this->Get_Name());
+      return(this->Get_Scope()->Get_Struct_Dereference() + this->Get_Name() + ".__val");
     else
-      return(this->Get_Name());
+      return(this->Get_Name() + ".__val");
   }
 
+  virtual void Write_Initialization(ofstream& ofile)
+  {
+    if(this->_value)
+      {
+	ofile << this->CRef() << " = ";
+	this->_value->PrintC(ofile,"");
+	ofile << ";" << endl;
+      }
+  }
 };
 
 // interface object: function arguments
@@ -119,7 +125,7 @@ class AaPipeObject: public AaObject
     if(this->Get_Scope() == NULL)
       return(this->Get_Valid_Flag_Name());
     else
-      return(this->Get_Scope()->Get_Struct_Dereference() + "." + this->Get_Valid_Flag_Name());
+      return(this->Get_Scope()->Get_Struct_Dereference() + this->Get_Valid_Flag_Name());
   }
 
   virtual void PrintC(ofstream& ofile, string tab_string)

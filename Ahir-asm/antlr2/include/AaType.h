@@ -20,6 +20,7 @@ class AaType: public AaRoot
   ~AaType();
   virtual string Kind() {return("AaType");}
   virtual string CName() {assert(0);}
+  virtual string CDim() {assert(0);}
 };
 
 class AaScalarType: public AaType
@@ -29,6 +30,7 @@ class AaScalarType: public AaType
   AaScalarType(AaScope* parent);
   ~AaScalarType();
   virtual string Kind() {return("AaScalarType");}
+  virtual string CDim() {return("");}
 };
 
 
@@ -80,7 +82,7 @@ class AaPointerType: public AaUintType
 
   virtual string CName()
   {
-    return("void*");
+    return("pointer");
   }
 
 };
@@ -129,9 +131,14 @@ class AaArrayType: public AaType
   unsigned int Get_Dimension(unsigned int dim_id);
   void Print(ostream& ofile);
   virtual string Kind() {return("AaArrayType");}
-  virtual string CName(ofstream& header, ofstream& source)
+  virtual string CName()
   {
     string ret_string =  this->_element_type->CName();
+    return(ret_string);
+  }
+  virtual string CDim() 
+  {
+    string ret_string =  "";
     for(unsigned int i=0; i < this->Get_Number_Of_Dimensions(); i++)
       ret_string +=  "[" + IntToStr(this->_dimension[i]) + "]";
     return(ret_string);

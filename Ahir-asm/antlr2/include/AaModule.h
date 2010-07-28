@@ -20,10 +20,14 @@ class AaModule: public AaSeriesBlockStatement
   vector<AaInterfaceObject*>  _input_args;
   vector<AaInterfaceObject*>  _output_args;
 
+  bool _foreign_flag;
 
  public:
   AaModule(string fname); // Modules have NULL parent (parent is the program)
   ~AaModule();
+
+  void Set_Foreign_Flag(bool ff) { this->_foreign_flag = ff; }
+  bool Get_Foreign_Flag() {return(this->_foreign_flag);}
 
   void Add_Argument(AaInterfaceObject* obj);
 
