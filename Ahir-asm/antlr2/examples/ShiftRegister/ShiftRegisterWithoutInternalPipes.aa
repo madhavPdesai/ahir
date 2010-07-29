@@ -14,7 +14,10 @@ $is
 
 	$branchblock[b1]
 	{
+		// ping-pong buffer
 		$storage midpoint $array<2> $of $uint<10>
+
+		// ping-pong pointers
 		$storage I $uint<1>  := 0
 		$storage J $uint<1>  := 1
 
@@ -26,8 +29,8 @@ $is
 		}
 		$parallelblock[b2]
 		{
-			I := ($not I)
-			J := ($not J)
+			I := (~ I)
+			J := (~ J)
 		}
 		$place [loopback]
 	}

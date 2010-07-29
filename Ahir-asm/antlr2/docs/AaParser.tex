@@ -1,4 +1,3 @@
-
 \begin{verbatim}
 
 
@@ -7,17 +6,19 @@ Definition of parser AaParser, which is a subclass of LLkParser.
 
 aA_Program
 	:	(	( aA_Module ) 
-		|	( DECLARE ( aA_Object_Declaration )+ ) 
+		|	( aA_Object_Declaration ) 
 		)* 
 	;
 
 
 aA_Module
-	:	MODULE aA_Label aA_In_Args aA_Out_Args IS LBRACE 
-		(	DECLARE ( aA_Object_Declaration )+ 
+	:	(	FOREIGN 
 		|	
 		) 
-		aA_Atomic_Statement_Sequence RBRACE 
+		MODULE aA_Label aA_In_Args aA_Out_Args 
+		(	IS LBRACE ( aA_Object_Declaration )* aA_Atomic_Statement_Sequence RBRACE 
+		|	
+		) 
 	;
 
 
@@ -86,7 +87,7 @@ aA_Block_Statement
 
 aA_Object_Reference
 	:	(	(	( PERCENT SIMPLE_IDENTIFIER )* 
-			|	( CARET )+ 
+			|	( HASH )+ 
 			) 
 			COLON 
 		|	
@@ -120,11 +121,7 @@ aA_Series_Block_Statement
 		(	aA_Label 
 		|	
 		) 
-		LBRACE 
-		(	DECLARE ( aA_Object_Declaration )+ 
-		|	
-		) 
-		aA_Atomic_Statement_Sequence RBRACE 
+		LBRACE ( aA_Object_Declaration )* aA_Atomic_Statement_Sequence RBRACE 
 	;
 
 
@@ -133,11 +130,7 @@ aA_Parallel_Block_Statement
 		(	aA_Label 
 		|	
 		) 
-		LBRACE 
-		(	DECLARE ( aA_Object_Declaration )+ 
-		|	
-		) 
-		aA_Atomic_Statement_Sequence RBRACE 
+		LBRACE ( aA_Object_Declaration )* aA_Atomic_Statement_Sequence RBRACE 
 	;
 
 
@@ -146,11 +139,7 @@ aA_Fork_Block_Statement
 		(	aA_Label 
 		|	
 		) 
-		LBRACE 
-		(	DECLARE ( aA_Object_Declaration )+ 
-		|	
-		) 
-		aA_Fork_Block_Statement_Sequence RBRACE 
+		LBRACE ( aA_Object_Declaration )* aA_Fork_Block_Statement_Sequence RBRACE 
 	;
 
 
@@ -159,11 +148,7 @@ aA_Branch_Block_Statement
 		(	aA_Label 
 		|	
 		) 
-		LBRACE 
-		(	DECLARE ( aA_Object_Declaration )+ 
-		|	
-		) 
-		aA_Branch_Block_Statement_Sequence RBRACE 
+		LBRACE ( aA_Object_Declaration )* aA_Branch_Block_Statement_Sequence RBRACE 
 	;
 
 
@@ -177,7 +162,7 @@ aA_Fork_Block_Statement_Sequence
 
 aA_Join_Fork_Statement
 	:	JOIN ( SIMPLE_IDENTIFIER )* 
-		(	AND FORK aA_Atomic_Statement_Sequence 
+		(	FORK aA_Atomic_Statement_Sequence 
 		|	
 		) 
 		ENDJOIN 

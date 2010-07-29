@@ -1,3 +1,6 @@
+// An example to illustrate a slightly non-trivial
+// Aa program
+
 // an array of 32-bit unsigned integers.
 $storage mem $array<1024> $of $uint<32> 
 
@@ -13,6 +16,8 @@ $is
    mp := ((high-low)/2)
 
 
+   // branch block to distinguish between trivial and non-trivial
+   // cases
    $branchblock[trivcheck]
     {
        // d from parent scope

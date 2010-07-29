@@ -8,7 +8,8 @@ Definition of lexer AaLexer, which is a subclass of CharScanner.
  *  lexer rules.  It logically consists of one big alternative block with
  *  each user-defined rule being an alternative.
  */
-mMODULE 
+mFOREIGN 
+|	mMODULE 
 |	mDECLARE 
 |	mDEFAULT 
 |	mSTORAGE 
@@ -65,7 +66,6 @@ mMODULE
 |	mLPAREN 
 |	mRPAREN 
 |	mPERCENT 
-|	mCARET 
 |	mPLUS 
 |	mMINUS 
 |	mMUL 
@@ -91,6 +91,10 @@ mMODULE
 |	mSINGLELINECOMMENT 
 |	mSCOPE_IDENTIFIER 
 |	mSIMPLE_IDENTIFIER 
+mFOREIGN
+	:	"$foreign" 
+	;
+
 mMODULE
 	:	"$module" 
 	;
@@ -319,10 +323,6 @@ mPERCENT
 	:	'%' 
 	;
 
-mCARET
-	:	'^' 
-	;
-
 mPLUS
 	:	'+' 
 	;
@@ -340,31 +340,31 @@ mDIV
 	;
 
 mNOT
-	:	"$not" 
+	:	'~' 
 	;
 
 mOR
-	:	"$or" 
+	:	'|' 
 	;
 
 mAND
-	:	"$and" 
+	:	'&' 
 	;
 
 mXOR
-	:	"$xor" 
+	:	'^' 
 	;
 
 mNOR
-	:	"$nor" 
+	:	"~|" 
 	;
 
 mNAND
-	:	"$nand" 
+	:	"~&" 
 	;
 
 mXNOR
-	:	"$xnor" 
+	:	"~^" 
 	;
 
 mMUX

@@ -4,6 +4,9 @@ $module [sum_mod]
     $out (c $uint<10>)
 $is
 {
+	// note that q,r,s,c are
+	// all implicitly declared
+	// variables
 	q := (a + b)
         r := (q + b)
         s := (r + b)

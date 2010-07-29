@@ -21,13 +21,13 @@ $module [abcd]
 		{// new scope with label s1
 			
 			$storage a $uint<32>
-			a1 := (a + ^:a)  // a from here,  ^:a from parent
+			a1 := (a + #:a)  // a from here,  #:a from parent
 			$parallelblock[p1] 
 			{
 				$storage b $uint<32>
-				b1 := (b + ^:b) // b from here, ^:b will be input
+				b1 := (b + #:b) // b from here, #:b will be input
                                                  // port of module
-				a1 := (a + (^:a + ^^:a)) // a from s1, ^:a from s1, ^^:a is
+				a1 := (a + (#:a + ##:a)) // a from s1, #:a from s1, ##:a is
 	                                                 // input port of module. 
 			}
 		}
@@ -55,7 +55,7 @@ $module [abcd]
 			$merge q r $entry  // merge from q or from entry of this block
 				$phi  b := q1 $on q  
 					   a  $on $entry  
-					   ^:b $on r
+					   #:b $on r
 			$endmerge
 
 			$if (a > b) $then // a is input port, b is from here.
@@ -64,7 +64,7 @@ $module [abcd]
 
 			// switch MUST be preceded by a merge
 			$switch a $when 0 $then  
-				$seriesblock[s2]{ u := ($not a) }  
+				$seriesblock[s2]{ u := (~a) }  
 				$place [q]
 			$when <0 0> $then  
 				$null
@@ -83,7 +83,7 @@ $module [abcd]
 			$parallelblock[p2]{ $null}
 			$parallelblock[p3]{ $null}
 
-			$join s2 p2 $and $fork 
+			$join s2 p2 $fork 
 				$parallelblock[p4]{ $null}
 				$parallelblock[p5]{ $null}
 			$endjoin

@@ -1,0 +1,17 @@
+// a simple example to illustrate
+// use of pointers as opaque handles.
+// A foreign module is used to
+// provide access to pointer contents
+// etc.
+$module [passpointer]
+    $in (a $pointer<32>)
+    $out (b $pointer<32>)
+$is
+{
+	$call Increment(a)(b)
+}
+
+$foreign $module [Increment]
+	$in (a $pointer<32>)
+	$out (b $pointer<32>)
+

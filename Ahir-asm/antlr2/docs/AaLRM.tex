@@ -11,18 +11,19 @@
 
 \section{Introduction}
 
-{\bf Aa} is intended to be a low-level 
+{\bf Aa} is a low-level 
 programming language for the description
-of algorithms in which the control flow
+of algorithms.  The control flow in
+an \Aa program 
 can be modeled by a petri net
 of a specific class (the type-2 petri-net as
-introduced in \cite{ref:SameerPhD}).  A program in
-\Aa can also be viewed as a 
+introduced in \cite{ref:SameerPhD}).  
+A program in \Aa can also be viewed as a 
 description of a system which reacts with 
 its environment through input and output ports and 
 through message queues.  Thus, an \Aa program
-can be directly executed on a computer, and
-can also be mapped to a logic circuit.
+can either be executed on a computer, or
+be mapped to a logic circuit.
 
 In the rest of this document, we outline the
 structure and the syntax of the \Aa language,
@@ -47,7 +48,7 @@ are globally visible variables that can be read from
 anywhere in the program and can be written from anywhere
 in the program.
 \item {\bf Pipe} objects declared in the program are
-globally visible first-in-first-out queues that can 
+globally visible first-in-first-out buffers that can 
 be read from anywhere in the program. 
 written into by at most one module in the program.
 \begin{itemize}
@@ -68,23 +69,22 @@ Thus, an assignment to a constant is an error.
 A module in \Aa is the basic unit of compilation, and
 has the following structure
 \begin{verbatim}
-module-definition :=  
-                 module-specifier module-name  
-                 module-input-arguments
-                 module-output-arguments
-                 module-object-declarations
-                 { <module-body> }
+$module [module-name] 
+   $in(<input-arguments>)
+   $out(<output-arguments>)
+$is
+{
+   <object-declarations>
+   <sequence-of-statements>
+}
 \end{verbatim}
 Thus, a module has a name, has input and output arguments,
 declares objects and consists of a sequence of statements.
 Objects (storage/pipe/constant) declared in the module are visible only in the
 module body. 
 
-The module body itself is a sequence of statements.
-\begin{verbatim}
-module-body := (statement)+
-\end{verbatim}
-Each statement can be viewed as a transition
+Each statement in the sequence
+of statements can be viewed as a transition
 in a petri-net, and has a 
 set of input (or source) places  and a set of output
 (or sink)  places.  
@@ -92,6 +92,7 @@ The execution of the statement is triggered when
 there is a token present in each of its source 
 places and when the statement finishes execution,
 a token is placed in each of its output places.
+
 The control flow in the sequence of statements
 in a module is serial in nature.  Thus each
 statement has a single source place and a single
@@ -105,30 +106,30 @@ has finished, a token is placed in the exit
 place.  
 
 The region between \{ and \} is termed a {\bf scope}.  Thus, 
-the module description defines a scope.  In this case, 
+a module description defines a scope.  In this case, 
 the scope has a label which is the same as the module name.
 As we shall see later, the statements in the statement sequence
-may in turn define scopes, which may be labeled or anonymous.
-Each scope defines a name-space.  The visibility
+may in turn define scopes.  Each scope defines a name-space.  
+The visibility
 rules and access mechanisms between scopes will be described
-in Section \ref{sec:Scopes}
+in Section \ref{sec:Scopes}.
 
 
 \section{Statements}
  
 Statements in the module-body are can be of two kinds:
 \begin{itemize}
-\item Atomic statements: those that have a single
+\item Simple statements: those that have a single
 entry place and a single exit place.  These are
 the only statements that can occur in a module body.
 These statements are further divided into 
 {\em simple} statements and {\em block} statements.
 \item Sub-atomic statements:  these statements
 can appear only inside block statements,  and they
-can have multiple sources and multiple sinks.
+can have multiple source and sink places.
 Examples of these statements are statements for
 combining tokens (merge and join statements) and
-statements for redirecting tokens (the toss statement).
+statements for redirecting tokens (the place statement).
 \end{itemize}
 
 
@@ -153,7 +154,7 @@ and passes the control flow forward (we will see what this
 means in the sequel).
 Some examples of simple statements are 
 \begin{verbatim}
-a  :=  ($not b)
+a  :=  (~b)
 b  :=   (c + (d + e))
 \end{verbatim}
 etc.  
@@ -208,7 +209,7 @@ Here is an example:
 \begin{verbatim}
 $seriesblock [s1] 
 {
-   $declare $storage b $uint<32>
+   $storage b $uint<32>
    b := a
    b := ( $mux (a > c)  (b+c) (b-c))
    q := ( b * 2)
@@ -291,7 +292,7 @@ $forkblock [f1] {
   $seriesblock [s1] { ... }
   $seriesblock [s2] { ... }
   $seriesblock [s3] { ... }
-  $join s1 s2 $and $fork 
+  $join s1 s2 $fork 
       $seriesblock [s4] { ... }
   $join s3 s4
 }
@@ -380,7 +381,7 @@ with the exit place of the  containing branch block.
 specified as 
 \begin{verbatim}
 merge-statement :=
-          merge-spec label-list merge-assignments
+          merge-spec label-list merge-assignments end-merge-spec
 \end{verbatim}
 which is to be interpreted as follows.  The labels in the label list
 refer to token labels defined by ``toss'' statements within the branch block.
@@ -390,13 +391,23 @@ the merge statement starts and executes a series of special assignments
 which multiplex values into new variables based on which arc the
 token arrived from.  The merge statement then releases its token to
 the next statement. 
+The merge assignments inside a merge block are all of a specific
+form, called the phi-statement.  A phi-statement has the following
+form
+\begin{verbatim}
+$phi a := b $on $entry c $on loopback 
+\end{verbatim}
+This says that the target $a$ is to take the value of $b$ if
+the merge statement was started from its entry place (ie from a
+token passed from its predecessor) and is to take the value of $c$
+if the merge statement was started from the place ``loopback".
 \end{itemize}
 
 Here is an example of a branch block constructed in this manner
 \begin{verbatim}
 $branchblock [b1] 
 {
-  $merge loop $entry // $entry is the place
+  $merge loopback $entry // $entry is the place
                      // into the block
                      // merge triggered by
                      // token at entry or
@@ -406,15 +417,16 @@ $branchblock [b1]
        $phi q := 0 on $entry r on loop 
                     // q is defined by where 
                     // the token came from
+  $endmerge
   r := q + 1
   $if r < 10 $then 
-       $place [loop] // put token in place "loop"
+       $place [loopback] // put token in place "loopback"
   $endif
 }
 \end{verbatim}
 This is to be interpreted as follows: the merge executes
-whenever a token is present  either in the entry place
-of the branch-block or in the place labeled ``loop''.
+whenever a token is present in its entry place  or in 
+the place labeled ``loopback''.
 The merge defines variable ``q'' with a value which is
 either 0 (if a token was present in the entry place)
 or r (if a token was present in the ``loop'' place).
@@ -458,6 +470,7 @@ scopes.
 \item A scope can read from variables that are defined in ancestor scopes.
 \item A scope can only write to one of the following:
 \begin{itemize}
+\item an implicit variable defined in the scope.
 \item a storage or pipe variable defined in the scope or an ancestor
 of the scope.
 \item an output argument of a module of which the scope is a descendant.
@@ -474,13 +487,13 @@ a            look for variable a in current scope;
 
 :a           same as the previous case
 
-^:a          look for variable a starting from the parent of
+#:a          look for variable a starting from the parent of
              the current scope.
 
 %p:a         look for variable a starting from the child scope 
-	     with label p (child scope of the current scope).
+             with label p (child scope of the current scope).
 
-^^:a         look for variable starting from the parent of
+##:a         look for variable starting from the parent of
              the parent of the current scope.
 
 %p%q:a       look for variable starting from the child scope 
@@ -494,11 +507,172 @@ a[10]        look for a storage variable a defined in the
 \end{verbatim}
 Thus, a generic variable reference has the form 
 \begin{verbatim} 
-    scope-id : variable-reference 
+    scope-reference : variable-reference 
 \end{verbatim} 
 and the scoping rules forbid a scope from accessing variables
 which are not defined in either an ancestor or a descendant
 of the scope.
+
+\section{Types}
+
+Types in \Aa can be either scalars or arrays.
+
+Scalar types can be one of 
+\begin{itemize}
+\item Unsigned integers:  An unsigned integer type
+has a width parameter and is specified as 
+\begin{verbatim}
+$uint<width>
+\end{verbatim}
+The width parameter can be any positive number.
+Values corresponding to this type are to be
+viewed as unsigned integers represented by 
+a binary sequence of the specified width.
+\item Signed integers:  A signed integer type
+has a width parameter and is specified as 
+\begin{verbatim}
+$int<width>
+\end{verbatim}
+The width parameter can be any positive number.
+Values corresponding to this type are to be
+viewed as integers maintained in the
+two-s complement form  by 
+a binary sequence of the specified width.
+\item Floats: A float is parametrized by
+two integers, the width of the exponent,
+and the width of the mantissa.  
+The specification is
+\begin{verbatim}
+$float<exponent,mantissa>
+\end{verbatim}
+where the exponent and mantissa must be positive
+integers.  The float is represented by 
+a word with $exponent+mantissa+1$ bits
+(with the additional bit needed for the sign).
+The standard IEEE 754 float and double
+precision representations correspond
+to
+\begin{verbatim}
+$float<8><23> 
+\end{verbatim}
+and
+\begin{verbatim}
+$float<11><52> 
+\end{verbatim}
+respectively.
+\item Pointers:  A pointer type has the form
+\begin{verbatim}
+$pointer<ref-width>
+\end{verbatim}
+A value of this type is considered to be
+a handle to an item whose width is specified
+by ref-width (ref-width must be positive).  
+A pointer value can only be
+referred to and {\bf can never} be used in a
+unary, binary or ternary expression.
+\end{itemize}
+
+
+Array types in \Aa have the form
+\begin{verbatim}
+$array[d1][d2]..[dk] $of <scalar-type-spec>
+\end{verbatim}
+The number of dimensions $k$ must be positive (there is
+no limit on this number), and the scalar type spec
+must specify one of the scalar types described above.
+
+\section{Expressions}
+
+Expressions in \Aa fall into the following classes
+\begin{itemize}
+\item {\bf Object References}: references to an object
+which have the form
+\begin{verbatim}
+<scope-specifier>:<object-specifier>
+\end{verbatim}
+The scope specifier can either specify a
+parent scope of the scope in which the expression appears,
+or a child scope of the scope in which the 
+expression appears.   The scope-specifier can be omitted
+if the reference is to be resolved in the same scope
+as the expression.
+\item {\bf Unary} Expressions:  There are two
+possible unary expressions.  The {\bf type-cast}
+expression is of the form
+\begin{verbatim}
+($cast (<type-spec>)  <expression>)
+\end{verbatim}
+For example
+\begin{verbatim}
+($cast ($uint<10>) ##:a)
+\end{verbatim}
+The type-cast expression takes the value of the
+specified expression and converts it to a value
+of the specified type.
+The {\bf bit-wise complement} expression is of the form
+\begin{verbatim}
+( ~ <expression> )
+\end{verbatim}
+The symbol for the complement is the same
+as the one used in the C programming language,
+and the evaluation of the expression proceeds in the
+usual way.
+\item {\bf Binary} Expressions: These are of the
+form
+\begin{verbatim}
+(<expression> <operation-id>  <expression>)
+\end{verbatim}
+The following binary operations are supported
+\begin{verbatim}
+// arithmetic operators
+PLUS              + 
+MINUS             - 
+MUL               * 
+DIV               / 
+SHL               <<
+SHR               >> 
+
+// bit-wise logical operators
+NOT               ~     
+OR                |     
+AND               &    
+XOR               ^   
+NOR               ~|     
+NAND              ~&    
+XNOR              ~^   
+
+// comparison operators
+EQUAL             ==
+NOTEQUAL          !=
+LESS              < 
+LESSEQUAL         <=
+GREATER           > 
+GREATEREQUAL      >=
+\end{verbatim}
+The evaluation of a binary expression proceeds in
+the usual way.
+\item {\bf Ternary} Expressions:  There is only one
+form for the ternary expression.
+\begin{verbatim}
+( $mux <test-expression>  <true-expression> <false-expression> )
+\end{verbatim}
+The test-expression is evaluated, and if true, the true-expression
+is evaluated, and if false, the false-expression is evaluated.
+\end{itemize}
+
+\section{Foreign Modules}
+
+A module can be marked as foreign by using the
+\$foreign keyword.
+\begin{verbatim}
+$foreign $ module [GetValue]
+	$in (ptr $pointer<32>)
+	$out (val $uint<32>)
+\end{verbatim}
+The \Aa compiler then considers that the module GetValue
+is defined ``elsewhere'' and does not try to link to it
+directly.  This linking is done outside by other tools which
+use the results of the \Aa compilation process.
 
 \section{Examples}
 
@@ -522,7 +696,7 @@ a value into an array position.
 An example which is a little bit more complicated:
 \begin{verbatim}
 // an array of 32-bit unsigned integers.
-$declare $storage mem $array<1024> $of $uint<32> 
+$storage mem $array<1024> $of $uint<32> 
 
 // module returns the sum of mem[I] from
 // I=low to I=high
@@ -545,10 +719,10 @@ $is
            $parallelblock[parsum]
            {
                $branchblock[sb1]{
-                    $declare $storage  I $uint<10> := 0
+                    $storage  I $uint<10> := 0
                     $merge $entry loopback
                        $phi s := 0 $on $entry  s1 $on loopback
-                    $endmerge
+		    $endmerge
                     $if (I < mp) $then
                        I := (I+1)
                        s1 := ($mux (I == 0)  0 (s + mem[I]))
@@ -556,11 +730,11 @@ $is
                     $endif
                } 
                $branchblock[sb2]{
-                    $declare $storage  J $uint<10> := 0
+                    $storage  J $uint<10> := 0
                     J := (mp + 1)
                     $merge $entry loopback
                        $phi s := 0 $on $entry s1 $on loopback
-                    $endmerge
+		    $endmerge
                     $if (J < high) $then
                          J := (J+1)
                          s1 := ($mux (J == (mp+1))  0 (s + mem[J]))
@@ -571,22 +745,15 @@ $is
  
            // combine results from parallel statement above
            snontriv := (%parsum%sb1:s  + %parsum%sb2:s)
-           // put token in place nontrivsum.  It will be picked
-           // up by succeeding merge
            $place [nontrivsum]
       $else
 
            // summation is trivial 
            striv := mem[low]
-           // put token in place trivsum.  It will be picked
-           // up by succeeding merge
            $place [trivsum]
       $endif
       $merge nontrivsum trivsum
          // which sum do you pick? depends on which path was taken
-         // note that sum here refers to the output argument of 
-         // the parent module which is globally visible, but can
-         // be written into exactly once!
          $phi sum := snontriv $on nontrivsum striv $on trivsum
       $endmerge
     }
@@ -629,11 +796,3 @@ http://www.antlr2.org.
 \end{thebibliography}
 
 \end{document}
- 
-
-
-
-
-
-
-
