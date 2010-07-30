@@ -89,7 +89,7 @@ in a petri-net, and has a
 set of input (or source) places  and a set of output
 (or sink)  places.  
 The execution of the statement is triggered when
-there is a token present in each of its source 
+there is a token present in some subset of its source 
 places and when the statement finishes execution,
 a token is placed in each of its output places.
 
@@ -371,12 +371,13 @@ a token after it has executed.  For example,
 $place [fastpath]
 \end{verbatim}
 means that the incoming token is placed in a labeled
-place ``fastpath''.  The token will either
-trigger a {\bf merge} statement which is required
+place ``fastpath'' (the place statement never
+puts a token into its default exit place).  
+The token placed in ``fastpath" must be used to
+trigger a unique {\bf merge} statement which is required
 to depend on this labeled place in the same branch
-block, or if no such merge statement
-exists, then ``fastpath'' is identified
-with the exit place of the  containing branch block.
+block. If no such merge exists, or if multiple such merges exist, 
+then this is an error.
 \item Merge statements: A merge statement is
 specified as 
 \begin{verbatim}
@@ -384,9 +385,9 @@ merge-statement :=
           merge-spec label-list merge-assignments end-merge-spec
 \end{verbatim}
 which is to be interpreted as follows.  The labels in the label list
-refer to token labels defined by ``toss'' statements within the branch block.
-Whenever a token labeled by any of the items in label-list arrives
-at the input of the merge,
+refer to token labels defined by {\bf place}  statements within the branch block.
+Whenever a token is present in any of the places in
+the label-list for a merge,
 the merge statement starts and executes a series of special assignments
 which multiplex values into new variables based on which arc the
 token arrived from.  The merge statement then releases its token to
@@ -401,6 +402,9 @@ This says that the target $a$ is to take the value of $b$ if
 the merge statement was started from its entry place (ie from a
 token passed from its predecessor) and is to take the value of $c$
 if the merge statement was started from the place ``loopback".
+Note that if the merge statement is to be triggered by a
+token in its default entry place, one of the labels in the
+label-list for the merge must contain the identifier \$entry.
 \end{itemize}
 
 Here is an example of a branch block constructed in this manner

@@ -1,7 +1,7 @@
 #ifndef _Aa_Util__
 #define _Aa_Util__
 #include <AaIncludes.h>
-
+#include <AaEnums.h>
 
 // Tab string
 string Tab_(unsigned int n);
@@ -17,11 +17,13 @@ struct StringCompare:public binary_function
 };
 
 
-bool Is_Compare_Operation(string op);
+bool Is_Compare_Operation(AaOperation op);
+bool Is_Shift_Operation(AaOperation op);
 
-bool Is_Shift_Operation(string op);
 
-// parse the file and update AaProgram
-void AaParse(string filename);
+string C_Name(AaOperation op);
+string Aa_Name(AaOperation op);
+
+
 
 #endif

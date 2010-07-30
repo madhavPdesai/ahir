@@ -484,17 +484,23 @@ class AaPlaceStatement: public AaStatement
   virtual string Get_Label() {return(this->_label);}
   void Increment_Merge_Count()
   {
-    this->_merge_count++;
+
     if(this->_merge_count > 0)
       {
 	AaRoot::Error("place merges into more than one merge statement!",this);
       }
+
+    this->_merge_count++;
   }
 
   virtual string Get_Place_Name() { return(this->Get_Label()); }
   virtual string Get_Place_Name_Ref() {return(this->Get_Struct_Dereference() + this->Get_Place_Name()); }
 
-  virtual void Print(ostream& ofile) { ofile << this->Tab() << "$place[" << this->Get_Label() << "]"  << endl; }
+  virtual void Print(ostream& ofile) 
+  { 
+    this->Err_Check(); 
+    ofile << this->Tab() << "$place[" << this->Get_Label() << "]"  << endl; 
+  }
   virtual string Kind() {return("AaPlaceStatement");}
   virtual void Map_Source_References() {} // do nothing
 
@@ -513,6 +519,13 @@ class AaPlaceStatement: public AaStatement
     return(this->Get_Scope()->Get_Struct_Dereference());
   }
 
+  virtual void Err_Check()
+  {
+    if(this->_merge_count == 0)
+      {
+	AaRoot::Error("place is not cleared by any merge ", this);
+      }
+  }
 };
 
 
@@ -521,6 +534,9 @@ class AaMergeStatement: public AaSeriesBlockStatement
   vector<string> _merge_label_vector; // to preserve the order
   set<string,StringCompare> _merge_label_set;
   vector<AaPlaceStatement*> _wait_on_statements;
+
+  unsigned char _wait_on_entry;
+
  public:
   void Add_Merge_Label(string lbl) 
   { 

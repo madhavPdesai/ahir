@@ -1135,7 +1135,7 @@ void AaJoinForkStatement::Write_Entry_Transfer_Code(ofstream& ofile)
 //---------------------------------------------------------------------
 AaMergeStatement::AaMergeStatement(AaBranchBlockStatement* scope):AaSeriesBlockStatement((AaScope*)scope,"") 
 {
-
+  this->_wait_on_entry = 0;
 }
 AaMergeStatement::~AaMergeStatement() {}
 void AaMergeStatement::Print(ostream& ofile)
@@ -1172,6 +1172,7 @@ void AaMergeStatement::Map_Source_References()
 	      if(child->Is("AaPlaceStatement"))
 		{
 		  this->_wait_on_statements.push_back((AaPlaceStatement*)child);
+		  ((AaPlaceStatement*)child)->Increment_Merge_Count();
 		}
 	      else
 		AaRoot::Error("did not find place statement with label " + this->_merge_label_vector[i],this);
@@ -1180,6 +1181,10 @@ void AaMergeStatement::Map_Source_References()
 	    {
 	      AaRoot::Error("did not find place statement with label " + this->_merge_label_vector[i],this);
 	    }
+	}
+      else
+	{
+	  this->_wait_on_entry = 1;
 	}
     }
 
@@ -1190,7 +1195,11 @@ void AaMergeStatement::Map_Source_References()
 
 void AaMergeStatement::Write_Entry_Condition(ofstream& ofile)
 {
-  this->AaBlockStatement::Write_Entry_Condition(ofile);
+  if(this->_wait_on_entry)
+    this->AaBlockStatement::Write_Entry_Condition(ofile);
+  else
+    ofile << " 0 ";
+
   for(unsigned int i=0; i < this->_wait_on_statements.size(); i++)
     {
       ofile << " || " << this->_wait_on_statements[i]->Get_Place_Name_Ref() ;
@@ -1647,6 +1656,8 @@ AaPlaceStatement::AaPlaceStatement(AaBranchBlockStatement* parent_tpr,string lbl
 AaPlaceStatement::~AaPlaceStatement() {};
 void AaPlaceStatement::Write_C_Struct(ofstream& ofile)
 {
+  this->Err_Check();
+
   ofile << this->Tab() << "unsigned int " << this->Get_Place_Name() << ": 1;" << endl;
   ofile << this->Tab() << "unsigned int " << this->Get_Entry_Name() << ": 1;" << endl;
   // NOTE: no exit flag!
@@ -1654,6 +1665,8 @@ void AaPlaceStatement::Write_C_Struct(ofstream& ofile)
 }
 void AaPlaceStatement::Write_C_Function_Body(ofstream& ofile) 
 {
+
+  this->Err_Check();
 
   ofile << "// -------------------------------------------------------------------------------------------" << endl;
   ofile << "// Begin Statement " << this->Get_C_Name() << endl;

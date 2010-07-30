@@ -84,6 +84,8 @@ class AaRoot
   virtual string Get_Struct_Dereference() { assert(0); }
 
   virtual string Get_File_Name() { return(this->_file_name);}
+
+  virtual void Err_Check() {}
 };
 
 #endif
