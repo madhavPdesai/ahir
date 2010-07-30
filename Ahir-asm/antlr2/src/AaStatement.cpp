@@ -689,8 +689,6 @@ void AaCallStatement::Write_C_Function_Body(ofstream& ofile)
 	<< "*) calloc(1,sizeof("
 	<< this->Get_Called_Module_Struct_Name()
 	<< "));" << endl;
-  ofile << this->Get_Called_Function_Struct_Pointer_Ref() << "->"
-	<< ((AaModule*)this->Get_Called_Module())->Get_Entry_Name()  << " = 1;" << endl;
   ofile << "// reset entry flag and set in progress flag" << endl;
   ofile << this->Get_Entry_Name_Ref() << " = 0;" << endl;
   ofile << this->Get_In_Progress_Name_Ref() << " = 1;" << endl;
@@ -703,9 +701,13 @@ void AaCallStatement::Write_C_Function_Body(ofstream& ofile)
   ofile << "if (" << this->Get_In_Progress_Name_Ref() << " ) { " << endl;
 
   //     if(called-fn-struct->_entry) {
-  ofile << "if (" 
+  ofile << "if ( !" 
 	<< this->Get_Called_Function_Struct_Pointer_Ref() << "->" 
-	<< ((AaModule*)this->Get_Called_Module())->Get_Entry_Name()  << ") {// entry flag set?" << endl;
+	<< ((AaModule*)this->Get_Called_Module())->Get_Entry_Name() 
+	<< " && !"
+	<< this->Get_Called_Function_Struct_Pointer_Ref() << "->" 
+	<< ((AaModule*)this->Get_Called_Module())->Get_In_Progress_Name() 
+	<< ") {// entry and in_progress flags not set?" << endl;
   //           if(pipe-read-flags-ok) {
   ofile << "if (" ;
   this->Write_Pipe_Read_Condition_Check(ofile,"");
@@ -715,6 +717,10 @@ void AaCallStatement::Write_C_Function_Body(ofstream& ofile)
   //                update read condition flags
   this->Write_Pipe_Read_Condition_Update(ofile,"");
 
+  // set the entry flag in the called function structure.
+  ofile << this->Get_Called_Function_Struct_Pointer_Ref() << "->"
+	<< ((AaModule*)this->Get_Called_Module())->Get_Entry_Name()  << " = 1;" << endl;
+
 
   ofile << "} // arguments copied to call structure" << endl;
   //           }
@@ -723,10 +729,13 @@ void AaCallStatement::Write_C_Function_Body(ofstream& ofile)
       
       
   // if called function is still in progress, call it again
-  ofile << "if (!" 
-	<< this->Get_Called_Function_Struct_Pointer_Ref() << "->"
-	<< ((AaModule*)this->Get_Called_Module())->Get_Exit_Name() 
-	<< ")  {// called function had not finished" << endl;
+  ofile << "if ( " 
+	<< this->Get_Called_Function_Struct_Pointer_Ref() << "->" 
+	<< ((AaModule*)this->Get_Called_Module())->Get_Entry_Name() 
+	<< " || "
+	<< this->Get_Called_Function_Struct_Pointer_Ref() << "->" 
+	<< ((AaModule*)this->Get_Called_Module())->Get_In_Progress_Name() 
+	<< ")  {// called function still in progress" << endl;
       
   // call the function
   ofile << "// call the function" << endl;

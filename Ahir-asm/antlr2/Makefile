@@ -103,8 +103,12 @@ $(OBJ)/AaLexer.o: $(GRMR)/AaLexer.cpp $(GRMR)/AaLexer.hpp
 $(OBJ)/AaParser.o: $(GRMR)/AaParser.cpp $(GRMR)/AaParser.hpp $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(GRMR)/AaParser.cpp -o $(OBJ)/AaParser.o
 
-aNTLR: $(GRMR)/Aa.g
+aNTLR: $(GRMR)/AaLexer.cpp $(GRMR)/AaParser.html 
+
+$(GRMR)/AaLexer.cpp: $(GRMR)/Aa.g
 	java -cp $(ANTLR2)/antlr.jar antlr.Tool -o $(GRMR) $(GRMR)/Aa.g
+
+$(GRMR)/AaParser.html:
 	java -cp $(ANTLR2)/antlr.jar antlr.Tool -html -o $(GRMR) $(GRMR)/Aa.g
 
 clean:
