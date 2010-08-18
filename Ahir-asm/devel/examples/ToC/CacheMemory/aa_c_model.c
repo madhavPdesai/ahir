@@ -275,7 +275,6 @@ cachememory_ (cachememory_State * __top)
 		  if (__top->p1.reader._call_line_50_called_fn_struct == NULL)
 		    {
 		      __top->p1.reader._call_line_50_called_fn_struct = (Fetch_State *) calloc (1, sizeof (Fetch_State));
-		      __top->p1.reader._call_line_50_called_fn_struct->Fetch_entry = 1;
 // reset entry flag and set in progress flag
 		      __top->p1.reader._call_line_50_entry = 0;
 		      __top->p1.reader._call_line_50_in_progress = 1;
@@ -283,14 +282,17 @@ cachememory_ (cachememory_State * __top)
 		}		// entry into this call statement
 	      if (__top->p1.reader._call_line_50_in_progress)
 		{
-		  if (__top->p1.reader._call_line_50_called_fn_struct->Fetch_entry)
-		    {		// entry flag set?
+		  if (!__top->p1.reader._call_line_50_called_fn_struct->Fetch_entry
+		      && !__top->p1.reader._call_line_50_called_fn_struct->Fetch_in_progress)
+		    {		// entry and in_progress flags not set?
 		      if (1)
 			{	// check if pipes can be read from
+			  __top->p1.reader._call_line_50_called_fn_struct->Fetch_entry = 1;
 			}	// arguments copied to call structure
 		    }		// called function had entry flag set
-		  if (!__top->p1.reader._call_line_50_called_fn_struct->Fetch_exit)
-		    {		// called function had not finished
+		  if (__top->p1.reader._call_line_50_called_fn_struct->Fetch_entry
+		      || __top->p1.reader._call_line_50_called_fn_struct->Fetch_in_progress)
+		    {		// called function still in progress
 // call the function
 		      Fetch (&(__top->p1.reader._call_line_50_called_fn_struct->req));	//   file CacheMemory.aa, line 50
 		      __top->p1.reader._call_line_50_called_fn_struct->Fetch_entry = 0;
@@ -327,7 +329,6 @@ cachememory_ (cachememory_State * __top)
 		    {
 		      __top->p1.reader._call_line_52_called_fn_struct =
 			(Is_Read_Access_State *) calloc (1, sizeof (Is_Read_Access_State));
-		      __top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_entry = 1;
 // reset entry flag and set in progress flag
 		      __top->p1.reader._call_line_52_entry = 0;
 		      __top->p1.reader._call_line_52_in_progress = 1;
@@ -335,15 +336,18 @@ cachememory_ (cachememory_State * __top)
 		}		// entry into this call statement
 	      if (__top->p1.reader._call_line_52_in_progress)
 		{
-		  if (__top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_entry)
-		    {		// entry flag set?
+		  if (!__top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_entry
+		      && !__top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_in_progress)
+		    {		// entry and in_progress flags not set?
 		      if (1)
 			{	// check if pipes can be read from
 			  __top->p1.reader._call_line_52_called_fn_struct->req.__val = (__top->p1.reader.req_pointer).__val;
+			  __top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_entry = 1;
 			}	// arguments copied to call structure
 		    }		// called function had entry flag set
-		  if (!__top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_exit)
-		    {		// called function had not finished
+		  if (__top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_entry
+		      || __top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_in_progress)
+		    {		// called function still in progress
 // call the function
 		      Is_Read_Access (__top->p1.reader._call_line_52_called_fn_struct->req, &(__top->p1.reader._call_line_52_called_fn_struct->flag));	//   file CacheMemory.aa, line 52
 		      __top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_entry = 0;
@@ -403,7 +407,6 @@ cachememory_ (cachememory_State * __top)
 			{
 			  __top->p1.reader._call_line_54_called_fn_struct =
 			    (Access_Address_State *) calloc (1, sizeof (Access_Address_State));
-			  __top->p1.reader._call_line_54_called_fn_struct->Access_Address_entry = 1;
 // reset entry flag and set in progress flag
 			  __top->p1.reader._call_line_54_entry = 0;
 			  __top->p1.reader._call_line_54_in_progress = 1;
@@ -411,15 +414,18 @@ cachememory_ (cachememory_State * __top)
 		    }		// entry into this call statement
 		  if (__top->p1.reader._call_line_54_in_progress)
 		    {
-		      if (__top->p1.reader._call_line_54_called_fn_struct->Access_Address_entry)
-			{	// entry flag set?
+		      if (!__top->p1.reader._call_line_54_called_fn_struct->Access_Address_entry
+			  && !__top->p1.reader._call_line_54_called_fn_struct->Access_Address_in_progress)
+			{	// entry and in_progress flags not set?
 			  if (1)
 			    {	// check if pipes can be read from
 			      __top->p1.reader._call_line_54_called_fn_struct->req.__val = (__top->p1.reader.req_pointer).__val;
+			      __top->p1.reader._call_line_54_called_fn_struct->Access_Address_entry = 1;
 			    }	// arguments copied to call structure
 			}	// called function had entry flag set
-		      if (!__top->p1.reader._call_line_54_called_fn_struct->Access_Address_exit)
-			{	// called function had not finished
+		      if (__top->p1.reader._call_line_54_called_fn_struct->Access_Address_entry
+			  || __top->p1.reader._call_line_54_called_fn_struct->Access_Address_in_progress)
+			{	// called function still in progress
 // call the function
 			  Access_Address (__top->p1.reader._call_line_54_called_fn_struct->req, &(__top->p1.reader._call_line_54_called_fn_struct->addr));	//   file CacheMemory.aa, line 54
 			  __top->p1.reader._call_line_54_called_fn_struct->Access_Address_entry = 0;
@@ -473,7 +479,6 @@ cachememory_ (cachememory_State * __top)
 			    {
 			      __top->p1.reader.extwrite._call_line_57_called_fn_struct =
 				(Access_Address_State *) calloc (1, sizeof (Access_Address_State));
-			      __top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_entry = 1;
 // reset entry flag and set in progress flag
 			      __top->p1.reader.extwrite._call_line_57_entry = 0;
 			      __top->p1.reader.extwrite._call_line_57_in_progress = 1;
@@ -481,16 +486,19 @@ cachememory_ (cachememory_State * __top)
 			}	// entry into this call statement
 		      if (__top->p1.reader.extwrite._call_line_57_in_progress)
 			{
-			  if (__top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_entry)
-			    {	// entry flag set?
+			  if (!__top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_entry
+			      && !__top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_in_progress)
+			    {	// entry and in_progress flags not set?
 			      if (1)
 				{	// check if pipes can be read from
 				  __top->p1.reader.extwrite._call_line_57_called_fn_struct->req.__val =
 				    (__top->p1.reader.req_pointer).__val;
+				  __top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_entry = 1;
 				}	// arguments copied to call structure
 			    }	// called function had entry flag set
-			  if (!__top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_exit)
-			    {	// called function had not finished
+			  if (__top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_entry
+			      || __top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_in_progress)
+			    {	// called function still in progress
 // call the function
 			      Access_Address (__top->p1.reader.extwrite._call_line_57_called_fn_struct->req, &(__top->p1.reader.extwrite._call_line_57_called_fn_struct->addr));	//   file CacheMemory.aa, line 57
 			      __top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_entry = 0;
@@ -524,7 +532,6 @@ cachememory_ (cachememory_State * __top)
 			    {
 			      __top->p1.reader.extwrite._call_line_58_called_fn_struct =
 				(Access_Data_State *) calloc (1, sizeof (Access_Data_State));
-			      __top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_entry = 1;
 // reset entry flag and set in progress flag
 			      __top->p1.reader.extwrite._call_line_58_entry = 0;
 			      __top->p1.reader.extwrite._call_line_58_in_progress = 1;
@@ -532,16 +539,19 @@ cachememory_ (cachememory_State * __top)
 			}	// entry into this call statement
 		      if (__top->p1.reader.extwrite._call_line_58_in_progress)
 			{
-			  if (__top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_entry)
-			    {	// entry flag set?
+			  if (!__top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_entry
+			      && !__top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_in_progress)
+			    {	// entry and in_progress flags not set?
 			      if (1)
 				{	// check if pipes can be read from
 				  __top->p1.reader.extwrite._call_line_58_called_fn_struct->req.__val =
 				    (__top->p1.reader.req_pointer).__val;
+				  __top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_entry = 1;
 				}	// arguments copied to call structure
 			    }	// called function had entry flag set
-			  if (!__top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_exit)
-			    {	// called function had not finished
+			  if (__top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_entry
+			      || __top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_in_progress)
+			    {	// called function still in progress
 // call the function
 			      Access_Data (__top->p1.reader.extwrite._call_line_58_called_fn_struct->req, &(__top->p1.reader.extwrite._call_line_58_called_fn_struct->data));	//   file CacheMemory.aa, line 58
 			      __top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_entry = 0;
@@ -816,7 +826,6 @@ cachememory_ (cachememory_State * __top)
 			    {
 			      __top->p1.writeport._call_line_78_called_fn_struct =
 				(Write_Hit_State *) calloc (1, sizeof (Write_Hit_State));
-			      __top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_entry = 1;
 // reset entry flag and set in progress flag
 			      __top->p1.writeport._call_line_78_entry = 0;
 			      __top->p1.writeport._call_line_78_in_progress = 1;
@@ -824,16 +833,19 @@ cachememory_ (cachememory_State * __top)
 			}	// entry into this call statement
 		      if (__top->p1.writeport._call_line_78_in_progress)
 			{
-			  if (__top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_entry)
-			    {	// entry flag set?
+			  if (!__top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_entry
+			      && !__top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_in_progress)
+			    {	// entry and in_progress flags not set?
 			      if (1)
 				{	// check if pipes can be read from
 				  __top->p1.writeport._call_line_78_called_fn_struct->addr.__val =
 				    (__top->p1.writeport.write_address).__val;
+				  __top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_entry = 1;
 				}	// arguments copied to call structure
 			    }	// called function had entry flag set
-			  if (!__top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_exit)
-			    {	// called function had not finished
+			  if (__top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_entry
+			      || __top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_in_progress)
+			    {	// called function still in progress
 // call the function
 			      Write_Hit (__top->p1.writeport._call_line_78_called_fn_struct->addr);	//   file CacheMemory.aa, line 78
 			      __top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_entry = 0;
@@ -874,7 +886,6 @@ cachememory_ (cachememory_State * __top)
 			    {
 			      __top->p1.writeport._call_line_81_called_fn_struct =
 				(Write_Miss_State *) calloc (1, sizeof (Write_Miss_State));
-			      __top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_entry = 1;
 // reset entry flag and set in progress flag
 			      __top->p1.writeport._call_line_81_entry = 0;
 			      __top->p1.writeport._call_line_81_in_progress = 1;
@@ -882,16 +893,19 @@ cachememory_ (cachememory_State * __top)
 			}	// entry into this call statement
 		      if (__top->p1.writeport._call_line_81_in_progress)
 			{
-			  if (__top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_entry)
-			    {	// entry flag set?
+			  if (!__top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_entry
+			      && !__top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_in_progress)
+			    {	// entry and in_progress flags not set?
 			      if (1)
 				{	// check if pipes can be read from
 				  __top->p1.writeport._call_line_81_called_fn_struct->addr.__val =
 				    (__top->p1.writeport.write_address).__val;
+				  __top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_entry = 1;
 				}	// arguments copied to call structure
 			    }	// called function had entry flag set
-			  if (!__top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_exit)
-			    {	// called function had not finished
+			  if (__top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_entry
+			      || __top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_in_progress)
+			    {	// called function still in progress
 // call the function
 			      Write_Miss (__top->p1.writeport._call_line_81_called_fn_struct->addr);	//   file CacheMemory.aa, line 81
 			      __top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_entry = 0;
@@ -1001,7 +1015,6 @@ cachememory_ (cachememory_State * __top)
 			{
 			  __top->p1.writeport._call_line_88_called_fn_struct =
 			    (Write_Hit_State *) calloc (1, sizeof (Write_Hit_State));
-			  __top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_entry = 1;
 // reset entry flag and set in progress flag
 			  __top->p1.writeport._call_line_88_entry = 0;
 			  __top->p1.writeport._call_line_88_in_progress = 1;
@@ -1009,16 +1022,19 @@ cachememory_ (cachememory_State * __top)
 		    }		// entry into this call statement
 		  if (__top->p1.writeport._call_line_88_in_progress)
 		    {
-		      if (__top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_entry)
-			{	// entry flag set?
+		      if (!__top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_entry
+			  && !__top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_in_progress)
+			{	// entry and in_progress flags not set?
 			  if (1)
 			    {	// check if pipes can be read from
 			      __top->p1.writeport._call_line_88_called_fn_struct->addr.__val =
 				(__top->p1.writeport.write_address).__val;
+			      __top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_entry = 1;
 			    }	// arguments copied to call structure
 			}	// called function had entry flag set
-		      if (!__top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_exit)
-			{	// called function had not finished
+		      if (__top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_entry
+			  || __top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_in_progress)
+			{	// called function still in progress
 // call the function
 			  Write_Hit (__top->p1.writeport._call_line_88_called_fn_struct->addr);	//   file CacheMemory.aa, line 88
 			  __top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_entry = 0;
@@ -1221,7 +1237,6 @@ cachememory_ (cachememory_State * __top)
 			    {
 			      __top->p1.readport._call_line_102_called_fn_struct =
 				(Read_Hit_State *) calloc (1, sizeof (Read_Hit_State));
-			      __top->p1.readport._call_line_102_called_fn_struct->Read_Hit_entry = 1;
 // reset entry flag and set in progress flag
 			      __top->p1.readport._call_line_102_entry = 0;
 			      __top->p1.readport._call_line_102_in_progress = 1;
@@ -1229,18 +1244,21 @@ cachememory_ (cachememory_State * __top)
 			}	// entry into this call statement
 		      if (__top->p1.readport._call_line_102_in_progress)
 			{
-			  if (__top->p1.readport._call_line_102_called_fn_struct->Read_Hit_entry)
-			    {	// entry flag set?
+			  if (!__top->p1.readport._call_line_102_called_fn_struct->Read_Hit_entry
+			      && !__top->p1.readport._call_line_102_called_fn_struct->Read_Hit_in_progress)
+			    {	// entry and in_progress flags not set?
 			      if (1)
 				{	// check if pipes can be read from
 				  __top->p1.readport._call_line_102_called_fn_struct->addr.__val =
 				    (__top->p1.readport.read_address).__val;
 				  __top->p1.readport._call_line_102_called_fn_struct->data.__val =
 				    (__top->data_array[(__top->p1.readport.addr).__val]).__val;
+				  __top->p1.readport._call_line_102_called_fn_struct->Read_Hit_entry = 1;
 				}	// arguments copied to call structure
 			    }	// called function had entry flag set
-			  if (!__top->p1.readport._call_line_102_called_fn_struct->Read_Hit_exit)
-			    {	// called function had not finished
+			  if (__top->p1.readport._call_line_102_called_fn_struct->Read_Hit_entry
+			      || __top->p1.readport._call_line_102_called_fn_struct->Read_Hit_in_progress)
+			    {	// called function still in progress
 // call the function
 			      Read_Hit (__top->p1.readport._call_line_102_called_fn_struct->addr, __top->p1.readport._call_line_102_called_fn_struct->data);	//   file CacheMemory.aa, line 102
 			      __top->p1.readport._call_line_102_called_fn_struct->Read_Hit_entry = 0;
@@ -1280,7 +1298,6 @@ cachememory_ (cachememory_State * __top)
 			    {
 			      __top->p1.readport._call_line_105_called_fn_struct =
 				(Read_Miss_State *) calloc (1, sizeof (Read_Miss_State));
-			      __top->p1.readport._call_line_105_called_fn_struct->Read_Miss_entry = 1;
 // reset entry flag and set in progress flag
 			      __top->p1.readport._call_line_105_entry = 0;
 			      __top->p1.readport._call_line_105_in_progress = 1;
@@ -1288,16 +1305,19 @@ cachememory_ (cachememory_State * __top)
 			}	// entry into this call statement
 		      if (__top->p1.readport._call_line_105_in_progress)
 			{
-			  if (__top->p1.readport._call_line_105_called_fn_struct->Read_Miss_entry)
-			    {	// entry flag set?
+			  if (!__top->p1.readport._call_line_105_called_fn_struct->Read_Miss_entry
+			      && !__top->p1.readport._call_line_105_called_fn_struct->Read_Miss_in_progress)
+			    {	// entry and in_progress flags not set?
 			      if (1)
 				{	// check if pipes can be read from
 				  __top->p1.readport._call_line_105_called_fn_struct->addr.__val =
 				    (__top->p1.readport.read_address).__val;
+				  __top->p1.readport._call_line_105_called_fn_struct->Read_Miss_entry = 1;
 				}	// arguments copied to call structure
 			    }	// called function had entry flag set
-			  if (!__top->p1.readport._call_line_105_called_fn_struct->Read_Miss_exit)
-			    {	// called function had not finished
+			  if (__top->p1.readport._call_line_105_called_fn_struct->Read_Miss_entry
+			      || __top->p1.readport._call_line_105_called_fn_struct->Read_Miss_in_progress)
+			    {	// called function still in progress
 // call the function
 			      Read_Miss (__top->p1.readport._call_line_105_called_fn_struct->addr);	//   file CacheMemory.aa, line 105
 			      __top->p1.readport._call_line_105_called_fn_struct->Read_Miss_entry = 0;
@@ -1347,7 +1367,6 @@ cachememory_ (cachememory_State * __top)
 			{
 			  __top->p1.readport._call_line_109_called_fn_struct =
 			    (Read_Miss_State *) calloc (1, sizeof (Read_Miss_State));
-			  __top->p1.readport._call_line_109_called_fn_struct->Read_Miss_entry = 1;
 // reset entry flag and set in progress flag
 			  __top->p1.readport._call_line_109_entry = 0;
 			  __top->p1.readport._call_line_109_in_progress = 1;
@@ -1355,16 +1374,19 @@ cachememory_ (cachememory_State * __top)
 		    }		// entry into this call statement
 		  if (__top->p1.readport._call_line_109_in_progress)
 		    {
-		      if (__top->p1.readport._call_line_109_called_fn_struct->Read_Miss_entry)
-			{	// entry flag set?
+		      if (!__top->p1.readport._call_line_109_called_fn_struct->Read_Miss_entry
+			  && !__top->p1.readport._call_line_109_called_fn_struct->Read_Miss_in_progress)
+			{	// entry and in_progress flags not set?
 			  if (1)
 			    {	// check if pipes can be read from
 			      __top->p1.readport._call_line_109_called_fn_struct->addr.__val =
 				(__top->p1.readport.read_address).__val;
+			      __top->p1.readport._call_line_109_called_fn_struct->Read_Miss_entry = 1;
 			    }	// arguments copied to call structure
 			}	// called function had entry flag set
-		      if (!__top->p1.readport._call_line_109_called_fn_struct->Read_Miss_exit)
-			{	// called function had not finished
+		      if (__top->p1.readport._call_line_109_called_fn_struct->Read_Miss_entry
+			  || __top->p1.readport._call_line_109_called_fn_struct->Read_Miss_in_progress)
+			{	// called function still in progress
 // call the function
 			  Read_Miss (__top->p1.readport._call_line_109_called_fn_struct->addr);	//   file CacheMemory.aa, line 109
 			  __top->p1.readport._call_line_109_called_fn_struct->Read_Miss_entry = 0;

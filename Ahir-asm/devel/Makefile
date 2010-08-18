@@ -6,7 +6,7 @@ OBJ=$(AAHOME)/obj
 GRMR=$(AAHOME)/grammar
 BIN=$(AAHOME)/bin
 DOC=$(AAHOME)/docs
-ANTLR2=/home/madhav/antlr2
+ANTLR2=../antlr2
 INCLUDES=-I$(AAHOME)/include -I$(GRMR) -I$(ANTLR2)
 HEADERS=$(INCL)/AaRoot.h\
 		$(INCL)/AaScope.h\
