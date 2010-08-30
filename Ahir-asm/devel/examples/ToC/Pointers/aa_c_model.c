@@ -37,7 +37,6 @@ passpointer_ (passpointer_State * __top)
 	    {
 	      __top->_call_line_11_called_fn_struct =
 		(Increment_State *) calloc (1, sizeof (Increment_State));
-	      __top->_call_line_11_called_fn_struct->Increment_entry = 1;
 // reset entry flag and set in progress flag
 	      __top->_call_line_11_entry = 0;
 	      __top->_call_line_11_in_progress = 1;
@@ -45,16 +44,20 @@ passpointer_ (passpointer_State * __top)
 	}			// entry into this call statement
       if (__top->_call_line_11_in_progress)
 	{
-	  if (__top->_call_line_11_called_fn_struct->Increment_entry)
-	    {			// entry flag set?
+	  if (!__top->_call_line_11_called_fn_struct->Increment_entry
+	      && !__top->_call_line_11_called_fn_struct->
+	      Increment_in_progress)
+	    {			// entry and in_progress flags not set?
 	      if (1)
 		{		// check if pipes can be read from
 		  __top->_call_line_11_called_fn_struct->a.__val =
 		    (__top->a).__val;
+		  __top->_call_line_11_called_fn_struct->Increment_entry = 1;
 		}		// arguments copied to call structure
 	    }			// called function had entry flag set
-	  if (!__top->_call_line_11_called_fn_struct->Increment_exit)
-	    {			// called function had not finished
+	  if (__top->_call_line_11_called_fn_struct->Increment_entry
+	      || __top->_call_line_11_called_fn_struct->Increment_in_progress)
+	    {			// called function still in progress
 // call the function
 	      Increment (__top->_call_line_11_called_fn_struct->a, &(__top->_call_line_11_called_fn_struct->b));	//   file Pointers.aa, line 11
 	      __top->_call_line_11_called_fn_struct->Increment_entry = 0;

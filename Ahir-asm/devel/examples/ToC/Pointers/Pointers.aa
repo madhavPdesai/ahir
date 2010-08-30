@@ -11,7 +11,3 @@ $is
 	$call Increment(a)(b)
 }
 
-$foreign $module [Increment]
-	$in (a $pointer<32>)
-	$out (b $pointer<32>)
-
