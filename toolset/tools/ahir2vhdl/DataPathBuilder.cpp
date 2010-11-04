@@ -4,7 +4,7 @@
 #include "SimpleEntity.hpp"
 #include "typedefs.hpp"
 
-#include <AHIR/AHIRModule.hpp>
+#include <AHIR/Module.hpp>
 #include <Base/Type.hpp>
 
 #include <boost/lexical_cast.hpp>

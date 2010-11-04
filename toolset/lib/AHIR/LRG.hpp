@@ -1,6 +1,7 @@
 #ifndef AHIR_LRG_HPP
 #define AHIR_LRG_HPP
 
+#include "ControlPath.hpp"
 #include <Base/Utils.hpp>
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>

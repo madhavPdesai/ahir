@@ -1,4 +1,4 @@
-#include "AHIRModule.hpp"
+#include "Module.hpp"
 #include <Base/Program.hpp>
 #include "DataPath.hpp"
 #include "ControlPath.hpp"

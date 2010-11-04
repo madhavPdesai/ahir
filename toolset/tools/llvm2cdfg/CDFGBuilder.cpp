@@ -5,7 +5,7 @@
 
 #include <Base/Program.hpp>
 #include <Base/Addressable.hpp>
-#include <Base/Values.hpp>
+#include <Base/Value.hpp>
 #include <CDFG/Utils.hpp>
 
 #include <llvm/Constants.h>

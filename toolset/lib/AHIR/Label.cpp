@@ -4,7 +4,7 @@
 #include "ControlPath.hpp"
 #include "CPUtils.hpp"
 #include "MuxRegions.hpp"
-#include "AHIRModule.hpp"
+#include "Module.hpp"
 #include "Type2Verify.hpp"
 #include <Base/Program.hpp>
 #include <Base/Utils.hpp>

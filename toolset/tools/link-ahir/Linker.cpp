@@ -4,7 +4,7 @@
 #include <Base/Addressable.hpp>
 
 #include <AHIR/LinkLayer.hpp>
-#include <AHIR/AHIRModule.hpp>
+#include <AHIR/Module.hpp>
 #include <AHIR/ControlPath.hpp>
 #include <AHIR/DataPath.hpp>
 #include <AHIR/Arbiter.hpp>

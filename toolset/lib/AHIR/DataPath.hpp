@@ -77,7 +77,6 @@ namespace ahir {
     void register_req(const std::string &id, Symbol sym);
     void register_ack(const std::string &id, Symbol sym);
 
-    // big fat fingers in the eye of OOP
     std::string callee;
     std::string value;		   // used by Constant
     hls::Addressable *addressable; // used by Address

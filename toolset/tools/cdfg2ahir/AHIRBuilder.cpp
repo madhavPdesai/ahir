@@ -10,7 +10,7 @@
 #include <AHIR/CPUtils.hpp>
 #include <AHIR/DataPath.hpp>
 #include <AHIR/LinkLayer.hpp>
-#include <AHIR/AHIRModule.hpp>
+#include <AHIR/Module.hpp>
 
 #include <boost/lexical_cast.hpp>
 #include <sstream>

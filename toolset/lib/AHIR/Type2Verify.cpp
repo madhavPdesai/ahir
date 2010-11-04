@@ -3,7 +3,7 @@
 #include "ControlPath.hpp"
 #include "CPUtils.hpp"
 #include <Base/Program.hpp>
-#include "AHIRModule.hpp"
+#include "Module.hpp"
 #include <Base/Utils.hpp>
 
 #include <boost/graph/adjacency_list.hpp>

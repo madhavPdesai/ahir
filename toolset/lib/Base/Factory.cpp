@@ -1,7 +1,7 @@
 #include "Factory.hpp"
 
 #include "Addressable.hpp"
-#include "Values.hpp"
+#include "Value.hpp"
 #include "Program.hpp"
 #include "Module.hpp"
 #include "Type.hpp"

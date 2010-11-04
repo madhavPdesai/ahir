@@ -12,7 +12,7 @@
 #include "ArbiterBuilder.hpp"
 
 #include <Base/Program.hpp>
-#include <AHIR/AHIRModule.hpp>
+#include <AHIR/Module.hpp>
 #include <Base/Printer.hpp>
 
 #include <assert.h>

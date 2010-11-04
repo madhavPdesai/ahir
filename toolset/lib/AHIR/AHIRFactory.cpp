@@ -1,6 +1,6 @@
 #include "AHIRFactory.hpp"
 
-#include "AHIRModule.hpp"
+#include "Module.hpp"
 #include "DataPath.hpp"
 #include "ControlPath.hpp"
 #include "LinkLayer.hpp"

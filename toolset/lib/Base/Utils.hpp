@@ -12,15 +12,4 @@ namespace hls {
   std::string create_bitstring(unsigned value, unsigned size);
 }
 
-namespace ahir {
-
-  // Constants used in the control path. They are here so that users
-  // don't have to include ControlPath.hpp just for these.
-  const unsigned marked_place_id = 0;
-  const unsigned init_id = 1;
-  const unsigned fin_id = 2;
-
-};
-
-
 #endif

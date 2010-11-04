@@ -3,7 +3,7 @@
 #include "../Base/Program.hpp"
 #include "../Base/Addressable.hpp"
 #include "CDFG.hpp"
-#include "../Base/Values.hpp"
+#include "../Base/Value.hpp"
 
 #include <fstream>
 

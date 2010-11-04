@@ -1,6 +1,6 @@
 #include "Printer.hpp"
 
-#include "AHIRModule.hpp"
+#include "Module.hpp"
 #include "ControlPath.hpp"
 #include "CPUtils.hpp"
 #include "DataPath.hpp"
@@ -11,7 +11,7 @@
 #include <Base/Program.hpp>
 #include <Base/Addressable.hpp>
 #include <Base/Module.hpp>
-#include <Base/Values.hpp>
+#include <Base/Value.hpp>
 #include <Base/Type.hpp>
 
 #include <fstream>

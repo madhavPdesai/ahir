@@ -2,7 +2,7 @@
 
 #include <AHIR/Label.hpp>
 #include <AHIR/Printer.hpp>
-#include <AHIR/AHIRModule.hpp>
+#include <AHIR/Module.hpp>
 #include <AHIR/ControlPath.hpp>
 #include <AHIR/DataPath.hpp>
 

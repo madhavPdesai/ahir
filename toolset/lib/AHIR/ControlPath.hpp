@@ -17,6 +17,25 @@ namespace ahir {
   class Module;
   class LabelGraph;
 
+  typedef enum {
+    PLACE = 0 
+    , REQ 
+    , ACK 
+    , HIDDEN 
+  } CPEType;
+
+  inline bool is_trans(CPEType t) 
+  {
+    return t != PLACE;
+  }
+
+  class CPElement;
+  typedef std::set<CPElement*> CPEList;
+
+  const unsigned marked_place_id = 0;
+  const unsigned init_id = 1;
+  const unsigned fin_id = 2;
+
   struct CPElement {
     unsigned id;
     CPEType type;
@@ -47,7 +66,7 @@ namespace ahir {
     Place(unsigned _id, const std::string &d
           ,  unsigned m = 0)
       : CPElement(_id, PLACE, d), marking(m)
-    { assert((m == 0) ^ (id == marked_place_id)); } // No logical XOR! Hail!
+    { assert((m == 0) ^ (id == marked_place_id)); }
 
     Place(const Place &other)
       : CPElement(other), marking(other.marking)
