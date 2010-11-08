@@ -19,17 +19,12 @@ void AHIRParser::on_start_element(const Glib::ustring& name,
     case INIT:
       if (name == "dp") {
 	state = DP;
-	factory->create_dp(id);
       } else if (name == "cp") {
 	state = CP;
-	factory->create_cp(id);
       } else if (name == "ln") {
 	state = LN;
-	factory->create_ln(id);
       } else if (name == "arbiter") {
 	state = ARBITER;
-	factory->create_arbiter(id);
-
       } else
 	assert(false && "unexpected element");
       break;

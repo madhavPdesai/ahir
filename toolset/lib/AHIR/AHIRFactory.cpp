@@ -37,12 +37,6 @@ void AHIRFactory::create_module_hook(const std::string &id
 
 // /* ----- data-path ----- */
 
-void AHIRFactory::create_dp(const std::string& id)
-{
-  dp = new DataPath(id);
-  ahir_module->register_dp(dp);
-}
-
 void AHIRFactory::create_dpe(const std::string& _id
 			     , const std::string& ntype
 			     , const std::string &description)
@@ -286,12 +280,6 @@ void AHIRFactory::map_symbols(const std::string &src
 }
 
 /* ----- Inter-module Link Layer ----- */
-
-void AHIRFactory::create_arbiter(const std::string &id)
-{
-  arbiter = new Arbiter(id);
-  ahir_module->register_arbiter(arbiter);
-}
 
 void AHIRFactory::create_client(const std::string &id
 				, const std::string &module_name

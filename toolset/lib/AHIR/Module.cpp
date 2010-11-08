@@ -11,6 +11,15 @@
 using namespace ahir;
 using namespace hls;
   
+ahir::Module::Module(const std::string &_id)
+  : hls::Module(_id, "ahir")
+{
+  cp = new ControlPath(id + "_cp");
+  dp = new DataPath(id + "_dp");
+  ln = new LinkLayer(id + "_ln");
+  arbiter = new Arbiter(id + "_arbiter");
+}
+
 ahir::Module* get_ahir_module(Program *program, const std::string &id) 
 {
   hls::Module *module = program->find_module(id);
@@ -19,36 +28,6 @@ ahir::Module* get_ahir_module(Program *program, const std::string &id)
 
   ahir::Module *ahir = static_cast<ahir::Module*>(module);
   return ahir;
-}
-
-void ahir::Module::register_dp(DataPath *_dp)
-{
-  assert(!dp);
-  dp = _dp;
-  assert(!dp->parent);
-  dp->parent = this;
-}
-
-void ahir::Module::register_cp(ControlPath *_cp)
-{
-  assert(!cp);
-  cp = _cp;
-  assert(!cp->parent);
-  cp->parent = this;
-}
-
-void ahir::Module::register_ln(LinkLayer *_ln)
-{
-  assert(!ln);
-  ln = _ln;
-  assert(!ln->parent);
-  ln->parent = this;
-}
-
-void ahir::Module::register_arbiter(Arbiter *_arbiter)
-{
-  assert(!arbiter);
-  arbiter = _arbiter;
 }
 
 // The current AHIR implementation represents input arguments as

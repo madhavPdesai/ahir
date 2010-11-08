@@ -2,8 +2,11 @@
 #define __AHIRMODULE_HPP__
 
 #include <Base/Module.hpp>
-#include <AHIR/Storage.hpp>
+#include <Base/Storage.hpp>
 #include "Symbol.hpp"
+#include "ControlPath.hpp"
+#include "DataPath.hpp"
+#include "LinkLayer.hpp"
 
 namespace hls
 {
@@ -28,10 +31,6 @@ namespace ahir
 
     Symbol req, ack;
 
-    void register_dp(DataPath *_dp);
-    void register_cp(ControlPath *_cp);
-    void register_ln(LinkLayer *_ln);
-    void register_arbiter(Arbiter *_arbiter);
 
     void add_input_argument(const std::string &id, hls::Type &type);
     void add_output_argument(const std::string &id, const hls::Type *type);
@@ -45,11 +44,7 @@ namespace ahir
 
     DPElement* locate_dpe_from_cpe_id(unsigned id);
 
-    Module(const std::string &_id)
-      : hls::Module(_id, "ahir"), Storage(_id)
-      , cp(NULL), dp(NULL), ln(NULL), arbiter(NULL)
-      , req(0), ack(0)
-    {};
+    Module(const std::string &_id);
   };
 }
 
