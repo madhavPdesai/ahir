@@ -72,8 +72,6 @@ void vhdl::ahir2vhdl(Program *program, bool clocked_ln)
 
   print_vhdl(program, clocked_ln);
 
-  dump_address_space(program, program->id + "_memory_init.txt");
-  
   generate_system(program);
 }
 

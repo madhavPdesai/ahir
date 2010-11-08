@@ -25,7 +25,7 @@ namespace cdfg {
     hls::Program *program;
     
     void create_program(std::string id);
-    void create_addressable(llvm::GlobalVariable &G);
+    void create_memory_location(llvm::GlobalVariable &G);
     virtual void create_cdfg(llvm::Function &F) = 0;
     
     virtual void initialise_with_function(llvm::Function &F) = 0;

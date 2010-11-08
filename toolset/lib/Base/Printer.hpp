@@ -8,6 +8,7 @@
 #include <assert.h>
 
 namespace hls {
+  class Storage;
   class Program;
   class Module;
 
@@ -31,7 +32,7 @@ namespace hls {
     virtual void print_address_value(AddressValue *value, hls::ostream &out);
     virtual void print_value(Value *value, hls::ostream &out);
     virtual void print_types(Program *program, hls::ostream &out);
-    virtual void print_addressables(Program *program, hls::ostream &out);
+    virtual void print_storage(Storage *storage, hls::ostream &out);
 
   };
   

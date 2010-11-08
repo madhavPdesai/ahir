@@ -68,11 +68,11 @@ void AHIRFactory::dpe_set_value(const std::string &characters)
   dpe->value = characters;
 }
 
-void AHIRFactory::dpe_set_addressable(const std::string &characters)
+void AHIRFactory::dpe_set_memory_location(const std::string &characters)
 {
   assert(dpe->ntype == Address);
-  dpe->addressable = program->find_addressable(characters);
-  assert(dpe->addressable);
+  dpe->mloc = program->find_memory_location(characters);
+  assert(dpe->mloc);
 }
 
 void AHIRFactory::dpe_set_counterpart(const std::string &characters)

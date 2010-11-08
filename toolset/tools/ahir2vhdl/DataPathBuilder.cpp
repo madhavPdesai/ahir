@@ -439,7 +439,7 @@ namespace {
           break;
 
         case Address:
-          dpe->addressable = adpe->addressable;
+          dpe->mloc = adpe->mloc;
           break;
 
         case Call:

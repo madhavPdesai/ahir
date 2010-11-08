@@ -22,7 +22,7 @@ namespace ahir
   class Arbiter;
   class DPElement;
   
-  struct Module : public hls::Module, public Storage
+  struct Module : public hls::Module
   {
     ControlPath *cp;
     DataPath *dp;

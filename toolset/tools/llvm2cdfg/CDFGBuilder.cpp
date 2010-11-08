@@ -41,7 +41,7 @@ namespace cdfg {
     program = new Program(id);
   }
 
-  void CDFGBuilder::create_addressable(llvm::GlobalVariable &G)
+  void CDFGBuilder::create_memory_location(llvm::GlobalVariable &G)
   {
     const llvm::Type *ptr = G.getType();
     const SequentialType *st = dyn_cast<SequentialType>(ptr);
@@ -49,16 +49,17 @@ namespace cdfg {
 
     const llvm::Type *etype = st->getElementType();
 
-    Addressable *addr = new Addressable(G.getNameStr()
-                                        , getTypeName(etype)
-                                        , getTypePaddedSize(TD, etype));
+    MemorySpace *ms = program->find_memory_space("default");
+    if (!ms)
+      ms = program->add_memory_space("default");
+
+    MemoryLocation *mloc = ms->add_location(G.getNameStr(), getTypeName(etype)
+                                            , getTypePaddedSize(TD, etype));
 
     if (G.hasInitializer()) {
       llvm::Constant *init = G.getInitializer();
-      addr->value = getAddressableValue(init, program, TD);
+      mloc->value = getAddressableValue(init, program, TD);
     }
-
-    program->register_addressable(addr);
   }
 
   void CDFGBuilder::visitInstruction(llvm::Instruction &I)
@@ -274,14 +275,13 @@ namespace {
   
     void visitAllocaInst(AllocaInst &I)
     {
-      Addressable *addr = create_addressable(I);
-      CDFGNode *an = create_data_node(Address
-                                      , llvm::IntegerType::get(I.getContext()
-                                                               , TD->getPointerSizeInBits())
-                                      , I.getNameStr());
+      MemoryLocation *addr = create_memory_location(I);
+      const llvm::Type *ptr
+        = llvm::IntegerType::get(I.getContext(), TD->getPointerSizeInBits());
+      CDFGNode *an = create_data_node(Address, ptr, I.getNameStr());
       register_node(I, an);
       addr->register_address(cdfg->id, an->id);
-      an->addressable = addr;
+      an->mloc = addr;
     }
 
     void phi_connect_input(CDFGNode *mux
@@ -788,10 +788,10 @@ namespace {
                                                                  , TD->getPointerSizeInBits())
                                         , G->getNameStr());
         register_node(G, an);
-        Addressable *g = program->find_addressable(G->getNameStr());
+        MemoryLocation *g = program->find_memory_location(G->getNameStr());
         assert(g);
         g->register_address(cdfg->id, an->id);
-        an->addressable = g;
+        an->mloc = g;
 
         return an;
       } else {
@@ -888,7 +888,7 @@ namespace {
       return node;
     }
 
-    Addressable* create_addressable(AllocaInst &I)
+    MemoryLocation* create_memory_location(AllocaInst &I)
     {
       // An Alloca always allocates an array, which may be of size 1 for
       // a single element.
@@ -905,10 +905,8 @@ namespace {
       const llvm::Type *etype = I.getAllocatedType();
       size *= getTypePaddedSize(TD, etype);
   
-      Addressable *addr = new Addressable(id.str(), getTypeName(etype), size);
-      program->register_addressable(addr);
-  
-      return addr;
+      return program->add_memory_location("default", id.str()
+                                          , getTypeName(etype), size);
     }
 
     Port* get_output_data_port(CDFGNode *vnode, llvm::Value *val)

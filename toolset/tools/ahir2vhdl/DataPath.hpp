@@ -3,6 +3,7 @@
 
 #include "Entity.hpp"
 #include "Assignable.hpp"
+#include <Base/Storage.hpp>
 #include <Base/ostream.hpp>
 #include <set>
 
@@ -29,7 +30,7 @@ namespace vhdl {
     void register_member(vhdl::DPElement *dpe);
 
     DPElement *counterpart;
-    hls::Addressable *addressable;
+    hls::MemoryLocation *mloc;
     std::string cname;
     std::string callee;
     std::string value;
@@ -48,7 +49,7 @@ namespace vhdl {
 	      , const std::string &c, const std::string &d
               , const std::string &config = "")
       : Entity(_id, DPE, d), ntype(_ntype)
-      , counterpart(NULL), addressable(NULL), cname(c)
+      , counterpart(NULL), mloc(NULL), cname(c)
       , type(NULL)
     {
       configuration = config;

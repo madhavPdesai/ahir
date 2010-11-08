@@ -1,6 +1,8 @@
 #ifndef __PROGRAM_HPP__
 #define __PROGRAM_HPP__
 
+#include "Storage.hpp"
+
 #include <string>
 #include <map>
 
@@ -10,10 +12,11 @@ namespace hls {
   class Module;
   class Addressable;
 
-  struct Program {
+  struct Program : public Storage {
     std::string id;
-    Module *start;
     unsigned first_free_address;
+    
+    Module *start;
 
     typedef std::map<std::string, Module*> ModuleList;
     ModuleList modules;
@@ -24,11 +27,6 @@ namespace hls {
     TypeList types;
     const Type* find_type(const std::string &id);
     void register_type(const std::string &id, const Type *type);
-
-    typedef std::map<std::string, Addressable*> AddressSpace;
-    AddressSpace addrs;
-    void register_addressable(Addressable *addr);
-    Addressable* find_addressable(const std::string &id);
 
     Program(const std::string& _id);
   };

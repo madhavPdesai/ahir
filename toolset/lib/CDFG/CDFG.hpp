@@ -90,7 +90,7 @@ namespace cdfg {
     std::string callee;
     std::string value; // used by Constant
     std::string portname;
-    hls::Addressable *addressable; // used by Address
+    hls::MemoryLocation *mloc; // used by Address
     CDFGNode *counterpart;	   // LC <-> LR mapping
     
     // typedef std::map<unsigned, std::string> CaseMap;
@@ -100,7 +100,7 @@ namespace cdfg {
     hls::Colour colour;
 
     CDFGNode(unsigned _id, hls::NodeType _type, const std::string &_d)
-      : id(_id), ntype(_type), description(_d), addressable(NULL), counterpart(NULL)
+      : id(_id), ntype(_type), description(_d), mloc(NULL), counterpart(NULL)
     {}
 
     ~CDFGNode();

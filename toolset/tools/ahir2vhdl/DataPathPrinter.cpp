@@ -230,7 +230,7 @@ namespace {
       }
       
       case Address: {
-	hls::Addressable *addr = dpe->addressable;
+	hls::MemoryLocation *addr = dpe->mloc;
 	assert(addr);
 	assert(addr->address > 0);
 	Port *port = dpe->find_port("z");

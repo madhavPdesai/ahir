@@ -81,18 +81,17 @@ void Factory::create_float_type(const std::string &id
 }
 
 void Factory::create_addressable(const std::string &id
-				 , const std::string &type
-				 , const std::string &size
+				 , const std::string &type_id
+				 , const std::string &_size
 				 , const std::string &address
 				 , const std::string &description)
 {
-  assert(!addressable);
-  addressable = new Addressable(id, type, boost::lexical_cast<unsigned>(size));
+  unsigned size = boost::lexical_cast<unsigned>(size);
+  MemoryLocation *mloc = program->add_memory_location("default", id, type_id, size);
   if (address.size() > 0) {
     unsigned addr = boost::lexical_cast<unsigned>(address);
-    addressable->set_address(addr);
+    mloc->address = addr;
   }
-  program->register_addressable(addressable);
   assert(!svalue);
   assert(!cvalue);
 }

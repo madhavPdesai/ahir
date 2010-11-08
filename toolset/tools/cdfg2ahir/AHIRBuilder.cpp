@@ -356,7 +356,7 @@ namespace {
           break;
 
         case hls::Address:
-          dpe->addressable = node->addressable;
+          dpe->mloc = node->mloc;
           break;
 
         case hls::Call:

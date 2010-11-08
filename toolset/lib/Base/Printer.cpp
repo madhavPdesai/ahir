@@ -3,7 +3,6 @@
 #include "Module.hpp"
 #include "Value.hpp"
 #include "Type.hpp"
-#include "Addressable.hpp"
 #include "Utils.hpp"
 
 #include <fstream>
@@ -27,7 +26,7 @@ void Printer::print_program(Program *program, hls::ostream &out)
 
   out << indent_in;
   print_types(program, out);
-  print_addressables(program, out);
+  print_storage(program, out);
 
   for (Program::ModuleList::iterator fi = program->modules.begin()
   	 , fe = program->modules.end(); fi != fe; ++fi) {
@@ -49,6 +48,7 @@ void Printer::print_module(hls::Module *myf, hls::ostream &out)
   out << indent_in;
 
   // print_call_interface(myf, out);
+  print_storage(myf, out);
   print_module_body(myf, out);
     
   out << indent_out;
@@ -139,36 +139,40 @@ void Printer::print_types(Program *program, hls::ostream &out)
   out << indent << "</types>";
 }
   
-void Printer::print_addressables(Program *program, hls::ostream &out)
+void Printer::print_storage(Storage *storage, hls::ostream &out)
 {
-  out << "\n" << indent << "<address_space>";
-  out << indent_in;
-    
-  for (Program::AddressSpace::iterator ai = program->addrs.begin()
-	 , ae = program->addrs.end();
-       ai != ae; ++ai) {
-    Addressable *addr = (*ai).second;
-      
-    out << indent << "<addressable id=\"" << addr->id
-	<< "\" type=\"" << addr->type
-	<< "\" size=\"" << addr->size;
-    if (addr->address != 0)
-      out << "\" address=\"" << addr->address;
-    out << "\">";
-
+  for (Storage::memory_iterator msi = storage->memory_begin(),
+         mse = storage->memory_end(); msi != mse; ++msi) {
+    MemorySpace *ms = (*msi).second;
+    out << "\n" << indent << "<mspace id=\"" << ms->id << "\">";
     out << indent_in;
 
-    if (addr->value)
-      print_value(addr->value, out);
+    for (MemorySpace::iterator li = ms->begin(), le = ms->end();
+         li != le; ++li) {
+      MemoryLocation *mloc = (*li).second;
+      
+      out << indent << "<mloc id=\"" << mloc->id
+          << "\" type=\"" << mloc->type
+          << "\" size=\"" << mloc->size;
+      if (mloc->address != 0)
+        out << "\" address=\"" << mloc->address;
+      out << "\">";
 
-    out << indent_out;
-    out << indent << "</addressable>";
-  }
+      out << indent_in;
+      
+      if (mloc->value)
+        print_value(mloc->value, out);
+
+      out << indent_out;
+      out << indent << "</mloc>";
+    }
     
-  out << indent_out;
-  out << indent << "</address_space>";
+    out << indent_out;
+    out << indent << "</mspace>";
+  }
 }
 
+/*
 void dump_value(Program *program, unsigned address, Value *value, std::ostream &out);
 
 void dump_value_in_bytes(unsigned address, const std::string &value,
@@ -257,3 +261,4 @@ void hls::dump_address_space(hls::Program *program, const std::string &filename)
     dump_addressable(program, adr, out);
   }
 }
+*/

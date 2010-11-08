@@ -68,8 +68,8 @@ namespace ahir {
 	break;
 
       case Address:
-	assert(dpe->addressable);
-	out << indent << "<addressable>" << dpe->addressable->id << "</addressable>";
+	assert(dpe->mloc);
+	out << indent << "<mloc>" << dpe->mloc->id << "</mloc>";
 	break;
 
       case Call:

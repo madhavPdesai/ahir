@@ -141,7 +141,7 @@ void AHIRParser::on_characters(const Glib::ustring& characters)
       break;
 
     case DPE_ADDRESSABLE:
-      factory->dpe_set_addressable(characters);
+      factory->dpe_set_memory_location(characters);
       break;
 
     case DPE_CALLEE:

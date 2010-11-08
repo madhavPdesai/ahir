@@ -7,7 +7,7 @@
 using namespace hls;
 
 Program::Program(const std::string& _id)
-  : id(_id), start(NULL), first_free_address(0)
+  : id(_id), first_free_address(0), start(NULL)
 {}
 
 const Type* Program::find_type(const std::string &id)
@@ -35,19 +35,5 @@ void Program::register_module(Module *func)
 {
   assert(!find_module(func->id));
   modules[func->id] = func;
-}
-
-void Program::register_addressable(Addressable *addr)
-{
-  assert(addrs.find(addr->id) == addrs.end()
-	 && "addressable already exists");
-  addrs[addr->id] = addr;
-}
-
-Addressable* Program::find_addressable(const std::string &id)
-{
-  if (addrs.find(id) != addrs.end())
-    return addrs[id];
-  return NULL;
 }
 

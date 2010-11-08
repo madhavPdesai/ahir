@@ -64,14 +64,19 @@ void Linker::assign_addresses(Program *program)
 {
   size_t current = 1;
 
-  for (Program::AddressSpace::iterator gi = program->addrs.begin()
-	 , ge = program->addrs.end(); gi != ge; gi++) {
-    Addressable *glob = (*gi).second;
-    glob->set_address(current);
-    current += glob->size;
-  }
+  for (Storage::memory_iterator si = program->memory_begin()
+	 , se = program->memory_end(); si != se; si++) {
+    MemorySpace *ms = (*si).second;
 
-  program->first_free_address = current;
+    for (MemorySpace::iterator mi = ms->begin(), me = ms->end();
+         mi != me; ++mi) {
+      MemoryLocation *mloc = (*mi).second;
+      mloc->address = current;
+      current += mloc->size;
+    }
+
+    program->first_free_address = current;
+  }
 }
 
 void Linker::link(Program *program)

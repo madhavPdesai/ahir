@@ -5,6 +5,7 @@
 #include "typedefs.hpp"
 #include <Base/NodeType.hpp>
 #include <Base/Utils.hpp>
+#include <Base/Storage.hpp>
 
 #include <set>
 
@@ -79,14 +80,14 @@ namespace ahir {
 
     std::string callee;
     std::string value;		   // used by Constant
-    hls::Addressable *addressable; // used by Address
+    hls::MemoryLocation *mloc;     // used by Address
     DPElement *counterpart;	   // LC <-> LR mapping
     std::string portname;
 
     DPElement(unsigned _id, hls::NodeType t, const std::string &_d)
       : id(_id), ntype(t), description(_d), parent(NULL)
     {
-      addressable = NULL;
+      mloc = NULL;
       counterpart = NULL;
     };
   };

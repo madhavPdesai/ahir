@@ -109,7 +109,7 @@ namespace {
       for (llvm::Module::global_iterator gi = M.global_begin(), ge = M.global_end();
            gi != ge; ++gi) {
         if (!is_ioport_identifier(*gi))
-          cbuilder->create_addressable(*gi);
+          cbuilder->create_memory_location(*gi);
       }
   
       for (llvm::Module::iterator fi = M.begin(), fe = M.end();

@@ -1,40 +1,55 @@
 #ifndef STORAGE_HPP
 #define STORAGE_HPP
 
+#include "Type.hpp"
+#include "Value.hpp"
+
 #include <map>
 #include <string>
 #include <set>
+#include <deque>
 
-namespace ahir {
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 
-  struct MemoryLocation 
+namespace ba = boost::algorithm;
+
+namespace hls {
+
+  struct MemoryLocation
   {
-    const std::string id;
-    const Type* const type;     // the type can never be changed.
-    Value *value;
+    std::string id;
+    const std::string type;     // the type can never be changed.
+    hls::Value *value;
+    unsigned address;
+    unsigned size;
 
+    /*! @name Indirect Address
+      List of Address objects in the data-path that indirectly refer
+      to this Addressable location.
+     */
+    //@{
+    typedef std::map<std::string, std::set<unsigned> > AddressList;
+    AddressList addresses;
+    void register_address(const std::string &module, unsigned addr)
+    {
+      addresses[module].insert(addr);
+    }
+    
   private:
     // A MemoryLocation can only be created by a MemorySpace
     friend class MemorySpace;
-    MemoryLocation(const std::string &_id, const Type *_type)
-      : id(_id), type(_type), value(NULL)
+    MemoryLocation(const std::string &_id
+                   , const std::string &_type
+                   , unsigned _size)
+      : id(_id), type(_type), value(NULL), address(0), size(_size)
     {};
   };
 
   class MemorySpace 
   {
-    // Use a set for iteration, and a map for searching by id. The
-    // two are always in sync.
-    //
-    // FIXME: We need a custom iterator class that encapsulates the
-    // map::iterator to behave like the set::iterator! Use the
-    // "map_values" iterator adaptor from Boost.Range 0.43 when it
-    // becomes available.
     typedef std::map<std::string, MemoryLocation*> _mapType;
     _mapType space_map;
-
-    typedef std::set<MemoryLocation*> _setType;
-    _setType space;
 
     // A memory space can only be created by a Storage object
     friend class Storage;
@@ -44,23 +59,22 @@ namespace ahir {
 
     void clear()
     {
-      space.clear();
       space_map.clear();
     }
 
     // TODO: Define set-like operations on memory spaces.
 
   public:
-    const std::string id;
+
+    std::string id;
     
     MemoryLocation* add_location(const std::string &id
-                                 , const Type *type
-                                 , Value *value = NULL)
+                                 , const std::string &type
+                                 , unsigned size)
     {
       assert(!find_location(id));
-      MemoryLocation *m = new MemoryLocation(id, type, value);
+      MemoryLocation *m = new MemoryLocation(id, type, size);
       space_map[m->id] = m;
-      space.insert(m);
       return m;
     }
     
@@ -72,22 +86,22 @@ namespace ahir {
     }
 
     // FIXME: Replace this with the boost::map_values
-    typedef _setType::iterator iterator;
+    typedef _mapType::iterator iterator;
 
     iterator begin()
     {
-      return space.begin();
+      return space_map.begin();
     }
 
     iterator end()
     {
-      return space.end();
+      return space_map.end();
     }
 
     ~MemorySpace()
     {
-      for (iterator ii = space.begin(), ie = space.end(); ii != ie; ++ii)
-        delete *ii;
+      for (iterator ii = begin(), ie = end(); ii != ie; ++ii)
+        delete (*ii).second;
       clear();
     }
   };
@@ -95,58 +109,75 @@ namespace ahir {
   // Classes derived from this shall have storage facilities. (e.g.,
   // Program and Module).
   
-  class Storage : public Base 
+  class Storage
   {
     typedef std::map<std::string, MemorySpace*> _mapType;
     _mapType storage_map;
 
-    // FIXME: Eliminate this with boost::map_values
-    typedef std::set<MemorySpace*> _setType;
-    _setType storage;
-
     void memory_clear()
     {
       storage_map.clear();
-      storage.clear();
     }
 
     // TOOD: Allow memory spaces and memory locations to migrate
     // between different Storage instances.
+
+    typedef std::deque<std::string> TokenList;
+    void split_name(TokenList &tokens, const std::string &name) 
+    {
+      ba::split(tokens, name, ba::is_any_of(":"));
+      
+      assert(tokens.size() < 3);
+
+      if (tokens.size() == 1)
+        tokens.push_front("default");
+
+      assert(tokens.size() == 2);
+    }
     
   public:
 
-    Storage(const std::string &_id)
-      : Base(_id)
-    {} 
-    
-    // Add a location to a new memory space where it lives all by itself.
-    MemoryLocation* add_location(const std::string &var_id
-                                 , const Type *type
-                                 , Value *value = NULL)
+    // Add a location to the default memory space.
+    MemoryLocation* add_memory_location(const std::string &var_id
+                                        , const std::string &type
+                                        , unsigned size)
     {
-      MemorySpace *ms = add_memory_space(var_id);
-      return ms->add_location(var_id, type, value);
+      TokenList tokens;
+      split_name(tokens, var_id);
+      add_memory_location(tokens[0], tokens[1], type, size);
     }
 
     // Add a location to an arbitrary memory space, creating the space
     // if necessary.
-    MemoryLocation* add_location(const std::string &var_id
-                                 , const Type *type
-                                 , Value *value
-                                 , const std::string &space_id)
+    MemoryLocation* add_memory_location(const std::string &space_id
+                                        , const std::string &var_id
+                                        , const std::string &type
+                                        , unsigned size)
     {
       MemorySpace *ms = find_memory_space(space_id);
       if (!ms)
         ms = add_memory_space(space_id);
-      return ms->add_location(var_id, type, value);
+      return ms->add_location(var_id, type, size);
     }
 
-    MemroySpace* add_memory_space(const std::string &id)
+    MemoryLocation* find_memory_location(const std::string &id) 
+    {
+      TokenList tokens;
+      split_name(tokens, id);
+
+      const std::string &ms_id = tokens[0];
+      MemorySpace *ms = find_memory_space(ms_id);
+      if (!ms)
+        return NULL;
+
+      return ms->find_location(tokens[1]);
+    }
+          
+    MemorySpace* add_memory_space(const std::string &id)
     {
       assert(!find_memory_space(id));
       MemorySpace *m = new MemorySpace(id);
       storage_map[m->id] = m;
-      storage.insert(m);
       return m;
     }
 
@@ -158,26 +189,26 @@ namespace ahir {
     }
 
     // Prefix "memory_" to avoid confusion in derived classes.
-    typedef _setType::iterator memory_iterator;
+    typedef _mapType::iterator memory_iterator;
     
     memory_iterator memory_begin()
     {
-      return storage.begin();
+      return storage_map.begin();
     }
 
     memory_iterator memory_end() 
     {
-      return storage.end();
+      return storage_map.end();
     }
 
     ~Storage()
     {
-      for (memory_iterator ii = storage.begin(), ie = storage.end();
+      for (memory_iterator ii = memory_begin(), ie = memory_end();
            ii != ie; ++ii)
-        delete *ii;
+        delete (*ii).second;
       memory_clear();
     }
-  }
+  };
 }
 
 #endif

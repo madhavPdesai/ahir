@@ -36,8 +36,8 @@ void cdfg::Printer::print_node_details(CDFGNode *node, hls::ostream &out)
       break;
 
     case Address:
-      assert(node->addressable);
-      out << indent << "<addressable id=\"" << node->addressable->id
+      assert(node->mloc);
+      out << indent << "<mloc id=\"" << node->mloc->id
 	  << "\"/>";
       break;
 

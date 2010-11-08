@@ -108,9 +108,9 @@ void CDFGFactory::node_register_counterpart(const std::string &id)
 
 void CDFGFactory::node_register_addressable(const std::string &id)
 {
-  Addressable *addr = program->find_addressable(id);
+  MemoryLocation *addr = program->find_memory_location(id);
   assert(addr);
-  node->addressable = addr;
+  node->mloc = addr;
   addr->register_address(module->id, node->id);
 }
   

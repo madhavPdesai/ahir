@@ -65,7 +65,7 @@ namespace ahir
     			     , const std::string& wire);
 
     void dpe_set_value(const std::string &characters);
-    void dpe_set_addressable(const std::string &characters);
+    void dpe_set_memory_location(const std::string &characters);
     void dpe_set_counterpart(const std::string &characters);
     void dpe_set_io_portname(const std::string &characters);
 
