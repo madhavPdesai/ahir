@@ -1,6 +1,7 @@
 #ifndef __HLS_MODULE_HPP__
 #define __HLS_MODULE_HPP__
 
+#include "Annotable.hpp"
 #include "Storage.hpp"
 #include <vector>
 #include <string>
@@ -8,7 +9,7 @@
 
 namespace hls {
 
-  struct Module : public hls::Storage {
+  struct Module : public hls::Annotable, public hls::Storage {
     
     std::string id;
     std::string type;

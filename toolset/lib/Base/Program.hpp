@@ -1,6 +1,7 @@
 #ifndef __PROGRAM_HPP__
 #define __PROGRAM_HPP__
 
+#include "Annotable.hpp"
 #include "Storage.hpp"
 
 #include <string>
@@ -12,7 +13,7 @@ namespace hls {
   class Module;
   class Addressable;
 
-  struct Program : public Storage {
+  struct Program : public Annotable, public Storage {
     std::string id;
     unsigned first_free_address;
     

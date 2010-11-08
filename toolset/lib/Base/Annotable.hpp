@@ -1,12 +1,13 @@
-#ifndef BASE_HPP
-#define BASE_HPP
+#ifndef Annotable_HPP
+#define Annotable_HPP
 
 #include <map>
 #include <string>
+#include <assert.h>
 
 namespace hls {
 
-  class Root {
+  class Annotable {
 
   private:
 
@@ -15,12 +16,6 @@ namespace hls {
 
   public:
 
-    const std::string id;
-
-    Root(const std::string &_id)
-      : id(_id)
-    {} 
-    
     void set_attribute(const std::string &key, const std::string &value)
     {
       attributes[key] = value;
@@ -34,17 +29,17 @@ namespace hls {
     const std::string& get_attribute(const std::string &key) const
     {
       assert(has_attribute(key));
-      return attributes[key];
+      return (*attributes.find(key)).second;
     }
 
     typedef AttributeMap::iterator attribute_iterator;
 
-    attribute_iterator attributes_begin() const
+    attribute_iterator attributes_begin() 
     {
       return attributes.begin();
     }
 
-    attribute_iterator attributes_end() const
+    attribute_iterator attributes_end() 
     {
       return attributes.end();
     }

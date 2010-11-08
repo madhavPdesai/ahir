@@ -3,6 +3,7 @@
 
 #include "Type.hpp"
 #include "Value.hpp"
+#include "Annotable.hpp"
 
 #include <map>
 #include <string>
@@ -16,7 +17,7 @@ namespace ba = boost::algorithm;
 
 namespace hls {
 
-  struct MemoryLocation
+  struct MemoryLocation : public hls::Annotable
   {
     std::string id;
     const std::string type;     // the type can never be changed.
@@ -46,7 +47,7 @@ namespace hls {
     {};
   };
 
-  class MemorySpace 
+  class MemorySpace : public hls::Annotable
   {
     typedef std::map<std::string, MemoryLocation*> _mapType;
     _mapType space_map;
