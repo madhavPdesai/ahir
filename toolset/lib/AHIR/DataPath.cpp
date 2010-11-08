@@ -138,10 +138,22 @@ void DPElement::register_req(const std::string &id, Symbol sym)
   reqs[id] = sym;
 }
 
+Symbol DPElement::find_req(const std::string &name)
+{
+  assert(reqs.find(name) != reqs.end());
+  return reqs[name];
+}
+
 void DPElement::register_ack(const std::string &id, Symbol sym)
 {
   assert(acks.find(id) == acks.end());
   acks[id] = sym;
+}
+
+Symbol DPElement::find_ack(const std::string &name)
+{
+  assert(acks.find(name) != acks.end());
+  return acks[name];
 }
 
 void DataPath::register_wire(Wire *wire)

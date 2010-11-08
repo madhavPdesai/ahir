@@ -76,7 +76,9 @@ namespace ahir {
     typedef std::map<std::string, Symbol> SymbolMap;
     SymbolMap reqs, acks;
     void register_req(const std::string &id, Symbol sym);
+    Symbol find_req(const std::string &id);
     void register_ack(const std::string &id, Symbol sym);
+    Symbol find_ack(const std::string &id);
 
     std::string callee;
     std::string value;		   // used by Constant

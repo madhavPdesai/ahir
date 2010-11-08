@@ -112,3 +112,56 @@ DPElement* ahir::Module::locate_dpe_from_cpe_id(unsigned id)
 
   return dpe;
 }
+
+DPElement* ahir::Module::add_dpe(unsigned id, NodeType ntype
+                                 , const std::string &d)
+{
+  assert(!dp->find_dpe(id));
+  DPElement *dpe = new DPElement(id, ntype, d);
+  dp->register_dpe(dpe);
+  return dpe;
+}
+
+DPElement* ahir::Module::find_dpe(unsigned id)
+{
+  return dp->find_dpe(id);
+}
+
+Wire* ahir::Module::add_wire(unsigned id)
+{
+  assert(!dp->find_wire(id));
+  Wire *wire = new Wire(id);
+  dp->register_wire(wire);
+  return wire;
+}
+
+Wire* ahir::Module::find_wire(unsigned id)
+{
+  return dp->find_wire(id);
+}
+
+void ahir::Module::connect_wire(Wire *wire, DPElement *dpe
+                                , const std::string &port_id)
+{
+  Port *port = dpe->find_port(port_id);
+  assert(port);
+  port->connect_wire(wire);
+}
+
+void ahir::Module::link_symbols(Transition *t, DPElement *dpe
+                                , const std::string &name)
+{
+  Symbol &ts = t->symbol;
+
+  if (is_req(t)) {
+    assert(dpe->find_req(name) == 0);
+    Symbol s = dp->reqs.size();
+    dp->register_req(dpe, name, s);
+    ln->map(cp->id, ts, dp->id, s);
+  } else {
+    assert(dpe->find_ack(name) == 0);
+    Symbol s = dp->acks.size();
+    dp->register_ack(dpe, name, s);
+    ln->map(dp->id, s, cp->id, ts);
+  }
+}

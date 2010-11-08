@@ -42,7 +42,14 @@ namespace ahir
     void control_flow(Place *src, Transition *snk);
     void control_flow(Transition *src, Transition *snk);
 
+    DPElement* add_dpe(unsigned id, hls::NodeType ntype
+                       , const std::string &d = "");
+    DPElement* find_dpe(unsigned id);
+    Wire* add_wire(unsigned id);
+    Wire* find_wire(unsigned id);
+    void connect_wire(Wire *wire, DPElement *dpe, const std::string &port_id);
 
+    void link_symbols(Transition *t, DPElement *dpe, const std::string &name);
 
     DPElement* locate_dpe_from_cpe_id(unsigned id);
 
