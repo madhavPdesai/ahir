@@ -55,42 +55,44 @@ void ahir::Module::add_output_argument(const std::string &id, const hls::Type *t
   ret->register_port(aport);
 }
 
-Transition& ahir::Module::add_transition(const std::string &id
-                                         , CPEType t == HIDDEN
-                                         , const std::string &description = "")
+Transition* ahir::Module::add_transition(unsigned id
+                                         , CPEType type = HIDDEN
+                                         , const std::string &description)
 {
   assert(cp);
-  assert(is_trans(t));
-  Transition *t = new Transition(id, t, description);
+  assert(is_trans(type));
+  Transition *t = new Transition(id, type, description);
   cp->register_transition(t);
-  return *t;
+  return t;
 }
 
-Place& ahir::Module::add_place(const std::string &id
-                               , const std::string &description = "")
+Place* ahir::Module::add_place(unsigned id
+                               , const std::string &description)
 {
   assert(cp);
   Place *p = new Place(id, description);
   cp->register_place(p);
-  return *p;
+  return p;
 }
 
-void ahir::Module::set_dependence(Transition &t, Place &p)
+void ahir::Module::control_flow(Transition *t, Place *p)
 {
-  control_flow(&t, &p);
+  ahir::control_flow(t, p);
 }
 
-void ahir::Module::set_dependence(Place &p, Transition &t)
+void ahir::Module::control_flow(Place *p, Transition *t)
 {
-  control_flow(&p, &t);
+  ahir::control_flow(p, t);
 }
 
-void ahir::Module::set_dependence(Transition &u, Transition &v)
+void ahir::Module::control_flow(Transition *u, Transition *v)
 {
-  Place *p = new Place(u.id + "_to_" + v.id, "");
+  std::ostringstream d;
+  d << u->id << "_to_" << v->id;
+  Place *p = new Place(cp->places.size(), d.str());
   cp->register_place(p);
-  control_flow(&u, p);
-  control_flow(p, &v);
+  ahir::control_flow(u, p);
+  ahir::control_flow(p, v);
 }
 
 DPElement* ahir::Module::locate_dpe_from_cpe_id(unsigned id)
