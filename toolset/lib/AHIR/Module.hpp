@@ -29,15 +29,14 @@ namespace ahir
     LinkLayer *ln;
     Arbiter *arbiter;
 
-    Symbol req, ack;
+    void add_input_argument(const std::string &id, const hls::Type *type);
+    void add_output_argument(const std::string &id, const hls::Type *type);
 
     Transition* add_transition(unsigned id, ahir::CPEType type
                                , const std::string &description = "");
     Place* add_place(unsigned id
                      , const std::string &description = "");
 
-    void add_input_argument(const std::string &id, hls::Type &type);
-    void add_output_argument(const std::string &id, const hls::Type *type);
     void control_flow(Transition *src, Place *snk);
     void control_flow(Place *src, Transition *snk);
     void control_flow(Transition *src, Transition *snk);
