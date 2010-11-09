@@ -56,7 +56,7 @@ void Parser::on_start_element(const Glib::ustring& name
     case INIT:
       if (name == "program") {
 	state = PROGRAM;
-	factory->create_program(id, get_attribute(properties, "start"));
+	factory->create_program(id);
       } else
 	assert(false && "unexpected element");
       break;
@@ -66,21 +66,30 @@ void Parser::on_start_element(const Glib::ustring& name
 	state = MODULE;
 	std::string type = get_attribute(properties, "type");
 	factory->create_module(id, type);
-      } else if (name == "address_space") {
-	state = ADDRESS_SPACE;
+      } else if (name == "roots") {
+        state = ROOTS;
+      } else if (name == "mspace") {
+	state = MSPACE;
       } else if (name == "types") {
         state = TYPES;
       } else
 	assert(false && "unexpected element");
       break;
 
-    case ADDRESS_SPACE:
-      if (name == "addressable") {
-	state = ADDRESSABLE;
-	factory->create_addressable(id, get_attribute(properties, "type")
-				    , get_attribute(properties, "size")
-				    , maybe_get_attribute(properties, "address")
-				    , maybe_get_attribute(properties, "description"));
+    case ROOTS:
+      if (name == "root") {
+        state = ROOT;
+      } else
+        assert(false && "unexpected element");
+      break;
+      
+    case MSPACE:
+      if (name == "mloc") {
+	state = MLOC;
+	factory->create_memory_location(id, get_attribute(properties, "type")
+                                        , get_attribute(properties, "size")
+                                        , maybe_get_attribute(properties, "address")
+                                        , maybe_get_attribute(properties, "description"));
       } else
 	assert(false && "unexpected element");
       break;
@@ -103,7 +112,7 @@ void Parser::on_start_element(const Glib::ustring& name
         assert(false && "unexpected element");
       break;
 
-    case ADDRESSABLE:
+    case MLOC:
     case COMPOSITE:
       if (name == "scalar") {
 	state = SCALAR;
@@ -167,8 +176,8 @@ void Parser::on_end_element(const Glib::ustring& name)
       module_parser->on_end_element(name);
       break;
 
-    case ADDRESSABLE:
-      factory->commit_addressable();
+    case MLOC:
+      factory->commit_memory_location();
       break;
 
     default:
@@ -187,16 +196,12 @@ void Parser::on_characters(const Glib::ustring& characters)
       factory->set_value_scalar(characters);
       break;
       
-    // case MODULE_RETVAL:
-      // factory->module_set_retval(characters);
-      // break;
-      
-    // case MODULE_ARG:
-      // factory->module_append_arg(characters);
-      // break;
-
     case PARSE_MODULE:
       module_parser->on_characters(characters);
+      break;
+
+    case ROOT:
+      factory->register_root(characters);
       break;
       
     default:

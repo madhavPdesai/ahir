@@ -32,7 +32,8 @@ namespace hls {
     typedef enum {
       INIT
       , PROGRAM
-      , ADDRESS_SPACE, ADDRESSABLE
+      , ROOTS, ROOT
+      , MSPACE, MLOC
       , TYPES, TYPE
       , MODULE
       // , MODULE_IFACE, MODULE_RETVAL, MODULE_ARG

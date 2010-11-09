@@ -70,9 +70,9 @@ namespace hls {
     std::string id;
     unsigned first_free_address;
     
-    MemoryLocation* add_location(const std::string &id
-                                 , const std::string &type
-                                 , unsigned size)
+    MemoryLocation* add_memory_location(const std::string &id
+                                        , const std::string &type
+                                        , unsigned size)
     {
       assert(!find_location(id));
       MemoryLocation *m = new MemoryLocation(id, type, size);
@@ -176,7 +176,7 @@ namespace hls {
       MemorySpace *ms = find_memory_space(space_id);
       if (!ms)
         ms = add_memory_space(space_id);
-      return ms->add_location(var_id, type, size);
+      return ms->add_memory_location(var_id, type, size);
     }
 
     MemoryLocation* find_memory_location(const std::string &id) 

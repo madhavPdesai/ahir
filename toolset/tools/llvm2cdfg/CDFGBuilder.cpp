@@ -53,8 +53,9 @@ namespace cdfg {
     if (!ms)
       ms = program->add_memory_space("default");
 
-    MemoryLocation *mloc = ms->add_location(G.getNameStr(), getTypeName(etype)
-                                            , getTypePaddedSize(TD, etype));
+    MemoryLocation *mloc = ms->add_memory_location(G.getNameStr()
+                                                   , getTypeName(etype)
+                                                   , getTypePaddedSize(TD, etype));
 
     if (G.hasInitializer()) {
       llvm::Constant *init = G.getInitializer();

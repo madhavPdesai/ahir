@@ -8,7 +8,9 @@ namespace hls {
 
   class Program;
   class Module;
-  class Addressable;
+  class Storage;
+  class MemorySpace;
+  class MemoryLocation;
   class Value;
   class ScalarValue;
   class CompositeValue;
@@ -18,7 +20,9 @@ namespace hls {
   {
     Program *program;
     Module *module;
-    Addressable *addressable;
+    Storage *storage;
+    MemorySpace *mspace;
+    MemoryLocation *mloc;
     ScalarValue *svalue;
     CompositeValue *cvalue;
     Omega *omega;
@@ -27,23 +31,25 @@ namespace hls {
 
     std::string format(const std::string& input);
 
-    void create_program(const std::string &id, const std::string &start);
-    std::string pending_start;
+    void create_program(const std::string &id);
     void commit_program();
+
+    void register_root(const std::string &id);
     
     void create_module(const std::string &id, const std::string &type);
     virtual void create_module_hook(const std::string &id, const std::string &type) = 0;
     void begin_iface();
 
-    void create_addressable(const std::string &id
-			    , const std::string &type
-			    , const std::string &size
-			    , const std::string &address
-			    , const std::string &description);
+    void create_memory_space(const std::string &id);
+    void create_memory_location(const std::string &id
+                                , const std::string &type
+                                , const std::string &size
+                                , const std::string &address
+                                , const std::string &description);
     void dispatch_value(Value *value);
     void register_scalar(const std::string &type);
     void register_composite(const std::string &type);
-    void register_address_value(const std::string &addressable
+    void register_address_value(const std::string &mloc_name
                                 , const std::string &size);
 
     void create_integer_type(const std::string &id
@@ -57,7 +63,7 @@ namespace hls {
     void push_cvalue(CompositeValue *cval);
     void pop_cvalue();
     void commit_value_composite();
-    void commit_addressable();
+    void commit_memory_location();
     void commit_value_scalar();
     void set_value_scalar(const std::string &characters);
     
