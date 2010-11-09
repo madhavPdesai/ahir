@@ -192,8 +192,7 @@ namespace {
       program->modules[cdfg->id] = cdfg;
 
       if (cdfg->id == program->id + "_start") {
-        assert(!program->start && "start function already defined");
-        program->start = cdfg;
+        program->roots.push_back(cdfg->id);
       }
     }
 

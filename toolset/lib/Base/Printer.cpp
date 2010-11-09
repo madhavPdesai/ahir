@@ -19,12 +19,17 @@ void Printer::print(Program *program, const std::string &suffix)
 
 void Printer::print_program(Program *program, hls::ostream &out)
 {
-  assert(program->start);
-  out << indent << "<program id=\"" << program->id
-      << "\" start=\"" << program->start->id
-      << "\">";
-
   out << indent_in;
+  
+  if (program->roots.size() > 0) {
+    out << indent << "<roots>" << indent_in;
+    for (Program::RootList::iterator ri = program->roots.begin(),
+           re = program->roots.end(); ri != re; ++ri) {
+      out << indent << "<root>" << *ri << "</root>";
+    }
+    out << indent_out << indent << "</roots>";
+  }
+  
   print_types(program, out);
   print_storage(program, out);
 

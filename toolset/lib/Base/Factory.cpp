@@ -178,6 +178,4 @@ void Factory::set_value_scalar(const std::string &characters)
 
 void Factory::commit_program()
 {
-  program->start = program->find_module(pending_start);
-  assert(program->start);
 }

@@ -56,8 +56,6 @@ namespace {
 void vhdl::ahir2vhdl(Program *program, bool clocked_ln)
 {
   init_names();
-  assert(program->start);
-  std::string start_id = program->start->id;
   
   for (Program::ModuleList::iterator mi = program->modules.begin()
 	 , me = program->modules.end(); mi != me; ++mi) {
@@ -66,9 +64,6 @@ void vhdl::ahir2vhdl(Program *program, bool clocked_ln)
     (*mi).second = vhdl;
     delete ahir;
   }
-
-  program->start = program->find_module(start_id);
-  assert(program->start);
 
   print_vhdl(program, clocked_ln);
 

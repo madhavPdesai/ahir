@@ -481,8 +481,6 @@ namespace {
 
 void ahir::cdfg2ahir(hls::Program *program)
 {
-  const std::string start_id = program->start->id;
-
   AHIRBuilder builder;
   
   for (hls::Program::ModuleList::iterator fi = program->modules.begin()
@@ -496,7 +494,5 @@ void ahir::cdfg2ahir(hls::Program *program)
     delete cdfg;
     (*fi).second = ahir;
   }
-
-  program->start = program->find_module(start_id);
 }
 

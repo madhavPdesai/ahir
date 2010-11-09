@@ -15,9 +15,12 @@ namespace hls {
 
   struct Program : public Annotable, public Storage {
     std::string id;
-    
-    Module *start;
 
+    // A list of "root" modules. Each root is the starting point of a
+    // call-graph.
+    typedef std::vector<std::string> RootList;
+    RootList roots;
+    
     typedef std::map<std::string, Module*> ModuleList;
     ModuleList modules;
     Module* find_module(const std::string &id);

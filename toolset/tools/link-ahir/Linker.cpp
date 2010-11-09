@@ -47,9 +47,9 @@ void Linker::create_arbiters(Program *program)
     }
   }
 
-  assert(program->start);
-  assert(is_ahir(program->start));
-  ahir::Module *start = static_cast<ahir::Module*>(program->start);
+  assert(program->roots.size() == 1);
+  const std::string &root_id = *program->roots.begin();
+  ahir::Module *start = get_ahir_module(program, root_id);
   Arbiter *arbiter = start->arbiter;
   
   // the environment is the only client of the "start" function, and
