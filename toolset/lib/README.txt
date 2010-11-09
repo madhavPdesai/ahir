@@ -14,6 +14,7 @@ Module: (Storage + CP + DP + LN, Id)
 	add_place(id,initial-marking)
 	control_flow(t,p / p,t / t,t)
 	link_symbols(transition t, dpe, string dpe-ctrl-sig)
+        add_port(dpe, port-name, in-or-out, data-type)
 	add_wire(id, type)
 	connect_wire(id, dpe, string dpe-port-name)
 	add_memory_space(id) --inherited from Storage

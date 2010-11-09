@@ -44,6 +44,10 @@ namespace ahir
     DPElement* add_dpe(unsigned id, hls::NodeType ntype
                        , const std::string &d = "");
     DPElement* find_dpe(unsigned id);
+
+    Port *add_port(DPElement *dpe, const std::string &port_id
+                   , hls::IOType in_or_out, const hls::Type *data_type);
+
     Wire* add_wire(unsigned id);
     Wire* find_wire(unsigned id);
     void connect_wire(Wire *wire, DPElement *dpe, const std::string &port_id);

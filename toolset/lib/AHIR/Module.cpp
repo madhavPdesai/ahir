@@ -127,6 +127,15 @@ DPElement* ahir::Module::find_dpe(unsigned id)
   return dp->find_dpe(id);
 }
 
+Port* ahir::Module::add_port(DPElement *dpe, const std::string &port_id
+                             , hls::IOType in_or_out
+                             , const hls::Type *data_type) 
+{
+  Port *port = new Port(port_id, in_or_out, data_type);
+  dpe->register_port(port);
+  return port;
+}
+
 Wire* ahir::Module::add_wire(unsigned id)
 {
   assert(!dp->find_wire(id));
