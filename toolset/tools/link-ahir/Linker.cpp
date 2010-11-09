@@ -75,7 +75,7 @@ void Linker::assign_addresses(Program *program)
       current += mloc->size;
     }
 
-    program->first_free_address = current;
+    ms->first_free_address = current;
   }
 }
 

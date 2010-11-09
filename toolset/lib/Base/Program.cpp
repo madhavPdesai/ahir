@@ -7,7 +7,7 @@
 using namespace hls;
 
 Program::Program(const std::string& _id)
-  : id(_id), first_free_address(0), start(NULL)
+  : id(_id), start(NULL)
 {}
 
 const Type* Program::find_type(const std::string &id)

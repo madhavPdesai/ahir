@@ -15,7 +15,6 @@ namespace hls {
 
   struct Program : public Annotable, public Storage {
     std::string id;
-    unsigned first_free_address;
     
     Module *start;
 

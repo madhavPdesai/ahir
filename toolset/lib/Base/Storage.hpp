@@ -55,7 +55,7 @@ namespace hls {
     // A memory space can only be created by a Storage object
     friend class Storage;
     MemorySpace(const std::string _id)
-      : id(_id) 
+      : id(_id), first_free_address(0)
     {}
 
     void clear()
@@ -68,6 +68,7 @@ namespace hls {
   public:
 
     std::string id;
+    unsigned first_free_address;
     
     MemoryLocation* add_location(const std::string &id
                                  , const std::string &type
@@ -123,6 +124,12 @@ namespace hls {
     // TOOD: Allow memory spaces and memory locations to migrate
     // between different Storage instances.
 
+    // A fully qualified name for a memory location has two components
+    // separated by a colon --- the memory-space id and the location
+    // id. This function splits a string consisiting of one or two
+    // tokens separated by a colon. If there is only one token, it is
+    // assumed to be the location id, and the function inserts the
+    // string "default" as the memory-space id.
     typedef std::deque<std::string> TokenList;
     void split_name(TokenList &tokens, const std::string &name) 
     {
@@ -138,7 +145,9 @@ namespace hls {
     
   public:
 
-    // Add a location to the default memory space.
+    // Add a location with the given fully qualified id. If the id
+    // does not contain a memory-space id, the function "split_name"
+    // inserts "default" as the memory-space id.
     MemoryLocation* add_memory_location(const std::string &var_id
                                         , const std::string &type
                                         , unsigned size)
@@ -146,6 +155,15 @@ namespace hls {
       TokenList tokens;
       split_name(tokens, var_id);
       add_memory_location(tokens[0], tokens[1], type, size);
+    }
+
+    // Convenience function that adds a memory location to a distinct
+    // memory space with the same name as the location.
+    MemoryLocation* add_distinct_memory_location(const std::string &id
+                                                 , const std::string &type
+                                                 , unsigned size) 
+    {
+      add_memory_location(id, id, type, size);
     }
 
     // Add a location to an arbitrary memory space, creating the space
