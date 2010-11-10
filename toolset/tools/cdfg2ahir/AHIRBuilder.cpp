@@ -73,9 +73,9 @@ namespace {
     ahir::Module* cdfg2ahir(CDFG *cdfg)
     {
       ahir = new Module(cdfg->id);
-      cp = ahir->cp = new ControlPath(ahir->id + "_cp");
-      dp = ahir->dp = new DataPath(ahir->id + "_dp");
-      ln = ahir->ln = new LinkLayer(ahir->id + "_ln");
+      cp = ahir->cp;
+      dp = ahir->dp;
+      ln = ahir->ln;
   
       visit(cdfg);
   
@@ -94,9 +94,9 @@ namespace {
     {
       NodeFragment* fragment = new NodeFragment();
       register_node_fragment(node, fragment);
-      fragment->dpe = create_dpe(node);
+      fragment->dpe = ahir->add_dpe(dp->elements.size() + 1
+                                    , node->ntype, node->description);
       assign_node_details(node, fragment->dpe);
-      dp->register_dpe(fragment->dpe);
       visit_ports(node, fragment);
     }
 
@@ -178,9 +178,9 @@ namespace {
         Transition *reqC = create_transition(REQ, node, fragment, "reqC");
         Transition *ackC = create_transition(ACK, node, fragment, "ackC");
 
-        control_flow(reqR, ackR);
-        control_flow(ackR, reqC);
-        control_flow(reqC, ackC);
+        ahir->control_flow(reqR, ackR);
+        ahir->control_flow(ackR, reqC);
+        ahir->control_flow(reqC, ackC);
     
       } else {
         fragment->place = create_place(node->description);
@@ -192,9 +192,9 @@ namespace {
           Transition *t = create_transition((is_input(cport) ? REQ : ACK)
                                             , node, fragment, cport->id);
           if (is_input(cport))
-            ahir::control_flow(t, fragment->place);
+            ahir->control_flow(t, fragment->place);
           else
-            ahir::control_flow(fragment->place, t);
+            ahir->control_flow(fragment->place, t);
         }
       }
     }
@@ -204,16 +204,14 @@ namespace {
     void visit_data_edge(CDFGEdge *edge) 
     {
       cdfg::Port *driver = edge->driver;
+
       CDFGNode *dnode = driver->parent;
       assert(dnode);
-
       DPElement *de = get_dpe(dnode);
 
-      ahir::Port *d = de->find_port(driver->id);
-      assert(d);
-      create_wire(d);
+      Wire *wire = ahir->add_wire(dp->wires.size() + 1);
+      ahir->connect_wire(wire, de, driver->id);
 
-      // assert(edge->users.size() > 0);
       for (CDFGEdge::UserList::iterator ui = edge->users.begin()
              , ue = edge->users.end(); ui != ue; ++ui) {
         cdfg::Port *user = *ui;
@@ -223,10 +221,7 @@ namespace {
 
         DPElement *du = get_dpe(unode);
 
-        ahir::Port *u = du->find_port(user->id);
-        assert(u);
-
-        d->wire->add_user(u);
+        ahir->connect_wire(wire, du, user->id);
       }
     }
 
@@ -247,7 +242,7 @@ namespace {
       CPElement *dst = (unode->ntype == hls::Merge
                         ? (CPElement*)get_place(unode)
                         : (CPElement*)get_entry_transition(unode, user->id));
-      control_flow(src, dst);
+      ahir->control_flow(src, dst);
     }
 
     /* ===== Fragments ===== */
@@ -342,12 +337,6 @@ namespace {
 
     /* ===== Construction Kit ===== */
 
-    DPElement* create_dpe(CDFGNode *node)
-    {
-      DPElement *dpe = new DPElement(dp->elements.size() + 1, node->ntype, node->description);
-      return dpe;
-    }
-
     void assign_node_details(CDFGNode *node, DPElement *dpe) 
     {
       switch (node->ntype) {
@@ -395,86 +384,26 @@ namespace {
       return aport;
     }
 
-    void create_wire(ahir::Port *port)
-    {
-      assert(port);
-      assert(!port->wire);
-      assert(is_output(port));
-      port->wire = new Wire(dp->wires.size() + 1);
-      port->wire->driver = port;
-      dp->register_wire(port->wire);
-    }
-
     Transition* create_transition(CPEType _t, CDFGNode *node
                                   , NodeFragment *fragment
                                   , const std::string &id)
     {
-      Transition *t = new Transition(cp->elements.size(), _t
-                                     , node->description + ":" + id);
+      Transition *t = ahir->add_transition(cp->elements.size(), _t
+                                           , node->description + ":" + id);
 
-      if (fragment->dpe) {
-      
-        switch (_t) {
-          case REQ:
-            t->symbol = cp->reqs.size() + 1;
-            dp->register_req(fragment->dpe, id, lambda_to_sigma(t));
-            break;
-          case ACK:
-            t->symbol = cp->acks.size() + 1;
-            dp->register_ack(fragment->dpe, id, sigma_to_lambda(t));
-            break;
-          default:
-            break;
-        }
-      }
+      if (fragment->dpe)
+        ahir->link_symbols(t, fragment->dpe, id);
       
       fragment->register_transition(id, t);
-      cp->register_transition(t);
 
       return t;
     }
 
     Place* create_place(const std::string &description)
     {
-      Place *p = new Place(cp->elements.size(), description);
-      cp->register_place(p);
-
-      return p;
+      return ahir->add_place(cp->elements.size(), description);
     }
 
-    Symbol lambda_to_sigma(Transition *t)
-    {
-      assert(is_req(t));
-      Symbol req = dp->reqs.size() + 1;
-
-      ln->map(cp->id + "_LambdaOut", t->symbol, dp->id + "_SigmaIn", req);
-      return req;
-    }
-
-    Symbol sigma_to_lambda(Transition *t)
-    {
-      assert(is_ack(t));
-      Symbol ack = dp->acks.size() + 1;
-  
-      ln->map(dp->id + "_SigmaOut", ack, cp->id + "_LambdaIn", t->symbol);
-      return ack;
-    }
-
-    void control_flow(CPElement *src, CPElement *snk) 
-    {
-      if (is_trans(src) && is_trans(snk))
-        return control_flow(static_cast<Transition*>(src), static_cast<Transition*>(snk));
-
-      return ahir::control_flow(src, snk);
-    }
-    
-    void control_flow(Transition *src, Transition *snk)
-    {
-      Place *p = create_place("from " + src->description + " to " + snk->description);
-      ahir::control_flow(src, p);
-      ahir::control_flow(p, snk);
-    }
-  
   };
   
 } // end anonymous namespace    

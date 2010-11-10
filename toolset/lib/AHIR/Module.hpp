@@ -32,14 +32,28 @@ namespace ahir
     void add_input_argument(const std::string &id, const hls::Type *type);
     void add_output_argument(const std::string &id, const hls::Type *type);
 
-    Transition* add_transition(unsigned id, ahir::CPEType type, Symbol s
-                               , const std::string &description = "");
+    /*! Convenience function.
+    
+      \todo This function is used by the AHIR Parser to introduce a known
+      transition in the module. It is required only because the
+      current XML format explicitly stores symbols in the link-layer.
+      As a result, the numerical value of the symbol associated with a
+      particular transition HAS to be preserved. This is a bug which
+      should be fixed by removing numerical symbol values from the
+      link layer.
+    */
+    Transition* add_transition_with_symbol(unsigned id, ahir::CPEType type
+                                           , Symbol s
+                                           , const std::string &d = "");
+    Transition* add_transition(unsigned id, ahir::CPEType type
+                               , const std::string &d = "");
     Place* add_place(unsigned id
                      , const std::string &description = "");
 
     void control_flow(Transition *src, Place *snk);
     void control_flow(Place *src, Transition *snk);
     void control_flow(Transition *src, Transition *snk);
+    void control_flow(CPElement *src, CPElement *snk);
 
     DPElement* add_dpe(unsigned id, hls::NodeType ntype
                        , const std::string &d = "");

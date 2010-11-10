@@ -202,7 +202,7 @@ void AHIRFactory::create_transition(const std::string &id
     return;
   }
 
-  trans = ahir_module->add_transition(i, t, s, description);
+  trans = ahir_module->add_transition_with_symbol(i, t, s, description);
 }
 
 void AHIRFactory::transition_add_snk(const std::string &id)
