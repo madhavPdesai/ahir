@@ -17,17 +17,17 @@ namespace ba = boost::algorithm;
 
 namespace hls {
 
-  /** \brief Describes a named memory location. */
+  /*! \brief Describes a named memory location. */
   struct MemoryLocation : public hls::Annotable
   {
     std::string id;
-    /// Can be interpreted only if the corresponding hls::Type exists
-    /// in the current base::Program.
+    //! Can be interpreted only if the corresponding hls::Type exists
+    //! in the current base::Program.
     const std::string type;
     hls::Value *value;
-    /// Assigned by the linker.
+    //! Assigned by the linker.
     unsigned address;
-    /// Convenience field; can be determined from value.
+    //! Convenience field; can be determined from value.
     unsigned size;
 
     typedef std::map<std::string, std::set<unsigned> > AddressList;
@@ -43,7 +43,7 @@ namespace hls {
     
   private:
     friend class MemorySpace;
-    /// \brief A MemoryLocation can only be created by a MemorySpace
+    //! \brief A MemoryLocation can only be created by a MemorySpace
     MemoryLocation(const std::string &_id
                    , const std::string &_type
                    , unsigned _size)
@@ -51,14 +51,14 @@ namespace hls {
     {};
   };
 
-  /// \brief A collection of MemoryLocations
+  //! \brief A collection of MemoryLocations
   class MemorySpace : public hls::Annotable
   {
     typedef std::map<std::string, MemoryLocation*> _mapType;
     _mapType space_map;
 
     friend class Storage;
-    /// \brief A memory space can only be created by a Storage object
+    //! \brief A memory space can only be created by a Storage object
     MemorySpace(const std::string _id)
       : id(_id), first_free_address(0)
     {}
@@ -73,8 +73,8 @@ namespace hls {
   public:
 
     std::string id;
-    /// \brief The first address that is not assigned to any memory
-    /// location.
+    //! \brief The first address that is not assigned to any memory
+    //! location.
     unsigned first_free_address;
     
     MemoryLocation* add_memory_location(const std::string &id
@@ -115,7 +115,7 @@ namespace hls {
     }
   };
     
-  /// \brief Provides mechanisms for describing addressable storage (memory).
+  //! \brief Provides mechanisms for describing addressable storage (memory).
     class Storage
   {
     typedef std::map<std::string, MemorySpace*> _mapType;
@@ -126,18 +126,18 @@ namespace hls {
       storage_map.clear();
     }
 
-    /// \TODO: Allow memory spaces and memory locations to migrate
-    /// between different Storage instances.
+    //! \TODO: Allow memory spaces and memory locations to migrate
+    //! between different Storage instances.
 
     typedef std::deque<std::string> TokenList;
-    /// \brief Split a fully qualified name for a memory location
-    /// 
-    /// A fully qualified name for a memory location has two
-    /// components separated by a colon --- the memory-space id and
-    /// the location id. This function splits a string consisiting of
-    /// one or two tokens separated by a colon. If there is only one
-    /// token, it is assumed to be the location id, and the function
-    /// inserts the string "default" as the memory-space id.
+    //! \brief Split a fully qualified name for a memory location
+    //! 
+    //! A fully qualified name for a memory location has two
+    //! components separated by a colon --- the memory-space id and
+    //! the location id. This function splits a string consisiting of
+    //! one or two tokens separated by a colon. If there is only one
+    //! token, it is assumed to be the location id, and the function
+    //! inserts the string "default" as the memory-space id.
     void split_name(TokenList &tokens, const std::string &name) 
     {
       ba::split(tokens, name, ba::is_any_of(":"));
@@ -152,10 +152,10 @@ namespace hls {
     
   public:
 
-    /// \brief Add a location with the given fully qualified id.
-    ///
-    /// If the id does not contain a memory-space id, then the string
-    /// "default" is used.
+    //! \brief Add a location with the given fully qualified id.
+    //!
+    //! If the id does not contain a memory-space id, then the string
+    //! "default" is used.
     MemoryLocation* add_memory_location(const std::string &var_id
                                         , const std::string &type
                                         , unsigned size)
@@ -165,10 +165,10 @@ namespace hls {
       add_memory_location(tokens[0], tokens[1], type, size);
     }
 
-    /// \brief Convenience function.
-    ///  
-    ///  Adds a memory location to a distinct memory space with the
-    ///  same name as the location.
+    //! \brief Convenience function.
+    //!  
+    //!  Adds a memory location to a distinct memory space with the
+    //!  same name as the location.
     MemoryLocation* add_distinct_memory_location(const std::string &id
                                                  , const std::string &type
                                                  , unsigned size) 
@@ -176,8 +176,8 @@ namespace hls {
       add_memory_location(id, id, type, size);
     }
 
-    /// Add a location to the named memory space, creating the space
-    /// if necessary.
+    //! Add a location to the named memory space, creating the space
+    //! if necessary.
     MemoryLocation* add_memory_location(const std::string &space_id
                                         , const std::string &var_id
                                         , const std::string &type

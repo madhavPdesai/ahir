@@ -7,7 +7,7 @@
 
 namespace hls {
 
-  /** \brief Provides mechanisms for adding (key,value) attribute pairs. */
+  /*! \brief Provides mechanisms for adding (key,value) attribute pairs. */
   struct Annotable {
 
     typedef std::map<std::string, std::string> AttributeMap;
@@ -46,7 +46,7 @@ namespace hls {
     }
     
   private:
-    /// \brief List of attributes as (key,value) pairs of strings.
+    //! \brief List of attributes as (key,value) pairs of strings.
     AttributeMap attributes;
 
   };

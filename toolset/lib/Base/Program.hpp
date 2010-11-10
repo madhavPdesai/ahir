@@ -13,20 +13,20 @@ namespace hls {
   class Module;
   class Addressable;
 
-  /** \brief An AHIR program is a collection of \link Module Modules\endlink. */
+  /*! \brief An AHIR program is a collection of \link Module Modules\endlink. */
   
   struct Program : public Annotable, public Storage {
     std::string id;
 
     typedef std::vector<std::string> RootList;
-    /// \brief The list of names for the "root" \link Module Modules\endlink.
-    ///
-    /// Each root is the starting point of a call-graph. The named
-    /// \link Module Modules\endlink most exist in this program.
+    //! \brief The list of names for the "root" \link Module Modules\endlink.
+    //!
+    //! Each root is the starting point of a call-graph. The named
+    //! \link Module Modules\endlink most exist in this program.
     RootList roots;
     
     typedef std::map<std::string, Module*> ModuleList;
-    /// The list of \link Module Modules\endlink present in this program.
+    //! The list of \link Module Modules\endlink present in this program.
     ModuleList modules;
     Module* find_module(const std::string &id);
     void register_module(Module *module);
