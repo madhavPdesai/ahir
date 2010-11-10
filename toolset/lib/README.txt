@@ -19,9 +19,9 @@ Module: (Storage + CP + DP + LN, Id)
 	connect_wire(id, dpe, string dpe-port-name)
 	add_memory_space(id) --inherited from Storage
 	add_memory_location(id, mem-space-id) -- inherited from Storage
-Program: (Storage + {Module}, Id)
+Program: (Storage + {Module}, Id, {root-module-id})
 	add_module(id..)
-	mark_start_module(id)
+	register_root_module(id)
 	add_memory_space(id) --inherited from Storage
 	add_memory_location(id, mem-space-id) -- inherited from Storage
 	initialize(AHIR)

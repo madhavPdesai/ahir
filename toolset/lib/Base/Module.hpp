@@ -9,9 +9,11 @@
 
 namespace hls {
 
+  /// \brief Smallest component of a system, it is either a CDFG or an ahir::Module.
   struct Module : public hls::Annotable, public hls::Storage {
     
     std::string id;
+    /// Whether CDFG or ahir::Module
     std::string type;
 
     Module(const std::string &_id, const std::string &t)
