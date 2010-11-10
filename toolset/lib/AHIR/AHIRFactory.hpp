@@ -48,12 +48,9 @@ namespace ahir
 
     void create_module_hook(const std::string &id, const std::string &type);
     
-    void create_dp(const std::string& id);
-    void commit_dp();
     void create_dpe(const std::string &id
 		    , const std::string& ntype
 		    , const std::string &description);
-    void commit_dpe();
     void dpe_new_req(const std::string &id) { dpe_req = id; };
     void dpe_new_ack(const std::string &id) { dpe_ack = id; };
     void dpe_set_req(const std::string &sym);
@@ -77,11 +74,6 @@ namespace ahir
 			, const std::string &description);
     void wrapper_add_member(const std::string &id);
     
-    void create_cp(const std::string &id);
-			   // const std::string &init,
-			   // const std::string &fin);
-    void commit_cp();
-    
     void create_place(const std::string &id, const std::string &marking
 		      , const std::string &description);
     
@@ -92,13 +84,11 @@ namespace ahir
     void transition_add_src(const std::string &id);
     void transition_add_snk(const std::string &id);
     
-    void create_ln(const std::string& id);
     void map_symbols(const std::string &src
 		     , const std::string &src_sym
 		     , const std::string &snk
 		     , const std::string &snk_sym);
 
-    void create_arbiter(const std::string &id);
     void create_client(const std::string &id
 		       , const std::string &module_name
 		       , const std::string &callsite);

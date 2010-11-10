@@ -32,7 +32,7 @@ namespace ahir
     void add_input_argument(const std::string &id, const hls::Type *type);
     void add_output_argument(const std::string &id, const hls::Type *type);
 
-    Transition* add_transition(unsigned id, ahir::CPEType type
+    Transition* add_transition(unsigned id, ahir::CPEType type, Symbol s
                                , const std::string &description = "");
     Place* add_place(unsigned id
                      , const std::string &description = "");

@@ -56,12 +56,14 @@ void ahir::Module::add_output_argument(const std::string &id, const hls::Type *t
 }
 
 Transition* ahir::Module::add_transition(unsigned id
-                                         , CPEType type = HIDDEN
+                                         , CPEType type
+                                         , Symbol s
                                          , const std::string &description)
 {
   assert(cp);
   assert(is_trans(type));
   Transition *t = new Transition(id, type, description);
+  t->symbol = s;
   cp->register_transition(t);
   return t;
 }

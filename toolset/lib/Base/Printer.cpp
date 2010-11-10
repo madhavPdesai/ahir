@@ -19,7 +19,7 @@ void Printer::print(Program *program, const std::string &suffix)
 
 void Printer::print_program(Program *program, hls::ostream &out)
 {
-  out << indent_in;
+  out << indent << "<program id=\"" << program->id << "\">" << indent_in;
   
   if (program->roots.size() > 0) {
     out << indent << "<roots>" << indent_in;
@@ -39,9 +39,7 @@ void Printer::print_program(Program *program, hls::ostream &out)
     print_module(myf, out);
   }
 
-  out << indent_out;
-    
-  out << "\n" << indent << "</program>";
+  out << indent_out << indent << "</program>";
 }
 
 

@@ -65,7 +65,7 @@ void AHIRParser::on_start_element(const Glib::ustring& name,
 	state = DPE_CALLEE;
       } else if (name == "value") {
 	state = DPE_VALUE;
-      } else if (name == "addressable") {
+      } else if (name == "mloc") {
 	state = DPE_ADDRESSABLE;
       } else if (name == "counterpart") {
 	state = DPE_COUNTERPART;
@@ -163,26 +163,6 @@ void AHIRParser::on_characters(const Glib::ustring& characters)
 
 void AHIRParser::on_end_element(const Glib::ustring& name)
 {
-  switch (state) {
-    case CP:
-      assert(name == "cp");
-      factory->commit_cp();
-      break;
-
-    case DP:
-      assert(name == "dp");
-      factory->commit_dp();
-      break;
-
-    case DPE:
-      assert(name == "dpe");
-      factory->commit_dpe();
-      break;
-
-    default:
-      break;
-  }
-  
   assert(stack.size() > 0 && "invalid stack");
   state = stack.back();
   stack.pop_back();

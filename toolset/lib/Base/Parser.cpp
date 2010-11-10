@@ -69,6 +69,7 @@ void Parser::on_start_element(const Glib::ustring& name
       } else if (name == "roots") {
         state = ROOTS;
       } else if (name == "mspace") {
+        factory->create_memory_space(id);
 	state = MSPACE;
       } else if (name == "types") {
         state = TYPES;

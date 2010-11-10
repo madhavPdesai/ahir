@@ -116,7 +116,7 @@ namespace hls {
   };
     
   //! \brief Provides mechanisms for describing addressable storage (memory).
-    class Storage
+  class Storage
   {
     typedef std::map<std::string, MemorySpace*> _mapType;
     _mapType storage_map;

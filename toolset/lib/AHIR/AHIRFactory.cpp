@@ -33,21 +33,20 @@ void AHIRFactory::create_module_hook(const std::string &id
   assert(type == "ahir");
   ahir_module = new ahir::Module(id);
   module = ahir_module;
+  dp = ahir_module->dp;
+  cp = ahir_module->cp;
+  ln = ahir_module->ln;
+  arbiter = ahir_module->arbiter;
 }
 
 // /* ----- data-path ----- */
 
-void AHIRFactory::create_dpe(const std::string& _id
+void AHIRFactory::create_dpe(const std::string& id
 			     , const std::string& ntype
 			     , const std::string &description)
 {
-  unsigned id = boost::lexical_cast<unsigned>(_id);
-  dpe = new DPElement(id, hls::ntype(ntype), description);
-}
-
-void AHIRFactory::commit_dpe()
-{
-  dp->register_dpe(dpe);
+  dpe = ahir_module->add_dpe(boost::lexical_cast<unsigned>(id)
+                             , hls::ntype(ntype), description);
 }
 
 void AHIRFactory::dpe_set_req(const std::string &sym)
@@ -122,9 +121,6 @@ Wire* AHIRFactory::create_wire(const std::string& id)
   return wire;
 }
 
-void AHIRFactory::commit_dp()
-{}
-
 void AHIRFactory::create_wrapper(const std::string &id
 				 , const std::string &description)
 {
@@ -140,16 +136,6 @@ void AHIRFactory::wrapper_add_member(const std::string &_id)
 
 // /* ----- control-path ----- */
 
-void AHIRFactory::create_cp(const std::string &id)
-{
-  cp = new ControlPath(id);
-  assert(!ahir_module->cp);
-  ahir_module->cp = cp;
-}
-
-void AHIRFactory::commit_cp()
-{}
-
 // /* ----- place ----- */
 
 void AHIRFactory::create_place(const std::string &id
@@ -162,9 +148,8 @@ void AHIRFactory::create_place(const std::string &id
     assert(m == 1);
     place = cp->marked_place;
   } else {
-    place = new Place(boost::lexical_cast<unsigned>(id), description);
+    place = ahir_module->add_place(boost::lexical_cast<unsigned>(id), description);
     place->marking = m;
-    cp->register_place(place);
   }
 
   // src Place needed by snk Transitions in pending_src.
@@ -208,33 +193,16 @@ void AHIRFactory::create_transition(const std::string &id
   Symbol s = boost::lexical_cast<unsigned>(sym);
 
   if (i == init_id) {
-    // assert(t == ACK);
-    // assert(s == 1);
     trans = cp->init;
     return;
   }
 
   if (i == fin_id) {
-    // assert(t == REQ);
-    // assert(s == 1);
     trans = cp->fin;
     return;
   }
 
-  // assert(s != 1);
-  
-  trans = new Transition(i, t, description);
-
-  switch (t) {
-    case REQ:
-    case ACK:
-      trans->symbol = s;
-      break;
-    default:
-      break;
-  }
-
-  cp->register_transition(trans);
+  trans = ahir_module->add_transition(i, t, s, description);
 }
 
 void AHIRFactory::transition_add_snk(const std::string &id)
@@ -261,13 +229,6 @@ void AHIRFactory::transition_add_src(const std::string &id)
 }
 
 // /* ----- link layer ----- */
-
-void AHIRFactory::create_ln(const std::string& id)
-{
-  ln = new LinkLayer(id);
-  assert(!ahir_module->ln);
-  ahir_module->ln = ln;
-}
 
 void AHIRFactory::map_symbols(const std::string &src
 		     , const std::string &src_sym

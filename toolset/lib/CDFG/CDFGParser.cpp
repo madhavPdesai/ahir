@@ -56,7 +56,7 @@ void CDFGParser::on_start_element(const Glib::ustring& name
 	}
       } else if (name == "value") {
 	state = CONSTANT;
-      } else if (name == "addressable") {
+      } else if (name == "mloc") {
 	state = ADDRESSABLE_BACKREF;
 	factory->node_register_addressable(id);
       } else if (name == "callee") {

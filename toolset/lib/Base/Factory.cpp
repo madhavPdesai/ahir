@@ -107,7 +107,7 @@ void Factory::create_memory_location(const std::string &id
                                      , const std::string &description)
 {
   unsigned size = boost::lexical_cast<unsigned>(size);
-  MemoryLocation *mloc = mspace->add_memory_location(id, type_id, size);
+  mloc = mspace->add_memory_location(id, type_id, size);
   if (address.size() > 0) {
     unsigned addr = boost::lexical_cast<unsigned>(address);
     mloc->address = addr;

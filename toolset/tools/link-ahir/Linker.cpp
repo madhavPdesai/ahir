@@ -23,8 +23,7 @@ void Linker::create_arbiters(Program *program)
 
     ahir::Module *ahir = get_ahir_module(program, (*mi).first);
 
-    assert(!ahir->arbiter);
-    ahir->arbiter = new Arbiter(ahir->id + "_arbiter");
+    assert(ahir->arbiter);
   }
 
   for (Program::ModuleList::iterator mi = program->modules.begin()
