@@ -7,14 +7,10 @@
 
 namespace hls {
 
-  class Annotable {
-
-  private:
+  /*! \brief Provides mechanisms for adding (key,value) attribute pairs. */
+  struct Annotable {
 
     typedef std::map<std::string, std::string> AttributeMap;
-    AttributeMap attributes;
-
-  public:
 
     void set_attribute(const std::string &key, const std::string &value)
     {
@@ -48,6 +44,11 @@ namespace hls {
     {
       attributes.clear();
     }
+    
+  private:
+    //! \brief List of attributes as (key,value) pairs of strings.
+    AttributeMap attributes;
+
   };
   
 }

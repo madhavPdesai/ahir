@@ -55,15 +55,37 @@ void ahir::Module::add_output_argument(const std::string &id, const hls::Type *t
   ret->register_port(aport);
 }
 
-Transition* ahir::Module::add_transition(unsigned id
-                                         , CPEType type = HIDDEN
-                                         , const std::string &description)
+Transition* ahir::Module::add_transition_with_symbol(unsigned id
+                                                     , CPEType type
+                                                     , Symbol s
+                                                     , const std::string &d)
 {
   assert(cp);
   assert(is_trans(type));
-  Transition *t = new Transition(id, type, description);
+  Transition *t = new Transition(id, type, d);
+  t->symbol = s;
   cp->register_transition(t);
   return t;
+}
+
+Transition* ahir::Module::add_transition(unsigned id
+                                         , CPEType type
+                                         , const std::string &d)
+{
+  Symbol s = 0;
+  
+  switch (type) {
+    case REQ:
+      s = cp->reqs.size() + 1;
+      break;
+    case ACK:
+      s = cp->acks.size() + 1;
+      break;
+    default:
+      break;
+  }
+  
+  return add_transition_with_symbol(id, type, s, d);
 }
 
 Place* ahir::Module::add_place(unsigned id
@@ -89,10 +111,19 @@ void ahir::Module::control_flow(Transition *u, Transition *v)
 {
   std::ostringstream d;
   d << u->id << "_to_" << v->id;
-  Place *p = new Place(cp->places.size(), d.str());
+  Place *p = new Place(cp->elements.size(), d.str());
   cp->register_place(p);
   ahir::control_flow(u, p);
   ahir::control_flow(p, v);
+}
+
+void ahir::Module::control_flow(CPElement *src, CPElement *snk) 
+{
+  if (is_trans(src) && is_trans(snk))
+    control_flow(static_cast<Transition*>(src)
+                 , static_cast<Transition*>(snk));
+  else
+    ahir::control_flow(src, snk);
 }
 
 DPElement* ahir::Module::locate_dpe_from_cpe_id(unsigned id)
@@ -127,6 +158,15 @@ DPElement* ahir::Module::find_dpe(unsigned id)
   return dp->find_dpe(id);
 }
 
+Port* ahir::Module::add_port(DPElement *dpe, const std::string &port_id
+                             , hls::IOType in_or_out
+                             , const hls::Type *data_type) 
+{
+  Port *port = new Port(port_id, in_or_out, data_type);
+  dpe->register_port(port);
+  return port;
+}
+
 Wire* ahir::Module::add_wire(unsigned id)
 {
   assert(!dp->find_wire(id));
@@ -155,13 +195,13 @@ void ahir::Module::link_symbols(Transition *t, DPElement *dpe
 
   if (is_req(t)) {
     assert(dpe->find_req(name) == 0);
-    Symbol s = dp->reqs.size();
+    Symbol s = dp->reqs.size() + 1;
     dp->register_req(dpe, name, s);
-    ln->map(cp->id, ts, dp->id, s);
+    ln->map(cp->id + "_LambdaOut", ts, dp->id + "_SigmaIn", s);
   } else {
     assert(dpe->find_ack(name) == 0);
-    Symbol s = dp->acks.size();
+    Symbol s = dp->acks.size() + 1;
     dp->register_ack(dpe, name, s);
-    ln->map(dp->id, s, cp->id, ts);
+    ln->map(dp->id + "_SigmaOut", s, cp->id + "_LambdaIn", ts);
   }
 }

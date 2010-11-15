@@ -71,7 +71,9 @@ namespace {
   
   void system_create_start_ports(System &system, Program *program)
   {
-    vhdl::Module *start = get_vhdl_module(program, program->start->id);
+    assert(program->roots.size() == 1);
+    const std::string &root_id = *program->roots.begin();
+    vhdl::Module *start = get_vhdl_module(program, root_id);
     assert(start);
     DataPath *dp = start->dp;
     assert(dp);
@@ -536,6 +538,9 @@ namespace {
 
   void print_component_instances(Program *program, hls::ostream &out)
   {
+    assert(program->roots.size() == 1);
+    const std::string &root_id = *program->roots.begin();
+    
     for (Program::ModuleList::iterator mi = program->modules.begin()
            , me = program->modules.end(); mi != me; ++mi) {
       vhdl::Module *module = get_vhdl_module(program, (*mi).first);
@@ -543,7 +548,7 @@ namespace {
       print_instance(module->dp, out);
       print_instance(module->ln, out);
 
-      if (module->id == program->start->id)
+      if (module->id == root_id)
         continue;
       
       system_connect_arbiter(program, module, out);

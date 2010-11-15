@@ -12,7 +12,7 @@ namespace hls {
   
   class Type;
   
-  /*! Base class to represent values in AHIR.
+  /*! \brief Base class to represent values in AHIR.
    */
   struct Value {
     typedef enum {Scalar, Composite, Address} ValueType;
@@ -26,7 +26,7 @@ namespace hls {
     virtual ~Value() {} 
   };
 
-  //! Derived class for scalar values.
+  //! \brief Derived class for scalar values.
   struct ScalarValue : public Value {
     //! String encoded value, to be interpreted by the user.
     std::string value;
@@ -37,12 +37,12 @@ namespace hls {
     {} 
   };
 
-  /*! Derived class for a composite value, i.e., array or struct in C. 
-    A CompositeValue may contain a mix of composite as well as scalar
-    values. The size of this value must be the sum of the sizes of all
-    elements in it. The address of each element may be relative to the
-    owner, or computed as an absolute value, at the choice of the
-    user.
+  /*! \brief Derived class for a composite value, i.e., array or
+      struct in C.
+    
+    A CompositeValue contains references to instances of any subclass
+    of hls::Value. The size of this value must be the sum of the sizes
+    of all elements in it.
    */
   struct CompositeValue : public Value {
     typedef std::vector<Value*> ElementVector;
@@ -53,9 +53,13 @@ namespace hls {
     {}
   };
 
-  struct AddressValue : public Value
-  {
-    std::string addressable;
+  /*! Derived class to represent a pointer value.
+
+    An instance of AddressValue indicates a MemoryLocation by it's
+    fully qualified name.
+  */
+  struct AddressValue : public Value {
+  std::string addressable;
 
     AddressValue(const std::string &addr, unsigned _s)
       : Value(Address, _s, "address"), addressable(addr)
