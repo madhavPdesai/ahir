@@ -46,3 +46,8 @@ TODO's
 	define key
    - union of AHIR programs
    - constant operands in ahir2vhdl
+   - pipes in the program
+	if a pipe has only read/write operations within the program
+	then the ahir-system should have corresponding i/o port for
+	the pipe.
+
