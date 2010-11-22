@@ -32,6 +32,7 @@ namespace ahir {
   class CPElement;
   typedef std::set<CPElement*> CPEList;
 
+
   const unsigned marked_place_id = 0;
   const unsigned init_id = 1;
   const unsigned fin_id = 2;
@@ -55,6 +56,9 @@ namespace ahir {
       : id(other.id), type(other.type), description(other.description)
       , colour(other.colour), label(other.label)
     {} 
+
+  public: 
+    CPEType Type() { return (this->type);}
   };
 
   struct Place : public CPElement {

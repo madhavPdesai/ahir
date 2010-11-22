@@ -1,5 +1,6 @@
 #include <AaParserClasses.h>
 #include <AaProgram.h>
+#include <Aa2Ahir.h>
 
 //---------------------------------------------------------------------
 // AaProgram
@@ -296,4 +297,34 @@ void AaProgram::Write_C_Model()
       (*miter).second->Write_Source(source_file);
     }
 }
+
+
+
+void AaProgram::Write_Ahir_Model()
+{
+
+  Aa2Ahir::Add_Memory_Space("", "default");
+
+  // this stuff should ideally be moved to AaObject.
+  // make objects (map them to distinct memory spaces)
+  // make modules
+  for(std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.begin();
+      miter != AaProgram::_objects.end();
+      miter++)
+    {
+      (*miter).second->Write_Ahir_Model();
+    }
+
+  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+      miter != AaProgram::_modules.end();
+      miter++)
+    {
+      (*miter).second->Write_Header(header_file);
+      (*miter).second->Write_Source(source_file);
+    }
+
+}
+
+
+
 

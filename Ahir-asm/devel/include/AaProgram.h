@@ -63,7 +63,6 @@ class AaProgram
   static void Check_For_Cycles_In_Call_Graph();
   static void Init_Call_Graph();
 
-
   // add type dependency
   static void Add_Type_Dependency(AaRoot* u, AaRoot* v);
   static bool Propagate_Types();
@@ -83,6 +82,10 @@ class AaProgram
     string r = "__top";
     return (r);
   }
+
+  // write an AHIR model
+  static void Write_Ahir_Model();
+
 };
 
 

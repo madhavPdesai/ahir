@@ -12,9 +12,6 @@
 //
 class AaRoot
 {
-  // the containing scope
-  AaRoot* _scope;
-
   // to get unique id's for anon objects
   static int _root_counter;
   // set if there is an error
@@ -86,6 +83,7 @@ class AaRoot
   virtual string Get_File_Name() { return(this->_file_name);}
 
   virtual void Err_Check() {}
+
 };
 
 #endif

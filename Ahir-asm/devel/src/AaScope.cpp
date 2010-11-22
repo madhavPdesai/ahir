@@ -74,3 +74,15 @@ string AaScope::Get_Struct_Dereference()
   return(ret_string);
 }
 
+
+AaScope* AaScope::Get_Nearest_Ancestor_Scope(string class_type)
+{
+  AaScope* p = this;
+  while (p != NULL)
+    {
+      if(p->Is(class_type))
+	break;
+      p = p->Get_Parent_Scope();
+    }
+  return(p);
+}

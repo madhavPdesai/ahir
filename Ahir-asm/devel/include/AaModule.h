@@ -57,6 +57,7 @@ class AaModule: public AaSeriesBlockStatement
   string Get_Structure_Name() { return(this->Get_Label() + "_State"); }
   void Write_Header(ofstream& ofile);
   void Write_Source(ofstream& ofile);
+  
 };
 
 #endif

@@ -78,7 +78,9 @@ namespace hls {
     unsigned first_free_address;
     
     MemoryLocation* add_memory_location(const std::string &id
-                                        , const std::string &type
+                                        , const std::string &type // currently recognized types
+	                                                          // are "APInt(n)" and "APFloat(m,n) 
+								  // (as specified in Type.hpp)
                                         , unsigned size)
     {
       assert(!find_location(id));

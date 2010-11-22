@@ -29,6 +29,8 @@ namespace ahir {
     void print_ahir(Module *ahir, hls::ostream &out);
     void print_module_body(hls::Module *myf, hls::ostream &out);
     void print_arbiter(Arbiter *arbiter, hls::ostream &out);
+
+    void print_program(hls::Program* pgm, std::string& ofile); // TODO
     
     Printer() : hls::Printer() {};
   };

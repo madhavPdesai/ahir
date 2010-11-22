@@ -83,6 +83,9 @@ namespace ahir {
     std::string callee;
     std::string value;		   // used by Constant
     hls::MemoryLocation *mloc;     // used by Address
+    hls::MemorySpace  *mspace;     // used by Load/Store elements to point
+	                           // to memory space with which they are
+			           // associated.
     DPElement *counterpart;	   // LC <-> LR mapping
     std::string portname;
 

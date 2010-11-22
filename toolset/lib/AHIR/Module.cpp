@@ -97,6 +97,15 @@ Place* ahir::Module::add_place(unsigned id
   return p;
 }
 
+void ahir::Module::control_flow(unsigned int src, unsigned int dest)
+{
+  CPElement* src_e = cp->find_element(src);
+  CPElement* dest_e = cp->find_element(dest);
+
+  if(src_e != NULL && dest_e != NULL)
+    ahir::control_flow(src_e, dest_e);
+}
+
 void ahir::Module::control_flow(Transition *t, Place *p)
 {
   ahir::control_flow(t, p);

@@ -64,6 +64,8 @@ class AaObject: public AaRoot
 	ofile << ";" << endl;
       }
   }
+
+  virtual void Write_Ahir_Model();
 };
 
 // interface object: function arguments
@@ -95,6 +97,8 @@ class AaConstantObject: public AaObject
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaConstantObject");}
 
+  // todo: this is different from the base Object..
+  virtual void Write_Ahir_Model();
 };
 
 class AaStorageObject: public AaObject
@@ -108,11 +112,17 @@ class AaStorageObject: public AaObject
 
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaStorageObject");}
+
+  // todo: this is the same as object, but keep it here
+  //      because the initial value needs to be 
+  //      updated..
+  virtual void Write_Ahir_Model();
 };
 
 class AaPipeObject: public AaObject
 {
-  //
+
+  
  public:
   AaPipeObject(AaScope* scope_tpr,string oname, AaType* otype);
   ~AaPipeObject();
@@ -138,6 +148,7 @@ class AaPipeObject: public AaObject
 	  << endl;
   }
 
+  virtual void Write_Ahir_Model();
 
 
 };

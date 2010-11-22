@@ -42,6 +42,19 @@ void AaObject::Print(ostream& ofile)
   ofile << " ";
 }
 
+void AaObject::Write_Ahir_Model()
+{
+  AaScope* pmodule = this->Get_Scope()->Get_Nearest_Ancestor_Scope("AaModule");
+  string module_name = (pmodule != NULL ? pmodule->Get_Name() : "");
+  
+  Aa2Ahir::Add_Memory_Location(module_name,
+			       this->Get_Name(), 
+			       this->Get_Name(),
+			       this->Get_Type());
+
+  //\todo: add attribute initial value to memory location..
+}
+
 //---------------------------------------------------------------------
 // AaInterfaceObject
 //---------------------------------------------------------------------
@@ -80,6 +93,42 @@ void AaPipeObject::Print(ostream& ofile)
   ofile << this->Tab();
   ofile << "$pipe ";
   this->AaObject::Print(ofile);
+}
+
+// add DPE's for pipe.
+// note: if there are writes to the pipe, add an output port
+//       and if there are reads from the pipe, add an input port.
+//
+void AaPipeObject::Write_Ahir_Model()
+{
+  AaScope* pmodule = this->Get_Scope()->Get_Nearest_Ancestor_Scope("AaModule");
+  string module_name = (pmodule != NULL ? pmodule->Get_Name() : "");
+  
+  if(this->Get_Number_Of_Target_References() > 0)
+    {
+      string inst_name = this->Get_Name() + "_output_port";
+      Aa2Ahir::Add_DPE(module_name,
+		       DPE_OUTPUT_PORT,
+		       inst_name);
+      Aa2Ahir::Add_DPE_Port(module_name,
+			    inst_name,
+			    "data",
+			    "in",
+			    this->Get_Type());
+    }
+
+  if(this->Get_Number_Of_Source_References() > 0)
+    {
+      string inst_name = this->Get_Name() + "_output_port";
+      Aa2Ahir::Add_DPE(module_name,
+		       DPE_INPUT_PORT,
+		       inst_name);
+      Aa2Ahir::Add_DPE_Port(module_name,
+			    inst_name,
+			    "data",
+			    "out",
+			    this->Get_Type());
+    }
 }
 
 //---------------------------------------------------------------------

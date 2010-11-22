@@ -75,6 +75,11 @@ class AaScope : public AaRoot
     return(ret_scope);
   }
 
+  
+  // get nearest ancestor (including self) of the
+  // specified class name
+  virtual AaScope* Get_Nearest_Ancestor_Scope(string class_type);
+
   // hierarchical identifier of a child.
   virtual AaScope* Get_Descendant_Scope(const vector<string>& desc_labels)
   {

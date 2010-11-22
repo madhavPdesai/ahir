@@ -45,7 +45,7 @@ namespace hls {
     {}
   };
 
-  std::string str(TypeID t);
+  std::string str(TypeID t); // "APInt" or "APFloat" 
   std::string str(const Type *t);
   std::string get_apint_description(unsigned w);
   std::string get_apfloat_description(unsigned e, unsigned f);

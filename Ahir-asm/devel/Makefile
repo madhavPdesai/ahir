@@ -1,5 +1,6 @@
 # a simple makefile which builds all the Aa related tools
 AAHOME=.
+AHIRHOME=../../toolset/lib
 SRC=$(AAHOME)/src
 INCL=$(AAHOME)/include
 OBJ=$(AAHOME)/obj
@@ -8,6 +9,7 @@ BIN=$(AAHOME)/bin
 DOC=$(AAHOME)/docs
 ANTLR2=../antlr2
 INCLUDES=-I$(AAHOME)/include -I$(GRMR) -I$(ANTLR2)
+AHIRINCLUDES=-I$(AHIRHOME) 
 HEADERS=$(INCL)/AaRoot.h\
 		$(INCL)/AaScope.h\
 		$(INCL)/AaType.h\
@@ -38,7 +40,7 @@ DEFS=-DDebug
 CXXFLAGS=-g
 
 
-all : aNTLR $(BIN)/TestAaParser $(INCL)/Aa2C.h $(BIN)/Aa2C $(GRMR)/AaParser.html 
+all : aNTLR $(BIN)/TestAaParser $(INCL)/Aa2C.h $(BIN)/Aa2C $(GRMR)/AaParser.html  $(BIN)/Aa2Ahir
 
 
 $(BIN)/TestAaParser : $(OBJS) $(OBJ)/TestAaParser.o
@@ -53,8 +55,14 @@ $(BIN)/AaWriteCHeader : $(OBJS) $(OBJ)/AaWriteCHeader.o
 $(BIN)/Aa2C : $(OBJS) $(OBJ)/Aa2C.o 
 	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/Aa2C.o  $(OBJS) -lantlr-4.0.3 -o $(BIN)/Aa2C
 
+$(BIN)/Aa2Ahir : $(OBJS) $(OBJ)/Aa2Ahir.o 
+	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/Aa2Ahir.o  $(OBJS) -lantlr-4.0.3 -o $(BIN)/Aa2Ahir
+
 $(OBJ)/Aa2C.o : $(SRC)/Aa2C.cpp  $(INCL)/Aa2C.h $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/Aa2C.cpp -o $(OBJ)/Aa2C.o
+
+$(OBJ)/Aa2Ahir.o : $(SRC)/Aa2Ahir.cpp  $(INCL)/Aa2Ahir.h $(HEADERS)
+	g++ $(DEFS) $(INCLUDES) $(AHIRINCLUDES) $(CXXFLAGS) -c $(SRC)/Aa2Ahir.cpp -o $(OBJ)/Aa2Ahir.o
 
 $(OBJ)/AaWriteCHeader.o : $(SRC)/AaWriteCHeader.cpp  $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/AaWriteCHeader.cpp -o $(OBJ)/AaWriteCHeader.o

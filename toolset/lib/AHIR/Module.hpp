@@ -42,13 +42,19 @@ namespace ahir
       should be fixed by removing numerical symbol values from the
       link layer.
     */
+    // id must be >= 3
     Transition* add_transition_with_symbol(unsigned id, ahir::CPEType type
                                            , Symbol s
                                            , const std::string &d = "");
+    // id must be >= 3
     Transition* add_transition(unsigned id, ahir::CPEType type
                                , const std::string &d = "");
+    // id must be >= 3
     Place* add_place(unsigned id
                      , const std::string &description = "");
+
+
+    void control_flow(unsigned int src, unsigned int dest); // todo
 
     void control_flow(Transition *src, Place *snk);
     void control_flow(Place *src, Transition *snk);
