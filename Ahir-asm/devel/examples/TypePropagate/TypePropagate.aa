@@ -14,9 +14,11 @@ $is
 	a := (($cast ($int<2>) low) + ($cast ($int<2>) high))
 	b :=  (s + mem[I]) // s, b will have same type as element of mem
 	s := b     // s will have same type as a
-	c := ($cast ($float<5,6>) low) 
+	c := ($cast ($float<8,23>) low) 
 	q := (I + 1) // q,I will have same type
-	$call fetch(ptr) (q)
+	t := (b @ 1)
+        u := (($cast ($uint<2>) a ) _ ($cast ($uint<32>) b))
+	$call fetch(ptr) (r)
 
 }
 
@@ -28,3 +30,9 @@ $is
 {
    $call fetch_foreign (ptr) (result)
 }
+
+
+$foreign $module [fetch_foreign]
+    $in (ptr $pointer<16>)
+    $out (result $uint<16>)
+

@@ -11,6 +11,9 @@
 //
 // hit/miss is figured out and reported using foreign
 // functions.
+
+$storage g_data_array $array<4>  $of $uint<32>
+
 $module [cachememory]
 	$in()
 	$out()

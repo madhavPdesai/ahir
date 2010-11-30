@@ -23,6 +23,8 @@ enum AaOperation
     __GREATER,
     __GREATEREQUAL,
     __NOT,
+    __CONCAT,
+    __BITSEL
   };
 
 
@@ -52,7 +54,9 @@ enum AaAhirOperation
     ___PHI,
     ___SELECT,
     ___BRANCH,
-    ___CONSTANT
+    ___CONSTANT,
+    ___CONCAT,
+    ___BITSEL
   };
 
 

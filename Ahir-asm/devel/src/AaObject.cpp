@@ -11,6 +11,7 @@ using namespace std;
 #include <AaStatement.h>
 #include <AaModule.h>
 #include <AaProgram.h>
+#include <Aa2Ahir.h>
 
 
 /*****************************************  OBJECT  ****************************/
@@ -44,6 +45,7 @@ void AaObject::Print(ostream& ofile)
 
 void AaObject::Write_Ahir_Model()
 {
+/* This gets out of here.. put it in Aa2Ahir "later"
   AaScope* pmodule = this->Get_Scope()->Get_Nearest_Ancestor_Scope("AaModule");
   string module_name = (pmodule != NULL ? pmodule->Get_Name() : "");
   
@@ -53,6 +55,7 @@ void AaObject::Write_Ahir_Model()
 			       this->Get_Type());
 
   //\todo: add attribute initial value to memory location..
+*/
 }
 
 //---------------------------------------------------------------------
@@ -101,6 +104,9 @@ void AaPipeObject::Print(ostream& ofile)
 //
 void AaPipeObject::Write_Ahir_Model()
 {
+
+// Get this out of here.
+/*
   AaScope* pmodule = this->Get_Scope()->Get_Nearest_Ancestor_Scope("AaModule");
   string module_name = (pmodule != NULL ? pmodule->Get_Name() : "");
   
@@ -108,7 +114,7 @@ void AaPipeObject::Write_Ahir_Model()
     {
       string inst_name = this->Get_Name() + "_output_port";
       Aa2Ahir::Add_DPE(module_name,
-		       DPE_OUTPUT_PORT,
+		       "output_port",
 		       inst_name);
       Aa2Ahir::Add_DPE_Port(module_name,
 			    inst_name,
@@ -121,7 +127,7 @@ void AaPipeObject::Write_Ahir_Model()
     {
       string inst_name = this->Get_Name() + "_output_port";
       Aa2Ahir::Add_DPE(module_name,
-		       DPE_INPUT_PORT,
+		       "input_port",
 		       inst_name);
       Aa2Ahir::Add_DPE_Port(module_name,
 			    inst_name,
@@ -129,6 +135,7 @@ void AaPipeObject::Write_Ahir_Model()
 			    "out",
 			    this->Get_Type());
     }
+*/
 }
 
 //---------------------------------------------------------------------

@@ -40,7 +40,7 @@ DEFS=-DDebug
 CXXFLAGS=-g
 
 
-all : aNTLR $(BIN)/TestAaParser $(INCL)/Aa2C.h $(BIN)/Aa2C $(GRMR)/AaParser.html  $(BIN)/Aa2Ahir
+all : aNTLR $(BIN)/TestAaParser $(INCL)/Aa2C.h $(BIN)/Aa2C $(GRMR)/AaParser.html #  $(BIN)/Aa2Ahir
 
 
 $(BIN)/TestAaParser : $(OBJS) $(OBJ)/TestAaParser.o

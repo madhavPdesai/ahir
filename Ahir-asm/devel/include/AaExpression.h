@@ -16,9 +16,14 @@ class AaExpression: public AaRoot
   // the containing scope of this expression
   AaScope* _scope;
 
+
+
  protected:
   // type of the expression
   AaType* _type;
+
+  // targets of this expression?
+  set<AaExpression*> _targets;
 
  public:
   virtual AaScope* Get_Scope() { return(this->_scope);}
@@ -27,29 +32,17 @@ class AaExpression: public AaRoot
   ~AaExpression();
   virtual string Kind() {return("AaExpression");}
 
-  virtual void Set_Type(AaType* t) 
-  {
-    if(this->_type == NULL)
-      this->_type = t;
-    else
-      if(t != this->_type)
-	{
-	  string err_msg = "Error: type of expression ";
-	  this->Print(err_msg);
-	  err_msg += " is ambiguous, is it  ";
-	  this->_type->Print(err_msg);
-	  err_msg += " or ";
-	  t->Print(err_msg);
-	  err_msg += " ? ";
-	  AaRoot::Error(err_msg, this);
-	}
-  }
+  virtual void Set_Type(AaType* t);
   virtual AaType* Get_Type() {return(this->_type);}
 
   virtual void Map_Source_References(set<AaRoot*>& source_objects) { assert(0); }
   virtual bool Is_Expression() {return(true); }
 
   virtual void PrintC(ofstream& ofile, string tab_string) { assert(0); }
+
+  virtual void Update_Type() {};
+
+  virtual void Add_Target(AaExpression* expr) {this->_targets.insert(expr);}
 };
 
 
@@ -183,6 +176,7 @@ class AaTypeCastExpression: public AaExpression
   {
     ofile << tab_string << "(" << "(" << this->_to_type->CName() << ") ";
     this->_rest->PrintC(ofile,"");
+    ofile << ")";
   }
 };
 
@@ -241,13 +235,45 @@ class AaBinaryExpression: public AaExpression
   }
   virtual void PrintC(ofstream& ofile, string tab_string)
   {
-    ofile << tab_string 
-	  << C_Name(this->_operation) << "(";
-    this->_first->PrintC(ofile,"");
-    ofile << ", ";
-    this->_second->PrintC(ofile,"");
-    ofile << ")" ;
+    if(!Is_Concat_Operation(this->_operation))
+      {
+	ofile << tab_string 
+	      << C_Name(this->_operation) << "(";
+	this->_first->PrintC(ofile,"");
+	ofile << ", ";
+	this->_second->PrintC(ofile,"");
+	ofile << ")" ;
+      }
+    else
+      {
+	int a_width = ((AaUintType*)(this->Get_Type()))->Get_Width();
+	int c_width;
+	if(a_width <= 8)
+	  c_width = 8;
+	else if(a_width <= 16)
+	  c_width = 16;
+	else if(a_width <= 32)
+	  c_width = 32;
+	else if(a_width <= 64)
+	  c_width = 64;
+	else
+	  assert(0 && "maximum supported length of integer for Aa2C is 64");
+
+	ofile << tab_string 
+	      << C_Name(this->_operation) << "(" << c_width << "_t,";
+	this->_first->PrintC(ofile,"");
+	
+	ofile << ", ";
+	ofile << ((AaUintType*)this->_first->Get_Type())->Get_Width();
+	ofile << ", ";
+	this->_second->PrintC(ofile,"");
+	ofile << ", ";
+	ofile << ((AaUintType*)this->_first->Get_Type())->Get_Width();
+	ofile << ")" ;
+      }
   }
+
+  virtual void Update_Type();
 };
 
 // ternary expression: a ? b : c

@@ -22,11 +22,14 @@ class AaRoot
   // fill from the parser at some point.
   unsigned int _line_number;
 
+  string _file_name;
+
+ protected:
   // vector of references to this object from "anywhere"
   set<AaRoot*> _target_references; // objects that use this as a target (in arcs)
   set<AaRoot*> _source_references; // objects that use this as a source (out arcs)
 
-  string _file_name;
+
 
  public:
 

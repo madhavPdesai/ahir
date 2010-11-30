@@ -1,4 +1,5 @@
 #include <aa_c_model.h>
+uint_32 g_data_array[4];
 int
 cachememory ()
 {
@@ -34,172 +35,172 @@ cachememory_ (cachememory_State * __top)
 	  __top->init.I.__val = 0;
 	  __top->init.init_entry = 0;
 	  __top->init.init_in_progress = 1;
-	  __top->init._merge_line_35_entry = 1;
+	  __top->init._merge_line_38_entry = 1;
 	}
       if (__top->init.init_in_progress)
 	{
 // -------------------------------------------------------------------------------------------
-// Begin Block _merge_line_35
+// Begin Block _merge_line_38
 // -------------------------------------------------------------------------------------------
-	  if (__top->init._merge_line_35_entry || __top->init.loopback)
+	  if (__top->init._merge_line_38_entry || __top->init.loopback)
 	    {
-	      if (__top->init._merge_line_35_entry)
+	      if (__top->init._merge_line_38_entry)
 		{
-		  __top->init._merge_line_35_entry = 0;
-		  __top->init._merge_line_35_from_entry = 1;
+		  __top->init._merge_line_38_entry = 0;
+		  __top->init._merge_line_38_from_entry = 1;
 		}
-	      __top->init._merge_line_35_in_progress = 1;
+	      __top->init._merge_line_38_in_progress = 1;
 	    }
-	  if (__top->init._merge_line_35_in_progress)
+	  if (__top->init._merge_line_38_in_progress)
 	    {
 	      if (1)
 		{
 		  // clear the place flag 
 		  __top->init.loopback = 0;
-		  __top->init._merge_line_35_from_entry = 0;
-		  __top->init._merge_line_35_in_progress = 0;
-		  __top->init._merge_line_35_exit = 1;
+		  __top->init._merge_line_38_from_entry = 0;
+		  __top->init._merge_line_38_in_progress = 0;
+		  __top->init._merge_line_38_exit = 1;
 		}
 	    }
 // -------------------------------------------------------------------------------------------
-// End Block _merge_line_35
+// End Block _merge_line_38
 // -------------------------------------------------------------------------------------------
-	  if (__top->init._merge_line_35_exit)
+	  if (__top->init._merge_line_38_exit)
 	    {
-	      __top->init._merge_line_35_exit = 0;
-	      __top->init._assign_line_36_entry = 1;
+	      __top->init._merge_line_38_exit = 0;
+	      __top->init._assign_line_39_entry = 1;
 	    }
 // -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_36
+// Begin Statement _assign_line_39
 // -------------------------------------------------------------------------------------------
-	  if (__top->init._assign_line_36_entry)
+	  if (__top->init._assign_line_39_entry)
 	    {
 	      if (1)
 		{
-		  (__top->addr_array[(__top->init.I).__val]).__val = 0;	//  file CacheMemory.aa, line 36
-		  __top->init._assign_line_36_entry = 0;
-		  __top->init._assign_line_36_exit = 1;
+		  (__top->addr_array[(__top->init.I).__val]).__val = 0;	//  file CacheMemory.aa, line 39
+		  __top->init._assign_line_39_entry = 0;
+		  __top->init._assign_line_39_exit = 1;
 		}
 	    }
 // -------------------------------------------------------------------------------------------
-// End Statement _assign_line_36
+// End Statement _assign_line_39
 // -------------------------------------------------------------------------------------------
-	  if (__top->init._assign_line_36_exit)
+	  if (__top->init._assign_line_39_exit)
 	    {
-	      __top->init._assign_line_36_exit = 0;
-	      __top->init._assign_line_37_entry = 1;
+	      __top->init._assign_line_39_exit = 0;
+	      __top->init._assign_line_40_entry = 1;
 	    }
 // -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_37
+// Begin Statement _assign_line_40
 // -------------------------------------------------------------------------------------------
-	  if (__top->init._assign_line_37_entry)
+	  if (__top->init._assign_line_40_entry)
 	    {
 	      if (1)
 		{
-		  (__top->data_array[(__top->init.I).__val]).__val = 0;	//  file CacheMemory.aa, line 37
-		  __top->init._assign_line_37_entry = 0;
-		  __top->init._assign_line_37_exit = 1;
+		  (__top->data_array[(__top->init.I).__val]).__val = 0;	//  file CacheMemory.aa, line 40
+		  __top->init._assign_line_40_entry = 0;
+		  __top->init._assign_line_40_exit = 1;
 		}
 	    }
 // -------------------------------------------------------------------------------------------
-// End Statement _assign_line_37
+// End Statement _assign_line_40
 // -------------------------------------------------------------------------------------------
-	  if (__top->init._assign_line_37_exit)
+	  if (__top->init._assign_line_40_exit)
 	    {
-	      __top->init._assign_line_37_exit = 0;
-	      __top->init._assign_line_38_entry = 1;
+	      __top->init._assign_line_40_exit = 0;
+	      __top->init._assign_line_41_entry = 1;
 	    }
 // -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_38
+// Begin Statement _assign_line_41
 // -------------------------------------------------------------------------------------------
-	  if (__top->init._assign_line_38_entry)
+	  if (__top->init._assign_line_41_entry)
 	    {
 	      if (1)
 		{
-		  (__top->valid_array[(__top->init.I).__val]).__val = 0;	//  file CacheMemory.aa, line 38
-		  __top->init._assign_line_38_entry = 0;
-		  __top->init._assign_line_38_exit = 1;
+		  (__top->valid_array[(__top->init.I).__val]).__val = 0;	//  file CacheMemory.aa, line 41
+		  __top->init._assign_line_41_entry = 0;
+		  __top->init._assign_line_41_exit = 1;
 		}
 	    }
 // -------------------------------------------------------------------------------------------
-// End Statement _assign_line_38
+// End Statement _assign_line_41
 // -------------------------------------------------------------------------------------------
-	  if (__top->init._assign_line_38_exit)
+	  if (__top->init._assign_line_41_exit)
 	    {
-	      __top->init._assign_line_38_exit = 0;
-	      __top->init._if_line_0_entry = 1;
+	      __top->init._assign_line_41_exit = 0;
+	      __top->init._if_line_10310760_entry = 1;
 	    }
 // -------------------------------------------------------------------------------------------
-// Begin Statement _if_line_0
+// Begin Statement _if_line_10310760
 // -------------------------------------------------------------------------------------------
-	  if (__top->init._if_line_0_entry)
+	  if (__top->init._if_line_10310760_entry)
 	    {
 	      if (1)
 		{
 		  if (__LESS ((__top->init.I).__val, 3))
 		    {
-		      __top->init._if_line_0_entry = 0;
-		      __top->init._if_line_0_in_progress = 1;
-		      __top->init._assign_line_40_entry = 1;
+		      __top->init._if_line_10310760_entry = 0;
+		      __top->init._if_line_10310760_in_progress = 1;
+		      __top->init._assign_line_43_entry = 1;
 		    }
 		  else
 		    {
-		      __top->init._if_line_0_entry = 0;
-		      __top->init._if_line_0_in_progress = 0;
-		      __top->init._if_line_0_exit = 1;
+		      __top->init._if_line_10310760_entry = 0;
+		      __top->init._if_line_10310760_in_progress = 0;
+		      __top->init._if_line_10310760_exit = 1;
 		    }		// transfer control based on test condition
 		}		// proceed if pipe is available 
 	    }			// entry flag
-	  if (__top->init._if_line_0_in_progress)
+	  if (__top->init._if_line_10310760_in_progress)
 	    {
 // -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_40
+// Begin Statement _assign_line_43
 // -------------------------------------------------------------------------------------------
-	      if (__top->init._assign_line_40_entry)
+	      if (__top->init._assign_line_43_entry)
 		{
 		  if (1)
 		    {
-		      (__top->init.I).__val = __PLUS ((__top->init.I).__val, 1);	//  file CacheMemory.aa, line 40
-		      __top->init._assign_line_40_entry = 0;
-		      __top->init._assign_line_40_exit = 1;
+		      (__top->init.I).__val = __PLUS ((__top->init.I).__val, 1);	//  file CacheMemory.aa, line 43
+		      __top->init._assign_line_43_entry = 0;
+		      __top->init._assign_line_43_exit = 1;
 		    }
 		}
 // -------------------------------------------------------------------------------------------
-// End Statement _assign_line_40
+// End Statement _assign_line_43
 // -------------------------------------------------------------------------------------------
-	      if (__top->init._assign_line_40_exit)
+	      if (__top->init._assign_line_43_exit)
 		{
-		  __top->init._assign_line_40_exit = 0;
-		  __top->init._place_line_41_entry = 1;
+		  __top->init._assign_line_43_exit = 0;
+		  __top->init._place_line_44_entry = 1;
 		}
 // -------------------------------------------------------------------------------------------
-// Begin Statement _place_line_41
+// Begin Statement _place_line_44
 // -------------------------------------------------------------------------------------------
-	      if (__top->init._place_line_41_entry)
+	      if (__top->init._place_line_44_entry)
 		{
 		  __top->init.loopback = 1;
-		  __top->init._place_line_41_entry = 0;
+		  __top->init._place_line_44_entry = 0;
 		}
 // -------------------------------------------------------------------------------------------
-// End Statement _place_line_41
+// End Statement _place_line_44
 // -------------------------------------------------------------------------------------------
 	      if (0)
 		{
-		  __top->init._assign_line_40_exit = 0;
-		  __top->init._if_line_0_in_progress = 0;
-		  __top->init._if_line_0_exit = 1;
+		  __top->init._assign_line_43_exit = 0;
+		  __top->init._if_line_10310760_in_progress = 0;
+		  __top->init._if_line_10310760_exit = 1;
 		}
 	    }
 // -------------------------------------------------------------------------------------------
-// End Statement _if_line_0
+// End Statement _if_line_10310760
 // -------------------------------------------------------------------------------------------
-	  if (__top->init._if_line_0_exit)
+	  if (__top->init._if_line_10310760_exit)
 	    {
-	      __top->init._merge_line_35_exit = 0;
-	      __top->init._assign_line_36_exit = 0;
-	      __top->init._assign_line_37_exit = 0;
-	      __top->init._assign_line_38_exit = 0;
-	      __top->init._if_line_0_exit = 0;
+	      __top->init._merge_line_38_exit = 0;
+	      __top->init._assign_line_39_exit = 0;
+	      __top->init._assign_line_40_exit = 0;
+	      __top->init._assign_line_41_exit = 0;
+	      __top->init._if_line_10310760_exit = 0;
 	      __top->init.init_in_progress = 0;
 	      __top->init.init_exit = 1;
 	    }
@@ -232,231 +233,231 @@ cachememory_ (cachememory_State * __top)
 	    {
 	      __top->p1.reader.reader_entry = 0;
 	      __top->p1.reader.reader_in_progress = 1;
-	      __top->p1.reader._merge_line_49_entry = 1;
+	      __top->p1.reader._merge_line_52_entry = 1;
 	    }
 	  if (__top->p1.reader.reader_in_progress)
 	    {
 // -------------------------------------------------------------------------------------------
-// Begin Block _merge_line_49
+// Begin Block _merge_line_52
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.reader._merge_line_49_entry || __top->p1.reader.loopback)
+	      if (__top->p1.reader._merge_line_52_entry || __top->p1.reader.loopback)
 		{
-		  if (__top->p1.reader._merge_line_49_entry)
+		  if (__top->p1.reader._merge_line_52_entry)
 		    {
-		      __top->p1.reader._merge_line_49_entry = 0;
-		      __top->p1.reader._merge_line_49_from_entry = 1;
+		      __top->p1.reader._merge_line_52_entry = 0;
+		      __top->p1.reader._merge_line_52_from_entry = 1;
 		    }
-		  __top->p1.reader._merge_line_49_in_progress = 1;
+		  __top->p1.reader._merge_line_52_in_progress = 1;
 		}
-	      if (__top->p1.reader._merge_line_49_in_progress)
+	      if (__top->p1.reader._merge_line_52_in_progress)
 		{
 		  if (1)
 		    {
 		      // clear the place flag 
 		      __top->p1.reader.loopback = 0;
-		      __top->p1.reader._merge_line_49_from_entry = 0;
-		      __top->p1.reader._merge_line_49_in_progress = 0;
-		      __top->p1.reader._merge_line_49_exit = 1;
+		      __top->p1.reader._merge_line_52_from_entry = 0;
+		      __top->p1.reader._merge_line_52_in_progress = 0;
+		      __top->p1.reader._merge_line_52_exit = 1;
 		    }
 		}
 // -------------------------------------------------------------------------------------------
-// End Block _merge_line_49
+// End Block _merge_line_52
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.reader._merge_line_49_exit)
+	      if (__top->p1.reader._merge_line_52_exit)
 		{
-		  __top->p1.reader._merge_line_49_exit = 0;
-		  __top->p1.reader._call_line_50_entry = 1;
+		  __top->p1.reader._merge_line_52_exit = 0;
+		  __top->p1.reader._call_line_53_entry = 1;
 		}
 // -------------------------------------------------------------------------------------------
-// Begin Statement _call_line_50
+// Begin Statement _call_line_53
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.reader._call_line_50_entry)
+	      if (__top->p1.reader._call_line_53_entry)
 		{
-		  if (__top->p1.reader._call_line_50_called_fn_struct == NULL)
+		  if (__top->p1.reader._call_line_53_called_fn_struct == NULL)
 		    {
-		      __top->p1.reader._call_line_50_called_fn_struct = (Fetch_State *) calloc (1, sizeof (Fetch_State));
+		      __top->p1.reader._call_line_53_called_fn_struct = (Fetch_State *) calloc (1, sizeof (Fetch_State));
 // reset entry flag and set in progress flag
-		      __top->p1.reader._call_line_50_entry = 0;
-		      __top->p1.reader._call_line_50_in_progress = 1;
+		      __top->p1.reader._call_line_53_entry = 0;
+		      __top->p1.reader._call_line_53_in_progress = 1;
 		    }		// allocation of pointer to called function
 		}		// entry into this call statement
-	      if (__top->p1.reader._call_line_50_in_progress)
+	      if (__top->p1.reader._call_line_53_in_progress)
 		{
-		  if (!__top->p1.reader._call_line_50_called_fn_struct->Fetch_entry
-		      && !__top->p1.reader._call_line_50_called_fn_struct->Fetch_in_progress)
+		  if (!__top->p1.reader._call_line_53_called_fn_struct->Fetch_entry
+		      && !__top->p1.reader._call_line_53_called_fn_struct->Fetch_in_progress)
 		    {		// entry and in_progress flags not set?
 		      if (1)
 			{	// check if pipes can be read from
-			  __top->p1.reader._call_line_50_called_fn_struct->Fetch_entry = 1;
+			  __top->p1.reader._call_line_53_called_fn_struct->Fetch_entry = 1;
 			}	// arguments copied to call structure
 		    }		// called function had entry flag set
-		  if (__top->p1.reader._call_line_50_called_fn_struct->Fetch_entry
-		      || __top->p1.reader._call_line_50_called_fn_struct->Fetch_in_progress)
+		  if (__top->p1.reader._call_line_53_called_fn_struct->Fetch_entry
+		      || __top->p1.reader._call_line_53_called_fn_struct->Fetch_in_progress)
 		    {		// called function still in progress
 // call the function
-		      Fetch (&(__top->p1.reader._call_line_50_called_fn_struct->req));	//   file CacheMemory.aa, line 50
-		      __top->p1.reader._call_line_50_called_fn_struct->Fetch_entry = 0;
-		      __top->p1.reader._call_line_50_called_fn_struct->Fetch_in_progress = 0;
-		      __top->p1.reader._call_line_50_called_fn_struct->Fetch_exit = 1;
+		      Fetch (&(__top->p1.reader._call_line_53_called_fn_struct->req));	//   file CacheMemory.aa, line 53
+		      __top->p1.reader._call_line_53_called_fn_struct->Fetch_entry = 0;
+		      __top->p1.reader._call_line_53_called_fn_struct->Fetch_in_progress = 0;
+		      __top->p1.reader._call_line_53_called_fn_struct->Fetch_exit = 1;
 		    }		// called function was in progress 
-		  if (__top->p1.reader._call_line_50_called_fn_struct->Fetch_exit)
+		  if (__top->p1.reader._call_line_53_called_fn_struct->Fetch_exit)
 		    {
 		      if (1)
 			{
-			  (__top->p1.reader.req_pointer).__val = __top->p1.reader._call_line_50_called_fn_struct->req.__val;
-			  cfree (__top->p1.reader._call_line_50_called_fn_struct);
-			  __top->p1.reader._call_line_50_called_fn_struct = NULL;
+			  (__top->p1.reader.req_pointer).__val = __top->p1.reader._call_line_53_called_fn_struct->req.__val;
+			  cfree (__top->p1.reader._call_line_53_called_fn_struct);
+			  __top->p1.reader._call_line_53_called_fn_struct = NULL;
 // reset in progress flag and set exit flag
-			  __top->p1.reader._call_line_50_exit = 1;
-			  __top->p1.reader._call_line_50_in_progress = 0;
+			  __top->p1.reader._call_line_53_exit = 1;
+			  __top->p1.reader._call_line_53_in_progress = 0;
 			}	// ok to copy outputs to destinations?
 		    }		// called function had finishes?
 		}		// statement was in progress
 // -------------------------------------------------------------------------------------------
-// End Statement _call_line_50
+// End Statement _call_line_53
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.reader._call_line_50_exit)
+	      if (__top->p1.reader._call_line_53_exit)
 		{
-		  __top->p1.reader._call_line_50_exit = 0;
-		  __top->p1.reader._call_line_52_entry = 1;
+		  __top->p1.reader._call_line_53_exit = 0;
+		  __top->p1.reader._call_line_55_entry = 1;
 		}
 // -------------------------------------------------------------------------------------------
-// Begin Statement _call_line_52
+// Begin Statement _call_line_55
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.reader._call_line_52_entry)
+	      if (__top->p1.reader._call_line_55_entry)
 		{
-		  if (__top->p1.reader._call_line_52_called_fn_struct == NULL)
+		  if (__top->p1.reader._call_line_55_called_fn_struct == NULL)
 		    {
-		      __top->p1.reader._call_line_52_called_fn_struct =
+		      __top->p1.reader._call_line_55_called_fn_struct =
 			(Is_Read_Access_State *) calloc (1, sizeof (Is_Read_Access_State));
 // reset entry flag and set in progress flag
-		      __top->p1.reader._call_line_52_entry = 0;
-		      __top->p1.reader._call_line_52_in_progress = 1;
+		      __top->p1.reader._call_line_55_entry = 0;
+		      __top->p1.reader._call_line_55_in_progress = 1;
 		    }		// allocation of pointer to called function
 		}		// entry into this call statement
-	      if (__top->p1.reader._call_line_52_in_progress)
+	      if (__top->p1.reader._call_line_55_in_progress)
 		{
-		  if (!__top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_entry
-		      && !__top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_in_progress)
+		  if (!__top->p1.reader._call_line_55_called_fn_struct->Is_Read_Access_entry
+		      && !__top->p1.reader._call_line_55_called_fn_struct->Is_Read_Access_in_progress)
 		    {		// entry and in_progress flags not set?
 		      if (1)
 			{	// check if pipes can be read from
-			  __top->p1.reader._call_line_52_called_fn_struct->req.__val = (__top->p1.reader.req_pointer).__val;
-			  __top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_entry = 1;
+			  __top->p1.reader._call_line_55_called_fn_struct->req.__val = (__top->p1.reader.req_pointer).__val;
+			  __top->p1.reader._call_line_55_called_fn_struct->Is_Read_Access_entry = 1;
 			}	// arguments copied to call structure
 		    }		// called function had entry flag set
-		  if (__top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_entry
-		      || __top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_in_progress)
+		  if (__top->p1.reader._call_line_55_called_fn_struct->Is_Read_Access_entry
+		      || __top->p1.reader._call_line_55_called_fn_struct->Is_Read_Access_in_progress)
 		    {		// called function still in progress
 // call the function
-		      Is_Read_Access (__top->p1.reader._call_line_52_called_fn_struct->req, &(__top->p1.reader._call_line_52_called_fn_struct->flag));	//   file CacheMemory.aa, line 52
-		      __top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_entry = 0;
-		      __top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_in_progress = 0;
-		      __top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_exit = 1;
+		      Is_Read_Access (__top->p1.reader._call_line_55_called_fn_struct->req, &(__top->p1.reader._call_line_55_called_fn_struct->flag));	//   file CacheMemory.aa, line 55
+		      __top->p1.reader._call_line_55_called_fn_struct->Is_Read_Access_entry = 0;
+		      __top->p1.reader._call_line_55_called_fn_struct->Is_Read_Access_in_progress = 0;
+		      __top->p1.reader._call_line_55_called_fn_struct->Is_Read_Access_exit = 1;
 		    }		// called function was in progress 
-		  if (__top->p1.reader._call_line_52_called_fn_struct->Is_Read_Access_exit)
+		  if (__top->p1.reader._call_line_55_called_fn_struct->Is_Read_Access_exit)
 		    {
 		      if (1)
 			{
-			  (__top->p1.reader.is_read).__val = __top->p1.reader._call_line_52_called_fn_struct->flag.__val;
-			  cfree (__top->p1.reader._call_line_52_called_fn_struct);
-			  __top->p1.reader._call_line_52_called_fn_struct = NULL;
+			  (__top->p1.reader.is_read).__val = __top->p1.reader._call_line_55_called_fn_struct->flag.__val;
+			  cfree (__top->p1.reader._call_line_55_called_fn_struct);
+			  __top->p1.reader._call_line_55_called_fn_struct = NULL;
 // reset in progress flag and set exit flag
-			  __top->p1.reader._call_line_52_exit = 1;
-			  __top->p1.reader._call_line_52_in_progress = 0;
+			  __top->p1.reader._call_line_55_exit = 1;
+			  __top->p1.reader._call_line_55_in_progress = 0;
 			}	// ok to copy outputs to destinations?
 		    }		// called function had finishes?
 		}		// statement was in progress
 // -------------------------------------------------------------------------------------------
-// End Statement _call_line_52
+// End Statement _call_line_55
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.reader._call_line_52_exit)
+	      if (__top->p1.reader._call_line_55_exit)
 		{
-		  __top->p1.reader._call_line_52_exit = 0;
-		  __top->p1.reader._if_line_53_entry = 1;
+		  __top->p1.reader._call_line_55_exit = 0;
+		  __top->p1.reader._if_line_56_entry = 1;
 		}
 // -------------------------------------------------------------------------------------------
-// Begin Statement _if_line_53
+// Begin Statement _if_line_56
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.reader._if_line_53_entry)
+	      if (__top->p1.reader._if_line_56_entry)
 		{
 		  if (1)
 		    {
 		      if ((__top->p1.reader.is_read).__val)
 			{
-			  __top->p1.reader._if_line_53_entry = 0;
-			  __top->p1.reader._if_line_53_in_progress = 1;
-			  __top->p1.reader._call_line_54_entry = 1;
+			  __top->p1.reader._if_line_56_entry = 0;
+			  __top->p1.reader._if_line_56_in_progress = 1;
+			  __top->p1.reader._call_line_57_entry = 1;
 			}
 		      else
 			{
-			  __top->p1.reader._if_line_53_entry = 0;
-			  __top->p1.reader._if_line_53_in_progress = 1;
+			  __top->p1.reader._if_line_56_entry = 0;
+			  __top->p1.reader._if_line_56_in_progress = 1;
 			  __top->p1.reader.extwrite.extwrite_entry = 1;
 			}	// transfer control based on test condition
 		    }		// proceed if pipe is available 
 		}		// entry flag
-	      if (__top->p1.reader._if_line_53_in_progress)
+	      if (__top->p1.reader._if_line_56_in_progress)
 		{
 // -------------------------------------------------------------------------------------------
-// Begin Statement _call_line_54
+// Begin Statement _call_line_57
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.reader._call_line_54_entry)
+		  if (__top->p1.reader._call_line_57_entry)
 		    {
-		      if (__top->p1.reader._call_line_54_called_fn_struct == NULL)
+		      if (__top->p1.reader._call_line_57_called_fn_struct == NULL)
 			{
-			  __top->p1.reader._call_line_54_called_fn_struct =
+			  __top->p1.reader._call_line_57_called_fn_struct =
 			    (Access_Address_State *) calloc (1, sizeof (Access_Address_State));
 // reset entry flag and set in progress flag
-			  __top->p1.reader._call_line_54_entry = 0;
-			  __top->p1.reader._call_line_54_in_progress = 1;
+			  __top->p1.reader._call_line_57_entry = 0;
+			  __top->p1.reader._call_line_57_in_progress = 1;
 			}	// allocation of pointer to called function
 		    }		// entry into this call statement
-		  if (__top->p1.reader._call_line_54_in_progress)
+		  if (__top->p1.reader._call_line_57_in_progress)
 		    {
-		      if (!__top->p1.reader._call_line_54_called_fn_struct->Access_Address_entry
-			  && !__top->p1.reader._call_line_54_called_fn_struct->Access_Address_in_progress)
+		      if (!__top->p1.reader._call_line_57_called_fn_struct->Access_Address_entry
+			  && !__top->p1.reader._call_line_57_called_fn_struct->Access_Address_in_progress)
 			{	// entry and in_progress flags not set?
 			  if (1)
 			    {	// check if pipes can be read from
-			      __top->p1.reader._call_line_54_called_fn_struct->req.__val = (__top->p1.reader.req_pointer).__val;
-			      __top->p1.reader._call_line_54_called_fn_struct->Access_Address_entry = 1;
+			      __top->p1.reader._call_line_57_called_fn_struct->req.__val = (__top->p1.reader.req_pointer).__val;
+			      __top->p1.reader._call_line_57_called_fn_struct->Access_Address_entry = 1;
 			    }	// arguments copied to call structure
 			}	// called function had entry flag set
-		      if (__top->p1.reader._call_line_54_called_fn_struct->Access_Address_entry
-			  || __top->p1.reader._call_line_54_called_fn_struct->Access_Address_in_progress)
+		      if (__top->p1.reader._call_line_57_called_fn_struct->Access_Address_entry
+			  || __top->p1.reader._call_line_57_called_fn_struct->Access_Address_in_progress)
 			{	// called function still in progress
 // call the function
-			  Access_Address (__top->p1.reader._call_line_54_called_fn_struct->req, &(__top->p1.reader._call_line_54_called_fn_struct->addr));	//   file CacheMemory.aa, line 54
-			  __top->p1.reader._call_line_54_called_fn_struct->Access_Address_entry = 0;
-			  __top->p1.reader._call_line_54_called_fn_struct->Access_Address_in_progress = 0;
-			  __top->p1.reader._call_line_54_called_fn_struct->Access_Address_exit = 1;
+			  Access_Address (__top->p1.reader._call_line_57_called_fn_struct->req, &(__top->p1.reader._call_line_57_called_fn_struct->addr));	//   file CacheMemory.aa, line 57
+			  __top->p1.reader._call_line_57_called_fn_struct->Access_Address_entry = 0;
+			  __top->p1.reader._call_line_57_called_fn_struct->Access_Address_in_progress = 0;
+			  __top->p1.reader._call_line_57_called_fn_struct->Access_Address_exit = 1;
 			}	// called function was in progress 
-		      if (__top->p1.reader._call_line_54_called_fn_struct->Access_Address_exit)
+		      if (__top->p1.reader._call_line_57_called_fn_struct->Access_Address_exit)
 			{
 			  if (1 && !__top->read_address_pipe_valid__)
 			    {
-			      (__top->read_address_pipe).__val = __top->p1.reader._call_line_54_called_fn_struct->addr.__val;
+			      (__top->read_address_pipe).__val = __top->p1.reader._call_line_57_called_fn_struct->addr.__val;
 			      __top->read_address_pipe_valid__ = 1;
-			      cfree (__top->p1.reader._call_line_54_called_fn_struct);
-			      __top->p1.reader._call_line_54_called_fn_struct = NULL;
+			      cfree (__top->p1.reader._call_line_57_called_fn_struct);
+			      __top->p1.reader._call_line_57_called_fn_struct = NULL;
 // reset in progress flag and set exit flag
-			      __top->p1.reader._call_line_54_exit = 1;
-			      __top->p1.reader._call_line_54_in_progress = 0;
+			      __top->p1.reader._call_line_57_exit = 1;
+			      __top->p1.reader._call_line_57_in_progress = 0;
 			    }	// ok to copy outputs to destinations?
 			}	// called function had finishes?
 		    }		// statement was in progress
 // -------------------------------------------------------------------------------------------
-// End Statement _call_line_54
+// End Statement _call_line_57
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.reader._call_line_54_exit)
+		  if (__top->p1.reader._call_line_57_exit)
 		    {
-		      __top->p1.reader._call_line_54_exit = 0;
-		      __top->p1.reader._if_line_53_in_progress = 0;
-		      __top->p1.reader._if_line_53_exit = 1;
+		      __top->p1.reader._call_line_57_exit = 0;
+		      __top->p1.reader._if_line_56_in_progress = 0;
+		      __top->p1.reader._if_line_56_exit = 1;
 		    }
 		}
-	      if (__top->p1.reader._if_line_53_in_progress)
+	      if (__top->p1.reader._if_line_56_in_progress)
 		{
 // -------------------------------------------------------------------------------------------
 // Begin Block extwrite
@@ -465,121 +466,121 @@ cachememory_ (cachememory_State * __top)
 		    {
 		      __top->p1.reader.extwrite.extwrite_entry = 0;
 		      __top->p1.reader.extwrite.extwrite_in_progress = 1;
-		      __top->p1.reader.extwrite._call_line_57_entry = 1;
-		      __top->p1.reader.extwrite._call_line_58_entry = 1;
+		      __top->p1.reader.extwrite._call_line_60_entry = 1;
+		      __top->p1.reader.extwrite._call_line_61_entry = 1;
 		    }
 		  if (__top->p1.reader.extwrite.extwrite_in_progress)
 		    {
 // -------------------------------------------------------------------------------------------
-// Begin Statement _call_line_57
+// Begin Statement _call_line_60
 // -------------------------------------------------------------------------------------------
-		      if (__top->p1.reader.extwrite._call_line_57_entry)
+		      if (__top->p1.reader.extwrite._call_line_60_entry)
 			{
-			  if (__top->p1.reader.extwrite._call_line_57_called_fn_struct == NULL)
+			  if (__top->p1.reader.extwrite._call_line_60_called_fn_struct == NULL)
 			    {
-			      __top->p1.reader.extwrite._call_line_57_called_fn_struct =
+			      __top->p1.reader.extwrite._call_line_60_called_fn_struct =
 				(Access_Address_State *) calloc (1, sizeof (Access_Address_State));
 // reset entry flag and set in progress flag
-			      __top->p1.reader.extwrite._call_line_57_entry = 0;
-			      __top->p1.reader.extwrite._call_line_57_in_progress = 1;
+			      __top->p1.reader.extwrite._call_line_60_entry = 0;
+			      __top->p1.reader.extwrite._call_line_60_in_progress = 1;
 			    }	// allocation of pointer to called function
 			}	// entry into this call statement
-		      if (__top->p1.reader.extwrite._call_line_57_in_progress)
+		      if (__top->p1.reader.extwrite._call_line_60_in_progress)
 			{
-			  if (!__top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_entry
-			      && !__top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_in_progress)
+			  if (!__top->p1.reader.extwrite._call_line_60_called_fn_struct->Access_Address_entry
+			      && !__top->p1.reader.extwrite._call_line_60_called_fn_struct->Access_Address_in_progress)
 			    {	// entry and in_progress flags not set?
 			      if (1)
 				{	// check if pipes can be read from
-				  __top->p1.reader.extwrite._call_line_57_called_fn_struct->req.__val =
+				  __top->p1.reader.extwrite._call_line_60_called_fn_struct->req.__val =
 				    (__top->p1.reader.req_pointer).__val;
-				  __top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_entry = 1;
+				  __top->p1.reader.extwrite._call_line_60_called_fn_struct->Access_Address_entry = 1;
 				}	// arguments copied to call structure
 			    }	// called function had entry flag set
-			  if (__top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_entry
-			      || __top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_in_progress)
+			  if (__top->p1.reader.extwrite._call_line_60_called_fn_struct->Access_Address_entry
+			      || __top->p1.reader.extwrite._call_line_60_called_fn_struct->Access_Address_in_progress)
 			    {	// called function still in progress
 // call the function
-			      Access_Address (__top->p1.reader.extwrite._call_line_57_called_fn_struct->req, &(__top->p1.reader.extwrite._call_line_57_called_fn_struct->addr));	//   file CacheMemory.aa, line 57
-			      __top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_entry = 0;
-			      __top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_in_progress = 0;
-			      __top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_exit = 1;
+			      Access_Address (__top->p1.reader.extwrite._call_line_60_called_fn_struct->req, &(__top->p1.reader.extwrite._call_line_60_called_fn_struct->addr));	//   file CacheMemory.aa, line 60
+			      __top->p1.reader.extwrite._call_line_60_called_fn_struct->Access_Address_entry = 0;
+			      __top->p1.reader.extwrite._call_line_60_called_fn_struct->Access_Address_in_progress = 0;
+			      __top->p1.reader.extwrite._call_line_60_called_fn_struct->Access_Address_exit = 1;
 			    }	// called function was in progress 
-			  if (__top->p1.reader.extwrite._call_line_57_called_fn_struct->Access_Address_exit)
+			  if (__top->p1.reader.extwrite._call_line_60_called_fn_struct->Access_Address_exit)
 			    {
 			      if (1 && !__top->write_address_pipe_valid__)
 				{
 				  (__top->write_address_pipe).__val =
-				    __top->p1.reader.extwrite._call_line_57_called_fn_struct->addr.__val;
+				    __top->p1.reader.extwrite._call_line_60_called_fn_struct->addr.__val;
 				  __top->write_address_pipe_valid__ = 1;
-				  cfree (__top->p1.reader.extwrite._call_line_57_called_fn_struct);
-				  __top->p1.reader.extwrite._call_line_57_called_fn_struct = NULL;
+				  cfree (__top->p1.reader.extwrite._call_line_60_called_fn_struct);
+				  __top->p1.reader.extwrite._call_line_60_called_fn_struct = NULL;
 // reset in progress flag and set exit flag
-				  __top->p1.reader.extwrite._call_line_57_exit = 1;
-				  __top->p1.reader.extwrite._call_line_57_in_progress = 0;
+				  __top->p1.reader.extwrite._call_line_60_exit = 1;
+				  __top->p1.reader.extwrite._call_line_60_in_progress = 0;
 				}	// ok to copy outputs to destinations?
 			    }	// called function had finishes?
 			}	// statement was in progress
 // -------------------------------------------------------------------------------------------
-// End Statement _call_line_57
+// End Statement _call_line_60
 // -------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------
-// Begin Statement _call_line_58
+// Begin Statement _call_line_61
 // -------------------------------------------------------------------------------------------
-		      if (__top->p1.reader.extwrite._call_line_58_entry)
+		      if (__top->p1.reader.extwrite._call_line_61_entry)
 			{
-			  if (__top->p1.reader.extwrite._call_line_58_called_fn_struct == NULL)
+			  if (__top->p1.reader.extwrite._call_line_61_called_fn_struct == NULL)
 			    {
-			      __top->p1.reader.extwrite._call_line_58_called_fn_struct =
+			      __top->p1.reader.extwrite._call_line_61_called_fn_struct =
 				(Access_Data_State *) calloc (1, sizeof (Access_Data_State));
 // reset entry flag and set in progress flag
-			      __top->p1.reader.extwrite._call_line_58_entry = 0;
-			      __top->p1.reader.extwrite._call_line_58_in_progress = 1;
+			      __top->p1.reader.extwrite._call_line_61_entry = 0;
+			      __top->p1.reader.extwrite._call_line_61_in_progress = 1;
 			    }	// allocation of pointer to called function
 			}	// entry into this call statement
-		      if (__top->p1.reader.extwrite._call_line_58_in_progress)
+		      if (__top->p1.reader.extwrite._call_line_61_in_progress)
 			{
-			  if (!__top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_entry
-			      && !__top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_in_progress)
+			  if (!__top->p1.reader.extwrite._call_line_61_called_fn_struct->Access_Data_entry
+			      && !__top->p1.reader.extwrite._call_line_61_called_fn_struct->Access_Data_in_progress)
 			    {	// entry and in_progress flags not set?
 			      if (1)
 				{	// check if pipes can be read from
-				  __top->p1.reader.extwrite._call_line_58_called_fn_struct->req.__val =
+				  __top->p1.reader.extwrite._call_line_61_called_fn_struct->req.__val =
 				    (__top->p1.reader.req_pointer).__val;
-				  __top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_entry = 1;
+				  __top->p1.reader.extwrite._call_line_61_called_fn_struct->Access_Data_entry = 1;
 				}	// arguments copied to call structure
 			    }	// called function had entry flag set
-			  if (__top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_entry
-			      || __top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_in_progress)
+			  if (__top->p1.reader.extwrite._call_line_61_called_fn_struct->Access_Data_entry
+			      || __top->p1.reader.extwrite._call_line_61_called_fn_struct->Access_Data_in_progress)
 			    {	// called function still in progress
 // call the function
-			      Access_Data (__top->p1.reader.extwrite._call_line_58_called_fn_struct->req, &(__top->p1.reader.extwrite._call_line_58_called_fn_struct->data));	//   file CacheMemory.aa, line 58
-			      __top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_entry = 0;
-			      __top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_in_progress = 0;
-			      __top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_exit = 1;
+			      Access_Data (__top->p1.reader.extwrite._call_line_61_called_fn_struct->req, &(__top->p1.reader.extwrite._call_line_61_called_fn_struct->data));	//   file CacheMemory.aa, line 61
+			      __top->p1.reader.extwrite._call_line_61_called_fn_struct->Access_Data_entry = 0;
+			      __top->p1.reader.extwrite._call_line_61_called_fn_struct->Access_Data_in_progress = 0;
+			      __top->p1.reader.extwrite._call_line_61_called_fn_struct->Access_Data_exit = 1;
 			    }	// called function was in progress 
-			  if (__top->p1.reader.extwrite._call_line_58_called_fn_struct->Access_Data_exit)
+			  if (__top->p1.reader.extwrite._call_line_61_called_fn_struct->Access_Data_exit)
 			    {
 			      if (1 && !__top->write_data_pipe_valid__)
 				{
 				  (__top->write_data_pipe).__val =
-				    __top->p1.reader.extwrite._call_line_58_called_fn_struct->data.__val;
+				    __top->p1.reader.extwrite._call_line_61_called_fn_struct->data.__val;
 				  __top->write_data_pipe_valid__ = 1;
-				  cfree (__top->p1.reader.extwrite._call_line_58_called_fn_struct);
-				  __top->p1.reader.extwrite._call_line_58_called_fn_struct = NULL;
+				  cfree (__top->p1.reader.extwrite._call_line_61_called_fn_struct);
+				  __top->p1.reader.extwrite._call_line_61_called_fn_struct = NULL;
 // reset in progress flag and set exit flag
-				  __top->p1.reader.extwrite._call_line_58_exit = 1;
-				  __top->p1.reader.extwrite._call_line_58_in_progress = 0;
+				  __top->p1.reader.extwrite._call_line_61_exit = 1;
+				  __top->p1.reader.extwrite._call_line_61_in_progress = 0;
 				}	// ok to copy outputs to destinations?
 			    }	// called function had finishes?
 			}	// statement was in progress
 // -------------------------------------------------------------------------------------------
-// End Statement _call_line_58
+// End Statement _call_line_61
 // -------------------------------------------------------------------------------------------
-		      if ((1 && __top->p1.reader.extwrite._call_line_58_exit && __top->p1.reader.extwrite._call_line_57_exit))
+		      if ((1 && __top->p1.reader.extwrite._call_line_61_exit && __top->p1.reader.extwrite._call_line_60_exit))
 			{
-			  __top->p1.reader.extwrite._call_line_57_exit = 0;
-			  __top->p1.reader.extwrite._call_line_58_exit = 0;
+			  __top->p1.reader.extwrite._call_line_60_exit = 0;
+			  __top->p1.reader.extwrite._call_line_61_exit = 0;
 			  __top->p1.reader.extwrite.extwrite_in_progress = 0;
 			  __top->p1.reader.extwrite.extwrite_exit = 1;
 			}
@@ -590,35 +591,35 @@ cachememory_ (cachememory_State * __top)
 		  if (__top->p1.reader.extwrite.extwrite_exit)
 		    {
 		      __top->p1.reader.extwrite.extwrite_exit = 0;
-		      __top->p1.reader._if_line_53_in_progress = 0;
-		      __top->p1.reader._if_line_53_exit = 1;
+		      __top->p1.reader._if_line_56_in_progress = 0;
+		      __top->p1.reader._if_line_56_exit = 1;
 		    }
 		}
 // -------------------------------------------------------------------------------------------
-// End Statement _if_line_53
+// End Statement _if_line_56
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.reader._if_line_53_exit)
+	      if (__top->p1.reader._if_line_56_exit)
 		{
-		  __top->p1.reader._if_line_53_exit = 0;
-		  __top->p1.reader._place_line_61_entry = 1;
+		  __top->p1.reader._if_line_56_exit = 0;
+		  __top->p1.reader._place_line_64_entry = 1;
 		}
 // -------------------------------------------------------------------------------------------
-// Begin Statement _place_line_61
+// Begin Statement _place_line_64
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.reader._place_line_61_entry)
+	      if (__top->p1.reader._place_line_64_entry)
 		{
 		  __top->p1.reader.loopback = 1;
-		  __top->p1.reader._place_line_61_entry = 0;
+		  __top->p1.reader._place_line_64_entry = 0;
 		}
 // -------------------------------------------------------------------------------------------
-// End Statement _place_line_61
+// End Statement _place_line_64
 // -------------------------------------------------------------------------------------------
 	      if (0)
 		{
-		  __top->p1.reader._merge_line_49_exit = 0;
-		  __top->p1.reader._call_line_50_exit = 0;
-		  __top->p1.reader._call_line_52_exit = 0;
-		  __top->p1.reader._if_line_53_exit = 0;
+		  __top->p1.reader._merge_line_52_exit = 0;
+		  __top->p1.reader._call_line_53_exit = 0;
+		  __top->p1.reader._call_line_55_exit = 0;
+		  __top->p1.reader._if_line_56_exit = 0;
 		  __top->p1.reader.reader_in_progress = 0;
 		  __top->p1.reader.reader_exit = 1;
 		}
@@ -633,39 +634,39 @@ cachememory_ (cachememory_State * __top)
 	    {
 	      __top->p1.writeport.writeport_entry = 0;
 	      __top->p1.writeport.writeport_in_progress = 1;
-	      __top->p1.writeport._merge_line_68_entry = 1;
+	      __top->p1.writeport._merge_line_71_entry = 1;
 	    }
 	  if (__top->p1.writeport.writeport_in_progress)
 	    {
 // -------------------------------------------------------------------------------------------
-// Begin Block _merge_line_68
+// Begin Block _merge_line_71
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.writeport._merge_line_68_entry || __top->p1.writeport.loopback)
+	      if (__top->p1.writeport._merge_line_71_entry || __top->p1.writeport.loopback)
 		{
-		  if (__top->p1.writeport._merge_line_68_entry)
+		  if (__top->p1.writeport._merge_line_71_entry)
 		    {
-		      __top->p1.writeport._merge_line_68_entry = 0;
-		      __top->p1.writeport._merge_line_68_from_entry = 1;
+		      __top->p1.writeport._merge_line_71_entry = 0;
+		      __top->p1.writeport._merge_line_71_from_entry = 1;
 		    }
-		  __top->p1.writeport._merge_line_68_in_progress = 1;
+		  __top->p1.writeport._merge_line_71_in_progress = 1;
 		}
-	      if (__top->p1.writeport._merge_line_68_in_progress)
+	      if (__top->p1.writeport._merge_line_71_in_progress)
 		{
 		  if (1)
 		    {
 		      // clear the place flag 
 		      __top->p1.writeport.loopback = 0;
-		      __top->p1.writeport._merge_line_68_from_entry = 0;
-		      __top->p1.writeport._merge_line_68_in_progress = 0;
-		      __top->p1.writeport._merge_line_68_exit = 1;
+		      __top->p1.writeport._merge_line_71_from_entry = 0;
+		      __top->p1.writeport._merge_line_71_in_progress = 0;
+		      __top->p1.writeport._merge_line_71_exit = 1;
 		    }
 		}
 // -------------------------------------------------------------------------------------------
-// End Block _merge_line_68
+// End Block _merge_line_71
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.writeport._merge_line_68_exit)
+	      if (__top->p1.writeport._merge_line_71_exit)
 		{
-		  __top->p1.writeport._merge_line_68_exit = 0;
+		  __top->p1.writeport._merge_line_71_exit = 0;
 		  __top->p1.writeport.getdetails.getdetails_entry = 1;
 		}
 // -------------------------------------------------------------------------------------------
@@ -675,48 +676,48 @@ cachememory_ (cachememory_State * __top)
 		{
 		  __top->p1.writeport.getdetails.getdetails_entry = 0;
 		  __top->p1.writeport.getdetails.getdetails_in_progress = 1;
-		  __top->p1.writeport.getdetails._assign_line_70_entry = 1;
-		  __top->p1.writeport.getdetails._assign_line_71_entry = 1;
+		  __top->p1.writeport.getdetails._assign_line_73_entry = 1;
+		  __top->p1.writeport.getdetails._assign_line_74_entry = 1;
 		}
 	      if (__top->p1.writeport.getdetails.getdetails_in_progress)
 		{
 // -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_70
+// Begin Statement _assign_line_73
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.writeport.getdetails._assign_line_70_entry)
+		  if (__top->p1.writeport.getdetails._assign_line_73_entry)
 		    {
 		      if (1 && __top->write_address_pipe_valid__)
 			{
-			  (__top->p1.writeport.write_address).__val = (__top->write_address_pipe).__val;	//  file CacheMemory.aa, line 70
+			  (__top->p1.writeport.write_address).__val = (__top->write_address_pipe).__val;	//  file CacheMemory.aa, line 73
 			  __top->write_address_pipe_valid__ = 0;
-			  __top->p1.writeport.getdetails._assign_line_70_entry = 0;
-			  __top->p1.writeport.getdetails._assign_line_70_exit = 1;
+			  __top->p1.writeport.getdetails._assign_line_73_entry = 0;
+			  __top->p1.writeport.getdetails._assign_line_73_exit = 1;
 			}
 		    }
 // -------------------------------------------------------------------------------------------
-// End Statement _assign_line_70
+// End Statement _assign_line_73
 // -------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_71
+// Begin Statement _assign_line_74
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.writeport.getdetails._assign_line_71_entry)
+		  if (__top->p1.writeport.getdetails._assign_line_74_entry)
 		    {
 		      if (1 && __top->write_data_pipe_valid__)
 			{
-			  (__top->p1.writeport.write_data).__val = (__top->write_data_pipe).__val;	//  file CacheMemory.aa, line 71
+			  (__top->p1.writeport.write_data).__val = (__top->write_data_pipe).__val;	//  file CacheMemory.aa, line 74
 			  __top->write_data_pipe_valid__ = 0;
-			  __top->p1.writeport.getdetails._assign_line_71_entry = 0;
-			  __top->p1.writeport.getdetails._assign_line_71_exit = 1;
+			  __top->p1.writeport.getdetails._assign_line_74_entry = 0;
+			  __top->p1.writeport.getdetails._assign_line_74_exit = 1;
 			}
 		    }
 // -------------------------------------------------------------------------------------------
-// End Statement _assign_line_71
+// End Statement _assign_line_74
 // -------------------------------------------------------------------------------------------
-		  if ((1 && __top->p1.writeport.getdetails._assign_line_71_exit
-		       && __top->p1.writeport.getdetails._assign_line_70_exit))
+		  if ((1 && __top->p1.writeport.getdetails._assign_line_74_exit
+		       && __top->p1.writeport.getdetails._assign_line_73_exit))
 		    {
-		      __top->p1.writeport.getdetails._assign_line_70_exit = 0;
-		      __top->p1.writeport.getdetails._assign_line_71_exit = 0;
+		      __top->p1.writeport.getdetails._assign_line_73_exit = 0;
+		      __top->p1.writeport.getdetails._assign_line_74_exit = 0;
 		      __top->p1.writeport.getdetails.getdetails_in_progress = 0;
 		      __top->p1.writeport.getdetails.getdetails_exit = 1;
 		    }
@@ -727,55 +728,55 @@ cachememory_ (cachememory_State * __top)
 	      if (__top->p1.writeport.getdetails.getdetails_exit)
 		{
 		  __top->p1.writeport.getdetails.getdetails_exit = 0;
-		  __top->p1.writeport._assign_line_73_entry = 1;
+		  __top->p1.writeport._assign_line_76_entry = 1;
 		}
 // -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_73
+// Begin Statement _assign_line_76
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.writeport._assign_line_73_entry)
+	      if (__top->p1.writeport._assign_line_76_entry)
 		{
 		  if (1)
 		    {
-		      (__top->p1.writeport.addr).__val = __AND ((__top->p1.writeport.write_address).__val, (__top->map_mask).__val);	//  file CacheMemory.aa, line 73
-		      __top->p1.writeport._assign_line_73_entry = 0;
-		      __top->p1.writeport._assign_line_73_exit = 1;
+		      (__top->p1.writeport.addr).__val = __AND ((__top->p1.writeport.write_address).__val, (__top->map_mask).__val);	//  file CacheMemory.aa, line 76
+		      __top->p1.writeport._assign_line_76_entry = 0;
+		      __top->p1.writeport._assign_line_76_exit = 1;
 		    }
 		}
 // -------------------------------------------------------------------------------------------
-// End Statement _assign_line_73
+// End Statement _assign_line_76
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.writeport._assign_line_73_exit)
+	      if (__top->p1.writeport._assign_line_76_exit)
 		{
-		  __top->p1.writeport._assign_line_73_exit = 0;
-		  __top->p1.writeport._if_line_74_entry = 1;
+		  __top->p1.writeport._assign_line_76_exit = 0;
+		  __top->p1.writeport._if_line_77_entry = 1;
 		}
 // -------------------------------------------------------------------------------------------
-// Begin Statement _if_line_74
+// Begin Statement _if_line_77
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.writeport._if_line_74_entry)
+	      if (__top->p1.writeport._if_line_77_entry)
 		{
 		  if (1)
 		    {
 		      if ((__top->valid_array[(__top->p1.writeport.addr).__val]).__val)
 			{
-			  __top->p1.writeport._if_line_74_entry = 0;
-			  __top->p1.writeport._if_line_74_in_progress = 1;
-			  __top->p1.writeport._if_line_75_entry = 1;
+			  __top->p1.writeport._if_line_77_entry = 0;
+			  __top->p1.writeport._if_line_77_in_progress = 1;
+			  __top->p1.writeport._if_line_78_entry = 1;
 			}
 		      else
 			{
-			  __top->p1.writeport._if_line_74_entry = 0;
-			  __top->p1.writeport._if_line_74_in_progress = 1;
-			  __top->p1.writeport._assign_line_85_entry = 1;
+			  __top->p1.writeport._if_line_77_entry = 0;
+			  __top->p1.writeport._if_line_77_in_progress = 1;
+			  __top->p1.writeport._assign_line_88_entry = 1;
 			}	// transfer control based on test condition
 		    }		// proceed if pipe is available 
 		}		// entry flag
-	      if (__top->p1.writeport._if_line_74_in_progress)
+	      if (__top->p1.writeport._if_line_77_in_progress)
 		{
 // -------------------------------------------------------------------------------------------
-// Begin Statement _if_line_75
+// Begin Statement _if_line_78
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.writeport._if_line_75_entry)
+		  if (__top->p1.writeport._if_line_78_entry)
 		    {
 		      if (1)
 			{
@@ -783,100 +784,40 @@ cachememory_ (cachememory_State * __top)
 			      ((__top->addr_array[(__top->p1.writeport.addr).__val]).__val,
 			       (__top->p1.writeport.write_address).__val))
 			    {
-			      __top->p1.writeport._if_line_75_entry = 0;
-			      __top->p1.writeport._if_line_75_in_progress = 1;
-			      __top->p1.writeport._assign_line_77_entry = 1;
+			      __top->p1.writeport._if_line_78_entry = 0;
+			      __top->p1.writeport._if_line_78_in_progress = 1;
+			      __top->p1.writeport._assign_line_80_entry = 1;
 			    }
 			  else
 			    {
-			      __top->p1.writeport._if_line_75_entry = 0;
-			      __top->p1.writeport._if_line_75_in_progress = 1;
-			      __top->p1.writeport._call_line_81_entry = 1;
+			      __top->p1.writeport._if_line_78_entry = 0;
+			      __top->p1.writeport._if_line_78_in_progress = 1;
+			      __top->p1.writeport._call_line_84_entry = 1;
 			    }	// transfer control based on test condition
 			}	// proceed if pipe is available 
 		    }		// entry flag
-		  if (__top->p1.writeport._if_line_75_in_progress)
+		  if (__top->p1.writeport._if_line_78_in_progress)
 		    {
 // -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_77
+// Begin Statement _assign_line_80
 // -------------------------------------------------------------------------------------------
-		      if (__top->p1.writeport._assign_line_77_entry)
+		      if (__top->p1.writeport._assign_line_80_entry)
 			{
 			  if (1)
 			    {
-			      (__top->data_array[(__top->p1.writeport.addr).__val]).__val = (__top->p1.writeport.write_data).__val;	//  file CacheMemory.aa, line 77
-			      __top->p1.writeport._assign_line_77_entry = 0;
-			      __top->p1.writeport._assign_line_77_exit = 1;
+			      (__top->data_array[(__top->p1.writeport.addr).__val]).__val = (__top->p1.writeport.write_data).__val;	//  file CacheMemory.aa, line 80
+			      __top->p1.writeport._assign_line_80_entry = 0;
+			      __top->p1.writeport._assign_line_80_exit = 1;
 			    }
 			}
 // -------------------------------------------------------------------------------------------
-// End Statement _assign_line_77
+// End Statement _assign_line_80
 // -------------------------------------------------------------------------------------------
-		      if (__top->p1.writeport._assign_line_77_exit)
+		      if (__top->p1.writeport._assign_line_80_exit)
 			{
-			  __top->p1.writeport._assign_line_77_exit = 0;
-			  __top->p1.writeport._call_line_78_entry = 1;
+			  __top->p1.writeport._assign_line_80_exit = 0;
+			  __top->p1.writeport._call_line_81_entry = 1;
 			}
-// -------------------------------------------------------------------------------------------
-// Begin Statement _call_line_78
-// -------------------------------------------------------------------------------------------
-		      if (__top->p1.writeport._call_line_78_entry)
-			{
-			  if (__top->p1.writeport._call_line_78_called_fn_struct == NULL)
-			    {
-			      __top->p1.writeport._call_line_78_called_fn_struct =
-				(Write_Hit_State *) calloc (1, sizeof (Write_Hit_State));
-// reset entry flag and set in progress flag
-			      __top->p1.writeport._call_line_78_entry = 0;
-			      __top->p1.writeport._call_line_78_in_progress = 1;
-			    }	// allocation of pointer to called function
-			}	// entry into this call statement
-		      if (__top->p1.writeport._call_line_78_in_progress)
-			{
-			  if (!__top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_entry
-			      && !__top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_in_progress)
-			    {	// entry and in_progress flags not set?
-			      if (1)
-				{	// check if pipes can be read from
-				  __top->p1.writeport._call_line_78_called_fn_struct->addr.__val =
-				    (__top->p1.writeport.write_address).__val;
-				  __top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_entry = 1;
-				}	// arguments copied to call structure
-			    }	// called function had entry flag set
-			  if (__top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_entry
-			      || __top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_in_progress)
-			    {	// called function still in progress
-// call the function
-			      Write_Hit (__top->p1.writeport._call_line_78_called_fn_struct->addr);	//   file CacheMemory.aa, line 78
-			      __top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_entry = 0;
-			      __top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_in_progress = 0;
-			      __top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_exit = 1;
-			    }	// called function was in progress 
-			  if (__top->p1.writeport._call_line_78_called_fn_struct->Write_Hit_exit)
-			    {
-			      if (1)
-				{
-				  cfree (__top->p1.writeport._call_line_78_called_fn_struct);
-				  __top->p1.writeport._call_line_78_called_fn_struct = NULL;
-// reset in progress flag and set exit flag
-				  __top->p1.writeport._call_line_78_exit = 1;
-				  __top->p1.writeport._call_line_78_in_progress = 0;
-				}	// ok to copy outputs to destinations?
-			    }	// called function had finishes?
-			}	// statement was in progress
-// -------------------------------------------------------------------------------------------
-// End Statement _call_line_78
-// -------------------------------------------------------------------------------------------
-		      if (__top->p1.writeport._call_line_78_exit)
-			{
-			  __top->p1.writeport._assign_line_77_exit = 0;
-			  __top->p1.writeport._call_line_78_exit = 0;
-			  __top->p1.writeport._if_line_75_in_progress = 0;
-			  __top->p1.writeport._if_line_75_exit = 1;
-			}
-		    }
-		  if (__top->p1.writeport._if_line_75_in_progress)
-		    {
 // -------------------------------------------------------------------------------------------
 // Begin Statement _call_line_81
 // -------------------------------------------------------------------------------------------
@@ -885,7 +826,7 @@ cachememory_ (cachememory_State * __top)
 			  if (__top->p1.writeport._call_line_81_called_fn_struct == NULL)
 			    {
 			      __top->p1.writeport._call_line_81_called_fn_struct =
-				(Write_Miss_State *) calloc (1, sizeof (Write_Miss_State));
+				(Write_Hit_State *) calloc (1, sizeof (Write_Hit_State));
 // reset entry flag and set in progress flag
 			      __top->p1.writeport._call_line_81_entry = 0;
 			      __top->p1.writeport._call_line_81_in_progress = 1;
@@ -893,26 +834,26 @@ cachememory_ (cachememory_State * __top)
 			}	// entry into this call statement
 		      if (__top->p1.writeport._call_line_81_in_progress)
 			{
-			  if (!__top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_entry
-			      && !__top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_in_progress)
+			  if (!__top->p1.writeport._call_line_81_called_fn_struct->Write_Hit_entry
+			      && !__top->p1.writeport._call_line_81_called_fn_struct->Write_Hit_in_progress)
 			    {	// entry and in_progress flags not set?
 			      if (1)
 				{	// check if pipes can be read from
 				  __top->p1.writeport._call_line_81_called_fn_struct->addr.__val =
 				    (__top->p1.writeport.write_address).__val;
-				  __top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_entry = 1;
+				  __top->p1.writeport._call_line_81_called_fn_struct->Write_Hit_entry = 1;
 				}	// arguments copied to call structure
 			    }	// called function had entry flag set
-			  if (__top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_entry
-			      || __top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_in_progress)
+			  if (__top->p1.writeport._call_line_81_called_fn_struct->Write_Hit_entry
+			      || __top->p1.writeport._call_line_81_called_fn_struct->Write_Hit_in_progress)
 			    {	// called function still in progress
 // call the function
-			      Write_Miss (__top->p1.writeport._call_line_81_called_fn_struct->addr);	//   file CacheMemory.aa, line 81
-			      __top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_entry = 0;
-			      __top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_in_progress = 0;
-			      __top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_exit = 1;
+			      Write_Hit (__top->p1.writeport._call_line_81_called_fn_struct->addr);	//   file CacheMemory.aa, line 81
+			      __top->p1.writeport._call_line_81_called_fn_struct->Write_Hit_entry = 0;
+			      __top->p1.writeport._call_line_81_called_fn_struct->Write_Hit_in_progress = 0;
+			      __top->p1.writeport._call_line_81_called_fn_struct->Write_Hit_exit = 1;
 			    }	// called function was in progress 
-			  if (__top->p1.writeport._call_line_81_called_fn_struct->Write_Miss_exit)
+			  if (__top->p1.writeport._call_line_81_called_fn_struct->Write_Hit_exit)
 			    {
 			      if (1)
 				{
@@ -929,168 +870,228 @@ cachememory_ (cachememory_State * __top)
 // -------------------------------------------------------------------------------------------
 		      if (__top->p1.writeport._call_line_81_exit)
 			{
+			  __top->p1.writeport._assign_line_80_exit = 0;
 			  __top->p1.writeport._call_line_81_exit = 0;
-			  __top->p1.writeport._if_line_75_in_progress = 0;
-			  __top->p1.writeport._if_line_75_exit = 1;
+			  __top->p1.writeport._if_line_78_in_progress = 0;
+			  __top->p1.writeport._if_line_78_exit = 1;
+			}
+		    }
+		  if (__top->p1.writeport._if_line_78_in_progress)
+		    {
+// -------------------------------------------------------------------------------------------
+// Begin Statement _call_line_84
+// -------------------------------------------------------------------------------------------
+		      if (__top->p1.writeport._call_line_84_entry)
+			{
+			  if (__top->p1.writeport._call_line_84_called_fn_struct == NULL)
+			    {
+			      __top->p1.writeport._call_line_84_called_fn_struct =
+				(Write_Miss_State *) calloc (1, sizeof (Write_Miss_State));
+// reset entry flag and set in progress flag
+			      __top->p1.writeport._call_line_84_entry = 0;
+			      __top->p1.writeport._call_line_84_in_progress = 1;
+			    }	// allocation of pointer to called function
+			}	// entry into this call statement
+		      if (__top->p1.writeport._call_line_84_in_progress)
+			{
+			  if (!__top->p1.writeport._call_line_84_called_fn_struct->Write_Miss_entry
+			      && !__top->p1.writeport._call_line_84_called_fn_struct->Write_Miss_in_progress)
+			    {	// entry and in_progress flags not set?
+			      if (1)
+				{	// check if pipes can be read from
+				  __top->p1.writeport._call_line_84_called_fn_struct->addr.__val =
+				    (__top->p1.writeport.write_address).__val;
+				  __top->p1.writeport._call_line_84_called_fn_struct->Write_Miss_entry = 1;
+				}	// arguments copied to call structure
+			    }	// called function had entry flag set
+			  if (__top->p1.writeport._call_line_84_called_fn_struct->Write_Miss_entry
+			      || __top->p1.writeport._call_line_84_called_fn_struct->Write_Miss_in_progress)
+			    {	// called function still in progress
+// call the function
+			      Write_Miss (__top->p1.writeport._call_line_84_called_fn_struct->addr);	//   file CacheMemory.aa, line 84
+			      __top->p1.writeport._call_line_84_called_fn_struct->Write_Miss_entry = 0;
+			      __top->p1.writeport._call_line_84_called_fn_struct->Write_Miss_in_progress = 0;
+			      __top->p1.writeport._call_line_84_called_fn_struct->Write_Miss_exit = 1;
+			    }	// called function was in progress 
+			  if (__top->p1.writeport._call_line_84_called_fn_struct->Write_Miss_exit)
+			    {
+			      if (1)
+				{
+				  cfree (__top->p1.writeport._call_line_84_called_fn_struct);
+				  __top->p1.writeport._call_line_84_called_fn_struct = NULL;
+// reset in progress flag and set exit flag
+				  __top->p1.writeport._call_line_84_exit = 1;
+				  __top->p1.writeport._call_line_84_in_progress = 0;
+				}	// ok to copy outputs to destinations?
+			    }	// called function had finishes?
+			}	// statement was in progress
+// -------------------------------------------------------------------------------------------
+// End Statement _call_line_84
+// -------------------------------------------------------------------------------------------
+		      if (__top->p1.writeport._call_line_84_exit)
+			{
+			  __top->p1.writeport._call_line_84_exit = 0;
+			  __top->p1.writeport._if_line_78_in_progress = 0;
+			  __top->p1.writeport._if_line_78_exit = 1;
 			}
 		    }
 // -------------------------------------------------------------------------------------------
-// End Statement _if_line_75
+// End Statement _if_line_78
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.writeport._if_line_75_exit)
+		  if (__top->p1.writeport._if_line_78_exit)
 		    {
-		      __top->p1.writeport._if_line_75_exit = 0;
-		      __top->p1.writeport._if_line_74_in_progress = 0;
-		      __top->p1.writeport._if_line_74_exit = 1;
+		      __top->p1.writeport._if_line_78_exit = 0;
+		      __top->p1.writeport._if_line_77_in_progress = 0;
+		      __top->p1.writeport._if_line_77_exit = 1;
 		    }
 		}
-	      if (__top->p1.writeport._if_line_74_in_progress)
+	      if (__top->p1.writeport._if_line_77_in_progress)
 		{
 // -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_85
+// Begin Statement _assign_line_88
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.writeport._assign_line_85_entry)
+		  if (__top->p1.writeport._assign_line_88_entry)
 		    {
 		      if (1)
 			{
-			  (__top->data_array[(__top->p1.writeport.addr).__val]).__val = (__top->p1.writeport.write_data).__val;	//  file CacheMemory.aa, line 85
-			  __top->p1.writeport._assign_line_85_entry = 0;
-			  __top->p1.writeport._assign_line_85_exit = 1;
+			  (__top->data_array[(__top->p1.writeport.addr).__val]).__val = (__top->p1.writeport.write_data).__val;	//  file CacheMemory.aa, line 88
+			  __top->p1.writeport._assign_line_88_entry = 0;
+			  __top->p1.writeport._assign_line_88_exit = 1;
 			}
 		    }
 // -------------------------------------------------------------------------------------------
-// End Statement _assign_line_85
+// End Statement _assign_line_88
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.writeport._assign_line_85_exit)
+		  if (__top->p1.writeport._assign_line_88_exit)
 		    {
-		      __top->p1.writeport._assign_line_85_exit = 0;
-		      __top->p1.writeport._assign_line_86_entry = 1;
+		      __top->p1.writeport._assign_line_88_exit = 0;
+		      __top->p1.writeport._assign_line_89_entry = 1;
 		    }
 // -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_86
+// Begin Statement _assign_line_89
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.writeport._assign_line_86_entry)
+		  if (__top->p1.writeport._assign_line_89_entry)
 		    {
 		      if (1)
 			{
-			  (__top->valid_array[(__top->p1.writeport.addr).__val]).__val = 1;	//  file CacheMemory.aa, line 86
-			  __top->p1.writeport._assign_line_86_entry = 0;
-			  __top->p1.writeport._assign_line_86_exit = 1;
+			  (__top->valid_array[(__top->p1.writeport.addr).__val]).__val = 1;	//  file CacheMemory.aa, line 89
+			  __top->p1.writeport._assign_line_89_entry = 0;
+			  __top->p1.writeport._assign_line_89_exit = 1;
 			}
 		    }
 // -------------------------------------------------------------------------------------------
-// End Statement _assign_line_86
+// End Statement _assign_line_89
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.writeport._assign_line_86_exit)
+		  if (__top->p1.writeport._assign_line_89_exit)
 		    {
-		      __top->p1.writeport._assign_line_86_exit = 0;
-		      __top->p1.writeport._assign_line_87_entry = 1;
+		      __top->p1.writeport._assign_line_89_exit = 0;
+		      __top->p1.writeport._assign_line_90_entry = 1;
 		    }
 // -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_87
+// Begin Statement _assign_line_90
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.writeport._assign_line_87_entry)
+		  if (__top->p1.writeport._assign_line_90_entry)
 		    {
 		      if (1)
 			{
-			  (__top->addr_array[(__top->p1.writeport.addr).__val]).__val = (__top->p1.writeport.write_address).__val;	//  file CacheMemory.aa, line 87
-			  __top->p1.writeport._assign_line_87_entry = 0;
-			  __top->p1.writeport._assign_line_87_exit = 1;
+			  (__top->addr_array[(__top->p1.writeport.addr).__val]).__val = (__top->p1.writeport.write_address).__val;	//  file CacheMemory.aa, line 90
+			  __top->p1.writeport._assign_line_90_entry = 0;
+			  __top->p1.writeport._assign_line_90_exit = 1;
 			}
 		    }
 // -------------------------------------------------------------------------------------------
-// End Statement _assign_line_87
+// End Statement _assign_line_90
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.writeport._assign_line_87_exit)
+		  if (__top->p1.writeport._assign_line_90_exit)
 		    {
-		      __top->p1.writeport._assign_line_87_exit = 0;
-		      __top->p1.writeport._call_line_88_entry = 1;
+		      __top->p1.writeport._assign_line_90_exit = 0;
+		      __top->p1.writeport._call_line_91_entry = 1;
 		    }
 // -------------------------------------------------------------------------------------------
-// Begin Statement _call_line_88
+// Begin Statement _call_line_91
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.writeport._call_line_88_entry)
+		  if (__top->p1.writeport._call_line_91_entry)
 		    {
-		      if (__top->p1.writeport._call_line_88_called_fn_struct == NULL)
+		      if (__top->p1.writeport._call_line_91_called_fn_struct == NULL)
 			{
-			  __top->p1.writeport._call_line_88_called_fn_struct =
+			  __top->p1.writeport._call_line_91_called_fn_struct =
 			    (Write_Hit_State *) calloc (1, sizeof (Write_Hit_State));
 // reset entry flag and set in progress flag
-			  __top->p1.writeport._call_line_88_entry = 0;
-			  __top->p1.writeport._call_line_88_in_progress = 1;
+			  __top->p1.writeport._call_line_91_entry = 0;
+			  __top->p1.writeport._call_line_91_in_progress = 1;
 			}	// allocation of pointer to called function
 		    }		// entry into this call statement
-		  if (__top->p1.writeport._call_line_88_in_progress)
+		  if (__top->p1.writeport._call_line_91_in_progress)
 		    {
-		      if (!__top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_entry
-			  && !__top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_in_progress)
+		      if (!__top->p1.writeport._call_line_91_called_fn_struct->Write_Hit_entry
+			  && !__top->p1.writeport._call_line_91_called_fn_struct->Write_Hit_in_progress)
 			{	// entry and in_progress flags not set?
 			  if (1)
 			    {	// check if pipes can be read from
-			      __top->p1.writeport._call_line_88_called_fn_struct->addr.__val =
+			      __top->p1.writeport._call_line_91_called_fn_struct->addr.__val =
 				(__top->p1.writeport.write_address).__val;
-			      __top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_entry = 1;
+			      __top->p1.writeport._call_line_91_called_fn_struct->Write_Hit_entry = 1;
 			    }	// arguments copied to call structure
 			}	// called function had entry flag set
-		      if (__top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_entry
-			  || __top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_in_progress)
+		      if (__top->p1.writeport._call_line_91_called_fn_struct->Write_Hit_entry
+			  || __top->p1.writeport._call_line_91_called_fn_struct->Write_Hit_in_progress)
 			{	// called function still in progress
 // call the function
-			  Write_Hit (__top->p1.writeport._call_line_88_called_fn_struct->addr);	//   file CacheMemory.aa, line 88
-			  __top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_entry = 0;
-			  __top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_in_progress = 0;
-			  __top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_exit = 1;
+			  Write_Hit (__top->p1.writeport._call_line_91_called_fn_struct->addr);	//   file CacheMemory.aa, line 91
+			  __top->p1.writeport._call_line_91_called_fn_struct->Write_Hit_entry = 0;
+			  __top->p1.writeport._call_line_91_called_fn_struct->Write_Hit_in_progress = 0;
+			  __top->p1.writeport._call_line_91_called_fn_struct->Write_Hit_exit = 1;
 			}	// called function was in progress 
-		      if (__top->p1.writeport._call_line_88_called_fn_struct->Write_Hit_exit)
+		      if (__top->p1.writeport._call_line_91_called_fn_struct->Write_Hit_exit)
 			{
 			  if (1)
 			    {
-			      cfree (__top->p1.writeport._call_line_88_called_fn_struct);
-			      __top->p1.writeport._call_line_88_called_fn_struct = NULL;
+			      cfree (__top->p1.writeport._call_line_91_called_fn_struct);
+			      __top->p1.writeport._call_line_91_called_fn_struct = NULL;
 // reset in progress flag and set exit flag
-			      __top->p1.writeport._call_line_88_exit = 1;
-			      __top->p1.writeport._call_line_88_in_progress = 0;
+			      __top->p1.writeport._call_line_91_exit = 1;
+			      __top->p1.writeport._call_line_91_in_progress = 0;
 			    }	// ok to copy outputs to destinations?
 			}	// called function had finishes?
 		    }		// statement was in progress
 // -------------------------------------------------------------------------------------------
-// End Statement _call_line_88
+// End Statement _call_line_91
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.writeport._call_line_88_exit)
+		  if (__top->p1.writeport._call_line_91_exit)
 		    {
-		      __top->p1.writeport._assign_line_85_exit = 0;
-		      __top->p1.writeport._assign_line_86_exit = 0;
-		      __top->p1.writeport._assign_line_87_exit = 0;
-		      __top->p1.writeport._call_line_88_exit = 0;
-		      __top->p1.writeport._if_line_74_in_progress = 0;
-		      __top->p1.writeport._if_line_74_exit = 1;
+		      __top->p1.writeport._assign_line_88_exit = 0;
+		      __top->p1.writeport._assign_line_89_exit = 0;
+		      __top->p1.writeport._assign_line_90_exit = 0;
+		      __top->p1.writeport._call_line_91_exit = 0;
+		      __top->p1.writeport._if_line_77_in_progress = 0;
+		      __top->p1.writeport._if_line_77_exit = 1;
 		    }
 		}
 // -------------------------------------------------------------------------------------------
-// End Statement _if_line_74
+// End Statement _if_line_77
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.writeport._if_line_74_exit)
+	      if (__top->p1.writeport._if_line_77_exit)
 		{
-		  __top->p1.writeport._if_line_74_exit = 0;
-		  __top->p1.writeport._place_line_90_entry = 1;
+		  __top->p1.writeport._if_line_77_exit = 0;
+		  __top->p1.writeport._place_line_93_entry = 1;
 		}
 // -------------------------------------------------------------------------------------------
-// Begin Statement _place_line_90
+// Begin Statement _place_line_93
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.writeport._place_line_90_entry)
+	      if (__top->p1.writeport._place_line_93_entry)
 		{
 		  __top->p1.writeport.loopback = 1;
-		  __top->p1.writeport._place_line_90_entry = 0;
+		  __top->p1.writeport._place_line_93_entry = 0;
 		}
 // -------------------------------------------------------------------------------------------
-// End Statement _place_line_90
+// End Statement _place_line_93
 // -------------------------------------------------------------------------------------------
 	      if (0)
 		{
-		  __top->p1.writeport._merge_line_68_exit = 0;
+		  __top->p1.writeport._merge_line_71_exit = 0;
 		  __top->p1.writeport.getdetails.getdetails_exit = 0;
-		  __top->p1.writeport._assign_line_73_exit = 0;
-		  __top->p1.writeport._if_line_74_exit = 0;
+		  __top->p1.writeport._assign_line_76_exit = 0;
+		  __top->p1.writeport._if_line_77_exit = 0;
 		  __top->p1.writeport.writeport_in_progress = 0;
 		  __top->p1.writeport.writeport_exit = 1;
 		}
@@ -1105,189 +1106,128 @@ cachememory_ (cachememory_State * __top)
 	    {
 	      __top->p1.readport.readport_entry = 0;
 	      __top->p1.readport.readport_in_progress = 1;
-	      __top->p1.readport._merge_line_96_entry = 1;
+	      __top->p1.readport._merge_line_99_entry = 1;
 	    }
 	  if (__top->p1.readport.readport_in_progress)
 	    {
 // -------------------------------------------------------------------------------------------
-// Begin Block _merge_line_96
+// Begin Block _merge_line_99
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.readport._merge_line_96_entry || __top->p1.readport.loopback)
+	      if (__top->p1.readport._merge_line_99_entry || __top->p1.readport.loopback)
 		{
-		  if (__top->p1.readport._merge_line_96_entry)
+		  if (__top->p1.readport._merge_line_99_entry)
 		    {
-		      __top->p1.readport._merge_line_96_entry = 0;
-		      __top->p1.readport._merge_line_96_from_entry = 1;
+		      __top->p1.readport._merge_line_99_entry = 0;
+		      __top->p1.readport._merge_line_99_from_entry = 1;
 		    }
-		  __top->p1.readport._merge_line_96_in_progress = 1;
+		  __top->p1.readport._merge_line_99_in_progress = 1;
 		}
-	      if (__top->p1.readport._merge_line_96_in_progress)
+	      if (__top->p1.readport._merge_line_99_in_progress)
 		{
 		  if (1)
 		    {
 		      // clear the place flag 
 		      __top->p1.readport.loopback = 0;
-		      __top->p1.readport._merge_line_96_from_entry = 0;
-		      __top->p1.readport._merge_line_96_in_progress = 0;
-		      __top->p1.readport._merge_line_96_exit = 1;
+		      __top->p1.readport._merge_line_99_from_entry = 0;
+		      __top->p1.readport._merge_line_99_in_progress = 0;
+		      __top->p1.readport._merge_line_99_exit = 1;
 		    }
 		}
 // -------------------------------------------------------------------------------------------
-// End Block _merge_line_96
+// End Block _merge_line_99
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.readport._merge_line_96_exit)
+	      if (__top->p1.readport._merge_line_99_exit)
 		{
-		  __top->p1.readport._merge_line_96_exit = 0;
-		  __top->p1.readport._assign_line_97_entry = 1;
+		  __top->p1.readport._merge_line_99_exit = 0;
+		  __top->p1.readport._assign_line_100_entry = 1;
 		}
 // -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_97
+// Begin Statement _assign_line_100
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.readport._assign_line_97_entry)
+	      if (__top->p1.readport._assign_line_100_entry)
 		{
 		  if (1 && __top->read_address_pipe_valid__)
 		    {
-		      (__top->p1.readport.read_address).__val = (__top->read_address_pipe).__val;	//  file CacheMemory.aa, line 97
+		      (__top->p1.readport.read_address).__val = (__top->read_address_pipe).__val;	//  file CacheMemory.aa, line 100
 		      __top->read_address_pipe_valid__ = 0;
-		      __top->p1.readport._assign_line_97_entry = 0;
-		      __top->p1.readport._assign_line_97_exit = 1;
+		      __top->p1.readport._assign_line_100_entry = 0;
+		      __top->p1.readport._assign_line_100_exit = 1;
 		    }
 		}
 // -------------------------------------------------------------------------------------------
-// End Statement _assign_line_97
+// End Statement _assign_line_100
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.readport._assign_line_97_exit)
+	      if (__top->p1.readport._assign_line_100_exit)
 		{
-		  __top->p1.readport._assign_line_97_exit = 0;
-		  __top->p1.readport._assign_line_98_entry = 1;
+		  __top->p1.readport._assign_line_100_exit = 0;
+		  __top->p1.readport._assign_line_101_entry = 1;
 		}
 // -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_98
+// Begin Statement _assign_line_101
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.readport._assign_line_98_entry)
+	      if (__top->p1.readport._assign_line_101_entry)
 		{
 		  if (1)
 		    {
-		      (__top->p1.readport.addr).__val = __AND ((__top->p1.readport.read_address).__val, (__top->map_mask).__val);	//  file CacheMemory.aa, line 98
-		      __top->p1.readport._assign_line_98_entry = 0;
-		      __top->p1.readport._assign_line_98_exit = 1;
+		      (__top->p1.readport.addr).__val = __AND ((__top->p1.readport.read_address).__val, (__top->map_mask).__val);	//  file CacheMemory.aa, line 101
+		      __top->p1.readport._assign_line_101_entry = 0;
+		      __top->p1.readport._assign_line_101_exit = 1;
 		    }
 		}
 // -------------------------------------------------------------------------------------------
-// End Statement _assign_line_98
+// End Statement _assign_line_101
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.readport._assign_line_98_exit)
+	      if (__top->p1.readport._assign_line_101_exit)
 		{
-		  __top->p1.readport._assign_line_98_exit = 0;
-		  __top->p1.readport._if_line_99_entry = 1;
+		  __top->p1.readport._assign_line_101_exit = 0;
+		  __top->p1.readport._if_line_102_entry = 1;
 		}
 // -------------------------------------------------------------------------------------------
-// Begin Statement _if_line_99
+// Begin Statement _if_line_102
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.readport._if_line_99_entry)
+	      if (__top->p1.readport._if_line_102_entry)
 		{
 		  if (1)
 		    {
 		      if ((__top->valid_array[(__top->p1.readport.addr).__val]).__val)
 			{
-			  __top->p1.readport._if_line_99_entry = 0;
-			  __top->p1.readport._if_line_99_in_progress = 1;
-			  __top->p1.readport._if_line_100_entry = 1;
+			  __top->p1.readport._if_line_102_entry = 0;
+			  __top->p1.readport._if_line_102_in_progress = 1;
+			  __top->p1.readport._if_line_103_entry = 1;
 			}
 		      else
 			{
-			  __top->p1.readport._if_line_99_entry = 0;
-			  __top->p1.readport._if_line_99_in_progress = 1;
-			  __top->p1.readport._call_line_109_entry = 1;
+			  __top->p1.readport._if_line_102_entry = 0;
+			  __top->p1.readport._if_line_102_in_progress = 1;
+			  __top->p1.readport._call_line_112_entry = 1;
 			}	// transfer control based on test condition
 		    }		// proceed if pipe is available 
 		}		// entry flag
-	      if (__top->p1.readport._if_line_99_in_progress)
+	      if (__top->p1.readport._if_line_102_in_progress)
 		{
 // -------------------------------------------------------------------------------------------
-// Begin Statement _if_line_100
+// Begin Statement _if_line_103
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.readport._if_line_100_entry)
+		  if (__top->p1.readport._if_line_103_entry)
 		    {
 		      if (1)
 			{
 			  if (__EQUAL
 			      ((__top->addr_array[(__top->p1.readport.addr).__val]).__val, (__top->p1.readport.read_address).__val))
 			    {
-			      __top->p1.readport._if_line_100_entry = 0;
-			      __top->p1.readport._if_line_100_in_progress = 1;
-			      __top->p1.readport._call_line_102_entry = 1;
+			      __top->p1.readport._if_line_103_entry = 0;
+			      __top->p1.readport._if_line_103_in_progress = 1;
+			      __top->p1.readport._call_line_105_entry = 1;
 			    }
 			  else
 			    {
-			      __top->p1.readport._if_line_100_entry = 0;
-			      __top->p1.readport._if_line_100_in_progress = 1;
-			      __top->p1.readport._call_line_105_entry = 1;
+			      __top->p1.readport._if_line_103_entry = 0;
+			      __top->p1.readport._if_line_103_in_progress = 1;
+			      __top->p1.readport._call_line_108_entry = 1;
 			    }	// transfer control based on test condition
 			}	// proceed if pipe is available 
 		    }		// entry flag
-		  if (__top->p1.readport._if_line_100_in_progress)
-		    {
-// -------------------------------------------------------------------------------------------
-// Begin Statement _call_line_102
-// -------------------------------------------------------------------------------------------
-		      if (__top->p1.readport._call_line_102_entry)
-			{
-			  if (__top->p1.readport._call_line_102_called_fn_struct == NULL)
-			    {
-			      __top->p1.readport._call_line_102_called_fn_struct =
-				(Read_Hit_State *) calloc (1, sizeof (Read_Hit_State));
-// reset entry flag and set in progress flag
-			      __top->p1.readport._call_line_102_entry = 0;
-			      __top->p1.readport._call_line_102_in_progress = 1;
-			    }	// allocation of pointer to called function
-			}	// entry into this call statement
-		      if (__top->p1.readport._call_line_102_in_progress)
-			{
-			  if (!__top->p1.readport._call_line_102_called_fn_struct->Read_Hit_entry
-			      && !__top->p1.readport._call_line_102_called_fn_struct->Read_Hit_in_progress)
-			    {	// entry and in_progress flags not set?
-			      if (1)
-				{	// check if pipes can be read from
-				  __top->p1.readport._call_line_102_called_fn_struct->addr.__val =
-				    (__top->p1.readport.read_address).__val;
-				  __top->p1.readport._call_line_102_called_fn_struct->data.__val =
-				    (__top->data_array[(__top->p1.readport.addr).__val]).__val;
-				  __top->p1.readport._call_line_102_called_fn_struct->Read_Hit_entry = 1;
-				}	// arguments copied to call structure
-			    }	// called function had entry flag set
-			  if (__top->p1.readport._call_line_102_called_fn_struct->Read_Hit_entry
-			      || __top->p1.readport._call_line_102_called_fn_struct->Read_Hit_in_progress)
-			    {	// called function still in progress
-// call the function
-			      Read_Hit (__top->p1.readport._call_line_102_called_fn_struct->addr, __top->p1.readport._call_line_102_called_fn_struct->data);	//   file CacheMemory.aa, line 102
-			      __top->p1.readport._call_line_102_called_fn_struct->Read_Hit_entry = 0;
-			      __top->p1.readport._call_line_102_called_fn_struct->Read_Hit_in_progress = 0;
-			      __top->p1.readport._call_line_102_called_fn_struct->Read_Hit_exit = 1;
-			    }	// called function was in progress 
-			  if (__top->p1.readport._call_line_102_called_fn_struct->Read_Hit_exit)
-			    {
-			      if (1)
-				{
-				  cfree (__top->p1.readport._call_line_102_called_fn_struct);
-				  __top->p1.readport._call_line_102_called_fn_struct = NULL;
-// reset in progress flag and set exit flag
-				  __top->p1.readport._call_line_102_exit = 1;
-				  __top->p1.readport._call_line_102_in_progress = 0;
-				}	// ok to copy outputs to destinations?
-			    }	// called function had finishes?
-			}	// statement was in progress
-// -------------------------------------------------------------------------------------------
-// End Statement _call_line_102
-// -------------------------------------------------------------------------------------------
-		      if (__top->p1.readport._call_line_102_exit)
-			{
-			  __top->p1.readport._call_line_102_exit = 0;
-			  __top->p1.readport._if_line_100_in_progress = 0;
-			  __top->p1.readport._if_line_100_exit = 1;
-			}
-		    }
-		  if (__top->p1.readport._if_line_100_in_progress)
+		  if (__top->p1.readport._if_line_103_in_progress)
 		    {
 // -------------------------------------------------------------------------------------------
 // Begin Statement _call_line_105
@@ -1297,7 +1237,7 @@ cachememory_ (cachememory_State * __top)
 			  if (__top->p1.readport._call_line_105_called_fn_struct == NULL)
 			    {
 			      __top->p1.readport._call_line_105_called_fn_struct =
-				(Read_Miss_State *) calloc (1, sizeof (Read_Miss_State));
+				(Read_Hit_State *) calloc (1, sizeof (Read_Hit_State));
 // reset entry flag and set in progress flag
 			      __top->p1.readport._call_line_105_entry = 0;
 			      __top->p1.readport._call_line_105_in_progress = 1;
@@ -1305,26 +1245,28 @@ cachememory_ (cachememory_State * __top)
 			}	// entry into this call statement
 		      if (__top->p1.readport._call_line_105_in_progress)
 			{
-			  if (!__top->p1.readport._call_line_105_called_fn_struct->Read_Miss_entry
-			      && !__top->p1.readport._call_line_105_called_fn_struct->Read_Miss_in_progress)
+			  if (!__top->p1.readport._call_line_105_called_fn_struct->Read_Hit_entry
+			      && !__top->p1.readport._call_line_105_called_fn_struct->Read_Hit_in_progress)
 			    {	// entry and in_progress flags not set?
 			      if (1)
 				{	// check if pipes can be read from
 				  __top->p1.readport._call_line_105_called_fn_struct->addr.__val =
 				    (__top->p1.readport.read_address).__val;
-				  __top->p1.readport._call_line_105_called_fn_struct->Read_Miss_entry = 1;
+				  __top->p1.readport._call_line_105_called_fn_struct->data.__val =
+				    (__top->data_array[(__top->p1.readport.addr).__val]).__val;
+				  __top->p1.readport._call_line_105_called_fn_struct->Read_Hit_entry = 1;
 				}	// arguments copied to call structure
 			    }	// called function had entry flag set
-			  if (__top->p1.readport._call_line_105_called_fn_struct->Read_Miss_entry
-			      || __top->p1.readport._call_line_105_called_fn_struct->Read_Miss_in_progress)
+			  if (__top->p1.readport._call_line_105_called_fn_struct->Read_Hit_entry
+			      || __top->p1.readport._call_line_105_called_fn_struct->Read_Hit_in_progress)
 			    {	// called function still in progress
 // call the function
-			      Read_Miss (__top->p1.readport._call_line_105_called_fn_struct->addr);	//   file CacheMemory.aa, line 105
-			      __top->p1.readport._call_line_105_called_fn_struct->Read_Miss_entry = 0;
-			      __top->p1.readport._call_line_105_called_fn_struct->Read_Miss_in_progress = 0;
-			      __top->p1.readport._call_line_105_called_fn_struct->Read_Miss_exit = 1;
+			      Read_Hit (__top->p1.readport._call_line_105_called_fn_struct->addr, __top->p1.readport._call_line_105_called_fn_struct->data);	//   file CacheMemory.aa, line 105
+			      __top->p1.readport._call_line_105_called_fn_struct->Read_Hit_entry = 0;
+			      __top->p1.readport._call_line_105_called_fn_struct->Read_Hit_in_progress = 0;
+			      __top->p1.readport._call_line_105_called_fn_struct->Read_Hit_exit = 1;
 			    }	// called function was in progress 
-			  if (__top->p1.readport._call_line_105_called_fn_struct->Read_Miss_exit)
+			  if (__top->p1.readport._call_line_105_called_fn_struct->Read_Hit_exit)
 			    {
 			      if (1)
 				{
@@ -1342,104 +1284,163 @@ cachememory_ (cachememory_State * __top)
 		      if (__top->p1.readport._call_line_105_exit)
 			{
 			  __top->p1.readport._call_line_105_exit = 0;
-			  __top->p1.readport._if_line_100_in_progress = 0;
-			  __top->p1.readport._if_line_100_exit = 1;
+			  __top->p1.readport._if_line_103_in_progress = 0;
+			  __top->p1.readport._if_line_103_exit = 1;
+			}
+		    }
+		  if (__top->p1.readport._if_line_103_in_progress)
+		    {
+// -------------------------------------------------------------------------------------------
+// Begin Statement _call_line_108
+// -------------------------------------------------------------------------------------------
+		      if (__top->p1.readport._call_line_108_entry)
+			{
+			  if (__top->p1.readport._call_line_108_called_fn_struct == NULL)
+			    {
+			      __top->p1.readport._call_line_108_called_fn_struct =
+				(Read_Miss_State *) calloc (1, sizeof (Read_Miss_State));
+// reset entry flag and set in progress flag
+			      __top->p1.readport._call_line_108_entry = 0;
+			      __top->p1.readport._call_line_108_in_progress = 1;
+			    }	// allocation of pointer to called function
+			}	// entry into this call statement
+		      if (__top->p1.readport._call_line_108_in_progress)
+			{
+			  if (!__top->p1.readport._call_line_108_called_fn_struct->Read_Miss_entry
+			      && !__top->p1.readport._call_line_108_called_fn_struct->Read_Miss_in_progress)
+			    {	// entry and in_progress flags not set?
+			      if (1)
+				{	// check if pipes can be read from
+				  __top->p1.readport._call_line_108_called_fn_struct->addr.__val =
+				    (__top->p1.readport.read_address).__val;
+				  __top->p1.readport._call_line_108_called_fn_struct->Read_Miss_entry = 1;
+				}	// arguments copied to call structure
+			    }	// called function had entry flag set
+			  if (__top->p1.readport._call_line_108_called_fn_struct->Read_Miss_entry
+			      || __top->p1.readport._call_line_108_called_fn_struct->Read_Miss_in_progress)
+			    {	// called function still in progress
+// call the function
+			      Read_Miss (__top->p1.readport._call_line_108_called_fn_struct->addr);	//   file CacheMemory.aa, line 108
+			      __top->p1.readport._call_line_108_called_fn_struct->Read_Miss_entry = 0;
+			      __top->p1.readport._call_line_108_called_fn_struct->Read_Miss_in_progress = 0;
+			      __top->p1.readport._call_line_108_called_fn_struct->Read_Miss_exit = 1;
+			    }	// called function was in progress 
+			  if (__top->p1.readport._call_line_108_called_fn_struct->Read_Miss_exit)
+			    {
+			      if (1)
+				{
+				  cfree (__top->p1.readport._call_line_108_called_fn_struct);
+				  __top->p1.readport._call_line_108_called_fn_struct = NULL;
+// reset in progress flag and set exit flag
+				  __top->p1.readport._call_line_108_exit = 1;
+				  __top->p1.readport._call_line_108_in_progress = 0;
+				}	// ok to copy outputs to destinations?
+			    }	// called function had finishes?
+			}	// statement was in progress
+// -------------------------------------------------------------------------------------------
+// End Statement _call_line_108
+// -------------------------------------------------------------------------------------------
+		      if (__top->p1.readport._call_line_108_exit)
+			{
+			  __top->p1.readport._call_line_108_exit = 0;
+			  __top->p1.readport._if_line_103_in_progress = 0;
+			  __top->p1.readport._if_line_103_exit = 1;
 			}
 		    }
 // -------------------------------------------------------------------------------------------
-// End Statement _if_line_100
+// End Statement _if_line_103
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.readport._if_line_100_exit)
+		  if (__top->p1.readport._if_line_103_exit)
 		    {
-		      __top->p1.readport._if_line_100_exit = 0;
-		      __top->p1.readport._if_line_99_in_progress = 0;
-		      __top->p1.readport._if_line_99_exit = 1;
+		      __top->p1.readport._if_line_103_exit = 0;
+		      __top->p1.readport._if_line_102_in_progress = 0;
+		      __top->p1.readport._if_line_102_exit = 1;
 		    }
 		}
-	      if (__top->p1.readport._if_line_99_in_progress)
+	      if (__top->p1.readport._if_line_102_in_progress)
 		{
 // -------------------------------------------------------------------------------------------
-// Begin Statement _call_line_109
+// Begin Statement _call_line_112
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.readport._call_line_109_entry)
+		  if (__top->p1.readport._call_line_112_entry)
 		    {
-		      if (__top->p1.readport._call_line_109_called_fn_struct == NULL)
+		      if (__top->p1.readport._call_line_112_called_fn_struct == NULL)
 			{
-			  __top->p1.readport._call_line_109_called_fn_struct =
+			  __top->p1.readport._call_line_112_called_fn_struct =
 			    (Read_Miss_State *) calloc (1, sizeof (Read_Miss_State));
 // reset entry flag and set in progress flag
-			  __top->p1.readport._call_line_109_entry = 0;
-			  __top->p1.readport._call_line_109_in_progress = 1;
+			  __top->p1.readport._call_line_112_entry = 0;
+			  __top->p1.readport._call_line_112_in_progress = 1;
 			}	// allocation of pointer to called function
 		    }		// entry into this call statement
-		  if (__top->p1.readport._call_line_109_in_progress)
+		  if (__top->p1.readport._call_line_112_in_progress)
 		    {
-		      if (!__top->p1.readport._call_line_109_called_fn_struct->Read_Miss_entry
-			  && !__top->p1.readport._call_line_109_called_fn_struct->Read_Miss_in_progress)
+		      if (!__top->p1.readport._call_line_112_called_fn_struct->Read_Miss_entry
+			  && !__top->p1.readport._call_line_112_called_fn_struct->Read_Miss_in_progress)
 			{	// entry and in_progress flags not set?
 			  if (1)
 			    {	// check if pipes can be read from
-			      __top->p1.readport._call_line_109_called_fn_struct->addr.__val =
+			      __top->p1.readport._call_line_112_called_fn_struct->addr.__val =
 				(__top->p1.readport.read_address).__val;
-			      __top->p1.readport._call_line_109_called_fn_struct->Read_Miss_entry = 1;
+			      __top->p1.readport._call_line_112_called_fn_struct->Read_Miss_entry = 1;
 			    }	// arguments copied to call structure
 			}	// called function had entry flag set
-		      if (__top->p1.readport._call_line_109_called_fn_struct->Read_Miss_entry
-			  || __top->p1.readport._call_line_109_called_fn_struct->Read_Miss_in_progress)
+		      if (__top->p1.readport._call_line_112_called_fn_struct->Read_Miss_entry
+			  || __top->p1.readport._call_line_112_called_fn_struct->Read_Miss_in_progress)
 			{	// called function still in progress
 // call the function
-			  Read_Miss (__top->p1.readport._call_line_109_called_fn_struct->addr);	//   file CacheMemory.aa, line 109
-			  __top->p1.readport._call_line_109_called_fn_struct->Read_Miss_entry = 0;
-			  __top->p1.readport._call_line_109_called_fn_struct->Read_Miss_in_progress = 0;
-			  __top->p1.readport._call_line_109_called_fn_struct->Read_Miss_exit = 1;
+			  Read_Miss (__top->p1.readport._call_line_112_called_fn_struct->addr);	//   file CacheMemory.aa, line 112
+			  __top->p1.readport._call_line_112_called_fn_struct->Read_Miss_entry = 0;
+			  __top->p1.readport._call_line_112_called_fn_struct->Read_Miss_in_progress = 0;
+			  __top->p1.readport._call_line_112_called_fn_struct->Read_Miss_exit = 1;
 			}	// called function was in progress 
-		      if (__top->p1.readport._call_line_109_called_fn_struct->Read_Miss_exit)
+		      if (__top->p1.readport._call_line_112_called_fn_struct->Read_Miss_exit)
 			{
 			  if (1)
 			    {
-			      cfree (__top->p1.readport._call_line_109_called_fn_struct);
-			      __top->p1.readport._call_line_109_called_fn_struct = NULL;
+			      cfree (__top->p1.readport._call_line_112_called_fn_struct);
+			      __top->p1.readport._call_line_112_called_fn_struct = NULL;
 // reset in progress flag and set exit flag
-			      __top->p1.readport._call_line_109_exit = 1;
-			      __top->p1.readport._call_line_109_in_progress = 0;
+			      __top->p1.readport._call_line_112_exit = 1;
+			      __top->p1.readport._call_line_112_in_progress = 0;
 			    }	// ok to copy outputs to destinations?
 			}	// called function had finishes?
 		    }		// statement was in progress
 // -------------------------------------------------------------------------------------------
-// End Statement _call_line_109
+// End Statement _call_line_112
 // -------------------------------------------------------------------------------------------
-		  if (__top->p1.readport._call_line_109_exit)
+		  if (__top->p1.readport._call_line_112_exit)
 		    {
-		      __top->p1.readport._call_line_109_exit = 0;
-		      __top->p1.readport._if_line_99_in_progress = 0;
-		      __top->p1.readport._if_line_99_exit = 1;
+		      __top->p1.readport._call_line_112_exit = 0;
+		      __top->p1.readport._if_line_102_in_progress = 0;
+		      __top->p1.readport._if_line_102_exit = 1;
 		    }
 		}
 // -------------------------------------------------------------------------------------------
-// End Statement _if_line_99
+// End Statement _if_line_102
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.readport._if_line_99_exit)
+	      if (__top->p1.readport._if_line_102_exit)
 		{
-		  __top->p1.readport._if_line_99_exit = 0;
-		  __top->p1.readport._place_line_111_entry = 1;
+		  __top->p1.readport._if_line_102_exit = 0;
+		  __top->p1.readport._place_line_114_entry = 1;
 		}
 // -------------------------------------------------------------------------------------------
-// Begin Statement _place_line_111
+// Begin Statement _place_line_114
 // -------------------------------------------------------------------------------------------
-	      if (__top->p1.readport._place_line_111_entry)
+	      if (__top->p1.readport._place_line_114_entry)
 		{
 		  __top->p1.readport.loopback = 1;
-		  __top->p1.readport._place_line_111_entry = 0;
+		  __top->p1.readport._place_line_114_entry = 0;
 		}
 // -------------------------------------------------------------------------------------------
-// End Statement _place_line_111
+// End Statement _place_line_114
 // -------------------------------------------------------------------------------------------
 	      if (0)
 		{
-		  __top->p1.readport._merge_line_96_exit = 0;
-		  __top->p1.readport._assign_line_97_exit = 0;
-		  __top->p1.readport._assign_line_98_exit = 0;
-		  __top->p1.readport._if_line_99_exit = 0;
+		  __top->p1.readport._merge_line_99_exit = 0;
+		  __top->p1.readport._assign_line_100_exit = 0;
+		  __top->p1.readport._assign_line_101_exit = 0;
+		  __top->p1.readport._if_line_102_exit = 0;
 		  __top->p1.readport.readport_in_progress = 0;
 		  __top->p1.readport.readport_exit = 1;
 		}

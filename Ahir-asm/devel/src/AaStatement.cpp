@@ -276,6 +276,7 @@ void AaStatement::Write_C_Function_Body(ofstream& ofile)
   ofile << "// -------------------------------------------------------------------------------------------" << endl;
 }
 
+
 //---------------------------------------------------------------------
 // AaStatementSequence
 //---------------------------------------------------------------------
@@ -441,9 +442,6 @@ void AaAssignmentStatement::Map_Source_References()
   AaProgram::Add_Type_Dependency(this->_target,this->_source);
 }
 
-
-
- 
 
 
 void AaAssignmentStatement::PrintC(ofstream& ofile, string tab_string)

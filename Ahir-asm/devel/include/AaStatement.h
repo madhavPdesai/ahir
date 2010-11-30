@@ -57,6 +57,8 @@ class AaStatement: public AaScope
   virtual void Write_C_Function_Body(ofstream& ofile);
 
   virtual string Get_C_Name() {assert(0); }
+
+
   virtual string Get_Entry_Name() { return(this->Get_C_Name() + "_entry"); }
   virtual string Get_In_Progress_Name() { return(this->Get_C_Name() + "_in_progress"); }
   virtual string Get_Exit_Name() { return(this->Get_C_Name() + "_exit"); }
@@ -92,12 +94,17 @@ class AaStatement: public AaScope
   virtual void PrintC(ofstream& ofile, string tab_string) { assert(0); }
 
   virtual string Get_Source_Info() 
-  { 
-    return(string(" file ") 
+  {
+     return(string(" file ") 
 	   + this->Get_File_Name() 
 	   + ", line " 
 	   + 
 	   IntToStr(this->Get_Line_Number())); 
+  }
+
+  virtual string Get_Line_Directive()
+  {
+    return(string("#line ") + IntToStr(this->Get_Line_Number()) + " \"" + this->Get_File_Name() + "\"\n");
   }
 
 };

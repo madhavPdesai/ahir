@@ -37,6 +37,7 @@ int main (int argc, char* argv)
       cout << "typedef struct _uint_" << IntToStr(i) << " { " << endl;
       cout << "\t" << stduint_type << " __val : " << IntToStr(i) << ";" << endl;
       cout << "} uint_" << IntToStr(i) << ";" << endl;
+
  
       cout << endl;
 
@@ -78,9 +79,12 @@ int main (int argc, char* argv)
   cout << "#define " << C_Name(__GREATER)      << "(x,y)  ((x) > (y))"      << endl;
   cout << "#define " << C_Name(__GREATEREQUAL) << "(x,y)  ((x) >= (y))"     << endl;
   cout << "#define " << C_Name(__NOT)          << "(x)    (~(x))"           << endl;
+  
+  // added bit-select and concatenate
+  cout << "#define " << C_Name(__BITSEL)       << "(x,y)  ((x & (1 << y)) >> y)"      << endl;
+  cout << "#define " << C_Name(__CONCAT)       << "(z,x,lx,y,ly)  (((uint ##z)(x << ly))|y)" << endl;
 
   // some return codes
-
   cout << "#define AASUCCESS 0" << endl;
   cout << "#define AAFAILURE 1" << endl;
 }

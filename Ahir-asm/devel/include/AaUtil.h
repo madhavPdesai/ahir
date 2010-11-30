@@ -19,6 +19,8 @@ struct StringCompare:public binary_function
 
 bool Is_Compare_Operation(AaOperation op);
 bool Is_Shift_Operation(AaOperation op);
+bool Is_Bitsel_Operation(AaOperation op);
+bool Is_Concat_Operation(AaOperation op);
 
 
 string C_Name(AaOperation op);

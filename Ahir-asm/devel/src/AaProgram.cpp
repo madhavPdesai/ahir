@@ -186,72 +186,110 @@ bool AaProgram::Propagate_Types()
   int num_comps = AaProgram::_type_dependency_graph.Connected_Components(type_eq_class_map);
   bool err_flag = false;
   assert(num_comps == type_eq_class_map.size());
-  for(unsigned int i = 0; i < num_comps; i++)
-    {
-      AaType* itype = NULL;
+  int unknown_type_count, last_unknown_type_count;
 
-      // two passes: first find the type and then set it
-      for(set<AaRoot*>::iterator siter = type_eq_class_map[i].begin();
-	  siter != type_eq_class_map[i].end();
-	  siter++)
+  unknown_type_count = 0;
+
+  // initially all are in the unknown set
+  set<int> unknown_type_set;
+  for(int i = 0; i < type_eq_class_map.size(); i++)
+    unknown_type_set.insert(i);
+
+
+  // keep iterating as long as there is an unknown
+  // type
+  while(unknown_type_set.size() > 0)
+    { 
+      // keep trying until you cover all equivalence classes or until
+      // you reach a fixed point..
+      set<int>::iterator siter;
+      bool found_at_least_one = false;
+
+      for(siter = unknown_type_set.begin(); siter != unknown_type_set.end(); siter++)
 	{
-	  AaRoot* item = *siter;
-	  AaType* ntype = NULL;
-	  if(item->Is_Expression())
-	    {
-	      ntype = ((AaExpression*)item)->Get_Type();
-	    }
-	  else if(item->Is_Object())
-	    {
-	      ntype = ((AaObject*)item)->Get_Type();
-	    }
-	  else 
-	    {
+	  int i = *siter;
 
-	      AaRoot::Error("in type propagation, encountered an object which was not an expression or object",item);
-	      item->Print(cerr);
-	      cerr << endl;
-	      err_flag = true;
-	    }
-
-	  if(ntype != NULL && itype != NULL && (itype != ntype))
-	    {
-	      AaRoot::Error("in type propagation, found ambiguity in types",item);
-	      item->Print(cerr);
-	      cerr << endl;
-
-	      err_flag = true;
-	    }
-	  else if(ntype != NULL && itype == NULL)
-	    itype = ntype;
-	}
-
-      if(itype == NULL)
-	{
-	  string err_msg =  "in type propagation, could not determine types of the following expressions/objects ";
-	  AaRoot::Error(err_msg, NULL);
+	  AaType* itype = NULL;
+	  
+	  // two passes: first find the type and then set it
 	  for(set<AaRoot*>::iterator siter = type_eq_class_map[i].begin();
 	      siter != type_eq_class_map[i].end();
 	      siter++)
 	    {
-	      (*siter)->Print(cerr);
-	      cerr << "\t line " << (*siter)->Get_Line_Number() << endl;
+	      AaRoot* item = *siter;
+	      AaType* ntype = NULL;
+	      if(item->Is_Expression())
+		{
+		  ntype = ((AaExpression*)item)->Get_Type();
+		}
+	      else if(item->Is_Object())
+		{
+		  ntype = ((AaObject*)item)->Get_Type();
+		}
+	      else 
+		{
+		  
+		  AaRoot::Error("in type propagation, encountered an object which was not an expression or object",item);
+		  item->Print(cerr);
+		  cerr << endl;
+		  err_flag = true;
+		}
+	      
+	      if(ntype != NULL && itype != NULL && (itype != ntype))
+		{
+		  AaRoot::Error("in type propagation, found ambiguity in types",item);
+		  item->Print(cerr);
+		  cerr << endl;
+		  
+		  err_flag = true;
+		}
+	      else if(ntype != NULL && itype == NULL)
+		itype = ntype;
 	    }
-	  err_flag = true;
-	}
 
-      // second pass
-      for(set<AaRoot*>::iterator siter = type_eq_class_map[i].begin();
-	  siter != type_eq_class_map[i].end();
-	  siter++)
-	{
-	  AaRoot* item = *siter;
-	  if(item->Is_Expression())
+	  if(itype != NULL)
 	    {
-	      if(((AaExpression*)item)->Get_Type() == NULL)
-		((AaExpression*)item)->Set_Type(itype);
+	      found_at_least_one = true;
+
+	      // set the type of all expressions in this equivalence class to itype
+	      for(set<AaRoot*>::iterator siter = type_eq_class_map[i].begin();
+		  siter != type_eq_class_map[i].end();
+		  siter++)
+		{
+		  AaRoot* item = *siter;
+		  if(item->Is_Expression())
+		    {
+		      if(((AaExpression*)item)->Get_Type() == NULL)
+			((AaExpression*)item)->Set_Type(itype);
+		    }
+		}
+
+	      // type of map entry at i has been discovered
+	      // erase it from the set.
+	      unknown_type_set.erase(i);
 	    }
+	} // iterated over all unknown equivalence classes 
+
+      if(!found_at_least_one)
+	{// did not find even one map whose type could be determined!
+	  string err_msg =  "in type propagation, could not determine types of the following expressions/objects ";
+	  AaRoot::Error(err_msg, NULL);
+	  for(set<int>::iterator uiter = unknown_type_set.begin(); uiter != unknown_type_set.end(); uiter++)
+	    {
+	      int i = *uiter;
+
+	      for(set<AaRoot*>::iterator siter = type_eq_class_map[i].begin();
+		  siter != type_eq_class_map[i].end();
+		  siter++)
+		{
+		  (*siter)->Print(cerr);
+		  cerr << "\t line " << (*siter)->Get_Line_Number() << endl;
+		}
+	 	    }
+	  err_flag = true;
+	  break; // stop trying, you have reached a fixed point.
 	}
+      // if found at least one, continue..
     }
   return(err_flag);
 }
@@ -303,6 +341,7 @@ void AaProgram::Write_C_Model()
 void AaProgram::Write_Ahir_Model()
 {
 
+/* Later
   Aa2Ahir::Add_Memory_Space("", "default");
 
   // this stuff should ideally be moved to AaObject.
@@ -319,9 +358,9 @@ void AaProgram::Write_Ahir_Model()
       miter != AaProgram::_modules.end();
       miter++)
     {
-      (*miter).second->Write_Header(header_file);
-      (*miter).second->Write_Source(source_file);
+	assert(0);
     }
+*/
 
 }
 

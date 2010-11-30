@@ -43,6 +43,14 @@ bool Is_Compare_Operation(AaOperation op)
   return(op == __LESS || op == __GREATER || op == __LESSEQUAL || op == __GREATEREQUAL 
 	 || op == __EQUAL || op == __NOTEQUAL);
 }
+bool Is_Bitsel_Operation(AaOperation op)
+{
+  return(op == __BITSEL);
+}
+bool Is_Concat_Operation(AaOperation op)
+{
+  return(op == __CONCAT);
+}
 
 string C_Name(AaOperation op)
 {
@@ -105,6 +113,12 @@ string C_Name(AaOperation op)
       break;
     case __NOT:
       ret_string = "__NOT";
+      break;
+    case __BITSEL:
+      ret_string = "__BITSELECT";
+      break;
+    case __CONCAT:
+      ret_string = "__CONCATENATE";
       break;
     default:
       cerr << "Error: unrecognized operation" << endl;
@@ -173,6 +187,12 @@ string Aa_Name(AaOperation op)
       break;
     case __NOT:
       ret_string = "~";
+      break;
+    case __BITSEL:
+      ret_string = ".";
+      break;
+    case __CONCAT:
+      ret_string = "_";
       break;
     default:
       cerr << "Error: unrecognized operation" << endl;

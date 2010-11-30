@@ -24,6 +24,36 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
 }
 AaExpression::~AaExpression() {};
 
+void AaExpression::Set_Type(AaType* t)
+{
+  if(this->_type == NULL)
+    {
+      this->_type = t;
+      for(set<AaExpression*>::iterator siter = this->_targets.begin();
+	  siter != this->_targets.end();
+	  siter++)
+	{
+	  AaExpression* ref = *siter;
+	  if(ref->Is("AaBinaryExpression"))
+	    ((AaBinaryExpression*)ref)->Update_Type();
+	}
+    }
+  else
+    {
+      if(t != this->_type)
+	{
+	  string err_msg = "Error: type of expression ";
+	  this->Print(err_msg);
+	  err_msg += " is ambiguous, is it  ";
+	  this->_type->Print(err_msg);
+	  err_msg += " or ";
+	  t->Print(err_msg);
+	  err_msg += " ? ";
+	  AaRoot::Error(err_msg, this);
+	}
+    }
+}
+
 //---------------------------------------------------------------------
 // AaObjectReference
 //---------------------------------------------------------------------
@@ -156,7 +186,10 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
   if(obj->Is_Object())
     this->Set_Type(((AaObject*)obj)->Get_Type());
   else if(obj->Is_Expression())
-    AaProgram::Add_Type_Dependency(this,obj);
+    {
+      AaProgram::Add_Type_Dependency(this,obj);
+      this->Add_Target((AaExpression*) obj);
+    }
   this->_object = obj;
 }
 void AaSimpleObjectReference::PrintC(ofstream& ofile, string tab_string)
@@ -250,6 +283,8 @@ AaTypeCastExpression::AaTypeCastExpression(AaScope* parent, AaType* ref_type,AaE
   this->_to_type = ref_type;
   this->_type = ref_type;
   this->_rest = rest;
+  if(rest)
+    rest->Add_Target(this);
 }
 
 AaTypeCastExpression::~AaTypeCastExpression() {};
@@ -272,6 +307,8 @@ AaUnaryExpression::AaUnaryExpression(AaScope* parent_tpr,AaOperation op, AaExpre
   this->_rest       = rest;
   
   AaProgram::Add_Type_Dependency(this,rest);
+  if(rest)
+    rest->Add_Target(this);
 }
 AaUnaryExpression::~AaUnaryExpression() {};
 void AaUnaryExpression::Print(ostream& ofile)
@@ -291,7 +328,13 @@ AaBinaryExpression::AaBinaryExpression(AaScope* parent_tpr,AaOperation op, AaExp
 {
   this->_operation = op;
 
-  if(Is_Compare_Operation(op))
+  if(Is_Bitsel_Operation(op))
+    { // bitsel: the output is always a single bit
+      // there is no dependence betweem the two 
+      // inputs
+      this->Set_Type(AaProgram::Make_Uinteger_Type(1));
+    }
+  else if(Is_Compare_Operation(op))
     {
       this->Set_Type(AaProgram::Make_Uinteger_Type(1));
       AaProgram::Add_Type_Dependency(first,second);
@@ -300,15 +343,22 @@ AaBinaryExpression::AaBinaryExpression(AaScope* parent_tpr,AaOperation op, AaExp
     {
       AaProgram::Add_Type_Dependency(first,this);
     }
-  else
+  else if(!Is_Concat_Operation(op))
     {
       AaProgram::Add_Type_Dependency(first,this);
       AaProgram::Add_Type_Dependency(second,this);
     }
 
   this->_first = first;
+  if(first)
+    first->Add_Target(this);
   this->_second = second;
+  if(second)
+    second->Add_Target(this);
+
+  this->Update_Type();
 }
+
 AaBinaryExpression::~AaBinaryExpression() {};
 void AaBinaryExpression::Print(ostream& ofile)
 {
@@ -321,6 +371,33 @@ void AaBinaryExpression::Print(ostream& ofile)
   ofile << ")";
 }
 
+void AaBinaryExpression::Update_Type()
+{
+  if(Is_Concat_Operation(this->_operation) && (this->Get_Type() == NULL))
+    {
+      // check the types of both sources.
+      // they must both be uintegers and
+      // the type of this expression must
+      // be a uinteger whose width is the
+      // sume of those of the sources.
+      AaType* t1 = this->Get_First()->Get_Type();
+      AaType* t2 = this->Get_Second()->Get_Type();
+
+      if(t1 != NULL && t2 != NULL)
+	{
+	  if(t1->Is("AaUintType") && t2->Is("AaUintType"))
+	    {
+	      AaType* nt = AaProgram::Make_Uinteger_Type(((AaUintType*)t1)->Get_Width()+((AaUintType*)t2)->Get_Width());
+	      this->AaExpression::Set_Type(nt);
+	    }
+	  else
+	    {
+	      AaRoot::Error("source arguments of concatenate expression must have uint types",this);
+	    }
+	}
+    }
+}
+
 //---------------------------------------------------------------------
 // AaTernaryExpression
 //---------------------------------------------------------------------
@@ -329,14 +406,26 @@ AaTernaryExpression::AaTernaryExpression(AaScope* parent_tpr,
 					 AaExpression* iftrue, 
 					 AaExpression* iffalse):AaExpression(parent_tpr)
 {
+
+  assert(test != NULL);
+
+  
   this->_test = test;
+  test->Add_Target(this);
+
   assert(test->Get_Type() && test->Get_Type()->Is("AaUintType") &&
 	 (((AaUintType*)(test->Get_Type()))->Get_Width() == 1));
 
   if(iftrue)
-    AaProgram::Add_Type_Dependency(iftrue,this);
+    {
+      AaProgram::Add_Type_Dependency(iftrue,this);
+      iftrue->Add_Target(this);
+    }
   if(iffalse)
-    AaProgram::Add_Type_Dependency(iffalse,this);
+    {
+      AaProgram::Add_Type_Dependency(iffalse,this);
+      iffalse->Add_Target(this);
+    }
 
   this->_if_true = iftrue;
   this->_if_false = iffalse;

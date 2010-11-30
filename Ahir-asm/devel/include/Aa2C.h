@@ -539,5 +539,7 @@ typedef struct _float_11_52 { double __val; } float_11_52;
 #define __GREATER(x,y)  ((x) > (y))
 #define __GREATEREQUAL(x,y)  ((x) >= (y))
 #define __NOT(x)    (~(x))
+#define __BITSELECT(x,y)  ((x & (1 << y)) >> y)
+#define __CONCATENATE(z,x,lx,y,ly)  (((uint ##z)(x << ly))|y)
 #define AASUCCESS 0
 #define AAFAILURE 1

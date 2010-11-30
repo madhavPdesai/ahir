@@ -82,7 +82,7 @@ AaScope* AaScope::Get_Nearest_Ancestor_Scope(string class_type)
     {
       if(p->Is(class_type))
 	break;
-      p = p->Get_Parent_Scope();
+      p = p->Get_Scope();
     }
   return(p);
 }

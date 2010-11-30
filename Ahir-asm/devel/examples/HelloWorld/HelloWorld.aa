@@ -1,7 +1,7 @@
 // a simple example..
 $module [sum_mod]
     $in (a $uint<10> b $uint<10>)
-    $out (c $uint<10>)
+    $out (c $uint<20>)
 $is
 {
 	// note that q,r,s,c are
@@ -9,6 +9,6 @@ $is
 	// variables
 	q := (a + b)
         r := (q + b)
-        s := (r + b)
+        s := (r _ b)
         c := s
 }

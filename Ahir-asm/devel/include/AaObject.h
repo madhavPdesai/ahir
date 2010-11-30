@@ -65,6 +65,7 @@ class AaObject: public AaRoot
       }
   }
 
+  // \todo
   virtual void Write_Ahir_Model();
 };
 
@@ -98,7 +99,7 @@ class AaConstantObject: public AaObject
   virtual string Kind() {return("AaConstantObject");}
 
   // todo: this is different from the base Object..
-  virtual void Write_Ahir_Model();
+  // virtual void Write_Ahir_Model();
 };
 
 class AaStorageObject: public AaObject
@@ -116,7 +117,7 @@ class AaStorageObject: public AaObject
   // todo: this is the same as object, but keep it here
   //      because the initial value needs to be 
   //      updated..
-  virtual void Write_Ahir_Model();
+  // virtual void Write_Ahir_Model();
 };
 
 class AaPipeObject: public AaObject
@@ -148,7 +149,7 @@ class AaPipeObject: public AaObject
 	  << endl;
   }
 
-  virtual void Write_Ahir_Model();
+   virtual void Write_Ahir_Model();
 
 
 };
