@@ -14,7 +14,7 @@
 
 $storage g_data_array $array<4>  $of $uint<32>
 
-$module [cachememory]
+$inline $module [cachememory]
 	$in()
 	$out()
 $is
@@ -116,11 +116,11 @@ $is
 	}
 }
 
-$foreign $module [Fetch] 
+$foreign $inline $module [Fetch] 
 	$in ()
 	$out (req $pointer<32>)
 
-$foreign $module [Is_Read_Access] 
+$foreign $inline $module [Is_Read_Access] 
 	$in (req $pointer<32>)
 	$out (flag $uint<1>)
 

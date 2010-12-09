@@ -21,6 +21,7 @@ class AaModule: public AaSeriesBlockStatement
   vector<AaInterfaceObject*>  _output_args;
 
   bool _foreign_flag;
+  bool _inline_flag;
 
  public:
   AaModule(string fname); // Modules have NULL parent (parent is the program)
@@ -28,6 +29,9 @@ class AaModule: public AaSeriesBlockStatement
 
   void Set_Foreign_Flag(bool ff) { this->_foreign_flag = ff; }
   bool Get_Foreign_Flag() {return(this->_foreign_flag);}
+
+  void Set_Inline_Flag(bool ff) { this->_inline_flag = ff; }
+  bool Get_Inline_Flag() {return(this->_inline_flag);}
 
   void Add_Argument(AaInterfaceObject* obj);
 

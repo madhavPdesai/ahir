@@ -111,12 +111,14 @@ aA_Module returns [AaModule* new_module]
     AaStatementSequence* stmts = NULL;
     AaObject* obj = NULL;
     bool foreign_flag = false;
+    bool inline_flag = false;
 }
-    : (FOREIGN {foreign_flag = true;})? mt: MODULE 
+    : (FOREIGN {foreign_flag = true;})? (INLINE {inline_flag = true;})? mt: MODULE 
         lbl = aA_Label 
         {
             new_module = new AaModule(lbl);
             new_module->Set_Foreign_Flag(foreign_flag);
+            new_module->Set_Inline_Flag(inline_flag);
             new_module->Set_Line_Number(mt->getLine());
         }
         aA_In_Args[new_module] aA_Out_Args[new_module] (IS
@@ -1166,6 +1168,7 @@ options {
 
 // language keywords (all start with $)
 FOREIGN       : "$foreign";
+INLINE        : "$inline";
 MODULE        : "$module";
 DECLARE       : "$declare";
 DEFAULT       : "$default";

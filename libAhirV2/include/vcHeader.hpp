@@ -6,11 +6,19 @@ class vcRoot
   string _id;
   map<string,string> _atttribute_map;
 
+  static bool _err_flag;
+
  public:
   vcRoot(string id);
-  ~vcRoot();
+
+  static void Error(string err_msg); // {_error_flag = true;}
+  static void Warning(string err_msg); // {_warning_flag = true;}
+  static bool Get_Error_Flag(); // { return _error_flag; }
+  static bool Get_Warning_Flag(); // { return _warning_flag; }
 
   void Add_Attribute(string tag, string value);
+
+  string Get_Id() {return(this->_id);}
 
   virtual void Print(ostream& ofile);
 
@@ -30,9 +38,9 @@ class vcRoot
 
 //  compare functor
 struct vcRoot_Compare:public binary_function
-  <vcRoot&, vcRoot&, bool >
+  <vcRoot*, vcRoot*, bool >
 {
-  bool operator() (vcRoot&, vcRoot&) const;
+  bool operator() (vcRoot*, vcRoot*) const;
 };
 
 #endif // vcRoot
@@ -46,7 +54,6 @@ class vcType: public AaRoot
 
  public:
   vcType(string id);
-  ~vcType();
 
   virtual string Kind()
   {
@@ -76,7 +83,6 @@ class vcScalarType: public vcType
 
  public:
   vcScalarType(string id);
-  ~vcScalarType();
   virtual string Kind() {return("vcScalarType");}
   virtual int Size() { assert(0);}
 };
@@ -92,7 +98,6 @@ class vcIntType: public vcScalarType
  public:
   virtual unsigned int Get_Width() {return(this->_width);}
   vcIntType(string id, unsigned int width);
-  ~vcUintType();
 
   void Print(ostream& ofile);
   virtual string Kind() {return("vcIntType");}
@@ -105,8 +110,7 @@ class vcPointerType: public vcScalarType
   vcRoot* _memory_space;
 
  public :
-  vcPointerType(string id, string mem_space_id);
-  ~vcPointerType();
+  vcPointerType(string mem_space_id);
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcPointerType");}
@@ -123,19 +127,21 @@ class vcFloatType : public vcScalarType
 {
   protected:
   // both > 0
-  unsigned int _characteristic;
-  unsigned int _mantissa;
+  vcIntType* _characteristic_type;
+  vcIntType* _mantissa_type;
 
  public:
-  unsigned int Get_Characteristic() {return(this->_characteristic);}
-  unsigned int Get_Mantissa() {return(this->_mantissa);}
+  unsigned int Get_Characteristic_Width() {return(this->_characteristic_type->Get_Width());}
+  unsigned int Get_Mantissa_Width() {return(this->_mantissa_type->Get_Width());}
 
-  vcFloatType(string id, unsigned int characteristic, unsigned int mantissa);
-  ~vcFloatType();
+  vcIntType* Get_Characteristic_Type() {return(this->_characteristic_type);}
+  vcIntType* Get_Mantissa_Type() {return(this->_mantissa_type);}
+
+  vcFloatType(vcIntType* ctype, vcIntType* mtype);
   void Print(ostream& ofile);
 
   virtual string Kind() {return("vcFloatType");}
-  virtual int Size() { return(this->_characteristic + this->_mantissa + 1);}
+  virtual int Size() { return(this->Get_Characteristic_Width() + this->Get_Mantissa_Width() + 1);}
 };
 
 class vcArrayType: public vcType
@@ -149,8 +155,7 @@ class vcArrayType: public vcType
  public:
 
   vcScalarType* Get_Element_Type() {return(this->_element_type);}
-  vcArrayType(string id, AaScalarType* stype, int dimension);
-  ~vcArrayType();
+  vcArrayType(vcScalarType* stype, int dimension);
 
   void Print(ostream& ofile);
   virtual string Kind() {return("vcArrayType");}
@@ -160,10 +165,9 @@ class vcArrayType: public vcType
 
 class vcRecordType: public vcType
 {
-  vector<vcType> _element_types;
+  vector<vcType*> _element_types;
  public:
-  vcRecordType(string id, vector<vcType>& element_types);
-  ~vcRecordType();
+  vcRecordType(vector<vcType*>& element_types);
 
   void Print(ostream& ofile);
   virtual string Kind() { return("vcRecordType"); }
@@ -174,6 +178,11 @@ class vcRecordType: public vcType
       ret_val += this->_element_types[i].Size();
     return(ret_val);
   }
+
+  vcType* Get_Element_Type(int idx) {return(this->_element_types[idx]);}
+  int Get_Number_Of_Elements() {return(this->_element_types.size();}
+
+
 };
 
 #endif // vcType
@@ -189,7 +198,6 @@ class vcValue: public AaRoot
   vcType* _type;
  public:
   vcValue(vcType t);
-  ~vcValue();
 
   vcType* Get_Type() { return(this->_type);}
   virtual string Kind() {return("vcValue");}
@@ -201,10 +209,10 @@ class vcIntValue: public vcValue
   // each of which can be 0 or 1.
   vector<char> _value;
  public:
-  int Get_Value() { return(this->_value);}
-  vcIntValue(vcIntType t, string value);
 
-  ~vcIntValue();
+  vcIntValue(vcIntType* t, string value);
+  vcIntValue(vcIntType* t, string value, string format);
+
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcIntValue");}
@@ -230,17 +238,23 @@ vcIntValue operator-(vcIntValue, vcIntValue);
 vcIntValue operator*(vcIntValue, vcIntValue);
 vcIntValue operator/(vcIntValue, vcIntValue);
 
+vcIntValue operator>(vcIntValue, vcIntValue);
+vcIntValue operator<(vcIntValue, vcIntValue);
+vcIntValue operator>=(vcIntValue, vcIntValue);
+vcIntValue operator==(vcIntValue, vcIntValue);
+
+
+
 class vcFloatValue: public vcValue
 {
-  vcIntValue _sign;
+  char _sign;
   vcIntValue _characteristic;
   vcIntValue _mantissa;
 
  public:
   int Get_Value() { return(this->_value);}
 
-  vcFloatValue(vcFloatType t, string value);
-  ~vcFloatValue();
+  vcFloatValue(vcFloatType* t, char sgn, vcIntValue* cvalue, vcIntValue* mvalue);
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcFloatValue");}
@@ -267,11 +281,16 @@ vcFloatValue operator-(vcFloatValue, vcFloatValue);
 vcFloatValue operator*(vcFloatValue, vcFloatValue);
 vcFloatValue operator/(vcFloatValue, vcFloatValue);
 
+vcIntValue operator>(vcFloatValue, vcFloatValue);
+vcIntValue operator<(vcFloatValue, vcFloatValue);
+vcIntValue operator>=(vcFloatValue, vcFloatValue);
+vcIntValue operator==(vcFloatValue, vcFloatValue);
+
 class vcArrayValue: public vcValue
 {
   vector<vcValue> _value_array;
  public:
-  vcArrayValue(vcArrayType t, vector<vcValue>& values);
+  vcArrayValue(vcArrayType* t, vector<vcValue*>& values);
   ~vcArrayValue();
 
   virtual void Print(ostream& ofile);
@@ -284,17 +303,17 @@ class vcArrayValue: public vcValue
   vcArrayValue& operator=(const vcArrayValue& v);
 
   // concatenate
-  friend vcArrayValue operator&&(vcFloatValue, vcFloatValue);
+  friend vcArrayValue operator&&(vcArrayValue, vcArrayValue);
 };
 
-vcArrayValue operator&&(vcFloatValue, vcFloatValue);
+// concatenate arrays.
+vcArrayValue operator&&(vcArrayValue, vcArrayValue);
 
 class vcRecordValue: public vcValue
 {
-  vector<string>  _element_names;
-  vector<vcValue> _element_values;
+  vector<vcValue*> _element_values;
  public:
-  vcRecordValue(vcArrayType t, vector<vcValue>& element_names, vector<vcValue>& values);
+  vcRecordValue(vcRecordType* t, vector<vcValue*>& values);
   ~vcRecordValue();
 
   int Get_Number_Of_Elements();
@@ -318,18 +337,21 @@ class vcRecordValue: public vcValue
 
 class vcStorageObject: public vcRoot
 {
-  vcType  _type;
-  vcValue _value;
-  vcIntValue _base_address;
+  vcType*  _type;
+  vcValue* _value;
+  vcIntValue* _base_address;
+
  public:
-  vcStorageObject(string id, vcType t);
+  vcStorageObject(string id, vcType* t);
   ~vcStorageObject();
 
-  void Set_Value(const vcValue& v);
-  vcValue& Get_Value();
+  vcType* Get_Type() { return(_type);}
 
-  void Set_Base_Address(vcIntValue v);
-  vcIntValue& Get_Base_Address();
+  void Set_Value(vcValue* v);
+  vcValue* Get_Value() {return(_value);}
+
+  void Set_Base_Address(vcIntValue* v);
+  vcIntValue* Get_Base_Address(); {return(_base_address);}
 
   virtual void Print(ostream& ofile);
 
@@ -343,14 +365,28 @@ class vcStorageObject: public vcRoot
 
 class vcMemorySpace
 {
-  vector<vcStorageObject> objects;
+  vector<vcStorageObject*> objects;
+  
+  unsigned int _capacity;
+  unsigned int _word_size;
+  unsigned int _address_width;
+
  public:
   vcMemorySpace(string id);
   ~vcMemorySpace();
 
-  void Add_Storage_Object(vcStorageObject& obj);
+  void Set_Capacity(unsigned int c) { this->_capacity = c;}
+  void Set_Word_Size(unsigned int c) { this->_word_size = c;}
+  void Set_Address_Width(unsigned int c) { this->_address_width = c;}
+
+  int Set_Capacity() { return this->_capacity;}
+  int Set_Word_Size() { return this->_word_size;}
+  int Set_Address_Width() {return this->_address_width;}
+
+
+  void Add_Storage_Object(vcStorageObject* obj);
   void Get_Number_Of_Storage_Objects();
-  vcStorageObject& Get_Storage_Object(int index);
+  vcStorageObject* Get_Storage_Object(int index);
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcMemorySpace");}
@@ -369,8 +405,9 @@ enum vcTransitionType
 
 class vcCPElement: public vcRoot
 {
-  set<vcCPElement*> _predecessors;
-  set<vcCPElement*> _successors;
+  vector<vcCPElement*> _predecessors;
+  vector<vcCPElement*> _successors;
+
  public:
   vcCPElement(string id);
   ~vcCPElement();
@@ -389,7 +426,6 @@ class vcTransition: public vcCPElement
 
  public:
   vcTransition(string id, vcTransitionType t);
-  ~vcTransition();
 
   virtual string Kind() {return("vcTransition");}
 
@@ -400,26 +436,71 @@ class vcPlace: public vcCPElement
   unsigned int _initial_marking;
  public:
   vcPlace(string id, unsigned int init_marking);
-  ~vcPlace();
 
   virtual string Kind() {return("vcPlace");}
 };
 
-
-class vcControlPath: public vcRoot
+class vcCPBlock: public vcCPElement
 {
-  map<string, vcCPElement*> _cp_element_map;
+  map<string, vcCPElement*> _element_map;
+  vector<vcCPElement*> _elements;
+ public:
+  vcCPSeriesBlock(string id);
+  virtual void Add_CPElement(vcCPElement* cpe);
+  virtual string Kind() {return("vcCPBlock");}
+
+  vcCPElement* Find_CPElement(string cname);
+};
+
+class vcCPSeriesBlock: public vcBlock
+{
+ public:
+  vcCPSeriesBlock(string id);
+  virtual string Kind() {return("vcCPSeriesBlock");}
+};
+
+class vcCPParallelBlock: public vcBlock
+{
+ public:
+  vcCPParallelBlock(string id);
+  virtual string Kind() {return("vcCPSeriesBlock");}
+};
+
+class vcCPBranchBlock: public vcCPSeriesBlock
+{
+  map<vcCPPlace*, vector<vcCPElement*>, vcRoot_Compare > _branch_map;
+  map<vcCPPlace*, vector<pair<vcCPElement*,vcCPElement*> >, vcRoot_Compare > _merge_map;
+
+ public:
+  vcCPBranchBlock(string id);
+  virtual string Kind() {return("vcCPBranchBlock");}
+
+  void Add_Branch_Point(string bp_name, vector<string>& choice_cpe_vec);
+  void Add_Merge_Point(string merge_place, string merge_from, string merge_region);
+};
+
+class vcCPForkBlock: public vcCPParallelBlock
+{
+  map<vcCPTransition*, vector<vcCPElement*>, vcRoot_Compare > _fork_map;
+  map<vcCPTransition*, vector<vcCPElement*>, vcRoot_Compare > _join_map;
+
+ public:
+  vcCPForkBlock(string id);
+  virtual string Kind() {return("vcCPForkBlock");}
+
+  void Add_Fork_Point(string& fork_name, vector<string>& fork_cpe_vec);
+  void Add_Join_Point(string& join_name, vector<string>& join_cpe_vec);
+};
+
+
+class vcControlPath: public vcSeriesBlock
+{
+
  public:
   vcControlPath(string id);
-  ~vcControlPath();
-  
-  void Add_Transition(string transition_name, vcTransitionType t);
-  void Add_Place(string place_name, unsigned int init_marking);
-  void Add_Dependency(vcCPElement* from, vcCPElement* to);
 
   vcTransition* Find_Transition(string tname);
   vcPlace* Find_Place(string pname);
-  vcCPElement* Find_CPElement(string cname);
 
   virtual string Kind() {return("vcControlPath");}
 };
@@ -433,12 +514,10 @@ class vcWire: public vcRoot
 {
   vcType* _type;
   vcRoot* _driver;
-
   set<vcRoot*> _receivers;
 
  public:
   vcWire(string id, vcType* t);
-  ~vcWire();
  
   void Connect_Driver(vcRoot* d);
   void Connect_Receiver(vcRoot* r);
@@ -461,8 +540,8 @@ class vcDatapathElementTemplate: public vcRoot
   set<string> _reqs;
   set<string> _acks;
   
-  map<string, vcScalarTypeTemplate> _input_port_map;
-  map<string, vcScalarTypeTemplate> _output_port_map;
+  map<string, vcScalarTypeTemplate*> _input_port_map;
+  map<string, vcScalarTypeTemplate*> _output_port_map;
 
  public:
 
@@ -471,8 +550,8 @@ class vcDatapathElementTemplate: public vcRoot
   void Add_Req(string req_name);
   void Add_Ack(string ack_name);
   
-  void Add_Input_Port(string pname, vcScalarTypeTemplate& t);
-  void Add_Output_Port(string pname, vcScalarTypeTemplate& t);
+  void Add_Input_Port(string pname, vcScalarTypeTemplate* t);
+  void Add_Output_Port(string pname, vcScalarTypeTemplate* t);
 
   bool Is_Req(string req_name);
   bool Is_Ack(string ack_name);
@@ -487,19 +566,20 @@ class vcDatapathElementTemplate: public vcRoot
 
 class vcDatapathElementLibrary: public vcRoot
 {
-  map<string, vcDatapathElementTemplate&> _template_map;
+  set<vcDatapathElementTemplate*,vcRoot_Compare> _templates;
  public:
   vcDatapathElementLibrary(string id);
-  void Add_Template(string template_name, vcDatapathElementTemplate& t);
-  vcDatapathElementTemplate& Get_Template(string template_name);
+  void Add_Template(vcDatapathElementTemplate* t);
+  vcDatapathElementTemplate* Get_Template(string template_name);
 };
 
 class vcDatapathElement: public vcRoot
 {
   string _template_name;
+  vcDatapathElementTemplate* _template;
 
   map<string, int> _parameter_value_map;
-  map<vcDPTemplatePort*,vcWire*> _port_map;
+  map<string, vcWire*> _port_map;
   map<string, vcTransition*> _control_link_map;
 
  public:
@@ -515,7 +595,11 @@ class vcDatapathElement: public vcRoot
   void Connect_Wire(string port_name, vcWire* w);
   vcWire* Get_Connected_Wire(string port_name);
 
-  void Add_Link(string req_ack_name, vcTransition* t);
+  void Add_Link(string trans_name, string dpe_inst_id, string req_ack_id);
+
+  void Set_Template(vcDatapathElementTemplate* t) { this->_template = t;}
+  vcDatapathElementTemplate* Get_Template() {return(this->_template);}
+
   virtual string Kind() {return("vcDatapathElement");}
 };
 
@@ -532,6 +616,8 @@ class vcDataPath: public vcRoot
   void Set_DPE_Parameter(string dpe_name, string param_name, int param_value);
   int Get_DPE_Parameter(string dpe_name, string param_name);
 
+  vcWire* Get_Wire(string wname);
+  void Add_Wire(string wname, vcType* t);
   void Drive_Wire(string dpe_name, string port_name, vcWire* w);
   void Tap_Wire(string dpe_name, string port_name, vcWire* v);
 
@@ -543,12 +629,12 @@ class vcDataPath: public vcRoot
 #define VC_LINK_H_
 class vcLink: public vcRoot
 {
-  map<vcCPElement&,pair<vcDatapathElement&,string>,vcRoot_Compare> _link_map;
+  map<vcCPTransition*,pair<vcDatapathElement*,string>,vcRoot_Compare> _link_map;
 
  public:
   vcLink();
-  void Add_Link(vcCPElement& cpe, vcDatapathElement& dpe, string& req_or_ack_name);
-  pair<vcDatapathElement&, string>& Get_Link(vcCPElement& cpe);
+  void Add_Link(vcCPTransition* cpe, vcDatapathElement* dpe, string req_or_ack_name);
+  pair<vcDatapathElement*, string>& Get_Link(vcCPTransition* cpe);
 
   virtual string Kind() {return("vcLink");}
 
@@ -560,17 +646,22 @@ class vcLink: public vcRoot
 
 class vcModule
 {
-  set<vcMemorySpace&, vcRoot_Compare> _memory_space_set;
+  set<vcMemorySpace*, vcRoot_Compare> _memory_space_set;
+
+  map<string, vcType*> _input_arguments;
+  map<string, vcType*> _output_arguments;
+
   vcControlPath* _control_path;
   vcDataPath*    _data_path;
+
+  bool _inline;
 
  public:
   vcModule(string module_name);
   ~vcModule();
 
-  void Add_Transition(string tname, vcTransitionType t);
-  void Add_Place(string place, unsigned int init_marking);
-  void Add_Dependency(string cpe_name_1, string cpe_name_2);
+  void Set_Inline(bool v) { this->_inline = v;}
+  bool Get_Inline() { return this->_inline;}
 
   void Add_DPE(string dpe_name, string dpe_template_name);
   void Connect_Wire(string dpe_name, string port_name, string wire_name);
@@ -578,15 +669,46 @@ class vcModule
   void Add_Link(string dpe_name, string dpe_req_ack_name, string transition_name);
   virtual string Kind() {return("vcModule");}
 
+  void Add_Memory_Space(vcMemorySpace* ms);
+  vcMemorySpace* Find_Memory_Space(string ms_name);
+
+  void Set_Control_Path(vcControlPath* cp) { this->_control_path = cp;}
+  vcControlPath* Get_Control_Path() { return(this->_control_path);}
+
+  void Set_Data_Path(vcDataPath* cp) { this->_data_path = cp;}
+  vcDataPath* Get_Data_Path() { return(this->_data_path);}
+
+  vcType* Get_Argument_Type(string arg_name, string mode /* "in" or "out" */);
+  void Add_Argument(string arg_name, string mode, vcType* t);
 };
 
 #endif // vcModule
 
-#ifndef _VC_PROGRAM_H_
-#define _VC_PROGRAM_H_
+#ifndef _VC_System_H_
+#define _VC_System_H_
 
-class vcProgram
+class vcSystem: public vcRoot
 {
+
+  set<vcMemorySpace*, vcRoot_Compare> _memory_space_set;
+
+  vector<vcModule*> _top_modules;
+  map<string, vcModule*> _modules;
+  map<string, vcDatapathElementLibrary*> _dpe_libraries;
+
+ public:
+  vcSystem(string id);
   
+  void Add_Module(string m_id, vcModule* module);
+  void Add_Library(string m_id, vcModule* module);
+
+  void Set_As_Top_Module(vcModule* module);
+  void Add_Memory_Space(vcMemorySpace* ms);
+  vcMemorySpace* Find_Memory_Space(string ms_name);
+
+  void Elaborate(); // elaborate the system...
+
+  void Print_VHDL(ostream& ofile);
+  void Print_VHDL(ofstream& ofile);
 };
 #endif
