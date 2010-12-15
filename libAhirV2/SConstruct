@@ -1,0 +1,17 @@
+import os
+
+env = Environment(ENV = {'PATH' : os.environ['PATH']})
+
+# use a path to get to the antlr jar "later"
+ant = Builder(action = 'java -cp  ../Ahir-asm/antlr2/antlr.jar antlr.Tool -o src $SOURCE')
+
+env.Append(BUILDERS = {'antlr' : ant})
+env.Append(CPPPATH = './include')
+
+env.antlr(['src/vcLexer.cpp','src/vcParser.cpp'], 'grammar/vc.g')
+
+VariantDir('obj','src',duplicate=0)
+env.Object(Glob('obj/*.cpp'))
+
+
+

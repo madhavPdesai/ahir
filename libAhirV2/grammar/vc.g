@@ -183,7 +183,7 @@ ADDRWIDTH aw:UINTEGER {ms->Set_Word_Size(atoi(aw->getText().c_str()));}
 ;
 
 //--------------------------------------------------------------------------------------------------------------------------------------
-// vc_MemoryLocation:  OBJECT vc_Label LBRACE TYPE vc_Type (VALUE ? vc_Value) RBRACE
+// vc_MemoryLocation:  OBJECT vc_Label COLON vc_Type (ASSIGNEQUAL ? vc_Value)
 //--------------------------------------------------------------------------------------------------------------------------------------
 vc_MemoryLocation[vcMemorySpace* ms]
 {
@@ -192,9 +192,9 @@ vc_MemoryLocation[vcMemorySpace* ms]
 	vcType* t;
 	vcValue* v = NULL;
 }
-: OBJECT lbl = vc_Label LBRACE TYPE t = vc_Type (VALUE v = vc_Value[t])? RBRACE
+: OBJECT lbl = vc_Label COLON t = vc_Type (ASSIGNEQUAL v = vc_Value[t])? 
 {
-	nl = new VcStorageObject(lbl,t);
+	nl = new vcStorageObject(lbl,t);
 	if(v != NULL)
 		nl->Set_Value(v);
 }
@@ -223,14 +223,13 @@ vc_Link[vcModule* m]
 ;
    
 //-----------------------------------------------------------------------------------------------
-// vc_Controlpath: CONTROLPATH vc_Label LBRACE (vc_CPRegion)+  vc_AttributeSpec* RBRACE
+// vc_Controlpath: CONTROLPATH LBRACE (vc_CPRegion)+  vc_AttributeSpec* RBRACE
 //-----------------------------------------------------------------------------------------------
 vc_Controlpath[vcModule* m]
 {
-	string lbl;
-	vcControPath* cp = NULL;
+	vcControPath* cp = new vcControlPath(m->Get_Id() + "_CP");
 }
-: CONTROLPATH lbl = vc_Label { cp = new vcControlPath(lbl);} LBRACE (vc_CPRegion[cp])* (vc_AttributeSpec[cp])* RBRACE
+: CONTROLPATH  LBRACE (vc_CPRegion[cp])* (vc_AttributeSpec[cp])* RBRACE
 ;
 
 //-----------------------------------------------------------------------------------------------
@@ -254,7 +253,7 @@ vc_CPTransition returns[vcCPElement* cpe]
 { 
    vcTransitionType t;
 }
-: TRANSITION id:vc_Identifier ((IN {t = _IN;}) | (OUT {t = _OUT;}) | (HIDDEN {t = _HIDDEN;}));
+: TRANSITION id:vc_Identifier ((IN {t = _IN_TRANSITION;}) | (OUT {t = _OUT_TRANSITION;}) | (HIDDEN {t = _HIDDEN_TRANSITION;}));
 
 //-----------------------------------------------------------------------------------------------
 // vc_CPRegion: (vc_CPSeriesBlock | vc_CPParallelBlock | vc_CPBranchBlock | vc_CPForkBlock )
@@ -297,7 +296,7 @@ vc_CPParallelBlock[vcControlPath* cp]
 ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPBranchBlock: BRANCHBLOCK vc_Label LBRACE (vc_CPRegion | vc_CPBranch | vc_CPMerge)+ RBRACE
+// vc_CPBranchBlock: BRANCHBLOCK vc_Label LBRACE (vc_CPRegion | vc_CPBranch | vc_CPMerge | vc_CPPlace)+ RBRACE
 //-----------------------------------------------------------------------------------------------
 vc_CPBranchBlock[vcControlPath* cp] 
 {
@@ -313,26 +312,16 @@ vc_CPBranchBlock[vcControlPath* cp]
 ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPMerge: MERGE vc_Label (LPAREN ENTRY (COLON vc_Identifier)? RPAREN) (LPAREN vc_Identifier (COLON vc_Identifier)? RPAREN)+ 
+// vc_CPMerge: MERGE vc_Label  LPAREN ENTRY? (vc_Identifier)* RPAREN
 //-----------------------------------------------------------------------------------------------
 vc_CPMerge[vcCPBranchBlock* bb]
 { 
 	string lbl;
-	string merge_from;
 	string merge_region;
 }
 :
-MERGE lbl = vc_Label 
-(LPAREN e:ENTRY {merge_from = e->getText(); merged_regions.clear();} 
- (COLON u:vc_Identifier { merge_region = u->getText();})?
- {
- bb->Add_Merge_Point(lbl, merge_from, merge_region);
- } RPAREN )?
-(LPAREN ep:vc_Identifier {merge_from = ep->getText(); merged_regions.clear();} 
- (COLON up:vc_Identifier { merged_region = up->getText();})?
- {
- bb->Add_Merge_Point(lbl, merge_from, merge_region);
- } RPAREN)*
+MERGE lbl = vc_Label LPAREN (e:ENTRY {bb->Add_Merge_Point(lbl,e->getText());})?
+      (mid:vc_Identifier {bb->Add_Merge_Point(lbl,mid->getText());})* RPAREN
 ;
 
 
@@ -353,7 +342,7 @@ RPAREN {bb->Add_Branch_Point(lbl,branch_ids);}
 ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPForkBlock: FORKBLOCK vc_Label LBRACE (vc_CPFork | vc_CPRegion | vc_CPJoin )+ RBRACE
+// vc_CPForkBlock: FORKBLOCK vc_Label LBRACE (vc_CPFork | vc_CPRegion | vc_CPJoin | vc_CPTransition )+ RBRACE
 //-----------------------------------------------------------------------------------------------
 vc_CPForkBlock[vcControlPath* cp] 
 {
@@ -401,17 +390,16 @@ RPAREN {bb->Add_Fork_Point(lbl,fork_ids);}
 //-----------------------------------------------------------------------------------------------
 vc_Datapath[vcModule* m]
 {
-	vcDataPath* dp;
+	vcDataPath* dp = new vcDataPath(m->Get_Id() + "_DP");
 }
-: DATAPATH { dp = new vcDataPath(m.Get_Id()); } LBRACE
-( vc_WireDeclaration[dp] | vc_DatapathElementInstantiation[dp])* RBRACE
+: DATAPATH LBRACE ( vc_WireDeclaration[dp] | vc_DatapathElementInstantiation[dp] | vc_AttributeSpec[dp])* RBRACE
 ;
 
 
 //-------------------------------------------------------------------------------------------------------------------------
 // vc_DatapathElementInstantiation: DPEINSTANCE [vc_Label] OF [vc_Label] LBRACE 
-//                   (PARAMS (vc_Identifier IMPLIES vc_Identifier)+)?  
-//                   (PORTMAP (vc_Identifier IMPLIES vc_Identifier)+)?
+//                   (PARAMETER MAP (vc_Identifier IMPLIES vc_Identifier)+)?  
+//                   (PORT MAP (vc_Identifier IMPLIES vc_Identifier)+)?
 //                    vc_AttributeSpec* RBRACE
 //-------------------------------------------------------------------------------------------------------------------------
 vc_DatapathElementInstantiation[vcDataPath* dp]
@@ -421,11 +409,11 @@ vc_DatapathElementInstantiation[vcDataPath* dp]
 	vcDatapathElement* dpe;
 }: DPEINSTANCE id = vc_Label OF template_id = vc_Label {dpe = new vcDatapathElement(id,template_id);} 
 LBRACE
-(PARAMS 
+(PARAMETER MAP
  (paramid: vc_Identifier IMPLIES vid:vc_Identifier {dpe->Set_Parameter(paramid->getText(), atoi(vid->getText().c_str()));})+)?
-(PORTMAP 
+(PORT MAP
  (portid: vc_Identifier IMPLIES wid: vc_Identifier{dpe->Connect_Wire(portid->getText(),dp->Get_Wire(wid->getText()));})+)? 
-(vc_AttributeSpec[dp])* 
+(vc_AttributeSpec[dpe])* 
 RBRACE
 
 ;
@@ -481,7 +469,7 @@ vc_Interface_Object_Declaration[vcModule* parent, string mode]
 //----------------------------------------------------------------------------------------------------------
 vc_Object_Declaration_Base[vcType** t, string& obj_name, vcValue** v]
 {
-        vcType* tt = NULL;
+	vcType* tt = NULL;
 	vcValue* vv = NULL;
 }
 : id:SIMPLE_IDENTIFIER {obj_name = id->getText();} COLON tt = vc_Type
@@ -559,7 +547,7 @@ vc_IntValue[vcType* t] returns[vcValue* v]
 ;
 
 //----------------------------------------------------------------------------------------------------------
-// vc_FloatValue: (MINUS)? '.' vc_IntValue  'E' vc_IntValue
+// vc_FloatValue: (MINUS)?  "C" vc_IntValue "M" vc_IntValue
 //----------------------------------------------------------------------------------------------------------
 vc_FloatValue[vcType* t] returns[vcValue* v]
 {
@@ -569,7 +557,7 @@ vc_FloatValue[vcType* t] returns[vcValue* v]
 	char sign_value = 0;
 	vcIntValue* cv;
 	vcIntValue* mv;
-}:  (MINUS {sign_value = 1;})? cv = vc_IntValue[t->Get_Characteristic_Type()] "E" mv = vc_IntValue[t->Get_Mantissa_Type()]
+}:  (MINUS {sign_value = 1;})? "C" cv = vc_IntValue[t->Get_Characteristic_Type()] "M" mv = vc_IntValue[t->Get_Mantissa_Type()]
 {
 	v = (vcValue*) (new vcFloatValue(t,sign_value, cv, mv));
 }
@@ -631,7 +619,7 @@ vc_ArrayType returns [vcType* t]
 	vcArrayType* at;
 	vcType* et;
 	unsigned int dimension;
-}: ARRAY LBRACKET dim: UINTEGER {dimension = atoi(dim->getText().c_str());} RBRACKET OF et = vc_ScalarType
+}: ARRAY LBRACKET dim: UINTEGER {dimension = atoi(dim->getText().c_str());} RBRACKET OF et = vc_Type
 { at = new vcArrayType(et,dimension); t = (vcType*) at;}
 ;
 
@@ -694,6 +682,7 @@ BRANCHBLOCK   : "$branchblock";
 OF            : "$of";
 FORK          : "$fork";
 JOIN          : "$join";
+BRANCH        : "$branch";
 MERGE         : "$merge";
 ENTRY         : "$entry";
 EXIT          : "$exit";
@@ -704,6 +693,11 @@ ACKS          : "$acks";
 TRANSITION    : "$transition";
 PLACE         : "$place";
 HIDDEN        : "$hidden";
+PARAMETER     : "$parameter";
+PORT          : "$port";
+MAP           : "$map";
+DATAPATH      : "$datapath";
+CONTROLPATH   : "$controlpath";
 
 
 // Special symbols
