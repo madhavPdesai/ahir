@@ -123,10 +123,12 @@ static char *vcLexerKeywords[] =
       "$at"
   };
 
+string IntToStr(unsigned int x);
+
 class vcRoot
 {
   string _id;
-  map<string,string> _atttribute_map;
+  map<string,string> _attribute_map;
 
   
 

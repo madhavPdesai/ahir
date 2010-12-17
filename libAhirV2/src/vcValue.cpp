@@ -71,7 +71,7 @@ string Add(string s, string t)
   for(int idx = 0; idx < ret_string.size(); idx++)
     {
       cout = _OR_(_AND_(ret_string[idx],t[idx]), _AND_(_OR_(ret_string[idx],t[idx]),cin));
-      sum = _XOR_(_XOR(ret_string[idx],t[idx]),cin);
+      sum = _XOR_(_XOR_(ret_string[idx],t[idx]),cin);
 
       ret_string[idx] = sum;
       cin = cout;
@@ -85,7 +85,7 @@ bool Less(string s, string t) // s,t are assumed to be little-endian
   assert(s.size() == t.size());
   bool ret_val = true;
 
-  ret_val = Less(s.sub_str(1), t.sub_str(1)) || (s[0] == '0' && t[0] == '1' && Equal(s.sub_str(1), t.sub_str(1)));
+  ret_val = Less(s.substr(1), t.substr(1)) || (s[0] == '0' && t[0] == '1' && Equal(s.substr(1), t.substr(1)));
   return(ret_val);
 
 }
@@ -93,7 +93,7 @@ bool Less(string s, string t) // s,t are assumed to be little-endian
 bool Equal(string s, string t) // s,t are assumed to be little-endian
 {
   assert(s.size() == t.size());
-  bool ret_val = (s[0] == t[0]) && Equal(s.sub_str(1),t.sub_str(1));
+  bool ret_val = (s[0] == t[0]) && Equal(s.substr(1),t.substr(1));
   return(ret_val);
 }
 
@@ -128,13 +128,13 @@ string Mul(string s, string t) // s,t are assumed to be little-endian
       mul_result = SHRA(mul_result);
       if(t[vidx] == '1') 
 	{
-	  string mul_result_top = mul_result.sub_str(result_size);
+	  string mul_result_top = mul_result.substr(result_size);
 	  mul_result_top = Add(mul_result_top,s);
 	  mul_result.replace(result_size,result_size, mul_result_top);
 	}
     }
 
-  string ret_string = (mul_result.sub_str(0,result_size));
+  string ret_string = (mul_result.substr(0,result_size));
   return(ret_string);
 }
 
@@ -146,7 +146,7 @@ string SHRA(string s)
   string sr = Reverse(s);
   string retr;
   retr.push_back(sr[0]);
-  retr = retr + sr.sub_str(1);
+  retr = retr + sr.substr(1);
   return(Reverse(retr));
 }
 
@@ -156,27 +156,27 @@ string SHRA(string s)
 string SHR(string s)
 {
   string sr = Reverse(s);
-  string retr = '0' + sr.sub_str(1);
+  string retr = '0' + sr.substr(1);
   return(Reverse(retr));
 }
 
-vcValue::vcValue(vcType t):vcRoot()
+vcValue::vcValue(vcType* t):vcRoot()
 {
-  assert(t);
+  assert(t != NULL);
   this->_type = t;
 }
 
-vcIntValue::vcIntValue(vcIntType* t):vcValue(t)
+vcIntValue::vcIntValue(vcIntType* t):vcValue((vcType*)t)
 {
     assert(t->Is("vcIntType"));
-    for(int idx = 0; t->Get_Size(); idx++)
+    for(int idx = 0; idx < t->Size(); idx++)
       this->_value.push_back('0');
 }
 
-vcIntValue::vcIntValue(vcIntType* t, string value):vcType(t)
+vcIntValue::vcIntValue(vcIntType* t, string value):vcValue((vcType*)t)
 {
   // length
-  assert(t->Is("vcIntType") && (t->Get_Size() == value.size()));
+  assert(t->Is("vcIntType") && ((t)->Size() == value.size()));
 
   // assume binary.
   for(int idx = 0; idx < value.size(); idx++)
@@ -185,19 +185,17 @@ vcIntValue::vcIntValue(vcIntType* t, string value):vcType(t)
   this->_value = Reverse(value);
 }
 
-vcIntValue::vcIntValue(vcIntType* t, string big_endian_value, string format):vcType(t)
+vcIntValue::vcIntValue(vcIntType* t, string big_endian_value, string format):vcValue((vcType*)t)
 {
-
-
   if(format == "binary")
     {
-      assert(t->Is("vcIntType") && (t->Get_Size() == value.size()));
+      assert(t->Is("vcIntType") && ((t)->Size() == big_endian_value.size()));
       this->_value = Reverse(big_endian_value);
     }
   else 
     {
       this->_value = Hex_To_Binary(Reverse(big_endian_value));
-      this->_value.resize(t->Get_Size(),'0');
+      this->_value.resize((t)->Size(),'0');
     }
 }
 
@@ -207,35 +205,36 @@ void vcIntValue::Print(ostream& ofile)
   ofile << Reverse(this->_value) << " ";
 }
 // assignment operator
-vcIntValue& vcIntValue::operator=(const vcIntValue& v)
+vcIntValue& vcIntValue::operator=( vcIntValue& v)
 {
-  this->_type = v->Get_Type();
-  this->_value = v->Get_Value();
-}
-
-// +=, *=, -=
-vcIntValue& vcIntValue::operator+=(const vcIntValue& v)
-{
-  assert(this->_value.size() == v->Get_Value().size());
-  this->_value = Add(this->_value, v->Get_Value());
-  return (*this);
-}
-
-vcIntValue& vcIntValue::operator*=(vcIntValue& v)
-{
-  assert(this->_value.size() == v->Get_Value().size());
-  this->_value = Mul(this->_value, v->Get_Value());
+  this->_type = v.Get_Type();
+  this->_value = v.Get_Value();
   return(*this);
 }
 
-vcIntValue& vcIntValue::operator-=(vcIntValue)
+// +=, *=, -=
+vcIntValue& vcIntValue::operator+=( vcIntValue& v)
 {
-  assert(this->_value.size() == v->Get_Value().size());
-  this->_value = Sub(this->_value, v->Get_Value());
+  assert(this->_value.size() == v.Get_Value().size());
+  this->_value = Add(this->_value, v.Get_Value());
   return (*this);
 }
 
-vcIntValue& vcIntValue::operator/=(vcIntValue)
+vcIntValue& vcIntValue::operator*=( vcIntValue& v)
+{
+  assert(this->_value.size() == v.Get_Value().size());
+  this->_value = Mul(this->_value, v.Get_Value());
+  return(*this);
+}
+
+vcIntValue& vcIntValue::operator-=( vcIntValue& v)
+{
+  assert(this->_value.size() == v.Get_Value().size());
+  this->_value = Sub(this->_value, v.Get_Value());
+  return (*this);
+}
+
+vcIntValue& vcIntValue::operator/=( vcIntValue& v)
 {
   assert(0 && "integer divide not implemented\n");
 }
@@ -244,18 +243,18 @@ vcIntValue& vcIntValue::operator/=(vcIntValue)
 // friend operators
 vcIntValue operator+(vcIntValue& s, vcIntValue& t)
 {
-  assert(s.Get_Type()->Is("vcIntType") && t.Get_Type()->Is("vcIntType") && (s.Get_Type()->Get_Size() ==  t.Get_Type()->Get_Size()));
-  return vcIntValue(s.Get_Type(),Add(s.Get_Value(),t.Get_Value()));
+  assert(s.Get_Type()->Is("vcIntType") && t.Get_Type()->Is("vcIntType") && (s.Get_Type()->Size() ==  t.Get_Type()->Size()));
+  return vcIntValue((vcIntType*)(s.Get_Type()),Add(s.Get_Value(),t.Get_Value()));
 }
 vcIntValue operator-(vcIntValue& s, vcIntValue& t)
 {
-  assert(s.Get_Type()->Is("vcIntType") && t.Get_Type()->Is("vcIntType") && (s.Get_Type()->Get_Size() ==  t.Get_Type()->Get_Size()));
-  return vcIntValue(s.Get_Type(),Sub(s.Get_Value(),t.Get_Value()));
+  assert(s.Get_Type()->Is("vcIntType") && t.Get_Type()->Is("vcIntType") && (s.Get_Type()->Size() ==  t.Get_Type()->Size()));
+  return vcIntValue((vcIntType*)(s.Get_Type()),Sub(s.Get_Value(),t.Get_Value()));
 }
 vcIntValue operator*(vcIntValue& s , vcIntValue &t)
 {
-  assert(s.Get_Type()->Is("vcIntType") && t.Get_Type()->Is("vcIntType") && (s.Get_Type()->Get_Size() ==  t.Get_Type()->Get_Size()));
-  return vcIntValue(s.Get_Type(),Mul(s.Get_Value(),t.Get_Value()));
+  assert(s.Get_Type()->Is("vcIntType") && t.Get_Type()->Is("vcIntType") && (s.Get_Type()->Size() ==  t.Get_Type()->Size()));
+  return vcIntValue((vcIntType*)(s.Get_Type()),Mul(s.Get_Value(),t.Get_Value()));
 }
 vcIntValue operator/(vcIntValue& s, vcIntValue& t)
 {
@@ -286,11 +285,11 @@ bool operator<=(vcIntValue& s, vcIntValue& t)
 
 
 
-vcFloatValue::vcFloatValue(vcFloatType* t, char sgn, vcIntValue* cvalue, vcIntValue* mvalue):vcValue(t)
+vcFloatValue::vcFloatValue(vcFloatType* t, char sgn, vcIntValue* cvalue, vcIntValue* mvalue):vcValue((vcType*)t)
 {
   this->_sign = sgn;
-  this->_characteristic = *cvalue;
-  this->_mantissa = *mvalue;
+  this->_characteristic = cvalue;
+  this->_mantissa = mvalue;
 }
 
 void vcFloatValue::Print(ostream& ofile)
@@ -303,15 +302,17 @@ void vcFloatValue::Print(ostream& ofile)
 }
 
 // assignment operator
-vcFloatValue& vcFloatValue::operator=(const vcFloatValue& v)
+vcFloatValue& vcFloatValue::operator=( vcFloatValue& v)
 {
-  this->_sign = sign;
-  this->_characteristic = v->Get_Characteristic();
-  this->_mantissa = v->Get_Mantissa();
+  this->_sign = v.Get_Sign();
+
+  // dont delete anything!
+  this->_characteristic = v.Get_Characteristic();
+  this->_mantissa = v.Get_Mantissa();
 }
 
 
-vcArrayValue::vcArrayValue(vcArrayType* t, vector<vcValue*>& values):vcValue(t)
+vcArrayValue::vcArrayValue(vcArrayType* t, vector<vcValue*>& values):vcValue((vcType*)t)
 {
   for(int idx = 0; idx < values.size(); idx++)
     _value_array.push_back(values[idx]);
@@ -335,7 +336,7 @@ void vcArrayValue::Print(ostream& ofile)
 vcArrayValue* vcArrayValue::Slice(int lindex, int rindex)
 {
   assert(rindex >= lindex);
-  vcArrayType* t = Make_Array_Type(rindex-lindex, this->Get_Element_Type());
+  vcArrayType* t = Make_Array_Type(rindex-lindex, ((vcArrayType*)(this->Get_Type()))->Get_Element_Type());
   vector<vcValue*> slice_values;
   for(int idx = lindex; idx <= rindex; idx++)
     slice_values.push_back(this->_value_array[idx]);
@@ -351,24 +352,33 @@ vcValue* vcArrayValue::operator[](int index)
 }
 
 // assignment operator
-vcArrayValue& vcArrayValue::operator=(const vcArrayValue& v)
+vcArrayValue& vcArrayValue::operator=( vcArrayValue& v)
 {
-  this->_type = v->Get_Type();
+  this->_type = v.Get_Type();
   this->_value_array.clear();
-  for(int idx = 0; idx < v->Get_Number_Of_Values(); idx++)
+  for(int idx = 0; idx < v.Get_Number_Of_Values(); idx++)
     this->_value_array.push_back(v[idx]);
 };
+
+vcType* vcArrayValue::Get_Element_Type()
+{
+  return(((vcArrayType*)this->_type)->Get_Element_Type());
+}
+int vcArrayValue::Get_Dimension()
+{
+ return(((vcArrayType*)this->_type)->Get_Dimension());
+}
 
 // concatenate arrays.
 vcArrayValue* operator&&(vcArrayValue& s, vcArrayValue& t)
 {
 
-  assert(s->Get_Element_Type() == t->Get_Element_Type());
+  assert(s.Get_Element_Type() == t.Get_Element_Type());
 
-  vcArrayType* at = Make_Array_Type(s->Get_Type()->Get_Dimension() + t->Get_Type()->Get_Dimension(), s->Get_Element_Type());
-  vector<vcValue*> concat_values = s->_value_array;
+  vcArrayType* at = Make_Array_Type(s.Get_Dimension() + t.Get_Dimension(), s.Get_Element_Type());
+  vector<vcValue*> concat_values = s._value_array;
   
-  for(int idx = 0; idx < t->Get_Number_Of_Values(); idx++)
+  for(int idx = 0; idx < t.Get_Number_Of_Values(); idx++)
     concat_values.push_back(t[idx]);
   
   vcArrayValue* ret_val = new vcArrayValue(at, concat_values);
@@ -379,10 +389,10 @@ vcArrayValue* operator&&(vcArrayValue& s, vcArrayValue& t)
 bool operator==(vcArrayValue& s, vcArrayValue& t)
 {
   bool ret_val = true;
-  if(s->Get_Type() == t->Get_Type())
+  if(s.Get_Type() == t.Get_Type())
     {
-      if(s->_value_array.size() == t->_value_array_size())
-	for(int idx = 0; idx < s->_value_array.size(); idx++)
+      if(s._value_array.size() == t._value_array.size())
+	for(int idx = 0; idx < s._value_array.size(); idx++)
 	  {
 	    if(!(s[idx] == t[idx]))
 	      { 
@@ -400,7 +410,7 @@ bool operator==(vcArrayValue& s, vcArrayValue& t)
 }
 
 
-vcRecordValue::vcRecordValue(vcRecordType* t, vector<vcValue*>& values):vcValue(t)
+vcRecordValue::vcRecordValue(vcRecordType* t, vector<vcValue*>& values):vcValue((vcType*)t)
 {
   this->_element_values = values;
 }
@@ -425,7 +435,7 @@ vcValue* vcRecordValue::operator[](int index)
 }
 
   // assignment operator
-vcRecordValue& vcRecordValue::operator=(const vcRecordValue& v)
+vcRecordValue& vcRecordValue::operator=( vcRecordValue& v)
 {
   this->_type = v.Get_Type();
   this->_element_values.clear();
@@ -436,13 +446,13 @@ vcRecordValue& vcRecordValue::operator=(const vcRecordValue& v)
 
 
 
-bool operator==(vcRecordValue&, vcRecordValue&)
+bool operator==(vcRecordValue& s, vcRecordValue& t)
 {
   bool ret_val = true;
-  if(s->Get_Type() == t->Get_Type())
+  if(s.Get_Type() == t.Get_Type())
     {
-      if(s->_element_values.size() == t->_element_values_size())
-	for(int idx = 0; idx < s->_element_values.size(); idx++)
+      if(s._element_values.size() == t._element_values.size())
+	for(int idx = 0; idx < s._element_values.size(); idx++)
 	  {
 	    if(!(s[idx] == t[idx]))
 	      { 

@@ -7,8 +7,10 @@
 
 class vcType: public vcRoot
 {
+  unsigned int _index;
 
 public:
+
   vcType();
 
   virtual string Kind()
@@ -16,14 +18,17 @@ public:
     return("vcType");
   }
 
+  void Set_Index(unsigned int w) {this->_index = w;}
+  unsigned int Get_Index() {return(this->_index);}
+
   virtual void Print(ostream& ofile) {assert(0);}
   virtual int Size() { assert(0);}
 };
 
 class vcScalarTypeTemplate: public vcType
 {
-  bool int_flag;
-  bool float_flag;
+  bool _int_flag;
+  bool _float_flag;
   string _width;
   string _characteristic;
   string _mantissa;
@@ -60,15 +65,17 @@ public:
   virtual int Size() { return(this->_width);}
 };
 
+class vcMemorySpace;
 class vcPointerType: public vcScalarType
 {
+  string _scope_id;
   string _memory_space_name;
-  vcRoot* _memory_space;
+  vcMemorySpace* _memory_space;
 
 public :
-  vcPointerType(string mem_space_id);
-  void Set_Memory_Space(vcRoot* ms);
-  vcRoot* Get_Memory_Space();
+  vcPointerType(string scope_id, string mem_space_id);
+  void Set_Memory_Space(vcMemorySpace* ms);
+  vcMemorySpace* Get_Memory_Space();
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcPointerType");}
@@ -112,6 +119,7 @@ class vcArrayType: public vcType
  
 public:
 
+  int Get_Dimension() {return(this->_dimension);}
   vcType* Get_Element_Type() {return(this->_element_type);}
   vcArrayType(vcType* stype, int dimension);
   void Print(ostream& ofile);

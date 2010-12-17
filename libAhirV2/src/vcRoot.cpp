@@ -1,6 +1,11 @@
 #include <vcRoot.hpp>
 
-bool vcRoot::_err_flag = false;
+string IntToStr(unsigned int x)
+{
+  ostringstream string_stream(ostringstream::out);
+  string_stream << x;
+  return(string_stream.str());
+}
 
 vcRoot::vcRoot()
 {
@@ -20,7 +25,7 @@ string vcRoot::Get_Id()
 {
   return(this->_id);
 }
-string Get_Label()
+string vcRoot::Get_Label()
 {
   string ret_string = (vcLexerKeywords[__LBRACKET] + this->Get_Id()) + vcLexerKeywords[__RBRACKET];
   return(ret_string);

@@ -424,7 +424,7 @@ vc_Datapath[vcSystem* sys,vcModule* m]
 vc_DatapathElementInstantiation[vcSystem* sys, vcModule* m, vcDataPath* dp]
 {
 	string id;
-	string template_id,param_id,vid,port_id,wid,lib_id
+	string template_id,param_id,vid,port_id,wid,lib_id;
 	vcDatapathElement* dpe;
 }: DPEINSTANCE id = vc_Label OF lib_id = vc_Identifier COLON template_id = vc_Identifier
    {
@@ -434,9 +434,9 @@ vc_DatapathElementInstantiation[vcSystem* sys, vcModule* m, vcDataPath* dp]
    } 
 LBRACE
 (PARAMETER MAP
- (paramid = vc_Identifier IMPLIES vid = vc_Identifier {dpe->Set_Parameter(paramid, atoi(vid.c_str()));})+)?
+ (param_id = vc_Identifier IMPLIES vid = vc_Identifier {dpe->Set_Parameter(param_id, atoi(vid.c_str()));})+)?
 (PORT MAP
- (portid = vc_Identifier IMPLIES wid = vc_Identifier {assert(dpe->Get_Wire(wid) != NULL); dpe->Connect_Wire(portid,dp->Get_Wire(wid));})+)? 
+ (port_id = vc_Identifier IMPLIES wid = vc_Identifier {assert(dp->Find_Wire(wid) != NULL); dpe->Connect_Wire(port_id,dp->Find_Wire(wid));})+)? 
 (vc_AttributeSpec[dpe])* 
 RBRACE
 
@@ -483,8 +483,7 @@ vc_Interface_Object_Declaration[vcSystem* sys, vcModule* parent, string mode]
 }
 : vc_Object_Declaration_Base[sys, &t,obj_name,&v] 
 { 
-	if(mode == "in") parent->Add_Input_Argument(obj_name,t,v);
-	else parent->Add_Output_Argument(obj_name,t,v);
+	parent->Add_Argument(obj_name,mode,t);
 }
 ;
 
@@ -505,7 +504,7 @@ vc_Object_Declaration_Base[vcSystem* sys, vcType** t, string& obj_name, vcValue*
 //----------------------------------------------------------------------------------------------------------
 // vc_WireDeclaration: WIRE vc_Object_Declaration_Base
 //----------------------------------------------------------------------------------------------------------
-vc_WireDeclaration[vcDataPath* dp,vcSystem* sys]
+vc_WireDeclaration[vcSystem* sys,vcDataPath* dp]
 {
 	vcType* t;
 	string obj_name;
@@ -566,7 +565,7 @@ vc_IntValue[vcType* t] returns[vcValue* v]
 }: (bid: BINARYSTRING { vstring = bid->getText(); format = "binary";} ) |
 (hid: HEXSTRING { vstring = hid->getText(); format = "hexadecimal";})
 {
-	v = (vcValue*) (new vcIntValue(t,vstring,format));
+	v = (vcValue*) (new vcIntValue((vcIntType*)t,vstring,format));
 }
 ;
 
@@ -579,11 +578,12 @@ vc_FloatValue[vcType* t] returns[vcValue* v]
 	string format;
 	assert(t->Is("vcFloatType"));
 	char sign_value = 0;
-	vcIntValue* cv;
-	vcIntValue* mv;
-}:  (MINUS {sign_value = 1;})? "C" cv = vc_IntValue[t->Get_Characteristic_Type()] "M" mv = vc_IntValue[t->Get_Mantissa_Type()]
+	vcValue* cv;
+	vcValue* mv;
+        assert(t != NULL && t->Is("vcFloatType"));
+}:  (MINUS {sign_value = 1;})? "C" cv = vc_IntValue[((vcFloatType*)t)->Get_Characteristic_Type()] "M" mv = vc_IntValue[((vcFloatType*)t)->Get_Mantissa_Type()]
 {
-	v = (vcValue*) (new vcFloatValue(t,sign_value, cv, mv));
+	v = (vcValue*) (new vcFloatValue((vcFloatType*)t,sign_value, (vcIntValue*)cv, (vcIntValue*)mv));
 }
 ;
 
@@ -596,67 +596,68 @@ vc_Type[vcSystem* sys] returns[vcType* t]
 //----------------------------------------------------------------------------------------------------------
 // vc_ScalarType : vc_IntType | vc_FloatType | vc_PointerType 
 //----------------------------------------------------------------------------------------------------------
-vc_ScalarType returns[vcType* t]
-: (t =  vc_IntType ) | (t = vc_FloatType) | (t =  vc_PointerType ) ;
+vc_ScalarType[vcSystem* sys] returns[vcType* t]
+: (t =  vc_IntType[sys] ) | (t = vc_FloatType[sys]) | (t =  vc_PointerType[sys] ) ;
 
 //----------------------------------------------------------------------------------------------------------
 // vc_IntType : INT LESS UINTEGER GREATER
 //----------------------------------------------------------------------------------------------------------
-vc_IntType returns [vcType* t]
+vc_IntType[vcSystem* sys] returns [vcType* t]
 {
 	vcIntType* it;
 	unsigned int w;
 }
-: INT LESS i:UINTEGER {w = atoi(i->getText().c_str());} GREATER {it = vcProgram::Make_Integer_Type(w); t = (vcType*)it;}
+: INT LESS i:UINTEGER {w = atoi(i->getText().c_str());} GREATER {it = sys->Make_Integer_Type(w); t = (vcType*)it;}
 ;
 
 //----------------------------------------------------------------------------------------------------------
 // vc_FloatType: FLOAT LESS UINTEGER COMMA UINTEGER GREATER
 //----------------------------------------------------------------------------------------------------------
-vc_FloatType returns [vcType* t]
+vc_FloatType[vcSystem* sys] returns [vcType* t]
 {
 	vcFloatType* ft;
 	unsigned int c,m;
 }
 : FLOAT LESS cid:UINTEGER {c = atoi(cid->getText().c_str());} COMMA mid:UINTEGER {m = atoi(mid->getText().c_str());}
-GREATER {ft = vcProgram::Make_Float_Type(c,m); t = (vcType*)ft;}
+GREATER {ft = sys->Make_Float_Type(c,m); t = (vcType*)ft;}
 ;
 
 
 //----------------------------------------------------------------------------------------------------------
-// vc_PointerType : POINTER LESS HIERARCHICAL_IDENTIFIER GREATER
+// vc_PointerType : POINTER LESS (vc_Identifier COLON)? vc_Identifier GREATER
 //----------------------------------------------------------------------------------------------------------
-vc_PointerType returns [vcType* t]
+vc_PointerType[vcSystem* sys] returns [vcType* t]
 { 
 	vcPointerType* pt;
+        string scope_id;
 	string space_id; 
 }:
-POINTER LESS id:HIERARCHICAL_IDENTIFIER 
-{space_id = id->getText(); pt = new vcPointer(space_id); t = (vcType*) pt;} 
+POINTER LESS (scope_id = vc_Identifier COLON)? space_id = vc_Identifier
+{pt = sys->Make_Pointer_Type(scope_id,space_id); t = (vcType*) pt;} 
 GREATER
 ;
 //----------------------------------------------------------------------------------------------------------
 // vc_Array_Type: ARRAY (LBRACKET UINTEGER RBRACKET) OF vc_ScalarType
 //----------------------------------------------------------------------------------------------------------
-vc_ArrayType returns [vcType* t]
+vc_ArrayType[vcSystem* sys] returns [vcType* t]
 {
 	vcArrayType* at;
 	vcType* et;
 	unsigned int dimension;
-}: ARRAY LBRACKET dim: UINTEGER {dimension = atoi(dim->getText().c_str());} RBRACKET OF et = vc_Type
-{ at = new vcArrayType(et,dimension); t = (vcType*) at;}
+}: ARRAY LBRACKET dim: UINTEGER {dimension = atoi(dim->getText().c_str());} RBRACKET OF et = vc_Type[sys]
+{ at = sys->Make_Array_Type(et,dimension); t = (vcType*) at;}
 ;
 
 //----------------------------------------------------------------------------------------------------------
 // vc_Record_Type: Record (LPAREN (vc_Type) (COMMA vc_Type)*  RPAREN)
 //----------------------------------------------------------------------------------------------------------
-vc_RecordType returns [vcType* t]
+vc_RecordType[vcSystem* sys] returns [vcType* t]
 {
 	vcRecordType* rt;
-	vcElementType* et;
+	vcType* et;
 	vector<vcType*> etypes;
-}: RECORD LBRACKET (et = vc_Type {etypes.push_back(et);}) (COMMA t = vc_Type {etypes.push_back(et);})* RBRACKET
-{ rt = new vcRecordType(etypes); t = (vcType*) rt; etypes.clear();}
+}: RECORD LBRACKET (et = vc_Type[sys] {etypes.push_back(et);}) (COMMA t = vc_Type[sys] {etypes.push_back(et);})* RBRACKET
+{ rt = sys->Make_Record_Type(etypes); t = (vcType*) rt; etypes.clear();}
 ;
 
 //----------------------------------------------------------------------------------------------------------

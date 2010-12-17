@@ -19,9 +19,9 @@ class vcMemorySpace: public vcRoot
   void Set_Word_Size(unsigned int c) { this->_word_size = c;}
   void Set_Address_Width(unsigned int c) { this->_address_width = c;}
 
-  int Set_Capacity() { return this->_capacity;}
-  int Set_Word_Size() { return this->_word_size;}
-  int Set_Address_Width() {return this->_address_width;}
+  int Get_Capacity() { return this->_capacity;}
+  int Get_Word_Size() { return this->_word_size;}
+  int Get_Address_Width() {return this->_address_width;}
 
   virtual string Kind() {return("vcMemorySpace");}
 

@@ -51,11 +51,19 @@ public:
 	public: void vc_System(
 		vcSystem* sys
 	);
-	public: vcModule*  vc_Module();
-	public: vcMemorySpace*  vc_MemorySpace();
-	public: vcDatapathElementLibrary*  vc_Library();
+	public: vcModule*  vc_Module(
+		vcSystem* sys
+	);
+	public: vcMemorySpace*  vc_MemorySpace(
+		vcSystem* sys
+	);
+	public: vcDatapathElementLibrary*  vc_Library(
+		vcSystem* sys
+	);
 	public: string  vc_Label();
-	public: vcDatapathElementTemplate*  vc_DatapathElementTemplate();
+	public: vcDatapathElementTemplate*  vc_DatapathElementTemplate(
+		vcSystem* sys
+	);
 	public: void vc_DpeParamSpec(
 		vcDatapathElementTemplate* p
 	);
@@ -80,23 +88,25 @@ public:
 		vcMemorySpace* ms
 	);
 	public: void vc_MemoryLocation(
-		vcMemorySpace* ms
+		vcSystem* sys, vcMemorySpace* ms
 	);
-	public: vcType*  vc_Type();
+	public: vcType*  vc_Type(
+		vcSystem* sys
+	);
 	public: vcValue*  vc_Value(
 		vcType* t
 	);
 	public: void vc_Inargs(
-		vcModule* parent
+		vcSystem* sys, vcModule* parent
 	);
 	public: void vc_Outargs(
-		vcModule* parent
+		vcSystem* sys, vcModule* parent
 	);
 	public: void vc_Controlpath(
-		vcModule* m
+		vcSystem* sys, vcModule* m
 	);
 	public: void vc_Datapath(
-		vcModule* m
+		vcSystem* sys,vcModule* m
 	);
 	public: void vc_Link(
 		vcModule* m
@@ -135,16 +145,16 @@ public:
 		vcCPForkBlock* fb
 	);
 	public: void vc_WireDeclaration(
-		vcDataPath* dp
+		vcSystem* sys,vcDataPath* dp
 	);
 	public: void vc_DatapathElementInstantiation(
-		vcDataPath* dp
+		vcSystem* sys, vcModule* m, vcDataPath* dp
 	);
 	public: void vc_Interface_Object_Declaration(
-		vcModule* parent, string mode
+		vcSystem* sys, vcModule* parent, string mode
 	);
 	public: void vc_Object_Declaration_Base(
-		vcType** t, string& obj_name, vcValue** v
+		vcSystem* sys, vcType** t, string& obj_name, vcValue** v
 	);
 	public: vcValue*  vc_IntValue(
 		vcType* t
@@ -152,12 +162,24 @@ public:
 	public: vcValue*  vc_FloatValue(
 		vcType* t
 	);
-	public: vcType*  vc_ScalarType();
-	public: vcType*  vc_ArrayType();
-	public: vcType*  vc_RecordType();
-	public: vcType*  vc_IntType();
-	public: vcType*  vc_FloatType();
-	public: vcType*  vc_PointerType();
+	public: vcType*  vc_ScalarType(
+		vcSystem* sys
+	);
+	public: vcType*  vc_ArrayType(
+		vcSystem* sys
+	);
+	public: vcType*  vc_RecordType(
+		vcSystem* sys
+	);
+	public: vcType*  vc_IntType(
+		vcSystem* sys
+	);
+	public: vcType*  vc_FloatType(
+		vcSystem* sys
+	);
+	public: vcType*  vc_PointerType(
+		vcSystem* sys
+	);
 public:
 	ANTLR_USE_NAMESPACE(antlr)RefAST getAST()
 	{

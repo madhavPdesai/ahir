@@ -21,9 +21,9 @@ class vcRecordType;
 string Reverse(string s);
 string Zero_String(int n);
 string Complement(string s);
-bool   Add(string s, string t); // s,t are assumed to be little-endian
-bool   Less(string s, string t); // s,t are assumed to be little-endian
-string Equal(string s, string t); // s,t are assumed to be little-endian
+string Add(string s, string t); // s,t are assumed to be little-endian
+bool Less(string s, string t); // s,t are assumed to be little-endian
+bool Equal(string s, string t); // s,t are assumed to be little-endian
 string Sub(string s, string t); // s,t are assumed to be little-endian
 string Mul(string s, string t); // s,t are assumed to be little-endian
 string SHRA(string s); // s is little-endian.
@@ -33,9 +33,10 @@ string Hex_To_Binary(string s); // little-endian hex-string converted to little-
 
 class vcValue: public vcRoot
 {
+protected:
   vcType* _type;
  public:
-  vcValue(vcType t);
+  vcValue(vcType* t);
 
   vcType* Get_Type() { return(this->_type);}
   virtual string Kind() {return("vcValue");}
@@ -44,6 +45,7 @@ class vcValue: public vcRoot
 
 class vcIntValue: public vcValue
 {
+
   // value is a binary string of characters
   // each of which can be 0 or 1.
   string _value;
@@ -58,13 +60,13 @@ class vcIntValue: public vcValue
   virtual string Kind() {return("vcIntValue");}
 
   // assignment operator
-  vcIntValue& operator=(const vcIntValue& v);
+  vcIntValue& operator=(vcIntValue& v);
 
   // +=, *=, -=
-  vcIntValue& operator+=(const vcIntValue&);
-  vcIntValue& operator*=(const vcIntValue&);
-  vcIntValue& operator-=(const vcIntValue&);
-  vcIntValue& operator/=(const vcIntValue&);
+  vcIntValue& operator+=(vcIntValue&);
+  vcIntValue& operator*=(vcIntValue&);
+  vcIntValue& operator-=(vcIntValue&);
+  vcIntValue& operator/=(vcIntValue&);
 
 };
 
@@ -83,21 +85,21 @@ bool operator==(vcIntValue&, vcIntValue&);
 class vcFloatValue: public vcValue
 {
   char _sign;
-  vcIntValue& _characteristic;
-  vcIntValue& _mantissa;
+  vcIntValue* _characteristic;
+  vcIntValue* _mantissa;
 
  public:
 
   vcFloatValue(vcFloatType* t, char sgn, vcIntValue* cvalue, vcIntValue* mvalue);
-
-  vcIntValue& Get_Characteristic() {return(this->_characteristic);}
-  vcIntValue& Get_Mantissa() {return(this->_mantissa);}
+  char Get_Sign() {return(this->_sign);}
+  vcIntValue* Get_Characteristic() {return(this->_characteristic);}
+  vcIntValue* Get_Mantissa() {return(this->_mantissa);}
   
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcFloatValue");}
 
   // assignment operator
-  vcFloatValue& operator=(const vcFloatValue& v);
+  vcFloatValue& operator=(vcFloatValue& v);
 
   // +=, *=, -=
   vcFloatValue& operator+=(vcFloatValue) { assert(0);}
@@ -131,9 +133,11 @@ class vcArrayValue: public vcValue
 
   int Get_Number_Of_Values() { return(this->_value_array.size());}
 
+  vcType* Get_Element_Type();
+  int Get_Dimension();
 
   // assignment operator
-  vcArrayValue& operator=(const vcArrayValue& v);
+  vcArrayValue& operator=(vcArrayValue& v);
 
   // concatenate
   friend vcArrayValue* operator&&(vcArrayValue&, vcArrayValue&);
@@ -153,7 +157,7 @@ class vcRecordValue: public vcValue
   vcRecordValue(vcRecordType* t, vector<vcValue*>& values);
   virtual void Print(ostream& ofile);
   // assignment operator
-  vcRecordValue& operator=(const vcRecordValue& v);
+  vcRecordValue& operator=(vcRecordValue& v);
   vcValue* operator[](int index);
 
   int Get_Number_Of_Elements() {return(this->_element_values.size());}
