@@ -157,7 +157,7 @@ class vcRecordValue: public vcValue
   vcValue* operator[](int index);
 
   int Get_Number_Of_Elements() {return(this->_element_values.size());}
-  vcValue Get_Element(int index) {assert(index >= 0 && index < this->_element_values.size()); return(this->_element_values[index]);}
+  vcValue* Get_Element(int index) {assert(index >= 0 && index < this->_element_values.size()); return(this->_element_values[index]);}
 
   virtual string Kind() {return("vcRecordValue");}
 

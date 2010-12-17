@@ -21,7 +21,7 @@ class CUSTOM_API vcParser : public ANTLR_USE_NAMESPACE(antlr)LLkParser, public v
 
 	void reportError(RecognitionException &re )
 	{
-		vcRoot::Error("Parsing Exception: " + re.toString(),NULL);
+		vcSystem::Error("Parsing Exception: " + re.toString());
 	}
 #line 22 "vcParser.hpp"
 public:
@@ -48,30 +48,32 @@ public:
 	{
 		return vcParser::tokenNames;
 	}
-	public: void vc_System();
+	public: void vc_System(
+		vcSystem* sys
+	);
 	public: vcModule*  vc_Module();
 	public: vcMemorySpace*  vc_MemorySpace();
 	public: vcDatapathElementLibrary*  vc_Library();
 	public: string  vc_Label();
 	public: vcDatapathElementTemplate*  vc_DatapathElementTemplate();
 	public: void vc_DpeParamSpec(
-		vc_DatapathElementTemplate* p
+		vcDatapathElementTemplate* p
 	);
 	public: void vc_InDpePorts(
-		vc_DatapathElementTemplate* t
+		vcDatapathElementTemplate* t
 	);
 	public: void vc_OutDpePorts(
-		vc_DatapathElementTemplate* t
+		vcDatapathElementTemplate* t
 	);
 	public: void vc_DpeReqs(
-		vc_DatapathElementTemplate* t
+		vcDatapathElementTemplate* t
 	);
 	public: void vc_DpeAcks(
-		vc_DatapathElementTemplate* t
+		vcDatapathElementTemplate* t
 	);
-	public: void vc_Identifier();
+	public: string  vc_Identifier();
 	public: void vc_DpePorts(
-		vc_DatapathElementTemplate* t, string mode
+		vcDatapathElementTemplate* t, string mode
 	);
 	public: vcScalarTypeTemplate*  vc_ScalarTypeTemplate();
 	public: void vc_MemorySpaceParams(
@@ -103,22 +105,22 @@ public:
 		vcRoot* m
 	);
 	public: void vc_CPRegion(
-		vcControlPath* cp
+		vcCPBlock* cp
 	);
 	public: vcCPElement*  vc_CPElement();
 	public: vcCPElement*  vc_CPPlace();
 	public: vcCPElement*  vc_CPTransition();
 	public: void vc_CPSeriesBlock(
-		vcControlPath* cp
+		vcCPBlock* cp
 	);
 	public: void vc_CPParallelBlock(
-		vcControlPath* cp
+		vcCPBlock* cp
 	);
 	public: void vc_CPBranchBlock(
-		vcControlPath* cp
+		vcCPBlock* cp
 	);
 	public: void vc_CPForkBlock(
-		vcControlPath* cp
+		vcCPBlock* cp
 	);
 	public: void vc_CPBranch(
 		vcCPBranchBlock* bb
@@ -167,10 +169,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 70;
+	static const int NUM_TOKENS = 74;
 #else
 	enum {
-		NUM_TOKENS = 70
+		NUM_TOKENS = 74
 	};
 #endif
 	

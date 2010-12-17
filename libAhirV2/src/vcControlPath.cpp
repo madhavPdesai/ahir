@@ -123,27 +123,29 @@ void vcCPBranchBlock::Print(ostream& ofile)
       iter != _branch_map.end();
       iter++)
     {
-      ofile << vcLexerKeywords[__BRANCH] << " [" << (*iter).first->Get_Id() << "] (";
+      ofile << vcLexerKeywords[__FROM] << " " << (*iter).first->Get_Label() << " " << 
+	vcLexerKeywords[__BRANCH] << " " << vcLexerKeywords[__LPAREN];
       for(int idx = 0; idx < (*iter).second.size(); idx++)
 	{
 	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
 	}
-      ofile << ") " << endl;
+      ofile << vcLexerKeywords[__RPAREN] << endl;
     }
 
-  // now print the branch and merge points.
   for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = _merge_map.begin();
       iter != _merge_map.end();
       iter++)
     {
-      ofile << vcLexerKeywords[__MERGE] << " [" << (*iter).first->Get_Id() << "] (";
+      ofile << vcLexerKeywords[__AT] << " " << (*iter).first->Get_Label() << " " << vcLexerKeywords[__MERGE] << " "
+	    << vcLexerKeywords[__LPAREN] ;
       for(int idx = 0; idx < (*iter).second.size(); idx++)
 	{
 	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
 	}
-      ofile << ") " << endl;
+      ofile << vcLexerKeywords[__RPAREN] << endl;
     }
 }
+
 
 
 vcCPForkBlock::vcCPForkBlock(string id):vcCPParallelBlock(id)
@@ -186,12 +188,13 @@ void vcCPForkBlock::Print(ostream& ofile)
       iter != _fork_map.end();
       iter++)
     {
-      ofile << vcLexerKeywords[__FORK] << " [" << (*iter).first->Get_Id() << "] (";
+      ofile << vcLexerKeywords[__FROM] << " " << (*iter).first->Get_Label() << " " << 
+	vcLexerKeywords[__FORK] << " " << vcLexerKeywords[__LPAREN];
       for(int idx = 0; idx < (*iter).second.size(); idx++)
 	{
 	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
 	}
-      ofile << ") " << endl;
+      ofile << vcLexerKeywords[__RPAREN] << endl;
     }
 
 
@@ -199,12 +202,13 @@ void vcCPForkBlock::Print(ostream& ofile)
       iter != _join_map.end();
       iter++)
     {
-      ofile << vcLexerKeywords[__JOIN] << " [" << (*iter).first->Get_Id() << "] (";
+      ofile << vcLexerKeywords[__AT] << " " << (*iter).first->Get_Label() << " " << 
+	vcLexerKeywords[__JOIN] << " " << vcLexerKeywords[__LPAREN];
       for(int idx = 0; idx < (*iter).second.size(); idx++)
 	{
 	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
 	}
-      ofile << ") " << endl;
+      ofile << vcLexerKeywords[__RPAREN] << endl;
     }
 }
 

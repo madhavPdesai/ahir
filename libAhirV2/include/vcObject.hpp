@@ -4,6 +4,7 @@
 #include <vcRoot.hpp>
 
 class vcType;
+class vcValue;
 class vcIntValue;
 
 class vcStorageObject: public vcRoot
@@ -22,7 +23,7 @@ class vcStorageObject: public vcRoot
   vcValue* Get_Value() {return(_value);}
 
   void Set_Base_Address(vcIntValue* v);
-  vcIntValue* Get_Base_Address(); {return(_base_address);}
+  vcIntValue* Get_Base_Address() {return(_base_address);}
 
 
   virtual string Kind() {return("vcStorageObject");}

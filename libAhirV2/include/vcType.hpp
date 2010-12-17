@@ -5,7 +5,7 @@
 #include <vcIncludes.hpp>
 #include <vcRoot.hpp>
 
-class vcType: public AaRoot
+class vcType: public vcRoot
 {
 
 public:
@@ -131,7 +131,7 @@ public:
   { 
     int ret_val = 0;
     for(int i = 0; i < this->_element_types.size(); i++)
-      ret_val += this->_element_types[i].Size();
+      ret_val += this->_element_types[i]->Size();
     return(ret_val);
   }
 

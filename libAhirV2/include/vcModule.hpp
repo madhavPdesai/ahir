@@ -11,7 +11,7 @@ class vcControlPath;
 class vcDataPath;
 
 
-class vcModule
+class vcModule: public vcRoot
 {
   map<string, vcMemorySpace*> _memory_space_map;
 

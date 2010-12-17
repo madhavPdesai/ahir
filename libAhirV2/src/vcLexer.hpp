@@ -47,6 +47,7 @@ public:
 	public: void mOF(bool _createToken);
 	public: void mFORK(bool _createToken);
 	public: void mJOIN(bool _createToken);
+	public: void mBRANCH(bool _createToken);
 	public: void mMERGE(bool _createToken);
 	public: void mENTRY(bool _createToken);
 	public: void mEXIT(bool _createToken);
@@ -60,6 +61,15 @@ public:
 	public: void mPARAMETER(bool _createToken);
 	public: void mPORT(bool _createToken);
 	public: void mMAP(bool _createToken);
+	public: void mDATAPATH(bool _createToken);
+	public: void mCONTROLPATH(bool _createToken);
+	public: void mWIRE(bool _createToken);
+	public: void mMIN(bool _createToken);
+	public: void mMAX(bool _createToken);
+	public: void mDPEINSTANCE(bool _createToken);
+	public: void mLINK(bool _createToken);
+	public: void mFROM(bool _createToken);
+	public: void mAT(bool _createToken);
 	public: void mCOLON(bool _createToken);
 	public: void mCOMMA(bool _createToken);
 	public: void mASSIGNEQUAL(bool _createToken);

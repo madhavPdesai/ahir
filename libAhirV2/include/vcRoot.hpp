@@ -54,7 +54,14 @@ enum vcLexerKeytags
     __PORT ,
     __MAP,
     __DATAPATH,
-    __CONTROLPATH
+    __CONTROLPATH,
+    __WIRE,
+    __MIN,
+    __MAX,
+    __DPEINSTANCE,
+    __LINK,
+    __FROM,
+    __AT
   };
 
 static char *vcLexerKeywords[] = 
@@ -74,7 +81,7 @@ static char *vcLexerKeywords[] =
       "$of"		,
       "$fork"		,
       "$join"		,
-      "$branch"		,
+      "$choose"		,
       "$merge"		,
       "$entry"		,
       "$exit"		,
@@ -106,7 +113,14 @@ static char *vcLexerKeywords[] =
       "$port",
       "$map",
       "$datapath",
-      "$controlpath"
+      "$controlpath",
+      "$wire",
+      "$min",
+      "$max",
+      "$dpeinstance",
+      "$link",
+      "$from",
+      "$at"
   };
 
 class vcRoot
@@ -114,18 +128,17 @@ class vcRoot
   string _id;
   map<string,string> _atttribute_map;
 
-  static bool _err_flag;
+  
 
  public:
   vcRoot();
   vcRoot(string id);
 
-  static void Error(string err_msg); // {_error_flag = true;}
-  static void Warning(string err_msg); // {_warning_flag = true;}
-  static bool Get_Error_Flag(); // { return _error_flag; }
+  
 
   void Add_Attribute(string tag, string value);
   string Get_Id();
+  string Get_Label();
 
   virtual void Print(ostream& ofile);
 

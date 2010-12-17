@@ -2,6 +2,7 @@
 #include <vcRoot.hpp>
 #include <vcType.hpp>
 #include <vcValue.hpp>
+#include <vcObject.hpp>
 
 vcStorageObject::vcStorageObject(string id, vcType* t):vcRoot(id)
 {

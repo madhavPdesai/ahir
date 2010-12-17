@@ -1,6 +1,7 @@
 #include <vcIncludes.hpp>
 #include <vcRoot.hpp>
 #include <vcType.hpp>
+#include <vcControlPath.hpp>
 #include <vcDataPath.hpp>
 
 
@@ -41,20 +42,20 @@ void vcDatapathElementTemplate::Print(ostream& ofile)
       iter++)
     {
       ofile << vcLexerKeywords[__PARAMETER] << " " << vcLexerKeywords[__LPAREN] << " ";
-      ofile << *(iter).first << " " << vcLexerKeywords[__MIN] << " " << *(iter).second.first;
-      ofile << " " << vcLexerKeywords[__MAX] << " " << *(iter).second.second << vcLexerKeywords[__RPAREN] << endl;
+      ofile << (*iter).first << " " << vcLexerKeywords[__MIN] << " " << ((*iter).second).first;
+      ofile << " " << vcLexerKeywords[__MAX] << " " << ((*iter).second).second << vcLexerKeywords[__RPAREN] << endl;
     }
 
   // input ports
   if(this->_input_port_map.size() > 0)
     {
       ofile << vcLexerKeywords[__IN] << " " ;
-      for(map<string,vcScalaryTypeTemplate* >::iterator iter = this->_input_port_map.begin();
-	  iter != this->_input_port_map.end();
-	  iter++)
+      for(map<string,vcScalarTypeTemplate* >::iterator iiter = this->_input_port_map.begin();
+	  iiter != this->_input_port_map.end();
+	  iiter++)
 	{
-	  ofile << *(iter).first << vcLexerKeywords[__COLON] << " ";
-	  (*iter).second->Print(ofile);
+	  ofile << (*iiter).first << vcLexerKeywords[__COLON] << " ";
+	  (*iiter).second->Print(ofile);
 	  ofile << " ";
 	}
       
@@ -65,12 +66,12 @@ void vcDatapathElementTemplate::Print(ostream& ofile)
   if(this->_output_port_map.size() > 0)
     {
       ofile << vcLexerKeywords[__OUT] << " " ;
-      for(map<string,vcScalaryTypeTemplate* >::iterator iter = this->_output_port_map.begin();
-	  iter != this->_output_port_map.end();
-	  iter++)
+      for(map<string,vcScalarTypeTemplate* >::iterator oiter = this->_output_port_map.begin();
+	  oiter != this->_output_port_map.end();
+	  oiter++)
 	{
-	  ofile << *(iter).first << vcLexerKeywords[__COLON] << " ";
-	  (*iter).second->Print(ofile);
+	  ofile << (*oiter).first << vcLexerKeywords[__COLON] << " ";
+	  (*oiter).second->Print(ofile);
 	  ofile << " ";
 	}
       
@@ -95,11 +96,11 @@ void vcDatapathElementTemplate::Print(ostream& ofile)
   if(this->_acks.size() > 0)
     {
       ofile << vcLexerKeywords[__ACKS] << " " ;
-      for(set<string>::iterator siter = this->_acks.begin();
-	  siter != this->_acks.end();
-	  siter++)
+      for(set<string>::iterator aiter = this->_acks.begin();
+	  aiter != this->_acks.end();
+	  aiter++)
 	{
-	  ofile << *siter << " ";
+	  ofile << *aiter << " ";
 	}
       ofile << endl;
     }
@@ -113,25 +114,25 @@ vcDatapathElementLibrary::vcDatapathElementLibrary(string id):vcRoot(id)
 }
 void vcDatapathElementLibrary::Add_Template(vcDatapathElementTemplate* t)
 {
-  assert(t != NULL);
-  this->_templates.insert(t);
+  assert(this->_templates.find(t->Get_Id()) == this->_templates.end());
+  this->_templates[t->Get_Id()] = t;
 }
-vcDatapathElementTemplateLibrary::vcDatapathElementTemplate* Get_Template(string template_name)
+vcDatapathElementTemplate* vcDatapathElementLibrary::Get_Template(string template_name)
 {
   vcDatapathElementTemplate* rt = NULL;
-  set<vcDatapathElementTemplate*, vcRoot_Compare>::iterator iter = this->_templates.find(template_name);
+  map<string,vcDatapathElementTemplate*>::iterator iter = this->_templates.find(template_name);
   if(iter != this->_templates.end())
-    rt = *iter;
+    rt = (*iter).second;
   return(rt);
 }
 void vcDatapathElementLibrary::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__LIBRARY] << " [" << this->Get_Id() << "] {" << endl;
-  for(set<vcDatapathElementTemplate*, vcRoot_Compare>::iterator iter = this->_templates.begin();
+  for(map<string,vcDatapathElementTemplate*>::iterator iter = this->_templates.begin();
       iter != this->_templates.end();
       iter++)
     {
-      (*iter)->Print(ofile);
+      ((*iter).second)->Print(ofile);
     }
   ofile << "}" << endl;
 }
@@ -164,11 +165,11 @@ void vcDatapathElement::Print(ostream& ofile)
   if(this->_port_map.size() > 0)
     {
       ofile << vcLexerKeywords[__PORT] << " " << vcLexerKeywords[__MAP] << " ";
-      for(map<string,int>::iterator miter = this->_port_map.begin();
+      for(map<string,vcWire*>::iterator miter = this->_port_map.begin();
 	  miter != this->_port_map.end();
 	  miter++)
 	{
-	  ofile << (*miter).first << " " << vcLexerKeywords[__IMPLIES] << " " << (*miter).second << " " << endl;
+	  ofile << (*miter).first << " " << vcLexerKeywords[__IMPLIES] << " " << (*miter).second->Get_Id() << " " << endl;
 	}
 
     }
@@ -185,7 +186,7 @@ bool vcDatapathElement::Is_Parameter(string id)
 
 void vcDatapathElement::Set_Parameter(string id, int val)
 {
-  if(this->_template->Is_Parameter(id) && this->_template_Is_Legal_Parameter_Value(id,val))
+  if(this->_template->Is_Parameter(id) && this->_template->Is_Legal_Parameter_Value(id,val))
     {
       this->_parameter_value_map[id] = val;
     }
@@ -202,8 +203,7 @@ int  vcDatapathElement::Get_Parameter(string id)
 
 vcWire* vcDatapathElement::Get_Connected_Wire(string port_name)
 {
-
-  map<string,vcWire*>::iterator iter = this->_port_map.find(id);
+  map<string,vcWire*>::iterator iter = this->_port_map.find(port_name);
   if(iter != this->_port_map.end())
     return((*iter).second);
   else
@@ -227,10 +227,10 @@ vcDataPath::vcDataPath(string id):vcRoot(id)
 void vcDataPath::Add_DPE(string dpe_name, vcDatapathElementTemplate* t)
 {
   assert(this->_dpe_map.find(dpe_name) == this->_dpe_map.end());
-  this->_dpe_map[dpe_name] = t;
+  this->_dpe_map[dpe_name] = new vcDatapathElement(dpe_name,t);
 }
 
-vcDatpathElement* vcDataPath::Find_DPE(string dpe_name)
+vcDatapathElement* vcDataPath::Find_DPE(string dpe_name)
 {
   map<string, vcDatapathElement*>::iterator iter = this->_dpe_map.find(dpe_name);
   if(iter != this->_dpe_map.end())
@@ -260,7 +260,7 @@ int vcDataPath::Get_DPE_Parameter(string dpe_name, string param_name)
 
 vcWire* vcDataPath::Find_Wire(string wname)
 {
-  map<string, vcWire*>::iterator iter = this->_wire_map.find(dpe_name);
+  map<string, vcWire*>::iterator iter = this->_wire_map.find(wname);
   if(iter != this->_wire_map.end())
     return((*iter).second);
   else

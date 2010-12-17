@@ -27,7 +27,7 @@ class vcMemorySpace: public vcRoot
 
   vcMemorySpace(string id);
   void Add_Storage_Object(vcStorageObject* obj);
-  void Get_Number_Of_Storage_Objects();
+  int Get_Number_Of_Storage_Objects();
   vcStorageObject* Get_Storage_Object(string obj_name);
 
   virtual void Print(ostream& ofile);

@@ -4,6 +4,7 @@
 #include <vcObject.hpp>
 #include <vcMemorySpace.hpp>
 #include <vcControlPath.hpp>
+#include <vcDataPath.hpp>
 #include <vcModule.hpp>
 
 vcModule::vcModule(string module_name):vcRoot(module_name)
@@ -16,7 +17,7 @@ void vcModule::Print(ostream& ofile)
     {
       ofile << vcLexerKeywords[__IN] << " " << vcLexerKeywords[__LPAREN] << " ";
       for(map<string,vcType*>::iterator iter = this->_input_arguments.begin();
-	  iter != this->input_arguments.end();
+	  iter != this->_input_arguments.end();
 	  iter++)
 	{
 	  ofile << (*iter).first << vcLexerKeywords[__COLON];
@@ -29,7 +30,7 @@ void vcModule::Print(ostream& ofile)
     {
       ofile << vcLexerKeywords[__OUT] << " " << vcLexerKeywords[__LPAREN] << " ";
       for(map<string,vcType*>::iterator iter = this->_output_arguments.begin();
-	  iter != this->output_arguments.end();
+	  iter != this->_output_arguments.end();
 	  iter++)
 	{
 	  ofile << (*iter).first << vcLexerKeywords[__COLON];
@@ -43,7 +44,7 @@ void vcModule::Print(ostream& ofile)
 
   if(this->_link_map.size() > 0)
     {
-      for(map<string,pair<string,strin> >::iterator iter = this->_link_map.begin();
+      for(map<string,pair<string,string> >::iterator iter = this->_link_map.begin();
 	  iter != this->_link_map.end();
 	  iter++)
 	{
@@ -51,13 +52,13 @@ void vcModule::Print(ostream& ofile)
 	  ofile << (*iter).second.first << vcLexerKeywords[__COLON] << (*iter).second.second << vcLexerKeywords[__RPAREN] << endl;
 	}
     }
-  if(this->_memory_space_set.size() > 0)
+  if(this->_memory_space_map.size() > 0)
     {
-      for(set<vcMemorySpace*, vcRoot_Compare>::iterator iter = this->_memory_space_set.begin();
-	  iter != this->_memory_space_set.end();
+      for(map<string,vcMemorySpace*>::iterator iter = this->_memory_space_map.begin();
+	  iter != this->_memory_space_map.end();
 	  iter++)
 	{
-	  (*iter)->Print(ofile);
+	  (*iter).second->Print(ofile);
 	}
     }
 

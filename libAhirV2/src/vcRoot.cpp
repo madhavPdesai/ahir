@@ -11,22 +11,6 @@ vcRoot::vcRoot(string id)
   this->_id = id;
 }
 
-void vcRoot::Error(string err_msg)
-{
-  cerr << "Error: " << err_msg << endl;
-  vcRoot::_err_flag = true;
-}
-
-void vcRoot::Warning(string err_msg)
-{
-  cerr << "Warning: " << err_msg << endl;
-}
-
-
-bool vcRoot::Get_Error_Flag()
-{
-  return(vcRoot::_err_flag);
-}
 
 void vcRoot::Add_Attribute(string tag, string value)
 {
@@ -35,6 +19,11 @@ void vcRoot::Add_Attribute(string tag, string value)
 string vcRoot::Get_Id() 
 {
   return(this->_id);
+}
+string Get_Label()
+{
+  string ret_string = (vcLexerKeywords[__LBRACKET] + this->Get_Id()) + vcLexerKeywords[__RBRACKET];
+  return(ret_string);
 }
 void vcRoot::Print(ostream& ofile)
 {

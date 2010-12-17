@@ -1,7 +1,8 @@
 #ifndef _VC_DATAPATH_H_
 #define _VC_DATAPATH_H_
 #include <vcIncludes.hpp>
-class vcRoot;
+#include <vcRoot.hpp>
+
 class vcType;
 class vcScalarTypeTemplate;
 
@@ -9,25 +10,25 @@ class vcWire: public vcRoot
 {
   vcType* _type;
   vcRoot* _driver;
-  set<vcRoot*> _receivers;
+  set<vcRoot*,vcRoot_Compare> _receivers;
 
  public:
   vcWire(string id, vcType* t);
   virtual void Print(ostream& ofile);
 
   void Connect_Driver(vcRoot* d) {this->_driver = d;}
-  void Connect_Receiver(vcRoot* r) {this->_receivers.push_back(r);}
+  void Connect_Receiver(vcRoot* r) {this->_receivers.insert(r);}
 
   vcType* Get_Type() {return(this->_type);}
   vcRoot* Get_Driver() {return(this->_driver);}
-  int Get_Receivers(vector<vcRoot*>& receivers) {return this->_receivers;}
+  const set<vcRoot*,vcRoot_Compare>&  Get_Receivers() {return this->_receivers;}
 
   virtual string Kind() {return("vcWire");}
 };
 
 class vcDatapathElementTemplate: public vcRoot
 {
-  map<string, pair<int,int>> _parameter_limit_map;
+  map<string, pair<int,int> > _parameter_limit_map;
   
   set<string> _reqs;
   set<string> _acks;
@@ -43,8 +44,8 @@ class vcDatapathElementTemplate: public vcRoot
 
 
   void Add_Parameter(string param_val, int min_val, int max_val) {this->_parameter_limit_map[param_val] = pair<int,int>(min_val,max_val);}
-  void Add_Req(string req_name) {this->_reqs.push_back(req_name);}
-  void Add_Ack(string ack_name) {this->_acks.push_back(ack_name);}
+  void Add_Req(string req_name) {this->_reqs.insert(req_name);}
+  void Add_Ack(string ack_name) {this->_acks.insert(ack_name);}
   
   void Add_Input_Port(string pname, vcScalarTypeTemplate* t) {this->_input_port_map[pname] = t;}
   void Add_Output_Port(string pname, vcScalarTypeTemplate* t) {this->_output_port_map[pname] = t;}
@@ -63,7 +64,7 @@ class vcDatapathElementTemplate: public vcRoot
 
 class vcDatapathElementLibrary: public vcRoot
 {
-  set<vcDatapathElementTemplate*,vcRoot_Compare> _templates;
+  map<string,vcDatapathElementTemplate*> _templates;
  public:
   vcDatapathElementLibrary(string id);
   void Add_Template(vcDatapathElementTemplate* t);
@@ -71,6 +72,7 @@ class vcDatapathElementLibrary: public vcRoot
   virtual void Print(ostream& ofile);
 };
 
+class vcTransition;
 class vcDatapathElement: public vcRoot
 {
   vcDatapathElementTemplate* _template;
@@ -109,7 +111,7 @@ class vcDataPath: public vcRoot
  public:
   vcDataPath(string id);
   void Add_DPE(string dpe_name, vcDatapathElementTemplate* t);
-  vcDatpathElement* Find_DPE(string dpe_name);
+  vcDatapathElement* Find_DPE(string dpe_name);
   void Set_DPE_Parameter(string dpe_name, string param_name, int param_value);
   int Get_DPE_Parameter(string dpe_name, string param_name);
 
