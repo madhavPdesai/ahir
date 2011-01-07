@@ -1,5 +1,5 @@
 # Each line contains the following sequence of strings
-# operator operator-id entity architecture op-entity op-architecture zero_delay 
+# operator operator-id entity architecture op-entity op-architecture zero_delay num_inputs
 #
 # Corresponding to each line, a file <operator>.vhd is created.
 # The contents of this file are:
@@ -17,8 +17,8 @@
 # end configuration <operator>;
 #
 # e.g.
-ApIntToApFloatSigned   ApIntToApFloatSigned  ApIntToApFloat_S_1  Base OperatorShared Vanilla false 
-ApIntToApFloatUnsigned   ApIntToApFloatUnsigned  ApIntToApFloat_S_1  Base OperatorShared Vanilla false 
+ApIntToApFloatSigned   ApIntToApFloatSigned  ApIntToApFloat_S_1  Base OperatorShared Vanilla false 1 
+ApIntToApFloatUnsigned   ApIntToApFloatUnsigned  ApIntToApFloat_S_1  Base OperatorShared Vanilla false 1
 # library ieee;
 # use ieee.std_logic_1164.all;
 # library ahir;
@@ -38,5 +38,5 @@ ApIntToApFloatUnsigned   ApIntToApFloatUnsigned  ApIntToApFloat_S_1  Base Operat
 # 	end for;
 #   end for;
 # end ApIntToApFloat;
-ApFloatToApIntSigned   ApFloatToApIntSigned  ApFloatToApInt_S_1  Base OperatorShared Vanilla false 
-ApFloatToApIntUnsigned   ApFloatToApIntUnsigned  ApFloatToApInt_S_1  Base OperatorShared Vanilla false 
+ApFloatToApIntSigned   ApFloatToApIntSigned  ApFloatToApInt_S_1  Base OperatorShared Vanilla false 1
+ApFloatToApIntUnsigned   ApFloatToApIntUnsigned  ApFloatToApInt_S_1  Base OperatorShared Vanilla false 1

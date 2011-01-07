@@ -1,5 +1,5 @@
 # Each line contains the following sequence of strings
-# operator operator-id entity architecture op-entity op-architecture zero_delay 
+# operator operator-id entity architecture op-entity op-architecture zero_delay num_inputs in_out_width_equal
 # 
 #  This script creates a file all_configurations.vhd 
 # Corresponding to each uncommented line, a configuration is generated.
@@ -36,46 +36,46 @@
 #   end for;
 # end ApIntAdd;
 # single input operators
-ApIntNot   ApIntNot ApInt_S_1  Base OperatorShared Vanilla  false
-ApIntToApIntSigned ApIntToApIntSigned ApInt_S_1  Base OperatorShared Vanilla  false
-ApIntToApIntUnsigned ApIntToApIntUnsigned ApInt_S_1  Base OperatorShared Vanilla  false
+ApIntNot   ApIntNot ApInt_S_1  Base OperatorShared Vanilla  false 1 true
+ApIntToApIntSigned ApIntToApIntSigned ApInt_S_1  Base OperatorShared Vanilla  false 1 false
+ApIntToApIntUnsigned ApIntToApIntUnsigned ApInt_S_1  Base OperatorShared Vanilla  false 1 false
 # two inputs without constant 
-ApIntAdd	ApIntAdd 	ApInt_S_2  Base OperatorShared Vanilla false 
-ApIntSub        ApIntSub        ApInt_S_2  Base OperatorShared Vanilla false
-ApIntAnd        ApIntAnd        ApInt_S_2  Base OperatorShared Vanilla false
-ApIntOr         ApIntOr         ApInt_S_2  Base OperatorShared Vanilla false
-ApIntXor        ApIntXor        ApInt_S_2  Base OperatorShared Vanilla false
-ApIntMul        ApIntMul        ApInt_S_2  Base OperatorShared Vanilla false
-ApIntSHL        ApIntSHL        ApInt_S_2  Base OperatorShared Vanilla false
-ApIntLSHR       ApIntLSHR       ApInt_S_2  Base OperatorShared Vanilla false
-ApIntASHR       ApIntASHR       ApInt_S_2  Base OperatorShared Vanilla false
-ApIntEq         ApIntEq         ApInt_S_2  Base OperatorShared Vanilla false
-ApIntNe         ApIntNe         ApInt_S_2  Base OperatorShared Vanilla false
-ApIntUgt        ApIntUgt        ApInt_S_2  Base OperatorShared Vanilla false
-ApIntUge        ApIntUge        ApInt_S_2  Base OperatorShared Vanilla false
-ApIntUlt        ApIntUlt        ApInt_S_2  Base OperatorShared Vanilla false
-ApIntUle        ApIntUle        ApInt_S_2  Base OperatorShared Vanilla false
-ApIntSgt        ApIntSgt        ApInt_S_2  Base OperatorShared Vanilla false
-ApIntSge        ApIntSge        ApInt_S_2  Base OperatorShared Vanilla false
-ApIntSlt        ApIntSlt        ApInt_S_2  Base OperatorShared Vanilla false
-ApIntSle        ApIntSle        ApInt_S_2  Base OperatorShared Vanilla false
+ApIntAdd	ApIntAdd 	ApInt_S_2  Base OperatorShared Vanilla false 2 true
+ApIntSub        ApIntSub        ApInt_S_2  Base OperatorShared Vanilla false 2 true
+ApIntAnd        ApIntAnd        ApInt_S_2  Base OperatorShared Vanilla false 2 true
+ApIntOr         ApIntOr         ApInt_S_2  Base OperatorShared Vanilla false 2 true
+ApIntXor        ApIntXor        ApInt_S_2  Base OperatorShared Vanilla false 2 true
+ApIntMul        ApIntMul        ApInt_S_2  Base OperatorShared Vanilla false 2 true
+ApIntSHL        ApIntSHL        ApInt_S_2  Base OperatorShared Vanilla false 2 true
+ApIntLSHR       ApIntLSHR       ApInt_S_2  Base OperatorShared Vanilla false 2 true
+ApIntASHR       ApIntASHR       ApInt_S_2  Base OperatorShared Vanilla false 2 true
+ApIntEq         ApIntEq         ApInt_S_2  Base OperatorShared Vanilla false 2 false
+ApIntNe         ApIntNe         ApInt_S_2  Base OperatorShared Vanilla false 2 false
+ApIntUgt        ApIntUgt        ApInt_S_2  Base OperatorShared Vanilla false 2 false
+ApIntUge        ApIntUge        ApInt_S_2  Base OperatorShared Vanilla false 2 false
+ApIntUlt        ApIntUlt        ApInt_S_2  Base OperatorShared Vanilla false 2 false
+ApIntUle        ApIntUle        ApInt_S_2  Base OperatorShared Vanilla false 2 false
+ApIntSgt        ApIntSgt        ApInt_S_2  Base OperatorShared Vanilla false 2 false
+ApIntSge        ApIntSge        ApInt_S_2  Base OperatorShared Vanilla false 2 false
+ApIntSlt        ApIntSlt        ApInt_S_2  Base OperatorShared Vanilla false 2 false 
+ApIntSle        ApIntSle        ApInt_S_2  Base OperatorShared Vanilla false 2 false
 #two inputs with constants
-ApIntAddC        ApIntAdd 	 ApInt_S_2_C  Base OperatorShared Vanilla false 
-ApIntSubC        ApIntSub        ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntAndC        ApIntAnd        ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntOrC         ApIntOr         ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntXorC        ApIntXor        ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntMulC        ApIntMul        ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntSHLC        ApIntSHL        ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntLSHRC       ApIntLSHR       ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntASHRC       ApIntASHR       ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntEqC         ApIntEq         ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntNeC         ApIntNe         ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntUgtC        ApIntUgt        ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntUgeC        ApIntUge        ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntUltC        ApIntUlt        ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntUleC        ApIntUle        ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntSgtC        ApIntSgt        ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntSgeC        ApIntSge        ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntSltC        ApIntSlt        ApInt_S_2_C  Base OperatorShared Vanilla false
-ApIntSleC        ApIntSle        ApInt_S_2_C  Base OperatorShared Vanilla false
+ApIntAddC        ApIntAdd 	 ApInt_S_2_C  Base OperatorShared Vanilla false 1 true
+ApIntSubC        ApIntSub        ApInt_S_2_C  Base OperatorShared Vanilla false 1 true
+ApIntAndC        ApIntAnd        ApInt_S_2_C  Base OperatorShared Vanilla false 1 true
+ApIntOrC         ApIntOr         ApInt_S_2_C  Base OperatorShared Vanilla false 1 true
+ApIntXorC        ApIntXor        ApInt_S_2_C  Base OperatorShared Vanilla false 1 true
+ApIntMulC        ApIntMul        ApInt_S_2_C  Base OperatorShared Vanilla false 1 true
+ApIntSHLC        ApIntSHL        ApInt_S_2_C  Base OperatorShared Vanilla false 1 true
+ApIntLSHRC       ApIntLSHR       ApInt_S_2_C  Base OperatorShared Vanilla false 1 true
+ApIntASHRC       ApIntASHR       ApInt_S_2_C  Base OperatorShared Vanilla false 1 true
+ApIntEqC         ApIntEq         ApInt_S_2_C  Base OperatorShared Vanilla false 1 false
+ApIntNeC         ApIntNe         ApInt_S_2_C  Base OperatorShared Vanilla false 1 false
+ApIntUgtC        ApIntUgt        ApInt_S_2_C  Base OperatorShared Vanilla false 1 false
+ApIntUgeC        ApIntUge        ApInt_S_2_C  Base OperatorShared Vanilla false 1 false
+ApIntUltC        ApIntUlt        ApInt_S_2_C  Base OperatorShared Vanilla false 1 false
+ApIntUleC        ApIntUle        ApInt_S_2_C  Base OperatorShared Vanilla false 1 false
+ApIntSgtC        ApIntSgt        ApInt_S_2_C  Base OperatorShared Vanilla false 1 false
+ApIntSgeC        ApIntSge        ApInt_S_2_C  Base OperatorShared Vanilla false 1 false
+ApIntSltC        ApIntSlt        ApInt_S_2_C  Base OperatorShared Vanilla false 1 false
+ApIntSleC        ApIntSle        ApInt_S_2_C  Base OperatorShared Vanilla false 1 false

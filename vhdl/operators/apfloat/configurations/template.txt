@@ -36,40 +36,40 @@
 #   end for;
 # end ApFloatAdd;
 # single input operators
-ApFloatResize   ApFloatResize ApFloat_S_1  Base OperatorShared Vanilla  false
+ApFloatResize   ApFloatResize ApFloat_S_1  Base OperatorShared Vanilla  false 1
 # two inputs without constant 
-ApFloatAdd	  ApFloatAdd 	    ApFloat_S_2  Base OperatorShared Vanilla false 
-ApFloatSub        ApFloatSub        ApFloat_S_2  Base OperatorShared Vanilla false
-ApFloatMul        ApFloatMul        ApFloat_S_2  Base OperatorShared Vanilla false
-ApFloatOeq        ApFloatOeq        ApFloat_Cmp_2  Base OperatorShared Vanilla false
-ApFloatOne        ApFloatOne        ApFloat_Cmp_2  Base OperatorShared Vanilla false
-ApFloatOgt        ApFloatOgt        ApFloat_Cmp_2  Base OperatorShared Vanilla false
-ApFloatOge        ApFloatOge        ApFloat_Cmp_2  Base OperatorShared Vanilla false
-ApFloatOlt        ApFloatOlt        ApFloat_Cmp_2  Base OperatorShared Vanilla false
-ApFloatOle        ApFloatOle        ApFloat_Cmp_2  Base OperatorShared Vanilla false
-ApFloatUeq        ApFloatUeq        ApFloat_Cmp_2  Base OperatorShared Vanilla false
-ApFloatUne        ApFloatUne        ApFloat_Cmp_2  Base OperatorShared Vanilla false
-ApFloatUgt        ApFloatUgt        ApFloat_Cmp_2  Base OperatorShared Vanilla false
-ApFloatUge        ApFloatUge        ApFloat_Cmp_2  Base OperatorShared Vanilla false
-ApFloatUlt        ApFloatUlt        ApFloat_Cmp_2  Base OperatorShared Vanilla false
-ApFloatUle        ApFloatUle        ApFloat_Cmp_2  Base OperatorShared Vanilla false
-ApFloatOrd        ApFloatOrd        ApFloat_Cmp_2  Base OperatorShared Vanilla false
-ApFloatUno        ApFloatUno       ApFloat_Cmp_2  Base OperatorShared Vanilla false
+ApFloatAdd	  ApFloatAdd 	    ApFloat_S_2  Base OperatorShared Vanilla false 2
+ApFloatSub        ApFloatSub        ApFloat_S_2  Base OperatorShared Vanilla false 2
+ApFloatMul        ApFloatMul        ApFloat_S_2  Base OperatorShared Vanilla false 2
+ApFloatOeq        ApFloatOeq        ApFloat_Cmp_2  Base OperatorShared Vanilla false 1
+ApFloatOne        ApFloatOne        ApFloat_Cmp_2  Base OperatorShared Vanilla false 1
+ApFloatOgt        ApFloatOgt        ApFloat_Cmp_2  Base OperatorShared Vanilla false 1
+ApFloatOge        ApFloatOge        ApFloat_Cmp_2  Base OperatorShared Vanilla false 1
+ApFloatOlt        ApFloatOlt        ApFloat_Cmp_2  Base OperatorShared Vanilla false 1
+ApFloatOle        ApFloatOle        ApFloat_Cmp_2  Base OperatorShared Vanilla false 1
+ApFloatUeq        ApFloatUeq        ApFloat_Cmp_2  Base OperatorShared Vanilla false 1
+ApFloatUne        ApFloatUne        ApFloat_Cmp_2  Base OperatorShared Vanilla false 1
+ApFloatUgt        ApFloatUgt        ApFloat_Cmp_2  Base OperatorShared Vanilla false 1
+ApFloatUge        ApFloatUge        ApFloat_Cmp_2  Base OperatorShared Vanilla false 1
+ApFloatUlt        ApFloatUlt        ApFloat_Cmp_2  Base OperatorShared Vanilla false 1
+ApFloatUle        ApFloatUle        ApFloat_Cmp_2  Base OperatorShared Vanilla false 1
+ApFloatOrd        ApFloatOrd        ApFloat_Cmp_2  Base OperatorShared Vanilla false 1
+ApFloatUno        ApFloatUno       ApFloat_Cmp_2  Base OperatorShared Vanilla false 1
 #two inputs with constants
-ApFloatAddC        ApFloatAdd 	    ApFloat_S_2_C  Base OperatorShared Vanilla false 
-ApFloatSubC        ApFloatSub       ApFloat_S_2_C  Base OperatorShared Vanilla false
-ApFloatMulC        ApFloatMul       ApFloat_S_2_C  Base OperatorShared Vanilla false
-ApFloatOeqC        ApFloatOeq       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false
-ApFloatOneC        ApFloatOne       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false
-ApFloatOgtC        ApFloatOgt       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false
-ApFloatOgeC        ApFloatOge       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false
-ApFloatOltC        ApFloatOlt       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false
-ApFloatOleC        ApFloatOle       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false
-ApFloatUeqC        ApFloatUeq       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false
-ApFloatUneC        ApFloatUne       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false
-ApFloatUgtC        ApFloatUgt       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false
-ApFloatUgeC        ApFloatUge       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false
-ApFloatUltC        ApFloatUlt       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false
-ApFloatUleC        ApFloatUle       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false
-ApFloatOrdC        ApFloatOrd        ApFloat_Cmp_2  Base OperatorShared Vanilla false
-ApFloatUnoC        ApFloatUno       ApFloat_Cmp_2  Base OperatorShared Vanilla false
+ApFloatAddC        ApFloatAdd 	    ApFloat_S_2_C  Base OperatorShared Vanilla false  1
+ApFloatSubC        ApFloatSub       ApFloat_S_2_C  Base OperatorShared Vanilla false 1
+ApFloatMulC        ApFloatMul       ApFloat_S_2_C  Base OperatorShared Vanilla false 1
+ApFloatOeqC        ApFloatOeq       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false 1
+ApFloatOneC        ApFloatOne       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false 1
+ApFloatOgtC        ApFloatOgt       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false 1
+ApFloatOgeC        ApFloatOge       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false 1
+ApFloatOltC        ApFloatOlt       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false 1
+ApFloatOleC        ApFloatOle       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false 1
+ApFloatUeqC        ApFloatUeq       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false 1
+ApFloatUneC        ApFloatUne       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false 1
+ApFloatUgtC        ApFloatUgt       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false 1
+ApFloatUgeC        ApFloatUge       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false 1
+ApFloatUltC        ApFloatUlt       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false 1
+ApFloatUleC        ApFloatUle       ApFloat_Cmp_2_C  Base OperatorShared Vanilla false 1
+ApFloatOrdC        ApFloatOrd        ApFloat_Cmp_2  Base OperatorShared Vanilla false 1
+ApFloatUnoC        ApFloatUno       ApFloat_Cmp_2  Base OperatorShared Vanilla false 1 
