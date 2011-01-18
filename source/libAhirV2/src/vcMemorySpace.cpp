@@ -10,6 +10,8 @@ vcMemorySpace::vcMemorySpace(string id, vcModule* m):vcRoot(id)
   this->_address_width = 0;
   this->_word_size = 0;
   this->_capacity = 0;
+  this->_num_loads = 0;
+  this->_num_stores = 0;
 }
 
 void vcMemorySpace::Add_Storage_Object(vcStorageObject* obj)
@@ -36,6 +38,14 @@ string vcMemorySpace::Get_Scope_Id()
   if(this->_scope)
     ret_string = this->_scope->Get_Id();
   return(ret_string);
+}
+
+string vcMemorySpace::Get_Hierarchical_Id()
+{
+  if(this->_scope)
+    return(this->Get_Scope_Id() + "/" + this->Get_Id());
+  else
+    return(this->Get_Id());
 }
 
 void vcMemorySpace::Print(ostream& ofile)

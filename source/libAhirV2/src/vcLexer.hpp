@@ -69,14 +69,18 @@ public:
 	public: void mDPEINSTANCE(bool _createToken);
 	public: void mLINK(bool _createToken);
 	public: void mPHI(bool _createToken);
+	public: void mLOAD(bool _createToken);
+	public: void mSTORE(bool _createToken);
+	public: void mTO(bool _createToken);
+	public: void mCALL(bool _createToken);
+	public: void mINLINE(bool _createToken);
+	public: void mIOPORT(bool _createToken);
+	public: void mPIPE(bool _createToken);
 	public: void mFROM(bool _createToken);
 	public: void mAT(bool _createToken);
 	public: void mCONSTANT(bool _createToken);
 	public: void mCOLON(bool _createToken);
 	public: void mCOMMA(bool _createToken);
-	public: void mASSIGNEQUAL(bool _createToken);
-	public: void mLESS(bool _createToken);
-	public: void mGREATER(bool _createToken);
 	public: void mIMPLIES(bool _createToken);
 	public: void mEQUIVALENT(bool _createToken);
 	public: void mLBRACE(bool _createToken);
@@ -85,7 +89,6 @@ public:
 	public: void mRBRACKET(bool _createToken);
 	public: void mLPAREN(bool _createToken);
 	public: void mRPAREN(bool _createToken);
-	public: void mSLASH(bool _createToken);
 	public: void mINT(bool _createToken);
 	public: void mFLOAT(bool _createToken);
 	public: void mPOINTER(bool _createToken);
@@ -102,12 +105,17 @@ public:
 	public: void mEQ_OP(bool _createToken);
 	public: void mLT_OP(bool _createToken);
 	public: void mLE_OP(bool _createToken);
+	public: void mUGT_OP(bool _createToken);
+	public: void mUGE_OP(bool _createToken);
+	public: void mULT_OP(bool _createToken);
+	public: void mULE_OP(bool _createToken);
 	public: void mNEQ_OP(bool _createToken);
+	public: void mUNORDERED_OP(bool _createToken);
 	public: void mBITSEL_OP(bool _createToken);
 	public: void mCONCAT_OP(bool _createToken);
 	public: void mBRANCH_OP(bool _createToken);
 	public: void mSELECT_OP(bool _createToken);
-	public: void mNOP_OP(bool _createToken);
+	public: void mASSIGN_OP(bool _createToken);
 	public: void mNOT_OP(bool _createToken);
 	public: void mOR_OP(bool _createToken);
 	public: void mAND_OP(bool _createToken);
@@ -137,6 +145,8 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_3;
 	static const unsigned long _tokenSet_4_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_4;
+	static const unsigned long _tokenSet_5_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_5;
 };
 
 #endif /*INC_vcLexer_hpp_*/

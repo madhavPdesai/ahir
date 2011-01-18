@@ -39,11 +39,10 @@ void vcParser::vc_System(
 ) {
 #line 40 "vc.g"
 	
-		vcDatapathElementLibrary* lib = NULL;
 		vcModule* nf = NULL;
 		vcMemorySpace* ms = NULL;
 	
-#line 47 "vcParser.cpp"
+#line 46 "vcParser.cpp"
 	
 	try {      // for error handling
 		{ // ( ... )*
@@ -60,16 +59,16 @@ void vcParser::vc_System(
 			{
 				{
 				ms=vc_MemorySpace(sys,NULL);
-#line 50 "vc.g"
+#line 49 "vc.g"
 				sys->Add_Memory_Space(ms);
-#line 66 "vcParser.cpp"
+#line 65 "vcParser.cpp"
 				}
 				break;
 			}
-			case LIBRARY:
+			case PIPE:
 			{
 				{
-				lib=vc_Library(sys);
+				vc_Pipe(sys);
 				}
 				break;
 			}
@@ -91,23 +90,23 @@ void vcParser::vc_System(
 vcModule*  vcParser::vc_Module(
 	vcSystem* sys
 ) {
-#line 219 "vc.g"
+#line 107 "vc.g"
 	vcModule* m;
-#line 97 "vcParser.cpp"
-#line 219 "vc.g"
+#line 96 "vcParser.cpp"
+#line 107 "vc.g"
 	
 		string lbl;
 		m = NULL;
 	vcMemorySpace* ms;
 	
-#line 104 "vcParser.cpp"
+#line 103 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(MODULE);
 		lbl=vc_Label();
-#line 225 "vc.g"
-		m = new vcModule(lbl); sys->Add_Module(m);
-#line 111 "vcParser.cpp"
+#line 113 "vc.g"
+		m = new vcModule(sys,lbl); sys->Add_Module(m);
+#line 110 "vcParser.cpp"
 		match(LBRACE);
 		{
 		switch ( LA(1)) {
@@ -116,9 +115,9 @@ vcModule*  vcParser::vc_Module(
 			vc_Inargs(sys,m);
 			break;
 		}
-		case OUT:
 		case MEMORYSPACE:
 		case CONTROLPATH:
+		case OUT:
 		{
 			break;
 		}
@@ -150,16 +149,16 @@ vcModule*  vcParser::vc_Module(
 		for (;;) {
 			if ((LA(1) == MEMORYSPACE)) {
 				ms=vc_MemorySpace(sys,m);
-#line 227 "vc.g"
+#line 115 "vc.g"
 				m->Add_Memory_Space(ms);
-#line 156 "vcParser.cpp"
+#line 155 "vcParser.cpp"
 			}
 			else {
-				goto _loop46;
+				goto _loop18;
 			}
 			
 		}
-		_loop46:;
+		_loop18:;
 		} // ( ... )*
 		vc_Controlpath(sys,m);
 		{
@@ -170,8 +169,7 @@ vcModule*  vcParser::vc_Module(
 			break;
 		}
 		case RBRACE:
-		case LINK:
-		case PHI:
+		case SIMPLE_IDENTIFIER:
 		case ATTRIBUTE:
 		{
 			break;
@@ -184,27 +182,15 @@ vcModule*  vcParser::vc_Module(
 		}
 		{ // ( ... )*
 		for (;;) {
-			if ((LA(1) == LINK)) {
+			if ((LA(1) == SIMPLE_IDENTIFIER)) {
 				vc_Link(m);
 			}
 			else {
-				goto _loop49;
+				goto _loop21;
 			}
 			
 		}
-		_loop49:;
-		} // ( ... )*
-		{ // ( ... )*
-		for (;;) {
-			if ((LA(1) == PHI)) {
-				vc_Phi_Link(m);
-			}
-			else {
-				goto _loop51;
-			}
-			
-		}
-		_loop51:;
+		_loop21:;
 		} // ( ... )*
 		{ // ( ... )*
 		for (;;) {
@@ -212,11 +198,11 @@ vcModule*  vcParser::vc_Module(
 				vc_AttributeSpec(m);
 			}
 			else {
-				goto _loop53;
+				goto _loop23;
 			}
 			
 		}
-		_loop53:;
+		_loop23:;
 		} // ( ... )*
 		match(RBRACE);
 	}
@@ -230,22 +216,22 @@ vcModule*  vcParser::vc_Module(
 vcMemorySpace*  vcParser::vc_MemorySpace(
 	vcSystem* sys, vcModule* m
 ) {
-#line 180 "vc.g"
+#line 68 "vc.g"
 	vcMemorySpace* ms;
-#line 236 "vcParser.cpp"
-#line 180 "vc.g"
+#line 222 "vcParser.cpp"
+#line 68 "vc.g"
 	
 		string lbl;
 		ms = NULL;
 	
-#line 242 "vcParser.cpp"
+#line 228 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(MEMORYSPACE);
 		lbl=vc_Label();
-#line 185 "vc.g"
+#line 73 "vc.g"
 		ms = new vcMemorySpace(lbl,m);
-#line 249 "vcParser.cpp"
+#line 235 "vcParser.cpp"
 		match(LBRACE);
 		vc_MemorySpaceParams(ms);
 		{ // ( ... )*
@@ -254,11 +240,11 @@ vcMemorySpace*  vcParser::vc_MemorySpace(
 				vc_MemoryLocation(sys,ms);
 			}
 			else {
-				goto _loop38;
+				goto _loop10;
 			}
 			
 		}
-		_loop38:;
+		_loop10:;
 		} // ( ... )*
 		match(RBRACE);
 	}
@@ -269,55 +255,35 @@ vcMemorySpace*  vcParser::vc_MemorySpace(
 	return ms;
 }
 
-vcDatapathElementLibrary*  vcParser::vc_Library(
+void vcParser::vc_Pipe(
 	vcSystem* sys
 ) {
-#line 60 "vc.g"
-	vcDatapathElementLibrary* new_lib;
-#line 278 "vcParser.cpp"
-#line 60 "vc.g"
+	ANTLR_USE_NAMESPACE(antlr)RefToken  wid = ANTLR_USE_NAMESPACE(antlr)nullToken;
+#line 58 "vc.g"
 	
-		string lbl = "";
-		vcDatapathElementTemplate* e;
-		new_lib = NULL;
+	string lbl;
 	
-#line 285 "vcParser.cpp"
+#line 267 "vcParser.cpp"
 	
 	try {      // for error handling
-		match(LIBRARY);
+		match(PIPE);
 		lbl=vc_Label();
-#line 66 "vc.g"
-		new_lib = new vcDatapathElementLibrary(lbl); sys->Add_Library(new_lib);
-#line 292 "vcParser.cpp"
-		match(LBRACE);
-		{ // ( ... )*
-		for (;;) {
-			if ((LA(1) == DPE)) {
-				e=vc_DatapathElementTemplate(sys,new_lib);
-#line 68 "vc.g"
-				new_lib->Add_Template(e);
-#line 300 "vcParser.cpp"
-			}
-			else {
-				goto _loop9;
-			}
-			
-		}
-		_loop9:;
-		} // ( ... )*
-		match(RBRACE);
+		wid = LT(1);
+		match(UINTEGER);
+#line 61 "vc.g"
+		sys->Add_Pipe(lbl,atoi(wid->getText().c_str()));
+#line 276 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
 		recover(ex,_tokenSet_1);
 	}
-	return new_lib;
 }
 
 string  vcParser::vc_Label() {
-#line 744 "vc.g"
+#line 643 "vc.g"
 	string lbl;
-#line 321 "vcParser.cpp"
+#line 287 "vcParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  id = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	
 	try {      // for error handling
@@ -325,9 +291,9 @@ string  vcParser::vc_Label() {
 		{
 		id = LT(1);
 		match(SIMPLE_IDENTIFIER);
-#line 746 "vc.g"
+#line 645 "vc.g"
 		lbl = id->getText();
-#line 331 "vcParser.cpp"
+#line 297 "vcParser.cpp"
 		}
 		match(RBRACKET);
 	}
@@ -336,448 +302,6 @@ string  vcParser::vc_Label() {
 		recover(ex,_tokenSet_3);
 	}
 	return lbl;
-}
-
-vcDatapathElementTemplate*  vcParser::vc_DatapathElementTemplate(
-	vcSystem* sys,vcDatapathElementLibrary* lib
-) {
-#line 75 "vc.g"
-	vcDatapathElementTemplate* t;
-#line 347 "vcParser.cpp"
-#line 75 "vc.g"
-	
-		string lbl = "";
-	
-#line 352 "vcParser.cpp"
-	
-	try {      // for error handling
-		match(DPE);
-		lbl=vc_Label();
-#line 79 "vc.g"
-		t = new vcDatapathElementTemplate(lib,lbl);
-#line 359 "vcParser.cpp"
-		match(LBRACE);
-		{
-		switch ( LA(1)) {
-		case PARAMETER:
-		{
-			vc_DpeParamSpec(t);
-			break;
-		}
-		case RBRACE:
-		case IN:
-		case OUT:
-		case REQS:
-		case ACKS:
-		case ATTRIBUTE:
-		{
-			break;
-		}
-		default:
-		{
-			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
-		}
-		}
-		}
-		{
-		switch ( LA(1)) {
-		case IN:
-		{
-			vc_InDpePorts(t);
-			break;
-		}
-		case RBRACE:
-		case OUT:
-		case REQS:
-		case ACKS:
-		case ATTRIBUTE:
-		{
-			break;
-		}
-		default:
-		{
-			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
-		}
-		}
-		}
-		{
-		switch ( LA(1)) {
-		case OUT:
-		{
-			vc_OutDpePorts(t);
-			break;
-		}
-		case RBRACE:
-		case REQS:
-		case ACKS:
-		case ATTRIBUTE:
-		{
-			break;
-		}
-		default:
-		{
-			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
-		}
-		}
-		}
-		{
-		switch ( LA(1)) {
-		case REQS:
-		{
-			vc_DpeReqs(t);
-			break;
-		}
-		case RBRACE:
-		case ACKS:
-		case ATTRIBUTE:
-		{
-			break;
-		}
-		default:
-		{
-			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
-		}
-		}
-		}
-		{
-		switch ( LA(1)) {
-		case ACKS:
-		{
-			vc_DpeAcks(t);
-			break;
-		}
-		case RBRACE:
-		case ATTRIBUTE:
-		{
-			break;
-		}
-		default:
-		{
-			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
-		}
-		}
-		}
-		{ // ( ... )*
-		for (;;) {
-			if ((LA(1) == ATTRIBUTE)) {
-				vc_AttributeSpec(t);
-			}
-			else {
-				goto _loop17;
-			}
-			
-		}
-		_loop17:;
-		} // ( ... )*
-		match(RBRACE);
-	}
-	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
-		reportError(ex);
-		recover(ex,_tokenSet_4);
-	}
-	return t;
-}
-
-void vcParser::vc_DpeParamSpec(
-	vcDatapathElementTemplate* p
-) {
-	ANTLR_USE_NAMESPACE(antlr)RefToken  minval = ANTLR_USE_NAMESPACE(antlr)nullToken;
-	ANTLR_USE_NAMESPACE(antlr)RefToken  maxval = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 89 "vc.g"
-	
-		string pname;
-		unsigned int min_val, max_val;
-	
-#line 492 "vcParser.cpp"
-	
-	try {      // for error handling
-		match(PARAMETER);
-		{ // ( ... )+
-		int _cnt20=0;
-		for (;;) {
-			if ((LA(1) == SIMPLE_IDENTIFIER)) {
-				pname=vc_Identifier();
-				match(MIN);
-				minval = LT(1);
-				match(UINTEGER);
-#line 96 "vc.g"
-				min_val = atoi(minval->getText().c_str());
-#line 506 "vcParser.cpp"
-				match(MAX);
-				maxval = LT(1);
-				match(UINTEGER);
-#line 98 "vc.g"
-				max_val = atoi(maxval->getText().c_str()); p->Add_Parameter(pname,min_val,max_val);
-#line 512 "vcParser.cpp"
-			}
-			else {
-				if ( _cnt20>=1 ) { goto _loop20; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
-			}
-			
-			_cnt20++;
-		}
-		_loop20:;
-		}  // ( ... )+
-	}
-	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
-		reportError(ex);
-		recover(ex,_tokenSet_5);
-	}
-}
-
-void vcParser::vc_InDpePorts(
-	vcDatapathElementTemplate* t
-) {
-	
-	try {      // for error handling
-		match(IN);
-		vc_DpePorts(t,"in");
-	}
-	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
-		reportError(ex);
-		recover(ex,_tokenSet_6);
-	}
-}
-
-void vcParser::vc_OutDpePorts(
-	vcDatapathElementTemplate* t
-) {
-	
-	try {      // for error handling
-		match(OUT);
-		vc_DpePorts(t,"out");
-	}
-	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
-		reportError(ex);
-		recover(ex,_tokenSet_7);
-	}
-}
-
-void vcParser::vc_DpeReqs(
-	vcDatapathElementTemplate* t
-) {
-#line 158 "vc.g"
-	
-	string lbl;
-	
-#line 564 "vcParser.cpp"
-	
-	try {      // for error handling
-		match(REQS);
-		{ // ( ... )+
-		int _cnt32=0;
-		for (;;) {
-			if ((LA(1) == SIMPLE_IDENTIFIER)) {
-				lbl=vc_Identifier();
-#line 163 "vc.g"
-				t->Add_Req(lbl);
-#line 575 "vcParser.cpp"
-			}
-			else {
-				if ( _cnt32>=1 ) { goto _loop32; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
-			}
-			
-			_cnt32++;
-		}
-		_loop32:;
-		}  // ( ... )+
-	}
-	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
-		reportError(ex);
-		recover(ex,_tokenSet_8);
-	}
-}
-
-void vcParser::vc_DpeAcks(
-	vcDatapathElementTemplate* t
-) {
-#line 169 "vc.g"
-	
-	string lbl;
-	
-#line 599 "vcParser.cpp"
-	
-	try {      // for error handling
-		match(ACKS);
-		{ // ( ... )+
-		int _cnt35=0;
-		for (;;) {
-			if ((LA(1) == SIMPLE_IDENTIFIER)) {
-				lbl=vc_Identifier();
-#line 174 "vc.g"
-				t->Add_Ack(lbl);
-#line 610 "vcParser.cpp"
-			}
-			else {
-				if ( _cnt35>=1 ) { goto _loop35; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
-			}
-			
-			_cnt35++;
-		}
-		_loop35:;
-		}  // ( ... )+
-	}
-	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
-		reportError(ex);
-		recover(ex,_tokenSet_9);
-	}
-}
-
-void vcParser::vc_AttributeSpec(
-	vcRoot* m
-) {
-	ANTLR_USE_NAMESPACE(antlr)RefToken  kid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-	ANTLR_USE_NAMESPACE(antlr)RefToken  vid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 975 "vc.g"
-	
-		string key;
-		string value;
-	
-#line 637 "vcParser.cpp"
-	
-	try {      // for error handling
-		match(ATTRIBUTE);
-		kid = LT(1);
-		match(SIMPLE_IDENTIFIER);
-#line 981 "vc.g"
-		key = kid->getText();
-#line 645 "vcParser.cpp"
-		match(IMPLIES);
-		vid = LT(1);
-		match(QUOTED_STRING);
-#line 981 "vc.g"
-		value = vid->getText();
-#line 651 "vcParser.cpp"
-#line 982 "vc.g"
-		m->Add_Attribute(key,value);
-#line 654 "vcParser.cpp"
-	}
-	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
-		reportError(ex);
-		recover(ex,_tokenSet_10);
-	}
-}
-
-string  vcParser::vc_Identifier() {
-#line 990 "vc.g"
-	string s;
-#line 665 "vcParser.cpp"
-	ANTLR_USE_NAMESPACE(antlr)RefToken  id = ANTLR_USE_NAMESPACE(antlr)nullToken;
-	
-	try {      // for error handling
-		id = LT(1);
-		match(SIMPLE_IDENTIFIER);
-#line 990 "vc.g"
-		s = id->getText();
-#line 673 "vcParser.cpp"
-	}
-	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
-		reportError(ex);
-		recover(ex,_tokenSet_11);
-	}
-	return s;
-}
-
-void vcParser::vc_DpePorts(
-	vcDatapathElementTemplate* t, string mode
-) {
-#line 123 "vc.g"
-	
-	string pname;
-		vcScalarTypeTemplate* tt;
-	
-#line 690 "vcParser.cpp"
-	
-	try {      // for error handling
-		{ // ( ... )+
-		int _cnt25=0;
-		for (;;) {
-			if ((LA(1) == SIMPLE_IDENTIFIER)) {
-				pname=vc_Identifier();
-				match(COLON);
-				tt=vc_ScalarTypeTemplate();
-#line 130 "vc.g"
-				
-				if(mode == "in") 
-				t->Add_Input_Port(pname, tt);
-				else
-				t->Add_Output_Port(pname, tt);
-				
-#line 707 "vcParser.cpp"
-			}
-			else {
-				if ( _cnt25>=1 ) { goto _loop25; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
-			}
-			
-			_cnt25++;
-		}
-		_loop25:;
-		}  // ( ... )+
-	}
-	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
-		reportError(ex);
-		recover(ex,_tokenSet_6);
-	}
-}
-
-vcScalarTypeTemplate*  vcParser::vc_ScalarTypeTemplate() {
-#line 143 "vc.g"
-	vcScalarTypeTemplate* t;
-#line 727 "vcParser.cpp"
-	ANTLR_USE_NAMESPACE(antlr)RefToken  c = ANTLR_USE_NAMESPACE(antlr)nullToken;
-	ANTLR_USE_NAMESPACE(antlr)RefToken  m = ANTLR_USE_NAMESPACE(antlr)nullToken;
-	ANTLR_USE_NAMESPACE(antlr)RefToken  w = ANTLR_USE_NAMESPACE(antlr)nullToken;
-	
-	try {      // for error handling
-		{
-		switch ( LA(1)) {
-		case FLOAT:
-		{
-			{
-			match(FLOAT);
-			match(LESS);
-			c = LT(1);
-			match(SIMPLE_IDENTIFIER);
-			match(COMMA);
-			m = LT(1);
-			match(SIMPLE_IDENTIFIER);
-			match(GREATER);
-#line 145 "vc.g"
-			
-			t = new vcScalarTypeTemplate(c->getText(),m->getText());
-			
-#line 750 "vcParser.cpp"
-			}
-			break;
-		}
-		case INT:
-		{
-			{
-			match(INT);
-			match(LESS);
-			w = LT(1);
-			match(SIMPLE_IDENTIFIER);
-			match(GREATER);
-#line 149 "vc.g"
-			
-			t = new vcScalarTypeTemplate(w->getText());
-			
-#line 766 "vcParser.cpp"
-			}
-			break;
-		}
-		default:
-		{
-			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
-		}
-		}
-		}
-	}
-	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
-		reportError(ex);
-		recover(ex,_tokenSet_12);
-	}
-	return t;
 }
 
 void vcParser::vc_MemorySpaceParams(
@@ -791,39 +315,39 @@ void vcParser::vc_MemorySpaceParams(
 		match(CAPACITY);
 		cap = LT(1);
 		match(UINTEGER);
-#line 192 "vc.g"
+#line 80 "vc.g"
 		ms->Set_Capacity(atoi(cap->getText().c_str()));
-#line 797 "vcParser.cpp"
+#line 321 "vcParser.cpp"
 		match(DATAWIDTH);
 		lau = LT(1);
 		match(UINTEGER);
-#line 193 "vc.g"
+#line 81 "vc.g"
 		ms->Set_Word_Size(atoi(lau->getText().c_str()));
-#line 803 "vcParser.cpp"
+#line 327 "vcParser.cpp"
 		match(ADDRWIDTH);
 		aw = LT(1);
 		match(UINTEGER);
-#line 194 "vc.g"
+#line 82 "vc.g"
 		ms->Set_Address_Width(atoi(aw->getText().c_str()));
-#line 809 "vcParser.cpp"
+#line 333 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_13);
+		recover(ex,_tokenSet_4);
 	}
 }
 
 void vcParser::vc_MemoryLocation(
 	vcSystem* sys, vcMemorySpace* ms
 ) {
-#line 200 "vc.g"
+#line 88 "vc.g"
 	
 		vcStorageObject* nl = NULL;
 		string lbl;
 		vcType* t;
 		vcValue* v = NULL;
 	
-#line 827 "vcParser.cpp"
+#line 351 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(OBJECT);
@@ -832,9 +356,9 @@ void vcParser::vc_MemoryLocation(
 		t=vc_Type(sys);
 		{
 		switch ( LA(1)) {
-		case ASSIGNEQUAL:
+		case ASSIGN_OP:
 		{
-			match(ASSIGNEQUAL);
+			match(ASSIGN_OP);
 			v=vc_Value(t);
 			break;
 		}
@@ -849,33 +373,33 @@ void vcParser::vc_MemoryLocation(
 		}
 		}
 		}
-#line 208 "vc.g"
+#line 96 "vc.g"
 		
 			nl = new vcStorageObject(lbl,t);
 			if(v != NULL)
 				nl->Set_Value(v);
 		ms->Add_Storage_Object(nl);
 		
-#line 860 "vcParser.cpp"
+#line 384 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_13);
+		recover(ex,_tokenSet_4);
 	}
 }
 
 vcType*  vcParser::vc_Type(
 	vcSystem* sys
 ) {
-#line 903 "vc.g"
+#line 802 "vc.g"
 	vcType* t;
-#line 873 "vcParser.cpp"
+#line 397 "vcParser.cpp"
 	
 	try {      // for error handling
 		{
 		switch ( LA(1)) {
-		case FLOAT:
 		case INT:
+		case FLOAT:
 		case POINTER:
 		{
 			{
@@ -906,7 +430,7 @@ vcType*  vcParser::vc_Type(
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_14);
+		recover(ex,_tokenSet_5);
 	}
 	return t;
 }
@@ -914,11 +438,11 @@ vcType*  vcParser::vc_Type(
 vcValue*  vcParser::vc_Value(
 	vcType* t
 ) {
-#line 830 "vc.g"
+#line 729 "vc.g"
 	vcValue* v;
-#line 920 "vcParser.cpp"
+#line 444 "vcParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  sid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 830 "vc.g"
+#line 729 "vc.g"
 	
 		v = NULL;
 		string v_string;
@@ -936,7 +460,7 @@ vcValue*  vcParser::vc_Value(
 				etypes.push_back(((vcRecordType*)t)->Get_Element_Type(i));
 		}
 	
-#line 940 "vcParser.cpp"
+#line 464 "vcParser.cpp"
 	
 	try {      // for error handling
 		switch ( LA(1)) {
@@ -973,29 +497,29 @@ vcValue*  vcParser::vc_Value(
 			sid = LT(1);
 			match(LPAREN);
 			ev=vc_Value(etypes[idx]);
-#line 851 "vc.g"
+#line 750 "vc.g"
 			evalues.push_back(ev);
-#line 979 "vcParser.cpp"
+#line 503 "vcParser.cpp"
 			{ // ( ... )*
 			for (;;) {
 				if ((LA(1) == COMMA)) {
 					match(COMMA);
-#line 852 "vc.g"
+#line 751 "vc.g"
 					if(t->Is("vcRecordType")) idx++;
-#line 986 "vcParser.cpp"
+#line 510 "vcParser.cpp"
 					ev=vc_Value(etypes[idx]);
-#line 852 "vc.g"
+#line 751 "vc.g"
 					evalues.push_back(ev);
-#line 990 "vcParser.cpp"
+#line 514 "vcParser.cpp"
 				}
 				else {
-					goto _loop198;
+					goto _loop157;
 				}
 				
 			}
-			_loop198:;
+			_loop157:;
 			} // ( ... )*
-#line 854 "vc.g"
+#line 753 "vc.g"
 			
 			if(t->Is("vcRecordType")) 
 			v = (vcValue*) (new vcRecordValue((vcRecordType*)t,evalues));
@@ -1004,7 +528,7 @@ vcValue*  vcParser::vc_Value(
 			else 
 			vcSystem::Error("composite value specified for scalar type");
 			
-#line 1008 "vcParser.cpp"
+#line 532 "vcParser.cpp"
 			match(RPAREN);
 			}
 			break;
@@ -1017,7 +541,7 @@ vcValue*  vcParser::vc_Value(
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_15);
+		recover(ex,_tokenSet_6);
 	}
 	return v;
 }
@@ -1025,11 +549,11 @@ vcValue*  vcParser::vc_Value(
 void vcParser::vc_Inargs(
 	vcSystem* sys, vcModule* parent
 ) {
-#line 752 "vc.g"
+#line 651 "vc.g"
 	
 		string mode = "in";
 	
-#line 1033 "vcParser.cpp"
+#line 557 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(IN);
@@ -1039,27 +563,27 @@ void vcParser::vc_Inargs(
 				vc_Interface_Object_Declaration(sys, parent,mode);
 			}
 			else {
-				goto _loop185;
+				goto _loop144;
 			}
 			
 		}
-		_loop185:;
+		_loop144:;
 		} // ( ... )*
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_16);
+		recover(ex,_tokenSet_7);
 	}
 }
 
 void vcParser::vc_Outargs(
 	vcSystem* sys, vcModule* parent
 ) {
-#line 763 "vc.g"
+#line 662 "vc.g"
 	
 		string mode = "out";
 	
-#line 1063 "vcParser.cpp"
+#line 587 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(OUT);
@@ -1069,42 +593,42 @@ void vcParser::vc_Outargs(
 				vc_Interface_Object_Declaration(sys,parent,mode);
 			}
 			else {
-				goto _loop188;
+				goto _loop147;
 			}
 			
 		}
-		_loop188:;
+		_loop147:;
 		} // ( ... )*
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_17);
+		recover(ex,_tokenSet_8);
 	}
 }
 
 void vcParser::vc_Controlpath(
 	vcSystem* sys, vcModule* m
 ) {
-#line 291 "vc.g"
+#line 178 "vc.g"
 	
 		vcControlPath* cp = new vcControlPath(m->Get_Id() + "_CP");
 	
-#line 1093 "vcParser.cpp"
+#line 617 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(CONTROLPATH);
 		match(LBRACE);
 		{ // ( ... )*
 		for (;;) {
-			if ((_tokenSet_18.member(LA(1)))) {
+			if ((_tokenSet_9.member(LA(1)))) {
 				vc_CPRegion(cp);
 			}
 			else {
-				goto _loop63;
+				goto _loop38;
 			}
 			
 		}
-		_loop63:;
+		_loop38:;
 		} // ( ... )*
 		{ // ( ... )*
 		for (;;) {
@@ -1112,31 +636,31 @@ void vcParser::vc_Controlpath(
 				vc_AttributeSpec(cp);
 			}
 			else {
-				goto _loop65;
+				goto _loop40;
 			}
 			
 		}
-		_loop65:;
+		_loop40:;
 		} // ( ... )*
 		match(RBRACE);
-#line 295 "vc.g"
+#line 182 "vc.g"
 		m->Set_Control_Path(cp);
-#line 1125 "vcParser.cpp"
+#line 649 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_19);
+		recover(ex,_tokenSet_10);
 	}
 }
 
 void vcParser::vc_Datapath(
 	vcSystem* sys,vcModule* m
 ) {
-#line 463 "vc.g"
+#line 351 "vc.g"
 	
 		vcDataPath* dp = new vcDataPath(m,m->Get_Id() + "_DP");
 	
-#line 1140 "vcParser.cpp"
+#line 664 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(DATAPATH);
@@ -1147,18 +671,14 @@ void vcParser::vc_Datapath(
 			case CONSTANT:
 			case WIRE:
 			{
-				vc_WireDeclaration(sys,dp);
+				vc_Wire_Declaration(sys,dp);
 				break;
 			}
-			case DPEINSTANCE:
-			{
-				vc_DatapathElementInstantiation(sys,m,dp);
-				break;
-			}
+			case ASSIGN_OP:
+			case DIV_OP:
 			case PLUS_OP:
 			case MINUS_OP:
 			case MUL_OP:
-			case DIV_OP:
 			case SHL_OP:
 			case SHR_OP:
 			case GT_OP:
@@ -1176,21 +696,20 @@ void vcParser::vc_Datapath(
 			case NAND_OP:
 			case XNOR_OP:
 			case NOT_OP:
-			case NOP_OP:
 			case BRANCH_OP:
 			case SELECT_OP:
 			{
-				vc_OperatorInstantiation(sys,dp);
+				vc_Operator_Instantiation(sys,dp);
 				break;
 			}
 			case PHI:
 			{
-				vc_PhiInstantiation(dp);
+				vc_Phi_Instantiation(dp);
 				break;
 			}
 			case CALL:
 			{
-				vc_CallInstantiation(sys,dp);
+				vc_Call_Instantiation(sys,dp);
 				break;
 			}
 			case IOPORT:
@@ -1211,20 +730,20 @@ void vcParser::vc_Datapath(
 			}
 			default:
 			{
-				goto _loop122;
+				goto _loop93;
 			}
 			}
 		}
-		_loop122:;
+		_loop93:;
 		} // ( ... )*
 		match(RBRACE);
-#line 475 "vc.g"
+#line 362 "vc.g"
 		m->Set_Data_Path(dp);
-#line 1224 "vcParser.cpp"
+#line 743 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_20);
+		recover(ex,_tokenSet_11);
 	}
 }
 
@@ -1232,130 +751,211 @@ void vcParser::vc_Link(
 	vcModule* m
 ) {
 	ANTLR_USE_NAMESPACE(antlr)RefToken  dpeid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-	ANTLR_USE_NAMESPACE(antlr)RefToken  reqackid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 237 "vc.g"
+#line 125 "vc.g"
 	
+	vcDatapathElement* dpe;
 	vector<string> ref_vec;
+	vector<vcTransition*> reqs;
+	vector<vcTransition*> acks;
 	
-#line 1241 "vcParser.cpp"
+#line 762 "vcParser.cpp"
 	
 	try {      // for error handling
-		match(LINK);
-		vc_Hierarchical_CP_Ref(ref_vec);
-		match(EQUIVALENT);
 		dpeid = LT(1);
 		match(SIMPLE_IDENTIFIER);
-		match(SLASH);
-		reqackid = LT(1);
-		match(SIMPLE_IDENTIFIER);
-#line 242 "vc.g"
-		m->Add_Link(ref_vec, dpeid->getText(), reqackid->getText());
-#line 1254 "vcParser.cpp"
+#line 133 "vc.g"
+		
+		dpe = m->Get_Data_Path()->Find_DPE(dpeid->getText()); 
+		assert(dpe != NULL);
+		
+#line 772 "vcParser.cpp"
+		match(EQUIVALENT);
+		match(LPAREN);
+		{ // ( ... )+
+		int _cnt26=0;
+		for (;;) {
+			if ((LA(1) == SIMPLE_IDENTIFIER || LA(1) == ENTRY || LA(1) == EXIT)) {
+				vc_Hierarchical_CP_Ref(ref_vec);
+#line 140 "vc.g"
+				
+				vcTransition* t = m->Get_Control_Path()->Find_Transition(ref_vec);
+				assert(t != NULL);
+				reqs.push_back(t);
+				ref_vec.clear();
+				
+#line 787 "vcParser.cpp"
+			}
+			else {
+				if ( _cnt26>=1 ) { goto _loop26; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
+			}
+			
+			_cnt26++;
+		}
+		_loop26:;
+		}  // ( ... )+
+		match(RPAREN);
+		match(LPAREN);
+		{ // ( ... )+
+		int _cnt28=0;
+		for (;;) {
+			if ((LA(1) == SIMPLE_IDENTIFIER || LA(1) == ENTRY || LA(1) == EXIT)) {
+				vc_Hierarchical_CP_Ref(ref_vec);
+#line 150 "vc.g"
+				
+				vcTransition* t = m->Get_Control_Path()->Find_Transition(ref_vec);
+				assert(t != NULL);
+				acks.push_back(t);
+				ref_vec.clear();
+				
+#line 811 "vcParser.cpp"
+			}
+			else {
+				if ( _cnt28>=1 ) { goto _loop28; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
+			}
+			
+			_cnt28++;
+		}
+		_loop28:;
+		}  // ( ... )+
+		match(RPAREN);
+#line 158 "vc.g"
+		m->Add_Link(dpe,reqs,acks);
+#line 824 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_20);
+		recover(ex,_tokenSet_11);
 	}
 }
 
-void vcParser::vc_Phi_Link(
-	vcModule* m
+void vcParser::vc_AttributeSpec(
+	vcRoot* m
 ) {
-#line 250 "vc.g"
+	ANTLR_USE_NAMESPACE(antlr)RefToken  kid = ANTLR_USE_NAMESPACE(antlr)nullToken;
+	ANTLR_USE_NAMESPACE(antlr)RefToken  vid = ANTLR_USE_NAMESPACE(antlr)nullToken;
+#line 874 "vc.g"
 	
-	vector<string> ref_vec;
-	string phi_id;
-	vcPhi* phi;
-	vcTransition* t;
-	vector<vcTransition*> inreqs;
-	vcTransition* outack;
+		string key;
+		string value;
 	
-#line 1274 "vcParser.cpp"
+#line 842 "vcParser.cpp"
 	
 	try {      // for error handling
-		match(PHI);
-		match(LINK);
-		phi_id=vc_Identifier();
-#line 259 "vc.g"
-		phi = m->Get_Data_Path()->Find_Phi(phi_id); assert(phi != NULL);
-#line 1282 "vcParser.cpp"
-		match(REQS);
-		{ // ( ... )+
-		int _cnt57=0;
-		for (;;) {
-			if ((LA(1) == SIMPLE_IDENTIFIER)) {
-				vc_Hierarchical_CP_Ref(ref_vec);
-#line 261 "vc.g"
-				
-				t = m->Get_Control_Path()->Find_Transition(ref_vec); 
-				assert(t != NULL);
-				inreqs.push_back(t);
-				ref_vec.clear();
-				
-#line 1296 "vcParser.cpp"
-			}
-			else {
-				if ( _cnt57>=1 ) { goto _loop57; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
-			}
-			
-			_cnt57++;
-		}
-		_loop57:;
-		}  // ( ... )+
-		match(ACKS);
-		vc_Hierarchical_CP_Ref(ref_vec);
-#line 268 "vc.g"
-		
-		outack = m->Get_Control_Path()->Find_Transition(ref_vec); 
-		assert(outack != NULL);
-		phi->Set_Inreqs(inreqs);
-		phi->Set_Ack(outack);
-		
-		m->Add_Phi_Link(phi,inreqs,outack);
-		
-#line 1317 "vcParser.cpp"
+		match(ATTRIBUTE);
+		kid = LT(1);
+		match(SIMPLE_IDENTIFIER);
+#line 880 "vc.g"
+		key = kid->getText();
+#line 850 "vcParser.cpp"
+		match(IMPLIES);
+		vid = LT(1);
+		match(QUOTED_STRING);
+#line 880 "vc.g"
+		value = vid->getText();
+#line 856 "vcParser.cpp"
+#line 881 "vc.g"
+		m->Add_Attribute(key,value);
+#line 859 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_21);
+		recover(ex,_tokenSet_12);
 	}
 }
 
 void vcParser::vc_Hierarchical_CP_Ref(
 	vector<string>& ref_vec
 ) {
-#line 281 "vc.g"
+	ANTLR_USE_NAMESPACE(antlr)RefToken  entry_id = ANTLR_USE_NAMESPACE(antlr)nullToken;
+	ANTLR_USE_NAMESPACE(antlr)RefToken  exit_id = ANTLR_USE_NAMESPACE(antlr)nullToken;
+#line 165 "vc.g"
 	
 	string id;
 	
-#line 1332 "vcParser.cpp"
+#line 876 "vcParser.cpp"
 	
 	try {      // for error handling
 		{ // ( ... )*
 		for (;;) {
-			if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == SLASH)) {
+			if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == DIV_OP)) {
 				id=vc_Identifier();
-#line 285 "vc.g"
+#line 169 "vc.g"
 				ref_vec.push_back(id);
-#line 1341 "vcParser.cpp"
-				match(SLASH);
+#line 885 "vcParser.cpp"
+				match(DIV_OP);
 			}
 			else {
-				goto _loop60;
+				goto _loop31;
 			}
 			
 		}
-		_loop60:;
+		_loop31:;
 		} // ( ... )*
-		id=vc_Identifier();
-#line 285 "vc.g"
-		ref_vec.push_back(id);
-#line 1354 "vcParser.cpp"
+		{
+		switch ( LA(1)) {
+		case SIMPLE_IDENTIFIER:
+		{
+			{
+			id=vc_Identifier();
+#line 170 "vc.g"
+			ref_vec.push_back(id);
+#line 903 "vcParser.cpp"
+			}
+			break;
+		}
+		case ENTRY:
+		{
+			{
+			entry_id = LT(1);
+			match(ENTRY);
+#line 171 "vc.g"
+			ref_vec.push_back(entry_id->getText());
+#line 914 "vcParser.cpp"
+			}
+			break;
+		}
+		case EXIT:
+		{
+			{
+			exit_id = LT(1);
+			match(EXIT);
+#line 172 "vc.g"
+			ref_vec.push_back(exit_id->getText());
+#line 925 "vcParser.cpp"
+			}
+			break;
+		}
+		default:
+		{
+			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
+		}
+		}
+		}
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_22);
+		recover(ex,_tokenSet_13);
 	}
+}
+
+string  vcParser::vc_Identifier() {
+#line 889 "vc.g"
+	string s;
+#line 945 "vcParser.cpp"
+	ANTLR_USE_NAMESPACE(antlr)RefToken  id = ANTLR_USE_NAMESPACE(antlr)nullToken;
+	
+	try {      // for error handling
+		id = LT(1);
+		match(SIMPLE_IDENTIFIER);
+#line 889 "vc.g"
+		s = id->getText();
+#line 953 "vcParser.cpp"
+	}
+	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
+		reportError(ex);
+		recover(ex,_tokenSet_14);
+	}
+	return s;
 }
 
 void vcParser::vc_CPRegion(
@@ -1392,16 +992,16 @@ void vcParser::vc_CPRegion(
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_23);
+		recover(ex,_tokenSet_15);
 	}
 }
 
 vcCPElement*  vcParser::vc_CPElement(
 	vcCPElement* p
 ) {
-#line 301 "vc.g"
+#line 188 "vc.g"
 	vcCPElement* cpe;
-#line 1405 "vcParser.cpp"
+#line 1005 "vcParser.cpp"
 	
 	try {      // for error handling
 		switch ( LA(1)) {
@@ -1427,7 +1027,7 @@ vcCPElement*  vcParser::vc_CPElement(
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_24);
+		recover(ex,_tokenSet_16);
 	}
 	return cpe;
 }
@@ -1435,25 +1035,25 @@ vcCPElement*  vcParser::vc_CPElement(
 vcCPElement*  vcParser::vc_CPPlace(
 	vcCPElement* p
 ) {
-#line 308 "vc.g"
+#line 195 "vc.g"
 	vcCPElement* cpe;
-#line 1441 "vcParser.cpp"
-#line 308 "vc.g"
+#line 1041 "vcParser.cpp"
+#line 195 "vc.g"
 	
 	string id;
 	
-#line 1446 "vcParser.cpp"
+#line 1046 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(PLACE);
 		id=vc_Label();
-#line 312 "vc.g"
+#line 199 "vc.g"
 		cpe = (vcCPElement*) new vcPlace(p, id,0);
-#line 1453 "vcParser.cpp"
+#line 1053 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_25);
+		recover(ex,_tokenSet_17);
 	}
 	return cpe;
 }
@@ -1461,66 +1061,27 @@ vcCPElement*  vcParser::vc_CPPlace(
 vcCPElement*  vcParser::vc_CPTransition(
 	vcCPElement* p
 ) {
-#line 318 "vc.g"
+#line 205 "vc.g"
 	vcCPElement* cpe;
-#line 1467 "vcParser.cpp"
-#line 318 "vc.g"
+#line 1067 "vcParser.cpp"
+#line 205 "vc.g"
 	
-	vcTransitionType t;
 	string id;
 	
-#line 1473 "vcParser.cpp"
+#line 1072 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(TRANSITION);
 		id=vc_Label();
-		{
-		switch ( LA(1)) {
-		case IN:
-		{
-			{
-			match(IN);
-#line 323 "vc.g"
-			t = _IN_TRANSITION;
-#line 1486 "vcParser.cpp"
-			}
-			break;
-		}
-		case OUT:
-		{
-			{
-			match(OUT);
-#line 323 "vc.g"
-			t = _OUT_TRANSITION;
-#line 1496 "vcParser.cpp"
-			}
-			break;
-		}
-		case HIDDEN:
-		{
-			{
-			match(HIDDEN);
-#line 323 "vc.g"
-			t = _HIDDEN_TRANSITION;
-#line 1506 "vcParser.cpp"
-			}
-			break;
-		}
-		default:
-		{
-			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
-		}
-		}
-		}
-#line 324 "vc.g"
+#line 210 "vc.g"
 		
-		cpe = (vcCPElement*) (new vcTransition(p,id,t));
+		cpe = (vcCPElement*) (new vcTransition(p,id));
 		
-#line 1520 "vcParser.cpp"
+#line 1081 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_25);
+		recover(ex,_tokenSet_18);
 	}
 	return cpe;
 }
@@ -1528,23 +1089,23 @@ vcCPElement*  vcParser::vc_CPTransition(
 void vcParser::vc_CPSeriesBlock(
 	vcCPBlock* cp
 ) {
-#line 343 "vc.g"
+#line 229 "vc.g"
 	
 		string lbl;
 		vcCPSeriesBlock* sb;
 		vcCPElement* cpe;
 	
-#line 1538 "vcParser.cpp"
+#line 1099 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(SERIESBLOCK);
 		lbl=vc_Label();
-#line 349 "vc.g"
+#line 235 "vc.g"
 		sb = new vcCPSeriesBlock(cp,lbl);
-#line 1545 "vcParser.cpp"
+#line 1106 "vcParser.cpp"
 		match(LBRACE);
 		{ // ( ... )+
-		int _cnt80=0;
+		int _cnt51=0;
 		for (;;) {
 			switch ( LA(1)) {
 			case PLACE:
@@ -1552,9 +1113,9 @@ void vcParser::vc_CPSeriesBlock(
 			{
 				{
 				cpe=vc_CPElement(sb);
-#line 350 "vc.g"
+#line 236 "vc.g"
 				sb->Add_CPElement(cpe);
-#line 1558 "vcParser.cpp"
+#line 1119 "vcParser.cpp"
 				}
 				break;
 			}
@@ -1570,87 +1131,87 @@ void vcParser::vc_CPSeriesBlock(
 			}
 			default:
 			{
-				if ( _cnt80>=1 ) { goto _loop80; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
+				if ( _cnt51>=1 ) { goto _loop51; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
 			}
 			}
-			_cnt80++;
+			_cnt51++;
 		}
-		_loop80:;
+		_loop51:;
 		}  // ( ... )+
 		match(RBRACE);
-#line 352 "vc.g"
+#line 238 "vc.g"
 		cp->Add_CPElement(sb);
-#line 1584 "vcParser.cpp"
+#line 1145 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_23);
+		recover(ex,_tokenSet_15);
 	}
 }
 
 void vcParser::vc_CPParallelBlock(
 	vcCPBlock* cp
 ) {
-#line 358 "vc.g"
+#line 244 "vc.g"
 	
 		string lbl;
 		vcCPParallelBlock* sb;
 		vcCPElement* cpe;
 	
-#line 1601 "vcParser.cpp"
+#line 1162 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(PARALLELBLOCK);
 		lbl=vc_Label();
-#line 364 "vc.g"
+#line 250 "vc.g"
 		sb = new vcCPParallelBlock(cp,lbl);
-#line 1608 "vcParser.cpp"
+#line 1169 "vcParser.cpp"
 		match(LBRACE);
 		{ // ( ... )+
-		int _cnt83=0;
+		int _cnt54=0;
 		for (;;) {
-			if ((_tokenSet_18.member(LA(1)))) {
+			if ((_tokenSet_9.member(LA(1)))) {
 				vc_CPRegion(sb);
 			}
 			else {
-				if ( _cnt83>=1 ) { goto _loop83; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
+				if ( _cnt54>=1 ) { goto _loop54; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
 			}
 			
-			_cnt83++;
+			_cnt54++;
 		}
-		_loop83:;
+		_loop54:;
 		}  // ( ... )+
 		match(RBRACE);
-#line 366 "vc.g"
+#line 252 "vc.g"
 		cp->Add_CPElement(sb);
-#line 1627 "vcParser.cpp"
+#line 1188 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_23);
+		recover(ex,_tokenSet_15);
 	}
 }
 
 void vcParser::vc_CPBranchBlock(
 	vcCPBlock* cp
 ) {
-#line 372 "vc.g"
+#line 258 "vc.g"
 	
 		string lbl;
 		vcCPBranchBlock* sb;
 		vcCPElement* cpe;
 	
-#line 1644 "vcParser.cpp"
+#line 1205 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(BRANCHBLOCK);
 		lbl=vc_Label();
-#line 378 "vc.g"
+#line 264 "vc.g"
 		sb = new vcCPBranchBlock(cp,lbl);
-#line 1651 "vcParser.cpp"
+#line 1212 "vcParser.cpp"
 		match(LBRACE);
 		{ // ( ... )+
-		int _cnt90=0;
+		int _cnt61=0;
 		for (;;) {
 			switch ( LA(1)) {
 			case SERIESBLOCK:
@@ -1663,70 +1224,66 @@ void vcParser::vc_CPBranchBlock(
 				}
 				break;
 			}
-			case FROM:
-			{
-				{
-				vc_CPBranch(sb);
-				}
-				break;
-			}
-			case AT:
-			{
-				{
-				vc_CPMerge(sb);
-				}
-				break;
-			}
 			case PLACE:
 			{
 				{
 				cpe=vc_CPPlace(sb);
-#line 382 "vc.g"
+#line 268 "vc.g"
 				sb->Add_CPElement(cpe);
-#line 1687 "vcParser.cpp"
+#line 1234 "vcParser.cpp"
 				}
 				break;
 			}
 			default:
-			{
-				if ( _cnt90>=1 ) { goto _loop90; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
+				if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == BRANCH)) {
+					{
+					vc_CPBranch(sb);
+					}
+				}
+				else if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == MERGE)) {
+					{
+					vc_CPMerge(sb);
+					}
+				}
+			else {
+				if ( _cnt61>=1 ) { goto _loop61; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
 			}
 			}
-			_cnt90++;
+			_cnt61++;
 		}
-		_loop90:;
+		_loop61:;
 		}  // ( ... )+
 		match(RBRACE);
-#line 383 "vc.g"
+#line 269 "vc.g"
 		cp->Add_CPElement(sb);
-#line 1703 "vcParser.cpp"
+#line 1260 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_23);
+		recover(ex,_tokenSet_15);
 	}
 }
 
 void vcParser::vc_CPForkBlock(
 	vcCPBlock* cp
 ) {
-#line 417 "vc.g"
+#line 303 "vc.g"
 	
 		string lbl;
 		vcCPForkBlock* fb;
 		vcCPElement* cpe;
 	
-#line 1720 "vcParser.cpp"
+#line 1277 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(FORKBLOCK);
 		lbl=vc_Label();
-#line 423 "vc.g"
+#line 309 "vc.g"
 		fb = new vcCPForkBlock(cp,lbl);
-#line 1727 "vcParser.cpp"
+#line 1284 "vcParser.cpp"
 		match(LBRACE);
 		{ // ( ... )+
-		int _cnt105=0;
+		int _cnt76=0;
 		for (;;) {
 			switch ( LA(1)) {
 			case SERIESBLOCK:
@@ -1739,47 +1296,43 @@ void vcParser::vc_CPForkBlock(
 				}
 				break;
 			}
-			case FROM:
-			{
-				{
-				vc_CPFork(fb);
-				}
-				break;
-			}
-			case AT:
-			{
-				{
-				vc_CPJoin(fb);
-				}
-				break;
-			}
 			case TRANSITION:
 			{
 				{
 				cpe=vc_CPTransition(fb);
-#line 427 "vc.g"
+#line 313 "vc.g"
 				fb->Add_CPElement(cpe);
-#line 1763 "vcParser.cpp"
+#line 1306 "vcParser.cpp"
 				}
 				break;
 			}
 			default:
-			{
-				if ( _cnt105>=1 ) { goto _loop105; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
+				if ((LA(1) == SIMPLE_IDENTIFIER || LA(1) == ENTRY) && (LA(2) == FORK)) {
+					{
+					vc_CPFork(fb);
+					}
+				}
+				else if ((LA(1) == SIMPLE_IDENTIFIER || LA(1) == EXIT) && (LA(2) == JOIN)) {
+					{
+					vc_CPJoin(fb);
+					}
+				}
+			else {
+				if ( _cnt76>=1 ) { goto _loop76; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
 			}
 			}
-			_cnt105++;
+			_cnt76++;
 		}
-		_loop105:;
+		_loop76:;
 		}  // ( ... )+
 		match(RBRACE);
-#line 428 "vc.g"
+#line 314 "vc.g"
 		cp->Add_CPElement(fb);
-#line 1779 "vcParser.cpp"
+#line 1332 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_23);
+		recover(ex,_tokenSet_15);
 	}
 }
 
@@ -1787,37 +1340,30 @@ void vcParser::vc_CPBranch(
 	vcCPBranchBlock* bb
 ) {
 	ANTLR_USE_NAMESPACE(antlr)RefToken  e = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 404 "vc.g"
+#line 290 "vc.g"
 	
 		string lbl,b;
 		vector<string> branch_ids;
 	
-#line 1796 "vcParser.cpp"
+#line 1349 "vcParser.cpp"
 	
 	try {      // for error handling
-		match(FROM);
 		lbl=vc_Identifier();
 		match(BRANCH);
+		match(LPAREN);
 		{
 		switch ( LA(1)) {
 		case EXIT:
 		{
 			e = LT(1);
 			match(EXIT);
-#line 410 "vc.g"
+#line 296 "vc.g"
 			branch_ids.push_back(e->getText());
-#line 1810 "vcParser.cpp"
+#line 1363 "vcParser.cpp"
 			break;
 		}
-		case RBRACE:
 		case SIMPLE_IDENTIFIER:
-		case PLACE:
-		case SERIESBLOCK:
-		case PARALLELBLOCK:
-		case BRANCHBLOCK:
-		case AT:
-		case FROM:
-		case FORKBLOCK:
+		case RPAREN:
 		{
 			break;
 		}
@@ -1831,24 +1377,25 @@ void vcParser::vc_CPBranch(
 		for (;;) {
 			if ((LA(1) == SIMPLE_IDENTIFIER)) {
 				b=vc_Identifier();
-#line 411 "vc.g"
+#line 297 "vc.g"
 				branch_ids.push_back(b);
-#line 1837 "vcParser.cpp"
+#line 1383 "vcParser.cpp"
 			}
 			else {
-				goto _loop98;
+				goto _loop69;
 			}
 			
 		}
-		_loop98:;
+		_loop69:;
 		} // ( ... )*
-#line 411 "vc.g"
+#line 297 "vc.g"
 		bb->Add_Branch_Point(lbl,branch_ids);
-#line 1848 "vcParser.cpp"
+#line 1394 "vcParser.cpp"
+		match(RPAREN);
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_26);
+		recover(ex,_tokenSet_19);
 	}
 }
 
@@ -1856,37 +1403,30 @@ void vcParser::vc_CPMerge(
 	vcCPBranchBlock* bb
 ) {
 	ANTLR_USE_NAMESPACE(antlr)RefToken  e = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 389 "vc.g"
+#line 275 "vc.g"
 	
 		string lbl,mid;
 		string merge_region;
 	
-#line 1865 "vcParser.cpp"
+#line 1412 "vcParser.cpp"
 	
 	try {      // for error handling
-		match(AT);
 		lbl=vc_Identifier();
 		match(MERGE);
+		match(LPAREN);
 		{
 		switch ( LA(1)) {
 		case ENTRY:
 		{
 			e = LT(1);
 			match(ENTRY);
-#line 395 "vc.g"
+#line 281 "vc.g"
 			bb->Add_Merge_Point(lbl,e->getText());
-#line 1879 "vcParser.cpp"
+#line 1426 "vcParser.cpp"
 			break;
 		}
-		case RBRACE:
 		case SIMPLE_IDENTIFIER:
-		case PLACE:
-		case SERIESBLOCK:
-		case PARALLELBLOCK:
-		case BRANCHBLOCK:
-		case AT:
-		case FROM:
-		case FORKBLOCK:
+		case RPAREN:
 		{
 			break;
 		}
@@ -1900,21 +1440,22 @@ void vcParser::vc_CPMerge(
 		for (;;) {
 			if ((LA(1) == SIMPLE_IDENTIFIER)) {
 				mid=vc_Identifier();
-#line 396 "vc.g"
+#line 282 "vc.g"
 				bb->Add_Merge_Point(lbl,mid);
-#line 1906 "vcParser.cpp"
+#line 1446 "vcParser.cpp"
 			}
 			else {
-				goto _loop94;
+				goto _loop65;
 			}
 			
 		}
-		_loop94:;
+		_loop65:;
 		} // ( ... )*
+		match(RPAREN);
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_26);
+		recover(ex,_tokenSet_19);
 	}
 }
 
@@ -1923,15 +1464,14 @@ void vcParser::vc_CPFork(
 ) {
 	ANTLR_USE_NAMESPACE(antlr)RefToken  fe = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  e = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 448 "vc.g"
+#line 334 "vc.g"
 	
 		string lbl,b;
 		vector<string> fork_ids;
 	
-#line 1932 "vcParser.cpp"
+#line 1473 "vcParser.cpp"
 	
 	try {      // for error handling
-		match(FROM);
 		{
 		switch ( LA(1)) {
 		case SIMPLE_IDENTIFIER:
@@ -1946,9 +1486,9 @@ void vcParser::vc_CPFork(
 			{
 			fe = LT(1);
 			match(ENTRY);
-#line 454 "vc.g"
+#line 341 "vc.g"
 			lbl = fe->getText();
-#line 1952 "vcParser.cpp"
+#line 1492 "vcParser.cpp"
 			}
 			break;
 		}
@@ -1959,26 +1499,20 @@ void vcParser::vc_CPFork(
 		}
 		}
 		match(FORK);
+		match(LPAREN);
 		{
 		switch ( LA(1)) {
 		case EXIT:
 		{
 			e = LT(1);
 			match(EXIT);
-#line 454 "vc.g"
+#line 341 "vc.g"
 			fork_ids.push_back(e->getText());
-#line 1971 "vcParser.cpp"
+#line 1512 "vcParser.cpp"
 			break;
 		}
-		case RBRACE:
 		case SIMPLE_IDENTIFIER:
-		case TRANSITION:
-		case SERIESBLOCK:
-		case PARALLELBLOCK:
-		case BRANCHBLOCK:
-		case AT:
-		case FROM:
-		case FORKBLOCK:
+		case RPAREN:
 		{
 			break;
 		}
@@ -1992,24 +1526,25 @@ void vcParser::vc_CPFork(
 		for (;;) {
 			if ((LA(1) == SIMPLE_IDENTIFIER)) {
 				b=vc_Identifier();
-#line 455 "vc.g"
+#line 342 "vc.g"
 				fork_ids.push_back(b);
-#line 1998 "vcParser.cpp"
+#line 1532 "vcParser.cpp"
 			}
 			else {
-				goto _loop119;
+				goto _loop90;
 			}
 			
 		}
-		_loop119:;
+		_loop90:;
 		} // ( ... )*
-#line 456 "vc.g"
+		match(RPAREN);
+#line 343 "vc.g"
 		fb->Add_Fork_Point(lbl,fork_ids);
-#line 2009 "vcParser.cpp"
+#line 1544 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_27);
+		recover(ex,_tokenSet_20);
 	}
 }
 
@@ -2018,15 +1553,14 @@ void vcParser::vc_CPJoin(
 ) {
 	ANTLR_USE_NAMESPACE(antlr)RefToken  je = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  e = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 434 "vc.g"
+#line 320 "vc.g"
 	
 		string lbl,b;
 		vector<string> join_ids;
 	
-#line 2027 "vcParser.cpp"
+#line 1562 "vcParser.cpp"
 	
 	try {      // for error handling
-		match(AT);
 		{
 		switch ( LA(1)) {
 		case SIMPLE_IDENTIFIER:
@@ -2041,9 +1575,9 @@ void vcParser::vc_CPJoin(
 			{
 			je = LT(1);
 			match(EXIT);
-#line 440 "vc.g"
+#line 326 "vc.g"
 			lbl = je->getText();
-#line 2047 "vcParser.cpp"
+#line 1581 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2054,26 +1588,20 @@ void vcParser::vc_CPJoin(
 		}
 		}
 		match(JOIN);
+		match(LPAREN);
 		{
 		switch ( LA(1)) {
 		case ENTRY:
 		{
 			e = LT(1);
 			match(ENTRY);
-#line 440 "vc.g"
+#line 326 "vc.g"
 			join_ids.push_back(e->getText());
-#line 2066 "vcParser.cpp"
+#line 1601 "vcParser.cpp"
 			break;
 		}
-		case RBRACE:
 		case SIMPLE_IDENTIFIER:
-		case TRANSITION:
-		case SERIESBLOCK:
-		case PARALLELBLOCK:
-		case BRANCHBLOCK:
-		case AT:
-		case FROM:
-		case FORKBLOCK:
+		case RPAREN:
 		{
 			break;
 		}
@@ -2087,39 +1615,40 @@ void vcParser::vc_CPJoin(
 		for (;;) {
 			if ((LA(1) == SIMPLE_IDENTIFIER)) {
 				b=vc_Identifier();
-#line 441 "vc.g"
+#line 327 "vc.g"
 				join_ids.push_back(b);
-#line 2093 "vcParser.cpp"
+#line 1621 "vcParser.cpp"
 			}
 			else {
-				goto _loop112;
+				goto _loop83;
 			}
 			
 		}
-		_loop112:;
+		_loop83:;
 		} // ( ... )*
-#line 442 "vc.g"
+		match(RPAREN);
+#line 328 "vc.g"
 		fb->Add_Join_Point(lbl,join_ids);
-#line 2104 "vcParser.cpp"
+#line 1633 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_27);
+		recover(ex,_tokenSet_20);
 	}
 }
 
-void vcParser::vc_WireDeclaration(
+void vcParser::vc_Wire_Declaration(
 	vcSystem* sys,vcDataPath* dp
 ) {
 	ANTLR_USE_NAMESPACE(antlr)RefToken  cid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 802 "vc.g"
+#line 701 "vc.g"
 	
 		vcType* t;
 	vcValue* v;
 		string obj_name;
 	bool const_flag = false;
 	
-#line 2123 "vcParser.cpp"
+#line 1652 "vcParser.cpp"
 	
 	try {      // for error handling
 		{
@@ -2128,9 +1657,9 @@ void vcParser::vc_WireDeclaration(
 		{
 			cid = LT(1);
 			match(CONSTANT);
-#line 810 "vc.g"
+#line 709 "vc.g"
 			const_flag = true;
-#line 2134 "vcParser.cpp"
+#line 1663 "vcParser.cpp"
 			break;
 		}
 		case WIRE:
@@ -2145,7 +1674,7 @@ void vcParser::vc_WireDeclaration(
 		}
 		match(WIRE);
 		vc_Object_Declaration_Base(sys, &t, obj_name, &v);
-#line 811 "vc.g"
+#line 710 "vc.g"
 		
 		if(!const_flag) 
 		dp->Add_Wire(obj_name, t);
@@ -2159,156 +1688,24 @@ void vcParser::vc_WireDeclaration(
 		dp->Add_Constant_Wire(obj_name,v);
 		}
 		
-#line 2163 "vcParser.cpp"
+#line 1692 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_10);
+		recover(ex,_tokenSet_12);
 	}
 }
 
-void vcParser::vc_DatapathElementInstantiation(
-	vcSystem* sys, vcModule* m, vcDataPath* dp
-) {
-	ANTLR_USE_NAMESPACE(antlr)RefToken  vid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 718 "vc.g"
-	
-		string id;
-		string template_id,param_id,port_id,wid,lib_id;
-		vcDatapathElement* dpe;
-	
-#line 2181 "vcParser.cpp"
-	
-	try {      // for error handling
-		match(DPEINSTANCE);
-		id=vc_Label();
-		match(LIBRARY);
-		{
-		lib_id=vc_Identifier();
-		}
-		match(DPE);
-		{
-		template_id=vc_Identifier();
-		}
-#line 724 "vc.g"
-		
-		vcDatapathElementTemplate* tt = sys->Get_DPE_Template(lib_id,template_id);
-		assert(tt != NULL);
-		dpe = new vcDatapathElement(id,tt);
-		
-#line 2200 "vcParser.cpp"
-		match(LBRACE);
-		{
-		switch ( LA(1)) {
-		case PARAMETER:
-		{
-			match(PARAMETER);
-			match(MAP);
-			{ // ( ... )+
-			int _cnt175=0;
-			for (;;) {
-				if ((LA(1) == SIMPLE_IDENTIFIER)) {
-					param_id=vc_Identifier();
-					match(IMPLIES);
-					vid = LT(1);
-					match(UINTEGER);
-#line 731 "vc.g"
-					dpe->Set_Parameter(param_id, atoi(vid->getText().c_str()));
-#line 2218 "vcParser.cpp"
-				}
-				else {
-					if ( _cnt175>=1 ) { goto _loop175; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
-				}
-				
-				_cnt175++;
-			}
-			_loop175:;
-			}  // ( ... )+
-			break;
-		}
-		case RBRACE:
-		case PORT:
-		case ATTRIBUTE:
-		{
-			break;
-		}
-		default:
-		{
-			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
-		}
-		}
-		}
-		{
-		switch ( LA(1)) {
-		case PORT:
-		{
-			match(PORT);
-			match(MAP);
-			{ // ( ... )+
-			int _cnt178=0;
-			for (;;) {
-				if ((LA(1) == SIMPLE_IDENTIFIER)) {
-					port_id=vc_Identifier();
-					match(IMPLIES);
-					wid=vc_Identifier();
-#line 733 "vc.g"
-					assert(dp->Find_Wire(wid) != NULL); dpe->Connect_Wire(port_id,dp->Find_Wire(wid));
-#line 2257 "vcParser.cpp"
-				}
-				else {
-					if ( _cnt178>=1 ) { goto _loop178; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
-				}
-				
-				_cnt178++;
-			}
-			_loop178:;
-			}  // ( ... )+
-			break;
-		}
-		case RBRACE:
-		case ATTRIBUTE:
-		{
-			break;
-		}
-		default:
-		{
-			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
-		}
-		}
-		}
-		{ // ( ... )*
-		for (;;) {
-			if ((LA(1) == ATTRIBUTE)) {
-				vc_AttributeSpec(dpe);
-			}
-			else {
-				goto _loop180;
-			}
-			
-		}
-		_loop180:;
-		} // ( ... )*
-		match(RBRACE);
-#line 736 "vc.g"
-		dp->Add_DPE(dpe);
-#line 2295 "vcParser.cpp"
-	}
-	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
-		reportError(ex);
-		recover(ex,_tokenSet_10);
-	}
-}
-
-void vcParser::vc_OperatorInstantiation(
+void vcParser::vc_Operator_Instantiation(
 	vcSystem* sys, vcDataPath* dp
 ) {
 	
 	try {      // for error handling
 		switch ( LA(1)) {
+		case DIV_OP:
 		case PLUS_OP:
 		case MINUS_OP:
 		case MUL_OP:
-		case DIV_OP:
 		case SHL_OP:
 		case SHR_OP:
 		case GT_OP:
@@ -2326,23 +1723,23 @@ void vcParser::vc_OperatorInstantiation(
 		case NAND_OP:
 		case XNOR_OP:
 		{
-			vc_BinaryOperatorInstantiation(dp);
+			vc_BinaryOperator_Instantiation(dp);
 			break;
 		}
+		case ASSIGN_OP:
 		case NOT_OP:
-		case NOP_OP:
 		{
-			vc_UnaryOperatorInstantiation(dp);
+			vc_UnaryOperator_Instantiation(dp);
 			break;
 		}
 		case SELECT_OP:
 		{
-			vc_SelectInstantiation(dp);
+			vc_Select_Instantiation(dp);
 			break;
 		}
 		case BRANCH_OP:
 		{
-			vc_BranchInstantiation(dp);
+			vc_Branch_Instantiation(dp);
 			break;
 		}
 		default:
@@ -2353,14 +1750,14 @@ void vcParser::vc_OperatorInstantiation(
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_10);
+		recover(ex,_tokenSet_12);
 	}
 }
 
-void vcParser::vc_PhiInstantiation(
+void vcParser::vc_Phi_Instantiation(
 	vcDataPath* dp
 ) {
-#line 694 "vc.g"
+#line 620 "vc.g"
 	
 	string lbl;
 	string id;
@@ -2369,49 +1766,52 @@ void vcParser::vc_PhiInstantiation(
 	vcPhi* phi;
 	vector<vcWire*> inwires;
 	
-#line 2373 "vcParser.cpp"
+#line 1770 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(PHI);
 		lbl=vc_Label();
+		match(LPAREN);
 		{ // ( ... )+
-		int _cnt169=0;
+		int _cnt139=0;
 		for (;;) {
 			if ((LA(1) == SIMPLE_IDENTIFIER)) {
 				id=vc_Identifier();
-#line 702 "vc.g"
+#line 628 "vc.g"
 				tw = dp->Find_Wire(id); assert(tw != NULL); inwires.push_back(tw);
-#line 2385 "vcParser.cpp"
+#line 1783 "vcParser.cpp"
 			}
 			else {
-				if ( _cnt169>=1 ) { goto _loop169; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
+				if ( _cnt139>=1 ) { goto _loop139; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
 			}
 			
-			_cnt169++;
+			_cnt139++;
 		}
-		_loop169:;
+		_loop139:;
 		}  // ( ... )+
-		match(IMPLIES);
+		match(RPAREN);
+		match(LPAREN);
 		id=vc_Identifier();
-#line 704 "vc.g"
+#line 631 "vc.g"
 		
 		outwire = dp->Find_Wire(id); 
 		assert(outwire != NULL); 
 		phi = new vcPhi(lbl,inwires, outwire); 
 		dp->Add_Phi(phi);
 		
-#line 2404 "vcParser.cpp"
+#line 1803 "vcParser.cpp"
+		match(RPAREN);
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_10);
+		recover(ex,_tokenSet_12);
 	}
 }
 
-void vcParser::vc_CallInstantiation(
+void vcParser::vc_Call_Instantiation(
 	vcSystem* sys, vcDataPath* dp
 ) {
-#line 612 "vc.g"
+#line 498 "vc.g"
 	
 	bool inline_flag;
 	vcCall* nc = NULL;
@@ -2421,38 +1821,38 @@ void vcParser::vc_CallInstantiation(
 	vector<vcWire*> inwires;
 	vector<vcWire*> outwires;
 	
-#line 2425 "vcParser.cpp"
+#line 1825 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(CALL);
 		{
 		match(INLINE);
-#line 623 "vc.g"
+#line 509 "vc.g"
 		inline_flag = true;
-#line 2433 "vcParser.cpp"
+#line 1833 "vcParser.cpp"
 		}
 		id=vc_Label();
 		match(MODULE);
 		mid=vc_Identifier();
 		match(LBRACE);
-#line 623 "vc.g"
+#line 509 "vc.g"
 		m = sys->Find_Module(mid); assert(m != NULL);
-#line 2441 "vcParser.cpp"
+#line 1841 "vcParser.cpp"
 		match(LPAREN);
 		{ // ( ... )*
 		for (;;) {
 			if ((LA(1) == SIMPLE_IDENTIFIER)) {
 				mid=vc_Identifier();
-#line 624 "vc.g"
+#line 510 "vc.g"
 				vcWire* w = dp->Find_Wire(mid); assert(w != NULL); inwires.push_back(w);
-#line 2449 "vcParser.cpp"
+#line 1849 "vcParser.cpp"
 			}
 			else {
-				goto _loop155;
+				goto _loop126;
 			}
 			
 		}
-		_loop155:;
+		_loop126:;
 		} // ( ... )*
 		match(RPAREN);
 		match(LPAREN);
@@ -2460,66 +1860,50 @@ void vcParser::vc_CallInstantiation(
 		for (;;) {
 			if ((LA(1) == SIMPLE_IDENTIFIER)) {
 				mid=vc_Identifier();
-#line 625 "vc.g"
+#line 511 "vc.g"
 				vcWire* w = dp->Find_Wire(mid); assert(w != NULL); outwires.push_back(w);
-#line 2466 "vcParser.cpp"
+#line 1866 "vcParser.cpp"
 			}
 			else {
-				goto _loop157;
+				goto _loop128;
 			}
 			
 		}
-		_loop157:;
+		_loop128:;
 		} // ( ... )*
 		match(RPAREN);
-#line 626 "vc.g"
+#line 512 "vc.g"
 		nc = new vcCall(id, m, inwires, outwires, inline_flag); dp->Add_Call(nc);
-#line 2478 "vcParser.cpp"
-		{ // ( ... )*
-		for (;;) {
-			if ((LA(1) == ATTRIBUTE)) {
-				vc_AttributeSpec(nc);
-			}
-			else {
-				goto _loop159;
-			}
-			
-		}
-		_loop159:;
-		} // ( ... )*
-		match(RBRACE);
+#line 1878 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_10);
+		recover(ex,_tokenSet_12);
 	}
 }
 
 void vcParser::vc_IOPort_Instantiation(
 	vcDataPath* dp
 ) {
-#line 633 "vc.g"
+#line 518 "vc.g"
 	
-	string id, wid, pid;
+	string id, in_id, out_id, pipe_id;
 	vcWire* w;
 	bool in_flag = false;
 	
-#line 2508 "vcParser.cpp"
+#line 1895 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(IOPORT);
-		id=vc_Label();
-		match(PIPE);
-		pid=vc_Identifier();
 		{
 		switch ( LA(1)) {
 		case IN:
 		{
 			{
 			match(IN);
-#line 639 "vc.g"
+#line 524 "vc.g"
 			in_flag = true;
-#line 2523 "vcParser.cpp"
+#line 1907 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2534,61 +1918,63 @@ void vcParser::vc_IOPort_Instantiation(
 		}
 		}
 		}
-		wid=vc_Identifier();
-#line 640 "vc.g"
+		id=vc_Label();
+		match(LPAREN);
+		in_id=vc_Identifier();
+		match(RPAREN);
+		match(LPAREN);
+		out_id=vc_Identifier();
+		match(RPAREN);
+#line 526 "vc.g"
 		
-		w = dp->Find_Wire(wid);
-		assert(w != NULL);
 		if(in_flag)
 		{
-		vcInport* np = new vcInport(id,pid,w);
+		w = dp->Find_Wire(out_id);
+		pipe_id = in_id;
+		}
+		else
+		{
+		w = dp->Find_Wire(in_id);
+		pipe_id = out_id;
+		}
+		
+		assert(w != NULL);
+		if(w->Get_Type()->Size() != dp->Get_Parent()->Get_Parent()->Get_Pipe_Width(pipe_id))
+		vcSystem::Error("Pipe " + pipe_id + " width does not match wire width on IOport " + id);
+		
+		if(in_flag)
+		{
+		vcInport* np = new vcInport(id,pipe_id,w);
 		dp->Add_Inport(np);
 		}
 		else
 		{
-		vcOutport* np = new vcOutport(id,pid,w);
+		vcOutport* np = new vcOutport(id,pipe_id,w);
 		dp->Add_Outport(np);
 		}
 		
-#line 2554 "vcParser.cpp"
+#line 1957 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_10);
+		recover(ex,_tokenSet_12);
 	}
 }
 
 void vcParser::vc_LoadStore_Instantiation(
 	vcSystem* sys, vcDataPath* dp
 ) {
-#line 659 "vc.g"
-	
-	string id, wid;
-	string ms_id;
-	string m_id = "";
-	vcWire* addr;
-	vcWire* data;
-	vcMemorySpace* ms;
-	bool is_load = false;
-	
-#line 2575 "vcParser.cpp"
 	
 	try {      // for error handling
-		{
 		switch ( LA(1)) {
 		case LOAD:
 		{
-			{
-			match(LOAD);
-#line 670 "vc.g"
-			is_load = true;
-#line 2586 "vcParser.cpp"
-			}
+			vc_Load_Instantiation(sys,dp);
 			break;
 		}
 		case STORE:
 		{
-			match(STORE);
+			vc_Store_Instantiation(sys,dp);
 			break;
 		}
 		default:
@@ -2596,60 +1982,14 @@ void vcParser::vc_LoadStore_Instantiation(
 			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
 		}
 		}
-		}
-		id=vc_Label();
-		match(MEMORYSPACE);
-		{
-		if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == SLASH)) {
-			m_id=vc_Identifier();
-			match(SLASH);
-		}
-		else if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == ADDRESS)) {
-		}
-		else {
-			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
-		}
-		
-		}
-		ms_id=vc_Identifier();
-#line 671 "vc.g"
-		
-		ms = sys->Find_Memory_Space(m_id,ms_id); 
-		assert(ms != NULL);
-		
-#line 2621 "vcParser.cpp"
-		match(ADDRESS);
-		wid=vc_Identifier();
-#line 675 "vc.g"
-		addr = dp->Find_Wire(wid); assert(addr != NULL);
-#line 2626 "vcParser.cpp"
-		match(DATA);
-		wid=vc_Identifier();
-#line 676 "vc.g"
-		data = dp->Find_Wire(wid); assert(data != NULL);
-#line 2631 "vcParser.cpp"
-#line 677 "vc.g"
-		
-		if(is_load)
-		{
-		vcLoad* nl = new vcLoad(id, ms, addr, data);
-		dp->Add_Load(nl);
-		}
-		else
-		{
-		vcStore* ns = new vcStore(id, ms, addr, data);
-		dp->Add_Store(ns);
-		}
-		
-#line 2645 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_10);
+		recover(ex,_tokenSet_12);
 	}
 }
 
-void vcParser::vc_BinaryOperatorInstantiation(
+void vcParser::vc_BinaryOperator_Instantiation(
 	vcDataPath* dp
 ) {
 	ANTLR_USE_NAMESPACE(antlr)RefToken  plus_id = ANTLR_USE_NAMESPACE(antlr)nullToken;
@@ -2672,7 +2012,7 @@ void vcParser::vc_BinaryOperatorInstantiation(
 	ANTLR_USE_NAMESPACE(antlr)RefToken  nor_id = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  nand_id = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  xnor_id = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 492 "vc.g"
+#line 379 "vc.g"
 	
 	vcBinarySplitOperator* new_op = NULL;
 	string id;
@@ -2683,7 +2023,7 @@ void vcParser::vc_BinaryOperatorInstantiation(
 	vcWire* z = NULL;
 	vcValue* val = NULL;
 	
-#line 2687 "vcParser.cpp"
+#line 2027 "vcParser.cpp"
 	
 	try {      // for error handling
 		{
@@ -2693,9 +2033,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			plus_id = LT(1);
 			match(PLUS_OP);
-#line 504 "vc.g"
+#line 391 "vc.g"
 			op_id = plus_id->getText();
-#line 2699 "vcParser.cpp"
+#line 2039 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2704,9 +2044,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			minus_id = LT(1);
 			match(MINUS_OP);
-#line 505 "vc.g"
+#line 392 "vc.g"
 			op_id = minus_id->getText();
-#line 2710 "vcParser.cpp"
+#line 2050 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2715,9 +2055,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			mul_id = LT(1);
 			match(MUL_OP);
-#line 506 "vc.g"
+#line 393 "vc.g"
 			op_id = mul_id->getText();
-#line 2721 "vcParser.cpp"
+#line 2061 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2726,9 +2066,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			div_id = LT(1);
 			match(DIV_OP);
-#line 507 "vc.g"
+#line 394 "vc.g"
 			op_id = div_id->getText();
-#line 2732 "vcParser.cpp"
+#line 2072 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2737,9 +2077,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			shl_id = LT(1);
 			match(SHL_OP);
-#line 508 "vc.g"
+#line 395 "vc.g"
 			op_id = shl_id->getText();
-#line 2743 "vcParser.cpp"
+#line 2083 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2748,9 +2088,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			shr_id = LT(1);
 			match(SHR_OP);
-#line 509 "vc.g"
+#line 396 "vc.g"
 			op_id = shr_id->getText();
-#line 2754 "vcParser.cpp"
+#line 2094 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2759,9 +2099,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			gt_id = LT(1);
 			match(GT_OP);
-#line 510 "vc.g"
+#line 397 "vc.g"
 			op_id = gt_id->getText();
-#line 2765 "vcParser.cpp"
+#line 2105 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2770,9 +2110,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			ge_id = LT(1);
 			match(GE_OP);
-#line 511 "vc.g"
+#line 398 "vc.g"
 			op_id = ge_id->getText();
-#line 2776 "vcParser.cpp"
+#line 2116 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2781,9 +2121,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			eq_id = LT(1);
 			match(EQ_OP);
-#line 512 "vc.g"
+#line 399 "vc.g"
 			op_id = eq_id->getText();
-#line 2787 "vcParser.cpp"
+#line 2127 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2792,9 +2132,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			lt_id = LT(1);
 			match(LT_OP);
-#line 513 "vc.g"
+#line 400 "vc.g"
 			op_id = lt_id->getText();
-#line 2798 "vcParser.cpp"
+#line 2138 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2803,9 +2143,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			le_id = LT(1);
 			match(LE_OP);
-#line 514 "vc.g"
+#line 401 "vc.g"
 			op_id = le_id->getText();
-#line 2809 "vcParser.cpp"
+#line 2149 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2814,9 +2154,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			neq_id = LT(1);
 			match(NEQ_OP);
-#line 515 "vc.g"
+#line 402 "vc.g"
 			op_id = neq_id->getText();
-#line 2820 "vcParser.cpp"
+#line 2160 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2825,9 +2165,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			bitsel_id = LT(1);
 			match(BITSEL_OP);
-#line 516 "vc.g"
+#line 403 "vc.g"
 			op_id = bitsel_id->getText();
-#line 2831 "vcParser.cpp"
+#line 2171 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2836,9 +2176,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			concat_id = LT(1);
 			match(CONCAT_OP);
-#line 517 "vc.g"
+#line 404 "vc.g"
 			op_id = concat_id->getText();
-#line 2842 "vcParser.cpp"
+#line 2182 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2847,9 +2187,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			or_id = LT(1);
 			match(OR_OP);
-#line 518 "vc.g"
+#line 405 "vc.g"
 			op_id = or_id->getText();
-#line 2853 "vcParser.cpp"
+#line 2193 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2858,9 +2198,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			and_id = LT(1);
 			match(AND_OP);
-#line 519 "vc.g"
+#line 406 "vc.g"
 			op_id = and_id->getText();
-#line 2864 "vcParser.cpp"
+#line 2204 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2869,9 +2209,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			xor_id = LT(1);
 			match(XOR_OP);
-#line 520 "vc.g"
+#line 407 "vc.g"
 			op_id = xor_id->getText();
-#line 2875 "vcParser.cpp"
+#line 2215 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2880,9 +2220,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			nor_id = LT(1);
 			match(NOR_OP);
-#line 521 "vc.g"
+#line 408 "vc.g"
 			op_id = nor_id->getText();
-#line 2886 "vcParser.cpp"
+#line 2226 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2891,9 +2231,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			nand_id = LT(1);
 			match(NAND_OP);
-#line 522 "vc.g"
+#line 409 "vc.g"
 			op_id = nand_id->getText();
-#line 2897 "vcParser.cpp"
+#line 2237 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2902,9 +2242,9 @@ void vcParser::vc_BinaryOperatorInstantiation(
 			{
 			xnor_id = LT(1);
 			match(XNOR_OP);
-#line 523 "vc.g"
+#line 410 "vc.g"
 			op_id = xnor_id->getText();
-#line 2908 "vcParser.cpp"
+#line 2248 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2917,36 +2257,36 @@ void vcParser::vc_BinaryOperatorInstantiation(
 		id=vc_Label();
 		match(LPAREN);
 		wid=vc_Identifier();
-#line 525 "vc.g"
+#line 412 "vc.g"
 		x = dp->Find_Wire(wid); assert(x != NULL);
-#line 2923 "vcParser.cpp"
+#line 2263 "vcParser.cpp"
 		wid=vc_Identifier();
-#line 526 "vc.g"
+#line 413 "vc.g"
 		y = dp->Find_Wire(wid); assert(x != NULL);
-#line 2927 "vcParser.cpp"
+#line 2267 "vcParser.cpp"
 		match(RPAREN);
 		match(LPAREN);
 		wid=vc_Identifier();
-#line 529 "vc.g"
+#line 416 "vc.g"
 		z = dp->Find_Wire(wid); assert(z != NULL);
-#line 2933 "vcParser.cpp"
+#line 2273 "vcParser.cpp"
 		match(RPAREN);
-#line 531 "vc.g"
+#line 418 "vc.g"
 		new_op = new vcBinarySplitOperator(id,op_id,x,y,z); dp->Add_Split_Operator(new_op);
-#line 2937 "vcParser.cpp"
+#line 2277 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_10);
+		recover(ex,_tokenSet_12);
 	}
 }
 
-void vcParser::vc_UnaryOperatorInstantiation(
+void vcParser::vc_UnaryOperator_Instantiation(
 	vcDataPath* dp
 ) {
 	ANTLR_USE_NAMESPACE(antlr)RefToken  not_id = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  nop_id = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 539 "vc.g"
+#line 426 "vc.g"
 	
 	vcUnarySplitOperator* new_op = NULL;
 	string id;
@@ -2955,7 +2295,7 @@ void vcParser::vc_UnaryOperatorInstantiation(
 	vcWire* x = NULL;
 	vcWire* z = NULL;
 	
-#line 2959 "vcParser.cpp"
+#line 2299 "vcParser.cpp"
 	
 	try {      // for error handling
 		{
@@ -2965,20 +2305,20 @@ void vcParser::vc_UnaryOperatorInstantiation(
 			{
 			not_id = LT(1);
 			match(NOT_OP);
-#line 549 "vc.g"
+#line 436 "vc.g"
 			op_id = not_id->getText();
-#line 2971 "vcParser.cpp"
+#line 2311 "vcParser.cpp"
 			}
 			break;
 		}
-		case NOP_OP:
+		case ASSIGN_OP:
 		{
 			{
 			nop_id = LT(1);
-			match(NOP_OP);
-#line 550 "vc.g"
+			match(ASSIGN_OP);
+#line 437 "vc.g"
 			op_id = nop_id->getText();
-#line 2982 "vcParser.cpp"
+#line 2322 "vcParser.cpp"
 			}
 			break;
 		}
@@ -2991,30 +2331,30 @@ void vcParser::vc_UnaryOperatorInstantiation(
 		id=vc_Label();
 		match(LPAREN);
 		wid=vc_Identifier();
-#line 552 "vc.g"
+#line 439 "vc.g"
 		x = dp->Find_Wire(wid); assert(x != NULL);
-#line 2997 "vcParser.cpp"
+#line 2337 "vcParser.cpp"
 		match(RPAREN);
 		match(LPAREN);
 		wid=vc_Identifier();
-#line 555 "vc.g"
+#line 442 "vc.g"
 		z = dp->Find_Wire(wid); assert(z != NULL);
-#line 3003 "vcParser.cpp"
+#line 2343 "vcParser.cpp"
 		match(RPAREN);
-#line 557 "vc.g"
+#line 444 "vc.g"
 		new_op = new vcUnarySplitOperator(id,op_id,x,z); dp->Add_Split_Operator(new_op);
-#line 3007 "vcParser.cpp"
+#line 2347 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_10);
+		recover(ex,_tokenSet_12);
 	}
 }
 
-void vcParser::vc_SelectInstantiation(
+void vcParser::vc_Select_Instantiation(
 	vcDataPath* dp
 ) {
-#line 582 "vc.g"
+#line 469 "vc.g"
 	
 	vcSelect* new_op = NULL;
 	string id;
@@ -3026,94 +2366,218 @@ void vcParser::vc_SelectInstantiation(
 	vcWire* z = NULL;
 	vcValue* val = NULL;
 	
-#line 3030 "vcParser.cpp"
+#line 2370 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(SELECT_OP);
 		id=vc_Label();
 		match(LPAREN);
 		wid=vc_Identifier();
-#line 597 "vc.g"
+#line 484 "vc.g"
 		sel = dp->Find_Wire(wid); assert(sel != NULL);
-#line 3039 "vcParser.cpp"
+#line 2379 "vcParser.cpp"
 		wid=vc_Identifier();
-#line 598 "vc.g"
+#line 485 "vc.g"
 		x = dp->Find_Wire(wid); assert(x != NULL);
-#line 3043 "vcParser.cpp"
+#line 2383 "vcParser.cpp"
 		wid=vc_Identifier();
-#line 599 "vc.g"
+#line 486 "vc.g"
 		y = dp->Find_Wire(wid); assert(x != NULL);
-#line 3047 "vcParser.cpp"
+#line 2387 "vcParser.cpp"
 		match(RPAREN);
 		match(LPAREN);
 		wid=vc_Identifier();
-#line 602 "vc.g"
+#line 489 "vc.g"
 		z = dp->Find_Wire(wid); assert(z != NULL);
-#line 3053 "vcParser.cpp"
+#line 2393 "vcParser.cpp"
 		match(RPAREN);
-#line 604 "vc.g"
+#line 491 "vc.g"
 		new_op = new vcSelect(id,sel,x,y,z); dp->Add_Select(new_op);
-#line 3057 "vcParser.cpp"
+#line 2397 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_10);
+		recover(ex,_tokenSet_12);
 	}
 }
 
-void vcParser::vc_BranchInstantiation(
+void vcParser::vc_Branch_Instantiation(
 	vcDataPath* dp
 ) {
-#line 563 "vc.g"
+#line 450 "vc.g"
 	
 	vcBranch* new_op = NULL;
 	string id;
 	string wid;
 	vcWire* x = NULL;
 	
-#line 3075 "vcParser.cpp"
+#line 2415 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(BRANCH_OP);
 		id=vc_Label();
 		match(LPAREN);
 		wid=vc_Identifier();
-#line 573 "vc.g"
+#line 460 "vc.g"
 		x = dp->Find_Wire(wid); assert(x != NULL);
-#line 3084 "vcParser.cpp"
+#line 2424 "vcParser.cpp"
 		match(RPAREN);
-#line 575 "vc.g"
+#line 462 "vc.g"
 		new_op = new vcBranch(id,x); dp->Add_Branch(new_op);
-#line 3088 "vcParser.cpp"
+#line 2428 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_10);
+		recover(ex,_tokenSet_12);
+	}
+}
+
+void vcParser::vc_Load_Instantiation(
+	vcSystem* sys, vcDataPath* dp
+) {
+#line 567 "vc.g"
+	
+	string id, wid;
+	string ms_id;
+	string m_id = "";
+	vcWire* addr;
+	vcWire* data;
+	vcMemorySpace* ms;
+	bool is_load = false;
+	
+#line 2449 "vcParser.cpp"
+	
+	try {      // for error handling
+		match(LOAD);
+		id=vc_Label();
+		match(FROM);
+		{
+		if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == DIV_OP)) {
+			m_id=vc_Identifier();
+			match(DIV_OP);
+		}
+		else if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == LPAREN)) {
+		}
+		else {
+			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
+		}
+		
+		}
+		ms_id=vc_Identifier();
+#line 578 "vc.g"
+		
+		ms = sys->Find_Memory_Space(m_id,ms_id); 
+		assert(ms != NULL);
+		
+#line 2473 "vcParser.cpp"
+		match(LPAREN);
+		wid=vc_Identifier();
+#line 582 "vc.g"
+		addr = dp->Find_Wire(wid); assert(addr != NULL);
+#line 2478 "vcParser.cpp"
+		match(RPAREN);
+		match(LPAREN);
+		wid=vc_Identifier();
+#line 583 "vc.g"
+		data = dp->Find_Wire(wid); assert(data != NULL);
+#line 2484 "vcParser.cpp"
+		match(RPAREN);
+#line 584 "vc.g"
+		
+		vcLoad* nl = new vcLoad(id, ms, addr, data);
+		dp->Add_Load(nl);
+		
+#line 2491 "vcParser.cpp"
+	}
+	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
+		reportError(ex);
+		recover(ex,_tokenSet_12);
+	}
+}
+
+void vcParser::vc_Store_Instantiation(
+	vcSystem* sys, vcDataPath* dp
+) {
+#line 594 "vc.g"
+	
+	string id, wid;
+	string ms_id;
+	string m_id = "";
+	vcWire* addr;
+	vcWire* data;
+	vcMemorySpace* ms;
+	bool is_load = false;
+	
+#line 2512 "vcParser.cpp"
+	
+	try {      // for error handling
+		match(STORE);
+		id=vc_Label();
+		match(TO);
+		{
+		if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == DIV_OP)) {
+			m_id=vc_Identifier();
+			match(DIV_OP);
+		}
+		else if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == LPAREN)) {
+		}
+		else {
+			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
+		}
+		
+		}
+		ms_id=vc_Identifier();
+#line 605 "vc.g"
+		
+		ms = sys->Find_Memory_Space(m_id,ms_id); 
+		assert(ms != NULL);
+		
+#line 2536 "vcParser.cpp"
+		match(LPAREN);
+		wid=vc_Identifier();
+#line 609 "vc.g"
+		addr = dp->Find_Wire(wid); assert(addr != NULL);
+#line 2541 "vcParser.cpp"
+		wid=vc_Identifier();
+#line 610 "vc.g"
+		data = dp->Find_Wire(wid); assert(data != NULL);
+#line 2545 "vcParser.cpp"
+		match(RPAREN);
+#line 611 "vc.g"
+		
+		vcStore* ns = new vcStore(id, ms, addr, data);
+		dp->Add_Store(ns);
+		
+#line 2552 "vcParser.cpp"
+	}
+	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
+		reportError(ex);
+		recover(ex,_tokenSet_12);
 	}
 }
 
 void vcParser::vc_Interface_Object_Declaration(
 	vcSystem* sys, vcModule* parent, string mode
 ) {
-#line 773 "vc.g"
+#line 672 "vc.g"
 	
 		vcType* t;
 		vcValue* v;
 		string obj_name;
 	
-#line 3105 "vcParser.cpp"
+#line 2569 "vcParser.cpp"
 	
 	try {      // for error handling
 		vc_Object_Declaration_Base(sys, &t,obj_name,&v);
-#line 780 "vc.g"
+#line 679 "vc.g"
 		
 			parent->Add_Argument(obj_name,mode,t);
 		
-#line 3113 "vcParser.cpp"
+#line 2577 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_28);
+		recover(ex,_tokenSet_21);
 	}
 }
 
@@ -3121,104 +2585,61 @@ void vcParser::vc_Object_Declaration_Base(
 	vcSystem* sys, vcType** t, string& obj_name, vcValue** v
 ) {
 	ANTLR_USE_NAMESPACE(antlr)RefToken  id = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 788 "vc.g"
+#line 687 "vc.g"
 	
 		vcType* tt = NULL;
 		vcValue* vv = NULL;
 	
-#line 3130 "vcParser.cpp"
+#line 2594 "vcParser.cpp"
 	
 	try {      // for error handling
 		id = LT(1);
 		match(SIMPLE_IDENTIFIER);
-#line 793 "vc.g"
+#line 692 "vc.g"
 		obj_name = id->getText();
-#line 3137 "vcParser.cpp"
+#line 2601 "vcParser.cpp"
 		match(COLON);
 		tt=vc_Type(sys);
-#line 793 "vc.g"
+#line 692 "vc.g"
 		*t = tt;
-#line 3142 "vcParser.cpp"
+#line 2606 "vcParser.cpp"
 		{
-		switch ( LA(1)) {
-		case ASSIGNEQUAL:
-		{
-			match(ASSIGNEQUAL);
+		if ((LA(1) == ASSIGN_OP) && (_tokenSet_22.member(LA(2)))) {
+			match(ASSIGN_OP);
 			vv=vc_Value(*t);
-			break;
 		}
-		case RBRACE:
-		case OUT:
-		case SIMPLE_IDENTIFIER:
-		case MEMORYSPACE:
-		case PHI:
-		case CONTROLPATH:
-		case PLUS_OP:
-		case MINUS_OP:
-		case MUL_OP:
-		case DIV_OP:
-		case SHL_OP:
-		case SHR_OP:
-		case GT_OP:
-		case GE_OP:
-		case EQ_OP:
-		case LT_OP:
-		case LE_OP:
-		case NEQ_OP:
-		case BITSEL_OP:
-		case CONCAT_OP:
-		case OR_OP:
-		case AND_OP:
-		case XOR_OP:
-		case NOR_OP:
-		case NAND_OP:
-		case XNOR_OP:
-		case NOT_OP:
-		case NOP_OP:
-		case BRANCH_OP:
-		case SELECT_OP:
-		case CALL:
-		case IOPORT:
-		case LOAD:
-		case STORE:
-		case DPEINSTANCE:
-		case CONSTANT:
-		case WIRE:
-		case ATTRIBUTE:
-		{
-			break;
+		else if ((_tokenSet_23.member(LA(1))) && (_tokenSet_24.member(LA(2)))) {
 		}
-		default:
-		{
+		else {
 			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
 		}
+		
 		}
-		}
-#line 794 "vc.g"
+#line 693 "vc.g"
 		if(v != NULL) *v = vv;
-#line 3200 "vcParser.cpp"
+#line 2621 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_29);
+		recover(ex,_tokenSet_23);
 	}
 }
 
 vcValue*  vcParser::vc_IntValue(
 	vcType* t
 ) {
-#line 870 "vc.g"
+#line 769 "vc.g"
 	vcValue* v;
-#line 3213 "vcParser.cpp"
+#line 2634 "vcParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  bid = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  hid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 870 "vc.g"
+#line 769 "vc.g"
 	
 		string vstring;
 		string format;
 		assert(t->Is("vcIntType") || t->Is("vcPointerType"));
 	
-#line 3222 "vcParser.cpp"
+#line 2643 "vcParser.cpp"
 	
 	try {      // for error handling
 		{
@@ -3228,9 +2649,9 @@ vcValue*  vcParser::vc_IntValue(
 			{
 			bid = LT(1);
 			match(BINARYSTRING);
-#line 875 "vc.g"
+#line 774 "vc.g"
 			vstring = bid->getText(); format = "binary";
-#line 3234 "vcParser.cpp"
+#line 2655 "vcParser.cpp"
 			}
 			break;
 		}
@@ -3239,9 +2660,9 @@ vcValue*  vcParser::vc_IntValue(
 			{
 			hid = LT(1);
 			match(HEXSTRING);
-#line 876 "vc.g"
+#line 775 "vc.g"
 			vstring = hid->getText(); format = "hexadecimal";
-#line 3245 "vcParser.cpp"
+#line 2666 "vcParser.cpp"
 			}
 			break;
 		}
@@ -3251,15 +2672,15 @@ vcValue*  vcParser::vc_IntValue(
 		}
 		}
 		}
-#line 877 "vc.g"
+#line 776 "vc.g"
 		
 			v = (vcValue*) (new vcIntValue((vcIntType*)t,vstring.substr(2),format));
 		
-#line 3259 "vcParser.cpp"
+#line 2680 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_30);
+		recover(ex,_tokenSet_25);
 	}
 	return v;
 }
@@ -3267,10 +2688,10 @@ vcValue*  vcParser::vc_IntValue(
 vcValue*  vcParser::vc_FloatValue(
 	vcType* t
 ) {
-#line 885 "vc.g"
+#line 784 "vc.g"
 	vcValue* v;
-#line 3273 "vcParser.cpp"
-#line 885 "vc.g"
+#line 2694 "vcParser.cpp"
+#line 784 "vc.g"
 	
 		string vstring;
 		string format;
@@ -3280,7 +2701,7 @@ vcValue*  vcParser::vc_FloatValue(
 		vcValue* mv;
 	assert(t != NULL && t->Is("vcFloatType"));
 	
-#line 3284 "vcParser.cpp"
+#line 2705 "vcParser.cpp"
 	
 	try {      // for error handling
 		{
@@ -3288,9 +2709,9 @@ vcValue*  vcParser::vc_FloatValue(
 		case MINUS:
 		{
 			match(MINUS);
-#line 894 "vc.g"
+#line 793 "vc.g"
 			sign_value = 1;
-#line 3294 "vcParser.cpp"
+#line 2715 "vcParser.cpp"
 			break;
 		}
 		case LITERAL_C:
@@ -3307,15 +2728,15 @@ vcValue*  vcParser::vc_FloatValue(
 		cv=vc_IntValue(((vcFloatType*)t)->Get_Characteristic_Type());
 		match(LITERAL_M);
 		mv=vc_IntValue(((vcFloatType*)t)->Get_Mantissa_Type());
-#line 895 "vc.g"
+#line 794 "vc.g"
 		
 			v = (vcValue*) (new vcFloatValue((vcFloatType*)t,sign_value, (vcIntValue*)cv, (vcIntValue*)mv));
 		
-#line 3315 "vcParser.cpp"
+#line 2736 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_15);
+		recover(ex,_tokenSet_6);
 	}
 	return v;
 }
@@ -3323,9 +2744,9 @@ vcValue*  vcParser::vc_FloatValue(
 vcType*  vcParser::vc_ScalarType(
 	vcSystem* sys
 ) {
-#line 909 "vc.g"
+#line 808 "vc.g"
 	vcType* t;
-#line 3329 "vcParser.cpp"
+#line 2750 "vcParser.cpp"
 	
 	try {      // for error handling
 		switch ( LA(1)) {
@@ -3358,7 +2779,7 @@ vcType*  vcParser::vc_ScalarType(
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_14);
+		recover(ex,_tokenSet_5);
 	}
 	return t;
 }
@@ -3366,36 +2787,36 @@ vcType*  vcParser::vc_ScalarType(
 vcType*  vcParser::vc_ArrayType(
 	vcSystem* sys
 ) {
-#line 951 "vc.g"
+#line 850 "vc.g"
 	vcType* t;
-#line 3372 "vcParser.cpp"
+#line 2793 "vcParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  dim = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 951 "vc.g"
+#line 850 "vc.g"
 	
 		vcArrayType* at;
 		vcType* et;
 		unsigned int dimension;
 	
-#line 3380 "vcParser.cpp"
+#line 2801 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(ARRAY);
 		match(LBRACKET);
 		dim = LT(1);
 		match(UINTEGER);
-#line 956 "vc.g"
+#line 855 "vc.g"
 		dimension = atoi(dim->getText().c_str());
-#line 3389 "vcParser.cpp"
+#line 2810 "vcParser.cpp"
 		match(RBRACKET);
 		match(OF);
 		et=vc_Type(sys);
-#line 957 "vc.g"
+#line 856 "vc.g"
 		at = Make_Array_Type(et,dimension); t = (vcType*) at;
-#line 3395 "vcParser.cpp"
+#line 2816 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_14);
+		recover(ex,_tokenSet_5);
 	}
 	return t;
 }
@@ -3403,50 +2824,50 @@ vcType*  vcParser::vc_ArrayType(
 vcType*  vcParser::vc_RecordType(
 	vcSystem* sys
 ) {
-#line 963 "vc.g"
+#line 862 "vc.g"
 	vcType* t;
-#line 3409 "vcParser.cpp"
-#line 963 "vc.g"
+#line 2830 "vcParser.cpp"
+#line 862 "vc.g"
 	
 		vcRecordType* rt;
 		vcType* et;
 		vector<vcType*> etypes;
 	
-#line 3416 "vcParser.cpp"
+#line 2837 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(RECORD);
 		match(LBRACKET);
 		{
 		et=vc_Type(sys);
-#line 968 "vc.g"
+#line 867 "vc.g"
 		etypes.push_back(et);
-#line 3425 "vcParser.cpp"
+#line 2846 "vcParser.cpp"
 		}
 		{ // ( ... )*
 		for (;;) {
 			if ((LA(1) == COMMA)) {
 				match(COMMA);
 				t=vc_Type(sys);
-#line 968 "vc.g"
+#line 867 "vc.g"
 				etypes.push_back(et);
-#line 3434 "vcParser.cpp"
+#line 2855 "vcParser.cpp"
 			}
 			else {
-				goto _loop222;
+				goto _loop181;
 			}
 			
 		}
-		_loop222:;
+		_loop181:;
 		} // ( ... )*
 		match(RBRACKET);
-#line 969 "vc.g"
+#line 868 "vc.g"
 		rt = Make_Record_Type(etypes); t = (vcType*) rt; etypes.clear();
-#line 3446 "vcParser.cpp"
+#line 2867 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_14);
+		recover(ex,_tokenSet_5);
 	}
 	return t;
 }
@@ -3454,33 +2875,33 @@ vcType*  vcParser::vc_RecordType(
 vcType*  vcParser::vc_IntType(
 	vcSystem* sys
 ) {
-#line 915 "vc.g"
+#line 814 "vc.g"
 	vcType* t;
-#line 3460 "vcParser.cpp"
+#line 2881 "vcParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  i = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 915 "vc.g"
+#line 814 "vc.g"
 	
 		vcIntType* it;
 		unsigned int w;
 	
-#line 3467 "vcParser.cpp"
+#line 2888 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(INT);
-		match(LESS);
+		match(LT_OP);
 		i = LT(1);
 		match(UINTEGER);
-#line 920 "vc.g"
+#line 819 "vc.g"
 		w = atoi(i->getText().c_str());
-#line 3476 "vcParser.cpp"
-		match(GREATER);
-#line 920 "vc.g"
+#line 2897 "vcParser.cpp"
+		match(GT_OP);
+#line 819 "vc.g"
 		it = Make_Integer_Type(w); t = (vcType*)it;
-#line 3480 "vcParser.cpp"
+#line 2901 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_14);
+		recover(ex,_tokenSet_5);
 	}
 	return t;
 }
@@ -3488,40 +2909,40 @@ vcType*  vcParser::vc_IntType(
 vcType*  vcParser::vc_FloatType(
 	vcSystem* sys
 ) {
-#line 926 "vc.g"
+#line 825 "vc.g"
 	vcType* t;
-#line 3494 "vcParser.cpp"
+#line 2915 "vcParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  cid = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  mid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 926 "vc.g"
+#line 825 "vc.g"
 	
 		vcFloatType* ft;
 		unsigned int c,m;
 	
-#line 3502 "vcParser.cpp"
+#line 2923 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(FLOAT);
-		match(LESS);
+		match(LT_OP);
 		cid = LT(1);
 		match(UINTEGER);
-#line 931 "vc.g"
+#line 830 "vc.g"
 		c = atoi(cid->getText().c_str());
-#line 3511 "vcParser.cpp"
+#line 2932 "vcParser.cpp"
 		match(COMMA);
 		mid = LT(1);
 		match(UINTEGER);
-#line 931 "vc.g"
+#line 830 "vc.g"
 		m = atoi(mid->getText().c_str());
-#line 3517 "vcParser.cpp"
-		match(GREATER);
-#line 932 "vc.g"
+#line 2938 "vcParser.cpp"
+		match(GT_OP);
+#line 831 "vc.g"
 		ft = Make_Float_Type(c,m); t = (vcType*)ft;
-#line 3521 "vcParser.cpp"
+#line 2942 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_14);
+		recover(ex,_tokenSet_5);
 	}
 	return t;
 }
@@ -3529,31 +2950,31 @@ vcType*  vcParser::vc_FloatType(
 vcType*  vcParser::vc_PointerType(
 	vcSystem* sys
 ) {
-#line 939 "vc.g"
+#line 838 "vc.g"
 	vcType* t;
-#line 3535 "vcParser.cpp"
+#line 2956 "vcParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  sid = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  mid = ANTLR_USE_NAMESPACE(antlr)nullToken;
-#line 939 "vc.g"
+#line 838 "vc.g"
 	
 		vcPointerType* pt;
 	string scope_id, space_id;
 	
-#line 3543 "vcParser.cpp"
+#line 2964 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(POINTER);
-		match(LESS);
+		match(LT_OP);
 		{
-		if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == SLASH)) {
+		if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == DIV_OP)) {
 			sid = LT(1);
 			match(SIMPLE_IDENTIFIER);
-			match(SLASH);
-#line 944 "vc.g"
+			match(DIV_OP);
+#line 843 "vc.g"
 			scope_id = sid->getText();
-#line 3555 "vcParser.cpp"
+#line 2976 "vcParser.cpp"
 		}
-		else if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == GREATER)) {
+		else if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == GT_OP)) {
 		}
 		else {
 			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
@@ -3562,14 +2983,14 @@ vcType*  vcParser::vc_PointerType(
 		}
 		mid = LT(1);
 		match(SIMPLE_IDENTIFIER);
-#line 945 "vc.g"
+#line 844 "vc.g"
 		space_id = mid->getText(); pt = Make_Pointer_Type(sys, scope_id,space_id); t = (vcType*) pt;
-#line 3568 "vcParser.cpp"
-		match(GREATER);
+#line 2989 "vcParser.cpp"
+		match(GT_OP);
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
-		recover(ex,_tokenSet_14);
+		recover(ex,_tokenSet_5);
 	}
 	return t;
 }
@@ -3582,49 +3003,33 @@ const char* vcParser::tokenNames[] = {
 	"EOF",
 	"<2>",
 	"NULL_TREE_LOOKAHEAD",
-	"LIBRARY",
+	"PIPE",
+	"UINTEGER",
+	"MEMORYSPACE",
 	"LBRACE",
 	"RBRACE",
-	"DPE",
-	"PARAMETER",
-	"MIN",
-	"UINTEGER",
-	"MAX",
-	"IN",
-	"OUT",
-	"COLON",
-	"FLOAT",
-	"LESS",
-	"SIMPLE_IDENTIFIER",
-	"COMMA",
-	"GREATER",
-	"INT",
-	"REQS",
-	"ACKS",
-	"MEMORYSPACE",
 	"CAPACITY",
 	"DATAWIDTH",
 	"ADDRWIDTH",
 	"OBJECT",
-	"ASSIGNEQUAL",
+	"COLON",
+	"ASSIGN_OP",
 	"MODULE",
-	"LINK",
+	"SIMPLE_IDENTIFIER",
 	"EQUIVALENT",
-	"SLASH",
-	"PHI",
+	"LPAREN",
+	"RPAREN",
+	"DIV_OP",
+	"ENTRY",
+	"EXIT",
 	"CONTROLPATH",
 	"PLACE",
 	"TRANSITION",
-	"HIDDEN",
 	"SERIESBLOCK",
 	"PARALLELBLOCK",
 	"BRANCHBLOCK",
-	"AT",
 	"MERGE",
-	"ENTRY",
-	"FROM",
 	"BRANCH",
-	"EXIT",
 	"FORKBLOCK",
 	"JOIN",
 	"FORK",
@@ -3632,7 +3037,6 @@ const char* vcParser::tokenNames[] = {
 	"PLUS_OP",
 	"MINUS_OP",
 	"MUL_OP",
-	"DIV_OP",
 	"SHL_OP",
 	"SHR_OP",
 	"GT_OP",
@@ -3649,39 +3053,56 @@ const char* vcParser::tokenNames[] = {
 	"NOR_OP",
 	"NAND_OP",
 	"XNOR_OP",
-	"LPAREN",
-	"RPAREN",
 	"NOT_OP",
-	"NOP_OP",
 	"BRANCH_OP",
 	"SELECT_OP",
 	"CALL",
 	"INLINE",
 	"IOPORT",
-	"PIPE",
+	"IN",
+	"OUT",
 	"LOAD",
+	"FROM",
 	"STORE",
-	"ADDRESS",
-	"DATA",
-	"IMPLIES",
-	"DPEINSTANCE",
-	"MAP",
-	"PORT",
+	"TO",
+	"PHI",
 	"LBRACKET",
 	"RBRACKET",
 	"CONSTANT",
 	"WIRE",
+	"COMMA",
 	"BINARYSTRING",
 	"HEXSTRING",
 	"MINUS",
 	"\"C\"",
 	"\"M\"",
+	"INT",
+	"FLOAT",
 	"POINTER",
 	"ARRAY",
 	"OF",
 	"RECORD",
 	"ATTRIBUTE",
+	"IMPLIES",
 	"QUOTED_STRING",
+	"DPE",
+	"LIBRARY",
+	"REQS",
+	"ACKS",
+	"HIDDEN",
+	"PARAMETER",
+	"PORT",
+	"MAP",
+	"MIN",
+	"MAX",
+	"DPEINSTANCE",
+	"LINK",
+	"AT",
+	"UGT_OP",
+	"UGE_OP",
+	"ULT_OP",
+	"ULE_OP",
+	"UNORDERED_OP",
 	"WHITESPACE",
 	"SINGLELINECOMMENT",
 	"HIERARCHICAL_IDENTIFIER",
@@ -3693,123 +3114,107 @@ const char* vcParser::tokenNames[] = {
 const unsigned long vcParser::_tokenSet_0_data_[] = { 2UL, 0UL, 0UL, 0UL };
 // EOF 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_0(_tokenSet_0_data_,4);
-const unsigned long vcParser::_tokenSet_1_data_[] = { 545259538UL, 0UL, 0UL, 0UL };
-// EOF LIBRARY MEMORYSPACE MODULE 
+const unsigned long vcParser::_tokenSet_1_data_[] = { 32850UL, 0UL, 0UL, 0UL };
+// EOF PIPE MEMORYSPACE MODULE 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_1(_tokenSet_1_data_,4);
-const unsigned long vcParser::_tokenSet_2_data_[] = { 545259538UL, 4UL, 0UL, 0UL };
-// EOF LIBRARY MEMORYSPACE MODULE CONTROLPATH 
+const unsigned long vcParser::_tokenSet_2_data_[] = { 8421458UL, 0UL, 0UL, 0UL };
+// EOF PIPE MEMORYSPACE MODULE CONTROLPATH 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_2(_tokenSet_2_data_,4);
-const unsigned long vcParser::_tokenSet_3_data_[] = { 545419376UL, 37880UL, 65664UL, 0UL, 0UL, 0UL, 0UL, 0UL };
-// LIBRARY LBRACE RBRACE IN OUT COLON SIMPLE_IDENTIFIER MEMORYSPACE MODULE 
-// PLACE TRANSITION HIDDEN SERIESBLOCK PARALLELBLOCK BRANCHBLOCK AT FROM 
-// FORKBLOCK LPAREN PIPE 
+const unsigned long vcParser::_tokenSet_3_data_[] = { 2674237856UL, 2147483648UL, 2UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// UINTEGER LBRACE RBRACE COLON MODULE SIMPLE_IDENTIFIER LPAREN ENTRY EXIT 
+// PLACE TRANSITION SERIESBLOCK PARALLELBLOCK BRANCHBLOCK FORKBLOCK FROM 
+// TO 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_3(_tokenSet_3_data_,8);
-const unsigned long vcParser::_tokenSet_4_data_[] = { 192UL, 0UL, 0UL, 0UL };
-// RBRACE DPE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_4(_tokenSet_4_data_,4);
-const unsigned long vcParser::_tokenSet_5_data_[] = { 6303808UL, 0UL, 0UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE IN OUT REQS ACKS ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_5(_tokenSet_5_data_,8);
-const unsigned long vcParser::_tokenSet_6_data_[] = { 6299712UL, 0UL, 0UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE OUT REQS ACKS ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_6(_tokenSet_6_data_,8);
-const unsigned long vcParser::_tokenSet_7_data_[] = { 6291520UL, 0UL, 0UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE REQS ACKS ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_7(_tokenSet_7_data_,8);
-const unsigned long vcParser::_tokenSet_8_data_[] = { 4194368UL, 0UL, 0UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE ACKS ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_8(_tokenSet_8_data_,8);
-const unsigned long vcParser::_tokenSet_9_data_[] = { 64UL, 0UL, 0UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_9(_tokenSet_9_data_,8);
-const unsigned long vcParser::_tokenSet_10_data_[] = { 64UL, 4294443010UL, 407289471UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE PHI PLUS_OP MINUS_OP MUL_OP DIV_OP SHL_OP SHR_OP GT_OP GE_OP 
-// EQ_OP LT_OP LE_OP NEQ_OP BITSEL_OP CONCAT_OP OR_OP AND_OP XOR_OP NOR_OP 
-// NAND_OP XNOR_OP NOT_OP NOP_OP BRANCH_OP SELECT_OP CALL IOPORT LOAD STORE 
-// DPEINSTANCE CONSTANT WIRE ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_10(_tokenSet_10_data_,8);
-const unsigned long vcParser::_tokenSet_11_data_[] = { 2153935584UL, 4294686683UL, 410959743UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// LBRACE RBRACE DPE MIN IN OUT COLON SIMPLE_IDENTIFIER REQS ACKS EQUIVALENT 
-// SLASH PHI PLACE TRANSITION SERIESBLOCK PARALLELBLOCK BRANCHBLOCK AT 
-// MERGE FROM BRANCH FORKBLOCK JOIN FORK PLUS_OP MINUS_OP MUL_OP DIV_OP 
-// SHL_OP SHR_OP GT_OP GE_OP EQ_OP LT_OP LE_OP NEQ_OP BITSEL_OP CONCAT_OP 
-// OR_OP AND_OP XOR_OP NOR_OP NAND_OP XNOR_OP RPAREN NOT_OP NOP_OP BRANCH_OP 
-// SELECT_OP CALL IOPORT LOAD STORE ADDRESS DATA IMPLIES DPEINSTANCE CONSTANT 
-// WIRE ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_11(_tokenSet_11_data_,8);
-const unsigned long vcParser::_tokenSet_12_data_[] = { 6430784UL, 0UL, 0UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE OUT SIMPLE_IDENTIFIER REQS ACKS ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_12(_tokenSet_12_data_,8);
-const unsigned long vcParser::_tokenSet_13_data_[] = { 134217792UL, 0UL, 0UL, 0UL };
+const unsigned long vcParser::_tokenSet_4_data_[] = { 4352UL, 0UL, 0UL, 0UL };
 // RBRACE OBJECT 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_13(_tokenSet_13_data_,4);
-const unsigned long vcParser::_tokenSet_14_data_[] = { 411443264UL, 4294443014UL, 474398335UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE OUT SIMPLE_IDENTIFIER COMMA MEMORYSPACE OBJECT ASSIGNEQUAL PHI 
-// CONTROLPATH PLUS_OP MINUS_OP MUL_OP DIV_OP SHL_OP SHR_OP GT_OP GE_OP 
-// EQ_OP LT_OP LE_OP NEQ_OP BITSEL_OP CONCAT_OP OR_OP AND_OP XOR_OP NOR_OP 
-// NAND_OP XNOR_OP NOT_OP NOP_OP BRANCH_OP SELECT_OP CALL IOPORT LOAD STORE 
-// DPEINSTANCE RBRACKET CONSTANT WIRE ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_14(_tokenSet_14_data_,8);
-const unsigned long vcParser::_tokenSet_15_data_[] = { 143007808UL, 4294443014UL, 407289727UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE OUT SIMPLE_IDENTIFIER COMMA MEMORYSPACE OBJECT PHI CONTROLPATH 
-// PLUS_OP MINUS_OP MUL_OP DIV_OP SHL_OP SHR_OP GT_OP GE_OP EQ_OP LT_OP 
-// LE_OP NEQ_OP BITSEL_OP CONCAT_OP OR_OP AND_OP XOR_OP NOR_OP NAND_OP 
-// XNOR_OP RPAREN NOT_OP NOP_OP BRANCH_OP SELECT_OP CALL IOPORT LOAD STORE 
-// DPEINSTANCE CONSTANT WIRE ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_15(_tokenSet_15_data_,8);
-const unsigned long vcParser::_tokenSet_16_data_[] = { 8396800UL, 4UL, 0UL, 0UL };
-// OUT MEMORYSPACE CONTROLPATH 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_16(_tokenSet_16_data_,4);
-const unsigned long vcParser::_tokenSet_17_data_[] = { 8388608UL, 4UL, 0UL, 0UL };
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_4(_tokenSet_4_data_,4);
+const unsigned long vcParser::_tokenSet_5_data_[] = { 9523520UL, 1811939320UL, 524533UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// MEMORYSPACE RBRACE OBJECT ASSIGN_OP SIMPLE_IDENTIFIER DIV_OP CONTROLPATH 
+// PLUS_OP MINUS_OP MUL_OP SHL_OP SHR_OP GT_OP GE_OP EQ_OP LT_OP LE_OP 
+// NEQ_OP BITSEL_OP CONCAT_OP OR_OP AND_OP XOR_OP NOR_OP NAND_OP XNOR_OP 
+// NOT_OP BRANCH_OP SELECT_OP CALL IOPORT OUT LOAD STORE PHI RBRACKET CONSTANT 
+// WIRE COMMA ATTRIBUTE 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_5(_tokenSet_5_data_,8);
+const unsigned long vcParser::_tokenSet_6_data_[] = { 10047808UL, 1811939320UL, 524517UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// MEMORYSPACE RBRACE OBJECT ASSIGN_OP SIMPLE_IDENTIFIER RPAREN DIV_OP 
+// CONTROLPATH PLUS_OP MINUS_OP MUL_OP SHL_OP SHR_OP GT_OP GE_OP EQ_OP 
+// LT_OP LE_OP NEQ_OP BITSEL_OP CONCAT_OP OR_OP AND_OP XOR_OP NOR_OP NAND_OP 
+// XNOR_OP NOT_OP BRANCH_OP SELECT_OP CALL IOPORT OUT LOAD STORE PHI CONSTANT 
+// WIRE COMMA ATTRIBUTE 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_6(_tokenSet_6_data_,8);
+const unsigned long vcParser::_tokenSet_7_data_[] = { 8388672UL, 536870912UL, 0UL, 0UL };
+// MEMORYSPACE CONTROLPATH OUT 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_7(_tokenSet_7_data_,4);
+const unsigned long vcParser::_tokenSet_8_data_[] = { 8388672UL, 0UL, 0UL, 0UL };
 // MEMORYSPACE CONTROLPATH 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_17(_tokenSet_17_data_,4);
-const unsigned long vcParser::_tokenSet_18_data_[] = { 0UL, 33216UL, 0UL, 0UL };
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_8(_tokenSet_8_data_,4);
+const unsigned long vcParser::_tokenSet_9_data_[] = { 2617245696UL, 0UL, 0UL, 0UL };
 // SERIESBLOCK PARALLELBLOCK BRANCHBLOCK FORKBLOCK 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_18(_tokenSet_18_data_,4);
-const unsigned long vcParser::_tokenSet_19_data_[] = { 1073741888UL, 262146UL, 0UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE LINK PHI DATAPATH ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_19(_tokenSet_19_data_,8);
-const unsigned long vcParser::_tokenSet_20_data_[] = { 1073741888UL, 2UL, 0UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE LINK PHI ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_20(_tokenSet_20_data_,8);
-const unsigned long vcParser::_tokenSet_21_data_[] = { 64UL, 2UL, 0UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE PHI ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_21(_tokenSet_21_data_,8);
-const unsigned long vcParser::_tokenSet_22_data_[] = { 2151809088UL, 2UL, 0UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE SIMPLE_IDENTIFIER ACKS EQUIVALENT PHI ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_22(_tokenSet_22_data_,8);
-const unsigned long vcParser::_tokenSet_23_data_[] = { 64UL, 37848UL, 0UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE PLACE TRANSITION SERIESBLOCK PARALLELBLOCK BRANCHBLOCK AT FROM 
-// FORKBLOCK ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_23(_tokenSet_23_data_,8);
-const unsigned long vcParser::_tokenSet_24_data_[] = { 64UL, 33240UL, 0UL, 0UL };
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_9(_tokenSet_9_data_,4);
+const unsigned long vcParser::_tokenSet_10_data_[] = { 65792UL, 4UL, 524288UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// RBRACE SIMPLE_IDENTIFIER DATAPATH ATTRIBUTE 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_10(_tokenSet_10_data_,8);
+const unsigned long vcParser::_tokenSet_11_data_[] = { 65792UL, 0UL, 524288UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// RBRACE SIMPLE_IDENTIFIER ATTRIBUTE 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_11(_tokenSet_11_data_,8);
+const unsigned long vcParser::_tokenSet_12_data_[] = { 1065216UL, 1275068408UL, 524389UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// RBRACE ASSIGN_OP DIV_OP PLUS_OP MINUS_OP MUL_OP SHL_OP SHR_OP GT_OP 
+// GE_OP EQ_OP LT_OP LE_OP NEQ_OP BITSEL_OP CONCAT_OP OR_OP AND_OP XOR_OP 
+// NOR_OP NAND_OP XNOR_OP NOT_OP BRANCH_OP SELECT_OP CALL IOPORT LOAD STORE 
+// PHI CONSTANT WIRE ATTRIBUTE 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_12(_tokenSet_12_data_,8);
+const unsigned long vcParser::_tokenSet_13_data_[] = { 6881280UL, 0UL, 0UL, 0UL };
+// SIMPLE_IDENTIFIER RPAREN ENTRY EXIT 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_13(_tokenSet_13_data_,4);
+const unsigned long vcParser::_tokenSet_14_data_[] = { 1618804864UL, 3UL, 0UL, 0UL };
+// LBRACE SIMPLE_IDENTIFIER LPAREN RPAREN DIV_OP ENTRY EXIT MERGE BRANCH 
+// JOIN FORK 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_14(_tokenSet_14_data_,4);
+const unsigned long vcParser::_tokenSet_15_data_[] = { 2673934592UL, 0UL, 524288UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// RBRACE SIMPLE_IDENTIFIER ENTRY EXIT PLACE TRANSITION SERIESBLOCK PARALLELBLOCK 
+// BRANCHBLOCK FORKBLOCK ATTRIBUTE 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_15(_tokenSet_15_data_,8);
+const unsigned long vcParser::_tokenSet_16_data_[] = { 2667577600UL, 0UL, 0UL, 0UL };
 // RBRACE PLACE TRANSITION SERIESBLOCK PARALLELBLOCK BRANCHBLOCK FORKBLOCK 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_24(_tokenSet_24_data_,4);
-const unsigned long vcParser::_tokenSet_25_data_[] = { 64UL, 37848UL, 0UL, 0UL };
-// RBRACE PLACE TRANSITION SERIESBLOCK PARALLELBLOCK BRANCHBLOCK AT FROM 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_16(_tokenSet_16_data_,4);
+const unsigned long vcParser::_tokenSet_17_data_[] = { 2667643136UL, 0UL, 0UL, 0UL };
+// RBRACE SIMPLE_IDENTIFIER PLACE TRANSITION SERIESBLOCK PARALLELBLOCK 
+// BRANCHBLOCK FORKBLOCK 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_17(_tokenSet_17_data_,4);
+const unsigned long vcParser::_tokenSet_18_data_[] = { 2673934592UL, 0UL, 0UL, 0UL };
+// RBRACE SIMPLE_IDENTIFIER ENTRY EXIT PLACE TRANSITION SERIESBLOCK PARALLELBLOCK 
+// BRANCHBLOCK FORKBLOCK 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_18(_tokenSet_18_data_,4);
+const unsigned long vcParser::_tokenSet_19_data_[] = { 2634088704UL, 0UL, 0UL, 0UL };
+// RBRACE SIMPLE_IDENTIFIER PLACE SERIESBLOCK PARALLELBLOCK BRANCHBLOCK 
 // FORKBLOCK 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_25(_tokenSet_25_data_,4);
-const unsigned long vcParser::_tokenSet_26_data_[] = { 64UL, 37832UL, 0UL, 0UL };
-// RBRACE PLACE SERIESBLOCK PARALLELBLOCK BRANCHBLOCK AT FROM FORKBLOCK 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_26(_tokenSet_26_data_,4);
-const unsigned long vcParser::_tokenSet_27_data_[] = { 64UL, 37840UL, 0UL, 0UL };
-// RBRACE TRANSITION SERIESBLOCK PARALLELBLOCK BRANCHBLOCK AT FROM FORKBLOCK 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_27(_tokenSet_27_data_,4);
-const unsigned long vcParser::_tokenSet_28_data_[] = { 8527872UL, 4UL, 0UL, 0UL };
-// OUT SIMPLE_IDENTIFIER MEMORYSPACE CONTROLPATH 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_28(_tokenSet_28_data_,4);
-const unsigned long vcParser::_tokenSet_29_data_[] = { 8527936UL, 4294443014UL, 407289471UL, 64UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE OUT SIMPLE_IDENTIFIER MEMORYSPACE PHI CONTROLPATH PLUS_OP MINUS_OP 
-// MUL_OP DIV_OP SHL_OP SHR_OP GT_OP GE_OP EQ_OP LT_OP LE_OP NEQ_OP BITSEL_OP 
-// CONCAT_OP OR_OP AND_OP XOR_OP NOR_OP NAND_OP XNOR_OP NOT_OP NOP_OP BRANCH_OP 
-// SELECT_OP CALL IOPORT LOAD STORE DPEINSTANCE CONSTANT WIRE ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_29(_tokenSet_29_data_,8);
-const unsigned long vcParser::_tokenSet_30_data_[] = { 143007808UL, 4294443014UL, 407289727UL, 66UL, 0UL, 0UL, 0UL, 0UL };
-// RBRACE OUT SIMPLE_IDENTIFIER COMMA MEMORYSPACE OBJECT PHI CONTROLPATH 
-// PLUS_OP MINUS_OP MUL_OP DIV_OP SHL_OP SHR_OP GT_OP GE_OP EQ_OP LT_OP 
-// LE_OP NEQ_OP BITSEL_OP CONCAT_OP OR_OP AND_OP XOR_OP NOR_OP NAND_OP 
-// XNOR_OP RPAREN NOT_OP NOP_OP BRANCH_OP SELECT_OP CALL IOPORT LOAD STORE 
-// DPEINSTANCE CONSTANT WIRE "M" ATTRIBUTE 
-const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_30(_tokenSet_30_data_,8);
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_19(_tokenSet_19_data_,4);
+const unsigned long vcParser::_tokenSet_20_data_[] = { 2657157376UL, 0UL, 0UL, 0UL };
+// RBRACE SIMPLE_IDENTIFIER ENTRY EXIT TRANSITION SERIESBLOCK PARALLELBLOCK 
+// BRANCHBLOCK FORKBLOCK 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_20(_tokenSet_20_data_,4);
+const unsigned long vcParser::_tokenSet_21_data_[] = { 8454208UL, 536870912UL, 0UL, 0UL };
+// MEMORYSPACE SIMPLE_IDENTIFIER CONTROLPATH OUT 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_21(_tokenSet_21_data_,4);
+const unsigned long vcParser::_tokenSet_22_data_[] = { 262144UL, 0UL, 3840UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// LPAREN BINARYSTRING HEXSTRING MINUS "C" 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_22(_tokenSet_22_data_,8);
+const unsigned long vcParser::_tokenSet_23_data_[] = { 9519424UL, 1811939320UL, 524389UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// MEMORYSPACE RBRACE ASSIGN_OP SIMPLE_IDENTIFIER DIV_OP CONTROLPATH PLUS_OP 
+// MINUS_OP MUL_OP SHL_OP SHR_OP GT_OP GE_OP EQ_OP LT_OP LE_OP NEQ_OP BITSEL_OP 
+// CONCAT_OP OR_OP AND_OP XOR_OP NOR_OP NAND_OP XNOR_OP NOT_OP BRANCH_OP 
+// SELECT_OP CALL IOPORT OUT LOAD STORE PHI CONSTANT WIRE ATTRIBUTE 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_23(_tokenSet_23_data_,8);
+const unsigned long vcParser::_tokenSet_24_data_[] = { 8462784UL, 872415232UL, 524360UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// MEMORYSPACE LBRACE RBRACE COLON SIMPLE_IDENTIFIER CONTROLPATH INLINE 
+// IN OUT LBRACKET WIRE ATTRIBUTE 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_24(_tokenSet_24_data_,8);
+const unsigned long vcParser::_tokenSet_25_data_[] = { 10047808UL, 1811939320UL, 528613UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// MEMORYSPACE RBRACE OBJECT ASSIGN_OP SIMPLE_IDENTIFIER RPAREN DIV_OP 
+// CONTROLPATH PLUS_OP MINUS_OP MUL_OP SHL_OP SHR_OP GT_OP GE_OP EQ_OP 
+// LT_OP LE_OP NEQ_OP BITSEL_OP CONCAT_OP OR_OP AND_OP XOR_OP NOR_OP NAND_OP 
+// XNOR_OP NOT_OP BRANCH_OP SELECT_OP CALL IOPORT OUT LOAD STORE PHI CONSTANT 
+// WIRE COMMA "M" ATTRIBUTE 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_25(_tokenSet_25_data_,8);
 
 

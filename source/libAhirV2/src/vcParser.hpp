@@ -57,36 +57,10 @@ public:
 	public: vcMemorySpace*  vc_MemorySpace(
 		vcSystem* sys, vcModule* m
 	);
-	public: vcDatapathElementLibrary*  vc_Library(
+	public: void vc_Pipe(
 		vcSystem* sys
 	);
 	public: string  vc_Label();
-	public: vcDatapathElementTemplate*  vc_DatapathElementTemplate(
-		vcSystem* sys,vcDatapathElementLibrary* lib
-	);
-	public: void vc_DpeParamSpec(
-		vcDatapathElementTemplate* p
-	);
-	public: void vc_InDpePorts(
-		vcDatapathElementTemplate* t
-	);
-	public: void vc_OutDpePorts(
-		vcDatapathElementTemplate* t
-	);
-	public: void vc_DpeReqs(
-		vcDatapathElementTemplate* t
-	);
-	public: void vc_DpeAcks(
-		vcDatapathElementTemplate* t
-	);
-	public: void vc_AttributeSpec(
-		vcRoot* m
-	);
-	public: string  vc_Identifier();
-	public: void vc_DpePorts(
-		vcDatapathElementTemplate* t, string mode
-	);
-	public: vcScalarTypeTemplate*  vc_ScalarTypeTemplate();
 	public: void vc_MemorySpaceParams(
 		vcMemorySpace* ms
 	);
@@ -114,12 +88,13 @@ public:
 	public: void vc_Link(
 		vcModule* m
 	);
-	public: void vc_Phi_Link(
-		vcModule* m
+	public: void vc_AttributeSpec(
+		vcRoot* m
 	);
 	public: void vc_Hierarchical_CP_Ref(
 		vector<string>& ref_vec
 	);
+	public: string  vc_Identifier();
 	public: void vc_CPRegion(
 		vcCPBlock* cp
 	);
@@ -156,19 +131,16 @@ public:
 	public: void vc_CPJoin(
 		vcCPForkBlock* fb
 	);
-	public: void vc_WireDeclaration(
+	public: void vc_Wire_Declaration(
 		vcSystem* sys,vcDataPath* dp
 	);
-	public: void vc_DatapathElementInstantiation(
-		vcSystem* sys, vcModule* m, vcDataPath* dp
-	);
-	public: void vc_OperatorInstantiation(
+	public: void vc_Operator_Instantiation(
 		vcSystem* sys, vcDataPath* dp
 	);
-	public: void vc_PhiInstantiation(
+	public: void vc_Phi_Instantiation(
 		vcDataPath* dp
 	);
-	public: void vc_CallInstantiation(
+	public: void vc_Call_Instantiation(
 		vcSystem* sys, vcDataPath* dp
 	);
 	public: void vc_IOPort_Instantiation(
@@ -177,17 +149,23 @@ public:
 	public: void vc_LoadStore_Instantiation(
 		vcSystem* sys, vcDataPath* dp
 	);
-	public: void vc_BinaryOperatorInstantiation(
+	public: void vc_BinaryOperator_Instantiation(
 		vcDataPath* dp
 	);
-	public: void vc_UnaryOperatorInstantiation(
+	public: void vc_UnaryOperator_Instantiation(
 		vcDataPath* dp
 	);
-	public: void vc_SelectInstantiation(
+	public: void vc_Select_Instantiation(
 		vcDataPath* dp
 	);
-	public: void vc_BranchInstantiation(
+	public: void vc_Branch_Instantiation(
 		vcDataPath* dp
+	);
+	public: void vc_Load_Instantiation(
+		vcSystem* sys, vcDataPath* dp
+	);
+	public: void vc_Store_Instantiation(
+		vcSystem* sys, vcDataPath* dp
 	);
 	public: void vc_Interface_Object_Declaration(
 		vcSystem* sys, vcModule* parent, string mode
@@ -289,16 +267,6 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_24;
 	static const unsigned long _tokenSet_25_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_25;
-	static const unsigned long _tokenSet_26_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_26;
-	static const unsigned long _tokenSet_27_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_27;
-	static const unsigned long _tokenSet_28_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_28;
-	static const unsigned long _tokenSet_29_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_29;
-	static const unsigned long _tokenSet_30_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_30;
 };
 
 #endif /*INC_vcParser_hpp_*/

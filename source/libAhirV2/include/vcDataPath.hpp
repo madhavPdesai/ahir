@@ -17,26 +17,29 @@ class vcOutport;
 class vcOperator;
 class vcSplitOperator;
 
+class vcDatapathElement;
 class vcWire: public vcRoot
 {
 protected:
   vcType* _type;
-  vcRoot* _driver;
-  set<vcRoot*,vcRoot_Compare> _receivers;
+  vcDatapathElement* _driver;
+  set<vcDatapathElement*> _receivers;
 
 public:
 
   vcWire(string id, vcType* t);
   virtual void Print(ostream& ofile);
 
-  virtual void Connect_Driver(vcRoot* d) {this->_driver = d;}
-  virtual void Connect_Receiver(vcRoot* r) {this->_receivers.insert(r);}
+  virtual void Connect_Driver(vcDatapathElement* d) {this->_driver = d;}
+  virtual void Connect_Receiver(vcDatapathElement* r) {this->_receivers.insert(r);}
 
   vcType* Get_Type() {return(this->_type);}
-  vcRoot* Get_Driver() {return(this->_driver);}
-  const set<vcRoot*,vcRoot_Compare>&  Get_Receivers() {return this->_receivers;}
+  vcDatapathElement* Get_Driver() {return(this->_driver);}
+  const set<vcDatapathElement*>&  Get_Receivers() {return this->_receivers;}
 
   virtual string Kind() {return("vcWire");}
+  void Print_VHDL_Std_Logic_Declaration(ostream& ofile);
+  int Get_Size();
 };
 
 class vcConstantWire: public vcWire
@@ -45,10 +48,8 @@ class vcConstantWire: public vcWire
 public:
   vcConstantWire(string id, vcValue* v);
   virtual void Print(ostream& ofile);
-
-  virtual void Connect_Driver(vcRoot* d) {assert(0);}
-  virtual void Connect_Receiver(vcRoot* r) {this->_receivers.insert(r);}
-
+  vcValue* Get_Value() {return(this->_value);}
+  virtual void Connect_Driver(vcDatapathElement* d) {assert(0);}
   virtual string Kind() {return("vcConstantWire");}
 };
 
@@ -57,7 +58,6 @@ class vcInputWire: public vcWire
 public:
   vcInputWire(string id, vcType* t);
   virtual void Connect_Driver(vcRoot* d) {assert(0);}
-  virtual void Connect_Receiver(vcRoot* r) {this->_receivers.insert(r);}
 
   virtual string Kind() {return("vcInputWire");}
 };
@@ -67,117 +67,86 @@ class vcOutputWire: public vcWire
 {
 public:
   vcOutputWire(string id, vcType* t);
-  virtual void Connect_Driver(vcRoot* d) {this->_driver = d;}
   virtual void Connect_Receiver(vcRoot* r) {assert(0);}
 
   virtual string Kind() {return("vcOutputWire");}
 };
 
 
-class vcDatapathElementLibrary; // forward decl.
-class vcDatapathElementTemplate: public vcRoot
-{
-protected:
-  vcDatapathElementLibrary* _library;
-  map<string, pair<int,int> > _parameter_limit_map;
-  
-  set<string> _reqs;
-  set<string> _acks;
-  
-  map<string, vcScalarTypeTemplate*> _input_port_map;
-  map<string, vcScalarTypeTemplate*> _output_port_map;
-
-public:
-
-  vcDatapathElementTemplate(vcDatapathElementLibrary* lib, string id);
-  bool Is_Legal_Parameter_Value(string pname, int val);
-  virtual void Print(ostream& ofile);
-  vcDatapathElementLibrary* Get_Library() {return(this->_library);}
-
-  void Add_Parameter(string param_val, int min_val, int max_val) {this->_parameter_limit_map[param_val] = pair<int,int>(min_val,max_val);}
-  void Add_Req(string req_name) {this->_reqs.insert(req_name);}
-  void Add_Ack(string ack_name) {this->_acks.insert(ack_name);}
-  
-  void Add_Input_Port(string pname, vcScalarTypeTemplate* t) {this->_input_port_map[pname] = t;}
-  void Add_Output_Port(string pname, vcScalarTypeTemplate* t) {this->_output_port_map[pname] = t;}
-
-  bool Is_Req(string req_name) {return(this->_reqs.find(req_name) != this->_reqs.end());}
-  bool Is_Ack(string ack_name) {return(this->_acks.find(ack_name) != this->_acks.end());}
-  
-  bool Is_Input_Port(string pname) {return(this->_input_port_map.find(pname) != this->_input_port_map.end());}
-  bool Is_Output_Port(string pname){return(this->_output_port_map.find(pname) != this->_output_port_map.end());}
-
-  bool Is_Parameter(string pname) {return(this->_parameter_limit_map.find(pname) != this->_parameter_limit_map.end());}
-
-  virtual string Kind() {return("vcDatapathElementTemplate");}
-};
-
-class vcDatapathElementLibrary: public vcRoot
-{
-  map<string,vcDatapathElementTemplate*> _templates;
- public:
-  vcDatapathElementLibrary(string id);
-  void Add_Template(vcDatapathElementTemplate* t);
-  vcDatapathElementTemplate* Get_Template(string template_name);
-  virtual void Print(ostream& ofile);
-};
-
 class vcTransition;
+class vcCompatibilityLabel;
+class vcControlPath;
+class vcDataPath;
 class vcDatapathElement: public vcRoot
 {
-  vcDatapathElementTemplate* _template;
-
-  map<string, int> _parameter_value_map;
-
-  map<string, vcWire*> _port_map;
-  map<vcWire*, string, vcRoot_Compare> _reverse_port_map;
-
-  map<string, vcTransition*> _control_link_map;
+protected:
+  vector<vcTransition*> _reqs;
+  vector<vcTransition*> _acks;
 
  public:
+  vcDatapathElement(string id):vcRoot(id) {}
 
-  vcDatapathElement(string id, vcDatapathElementTemplate* t);
-  virtual void Print(ostream& ofile);
+  virtual void Add_Reqs(vector<vcTransition*>& reqs) {assert(0);}
+  virtual void Add_Acks(vector<vcTransition*>& acks) {assert(0);}
 
-  bool Is_Parameter(string id);
+  int Get_Number_Of_Reqs() {return(this->_reqs.size());}
+  int Get_Number_Of_Acks() {return(this->_acks.size());}
 
-  void Set_Parameter(string id, int val);
-  int  Get_Parameter(string id);
+  vcTransition* Get_Req(int idx) {if(idx >= 0 && idx<_reqs.size()) return(this->_reqs[idx]); else return(NULL);}
+  vcTransition* Get_Ack(int idx) {if(idx >= 0 && idx<_acks.size()) return(this->_acks[idx]); else return(NULL);}
 
-  vcWire* Get_Connected_Wire(string port_name);
-  string Get_Connected_Port(vcWire* w);
-
-  void Connect_Wire(string port_name, vcWire* w) {_port_map[port_name] = w; _reverse_port_map[w] = port_name;}
-  void Add_Link(vcTransition* t, string req_ack_id) {_control_link_map[req_ack_id] = t;}
-  vcDatapathElementTemplate* Get_Template() {return(this->_template);}
+  virtual bool Is_Shareable_With(vcDatapathElement* other) {return(false);}
   virtual string Kind() {return("vcDatapathElement");}
+  virtual string Get_Operator_Type() {return(this->Kind());}
+
+  virtual void Append_Inwires(vector<vcWire*>& inwires) {assert(0);}
+  virtual void Append_Outwires(vector<vcWire*>& owires) {assert(0);}
+
+  friend class vcDataPath;
+
 };
 
 
 class vcModule;
+class vcControlPath;
 class vcMemorySpace;
-
-#define _ADD(_map_id,_id,_ptr) _map_id[_id]=_ptr
-#define __FIND(_map_id,_id) (_map_id.find(_id) != _map_id.end() ? _map_id[_id] : NULL) 
-
 class vcDataPath: public vcRoot
 {
-
   vcModule* _parent;
 
   // lots of maps.
-  map<string, vcDatapathElement*> _dpe_map;
+  map<string, vcDatapathElement*> _dpe_map; // all dpes are recorded here
+
+  // separated maps for convenience
   map<string, vcPhi*> _phi_map;
   map<string, vcWire*> _wire_map;
   map<string, vcSelect*> _select_map;
   map<string, vcBranch*> _branch_map;
-  map<string, vcOperator*> _operator_map;
+
+  // these operators can be shared..
   map<string, vcSplitOperator*> _split_operator_map;
+  vector<set<vcDatapathElement*> > _compatible_split_operator_groups;
+
   map<string, vcLoad*> _load_map;
+  vector<set<vcDatapathElement*> > _compatible_load_groups;
+
   map<string, vcStore*> _store_map;
+  vector<set<vcDatapathElement*> > _compatible_store_groups;
+
   map<string, vcCall*> _call_map;
+  vector<set<vcDatapathElement*> > _compatible_call_groups;
+
   map<string, vcOutport*> _outport_map;
+  vector<set<vcDatapathElement*> > _compatible_outport_groups;
+
   map<string, vcInport*> _inport_map;
+  vector<set<vcDatapathElement*> > _compatible_inport_groups;
+
+  map<vcDatapathElement*, pair<vcCompatibilityLabel*, vcCompatibilityLabel*> > _dpe_label_interval_map;
+
+  // pipe-name to vector of groups which use pipe name.
+  map<string, vector<int> > _inport_group_map;
+  map<string, vector<int> > _outport_group_map;
 
  public:
   vcDataPath(vcModule* m, string id);
@@ -188,7 +157,6 @@ class vcDataPath: public vcRoot
   void Add_Store(vcStore* st);
   vcStore* Find_Store(string id);
 
-
   void Add_Call(vcCall* c);
   vcCall* Find_Call(string id);
 
@@ -197,9 +165,6 @@ class vcDataPath: public vcRoot
 
   void Add_Outport(vcOutport* p);
   vcOutport* Find_Outport(string id);
-
-  void Add_Operator(vcOperator* p);
-  vcOperator* Find_Operator(string id);
 
   void Add_Split_Operator(vcSplitOperator* p);
   vcSplitOperator* Find_Split_Operator(string id);
@@ -210,11 +175,7 @@ class vcDataPath: public vcRoot
   void Add_Branch(vcBranch* p);
   vcBranch* Find_Branch(string id);
 
-  void Add_DPE(vcDatapathElement* t);
   vcDatapathElement* Find_DPE(string dpe_name);
-
-  void Set_DPE_Parameter(string dpe_name, string param_name, int param_value);
-  int Get_DPE_Parameter(string dpe_name, string param_name);
 
   void Add_Phi(vcPhi* p);
   vcPhi* Find_Phi(string pname);
@@ -232,5 +193,33 @@ class vcDataPath: public vcRoot
   virtual void Print(ostream& ofile);
 
   virtual string Kind() {return("vcDatapath");}
+
+  pair<vcCompatibilityLabel*,vcCompatibilityLabel*> Get_Label_Interval(vcControlPath* cp, vcDatapathElement* dpe);
+
+  void Compute_Maximal_Groups(vcControlPath* cp);
+  void Update_Maximal_Groups(vcControlPath* cp,
+			     vcDatapathElement* dpe, 
+			     vector<set<vcDatapathElement*> >& dpe_group);
+  void Print_Compatible_Operator_Groups(ostream& ofile);
+  void Print_Compatible_Operator_Groups(ostream& ofile, vector<set<vcDatapathElement*> >& dpe_groups);
+
+  void Print_VHDL_Memory_Interface_Ports(ostream& ofile);
+  void Print_VHDL_IO_Interface_Ports(ostream& ofile);
+  void Print_VHDL_Call_Interface_Ports(ostream& ofile);
+
+  void Print_VHDL(ostream& ofile);
+
+  void Print_VHDL_Phi_Instances(ostream& ofile);
+  void Print_VHDL_Select_Instances(ostream& ofile);
+  void Print_VHDL_Branch_Instances(ostream& ofile);
+  void Print_VHDL_Split_Operator_Instances(ostream& ofile);
+  void Print_VHDL_Load_Instances(ostream& ofile);
+  void Print_VHDL_Store_Instances(ostream& ofile);
+  void Print_VHDL_Inport_Instances(ostream& ofile);
+  void Print_VHDL_Outport_Instances(ostream& ofile);
+  void Print_VHDL_Call_Instances(ostream& ofile);
+
+  void Print_VHDL_Concatenation(string target, vector<vcWire*> wires, ostream& ofile);
+  void Print_VHDL_Disconcatenation(string source, int total_width, vector<vcWire*> wires, ostream& ofile);
 };
 #endif // vcDataPath

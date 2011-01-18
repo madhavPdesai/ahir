@@ -6,7 +6,7 @@
 using namespace std;
 using namespace antlr;
 
-void vcParse(string filename, vcSystem* sys)
+void vcSystem::Parse(string filename)
 {
   ifstream infile;
   
@@ -25,7 +25,7 @@ void vcParse(string filename, vcSystem* sys)
   
   try
     {
-      parser->vc_System(sys);
+      parser->vc_System(this);
     }
   catch(ANTLR_USE_NAMESPACE(antlr)RecognitionException& re)
     {

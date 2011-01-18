@@ -3,6 +3,8 @@
 #include <vcControlPath.hpp>
 #include <vcSystem.hpp>
 
+int vcControlPath::_free_index = 0;
+
 vcCompatibilityLabel::vcCompatibilityLabel(vcControlPath* cp, string id): vcCPElement(cp,id)
 {
   this->_labeled_in_arc.first = NULL;
@@ -168,6 +170,7 @@ bool vcCompatibilityLabel::Is_Compatible(vcCompatibilityLabel* other)
     return false;
 }
 
+
 bool operator==(vector<vcCompatibilityLabel*>& u, vector<vcCompatibilityLabel*>& v)
 {
   bool ret_flag = true;
@@ -176,6 +179,27 @@ bool operator==(vector<vcCompatibilityLabel*>& u, vector<vcCompatibilityLabel*>&
       for(int jdx = 0; idx < v.size(); jdx++)
 	{
 	  if(!(u[idx]->Is_Compatible(v[idx])))
+	    {
+	      ret_flag = false;
+	      break;
+	    }
+	}
+    }
+  return(ret_flag);
+}
+
+bool operator==(set<vcCompatibilityLabel*>& u, set<vcCompatibilityLabel*>& v)
+{
+  bool ret_flag = true;
+  for(set<vcCompatibilityLabel*>::iterator uiter = u.begin();
+      uiter != u.end();
+      uiter++)
+    {
+      for(set<vcCompatibilityLabel*>::iterator viter = v.begin();
+	  viter != v.end();
+	  viter++)
+	{
+	  if(!(*uiter)->Is_Compatible((*viter)))
 	    {
 	      ret_flag = false;
 	      break;
@@ -211,6 +235,9 @@ void vcCompatibilityLabel::Print(ostream& ofile)
 
 vcCPElement::vcCPElement(vcCPElement* parent, string id):vcRoot(id)
 {
+  this->_index = vcControlPath::_free_index;
+  vcControlPath::_free_index++;
+
   this->_compatibility_label = NULL;
   this->_parent = parent;
 }
@@ -243,24 +270,99 @@ void vcCPElement::Print_Successors(ostream& ofile)
     }
   ofile << endl;
 }
-vcTransition::vcTransition(vcCPElement* parent, string id, vcTransitionType t):vcCPElement(parent, id)
+vcTransition::vcTransition(vcCPElement* parent, string id):vcCPElement(parent, id)
 {
-  this->_transition_type = t;
+  _is_input = false;
+  _is_output = false;
 }
+
+
 
 void vcTransition::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__TRANSITION] << " " << this->Get_Label() << " ";
-  switch(_transition_type)
+  ofile << vcLexerKeywords[__TRANSITION] << " " << this->Get_Label() << endl;
+}
+
+#define MAX(x,y) (x > y ? x : y)
+
+//
+// slightly complicated but not too bad.
+// you will need to instantiate places if the transition is a join..
+//
+void vcTransition::Print_VHDL(ostream& ofile)
+{
+
+  // every transition has at least one predecessor (entry of control-path has no
+  // explicit predecessor, but does have an implicit one.
+  if(this->Get_Number_Of_Predecessors() > 1)
     {
-    case  _IN_TRANSITION: ofile << vcLexerKeywords[__IN] << endl; break;
-    case  _OUT_TRANSITION: ofile << vcLexerKeywords[__OUT] << endl; break;
-    case  _HIDDEN_TRANSITION: ofile << vcLexerKeywords[__HIDDEN] << endl; break;
-    default: break;
+
+      ofile << this->Get_VHDL_Id() << "_block : Block -- non-trivial join transition " << this->Get_Hierarchical_Id() << endl;
+
+      ofile << "signal " <<  this->Get_VHDL_Id() << "_predecessors: BooleanArray(" 
+	    << this->Get_Number_Of_Predecessors()-1 << " downto 0);" << endl;
+
+      for(int idx = 0; idx < this->Get_Number_Of_Predecessors(); idx++)
+	{
+	  ofile << "signal " <<  this->Get_VHDL_Id() << "_p" << idx << "_pred: BooleanArray(0 downto 0);" << endl;
+	  ofile << "signal " <<  this->Get_VHDL_Id() << "_p" << idx << "_succ: BooleanArray(0 downto 0);" << endl;
+	}
+      ofile << "begin " << endl;
+
+      for(int idx = 0; idx < this->Get_Number_Of_Predecessors(); idx++)
+	{
+	  vcCPElement* pred = this->Get_Predecessors()[idx];
+	  ofile << this->Get_VHDL_Id() << "_" << idx << "_place: Place port map( ";
+	  // predecessors
+	  ofile << this->Get_VHDL_Id() << "_p" << idx << "_pred, ";
+	  ofile << this->Get_VHDL_Id() << "_p" << idx << "_succ, ";
+	  ofile <<  this->Get_VHDL_Id() << "_predecessors(" << idx << "), ";
+	  ofile << "clk, reset);" << endl;
+
+	  ofile << this->Get_VHDL_Id() << "_p" << idx << "_succ(0) <=  " << this->Get_Exit_Symbol() << ";" << endl;
+	  ofile << this->Get_VHDL_Id() << "_p" << idx << "_pred(0) <=  " << pred->Get_Exit_Symbol() << ";" << endl;
+	}
+      
+      ofile << this->Get_Exit_Symbol() << " <= OrReduce(" << this->Get_VHDL_Id() << "_predecessors)";
+      if(this->Get_Is_Input())
+	ofile << " and " << this->Get_DP_To_CP_Symbol();
+      ofile << "; " << endl;
     }
+  else if(this->Get_Number_Of_Predecessors() == 1)
+    {
+      // if only one predecessor, then direct connection from predecessors(0).
+      if(!this->_is_input)
+	{
+	  vcCPElement* pred = this->Get_Predecessors()[0];
+	  ofile <<  this->Get_Exit_Symbol() << " <= " << pred->Get_Exit_Symbol() << "; -- transition " << this->Get_Hierarchical_Id() << endl;
+	}
+      else
+	{
+	  ofile <<  this->Get_Exit_Symbol() << " <= " << this->Get_DP_To_CP_Symbol() << "; -- transition " << this->Get_Hierarchical_Id() << endl;
+	}
+    }
+  else
+    {
+      ofile <<  this->Get_Exit_Symbol() << "  <= " << this->Get_Parent()->Get_Start_Symbol() << "; -- transition " << this->Get_Hierarchical_Id() << endl;
+    }
+
+  if(this->Get_Is_Output())
+    ofile << this->Get_CP_To_DP_Symbol() << " <= " << this->Get_Exit_Symbol() << "; -- link to DP" << endl;
+  
+  if(this->Get_Number_Of_Predecessors() > 1) // block was used...
+    ofile << "end Block; -- non-trivial join transition " << this->Get_Hierarchical_Id() << endl;
+
 }
 
 
+string vcTransition::Get_DP_To_CP_Symbol()
+{
+  return(To_VHDL(this->Get_Hierarchical_Id()) + "_dp_to_cp");
+}
+string vcTransition::Get_CP_To_DP_Symbol()
+{
+  return(To_VHDL(this->Get_Hierarchical_Id()) + "_cp_to_dp");
+}
 vcPlace::vcPlace(vcCPElement* parent, string id, unsigned int init_marking):vcCPElement(parent, id)
 {
   this->_initial_marking = init_marking;
@@ -271,8 +373,26 @@ void vcPlace::Print(ostream& ofile)
   ofile << vcLexerKeywords[__PLACE] << " " << this->Get_Label() << endl;
 }
 
+void vcPlace::Print_VHDL(ostream& ofile)
+{
+  // 
+  // the place is simply optimized away to a direct connection..
+  //
+  ofile << this->Get_Exit_Symbol() <<  "  <=  ";
+  for(int idx = 0; idx < this->Get_Number_Of_Predecessors(); idx++)
+    {
+      if(idx > 0)
+	ofile << " or ";
+      
+      ofile <<  this->Get_Predecessors()[idx]->Get_Exit_Symbol();
+    }
+  ofile << "; -- place " << this->Get_Hierarchical_Id() << " (optimized away) " << endl;
+}
+
 vcCPBlock::vcCPBlock(vcCPBlock* parent, string id): vcCPElement((vcCPElement*)parent, id)
 {
+  _entry = new vcTransition(this,vcLexerKeywords[__ENTRY]);
+  _exit = new vcTransition(this,vcLexerKeywords[__EXIT]);
 }
 
 void vcCPBlock::Add_CPElement(vcCPElement* cpe)
@@ -285,10 +405,55 @@ void vcCPBlock::Add_CPElement(vcCPElement* cpe)
 
 vcCPElement* vcCPBlock::Find_CPElement(string cname)
 {
-  if(this->_element_map.find(cname) == this->_element_map.end())
-    return(NULL);
-  else
-    return ((*(this->_element_map.find(cname))).second);
+  vcCPElement* ret_cpe = NULL;
+  if(cname == vcLexerKeywords[__ENTRY])
+    ret_cpe = (vcCPElement*) this->_entry;
+  else if(cname == vcLexerKeywords[__EXIT])
+    ret_cpe = (vcCPElement*) this->_exit;
+  else if(this->_element_map.find(cname) != this->_element_map.end())
+    ret_cpe = ((*(this->_element_map.find(cname))).second);
+  return(ret_cpe);
+}
+
+
+
+void vcCPBlock::Print_VHDL_Start_Symbol_Assignment(ostream& ofile)
+{
+  ofile << this->Get_Start_Symbol() << " <= " << this->Get_Predecessors()[0]->Get_Exit_Symbol() << "; -- control passed to block" << endl;
+}
+
+void vcCPBlock::Print_VHDL_Exit_Symbol_Assignment(ostream& ofile)
+{
+  ofile << this->Get_Exit_Symbol() << " <= " << this->_exit->Get_Exit_Symbol() << "; -- control passed from block " << endl;
+}
+
+void vcCPBlock::Print_VHDL(ostream& ofile)
+{
+  
+  // Hack alert!
+  string id = (this->Get_Hierarchical_Id() == "" ? "control-path" : this->Get_Hierarchical_Id());
+
+  // declare all exit flags.
+  ofile << this->Get_VHDL_Id() << ": Block -- " << id << endl;
+  ofile << "signal " << this->Get_Start_Symbol() << ": Boolean;" << endl;
+  ofile << "signal " << this->_entry->Get_Exit_Symbol() << ": Boolean;" << endl;
+  ofile << "signal " << this->_exit->Get_Exit_Symbol() << ": Boolean;" << endl;
+  for(int idx = 0; idx < this->_elements.size(); idx++)
+    {
+      ofile << "signal " << _elements[idx]->Get_Exit_Symbol() << " : Boolean;" << endl;
+    }
+  ofile << "begin " << endl;
+  this->Print_VHDL_Start_Symbol_Assignment(ofile);
+
+  this->_entry->Print_VHDL(ofile);
+  for(int idx = 0; idx < this->_elements.size(); idx++)
+    {
+      this->_elements[idx]->Print_VHDL(ofile);
+    }
+  this->_exit->Print_VHDL(ofile);
+  this->Print_VHDL_Exit_Symbol_Assignment(ofile);
+
+  ofile << "end Block; -- " << id << endl;
 }
 
 void vcCPBlock::Print_Elements(ostream& ofile)
@@ -369,28 +534,14 @@ void vcCPBlock::Update_Predecessor_Successor_Links()
 
 vcCPSeriesBlock::vcCPSeriesBlock(vcCPBlock* p, string id):vcCPBlock(p, id)
 {
-  _entry = new vcPlace(this,vcLexerKeywords[__ENTRY],0);
-  _exit = new vcPlace(this,vcLexerKeywords[__EXIT],0);
 }
 
-vcCPElement* vcCPSeriesBlock::Find_CPElement(string cname)
-{
-  vcCPElement* ret_cpe = NULL;
-  if(cname == vcLexerKeywords[__ENTRY])
-    ret_cpe = (vcCPElement*) this->_entry;
-  else if(cname == vcLexerKeywords[__EXIT])
-    ret_cpe = (vcCPElement*) this->_exit;
-  else
-    ret_cpe = this->vcCPBlock::Find_CPElement(cname);
-    
-  return(ret_cpe);
-}
 
 void vcCPSeriesBlock::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__SERIESBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
   this->Print_Elements(ofile);
-  ofile << "}// series-block " << this->Get_Id() << endl;
+  ofile << "\n// end series-block " << this->Get_Id() << endl << "}" << endl;
 }
 
 
@@ -451,28 +602,15 @@ void vcCPSeriesBlock::Update_Predecessor_Successor_Links()
 
 vcCPParallelBlock::vcCPParallelBlock(vcCPBlock* p, string id):vcCPBlock(p, id)
 {
-  _entry = new vcTransition(this,vcLexerKeywords[__ENTRY],_HIDDEN_TRANSITION);
-  _exit = new vcTransition(this,vcLexerKeywords[__EXIT], _HIDDEN_TRANSITION);
+
 }
 
-vcCPElement* vcCPParallelBlock::Find_CPElement(string cname)
-{
-  vcCPElement* ret_cpe = NULL;
-  if(cname == vcLexerKeywords[__ENTRY])
-    ret_cpe = (vcCPElement*) this->_entry;
-  else if(cname == vcLexerKeywords[__EXIT])
-    ret_cpe = (vcCPElement*) this->_exit;
-  else
-    ret_cpe = this->vcCPBlock::Find_CPElement(cname);
-    
-  return(ret_cpe);
-}
 
 void vcCPParallelBlock::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__PARALLELBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
   this->Print_Elements(ofile);
-  ofile << "}// parallel-block " << this->Get_Id() << endl;
+  ofile << "\n// end  parallel-block " << this->Get_Id() << endl << "}" << endl;
 }
 
 
@@ -581,27 +719,27 @@ void vcCPBranchBlock::Print(ostream& ofile)
       iter != _branch_map.end();
       iter++)
     {
-      ofile << vcLexerKeywords[__FROM] << " " << (*iter).first->Get_Id() << " " << 
-	vcLexerKeywords[__BRANCH] << " ";
+      ofile << (*iter).first->Get_Id() << " " << 
+	vcLexerKeywords[__BRANCH] << " (";
       for(int idx = 0; idx < (*iter).second.size(); idx++)
 	{
 	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
 	}
-      ofile << endl;
+      ofile << ")" << endl;
     }
 
   for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = _merge_map.begin();
       iter != _merge_map.end();
       iter++)
     {
-      ofile << vcLexerKeywords[__AT] << " " << (*iter).first->Get_Id() << " " << vcLexerKeywords[__MERGE] << " ";
+      ofile << (*iter).first->Get_Id() << " " << vcLexerKeywords[__MERGE] << " (";
       for(int idx = 0; idx < (*iter).second.size(); idx++)
 	{
 	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
 	}
-      ofile << endl;
+      ofile << ")" << endl;
     }
-  ofile << "}// branch-block " << this->Get_Id() << endl;
+  ofile << "\n// end branch-block " << this->Get_Id() << endl << "}" << endl;
 }
 
 
@@ -710,13 +848,13 @@ void vcCPForkBlock::Print(ostream& ofile)
       iter != _fork_map.end();
       iter++)
     {
-      ofile << vcLexerKeywords[__FROM] << " " << (*iter).first->Get_Id() << " " << 
-	vcLexerKeywords[__FORK] << " " ;
+      ofile << (*iter).first->Get_Id() << " " << 
+	vcLexerKeywords[__FORK] << " (" ;
       for(int idx = 0; idx < (*iter).second.size(); idx++)
 	{
 	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
 	}
-      ofile << endl;
+      ofile << ")" << endl;
     }
 
 
@@ -724,15 +862,15 @@ void vcCPForkBlock::Print(ostream& ofile)
       iter != _join_map.end();
       iter++)
     {
-      ofile << vcLexerKeywords[__AT] << " " << (*iter).first->Get_Id() << " " << 
-	vcLexerKeywords[__JOIN] << " " ;
+      ofile <<  (*iter).first->Get_Id() << " " << 
+	vcLexerKeywords[__JOIN] << " (" ;
       for(int idx = 0; idx < (*iter).second.size(); idx++)
 	{
 	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
 	}
-      ofile << endl;
+      ofile << ")" << endl;
     }
-  ofile << "}// fork-block " << this->Get_Id() << endl;
+  ofile << "\n// end fork-block " << this->Get_Id() << endl << "}" << endl;
 }
 
 bool vcCPForkBlock::Check_Structure()
@@ -927,7 +1065,7 @@ void vcControlPath::Print(ostream& ofile)
   ofile << vcLexerKeywords[__CONTROLPATH] << " {" << endl;
   this->Print_Elements(ofile);
   this->Print_Attributes(ofile);
-  ofile << "}// controlpath" << endl;
+  ofile << "\n// end controlpath" << endl << "}" << endl;
 }
 
 
@@ -1017,6 +1155,18 @@ bool vcControlPath::Are_Compatible(vcCompatibilityLabel* u, vcCompatibilityLabel
     return(false);
 }
 
+
+bool vcControlPath::Lesser(vcCompatibilityLabel* u, vcCompatibilityLabel* v)
+{
+  return(this->_label_descendent_map[u].find(v) != this->_label_descendent_map[u].end());
+}
+
+bool vcControlPath::Greater(vcCompatibilityLabel* v, vcCompatibilityLabel* u)
+{
+  return(this->_label_descendent_map[u].find(v) != this->_label_descendent_map[u].end());
+}
+
+
 vcCompatibilityLabel* vcControlPath::Make_Compatibility_Label(string id)
 {
   vcCompatibilityLabel* nl = new vcCompatibilityLabel(this,id);
@@ -1063,4 +1213,25 @@ void vcControlPath::Print_Compatibility_Labels(ostream& ofile)
 	}
       ofile << endl;
     }
+}
+
+bool vcCompatibilityLabel_Compare::operator() (vcCompatibilityLabel* u, vcCompatibilityLabel* v) const
+{
+  if(u->Get_Parent() != v->Get_Parent())
+    return(false);
+  
+  assert(u->Get_Parent() != NULL && (u->Get_Parent()->Kind() == "vcControlPath"));
+
+  vcControlPath* cp = (vcControlPath*) u->Get_Parent();
+  return(cp->Lesser(u,v));
+}
+
+void vcControlPath::Print_VHDL_Start_Symbol_Assignment(ostream& ofile)
+{
+  ofile << this->Get_Start_Symbol() << " <=  true when start = '1' else false; -- control passed to control-path." << endl;
+}
+
+void vcControlPath::Print_VHDL_Exit_Symbol_Assignment(ostream& ofile)
+{
+  ofile << "fin  <=  '1' when " << this->_exit->Get_Exit_Symbol() << " else '0'; -- fin symbol when control-path exits" << endl;
 }

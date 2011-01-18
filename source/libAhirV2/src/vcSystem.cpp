@@ -15,13 +15,7 @@ vcSystem::vcSystem(string id):vcRoot(id)
 }
 void vcSystem::Print(ostream& ofile)
 {
-  // libraries
-  for(map<string,vcDatapathElementLibrary*>::iterator libiter = _dpe_libraries.begin();
-      libiter != _dpe_libraries.end();
-      libiter++)
-    {
-      (*libiter).second->Print(ofile);
-    }
+  this->Print_Pipes(ofile);
 
   // memory spaces
   for(map<string,vcMemorySpace*>::iterator msiter = _memory_space_map.begin();
@@ -43,16 +37,30 @@ void vcSystem::Print(ostream& ofile)
   this->Print_Attributes(ofile);
 }
 
+
+void vcSystem::Print_Pipes(ostream& ofile)
+{
+  for(map<string,int>::iterator piter = this->_pipe_map.begin();
+      piter != this->_pipe_map.end();
+      piter++)
+    {
+      ofile << vcLexerKeywords[__PIPE] << " [" << (*piter).first << "] " << (*piter).second << endl;
+    }
+}
+
 void vcSystem::Add_Module(vcModule* module)
 {
   assert(this->_modules.find(module->Get_Id()) == this->_modules.end());
   this->_modules[module->Get_Id()] = module;
 }
-void vcSystem::Add_Library(vcDatapathElementLibrary* lib)
+
+void vcSystem::Set_As_Top_Module(string module_name)
 {
-  string m_id = lib->Get_Id();
-  assert(this->_dpe_libraries.find(m_id) == this->_dpe_libraries.end());
-  this->_dpe_libraries[m_id] = lib;
+  vcModule* m = this->Find_Module(module_name);
+  if(m == NULL)
+    vcSystem::Error("did not find module " + module_name + " in the system");
+  else
+    this->Set_As_Top_Module(m);
 }
 
 void vcSystem::Set_As_Top_Module(vcModule* module)
@@ -97,18 +105,13 @@ vcModule* vcSystem::Find_Module(string m_name)
     ret_module = (*iter).second;
   return(ret_module);
 }
-vcDatapathElementLibrary* vcSystem::Find_Library(string lib_name)
-{
-  vcDatapathElementLibrary* ret_lib = NULL;
-  map<string, vcDatapathElementLibrary*>::iterator iter = this->_dpe_libraries.find(lib_name);
-  if(iter != this->_dpe_libraries.end())
-    ret_lib = (*iter).second;
-  return(ret_lib);
-}
 
 void vcSystem::Elaborate()
 {
-  assert(0 && "todo");
+  this->Check_Control_Structure();
+  this->Compute_Compatibility_Labels();
+  this->Compute_Maximal_Groups();
+
 }
  
 
@@ -130,25 +133,6 @@ bool vcSystem::Get_Error_Flag()
 }
 
 
-vcDatapathElementTemplate* vcSystem::Get_DPE_Template(string library_id, string template_id)
-{
-  vcDatapathElementTemplate* t = NULL;
-  vcDatapathElementLibrary* lib = this->Find_Library(library_id);
-  if(lib == NULL)
-    {
-      string err_msg = "could not find library " + library_id;
-      this->Error(err_msg);
-    }
-  else
-    {
-      t = lib->Get_Template(template_id);
-      if(t == NULL)
-	{
-	  this->Error(string("could not find template ") + template_id + " in library " + library_id);
-	}
-    }
-  return(t);
-}
 
 
 void vcSystem::Check_Control_Structure()
@@ -168,7 +152,16 @@ void vcSystem::Compute_Compatibility_Labels()
     {
       (*moditer).second->Compute_Compatibility_Labels();
     }
+}
 
+void vcSystem::Compute_Maximal_Groups()
+{
+  for(map<string,vcModule*>::iterator moditer = _modules.begin();
+      moditer != _modules.end();
+      moditer++)
+    {
+      (*moditer).second->Compute_Maximal_Groups();
+    }
 }
 
 void vcSystem::Print_Control_Structure(ostream& ofile)
@@ -181,39 +174,69 @@ void vcSystem::Print_Control_Structure(ostream& ofile)
     }
 }
 
-
-void vcSystem::Print_VHDL(string top_module_name)
-{
-  vcModule* top_module = this->Find_Module(top_module_name);
-  if(top_module == NULL)
-    {
-      vcSystem::Error("could not find module " + top_module_name);
-      return;
-    }
-
-  this->_top_module = top_module;
-
-  ofstream outfile;
-  string file_name = (string("SystemWith_") + top_module_name + "_AsTop.vhd");
-  outfile.open(file_name.c_str());
-  this->Print_VHDL(outfile);
-  outfile.close();
-}
-
-
 void  vcSystem::Print_VHDL(ostream& ofile)
 {
-  ofile << "library ieee;\n\
-              use ieee.std_logic_1164.all;\n\
-              library ahir;\n\
-              use ahir.memory_subsystem_package.all;\n\
-              use ahir.types.all;\n\
-              use ahir.subprograms.all;\n\
-              use ahir.components.all;\n\
-              use ahir.basecomponents.all;\n\
-              use ahir.loadstorepack.all;\n\
-              use ahir.operatorpackage.all;\n";
+  // print modules
+  for(map<string,vcModule*>::iterator moditer = _modules.begin();
+      moditer != _modules.end();
+      moditer++)
+    {
+      (*moditer).second->Print_VHDL(ofile);
+    }
+
+  this->Print_VHDL_Inclusions(ofile);
+  this->Print_VHDL_Entity(ofile);
+  this->Print_VHDL_Architecture(ofile);
 }
 
+void vcSystem::Print_VHDL_Testbench(ostream& ofile) {assert(0);}
+void vcSystem::Print_VHDL_Component(ostream& ofile)
+{
+  ofile << "component " << this->Get_Id() << " is " << endl;
+  ofile << "port (" << endl;
+  this->_top_module->Print_VHDL_Argument_Ports(ofile);
+  ofile << ");" << endl;
+  ofile << "end component;" << endl;
+  
+}
+void vcSystem::Print_VHDL_Entity(ostream& ofile)
+{
+  ofile << "entity " << this->Get_Id() << " is " << endl;
+  ofile << "port (" << endl;
+  this->_top_module->Print_VHDL_Argument_Ports(ofile);
+  ofile << ");" << endl;
+  ofile << "end entity;" << endl;
 
+}
+
+void vcSystem::Print_VHDL_Architecture(ostream& ofile)
+{
+  ofile << "architecture Default of " << this->Get_Id() << " is " << endl;
+  ofile << "-- IN PROGRESS " << endl;
+  for(map<string,vcModule*>::iterator moditer = _modules.begin();
+      moditer != _modules.end();
+      moditer++)
+    {
+      (*moditer).second->Print_VHDL_Component(ofile);
+    }
+
+  ofile << "begin " << endl;
+  ofile << "-- IN PROGRESS " << endl;
+  ofile << "end Default;" << endl;
+  
+}
+
+void  vcSystem::Print_VHDL_Inclusions(ostream& ofile)
+{
+  ofile << "library ieee;\n\
+use ieee.std_logic_1164.all;\n			\
+library ahir;\n					\
+use ahir.memory_subsystem_package.all;\n	\
+use ahir.types.all;\n				\
+use ahir.subprograms.all;\n			\
+use ahir.components.all;\n			\
+use ahir.basecomponents.all;\n			\
+use ahir.loadstorepack.all;\n			\
+use ahir.operatorpackage.all;\n";
+}
 

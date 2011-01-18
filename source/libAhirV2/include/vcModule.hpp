@@ -11,17 +11,19 @@ class vcControlPath;
 class vcWire;
 class vcDataPath;
 class vcDatapathElement;
-
+class vcWire;
 class vcPhi;
+class vcSystem;
 class vcModule: public vcRoot
 {
+  
+  vcSystem* _parent;
+
   map<string, vcMemorySpace*> _memory_space_map;
 
   // transition-id -> (dpe-id,req-ack-id) 
-  map<vcTransition*,pair<vcDatapathElement*,string> > _link_map;
-
-  // this map is actually redundant
-  map<vcPhi*, pair< vector<vcTransition*>, vcTransition*> > _phi_link_map;
+  set<vcDatapathElement*> _linked_dpe_set;
+  set<vcTransition*> _linked_transition_set;
 
   vector<string> _ordered_input_arguments;
   vector<string> _ordered_output_arguments;
@@ -32,14 +34,26 @@ class vcModule: public vcRoot
   vcControlPath* _control_path;
   vcDataPath*    _data_path;
 
+  // calls to each module
+  // for each module, record the indices of the
+  // groups which call this module
+  map<vcModule*,vector<int> > _call_group_map;
+
+  int _num_calls;
+
   bool _inline;
  public:
-  vcModule(string module_name);
+  vcModule(vcSystem* sys, string module_name);
+  vcSystem* Get_Parent() {return(this->_parent);}
+
   virtual void Print(ostream& ofile);
 
-  void Add_Link(vector<string>& transition_ref, string dpe_name, string dpe_req_ack_name);
-  void Add_Phi_Link(vcPhi* phi, vector<vcTransition*>& inreqs, vcTransition* outack);
+  void Register_Call_Group(vcModule* m, int g_id) {_call_group_map[m].push_back(g_id); _num_calls++;}
+  int Get_Num_Calls() {return(this->_num_calls);}
 
+  int Get_In_Arg_Width();
+  int Get_Out_Arg_Width();
+  void Add_Link(vcDatapathElement* dpe, vector<vcTransition*>& reqs, vector<vcTransition*>& acks);
   void Add_Memory_Space(vcMemorySpace* ms);
   vcMemorySpace* Find_Memory_Space(string ms_name);
   vcType* Get_Argument_Type(string arg_name, string mode /* "in" or "out" */);
@@ -69,10 +83,19 @@ class vcModule: public vcRoot
 
   void Check_Control_Structure();
   void Compute_Compatibility_Labels();
+  void Compute_Maximal_Groups();
 
   void Print_Control_Structure(ostream& ofile);
+  void Print_Compatible_Operator_Groups(ostream& ofile);
 
   virtual void Print_VHDL(ostream& ofile);
+
+  void Print_VHDL_Ports(ostream& ofile);
+  void Print_VHDL_Argument_Ports(ostream& ofile);
+  void Print_VHDL_Component(ostream& ofile);
+  void Print_VHDL_Entity(ostream& ofile);
+  void Print_VHDL_Architecture(ostream& ofile);
+
 };
 
 #endif // vcModule

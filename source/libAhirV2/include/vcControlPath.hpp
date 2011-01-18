@@ -2,26 +2,20 @@
 #define _vC_CP_H_
 #include <vcIncludes.hpp>
 class vcRoot;
-
-enum vcTransitionType
-  {
-    _IN_TRANSITION,
-    _OUT_TRANSITION,
-    _HIDDEN_TRANSITION
-  };
-
-
 class vcControlPath;
 class vcCompatibilityLabel;
 class vcCPElement: public vcRoot
 {
+
 protected:
+  int _index;
   vcCPElement* _parent;
   vector<vcCPElement*> _predecessors;
   vector<vcCPElement*> _successors;
   vcCompatibilityLabel* _compatibility_label;
 
 public:
+
   vcCPElement(vcCPElement* parent, string id);
 
   void Add_Successor(vcCPElement* cpe) { this->_successors.push_back(cpe);}
@@ -59,13 +53,20 @@ public:
     return(this->_compatibility_label);
   }
 
-
   vector<vcCPElement*>& Get_Predecessors() {return(this->_predecessors);}
   vector<vcCPElement*>& Get_Successors() {return(this->_successors);}
 
   virtual void Print_Successors(ostream& ofile);
   virtual void Print_Structure(ostream& ofile) {}
 
+  string Get_VHDL_Id() {return("cp_" + IntToStr(this->Get_Index()));}
+
+  virtual string Get_Exit_Symbol() {return(this->Get_VHDL_Id() + "_symbol");}
+  virtual string Get_Start_Symbol(){return(this->Get_VHDL_Id() + "_start");}
+
+  virtual string Get_Always_True_Symbol() {return("always_true_symbol");}
+
+  virtual int Get_Index() {return(this->_index);}
 };
 
 
@@ -92,36 +93,59 @@ public:
 
   bool Is_Compatible(vcCompatibilityLabel* other);
 
+
   friend class vcControlPath;
 
   friend bool operator==(vector<vcCompatibilityLabel*>&, vector<vcCompatibilityLabel*>&);
-
+  friend bool operator==(set<vcCompatibilityLabel*>&, set<vcCompatibilityLabel*>&);
 };
 
 // compatibility operators
 bool operator== (vector<vcCompatibilityLabel*>&, vector<vcCompatibilityLabel*>&);
+bool operator==(set<vcCompatibilityLabel*>&, set<vcCompatibilityLabel*>&);
+
 
 class vcDatapathElement;
+enum vcTransitionType
+  {
+    _IN_TRANSITION,
+    _OUT_TRANSITION
+  };
 class vcTransition: public vcCPElement
 {
-  vcTransitionType _transition_type;
-  pair<vcDatapathElement*, string> _dp_link;
+  vector<pair<vcDatapathElement*,vcTransitionType> > _dp_link;
+  bool _is_input;
+  bool _is_output;
 
 public:
-  vcTransition(vcCPElement* parent, string id, vcTransitionType t);
-  void Add_DP_Link(vcDatapathElement* dpe, string req_ack_name)
+  vcTransition(vcCPElement* parent, string id);
+  void Add_DP_Link(vcDatapathElement* dpe,vcTransitionType ltype)
   {
-    this->_dp_link.first = dpe;
-    this->_dp_link.second = req_ack_name;
+    if(ltype == _IN_TRANSITION)
+      _is_input = true;
+    else
+      _is_output = true;
+
+    this->_dp_link.push_back(pair<vcDatapathElement*,vcTransitionType>(dpe,ltype));
   }
 
+  bool Get_Is_Input() { return(_is_input);}
+  bool Get_Is_Output() { return(_is_output);}
+
   virtual void Print(ostream& ofile);
+  virtual void Print_VHDL(ostream& ofile);
+
   virtual string Kind() {return("vcTransition");}
 
-  vcTransitionType Get_Transition_Type() {return(this->_transition_type);}
-  pair<vcDatapathElement*,string>& Get_DP_Link() {return(this->_dp_link);}
+  vector<pair<vcDatapathElement*,vcTransitionType> >&  Get_DP_Link() {return(this->_dp_link);}
 
   friend class ControlPath;
+
+  string Get_DP_To_CP_Symbol();
+  string Get_CP_To_DP_Symbol();
+
+
+
 };
 
 class vcPlace: public vcCPElement
@@ -132,6 +156,9 @@ public:
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcPlace");}
 
+  virtual void Print_VHDL(ostream& ofile);
+
+
   friend class ControlPath;
 };
 
@@ -141,6 +168,9 @@ class vcCPBlock: public vcCPElement
 protected:
   map<string, vcCPElement*> _element_map;
   vector<vcCPElement*> _elements;
+
+  vcTransition* _entry;
+  vcTransition* _exit;
 
 public:
   vcCPBlock(vcCPBlock* parent, string id);
@@ -160,20 +190,24 @@ public:
 		 bool& cycle_flag, int& num_visited, vector<vcCPElement*>& dfs_ordered_elements);
 
   virtual void Print_Structure(ostream& ofile);
+
+  virtual void Print_VHDL(ostream& ofile);
+
+  virtual void Print_VHDL_Start_Symbol_Assignment(ostream& ofile);
+  virtual void Print_VHDL_Exit_Symbol_Assignment(ostream& ofile);
 };
 
 class vcCPSeriesBlock: public vcCPBlock
 {
-protected:
-  vcPlace* _entry;
-  vcPlace* _exit;
   
 public:
-  virtual vcCPElement* Find_CPElement(string cname);
+
   vcCPSeriesBlock(vcCPBlock* parent, string id);
 
 
   virtual void Print(ostream& ofile);
+
+
   virtual string Kind() {return("vcCPSeriesBlock");}
 
   virtual void Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* m);
@@ -184,15 +218,14 @@ public:
 
 class vcCPParallelBlock: public vcCPBlock
 {
-protected:
-  vcTransition* _entry;
-  vcTransition* _exit;
 
 public:
-  virtual vcCPElement* Find_CPElement(string cname);
+
 
   vcCPParallelBlock(vcCPBlock* parent, string id);
   virtual void Print(ostream& ofile);
+
+
   virtual string Kind() {return("vcCPSeriesBlock");}
 
   virtual void Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* m);
@@ -214,6 +247,7 @@ public:
   void Add_Merge_Point(string merge_place, string merge_region);
   virtual void Print(ostream& ofile);
 
+
   virtual bool Check_Structure(); // check that the block is well-formed.
   virtual void Update_Predecessor_Successor_Links();
 };
@@ -226,6 +260,8 @@ class vcCPForkBlock: public vcCPParallelBlock
 public:
   virtual string Kind() {return("vcCPForkBlock");}
   vcCPForkBlock(vcCPBlock* parent, string id);
+
+
   virtual void Print(ostream& ofile);
   void Add_Fork_Point(string& fork_name, vector<string>& fork_cpe_vec);
   void Add_Join_Point(string& join_name, vector<string>& join_cpe_vec);
@@ -245,13 +281,18 @@ class vcControlPath: public vcCPParallelBlock
 
   map<vcCompatibilityLabel*, set<vcCompatibilityLabel*> > _label_descendent_map;
 
+
+
 public:
+  static int _free_index;
+
   virtual string Kind() {return("vcControlPath");}
 
   vcControlPath(string id);
   vcTransition* Find_Transition(vector<string>& hier_ref);
   vcPlace* Find_Place(vector<string>& hier_ref);
   virtual void Print(ostream& ofile);
+
   virtual void Get_Hierarchical_Ref(vector<string>& ref_vec) {return;}
   void Compute_Compatibility_Labels();
 
@@ -263,6 +304,18 @@ public:
   void Print_Compatibility_Labels(ostream& ofile);
 
   bool Are_Compatible(vcCompatibilityLabel* u, vcCompatibilityLabel* v);
+  bool Lesser(vcCompatibilityLabel* u, vcCompatibilityLabel* v);
+  bool Greater(vcCompatibilityLabel* u, vcCompatibilityLabel* v);
+
+  virtual void Print_VHDL_Start_Symbol_Assignment(ostream& ofile);
+  virtual void Print_VHDL_Exit_Symbol_Assignment(ostream& ofile);
+};
+
+
+struct vcCompatibilityLabel_Compare:public binary_function
+  <vcCompatibilityLabel*, vcCompatibilityLabel*, bool >
+{
+  bool operator() (vcCompatibilityLabel*, vcCompatibilityLabel*) const;
 };
 
 #endif

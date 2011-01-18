@@ -1,10 +1,40 @@
 #include <vcRoot.hpp>
 
+string To_VHDL(string x)
+{
+  string ret_string;
+  for (int i = 0; i < x.size(); i++)
+    {
+      if(x[i] == '/' || x[i] == '$')
+	{
+	  ret_string += 'X';
+	}
+      else
+	ret_string += x[i];
+    }
+  return(ret_string);
+}
+
 string IntToStr(unsigned int x)
 {
   ostringstream string_stream(ostringstream::out);
   string_stream << x;
   return(string_stream.str());
+}
+
+int CeilLog2(int n)
+{
+  int ret_val = 0;
+
+  while( n > 1)
+    {
+      n = n/2;
+      ret_val++;
+    }
+  if(ret_val == 0)
+    ret_val = 1;
+
+  return(ret_val);
 }
 
 bool vcRoot_Compare::operator() (vcRoot* s, vcRoot* t) const

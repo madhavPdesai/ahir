@@ -23,6 +23,7 @@ public:
 
   virtual void Print(ostream& ofile) {assert(0);}
   virtual int Size() { assert(0);}
+  virtual bool Is_Int_Type() {return(false);}
 };
 
 class vcScalarTypeTemplate: public vcType
@@ -64,6 +65,7 @@ public:
   void Print(ostream& ofile);
   virtual string Kind() {return("vcIntType");}
   virtual int Size() { return(this->_width);}
+  virtual bool Is_Int_Type() {return(true);}
 };
 
 class vcMemorySpace;

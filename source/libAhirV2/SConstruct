@@ -19,6 +19,7 @@ env.Library('lib/libVC', Glob('obj/*.cpp'), CCFLAGS='-g ')
 env.Program('bin/vcParse', 'util/vcParseMain.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr-4.0.3' ], LIBPATH=Split('../Ahir-asm/antlr2/ ./lib/'))
 env.Program('bin/vcCPCheck', 'util/vcCPCheck.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr-4.0.3' ], LIBPATH=Split('../Ahir-asm/antlr2/ ./lib/'))
 env.Program('bin/vcFormat', 'util/vcFormat.cpp',CCFLAGS='-g ', LINKFLAGS='-g ')
+env.Program('bin/vc2vhdl', 'util/vc2vhdl.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr-4.0.3' ], LIBPATH=Split('../Ahir-asm/antlr2/ ./lib/'))
 
 
 

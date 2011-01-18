@@ -3,56 +3,55 @@
 
 #include <vcIncludes.hpp>
 #include <vcRoot.hpp>
-
+#include <vcDataPath.hpp>
 
 class vcTransition;
 class vcModule;
 class vcWire;
 class vcDataPath;
+class vcType;
 
-class vcOperator: public vcRoot
+// single req, single ack
+class vcOperator: public vcDatapathElement
 {
 
-protected:
-  // unitary operator..
-  // cannot be pipelined!
-  vcTransition* _req;
-  vcTransition* _ack;
 public:
 
-  vcOperator(string id): vcRoot(id) {_req = NULL; _ack = NULL;}
+  vcOperator(string id): vcDatapathElement(id) {}
 
-  void Set_Req(vcTransition* req) {this->_req = req;}
-  void Set_Ack(vcTransition* ack) {this->_ack = ack;}
-
+  virtual void Add_Reqs(vector<vcTransition*>& reqs);
+  virtual void Add_Acks(vector<vcTransition*>& acks);
   virtual string Kind() {return("vcOperator");}  
+
+  virtual bool Is_Shareable_With(vcDatapathElement* other) {return(false);}
 
   friend class vcDataPath;
 };
 
-class vcSplitOperator: public vcRoot
+// split reqs (2) and matching acks (2)
+class vcSplitOperator: public vcDatapathElement
 {
-
 protected:
 
-  // note: split Request-Complete handshake
-  vcTransition* _reqR;
-  vcTransition* _ackR;
-
-  vcTransition* _reqC;
-  vcTransition* _ackC;
-
 public: 
-  vcSplitOperator(string id):vcRoot(id) {_reqR = NULL; _reqC = NULL; _ackR = NULL; _ackC = NULL;}
+  vcSplitOperator(string id):vcDatapathElement(id) {}
 
-  void Set_ReqR(vcTransition* t) {_reqR = t;}
-  void Set_ReqC(vcTransition* t) {_reqC = t;}
-  void Set_AckR(vcTransition* t) {_ackR = t;}
-  void Set_AckC(vcTransition* t) {_ackC = t;}
-
+  virtual void Add_Reqs(vector<vcTransition*>& reqs);
+  virtual void Add_Acks(vector<vcTransition*>& acks);
   virtual string Kind() {return("vcSplitOperator");}
 
   virtual void Check_Consistency() {assert(0);}
+  virtual bool Is_Shareable_With(vcDatapathElement* other) {return(false);}
+
+  virtual int Get_Number_Of_Input_Wires() {assert(0);}
+  virtual int Get_Number_Of_Output_Wires() {assert(0);}
+
+  virtual void Append_Inwires(vector<vcWire*>& inwires) {assert(0);}
+  virtual void Append_Outwires(vector<vcWire*>& outwires) {assert(0);}
+
+  virtual string Get_Op_Id() {assert(0);}
+  virtual vcType* Get_Input_Type() {assert(0);}
+  virtual vcType* Get_Output_Type() {assert(0);}
 
   friend class vcDataPath;
 };
@@ -77,6 +76,25 @@ public:
   virtual void Print(ostream& ofile);
 
   virtual string Kind() {return("vcCall");}
+  virtual bool Is_Shareable_With(vcDatapathElement* other) 
+  {
+    return((this->Kind() == other->Kind()) && (this->_called_module == ((vcCall*)other)->Get_Called_Module()));
+  }
+
+  virtual int Get_Number_Of_Input_Wires() { return(this->_in_wires.size()); }
+  virtual int Get_Number_Of_Output_Wires() { return(this->_out_wires.size()); }
+
+  virtual void Append_Inwires(vector<vcWire*>& inwires) 
+  {
+    for(int idx = 0; idx < _in_wires.size(); idx++)
+      inwires.push_back(_in_wires[idx]);
+  }
+  virtual void Append_Outwires(vector<vcWire*>& outwires) 
+  {
+    for(int idx = 0; idx < _out_wires.size(); idx++)
+      outwires.push_back(_out_wires[idx]);
+  }
+
   friend class vcDataPath;
 };
 
@@ -87,13 +105,15 @@ protected:
   vcWire* _data;
   string _pipe_id;
 public:
-  vcIOport(string id, string pipe_id, vcWire* w): vcOperator(id)
-  {
-    _pipe_id = pipe_id;
-    _data = w;
-  }
+  vcIOport(string id, string pipe_id, vcWire* w);
+  string Get_Pipe_Id() {return(this->_pipe_id);}
 
   virtual string Kind() {return("vcIOport");}
+  virtual bool Is_Shareable_With(vcDatapathElement* other) 
+  {
+    return((this->Kind() == other->Kind()) && (this->_pipe_id == ((vcIOport*)other)->Get_Pipe_Id()));
+  }
+
   friend class vcDataPath;
 };
 
@@ -133,7 +153,14 @@ protected:
 
 public:
   vcLoadStore(string id, vcMemorySpace* ms, vcWire* addr, vcWire* data);
+  vcMemorySpace* Get_Memory_Space() {return(this->_memory_space);}
   virtual string Kind() {return("vcLoadStore");}
+
+  virtual bool Is_Shareable_With(vcDatapathElement* other)
+  {
+    return((this->Kind() == other->Kind()) && (this->_memory_space == ((vcLoadStore*)other)->Get_Memory_Space()));
+  }
+
   friend class vcDataPath;
 };
 
@@ -145,6 +172,19 @@ public:
   virtual void Print(ostream& ofile);
 
   virtual string Kind() {return("vcLoad");}
+
+  virtual int Get_Number_Of_Input_Wires() { return(1); }
+  virtual int Get_Number_Of_Output_Wires() { return(1);}
+
+  virtual void Append_Inwires(vector<vcWire*>& inwires) 
+  {
+    inwires.push_back(_address);
+  }
+  virtual void Append_Outwires(vector<vcWire*>& outwires) 
+  {
+    outwires.push_back(_data);
+  }
+
   friend class vcDataPath;
 };
 
@@ -158,30 +198,38 @@ public:
   virtual void Print(ostream& ofile);
 
   virtual string Kind() {return("vcStore");}
+
+  virtual int Get_Number_Of_Input_Wires() { return(2); }
+  virtual int Get_Number_Of_Output_Wires() { return(0);}
+
+  virtual void Append_Inwires(vector<vcWire*>& inwires) 
+  {
+    inwires.push_back(_address);
+    inwires.push_back(_data);
+  }
+  virtual void Append_Outwires(vector<vcWire*>& outwires) 
+  {
+    // nothing.
+  }
+
   friend class vcDataPath;
 };
 
 // many reqs, single ack...unique operator of this type
-class vcPhi: public vcRoot
+class vcPhi: public vcDatapathElement
 {
 protected:
   vector<vcWire*> _inwires;
   vcWire* _outwire;
-  vector<vcTransition*> _inreqs;
-  vcTransition* _ack;
 public:
   vcPhi(string id, vector<vcWire*>& inwires, vcWire* outwire);
   virtual void Print(ostream& ofile);
 
-  void Set_Inreqs(vector<vcTransition*>& reqs);
-  void Set_Ack(vcTransition* t);
-
+  virtual void Add_Reqs(vector<vcTransition*>& reqs);
+  virtual void Add_Acks(vector<vcTransition*>& acks);
 
   vector<vcWire*>& Get_Inwires() {return(this->_inwires);}
   vcWire* Get_Outwire() {return(this->_outwire);}
-
-  vector<vcTransition*>& Get_Inreqs() {return(this->_inreqs);}
-  vcTransition* Get_Ack() {return(this->_ack);}
   virtual string Kind() {return("vcPhi");}
 
   friend class vcDataPath;
@@ -206,12 +254,41 @@ protected:
 public:
 
   vcBinarySplitOperator(string id, string op_id, vcWire* x, vcWire* y, vcWire* z);
+  string Get_Op_Id() {return(this->_op_id);}
 
+  virtual vcType* Get_Input_Type() {return(this->_x->Get_Type());}
+
+  vcType* Get_X_Input_Type() {return(this->_x->Get_Type());}
+  vcType* Get_Y_Input_Type() {return(this->_y->Get_Type());}
+  virtual vcType* Get_Output_Type() {return(this->_z->Get_Type());}
 
   virtual void Print(ostream& ofile);
 
   virtual void Check_Consistency() {assert(0);}
   virtual string Kind() {return("vcBinarySplitOperator");}
+
+  virtual bool Is_Shareable_With(vcDatapathElement* other);
+
+
+  virtual int Get_Number_Of_Input_Wires() { return(2); }
+  virtual int Get_Number_Of_Output_Wires() { return(1);}
+
+  virtual void Append_Inwires(vector<vcWire*>& inwires) 
+  {
+    inwires.push_back(_x);
+    inwires.push_back(_y);
+  }
+  virtual void Append_Outwires(vector<vcWire*>& outwires) 
+  {
+    outwires.push_back(_z);
+  }
+
+  vcWire* Get_X() {return(_x);}
+  vcWire* Get_Y() {return(_y);}
+  vcWire* Get_Z() {return(_z);}
+
+
+  virtual string Get_Operator_Type() {return(this->Kind() + " (" + this->_op_id + ")");}
 
   friend class vcDataPath;
 };
@@ -232,16 +309,38 @@ protected:
 public:
 
   vcUnarySplitOperator(string id, string op_id, vcWire* x, vcWire* z);
+  string Get_Op_Id() {return(this->_op_id);}
 
+  virtual bool Is_Shareable_With(vcDatapathElement* other);
   virtual void Print(ostream& ofile);
   virtual void Check_Consistency() {assert(0);}
   virtual string Kind() {return("vcUnarySplitOperator");}
+
+  virtual string Get_Operator_Type() {return(this->Kind() + " (" + this->_op_id + ")");}
+
+  virtual int Get_Number_Of_Input_Wires() { return(1); }
+  virtual int Get_Number_Of_Output_Wires() { return(1);}
+
+  virtual void Append_Inwires(vector<vcWire*>& inwires) 
+  {
+    inwires.push_back(_x);
+  }
+  virtual void Append_Outwires(vector<vcWire*>& outwires) 
+  {
+    outwires.push_back(_z);
+  }
+
+  virtual vcType* Get_Input_Type() {return(this->_x->Get_Type());}
+
+  vcType* Get_X_Input_Type() {return(this->_x->Get_Type());}
+  virtual vcType* Get_Output_Type() {return(this->_z->Get_Type());}
 
   friend class vcDataPath;
 };
 
 class vcSelect: public vcOperator
 {
+
 protected:
 
   vcWire* _sel;
@@ -259,24 +358,21 @@ public:
 };
 
 // single req, two acks.
-class vcBranch: public vcRoot
+class vcBranch: public vcDatapathElement
 {
 protected:
   vcWire* _test;
-
-  vcTransition* _req;
-  vcTransition* _ack0;
-  vcTransition* _ack1;
 public:
   vcBranch(string id, vcWire* twire);
 
-  void Set_Req(vcTransition* t) {_req =t;}
-  void Set_Ack0(vcTransition* t) {_ack0 = t;}
-  void Set_Ack1(vcTransition* t) {_ack1 = t;}
-  
+  virtual void Add_Reqs(vector<vcTransition*>& reqs);
+  virtual void Add_Acks(vector<vcTransition*>& acks);
+
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcBranch");}
   friend class vcDataPath;
 };
 
+string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type);
+bool Check_If_Equivalent(vector<vcWire*>& iw1, vector<vcWire*>& iw2);
 #endif

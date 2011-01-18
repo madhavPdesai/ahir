@@ -35,11 +35,10 @@ options {
 }
 
 //-----------------------------------------------------------------------------------------------
-// vc_System :  (vc_Library | vc_Module | vc_MemorySpace)+
+// vc_System :  (vc_Module | vc_MemorySpace)+
 //-----------------------------------------------------------------------------------------------
 vc_System[vcSystem* sys]
 { 
-	vcDatapathElementLibrary* lib = NULL;
 	vcModule* nf = NULL;
 	vcMemorySpace* ms = NULL;
 }
@@ -49,130 +48,19 @@ vc_System[vcSystem* sys]
  |
  (ms = vc_MemorySpace[sys,NULL] {sys->Add_Memory_Space(ms);})
  |
- (lib = vc_Library[sys])
+ (vc_Pipe[sys])
  )*
 	;
 
-
 //-----------------------------------------------------------------------------------------------
-// vc_Library : LIBRARY vc_Label LBRACE (vc_DatapathElementTemplate)* RBRACE
+// vc_System :  PIPE vc_Label UINTEGER
 //-----------------------------------------------------------------------------------------------
-vc_Library[vcSystem* sys] returns [vcDatapathElementLibrary* new_lib]
-{
-	string lbl = "";
-	vcDatapathElementTemplate* e;
-	new_lib = NULL;
-}
-: LIBRARY lbl = vc_Label { new_lib = new vcDatapathElementLibrary(lbl); sys->Add_Library(new_lib);} 
-   LBRACE
-    ( e = vc_DatapathElementTemplate[sys,new_lib] { new_lib->Add_Template(e); } )* 
-   RBRACE
-;
-
-//----------------------------------------------------------------------------------------------------------
-// vc_DatapathElementTemplate: DPE vc_Label LBRACE  vc_DpeParamSpec? vc_InDpePorts? vc_OutDpePorts? vc_DpeReqs? vc_DpeAcks? vc_AttributeSpec* RBRACE
-//----------------------------------------------------------------------------------------------------------
-vc_DatapathElementTemplate[vcSystem* sys,vcDatapathElementLibrary* lib] returns [vcDatapathElementTemplate* t]
-{
-	string lbl = "";
-}
-:  DPE lbl = vc_Label { t = new vcDatapathElementTemplate(lib,lbl);}
-LBRACE (vc_DpeParamSpec[t])?  (vc_InDpePorts[t])?  (vc_OutDpePorts[t])?  (vc_DpeReqs[t])? (vc_DpeAcks[t])?
-  (vc_AttributeSpec[t])*
-RBRACE 
-;
-
-
-//--------------------------------------------------------------------------------------------------------------------------------------
-// vc_DpeParamSpec: PARAMETER (vc_Identifier MIN UINTEGER MAX UINTEGER)+
-//--------------------------------------------------------------------------------------------------------------------------------------
-vc_DpeParamSpec[vcDatapathElementTemplate* p] 
-{
-	string pname;
-	unsigned int min_val, max_val;
-}
-:  PARAMETER 
-(pname = vc_Identifier MIN
-  minval:UINTEGER { min_val = atoi(minval->getText().c_str());} 
-  MAX 
-  maxval:UINTEGER { max_val = atoi(maxval->getText().c_str()); p->Add_Parameter(pname,min_val,max_val); } 
-)+ 
-
-;
-
-
-//----------------------------------------------------------------------------------------------------------
-// vc_InDpePorts: IN vc_DpePorts 
-//----------------------------------------------------------------------------------------------------------
-vc_InDpePorts[vcDatapathElementTemplate* t]
-:
-IN vc_DpePorts[t,"in"]
-;
-
-//----------------------------------------------------------------------------------------------------------
-// vc_OutDpePorts: IN vc_DpePorts 
-//----------------------------------------------------------------------------------------------------------
-vc_OutDpePorts[vcDatapathElementTemplate* t]
-:
-OUT vc_DpePorts[t,"out"]
-;
-
-//----------------------------------------------------------------------------------------------------------
-// vc_DpePorts: ( vc_Identifier COLON vc_ScalarTypeTemplate )+
-//----------------------------------------------------------------------------------------------------------
-vc_DpePorts[vcDatapathElementTemplate* t, string mode]
-{
-        string pname;
-	vcScalarTypeTemplate* tt;
-}
-:
-(pname = vc_Identifier COLON tt = vc_ScalarTypeTemplate 
- { 
- if(mode == "in") 
- t->Add_Input_Port(pname, tt);
- else
- t->Add_Output_Port(pname, tt);
- }
- )+
-;
-
-//----------------------------------------------------------------------------------------------------------
-// vc_ScalarTypeTemplate: ((FLOAT LESS SIMPLE_IDENTIFIER COMMA SIMPLE_IDENTIFIER GREATER) |
-//                                  (INT   LESS SIMPLE_IDENTIFIER GREATER)
-//----------------------------------------------------------------------------------------------------------
-vc_ScalarTypeTemplate returns[vcScalarTypeTemplate* t]
-: ((FLOAT LESS c: SIMPLE_IDENTIFIER COMMA m:SIMPLE_IDENTIFIER GREATER 
-  {
-    t = new vcScalarTypeTemplate(c->getText(),m->getText());
-  }) |
-  (INT LESS w:SIMPLE_IDENTIFIER GREATER
-  {
-    t = new vcScalarTypeTemplate(w->getText());
-  })
-);
-
-
-//----------------------------------------------------------------------------------------------------------
-// vc_DpeReqs: REQS (vc_Identifier)+
-//----------------------------------------------------------------------------------------------------------
-vc_DpeReqs[vcDatapathElementTemplate* t]
+vc_Pipe[vcSystem* sys]
 {
   string lbl;
-}
-:
-REQS (lbl =  vc_Identifier { t->Add_Req(lbl);})+
+}:  PIPE lbl = vc_Label  wid:UINTEGER {sys->Add_Pipe(lbl,atoi(wid->getText().c_str()));}
 ;
 
-//----------------------------------------------------------------------------------------------------------
-// vc_DpeAcks: ACKS (vc_Identifier)+
-//----------------------------------------------------------------------------------------------------------
-vc_DpeAcks[vcDatapathElementTemplate* t]
-{
-  string lbl;
-}
-:
-ACKS (lbl = vc_Identifier { t->Add_Ack(lbl);})+
-;
 
 //--------------------------------------------------------------------------------------------------------------------------------------
 // vc_MemorySpace:  MEMORYSPACE vc_Label  LBRACE vc_MemorySpaceParams (vc_MemoryLocation)* RBRACE
@@ -195,7 +83,7 @@ ADDRWIDTH aw:UINTEGER {ms->Set_Address_Width(atoi(aw->getText().c_str()));}
 ;
 
 //--------------------------------------------------------------------------------------------------------------------------------------
-// vc_MemoryLocation:  OBJECT vc_Label COLON vc_Type (ASSIGNEQUAL ? vc_Value)
+// vc_MemoryLocation:  OBJECT vc_Label COLON vc_Type (ASSIGN_OP ? vc_Value)
 //--------------------------------------------------------------------------------------------------------------------------------------
 vc_MemoryLocation[vcSystem* sys, vcMemorySpace* ms]
 {
@@ -204,7 +92,7 @@ vc_MemoryLocation[vcSystem* sys, vcMemorySpace* ms]
 	vcType* t;
 	vcValue* v = NULL;
 }
-: OBJECT lbl = vc_Label COLON t = vc_Type[sys] (ASSIGNEQUAL v = vc_Value[t])? 
+: OBJECT lbl = vc_Label COLON t = vc_Type[sys] (ASSIGN_OP v = vc_Value[t])? 
 {
 	nl = new vcStorageObject(lbl,t);
 	if(v != NULL)
@@ -222,67 +110,66 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
 	m = NULL;
         vcMemorySpace* ms;
 }
-: MODULE lbl = vc_Label { m = new vcModule(lbl); sys->Add_Module(m);} 
+: MODULE lbl = vc_Label { m = new vcModule(sys,lbl); sys->Add_Module(m);} 
   LBRACE (vc_Inargs[sys,m])? (vc_Outargs[sys,m])? 
   (ms = vc_MemorySpace[sys,m] {m->Add_Memory_Space(ms);})* 
-   vc_Controlpath[sys,m] (vc_Datapath[sys,m])? (vc_Link[m])* (vc_Phi_Link[m])* 
+   vc_Controlpath[sys,m] (vc_Datapath[sys,m])? (vc_Link[m])*
   (vc_AttributeSpec[m])* 
   RBRACE
 ;
 
 
-//--------------------------------------------------------------------------------------------------------------------------------------
-// vc_Link : LINK vc_Hiearchical_CP_Ref EQUIVALENT vc_Identifier COLON vc_Identifier 
-//--------------------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------------
+// vc_Link : vc_Identifier EQUIVALENT LPAREN vc_Hiearchical_CP_Ref+ RPAREN LPAREN vc_Hierarchical_CP_Ref+ RPAREN
+//----------------------------------------------------------------------------------------------------------------------------------------
 vc_Link[vcModule* m]
 {
+   vcDatapathElement* dpe;
    vector<string> ref_vec;
+   vector<vcTransition*> reqs;
+   vector<vcTransition*> acks;
 }
-:  LINK  vc_Hierarchical_CP_Ref[ref_vec] EQUIVALENT dpeid:SIMPLE_IDENTIFIER SLASH reqackid:SIMPLE_IDENTIFIER
-   { m->Add_Link(ref_vec, dpeid->getText(), reqackid->getText());}
+:  dpeid:SIMPLE_IDENTIFIER 
+       {
+          dpe = m->Get_Data_Path()->Find_DPE(dpeid->getText()); 
+          assert(dpe != NULL);
+       }
+       EQUIVALENT
+        LPAREN  
+         (vc_Hierarchical_CP_Ref[ref_vec] 
+              { 
+                 vcTransition* t = m->Get_Control_Path()->Find_Transition(ref_vec);
+                 assert(t != NULL);
+                 reqs.push_back(t);
+                 ref_vec.clear();
+              }
+          )+
+        RPAREN
+        LPAREN  
+         (vc_Hierarchical_CP_Ref[ref_vec] 
+              { 
+                 vcTransition* t = m->Get_Control_Path()->Find_Transition(ref_vec);
+                 assert(t != NULL);
+                 acks.push_back(t);
+                 ref_vec.clear();
+              }
+          )+
+        RPAREN
+   { m->Add_Link(dpe,reqs,acks);}
 ;
 
-   
-
-//--------------------------------------------------------------------------------------------------------------------------------------
-// vc_Phi_Link : PHI LINK vc_Identifier REQS (vc_Hierarchical_CP_Ref)+ ACKS vc_Hiearchical_CP_Ref 
-//--------------------------------------------------------------------------------------------------------------------------------------
-vc_Phi_Link[vcModule* m]
-{
-  vector<string> ref_vec;
-  string phi_id;
-  vcPhi* phi;
-  vcTransition* t;
-  vector<vcTransition*> inreqs;
-  vcTransition* outack;
-}:
-   PHI LINK phi_id = vc_Identifier { phi = m->Get_Data_Path()->Find_Phi(phi_id); assert(phi != NULL);}
-   REQS ( vc_Hierarchical_CP_Ref[ref_vec] 
-    { 
-       t = m->Get_Control_Path()->Find_Transition(ref_vec); 
-       assert(t != NULL);
-       inreqs.push_back(t);
-       ref_vec.clear();
-    })+
-   ACKS  vc_Hierarchical_CP_Ref[ref_vec]
-     { 
-       outack = m->Get_Control_Path()->Find_Transition(ref_vec); 
-       assert(outack != NULL);
-       phi->Set_Inreqs(inreqs);
-       phi->Set_Ack(outack);
-
-       m->Add_Phi_Link(phi,inreqs,outack);
-     }
-;
 
 //-----------------------------------------------------------------------------------------------
-// vc_Hierarchical_CP_Ref :  ( vc_Identifier SLASH )* vc_Identifier
+// vc_Hierarchical_CP_Ref :  ( vc_Identifier DIV_OP )* vc_Identifier
 //-----------------------------------------------------------------------------------------------
 vc_Hierarchical_CP_Ref[vector<string>& ref_vec]
 {
   string id;
 }
-: (id = vc_Identifier {ref_vec.push_back(id);} SLASH)* id = vc_Identifier {ref_vec.push_back(id);}
+: (id = vc_Identifier {ref_vec.push_back(id);} DIV_OP)* 
+  ((id = vc_Identifier {ref_vec.push_back(id);}) |
+   (entry_id:ENTRY {ref_vec.push_back(entry_id->getText());}) |
+   (exit_id:EXIT {ref_vec.push_back(exit_id->getText());}))
 ;
 
 //-----------------------------------------------------------------------------------------------
@@ -317,12 +204,11 @@ vc_CPPlace[vcCPElement* p] returns[vcCPElement* cpe]
 //-----------------------------------------------------------------------------------------------
 vc_CPTransition[vcCPElement* p] returns[vcCPElement* cpe]
 { 
-   vcTransitionType t;
    string id;
 }
-: TRANSITION id = vc_Label ((IN {t = _IN_TRANSITION;}) | (OUT {t = _OUT_TRANSITION;}) | (HIDDEN {t = _HIDDEN_TRANSITION;})) 
+: TRANSITION id = vc_Label
   {
-    cpe = (vcCPElement*) (new vcTransition(p,id,t));
+    cpe = (vcCPElement*) (new vcTransition(p,id));
   }
   ;
 
@@ -384,7 +270,7 @@ vc_CPBranchBlock[vcCPBlock* cp]
 ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPMerge: AT vc_Identifier MERGE  ENTRY? (vc_Identifier)* 
+// vc_CPMerge: MERGE vc_Identifier LPAREN ENTRY? (vc_Identifier)* RPAREN
 //-----------------------------------------------------------------------------------------------
 vc_CPMerge[vcCPBranchBlock* bb]
 { 
@@ -392,14 +278,14 @@ vc_CPMerge[vcCPBranchBlock* bb]
 	string merge_region;
 }
 :
-AT lbl = vc_Identifier MERGE  (e:ENTRY {bb->Add_Merge_Point(lbl,e->getText());})?
-      (mid = vc_Identifier {bb->Add_Merge_Point(lbl,mid);})* 
+lbl = vc_Identifier  MERGE LPAREN  (e:ENTRY {bb->Add_Merge_Point(lbl,e->getText());})?
+      (mid = vc_Identifier {bb->Add_Merge_Point(lbl,mid);})* RPAREN
 ;
 
 
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPBranch: FROM vc_Identifier BRANCH  EXIT? (vc_Identifier)* 
+// vc_CPBranch: BRANCH vc_Identifier LPAREN EXIT? (vc_Identifier)*  RPAREN
 //-----------------------------------------------------------------------------------------------
 vc_CPBranch[vcCPBranchBlock* bb]
 {
@@ -407,8 +293,8 @@ vc_CPBranch[vcCPBranchBlock* bb]
 	vector<string> branch_ids;
 }
 :
-FROM lbl = vc_Identifier  BRANCH  (e:EXIT {branch_ids.push_back(e->getText());})?
-(b =  vc_Identifier {branch_ids.push_back(b);})* {bb->Add_Branch_Point(lbl,branch_ids);}
+lbl = vc_Identifier  BRANCH LPAREN (e:EXIT {branch_ids.push_back(e->getText());})?
+(b =  vc_Identifier {branch_ids.push_back(b);})* {bb->Add_Branch_Point(lbl,branch_ids);} RPAREN
 ;
 
 //-----------------------------------------------------------------------------------------------
@@ -429,7 +315,7 @@ vc_CPForkBlock[vcCPBlock* cp]
 ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPJoin: AT (vc_Identifier | EXIT) JOIN  ENTRY? (vc_Idenitfier)+ 
+// vc_CPJoin: (vc_Identifier | EXIT) JOIN LPAREN  ENTRY? (vc_Idenitfier)+  RPAREN
 //-----------------------------------------------------------------------------------------------
 vc_CPJoin[vcCPForkBlock* fb]
 {
@@ -437,13 +323,13 @@ vc_CPJoin[vcCPForkBlock* fb]
 	vector<string> join_ids;
 }
 :
-AT ((lbl = vc_Identifier) | (je:EXIT {lbl = je->getText();})) JOIN (e:ENTRY {join_ids.push_back(e->getText());})?
-(b =  vc_Identifier {join_ids.push_back(b);})*
+((lbl = vc_Identifier) | (je:EXIT {lbl = je->getText();})) JOIN  LPAREN (e:ENTRY {join_ids.push_back(e->getText());})?
+(b =  vc_Identifier {join_ids.push_back(b);})* RPAREN
  {fb->Add_Join_Point(lbl,join_ids);}
 ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPFork: FROM (vc_Identifier | ENTRY)  FORK  EXIT? (vc_Identifier)+ 
+// vc_CPFork: (vc_Identifier | ENTRY) FORK  LPAREN  EXIT? (vc_Identifier)+  RPAREN
 //-----------------------------------------------------------------------------------------------
 vc_CPFork[vcCPForkBlock* fb]
 {
@@ -451,24 +337,25 @@ vc_CPFork[vcCPForkBlock* fb]
 	vector<string> fork_ids;
 }
 :
-FROM ((lbl = vc_Identifier) | (fe:ENTRY {lbl = fe->getText();}))  FORK  (e:EXIT {fork_ids.push_back(e->getText());})?
-(b = vc_Identifier {fork_ids.push_back(b);})*
+
+((lbl = vc_Identifier) | (fe:ENTRY {lbl = fe->getText();})) FORK  LPAREN (e:EXIT {fork_ids.push_back(e->getText());})?
+(b = vc_Identifier {fork_ids.push_back(b);})* RPAREN
  {fb->Add_Fork_Point(lbl,fork_ids);}
 ;
 
 //-----------------------------------------------------------------------------------------------
 // vc_Datapath: DATAPATH LBRACE 
-// (vc_WireDeclaration | vc_DatapathElementInstantiation | vc_Phi_Instantiation | vc_Call_Instantiation | vc_AttributeSpec[dp] )*  RBRACE
+// (vc_Wire_Declaration | vc_Operator_Instantiation | vc_Phi_Instantiation | vc_Call_Instantiation |
+//                vc_LoadStore_Instantiation | vc_IOPort_Instantiation | vc_AttributeSpec[dp] )*  RBRACE
 //-----------------------------------------------------------------------------------------------
 vc_Datapath[vcSystem* sys,vcModule* m]
 {
 	vcDataPath* dp = new vcDataPath(m,m->Get_Id() + "_DP");
 }
-: DATAPATH LBRACE ( vc_WireDeclaration[sys,dp] | 
-                   vc_DatapathElementInstantiation[sys,m,dp] | 
-                   vc_OperatorInstantiation[sys,dp] |
-                   vc_PhiInstantiation[dp] |
-                   vc_CallInstantiation[sys,dp] | 
+: DATAPATH LBRACE ( vc_Wire_Declaration[sys,dp] | 
+                   vc_Operator_Instantiation[sys,dp] |
+                   vc_Phi_Instantiation[dp] |
+                   vc_Call_Instantiation[sys,dp] | 
                    vc_IOPort_Instantiation[dp] |
                    vc_LoadStore_Instantiation[sys,dp] |
                     vc_AttributeSpec[dp])* RBRACE
@@ -477,19 +364,19 @@ vc_Datapath[vcSystem* sys,vcModule* m]
 
 
 //-----------------------------------------------------------------------------------------------------------------------------
-// vc_OperatorInstantiation: vc_BinaryOperatorInstantiation | vc_UnaryOperatorInstantiation | vc_SelectInstantiation | vc_BranchInstantiation
+// vc_Operator_Instantiation: vc_BinaryOperator_Instantiation | vc_UnaryOperator_Instantiation | vc_Select_Instantiation | vc_Branch_Instantiation
 //----------------------------------------------------------------------------------------------------------------------------
-vc_OperatorInstantiation[vcSystem* sys, vcDataPath* dp] : vc_BinaryOperatorInstantiation[dp] |
-                                           vc_UnaryOperatorInstantiation[dp] |
-                                           vc_SelectInstantiation[dp] |
-                                           vc_BranchInstantiation[dp]
+vc_Operator_Instantiation[vcSystem* sys, vcDataPath* dp] : vc_BinaryOperator_Instantiation[dp] |
+                                           vc_UnaryOperator_Instantiation[dp] |
+                                           vc_Select_Instantiation[dp] |
+                                           vc_Branch_Instantiation[dp]
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
-// vc_BinaryOperatorInstantiation: vc_BinaryOp vc_Label LPAREN vc_Identifier vc_Identifier RPAREN
+// vc_BinaryOperator_Instantiation: vc_BinaryOp vc_Label LPAREN vc_Identifier vc_Identifier RPAREN
 //                                             LPAREN vc_Identifier RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
-vc_BinaryOperatorInstantiation[vcDataPath* dp] 
+vc_BinaryOperator_Instantiation[vcDataPath* dp] 
 {
   vcBinarySplitOperator* new_op = NULL;
   string id;
@@ -504,7 +391,7 @@ vc_BinaryOperatorInstantiation[vcDataPath* dp]
   ((plus_id: PLUS_OP {op_id = plus_id->getText();}) |
   (minus_id: MINUS_OP {op_id = minus_id->getText();}) |
   (mul_id: MUL_OP {op_id = mul_id->getText();}) |
-  (div_id:DIV_OP  {op_id = div_id->getText();}) |
+  (div_id:DIV_OP {op_id = div_id->getText();}) |
   (shl_id:SHL_OP  {op_id = shl_id->getText();}) |
   (shr_id:SHR_OP  {op_id = shr_id->getText();}) |
   (gt_id:GT_OP  {op_id = gt_id->getText();}) |
@@ -533,10 +420,10 @@ vc_BinaryOperatorInstantiation[vcDataPath* dp]
 
 
 //-------------------------------------------------------------------------------------------------------------------------
-// vc_UnaryOperatorInstantiation: vc_UnaryOp vc_Label LPAREN vc_Identifier RPAREN
+// vc_UnaryOperator_Instantiation: vc_UnaryOp vc_Label LPAREN vc_Identifier RPAREN
 //                                             LPAREN vc_Identifier RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
-vc_UnaryOperatorInstantiation[vcDataPath* dp] 
+vc_UnaryOperator_Instantiation[vcDataPath* dp] 
 {
   vcUnarySplitOperator* new_op = NULL;
   string id;
@@ -547,7 +434,7 @@ vc_UnaryOperatorInstantiation[vcDataPath* dp]
 }
 :
   ((not_id: NOT_OP {op_id = not_id->getText();}) |
-  (nop_id:NOP_OP  {op_id = nop_id->getText();})) id = vc_Label 
+  (nop_id:ASSIGN_OP  {op_id = nop_id->getText();})) id = vc_Label 
  LPAREN 
     wid = vc_Identifier {x = dp->Find_Wire(wid); assert(x != NULL);}
  RPAREN
@@ -558,9 +445,9 @@ vc_UnaryOperatorInstantiation[vcDataPath* dp]
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
-// vc_BranchInstantiation: BRANCH_OP vc_Label LPAREN vc_Identifier RPAREN
+// vc_Branch_Instantiation: BRANCH_OP vc_Label LPAREN vc_Identifier RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
-vc_BranchInstantiation[vcDataPath* dp] 
+vc_Branch_Instantiation[vcDataPath* dp] 
 {
   vcBranch* new_op = NULL;
   string id;
@@ -576,10 +463,10 @@ vc_BranchInstantiation[vcDataPath* dp]
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
-// vc_SelectInstantiation: SELECT_OP vc_Label LPAREN vc_Identifier vc_Identifier vc_Identifier RPAREN
+// vc_Select_Instantiation: SELECT_OP vc_Label LPAREN vc_Identifier vc_Identifier vc_Identifier RPAREN
 //                                             LPAREN vc_Identifier RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
-vc_SelectInstantiation[vcDataPath* dp] 
+vc_Select_Instantiation[vcDataPath* dp] 
 {
   vcSelect* new_op = NULL;
   string id;
@@ -605,11 +492,10 @@ vc_SelectInstantiation[vcDataPath* dp]
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
-// vc_CallInstantiation: CALL (INLINE)? vc_Label MODULE vc_Identifier LBRACE 
+// vc_Call_Instantiation: CALL (INLINE)? vc_Label MODULE vc_Identifier 
 //              LPAREN vc_Identifier* RPAREN LPAREN vc_Identifier* RPAREN
-//              vc_AttritbuteSpec* RBRACE
 //-------------------------------------------------------------------------------------------------------------------------
-vc_CallInstantiation[vcSystem* sys, vcDataPath* dp]
+vc_Call_Instantiation[vcSystem* sys, vcDataPath* dp]
 {
   bool inline_flag;
   vcCall* nc = NULL;
@@ -624,39 +510,61 @@ vc_CallInstantiation[vcSystem* sys, vcDataPath* dp]
        LPAREN (mid = vc_Identifier {vcWire* w = dp->Find_Wire(mid); assert(w != NULL); inwires.push_back(w);})* RPAREN
        LPAREN (mid = vc_Identifier {vcWire* w = dp->Find_Wire(mid); assert(w != NULL); outwires.push_back(w);})* RPAREN
        { nc = new vcCall(id, m, inwires, outwires, inline_flag); dp->Add_Call(nc);} 
-       (vc_AttributeSpec[nc])* RBRACE
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
-// vc_IOPort_Instantiation[dp]: IOPORT  vc_LABEL PIPE vc_Identifier  (IN | OUT) vc_Identifier
+// vc_IOPort_Instantiation[dp]: IOPORT  (IN | OUT) vc_LABEL LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
 vc_IOPort_Instantiation[vcDataPath* dp]
 {
- string id, wid, pid;
+ string id, in_id, out_id, pipe_id;
  vcWire* w;
  bool in_flag = false;
 }
-: IOPORT id = vc_Label PIPE pid = vc_Identifier (( IN {in_flag = true;})  | OUT) wid = vc_Identifier 
+: IOPORT (( IN {in_flag = true;})  | OUT)  id = vc_Label LPAREN in_id = vc_Identifier RPAREN 
+    LPAREN out_id = vc_Identifier RPAREN
        {
-          w = dp->Find_Wire(wid);
-          assert(w != NULL);
           if(in_flag)
           {
-             vcInport* np = new vcInport(id,pid,w);
+            w = dp->Find_Wire(out_id);
+            pipe_id = in_id;
+          }
+          else
+          {
+            w = dp->Find_Wire(in_id);
+            pipe_id = out_id;
+          }
+
+          assert(w != NULL);
+          if(w->Get_Type()->Size() != dp->Get_Parent()->Get_Parent()->Get_Pipe_Width(pipe_id))
+             vcSystem::Error("Pipe " + pipe_id + " width does not match wire width on IOport " + id);
+
+          if(in_flag)
+          {
+             vcInport* np = new vcInport(id,pipe_id,w);
              dp->Add_Inport(np);
           }
           else
           {
-             vcOutport* np = new vcOutport(id,pid,w);
+             vcOutport* np = new vcOutport(id,pipe_id,w);
              dp->Add_Outport(np);
           }
       }
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
-// vc_LoadStore_Instantiation: (LOAD | STORE) vc_Label MEMORYSPACE (vc_Identifier SLASH ) vc_Identifier ADDRESS vc_Identifier DATA vc_Identifier
+// vc_LoadStore_Instantiation: vc_LoadInstantiation | vc_StoreInstantiation
 //-------------------------------------------------------------------------------------------------------------------------
-vc_LoadStore_Instantiation[vcSystem* sys, vcDataPath* dp]
+vc_LoadStore_Instantiation[vcSystem* sys, vcDataPath* dp]:
+   vc_Load_Instantiation[sys,dp] | vc_Store_Instantiation[sys,dp]
+;
+
+
+
+//-------------------------------------------------------------------------------------------------------------------------
+// vc_Load_Instantiation: LOAD vc_Label FROM (vc_Identifier DIV_OP)? vc_Identifier LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN
+//-------------------------------------------------------------------------------------------------------------------------
+vc_Load_Instantiation[vcSystem* sys, vcDataPath* dp]
 {
    string id, wid;
    string ms_id;
@@ -666,32 +574,50 @@ vc_LoadStore_Instantiation[vcSystem* sys, vcDataPath* dp]
    vcMemorySpace* ms;
    bool is_load = false;
 }
-:
-   ((LOAD {is_load = true;}) | STORE) id = vc_Label MEMORYSPACE (m_id = vc_Identifier SLASH)? ms_id = vc_Identifier 
+:  LOAD id = vc_Label FROM (m_id = vc_Identifier DIV_OP)? ms_id = vc_Identifier 
      {
        ms = sys->Find_Memory_Space(m_id,ms_id); 
        assert(ms != NULL);
      }
-   ADDRESS wid = vc_Identifier {addr = dp->Find_Wire(wid); assert(addr != NULL);}
-   DATA    wid = vc_Identifier {data = dp->Find_Wire(wid); assert(data != NULL);}
+   LPAREN    wid = vc_Identifier {addr = dp->Find_Wire(wid); assert(addr != NULL);} RPAREN
+   LPAREN    wid = vc_Identifier {data = dp->Find_Wire(wid); assert(data != NULL);} RPAREN
    {
-      if(is_load)
-      {
          vcLoad* nl = new vcLoad(id, ms, addr, data);
          dp->Add_Load(nl);
-      }
-      else
-      {
+   }
+;
+
+
+//-------------------------------------------------------------------------------------------------------------------------
+// vc_Store_Instantiation: STORE vc_Label TO (vc_Identifier DIV_OP)? vc_Identifier LPAREN vc_Identifier vc_Identifier RPAREN
+//-------------------------------------------------------------------------------------------------------------------------
+vc_Store_Instantiation[vcSystem* sys, vcDataPath* dp]
+{
+   string id, wid;
+   string ms_id;
+   string m_id = "";
+   vcWire* addr;
+   vcWire* data;
+   vcMemorySpace* ms;
+   bool is_load = false;
+}
+:  STORE id = vc_Label TO (m_id = vc_Identifier DIV_OP)? ms_id = vc_Identifier 
+     {
+       ms = sys->Find_Memory_Space(m_id,ms_id); 
+       assert(ms != NULL);
+     }
+   LPAREN    wid = vc_Identifier {addr = dp->Find_Wire(wid); assert(addr != NULL);} 
+             wid = vc_Identifier {data = dp->Find_Wire(wid); assert(data != NULL);} RPAREN
+   {
          vcStore* ns = new vcStore(id, ms, addr, data);
          dp->Add_Store(ns);
-      }
    }
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
-// vc_PhiInstantiation: PHI vc_Label ( vc_Identifier )+ IMPLIES vc_Identifier
+// vc_Phi_Instantiation: PHI vc_Label LPAREN ( vc_Identifier )+ RPAREN LPAREN vc_Identifier RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
-vc_PhiInstantiation[vcDataPath* dp]
+vc_Phi_Instantiation[vcDataPath* dp]
 {
   string lbl;
   string id;
@@ -699,7 +625,8 @@ vc_PhiInstantiation[vcDataPath* dp]
   vcWire* outwire;
   vcPhi* phi;
   vector<vcWire*> inwires;
-}: PHI lbl = vc_Label ( id = vc_Identifier { tw = dp->Find_Wire(id); assert(tw != NULL); inwires.push_back(tw);})+ IMPLIES
+}: PHI lbl = vc_Label LPAREN ( id = vc_Identifier { tw = dp->Find_Wire(id); assert(tw != NULL); inwires.push_back(tw);})+ RPAREN
+   LPAREN
    id = vc_Identifier 
     { 
          outwire = dp->Find_Wire(id); 
@@ -707,36 +634,8 @@ vc_PhiInstantiation[vcDataPath* dp]
          phi = new vcPhi(lbl,inwires, outwire); 
          dp->Add_Phi(phi);
     }
+  RPAREN
 ;
-
-//-------------------------------------------------------------------------------------------------------------------------
-// vc_DatapathElementInstantiation: DPEINSTANCE [vc_Label] LIB vc_Identifier DPE vc_Identifier LBRACE 
-//                   (PARAMETER MAP (vc_Identifier IMPLIES vc_Identifier)+)?  
-//                   (PORT MAP (vc_Identifier IMPLIES vc_Identifier)+)?
-//                    vc_AttributeSpec* RBRACE
-//-------------------------------------------------------------------------------------------------------------------------
-vc_DatapathElementInstantiation[vcSystem* sys, vcModule* m, vcDataPath* dp]
-{
-	string id;
-	string template_id,param_id,port_id,wid,lib_id;
-	vcDatapathElement* dpe;
-}: DPEINSTANCE id = vc_Label LIBRARY (lib_id = vc_Identifier) DPE (template_id = vc_Identifier)
-   {
-      vcDatapathElementTemplate* tt = sys->Get_DPE_Template(lib_id,template_id);
-      assert(tt != NULL);
-      dpe = new vcDatapathElement(id,tt);
-   } 
-LBRACE
-(PARAMETER MAP
- (param_id = vc_Identifier IMPLIES vid:UINTEGER {dpe->Set_Parameter(param_id, atoi(vid->getText().c_str()));})+)?
-(PORT MAP
- (port_id = vc_Identifier IMPLIES wid = vc_Identifier {assert(dp->Find_Wire(wid) != NULL); dpe->Connect_Wire(port_id,dp->Find_Wire(wid));})+)? 
-(vc_AttributeSpec[dpe])* 
-RBRACE
-{ dp->Add_DPE(dpe);}
-
-;
-
 
 //-----------------------------------------------------------------------------------------------
 // vc_Label : LBRACKET SIMPLE_IDENTIFIER RBRACKET
@@ -783,7 +682,7 @@ vc_Interface_Object_Declaration[vcSystem* sys, vcModule* parent, string mode]
 ;
 
 //----------------------------------------------------------------------------------------------------------
-// vc_Object_Declaration_Base: SIMPLE_IDENTIFIER COLON vc_Type (ASSIGNEQUAL vc_Value)?
+// vc_Object_Declaration_Base: SIMPLE_IDENTIFIER COLON vc_Type (ASSIGN_OP vc_Value)?
 //----------------------------------------------------------------------------------------------------------
 vc_Object_Declaration_Base[vcSystem* sys, vcType** t, string& obj_name, vcValue** v]
 {
@@ -791,15 +690,15 @@ vc_Object_Declaration_Base[vcSystem* sys, vcType** t, string& obj_name, vcValue*
 	vcValue* vv = NULL;
 }
 : id:SIMPLE_IDENTIFIER {obj_name = id->getText();} COLON tt = vc_Type[sys] {*t = tt;}
-(ASSIGNEQUAL vv =  vc_Value[*t])? {if(v != NULL) *v = vv;}
+(ASSIGN_OP vv =  vc_Value[*t])? {if(v != NULL) *v = vv;}
 ;
 
 
 
 //----------------------------------------------------------------------------------------------------------
-// vc_WireDeclaration: (CONSTANT)? WIRE vc_Object_Declaration_Base
+// vc_Wire_Declaration: (CONSTANT)? WIRE vc_Object_Declaration_Base
 //----------------------------------------------------------------------------------------------------------
-vc_WireDeclaration[vcSystem* sys,vcDataPath* dp]
+vc_Wire_Declaration[vcSystem* sys,vcDataPath* dp]
 {
 	vcType* t;
         vcValue* v;
@@ -910,40 +809,40 @@ vc_ScalarType[vcSystem* sys] returns[vcType* t]
 : (t =  vc_IntType[sys] ) | (t = vc_FloatType[sys]) | (t =  vc_PointerType[sys] ) ;
 
 //----------------------------------------------------------------------------------------------------------
-// vc_IntType : INT LESS UINTEGER GREATER
+// vc_IntType : INT LT_OP UINTEGER GT_OP
 //----------------------------------------------------------------------------------------------------------
 vc_IntType[vcSystem* sys] returns [vcType* t]
 {
 	vcIntType* it;
 	unsigned int w;
 }
-: INT LESS i:UINTEGER {w = atoi(i->getText().c_str());} GREATER {it = Make_Integer_Type(w); t = (vcType*)it;}
+: INT LT_OP i:UINTEGER {w = atoi(i->getText().c_str());} GT_OP {it = Make_Integer_Type(w); t = (vcType*)it;}
 ;
 
 //----------------------------------------------------------------------------------------------------------
-// vc_FloatType: FLOAT LESS UINTEGER COMMA UINTEGER GREATER
+// vc_FloatType: FLOAT LT_OP UINTEGER COMMA UINTEGER GT_OP
 //----------------------------------------------------------------------------------------------------------
 vc_FloatType[vcSystem* sys] returns [vcType* t]
 {
 	vcFloatType* ft;
 	unsigned int c,m;
 }
-: FLOAT LESS cid:UINTEGER {c = atoi(cid->getText().c_str());} COMMA mid:UINTEGER {m = atoi(mid->getText().c_str());}
-GREATER {ft = Make_Float_Type(c,m); t = (vcType*)ft;}
+: FLOAT LT_OP cid:UINTEGER {c = atoi(cid->getText().c_str());} COMMA mid:UINTEGER {m = atoi(mid->getText().c_str());}
+GT_OP {ft = Make_Float_Type(c,m); t = (vcType*)ft;}
 ;
 
 
 //----------------------------------------------------------------------------------------------------------
-// vc_PointerType : POINTER LESS (vc_Identifier COLON)? vc_Identifier GREATER
+// vc_PointerType : POINTER LT_OP (vc_Identifier COLON)? vc_Identifier GT_OP
 //----------------------------------------------------------------------------------------------------------
 vc_PointerType[vcSystem* sys] returns [vcType* t]
 { 
 	vcPointerType* pt;
         string scope_id, space_id;
 }:
-POINTER LESS (sid:SIMPLE_IDENTIFIER SLASH {scope_id = sid->getText();})? mid:SIMPLE_IDENTIFIER
+POINTER LT_OP (sid:SIMPLE_IDENTIFIER DIV_OP {scope_id = sid->getText();})? mid:SIMPLE_IDENTIFIER
 {space_id = mid->getText(); pt = Make_Pointer_Type(sys, scope_id,space_id); t = (vcType*) pt;} 
-GREATER
+GT_OP
 ;
 //----------------------------------------------------------------------------------------------------------
 // vc_Array_Type: ARRAY (LBRACKET UINTEGER RBRACKET) OF vc_ScalarType
@@ -1009,35 +908,42 @@ CAPACITY      : "$capacity";
 DATAWIDTH     : "$datawidth";
 ADDRWIDTH     : "$addrwidth";
 MODULE        : "$module";
-SERIESBLOCK   : "$seriesblock";
-PARALLELBLOCK : "$parallelblock";
-FORKBLOCK     : "$forkblock";
-BRANCHBLOCK   : "$branchblock";
+SERIESBLOCK   : ";;";
+PARALLELBLOCK : "||";
+FORKBLOCK     : "::";
+BRANCHBLOCK   : "<>";
 OF            : "$of";
-FORK          : "$fork";
-JOIN          : "$join";
-BRANCH        : "$choose";
-MERGE         : "$merge";
+FORK          : "&->";
+JOIN          : "<-&";
+BRANCH        : "|->";
+MERGE         : "<-|";
 ENTRY         : "$entry";
 EXIT          : "$exit";
 IN            : "$in";
 OUT           : "$out";
 REQS          : "$reqs";
 ACKS          : "$acks";
-TRANSITION    : "$transition";
-PLACE         : "$place";
+TRANSITION    : "$T";
+PLACE         : "$P";
 HIDDEN        : "$hidden";
 PARAMETER     : "$parameter";
 PORT          : "$port";
 MAP           : "$map";
-DATAPATH      : "$datapath";
-CONTROLPATH   : "$controlpath";
-WIRE          : "$wire";
+DATAPATH      : "$DP";
+CONTROLPATH   : "$CP";
+WIRE          : "$W";
 MIN           : "$min";
 MAX           : "$max";
 DPEINSTANCE   : "$dpeinstance";
 LINK          : "$link";
 PHI           : "$phi";
+LOAD          : "$load";
+STORE         : "$store";
+TO            : "$to";
+CALL          : "$call";
+INLINE        : "$inline";
+IOPORT        : "$ioport";
+PIPE          : "$pipe";
 FROM          : "$from";
 AT            : "$at";
 CONSTANT      : "$constant";
@@ -1046,9 +952,6 @@ CONSTANT      : "$constant";
 // Special symbols
 COLON		 : ':' ; // label separator
 COMMA            : ',' ; // argument-separator, index-separator etc.
-ASSIGNEQUAL      : ":=" ; // assignment
-LESS             : "<" ; // less-than
-GREATER          : ">" ; // greater-than
 IMPLIES          : "=>"; 
 EQUIVALENT       : "<=>";
 LBRACE           : '{' ; // scope open
@@ -1057,7 +960,6 @@ LBRACKET         : '[' ; // array index marker
 RBRACKET         : ']' ; // array index marker
 LPAREN           : '(' ; // argument-list
 RPAREN           : ')' ; // argument-list
-SLASH            : '/' ;
 
 
 // types
@@ -1068,29 +970,34 @@ ARRAY          : "$array";
 RECORD         : "$record";
 
 // operators
-PLUS_OP          : "$+";
-MINUS_OP         : "$-";
-MUL_OP           : "$*";
-DIV_OP           : "$/";
-SHL_OP           : "$<<";
-SHR_OP           : "$>>";
-GT_OP            : "$>";
-GE_OP            : "$>=";
-EQ_OP            : "$==";
-LT_OP            : "$<";
-LE_OP            : "$<=";
-NEQ_OP           : "$!=";
-BITSEL_OP        : "$[]";
-CONCAT_OP        : "$_";
-BRANCH_OP        : "$==0?";
-SELECT_OP        : "$?";
-NOP_OP           : "$:=";
-NOT_OP           : "$~";
-OR_OP            : "$|";
-AND_OP           : "$&";
-XOR_OP           : "$^";
-NOR_OP           : "$~|";
-NAND_OP          : "$~&";
+PLUS_OP          : "+";
+MINUS_OP         : "-";
+MUL_OP           : "*";
+DIV_OP           : '/'; // note: character literal
+SHL_OP           : "<<";
+SHR_OP           : ">>";
+GT_OP            : ">";
+GE_OP            : ">=";
+EQ_OP            : "==";
+LT_OP            : "<";
+LE_OP            : "<=";
+UGT_OP           : "|>|";
+UGE_OP           : "|>=|";
+ULT_OP           : "|<|";
+ULE_OP           : "|<=|";
+NEQ_OP           : "!=";
+UNORDERED_OP     : "><";
+BITSEL_OP        : "[]";
+CONCAT_OP        : "_";
+BRANCH_OP        : "==0?";
+SELECT_OP        : "?";
+ASSIGN_OP        : ":="; 
+NOT_OP           : "~";
+OR_OP            : "|";
+AND_OP           : "&";
+XOR_OP           : "^";
+NOR_OP           : "~|";
+NAND_OP          : "~&";
 XNOR_OP          : "~^";
 
 // data format

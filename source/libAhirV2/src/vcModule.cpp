@@ -7,12 +7,16 @@
 #include <vcOperator.hpp>
 #include <vcDataPath.hpp>
 #include <vcModule.hpp>
+#include <vcSystem.hpp>
 
-vcModule::vcModule(string module_name):vcRoot(module_name)
+vcModule::vcModule(vcSystem* sys, string module_name):vcRoot(module_name)
 {
+  this->_parent = sys;
   this->_control_path = NULL;
   this->_data_path = NULL;
+  this->_num_calls = 0;
 }
+
 void vcModule::Set_Data_Path(vcDataPath* dp)
 {
   assert(dp != NULL);
@@ -20,11 +24,6 @@ void vcModule::Set_Data_Path(vcDataPath* dp)
   this->_data_path = dp;
 }
 
-void vcModule::Add_Phi_Link(vcPhi* phi, vector<vcTransition*>& inreqs, vcTransition* outack)
-{
-  this->_phi_link_map[phi].first = inreqs;
-  this->_phi_link_map[phi].second = outack;
-}
 
 void vcModule::Print(ostream& ofile)
 {
@@ -73,33 +72,27 @@ void vcModule::Print(ostream& ofile)
     this->_data_path->Print(ofile);
 
 
-  if(this->_link_map.size() > 0)
+  if(this->_linked_dpe_set.size() > 0)
     {
-      for(map<vcTransition*,pair<vcDatapathElement*,string> >::iterator iter = this->_link_map.begin();
-	  iter != this->_link_map.end();
+      for(set<vcDatapathElement*>::iterator iter = this->_linked_dpe_set.begin();
+	  iter != this->_linked_dpe_set.end();
 	  iter++)
 	{
-	  ofile << vcLexerKeywords[__LINK] << " " << (*iter).first->Get_Hierarchical_Id() << " ";
+	  vcDatapathElement* dpe = (*iter);
+	  ofile << dpe->Get_Id() << " ";
 	  ofile << vcLexerKeywords[__EQUIVALENT] << " ";
-	  ofile << (*iter).second.first->Get_Id() << vcLexerKeywords[__SLASH] << (*iter).second.second << endl;
-	}
-    }
 
-  if(this->_phi_link_map.size() > 0)
-    {
-      for(map<vcPhi*,pair<vector<vcTransition*>, vcTransition*> >::iterator iter = this->_phi_link_map.begin();
-	  iter != this->_phi_link_map.end();
-	  iter++)
-	{
-	  ofile << vcLexerKeywords[__PHI] << " " << vcLexerKeywords[__LINK] << " " 
-		<< (*iter).first->Get_Id() << " ";
-	  ofile << vcLexerKeywords[__REQS] << " ";
-	  for(int idx = 0; idx < (*iter).second.first.size(); idx++)
-	    {
-	      ofile << (*iter).second.first[idx]->Get_Hierarchical_Id() << " ";
-	    }
-	  ofile << vcLexerKeywords[__ACKS] << " ";
-	  ofile << (*iter).second.second->Get_Hierarchical_Id() << endl;
+	  ofile << vcLexerKeywords[__LPAREN];
+	  for(int idx = 0; idx < dpe->Get_Number_Of_Reqs(); idx++)
+	    ofile << dpe->Get_Req(idx)->Get_Hierarchical_Id() << " ";
+	  ofile << vcLexerKeywords[__RPAREN];
+	  ofile << " ";
+	  ofile << vcLexerKeywords[__LPAREN];
+	  for(int idx = 0; idx < dpe->Get_Number_Of_Acks(); idx++)
+	    ofile << dpe->Get_Ack(idx)->Get_Hierarchical_Id() << " ";
+	  ofile << vcLexerKeywords[__RPAREN];
+
+	  ofile << endl;
 	}
     }
 
@@ -107,27 +100,29 @@ void vcModule::Print(ostream& ofile)
   ofile << "}" << endl;
 }
 
-void vcModule::Add_Link(vector<string>& transition_ref, string dpe_name, string dpe_req_ack_name)
+void vcModule::Add_Link(vcDatapathElement* dpe, vector<vcTransition*>& reqs, vector<vcTransition*>& acks)
 {
-  pair<vcDatapathElement*,string> add_pair;
-  vcTransition* trans = this->_control_path->Find_Transition(transition_ref);
-  vcDatapathElement* dpe = this->_data_path->Find_DPE(dpe_name);
+  if(this->_linked_dpe_set.find(dpe) != this->_linked_dpe_set.end())
+    {
+      vcSystem::Error("multiple links to DPE " + dpe->Get_Id() + " in module " + this->Get_Id());
+      return;
+    }
 
-  assert(trans != NULL && dpe != NULL && dpe->Get_Template() != NULL);
+  this->_linked_dpe_set.insert(dpe);
 
-  if(trans->Get_Transition_Type() == _IN_TRANSITION)
-    assert(dpe->Get_Template()->Is_Ack(dpe_req_ack_name));
-  else if(trans->Get_Transition_Type() == _OUT_TRANSITION)
-    assert(dpe->Get_Template()->Is_Req(dpe_req_ack_name));
-  else
-    assert(0 && "link cannot be made with a hidden transition");
+  dpe->Add_Reqs(reqs);
+  for(int idx=0; idx < reqs.size(); idx++)
+    {
+      reqs[idx]->Add_DP_Link(dpe,_OUT_TRANSITION);
+      this->_linked_transition_set.insert(reqs[idx]);
+    }
 
-
-  add_pair.first = dpe;
-  add_pair.second = dpe_req_ack_name;
-
-  this->_link_map[trans] = add_pair;
-  dpe->Add_Link(trans,dpe_req_ack_name);
+  dpe->Add_Acks(acks);
+  for(int idx=0; idx < acks.size(); idx++)
+    {
+      acks[idx]->Add_DP_Link(dpe,_IN_TRANSITION);
+      this->_linked_transition_set.insert(acks[idx]);
+    }
 }
 
 void vcModule::Add_Memory_Space(vcMemorySpace* ms)
@@ -135,6 +130,7 @@ void vcModule::Add_Memory_Space(vcMemorySpace* ms)
   assert(ms != NULL && (this->_memory_space_map.find(ms->Get_Id())  == this->_memory_space_map.end()));
   this->_memory_space_map[ms->Get_Id()] = ms;
 }
+
 vcMemorySpace* vcModule::Find_Memory_Space(string ms_name)
 {
   map<string, vcMemorySpace*>::iterator iter = this->_memory_space_map.find(ms_name);
@@ -143,6 +139,7 @@ vcMemorySpace* vcModule::Find_Memory_Space(string ms_name)
   else
     return(NULL);
 }
+
 vcType* vcModule::Get_Argument_Type(string arg_name, string mode /* "in" or "out" */)
 {
   vcType* ret_type = NULL;
@@ -176,7 +173,6 @@ void vcModule::Add_Argument(string arg_name, string mode, vcType* t)
     }
 }
 
-
 vcWire* vcModule::Get_Argument(string arg_name, string mode)
 {
   vcWire* ret_wire = NULL;
@@ -200,9 +196,39 @@ vcWire* vcModule::Get_Argument(string arg_name, string mode)
   return(ret_wire);
 }
 
+
+int vcModule::Get_In_Arg_Width()
+{
+  int ret_val = 0;
+  for(map<string,vcWire*>::iterator iter = _input_arguments.begin();
+      iter != _input_arguments.end();
+      iter++)
+    {
+      ret_val += (*iter).second->Get_Type()->Size();
+    }
+  return(ret_val);
+}
+
+int vcModule::Get_Out_Arg_Width()
+{
+  int ret_val = 0;
+  for(map<string,vcWire*>::iterator iter = _output_arguments.begin();
+      iter != _output_arguments.end();
+      iter++)
+    {
+	ret_val += (*iter).second->Get_Type()->Size();
+    }
+  return(ret_val);
+}
+
+
 void vcModule::Check_Control_Structure()
 {
   this->_control_path->Check_Structure();
+}
+void vcModule::Compute_Maximal_Groups()
+{
+  this->_data_path->Compute_Maximal_Groups(this->_control_path);
 }
 void vcModule::Compute_Compatibility_Labels()
 {
@@ -212,8 +238,127 @@ void vcModule::Print_Control_Structure(ostream& ofile)
 {
   this->_control_path->Print_Structure(ofile);
   this->_control_path->Print_Compatibility_Labels(ofile);
+  this->Print_Compatible_Operator_Groups(ofile);
 }
+
+void vcModule::Print_Compatible_Operator_Groups(ostream& ofile)
+{
+  this->_data_path->Print_Compatible_Operator_Groups(ofile);
+}
+
 void vcModule::Print_VHDL(ostream& ofile)
 {
-  assert(0);
+  vcSystem::Print_VHDL_Inclusions(ofile);
+  this->Print_VHDL_Entity(ofile);
+  this->Print_VHDL_Architecture(ofile);
 }
+
+void vcModule::Print_VHDL_Argument_Ports(ostream& ofile)
+{
+  for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
+    {
+      ofile << "     " << _ordered_input_arguments[idx] << " : in " ;
+      vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
+      assert(w != NULL);
+      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
+    }
+
+  for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
+    {
+      ofile << "     " << _ordered_output_arguments[idx] << " : in " ;
+      vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
+      assert(w != NULL);
+      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
+    }
+
+  ofile << "     " << "clock : in std_logic;" << endl ;
+  ofile << "     " << "reset : in std_logic;"  << endl;
+  ofile << "     " << "start : in std_logic;"  << endl;
+  ofile << "     " << "fin   : out std_logic;" << endl;
+
+  this->_data_path->Print_VHDL_Memory_Interface_Ports(ofile);
+  this->_data_path->Print_VHDL_IO_Interface_Ports(ofile);
+  this->_data_path->Print_VHDL_Call_Interface_Ports(ofile);
+  
+}
+
+void vcModule::Print_VHDL_Ports(ostream& ofile)
+{
+  ofile << "  port (" << endl;
+
+  // arguments, clock, reset etc.
+  this->Print_VHDL_Argument_Ports(ofile);
+
+  // print external load/store ports.
+  this->_data_path->Print_VHDL_Memory_Interface_Ports(ofile);
+
+  // print external IO ports.
+  this->_data_path->Print_VHDL_IO_Interface_Ports(ofile);
+
+  // print call interface ports
+  this->_data_path->Print_VHDL_Call_Interface_Ports(ofile);
+
+  ofile << "  );" << endl;
+}
+
+
+void vcModule::Print_VHDL_Component(ostream& ofile)
+{
+  ofile << "component " << this->Get_Id() << " is" << endl;
+  this->Print_VHDL_Ports(ofile);
+  ofile << "end component;" << endl;
+}
+
+
+void vcModule::Print_VHDL_Entity(ostream& ofile)
+{
+  ofile << "entity " << this->Get_Id() << " is" << endl;
+  this->Print_VHDL_Ports(ofile);
+  ofile << "end entity " << this->Get_Id() << ";" << endl;
+}
+
+void vcModule::Print_VHDL_Architecture(ostream& ofile)
+{
+  ofile << "architecture Default of " << this->Get_Id() << endl;
+
+  // always true signal
+  ofile << "signal " << this->_control_path->Get_Always_True_Symbol() << ": Boolean;" << endl;
+
+  // print link signals between CP and DP
+  ofile << "-- links between control-path and data-path" << endl;
+  for(set<vcTransition*>::iterator iter = _linked_transition_set.begin();
+      iter != _linked_transition_set.end();
+      iter++)
+    {
+      if((*iter)->Get_Is_Input())
+	ofile << "signal " << (*iter)->Get_CP_To_DP_Symbol() << " : boolean;" << endl;
+      else if((*iter)->Get_Is_Output()) 
+	ofile << "signal " << (*iter)->Get_DP_To_CP_Symbol() << " : boolean;" << endl;
+    }
+  ofile << endl;
+
+  ofile << "-- IN PROGRESS" << endl;
+
+  //\todo
+  // print link signals between DP and Memories within the module
+  // print links between DP and Ports.
+
+  ofile << "begin " << endl;
+
+  ofile << "-- the control path" << endl;
+
+  // the always true signal, tied to true..
+  ofile << ((vcCPElement*)(this->_control_path))->Get_Always_True_Symbol() << " <= true; " << endl;
+
+  this->_control_path->Print_VHDL(ofile);
+
+  ofile << endl << endl;
+
+  ofile << "-- the data path" << endl;
+  this->_data_path->Print_VHDL(ofile);
+  ofile << endl;
+
+  ofile << "end Default;" << endl;
+
+}
+
