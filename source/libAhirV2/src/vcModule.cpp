@@ -253,52 +253,56 @@ void vcModule::Print_VHDL(ostream& ofile)
   this->Print_VHDL_Architecture(ofile);
 }
 
-void vcModule::Print_VHDL_Argument_Ports(ostream& ofile)
+string vcModule::Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile)
 {
+  
+  ofile << semi_colon << endl;
   for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
     {
+      ofile << semi_colon << endl;
       ofile << "     " << _ordered_input_arguments[idx] << " : in " ;
       vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
       assert(w != NULL);
-      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
+      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0)";
+      semi_colon = ";";
     }
 
   for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
     {
+      ofile << semi_colon << endl;
       ofile << "     " << _ordered_output_arguments[idx] << " : in " ;
       vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
       assert(w != NULL);
-      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
+      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0)";
+      semi_colon = ";";
     }
 
-  ofile << "     " << "clock : in std_logic;" << endl ;
-  ofile << "     " << "reset : in std_logic;"  << endl;
-  ofile << "     " << "start : in std_logic;"  << endl;
-  ofile << "     " << "fin   : out std_logic;" << endl;
-
-  this->_data_path->Print_VHDL_Memory_Interface_Ports(ofile);
-  this->_data_path->Print_VHDL_IO_Interface_Ports(ofile);
-  this->_data_path->Print_VHDL_Call_Interface_Ports(ofile);
-  
+  ofile << semi_colon << endl;
+  ofile <<  "clock : in std_logic;" << endl ;
+  ofile <<  "reset : in std_logic;"  << endl;
+  ofile <<  "start : in std_logic;"  << endl;
+  ofile <<  "fin   : out std_logic";
+  return(semi_colon);
 }
 
 void vcModule::Print_VHDL_Ports(ostream& ofile)
 {
-  ofile << "  port (" << endl;
+  string semi_colon;
+  ofile << "port (" << endl;
 
   // arguments, clock, reset etc.
-  this->Print_VHDL_Argument_Ports(ofile);
+  semi_colon = this->Print_VHDL_Argument_Ports(semi_colon, ofile);
 
   // print external load/store ports.
-  this->_data_path->Print_VHDL_Memory_Interface_Ports(ofile);
+  semi_colon = this->_data_path->Print_VHDL_Memory_Interface_Ports(semi_colon, ofile);
 
   // print external IO ports.
-  this->_data_path->Print_VHDL_IO_Interface_Ports(ofile);
+  semi_colon = this->_data_path->Print_VHDL_IO_Interface_Ports(semi_colon, ofile);
 
   // print call interface ports
-  this->_data_path->Print_VHDL_Call_Interface_Ports(ofile);
+  semi_colon = this->_data_path->Print_VHDL_Call_Interface_Ports(semi_colon, ofile);
 
-  ofile << "  );" << endl;
+  ofile << ");" << endl;
 }
 
 
@@ -319,7 +323,7 @@ void vcModule::Print_VHDL_Entity(ostream& ofile)
 
 void vcModule::Print_VHDL_Architecture(ostream& ofile)
 {
-  ofile << "architecture Default of " << this->Get_Id() << endl;
+  ofile << "architecture Default of " << this->Get_Id() << " is " << endl;
 
   // always true signal
   ofile << "signal " << this->_control_path->Get_Always_True_Symbol() << ": Boolean;" << endl;
@@ -337,11 +341,18 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
     }
   ofile << endl;
 
-  ofile << "-- IN PROGRESS" << endl;
 
-  //\todo
   // print link signals between DP and Memories within the module
-  // print links between DP and Ports.
+  for(map<string, vcMemorySpace*>::iterator iter = _memory_space_map.begin();
+      iter != _memory_space_map.end();
+      iter++)
+    {
+      (*iter).second->Print_VHDL_Interface_Signal_Declarations(ofile);
+    }
+  
+  // print links between DP and Ports. todo
+  ofile << "-- IN PROGRESS: signals to IO operators, signals to Call operators."
+	<< endl;  
 
   ofile << "begin " << endl;
 

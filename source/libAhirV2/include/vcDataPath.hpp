@@ -203,9 +203,9 @@ class vcDataPath: public vcRoot
   void Print_Compatible_Operator_Groups(ostream& ofile);
   void Print_Compatible_Operator_Groups(ostream& ofile, vector<set<vcDatapathElement*> >& dpe_groups);
 
-  void Print_VHDL_Memory_Interface_Ports(ostream& ofile);
-  void Print_VHDL_IO_Interface_Ports(ostream& ofile);
-  void Print_VHDL_Call_Interface_Ports(ostream& ofile);
+  string Print_VHDL_Memory_Interface_Ports(string semi_colon, ostream& ofile);
+  string Print_VHDL_IO_Interface_Ports(string semi_colon, ostream& ofile);
+  string Print_VHDL_Call_Interface_Ports(string semi_colon, ostream& ofile);
 
   void Print_VHDL(ostream& ofile);
 
@@ -221,5 +221,14 @@ class vcDataPath: public vcRoot
 
   void Print_VHDL_Concatenation(string target, vector<vcWire*> wires, ostream& ofile);
   void Print_VHDL_Disconcatenation(string source, int total_width, vector<vcWire*> wires, ostream& ofile);
+
+  void Print_VHDL_Concatenate_Req(string req_id, vector<vcTransition*>& reqs,  ostream& ofile);
+  void Print_VHDL_Disconcatenate_Ack(string ack_id, vector<vcTransition*>& acks,  ostream& ofile);
+
+  string Get_VHDL_IOport_Interface_Port_Name(string pipe_id, string pid);
+  string Get_VHDL_IOport_Interface_Port_Section(string pipe_id,
+						string in_or_out,
+						string pid,
+						int idx);
 };
 #endif // vcDataPath

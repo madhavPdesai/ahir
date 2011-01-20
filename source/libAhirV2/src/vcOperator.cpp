@@ -375,7 +375,9 @@ void vcBranch::Print(ostream& ofile)
 
 string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
 {
+
   string ret_string;
+
   if(in_type->Kind() == "vcIntType" || in_type->Kind() == "vcPointerType")
     {
       if(vc_op_id == vcLexerKeywords[__PLUS_OP]          ) { ret_string = "ApIntAdd";} 
@@ -441,7 +443,9 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
       if(vc_op_id == vcLexerKeywords[__ASSIGN_OP] ) { ret_string = "ApIntToApFloat";} // always a signed number..
       else { vcSystem::Error("unsupported int -> float operation " + vc_op_id);}
     }
-  return(ret_string);
+
+  string q_ret_string = '"' + ret_string + '"';
+  return(q_ret_string);
 }
 
 

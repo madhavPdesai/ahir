@@ -91,7 +91,7 @@ class vcModule: public vcRoot
   virtual void Print_VHDL(ostream& ofile);
 
   void Print_VHDL_Ports(ostream& ofile);
-  void Print_VHDL_Argument_Ports(ostream& ofile);
+  string Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile);
   void Print_VHDL_Component(ostream& ofile);
   void Print_VHDL_Entity(ostream& ofile);
   void Print_VHDL_Architecture(ostream& ofile);

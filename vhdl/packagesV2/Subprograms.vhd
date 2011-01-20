@@ -95,7 +95,7 @@ package Subprograms is
 
 
   procedure Extract(source: in std_logic_vector; index: in integer; target: out std_logic_vector);
-  procedure Insert(source: out std_logic_vector; index: in integer; target: in std_logic_vector);
+  procedure Insert(target: out std_logic_vector; index: in integer; source: in std_logic_vector);
 
 
   procedure Insert(x: out StdLogicArray2D; idx: in integer; w: in std_logic_vector );
@@ -917,9 +917,9 @@ package body Subprograms is
   -----------------------------------------------------------------------------
 
   -----------------------------------------------------------------------------
-  procedure Insert(source: out std_logic_vector; index: in integer; target: in std_logic_vector) is
+  procedure Insert(target: out std_logic_vector; index: in integer; source: in std_logic_vector) is
   begin
-    source(((index+1)*target'length)-1 downto (index*target'length)) := target;
+    target(((index+1)*source'length)-1 downto (index*source'length)) := source;
   end procedure;
 
   

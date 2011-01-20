@@ -182,10 +182,19 @@ vcStore* vcDataPath::Find_Store(string id)  {return(__FIND(_store_map,id));}
 void vcDataPath::Add_Call(vcCall* c)  {_ADD(_call_map,c->Get_Id(), c);}
 vcCall* vcDataPath::Find_Call(string id) {return(__FIND(_call_map,id));}
 
-void vcDataPath::Add_Inport(vcInport* p) {_ADD(_inport_map,p->Get_Id(), p);}
+void vcDataPath::Add_Inport(vcInport* p) 
+{
+  _ADD(_inport_map,p->Get_Id(), p);
+  assert(p->Get_Data()->Get_Size() == this->Get_Parent()->Get_Parent()->Get_Pipe_Width(p->Get_Pipe_Id()));
+}
 vcInport* vcDataPath::Find_Inport(string id) {return(__FIND(_inport_map,id));}
 
-void vcDataPath::Add_Outport(vcOutport* p) {_ADD(_outport_map,p->Get_Id(), p);}
+void vcDataPath::Add_Outport(vcOutport* p) 
+{
+  _ADD(_outport_map,p->Get_Id(), p);
+  assert(p->Get_Data()->Get_Size() == this->Get_Parent()->Get_Parent()->Get_Pipe_Width(p->Get_Pipe_Id()));
+
+}
 vcOutport* vcDataPath::Find_Outport(string id) {return(__FIND(_outport_map,id));}
 
 
@@ -237,13 +246,13 @@ void vcDataPath::Compute_Maximal_Groups(vcControlPath* cp)
   for(int idx = 0; idx < this->_compatible_load_groups.size(); idx++)
     {
       vcMemorySpace* ms = ((vcLoad*) (*(_compatible_load_groups[idx].begin())))->Get_Memory_Space();
-      ms->Register_Load_Group(this->_parent, idx);
+      ms->Register_Load_Group(this->_parent, idx, _compatible_load_groups[idx].size());
     }
 
   for(int idx = 0; idx < this->_compatible_store_groups.size(); idx++)
     {
       vcMemorySpace* ms = ((vcStore*) (*(_compatible_store_groups[idx].begin())))->Get_Memory_Space();
-      ms->Register_Store_Group(this->_parent, idx);
+      ms->Register_Store_Group(this->_parent, idx, _compatible_store_groups[idx].size());
     }
 
   for(int idx = 0; idx < this->_compatible_call_groups.size(); idx++)
@@ -341,10 +350,19 @@ void vcDataPath::Print_Compatible_Operator_Groups(ostream& ofile, vector<set<vcD
     }
 }
 
-void vcDataPath::Print_VHDL_Memory_Interface_Ports(ostream& ofile)
+
+
+//
+// for each memory space accessed by this module
+// add interface ports.
+//
+// the width of the interface ports is determined by number
+// of load/store groups associated with the memory space.
+string vcDataPath::Print_VHDL_Memory_Interface_Ports(string semi_colon, ostream& ofile)
 {
   map<vcMemorySpace*, vector<int> > ms_to_load_group_map;
   vcMemorySpace* ms = NULL;
+
 
   // Each load group to a memory space contributes one request 
   // and one complete bundle.
@@ -361,22 +379,32 @@ void vcDataPath::Print_VHDL_Memory_Interface_Ports(ostream& ofile)
       ms_iter != ms_to_load_group_map.end();
       ms_iter++)
     {
+      ofile << semi_colon << endl;
 
       ms = (*ms_iter).first;
 
       int num_reqs = (*ms_iter).second.size();
-      int tag_width = CeilLog2(ms->Get_Num_Loads());
+      int tag_width = ms->Get_Tag_Length();
 
+      // load ports to this memory space from this module
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_req") 
+	    << " : out  std_logic_vector(" << num_reqs-1  << " downto 0);" << endl;
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_ack") 
+	    << " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_addr") 
+	    << " : out  std_logic_vector(" << (num_reqs*ms->Get_Address_Width())-1 << " downto 0);" << endl;
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_tag") 
+	    << " :  out  std_logic_vector(" << (num_reqs* tag_width)-1  << " downto 0);" << endl;
 
-      ofile << ms->Get_Id() << "_lr_req  : out  std_logic_vector(" << num_reqs-1  << "downto 0);" << endl;
-      ofile << ms->Get_Id() << "_lr_ack  : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-      ofile << ms->Get_Id() << "_lr_addr : out  std_logic_vector(" << (num_reqs*ms->Get_Address_Width())-1 << "downto 0);" << endl;
-      ofile << ms->Get_Id() << "_lr_tag :  out  std_logic_vector(" << (num_reqs* tag_width)-1  << " downto 0);" << endl;
-
-      ofile << ms->Get_Id() << "_lc_req  : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-      ofile << ms->Get_Id() << "_lc_ack  : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-      ofile << ms->Get_Id() << "_lc_data : in   std_logic_vector(" << (num_reqs*ms->Get_Word_Size())-1 << " downto 0);" << endl;
-      ofile << ms->Get_Id() << "_lc_tag :  in  std_logic_vector("  << (num_reqs*tag_width)-1  << " downto 0);" << endl;
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_req") 
+	    << " : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_ack") 
+	    << " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_data") 
+	    << " : in   std_logic_vector(" << (num_reqs*ms->Get_Word_Size())-1 << " downto 0);" << endl;
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_tag") 
+	    << " :  in  std_logic_vector("  << (num_reqs*tag_width)-1  << " downto 0)";
+      semi_colon = ";";
     }
 
   map<vcMemorySpace*, vector<int> > ms_to_store_group_map;
@@ -396,26 +424,38 @@ void vcDataPath::Print_VHDL_Memory_Interface_Ports(ostream& ofile)
       ms_iter != ms_to_store_group_map.end();
       ms_iter++)
     {
+      ofile << semi_colon << endl;
+
       int num_stores = (*ms_iter).first->Get_Num_Stores();
 
       ms = (*ms_iter).first;
 
       int num_reqs = (*ms_iter).second.size();
-      int tag_width = CeilLog2(ms->Get_Num_Stores());
+      int tag_width = ms->Get_Tag_Length();
 
-      ofile << ms->Get_Id() << "_sr_req  : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-      ofile << ms->Get_Id() << "_sr_ack  : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-      ofile << ms->Get_Id() << "_sr_addr : out  std_logic_vector(" << (num_reqs*ms->Get_Address_Width())-1 << " downto 0);" << endl;
-      ofile << ms->Get_Id() << "_sr_data : out  std_logic_vector(" << (num_reqs*ms->Get_Word_Size())-1 << " downto 0);" << endl;
-      ofile << ms->Get_Id() << "_sr_tag :  out  std_logic_vector(" << (num_reqs*tag_width)-1 << " downto 0);" << endl;
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_req") 
+	    << " : out  std_logic_vector(" << num_reqs-1  << " downto 0);" << endl;
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_ack") 
+	    << " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_addr") 
+	    << " : out  std_logic_vector(" << (num_reqs*ms->Get_Address_Width())-1 << " downto 0);" << endl;
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_data") 
+	    << " : out  std_logic_vector(" << (num_reqs*ms->Get_Word_Size())-1 << " downto 0);" << endl;
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_tag") 
+	    << " :  out  std_logic_vector(" << (num_reqs* tag_width)-1  << " downto 0);" << endl;
 
-      ofile << ms->Get_Id() << "_sc_req  : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-      ofile << ms->Get_Id() << "_sc_ack  : in   std_logic_vector(" << num_reqs << " downto 0);" << endl;
-      ofile << ms->Get_Id() << "_sc_tag :  in  std_logic_vector("  << (num_reqs*tag_width)-1 << " downto 0);" << endl;
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_req") 
+	    << " : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_ack") 
+	    << " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
+      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_tag") 
+	    << " :  in  std_logic_vector("  << (num_reqs*tag_width)-1  << " downto 0)";
+      semi_colon = ";";
     }
+  return(semi_colon);
 }
 
-void vcDataPath::Print_VHDL_IO_Interface_Ports(ostream& ofile)
+string vcDataPath::Print_VHDL_IO_Interface_Ports(string semi_colon, ostream& ofile)
 {
   map<string, vector<int> > pipe_to_inport_group_map;
   string pipe_id;
@@ -436,9 +476,14 @@ void vcDataPath::Print_VHDL_IO_Interface_Ports(ostream& ofile)
 
       int num_reqs = (*ms_iter).second.size();
 
-      ofile << pipe_id << "_ioread_oreq  : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-      ofile << pipe_id << "_ioread_oack  : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-      ofile << pipe_id << "_ioread_odata : in   std_logic_vector(" << (num_reqs * word_size)-1 << " downto 0);" << endl;
+      ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"_ioread_req")
+	    << " : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
+      ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"_ioread_ack")
+	    << " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
+      ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"_ioread_data")
+	    << " : in   std_logic_vector(" << (num_reqs * word_size)-1 << " downto 0)";
+
+      semi_colon = ";";
     }
 
 
@@ -449,6 +494,9 @@ void vcDataPath::Print_VHDL_IO_Interface_Ports(ostream& ofile)
       pipe_to_outport_group_map[pipe_id].push_back(idx);
     }
 
+  if(pipe_to_outport_group_map.size() > 0)
+    ofile << semi_colon << endl;
+
   for(map<string,vector<int> >::iterator ms_iter = pipe_to_outport_group_map.begin();
       ms_iter != pipe_to_outport_group_map.end();
       ms_iter++)
@@ -457,14 +505,18 @@ void vcDataPath::Print_VHDL_IO_Interface_Ports(ostream& ofile)
       word_size = this->_parent->Get_Parent()->Get_Pipe_Width(pipe_id);
 
       int num_reqs = (*ms_iter).second.size();
-
-      ofile << pipe_id << "_iowrite_oreq  : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-      ofile << pipe_id << "_iowrite_oack  : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-      ofile << pipe_id << "_iowrite_odata : out  std_logic_vector(" << (num_reqs * word_size)-1 << " downto 0);" << endl;
+      ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"_iowrite_req")
+	    << " : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
+      ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"_iowrite_ack")
+	    << " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
+      ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"_iowrite_data")
+	    << " : out  std_logic_vector(" << (num_reqs * word_size)-1 << " downto 0)";
+      semi_colon = ";";
     }
+  return(semi_colon);
 }
 
-void vcDataPath::Print_VHDL_Call_Interface_Ports(ostream& ofile)
+string  vcDataPath::Print_VHDL_Call_Interface_Ports(string semi_colon, ostream& ofile)
 {
   map<vcModule*, vector<int> > ms_to_call_group_map;
   vcModule* ms;
@@ -484,6 +536,8 @@ void vcDataPath::Print_VHDL_Call_Interface_Ports(ostream& ofile)
       ms_iter++)
     {
 
+      ofile << semi_colon << endl;
+
       ms = (*ms_iter).first;
 
       int num_reqs = (*ms_iter).second.size();
@@ -497,8 +551,11 @@ void vcDataPath::Print_VHDL_Call_Interface_Ports(ostream& ofile)
       ofile << ms->Get_Id() << "_return_req  : out  std_logic_vector(" << num_reqs-1 <<  " downto 0);" << endl;
       ofile << ms->Get_Id() << "_return_ack  : in   std_logic_vector(" << num_reqs-1 <<  " downto 0);" << endl;
       ofile << ms->Get_Id() << "_return_data : in   std_logic_vector(" << (num_reqs * ms->Get_Out_Arg_Width())-1 << " downto 0);" << endl;
-      ofile << ms->Get_Id() << "_return_tag :  in   std_logic_vector(" << (num_reqs * tag_width)-1 << " downto 0);" << endl;
+      ofile << ms->Get_Id() << "_return_tag :  in   std_logic_vector(" << (num_reqs * tag_width)-1 << " downto 0)";
+
+      semi_colon = ";";
     }
+  return(semi_colon);
 }
 
 
@@ -513,6 +570,8 @@ void vcDataPath::Print_VHDL(ostream& ofile)
     {
       (*iter).second->Print_VHDL_Std_Logic_Declaration(ofile);
     }
+
+    
   ofile << "begin " << endl;
 
   // tie constant wires to their values.
@@ -521,14 +580,14 @@ void vcDataPath::Print_VHDL(ostream& ofile)
       iter++)
     {
       if((*iter).second->Is("vcConstantWire"))
-	ofile << (*iter).first << " <= " << ((vcConstantWire*)((*iter).second))->Get_Value()->To_VHDL_String();
+	ofile << (*iter).first << " <= " << ((vcConstantWire*)((*iter).second))->Get_Value()->To_VHDL_String() << ";" << endl;
     }
 
-  // now instantiate each group.
-  this->Print_VHDL_Phi_Instances(ofile);
-  this->Print_VHDL_Select_Instances(ofile);
-  this->Print_VHDL_Branch_Instances(ofile);
-  this->Print_VHDL_Split_Operator_Instances(ofile);
+  // now instantiate each group. 
+  this->Print_VHDL_Phi_Instances(ofile); // done
+  this->Print_VHDL_Select_Instances(ofile); // done
+  this->Print_VHDL_Branch_Instances(ofile); // done
+  this->Print_VHDL_Split_Operator_Instances(ofile); //done
   this->Print_VHDL_Load_Instances(ofile);
   this->Print_VHDL_Store_Instances(ofile);
   this->Print_VHDL_Inport_Instances(ofile);
@@ -678,6 +737,11 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	  use_constant = true;
 	  const_operand = ((vcConstantWire*)inwires[1])->Get_Value()->To_VHDL_String();
 	}
+      else
+	{
+	  const_operand += "\"0\"";
+	}
+
 
       // total out-width..
       int out_width = 0;
@@ -685,6 +749,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	{
 	  out_width += outwires[u]->Get_Size();
 	}
+
 
       // VHDL code for this shared group
       ofile << "-- shared split operator group (" << idx << ") : " ;
@@ -703,37 +768,10 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 
       ofile << "begin" << endl;
 
-      // concatenate reqL
-      ofile << " reqL <= ";
-      for(int rI = 0; rI < reqL.size(); rI++)
-	{
-	  if(rI > 0)
-	    ofile << " & ";
-	  ofile << reqL[rI]->Get_CP_To_DP_Symbol();
-	}
-      ofile << ";" << endl;
-
-      // disconcatenate ackL
-      for(int aI = 0; aI < ackL.size(); aI++)
-	{
-	  ofile << ackL[aI]->Get_DP_To_CP_Symbol() << " <= ackL(" << aI << ");" << endl;
-	}
-
-      // concatenate reqR
-      ofile << " reqR <= ";
-      for(int rI = 0; rI < reqR.size(); rI++)
-	{
-	  if(rI > 0)
-	    ofile << " & ";
-	  ofile << reqR[rI]->Get_CP_To_DP_Symbol();
-	}
-      ofile << ";" << endl;
-
-      // disconcatenate ackR
-      for(int aI = 0; aI < ackR.size(); aI++)
-	{
-	  ofile << ackR[aI]->Get_DP_To_CP_Symbol() << " <=  ackR(" << aI << ");" << endl;
-	}
+      this->Print_VHDL_Concatenate_Req("reqL",reqL,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("ackL",ackL,ofile);
+      this->Print_VHDL_Concatenate_Req("reqR",reqR,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("ackR",ackR,ofile);
 	
       // concatenate data_in
       this->Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
@@ -785,6 +823,29 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
     }
 }
 
+void vcDataPath::Print_VHDL_Concatenate_Req(string req_id, vector<vcTransition*>& reqs,  ostream& ofile)
+{
+	
+  for(int rI = 0; rI < reqs.size(); rI++)
+    {
+      ofile << req_id <<  "(" << (reqs.size()-1)-rI << ") <= " 
+	    << reqs[rI]->Get_CP_To_DP_Symbol() << ";" << endl;
+    }
+}
+
+
+void vcDataPath::Print_VHDL_Disconcatenate_Ack(string ack_id, vector<vcTransition*>& acks,  ostream& ofile)
+{
+  // disconcatenate ackL
+  for(int aI = 0; aI < acks.size(); aI++)
+    {
+      ofile << acks[(acks.size()-1) - aI]->Get_DP_To_CP_Symbol() << " <= "
+	    << ack_id << "(" << aI << ");" << endl;
+    }
+}
+
+
+
 void vcDataPath::Print_VHDL_Concatenation(string target, vector<vcWire*> wires, ostream& ofile)
 {
   ofile << target << " <= ";
@@ -810,23 +871,419 @@ void vcDataPath::Print_VHDL_Disconcatenation(string source, int total_width, vec
     }
 }
 
-// next:  load-req and load-ack instances..
+
 void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 { 
-  ofile << "-- IN PROGRESS " << endl; 
+  // print LoadReqShared instance and LoadCompleteShared instance.
+  for(int idx = 0; idx < this->_compatible_load_groups.size(); idx++)
+    { // for each operator group.
+
+      // number of requesters.
+      int num_reqs = _compatible_load_groups[idx].size();
+
+      // to collect inwires, outwires and reqs/acks.
+      vector<vcWire*> inwires;
+      vector<vcTransition*> reqL;
+      vector<vcTransition*> ackL;
+      vector<vcTransition*> reqR;
+      vector<vcTransition*> ackR;
+      vector<vcWire*> outwires;
+
+      // to keep track of the ids of the operators in this group.
+      vector<string> elements;
+
+      vcMemorySpace* ms = NULL;
+
+      // ok. collect all the information..
+      for(set<vcDatapathElement*>::iterator iter = _compatible_load_groups[idx].begin();
+	  iter != _compatible_load_groups[idx].end();
+	  iter++)
+	{
+
+	  assert((*iter)->Is("vcLoad"));
+	  vcLoad* so = (vcLoad*) (*iter);
+
+	  if(ms == NULL)
+	    ms = ((vcLoad*) so)->Get_Memory_Space();
+	  else
+	    assert(ms == ((vcLoad*) so)->Get_Memory_Space());
+
+	  elements.push_back(so->Get_Id());
+	  so->Append_Inwires(inwires);
+	  so->Append_Outwires(outwires);
+	  reqL.push_back(so->Get_Req(0));
+	  ackL.push_back(so->Get_Ack(0));
+	  reqR.push_back(so->Get_Req(1));
+	  ackR.push_back(so->Get_Ack(1));
+	}
+      assert(ms != NULL);
+
+      // address, data
+      int addr_width = ((vcLoadStore*)(*_compatible_load_groups[idx].begin()))->Get_Address()->Get_Size();
+      int data_width = ((vcLoadStore*)(*_compatible_load_groups[idx].begin()))->Get_Data()->Get_Size();
+      
+      // tag-length
+      int tag_length = ms->Get_Tag_Length();
+
+      // total in-width 
+      int in_width = 0;
+      for(int u = 0; u < inwires.size(); u++)
+	{
+	  in_width += inwires[u]->Get_Size();
+	}
+
+      // total out-width..
+      int out_width = 0;
+      for(int u = 0; u < outwires.size(); u++)
+	{
+	  out_width += outwires[u]->Get_Size();
+	}
+
+      // VHDL code for this shared group
+      ofile << "-- shared load operator group (" << idx << ") : " ;
+      for(int u = 0; u < elements.size(); u++)
+	ofile << elements[u] << " ";
+      ofile << endl;
+
+
+      // make a block
+      ofile << "LoadGroup" << idx << ": Block " << endl;
+      // in and out data.
+      ofile << "signal data_in: std_logic_vector(" << in_width-1 << " downto 0);" << endl;
+      ofile << "signal data_out: std_logic_vector(" << out_width-1 << " downto 0);" << endl;
+      // in and out acks.
+      ofile << "signal reqR, ackR, reqL, ackL : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+
+      ofile << "begin" << endl;
+
+      this->Print_VHDL_Concatenate_Req("reqL",reqL,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("ackL",ackL,ofile);
+      this->Print_VHDL_Concatenate_Req("reqR",reqR,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("ackR",ackR,ofile);
+	
+      // concatenate data_in
+      this->Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
+      // disconcatenate data_out
+      this->Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
+
+      vcModule* m = this->Get_Parent();
+
+      // now the operator instances 
+      ofile << "LoadReq: LoadReqShared " << endl;
+      ofile << "generic map ( addr_width => " << addr_width << ","
+	    << "  num_reqs => " << num_reqs << ","
+	    << "  tag_length => " << tag_length << ","
+	    << "  no_arbitration => true)" << endl;
+      ofile << "port map ( reqL => reqL " << ", " <<  endl
+	    << "    ackL => ackL " << ", " <<  endl
+	    << "    dataL => data_in, " << endl
+	    << "    mreq => " 
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m,"load", "lr_req", idx)  << "," << endl
+	    << "    mack => " 
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m, "load", "lr_ack", idx)  << "," << endl
+	    << "    maddr => " 
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m, "load", "lr_addr",idx) << "," << endl
+	    << "    mtag => "  
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m , "load", "lr_tag",idx) << "," << endl
+	    << "  clk => clk, reset => reset);" << endl;
+
+      ofile << "LoadComplete: LoadCompleteShared " << endl;
+      ofile << "generic map ( data_width => " << data_width << ","
+	    << "  num_reqs => " << num_reqs << ","
+	    << "  tag_length => " << tag_length << ","
+	    << "  no_arbitration => true)" << endl;
+      ofile << "port map ( reqR => reqR " << ", " <<  endl
+	    << "    ackR => ackR " << ", " <<  endl
+	    << "    dataR => data_out, " << endl
+	    << "    mreq => " 
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m,"load", "lc_req", idx)  << "," << endl
+	    << "    mack => " 
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m,"load", "lc_ack", idx)  << "," << endl
+	    << "    maddr => " 
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m,"load", "lc_addr", idx)  << "," << endl
+	    << "    mtag => "  
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m, "load", "lc_tag", idx)  << "," << endl
+	    << "  clk => clk, reset => reset);" << endl;
+      ofile << "end Block; -- load group " << idx << endl; // thats it..
+    }
 }
+
 void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 { 
-  ofile << "-- IN PROGRESS " << endl; 
+  for(int idx = 0; idx < this->_compatible_store_groups.size(); idx++)
+    { // for each operator group.
+
+      // number of requesters.
+      int num_reqs = _compatible_store_groups[idx].size();
+
+      vector<vcWire*> addrwires;
+      vector<vcWire*> datawires;
+      vector<vcTransition*> reqL;
+      vector<vcTransition*> ackL;
+      vector<vcTransition*> reqR;
+      vector<vcTransition*> ackR;
+
+      // to keep track of the ids of the operators in this group.
+      vector<string> elements;
+
+      vcMemorySpace* ms = NULL;
+
+      // ok. collect all the information..
+      for(set<vcDatapathElement*>::iterator iter = _compatible_store_groups[idx].begin();
+	  iter != _compatible_store_groups[idx].end();
+	  iter++)
+	{
+	  assert((*iter)->Is("vcStore"));
+	  vcStore* so = (vcStore*) (*iter);
+
+	  if(ms == NULL)
+	    ms = so->Get_Memory_Space();
+	  else
+	    assert(ms == so->Get_Memory_Space());
+
+	  elements.push_back(so->Get_Id());
+	  addrwires.push_back(so->Get_Address());
+	  datawires.push_back(so->Get_Data());
+
+	  reqL.push_back(so->Get_Req(0));
+	  ackL.push_back(so->Get_Ack(0));
+	  reqR.push_back(so->Get_Req(1));
+	  ackR.push_back(so->Get_Ack(1));
+	}
+      assert(ms != NULL);
+
+      // address, data
+      int addr_width = ((vcLoadStore*)(*_compatible_store_groups[idx].begin()))->Get_Address()->Get_Size();
+      assert(addr_width == ms->Get_Address_Width());
+      int data_width = ((vcLoadStore*)(*_compatible_store_groups[idx].begin()))->Get_Data()->Get_Size();
+      assert(data_width == ms->Get_Word_Size());
+      
+      // tag-length
+      int tag_length = ms->Get_Tag_Length();
+
+      // total addr-width 
+      int total_addr_width = addrwires.size() * addr_width;
+      int total_data_width = datawires.size() * data_width;
+      
+      // VHDL code for this shared group
+      ofile << "-- shared store operator group (" << idx << ") : " ;
+      for(int u = 0; u < elements.size(); u++)
+	ofile << elements[u] << " ";
+      ofile << endl;
+
+
+      // make a block
+      ofile << "StoreGroup" << idx << ": Block " << endl;
+      // in and out data.
+      ofile << "signal addr_in: std_logic_vector(" << total_addr_width-1 << " downto 0);" << endl;
+      ofile << "signal data_in: std_logic_vector(" << total_data_width-1 << " downto 0);" << endl;
+      // in and out acks.
+      ofile << "signal reqR, ackR, reqL, ackL : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+
+      ofile << "begin" << endl;
+
+      this->Print_VHDL_Concatenate_Req("reqL",reqL,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("ackL",ackL,ofile);
+      this->Print_VHDL_Concatenate_Req("reqR",reqR,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("ackR",ackR,ofile);
+
+      // concatenate addr_in and data_in
+      this->Print_VHDL_Concatenation(string("addr_in"), addrwires,ofile);
+      this->Print_VHDL_Concatenation(string("data_in"), datawires,ofile);
+
+      vcModule* m = this->Get_Parent();
+
+      // now the operator instances 
+      ofile << "StoreReq: StoreReqShared " << endl;
+      ofile << "generic map ( addr_width => " << addr_width << ","
+	    << "  num_reqs => " << num_reqs << ","
+	    << "  tag_length => " << tag_length << ","
+	    << "  no_arbitration => true)" << endl;
+      ofile << "port map ( reqL => reqL " << ", " <<  endl
+	    << "    ackL => ackL " << ", " <<  endl
+	    << "    addr => addr_in, " << endl
+	    << "    data => data_in, " << endl
+	    << "    mreq => " 
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m,"store", "sr_req", idx)  << "," << endl
+	    << "    mack => " 
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m,"store", "sr_ack", idx)  << "," << endl
+	    << "    maddr => " 
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m,"store","sr_addr",idx) << "," << endl
+	    << "    mdata => " 
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m,"store","sr_data",idx) << "," << endl
+	    << "    mtag => "  
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m,"store","sr_tag",idx) << "," << endl
+	    << "  clk => clk, reset => reset);" << endl;
+
+      ofile << "StoreComplete: StoreCompleteShared " << endl;
+      ofile << "generic map ( "
+	    << "  num_reqs => " << num_reqs << ","
+	    << "  tag_length => " << tag_length << ")" << endl;
+
+      ofile << "port map ( reqR => reqR " << ", " <<  endl
+	    << "    ackR => ackR " << ", " <<  endl
+	    << "    mreq => " 
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m,"store", "sc_req", idx)  << "," << endl
+	    << "    mack => " 
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m,"store", "sc_ack", idx)  << "," << endl
+	    << "    mtag => "  
+	    << ms->Get_VHDL_Memory_Interface_Port_Section(m,"store", "sc_tag", idx)  << "," << endl
+	    << "  clk => clk, reset => reset);" << endl;
+      ofile << "end Block; -- store group " << idx << endl; // thats it..
+    }
 }
+
 void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 {
-  ofile << "-- IN PROGRESS " << endl; 
+
+  for(int idx = 0; idx < this->_compatible_inport_groups.size(); idx++)
+    { // for each operator group.
+
+      // number of requesters.
+      int num_reqs = _compatible_inport_groups[idx].size();
+
+      vector<vcTransition*> req;
+      vector<vcTransition*> ack;
+      vector<vcWire*> outwires;
+
+      // to keep track of the ids of the operators in this group.
+      vector<string> elements;
+
+      string pipe_id;
+      int data_width = -1;
+
+      // ok. collect all the information..
+      for(set<vcDatapathElement*>::iterator iter = _compatible_inport_groups[idx].begin();
+	  iter != _compatible_inport_groups[idx].end();
+	  iter++)
+	{
+
+	  assert((*iter)->Is("vcInport"));
+	  vcInport* so = (vcInport*) (*iter);
+
+	  if(pipe_id == "")
+	    pipe_id = ((vcInport*) so)->Get_Pipe_Id();
+	  else
+	    assert(pipe_id == ((vcInport*) so)->Get_Pipe_Id());
+
+	  if(data_width < 0)
+	    data_width = so->Get_Data()->Get_Size();
+	  else
+	    assert(data_width == so->Get_Data()->Get_Size());
+
+	  elements.push_back(so->Get_Id());
+	  so->Append_Outwires(outwires);
+	  req.push_back(so->Get_Req(0));
+	  ack.push_back(so->Get_Ack(0));
+	}
+      assert(pipe_id != "");
+      assert(data_width > 0);
+
+      // total out-width..
+      int out_width = 0;
+      for(int u = 0; u < outwires.size(); u++)
+	{
+	  out_width += outwires[u]->Get_Size();
+	}
+
+      // VHDL code for this shared group
+      ofile << "-- shared inport operator group (" << idx << ") : " ;
+      for(int u = 0; u < elements.size(); u++)
+	ofile << elements[u] << " ";
+      ofile << endl;
+
+
+      // make a block
+      ofile << "InportGroup" << idx << ": Block " << endl;
+      // in and out data.
+      ofile << "signal data_out: std_logic_vector(" << out_width-1 << " downto 0);" << endl;
+      // in and out acks.
+      ofile << "signal req, ack : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+
+      ofile << "begin" << endl;
+
+      this->Print_VHDL_Concatenate_Req("req",req,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("ack",ack, ofile);
+
+      // disconcatenate data_out
+      this->Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
+
+      // now the operator instances 
+      ofile << "Inport: InputPort " << endl;
+      ofile << "generic map ( data_width => " << data_width << ","
+	    << "  num_reqs => " << num_reqs << ","
+	    << "  no_arbitration => true)" << endl;
+      ofile << "port map ( req => req " << ", " <<  endl
+	    << "    ack => ack " << ", " <<  endl
+	    << "    data => data_out, " << endl
+	    << "    oreq => " 
+	    << this->Get_VHDL_IOport_Interface_Port_Section(pipe_id, "in" , "_oread_oreq", idx)  << "," << endl
+	    << "    oack => " 
+	    << this->Get_VHDL_IOport_Interface_Port_Section(pipe_id,"in",  "_oread_oack", idx)  << "," << endl
+	    << "    odata => " 
+	    << this->Get_VHDL_IOport_Interface_Port_Section(pipe_id,"in", "_oread_odata", idx)  << "," << endl
+	    << "  clk => clk, reset => reset);" << endl;
+      ofile << "end Block; -- inport group " << idx << endl; // thats it..
+    }
 }
+
+
 void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 { 
   ofile << "-- IN PROGRESS " << endl; 
 }
+
+
+string vcDataPath::Get_VHDL_IOport_Interface_Port_Name(string pipe_id, string pid)
+{
+  return(pipe_id + pid);
+}
+
+string vcDataPath::Get_VHDL_IOport_Interface_Port_Section(string pipe_id, 
+							  string in_or_out,
+							  string pid,
+							  int idx)
+{
+  vcModule* m = this->Get_Parent();
+  vcSystem* sys = m->Get_Parent();
+
+  map<string,vector<int> >::iterator iter;
+  if(in_or_out == "in")
+    {
+      iter = _inport_group_map.find(pipe_id);
+      assert(iter != _inport_group_map.end());
+    }
+  else
+    {
+      iter = _outport_group_map.find(pipe_id);
+      assert(iter != _outport_group_map.end());
+    }
+
+  int down_index;
+  // left to right 
+  for(int index = 0; index < (*iter).second.size(); index++)
+    {
+      down_index = ((*iter).second.size()-1) - index; // position from left.
+      if(idx == (*iter).second[index])
+	break;
+      if(index == (*iter).second.size() - 1)
+	assert(0);
+    }
+
+  assert(sys->Has_Pipe(pipe_id));
+  int pipe_width = sys->Get_Pipe_Width(pipe_id);
+
+  if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))
+    return(this->Get_Id() + "_" + pid + "(" + IntToStr(down_index) + ")");
+  else if(pid.find("data") != string::npos)
+    return(this->Get_Id() + "_" + pid + "(" 
+	   + IntToStr(((down_index+1)*pipe_width)-1) + " downto "
+	   + IntToStr(down_index*pipe_width) + ")");
+  else
+    assert(0); // fatal
+}
+
+
 void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 { 
   ofile << "-- IN PROGRESS " << endl; 

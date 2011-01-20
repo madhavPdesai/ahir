@@ -46,8 +46,6 @@ public:
   virtual int Get_Number_Of_Input_Wires() {assert(0);}
   virtual int Get_Number_Of_Output_Wires() {assert(0);}
 
-  virtual void Append_Inwires(vector<vcWire*>& inwires) {assert(0);}
-  virtual void Append_Outwires(vector<vcWire*>& outwires) {assert(0);}
 
   virtual string Get_Op_Id() {assert(0);}
   virtual vcType* Get_Input_Type() {assert(0);}
@@ -107,7 +105,7 @@ protected:
 public:
   vcIOport(string id, string pipe_id, vcWire* w);
   string Get_Pipe_Id() {return(this->_pipe_id);}
-
+  vcWire* Get_Data() {return(this->_data);}
   virtual string Kind() {return("vcIOport");}
   virtual bool Is_Shareable_With(vcDatapathElement* other) 
   {
@@ -127,6 +125,12 @@ public:
   virtual void Print(ostream& ofile);
 
   virtual string Kind() {return("vcOutport");}
+
+  virtual void Append_Inwires(vector<vcWire*>& inwires) 
+  {
+    inwires.push_back(_data);
+  }
+
   friend class vcDataPath;
 };
 
@@ -138,6 +142,11 @@ public:
   virtual void Print(ostream& ofile);
 
   virtual string Kind() {return("vcInport");}
+  virtual void Append_Outwires(vector<vcWire*>& outwires) 
+  {
+    outwires.push_back(_data);
+  }
+
   friend class vcDataPath;
 };
 
@@ -160,6 +169,9 @@ public:
   {
     return((this->Kind() == other->Kind()) && (this->_memory_space == ((vcLoadStore*)other)->Get_Memory_Space()));
   }
+
+  vcWire* Get_Address() {return(this->_address);}
+  vcWire* Get_Data() {return(this->_data);}
 
   friend class vcDataPath;
 };
@@ -207,6 +219,7 @@ public:
     inwires.push_back(_address);
     inwires.push_back(_data);
   }
+
   virtual void Append_Outwires(vector<vcWire*>& outwires) 
   {
     // nothing.

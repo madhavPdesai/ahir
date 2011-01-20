@@ -194,7 +194,7 @@ void vcSystem::Print_VHDL_Component(ostream& ofile)
 {
   ofile << "component " << this->Get_Id() << " is " << endl;
   ofile << "port (" << endl;
-  this->_top_module->Print_VHDL_Argument_Ports(ofile);
+  this->_top_module->Print_VHDL_Argument_Ports("", ofile);
   ofile << ");" << endl;
   ofile << "end component;" << endl;
   
@@ -203,16 +203,62 @@ void vcSystem::Print_VHDL_Entity(ostream& ofile)
 {
   ofile << "entity " << this->Get_Id() << " is " << endl;
   ofile << "port (" << endl;
-  this->_top_module->Print_VHDL_Argument_Ports(ofile);
+  string semi_colon;
+  semi_colon = this->_top_module->Print_VHDL_Argument_Ports(semi_colon,ofile);
+  
+  // print memory-space initialization ports.
+  for(map<string,vcMemorySpace*>::iterator iter = _memory_space_map.begin();
+      iter != _memory_space_map.end();
+      iter++)
+    {
+      ofile << semi_colon << endl;
+      semi_colon = ";";
+      
+      vcMemorySpace* ms  = (*iter).second;
+
+      ofile << ms->Get_Id() << "_init_lr_req: in  std_logic; " << endl;
+      ofile << ms->Get_Id() << "_init_lr_ack: out std_logic; " << endl;
+      ofile << ms->Get_Id() << "_init_lr_addr: in std_logic_vector(" << ms->Get_Address_Width()-1 << " downto 0);" << endl;
+
+      ofile << ms->Get_Id() << "_init_lc_req: in std_logic; " << endl;
+      ofile << ms->Get_Id() << "_init_lc_ack: out std_logic; " << endl;
+      ofile << ms->Get_Id() << "_init_lc_data: out std_logic_vector(" << ms->Get_Word_Size()-1 << " downto 0);" << endl;
+
+      ofile << ms->Get_Id() << "_init_sr_req: in  std_logic; " << endl;
+      ofile << ms->Get_Id() << "_init_sr_ack: out std_logic; " << endl;
+      ofile << ms->Get_Id() << "_init_sr_addr: in std_logic_vector(" << ms->Get_Address_Width()-1 << " downto 0);" << endl;
+      ofile << ms->Get_Id() << "_init_sr_data: in std_logic_vector(" << ms->Get_Word_Size()-1 << " downto 0);" << endl;
+
+      ofile << ms->Get_Id() << "_init_sc_req: in std_logic; " << endl;
+      ofile << ms->Get_Id() << "_init_sc_ack: out std_logic " << endl;
+    }
+
   ofile << ");" << endl;
   ofile << "end entity;" << endl;
-
 }
 
 void vcSystem::Print_VHDL_Architecture(ostream& ofile)
 {
   ofile << "architecture Default of " << this->Get_Id() << " is " << endl;
   ofile << "-- IN PROGRESS " << endl;
+  
+  // initialization signal tags.. unused tied to 0  
+  for(map<string,vcMemorySpace*>::iterator iter = _memory_space_map.begin();
+      iter != _memory_space_map.end();
+      iter++)
+    {
+      vcMemorySpace* ms  = (*iter).second;
+      ofile << "-- initialization tags for memory space " << ms->Get_Id() << endl;
+      ofile << "signal " << ms->Get_Id() << "_init_lr_tag: std_logic_vector(" << ms->Get_Tag_Length()-1 << " downto 0);" << endl;
+
+      ofile << "signal " << ms->Get_Id() << "_init_lc_tag: std_logic_vector(" << ms->Get_Tag_Length()-1 << " downto 0);" << endl;
+
+      ofile << "signal " << ms->Get_Id() << "_init_sr_tag: std_logic_vector(" << ms->Get_Tag_Length()-1 << " downto 0);" << endl;
+
+      ofile << "signal " << ms->Get_Id() << "_init_sc_tag: std_logic_vector(" << ms->Get_Tag_Length()-1 << " downto 0);" << endl;
+    }
+
+
   for(map<string,vcModule*>::iterator moditer = _modules.begin();
       moditer != _modules.end();
       moditer++)
@@ -221,7 +267,17 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
     }
 
   ofile << "begin " << endl;
-  ofile << "-- IN PROGRESS " << endl;
+  ofile << "-- signals tied to 0 " << endl;
+  for(map<string,vcMemorySpace*>::iterator iter = _memory_space_map.begin();
+      iter != _memory_space_map.end();
+      iter++)
+    {
+      vcMemorySpace* ms  = (*iter).second;
+      ofile << "-- these are not necessary, but need to have them, so tie them to '0'" << endl;
+      ofile << ms->Get_Id() << "_init_lr_tag <= (others => '0');" << endl;
+      ofile << ms->Get_Id() << "_init_sr_tag <= (others => '0');" << endl;
+    }
+
   ofile << "end Default;" << endl;
   
 }
