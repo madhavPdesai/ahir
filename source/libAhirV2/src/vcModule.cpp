@@ -288,7 +288,7 @@ string vcModule::Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile)
 void vcModule::Print_VHDL_Ports(ostream& ofile)
 {
   string semi_colon;
-  ofile << "port (" << endl;
+  ofile << "port ( -- @" << endl;
 
   // arguments, clock, reset etc.
   semi_colon = this->Print_VHDL_Argument_Ports(semi_colon, ofile);
@@ -302,28 +302,28 @@ void vcModule::Print_VHDL_Ports(ostream& ofile)
   // print call interface ports
   semi_colon = this->_data_path->Print_VHDL_Call_Interface_Ports(semi_colon, ofile);
 
-  ofile << ");" << endl;
+  ofile << "-- # " << endl << ");" << endl;
 }
 
 
 void vcModule::Print_VHDL_Component(ostream& ofile)
 {
-  ofile << "component " << this->Get_Id() << " is" << endl;
+  ofile << "component " << this->Get_Id() << " is -- @" << endl;
   this->Print_VHDL_Ports(ofile);
-  ofile << "end component;" << endl;
+  ofile << "-- #" << endl << "end component;" << endl;
 }
 
 
 void vcModule::Print_VHDL_Entity(ostream& ofile)
 {
-  ofile << "entity " << this->Get_Id() << " is" << endl;
+  ofile << "entity " << this->Get_Id() << " is -- @" << endl;
   this->Print_VHDL_Ports(ofile);
-  ofile << "end entity " << this->Get_Id() << ";" << endl;
+  ofile << "-- #" << endl << "end entity " << this->Get_Id() << ";" << endl;
 }
 
 void vcModule::Print_VHDL_Architecture(ostream& ofile)
 {
-  ofile << "architecture Default of " << this->Get_Id() << " is " << endl;
+  ofile << "architecture Default of " << this->Get_Id() << " is -- @" << endl;
 
   // always true signal
   ofile << "signal " << this->_control_path->Get_Always_True_Symbol() << ": Boolean;" << endl;
@@ -354,7 +354,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
   ofile << "-- IN PROGRESS: signals to IO operators, signals to Call operators."
 	<< endl;  
 
-  ofile << "begin " << endl;
+  ofile << "-- #" << endl << "begin --  @" << endl;
 
   ofile << "-- the control path" << endl;
 
@@ -369,7 +369,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
   this->_data_path->Print_VHDL(ofile);
   ofile << endl;
 
-  ofile << "end Default;" << endl;
+  ofile << "-- #" << endl << "end Default;" << endl;
 
 }
 

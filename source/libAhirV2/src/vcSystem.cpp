@@ -201,8 +201,8 @@ void vcSystem::Print_VHDL_Component(ostream& ofile)
 }
 void vcSystem::Print_VHDL_Entity(ostream& ofile)
 {
-  ofile << "entity " << this->Get_Id() << " is " << endl;
-  ofile << "port (" << endl;
+  ofile << "entity " << this->Get_Id() << " is  -- system @" << endl;
+  ofile << "port ( -- system-ports @" << endl;
   string semi_colon;
   semi_colon = this->_top_module->Print_VHDL_Argument_Ports(semi_colon,ofile);
   
@@ -233,13 +233,13 @@ void vcSystem::Print_VHDL_Entity(ostream& ofile)
       ofile << ms->Get_Id() << "_init_sc_ack: out std_logic " << endl;
     }
 
-  ofile << ");" << endl;
-  ofile << "end entity;" << endl;
+  ofile << "-- system-ports # " << endl << ");" << endl;
+  ofile << "-- #\n end entity; " << endl;
 }
 
 void vcSystem::Print_VHDL_Architecture(ostream& ofile)
 {
-  ofile << "architecture Default of " << this->Get_Id() << " is " << endl;
+  ofile << "architecture Default of " << this->Get_Id() << " is -- system-architecture @" << endl;
   ofile << "-- IN PROGRESS " << endl;
   
   // initialization signal tags.. unused tied to 0  
@@ -266,7 +266,7 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
       (*moditer).second->Print_VHDL_Component(ofile);
     }
 
-  ofile << "begin " << endl;
+  ofile << "-- # " << endl << "begin -- @" << endl;
   ofile << "-- signals tied to 0 " << endl;
   for(map<string,vcMemorySpace*>::iterator iter = _memory_space_map.begin();
       iter != _memory_space_map.end();
@@ -278,7 +278,7 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
       ofile << ms->Get_Id() << "_init_sr_tag <= (others => '0');" << endl;
     }
 
-  ofile << "end Default;" << endl;
+  ofile << "-- # " << endl << "end Default;" << endl;
   
 }
 

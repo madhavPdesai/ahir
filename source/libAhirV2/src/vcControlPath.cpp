@@ -297,7 +297,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
   if(this->Get_Number_Of_Predecessors() > 1)
     {
 
-      ofile << this->Get_VHDL_Id() << "_block : Block -- non-trivial join transition " << this->Get_Hierarchical_Id() << endl;
+      ofile << this->Get_VHDL_Id() << "_block : Block -- non-trivial join transition " << this->Get_Hierarchical_Id() << " @" <<  endl;
 
       ofile << "signal " <<  this->Get_VHDL_Id() << "_predecessors: BooleanArray(" 
 	    << this->Get_Number_Of_Predecessors()-1 << " downto 0);" << endl;
@@ -307,17 +307,17 @@ void vcTransition::Print_VHDL(ostream& ofile)
 	  ofile << "signal " <<  this->Get_VHDL_Id() << "_p" << idx << "_pred: BooleanArray(0 downto 0);" << endl;
 	  ofile << "signal " <<  this->Get_VHDL_Id() << "_p" << idx << "_succ: BooleanArray(0 downto 0);" << endl;
 	}
-      ofile << "begin " << endl;
+      ofile << "-- #" << endl << "begin " << endl;
 
       for(int idx = 0; idx < this->Get_Number_Of_Predecessors(); idx++)
 	{
 	  vcCPElement* pred = this->Get_Predecessors()[idx];
-	  ofile << this->Get_VHDL_Id() << "_" << idx << "_place: Place port map( ";
+	  ofile << this->Get_VHDL_Id() << "_" << idx << "_place: Place port map( -- @";
 	  // predecessors
 	  ofile << this->Get_VHDL_Id() << "_p" << idx << "_pred, ";
 	  ofile << this->Get_VHDL_Id() << "_p" << idx << "_succ, ";
 	  ofile <<  this->Get_VHDL_Id() << "_predecessors(" << idx << "), ";
-	  ofile << "clk, reset);" << endl;
+	  ofile << "clk, reset" << "-- #" << endl << "); -- " << endl;
 
 	  ofile << this->Get_VHDL_Id() << "_p" << idx << "_succ(0) <=  " << this->Get_Exit_Symbol() << ";" << endl;
 	  ofile << this->Get_VHDL_Id() << "_p" << idx << "_pred(0) <=  " << pred->Get_Exit_Symbol() << ";" << endl;
@@ -350,7 +350,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
     ofile << this->Get_CP_To_DP_Symbol() << " <= " << this->Get_Exit_Symbol() << "; -- link to DP" << endl;
   
   if(this->Get_Number_Of_Predecessors() > 1) // block was used...
-    ofile << "end Block; -- non-trivial join transition " << this->Get_Hierarchical_Id() << endl;
+    ofile << "-- #" << endl << "end Block; -- non-trivial join transition " << this->Get_Hierarchical_Id() << endl;
 
 }
 
@@ -434,7 +434,7 @@ void vcCPBlock::Print_VHDL(ostream& ofile)
   string id = (this->Get_Hierarchical_Id() == "" ? "control-path" : this->Get_Hierarchical_Id());
 
   // declare all exit flags.
-  ofile << this->Get_VHDL_Id() << ": Block -- " << id << endl;
+  ofile << this->Get_VHDL_Id() << ": Block -- " << id << " @" << endl;
   ofile << "signal " << this->Get_Start_Symbol() << ": Boolean;" << endl;
   ofile << "signal " << this->_entry->Get_Exit_Symbol() << ": Boolean;" << endl;
   ofile << "signal " << this->_exit->Get_Exit_Symbol() << ": Boolean;" << endl;
@@ -442,7 +442,7 @@ void vcCPBlock::Print_VHDL(ostream& ofile)
     {
       ofile << "signal " << _elements[idx]->Get_Exit_Symbol() << " : Boolean;" << endl;
     }
-  ofile << "begin " << endl;
+  ofile << "-- #" << endl << "begin -- @" << endl;
   this->Print_VHDL_Start_Symbol_Assignment(ofile);
 
   this->_entry->Print_VHDL(ofile);
@@ -453,7 +453,7 @@ void vcCPBlock::Print_VHDL(ostream& ofile)
   this->_exit->Print_VHDL(ofile);
   this->Print_VHDL_Exit_Symbol_Assignment(ofile);
 
-  ofile << "end Block; -- " << id << endl;
+  ofile << "-- #" << endl << "end Block; -- " << id << endl;
 }
 
 void vcCPBlock::Print_Elements(ostream& ofile)
