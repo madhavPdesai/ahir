@@ -338,32 +338,70 @@ void AaProgram::Write_C_Model()
 
 
 
-void AaProgram::Write_Ahir_Model()
+void AaProgram::Write_VC_Model(int default_space_pointer_width,
+				 int default_space_word_size,
+				 ostream& ofile)
+{
+  AaProgram::Write_VC_Pipe_Declarations(ofile);
+  AaProgram::Write_VC_Memory_Spaces(default_space_pointer_width,
+				    default_space_word_size,
+				    ofile);
+
+  AaProgram::Write_VC_Modules(default_space_pointer_width,
+				default_space_word_size,
+				ofile);
+}
+
+
+void AaProgram::Write_VC_Pipe_Declarations(ostream& ofile)
 {
 
-/* Later
-  Aa2Ahir::Add_Memory_Space("", "default");
-
-  // this stuff should ideally be moved to AaObject.
-  // make objects (map them to distinct memory spaces)
-  // make modules
-  for(std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.begin();
-      miter != AaProgram::_objects.end();
-      miter++)
+  // Pipes in VC are declared at the system level.
+  //
+  // declare pipes at top-level and recursively
+  // enter all modules/blocks and print pipes declared
+  // in their scope..
+  for(map<string,AaObject*,StringCompare>::iterator iter = AaProgram::_objects.begin();
+      iter != AaProgram::_objects.end();
+      iter++)
     {
-      (*miter).second->Write_Ahir_Model();
+      if((*iter).second->Is("AaPipeObject"))
+	{
+	  ((AaPipeObject*)((*iter).second))->Write_VC_Model(ofile);
+	}
     }
 
+  for(map<string,AaModule*,StringCompare>::iterator iter = AaProgram::_modules.begin();
+      iter != AaProgram::_modules.end();
+      iter++)
+    {
+      ((*iter).second)->Write_VC_Pipe_Declarations(ofile);
+    }
+  
+}
+
+
+void AaProgram::Write_VC_Memory_Spaces(int default_space_pointer_width,
+				       int default_space_word_size,
+				       ostream& ofile)
+{
+  // todo.
+}
+
+
+void AaProgram::Write_VC_Modules(int default_space_pointer_width,
+			     int default_space_word_size,
+			     ostream& ofile)
+{
   for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
       miter != AaProgram::_modules.end();
       miter++)
     {
-	assert(0);
+      (*miter).second->Write_VC_Model(default_space_pointer_width,
+				      default_space_word_size,
+				      ofile);
     }
-*/
-
 }
-
 
 
 

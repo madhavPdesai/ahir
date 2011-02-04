@@ -31,7 +31,6 @@ architecture default_arch of InputPortLevel is
   signal data_final, data_reg : IPWArray(data'length(1)-1 downto 0);
   signal req_active, ack_sig  : std_logic_vector(data'length(1)-1 downto 0); 
   
-  constant no_arbitration: boolean := All_Entries_Same(colouring);
   
 begin  -- default_arch
 

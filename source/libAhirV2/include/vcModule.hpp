@@ -38,8 +38,8 @@ class vcModule: public vcRoot
   // for each module, record the indices of the
   // groups which call this module
   map<vcModule*,vector<int> > _call_group_map;
-
   int _num_calls;
+  int _max_number_of_caller_tags_needed;
 
   bool _inline;
  public:
@@ -48,16 +48,25 @@ class vcModule: public vcRoot
 
   virtual void Print(ostream& ofile);
 
-  void Register_Call_Group(vcModule* m, int g_id) {_call_group_map[m].push_back(g_id); _num_calls++;}
+
+  void Register_Call_Group(vcModule* m, int g_id, int g_size) 
+  {
+    _call_group_map[m].push_back(g_id); 
+    _num_calls++;
+    _max_number_of_caller_tags_needed = MAX(_max_number_of_caller_tags_needed, g_size);
+  }
   int Get_Num_Calls() {return(this->_num_calls);}
+  int Get_Caller_Tag_Length() {return(CeilLog2(this->_max_number_of_caller_tags_needed));}
+  int Get_Callee_Tag_Length() {return(CeilLog2(this->_num_calls));}
 
   int Get_In_Arg_Width();
   int Get_Out_Arg_Width();
-  void Add_Link(vcDatapathElement* dpe, vector<vcTransition*>& reqs, vector<vcTransition*>& acks);
-  void Add_Memory_Space(vcMemorySpace* ms);
+
   vcMemorySpace* Find_Memory_Space(string ms_name);
   vcType* Get_Argument_Type(string arg_name, string mode /* "in" or "out" */);
-  void Add_Argument(string arg_name, string mode, vcType* t);
+
+
+
   vcWire* Get_Argument(string arg_name, string mode);
   string Get_Input_Argument(int idx)
   {
@@ -71,31 +80,61 @@ class vcModule: public vcRoot
     return(this->_ordered_output_arguments[idx]);
   }
 
-  void Set_Inline(bool v) { this->_inline = v;}
+
   bool Get_Inline() { return this->_inline;}
   virtual string Kind() {return("vcModule");}
 
-  void Set_Control_Path(vcControlPath* cp) { this->_control_path = cp;}
   vcControlPath* Get_Control_Path() { return(this->_control_path);}
-
-  void Set_Data_Path(vcDataPath* dp);
   vcDataPath* Get_Data_Path() { return(this->_data_path);}
+
+  // builder methods
+  void Add_Link(vcDatapathElement* dpe, vector<vcTransition*>& reqs, vector<vcTransition*>& acks);
+  void Add_Memory_Space(vcMemorySpace* ms);
+  void Add_Argument(string arg_name, string mode, vcType* t);
+  void Set_Control_Path(vcControlPath* cp) { this->_control_path = cp;}
+  void Set_Data_Path(vcDataPath* dp);
+  void Set_Inline(bool v) { this->_inline = v;}
 
   void Check_Control_Structure();
   void Compute_Compatibility_Labels();
   void Compute_Maximal_Groups();
 
+  // print analysis results.
   void Print_Control_Structure(ostream& ofile);
   void Print_Compatible_Operator_Groups(ostream& ofile);
 
+  // VHDL related stuff..
   virtual void Print_VHDL(ostream& ofile);
-
   void Print_VHDL_Ports(ostream& ofile);
   string Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile);
   void Print_VHDL_Component(ostream& ofile);
   void Print_VHDL_Entity(ostream& ofile);
   void Print_VHDL_Architecture(ostream& ofile);
 
+  string Get_VHDL_Call_Interface_Port_Name(string pid);
+  string Get_VHDL_Call_Interface_Port_Section(vcModule* m,
+					      string call_or_return,
+					      string pid,
+					      int idx);
+
+  string Print_VHDL_Tag_Interface_Ports(string semi_colon,ostream& ofile);
+  void Print_VHDL_Argument_Signals(ostream& ofile);
+  void Print_VHDL_Caller_Aggregate_Signals(ostream& ofile);
+
+  void Print_VHDL_In_Arg_Disconcatenation(ostream& ofile);
+  void Print_VHDL_Out_Arg_Concatenation(ostream& ofile);
+  void Print_VHDL_Call_Arbiter_Instantiation(ostream& ofile);
+
+  void Print_VHDL_Instance(ostream& ofile);
+  void Print_VHDL_Instance_Port_Map(ostream& ofile);
+  string Print_VHDL_Argument_Port_Map(string  comma, ostream& ofile);
+  string Print_VHDL_Tag_Interface_Port_Map(string comma, ostream& ofile);
+  string Print_VHDL_System_Argument_Ports(string semi_colon,ostream& ofile);
+  void Print_VHDL_System_Argument_Signals(ostream& ofile);
+  string Print_VHDL_System_Instance_Port_Map(string comma,ostream& ofile);
+
+  bool Get_Caller_Module_Section(vcModule* caller_module, int& hindex, int& lindex);
+  string Get_Aggregate_Section(string pid, int hindex, int lindex);
 };
 
 #endif // vcModule

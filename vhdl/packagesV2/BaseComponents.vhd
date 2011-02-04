@@ -6,6 +6,41 @@ library ahir;
 use ahir.Types.all;
 
 package BaseComponents is
+
+  -----------------------------------------------------------------------------
+  -- control path components
+  -----------------------------------------------------------------------------
+  
+  component place
+    generic (
+      marking : boolean); 
+    port (
+      preds : in  BooleanArray;
+      succs : in  BooleanArray;
+      token : out boolean;
+      clk   : in  std_logic;
+      reset : in  std_logic); 
+  end component;
+
+  component transition
+    port (
+      preds      : in BooleanArray;
+      symbol_in  : in boolean;
+      symbol_out : out boolean); 
+  end component;
+
+  -----------------------------------------------------------------------------
+  -- miscellaneous
+  -----------------------------------------------------------------------------
+  component BypassRegister 
+  generic(data_width: integer); 
+  port (
+    clk, reset : in  std_logic;
+    enable     : in  std_logic;
+    data_in     : in  std_logic_vector(data_width-1 downto 0);
+    data_out    : out std_logic_vector(data_width-1 downto 0));
+  end component BypassRegister;
+
   -----------------------------------------------------------------------------
   -- operator base components
   -----------------------------------------------------------------------------
@@ -33,8 +68,10 @@ package BaseComponents is
         );
     port (
       -- req/ack follow level protocol
-      reqR, ackL : out std_logic;
-      ackR, reqL : in  std_logic;
+      reqR: out std_logic;
+      ackR: in std_logic;
+      reqL: in std_logic;
+      ackL : out  std_logic;
       -- tagL is passed out to tagR
       tagL       : in  std_logic_vector(twidth-1 downto 0);
       -- input array consists of m sets of 1 or 2 possibly concatenated
@@ -100,6 +137,44 @@ package BaseComponents is
         );
   end component SplitOperatorSharedTB;
 
+  -----------------------------------------------------------------------------
+  -- phi,branch,select
+  -----------------------------------------------------------------------------
+  component PhiBase 
+    generic (
+      num_reqs   : integer;
+      data_width : integer);
+    port (
+      req                 : in  BooleanArray(num_reqs-1 downto 0);
+      ack                 : out Boolean;
+      idata               : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
+      odata               : out std_logic_vector(data_width-1 downto 0);
+      clk, reset          : in std_logic);
+  end component PhiBase;
+
+
+  component BranchBase 
+    port (condition: in std_logic_vector(0 downto 0);
+          clk,reset: in std_logic;
+          req: in Boolean;
+          ack0: out Boolean;
+          ack1: out Boolean);
+  end component;
+
+  component SelectBase 
+    generic(data_width: integer);
+    port(x,y: in std_logic_vector(data_width-1 downto 0);
+         sel: in std_logic_vector(0 downto 0);
+         req: in boolean;
+         z: out std_logic_vector(data_width-1 downto 0);
+         ack: out boolean;
+         clk,reset: in std_logic);
+  end component SelectBase;
+
+
+  -----------------------------------------------------------------------------
+  -- mux/demux
+  -----------------------------------------------------------------------------
   
   component InputMuxBase 
     generic ( iwidth: integer;
@@ -145,36 +220,251 @@ package BaseComponents is
       clk, reset          : in std_logic);
   end component OutputDeMuxBase;
 
-  component PhiBase 
-    generic (
-      num_reqs   : integer;
-      data_width : integer);
+
+  -----------------------------------------------------------------------------
+  -- arbiters
+  -----------------------------------------------------------------------------
+  component CallArbiter
+    generic(num_reqs: integer;
+            call_data_width: integer;
+            return_data_width: integer;
+            tag_length: integer);
+    port ( -- ready/ready handshake on all ports
+      -- ports for the caller
+      call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+      call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+      call_data   : in  std_logic_vector((num_reqs*call_data_width)-1 downto 0);
+      -- call port connected to the called module
+      call_mreq   : out std_logic;
+      call_mack   : in  std_logic;
+      call_mdata  : out std_logic_vector(call_data_width-1 downto 0);
+      call_mtag   : out std_logic_vector(tag_length-1 downto 0);
+      -- similarly for return, initiated by the caller
+      return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+      return_acks : out std_logic_vector(num_reqs-1 downto 0);
+      return_data : out std_logic_vector((num_reqs*return_data_width)-1 downto 0);
+      -- return from function
+      -- function to assert mreq arbiter to return mack
+      -- ( NOTE: It has to be this way, the arbiter should
+      -- accept the return value if it has room)
+      return_mreq : in std_logic;
+      return_mack : out std_logic;
+      return_mdata : in  std_logic_vector(return_data_width-1 downto 0);
+      return_mtag : in  std_logic_vector(tag_length-1 downto 0);
+      clk: in std_logic;
+      reset: in std_logic);
+  end component CallArbiter;
+
+  component CallArbiterUnitary
+    generic(num_reqs: integer;
+            call_data_width: integer;
+            return_data_width: integer;
+            caller_tag_length: integer;
+            callee_tag_length: integer);
+    port ( -- ready/ready handshake on all ports
+      -- ports for the caller
+      call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+      call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+      call_data   : in  std_logic_vector((num_reqs*call_data_width)-1 downto 0);
+      call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+      -- similarly for return, initiated by the caller
+      return_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+      return_acks   : out std_logic_vector(num_reqs-1 downto 0);
+      return_data   : out std_logic_vector((num_reqs*return_data_width)-1 downto 0);
+      return_tag    : out  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+      -- ports connected to the called module
+      call_start   : out std_logic;
+      call_fin   : in  std_logic;
+      call_in_args  : out std_logic_vector(call_data_width-1 downto 0);
+      call_in_tag   : out std_logic_vector(callee_tag_length-1 downto 0);
+      -- from the called module
+      call_out_args : in  std_logic_vector(return_data_width-1 downto 0);
+      call_out_tag : in  std_logic_vector(callee_tag_length-1 downto 0);
+      clk: in std_logic;
+      reset: in std_logic);
+  end component CallArbiterUnitary;
+
+  component CallMediator
     port (
-      req                 : in  BooleanArray(num_reqs-1 downto 0);
-      ack                 : out Boolean;
-      idata               : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
-      odata               : out std_logic_vector(data_width-1 downto 0);
-      clk, reset          : in std_logic);
-  end component PhiBase;
+      call_req: in std_logic;
+      call_ack: out std_logic;
+      enable_call_data: out std_logic;
+      return_req: in std_logic;
+      return_ack: out std_logic;
+      enable_return_data: out std_logic;
+      start: out std_logic;
+      fin: in std_logic;
+      clk: in std_logic;
+      reset: in std_logic);
+  end component CallMediator;
 
-
-  component BranchBase 
-    port (condition: in std_logic_vector(0 downto 0);
-          clk,reset: in std_logic;
-          req: in Boolean;
-          ack0: out Boolean;
-          ack1: out Boolean);
+  -----------------------------------------------------------------------------
+  -- IO ports
+  -----------------------------------------------------------------------------
+  component InputPort
+    generic (num_reqs: integer;
+             data_width: integer;
+             no_arbitration: boolean);
+    port (
+      -- pulse interface with the data-path
+      req        : in  BooleanArray(num_reqs-1 downto 0);
+      ack        : out BooleanArray(num_reqs-1 downto 0);
+      data       : out std_logic_vector((num_reqs*data_width)-1 downto 0);
+      -- ready/ready interface with outside world
+      oreq       : out std_logic;
+      oack       : in  std_logic;
+      odata      : in  std_logic_vector(data_width-1 downto 0);
+      clk, reset : in  std_logic);
   end component;
 
-  component SelectBase 
-    generic(data_width: integer);
-    port(x,y: in std_logic_vector(data_width-1 downto 0);
-         sel: in std_logic_vector(0 downto 0);
-         req: in boolean;
-         z: out std_logic_vector(data_width-1 downto 0);
-         ack: out boolean;
-         clk,reset: in std_logic);
-  end component SelectBase;
-  
+
+  component InputPortLevel
+    generic (num_reqs: integer; 
+             data_width: integer;  
+             no_arbitration: boolean);
+    port (
+      -- ready/ready interface with the requesters
+      req       : in  std_logic_vector(num_reqs-1 downto 0);
+      ack       : out std_logic_vector(num_reqs-1 downto 0);
+      data      : out std_logic_vector((num_reqs*data_width)-1 downto 0);
+      -- ready/ready interface with outside world
+      oreq       : out std_logic;
+      oack       : in  std_logic;
+      odata      : in  std_logic_vector(data_width-1 downto 0);
+      clk, reset : in  std_logic);
+    
+  end component InputPortLevel;
+
+
+  component OutputPort
+    generic(num_reqs: integer;
+            data_width: integer;
+            no_arbitration: boolean);
+    port (
+      req        : in  BooleanArray(num_reqs-1 downto 0);
+      ack        : out BooleanArray(num_reqs-1 downto 0);
+      data       : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
+      oreq       : out std_logic;
+      oack       : in  std_logic;
+      odata      : out std_logic_vector(data_width-1 downto 0);
+      clk, reset : in  std_logic);
+  end component;
+
+  component OutputPortLevel
+    generic(num_reqs: integer;
+            data_width: integer;
+            no_arbitration: boolean);
+    port (
+      req       : in  std_logic_vector(num_reqs-1 downto 0);
+      ack       : out std_logic_vector(num_reqs-1 downto 0);
+      data      : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
+      oreq       : out std_logic;
+      oack       : in  std_logic;
+      odata      : out std_logic_vector(data_width-1 downto 0);
+      clk, reset : in  std_logic);
+  end component;
+
+
+  -----------------------------------------------------------------------------
+  -- load/store
+  -----------------------------------------------------------------------------
+  component LoadReqShared
+    generic
+      (
+	addr_width: integer;
+      	num_reqs : integer; -- how many requesters?
+	tag_length: integer;
+	no_arbitration: Boolean
+        );
+    port (
+      -- req/ack follow pulse protocol
+      reqL                     : in BooleanArray(num_reqs-1 downto 0);
+      ackL                     : out BooleanArray(num_reqs-1 downto 0);
+      -- concatenated address corresponding to access
+      dataL                    : in std_logic_vector((addr_width*num_reqs)-1 downto 0);
+      -- address to memory
+      maddr                   : out std_logic_vector(addr_width-1 downto 0);
+      mtag                    : out std_logic_vector(tag_length-1 downto 0);
+      mreq                    : out std_logic;
+      mack                    : in std_logic;
+      -- clock, reset (active high)
+      clk, reset              : in std_logic);
+  end component LoadReqShared;
+
+  component StoreReqShared
+    generic
+      (
+	addr_width: integer;
+	data_width : integer;
+      	num_reqs : integer; -- how many requesters?
+	tag_length: integer;
+	no_arbitration: Boolean
+        );
+    port (
+      -- req/ack follow pulse protocol
+      reqL                     : in BooleanArray(num_reqs-1 downto 0);
+      ackL                     : out BooleanArray(num_reqs-1 downto 0);
+      -- address corresponding to access
+      addr                    : in std_logic_vector((addr_width*num_reqs)-1 downto 0);
+      data                    : in std_logic_vector((data_width*num_reqs)-1 downto 0);
+      -- address to memory
+      maddr                   : out std_logic_vector(addr_width-1 downto 0);
+      mdata                   : out std_logic_vector(data_width-1 downto 0);
+      mtag                    : out std_logic_vector(tag_length-1 downto 0);
+      mreq                    : out std_logic;
+      mack                    : in std_logic;
+      -- clock, reset (active high)
+      clk, reset              : in std_logic);
+  end component StoreReqShared;
+
+
+  component LoadCompleteShared
+    generic
+      (
+        data_width: integer;
+        tag_length:  integer;
+        num_reqs : integer;
+        no_arbitration: boolean
+        );
+    port (
+      -- req/ack follow level protocol
+      reqR                     : in BooleanArray(num_reqs-1 downto 0);
+      ackR                     : out BooleanArray(num_reqs-1 downto 0);
+      dataR                    : out std_logic_vector((data_width*num_reqs)-1 downto 0);
+      -- output data consists of concatenated pairs of ops.
+      mdata                    : in std_logic_vector(data_width-1 downto 0);
+      mreq                     : out std_logic;
+      mack                     : in  std_logic;
+      mtag                     : in std_logic_vector(tag_length-1 downto 0);
+      -- with dataR
+      clk, reset              : in std_logic);
+  end component LoadCompleteShared;
+
+  component StoreCompleteShared
+    generic (num_reqs: integer;
+             tag_length: integer);
+    port (
+      -- in requester array, pulse protocol
+      -- more than one requester can be active
+      -- at any time
+      reqR : in BooleanArray(num_reqs-1 downto 0);
+      -- out ack array, pulse protocol
+      -- more than one ack can be sent back
+      -- at any time.
+      --
+      -- Note: req -> ack delay can be 0
+      ackR : out BooleanArray(num_reqs-1 downto 0);
+      -- mreq goes out to memory as 
+      -- a response to mack.
+      mreq : out std_logic;
+      mack : in  std_logic;
+      -- mtag to distinguish the 
+      -- requesters.
+      mtag : in std_logic_vector(tag_length-1 downto 0);
+      -- rising edge of clock is used
+      clk : in std_logic;
+      -- synchronous reset, active high
+      reset : in std_logic);
+  end component StoreCompleteShared;
 
 end BaseComponents;

@@ -3,6 +3,7 @@
 
 using namespace std;
 
+#include <stdint.h>
 #include <cstddef>
 #include <algorithm>
 #include <stdlib.h>

@@ -14,7 +14,7 @@ entity LoadCompleteShared is
       data_width: integer;
       tag_length:  integer;
       num_reqs : integer;
-      no_arbitration: boolean;
+      no_arbitration: boolean
     );
   port (
     -- req/ack follow level protocol
@@ -23,8 +23,8 @@ entity LoadCompleteShared is
     dataR                    : out std_logic_vector((data_width*num_reqs)-1 downto 0);
     -- output data consists of concatenated pairs of ops.
     mdata                    : in std_logic_vector(data_width-1 downto 0);
-    mack                     : out std_logic;
-    mreq                     : in  std_logic;
+    mreq                     : out  std_logic;
+    mack                     : in std_logic;
     mtag                     : in std_logic_vector(tag_length-1 downto 0);
     -- with dataR
     clk, reset              : in std_logic);
@@ -43,8 +43,8 @@ begin  -- Behave
 	nreqs  => num_reqs,
 	no_arbitration => no_arbitration)
     port map (
-      reqL   => mreq,
-      ackL   => mack,
+      reqL   => mack,                   -- cross-over (mack from mem-subsystem)
+      ackL   => mreq,                   -- cross-over 
       dataL =>  mdata,
       tagL  =>  mtag,
       reqR  => reqR,

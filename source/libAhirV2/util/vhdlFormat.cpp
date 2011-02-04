@@ -40,14 +40,14 @@ int main(int argc, char* argv[])
       if(!last_char_is_return || !isspace(inchar))
 	{
 
-	  if(inchar  == '@')
+	  if(inchar  == '{')
 	    {
 	      if(!last_char_is_return) // push { to new line with appropriate tab.
 		cout << "\n";
 	      tab_count++;
 	      last_char_is_return = true;
 	    }
-	  else if(inchar == '#')
+	  else if(inchar == '}')
 	    {
 	      if(!last_char_is_return) // push } to new line with appropriate tab
 		cout << "\n";

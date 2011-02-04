@@ -268,3 +268,82 @@ void AaModule::Write_Source(ofstream& ofile)
     }
 
 }
+
+
+
+void AaModule::Write_VC_Model(int default_space_pointer_width,
+		    int default_space_word_size,
+		    ostream& ofile)
+{
+  ofile << "$module [" << this->Get_Label() << "] {" << endl;
+  if(_input_args.size() > 0)
+    {
+      ofile << "$in ";
+      for(int idx = 0; idx < _input_args.size(); idx++)
+	{
+	  _input_args[idx]->Write_VC_Model(ofile);
+	}
+    }
+  if(_output_args.size() > 0)
+    {
+      ofile << "$out ";
+      for(int idx = 0; idx < _output_args.size(); idx++)
+	{
+	  _output_args[idx]->Write_VC_Model(ofile);
+	}
+    }
+  ofile << endl;
+  
+  this->Write_VC_Control_Path(ofile);
+  this->Write_VC_Data_Path(ofile);
+  this->Write_VC_Memory_Spaces(ofile);
+  ofile << "}";
+}
+
+
+void AaModule::Write_VC_Control_Path(ostream& ofile)
+{
+
+  ofile << "$CP { // begin control-path " << endl;
+
+  // for each statement, print a CP region.
+  for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+    {
+      this->_statement_sequence->Get_Statement(idx)->Write_VC_Control_Path(ofile);
+    }
+  
+  // for simple statements
+  //    for the rhs expression, create
+  //    a fork region.  In this region,
+  //    each expression node will correspond
+  //    to a series region, and at each
+  //    expression node, two series regions
+  //    will join.  The series region for
+  //    an expression node will consist
+  //    of req/ack transitions.
+  
+
+  // for series/parallel/fork regions, 
+  // things are easy.
+
+
+  // for branch regions, the if and switch
+  // statements create small complications.
+  // For each if node, the test-expression will
+  // need to be evaluated and will need to be 
+  // followed by a branch.
+  // Each select node will correspond to
+  // a fork-region, in which each leg will be
+  // a test-expression computation followed by
+  // a branch region in which the result of
+  // the test is use.
+  ofile << "} // end control-path" << endl;
+}
+
+void AaModule::Write_VC_Data_Path(ostream& ofile)
+{
+}
+
+void AaModule::Write_VC_Memory_Spaces(ostream& ofile)
+{
+}

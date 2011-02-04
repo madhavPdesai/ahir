@@ -6,7 +6,7 @@ library ahir;
 use ahir.Types.all;
 
 library ieee_proposed;
-use ieee_proposed.math_utility_pkg.all;
+-- use ieee_proposed.math_utility_pkg.all;
 use ieee_proposed.fixed_pkg.all;
 use ieee_proposed.float_pkg.all;
 
@@ -306,8 +306,8 @@ package body Subprograms is
     alias lx: ApInt(x'length-1 downto 0) is x;
     variable rv: std_logic_vector(x'length-1 downto 0);
   begin
-    for I in 0 to x'length-1 loop
-      rv(I) := lx(I);
+    for I in 1 to x'length loop
+      rv(I-1) := lx(I-1);
     end loop;
     return(rv);
   end function To_SLV;
@@ -319,8 +319,8 @@ package body Subprograms is
     alias lx: IStdLogicVector(x'length-1 downto 0) is x;
     variable rv: std_logic_vector(x'length-1 downto 0);
   begin
-    for I in 0 to x'length-1 loop
-      rv(I) := lx(I);
+    for I in 1 to x'length loop
+      rv(I-1) := lx(I-1);
     end loop;
     return(rv);
   end function To_SLV;
@@ -332,8 +332,8 @@ package body Subprograms is
     alias lx: ApFloat(x'length-1 downto 0) is x;
     variable rv: std_logic_vector(x'length-1 downto 0);
   begin
-    for I in 0 to x'length-1 loop
-      rv(I) := lx(I);
+    for I in 1 to x'length loop
+      rv(I-1) := lx(I-1);
     end loop;
     return(rv);
   end function To_SLV;
@@ -345,11 +345,11 @@ package body Subprograms is
     alias lx: BooleanArray(x'length-1 downto 0) is x;
     variable rv: std_logic_vector(x'length-1 downto 0);
   begin
-    for I in 0 to x'length-1 loop
-      if(lx(I)) then
-        rv(I) := '1';
+    for I in 1 to x'length loop
+      if(lx(I-1)) then
+        rv(I-1) := '1';
       else
-        rv(I) := '0';
+        rv(I-1) := '0';
       end if;
     end loop;
     return(rv);

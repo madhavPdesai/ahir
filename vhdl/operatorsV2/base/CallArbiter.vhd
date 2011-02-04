@@ -86,7 +86,7 @@ begin
    process(return_data_sig)
      variable lreturn_data : std_logic_vector((num_reqs*return_data_width)-1 downto 0);
    begin
-     for J in return_data'length(1)-1 downto 0 loop
+     for J in return_data_sig'high(1) downto return_data_sig'low(1) loop
        Insert(lreturn_data,J,return_data_sig(J));
      end loop;  -- J
      return_data <= lreturn_data;
@@ -97,7 +97,7 @@ begin
    return_mack <= OrReduce(return_mack_sig);
    
    -- incoming data written into appropriate register.
-   RetGen: for I in return_reqs'length-1 downto 0 generate
+   RetGen: for I in return_reqs'high downto return_reqs'low generate
 
      fsm: block
        signal ack_reg, mack_sig, valid_flag : std_logic;

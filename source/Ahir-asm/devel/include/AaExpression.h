@@ -43,6 +43,10 @@ class AaExpression: public AaRoot
   virtual void Update_Type() {};
 
   virtual void Add_Target(AaExpression* expr) {this->_targets.insert(expr);}
+  
+  virtual string Get_VC_Name();
+
+  virtual void Write_VC_Control_Path(ostream& ofile);
 };
 
 
@@ -102,6 +106,7 @@ class AaObjectReference: public AaExpression
   virtual void Add_Target_Reference(AaRoot* referrer); 
   virtual void Add_Source_Reference(AaRoot* referrer);
   virtual void PrintC(ofstream& ofile, string tab_string);
+
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
@@ -116,6 +121,7 @@ class AaConstantLiteralReference: public AaObjectReference
   virtual string Kind() {return("AaConstantLiteralReference");}
   virtual void Map_Source_References(set<AaRoot*>& source_objects) {} // do nothing
   virtual void PrintC(ofstream& ofile, string tab_string);
+  virtual void Write_VC_Control_Path(ostream& ofile);
 };
 
 // simple reference (no array indices)
@@ -127,6 +133,8 @@ class AaSimpleObjectReference: public AaObjectReference
   virtual string Kind() {return("AaSimpleObjectReference");}
   virtual void Set_Object(AaRoot* obj);
   virtual void PrintC(ofstream& ofile, string tab_string);
+
+  virtual void Write_VC_Control_Path(ostream& ofile);
 };
 
 // array object reference
@@ -151,6 +159,9 @@ class AaArrayObjectReference: public AaObjectReference
   virtual string Kind() {return("AaArrayObjectReference");}
   virtual void Map_Source_References(set<AaRoot*>& source_objects); // important
   virtual void PrintC(ofstream& ofile, string tab_string);
+
+  virtual void Write_VC_Control_Path(ostream& ofile);
+  void Write_VC_Address_Gen_Control_Path(ostream& ofile);
 };
 
 // type cast expression (is unary)
@@ -178,6 +189,8 @@ class AaTypeCastExpression: public AaExpression
     this->_rest->PrintC(ofile,"");
     ofile << ")";
   }
+
+  virtual void Write_VC_Control_Path(ostream& ofile);
 };
 
 
@@ -208,6 +221,8 @@ class AaUnaryExpression: public AaExpression
     this->_rest->PrintC(ofile,"");
     ofile << ") ";
   }
+
+  virtual void Write_VC_Control_Path(ostream& ofile);
 };
 
 // 
@@ -274,6 +289,9 @@ class AaBinaryExpression: public AaExpression
   }
 
   virtual void Update_Type();
+
+  virtual void Write_VC_Control_Path(ostream& ofile);
+  bool Is_Trivial();
 };
 
 // ternary expression: a ? b : c
@@ -310,6 +328,8 @@ class AaTernaryExpression: public AaExpression
     this->_if_false->PrintC(ofile,tab_string);
     ofile << ") ";
   }
+
+  virtual void Write_VC_Control_Path(ostream& ofile);
 };
 
 #endif

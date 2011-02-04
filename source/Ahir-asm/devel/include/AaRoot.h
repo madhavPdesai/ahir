@@ -13,7 +13,7 @@
 class AaRoot
 {
   // to get unique id's for anon objects
-  static int _root_counter;
+  static int64_t _root_counter;
   // set if there is an error
   static bool _error_flag;
   // set if there is a warning
@@ -23,6 +23,8 @@ class AaRoot
   unsigned int _line_number;
 
   string _file_name;
+
+  int64_t _index;
 
  protected:
   // vector of references to this object from "anywhere"
@@ -34,13 +36,15 @@ class AaRoot
  public:
 
   static void Increment_Root_Counter();// { _root_counter += 1; }
-  static int Get_Root_Counter(); // { return _root_counter; }
+  static int64_t Get_Root_Counter(); // { return _root_counter; }
   static void Error(string err_msg,AaRoot* r); // {_error_flag = true;}
   static void Warning(string err_msg,AaRoot* r); // {_warning_flag = true;}
   static bool Get_Error_Flag(); // { return _error_flag; }
   static bool Get_Warning_Flag(); // { return _warning_flag; }
   void Set_Line_Number(int n) { this->_line_number = n; }
   unsigned int Get_Line_Number() { return(this->_line_number); }
+
+  int64_t Get_Index() {return(_index);}
 
   AaRoot();
   ~AaRoot(); 
@@ -89,4 +93,5 @@ class AaRoot
 
 };
 
+string Make_VC_Legal(string x);
 #endif

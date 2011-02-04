@@ -19,7 +19,6 @@
 class AaProgram
 {
 
-
   // all kinds of std::maps.
   static std::map<string,AaObject*,StringCompare> _objects;
   static std::map<string,AaModule*,StringCompare> _modules;
@@ -34,7 +33,7 @@ class AaProgram
   static AaUGraphBase _type_dependency_graph;
 
  public:
-
+  
   static string _current_file_name;
 
   AaProgram();
@@ -83,9 +82,17 @@ class AaProgram
     return (r);
   }
 
-  // write an AHIR model
-  static void Write_Ahir_Model();
-
+  // write VC model
+  static void Write_VC_Model(int default_space_pointer_width,
+			     int default_space_word_size,
+			     ostream& ofile);
+  static void Write_VC_Pipe_Declarations(ostream& ofile);
+  static void Write_VC_Memory_Spaces(int default_space_pointer_width,
+				     int default_space_word_size,
+				     ostream& ofile);
+  static void Write_VC_Modules(int default_space_pointer_width,
+			       int default_space_word_size,
+			       ostream& ofile);
 };
 
 

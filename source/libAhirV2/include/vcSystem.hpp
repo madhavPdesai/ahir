@@ -18,7 +18,7 @@ class vcModule;
 class vcSystem: public vcRoot
 {
   map<string, vcMemorySpace*> _memory_space_map;
-  vcModule* _top_module;
+  set<vcModule*,vcRoot_Compare> _top_module_set;
   map<string, vcModule*> _modules;
 
   map<string,int> _pipe_map;
@@ -85,8 +85,11 @@ class vcSystem: public vcRoot
   void Print_Pipes(ostream& ofile);
 
   void Add_Module(vcModule* module);
+
   void Set_As_Top_Module(vcModule* module);
   void Set_As_Top_Module(string module_name);
+  bool Is_A_Top_Module(vcModule* m);
+
   void Add_Memory_Space(vcMemorySpace* ms);
   vcMemorySpace* Find_Memory_Space(string module_name, string ms_name); 
   vcMemorySpace* Find_Memory_Space(string ms_name);
@@ -103,13 +106,33 @@ class vcSystem: public vcRoot
   void Compute_Maximal_Groups();
   void Print_Control_Structure(ostream& ofile);
 
+  // VHDL related stuff... 
   virtual void Print_VHDL(ostream& ofile);
-
-  void Print_VHDL_Testbench(ostream& ofile);
+  void Print_VHDL_Test_Bench(ostream& ofile);
   void Print_VHDL_Component(ostream& ofile);
   void Print_VHDL_Entity(ostream& ofile);
   void Print_VHDL_Architecture(ostream& ofile);
   static void Print_VHDL_Inclusions(ostream& ofile);
+
+  string Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile);
+  void Print_VHDL_Pipe_Signals(ostream& ofile);
+  bool Get_Pipe_Module_Section(string pipe_id, 
+			       vcModule* caller_module, 
+			       string read_or_write, 
+			       int& hindex, 
+			       int& lindex);
+  string Get_Pipe_Aggregate_Section(string pipe_id,
+				    string pid, 
+				    int hindex, 
+				    int lindex);
+  string Get_VHDL_Pipe_Interface_Port_Name(string pipe_id, string pid);
+  void Print_VHDL_Pipe_Instances(ostream& ofile);
+  string Print_VHDL_System_Ports(string semi_colon, ostream& ofile);
+  void Print_VHDL_Pipe_Port_Signals(ostream& ofile);
+  void Print_VHDL_Test_Bench_Signals(ostream& ofile);
+  void Print_VHDL_Instance(ostream& ofile);
+  string Print_VHDL_System_Instance_Pipe_Port_Map(string comma, ostream& ofile);
+  string Print_VHDL_Instance_Port_Map(string comma, ostream& ofile);
 
   void Parse(string filename);
 };

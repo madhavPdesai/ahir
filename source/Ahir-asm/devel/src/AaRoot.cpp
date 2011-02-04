@@ -16,12 +16,13 @@ using namespace std;
 //---------------------------------------------------------------------
 // AaRoot
 //---------------------------------------------------------------------
-int AaRoot::_root_counter = 0;
+int64_t AaRoot::_root_counter = 0;
 bool AaRoot::_error_flag = false;
 bool AaRoot::_warning_flag = false;
 
 AaRoot::AaRoot() 
 {
+  this->_index = AaRoot::Get_Root_Counter();
   this->Increment_Root_Counter();
   this->_file_name = AaProgram::_current_file_name;
 }
@@ -35,7 +36,7 @@ bool AaRoot::Is(const string kinfo)
   return(this->Kind() == kinfo);
 }
 void AaRoot::Increment_Root_Counter() { AaRoot::_root_counter += 1; }
-int AaRoot::Get_Root_Counter() { return AaRoot::_root_counter; }
+int64_t AaRoot::Get_Root_Counter() { return AaRoot::_root_counter; }
 void AaRoot::Error(string msg,AaRoot* r) 
 { 
   cerr << "Error: " << msg;
@@ -81,4 +82,15 @@ void AaRoot::Add_Source_Reference(AaRoot* referrer)
   this->_source_references.insert(referrer);
 }
 
-
+string Make_VC_Legal(string x)
+{
+  string ret_string;
+  for(int i = 0; i < x.size(); i++)
+    {
+      if(x[i] == '%')
+	ret_string += "xx";
+      else
+	ret_string += x[i];
+    }
+  return(ret_string);
+}

@@ -95,7 +95,6 @@ void vcMemorySpace::Print_VHDL_Interface_Signal_Declarations(ostream& ofile)
 	    << " : std_logic_vector(" << (num_load_reqs*data_width)-1 << " downto 0);" << endl;
       ofile << "signal " << this->Get_VHDL_Memory_Interface_Port_Name("lc_tag") 
 	    << " :  std_logic_vector("  << (num_load_reqs*tag_length)-1  << " downto 0);" << endl;
-      
     }
 
   if(num_store_reqs > 0)
@@ -179,4 +178,91 @@ string vcMemorySpace::Get_VHDL_Memory_Interface_Port_Section(vcModule* m,
 	   + IntToStr(down_index*this->Get_Tag_Length()) + ")");
   else
     assert(0); // fatal
+}
+
+
+bool vcMemorySpace::Get_Caller_Module_Section(vcModule* caller_module, string load_or_store, int& hindex, int& lindex)
+{
+  bool ret_val = false;
+  hindex = ((load_or_store == "load") ? this->_num_loads-1 : this->_num_stores -1);
+  for(map<vcModule*,vector<int> >::iterator iter = ((load_or_store == "load") ? _load_group_map.begin() : _store_group_map.begin());
+      iter != ((load_or_store == "load") ? _load_group_map.end() : _store_group_map.end());
+      iter++)
+    {
+      if(caller_module == (*iter).first)
+	{
+	  lindex = (hindex + 1) - (*iter).second.size();
+	  ret_val = true;
+	  break;
+	}
+      else
+	{
+	  hindex -= (*iter).second.size();
+	}
+    }
+  return(ret_val);
+}
+
+string vcMemorySpace::Get_Aggregate_Section(string pid, int hindex, int lindex)
+{
+  int data_width;
+  string ret_string = this->Get_Id() + "_" + pid;
+
+  // find data_width.
+  if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))
+    data_width = 1;
+  else if(pid.find("addr") != string::npos)
+    data_width = this->Get_Address_Width();
+  else if(pid.find("data") != string::npos)
+    data_width = this->Get_Word_Size();
+  else if(pid.find("tag") != string::npos)
+    data_width = this->Get_Tag_Length();
+  else
+    assert(0); // fatal
+
+  ret_string += "(";
+  ret_string += IntToStr(((hindex+1)*data_width)-1);
+  ret_string += " downto ";
+  ret_string += IntToStr(lindex*data_width);
+  ret_string += ")";
+  return(ret_string);
+}
+
+
+void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
+{
+  ofile << "MemorySpace_" << this->Get_Id() << ": memory_subsystem -- {" << endl;
+  ofile << "generic map(-- {" << endl;
+  ofile << "num_loads => " << this->Get_Num_Loads() << "," << endl
+	<< "num_stores => " << this->Get_Num_Stores() << "," << endl
+	<< "addr_width => " << this->Get_Address_Width() << "," << endl
+	<< "data_width => " << this->Get_Word_Size() << "," << endl
+	<< "tag_width => " << this->Get_Tag_Length() << "," << endl
+	<< "number_of_banks => " << CeilLog2((this->Get_Num_Loads() + this->Get_Num_Stores())) << ","
+	<< "mux_degree => 2," << endl
+	<< "demux_degree => 2," << endl
+	<< "base_bank_addr_width => 10," << endl
+	<< "base_bank_data_width => 1" 
+	<< ") -- }" << endl;
+  ofile << "port map(-- {" << endl;
+  ofile 
+    << "lr_addr_in => " << this->Get_Id() << "_lr_addr," << endl
+    << "lr_req_in => " << this->Get_Id() << "_lr_req," << endl
+    << "lr_ack_out => " << this->Get_Id() << "_lr_ack," << endl
+    << "lr_tag_in => " << this->Get_Id() << "_lr_tag," << endl
+    << "lc_req_in => " << this->Get_Id() << "_lc_req," << endl
+    << "lc_ack_out => " << this->Get_Id() << "_lc_ack," << endl
+    << "lc_data_out => " << this->Get_Id() << "_lc_data," << endl
+    << "lc_tag_out => " << this->Get_Id() << "_lc_tag," << endl
+    << "sr_addr_in => " << this->Get_Id() << "_sr_addr," << endl
+    << "sr_data_in => " << this->Get_Id() << "_sr_data," << endl
+    << "sr_req_in => " << this->Get_Id() << "_sr_req," << endl
+    << "sr_ack_out => " << this->Get_Id() << "_sr_ack," << endl
+    << "sr_tag_in => " << this->Get_Id() << "_sr_tag," << endl
+    << "sc_req_in=> " << this->Get_Id() << "_sc_req," << endl
+    << "sc_ack_out => " << this->Get_Id() << "_sc_ack," << endl
+    << "sc_tag_out => " << this->Get_Id() << "_sc_tag," << endl
+    << "clock => clk," << endl
+    << "reset => reset";
+  ofile << "); -- }  }" << endl;
 }

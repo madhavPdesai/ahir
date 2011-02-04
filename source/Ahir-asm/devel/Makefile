@@ -40,7 +40,7 @@ DEFS=-DDebug
 CXXFLAGS=-g
 
 
-all : aNTLR $(BIN)/TestAaParser $(INCL)/Aa2C.h $(BIN)/Aa2C $(GRMR)/AaParser.html #  $(BIN)/Aa2Ahir
+all : aNTLR $(BIN)/TestAaParser $(INCL)/Aa2C.h $(BIN)/Aa2C $(GRMR)/AaParser.html  $(BIN)/Aa2VC
 
 
 $(BIN)/TestAaParser : $(OBJS) $(OBJ)/TestAaParser.o
@@ -55,11 +55,17 @@ $(BIN)/AaWriteCHeader : $(OBJS) $(OBJ)/AaWriteCHeader.o
 $(BIN)/Aa2C : $(OBJS) $(OBJ)/Aa2C.o 
 	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/Aa2C.o  $(OBJS) -lantlr-4.0.3 -o $(BIN)/Aa2C
 
+$(BIN)/Aa2VC : $(OBJS) $(OBJ)/Aa2VC.o 
+	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/Aa2VC.o  $(OBJS) -lantlr-4.0.3 -o $(BIN)/Aa2VC
+
 $(BIN)/Aa2Ahir : $(OBJS) $(OBJ)/Aa2Ahir.o 
 	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/Aa2Ahir.o  $(OBJS) -lantlr-4.0.3 -o $(BIN)/Aa2Ahir
 
 $(OBJ)/Aa2C.o : $(SRC)/Aa2C.cpp  $(INCL)/Aa2C.h $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/Aa2C.cpp -o $(OBJ)/Aa2C.o
+
+$(OBJ)/Aa2VC.o : $(SRC)/Aa2VC.cpp  $(HEADERS)
+	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/Aa2VC.cpp -o $(OBJ)/Aa2VC.o
 
 $(OBJ)/Aa2Ahir.o : $(SRC)/Aa2Ahir.cpp  $(INCL)/Aa2Ahir.h $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(AHIRINCLUDES) $(CXXFLAGS) -c $(SRC)/Aa2Ahir.cpp -o $(OBJ)/Aa2Ahir.o

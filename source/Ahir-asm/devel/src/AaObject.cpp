@@ -31,6 +31,7 @@ string AaObject::Tab()
 {
   return((this->Get_Scope() != NULL) ? Tab_(this->Get_Scope()->Get_Depth()+1) : Tab_(0));
 }
+
 void AaObject::Print(ostream& ofile)
 {
   ofile << " " << this->Get_Name() << " ";
@@ -43,19 +44,10 @@ void AaObject::Print(ostream& ofile)
   ofile << " ";
 }
 
-void AaObject::Write_Ahir_Model()
+void AaObject::Write_VC_Model(ostream& ofile)
 {
-/* This gets out of here.. put it in Aa2Ahir "later"
-  AaScope* pmodule = this->Get_Scope()->Get_Nearest_Ancestor_Scope("AaModule");
-  string module_name = (pmodule != NULL ? pmodule->Get_Name() : "");
-  
-  Aa2Ahir::Add_Memory_Location(module_name,
-			       this->Get_Name(), 
-			       this->Get_Name(),
-			       this->Get_Type());
-
-  //\todo: add attribute initial value to memory location..
-*/
+  ofile << this->Get_VC_Name() << ":";
+  this->Get_Type()->Write_VC_Model(ofile);
 }
 
 //---------------------------------------------------------------------
@@ -98,44 +90,19 @@ void AaPipeObject::Print(ostream& ofile)
   this->AaObject::Print(ofile);
 }
 
+//
 // add DPE's for pipe.
 // note: if there are writes to the pipe, add an output port
 //       and if there are reads from the pipe, add an input port.
 //
-void AaPipeObject::Write_Ahir_Model()
+void AaPipeObject::Write_VC_Model(ostream& ofile)
 {
-
-// Get this out of here.
-/*
-  AaScope* pmodule = this->Get_Scope()->Get_Nearest_Ancestor_Scope("AaModule");
-  string module_name = (pmodule != NULL ? pmodule->Get_Name() : "");
-  
-  if(this->Get_Number_Of_Target_References() > 0)
-    {
-      string inst_name = this->Get_Name() + "_output_port";
-      Aa2Ahir::Add_DPE(module_name,
-		       "output_port",
-		       inst_name);
-      Aa2Ahir::Add_DPE_Port(module_name,
-			    inst_name,
-			    "data",
-			    "in",
-			    this->Get_Type());
-    }
-
-  if(this->Get_Number_Of_Source_References() > 0)
-    {
-      string inst_name = this->Get_Name() + "_output_port";
-      Aa2Ahir::Add_DPE(module_name,
-		       "input_port",
-		       inst_name);
-      Aa2Ahir::Add_DPE_Port(module_name,
-			    inst_name,
-			    "data",
-			    "out",
-			    this->Get_Type());
-    }
-*/
+  ofile << "$pipe [" << this->Get_VC_Name() << "] " << this->_type->Size() << endl;
+}
+string AaPipeObject::Get_VC_Name()
+{
+  string ret_string = Make_VC_Legal(this->Get_Scope()->Get_Hierarchical_Name() + "%" + this->Get_Name());
+  return(ret_string);
 }
 
 //---------------------------------------------------------------------

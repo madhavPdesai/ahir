@@ -65,7 +65,7 @@ vcStore::vcStore(string id, vcMemorySpace* ms, vcWire* addr, vcWire* data):vcLoa
 void vcStore::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__STORE] 	<< " "
-	<< this->Get_Label() << " " << vcLexerKeywords[__TO]
+	<< this->Get_Label() << " " << vcLexerKeywords[__TO] << " "
 	<< this->_memory_space->Get_Hierarchical_Id() << " "
 	<< vcLexerKeywords[__LPAREN] << " "
 	<< this->_address->Get_Id() << " "
@@ -171,7 +171,7 @@ void vcInport::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__IOPORT] << " " <<  vcLexerKeywords[__IN] << " " << this->Get_Label() << "  " 
 	<< vcLexerKeywords[__LPAREN] << this->_pipe_id << vcLexerKeywords[__RPAREN] << " "
-	<< vcLexerKeywords[__LPAREN] << this->Get_Id() << vcLexerKeywords[__RPAREN] << endl;
+	<< vcLexerKeywords[__LPAREN] << this->_data->Get_Id() << vcLexerKeywords[__RPAREN] << endl;
 }
 
 vcOutport::vcOutport(string id, string pipe_id, vcWire* w):vcIOport(id,pipe_id,w) 
@@ -181,7 +181,7 @@ vcOutport::vcOutport(string id, string pipe_id, vcWire* w):vcIOport(id,pipe_id,w
 void vcOutport::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__IOPORT] << " " <<  vcLexerKeywords[__OUT] << " " << this->Get_Label() << "  " 
-	<< vcLexerKeywords[__LPAREN] << this->Get_Id() << vcLexerKeywords[__RPAREN] << " " 
+	<< vcLexerKeywords[__LPAREN] << this->_data->Get_Id() << vcLexerKeywords[__RPAREN] << " " 
 	<< vcLexerKeywords[__LPAREN] << this->_pipe_id << vcLexerKeywords[__RPAREN] << endl;
 }
 
@@ -202,24 +202,8 @@ vcUnarySplitOperator::vcUnarySplitOperator(string id, string op_id, vcWire* x, v
 
 bool vcUnarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
 {
-  if(!((this->Kind() == other->Kind()) && (this->_op_id == ((vcUnarySplitOperator*)other)->Get_Op_Id())))
-    return(false);
-
-  vector<vcWire*> iw1, iw2;
-  this->Append_Inwires(iw1);
-  other->Append_Inwires(iw2);
-
-  if(!Check_If_Equivalent(iw1,iw2))
-    return(false);
-
-  vector<vcWire*> ow1, ow2;
-  this->Append_Outwires(iw1);
-  other->Append_Outwires(iw2);
-
-  if(!Check_If_Equivalent(ow1,ow2))
-    return(false);
-
-  return(true);
+  // unary operations are too trivial to share..
+  return(false);
 }
 
 
@@ -255,6 +239,11 @@ vcBinarySplitOperator::vcBinarySplitOperator(string id, string op_id, vcWire* x,
 
 bool vcBinarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
 {
+
+  // trivial operations are not worth sharing..
+  if(Is_Trivial_Op(this->_op_id))
+    return(false);
+
   bool ret_val = ((this->Kind() == other->Kind()) 
 		  && 
 		  (this->_op_id == ((vcBinarySplitOperator*)other)->Get_Op_Id()));
@@ -372,6 +361,20 @@ void vcBranch::Print(ostream& ofile)
 	<< vcLexerKeywords[__LPAREN] << this->_test->Get_Id() << vcLexerKeywords[__RPAREN] << endl;
 }
 
+
+bool Is_Trivial_Op(string vc_op_id)
+{
+  bool ret_val = false;
+  if(vc_op_id == vcLexerKeywords[__BITSEL_OP]        )      { ret_val = true;      } 
+  else if(vc_op_id == vcLexerKeywords[__CONCAT_OP]        ) { ret_val = true; } 
+  else if(vc_op_id == vcLexerKeywords[__OR_OP]            ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__AND_OP]           ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__XOR_OP]           ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__NOR_OP]           ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__NAND_OP]          ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__XNOR_OP]          ) { ret_val = true; }
+  return(ret_val);
+}
 
 string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
 {

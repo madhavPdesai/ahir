@@ -399,12 +399,23 @@ void AaStatementSequence::Write_Series_Exit_Check_Condition(ofstream& ofile)
     ofile << "1";
 }
 
+void AaStatementSequence::Write_VC_Control_Path(ostream& ofile)
+{
+  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+    this->_statement_sequence[i]->Write_VC_Control_Path(ofile);
+}
 //---------------------------------------------------------------------
 // AaNullStatement: public AaStatement
 //---------------------------------------------------------------------
 AaNullStatement::AaNullStatement(AaScope* parent_tpr):AaStatement(parent_tpr) {};
 AaNullStatement::~AaNullStatement() {};
-
+void AaNullStatement::Write_VC_Control_Path(ostream& ofile)
+{
+  // write a blank series block...
+  ofile << ";;[" << this->Get_Label() << "] {"  << endl;
+  ofile << "$T [dummy] // dummy transition " << endl;
+  ofile << "}";
+}
 
 //---------------------------------------------------------------------
 // AaAssignmentStatement
@@ -488,6 +499,14 @@ void AaAssignmentStatement::Write_C_Struct(ofstream& ofile)
 	    << ";" << endl;
     }
 }
+
+void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
+{
+  ofile << "::[" << this->Get_Label() << "] {" << endl;
+  this->_source->Write_VC_Control_Path(ofile);
+  ofile << "} // end fork block " << this->Get_Label() << endl;
+}
+
 //---------------------------------------------------------------------
 // AaCallStatement
 //---------------------------------------------------------------------
@@ -975,6 +994,21 @@ void AaBlockStatement::Write_C_Function_Body(ofstream& ofile)
 void AaBlockStatement::Write_Entry_Condition(ofstream& ofile)
 {
   ofile << this->Get_Entry_Name_Ref();
+}
+
+
+void AaBlockStatement::Write_VC_Pipe_Declarations(ostream& ofile)
+{
+  for(int idx = 0; idx < _objects.size(); idx++)
+    {
+      if(_objects[idx]->Is("AaPipeObject"))
+	((AaPipeObject*)(_objects[idx]))->Write_VC_Model(ofile);
+    }
+
+  for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+    {
+      this->_statement_sequence->Get_Statement(idx)->Write_VC_Pipe_Declarations(ofile);
+    }
 }
 
 

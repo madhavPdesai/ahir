@@ -74,7 +74,12 @@ class vcMemorySpace: public vcRoot
 						string load_or_store,
 						string pid,
 						int idx);
+
+  bool Get_Caller_Module_Section(vcModule* caller_module, string load_or_store, int& hindex, int& lindex);
+  string Get_Aggregate_Section(string pid, int hindex, int lindex);
+
   virtual void Print(ostream& ofile);
+  void Print_VHDL_Instance(ostream& ofile);
 
 };
 #endif // vcMemorySpace

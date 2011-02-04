@@ -5,9 +5,10 @@ use ieee.numeric_std.all;
 library ahir;	
 use ahir.Types.all;	
 use ahir.Subprograms.all;	
+use ahir.Utilities.all;
 	
 library ieee_proposed;	
-use ieee_proposed.math_utility_pkg.all;	
+-- use ieee_proposed.math_utility_pkg.all;	
 use ieee_proposed.fixed_pkg.all;	
 use ieee_proposed.float_pkg.all;	
 
@@ -343,22 +344,35 @@ package body OperatorPackage is
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
   procedure ApIntToApFloatSigned_proc (l : in apint; result : out IStdLogicVector) is					
+     variable exponent_width: integer;
+     variable fraction_width: integer;
   begin
-   result := To_ISLV(to_apfloat(to_float(to_signed(l),result'high,-result'low,round_zero)));
+   fraction_width := - result'low;
+   -- todo: why does ghdl barf on this?
+   -- result := To_ISLV(to_apfloat(to_float(to_signed(l),exponent_width,fraction_width,round_zero)));
   end ApIntToApFloatSigned_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
   procedure ApIntToApFloatUnsigned_proc (l : in apint; result : out IStdLogicVector) is					
+     variable exponent_width: integer;
+     variable fraction_width: integer;
   begin
-   result := To_ISLV(to_apfloat(to_float(to_unsigned(l),result'high,-result'low,round_zero)));
+   -- todo: why does ghdl barf on this?
+   -- result := To_ISLV(to_apfloat(to_float(to_unsigned(l),exponent_width,fraction_width,round_zero)));
   end ApIntToApFloatUnsigned_proc; 				
   ---------------------------------------------------------------------
 
    -----------------------------------------------------------------------------	
   procedure TwoInputOperation(constant id : in string; x, y : in IStdLogicVector; result : out IStdLogicVector) is	
     variable result_var : IStdLogicVector(result'high downto result'low);	
+    variable temp_int: integer;
   begin
-    if id = "ApIntAdd" then					
+    if id = "ApIntBitsel" then
+      result_var := x & y;
+    elsif id = "ApIntBitsel" then
+      temp_int := To_Integer(To_Unsigned(To_SLV(y)));
+      result_var(result_var'low) := x(temp_int);
+    elsif id = "ApIntAdd" then					
       ApIntAdd_proc(To_apint(x), To_apint(y), result_var);
     elsif id = "ApIntSub" then					
       ApIntSub_proc(To_apint(x), To_apint(y), result_var);
@@ -443,6 +457,8 @@ package body OperatorPackage is
   begin
     if id = "ApIntNot" then					
       ApIntNot_proc(To_apint(x), result_var);
+    elsif id = "ApIntAssign" then
+      result_var := x;
     elsif id = "ApIntToApIntSigned" then					
       ApIntToApIntSigned_proc(To_apint(x), result_var);
     elsif id = "ApIntToApIntUnsigned" then					

@@ -54,6 +54,19 @@ void AaExpression::Set_Type(AaType* t)
     }
 }
 
+string AaExpression::Get_VC_Name()
+{
+  string ret_string = this->Kind() + "_" + Int64ToStr(this->Get_Index());
+  return(ret_string);
+}
+
+void AaExpression::Write_VC_Control_Path(ostream& ofile)
+{
+  ofile << ";;[" << this->Get_VC_Name() << "] {"
+	<< "$T [dummy] " << endl
+	<< "}" << endl;
+}
+
 //---------------------------------------------------------------------
 // AaObjectReference
 //---------------------------------------------------------------------
@@ -176,6 +189,11 @@ void AaConstantLiteralReference::PrintC(ofstream& ofile, string tab_string)
     }
 }
 
+void AaConstantLiteralReference::Write_VC_Control_Path(ostream& ofile)
+{
+  // null region.
+}
+
 //---------------------------------------------------------------------
 //AaSimpleObjectReference
 //---------------------------------------------------------------------
@@ -199,6 +217,48 @@ void AaSimpleObjectReference::PrintC(ofstream& ofile, string tab_string)
   ofile << this->Get_Object_Root_Name() << ").__val";
 }
 
+void AaSimpleObjectReference::Write_VC_Control_Path(ostream& ofile)
+{
+  // if object referred to is a constant, then
+  // print a null control-path
+  if(this->_object->Is("AaConstantObject"))
+    {
+      this->AaExpression::Write_VC_Control_Path(ofile);
+    }
+
+  // else, if the object being referred to is 
+  // a storage object, then it is a load operation,
+  // instantiate a series r-a-r-a chain..
+  else if(this->_object->Is("AaStorageObject"))
+    {
+      ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
+      ofile << "$T [lr_req] $T [lr_ack] $T[lc_req] $T[lc_ack]" << endl;
+      ofile << "}" << endl;
+    }
+
+  // else if the object being referred to is 
+  // a statement, instantiate a series r-a-r-a
+  // chain for the assign operation..
+  //
+  // TODO: In VC, change assign/not/or/xor/and/nor/xnor/nand to
+  //       r-a operators.
+  else if(this->_object->Is("AaAssignmentSatement"))
+    {
+      ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
+      ofile << "$T [req] $T [ack] " << endl;
+      ofile << "}" << endl;
+    }
+
+  // else if the object being referred to is
+  // a pipe, instantiate a series r-a
+  // chain for the inport operation
+  else if(this->_object->Is("AaPipeObject"))
+    {
+      ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
+      ofile << "$T [read_req] $T [read_ack] " << endl;
+      ofile << "}" << endl;
+    }
+}
 
 //---------------------------------------------------------------------
 // AaArrayObjectReference
@@ -275,6 +335,87 @@ void AaArrayObjectReference::PrintC(ofstream& ofile, string tab_string)
   ofile << ").__val";
 }
 
+void AaArrayObjectReference::Write_VC_Control_Path(ostream& ofile)
+{
+  assert(0);
+
+  // if object referred to is a constant, then
+  // print a null control-path
+  if(this->_object->Is("AaConstantObject"))
+    {
+      this->AaExpression::Write_VC_Control_Path(ofile);
+    }
+
+  // else, if the object being referred to is 
+  // a storage object, then it is a load operation,
+  // instantiate a series r-a-r-a chain..
+  else if(this->_object->Is("AaStorageObject"))
+    {
+      ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
+      this->Write_VC_Address_Gen_Control_Path(ofile);
+      ofile << "$T [lr_req] $T [lr_ack] $T[lc_req] $T[lc_ack]" << endl;
+      ofile << "}" << endl;
+    }
+
+  // else if the object being referred to is 
+  // a statement, instantiate a series r-a-r-a
+  // chain for the assign operation..
+  //
+  // TODO: In VC, change assign/not/or/xor/and/nor/xnor/nand to
+  //       r-a operators.
+  else if(this->_object->Is("AaAssignmentSatement"))
+    {
+      ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
+      ofile << "$T [req] $T [ack] " << endl;
+      ofile << "}" << endl;
+    }
+
+  // else if the object being referred to is
+  // a pipe, instantiate a series r-a
+  // chain for the inport operation
+  else if(this->_object->Is("AaPipeObject"))
+    {
+      ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
+      ofile << "$T [read_req] $T [read_ack] " << endl;
+      ofile << "}" << endl;
+    }
+
+  // else, if the object being referred to is 
+  // a storage object, then it is a load operation,
+  // instantiate a series r-a-r-a chain..
+}
+
+void AaArrayObjectReference::Write_VC_Address_Gen_Control_Path(ostream& ofile)
+{
+  ofile << ";;[" << this->Get_VC_Name() << "_AddressGen {" << endl;
+
+  // in parallel, compute each of the indices..
+  ofile << "// calculate index1 = idx1*dim1, index2 = idx2*dim2 ... " << endl;
+  ofile << "||[" << this->Get_VC_Name() << "_IndexGen {" << endl;
+  for(int idx = 0; idx < _indices.size(); idx++)
+    {
+      _indices[idx]->Write_VC_Control_Path(ofile);
+    }
+  ofile << "}" << endl;
+  
+  // followed by a computation of the address
+  // as a weighted sum of the computed indices..
+  if(_indices.size() > 1)
+    ofile << "// index = index1 + index2 + ... indexN " << endl;
+  for(int idx = 1; idx < _indices.size(); idx++)
+    {
+      ofile << "$T [rr" << (idx-1) << "] $T [ra" << idx-1 << "] ";
+      ofile << "$T [cr" << (idx-1) << "] $T [ca" << idx-1 << "] " << endl;
+    }
+
+  // followed by a base + index*step
+  ofile << "// addr = (index*step) + base" << endl;
+  ofile << "$T [mrr] $T [mra] $T [mcr] $T [mca] " << endl;
+  ofile << "$T [arr] $T [ara] $T [acr] $T [aca] " << endl;
+
+  ofile << "}" << endl;
+}
+
 //---------------------------------------------------------------------
 // type cast expression (is unary)
 //---------------------------------------------------------------------
@@ -295,6 +436,32 @@ void AaTypeCastExpression::Print(ostream& ofile)
   ofile << ") ";
   this->Get_Rest()->Print(ofile);
   ofile << " )";
+}
+
+
+void AaTypeCastExpression::Write_VC_Control_Path(ostream& ofile)
+{
+  // if object referred to is a constant, then
+  // print a null control-path
+  if(this->_rest->Is("AaConstantObject") ||
+     (this->_to_type == _rest->Get_Type()))
+    {
+      this->AaExpression::Write_VC_Control_Path(ofile);
+    }
+  // int-to-int conversion:  r-a pair
+  else if(this->_to_type->Is_Integer_Type() && _rest->Get_Type()->Is_Integer_Type())
+    {
+      ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
+      ofile << "$T [req] $T [ack] " << endl;
+      ofile << "}" << endl;
+    }
+  // int-to-float or float-to-int conversion: r-a-r-a pair.
+  else
+    {
+      ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
+      ofile << "$T [rr] $T [ra] $T [cr] $T [ca] " << endl;
+      ofile << "}" << endl;
+    }
 }
 
 
@@ -319,6 +486,22 @@ void AaUnaryExpression::Print(ostream& ofile)
   ofile << " ";
   this->Get_Rest()->Print(ofile);
   ofile << " )";
+}
+
+void AaUnaryExpression::Write_VC_Control_Path(ostream& ofile)
+{
+  // if object referred to is a constant, then
+  // print a null control-path
+  if(this->_rest->Is("AaConstantObject"))
+    {
+      this->AaExpression::Write_VC_Control_Path(ofile);
+    }
+  else 
+    {
+      ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
+      ofile << "$T [req] $T [ack] " << endl;
+      ofile << "}" << endl;
+    }
 }
 
 //---------------------------------------------------------------------
@@ -398,6 +581,41 @@ void AaBinaryExpression::Update_Type()
     }
 }
 
+
+bool AaBinaryExpression::Is_Trivial()
+{
+  if(this->_operation == __OR || this->_operation == __AND ||
+     this->_operation == __NOR || this->_operation == __NAND ||
+     this->_operation == __XOR || this->_operation == __XNOR ||
+     this->_operation == __CONCAT || this->_operation == __BITSEL)
+    return(true);
+  else
+    return(false);
+
+}
+
+void AaBinaryExpression::Write_VC_Control_Path(ostream& ofile)
+{
+  // if object referred to is a constant, then
+  // print a null control-path
+  if(this->_first->Is("AaConstantObject") && this->_second->Is("AaConstantObject"))
+    {
+      this->AaExpression::Write_VC_Control_Path(ofile);
+    }
+  else if(this->Is_Trivial())
+    {
+      ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
+      ofile << "$T [req] $T [ack] " << endl;
+      ofile << "}" << endl;
+    }
+  else
+    {
+      ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
+      ofile << "$T [rr] $T [ra] $T [cr] $T [ca] " << endl;
+      ofile << "}" << endl;
+    }
+}
+
 //---------------------------------------------------------------------
 // AaTernaryExpression
 //---------------------------------------------------------------------
@@ -440,6 +658,15 @@ void AaTernaryExpression::Print(ostream& ofile)
   ofile << "  ";
   this->Get_If_False()->Print(ofile);
   ofile << " ) ";
+}
+
+void AaTernaryExpression::Write_VC_Control_Path(ostream& ofile)
+{
+  assert(0);
+
+  // if _test is constant, print dummy.
+
+  // else, r-a series chain
 }
 
 

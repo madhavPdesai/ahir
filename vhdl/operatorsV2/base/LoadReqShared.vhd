@@ -39,10 +39,8 @@ architecture Vanilla of LoadReqShared is
   constant owidth: integer := addr_width;
 
 begin  -- Behave
-  assert(tag_length >= CeilLog2(num_reqs)) report "insufficient tag width" severity error;
+  assert(tag_length >= Ceil_Log2(num_reqs)) report "insufficient tag width" severity error;
 
-  assert ack'length = req'length report "mismatched req/ack vectors" severity error;
-  
   assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
     report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
   

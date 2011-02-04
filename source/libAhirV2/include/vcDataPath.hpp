@@ -207,6 +207,10 @@ class vcDataPath: public vcRoot
   string Print_VHDL_IO_Interface_Ports(string semi_colon, ostream& ofile);
   string Print_VHDL_Call_Interface_Ports(string semi_colon, ostream& ofile);
 
+  string Print_VHDL_Memory_Interface_Port_Map(string comma, ostream& ofile);
+  string Print_VHDL_IO_Interface_Port_Map(string comma, ostream& ofile);
+  string Print_VHDL_Call_Interface_Port_Map(string comma, ostream& ofile);
+
   void Print_VHDL(ostream& ofile);
 
   void Print_VHDL_Phi_Instances(ostream& ofile);

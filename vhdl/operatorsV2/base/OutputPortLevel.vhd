@@ -12,8 +12,8 @@ entity OutputPortLevel is
 	data_width: integer;
 	no_arbitration: boolean);
   port (
-    req       : in  std_logic_vector(num_reqs-1);
-    ack       : out std_logic_vector(num_reqs-1);
+    req       : in  std_logic_vector(num_reqs-1 downto 0);
+    ack       : out std_logic_vector(num_reqs-1 downto 0);
     data      : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
     oreq       : out std_logic;
     oack       : in  std_logic;

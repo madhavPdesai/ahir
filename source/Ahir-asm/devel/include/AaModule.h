@@ -61,7 +61,14 @@ class AaModule: public AaSeriesBlockStatement
   string Get_Structure_Name() { return(this->Get_Label() + "_State"); }
   void Write_Header(ofstream& ofile);
   void Write_Source(ofstream& ofile);
-  
+
+  void Write_VC_Model(int default_space_pointer_width,
+		      int default_space_word_size,
+		      ostream& ofile);
+
+  void Write_VC_Control_Path(ostream& ofile);
+  void Write_VC_Data_Path(ostream& ofile);
+  void Write_VC_Memory_Spaces(ostream& ofile);
 };
 
 #endif

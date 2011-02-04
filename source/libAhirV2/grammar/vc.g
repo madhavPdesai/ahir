@@ -506,7 +506,7 @@ vc_Call_Instantiation[vcSystem* sys, vcDataPath* dp]
   vector<vcWire*> outwires;
 }
 :
-  CALL (INLINE {inline_flag = true;}) id = vc_Label MODULE mid=vc_Identifier LBRACE {m = sys->Find_Module(mid); assert(m != NULL);}
+  CALL (INLINE {inline_flag = true;})? id = vc_Label MODULE mid=vc_Identifier {m = sys->Find_Module(mid); assert(m != NULL);}
        LPAREN (mid = vc_Identifier {vcWire* w = dp->Find_Wire(mid); assert(w != NULL); inwires.push_back(w);})* RPAREN
        LPAREN (mid = vc_Identifier {vcWire* w = dp->Find_Wire(mid); assert(w != NULL); outwires.push_back(w);})* RPAREN
        { nc = new vcCall(id, m, inwires, outwires, inline_flag); dp->Add_Call(nc);} 
@@ -833,7 +833,7 @@ GT_OP {ft = Make_Float_Type(c,m); t = (vcType*)ft;}
 
 
 //----------------------------------------------------------------------------------------------------------
-// vc_PointerType : POINTER LT_OP (vc_Identifier COLON)? vc_Identifier GT_OP
+// vc_PointerType : POINTER LT_OP (vc_Identifier DIV_OP)? vc_Identifier GT_OP
 //----------------------------------------------------------------------------------------------------------
 vc_PointerType[vcSystem* sys] returns [vcType* t]
 { 

@@ -107,6 +107,13 @@ class AaStatement: public AaScope
     return(string("#line ") + IntToStr(this->Get_Line_Number()) + " \"" + this->Get_File_Name() + "\"\n");
   }
 
+  virtual void Write_VC_Pipe_Declarations(ostream& ofile)
+  {
+    // do nothing.
+  }
+
+  virtual void Write_VC_Control_Path(ostream& ofile) { assert(0);}
+
 };
 
 // statement sequence (is used in block statements which lead to programs)
@@ -163,6 +170,8 @@ class AaStatementSequence: public AaScope
 
   virtual void Write_Clear_Exit_Flags_Code(ostream& ofile);
 
+  virtual void Write_VC_Control_Path(ostream& ofile); //todo
+
 };
 
 // null statement
@@ -186,6 +195,7 @@ class AaNullStatement: public AaStatement
   }
 
   virtual bool Can_Block() { return(false); }
+  virtual void Write_VC_Control_Path(ostream& ofile);
 };
 
 
@@ -223,6 +233,8 @@ class AaAssignmentStatement: public AaStatement
   virtual void PrintC(ofstream& ofile, string tab_string);
 
   virtual void Write_C_Struct(ofstream& ofile);
+
+  virtual void Write_VC_Control_Path(ostream& ofile);
 };
 
 
@@ -400,6 +412,8 @@ class AaBlockStatement: public AaStatement
 
 
   virtual void Write_Entry_Condition(ofstream& ofile);
+
+  virtual void Write_VC_Pipe_Declarations(ostream& ofile);  
 };
 
 class AaSeriesBlockStatement: public AaBlockStatement

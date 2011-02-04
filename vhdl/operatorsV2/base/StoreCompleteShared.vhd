@@ -5,7 +5,6 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;
-use ahir.LoadStorePack.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
@@ -63,8 +62,8 @@ begin  -- Behave
 
 		if(reset = '1') then
 			next_flag := '0';
-		else if(full_flag(I) = '0') then
-			if(v) then
+		elsif(full_flag(I) = '0') then
+			if(valid) then
 				rR := '1';
 				if mack = '1' then
 					next_flag := '1';

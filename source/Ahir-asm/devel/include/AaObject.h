@@ -16,6 +16,8 @@
 
 class AaObject: public AaRoot
 {
+
+ protected:
   string _name;
   AaConstantLiteralReference* _value;
   AaType* _type;
@@ -28,6 +30,8 @@ class AaObject: public AaRoot
   AaConstantLiteralReference* Get_Value() {return(this->_value);}
   void Set_Value(AaConstantLiteralReference* v) {this->_value = v;}
   virtual string Get_Name() {return(this->_name);}
+  virtual string Get_VC_Name() {return(this->_name);}
+
   virtual AaScope* Get_Scope() {return(this->_scope);}
   virtual string Tab();
 
@@ -66,7 +70,7 @@ class AaObject: public AaRoot
   }
 
   // \todo
-  virtual void Write_Ahir_Model();
+  virtual void Write_VC_Model(ostream& ofile);
 };
 
 // interface object: function arguments
@@ -99,13 +103,16 @@ class AaConstantObject: public AaObject
   virtual string Kind() {return("AaConstantObject");}
 
   // todo: this is different from the base Object..
-  // virtual void Write_Ahir_Model();
+  // virtual void Write_VC_Model(ostream& ofile);
 };
 
 class AaStorageObject: public AaObject
 {
   // objects will be stored in memory
   //
+  int _base_address;    // location of "base" of object.
+  int _word_size;       // minimum addressable unit
+  
  public:
 
   AaStorageObject(AaScope* scope_tpr, string oname, AaType* otype, AaConstantLiteralReference* initial_value);
@@ -117,12 +124,11 @@ class AaStorageObject: public AaObject
   // todo: this is the same as object, but keep it here
   //      because the initial value needs to be 
   //      updated..
-  // virtual void Write_Ahir_Model();
+  // virtual void Write_VC_Model(ostream& ofile);
 };
 
 class AaPipeObject: public AaObject
 {
-
   
  public:
   AaPipeObject(AaScope* scope_tpr,string oname, AaType* otype);
@@ -149,8 +155,8 @@ class AaPipeObject: public AaObject
 	  << endl;
   }
 
-   virtual void Write_Ahir_Model();
-
+   virtual void Write_VC_Model(ostream& ofile);
+   virtual string Get_VC_Name();
 
 };
 

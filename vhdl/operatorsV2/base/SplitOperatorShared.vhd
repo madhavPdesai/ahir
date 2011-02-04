@@ -63,7 +63,7 @@ architecture Vanilla of SplitOperatorShared is
   signal idata : std_logic_vector(iwidth-1 downto 0);
   signal odata: std_logic_vector(owidth-1 downto 0);
 
-  constant tag_length: integer := Ceil_Log2(reqL'length);
+  constant tag_length: integer := Maximum(1,Ceil_Log2(reqL'length));
   signal itag,otag : std_logic_vector(tag_length-1 downto 0);
   signal ireq,iack, oreq, oack: std_logic;
 

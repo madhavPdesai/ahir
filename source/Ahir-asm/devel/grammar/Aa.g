@@ -345,7 +345,7 @@ aA_Block_Statement_Sequence[AaScope* scope] returns [AaStatementSequence* nsb]
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Series_Block_Statement: SERIESBLOCK LABEL LBRACE aA_Atomic_Statement_Sequence RBRACE
+// aA_Series_Block_Statement: SERIESBLOCK LABEL LBRACE (aA_Object_Declaration)* aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 // a series connection of atomic statements.  control passes down the
 // statement sequence
@@ -375,7 +375,7 @@ aA_Series_Block_Statement[AaScope* scope] returns [AaSeriesBlockStatement* new_s
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Parallel_Block_Statement: PARALLELBLOCK LABEL LBRACE aA_Atomic_Statement_Sequence RBRACE
+// aA_Parallel_Block_Statement: PARALLELBLOCK LABEL LBRACE aA_Object_Declaration* aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 // a parallel connection of atomic statements.  all statements are started in parallel
 // and the block statement terminates when all statements have terminated.
@@ -399,7 +399,7 @@ aA_Parallel_Block_Statement[AaScope* scope] returns [AaParallelBlockStatement* n
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Fork_Block_Statement: FORKBLOCK LABEL LBRACE aA_Fork_Block_Statement_Sequence RBRACE
+// aA_Fork_Block_Statement: FORKBLOCK LABEL LBRACE aA_Object_Declaration* aA_Fork_Block_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 // for non series-parallel fork-join structures.  basically describes a directed
 // graph with each node being represented by a statement.  In-arcs describe a join
@@ -432,7 +432,7 @@ aA_Fork_Block_Statement[AaScope* scope] returns [AaForkBlockStatement* new_fbs]
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Branch_Block_Statement: BRANCHBLOCK LABEL LBRACE aA_Branch_Block_Statement_Sequence RBRACE
+// aA_Branch_Block_Statement: BRANCHBLOCK LABEL LBRACE aA_Object_Declaration* aA_Branch_Block_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 // for specifying arbitrary branching structures with a single token in flight.
 // the structure is described by two constructs: a switch/if and a merge.

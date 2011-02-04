@@ -21,6 +21,12 @@ class AaType: public AaRoot
   virtual string Kind() {return("AaType");}
   virtual string CName() {assert(0);}
   virtual string CDim() {assert(0);}
+  virtual int Size() {assert(0);}
+  virtual void Write_VC_Model(ostream& ofile) { assert(0);}
+  virtual bool Is_Integer_Type() {return(false);}
+  virtual bool Is_Float_Type() {return(false);}
+
+
 };
 
 class AaScalarType: public AaType
@@ -53,7 +59,17 @@ class AaUintType: public AaScalarType
   {
     return("uint_" + IntToStr(this->Get_Width()));
   }
+  virtual int Size() {return(this->_width);}
+
+  virtual void Write_VC_Model(ostream& ofile) 
+  { 
+    ofile << "$int<" << _width << ">";
+  }
+
+  virtual bool Is_Integer_Type() {return(true);}
+  virtual bool Is_Float_Type() {return(false);}
 };
+
 
 class AaIntType: public AaUintType
 {
@@ -85,6 +101,12 @@ class AaPointerType: public AaUintType
     return("pointer");
   }
 
+  virtual void Write_VC_Model(ostream& ofile) 
+  { 
+    ofile << "$pointer<global>";
+  }
+
+
 };
 
 
@@ -109,6 +131,15 @@ class AaFloatType : public AaScalarType
     return(string("float_") + IntToStr(this->_characteristic) +  "_" + IntToStr(this->_mantissa));
   }
 
+  virtual int Size() {return(this->_characteristic + this->_mantissa + 1);}
+
+  virtual void Write_VC_Model(ostream& ofile) 
+  { 
+    ofile << "$float<" << _characteristic << "," << _mantissa << ">";
+  }
+
+  virtual bool Is_Integer_Type() {return(false);}
+  virtual bool Is_Float_Type() {return(true);}
 };
 
 class AaArrayType: public AaType
@@ -143,6 +174,31 @@ class AaArrayType: public AaType
       ret_string +=  "[" + IntToStr(this->_dimension[i]) + "]";
     return(ret_string);
   }
+
+  virtual int Size() 
+  {
+    int ret_val = this->_element_type->Size();
+
+    for(unsigned int i=0; i < this->Get_Number_Of_Dimensions(); i++)
+      ret_val =  ret_val * this->_dimension[i];
+
+    return(ret_val);
+  }
+
+  int Number_Of_Elements()
+  {
+    int ret_val = 1;
+    for(unsigned int i=0; i < this->Get_Number_Of_Dimensions(); i++)
+      ret_val = ret_val*(this->_dimension[i]);
+    return(ret_val);
+  }
+
+  virtual void Write_VC_Model(ostream& ofile) 
+  { 
+    ofile << "$array<" << this->Number_Of_Elements() << "> $of ";
+    this->_element_type->Write_VC_Model(ofile);
+  }
+
 };
 
 #endif

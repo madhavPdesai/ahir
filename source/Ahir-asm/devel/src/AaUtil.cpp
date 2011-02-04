@@ -18,6 +18,13 @@ string IntToStr(unsigned int x)
   return(string_stream.str());
 }
 
+string Int64ToStr(int64_t x)
+{
+  ostringstream string_stream(ostringstream::out);
+  string_stream << x;
+  return(string_stream.str());
+}
+
 bool StringCompare::operator() (string s11, string s21) const
 {
   const char *s1 = s11.c_str ();
