@@ -15,9 +15,14 @@ class vcType;
 class vcOperator: public vcDatapathElement
 {
 
+  bool _flow_through; // if true, operator is combinational..
+
 public:
 
-  vcOperator(string id): vcDatapathElement(id) {}
+  vcOperator(string id): vcDatapathElement(id) { _flow_through = false; }
+
+  void Set_Flow_Through(bool v) {this->_flow_through = v;}
+  bool Get_Flow_Through() {return(this->_flow_through);}
 
   virtual void Add_Reqs(vector<vcTransition*>& reqs);
   virtual void Add_Acks(vector<vcTransition*>& acks);
@@ -250,7 +255,7 @@ public:
 
 
 //
-// all arithmetic and logical binary operators.
+// all arithmetic binary operators.
 //
 class vcBinarySplitOperator: public vcSplitOperator
 {
@@ -306,6 +311,62 @@ public:
   friend class vcDataPath;
 };
 
+// binary operator can also be non-split, that is
+// with a single req/ack pair.
+class vcBinaryOperator: public vcOperator
+{
+protected:
+  string _op_id;
+
+  // two inputs
+  vcWire* _x;
+  vcWire* _y;
+  
+  // single output
+  vcWire* _z;
+
+public:
+
+  vcBinaryOperator(string id, string op_id, vcWire* x, vcWire* y, vcWire* z);
+  string Get_Op_Id() {return(this->_op_id);}
+
+  virtual vcType* Get_Input_Type() {return(this->_x->Get_Type());}
+
+  vcType* Get_X_Input_Type() {return(this->_x->Get_Type());}
+  vcType* Get_Y_Input_Type() {return(this->_y->Get_Type());}
+  virtual vcType* Get_Output_Type() {return(this->_z->Get_Type());}
+
+  virtual void Print(ostream& ofile);
+
+  virtual void Check_Consistency() {assert(0);}
+  virtual string Kind() {return("vcBinaryOperator");}
+
+  virtual bool Is_Shareable_With(vcDatapathElement* other) 
+  { 
+    return(false); 
+  }
+
+  virtual int Get_Number_Of_Input_Wires() { return(2); }
+  virtual int Get_Number_Of_Output_Wires() { return(1);}
+
+  virtual void Append_Inwires(vector<vcWire*>& inwires) 
+  {
+    inwires.push_back(_x);
+    inwires.push_back(_y);
+  }
+  virtual void Append_Outwires(vector<vcWire*>& outwires) 
+  {
+    outwires.push_back(_z);
+  }
+
+  vcWire* Get_X() {return(_x);}
+  vcWire* Get_Y() {return(_y);}
+  vcWire* Get_Z() {return(_z);}
+
+  virtual string Get_Operator_Type() {return(this->Kind() + " (" + this->_op_id + ")");}
+  friend class vcDataPath;
+};
+
 
 // NOT is the only one of this type
 class vcUnarySplitOperator: public vcSplitOperator
@@ -328,6 +389,52 @@ public:
   virtual void Print(ostream& ofile);
   virtual void Check_Consistency() {assert(0);}
   virtual string Kind() {return("vcUnarySplitOperator");}
+
+  virtual string Get_Operator_Type() {return(this->Kind() + " (" + this->_op_id + ")");}
+
+  virtual int Get_Number_Of_Input_Wires() { return(1); }
+  virtual int Get_Number_Of_Output_Wires() { return(1);}
+
+  virtual void Append_Inwires(vector<vcWire*>& inwires) 
+  {
+    inwires.push_back(_x);
+  }
+  virtual void Append_Outwires(vector<vcWire*>& outwires) 
+  {
+    outwires.push_back(_z);
+  }
+
+  virtual vcType* Get_Input_Type() {return(this->_x->Get_Type());}
+
+  vcType* Get_X_Input_Type() {return(this->_x->Get_Type());}
+  virtual vcType* Get_Output_Type() {return(this->_z->Get_Type());}
+
+  friend class vcDataPath;
+};
+
+
+// NOT is the only one of this type
+class vcUnaryOperator: public vcOperator
+{
+protected:
+  string _op_id;
+
+  // single input
+  vcWire* _x;
+  
+  // single output
+  vcWire* _z;
+
+public:
+
+  vcUnaryOperator(string id, string op_id, vcWire* x, vcWire* z);
+  string Get_Op_Id() {return(this->_op_id);}
+
+  virtual bool Is_Shareable_With(vcDatapathElement* other) {return(false);}
+
+  virtual void Print(ostream& ofile);
+  virtual void Check_Consistency() {assert(0);}
+  virtual string Kind() {return("vcUnaryOperator");}
 
   virtual string Get_Operator_Type() {return(this->Kind() + " (" + this->_op_id + ")");}
 

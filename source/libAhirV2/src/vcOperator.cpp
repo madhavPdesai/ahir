@@ -220,6 +220,35 @@ void vcUnarySplitOperator::Print(ostream& ofile)
 	<< endl;
 }
 
+
+vcUnaryOperator::vcUnaryOperator(string id, string op_id, vcWire* x, vcWire* z):vcOperator(id)
+{
+  assert(x != NULL && z != NULL);
+  
+  this->_op_id = op_id;
+
+  this->_x = x;
+  x->Connect_Receiver(this);
+
+  this->_z = z;
+  z->Connect_Driver(this);
+}
+
+
+void vcUnaryOperator::Print(ostream& ofile)
+{
+  ofile << this->_op_id << " " << this->Get_Label() << " "
+	<< vcLexerKeywords[__LPAREN] 
+	<< this->_x->Get_Id() << " "
+	<< vcLexerKeywords[__RPAREN] 
+	<< " "
+	<< vcLexerKeywords[__LPAREN] 
+	<< this->_z->Get_Id()
+	<< vcLexerKeywords[__RPAREN] 
+	<< endl;
+}
+
+
 vcBinarySplitOperator::vcBinarySplitOperator(string id, string op_id, vcWire* x, vcWire* y, vcWire* z):vcSplitOperator(id)
 {
   assert(x != NULL && y != NULL && z != NULL);
@@ -293,6 +322,36 @@ bool vcBinarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
 
 
 void vcBinarySplitOperator::Print(ostream& ofile)
+{
+  ofile << this->_op_id << " " << this->Get_Label() << " "
+	<< vcLexerKeywords[__LPAREN] 
+	<< this->_x->Get_Id() << " "
+	<< this->_y->Get_Id() << " "
+	<< vcLexerKeywords[__RPAREN] 
+	<< " "
+	<< vcLexerKeywords[__LPAREN] 
+	<< this->_z->Get_Id()
+	<< vcLexerKeywords[__RPAREN] 
+	<< endl;
+}
+
+vcBinaryOperator::vcBinaryOperator(string id, string op_id, vcWire* x, vcWire* y, vcWire* z):vcOperator(id)
+{
+  assert(x != NULL && y != NULL && z != NULL);
+  
+  this->_op_id = op_id;
+  
+  this->_x = x;
+  x->Connect_Receiver(this);
+
+  this->_y = y;
+  y->Connect_Receiver(this);
+
+  this->_z = z;
+  z->Connect_Driver(this);
+}
+
+void vcBinaryOperator::Print(ostream& ofile)
 {
   ofile << this->_op_id << " " << this->Get_Label() << " "
 	<< vcLexerKeywords[__LPAREN] 

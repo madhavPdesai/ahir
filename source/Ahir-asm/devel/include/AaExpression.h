@@ -47,6 +47,11 @@ class AaExpression: public AaRoot
   virtual string Get_VC_Name();
 
   virtual void Write_VC_Control_Path(ostream& ofile);
+
+  virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
+  {
+    assert(0);
+  }
 };
 
 
@@ -107,6 +112,7 @@ class AaObjectReference: public AaExpression
   virtual void Add_Source_Reference(AaRoot* referrer);
   virtual void PrintC(ofstream& ofile, string tab_string);
 
+
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
@@ -122,6 +128,11 @@ class AaConstantLiteralReference: public AaObjectReference
   virtual void Map_Source_References(set<AaRoot*>& source_objects) {} // do nothing
   virtual void PrintC(ofstream& ofile, string tab_string);
   virtual void Write_VC_Control_Path(ostream& ofile);
+
+  virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
+  {
+    leaf_expression_set.insert(this);
+  }
 };
 
 // simple reference (no array indices)
@@ -135,6 +146,11 @@ class AaSimpleObjectReference: public AaObjectReference
   virtual void PrintC(ofstream& ofile, string tab_string);
 
   virtual void Write_VC_Control_Path(ostream& ofile);
+
+  virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
+  {
+    leaf_expression_set.insert(this);
+  }
 };
 
 // array object reference
@@ -162,6 +178,12 @@ class AaArrayObjectReference: public AaObjectReference
 
   virtual void Write_VC_Control_Path(ostream& ofile);
   void Write_VC_Address_Gen_Control_Path(ostream& ofile);
+
+  virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
+  {
+    for(int idx = 0; idx < _indices.size(); idx++)
+      _indices[idx]->Get_Leaf_Expression_Set(leaf_expression_set);
+  }
 };
 
 // type cast expression (is unary)
@@ -191,6 +213,11 @@ class AaTypeCastExpression: public AaExpression
   }
 
   virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
+  {
+      _rest->Get_Leaf_Expression_Set(leaf_expression_set);
+  }
+
 };
 
 
@@ -223,6 +250,12 @@ class AaUnaryExpression: public AaExpression
   }
 
   virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
+  {
+      _rest->Get_Leaf_Expression_Set(leaf_expression_set);
+  }
+
+
 };
 
 // 
@@ -291,6 +324,13 @@ class AaBinaryExpression: public AaExpression
   virtual void Update_Type();
 
   virtual void Write_VC_Control_Path(ostream& ofile);
+
+  virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
+  {
+      _first->Get_Leaf_Expression_Set(leaf_expression_set);
+      _second->Get_Leaf_Expression_Set(leaf_expression_set);
+  }
+
   bool Is_Trivial();
 };
 
@@ -330,6 +370,15 @@ class AaTernaryExpression: public AaExpression
   }
 
   virtual void Write_VC_Control_Path(ostream& ofile);
+
+  virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
+  {
+      _test->Get_Leaf_Expression_Set(leaf_expression_set);
+      _if_true->Get_Leaf_Expression_Set(leaf_expression_set);
+      _if_false->Get_Leaf_Expression_Set(leaf_expression_set);
+  }
+
+
 };
 
 #endif

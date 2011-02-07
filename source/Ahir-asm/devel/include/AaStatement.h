@@ -112,6 +112,7 @@ class AaStatement: public AaScope
     // do nothing.
   }
 
+  virtual string Get_VC_Name();
   virtual void Write_VC_Control_Path(ostream& ofile) { assert(0);}
 
 };
@@ -170,8 +171,9 @@ class AaStatementSequence: public AaScope
 
   virtual void Write_Clear_Exit_Flags_Code(ostream& ofile);
 
-  virtual void Write_VC_Control_Path(ostream& ofile); //todo
+  virtual void Write_VC_Control_Path(ostream& ofile); 
 
+  AaStatement* Get_Next_Statement(AaStatement* stmt);
 };
 
 // null statement
@@ -301,6 +303,8 @@ class AaCallStatement: public AaStatement
   virtual void Write_Inarg_Copy_Code(ofstream& ofile,string tab_string);
   virtual void Write_Outarg_Copy_Code(ofstream& ofile,string tab_string);
 
+  virtual void Write_VC_Control_Path(ostream& ofile);
+
 };
 
 
@@ -414,6 +418,13 @@ class AaBlockStatement: public AaStatement
   virtual void Write_Entry_Condition(ofstream& ofile);
 
   virtual void Write_VC_Pipe_Declarations(ostream& ofile);  
+
+  virtual string Get_VC_Name() {return(this->_label);}
+
+  virtual AaStatement* Get_Next_Statement(AaStatement* stmt)
+  {
+    return(this->_statement_sequence->Get_Next_Statement(stmt));
+  }
 };
 
 class AaSeriesBlockStatement: public AaBlockStatement
@@ -428,6 +439,13 @@ class AaSeriesBlockStatement: public AaBlockStatement
   virtual void Write_Entry_Transfer_Code(ofstream& ofile);
   virtual void Write_Statement_Invocations(ofstream& ofile);
   virtual void Write_Exit_Check_Condition(ofstream& ofile);
+
+  virtual void Write_VC_Control_Path(ostream& ofile)
+  {
+    ofile << ";;[" << this->Get_VC_Name() << "] {";
+    this->_statement_sequence->Write_VC_Control_Path(ofile);
+    ofile << "} // end series block " << this->Get_VC_Name() << endl;
+  }
 
 };
 
@@ -444,16 +462,29 @@ class AaParallelBlockStatement: public AaBlockStatement
   virtual void Write_Entry_Transfer_Code(ofstream& ofile);
   virtual void Write_Statement_Invocations(ofstream& ofile);
   virtual void Write_Exit_Check_Condition(ofstream& ofile);
+
+  virtual void Write_VC_Control_Path(ostream& ofile)
+  {
+    ofile << "||[" << this->Get_VC_Name() << "] {";
+    this->_statement_sequence->Write_VC_Control_Path(ofile);
+    ofile << "} // end series block " << this->Get_VC_Name() << endl;
+  }
+
 };
 
 class AaForkBlockStatement: public AaParallelBlockStatement
 {
+
+  set<AaStatement*> _explicitly_forked_statements;
+  set<AaStatement*> _explicitly_joined_statements;
+
  public:
   AaForkBlockStatement(AaScope* scope , string label);
   ~AaForkBlockStatement();
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaForkBlockStatement");}
 
+  virtual void Write_VC_Control_Path(ostream& ofile);
 };
 
 class AaBranchBlockStatement: public AaSeriesBlockStatement
@@ -463,6 +494,8 @@ class AaBranchBlockStatement: public AaSeriesBlockStatement
   ~AaBranchBlockStatement();
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaBranchBlockStatement");}
+
+  virtual void Write_VC_Control_Path(ostream& ofile);
 };
 
 
@@ -490,6 +523,10 @@ class AaJoinForkStatement: public AaParallelBlockStatement
     return(this->Get_Scope()->Get_Struct_Dereference());
   }
 
+
+  virtual void Write_VC_Control_Path(ostream& ofile);
+
+  virtual string Get_VC_Name() {return(this->_label);}
 
 };
 
@@ -547,6 +584,13 @@ class AaPlaceStatement: public AaStatement
 	AaRoot::Error("place is not cleared by any merge ", this);
       }
   }
+
+  virtual string Get_VC_Name() {return(this->Get_Label());}
+  void Write_VC_Control_Path(ostream& ofile)
+  {
+    ofile << "$P [" << this->Get_VC_Name() << "]" << endl;
+  }
+
 };
 
 
@@ -599,6 +643,9 @@ class AaMergeStatement: public AaSeriesBlockStatement
     return(this->Get_Struct_Dereference() +  this->Get_Merge_From_Entry());
   }
 
+  virtual void Write_VC_Control_Path(ostream& ofile);
+
+
 };
 
 class AaPhiStatement: public AaStatement
@@ -606,6 +653,7 @@ class AaPhiStatement: public AaStatement
   AaMergeStatement* _parent_merge;
   AaSimpleObjectReference* _target;
   vector<pair<string,AaExpression*> > _source_pairs;
+  set<string> _merged_labels;
 
  public:
   AaPhiStatement(AaBranchBlockStatement* scope, AaMergeStatement* pm);
@@ -617,8 +665,14 @@ class AaPhiStatement: public AaStatement
   }
   void Add_Source_Pair(string label, AaExpression* expr)
   {
+    _merged_labels.insert(label);
     this->_source_pairs.push_back(pair<string,AaExpression*>(label,expr));
   }
+  bool Is_Merged(string label)
+  {
+    return(_merged_labels.find(label) != _merged_labels.end());
+  }
+
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaPhiStatement");}
   virtual void Map_Source_References();
@@ -629,6 +683,8 @@ class AaPhiStatement: public AaStatement
   }
   virtual void PrintC(ofstream& ofile, string tab_string);
   void Write_C_Struct(ofstream& ofile);
+
+  virtual void Write_VC_Control_Path(ostream& ofile);
 };
 
 

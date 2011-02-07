@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 entity BypassRegister is
-  generic(data_width: integer); 
+  generic(data_width: integer; enable_bypass: boolean := false); 
   port (
     clk, reset : in  std_logic;
     enable     : in  std_logic;
@@ -26,5 +26,12 @@ begin  -- behave
     end if;
   end process;
 
-  data_out <= data_in when enable = '1' else data_reg;
+  Bypass: if enable_bypass generate
+    data_out <= data_in when enable = '1' else data_reg;    
+  end generate Bypass;
+
+  NoBypass: if not enable_bypass generate
+    data_out <= data_reg;
+  end generate NoBypass;
+
 end behave;

@@ -236,18 +236,6 @@ void AaSimpleObjectReference::Write_VC_Control_Path(ostream& ofile)
       ofile << "}" << endl;
     }
 
-  // else if the object being referred to is 
-  // a statement, instantiate a series r-a-r-a
-  // chain for the assign operation..
-  //
-  // TODO: In VC, change assign/not/or/xor/and/nor/xnor/nand to
-  //       r-a operators.
-  else if(this->_object->Is("AaAssignmentSatement"))
-    {
-      ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
-      ofile << "$T [req] $T [ack] " << endl;
-      ofile << "}" << endl;
-    }
 
   // else if the object being referred to is
   // a pipe, instantiate a series r-a
@@ -258,6 +246,20 @@ void AaSimpleObjectReference::Write_VC_Control_Path(ostream& ofile)
       ofile << "$T [read_req] $T [read_ack] " << endl;
       ofile << "}" << endl;
     }
+
+  // the object being referred to is 
+  // a statement target, instantiate a series r-a
+  // chain for the assign operation..
+  //
+  // TODO: In VC, change assign/not/or/xor/and/nor/xnor/nand to
+  //       r-a operators.
+  else 
+    {
+      ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
+      ofile << "$T [req] $T [ack] " << endl;
+      ofile << "}" << endl;
+    }
+
 }
 
 //---------------------------------------------------------------------

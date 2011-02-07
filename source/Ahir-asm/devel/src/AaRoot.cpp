@@ -87,7 +87,7 @@ string Make_VC_Legal(string x)
   string ret_string;
   for(int i = 0; i < x.size(); i++)
     {
-      if(x[i] == '%')
+      if(x[i] == '%' || x[i] == '$')
 	ret_string += "xx";
       else
 	ret_string += x[i];

@@ -33,7 +33,7 @@ package BaseComponents is
   -- miscellaneous
   -----------------------------------------------------------------------------
   component BypassRegister 
-  generic(data_width: integer); 
+  generic(data_width: integer; enable_bypass: boolean); 
   port (
     clk, reset : in  std_logic;
     enable     : in  std_logic;
@@ -44,6 +44,42 @@ package BaseComponents is
   -----------------------------------------------------------------------------
   -- operator base components
   -----------------------------------------------------------------------------
+  component UnitaryOperatorBase 
+    generic
+      (
+        operator_id   : string;          -- operator id
+        input1_is_int : Boolean := true; -- false means float
+        input1_characteristic_width : integer := 0; -- characteristic width if input1 is float
+        input1_mantissa_width       : integer := 0; -- mantissa width if input1 is float
+        iwidth_1      : integer;    -- width of input1
+        input2_is_int : Boolean := true; -- false means float
+        input2_characteristic_width : integer := 0; -- characteristic width if input2 is float
+        input2_mantissa_width       : integer := 0; -- mantissa width if input2 is float
+        iwidth_2      : integer;    -- width of input2
+        num_inputs    : integer := 2;    -- can be 1 or 2.
+        output_is_int : Boolean := true;  -- false means that the output is a float
+        output_characteristic_width : integer := 0;
+        output_mantissa_width       : integer := 0;
+        owidth        : integer;          -- width of output.
+        constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
+        twidth        : integer;          -- tag width
+        use_constant  : boolean := false;  -- if true, the second operand is
+                                           -- assumed to be the generic
+        zero_delay    : boolean := false;  -- if true, operator result is
+                                           -- registered, but with a bypass, so
+                                           -- that the result is available immediately.
+        flow_through  : boolean := false  -- if true, operator is combinational
+        );
+    port (
+      -- req -> ack follow pulse protocol
+      req:  in Boolean;
+      ack:  out Boolean;
+      -- operands.
+      dataL      : in  std_logic_vector(iwidth_1 + iwidth_2 - 1 downto 0);
+      dataR      : out std_logic_vector(owidth-1 downto 0);
+      clk, reset : in  std_logic);
+  end component UnitaryOperatorBase;
+
   component SplitOperatorBase
     generic
       (
@@ -63,8 +99,11 @@ package BaseComponents is
         owidth        : integer;          -- width of output.
         constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
         twidth        : integer;          -- tag width
-        use_constant  : boolean := false;
-        zero_delay    : boolean := false
+        use_constant  : boolean := false;  -- if true, the second operand is
+                                           -- provided by the generic.
+        zero_delay    : boolean := false  -- if true, the result is registered,
+                                          -- but with a bypass, so that it is
+                                          -- available immediately.
         );
     port (
       -- req/ack follow level protocol
