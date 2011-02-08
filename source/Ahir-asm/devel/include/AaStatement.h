@@ -25,6 +25,8 @@ class AaStatement: public AaScope
   set<AaRoot*> _target_objects;
   set<AaRoot*> _source_objects;
 
+  int _index_in_sequence;
+
  public:
   AaStatement(AaScope* scope);
   
@@ -45,7 +47,8 @@ class AaStatement: public AaScope
 
   virtual bool Is_Statement() { return(true);}
 
-
+  void Set_Index_In_Sequence(int id) {this->_index_in_sequence = id;}
+  int Get_Index_In_Sequence() {return(this->_index_in_sequence);}
 
   ~AaStatement();
 
@@ -174,6 +177,7 @@ class AaStatementSequence: public AaScope
   virtual void Write_VC_Control_Path(ostream& ofile); 
 
   AaStatement* Get_Next_Statement(AaStatement* stmt);
+  AaStatement* Get_Previous_Statement(AaStatement* stmt);
 };
 
 // null statement
@@ -425,6 +429,11 @@ class AaBlockStatement: public AaStatement
   {
     return(this->_statement_sequence->Get_Next_Statement(stmt));
   }
+
+  virtual AaStatement* Get_Previous_Statement(AaStatement* stmt)
+  {
+    return(this->_statement_sequence->Get_Previous_Statement(stmt));
+  }
 };
 
 class AaSeriesBlockStatement: public AaBlockStatement
@@ -496,6 +505,9 @@ class AaBranchBlockStatement: public AaSeriesBlockStatement
   virtual string Kind() {return("AaBranchBlockStatement");}
 
   virtual void Write_VC_Control_Path(ostream& ofile);
+  void Write_VC_Control_Path(bool link_to_self,
+			     AaStatementSequence* sseq,
+			     ostream& ofile);
 };
 
 
@@ -645,6 +657,7 @@ class AaMergeStatement: public AaSeriesBlockStatement
 
   virtual void Write_VC_Control_Path(ostream& ofile);
 
+  virtual string Get_VC_Name();
 
 };
 
@@ -737,6 +750,7 @@ class AaSwitchStatement: public AaStatement
     return(this->Get_Scope()->Get_Struct_Dereference());
   }
 
+  virtual void Write_VC_Control_Path(ostream& ofile);
 };
 
 
@@ -778,7 +792,7 @@ class AaIfStatement: public AaStatement
     return(this->Get_Scope()->Get_Struct_Dereference());
   }
 
-
+  virtual void Write_VC_Control_Path(ostream& ofile);
 };
 
 

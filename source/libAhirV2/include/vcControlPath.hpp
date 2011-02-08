@@ -273,7 +273,7 @@ public:
 
 
 
-class vcControlPath: public vcCPParallelBlock
+class vcControlPath: public vcCPSeriesBlock
 {
 
   set<vcCompatibilityLabel*> _compatibility_label_set;
@@ -300,7 +300,7 @@ public:
   void Delete_Compatibility_Label(vcCompatibilityLabel* nl);
 
   virtual bool Check_Structure();
-  virtual void Print_Structure(ostream& ofile) {this->vcCPParallelBlock::Print_Structure(ofile);}
+  virtual void Print_Structure(ostream& ofile) {this->vcCPSeriesBlock::Print_Structure(ofile);}
   void Print_Compatibility_Labels(ostream& ofile);
 
   bool Are_Compatible(vcCompatibilityLabel* u, vcCompatibilityLabel* v);

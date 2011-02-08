@@ -37,6 +37,7 @@ class AaExpression: public AaRoot
 
   virtual void Map_Source_References(set<AaRoot*>& source_objects) { assert(0); }
   virtual bool Is_Expression() {return(true); }
+  virtual bool Is_Object_Reference() {return(false);}
 
   virtual void PrintC(ofstream& ofile, string tab_string) { assert(0); }
 
@@ -46,7 +47,7 @@ class AaExpression: public AaRoot
   
   virtual string Get_VC_Name();
 
-  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path( ostream& ofile);
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
@@ -112,6 +113,7 @@ class AaObjectReference: public AaExpression
   virtual void Add_Source_Reference(AaRoot* referrer);
   virtual void PrintC(ofstream& ofile, string tab_string);
 
+  virtual bool Is_Object_Reference() {return(true);}
 
 };
 
@@ -127,7 +129,7 @@ class AaConstantLiteralReference: public AaObjectReference
   virtual string Kind() {return("AaConstantLiteralReference");}
   virtual void Map_Source_References(set<AaRoot*>& source_objects) {} // do nothing
   virtual void PrintC(ofstream& ofile, string tab_string);
-  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path( ostream& ofile);
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
@@ -145,7 +147,7 @@ class AaSimpleObjectReference: public AaObjectReference
   virtual void Set_Object(AaRoot* obj);
   virtual void PrintC(ofstream& ofile, string tab_string);
 
-  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path( ostream& ofile);
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
@@ -176,7 +178,7 @@ class AaArrayObjectReference: public AaObjectReference
   virtual void Map_Source_References(set<AaRoot*>& source_objects); // important
   virtual void PrintC(ofstream& ofile, string tab_string);
 
-  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path( ostream& ofile);
   void Write_VC_Address_Gen_Control_Path(ostream& ofile);
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
@@ -212,7 +214,7 @@ class AaTypeCastExpression: public AaExpression
     ofile << ")";
   }
 
-  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path( ostream& ofile);
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
       _rest->Get_Leaf_Expression_Set(leaf_expression_set);
@@ -249,7 +251,7 @@ class AaUnaryExpression: public AaExpression
     ofile << ") ";
   }
 
-  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path( ostream& ofile);
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
       _rest->Get_Leaf_Expression_Set(leaf_expression_set);
@@ -323,7 +325,7 @@ class AaBinaryExpression: public AaExpression
 
   virtual void Update_Type();
 
-  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path( ostream& ofile);
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
@@ -369,7 +371,7 @@ class AaTernaryExpression: public AaExpression
     ofile << ") ";
   }
 
-  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path( ostream& ofile);
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {

@@ -246,9 +246,10 @@ vc_CPParallelBlock[vcCPBlock* cp]
 	string lbl;
 	vcCPParallelBlock* sb;
 	vcCPElement* cpe;
+        vcCPElement* t;
 }
 : PARALLELBLOCK lbl = vc_Label { sb = new vcCPParallelBlock(cp,lbl);} LBRACE 
- ( vc_CPRegion[sb] )+ RBRACE
+ ( vc_CPRegion[sb] | t = vc_CPTransition[sb] {sb->Add_CPElement(t);} )+ RBRACE
 { cp->Add_CPElement(sb); }
 ;
 

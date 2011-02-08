@@ -192,8 +192,10 @@ package BaseComponents is
   end component PhiBase;
 
 
-  component BranchBase 
-    port (condition: in std_logic_vector(0 downto 0);
+  component BranchBase
+    generic (
+      (condition_width : integer);
+    port (condition: in std_logic_vector(condition_width-1 downto 0);
           clk,reset: in std_logic;
           req: in Boolean;
           ack0: out Boolean;

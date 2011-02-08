@@ -6,6 +6,7 @@
 AaStatement::AaStatement(AaScope* p): AaScope(p) 
 {
   this->_tab_depth = ((p != NULL) ? p->Get_Depth()+1 : 1);
+  _index_in_sequence = -1;
 }
 AaStatement::~AaStatement() {};
 string AaStatement::Tab()
@@ -292,6 +293,8 @@ AaStatementSequence::AaStatementSequence(AaScope* scope, vector<AaStatement*>& s
   for(unsigned int i=0; i < statement_sequence.size();i++)
     {
       AaStatement* stmt = statement_sequence[i];
+      stmt->Set_Index_In_Sequence(i);
+
       this->_statement_sequence.push_back(stmt);
     }
 }
@@ -415,17 +418,33 @@ void AaStatementSequence::Write_VC_Control_Path(ostream& ofile)
 AaStatement* AaStatementSequence::Get_Next_Statement(AaStatement* stmt)
 {
   AaStatement* ret_stmt = NULL;
-  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+  int idx = stmt->Get_Index_In_Sequence();
+
+  assert(idx >= 0);
+
+  if(idx < (this->Get_Statement_Count() -1))
     {
-      if(_statement_sequence[i] == stmt)
-	{
-	  if((i+1) < _statement_sequence.size())
-	    ret_stmt = _statement_sequence[i+1];
-	  break;
-	}
+      ret_stmt = this->Get_Statement(idx+1);
     }
+  
   return(ret_stmt);
 }
+
+AaStatement* AaStatementSequence::Get_Previous_Statement(AaStatement* stmt)
+{
+  AaStatement* ret_stmt = NULL;
+  int idx = stmt->Get_Index_In_Sequence();
+
+  assert(idx >= 0);
+
+  if(idx > 0)
+    {
+      ret_stmt = this->Get_Statement(idx-1);
+    }
+  
+  return(ret_stmt);
+}
+
 //---------------------------------------------------------------------
 // AaNullStatement: public AaStatement
 //---------------------------------------------------------------------
@@ -434,7 +453,7 @@ AaNullStatement::~AaNullStatement() {};
 void AaNullStatement::Write_VC_Control_Path(ostream& ofile)
 {
   // write a blank series block...
-  ofile << ";;[" << this->Get_Label() << "] {"  << endl;
+  ofile << ";;[" << this->Get_VC_Name() << "] {"  << endl;
   ofile << "$T [dummy] // dummy transition " << endl;
   ofile << "}";
 }
@@ -526,6 +545,7 @@ void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
 {
   ofile << ";;[" << this->Get_VC_Name() << "] // " << this->Get_Source_Info() << endl << " {" << endl;
   this->_source->Write_VC_Control_Path(ofile);
+  this->_target->Write_VC_Control_Path(ofile);
   ofile << "} // end assignment statement " << this->Get_VC_Name() << endl;
 }
 
@@ -917,7 +937,18 @@ void AaCallStatement::Write_Outarg_Copy_Code(ofstream& ofile,string tab_string)
 void AaCallStatement::Write_VC_Control_Path(ostream& ofile)
 {
   ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
+  ofile << "||[" << this->Get_VC_Name() << "_in_args_] {" << endl;
+  for(int idx = 0; idx < _input_args.size(); idx++)
+    _input_args[idx]->Write_VC_Control_Path(ofile);
+  ofile << "}" << endl;
+
   ofile << "$T [crr] $T [cra] $T [ccr] $T [cca]" << endl;
+
+  ofile << "||[" << this->Get_VC_Name() << "_out_args_] {" << endl;
+  for(int idx = 0; idx < _output_args.size(); idx++)
+    _output_args[idx]->Write_VC_Control_Path(ofile);
+  ofile << "}" << endl;
+
   ofile << "} // end call-statement " << this->Get_VC_Name() << endl;
 }
 
@@ -1170,38 +1201,110 @@ void AaBranchBlockStatement::Print(ostream& ofile)
 void AaBranchBlockStatement::Write_VC_Control_Path(ostream& ofile)
 {
   // three passes..
-  ofile << "<>[" << this->Get_VC_Name() << "] {" << endl;
-  // first the places..
-  if(this->_statement_sequence)
+  ofile << "<>[" << this->Get_VC_Name() << "] // Branch Block " << endl << " {" << endl;
+
+  // entry and exit place, created explicitly
+  ofile << "$P [" << this->Get_VC_Name() << "__entry__]" << endl;
+  ofile << "$P [" << this->Get_VC_Name() << "__exit__]" << endl;
+
+  this->Write_VC_Control_Path(true, this->_statement_sequence, ofile);
+
+  ofile << "} " << endl;
+}
+
+void AaBranchBlockStatement::Write_VC_Control_Path(bool link_to_self,
+						   AaStatementSequence* sseq,
+						   ostream& ofile)
+{
+  if(sseq)
     {
-      for(int idx = 0; idx  < this->_statement_sequence->Get_Statement_Count(); idx++)
+      // first declare the entry/exit places for statements
+      // in the sequence..
+      for(int idx = 0; idx  < sseq->Get_Statement_Count(); idx++)
 	{
-	  AaStatement* stmt = this->_statement_sequence->Get_Statement(idx);
+	  AaStatement* stmt = sseq->Get_Statement(idx);
+	  if(!stmt->Is("AaPlaceStatement"))
+	    {
+	      // every statement other than a place 
+	      ofile << "$P [" << stmt->Get_VC_Name() << "__entry__] " << endl;
+	      ofile << "$P [" << stmt->Get_VC_Name() << "__exit__] " << endl;
+	    }
+	}
+
+      // now the place statements.
+      for(int idx = 0; idx  < sseq->Get_Statement_Count(); idx++)
+	{
+	  AaStatement* stmt = sseq->Get_Statement(idx);
 	  if(stmt->Is("AaPlaceStatement"))
 	    stmt->Write_VC_Control_Path(ofile);
 	}
-      
+	
+
       // next all except the merges.
-      for(int idx = 0; idx  < this->_statement_sequence->Get_Statement_Count(); idx++)
+      for(int idx = 0; idx  < sseq->Get_Statement_Count(); idx++)
 	{
-	  AaStatement* stmt = this->_statement_sequence->Get_Statement(idx);
-	  if(!stmt->Is("AaMergeStatement"))
-	    stmt->Write_VC_Control_Path(ofile);
+	  AaStatement* stmt = sseq->Get_Statement(idx);
+	  if(!stmt->Is("AaMergeStatement") && !stmt->Is("AaPlaceStatement"))
+	    {
+	      stmt->Write_VC_Control_Path(ofile);
+		
+	      // control regulated by __entry__ and __exit__ places..
+	      ofile << stmt->Get_VC_Name() << "__entry__ |-> (" << stmt->Get_VC_Name() << ")" << endl;
+	      ofile << stmt->Get_VC_Name() << "__exit__ <-| (" << stmt->Get_VC_Name() << ")" << endl;
+	    }
 	}
-      
-      // finally the merges.
-      for(int idx = 0; idx  < this->_statement_sequence->Get_Statement_Count(); idx++)
+	
+      // almost finally the merges.
+      for(int idx = 0; idx  < sseq->Get_Statement_Count(); idx++)
 	{
-	  AaStatement* stmt = this->_statement_sequence->Get_Statement(idx);
+	  AaStatement* stmt = sseq->Get_Statement(idx);
 	  if(stmt->Is("AaMergeStatement"))
-	    stmt->Write_VC_Control_Path(ofile);
+	    {
+	      stmt->Write_VC_Control_Path(ofile);
+	    }
+	}
+	
+      // very finally, the control transfer between statements..
+      for(int idx = 0; idx  < sseq->Get_Statement_Count(); idx++)
+	{
+	  AaStatement* stmt = sseq->Get_Statement(idx);
+	    
+	  if(!stmt->Is("AaPlaceStatement"))
+	    {
+	      // stmt must pass control to its successor..
+	      AaStatement* next_stmt = sseq->Get_Next_Statement(stmt);
+	      if(next_stmt != NULL)
+		{
+		  if(!next_stmt->Is("AaPlaceStatement"))
+		    ofile << stmt->Get_VC_Name() << "__exit__ |-> (" << next_stmt->Get_VC_Name() << "__entry__)" << endl;
+		  else
+		    ofile << stmt->Get_VC_Name() << "__exit__ |-> (" << next_stmt->Get_VC_Name() << ")" << endl;
+		}
+	      else if(link_to_self)
+		ofile << stmt->Get_VC_Name() << "__exit__ |-> ($exit)";
+		
+		
+	      AaStatement* prev_stmt = sseq->Get_Previous_Statement(stmt);
+	      if(prev_stmt == NULL)
+		{
+		  if(link_to_self)
+		    ofile << stmt->Get_VC_Name() << "__entry__ <-| ($entry)" << endl;
+		}
+	      else
+		{
+		  if(!prev_stmt->Is("AaPlaceStatement"))		  
+		    ofile << stmt->Get_VC_Name() << "__entry__ <-| (" << prev_stmt->Get_VC_Name() << "__exit__)" << endl;
+		  else
+		    ofile << stmt->Get_VC_Name() << "__entry__ <-| (" << prev_stmt->Get_VC_Name() << ")" << endl;
+		}
+	    }
 	}
     }
-  else
+  else if(link_to_self)
     {
-      ofile << "$P [dummy] " << endl;
-      ofile << "dummy <-| ($entry) " << endl;
-      ofile << "dummy |-> ($exit)" << endl;
+      ofile << "$P [dummy_place_] " << endl;
+      ofile << "dummy_place_ <-| ($entry) " << endl;
+      ofile << "dummy_place_ |-> ($exit)" << endl;
     }
 }
 
@@ -1418,38 +1521,35 @@ void AaMergeStatement::Write_Entry_Transfer_Code(ofstream& ofile)
 
 }
 
+string AaMergeStatement::Get_VC_Name()
+{
+  string ret_string = this->Kind() + "_" + Int64ToStr(this->Get_Index());
+  return(ret_string);
+}
+
 void AaMergeStatement::Write_VC_Control_Path(ostream& ofile)
 {
   // first, for each element of the merge-label set,
   // find the phi statements that depend on it.
   map<string,set<AaPhiStatement*> > phi_dependency_map;
-  for(int idx = 0; idx < _statement_sequence->Get_Statement_Count(); idx++)
+  ofile << "//---------------------   merge statement " << this->Get_Source_Info() << "  --------------------------" << endl;
+  if(_statement_sequence != NULL)
     {
-      AaStatement* stmt = _statement_sequence->Get_Statement(idx);
-      assert(stmt->Is("AaPhiStatement"));
-      
-      AaPhiStatement* pstmt = (AaPhiStatement*) stmt;
-      for(set<string,StringCompare>::iterator iter= _merge_label_set.begin();
-	  iter != _merge_label_set.end();
-	  iter++)
+      for(int idx = 0; idx < _statement_sequence->Get_Statement_Count(); idx++)
 	{
-	  if(pstmt->Is_Merged(*iter))
-	    phi_dependency_map[(*iter)].insert(pstmt);
+	  AaStatement* stmt = _statement_sequence->Get_Statement(idx);
+	  assert(stmt->Is("AaPhiStatement"));
+	  
+	  AaPhiStatement* pstmt = (AaPhiStatement*) stmt;
+	  for(set<string,StringCompare>::iterator iter= _merge_label_set.begin();
+	      iter != _merge_label_set.end();
+	      iter++)
+	    {
+	      if(pstmt->Is_Merged(*iter))
+		phi_dependency_map[(*iter)].insert(pstmt);
+	    }
 	}
     }
-
-
-  // for each merge-label create an intermediate place
-  for(set<string,StringCompare>::iterator iter= _merge_label_set.begin();
-      iter != _merge_label_set.end();
-      iter++)
-    {
-      ofile << "$P [" << (*iter) << "_Intermediate]" << endl;
-      
-      // merge-label merges into its intermediate
-      ofile << (*iter) << "_Intermediate <-| (" << (*iter) << ")" << endl;
-    }
-
 
   // for each merge-label create a parallel region
   // in which requests are generated to all the phi-statements
@@ -1459,7 +1559,10 @@ void AaMergeStatement::Write_VC_Control_Path(ostream& ofile)
       iter++)
     {
       string mlabel = (*iter);
-      ofile << "||[" << Make_VC_Legal(mlabel) << "_PhiReq] {" << endl; 
+      string mplace = ((mlabel == "$entry") ? (this->Get_VC_Name() + "__entry__") : mlabel);
+
+
+      ofile << "||[" << mplace << "_PhiReq] {" << endl; 
       if(phi_dependency_map[mlabel].size() > 0)
 	{
 	  for(set<AaPhiStatement*>::iterator siter = phi_dependency_map[mlabel].begin();
@@ -1475,20 +1578,21 @@ void AaMergeStatement::Write_VC_Control_Path(ostream& ofile)
 	}
       ofile << "}" << endl;
       
-      // intermediate for merge-label branches to PhiReq
-      ofile << mlabel << "_Intermediate |-> (" << Make_VC_Legal(mlabel) << "_PhiReq)" << endl;
+      // merge-labels 
+      ofile << mplace << " |-> (" << mplace << "_PhiReq)" << endl;
     }
   
   // all the parallel regions created above will merge into 
   // a single place.
-  ofile << "$P [" << this->Get_VC_Name() << "_PhiRequestMerge] " << endl;
-  ofile << this->Get_VC_Name() << "_PhiRequestMerge <-| (";
+  ofile << "$P [" << this->Get_VC_Name() << "_PhiReqMerge] " << endl;
+  ofile << this->Get_VC_Name() << "_PhiReqMerge <-| (";
   for(set<string,StringCompare>::iterator iter= _merge_label_set.begin();
       iter != _merge_label_set.end();
       iter++)
     {
       string mlabel = (*iter);
-      ofile << " " << Make_VC_Legal(mlabel) << "_PhiReq "; 
+      string mplace = ((mlabel == "$entry") ? (this->Get_VC_Name() + "__entry__") : mlabel);
+      ofile << " " << mplace << "_PhiReq "; 
     }
   ofile << ")" << endl;
 
@@ -1496,33 +1600,27 @@ void AaMergeStatement::Write_VC_Control_Path(ostream& ofile)
   // the acks from the phi statements associated with
   // this merge statement.
   ofile << "||[" << this->Get_VC_Name() << "_PhiAck] {" << endl;
-  for(int idx = 0; idx < _statement_sequence->Get_Statement_Count(); idx++)
+
+  if(_statement_sequence)
     {
-      AaStatement* stmt = _statement_sequence->Get_Statement(idx);
-      assert(stmt->Is("AaPhiStatement"));
-      ofile << "$T [" << stmt->Get_VC_Name() << "_ack] " << endl; 
-    }
-  ofile << "}";
-
-  // now a place for this merge statement.
-  ofile << "$P [" << this->Get_VC_Name() << "]" << endl;
-
-  // the PhiAck parallel CPR merges into this place.
-  ofile << this->Get_VC_Name() << " <-| (" << this->Get_VC_Name() << "_PhiAck)" << endl;
-
-  // to finish the game..  the merge place must branch the successor..
-  AaScope* parent_scope = this->Get_Scope();
-  assert(parent_scope->Is("AaBranchBlockStatement"));
-  AaBranchBlockStatement* parent_bb = (AaBranchBlockStatement*) parent_scope;
-  AaStatement* next_stmt = parent_bb->Get_Next_Statement(this);
-  if(next_stmt != NULL)
-    {
-      ofile << this->Get_VC_Name() << " |-> (" << next_stmt->Get_VC_Name() << "_PhiAck)" << endl;
+      for(int idx = 0; idx < _statement_sequence->Get_Statement_Count(); idx++)
+	{
+	  AaStatement* stmt = _statement_sequence->Get_Statement(idx);
+	  assert(stmt->Is("AaPhiStatement"));
+	  ofile << "$T [" << stmt->Get_VC_Name() << "_ack] " << endl; 
+	}
     }
   else
-    ofile << this->Get_VC_Name() << "_merge |-> ($exit)" << endl;
+    ofile << "$T [dummy] " << endl;
+
+  ofile << "}";
+
+  // the PhiAck parallel CPR merges into the exit place for this merge
+  ofile << this->Get_VC_Name() << "_PhiReqMerge |-> (" << this->Get_VC_Name() << "_PhiAck)" << endl;
+  ofile << this->Get_VC_Name() << "__exit__ <-| (" << this->Get_VC_Name() << "_PhiAck)" << endl;
 
   // thats it..
+  ofile << "//---------------------  end of merge statement " << this->Get_Source_Info() << "  --------------------------" << endl;
 }
 
 
@@ -1787,6 +1885,99 @@ void AaSwitchStatement::Write_C_Function_Body(ofstream& ofile)
   ofile << "// -------------------------------------------------------------------------------------------" << endl;
 }
 
+void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
+{
+  AaScope* pscope = this->Get_Scope();
+  assert(pscope->Is("AaBranchBlockStatement"));
+
+  // first evaluate the switch expression..
+
+  ofile << "//---------------------    switch statement " << this->Get_Source_Info() << "  --------------------------" << endl;
+  this->_select_expression->Write_VC_Control_Path(ofile);
+  ofile << this->Get_VC_Name() << "__entry__ |-> (" << this->_select_expression->Get_VC_Name() << ")" << endl;
+
+  ofile << "//---------------------    condition computation  --------------------------" << endl;
+  ofile << "||[" << this->Get_VC_Name() << "__condition_check__] {" << endl;
+  for(int idx = 0; idx < _choice_pairs.size(); idx++)
+    {
+      ofile << ";;[condition_" << idx << "] {" << endl;
+      ofile << "$T [rr] $T [ra] $T [cr] $T [ca] " << endl;
+      ofile << "}" << endl;
+    }
+  ofile << "}" << endl;
+  ofile << "$P [" << this->Get_VC_Name() << "__select__] " << endl;
+  ofile << this->Get_VC_Name() << "__select__ <-| (" << this->Get_VC_Name() << "__condition_check__)" << endl;
+  ofile << "//---------------------    choices  --------------------------" << endl;
+  // follow the place by "n+1" choices.  The +1 choice
+  // corresponds to the default..
+  vector<AaStatement*> last_statements;
+  vector<AaStatement*> first_statements;
+  for(int idx = 0; idx < _choice_pairs.size(); idx++)
+    {
+      ofile << "//---------------------    alternative " << idx << "  --------------------------" << endl;
+      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(false,_choice_pairs[idx].second,ofile);
+      last_statements.push_back(_choice_pairs[idx].second->Get_Statement(_choice_pairs[idx].second->Get_Statement_Count() - 1));
+      first_statements.push_back(_choice_pairs[idx].second->Get_Statement(0));
+      ofile << ";;[choice_" << idx << "] { $T [choice_transition]  }"  << endl;
+      if(first_statements[idx]->Is("AaPlaceStatement"))
+	{
+	  ofile << first_statements[idx]->Get_VC_Name() << " <-| (choice_" << idx << ")" << endl;
+	}
+      else
+	{
+	  ofile << first_statements[idx]->Get_VC_Name() << "__entry__ <-| (choice_" << idx << ")" <<  endl;
+	}
+    }
+  if(_default_sequence != NULL)
+    {
+      // the default sequence will use the ack0 signal from a branch
+      // operator whose input is the concatenation of the comparisons
+      // carried out in the condition-check parallel block
+      ofile << "//---------------------  default ---------------------------------------" << endl;
+      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(false,_default_sequence,ofile);
+      last_statements.push_back(_default_sequence->Get_Statement(_default_sequence->Get_Statement_Count() - 1));
+      first_statements.push_back(_default_sequence->Get_Statement(0));
+
+      ofile << ";;[choice_default] { $T [choice_transition]  }"  << endl;
+      if(first_statements.back()->Is("AaPlaceStatement"))
+	{
+	  ofile << first_statements.back()->Get_VC_Name() << " <-| (choice_default) " << endl;
+	}
+      else
+	{
+	  ofile << first_statements.back()->Get_VC_Name() << "__entry__ <-| (choice_default)" <<  endl;
+	}
+    }
+
+  ofile << this->Get_VC_Name() << "__select__ |-> (";
+  for(int idx = 0; idx < _choice_pairs.size(); idx++)
+    {
+      if(idx > 0)
+	ofile << " ";
+      ofile << "choice_" << idx;
+    }
+  if(_default_sequence != NULL)
+    ofile << " choice_default";
+  ofile << ")" << endl;
+  
+  ofile << "//---------------------  exit merge for switch ---------------------------------------" << endl;
+  string exit_merge_list;
+  for(int idx = 0; idx < last_statements.size(); idx++)
+    {
+      if(!last_statements[idx]->Is("AaPlaceStatement"))
+	{
+	  exit_merge_list += last_statements[idx]->Get_VC_Name() + "__exit__ ";	  
+	}
+    }
+  
+  if(exit_merge_list != "")
+    {
+      ofile << this->Get_VC_Name() << "__exit__ <-| ("  << exit_merge_list << ")" << endl;
+    }
+  ofile << "//---------------------   end of switch statement " << this->Get_Source_Info() << "  --------------------------" << endl;
+}
+
+
 //---------------------------------------------------------------------
 // AaIfStatement: public AaStatement
 //---------------------------------------------------------------------
@@ -1937,6 +2128,57 @@ void AaIfStatement::Write_C_Function_Body(ofstream& ofile)
   ofile << "// End Statement " << this->Get_C_Name() << endl;
   ofile << "// -------------------------------------------------------------------------------------------" << endl;
 }
+
+void AaIfStatement::Write_VC_Control_Path(ostream& ofile)
+{
+  AaScope* pscope = this->Get_Scope();
+  assert(pscope->Is("AaBranchBlockStatement"));
+
+  // first the CP for the test expression
+  this->_test_expression->Write_VC_Control_Path(ofile);
+  ofile << this->Get_VC_Name() << "__entry__ |-> (" << this->_test_expression->Get_VC_Name() << ")" << endl;
+  
+  // now the test-place.
+  ofile << "$P [" << _test_expression->Get_VC_Name() << "_place]" << endl;
+  ofile << _test_expression->Get_VC_Name() << "_place <-| (" << _test_expression->Get_VC_Name() << ")" << endl;
+  
+  AaStatement* last_if = NULL;
+  AaStatement* last_else = NULL;
+  // now the if-sequence of statments
+  if(_if_sequence != NULL)
+    {
+      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(false,_if_sequence,ofile);
+      last_if = _if_sequence->Get_Statement(_if_sequence->Get_Statement_Count() -1 );
+      
+    }
+  if(_else_sequence != NULL)
+    {
+      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(false,_else_sequence,ofile);
+      last_else = _else_sequence->Get_Statement(_else_sequence->Get_Statement_Count() -1 );
+    }
+  else
+    {
+      ofile << ";;[NullElse] { $T [dummy] } " << endl;
+    }
+
+  string exit_merge_list;
+  if(!last_if->Is("AaPlace"))
+    exit_merge_list += last_if->Get_VC_Name() + " ";
+  if(last_else != NULL)
+    {
+      if(!last_else->Is("AaPlace"))
+	exit_merge_list += last_else->Get_VC_Name() + " ";
+    }
+  else
+    exit_merge_list += "NullElse ";
+
+  if(exit_merge_list != "")
+    {
+      ofile << this->Get_VC_Name() << "__exit__ <-| ("  << exit_merge_list << ")" << endl;
+    }
+}
+
+
 //---------------------------------------------------------------------
 // AaPlaceStatement: public AaStatement
 //---------------------------------------------------------------------

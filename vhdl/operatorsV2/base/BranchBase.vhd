@@ -2,7 +2,8 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 entity BranchBase is
-  port (condition: in std_logic_vector(0 downto 0);
+  generic (condition_width: integer := 1);
+  port (condition: in std_logic_vector(condition_width-1 downto 0);
         clk,reset: in std_logic;
         req: in Boolean;
         ack0: out Boolean;
@@ -14,13 +15,15 @@ architecture Behave of BranchBase is
 begin
 
   process(clk)
+    variable c_reduce : std_logic;
   begin
     if(clk'event and clk = '1') then
       if(reset = '1') then
         ack0 <= false;
         ack1 <= false;
       elsif req then
-        if(condition(0) = '1') then
+        c_reduce := OrReduce(condition);
+        if(c_reduce = '1') then
           ack1 <= true;
           ack0 <= false;
         else

@@ -1024,7 +1024,7 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
   this->vcCPBlock::Update_Predecessor_Successor_Links();
 }
 
-vcControlPath::vcControlPath(string id):vcCPParallelBlock(NULL, id)
+vcControlPath::vcControlPath(string id):vcCPSeriesBlock(NULL, id)
 {
 }
 
@@ -1075,7 +1075,7 @@ void vcControlPath::Print(ostream& ofile)
 void vcControlPath::Compute_Compatibility_Labels()
 {
   vcCompatibilityLabel* nl = this->Make_Compatibility_Label(this->Get_Id());
-  this->vcCPParallelBlock::Compute_Compatibility_Labels(nl,this);
+  this->vcCPSeriesBlock::Compute_Compatibility_Labels(nl,this);
 
 
   // set up connectivity
@@ -1187,8 +1187,8 @@ void vcControlPath::Delete_Compatibility_Label(vcCompatibilityLabel* nl)
 
 bool vcControlPath::Check_Structure()
 {
-  this->vcCPParallelBlock::Update_Predecessor_Successor_Links();
-  this->vcCPParallelBlock::Check_Structure();
+  this->vcCPSeriesBlock::Update_Predecessor_Successor_Links();
+  this->vcCPSeriesBlock::Check_Structure();
 }
 
 void vcControlPath::Print_Compatibility_Labels(ostream& ofile)

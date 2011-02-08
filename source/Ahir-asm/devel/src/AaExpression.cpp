@@ -189,7 +189,7 @@ void AaConstantLiteralReference::PrintC(ofstream& ofile, string tab_string)
     }
 }
 
-void AaConstantLiteralReference::Write_VC_Control_Path(ostream& ofile)
+void AaConstantLiteralReference::Write_VC_Control_Path( ostream& ofile)
 {
   // null region.
 }
@@ -217,7 +217,7 @@ void AaSimpleObjectReference::PrintC(ofstream& ofile, string tab_string)
   ofile << this->Get_Object_Root_Name() << ").__val";
 }
 
-void AaSimpleObjectReference::Write_VC_Control_Path(ostream& ofile)
+void AaSimpleObjectReference::Write_VC_Control_Path( ostream& ofile)
 {
   // if object referred to is a constant, then
   // print a null control-path
@@ -229,10 +229,12 @@ void AaSimpleObjectReference::Write_VC_Control_Path(ostream& ofile)
   // else, if the object being referred to is 
   // a storage object, then it is a load operation,
   // instantiate a series r-a-r-a chain..
+  // if is_store is set, instantiate a store operation
+  // as well.
   else if(this->_object->Is("AaStorageObject"))
     {
       ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
-      ofile << "$T [lr_req] $T [lr_ack] $T[lc_req] $T[lc_ack]" << endl;
+      ofile << "$T [rr] $T [ra] $T[cr] $T[ca]" << endl;
       ofile << "}" << endl;
     }
 
@@ -243,7 +245,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path(ostream& ofile)
   else if(this->_object->Is("AaPipeObject"))
     {
       ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
-      ofile << "$T [read_req] $T [read_ack] " << endl;
+      ofile << "$T [req] $T [ack] " << endl;
       ofile << "}" << endl;
     }
 
@@ -255,11 +257,8 @@ void AaSimpleObjectReference::Write_VC_Control_Path(ostream& ofile)
   //       r-a operators.
   else 
     {
-      ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
-      ofile << "$T [req] $T [ack] " << endl;
-      ofile << "}" << endl;
+      this->AaExpression::Write_VC_Control_Path(ofile);
     }
-
 }
 
 //---------------------------------------------------------------------
@@ -337,7 +336,7 @@ void AaArrayObjectReference::PrintC(ofstream& ofile, string tab_string)
   ofile << ").__val";
 }
 
-void AaArrayObjectReference::Write_VC_Control_Path(ostream& ofile)
+void AaArrayObjectReference::Write_VC_Control_Path( ostream& ofile)
 {
   assert(0);
 
