@@ -257,6 +257,9 @@ class vcCPForkBlock: public vcCPParallelBlock
   map<vcTransition*, vector<vcCPElement*>, vcRoot_Compare > _fork_map;
   map<vcTransition*, vector<vcCPElement*>, vcRoot_Compare > _join_map;
 
+  set<vcCPElement*> _forked_elements;
+  set<vcCPElement*> _joined_elements;
+
 public:
   virtual string Kind() {return("vcCPForkBlock");}
   vcCPForkBlock(vcCPBlock* parent, string id);

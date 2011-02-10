@@ -117,6 +117,7 @@ class AaStatement: public AaScope
 
   virtual string Get_VC_Name();
   virtual void Write_VC_Control_Path(ostream& ofile) { assert(0);}
+  virtual void Write_VC_Data_Path(ostream& ofile) { assert(0);}
 
 };
 
@@ -175,6 +176,7 @@ class AaStatementSequence: public AaScope
   virtual void Write_Clear_Exit_Flags_Code(ostream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile); 
+  virtual void Write_VC_Data_Path(ostream& ofile);
 
   AaStatement* Get_Next_Statement(AaStatement* stmt);
   AaStatement* Get_Previous_Statement(AaStatement* stmt);
@@ -202,6 +204,7 @@ class AaNullStatement: public AaStatement
 
   virtual bool Can_Block() { return(false); }
   virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Data_Path(ostream& ofile) {}
 };
 
 
@@ -241,6 +244,9 @@ class AaAssignmentStatement: public AaStatement
   virtual void Write_C_Struct(ofstream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Data_Path(ostream& ofile);
+  virtual bool Is_Constant();
+
 };
 
 
@@ -451,7 +457,7 @@ class AaSeriesBlockStatement: public AaBlockStatement
 
   virtual void Write_VC_Control_Path(ostream& ofile)
   {
-    ofile << ";;[" << this->Get_VC_Name() << "] {";
+    ofile << ";;[" << this->Get_VC_Name() << "] // series block " << this->Get_Source_Info() << endl << "{";
     this->_statement_sequence->Write_VC_Control_Path(ofile);
     ofile << "} // end series block " << this->Get_VC_Name() << endl;
   }
@@ -474,9 +480,10 @@ class AaParallelBlockStatement: public AaBlockStatement
 
   virtual void Write_VC_Control_Path(ostream& ofile)
   {
-    ofile << "||[" << this->Get_VC_Name() << "] {";
+    ofile << "||[" << this->Get_VC_Name() << "] // parallel block " 
+	  << this->Get_Source_Info() << endl << "{";
     this->_statement_sequence->Write_VC_Control_Path(ofile);
-    ofile << "} // end series block " << this->Get_VC_Name() << endl;
+    ofile << "} // end parallel block " << this->Get_VC_Name() << endl;
   }
 
 };
@@ -538,7 +545,7 @@ class AaJoinForkStatement: public AaParallelBlockStatement
 
   virtual void Write_VC_Control_Path(ostream& ofile);
 
-  virtual string Get_VC_Name() {return(this->_label);}
+  virtual string Get_VC_Name();
 
 };
 

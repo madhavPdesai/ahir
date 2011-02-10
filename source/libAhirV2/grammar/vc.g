@@ -234,7 +234,7 @@ vc_CPSeriesBlock[vcCPBlock* cp]
 }
 : SERIESBLOCK lbl = vc_Label { sb = new vcCPSeriesBlock(cp,lbl);} LBRACE 
 (( cpe =  vc_CPElement[sb] { sb->Add_CPElement(cpe); }) | 
- ( vc_CPRegion[sb] ))+ RBRACE
+ ( vc_CPRegion[sb] ))* RBRACE
 { cp->Add_CPElement(sb); }
 ;
 
@@ -249,7 +249,7 @@ vc_CPParallelBlock[vcCPBlock* cp]
         vcCPElement* t;
 }
 : PARALLELBLOCK lbl = vc_Label { sb = new vcCPParallelBlock(cp,lbl);} LBRACE 
- ( vc_CPRegion[sb] | t = vc_CPTransition[sb] {sb->Add_CPElement(t);} )+ RBRACE
+ ( vc_CPRegion[sb] | t = vc_CPTransition[sb] {sb->Add_CPElement(t);} )* RBRACE
 { cp->Add_CPElement(sb); }
 ;
 

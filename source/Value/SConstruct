@@ -1,0 +1,10 @@
+import os
+env = Environment(ENV = {'PATH' : os.environ['PATH']})
+env.Append(CPPPATH = './src/:./include/')
+env.Library('lib/libValue', Glob('src/*.cpp'), CCFLAGS='-g ')
+env.Program('bin/TestValue','util/TestValue.cpp',CCFLAGS='-g',LINKFLAGS='-g', LIBS=['Value'], LIBPATH=['./lib'])
+
+
+
+
+

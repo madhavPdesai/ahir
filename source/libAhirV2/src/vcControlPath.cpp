@@ -825,6 +825,7 @@ void vcCPForkBlock::Add_Fork_Point(string& fork_name, vector<string>& fork_cpe_v
       vcCPElement* fre = this->Find_CPElement(fork_cpe_vec[idx]);
       assert(fre != NULL);
       this->_fork_map[((vcTransition*)fp)].push_back(fre);
+      this->_forked_elements.insert(fre);
     }
 }
 
@@ -838,6 +839,7 @@ void vcCPForkBlock::Add_Join_Point(string& join_name, vector<string>& join_cpe_v
       vcCPElement* jre = this->Find_CPElement(join_cpe_vec[idx]);
       assert(jre != NULL);
       this->_join_map[((vcTransition*)jp)].push_back(jre);
+      this->_joined_elements.insert(jre);
     }
 }
 void vcCPForkBlock::Print(ostream& ofile)
@@ -994,6 +996,7 @@ void vcCPForkBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label,
 
 void vcCPForkBlock::Update_Predecessor_Successor_Links()
 {
+
   // forks
   for(map<vcTransition*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = this->_fork_map.begin();
       iter != this->_fork_map.end();
@@ -1021,6 +1024,45 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
 	  t->Add_Predecessor(e);
 	}
     }
+
+
+  // those that were not covered by explicit fork/join declarations
+  vector<vcCPElement*> unforked_elements;
+  vector<vcCPElement*> unjoined_elements;
+  for(int idx = 0; idx < _elements.size(); idx++)
+    {
+      if(_forked_elements.find(_elements[idx]) == _forked_elements.end())
+	unforked_elements.push_back(_elements[idx]);
+      
+      if(_joined_elements.find(_elements[idx]) == _joined_elements.end())
+	unjoined_elements.push_back(_elements[idx]);
+    }
+
+
+  // finally, those CPElements in the block which
+  // are not forked from an explicitly specified fork
+  // are assumed to be forked from $entry.
+  if(unforked_elements.size() > 0)
+    {
+      for(int idx = 0; idx < unforked_elements.size(); idx++)
+	{
+	  this->_entry->Add_Successor(unforked_elements[idx]);
+	  unforked_elements[idx]->Add_Predecessor(this->_entry);
+	}
+    }
+
+  // finally, those CPElements in the block which
+  // are not joined at an explicitly specified join
+  // are assumed to join at $exit.
+  if(unjoined_elements.size() > 0)
+    {
+      for(int idx = 0; idx < unjoined_elements.size(); idx++)
+	{
+	  this->_entry->Add_Predecessor(unjoined_elements[idx]);
+	  unjoined_elements[idx]->Add_Successor(this->_entry);
+	}
+    }
+
   this->vcCPBlock::Update_Predecessor_Successor_Links();
 }
 

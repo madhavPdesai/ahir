@@ -71,6 +71,8 @@ class AaObject: public AaRoot
 
   // \todo
   virtual void Write_VC_Model(ostream& ofile);
+
+  virtual bool Is_Constant() {return(false);}
 };
 
 // interface object: function arguments
@@ -101,6 +103,8 @@ class AaConstantObject: public AaObject
 
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaConstantObject");}
+
+  virtual bool Is_Constant() {return(true);}
 
   // todo: this is different from the base Object..
   // virtual void Write_VC_Model(ostream& ofile);

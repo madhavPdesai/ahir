@@ -56,7 +56,10 @@ class AaRoot
   virtual string Get_Name() {assert(0);}
   virtual AaRoot* Find_Child() {return(NULL);}
   virtual bool Is_Scope() {return(false); }
+
   virtual bool Is_Object() {return(false); }
+  virtual bool Is_Constant() {return(false);}
+
   virtual bool Is_Expression() {return(false); }
   virtual bool Is_Statement() {return(false); }
 

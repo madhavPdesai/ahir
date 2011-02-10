@@ -296,51 +296,34 @@ void AaModule::Write_VC_Model(int default_space_pointer_width,
   
   this->Write_VC_Control_Path(ofile);
   this->Write_VC_Data_Path(ofile);
+  this->Write_VC_Link(ofile);
   this->Write_VC_Memory_Spaces(ofile);
   ofile << "}";
 }
 
-
 void AaModule::Write_VC_Control_Path(ostream& ofile)
 {
-
   ofile << "$CP { // begin control-path " << endl;
-
   // for each statement, print a CP region.
   for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
     {
       this->_statement_sequence->Get_Statement(idx)->Write_VC_Control_Path(ofile);
     }
-  
-  // for simple statements
-  //    for the rhs expression, create
-  //    a fork region.  In this region,
-  //    each expression node will correspond
-  //    to a series region, and at each
-  //    expression node, two series regions
-  //    will join.  The series region for
-  //    an expression node will consist
-  //    of req/ack transitions.
-  
-
-  // for series/parallel/fork regions, 
-  // things are easy.
-
-
-  // for branch regions, the if and switch
-  // statements create small complications.
-  // For each if node, the test-expression will
-  // need to be evaluated and will need to be 
-  // followed by a branch.
-  // Each select node will correspond to
-  // a fork-region, in which each leg will be
-  // a test-expression computation followed by
-  // a branch region in which the result of
-  // the test is use.
   ofile << "} // end control-path" << endl;
 }
 
 void AaModule::Write_VC_Data_Path(ostream& ofile)
+{
+  ofile << "$DP { // begin data-path " << endl;
+  // for each statement, print a CP region.
+  for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+    {
+      this->_statement_sequence->Get_Statement(idx)->Write_VC_Control_Path(ofile);
+    }
+  ofile << "} // end data-path" << endl;
+}
+
+void AaModule::Write_VC_Link(ostream& ofile)
 {
 }
 

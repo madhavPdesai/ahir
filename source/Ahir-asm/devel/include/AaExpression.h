@@ -40,7 +40,6 @@ class AaExpression: public AaRoot
   virtual bool Is_Object_Reference() {return(false);}
 
   virtual void PrintC(ofstream& ofile, string tab_string) { assert(0); }
-
   virtual void Update_Type() {};
 
   virtual void Add_Target(AaExpression* expr) {this->_targets.insert(expr);}
@@ -48,11 +47,15 @@ class AaExpression: public AaRoot
   virtual string Get_VC_Name();
 
   virtual void Write_VC_Control_Path( ostream& ofile);
+  virtual void Write_VC_Control_Path_As_Target( ostream& ofile) {assert(0);}
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
     assert(0);
   }
+
+  virtual bool Is_Constant() {return(false);}
+  virtual bool Is_Implicit_Variable_Reference() {return(false);}
 };
 
 
@@ -135,6 +138,9 @@ class AaConstantLiteralReference: public AaObjectReference
   {
     leaf_expression_set.insert(this);
   }
+
+  virtual bool Is_Constant() {return(true);}
+
 };
 
 // simple reference (no array indices)
@@ -153,6 +159,10 @@ class AaSimpleObjectReference: public AaObjectReference
   {
     leaf_expression_set.insert(this);
   }
+
+  virtual void Write_VC_Control_Path_As_Target( ostream& ofile);
+  virtual bool Is_Constant();
+  virtual bool Is_Implicit_Variable_Reference();
 };
 
 // array object reference
@@ -186,6 +196,10 @@ class AaArrayObjectReference: public AaObjectReference
     for(int idx = 0; idx < _indices.size(); idx++)
       _indices[idx]->Get_Leaf_Expression_Set(leaf_expression_set);
   }
+
+  virtual void Write_VC_Control_Path_As_Target( ostream& ofile);
+  virtual bool Is_Constant();
+
 };
 
 // type cast expression (is unary)
@@ -220,6 +234,7 @@ class AaTypeCastExpression: public AaExpression
       _rest->Get_Leaf_Expression_Set(leaf_expression_set);
   }
 
+  virtual bool Is_Constant() {return(this->_rest->Is_Constant());}
 };
 
 
@@ -258,6 +273,7 @@ class AaUnaryExpression: public AaExpression
   }
 
 
+  virtual bool Is_Constant() {return(this->_rest->Is_Constant());}
 };
 
 // 
@@ -334,6 +350,10 @@ class AaBinaryExpression: public AaExpression
   }
 
   bool Is_Trivial();
+  virtual bool Is_Constant() 
+  {
+    return(this->_first->Is_Constant() && this->_second->Is_Constant());
+  }
 };
 
 // ternary expression: a ? b : c
@@ -380,6 +400,10 @@ class AaTernaryExpression: public AaExpression
       _if_false->Get_Leaf_Expression_Set(leaf_expression_set);
   }
 
+  virtual bool Is_Constant() 
+  {
+    return(this->_test->Is_Constant() && this->_if_true->Is_Constant() && this->_if_false->Is_Constant());
+  }
 
 };
 
