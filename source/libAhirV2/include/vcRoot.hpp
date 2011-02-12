@@ -101,7 +101,8 @@ enum vcLexerKeytags
     __XOR_OP           ,
     __NOR_OP           ,
     __NAND_OP          ,
-    __XNOR_OP          
+    __XNOR_OP          ,
+    __OPEN
   };
 
 static char *vcLexerKeywords[] = 
@@ -200,7 +201,8 @@ static char *vcLexerKeywords[] =
       "^",
       "~|",
       "~&",
-      "~^"
+      "~^",
+      "$open"
   };
 
 string To_VHDL(string x);

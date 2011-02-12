@@ -146,13 +146,15 @@ vc_Link[vcModule* m]
           )+
         RPAREN
         LPAREN  
-         (vc_Hierarchical_CP_Ref[ref_vec] 
+         ((vc_Hierarchical_CP_Ref[ref_vec] 
               { 
                  vcTransition* t = m->Get_Control_Path()->Find_Transition(ref_vec);
                  assert(t != NULL);
                  acks.push_back(t);
                  ref_vec.clear();
-              }
+              })
+           |
+           (OPEN {acks.push_back(NULL);})
           )+
         RPAREN
    { m->Add_Link(dpe,reqs,acks);}
@@ -446,21 +448,22 @@ vc_UnaryOperator_Instantiation[vcDataPath* dp]
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
-// vc_Branch_Instantiation: BRANCH_OP vc_Label LPAREN vc_Identifier RPAREN
+// vc_Branch_Instantiation: BRANCH_OP vc_Label LPAREN (vc_Identifier)+ RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
 vc_Branch_Instantiation[vcDataPath* dp] 
 {
   vcBranch* new_op = NULL;
   string id;
   string wid;
-  vcWire* x = NULL;
+  vector<vcWire*> wires;
+  vcWire* x;
 }
 :
  BRANCH_OP id = vc_Label
  LPAREN 
-    wid = vc_Identifier {x = dp->Find_Wire(wid); assert(x != NULL);}
+    wid = vc_Identifier {x = dp->Find_Wire(wid); assert(x != NULL); wires.push_back(x);}
  RPAREN
- { new_op = new vcBranch(id,x); dp->Add_Branch(new_op);}   
+ { new_op = new vcBranch(id,wires); dp->Add_Branch(new_op);}   
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
@@ -1000,6 +1003,8 @@ XOR_OP           : "^";
 NOR_OP           : "~|";
 NAND_OP          : "~&";
 XNOR_OP          : "~^";
+
+OPEN             : "$open";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

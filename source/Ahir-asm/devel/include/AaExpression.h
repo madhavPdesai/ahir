@@ -16,8 +16,6 @@ class AaExpression: public AaRoot
   // the containing scope of this expression
   AaScope* _scope;
 
-
-
  protected:
   // type of the expression
   AaType* _type;
@@ -26,6 +24,9 @@ class AaExpression: public AaRoot
   set<AaExpression*> _targets;
 
  public:
+
+  AaValue* _expression_value;
+
   virtual AaScope* Get_Scope() { return(this->_scope);}
 
   AaExpression(AaScope* scope_tpr);
@@ -34,6 +35,7 @@ class AaExpression: public AaRoot
 
   virtual void Set_Type(AaType* t);
   virtual AaType* Get_Type() {return(this->_type);}
+  virtual AaValue* Get_Expression_Value() {return(this->_expression_value);}
 
   virtual void Map_Source_References(set<AaRoot*>& source_objects) { assert(0); }
   virtual bool Is_Expression() {return(true); }
@@ -47,7 +49,22 @@ class AaExpression: public AaRoot
   virtual string Get_VC_Name();
 
   virtual void Write_VC_Control_Path( ostream& ofile);
-  virtual void Write_VC_Control_Path_As_Target( ostream& ofile) {assert(0);}
+  virtual void Write_VC_Control_Path_As_Target( ostream& ofile) 
+  {
+    this->Write_VC_Control_Path(ofile);
+  }
+
+  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile) {assert(0);}
+  virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile) {assert(0);}
+  virtual void Write_VC_Wire_Declarations_As_Target(ostream& ofile) {assert(0);}
+  virtual void Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source) {assert(0);}
+  virtual void Write_VC_Datapath_Instances(bool skip_immediate,  ostream& ofile) {assert(0);}
+  virtual void Write_VC_Links(string hier_id, ostream& ofile);
+  virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
+  virtual string Get_VC_Constant_Name();
+  virtual string Get_VC_Wire_Name();
+  virtual string Get_VC_Instance_Name();
+  virtual string Get_VC_Datapath_Instance_Name();
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
@@ -141,6 +158,7 @@ class AaConstantLiteralReference: public AaObjectReference
 
   virtual bool Is_Constant() {return(true);}
 
+  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
 };
 
 // simple reference (no array indices)

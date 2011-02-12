@@ -107,7 +107,7 @@ class AaConstantObject: public AaObject
   virtual bool Is_Constant() {return(true);}
 
   // todo: this is different from the base Object..
-  // virtual void Write_VC_Model(ostream& ofile);
+  virtual void Write_VC_Model(ostream& ofile);
 };
 
 class AaStorageObject: public AaObject
@@ -128,7 +128,7 @@ class AaStorageObject: public AaObject
   // todo: this is the same as object, but keep it here
   //      because the initial value needs to be 
   //      updated..
-  // virtual void Write_VC_Model(ostream& ofile);
+  virtual void Write_VC_Model(ostream& ofile);
 };
 
 class AaPipeObject: public AaObject

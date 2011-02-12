@@ -8,7 +8,9 @@ GRMR=$(AAHOME)/grammar
 BIN=$(AAHOME)/bin
 DOC=$(AAHOME)/docs
 ANTLR2=../antlr2
-INCLUDES=-I$(AAHOME)/include -I$(GRMR) -I$(ANTLR2)
+VALUEINCLUDE=../../Value/include
+VALUELIB=../../Value/lib
+INCLUDES=-I$(AAHOME)/include -I$(GRMR) -I$(ANTLR2) -I$(VALUEINCLUDE)
 AHIRINCLUDES=-I$(AHIRHOME) 
 HEADERS=$(INCL)/AaRoot.h\
 		$(INCL)/AaScope.h\
@@ -22,7 +24,7 @@ HEADERS=$(INCL)/AaRoot.h\
 		$(INCL)/AaUtil.h\
 		$(INCL)/AaParse.h
 
-LIBS=-L$(ANTLR2)
+LIBS=-L$(ANTLR2) -L$(VALUELIB)
 OBJS=$(OBJ)/AaLexer.o $(OBJ)/AaParser.o\
 		$(OBJ)/AaRoot.o\
 		$(OBJ)/AaScope.o\
@@ -44,22 +46,22 @@ all : aNTLR $(BIN)/TestAaParser $(INCL)/Aa2C.h $(BIN)/Aa2C $(GRMR)/AaParser.html
 
 
 $(BIN)/TestAaParser : $(OBJS) $(OBJ)/TestAaParser.o
-	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/TestAaParser.o  $(OBJS) -lantlr-4.0.3 -o $(BIN)/TestAaParser 
+	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/TestAaParser.o  $(OBJS) -lantlr-4.0.3 -lValue -o $(BIN)/TestAaParser 
 
 $(INCL)/Aa2C.h: $(BIN)/AaWriteCHeader
 	$(BIN)/AaWriteCHeader > $(INCL)/Aa2C.h
 
 $(BIN)/AaWriteCHeader : $(OBJS) $(OBJ)/AaWriteCHeader.o
-	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/AaWriteCHeader.o  $(OBJS) -lantlr-4.0.3 -o $(BIN)/AaWriteCHeader
+	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/AaWriteCHeader.o  $(OBJS) -lantlr-4.0.3 -lValue -o $(BIN)/AaWriteCHeader
 
 $(BIN)/Aa2C : $(OBJS) $(OBJ)/Aa2C.o 
-	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/Aa2C.o  $(OBJS) -lantlr-4.0.3 -o $(BIN)/Aa2C
+	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/Aa2C.o  $(OBJS) -lantlr-4.0.3 -lValue -o $(BIN)/Aa2C
 
 $(BIN)/Aa2VC : $(OBJS) $(OBJ)/Aa2VC.o 
-	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/Aa2VC.o  $(OBJS) -lantlr-4.0.3 -o $(BIN)/Aa2VC
+	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/Aa2VC.o  $(OBJS) -lantlr-4.0.3 -lValue -o $(BIN)/Aa2VC
 
 $(BIN)/Aa2Ahir : $(OBJS) $(OBJ)/Aa2Ahir.o 
-	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/Aa2Ahir.o  $(OBJS) -lantlr-4.0.3 -o $(BIN)/Aa2Ahir
+	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/Aa2Ahir.o  $(OBJS) -lantlr-4.0.3 -lValue -o $(BIN)/Aa2Ahir
 
 $(OBJ)/Aa2C.o : $(SRC)/Aa2C.cpp  $(INCL)/Aa2C.h $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/Aa2C.cpp -o $(OBJ)/Aa2C.o

@@ -481,9 +481,9 @@ public:
 class vcBranch: public vcDatapathElement
 {
 protected:
-  vcWire* _test;
+  vector<vcWire*> _inwires;
 public:
-  vcBranch(string id, vcWire* twire);
+  vcBranch(string id, vector<vcWire*>& wires);
 
   virtual void Add_Reqs(vector<vcTransition*>& reqs);
   virtual void Add_Acks(vector<vcTransition*>& acks);

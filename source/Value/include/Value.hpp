@@ -55,9 +55,14 @@ namespace _base_value_
     int _width;
     UWord* _bit_field;
 
+    ~IntValue();
     IntValue();
     IntValue(int width);
-    IntValue(int width, string format, string initial_value);
+
+    // init_value is either a decimal string (e.g. "-135", "2490")
+    // or a binary string (with _b as the first two characters)
+    // e.g. "_b1010"
+    IntValue(int width, string initial_value);
     IntValue(const IntValue&);
 
     int Width() {return(_width);}
@@ -90,7 +95,11 @@ namespace _base_value_
 
     void Signed_Assign(IntValue&);
     void Unsigned_Assign(IntValue&);
-    
+
+    void Increment();
+    void Decrement();
+
+
     void Complement();
     void And(IntValue&);
     void Or(IntValue&);
@@ -99,6 +108,22 @@ namespace _base_value_
     void Nor(IntValue&);
     void Xnor(IntValue&);
     void Concatenate(IntValue&);
+
+    // todo: shift operators.
+    void Shift_Left();
+    void Shift_Left(int idx);
+    void Shift_Right();
+    void Shift_Right(int idx);
+
+    void Shift_Right_Signed();
+    void Shift_Right_Signed(int idx);
+
+    void Rotate_Left();
+    void Rotate_Left(int idx);
+    void Rotate_Right();
+    void Rotate_Right(int idx);
+    
+    //////// ^^ shift operators todo ////////////////
 
     bool Greater(IntValue&);
     bool Less_Than(IntValue&);
@@ -174,6 +199,8 @@ namespace _base_value_
     bool Greater_Equal( FloatValue& t);
     bool Less_Equal( FloatValue& t);
     bool Equal( FloatValue& t);
+
+    void Assign(FloatValue& t);
 
     void To_Integer(IntValue&);
 

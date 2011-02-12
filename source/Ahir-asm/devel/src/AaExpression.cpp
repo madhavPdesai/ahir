@@ -21,6 +21,7 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
 {
   this->_scope = parent_tpr;
   this->_type = NULL; // will be determined by dependency traversal
+  this->_expression_value = NULL; // if constant will be calculated in Evaluate traversal.
 }
 AaExpression::~AaExpression() {};
 

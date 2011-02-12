@@ -25,7 +25,7 @@ class AaType: public AaRoot
   virtual void Write_VC_Model(ostream& ofile) { assert(0);}
   virtual bool Is_Integer_Type() {return(false);}
   virtual bool Is_Float_Type() {return(false);}
-
+  virtual string Get_VC_Name();
 
 };
 

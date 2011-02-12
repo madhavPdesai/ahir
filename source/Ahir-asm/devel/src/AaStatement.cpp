@@ -1,4 +1,5 @@
 #include <AaProgram.h>
+#include <Aa2VC.h>
 
 //---------------------------------------------------------------------
 // AaStatement
@@ -192,7 +193,7 @@ void AaStatement::Write_Pipe_Read_Condition_Update(ofstream& ofile , string tab_
 }
 void AaStatement::Write_Pipe_Write_Condition_Update(ofstream& ofile , string tab_string)
 {
- for(set<AaRoot*>::iterator siter = this->_target_objects.begin();
+  for(set<AaRoot*>::iterator siter = this->_target_objects.begin();
       siter != this->_target_objects.end();
       siter++)
     {
@@ -205,7 +206,7 @@ void AaStatement::Write_Pipe_Write_Condition_Update(ofstream& ofile , string tab
 }
 void AaStatement::Write_Pipe_Condition_Update(ofstream& ofile, string tab_string)
 {
- for(set<AaRoot*>::iterator siter = this->_target_objects.begin();
+  for(set<AaRoot*>::iterator siter = this->_target_objects.begin();
       siter != this->_target_objects.end();
       siter++)
     {
@@ -415,11 +416,40 @@ void AaStatementSequence::Write_VC_Control_Path(ostream& ofile)
     this->_statement_sequence[i]->Write_VC_Control_Path(ofile);
 }
 
-
-void AaStatementSequence::Write_VC_Control_Path(ostream& ofile)
+void AaStatementSequence::Write_VC_Data_Path(ostream& ofile)
 {
   for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
     this->_statement_sequence[i]->Write_VC_Data_Path(ofile);
+}
+void AaStatementSequence::Write_VC_Pipe_Declarations(ostream& ofile)
+{
+  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+    this->_statement_sequence[i]->Write_VC_Pipe_Declarations(ofile);
+}
+void AaStatementSequence::Write_VC_Memory_Space_Declarations(ostream& ofile)
+{
+  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+    this->_statement_sequence[i]->Write_VC_Memory_Space_Declarations(ofile);
+}
+void AaStatementSequence::Write_VC_Constant_Wire_Declarations(ostream& ofile)
+{
+  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+    this->_statement_sequence[i]->Write_VC_Constant_Wire_Declarations(ofile);
+}
+void AaStatementSequence::Write_VC_Wire_Declarations(ostream& ofile)
+{
+  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+    this->_statement_sequence[i]->Write_VC_Wire_Declarations(ofile);
+}
+void AaStatementSequence::Write_VC_Datapath_Instances(ostream& ofile)
+{
+  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+    this->_statement_sequence[i]->Write_VC_Datapath_Instances(ofile);
+}
+void AaStatementSequence::Write_VC_Links(string hier_id, ostream& ofile)
+{
+  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+    this->_statement_sequence[i]->Write_VC_Links(hier_id, ofile);
 }
 
 AaStatement* AaStatementSequence::Get_Next_Statement(AaStatement* stmt)
@@ -572,6 +602,84 @@ void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
       ofile << "$T [dummy] // assignment evaluates to a constant " << endl;
     }
   ofile << "} // end assignment statement " << this->Get_VC_Name() << endl;
+}
+
+void AaAssignmentStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
+{
+  if(this->Is_Constant())
+    {
+      Write_VC_Constant_Declaration(this->_target->Get_VC_Constant_Name(),
+				    this->_target->Get_Type()->Get_VC_Name(),
+				    this->_target->Get_Expression_Value()->To_Binary_String());
+    }
+  this->_source->Write_VC_Constant_Wire_Declarations(ofile);
+}
+void AaAssignmentStatement::Write_VC_Wire_Declarations(ostream& ofile)
+{
+  if(this->_target->Is_Implicit_Variable_Reference())
+    {
+      Write_VC_Wire_Declaration(this->_target->Get_VC_Wire_Name(),
+				this->_target->Get_Type()->Get_VC_Name());
+      this->_source->Write_VC_Wire_Declarations(false,ofile);
+    }
+  else 
+    {
+      this->_source->Write_VC_Wire_Declarations(true,ofile);
+      this->_target->Write_VC_Wire_Declarations_As_Target(ofile);
+    }
+
+}
+void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
+{
+  if(this->_target->Is_Implicit_Variable_Reference())
+    {
+      if(this->_source->Is_Implicit_Variable_Reference())
+	{
+	  Write_VC_Unary_Operator(__VC_ASSIGN_OP,
+				  this->_target->Get_VC_Datapath_Instance_Name(),
+				  this->_source->Get_VC_Wire_Name(),
+				  this->_target->Get_VC_Wire_Name());
+
+	}
+      else
+	{
+	  this->_source->Write_VC_Datapath_Instances(true,ofile);
+	}
+    }
+  else if(!this->_target->Is_Implicit_Variable_Reference())
+    {
+      this->_target->Write_VC_Datapath_Instances_As_Target(ofile, this->_source);
+      this->_source->Write_VC_Datapath_Instances(false,ofile);
+    }
+}
+
+void AaAssignmentStatement::Write_VC_Links(string hier_id,ostream& ofile)
+{
+  hier_id = hier_id + "/" + this->Get_VC_Name();
+  vector<string> reqs;
+  vector<string> acks;
+
+  if(this->_target->Is_Implicit_Variable_Reference())
+    {
+      if(this->_source->Is_Implicit_Variable_Reference())
+	{
+	  reqs.push_back(hier_id + "/req");
+	  acks.push_back(hier_id + "/ack");
+	  Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
+			reqs, acks);
+	  reqs.clear();
+	  acks.clear();
+	}
+      else
+	{
+	  this->_source->Write_VC_Links(hier_id,ofile);
+	}
+    }
+  else if(!this->_target->Is_Implicit_Variable_Reference())
+    {
+      this->_target->Write_VC_Links_As_Target(hier_id, ofile);
+      this->_source->Write_VC_Links(hier_id, ofile);
+    }
 }
 
 bool AaAssignmentStatement::Is_Constant()
@@ -984,6 +1092,59 @@ void AaCallStatement::Write_VC_Control_Path(ostream& ofile)
 }
 
 
+void AaCallStatement::Write_VC_Wire_Declarations(ostream& ofile)
+{
+ for(int idx = 0; idx < _input_args.size(); idx++)
+   _input_args[idx]->Write_VC_Wire_Declarations(false, ofile);
+ for(int idx = 0; idx < _output_args.size(); idx++)
+   _output_args[idx]->Write_VC_Wire_Declarations_As_Target(ofile);
+}
+void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
+{
+  vector<string> inargs, outargs;
+
+  for(int idx = 0; idx < _input_args.size(); idx++)
+    {
+      _input_args[idx]->Write_VC_Datapath_Instances(false, ofile);
+      inargs.push_back(_input_args[idx]->Get_VC_Wire_Name());
+    }
+  
+  for(int idx = 0; idx < _output_args.size(); idx++)
+    {
+      _output_args[idx]->Write_VC_Datapath_Instances_As_Target(ofile,NULL);
+      outargs.push_back(_output_args[idx]->Get_VC_Wire_Name());
+    }
+
+  Write_VC_Call_Operator(this->Get_VC_Name() + "_call",
+			 _function_name,
+			 inargs,
+			 outargs);
+
+}
+void AaCallStatement::Write_VC_Links(string hier_id, ostream& ofile)
+{
+  vector<string> reqs, acks;
+
+  hier_id = hier_id + "/" + this->Get_VC_Name();
+  for(int idx = 0; idx < _input_args.size(); idx++)
+    {
+      _input_args[idx]->Write_VC_Links(hier_id + "/_in_args_", ofile);
+
+    }
+  for(int idx = 0; idx < _output_args.size(); idx++)
+    {
+      _output_args[idx]->Write_VC_Links(hier_id + "/_out_args_", ofile);
+    }
+
+  reqs.push_back(hier_id + "/crr");
+  reqs.push_back(hier_id + "/ccr");
+
+  acks.push_back(hier_id + "/cra");
+  acks.push_back(hier_id + "/cca");
+
+  Write_VC_Link(this->Get_VC_Name() + "_call",reqs,acks);
+}
+
 //---------------------------------------------------------------------
 // AaBlockStatement: public AaStatement
 //---------------------------------------------------------------------
@@ -1102,6 +1263,69 @@ void AaBlockStatement::Write_VC_Pipe_Declarations(ostream& ofile)
 	this->_statement_sequence->Get_Statement(idx)->Write_VC_Pipe_Declarations(ofile);
       }
 }
+ 
+void AaBlockStatement::Write_VC_Memory_Space_Declarations(ostream& ofile)
+{
+  for(int idx = 0; idx < _objects.size(); idx++)
+    {
+      if(_objects[idx]->Is("AaStorageObject"))
+	{
+	  ((AaStorageObject*)(_objects[idx]))->Write_VC_Model(ofile);
+	}
+    }
+  
+  if(this->_statement_sequence != NULL)
+    for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+      {
+	this->_statement_sequence->Get_Statement(idx)->Write_VC_Memory_Space_Declarations(ofile);
+      }
+}
+
+void AaBlockStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
+{
+  for(int idx = 0; idx < _objects.size(); idx++)
+    {
+      if(_objects[idx]->Is("AaConstantObject"))
+	{
+	  ((AaStorageObject*)(_objects[idx]))->Write_VC_Model(ofile);
+	}
+    }
+  
+  if(this->_statement_sequence != NULL)
+    for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+      {
+	this->_statement_sequence->Get_Statement(idx)->Write_VC_Constant_Wire_Declarations(ofile);
+      }
+}
+
+
+void AaBlockStatement::Write_VC_Wire_Declarations(ostream& ofile)
+{
+  if(this->_statement_sequence != NULL)
+    for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+      {
+	this->_statement_sequence->Get_Statement(idx)->Write_VC_Wire_Declarations(ofile);
+      }
+}
+
+void AaBlockStatement::Write_VC_Datapath_Instances(ostream& ofile)
+{
+  if(this->_statement_sequence != NULL)
+    for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+      {
+	this->_statement_sequence->Get_Statement(idx)->Write_VC_Datapath_Instances(ofile);
+      }
+}
+
+void AaBlockStatement::Write_VC_Links(string hier_id, ostream& ofile)
+{
+  hier_id = hier_id + "/" + this->Get_VC_Name();
+  if(this->_statement_sequence != NULL)
+    for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+      {
+	this->_statement_sequence->Get_Statement(idx)->Write_VC_Links(hier_id, ofile);
+      }
+}
 
 
 //---------------------------------------------------------------------
@@ -1109,7 +1333,7 @@ void AaBlockStatement::Write_VC_Pipe_Declarations(ostream& ofile)
 //---------------------------------------------------------------------
 AaSeriesBlockStatement::AaSeriesBlockStatement(AaScope* scope,string label):AaBlockStatement(scope,label) {}
 AaSeriesBlockStatement::~AaSeriesBlockStatement() {}
- void AaSeriesBlockStatement::Print(ostream& ofile)
+void AaSeriesBlockStatement::Print(ostream& ofile)
 {
   ofile << this->Tab();
   ofile << "$seriesblock";
@@ -1144,7 +1368,7 @@ void AaSeriesBlockStatement::Write_Exit_Check_Condition(ofstream& ofile)
 //---------------------------------------------------------------------
 AaParallelBlockStatement::AaParallelBlockStatement(AaScope* scope,string label):AaBlockStatement(scope,label) {}
 AaParallelBlockStatement::~AaParallelBlockStatement() {}
- void AaParallelBlockStatement::Print(ostream& ofile)
+void AaParallelBlockStatement::Print(ostream& ofile)
 {
   ofile << this->Tab();
   ofile << "$parallelblock";
@@ -1179,7 +1403,7 @@ void AaParallelBlockStatement::Write_Exit_Check_Condition(ofstream& ofile)
 //---------------------------------------------------------------------
 AaForkBlockStatement::AaForkBlockStatement(AaScope* scope,string label):AaParallelBlockStatement(scope,label) {}
 AaForkBlockStatement::~AaForkBlockStatement() {}
- void AaForkBlockStatement::Print(ostream& ofile)
+void AaForkBlockStatement::Print(ostream& ofile)
 {
   ofile << this->Tab();
   ofile << "$forkblock ";
@@ -1389,7 +1613,7 @@ void AaJoinForkStatement::Map_Source_References()
 	}
       else
 	{
-	    AaRoot::Error("did not find statement with label " + this->_join_labels[i],this);
+	  AaRoot::Error("did not find statement with label " + this->_join_labels[i],this);
 	}
     }
 
@@ -1440,20 +1664,31 @@ void AaJoinForkStatement::Write_VC_Control_Path(ostream& ofile)
       ofile << ")" << endl;
     }
 
-  if(_wait_on_statements.size() == 0)
+  if(_statement_sequence == NULL)
     {
       ofile << this->Get_VC_Name() << " &-> ($exit)" <<  endl;
     }
   else
     {
       ofile << this->Get_VC_Name() << " &-> (";
-      for(int idx = 0; idx < _wait_on_statements.size(); idx++)
+      for(int idx = 0; idx < _statement_sequence->Get_Statement_Count(); idx++)
 	{
 	  if(idx > 0)
 	    ofile << " ";
-	  ofile << _wait_on_statements[idx]->Get_VC_Name();
+	  ofile << _statement_sequence->Get_Statement(idx)->Get_VC_Name();
 	}
       ofile << ")" << endl;
+    }
+}
+
+void AaJoinForkStatement::Write_VC_Links(string hier_id, ostream& ofile)
+{
+  if(_statement_sequence != NULL)
+    {
+      for(int idx = 0; idx < _statement_sequence->Get_Statement_Count(); idx++)
+	{
+	  _statement_sequence->Get_Statement(idx)->Write_VC_Links(hier_id,ofile);
+	}
     }
 }
 
@@ -1672,6 +1907,88 @@ void AaMergeStatement::Write_VC_Control_Path(ostream& ofile)
   ofile << "//---------------------  end of merge statement " << this->Get_Source_Info() << "  --------------------------" << endl;
 }
 
+void AaMergeStatement::Write_VC_Wire_Declarations(ostream& ofile)
+{
+  if(_statement_sequence != NULL)
+    {
+      for(int idx = 0; idx < _statement_sequence->Get_Statement_Count(); idx++)
+	{
+	  _statement_sequence->Get_Statement(idx)->Write_VC_Wire_Declarations(ofile);
+	}
+    }
+}
+void AaMergeStatement::Write_VC_Datapath_Instances(ostream& ofile)
+{
+  if(_statement_sequence != NULL)
+    {
+      for(int idx = 0; idx < _statement_sequence->Get_Statement_Count(); idx++)
+	{
+	  _statement_sequence->Get_Statement(idx)->Write_VC_Wire_Declarations(ofile);
+	}
+    }
+}
+
+void AaMergeStatement::Write_VC_Links(string hier_id, ostream& ofile)
+{
+  map<AaPhiStatement*,vector<string> > phi_req_map;
+  
+  // first, for each element of the merge-label set,
+  // find the phi statements that depend on it.
+  map<string,set<AaPhiStatement*> > phi_dependency_map;
+  if(_statement_sequence != NULL)
+    {
+      for(int idx = 0; idx < _statement_sequence->Get_Statement_Count(); idx++)
+	{
+	  AaStatement* stmt = _statement_sequence->Get_Statement(idx);
+	  assert(stmt->Is("AaPhiStatement"));
+	  
+	  AaPhiStatement* pstmt = (AaPhiStatement*) stmt;
+	  for(set<string,StringCompare>::iterator iter= _merge_label_set.begin();
+	      iter != _merge_label_set.end();
+	      iter++)
+	    {
+	      if(pstmt->Is_Merged(*iter))
+		phi_dependency_map[(*iter)].insert(pstmt);
+	    }
+	}
+    }
+
+  // for each merge-label create a parallel region
+  // in which requests are generated to all the phi-statements
+  // which depend on this label..
+  for(set<string,StringCompare>::iterator iter= _merge_label_set.begin();
+      iter != _merge_label_set.end();
+      iter++)
+    {
+      string mlabel = (*iter);
+      string mplace = ((mlabel == "$entry") ? (this->Get_VC_Name() + "__entry__") : mlabel);
+      if(phi_dependency_map[mlabel].size() > 0)
+	{
+	  for(set<AaPhiStatement*>::iterator siter = phi_dependency_map[mlabel].begin();
+	      siter != phi_dependency_map[mlabel].end();
+	      siter++)
+	    {
+	      phi_req_map[(*siter)].push_back(hier_id + 
+					      "/" + 
+					      mplace + "_PhiReq/" + 
+					      (*siter)->Get_Name() + "_req");
+	    }
+	}
+    }
+  
+  if(_statement_sequence)
+    {
+      for(int idx = 0; idx < _statement_sequence->Get_Statement_Count(); idx++)
+	{
+	  AaStatement* stmt = _statement_sequence->Get_Statement(idx);
+	  assert(stmt->Is("AaPhiStatement"));
+	  string ack_name = hier_id + "/"  +  this->Get_VC_Name() + "_PhiAck/" + 
+	    stmt->Get_VC_Name() + "_ack";
+
+	  Write_VC_Link(stmt->Get_VC_Name(), phi_req_map[(AaPhiStatement*)stmt],ack_name);
+	}
+    }
+}
 
 //---------------------------------------------------------------------
 // AaPhiStatement: public AaStatement
@@ -1774,6 +2091,18 @@ void AaPhiStatement::Write_VC_Control_Path(ostream& ofile)
 	<< "}" << endl;
 }
 
+void AaPhiStatement::Write_VC_Wire_Declarations(ostream& ofile)
+{
+  this->_target->Write_VC_Wire_Declarations_As_Target(ofile);
+}
+void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
+{
+  vector<string> sources;
+  for(int i = 0; i < _source_pairs.size(); i++)
+    sources.push_back(_source_pairs[i].second->Get_VC_Wire_Name());
+  Write_VC_Phi_Operator(this->Get_VC_Name(),sources,_target->Get_VC_Wire_Name());
+}
+
 //---------------------------------------------------------------------
 // AaSwitchStatement: public AaStatement
 //---------------------------------------------------------------------
@@ -1828,26 +2157,26 @@ void AaSwitchStatement::Write_C_Function_Body(ofstream& ofile)
 {
   /*
     if(entryflag)
-     {
-        if(pipeokflag)
-        {
-          if(cond)
-          {
-             transfer-to-if-sequence
-          }
-          else
-          {
-             transfer-to-else-sequence 
-                (or set exit flag)
-          }
-        }
-      }
+    {
+    if(pipeokflag)
+    {
+    if(cond)
+    {
+    transfer-to-if-sequence
+    }
+    else
+    {
+    transfer-to-else-sequence 
+    (or set exit flag)
+    }
+    }
+    }
 
-      sequence-invocation
-      exit-condition-invocation
+    sequence-invocation
+    exit-condition-invocation
  
-      sequence-invocation
-      exit-condition-invocation
+    sequence-invocation
+    exit-condition-invocation
   */
 
   ofile << "// -------------------------------------------------------------------------------------------" << endl;
@@ -1942,19 +2271,32 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
   // first evaluate the switch expression..
 
   ofile << "//---------------------    switch statement " << this->Get_Source_Info() << "  --------------------------" << endl;
+
+  // the select expression.
   this->_select_expression->Write_VC_Control_Path(ofile);
   ofile << this->Get_VC_Name() << "__entry__ |-> (" << this->_select_expression->Get_VC_Name() << ")" << endl;
-
 
   ofile << "||[" << this->Get_VC_Name() << "__condition_check__] { // condition computation" << endl;
   for(int idx = 0; idx < _choice_pairs.size(); idx++)
     {
       ofile << ";;[condition_" << idx << "] {" << endl;
-      ofile << "$T [rr] $T [ra] $T [cr] $T [ca] " << endl;
+
+      // one comparison per choice
+      ofile << " $T [rr] $T [ra] $T [cr] $T [ca] " << endl;
+
+      // one branch operator per choice
+      ofile << " $T [cmp] // cmp will trigger choice comparison" << endl;
       ofile << "}" << endl;
     }
+
+  // need one branch operator for the default.
+  // $exit of condition_check will trigger default branch comparison.
   ofile << "}" << endl;
+
+  // select place..
   ofile << "$P [" << this->Get_VC_Name() << "__select__] " << endl;
+
+  // condition check will merge into select.
   ofile << this->Get_VC_Name() << "__select__ <-| (" << this->Get_VC_Name() << "__condition_check__)" << endl;
   // follow the place by "n+1" choices.  The +1 choice
   // corresponds to the default..
@@ -1966,7 +2308,13 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
       ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(false,_choice_pairs[idx].second,ofile);
       last_statements.push_back(_choice_pairs[idx].second->Get_Statement(_choice_pairs[idx].second->Get_Statement_Count() - 1));
       first_statements.push_back(_choice_pairs[idx].second->Get_Statement(0));
-      ofile << ";;[choice_" << idx << "] { $T [choice_transition]  }"  << endl;
+
+      // link ack1 of the corresponding branch operator
+      // to choice_K/ack1.
+      //
+      // the ack0 transition from the branch operator
+      // will be ignored..
+      ofile << ";;[choice_" << idx << "] { $T [ack1]  // ack0 will be ignored..\n }"  << endl;
       if(first_statements[idx]->Is("AaPlaceStatement"))
 	{
 	  ofile << first_statements[idx]->Get_VC_Name() << " <-| (choice_" << idx << ")" << endl;
@@ -1986,7 +2334,13 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
       last_statements.push_back(_default_sequence->Get_Statement(_default_sequence->Get_Statement_Count() - 1));
       first_statements.push_back(_default_sequence->Get_Statement(0));
 
-      ofile << ";;[choice_default] { $T [choice_transition]  }"  << endl;
+      // link ack0 of the default branch operator to
+      // choice_default/ack0.
+      //
+      // the ack1 transition from the branch operator
+      // will be ignored.
+      //
+      ofile << ";;[choice_default] { $T [ack0] // ack1 will be ignored..\n  }"  << endl;
       if(first_statements.back()->Is("AaPlaceStatement"))
 	{
 	  ofile << first_statements.back()->Get_VC_Name() << " <-| (choice_default) " << endl;
@@ -1997,6 +2351,8 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
 	}
     }
 
+  // select will branch off to one of the choice
+  // regions.
   ofile << this->Get_VC_Name() << "__select__ |-> (";
   for(int idx = 0; idx < _choice_pairs.size(); idx++)
     {
@@ -2008,6 +2364,8 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
     ofile << " choice_default";
   ofile << ")" << endl;
   
+  // the last statements from each of the choice regions
+  // will merge into the exit of the switch statement.
   string exit_merge_list;
   for(int idx = 0; idx < last_statements.size(); idx++)
     {
@@ -2021,9 +2379,120 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
     {
       ofile << this->Get_VC_Name() << "__exit__ <-| ("  << exit_merge_list << ") // switch exit" << endl;
     }
+  else
+    {
+      assert(0);
+      AaRoot::Error("token cannot exit switch statement: " + this->Get_Source_Info(), this);
+    }
   ofile << "//---------------------   end of switch statement " << this->Get_Source_Info() << "  --------------------------" << endl;
 }
 
+void AaSwitchStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
+{
+  // constant literal expressions will be declared as constants..
+  for(int idx = 0; idx < _choice_pairs.size(); idx++)
+    this->_choice_pairs[idx].first->Write_VC_Constant_Wire_Declarations(ofile);
+}
+void AaSwitchStatement::Write_VC_Wire_Declarations(ostream& ofile)
+{
+  // wire declarations..
+  this->_select_expression->Write_VC_Wire_Declarations(false,ofile);
+  for(int idx = 0; idx < _choice_pairs.size(); idx++)
+    {
+      AaConstantLiteralReference* expr = this->_choice_pairs[idx].first;
+      Write_VC_Wire_Declaration(expr->Get_VC_Constant_Name() + "_cmp", "$int<1>");
+      this->_choice_pairs[idx].second->Write_VC_Wire_Declarations(ofile);
+    }
+  if(this->_default_sequence)
+    this->_default_sequence->Write_VC_Wire_Declarations(ofile);
+  
+}
+void AaSwitchStatement::Write_VC_Datapath_Instances(ostream& ofile)
+{
+  vector<string> default_branch_inputs;
+  this->_select_expression->Write_VC_Datapath_Instances(false,ofile);
+  for(int idx = 0; idx < _choice_pairs.size(); idx++)
+    {
+      AaConstantLiteralReference* expr = this->_choice_pairs[idx].first;
+      vector<string> br_input;
+
+      // one comparison operator per switch choice.
+      Write_VC_Unary_Operator(__VC_EQ_OP, 
+			      this->Get_VC_Name() + "_select_expr_" + IntToStr(idx),
+			      expr->Get_VC_Constant_Name(),
+			      expr->Get_VC_Constant_Name() + "_cmp");
+      br_input.push_back(expr->Get_VC_Constant_Name() + "_cmp");
+      default_branch_inputs.push_back(expr->Get_VC_Constant_Name() + "_cmp");
+
+      // one branch instance per switch choice.
+      Write_VC_Branch_Instance(this->Get_VC_Name() + "_branch_" + IntToStr(idx),
+			       br_input);
+      this->_choice_pairs[idx].second->Write_VC_Datapath_Instances(ofile);
+    }
+
+  if(this->_default_sequence != NULL)
+    {
+      // one branch instance for the default.
+      Write_VC_Branch_Instance(this->Get_VC_Name() + "_branch_default_",
+			       default_branch_inputs);
+      this->_default_sequence->Write_VC_Datapath_Instances(ofile);
+    }
+}
+
+void AaSwitchStatement::Write_VC_Links(string hier_id, ostream& ofile)
+{
+  vector<string> reqs, acks;
+  // links in the expression tree.
+  this->_select_expression->Write_VC_Links(hier_id,ofile);
+
+  //  links for each of the choices.  Note that there will
+  //  be a single branch instance for each choice.
+  for(int idx = 0; idx < _choice_pairs.size(); idx++)
+    {
+
+
+      // for the comparison operation.
+      reqs.push_back(hier_id + "/__condition_check__/condition_" + IntToStr(idx) + "/rr");
+      reqs.push_back(hier_id + "/__condition_check__/condition_" + IntToStr(idx) + "/cr");
+      acks.push_back(hier_id + "/__condition_check__/condition_" + IntToStr(idx) + "/ra");
+      acks.push_back(hier_id + "/__condition_check__/condition_" + IntToStr(idx) + "/ca");
+      Write_VC_Link(this->Get_VC_Name() + "_select_expr_" + IntToStr(idx),reqs,acks);
+      
+      reqs.clear();
+      acks.clear();
+
+      // for the branch operator
+      reqs.push_back(hier_id + "/__condition_check__/condition_" + IntToStr(idx) + "/cmp");
+      acks.push_back("$open"); // ack0 is ignored.
+      acks.push_back(hier_id + "/choice_" + IntToStr(idx) + "/ack1");
+      Write_VC_Link(this->Get_VC_Name() + "_branch_" + IntToStr(idx),
+		    reqs,
+		    acks);
+
+      reqs.clear();
+      acks.clear();
+
+      // choice sequence has links too..
+      this->_choice_pairs[idx].second->Write_VC_Links(hier_id, ofile);
+    }
+
+  // link for the default branch.
+  if(this->_default_sequence != NULL)
+    {
+      string req_hier_id = hier_id + "/__condition_check__";
+
+      // the branch operator for the default.
+      reqs.push_back(req_hier_id + "/$exit");
+      acks.push_back(hier_id + "/choice_default/ack0");
+      acks.push_back("$open"); // ack1 is ignored.
+      Write_VC_Link(this->Get_VC_Name() + "_branch_default_",reqs,acks);
+      reqs.clear();
+      acks.clear();
+
+      // default sequence has links too..
+      this->_default_sequence->Write_VC_Links(hier_id,ofile);
+    }
+}
 
 //---------------------------------------------------------------------
 // AaIfStatement: public AaStatement
@@ -2069,26 +2538,26 @@ void AaIfStatement::Write_C_Function_Body(ofstream& ofile)
 {
   /*
     if(entryflag)
-     {
-        if(pipeokflag)
-        {
-          if(cond)
-          {
-             transfer-to-if-sequence
-          }
-          else
-          {
-             transfer-to-else-sequence 
-                (or set exit flag)
-          }
-        }
-      }
+    {
+    if(pipeokflag)
+    {
+    if(cond)
+    {
+    transfer-to-if-sequence
+    }
+    else
+    {
+    transfer-to-else-sequence 
+    (or set exit flag)
+    }
+    }
+    }
 
-      if-sequence-invocation
-      if-exit-condition-invocation
+    if-sequence-invocation
+    if-exit-condition-invocation
  
-      else-sequence-invocation
-      else-exit-condition-invocation
+    else-sequence-invocation
+    else-exit-condition-invocation
   */
   ofile << "// -------------------------------------------------------------------------------------------" << endl;
   ofile << "// Begin Statement " << this->Get_C_Name() << endl;

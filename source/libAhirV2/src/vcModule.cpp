@@ -90,7 +90,12 @@ void vcModule::Print(ostream& ofile)
 	  ofile << " ";
 	  ofile << vcLexerKeywords[__LPAREN];
 	  for(int idx = 0; idx < dpe->Get_Number_Of_Acks(); idx++)
-	    ofile << dpe->Get_Ack(idx)->Get_Hierarchical_Id() << " ";
+	    {
+	      if(dpe->Get_Ack(idx) != NULL)
+		ofile << dpe->Get_Ack(idx)->Get_Hierarchical_Id() << " ";
+	      else
+		ofile << vcLexerKeywords[__OPEN] << " ";
+	    }
 	  ofile << vcLexerKeywords[__RPAREN];
 
 	  ofile << endl;
@@ -121,8 +126,11 @@ void vcModule::Add_Link(vcDatapathElement* dpe, vector<vcTransition*>& reqs, vec
   dpe->Add_Acks(acks);
   for(int idx=0; idx < acks.size(); idx++)
     {
-      acks[idx]->Add_DP_Link(dpe,_IN_TRANSITION);
-      this->_linked_transition_set.insert(acks[idx]);
+      if(acks[idx] != NULL)
+	{
+	  acks[idx]->Add_DP_Link(dpe,_IN_TRANSITION);
+	  this->_linked_transition_set.insert(acks[idx]);
+	}
     }
 }
 

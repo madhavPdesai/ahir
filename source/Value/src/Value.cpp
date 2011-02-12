@@ -5,6 +5,12 @@ Value::Value()
 {
 }
 
+IntValue::~IntValue()
+{
+  if(this->_bit_field)
+    delete [] _bit_field;
+}
+
 IntValue::IntValue():Value()
 {
   this->_bit_field = NULL;
@@ -21,9 +27,21 @@ IntValue::IntValue(int n): Value()
     this->_bit_field[idx] = 0;
 }
 
-IntValue::IntValue(int n, string format, string init_value)
+IntValue::IntValue(int n, string init_value)
 {
   assert(n > 0);
+
+  string format;
+  if(init_value.size() > 2)
+    {
+      if((init_value[0] == '_') && (init_value[1] == 'b'))
+	format = "binary";
+      else
+	format = "decimal";
+    }
+  else
+    format = "decimal";
+
   _width = n;
   _bit_field = new UWord[this->Array_Size()];
 
@@ -44,18 +62,21 @@ IntValue::IntValue(int n, string format, string init_value)
     }
   else if(format == "binary")
     {
-      if(init_value.size() > _width)
+      if(init_value.size()-2 > _width)
 	{
 	  cerr << "Error: binary initialization string is longer than integer width" << endl;
-	  cerr << "          the initial value will be truncated " << endl;
+	  cerr << "          the initial value will be ignored " << endl;
 	}
-      for(int idx = init_value.size()-1; idx >= 0; idx--)
+      else
 	{
-	  int actual_index = (init_value.size()-1) - idx;
-	  if(init_value[idx] == '1')
-	    this->Set_Bit(actual_index,true);
-	  else
-	    this->Set_Bit(actual_index,false);
+	  for(int idx = init_value.size()-1; idx >= 2; idx--)
+	    {
+	      int actual_index = (init_value.size()-1) - idx;
+	      if(init_value[idx] == '1')
+		this->Set_Bit(actual_index,true);
+	      else
+		this->Set_Bit(actual_index,false);
+	    }
 	}
     }
 }
@@ -82,7 +103,7 @@ SWord IntValue::To_Integer()
 
 string IntValue::To_String()
 {
-  string ret_value;
+  string ret_value = "_b";
   for(int idx = _width-1; idx >= 0; idx--)
     {
       ret_value.push_back((this->Get_Bit(idx) ? '1' : '0'));
@@ -184,7 +205,7 @@ void IntValue::Multiply(IntValue& b )
 void IntValue::Subtract(IntValue& b)
 {
   assert(_width == b.Width());
-  IntValue one_val(b.Width(),"binary","1");
+  IntValue one_val(b.Width(),"_b1");
 
   IntValue tmp(b.Width());
   tmp = b;
@@ -264,9 +285,25 @@ void IntValue::Set_Bit(int idx, bool v)
 
 void IntValue::Negate()
 {
-  IntValue one_val(this->Width(),"binary","1");
+  IntValue one_val(this->Width());
+  one_val.Set_Bit(0,true);
+
   this->Complement();
   this->Add(one_val);
+}
+
+void IntValue::Increment()
+{
+  IntValue one_val(this->Width());
+  one_val.Set_Bit(0,true);
+  this->Add(one_val);
+}
+
+void IntValue::Decrement()
+{
+  IntValue one_val(this->Width());
+  one_val.Set_Bit(0,true);
+  this->Subtract(one_val);
 }
 
 void IntValue::Complement()
@@ -325,6 +362,65 @@ void IntValue::Concatenate(IntValue& b)
     }
 
   this->Swap(tmp);
+}
+
+void IntValue::Shift_Left()
+{
+  for(int idx = this->Width()-1; idx > 0; idx--)
+    this->Set_Bit(idx,this->Get_Bit(idx-1));
+  this->Set_Bit(0,false);
+}
+
+void IntValue::Shift_Left(int idx)
+{
+  for(int i= 0; i < idx; i++)
+    this->Shift_Left();
+}
+
+void IntValue::Shift_Right()
+{
+  for(int idx = 0; idx < this->Width()-1; idx++)
+    this->Set_Bit(idx,this->Get_Bit(idx+1));
+  this->Set_Bit(this->Width()-1,false);
+}
+void IntValue::Shift_Right(int idx)
+{
+  for(int i = 0; i < idx; i++)
+    this->Shift_Right();
+}
+void IntValue::Shift_Right_Signed()
+{
+  bool sign_bit = this->Get_Bit(this->Width()-1);
+  this->Shift_Right();
+  this->Set_Bit(this->Width()-1,sign_bit);
+}
+void IntValue::Shift_Right_Signed(int idx)
+{
+  for(int i = 0; i < idx; i++)
+    this->Shift_Right_Signed(idx);
+}
+
+void IntValue::Rotate_Left()
+{
+  bool high_bit = this->Get_Bit(this->Width()-1);
+  this->Shift_Left();
+  this->Set_Bit(0,high_bit);
+}
+void IntValue::Rotate_Left(int idx)
+{
+ for(int i = 0; i < idx; i++)
+    this->Rotate_Left(idx);
+}
+void IntValue::Rotate_Right()
+{
+  bool low_bit = this->Get_Bit(0);
+  this->Shift_Right();
+  this->Set_Bit(this->Width()-1,low_bit);
+}
+void IntValue::Rotate_Right(int idx)
+{
+ for(int i = 0; i < idx; i++)
+    this->Rotate_Right(idx);
 }
 
 bool IntValue::Greater(IntValue& b)
@@ -466,6 +562,24 @@ void FloatValue::Divide(FloatValue& v)
     this->data._double_value /= v.data._double_value;
 }
 
+void FloatValue::Assign(FloatValue& v)
+{
+  if(this->Is_float32())
+    {
+      if(v.Is_float32())
+	this->data._float_value = v.data._float_value;
+      else
+	this->data._float_value = v.data._double_value;
+    }
+  else   if(this->Is_double64())
+    {
+      if(v.Is_float32())
+	this->data._double_value = v.data._float_value;
+      else 
+	this->data._double_value = v.data._double_value;
+    }
+}
+
 void FloatValue::To_Integer(IntValue& v)
 {
   if(this->Is_float32())
@@ -478,9 +592,9 @@ string FloatValue::To_String()
 {
   char buffer[1024];
   if(this->Is_float32())
-    sprintf(buffer,"%f",this->data._float_value);
+    sprintf(buffer,"%e",this->data._float_value);
   else   if(this->Is_double64())
-    sprintf(buffer,"%f",this->data._double_value);
+    sprintf(buffer,"%le",this->data._double_value);
 
   string ret_string = buffer;
   return(ret_string);

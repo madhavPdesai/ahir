@@ -680,11 +680,22 @@ void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
     {
       vcBranch* s = (*iter).second;
       ofile << s->Get_Id() << ": BranchBase ";
-      ofile << " port map( condition => " << s->_test->Get_Id()
-	    << ", req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol() 
-	    << ", ack0 => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol()
-	    << ", ack1 => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol()
-	    << ", clk => clk, reset => reset);" << endl;
+      ofile << " port map( -- { " << endl << " condition => ";
+      for(int idx = 0; idx < s->_inwires.size(); idx++)
+	{
+	  if(idx > 0)
+	    ofile << " & ";
+	  ofile << << _inwires[idx]->Get_Id();
+	}
+      ofile << "," << endl;
+      ofile << "req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol() << "," <<  endl
+	    << "ack0 => " << ((s->Get_Ack(0) != NULL) ? s->Get_Ack(0)->Get_DP_To_CP_Symbol() : 
+			      vcLexerKeywords[__OPEN] )
+	    << "ack1 => " << ((s->Get_Ack(1) != NULL) ? s->Get_Ack(1)->Get_DP_To_CP_Symbol() : 
+			      vcLexerKeywords[__OPEN] )
+	    << "," << endl
+	    << "clk => clk," << endl
+	    << "reset => reset); -- }" << endl;
     }
 }
 
@@ -853,8 +864,9 @@ void vcDataPath::Print_VHDL_Disconcatenate_Ack(string ack_id, vector<vcTransitio
   // disconcatenate ackL
   for(int aI = 0; aI < acks.size(); aI++)
     {
-      ofile << acks[aI]->Get_DP_To_CP_Symbol() << " <= "
-	    << ack_id << "(" << (acks.size()-1) - aI << ");" << endl;
+      if(acks[aI] != NULL)
+	ofile << acks[aI]->Get_DP_To_CP_Symbol() << " <= "
+	      << ack_id << "(" << (acks.size()-1) - aI << ");" << endl;
     }
 }
 

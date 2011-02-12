@@ -396,10 +396,13 @@ void vcSelect::Print(ostream& ofile)
 	<< endl;
 }
 
-vcBranch::vcBranch(string id, vcWire* twire): vcDatapathElement(id) 
+vcBranch::vcBranch(string id, vector<vcWire*>& wires): vcDatapathElement(id) 
 {
-  _test = twire;
-  _test->Connect_Receiver(this);
+  for(int idx = 0; idx < wires.size(); idx++)
+    {
+      _inwires.push_back(wires[idx]);
+      wires[idx]->Connect_Receiver(this);
+    }
 }
 
 void vcBranch::Add_Reqs(vector<vcTransition*>& reqs)
@@ -417,7 +420,14 @@ void vcBranch::Add_Acks(vector<vcTransition*>& acks)
 void vcBranch::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__BRANCH_OP] << " " << this->Get_Label() << " " 
-	<< vcLexerKeywords[__LPAREN] << this->_test->Get_Id() << vcLexerKeywords[__RPAREN] << endl;
+	<< vcLexerKeywords[__LPAREN];
+  for(int idx =0; idx < _inwires.size(); idx++)
+    {
+      if(idx > 0)
+	ofile << " ";
+      ofile << _inwires[idx]->Get_Id();
+    }
+  ofile << vcLexerKeywords[__RPAREN] << endl;
 }
 
 

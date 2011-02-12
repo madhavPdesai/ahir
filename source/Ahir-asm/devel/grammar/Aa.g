@@ -1129,12 +1129,17 @@ aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReferenc
             ( 
                 (iid: UINTEGER { full_name += iid->getText(); line_number = iid->getLine();} ) 
                 |
-                (fid: UFLOAT { full_name += fid->getText(); line_number = fid->getLine(); } ) 
+                (fid: UFLOAT { full_name += fid->getText(); line_number = fid->getLine(); } )
+                |
+                (bid: BINARY { full_name += bid->getText(); line_number = bid->getLine();} ) 
             )
             |
             ( lp: LESS { full_name += lp->getText(); line_number=lp->getLine(); }
                 ( 
-                    (iidv: UINTEGER { literals.push_back(iidv->getText()); full_name += iidv->getText() + " ";} )+
+                    (
+                       (iidv: UINTEGER { literals.push_back(iidv->getText()); full_name += iidv->getText() + " ";} )
+                       |
+                       (bidv: BINARY { literals.push_back(bidv->getText()); full_name += bidv->getText() + " ";}))+
                     |
                     (fidv: UFLOAT { literals.push_back(fidv->getText()); full_name += fidv->getText() + " ";} )+
                 )
@@ -1147,7 +1152,6 @@ aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReferenc
                 obj_ref->Set_Line_Number(line_number);
         }
     ;
-
 
 
 //----------------------------------------------------------------------------------------------------------
@@ -1267,7 +1271,8 @@ CAST : "$cast";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;
-UFLOAT : '.' UINTEGER 'E' ('+' | '-') UINTEGER;
+UFLOAT : DIGIT '.' (DIGIT)+ 'e' ('+' | '-') UINTEGER;
+BINARY : "_b" ('0' | '1')+;
 
 // White spaces (only "\n" is newline)
 WHITESPACE: (	' ' |'\t' | '\f' | '\r' | '\n' { newline(); } ) 
