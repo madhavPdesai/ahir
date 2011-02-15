@@ -70,9 +70,6 @@ public:
 	public: vcType*  vc_Type(
 		vcSystem* sys
 	);
-	public: vcValue*  vc_Value(
-		vcType* t
-	);
 	public: void vc_Inargs(
 		vcSystem* sys, vcModule* parent
 	);
@@ -173,6 +170,9 @@ public:
 	public: void vc_Object_Declaration_Base(
 		vcSystem* sys, vcType** t, string& obj_name, vcValue** v
 	);
+	public: vcValue*  vc_Value(
+		vcType* t
+	);
 	public: vcValue*  vc_IntValue(
 		vcType* t
 	);
@@ -208,10 +208,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 109;
+	static const int NUM_TOKENS = 110;
 #else
 	enum {
-		NUM_TOKENS = 109
+		NUM_TOKENS = 110
 	};
 #endif
 	
@@ -265,8 +265,6 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_23;
 	static const unsigned long _tokenSet_24_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_24;
-	static const unsigned long _tokenSet_25_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_25;
 };
 
 #endif /*INC_vcParser_hpp_*/

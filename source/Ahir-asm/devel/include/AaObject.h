@@ -69,7 +69,6 @@ class AaObject: public AaRoot
       }
   }
 
-  // \todo
   virtual void Write_VC_Model(ostream& ofile);
 
   virtual bool Is_Constant() {return(false);}
@@ -108,6 +107,10 @@ class AaConstantObject: public AaObject
 
   // todo: this is different from the base Object..
   virtual void Write_VC_Model(ostream& ofile);
+
+  void Evaluate();
+  AaValue* Get_Expression_Value();
+
 };
 
 class AaStorageObject: public AaObject
@@ -129,6 +132,10 @@ class AaStorageObject: public AaObject
   //      because the initial value needs to be 
   //      updated..
   virtual void Write_VC_Model(ostream& ofile);
+  string Get_VC_Memory_Space_Name()
+  {
+    return(this->Get_VC_Name() + "_ms");
+  }
 };
 
 class AaPipeObject: public AaObject
@@ -161,7 +168,6 @@ class AaPipeObject: public AaObject
 
    virtual void Write_VC_Model(ostream& ofile);
    virtual string Get_VC_Name();
-
 };
 
 #endif

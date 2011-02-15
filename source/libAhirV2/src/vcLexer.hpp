@@ -123,6 +123,7 @@ public:
 	public: void mNOR_OP(bool _createToken);
 	public: void mNAND_OP(bool _createToken);
 	public: void mXNOR_OP(bool _createToken);
+	public: void mOPEN(bool _createToken);
 	public: void mUINTEGER(bool _createToken);
 	protected: void mDIGIT(bool _createToken);
 	public: void mWHITESPACE(bool _createToken);

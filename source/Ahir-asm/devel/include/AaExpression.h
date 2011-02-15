@@ -23,6 +23,7 @@ class AaExpression: public AaRoot
   // targets of this expression?
   set<AaExpression*> _targets;
 
+  bool _already_evaluated;
  public:
 
   AaValue* _expression_value;
@@ -54,25 +55,54 @@ class AaExpression: public AaRoot
     this->Write_VC_Control_Path(ofile);
   }
 
-  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile) {assert(0);}
-  virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile) {assert(0);}
-  virtual void Write_VC_Wire_Declarations_As_Target(ostream& ofile) {assert(0);}
-  virtual void Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source) {assert(0);}
-  virtual void Write_VC_Datapath_Instances(bool skip_immediate,  ostream& ofile) {assert(0);}
-  virtual void Write_VC_Links(string hier_id, ostream& ofile);
-  virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
-  virtual string Get_VC_Constant_Name();
-  virtual string Get_VC_Wire_Name();
-  virtual string Get_VC_Instance_Name();
-  virtual string Get_VC_Datapath_Instance_Name();
+  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile) {}
+  virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile) {}
+  virtual void Write_VC_Wire_Declarations_As_Target(ostream& ofile) {}
+  virtual void Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source) {}
+  virtual void Write_VC_Datapath_Instances(AaExpression* target,  ostream& ofile) {}
+  virtual void Write_VC_Links(string hier_id, ostream& ofile) {}
+  virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile) {}
+  virtual string Get_VC_Wire_Name()
+  {
+    return(this->Kind() + "_" + IntToStr(this->Get_Index()) + "_wire");
+  }
+
+  virtual string Get_VC_Constant_Name()
+  {
+    return(this->Kind() + "_" + IntToStr(this->Get_Index()) + "_constant");
+  }
+
+  virtual string Get_VC_Driver_Name()
+  {
+    if(this->Is_Constant())
+      return(this->Get_VC_Constant_Name());
+    else
+      return(this->Get_VC_Wire_Name());
+  }
+
+  virtual string Get_VC_Receiver_Name()
+  {
+    return(this->Get_VC_Wire_Name());
+  }
+
+  virtual string Get_VC_Datapath_Instance_Name()
+  {
+    return(this->Kind() + "_" + IntToStr(this->Get_Index()) + "_dp_instance");
+  }
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
     assert(0);
   }
 
-  virtual bool Is_Constant() {return(false);}
+  virtual bool Is_Constant() {return(this->_expression_value != NULL);}
+
   virtual bool Is_Implicit_Variable_Reference() {return(false);}
+
+  virtual bool Is_Implicit_Object() {return(false);}
+
+  virtual void Evaluate() {if(!_already_evaluated) _already_evaluated = true;};
+  virtual void Assign_Expression_Value(AaValue* expr_value);
 };
 
 
@@ -135,6 +165,8 @@ class AaObjectReference: public AaExpression
 
   virtual bool Is_Object_Reference() {return(true);}
 
+  virtual void Evaluate();
+
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
@@ -156,9 +188,8 @@ class AaConstantLiteralReference: public AaObjectReference
     leaf_expression_set.insert(this);
   }
 
-  virtual bool Is_Constant() {return(true);}
-
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
+  virtual void Evaluate();
 };
 
 // simple reference (no array indices)
@@ -179,8 +210,23 @@ class AaSimpleObjectReference: public AaObjectReference
   }
 
   virtual void Write_VC_Control_Path_As_Target( ostream& ofile);
-  virtual bool Is_Constant();
+
   virtual bool Is_Implicit_Variable_Reference();
+  virtual bool Is_Implicit_Object();
+
+  virtual string Get_VC_Driver_Name();
+  virtual string Get_VC_Receiver_Name();
+
+  virtual void Evaluate();
+
+  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
+  virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
+  virtual void Write_VC_Wire_Declarations_As_Target(ostream& ofile);
+  virtual void Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source);
+  virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
+  virtual void Write_VC_Links(string hier_id, ostream& ofile);
+  virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
+
 };
 
 // array object reference
@@ -216,8 +262,15 @@ class AaArrayObjectReference: public AaObjectReference
   }
 
   virtual void Write_VC_Control_Path_As_Target( ostream& ofile);
-  virtual bool Is_Constant();
+  virtual void Evaluate();
 
+  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
+  virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
+  virtual void Write_VC_Wire_Declarations_As_Target(ostream& ofile);
+  virtual void Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source);
+  virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
+  virtual void Write_VC_Links(string hier_id, ostream& ofile);
+  virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
 };
 
 // type cast expression (is unary)
@@ -252,7 +305,12 @@ class AaTypeCastExpression: public AaExpression
       _rest->Get_Leaf_Expression_Set(leaf_expression_set);
   }
 
-  virtual bool Is_Constant() {return(this->_rest->Is_Constant());}
+  virtual void Evaluate();
+
+  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
+  virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
+  virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
+  virtual void Write_VC_Links(string hier_id, ostream& ofile);
 };
 
 
@@ -291,7 +349,13 @@ class AaUnaryExpression: public AaExpression
   }
 
 
-  virtual bool Is_Constant() {return(this->_rest->Is_Constant());}
+  virtual void Evaluate();
+  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
+  virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
+  virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
+  virtual void Write_VC_Links(string hier_id, ostream& ofile);
+
+
 };
 
 // 
@@ -368,10 +432,12 @@ class AaBinaryExpression: public AaExpression
   }
 
   bool Is_Trivial();
-  virtual bool Is_Constant() 
-  {
-    return(this->_first->Is_Constant() && this->_second->Is_Constant());
-  }
+  virtual void Evaluate();
+  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
+  virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
+  virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
+  virtual void Write_VC_Links(string hier_id, ostream& ofile);
+
 };
 
 // ternary expression: a ? b : c
@@ -410,6 +476,10 @@ class AaTernaryExpression: public AaExpression
   }
 
   virtual void Write_VC_Control_Path( ostream& ofile);
+  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
+  virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
+  virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
+  virtual void Write_VC_Links(string hier_id, ostream& ofile);
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
@@ -418,11 +488,7 @@ class AaTernaryExpression: public AaExpression
       _if_false->Get_Leaf_Expression_Set(leaf_expression_set);
   }
 
-  virtual bool Is_Constant() 
-  {
-    return(this->_test->Is_Constant() && this->_if_true->Is_Constant() && this->_if_false->Is_Constant());
-  }
-
+  virtual void Evaluate();
 };
 
 #endif

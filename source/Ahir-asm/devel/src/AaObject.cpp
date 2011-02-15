@@ -11,7 +11,7 @@ using namespace std;
 #include <AaStatement.h>
 #include <AaModule.h>
 #include <AaProgram.h>
-#include <Aa2Ahir.h>
+#include <Aa2VC.h>
 
 
 /*****************************************  OBJECT  ****************************/
@@ -46,8 +46,7 @@ void AaObject::Print(ostream& ofile)
 
 void AaObject::Write_VC_Model(ostream& ofile)
 {
-  ofile << this->Get_VC_Name() << ":";
-  this->Get_Type()->Write_VC_Model(ofile);
+  ofile << this->Get_VC_Name() << ":";  this->Get_Type()->Write_VC_Model(ofile);
 }
 
 //---------------------------------------------------------------------
@@ -78,6 +77,20 @@ void AaStorageObject::Print(ostream& ofile)
   this->AaObject::Print(ofile);
 }
 
+void AaStorageObject::Write_VC_Model(ostream& ofile)
+{
+  // declare the memoryspace/storage object pair..
+  Write_VC_Memory_Space_Declaration(this->Get_VC_Memory_Space_Name(),
+				    this->Get_VC_Name(),
+				    this->Get_Type(),
+				    ofile);
+				    
+			       
+  // later, a VC compiler can potentially 
+  // club memory spaces together.
+}
+
+
 //---------------------------------------------------------------------
 // AaPipeObject
 //---------------------------------------------------------------------
@@ -97,7 +110,9 @@ void AaPipeObject::Print(ostream& ofile)
 //
 void AaPipeObject::Write_VC_Model(ostream& ofile)
 {
-  ofile << "$pipe [" << this->Get_VC_Name() << "] " << this->_type->Size() << endl;
+  Write_VC_Pipe_Declaration(this->Get_VC_Name(),
+			    this->_type->Size(),
+			    ofile);
 }
 string AaPipeObject::Get_VC_Name()
 {
@@ -122,4 +137,21 @@ void AaConstantObject::Print(ostream& ofile)
 }
 
 
+AaValue* AaConstantObject::Get_Expression_Value()
+{
+  return(this->_value->Get_Expression_Value());
+}
 
+void AaConstantObject::Write_VC_Model(ostream& ofile)
+{
+  Write_VC_Constant_Declaration(this->Get_VC_Name(),
+				this->Get_Type(),
+				this->Get_Value()->Get_Expression_Value(),
+				ofile);
+}
+
+
+void AaConstantObject::Evaluate()
+{
+  this->_value->Evaluate();
+}

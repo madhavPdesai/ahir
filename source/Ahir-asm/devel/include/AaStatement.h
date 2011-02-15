@@ -113,7 +113,6 @@ class AaStatement: public AaScope
   virtual string Get_VC_Name();
   virtual void Write_VC_Control_Path(ostream& ofile) { assert(0);}
 
-  virtual void Write_VC_Data_Path(ostream& ofile) {}
   virtual void Write_VC_Pipe_Declarations(ostream& ofile) {}
   virtual void Write_VC_Memory_Space_Declarations(ostream& ofile) {}
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile) {}
@@ -121,6 +120,7 @@ class AaStatement: public AaScope
   virtual void Write_VC_Datapath_Instances(ostream& ofile) {}
   virtual void Write_VC_Links(string hier_id, ostream& ofile) {}
 
+  virtual void Propagate_Constants() {}
 
 };
 
@@ -179,7 +179,6 @@ class AaStatementSequence: public AaScope
   virtual void Write_Clear_Exit_Flags_Code(ostream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile); 
-  virtual void Write_VC_Data_Path(ostream& ofile);
   virtual void Write_VC_Pipe_Declarations(ostream& ofile);
   virtual void Write_VC_Memory_Space_Declarations(ostream& ofile);
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
@@ -189,6 +188,12 @@ class AaStatementSequence: public AaScope
 
   AaStatement* Get_Next_Statement(AaStatement* stmt);
   AaStatement* Get_Previous_Statement(AaStatement* stmt);
+
+  virtual void Propagate_Constants()
+  {
+    for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+      this->_statement_sequence[i]->Propagate_Constants();
+  }
 
 
 };
@@ -261,6 +266,8 @@ class AaAssignmentStatement: public AaStatement
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
+
+  virtual void Propagate_Constants(); 
 };
 
 
@@ -332,6 +339,8 @@ class AaCallStatement: public AaStatement
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
+
+  virtual void Propagate_Constants();
 
 };
 
@@ -464,6 +473,8 @@ class AaBlockStatement: public AaStatement
   {
     return(this->_statement_sequence->Get_Previous_Statement(stmt));
   }
+
+  virtual void Propagate_Constants();
 };
 
 class AaSeriesBlockStatement: public AaBlockStatement
@@ -572,6 +583,7 @@ class AaJoinForkStatement: public AaParallelBlockStatement
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
 
   virtual string Get_VC_Name();
+
 };
 
 
@@ -736,8 +748,12 @@ class AaPhiStatement: public AaStatement
 
   virtual void Write_VC_Control_Path(ostream& ofile);
 
+  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
+
+  virtual void Propagate_Constants();
+  virtual bool Is_Constant();
 };
 
 
@@ -797,6 +813,7 @@ class AaSwitchStatement: public AaStatement
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
 
+  virtual void Propagate_Constants(); 
 };
 
 
@@ -840,8 +857,12 @@ class AaIfStatement: public AaStatement
 
   virtual void Write_VC_Control_Path(ostream& ofile);
 
+  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
+  virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
   virtual void Write_VC_Links(string hier_id,ostream& ofile);
+
+  virtual void Propagate_Constants(); 
 };
 
 

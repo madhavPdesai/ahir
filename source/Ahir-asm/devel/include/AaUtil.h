@@ -17,6 +17,8 @@ struct StringCompare:public binary_function
   bool operator() (string, string) const;
 };
 
+int CeilLog2(int n);
+
 
 bool Is_Compare_Operation(AaOperation op);
 bool Is_Shift_Operation(AaOperation op);
@@ -27,6 +29,6 @@ bool Is_Concat_Operation(AaOperation op);
 string C_Name(AaOperation op);
 string Aa_Name(AaOperation op);
 
-
+string To_Alphanumeric(string x);
 
 #endif

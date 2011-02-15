@@ -82,11 +82,15 @@ class AaProgram
     return (r);
   }
 
+  // propagate constant values...
+  static void Propagate_Constants();
+
   // write VC model
   static void Write_VC_Model(int default_space_pointer_width,
 			     int default_space_word_size,
 			     ostream& ofile);
   static void Write_VC_Pipe_Declarations(ostream& ofile);
+  static void Write_VC_Constant_Declarations(ostream& ofile);
   static void Write_VC_Memory_Spaces(int default_space_pointer_width,
 				     int default_space_word_size,
 				     ostream& ofile);

@@ -83,7 +83,7 @@ ADDRWIDTH aw:UINTEGER {ms->Set_Address_Width(atoi(aw->getText().c_str()));}
 ;
 
 //--------------------------------------------------------------------------------------------------------------------------------------
-// vc_MemoryLocation:  OBJECT vc_Label COLON vc_Type (ASSIGN_OP ? vc_Value)
+// vc_MemoryLocation:  OBJECT vc_Label COLON vc_Type 
 //--------------------------------------------------------------------------------------------------------------------------------------
 vc_MemoryLocation[vcSystem* sys, vcMemorySpace* ms]
 {
@@ -92,11 +92,9 @@ vc_MemoryLocation[vcSystem* sys, vcMemorySpace* ms]
 	vcType* t;
 	vcValue* v = NULL;
 }
-: OBJECT lbl = vc_Label COLON t = vc_Type[sys] (ASSIGN_OP v = vc_Value[t])? 
+: OBJECT lbl = vc_Label COLON t = vc_Type[sys]
 {
 	nl = new vcStorageObject(lbl,t);
-	if(v != NULL)
-		nl->Set_Value(v);
         ms->Add_Storage_Object(nl);
 }
 ;
@@ -679,21 +677,22 @@ vc_Interface_Object_Declaration[vcSystem* sys, vcModule* parent, string mode]
 	vcValue* v;
 	string obj_name;
 }
-: vc_Object_Declaration_Base[sys, &t,obj_name,&v] 
+: id: SIMPLE_IDENTIFIER {obj_name = id->getText();} COLON t = vc_Type[sys]
 { 
 	parent->Add_Argument(obj_name,mode,t);
 }
 ;
 
 //----------------------------------------------------------------------------------------------------------
-// vc_Object_Declaration_Base: SIMPLE_IDENTIFIER COLON vc_Type (ASSIGN_OP vc_Value)?
+// vc_Object_Declaration_Base: vc_Label COLON vc_Type (ASSIGN_OP vc_Value)?
 //----------------------------------------------------------------------------------------------------------
 vc_Object_Declaration_Base[vcSystem* sys, vcType** t, string& obj_name, vcValue** v]
 {
 	vcType* tt = NULL;
 	vcValue* vv = NULL;
+        string oname;
 }
-: id:SIMPLE_IDENTIFIER {obj_name = id->getText();} COLON tt = vc_Type[sys] {*t = tt;}
+: oname = vc_Label {obj_name = oname;} COLON tt = vc_Type[sys] {*t = tt;}
 (ASSIGN_OP vv =  vc_Value[*t])? {if(v != NULL) *v = vv;}
 ;
 

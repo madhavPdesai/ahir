@@ -893,8 +893,14 @@ aA_Storage_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         }
         : (st:STORAGE aA_Object_Declaration_Base[scope,oname,otype,initial_value])
         {
-            obj = new AaStorageObject(scope,oname,otype,initial_value);
+
+            obj = new AaStorageObject(scope,oname,otype,NULL);
             obj->Set_Line_Number(st->getLine());
+            if(initial_value != NULL)
+            {
+              AaRoot::Warning("initial value not allowed on storage objects, will be ignored.",obj);
+              delete initial_value;
+            }
         }
         ;
 
@@ -902,7 +908,7 @@ aA_Storage_Object_Declaration[AaScope* scope] returns [AaObject* obj]
 // aA_Object_Declaration_Base: SIMPLE_IDENTIFIER COLON aA_Type_Reference (ASSIGNEQUAL aA_Constant_Literal_Reference)?
 //----------------------------------------------------------------------------------------------------------
 aA_Object_Declaration_Base[AaScope* scope, string& oname, AaType*& otype, AaConstantLiteralReference*& initial_value]
-        : (id:SIMPLE_IDENTIFIER { oname = id->getText(); })
+        : (id:SIMPLE_IDENTIFIER { oname = id->getText(); }) COLON
             (otype = aA_Type_Reference[scope])
             (ASSIGNEQUAL initial_value = aA_Constant_Literal_Reference[scope])?
         ;

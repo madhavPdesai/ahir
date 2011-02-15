@@ -43,7 +43,14 @@ namespace _base_value_
 
   public:
     Value();
+
     virtual string To_String() {assert(0);}
+    virtual SWord To_Integer() {assert(0);}
+    virtual UWord To_Uinteger() {assert(0);}
+    virtual float To_Float() {assert(0);}
+    virtual double To_Double() {assert(0);}
+    virtual bool To_Boolean(){assert(0);}
+
   };
 
   class FloatValue;
@@ -74,8 +81,10 @@ namespace _base_value_
       return(ret_val);
     }
 
-    SWord To_Integer();
-    UWord To_Uinteger();
+    virtual SWord To_Integer();
+    virtual UWord To_Uinteger();
+
+    virtual bool To_Boolean();
 
     string To_String();
 
@@ -98,7 +107,6 @@ namespace _base_value_
 
     void Increment();
     void Decrement();
-
 
     void Complement();
     void And(IntValue&);
@@ -123,8 +131,6 @@ namespace _base_value_
     void Rotate_Right();
     void Rotate_Right(int idx);
     
-    //////// ^^ shift operators todo ////////////////
-
     bool Greater(IntValue&);
     bool Less_Than(IntValue&);
     bool Greater_Equal(IntValue&);
@@ -164,6 +170,20 @@ namespace _base_value_
     {
       return((_characteristic_width == 8) && (_mantissa_width == 23));
     }
+    virtual float To_Float() 
+    {
+      if(Is_float32())
+	return(this->data._float_value);
+      else
+	return((float) (this->data._double_value));
+    }
+    virtual double To_Double()
+    {
+      if(Is_float32())
+	return((double)this->data._float_value);
+      else
+	return(this->data._double_value);
+    }
 
     bool Is_double64()
     {
@@ -201,7 +221,6 @@ namespace _base_value_
     bool Equal( FloatValue& t);
 
     void Assign(FloatValue& t);
-
     void To_Integer(IntValue&);
 
     virtual string To_String();

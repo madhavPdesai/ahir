@@ -415,12 +415,6 @@ void AaStatementSequence::Write_VC_Control_Path(ostream& ofile)
   for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
     this->_statement_sequence[i]->Write_VC_Control_Path(ofile);
 }
-
-void AaStatementSequence::Write_VC_Data_Path(ostream& ofile)
-{
-  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
-    this->_statement_sequence[i]->Write_VC_Data_Path(ofile);
-}
 void AaStatementSequence::Write_VC_Pipe_Declarations(ostream& ofile)
 {
   for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
@@ -610,81 +604,97 @@ void AaAssignmentStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
     {
       Write_VC_Constant_Declaration(this->_target->Get_VC_Constant_Name(),
 				    this->_target->Get_Type()->Get_VC_Name(),
-				    this->_target->Get_Expression_Value()->To_Binary_String());
+				    this->_target->Get_Expression_Value()->To_VC_String(),
+				    ofile);
     }
   this->_source->Write_VC_Constant_Wire_Declarations(ofile);
 }
 void AaAssignmentStatement::Write_VC_Wire_Declarations(ostream& ofile)
 {
-  if(this->_target->Is_Implicit_Variable_Reference())
-    {
-      Write_VC_Wire_Declaration(this->_target->Get_VC_Wire_Name(),
-				this->_target->Get_Type()->Get_VC_Name());
-      this->_source->Write_VC_Wire_Declarations(false,ofile);
-    }
-  else 
+  if(!this->Is_Constant())
     {
       this->_source->Write_VC_Wire_Declarations(true,ofile);
       this->_target->Write_VC_Wire_Declarations_As_Target(ofile);
     }
-
 }
+
 void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 {
-  if(this->_target->Is_Implicit_Variable_Reference())
+  if(!this->Is_Constant())
     {
-      if(this->_source->Is_Implicit_Variable_Reference())
+      if(this->_target->Is_Implicit_Variable_Reference())
 	{
-	  Write_VC_Unary_Operator(__VC_ASSIGN_OP,
-				  this->_target->Get_VC_Datapath_Instance_Name(),
-				  this->_source->Get_VC_Wire_Name(),
-				  this->_target->Get_VC_Wire_Name());
-
+	  if(this->_source->Is_Implicit_Variable_Reference())
+	    {
+	      Write_VC_Unary_Operator(__NOP,
+				      this->_target->Get_VC_Datapath_Instance_Name(),
+				      this->_source->Get_VC_Wire_Name(),
+				      this->_source->Get_Type(),
+				      this->_target->Get_VC_Wire_Name(),
+				      this->_target->Get_Type(),
+				      ofile);
+	    }
+	  else
+	    {
+	      this->_source->Write_VC_Datapath_Instances(this->_target,ofile);
+	    }
 	}
       else
 	{
-	  this->_source->Write_VC_Datapath_Instances(true,ofile);
+	  this->_target->Write_VC_Datapath_Instances_As_Target(ofile, this->_source);
+	  this->_source->Write_VC_Datapath_Instances(NULL,ofile);
 	}
-    }
-  else if(!this->_target->Is_Implicit_Variable_Reference())
-    {
-      this->_target->Write_VC_Datapath_Instances_As_Target(ofile, this->_source);
-      this->_source->Write_VC_Datapath_Instances(false,ofile);
     }
 }
 
 void AaAssignmentStatement::Write_VC_Links(string hier_id,ostream& ofile)
 {
-  hier_id = hier_id + "/" + this->Get_VC_Name();
-  vector<string> reqs;
-  vector<string> acks;
-
-  if(this->_target->Is_Implicit_Variable_Reference())
+  if(!this->Is_Constant())
     {
-      if(this->_source->Is_Implicit_Variable_Reference())
-	{
-	  reqs.push_back(hier_id + "/req");
-	  acks.push_back(hier_id + "/ack");
-	  Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
-			reqs, acks);
-	  reqs.clear();
-	  acks.clear();
-	}
+      if(hier_id != "")
+	hier_id = hier_id + "/" + this->Get_VC_Name();
       else
+	hier_id = this->Get_VC_Name();
+
+      vector<string> reqs;
+      vector<string> acks;
+      
+      if(this->_target->Is_Implicit_Variable_Reference())
 	{
-	  this->_source->Write_VC_Links(hier_id,ofile);
+	  if(this->_source->Is_Implicit_Variable_Reference())
+	    {
+	      reqs.push_back(hier_id + "/req");
+	      acks.push_back(hier_id + "/ack");
+	      Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
+			    reqs, acks, ofile);
+	      reqs.clear();
+	      acks.clear();
+	    }
+	  else
+	    {
+	      this->_source->Write_VC_Links(hier_id,ofile);
+	    }
 	}
-    }
-  else if(!this->_target->Is_Implicit_Variable_Reference())
-    {
-      this->_target->Write_VC_Links_As_Target(hier_id, ofile);
-      this->_source->Write_VC_Links(hier_id, ofile);
+      else if(!this->_target->Is_Implicit_Variable_Reference())
+	{
+	  this->_target->Write_VC_Links_As_Target(hier_id, ofile);
+	  this->_source->Write_VC_Links(hier_id, ofile);
+	}
     }
 }
 
 bool AaAssignmentStatement::Is_Constant()
 {
-  return(this->_source->Is_Constant());
+  return(this->_target->Is_Constant());
+}
+
+void AaAssignmentStatement::Propagate_Constants()
+{
+  this->_source->Evaluate();
+  if(this->_source->Is_Constant())
+    {
+      this->_target->Assign_Expression_Value(this->_source->Get_Expression_Value());
+    }
 }
 
 //---------------------------------------------------------------------
@@ -1101,31 +1111,39 @@ void AaCallStatement::Write_VC_Wire_Declarations(ostream& ofile)
 }
 void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 {
-  vector<string> inargs, outargs;
+  vector<pair<string,AaType*> > inargs, outargs;
 
   for(int idx = 0; idx < _input_args.size(); idx++)
     {
-      _input_args[idx]->Write_VC_Datapath_Instances(false, ofile);
-      inargs.push_back(_input_args[idx]->Get_VC_Wire_Name());
+      _input_args[idx]->Write_VC_Datapath_Instances(NULL, ofile);
+      inargs.push_back(pair<string,AaType*>(_input_args[idx]->Get_VC_Wire_Name(),
+					    _input_args[idx]->Get_Type()));
     }
   
   for(int idx = 0; idx < _output_args.size(); idx++)
     {
       _output_args[idx]->Write_VC_Datapath_Instances_As_Target(ofile,NULL);
-      outargs.push_back(_output_args[idx]->Get_VC_Wire_Name());
+      outargs.push_back(pair<string,AaType*>(_output_args[idx]->Get_VC_Wire_Name(),
+					     _output_args[idx]->Get_Type()));
     }
 
   Write_VC_Call_Operator(this->Get_VC_Name() + "_call",
 			 _function_name,
 			 inargs,
-			 outargs);
+			 outargs,
+			 ofile);
 
 }
 void AaCallStatement::Write_VC_Links(string hier_id, ostream& ofile)
 {
   vector<string> reqs, acks;
 
-  hier_id = hier_id + "/" + this->Get_VC_Name();
+  
+  if(hier_id != "/")
+    hier_id = hier_id + "/" + this->Get_VC_Name();
+  else
+    hier_id = this->Get_VC_Name();
+
   for(int idx = 0; idx < _input_args.size(); idx++)
     {
       _input_args[idx]->Write_VC_Links(hier_id + "/_in_args_", ofile);
@@ -1142,7 +1160,16 @@ void AaCallStatement::Write_VC_Links(string hier_id, ostream& ofile)
   acks.push_back(hier_id + "/cra");
   acks.push_back(hier_id + "/cca");
 
-  Write_VC_Link(this->Get_VC_Name() + "_call",reqs,acks);
+  Write_VC_Link(this->Get_VC_Name() + "_call",reqs,acks,ofile);
+}
+
+
+void AaCallStatement::Propagate_Constants()
+{
+ for(int idx = 0; idx < _input_args.size(); idx++)
+    {
+      _input_args[idx]->Evaluate();
+    }
 }
 
 //---------------------------------------------------------------------
@@ -1319,7 +1346,11 @@ void AaBlockStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 void AaBlockStatement::Write_VC_Links(string hier_id, ostream& ofile)
 {
-  hier_id = hier_id + "/" + this->Get_VC_Name();
+  if(hier_id != "")
+    hier_id = hier_id + "/" + this->Get_VC_Name();
+  else
+    hier_id = this->Get_VC_Name();
+
   if(this->_statement_sequence != NULL)
     for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
       {
@@ -1327,6 +1358,21 @@ void AaBlockStatement::Write_VC_Links(string hier_id, ostream& ofile)
       }
 }
 
+
+void AaBlockStatement::Propagate_Constants()
+{
+  for(int idx = 0; idx < _objects.size(); idx++)
+    {
+      if(_objects[idx]->Is("AaConstantObject"))
+	{
+	  ((AaConstantObject*)(_objects[idx]))->Evaluate();
+	}
+    }
+
+  if(this->_statement_sequence)
+    this->_statement_sequence->Propagate_Constants();
+
+}
 
 //---------------------------------------------------------------------
 // AaSeriesBlockStatement: public AaBlockStatement
@@ -1985,7 +2031,9 @@ void AaMergeStatement::Write_VC_Links(string hier_id, ostream& ofile)
 	  string ack_name = hier_id + "/"  +  this->Get_VC_Name() + "_PhiAck/" + 
 	    stmt->Get_VC_Name() + "_ack";
 
-	  Write_VC_Link(stmt->Get_VC_Name(), phi_req_map[(AaPhiStatement*)stmt],ack_name);
+	  vector<string> acks;
+	  acks.push_back(ack_name);
+	  Write_VC_Link(stmt->Get_VC_Name(), phi_req_map[(AaPhiStatement*)stmt],acks,ofile);
 	}
     }
 }
@@ -2091,16 +2139,61 @@ void AaPhiStatement::Write_VC_Control_Path(ostream& ofile)
 	<< "}" << endl;
 }
 
+void AaPhiStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
+{
+  for(int idx = 0; idx < _source_pairs.size(); idx++)
+    _source_pairs[idx].second->Write_VC_Constant_Wire_Declarations(ofile);
+  
+  this->_target->Write_VC_Constant_Wire_Declarations(ofile);
+}
 void AaPhiStatement::Write_VC_Wire_Declarations(ostream& ofile)
 {
+  for(int idx = 0; idx < _source_pairs.size(); idx++)
+    _source_pairs[idx].second->Write_VC_Wire_Declarations(false,ofile);
+
   this->_target->Write_VC_Wire_Declarations_As_Target(ofile);
 }
 void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 {
-  vector<string> sources;
+  vector<pair<string,AaType*> > sources;
   for(int i = 0; i < _source_pairs.size(); i++)
-    sources.push_back(_source_pairs[i].second->Get_VC_Wire_Name());
-  Write_VC_Phi_Operator(this->Get_VC_Name(),sources,_target->Get_VC_Wire_Name());
+    sources.push_back(pair<string,AaType*>(_source_pairs[i].second->Get_VC_Wire_Name(),
+					   _source_pairs[i].second->Get_Type()));
+
+  Write_VC_Phi_Operator(this->Get_VC_Name(),
+			sources,
+			_target->Get_VC_Wire_Name(),
+			_target->Get_Type(),
+			ofile);
+}
+
+bool AaPhiStatement::Is_Constant()
+{
+  return(this->_target->Is_Constant());
+}
+
+
+void AaPhiStatement::Propagate_Constants()
+{
+  bool all_values_equal = true;
+  AaValue* last_expr_value = NULL;
+  for(int idx = 0; idx < _source_pairs.size(); idx++)
+    {
+      _source_pairs[idx].second->Evaluate();
+      if(all_values_equal && _source_pairs[idx].second->Is_Constant())
+	{
+	  if( last_expr_value  == NULL)
+	    last_expr_value = _source_pairs[idx].second->Get_Expression_Value();
+	  else
+	    all_values_equal = last_expr_value->Equals(_source_pairs[idx].second->Get_Expression_Value());
+	}
+      else if(! _source_pairs[idx].second->Is_Constant())
+	all_values_equal = false;
+    }
+
+  // target is a constant if _source_pairs.size() == 1.
+  if(all_values_equal && (_source_pairs.size() > 1))
+    _target->Assign_Expression_Value(_source_pairs[0].second->Get_Expression_Value());
 }
 
 //---------------------------------------------------------------------
@@ -2389,10 +2482,18 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
 
 void AaSwitchStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
+  this->_select_expression->Write_VC_Constant_Wire_Declarations(ofile);
   // constant literal expressions will be declared as constants..
   for(int idx = 0; idx < _choice_pairs.size(); idx++)
-    this->_choice_pairs[idx].first->Write_VC_Constant_Wire_Declarations(ofile);
+    {
+      this->_choice_pairs[idx].first->Write_VC_Constant_Wire_Declarations(ofile);
+      this->_choice_pairs[idx].second->Write_VC_Constant_Wire_Declarations(ofile);
+    }
+
+  if(this->_default_sequence)
+    this->_default_sequence->Write_VC_Constant_Wire_Declarations(ofile);
 }
+
 void AaSwitchStatement::Write_VC_Wire_Declarations(ostream& ofile)
 {
   // wire declarations..
@@ -2400,7 +2501,7 @@ void AaSwitchStatement::Write_VC_Wire_Declarations(ostream& ofile)
   for(int idx = 0; idx < _choice_pairs.size(); idx++)
     {
       AaConstantLiteralReference* expr = this->_choice_pairs[idx].first;
-      Write_VC_Wire_Declaration(expr->Get_VC_Constant_Name() + "_cmp", "$int<1>");
+      Write_VC_Wire_Declaration(expr->Get_VC_Constant_Name() + "_cmp", "$int<1>",ofile);
       this->_choice_pairs[idx].second->Write_VC_Wire_Declarations(ofile);
     }
   if(this->_default_sequence)
@@ -2409,24 +2510,33 @@ void AaSwitchStatement::Write_VC_Wire_Declarations(ostream& ofile)
 }
 void AaSwitchStatement::Write_VC_Datapath_Instances(ostream& ofile)
 {
-  vector<string> default_branch_inputs;
-  this->_select_expression->Write_VC_Datapath_Instances(false,ofile);
+  vector<pair<string,AaType*> > default_branch_inputs;
+  this->_select_expression->Write_VC_Datapath_Instances(NULL,ofile);
   for(int idx = 0; idx < _choice_pairs.size(); idx++)
     {
       AaConstantLiteralReference* expr = this->_choice_pairs[idx].first;
-      vector<string> br_input;
+      vector<pair<string,AaType*> > br_input;
 
       // one comparison operator per switch choice.
-      Write_VC_Unary_Operator(__VC_EQ_OP, 
-			      this->Get_VC_Name() + "_select_expr_" + IntToStr(idx),
-			      expr->Get_VC_Constant_Name(),
-			      expr->Get_VC_Constant_Name() + "_cmp");
-      br_input.push_back(expr->Get_VC_Constant_Name() + "_cmp");
-      default_branch_inputs.push_back(expr->Get_VC_Constant_Name() + "_cmp");
+      Write_VC_Binary_Operator(__EQUAL, 
+			       this->Get_VC_Name() + "_select_expr_" + IntToStr(idx),
+			       _select_expression->Get_VC_Name(),
+			       _select_expression->Get_Type(),
+			       expr->Get_VC_Constant_Name(),
+			       expr->Get_Type(),
+			       expr->Get_VC_Constant_Name() + "_cmp",
+			       expr->Get_Type(),
+			       ofile);
+
+      br_input.push_back(pair<string,AaType*>(expr->Get_VC_Constant_Name() + "_cmp",
+					      expr->Get_Type()));
+      default_branch_inputs.push_back(pair<string,AaType*>(expr->Get_VC_Constant_Name() + "_cmp",
+							   expr->Get_Type()));
 
       // one branch instance per switch choice.
       Write_VC_Branch_Instance(this->Get_VC_Name() + "_branch_" + IntToStr(idx),
-			       br_input);
+			       br_input,
+			       ofile);
       this->_choice_pairs[idx].second->Write_VC_Datapath_Instances(ofile);
     }
 
@@ -2434,7 +2544,8 @@ void AaSwitchStatement::Write_VC_Datapath_Instances(ostream& ofile)
     {
       // one branch instance for the default.
       Write_VC_Branch_Instance(this->Get_VC_Name() + "_branch_default_",
-			       default_branch_inputs);
+			       default_branch_inputs,
+			       ofile);
       this->_default_sequence->Write_VC_Datapath_Instances(ofile);
     }
 }
@@ -2456,18 +2567,19 @@ void AaSwitchStatement::Write_VC_Links(string hier_id, ostream& ofile)
       reqs.push_back(hier_id + "/__condition_check__/condition_" + IntToStr(idx) + "/cr");
       acks.push_back(hier_id + "/__condition_check__/condition_" + IntToStr(idx) + "/ra");
       acks.push_back(hier_id + "/__condition_check__/condition_" + IntToStr(idx) + "/ca");
-      Write_VC_Link(this->Get_VC_Name() + "_select_expr_" + IntToStr(idx),reqs,acks);
+      Write_VC_Link(this->Get_VC_Name() + "_select_expr_" + IntToStr(idx),reqs,acks,ofile);
       
       reqs.clear();
       acks.clear();
 
       // for the branch operator
       reqs.push_back(hier_id + "/__condition_check__/condition_" + IntToStr(idx) + "/cmp");
-      acks.push_back("$open"); // ack0 is ignored.
+      acks.push_back("$open"); // ack0 is ignored. 
       acks.push_back(hier_id + "/choice_" + IntToStr(idx) + "/ack1");
       Write_VC_Link(this->Get_VC_Name() + "_branch_" + IntToStr(idx),
 		    reqs,
-		    acks);
+		    acks,
+		    ofile);
 
       reqs.clear();
       acks.clear();
@@ -2485,13 +2597,26 @@ void AaSwitchStatement::Write_VC_Links(string hier_id, ostream& ofile)
       reqs.push_back(req_hier_id + "/$exit");
       acks.push_back(hier_id + "/choice_default/ack0");
       acks.push_back("$open"); // ack1 is ignored.
-      Write_VC_Link(this->Get_VC_Name() + "_branch_default_",reqs,acks);
+      Write_VC_Link(this->Get_VC_Name() + "_branch_default_",reqs,acks,ofile);
       reqs.clear();
       acks.clear();
 
       // default sequence has links too..
       this->_default_sequence->Write_VC_Links(hier_id,ofile);
     }
+}
+
+void AaSwitchStatement::Propagate_Constants()
+{
+  this->_select_expression->Evaluate();
+  for(int idx = 0; idx < _choice_pairs.size(); idx++)
+    {
+      this->_choice_pairs[idx].first->Evaluate();
+      this->_choice_pairs[idx].second->Propagate_Constants();
+    }
+
+  if(this->_default_sequence)
+    this->_default_sequence->Propagate_Constants();
 }
 
 //---------------------------------------------------------------------
@@ -2652,12 +2777,15 @@ void AaIfStatement::Write_VC_Control_Path(ostream& ofile)
 
   ofile << "//---------------------    if statement " << this->Get_Source_Info() << "  --------------------------" << endl;
   // first the CP for the test expression
+  ofile << ";;[eval_test] { // test expression evaluate and trigger branch "  << endl;
   this->_test_expression->Write_VC_Control_Path(ofile);
-  ofile << this->Get_VC_Name() << "__entry__ |-> (" << this->_test_expression->Get_VC_Name() << ")" << endl;
+  ofile << " $T [branch_req] " << endl;
+  ofile << "}" << endl;
+  ofile << this->Get_VC_Name() << "__entry__ |-> (eval_test)" << endl;
   
   // now the test-place.
   ofile << "$P [" << _test_expression->Get_VC_Name() << "_place]" << endl;
-  ofile << _test_expression->Get_VC_Name() << "_place <-| (" << _test_expression->Get_VC_Name() << ")" << endl;
+  ofile << _test_expression->Get_VC_Name() << "_place <-| (eval_test)" << endl;
   
   AaStatement* last_if = NULL;
   AaStatement* first_if = NULL;
@@ -2677,32 +2805,33 @@ void AaIfStatement::Write_VC_Control_Path(ostream& ofile)
       first_else = _else_sequence->Get_Statement(0);
     }
 
+  string test_place_successors = "IfLink ElseLink";
+  ofile << ";;[IfLink] { $T [if_choice_transition] } " << endl;
+  ofile << ";;[ElseLink] { $T [else_choice_transition] } " << endl;
+  ofile << _test_expression->Get_VC_Name() << "_place |-> (" << test_place_successors << ")" << endl;
 
-  string test_place_successors;
-  if(first_if == NULL || first_if->Is("AaPlaceStatement"))
+  // links from IfLink to if-sequence
+  if(first_if != NULL && first_if->Is("AaPlaceStatement"))
     {
-      ofile << ";;[IfLink] { $T [if_choice_transition] } " << endl;
-      test_place_successors += "IfLink ";
+      ofile << first_if->Get_VC_Name() << " <-| (IfLink)" << endl;
     }
   else if(first_if != NULL && !first_if->Is("AaPlaceStatement"))
     {
-      ofile << "// if choice will trigger " << first_if->Get_VC_Name() << endl;
-      test_place_successors += first_if->Get_VC_Name() + " ";
+      ofile << first_if->Get_VC_Name() << "__entry__ <-| (IfLink)" << endl;
     }
 
-  if(first_else == NULL || first_else->Is("AaPlaceStatement"))
+  // links from ElseLink to else-sequence.
+  if(first_else != NULL && first_else->Is("AaPlaceStatement"))
     {
-      ofile << ";;[ElseLink] { $T [else_choice_transition] } " << endl;
-      test_place_successors += "ElseLink ";
+      ofile << first_else->Get_VC_Name() << " <-| (ElseLink)" << endl;
     }
   else if(first_else != NULL && !first_else->Is("AaPlaceStatement"))
     {
-      ofile << "// else choice will trigger " << first_else->Get_VC_Name() << endl;
-      test_place_successors += first_else->Get_VC_Name() + " ";
+      ofile << first_else->Get_VC_Name() << "__entry__ <-| (ElseLink)" << endl;
     }
-  ofile << _test_expression->Get_VC_Name() << "_place |-> (" << test_place_successors << ")" << endl;
 
 
+  // links from if/else sequences to exit.
   string exit_merge_list;
   if(last_if != NULL && !last_if->Is("AaPlaceStatement"))
     exit_merge_list += last_if->Get_VC_Name() + "__exit__ ";
@@ -2722,6 +2851,67 @@ void AaIfStatement::Write_VC_Control_Path(ostream& ofile)
       ofile << this->Get_VC_Name() << "__exit__ <-| ("  << exit_merge_list << ")" << endl;
     }
   ofile << "//---------------------  end of if statement " << this->Get_Source_Info() << "  --------------------------" << endl;
+}
+
+
+void AaIfStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
+{
+ if(this->_if_sequence)
+    this->_if_sequence->Write_VC_Constant_Wire_Declarations(ofile);
+
+  if(this->_else_sequence)
+    this->_else_sequence->Write_VC_Constant_Wire_Declarations(ofile);
+}
+void AaIfStatement::Write_VC_Wire_Declarations(ostream& ofile)
+{
+  // one wire for the test expression result.
+  this->_test_expression->Write_VC_Wire_Declarations(false,ofile);
+
+  // wires from the if-sequence
+  if(this->_if_sequence)
+    this->_if_sequence->Write_VC_Wire_Declarations(ofile);
+
+  // wires from the else-sequence
+  if(this->_else_sequence)
+    this->_else_sequence->Write_VC_Wire_Declarations(ofile);
+
+}
+void AaIfStatement::Write_VC_Datapath_Instances(ostream& ofile)
+{
+  
+  // test expression needs to be computed.
+  this->_test_expression->Write_VC_Datapath_Instances(NULL, ofile);
+
+  // followed by a branch.
+  vector<pair<string,AaType*> > branch_inputs;
+  branch_inputs.push_back(pair<string,AaType*>(this->_test_expression->Get_VC_Wire_Name(),
+					       this->_test_expression->Get_Type()));
+			  
+  Write_VC_Branch_Instance(this->Get_VC_Name()+"_branch",
+			   branch_inputs,
+			   ofile);
+			     
+}
+void AaIfStatement::Write_VC_Links(string hier_id,ostream& ofile)
+{
+  this->_test_expression->Write_VC_Links(hier_id + "/eval_test",ofile);
+  vector<string> reqs;
+  vector<string> acks;
+
+  reqs.push_back(hier_id + "/eval_test/branch_req");
+  acks.push_back(hier_id + "/ElseLink/ese_choice_transition");
+  acks.push_back(hier_id + "/IfLink/if_choice_transition");
+
+  Write_VC_Link(this->Get_VC_Name()+"_branch",reqs,acks,ofile);
+}
+
+void AaIfStatement::Propagate_Constants()
+{
+  this->_test_expression->Evaluate();
+  if(this->_if_sequence)
+    this->_if_sequence->Propagate_Constants();
+  if(this->_else_sequence)
+    this->_else_sequence->Propagate_Constants();
 }
 
 

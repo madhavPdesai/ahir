@@ -685,7 +685,7 @@ void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
 	{
 	  if(idx > 0)
 	    ofile << " & ";
-	  ofile << << _inwires[idx]->Get_Id();
+	  ofile << s->_inwires[idx]->Get_Id();
 	}
       ofile << "," << endl;
       ofile << "req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol() << "," <<  endl

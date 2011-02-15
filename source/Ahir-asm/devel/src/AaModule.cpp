@@ -281,6 +281,9 @@ void AaModule::Write_VC_Model(int default_space_pointer_width,
       ofile << "$in ";
       for(int idx = 0; idx < _input_args.size(); idx++)
 	{
+	  if(idx > 0)
+	    ofile << " ";
+
 	  _input_args[idx]->Write_VC_Model(ofile);
 	}
     }
@@ -289,16 +292,25 @@ void AaModule::Write_VC_Model(int default_space_pointer_width,
       ofile << "$out ";
       for(int idx = 0; idx < _output_args.size(); idx++)
 	{
+	  if(idx > 0)
+	    ofile << " ";
 	  _output_args[idx]->Write_VC_Model(ofile);
 	}
     }
   ofile << endl;
-  
+
+  this->Write_VC_Memory_Spaces(ofile);  
   this->Write_VC_Control_Path(ofile);
   this->Write_VC_Data_Path(ofile);
-  this->Write_VC_Link(ofile);
-  this->Write_VC_Memory_Spaces(ofile);
+  this->Write_VC_Links(ofile);
+
   ofile << "}";
+}
+
+void AaModule::Write_VC_Links(ostream& ofile)
+{
+  if(this->_statement_sequence)
+    this->_statement_sequence->Write_VC_Links("",ofile);
 }
 
 void AaModule::Write_VC_Control_Path(ostream& ofile)
@@ -315,18 +327,24 @@ void AaModule::Write_VC_Control_Path(ostream& ofile)
 void AaModule::Write_VC_Data_Path(ostream& ofile)
 {
   ofile << "$DP { // begin data-path " << endl;
-  // for each statement, print a CP region.
-  for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+  if(this->_statement_sequence)
     {
-      this->_statement_sequence->Get_Statement(idx)->Write_VC_Control_Path(ofile);
+      this->_statement_sequence->Write_VC_Constant_Wire_Declarations(ofile);
+      this->_statement_sequence->Write_VC_Wire_Declarations(ofile);
+      this->_statement_sequence->Write_VC_Datapath_Instances(ofile);
     }
   ofile << "} // end data-path" << endl;
 }
 
-void AaModule::Write_VC_Link(ostream& ofile)
-{
-}
 
 void AaModule::Write_VC_Memory_Spaces(ostream& ofile)
 {
+
+  this->Write_VC_Memory_Space_Declarations(ofile);
+  // for each storage object, declare a memory space
+  // which contains it.
+  if(this->_statement_sequence)
+    {
+      this->_statement_sequence->Write_VC_Memory_Space_Declarations(ofile);
+    }
 }

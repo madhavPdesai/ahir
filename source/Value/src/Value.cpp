@@ -89,6 +89,19 @@ IntValue::IntValue(const IntValue& v):Value()
     _bit_field[idx] = v._bit_field[idx];
 }
 
+bool IntValue::To_Boolean()
+{
+  bool ret_val = false;
+  for(int idx = 0; idx < this->Array_Size(); idx++)
+    {
+      if(_bit_field[idx] != 0)
+	{
+	  ret_val = true;
+	  break;
+	}
+    }
+  return(ret_val);
+}
 UWord IntValue::To_Uinteger()
 {
   return(_bit_field[0]);

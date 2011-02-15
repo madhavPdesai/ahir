@@ -22,7 +22,8 @@ HEADERS=$(INCL)/AaRoot.h\
 		$(INCL)/AaModule.h\
 		$(INCL)/AaProgram.h\
 		$(INCL)/AaUtil.h\
-		$(INCL)/AaParse.h
+		$(INCL)/AaParse.h\
+		$(INCL)/Aa2VC.h
 
 LIBS=-L$(ANTLR2) -L$(VALUELIB)
 OBJS=$(OBJ)/AaLexer.o $(OBJ)/AaParser.o\
@@ -36,7 +37,8 @@ OBJS=$(OBJ)/AaLexer.o $(OBJ)/AaParser.o\
 		$(OBJ)/AaModule.o\
 		$(OBJ)/AaProgram.o\
 		$(OBJ)/AaUtil.o\
-		$(OBJ)/AaParse.o
+		$(OBJ)/AaParse.o\
+		$(OBJ)/Aa2VCWrite.o
 
 DEFS=-DDebug
 CXXFLAGS=-g
@@ -69,8 +71,8 @@ $(OBJ)/Aa2C.o : $(SRC)/Aa2C.cpp  $(INCL)/Aa2C.h $(HEADERS)
 $(OBJ)/Aa2VC.o : $(SRC)/Aa2VC.cpp  $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/Aa2VC.cpp -o $(OBJ)/Aa2VC.o
 
-$(OBJ)/Aa2Ahir.o : $(SRC)/Aa2Ahir.cpp  $(INCL)/Aa2Ahir.h $(HEADERS)
-	g++ $(DEFS) $(INCLUDES) $(AHIRINCLUDES) $(CXXFLAGS) -c $(SRC)/Aa2Ahir.cpp -o $(OBJ)/Aa2Ahir.o
+$(OBJ)/Aa2VCWrite.o : $(SRC)/Aa2VCWrite.cpp  $(HEADERS)
+	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/Aa2VCWrite.cpp -o $(OBJ)/Aa2VCWrite.o
 
 $(OBJ)/AaWriteCHeader.o : $(SRC)/AaWriteCHeader.cpp  $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/AaWriteCHeader.cpp -o $(OBJ)/AaWriteCHeader.o

@@ -343,6 +343,8 @@ void AaProgram::Write_VC_Model(int default_space_pointer_width,
 				 ostream& ofile)
 {
   AaProgram::Write_VC_Pipe_Declarations(ofile);
+  AaProgram::Write_VC_Constant_Declarations(ofile);
+
   AaProgram::Write_VC_Memory_Spaces(default_space_pointer_width,
 				    default_space_word_size,
 				    ofile);
@@ -352,6 +354,18 @@ void AaProgram::Write_VC_Model(int default_space_pointer_width,
 				ofile);
 }
 
+void AaProgram::Write_VC_Constant_Declarations(ostream& ofile)
+{
+  for(map<string,AaObject*,StringCompare>::iterator iter = AaProgram::_objects.begin();
+      iter != AaProgram::_objects.end();
+      iter++)
+    {
+      if((*iter).second->Is("AaConstantObject"))
+	{
+	  ((AaPipeObject*)((*iter).second))->Write_VC_Model(ofile);
+	}
+    }
+}
 
 void AaProgram::Write_VC_Pipe_Declarations(ostream& ofile)
 {
@@ -405,3 +419,25 @@ void AaProgram::Write_VC_Modules(int default_space_pointer_width,
 
 
 
+
+  // propagate constant values...
+void AaProgram::Propagate_Constants()
+{
+  for(map<string,AaObject*,StringCompare>::iterator iter = AaProgram::_objects.begin();
+      iter != AaProgram::_objects.end();
+      iter++)
+    {
+      if((*iter).second->Is("AaConstantObject"))
+	{
+	  ((AaConstantObject*)((*iter).second))->Evaluate();
+	}
+    }
+
+  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+      miter != AaProgram::_modules.end();
+      miter++)
+    {
+      (*miter).second->Propagate_Constants();
+    }
+
+}

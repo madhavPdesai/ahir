@@ -25,8 +25,10 @@ class AaType: public AaRoot
   virtual void Write_VC_Model(ostream& ofile) { assert(0);}
   virtual bool Is_Integer_Type() {return(false);}
   virtual bool Is_Float_Type() {return(false);}
-  virtual string Get_VC_Name();
+  virtual string Get_VC_Name() {assert(0);}
+  virtual int Number_Of_Elements() {return(1);}
 
+  virtual int Get_Data_Width() {assert(0);}
 };
 
 class AaScalarType: public AaType
@@ -60,6 +62,7 @@ class AaUintType: public AaScalarType
     return("uint_" + IntToStr(this->Get_Width()));
   }
   virtual int Size() {return(this->_width);}
+  virtual int Get_Data_Width() {return(this->Size());}
 
   virtual void Write_VC_Model(ostream& ofile) 
   { 
@@ -68,6 +71,10 @@ class AaUintType: public AaScalarType
 
   virtual bool Is_Integer_Type() {return(true);}
   virtual bool Is_Float_Type() {return(false);}
+
+
+  virtual string Get_VC_Name() {return("$int<" + IntToStr(this->Get_Width()) + ">");}
+
 };
 
 
@@ -103,7 +110,12 @@ class AaPointerType: public AaUintType
 
   virtual void Write_VC_Model(ostream& ofile) 
   { 
-    ofile << "$pointer<global>";
+    ofile << "$pointer<default>";
+  }
+
+  virtual string Get_VC_Name() 
+  {
+    return("$pointer<default>");
   }
 
 
@@ -138,6 +150,13 @@ class AaFloatType : public AaScalarType
     ofile << "$float<" << _characteristic << "," << _mantissa << ">";
   }
 
+  virtual string Get_VC_Name()
+  {
+    return("$float<" + IntToStr( _characteristic) +  "," + IntToStr( _mantissa) + ">");
+  }
+
+  virtual int Get_Data_Width() {return(this->Size());}
+
   virtual bool Is_Integer_Type() {return(false);}
   virtual bool Is_Float_Type() {return(true);}
 };
@@ -151,6 +170,8 @@ class AaArrayType: public AaType
   AaScalarType* _element_type;
  
  public:
+
+  vector<unsigned int>& Get_Dimension_Vector() {return(this->_dimension);}
 
   unsigned int Get_Number_Of_Dimensions() {return(this->_dimension.size());}
   AaScalarType* Get_Element_Type() {return(this->_element_type);}
@@ -185,7 +206,9 @@ class AaArrayType: public AaType
     return(ret_val);
   }
 
-  int Number_Of_Elements()
+  virtual int Get_Data_Width() {return(this->_element_type->Get_Data_Width());}
+
+  virtual int Number_Of_Elements()
   {
     int ret_val = 1;
     for(unsigned int i=0; i < this->Get_Number_Of_Dimensions(); i++)
@@ -197,6 +220,12 @@ class AaArrayType: public AaType
   { 
     ofile << "$array<" << this->Number_Of_Elements() << "> $of ";
     this->_element_type->Write_VC_Model(ofile);
+  }
+
+  virtual string Get_VC_Name(ostream& ofile) 
+  { 
+    return( "$array<" + IntToStr(this->Number_Of_Elements()) + "> $of " +
+	    this->_element_type->Get_VC_Name());
   }
 
 };

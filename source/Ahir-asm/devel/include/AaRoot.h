@@ -49,6 +49,8 @@ class AaRoot
   AaRoot();
   ~AaRoot(); 
 
+  virtual string Get_VC_Name() {assert(0);}
+
   // useful print versions
   virtual void Print(ostream& ofile); // override this in derived classes
   virtual void Print(ofstream& ofile);

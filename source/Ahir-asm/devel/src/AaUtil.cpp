@@ -25,6 +25,22 @@ string Int64ToStr(int64_t x)
   return(string_stream.str());
 }
 
+int CeilLog2(int n)
+{
+  int ret_val = 0;
+
+  while( n > 1)
+    {
+      n = n/2;
+      ret_val++;
+    }
+  if(ret_val == 0)
+    ret_val = 1;
+
+  return(ret_val);
+}
+
+
 bool StringCompare::operator() (string s11, string s21) const
 {
   const char *s1 = s11.c_str ();
@@ -207,3 +223,16 @@ string Aa_Name(AaOperation op)
   return(ret_string);
 }
 
+
+string To_Alphanumeric(string x)
+{
+  string ret_string;
+  for(int i =0; i< x.size(); i++)
+    {
+      if(!isalnum(x[i]))
+	ret_string += "_";
+      else
+	ret_string += x[i];
+    }
+  return(ret_string);
+}
