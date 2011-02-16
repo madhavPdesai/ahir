@@ -269,12 +269,18 @@ void AaModule::Write_Source(ofstream& ofile)
 
 }
 
-
+void AaModule::Propagate_Constants()
+{
+  if(this->_statement_sequence)
+    this->_statement_sequence->Propagate_Constants();
+}
 
 void AaModule::Write_VC_Model(int default_space_pointer_width,
 		    int default_space_word_size,
 		    ostream& ofile)
 {
+  this->Propagate_Constants();
+
   ofile << "$module [" << this->Get_Label() << "] {" << endl;
   if(_input_args.size() > 0)
     {
@@ -287,6 +293,9 @@ void AaModule::Write_VC_Model(int default_space_pointer_width,
 	  _input_args[idx]->Write_VC_Model(ofile);
 	}
     }
+
+  ofile << endl;
+
   if(_output_args.size() > 0)
     {
       ofile << "$out ";

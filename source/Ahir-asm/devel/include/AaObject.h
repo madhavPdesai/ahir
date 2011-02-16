@@ -28,7 +28,8 @@ class AaObject: public AaRoot
   AaType* Get_Type() {return(this->_type);}
 
   AaConstantLiteralReference* Get_Value() {return(this->_value);}
-  void Set_Value(AaConstantLiteralReference* v) {this->_value = v;}
+  void Set_Value(AaConstantLiteralReference* v);
+
   virtual string Get_Name() {return(this->_name);}
   virtual string Get_VC_Name() {return(this->_name);}
 
@@ -72,6 +73,7 @@ class AaObject: public AaRoot
   virtual void Write_VC_Model(ostream& ofile);
 
   virtual bool Is_Constant() {return(false);}
+  virtual string Get_VC_Memory_Space_Name() {assert(0);}
 };
 
 // interface object: function arguments
@@ -132,10 +134,9 @@ class AaStorageObject: public AaObject
   //      because the initial value needs to be 
   //      updated..
   virtual void Write_VC_Model(ostream& ofile);
-  string Get_VC_Memory_Space_Name()
-  {
-    return(this->Get_VC_Name() + "_ms");
-  }
+
+  virtual string Get_VC_Name();
+  virtual string Get_VC_Memory_Space_Name();
 };
 
 class AaPipeObject: public AaObject

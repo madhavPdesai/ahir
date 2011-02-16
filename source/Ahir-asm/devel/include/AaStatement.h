@@ -110,7 +110,12 @@ class AaStatement: public AaScope
     return(string("#line ") + IntToStr(this->Get_Line_Number()) + " \"" + this->Get_File_Name() + "\"\n");
   }
 
-  virtual string Get_VC_Name();
+  virtual string Get_VC_Name()
+  {
+    string ret_string = "stmt_" + Int64ToStr(this->Get_Index());
+    return(ret_string);
+  }
+
   virtual void Write_VC_Control_Path(ostream& ofile) { assert(0);}
 
   virtual void Write_VC_Pipe_Declarations(ostream& ofile) {}
@@ -268,6 +273,7 @@ class AaAssignmentStatement: public AaStatement
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
 
   virtual void Propagate_Constants(); 
+  virtual string Get_VC_Name() {return("assign_stmt_" + Int64ToStr(this->Get_Index()));}
 };
 
 
@@ -341,6 +347,7 @@ class AaCallStatement: public AaStatement
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
 
   virtual void Propagate_Constants();
+  virtual string Get_VC_Name() {return("call_stmt_" + Int64ToStr(this->Get_Index()));}
 
 };
 
@@ -462,7 +469,8 @@ class AaBlockStatement: public AaStatement
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
 
 
-  virtual string Get_VC_Name() {return(this->_label);}
+  virtual string Get_VC_Name() {return("block_stmt_" + Int64ToStr(this->Get_Index()));}
+
 
   virtual AaStatement* Get_Next_Statement(AaStatement* stmt)
   {
@@ -497,6 +505,8 @@ class AaSeriesBlockStatement: public AaBlockStatement
     ofile << "} // end series block " << this->Get_VC_Name() << endl;
   }
 
+  virtual string Get_VC_Name() {return ("series_block_stmt_" + Int64ToStr(this->Get_Index()));}
+
 };
 
 
@@ -521,6 +531,7 @@ class AaParallelBlockStatement: public AaBlockStatement
     ofile << "} // end parallel block " << this->Get_VC_Name() << endl;
   }
 
+  virtual string Get_VC_Name() {return("parallel_block_stmt_" + Int64ToStr(this->Get_Index()));}
 };
 
 class AaForkBlockStatement: public AaParallelBlockStatement
@@ -537,6 +548,7 @@ class AaForkBlockStatement: public AaParallelBlockStatement
 
   virtual void Write_VC_Control_Path(ostream& ofile);
 
+  virtual string Get_VC_Name() {return("fork_block_stmt_" + Int64ToStr(this->Get_Index()));}
 };
 
 class AaBranchBlockStatement: public AaSeriesBlockStatement
@@ -551,6 +563,8 @@ class AaBranchBlockStatement: public AaSeriesBlockStatement
   void Write_VC_Control_Path(bool link_to_self,
 			     AaStatementSequence* sseq,
 			     ostream& ofile);
+
+  virtual string Get_VC_Name() {return("branch_block_stmt_" + Int64ToStr(this->Get_Index()));}
 };
 
 
@@ -582,7 +596,7 @@ class AaJoinForkStatement: public AaParallelBlockStatement
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
 
-  virtual string Get_VC_Name();
+  virtual string Get_VC_Name() {return("join_fork_stmt_" + Int64ToStr(this->Get_Index()));}
 
 };
 
@@ -641,7 +655,8 @@ class AaPlaceStatement: public AaStatement
       }
   }
 
-  virtual string Get_VC_Name() {return(this->Get_Label());}
+  virtual string Get_VC_Name() {return("place_stmt_" + Int64ToStr(this->Get_Index()));}
+
   void Write_VC_Control_Path(ostream& ofile)
   {
     ofile << "$P [" << this->Get_VC_Name() << "]" << endl;
@@ -702,7 +717,7 @@ class AaMergeStatement: public AaSeriesBlockStatement
   virtual void Write_VC_Control_Path(ostream& ofile);
 
 
-  virtual string Get_VC_Name();
+  virtual string Get_VC_Name() {return("merge_stmt_" + Int64ToStr(this->Get_Index()));}
 
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
@@ -754,6 +769,8 @@ class AaPhiStatement: public AaStatement
 
   virtual void Propagate_Constants();
   virtual bool Is_Constant();
+
+  virtual string Get_VC_Name() {return("phi_stmt_" + Int64ToStr(this->Get_Index()));}
 };
 
 
@@ -814,6 +831,8 @@ class AaSwitchStatement: public AaStatement
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
 
   virtual void Propagate_Constants(); 
+
+  virtual string Get_VC_Name() {return("switch_stmt_" + Int64ToStr(this->Get_Index()));}
 };
 
 
@@ -863,6 +882,8 @@ class AaIfStatement: public AaStatement
   virtual void Write_VC_Links(string hier_id,ostream& ofile);
 
   virtual void Propagate_Constants(); 
+
+  virtual string Get_VC_Name() {return("if_stmt_" + Int64ToStr(this->Get_Index()));}
 };
 
 

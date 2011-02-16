@@ -70,6 +70,8 @@ class AaModule: public AaSeriesBlockStatement
   void Write_VC_Data_Path(ostream& ofile);
   void Write_VC_Memory_Spaces(ostream& ofile);
   void Write_VC_Links(ostream& ofile);
+
+  void Propagate_Constants();
 };
 
 #endif

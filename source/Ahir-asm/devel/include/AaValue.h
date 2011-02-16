@@ -133,6 +133,7 @@ class AaArrayValue: public AaValue
   }
 };
 
+AaValue* Make_Aa_Value(AaScope* scope, AaType* t);
 AaValue* Make_Aa_Value(AaScope* scope, AaType* t, vector<string>& literals);
 AaValue* Perform_Unary_Operation(AaOperation op, AaValue* v);
 AaValue* Perform_Binary_Operation(AaOperation op, AaValue* u, AaValue* v);

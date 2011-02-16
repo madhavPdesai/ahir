@@ -64,12 +64,12 @@ class AaExpression: public AaRoot
   virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile) {}
   virtual string Get_VC_Wire_Name()
   {
-    return(this->Kind() + "_" + IntToStr(this->Get_Index()) + "_wire");
+    return(this->Get_VC_Name() + "_wire");
   }
 
   virtual string Get_VC_Constant_Name()
   {
-    return(this->Kind() + "_" + IntToStr(this->Get_Index()) + "_constant");
+    return(this->Get_VC_Wire_Name() + "_constant");
   }
 
   virtual string Get_VC_Driver_Name()
@@ -87,7 +87,7 @@ class AaExpression: public AaRoot
 
   virtual string Get_VC_Datapath_Instance_Name()
   {
-    return(this->Kind() + "_" + IntToStr(this->Get_Index()) + "_dp_instance");
+    return(this->Get_VC_Name() +  "_inst");
   }
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
@@ -214,6 +214,7 @@ class AaSimpleObjectReference: public AaObjectReference
   virtual bool Is_Implicit_Variable_Reference();
   virtual bool Is_Implicit_Object();
 
+  virtual string Get_VC_Constant_Name();
   virtual string Get_VC_Driver_Name();
   virtual string Get_VC_Receiver_Name();
 
@@ -227,6 +228,7 @@ class AaSimpleObjectReference: public AaObjectReference
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
   virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
 
+  string Get_VC_Name() {return("simple_obj_ref_" + Int64ToStr(this->Get_Index()));}
 };
 
 // array object reference
@@ -271,6 +273,7 @@ class AaArrayObjectReference: public AaObjectReference
   virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
   virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
+  string Get_VC_Name() {return("array_obj_ref_" + Int64ToStr(this->Get_Index()));}
 };
 
 // type cast expression (is unary)
@@ -311,6 +314,7 @@ class AaTypeCastExpression: public AaExpression
   virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
   virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
+  string Get_VC_Name() {return("type_cast_" + Int64ToStr(this->Get_Index()));}
 };
 
 
@@ -355,7 +359,7 @@ class AaUnaryExpression: public AaExpression
   virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
 
-
+  string Get_VC_Name() {return("unary_" + Int64ToStr(this->Get_Index()));}
 };
 
 // 
@@ -438,6 +442,7 @@ class AaBinaryExpression: public AaExpression
   virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
 
+  string Get_VC_Name() {return("binary_" + Int64ToStr(this->Get_Index()));}
 };
 
 // ternary expression: a ? b : c
@@ -489,6 +494,8 @@ class AaTernaryExpression: public AaExpression
   }
 
   virtual void Evaluate();
+
+  string Get_VC_Name() {return("ternary_" + Int64ToStr(this->Get_Index()));}
 };
 
 #endif

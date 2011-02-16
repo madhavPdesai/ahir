@@ -150,24 +150,20 @@ void Write_VC_Constant_Declaration(string name, AaType* type, AaValue* value, os
 void Write_VC_Constant_Pointer_Declaration(string name, 
 					   string wire_name, 
 					   AaUintType* type, 
-					   unsigned int value, 
+					   string value,
 					   ostream& ofile)
 {
   string type_name = "$pointer<" + name + ">";
-  vector<string> iv;
-  iv.push_back(IntToStr(value));
-  AaIntValue* nv = (AaIntValue*) Make_Aa_Value(NULL,type,iv);
-  Write_VC_Constant_Declaration(name,
+  Write_VC_Constant_Declaration(wire_name,
 				type_name,
-				nv->To_VC_String(),
+				value,
 				ofile);
-  delete nv;
 }
 
 void Write_VC_Pointer_Declaration(string name, string wire_name, AaType* type,ostream& ofile)
 {
   string type_name = "$pointer<" + name + ">";
-  Write_VC_Wire_Declaration(name,
+  Write_VC_Wire_Declaration(wire_name,
 			    type_name,
 			    ofile);
 }

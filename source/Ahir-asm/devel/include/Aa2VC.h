@@ -42,7 +42,7 @@ void Write_VC_Constant_Declaration(string name, AaType* type, AaValue* value,
 void Write_VC_Constant_Pointer_Declaration(string name, 
 					   string wire_name, 
 					   AaUintType* type, 
-					   unsigned int value,
+					   string value,
 					   ostream& ofile);
 void Write_VC_Pointer_Declaration(string name, string wire_name, AaType* type,ostream& ofile);
 void Write_VC_Wire_Declaration(string name, AaType* type,ostream& ofile);

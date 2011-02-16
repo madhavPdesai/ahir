@@ -34,7 +34,7 @@ string AaObject::Tab()
 
 void AaObject::Print(ostream& ofile)
 {
-  ofile << " " << this->Get_Name() << " ";
+  ofile << " " << this->Get_Name() << " : ";
   this->Get_Type()->Print(ofile);
   if(this->_value != NULL)
     {
@@ -49,6 +49,15 @@ void AaObject::Write_VC_Model(ostream& ofile)
   ofile << this->Get_VC_Name() << ":";  this->Get_Type()->Write_VC_Model(ofile);
 }
 
+void AaObject::Set_Value(AaConstantLiteralReference* v)
+{
+  _value = v;
+  if(v != NULL)
+    {
+      v->Set_Type(this->_type);
+      v->Evaluate();
+    }
+}
 //---------------------------------------------------------------------
 // AaInterfaceObject
 //---------------------------------------------------------------------
@@ -79,8 +88,12 @@ void AaStorageObject::Print(ostream& ofile)
 
 void AaStorageObject::Write_VC_Model(ostream& ofile)
 {
+  ofile << "// ";
+  this->Print(ofile);
+  ofile << endl;
+  ofile << "// in scope  " << (this->Get_Scope() != NULL ? this->Get_Scope()->Get_Hierarchical_Name() : "top-level") << endl;
   // declare the memoryspace/storage object pair..
-  Write_VC_Memory_Space_Declaration(this->Get_VC_Memory_Space_Name(),
+  Write_VC_Memory_Space_Declaration("ms_" + this->Get_VC_Name(),
 				    this->Get_VC_Name(),
 				    this->Get_Type(),
 				    ofile);
@@ -88,6 +101,24 @@ void AaStorageObject::Write_VC_Model(ostream& ofile)
 			       
   // later, a VC compiler can potentially 
   // club memory spaces together.
+}
+
+
+string AaStorageObject::Get_VC_Name()
+{
+  string ret_string = "storage_" + this->Get_Name() + "_" + Int64ToStr(this->Get_Index());
+  return(ret_string);
+}
+
+
+string AaStorageObject::Get_VC_Memory_Space_Name()
+{
+  string scope_name;
+  if(this->Get_Scope())
+    {
+      scope_name =this->Get_Scope()->Get_Root_Scope()->Get_Label() + "/";
+    }
+  return(scope_name + "ms_" + this->Get_VC_Name());
 }
 
 
@@ -110,13 +141,19 @@ void AaPipeObject::Print(ostream& ofile)
 //
 void AaPipeObject::Write_VC_Model(ostream& ofile)
 {
+  ofile << "// ";
+  this->Print(ofile);
+  ofile << endl;
+  ofile << "// in scope  " << (this->Get_Scope() != NULL ? this->Get_Scope()->Get_Hierarchical_Name() : "top-level") << endl;
+
   Write_VC_Pipe_Declaration(this->Get_VC_Name(),
 			    this->_type->Size(),
 			    ofile);
 }
+
 string AaPipeObject::Get_VC_Name()
 {
-  string ret_string = Make_VC_Legal(this->Get_Scope()->Get_Hierarchical_Name() + "%" + this->Get_Name());
+  string ret_string = "pipe_" + this->Get_Name() + "_" + Int64ToStr(this->Get_Index());
   return(ret_string);
 }
 

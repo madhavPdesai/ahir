@@ -211,13 +211,38 @@ bool AaArrayValue::Equals(AaValue* other)
     return(false);
 }
 
+AaValue* Make_Aa_Value(AaScope* scope, AaType* t)
+{
+  AaValue* ret_value = NULL;
+  if(t->Is_Integer_Type())
+    {
+      ret_value = new AaIntValue(scope,
+				 t->Size());
+    }
+  else if(t->Is_Float_Type())
+    {
+      ret_value = new AaFloatValue(scope,
+				   ((AaFloatType*)t)->Get_Characteristic(),
+				   ((AaFloatType*)t)->Get_Mantissa());
+
+    }
+  else 
+    {
+      assert(t->Is("AaArrayType"));
+      ret_value = new AaArrayValue(scope,
+				   ((AaArrayType*)t)->Get_Element_Type(),
+				   ((AaArrayType*)t)->Get_Dimension_Vector());
+    }
+  if(ret_value)
+    ret_value->Set_Type(t);
+  return(ret_value);
+}
 
 AaValue* Make_Aa_Value(AaScope* scope, AaType* t,vector<string>& literals)
 {
   AaValue* ret_value = NULL;
   if(t->Is_Integer_Type())
     {
-      assert(literals.size() == 1);
       ret_value = new AaIntValue(scope,
 				 t->Size());
       if(literals.size() > 0)
@@ -225,7 +250,6 @@ AaValue* Make_Aa_Value(AaScope* scope, AaType* t,vector<string>& literals)
     }
   else if(t->Is_Float_Type())
     {
-      assert(literals.size() == 1);
       ret_value = new AaFloatValue(scope,
 				   ((AaFloatType*)t)->Get_Characteristic(),
 				   ((AaFloatType*)t)->Get_Mantissa());
@@ -255,7 +279,8 @@ AaValue* Make_Aa_Value(AaScope* scope, AaType* t,vector<string>& literals)
 				       literals);
 	}
     }
-  ret_value->Set_Type(t);
+  if(ret_value)
+    ret_value->Set_Type(t);
   return(ret_value);
 }
 

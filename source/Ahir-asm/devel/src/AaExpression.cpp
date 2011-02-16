@@ -58,12 +58,16 @@ void AaExpression::Set_Type(AaType* t)
 
 string AaExpression::Get_VC_Name()
 {
-  string ret_string = this->Kind() + "_" + Int64ToStr(this->Get_Index());
+  string ret_string = "expr_" + Int64ToStr(this->Get_Index());
   return(ret_string);
 }
 
 void AaExpression::Write_VC_Control_Path(ostream& ofile)
 {
+  ofile << "// CP for expression: ";
+  this->Print(ofile);
+  ofile << endl;
+
   ofile << ";;[" << this->Get_VC_Name() << "] {"
 	<< "$T [dummy] " << endl
 	<< "}" << endl;
@@ -73,8 +77,9 @@ void AaExpression::Assign_Expression_Value(AaValue* expr_value)
 {
   if(this->Get_Type()->Is_Integer_Type())
     {
-      AaIntValue* nv = new AaIntValue(this->Get_Scope(),
-				      this->Get_Type()->Size());
+      AaIntValue* nv = (AaIntValue*) Make_Aa_Value(this->Get_Scope(),
+						   this->Get_Type());
+						   
       nv->Assign(this->Get_Type(),expr_value);
       _expression_value = nv;
     }
@@ -261,6 +266,10 @@ void AaConstantLiteralReference::Evaluate()
 
 void AaConstantLiteralReference::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
+  ofile << "// Constant-declaration for expression: ";
+  this->Print(ofile);
+  ofile << endl;
+
   Write_VC_Constant_Declaration(this->Get_VC_Constant_Name(),
 				this->Get_Type(),
 				this->_expression_value,
@@ -344,14 +353,47 @@ string AaSimpleObjectReference::Get_VC_Receiver_Name()
 }
 
 
+string AaSimpleObjectReference::Get_VC_Constant_Name()
+{
+ if(this->_object == NULL)
+    {// implicit variable.
+      return(this->AaExpression::Get_VC_Constant_Name());
+    }
+  else if(this->_object->Is_Object())
+    {
+      // if it points to an object, get the object's name
+      // to avoid double declaration...
+      if(this->_object->Is("AaInterfaceObject"))
+	return(this->_object->Get_VC_Name());
+      else
+	return(this->AaExpression::Get_VC_Constant_Name());
+    }
+  else if(this->_object->Is_Expression())
+    {
+      return(((AaExpression*)this->_object)->Get_VC_Constant_Name());
+    }
+  else if(this->_object->Is_Statement())
+    {
+      return(To_Alphanumeric(this->_object_ref_string));
+    }
+  else
+    assert(0);
+}
+
 
 void AaSimpleObjectReference::Write_VC_Control_Path( ostream& ofile)
 {
   string ps;
   this->AaRoot::Print(ps);
 
+
+
   if(!this->Is_Constant())
     {
+      ofile << "// CP for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
       // if this is a statement...
       if(this->Is_Implicit_Variable_Reference())
 	{
@@ -386,6 +428,11 @@ void AaSimpleObjectReference::Write_VC_Control_Path( ostream& ofile)
 
 void AaSimpleObjectReference::Write_VC_Control_Path_As_Target( ostream& ofile)
 {
+
+  ofile << "// CP for expression: ";
+  this->Print(ofile);
+  ofile << endl;
+
   // else, if the object being referred to is 
   // a storage object, then it is a load operation,
   // instantiate a series r-a-r-a chain..
@@ -397,7 +444,9 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target( ostream& ofile)
     }
   else if(this->_object->Is("AaStorageObject"))
     {
-      ofile << ";;[" << this->Get_VC_Name() << "] { // store operation" << endl;
+      ofile << ";;[" << this->Get_VC_Name() << "] { // store ";
+      this->Print(ofile);
+      ofile << endl;
       ofile << "$T [srr] $T [sra] $T[scr] $T[sca]" << endl;
       ofile << "}" << endl;
     }
@@ -406,7 +455,9 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target( ostream& ofile)
   // chain for the inport operation
   else if(this->_object->Is("AaPipeObject"))
     {
-      ofile << ";;[" << this->Get_VC_Name() << "] { // pipe write operation" << endl;
+      ofile << ";;[" << this->Get_VC_Name() << "] { // pipe write ";
+      this->Print(ofile);
+      ofile << endl;
       ofile << "$T [pipe_wreq] $T [pipe_wack] " << endl;
       ofile << "}" << endl;
     }
@@ -416,6 +467,10 @@ bool AaSimpleObjectReference::Is_Implicit_Object()
 {
   return(this->_object == NULL);
 }
+
+// return true if the expression points
+// to an implicitly defined variable reference.
+// (either a statement or an interface object).
 bool AaSimpleObjectReference::Is_Implicit_Variable_Reference()
 {
   return((this->_object == NULL) ||
@@ -444,7 +499,7 @@ void AaSimpleObjectReference::Evaluate()
 }
 
 
-void AaSimpleObjectReference:: Write_VC_Constant_Wire_Declarations(ostream& ofile)
+void AaSimpleObjectReference::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
   if(this->Is_Constant() && !this->Is_Implicit_Variable_Reference())
     Write_VC_Constant_Declaration(this->Get_VC_Constant_Name(),
@@ -452,7 +507,7 @@ void AaSimpleObjectReference:: Write_VC_Constant_Wire_Declarations(ostream& ofil
 				  this->Get_Expression_Value(),
 				  ofile);
 }
-void AaSimpleObjectReference:: Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
+void AaSimpleObjectReference::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
   if(!skip_immediate && !this->Is_Constant() && !this->Is_Implicit_Variable_Reference())
     {
@@ -462,34 +517,41 @@ void AaSimpleObjectReference:: Write_VC_Wire_Declarations(bool skip_immediate, o
       if(this->_object->Is("AaStorageObject"))
 	{
 	  AaUintType* t = AaProgram::Make_Uinteger_Type(1);
-	  Write_VC_Constant_Pointer_Declaration(this->_object->Get_VC_Name(),
+	  string v = "_b0";
+	  Write_VC_Constant_Pointer_Declaration(((AaStorageObject*)this->_object)->Get_VC_Memory_Space_Name(),
 						this->Get_VC_Wire_Name() + "_addr",
 						t,
-						0,
+						v,
 						ofile);
 	}
     }
 }
 
-void AaSimpleObjectReference:: Write_VC_Wire_Declarations_As_Target(ostream& ofile)
+void AaSimpleObjectReference::Write_VC_Wire_Declarations_As_Target(ostream& ofile)
 {
 
   if(!this->Is_Constant() )
     {
-      if(!this->Is_Implicit_Variable_Reference() || this->_object->Is_Statement())
+
+      // if _object is a statement, declare it, otherwise not.
+      if(this->_object->Is_Statement())
 	{
 	  Write_VC_Wire_Declaration(this->Get_VC_Receiver_Name(),
 				    this->Get_Type(),
 				    ofile);
 	}
 
+      // if _object is a storage object, then,
+      // make a single-bit constant pointer
+      // for use in subsequence store instance.
       if(this->_object->Is("AaStorageObject"))
 	{
 	  AaUintType* t = AaProgram::Make_Uinteger_Type(1);
-	  Write_VC_Constant_Pointer_Declaration(this->_object->Get_VC_Name(),
+	  string v = "_b0";
+	  Write_VC_Constant_Pointer_Declaration(((AaObject*)this->_object)->Get_VC_Memory_Space_Name(),
 						this->Get_VC_Wire_Name() + "_addr",
 						t,
-						0,
+						v,
 						ofile);
 	}
     }
@@ -530,7 +592,8 @@ void AaSimpleObjectReference:: Write_VC_Datapath_Instances(AaExpression* target,
 	  // a store operator..
 	  Write_VC_Load_Operator((AaStorageObject*)this->_object,
 				 this->Get_VC_Datapath_Instance_Name(),
-				 (target != NULL ? target->Get_VC_Name() : this->Get_VC_Receiver_Name()),
+				 (target != NULL ? target->Get_VC_Receiver_Name() : 
+				  this->Get_VC_Receiver_Name()),
 				 this->Get_VC_Wire_Name() + "_addr",
 				 ofile);
 	}
@@ -544,10 +607,15 @@ void AaSimpleObjectReference:: Write_VC_Datapath_Instances(AaExpression* target,
 	}
     }
 }
-void AaSimpleObjectReference:: Write_VC_Links(string hier_id, ostream& ofile) 
+void AaSimpleObjectReference::Write_VC_Links(string hier_id, ostream& ofile) 
 {
   if(!this->Is_Constant() && !this->Is_Implicit_Variable_Reference())
     {
+      ofile << "// CP-DP links for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
+
       vector<string> reqs;
       vector<string> acks;
       string inst_name = this->Get_VC_Datapath_Instance_Name();
@@ -570,6 +638,11 @@ void AaSimpleObjectReference:: Write_VC_Links_As_Target(string hier_id, ostream&
 {
   if(!this->Is_Constant() && !this->Is_Implicit_Variable_Reference())
     {
+
+      ofile << "// CP-DP links for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
       vector<string> reqs;
       vector<string> acks;
       string inst_name = this->Get_VC_Datapath_Instance_Name();
@@ -671,6 +744,11 @@ void AaArrayObjectReference::Write_VC_Control_Path( ostream& ofile)
 
   if(!this->Is_Constant())
     {
+
+      ofile << "// CP for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
       // else, if the object being referred to is 
       // a storage object, then it is a load operation,
       // instantiate a series r-a-r-a chain..
@@ -761,14 +839,34 @@ void AaArrayObjectReference::Evaluate()
 
 void AaArrayObjectReference::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
-  for(int idx = 0; idx < _indices.size(); idx++)
+
+  if(this->Is_Constant())
     {
-      _indices[idx]->Write_VC_Constant_Wire_Declarations(ofile);
+      ofile << "// constant-declarations for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
+      Write_VC_Constant_Declaration(this->Get_VC_Constant_Name(),
+				    this->Get_Type(),
+				    this->Get_Expression_Value(),
+				    ofile);
+    }
+  else
+    {
+      for(int idx = 0; idx < _indices.size(); idx++)
+	{
+	  _indices[idx]->Write_VC_Constant_Wire_Declarations(ofile);
+	}
     }
 }
 
 void AaArrayObjectReference::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
+  assert(this->_object->Is("AaStorageObject"));
+
+  if(this->Is_Constant())
+    return;
+
   for(int idx = 0; idx < _indices.size(); idx++)
     {
       _indices[idx]->Write_VC_Wire_Declarations(false,ofile);
@@ -777,15 +875,21 @@ void AaArrayObjectReference::Write_VC_Wire_Declarations(bool skip_immediate, ost
   assert(this->Get_Type()->Is("AaArrayType"));
   AaUintType* t = AaProgram::Make_Uinteger_Type(CeilLog2(((AaArrayType*)this->Get_Type())->Number_Of_Elements()));
 
+
+  ofile << "// wire-declarations for expression: ";
+  this->Print(ofile);
+  ofile << endl;
+
+
   if(!_indices[0]->Is_Constant())
-    Write_VC_Pointer_Declaration(this->_object->Get_VC_Name(),
+    Write_VC_Pointer_Declaration(((AaStorageObject*)this->_object)->Get_VC_Name(),
 				 this->Get_VC_Name() + "_read_ptr",
 				 t,
 				 ofile);
   else
     {
-      int v = _indices[0]->Get_Expression_Value()->To_Integer();
-      Write_VC_Constant_Pointer_Declaration(this->_object->Get_VC_Name(),
+      string v = _indices[0]->Get_Expression_Value()->To_VC_String();
+      Write_VC_Constant_Pointer_Declaration(((AaStorageObject*)this->_object)->Get_VC_Memory_Space_Name(),
 					    this->Get_VC_Name() + "_constant_read_ptr",
 					    t,
 					    v,
@@ -802,6 +906,12 @@ void AaArrayObjectReference::Write_VC_Wire_Declarations(bool skip_immediate, ost
 
 void AaArrayObjectReference::Write_VC_Wire_Declarations_As_Target(ostream& ofile)
 {
+
+  if(this->Is_Constant())
+    return;
+
+  assert(this->_object->Is("AaStorageObject"));
+
   for(int idx = 0; idx < _indices.size(); idx++)
     {
       _indices[idx]->Write_VC_Wire_Declarations(false,ofile);
@@ -809,15 +919,21 @@ void AaArrayObjectReference::Write_VC_Wire_Declarations_As_Target(ostream& ofile
   // the final address.
   assert(this->Get_Type()->Is("AaArrayType"));
   AaUintType* t = AaProgram::Make_Uinteger_Type(CeilLog2(((AaArrayType*)this->Get_Type())->Number_Of_Elements()));
+
+  ofile << "// wire-declarations for expression: ";
+  this->Print(ofile);
+  ofile << endl;
+
+
   if(!_indices[0]->Is_Constant())
-    Write_VC_Pointer_Declaration(this->_object->Get_VC_Name(),
+    Write_VC_Pointer_Declaration(((AaStorageObject*)this->_object)->Get_VC_Memory_Space_Name(),
 				 this->Get_VC_Name() + "_write_ptr",
 				 t,
 				 ofile);
   else
     {
-      int v = _indices[0]->Get_Expression_Value()->To_Integer();
-      Write_VC_Constant_Pointer_Declaration(this->_object->Get_VC_Name(),
+      string v = _indices[0]->Get_Expression_Value()->To_VC_String();
+      Write_VC_Constant_Pointer_Declaration(((AaStorageObject*)this->_object)->Get_VC_Memory_Space_Name(),
 					    this->Get_VC_Name() + "_constant_write_ptr",
 					    t,
 					    v,
@@ -827,6 +943,10 @@ void AaArrayObjectReference::Write_VC_Wire_Declarations_As_Target(ostream& ofile
 
 void AaArrayObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source)
 {
+
+
+
+
   for(int idx = 0; idx < _indices.size(); idx++)
     {
       _indices[idx]->Write_VC_Datapath_Instances(NULL,ofile);
@@ -844,6 +964,10 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& ofi
     }
     
   AaUintType* t = AaProgram::Make_Uinteger_Type(CeilLog2(((AaArrayType*)this->Get_Type())->Number_Of_Elements()));
+
+  ofile << "// data-path-instances for expression: ";
+  this->Print(ofile);
+  ofile << endl;
 
   if(!_indices[0]->Is_Constant())
     {
@@ -867,6 +991,10 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& ofi
 }
 void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
 {
+
+
+
+
   for(int idx = 0; idx < _indices.size(); idx++)
     {
       _indices[idx]->Write_VC_Datapath_Instances(NULL,ofile);
@@ -884,6 +1012,10 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
     }
     
   AaUintType* t = AaProgram::Make_Uinteger_Type(CeilLog2(((AaArrayType*)this->Get_Type())->Number_Of_Elements()));
+
+  ofile << "// data-path-instances for expression: ";
+  this->Print(ofile);
+  ofile << endl;
 
   if(!_indices[0]->Is_Constant())
     {
@@ -907,11 +1039,17 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 }
 void AaArrayObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
 {
+
+
   // index calculation links.
   for(int idx = 0; idx < _indices.size(); idx++)
     {
       _indices[idx]->Write_VC_Links(hier_id + "/" + this->Get_VC_Name() + "_AddressGen/IndexGen",ofile);
     }
+
+  ofile << "// CP-DP links for expression: ";
+  this->Print(ofile);
+  ofile << endl;
 
   vector<string> acks, reqs;
   // link to resize 
@@ -972,8 +1110,13 @@ void AaTypeCastExpression::Write_VC_Control_Path(ostream& ofile)
   string ps;
   this->AaRoot::Print(ps);
 
+
   if(!this->Is_Constant())
     {
+      ofile << "// control-path for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
       ofile << ";;[" << this->Get_VC_Name() << "] { // type-cast expression: " << ps << endl;
       this->_rest->Write_VC_Control_Path(ofile);
       ofile << "$T [rr] $T [ra] $T [cr] $T [ca] // int<->float conversion. " << endl;
@@ -996,28 +1139,49 @@ void AaTypeCastExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
   if(this->Is_Constant())
     {
-      this->_rest->Write_VC_Constant_Wire_Declarations(ofile);
+
+      ofile << "// constant-declarations for expression: ";
+      this->Print(ofile);
+      ofile << endl;
       Write_VC_Constant_Declaration(this->Get_VC_Constant_Name(),
 				    this->Get_Type(),
 				    this->Get_Expression_Value(),
 				    ofile);
+    }
+  else
+    {
+      this->_rest->Write_VC_Constant_Wire_Declarations(ofile);
     }
 }
 void AaTypeCastExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
   if(!this->Is_Constant() && !skip_immediate)
     {
+
+      this->_rest->Write_VC_Wire_Declarations(false,ofile);
+
+      ofile << "// wire-declarations for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
       Write_VC_Wire_Declaration(this->Get_VC_Driver_Name(),
 				this->Get_Type(),
 				ofile);
-      this->_rest->Write_VC_Wire_Declarations(false,ofile);
+
     }
 }
 void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
 {
   if(!this->Is_Constant())
     {
+
+
       this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
+
+      ofile << "// data-path instances for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
       Write_VC_Unary_Operator(__NOP,
 			      this->Get_VC_Datapath_Instance_Name(),
 			      this->_rest->Get_VC_Wire_Name(),
@@ -1029,13 +1193,25 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 }
 void AaTypeCastExpression::Write_VC_Links(string hier_id, ostream& ofile)
 {
-  this->_rest->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
-  vector<string> reqs,acks;
-  reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/rr");
-  reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/cr");
-  acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ra");
-  acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ca");
-  Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
+
+
+
+  if(!this->Is_Constant())
+    {
+
+      this->_rest->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
+
+      ofile << "// CP-DP links for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+      
+      vector<string> reqs,acks;
+      reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/rr");
+      reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/cr");
+      acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ra");
+      acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ca");
+      Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
+    }
 }
 
 //---------------------------------------------------------------------
@@ -1065,6 +1241,11 @@ void AaUnaryExpression::Write_VC_Control_Path(ostream& ofile)
   string ps;
   this->AaRoot::Print(ps);
 
+  ofile << "// control-path for expression: ";
+  this->Print(ofile);
+  ofile << endl;
+
+
   if(!this->Is_Constant())
     {
       ofile << ";;[" << this->Get_VC_Name() << "] { // unary expression: " << ps << endl;
@@ -1092,21 +1273,35 @@ void AaUnaryExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
   if(this->Is_Constant())
     {
-      this->_rest->Write_VC_Constant_Wire_Declarations(ofile);
+
+      ofile << "// constant-declarations for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
+
       Write_VC_Constant_Declaration(this->Get_VC_Constant_Name(),
 				    this->Get_Type(),
 				    this->Get_Expression_Value(),
 				    ofile);
     }
+  else
+    this->_rest->Write_VC_Constant_Wire_Declarations(ofile);
 }
 void AaUnaryExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
   if(!this->Is_Constant() && !skip_immediate)
     {
+
+      this->_rest->Write_VC_Wire_Declarations(false,ofile);
+
+      ofile << "// wire-declarations for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
       Write_VC_Wire_Declaration(this->Get_VC_Driver_Name(),
 				this->Get_Type(),
 				ofile);
-      this->_rest->Write_VC_Wire_Declarations(false,ofile);
+
     }
 
 }
@@ -1114,7 +1309,15 @@ void AaUnaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
 {
   if(!this->Is_Constant())
     {
+
+
       this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
+
+
+      ofile << "// data-path instances for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
       Write_VC_Unary_Operator(this->Get_Operation(),
 			      this->Get_VC_Datapath_Instance_Name(),
 			      this->_rest->Get_VC_Driver_Name(),
@@ -1128,9 +1331,16 @@ void AaUnaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
 }
 void AaUnaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
 {
-  this->_rest->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
   if(!this->Is_Constant())
     {
+
+      this->_rest->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
+
+
+      ofile << "// CP-DP links for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
        vector<string> reqs,acks;
       reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/rr");
       reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/cr");
@@ -1238,6 +1448,11 @@ void AaBinaryExpression::Write_VC_Control_Path(ostream& ofile)
 
   if(!this->Is_Constant())
     {
+
+      ofile << "// control-path for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
       ofile << ";;[" << this->Get_VC_Name() << "] { // binary expression: " << ps << endl;
 
       ofile << "||[" << this->Get_VC_Name() << "_inputs] { " << endl;
@@ -1254,23 +1469,44 @@ void AaBinaryExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
   if(this->Is_Constant())
     {
-      this->_first->Write_VC_Constant_Wire_Declarations(ofile);
-      this->_second->Write_VC_Constant_Wire_Declarations(ofile);
+
+      ofile << "// constant-declarations for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
+
       Write_VC_Constant_Declaration(this->Get_VC_Constant_Name(),
 				    this->Get_Type(),
 				    this->Get_Expression_Value(),
 				    ofile);
     }
+  else
+    {
+      this->_first->Write_VC_Constant_Wire_Declarations(ofile);
+      this->_second->Write_VC_Constant_Wire_Declarations(ofile);
+    }
 }
 void AaBinaryExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
-  if(!this->Is_Constant() && !skip_immediate)
-    Write_VC_Wire_Declaration(this->Get_VC_Driver_Name(),
-			      this->Get_Type(),
-			      ofile);
 
-  this->_first->Write_VC_Constant_Wire_Declarations(ofile);
-  this->_second->Write_VC_Constant_Wire_Declarations(ofile);
+
+  if(!this->Is_Constant())
+    {
+      this->_first->Write_VC_Wire_Declarations(false,ofile);
+      this->_second->Write_VC_Wire_Declarations(false, ofile);
+      
+      if(!this->Is_Constant() && !skip_immediate)
+	{
+	  ofile << "// wire-declarations for expression: ";
+	  this->Print(ofile);
+	  ofile << endl;
+	  Write_VC_Wire_Declaration(this->Get_VC_Driver_Name(),
+				    this->Get_Type(),
+				    ofile);
+	}
+    }
+
+
 
 }
 void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
@@ -1279,8 +1515,14 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 
   if(!this->Is_Constant())
     {
+
       this->_first->Write_VC_Datapath_Instances(NULL,ofile);
       this->_second->Write_VC_Datapath_Instances(NULL,ofile);
+
+      ofile << "// data-path-instances for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
       Write_VC_Binary_Operator(this->Get_Operation(),
 			       this->Get_VC_Datapath_Instance_Name(),
 			       _first->Get_VC_Driver_Name(),
@@ -1296,10 +1538,17 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 }
 void AaBinaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
 {
-  this->_first->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
-  this->_second->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
+
   if(!this->Is_Constant())
     {
+
+      this->_first->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
+      this->_second->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
+
+      ofile << "// CP-DP links for expression: ";
+      this->Print(ofile);
+      ofile << endl;
+
        vector<string> reqs,acks;
        reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/rr");
        reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/cr");
@@ -1372,6 +1621,10 @@ void AaTernaryExpression::Print(ostream& ofile)
 void AaTernaryExpression::Write_VC_Control_Path(ostream& ofile)
 {
 
+  ofile << "// control-path for expression: ";
+  this->Print(ofile);
+  ofile << endl;
+
   // if _test is constant, print dummy.
   string ps;
   this->AaRoot::Print(ps);
@@ -1415,9 +1668,11 @@ void AaTernaryExpression::Evaluate()
 
 void AaTernaryExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
-  this->_test->Write_VC_Constant_Wire_Declarations(ofile);
-  this->_if_true->Write_VC_Constant_Wire_Declarations(ofile);
-  this->_if_false->Write_VC_Constant_Wire_Declarations(ofile);
+
+  ofile << "// constant-declarations for expression: ";
+  this->Print(ofile);
+  ofile << endl;
+
 
   if(this->Is_Constant())
     {
@@ -1426,15 +1681,31 @@ void AaTernaryExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 				    this->Get_Expression_Value(),
 				    ofile);
     }
+  else
+    {
+      this->_test->Write_VC_Constant_Wire_Declarations(ofile);
+      this->_if_true->Write_VC_Constant_Wire_Declarations(ofile);
+      this->_if_false->Write_VC_Constant_Wire_Declarations(ofile);
+    }
+
 }
 void AaTernaryExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
-  this->_test->Write_VC_Wire_Declarations(false,ofile);
-  this->_if_true->Write_VC_Wire_Declarations(false,ofile);
-  this->_if_false->Write_VC_Wire_Declarations(false,ofile);
+
+
+
+  if(!this->Is_Constant())
+    {
+      this->_test->Write_VC_Wire_Declarations(false,ofile);
+      this->_if_true->Write_VC_Wire_Declarations(false,ofile);
+      this->_if_false->Write_VC_Wire_Declarations(false,ofile);
+    }
 
   if(!skip_immediate && !this->Is_Constant())
     {
+      ofile << "// wire-declarations for expression: ";
+      this->Print(ofile);
+      ofile << endl;
       Write_VC_Wire_Declaration(this->Get_VC_Driver_Name(),
 				this->Get_Type(),
 				ofile);
@@ -1444,9 +1715,15 @@ void AaTernaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostr
 {
   if(!this->Is_Constant())
     {
+
+
       this->_test->Write_VC_Datapath_Instances(NULL,ofile);
       this->_if_true->Write_VC_Datapath_Instances(NULL,ofile);
       this->_if_false->Write_VC_Datapath_Instances(NULL,ofile);
+
+      ofile << "// data-path-instances for expression: ";
+      this->Print(ofile);
+      ofile << endl;
 
       Write_VC_Select_Operator(this->Get_VC_Datapath_Instance_Name(),
 			       this->_test->Get_VC_Driver_Name(),
@@ -1472,6 +1749,11 @@ void AaTernaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
 				     + this->Get_VC_Name() + "_inputs", ofile); 
       this->_if_false->Write_VC_Links(hier_id + "/" + this->Get_VC_Name() + "/"
 				     + this->Get_VC_Name() + "_inputs", ofile); 
+
+
+      ofile << "// CP-DP links for expression: ";
+      this->Print(ofile);
+      ofile << endl;
 
       vector<string> reqs,acks;
       reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/req");
