@@ -113,6 +113,7 @@ class AaConstantObject: public AaObject
   void Evaluate();
   AaValue* Get_Expression_Value();
 
+  virtual string Get_VC_Name();
 };
 
 class AaStorageObject: public AaObject

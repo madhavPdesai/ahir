@@ -68,8 +68,8 @@ options {
 class AaParser extends Parser;
 
 options {
-	// go with LL(2) grammar
-	k=2;
+	// go with LL(4) grammar
+	k=4;
 	defaultErrorHandler=true;
 } 
 {
@@ -1120,44 +1120,73 @@ aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
 
          
 //----------------------------------------------------------------------------------------------------------
-// aA_Constant_Literal_Reference: (PLUS | MINUS)? ((INTEGER)+ | (FLOAT)+)
+// aA_Constant_Literal_Reference: aA_Constant_Scalar_Reference | LESS aA_Constant_Scalar_Reference+ GREATER
 //----------------------------------------------------------------------------------------------------------
 aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReference* obj_ref]
     {
         string full_name;
         vector<string> literals;
         unsigned int line_number;
+        unsigned int dlno;
     }
     : 
-
-        (PLUS | MINUS {full_name += '-';})? 
-        ( 
-            ( 
-                (iid: UINTEGER { full_name += iid->getText(); line_number = iid->getLine();} ) 
-                |
-                (fid: UFLOAT { full_name += fid->getText(); line_number = fid->getLine(); } )
-                |
-                (bid: BINARY { full_name += bid->getText(); line_number = bid->getLine();} ) 
-            )
-            |
-            ( lp: LESS { full_name += lp->getText(); line_number=lp->getLine(); }
-                ( 
-                    (
-                       (iidv: UINTEGER { literals.push_back(iidv->getText()); full_name += iidv->getText() + " ";} )
-                       |
-                       (bidv: BINARY { literals.push_back(bidv->getText()); full_name += bidv->getText() + " ";}))+
-                    |
-                    (fidv: UFLOAT { literals.push_back(fidv->getText()); full_name += fidv->getText() + " ";} )+
-                )
-              rp: GREATER { full_name += rp->getText(); }
-            )
-        )
+          (           
+           (aA_Integer_Literal_Reference[full_name,literals,dlno]) 
+           |
+            (lid:LESS  {full_name += lid->getText(); line_number = lid->getLine();}
+            (aA_Integer_Literal_Reference[full_name,literals,dlno])+
+              gid:GREATER {full_name += gid->getText();} )
+           | 
+           (aA_Float_Literal_Reference[full_name,literals,dlno])
+           |
+           (llid:LESS { full_name += llid->getText(); line_number = llid->getLine();}
+              (aA_Float_Literal_Reference[full_name,literals,dlno])+ ggid:GREATER 
+                      {full_name += ggid->getText();})
+         )
 
         {
                 obj_ref = new AaConstantLiteralReference(scope,full_name,literals);
                 obj_ref->Set_Line_Number(line_number);
+                full_name.clear();
         }
-    ;
+;
+
+
+//----------------------------------------------------------------------------------------------------------
+// aA_Integer_Literal_Reference : (MINUS)? UINTEGER
+//----------------------------------------------------------------------------------------------------------
+aA_Integer_Literal_Reference[string& full_name, vector<string>& literals, unsigned int& line_number]
+{ 
+  string sign_char;
+}
+:
+   (( (MINUS {sign_char = "-";})?  iid: UINTEGER 
+                 {
+                       line_number = iid->getLine();
+                       full_name += sign_char +  iid->getText() + " "; 
+                       literals.push_back(sign_char + iid->getText());
+                 }) |
+   (bidv:BINARY
+                 { 
+                       line_number = bidv->getLine();
+                       literals.push_back(bidv->getText()); 
+                       full_name += bidv->getText() + " ";
+                 }))
+;
+               
+
+//----------------------------------------------------------------------------------------------------------
+// aA_Float_Literal_Reference : (MINUS)? UFLOAT
+//----------------------------------------------------------------------------------------------------------
+aA_Float_Literal_Reference[string& full_name, vector<string>& literals, unsigned int& line_number]
+:
+   ( "_f" MINUS {full_name += '-';})?  iid: UFLOAT 
+           { 
+               full_name += iid->getText(); 
+               line_number = iid->getLine(); 
+               literals.push_back(full_name); 
+           } 
+;
 
 
 //----------------------------------------------------------------------------------------------------------
@@ -1278,7 +1307,7 @@ CAST : "$cast";
 // data format
 UINTEGER          : DIGIT (DIGIT)*;
 UFLOAT : DIGIT '.' (DIGIT)+ 'e' ('+' | '-') UINTEGER;
-BINARY : "_b" ('0' | '1')+;
+BINARY : "_b"  ('0' | '1')+ ;
 
 // White spaces (only "\n" is newline)
 WHITESPACE: (	' ' |'\t' | '\f' | '\r' | '\n' { newline(); } ) 

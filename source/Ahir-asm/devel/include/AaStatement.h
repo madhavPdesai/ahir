@@ -93,6 +93,7 @@ class AaStatement: public AaScope
   virtual void Write_Pipe_Condition_Update(ofstream& ofile, string tab_string);
   virtual void Write_Pipe_Read_Condition_Update(ofstream& ofile , string tab_string);
   virtual void Write_Pipe_Write_Condition_Update(ofstream& ofile , string tab_string);
+  virtual void Write_VC_Constant_Declarations(ostream& ofile) {};
 
   virtual void PrintC(ofstream& ofile, string tab_string) { assert(0); }
 
@@ -200,6 +201,11 @@ class AaStatementSequence: public AaScope
       this->_statement_sequence[i]->Propagate_Constants();
   }
 
+  virtual void Write_VC_Constant_Declarations(ostream& ofile)
+  {
+    for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+      this->_statement_sequence[i]->Write_VC_Constant_Declarations(ofile);
+  }
 
 };
 
@@ -461,6 +467,7 @@ class AaBlockStatement: public AaStatement
 
   virtual void Write_Entry_Condition(ofstream& ofile);
 
+  virtual void Write_VC_Constant_Declarations(ostream& ofile);
   virtual void Write_VC_Pipe_Declarations(ostream& ofile);  
   virtual void Write_VC_Memory_Space_Declarations(ostream& ofile);  
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
@@ -825,6 +832,7 @@ class AaSwitchStatement: public AaStatement
 
   virtual void Write_VC_Control_Path(ostream& ofile);
 
+  virtual void Write_VC_Constant_Declarations(ostream& ofile);
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
@@ -860,6 +868,7 @@ class AaIfStatement: public AaStatement
       this->_else_sequence->Map_Source_References();
   }
 
+  virtual void Write_VC_Constant_Declarations(ostream& ofile);
 
   virtual string Get_C_Name()
   {

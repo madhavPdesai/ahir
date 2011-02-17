@@ -362,7 +362,7 @@ void AaProgram::Write_VC_Constant_Declarations(ostream& ofile)
     {
       if((*iter).second->Is("AaConstantObject"))
 	{
-	  ((AaPipeObject*)((*iter).second))->Write_VC_Model(ofile);
+	  ((AaConstantObject*)((*iter).second))->Write_VC_Model(ofile);
 	}
     }
 }

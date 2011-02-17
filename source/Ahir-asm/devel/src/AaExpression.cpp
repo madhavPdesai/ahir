@@ -677,15 +677,15 @@ AaArrayObjectReference::~AaArrayObjectReference()
 }
 void AaArrayObjectReference::Print(ostream& ofile)
 {
-  ofile << "(";
   ofile << this->Get_Object_Ref_String();
+  ofile << "[";
   for(unsigned int i = 0; i < this->Get_Number_Of_Indices(); i++)
     {
-      ofile << "[";
+      if(i > 0)
+	ofile << " ";
       this->Get_Array_Index(i)->Print(ofile);
-      ofile << "]";
     }
-  ofile << ").__val";
+  ofile << "]";
 }
 AaExpression*  AaArrayObjectReference::Get_Array_Index(unsigned int idx)
 {
@@ -807,33 +807,59 @@ void AaArrayObjectReference::Write_VC_Control_Path_As_Target( ostream& ofile)
 
 void AaArrayObjectReference::Evaluate()
 {
+  
+  AaArrayType* at;
+  AaType* t = NULL;
+  if(this->_object->Is_Expression())
+    {
+      t = ((AaExpression*)(this->_object))->Get_Type();
+    }
+  else if(this->_object->Is_Object())
+    {
+      t = ((AaObject*)(this->_object))->Get_Type();
+    }
+
+  assert(t->Is("AaArrayType"));
+  
+  at = (AaArrayType*)t;
+
   if(!_already_evaluated)
     {
       _already_evaluated = true;
+      bool all_indices_constants = true;
+      vector<int> index_vector;
+      for(int idx = 0; idx < _indices.size(); idx++)
+	{
+
+	  // need to evaluate the indices!
+	  if(!_indices[idx]->Get_Type())
+	    _indices[idx]->Set_Type(AaProgram::Make_Uinteger_Type(at->Get_Dimension(idx)));
+	  _indices[idx]->Evaluate();
+
+
+	  if(!_indices[idx]->Is_Constant())
+	    {
+	      all_indices_constants = false;
+	    }
+	  else
+	    index_vector.push_back(_indices[idx]->Get_Expression_Value()->To_Integer());
+	}
+
+      AaValue* expr_value = NULL;
       if(this->_object->Is_Expression())
 	{
-	  bool all_indices_constants = true;
-	  vector<int> index_vector;
-	  for(int idx = 0; idx < _indices.size(); idx++)
-	    {
-	      _indices[idx]->Evaluate();
-	      if(!_indices[idx]->Is_Constant())
-		{
-		  all_indices_constants = false;
-		}
-	      else
-		index_vector.push_back(_indices[idx]->Get_Expression_Value()->To_Integer());
-	    }
 	  ((AaExpression*)this->_object)->Evaluate();
-	  if(!all_indices_constants || !((AaExpression*)this->_object)->Is_Constant())
-	    return;
-	  
-	  // now evaluate..
-	  // get the n-dimensional value and index it.
-	  AaValue* expr_value =  ((AaExpression*)this->_object)->Get_Expression_Value();
-	  assert(expr_value != NULL && expr_value->Is("AaArrayValue"));
-	  this->Assign_Expression_Value(((AaArrayValue*)expr_value)->Get_Element(index_vector));
 	}
+      else if(this->_object->Is_Object() && this->_object->Is_Constant())
+	{
+	  expr_value = ((AaObject*)(this->_object))->Get_Value()->Get_Expression_Value();
+	}
+
+      if(!all_indices_constants || !this->_object->Is_Constant())
+	return;
+      
+      assert(expr_value != NULL && expr_value->Is("AaArrayValue"));
+      this->Assign_Expression_Value(((AaArrayValue*)expr_value)->Get_Element(index_vector));
     }
 }
 
@@ -862,7 +888,7 @@ void AaArrayObjectReference::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 
 void AaArrayObjectReference::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
-  assert(this->_object->Is("AaStorageObject"));
+  assert(this->_object->Is_Object());
 
   if(this->Is_Constant())
     return;
@@ -944,7 +970,8 @@ void AaArrayObjectReference::Write_VC_Wire_Declarations_As_Target(ostream& ofile
 void AaArrayObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source)
 {
 
-
+  assert(this->_object && this->_object->Is("AaStorageObject"));
+    return;
 
 
   for(int idx = 0; idx < _indices.size(); idx++)
@@ -992,7 +1019,8 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& ofi
 void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
 {
 
-
+  if(this->Is_Constant())
+    return;
 
 
   for(int idx = 0; idx < _indices.size(); idx++)
@@ -1017,29 +1045,37 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
   this->Print(ofile);
   ofile << endl;
 
-  if(!_indices[0]->Is_Constant())
+
+  if(this->_object->Is("AaStorageObject"))
     {
-      Write_VC_Unary_Operator(__NOP,
-			      this->Get_VC_Name() + "_addr_resize",
-			      _indices[0]->Get_VC_Wire_Name(),
-			      _indices[0]->Get_Type(),
-			      index_addr,
-			      t,
-			      ofile);
+      if(!_indices[0]->Is_Constant())
+	{
+	  Write_VC_Unary_Operator(__NOP,
+				  this->Get_VC_Name() + "_addr_resize",
+				  _indices[0]->Get_VC_Wire_Name(),
+				  _indices[0]->Get_Type(),
+				  index_addr,
+				  t,
+				  ofile);
+	}
+      
+      // one store instance, 
+      Write_VC_Load_Operator((AaStorageObject*)this->_object,
+			     this->Get_VC_Datapath_Instance_Name(),
+			     (target != NULL ? target->Get_VC_Name() : this->Get_VC_Name()),
+			     index_addr,
+			     ofile);
     }
-
-
-  // one store instance, 
-  Write_VC_Load_Operator((AaStorageObject*)this->_object,
-			 this->Get_VC_Datapath_Instance_Name(),
-			 (target != NULL ? target->Get_VC_Name() : this->Get_VC_Name()),
-			 index_addr,
-			 ofile);
-
+  else if(this->_object->Is("AaConstantObject"))
+    {
+      //\todo. instantiate a bit-sel operator...
+    }
 }
+
 void AaArrayObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
 {
-
+  if(this->Is_Constant())
+    return;
 
   // index calculation links.
   for(int idx = 0; idx < _indices.size(); idx++)
@@ -1067,8 +1103,9 @@ void AaArrayObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
       reqs.clear();
       acks.clear();
     }
-  
-  // and link to load.
+
+
+  // and link to load/constant bit-sel..
   string inst_name = this->Get_VC_Datapath_Instance_Name();
   reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/rr");
   reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/cr");
@@ -1250,7 +1287,7 @@ void AaUnaryExpression::Write_VC_Control_Path(ostream& ofile)
     {
       ofile << ";;[" << this->Get_VC_Name() << "] { // unary expression: " << ps << endl;
       this->_rest->Write_VC_Control_Path(ofile);
-      ofile << "$T [rr] $T [ra] $T [cr] $T [ca] // variable update" << endl;
+      ofile << "$T [rr] $T [ra] $T [cr] $T [ca] //(split) unary operation" << endl;
       ofile << "}" << endl;
     }
 }
@@ -1542,8 +1579,11 @@ void AaBinaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
   if(!this->Is_Constant())
     {
 
-      this->_first->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
-      this->_second->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
+      string input_hier_id = hier_id + "/"  + this->Get_VC_Name() + "/"
+	+ this->Get_VC_Name() + "_inputs";
+
+      this->_first->Write_VC_Links(input_hier_id, ofile);
+      this->_second->Write_VC_Links(input_hier_id, ofile);
 
       ofile << "// CP-DP links for expression: ";
       this->Print(ofile);

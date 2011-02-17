@@ -186,7 +186,7 @@ AaValue* AaArrayValue::Get_Element(vector<int>& indices)
       index_in_array += (_dimensions[idx]*indices[idx-1]);
     }
 
-  assert(index_in_array < _value_vector.size()-1);
+  assert(index_in_array < _value_vector.size());
   return(_value_vector[index_in_array]);
 }
   
@@ -260,7 +260,7 @@ AaValue* Make_Aa_Value(AaScope* scope, AaType* t,vector<string>& literals)
   else 
     {
       assert(t->Is("AaArrayType"));
-      if(((AaArrayType*)t)->Get_Element_Type()->Is("AaIntType"))
+      if(((AaArrayType*)t)->Get_Element_Type()->Is_Integer_Type())
 	{
 	  ret_value = new AaArrayValue(scope,
 				       ((AaArrayType*)t)->Get_Element_Type()->Size(),

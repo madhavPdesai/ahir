@@ -336,6 +336,9 @@ void AaModule::Write_VC_Control_Path(ostream& ofile)
 void AaModule::Write_VC_Data_Path(ostream& ofile)
 {
   ofile << "$DP { // begin data-path " << endl;
+
+  this->Write_VC_Constant_Declarations(ofile);
+
   if(this->_statement_sequence)
     {
       this->_statement_sequence->Write_VC_Constant_Wire_Declarations(ofile);

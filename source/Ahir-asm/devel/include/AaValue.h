@@ -129,6 +129,7 @@ class AaArrayValue: public AaValue
 	  ret_val += ",";
 	ret_val += this->_value_vector[idx]->To_VC_String();
       }
+    ret_val += ")";
     return(ret_val);
   }
 };

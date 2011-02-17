@@ -192,3 +192,10 @@ void AaConstantObject::Evaluate()
 {
   this->_value->Evaluate();
 }
+
+
+string AaConstantObject::Get_VC_Name()
+{
+  string ret_string = "constant_" + this->Get_Name() + "_" + Int64ToStr(this->Get_Index());
+  return(ret_string);
+}

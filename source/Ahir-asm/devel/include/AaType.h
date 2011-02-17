@@ -222,7 +222,7 @@ class AaArrayType: public AaType
     this->_element_type->Write_VC_Model(ofile);
   }
 
-  virtual string Get_VC_Name(ostream& ofile) 
+  virtual string Get_VC_Name() 
   { 
     return( "$array<" + IntToStr(this->Number_Of_Elements()) + "> $of " +
 	    this->_element_type->Get_VC_Name());

@@ -1324,6 +1324,25 @@ void AaBlockStatement::Write_Entry_Condition(ofstream& ofile)
 }
 
 
+void AaBlockStatement::Write_VC_Constant_Declarations(ostream& ofile)
+{
+
+  if(this->_statement_sequence != NULL)
+    for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+      {
+	this->_statement_sequence->Get_Statement(idx)->Write_VC_Constant_Declarations(ofile);
+      }
+
+  ofile << "// constant-object-declarations for block " << this->Get_Hierarchical_Name() << endl;
+  ofile << "// " << this->Get_Source_Info() << endl;
+  for(int idx = 0; idx < _objects.size(); idx++)
+    {
+      if(_objects[idx]->Is("AaConstantObject"))
+	{
+	  _objects[idx]->Write_VC_Model(ofile);
+	}
+    }
+}
 void AaBlockStatement::Write_VC_Pipe_Declarations(ostream& ofile)
 {
   ofile << "// pipe-declarations for block " << this->Get_Hierarchical_Name() << endl;
@@ -2598,6 +2617,17 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
   ofile << "//---------------------   end of switch statement " << this->Get_Source_Info() << "  --------------------------" << endl;
 }
 
+void AaSwitchStatement::Write_VC_Constant_Declarations(ostream& ofile)
+{
+  for(int idx = 0; idx < _choice_pairs.size(); idx++)
+    {
+      this->_choice_pairs[idx].second->Write_VC_Constant_Declarations(ofile);
+    }
+  if(this->_default_sequence)
+    this->_default_sequence->Write_VC_Constant_Declarations(ofile);
+
+}
+
 void AaSwitchStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
 
@@ -2612,7 +2642,6 @@ void AaSwitchStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
       this->_choice_pairs[idx].first->Write_VC_Constant_Wire_Declarations(ofile);
       this->_choice_pairs[idx].second->Write_VC_Constant_Wire_Declarations(ofile);
     }
-
   if(this->_default_sequence)
     this->_default_sequence->Write_VC_Constant_Wire_Declarations(ofile);
 }
@@ -2996,6 +3025,13 @@ void AaIfStatement::Write_VC_Control_Path(ostream& ofile)
   ofile << "//---------------------  end of if statement " << this->Get_Source_Info() << "  --------------------------" << endl;
 }
 
+void AaIfStatement::Write_VC_Constant_Declarations(ostream& ofile)
+{
+  if(this->_if_sequence)
+    this->_if_sequence->Write_VC_Constant_Declarations(ofile);
+  if(this->_else_sequence)
+    this->_else_sequence->Write_VC_Constant_Declarations(ofile);
+}
 
 void AaIfStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
