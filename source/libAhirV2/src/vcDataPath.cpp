@@ -28,7 +28,7 @@ void vcWire::Print_VHDL_Std_Logic_Declaration(ostream& ofile)
 	 this->Get_Type()->Is("vcFloatType") ||
 	 this->Get_Type()->Is("vcPointerType"));
 
-  ofile << "signal " << this->Get_Id() << " : std_logic_vector (" << this->Get_Type()->Size()-1 << " downto 0);" << endl;
+  ofile << "signal " << this->Get_Id() << " : " << this->Get_Type()->Get_VHDL_Type_Name() << ";" << endl;
 }
 
 int vcWire::Get_Size() {return(this->_type->Size());}
@@ -47,6 +47,13 @@ void vcConstantWire::Print(ostream& ofile)
   ofile << vcLexerKeywords[__ASSIGNEQUAL] << " ";
   this->_value->Print(ofile);
   ofile << endl;
+}
+
+void vcConstantWire::Print_VHDL_Constant_Declaration(ostream& ofile)
+{
+  ofile << "constant " << this->Get_Id() << " : " ;
+  ofile << this->Get_Type()->Get_VHDL_Type_Name()  << " := ";
+  ofile << this->_value->To_VHDL_String() << ";" << endl;
 }
 
 vcInputWire::vcInputWire(string id, vcType* t): vcWire(id,t)
@@ -113,6 +120,13 @@ vcWire* vcDataPath::Find_Wire(string wname)
 	    ret_wire = this->Get_Parent()->Get_Argument(wname,"out");
 	}
     }
+
+  if(ret_wire == NULL)
+    {
+      // perhaps it is a constant defined at the Program scope
+      ret_wire = (vcWire*) this->Get_Parent()->Get_Parent()->Find_Constant_Wire(wname);
+    }
+
   return(ret_wire);
 }
 
@@ -212,6 +226,9 @@ vcSelect* vcDataPath::Find_Select(string id) {return(__FIND(_select_map,id));}
 
 void vcDataPath::Add_Branch(vcBranch* p)  {_ADD(_branch_map,p->Get_Id(), p);}
 vcBranch* vcDataPath::Find_Branch(string id) {return(__FIND(_branch_map,id));}
+
+void vcDataPath::Add_Register(vcRegister* p)  {_ADD(_register_map,p->Get_Id(), p);}
+vcRegister* vcDataPath::Find_Register(string id) {return(__FIND(_register_map,id));}
 
 
 void vcDataPath::Compute_Maximal_Groups(vcControlPath* cp)
@@ -600,6 +617,7 @@ void vcDataPath::Print_VHDL(ostream& ofile)
   // now instantiate each group. 
   this->Print_VHDL_Phi_Instances(ofile); // done
   this->Print_VHDL_Select_Instances(ofile); // done
+  this->Print_VHDL_Register_Instances(ofile); // todo
   this->Print_VHDL_Branch_Instances(ofile); // done
   this->Print_VHDL_Split_Operator_Instances(ofile); //done
   this->Print_VHDL_Load_Instances(ofile);
@@ -671,6 +689,22 @@ void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
 	    << ", ack => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol() << ", clk => clk, reset => reset); -- }" << endl;
     }
 }
+
+void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
+{ 
+  for(map<string, vcRegister*>::iterator iter = _register_map.begin();
+      iter != _register_map.end();
+      iter++)
+    {
+      vcRegister* s = (*iter).second;
+      ofile << s->Get_Id() << ": RegisterBase generic map(data_width => " << s->_din->Get_Size() << ") -- {" << endl;
+      ofile << " port map( din => " << s->_din->Get_Id() << "," 
+	    << " dout => " << s->_dout->Get_Id() << ","
+	    << " req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol()  << ","
+	    << " ack => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol() << ", clk => clk, reset => reset); -- }" << endl;
+    }
+}
+
 
 void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
 { 

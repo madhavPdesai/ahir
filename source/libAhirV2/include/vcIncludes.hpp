@@ -25,5 +25,6 @@ using namespace std;
 #include <istream>
 #include <ostream>
 #include <assert.h>
+#include <stdint.h>
 
 #endif

@@ -54,6 +54,12 @@ void vcSystem::Add_Module(vcModule* module)
   this->_modules[module->Get_Id()] = module;
 }
 
+void vcSystem::Add_Constant_Wire(string obj_name, vcValue* v)
+{
+  assert(this->_constant_map.find(obj_name) == this->_constant_map.end());
+  this->_constant_map[obj_name] = new vcConstantWire(obj_name,v);
+}
+
 void vcSystem::Set_As_Top_Module(string module_name)
 {
   vcModule* m = this->Find_Module(module_name);
@@ -181,6 +187,17 @@ void vcSystem::Print_Control_Structure(ostream& ofile)
 
 void  vcSystem::Print_VHDL(ostream& ofile)
 {
+
+  // print types.
+  ofile << "library ieee;" << endl
+	<< "use ieee.std_logic_1164.all;" << endl;
+  ofile << "package vc_system_package is -- { " << endl;
+  Print_VHDL_Type_Declarations(ofile);
+
+  this->Print_VHDL_Constant_Declarations(ofile);
+  
+  ofile << "-- } " << endl <<  "end package vc_system_package;" << endl;
+  
   // print modules
   for(map<string,vcModule*>::iterator moditer = _modules.begin();
       moditer != _modules.end();
@@ -192,6 +209,16 @@ void  vcSystem::Print_VHDL(ostream& ofile)
   this->Print_VHDL_Inclusions(ofile);
   this->Print_VHDL_Entity(ofile);
   this->Print_VHDL_Architecture(ofile);
+}
+
+void vcSystem::Print_VHDL_Constant_Declarations(ostream& ofile)
+{
+  for(map<string,vcConstantWire*>::iterator iter = _constant_map.begin();
+      iter != _constant_map.end();
+      iter++)
+    {
+      (*iter).second->Print_VHDL_Std_Logic_Declaration(ofile);
+    }
 }
 
 void vcSystem::Print_VHDL_Test_Bench(ostream& ofile) 
@@ -507,7 +534,6 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
 
   ofile << "architecture Default of " << this->Get_Id() << " is -- system-architecture {" << endl;
 
-
   for(map<string,vcMemorySpace*>::iterator iter = _memory_space_map.begin();
       iter != _memory_space_map.end();
       iter++)
@@ -655,5 +681,7 @@ use ahir.subprograms.all;\n			\
 use ahir.components.all;\n			\
 use ahir.basecomponents.all;\n			\
 use ahir.operatorpackage.all;\n";
+  ofile << "library work;" << endl;
+  ofile << "use work.vc_system_type_package.all;" << endl;
 }
 

@@ -14,6 +14,8 @@ class vcMemorySpace;
 class vcDatapathElementLibrary;
 class vcDatapathElementTemplate;
 class vcModule;
+class vcConstantWire;
+class vcValue;
 
 class vcSystem: public vcRoot
 {
@@ -22,6 +24,7 @@ class vcSystem: public vcRoot
   map<string, vcModule*> _modules;
 
   map<string,int> _pipe_map;
+  map<string,vcConstantWire*> _constant_map;
 
   map<string, map<vcModule*, vector<int> > > _pipe_read_map; // inports on modules connected to pipe.
   map<string, int> _pipe_read_count;
@@ -75,6 +78,16 @@ class vcSystem: public vcRoot
     assert(_pipe_map.find(pipe_id) == _pipe_map.end());
     assert(width > 0);
     _pipe_map[pipe_id] = width;
+  }
+
+  void Add_Constant_Wire(string obj_name, vcValue* v);
+  vcConstantWire* Find_Constant_Wire(string obj_name)
+  {
+    map<string,vcConstantWire*>::iterator iter = _constant_map.find(obj_name);
+    if(iter != _constant_map.end())
+      return((*iter).second);
+    else
+      return(NULL);
   }
 
   int Get_Pipe_Width(string pipe_id)
@@ -134,6 +147,7 @@ class vcSystem: public vcRoot
   string Print_VHDL_System_Instance_Pipe_Port_Map(string comma, ostream& ofile);
   string Print_VHDL_Instance_Port_Map(string comma, ostream& ofile);
 
+  void  Print_VHDL_Constant_Declarations(ostream& ofile);
   void Parse(string filename);
 };
 

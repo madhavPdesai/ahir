@@ -110,7 +110,8 @@ void Write_VC_Phi_Operator(string inst_name,
 	ofile << " ";
       ofile << sources[idx].first;
     }
-  ofile << ")";
+  ofile << ") ";
+  ofile << "( " << target << " )"  << endl;
 }
 
 void Write_VC_Link(string inst_name, vector<string>& reqs, vector<string>& acks, ostream& ofile)
@@ -131,7 +132,7 @@ void Write_VC_Link(string inst_name, vector<string>& reqs, vector<string>& acks,
 }
 void Write_VC_Branch_Instance(string inst_name, vector<pair<string,AaType*> >& br_inputs, ostream& ofile)
 {
-  ofile << "$branch [" << inst_name << "] (";
+  ofile << "==0? [" << inst_name << "] (";
   for(int idx = 0; idx < br_inputs.size(); idx++)
     {
       if(idx > 0)

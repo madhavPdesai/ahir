@@ -60,6 +60,9 @@ public:
 	public: void vc_Pipe(
 		vcSystem* sys
 	);
+	public: void vc_Wire_Declaration(
+		vcSystem* sys,vcDataPath* dp
+	);
 	public: string  vc_Label();
 	public: void vc_MemorySpaceParams(
 		vcMemorySpace* ms
@@ -128,9 +131,6 @@ public:
 	public: void vc_CPJoin(
 		vcCPForkBlock* fb
 	);
-	public: void vc_Wire_Declaration(
-		vcSystem* sys,vcDataPath* dp
-	);
 	public: void vc_Operator_Instantiation(
 		vcSystem* sys, vcDataPath* dp
 	);
@@ -156,6 +156,9 @@ public:
 		vcDataPath* dp
 	);
 	public: void vc_Branch_Instantiation(
+		vcDataPath* dp
+	);
+	public: void vc_Register_Instantiation(
 		vcDataPath* dp
 	);
 	public: void vc_Load_Instantiation(
@@ -265,6 +268,8 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_23;
 	static const unsigned long _tokenSet_24_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_24;
+	static const unsigned long _tokenSet_25_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_25;
 };
 
 #endif /*INC_vcParser_hpp_*/

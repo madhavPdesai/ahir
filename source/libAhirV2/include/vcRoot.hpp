@@ -207,6 +207,7 @@ static char *vcLexerKeywords[] =
 
 string To_VHDL(string x);
 string IntToStr(unsigned int x);
+string Int64ToStr(int64_t x);
 int CeilLog2(int n);
 
 #define MAX(x,y) (x > y ? x : y)
@@ -218,18 +219,21 @@ protected:
   string _id;
   map<string,string> _attribute_map;
 
+  int64_t _root_index;
 
+  static int64_t _root_index_counter;
  public:
   vcRoot();
   vcRoot(string id);
-
-  
 
   void Add_Attribute(string tag, string value);
   string Get_Id();
   string Get_Label();
 
   virtual void Print(ostream& ofile);
+
+  int64_t Get_Root_Index() {return(_root_index);}
+
 
   void Print(ofstream& ofile);
   void Print(string& ostring);

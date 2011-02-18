@@ -662,7 +662,7 @@ class AaPlaceStatement: public AaStatement
       }
   }
 
-  virtual string Get_VC_Name() {return("place_stmt_" + Int64ToStr(this->Get_Index()));}
+  virtual string Get_VC_Name() {return(this->_label);}
 
   void Write_VC_Control_Path(ostream& ofile)
   {

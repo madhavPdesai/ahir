@@ -16,7 +16,7 @@ class vcInport;
 class vcOutport;
 class vcOperator;
 class vcSplitOperator;
-
+class vcRegister;
 class vcDatapathElement;
 class vcWire: public vcRoot
 {
@@ -38,7 +38,7 @@ public:
   const set<vcDatapathElement*>&  Get_Receivers() {return this->_receivers;}
 
   virtual string Kind() {return("vcWire");}
-  void Print_VHDL_Std_Logic_Declaration(ostream& ofile);
+  virtual void Print_VHDL_Std_Logic_Declaration(ostream& ofile);
   int Get_Size();
 };
 
@@ -50,6 +50,8 @@ public:
   virtual void Print(ostream& ofile);
   vcValue* Get_Value() {return(this->_value);}
   virtual void Connect_Driver(vcDatapathElement* d) {assert(0);}
+
+  void Print_VHDL_Constant_Declaration(ostream& ofile);
   virtual string Kind() {return("vcConstantWire");}
 };
 
@@ -122,6 +124,7 @@ class vcDataPath: public vcRoot
   map<string, vcWire*> _wire_map;
   map<string, vcSelect*> _select_map;
   map<string, vcBranch*> _branch_map;
+  map<string, vcRegister*> _register_map;
 
   // these operators can be shared..
   map<string, vcSplitOperator*> _split_operator_map;
@@ -175,6 +178,9 @@ class vcDataPath: public vcRoot
   void Add_Branch(vcBranch* p);
   vcBranch* Find_Branch(string id);
 
+  void Add_Register(vcRegister* p);
+  vcRegister* Find_Register(string id);
+
   vcDatapathElement* Find_DPE(string dpe_name);
 
   void Add_Phi(vcPhi* p);
@@ -215,6 +221,7 @@ class vcDataPath: public vcRoot
 
   void Print_VHDL_Phi_Instances(ostream& ofile);
   void Print_VHDL_Select_Instances(ostream& ofile);
+  void Print_VHDL_Register_Instances(ostream& ofile);
   void Print_VHDL_Branch_Instances(ostream& ofile);
   void Print_VHDL_Split_Operator_Instances(ostream& ofile);
   void Print_VHDL_Load_Instances(ostream& ofile);

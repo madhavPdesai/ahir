@@ -24,6 +24,10 @@ public:
   virtual void Print(ostream& ofile) {assert(0);}
   virtual int Size() { assert(0);}
   virtual bool Is_Int_Type() {return(false);}
+
+  virtual string Get_VHDL_Type_Name() {assert(0);}
+  virtual void Print_VHDL_Declaration() {}
+
 };
 
 class vcScalarTypeTemplate: public vcType
@@ -66,6 +70,8 @@ public:
   virtual string Kind() {return("vcIntType");}
   virtual int Size() { return(this->_width);}
   virtual bool Is_Int_Type() {return(true);}
+
+  virtual string Get_VHDL_Type_Name() {return("std_logic_vector(" + IntToStr(_width-1) + " downto 0)");}
 };
 
 class vcMemorySpace;
@@ -102,7 +108,8 @@ public:
 
   virtual string Kind() {return("vcFloatType");}
   virtual int Size() { return(this->Get_Characteristic_Width() + this->Get_Mantissa_Width() + 1);}
-};
+
+  virtual string Get_VHDL_Type_Name() {return("std_logic_vector(" + IntToStr(this->Size()-1) + " downto 0)");}};
 
 class vcArrayType: public vcType
 {
@@ -121,6 +128,18 @@ public:
   virtual string Kind() {return("vcArrayType");}
 
   virtual int Size() { return(this->_dimension * this->_element_type->Size());}
+
+  virtual string Get_VHDL_Type_Name() 
+  {
+    return("vcArrayType_" + Int64ToStr(this->Get_Root_Index()) + "(" + IntToStr(this->Get_Dimension()-1) + " downto 0)");
+  }
+
+  virtual void Print_VHDL_Declaration(ostream& ofile)
+  {
+    ofile << "type vcArrayType_" << Int64ToStr(this->Get_Root_Index()) << " is array( natural range <> ) of "
+	  << _element_type->Get_VHDL_Type_Name() << ";" << endl;
+  }
+
 };
 
 class vcRecordType: public vcType
@@ -141,6 +160,21 @@ public:
   vcType* Get_Element_Type(int idx) {return(this->_element_types[idx]);}
   int Get_Number_Of_Elements() {return(this->_element_types.size());}
   
+  virtual string Get_VHDL_Type_Name() 
+  {
+    return("vRecordType_" + Int64ToStr(this->Get_Root_Index()));
+  }
+
+  virtual void Print_VHDL_Declaration(ostream& ofile)
+  {
+    ofile << "type vcRecordType_" << Int64ToStr(this->Get_Root_Index()) << " is record  -- {" << endl;
+    for(int i = 0; i < this->_element_types.size(); i++)
+      {
+	ofile << "field_" << IntToStr(i) << " : ";
+	ofile << this->_element_types[i]->Get_VHDL_Type_Name() << ";" << endl;
+      }
+    ofile << "end record;" << endl;
+  }
   
 };
 
@@ -149,6 +183,8 @@ vcIntType* Make_Integer_Type(unsigned int w);
 vcFloatType* Make_Float_Type(unsigned int c, unsigned int m);
 vcArrayType* Make_Array_Type(vcType* etype, unsigned int dim);
 vcRecordType* Make_Record_Type(vector<vcType*>& etypes);
+
+void Print_VHDL_Type_Declarations(ostream& ofile);
 
 class vcSystem;
 vcPointerType* Make_Pointer_Type(vcSystem* sys, string scope_id, string space_id);

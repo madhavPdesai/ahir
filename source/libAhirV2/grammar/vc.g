@@ -49,6 +49,8 @@ vc_System[vcSystem* sys]
  (ms = vc_MemorySpace[sys,NULL] {sys->Add_Memory_Space(ms);})
  |
  (vc_Pipe[sys])
+ |
+ (vc_Wire_Declaration[sys,NULL])
  )*
 	;
 
@@ -365,12 +367,13 @@ vc_Datapath[vcSystem* sys,vcModule* m]
 
 
 //-----------------------------------------------------------------------------------------------------------------------------
-// vc_Operator_Instantiation: vc_BinaryOperator_Instantiation | vc_UnaryOperator_Instantiation | vc_Select_Instantiation | vc_Branch_Instantiation
+// vc_Operator_Instantiation: vc_BinaryOperator_Instantiation | vc_UnaryOperator_Instantiation | vc_Select_Instantiation | vc_Branch_Instantiation | vc_Register_Instantiation
 //----------------------------------------------------------------------------------------------------------------------------
 vc_Operator_Instantiation[vcSystem* sys, vcDataPath* dp] : vc_BinaryOperator_Instantiation[dp] |
                                            vc_UnaryOperator_Instantiation[dp] |
                                            vc_Select_Instantiation[dp] |
-                                           vc_Branch_Instantiation[dp]
+                                           vc_Branch_Instantiation[dp] |
+                                           vc_Register_Instantiation[dp]
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
@@ -434,15 +437,15 @@ vc_UnaryOperator_Instantiation[vcDataPath* dp]
   vcWire* z = NULL;
 }
 :
-  ((not_id: NOT_OP {op_id = not_id->getText();}) |
-  (nop_id:ASSIGN_OP  {op_id = nop_id->getText();})) id = vc_Label 
+  (not_id: NOT_OP {op_id = not_id->getText();})
+    id = vc_Label 
  LPAREN 
     wid = vc_Identifier {x = dp->Find_Wire(wid); assert(x != NULL);}
  RPAREN
  LPAREN
     wid = vc_Identifier {z = dp->Find_Wire(wid); assert(z != NULL);}
  RPAREN
- { new_op = new vcUnarySplitOperator(id,op_id,x,z); dp->Add_Split_Operator(new_op);}   
+ { new_op = new vcUnarySplitOperator(id,op_id,x,z); dp->Add_Split_Operator(new_op);}
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
@@ -492,6 +495,28 @@ vc_Select_Instantiation[vcDataPath* dp]
  RPAREN
  { new_op = new vcSelect(id,sel,x,y,z); dp->Add_Select(new_op);}   
 ;
+
+
+//-------------------------------------------------------------------------------------------------------------------------
+// vc_Register_Instantiation: ASSIGN_OP vc_Label LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN
+
+//-------------------------------------------------------------------------------------------------------------------------
+vc_Register_Instantiation[vcDataPath* dp]
+{
+  vcRegister* new_reg = NULL;
+  vcWire* x;
+  vcWire* y;
+  string id;
+  string din;
+  string dout;
+}: ASSIGN_OP id = vc_Label LPAREN din = vc_Identifier { x = dp->Find_Wire(din); assert(x != NULL);} RPAREN
+                           LPAREN dout = vc_Identifier { y = dp->Find_Wire(dout); assert(y != NULL);} RPAREN
+   {  
+      new_reg = new vcRegister(id, x, y); dp->Add_Register(new_reg);
+   }
+;
+ 
+
 
 //-------------------------------------------------------------------------------------------------------------------------
 // vc_Call_Instantiation: CALL (INLINE)? vc_Label MODULE vc_Identifier 
@@ -709,18 +734,30 @@ vc_Wire_Declaration[vcSystem* sys,vcDataPath* dp]
         bool const_flag = false;
 }
 :
-(cid:CONSTANT {const_flag = true;} )? WIRE vc_Object_Declaration_Base[sys, &t, obj_name, &v] 
+(cid:CONSTANT {const_flag = true;} )? wid:WIRE vc_Object_Declaration_Base[sys, &t, obj_name, &v] 
      { 
         if(!const_flag) 
-           dp->Add_Wire(obj_name, t);
+        {
+           if(dp != NULL)
+              dp->Add_Wire(obj_name, t);
+           else
+              sys->Error("Warning: wire declaration at system scope ignored: line number " + 
+                            IntToStr(wid->getLine()));
+        }
         else
         {
            if (v == NULL)
            {
-              sys->Error("constant wire without specified value?\n");
+              sys->Error("constant wire without specified value? line number " +
+                           IntToStr(cid->getLine()));
            }
            else 
-             dp->Add_Constant_Wire(obj_name,v);
+           {
+             if(dp != NULL)
+                dp->Add_Constant_Wire(obj_name,v);
+             else
+                sys->Add_Constant_Wire(obj_name,v);
+           }
         }
      }
 ;

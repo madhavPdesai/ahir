@@ -648,9 +648,9 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	    {
 	      Write_VC_Unary_Operator(__NOP,
 				      this->_target->Get_VC_Datapath_Instance_Name(),
-				      this->_source->Get_VC_Wire_Name(),
+				      this->_source->Get_VC_Driver_Name(),
 				      this->_source->Get_Type(),
-				      this->_target->Get_VC_Wire_Name(),
+				      this->_target->Get_VC_Receiver_Name(),
 				      this->_target->Get_Type(),
 				      ofile);
 	    }
@@ -1159,14 +1159,14 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
   for(int idx = 0; idx < _input_args.size(); idx++)
     {
       _input_args[idx]->Write_VC_Datapath_Instances(NULL, ofile);
-      inargs.push_back(pair<string,AaType*>(_input_args[idx]->Get_VC_Wire_Name(),
+      inargs.push_back(pair<string,AaType*>(_input_args[idx]->Get_VC_Driver_Name(),
 					    _input_args[idx]->Get_Type()));
     }
   
   for(int idx = 0; idx < _output_args.size(); idx++)
     {
       _output_args[idx]->Write_VC_Datapath_Instances_As_Target(ofile,NULL);
-      outargs.push_back(pair<string,AaType*>(_output_args[idx]->Get_VC_Wire_Name(),
+      outargs.push_back(pair<string,AaType*>(_output_args[idx]->Get_VC_Receiver_Name(),
 					     _output_args[idx]->Get_Type()));
     }
 
@@ -1602,10 +1602,6 @@ void AaBranchBlockStatement::Write_VC_Control_Path(ostream& ofile)
 
   // three passes..
   ofile << "<>[" << this->Get_VC_Name() << "] // Branch Block " << this->Get_Source_Info() << endl << " {" << endl;
-
-  // entry and exit place, created explicitly
-  ofile << "$P [" << this->Get_VC_Name() << "__entry__]" << endl;
-  ofile << "$P [" << this->Get_VC_Name() << "__exit__]" << endl;
 
   this->Write_VC_Control_Path(true, this->_statement_sequence, ofile);
 
@@ -2129,7 +2125,7 @@ void AaMergeStatement::Write_VC_Links(string hier_id, ostream& ofile)
 	      phi_req_map[(*siter)].push_back(hier_id + 
 					      "/" + 
 					      mplace + "_PhiReq/" + 
-					      (*siter)->Get_Name() + "_req");
+					      (*siter)->Get_VC_Name() + "_req");
 	    }
 	}
     }
@@ -2167,18 +2163,18 @@ void AaPhiStatement::Print(ostream& ofile)
   ofile << this->Tab() << "$phi ";
   this->_target->Print(ofile);
   ofile << " := ";
-  if(this->_target->Get_Type())
-    {
-      ofile <<" // type of target is ";
-      this->_target->Get_Type()->Print(ofile);
-      ofile << endl;
-    }
   for(unsigned int i=0; i < this->_source_pairs.size(); i++)
     {
       ofile << this->Tab() << "  ";
       this->_source_pairs[i].second->Print(ofile);
-      ofile << " $on " << this->_source_pairs[i].first << endl;
+      ofile << " $on " << this->_source_pairs[i].first;
     }
+  if(this->_target->Get_Type())
+    {
+      ofile <<" // type of target is ";
+      this->_target->Get_Type()->Print(ofile);
+    }
+
   ofile << endl;
 }
 void AaPhiStatement::Map_Source_References()
@@ -2288,12 +2284,12 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
   vector<pair<string,AaType*> > sources;
   for(int i = 0; i < _source_pairs.size(); i++)
-    sources.push_back(pair<string,AaType*>(_source_pairs[i].second->Get_VC_Wire_Name(),
+    sources.push_back(pair<string,AaType*>(_source_pairs[i].second->Get_VC_Driver_Name(),
 					   _source_pairs[i].second->Get_Type()));
 
   Write_VC_Phi_Operator(this->Get_VC_Name(),
 			sources,
-			_target->Get_VC_Wire_Name(),
+			_target->Get_VC_Receiver_Name(),
 			_target->Get_Type(),
 			ofile);
 }
@@ -2506,6 +2502,9 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
   this->_select_expression->Write_VC_Control_Path(ofile);
   ofile << this->Get_VC_Name() << "__entry__ |-> (" << this->_select_expression->Get_VC_Name() << ")" << endl;
 
+  ofile << "$P [" << this->Get_VC_Name() << "__condition_check_place__] " << endl;
+  ofile << this->Get_VC_Name() << "__condition_check_place__ <-| (" << this->_select_expression->Get_VC_Name() << ")" << endl;
+
   ofile << "||[" << this->Get_VC_Name() << "__condition_check__] { // condition computation" << endl;
   for(int idx = 0; idx < _choice_pairs.size(); idx++)
     {
@@ -2522,6 +2521,7 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
   // need one branch operator for the default.
   // $exit of condition_check will trigger default branch comparison.
   ofile << "}" << endl;
+  ofile << this->Get_VC_Name() << "__condition_check_place__ |-> (" << this->Get_VC_Name() << "__condition_check__)" << endl;
 
   // select place..
   ofile << "$P [" << this->Get_VC_Name() << "__select__] " << endl;
@@ -2680,7 +2680,7 @@ void AaSwitchStatement::Write_VC_Datapath_Instances(ostream& ofile)
       // one comparison operator per switch choice.
       Write_VC_Binary_Operator(__EQUAL, 
 			       this->Get_VC_Name() + "_select_expr_" + IntToStr(idx),
-			       _select_expression->Get_VC_Name(),
+			       _select_expression->Get_VC_Driver_Name(),
 			       _select_expression->Get_Type(),
 			       expr->Get_VC_Constant_Name(),
 			       expr->Get_Type(),
@@ -2729,17 +2729,17 @@ void AaSwitchStatement::Write_VC_Links(string hier_id, ostream& ofile)
 
 
       // for the comparison operation.
-      reqs.push_back(hier_id + "/__condition_check__/condition_" + IntToStr(idx) + "/rr");
-      reqs.push_back(hier_id + "/__condition_check__/condition_" + IntToStr(idx) + "/cr");
-      acks.push_back(hier_id + "/__condition_check__/condition_" + IntToStr(idx) + "/ra");
-      acks.push_back(hier_id + "/__condition_check__/condition_" + IntToStr(idx) + "/ca");
+      reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "__condition_check__/condition_" + IntToStr(idx) + "/rr");
+      reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "__condition_check__/condition_" + IntToStr(idx) + "/cr");
+      acks.push_back(hier_id + "/" + this->Get_VC_Name() + "__condition_check__/condition_" + IntToStr(idx) + "/ra");
+      acks.push_back(hier_id + "/" + this->Get_VC_Name() + "__condition_check__/condition_" + IntToStr(idx) + "/ca");
       Write_VC_Link(this->Get_VC_Name() + "_select_expr_" + IntToStr(idx),reqs,acks,ofile);
       
       reqs.clear();
       acks.clear();
 
       // for the branch operator
-      reqs.push_back(hier_id + "/__condition_check__/condition_" + IntToStr(idx) + "/cmp");
+      reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "__condition_check__/condition_" + IntToStr(idx) + "/cmp");
       acks.push_back("$open"); // ack0 is ignored. 
       acks.push_back(hier_id + "/choice_" + IntToStr(idx) + "/ack1");
       Write_VC_Link(this->Get_VC_Name() + "_branch_" + IntToStr(idx),
@@ -2757,7 +2757,7 @@ void AaSwitchStatement::Write_VC_Links(string hier_id, ostream& ofile)
   // link for the default branch.
   if(this->_default_sequence != NULL)
     {
-      string req_hier_id = hier_id + "/__condition_check__";
+      string req_hier_id = hier_id + "/" + this->Get_VC_Name() + "__condition_check__";
 
       // the branch operator for the default.
       reqs.push_back(req_hier_id + "/$exit");
@@ -2774,15 +2774,26 @@ void AaSwitchStatement::Write_VC_Links(string hier_id, ostream& ofile)
 
 void AaSwitchStatement::Propagate_Constants()
 {
-  this->_select_expression->Evaluate();
-  for(int idx = 0; idx < _choice_pairs.size(); idx++)
+  if(this->_select_expression->Get_Type() == NULL)
     {
-      this->_choice_pairs[idx].first->Evaluate();
-      this->_choice_pairs[idx].second->Propagate_Constants();
+      AaRoot::Error("Could not determine type of select expression in switch statement.. ", this);
     }
+  else
+    {
+      this->_select_expression->Evaluate();
+      for(int idx = 0; idx < _choice_pairs.size(); idx++)
+	{
+	  if(!this->_choice_pairs[idx].first->Get_Type())
+	    {
+	      this->_choice_pairs[idx].first->Set_Type(this->_select_expression->Get_Type());
+	    }
+	  this->_choice_pairs[idx].first->Evaluate();
+	  this->_choice_pairs[idx].second->Propagate_Constants();
+	}
 
-  if(this->_default_sequence)
-    this->_default_sequence->Propagate_Constants();
+      if(this->_default_sequence)
+	this->_default_sequence->Propagate_Constants();
+    }
 }
 
 //---------------------------------------------------------------------
@@ -3041,6 +3052,9 @@ void AaIfStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
   ofile << "// " << this->Get_Source_Info() << endl;
 
 
+  // one wire for the test expression result.
+  this->_test_expression->Write_VC_Constant_Wire_Declarations(ofile);
+
  if(this->_if_sequence)
     this->_if_sequence->Write_VC_Constant_Wire_Declarations(ofile);
 
@@ -3077,7 +3091,7 @@ void AaIfStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
   // followed by a branch.
   vector<pair<string,AaType*> > branch_inputs;
-  branch_inputs.push_back(pair<string,AaType*>(this->_test_expression->Get_VC_Wire_Name(),
+  branch_inputs.push_back(pair<string,AaType*>(this->_test_expression->Get_VC_Driver_Name(),
 					       this->_test_expression->Get_Type()));
 			  
   Write_VC_Branch_Instance(this->Get_VC_Name()+"_branch",
@@ -3097,7 +3111,7 @@ void AaIfStatement::Write_VC_Links(string hier_id,ostream& ofile)
   vector<string> acks;
 
   reqs.push_back(hier_id + "/eval_test/branch_req");
-  acks.push_back(hier_id + "/ElseLink/ese_choice_transition");
+  acks.push_back(hier_id + "/ElseLink/else_choice_transition");
   acks.push_back(hier_id + "/IfLink/if_choice_transition");
 
   Write_VC_Link(this->Get_VC_Name()+"_branch",reqs,acks,ofile);
@@ -3105,6 +3119,11 @@ void AaIfStatement::Write_VC_Links(string hier_id,ostream& ofile)
 
 void AaIfStatement::Propagate_Constants()
 {
+  if(this->_test_expression->Get_Type() == NULL)
+    {
+      AaRoot::Warning("Could not determine type of test expression in if statement.. will assume that it is $uint<1> ", this);
+      this->_test_expression->Set_Type(AaProgram::Make_Uinteger_Type(1));
+    }
   this->_test_expression->Evaluate();
   if(this->_if_sequence)
     this->_if_sequence->Propagate_Constants();

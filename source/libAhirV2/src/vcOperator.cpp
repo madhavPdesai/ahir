@@ -42,8 +42,27 @@ vcLoadStore::vcLoadStore(string id, vcMemorySpace* ms, vcWire* addr, vcWire* dat
   _address = addr;
   _data = data;
 
-  assert((ms != NULL) && (ms->Get_Address_Width() == addr->Get_Type()->Size()) &&
-	 (ms->Get_Word_Size() == data->Get_Type()->Size()));
+  
+  assert(ms != NULL);
+
+  if(ms->Get_Address_Width() != addr->Get_Type()->Size())
+    {
+      string err_msg = string("load/store operator address-wire width must\n") +
+	"be the same as the memory space address width\n" +
+	"for load/store with id " + id + 
+	" (memory space " + ms->Get_Id() + ")"; 
+
+      vcSystem::Error(err_msg);
+
+    }
+  if(ms->Get_Word_Size() != data->Get_Type()->Size())
+    {
+      string err_msg = string("load/store operator data-wire width must\n") +
+	"be the same as the memory space data width\n" +
+	"for load/store with id " + id + 
+	" (memory space " + ms->Get_Id() + ")";
+      vcSystem::Error(err_msg);
+    }
 }
 
 
@@ -184,7 +203,6 @@ void vcOutport::Print(ostream& ofile)
 	<< vcLexerKeywords[__LPAREN] << this->_data->Get_Id() << vcLexerKeywords[__RPAREN] << " " 
 	<< vcLexerKeywords[__LPAREN] << this->_pipe_id << vcLexerKeywords[__RPAREN] << endl;
 }
-
 
 vcUnarySplitOperator::vcUnarySplitOperator(string id, string op_id, vcWire* x, vcWire* z):vcSplitOperator(id)
 {
@@ -392,6 +410,28 @@ void vcSelect::Print(ostream& ofile)
 	<< " "
 	<< vcLexerKeywords[__LPAREN] 
 	<< this->_z->Get_Id()
+	<< vcLexerKeywords[__RPAREN] 
+	<< endl;
+}
+
+vcRegister::vcRegister(string id, vcWire* din, vcWire* dout):vcOperator(id)
+{
+  assert(din && dout && (din->Get_Type()->Size() == dout->Get_Type()->Size()));
+
+  _din = din;
+  _dout = dout;
+
+}
+
+void vcRegister::Print(ostream& ofile)
+{
+  ofile << vcLexerKeywords[__ASSIGN_OP] << " " << this->Get_Label() << " "
+	<< vcLexerKeywords[__LPAREN] 
+	<< this->_din->Get_Id() << " "
+	<< vcLexerKeywords[__RPAREN] 
+	<< " "
+	<< vcLexerKeywords[__LPAREN] 
+	<< this->_dout->Get_Id()
 	<< vcLexerKeywords[__RPAREN] 
 	<< endl;
 }

@@ -64,18 +64,23 @@ IntValue::IntValue(int n, string init_value)
     {
       if(init_value.size()-2 > _width)
 	{
-	  cerr << "Error: binary initialization string is longer than integer width" << endl;
-	  cerr << "          the initial value will be ignored " << endl;
+	  cerr << "Warning: binary initialization string is longer than integer width" << endl;
+	  cerr << "          the initial value will be truncated to the least-significant bits. " << endl;
 	}
       else
 	{
+	  int bit_count = 0;
 	  for(int idx = init_value.size()-1; idx >= 2; idx--)
 	    {
+	      bit_count++;
 	      int actual_index = (init_value.size()-1) - idx;
 	      if(init_value[idx] == '1')
 		this->Set_Bit(actual_index,true);
 	      else
 		this->Set_Bit(actual_index,false);
+
+	      if(bit_count == _width-1)
+		break;
 	    }
 	}
     }
@@ -287,12 +292,12 @@ void IntValue::Set_Bit(int idx, bool v)
   int word_index = idx/__WORD_SIZE__;
   int bit_index  = idx%__WORD_SIZE__;
 
-  assert(word_index < this->Array_Size());
-  
-  UWord bit_mask = (1 << bit_index);
-  UWord and_mask = ~bit_mask;
-
-  _bit_field[word_index] = (_bit_field[word_index] &  and_mask) | (v ? bit_mask : 0);
+  if(word_index < this->Array_Size())
+    {
+      UWord bit_mask = (1 << bit_index);
+      UWord and_mask = ~bit_mask;
+      _bit_field[word_index] = (_bit_field[word_index] &  and_mask) | (v ? bit_mask : 0);
+    }
 }
 
 

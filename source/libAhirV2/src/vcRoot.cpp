@@ -22,6 +22,14 @@ string IntToStr(unsigned int x)
   return(string_stream.str());
 }
 
+
+string Int64ToStr(int64_t x)
+{
+  ostringstream string_stream(ostringstream::out);
+  string_stream << x;
+  return(string_stream.str());
+}
+
 int CeilLog2(int n)
 {
   int ret_val = 0;
@@ -54,13 +62,20 @@ bool vcRoot_Compare::operator() (vcRoot* s, vcRoot* t) const
   return false;
 }
 
+
+int64_t vcRoot::_root_index_counter = 0;
+
 vcRoot::vcRoot()
 {
   this->_id = "";
+  this->_root_index = vcRoot::_root_index_counter;
+  vcRoot::_root_index_counter++;
 }
 vcRoot::vcRoot(string id)
 {
   this->_id = id;
+  this->_root_index = vcRoot::_root_index_counter;
+  vcRoot::_root_index_counter++;
 }
 
 

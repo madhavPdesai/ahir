@@ -924,8 +924,15 @@ aA_Constant_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         }
         : (st: CONSTANT aA_Object_Declaration_Base[scope,oname,otype,initial_value])
         {
-            obj = new AaConstantObject(scope,oname,otype,initial_value);
-            obj->Set_Line_Number(st->getLine());
+            if(otype->Is("AaArrayType"))
+            {
+                AaRoot::Error("Currently, Aa constants must have scalar types!", otype);
+            }
+            else
+            {
+               obj = new AaConstantObject(scope,oname,otype,initial_value);
+               obj->Set_Line_Number(st->getLine());
+            }
         }
         ;
 
