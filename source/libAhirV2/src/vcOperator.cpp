@@ -272,6 +272,17 @@ vcBinarySplitOperator::vcBinarySplitOperator(string id, string op_id, vcWire* x,
   assert(x != NULL && y != NULL && z != NULL);
   
   this->_op_id = op_id;
+
+
+  if(x->Is("vcConstantWire"))
+    {
+      if(Is_Symmetric_Op(op_id))
+	{
+	  vcWire* tmp = y;
+	  y = x;
+	  x = y;
+	}
+    }
   
   this->_x = x;
   x->Connect_Receiver(this);
@@ -485,6 +496,26 @@ bool Is_Trivial_Op(string vc_op_id)
   return(ret_val);
 }
 
+bool Is_Symmetric_Op(string vc_op_id)
+{
+  bool ret_val = false;
+  if(vc_op_id == vcLexerKeywords[__PLUS_OP]        )      { ret_val = true;      } 
+  else if(vc_op_id == vcLexerKeywords[__MUL_OP]        ) { ret_val = true; } 
+  else if(vc_op_id == vcLexerKeywords[__EQ_OP]        ) { ret_val = true; } 
+  else if(vc_op_id == vcLexerKeywords[__OR_OP]            ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__AND_OP]           ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__XOR_OP]           ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__NOR_OP]           ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__NAND_OP]          ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__XNOR_OP]          ) { ret_val = true; }
+  return(ret_val);
+}
+
+bool Is_Unary_Op(string vc_op_id)
+{
+  return(vc_op_id == vcLexerKeywords[__NOT_OP]);
+}
+
 string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
 {
 
@@ -578,7 +609,13 @@ bool Check_If_Equivalent(vector<vcWire*>& iw1, vector<vcWire*>& iw2)
 	  ret_val = false;
 	  break;
 	}
-      
+
+      if(w1->Is("vcConstantWire")  != w2->Is("vcConstantWire"))
+	{
+	  ret_val = false;
+	  break;
+	}
+
       if(w1->Get_Type()->Size() != w2->Get_Type()->Size())
 	{
 	  ret_val = false;

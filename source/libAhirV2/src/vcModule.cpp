@@ -331,8 +331,8 @@ void  vcModule::Print_VHDL_System_Argument_Signals(ostream& ofile)
 	<< this->Get_Callee_Tag_Length()-1 << " downto 0);" << endl;
   ofile << "signal " << prefix << "tag_out: std_logic_vector(" 
 	<< this->Get_Callee_Tag_Length()-1 << " downto 0);" << endl;
-  ofile << "signal " << prefix <<  "start : std_logic;"  << endl;
-  ofile << "signal " << prefix <<  "fin   : std_logic;" << endl;
+  ofile << "signal " << prefix <<  "start : std_logic := '0';"  << endl;
+  ofile << "signal " << prefix <<  "fin   : std_logic := '0';" << endl;
 }
 
 string vcModule::Print_VHDL_System_Argument_Ports(string semi_colon,ostream& ofile)

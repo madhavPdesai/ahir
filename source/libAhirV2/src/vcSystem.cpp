@@ -682,6 +682,6 @@ use ahir.components.all;\n			\
 use ahir.basecomponents.all;\n			\
 use ahir.operatorpackage.all;\n";
   ofile << "library work;" << endl;
-  ofile << "use work.vc_system_type_package.all;" << endl;
+  ofile << "use work.vc_system_package.all;" << endl;
 }
 

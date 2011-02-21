@@ -6,7 +6,8 @@ library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.OperatorPackage.all;
--- use ahir.FloatOperatorPackage.all;
+use ahir.BaseComponents.all;
+use ahir.FloatOperatorPackage.all;
 
 entity UnitaryOperatorBase is
   generic
@@ -45,7 +46,6 @@ end UnitaryOperatorBase;
 architecture Vanilla of UnitaryOperatorBase is
   signal   result: std_logic_vector(owidth-1 downto 0);
   signal   state_sig : std_logic;
-  constant tag0      : std_logic_vector(tagR'length-1 downto 0) := (others => '0');
   constant iwidth : integer := iwidth_1  + iwidth_2;
   signal   enable_data_reg : std_logic;
   
@@ -194,13 +194,13 @@ begin  -- Behave
 
   FlowThrough: if flow_through generate
     ack <= req;
-    data_out <= result;
+    dataR <= result;
   end generate FlowThrough;
 
   ZeroDelay: if ((not flow_through) and zero_delay) generate
 
     ack <= req;
-    enable_data_reg <= '1' when req = '1' else '0';
+    enable_data_reg <= '1' when req  else '0';
 
     dreg : BypassRegister generic map (
       data_width    => owidth,
@@ -220,14 +220,14 @@ begin  -- Behave
     begin
       if(clk'event and clk = '1') then
         if(reset = '1') then
-          ack <= '0';
+          ack <= false;
         else
           ack <= req;
         end if;
       end if;
     end process;
 
-    enable_data_reg <= '1' when req = '1' else '0';
+    enable_data_reg <= '1' when req  else '0';
 
     dreg : BypassRegister generic map (
       data_width    => owidth,

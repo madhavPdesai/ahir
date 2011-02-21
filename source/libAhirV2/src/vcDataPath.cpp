@@ -739,6 +739,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
   for(int idx = 0; idx < this->_compatible_split_operator_groups.size(); idx++)
     { // for each operator group.
 
+      bool is_unary_operator = false;
       // number of requesters.
       int num_reqs = _compatible_split_operator_groups[idx].size();
 
@@ -770,7 +771,10 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	  iter != _compatible_split_operator_groups[idx].end();
 	  iter++)
 	{
+
 	  vcSplitOperator* so = (vcSplitOperator*) (*iter);
+	  is_unary_operator = Is_Unary_Op(so->Get_Op_Id());
+
 	  elements.push_back(so->Get_Id());
 	  so->Append_Inwires(inwires);
 	  so->Append_Outwires(outwires);
@@ -780,12 +784,6 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	  ackR.push_back(so->Get_Ack(1));
 	}
 
-      // total in-width 
-      int in_width = 0;
-      for(int u = 0; u < inwires.size(); u++)
-	{
-	  in_width += inwires[u]->Get_Size();
-	}
 
       // is the second input a constant?
       bool use_constant = false;
@@ -799,6 +797,22 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       else
 	{
 	  const_operand += "\"0\"";
+	}
+
+
+      // total in-width 
+      int in_width = 0;
+      vector<vcWire*> concat_in_wires;
+      for(int u = 0; u < inwires.size(); u++)
+	{
+	  if(!use_constant || (u%2 != 0))
+	    {
+	      // do not count if inwire is
+	      // an even operand and if it is
+	      // a constant.
+	      in_width += inwires[u]->Get_Size();
+	      concat_in_wires.push_back(inwires[u]);
+	    }
 	}
 
 
@@ -833,7 +847,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       this->Print_VHDL_Disconcatenate_Ack("ackR",ackR,ofile);
 	
       // concatenate data_in
-      this->Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
+      this->Print_VHDL_Concatenation(string("data_in"), concat_in_wires,ofile);
 
       // disconcatenate data_out
       this->Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
@@ -1023,6 +1037,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 	
       // concatenate data_in
       this->Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
+
       // disconcatenate data_out
       this->Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
 

@@ -1,5 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
+library ahir;
+use ahir.Utilities.all;
+use ahir.SubPrograms.all;
 
 entity BranchBase is
   generic (condition_width: integer := 1);

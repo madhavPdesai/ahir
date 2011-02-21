@@ -41,6 +41,7 @@ package BaseComponents is
     data_out    : out std_logic_vector(data_width-1 downto 0));
   end component BypassRegister;
 
+
   -----------------------------------------------------------------------------
   -- operator base components
   -----------------------------------------------------------------------------
@@ -177,6 +178,18 @@ package BaseComponents is
   end component SplitOperatorSharedTB;
 
   -----------------------------------------------------------------------------
+  -- register operator
+  -----------------------------------------------------------------------------
+  component RegisterBase 
+      generic(data_width: integer);
+      port(din: in std_logic_vector(data_width-1 downto 0);
+           dout: out std_logic_vector(data_width-1 downto 0);
+           req: in boolean;
+           ack: out boolean;
+           clk,reset: in std_logic);
+  end component RegisterBase;
+
+  -----------------------------------------------------------------------------
   -- phi,branch,select
   -----------------------------------------------------------------------------
   component PhiBase 
@@ -194,7 +207,7 @@ package BaseComponents is
 
   component BranchBase
     generic (
-      (condition_width : integer);
+      condition_width : integer);
     port (condition: in std_logic_vector(condition_width-1 downto 0);
           clk,reset: in std_logic;
           req: in Boolean;
