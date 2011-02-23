@@ -218,13 +218,13 @@ class AaArrayType: public AaType
 
   virtual void Write_VC_Model(ostream& ofile) 
   { 
-    ofile << "$array<" << this->Number_Of_Elements() << "> $of ";
+    ofile << "$array[" << this->Number_Of_Elements() << "] $of ";
     this->_element_type->Write_VC_Model(ofile);
   }
 
   virtual string Get_VC_Name() 
   { 
-    return( "$array<" + IntToStr(this->Number_Of_Elements()) + "> $of " +
+    return( "$array[" + IntToStr(this->Number_Of_Elements()) + "] $of " +
 	    this->_element_type->Get_VC_Name());
   }
 

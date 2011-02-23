@@ -11,6 +11,8 @@ string AaProgram::_current_file_name;
 std::map<string,AaType*,StringCompare>   AaProgram::_type_map;
 std::map<string,AaObject*,StringCompare> AaProgram::_objects;
 std::map<string,AaModule*,StringCompare> AaProgram::_modules;
+std::vector<AaModule*> AaProgram::_ordered_module_vector;
+
 AaGraphBase AaProgram::_call_graph;
 AaUGraphBase AaProgram::_type_dependency_graph;
 
@@ -54,6 +56,8 @@ void AaProgram::Add_Module(AaModule* obj)
 { 
   assert(AaProgram::Find_Module(obj->Get_Label()) == NULL); 
   AaProgram::_modules[obj->Get_Label()] = obj;
+  AaProgram::_ordered_module_vector.push_back(obj);
+
 }
 
 AaModule* AaProgram::Find_Module(string obj_name)
@@ -399,7 +403,15 @@ void AaProgram::Write_VC_Memory_Spaces(int default_space_pointer_width,
 				       int default_space_word_size,
 				       ostream& ofile)
 {
-  // todo.
+  for(map<string,AaObject*,StringCompare>::iterator iter = AaProgram::_objects.begin();
+      iter != AaProgram::_objects.end();
+      iter++)
+    {
+      if((*iter).second->Is("AaStorageObject"))
+	{
+	  ((AaStorageObject*)((*iter).second))->Write_VC_Model(ofile);
+	}
+    }
 }
 
 
@@ -407,13 +419,11 @@ void AaProgram::Write_VC_Modules(int default_space_pointer_width,
 			     int default_space_word_size,
 			     ostream& ofile)
 {
-  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
-      miter != AaProgram::_modules.end();
-      miter++)
+  for(int idx =0; idx < AaProgram::_ordered_module_vector.size(); idx++)
     {
-      (*miter).second->Write_VC_Model(default_space_pointer_width,
-				      default_space_word_size,
-				      ofile);
+      AaProgram::_ordered_module_vector[idx]->Write_VC_Model(default_space_pointer_width,
+							     default_space_word_size,
+							     ofile);
     }
 }
 

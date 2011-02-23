@@ -325,7 +325,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
 	  ofile << this->Get_VHDL_Id() << "_p" << idx << "_pred(0) <=  " << pred->Get_Exit_Symbol() << ";" << endl;
 	}
       
-      ofile << this->Get_Exit_Symbol() << " <= OrReduce(" << this->Get_VHDL_Id() << "_predecessors)";
+      ofile << this->Get_Exit_Symbol() << " <= AndReduce(" << this->Get_VHDL_Id() << "_predecessors)";
       if(this->Get_Is_Input())
 	ofile << " and " << this->Get_DP_To_CP_Symbol();
       ofile << "; " << endl;

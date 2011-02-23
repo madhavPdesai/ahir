@@ -24,6 +24,9 @@ class AaProgram
   static std::map<string,AaModule*,StringCompare> _modules;
   static std::map<string,AaType*,StringCompare> _type_map;
 
+  // modules should be printed in the order in which
+  // they were encountered.
+  static vector<AaModule*> _ordered_module_vector;
   // the call graph
   static AaGraphBase _call_graph;
 

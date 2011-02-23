@@ -612,6 +612,7 @@ void AaAssignmentStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
       this->Print(ofile);
       ofile << "// " << this->Get_Source_Info() << endl;
 
+      // declare the target as a constant...
       Write_VC_Constant_Declaration(this->_target->Get_VC_Constant_Name(),
 				    this->_target->Get_Type()->Get_VC_Name(),
 				    this->_target->Get_Expression_Value()->To_VC_String(),
@@ -628,7 +629,18 @@ void AaAssignmentStatement::Write_VC_Wire_Declarations(ostream& ofile)
       this->Print(ofile);
       ofile << "// " << this->Get_Source_Info() << endl;
 
-      this->_source->Write_VC_Wire_Declarations(true,ofile);
+
+      if(this->_target->Is_Implicit_Variable_Reference())
+	// source wire not necessary if the target is
+	// an implicit variable
+	this->_source->Write_VC_Wire_Declarations(true,ofile);
+      else
+	// if target is not implicit variable,
+	// then source wire must be declared..
+	this->_source->Write_VC_Wire_Declarations(false,ofile);
+
+      // target wire is explicitly declared only if
+      // target is a statement..
       this->_target->Write_VC_Wire_Declarations_As_Target(ofile);
     }
 }
@@ -646,6 +658,8 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	{
 	  if(this->_source->Is_Implicit_Variable_Reference())
 	    {
+	      // target and source are both implicit.
+	      // instantiate a register..
 	      Write_VC_Unary_Operator(__NOP,
 				      this->_target->Get_VC_Datapath_Instance_Name(),
 				      this->_source->Get_VC_Driver_Name(),
@@ -656,13 +670,17 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	    }
 	  else
 	    {
+	      // target is implicit, source is not..
+	      // instantiate source stuf..
 	      this->_source->Write_VC_Datapath_Instances(this->_target,ofile);
 	    }
 	}
       else
 	{
-	  this->_target->Write_VC_Datapath_Instances_As_Target(ofile, this->_source);
+	  // target is not implicit..
+	  // source will have an explicit wire..
 	  this->_source->Write_VC_Datapath_Instances(NULL,ofile);
+	  this->_target->Write_VC_Datapath_Instances_As_Target(ofile, this->_source);
 	}
     }
 }
@@ -721,6 +739,8 @@ void AaAssignmentStatement::Propagate_Constants()
     {
       this->_target->Assign_Expression_Value(this->_source->Get_Expression_Value());
     }
+  else
+    this->_target->Evaluate();
 }
 
 //---------------------------------------------------------------------
@@ -1187,7 +1207,7 @@ void AaCallStatement::Write_VC_Links(string hier_id, ostream& ofile)
   vector<string> reqs, acks;
 
   
-  if(hier_id != "/")
+  if(hier_id != "")
     hier_id = hier_id + "/" + this->Get_VC_Name();
   else
     hier_id = this->Get_VC_Name();

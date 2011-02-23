@@ -231,38 +231,99 @@ string vcMemorySpace::Get_Aggregate_Section(string pid, int hindex, int lindex)
 
 void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 {
-  ofile << "MemorySpace_" << this->Get_Id() << ": memory_subsystem -- {" << endl;
-  ofile << "generic map(-- {" << endl;
-  ofile << "num_loads => " << this->Get_Num_Loads() << "," << endl
-	<< "num_stores => " << this->Get_Num_Stores() << "," << endl
-	<< "addr_width => " << this->Get_Address_Width() << "," << endl
-	<< "data_width => " << this->Get_Word_Size() << "," << endl
-	<< "tag_width => " << this->Get_Tag_Length() << "," << endl
-	<< "number_of_banks => " << CeilLog2((this->Get_Num_Loads() + this->Get_Num_Stores())) << ","
-	<< "mux_degree => 2," << endl
-	<< "demux_degree => 2," << endl
-	<< "base_bank_addr_width => 10," << endl
-	<< "base_bank_data_width => 1" 
-	<< ") -- }" << endl;
-  ofile << "port map(-- {" << endl;
-  ofile 
-    << "lr_addr_in => " << this->Get_Id() << "_lr_addr," << endl
-    << "lr_req_in => " << this->Get_Id() << "_lr_req," << endl
-    << "lr_ack_out => " << this->Get_Id() << "_lr_ack," << endl
-    << "lr_tag_in => " << this->Get_Id() << "_lr_tag," << endl
-    << "lc_req_in => " << this->Get_Id() << "_lc_req," << endl
-    << "lc_ack_out => " << this->Get_Id() << "_lc_ack," << endl
-    << "lc_data_out => " << this->Get_Id() << "_lc_data," << endl
-    << "lc_tag_out => " << this->Get_Id() << "_lc_tag," << endl
-    << "sr_addr_in => " << this->Get_Id() << "_sr_addr," << endl
-    << "sr_data_in => " << this->Get_Id() << "_sr_data," << endl
-    << "sr_req_in => " << this->Get_Id() << "_sr_req," << endl
-    << "sr_ack_out => " << this->Get_Id() << "_sr_ack," << endl
-    << "sr_tag_in => " << this->Get_Id() << "_sr_tag," << endl
-    << "sc_req_in=> " << this->Get_Id() << "_sc_req," << endl
-    << "sc_ack_out => " << this->Get_Id() << "_sc_ack," << endl
-    << "sc_tag_out => " << this->Get_Id() << "_sc_tag," << endl
-    << "clock => clk," << endl
-    << "reset => reset";
-  ofile << "); -- }  }" << endl;
+  if(this->Get_Capacity() <= 16)
+    {
+      // instantiate a register bank..
+      ofile << "RegisterBank_" << this->Get_Id() << ": register_bank -- {" << endl;
+      ofile << "generic map(-- {" << endl;
+      ofile << "num_loads => " << this->Get_Num_Loads() << "," << endl
+	    << "num_stores => " << this->Get_Num_Stores() << "," << endl
+	    << "addr_width => " << this->Get_Address_Width() << "," << endl
+	    << "data_width => " << this->Get_Word_Size() << "," << endl
+	    << "tag_width => " << this->Get_Tag_Length() << "," << endl
+	    << "num_registers => " << this->Get_Capacity()
+	    << ") -- }" << endl;
+      ofile << "port map(-- {" << endl;
+      ofile 
+	<< "lr_addr_in => " << this->Get_Id() << "_lr_addr," << endl
+	<< "lr_req_in => " << this->Get_Id() << "_lr_req," << endl
+	<< "lr_ack_out => " << this->Get_Id() << "_lr_ack," << endl
+	<< "lr_tag_in => " << this->Get_Id() << "_lr_tag," << endl
+	<< "lc_req_in => " << this->Get_Id() << "_lc_req," << endl
+	<< "lc_ack_out => " << this->Get_Id() << "_lc_ack," << endl
+	<< "lc_data_out => " << this->Get_Id() << "_lc_data," << endl
+	<< "lc_tag_out => " << this->Get_Id() << "_lc_tag," << endl
+	<< "sr_addr_in => " << this->Get_Id() << "_sr_addr," << endl
+	<< "sr_data_in => " << this->Get_Id() << "_sr_data," << endl
+	<< "sr_req_in => " << this->Get_Id() << "_sr_req," << endl
+	<< "sr_ack_out => " << this->Get_Id() << "_sr_ack," << endl
+	<< "sr_tag_in => " << this->Get_Id() << "_sr_tag," << endl
+	<< "sc_req_in=> " << this->Get_Id() << "_sc_req," << endl
+	<< "sc_ack_out => " << this->Get_Id() << "_sc_ack," << endl
+	<< "sc_tag_out => " << this->Get_Id() << "_sc_tag," << endl
+	<< "clock => clk," << endl
+	<< "reset => reset";
+      ofile << "); -- }  }" << endl;
+    }
+  else
+    {
+      ofile << "MemorySpace_" << this->Get_Id() << ": memory_subsystem -- {" << endl;
+      ofile << "generic map(-- {" << endl;
+      ofile << "num_loads => " << this->Get_Num_Loads() << "," << endl
+	    << "num_stores => " << this->Get_Num_Stores() << "," << endl
+	    << "addr_width => " << this->Get_Address_Width() << "," << endl
+	    << "data_width => " << this->Get_Word_Size() << "," << endl
+	    << "tag_width => " << this->Get_Tag_Length() << "," << endl
+	// the following parameters are hard-wired.. but 
+	// it may be a good idea to expose them!
+	    << "number_of_banks => " << this->Calculate_Number_Of_Banks() << "," << endl
+	    << "mux_degree => 2," << endl
+	    << "demux_degree => 2," << endl
+	    << "base_bank_addr_width => " << this->Calculate_Base_Bank_Address_Width() << "," << endl
+	    << "base_bank_data_width => " << this->Calculate_Base_Bank_Data_Width() << endl 
+	    << ") -- }" << endl;
+      ofile << "port map(-- {" << endl;
+      ofile 
+	<< "lr_addr_in => " << this->Get_Id() << "_lr_addr," << endl
+	<< "lr_req_in => " << this->Get_Id() << "_lr_req," << endl
+	<< "lr_ack_out => " << this->Get_Id() << "_lr_ack," << endl
+	<< "lr_tag_in => " << this->Get_Id() << "_lr_tag," << endl
+	<< "lc_req_in => " << this->Get_Id() << "_lc_req," << endl
+	<< "lc_ack_out => " << this->Get_Id() << "_lc_ack," << endl
+	<< "lc_data_out => " << this->Get_Id() << "_lc_data," << endl
+	<< "lc_tag_out => " << this->Get_Id() << "_lc_tag," << endl
+	<< "sr_addr_in => " << this->Get_Id() << "_sr_addr," << endl
+	<< "sr_data_in => " << this->Get_Id() << "_sr_data," << endl
+	<< "sr_req_in => " << this->Get_Id() << "_sr_req," << endl
+	<< "sr_ack_out => " << this->Get_Id() << "_sr_ack," << endl
+	<< "sr_tag_in => " << this->Get_Id() << "_sr_tag," << endl
+	<< "sc_req_in=> " << this->Get_Id() << "_sc_req," << endl
+	<< "sc_ack_out => " << this->Get_Id() << "_sc_ack," << endl
+	<< "sc_tag_out => " << this->Get_Id() << "_sc_tag," << endl
+	<< "clock => clk," << endl
+	<< "reset => reset";
+      ofile << "); -- }  }" << endl;
+    }
+}
+
+
+int vcMemorySpace::Calculate_Number_Of_Banks()
+{
+  int num_banks = CeilLog2(this->Get_Num_Loads() + this->Get_Num_Stores());
+  if(CeilLog2(num_banks) < this->Get_Address_Width())
+    {
+      return(num_banks);
+    }
+  else
+    {
+      return(1);
+    }
+}
+int vcMemorySpace::Calculate_Base_Bank_Address_Width()
+{
+  return(10);
+}
+int vcMemorySpace::Calculate_Base_Bank_Data_Width()
+{
+  return(8);
 }

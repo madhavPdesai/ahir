@@ -135,7 +135,7 @@ begin
        end process;
 
        -- pass info out of the generate
-       return_acks_sig(I) <= (return_reqs(I) and ack_reg);
+       return_acks_sig(I) <= ack_reg;
        return_data_sig(I) <= data_reg;
        return_mack_sig(I) <= mack_sig;
        

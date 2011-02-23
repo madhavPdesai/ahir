@@ -506,6 +506,7 @@ void AaSimpleObjectReference::Write_VC_Constant_Wire_Declarations(ostream& ofile
 				  this->Get_Type(),
 				  this->Get_Expression_Value(),
 				  ofile);
+
 }
 void AaSimpleObjectReference::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
@@ -514,16 +515,17 @@ void AaSimpleObjectReference::Write_VC_Wire_Declarations(bool skip_immediate, os
       Write_VC_Wire_Declaration(this->Get_VC_Driver_Name(),
 				this->Get_Type(),
 				ofile);
-      if(this->_object->Is("AaStorageObject"))
-	{
-	  AaUintType* t = AaProgram::Make_Uinteger_Type(1);
-	  string v = "_b0";
-	  Write_VC_Constant_Pointer_Declaration(((AaStorageObject*)this->_object)->Get_VC_Memory_Space_Name(),
-						this->Get_VC_Driver_Name() + "_addr",
-						t,
-						v,
-						ofile);
-	}
+    }
+
+  if(!this->Is_Constant() && this->_object->Is("AaStorageObject"))
+    {
+      AaUintType* t = AaProgram::Make_Uinteger_Type(1);
+      string v = "_b0";
+      Write_VC_Constant_Pointer_Declaration(((AaStorageObject*)this->_object)->Get_VC_Memory_Space_Name(),
+					    this->Get_VC_Driver_Name() + "_addr",
+					    t,
+					    v,
+					    ofile);
     }
 }
 
@@ -850,6 +852,7 @@ void AaArrayObjectReference::Evaluate()
       if(this->_object->Is_Expression())
 	{
 	  ((AaExpression*)this->_object)->Evaluate();
+	  expr_value =  ((AaExpression*)this->_object)->Get_Expression_Value();
 	}
       else if(this->_object->Is_Object() && this->_object->Is_Constant())
 	{
@@ -898,9 +901,12 @@ void AaArrayObjectReference::Write_VC_Wire_Declarations(bool skip_immediate, ost
     {
       _indices[idx]->Write_VC_Wire_Declarations(false,ofile);
     }
+
   // the final address.
-  assert(this->Get_Type()->Is("AaArrayType"));
-  AaUintType* t = AaProgram::Make_Uinteger_Type(CeilLog2(((AaArrayType*)this->Get_Type())->Number_Of_Elements()));
+  AaType* obj_type = ((AaStorageObject*)(this->_object))->Get_Type();
+  assert(obj_type->Is("AaArrayType"));
+
+  AaUintType* t = AaProgram::Make_Uinteger_Type(CeilLog2(((AaArrayType*)obj_type)->Number_Of_Elements()));
 
 
   ofile << "// wire-declarations for expression: ";
@@ -943,9 +949,12 @@ void AaArrayObjectReference::Write_VC_Wire_Declarations_As_Target(ostream& ofile
     {
       _indices[idx]->Write_VC_Wire_Declarations(false,ofile);
     }
+
   // the final address.
-  assert(this->Get_Type()->Is("AaArrayType"));
-  AaUintType* t = AaProgram::Make_Uinteger_Type(CeilLog2(((AaArrayType*)this->Get_Type())->Number_Of_Elements()));
+  AaType* obj_type = ((AaStorageObject*)(this->_object))->Get_Type();
+  assert(obj_type->Is("AaArrayType"));
+
+  AaUintType* t = AaProgram::Make_Uinteger_Type(CeilLog2(((AaArrayType*)obj_type)->Number_Of_Elements()));
 
   ofile << "// wire-declarations for expression: ";
   this->Print(ofile);
@@ -953,10 +962,12 @@ void AaArrayObjectReference::Write_VC_Wire_Declarations_As_Target(ostream& ofile
 
 
   if(!_indices[0]->Is_Constant())
-    Write_VC_Pointer_Declaration(((AaStorageObject*)this->_object)->Get_VC_Memory_Space_Name(),
-				 this->Get_VC_Driver_Name() + "_write_ptr",
-				 t,
-				 ofile);
+    {
+      Write_VC_Pointer_Declaration(((AaStorageObject*)this->_object)->Get_VC_Memory_Space_Name(),
+				   this->Get_VC_Driver_Name() + "_write_ptr",
+				   t,
+				   ofile);
+    }
   else
     {
       string v = _indices[0]->Get_Expression_Value()->To_VC_String();
@@ -971,9 +982,10 @@ void AaArrayObjectReference::Write_VC_Wire_Declarations_As_Target(ostream& ofile
 void AaArrayObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source)
 {
 
-  assert(this->_object && this->_object->Is("AaStorageObject"));
+  if(this->Is_Constant())
     return;
 
+  assert(this->_object && this->_object->Is("AaStorageObject"));
 
   for(int idx = 0; idx < _indices.size(); idx++)
     {
@@ -991,7 +1003,13 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& ofi
       index_addr =  this->Get_VC_Driver_Name() + "_constant_write_ptr";
     }
     
-  AaUintType* t = AaProgram::Make_Uinteger_Type(CeilLog2(((AaArrayType*)this->Get_Type())->Number_Of_Elements()));
+
+  // the final address.
+  AaType* obj_type = ((AaStorageObject*)(this->_object))->Get_Type();
+  assert(obj_type->Is("AaArrayType"));
+
+  AaUintType* t = AaProgram::Make_Uinteger_Type(CeilLog2(((AaArrayType*)obj_type)->Number_Of_Elements()));
+
 
   ofile << "// data-path-instances for expression: ";
   this->Print(ofile);
@@ -1039,8 +1057,13 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
     {
       index_addr =  this->Get_VC_Driver_Name() + "_constant_read_ptr";
     }
+
+  // the final address.
+  AaType* obj_type = ((AaStorageObject*)(this->_object))->Get_Type();
+  assert(obj_type->Is("AaArrayType"));
+
+  AaUintType* t = AaProgram::Make_Uinteger_Type(CeilLog2(((AaArrayType*)obj_type)->Number_Of_Elements()));
     
-  AaUintType* t = AaProgram::Make_Uinteger_Type(CeilLog2(((AaArrayType*)this->Get_Type())->Number_Of_Elements()));
 
   ofile << "// data-path-instances for expression: ";
   this->Print(ofile);
@@ -1063,7 +1086,7 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
       // one store instance, 
       Write_VC_Load_Operator((AaStorageObject*)this->_object,
 			     this->Get_VC_Datapath_Instance_Name(),
-			     (target != NULL ? target->Get_VC_Name() : this->Get_VC_Name()),
+			     (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name()),
 			     index_addr,
 			     ofile);
     }

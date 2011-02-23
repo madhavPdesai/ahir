@@ -27,15 +27,13 @@ string Int64ToStr(int64_t x)
 
 int CeilLog2(int n)
 {
-  int ret_val = 0;
+  int ret_val = 1;
 
   while( n > 1)
     {
       n = n/2;
       ret_val++;
     }
-  if(ret_val == 0)
-    ret_val = 1;
 
   return(ret_val);
 }

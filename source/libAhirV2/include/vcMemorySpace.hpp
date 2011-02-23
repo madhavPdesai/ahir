@@ -81,5 +81,8 @@ class vcMemorySpace: public vcRoot
   virtual void Print(ostream& ofile);
   void Print_VHDL_Instance(ostream& ofile);
 
+  int Calculate_Number_Of_Banks();
+  int Calculate_Base_Bank_Address_Width();
+  int Calculate_Base_Bank_Data_Width();
 };
 #endif // vcMemorySpace
