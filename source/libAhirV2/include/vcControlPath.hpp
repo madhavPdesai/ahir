@@ -186,7 +186,11 @@ public:
   virtual void Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* m);
   virtual void Update_Predecessor_Successor_Links();
   
-  void BFS_Order(bool reverse_flag,vcCPElement* start_element, 
+  void BFS_Order(bool reverse_flag,
+		 vcCPElement* start_element, 
+		 int& num_visited, 
+		 vector<vcCPElement*>& bfs_ordered_elements);
+  void DFS_Order(bool reverse_flag,vcCPElement* start_element, 
 		 bool& cycle_flag, int& num_visited, vector<vcCPElement*>& dfs_ordered_elements);
 
   virtual void Print_Structure(ostream& ofile);

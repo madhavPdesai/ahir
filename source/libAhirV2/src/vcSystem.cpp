@@ -626,7 +626,7 @@ void vcSystem::Print_VHDL_Pipe_Instances(ostream& ofile)
 	  ofile << "port map( -- { " << endl;
 	  ofile << "req => " << pipe_id << "_pipe_read_req," << endl 
 		<< "ack => " << pipe_id << "_pipe_read_ack," << endl 
-		<< "data => "<< pipe_id << "_pipe_write_data," << endl 
+		<< "data => "<< pipe_id << "_pipe_read_data," << endl 
 		<< "oreq => "<< pipe_id << "_pipe_ack, -- cross-over" << endl
 		<< "oack => "<< pipe_id << "_pipe_req, -- cross-over" << endl
 		<< "odata => "<< pipe_id << "_pipe_data," << endl

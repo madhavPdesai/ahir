@@ -554,11 +554,17 @@ vc_IOPort_Instantiation[vcDataPath* dp]
           if(in_flag)
           {
             w = dp->Find_Wire(out_id);
+            if(w == NULL)
+               vcSystem::Error("could not find wire named " + out_id);
+
             pipe_id = in_id;
           }
           else
           {
             w = dp->Find_Wire(in_id);
+            if(w == NULL)
+               vcSystem::Error("could not find wire named " + in_id);
+ 
             pipe_id = out_id;
           }
 

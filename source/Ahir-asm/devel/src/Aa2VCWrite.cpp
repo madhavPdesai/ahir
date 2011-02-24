@@ -213,9 +213,9 @@ void Write_VC_IO_Output_Port(AaPipeObject* obj, string inst_name, string data_na
 			     ostream& ofile)
 {
   ofile << "$ioport $out [" << inst_name  << "] "
-	<< "(" << obj->Get_VC_Name() << ") "
-	<< " (" 
-	<< data_name << ")" << endl;
+	<< " (" << data_name << ") " 
+	<< "(" << obj->Get_VC_Name() << ")"
+	<< endl;
 }
 
 void Write_VC_Select_Operator(string inst_name,

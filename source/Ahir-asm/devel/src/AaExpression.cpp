@@ -574,8 +574,7 @@ void AaSimpleObjectReference:: Write_VC_Datapath_Instances_As_Target( ostream& o
 	}
       else if(this->_object->Is("AaPipeObject"))
 	{
-	  string src_name = (source->Is_Constant() ? source->Get_VC_Constant_Name() :
-			     source->Get_VC_Driver_Name());
+	  string src_name =  source->Get_VC_Driver_Name();
 	  // io write.
 	  Write_VC_IO_Output_Port((AaPipeObject*) this->_object,
 				  this->Get_VC_Datapath_Instance_Name(),
@@ -604,7 +603,7 @@ void AaSimpleObjectReference:: Write_VC_Datapath_Instances(AaExpression* target,
 	  // io write.
 	  Write_VC_IO_Input_Port((AaPipeObject*) this->_object,
 				 this->Get_VC_Datapath_Instance_Name(),
-				 (target != NULL ? target->Get_VC_Name() : this->Get_VC_Receiver_Name()),
+				 (target != NULL ? target->Get_VC_Driver_Name() : this->Get_VC_Receiver_Name()),
 				 ofile);
 	}
     }

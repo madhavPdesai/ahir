@@ -78,7 +78,7 @@ begin
   process(data_final)
     variable ldata: std_logic_vector((num_reqs*data_width)-1 downto 0);
   begin
-    for J in data'length(1)-1 downto 0 loop
+    for J in num_reqs-1 downto 0 loop
       Insert(ldata,J,data_final(J));
     end loop;
     data <= ldata;

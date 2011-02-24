@@ -27,9 +27,9 @@ end InputPortLevel;
 architecture default_arch of InputPortLevel is
 
   
-  type IPWArray is array(integer range <>) of std_logic_vector(odata'range);
-  signal data_final, data_reg : IPWArray(data'length(1)-1 downto 0);
-  signal req_active, ack_sig  : std_logic_vector(data'length(1)-1 downto 0); 
+  type IPWArray is array(integer range <>) of std_logic_vector(data_width-1 downto 0);
+  signal data_final, data_reg : IPWArray(num_reqs-1 downto 0);
+  signal req_active, ack_sig  : std_logic_vector(num_reqs-1 downto 0); 
   
   
 begin  -- default_arch
@@ -47,13 +47,13 @@ begin  -- default_arch
   process(data_final)
     variable ldata: std_logic_vector((num_reqs*data_width)-1 downto 0);
   begin
-    for J in data'length(1)-1 downto 0 loop
+    for J in num_reqs-1 downto 0 loop
       Insert(ldata,J,data_final(J));
     end loop;
     data <= ldata;
   end process;
 
-  gen: for I in data'length(1)-1 downto 0 generate
+  gen: for I in num_reqs-1 downto 0 generate
 
     ack_sig(I) <= req_active(I) and oack; 
     

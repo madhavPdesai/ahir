@@ -486,13 +486,13 @@ void vcCPBlock::Print_Structure(ostream& ofile)
 }
 
 
-void vcCPBlock::BFS_Order(bool reverse_flag, vcCPElement* start_element, bool& cycle_flag, int& num_visited, vector<vcCPElement*>& bfs_ordered_elements)
+void vcCPBlock::BFS_Order(bool reverse_flag, vcCPElement* start_element, int& num_visited, vector<vcCPElement*>& bfs_ordered_elements)
 {
   set<vcCPElement*> visited_set;
-  set<vcCPElement*> on_queue_set;
   deque<vcCPElement*> bfs_queue;
-  
+  set<vcCPElement*> on_queue_set;
   bfs_queue.push_back(start_element);
+  on_queue_set.insert(start_element);
   num_visited = 0;
 
   while(!bfs_queue.empty())
@@ -500,22 +500,18 @@ void vcCPBlock::BFS_Order(bool reverse_flag, vcCPElement* start_element, bool& c
       vcCPElement* top = (bfs_queue.front());
 
       bfs_queue.pop_front();
-      visited_set.insert(top);
-      bfs_ordered_elements.push_back(top);
       on_queue_set.erase(top);
 
-      num_visited++;
+      visited_set.insert(top);
+      bfs_ordered_elements.push_back(top);
 
+      num_visited++;
 
       vector<vcCPElement*>& adj = (reverse_flag ? top->Get_Predecessors() : top->Get_Successors());
       for(int idx = 0; idx < adj.size(); idx++)
 	{
 	  vcCPElement* w = adj[idx];
-	  if(visited_set.find(w) != visited_set.end())
-	    {
-	      cycle_flag = true;
-	    }
-	  else if((on_queue_set.find(w) == on_queue_set.end()) && (visited_set.find(w) == visited_set.end()))
+	  if((on_queue_set.find(w) == on_queue_set.end()) && (visited_set.find(w) == visited_set.end()))
 	    {// push into queue if not already present in the queue and if not already popped from front..
 	      bfs_queue.push_back(w);
 	      on_queue_set.insert(w);
@@ -523,6 +519,55 @@ void vcCPBlock::BFS_Order(bool reverse_flag, vcCPElement* start_element, bool& c
 	}
     }
 }
+
+
+void vcCPBlock::DFS_Order(bool reverse_flag, vcCPElement* start_element, bool& cycle_flag, int& num_visited, vector<vcCPElement*>& dfs_ordered_elements)
+{
+  set<vcCPElement*> visited_set;
+  set<vcCPElement*> on_queue_set;
+  deque<vcCPElement*> dfs_queue;
+  
+  dfs_queue.push_front(start_element);
+  on_queue_set.insert(start_element);
+
+  num_visited = 1;
+  visited_set.insert(start_element);
+  dfs_ordered_elements.push_back(start_element);
+
+  while(!dfs_queue.empty())
+    {
+      vcCPElement* top = dfs_queue.front();
+      vector<vcCPElement*>& adj = (reverse_flag ? top->Get_Predecessors() : top->Get_Successors());
+      bool all_neighbours_visited = true;
+      for(int idx = 0; idx < adj.size(); idx++)
+	{
+	  vcCPElement* w = adj[idx];
+	  if(on_queue_set.find(w) != on_queue_set.end())
+	    {
+	      cycle_flag = true;
+	    }
+	  else if(visited_set.find(w) == visited_set.end())
+	    {
+	      num_visited++;
+
+	      dfs_ordered_elements.push_back(w);
+	      visited_set.insert(w);
+	      dfs_queue.push_front(w);
+	      on_queue_set.insert(w);
+	      all_neighbours_visited = false;
+
+	      break;
+	    }
+	}
+
+      if(all_neighbours_visited)
+	{
+	  dfs_queue.pop_front();
+	  on_queue_set.erase(top);
+	}
+    }
+}
+
 
 
 void vcCPBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* cp) {assert(0);}
@@ -756,7 +801,7 @@ bool vcCPBranchBlock::Check_Structure()
       bool cycle_flag = false;
       int num_visited = 0;
 
-      this->BFS_Order(false,this->_entry, cycle_flag, num_visited, reachable_elements);
+      this->BFS_Order(false,this->_entry, num_visited, reachable_elements);
       if(num_visited != (this->_elements.size() + 2))
 	{
 	  ret_flag = false;
@@ -766,7 +811,7 @@ bool vcCPBranchBlock::Check_Structure()
       reachable_elements.clear();
       num_visited = 0;
       cycle_flag = false;
-      this->BFS_Order(true, this->_exit, cycle_flag, num_visited, reachable_elements);
+      this->BFS_Order(true, this->_exit, num_visited, reachable_elements);
       if(num_visited != (this->_elements.size() + 2))
 	{
 	  ret_flag = false;
@@ -886,7 +931,7 @@ bool vcCPForkBlock::Check_Structure()
       bool cycle_flag = false;
       int num_visited = 0;
 
-      this->BFS_Order(false, this->_entry, cycle_flag, num_visited, reachable_elements);
+      this->DFS_Order(false, this->_entry, cycle_flag, num_visited, reachable_elements);
       if(num_visited != (this->_elements.size() + 2))
 	{
 	  ret_flag = false;
@@ -902,7 +947,7 @@ bool vcCPForkBlock::Check_Structure()
       reachable_elements.clear();
       num_visited = 0;
       cycle_flag = false;
-      this->BFS_Order(true, this->_exit, cycle_flag, num_visited, reachable_elements);
+      this->BFS_Order(true, this->_exit, num_visited, reachable_elements);
       if(num_visited != (this->_elements.size() + 2))
 	{
 	  ret_flag = false;
@@ -922,10 +967,9 @@ void vcCPForkBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label,
   this->Set_Compatibility_Label(in_label);
 
   vector<vcCPElement*> reachable_elements;
-  bool cycle_flag = false;
   int num_visited = 0;
   
-  this->BFS_Order(false, this->_entry, cycle_flag, num_visited, reachable_elements);
+  this->BFS_Order(false, this->_entry, num_visited, reachable_elements);
   this->_entry->Set_Compatibility_Label(in_label);
 
   for(int idx = 0; idx < reachable_elements.size(); idx++)
@@ -934,7 +978,6 @@ void vcCPForkBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label,
 	{
 	  vcTransition* t = (vcTransition*) reachable_elements[idx];
 
-	  // first the join case.
 	  map<vcTransition*, vector<vcCPElement*>, vcRoot_Compare>::iterator join_iter = this->_join_map.find(t);
 	  if(join_iter != this->_join_map.end())
 	    {
@@ -1037,6 +1080,12 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
       if(_joined_elements.find(_elements[idx]) == _joined_elements.end())
 	unjoined_elements.push_back(_elements[idx]);
     }
+  if(_forked_elements.find(this->_exit) == _forked_elements.end())
+    unforked_elements.push_back(this->_exit);
+
+  if(_joined_elements.find(this->_exit) == _joined_elements.end())
+    unjoined_elements.push_back(this->_exit);
+
 
 
   // finally, those CPElements in the block which
@@ -1046,8 +1095,11 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
     {
       for(int idx = 0; idx < unforked_elements.size(); idx++)
 	{
+	  // entry -> exit link may be introduced here.
+	  // (if not explicitly specified).
 	  this->_entry->Add_Successor(unforked_elements[idx]);
 	  unforked_elements[idx]->Add_Predecessor(this->_entry);
+	  this->_fork_map[this->_entry].push_back(unforked_elements[idx]);
 	}
     }
 
@@ -1058,8 +1110,12 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
     {
       for(int idx = 0; idx < unjoined_elements.size(); idx++)
 	{
-	  this->_entry->Add_Predecessor(unjoined_elements[idx]);
-	  unjoined_elements[idx]->Add_Successor(this->_entry);
+	  if(unjoined_elements[idx] != this->_exit)
+	    {
+	      this->_exit->Add_Predecessor(unjoined_elements[idx]);
+	      unjoined_elements[idx]->Add_Successor(this->_exit);
+	      this->_join_map[this->_exit].push_back(unjoined_elements[idx]);
+	    }
 	}
     }
 
@@ -1161,7 +1217,8 @@ void vcControlPath::Compute_Compatibility_Labels()
   // and that there is no cycle.
   bool cycle_flag = false;
   int num_visited = 0;
-  this->vcCPBlock::BFS_Order(false, (vcCPElement*) source, cycle_flag, num_visited, this->_bfs_ordered_labels);
+  vector<vcCPElement*> dfs_ordered_elements;
+  this->vcCPBlock::DFS_Order(false, (vcCPElement*) source, cycle_flag, num_visited,dfs_ordered_elements);
   if(cycle_flag)
     {
       vcSystem::Error("Cycle in compatibility label graph\n");
@@ -1173,6 +1230,7 @@ void vcControlPath::Compute_Compatibility_Labels()
 
   // now build the descendant maps.
   // transitive closure..
+  this->vcCPBlock::BFS_Order(false, (vcCPElement*) source,num_visited, this->_bfs_ordered_labels);
   for(int hidx = this->_bfs_ordered_labels.size(); hidx > 0; hidx--)
     {
       int idx = hidx-1;

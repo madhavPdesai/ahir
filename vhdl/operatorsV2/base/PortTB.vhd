@@ -7,6 +7,7 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.Components.all;
+use ahir.BaseComponents.all;
 
 entity PortTB is
   generic
@@ -22,13 +23,13 @@ architecture Behave of PortTB is
     constant num_req : integer := g_num_req;
     
     signal reqR, ackR, reqL, ackL : BooleanArray(num_req-1 downto 0);
-    signal din, dout : StdLogicArray2D(num_req-1 downto 0, data_width-1 downto 0);
+    signal din, dout : std_logic_vector((num_req*data_width)-1 downto 0);
 
     type   Data2D is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
     signal din_raw, dout_raw: Data2D(num_req-1 downto 0);
 
-    function Build_Data(tmp_addr: in Data2D) return StdLogicArray2D is
-	variable tmp: StdLogicArray2D(num_req-1 downto 0, data_width-1 downto 0);
+    function Build_Data(tmp_addr: in Data2D) return std_logic_vector is
+	variable tmp: std_logic_vector((num_req*data_width)-1 downto 0);
     begin
         for I in 0 to num_req-1 loop
             Insert(tmp,I,tmp_addr(I));
@@ -36,7 +37,6 @@ architecture Behave of PortTB is
 	return(tmp);
     end function Build_Data;
 
-    constant def_colouring: NaturalArray(num_req-1 downto 0) := (0 => 0, others => 1);
     signal clock, reset : std_logic := '0';
 
     signal done_flag, success_flag: BooleanArray(num_req-1 downto 0);
@@ -107,13 +107,20 @@ begin
      end generate GenBlockSend;
 
      GenBlockReceive: for R in 0 to num_req-1 generate
-   
-       dout_raw(R) <= Extract(dout,R);
+
+       process(dout)
+         variable dout_var : std_logic_vector(data_width-1 downto 0);
+       begin
+         Extract(dout,R,dout_var);
+         dout_raw(R) <= dout_var;
+       end process;
+
 
        process 
          variable dv: natural;
 	 variable counter: natural;
 	 variable err_flag : boolean;
+         variable dout_var : std_logic_vector(data_width-1 downto 0);
        begin 
          reqR(R) <= false;	
          counter := 1;
@@ -135,8 +142,9 @@ begin
              if(ackR(R)) then
 		assert not verbose_mode report "Receive Request " & Convert_To_String(R) & "," &
 			Convert_To_String(counter) & " completed in TB " & tb_id  severity note;
-	
-                if(To_SLV(To_Unsigned(dv,data_width)) /= (Extract(dout,R))) then
+
+                Extract(dout,R,dout_var);
+                if(To_SLV(To_Unsigned(dv,data_width)) /= dout_var) then
                   err_flag := true;
                   assert false report "Mismatch observed at " & Convert_To_String(R) & "," &
 			Convert_To_String(counter) & " in TB " & tb_id  severity note;                  
@@ -170,7 +178,7 @@ begin
 	signal ip_to_op_ack, op_to_ip_req: std_logic;
 	signal op_to_ip_data: std_logic_vector(data_width-1 downto 0);
      begin
-     	op: OutputPort generic map(colouring => def_colouring)
+     	op: OutputPort generic map(num_reqs => num_req, data_width => data_width , no_arbitration => false)
 		port map(req => reqL,
 		 	ack => ackL,
 		 	data => din,
@@ -180,7 +188,7 @@ begin
 		 	clk => clock,
 		 	reset => reset);
         
-     	ip: InputPort generic map (colouring => def_colouring)
+     	ip: InputPort generic map (num_reqs => num_req, data_width => data_width , no_arbitration => false)
  		port map (req => reqR,
                   	ack => ackR,
                   	data => dout,

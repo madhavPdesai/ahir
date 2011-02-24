@@ -1700,7 +1700,7 @@ string vcDataPath::Print_VHDL_IO_Interface_Port_Map(string comma, ostream& ofile
 	  ofile << parent_module->Get_Parent()->Get_VHDL_Pipe_Interface_Port_Name(pipe_id,"read_req") 
 		<< " => " 
 		<< parent_module->Get_Parent()->Get_Pipe_Aggregate_Section(pipe_id,
-									   "write_req", 
+									   "read_req", 
 									   hindex, 
 									   lindex) 
 		<< "," << endl;

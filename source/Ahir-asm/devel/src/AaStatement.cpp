@@ -1803,8 +1803,10 @@ void AaJoinForkStatement::Write_Entry_Transfer_Code(ofstream& ofile)
 
 void AaJoinForkStatement::Write_VC_Control_Path(ostream& ofile)
 {
-  ofile << "// wire-declarations for join-fork statement " <<  endl;
+  ofile << "// control-path for join-fork statement " <<  endl;
   ofile << "// " << this->Get_Source_Info() << endl;
+  if(this->_statement_sequence != NULL)
+    this->_statement_sequence->Write_VC_Control_Path(ofile);
 
 
   ofile << "$T [" << this->Get_VC_Name() <<"] // join " << this->Get_Source_Info() << endl;
@@ -1815,11 +1817,11 @@ void AaJoinForkStatement::Write_VC_Control_Path(ostream& ofile)
   else
     {
       ofile << this->Get_VC_Name() << " <-& (";
-      for(int idx = 0; idx < _join_labels.size(); idx++)
+      for(int idx = 0; idx < _wait_on_statements.size(); idx++)
 	{
 	  if(idx > 0)
 	    ofile << " ";
-	  ofile << _join_labels[idx];
+	  ofile << _wait_on_statements[idx]->Get_VC_Name();
 	}
       ofile << ")" << endl;
     }

@@ -76,7 +76,7 @@ begin
     variable var_odata : std_logic_vector(data_width-1 downto 0) := (others => '0');
   begin  -- process
     var_odata := (others => '0');
-    for I in 0 to data'length(1) - 1 loop
+    for I in 0 to num_reqs - 1 loop
       var_odata := data_array(I) or var_odata;
     end loop;  -- I
     odata <= var_odata;
