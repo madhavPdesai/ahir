@@ -204,9 +204,43 @@ package BaseComponents is
        ack_in: in std_logic);
    end component RepeaterBase;
 
+  component ShiftRepeaterBase 
+   generic(data_width: integer := 32; number_of_stages: natural := 1);
+    port(clk: in std_logic;
+       reset: in std_logic;
+       data_in: in std_logic_vector(data_width-1 downto 0);
+       req_in: in std_logic;
+       ack_out : out std_logic;
+       data_out: out std_logic_vector(data_width-1 downto 0);
+       req_out : out std_logic;
+       ack_in: in std_logic);
+  end component ShiftRepeaterBase;
+
+  -----------------------------------------------------------------------------
+  -- pipe
+  -----------------------------------------------------------------------------
+  component PipeBase 
+    
+    generic (num_reads: integer;
+             num_writes: integer;
+             data_width: integer;
+             depth: integer := 1);
+    port (
+      read_req       : in  std_logic_vector(num_reads-1 downto 0);
+      read_ack       : out std_logic_vector(num_reads-1 downto 0);
+      read_data      : out std_logic_vector((num_reads*data_width)-1 downto 0);
+      write_req       : in  std_logic_vector(num_writes-1 downto 0);
+      write_ack       : out std_logic_vector(num_writes-1 downto 0);
+      write_data      : in std_logic_vector((num_writes*data_width)-1 downto 0);
+      clk, reset : in  std_logic);
+    
+  end component PipeBase;
+
+
   -----------------------------------------------------------------------------
   -- phi,branch,select
   -----------------------------------------------------------------------------
+
   component PhiBase 
     generic (
       num_reqs   : integer;

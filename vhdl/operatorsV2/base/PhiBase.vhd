@@ -22,8 +22,6 @@ end PhiBase;
 
 architecture Behave of PhiBase is
 
-  -- divide and conquer mux.
-
 begin  -- Behave
 
   assert(idata'length = (odata'length * req'length)) report "data size mismatch" severity failure;
@@ -33,10 +31,15 @@ begin  -- Behave
   begin
      if(clk'event and clk = '1') then
 	if(reset = '1') then
-          ack <= false;	
+          ack <= false;
+          odata <= (others => '0');
 	else
-          odata <= MuxOneHot(idata,req);
-          ack <= OrReduce(req);
+          if(OrReduce(req)) then
+            odata <= MuxOneHot(idata,req);
+            ack <= true;
+          else
+            ack <= false;
+          end if;
 	end if;
      end if;
   end process;

@@ -27,6 +27,8 @@ begin
       elsif req then
         ack <= true;
         dout <= din;
+      else
+        ack <= false;
       end if;
     end if;
   end process;

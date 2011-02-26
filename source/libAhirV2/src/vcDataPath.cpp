@@ -28,7 +28,7 @@ void vcWire::Print_VHDL_Std_Logic_Declaration(ostream& ofile)
 	 this->Get_Type()->Is("vcFloatType") ||
 	 this->Get_Type()->Is("vcPointerType"));
 
-  ofile << "signal " << this->Get_Id() << " : " << this->Get_Type()->Get_VHDL_Type_Name() << ";" << endl;
+  ofile << "signal " << this->Get_VHDL_Id() << " : " << this->Get_Type()->Get_VHDL_Type_Name() << ";" << endl;
 }
 
 int vcWire::Get_Size() {return(this->_type->Size());}
@@ -51,7 +51,7 @@ void vcConstantWire::Print(ostream& ofile)
 
 void vcConstantWire::Print_VHDL_Constant_Declaration(ostream& ofile)
 {
-  ofile << "constant " << this->Get_Id() << " : " ;
+  ofile << "constant " << this->Get_VHDL_Id() << " : " ;
   ofile << this->Get_Type()->Get_VHDL_Type_Name()  << " := ";
   ofile << this->_value->To_VHDL_String() << ";" << endl;
 }
@@ -644,7 +644,7 @@ void vcDataPath::Print_VHDL_Phi_Instances(ostream& ofile)
       assert(p->Get_Number_Of_Reqs() == num_reqs);
       assert(p->Get_Number_Of_Acks() == 1);
       
-      ofile << p->Get_Id() << ": Block; -- phi operator {" << endl;
+      ofile << p->Get_VHDL_Id() << ": Block -- phi operator {" << endl;
       ofile << "signal idata: std_logic_vector(" << idata_width-1 << " downto 0);" << endl;
       ofile << "signal req: BooleanArray(" << num_reqs-1 << " downto 0);" << endl;
       ofile << "--}\n begin -- {" << endl;
@@ -653,7 +653,7 @@ void vcDataPath::Print_VHDL_Phi_Instances(ostream& ofile)
 	{
 	  if(idx > 0)
 	    ofile << " & ";
-	  ofile << p->Get_Inwires()[idx]->Get_Id();
+	  ofile << p->Get_Inwires()[idx]->Get_VHDL_Id();
 	}
       ofile << ";" << endl;
 
@@ -666,9 +666,18 @@ void vcDataPath::Print_VHDL_Phi_Instances(ostream& ofile)
 	}
       ofile << ";" << endl;
       
-      ofile << "phi: PhiBase port map(req => req, ack => " << p->Get_Ack(0)->Get_DP_To_CP_Symbol()  << ","
-	    << "idata = > idata, odata => " << p->Get_Outwire()->Get_Id() << ", clk => clk, reset => reset);" << endl;
-      ofile << "-- }\n end Block; -- phi operator " << p->Get_Id() << endl;
+      ofile << "phi: PhiBase -- {" << endl
+	    << "generic map( -- { " << endl 
+	    << "num_reqs => " << p->Get_Number_Of_Reqs() << "," << endl
+	    << "data_width => " << odata_width << ") -- }"  << endl
+	    << "port map( -- { "<< endl 
+	    << "req => req, " << endl
+	    << "ack => " << p->Get_Ack(0)->Get_DP_To_CP_Symbol()  << "," << endl
+	    << "idata => idata," << endl
+	    << "odata => " << p->Get_Outwire()->Get_VHDL_Id() << "," << endl
+	    << "clk => clk," << endl
+	    << "reset => reset ); -- }}" << endl;
+      ofile << "-- }\n end Block; -- phi operator " << p->Get_VHDL_Id() << endl;
     }
 }
 
@@ -682,9 +691,9 @@ void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
       iter++)
     {
       vcSelect* s = (*iter).second;
-      ofile << s->Get_Id() << ": SelectBase generic map(data_width => " << s->_z->Get_Size() << ") -- {" << endl;
-      ofile << " port map( x => " << s->_x->Get_Id() << ", y => " << s->_y->Get_Id() << ", => " 
-	    << s->_sel->Get_Id() << ", z => " << s->_z->Get_Id() 
+      ofile << s->Get_VHDL_Id() << ": SelectBase generic map(data_width => " << s->_z->Get_Size() << ") -- {" << endl;
+      ofile << " port map( x => " << s->_x->Get_VHDL_Id() << ", y => " << s->_y->Get_VHDL_Id() << ", => " 
+	    << s->_sel->Get_VHDL_Id() << ", z => " << s->_z->Get_VHDL_Id() 
 	    << ", req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol() 
 	    << ", ack => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol() << ", clk => clk, reset => reset); -- }" << endl;
     }
@@ -697,9 +706,9 @@ void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
       iter++)
     {
       vcRegister* s = (*iter).second;
-      ofile << s->Get_Id() << ": RegisterBase generic map(data_width => " << s->_din->Get_Size() << ") -- {" << endl;
-      ofile << " port map( din => " << s->_din->Get_Id() << "," 
-	    << " dout => " << s->_dout->Get_Id() << ","
+      ofile << s->Get_VHDL_Id() << ": RegisterBase generic map(data_width => " << s->_din->Get_Size() << ") -- {" << endl;
+      ofile << " port map( din => " << s->_din->Get_VHDL_Id() << "," 
+	    << " dout => " << s->_dout->Get_VHDL_Id() << ","
 	    << " req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol()  << ","
 	    << " ack => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol() << ", clk => clk, reset => reset); -- }" << endl;
     }
@@ -713,23 +722,36 @@ void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
       iter++)
     {
       vcBranch* s = (*iter).second;
-      ofile << s->Get_Id() << ": BranchBase ";
-      ofile << " port map( -- { " << endl << " condition => ";
+
+      int in_width = 0;
+      for(int idx = 0; idx < s->_inwires.size(); idx++)
+	in_width += s->_inwires[idx]->Get_Size();
+
+      ofile << s->Get_VHDL_Id() << ": Block -- { -- branch-block" << endl;
+      ofile << "signal condition_sig : std_logic_vector(" << in_width-1 << " downto 0);" << endl;
+      ofile << "begin " << endl;
+      ofile << "condition_sig <= ";
       for(int idx = 0; idx < s->_inwires.size(); idx++)
 	{
 	  if(idx > 0)
 	    ofile << " & ";
-	  ofile << s->_inwires[idx]->Get_Id();
+	  ofile << s->_inwires[idx]->Get_VHDL_Id();
 	}
+      ofile << ";" << endl;
+      ofile << "branch_instance: BranchBase -- {" << endl;
+      ofile << " generic map( condition_width => " << in_width << ")" << endl;
+      ofile << " port map( -- { " << endl << " condition => condition_sig";
       ofile << "," << endl;
       ofile << "req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol() << "," <<  endl
 	    << "ack0 => " << ((s->Get_Ack(0) != NULL) ? s->Get_Ack(0)->Get_DP_To_CP_Symbol() : 
-			      vcLexerKeywords[__OPEN] )
+			      "open" )
+	    << "," << endl
 	    << "ack1 => " << ((s->Get_Ack(1) != NULL) ? s->Get_Ack(1)->Get_DP_To_CP_Symbol() : 
-			      vcLexerKeywords[__OPEN] )
+			      "open" )
 	    << "," << endl
 	    << "clk => clk," << endl
-	    << "reset => reset); -- }" << endl;
+	    << "reset => reset); -- }}" << endl;
+      ofile << "--}\n end Block; -- branch-block" << endl;
     }
 }
 
@@ -775,7 +797,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	  vcSplitOperator* so = (vcSplitOperator*) (*iter);
 	  is_unary_operator = Is_Unary_Op(so->Get_Op_Id());
 
-	  elements.push_back(so->Get_Id());
+	  elements.push_back(so->Get_VHDL_Id());
 	  so->Append_Inwires(inwires);
 	  so->Append_Outwires(outwires);
 	  reqL.push_back(so->Get_Req(0));
@@ -805,7 +827,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       vector<vcWire*> concat_in_wires;
       for(int u = 0; u < inwires.size(); u++)
 	{
-	  if(!use_constant || (u%2 != 0))
+	  if(!use_constant || (u%2 == 0))
 	    {
 	      // do not count if inwire is
 	      // an even operand and if it is
@@ -927,7 +949,7 @@ void vcDataPath::Print_VHDL_Concatenation(string target, vector<vcWire*> wires, 
     {
       if(u > 0)
 	ofile << " & ";
-      ofile << wires[u]->Get_Id();
+      ofile << wires[u]->Get_VHDL_Id();
     }
   ofile << ";" << endl;
 }
@@ -939,7 +961,7 @@ void vcDataPath::Print_VHDL_Disconcatenation(string source, int total_width, vec
   int lindex = total_width-1;
   for(int u = 0; u < wires.size(); u++)
     {
-      ofile << wires[u]->Get_Id() << " <= " << source << "(";
+      ofile << wires[u]->Get_VHDL_Id() << " <= " << source << "(";
       ofile << lindex << " downto " << (lindex - (wires[u]->Get_Size()-1)) << ");" << endl;
       lindex -= wires[u]->Get_Size();
     }
@@ -982,7 +1004,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 	  else
 	    assert(ms == ((vcLoad*) so)->Get_Memory_Space());
 
-	  elements.push_back(so->Get_Id());
+	  elements.push_back(so->Get_VHDL_Id());
 	  so->Append_Inwires(inwires);
 	  so->Append_Outwires(outwires);
 	  reqL.push_back(so->Get_Req(0));
@@ -1118,7 +1140,7 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 	  else
 	    assert(ms == so->Get_Memory_Space());
 
-	  elements.push_back(so->Get_Id());
+	  elements.push_back(so->Get_VHDL_Id());
 	  addrwires.push_back(so->Get_Address());
 	  datawires.push_back(so->Get_Data());
 
@@ -1250,7 +1272,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 	  else
 	    assert(data_width == so->Get_Data()->Get_Size());
 
-	  elements.push_back(so->Get_Id());
+	  elements.push_back(so->Get_VHDL_Id());
 	  so->Append_Outwires(outwires);
 	  req.push_back(so->Get_Req(0));
 	  ack.push_back(so->Get_Ack(0));
@@ -1344,7 +1366,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 	  else
 	    assert(data_width == so->Get_Data()->Get_Size());
 
-	  elements.push_back(so->Get_Id());
+	  elements.push_back(so->Get_VHDL_Id());
 	  so->Append_Inwires(inwires);
 	  req.push_back(so->Get_Req(0));
 	  ack.push_back(so->Get_Ack(0));
@@ -1489,7 +1511,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 	  else
 	    assert(called_module == so->Get_Called_Module());
 
-	  elements.push_back(so->Get_Id());
+	  elements.push_back(so->Get_VHDL_Id());
 	  so->Append_Inwires(inwires);
 	  so->Append_Outwires(outwires);
 	  reqL.push_back(so->Get_Req(0));
@@ -1697,7 +1719,8 @@ string vcDataPath::Print_VHDL_IO_Interface_Port_Map(string comma, ostream& ofile
       if(parent_module->Get_Parent()->Get_Pipe_Module_Section(pipe_id, parent_module,"read", hindex,lindex))
 	{
 	  ofile << comma << endl;
-	  ofile << parent_module->Get_Parent()->Get_VHDL_Pipe_Interface_Port_Name(pipe_id,"read_req") 
+	  ofile << parent_module->Get_Parent()->Get_VHDL_Pipe_Interface_Port_Name(pipe_id,
+										  "read_req") 
 		<< " => " 
 		<< parent_module->Get_Parent()->Get_Pipe_Aggregate_Section(pipe_id,
 									   "read_req", 

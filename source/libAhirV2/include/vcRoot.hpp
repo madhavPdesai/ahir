@@ -228,6 +228,8 @@ protected:
 
   void Add_Attribute(string tag, string value);
   string Get_Id();
+  virtual string Get_VHDL_Id() {return(To_VHDL(this->Get_Id()));}
+
   string Get_Label();
 
   virtual void Print(ostream& ofile);

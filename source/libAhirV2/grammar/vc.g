@@ -198,7 +198,13 @@ vc_CPPlace[vcCPElement* p] returns[vcCPElement* cpe]
 {
   string id;
 }
-: PLACE id = vc_Label {cpe = (vcCPElement*) new vcPlace(p, id,0);};
+: PLACE id = vc_Label 
+   {
+         cpe = NULL;
+         if(p->Find_CPElement(id) == NULL) 
+              cpe = (vcCPElement*) new vcPlace(p, id,0);
+   }
+;
 
 
 //-----------------------------------------------------------------------------------------------
@@ -210,7 +216,9 @@ vc_CPTransition[vcCPElement* p] returns[vcCPElement* cpe]
 }
 : TRANSITION id = vc_Label
   {
-    cpe = (vcCPElement*) (new vcTransition(p,id));
+    cpe = NULL;
+    if(p->Find_CPElement(id) == NULL) 
+       cpe = (vcCPElement*) (new vcTransition(p,id));
   }
   ;
 
@@ -462,7 +470,7 @@ vc_Branch_Instantiation[vcDataPath* dp]
 :
  BRANCH_OP id = vc_Label
  LPAREN 
-    wid = vc_Identifier {x = dp->Find_Wire(wid); assert(x != NULL); wires.push_back(x);}
+    (wid = vc_Identifier {x = dp->Find_Wire(wid); assert(x != NULL); wires.push_back(x);})+
  RPAREN
  { new_op = new vcBranch(id,wires); dp->Add_Branch(new_op);}   
 ;

@@ -59,7 +59,8 @@ public:
   virtual void Print_Successors(ostream& ofile);
   virtual void Print_Structure(ostream& ofile) {}
 
-  string Get_VHDL_Id() {return("cp_" + IntToStr(this->Get_Index()));}
+  //  string Get_VHDL_Id() {return("cp_" + IntToStr(this->Get_Index()));}
+  string Get_VHDL_Id() {return(To_VHDL(this->Get_Id()+ "_" + IntToStr(this->Get_Index())));}
 
   virtual string Get_Exit_Symbol() {return(this->Get_VHDL_Id() + "_symbol");}
   virtual string Get_Start_Symbol(){return(this->Get_VHDL_Id() + "_start");}

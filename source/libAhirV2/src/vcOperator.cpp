@@ -529,7 +529,7 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
       else if(vc_op_id == vcLexerKeywords[__DIV_OP]           ) { ret_string = "ApIntDiv";} 
       else if(vc_op_id == vcLexerKeywords[__SHL_OP]           ) { ret_string = "ApIntSHL";} 
       else if(vc_op_id == vcLexerKeywords[__SHR_OP]           ) { ret_string = "ApIntSHR";} 
-      else if(vc_op_id == vcLexerKeywords[__GT_OP]            ) { ret_string = "ApIntSgt;}";} 
+      else if(vc_op_id == vcLexerKeywords[__GT_OP]            ) { ret_string = "ApIntSgt";} 
       else if(vc_op_id == vcLexerKeywords[__GE_OP]            ) { ret_string = "ApIntSge"  ;} 
       else if(vc_op_id == vcLexerKeywords[__EQ_OP]            ) { ret_string = "ApIntEq"  ;} 
       else if(vc_op_id == vcLexerKeywords[__LT_OP]            ) { ret_string = "ApIntSlt"  ;} 

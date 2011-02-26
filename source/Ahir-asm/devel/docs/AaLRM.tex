@@ -40,28 +40,35 @@ declarations and module definitions.
 \begin{verbatim}
 program := ( module-definition | program-object-declaration )*
 \end{verbatim}
-Declarations at the program level 
+Program object declarations
 can belong to one of three classes:
 \begin{itemize}
 \item {\bf Storage} objects declared in the program
-are globally visible variables that can be read from
-anywhere in the program and can be written from anywhere
-in the program.
-\item {\bf Pipe} objects declared in the program are
-globally visible first-in-first-out buffers that can 
-be read from anywhere in the program. 
-written into by at most one module in the program.
+are variables that can be written into from multiple
+points in the program.  When declared at the program
+scope, storage objects are visible throughout
+the program.
+\item {\bf Pipe} objects declared at the program scope
+are globally visible first-in-first-out buffers that can 
+be read from anywhere in the program and can be
+written into from anywhere in th program.  A pipe
+is a single-place buffer.  A write to a pipe succeeds
+only if the single place buffer is empty.  A read
+from the pipe succeeds only if the single place
+buffer is not empty (the read empties the buffer).
+Thus, pipes can be used for synchronization in 
+an \Aa program.
 \begin{itemize}
-\item A pipe can be written into by at most one module
-in the program, and can be read from by at most one module
-in the program.
 \item A pipe that is only written into in the program, but
 is not read from, is assumed to have a destination outside
-the program.
+the program.  Such a pipe is an output port of the
+program.
 \item A pipe that is only read from in a program but not
 written into, is assumed to have a source outside the program.
+Such a pipe is an input port of the program.
 \end{itemize}
-\item {\bf Constant} objects are globally visible and have
+\item {\bf Constant} objects declared at
+the program scope are globally visible and have
 initial values which can never be altered in the program.
 Thus, an assignment to a constant is an error.
 \end{itemize} 
@@ -84,7 +91,8 @@ Objects (storage/pipe/constant) declared in the module are visible only in the
 module body. 
 
 Each statement in the sequence
-of statements can be viewed as a transition
+of statements can be abstractly 
+viewed as a transition
 in a petri-net, and has a 
 set of input (or source) places  and a set of output
 (or sink)  places.  
@@ -119,12 +127,12 @@ in Section \ref{sec:Scopes}.
  
 Statements in the module-body are can be of two kinds:
 \begin{itemize}
-\item Simple statements: those that have a single
+\item Complete or atomic statements: these that have a single
 entry place and a single exit place.  These are
 the only statements that can occur in a module body.
 These statements are further divided into 
 {\em simple} statements and {\em block} statements.
-\item Sub-atomic statements:  these statements
+\item Incomplete or sub-atomic statements:  these statements
 can appear only inside block statements,  and they
 can have multiple source and sink places.
 Examples of these statements are statements for
@@ -133,9 +141,9 @@ statements for redirecting tokens (the place statement).
 \end{itemize}
 
 
-\subsection{Simple Statements}
+\subsection{Complete Statements}
 
-Simple statements can be one of the following:
+Complete statements can be one of the following:
 \begin{itemize}
 \item An {\bf assignment} statement is of the form
 \begin{verbatim}
@@ -178,6 +186,7 @@ Here is an example of a call statement
 // foo has two inputs and three outputs
 $call foo (p,q)  (r,s,t)
 \end{verbatim}
+
 More details of the syntax are provided in 
 Section \ref{sec:Syntax}.
 \item The {\bf null} statement does nothing, and just passes the
@@ -187,7 +196,7 @@ $null
 \end{verbatim}
 \end{itemize}
 
-\subsection{Block Statements}
+\subsection{Complete Block Statements}
 
 Block statements can be used to describe complex
 control flows, and consist of a sequence of statements.
@@ -241,7 +250,7 @@ $parallelblock [p1]
    b := a + c
    d := a - c
 }
-\end{verbatim}
+\end{verbatim} %$
 The two statements will start in parallel, and the block 
 will finish when both have finished.  The
 order in which the two statements are executed
@@ -369,7 +378,7 @@ defines a place with a label  into which it places
 a token after it has executed.  For example,
 \begin{verbatim}
 $place [fastpath]
-\end{verbatim}
+\end{verbatim}%$
 means that the incoming token is placed in a labeled
 place ``fastpath'' (the place statement never
 puts a token into its default exit place).  
@@ -401,7 +410,7 @@ $phi a := b $on $entry c $on loopback
 This says that the target $a$ is to take the value of $b$ if
 the merge statement was started from its entry place (ie from a
 token passed from its predecessor) and is to take the value of $c$
-if the merge statement was started from the place ``loopback".
+if the merge statement was started from the place ``loopback''.
 Note that if the merge statement is to be triggered by a
 token in its default entry place, one of the labels in the
 label-list for the merge must contain the identifier \$entry.
@@ -427,7 +436,7 @@ $branchblock [b1]
        $place [loopback] // put token in place "loopback"
   $endif
 }
-\end{verbatim}
+\end{verbatim}%$
 This is to be interpreted as follows: the merge executes
 whenever a token is present in its entry place  or in 
 the place labeled ``loopback''.
@@ -548,7 +557,7 @@ and the width of the mantissa.
 The specification is
 \begin{verbatim}
 $float<exponent,mantissa>
-\end{verbatim}
+\end{verbatim} %$
 where the exponent and mantissa must be positive
 integers.  The float is represented by 
 a word with $exponent+mantissa+1$ bits
@@ -557,11 +566,11 @@ The standard IEEE 754 float and double
 precision representations correspond
 to
 \begin{verbatim}
-$float<8><23> 
+$float<8,23> 
 \end{verbatim}
 and
 \begin{verbatim}
-$float<11><52> 
+$float<11,52> 
 \end{verbatim}
 respectively.
 \item Pointers:  A pointer type has the form
@@ -579,13 +588,14 @@ unary, binary or ternary expression.
 
 Array types in \Aa have the form
 \begin{verbatim}
-$array[d1][d2]..[dk] $of <scalar-type-spec>
-\end{verbatim}
-The number of dimensions $k$ must be positive (there is
-no limit on this number), and the scalar type spec
+$array[d1] $of <scalar-type-spec>
+\end{verbatim} %$
+Only single dimensional arrays are allowed
+in an \Aa program, and the scalar type spec
 must specify one of the scalar types described above.
 
 \section{Expressions}
+
 
 Expressions in \Aa fall into the following classes
 \begin{itemize}
@@ -605,7 +615,7 @@ possible unary expressions.  The {\bf type-cast}
 expression is of the form
 \begin{verbatim}
 ($cast (<type-spec>)  <expression>)
-\end{verbatim}
+\end{verbatim} %$
 For example
 \begin{verbatim}
 ($cast ($uint<10>) ##:a)
@@ -654,62 +664,71 @@ GREATER           >
 GREATEREQUAL      >=
 \end{verbatim}
 The evaluation of a binary expression proceeds in
-the usual way.
+the usual way.  Note that when specifying an 
+expression, you {\bf must} use parentheses around
+each expression.
 \item {\bf Ternary} Expressions:  There is only one
 form for the ternary expression.
 \begin{verbatim}
 ( $mux <test-expression>  <true-expression> <false-expression> )
-\end{verbatim}
+\end{verbatim}%$
 The test-expression is evaluated, and if true, the true-expression
 is evaluated, and if false, the false-expression is evaluated.
+Note the parentheses delimiting the expression.
 \end{itemize}
+
+
 
 \section{Foreign Modules}
 
+
 A module can be marked as foreign by using the
+
 \$foreign keyword.
 \begin{verbatim}
 $foreign $ module [GetValue]
 	$in (ptr $pointer<32>)
 	$out (val $uint<32>)
 \end{verbatim}
+
 The \Aa compiler then considers that the module GetValue
 is defined ``elsewhere'' and does not try to link to it
 directly.  This linking is done outside by other tools which
 use the results of the \Aa compilation process.
 
+
 \section{Examples}
+
 
 Here is a very simple program
 \begin{verbatim}
 // an array of 32-bit unsigned integers.
 $storage mem $array<1024> of $uint<32> 
 $module [sel_mod]
-   $in (a $uint<32> b $uint<10>)
-   $out (c $uint<32>)
+   $in (a:$uint<32> b:$uint<10>)
+   $out (c:$uint<32>)
 $is
 {
-   c := (mem[b] + a)
-   mem[b] := c
+   t := (mem[b] + a)
+   mem[b] := t
+   c := t
 }
 \end{verbatim}
 This consists of a single module, which accumulates
 a value into an array position.
 
-
 An example which is a little bit more complicated:
 \begin{verbatim}
 // an array of 32-bit unsigned integers.
-$storage mem $array<1024> $of $uint<32> 
+$storage mem:$array[1024] $of $uint<32> 
 
 // module returns the sum of mem[I] from
 // I=low to I=high
 $module [sum_mod]
-    $in (low $uint<10> high $uint<10>)
-    $out (sum $uint<32>)
+    $in (low:$uint<10> high:$uint<10>)
+    $out (sum:$uint<32>)
 $is
 {
- 
    d := (high-low)  
    mp := ((high-low)/2)
 
@@ -723,7 +742,7 @@ $is
            $parallelblock[parsum]
            {
                $branchblock[sb1]{
-                    $storage  I $uint<10> := 0
+                    $storage  I:$uint<10>
                     $merge $entry loopback
                        $phi s := 0 $on $entry  s1 $on loopback
 		    $endmerge
@@ -734,7 +753,7 @@ $is
                     $endif
                } 
                $branchblock[sb2]{
-                    $storage  J $uint<10> := 0
+                    $storage  J:$uint<10>
                     J := (mp + 1)
                     $merge $entry loopback
                        $phi s := 0 $on $entry s1 $on loopback

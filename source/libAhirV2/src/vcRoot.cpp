@@ -10,7 +10,14 @@ string To_VHDL(string x)
 	  ret_string += 'X';
 	}
       else
-	ret_string += x[i];
+	{
+	  if((i > 0) && x[i-1] == '_' && x[i] == '_')
+	    ret_string += "x_x";
+	  else if(i == x.size()-1 && x[i] == '_')
+	    ret_string += "_x";
+	  else
+	    ret_string += x[i];
+	}
     }
   return(ret_string);
 }

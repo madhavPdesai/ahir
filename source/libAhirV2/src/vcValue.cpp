@@ -62,6 +62,9 @@ string Reverse(string s)
 
 string Add(string s, string t)
 {
+  if(s.size() == 0)
+    return("");
+
   assert(s.size() == t.size());
 
   char cin = '0';
@@ -85,7 +88,15 @@ bool Less(string s, string t) // s,t are assumed to be little-endian
   assert(s.size() == t.size());
   bool ret_val = true;
 
-  ret_val = Less(s.substr(1), t.substr(1)) || (s[0] == '0' && t[0] == '1' && Equal(s.substr(1), t.substr(1)));
+  if(s.size() == 0)
+    return(false);
+  else if(s.size() == 1)
+    return(s[0] == '0' && t[0] == '1');
+  else
+    ret_val = 
+      Less(s.substr(1), t.substr(1)) || 
+      ((s[0] == '0' && t[0] == '1') && Equal(s.substr(1), t.substr(1)));
+
   return(ret_val);
 
 }
@@ -93,12 +104,18 @@ bool Less(string s, string t) // s,t are assumed to be little-endian
 bool Equal(string s, string t) // s,t are assumed to be little-endian
 {
   assert(s.size() == t.size());
-  bool ret_val = (s[0] == t[0]) && Equal(s.substr(1),t.substr(1));
+  if(s.size() == 0)
+    return(true);
+
+  bool ret_val = (s[0] == t[0]) &&  Equal(s.substr(1),t.substr(1));
   return(ret_val);
 }
 
 string Sub(string s, string t) // s,t are assumed to be little-endian
 {
+  if(s.size() == 0)
+    return("");
+
   string q = Complement(t);
   string z = Zero_String(t.size());
   z[0] = '1';
@@ -112,7 +129,11 @@ string Mul(string s, string t) // s,t are assumed to be little-endian
 {
   assert(s.size() == t.size());
 
+
   string mul_result;
+  if(s.size() == 0)
+    return(mul_result);
+
   int mul_size = s.size() + t.size();
   int result_size = s.size();
 
@@ -143,6 +164,9 @@ string Mul(string s, string t) // s,t are assumed to be little-endian
 // SHRA(s) = s1 s2 s3 ... sn sn
 string SHRA(string s)
 {
+  if(s.size() <= 1)
+    return(s);
+
   string sr = Reverse(s);
   string retr;
   retr.push_back(sr[0]);
@@ -155,9 +179,16 @@ string SHRA(string s)
 // SHR(s) = s1 s2 s3 ... sn 0
 string SHR(string s)
 {
-  string sr = Reverse(s);
-  string retr = '0' + sr.substr(1);
-  return(Reverse(retr));
+  if(s.size() == 0)
+    return("");
+  else if(s.size() == 1)
+    return("0");
+  else
+    {
+      string sr = Reverse(s);
+      string retr = '0' + sr.substr(1);
+      return(Reverse(retr));
+    }
 }
 
 vcValue::vcValue(vcType* t):vcRoot()

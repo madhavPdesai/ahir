@@ -1623,13 +1623,17 @@ void AaBranchBlockStatement::Write_VC_Control_Path(ostream& ofile)
   // three passes..
   ofile << "<>[" << this->Get_VC_Name() << "] // Branch Block " << this->Get_Source_Info() << endl << " {" << endl;
 
-  this->Write_VC_Control_Path(true, this->_statement_sequence, ofile);
+  this->Write_VC_Control_Path("$entry", 
+			      this->_statement_sequence, 
+			      "$exit",
+			      ofile);
 
   ofile << "} " << endl;
 }
 
-void AaBranchBlockStatement::Write_VC_Control_Path(bool link_to_self,
+void AaBranchBlockStatement::Write_VC_Control_Path(string source_link,
 						   AaStatementSequence* sseq,
+						   string sink_link,
 						   ostream& ofile)
 {
   if(sseq)
@@ -1685,53 +1689,39 @@ void AaBranchBlockStatement::Write_VC_Control_Path(bool link_to_self,
 	}
 	
       // very finally, the control transfer between statements..
-      if(link_to_self)
-	ofile << "// ------------------- control transfer within branch block " 
-	      << this->Get_VC_Name() <<  " -----------------------------------" << endl;
-
       for(int idx = 0; idx  < sseq->Get_Statement_Count(); idx++)
 	{
 	  AaStatement* stmt = sseq->Get_Statement(idx);
 	    
-	  if(!stmt->Is("AaPlaceStatement"))
+	  
+	  // stmt gets control from its predecessor..
+	  AaStatement* prev_stmt = sseq->Get_Previous_Statement(stmt);
+	  if(prev_stmt == NULL)
 	    {
-	      
-	      // stmt gets control from its predecessor..
-	      AaStatement* prev_stmt = sseq->Get_Previous_Statement(stmt);
-	      if(prev_stmt == NULL)
-		{
-		  if(link_to_self)
-		    ofile << stmt->Get_VC_Name() << "__entry__ <-| ($entry)" << endl;
-		}
-	      else
-		{
-		  if(!prev_stmt->Is("AaPlaceStatement"))		  
-		    ofile << stmt->Get_VC_Name() << "__entry__ <-| (" << prev_stmt->Get_VC_Name() << "__exit__)" << endl;
-		  else
-		    ofile << stmt->Get_VC_Name() << "__entry__ <-| (" << prev_stmt->Get_VC_Name() << ")" << endl;
-		}
+	      ofile << stmt->Get_VC_Entry_Place_Name() << " <-| (" << source_link << ")" << endl;
+	    }
+	  else
+	    {
+	      if(!prev_stmt->Is("AaPlaceStatement"))		  
+		ofile << stmt->Get_VC_Entry_Place_Name() 
+		      << " <-| (" 
+		      << prev_stmt->Get_VC_Exit_Place_Name() 
+		      << ")" << endl;
+	    }
 
-	      // stmt must pass control to its successor..
-	      AaStatement* next_stmt = sseq->Get_Next_Statement(stmt);
-	      if(next_stmt != NULL)
-		{
-		  if(!next_stmt->Is("AaPlaceStatement"))
-		    ofile << stmt->Get_VC_Name() << "__exit__ |-> (" << next_stmt->Get_VC_Name() << "__entry__)" << endl;
-		  else
-		    ofile << stmt->Get_VC_Name() << "__exit__ |-> (" << next_stmt->Get_VC_Name() << ")" << endl;
-		}
-	      else if(link_to_self)
-		ofile << stmt->Get_VC_Name() << "__exit__ |-> ($exit)" << endl;
-		
-
+	  // stmt must pass control to its successor..
+	  AaStatement* next_stmt = sseq->Get_Next_Statement(stmt);
+	  if(next_stmt == NULL && !stmt->Is("AaPlaceStatement"))
+	    {
+	      ofile << stmt->Get_VC_Exit_Place_Name() << " |-> (" << sink_link << ")" << endl;
 	    }
 	}
     }
-  else if(link_to_self)
+  else 
     {
       ofile << "$P [dummy_place_] " << endl;
-      ofile << "dummy_place_ <-| ($entry) " << endl;
-      ofile << "dummy_place_ |-> ($exit)" << endl;
+      ofile << "dummy___place___ <-| (" << source_link << ")" << endl;
+      ofile << "dummy___place___ |-> (" << sink_link  << ")" << endl;
     }
 }
 
@@ -2519,13 +2509,22 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
   // first evaluate the switch expression..
 
   ofile << "//---------------------    switch statement " << this->Get_Source_Info() << "  --------------------------" << endl;
-
-  // the select expression.
-  this->_select_expression->Write_VC_Control_Path(ofile);
-  ofile << this->Get_VC_Name() << "__entry__ |-> (" << this->_select_expression->Get_VC_Name() << ")" << endl;
-
   ofile << "$P [" << this->Get_VC_Name() << "__condition_check_place__] " << endl;
-  ofile << this->Get_VC_Name() << "__condition_check_place__ <-| (" << this->_select_expression->Get_VC_Name() << ")" << endl;
+
+  // the select expression... may be trivial ...
+  if(!this->_select_expression->Is_Implicit_Variable_Reference())
+    {
+      this->_select_expression->Write_VC_Control_Path(ofile);
+      ofile << this->Get_VC_Name() << "__entry__ |-> (" << this->_select_expression->Get_VC_Name() << ")" << endl;
+      ofile << this->Get_VC_Name() << "__condition_check_place__ <-| (" 
+	    << this->_select_expression->Get_VC_Name() << ")" << endl;
+    }
+  else
+    {
+      ofile << this->Get_VC_Name() << "__entry__ |-> (" 
+	    << this->Get_VC_Name() << "__condition_check_place__)"  << endl;
+    }
+
 
   ofile << "||[" << this->Get_VC_Name() << "__condition_check__] { // condition computation" << endl;
   for(int idx = 0; idx < _choice_pairs.size(); idx++)
@@ -2552,14 +2551,10 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
   ofile << this->Get_VC_Name() << "__select__ <-| (" << this->Get_VC_Name() << "__condition_check__)" << endl;
   // follow the place by "n+1" choices.  The +1 choice
   // corresponds to the default..
-  vector<AaStatement*> last_statements;
-  vector<AaStatement*> first_statements;
+  string sink_element = this->Get_VC_Name() + "__exit__";
   for(int idx = 0; idx < _choice_pairs.size(); idx++)
     {
       ofile << "// switch choice " << idx << endl;
-      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(false,_choice_pairs[idx].second,ofile);
-      last_statements.push_back(_choice_pairs[idx].second->Get_Statement(_choice_pairs[idx].second->Get_Statement_Count() - 1));
-      first_statements.push_back(_choice_pairs[idx].second->Get_Statement(0));
 
       // link ack1 of the corresponding branch operator
       // to choice_K/ack1.
@@ -2567,24 +2562,15 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
       // the ack0 transition from the branch operator
       // will be ignored..
       ofile << ";;[choice_" << idx << "] { $T [ack1]  // ack0 will be ignored..\n }"  << endl;
-      if(first_statements[idx]->Is("AaPlaceStatement"))
-	{
-	  ofile << first_statements[idx]->Get_VC_Name() << " <-| (choice_" << idx << ")" << endl;
-	}
-      else
-	{
-	  ofile << first_statements[idx]->Get_VC_Name() << "__entry__ <-| (choice_" << idx << ")" <<  endl;
-	}
+
+      string source_element  = "choice_" + IntToStr(idx);
+      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(source_element,
+							       _choice_pairs[idx].second,
+							       sink_element,
+							       ofile);
     }
   if(_default_sequence != NULL)
     {
-      // the default sequence will use the ack0 signal from a branch
-      // operator whose input is the concatenation of the comparisons
-      // carried out in the condition-check parallel block
-      ofile << "// switch default choice " << endl;
-      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(false,_default_sequence,ofile);
-      last_statements.push_back(_default_sequence->Get_Statement(_default_sequence->Get_Statement_Count() - 1));
-      first_statements.push_back(_default_sequence->Get_Statement(0));
 
       // link ack0 of the default branch operator to
       // choice_default/ack0.
@@ -2593,14 +2579,17 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
       // will be ignored.
       //
       ofile << ";;[choice_default] { $T [ack0] // ack1 will be ignored..\n  }"  << endl;
-      if(first_statements.back()->Is("AaPlaceStatement"))
-	{
-	  ofile << first_statements.back()->Get_VC_Name() << " <-| (choice_default) " << endl;
-	}
-      else
-	{
-	  ofile << first_statements.back()->Get_VC_Name() << "__entry__ <-| (choice_default)" <<  endl;
-	}
+
+      
+      // the default sequence will use the ack0 signal from a branch
+      // operator whose input is the concatenation of the comparisons
+      // carried out in the condition-check parallel block
+      ofile << "// switch default choice " << endl;
+      string source_element = "choice_default";
+      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(source_element,
+							       _default_sequence,
+							       sink_element, 
+							       ofile);
     }
 
   // select will branch off to one of the choice
@@ -2612,30 +2601,11 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
 	ofile << " ";
       ofile << "choice_" << idx;
     }
+ 
   if(_default_sequence != NULL)
     ofile << " choice_default";
   ofile << ")" << endl;
   
-  // the last statements from each of the choice regions
-  // will merge into the exit of the switch statement.
-  string exit_merge_list;
-  for(int idx = 0; idx < last_statements.size(); idx++)
-    {
-      if(!last_statements[idx]->Is("AaPlaceStatement"))
-	{
-	  exit_merge_list += last_statements[idx]->Get_VC_Name() + "__exit__ ";	  
-	}
-    }
-  
-  if(exit_merge_list != "")
-    {
-      ofile << this->Get_VC_Name() << "__exit__ <-| ("  << exit_merge_list << ") // switch exit" << endl;
-    }
-  else
-    {
-      assert(0);
-      AaRoot::Error("token cannot exit switch statement: " + this->Get_Source_Info(), this);
-    }
   ofile << "//---------------------   end of switch statement " << this->Get_Source_Info() << "  --------------------------" << endl;
 }
 
@@ -2991,70 +2961,34 @@ void AaIfStatement::Write_VC_Control_Path(ostream& ofile)
   // now the test-place.
   ofile << "$P [" << _test_expression->Get_VC_Name() << "_place]" << endl;
   ofile << _test_expression->Get_VC_Name() << "_place <-| (eval_test)" << endl;
-  
+  string test_place_successors = "IfLink ElseLink";
+  ofile << ";;[IfLink] { $T [if_choice_transition] } " << endl;
+  ofile << ";;[ElseLink] { $T [else_choice_transition] } " << endl;
+  ofile << _test_expression->Get_VC_Name() << "_place |-> (" << test_place_successors << ")" << endl;  
+
   AaStatement* last_if = NULL;
   AaStatement* first_if = NULL;
   AaStatement* last_else = NULL;
   AaStatement* first_else = NULL;
+
+  string sink_element = this->Get_VC_Name() + "__exit__";
+
   // now the if-sequence of statments
   if(_if_sequence != NULL)
     {
-      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(false,_if_sequence,ofile);
-      last_if = _if_sequence->Get_Statement(_if_sequence->Get_Statement_Count() -1 );
-      first_if = _if_sequence->Get_Statement(0);
+      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path("IfLink",
+							       _if_sequence,
+							       sink_element,
+							       ofile);
     }
   if(_else_sequence != NULL)
     {
-      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(false,_else_sequence,ofile);
-      last_else = _else_sequence->Get_Statement(_else_sequence->Get_Statement_Count() -1 );
-      first_else = _else_sequence->Get_Statement(0);
+      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path("ElseLink",
+							       _else_sequence,
+							       sink_element,
+							       ofile);
     }
 
-  string test_place_successors = "IfLink ElseLink";
-  ofile << ";;[IfLink] { $T [if_choice_transition] } " << endl;
-  ofile << ";;[ElseLink] { $T [else_choice_transition] } " << endl;
-  ofile << _test_expression->Get_VC_Name() << "_place |-> (" << test_place_successors << ")" << endl;
-
-  // links from IfLink to if-sequence
-  if(first_if != NULL && first_if->Is("AaPlaceStatement"))
-    {
-      ofile << first_if->Get_VC_Name() << " <-| (IfLink)" << endl;
-    }
-  else if(first_if != NULL && !first_if->Is("AaPlaceStatement"))
-    {
-      ofile << first_if->Get_VC_Name() << "__entry__ <-| (IfLink)" << endl;
-    }
-
-  // links from ElseLink to else-sequence.
-  if(first_else != NULL && first_else->Is("AaPlaceStatement"))
-    {
-      ofile << first_else->Get_VC_Name() << " <-| (ElseLink)" << endl;
-    }
-  else if(first_else != NULL && !first_else->Is("AaPlaceStatement"))
-    {
-      ofile << first_else->Get_VC_Name() << "__entry__ <-| (ElseLink)" << endl;
-    }
-
-
-  // links from if/else sequences to exit.
-  string exit_merge_list;
-  if(last_if != NULL && !last_if->Is("AaPlaceStatement"))
-    exit_merge_list += last_if->Get_VC_Name() + "__exit__ ";
-  else if(last_if == NULL)
-    exit_merge_list += "IfLink ";
-
-  if(last_else != NULL)
-    {
-      if(!last_else->Is("AaPlaceStatement"))
-	exit_merge_list += last_else->Get_VC_Name() + "__exit__ ";
-    }
-  else
-    exit_merge_list += "ElseLink ";
-
-  if(exit_merge_list != "")
-    {
-      ofile << this->Get_VC_Name() << "__exit__ <-| ("  << exit_merge_list << ")" << endl;
-    }
   ofile << "//---------------------  end of if statement " << this->Get_Source_Info() << "  --------------------------" << endl;
 }
 

@@ -225,10 +225,10 @@ void vcSystem::Print_VHDL_Test_Bench(ostream& ofile)
 {
   this->Print_VHDL_Inclusions(ofile);
 
-  ofile << "entity " << this->Get_Id() << "_Test_Bench is -- {" << endl;
+  ofile << "entity " << this->Get_VHDL_Id() << "_Test_Bench is -- {" << endl;
   ofile << "-- }\n end entity;" << endl;
 
-  ofile << "architecture Default of " << this->Get_Id() << "_Test_Bench is -- {" << endl;
+  ofile << "architecture Default of " << this->Get_VHDL_Id() << "_Test_Bench is -- {" << endl;
   this->Print_VHDL_Component(ofile);
   this->Print_VHDL_Test_Bench_Signals(ofile);
   ofile << "-- }\n begin --{" << endl;
@@ -238,7 +238,7 @@ void vcSystem::Print_VHDL_Test_Bench(ostream& ofile)
 
 void vcSystem::Print_VHDL_Instance(ostream& ofile)
 {
-  ofile << this->Get_Id() << "_instance: " << this->Get_Id() << " -- {" << endl;
+  ofile << this->Get_VHDL_Id() << "_instance: " << this->Get_VHDL_Id() << " -- {" << endl;
   ofile << "port map ( -- {" << endl;
   string comma;
   comma = this->Print_VHDL_Instance_Port_Map(comma,ofile);
@@ -283,12 +283,12 @@ string vcSystem::Print_VHDL_System_Instance_Pipe_Port_Map(string comma, ostream&
 		<< " => "
 		<< pipe_id << "_pipe_write_data, "  << endl;
 
-	  ofile << pipe_id << "_pipe_write_req => "
+	  ofile << pipe_id << "_pipe_write_req "
 		<< " => "
 		<< pipe_id 
 		<< "_pipe_write_req, " << endl;
 	  ofile << pipe_id 
-		<< "_pipe_write_ack => "
+		<< "_pipe_write_ack "
 		<< " => "
 		<< pipe_id << "_pipe_write_ack";
 	  
@@ -330,7 +330,7 @@ void vcSystem::Print_VHDL_Test_Bench_Signals(ostream& ofile)
 
 void vcSystem::Print_VHDL_Component(ostream& ofile)
 {
-  ofile << "component " << this->Get_Id() << " is -- { " << endl;
+  ofile << "component " << this->Get_VHDL_Id() << " is -- { " << endl;
   string semi_colon;
   semi_colon = this->Print_VHDL_System_Ports(semi_colon, ofile);
   ofile << "-- }\n end component;" << endl;
@@ -357,7 +357,7 @@ string vcSystem::Print_VHDL_System_Ports(string semi_colon, ostream& ofile)
 
 void vcSystem::Print_VHDL_Entity(ostream& ofile)
 {
-  ofile << "entity " << this->Get_Id() << " is  -- system {" << endl;
+  ofile << "entity " << this->Get_VHDL_Id() << " is  -- system {" << endl;
   string semi_colon;
   semi_colon = this->Print_VHDL_System_Ports(semi_colon, ofile);
   ofile << "-- }\n end entity; " << endl;
@@ -369,7 +369,7 @@ void vcSystem::Print_VHDL_Pipe_Port_Signals(ostream& ofile)
       pipe_iter != _pipe_map.end();
       pipe_iter++)
     {
-      string pipe_id = (*pipe_iter).first;
+      string pipe_id = To_VHDL((*pipe_iter).first);
       int pipe_width = (*pipe_iter).second;
       
       int num_reads = this->Get_Num_Pipe_Reads(pipe_id);
@@ -380,9 +380,9 @@ void vcSystem::Print_VHDL_Pipe_Port_Signals(ostream& ofile)
 	  ofile << "-- write to pipe " << pipe_id << endl;
 	  ofile << "signal " 
 		<< pipe_id 
-		<< "_pipe_write_data: in std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-	  ofile << "signal " << pipe_id << "_pipe_write_req : std_logic := '0';" << endl;
-	  ofile << "signal " << pipe_id << "_pipe_write_ack : std_logic;" << endl;
+		<< "_pipe_write_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+	  ofile << "signal " << pipe_id << "_pipe_write_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
+	  ofile << "signal " << pipe_id << "_pipe_write_ack : std_logic_vector(0 downto 0);" << endl;
 	}
 
 
@@ -391,8 +391,8 @@ void vcSystem::Print_VHDL_Pipe_Port_Signals(ostream& ofile)
 	  ofile << "-- read from pipe " << pipe_id << endl;
 	  ofile << "signal "
 		<< pipe_id << "_pipe_read_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-	  ofile << "signal " << pipe_id << "_pipe_read_req : std_logic := '0';" << endl;
-	  ofile << "signal " << pipe_id << "_pipe_read_ack : std_logic;" << endl;
+	  ofile << "signal " << pipe_id << "_pipe_read_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
+	  ofile << "signal " << pipe_id << "_pipe_read_ack : std_logic_vector(0 downto 0);" << endl;
 	}
     }
 }
@@ -403,7 +403,7 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
       pipe_iter != _pipe_map.end();
       pipe_iter++)
     {
-      string pipe_id = (*pipe_iter).first;
+      string pipe_id = To_VHDL((*pipe_iter).first);
       int pipe_width = (*pipe_iter).second;
       
       int num_reads = this->Get_Num_Pipe_Reads(pipe_id);
@@ -415,8 +415,8 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 	  ofile << semi_colon << endl;
 	  semi_colon = ";";
 	  ofile << pipe_id << "_pipe_write_data: in std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-	  ofile << pipe_id << "_pipe_write_req : in std_logic;" << endl;
-	  ofile << pipe_id << "_pipe_write_ack : out std_logic";
+	  ofile << pipe_id << "_pipe_write_req : in std_logic_vector(0 downto 0);" << endl;
+	  ofile << pipe_id << "_pipe_write_ack : out std_logic_vector(0 downto 0)";
 	}
 
 
@@ -426,8 +426,8 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 	  ofile << semi_colon << endl;
 	  semi_colon = ";";
 	  ofile << pipe_id << "_pipe_read_data: out std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-	  ofile << pipe_id << "_pipe_read_req : in std_logic;" << endl;
-	  ofile << pipe_id << "_pipe_read_ack : out std_logic";
+	  ofile << pipe_id << "_pipe_read_req : in std_logic_vector(0 downto 0);" << endl;
+	  ofile << pipe_id << "_pipe_read_ack : out std_logic_vector(0 downto 0)";
 	}
     }
 
@@ -441,7 +441,7 @@ void vcSystem::Print_VHDL_Pipe_Signals(ostream& ofile)
       pipe_iter != _pipe_map.end();
       pipe_iter++)
     {
-      string pipe_id = (*pipe_iter).first;
+      string pipe_id = To_VHDL((*pipe_iter).first);
       int pipe_width = (*pipe_iter).second;
       
       int num_reads = this->Get_Num_Pipe_Reads(pipe_id);
@@ -462,11 +462,6 @@ void vcSystem::Print_VHDL_Pipe_Signals(ostream& ofile)
 	  ofile << "signal " << pipe_id << "_pipe_read_req: std_logic_vector(" << num_reads-1 << " downto 0);" << endl;
 	  ofile << "signal " << pipe_id << "_pipe_read_ack: std_logic_vector(" << num_reads-1 << " downto 0);" << endl;
 	}
-
-      ofile << "-- the pipe itself. " << pipe_id << endl;
-      ofile << "signal " << pipe_id << "_pipe_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-      ofile << "signal " << pipe_id << "_pipe_req: std_logic;" << endl;
-      ofile << "signal " << pipe_id << "_pipe_ack: std_logic;" << endl;
     }
 }
 
@@ -532,14 +527,14 @@ string vcSystem::Get_Pipe_Aggregate_Section(string pipe_id,
 void vcSystem::Print_VHDL_Architecture(ostream& ofile)
 {
 
-  ofile << "architecture Default of " << this->Get_Id() << " is -- system-architecture {" << endl;
+  ofile << "architecture Default of " << this->Get_VHDL_Id() << " is -- system-architecture {" << endl;
 
   for(map<string,vcMemorySpace*>::iterator iter = _memory_space_map.begin();
       iter != _memory_space_map.end();
       iter++)
     {
       vcMemorySpace* ms  = (*iter).second;
-      ofile << " -- interface signals to connect to memory space " << ms->Get_Id() << endl;
+      ofile << " -- interface signals to connect to memory space " << ms->Get_VHDL_Id() << endl;
       ms->Print_VHDL_Interface_Signal_Declarations(ofile);
     }
 
@@ -547,24 +542,24 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
       moditer != _modules.end();
       moditer++)
     {
-      ofile << "-- declarations related to module " << (*moditer).second->Get_Id() << endl;
+      ofile << "-- declarations related to module " << (*moditer).second->Get_VHDL_Id() << endl;
       // module component declarations
       (*moditer).second->Print_VHDL_Component(ofile);
 
       if(!this->Is_A_Top_Module((*moditer).second))
 	{
 
-	  ofile << "-- argument signals for module " << (*moditer).second->Get_Id() << endl;
+	  ofile << "-- argument signals for module " << (*moditer).second->Get_VHDL_Id() << endl;
 	  (*moditer).second->Print_VHDL_Argument_Signals(ofile);
 	  if((*moditer).second->Get_Num_Calls() > 0)
 	    {
-	      ofile << endl << "-- caller side aggregated signals for module " << (*moditer).second->Get_Id() << endl;
+	      ofile << endl << "-- caller side aggregated signals for module " << (*moditer).second->Get_VHDL_Id() << endl;
 	      (*moditer).second->Print_VHDL_Caller_Aggregate_Signals(ofile);
 	    }
 	}
       else if((*moditer).second->Get_Num_Calls() > 0)
 	{
-	  vcSystem::Error("top-module " + (*moditer).second->Get_Id() + " cannot be called from within the system!");
+	  vcSystem::Error("top-module " + (*moditer).second->Get_VHDL_Id() + " cannot be called from within the system!");
 	}
     }
 
@@ -575,7 +570,7 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
       moditer != _modules.end();
       moditer++)
     {
-      ofile << "-- module " << (*moditer).second->Get_Id() << endl;
+      ofile << "-- module " << (*moditer).second->Get_VHDL_Id() << endl;
       if(!this->Is_A_Top_Module((*moditer).second))
 	{
 	  if((*moditer).second->Get_Num_Calls() > 0)
@@ -609,64 +604,27 @@ void vcSystem::Print_VHDL_Pipe_Instances(ostream& ofile)
       pipe_iter != _pipe_map.end();
       pipe_iter++)
     {
-      string pipe_id = (*pipe_iter).first;
+      string pipe_id = To_VHDL((*pipe_iter).first);
       int pipe_width = (*pipe_iter).second;
       
-      int num_reads = this->Get_Num_Pipe_Reads(pipe_id);
-      int num_writes = this->Get_Num_Pipe_Writes(pipe_id);
+      int num_reads = MAX(this->Get_Num_Pipe_Reads(pipe_id),1);
+      int num_writes = MAX(this->Get_Num_Pipe_Writes(pipe_id), 1);
      
-      if(num_reads > 0)
-	{
-	  // input port level..
-	  ofile << pipe_id << "_ReadMux: InputPortLevel -- {" << endl;
-	  ofile << "generic map( -- { " << endl;
-	  ofile << "num_reqs => " << num_reads << "," << endl;
+      ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
+      ofile << "generic map( -- { " << endl;
+	  ofile << "num_reads => " << num_reads << "," << endl;
+	  ofile << "num_writes => " << num_writes << "," << endl;
 	  ofile << "data_width => " << pipe_width << "," << endl;
-	  ofile << "no_arbitration => false -- }\n)" << endl;
+	  ofile << "depth => 1 --}\n)" << endl;
 	  ofile << "port map( -- { " << endl;
-	  ofile << "req => " << pipe_id << "_pipe_read_req," << endl 
-		<< "ack => " << pipe_id << "_pipe_read_ack," << endl 
-		<< "data => "<< pipe_id << "_pipe_read_data," << endl 
-		<< "oreq => "<< pipe_id << "_pipe_ack, -- cross-over" << endl
-		<< "oack => "<< pipe_id << "_pipe_req, -- cross-over" << endl
-		<< "odata => "<< pipe_id << "_pipe_data," << endl
+	  ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 
+		<< "read_ack => " << pipe_id << "_pipe_read_ack," << endl 
+		<< "read_data => "<< pipe_id << "_pipe_read_data," << endl 
+		<< "write_req => " << pipe_id << "_pipe_write_req," << endl 
+		<< "write_ack => " << pipe_id << "_pipe_write_ack," << endl 
+		<< "write_data => "<< pipe_id << "_pipe_write_data," << endl 
 		<< "clk => clk,"
 		<< "reset => reset -- }\n ); -- }" << endl;
-
-	  if(num_writes == 0)
-	    {
-	      ofile << pipe_id << "_pipe_data <= " << pipe_id << "_pipe_write_data;" << endl;
-	      ofile << pipe_id << "_pipe_req <= "  << pipe_id << "_pipe_write_req; -- no cross-over"
-		    << endl;
-	      ofile << pipe_id << "_pipe_write_ack <= "  << pipe_id << "_pipe_ack; -- no cross-over"
-		    << endl;
-	    }
-	}
-
-      if(num_writes > 0)
-	{
-	  ofile << pipe_id << "_WriteMux: OutputPortLevel -- {" << endl;
-	  ofile << "generic map( -- { " << endl;
-	  ofile << "num_reqs => " << num_writes << "," << endl;
-	  ofile << "data_width => " << pipe_width << "," << endl;
-	  ofile << "no_arbitration => false -- }\n)" << endl;
-	  ofile << "port map( -- { " << endl;
-	  ofile << "req => " << pipe_id << "_pipe_write_req," << endl 
-		<< "ack => " << pipe_id << "_pipe_write_ack," << endl 
-		<< "data => "<< pipe_id << "_pipe_write_data," << endl 
-		<< "oreq => "<< pipe_id << "_pipe_req, -- no cross-over" << endl
-		<< "oack => "<< pipe_id << "_pipe_ack, -- no cross-over" << endl
-		<< "odata => "<< pipe_id << "_pipe_data," << endl
-		<< "clk => clk,"
-		<< "reset => reset -- }\n ); -- }" << endl;
-
-	  if(num_reads == 0)
-	    {
-	      ofile << pipe_id << "_pipe_read_data <= " << pipe_id << "_pipe_data;" << endl;
-	      ofile << pipe_id << "_pipe_ack <= "  << pipe_id << "_pipe_read_req; -- cross-over" << endl;
-	      ofile << pipe_id << "_pipe_read_ack <= "  << pipe_id << "_pipe_req; -- cross-over" << endl;
-	    }
-	}
     }
 }
 

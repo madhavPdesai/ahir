@@ -359,11 +359,11 @@ void vcTransition::Print_VHDL(ostream& ofile)
 
 string vcTransition::Get_DP_To_CP_Symbol()
 {
-  return(To_VHDL(this->Get_Hierarchical_Id()) + "_dp_to_cp");
+  return(To_VHDL(this->Get_Hierarchical_Id() + "_dp_to_cp"));
 }
 string vcTransition::Get_CP_To_DP_Symbol()
 {
-  return(To_VHDL(this->Get_Hierarchical_Id()) + "_cp_to_dp");
+  return(To_VHDL(this->Get_Hierarchical_Id() + "_cp_to_dp"));
 }
 vcPlace::vcPlace(vcCPElement* parent, string id, unsigned int init_marking):vcCPElement(parent, id)
 {
@@ -399,10 +399,13 @@ vcCPBlock::vcCPBlock(vcCPBlock* parent, string id): vcCPElement((vcCPElement*)pa
 
 void vcCPBlock::Add_CPElement(vcCPElement* cpe)
 {
-  assert(this->_element_map.find(cpe->Get_Id()) == this->_element_map.end());
-
-  this->_element_map[cpe->Get_Id()] = cpe;
-  this->_elements.push_back(cpe);
+  if(cpe != NULL)
+    {
+      assert(this->_element_map.find(cpe->Get_Id()) == this->_element_map.end());
+      
+      this->_element_map[cpe->Get_Id()] = cpe;
+      this->_elements.push_back(cpe);
+    }
 }
 
 vcCPElement* vcCPBlock::Find_CPElement(string cname)

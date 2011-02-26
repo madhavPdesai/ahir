@@ -122,7 +122,7 @@ void vcMemorySpace::Print_VHDL_Interface_Signal_Declarations(ostream& ofile)
 
 string vcMemorySpace::Get_VHDL_Memory_Interface_Port_Name(string pid)
 {
-  return(this->Get_Id() + "_" + pid);
+  return(this->Get_VHDL_Id() + "_" + pid);
 }
 
 // given a module, and type of operation,
@@ -163,17 +163,17 @@ string vcMemorySpace::Get_VHDL_Memory_Interface_Port_Section(vcModule* m,
     }
 
   if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))
-    return(this->Get_Id() + "_" + pid + "(" + IntToStr(down_index) + ")");
+    return(this->Get_VHDL_Id() + "_" + pid + "(" + IntToStr(down_index) + ")");
   else if(pid.find("data") != string::npos)
-    return(this->Get_Id() + "_" + pid + "(" 
+    return(this->Get_VHDL_Id() + "_" + pid + "(" 
 	   + IntToStr(((down_index+1)*this->Get_Word_Size())-1) + " downto "
 	   + IntToStr(down_index*this->Get_Word_Size()) + ")");
   else if(pid.find("addr") != string::npos)
-    return(this->Get_Id() + "_" + pid + "(" 
+    return(this->Get_VHDL_Id() + "_" + pid + "(" 
 	   + IntToStr(((down_index+1)*this->Get_Address_Width())-1) + " downto "
 	   + IntToStr(down_index*this->Get_Address_Width()) + ")");
   else if(pid.find("tag") != string::npos)
-    return(this->Get_Id() + "_" + pid + "(" 
+    return(this->Get_VHDL_Id() + "_" + pid + "(" 
 	   + IntToStr(((down_index+1)*this->Get_Tag_Length())-1) + " downto "
 	   + IntToStr(down_index*this->Get_Tag_Length()) + ")");
   else
@@ -206,7 +206,7 @@ bool vcMemorySpace::Get_Caller_Module_Section(vcModule* caller_module, string lo
 string vcMemorySpace::Get_Aggregate_Section(string pid, int hindex, int lindex)
 {
   int data_width;
-  string ret_string = this->Get_Id() + "_" + pid;
+  string ret_string = this->Get_VHDL_Id() + "_" + pid;
 
   // find data_width.
   if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))
@@ -234,7 +234,7 @@ void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
   if(this->Get_Capacity() <= 16)
     {
       // instantiate a register bank..
-      ofile << "RegisterBank_" << this->Get_Id() << ": register_bank -- {" << endl;
+      ofile << "RegisterBank_" << this->Get_VHDL_Id() << ": register_bank -- {" << endl;
       ofile << "generic map(-- {" << endl;
       ofile << "num_loads => " << this->Get_Num_Loads() << "," << endl
 	    << "num_stores => " << this->Get_Num_Stores() << "," << endl
@@ -245,29 +245,29 @@ void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 	    << ") -- }" << endl;
       ofile << "port map(-- {" << endl;
       ofile 
-	<< "lr_addr_in => " << this->Get_Id() << "_lr_addr," << endl
-	<< "lr_req_in => " << this->Get_Id() << "_lr_req," << endl
-	<< "lr_ack_out => " << this->Get_Id() << "_lr_ack," << endl
-	<< "lr_tag_in => " << this->Get_Id() << "_lr_tag," << endl
-	<< "lc_req_in => " << this->Get_Id() << "_lc_req," << endl
-	<< "lc_ack_out => " << this->Get_Id() << "_lc_ack," << endl
-	<< "lc_data_out => " << this->Get_Id() << "_lc_data," << endl
-	<< "lc_tag_out => " << this->Get_Id() << "_lc_tag," << endl
-	<< "sr_addr_in => " << this->Get_Id() << "_sr_addr," << endl
-	<< "sr_data_in => " << this->Get_Id() << "_sr_data," << endl
-	<< "sr_req_in => " << this->Get_Id() << "_sr_req," << endl
-	<< "sr_ack_out => " << this->Get_Id() << "_sr_ack," << endl
-	<< "sr_tag_in => " << this->Get_Id() << "_sr_tag," << endl
-	<< "sc_req_in=> " << this->Get_Id() << "_sc_req," << endl
-	<< "sc_ack_out => " << this->Get_Id() << "_sc_ack," << endl
-	<< "sc_tag_out => " << this->Get_Id() << "_sc_tag," << endl
+	<< "lr_addr_in => " << this->Get_VHDL_Id() << "_lr_addr," << endl
+	<< "lr_req_in => " << this->Get_VHDL_Id() << "_lr_req," << endl
+	<< "lr_ack_out => " << this->Get_VHDL_Id() << "_lr_ack," << endl
+	<< "lr_tag_in => " << this->Get_VHDL_Id() << "_lr_tag," << endl
+	<< "lc_req_in => " << this->Get_VHDL_Id() << "_lc_req," << endl
+	<< "lc_ack_out => " << this->Get_VHDL_Id() << "_lc_ack," << endl
+	<< "lc_data_out => " << this->Get_VHDL_Id() << "_lc_data," << endl
+	<< "lc_tag_out => " << this->Get_VHDL_Id() << "_lc_tag," << endl
+	<< "sr_addr_in => " << this->Get_VHDL_Id() << "_sr_addr," << endl
+	<< "sr_data_in => " << this->Get_VHDL_Id() << "_sr_data," << endl
+	<< "sr_req_in => " << this->Get_VHDL_Id() << "_sr_req," << endl
+	<< "sr_ack_out => " << this->Get_VHDL_Id() << "_sr_ack," << endl
+	<< "sr_tag_in => " << this->Get_VHDL_Id() << "_sr_tag," << endl
+	<< "sc_req_in=> " << this->Get_VHDL_Id() << "_sc_req," << endl
+	<< "sc_ack_out => " << this->Get_VHDL_Id() << "_sc_ack," << endl
+	<< "sc_tag_out => " << this->Get_VHDL_Id() << "_sc_tag," << endl
 	<< "clock => clk," << endl
 	<< "reset => reset";
       ofile << "); -- }  }" << endl;
     }
   else
     {
-      ofile << "MemorySpace_" << this->Get_Id() << ": memory_subsystem -- {" << endl;
+      ofile << "MemorySpace_" << this->Get_VHDL_Id() << ": memory_subsystem -- {" << endl;
       ofile << "generic map(-- {" << endl;
       ofile << "num_loads => " << this->Get_Num_Loads() << "," << endl
 	    << "num_stores => " << this->Get_Num_Stores() << "," << endl
@@ -284,22 +284,22 @@ void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 	    << ") -- }" << endl;
       ofile << "port map(-- {" << endl;
       ofile 
-	<< "lr_addr_in => " << this->Get_Id() << "_lr_addr," << endl
-	<< "lr_req_in => " << this->Get_Id() << "_lr_req," << endl
-	<< "lr_ack_out => " << this->Get_Id() << "_lr_ack," << endl
-	<< "lr_tag_in => " << this->Get_Id() << "_lr_tag," << endl
-	<< "lc_req_in => " << this->Get_Id() << "_lc_req," << endl
-	<< "lc_ack_out => " << this->Get_Id() << "_lc_ack," << endl
-	<< "lc_data_out => " << this->Get_Id() << "_lc_data," << endl
-	<< "lc_tag_out => " << this->Get_Id() << "_lc_tag," << endl
-	<< "sr_addr_in => " << this->Get_Id() << "_sr_addr," << endl
-	<< "sr_data_in => " << this->Get_Id() << "_sr_data," << endl
-	<< "sr_req_in => " << this->Get_Id() << "_sr_req," << endl
-	<< "sr_ack_out => " << this->Get_Id() << "_sr_ack," << endl
-	<< "sr_tag_in => " << this->Get_Id() << "_sr_tag," << endl
-	<< "sc_req_in=> " << this->Get_Id() << "_sc_req," << endl
-	<< "sc_ack_out => " << this->Get_Id() << "_sc_ack," << endl
-	<< "sc_tag_out => " << this->Get_Id() << "_sc_tag," << endl
+	<< "lr_addr_in => " << this->Get_VHDL_Id() << "_lr_addr," << endl
+	<< "lr_req_in => " << this->Get_VHDL_Id() << "_lr_req," << endl
+	<< "lr_ack_out => " << this->Get_VHDL_Id() << "_lr_ack," << endl
+	<< "lr_tag_in => " << this->Get_VHDL_Id() << "_lr_tag," << endl
+	<< "lc_req_in => " << this->Get_VHDL_Id() << "_lc_req," << endl
+	<< "lc_ack_out => " << this->Get_VHDL_Id() << "_lc_ack," << endl
+	<< "lc_data_out => " << this->Get_VHDL_Id() << "_lc_data," << endl
+	<< "lc_tag_out => " << this->Get_VHDL_Id() << "_lc_tag," << endl
+	<< "sr_addr_in => " << this->Get_VHDL_Id() << "_sr_addr," << endl
+	<< "sr_data_in => " << this->Get_VHDL_Id() << "_sr_data," << endl
+	<< "sr_req_in => " << this->Get_VHDL_Id() << "_sr_req," << endl
+	<< "sr_ack_out => " << this->Get_VHDL_Id() << "_sr_ack," << endl
+	<< "sr_tag_in => " << this->Get_VHDL_Id() << "_sr_tag," << endl
+	<< "sc_req_in=> " << this->Get_VHDL_Id() << "_sc_req," << endl
+	<< "sc_ack_out => " << this->Get_VHDL_Id() << "_sc_ack," << endl
+	<< "sc_tag_out => " << this->Get_VHDL_Id() << "_sc_tag," << endl
 	<< "clock => clk," << endl
 	<< "reset => reset";
       ofile << "); -- }  }" << endl;

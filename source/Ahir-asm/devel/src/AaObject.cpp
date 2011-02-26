@@ -32,6 +32,15 @@ string AaObject::Tab()
   return((this->Get_Scope() != NULL) ? Tab_(this->Get_Scope()->Get_Depth()+1) : Tab_(0));
 }
 
+string AaObject::Get_Hierarchical_Name()
+{
+  if(this->_scope)
+    {
+      return(this->_scope->Get_Hierarchical_Name() + ":" + this->Get_Name());
+    }
+  else
+    return(this->Get_Name());
+}
 void AaObject::Print(ostream& ofile)
 {
   ofile << " " << this->Get_Name() << " : ";
@@ -106,7 +115,7 @@ void AaStorageObject::Write_VC_Model(ostream& ofile)
 
 string AaStorageObject::Get_VC_Name()
 {
-  string ret_string = "storage_" + this->Get_Name() + "_" + Int64ToStr(this->Get_Index());
+  string ret_string = Make_VC_Legal(this->Get_Hierarchical_Name());
   return(ret_string);
 }
 
@@ -153,7 +162,7 @@ void AaPipeObject::Write_VC_Model(ostream& ofile)
 
 string AaPipeObject::Get_VC_Name()
 {
-  string ret_string = "pipe_" + this->Get_Name() + "_" + Int64ToStr(this->Get_Index());
+  string ret_string = Make_VC_Legal(this->Get_Hierarchical_Name());
   return(ret_string);
 }
 
@@ -196,6 +205,6 @@ void AaConstantObject::Evaluate()
 
 string AaConstantObject::Get_VC_Name()
 {
-  string ret_string = "constant_" + this->Get_Name() + "_" + Int64ToStr(this->Get_Index());
+  string ret_string = Make_VC_Legal(this->Get_Hierarchical_Name());
   return(ret_string);
 }

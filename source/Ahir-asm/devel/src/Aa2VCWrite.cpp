@@ -51,6 +51,8 @@ void Write_VC_Binary_Operator(AaOperation op,
   else if(op == __NAND) op_name = "~&";
   else if(op == __XNOR) op_name = "~^";
   else if(op == __SHL) op_name = "<<";
+  //\todo: for SHR, if the types of src1,src2 are integer,
+  //       then we use the signed version.
   else if(op == __SHR) op_name = ">>";
   else if(op == __PLUS) op_name = "+";
   else if(op == __MINUS) op_name = "-";
@@ -58,6 +60,9 @@ void Write_VC_Binary_Operator(AaOperation op,
   else if(op == __DIV) op_name = "/";
   else if(op == __EQUAL) op_name = "==";
   else if(op == __NOTEQUAL) op_name = "!=";
+  //
+  //\todo: for comparisons, if the types of src1,src2 are integer,
+  //       then we use the signed version.
   else if(op == __LESS) op_name = "<";
   else if(op == __LESSEQUAL) op_name = "<=";
   else if(op == __GREATER) op_name = ">";
@@ -233,4 +238,5 @@ void Write_VC_Select_Operator(string inst_name,
 	<< "(" << test_name << " " << if_true_name << " " << if_false_name << ") "
 	<< "(" << target_name << ")" << endl;
 }
+
 

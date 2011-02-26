@@ -7,16 +7,20 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
+-- a protocol matching mediator, used to
+-- decouple the split-protocol from the caller
+-- module from the current unitary start-fin
+-- protocol of the called module
 entity CallMediator is
   port (
-    call_req: in std_logic;
-    call_ack: out std_logic;
-    enable_call_data: out std_logic;
-    return_req: in std_logic;
-    return_ack: out std_logic;
-    enable_return_data: out std_logic;
-    start: out std_logic;
-    fin: in std_logic;
+    call_req: in std_logic;             -- the first split req
+    call_ack: out std_logic;            -- the first split ack
+    enable_call_data: out std_logic;    -- latch the incoming data
+    return_req: in std_logic;           -- the second split req
+    return_ack: out std_logic;          -- the second split ack
+    enable_return_data: out std_logic;  -- latch the return data
+    start: out std_logic;               -- start to called module
+    fin: in std_logic;                  -- fin from called module
     clk: in std_logic;
     reset: in std_logic);
 end CallMediator;

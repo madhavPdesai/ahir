@@ -31,6 +31,7 @@ class AaObject: public AaRoot
   void Set_Value(AaConstantLiteralReference* v);
 
   virtual string Get_Name() {return(this->_name);}
+  virtual string Get_Hierarchical_Name();
   virtual string Get_VC_Name() {return(this->_name);}
 
   virtual AaScope* Get_Scope() {return(this->_scope);}

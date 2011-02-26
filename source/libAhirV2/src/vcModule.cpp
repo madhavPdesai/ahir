@@ -266,7 +266,7 @@ void vcModule::Print_VHDL_Caller_Aggregate_Signals(ostream& ofile)
 {
   if(this->_num_calls > 0)
     {
-      string prefix = this->Get_Id() + "_";
+      string prefix = this->Get_VHDL_Id() + "_";
       // _num_calls is the total number of caller groups..
       ofile << "signal " << prefix << "call_reqs: std_logic_vector(" << _num_calls-1 << " downto 0);" << endl;
       ofile << "signal " << prefix << "call_acks: std_logic_vector(" << _num_calls-1 << " downto 0);" << endl;
@@ -282,7 +282,7 @@ void vcModule::Print_VHDL_Caller_Aggregate_Signals(ostream& ofile)
 
 void vcModule::Print_VHDL_Argument_Signals(ostream& ofile)
 {
-  string prefix  = this->Get_Id() + "_";
+  string prefix  = this->Get_VHDL_Id() + "_";
 
   for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
     {
@@ -310,7 +310,7 @@ void vcModule::Print_VHDL_Argument_Signals(ostream& ofile)
 
 void  vcModule::Print_VHDL_System_Argument_Signals(ostream& ofile)
 {
-  string prefix = this->Get_Id() +  "_";
+  string prefix = this->Get_VHDL_Id() +  "_";
   for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
     {
       ofile << "signal " << prefix << _ordered_input_arguments[idx] << " : " ;
@@ -337,7 +337,7 @@ void  vcModule::Print_VHDL_System_Argument_Signals(ostream& ofile)
 
 string vcModule::Print_VHDL_System_Argument_Ports(string semi_colon,ostream& ofile)
 {
-  string prefix = this->Get_Id() +  "_";
+  string prefix = this->Get_VHDL_Id() +  "_";
   ofile << semi_colon << endl;
   for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
     {
@@ -372,7 +372,7 @@ string vcModule::Print_VHDL_System_Argument_Ports(string semi_colon,ostream& ofi
 
 string vcModule::Print_VHDL_System_Instance_Port_Map(string comma,ostream& ofile)
 {
-  string prefix = this->Get_Id() +  "_";
+  string prefix = this->Get_VHDL_Id() +  "_";
   ofile << comma << endl;
   for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
     {
@@ -473,7 +473,7 @@ string vcModule::Print_VHDL_Tag_Interface_Ports(string semi_colon,ostream& ofile
 
 void vcModule::Print_VHDL_Component(ostream& ofile)
 {
-  ofile << "component " << this->Get_Id() << " is -- {" << endl;
+  ofile << "component " << this->Get_VHDL_Id() << " is -- {" << endl;
   this->Print_VHDL_Ports(ofile);
   ofile << "-- }" << endl << "end component;" << endl;
 }
@@ -481,14 +481,14 @@ void vcModule::Print_VHDL_Component(ostream& ofile)
 
 void vcModule::Print_VHDL_Entity(ostream& ofile)
 {
-  ofile << "entity " << this->Get_Id() << " is -- {" << endl;
+  ofile << "entity " << this->Get_VHDL_Id() << " is -- {" << endl;
   this->Print_VHDL_Ports(ofile);
-  ofile << "-- }" << endl << "end entity " << this->Get_Id() << ";" << endl;
+  ofile << "-- }" << endl << "end entity " << this->Get_VHDL_Id() << ";" << endl;
 }
 
 void vcModule::Print_VHDL_Architecture(ostream& ofile)
 {
-  ofile << "architecture Default of " << this->Get_Id() << " is -- {" << endl;
+  ofile << "architecture Default of " << this->Get_VHDL_Id() << " is -- {" << endl;
 
 
   // always true signal
@@ -559,7 +559,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 
 string vcModule::Get_VHDL_Call_Interface_Port_Name(string pid)
 {
-  return(this->Get_Id() + "_" + pid);
+  return(this->Get_VHDL_Id() + "_" + pid);
 }
 
 // given a module, and type of operation,
@@ -591,7 +591,7 @@ string vcModule::Get_VHDL_Call_Interface_Port_Section(vcModule* m,
     }
 
   if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))
-    return(this->Get_Id() + "_" + pid + "(" + IntToStr(down_index) + ")");
+    return(this->Get_VHDL_Id() + "_" + pid + "(" + IntToStr(down_index) + ")");
   else if(pid.find("data") != string::npos)
     {
       int word_size;
@@ -600,12 +600,12 @@ string vcModule::Get_VHDL_Call_Interface_Port_Section(vcModule* m,
       else
 	word_size = this->Get_Out_Arg_Width();
 
-      return(this->Get_Id() + "_" + pid + "(" 
+      return(this->Get_VHDL_Id() + "_" + pid + "(" 
 	     + IntToStr(((down_index+1)*word_size)-1) + " downto "
 	     + IntToStr(down_index*word_size) + ")");
     }
   else if(pid.find("tag") != string::npos)
-    return(this->Get_Id() + "_" + pid + "(" 
+    return(this->Get_VHDL_Id() + "_" + pid + "(" 
 	   + IntToStr(((down_index+1)*this->Get_Caller_Tag_Length())-1) + " downto "
 	   + IntToStr(down_index*this->Get_Caller_Tag_Length()) + ")");
   else
@@ -615,7 +615,7 @@ string vcModule::Get_VHDL_Call_Interface_Port_Section(vcModule* m,
 
 void vcModule::Print_VHDL_In_Arg_Disconcatenation(ostream& ofile)
 {
-  string prefix = this->Get_Id() + "_";
+  string prefix = this->Get_VHDL_Id() + "_";
 
   int lindex = this->Get_In_Arg_Width() - 1;
   for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
@@ -631,7 +631,7 @@ void vcModule::Print_VHDL_In_Arg_Disconcatenation(ostream& ofile)
 
 void vcModule::Print_VHDL_Out_Arg_Concatenation(ostream& ofile)
 {
-  string prefix = this->Get_Id() + "_";
+  string prefix = this->Get_VHDL_Id() + "_";
 
   ofile << prefix << "out_args <= ";
   for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
@@ -646,8 +646,8 @@ void vcModule::Print_VHDL_Out_Arg_Concatenation(ostream& ofile)
 
 void vcModule::Print_VHDL_Call_Arbiter_Instantiation(ostream& ofile)
 {
-  ofile << "-- call arbiter for module " << this->Get_Id() << endl;
-  string prefix = this->Get_Id() + "_";
+  ofile << "-- call arbiter for module " << this->Get_VHDL_Id() << endl;
+  string prefix = this->Get_VHDL_Id() + "_";
   
   ofile << prefix << "arbiter: CallArbiterUnitary -- {" << endl;
   ofile << "generic map( --{\n num_reqs => " << this->_num_calls << "," << endl;
@@ -676,8 +676,8 @@ void vcModule::Print_VHDL_Call_Arbiter_Instantiation(ostream& ofile)
 
 void vcModule::Print_VHDL_Instance(ostream& ofile)
 {
-  string instance_id = this->Get_Id() + "_instance";
-  ofile << instance_id << ":" << this->Get_Id() << "-- {" << endl;
+  string instance_id = this->Get_VHDL_Id() + "_instance";
+  ofile << instance_id << ":" << this->Get_VHDL_Id() << "-- {" << endl;
   ofile << "port map(-- {\n ";
 
   this->Print_VHDL_Instance_Port_Map(ofile);
@@ -698,7 +698,7 @@ void vcModule::Print_VHDL_Instance_Port_Map(ostream& ofile)
 
 string vcModule::Print_VHDL_Argument_Port_Map(string  comma, ostream& ofile)
 {
-  string prefix = this->Get_Id() +  "_";
+  string prefix = this->Get_VHDL_Id() +  "_";
   for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
     { 
       ofile << comma << endl;
@@ -723,7 +723,7 @@ string vcModule::Print_VHDL_Argument_Port_Map(string  comma, ostream& ofile)
 
 string  vcModule::Print_VHDL_Tag_Interface_Port_Map(string comma, ostream& ofile)
 {
-  string prefix = this->Get_Id() + "_";
+  string prefix = this->Get_VHDL_Id() + "_";
   ofile << comma << endl;
   ofile << "tag_in => " << prefix << "tag_in," << endl;
   ofile << "tag_out => " << prefix << "tag_out" ;
@@ -757,7 +757,7 @@ bool vcModule::Get_Caller_Module_Section(vcModule* caller_module, int& hindex, i
 string vcModule::Get_Aggregate_Section(string pid, int hindex, int lindex)
 {
   int data_width;
-  string ret_string = this->Get_Id() + "_" + pid;
+  string ret_string = this->Get_VHDL_Id() + "_" + pid;
 
   // find data_width.
   if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))

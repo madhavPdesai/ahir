@@ -1,6 +1,5 @@
 #include <AaParserClasses.h>
 #include <AaProgram.h>
-#include <Aa2Ahir.h>
 
 //---------------------------------------------------------------------
 // AaProgram

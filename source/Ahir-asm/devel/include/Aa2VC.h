@@ -66,4 +66,5 @@ void Write_VC_Select_Operator(string inst_name,
 			      AaType* target_type,
 			      ostream& ofile);
 
+
 #endif

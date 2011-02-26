@@ -128,6 +128,9 @@ class AaStatement: public AaScope
 
   virtual void Propagate_Constants() {}
 
+  virtual string Get_VC_Entry_Place_Name() { return(this->Get_VC_Name() + "__entry__");}
+  virtual string Get_VC_Exit_Place_Name() { return(this->Get_VC_Name() + "__exit__");}
+
 };
 
 // statement sequence (is used in block statements which lead to programs)
@@ -567,8 +570,9 @@ class AaBranchBlockStatement: public AaSeriesBlockStatement
   virtual string Kind() {return("AaBranchBlockStatement");}
 
   virtual void Write_VC_Control_Path(ostream& ofile);
-  void Write_VC_Control_Path(bool link_to_self,
+  void Write_VC_Control_Path(string source_link,
 			     AaStatementSequence* sseq,
+			     string sink_link,
 			     ostream& ofile);
 
   virtual string Get_VC_Name() {return("branch_block_stmt_" + Int64ToStr(this->Get_Index()));}
@@ -669,6 +673,8 @@ class AaPlaceStatement: public AaStatement
     ofile << "$P [" << this->Get_VC_Name() << "]" << endl;
   }
 
+  virtual string Get_VC_Entry_Place_Name() { return(this->Get_VC_Name()); }
+  virtual string Get_VC_Exit_Place_Name() { return(this->Get_VC_Name()); }
 };
 
 

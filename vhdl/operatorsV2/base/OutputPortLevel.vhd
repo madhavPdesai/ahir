@@ -28,11 +28,9 @@ architecture Base of OutputPortLevel is
   signal data_array : OPWArray(num_reqs-1 downto 0);
   signal req_active, ack_sig  : std_logic_vector(num_reqs-1 downto 0);
   
-  signal rep_data_in : std_logic_vector(data_width-1 downto 0);
-  signal rep_req_in, rep_ack_out : std_logic;
 begin
   
-  rep_req_in <= OrReduce(req_active);
+  oreq <= OrReduce(req_active);
 
   NoArb: if no_arbitration generate
      req_active <= req;
@@ -49,12 +47,12 @@ begin
     for I in 0 to num_reqs-1 loop
       var_odata := data_array(I) or var_odata;
     end loop;  -- I
-    rep_data_in <= var_odata;
+    odata <= var_odata;
   end process;
 
   gen: for I in num_reqs-1 downto 0 generate
 
-       ack_sig(I) <= req_active(I) and rep_ack_out; 
+       ack_sig(I) <= req_active(I) and oack; 
        ack(I) <= ack_sig(I);
 
        process(data,req_active(I))
@@ -69,17 +67,5 @@ begin
        end process;
          
   end generate gen;
-
-  rptr : RepeaterBase generic map (
-    data_width => data_width)
-    port map (
-      clk      => clk,
-      reset    => reset,
-      data_in  => rep_data_in,
-      req_in   => rep_req_in,
-      ack_out  => rep_ack_out,
-      data_out => odata,
-      req_out  => oreq,
-      ack_in   => oack);
 
 end Base;

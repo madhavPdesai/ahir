@@ -85,12 +85,15 @@ void AaRoot::Add_Source_Reference(AaRoot* referrer)
 string Make_VC_Legal(string x)
 {
   string ret_string;
-  for(int i = 0; i < x.size(); i++)
+
+  for(int idx = 0; idx < x.size(); idx++)
     {
-      if(x[i] == '%' || x[i] == '$')
-	ret_string += "xx";
+      if(isalnum(x[idx]) || (x[idx] == '_'))
+	ret_string += x[idx];
       else
-	ret_string += x[i];
+	ret_string += "xx";
     }
+
   return(ret_string);
 }
+
