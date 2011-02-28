@@ -110,6 +110,34 @@ protected:
   vcTransition* Get_Req(int idx) {if(idx >= 0 && idx<_reqs.size()) return(this->_reqs[idx]); else return(NULL);}
   vcTransition* Get_Ack(int idx) {if(idx >= 0 && idx<_acks.size()) return(this->_acks[idx]); else return(NULL);}
 
+  int Get_Req_Index(vcTransition* t)
+  {
+    int ret_index = -1;
+    for(int idx = 0; idx < _reqs.size(); idx++)
+      {
+	if(_reqs[idx] == t)
+	  {
+	    ret_index = idx;
+	    break;
+	  }
+      }
+    return(ret_index);
+  }
+
+  int Get_Ack_Index(vcTransition* t)
+  {
+    int ret_index = -1;
+    for(int idx = 0; idx < _acks.size(); idx++)
+      {
+	if(_acks[idx] == t)
+	  {
+	    ret_index = idx;
+	    break;
+	  }
+      }
+    return(ret_index);
+  }
+
   virtual bool Is_Shareable_With(vcDatapathElement* other) {return(false);}
   virtual string Kind() {return("vcDatapathElement");}
   virtual string Get_Operator_Type() {return(this->Kind());}

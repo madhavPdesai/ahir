@@ -1,6 +1,7 @@
 #include <vcIncludes.hpp>
 #include <vcRoot.hpp>
 #include <vcControlPath.hpp>
+#include <vcDataPath.hpp>
 #include <vcSystem.hpp>
 
 int vcControlPath::_free_index = 0;
@@ -356,14 +357,37 @@ void vcTransition::Print_VHDL(ostream& ofile)
 
 }
 
-
-string vcTransition::Get_DP_To_CP_Symbol()
-{
-  return(To_VHDL(this->Get_Hierarchical_Id() + "_dp_to_cp"));
-}
 string vcTransition::Get_CP_To_DP_Symbol()
 {
-  return(To_VHDL(this->Get_Hierarchical_Id() + "_cp_to_dp"));
+  string ret_string;
+  for(int idx = 0; idx < _dp_link.size(); idx++)
+    {
+      int req_idx = _dp_link[idx].first->Get_Req_Index(this);
+      if(req_idx >= 0)
+	{
+	  if(ret_string != "")
+	    ret_string += "_";
+
+	  ret_string += _dp_link[idx].first->Get_Id() + "_" + "req_" + IntToStr(req_idx);
+	}
+    }
+  return(ret_string);
+}
+string vcTransition::Get_DP_To_CP_Symbol()
+{
+  string ret_string;
+  for(int idx = 0; idx < _dp_link.size(); idx++)
+    {
+      int ack_idx = _dp_link[idx].first->Get_Ack_Index(this);
+      if(ack_idx >= 0)
+	{
+	  if(ret_string != "")
+	    ret_string += "_";
+
+	  ret_string += _dp_link[idx].first->Get_Id() + "_" + "ack_" + IntToStr(ack_idx);
+	}
+    }
+  return(ret_string);
 }
 vcPlace::vcPlace(vcCPElement* parent, string id, unsigned int init_marking):vcCPElement(parent, id)
 {
