@@ -1171,16 +1171,15 @@ void AaTypeCastExpression::Write_VC_Control_Path(ostream& ofile)
   string ps;
   this->AaRoot::Print(ps);
 
-
   if(!this->Is_Constant())
     {
       ofile << "// control-path for expression: ";
       this->Print(ofile);
       ofile << endl;
-
+      
       ofile << ";;[" << this->Get_VC_Name() << "] { // type-cast expression: " << ps << endl;
       this->_rest->Write_VC_Control_Path(ofile);
-      ofile << "$T [rr] $T [ra] $T [cr] $T [ca] // int<->float conversion. " << endl;
+      ofile << "$T [req] $T [ack] //  type-conversion.. " << endl;
       ofile << "}" << endl;
     }
 }
@@ -1216,28 +1215,34 @@ void AaTypeCastExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 }
 void AaTypeCastExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
-  if(!this->Is_Constant() && !skip_immediate)
+  if(!this->Is_Constant())
     {
-
       this->_rest->Write_VC_Wire_Declarations(false,ofile);
 
-      ofile << "// wire-declarations for expression: ";
-      this->Print(ofile);
-      ofile << endl;
-
-      Write_VC_Wire_Declaration(this->Get_VC_Driver_Name(),
-				this->Get_Type(),
-				ofile);
-
+      if(!skip_immediate)
+	{
+	  ofile << "// wire-declarations for expression: ";
+	  this->Print(ofile);
+	  ofile << endl;
+	  
+	  Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Driver_Name(),
+						 this->Get_Type(),
+						 ofile);
+	}
     }
 }
+
 void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
 {
   if(!this->Is_Constant())
     {
 
-
       this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
+
+      if(!this->Get_Type()->Is("AaUintType") && !this->_rest->Get_Type()->Is("AaUintType"))
+	{
+	  AaRoot::Error("For vc2vhdl, type-cast operations not yet correctly implemented except for $uint -> $uint conversions",this);
+	}
 
       ofile << "// data-path instances for expression: ";
       this->Print(ofile);
@@ -1252,6 +1257,7 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 			      ofile);
     }
 }
+
 void AaTypeCastExpression::Write_VC_Links(string hier_id, ostream& ofile)
 {
 
@@ -1267,10 +1273,8 @@ void AaTypeCastExpression::Write_VC_Links(string hier_id, ostream& ofile)
       ofile << endl;
       
       vector<string> reqs,acks;
-      reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/rr");
-      reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/cr");
-      acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ra");
-      acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ca");
+      reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/req");
+      acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ack");
       Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
     }
 }
@@ -1350,18 +1354,24 @@ void AaUnaryExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 }
 void AaUnaryExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
-  if(!this->Is_Constant() && !skip_immediate)
+  if(!this->Is_Constant())
     {
 
       this->_rest->Write_VC_Wire_Declarations(false,ofile);
 
-      ofile << "// wire-declarations for expression: ";
-      this->Print(ofile);
-      ofile << endl;
 
-      Write_VC_Wire_Declaration(this->Get_VC_Driver_Name(),
-				this->Get_Type(),
-				ofile);
+
+      if(!skip_immediate)
+	{
+
+	  ofile << "// wire-declarations for expression: ";
+	  this->Print(ofile);
+	  ofile << endl;
+
+	  Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Driver_Name(),
+						 this->Get_Type(),
+						 ofile);
+	}
 
     }
 
@@ -1418,6 +1428,14 @@ AaBinaryExpression::AaBinaryExpression(AaScope* parent_tpr,AaOperation op, AaExp
 {
   this->_operation = op;
 
+ this->_first = first;
+  if(first)
+    first->Add_Target(this);
+  this->_second = second;
+  if(second)
+    second->Add_Target(this);
+
+ 
   if(Is_Bitsel_Operation(op))
     { // bitsel: the output is always a single bit
       // there is no dependence betweem the two 
@@ -1438,13 +1456,6 @@ AaBinaryExpression::AaBinaryExpression(AaScope* parent_tpr,AaOperation op, AaExp
       AaProgram::Add_Type_Dependency(first,this);
       AaProgram::Add_Type_Dependency(second,this);
     }
-
-  this->_first = first;
-  if(first)
-    first->Add_Target(this);
-  this->_second = second;
-  if(second)
-    second->Add_Target(this);
 
   this->Update_Type();
 }
@@ -1486,8 +1497,14 @@ void AaBinaryExpression::Update_Type()
 	    }
 	}
     }
+  else if(Is_Bitsel_Operation(this->_operation) || Is_Shift_Operation(this->_operation))
+    {
+      if((this->_second->Get_Type() == NULL) && (this->_first->Get_Type() != NULL))
+	{
+	  this->_second->Set_Type(AaProgram::Make_Uinteger_Type(CeilLog2(this->_first->Get_Type()->Size())));
+	}
+    }
 }
-
 
 bool AaBinaryExpression::Is_Trivial()
 {
@@ -1561,9 +1578,9 @@ void AaBinaryExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream
 	  ofile << "// wire-declarations for expression: ";
 	  this->Print(ofile);
 	  ofile << endl;
-	  Write_VC_Wire_Declaration(this->Get_VC_Driver_Name(),
-				    this->Get_Type(),
-				    ofile);
+	  Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Driver_Name(),
+						 this->Get_Type(),
+						 ofile);
 	}
     }
 
@@ -1770,9 +1787,9 @@ void AaTernaryExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostrea
       ofile << "// wire-declarations for expression: ";
       this->Print(ofile);
       ofile << endl;
-      Write_VC_Wire_Declaration(this->Get_VC_Driver_Name(),
-				this->Get_Type(),
-				ofile);
+      Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Driver_Name(),
+					     this->Get_Type(),
+					     ofile);
     }
 }
 void AaTernaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)

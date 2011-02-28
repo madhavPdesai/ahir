@@ -190,9 +190,12 @@ public:
   void BFS_Order(bool reverse_flag,
 		 vcCPElement* start_element, 
 		 int& num_visited, 
-		 vector<vcCPElement*>& bfs_ordered_elements);
+		 vector<vcCPElement*>& bfs_ordered_elements,
+		 set<vcCPElement*>& visited_set);
   void DFS_Order(bool reverse_flag,vcCPElement* start_element, 
-		 bool& cycle_flag, int& num_visited, vector<vcCPElement*>& dfs_ordered_elements);
+		 bool& cycle_flag, int& num_visited, 
+		 vector<vcCPElement*>& dfs_ordered_elements,
+		 set<vcCPElement*>& visited_set);
 
   virtual void Print_Structure(ostream& ofile);
 
@@ -200,6 +203,8 @@ public:
 
   virtual void Print_VHDL_Start_Symbol_Assignment(ostream& ofile);
   virtual void Print_VHDL_Exit_Symbol_Assignment(ostream& ofile);
+
+  void Print_Missing_Elements(set<vcCPElement*>& visited_set); // print to cerr
 };
 
 class vcCPSeriesBlock: public vcCPBlock

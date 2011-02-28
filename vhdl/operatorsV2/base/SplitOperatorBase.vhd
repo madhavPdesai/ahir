@@ -7,6 +7,7 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.OperatorPackage.all;
 use ahir.FloatOperatorPackage.all;
+use ahir.BaseComponents.all;
 
 entity SplitOperatorBase is
   generic
@@ -59,144 +60,27 @@ begin  -- Behave
 
   assert((num_inputs = 1) or (num_inputs = 2)) report "either 1 or 2 inputs" severity failure;
 
-  TwoOperand : if num_inputs = 2 generate
-
-    -- int x int -> int
-    TwoOpIntIntInt: if input1_is_int and input2_is_int and output_is_int generate
-      process(dataL)
-        
-        variable   result_var   : IStdLogicVector(owidth-1 downto 0);
-        variable op1: IStdLogicVector(iwidth_1-1 downto 0);
-        variable op2: IStdLogicVector(iwidth_2-1 downto 0);
-      begin
-        op1 := To_ISLV(dataL(iwidth-1 downto iwidth_2));
-        op2 := To_ISLV(dataL(iwidth_2-1 downto 0));
-        TwoInputOperation(operator_id, op1, op2,result_var);
-        result <= To_SLV(result_var);
-      end process;
-    end generate TwoOpIntIntInt;
-
-    -- float x float -> float
-    TwoOpFloatFloatFloat: if (not input1_is_int) and (not input2_is_int) and (not output_is_int) generate
-      process(dataL)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        variable op2: IStdLogicVector(input2_characteristic_width downto (- input2_mantissa_width));
-        variable   result_var: IStdLogicVector(output_characteristic_width downto (-output_mantissa_width));
-      begin
-        op1 := To_ISLV(dataL(iwidth-1 downto iwidth_2));
-        op2 := To_ISLV(dataL(iwidth_2-1 downto 0));
-        TwoInputFloatOperation(operator_id, op1,op2,result_var);
-        result <= To_SLV(result_var);
-      end process;
-    end generate TwoOpFloatFloatFloat;
-
-    -- float x float -> int
-    TwoOpFloatFloatInt: if (not input1_is_int) and (not input2_is_int) and output_is_int generate
-      process(dataL)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        variable op2: IStdLogicVector(input2_characteristic_width downto (- input2_mantissa_width));
-        variable   result_var: IStdLogicVector(owidth-1 downto 0);
-      begin
-        op1 := To_ISLV(dataL(iwidth-1 downto iwidth_2));
-        op2 := To_ISLV(dataL(iwidth_2-1 downto 0));
-        TwoInputFloatOperation(operator_id, op1,op2,result_var);
-        result <= To_SLV(result_var);
-      end process;
-    end generate TwoOpFloatFloatInt;
-
-    -- float x int -> * and int x float -> * are not permitted.
-    assert(input1_is_int = input2_is_int) report "both operands of two input operators should be either ints or floats"
-      severity failure;
-
-    -- int x int -> float is not permitted.
-    assert((not input1_is_int) or output_is_int) report "if the inputs to a two-input operation are ints, the output cannot be a float!" severity failure;
-
-  end generate TwoOperand;
-
-
-  SingleOperandNoConstant : if num_inputs = 1 and not use_constant generate
-
-    SingleOperandNoConstantIntInt: if input1_is_int and output_is_int generate
-      process(dataL)
-        variable   result_var    : IStdLogicVector(owidth-1 downto 0);
-      begin
-        SingleInputOperation(operator_id, To_ISLV(dataL), result_var);
-        result <= To_SLV(result_var);
-      end process;
-    end generate SingleOperandNoConstantIntInt;
-    
-    SingleOperandNoConstantFloatFloat: if (not input1_is_int) and (not output_is_int) generate
-      process(dataL)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        variable result_var: IStdLogicVector(output_characteristic_width downto (- output_mantissa_width));
-      begin
-        op1 := To_ISLV(dataL);
-        SingleInputFloatOperation(operator_id, op1, result_var);
-        result <= To_SLV(result_var);
-      end process;
-    end generate SingleOperandNoConstantFloatFloat;
-
-    SingleOperandNoConstantFloatInt: if (not input1_is_int) and output_is_int generate
-      process(dataL)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        variable result_var: IStdLogicVector(owidth-1 downto 0);
-      begin
-        op1 := To_ISLV(dataL);
-        SingleInputFloatOperation(operator_id, op1, result_var);
-        result <= To_SLV(result_var);
-      end process;
-    end generate SingleOperandNoConstantFloatInt;
-
-    SingleOperandNoConstantIntFloat: if (input1_is_int) and (not output_is_int) generate
-      process(dataL)
-        variable result_var: IStdLogicVector(output_characteristic_width downto (- output_mantissa_width));
-      begin
-        SingleInputFloatOperation(operator_id, To_ISLV(dataL), result_var);
-        result <= To_SLV(result_var);
-      end process;
-    end generate SingleOperandNoConstantIntFloat;
-  end generate SingleOperandNoConstant;
-
-  SingleOperandWithConstant : if num_inputs = 1 and use_constant generate
-
-    SingleOperandWithConstantIntInt: if input1_is_int and output_is_int generate
-      process(dataL)
-        variable   result_var    : IStdLogicVector(owidth-1 downto 0);
-      begin
-        TwoInputOperation(operator_id,
-                          To_ISLV(dataL(iwidth-1 downto 0)), 
-                          To_ISLV(constant_operand),
-                          result_var); 
-        result <= To_SLV(result_var);
-      end process;
-    end generate SingleOperandWithConstantIntInt;
-
-    SingleOperandWithConstantFloatInt: if (not input1_is_int) and output_is_int generate
-      process(dataL)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        constant op2: IStdLogicVector(input2_characteristic_width downto (- input2_mantissa_width)) 
-          := To_ISLV(constant_operand);
-        variable   result_var: IStdLogicVector(owidth-1 downto 0);
-      begin
-        op1 := To_ISLV(dataL);	
-        TwoInputFloatOperation(operator_id, op1, op2, result_var);
-        result <= To_SLV(result_var);
-      end process;
-    end generate SingleOperandWithConstantFloatInt;
-
-    SingleOperandWithConstantFloatFloat: if (not input1_is_int) and (not output_is_int) generate
-      process(dataL)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        constant op2: IStdLogicVector(input2_characteristic_width downto (- input2_mantissa_width)) 
-          := To_ISLV(constant_operand);
-        variable result_var: IStdLogicVector(output_characteristic_width downto (- output_mantissa_width));
-      begin
-        op1 := To_ISLV(dataL);
-        TwoInputFloatOperation(operator_id, op1, op2, result_var);
-        result <= To_SLV(result_var);
-      end process;
-    end generate SingleOperandWithConstantFloatFloat;
-  end generate SingleOperandWithConstant;
+  comb_block: GenericCombinationalOperator
+    generic map (
+      operator_id                 => operator_id,
+      input1_is_int               => input1_is_int,
+      input1_characteristic_width => input1_characteristic_width,
+      input1_mantissa_width       => input1_mantissa_width,
+      iwidth_1                    => iwidth_1,
+      input2_is_int               => input2_is_int,
+      input2_characteristic_width => input2_characteristic_width,
+      input2_mantissa_width       => input2_mantissa_width,
+      iwidth_2                    => iwidth_2,
+      num_inputs                  => num_inputs,
+      output_is_int               => output_is_int,
+      output_characteristic_width => output_characteristic_width,
+      output_mantissa_width       => output_mantissa_width,
+      owidth                      => owidth,
+      constant_operand            => constant_operand,
+      use_constant                => use_constant)
+    port map (
+      data_in => dataL,
+      result  => result);
 
 
   -- state machine for single cycle delay case

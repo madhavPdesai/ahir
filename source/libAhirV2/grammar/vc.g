@@ -746,14 +746,20 @@ vc_Wire_Declaration[vcSystem* sys,vcDataPath* dp]
         vcValue* v;
 	string obj_name;
         bool const_flag = false;
+        bool intermediate_flag = false;
 }
 :
-(cid:CONSTANT {const_flag = true;} )? wid:WIRE vc_Object_Declaration_Base[sys, &t, obj_name, &v] 
+((cid:CONSTANT {const_flag = true;}) | (iid:INTERMEDIATE {intermediate_flag = true;}) )? wid:WIRE vc_Object_Declaration_Base[sys, &t, obj_name, &v] 
      { 
         if(!const_flag) 
         {
            if(dp != NULL)
-              dp->Add_Wire(obj_name, t);
+           {
+              if(intermediate_flag)
+                dp->Add_Intermediate_Wire(obj_name,t);
+              else
+                dp->Add_Wire(obj_name, t);
+           }
            else
               sys->Error("Warning: wire declaration at system scope ignored: line number " + 
                             IntToStr(wid->getLine()));
@@ -1001,6 +1007,7 @@ PIPE          : "$pipe";
 FROM          : "$from";
 AT            : "$at";
 CONSTANT      : "$constant";
+INTERMEDIATE  : "$intermediate";
 
 
 // Special symbols
@@ -1042,7 +1049,7 @@ ULE_OP           : "|<=|";
 NEQ_OP           : "!=";
 UNORDERED_OP     : "><";
 BITSEL_OP        : "[]";
-CONCAT_OP        : "_";
+CONCAT_OP        : "&&";
 BRANCH_OP        : "==0?";
 SELECT_OP        : "?";
 ASSIGN_OP        : ":="; 

@@ -322,6 +322,9 @@ bool vcBinarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
   if(!Check_If_Equivalent(ow1,ow2))
     return(false);
 
+  if(_y->Is("vcConstantWire") && Is_Shift_Op(this->_op_id))
+    return(false);
+
   if(_y->Is("vcConstantWire") && (((vcBinarySplitOperator*)other)->Get_Y()->Is("vcConstantWire")))
     {
       vcConstantWire* cy = (vcConstantWire*) _y;
@@ -427,11 +430,10 @@ void vcSelect::Print(ostream& ofile)
 
 vcRegister::vcRegister(string id, vcWire* din, vcWire* dout):vcOperator(id)
 {
-  assert(din && dout && (din->Get_Type()->Size() == dout->Get_Type()->Size()));
+  assert(din && dout);
 
   _din = din;
   _dout = dout;
-
 }
 
 void vcRegister::Print(ostream& ofile)
@@ -482,6 +484,13 @@ void vcBranch::Print(ostream& ofile)
 }
 
 
+bool Is_Shift_Op(string vc_op_id)
+{
+  bool ret_val = false;
+  if(vc_op_id == vcLexerKeywords[__SHL_OP]           ) { ret_val = true;} 
+  else if(vc_op_id == vcLexerKeywords[__SHR_OP]           ) { ret_val = true;} 
+  return(ret_val);
+}
 bool Is_Trivial_Op(string vc_op_id)
 {
   bool ret_val = false;
@@ -528,7 +537,8 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
       else if(vc_op_id == vcLexerKeywords[__MUL_OP]           ) { ret_string = "ApIntMul";} 
       else if(vc_op_id == vcLexerKeywords[__DIV_OP]           ) { ret_string = "ApIntDiv";} 
       else if(vc_op_id == vcLexerKeywords[__SHL_OP]           ) { ret_string = "ApIntSHL";} 
-      else if(vc_op_id == vcLexerKeywords[__SHR_OP]           ) { ret_string = "ApIntSHR";} 
+      else if(vc_op_id == vcLexerKeywords[__SHR_OP]           ) { ret_string = "ApIntLSHR";} 
+      //\todo: ASHR to be added here..
       else if(vc_op_id == vcLexerKeywords[__GT_OP]            ) { ret_string = "ApIntSgt";} 
       else if(vc_op_id == vcLexerKeywords[__GE_OP]            ) { ret_string = "ApIntSge"  ;} 
       else if(vc_op_id == vcLexerKeywords[__EQ_OP]            ) { ret_string = "ApIntEq"  ;} 
@@ -539,7 +549,7 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
       else if(vc_op_id == vcLexerKeywords[__ULT_OP]           ) { ret_string = "ApIntUlt"  ;}
       else if(vc_op_id == vcLexerKeywords[__ULE_OP]           ) { ret_string = "ApIntUle"  ;}
       else if(vc_op_id == vcLexerKeywords[__NEQ_OP]           ) { ret_string = "ApIntNeq"  ;} 
-      else if(vc_op_id == vcLexerKeywords[__BITSEL_OP]        ) { ret_string = "ApBitSel"  ;} 
+      else if(vc_op_id == vcLexerKeywords[__BITSEL_OP]        ) { ret_string = "ApBitsel"  ;} 
       else if(vc_op_id == vcLexerKeywords[__CONCAT_OP]        ) { ret_string = "ApConcat"  ;} 
       else if(vc_op_id == vcLexerKeywords[__ASSIGN_OP]        ) { ret_string = "ApAssign" ;}
       else if(vc_op_id == vcLexerKeywords[__NOT_OP]           ) { ret_string = "ApIntNot"  ;}

@@ -42,6 +42,19 @@ public:
   int Get_Size();
 };
 
+class vcIntermediateWire: public vcWire
+{
+public:
+  vcIntermediateWire(string id, vcType* t) : vcWire(id,t) {}
+  virtual void Print(ostream& ofile)
+  {
+    ofile << vcLexerKeywords[__INTERMEDIATE] << " ";
+    this->vcWire::Print(ofile);
+  }
+
+  virtual string Kind() {return("vcIntermediateWire");}
+};
+
 class vcConstantWire: public vcWire
 {
   vcValue* _value;
@@ -188,6 +201,7 @@ class vcDataPath: public vcRoot
 
   vcWire* Find_Wire(string wname);
   void Add_Wire(string wname, vcType* t);
+  void Add_Intermediate_Wire(string wname, vcType* t);
 
   void Add_Constant_Wire(string wname, vcValue* v);
 

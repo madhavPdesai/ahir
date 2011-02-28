@@ -210,10 +210,10 @@ string Aa_Name(AaOperation op)
       ret_string = "~";
       break;
     case __BITSEL:
-      ret_string = ".";
+      ret_string = "[]";
       break;
     case __CONCAT:
-      ret_string = "_";
+      ret_string = "&&";
       break;
     default:
       cerr << "Error: unrecognized operation" << endl;

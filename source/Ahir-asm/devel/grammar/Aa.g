@@ -1092,7 +1092,7 @@ aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
                     )* 
             |
                     (
-                        cid: HASH
+                        cid: UP
                         {
                             full_name += cid->getText();
                             search_ancestor_level++;
@@ -1256,7 +1256,7 @@ COLON		 : ':' ; // label separator
 SEMICOLON	 : ';' ; // sequence
 COMMA        : ',' ; // argument-separator, index-separator etc.
 QUOTE           : '"'; // string marker
-HASH            : '#';
+UP               : "../";
 ASSIGNEQUAL      : ":=" ; // assignment
 EQUAL            : "=="; // equality 
 NOTEQUAL         : "!="; // not equal
@@ -1275,8 +1275,8 @@ RBRACKET         : ']' ; // array index marker
 LPAREN           : '(' ; // argument-list
 RPAREN           : ')' ; // argument-list
 PERCENT          : '%' ; 
-CONCAT           : '_' ; // concatenation
-BITSEL           : '@' ; // bit-select
+CONCAT           : "&&" ; // concatenation
+BITSEL           : "[]" ; // bit-select
 
 
 // arithmetic operators

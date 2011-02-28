@@ -136,6 +136,12 @@ void vcDataPath::Add_Wire(string wname, vcType* t)
   this->_wire_map[wname] = new vcWire(wname, t);
 }
 
+void vcDataPath::Add_Intermediate_Wire(string wname, vcType* t)
+{
+  assert(this->Find_Wire(wname) == NULL);
+  this->_wire_map[wname] = new vcIntermediateWire(wname, t);
+}
+
 void vcDataPath::Add_Constant_Wire(string wname, vcValue* v)
 {
   assert(v != NULL);
@@ -706,7 +712,8 @@ void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
       iter++)
     {
       vcRegister* s = (*iter).second;
-      ofile << s->Get_VHDL_Id() << ": RegisterBase generic map(data_width => " << s->_din->Get_Size() << ") -- {" << endl;
+      ofile << s->Get_VHDL_Id() << ": RegisterBase generic map(in_data_width => " << s->_din->Get_Size()  << "," 
+	    << "out_data_width => " << s->_dout->Get_Size() << ") -- {" << endl;
       ofile << " port map( din => " << s->_din->Get_VHDL_Id() << "," 
 	    << " dout => " << s->_dout->Get_VHDL_Id() << ","
 	    << " req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol()  << ","
@@ -777,9 +784,13 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       // types. (e.g. + (float float) (float) or + (int int) (int) ?
       vcType* input_type =   ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())))->Get_Input_Type();
       vcType* output_type =   ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())))->Get_Output_Type();
-      string vhdl_op_id = Get_VHDL_Op_Id(((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())))->Get_Op_Id(),
+
+      
+      string vc_op_id = ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())))->Get_Op_Id();
+      string vhdl_op_id = Get_VHDL_Op_Id(vc_op_id,
 					 input_type,
 					 output_type);
+      
 
       // the number of inputs and outputs on each operator in the current group.
       int num_ips = ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())))->Get_Number_Of_Input_Wires();
@@ -863,11 +874,6 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 
       ofile << "-- }\n begin -- {" << endl;
 
-      this->Print_VHDL_Concatenate_Req("reqL",reqL,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackL",ackL,ofile);
-      this->Print_VHDL_Concatenate_Req("reqR",reqR,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackR",ackR,ofile);
-	
       // concatenate data_in
       this->Print_VHDL_Concatenation(string("data_in"), concat_in_wires,ofile);
 
@@ -884,36 +890,94 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       
 
       // now the operator instance.
-      ofile << "SplitOperator: SplitOperatorShared -- {" << endl;
-      ofile << "generic map ( -- { " ;
+      // it can be an instance either of a shared operator or of an unshared
+      // operator.
+      
+      if(num_reqs > 1)
+	{
+	  // ok, a shared operator
+	  this->Print_VHDL_Concatenate_Req("reqL",reqL,ofile);
+	  this->Print_VHDL_Disconcatenate_Ack("ackL",ackL,ofile);
+	  this->Print_VHDL_Concatenate_Req("reqR",reqR,ofile);
+	  this->Print_VHDL_Disconcatenate_Ack("ackR",ackR,ofile);
+	  
+	  ofile << "SplitOperator: SplitOperatorShared -- {" << endl;
+	  ofile << "generic map ( -- { " ;
+	  
+	  // a ton of generics..
+	  ofile << " operator_id => " << vhdl_op_id << "," << endl  // operator-id
+		<< " input1_is_int => " << (input_type_1->Is_Int_Type() ? "true" : "false") << ", " << endl  // first op is int?
+		<< " input1_characteristic_width => " 
+		<< (input_type_1->Is("vcFloatType") ? ((vcFloatType*)input_type_1)->Get_Characteristic_Width() : 0) << ", " << endl // char 1
+		<< " input1_mantissa_width    => " 
+		<< (input_type_1->Is("vcFloatType") ? ((vcFloatType*)input_type_1)->Get_Mantissa_Width() : 0) << ", " << endl // mantissa 1
+		<< " iwidth_1  => " << input_type_1->Size() << "," << endl // width 1
+		<< " input2_is_int => " << (input_type_2->Is_Int_Type() ? "true" : "false") << ", " << endl  // second op is int?
+		<< " input2_characteristic_width => " 
+		<< (input_type_2->Is("vcFloatType") ? ((vcFloatType*)input_type_2)->Get_Characteristic_Width() : 0) << ", " << endl // char 2
+		<< " input2_mantissa_width => "
+		<< (input_type_2->Is("vcFloatType") ? ((vcFloatType*)input_type_2)->Get_Mantissa_Width() : 0) << ", " << endl // mantissa 2
+		<< " iwidth_2      => " << (num_ips == 2 ? input_type_2->Size() : 0) << ", " << endl // width 2
+		<< " num_inputs    => " << num_ips << ","  << endl // number of inputs
+		<< " output_is_int => " << (output_type->Is_Int_Type() ? "true" : "false") << "," << endl // output is int?
+		<< " output_characteristic_width  => " 
+		<< (output_type->Is("vcFloatType") ? ((vcFloatType*)output_type)->Get_Characteristic_Width() : 0) << ", " << endl // char op
+		<< " output_mantissa_width => " 
+		<< (output_type->Is("vcFloatType") ? ((vcFloatType*)output_type)->Get_Mantissa_Width() : 0) << ", " << endl // mantissa op
+		<< " owidth => " << output_type->Size() << "," << endl  // output width
+		<< " constant_operand => " << const_operand << "," << endl // constant operand?
+		<< " use_constant  => " << (use_constant ? "true" : "false") << "," << endl // use constant?
+		<< " zero_delay => false, " << endl // single cycle delay
+		<< " no_arbitration => true, " << endl // no arbitration within group.
+		<< " num_reqs => " << num_reqs << "--} \n ) -- }" << endl; // number of requesters..
+	  ofile << "port map ( reqL => reqL , ackL => ackL, reqR => reqR, ackR => ackR, dataL => data_in, dataR => data_out, clk => clk, reset => reset);" << endl;
+	}
+      else
+	{
+	  // an unshared operator.
+	  bool flow_through_flag  = outwires[0]->Is("vcIntermediateWire") &&
+	    (Is_Trivial_Op(vc_op_id)  ||
+	     (use_constant && Is_Shift_Op(vc_op_id)));
 
-      // a ton of generics..
-      ofile << " operator_id => " << vhdl_op_id << "," << endl  // operator-id
-	    << " input1_is_int => " << (input_type_1->Is_Int_Type() ? "true" : "false") << ", " << endl  // first op is int?
-	    << " input1_characteristic_width => " 
-	    << (input_type_1->Is("vcFloatType") ? ((vcFloatType*)input_type_1)->Get_Characteristic_Width() : 0) << ", " << endl // char 1
-	    << " input1_mantissa_width    => " 
-	    << (input_type_1->Is("vcFloatType") ? ((vcFloatType*)input_type_1)->Get_Mantissa_Width() : 0) << ", " << endl // mantissa 1
-	    << " iwidth_1  => " << input_type_1->Size() << "," << endl // width 1
-	    << " input2_is_int => " << (input_type_2->Is_Int_Type() ? "true" : "false") << ", " << endl  // second op is int?
-	    << " input2_characteristic_width => " 
-	    << (input_type_2->Is("vcFloatType") ? ((vcFloatType*)input_type_2)->Get_Characteristic_Width() : 0) << ", " << endl // char 2
-	    << " input2_mantissa_width => "
-	    << (input_type_2->Is("vcFloatType") ? ((vcFloatType*)input_type_2)->Get_Mantissa_Width() : 0) << ", " << endl // mantissa 2
-	    << " iwidth_2      => " << (num_ips == 2 ? input_type_2->Size() : 0) << ", " << endl // width 2
-	    << " num_inputs    => " << num_ips << ","  << endl // number of inputs
-	    << " output_is_int => " << (output_type->Is_Int_Type() ? "true" : "false") << "," << endl // output is int?
-	    << " output_characteristic_width  => " 
-	    << (output_type->Is("vcFloatType") ? ((vcFloatType*)output_type)->Get_Characteristic_Width() : 0) << ", " << endl // char op
-	    << " output_mantissa_width => " 
-	    << (output_type->Is("vcFloatType") ? ((vcFloatType*)output_type)->Get_Mantissa_Width() : 0) << ", " << endl // mantissa op
-	    << " owidth => " << output_type->Size() << "," << endl  // output width
-	    << " constant_operand => " << const_operand << "," << endl // constant operand?
-	    << " use_constant  => " << (use_constant ? "true" : "false") << "," << endl // use constant?
-	    << " zero_delay => false, " << endl // single cycle delay
-	    << " no_arbitration => true, " << endl // no arbitration within group.
-	    << " num_reqs => " << num_reqs << "--} \n ) -- }" << endl; // number of requesters..
-      ofile << "port map ( reqL => reqL , ackL => ackL, reqR => reqR, ackR => ackR, dataL => data_in, dataR => data_out, clk => clk, reset => reset);" << endl;
+	  ofile << "UnsharedOperator: UnsharedOperatorBase -- {" << endl;
+	  ofile << "generic map ( -- { " ;
+	  
+	  // a ton of generics..
+	  ofile << " operator_id => " << vhdl_op_id << "," << endl  // operator-id
+		<< " input1_is_int => " << (input_type_1->Is_Int_Type() ? "true" : "false") << ", " << endl  // first op is int?
+		<< " input1_characteristic_width => " 
+		<< (input_type_1->Is("vcFloatType") ? ((vcFloatType*)input_type_1)->Get_Characteristic_Width() : 0) << ", " << endl // char 1
+		<< " input1_mantissa_width    => " 
+		<< (input_type_1->Is("vcFloatType") ? ((vcFloatType*)input_type_1)->Get_Mantissa_Width() : 0) << ", " << endl // mantissa 1
+		<< " iwidth_1  => " << input_type_1->Size() << "," << endl // width 1
+		<< " input2_is_int => " << (input_type_2->Is_Int_Type() ? "true" : "false") << ", " << endl  // second op is int?
+		<< " input2_characteristic_width => " 
+		<< (input_type_2->Is("vcFloatType") ? ((vcFloatType*)input_type_2)->Get_Characteristic_Width() : 0) << ", " << endl // char 2
+		<< " input2_mantissa_width => "
+		<< (input_type_2->Is("vcFloatType") ? ((vcFloatType*)input_type_2)->Get_Mantissa_Width() : 0) << ", " << endl // mantissa 2
+		<< " iwidth_2      => " << (num_ips == 2 ? input_type_2->Size() : 0) << ", " << endl // width 2
+		<< " num_inputs    => " << num_ips << ","  << endl // number of inputs
+		<< " output_is_int => " << (output_type->Is_Int_Type() ? "true" : "false") << "," << endl // output is int?
+		<< " output_characteristic_width  => " 
+		<< (output_type->Is("vcFloatType") ? ((vcFloatType*)output_type)->Get_Characteristic_Width() : 0) << ", " << endl // char op
+		<< " output_mantissa_width => " 
+		<< (output_type->Is("vcFloatType") ? ((vcFloatType*)output_type)->Get_Mantissa_Width() : 0) << ", " << endl // mantissa op
+		<< " owidth => " << output_type->Size() << "," << endl  // output width
+		<< " constant_operand => " << const_operand << "," << endl // constant operand?
+		<< " use_constant  => " << (use_constant ? "true" : "false") << "," << endl // use constant?
+		<< " zero_delay => false, " << endl // single cycle delay
+		<< " flow_through => " << (flow_through_flag ? "true" : "false")
+		<< "--} \n ) " << endl; // number of requesters..
+	  ofile << "port map ( -- { " << endl
+		<< "reqL => " << reqL[0]->Get_CP_To_DP_Symbol() << "," << endl
+		<< "ackL => " << ackL[0]->Get_DP_To_CP_Symbol() << "," << endl
+		<< "reqR => " << reqR[0]->Get_CP_To_DP_Symbol() << "," << endl
+		<< "ackR => " << ackR[0]->Get_DP_To_CP_Symbol() << "," << endl
+		<< "dataL => data_in, " << endl
+		<< "dataR => data_out," << endl
+		<< "clk => clk," << endl
+		<< "reset => reset); -- }}" << endl;
+	}
       ofile << "-- } \n end Block; -- split operator group " << idx << endl; // thats it..
     }
 }

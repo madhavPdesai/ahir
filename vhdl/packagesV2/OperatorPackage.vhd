@@ -193,9 +193,9 @@ package body OperatorPackage is
     variable result_var : IStdLogicVector(result'high downto result'low);	
     variable temp_int: integer;
   begin
-    if id = "ApIntBitsel" then
+    if id = "ApConcat" then
       result_var := x & y;
-    elsif id = "ApIntBitsel" then
+    elsif id = "ApBitsel" then
       temp_int := To_Integer(To_Unsigned(To_SLV(y)));
       result_var(result_var'low) := x(temp_int);
     elsif id = "ApIntAdd" then					

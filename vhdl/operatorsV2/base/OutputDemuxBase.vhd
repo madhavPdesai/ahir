@@ -115,7 +115,9 @@ begin  -- Behave
       latch :=  (reqRfinal(I) = '1')  and (reqL = '1') and (ackL_sig = '1') and (reset = '0');
       ldataL := dataL;
 
-      if(latch) then
+      if(reset = '1') then
+        dfinal(I) <= (others => '0');
+      elsif latch then
         dfinal(I) <= ldataL;
       else
         dfinal(I) <= dreg(I);

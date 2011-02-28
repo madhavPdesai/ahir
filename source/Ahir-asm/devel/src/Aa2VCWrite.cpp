@@ -33,6 +33,7 @@ void Write_VC_Unary_Operator(AaOperation op,
 	<< "(" << src_name << ") "
 	<< "(" << target_name << ")" << endl;
 }
+
 void Write_VC_Binary_Operator(AaOperation op, 
 			      string inst_name, 
 			      string src1, 
@@ -67,7 +68,7 @@ void Write_VC_Binary_Operator(AaOperation op,
   else if(op == __LESSEQUAL) op_name = "<=";
   else if(op == __GREATER) op_name = ">";
   else if(op == __GREATEREQUAL) op_name = ">=";
-  else if(op == __CONCAT) op_name = "_";
+  else if(op == __CONCAT) op_name = "&&";
   else if(op == __BITSEL) op_name = "[]";
   else
     assert(0);
@@ -181,6 +182,17 @@ void Write_VC_Wire_Declaration(string name, AaType* type, ostream& ofile)
 			    type_name,
 			    ofile);
 }
+
+void Write_VC_Intermediate_Wire_Declaration(string name, AaType* type, ostream& ofile)
+{
+  string type_name = type->Get_VC_Name();
+  ofile << "$intermediate ";
+  Write_VC_Wire_Declaration(name,
+			    type_name,
+			    ofile);
+}
+
+
 void Write_VC_Pipe_Declaration(string name, int width, ostream& ofile)
 {
   ofile << "$pipe [" << name << "] " << width << endl;

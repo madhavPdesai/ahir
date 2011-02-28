@@ -46,6 +46,10 @@ void Write_VC_Constant_Pointer_Declaration(string name,
 					   ostream& ofile);
 void Write_VC_Pointer_Declaration(string name, string wire_name, AaType* type,ostream& ofile);
 void Write_VC_Wire_Declaration(string name, AaType* type,ostream& ofile);
+void Write_VC_Intermediate_Wire_Declaration(string wire_name, 
+					    AaType* t,
+					    ostream& ofile);
+
 void Write_VC_Pipe_Declaration(string name, int width,ostream& ofile);
 void Write_VC_Memory_Space_Declaration(string space_name, string obj_name, AaType* type,ostream& ofile);
 void Write_VC_Load_Operator(AaStorageObject* obj, string inst_name, string data_name, string addr_name,

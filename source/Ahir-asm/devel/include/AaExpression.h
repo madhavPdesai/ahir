@@ -427,6 +427,7 @@ class AaBinaryExpression: public AaExpression
 
   virtual void Update_Type();
 
+
   virtual void Write_VC_Control_Path( ostream& ofile);
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)

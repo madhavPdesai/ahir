@@ -118,6 +118,7 @@ class AaStatement: public AaScope
   }
 
   virtual void Write_VC_Control_Path(ostream& ofile) { assert(0);}
+  virtual void Write_VC_Control_Path(string sink_link, ostream& ofile) { assert(0);}
 
   virtual void Write_VC_Pipe_Declarations(ostream& ofile) {}
   virtual void Write_VC_Memory_Space_Declarations(ostream& ofile) {}
@@ -686,6 +687,9 @@ class AaMergeStatement: public AaSeriesBlockStatement
 
   unsigned char _wait_on_entry;
 
+
+  string _vc_source_link; // name of VC source link.
+
  public:
   void Add_Merge_Label(string lbl) 
   { 
@@ -727,10 +731,11 @@ class AaMergeStatement: public AaSeriesBlockStatement
     return(this->Get_Struct_Dereference() +  this->Get_Merge_From_Entry());
   }
 
-  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path(string source_link, ostream& ofile);
 
 
   virtual string Get_VC_Name() {return("merge_stmt_" + Int64ToStr(this->Get_Index()));}
+  virtual string Get_VC_Entry_Place_Name() {return("");}
 
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
@@ -784,6 +789,7 @@ class AaPhiStatement: public AaStatement
   virtual bool Is_Constant();
 
   virtual string Get_VC_Name() {return("phi_stmt_" + Int64ToStr(this->Get_Index()));}
+  friend class AaMergeStatement;
 };
 
 
@@ -836,7 +842,7 @@ class AaSwitchStatement: public AaStatement
     return(this->Get_Scope()->Get_Struct_Dereference());
   }
 
-  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path(string sink_link, ostream& ofile);
 
   virtual void Write_VC_Constant_Declarations(ostream& ofile);
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
@@ -847,6 +853,7 @@ class AaSwitchStatement: public AaStatement
   virtual void Propagate_Constants(); 
 
   virtual string Get_VC_Name() {return("switch_stmt_" + Int64ToStr(this->Get_Index()));}
+  virtual string Get_VC_Exit_Place_Name() {return("");}
 };
 
 
@@ -889,7 +896,7 @@ class AaIfStatement: public AaStatement
     return(this->Get_Scope()->Get_Struct_Dereference());
   }
 
-  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path(string sink_link, ostream& ofile);
 
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
@@ -899,6 +906,7 @@ class AaIfStatement: public AaStatement
   virtual void Propagate_Constants(); 
 
   virtual string Get_VC_Name() {return("if_stmt_" + Int64ToStr(this->Get_Index()));}
+  virtual string Get_VC_Exit_Place_Name() {return("");}
 };
 
 
