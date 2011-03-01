@@ -209,9 +209,9 @@ aA_Assignment_Statement[AaScope* scope] returns[AaStatement* new_stmt]
 }
     : 
 
-        (target = aA_Object_Reference[scope]) 
+        (target = aA_Object_Reference[scope] | target = aA_Pointer_Dereference_Expression[scope]) 
         al: ASSIGNEQUAL 
-        (source = aA_Expression[scope])
+        (source = aA_Expression[scope] | source = aA_Pointer_Dereference_Expression[scope] | source = aA_Address_Of_Expression[scope])
         {
             new_stmt = new AaAssignmentStatement(scope,target,source, al->getLine());
             new_stmt->Set_Line_Number(al->getLine());
@@ -760,6 +760,35 @@ aA_Expression[AaScope* scope] returns [AaExpression* expr]
         )
 ;
 
+//----------------------------------------------------------------------------------------------------------
+// pointer de-reference
+//----------------------------------------------------------------------------------------------------------
+aA_Pointer_Dereference_Expression[AaScope* scope] returns [AaObjectReference* expr]
+{
+   AaObjectReference* obj_ref;
+}
+:
+    DEREFERENCE_OP LPAREN obj_ref = aA_Object_Reference[scope] RPAREN 
+     {
+         expr = new AaPointerDereferenceExpression(scope, obj_ref);
+     }
+; 
+
+
+//----------------------------------------------------------------------------------------------------------
+// address-of expression.
+//----------------------------------------------------------------------------------------------------------
+aA_Address_Of_Expression[AaScope* scope] returns [AaExpression* expr]
+{
+   AaObjectReference* obj_ref;
+}
+:
+    ADDRESS_OF_OP LPAREN obj_ref = aA_Object_Reference[scope] RPAREN 
+     {
+         expr = new AaAddressOfExpression(scope, obj_ref);
+     }
+; 
+
 
 //----------------------------------------------------------------------------------------------------------
 // aA_Unary_Expression : LPAREN ( NOT aA_Expression | LPAREN aA_Type_Reference RPAREN aA_Expression) RPAREN
@@ -1039,13 +1068,13 @@ aA_Float_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 //----------------------------------------------------------------------------------------------------------
 // aA_Pointer_Type_Reference: POINTER LESS UINTEGER GREATER
 //----------------------------------------------------------------------------------------------------------
-aA_Pointer_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
+aA_Pointer_Type_Reference[AaScope* scope] returns [AaScalarType* ret_type]
 {
-    unsigned int width;
+   AaType* ref_type;
 }
-    : POINTER LESS w:UINTEGER {width = atoi(w->getText().c_str());} GREATER 
+    : POINTER LESS ref_type = aA_Type_Reference[scope] GREATER 
         { 
-            ref_type = AaProgram::Make_Pointer_Type(width);
+            ret_type = AaProgram::Make_Pointer_Type(ref_type);
         }
     ;
 
@@ -1058,7 +1087,7 @@ aA_Array_Type_Reference[AaScope* scope] returns [AaType* ref_type]
     AaScalarType* element_type;
 }
     : ARRAY 
-        (LBRACKET ds:UINTEGER { dims.push_back(atoi(ds->getText().c_str())); } RBRACKET)
+        (LBRACKET ds:UINTEGER { dims.push_back(atoi(ds->getText().c_str())); } RBRACKET)+
         OF 
         (element_type = aA_Scalar_Type_Reference[scope])
         {
@@ -1310,6 +1339,9 @@ ARRAY          : "$array";
 // type cast
 CAST : "$cast";
 
+// pointer reference.
+DEREFERENCE_OP : "->";
+ADDRESS_OF_OP   : "@";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

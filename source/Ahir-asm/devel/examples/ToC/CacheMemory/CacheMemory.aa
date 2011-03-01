@@ -12,7 +12,7 @@
 // hit/miss is figured out and reported using foreign
 // functions.
 
-$storage g_data_array $array<4>  $of $uint<32>
+$storage g_data_array: $array[4]  $of $uint<32>
 
 $inline $module [cachememory]
 	$in()
@@ -21,20 +21,20 @@ $is
 {
 
 	// array
-	$storage addr_array  $array<4> $of $uint<8>
-	$storage valid_array $array<4> $of $uint<1>
-	$storage data_array $array<4>  $of $uint<32>
+	$storage addr_array : $array[4] $of $uint<8>
+	$storage valid_array: $array[4] $of $uint<1>
+	$storage data_array :$array[4]  $of $uint<32>
 
 	// 2 bits, so 4 locations.
-        $constant map_mask $uint<8> := 3 // bottom two bits
+        $constant map_mask: $uint<8> := 3 // bottom two bits
 
 	// internal pipes.
-	$pipe write_address_pipe $uint<8>
-	$pipe write_data_pipe    $uint<32>
-	$pipe read_address_pipe  $uint<8>
+	$pipe write_address_pipe: $uint<8>
+	$pipe write_data_pipe   : $uint<32>
+	$pipe read_address_pipe : $uint<8>
 
 	$branchblock[init]{
-		$storage I $uint<2> := 0
+		$storage I: $uint<2> := 0
 		$merge $entry loopback $endmerge
 		addr_array[I] := 0
 		data_array[I] := 0
@@ -65,8 +65,8 @@ $is
 		}
 		$branchblock[writeport]
 		{
-			$storage write_data    $uint<32>
-			$storage write_address $uint<8>
+			$storage write_data   : $uint<32>
+			$storage write_address: $uint<8>
 
 			$merge $entry loopback $endmerge
 			$parallelblock[getdetails] {
@@ -94,7 +94,7 @@ $is
 		}
 		$branchblock[readport]
 		{
-			$storage read_address $uint<8>
+			$storage read_address: $uint<8>
 
 			$merge $entry loopback $endmerge
 			read_address := read_address_pipe
@@ -118,32 +118,32 @@ $is
 
 $foreign $inline $module [Fetch] 
 	$in ()
-	$out (req $pointer<32>)
+	$out (req: $pointer<32>)
 
 $foreign $inline $module [Is_Read_Access] 
-	$in (req $pointer<32>)
-	$out (flag $uint<1>)
+	$in (req: $pointer<32>)
+	$out (flag: $uint<1>)
 
 $foreign $module [Access_Address] 
-	$in (req $pointer<32>)
-	$out (addr $uint<8>)
+	$in (req: $pointer<32>)
+	$out (addr: $uint<8>)
 
 $foreign $module [Access_Data] 
-	$in (req $pointer<32>)
-	$out (data $uint<32>)
+	$in (req: $pointer<32>)
+	$out (data: $uint<32>)
 
 $foreign $module [Write_Hit] 
-	$in (addr $uint<8>)
+	$in (addr: $uint<8>)
 	$out ()
 
 $foreign $module [Write_Miss] 
-	$in (addr $uint<8>)
+	$in (addr: $uint<8>)
 	$out ()
 
 $foreign $module [Read_Miss] 
-	$in (addr $uint<8>)
+	$in (addr: $uint<8>)
 	$out ()
 
 $foreign $module [Read_Hit] 
-	$in (addr $uint<8> data $uint<32>)
+	$in (addr: $uint<8> data: $uint<32>)
 	$out ()

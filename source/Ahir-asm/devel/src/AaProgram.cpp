@@ -6,6 +6,7 @@
 //---------------------------------------------------------------------
 
 // static members of AaProgram..
+int AaProgram::_pointer_width = 32;
 string AaProgram::_current_file_name;
 std::map<string,AaType*,StringCompare>   AaProgram::_type_map;
 std::map<string,AaObject*,StringCompare> AaProgram::_objects;
@@ -135,16 +136,16 @@ AaArrayType* AaProgram::Make_Array_Type(AaScalarType* etype, vector<unsigned int
   return(ret_type);
 }
 
-AaPointerType* AaProgram::Make_Pointer_Type(unsigned int w)
+AaPointerType* AaProgram::Make_Pointer_Type(AaType* ref_type)
 {
   AaPointerType* ret_type = NULL;
-  string tid = "pointer<" + IntToStr(w) + ">";
+  string tid = "pointer<" + ref_type->CName() + ">";
   std::map<string,AaType*,StringCompare>::iterator titer = AaProgram::_type_map.find(tid);
   if(titer != AaProgram::_type_map.end())
     ret_type = (AaPointerType*) (*titer).second;
   else
     {
-      ret_type = new AaPointerType((AaScope*) NULL, w);
+      ret_type = new AaPointerType((AaScope*) NULL, ref_type);
       AaProgram::_type_map[tid] = ret_type;
     }
   return(ret_type);

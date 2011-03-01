@@ -36,7 +36,7 @@ class AaProgram
   static AaUGraphBase _type_dependency_graph;
 
  public:
-  
+  static int _pointer_width;
   static string _current_file_name;
 
   AaProgram();
@@ -57,7 +57,7 @@ class AaProgram
   static AaIntType* Make_Integer_Type(unsigned int w);
   static AaFloatType* Make_Float_Type(unsigned int c, unsigned int m);
   static AaArrayType* Make_Array_Type(AaScalarType* etype, vector<unsigned int>& dims);
-  static AaPointerType* Make_Pointer_Type(unsigned int w);
+  static AaPointerType* Make_Pointer_Type(AaType* ref_type);
 
   static void Map_Source_References();
 

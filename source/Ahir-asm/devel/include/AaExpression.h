@@ -43,6 +43,7 @@ class AaExpression: public AaRoot
   virtual bool Is_Object_Reference() {return(false);}
 
   virtual void PrintC(ofstream& ofile, string tab_string) { assert(0); }
+
   virtual void Update_Type() {};
 
   virtual void Add_Target(AaExpression* expr) {this->_targets.insert(expr);}
@@ -162,11 +163,11 @@ class AaObjectReference: public AaExpression
   virtual void Add_Target_Reference(AaRoot* referrer); 
   virtual void Add_Source_Reference(AaRoot* referrer);
   virtual void PrintC(ofstream& ofile, string tab_string);
-
   virtual bool Is_Object_Reference() {return(true);}
 
   virtual void Evaluate();
-
+  void PrintAddressOfC(ofstream& ofile, string tab_string) {}
+  virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string) {}
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
@@ -202,24 +203,24 @@ class AaSimpleObjectReference: public AaObjectReference
   virtual void Set_Object(AaRoot* obj);
   virtual void PrintC(ofstream& ofile, string tab_string);
 
-  virtual void Write_VC_Control_Path( ostream& ofile);
+
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
     leaf_expression_set.insert(this);
   }
 
-  virtual void Write_VC_Control_Path_As_Target( ostream& ofile);
 
   virtual bool Is_Implicit_Variable_Reference();
   virtual bool Is_Implicit_Object();
 
+  virtual void Evaluate();
+
   virtual string Get_VC_Constant_Name();
   virtual string Get_VC_Driver_Name();
   virtual string Get_VC_Receiver_Name();
-
-  virtual void Evaluate();
-
+  virtual void Write_VC_Control_Path( ostream& ofile);
+  virtual void Write_VC_Control_Path_As_Target( ostream& ofile);
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
   virtual void Write_VC_Wire_Declarations_As_Target(ostream& ofile);
@@ -229,7 +230,11 @@ class AaSimpleObjectReference: public AaObjectReference
   virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
 
   string Get_VC_Name() {return("simple_obj_ref_" + Int64ToStr(this->Get_Index()));}
+  virtual void Print_AddressOf_C(ofstream& ofile, string tab_string);
+  virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string);
 };
+
+
 
 // array object reference
 class AaArrayObjectReference: public AaObjectReference
@@ -274,7 +279,77 @@ class AaArrayObjectReference: public AaObjectReference
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
   virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
   string Get_VC_Name() {return("array_obj_ref_" + Int64ToStr(this->Get_Index()));}
+  virtual void Print_AddressOf_C(ofstream& ofile, string tab_string);
+  virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string);
 };
+
+
+class AaPointerDereferenceExpression: public AaObjectReference
+{
+  AaObjectReference* _reference_to_object;
+ public:
+
+  AaPointerDereferenceExpression(AaScope* scope, AaObjectReference* obj_ref);
+
+  virtual void Print(ostream& ofile)
+  {
+    ofile << "->(";
+    this->_reference_to_object->Print(ofile);
+    ofile << ")";
+  }
+    
+  virtual void PrintC(ofstream& ofile, string tab_string);
+
+  virtual void Map_Source_References(set<AaRoot*>& source_objects); // important
+  virtual void Update_Type();
+  virtual string Kind() {return("AaPointerDereferenceExpression");}
+
+  virtual void Write_VC_Control_Path( ostream& ofile);
+  virtual void Write_VC_Control_Path_As_Target( ostream& ofile);
+  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
+  virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
+  virtual void Write_VC_Wire_Declarations_As_Target(ostream& ofile);
+  virtual void Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source);
+  virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
+  virtual void Write_VC_Links(string hier_id, ostream& ofile);
+  virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
+
+  string Get_VC_Name() {return("ptr_deref_" + Int64ToStr(this->Get_Index()));}
+};
+
+
+class AaAddressOfExpression: public AaObjectReference
+{
+  AaObjectReference* _reference_to_object;
+ public:
+  AaAddressOfExpression(AaScope* scope, AaObjectReference* obj_ref);
+
+  virtual void Print(ostream& ofile)
+  {
+    ofile << "@(";
+    this->_reference_to_object->Print(ofile);
+    ofile << ")";
+  }
+    
+  virtual void PrintC(ofstream& ofile, string tab_string);
+
+  virtual void Map_Source_References(set<AaRoot*>& source_objects); // important
+  virtual void Update_Type();
+
+  virtual string Kind() {return("AaAddressOfExpression");}
+
+  virtual void Write_VC_Control_Path( ostream& ofile);
+  virtual void Write_VC_Control_Path_As_Target( ostream& ofile);
+  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
+  virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
+  virtual void Write_VC_Wire_Declarations_As_Target(ostream& ofile);
+  virtual void Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source);
+  virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
+  virtual void Write_VC_Links(string hier_id, ostream& ofile);
+  virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
+  string Get_VC_Name() {return("ptr_deref_" + Int64ToStr(this->Get_Index()));}
+};
+
 
 // type cast expression (is unary)
 class AaTypeCastExpression: public AaExpression
@@ -316,6 +391,7 @@ class AaTypeCastExpression: public AaExpression
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
   string Get_VC_Name() {return("type_cast_" + Int64ToStr(this->Get_Index()));}
 };
+
 
 
 //

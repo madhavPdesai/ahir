@@ -746,14 +746,14 @@ class AaMergeStatement: public AaSeriesBlockStatement
 class AaPhiStatement: public AaStatement
 {
   AaMergeStatement* _parent_merge;
-  AaSimpleObjectReference* _target;
+  AaObjectReference* _target;
   vector<pair<string,AaExpression*> > _source_pairs;
   set<string> _merged_labels;
 
  public:
   AaPhiStatement(AaBranchBlockStatement* scope, AaMergeStatement* pm);
   ~AaPhiStatement();
-  void Set_Target(AaSimpleObjectReference* tgt) 
+  void Set_Target(AaObjectReference* tgt) 
   { 
     this->_target = tgt; 
     this->Map_Target(tgt); 

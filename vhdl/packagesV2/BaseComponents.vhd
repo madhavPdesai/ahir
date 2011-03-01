@@ -352,7 +352,9 @@ package BaseComponents is
 
 
   -----------------------------------------------------------------------------
-  -- arbiters
+  -- call arbiters
+  -- there are four forms for the four possibilities of the
+  -- called function (in-args+out-args, in-args, out-args, no args)
   -----------------------------------------------------------------------------
   component CallArbiter
     generic(num_reqs: integer;
@@ -385,6 +387,91 @@ package BaseComponents is
       reset: in std_logic);
   end component CallArbiter;
 
+  component CallArbiterNoInargs
+    generic(num_reqs: integer;
+            call_data_width: integer;
+            return_data_width: integer;
+            tag_length: integer);
+    port ( -- ready/ready handshake on all ports
+      -- ports for the caller
+      call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+      call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+      -- call port connected to the called module
+      call_mreq   : out std_logic;
+      call_mack   : in  std_logic;
+      call_mtag   : out std_logic_vector(tag_length-1 downto 0);
+      -- similarly for return, initiated by the caller
+      return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+      return_acks : out std_logic_vector(num_reqs-1 downto 0);
+      return_data : out std_logic_vector((num_reqs*return_data_width)-1 downto 0);
+      -- return from function
+      -- function to assert mreq arbiter to return mack
+      -- ( NOTE: It has to be this way, the arbiter should
+      -- accept the return value if it has room)
+      return_mreq : in std_logic;
+      return_mack : out std_logic;
+      return_mdata : in  std_logic_vector(return_data_width-1 downto 0);
+      return_mtag : in  std_logic_vector(tag_length-1 downto 0);
+      clk: in std_logic;
+      reset: in std_logic);
+  end component CallArbiterNoInargs;
+
+  component CallArbiterNoOutargs
+    generic(num_reqs: integer;
+            call_data_width: integer;
+            tag_length: integer);
+    port ( -- ready/ready handshake on all ports
+      -- ports for the caller
+      call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+      call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+      call_data   : in  std_logic_vector((num_reqs*call_data_width)-1 downto 0);
+      -- call port connected to the called module
+      call_mreq   : out std_logic;
+      call_mack   : in  std_logic;
+      call_mdata  : out std_logic_vector(call_data_width-1 downto 0);
+      call_mtag   : out std_logic_vector(tag_length-1 downto 0);
+      -- similarly for return, initiated by the caller
+      return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+      return_acks : out std_logic_vector(num_reqs-1 downto 0);
+      -- return from function
+      -- function to assert mreq arbiter to return mack
+      -- ( NOTE: It has to be this way, the arbiter should
+      -- accept the return value if it has room)
+      return_mreq : in std_logic;
+      return_mack : out std_logic;
+      return_mtag : in  std_logic_vector(tag_length-1 downto 0);
+      clk: in std_logic;
+      reset: in std_logic);
+  end component CallArbiterNoOutargs;
+
+
+
+  component CallArbiterNoInargsNoOutargs
+    generic(num_reqs: integer;
+            tag_length: integer);
+    port ( -- ready/ready handshake on all ports
+      -- ports for the caller
+      call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+      call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+      -- call port connected to the called module
+      call_mreq   : out std_logic;
+      call_mack   : in  std_logic;
+      call_mtag   : out std_logic_vector(tag_length-1 downto 0);
+      -- similarly for return, initiated by the caller
+      return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+      return_acks : out std_logic_vector(num_reqs-1 downto 0);
+      -- return from function
+      -- function to assert mreq arbiter to return mack
+      -- ( NOTE: It has to be this way, the arbiter should
+      -- accept the return value if it has room)
+      return_mreq : in std_logic;
+      return_mack : out std_logic;
+      return_mtag : in  std_logic_vector(tag_length-1 downto 0);
+      clk: in std_logic;
+      reset: in std_logic);
+  end component CallArbiterNoInargsNoOutargs;
+
+
   component CallArbiterUnitary
     generic(num_reqs: integer;
             call_data_width: integer;
@@ -413,6 +500,83 @@ package BaseComponents is
       clk: in std_logic;
       reset: in std_logic);
   end component CallArbiterUnitary;
+
+
+  component CallArbiterUnitaryNoInargs
+    generic(num_reqs: integer;
+            return_data_width: integer;
+            caller_tag_length: integer;
+            callee_tag_length: integer);
+    port ( -- ready/ready handshake on all ports
+      -- ports for the caller
+      call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+      call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+      call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+      -- similarly for return, initiated by the caller
+      return_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+      return_acks   : out std_logic_vector(num_reqs-1 downto 0);
+      return_data   : out std_logic_vector((num_reqs*return_data_width)-1 downto 0);
+      return_tag    : out  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+      -- ports connected to the called module
+      call_start   : out std_logic;
+      call_fin   : in  std_logic;
+      call_in_tag   : out std_logic_vector(callee_tag_length-1 downto 0);
+      -- from the called module
+      call_out_args : in  std_logic_vector(return_data_width-1 downto 0);
+      call_out_tag : in  std_logic_vector(callee_tag_length-1 downto 0);
+      clk: in std_logic;
+      reset: in std_logic);
+  end component CallArbiterUnitaryNoInargs;
+
+  component CallArbiterUnitaryNoOutargs
+    generic(num_reqs: integer;
+            call_data_width: integer;
+            caller_tag_length: integer;
+            callee_tag_length: integer);
+    port ( -- ready/ready handshake on all ports
+      -- ports for the caller
+      call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+      call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+      call_data   : in  std_logic_vector((num_reqs*call_data_width)-1 downto 0);
+      call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+      -- similarly for return, initiated by the caller
+      return_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+      return_acks   : out std_logic_vector(num_reqs-1 downto 0);
+      return_tag    : out  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+      -- ports connected to the called module
+      call_start   : out std_logic;
+      call_fin   : in  std_logic;
+      call_in_args  : out std_logic_vector(call_data_width-1 downto 0);
+      call_in_tag   : out std_logic_vector(callee_tag_length-1 downto 0);
+      -- from the called module
+      call_out_tag : in  std_logic_vector(callee_tag_length-1 downto 0);
+      clk: in std_logic;
+      reset: in std_logic);
+  end component CallArbiterUnitaryNoOutargs;
+
+
+  component CallArbiterUnitaryNoInargsNoOutargs
+    generic(num_reqs: integer;
+            caller_tag_length: integer;
+            callee_tag_length: integer);
+    port ( -- ready/ready handshake on all ports
+      -- ports for the caller
+      call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+      call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+      call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+      -- similarly for return, initiated by the caller
+      return_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+      return_acks   : out std_logic_vector(num_reqs-1 downto 0);
+      return_tag    : out  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+      -- ports connected to the called module
+      call_start   : out std_logic;
+      call_fin   : in  std_logic;
+      call_in_tag   : out std_logic_vector(callee_tag_length-1 downto 0);
+      -- from the called module
+      call_out_tag : in  std_logic_vector(callee_tag_length-1 downto 0);
+      clk: in std_logic;
+      reset: in std_logic);
+  end component CallArbiterUnitaryNoInargsNoOutargs;
 
   component CallMediator
     port (

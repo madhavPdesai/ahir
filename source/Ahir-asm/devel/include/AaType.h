@@ -25,10 +25,19 @@ class AaType: public AaRoot
   virtual void Write_VC_Model(ostream& ofile) { assert(0);}
   virtual bool Is_Integer_Type() {return(false);}
   virtual bool Is_Float_Type() {return(false);}
+  virtual bool Is_Array_Type() {return(false);}
+  virtual bool Is_Pointer_Type() {return(false);}
+
+  virtual bool Is_Scalar_Type() {return (Is_Integer_Type() || Is_Float_Type());}
+  
   virtual string Get_VC_Name() {assert(0);}
   virtual int Number_Of_Elements() {return(1);}
 
   virtual int Get_Data_Width() {assert(0);}
+  virtual string CPointerDereference()
+  {
+    return("*");
+  }
 };
 
 class AaScalarType: public AaType
@@ -96,8 +105,9 @@ class AaIntType: public AaUintType
 
 class AaPointerType: public AaUintType
 {
+  AaType* _ref_type;
  public :
-  AaPointerType(AaScope* scope, unsigned int _object_width);
+  AaPointerType(AaScope* scope, AaType* ref_type);
   ~AaPointerType();
 
   virtual void Print(ostream& ofile);
@@ -105,11 +115,15 @@ class AaPointerType: public AaUintType
 
   virtual string CName()
   {
-    return("pointer");
+    return(_ref_type->CName() + "*");
   }
+
+  AaType* Get_Ref_Type() {return(this->_ref_type);}
 
   virtual void Write_VC_Model(ostream& ofile) 
   { 
+    // need to identify potential memory spaces!
+    //\todo: this will change.
     ofile << "$pointer<default>";
   }
 
@@ -117,8 +131,7 @@ class AaPointerType: public AaUintType
   {
     return("$pointer<default>");
   }
-
-
+  virtual bool Is_Pointer_Type() {return(true);}
 };
 
 
@@ -171,11 +184,11 @@ class AaArrayType: public AaType
  
  public:
 
+  virtual bool Is_Array_Type() {return(true);}
   vector<unsigned int>& Get_Dimension_Vector() {return(this->_dimension);}
 
   unsigned int Get_Number_Of_Dimensions() {return(this->_dimension.size());}
-  AaScalarType* Get_Element_Type() {return(this->_element_type);}
-
+  AaType* Get_Element_Type() {return(this->_element_type);}
 
   AaArrayType(AaScope* scope, AaScalarType* stype, vector<unsigned int>& dimensions);
   ~AaArrayType();
@@ -185,7 +198,7 @@ class AaArrayType: public AaType
   virtual string Kind() {return("AaArrayType");}
   virtual string CName()
   {
-    string ret_string =  this->_element_type->CName();
+    string ret_string =  this->Get_Element_Type()->CName();
     return(ret_string);
   }
   virtual string CDim() 
@@ -198,7 +211,7 @@ class AaArrayType: public AaType
 
   virtual int Size() 
   {
-    int ret_val = this->_element_type->Size();
+    int ret_val = this->Get_Element_Type()->Size();
 
     for(unsigned int i=0; i < this->Get_Number_Of_Dimensions(); i++)
       ret_val =  ret_val * this->_dimension[i];
@@ -206,7 +219,7 @@ class AaArrayType: public AaType
     return(ret_val);
   }
 
-  virtual int Get_Data_Width() {return(this->_element_type->Get_Data_Width());}
+  virtual int Get_Data_Width() {return(this->Get_Element_Type()->Get_Data_Width());}
 
   virtual int Number_Of_Elements()
   {
@@ -219,13 +232,22 @@ class AaArrayType: public AaType
   virtual void Write_VC_Model(ostream& ofile) 
   { 
     ofile << "$array[" << this->Number_Of_Elements() << "] $of ";
-    this->_element_type->Write_VC_Model(ofile);
+    this->Get_Element_Type()->Write_VC_Model(ofile);
   }
 
   virtual string Get_VC_Name() 
   { 
     return( "$array[" + IntToStr(this->Number_Of_Elements()) + "] $of " +
-	    this->_element_type->Get_VC_Name());
+	    this->Get_Element_Type()->Get_VC_Name());
+  }
+
+
+  virtual string CPointerDereference()
+  {
+    string ret_string = this->Get_Element_Type()->CPointerDereference();
+    for(int i = 0; i < this->Get_Number_Of_Dimensions(); i++)
+      ret_string += "*";
+    return(ret_string);
   }
 
 };

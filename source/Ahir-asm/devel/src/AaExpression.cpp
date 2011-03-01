@@ -36,8 +36,8 @@ void AaExpression::Set_Type(AaType* t)
 	  siter++)
 	{
 	  AaExpression* ref = *siter;
-	  if(ref->Is("AaBinaryExpression"))
-	    ((AaBinaryExpression*)ref)->Update_Type();
+	  ref->Update_Type();
+
 	}
     }
   else
@@ -235,17 +235,27 @@ AaConstantLiteralReference::~AaConstantLiteralReference() {};
 void AaConstantLiteralReference::PrintC(ofstream& ofile, string tab_string)
 {
   ofile << tab_string;
-  if(this->_literals.size() > 0)
+  if(this->Get_Type() && !this->Get_Type()->Is_Array_Type())
     {
-      ofile << "{ ";
-      ofile << this->_literals[0];
-      for(unsigned int i= 1; i < this->_literals.size(); i++)
-	ofile << ", " << this->_literals[i];
-      ofile << "} ";
+      if(this->_literals.size() > 0)    
+	ofile << this->_literals[0] << " ";
+      else
+	ofile << this->Get_Object_Ref_String() << " ";
     }
   else
-    {
-      ofile << this->Get_Object_Ref_String() << " ";
+    {      
+      if(this->_literals.size() > 0)    
+	{
+	  ofile << "{ ";
+	  ofile << this->_literals[0];
+	  for(unsigned int i= 1; i < this->_literals.size(); i++)
+	    ofile << ", " << this->_literals[i];
+	  ofile << "} ";
+	}
+      else
+	{
+	  ofile << this->Get_Object_Ref_String() << " ";
+	}
     }
 }
 
@@ -284,7 +294,13 @@ AaSimpleObjectReference::~AaSimpleObjectReference() {};
 void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 {
   if(obj->Is_Object())
-    this->Set_Type(((AaObject*)obj)->Get_Type());
+    {
+      if(((AaObject*)obj)->Get_Type())
+	{
+	  AaType* obj_type = ((AaObject*)obj)->Get_Type();
+	  this->Set_Type(obj_type);
+	}
+    }
   else if(obj->Is_Expression())
     {
       AaProgram::Add_Type_Dependency(this,obj);
@@ -292,11 +308,26 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
     }
   this->_object = obj;
 }
-void AaSimpleObjectReference::PrintC(ofstream& ofile, string tab_string)
+
+void AaSimpleObjectReference::Print_AddressOf_C(ofstream& ofile, string tab_string)
+{
+  ofile << "(&(";
+  this->AaObjectReference::PrintC(ofile,tab_string);
+  ofile << this->Get_Object_Root_Name() << "))";
+}
+
+void AaSimpleObjectReference::Print_BaseStructRef_C(ofstream& ofile, string tab_string)
 {
   ofile << "(";
   this->AaObjectReference::PrintC(ofile,tab_string);
-  ofile << this->Get_Object_Root_Name() << ").__val";
+  ofile << this->Get_Object_Root_Name() << ")";
+
+}
+void AaSimpleObjectReference::PrintC(ofstream& ofile, string tab_string)
+{
+  this->Print_BaseStructRef_C(ofile,tab_string);
+  if(!this->Get_Type()->Is_Pointer_Type())
+    ofile << ".__val";
 }
 
 string AaSimpleObjectReference::Get_VC_Driver_Name()
@@ -702,17 +733,27 @@ void AaArrayObjectReference::Set_Object(AaRoot* obj)
       if(((AaObject*)obj)->Get_Type() && 
 	 ((AaObject*)obj)->Get_Type()->Is("AaArrayType"))
 	{
-	  if(((AaArrayType*)(((AaObject*)obj)->Get_Type()))->Get_Number_Of_Dimensions() == this->_indices.size())
+	  this->_object = obj;
+	  AaArrayType* at = ((AaArrayType*)(((AaObject*)obj)->Get_Type()));
+
+	  this->Set_Type(at->Get_Element_Type());
+
+	  // update the types of the index expressions if not 
+	  // already set.
+	  for(unsigned int i = 0; i < this->Get_Number_Of_Indices(); i++)
 	    {
-	      this->_object = obj;
-	      this->Set_Type(((AaArrayType*)(((AaObject*)obj)->Get_Type()))->Get_Element_Type());
-	      ok_flag = true;
+	      if(this->_indices[i]->Get_Type() == NULL)
+		{
+		  this->_indices[i]->Set_Type(AaProgram::Make_Uinteger_Type(CeilLog2(at->Get_Dimension(i))));
+		}
 	    }
+
+	  ok_flag = true;
 	}
     }
   if(!ok_flag)
     {
-      AaRoot::Error("type mismatch in object reference " + this->Get_Object_Ref_String(),this);
+      AaRoot::Error("array object reference must be to a storage object.." + this->Get_Object_Ref_String(),this);
     }
 }
 
@@ -726,6 +767,27 @@ void AaArrayObjectReference::Map_Source_References(set<AaRoot*>& source_objects)
 
 void AaArrayObjectReference::PrintC(ofstream& ofile, string tab_string)
 {
+  this->Print_BaseStructRef_C(ofile,tab_string);
+  if(!this->Get_Type()->Is_Pointer_Type())
+    ofile << ".__val";
+}
+
+void AaArrayObjectReference::Print_AddressOf_C(ofstream& ofile, string tab_string)
+{
+  ofile << "(&(";
+  this->AaObjectReference::PrintC(ofile,tab_string);
+  ofile << this->Get_Object_Root_Name();
+  for(unsigned int i = 0; i < this->Get_Number_Of_Indices(); i++)
+    {
+      ofile << "[";
+      this->Get_Array_Index(i)->PrintC(ofile,"");
+      ofile << "]";
+    }
+  ofile << "))";
+}
+
+void AaArrayObjectReference::Print_BaseStructRef_C(ofstream& ofile, string tab_string)
+{
   ofile << "(";
   this->AaObjectReference::PrintC(ofile,tab_string);
   ofile << this->Get_Object_Root_Name();
@@ -735,9 +797,8 @@ void AaArrayObjectReference::PrintC(ofstream& ofile, string tab_string)
       this->Get_Array_Index(i)->PrintC(ofile,"");
       ofile << "]";
     }
-  ofile << ").__val";
+  ofile << ")";
 }
-
 void AaArrayObjectReference::Write_VC_Control_Path( ostream& ofile)
 {
   string ps;
@@ -860,7 +921,7 @@ void AaArrayObjectReference::Evaluate()
 
       if(!all_indices_constants || !this->_object->Is_Constant())
 	return;
-      
+
       assert(expr_value != NULL && expr_value->Is("AaArrayValue"));
       this->Assign_Expression_Value(((AaArrayValue*)expr_value)->Get_Element(index_vector));
     }
@@ -1142,6 +1203,141 @@ void AaArrayObjectReference::Write_VC_Links_As_Target(string hier_id, ostream& o
   this->Write_VC_Links(hier_id,ofile);
 }
 
+//---------------------------------------------------------------------
+// AaPointerDereferenceExpression
+//---------------------------------------------------------------------
+AaPointerDereferenceExpression::AaPointerDereferenceExpression(AaScope* scope, AaObjectReference* obj_ref):
+  AaObjectReference(scope,obj_ref->Get_Object_Ref_String())
+{
+  _reference_to_object = obj_ref;
+  
+  obj_ref->Add_Target(this);
+}
+
+
+void AaPointerDereferenceExpression::PrintC(ofstream& ofile, string tab_string)
+{
+  ofile << "(" << this->_reference_to_object->Get_Type()->CPointerDereference();
+  this->_reference_to_object->Print_BaseStructRef_C(ofile,tab_string);
+  ofile << ")";
+  if(this->_reference_to_object->Get_Type()->Is_Pointer_Type())
+    {
+      if(!(((AaPointerType*)(_reference_to_object->Get_Type()))->Get_Ref_Type()->Is_Pointer_Type()))
+	ofile << ".__val ";
+    }
+}
+
+
+
+void AaPointerDereferenceExpression::Map_Source_References(set<AaRoot*>& source_objects)
+{
+  this->_reference_to_object->Map_Source_References(source_objects);
+  if(this->_reference_to_object->Get_Type())
+    {
+      if(!this->_reference_to_object->Get_Type()->Is("AaPointerType"))
+	{
+	  AaRoot::Error("cannot dereference an object whose type is not a pointer!", this);
+	}
+      else
+	{
+	  this->Set_Type(((AaPointerType*)this->_reference_to_object->Get_Type())->Get_Ref_Type());
+	}
+    }
+}
+
+void AaPointerDereferenceExpression::Update_Type()
+{
+  if(_reference_to_object->Get_Type() != NULL)
+    {
+      if(_reference_to_object->Get_Type()->Is_Pointer_Type())
+	{
+	  AaType* t = (((AaPointerType*)(_reference_to_object->Get_Type()))->Get_Ref_Type());
+	  if(this->_type != NULL && (t != this->_type))
+	    {
+	      AaRoot::Error("type ambiguity in pointer dereference expression", this);
+	    }
+	  else if(this->_type == NULL)
+	    this->Set_Type(t);
+	}
+    }
+}
+
+void AaPointerDereferenceExpression::Write_VC_Control_Path( ostream& ofile){ assert(0); }
+void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target( ostream& ofile){ assert(0); }
+void AaPointerDereferenceExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile){ assert(0); }
+void AaPointerDereferenceExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile){ assert(0); }
+void AaPointerDereferenceExpression::Write_VC_Wire_Declarations_As_Target(ostream& ofile){ assert(0); }
+void AaPointerDereferenceExpression::Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source){ assert(0); }
+void AaPointerDereferenceExpression::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile){ assert(0); }
+void AaPointerDereferenceExpression::Write_VC_Links(string hier_id, ostream& ofile){ assert(0); }
+void AaPointerDereferenceExpression::Write_VC_Links_As_Target(string hier_id, ostream& ofile){ assert(0); }
+
+
+//---------------------------------------------------------------------
+// AaAddressOfExpression
+//---------------------------------------------------------------------
+AaAddressOfExpression::AaAddressOfExpression(AaScope* scope, AaObjectReference* obj_ref): 
+  AaObjectReference(scope,obj_ref->Get_Object_Ref_String())
+{
+  _reference_to_object = obj_ref;
+  obj_ref->Add_Target(this);
+}
+
+
+void AaAddressOfExpression::PrintC(ofstream& ofile, string tab_string)
+{
+  ofile << "(&";
+  this->_reference_to_object->Print_BaseStructRef_C(ofile,tab_string);
+  ofile << ") " << endl;
+}
+
+
+void AaAddressOfExpression::Map_Source_References(set<AaRoot*>& source_objects)
+{
+  this->_reference_to_object->Map_Source_References(source_objects);
+  if((this->_reference_to_object->Get_Object() == NULL )
+     || (!this->_reference_to_object->Get_Object()->Is("AaStorageObject")))
+    {
+      AaRoot::Error("address-of expression must refer to a storage object",this);
+    }
+
+  if(this->_reference_to_object->Get_Type())
+    {
+      AaType* ref_obj_type = this->_reference_to_object->Get_Type();
+      if(ref_obj_type->Is_Scalar_Type())
+	this->Set_Type(AaProgram::Make_Pointer_Type(this->_reference_to_object->Get_Type()));
+      else
+	this->Set_Type(AaProgram::Make_Pointer_Type(this->_reference_to_object->Get_Type()));
+    }
+
+  
+}
+
+
+void AaAddressOfExpression::Update_Type()
+{
+  if(_reference_to_object->Get_Type() != NULL)
+    {
+      AaType* t = AaProgram::Make_Pointer_Type(_reference_to_object->Get_Type());
+      if(this->_type != NULL && (t != this->_type))
+	{
+	  AaRoot::Error("type ambiguity in pointer dereference expression", this);
+	}
+      else if(this->_type == NULL)
+	this->Set_Type(t);
+    }
+}
+
+
+void AaAddressOfExpression::Write_VC_Control_Path( ostream& ofile){ assert(0); }
+void AaAddressOfExpression::Write_VC_Control_Path_As_Target( ostream& ofile){ assert(0); }
+void AaAddressOfExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile){ assert(0); }
+void AaAddressOfExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile){ assert(0); }
+void AaAddressOfExpression::Write_VC_Wire_Declarations_As_Target(ostream& ofile){ assert(0); }
+void AaAddressOfExpression::Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source){ assert(0); }
+void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile){ assert(0); }
+void AaAddressOfExpression::Write_VC_Links(string hier_id, ostream& ofile){ assert(0); }
+void AaAddressOfExpression::Write_VC_Links_As_Target(string hier_id, ostream& ofile){ assert(0); }
 
 //---------------------------------------------------------------------
 // type cast expression (is unary)

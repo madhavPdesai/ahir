@@ -1,24 +1,14 @@
 #include <Aa2C.h>
-typedef struct Increment_State__
-{
-  pointer a;
-  pointer b;
-  unsigned Increment_entry:1;
-  unsigned Increment_in_progress:1;
-  unsigned Increment_exit:1;
-} Increment_State;
-int Increment (pointer, pointer *);
-typedef struct passpointer_State__
-{
-  pointer a;
-  pointer b;
-  unsigned int _call_line_11_entry:1;
-  unsigned int _call_line_11_in_progress:1;
-  unsigned int _call_line_11_exit:1;
-  Increment_State *_call_line_11_called_fn_struct;
-  unsigned passpointer_entry:1;
-  unsigned passpointer_in_progress:1;
-  unsigned passpointer_exit:1;
+typedef struct passpointer_State__ {
+	uint_32 a;
+	uint_32 b;
+	unsigned int _assign_line_24_entry: 1; 
+	unsigned int _assign_line_24_in_progress: 1; 
+	unsigned int _assign_line_24_exit: 1; 
+	uint_32* q;
+	unsigned passpointer_entry : 1;
+	unsigned passpointer_in_progress : 1;
+	unsigned passpointer_exit : 1;
 } passpointer_State;
-passpointer_State *passpointer_ (passpointer_State *);
-int passpointer (pointer, pointer *);
+passpointer_State* passpointer_(passpointer_State*);
+int passpointer(uint_32, uint_32* );

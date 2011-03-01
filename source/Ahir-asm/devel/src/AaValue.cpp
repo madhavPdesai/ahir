@@ -176,9 +176,9 @@ void AaArrayValue::Assign(AaType* target_type, AaValue* expr_value)
 // the index into value_vector is
 //   I1(D2D3..Dn) + I2(D3D4..Dn) + .. + In-1(Dn) + In
 //     = In + Dn(In-1 + Dn-1(In-2 + ...)))
+// (ie. the array is stored in row-major form..)
 AaValue* AaArrayValue::Get_Element(vector<int>& indices)
 {
-  assert(indices.size() == _dimensions.size());
 
   int index_in_array = indices[indices.size()-1];
   for(int idx = indices.size()-1; idx > 0; idx--)
@@ -187,7 +187,16 @@ AaValue* AaArrayValue::Get_Element(vector<int>& indices)
     }
 
   assert(index_in_array < _value_vector.size());
-  return(_value_vector[index_in_array]);
+
+  if(indices.size() == _dimensions.size())
+    return(_value_vector[index_in_array]);
+  else
+    {
+      assert(0);
+      //\todo : need to sort out the array pointer thingie..
+      //        a partial indexing into the array will
+      //        return an array of values...
+    }
 }
   
 

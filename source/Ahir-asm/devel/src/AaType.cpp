@@ -53,11 +53,17 @@ void AaIntType::Print(ostream& ofile)
 //---------------------------------------------------------------------
 // AaPointerType: public AaUintType
 //---------------------------------------------------------------------
-AaPointerType::AaPointerType(AaScope* p, unsigned int object_width): AaUintType(p,object_width) {};
+AaPointerType::AaPointerType(AaScope* p, AaType* ref_type): AaUintType(p,AaProgram::_pointer_width) 
+{
+  _ref_type = ref_type;
+};
+
 AaPointerType::~AaPointerType() {};
 void AaPointerType::Print(ostream& ofile)
 {
-  ofile << "$pointer<" << this->Get_Width() << "> ";
+  ofile << "$pointer< ";
+  _ref_type->Print(ofile);
+  ofile << " >";
 }
 
 //---------------------------------------------------------------------
@@ -79,10 +85,12 @@ void AaFloatType::Print(ostream& ofile)
 //---------------------------------------------------------------------
 AaArrayType::AaArrayType(AaScope* p, AaScalarType* stype, vector<unsigned int>& dimensions): AaType(p) 
 {
-  this->_element_type = stype;
   for(unsigned int i = 0; i < dimensions.size(); i++)
     this->_dimension.push_back(dimensions[i]);
-};
+
+  this->_element_type = stype;
+}
+
 AaArrayType::~AaArrayType() {};
 unsigned int AaArrayType::Get_Dimension(unsigned int dim_id)
 {

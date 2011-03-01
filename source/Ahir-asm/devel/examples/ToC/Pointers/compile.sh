@@ -1,4 +1,4 @@
-../../../bin/Aa2C Pointers.aa Foreign.aa
+../../../bin/Aa2C Pointers.aa 
 indent aa_c_model.c
 indent aa_c_model.h
 gcc -g -c -I../../../include -I./ aa_c_model.c

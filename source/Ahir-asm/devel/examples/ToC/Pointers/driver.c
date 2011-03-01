@@ -2,26 +2,14 @@
 #include <aa_c_model.h>
 int main(int argc, char* argv[])
 {
-	int a,b;
-	pointer pa,pb;
+	uint_32 a, b;
 
-	a = 5;
-	pa.__val = (void*) (&a);
+	a.__val = 5;
 
-	passpointer(pa,&pb);
+	passpointer(a,&b);
 
-	b = *((int*) (pb.__val));
 
-	printf("%d\n",b);
+	printf("%d\n",b.__val);
 	return(1);
 }
 
-
-int Increment(pointer pa, pointer* pb)
-{
-   if(pb->__val == NULL)
-	pb->__val = (int*) calloc(1,sizeof(int));
-
-   *((int*)(pb->__val)) = *((int*)(pa.__val)) + 1;
-   return(0);
-}

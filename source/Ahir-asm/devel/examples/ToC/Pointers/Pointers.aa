@@ -1,13 +1,25 @@
-// a simple example to illustrate
-// use of pointers as opaque handles.
-// A foreign module is used to
-// provide access to pointer contents
-// etc.
+
+$storage u: $array[2] $of $uint<32>
+$storage v: $array[2][2] $of $uint<32>
+$storage r: $array[2] $of $uint<32>
+$storage w0:  $array[2] $of $uint<32> 
+
+
+// $module [increment]
+    // $in (a: $pointer<$uint<32> > )
+    // $out (b: $pointer<$uint<32> > )
+// $is
+// {
+	// t1 := ->(a)
+	// t2 := (t1 + 1)
+	// ->(a) := t2
+// }
 $module [passpointer]
-    $in (a $pointer<32>)
-    $out (b $pointer<32>)
+    $in (a:$uint<32>)
+    $out (b:$uint<32>)
 $is
 {
-	$call Increment(a)(b)
+        w := @(u) 
+	w0 := ->(w)
 }
 

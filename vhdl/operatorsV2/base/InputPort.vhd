@@ -73,7 +73,7 @@ begin
                         reqFreg       => reqFreg);
 
   -----------------------------------------------------------------------------
-  -- data handlin
+  -- data handling
   -----------------------------------------------------------------------------
   process(data_final)
     variable ldata: std_logic_vector((num_reqs*data_width)-1 downto 0);
