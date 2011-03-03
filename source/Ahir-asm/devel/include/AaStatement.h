@@ -248,20 +248,21 @@ class AaNullStatement: public AaStatement
 // assignment statement
 class AaAssignmentStatement: public AaStatement
 {
-  AaObjectReference* _target;
+  AaExpression* _target;
   AaExpression* _source;
  public:
-  AaObjectReference* Get_Target() {return(this->_target);}
+  AaExpression* Get_Target() {return(this->_target);}
   AaExpression* Get_Source() {return(this->_source);}
 
   virtual void Map_Targets() 
   {
     // only one target which can serve as a handle
     // to this statement
-    this->Map_Target(this->Get_Target());
+    if(this->_target->Is_Object_Reference())
+      this->Map_Target((AaObjectReference*)this->Get_Target());
   }
 
-  AaAssignmentStatement(AaScope* scope,AaObjectReference* target, AaExpression* source, int lineno);
+  AaAssignmentStatement(AaScope* scope,AaExpression* target, AaExpression* source, int lineno);
   ~AaAssignmentStatement();
 
   virtual void Print(ostream& ofile); 

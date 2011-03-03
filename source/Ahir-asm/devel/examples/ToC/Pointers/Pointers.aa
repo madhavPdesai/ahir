@@ -11,7 +11,8 @@ $is
          $storage incr_temp: $uint<32>
 	 incr_t1 := ($cast ($pointer< $uint<32> >) incr_a)
          incr_temp  := ->(incr_t1)
-         incr_b  := (incr_temp + 1)
+         ->(incr_t1)  := (incr_temp + 1)
+	 incr_b := ->(incr_t1)
 }
 
 $module [passpointer]

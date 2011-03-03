@@ -110,7 +110,6 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
       if(child->Is_Expression())
 	obj_ref->Add_Target((AaExpression*) child);
 
-
       // obj_ref -> child
       child->Add_Target_Reference(obj_ref); // obj_ref uses child as a target
       obj_ref->Add_Source_Reference(child); // child uses obj_ref as a source
@@ -495,14 +494,22 @@ void AaNullStatement::Write_VC_Control_Path(ostream& ofile)
 //---------------------------------------------------------------------
 // AaAssignmentStatement
 //---------------------------------------------------------------------
-AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaObjectReference* tgt, AaExpression* src, int lineno):
+AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* tgt, AaExpression* src, int lineno):
   AaStatement(parent_tpr) 
 {
   assert(tgt); assert(src);
 
   this->Set_Line_Number(lineno);
   this->_target = tgt;
-  this->Map_Target(tgt);
+
+  if(tgt->Is_Object_Reference())
+    this->Map_Target((AaObjectReference*)tgt);
+  else if(tgt->Is("AaPointerDereferenceExpression"))
+    {
+      // nothing really.. need to map sources later..
+    }
+  else
+    assert(0);
 
   this->_source = src;
 
@@ -525,13 +532,11 @@ void AaAssignmentStatement::Print(ostream& ofile)
 }
 void AaAssignmentStatement::Map_Source_References()
 {
-
-
   this->_target->Map_Source_References(this->_target_objects);
+  if(!this->_target->Is("AaPointerDereferenceExpression"))
+    AaProgram::Add_Type_Dependency(this->_target,this->_source);
+
   this->_source->Map_Source_References(this->_source_objects);
-
-
-  AaProgram::Add_Type_Dependency(this->_target,this->_source);
 }
 
 
@@ -571,14 +576,19 @@ bool AaAssignmentStatement::Can_Block()
 void AaAssignmentStatement::Write_C_Struct(ofstream& ofile)
 {
   this->AaStatement::Write_C_Struct(ofile);
-  if(this->_target->Get_Object() == this)
+  if(this->_target->Is("AaPointerDereferenceExpression"))
+   {
+   }
+  else if(this->_target->Is_Object_Reference() && (((AaObjectReference*)this->_target)->Get_Object() == this))
     {
       ofile << this->Tab() 
 	    << this->_target->Get_Type()->CName() 
 	    << " "
-	    << this->_target->Get_Object_Ref_String()
+	    << ((AaObjectReference*)this->_target)->Get_Object_Ref_String()
 	    << ";" << endl;
     }
+  else if(!this->_target->Is_Object_Reference())
+    assert(0);
 }
 
 void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
@@ -594,7 +604,7 @@ void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
     {
       
       this->_source->Write_VC_Control_Path(ofile);
-      assert(this->_target->Is_Object_Reference());
+      assert(this->_target->Is_Object_Reference()); //\todo later ->(a)!
       this->_target->Write_VC_Control_Path_As_Target(ofile);
 
       // if _source is an object-reference which refers to
