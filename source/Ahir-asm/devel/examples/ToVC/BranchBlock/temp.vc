@@ -1,0 +1,291 @@
+$module [sum_mod] 
+{
+  $in a:$int <10>  b:$int <10>  
+  $out c:$int <10>  
+  $CP 
+  {
+    ;; [AaAssignmentStatement_8] 
+    {
+      ;; [AaSimpleObjectReference_6] 
+      {
+        $T [srr]
+        $T [sra]
+        $T [scr]
+        $T [sca]
+        // end series-block AaSimpleObjectReference_6
+      }
+      // end series-block AaAssignmentStatement_8
+    }
+    <> [bb] 
+    {
+      $P [bb__entry__]
+      $P [bb__exit__]
+      $P [AaMergeStatement_10__entry__]
+      $P [AaMergeStatement_10__exit__]
+      $P [AaAssignmentStatement_21__entry__]
+      $P [AaAssignmentStatement_21__exit__]
+      $P [AaAssignmentStatement_26__entry__]
+      $P [AaAssignmentStatement_26__exit__]
+      $P [AaSwitchStatement_27__entry__]
+      $P [AaSwitchStatement_27__exit__]
+      $P [AaAssignmentStatement_41__entry__]
+      $P [AaAssignmentStatement_41__exit__]
+      $P [AaAssignmentStatement_46__entry__]
+      $P [AaAssignmentStatement_46__exit__]
+      $P [AaIfStatement_47__entry__]
+      $P [AaIfStatement_47__exit__]
+      ;; [AaAssignmentStatement_21] 
+      {
+        ;; [AaBinaryExpression_20] 
+        {
+          || [AaBinaryExpression_20_inputs] 
+          {
+            // end  parallel-block AaBinaryExpression_20_inputs
+          }
+          $T [rr]
+          $T [ra]
+          $T [cr]
+          $T [ca]
+          // end series-block AaBinaryExpression_20
+        }
+        // end series-block AaAssignmentStatement_21
+      }
+      ;; [AaAssignmentStatement_26] 
+      {
+        ;; [AaBinaryExpression_25] 
+        {
+          || [AaBinaryExpression_25_inputs] 
+          {
+            ;; [AaSimpleObjectReference_23] 
+            {
+              $T [rr]
+              $T [ra]
+              $T [cr]
+              $T [ca]
+              // end series-block AaSimpleObjectReference_23
+            }
+            // end  parallel-block AaBinaryExpression_25_inputs
+          }
+          $T [rr]
+          $T [ra]
+          $T [cr]
+          $T [ca]
+          // end series-block AaBinaryExpression_25
+        }
+        ;; [AaSimpleObjectReference_22] 
+        {
+          $T [srr]
+          $T [sra]
+          $T [scr]
+          $T [sca]
+          // end series-block AaSimpleObjectReference_22
+        }
+        // end series-block AaAssignmentStatement_26
+      }
+      ;; [AaBinaryExpression_30] 
+      {
+        || [AaBinaryExpression_30_inputs] 
+        {
+          ;; [AaSimpleObjectReference_28] 
+          {
+            $T [rr]
+            $T [ra]
+            $T [cr]
+            $T [ca]
+            // end series-block AaSimpleObjectReference_28
+          }
+          // end  parallel-block AaBinaryExpression_30_inputs
+        }
+        $T [rr]
+        $T [ra]
+        $T [cr]
+        $T [ca]
+        // end series-block AaBinaryExpression_30
+      }
+      || [AaSwitchStatement_27__condition_check__] 
+      {
+        ;; [condition_0] 
+        {
+          $T [rr]
+          $T [ra]
+          $T [cr]
+          $T [ca]
+          // end series-block condition_0
+        }
+        // end  parallel-block AaSwitchStatement_27__condition_check__
+      }
+      $P [AaSwitchStatement_27__select__]
+      $P [loopback]
+      ;; [choice_0] 
+      {
+        $T [choice_transition]
+        // end series-block choice_0
+      }
+      $P [AaNullStatement_35__entry__]
+      $P [AaNullStatement_35__exit__]
+      ;; [AaNullStatement_35] 
+      {
+        $T [dummy]
+        // end series-block AaNullStatement_35
+      }
+      ;; [choice_default] 
+      {
+        $T [choice_transition]
+        // end series-block choice_default
+      }
+      ;; [AaAssignmentStatement_41] 
+      {
+        ;; [AaBinaryExpression_40] 
+        {
+          || [AaBinaryExpression_40_inputs] 
+          {
+            // end  parallel-block AaBinaryExpression_40_inputs
+          }
+          $T [rr]
+          $T [ra]
+          $T [cr]
+          $T [ca]
+          // end series-block AaBinaryExpression_40
+        }
+        // end series-block AaAssignmentStatement_41
+      }
+      ;; [AaAssignmentStatement_46] 
+      {
+        ;; [AaBinaryExpression_45] 
+        {
+          || [AaBinaryExpression_45_inputs] 
+          {
+            ;; [AaSimpleObjectReference_43] 
+            {
+              $T [rr]
+              $T [ra]
+              $T [cr]
+              $T [ca]
+              // end series-block AaSimpleObjectReference_43
+            }
+            // end  parallel-block AaBinaryExpression_45_inputs
+          }
+          $T [rr]
+          $T [ra]
+          $T [cr]
+          $T [ca]
+          // end series-block AaBinaryExpression_45
+        }
+        ;; [AaSimpleObjectReference_42] 
+        {
+          $T [srr]
+          $T [sra]
+          $T [scr]
+          $T [sca]
+          // end series-block AaSimpleObjectReference_42
+        }
+        // end series-block AaAssignmentStatement_46
+      }
+      ;; [AaBinaryExpression_50] 
+      {
+        || [AaBinaryExpression_50_inputs] 
+        {
+          ;; [AaSimpleObjectReference_48] 
+          {
+            $T [rr]
+            $T [ra]
+            $T [cr]
+            $T [ca]
+            // end series-block AaSimpleObjectReference_48
+          }
+          // end  parallel-block AaBinaryExpression_50_inputs
+        }
+        $T [rr]
+        $T [ra]
+        $T [cr]
+        $T [ca]
+        // end series-block AaBinaryExpression_50
+      }
+      $P [AaBinaryExpression_50_place]
+      $P [longloopback]
+      $P [AaNullStatement_53__entry__]
+      $P [AaNullStatement_53__exit__]
+      ;; [AaNullStatement_53] 
+      {
+        $T [dummy]
+        // end series-block AaNullStatement_53
+      }
+      ;; [IfLink] 
+      {
+        $T [if_choice_transition]
+        // end series-block IfLink
+      }
+      || [AaMergeStatement_10__entry___PhiReq] 
+      {
+        $T [AaPhiStatement_11_req]
+        // end  parallel-block AaMergeStatement_10__entry___PhiReq
+      }
+      || [longloopback_PhiReq] 
+      {
+        $T [AaPhiStatement_11_req]
+        // end  parallel-block longloopback_PhiReq
+      }
+      || [loopback_PhiReq] 
+      {
+        $T [AaPhiStatement_11_req]
+        // end  parallel-block loopback_PhiReq
+      }
+      $P [AaMergeStatement_10_PhiReqMerge]
+      || [AaMergeStatement_10_PhiAck] 
+      {
+        $T [AaPhiStatement_11_ack]
+        // end  parallel-block AaMergeStatement_10_PhiAck
+      }
+      AaAssignmentStatement_21__entry__ |-> ( AaAssignmentStatement_21 )
+      AaAssignmentStatement_21__exit__ |-> ( AaAssignmentStatement_26__entry__ )
+      AaAssignmentStatement_26__entry__ |-> ( AaAssignmentStatement_26 )
+      AaAssignmentStatement_26__exit__ |-> ( AaSwitchStatement_27__entry__ )
+      AaAssignmentStatement_41__entry__ |-> ( AaAssignmentStatement_41 )
+      AaAssignmentStatement_41__exit__ |-> ( AaAssignmentStatement_46__entry__ )
+      AaAssignmentStatement_46__entry__ |-> ( AaAssignmentStatement_46 )
+      AaAssignmentStatement_46__exit__ |-> ( AaIfStatement_47__entry__ )
+      AaBinaryExpression_50_place |-> ( IfLink  AaNullStatement_53 )
+      AaIfStatement_47__entry__ |-> ( AaBinaryExpression_50 )
+      AaIfStatement_47__exit__ |-> ( $exit )
+      AaMergeStatement_10_PhiReqMerge |-> ( AaMergeStatement_10_PhiAck )
+      AaMergeStatement_10__entry__ |-> ( AaMergeStatement_10__entry___PhiReq )
+      AaMergeStatement_10__exit__ |-> ( AaAssignmentStatement_21__entry__ )
+      AaNullStatement_35__entry__ |-> ( AaNullStatement_35 )
+      AaNullStatement_53__entry__ |-> ( AaNullStatement_53 )
+      AaSwitchStatement_27__entry__ |-> ( AaBinaryExpression_30 )
+      AaSwitchStatement_27__exit__ |-> ( AaAssignmentStatement_41__entry__ )
+      AaSwitchStatement_27__select__ |-> ( choice_0  choice_default )
+      longloopback |-> ( longloopback_PhiReq )
+      loopback |-> ( loopback_PhiReq )
+      AaAssignmentStatement_21__entry__ <-| ( AaMergeStatement_10__exit__ )
+      AaAssignmentStatement_21__exit__ <-| ( AaAssignmentStatement_21 )
+      AaAssignmentStatement_26__entry__ <-| ( AaAssignmentStatement_21__exit__ )
+      AaAssignmentStatement_26__exit__ <-| ( AaAssignmentStatement_26 )
+      AaAssignmentStatement_41__entry__ <-| ( AaSwitchStatement_27__exit__ )
+      AaAssignmentStatement_41__exit__ <-| ( AaAssignmentStatement_41 )
+      AaAssignmentStatement_46__entry__ <-| ( AaAssignmentStatement_41__exit__ )
+      AaAssignmentStatement_46__exit__ <-| ( AaAssignmentStatement_46 )
+      AaBinaryExpression_50_place <-| ( AaBinaryExpression_50 )
+      AaIfStatement_47__entry__ <-| ( AaAssignmentStatement_46__exit__ )
+      AaIfStatement_47__exit__ <-| ( AaNullStatement_53__exit__ )
+      AaMergeStatement_10_PhiReqMerge <-| ( AaMergeStatement_10__entry___PhiReq  longloopback_PhiReq  loopback_PhiReq )
+      AaMergeStatement_10__entry__ <-| ( $entry )
+      AaMergeStatement_10__exit__ <-| ( AaMergeStatement_10_PhiAck )
+      AaNullStatement_35__entry__ <-| ( choice_default )
+      AaNullStatement_35__exit__ <-| ( AaNullStatement_35 )
+      AaNullStatement_53__exit__ <-| ( AaNullStatement_53 )
+      AaSwitchStatement_27__entry__ <-| ( AaAssignmentStatement_26__exit__ )
+      AaSwitchStatement_27__exit__ <-| ( AaNullStatement_35__exit__ )
+      AaSwitchStatement_27__select__ <-| ( AaSwitchStatement_27__condition_check__ )
+      loopback <-| ( choice_0 )
+      // end branch-block bb
+    }
+    ;; [AaAssignmentStatement_58] 
+    {
+      $T [req]
+      $T [ack]
+      // end series-block AaAssignmentStatement_58
+    }
+    // end controlpath
+  }
+}

@@ -1,0 +1,12 @@
+// a simple example..
+$module [sum_mod]
+    $in (a:$uint<10> b:$uint<10>)
+    $out (c:$uint<10>)
+$is
+{
+	$parallelblock[pb] {
+		d := ( a + b)
+		e := ( a - b)
+	}
+        c := ( %pb:d + %pb:e)
+}

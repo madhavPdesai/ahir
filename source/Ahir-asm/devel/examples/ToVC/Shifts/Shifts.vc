@@ -1,0 +1,164 @@
+// pipe-declarations for block %sum_mod
+//  file Shifts.aa, line 2
+$module [sum_mod] 
+{
+  $in a:$int<10> b:$int<4>
+  $out c:$int<10> d:$int<10> e:$int<10> f:$int<10>
+  // memory-space-declarations for block %sum_mod
+  //  file Shifts.aa, line 2
+  $CP 
+  {
+    // begin control-path 
+    // control-path for: 	c := ( ($uint<10>) ((a && z1) >> b) ) // type of target is $uint<10>
+    //  file Shifts.aa, line 8
+    ;;[assign_stmt_20] //  file Shifts.aa, line 8
+    {
+      // control-path for expression: ( ($uint<10>) ((a && z1) >> b) )
+      ;;[type_cast_19] 
+      {
+        // type-cast expression: ( ($uint<10>) ((a && z1) >> b) )
+        // control-path for expression: ((a && z1) >> b)
+        ;;[binary_18] 
+        {
+          // binary expression: ((a && z1) >> b)
+          ||[binary_18_inputs] 
+          {
+            // control-path for expression: (a && z1)
+            ;;[binary_16] 
+            {
+              // binary expression: (a && z1)
+              ||[binary_16_inputs] 
+              {
+                // CP for expression: a
+              }
+              $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+            }
+            // CP for expression: b
+          }
+          $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+        }
+        $T [req] $T [ack] //  type-conversion.. 
+      }
+      // CP for expression: c
+    }
+    // end assignment statement assign_stmt_20
+    // control-path for: 	d := (a << b) // type of target is $uint<10>
+    //  file Shifts.aa, line 9
+    ;;[assign_stmt_25] //  file Shifts.aa, line 9
+    {
+      // control-path for expression: (a << b)
+      ;;[binary_24] 
+      {
+        // binary expression: (a << b)
+        ||[binary_24_inputs] 
+        {
+          // CP for expression: a
+          // CP for expression: b
+        }
+        $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+      }
+      // CP for expression: d
+    }
+    // end assignment statement assign_stmt_25
+    // control-path for: 	e := (a >> 1 ) // type of target is $uint<10>
+    //  file Shifts.aa, line 10
+    ;;[assign_stmt_30] //  file Shifts.aa, line 10
+    {
+      // control-path for expression: (a >> 1 )
+      ;;[binary_29] 
+      {
+        // binary expression: (a >> 1 )
+        ||[binary_29_inputs] 
+        {
+          // CP for expression: a
+        }
+        $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+      }
+      // CP for expression: e
+    }
+    // end assignment statement assign_stmt_30
+    // control-path for: 	f := (a << 1 ) // type of target is $uint<10>
+    //  file Shifts.aa, line 11
+    ;;[assign_stmt_35] //  file Shifts.aa, line 11
+    {
+      // control-path for expression: (a << 1 )
+      ;;[binary_34] 
+      {
+        // binary expression: (a << 1 )
+        ||[binary_34_inputs] 
+        {
+          // CP for expression: a
+        }
+        $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+      }
+      // CP for expression: f
+    }
+    // end assignment statement assign_stmt_35
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %sum_mod
+    //  file Shifts.aa, line 2
+    $constant $W[xxsum_modxxz1] : $int<1> := _b0
+    $constant $W[simple_obj_ref_15_wire_constant] : $int<1> := _b0
+    // Constant-declaration for expression: 1 
+    $constant $W[expr_28_wire_constant] : $int<4> := _b0001
+    // Constant-declaration for expression: 1 
+    $constant $W[expr_33_wire_constant] : $int<4> := _b0001
+    // wire-declarations for: 	c := ( ($uint<10>) ((a && z1) >> b) ) // type of target is $uint<10>
+    //  file Shifts.aa, line 8
+    // wire-declarations for expression: (a && z1)
+    $W[binary_16_wire] : $int<11>
+    // wire-declarations for expression: ((a && z1) >> b)
+    $W[binary_18_wire] : $int<11>
+    // wire-declarations for: 	d := (a << b) // type of target is $uint<10>
+    //  file Shifts.aa, line 9
+    // wire-declarations for: 	e := (a >> 1 ) // type of target is $uint<10>
+    //  file Shifts.aa, line 10
+    // wire-declarations for: 	f := (a << 1 ) // type of target is $uint<10>
+    //  file Shifts.aa, line 11
+    // data-path instances for: 	c := ( ($uint<10>) ((a && z1) >> b) ) // type of target is $uint<10>
+    //  file Shifts.aa, line 8
+    // data-path-instances for expression: (a && z1)
+    &&[binary_16_inst] (a simple_obj_ref_15_wire_constant) (binary_16_wire)
+    // data-path-instances for expression: ((a && z1) >> b)
+    >>[binary_18_inst] (binary_16_wire b) (binary_18_wire)
+    // data-path instances for expression: ( ($uint<10>) ((a && z1) >> b) )
+    := [type_cast_19_inst] (binary_18_wire) (c)
+    // data-path instances for: 	d := (a << b) // type of target is $uint<10>
+    //  file Shifts.aa, line 9
+    // data-path-instances for expression: (a << b)
+    <<[binary_24_inst] (a b) (d)
+    // data-path instances for: 	e := (a >> 1 ) // type of target is $uint<10>
+    //  file Shifts.aa, line 10
+    // data-path-instances for expression: (a >> 1 )
+    >>[binary_29_inst] (a expr_28_wire_constant) (e)
+    // data-path instances for: 	f := (a << 1 ) // type of target is $uint<10>
+    //  file Shifts.aa, line 11
+    // data-path-instances for expression: (a << 1 )
+    <<[binary_34_inst] (a expr_33_wire_constant) (f)
+  }
+  // end data-path
+  // CP-DP links for: 	c := ( ($uint<10>) ((a && z1) >> b) ) // type of target is $uint<10>
+  //  file Shifts.aa, line 8
+  // CP-DP links for expression: (a && z1)
+  binary_16_inst <=> (assign_stmt_20/type_cast_19/binary_18/binary_18_inputs/binary_16/rr assign_stmt_20/type_cast_19/binary_18/binary_18_inputs/binary_16/cr) (assign_stmt_20/type_cast_19/binary_18/binary_18_inputs/binary_16/ra assign_stmt_20/type_cast_19/binary_18/binary_18_inputs/binary_16/ca)
+  // CP-DP links for expression: ((a && z1) >> b)
+  binary_18_inst <=> (assign_stmt_20/type_cast_19/binary_18/rr assign_stmt_20/type_cast_19/binary_18/cr) (assign_stmt_20/type_cast_19/binary_18/ra assign_stmt_20/type_cast_19/binary_18/ca)
+  // CP-DP links for expression: ( ($uint<10>) ((a && z1) >> b) )
+  type_cast_19_inst <=> (assign_stmt_20/type_cast_19/req) (assign_stmt_20/type_cast_19/ack)
+  // CP-DP links for: 	d := (a << b) // type of target is $uint<10>
+  //  file Shifts.aa, line 9
+  // CP-DP links for expression: (a << b)
+  binary_24_inst <=> (assign_stmt_25/binary_24/rr assign_stmt_25/binary_24/cr) (assign_stmt_25/binary_24/ra assign_stmt_25/binary_24/ca)
+  // CP-DP links for: 	e := (a >> 1 ) // type of target is $uint<10>
+  //  file Shifts.aa, line 10
+  // CP-DP links for expression: (a >> 1 )
+  binary_29_inst <=> (assign_stmt_30/binary_29/rr assign_stmt_30/binary_29/cr) (assign_stmt_30/binary_29/ra assign_stmt_30/binary_29/ca)
+  // CP-DP links for: 	f := (a << 1 ) // type of target is $uint<10>
+  //  file Shifts.aa, line 11
+  // CP-DP links for expression: (a << 1 )
+  binary_34_inst <=> (assign_stmt_35/binary_34/rr assign_stmt_35/binary_34/cr) (assign_stmt_35/binary_34/ra assign_stmt_35/binary_34/ca)
+}

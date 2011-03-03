@@ -1,0 +1,161 @@
+// pipe-declarations for block %sum_mod
+//  file FullAdder.aa, line 2
+// pipe-declarations for block %sum_mod%pb
+//  file FullAdder.aa, line 7
+$module [sum_mod] 
+{
+  $in a:$int<1> b:$int<1> cin:$int<1>
+  $out sum:$int<1> cout:$int<1>
+  // memory-space-declarations for block %sum_mod
+  //  file FullAdder.aa, line 2
+  // memory-space-declarations for block %sum_mod%pb
+  //  file FullAdder.aa, line 7
+  // memory-space-declarations for block %sum_mod%pb
+  //  file FullAdder.aa, line 7
+  $CP 
+  {
+    // begin control-path 
+    ||[parallel_block_stmt_7] // parallel block  file FullAdder.aa, line 7
+    {
+      // control-path for: 		sum := ((a ^ b) ^ cin) // type of target is $uint<1>
+      //  file FullAdder.aa, line 8
+      ;;[assign_stmt_14] //  file FullAdder.aa, line 8
+      {
+        // control-path for expression: ((a ^ b) ^ cin)
+        ;;[binary_13] 
+        {
+          // binary expression: ((a ^ b) ^ cin)
+          ||[binary_13_inputs] 
+          {
+            // control-path for expression: (a ^ b)
+            ;;[binary_11] 
+            {
+              // binary expression: (a ^ b)
+              ||[binary_11_inputs] 
+              {
+                // CP for expression: a
+                // CP for expression: b
+              }
+              $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+            }
+            // CP for expression: cin
+          }
+          $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+        }
+        // CP for expression: sum
+      }
+      // end assignment statement assign_stmt_14
+      // control-path for: 		cout := ((cin & (a | b)) | (a & b)) // type of target is $uint<1>
+      //  file FullAdder.aa, line 9
+      ;;[assign_stmt_25] //  file FullAdder.aa, line 9
+      {
+        // control-path for expression: ((cin & (a | b)) | (a & b))
+        ;;[binary_24] 
+        {
+          // binary expression: ((cin & (a | b)) | (a & b))
+          ||[binary_24_inputs] 
+          {
+            // control-path for expression: (cin & (a | b))
+            ;;[binary_20] 
+            {
+              // binary expression: (cin & (a | b))
+              ||[binary_20_inputs] 
+              {
+                // CP for expression: cin
+                // control-path for expression: (a | b)
+                ;;[binary_19] 
+                {
+                  // binary expression: (a | b)
+                  ||[binary_19_inputs] 
+                  {
+                    // CP for expression: a
+                    // CP for expression: b
+                  }
+                  $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+                }
+              }
+              $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+            }
+            // control-path for expression: (a & b)
+            ;;[binary_23] 
+            {
+              // binary expression: (a & b)
+              ||[binary_23_inputs] 
+              {
+                // CP for expression: a
+                // CP for expression: b
+              }
+              $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+            }
+          }
+          $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+        }
+        // CP for expression: cout
+      }
+      // end assignment statement assign_stmt_25
+    }
+    // end parallel block parallel_block_stmt_7
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %sum_mod%pb
+    //  file FullAdder.aa, line 7
+    // constant-object-declarations for block %sum_mod
+    //  file FullAdder.aa, line 2
+    // constant-declarations for block %sum_mod%pb
+    //  file FullAdder.aa, line 7
+    // wire-declarations for block %sum_mod%pb
+    //  file FullAdder.aa, line 7
+    // wire-declarations for: 		sum := ((a ^ b) ^ cin) // type of target is $uint<1>
+    //  file FullAdder.aa, line 8
+    // wire-declarations for expression: (a ^ b)
+    $intermediate $W[binary_11_wire] : $int<1>
+    // wire-declarations for: 		cout := ((cin & (a | b)) | (a & b)) // type of target is $uint<1>
+    //  file FullAdder.aa, line 9
+    // wire-declarations for expression: (a | b)
+    $intermediate $W[binary_19_wire] : $int<1>
+    // wire-declarations for expression: (cin & (a | b))
+    $intermediate $W[binary_20_wire] : $int<1>
+    // wire-declarations for expression: (a & b)
+    $intermediate $W[binary_23_wire] : $int<1>
+    // datapath-instances for block %sum_mod%pb
+    //  file FullAdder.aa, line 7
+    // data-path instances for: 		sum := ((a ^ b) ^ cin) // type of target is $uint<1>
+    //  file FullAdder.aa, line 8
+    // data-path-instances for expression: (a ^ b)
+    ^[binary_11_inst] (a b) (binary_11_wire)
+    // data-path-instances for expression: ((a ^ b) ^ cin)
+    ^[binary_13_inst] (binary_11_wire cin) (sum)
+    // data-path instances for: 		cout := ((cin & (a | b)) | (a & b)) // type of target is $uint<1>
+    //  file FullAdder.aa, line 9
+    // data-path-instances for expression: (a | b)
+    |[binary_19_inst] (a b) (binary_19_wire)
+    // data-path-instances for expression: (cin & (a | b))
+    &[binary_20_inst] (cin binary_19_wire) (binary_20_wire)
+    // data-path-instances for expression: (a & b)
+    &[binary_23_inst] (a b) (binary_23_wire)
+    // data-path-instances for expression: ((cin & (a | b)) | (a & b))
+    |[binary_24_inst] (binary_20_wire binary_23_wire) (cout)
+  }
+  // end data-path
+  // CP-DP links for block %sum_mod%pb
+  //  file FullAdder.aa, line 7
+  // CP-DP links for: 		sum := ((a ^ b) ^ cin) // type of target is $uint<1>
+  //  file FullAdder.aa, line 8
+  // CP-DP links for expression: (a ^ b)
+  binary_11_inst <=> (parallel_block_stmt_7/assign_stmt_14/binary_13/binary_13_inputs/binary_11/rr parallel_block_stmt_7/assign_stmt_14/binary_13/binary_13_inputs/binary_11/cr) (parallel_block_stmt_7/assign_stmt_14/binary_13/binary_13_inputs/binary_11/ra parallel_block_stmt_7/assign_stmt_14/binary_13/binary_13_inputs/binary_11/ca)
+  // CP-DP links for expression: ((a ^ b) ^ cin)
+  binary_13_inst <=> (parallel_block_stmt_7/assign_stmt_14/binary_13/rr parallel_block_stmt_7/assign_stmt_14/binary_13/cr) (parallel_block_stmt_7/assign_stmt_14/binary_13/ra parallel_block_stmt_7/assign_stmt_14/binary_13/ca)
+  // CP-DP links for: 		cout := ((cin & (a | b)) | (a & b)) // type of target is $uint<1>
+  //  file FullAdder.aa, line 9
+  // CP-DP links for expression: (a | b)
+  binary_19_inst <=> (parallel_block_stmt_7/assign_stmt_25/binary_24/binary_24_inputs/binary_20/binary_20_inputs/binary_19/rr parallel_block_stmt_7/assign_stmt_25/binary_24/binary_24_inputs/binary_20/binary_20_inputs/binary_19/cr) (parallel_block_stmt_7/assign_stmt_25/binary_24/binary_24_inputs/binary_20/binary_20_inputs/binary_19/ra parallel_block_stmt_7/assign_stmt_25/binary_24/binary_24_inputs/binary_20/binary_20_inputs/binary_19/ca)
+  // CP-DP links for expression: (cin & (a | b))
+  binary_20_inst <=> (parallel_block_stmt_7/assign_stmt_25/binary_24/binary_24_inputs/binary_20/rr parallel_block_stmt_7/assign_stmt_25/binary_24/binary_24_inputs/binary_20/cr) (parallel_block_stmt_7/assign_stmt_25/binary_24/binary_24_inputs/binary_20/ra parallel_block_stmt_7/assign_stmt_25/binary_24/binary_24_inputs/binary_20/ca)
+  // CP-DP links for expression: (a & b)
+  binary_23_inst <=> (parallel_block_stmt_7/assign_stmt_25/binary_24/binary_24_inputs/binary_23/rr parallel_block_stmt_7/assign_stmt_25/binary_24/binary_24_inputs/binary_23/cr) (parallel_block_stmt_7/assign_stmt_25/binary_24/binary_24_inputs/binary_23/ra parallel_block_stmt_7/assign_stmt_25/binary_24/binary_24_inputs/binary_23/ca)
+  // CP-DP links for expression: ((cin & (a | b)) | (a & b))
+  binary_24_inst <=> (parallel_block_stmt_7/assign_stmt_25/binary_24/rr parallel_block_stmt_7/assign_stmt_25/binary_24/cr) (parallel_block_stmt_7/assign_stmt_25/binary_24/ra parallel_block_stmt_7/assign_stmt_25/binary_24/ca)
+}

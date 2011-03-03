@@ -1,0 +1,139 @@
+// $pipe  buffer : $uint<10> 
+// in scope  top-level
+$pipe [buffer] 10
+// $pipe  inpipe : $uint<10> 
+// in scope  top-level
+$pipe [inpipe] 10
+// $pipe  outpipe : $uint<10> 
+// in scope  top-level
+$pipe [outpipe] 10
+// pipe-declarations for block %sum_mod
+//  file Pipes.aa, line 5
+$module [sum_mod] 
+{
+  $in a:$int<10>
+  $out b:$int<10>
+  // memory-space-declarations for block %sum_mod
+  //  file Pipes.aa, line 5
+  $CP 
+  {
+    // begin control-path 
+    // control-path for: 	buffer := (a + inpipe) // type of target is $uint<10>
+    //  file Pipes.aa, line 10
+    ;;[assign_stmt_11] //  file Pipes.aa, line 10
+    {
+      // control-path for expression: (a + inpipe)
+      ;;[binary_10] 
+      {
+        // binary expression: (a + inpipe)
+        ||[binary_10_inputs] 
+        {
+          // CP for expression: a
+          // CP for expression: inpipe
+          ;;[simple_obj_ref_9] 
+          {
+            // pipe read: inpipe
+            $T [req] $T [ack] 
+          }
+        }
+        $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+      }
+      // CP for expression: buffer
+      ;;[simple_obj_ref_7] 
+      {
+        // pipe write buffer
+        $T [pipe_wreq] $T [pipe_wack] 
+      }
+    }
+    // end assignment statement assign_stmt_11
+    // control-path for: 	t := buffer // type of target is $uint<10>
+    //  file Pipes.aa, line 11
+    ;;[assign_stmt_14] //  file Pipes.aa, line 11
+    {
+      // CP for expression: buffer
+      ;;[simple_obj_ref_13] 
+      {
+        // pipe read: buffer
+        $T [req] $T [ack] 
+      }
+      // CP for expression: t
+    }
+    // end assignment statement assign_stmt_14
+    // control-path for: 	b := t // type of target is $uint<10>
+    //  file Pipes.aa, line 12
+    ;;[assign_stmt_17] //  file Pipes.aa, line 12
+    {
+      // CP for expression: t
+      // CP for expression: b
+      $T [req] $T [ack] // register.
+    }
+    // end assignment statement assign_stmt_17
+    // control-path for: 	outpipe := t // type of target is $uint<10>
+    //  file Pipes.aa, line 13
+    ;;[assign_stmt_20] //  file Pipes.aa, line 13
+    {
+      // CP for expression: t
+      // CP for expression: outpipe
+      ;;[simple_obj_ref_18] 
+      {
+        // pipe write outpipe
+        $T [pipe_wreq] $T [pipe_wack] 
+      }
+    }
+    // end assignment statement assign_stmt_20
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %sum_mod
+    //  file Pipes.aa, line 5
+    // wire-declarations for: 	buffer := (a + inpipe) // type of target is $uint<10>
+    //  file Pipes.aa, line 10
+    $W[simple_obj_ref_9_wire] : $int<10>
+    // wire-declarations for expression: (a + inpipe)
+    $W[binary_10_wire] : $int<10>
+    // wire-declarations for: 	t := buffer // type of target is $uint<10>
+    //  file Pipes.aa, line 11
+    $W[t_14] : $int<10>
+    // wire-declarations for: 	b := t // type of target is $uint<10>
+    //  file Pipes.aa, line 12
+    // wire-declarations for: 	outpipe := t // type of target is $uint<10>
+    //  file Pipes.aa, line 13
+    // data-path instances for: 	buffer := (a + inpipe) // type of target is $uint<10>
+    //  file Pipes.aa, line 10
+    $ioport $in [simple_obj_ref_9_inst] (inpipe) (simple_obj_ref_9_wire)
+    // data-path-instances for expression: (a + inpipe)
+    +[binary_10_inst] (a simple_obj_ref_9_wire) (binary_10_wire)
+    $ioport $out [simple_obj_ref_7_inst]  (binary_10_wire) (buffer)
+    // data-path instances for: 	t := buffer // type of target is $uint<10>
+    //  file Pipes.aa, line 11
+    $ioport $in [simple_obj_ref_13_inst] (buffer) (t_14)
+    // data-path instances for: 	b := t // type of target is $uint<10>
+    //  file Pipes.aa, line 12
+    := [simple_obj_ref_15_inst] (t_14) (b)
+    // data-path instances for: 	outpipe := t // type of target is $uint<10>
+    //  file Pipes.aa, line 13
+    $ioport $out [simple_obj_ref_18_inst]  (t_14) (outpipe)
+  }
+  // end data-path
+  // CP-DP links for: 	buffer := (a + inpipe) // type of target is $uint<10>
+  //  file Pipes.aa, line 10
+  // CP-DP links for expression: buffer
+  simple_obj_ref_7_inst <=> (assign_stmt_11/simple_obj_ref_7/pipe_wreq) (assign_stmt_11/simple_obj_ref_7/pipe_wack)
+  // CP-DP links for expression: inpipe
+  simple_obj_ref_9_inst <=> (assign_stmt_11/binary_10/binary_10_inputs/simple_obj_ref_9/req) (assign_stmt_11/binary_10/binary_10_inputs/simple_obj_ref_9/ack)
+  // CP-DP links for expression: (a + inpipe)
+  binary_10_inst <=> (assign_stmt_11/binary_10/rr assign_stmt_11/binary_10/cr) (assign_stmt_11/binary_10/ra assign_stmt_11/binary_10/ca)
+  // CP-DP links for: 	t := buffer // type of target is $uint<10>
+  //  file Pipes.aa, line 11
+  // CP-DP links for expression: buffer
+  simple_obj_ref_13_inst <=> (assign_stmt_14/simple_obj_ref_13/req) (assign_stmt_14/simple_obj_ref_13/ack)
+  // CP-DP links for: 	b := t // type of target is $uint<10>
+  //  file Pipes.aa, line 12
+  simple_obj_ref_15_inst <=> (assign_stmt_17/req) (assign_stmt_17/ack)
+  // CP-DP links for: 	outpipe := t // type of target is $uint<10>
+  //  file Pipes.aa, line 13
+  // CP-DP links for expression: outpipe
+  simple_obj_ref_18_inst <=> (assign_stmt_20/simple_obj_ref_18/pipe_wreq) (assign_stmt_20/simple_obj_ref_18/pipe_wack)
+}

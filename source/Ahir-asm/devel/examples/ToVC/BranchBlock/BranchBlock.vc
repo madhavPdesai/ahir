@@ -1,0 +1,311 @@
+// pipe-declarations for block %sum_mod
+//  file BranchBlock.aa, line 4
+// pipe-declarations for block %sum_mod%bb1
+//  file BranchBlock.aa, line 9
+// pipe-declarations for block %sum_mod%bb1%
+//  file BranchBlock.aa, line 10
+$module [sum_mod] 
+{
+  $in a:$int<10>
+  $out b:$int<10> c:$int<10>
+  // memory-space-declarations for block %sum_mod
+  //  file BranchBlock.aa, line 4
+  // memory-space-declarations for block %sum_mod%bb1
+  //  file BranchBlock.aa, line 9
+  // memory-space-declarations for block %sum_mod%bb1%
+  //  file BranchBlock.aa, line 10
+  // memory-space-declarations for block %sum_mod%bb1
+  //  file BranchBlock.aa, line 9
+  // memory-space-declarations for block %sum_mod%bb1%
+  //  file BranchBlock.aa, line 10
+  $CP 
+  {
+    // begin control-path 
+    // control-path for branch block %sum_mod%bb1
+    //  file BranchBlock.aa, line 9
+    <>[branch_block_stmt_5] // Branch Block  file BranchBlock.aa, line 9
+    {
+      $P [branch_block_stmt_5__entry__]
+      branch_block_stmt_5__entry__ <-| ($entry)
+      $P [branch_block_stmt_5__exit__]
+      branch_block_stmt_5__exit__ |-> ($exit)
+      $P [merge_stmt_6__exit__] 
+      $P [assign_stmt_20__entry__] 
+      $P [assign_stmt_20__exit__] 
+      $P [assign_stmt_25__entry__] 
+      $P [assign_stmt_25__exit__] 
+      $P [switch_stmt_26__entry__] 
+      // control-path for: 		new_loop_counter := (loop_counter - 1 ) // type of target is $uint<10>
+      //  file BranchBlock.aa, line 14
+      ;;[assign_stmt_20] //  file BranchBlock.aa, line 14
+      {
+        // control-path for expression: (loop_counter - 1 )
+        ;;[binary_19] 
+        {
+          // binary expression: (loop_counter - 1 )
+          ||[binary_19_inputs] 
+          {
+            // CP for expression: loop_counter
+          }
+          $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+        }
+        // CP for expression: new_loop_counter
+      }
+      // end assignment statement assign_stmt_20
+      assign_stmt_20__entry__ |-> (assign_stmt_20)
+      assign_stmt_20__exit__ <-| (assign_stmt_20)
+      // control-path for: 		t := (temp_t + 1 ) // type of target is $uint<10>
+      //  file BranchBlock.aa, line 15
+      ;;[assign_stmt_25] //  file BranchBlock.aa, line 15
+      {
+        // control-path for expression: (temp_t + 1 )
+        ;;[binary_24] 
+        {
+          // binary expression: (temp_t + 1 )
+          ||[binary_24_inputs] 
+          {
+            // CP for expression: temp_t
+          }
+          $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+        }
+        // CP for expression: t
+      }
+      // end assignment statement assign_stmt_25
+      assign_stmt_25__entry__ |-> (assign_stmt_25)
+      assign_stmt_25__exit__ <-| (assign_stmt_25)
+      // control-path for switch  
+      //  file BranchBlock.aa, line 16
+      //---------------------    switch statement  file BranchBlock.aa, line 16  --------------------------
+      $P [switch_stmt_26__condition_check_place__] 
+      switch_stmt_26__entry__ |-> (switch_stmt_26__condition_check_place__)
+      ||[switch_stmt_26__condition_check__] 
+      {
+        // condition computation
+        ;;[condition_0] 
+        {
+          $T [rr] $T [ra] $T [cr] $T [ca] 
+          $T [cmp] // cmp will trigger choice comparison
+        }
+        ;;[condition_1] 
+        {
+          $T [rr] $T [ra] $T [cr] $T [ca] 
+          $T [cmp] // cmp will trigger choice comparison
+        }
+        ;;[condition_2] 
+        {
+          $T [rr] $T [ra] $T [cr] $T [ca] 
+          $T [cmp] // cmp will trigger choice comparison
+        }
+      }
+      switch_stmt_26__condition_check_place__ |-> (switch_stmt_26__condition_check__)
+      $P [switch_stmt_26__select__] 
+      switch_stmt_26__select__ <-| (switch_stmt_26__condition_check__)
+      // switch choice 0
+      ;;[switch_stmt_26_choice_0] 
+      {
+        $T [ack1]  // ack0 will be ignored..
+      }
+      $P [loopback]
+      loopback <-| (switch_stmt_26_choice_0)
+      // switch choice 1
+      ;;[switch_stmt_26_choice_1] 
+      {
+        $T [ack1]  // ack0 will be ignored..
+      }
+      $P [loopback]
+      loopback <-| (switch_stmt_26_choice_1)
+      // switch choice 2
+      ;;[switch_stmt_26_choice_2] 
+      {
+        $T [ack1]  // ack0 will be ignored..
+      }
+      $P [loopback]
+      loopback <-| (switch_stmt_26_choice_2)
+      ;;[switch_stmt_26_choice_default] 
+      {
+        $T [ack0] // ack1 will be ignored..
+      }
+      // switch default choice 
+      $P [stmt_37__entry__] 
+      $P [stmt_37__exit__] 
+      // control-path for: 			$null
+      //  file BranchBlock.aa, line 0
+      ;;[stmt_37] 
+      {
+      }
+      stmt_37__entry__ |-> (stmt_37)
+      stmt_37__exit__ <-| (stmt_37)
+      stmt_37__entry__ <-| (switch_stmt_26_choice_default)
+      stmt_37__exit__ |-> (branch_block_stmt_5__exit__)
+      switch_stmt_26__select__ |-> (switch_stmt_26_choice_0 switch_stmt_26_choice_1 switch_stmt_26_choice_2 switch_stmt_26_choice_default)
+      //---------------------   end of switch statement  file BranchBlock.aa, line 16  --------------------------
+      // control-path for merge  
+      //  file BranchBlock.aa, line 10
+      //---------------------   merge statement  file BranchBlock.aa, line 10  --------------------------
+      ||[branch_block_stmt_5__entry___PhiReq] 
+      {
+        $T [phi_stmt_7_req] 
+        $T [phi_stmt_11_req] 
+      }
+      branch_block_stmt_5__entry__ |-> (branch_block_stmt_5__entry___PhiReq)
+      ||[loopback_PhiReq] 
+      {
+        $T [phi_stmt_7_req] 
+        $T [phi_stmt_11_req] 
+      }
+      loopback |-> (loopback_PhiReq)
+      $P [merge_stmt_6_PhiReqMerge] 
+      merge_stmt_6_PhiReqMerge <-| ( branch_block_stmt_5__entry___PhiReq  loopback_PhiReq )
+      ||[merge_stmt_6_PhiAck] 
+      {
+        $T [phi_stmt_7_ack] 
+        $T [phi_stmt_11_ack] 
+      }
+      merge_stmt_6_PhiReqMerge |-> (merge_stmt_6_PhiAck)
+      merge_stmt_6__exit__ <-| (merge_stmt_6_PhiAck)
+      //---------------------  end of merge statement  file BranchBlock.aa, line 10  --------------------------
+      assign_stmt_20__entry__ <-| (merge_stmt_6__exit__)
+      assign_stmt_25__entry__ <-| (assign_stmt_20__exit__)
+      switch_stmt_26__entry__ <-| (assign_stmt_25__exit__)
+    }
+    // control-path for: 	b := %bb1:t // type of target is $uint<10>
+    //  file BranchBlock.aa, line 21
+    ;;[assign_stmt_42] //  file BranchBlock.aa, line 21
+    {
+      // CP for expression: %bb1:t
+      // CP for expression: b
+      $T [req] $T [ack] // register.
+    }
+    // end assignment statement assign_stmt_42
+    // control-path for: 	c := %bb1:t // type of target is $uint<10>
+    //  file BranchBlock.aa, line 22
+    ;;[assign_stmt_45] //  file BranchBlock.aa, line 22
+    {
+      // CP for expression: %bb1:t
+      // CP for expression: c
+      $T [req] $T [ack] // register.
+    }
+    // end assignment statement assign_stmt_45
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %sum_mod%bb1%
+    //  file BranchBlock.aa, line 10
+    // constant-object-declarations for block %sum_mod%bb1
+    //  file BranchBlock.aa, line 9
+    // constant-object-declarations for block %sum_mod
+    //  file BranchBlock.aa, line 4
+    // constant-declarations for block %sum_mod%bb1
+    //  file BranchBlock.aa, line 9
+    // constant-declarations for block %sum_mod%bb1%
+    //  file BranchBlock.aa, line 10
+    // constant-declarations for phi:  			$phi loop_counter := 			  a $on $entry			  new_loop_counter $on loopback // type of target is $uint<10>
+    //  file BranchBlock.aa, line 11
+    // constant-declarations for phi:  			$phi temp_t := 			  0  $on $entry			  t $on loopback // type of target is $uint<10>
+    //  file BranchBlock.aa, line 12
+    // Constant-declaration for expression: 0 
+    $constant $W[expr_13_wire_constant] : $int<10> := _b0000000000
+    // Constant-declaration for expression: 1 
+    $constant $W[expr_18_wire_constant] : $int<10> := _b0000000001
+    // Constant-declaration for expression: 1 
+    $constant $W[expr_23_wire_constant] : $int<10> := _b0000000001
+    // constant-declarations  for switch  
+    //  file BranchBlock.aa, line 16
+    // Constant-declaration for expression: 1 
+    $constant $W[expr_28_wire_constant] : $int<10> := _b0000000001
+    // Constant-declaration for expression: 2 
+    $constant $W[expr_31_wire_constant] : $int<10> := _b0000000010
+    // Constant-declaration for expression: 3 
+    $constant $W[expr_34_wire_constant] : $int<10> := _b0000000011
+    // wire-declarations for block %sum_mod%bb1
+    //  file BranchBlock.aa, line 9
+    // wire-declarations for merge  
+    //  file BranchBlock.aa, line 10
+    // wire-declarations for phi:  			$phi loop_counter := 			  a $on $entry			  new_loop_counter $on loopback // type of target is $uint<10>
+    //  file BranchBlock.aa, line 11
+    $W[loop_counter_7] : $int<10>
+    // wire-declarations for phi:  			$phi temp_t := 			  0  $on $entry			  t $on loopback // type of target is $uint<10>
+    //  file BranchBlock.aa, line 12
+    $W[temp_t_11] : $int<10>
+    // wire-declarations for: 		new_loop_counter := (loop_counter - 1 ) // type of target is $uint<10>
+    //  file BranchBlock.aa, line 14
+    $W[new_loop_counter_20] : $int<10>
+    // wire-declarations for: 		t := (temp_t + 1 ) // type of target is $uint<10>
+    //  file BranchBlock.aa, line 15
+    $W[t_25] : $int<10>
+    // wire-declarations  for switch  
+    //  file BranchBlock.aa, line 16
+    $W[expr_28_wire_constant_cmp] : $int<1>
+    $W[expr_31_wire_constant_cmp] : $int<1>
+    $W[expr_34_wire_constant_cmp] : $int<1>
+    // wire-declarations for: 	b := %bb1:t // type of target is $uint<10>
+    //  file BranchBlock.aa, line 21
+    // wire-declarations for: 	c := %bb1:t // type of target is $uint<10>
+    //  file BranchBlock.aa, line 22
+    // datapath-instances for block %sum_mod%bb1
+    //  file BranchBlock.aa, line 9
+    // data-path instances for merge  
+    //  file BranchBlock.aa, line 10
+    // datapath-instances for phi:  			$phi loop_counter := 			  a $on $entry			  new_loop_counter $on loopback // type of target is $uint<10>
+    //  file BranchBlock.aa, line 11
+    $phi [phi_stmt_7] (a new_loop_counter_20) ( loop_counter_7 )
+    // datapath-instances for phi:  			$phi temp_t := 			  0  $on $entry			  t $on loopback // type of target is $uint<10>
+    //  file BranchBlock.aa, line 12
+    $phi [phi_stmt_11] (expr_13_wire_constant t_25) ( temp_t_11 )
+    // data-path instances for: 		new_loop_counter := (loop_counter - 1 ) // type of target is $uint<10>
+    //  file BranchBlock.aa, line 14
+    // data-path-instances for expression: (loop_counter - 1 )
+    -[binary_19_inst] (loop_counter_7 expr_18_wire_constant) (new_loop_counter_20)
+    // data-path instances for: 		t := (temp_t + 1 ) // type of target is $uint<10>
+    //  file BranchBlock.aa, line 15
+    // data-path-instances for expression: (temp_t + 1 )
+    +[binary_24_inst] (temp_t_11 expr_23_wire_constant) (t_25)
+    // datapath-instances  for switch  
+    //  file BranchBlock.aa, line 16
+    ==[switch_stmt_26_select_expr_0] (new_loop_counter_20 expr_28_wire_constant) (expr_28_wire_constant_cmp)
+    ==0? [switch_stmt_26_branch_0] (expr_28_wire_constant_cmp)
+    ==[switch_stmt_26_select_expr_1] (new_loop_counter_20 expr_31_wire_constant) (expr_31_wire_constant_cmp)
+    ==0? [switch_stmt_26_branch_1] (expr_31_wire_constant_cmp)
+    ==[switch_stmt_26_select_expr_2] (new_loop_counter_20 expr_34_wire_constant) (expr_34_wire_constant_cmp)
+    ==0? [switch_stmt_26_branch_2] (expr_34_wire_constant_cmp)
+    ==0? [switch_stmt_26_branch_default_] (expr_28_wire_constant_cmp expr_31_wire_constant_cmp expr_34_wire_constant_cmp)
+    // data-path instances for: 	b := %bb1:t // type of target is $uint<10>
+    //  file BranchBlock.aa, line 21
+    := [simple_obj_ref_40_inst] (t_25) (b)
+    // data-path instances for: 	c := %bb1:t // type of target is $uint<10>
+    //  file BranchBlock.aa, line 22
+    := [simple_obj_ref_43_inst] (t_25) (c)
+  }
+  // end data-path
+  // CP-DP links for block %sum_mod%bb1
+  //  file BranchBlock.aa, line 9
+  // CP-DP links for merge  
+  //  file BranchBlock.aa, line 10
+  phi_stmt_7 <=> (branch_block_stmt_5/branch_block_stmt_5__entry___PhiReq/phi_stmt_7_req branch_block_stmt_5/loopback_PhiReq/phi_stmt_7_req) (branch_block_stmt_5/merge_stmt_6_PhiAck/phi_stmt_7_ack)
+  phi_stmt_11 <=> (branch_block_stmt_5/branch_block_stmt_5__entry___PhiReq/phi_stmt_11_req branch_block_stmt_5/loopback_PhiReq/phi_stmt_11_req) (branch_block_stmt_5/merge_stmt_6_PhiAck/phi_stmt_11_ack)
+  // CP-DP links for: 		new_loop_counter := (loop_counter - 1 ) // type of target is $uint<10>
+  //  file BranchBlock.aa, line 14
+  // CP-DP links for expression: (loop_counter - 1 )
+  binary_19_inst <=> (branch_block_stmt_5/assign_stmt_20/binary_19/rr branch_block_stmt_5/assign_stmt_20/binary_19/cr) (branch_block_stmt_5/assign_stmt_20/binary_19/ra branch_block_stmt_5/assign_stmt_20/binary_19/ca)
+  // CP-DP links for: 		t := (temp_t + 1 ) // type of target is $uint<10>
+  //  file BranchBlock.aa, line 15
+  // CP-DP links for expression: (temp_t + 1 )
+  binary_24_inst <=> (branch_block_stmt_5/assign_stmt_25/binary_24/rr branch_block_stmt_5/assign_stmt_25/binary_24/cr) (branch_block_stmt_5/assign_stmt_25/binary_24/ra branch_block_stmt_5/assign_stmt_25/binary_24/ca)
+  // CP-DP links for switch  
+  //  file BranchBlock.aa, line 16
+  switch_stmt_26_select_expr_0 <=> (branch_block_stmt_5/switch_stmt_26__condition_check__/condition_0/rr branch_block_stmt_5/switch_stmt_26__condition_check__/condition_0/cr) (branch_block_stmt_5/switch_stmt_26__condition_check__/condition_0/ra branch_block_stmt_5/switch_stmt_26__condition_check__/condition_0/ca)
+  switch_stmt_26_branch_0 <=> (branch_block_stmt_5/switch_stmt_26__condition_check__/condition_0/cmp) ($open branch_block_stmt_5/switch_stmt_26_choice_0/ack1)
+  switch_stmt_26_select_expr_1 <=> (branch_block_stmt_5/switch_stmt_26__condition_check__/condition_1/rr branch_block_stmt_5/switch_stmt_26__condition_check__/condition_1/cr) (branch_block_stmt_5/switch_stmt_26__condition_check__/condition_1/ra branch_block_stmt_5/switch_stmt_26__condition_check__/condition_1/ca)
+  switch_stmt_26_branch_1 <=> (branch_block_stmt_5/switch_stmt_26__condition_check__/condition_1/cmp) ($open branch_block_stmt_5/switch_stmt_26_choice_1/ack1)
+  switch_stmt_26_select_expr_2 <=> (branch_block_stmt_5/switch_stmt_26__condition_check__/condition_2/rr branch_block_stmt_5/switch_stmt_26__condition_check__/condition_2/cr) (branch_block_stmt_5/switch_stmt_26__condition_check__/condition_2/ra branch_block_stmt_5/switch_stmt_26__condition_check__/condition_2/ca)
+  switch_stmt_26_branch_2 <=> (branch_block_stmt_5/switch_stmt_26__condition_check__/condition_2/cmp) ($open branch_block_stmt_5/switch_stmt_26_choice_2/ack1)
+  switch_stmt_26_branch_default_ <=> (branch_block_stmt_5/switch_stmt_26__condition_check__/$exit) (branch_block_stmt_5/switch_stmt_26_choice_default/ack0 $open)
+  // CP-DP links for: 	b := %bb1:t // type of target is $uint<10>
+  //  file BranchBlock.aa, line 21
+  simple_obj_ref_40_inst <=> (assign_stmt_42/req) (assign_stmt_42/ack)
+  // CP-DP links for: 	c := %bb1:t // type of target is $uint<10>
+  //  file BranchBlock.aa, line 22
+  simple_obj_ref_43_inst <=> (assign_stmt_45/req) (assign_stmt_45/ack)
+}

@@ -1,0 +1,10 @@
+// a simple example..
+$module [sum_mod]
+    $in (a:$uint<10>) $out (b:$uint<10>)
+$is
+{
+	$storage U: $uint<10>
+        $constant C: $array <4> $of $uint<10> := < 0 0 0 0 >
+	U := (a  + C[0])
+	b := (U  + C[3])
+}

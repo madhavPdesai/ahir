@@ -1,0 +1,14 @@
+$pipe buffer: $uint<10>
+$pipe inpipe: $uint<10>
+$pipe outpipe: $uint<10>
+// a simple example..
+$module [sum_mod]
+    $in (a:$uint<10>)
+    $out (b:$uint<10>)
+$is
+{
+	buffer := (a+inpipe)
+	t := buffer
+	b := t
+        outpipe := t
+}

@@ -1,0 +1,141 @@
+$module [sum_mod] 
+{
+  $in a:$int<10>b:$int<10>$out c:$int<10>
+  $CP 
+  {
+    // begin control-path 
+    ;;[AaAssignmentStatement_8] //  file BranchBlock.aa, line 8
+    {
+      ;;[AaSimpleObjectReference_7] 
+      {
+        $T [dummy] 
+      }
+      ;;[AaSimpleObjectReference_6] 
+      {
+        $T [rr] $T [ra] $T[cr] $T[ca]
+      }
+    }
+    // end assignment statement AaAssignmentStatement_8
+    <>[bb] // Branch Block 
+    {
+      $P [bb__entry__]
+      $P [bb__exit__]
+      ;;[AaAssignmentStatement_20] //  file BranchBlock.aa, line 13
+      {
+        ;;[AaBinaryExpression_19] 
+        {
+          $T [rr] $T [ra] $T [cr] $T [ca] 
+        }
+        ;;[AaSimpleObjectReference_16] 
+        {
+          $T [dummy] 
+        }
+      }
+      // end assignment statement AaAssignmentStatement_20
+      $P [AaAssignmentStatement_20__entry__] 
+      $P [AaAssignmentStatement_20__exit__] 
+      AaAssignmentStatement_20__entry__ |-> AaAssignmentStatement_20
+      AaAssignmentStatement_20__exit__ <-| AaAssignmentStatement_20
+      ;;[AaAssignmentStatement_25] //  file BranchBlock.aa, line 14
+      {
+        ;;[AaBinaryExpression_24] 
+        {
+          $T [rr] $T [ra] $T [cr] $T [ca] 
+        }
+        ;;[AaSimpleObjectReference_21] 
+        {
+          $T [rr] $T [ra] $T[cr] $T[ca]
+        }
+      }
+      // end assignment statement AaAssignmentStatement_25
+      $P [AaAssignmentStatement_25__entry__] 
+      $P [AaAssignmentStatement_25__exit__] 
+      AaAssignmentStatement_25__entry__ |-> AaAssignmentStatement_25
+      AaAssignmentStatement_25__exit__ <-| AaAssignmentStatement_25
+
+      //---------------------    switch statement  file BranchBlock.aa, line 15  --------------------------
+      //---------------------    select expression --------------------------
+      ;;[AaBinaryExpression_29] 
+      {
+        $T [rr] $T [ra] $T [cr] $T [ca] 
+      }
+      AaSwitchStatement_26__entry__ |-> AaBinaryExpression_29
+      //---------------------------------------------------------------------
+      //---------------------    condition computation  --------------------------
+      ||[AaSwitchStatement_26__condition_check__] 
+      {
+        ;;[condition_0] 
+        {
+          $T [rr] $T [ra] $T [cr] $T [ca] 
+        }
+      }
+      $P [AaSwitchStatement_26__select__] 
+      AaSwitchStatement_26__select__ <-| AaSwitchStatement_26__condition_check__
+      //---------------------------------------------------------------------
+      //---------------------    choices  --------------------------
+      //---------------------    alternative 0  --------------------------
+      $P [loopback]
+      loopback__exit__ |-> (AaAssignmentStatement_20_entry)
+      ;;[choice_0] 
+      {
+        $T [dummy] 
+      }
+      loopback <-| choice_0
+      //---------------------  default ---------------------------------------
+      ;;[] 
+      {
+        $T [dummy] // dummy transition 
+      }
+      $P [AaNullStatement_34__entry__] 
+      $P [AaNullStatement_34__exit__] 
+      AaNullStatement_34__entry__ |-> AaNullStatement_34
+      AaNullStatement_34__exit__ <-| AaNullStatement_34
+      AaNullStatement_34__exit__ |-> (AaAssignmentStatement_20_entry)
+      //---------------------  exit merge ---------------------------------------
+      AaSwitchStatement_26__exit__ <-| (AaNullStatement_34 )
+      $P [AaSwitchStatement_26__entry__] 
+      $P [AaSwitchStatement_26__exit__] 
+      AaSwitchStatement_26__entry__ |-> AaSwitchStatement_26
+      AaSwitchStatement_26__exit__ <-| AaSwitchStatement_26
+      ||[__entry___PhiReq] 
+      {
+        $T [AaPhiStatement_11_req] 
+      }
+      __entry__ |-> (xxentry_PhiReq)
+      ||[loopback_PhiReq] 
+      {
+        $T [AaPhiStatement_11_req] 
+      }
+      loopback |-> (loopback_PhiReq)
+      $P [_PhiReqMerge] 
+      _PhiReqMerge <-| ( __entry___PhiReq  loopback_PhiReq )
+      ||[_PhiAck] 
+      {
+        $T [AaPhiStatement_11_ack] 
+      }
+      _exit <-| (_PhiAck)
+      $P [__entry__] 
+      $P [__exit__] 
+      __exit__ |-> (AaAssignmentStatement_20_entry)
+      __entry__ <-| ($entry)
+      AaAssignmentStatement_20__exit__ |-> (AaAssignmentStatement_25_entry)
+      AaAssignmentStatement_20__entry__ <-| (__exit__)
+      AaAssignmentStatement_25__exit__ |-> (AaSwitchStatement_26_entry)
+      AaAssignmentStatement_25__entry__ <-| (AaAssignmentStatement_20__exit__)
+      AaSwitchStatement_26__exit__ |-> ($exit)AaSwitchStatement_26__entry__ <-| (AaAssignmentStatement_25__exit__)
+    }
+    ;;[AaAssignmentStatement_39] //  file BranchBlock.aa, line 17
+    {
+      ;;[AaSimpleObjectReference_38] 
+      {
+        $T [dummy] 
+      }
+      ;;[AaSimpleObjectReference_37] 
+      {
+        $T [dummy] 
+      }
+    }
+    // end assignment statement AaAssignmentStatement_39
+  }
+  // end control-path
+}

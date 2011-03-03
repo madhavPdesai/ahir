@@ -1,0 +1,17 @@
+$pipe stage0: $uint<10>
+$pipe stage1: $uint<10>
+$pipe inpipe: $uint<10>
+$pipe outpipe: $uint<10>
+// a simple example..
+$module [sum_mod]
+    $in (a:$uint<10>)
+    $out (b:$uint<10>)
+$is
+{
+	$parallelblock[sr]
+	{
+		stage0 := inpipe
+		stage1 := stage0
+		outpipe := stage1	
+	}
+}

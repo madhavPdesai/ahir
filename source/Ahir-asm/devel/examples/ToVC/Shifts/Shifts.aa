@@ -1,0 +1,12 @@
+// a simple example..
+$module [sum_mod]
+    $in (a:$uint<10> b:$uint<4>)
+    $out (c:$uint<10> d:$uint<10> e:$uint<10> f:$uint<10>)
+$is
+{
+	$constant z1: $uint<1> := 0
+        c := ( $cast ($uint<10>) ((a && z1) >> b))
+	d := ( a << b)
+	e := (a >> 1)
+	f := (a << 1)
+}
