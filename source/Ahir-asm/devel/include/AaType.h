@@ -20,6 +20,7 @@ class AaType: public AaRoot
   ~AaType();
   virtual string Kind() {return("AaType");}
   virtual string CName() {assert(0);}
+  virtual string CBaseName() {assert(0);}
   virtual string CDim() {assert(0);}
   virtual int Size() {assert(0);}
   virtual void Write_VC_Model(ostream& ofile) { assert(0);}
@@ -70,6 +71,10 @@ class AaUintType: public AaScalarType
   {
     return("uint_" + IntToStr(this->Get_Width()));
   }
+  virtual string CBaseName() 
+  {
+    return("uint" + IntToStr(this->Get_Width()) + "_t");
+  }
   virtual int Size() {return(this->_width);}
   virtual int Get_Data_Width() {return(this->Size());}
 
@@ -101,6 +106,10 @@ class AaIntType: public AaUintType
     return("int_" + IntToStr(this->Get_Width()));
   }
 
+  virtual string CBaseName() 
+  {
+    return("int" + IntToStr(this->Get_Width()) + "_t");
+  }
 };
 
 class AaPointerType: public AaUintType
@@ -117,6 +126,12 @@ class AaPointerType: public AaUintType
   {
     return(_ref_type->CName() + "*");
   }
+
+  virtual string CBaseName() 
+  {
+    return(this->CName());
+  }
+
 
   AaType* Get_Ref_Type() {return(this->_ref_type);}
 
@@ -154,6 +169,14 @@ class AaFloatType : public AaScalarType
   virtual string CName()
   {
     return(string("float_") + IntToStr(this->_characteristic) +  "_" + IntToStr(this->_mantissa));
+  }
+  
+  virtual string CBaseName() 
+  {
+    if(this->Size() == 32)
+      return("float");
+    else
+      return("double");
   }
 
   virtual int Size() {return(this->_characteristic + this->_mantissa + 1);}
@@ -199,6 +222,12 @@ class AaArrayType: public AaType
   virtual string CName()
   {
     string ret_string =  this->Get_Element_Type()->CName();
+    return(ret_string);
+  }
+
+  virtual string CBaseName()
+  {
+    string ret_string =  this->Get_Element_Type()->CBaseName();
     return(ret_string);
   }
   virtual string CDim() 

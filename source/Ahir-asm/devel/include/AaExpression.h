@@ -315,13 +315,7 @@ class AaPointerDereferenceExpression: public AaObjectReference
 
   AaPointerDereferenceExpression(AaScope* scope, AaObjectReference* obj_ref);
 
-  virtual void Print(ostream& ofile)
-  {
-    ofile << "->(";
-    this->_reference_to_object->Print(ofile);
-    ofile << ")";
-  }
-    
+  virtual void Print(ostream& ofile);
   virtual void PrintC(ofstream& ofile, string tab_string);
 
   virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
@@ -352,13 +346,7 @@ class AaAddressOfExpression: public AaObjectReference
  public:
   AaAddressOfExpression(AaScope* scope, AaObjectReference* obj_ref);
 
-  virtual void Print(ostream& ofile)
-  {
-    ofile << "@(";
-    this->_reference_to_object->Print(ofile);
-    ofile << ")";
-  }
-    
+  virtual void Print(ostream& ofile);
   virtual void PrintC(ofstream& ofile, string tab_string);
 
   virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
@@ -400,12 +388,7 @@ class AaTypeCastExpression: public AaExpression
     if(this->_rest) 
       this->_rest->Map_Source_References(source_objects);
   }
-  virtual void PrintC(ofstream& ofile, string tab_string)
-  {
-    ofile << tab_string << "(" << "(" << this->_to_type->CName() << ") ";
-    this->_rest->PrintC(ofile,"");
-    ofile << ")";
-  }
+  virtual void PrintC(ofstream& ofile, string tab_string);
 
   virtual void Write_VC_Control_Path( ostream& ofile);
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)

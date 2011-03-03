@@ -768,9 +768,10 @@ aA_Pointer_Dereference_Expression[AaScope* scope] returns [AaObjectReference* ex
    AaObjectReference* obj_ref;
 }
 :
-    DEREFERENCE_OP LPAREN obj_ref = aA_Object_Reference[scope] RPAREN 
+    did: DEREFERENCE_OP LPAREN obj_ref = aA_Object_Reference[scope] RPAREN 
      {
          expr = new AaPointerDereferenceExpression(scope, obj_ref);
+         expr->Set_Line_Number(did->getLine());
      }
 ; 
 
@@ -783,9 +784,10 @@ aA_Address_Of_Expression[AaScope* scope] returns [AaExpression* expr]
    AaObjectReference* obj_ref;
 }
 :
-    ADDRESS_OF_OP LPAREN obj_ref = aA_Object_Reference[scope] RPAREN 
+    aid: ADDRESS_OF_OP LPAREN obj_ref = aA_Object_Reference[scope] RPAREN 
      {
          expr = new AaAddressOfExpression(scope, obj_ref);
+         expr->Set_Line_Number(aid->getLine());
      }
 ; 
 

@@ -1287,6 +1287,23 @@ AaPointerDereferenceExpression::AaPointerDereferenceExpression(AaScope* scope, A
 }
 
 
+void AaPointerDereferenceExpression::Print(ostream& ofile)
+{
+  ofile << "->(";
+  this->_reference_to_object->Print(ofile);
+  ofile << ")";
+  
+  if(_addressed_object_representative == NULL)
+    {
+      AaRoot::Error("illegal pointer-dereference expression... source is not a storage object!", this);
+    }
+  else
+    ofile << " // memory space " << _addressed_object_representative->Get_Mem_Space_Index() << " ";
+    
+
+}
+  
+
 void AaPointerDereferenceExpression::PrintC(ofstream& ofile, string tab_string)
 {
   ofile << "(" << this->_reference_to_object->Get_Type()->CPointerDereference();
@@ -1359,6 +1376,21 @@ AaAddressOfExpression::AaAddressOfExpression(AaScope* scope, AaObjectReference* 
   _reference_to_object = obj_ref;
   obj_ref->Add_Target(this);
   this->_storage_object = NULL; // filled in during Map Source References.
+}
+
+
+void AaAddressOfExpression::Print(ostream& ofile)
+{
+  ofile << "@(";
+  this->_reference_to_object->Print(ofile);
+  ofile << ")";
+  if(_addressed_object_representative == NULL)
+    {
+      AaRoot::Error("illegal address-of expression... source is not a storage object!", this);
+    }
+  else
+    ofile << " // memory space " << _addressed_object_representative->Get_Mem_Space_Index() << " ";
+    
 }
 
 
@@ -1448,6 +1480,18 @@ void AaTypeCastExpression::Print(ostream& ofile)
   ofile << ") ";
   this->Get_Rest()->Print(ofile);
   ofile << " )";
+}
+
+
+void AaTypeCastExpression::PrintC(ofstream& ofile, string tab_string)
+{
+  if(this->_rest->Get_Type() && this->_rest->Get_Type()->Is("AaPointerType"))
+    ofile << tab_string << "(" << "(" << this->_to_type->CBaseName() << ") ";
+  else
+    ofile << tab_string << "(" << "(" << this->_to_type->CName() << ") ";
+
+  this->_rest->PrintC(ofile,"");
+  ofile << ")";
 }
 
 
