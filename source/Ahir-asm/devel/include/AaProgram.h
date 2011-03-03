@@ -23,6 +23,8 @@ class AaProgram
   static std::map<string,AaObject*,StringCompare> _objects;
   static std::map<string,AaModule*,StringCompare> _modules;
   static std::map<string,AaType*,StringCompare> _type_map;
+  static std::map<int,set<AaRoot*> > _storage_eq_class_map;
+  static std::map<int,set<AaModule*> > _storage_index_module_coverage_map;
 
   // modules should be printed in the order in which
   // they were encountered.
@@ -34,6 +36,10 @@ class AaProgram
   // (an undirected graph: connected components of this
   // graph will correspond to unique types!)
   static AaUGraphBase _type_dependency_graph;
+
+  // edge between u and v implies that
+  // u and v must be in the same memory space!
+  static AaUGraphBase _storage_dependency_graph;
 
  public:
   static int _pointer_width;
@@ -87,6 +93,10 @@ class AaProgram
 
   // propagate constant values...
   static void Propagate_Constants();
+
+  static void Coalesce_Storage();
+  static void Add_Storage_Dependency(AaStorageObject* u, AaStorageObject* v);
+  static void Add_Storage_Dependency_Graph_Vertex(AaStorageObject* u);
 
   // write VC model
   static void Write_VC_Model(int default_space_pointer_width,

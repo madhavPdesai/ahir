@@ -27,11 +27,10 @@ class AaRoot
   int64_t _index;
 
  protected:
+
   // vector of references to this object from "anywhere"
-  set<AaRoot*> _target_references; // objects that use this as a target (in arcs)
-  set<AaRoot*> _source_references; // objects that use this as a source (out arcs)
-
-
+  set<AaRoot*> _target_references; // objects that use this as a target
+  set<AaRoot*> _source_references; // objects that use this as a source.
 
  public:
 

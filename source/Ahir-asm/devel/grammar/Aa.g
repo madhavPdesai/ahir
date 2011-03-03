@@ -1087,7 +1087,7 @@ aA_Array_Type_Reference[AaScope* scope] returns [AaType* ref_type]
     AaScalarType* element_type;
 }
     : ARRAY 
-        (LBRACKET ds:UINTEGER { dims.push_back(atoi(ds->getText().c_str())); } RBRACKET)+
+        (LBRACKET ds:UINTEGER { dims.push_back(atoi(ds->getText().c_str())); } RBRACKET)
         OF 
         (element_type = aA_Scalar_Type_Reference[scope])
         {

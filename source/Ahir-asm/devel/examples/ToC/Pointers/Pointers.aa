@@ -1,25 +1,32 @@
 
-$storage u: $array[2] $of $uint<32>
-$storage v: $array[2][2] $of $uint<32>
-$storage r: $array[2] $of $uint<32>
-$storage w0:  $array[2] $of $uint<32> 
+$storage u: $uint<32>
+$storage v: $uint<32>
 
 
-// $module [increment]
-    // $in (a: $pointer<$uint<32> > )
-    // $out (b: $pointer<$uint<32> > )
-// $is
-// {
-	// t1 := ->(a)
-	// t2 := (t1 + 1)
-	// ->(a) := t2
-// }
+$module [increment]
+ $in (incr_a: $uint<32> )
+ $out (incr_b: $uint<32>) 
+$is
+{
+         $storage incr_temp: $uint<32>
+	 incr_t1 := ($cast ($pointer< $uint<32> >) incr_a)
+         incr_temp  := ->(incr_t1)
+	 incr_t2    := @(incr_temp)
+	 incr_b     := ($cast ($uint<32>) incr_t2)
+}
+
 $module [passpointer]
     $in (a:$uint<32>)
     $out (b:$uint<32>)
 $is
 {
-        w := @(u) 
-	w0 := ->(w)
+	u := a
+	pu := @(u)
+	q  := ($cast ($uint<32>) pu)
+	$call increment (q) (r)
+	pr := ($cast ( $pointer< $uint<32> > ) r)
+	pb  :=  (pu + pr)
+	b := ->(pb)
+	
 }
 

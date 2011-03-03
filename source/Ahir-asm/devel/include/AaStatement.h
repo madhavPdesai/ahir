@@ -50,6 +50,8 @@ class AaStatement: public AaScope
   void Set_Index_In_Sequence(int id) {this->_index_in_sequence = id;}
   int Get_Index_In_Sequence() {return(this->_index_in_sequence);}
 
+  virtual void Coalesce_Storage() {}
+
   ~AaStatement();
 
   virtual string Kind() {return("AaStatement");}
@@ -158,6 +160,11 @@ class AaStatementSequence: public AaScope
   {
     for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
       this->_statement_sequence[i]->Map_Source_References();
+  }
+  virtual void Coalesce_Storage()
+  {
+    for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+      this->_statement_sequence[i]->Coalesce_Storage();
   }
   virtual void Increment_Tab_Depth()
   {
@@ -383,6 +390,9 @@ class AaBlockStatement: public AaStatement
   {
     this->_statement_sequence = statement_sequence;
   }
+
+  virtual void Coalesce_Storage();
+
   virtual void Add_Object(AaObject* obj) 
   { 
     if(this->Find_Child_Here(obj->Get_Name()) == NULL)
@@ -753,16 +763,8 @@ class AaPhiStatement: public AaStatement
  public:
   AaPhiStatement(AaBranchBlockStatement* scope, AaMergeStatement* pm);
   ~AaPhiStatement();
-  void Set_Target(AaObjectReference* tgt) 
-  { 
-    this->_target = tgt; 
-    this->Map_Target(tgt); 
-  }
-  void Add_Source_Pair(string label, AaExpression* expr)
-  {
-    _merged_labels.insert(label);
-    this->_source_pairs.push_back(pair<string,AaExpression*>(label,expr));
-  }
+  void Set_Target(AaObjectReference* tgt);
+  void Add_Source_Pair(string label, AaExpression* expr);
   bool Is_Merged(string label)
   {
     return(_merged_labels.find(label) != _merged_labels.end());
@@ -814,6 +816,8 @@ class AaSwitchStatement: public AaStatement
 
   AaSwitchStatement(AaBranchBlockStatement* scope);
   ~AaSwitchStatement();
+  virtual void Coalesce_Storage();
+
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaSwitchStatement");}
   virtual void Map_Source_References()
@@ -880,6 +884,8 @@ class AaIfStatement: public AaStatement
     if(this->_else_sequence)
       this->_else_sequence->Map_Source_References();
   }
+
+  virtual void Coalesce_Storage();
 
   virtual void Write_VC_Constant_Declarations(ostream& ofile);
 

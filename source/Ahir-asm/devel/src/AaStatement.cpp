@@ -107,6 +107,10 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
     {
       obj_ref->Set_Object(child);
 
+      if(child->Is_Expression())
+	obj_ref->Add_Target((AaExpression*) child);
+
+
       // obj_ref -> child
       child->Add_Target_Reference(obj_ref); // obj_ref uses child as a target
       obj_ref->Add_Source_Reference(child); // child uses obj_ref as a source
@@ -501,6 +505,8 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaObjectRefere
   this->Map_Target(tgt);
 
   this->_source = src;
+
+  this->_source->Add_Target(this->_target);
 }
 AaAssignmentStatement::~AaAssignmentStatement() {};
 void AaAssignmentStatement::Print(ostream& ofile)
@@ -519,8 +525,12 @@ void AaAssignmentStatement::Print(ostream& ofile)
 }
 void AaAssignmentStatement::Map_Source_References()
 {
+
+
   this->_target->Map_Source_References(this->_target_objects);
   this->_source->Map_Source_References(this->_source_objects);
+
+
   AaProgram::Add_Type_Dependency(this->_target,this->_source);
 }
 
@@ -846,7 +856,8 @@ void AaCallStatement::Map_Source_References()
 	  // inarg -> inargument
 	  this->_input_args[i]->Add_Source_Reference(called_module->Get_Input_Argument(i));
 	  called_module->Get_Input_Argument(i)->Add_Target_Reference(this->_input_args[i]);
-
+	  called_module->Get_Input_Argument(i)->
+	    Set_Addressed_Object_Representative(this->_input_args[i]->Get_Addressed_Object_Representative());
 	}
     }
   for(unsigned int i=0; i < this->_output_args.size(); i++)
@@ -856,6 +867,8 @@ void AaCallStatement::Map_Source_References()
 	  // outarg <- outargument
 	  this->_output_args[i]->Add_Target_Reference(called_module->Get_Output_Argument(i));
 	  called_module->Get_Output_Argument(i)->Add_Source_Reference(this->_output_args[i]);
+	  this->_output_args[i]->
+	    Set_Addressed_Object_Representative(called_module->Get_Output_Argument(i)->Get_Addressed_Object_Representative());
 	}
     }
 }
@@ -1252,6 +1265,15 @@ AaBlockStatement::AaBlockStatement(AaScope* scope,string label):AaStatement(scop
 }
 
 AaBlockStatement::~AaBlockStatement() {}
+
+void AaBlockStatement::Coalesce_Storage()
+{
+  for(int idx = 0; idx < _objects.size(); idx++)
+    _objects[idx]->Coalesce_Storage();
+
+  if(this->_statement_sequence)
+    this->_statement_sequence->Coalesce_Storage();
+}
 
 void AaBlockStatement::Print(ostream& ofile)
 {
@@ -2214,6 +2236,29 @@ void AaPhiStatement::Print(ostream& ofile)
 
   ofile << endl;
 }
+
+void AaPhiStatement::Set_Target(AaObjectReference* tgt)
+{ 
+  this->_target = tgt; 
+  this->Map_Target(tgt); 
+
+  if(this->_source_pairs.size() > 0)
+    {
+      for(int idx = 0; idx < this->_source_pairs.size(); idx++)
+	this->_source_pairs[idx].second->Add_Target(this->_target);
+    }
+}
+
+void AaPhiStatement::Add_Source_Pair(string label, AaExpression* expr)
+{
+  _merged_labels.insert(label);
+
+  if(this->_target)
+    expr->Add_Target(this->_target);
+
+  this->_source_pairs.push_back(pair<string,AaExpression*>(label,expr));
+}
+
 void AaPhiStatement::Map_Source_References()
 {
   this->_target->Map_Source_References(this->_target_objects);
@@ -2371,6 +2416,16 @@ AaSwitchStatement::AaSwitchStatement(AaBranchBlockStatement* scope):AaStatement(
   this->_default_sequence = NULL;
 }
 AaSwitchStatement::~AaSwitchStatement() {}
+
+void AaSwitchStatement::Coalesce_Storage()
+{
+  for(unsigned int i=0; i < this->_choice_pairs.size(); i++)
+    this->_choice_pairs[i].second->Coalesce_Storage();
+
+  if(this->_default_sequence)
+    this->_default_sequence->Coalesce_Storage();
+}
+
 void AaSwitchStatement::Print(ostream& ofile)
 {
   assert(this->_select_expression);
@@ -2830,6 +2885,17 @@ AaIfStatement::AaIfStatement(AaBranchBlockStatement* scope):AaStatement(scope)
   this->_else_sequence = NULL;
 }
 AaIfStatement::~AaIfStatement() {}
+
+void AaIfStatement::Coalesce_Storage()
+{
+  if(this->_if_sequence)
+    this->_if_sequence->Coalesce_Storage();
+
+  if(this->_else_sequence)
+    this->_if_sequence->Coalesce_Storage();
+}
+
+
 void AaIfStatement::Print(ostream& ofile)
 {
   assert(this->_test_expression);

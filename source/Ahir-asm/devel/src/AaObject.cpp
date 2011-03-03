@@ -25,8 +25,60 @@ AaObject::AaObject(AaScope* parent_tpr, string oname, AaType* object_type):AaRoo
   this->_scope = parent_tpr;
   this->_value = NULL;
   this->_type = object_type;
+  this->_addressed_object_representative = NULL;
 }
 AaObject::~AaObject() {};
+
+bool AaObject::Set_Addressed_Object_Representative(AaStorageObject* obj)
+{
+  bool new_flag = false;
+  if(obj != NULL)
+    {
+      if(this->_addressed_object_representative == NULL)
+	{
+	  this->_addressed_object_representative == obj;
+	  new_flag = true;
+	}
+      else
+	{
+	  if(obj != this->_addressed_object_representative)
+	    {
+	      AaProgram::Add_Storage_Dependency(obj,this->_addressed_object_representative);
+	    }
+	}
+    }
+  return(new_flag);
+}
+
+void AaStorageObject::Coalesce_Storage()
+{
+  // ask the expressions that depend on this
+  // to propagate storage object references..
+  for(set<AaRoot*>::iterator iter = _source_references.begin();
+      iter != _source_references.end();
+      iter++)
+    {
+      if((*iter)->Is_Expression())
+	((AaExpression*)(*iter))->Propagate_Addressed_Object_Representative(NULL);
+    }
+}
+
+void AaObject::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
+{
+  if(this->Set_Addressed_Object_Representative(obj))
+    {
+      // propagate to all expressions that use this
+      // object as a source.
+      for(set<AaRoot*>::iterator iter = _source_references.begin();
+	  iter != _source_references.end();
+	  iter++)
+	{
+	  if((*iter)->Is_Expression())
+	    ((AaExpression*)(*iter))->Propagate_Addressed_Object_Representative(obj);
+	}
+    }
+}
+
 string AaObject::Tab()
 {
   return((this->Get_Scope() != NULL) ? Tab_(this->Get_Scope()->Get_Depth()+1) : Tab_(0));
@@ -86,6 +138,7 @@ AaStorageObject::AaStorageObject(AaScope* parent_tpr,string oname, AaType* otype
 		   AaConstantLiteralReference* initial_value):AaObject(parent_tpr,oname,otype) 
 {
   this->Set_Value(initial_value);
+  AaProgram::Add_Storage_Dependency_Graph_Vertex(this);
 };
 AaStorageObject::~AaStorageObject() {};
 void AaStorageObject::Print(ostream& ofile)

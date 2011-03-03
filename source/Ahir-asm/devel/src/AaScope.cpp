@@ -34,7 +34,6 @@ void AaScope::Map_Child(string lbl, AaRoot* tn)
       if(this->_child_map.find(lbl) == this->_child_map.end())
 	{
 	  this->_child_map[lbl] = tn;
-	  this->_reference_map[tn] = pair<vector<AaRoot*>*, vector<AaRoot*>*>(new vector<AaRoot*>, new vector<AaRoot*>);
 	}
     }
 }

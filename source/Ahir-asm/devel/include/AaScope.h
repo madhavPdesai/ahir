@@ -26,11 +26,6 @@ class AaScope : public AaRoot
   map<string,AaRoot*,StringCompare> _child_map;
 
 
-  // first is child
-  // second.first is vector of elements targetting first
-  // second.second is vector of elements using first
-  map<AaRoot*,pair<vector<AaRoot*>*, vector<AaRoot*>*> > _reference_map;
-
  public:
 
   virtual unsigned int Get_Depth() {return this->_depth;}

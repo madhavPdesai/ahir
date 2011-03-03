@@ -4,7 +4,7 @@ int main(int argc, char* argv[])
 {
 	uint_32 a, b;
 
-	a.__val = 5;
+	a.__val = 3;
 
 	passpointer(a,&b);
 

@@ -11,10 +11,12 @@ string AaProgram::_current_file_name;
 std::map<string,AaType*,StringCompare>   AaProgram::_type_map;
 std::map<string,AaObject*,StringCompare> AaProgram::_objects;
 std::map<string,AaModule*,StringCompare> AaProgram::_modules;
+std::map<int,set<AaRoot*> > AaProgram::_storage_eq_class_map;
 std::vector<AaModule*> AaProgram::_ordered_module_vector;
-
+std::map<int,set<AaModule*> > AaProgram::_storage_index_module_coverage_map;
 AaGraphBase AaProgram::_call_graph;
 AaUGraphBase AaProgram::_type_dependency_graph;
+AaUGraphBase AaProgram::_storage_dependency_graph;
 
 AaProgram::AaProgram() {}
 AaProgram::~AaProgram() {};
@@ -34,6 +36,20 @@ void AaProgram::Print(ostream& ofile)
       miter != AaProgram::_modules.end();
       miter++)
     (*miter).second->Print(ofile);
+
+  for(std::map<int,set<AaRoot*> >::iterator iter = AaProgram::_storage_eq_class_map.begin();
+      iter != AaProgram::_storage_eq_class_map.end();
+      iter++)
+    {
+      ofile << "// Memory space " << (*iter).first << ": ";
+      for(set<AaRoot*>::iterator siter = (*iter).second.begin();
+	  siter != (*iter).second.end();
+	  siter++)
+	{
+	  ofile << ((AaStorageObject*)(*siter))->Get_Hierarchical_Name() << " ";
+	}
+      ofile << endl;
+    }
 }
 
 void AaProgram::Add_Object(AaObject* obj) 
@@ -298,6 +314,58 @@ bool AaProgram::Propagate_Types()
   return(err_flag);
 }
 
+void AaProgram::Add_Storage_Dependency(AaStorageObject* u, AaStorageObject* v)
+{
+  AaProgram::_storage_dependency_graph.Add_Edge(u,v);
+}
+
+void AaProgram::Add_Storage_Dependency_Graph_Vertex(AaStorageObject* u)
+{
+  AaProgram::_storage_dependency_graph.Add_Vertex(u);
+}
+
+void AaProgram::Coalesce_Storage()
+{
+  // basically a DFS starting from the storage objects (at each level in the program)
+  for(map<string,AaObject*,StringCompare>::iterator obj_iter = _objects.begin();
+      obj_iter != _objects.end();
+      obj_iter++)
+    {
+      (*obj_iter).second->Coalesce_Storage();
+    }
+
+
+  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+      miter != AaProgram::_modules.end();
+      miter++)
+    {
+      (*miter).second->Coalesce_Storage();
+    }
+
+
+  int num_comps = AaProgram::_storage_dependency_graph.Connected_Components(AaProgram::_storage_eq_class_map);
+  for(int idx = 0; idx < AaProgram::_storage_eq_class_map.size(); idx++)
+    {
+      for(set<AaRoot*>::iterator iter = AaProgram::_storage_eq_class_map[idx].begin();
+	  iter !=  AaProgram::_storage_eq_class_map[idx].end();
+	  iter++)
+	{
+	  AaRoot* u = (*iter);
+	  assert(u->Is("AaStorageObject"));
+
+	  ((AaStorageObject*)u)->Set_Mem_Space_Index(idx);
+
+	  AaScope* p_scope = ((AaStorageObject*)u)->Get_Scope();
+	  if(p_scope != NULL)
+	    {
+	      AaScope* root_p_scope = p_scope->Get_Root_Scope();
+	      assert(root_p_scope->Is("AaModule"));
+	      AaProgram::_storage_index_module_coverage_map[idx].insert((AaModule*) root_p_scope);
+	    }
+	}
+    }
+}
+
 
 void AaProgram::Elaborate()
 {
@@ -305,6 +373,7 @@ void AaProgram::Elaborate()
   AaProgram::Map_Source_References();
   AaProgram::Check_For_Cycles_In_Call_Graph();
   AaProgram::Propagate_Types();
+  AaProgram::Coalesce_Storage();
 }
 
 void AaProgram::Write_C_Model()

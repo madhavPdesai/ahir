@@ -23,21 +23,78 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
   this->_type = NULL; // will be determined by dependency traversal
   this->_expression_value = NULL; // if constant will be calculated in Evaluate traversal.
   this->_already_evaluated = false;
+  this->_addressed_object_representative = NULL;
 }
 AaExpression::~AaExpression() {};
+
+bool AaExpression::Set_Addressed_Object_Representative(AaStorageObject* obj)
+{
+  bool new_flag = false;
+
+  if(obj == NULL)
+    return(new_flag);
+
+  if(this->_addressed_object_representative == NULL)
+   {
+     new_flag = true;
+     this->_addressed_object_representative = obj;
+   }
+ else
+   {
+     if(obj != this->_addressed_object_representative)
+       {
+	 AaProgram::Add_Storage_Dependency(obj,this->_addressed_object_representative);
+       }
+   }
+  return(new_flag);
+}
+
+
+void AaExpression::Propagate_Addressed_Object_Representative()
+{
+  AaStorageObject* obj = this->Get_Addressed_Object_Representative();
+  // propagate to all that are targets of this expression.
+  for(set<AaExpression*>::iterator iter = _targets.begin();
+      iter != _targets.end();
+      iter++)
+    {
+      (*(iter))->Propagate_Addressed_Object_Representative(obj);
+    }
+  
+  // propagate to all objects that use this 
+  // expression as a source.
+  for(set<AaRoot*>::iterator iter = _source_references.begin();
+      iter != _source_references.end();
+      iter++)
+    {
+      if((*iter)->Is_Object())
+	((AaObject*)(*iter))->Propagate_Addressed_Object_Representative(obj);
+    }
+}
+
+void AaExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
+{
+
+  if(this->Set_Addressed_Object_Representative(obj))
+    {
+      this->Propagate_Addressed_Object_Representative();
+    }
+}
 
 void AaExpression::Set_Type(AaType* t)
 {
   if(this->_type == NULL)
     {
       this->_type = t;
+
+      // all expressions of which this is the target may need
+      // to recompute their types.
       for(set<AaExpression*>::iterator siter = this->_targets.begin();
 	  siter != this->_targets.end();
 	  siter++)
 	{
 	  AaExpression* ref = *siter;
 	  ref->Update_Type();
-
 	}
     }
   else
@@ -121,6 +178,14 @@ void AaObjectReference::Print(ostream& ofile)
   ofile << this->Get_Object_Ref_String();
 }
 
+void AaObjectReference::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
+{
+  if((obj == NULL) || this->Set_Addressed_Object_Representative(obj))
+    {
+      this->AaExpression::Propagate_Addressed_Object_Representative();
+    }
+}
+
 void AaObjectReference::Map_Source_References(set<AaRoot*>& source_objects)
 {
   AaScope* search_scope = NULL;
@@ -154,10 +219,13 @@ void AaObjectReference::Map_Source_References(set<AaRoot*>& source_objects)
       if(child != this)
 	{
 	  this->Set_Object(child);
-	  
+
 	  child->Add_Source_Reference(this);  // child -> this (this uses child as a source)
 	  this->Add_Target_Reference(child);  // this  -> child (child uses this as a target)
-	  
+
+	  if(child->Is_Expression())
+	    ((AaExpression*)child)->Add_Target(this);
+
 	  if(child->Is_Object())
 	    source_objects.insert(child);
 	}
@@ -304,7 +372,11 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
   else if(obj->Is_Expression())
     {
       AaProgram::Add_Type_Dependency(this,obj);
-      this->Add_Target((AaExpression*) obj);
+
+      // if obj is an expression, then 
+      // obj drives this..
+      // (otherwise, it would be 
+      ((AaExpression*) obj)->Add_Target(this);
     }
   this->_object = obj;
 }
@@ -1262,6 +1334,11 @@ void AaPointerDereferenceExpression::Update_Type()
     }
 }
 
+void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
+{
+  this->Set_Addressed_Object_Representative(obj);
+}
+
 void AaPointerDereferenceExpression::Write_VC_Control_Path( ostream& ofile){ assert(0); }
 void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target( ostream& ofile){ assert(0); }
 void AaPointerDereferenceExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile){ assert(0); }
@@ -1281,6 +1358,7 @@ AaAddressOfExpression::AaAddressOfExpression(AaScope* scope, AaObjectReference* 
 {
   _reference_to_object = obj_ref;
   obj_ref->Add_Target(this);
+  this->_storage_object = NULL; // filled in during Map Source References.
 }
 
 
@@ -1295,11 +1373,16 @@ void AaAddressOfExpression::PrintC(ofstream& ofile, string tab_string)
 void AaAddressOfExpression::Map_Source_References(set<AaRoot*>& source_objects)
 {
   this->_reference_to_object->Map_Source_References(source_objects);
+
   if((this->_reference_to_object->Get_Object() == NULL )
      || (!this->_reference_to_object->Get_Object()->Is("AaStorageObject")))
     {
       AaRoot::Error("address-of expression must refer to a storage object",this);
     }
+
+  // this expression definitely points to a storage object...
+  AaStorageObject* obj = (AaStorageObject*) (_reference_to_object->Get_Object());
+  this->_storage_object = obj;
 
   if(this->_reference_to_object->Get_Type())
     {
@@ -1309,8 +1392,6 @@ void AaAddressOfExpression::Map_Source_References(set<AaRoot*>& source_objects)
       else
 	this->Set_Type(AaProgram::Make_Pointer_Type(this->_reference_to_object->Get_Type()));
     }
-
-  
 }
 
 
@@ -1328,6 +1409,14 @@ void AaAddressOfExpression::Update_Type()
     }
 }
 
+
+void AaAddressOfExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
+{
+  if(this->Set_Addressed_Object_Representative(this->_storage_object))
+    {
+      this->AaExpression::Propagate_Addressed_Object_Representative();
+    }
+}
 
 void AaAddressOfExpression::Write_VC_Control_Path( ostream& ofile){ assert(0); }
 void AaAddressOfExpression::Write_VC_Control_Path_As_Target( ostream& ofile){ assert(0); }

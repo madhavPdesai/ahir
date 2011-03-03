@@ -13,7 +13,7 @@
 /*****************************************  OBJECT  ****************************/
 // base object
 // Each object has a type, a name, a value and a parent
-
+class AaStorageObject;
 class AaObject: public AaRoot
 {
 
@@ -23,6 +23,7 @@ class AaObject: public AaRoot
   AaType* _type;
   AaScope* _scope;
 
+  AaStorageObject* _addressed_object_representative;
  public:
 
   AaType* Get_Type() {return(this->_type);}
@@ -75,6 +76,14 @@ class AaObject: public AaRoot
 
   virtual bool Is_Constant() {return(false);}
   virtual string Get_VC_Memory_Space_Name() {assert(0);}
+
+  bool Set_Addressed_Object_Representative(AaStorageObject* obj);
+  void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
+  virtual void Coalesce_Storage() {};
+  AaStorageObject* Get_Addressed_Object_Representative() 
+    {
+      return(this->_addressed_object_representative);
+    }
 };
 
 // interface object: function arguments
@@ -123,7 +132,13 @@ class AaStorageObject: public AaObject
   //
   int _base_address;    // location of "base" of object.
   int _word_size;       // minimum addressable unit
+
+  int _mem_space_index;
   
+  // if this is a pointer, a representative
+  // of the set of objects to which it can refere.
+
+
  public:
 
   AaStorageObject(AaScope* scope_tpr, string oname, AaType* otype, AaConstantLiteralReference* initial_value);
@@ -132,6 +147,12 @@ class AaStorageObject: public AaObject
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaStorageObject");}
 
+  void Set_Mem_Space_Index(int id) { _mem_space_index = id;}
+  int Get_Mem_Space_Index() {return(_mem_space_index);}
+
+  virtual void Coalesce_Storage();
+
+
   // todo: this is the same as object, but keep it here
   //      because the initial value needs to be 
   //      updated..
@@ -139,6 +160,9 @@ class AaStorageObject: public AaObject
 
   virtual string Get_VC_Name();
   virtual string Get_VC_Memory_Space_Name();
+
+  
+
 };
 
 class AaPipeObject: public AaObject

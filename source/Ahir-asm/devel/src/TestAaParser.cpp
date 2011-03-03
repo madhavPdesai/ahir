@@ -38,12 +38,7 @@ int main(int argc, char* argv[])
       return(1);
     }
 
-  AaProgram::Init_Call_Graph();
-  AaProgram::Map_Source_References();
-  AaProgram::Check_For_Cycles_In_Call_Graph();
-
-  //  AaProgram::Print_Type_Dependency_Graph(std::cerr);
-  AaProgram::Propagate_Types();
+  AaProgram::Elaborate();
 
   if(AaRoot::Get_Error_Flag())
     cerr << "Error: there were errors during elaboration, check the log" << endl;
