@@ -1,33 +1,30 @@
+ENAME := a5
+SRC := $(ENAME).c
+RAWBC := $(ENAME).raw.bc
+OPTBC := $(ENAME).bc
+CDFG := $(OPTBC).cdfg.xml
+AHIRDESC := $(OPTBC).ahir.xml
+LINKEDAHIRDESC := $(OPTBC).linked_ahir.xml
 
-SRC := a5.c
-BC := $(SRC:.c=.bc)
+all: vhdl
 
-vhdl:  opt.bc.linked_ahir.xml
-	rm -f *.vhdl
-	~/ProcIR24/VHDL/irsyn $<
+vhdl: linked_ahir
+	ahir2vhdl $(LINKEDAHIRDESC) 
 
-link : opt.bc.linked_ahir.xml
+linked_ahir: ahir
+	link-ahir $(AHIRDESC)
 
-opt.bc.linked_ahir.xml : opt.bc.ahir.xml
-	rm -f opt.bc.linked_ahir.xml
-	~/ProcIR24/Linker/irlink $<
+ahir: cdfg 
+	cdfg2ahir $(CDFG)
 
-ahir : opt.bc.ahir.xml
+cdfg: llvm
+	llvm2cdfg $(OPTBC)
 
-opt.bc.ahir.xml : opt.bc.cdfg.xml
-	rm -f opt.bc.ahir.xml
-	~/ProcIR24/AHIR/cdfg2ahir $<
+llvm : $(SRC)
+	rm -f *.bc *.ll
+	llvmc -emit-llvm -c $(SRC) -o $(RAWBC)
+	opt -std-compile-opts -disable-inlining -lowerswitch $(RAWBC) -o $(OPTBC)
+	llvm-dis $(OPTBC)
 
-cdfg : opt.bc.cdfg.xml
-
-opt.bc.cdfg.xml : opt.bc
-	rm -f opt.bc.cdfg.xml
-	~/ProcIR24/LLVM/irgen $<
-
-llvm : opt.bc
-
-opt.bc : $(SRC)
-	rm -f $(BC)
-	llvmc -emit-llvm -c $(SRC) -o $(BC)
-	rm -f opt.bc
-	opt -std-compile-opts -disable-inlining $(BC) -o opt.bc
+clean :
+	rm -f *.bc *.ll *.xml *.txt *.vhdl

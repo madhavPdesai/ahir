@@ -103,6 +103,7 @@ enum vcLexerKeytags
     __NOR_OP           ,
     __NAND_OP          ,
     __XNOR_OP          ,
+    __EQUIVALENCE_OP,
     __OPEN
   };
 
@@ -204,6 +205,7 @@ static char *vcLexerKeywords[] =
       "~|",
       "~&",
       "~^",
+      "&/",
       "$open"
   };
 

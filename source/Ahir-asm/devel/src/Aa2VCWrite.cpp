@@ -11,6 +11,32 @@ void Write_VC_Wire_Declaration(string wire_name, string type_name, ostream& ofil
 {
   ofile << "$W[" << wire_name << "] : " << type_name << endl;
 }
+
+void Write_VC_Equivalence_Operator(string inst_name,
+				   vector<string>& inwires,
+				   vector<string>& outwires,
+				   ostream& ofile)
+{
+  ofile << "&/ [" << inst_name << "] ";
+  ofile << "(";
+  for(int idx=0; idx < inwires.size(); idx++)
+    {
+      if(idx > 0)
+	ofile << " ";
+      ofile << inwires[idx];
+    }
+  ofile << ") ";
+
+  ofile << "(";
+  for(int idx=0; idx < outwires.size(); idx++)
+    {
+      if(idx > 0)
+	ofile << " ";
+      ofile << outwires[idx];
+    }
+  ofile << ") " << endl;
+
+}
 void Write_VC_Unary_Operator(AaOperation op, 
 			     string inst_name, 
 			     string src_name, 
@@ -200,24 +226,19 @@ void Write_VC_Pipe_Declaration(string name, int width, ostream& ofile)
 
 void Write_VC_Memory_Space_Declaration(string space_name, string obj_name, AaType* type, ostream& ofile)
 {
-  ofile << "$memoryspace [" << space_name << "] {"
-	<< "$capacity " << type->Number_Of_Elements() << endl
-	<< "$datawidth " << type->Get_Data_Width() << endl
-	<< "$addrwidth " << CeilLog2(type->Number_Of_Elements()) << endl
-	<< "$object [" << obj_name << "] : " << type->Get_VC_Name() << endl
-	<< "}" << endl;
+  assert(0);
 }
 
-void Write_VC_Load_Operator(AaStorageObject* obj, string inst_name, string data_name, string addr_name,
+void Write_VC_Load_Operator(string ms_name, string inst_name, string data_name, string addr_name,
 			    ostream& ofile)
 {
-  ofile << "$load [" << inst_name << "] $from " << obj->Get_VC_Memory_Space_Name() 
+  ofile << "$load [" << inst_name << "] $from " << ms_name 
 	<< " (" << addr_name  << ") (" << data_name << ")" << endl;
 }
-void Write_VC_Store_Operator(AaStorageObject* obj, string inst_name, string data_name, string addr_name,
+void Write_VC_Store_Operator(string ms_name, string inst_name, string data_name, string addr_name,
 			     ostream& ofile)
 {
-  ofile << "$store [" << inst_name << "] $to " << obj->Get_VC_Memory_Space_Name() 
+  ofile << "$store [" << inst_name << "] $to " << ms_name 
 	<< " (" << addr_name  << " " << data_name << ")" << endl;
 }
 void Write_VC_IO_Input_Port(AaPipeObject* obj, string inst_name, string data_name,

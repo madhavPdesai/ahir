@@ -97,3 +97,11 @@ string Make_VC_Legal(string x)
   return(ret_string);
 }
 
+
+bool AaRootCompare::operator() (AaRoot* s1, AaRoot* s2) const
+{
+  if(s1->Get_Index() < s2->Get_Index())
+    return(true);
+  else
+    return(false);
+}

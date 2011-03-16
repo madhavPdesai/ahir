@@ -35,6 +35,7 @@ int CeilLog2(int n)
       ret_val++;
     }
 
+
   return(ret_val);
 }
 
@@ -234,3 +235,38 @@ string To_Alphanumeric(string x)
     }
   return(ret_string);
 }
+
+int LCM(set<int>::iterator iL, set<int>::iterator iR)
+{
+  int ret_val = 0;
+  if(iL != iR)
+    {
+      int l_val = *iL;
+
+      set<int>::iterator nextiL = iL;
+      nextiL++;
+
+      int r_val = LCM(nextiL,iR);
+
+      if(r_val > 0)
+	{
+	  ret_val = r_val % l_val;
+	  if(ret_val == 0)
+	    ret_val = l_val;
+	}
+      else
+	ret_val = l_val;
+    }
+  return(ret_val);
+}
+
+int LCM(set<int>& s)
+{
+  return(LCM(s.begin(), s.end()));
+}
+
+string Augment_Hier_Id(string hid, string suffix)
+{
+  return((hid == "") ? suffix : (hid + "/" + suffix));
+}
+

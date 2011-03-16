@@ -275,9 +275,7 @@ void AaModule::Propagate_Constants()
     this->_statement_sequence->Propagate_Constants();
 }
 
-void AaModule::Write_VC_Model(int default_space_pointer_width,
-		    int default_space_word_size,
-		    ostream& ofile)
+void AaModule::Write_VC_Model(ostream& ofile)
 {
   this->Propagate_Constants();
 
@@ -351,12 +349,6 @@ void AaModule::Write_VC_Data_Path(ostream& ofile)
 
 void AaModule::Write_VC_Memory_Spaces(ostream& ofile)
 {
-
-  this->Write_VC_Memory_Space_Declarations(ofile);
-  // for each storage object, declare a memory space
-  // which contains it.
-  if(this->_statement_sequence)
-    {
-      this->_statement_sequence->Write_VC_Memory_Space_Declarations(ofile);
-    }
+  for(int idx = 0; idx < _memory_spaces.size(); idx++)
+    _memory_spaces[idx]->Write_VC_Model(ofile);
 }

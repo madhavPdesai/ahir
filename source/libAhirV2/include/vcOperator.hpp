@@ -11,10 +11,15 @@ class vcWire;
 class vcDataPath;
 class vcType;
 
+
+
+
+
 // single req, single ack
 class vcOperator: public vcDatapathElement
 {
 
+protected:
   bool _flow_through; // if true, operator is combinational..
 
 public:
@@ -32,6 +37,22 @@ public:
 
   friend class vcDataPath;
 };
+
+
+class vcEquivalence: public vcOperator
+{
+  int _width;
+  vector<vcWire*> _inwires;
+  vector<vcWire*> _outwires;
+public:
+  vcEquivalence(string id, vector<vcWire*>& inwires, vector<vcWire*>& outwires);
+  virtual string Kind() {return("vcEquivalence");}    
+  virtual void Print(ostream& ofile);
+  virtual bool Is_Shareable_With(vcDatapathElement* other) {return(false);}
+
+  friend class vcDataPath;
+};
+
 
 // split reqs (2) and matching acks (2)
 class vcSplitOperator: public vcDatapathElement

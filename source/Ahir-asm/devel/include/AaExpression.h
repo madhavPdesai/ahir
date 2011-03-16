@@ -192,6 +192,67 @@ class AaObjectReference: public AaExpression
 
   virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
 
+  // common operations across loads/stores.
+  void Write_VC_Load_Control_Path(AaExpression* address_expression,
+				  ostream& ofile);
+
+  void Write_VC_Store_Control_Path(AaExpression* address_expression,
+				   ostream& ofile);
+
+  void Write_VC_Load_Store_Constants(AaExpression* address_expression,
+				ostream& ofile);
+
+  void Write_VC_Load_Store_Wires(AaExpression* address_expression,
+				 ostream& ofile);
+
+
+  void Write_VC_Load_Data_Path(AaExpression* address_expression,
+			       AaExpression* target,
+			       ostream& ofile);
+
+  void Write_VC_Store_Data_Path(AaExpression* address_expression,
+				AaExpression* source,
+				ostream& ofile);
+
+
+  void Write_VC_Load_Links(string hier_id,
+			   AaExpression* address_expression,
+			   ostream& ofile);
+
+  void Write_VC_Store_Links(string hier_id,
+			    AaExpression* address_expression,
+			    ostream& ofile);
+
+  void Write_VC_Address_Calculation_Control_Path(AaExpression* address_expression, 
+					      ostream& ofile);
+  void Write_VC_Load_Store_Control_Path(AaExpression* address_expression, 
+					string read_or_write,
+					ostream& ofile);
+
+  void Write_VC_Address_Calculation_Data_Path(AaExpression* address_expression, 
+					      ostream& ofile);
+
+  void Write_VC_Load_Store_Data_Path(AaExpression* address_expression, 
+				     AaExpression* data_expression,
+				     string read_or_write,  
+				     ostream& ofile);
+
+  void Write_VC_Address_Calculation_Links(string hier_id,
+					  AaExpression* address_expression, 
+					  ostream& ofile);
+
+  void Write_VC_Load_Store_Links(string hier_id,
+				 string read_or_write,
+				 AaExpression* address_expression, 
+				 ostream& ofile);
+
+  virtual string Get_VC_Memory_Space_Name();
+  virtual int Get_Base_Address();
+  virtual int Get_Word_Size();
+  virtual int Get_Address_Width();
+  virtual string Get_VC_Base_Address_Name();
+  virtual string Get_VC_Offset_Scale_Factor_Name();
+  virtual string Get_VC_Word_Offset_Name(int idx);
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
@@ -275,6 +336,13 @@ class AaArrayObjectReference: public AaObjectReference
 			 vector<AaExpression*>& index_list);
   ~AaArrayObjectReference();
 
+  AaExpression* Get_Indices(int idx)
+  {
+    if(idx >= 0 && idx < _indices.size())
+      return(_indices[idx]);
+    else
+      return(NULL);
+  }
   virtual void Print(ostream& ofile); 
   AaExpression* Get_Array_Index(unsigned int idx);
   virtual void Set_Object(AaRoot* obj); 
@@ -315,9 +383,15 @@ class AaPointerDereferenceExpression: public AaObjectReference
 
   AaPointerDereferenceExpression(AaScope* scope, AaObjectReference* obj_ref);
 
+  AaObjectReference* Get_Reference_To_Object()
+  {
+    return(_reference_to_object);
+  }
+
   virtual void Print(ostream& ofile);
   virtual void PrintC(ofstream& ofile, string tab_string);
 
+  virtual void Evaluate() {} // do nothing.
   virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
 
   virtual void Map_Source_References(set<AaRoot*>& source_objects); // important
@@ -334,7 +408,14 @@ class AaPointerDereferenceExpression: public AaObjectReference
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
   virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
 
-  string Get_VC_Name() {return("ptr_deref_" + Int64ToStr(this->Get_Index()));}
+  virtual string Get_VC_Name() {return("ptr_deref_" + Int64ToStr(this->Get_Index()));}
+  virtual int Get_Base_Address() {return (0); }
+  virtual string Get_VC_Base_Address_Name() {return("");}
+  virtual string Get_VC_Memory_Space_Name();
+  virtual int Get_Word_Size();
+  virtual int Get_Address_Width();
+  virtual string Get_VC_Offset_Scale_Factor_Name();
+  virtual string Get_VC_Word_Offset_Name(int idx);
 };
 
 
@@ -365,7 +446,9 @@ class AaAddressOfExpression: public AaObjectReference
   virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
   virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
-  string Get_VC_Name() {return("ptr_deref_" + Int64ToStr(this->Get_Index()));}
+  string Get_VC_Name() {return("addr_of_" + Int64ToStr(this->Get_Index()));}
+
+  virtual void Evaluate();
 };
 
 
@@ -588,4 +671,7 @@ class AaTernaryExpression: public AaExpression
   string Get_VC_Name() {return("ternary_" + Int64ToStr(this->Get_Index()));}
 };
 
+
+			       
+				
 #endif

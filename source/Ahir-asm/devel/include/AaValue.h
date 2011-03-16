@@ -21,11 +21,15 @@ class AaValue: public AaRoot
   virtual string Get_Value_String() {assert(0);}
   virtual AaScope* Get_Scope() {return this->_scope;}
   virtual string Kind() {return("AaValue");}
+  virtual void Set_Value(string fmt) { assert(0); }
+
   virtual bool Is_IntValue() {return(false);}
   virtual bool Is_FloatValue() {return(false);}
   virtual bool Is_StringValue() {return(false);}
   virtual bool Is_ArrayValue() {return(false);}
+
   virtual string To_VC_String() {assert(0);} //todo
+
   virtual bool Equals(AaValue* other) {return(false);}
   virtual int To_Integer() {assert(0);}
   virtual bool To_Boolean() {assert(0);}
@@ -57,7 +61,7 @@ class AaIntValue: public AaValue
  public:
   IntValue* _value;
   AaIntValue(AaScope* s, int width);
-  void Set_Value(string format);
+  virtual void Set_Value(string format);
   void Assign(AaType* target_type, AaValue* expr_value);
 
   virtual string Kind() {return("AaIntValue");}
@@ -92,7 +96,7 @@ class AaFloatValue: public AaValue
   AaFloatValue(AaScope* s, int c, int m);
   void Assign(AaType* target_type, AaValue* expr_value);
 
-  void Set_Value(string format);
+  virtual void Set_Value(string format);
   virtual bool Is_FloatValue() {return(true);}
   virtual bool Equals(AaValue* other); 
 
@@ -109,7 +113,6 @@ class AaArrayValue: public AaValue
   vector<unsigned int> _dimensions;
   vector<AaValue*> _value_vector;
 
-  void Set_Value(vector<string>& init_values);
 
   AaArrayValue(AaScope* s, AaType* element_type, vector<unsigned int>& dims);
   void Assign(AaType* target_type, AaValue* expr_value);
@@ -138,5 +141,8 @@ AaValue* Make_Aa_Value(AaScope* scope, AaType* t);
 AaValue* Make_Aa_Value(AaScope* scope, AaType* t, vector<string>& literals);
 AaValue* Perform_Unary_Operation(AaOperation op, AaValue* v);
 AaValue* Perform_Binary_Operation(AaOperation op, AaValue* u, AaValue* v);
+// try to pack val into a binary string with size bits.
+// 
+string To_VC_String(unsigned int val, unsigned int size);
 
 #endif

@@ -10,9 +10,9 @@ class vcMemorySpace: public vcRoot
   vcModule* _scope; // module pointer or NULL if at system scope
   map<string, vcStorageObject*> _object_map;
   
-  unsigned int _capacity;
-  unsigned int _word_size;
-  unsigned int _address_width;
+  unsigned int _capacity; // in number of bits
+  unsigned int _word_size; // in number of bits
+  unsigned int _address_width; // in number of bits.
 
   // loads from each memory space
   // for each module, record the indices of the

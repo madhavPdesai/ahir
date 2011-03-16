@@ -236,6 +236,9 @@ vcBranch* vcDataPath::Find_Branch(string id) {return(__FIND(_branch_map,id));}
 void vcDataPath::Add_Register(vcRegister* p)  {_ADD(_register_map,p->Get_Id(), p);}
 vcRegister* vcDataPath::Find_Register(string id) {return(__FIND(_register_map,id));}
 
+void vcDataPath::Add_Equivalence(vcEquivalence* p)  {_ADD(_equivalence_map,p->Get_Id(), p);}
+vcEquivalence* vcDataPath::Find_Equivalence(string id) {return(__FIND(_equivalence_map,id));}
+
 
 void vcDataPath::Compute_Maximal_Groups(vcControlPath* cp)
 {
@@ -623,7 +626,8 @@ void vcDataPath::Print_VHDL(ostream& ofile)
   // now instantiate each group. 
   this->Print_VHDL_Phi_Instances(ofile); // done
   this->Print_VHDL_Select_Instances(ofile); // done
-  this->Print_VHDL_Register_Instances(ofile); // todo
+  this->Print_VHDL_Register_Instances(ofile); // done
+  this->Print_VHDL_Equivalence_Instances(ofile); // todo
   this->Print_VHDL_Branch_Instances(ofile); // done
   this->Print_VHDL_Split_Operator_Instances(ofile); //done
   this->Print_VHDL_Load_Instances(ofile);
@@ -721,6 +725,44 @@ void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
     }
 }
 
+void vcDataPath::Print_VHDL_Equivalence_Instances(ostream& ofile)
+{ 
+  for(map<string, vcEquivalence*>::iterator iter = _equivalence_map.begin();
+      iter != _equivalence_map.end();
+      iter++)
+    {
+      vcEquivalence* s = (*iter).second;
+      ofile << s->Get_VHDL_Id() << ": Block -- { " << endl;
+      ofile << "signal aggregated_sig: std_logic_vector("
+	    << s->_width-1 << " downto 0); --}" << endl;
+      ofile << "begin -- {" << endl;
+      ofile << s->Get_Ack(0)->Get_DP_To_CP_Symbol()  
+	    << " <= "
+	    << s->Get_Req(0)->Get_CP_To_DP_Symbol() 
+	    << ";" << endl;
+      ofile << " aggregated_sig <= ";
+      for(int idx = 0; idx < s->_inwires.size(); idx++)
+	{
+	  if(idx > 0)
+	    ofile << " & ";
+	  ofile << s->_inwires[idx]->Get_VHDL_Id();
+	}
+      ofile << ";" << endl;
+      int top_index = s->_width-1;
+      for(int idx = 0; idx < s->_outwires.size(); idx++)
+	{
+	  ofile << s->_outwires[idx]->Get_VHDL_Id() 
+		<< " <= aggregate_sig("
+		<< top_index
+		<< " downto "
+		<< (top_index - s->_outwires[idx]->Get_Size())+1
+		<< ");" << endl;
+	  top_index -= s->_outwires[idx]->Get_Size();
+	}
+      ofile << "--}" << endl;
+      ofile << "end Block;" << endl;
+    }
+}
 
 void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
 { 

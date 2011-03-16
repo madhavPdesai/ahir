@@ -14,9 +14,41 @@ std::map<string,AaModule*,StringCompare> AaProgram::_modules;
 std::map<int,set<AaRoot*> > AaProgram::_storage_eq_class_map;
 std::vector<AaModule*> AaProgram::_ordered_module_vector;
 std::map<int,set<AaModule*> > AaProgram::_storage_index_module_coverage_map;
+std::map<int,AaMemorySpace*> AaProgram::_memory_space_map;
+
 AaGraphBase AaProgram::_call_graph;
 AaUGraphBase AaProgram::_type_dependency_graph;
 AaUGraphBase AaProgram::_storage_dependency_graph;
+
+
+void AaMemorySpace::Write_VC_Model(ostream& ofile)
+{
+  if(_objects.size() == 0)
+    AaRoot::Error("memory space " + IntToStr(this->_mem_space_index) +
+		  " has no storage objects in it!",NULL);
+
+  ofile << "$memoryspace [memory_space_" << this->_mem_space_index << "] {"
+	<< "$capacity " << this->_total_size << endl
+	<< "$datawidth " << this->_word_size << endl
+	<< "$addrwidth " << this->_address_width << endl;  
+
+  for(set<AaStorageObject*,AaRootCompare>::iterator iter = _objects.begin();
+      iter != _objects.end();
+      iter++)
+    {
+      (*iter)->Write_VC_Model(ofile);
+    }
+
+  ofile << "}" << endl;
+}
+
+string AaMemorySpace::Get_VC_Identifier()
+{
+  if(this->_modules.size() == 1)
+    return((*(this->_modules.begin()))->Get_Label() + "/memory_space_" + IntToStr(_mem_space_index));
+  else
+    return("memory_space_" + IntToStr(_mem_space_index));
+}
 
 AaProgram::AaProgram() {}
 AaProgram::~AaProgram() {};
@@ -46,7 +78,8 @@ void AaProgram::Print(ostream& ofile)
 	  siter != (*iter).second.end();
 	  siter++)
 	{
-	  ofile << ((AaStorageObject*)(*siter))->Get_Hierarchical_Name() << " ";
+	  if((*siter)->Is("AaStorageObject"))
+	    ofile << ((AaStorageObject*)(*siter))->Get_Hierarchical_Name() << " ";
 	}
       ofile << endl;
     }
@@ -314,12 +347,12 @@ bool AaProgram::Propagate_Types()
   return(err_flag);
 }
 
-void AaProgram::Add_Storage_Dependency(AaStorageObject* u, AaStorageObject* v)
+void AaProgram::Add_Storage_Dependency(AaRoot* u, AaRoot* v)
 {
   AaProgram::_storage_dependency_graph.Add_Edge(u,v);
 }
 
-void AaProgram::Add_Storage_Dependency_Graph_Vertex(AaStorageObject* u)
+void AaProgram::Add_Storage_Dependency_Graph_Vertex(AaRoot* u)
 {
   AaProgram::_storage_dependency_graph.Add_Vertex(u);
 }
@@ -346,22 +379,89 @@ void AaProgram::Coalesce_Storage()
   int num_comps = AaProgram::_storage_dependency_graph.Connected_Components(AaProgram::_storage_eq_class_map);
   for(int idx = 0; idx < AaProgram::_storage_eq_class_map.size(); idx++)
     {
+      set<int> lau_set;
+      int total_size = 0;
+
+      AaMemorySpace* new_ms = new AaMemorySpace(idx);
+      AaProgram::_memory_space_map[idx] = new_ms;
+
       for(set<AaRoot*>::iterator iter = AaProgram::_storage_eq_class_map[idx].begin();
 	  iter !=  AaProgram::_storage_eq_class_map[idx].end();
 	  iter++)
 	{
 	  AaRoot* u = (*iter);
-	  assert(u->Is("AaStorageObject"));
-
-	  ((AaStorageObject*)u)->Set_Mem_Space_Index(idx);
-
-	  AaScope* p_scope = ((AaStorageObject*)u)->Get_Scope();
-	  if(p_scope != NULL)
+	  if(u->Is("AaStorageObject"))
 	    {
-	      AaScope* root_p_scope = p_scope->Get_Root_Scope();
-	      assert(root_p_scope->Is("AaModule"));
-	      AaProgram::_storage_index_module_coverage_map[idx].insert((AaModule*) root_p_scope);
+	      
+	      new_ms->_objects.insert((AaStorageObject*)u);
+	      
+	      ((AaStorageObject*)u)->Set_Mem_Space_Index(idx);
+	      ((AaStorageObject*)u)->Get_Type()->Fill_LAU_Set(lau_set);
+	      
+	      total_size += ((AaStorageObject*)u)->Get_Type()->Size();
+
+	      AaScope* p_scope = ((AaStorageObject*)u)->Get_Scope();
+	      if(p_scope != NULL)
+		{
+		  AaScope* root_p_scope = p_scope->Get_Root_Scope();
+		  assert(root_p_scope->Is("AaModule"));
+		  AaProgram::_storage_index_module_coverage_map[idx].insert((AaModule*) root_p_scope);
+		  new_ms->_modules.insert((AaModule*)root_p_scope);
+		}
 	    }
+	  else if(u->Is("AaPointerDereferenceExpression"))
+	    {
+	      AaPointerDereferenceExpression* pu = ((AaPointerDereferenceExpression*)u);
+	      AaType* ptype = pu->Get_Reference_To_Object()->Get_Type();
+	      assert(ptype != NULL && ptype->Is_Pointer_Type());
+
+	      int acc_width = ((AaPointerType*)ptype)->Get_Ref_Type()->Size();
+	      lau_set.insert(acc_width);
+	    }
+	  else
+	    assert(0);
+	}
+
+
+      // find the lcm
+      int word_size = LCM(lau_set);
+      int max_access_width = *(lau_set.rbegin());
+      int base_address = 0;
+      int addr_width = CeilLog2((total_size/word_size)-1);
+
+      new_ms->_total_size = total_size;
+      new_ms->_word_size = word_size;
+      new_ms->_address_width = addr_width;
+      new_ms->_max_access_width = max_access_width;
+
+      // assign the base addresses and the word-size to the
+      // objects..
+      for(set<AaStorageObject*,AaRootCompare>::iterator iter = 
+	    new_ms->_objects.begin();
+	  iter !=  new_ms->_objects.end();
+	  iter++)
+	{
+	  AaStorageObject* u = (*iter);
+
+	  ((AaStorageObject*)u)->Set_Base_Address(base_address);
+	  ((AaStorageObject*)u)->Set_Word_Size(word_size);
+	  ((AaStorageObject*)u)->Set_Address_Width(addr_width);
+
+	  base_address += (((AaStorageObject*)u)->Get_Type()->Size())/word_size;
+	}
+    }
+
+  // finally, assign memory-spaces to modules
+  // a memory space that is only used within a 
+  // module is localized to that module..
+  for(map<int,AaMemorySpace*>::iterator miter = AaProgram::_memory_space_map.begin();
+      miter != AaProgram::_memory_space_map.end();
+      miter++)
+    {
+      AaMemorySpace* ms = (*miter).second;
+      if(ms->_modules.size() == 1)
+	{
+	  (*(ms->_modules.begin()))->Add_Memory_Space(ms);
 	}
     }
 }
@@ -418,13 +518,17 @@ void AaProgram::Write_VC_Model(int default_space_pointer_width,
   AaProgram::Write_VC_Pipe_Declarations(ofile);
   AaProgram::Write_VC_Constant_Declarations(ofile);
 
-  AaProgram::Write_VC_Memory_Spaces(default_space_pointer_width,
-				    default_space_word_size,
-				    ofile);
+  AaProgram::Write_VC_Memory_Spaces(ofile);
+  AaProgram::Write_VC_Modules(ofile);
+}
 
-  AaProgram::Write_VC_Modules(default_space_pointer_width,
-				default_space_word_size,
-				ofile);
+AaMemorySpace* AaProgram::Get_Memory_Space(int idx)
+{
+  if(AaProgram::_memory_space_map.find(idx) != AaProgram::_memory_space_map.end())
+    return(AaProgram::_memory_space_map[idx]);
+  else
+    return(NULL);
+
 }
 
 void AaProgram::Write_VC_Constant_Declarations(ostream& ofile)
@@ -436,6 +540,10 @@ void AaProgram::Write_VC_Constant_Declarations(ostream& ofile)
       if((*iter).second->Is("AaConstantObject"))
 	{
 	  ((AaConstantObject*)((*iter).second))->Write_VC_Model(ofile);
+	}
+      else if(((*iter).second)->Is("AaStorageObject"))
+	{
+	  ((AaStorageObject*)((*iter).second))->Write_VC_Load_Store_Constants(ofile);
 	}
     }
 }
@@ -464,35 +572,26 @@ void AaProgram::Write_VC_Pipe_Declarations(ostream& ofile)
     {
       ((*iter).second)->Write_VC_Pipe_Declarations(ofile);
     }
-  
 }
 
 
-void AaProgram::Write_VC_Memory_Spaces(int default_space_pointer_width,
-				       int default_space_word_size,
-				       ostream& ofile)
+void AaProgram::Write_VC_Memory_Spaces(ostream& ofile)
 {
-  for(map<string,AaObject*,StringCompare>::iterator iter = AaProgram::_objects.begin();
-      iter != AaProgram::_objects.end();
+  for(map<int,AaMemorySpace*>::iterator iter = AaProgram::_memory_space_map.begin();
+      iter != AaProgram::_memory_space_map.end();
       iter++)
     {
-      if((*iter).second->Is("AaStorageObject"))
-	{
-	  ((AaStorageObject*)((*iter).second))->Write_VC_Model(ofile);
-	}
+      if((*iter).second->_modules.size() != 1)
+	(*iter).second->Write_VC_Model(ofile);
     }
 }
 
 
-void AaProgram::Write_VC_Modules(int default_space_pointer_width,
-			     int default_space_word_size,
-			     ostream& ofile)
+void AaProgram::Write_VC_Modules(ostream& ofile)
 {
   for(int idx =0; idx < AaProgram::_ordered_module_vector.size(); idx++)
     {
-      AaProgram::_ordered_module_vector[idx]->Write_VC_Model(default_space_pointer_width,
-							     default_space_word_size,
-							     ofile);
+      AaProgram::_ordered_module_vector[idx]->Write_VC_Model(ofile);
     }
 }
 

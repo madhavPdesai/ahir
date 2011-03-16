@@ -139,9 +139,26 @@ vc_Link[vcModule* m]
          (vc_Hierarchical_CP_Ref[ref_vec] 
               { 
                  vcTransition* t = m->Get_Control_Path()->Find_Transition(ref_vec);
-                 assert(t != NULL);
-                 reqs.push_back(t);
+                 if(t != NULL)
+                     {
+                         reqs.push_back(t);
+                     }
+                 else
+                    {
+
+                        string tid;
+                        for(int idx=0; idx < ref_vec.size();idx++)
+                            {
+                                if(idx > 0)
+                                    tid += "/";
+                                tid += ref_vec[idx];
+                            }
+
+                        vcSystem::Error("could not find transition " + tid + ": line " +
+                                        IntToStr(dpeid->getLine()));
+                    }
                  ref_vec.clear();
+
               }
           )+
         RPAREN
@@ -149,10 +166,29 @@ vc_Link[vcModule* m]
          ((vc_Hierarchical_CP_Ref[ref_vec] 
               { 
                  vcTransition* t = m->Get_Control_Path()->Find_Transition(ref_vec);
-                 assert(t != NULL);
-                 acks.push_back(t);
+                 if(t != NULL)
+                     {
+                         acks.push_back(t);
+                     }
+                 else
+                    {
+
+                        string tid;
+                        for(int idx=0; idx < ref_vec.size();idx++)
+                            {
+                                if(idx > 0)
+                                    tid += "/";
+                                tid += ref_vec[idx];
+                            }
+
+                        vcSystem::Error("could not find transition " + tid + ": line " +
+                                        IntToStr(dpeid->getLine()));
+                    }
                  ref_vec.clear();
-              })
+
+            
+                }
+            )
            |
            (OPEN {acks.push_back(NULL);})
           )+
@@ -363,13 +399,13 @@ vc_Datapath[vcSystem* sys,vcModule* m]
 {
 	vcDataPath* dp = new vcDataPath(m,m->Get_Id() + "_DP");
 }
-: DATAPATH LBRACE ( vc_Wire_Declaration[sys,dp] | 
-                   vc_Operator_Instantiation[sys,dp] |
-                   vc_Phi_Instantiation[dp] |
-                   vc_Call_Instantiation[sys,dp] | 
-                   vc_IOPort_Instantiation[dp] |
-                   vc_LoadStore_Instantiation[sys,dp] |
-                    vc_AttributeSpec[dp])* RBRACE
+    : DATAPATH LBRACE ( vc_Wire_Declaration[sys,dp] | 
+            vc_Operator_Instantiation[sys,dp] |
+            vc_Phi_Instantiation[dp] |
+            vc_Call_Instantiation[sys,dp] | 
+            vc_IOPort_Instantiation[dp] |
+            vc_LoadStore_Instantiation[sys,dp] |
+            vc_AttributeSpec[dp])* RBRACE
  { m->Set_Data_Path(dp);}
 ;
 
@@ -377,11 +413,13 @@ vc_Datapath[vcSystem* sys,vcModule* m]
 //-----------------------------------------------------------------------------------------------------------------------------
 // vc_Operator_Instantiation: vc_BinaryOperator_Instantiation | vc_UnaryOperator_Instantiation | vc_Select_Instantiation | vc_Branch_Instantiation | vc_Register_Instantiation
 //----------------------------------------------------------------------------------------------------------------------------
-vc_Operator_Instantiation[vcSystem* sys, vcDataPath* dp] : vc_BinaryOperator_Instantiation[dp] |
-                                           vc_UnaryOperator_Instantiation[dp] |
-                                           vc_Select_Instantiation[dp] |
-                                           vc_Branch_Instantiation[dp] |
-                                           vc_Register_Instantiation[dp]
+vc_Operator_Instantiation[vcSystem* sys, vcDataPath* dp] : 
+        vc_BinaryOperator_Instantiation[dp] |
+        vc_UnaryOperator_Instantiation[dp] |
+        vc_Select_Instantiation[dp] |
+        vc_Branch_Instantiation[dp] |
+        vc_Register_Instantiation[dp] |
+        vc_Equivalence_Instantiation[dp] 
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
@@ -524,6 +562,33 @@ vc_Register_Instantiation[vcDataPath* dp]
    }
 ;
  
+
+//-------------------------------------------------------------------------------------------------------------------------
+// vc_Equivalence_Instantiation: EQUIVALENCE_OP vc_Label LPAREN vc_Identifier+ RPAREN LPAREN vc_Identifier+ RPAREN
+
+//-------------------------------------------------------------------------------------------------------------------------
+vc_Equivalence_Instantiation[vcDataPath* dp]
+{
+    string id;
+    vcEquivalence* nm = NULL;
+    vector<vcWire*> inwires;
+    vector<vcWire*> outwires;
+    vcWire* w;
+    string wid;
+}
+    :
+        EQUIVALENCE_OP id = vc_Label LPAREN
+        (wid = vc_Identifier { w = dp->Find_Wire(wid); assert(w); inwires.push_back(w);})+
+        RPAREN
+        LPAREN
+        (wid = vc_Identifier { w = dp->Find_Wire(wid); assert(w); outwires.push_back(w);})+
+        RPAREN 
+        {
+            nm = new vcEquivalence(id,inwires,outwires);
+            dp->Add_Equivalence(nm);
+        }
+    ;
+
 
 
 //-------------------------------------------------------------------------------------------------------------------------
@@ -1060,6 +1125,8 @@ XOR_OP           : "^";
 NOR_OP           : "~|";
 NAND_OP          : "~&";
 XNOR_OP          : "~^";
+
+EQUIVALENCE_OP    : "&/";
 
 OPEN             : "$open";
 

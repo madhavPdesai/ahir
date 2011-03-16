@@ -146,6 +146,9 @@ void AaStorageObject::Print(ostream& ofile)
   ofile << this->Tab();
   ofile << "$storage ";
   this->AaObject::Print(ofile);
+  ofile << "// memory space index = " << this->Get_Mem_Space_Index() <<  " "
+	<< " base address = " << this->Get_Base_Address() << " "
+	<< " word size = " << this->Get_Word_Size();
 }
 
 void AaStorageObject::Write_VC_Model(ostream& ofile)
@@ -154,15 +157,9 @@ void AaStorageObject::Write_VC_Model(ostream& ofile)
   this->Print(ofile);
   ofile << endl;
   ofile << "// in scope  " << (this->Get_Scope() != NULL ? this->Get_Scope()->Get_Hierarchical_Name() : "top-level") << endl;
-  // declare the memoryspace/storage object pair..
-  Write_VC_Memory_Space_Declaration("ms_" + this->Get_VC_Name(),
-				    this->Get_VC_Name(),
-				    this->Get_Type(),
-				    ofile);
-				    
-			       
-  // later, a VC compiler can potentially 
-  // club memory spaces together.
+  
+  ofile << "$object [" << this->Get_VC_Name() << "] : " 
+	<< this->Get_Type()->Get_VC_Name() << endl;
 }
 
 
@@ -173,16 +170,49 @@ string AaStorageObject::Get_VC_Name()
 }
 
 
+
 string AaStorageObject::Get_VC_Memory_Space_Name()
 {
   string scope_name;
-  if(this->Get_Scope())
-    {
-      scope_name =this->Get_Scope()->Get_Root_Scope()->Get_Label() + "/";
-    }
-  return(scope_name + "ms_" + this->Get_VC_Name());
+  AaMemorySpace* ms = AaProgram::Get_Memory_Space(_mem_space_index);
+  assert(ms != NULL);
+  return(ms->Get_VC_Identifier());
 }
 
+void AaStorageObject::Write_VC_Load_Store_Constants(ostream& ofile)
+{
+  AaType* addr_type = AaProgram::Make_Uinteger_Type(this->Get_Address_Width());
+  
+  ofile << "// load store constants for object " 
+	<< this->Get_Hierarchical_Name() 
+	<< endl;
+
+  Write_VC_Constant_Declaration(this->Get_VC_Base_Address_Name(),
+				addr_type->Get_VC_Name(),
+				To_VC_String(this->Get_Base_Address(),addr_type->Size()),
+				ofile);
+
+  int words_per_access = (this->Get_Type()->Get_Data_Width())/this->Get_Word_Size();
+  
+  Write_VC_Constant_Declaration(this->Get_VC_Offset_Scale_Factor_Name(),
+				addr_type->Get_VC_Name(),
+				To_VC_String(words_per_access,addr_type->Size()),
+				ofile);
+
+  for(int idx= 0; idx < words_per_access; idx++)
+    {
+      Write_VC_Constant_Declaration(this->Get_VC_Word_Offset_Name(idx),
+				    addr_type->Get_VC_Name(),
+				    To_VC_String(idx,addr_type->Size()),
+				    ofile);
+    }
+}
+
+int AaStorageObject::Get_Offset_Scale_Factor()
+{
+ int words_per_access = (this->Get_Type()->Get_Data_Width())/this->Get_Word_Size();
+ return(words_per_access);
+}
 
 //---------------------------------------------------------------------
 // AaPipeObject

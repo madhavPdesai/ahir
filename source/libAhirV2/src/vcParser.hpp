@@ -161,6 +161,9 @@ public:
 	public: void vc_Register_Instantiation(
 		vcDataPath* dp
 	);
+	public: void vc_Equivalence_Instantiation(
+		vcDataPath* dp
+	);
 	public: void vc_Load_Instantiation(
 		vcSystem* sys, vcDataPath* dp
 	);
@@ -211,10 +214,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 111;
+	static const int NUM_TOKENS = 112;
 #else
 	enum {
-		NUM_TOKENS = 111
+		NUM_TOKENS = 112
 	};
 #endif
 	

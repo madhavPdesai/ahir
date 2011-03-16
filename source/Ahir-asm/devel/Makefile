@@ -33,6 +33,7 @@ OBJS=$(OBJ)/AaLexer.o $(OBJ)/AaParser.o\
 		$(OBJ)/AaValue.o\
 		$(OBJ)/AaObject.o\
 		$(OBJ)/AaExpression.o\
+		$(OBJ)/AaExpressionWriteVCLoadStore.o\
 		$(OBJ)/AaStatement.o\
 		$(OBJ)/AaModule.o\
 		$(OBJ)/AaProgram.o\
@@ -108,6 +109,9 @@ $(OBJ)/AaObject.o: $(SRC)/AaObject.cpp $(HEADERS)
 
 $(OBJ)/AaExpression.o: $(SRC)/AaExpression.cpp $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/AaExpression.cpp -o $(OBJ)/AaExpression.o
+
+$(OBJ)/AaExpressionWriteVCLoadStore.o: $(SRC)/AaExpressionWriteVCLoadStore.cpp $(HEADERS)
+	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/AaExpressionWriteVCLoadStore.cpp -o $(OBJ)/AaExpressionWriteVCLoadStore.o
 
 
 $(OBJ)/TestAaParser.o: $(SRC)/TestAaParser.cpp $(HEADERS)

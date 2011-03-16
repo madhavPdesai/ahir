@@ -97,5 +97,11 @@ class AaRoot
 
 };
 
+struct AaRootCompare:public binary_function
+  <AaRoot*, AaRoot*, bool >
+{
+  bool operator() (AaRoot*, AaRoot*) const;
+};
+
 string Make_VC_Legal(string x);
 #endif

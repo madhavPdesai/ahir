@@ -31,4 +31,6 @@ string Aa_Name(AaOperation op);
 
 string To_Alphanumeric(string x);
 
+int LCM(set<int>& s);
+string Augment_Hier_Id(string hid, string suffix);
 #endif

@@ -533,8 +533,7 @@ void AaAssignmentStatement::Print(ostream& ofile)
 void AaAssignmentStatement::Map_Source_References()
 {
   this->_target->Map_Source_References(this->_target_objects);
-  if(!this->_target->Is("AaPointerDereferenceExpression"))
-    AaProgram::Add_Type_Dependency(this->_target,this->_source);
+  AaProgram::Add_Type_Dependency(this->_target,this->_source);
 
   this->_source->Map_Source_References(this->_source_objects);
 }
@@ -615,6 +614,9 @@ void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
 	{
 	  ofile << "$T [req] $T [ack] // register." << endl;
 	}
+
+      // if target is a pointer then you will need a
+      // register??
 
     }
   else
@@ -1392,6 +1394,10 @@ void AaBlockStatement::Write_VC_Constant_Declarations(ostream& ofile)
       if(_objects[idx]->Is("AaConstantObject"))
 	{
 	  _objects[idx]->Write_VC_Model(ofile);
+	}
+      else if(_objects[idx]->Is("AaStorageObject"))
+	{
+	  ((AaStorageObject*)(_objects[idx]))->Write_VC_Load_Store_Constants(ofile);
 	}
     }
 }

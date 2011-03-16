@@ -83,8 +83,8 @@ int main(int argc, char **argv)
                   << "\n";
     }
 
-    Passes.add(cdfg::createLowerConstantExprPass());
-    Passes.add(cdfg::createLowerGepPass());
+    Passes.add(cdfg::createLowerConstantExprPass());// constant expression to arithmetic
+    Passes.add(cdfg::createLowerGepPass());// get element pointer to arithmetic
     // Passes.add(createReassociatePass());
     // Passes.add(createConstantPropagationPass());
     Passes.add(createDeadCodeEliminationPass());

@@ -15,6 +15,7 @@
 // *******************************************  MODULE ************************************
 // compilation unit: a module is basically a block
 // statement, but with arguments
+class AaMemorySpace;
 class AaModule: public AaSeriesBlockStatement
 {
   vector<AaInterfaceObject*>  _input_args;
@@ -23,6 +24,7 @@ class AaModule: public AaSeriesBlockStatement
   bool _foreign_flag;
   bool _inline_flag;
 
+  vector<AaMemorySpace*> _memory_spaces;
  public:
   AaModule(string fname); // Modules have NULL parent (parent is the program)
   ~AaModule();
@@ -62,9 +64,7 @@ class AaModule: public AaSeriesBlockStatement
   void Write_Header(ofstream& ofile);
   void Write_Source(ofstream& ofile);
 
-  void Write_VC_Model(int default_space_pointer_width,
-		      int default_space_word_size,
-		      ostream& ofile);
+  void Write_VC_Model(ostream& ofile);
 
   void Write_VC_Control_Path(ostream& ofile);
   void Write_VC_Data_Path(ostream& ofile);
@@ -72,6 +72,10 @@ class AaModule: public AaSeriesBlockStatement
   void Write_VC_Links(ostream& ofile);
 
   void Propagate_Constants();
+  void Add_Memory_Space(AaMemorySpace* ms)
+  {
+    _memory_spaces.push_back(ms);
+  }
 };
 
 #endif

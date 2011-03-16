@@ -231,7 +231,7 @@ string vcMemorySpace::Get_Aggregate_Section(string pid, int hindex, int lindex)
 
 void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 {
-  if(this->Get_Capacity() <= 16)
+  if((this->Get_Capacity()/this->Get_Word_Size()) <= 16)
     {
       // instantiate a register bank..
       ofile << "RegisterBank_" << this->Get_VHDL_Id() << ": register_bank -- {" << endl;

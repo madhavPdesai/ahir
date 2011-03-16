@@ -23,8 +23,11 @@ class AaType: public AaRoot
   virtual string CBaseName() {assert(0);}
   virtual string CDim() {assert(0);}
   virtual int Size() {assert(0);}
+  virtual void Fill_LAU_Set(set<int>& s) {s.insert(this->Size());}
+
   virtual void Write_VC_Model(ostream& ofile) { assert(0);}
   virtual bool Is_Integer_Type() {return(false);}
+  virtual bool Is_Uinteger_Type() {return(false);}
   virtual bool Is_Float_Type() {return(false);}
   virtual bool Is_Array_Type() {return(false);}
   virtual bool Is_Pointer_Type() {return(false);}
@@ -84,6 +87,7 @@ class AaUintType: public AaScalarType
   }
 
   virtual bool Is_Integer_Type() {return(true);}
+  virtual bool Is_Uinteger_Type() {return(true);}
   virtual bool Is_Float_Type() {return(false);}
 
 
@@ -110,11 +114,15 @@ class AaIntType: public AaUintType
   {
     return("int" + IntToStr(this->Get_Width()) + "_t");
   }
+
+  virtual bool Is_Uinteger_Type() {return(false);}
 };
 
 class AaPointerType: public AaUintType
 {
+
   AaType* _ref_type;
+
  public :
   AaPointerType(AaScope* scope, AaType* ref_type);
   ~AaPointerType();
@@ -144,7 +152,7 @@ class AaPointerType: public AaUintType
 
   virtual string Get_VC_Name() 
   {
-    return("$pointer<default>");
+    return(this->AaUintType::Get_VC_Name());
   }
   virtual bool Is_Pointer_Type() {return(true);}
 };
@@ -194,6 +202,7 @@ class AaFloatType : public AaScalarType
   virtual int Get_Data_Width() {return(this->Size());}
 
   virtual bool Is_Integer_Type() {return(false);}
+  virtual bool Is_Uinteger_Type() {return(false);}
   virtual bool Is_Float_Type() {return(true);}
 };
 
@@ -248,6 +257,8 @@ class AaArrayType: public AaType
     return(ret_val);
   }
 
+
+  virtual void Fill_LAU_Set(set<int>& s) {s.insert(this->Get_Element_Type()->Size());}
   virtual int Get_Data_Width() {return(this->Get_Element_Type()->Get_Data_Width());}
 
   virtual int Number_Of_Elements()

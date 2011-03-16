@@ -14,17 +14,40 @@
 #include <AaBglWrap.h>
 
 // ******************************************* PROGRAM ************************************
+
+class AaMemorySpace: public AaRoot
+{
+ public:
+ AaMemorySpace(int msi):AaRoot() 
+    { 
+      _mem_space_index = msi;
+    }
+
+  int _mem_space_index;
+  int _total_size;
+  int _word_size;
+  int _address_width;
+  int _max_access_width;
+
+  set<AaStorageObject*,AaRootCompare> _objects;
+  set<AaModule*> _modules;
+
+  void Write_VC_Model(ostream& ofile);
+  string Get_VC_Identifier();
+};
+
 // The program, a list of modules etc...
 // all members are static since there is a single program
 class AaProgram
 {
-
   // all kinds of std::maps.
   static std::map<string,AaObject*,StringCompare> _objects;
   static std::map<string,AaModule*,StringCompare> _modules;
   static std::map<string,AaType*,StringCompare> _type_map;
   static std::map<int,set<AaRoot*> > _storage_eq_class_map;
   static std::map<int,set<AaModule*> > _storage_index_module_coverage_map;
+  static std::map<int,AaMemorySpace*> _memory_space_map;
+
 
   // modules should be printed in the order in which
   // they were encountered.
@@ -95,8 +118,8 @@ class AaProgram
   static void Propagate_Constants();
 
   static void Coalesce_Storage();
-  static void Add_Storage_Dependency(AaStorageObject* u, AaStorageObject* v);
-  static void Add_Storage_Dependency_Graph_Vertex(AaStorageObject* u);
+  static void Add_Storage_Dependency(AaRoot* u, AaRoot* v);
+  static void Add_Storage_Dependency_Graph_Vertex(AaRoot* u);
 
   // write VC model
   static void Write_VC_Model(int default_space_pointer_width,
@@ -104,12 +127,10 @@ class AaProgram
 			     ostream& ofile);
   static void Write_VC_Pipe_Declarations(ostream& ofile);
   static void Write_VC_Constant_Declarations(ostream& ofile);
-  static void Write_VC_Memory_Spaces(int default_space_pointer_width,
-				     int default_space_word_size,
-				     ostream& ofile);
-  static void Write_VC_Modules(int default_space_pointer_width,
-			       int default_space_word_size,
-			       ostream& ofile);
+  static void Write_VC_Memory_Spaces(ostream& ofile);
+  static void Write_VC_Modules(ostream& ofile);
+
+  static AaMemorySpace* Get_Memory_Space(int idx);
 };
 
 

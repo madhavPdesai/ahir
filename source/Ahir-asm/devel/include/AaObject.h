@@ -132,6 +132,7 @@ class AaStorageObject: public AaObject
   //
   int _base_address;    // location of "base" of object.
   int _word_size;       // minimum addressable unit
+  int _address_width;   // address-width of the memory-space.
 
   int _mem_space_index;
   
@@ -150,6 +151,15 @@ class AaStorageObject: public AaObject
   void Set_Mem_Space_Index(int id) { _mem_space_index = id;}
   int Get_Mem_Space_Index() {return(_mem_space_index);}
 
+  void Set_Base_Address(int a) { _base_address = a; }
+  int Get_Base_Address() {return(_base_address);}
+
+  void Set_Word_Size(int a) { _word_size = a; }
+  int Get_Word_Size() {return(_word_size);}
+
+  void Set_Address_Width(int a) { _address_width = a; }
+  int Get_Address_Width() {return(_address_width);}
+
   virtual void Coalesce_Storage();
 
 
@@ -160,8 +170,25 @@ class AaStorageObject: public AaObject
 
   virtual string Get_VC_Name();
   virtual string Get_VC_Memory_Space_Name();
-
   
+  void Write_VC_Load_Store_Constants(ostream& ofile);
+
+  int Get_Offset_Scale_Factor();
+
+  string Get_VC_Base_Address_Name()
+  {
+    return(this->Get_VC_Name() + "_base_address");
+  }
+
+  string Get_VC_Offset_Scale_Factor_Name() 
+  {
+    return(this->Get_VC_Name() + "_offset_scale_factor");
+  }
+
+  string Get_VC_Word_Offset_Name(int idx)
+  {
+    return(this->Get_VC_Name() + "_word_offset_" + IntToStr(idx));
+  }
 
 };
 

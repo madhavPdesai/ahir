@@ -153,6 +153,7 @@ protected:
 class vcModule;
 class vcControlPath;
 class vcMemorySpace;
+class vcEquivalence;
 class vcDataPath: public vcRoot
 {
   vcModule* _parent;
@@ -166,6 +167,7 @@ class vcDataPath: public vcRoot
   map<string, vcSelect*> _select_map;
   map<string, vcBranch*> _branch_map;
   map<string, vcRegister*> _register_map;
+  map<string, vcEquivalence*> _equivalence_map;
 
   // these operators can be shared..
   map<string, vcSplitOperator*> _split_operator_map;
@@ -222,6 +224,9 @@ class vcDataPath: public vcRoot
   void Add_Register(vcRegister* p);
   vcRegister* Find_Register(string id);
 
+  void Add_Equivalence(vcEquivalence* p);
+  vcEquivalence* Find_Equivalence(string id);
+
   vcDatapathElement* Find_DPE(string dpe_name);
 
   void Add_Phi(vcPhi* p);
@@ -264,6 +269,7 @@ class vcDataPath: public vcRoot
   void Print_VHDL_Phi_Instances(ostream& ofile);
   void Print_VHDL_Select_Instances(ostream& ofile);
   void Print_VHDL_Register_Instances(ostream& ofile);
+  void Print_VHDL_Equivalence_Instances(ostream& ofile);
   void Print_VHDL_Branch_Instances(ostream& ofile);
   void Print_VHDL_Split_Operator_Instances(ostream& ofile);
   void Print_VHDL_Load_Instances(ostream& ofile);

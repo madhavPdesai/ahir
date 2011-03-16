@@ -9,6 +9,59 @@
 #include <vcModule.hpp>
 #include <vcSystem.hpp>
 
+vcEquivalence::vcEquivalence(string id, 
+			     vector<vcWire*>& inwires, 
+			     vector<vcWire*>& outwires):
+  vcOperator(id)
+{
+  _flow_through = true;
+
+  int in_width = 0;
+  for(int idx = 0; idx < inwires.size(); idx++)
+    {
+      in_width += inwires[idx]->Get_Size();
+      _inwires.push_back(inwires[idx]);
+      inwires[idx]->Connect_Receiver(this);
+    }
+
+  int out_width = 0;
+  for(int idx = 0; idx < outwires.size(); idx++)
+    {
+      out_width += outwires[idx]->Get_Size();
+      _outwires.push_back(outwires[idx]);
+      outwires[idx]->Connect_Driver(this);
+    }
+
+  if(in_width != out_width)
+    {
+      vcSystem::Error("in equivalence operator " + id + ", total input width is not equal to total output width");
+    }
+
+  _width = in_width;
+}
+
+void vcEquivalence::Print(ostream& ofile)
+{
+  ofile << vcLexerKeywords[__EQUIVALENCE_OP] << " " << this->Get_Label() << " ";
+  ofile << vcLexerKeywords[__LPAREN];
+  for(int idx = 0; idx < _inwires.size(); idx++)
+    {
+      if(idx > 0)
+	ofile << " ";
+      ofile << _inwires[idx]->Get_Id();
+    }
+  ofile << vcLexerKeywords[__RPAREN];
+  ofile << " " 	<< vcLexerKeywords[__LPAREN];
+  for(int idx = 0; idx < _outwires.size(); idx++)
+    {
+      if(idx > 0)
+	ofile << " ";
+      ofile << _outwires[idx]->Get_Id();
+    }
+  ofile << vcLexerKeywords[__RPAREN] << endl;
+}
+
+
 void   vcOperator::Add_Reqs(vector<vcTransition*>& reqs)
 {
   assert(reqs.size() == 1);
@@ -66,7 +119,11 @@ vcLoadStore::vcLoadStore(string id, vcMemorySpace* ms, vcWire* addr, vcWire* dat
 }
 
 
-vcLoad::vcLoad(string id, vcMemorySpace* ms, vcWire* addr, vcWire* data):vcLoadStore(id,ms,addr,data) {}
+vcLoad::vcLoad(string id, vcMemorySpace* ms, vcWire* addr, vcWire* data):vcLoadStore(id,ms,addr,data) 
+{
+  addr->Connect_Receiver(this);
+  data->Connect_Driver(this);
+}
 void vcLoad::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__LOAD] 	<< " "
@@ -80,7 +137,11 @@ void vcLoad::Print(ostream& ofile)
 	<< vcLexerKeywords[__RPAREN] << endl;
 
 }
-vcStore::vcStore(string id, vcMemorySpace* ms, vcWire* addr, vcWire* data):vcLoadStore(id,ms,addr,data) {}
+vcStore::vcStore(string id, vcMemorySpace* ms, vcWire* addr, vcWire* data):vcLoadStore(id,ms,addr,data) 
+{
+  addr->Connect_Receiver(this);
+  data->Connect_Receiver(this);
+}
 void vcStore::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__STORE] 	<< " "
@@ -433,7 +494,10 @@ vcRegister::vcRegister(string id, vcWire* din, vcWire* dout):vcOperator(id)
   assert(din && dout);
 
   _din = din;
+  din->Connect_Receiver(this);
+
   _dout = dout;
+  dout->Connect_Driver(this);
 }
 
 void vcRegister::Print(ostream& ofile)

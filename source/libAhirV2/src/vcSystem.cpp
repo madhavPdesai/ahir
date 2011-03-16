@@ -217,7 +217,7 @@ void vcSystem::Print_VHDL_Constant_Declarations(ostream& ofile)
       iter != _constant_map.end();
       iter++)
     {
-      (*iter).second->Print_VHDL_Std_Logic_Declaration(ofile);
+      (*iter).second->Print_VHDL_Constant_Declaration(ofile);
     }
 }
 

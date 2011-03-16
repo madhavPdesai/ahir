@@ -6,6 +6,12 @@ void Write_VC_Constant_Declaration(string wire_name, string type_name, string in
 				   ostream& ofile);
 void Write_VC_Wire_Declaration(string wire_name, string type_name,
 			       ostream& ofile);
+
+void Write_VC_Equivalence_Operator(string inst_name,
+				   vector<string>& inwires,
+				   vector<string>& outwires,
+				   ostream& ofile);
+
 void Write_VC_Unary_Operator(AaOperation op, 
 			     string inst_name, 
 			     string src_name, 
@@ -52,9 +58,9 @@ void Write_VC_Intermediate_Wire_Declaration(string wire_name,
 
 void Write_VC_Pipe_Declaration(string name, int width,ostream& ofile);
 void Write_VC_Memory_Space_Declaration(string space_name, string obj_name, AaType* type,ostream& ofile);
-void Write_VC_Load_Operator(AaStorageObject* obj, string inst_name, string data_name, string addr_name,
+void Write_VC_Load_Operator(string ms_name, string inst_name, string data_name, string addr_name,
 			    ostream& ofile);
-void Write_VC_Store_Operator(AaStorageObject* obj, string inst_name, string data_name, string addr_name,
+void Write_VC_Store_Operator(string ms_name, string inst_name, string data_name, string addr_name,
 			     ostream& ofile);
 void Write_VC_IO_Input_Port(AaPipeObject* obj, string inst_name, string data_name,ostream& ofile);
 void Write_VC_IO_Output_Port(AaPipeObject* obj, string inst_name, string data_name,ostream& ofile);
