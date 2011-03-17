@@ -16,6 +16,7 @@ class AaExpression: public AaRoot
 {
   // the containing scope of this expression
   AaScope* _scope;
+  bool _coalesce_flag;
 
  protected:
   // type of the expression
@@ -25,6 +26,10 @@ class AaExpression: public AaRoot
   // expression.
   set<AaExpression*> _targets;
 
+  // coalesce flag, used during memory space
+  // identification..
+  void Set_Coalesce_Flag(bool v) { _coalesce_flag = v;}
+  bool Get_Coalesce_Flag() {return(_coalesce_flag);}
 
   // the expression, when evaluated at run
   // time, can produce a value.  In the following

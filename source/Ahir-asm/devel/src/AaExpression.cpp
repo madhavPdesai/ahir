@@ -24,6 +24,7 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
   this->_expression_value = NULL; // if constant will be calculated in Evaluate traversal.
   this->_already_evaluated = false;
   this->_addressed_object_representative = NULL;
+  this->_coalesce_flag = false;
 }
 AaExpression::~AaExpression() {};
 
@@ -52,33 +53,39 @@ bool AaExpression::Set_Addressed_Object_Representative(AaStorageObject* obj)
 
 void AaExpression::Propagate_Addressed_Object_Representative()
 {
-  AaStorageObject* obj = this->Get_Addressed_Object_Representative();
-  // propagate to all that are targets of this expression.
-  for(set<AaExpression*>::iterator iter = _targets.begin();
-      iter != _targets.end();
-      iter++)
+  if(!this->Get_Coalesce_Flag())
     {
-      (*(iter))->Propagate_Addressed_Object_Representative(obj);
-    }
-  
-  // propagate to all objects that use this 
-  // expression as a source.
-  for(set<AaRoot*>::iterator iter = _source_references.begin();
-      iter != _source_references.end();
-      iter++)
-    {
-      if((*iter)->Is_Object())
-	((AaObject*)(*iter))->Propagate_Addressed_Object_Representative(obj);
+      this->Set_Coalesce_Flag(true);
+
+      AaStorageObject* obj = this->Get_Addressed_Object_Representative();
+      
+      // propagate to all that are targets of this expression.
+      for(set<AaExpression*>::iterator iter = _targets.begin();
+	  iter != _targets.end();
+	  iter++)
+	{
+	  (*(iter))->Propagate_Addressed_Object_Representative(obj);
+	}
+      
+      // propagate to all objects that use this 
+      // expression as a source.
+      for(set<AaRoot*>::iterator iter = _source_references.begin();
+	  iter != _source_references.end();
+	  iter++)
+	{
+	  if((*iter)->Is_Object())
+	    ((AaObject*)(*iter))->Propagate_Addressed_Object_Representative(obj);
+	}
+
+      this->Set_Coalesce_Flag(false);
     }
 }
 
 void AaExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
 {
+  this->Set_Addressed_Object_Representative(obj);
+  this->Propagate_Addressed_Object_Representative();
 
-  if(this->Set_Addressed_Object_Representative(obj))
-    {
-      this->Propagate_Addressed_Object_Representative();
-    }
 }
 
 void AaExpression::Set_Type(AaType* t)
@@ -180,10 +187,7 @@ void AaExpression::Set_Type(AaType* t)
 
  void AaObjectReference::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
  {
-   if((obj == NULL) || this->Set_Addressed_Object_Representative(obj))
-     {
-       this->AaExpression::Propagate_Addressed_Object_Representative();
-     }
+   this->AaExpression::Propagate_Addressed_Object_Representative(obj);
  }
 
  void AaObjectReference::Map_Source_References(set<AaRoot*>& source_objects)
@@ -1083,7 +1087,7 @@ void AaPointerDereferenceExpression::Print(ostream& ofile)
   
   if(_addressed_object_representative == NULL)
     {
-      AaRoot::Error("illegal pointer-dereference expression... source is not a storage object!", this);
+      AaRoot::Error("illegal pointer-dereference expression... not associated with any memory space!", this);
     }
 }
   
@@ -1142,12 +1146,39 @@ void AaPointerDereferenceExpression::Update_Type()
 
 void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
 {
-  if((obj != NULL) && this->Get_Addressed_Object_Representative() == NULL)
+  if(!this->Get_Coalesce_Flag())
     {
-      AaProgram::Add_Storage_Dependency(this,obj);
+      this->Set_Coalesce_Flag(true);
+      if((obj != NULL) && this->Get_Addressed_Object_Representative() == NULL)
+	{
+	  AaProgram::Add_Storage_Dependency(this,obj);
+	}
+      
+      this->Set_Addressed_Object_Representative(obj);
+      
+      // broken.. fix it..
+      // what should you propagate forward?
+      // _reference_to_object points to a pointer p.
+      // p has an addressed object representative obj1.
+      // obj1 has an addressed object representative obj2.
+      // ->(p) propagates obj2
+      AaStorageObject* obj1 = _reference_to_object->Get_Addressed_Object_Representative();
+      if(obj1 != NULL)
+	{
+	  AaStorageObject* obj2 = obj1->Get_Addressed_Object_Representative();
+	  if(obj2 != NULL)
+	    {
+	      // propagate to all expressions that are targets of this expression.
+	      for(set<AaExpression*>::iterator iter = _targets.begin();
+		  iter != _targets.end();
+		  iter++)
+		{
+		  (*(iter))->Propagate_Addressed_Object_Representative(obj2);
+		}
+	    }
+	}
+      this->Set_Coalesce_Flag(false);
     }
-
-  this->Set_Addressed_Object_Representative(obj);
 }
 
 void AaPointerDereferenceExpression::Write_VC_Control_Path( ostream& ofile)
@@ -1240,11 +1271,8 @@ void AaAddressOfExpression::Print(ostream& ofile)
   ofile << ")";
   if(_addressed_object_representative == NULL)
     {
-      AaRoot::Error("illegal address-of expression... source is not a storage object!", this);
+      AaRoot::Error("illegal address-of expression... unknown memory space!", this);
     }
-  else
-    ofile << " // memory space " << _addressed_object_representative->Get_Mem_Space_Index() << endl;
-    
 }
 
 
@@ -1298,11 +1326,15 @@ void AaAddressOfExpression::Update_Type()
 
 void AaAddressOfExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
 {
-  if(this->Set_Addressed_Object_Representative(this->_storage_object))
-    {
-      this->AaExpression::Propagate_Addressed_Object_Representative();
-    }
+
+  // @(p) always propagates forward, because
+  // _storage_object may have an updated 
+  // representative..
+  this->Set_Addressed_Object_Representative(this->_storage_object);
+  this->AaExpression::Propagate_Addressed_Object_Representative();
+
 }
+
 
 void AaAddressOfExpression::Evaluate()
 {
@@ -1417,10 +1449,9 @@ void AaAddressOfExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostr
 
       if(!skip_immediate)
 	{
-	  Write_VC_Pointer_Declaration(this->_storage_object->Get_VC_Memory_Space_Name(),
-				       this->Get_VC_Driver_Name(),
-				       NULL,
-				       ofile);
+	  Write_VC_Wire_Declaration(this->Get_VC_Driver_Name(),
+				    this->Get_Type()->Get_VC_Name(),
+				    ofile);
 	}
 
       assert(this->_reference_to_object->Is("AaArrayObjectReference"));
@@ -1546,7 +1577,7 @@ void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, os
 				   inst_root_name + "_plus_base",
 				   scaled_offset_name,
 				   addr_type,
-				   this->Get_VC_Base_Address_Name(),
+				   _storage_object->Get_VC_Base_Address_Name(),
 				   addr_type,
 				   final_root_address_name,
 				   addr_type,

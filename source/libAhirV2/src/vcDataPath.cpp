@@ -579,8 +579,11 @@ string  vcDataPath::Print_VHDL_Call_Interface_Ports(string semi_colon, ostream& 
 	    << " : out  std_logic_vector(" << num_reqs-1 <<  " downto 0);" << endl;
       ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_acks") 
 	    << " : in   std_logic_vector(" << num_reqs-1 <<  " downto 0);" << endl;
-      ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_data") 
-	    << " : out  std_logic_vector(" << (num_reqs * called_module->Get_In_Arg_Width())-1 << " downto 0);" << endl;
+
+      if(called_module->Get_In_Arg_Width() > 0)
+	ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_data") 
+	      << " : out  std_logic_vector(" << (num_reqs * called_module->Get_In_Arg_Width())-1 << " downto 0);" << endl;
+
       ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_tag") 
 	    << "  :  out  std_logic_vector(" << (num_reqs * tag_width)-1 << " downto 0);" << endl;
       
@@ -588,8 +591,9 @@ string  vcDataPath::Print_VHDL_Call_Interface_Ports(string semi_colon, ostream& 
 	    << " : out  std_logic_vector(" << num_reqs-1 <<  " downto 0);" << endl;
       ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_acks") 
 	    << " : in   std_logic_vector(" << num_reqs-1 <<  " downto 0);" << endl;
-      ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_data") 
-	    << " : in   std_logic_vector(" << (num_reqs * called_module->Get_Out_Arg_Width())-1 << " downto 0);" << endl;
+      if(called_module->Get_Out_Arg_Width() > 0)
+	ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_data") 
+	      << " : in   std_logic_vector(" << (num_reqs * called_module->Get_Out_Arg_Width())-1 << " downto 0);" << endl;
       ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_tag") 
 	    << " :  in   std_logic_vector(" << (num_reqs * tag_width)-1 << " downto 0)";
       semi_colon = ";";
@@ -1674,41 +1678,73 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
       vcModule* m = this->Get_Parent();
       // now the operator instances 
-      ofile << "CallReq: InputMuxBase -- {" << endl;
-      ofile << "generic map (iwidth => " << in_width << ","
-	    << " owidth => " << in_width/num_reqs << ","
-	    << " twidth => " << tag_length << ","
+      string imux_name = ((called_module->Get_In_Arg_Width() > 0) ?
+			  "InputMuxBase" : "InputMuxBaseNoData");
+
+      ofile << "CallReq: " << imux_name << " -- {" << endl;
+      ofile << "generic map ( ";
+
+      if(called_module->Get_In_Arg_Width() > 0)
+	{
+	  ofile << " iwidth => " << in_width << ","
+		<< " owidth => " << in_width/num_reqs << ",";
+	}
+
+      ofile << " twidth => " << tag_length << ","
 	    << " nreqs => " << num_reqs << ","
 	    << "  no_arbitration => true)" << endl;
       ofile << "port map ( -- { \n reqL => reqL " << ", " <<  endl
-	    << "    ackL => ackL " << ", " <<  endl
-	    << "    dataL => data_in, " << endl
-	    << "    reqR => " 
+	    << "    ackL => ackL " << ", " <<  endl;
+
+      if(called_module->Get_In_Arg_Width() > 0)
+	ofile << "    dataL => data_in, " << endl;
+
+      ofile << "    reqR => " 
 	    << called_module->Get_VHDL_Call_Interface_Port_Section(m,"call", "call_reqs", idx)  << "," << endl
 	    << "    ackR => " 
-	    << called_module->Get_VHDL_Call_Interface_Port_Section(m, "call", "call_acks", idx)  << "," << endl
-	    << "    dataR => " 
-	    << called_module->Get_VHDL_Call_Interface_Port_Section(m, "call", "call_data",idx) << "," << endl
-	    << "    tagR => "  
+	    << called_module->Get_VHDL_Call_Interface_Port_Section(m, "call", "call_acks", idx)  << "," << endl;
+
+      if(called_module->Get_In_Arg_Width() > 0)
+	ofile << "    dataR => " 
+	      << called_module->Get_VHDL_Call_Interface_Port_Section(m, "call", "call_data",idx) << "," << endl;
+
+      
+      ofile << "    tagR => "  
 	    << called_module->Get_VHDL_Call_Interface_Port_Section(m , "call", "call_tag",idx) << "," << endl
 	    << "  clk => clk, reset => reset -- }\n); -- }" << endl;
 
-      ofile << "CallComplete: OutputDemuxBase -- {" << endl;
-      ofile << "generic map (iwidth => " << out_width/num_reqs << ","
-	    << " owidth => " << out_width << ","
-	    << " twidth => " << tag_length << ","
+
+      string omux_name = ((called_module->Get_Out_Arg_Width() > 0) ?
+			  "OutputDemuxBase" : "OutputDemuxBaseNoData");
+      ofile << "CallComplete: " << omux_name << " -- {" << endl;
+      ofile << "generic map ( " << endl;
+      if(called_module->Get_Out_Arg_Width() > 0)
+	{
+	  ofile << "iwidth => " << out_width/num_reqs << ","
+		<< " owidth => " << out_width << ","; 
+	}
+
+      ofile << " twidth => " << tag_length << ","
 	    << " nreqs => " << num_reqs << ","
 	    << "  no_arbitration => true)" << endl;
       ofile << "port map ( -- {\n reqR => reqR " << ", " <<  endl
-	    << "    ackR => ackR " << ", " <<  endl
-	    << "    dataR => data_out, " << endl
-	    << "    reqL => " 
+	    << "    ackR => ackR " << ", " <<  endl;
+
+      if(called_module->Get_Out_Arg_Width() > 0)
+	ofile << "    dataR => data_out, " << endl;
+
+      ofile << "    reqL => " 
 	    << called_module->Get_VHDL_Call_Interface_Port_Section(m,"return", "return_acks", idx)  << ", -- cross-over" << endl
 	    << "    ackL => " 
-	    << called_module->Get_VHDL_Call_Interface_Port_Section(m,"return", "return_reqs", idx)  << ", -- cross-over" << endl
-	    << "    dataL => " 
-	    << called_module->Get_VHDL_Call_Interface_Port_Section(m,"return", "return_data", idx)  << "," << endl
-	    << "    tagL => "  
+	    << called_module->Get_VHDL_Call_Interface_Port_Section(m,"return", "return_reqs", idx)  << ", -- cross-over" << endl;
+
+      if(called_module->Get_Out_Arg_Width() > 0)
+	{
+	  ofile << "    dataL => " 
+		<< called_module->Get_VHDL_Call_Interface_Port_Section(m,"return", "return_data", idx)  << "," << endl;
+	}
+
+      ofile << "    tagL => "  
 	    << called_module->Get_VHDL_Call_Interface_Port_Section(m, "return", "return_tag", idx)  << "," << endl
 	    << "  clk => clk," << endl
 	    << " reset => reset -- }\n); -- }" << endl;
@@ -1921,16 +1957,27 @@ string vcDataPath::Print_VHDL_Call_Interface_Port_Map(string comma, ostream& ofi
 	    called_module->Get_Aggregate_Section("call_reqs", hindex, lindex) << "," << endl;
 	  ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_acks") << " => " <<
 	    called_module->Get_Aggregate_Section("call_acks", hindex, lindex) << "," << endl;
-	  ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_data") << " => " << 
-	    called_module->Get_Aggregate_Section("call_data", hindex, lindex) << "," << endl;
+
+	  if(called_module->Get_In_Arg_Width() > 0)
+	    {
+	      ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_data") << " => " << 
+		called_module->Get_Aggregate_Section("call_data", hindex, lindex) << "," << endl;
+	    }
+
 	  ofile << called_module->Get_VHDL_Call_Interface_Port_Name("call_tag") << " => " << 
 	    called_module->Get_Aggregate_Section("call_tag", hindex, lindex) << "," << endl;
 	  ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_reqs") << " => " << 
 	    called_module->Get_Aggregate_Section("return_reqs", hindex, lindex)<< "," << endl;
 	  ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_acks") << " => " << 
 	    called_module->Get_Aggregate_Section("return_acks", hindex, lindex)<< "," << endl;
-	  ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_data") << " => " << 
-	    called_module->Get_Aggregate_Section("return_data", hindex, lindex)<< "," << endl;
+
+	  if(called_module->Get_Out_Arg_Width() > 0)
+	    {
+	      ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_data") << " => " << 
+		called_module->Get_Aggregate_Section("return_data", hindex, lindex)<< "," << endl;
+	    }
+
+
 	  ofile << called_module->Get_VHDL_Call_Interface_Port_Name("return_tag") << " => " << 
 	    called_module->Get_Aggregate_Section("return_tag", hindex, lindex);
 	  comma = ",";

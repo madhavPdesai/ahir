@@ -649,27 +649,62 @@ void vcModule::Print_VHDL_Call_Arbiter_Instantiation(ostream& ofile)
   ofile << "-- call arbiter for module " << this->Get_VHDL_Id() << endl;
   string prefix = this->Get_VHDL_Id() + "_";
   
-  ofile << prefix << "arbiter: CallArbiterUnitary -- {" << endl;
+  string call_arbiter_id;
+  bool in_args = false;
+  bool out_args = false;
+  if(this->Get_In_Arg_Width() > 0)
+    {
+      in_args = true;
+      if(this->Get_Out_Arg_Width() > 0)
+	{
+	  call_arbiter_id = "CallArbiterUnitary";
+	  out_args = true;
+	}
+      else
+	call_arbiter_id = "CallArbiterUnitaryNoOutargs";
+    }
+  else
+    {
+      if(this->Get_Out_Arg_Width() > 0)
+	{
+	  call_arbiter_id = "CallArbiterUnitaryNoInargs";
+	  out_args = true;
+	}
+      else
+	call_arbiter_id = "CallArbiterUnitaryNoInargsNoOutargs";
+    }
+  ofile << prefix << "arbiter: " << call_arbiter_id << " -- {" << endl;
   ofile << "generic map( --{\n num_reqs => " << this->_num_calls << "," << endl;
-  ofile << " call_data_width => " << (this->Get_In_Arg_Width()) << "," << endl;
-  ofile << " return_data_width => " << (this->Get_Out_Arg_Width()) << "," << endl;
+  if(in_args)
+    ofile << " call_data_width => " << (this->Get_In_Arg_Width()) << "," << endl;
+  if(out_args)
+    ofile << " return_data_width => " << (this->Get_Out_Arg_Width()) << "," << endl;
+
   ofile << " callee_tag_length => " << (this->Get_Callee_Tag_Length()) << "," << endl;
   ofile << " caller_tag_length => " << (this->Get_Caller_Tag_Length()) << "--}\n )" << endl;
   ofile << "port map(-- {\n call_reqs => " << prefix << "call_reqs," << endl
 	<< " call_acks => " << prefix << "call_acks," << endl
 	<< " return_reqs => " << prefix << "return_reqs," << endl
-	<< " return_acks => " << prefix << "return_acks," << endl
-	<< " call_data  => " << prefix << "call_data," << endl
-	<< " call_tag  => " << prefix << "call_tag," << endl
+	<< " return_acks => " << prefix << "return_acks," << endl;
+
+  if(in_args)
+    ofile << " call_data  => " << prefix << "call_data," << endl;
+
+  ofile << " call_tag  => " << prefix << "call_tag," << endl
 	<< " return_tag  => " << prefix << "return_tag," << endl
 	<< " call_in_tag => " << prefix << "tag_in," << endl
-	<< " call_out_tag => "<< prefix << "tag_out," << endl
-	<< " return_data =>" << prefix << "return_data," << endl
-	<< " call_start => " << prefix << "start," << endl
-	<< " call_fin => " << prefix << "fin," << endl
-	<< " call_in_args => " << prefix << "in_args," << endl
-	<< " call_out_args => " << prefix << "out_args," << endl
-	<< " clk => clk, " << endl
+	<< " call_out_tag => "<< prefix << "tag_out," << endl;
+
+  if(out_args)
+    ofile << " return_data =>" << prefix << "return_data," << endl;
+
+  ofile << " call_start => " << prefix << "start," << endl
+	<< " call_fin => " << prefix << "fin," << endl;
+  if(in_args)
+    ofile << " call_in_args => " << prefix << "in_args," << endl;
+  if(out_args)
+    ofile << " call_out_args => " << prefix << "out_args," << endl;
+  ofile << " clk => clk, " << endl
 	<< " reset => reset --}\n); --}" << endl;
 }
 

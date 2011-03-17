@@ -54,6 +54,11 @@ void AaRoot::Warning(string msg,AaRoot* r)
   AaRoot::_warning_flag = true;
 }
 
+void AaRoot::Info(string msg) 
+{
+  cerr << "Info: " << msg << endl;
+}
+
 bool AaRoot::Get_Error_Flag() { return AaRoot::_error_flag; }
 bool AaRoot::Get_Warning_Flag() { return AaRoot::_warning_flag; }
 

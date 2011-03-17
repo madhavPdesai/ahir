@@ -47,7 +47,9 @@ class AaProgram
   static std::map<int,set<AaRoot*> > _storage_eq_class_map;
   static std::map<int,set<AaModule*> > _storage_index_module_coverage_map;
   static std::map<int,AaMemorySpace*> _memory_space_map;
-
+  
+  // recoalesce set.
+  static set<AaObject*> _recoalesce_set;
 
   // modules should be printed in the order in which
   // they were encountered.
@@ -131,6 +133,8 @@ class AaProgram
   static void Write_VC_Modules(ostream& ofile);
 
   static AaMemorySpace* Get_Memory_Space(int idx);
+
+  static void Add_To_Recoalesce_Set(AaObject* obj);
 };
 
 

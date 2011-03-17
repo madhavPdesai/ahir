@@ -36,7 +36,7 @@ bool AaObject::Set_Addressed_Object_Representative(AaStorageObject* obj)
     {
       if(this->_addressed_object_representative == NULL)
 	{
-	  this->_addressed_object_representative == obj;
+	  this->_addressed_object_representative = obj;
 	  new_flag = true;
 	}
       else
@@ -50,6 +50,10 @@ bool AaObject::Set_Addressed_Object_Representative(AaStorageObject* obj)
   return(new_flag);
 }
 
+// basically a DFS: which visits each expression reachable from
+// this storage object.  Whenever another object a is encountered
+// and the addressed object ref of a is modified, a is added
+// to a re-coalesce set.
 void AaStorageObject::Coalesce_Storage()
 {
   // ask the expressions that depend on this
@@ -59,7 +63,8 @@ void AaStorageObject::Coalesce_Storage()
       iter++)
     {
       if((*iter)->Is_Expression())
-	((AaExpression*)(*iter))->Propagate_Addressed_Object_Representative(NULL);
+	((AaExpression*)(*iter))->
+	  Propagate_Addressed_Object_Representative(this->Get_Addressed_Object_Representative());
     }
 }
 
@@ -67,15 +72,7 @@ void AaObject::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
 {
   if(this->Set_Addressed_Object_Representative(obj))
     {
-      // propagate to all expressions that use this
-      // object as a source.
-      for(set<AaRoot*>::iterator iter = _source_references.begin();
-	  iter != _source_references.end();
-	  iter++)
-	{
-	  if((*iter)->Is_Expression())
-	    ((AaExpression*)(*iter))->Propagate_Addressed_Object_Representative(obj);
-	}
+      AaProgram::Add_To_Recoalesce_Set(this);
     }
 }
 

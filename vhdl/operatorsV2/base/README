@@ -1,0 +1,117 @@
+An implementation of all the data-path operators needed to 
+generate a VHDL netlist from a VC description. For book-keeping
+reasons, the control-path related elements are kept in the
+folder ../control-path
+
+There is some redundancy but this keeps things simpler.
+
+
+The operators are eponymous with the file-names
+	BranchBase.vhd
+		the branch operation
+	BypassRegister.vhd
+		a bypass register used to forward and store data
+
+The next eight are arbiters whose role is to
+provide arbitration between callers and a callee module.
+For historical reasons, there are two versions, a 
+unitary req/ack protocol version, and a split req/ack
+protocol version.
+	CallArbiterNoInargsNoOutargs.vhd
+	CallArbiterNoInArgs.vhd
+	CallArbiterNoOutArgs.vhd
+	CallArbiterUnitaryNoInargsNoOutargs.vhd
+	CallArbiterUnitaryNoInargs.vhd
+	CallArbiterUnitaryNoOutargs.vhd
+	CallArbiterUnitary.vhd
+	CallArbiter.vhd
+
+This is a piece of glue which helps implement the
+unitary call arbiter using the split call arbiters.
+	CallMediator.vhd
+
+Often, we need zero delay (combinational operators).
+This provides a generic implementation.
+	GenericCombinationalOperator.vhd
+
+An input data multiplexor which is used in many
+places
+	InputMuxBase.vhd
+	InputMuxBaseNoData.vhd
+		the same, but is a control mux, without
+		any data.
+
+Input port implementations
+	InputPortLevel.vhd
+		a level triggered ready-ready protocol version
+		used as an aggregator at the system level
+	InputPortLevelNoData.vhd
+		the no-data version
+	InputPortNoData.vhd
+		a no-data version of the input port.
+	InputPort.vhd
+		this is the basic input port 
+
+Load operators
+	LoadCompleteShared.vhd
+	LoadReqShared.vhd
+
+An output demultimexor, used in many places
+	OutputDemuxBase.vhd
+	OutputDemuxBaseNoData.vhd
+		the same, but is a control demultiplexor
+		with no data.
+
+Output port implementations (similar to the InputPorts)
+	OutputPortLevel.vhd
+	OutputPortLevelNoData.vhd
+	OutputPortNoData.vhd
+	OutputPort.vhd
+
+Phi Operators and a testbench
+	PhiBaseTB.vhd
+		this is just for testing.. could be removed.
+	PhiBase.vhd
+		the PHI implementation
+
+Pipe implementation (with depth generic)
+	PipeBase.vhd
+
+A testbench for checking port implementations
+	PortTB.vhd
+	PortTBWrap.vhd
+
+Resizing register implementation
+	RegisterBase.vhd
+		a single cycle delay
+	RepeaterBase.vhd
+		a double buffered repeater, to 
+		ensure full rate communication without
+		compromising combinational delay.
+
+The select operator
+	SelectBase.vhd
+
+A variable delay repeater
+	ShiftRepeaterBase.vhd
+
+The basic split req/ack operator
+	SplitOperatorBase.vhd
+		this follows a split protocol, but req/ack
+		are levels.
+
+A testbench for the SplitOperator
+	SplitOperatorSharedTB.vhd
+	SplitOperatorSharedTBWrap.vhd
+
+The shared split req/ack operator
+	SplitOperatorShared.vhd
+
+Store operators
+	StoreCompleteShared.vhd
+	StoreReqShared.vhd
+
+An unshared operator
+	UnsharedOperatorBase.vhd
+		this is almost identical to SplitOperatorBase,
+		but req/ack are pulses.

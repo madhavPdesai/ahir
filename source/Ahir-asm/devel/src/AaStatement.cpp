@@ -524,11 +524,22 @@ void AaAssignmentStatement::Print(ostream& ofile)
   this->Get_Source()->Print(ofile);
   if(this->Get_Target()->Get_Type())
     {
-      ofile <<" // type of target is ";
+      ofile <<" // target type -> ";
       this->Get_Target()->Get_Type()->Print(ofile);
+      ofile << ", memory spaces: source -> " 
+	    << 	(this->_source->Get_Addressed_Object_Representative() ?
+		 IntToStr(this->_source->
+			  Get_Addressed_Object_Representative()
+			  ->Get_Mem_Space_Index()) :
+		 "none")
+	    << ", target -> "
+	    << 	(this->_target->Get_Addressed_Object_Representative() ?
+		 IntToStr(this->_target->
+			  Get_Addressed_Object_Representative()->
+			  Get_Mem_Space_Index()) :
+		 "none");
     }
   ofile << endl;
-
 }
 void AaAssignmentStatement::Map_Source_References()
 {

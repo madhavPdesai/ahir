@@ -463,9 +463,6 @@ void AaObjectReference::Write_VC_Load_Store_Data_Path(AaExpression* address_expr
   string final_root_address_name = this->Get_VC_Driver_Name() + "_address";
 
 
-  if(address_expression != NULL)
-    address_expression->Write_VC_Datapath_Instances(NULL,ofile);
-
   bool scale_flag = (this->Get_Type()->Size() > this->Get_Word_Size());
   for(int idx = 0;
       idx < (this->Get_Type()->Size() / this->Get_Word_Size());

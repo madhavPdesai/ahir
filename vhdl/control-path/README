@@ -16,9 +16,8 @@ transition.
                 edge. If the transition is not supposed to wait for a
                 symbol, then the input is tied high.
 
-- operator-stub :: A stub that accepts a request pulse and returns an
+- control_delay_element :: A stub that accepts a request pulse and returns an
                    acknowledgement pulse after a configurable delay.
-                   To be used in the testbench for the control-path.
 
 This results in a zero-delay implementation, since the token is
 forwarded as soon as it arrives at a place, and a transition fires as

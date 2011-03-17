@@ -29,6 +29,16 @@ package BaseComponents is
       symbol_out : out boolean); 
   end component;
 
+  component control_delay_element 
+    generic (delay_value: integer := 0);
+    port (
+      req   : in Boolean;
+      ack   : out Boolean;
+      clk   : in  std_logic;
+      reset : in  std_logic);
+  end component;
+
+
   -----------------------------------------------------------------------------
   -- miscellaneous
   -----------------------------------------------------------------------------
@@ -326,6 +336,22 @@ package BaseComponents is
       clk, reset          : in std_logic);
   end component InputMuxBase;
 
+  component InputMuxBaseNoData 
+    generic ( twidth: integer;
+              nreqs: integer;
+              no_arbitration: Boolean);
+    port (
+      -- req/ack follow pulse protocol
+      reqL                 : in  BooleanArray(nreqs-1 downto 0);
+      ackL                 : out BooleanArray(nreqs-1 downto 0);
+      -- output side req/ack level protocol
+      reqR                 : out std_logic;
+      ackR                 : in  std_logic;
+      -- tag specifies the requester index 
+      tagR                : out std_logic_vector(twidth-1 downto 0);
+      clk, reset          : in std_logic);
+  end component InputMuxBaseNoData;
+
 
   component OutputDeMuxBase 
     generic(iwidth: integer;
@@ -347,6 +373,24 @@ package BaseComponents is
       ackR                : out  BooleanArray(nreqs-1 downto 0);
       -- dataR is array(n,m) 
       dataR               : out std_logic_vector(owidth-1 downto 0);
+      clk, reset          : in std_logic);
+  end component OutputDeMuxBase;
+
+  component OutputDeMuxBaseNoData
+    generic(twidth: integer;
+            nreqs: integer;
+            no_arbitration: Boolean);
+    port (
+      -- req/ack follow level protocol
+      reqL                 : in  std_logic;
+      ackL                 : out std_logic;
+      -- tag identifies index to which demux
+      -- should happen
+      tagL                 : in std_logic_vector(twidth-1 downto 0);
+      -- reqR/ackR follow pulse protocol
+      -- and are of length n
+      reqR                : in BooleanArray(nreqs-1 downto 0);
+      ackR                : out  BooleanArray(nreqs-1 downto 0);
       clk, reset          : in std_logic);
   end component OutputDeMuxBase;
 
@@ -626,8 +670,21 @@ package BaseComponents is
       oack       : in  std_logic;
       odata      : in  std_logic_vector(data_width-1 downto 0);
       clk, reset : in  std_logic);
-    
   end component InputPortLevel;
+
+
+  component InputPortLevelNoData 
+    generic (num_reqs: integer; 
+             no_arbitration: boolean);
+    port (
+      -- ready/ready interface with the requesters
+      req       : in  std_logic_vector(num_reqs-1 downto 0);
+      ack       : out std_logic_vector(num_reqs-1 downto 0);
+      -- ready/ready interface with outside world
+      oreq       : out std_logic;
+      oack       : in  std_logic;
+      clk, reset : in  std_logic);
+  end component;
 
 
   component OutputPort
@@ -658,6 +715,16 @@ package BaseComponents is
       clk, reset : in  std_logic);
   end component;
 
+  component OutputPortLevelNoData 
+    generic(num_reqs: integer;
+            no_arbitration: boolean);
+    port (
+      req       : in  std_logic_vector(num_reqs-1 downto 0);
+      ack       : out std_logic_vector(num_reqs-1 downto 0);
+      oreq       : out std_logic;
+      oack       : in  std_logic;
+      clk, reset : in  std_logic);
+  end component;
 
   -----------------------------------------------------------------------------
   -- load/store

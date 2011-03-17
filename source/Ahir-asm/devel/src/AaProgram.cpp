@@ -16,6 +16,8 @@ std::vector<AaModule*> AaProgram::_ordered_module_vector;
 std::map<int,set<AaModule*> > AaProgram::_storage_index_module_coverage_map;
 std::map<int,AaMemorySpace*> AaProgram::_memory_space_map;
 
+std::set<AaObject*> AaProgram::_recoalesce_set;
+
 AaGraphBase AaProgram::_call_graph;
 AaUGraphBase AaProgram::_type_dependency_graph;
 AaUGraphBase AaProgram::_storage_dependency_graph;
@@ -357,6 +359,15 @@ void AaProgram::Add_Storage_Dependency_Graph_Vertex(AaRoot* u)
   AaProgram::_storage_dependency_graph.Add_Vertex(u);
 }
 
+// try to identify sets of objects which must reside in the
+// same memory space.
+//
+// the algorithm uses a DFS starting from the storage
+// objects and propagating through dependencies (expressions)
+// each expression or object has a representative pointer.
+// And as the DFS proceeds, edges are introduced between
+// storage objects.  Connected components in the storage
+// dependency graph correspond to memory spaces.
 void AaProgram::Coalesce_Storage()
 {
   // basically a DFS starting from the storage objects (at each level in the program)
@@ -375,6 +386,14 @@ void AaProgram::Coalesce_Storage()
       (*miter).second->Coalesce_Storage();
     }
 
+  while(AaProgram::_recoalesce_set.size() > 0)
+    {
+      AaObject* top_obj = *(AaProgram::_recoalesce_set.begin());
+      AaProgram::_recoalesce_set.erase(top_obj);
+      AaRoot::Info("Recoalescing from " + top_obj->Get_Name());
+
+      top_obj->Coalesce_Storage();
+    }
 
   int num_comps = AaProgram::_storage_dependency_graph.Connected_Components(AaProgram::_storage_eq_class_map);
   for(int idx = 0; idx < AaProgram::_storage_eq_class_map.size(); idx++)
@@ -531,6 +550,10 @@ AaMemorySpace* AaProgram::Get_Memory_Space(int idx)
 
 }
 
+void AaProgram::Add_To_Recoalesce_Set(AaObject* obj)
+{
+  AaProgram::_recoalesce_set.insert(obj);
+}
 void AaProgram::Write_VC_Constant_Declarations(ostream& ofile)
 {
   for(map<string,AaObject*,StringCompare>::iterator iter = AaProgram::_objects.begin();
