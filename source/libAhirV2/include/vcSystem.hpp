@@ -37,6 +37,8 @@ class vcSystem: public vcRoot
   vcSystem(string id);
   virtual void Print(ostream& ofile);
 
+  static int _register_bank_threshold;
+
   void Register_Pipe_Read(string pipe_id, vcModule* m, int idx)
   {
     ((_pipe_read_map[pipe_id])[m]).push_back(idx);

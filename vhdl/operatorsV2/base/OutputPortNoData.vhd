@@ -25,9 +25,6 @@ architecture Base of OutputPortNoData is
   signal reqF, reqFreg  : std_logic_vector(num_reqs-1 downto 0);
   signal req_fsm_state  : std_logic;
 
-  type   OPWArray is array(integer range <>) of std_logic_vector(data_width-1 downto 0);
-  signal data_array : OPWArray(num_reqs-1 downto 0);
-
   
 begin
 

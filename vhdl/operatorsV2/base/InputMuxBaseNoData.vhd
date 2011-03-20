@@ -38,8 +38,6 @@ architecture Behave of InputMuxBaseNoData is
 begin  -- Behave
 
 
-  assert(iwidth = owidth*nreqs) report "mismatched i/o widths in InputMuxBase" severity error;
-
   -----------------------------------------------------------------------------
   -- pulse to level translate
   -----------------------------------------------------------------------------

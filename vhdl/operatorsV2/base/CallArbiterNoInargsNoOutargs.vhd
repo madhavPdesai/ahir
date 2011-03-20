@@ -47,7 +47,7 @@ begin
    ----------------------------------------------------------------------------
    -- combinational process to handle call_reqs  --> call_mreq muxing
    ----------------------------------------------------------------------------
-   process(pe_call_reqs, call_data, call_mack)
+   process(pe_call_reqs,call_mack)
      variable there_is_a_call : std_logic;
      variable out_tag : std_logic_vector(tag_length-1 downto 0);
    begin

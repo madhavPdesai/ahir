@@ -79,7 +79,8 @@ class AaObject: public AaRoot
 
   bool Set_Addressed_Object_Representative(AaStorageObject* obj);
   void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
-  virtual void Coalesce_Storage() {};
+  void Coalesce_Storage();
+
   AaStorageObject* Get_Addressed_Object_Representative() 
     {
       return(this->_addressed_object_representative);
@@ -160,7 +161,6 @@ class AaStorageObject: public AaObject
   void Set_Address_Width(int a) { _address_width = a; }
   int Get_Address_Width() {return(_address_width);}
 
-  virtual void Coalesce_Storage();
 
 
   // todo: this is the same as object, but keep it here

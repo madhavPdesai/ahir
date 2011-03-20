@@ -375,7 +375,8 @@ void AaProgram::Coalesce_Storage()
       obj_iter != _objects.end();
       obj_iter++)
     {
-      (*obj_iter).second->Coalesce_Storage();
+      if(((*obj_iter).second)->Is("AaStorageObject"))
+	((*obj_iter).second)->Coalesce_Storage();
     }
 
 
@@ -448,7 +449,7 @@ void AaProgram::Coalesce_Storage()
       int base_address = 0;
       int addr_width = CeilLog2((total_size/word_size)-1);
 
-      new_ms->_total_size = total_size;
+      new_ms->_total_size = (total_size/word_size);
       new_ms->_word_size = word_size;
       new_ms->_address_width = addr_width;
       new_ms->_max_access_width = max_access_width;

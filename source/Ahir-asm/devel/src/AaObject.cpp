@@ -51,10 +51,10 @@ bool AaObject::Set_Addressed_Object_Representative(AaStorageObject* obj)
 }
 
 // basically a DFS: which visits each expression reachable from
-// this storage object.  Whenever another object a is encountered
+// this object.  Whenever another object a is encountered
 // and the addressed object ref of a is modified, a is added
 // to a re-coalesce set.
-void AaStorageObject::Coalesce_Storage()
+void AaObject::Coalesce_Storage()
 {
   // ask the expressions that depend on this
   // to propagate storage object references..

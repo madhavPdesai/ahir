@@ -1229,13 +1229,13 @@ void AaPointerDereferenceExpression::Write_VC_Wire_Declarations_As_Target(ostrea
 void AaPointerDereferenceExpression::Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source)
 {
   this->Write_VC_Store_Data_Path(this->_reference_to_object,
-				 source,
+				 ((source != NULL) ? source : this),
 				 ofile);
 }
 void AaPointerDereferenceExpression::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
 { 
   this->Write_VC_Load_Data_Path(this->_reference_to_object,
-				target,
+				((target != NULL) ? target : this),
 				ofile);
 }
 void AaPointerDereferenceExpression::Write_VC_Links(string hier_id, ostream& ofile)

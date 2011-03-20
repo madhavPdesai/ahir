@@ -756,7 +756,7 @@ void vcDataPath::Print_VHDL_Equivalence_Instances(ostream& ofile)
       for(int idx = 0; idx < s->_outwires.size(); idx++)
 	{
 	  ofile << s->_outwires[idx]->Get_VHDL_Id() 
-		<< " <= aggregate_sig("
+		<< " <= aggregated_sig("
 		<< top_index
 		<< " downto "
 		<< (top_index - s->_outwires[idx]->Get_Size())+1
@@ -1773,27 +1773,31 @@ string vcDataPath::Print_VHDL_Memory_Interface_Port_Map(string comma, ostream& o
     {
       ms = (*iter);
 
-      int hindex, lindex;
-      if(ms->Get_Caller_Module_Section(parent_module,"load",hindex,lindex))
+      if(ms->Get_Scope() == NULL) // only if ms is at the system level
 	{
-	  ofile << comma << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_req") << " => " <<
-	    ms->Get_Aggregate_Section("lr_req", hindex, lindex) << "," << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_ack") << " => " <<
-	    ms->Get_Aggregate_Section("lr_ack", hindex, lindex) << "," << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_addr") << " => " << 
-	    ms->Get_Aggregate_Section("lr_addr", hindex, lindex) << "," << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_tag") << " => " << 
-	    ms->Get_Aggregate_Section("lr_tag", hindex, lindex) << "," << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_req") << " => " << 
-	    ms->Get_Aggregate_Section("lc_req", hindex, lindex)<< "," << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_ack") << " => " << 
-	    ms->Get_Aggregate_Section("lc_ack", hindex, lindex)<< "," << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_data") << " => " << 
-	    ms->Get_Aggregate_Section("lc_data", hindex, lindex)<< "," << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_tag") << " => " << 
-	    ms->Get_Aggregate_Section("lc_tag", hindex, lindex);
-	  comma = ",";
+	  // if ms is not inside this module, then print a port map..
+	  int hindex, lindex;
+	  if(ms->Get_Caller_Module_Section(parent_module,"load",hindex,lindex))
+	    {
+	      ofile << comma << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_req") << " => " <<
+		ms->Get_Aggregate_Section("lr_req", hindex, lindex) << "," << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_ack") << " => " <<
+		ms->Get_Aggregate_Section("lr_ack", hindex, lindex) << "," << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_addr") << " => " << 
+		ms->Get_Aggregate_Section("lr_addr", hindex, lindex) << "," << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_tag") << " => " << 
+		ms->Get_Aggregate_Section("lr_tag", hindex, lindex) << "," << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_req") << " => " << 
+		ms->Get_Aggregate_Section("lc_req", hindex, lindex)<< "," << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_ack") << " => " << 
+		ms->Get_Aggregate_Section("lc_ack", hindex, lindex)<< "," << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_data") << " => " << 
+		ms->Get_Aggregate_Section("lc_data", hindex, lindex)<< "," << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_tag") << " => " << 
+		ms->Get_Aggregate_Section("lc_tag", hindex, lindex);
+	      comma = ",";
+	    }
 	}
     }
   
@@ -1813,27 +1817,30 @@ string vcDataPath::Print_VHDL_Memory_Interface_Port_Map(string comma, ostream& o
     {
       ms = (*iter);
 
-      int hindex, lindex;
-      if(ms->Get_Caller_Module_Section(parent_module,"store",hindex,lindex))
+      if(ms->Get_Scope() == NULL) // only if ms is at the system level
 	{
-	  ofile << comma << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_req") << " => " <<
-	    ms->Get_Aggregate_Section("sr_req", hindex, lindex) << "," << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_ack") << " => " <<
-	    ms->Get_Aggregate_Section("sr_ack", hindex, lindex) << "," << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_addr") << " => " << 
-	    ms->Get_Aggregate_Section("sr_addr", hindex, lindex) << "," << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_data") << " => " << 
-	    ms->Get_Aggregate_Section("sr_data", hindex, lindex)<< "," << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_tag") << " => " << 
-	    ms->Get_Aggregate_Section("sr_tag", hindex, lindex) << "," << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_req") << " => " << 
-	    ms->Get_Aggregate_Section("sc_req", hindex, lindex)<< "," << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_ack") << " => " << 
-	    ms->Get_Aggregate_Section("sc_ack", hindex, lindex)<< "," << endl;
-	  ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_tag") << " => " << 
-	    ms->Get_Aggregate_Section("sc_tag", hindex, lindex);
-	  comma = ",";
+	  int hindex, lindex;
+	  if(ms->Get_Caller_Module_Section(parent_module,"store",hindex,lindex))
+	    {
+	      ofile << comma << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_req") << " => " <<
+		ms->Get_Aggregate_Section("sr_req", hindex, lindex) << "," << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_ack") << " => " <<
+		ms->Get_Aggregate_Section("sr_ack", hindex, lindex) << "," << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_addr") << " => " << 
+		ms->Get_Aggregate_Section("sr_addr", hindex, lindex) << "," << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_data") << " => " << 
+		ms->Get_Aggregate_Section("sr_data", hindex, lindex)<< "," << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_tag") << " => " << 
+		ms->Get_Aggregate_Section("sr_tag", hindex, lindex) << "," << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_req") << " => " << 
+		ms->Get_Aggregate_Section("sc_req", hindex, lindex)<< "," << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_ack") << " => " << 
+		ms->Get_Aggregate_Section("sc_ack", hindex, lindex)<< "," << endl;
+	      ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_tag") << " => " << 
+		ms->Get_Aggregate_Section("sc_tag", hindex, lindex);
+	      comma = ",";
+	    }
 	}
     }
   return(comma);

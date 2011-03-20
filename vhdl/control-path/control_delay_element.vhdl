@@ -45,7 +45,7 @@ begin  -- default_arch
       else
         case state_sig is
           when '0' =>
-            if(req = '1') then
+            if req  then
               next_state_sig := '1';
             end if;
           when others =>

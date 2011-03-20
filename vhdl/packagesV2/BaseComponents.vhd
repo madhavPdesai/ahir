@@ -392,7 +392,7 @@ package BaseComponents is
       reqR                : in BooleanArray(nreqs-1 downto 0);
       ackR                : out  BooleanArray(nreqs-1 downto 0);
       clk, reset          : in std_logic);
-  end component OutputDeMuxBase;
+  end component OutputDeMuxBaseNoData;
 
 
   -----------------------------------------------------------------------------
@@ -433,7 +433,6 @@ package BaseComponents is
 
   component CallArbiterNoInargs
     generic(num_reqs: integer;
-            call_data_width: integer;
             return_data_width: integer;
             tag_length: integer);
     port ( -- ready/ready handshake on all ports

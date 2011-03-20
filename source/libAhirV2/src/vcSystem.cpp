@@ -10,6 +10,10 @@
 
 bool vcSystem::_error_flag = false;
 
+// if there are at most 16 addressable locations in a memory space, make
+// it a register bank (instead of a memory subsystem)
+int vcSystem::_register_bank_threshold = 16;
+
 vcSystem::vcSystem(string id):vcRoot(id)
 {
 }

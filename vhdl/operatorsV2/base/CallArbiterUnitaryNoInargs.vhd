@@ -15,7 +15,7 @@ use ahir.BaseComponents.all;
 -- arbiter registers the caller tag and returns it when
 -- the current call has finished.
 --
-entity CallArbiterUnitaryNoInargs.vhd is
+entity CallArbiterUnitaryNoInargs is
   generic(num_reqs: integer;
 	  return_data_width: integer;
 	  caller_tag_length: integer;
@@ -39,13 +39,12 @@ entity CallArbiterUnitaryNoInargs.vhd is
     call_out_tag : in  std_logic_vector(callee_tag_length-1 downto 0);
     clk: in std_logic;
     reset: in std_logic);
-end CallArbiterUnitaryNoInargs.vhd;
+end CallArbiterUnitaryNoInargs;
 
 
-architecture Struct of CallArbiterUnitaryNoInargs.vhd is
+architecture Struct of CallArbiterUnitaryNoInargs is
   signal call_acks_sig : std_logic_vector(num_reqs-1 downto 0);
   signal call_mreq, call_mack: std_logic;
-  signal call_mdata : std_logic_vector(call_data_width-1 downto 0);
   signal call_mtag : std_logic_vector(callee_tag_length-1 downto 0);
   signal return_mreq, return_mack: std_logic;
   signal return_mdata : std_logic_vector(return_data_width-1 downto 0);
@@ -83,7 +82,6 @@ begin
              call_acks => call_acks_sig,
              call_mreq => call_mreq,
              call_mack => call_mack,
-             call_mdata => call_mdata,
              call_mtag => call_mtag,
              return_reqs => return_reqs,
              return_acks => return_acks,

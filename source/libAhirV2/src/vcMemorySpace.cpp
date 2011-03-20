@@ -3,6 +3,7 @@
 #include <vcObject.hpp>
 #include <vcModule.hpp>
 #include <vcMemorySpace.hpp>
+#include <vcSystem.hpp>
 
 vcMemorySpace::vcMemorySpace(string id, vcModule* m):vcRoot(id)
 {
@@ -231,7 +232,7 @@ string vcMemorySpace::Get_Aggregate_Section(string pid, int hindex, int lindex)
 
 void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 {
-  if((this->Get_Capacity()/this->Get_Word_Size()) <= 16)
+  if(this->Get_Capacity() <= vcSystem::_register_bank_threshold)
     {
       // instantiate a register bank..
       ofile << "RegisterBank_" << this->Get_VHDL_Id() << ": register_bank -- {" << endl;
