@@ -49,7 +49,7 @@ class AaObject: public AaRoot
   {
     ofile << tab_string << this->Get_Type()->CName() 
 	  << " " 
-	  <<  this->Get_Name()
+	  << this->Get_Name()
 	  << this->Get_Type()->CDim();
     ofile << ";" << endl;
   }
@@ -173,22 +173,12 @@ class AaStorageObject: public AaObject
   
   void Write_VC_Load_Store_Constants(ostream& ofile);
 
-  int Get_Offset_Scale_Factor();
 
   string Get_VC_Base_Address_Name()
   {
     return(this->Get_VC_Name() + "_base_address");
   }
 
-  string Get_VC_Offset_Scale_Factor_Name() 
-  {
-    return(this->Get_VC_Name() + "_offset_scale_factor");
-  }
-
-  string Get_VC_Word_Offset_Name(int idx)
-  {
-    return(this->Get_VC_Name() + "_word_offset_" + IntToStr(idx));
-  }
 
 };
 

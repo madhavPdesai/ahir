@@ -6,7 +6,7 @@
 #include <AaRoot.h>
 #include <AaScope.h>
 
-
+class AaExpression;
 /*****************************************  TYPE ****************************/
 
 class AaType: public AaRoot
@@ -30,7 +30,12 @@ class AaType: public AaRoot
   virtual bool Is_Uinteger_Type() {return(false);}
   virtual bool Is_Float_Type() {return(false);}
   virtual bool Is_Array_Type() {return(false);}
+  virtual bool Is_Record_Type() {return(false);}
   virtual bool Is_Pointer_Type() {return(false);}
+  virtual bool Is_Composite_Type()
+  {
+    return(Is_Array_Type() || Is_Record_Type());
+  }
 
   virtual bool Is_Scalar_Type() {return (Is_Integer_Type() || Is_Float_Type());}
   
@@ -38,6 +43,10 @@ class AaType: public AaRoot
   virtual int Number_Of_Elements() {return(1);}
 
   virtual int Get_Data_Width() {assert(0);}
+
+  virtual AaType* Get_Element_Type(int idx) {assert(0);}
+  virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices) {assert(0);}
+
   virtual string CPointerDereference()
   {
     return("*");
@@ -155,6 +164,7 @@ class AaPointerType: public AaUintType
     return(this->AaUintType::Get_VC_Name());
   }
   virtual bool Is_Pointer_Type() {return(true);}
+  virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
 };
 
 
@@ -211,8 +221,8 @@ class AaArrayType: public AaType
   // multi-dimensional array types are possible
   vector<unsigned int> _dimension;
   
-  // element type is a scalar
-  AaScalarType* _element_type;
+  // element type..
+  AaType* _element_type;
  
  public:
 
@@ -220,9 +230,10 @@ class AaArrayType: public AaType
   vector<unsigned int>& Get_Dimension_Vector() {return(this->_dimension);}
 
   unsigned int Get_Number_Of_Dimensions() {return(this->_dimension.size());}
-  AaType* Get_Element_Type() {return(this->_element_type);}
+  virtual AaType* Get_Element_Type() {return(this->_element_type);}
+  virtual AaType* Get_Element_Type(int idx); // idx ranges from 0 to _dimension.size()-1
 
-  AaArrayType(AaScope* scope, AaScalarType* stype, vector<unsigned int>& dimensions);
+  AaArrayType(AaScope* scope, AaType* etype, vector<unsigned int>& dimensions);
   ~AaArrayType();
 
   unsigned int Get_Dimension(unsigned int dim_id);
@@ -281,7 +292,6 @@ class AaArrayType: public AaType
 	    this->Get_Element_Type()->Get_VC_Name());
   }
 
-
   virtual string CPointerDereference()
   {
     string ret_string = this->Get_Element_Type()->CPointerDereference();
@@ -290,6 +300,70 @@ class AaArrayType: public AaType
     return(ret_string);
   }
 
+
+  virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
+
 };
+
+
+class AaRecordType: public AaType
+{
+  vector<AaType*> _element_types;
+public:
+  virtual bool Is_Record_Type() {return(true);}
+  AaRecordType(AaScope* s, vector<AaType*>& element_types):AaType(s)
+    {
+      _element_types = element_types;
+    }
+
+  void Print(ostream& ofile)
+  {
+    ofile << "$record ";
+    for(int idx = 0; idx < _element_types.size(); idx++)
+      {
+	ofile << "< ";
+	_element_types[idx]->Print(ofile);
+	ofile << " >";
+      }
+  }
+
+  virtual string Kind() { return("AaRecordType"); }
+  virtual int Size() 
+  { 
+    int ret_val = 0;
+    for(int i = 0; i < this->_element_types.size(); i++)
+      ret_val += this->_element_types[i]->Size();
+    return(ret_val);
+  }
+
+  virtual AaType* Get_Element_Type(int idx) {return(this->_element_types[idx]);}
+  int Get_Number_Of_Elements() {return(this->_element_types.size());}
+
+  virtual void Fill_LAU_Set(set<int>& s) 
+  {
+    for(int idx = 0; idx < this->_element_types.size(); idx++)
+      {
+	if(this->_element_types[idx]->Is_Scalar_Type())
+	  s.insert(this->Get_Element_Type(idx)->Size());
+	else
+	  this->_element_types[idx]->Fill_LAU_Set(s);
+      }
+  }
+  
+  int Get_Data_Width(int idx) 
+  {
+    return(this->Get_Element_Type(idx)->Get_Data_Width());
+  }
+
+
+  virtual string CName() 
+  {
+    return("Struct_" + Int64ToStr(this->Get_Index()));
+  }  
+
+
+  virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
+};
+
 
 #endif

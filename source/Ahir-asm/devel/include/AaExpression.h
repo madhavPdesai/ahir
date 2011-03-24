@@ -171,9 +171,12 @@ class AaObjectReference: public AaExpression
   ~AaObjectReference();
   virtual void Print(ostream& ofile);
   virtual string Get_Object_Ref_String() {return(this->_object_ref_string);}
+  AaType* Get_Address_Type(vector<AaExpression*>* );
 
   virtual void Set_Object(AaRoot* obj) {this->_object = obj;}
   virtual AaRoot* Get_Object() { return(this->_object);}
+  AaType* Get_Object_Type();
+  virtual int Evaluate(vector<AaExpression*>* indices, vector<int>* scale_factors);
   virtual void Add_Hier_Id(string hier_id) {this->_hier_ids.push_back(hier_id);}
   virtual void Set_Object_Root_Name(string orn) {this->_object_root_name = orn; }
   virtual string Get_Object_Root_Name() {return(this->_object_root_name);}
@@ -198,66 +201,118 @@ class AaObjectReference: public AaExpression
   virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
 
   // common operations across loads/stores.
-  void Write_VC_Load_Control_Path(AaExpression* address_expression,
+  void Write_VC_Load_Control_Path(vector<AaExpression*>* address_expressions,
+				  vector<int>* scale_factors,
 				  ostream& ofile);
-
-  void Write_VC_Store_Control_Path(AaExpression* address_expression,
+  
+  void Write_VC_Store_Control_Path(vector<AaExpression*>* address_expressions,
+				  vector<int>* scale_factors,
 				   ostream& ofile);
 
-  void Write_VC_Load_Store_Constants(AaExpression* address_expression,
-				ostream& ofile);
+  void Write_VC_Load_Store_Constants(vector<AaExpression*>* address_expressions,
+				     vector<int>* scale_factors,
+				     ostream& ofile);
 
-  void Write_VC_Load_Store_Wires(AaExpression* address_expression,
+  void Write_VC_Load_Store_Wires(vector<AaExpression*>* address_expressions,
+				 vector<int>* scale_factors,
 				 ostream& ofile);
 
 
-  void Write_VC_Load_Data_Path(AaExpression* address_expression,
+  void Write_VC_Load_Data_Path(vector<AaExpression*>* address_expressions,
+			       vector<int>* scale_factors,
 			       AaExpression* target,
 			       ostream& ofile);
 
-  void Write_VC_Store_Data_Path(AaExpression* address_expression,
+  void Write_VC_Store_Data_Path(vector<AaExpression*>* address_expressions,
+				vector<int>* scale_factors,
 				AaExpression* source,
 				ostream& ofile);
 
-
   void Write_VC_Load_Links(string hier_id,
-			   AaExpression* address_expression,
+			   vector<AaExpression*>* address_expressions,
+			   vector<int>* scale_factors,
 			   ostream& ofile);
 
   void Write_VC_Store_Links(string hier_id,
-			    AaExpression* address_expression,
+			    vector<AaExpression*>* address_expressions,
+			    vector<int>* scale_factors,
 			    ostream& ofile);
 
-  void Write_VC_Address_Calculation_Control_Path(AaExpression* address_expression, 
-					      ostream& ofile);
-  void Write_VC_Load_Store_Control_Path(AaExpression* address_expression, 
+
+  void Write_VC_Load_Store_Control_Path(vector<AaExpression*>* address_expressions,
+					vector<int>* scale_factors,
 					string read_or_write,
 					ostream& ofile);
 
-  void Write_VC_Address_Calculation_Data_Path(AaExpression* address_expression, 
-					      ostream& ofile);
 
-  void Write_VC_Load_Store_Data_Path(AaExpression* address_expression, 
+  void Write_VC_Load_Store_Data_Path(vector<AaExpression*>* address_expressions,
+				     vector<int>* scale_factors,
 				     AaExpression* data_expression,
 				     string read_or_write,  
 				     ostream& ofile);
 
-  void Write_VC_Address_Calculation_Links(string hier_id,
-					  AaExpression* address_expression, 
-					  ostream& ofile);
-
   void Write_VC_Load_Store_Links(string hier_id,
 				 string read_or_write,
-				 AaExpression* address_expression, 
+				 vector<AaExpression*>* address_expressions,
+				 vector<int>* scale_factors,
 				 ostream& ofile);
+
+
+
+  void Write_VC_Address_Calculation_Constants(vector<AaExpression*>* address_expressions,
+					      vector<int>* scale_factors,
+					      ostream& ofile);
+  void Write_VC_Address_Calculation_Wires(vector<AaExpression*>* address_expressions,
+					  vector<int>* scale_factors,
+					  ostream& ofile);
+  void Write_VC_Address_Calculation_Control_Path(vector<AaExpression*>* address_expressions,
+						 vector<int>* scale_factors,
+						 ostream& ofile);
+  void Write_VC_Address_Calculation_Data_Path(vector<AaExpression*>* address_expressions,
+					      vector<int>* scale_factors,
+					      ostream& ofile);
+  void Write_VC_Address_Calculation_Links(string hier_id,
+					  vector<AaExpression*>* address_expressions,
+					  vector<int>* scale_factors,
+					  ostream& ofile);
+
+
+
+  void Write_VC_Root_Address_Calculation_Constants(vector<AaExpression*>* indices,
+						   vector<int>* scale_factors,
+						   ostream& ofile);
+  void Write_VC_Root_Address_Calculation_Wires(vector<AaExpression*>* indices,
+							vector<int>* scale_factors,
+							ostream& ofile);
+  void Write_VC_Root_Address_Calculation_Control_Path(vector<AaExpression*>* indices,
+						      vector<int>* scale_factors,
+						      ostream& ofile);
+  //todo
+  void Write_VC_Root_Address_Calculation_Data_Path(vector<AaExpression*>* indices,
+						   vector<int>* scale_factors,
+						   ostream& ofile);
+  //todo
+  void Write_VC_Root_Address_Calculation_Links(string hier_id,
+					       vector<AaExpression*>* indices,
+					       vector<int>* scale_factors,
+					       ostream& ofile);
+
+
 
   virtual string Get_VC_Memory_Space_Name();
   virtual int Get_Base_Address();
-  virtual int Get_Word_Size();
   virtual int Get_Address_Width();
+  virtual int Get_Word_Size();
   virtual string Get_VC_Base_Address_Name();
-  virtual string Get_VC_Offset_Scale_Factor_Name();
+  virtual string Get_VC_Word_Address_Name(int idx);
+
+  virtual string Get_VC_Offset_Name();
+  virtual string Get_VC_Offset_Constant_Part_Name();
+  virtual string Get_VC_Root_Address_Name();
   virtual string Get_VC_Word_Offset_Name(int idx);
+  virtual string Get_VC_Offset_Scale_Factor_Name(int idx);
+  virtual AaType* Get_Base_Address_Type();
+
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
@@ -269,6 +324,7 @@ class AaConstantLiteralReference: public AaObjectReference
 			     string literal_string,  
 			     vector<string>& literals);
   ~AaConstantLiteralReference();
+  vector<string>& Get_Literals() {return(_literals);}
   virtual string Kind() {return("AaConstantLiteralReference");}
   virtual void Map_Source_References(set<AaRoot*>& source_objects) {} // do nothing
   virtual void PrintC(ofstream& ofile, string tab_string);
@@ -304,6 +360,7 @@ class AaSimpleObjectReference: public AaObjectReference
   virtual bool Is_Implicit_Variable_Reference();
   virtual bool Is_Implicit_Object();
 
+
   virtual void Evaluate();
 
   virtual string Get_VC_Constant_Name();
@@ -322,6 +379,8 @@ class AaSimpleObjectReference: public AaObjectReference
   string Get_VC_Name() {return("simple_obj_ref_" + Int64ToStr(this->Get_Index()));}
   virtual void Print_AddressOf_C(ofstream& ofile, string tab_string);
   virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string);
+
+  virtual void Update_Type();
 };
 
 
@@ -329,11 +388,16 @@ class AaSimpleObjectReference: public AaObjectReference
 // array object reference
 class AaArrayObjectReference: public AaObjectReference
 {
+
   // indices will in general be expressions
   vector<AaExpression*> _indices;
 
  public:
-   unsigned int Get_Number_Of_Indices() {return this->_indices.size();}
+
+  vector<AaExpression*>* Get_Index_Vector() {return(&(_indices));}
+
+
+  unsigned int Get_Number_Of_Indices() {return this->_indices.size();}
 
   // note: base object and all elements of index_list become children
   AaArrayObjectReference(AaScope* scope_tpr,
@@ -355,6 +419,8 @@ class AaArrayObjectReference: public AaObjectReference
   virtual string Kind() {return("AaArrayObjectReference");}
   virtual void Map_Source_References(set<AaRoot*>& source_objects); // important
   virtual void PrintC(ofstream& ofile, string tab_string);
+
+  void Update_Address_Scaling_Factors(vector<int>& scale_factors,int word_size);
 
   virtual void Write_VC_Control_Path( ostream& ofile);
   void Write_VC_Address_Gen_Control_Path(ostream& ofile);
@@ -378,6 +444,9 @@ class AaArrayObjectReference: public AaObjectReference
   string Get_VC_Name() {return("array_obj_ref_" + Int64ToStr(this->Get_Index()));}
   virtual void Print_AddressOf_C(ofstream& ofile, string tab_string);
   virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string);
+  virtual void Update_Type();
+  virtual int Get_Base_Address();
+
 };
 
 
@@ -414,13 +483,9 @@ class AaPointerDereferenceExpression: public AaObjectReference
   virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
 
   virtual string Get_VC_Name() {return("ptr_deref_" + Int64ToStr(this->Get_Index()));}
-  virtual int Get_Base_Address() {return (0); }
-  virtual string Get_VC_Base_Address_Name() {return("");}
   virtual string Get_VC_Memory_Space_Name();
   virtual int Get_Word_Size();
   virtual int Get_Address_Width();
-  virtual string Get_VC_Offset_Scale_Factor_Name();
-  virtual string Get_VC_Word_Offset_Name(int idx);
 };
 
 

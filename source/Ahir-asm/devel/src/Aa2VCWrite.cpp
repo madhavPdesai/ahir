@@ -1,6 +1,26 @@
 #include <AaProgram.h>
 #include <Aa2VC.h>
 
+void Write_VC_Equivalence_Operator(string inst_name,
+				   string input,
+				   string output,
+				   ostream& ofile)
+{
+  vector<string> i; i.push_back(input);
+  vector<string> o; o.push_back(output);
+  Write_VC_Equivalence_Operator(inst_name,i,o,ofile);
+}
+
+void Write_VC_Constant_Declaration(string wire_name, AaType* t, string initial_value,
+				   ostream& ofile)
+{
+  AaValue* v = Make_Aa_Value(NULL,t);
+  v->Set_Value(initial_value);
+  Write_VC_Constant_Declaration(wire_name, t, v, ofile);
+  delete v;
+}
+
+
 void Write_VC_Constant_Declaration(string wire_name, string type_name, string initial_value, 
 				   ostream& ofile)
 {

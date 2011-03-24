@@ -168,14 +168,15 @@ AaFloatType* AaProgram::Make_Float_Type(unsigned int c, unsigned int m)
     }
   return(ret_type);
 }
-AaArrayType* AaProgram::Make_Array_Type(AaScalarType* etype, vector<unsigned int>& dims)
+AaArrayType* AaProgram::Make_Array_Type(AaType* etype, vector<unsigned int>& dims)
 {
   AaArrayType* ret_type = NULL;
   string tid = "array";
   for(unsigned int i=0; i < dims.size(); i++)
-    tid += "<" + IntToStr(dims[i]) + ">";
+    tid += "[" + IntToStr(dims[i]) + "]";
   tid += " of ";
-  etype->Print(tid);
+  tid += Int64ToStr(etype->Get_Index());
+
   std::map<string,AaType*,StringCompare>::iterator titer = AaProgram::_type_map.find(tid);
   if(titer != AaProgram::_type_map.end())
     ret_type = (AaArrayType*) (*titer).second;
@@ -190,7 +191,7 @@ AaArrayType* AaProgram::Make_Array_Type(AaScalarType* etype, vector<unsigned int
 AaPointerType* AaProgram::Make_Pointer_Type(AaType* ref_type)
 {
   AaPointerType* ret_type = NULL;
-  string tid = "pointer<" + ref_type->CName() + ">";
+  string tid = "pointer<" + Int64ToStr(ref_type->Get_Index()) + ">";
   std::map<string,AaType*,StringCompare>::iterator titer = AaProgram::_type_map.find(tid);
   if(titer != AaProgram::_type_map.end())
     ret_type = (AaPointerType*) (*titer).second;
@@ -201,6 +202,34 @@ AaPointerType* AaProgram::Make_Pointer_Type(AaType* ref_type)
     }
   return(ret_type);
 }
+
+AaRecordType* AaProgram::Make_Record_Type(vector<AaType*>& etypes)
+{
+  AaRecordType* ret_type = NULL;
+  string tid = "record<";
+  for(int idx = 0; idx < etypes.size(); idx++)
+    {
+      assert(etypes[idx]->Get_Index() > 0);
+      if(idx > 0)
+	tid += ",";
+      tid += IntToStr(etypes[idx]->Get_Index());
+    }
+  tid += ">";
+
+  std::map<string,AaType*>::iterator titer = AaProgram::_type_map.find(tid);
+  if(titer != AaProgram::_type_map.end())
+    {
+      assert((*titer).second->Is("AaRecordType"));
+      ret_type = (AaRecordType*) (*titer).second;
+    }
+  else
+    {
+      ret_type = new AaRecordType((AaScope*) NULL, etypes);
+      AaProgram::_type_map[tid] = ret_type;
+    }
+  return(ret_type);
+}
+
 void AaProgram::Init_Call_Graph()
 {
   string prog_name = "program";

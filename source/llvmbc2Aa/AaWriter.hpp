@@ -43,10 +43,10 @@ namespace Aa {
 
     std::string get_name(llvm::Value* v);
 
-    virtual void Write_PHI_Node(llvm::PHINode& pnode) {};
-    virtual void write_function(llvm::Function &F) = 0;
     virtual void initialise_with_function(llvm::Function &F) = 0;
     virtual void finalise_function() = 0;
+
+    virtual void Write_PHI_Node(llvm::PHINode& pnode) {};
     virtual void visitBasicBlock(llvm::BasicBlock &BB) {};
     virtual void visitInstruction(llvm::Instruction &I);
     virtual void visitBinaryOperator(llvm::BinaryOperator &I) { visitInstruction(I); }

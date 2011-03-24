@@ -188,28 +188,8 @@ void AaStorageObject::Write_VC_Load_Store_Constants(ostream& ofile)
 				addr_type->Get_VC_Name(),
 				To_VC_String(this->Get_Base_Address(),addr_type->Size()),
 				ofile);
-
-  int words_per_access = (this->Get_Type()->Get_Data_Width())/this->Get_Word_Size();
-  
-  Write_VC_Constant_Declaration(this->Get_VC_Offset_Scale_Factor_Name(),
-				addr_type->Get_VC_Name(),
-				To_VC_String(words_per_access,addr_type->Size()),
-				ofile);
-
-  for(int idx= 0; idx < words_per_access; idx++)
-    {
-      Write_VC_Constant_Declaration(this->Get_VC_Word_Offset_Name(idx),
-				    addr_type->Get_VC_Name(),
-				    To_VC_String(idx,addr_type->Size()),
-				    ofile);
-    }
 }
 
-int AaStorageObject::Get_Offset_Scale_Factor()
-{
- int words_per_access = (this->Get_Type()->Get_Data_Width())/this->Get_Word_Size();
- return(words_per_access);
-}
 
 //---------------------------------------------------------------------
 // AaPipeObject

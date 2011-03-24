@@ -15,7 +15,7 @@ class AaValue: public AaRoot
   AaType* _type;
  public:
   AaScope* _scope;
-  AaValue(AaScope* scope);
+  AaValue(AaScope* scope,AaType* t);
   ~AaValue();
 
   virtual string Get_Value_String() {assert(0);}
@@ -27,6 +27,7 @@ class AaValue: public AaRoot
   virtual bool Is_FloatValue() {return(false);}
   virtual bool Is_StringValue() {return(false);}
   virtual bool Is_ArrayValue() {return(false);}
+  virtual bool Is_RecordValue() {return(false);}
 
   virtual string To_VC_String() {assert(0);} //todo
 
@@ -37,6 +38,9 @@ class AaValue: public AaRoot
 
   void Set_Type(AaType* t) {_type = t;}
   AaType* Get_Type() {return(_type);}
+
+  virtual unsigned int Eat(unsigned int init_id, vector<string>& init_vals) {assert(0);}
+  virtual AaValue* Get_Element(vector<int>& indices) { assert(0); }
 };
 
 
@@ -62,6 +66,13 @@ class AaIntValue: public AaValue
   IntValue* _value;
   AaIntValue(AaScope* s, int width);
   virtual void Set_Value(string format);
+  virtual unsigned int Eat(unsigned int init_id, vector<string>& init_vals) 
+  {
+    assert(init_id < init_vals.size());
+    Set_Value(init_vals[init_id]);
+    return(init_id + 1);
+  }
+
   void Assign(AaType* target_type, AaValue* expr_value);
 
   virtual string Kind() {return("AaIntValue");}
@@ -95,6 +106,13 @@ class AaFloatValue: public AaValue
   virtual string Kind() {return("AaFloatValue");}
   AaFloatValue(AaScope* s, int c, int m);
   void Assign(AaType* target_type, AaValue* expr_value);
+  virtual unsigned int Eat(unsigned int init_id, vector<string>& init_vals) 
+  {
+    assert(init_id < init_vals.size());
+    Set_Value(init_vals[init_id]);
+    return(init_id + 1);
+  }
+
 
   virtual void Set_Value(string format);
   virtual bool Is_FloatValue() {return(true);}
@@ -104,7 +122,10 @@ class AaFloatValue: public AaValue
   {
     return(this->_value->To_String());
   }
+
+
 };
+
 
 class AaArrayValue: public AaValue
 {
@@ -114,11 +135,12 @@ class AaArrayValue: public AaValue
   vector<AaValue*> _value_vector;
 
 
-  AaArrayValue(AaScope* s, AaType* element_type, vector<unsigned int>& dims);
-  void Assign(AaType* target_type, AaValue* expr_value);
+  AaArrayValue(AaScope* s, AaArrayType* at);
+  AaArrayValue(AaScope* s, AaArrayType* at,  vector<string>& init_values);
 
-  AaArrayValue(AaScope* s, int w, vector<unsigned int>& dims,  vector<string>& init_values);
-  AaArrayValue(AaScope* s, int c, int m, vector<unsigned int>& dims, vector<string>& init_values);
+  virtual unsigned int Eat(unsigned int init_id, vector<string>& init_vals);
+
+  void Assign(AaType* target_type, AaValue* expr_value);
   AaValue* Get_Element(vector<int>& indices);
   virtual bool Is_ArrayValue() {return(true);}
   virtual bool Equals(AaValue* other); 
@@ -135,6 +157,35 @@ class AaArrayValue: public AaValue
     ret_val += ")";
     return(ret_val);
   }
+};
+
+class AaRecordValue: public AaValue
+{
+ public:
+  vector<AaValue*> _value_vector;
+
+  virtual bool Is_RecordValue() {return(true);}
+  virtual unsigned int Eat(unsigned int init_id, vector<string>& init_vals);
+
+  virtual string Kind() {return("AaRecordValue");}
+  AaRecordValue(AaScope* s, AaRecordType* rt);
+  AaRecordValue(AaScope* s, AaRecordType* rt, vector<string>& init_values);
+
+  AaValue* Get_Element(vector<int>& indices);
+  virtual string To_VC_String()
+  {
+    string ret_val = "(";
+    for(int idx = 0; idx < _value_vector.size(); idx++)
+      {
+	if(idx > 0)
+	  ret_val += ",";
+	ret_val += this->_value_vector[idx]->To_VC_String();
+      }
+    ret_val += ")";
+    return(ret_val);
+  }
+  virtual bool Equals(AaValue* other); 
+  void Assign(AaType* target_type, AaValue* expr_value);
 };
 
 AaValue* Make_Aa_Value(AaScope* scope, AaType* t);

@@ -15,11 +15,11 @@ using namespace std;
 
 // *******************************************  VALUE ************************************
 // AaValue
-AaValue::AaValue(AaScope* parent):AaRoot() {this->_scope = parent;}
+AaValue::AaValue(AaScope* parent, AaType* t):AaRoot() {this->_scope = parent;_type = t;}
 AaValue::~AaValue() {};
 
 //AaStringValue
-AaStringValue::AaStringValue(AaScope* parent, string value): AaValue(parent) 
+AaStringValue::AaStringValue(AaScope* parent, string value): AaValue(parent,NULL) 
 {
   this->_value = value;
 };
@@ -33,7 +33,7 @@ bool AaStringValue::Equals(AaValue* other)
   return(other->Is("AaStringValue") && (other->Get_Value_String() == this->Get_Value_String()));
 
 }
-AaIntValue::AaIntValue(AaScope* s, int w):AaValue(s)
+AaIntValue::AaIntValue(AaScope* s, int w):AaValue(s,AaProgram::Make_Integer_Type((unsigned int) w))
 {
   _value = new IntValue(w);
 }
@@ -62,7 +62,8 @@ bool AaIntValue::Equals(AaValue* other)
 {
   return(other->Is("AaIntValue") && _value->Equal(*(((AaIntValue*)other)->_value)));
 }
-AaFloatValue::AaFloatValue(AaScope* s, int c, int m):AaValue(s)
+AaFloatValue::AaFloatValue(AaScope* s, int c, int m):
+  AaValue(s,AaProgram::Make_Float_Type((unsigned int)c, (unsigned int) m))
 {
   _value = new FloatValue(c,m);
 }
@@ -71,11 +72,12 @@ bool AaFloatValue::Equals(AaValue* other)
   return(other->Is("AaFloatValue") && _value->Equal(*(((AaFloatValue*)other)->_value)));
 }
 
- void AaFloatValue::Set_Value(string init_value)
+void AaFloatValue::Set_Value(string init_value)
 {
   FloatValue tmp(_value->_characteristic_width, _value->_mantissa_width, init_value);
   _value->Swap(tmp);
 }
+
 void AaFloatValue::Assign(AaType* target_type, AaValue* expr_value)
 {
   if(expr_value->Is("AaFloatValue"))
@@ -97,66 +99,45 @@ void AaFloatValue::Assign(AaType* target_type, AaValue* expr_value)
 	}
     }
 }
-AaArrayValue::AaArrayValue(AaScope* s, 
-			   int w, 
-			   vector<unsigned int>& dims,
-			   vector<string>& init_values):AaValue(s)
-{
-  _dimensions = dims;
-  
-  int total_length = 1;
-  for(int idx =0; idx < dims.size(); idx++)
-    total_length  *= dims[idx];
-  assert(total_length == init_values.size());
 
-  for(int idx = 0; idx < init_values.size(); idx++)
-    {
-      AaIntValue* new_val = new AaIntValue(s,w);
-      new_val->Set_Value(init_values[idx]);
-      _value_vector.push_back(new_val);
-    }
-}
-AaArrayValue::AaArrayValue(AaScope* s, 
-			   int c, 
-			   int m, 
-			   vector<unsigned int>& dims, 
-			   vector<string>& init_values):AaValue(s)
+
+AaArrayValue::AaArrayValue(AaScope* s, AaArrayType* at,  vector<string>& init_values):AaValue(s,at)
 {
-  _dimensions = dims;
+  _dimensions = at->Get_Dimension_Vector();
   
   int total_length = 1;
-  for(int idx =0; idx < dims.size(); idx++)
-    total_length  *= dims[idx];
-  assert(total_length == init_values.size());
+  for(int idx =0; idx < _dimensions.size(); idx++)
+    total_length  *= _dimensions[idx];
   
-  for(int idx = 0; idx < init_values.size(); idx++)
+  unsigned int init_id = 0;
+  for(int idx = 0; idx < total_length; idx++)
     {
-      AaFloatValue* new_val = new AaFloatValue(s,c,m);
-      new_val->Set_Value(init_values[idx]);
+      AaValue* new_val = Make_Aa_Value(s,at->Get_Element_Type());
+      init_id = new_val->Eat(init_id, init_values);
+
       _value_vector.push_back(new_val);
     }
 }
 
 
-AaArrayValue::AaArrayValue(AaScope* s, AaType* element_type, vector<unsigned int>& dims):AaValue(s)
+AaArrayValue::AaArrayValue(AaScope* s, AaArrayType* at):AaValue(s,at)
 {
-  _dimensions = dims;
+  _dimensions = at->Get_Dimension_Vector();
   int nelements = 1;
-  for(int idx = 0; idx < dims.size(); idx++)
-    nelements *= dims[idx];
+  for(int idx = 0; idx < _dimensions.size(); idx++)
+    nelements *= _dimensions[idx];
 
-  if(element_type->Is_Integer_Type())
+  for(int idx = 0; idx < nelements; idx++)
+    _value_vector.push_back(Make_Aa_Value(s,at->Get_Element_Type()));
+}
+
+unsigned int AaArrayValue::Eat(unsigned int init_id, vector<string>& init_vals)
+{
+  for(int idx = 0; idx < _value_vector.size(); idx++)
     {
-      for(int idx = 0; idx < nelements; idx++)
-	_value_vector.push_back(new AaIntValue(s,element_type->Size()));
+      init_id = _value_vector[idx]->Eat(init_id,init_vals);
     }
-  else if(element_type->Is_Float_Type())
-    {
-      for(int idx = 0; idx < nelements; idx++)
-	_value_vector.push_back(new AaFloatValue(s,
-						 ((AaFloatType*)element_type)->Get_Characteristic(),
-						 ((AaFloatType*)element_type)->Get_Mantissa()));
-    }
+  return(init_id);
 }
 
 void AaArrayValue::Assign(AaType* target_type, AaValue* expr_value)
@@ -180,23 +161,30 @@ void AaArrayValue::Assign(AaType* target_type, AaValue* expr_value)
 AaValue* AaArrayValue::Get_Element(vector<int>& indices)
 {
 
-  int index_in_array = indices[indices.size()-1];
-  for(int idx = indices.size()-1; idx > 0; idx--)
+  vector<int> my_indices;
+  vector<int> succ_indices;
+
+  for(int idx = 0; idx < indices.size(); idx++)
     {
-      index_in_array += (_dimensions[idx]*indices[idx-1]);
+      if(idx < _dimensions.size())
+	my_indices.push_back(indices[idx]);
+      else
+	succ_indices.push_back(indices[idx]);
+    }
+
+  int index_in_array = my_indices[my_indices.size()-1];
+  for(int idx = my_indices.size()-1; idx > 0; idx--)
+    {
+      index_in_array += (_dimensions[idx]*my_indices[idx-1]);
     }
 
   assert(index_in_array < _value_vector.size());
 
-  if(indices.size() == _dimensions.size())
-    return(_value_vector[index_in_array]);
-  else
-    {
-      assert(0);
-      //\todo : need to sort out the array pointer thingie..
-      //        a partial indexing into the array will
-      //        return an array of values...
-    }
+  AaValue* ret_val = _value_vector[index_in_array];
+  if(succ_indices.size() > 0)
+    ret_val = ret_val->Get_Element(succ_indices);
+
+  return(ret_val);
 }
   
 
@@ -220,6 +208,93 @@ bool AaArrayValue::Equals(AaValue* other)
     return(false);
 }
 
+AaRecordValue::AaRecordValue(AaScope* s, AaRecordType* rt):AaValue(s,rt)
+{
+  for(int idx = 0; idx < rt->Get_Number_Of_Elements(); idx++)
+    {
+      _value_vector.push_back(Make_Aa_Value(s,rt->Get_Element_Type(idx)));
+    }
+  
+}
+AaRecordValue::AaRecordValue(AaScope* s, AaRecordType* rt, vector<string>& init_values):
+  AaValue(s,rt)
+{
+  for(int idx = 0; idx < rt->Get_Number_Of_Elements(); idx++)
+    {
+      _value_vector.push_back(Make_Aa_Value(s,rt->Get_Element_Type(idx)));
+    }
+
+  unsigned int init_id = 0;
+  for(int idx = 0; idx < _value_vector.size(); idx++)
+    {
+      init_id = _value_vector[idx]->Eat(init_id,init_values);
+    }
+}
+AaValue* AaRecordValue::Get_Element(vector<int>& indices)
+{
+  assert(indices.size() > 0);
+  
+  AaValue* v = this->_value_vector[indices[0]];
+
+  vector<int> succ_indices;
+  for(int idx = 1; idx < indices.size(); idx++)
+    {
+      succ_indices.push_back(indices[idx]);
+    }
+
+  if(succ_indices.size() > 0)
+    {
+      v = v->Get_Element(succ_indices);
+    }
+  return(v);
+}
+
+unsigned int AaRecordValue::Eat(unsigned int init_id, vector<string>& init_vals)
+{
+  for(int idx = 0; idx < _value_vector.size(); idx++)
+    {
+      init_id = _value_vector[idx]->Eat(init_id,init_vals);
+    }
+  return(init_id);
+}
+
+
+void AaRecordValue::Assign(AaType* target_type, AaValue* expr_value)
+{
+  assert(expr_value->Is("AaRecordValue") && target_type->Is("AaRecordType"));
+  AaRecordValue* rv = (AaRecordValue*) expr_value;
+  AaRecordType* rt = (AaRecordType*) target_type;
+  assert(rv->_value_vector.size() == this->_value_vector.size());
+
+  for(int idx = 0; idx < rv->_value_vector.size(); idx++)
+    {
+      this->_value_vector[idx]->Assign(rt->Get_Element_Type(idx),rv->_value_vector[idx]);
+    }
+}
+
+bool AaRecordValue::Equals(AaValue* other)
+{
+  if(!other->Is("AaRecordValue"))
+    return(false);
+  if(!(other->Get_Type() == this->Get_Type()))
+    return(false);
+  
+  AaRecordValue* rv = (AaRecordValue*) other;
+  if(rv->_value_vector.size() != this->_value_vector.size())
+    return(false);
+
+  bool ret_val = true;
+  for(int idx = 0; idx < this->_value_vector.size(); idx++)
+    {
+      if(!this->_value_vector[idx]->Equals(rv->_value_vector[idx]))
+	{
+	  ret_val = false;
+	  break;
+	}
+    }
+  return(ret_val);
+}
+
 AaValue* Make_Aa_Value(AaScope* scope, AaType* t)
 {
   AaValue* ret_value = NULL;
@@ -233,63 +308,23 @@ AaValue* Make_Aa_Value(AaScope* scope, AaType* t)
       ret_value = new AaFloatValue(scope,
 				   ((AaFloatType*)t)->Get_Characteristic(),
 				   ((AaFloatType*)t)->Get_Mantissa());
-
     }
-  else 
+  else if(t->Is("AaArrayType"))
     {
-      assert(t->Is("AaArrayType"));
-      ret_value = new AaArrayValue(scope,
-				   ((AaArrayType*)t)->Get_Element_Type(),
-				   ((AaArrayType*)t)->Get_Dimension_Vector());
+      ret_value = new AaArrayValue(scope,((AaArrayType*)t));
     }
-  if(ret_value)
-    ret_value->Set_Type(t);
+  else if(t->Is("AaRecordType"))
+    {
+      ret_value = new AaRecordValue(scope,((AaRecordType*)t));
+    }
+
   return(ret_value);
 }
 
 AaValue* Make_Aa_Value(AaScope* scope, AaType* t,vector<string>& literals)
 {
-  AaValue* ret_value = NULL;
-  if(t->Is_Integer_Type())
-    {
-      ret_value = new AaIntValue(scope,
-				 t->Size());
-      if(literals.size() > 0)
-	((AaIntValue*)ret_value)->Set_Value(literals[0]);
-    }
-  else if(t->Is_Float_Type())
-    {
-      ret_value = new AaFloatValue(scope,
-				   ((AaFloatType*)t)->Get_Characteristic(),
-				   ((AaFloatType*)t)->Get_Mantissa());
-
-      if(literals.size() > 0)
-	((AaFloatValue*)ret_value)->Set_Value(literals[0]);
-    }
-  else 
-    {
-      assert(t->Is("AaArrayType"));
-      if(((AaArrayType*)t)->Get_Element_Type()->Is_Integer_Type())
-	{
-	  ret_value = new AaArrayValue(scope,
-				       ((AaArrayType*)t)->Get_Element_Type()->Size(),
-				       ((AaArrayType*)t)->Get_Dimension_Vector(),
-				       literals);
-	}
-      else
-	{
-	  assert(((AaArrayType*)t)->Get_Element_Type()->Is("AaFloatType"));
-	  ret_value = new AaArrayValue(scope,
-				       ((AaFloatType*)((AaArrayType*)t)->
-					Get_Element_Type())->Get_Characteristic(),
-				       ((AaFloatType*)((AaArrayType*)t)->
-					Get_Element_Type())->Get_Mantissa(),
-				       ((AaArrayType*)t)->Get_Dimension_Vector(),
-				       literals);
-	}
-    }
-  if(ret_value)
-    ret_value->Set_Type(t);
+  AaValue* ret_value = Make_Aa_Value(scope,t);
+  ret_value->Eat(0,literals);
   return(ret_value);
 }
 

@@ -39,9 +39,7 @@ namespace Aa {
   {
     if(isa<llvm::GetElementPtrInst>(&I))
       {
-	std::cout << "// GetElementPtrInst " << std::endl;
 	llvm::GetElementPtrInst& eI = static_cast<llvm::GetElementPtrInst&>(I);
-	
 	std::string inst_name = I.getNameStr();
 	std::cout << inst_name << " := @(" ;
 
@@ -61,7 +59,12 @@ namespace Aa {
 	      }
 	    else
 	      {
-		
+		for(int idx = 1; idx < eI.getNumOperands(); idx++)
+		  {
+		    std::cout << "[";
+		    std::cout << get_name(eI.getOperand(idx));
+		    std::cout << "]";
+		  }
 	      }
 	  }
 	std::cout << ")" << std::endl;
@@ -130,15 +133,6 @@ namespace {
 
     void initialise_with_function(llvm::Function &F)
     {
-      for (llvm::Function::iterator bi = F.begin(), be = F.end(); bi != be; ++bi) 
-	{
-        	BasicBlock &bb = *bi;
-        	// create_bbnode(bb);
-      	}
-
-      // BBNode *start = blocks[&F.getEntryBlock()];
-      // control_flow(cdfg->start, "ack", cdfg->acceptor, "req");
-      // control_flow(cdfg->acceptor, "ack", start->entry, "req");
     }
 
     void finalise_function()
@@ -146,20 +140,10 @@ namespace {
       clear();
     }
 
-
-    void write_function(llvm::Function &F)
-    {
-      assert(!F.isDeclaration() && "external functions not supported");
-	// a foreign function.. can support it..
-    
-      const llvm::FunctionType *ftype = F.getFunctionType();
-      assert(!ftype->isVarArg() && "variable arguments not supported");
-    }
-
     void visitBasicBlock(BasicBlock &BB)
     {
       std::string bb_name = BB.getNameStr();
-      std::cerr << "//Info: In visitBasicBlock " << bb_name << std::endl;
+      std::cout << "//begin: basic-block " << bb_name << std::endl;
 
       // first name all instructions.
       int iidx = 0;
@@ -196,7 +180,6 @@ namespace {
 		}
 	    }
 	  std::cout << "$endmerge" << std::endl;
-	  std::cout << "//Info: TODO : body of Basic block " << bb_name << std::endl;
 
 	}
       
@@ -206,7 +189,6 @@ namespace {
     {
       std::string phi_name = pnode.getName();
       int num_sources = pnode.getNumIncomingValues();
-      std::cerr << "// Phi-node " << phi_name << " has " << num_sources << " sources"  << std::endl;
       std::cout << "$phi " << phi_name << " :=  ";
 
       BasicBlock* parent = pnode.getParent();
@@ -225,7 +207,6 @@ namespace {
     void visitBinaryOperator(BinaryOperator &I)
     {
       std::string iname = I.getName();
-      std::cerr << "//    In visitBinaryOperator " << iname << std::endl;
       
       std::string ntype;
       unsigned opcode = I.getOpcode();
@@ -266,7 +247,6 @@ namespace {
     void visitCallInst(CallInst &C)
     {
 	std::string cname = C.getName();
-	std::cout << "//    In visitCallInst " << cname << std::endl;
 	const llvm::Function* called_function  = C.getCalledFunction();
 	const llvm::Type* called_function_return_type = called_function->getReturnType();
 	bool has_ret_val = true;
@@ -293,7 +273,6 @@ namespace {
     void visitLoadInst(LoadInst &L)
     {
 	std::string lname = L.getName();
-	std::cout << "//    In visitLoadInst " << lname << std::endl;
 	std::cout << lname << " := " ;
 
 	bool is_alloca = isa<AllocaInst>(L.getPointerOperand());
@@ -307,8 +286,6 @@ namespace {
     void visitStoreInst(StoreInst &S)
     {
 	std::string sname = S.getName();
-	std::cout << "//    In visitStoreInst " << sname << std::endl;
-
 	bool is_alloca = isa<AllocaInst>(S.getPointerOperand());
 	if(is_alloca)
 		std::cout << get_name(S.getPointerOperand()) << " := ";
@@ -321,19 +298,99 @@ namespace {
     void visitCmpInst(CmpInst &C)
     {
 	std::string cname = C.getName();
-	std::cout << "//    In visitCmpInst " << cname << std::endl;
+
+	std::string op1 = get_name(C.getOperand(0));
+	std::string op2 = get_name(C.getOperand(1));
+
+	std::cout << cname << " := " ;
+
+	llvm::CmpInst::Predicate cmp_op = C.getPredicate();
+	if(cmp_op == CmpInst::FCMP_OEQ || cmp_op == CmpInst::FCMP_UEQ || cmp_op == CmpInst::ICMP_EQ)
+	  {
+	    std::cout << "(" <<  op1 << " == " << op2 << " )" << std::endl;
+	  }
+	else if(cmp_op == CmpInst::FCMP_OLT || cmp_op == CmpInst::FCMP_ULT || cmp_op == CmpInst::ICMP_ULT)
+	  {
+	    std::cout << "(" <<  op1 << " < " << op2 << " )" << std::endl;
+	  }
+	else if(cmp_op == CmpInst::ICMP_SLT)
+	  {
+	    int size = C.getOperand(0)->getType()->getScalarSizeInBits();
+	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") < " 
+		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
+	  }
+	else if(cmp_op == CmpInst::FCMP_OLE || cmp_op == CmpInst::FCMP_ULE || cmp_op == CmpInst::ICMP_ULE)
+	  {
+	    std::cout << "(" <<  op1 << " <= " << op2 << " )" << std::endl;
+	  }
+	else if(cmp_op == CmpInst::ICMP_SLE)
+	  {
+	    int size = C.getOperand(0)->getType()->getScalarSizeInBits();
+	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") <= " 
+		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
+	  }
+	else if(cmp_op == CmpInst::FCMP_OGT || cmp_op == CmpInst::FCMP_UGT || cmp_op == CmpInst::ICMP_UGT)
+	  {
+	    std::cout << "(" <<  op1 << " > " << op2 << " )" << std::endl;
+	  }
+	else if(cmp_op == CmpInst::ICMP_SGT)
+	  {
+	    int size = C.getOperand(0)->getType()->getScalarSizeInBits();
+	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") > " 
+		      << " ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
+	  }
+	else if(cmp_op == CmpInst::FCMP_OGE || cmp_op == CmpInst::FCMP_UGE || cmp_op == CmpInst::ICMP_UGE)
+	  {
+	    std::cout << "(" <<  op1 << " >= " << op2 << " )" << std::endl;
+	  }
+	else if(cmp_op == CmpInst::ICMP_SGE)
+	  {
+	    int size = C.getOperand(0)->getType()->getScalarSizeInBits();
+	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") >= " 
+		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
+	  }
+	else if(cmp_op == CmpInst::FCMP_FALSE)
+	  {
+	    std::cout << "_b0" << std::endl;
+	  }
+	else if(cmp_op == CmpInst::FCMP_TRUE)
+	  {
+	    std::cout << "_b1" << std::endl;
+	  }
+	else
+	  {
+	    std::cerr << "Error: unsupported compare operation" << std::endl;
+	  }
     }
 
     void visitSelectInst(SelectInst &S)
     {
 	std::string sname = S.getName();
-	std::cout << "//    In visitSelectInst " << sname << std::endl;
+	std::cout << sname << " := ( $mux " << get_name(S.getCondition()) 
+		  << " " << get_name(S.getTrueValue()) 
+		  << " " << get_name(S.getFalseValue()) << ")" << std::endl;
     }
 
     void visitBranchInst(BranchInst &br)
     {
 	std::string brname = br.getName();
-	std::cout << "//    In visitBranchInst " << brname << std::endl;
+	BasicBlock* from_bb = br.getParent();
+	if(br.isUnconditional())
+	  {
+
+	    BasicBlock* to_bb = br.getSuccessor(0);
+	    std::cout << "$place [" << from_bb->getNameStr() << "_" << to_bb->getNameStr() << "]" << std::endl;
+	  }
+	else
+	  {
+	    BasicBlock* dest0 = br.getSuccessor(0);
+	    BasicBlock* dest1 = br.getSuccessor(1);
+	    std::cout << "$if " << get_name(br.getCondition()) << " $then " ;
+	    std::cout << " $place [" << from_bb->getNameStr() << "_" << dest0->getNameStr() << "] ";
+	    std::cout << "$else ";
+	    std::cout << "$place [" << from_bb->getNameStr() << "_" << dest1->getNameStr() << "] ";
+	    std::cout << "$endif " << std::endl;
+	  }
     }
   
   };

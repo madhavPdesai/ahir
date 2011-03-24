@@ -898,7 +898,6 @@ aA_Binary_Op returns [AaOperation op] :
         ( id_less:LESS { op = __LESS;}) | 
         ( id_lessequal:LESSEQUAL { op = __LESSEQUAL;}) | 
         ( id_greater:GREATER { op = __GREATER;}) | 
-        ( id_greaterequal:GREATEREQUAL { op = __GREATEREQUAL;}) |
         ( id_bitsel:BITSEL { op = __BITSEL;}) | 
         ( id_concat:CONCAT { op = __CONCAT;})  
     ;
@@ -1017,11 +1016,12 @@ aA_Scalar_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
     ;
     
 //----------------------------------------------------------------------------------------------------------
-// aA_Type_Reference : aA_Uint_Reference | aA_Int_Reference | aA_Float_Reference | aA_Pointer_Reference | aA_Array_Reference
+// aA_Type_Reference : aA_Uint_Reference | aA_Int_Reference | aA_Float_Reference | aA_Pointer_Reference | aA_Array_Reference | aA_Record_Type_Reference[scope]
 //----------------------------------------------------------------------------------------------------------
 aA_Type_Reference[AaScope* scope] returns [AaType* ref_type]
     :  (ref_type = aA_Scalar_Type_Reference[scope]) |
-        (ref_type = aA_Array_Type_Reference[scope])
+        (ref_type = aA_Array_Type_Reference[scope]) |
+          (ref_type = aA_Record_Type_Reference[scope])
     ;
 
 //----------------------------------------------------------------------------------------------------------
@@ -1089,7 +1089,7 @@ aA_Array_Type_Reference[AaScope* scope] returns [AaType* ref_type]
     AaScalarType* element_type;
 }
     : ARRAY 
-        (LBRACKET ds:UINTEGER { dims.push_back(atoi(ds->getText().c_str())); } RBRACKET)
+        (LBRACKET ds:UINTEGER { dims.push_back(atoi(ds->getText().c_str())); } RBRACKET)+
         OF 
         (element_type = aA_Scalar_Type_Reference[scope])
         {
@@ -1097,6 +1097,17 @@ aA_Array_Type_Reference[AaScope* scope] returns [AaType* ref_type]
         }
     ;           
 
+//----------------------------------------------------------------------------------------------------------
+// aA_Record_Type_Reference: RECORD (LESS (aA_Type_Reference) GREATER)+
+//----------------------------------------------------------------------------------------------------------
+aA_Record_Type_Reference[AaScope* scope] returns [AaType* ref_type]
+{
+	AaRecordType* rt;
+	AaType* et;
+	vector<AaType*> etypes;
+}: RECORD  (LESS et = aA_Type_Reference[scope] {etypes.push_back(et);} GREATER)+
+{ rt = AaProgram::Make_Record_Type(etypes); ref_type = (AaType*) rt; etypes.clear();}
+;
 
 //----------------------------------------------------------------------------------------------------------
 // aA_Object_Reference : HIEARCHICAL_IDENTIFIER (LBRACKET Aa_Object_Reference RBRACKET)*
@@ -1327,8 +1338,6 @@ XNOR             : "~^"    ;
 
 // Mux
 MUX : "$mux";
-
-
 
 // types
 UINT           : "$uint"    ;

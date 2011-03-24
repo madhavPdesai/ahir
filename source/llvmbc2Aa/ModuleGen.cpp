@@ -188,7 +188,7 @@ namespace {
 	    }
 	}
 
-      std::cout << "$module [" << fname << "] { " << std::endl;
+      std::cout << "$module [" << fname << "] " << std::endl;
 
       std::cout << "// arguments" << std::endl;
 	std::cout << " $in (";
@@ -208,35 +208,35 @@ namespace {
 	   std::cout << "ret_val__ : " << get_aa_type_name(ret_type);
 	std::cout << ")" << std::endl;
 
+	std::cout << " $is " << std::endl<< "{" << std::endl;
+
 	if(has_ret_val)
 		std::cout << "$storage stored_ret_val__ : " << get_aa_type_name(ret_type) << std::endl;
 
-
-      std::cout << "// TODO:  object declarations" << std::endl;
-
-      std::cout << "$branchblock [" << fname << "] {"  << std::endl;
-      // visit the basic blocks..
-      for(llvm::Function::iterator iter = F.begin(); iter != F.end(); ++iter)
-	{
-	  llvm::BasicBlock* pred = (*iter).getSinglePredecessor();
-	  aa_writer->visit(*iter);
-	}
-
-      if(aa_writer->Get_Return_Flag())
-      {
-	std::cout << "$merge return__ $endmerge" << std::endl;
-	if(has_ret_val)
-		std::cout << "$ret_val__ := stored_ret_val__ "  << std::endl;
-      }
 	
-      std::cout << "}" << std::endl;
-       
-      std::cout << "}" << std::endl;
-
-      //TODO: is this needed?
-      // cbuilder->finalise_function();
+	std::cout << "$branchblock [" << fname << "] {"  << std::endl;
+	// visit the basic blocks..
+	for(llvm::Function::iterator iter = F.begin(); iter != F.end(); ++iter)
+	  {
+	    llvm::BasicBlock* pred = (*iter).getSinglePredecessor();
+	    aa_writer->visit(*iter);
+	  }
+	
+	if(aa_writer->Get_Return_Flag())
+	  {
+	    std::cout << "$merge return__ $endmerge" << std::endl;
+	    if(has_ret_val)
+	      std::cout << "ret_val__ := stored_ret_val__ "  << std::endl;
+	  }
+	
+	std::cout << "}" << std::endl;
+	
+	std::cout << "}" << std::endl;
+	
+	//TODO: is this needed?
+	// cbuilder->finalise_function();
     }
-
+    
   };
 
   char ModuleGenPass::ID = 0;

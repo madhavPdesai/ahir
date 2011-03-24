@@ -10,6 +10,8 @@
 //
 // base class for all objects.  Each object will have a parent scope
 //
+class AaType;
+class AaValue;
 class AaRoot
 {
   // to get unique id's for anon objects
@@ -50,6 +52,9 @@ class AaRoot
   ~AaRoot(); 
 
   virtual string Get_VC_Name() {assert(0);}
+
+  virtual AaType* Get_Type() {assert(0);}
+  virtual AaValue* Get_Expression_Value() {assert(0);}
 
   // useful print versions
   virtual void Print(ostream& ofile); // override this in derived classes

@@ -87,8 +87,9 @@ class AaProgram
 
   static AaIntType* Make_Integer_Type(unsigned int w);
   static AaFloatType* Make_Float_Type(unsigned int c, unsigned int m);
-  static AaArrayType* Make_Array_Type(AaScalarType* etype, vector<unsigned int>& dims);
+  static AaArrayType* Make_Array_Type(AaType* etype, vector<unsigned int>& dims);
   static AaPointerType* Make_Pointer_Type(AaType* ref_type);
+  static AaRecordType* Make_Record_Type(vector<AaType*>& element_types);
 
   static void Map_Source_References();
 

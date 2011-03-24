@@ -2,8 +2,17 @@
 #define __AA2VC__
 
 #include <AaIncludes.h>
-void Write_VC_Constant_Declaration(string wire_name, string type_name, string initial_value,
+void Write_VC_Equivalence_Operator(string inst_name,
+				   string input,
+				   string output,
 				   ostream& ofile);
+
+void Write_VC_Constant_Declaration(string name, string type, string val,  ostream& ofile);
+void Write_VC_Constant_Declaration(string wire_name, 
+				   AaType* t, 
+				   string initial_value,
+				   ostream& ofile);
+
 void Write_VC_Wire_Declaration(string wire_name, string type_name,
 			       ostream& ofile);
 
@@ -45,6 +54,7 @@ void Write_VC_Branch_Instance(string inst_name, vector<pair<string,AaType*> >& b
 			      ostream& ofile);
 void Write_VC_Constant_Declaration(string name, AaType* type, AaValue* value,
 				   ostream& ofile);
+
 void Write_VC_Constant_Pointer_Declaration(string name, 
 					   string wire_name, 
 					   AaUintType* type, 

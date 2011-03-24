@@ -51,6 +51,8 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
   
 
   bool is_array_ref = obj_ref->Is("AaArrayObjectReference");
+  bool is_pointer_deref = obj_ref->Is("AaPointerDereference");
+  bool is_simple_ref = obj_ref->Is("AaSimpleObjectReference");
 
   bool from_above = ((child != NULL) && (child->Is_Expression()) && 
 		     (((AaExpression*)child)->Get_Scope() != this->Get_Scope()));
@@ -58,8 +60,14 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
   bool map_flag = (((child == NULL) || from_above) && 
 		   (search_scope == this->Get_Scope()) && 
 		   !(is_array_ref));
-  bool err_no_target_in_scope = ((child == NULL) && (is_array_ref || (search_scope != this->Get_Scope())));
-  bool err_redeclaration = ((child !=NULL) && (child->Is_Expression()) &&
+
+  bool err_no_target_in_scope = ((child == NULL) && 
+				 (is_array_ref || is_pointer_deref 
+				  || (search_scope != this->Get_Scope())));
+
+  bool err_redeclaration = ((child !=NULL) && 
+			    (child->Is_Expression()) &&
+			    is_simple_ref &&
 			    (((AaExpression*)child)->Get_Scope() == this->Get_Scope()));
 
   bool err_write_to_constant = ((child !=NULL) && child->Is("AaConstantObject"));
@@ -603,6 +611,13 @@ void AaAssignmentStatement::Write_C_Struct(ofstream& ofile)
 
 void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
 {
+
+  if(!this->_source->Get_Type()->Is_Scalar_Type())
+    {
+      AaRoot::Error("LHS of assignment statement must evaluate to a scalar!",this);
+      return;
+    }
+
 
   ofile << "// control-path for: ";
   this->Print(ofile);

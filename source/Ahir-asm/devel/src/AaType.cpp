@@ -66,6 +66,17 @@ void AaPointerType::Print(ostream& ofile)
   ofile << " >";
 }
 
+AaType* AaPointerType::Get_Element_Type(int start_idx, vector<AaExpression*>& indices)
+{
+  AaType* ref_type = this->Get_Ref_Type();
+  start_idx++;
+  if(start_idx < indices.size())
+    {
+      ref_type = (ref_type->Get_Element_Type(start_idx,indices));
+    }
+  return(AaProgram::Make_Pointer_Type(ref_type));
+}
+
 //---------------------------------------------------------------------
 //AaFloatType
 //---------------------------------------------------------------------
@@ -83,7 +94,7 @@ void AaFloatType::Print(ostream& ofile)
 //---------------------------------------------------------------------
 // AaArrayType
 //---------------------------------------------------------------------
-AaArrayType::AaArrayType(AaScope* p, AaScalarType* stype, vector<unsigned int>& dimensions): AaType(p) 
+AaArrayType::AaArrayType(AaScope* p, AaType* stype, vector<unsigned int>& dimensions): AaType(p) 
 {
   for(unsigned int i = 0; i < dimensions.size(); i++)
     this->_dimension.push_back(dimensions[i]);
@@ -105,13 +116,62 @@ void AaArrayType::Print(ostream& ofile)
 {
   ofile << "$array";
   for(unsigned int i = 0; i < this->Get_Number_Of_Dimensions(); i++)
-    ofile << "<" << this->Get_Dimension(i) << ">";
+    ofile << "[" << this->Get_Dimension(i) << "]";
   ofile << " $of ";
   this->Get_Element_Type()->Print(ofile);
+}
+AaType* AaArrayType::Get_Element_Type(int idx)
+{
+  assert(idx >= 0 && idx < _dimension.size());
+  vector<unsigned int> edims;
+  for(int i = idx+1; i < _dimension.size(); i++)
+    {
+      edims.push_back(_dimension[i]);
+    }
+  if(edims.size() > 0)
+    return(AaProgram::Make_Array_Type(this->_element_type,edims));
+  else
+    return(this->_element_type);
+}
+
+AaType* AaArrayType::Get_Element_Type(int start_idx, vector<AaExpression*>& indices)
+{
+  int depth = (indices.size() - start_idx);
+  if(depth <= this->_dimension.size())
+    return(this->Get_Element_Type(depth-1));
+  else
+    {
+      return(this->Get_Element_Type()->Get_Element_Type(start_idx + this->_dimension.size(),
+							indices));
+    }
 }
 
 
 
+AaType* AaRecordType::Get_Element_Type(int start_idx, vector<AaExpression*>& indices)
+{
+  AaExpression* expr = indices[start_idx];
+  AaValue* v = NULL;
+  if(expr->Is("AaConstantLiteralReference"))
+    {
+      int type_width = CeilLog2(this->Get_Number_Of_Elements()-1);
+      v = Make_Aa_Value(this->Get_Scope(),
+			AaProgram::Make_Uinteger_Type(type_width),
+			((AaConstantLiteralReference*)expr)->Get_Literals());
 
+      int idx = v->To_Integer();
+      assert(idx >= 0 && idx < this->Get_Number_Of_Elements());
+
+      if(start_idx == indices.size()-1)
+	return(this->Get_Element_Type(idx));
+      else
+	return(this->Get_Element_Type(idx)->Get_Element_Type(start_idx+1,indices));
+    }
+  else
+    {
+      AaRoot::Error("Record index must be a literal constant",expr);
+      return(NULL);
+    }
+}
 
 
