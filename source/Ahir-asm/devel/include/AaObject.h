@@ -161,6 +161,7 @@ class AaStorageObject: public AaObject
   void Set_Address_Width(int a) { _address_width = a; }
   int Get_Address_Width() {return(_address_width);}
 
+  virtual bool Is_Storage_Object() {return(true);}
 
 
   // todo: this is the same as object, but keep it here

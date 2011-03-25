@@ -65,6 +65,7 @@ class AaRoot
   virtual bool Is_Scope() {return(false); }
 
   virtual bool Is_Object() {return(false); }
+  virtual bool Is_Storage_Object() {return(false); }
   virtual bool Is_Constant() {return(false);}
 
   virtual bool Is_Expression() {return(false); }

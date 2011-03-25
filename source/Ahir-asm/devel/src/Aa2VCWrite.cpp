@@ -27,6 +27,32 @@ void Write_VC_Constant_Declaration(string wire_name, string type_name, string in
   ofile << "$constant $W[" << wire_name << "] : " << type_name << " := " << initial_value << endl; 
 }
 
+void Write_VC_Constant_Declaration(string name, AaType* type, AaValue* value, ostream& ofile)
+{
+  Write_VC_Constant_Declaration(name,
+				type->Get_VC_Name(),
+				value->To_VC_String(),
+				ofile);
+}
+
+void Write_VC_Constant_Pointer_Declaration(string name, 
+					   string wire_name, 
+					   AaUintType* type, 
+					   string value,
+					   ostream& ofile)
+{
+  string type_name = "$pointer<" + name + ">";
+  AaValue* v = Make_Aa_Value(NULL,type);
+  v->Set_Value(value);
+  Write_VC_Constant_Declaration(wire_name,
+				type_name,
+				v->To_VC_String(),
+				ofile);
+  delete v;
+}
+
+
+
 void Write_VC_Wire_Declaration(string wire_name, string type_name, ostream& ofile)
 {
   ofile << "$W[" << wire_name << "] : " << type_name << endl;
@@ -193,26 +219,6 @@ void Write_VC_Branch_Instance(string inst_name, vector<pair<string,AaType*> >& b
     }
   ofile << ")" << endl;
 }
-void Write_VC_Constant_Declaration(string name, AaType* type, AaValue* value, ostream& ofile)
-{
-  Write_VC_Constant_Declaration(name,
-				type->Get_VC_Name(),
-				value->To_VC_String(),
-				ofile);
-}
-void Write_VC_Constant_Pointer_Declaration(string name, 
-					   string wire_name, 
-					   AaUintType* type, 
-					   string value,
-					   ostream& ofile)
-{
-  string type_name = "$pointer<" + name + ">";
-  Write_VC_Constant_Declaration(wire_name,
-				type_name,
-				value,
-				ofile);
-}
-
 void Write_VC_Pointer_Declaration(string name, string wire_name, AaType* type,ostream& ofile)
 {
   string type_name = "$pointer<" + name + ">";

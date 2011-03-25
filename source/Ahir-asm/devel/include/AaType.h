@@ -327,6 +327,19 @@ public:
       }
   }
 
+  virtual string Get_VC_Name() 
+  {
+    string ret_val;
+    ret_val =  "$record ";
+    for(int idx = 0; idx < _element_types.size(); idx++)
+      {
+	ret_val += "< ";
+	ret_val += _element_types[idx]->Get_VC_Name();
+	ret_val += " >";
+      }
+    return(ret_val);
+  }
+
   virtual string Kind() { return("AaRecordType"); }
   virtual int Size() 
   { 

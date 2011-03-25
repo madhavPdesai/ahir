@@ -32,80 +32,109 @@ architecture Default of sum_mod is --
   -- always true...
   signal always_true_symbol: Boolean;
   -- links between control-path and data-path
-  signal binary_42_inst_req_0 : boolean;
-  signal binary_42_inst_ack_0 : boolean;
-  signal binary_42_inst_req_1 : boolean;
-  signal binary_42_inst_ack_1 : boolean;
-  signal binary_44_inst_req_0 : boolean;
-  signal binary_44_inst_ack_0 : boolean;
-  signal binary_44_inst_req_1 : boolean;
-  signal binary_44_inst_ack_1 : boolean;
-  signal type_cast_79_inst_req_0 : boolean;
-  signal type_cast_79_inst_ack_0 : boolean;
+  signal binary_55_inst_req_0 : boolean;
+  signal binary_55_inst_ack_0 : boolean;
+  signal binary_55_inst_req_1 : boolean;
+  signal binary_45_inst_req_0 : boolean;
+  signal binary_45_inst_ack_0 : boolean;
+  signal binary_45_inst_req_1 : boolean;
+  signal binary_45_inst_ack_1 : boolean;
   signal binary_50_inst_req_0 : boolean;
   signal binary_50_inst_ack_0 : boolean;
   signal binary_50_inst_req_1 : boolean;
   signal binary_50_inst_ack_1 : boolean;
-  signal if_stmt_47_branch_req_0 : boolean;
-  signal if_stmt_47_branch_ack_1 : boolean;
-  signal binary_33_inst_req_0 : boolean;
-  signal binary_33_inst_ack_0 : boolean;
-  signal binary_33_inst_req_1 : boolean;
-  signal binary_33_inst_ack_1 : boolean;
-  signal binary_35_inst_req_0 : boolean;
-  signal binary_35_inst_ack_0 : boolean;
-  signal binary_35_inst_req_1 : boolean;
-  signal binary_35_inst_ack_1 : boolean;
-  signal binary_37_inst_req_0 : boolean;
-  signal binary_37_inst_ack_0 : boolean;
-  signal binary_37_inst_req_1 : boolean;
-  signal binary_37_inst_ack_1 : boolean;
-  signal if_stmt_47_branch_ack_0 : boolean;
+  signal binary_52_inst_req_0 : boolean;
+  signal binary_52_inst_ack_0 : boolean;
+  signal binary_52_inst_req_1 : boolean;
+  signal binary_52_inst_ack_1 : boolean;
+  signal binary_55_inst_ack_1 : boolean;
+  signal binary_57_inst_req_0 : boolean;
+  signal binary_57_inst_ack_0 : boolean;
+  signal binary_57_inst_req_1 : boolean;
+  signal binary_57_inst_ack_1 : boolean;
+  signal ternary_58_inst_req_0 : boolean;
+  signal ternary_58_inst_ack_0 : boolean;
+  signal binary_60_inst_req_0 : boolean;
+  signal binary_60_inst_ack_0 : boolean;
+  signal binary_60_inst_req_1 : boolean;
+  signal binary_60_inst_ack_1 : boolean;
+  signal binary_62_inst_req_0 : boolean;
+  signal binary_62_inst_ack_0 : boolean;
+  signal binary_62_inst_req_1 : boolean;
+  signal binary_48_inst_req_0 : boolean;
+  signal binary_48_inst_ack_0 : boolean;
+  signal binary_48_inst_req_1 : boolean;
+  signal binary_48_inst_ack_1 : boolean;
+  signal binary_62_inst_ack_1 : boolean;
   signal binary_64_inst_req_0 : boolean;
   signal binary_64_inst_ack_0 : boolean;
   signal binary_64_inst_req_1 : boolean;
   signal binary_64_inst_ack_1 : boolean;
-  signal binary_66_inst_req_0 : boolean;
-  signal binary_66_inst_ack_0 : boolean;
-  signal binary_66_inst_req_1 : boolean;
-  signal binary_66_inst_ack_1 : boolean;
-  signal binary_68_inst_req_0 : boolean;
-  signal binary_68_inst_ack_0 : boolean;
-  signal binary_68_inst_req_1 : boolean;
-  signal binary_68_inst_ack_1 : boolean;
-  signal binary_74_inst_req_0 : boolean;
-  signal binary_74_inst_ack_0 : boolean;
-  signal binary_74_inst_req_1 : boolean;
-  signal binary_74_inst_ack_1 : boolean;
-  signal type_cast_75_inst_req_0 : boolean;
-  signal type_cast_75_inst_ack_0 : boolean;
-  signal binary_84_inst_req_0 : boolean;
-  signal binary_84_inst_ack_0 : boolean;
-  signal binary_84_inst_req_1 : boolean;
-  signal binary_84_inst_ack_1 : boolean;
-  signal binary_90_inst_req_0 : boolean;
-  signal binary_90_inst_ack_0 : boolean;
-  signal binary_90_inst_req_1 : boolean;
-  signal binary_90_inst_ack_1 : boolean;
-  signal if_stmt_87_branch_req_0 : boolean;
-  signal if_stmt_87_branch_ack_1 : boolean;
-  signal if_stmt_87_branch_ack_0 : boolean;
-  signal phi_stmt_16_req_0 : boolean;
-  signal phi_stmt_20_req_0 : boolean;
-  signal phi_stmt_24_req_0 : boolean;
-  signal phi_stmt_16_req_1 : boolean;
-  signal phi_stmt_20_req_1 : boolean;
-  signal phi_stmt_24_req_1 : boolean;
-  signal phi_stmt_16_ack_0 : boolean;
-  signal phi_stmt_20_ack_0 : boolean;
-  signal phi_stmt_24_ack_0 : boolean;
-  signal phi_stmt_56_req_1 : boolean;
-  signal phi_stmt_56_req_0 : boolean;
-  signal phi_stmt_56_ack_0 : boolean;
-  signal binary_99_inst_req_0 : boolean;
-  signal binary_99_inst_ack_0 : boolean;
-  signal binary_99_inst_req_1 : boolean;
-  signal binary_99_inst_ack_1 : boolean;
+  signal type_cast_68_inst_req_0 : boolean;
+  signal type_cast_68_inst_ack_0 : boolean;
+  signal binary_75_inst_req_0 : boolean;
+  signal binary_75_inst_ack_0 : boolean;
+  signal binary_75_inst_req_1 : boolean;
+  signal binary_75_inst_ack_1 : boolean;
+  signal binary_78_inst_req_0 : boolean;
+  signal binary_78_inst_ack_0 : boolean;
+  signal binary_78_inst_req_1 : boolean;
+  signal binary_78_inst_ack_1 : boolean;
+  signal binary_80_inst_req_0 : boolean;
+  signal binary_80_inst_ack_0 : boolean;
+  signal binary_80_inst_req_1 : boolean;
+  signal binary_80_inst_ack_1 : boolean;
+  signal binary_82_inst_req_0 : boolean;
+  signal binary_82_inst_ack_0 : boolean;
+  signal binary_82_inst_req_1 : boolean;
+  signal binary_82_inst_ack_1 : boolean;
+  signal binary_85_inst_req_0 : boolean;
+  signal binary_85_inst_ack_0 : boolean;
+  signal binary_85_inst_req_1 : boolean;
+  signal binary_85_inst_ack_1 : boolean;
+  signal binary_87_inst_req_0 : boolean;
+  signal binary_87_inst_ack_0 : boolean;
+  signal binary_87_inst_req_1 : boolean;
+  signal binary_87_inst_ack_1 : boolean;
+  signal ternary_88_inst_req_0 : boolean;
+  signal ternary_88_inst_ack_0 : boolean;
+  signal binary_93_inst_req_0 : boolean;
+  signal binary_93_inst_ack_0 : boolean;
+  signal binary_93_inst_req_1 : boolean;
+  signal binary_93_inst_ack_1 : boolean;
+  signal type_cast_94_inst_req_0 : boolean;
+  signal type_cast_94_inst_ack_0 : boolean;
+  signal binary_100_inst_req_0 : boolean;
+  signal binary_100_inst_ack_0 : boolean;
+  signal binary_100_inst_req_1 : boolean;
+  signal binary_100_inst_ack_1 : boolean;
+  signal binary_105_inst_req_0 : boolean;
+  signal binary_105_inst_ack_0 : boolean;
+  signal binary_105_inst_req_1 : boolean;
+  signal binary_105_inst_ack_1 : boolean;
+  signal binary_111_inst_req_0 : boolean;
+  signal binary_111_inst_ack_0 : boolean;
+  signal binary_111_inst_req_1 : boolean;
+  signal binary_111_inst_ack_1 : boolean;
+  signal if_stmt_108_branch_req_0 : boolean;
+  signal if_stmt_108_branch_ack_1 : boolean;
+  signal if_stmt_108_branch_ack_0 : boolean;
+  signal phi_stmt_23_req_0 : boolean;
+  signal phi_stmt_27_req_0 : boolean;
+  signal phi_stmt_31_req_0 : boolean;
+  signal phi_stmt_35_req_0 : boolean;
+  signal phi_stmt_23_req_1 : boolean;
+  signal phi_stmt_27_req_1 : boolean;
+  signal phi_stmt_31_req_1 : boolean;
+  signal phi_stmt_35_req_1 : boolean;
+  signal phi_stmt_23_ack_0 : boolean;
+  signal phi_stmt_27_ack_0 : boolean;
+  signal phi_stmt_31_ack_0 : boolean;
+  signal phi_stmt_35_ack_0 : boolean;
+  signal binary_120_inst_req_0 : boolean;
+  signal binary_120_inst_ack_0 : boolean;
+  signal binary_120_inst_req_1 : boolean;
+  signal binary_120_inst_ack_1 : boolean;
   -- 
 begin --  
   -- tag register
@@ -123,1280 +152,1593 @@ begin --
     signal sum_mod_CP_0_start: Boolean;
     signal Xentry_1_symbol: Boolean;
     signal Xexit_2_symbol: Boolean;
-    signal branch_block_stmt_14_3_symbol : Boolean;
-    signal assign_stmt_100_238_symbol : Boolean;
+    signal branch_block_stmt_21_3_symbol : Boolean;
+    signal assign_stmt_121_296_symbol : Boolean;
     -- 
   begin -- 
     sum_mod_CP_0_start <=  true when start = '1' else false; -- control passed to control-path.
     Xentry_1_symbol  <= sum_mod_CP_0_start; -- transition $entry
-    branch_block_stmt_14_3: Block -- branch_block_stmt_14 
-      signal branch_block_stmt_14_3_start: Boolean;
+    branch_block_stmt_21_3: Block -- branch_block_stmt_21 
+      signal branch_block_stmt_21_3_start: Boolean;
       signal Xentry_4_symbol: Boolean;
       signal Xexit_5_symbol: Boolean;
-      signal branch_block_stmt_14_x_xentry_x_xx_x6_symbol : Boolean;
-      signal branch_block_stmt_14_x_xexit_x_xx_x7_symbol : Boolean;
-      signal merge_stmt_15_x_xexit_x_xx_x8_symbol : Boolean;
-      signal parallel_block_stmt_29_x_xentry_x_xx_x9_symbol : Boolean;
-      signal parallel_block_stmt_29_x_xexit_x_xx_x10_symbol : Boolean;
-      signal if_stmt_47_x_xentry_x_xx_x11_symbol : Boolean;
-      signal merge_stmt_55_x_xexit_x_xx_x12_symbol : Boolean;
-      signal assign_stmt_69_x_xentry_x_xx_x13_symbol : Boolean;
-      signal assign_stmt_69_x_xexit_x_xx_x14_symbol : Boolean;
-      signal parallel_block_stmt_70_x_xentry_x_xx_x15_symbol : Boolean;
-      signal parallel_block_stmt_70_x_xexit_x_xx_x16_symbol : Boolean;
-      signal if_stmt_87_x_xentry_x_xx_x17_symbol : Boolean;
-      signal parallel_block_stmt_29_18_symbol : Boolean;
-      signal if_stmt_47_eval_test_77_symbol : Boolean;
-      signal binary_50_place_91_symbol : Boolean;
-      signal if_stmt_47_if_link_92_symbol : Boolean;
-      signal if_stmt_47_else_link_96_symbol : Boolean;
-      signal if1_100_symbol : Boolean;
-      signal if0_101_symbol : Boolean;
-      signal assign_stmt_69_102_symbol : Boolean;
-      signal parallel_block_stmt_70_135_symbol : Boolean;
-      signal if_stmt_87_eval_test_177_symbol : Boolean;
-      signal binary_90_place_191_symbol : Boolean;
-      signal if_stmt_87_if_link_192_symbol : Boolean;
-      signal if_stmt_87_else_link_196_symbol : Boolean;
-      signal stmt_91_x_xentry_x_xx_x200_symbol : Boolean;
-      signal stmt_91_x_xexit_x_xx_x201_symbol : Boolean;
-      signal stmt_91_202_symbol : Boolean;
-      signal loopback_205_symbol : Boolean;
-      signal branch_block_stmt_14_x_xentry_x_xx_xPhiReq_206_symbol : Boolean;
-      signal loopback_PhiReq_212_symbol : Boolean;
-      signal merge_stmt_15_PhiReqMerge_218_symbol : Boolean;
-      signal merge_stmt_15_PhiAck_219_symbol : Boolean;
-      signal if0_PhiReq_225_symbol : Boolean;
-      signal if1_PhiReq_229_symbol : Boolean;
-      signal merge_stmt_55_PhiReqMerge_233_symbol : Boolean;
-      signal merge_stmt_55_PhiAck_234_symbol : Boolean;
+      signal branch_block_stmt_21_x_xentry_x_xx_x6_symbol : Boolean;
+      signal branch_block_stmt_21_x_xexit_x_xx_x7_symbol : Boolean;
+      signal merge_stmt_22_x_xexit_x_xx_x8_symbol : Boolean;
+      signal parallel_block_stmt_40_x_xentry_x_xx_x9_symbol : Boolean;
+      signal parallel_block_stmt_40_x_xexit_x_xx_x10_symbol : Boolean;
+      signal if_stmt_108_x_xentry_x_xx_x11_symbol : Boolean;
+      signal parallel_block_stmt_40_12_symbol : Boolean;
+      signal if_stmt_108_eval_test_245_symbol : Boolean;
+      signal binary_111_place_259_symbol : Boolean;
+      signal if_stmt_108_if_link_260_symbol : Boolean;
+      signal if_stmt_108_else_link_264_symbol : Boolean;
+      signal stmt_112_x_xentry_x_xx_x268_symbol : Boolean;
+      signal stmt_112_x_xexit_x_xx_x269_symbol : Boolean;
+      signal stmt_112_270_symbol : Boolean;
+      signal loopback_273_symbol : Boolean;
+      signal branch_block_stmt_21_x_xentry_x_xx_xPhiReq_274_symbol : Boolean;
+      signal loopback_PhiReq_281_symbol : Boolean;
+      signal merge_stmt_22_PhiReqMerge_288_symbol : Boolean;
+      signal merge_stmt_22_PhiAck_289_symbol : Boolean;
       -- 
     begin -- 
-      branch_block_stmt_14_3_start <= Xentry_1_symbol; -- control passed to block
-      Xentry_4_symbol  <= branch_block_stmt_14_3_start; -- transition branch_block_stmt_14/$entry
-      branch_block_stmt_14_x_xentry_x_xx_x6_symbol  <=  Xentry_4_symbol; -- place branch_block_stmt_14/branch_block_stmt_14__entry__ (optimized away) 
-      branch_block_stmt_14_x_xexit_x_xx_x7_symbol  <=  stmt_91_x_xexit_x_xx_x201_symbol; -- place branch_block_stmt_14/branch_block_stmt_14__exit__ (optimized away) 
-      merge_stmt_15_x_xexit_x_xx_x8_symbol  <=  merge_stmt_15_PhiAck_219_symbol; -- place branch_block_stmt_14/merge_stmt_15__exit__ (optimized away) 
-      parallel_block_stmt_29_x_xentry_x_xx_x9_symbol  <=  merge_stmt_15_x_xexit_x_xx_x8_symbol; -- place branch_block_stmt_14/parallel_block_stmt_29__entry__ (optimized away) 
-      parallel_block_stmt_29_x_xexit_x_xx_x10_symbol  <=  parallel_block_stmt_29_18_symbol; -- place branch_block_stmt_14/parallel_block_stmt_29__exit__ (optimized away) 
-      if_stmt_47_x_xentry_x_xx_x11_symbol  <=  parallel_block_stmt_29_x_xexit_x_xx_x10_symbol; -- place branch_block_stmt_14/if_stmt_47__entry__ (optimized away) 
-      merge_stmt_55_x_xexit_x_xx_x12_symbol  <=  merge_stmt_55_PhiAck_234_symbol; -- place branch_block_stmt_14/merge_stmt_55__exit__ (optimized away) 
-      assign_stmt_69_x_xentry_x_xx_x13_symbol  <=  merge_stmt_55_x_xexit_x_xx_x12_symbol; -- place branch_block_stmt_14/assign_stmt_69__entry__ (optimized away) 
-      assign_stmt_69_x_xexit_x_xx_x14_symbol  <=  assign_stmt_69_102_symbol; -- place branch_block_stmt_14/assign_stmt_69__exit__ (optimized away) 
-      parallel_block_stmt_70_x_xentry_x_xx_x15_symbol  <=  assign_stmt_69_x_xexit_x_xx_x14_symbol; -- place branch_block_stmt_14/parallel_block_stmt_70__entry__ (optimized away) 
-      parallel_block_stmt_70_x_xexit_x_xx_x16_symbol  <=  parallel_block_stmt_70_135_symbol; -- place branch_block_stmt_14/parallel_block_stmt_70__exit__ (optimized away) 
-      if_stmt_87_x_xentry_x_xx_x17_symbol  <=  parallel_block_stmt_70_x_xexit_x_xx_x16_symbol; -- place branch_block_stmt_14/if_stmt_87__entry__ (optimized away) 
-      parallel_block_stmt_29_18: Block -- branch_block_stmt_14/parallel_block_stmt_29 
-        signal parallel_block_stmt_29_18_start: Boolean;
-        signal Xentry_19_symbol: Boolean;
-        signal Xexit_20_symbol: Boolean;
-        signal assign_stmt_38_21_symbol : Boolean;
-        signal assign_stmt_45_54_symbol : Boolean;
+      branch_block_stmt_21_3_start <= Xentry_1_symbol; -- control passed to block
+      Xentry_4_symbol  <= branch_block_stmt_21_3_start; -- transition branch_block_stmt_21/$entry
+      branch_block_stmt_21_x_xentry_x_xx_x6_symbol  <=  Xentry_4_symbol; -- place branch_block_stmt_21/branch_block_stmt_21__entry__ (optimized away) 
+      branch_block_stmt_21_x_xexit_x_xx_x7_symbol  <=  stmt_112_x_xexit_x_xx_x269_symbol; -- place branch_block_stmt_21/branch_block_stmt_21__exit__ (optimized away) 
+      merge_stmt_22_x_xexit_x_xx_x8_symbol  <=  merge_stmt_22_PhiAck_289_symbol; -- place branch_block_stmt_21/merge_stmt_22__exit__ (optimized away) 
+      parallel_block_stmt_40_x_xentry_x_xx_x9_symbol  <=  merge_stmt_22_x_xexit_x_xx_x8_symbol; -- place branch_block_stmt_21/parallel_block_stmt_40__entry__ (optimized away) 
+      parallel_block_stmt_40_x_xexit_x_xx_x10_symbol  <=  parallel_block_stmt_40_12_symbol; -- place branch_block_stmt_21/parallel_block_stmt_40__exit__ (optimized away) 
+      if_stmt_108_x_xentry_x_xx_x11_symbol  <=  parallel_block_stmt_40_x_xexit_x_xx_x10_symbol; -- place branch_block_stmt_21/if_stmt_108__entry__ (optimized away) 
+      parallel_block_stmt_40_12: Block -- branch_block_stmt_21/parallel_block_stmt_40 
+        signal parallel_block_stmt_40_12_start: Boolean;
+        signal Xentry_13_symbol: Boolean;
+        signal Xexit_14_symbol: Boolean;
+        signal series_block_stmt_41_15_symbol : Boolean;
+        signal series_block_stmt_71_127_symbol : Boolean;
+        signal assign_stmt_101_219_symbol : Boolean;
+        signal assign_stmt_106_232_symbol : Boolean;
         -- 
       begin -- 
-        parallel_block_stmt_29_18_start <= parallel_block_stmt_29_x_xentry_x_xx_x9_symbol; -- control passed to block
-        Xentry_19_symbol  <= parallel_block_stmt_29_18_start; -- transition branch_block_stmt_14/parallel_block_stmt_29/$entry
-        assign_stmt_38_21: Block -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38 
-          signal assign_stmt_38_21_start: Boolean;
-          signal Xentry_22_symbol: Boolean;
-          signal Xexit_23_symbol: Boolean;
-          signal binary_37_24_symbol : Boolean;
+        parallel_block_stmt_40_12_start <= parallel_block_stmt_40_x_xentry_x_xx_x9_symbol; -- control passed to block
+        Xentry_13_symbol  <= parallel_block_stmt_40_12_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/$entry
+        series_block_stmt_41_15: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41 
+          signal series_block_stmt_41_15_start: Boolean;
+          signal Xentry_16_symbol: Boolean;
+          signal Xexit_17_symbol: Boolean;
+          signal assign_stmt_65_18_symbol : Boolean;
+          signal assign_stmt_69_119_symbol : Boolean;
           -- 
         begin -- 
-          assign_stmt_38_21_start <= Xentry_19_symbol; -- control passed to block
-          Xentry_22_symbol  <= assign_stmt_38_21_start; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/$entry
-          binary_37_24: Block -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37 
-            signal binary_37_24_start: Boolean;
-            signal Xentry_25_symbol: Boolean;
-            signal Xexit_26_symbol: Boolean;
-            signal binary_37_inputs_27_symbol : Boolean;
-            signal rr_50_symbol : Boolean;
-            signal ra_51_symbol : Boolean;
-            signal cr_52_symbol : Boolean;
-            signal ca_53_symbol : Boolean;
+          series_block_stmt_41_15_start <= Xentry_13_symbol; -- control passed to block
+          Xentry_16_symbol  <= series_block_stmt_41_15_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/$entry
+          assign_stmt_65_18: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65 
+            signal assign_stmt_65_18_start: Boolean;
+            signal Xentry_19_symbol: Boolean;
+            signal Xexit_20_symbol: Boolean;
+            signal binary_64_21_symbol : Boolean;
             -- 
           begin -- 
-            binary_37_24_start <= Xentry_22_symbol; -- control passed to block
-            Xentry_25_symbol  <= binary_37_24_start; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/$entry
-            binary_37_inputs_27: Block -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs 
-              signal binary_37_inputs_27_start: Boolean;
-              signal Xentry_28_symbol: Boolean;
-              signal Xexit_29_symbol: Boolean;
-              signal binary_35_30_symbol : Boolean;
+            assign_stmt_65_18_start <= Xentry_16_symbol; -- control passed to block
+            Xentry_19_symbol  <= assign_stmt_65_18_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/$entry
+            binary_64_21: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64 
+              signal binary_64_21_start: Boolean;
+              signal Xentry_22_symbol: Boolean;
+              signal Xexit_23_symbol: Boolean;
+              signal binary_64_inputs_24_symbol : Boolean;
+              signal rr_115_symbol : Boolean;
+              signal ra_116_symbol : Boolean;
+              signal cr_117_symbol : Boolean;
+              signal ca_118_symbol : Boolean;
               -- 
             begin -- 
-              binary_37_inputs_27_start <= Xentry_25_symbol; -- control passed to block
-              Xentry_28_symbol  <= binary_37_inputs_27_start; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/$entry
-              binary_35_30: Block -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35 
-                signal binary_35_30_start: Boolean;
-                signal Xentry_31_symbol: Boolean;
-                signal Xexit_32_symbol: Boolean;
-                signal binary_35_inputs_33_symbol : Boolean;
-                signal rr_46_symbol : Boolean;
-                signal ra_47_symbol : Boolean;
-                signal cr_48_symbol : Boolean;
-                signal ca_49_symbol : Boolean;
+              binary_64_21_start <= Xentry_19_symbol; -- control passed to block
+              Xentry_22_symbol  <= binary_64_21_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/$entry
+              binary_64_inputs_24: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs 
+                signal binary_64_inputs_24_start: Boolean;
+                signal Xentry_25_symbol: Boolean;
+                signal Xexit_26_symbol: Boolean;
+                signal binary_62_27_symbol : Boolean;
                 -- 
               begin -- 
-                binary_35_30_start <= Xentry_28_symbol; -- control passed to block
-                Xentry_31_symbol  <= binary_35_30_start; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/$entry
-                binary_35_inputs_33: Block -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs 
-                  signal binary_35_inputs_33_start: Boolean;
-                  signal Xentry_34_symbol: Boolean;
-                  signal Xexit_35_symbol: Boolean;
-                  signal binary_33_36_symbol : Boolean;
+                binary_64_inputs_24_start <= Xentry_22_symbol; -- control passed to block
+                Xentry_25_symbol  <= binary_64_inputs_24_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/$entry
+                binary_62_27: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62 
+                  signal binary_62_27_start: Boolean;
+                  signal Xentry_28_symbol: Boolean;
+                  signal Xexit_29_symbol: Boolean;
+                  signal binary_62_inputs_30_symbol : Boolean;
+                  signal rr_111_symbol : Boolean;
+                  signal ra_112_symbol : Boolean;
+                  signal cr_113_symbol : Boolean;
+                  signal ca_114_symbol : Boolean;
                   -- 
                 begin -- 
-                  binary_35_inputs_33_start <= Xentry_31_symbol; -- control passed to block
-                  Xentry_34_symbol  <= binary_35_inputs_33_start; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs/$entry
-                  binary_33_36: Block -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs/binary_33 
-                    signal binary_33_36_start: Boolean;
-                    signal Xentry_37_symbol: Boolean;
-                    signal Xexit_38_symbol: Boolean;
-                    signal binary_33_inputs_39_symbol : Boolean;
-                    signal rr_42_symbol : Boolean;
-                    signal ra_43_symbol : Boolean;
-                    signal cr_44_symbol : Boolean;
-                    signal ca_45_symbol : Boolean;
+                  binary_62_27_start <= Xentry_25_symbol; -- control passed to block
+                  Xentry_28_symbol  <= binary_62_27_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/$entry
+                  binary_62_inputs_30: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs 
+                    signal binary_62_inputs_30_start: Boolean;
+                    signal Xentry_31_symbol: Boolean;
+                    signal Xexit_32_symbol: Boolean;
+                    signal binary_60_33_symbol : Boolean;
                     -- 
                   begin -- 
-                    binary_33_36_start <= Xentry_34_symbol; -- control passed to block
-                    Xentry_37_symbol  <= binary_33_36_start; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs/binary_33/$entry
-                    binary_33_inputs_39: Block -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs/binary_33/binary_33_inputs 
-                      signal binary_33_inputs_39_start: Boolean;
-                      signal Xentry_40_symbol: Boolean;
-                      signal Xexit_41_symbol: Boolean;
+                    binary_62_inputs_30_start <= Xentry_28_symbol; -- control passed to block
+                    Xentry_31_symbol  <= binary_62_inputs_30_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/$entry
+                    binary_60_33: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60 
+                      signal binary_60_33_start: Boolean;
+                      signal Xentry_34_symbol: Boolean;
+                      signal Xexit_35_symbol: Boolean;
+                      signal binary_60_inputs_36_symbol : Boolean;
+                      signal rr_107_symbol : Boolean;
+                      signal ra_108_symbol : Boolean;
+                      signal cr_109_symbol : Boolean;
+                      signal ca_110_symbol : Boolean;
                       -- 
                     begin -- 
-                      binary_33_inputs_39_start <= Xentry_37_symbol; -- control passed to block
-                      Xentry_40_symbol  <= binary_33_inputs_39_start; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs/binary_33/binary_33_inputs/$entry
-                      Xexit_41_symbol <= Xentry_40_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs/binary_33/binary_33_inputs/$exit
-                      binary_33_inputs_39_symbol <= Xexit_41_symbol; -- control passed from block 
+                      binary_60_33_start <= Xentry_31_symbol; -- control passed to block
+                      Xentry_34_symbol  <= binary_60_33_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/$entry
+                      binary_60_inputs_36: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs 
+                        signal binary_60_inputs_36_start: Boolean;
+                        signal Xentry_37_symbol: Boolean;
+                        signal Xexit_38_symbol: Boolean;
+                        signal ternary_58_39_symbol : Boolean;
+                        -- 
+                      begin -- 
+                        binary_60_inputs_36_start <= Xentry_34_symbol; -- control passed to block
+                        Xentry_37_symbol  <= binary_60_inputs_36_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/$entry
+                        ternary_58_39: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58 
+                          signal ternary_58_39_start: Boolean;
+                          signal Xentry_40_symbol: Boolean;
+                          signal Xexit_41_symbol: Boolean;
+                          signal ternary_58_inputs_42_symbol : Boolean;
+                          signal req_105_symbol : Boolean;
+                          signal ack_106_symbol : Boolean;
+                          -- 
+                        begin -- 
+                          ternary_58_39_start <= Xentry_37_symbol; -- control passed to block
+                          Xentry_40_symbol  <= ternary_58_39_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/$entry
+                          ternary_58_inputs_42: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs 
+                            signal ternary_58_inputs_42_start: Boolean;
+                            signal Xentry_43_symbol: Boolean;
+                            signal Xexit_44_symbol: Boolean;
+                            signal binary_45_45_symbol : Boolean;
+                            signal binary_52_55_symbol : Boolean;
+                            signal binary_57_85_symbol : Boolean;
+                            -- 
+                          begin -- 
+                            ternary_58_inputs_42_start <= Xentry_40_symbol; -- control passed to block
+                            Xentry_43_symbol  <= ternary_58_inputs_42_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/$entry
+                            binary_45_45: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45 
+                              signal binary_45_45_start: Boolean;
+                              signal Xentry_46_symbol: Boolean;
+                              signal Xexit_47_symbol: Boolean;
+                              signal binary_45_inputs_48_symbol : Boolean;
+                              signal rr_51_symbol : Boolean;
+                              signal ra_52_symbol : Boolean;
+                              signal cr_53_symbol : Boolean;
+                              signal ca_54_symbol : Boolean;
+                              -- 
+                            begin -- 
+                              binary_45_45_start <= Xentry_43_symbol; -- control passed to block
+                              Xentry_46_symbol  <= binary_45_45_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45/$entry
+                              binary_45_inputs_48: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45/binary_45_inputs 
+                                signal binary_45_inputs_48_start: Boolean;
+                                signal Xentry_49_symbol: Boolean;
+                                signal Xexit_50_symbol: Boolean;
+                                -- 
+                              begin -- 
+                                binary_45_inputs_48_start <= Xentry_46_symbol; -- control passed to block
+                                Xentry_49_symbol  <= binary_45_inputs_48_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45/binary_45_inputs/$entry
+                                Xexit_50_symbol <= Xentry_49_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45/binary_45_inputs/$exit
+                                binary_45_inputs_48_symbol <= Xexit_50_symbol; -- control passed from block 
+                                -- 
+                              end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45/binary_45_inputs
+                              rr_51_symbol <= binary_45_inputs_48_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45/rr
+                              binary_45_inst_req_0 <= rr_51_symbol; -- link to DP
+                              ra_52_symbol <= binary_45_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45/ra
+                              cr_53_symbol <= ra_52_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45/cr
+                              binary_45_inst_req_1 <= cr_53_symbol; -- link to DP
+                              ca_54_symbol <= binary_45_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45/ca
+                              Xexit_47_symbol <= ca_54_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45/$exit
+                              binary_45_45_symbol <= Xexit_47_symbol; -- control passed from block 
+                              -- 
+                            end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45
+                            binary_52_55: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52 
+                              signal binary_52_55_start: Boolean;
+                              signal Xentry_56_symbol: Boolean;
+                              signal Xexit_57_symbol: Boolean;
+                              signal binary_52_inputs_58_symbol : Boolean;
+                              signal rr_81_symbol : Boolean;
+                              signal ra_82_symbol : Boolean;
+                              signal cr_83_symbol : Boolean;
+                              signal ca_84_symbol : Boolean;
+                              -- 
+                            begin -- 
+                              binary_52_55_start <= Xentry_43_symbol; -- control passed to block
+                              Xentry_56_symbol  <= binary_52_55_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/$entry
+                              binary_52_inputs_58: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs 
+                                signal binary_52_inputs_58_start: Boolean;
+                                signal Xentry_59_symbol: Boolean;
+                                signal Xexit_60_symbol: Boolean;
+                                signal binary_50_61_symbol : Boolean;
+                                -- 
+                              begin -- 
+                                binary_52_inputs_58_start <= Xentry_56_symbol; -- control passed to block
+                                Xentry_59_symbol  <= binary_52_inputs_58_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/$entry
+                                binary_50_61: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50 
+                                  signal binary_50_61_start: Boolean;
+                                  signal Xentry_62_symbol: Boolean;
+                                  signal Xexit_63_symbol: Boolean;
+                                  signal binary_50_inputs_64_symbol : Boolean;
+                                  signal rr_77_symbol : Boolean;
+                                  signal ra_78_symbol : Boolean;
+                                  signal cr_79_symbol : Boolean;
+                                  signal ca_80_symbol : Boolean;
+                                  -- 
+                                begin -- 
+                                  binary_50_61_start <= Xentry_59_symbol; -- control passed to block
+                                  Xentry_62_symbol  <= binary_50_61_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/$entry
+                                  binary_50_inputs_64: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs 
+                                    signal binary_50_inputs_64_start: Boolean;
+                                    signal Xentry_65_symbol: Boolean;
+                                    signal Xexit_66_symbol: Boolean;
+                                    signal binary_48_67_symbol : Boolean;
+                                    -- 
+                                  begin -- 
+                                    binary_50_inputs_64_start <= Xentry_62_symbol; -- control passed to block
+                                    Xentry_65_symbol  <= binary_50_inputs_64_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/$entry
+                                    binary_48_67: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48 
+                                      signal binary_48_67_start: Boolean;
+                                      signal Xentry_68_symbol: Boolean;
+                                      signal Xexit_69_symbol: Boolean;
+                                      signal binary_48_inputs_70_symbol : Boolean;
+                                      signal rr_73_symbol : Boolean;
+                                      signal ra_74_symbol : Boolean;
+                                      signal cr_75_symbol : Boolean;
+                                      signal ca_76_symbol : Boolean;
+                                      -- 
+                                    begin -- 
+                                      binary_48_67_start <= Xentry_65_symbol; -- control passed to block
+                                      Xentry_68_symbol  <= binary_48_67_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48/$entry
+                                      binary_48_inputs_70: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48/binary_48_inputs 
+                                        signal binary_48_inputs_70_start: Boolean;
+                                        signal Xentry_71_symbol: Boolean;
+                                        signal Xexit_72_symbol: Boolean;
+                                        -- 
+                                      begin -- 
+                                        binary_48_inputs_70_start <= Xentry_68_symbol; -- control passed to block
+                                        Xentry_71_symbol  <= binary_48_inputs_70_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48/binary_48_inputs/$entry
+                                        Xexit_72_symbol <= Xentry_71_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48/binary_48_inputs/$exit
+                                        binary_48_inputs_70_symbol <= Xexit_72_symbol; -- control passed from block 
+                                        -- 
+                                      end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48/binary_48_inputs
+                                      rr_73_symbol <= binary_48_inputs_70_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48/rr
+                                      binary_48_inst_req_0 <= rr_73_symbol; -- link to DP
+                                      ra_74_symbol <= binary_48_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48/ra
+                                      cr_75_symbol <= ra_74_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48/cr
+                                      binary_48_inst_req_1 <= cr_75_symbol; -- link to DP
+                                      ca_76_symbol <= binary_48_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48/ca
+                                      Xexit_69_symbol <= ca_76_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48/$exit
+                                      binary_48_67_symbol <= Xexit_69_symbol; -- control passed from block 
+                                      -- 
+                                    end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48
+                                    Xexit_66_symbol <= binary_48_67_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/$exit
+                                    binary_50_inputs_64_symbol <= Xexit_66_symbol; -- control passed from block 
+                                    -- 
+                                  end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs
+                                  rr_77_symbol <= binary_50_inputs_64_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/rr
+                                  binary_50_inst_req_0 <= rr_77_symbol; -- link to DP
+                                  ra_78_symbol <= binary_50_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/ra
+                                  cr_79_symbol <= ra_78_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/cr
+                                  binary_50_inst_req_1 <= cr_79_symbol; -- link to DP
+                                  ca_80_symbol <= binary_50_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/ca
+                                  Xexit_63_symbol <= ca_80_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/$exit
+                                  binary_50_61_symbol <= Xexit_63_symbol; -- control passed from block 
+                                  -- 
+                                end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50
+                                Xexit_60_symbol <= binary_50_61_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/$exit
+                                binary_52_inputs_58_symbol <= Xexit_60_symbol; -- control passed from block 
+                                -- 
+                              end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs
+                              rr_81_symbol <= binary_52_inputs_58_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/rr
+                              binary_52_inst_req_0 <= rr_81_symbol; -- link to DP
+                              ra_82_symbol <= binary_52_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/ra
+                              cr_83_symbol <= ra_82_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/cr
+                              binary_52_inst_req_1 <= cr_83_symbol; -- link to DP
+                              ca_84_symbol <= binary_52_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/ca
+                              Xexit_57_symbol <= ca_84_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/$exit
+                              binary_52_55_symbol <= Xexit_57_symbol; -- control passed from block 
+                              -- 
+                            end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52
+                            binary_57_85: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57 
+                              signal binary_57_85_start: Boolean;
+                              signal Xentry_86_symbol: Boolean;
+                              signal Xexit_87_symbol: Boolean;
+                              signal binary_57_inputs_88_symbol : Boolean;
+                              signal rr_101_symbol : Boolean;
+                              signal ra_102_symbol : Boolean;
+                              signal cr_103_symbol : Boolean;
+                              signal ca_104_symbol : Boolean;
+                              -- 
+                            begin -- 
+                              binary_57_85_start <= Xentry_43_symbol; -- control passed to block
+                              Xentry_86_symbol  <= binary_57_85_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/$entry
+                              binary_57_inputs_88: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs 
+                                signal binary_57_inputs_88_start: Boolean;
+                                signal Xentry_89_symbol: Boolean;
+                                signal Xexit_90_symbol: Boolean;
+                                signal binary_55_91_symbol : Boolean;
+                                -- 
+                              begin -- 
+                                binary_57_inputs_88_start <= Xentry_86_symbol; -- control passed to block
+                                Xentry_89_symbol  <= binary_57_inputs_88_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/$entry
+                                binary_55_91: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55 
+                                  signal binary_55_91_start: Boolean;
+                                  signal Xentry_92_symbol: Boolean;
+                                  signal Xexit_93_symbol: Boolean;
+                                  signal binary_55_inputs_94_symbol : Boolean;
+                                  signal rr_97_symbol : Boolean;
+                                  signal ra_98_symbol : Boolean;
+                                  signal cr_99_symbol : Boolean;
+                                  signal ca_100_symbol : Boolean;
+                                  -- 
+                                begin -- 
+                                  binary_55_91_start <= Xentry_89_symbol; -- control passed to block
+                                  Xentry_92_symbol  <= binary_55_91_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55/$entry
+                                  binary_55_inputs_94: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55/binary_55_inputs 
+                                    signal binary_55_inputs_94_start: Boolean;
+                                    signal Xentry_95_symbol: Boolean;
+                                    signal Xexit_96_symbol: Boolean;
+                                    -- 
+                                  begin -- 
+                                    binary_55_inputs_94_start <= Xentry_92_symbol; -- control passed to block
+                                    Xentry_95_symbol  <= binary_55_inputs_94_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55/binary_55_inputs/$entry
+                                    Xexit_96_symbol <= Xentry_95_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55/binary_55_inputs/$exit
+                                    binary_55_inputs_94_symbol <= Xexit_96_symbol; -- control passed from block 
+                                    -- 
+                                  end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55/binary_55_inputs
+                                  rr_97_symbol <= binary_55_inputs_94_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55/rr
+                                  binary_55_inst_req_0 <= rr_97_symbol; -- link to DP
+                                  ra_98_symbol <= binary_55_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55/ra
+                                  cr_99_symbol <= ra_98_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55/cr
+                                  binary_55_inst_req_1 <= cr_99_symbol; -- link to DP
+                                  ca_100_symbol <= binary_55_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55/ca
+                                  Xexit_93_symbol <= ca_100_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55/$exit
+                                  binary_55_91_symbol <= Xexit_93_symbol; -- control passed from block 
+                                  -- 
+                                end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55
+                                Xexit_90_symbol <= binary_55_91_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/$exit
+                                binary_57_inputs_88_symbol <= Xexit_90_symbol; -- control passed from block 
+                                -- 
+                              end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs
+                              rr_101_symbol <= binary_57_inputs_88_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/rr
+                              binary_57_inst_req_0 <= rr_101_symbol; -- link to DP
+                              ra_102_symbol <= binary_57_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/ra
+                              cr_103_symbol <= ra_102_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/cr
+                              binary_57_inst_req_1 <= cr_103_symbol; -- link to DP
+                              ca_104_symbol <= binary_57_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/ca
+                              Xexit_87_symbol <= ca_104_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/$exit
+                              binary_57_85_symbol <= Xexit_87_symbol; -- control passed from block 
+                              -- 
+                            end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57
+                            Xexit_44_block : Block -- non-trivial join transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/$exit 
+                              signal Xexit_44_predecessors: BooleanArray(2 downto 0);
+                              signal Xexit_44_p0_pred: BooleanArray(0 downto 0);
+                              signal Xexit_44_p0_succ: BooleanArray(0 downto 0);
+                              signal Xexit_44_p1_pred: BooleanArray(0 downto 0);
+                              signal Xexit_44_p1_succ: BooleanArray(0 downto 0);
+                              signal Xexit_44_p2_pred: BooleanArray(0 downto 0);
+                              signal Xexit_44_p2_succ: BooleanArray(0 downto 0);
+                              -- 
+                            begin -- 
+                              Xexit_44_0_place: Place -- 
+                                generic map(marking => false)
+                                port map( -- 
+                                  Xexit_44_p0_pred, Xexit_44_p0_succ, Xexit_44_predecessors(0), clk, reset-- 
+                                ); -- 
+                              Xexit_44_p0_succ(0) <=  Xexit_44_symbol;
+                              Xexit_44_p0_pred(0) <=  binary_45_45_symbol;
+                              Xexit_44_1_place: Place -- 
+                                generic map(marking => false)
+                                port map( -- 
+                                  Xexit_44_p1_pred, Xexit_44_p1_succ, Xexit_44_predecessors(1), clk, reset-- 
+                                ); -- 
+                              Xexit_44_p1_succ(0) <=  Xexit_44_symbol;
+                              Xexit_44_p1_pred(0) <=  binary_52_55_symbol;
+                              Xexit_44_2_place: Place -- 
+                                generic map(marking => false)
+                                port map( -- 
+                                  Xexit_44_p2_pred, Xexit_44_p2_succ, Xexit_44_predecessors(2), clk, reset-- 
+                                ); -- 
+                              Xexit_44_p2_succ(0) <=  Xexit_44_symbol;
+                              Xexit_44_p2_pred(0) <=  binary_57_85_symbol;
+                              Xexit_44_symbol <= AndReduce(Xexit_44_predecessors); 
+                              -- 
+                            end Block; -- non-trivial join transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/$exit
+                            ternary_58_inputs_42_symbol <= Xexit_44_symbol; -- control passed from block 
+                            -- 
+                          end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs
+                          req_105_symbol <= ternary_58_inputs_42_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/req
+                          ternary_58_inst_req_0 <= req_105_symbol; -- link to DP
+                          ack_106_symbol <= ternary_58_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ack
+                          Xexit_41_symbol <= ack_106_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/$exit
+                          ternary_58_39_symbol <= Xexit_41_symbol; -- control passed from block 
+                          -- 
+                        end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58
+                        Xexit_38_symbol <= ternary_58_39_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/$exit
+                        binary_60_inputs_36_symbol <= Xexit_38_symbol; -- control passed from block 
+                        -- 
+                      end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs
+                      rr_107_symbol <= binary_60_inputs_36_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/rr
+                      binary_60_inst_req_0 <= rr_107_symbol; -- link to DP
+                      ra_108_symbol <= binary_60_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/ra
+                      cr_109_symbol <= ra_108_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/cr
+                      binary_60_inst_req_1 <= cr_109_symbol; -- link to DP
+                      ca_110_symbol <= binary_60_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/ca
+                      Xexit_35_symbol <= ca_110_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/$exit
+                      binary_60_33_symbol <= Xexit_35_symbol; -- control passed from block 
                       -- 
-                    end Block; -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs/binary_33/binary_33_inputs
-                    rr_42_symbol <= binary_33_inputs_39_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs/binary_33/rr
-                    binary_33_inst_req_0 <= rr_42_symbol; -- link to DP
-                    ra_43_symbol <= binary_33_inst_ack_0; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs/binary_33/ra
-                    cr_44_symbol <= ra_43_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs/binary_33/cr
-                    binary_33_inst_req_1 <= cr_44_symbol; -- link to DP
-                    ca_45_symbol <= binary_33_inst_ack_1; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs/binary_33/ca
-                    Xexit_38_symbol <= ca_45_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs/binary_33/$exit
-                    binary_33_36_symbol <= Xexit_38_symbol; -- control passed from block 
+                    end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60
+                    Xexit_32_symbol <= binary_60_33_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/$exit
+                    binary_62_inputs_30_symbol <= Xexit_32_symbol; -- control passed from block 
                     -- 
-                  end Block; -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs/binary_33
-                  Xexit_35_symbol <= binary_33_36_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs/$exit
-                  binary_35_inputs_33_symbol <= Xexit_35_symbol; -- control passed from block 
+                  end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs
+                  rr_111_symbol <= binary_62_inputs_30_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/rr
+                  binary_62_inst_req_0 <= rr_111_symbol; -- link to DP
+                  ra_112_symbol <= binary_62_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/ra
+                  cr_113_symbol <= ra_112_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/cr
+                  binary_62_inst_req_1 <= cr_113_symbol; -- link to DP
+                  ca_114_symbol <= binary_62_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/ca
+                  Xexit_29_symbol <= ca_114_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/$exit
+                  binary_62_27_symbol <= Xexit_29_symbol; -- control passed from block 
                   -- 
-                end Block; -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/binary_35_inputs
-                rr_46_symbol <= binary_35_inputs_33_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/rr
-                binary_35_inst_req_0 <= rr_46_symbol; -- link to DP
-                ra_47_symbol <= binary_35_inst_ack_0; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/ra
-                cr_48_symbol <= ra_47_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/cr
-                binary_35_inst_req_1 <= cr_48_symbol; -- link to DP
-                ca_49_symbol <= binary_35_inst_ack_1; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/ca
-                Xexit_32_symbol <= ca_49_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35/$exit
-                binary_35_30_symbol <= Xexit_32_symbol; -- control passed from block 
+                end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62
+                Xexit_26_symbol <= binary_62_27_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/$exit
+                binary_64_inputs_24_symbol <= Xexit_26_symbol; -- control passed from block 
                 -- 
-              end Block; -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/binary_35
-              Xexit_29_symbol <= binary_35_30_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs/$exit
-              binary_37_inputs_27_symbol <= Xexit_29_symbol; -- control passed from block 
+              end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs
+              rr_115_symbol <= binary_64_inputs_24_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/rr
+              binary_64_inst_req_0 <= rr_115_symbol; -- link to DP
+              ra_116_symbol <= binary_64_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/ra
+              cr_117_symbol <= ra_116_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/cr
+              binary_64_inst_req_1 <= cr_117_symbol; -- link to DP
+              ca_118_symbol <= binary_64_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/ca
+              Xexit_23_symbol <= ca_118_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/$exit
+              binary_64_21_symbol <= Xexit_23_symbol; -- control passed from block 
               -- 
-            end Block; -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/binary_37_inputs
-            rr_50_symbol <= binary_37_inputs_27_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/rr
-            binary_37_inst_req_0 <= rr_50_symbol; -- link to DP
-            ra_51_symbol <= binary_37_inst_ack_0; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/ra
-            cr_52_symbol <= ra_51_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/cr
-            binary_37_inst_req_1 <= cr_52_symbol; -- link to DP
-            ca_53_symbol <= binary_37_inst_ack_1; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/ca
-            Xexit_26_symbol <= ca_53_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37/$exit
-            binary_37_24_symbol <= Xexit_26_symbol; -- control passed from block 
+            end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64
+            Xexit_20_symbol <= binary_64_21_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/$exit
+            assign_stmt_65_18_symbol <= Xexit_20_symbol; -- control passed from block 
             -- 
-          end Block; -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/binary_37
-          Xexit_23_symbol <= binary_37_24_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38/$exit
-          assign_stmt_38_21_symbol <= Xexit_23_symbol; -- control passed from block 
-          -- 
-        end Block; -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_38
-        assign_stmt_45_54: Block -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45 
-          signal assign_stmt_45_54_start: Boolean;
-          signal Xentry_55_symbol: Boolean;
-          signal Xexit_56_symbol: Boolean;
-          signal binary_44_57_symbol : Boolean;
-          -- 
-        begin -- 
-          assign_stmt_45_54_start <= Xentry_19_symbol; -- control passed to block
-          Xentry_55_symbol  <= assign_stmt_45_54_start; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/$entry
-          binary_44_57: Block -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44 
-            signal binary_44_57_start: Boolean;
-            signal Xentry_58_symbol: Boolean;
-            signal Xexit_59_symbol: Boolean;
-            signal binary_44_inputs_60_symbol : Boolean;
-            signal rr_73_symbol : Boolean;
-            signal ra_74_symbol : Boolean;
-            signal cr_75_symbol : Boolean;
-            signal ca_76_symbol : Boolean;
+          end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65
+          assign_stmt_69_119: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_69 
+            signal assign_stmt_69_119_start: Boolean;
+            signal Xentry_120_symbol: Boolean;
+            signal Xexit_121_symbol: Boolean;
+            signal type_cast_68_122_symbol : Boolean;
             -- 
           begin -- 
-            binary_44_57_start <= Xentry_55_symbol; -- control passed to block
-            Xentry_58_symbol  <= binary_44_57_start; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/$entry
-            binary_44_inputs_60: Block -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs 
-              signal binary_44_inputs_60_start: Boolean;
-              signal Xentry_61_symbol: Boolean;
-              signal Xexit_62_symbol: Boolean;
-              signal binary_42_63_symbol : Boolean;
+            assign_stmt_69_119_start <= assign_stmt_65_18_symbol; -- control passed to block
+            Xentry_120_symbol  <= assign_stmt_69_119_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_69/$entry
+            type_cast_68_122: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_69/type_cast_68 
+              signal type_cast_68_122_start: Boolean;
+              signal Xentry_123_symbol: Boolean;
+              signal Xexit_124_symbol: Boolean;
+              signal req_125_symbol : Boolean;
+              signal ack_126_symbol : Boolean;
               -- 
             begin -- 
-              binary_44_inputs_60_start <= Xentry_58_symbol; -- control passed to block
-              Xentry_61_symbol  <= binary_44_inputs_60_start; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs/$entry
-              binary_42_63: Block -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs/binary_42 
-                signal binary_42_63_start: Boolean;
-                signal Xentry_64_symbol: Boolean;
-                signal Xexit_65_symbol: Boolean;
-                signal binary_42_inputs_66_symbol : Boolean;
-                signal rr_69_symbol : Boolean;
-                signal ra_70_symbol : Boolean;
-                signal cr_71_symbol : Boolean;
-                signal ca_72_symbol : Boolean;
-                -- 
-              begin -- 
-                binary_42_63_start <= Xentry_61_symbol; -- control passed to block
-                Xentry_64_symbol  <= binary_42_63_start; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs/binary_42/$entry
-                binary_42_inputs_66: Block -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs/binary_42/binary_42_inputs 
-                  signal binary_42_inputs_66_start: Boolean;
-                  signal Xentry_67_symbol: Boolean;
-                  signal Xexit_68_symbol: Boolean;
-                  -- 
-                begin -- 
-                  binary_42_inputs_66_start <= Xentry_64_symbol; -- control passed to block
-                  Xentry_67_symbol  <= binary_42_inputs_66_start; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs/binary_42/binary_42_inputs/$entry
-                  Xexit_68_symbol <= Xentry_67_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs/binary_42/binary_42_inputs/$exit
-                  binary_42_inputs_66_symbol <= Xexit_68_symbol; -- control passed from block 
-                  -- 
-                end Block; -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs/binary_42/binary_42_inputs
-                rr_69_symbol <= binary_42_inputs_66_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs/binary_42/rr
-                binary_42_inst_req_0 <= rr_69_symbol; -- link to DP
-                ra_70_symbol <= binary_42_inst_ack_0; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs/binary_42/ra
-                cr_71_symbol <= ra_70_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs/binary_42/cr
-                binary_42_inst_req_1 <= cr_71_symbol; -- link to DP
-                ca_72_symbol <= binary_42_inst_ack_1; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs/binary_42/ca
-                Xexit_65_symbol <= ca_72_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs/binary_42/$exit
-                binary_42_63_symbol <= Xexit_65_symbol; -- control passed from block 
-                -- 
-              end Block; -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs/binary_42
-              Xexit_62_symbol <= binary_42_63_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs/$exit
-              binary_44_inputs_60_symbol <= Xexit_62_symbol; -- control passed from block 
+              type_cast_68_122_start <= Xentry_120_symbol; -- control passed to block
+              Xentry_123_symbol  <= type_cast_68_122_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_69/type_cast_68/$entry
+              req_125_symbol <= Xentry_123_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_69/type_cast_68/req
+              type_cast_68_inst_req_0 <= req_125_symbol; -- link to DP
+              ack_126_symbol <= type_cast_68_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_69/type_cast_68/ack
+              Xexit_124_symbol <= ack_126_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_69/type_cast_68/$exit
+              type_cast_68_122_symbol <= Xexit_124_symbol; -- control passed from block 
               -- 
-            end Block; -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/binary_44_inputs
-            rr_73_symbol <= binary_44_inputs_60_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/rr
-            binary_44_inst_req_0 <= rr_73_symbol; -- link to DP
-            ra_74_symbol <= binary_44_inst_ack_0; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/ra
-            cr_75_symbol <= ra_74_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/cr
-            binary_44_inst_req_1 <= cr_75_symbol; -- link to DP
-            ca_76_symbol <= binary_44_inst_ack_1; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/ca
-            Xexit_59_symbol <= ca_76_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44/$exit
-            binary_44_57_symbol <= Xexit_59_symbol; -- control passed from block 
+            end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_69/type_cast_68
+            Xexit_121_symbol <= type_cast_68_122_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_69/$exit
+            assign_stmt_69_119_symbol <= Xexit_121_symbol; -- control passed from block 
             -- 
-          end Block; -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/binary_44
-          Xexit_56_symbol <= binary_44_57_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45/$exit
-          assign_stmt_45_54_symbol <= Xexit_56_symbol; -- control passed from block 
+          end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_69
+          Xexit_17_symbol <= assign_stmt_69_119_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/$exit
+          series_block_stmt_41_15_symbol <= Xexit_17_symbol; -- control passed from block 
           -- 
-        end Block; -- branch_block_stmt_14/parallel_block_stmt_29/assign_stmt_45
-        Xexit_20_block : Block -- non-trivial join transition branch_block_stmt_14/parallel_block_stmt_29/$exit 
-          signal Xexit_20_predecessors: BooleanArray(1 downto 0);
-          signal Xexit_20_p0_pred: BooleanArray(0 downto 0);
-          signal Xexit_20_p0_succ: BooleanArray(0 downto 0);
-          signal Xexit_20_p1_pred: BooleanArray(0 downto 0);
-          signal Xexit_20_p1_succ: BooleanArray(0 downto 0);
-          -- 
-        begin -- 
-          Xexit_20_0_place: Place -- 
-            generic map(marking => false)
-            port map( -- 
-              Xexit_20_p0_pred, Xexit_20_p0_succ, Xexit_20_predecessors(0), clk, reset-- 
-            ); -- 
-          Xexit_20_p0_succ(0) <=  Xexit_20_symbol;
-          Xexit_20_p0_pred(0) <=  assign_stmt_38_21_symbol;
-          Xexit_20_1_place: Place -- 
-            generic map(marking => false)
-            port map( -- 
-              Xexit_20_p1_pred, Xexit_20_p1_succ, Xexit_20_predecessors(1), clk, reset-- 
-            ); -- 
-          Xexit_20_p1_succ(0) <=  Xexit_20_symbol;
-          Xexit_20_p1_pred(0) <=  assign_stmt_45_54_symbol;
-          Xexit_20_symbol <= AndReduce(Xexit_20_predecessors); 
-          -- 
-        end Block; -- non-trivial join transition branch_block_stmt_14/parallel_block_stmt_29/$exit
-        parallel_block_stmt_29_18_symbol <= Xexit_20_symbol; -- control passed from block 
-        -- 
-      end Block; -- branch_block_stmt_14/parallel_block_stmt_29
-      if_stmt_47_eval_test_77: Block -- branch_block_stmt_14/if_stmt_47_eval_test 
-        signal if_stmt_47_eval_test_77_start: Boolean;
-        signal Xentry_78_symbol: Boolean;
-        signal Xexit_79_symbol: Boolean;
-        signal binary_50_80_symbol : Boolean;
-        signal branch_req_90_symbol : Boolean;
-        -- 
-      begin -- 
-        if_stmt_47_eval_test_77_start <= if_stmt_47_x_xentry_x_xx_x11_symbol; -- control passed to block
-        Xentry_78_symbol  <= if_stmt_47_eval_test_77_start; -- transition branch_block_stmt_14/if_stmt_47_eval_test/$entry
-        binary_50_80: Block -- branch_block_stmt_14/if_stmt_47_eval_test/binary_50 
-          signal binary_50_80_start: Boolean;
-          signal Xentry_81_symbol: Boolean;
-          signal Xexit_82_symbol: Boolean;
-          signal binary_50_inputs_83_symbol : Boolean;
-          signal rr_86_symbol : Boolean;
-          signal ra_87_symbol : Boolean;
-          signal cr_88_symbol : Boolean;
-          signal ca_89_symbol : Boolean;
+        end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41
+        series_block_stmt_71_127: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71 
+          signal series_block_stmt_71_127_start: Boolean;
+          signal Xentry_128_symbol: Boolean;
+          signal Xexit_129_symbol: Boolean;
+          signal assign_stmt_89_130_symbol : Boolean;
+          signal assign_stmt_95_201_symbol : Boolean;
           -- 
         begin -- 
-          binary_50_80_start <= Xentry_78_symbol; -- control passed to block
-          Xentry_81_symbol  <= binary_50_80_start; -- transition branch_block_stmt_14/if_stmt_47_eval_test/binary_50/$entry
-          binary_50_inputs_83: Block -- branch_block_stmt_14/if_stmt_47_eval_test/binary_50/binary_50_inputs 
-            signal binary_50_inputs_83_start: Boolean;
-            signal Xentry_84_symbol: Boolean;
-            signal Xexit_85_symbol: Boolean;
+          series_block_stmt_71_127_start <= Xentry_13_symbol; -- control passed to block
+          Xentry_128_symbol  <= series_block_stmt_71_127_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/$entry
+          assign_stmt_89_130: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89 
+            signal assign_stmt_89_130_start: Boolean;
+            signal Xentry_131_symbol: Boolean;
+            signal Xexit_132_symbol: Boolean;
+            signal ternary_88_133_symbol : Boolean;
             -- 
           begin -- 
-            binary_50_inputs_83_start <= Xentry_81_symbol; -- control passed to block
-            Xentry_84_symbol  <= binary_50_inputs_83_start; -- transition branch_block_stmt_14/if_stmt_47_eval_test/binary_50/binary_50_inputs/$entry
-            Xexit_85_symbol <= Xentry_84_symbol; -- transition branch_block_stmt_14/if_stmt_47_eval_test/binary_50/binary_50_inputs/$exit
-            binary_50_inputs_83_symbol <= Xexit_85_symbol; -- control passed from block 
-            -- 
-          end Block; -- branch_block_stmt_14/if_stmt_47_eval_test/binary_50/binary_50_inputs
-          rr_86_symbol <= binary_50_inputs_83_symbol; -- transition branch_block_stmt_14/if_stmt_47_eval_test/binary_50/rr
-          binary_50_inst_req_0 <= rr_86_symbol; -- link to DP
-          ra_87_symbol <= binary_50_inst_ack_0; -- transition branch_block_stmt_14/if_stmt_47_eval_test/binary_50/ra
-          cr_88_symbol <= ra_87_symbol; -- transition branch_block_stmt_14/if_stmt_47_eval_test/binary_50/cr
-          binary_50_inst_req_1 <= cr_88_symbol; -- link to DP
-          ca_89_symbol <= binary_50_inst_ack_1; -- transition branch_block_stmt_14/if_stmt_47_eval_test/binary_50/ca
-          Xexit_82_symbol <= ca_89_symbol; -- transition branch_block_stmt_14/if_stmt_47_eval_test/binary_50/$exit
-          binary_50_80_symbol <= Xexit_82_symbol; -- control passed from block 
-          -- 
-        end Block; -- branch_block_stmt_14/if_stmt_47_eval_test/binary_50
-        branch_req_90_symbol <= binary_50_80_symbol; -- transition branch_block_stmt_14/if_stmt_47_eval_test/branch_req
-        if_stmt_47_branch_req_0 <= branch_req_90_symbol; -- link to DP
-        Xexit_79_symbol <= branch_req_90_symbol; -- transition branch_block_stmt_14/if_stmt_47_eval_test/$exit
-        if_stmt_47_eval_test_77_symbol <= Xexit_79_symbol; -- control passed from block 
-        -- 
-      end Block; -- branch_block_stmt_14/if_stmt_47_eval_test
-      binary_50_place_91_symbol  <=  if_stmt_47_eval_test_77_symbol; -- place branch_block_stmt_14/binary_50_place (optimized away) 
-      if_stmt_47_if_link_92: Block -- branch_block_stmt_14/if_stmt_47_if_link 
-        signal if_stmt_47_if_link_92_start: Boolean;
-        signal Xentry_93_symbol: Boolean;
-        signal Xexit_94_symbol: Boolean;
-        signal if_choice_transition_95_symbol : Boolean;
-        -- 
-      begin -- 
-        if_stmt_47_if_link_92_start <= binary_50_place_91_symbol; -- control passed to block
-        Xentry_93_symbol  <= if_stmt_47_if_link_92_start; -- transition branch_block_stmt_14/if_stmt_47_if_link/$entry
-        if_choice_transition_95_symbol <= if_stmt_47_branch_ack_1; -- transition branch_block_stmt_14/if_stmt_47_if_link/if_choice_transition
-        Xexit_94_symbol <= if_choice_transition_95_symbol; -- transition branch_block_stmt_14/if_stmt_47_if_link/$exit
-        if_stmt_47_if_link_92_symbol <= Xexit_94_symbol; -- control passed from block 
-        -- 
-      end Block; -- branch_block_stmt_14/if_stmt_47_if_link
-      if_stmt_47_else_link_96: Block -- branch_block_stmt_14/if_stmt_47_else_link 
-        signal if_stmt_47_else_link_96_start: Boolean;
-        signal Xentry_97_symbol: Boolean;
-        signal Xexit_98_symbol: Boolean;
-        signal else_choice_transition_99_symbol : Boolean;
-        -- 
-      begin -- 
-        if_stmt_47_else_link_96_start <= binary_50_place_91_symbol; -- control passed to block
-        Xentry_97_symbol  <= if_stmt_47_else_link_96_start; -- transition branch_block_stmt_14/if_stmt_47_else_link/$entry
-        else_choice_transition_99_symbol <= if_stmt_47_branch_ack_0; -- transition branch_block_stmt_14/if_stmt_47_else_link/else_choice_transition
-        Xexit_98_symbol <= else_choice_transition_99_symbol; -- transition branch_block_stmt_14/if_stmt_47_else_link/$exit
-        if_stmt_47_else_link_96_symbol <= Xexit_98_symbol; -- control passed from block 
-        -- 
-      end Block; -- branch_block_stmt_14/if_stmt_47_else_link
-      if1_100_symbol  <=  if_stmt_47_if_link_92_symbol; -- place branch_block_stmt_14/if1 (optimized away) 
-      if0_101_symbol  <=  if_stmt_47_else_link_96_symbol; -- place branch_block_stmt_14/if0 (optimized away) 
-      assign_stmt_69_102: Block -- branch_block_stmt_14/assign_stmt_69 
-        signal assign_stmt_69_102_start: Boolean;
-        signal Xentry_103_symbol: Boolean;
-        signal Xexit_104_symbol: Boolean;
-        signal binary_68_105_symbol : Boolean;
-        -- 
-      begin -- 
-        assign_stmt_69_102_start <= assign_stmt_69_x_xentry_x_xx_x13_symbol; -- control passed to block
-        Xentry_103_symbol  <= assign_stmt_69_102_start; -- transition branch_block_stmt_14/assign_stmt_69/$entry
-        binary_68_105: Block -- branch_block_stmt_14/assign_stmt_69/binary_68 
-          signal binary_68_105_start: Boolean;
-          signal Xentry_106_symbol: Boolean;
-          signal Xexit_107_symbol: Boolean;
-          signal binary_68_inputs_108_symbol : Boolean;
-          signal rr_131_symbol : Boolean;
-          signal ra_132_symbol : Boolean;
-          signal cr_133_symbol : Boolean;
-          signal ca_134_symbol : Boolean;
-          -- 
-        begin -- 
-          binary_68_105_start <= Xentry_103_symbol; -- control passed to block
-          Xentry_106_symbol  <= binary_68_105_start; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/$entry
-          binary_68_inputs_108: Block -- branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs 
-            signal binary_68_inputs_108_start: Boolean;
-            signal Xentry_109_symbol: Boolean;
-            signal Xexit_110_symbol: Boolean;
-            signal binary_66_111_symbol : Boolean;
-            -- 
-          begin -- 
-            binary_68_inputs_108_start <= Xentry_106_symbol; -- control passed to block
-            Xentry_109_symbol  <= binary_68_inputs_108_start; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/$entry
-            binary_66_111: Block -- branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66 
-              signal binary_66_111_start: Boolean;
-              signal Xentry_112_symbol: Boolean;
-              signal Xexit_113_symbol: Boolean;
-              signal binary_66_inputs_114_symbol : Boolean;
-              signal rr_127_symbol : Boolean;
-              signal ra_128_symbol : Boolean;
-              signal cr_129_symbol : Boolean;
-              signal ca_130_symbol : Boolean;
+            assign_stmt_89_130_start <= Xentry_128_symbol; -- control passed to block
+            Xentry_131_symbol  <= assign_stmt_89_130_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/$entry
+            ternary_88_133: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88 
+              signal ternary_88_133_start: Boolean;
+              signal Xentry_134_symbol: Boolean;
+              signal Xexit_135_symbol: Boolean;
+              signal ternary_88_inputs_136_symbol : Boolean;
+              signal req_199_symbol : Boolean;
+              signal ack_200_symbol : Boolean;
               -- 
             begin -- 
-              binary_66_111_start <= Xentry_109_symbol; -- control passed to block
-              Xentry_112_symbol  <= binary_66_111_start; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/$entry
-              binary_66_inputs_114: Block -- branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs 
-                signal binary_66_inputs_114_start: Boolean;
-                signal Xentry_115_symbol: Boolean;
-                signal Xexit_116_symbol: Boolean;
-                signal binary_64_117_symbol : Boolean;
+              ternary_88_133_start <= Xentry_131_symbol; -- control passed to block
+              Xentry_134_symbol  <= ternary_88_133_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/$entry
+              ternary_88_inputs_136: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs 
+                signal ternary_88_inputs_136_start: Boolean;
+                signal Xentry_137_symbol: Boolean;
+                signal Xexit_138_symbol: Boolean;
+                signal binary_75_139_symbol : Boolean;
+                signal binary_82_149_symbol : Boolean;
+                signal binary_87_179_symbol : Boolean;
                 -- 
               begin -- 
-                binary_66_inputs_114_start <= Xentry_112_symbol; -- control passed to block
-                Xentry_115_symbol  <= binary_66_inputs_114_start; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs/$entry
-                binary_64_117: Block -- branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs/binary_64 
-                  signal binary_64_117_start: Boolean;
-                  signal Xentry_118_symbol: Boolean;
-                  signal Xexit_119_symbol: Boolean;
-                  signal binary_64_inputs_120_symbol : Boolean;
-                  signal rr_123_symbol : Boolean;
-                  signal ra_124_symbol : Boolean;
-                  signal cr_125_symbol : Boolean;
-                  signal ca_126_symbol : Boolean;
+                ternary_88_inputs_136_start <= Xentry_134_symbol; -- control passed to block
+                Xentry_137_symbol  <= ternary_88_inputs_136_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/$entry
+                binary_75_139: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75 
+                  signal binary_75_139_start: Boolean;
+                  signal Xentry_140_symbol: Boolean;
+                  signal Xexit_141_symbol: Boolean;
+                  signal binary_75_inputs_142_symbol : Boolean;
+                  signal rr_145_symbol : Boolean;
+                  signal ra_146_symbol : Boolean;
+                  signal cr_147_symbol : Boolean;
+                  signal ca_148_symbol : Boolean;
                   -- 
                 begin -- 
-                  binary_64_117_start <= Xentry_115_symbol; -- control passed to block
-                  Xentry_118_symbol  <= binary_64_117_start; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs/binary_64/$entry
-                  binary_64_inputs_120: Block -- branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs/binary_64/binary_64_inputs 
-                    signal binary_64_inputs_120_start: Boolean;
-                    signal Xentry_121_symbol: Boolean;
-                    signal Xexit_122_symbol: Boolean;
+                  binary_75_139_start <= Xentry_137_symbol; -- control passed to block
+                  Xentry_140_symbol  <= binary_75_139_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75/$entry
+                  binary_75_inputs_142: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75/binary_75_inputs 
+                    signal binary_75_inputs_142_start: Boolean;
+                    signal Xentry_143_symbol: Boolean;
+                    signal Xexit_144_symbol: Boolean;
                     -- 
                   begin -- 
-                    binary_64_inputs_120_start <= Xentry_118_symbol; -- control passed to block
-                    Xentry_121_symbol  <= binary_64_inputs_120_start; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs/binary_64/binary_64_inputs/$entry
-                    Xexit_122_symbol <= Xentry_121_symbol; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs/binary_64/binary_64_inputs/$exit
-                    binary_64_inputs_120_symbol <= Xexit_122_symbol; -- control passed from block 
+                    binary_75_inputs_142_start <= Xentry_140_symbol; -- control passed to block
+                    Xentry_143_symbol  <= binary_75_inputs_142_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75/binary_75_inputs/$entry
+                    Xexit_144_symbol <= Xentry_143_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75/binary_75_inputs/$exit
+                    binary_75_inputs_142_symbol <= Xexit_144_symbol; -- control passed from block 
                     -- 
-                  end Block; -- branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs/binary_64/binary_64_inputs
-                  rr_123_symbol <= binary_64_inputs_120_symbol; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs/binary_64/rr
-                  binary_64_inst_req_0 <= rr_123_symbol; -- link to DP
-                  ra_124_symbol <= binary_64_inst_ack_0; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs/binary_64/ra
-                  cr_125_symbol <= ra_124_symbol; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs/binary_64/cr
-                  binary_64_inst_req_1 <= cr_125_symbol; -- link to DP
-                  ca_126_symbol <= binary_64_inst_ack_1; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs/binary_64/ca
-                  Xexit_119_symbol <= ca_126_symbol; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs/binary_64/$exit
-                  binary_64_117_symbol <= Xexit_119_symbol; -- control passed from block 
+                  end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75/binary_75_inputs
+                  rr_145_symbol <= binary_75_inputs_142_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75/rr
+                  binary_75_inst_req_0 <= rr_145_symbol; -- link to DP
+                  ra_146_symbol <= binary_75_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75/ra
+                  cr_147_symbol <= ra_146_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75/cr
+                  binary_75_inst_req_1 <= cr_147_symbol; -- link to DP
+                  ca_148_symbol <= binary_75_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75/ca
+                  Xexit_141_symbol <= ca_148_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75/$exit
+                  binary_75_139_symbol <= Xexit_141_symbol; -- control passed from block 
                   -- 
-                end Block; -- branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs/binary_64
-                Xexit_116_symbol <= binary_64_117_symbol; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs/$exit
-                binary_66_inputs_114_symbol <= Xexit_116_symbol; -- control passed from block 
+                end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75
+                binary_82_149: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82 
+                  signal binary_82_149_start: Boolean;
+                  signal Xentry_150_symbol: Boolean;
+                  signal Xexit_151_symbol: Boolean;
+                  signal binary_82_inputs_152_symbol : Boolean;
+                  signal rr_175_symbol : Boolean;
+                  signal ra_176_symbol : Boolean;
+                  signal cr_177_symbol : Boolean;
+                  signal ca_178_symbol : Boolean;
+                  -- 
+                begin -- 
+                  binary_82_149_start <= Xentry_137_symbol; -- control passed to block
+                  Xentry_150_symbol  <= binary_82_149_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/$entry
+                  binary_82_inputs_152: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs 
+                    signal binary_82_inputs_152_start: Boolean;
+                    signal Xentry_153_symbol: Boolean;
+                    signal Xexit_154_symbol: Boolean;
+                    signal binary_80_155_symbol : Boolean;
+                    -- 
+                  begin -- 
+                    binary_82_inputs_152_start <= Xentry_150_symbol; -- control passed to block
+                    Xentry_153_symbol  <= binary_82_inputs_152_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/$entry
+                    binary_80_155: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80 
+                      signal binary_80_155_start: Boolean;
+                      signal Xentry_156_symbol: Boolean;
+                      signal Xexit_157_symbol: Boolean;
+                      signal binary_80_inputs_158_symbol : Boolean;
+                      signal rr_171_symbol : Boolean;
+                      signal ra_172_symbol : Boolean;
+                      signal cr_173_symbol : Boolean;
+                      signal ca_174_symbol : Boolean;
+                      -- 
+                    begin -- 
+                      binary_80_155_start <= Xentry_153_symbol; -- control passed to block
+                      Xentry_156_symbol  <= binary_80_155_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/$entry
+                      binary_80_inputs_158: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs 
+                        signal binary_80_inputs_158_start: Boolean;
+                        signal Xentry_159_symbol: Boolean;
+                        signal Xexit_160_symbol: Boolean;
+                        signal binary_78_161_symbol : Boolean;
+                        -- 
+                      begin -- 
+                        binary_80_inputs_158_start <= Xentry_156_symbol; -- control passed to block
+                        Xentry_159_symbol  <= binary_80_inputs_158_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/$entry
+                        binary_78_161: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78 
+                          signal binary_78_161_start: Boolean;
+                          signal Xentry_162_symbol: Boolean;
+                          signal Xexit_163_symbol: Boolean;
+                          signal binary_78_inputs_164_symbol : Boolean;
+                          signal rr_167_symbol : Boolean;
+                          signal ra_168_symbol : Boolean;
+                          signal cr_169_symbol : Boolean;
+                          signal ca_170_symbol : Boolean;
+                          -- 
+                        begin -- 
+                          binary_78_161_start <= Xentry_159_symbol; -- control passed to block
+                          Xentry_162_symbol  <= binary_78_161_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78/$entry
+                          binary_78_inputs_164: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78/binary_78_inputs 
+                            signal binary_78_inputs_164_start: Boolean;
+                            signal Xentry_165_symbol: Boolean;
+                            signal Xexit_166_symbol: Boolean;
+                            -- 
+                          begin -- 
+                            binary_78_inputs_164_start <= Xentry_162_symbol; -- control passed to block
+                            Xentry_165_symbol  <= binary_78_inputs_164_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78/binary_78_inputs/$entry
+                            Xexit_166_symbol <= Xentry_165_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78/binary_78_inputs/$exit
+                            binary_78_inputs_164_symbol <= Xexit_166_symbol; -- control passed from block 
+                            -- 
+                          end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78/binary_78_inputs
+                          rr_167_symbol <= binary_78_inputs_164_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78/rr
+                          binary_78_inst_req_0 <= rr_167_symbol; -- link to DP
+                          ra_168_symbol <= binary_78_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78/ra
+                          cr_169_symbol <= ra_168_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78/cr
+                          binary_78_inst_req_1 <= cr_169_symbol; -- link to DP
+                          ca_170_symbol <= binary_78_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78/ca
+                          Xexit_163_symbol <= ca_170_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78/$exit
+                          binary_78_161_symbol <= Xexit_163_symbol; -- control passed from block 
+                          -- 
+                        end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78
+                        Xexit_160_symbol <= binary_78_161_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/$exit
+                        binary_80_inputs_158_symbol <= Xexit_160_symbol; -- control passed from block 
+                        -- 
+                      end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs
+                      rr_171_symbol <= binary_80_inputs_158_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/rr
+                      binary_80_inst_req_0 <= rr_171_symbol; -- link to DP
+                      ra_172_symbol <= binary_80_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/ra
+                      cr_173_symbol <= ra_172_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/cr
+                      binary_80_inst_req_1 <= cr_173_symbol; -- link to DP
+                      ca_174_symbol <= binary_80_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/ca
+                      Xexit_157_symbol <= ca_174_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/$exit
+                      binary_80_155_symbol <= Xexit_157_symbol; -- control passed from block 
+                      -- 
+                    end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80
+                    Xexit_154_symbol <= binary_80_155_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/$exit
+                    binary_82_inputs_152_symbol <= Xexit_154_symbol; -- control passed from block 
+                    -- 
+                  end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs
+                  rr_175_symbol <= binary_82_inputs_152_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/rr
+                  binary_82_inst_req_0 <= rr_175_symbol; -- link to DP
+                  ra_176_symbol <= binary_82_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/ra
+                  cr_177_symbol <= ra_176_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/cr
+                  binary_82_inst_req_1 <= cr_177_symbol; -- link to DP
+                  ca_178_symbol <= binary_82_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/ca
+                  Xexit_151_symbol <= ca_178_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/$exit
+                  binary_82_149_symbol <= Xexit_151_symbol; -- control passed from block 
+                  -- 
+                end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82
+                binary_87_179: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87 
+                  signal binary_87_179_start: Boolean;
+                  signal Xentry_180_symbol: Boolean;
+                  signal Xexit_181_symbol: Boolean;
+                  signal binary_87_inputs_182_symbol : Boolean;
+                  signal rr_195_symbol : Boolean;
+                  signal ra_196_symbol : Boolean;
+                  signal cr_197_symbol : Boolean;
+                  signal ca_198_symbol : Boolean;
+                  -- 
+                begin -- 
+                  binary_87_179_start <= Xentry_137_symbol; -- control passed to block
+                  Xentry_180_symbol  <= binary_87_179_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/$entry
+                  binary_87_inputs_182: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs 
+                    signal binary_87_inputs_182_start: Boolean;
+                    signal Xentry_183_symbol: Boolean;
+                    signal Xexit_184_symbol: Boolean;
+                    signal binary_85_185_symbol : Boolean;
+                    -- 
+                  begin -- 
+                    binary_87_inputs_182_start <= Xentry_180_symbol; -- control passed to block
+                    Xentry_183_symbol  <= binary_87_inputs_182_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/$entry
+                    binary_85_185: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85 
+                      signal binary_85_185_start: Boolean;
+                      signal Xentry_186_symbol: Boolean;
+                      signal Xexit_187_symbol: Boolean;
+                      signal binary_85_inputs_188_symbol : Boolean;
+                      signal rr_191_symbol : Boolean;
+                      signal ra_192_symbol : Boolean;
+                      signal cr_193_symbol : Boolean;
+                      signal ca_194_symbol : Boolean;
+                      -- 
+                    begin -- 
+                      binary_85_185_start <= Xentry_183_symbol; -- control passed to block
+                      Xentry_186_symbol  <= binary_85_185_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85/$entry
+                      binary_85_inputs_188: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85/binary_85_inputs 
+                        signal binary_85_inputs_188_start: Boolean;
+                        signal Xentry_189_symbol: Boolean;
+                        signal Xexit_190_symbol: Boolean;
+                        -- 
+                      begin -- 
+                        binary_85_inputs_188_start <= Xentry_186_symbol; -- control passed to block
+                        Xentry_189_symbol  <= binary_85_inputs_188_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85/binary_85_inputs/$entry
+                        Xexit_190_symbol <= Xentry_189_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85/binary_85_inputs/$exit
+                        binary_85_inputs_188_symbol <= Xexit_190_symbol; -- control passed from block 
+                        -- 
+                      end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85/binary_85_inputs
+                      rr_191_symbol <= binary_85_inputs_188_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85/rr
+                      binary_85_inst_req_0 <= rr_191_symbol; -- link to DP
+                      ra_192_symbol <= binary_85_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85/ra
+                      cr_193_symbol <= ra_192_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85/cr
+                      binary_85_inst_req_1 <= cr_193_symbol; -- link to DP
+                      ca_194_symbol <= binary_85_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85/ca
+                      Xexit_187_symbol <= ca_194_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85/$exit
+                      binary_85_185_symbol <= Xexit_187_symbol; -- control passed from block 
+                      -- 
+                    end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85
+                    Xexit_184_symbol <= binary_85_185_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/$exit
+                    binary_87_inputs_182_symbol <= Xexit_184_symbol; -- control passed from block 
+                    -- 
+                  end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs
+                  rr_195_symbol <= binary_87_inputs_182_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/rr
+                  binary_87_inst_req_0 <= rr_195_symbol; -- link to DP
+                  ra_196_symbol <= binary_87_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/ra
+                  cr_197_symbol <= ra_196_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/cr
+                  binary_87_inst_req_1 <= cr_197_symbol; -- link to DP
+                  ca_198_symbol <= binary_87_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/ca
+                  Xexit_181_symbol <= ca_198_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/$exit
+                  binary_87_179_symbol <= Xexit_181_symbol; -- control passed from block 
+                  -- 
+                end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87
+                Xexit_138_block : Block -- non-trivial join transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/$exit 
+                  signal Xexit_138_predecessors: BooleanArray(2 downto 0);
+                  signal Xexit_138_p0_pred: BooleanArray(0 downto 0);
+                  signal Xexit_138_p0_succ: BooleanArray(0 downto 0);
+                  signal Xexit_138_p1_pred: BooleanArray(0 downto 0);
+                  signal Xexit_138_p1_succ: BooleanArray(0 downto 0);
+                  signal Xexit_138_p2_pred: BooleanArray(0 downto 0);
+                  signal Xexit_138_p2_succ: BooleanArray(0 downto 0);
+                  -- 
+                begin -- 
+                  Xexit_138_0_place: Place -- 
+                    generic map(marking => false)
+                    port map( -- 
+                      Xexit_138_p0_pred, Xexit_138_p0_succ, Xexit_138_predecessors(0), clk, reset-- 
+                    ); -- 
+                  Xexit_138_p0_succ(0) <=  Xexit_138_symbol;
+                  Xexit_138_p0_pred(0) <=  binary_75_139_symbol;
+                  Xexit_138_1_place: Place -- 
+                    generic map(marking => false)
+                    port map( -- 
+                      Xexit_138_p1_pred, Xexit_138_p1_succ, Xexit_138_predecessors(1), clk, reset-- 
+                    ); -- 
+                  Xexit_138_p1_succ(0) <=  Xexit_138_symbol;
+                  Xexit_138_p1_pred(0) <=  binary_82_149_symbol;
+                  Xexit_138_2_place: Place -- 
+                    generic map(marking => false)
+                    port map( -- 
+                      Xexit_138_p2_pred, Xexit_138_p2_succ, Xexit_138_predecessors(2), clk, reset-- 
+                    ); -- 
+                  Xexit_138_p2_succ(0) <=  Xexit_138_symbol;
+                  Xexit_138_p2_pred(0) <=  binary_87_179_symbol;
+                  Xexit_138_symbol <= AndReduce(Xexit_138_predecessors); 
+                  -- 
+                end Block; -- non-trivial join transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/$exit
+                ternary_88_inputs_136_symbol <= Xexit_138_symbol; -- control passed from block 
                 -- 
-              end Block; -- branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/binary_66_inputs
-              rr_127_symbol <= binary_66_inputs_114_symbol; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/rr
-              binary_66_inst_req_0 <= rr_127_symbol; -- link to DP
-              ra_128_symbol <= binary_66_inst_ack_0; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/ra
-              cr_129_symbol <= ra_128_symbol; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/cr
-              binary_66_inst_req_1 <= cr_129_symbol; -- link to DP
-              ca_130_symbol <= binary_66_inst_ack_1; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/ca
-              Xexit_113_symbol <= ca_130_symbol; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66/$exit
-              binary_66_111_symbol <= Xexit_113_symbol; -- control passed from block 
+              end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs
+              req_199_symbol <= ternary_88_inputs_136_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/req
+              ternary_88_inst_req_0 <= req_199_symbol; -- link to DP
+              ack_200_symbol <= ternary_88_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ack
+              Xexit_135_symbol <= ack_200_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/$exit
+              ternary_88_133_symbol <= Xexit_135_symbol; -- control passed from block 
               -- 
-            end Block; -- branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/binary_66
-            Xexit_110_symbol <= binary_66_111_symbol; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs/$exit
-            binary_68_inputs_108_symbol <= Xexit_110_symbol; -- control passed from block 
+            end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88
+            Xexit_132_symbol <= ternary_88_133_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/$exit
+            assign_stmt_89_130_symbol <= Xexit_132_symbol; -- control passed from block 
             -- 
-          end Block; -- branch_block_stmt_14/assign_stmt_69/binary_68/binary_68_inputs
-          rr_131_symbol <= binary_68_inputs_108_symbol; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/rr
-          binary_68_inst_req_0 <= rr_131_symbol; -- link to DP
-          ra_132_symbol <= binary_68_inst_ack_0; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/ra
-          cr_133_symbol <= ra_132_symbol; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/cr
-          binary_68_inst_req_1 <= cr_133_symbol; -- link to DP
-          ca_134_symbol <= binary_68_inst_ack_1; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/ca
-          Xexit_107_symbol <= ca_134_symbol; -- transition branch_block_stmt_14/assign_stmt_69/binary_68/$exit
-          binary_68_105_symbol <= Xexit_107_symbol; -- control passed from block 
-          -- 
-        end Block; -- branch_block_stmt_14/assign_stmt_69/binary_68
-        Xexit_104_symbol <= binary_68_105_symbol; -- transition branch_block_stmt_14/assign_stmt_69/$exit
-        assign_stmt_69_102_symbol <= Xexit_104_symbol; -- control passed from block 
-        -- 
-      end Block; -- branch_block_stmt_14/assign_stmt_69
-      parallel_block_stmt_70_135: Block -- branch_block_stmt_14/parallel_block_stmt_70 
-        signal parallel_block_stmt_70_135_start: Boolean;
-        signal Xentry_136_symbol: Boolean;
-        signal Xexit_137_symbol: Boolean;
-        signal assign_stmt_76_138_symbol : Boolean;
-        signal assign_stmt_80_156_symbol : Boolean;
-        signal assign_stmt_85_164_symbol : Boolean;
-        -- 
-      begin -- 
-        parallel_block_stmt_70_135_start <= parallel_block_stmt_70_x_xentry_x_xx_x15_symbol; -- control passed to block
-        Xentry_136_symbol  <= parallel_block_stmt_70_135_start; -- transition branch_block_stmt_14/parallel_block_stmt_70/$entry
-        assign_stmt_76_138: Block -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76 
-          signal assign_stmt_76_138_start: Boolean;
-          signal Xentry_139_symbol: Boolean;
-          signal Xexit_140_symbol: Boolean;
-          signal type_cast_75_141_symbol : Boolean;
-          -- 
-        begin -- 
-          assign_stmt_76_138_start <= Xentry_136_symbol; -- control passed to block
-          Xentry_139_symbol  <= assign_stmt_76_138_start; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/$entry
-          type_cast_75_141: Block -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75 
-            signal type_cast_75_141_start: Boolean;
-            signal Xentry_142_symbol: Boolean;
-            signal Xexit_143_symbol: Boolean;
-            signal binary_74_144_symbol : Boolean;
-            signal req_154_symbol : Boolean;
-            signal ack_155_symbol : Boolean;
+          end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89
+          assign_stmt_95_201: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95 
+            signal assign_stmt_95_201_start: Boolean;
+            signal Xentry_202_symbol: Boolean;
+            signal Xexit_203_symbol: Boolean;
+            signal type_cast_94_204_symbol : Boolean;
             -- 
           begin -- 
-            type_cast_75_141_start <= Xentry_139_symbol; -- control passed to block
-            Xentry_142_symbol  <= type_cast_75_141_start; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/$entry
-            binary_74_144: Block -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/binary_74 
-              signal binary_74_144_start: Boolean;
-              signal Xentry_145_symbol: Boolean;
-              signal Xexit_146_symbol: Boolean;
-              signal binary_74_inputs_147_symbol : Boolean;
-              signal rr_150_symbol : Boolean;
-              signal ra_151_symbol : Boolean;
-              signal cr_152_symbol : Boolean;
-              signal ca_153_symbol : Boolean;
+            assign_stmt_95_201_start <= assign_stmt_89_130_symbol; -- control passed to block
+            Xentry_202_symbol  <= assign_stmt_95_201_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/$entry
+            type_cast_94_204: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94 
+              signal type_cast_94_204_start: Boolean;
+              signal Xentry_205_symbol: Boolean;
+              signal Xexit_206_symbol: Boolean;
+              signal binary_93_207_symbol : Boolean;
+              signal req_217_symbol : Boolean;
+              signal ack_218_symbol : Boolean;
               -- 
             begin -- 
-              binary_74_144_start <= Xentry_142_symbol; -- control passed to block
-              Xentry_145_symbol  <= binary_74_144_start; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/binary_74/$entry
-              binary_74_inputs_147: Block -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/binary_74/binary_74_inputs 
-                signal binary_74_inputs_147_start: Boolean;
-                signal Xentry_148_symbol: Boolean;
-                signal Xexit_149_symbol: Boolean;
+              type_cast_94_204_start <= Xentry_202_symbol; -- control passed to block
+              Xentry_205_symbol  <= type_cast_94_204_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/$entry
+              binary_93_207: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93 
+                signal binary_93_207_start: Boolean;
+                signal Xentry_208_symbol: Boolean;
+                signal Xexit_209_symbol: Boolean;
+                signal binary_93_inputs_210_symbol : Boolean;
+                signal rr_213_symbol : Boolean;
+                signal ra_214_symbol : Boolean;
+                signal cr_215_symbol : Boolean;
+                signal ca_216_symbol : Boolean;
                 -- 
               begin -- 
-                binary_74_inputs_147_start <= Xentry_145_symbol; -- control passed to block
-                Xentry_148_symbol  <= binary_74_inputs_147_start; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/binary_74/binary_74_inputs/$entry
-                Xexit_149_symbol <= Xentry_148_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/binary_74/binary_74_inputs/$exit
-                binary_74_inputs_147_symbol <= Xexit_149_symbol; -- control passed from block 
+                binary_93_207_start <= Xentry_205_symbol; -- control passed to block
+                Xentry_208_symbol  <= binary_93_207_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93/$entry
+                binary_93_inputs_210: Block -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93/binary_93_inputs 
+                  signal binary_93_inputs_210_start: Boolean;
+                  signal Xentry_211_symbol: Boolean;
+                  signal Xexit_212_symbol: Boolean;
+                  -- 
+                begin -- 
+                  binary_93_inputs_210_start <= Xentry_208_symbol; -- control passed to block
+                  Xentry_211_symbol  <= binary_93_inputs_210_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93/binary_93_inputs/$entry
+                  Xexit_212_symbol <= Xentry_211_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93/binary_93_inputs/$exit
+                  binary_93_inputs_210_symbol <= Xexit_212_symbol; -- control passed from block 
+                  -- 
+                end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93/binary_93_inputs
+                rr_213_symbol <= binary_93_inputs_210_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93/rr
+                binary_93_inst_req_0 <= rr_213_symbol; -- link to DP
+                ra_214_symbol <= binary_93_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93/ra
+                cr_215_symbol <= ra_214_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93/cr
+                binary_93_inst_req_1 <= cr_215_symbol; -- link to DP
+                ca_216_symbol <= binary_93_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93/ca
+                Xexit_209_symbol <= ca_216_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93/$exit
+                binary_93_207_symbol <= Xexit_209_symbol; -- control passed from block 
                 -- 
-              end Block; -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/binary_74/binary_74_inputs
-              rr_150_symbol <= binary_74_inputs_147_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/binary_74/rr
-              binary_74_inst_req_0 <= rr_150_symbol; -- link to DP
-              ra_151_symbol <= binary_74_inst_ack_0; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/binary_74/ra
-              cr_152_symbol <= ra_151_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/binary_74/cr
-              binary_74_inst_req_1 <= cr_152_symbol; -- link to DP
-              ca_153_symbol <= binary_74_inst_ack_1; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/binary_74/ca
-              Xexit_146_symbol <= ca_153_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/binary_74/$exit
-              binary_74_144_symbol <= Xexit_146_symbol; -- control passed from block 
+              end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93
+              req_217_symbol <= binary_93_207_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/req
+              type_cast_94_inst_req_0 <= req_217_symbol; -- link to DP
+              ack_218_symbol <= type_cast_94_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/ack
+              Xexit_206_symbol <= ack_218_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/$exit
+              type_cast_94_204_symbol <= Xexit_206_symbol; -- control passed from block 
               -- 
-            end Block; -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/binary_74
-            req_154_symbol <= binary_74_144_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/req
-            type_cast_75_inst_req_0 <= req_154_symbol; -- link to DP
-            ack_155_symbol <= type_cast_75_inst_ack_0; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/ack
-            Xexit_143_symbol <= ack_155_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75/$exit
-            type_cast_75_141_symbol <= Xexit_143_symbol; -- control passed from block 
+            end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94
+            Xexit_203_symbol <= type_cast_94_204_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/$exit
+            assign_stmt_95_201_symbol <= Xexit_203_symbol; -- control passed from block 
             -- 
-          end Block; -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/type_cast_75
-          Xexit_140_symbol <= type_cast_75_141_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76/$exit
-          assign_stmt_76_138_symbol <= Xexit_140_symbol; -- control passed from block 
+          end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95
+          Xexit_129_symbol <= assign_stmt_95_201_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/$exit
+          series_block_stmt_71_127_symbol <= Xexit_129_symbol; -- control passed from block 
           -- 
-        end Block; -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_76
-        assign_stmt_80_156: Block -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_80 
-          signal assign_stmt_80_156_start: Boolean;
-          signal Xentry_157_symbol: Boolean;
-          signal Xexit_158_symbol: Boolean;
-          signal type_cast_79_159_symbol : Boolean;
+        end Block; -- branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71
+        assign_stmt_101_219: Block -- branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101 
+          signal assign_stmt_101_219_start: Boolean;
+          signal Xentry_220_symbol: Boolean;
+          signal Xexit_221_symbol: Boolean;
+          signal binary_100_222_symbol : Boolean;
           -- 
         begin -- 
-          assign_stmt_80_156_start <= Xentry_136_symbol; -- control passed to block
-          Xentry_157_symbol  <= assign_stmt_80_156_start; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_80/$entry
-          type_cast_79_159: Block -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_80/type_cast_79 
-            signal type_cast_79_159_start: Boolean;
-            signal Xentry_160_symbol: Boolean;
-            signal Xexit_161_symbol: Boolean;
-            signal req_162_symbol : Boolean;
-            signal ack_163_symbol : Boolean;
+          assign_stmt_101_219_start <= Xentry_13_symbol; -- control passed to block
+          Xentry_220_symbol  <= assign_stmt_101_219_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/$entry
+          binary_100_222: Block -- branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100 
+            signal binary_100_222_start: Boolean;
+            signal Xentry_223_symbol: Boolean;
+            signal Xexit_224_symbol: Boolean;
+            signal binary_100_inputs_225_symbol : Boolean;
+            signal rr_228_symbol : Boolean;
+            signal ra_229_symbol : Boolean;
+            signal cr_230_symbol : Boolean;
+            signal ca_231_symbol : Boolean;
             -- 
           begin -- 
-            type_cast_79_159_start <= Xentry_157_symbol; -- control passed to block
-            Xentry_160_symbol  <= type_cast_79_159_start; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_80/type_cast_79/$entry
-            req_162_symbol <= Xentry_160_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_80/type_cast_79/req
-            type_cast_79_inst_req_0 <= req_162_symbol; -- link to DP
-            ack_163_symbol <= type_cast_79_inst_ack_0; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_80/type_cast_79/ack
-            Xexit_161_symbol <= ack_163_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_80/type_cast_79/$exit
-            type_cast_79_159_symbol <= Xexit_161_symbol; -- control passed from block 
-            -- 
-          end Block; -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_80/type_cast_79
-          Xexit_158_symbol <= type_cast_79_159_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_80/$exit
-          assign_stmt_80_156_symbol <= Xexit_158_symbol; -- control passed from block 
-          -- 
-        end Block; -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_80
-        assign_stmt_85_164: Block -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85 
-          signal assign_stmt_85_164_start: Boolean;
-          signal Xentry_165_symbol: Boolean;
-          signal Xexit_166_symbol: Boolean;
-          signal binary_84_167_symbol : Boolean;
-          -- 
-        begin -- 
-          assign_stmt_85_164_start <= Xentry_136_symbol; -- control passed to block
-          Xentry_165_symbol  <= assign_stmt_85_164_start; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85/$entry
-          binary_84_167: Block -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85/binary_84 
-            signal binary_84_167_start: Boolean;
-            signal Xentry_168_symbol: Boolean;
-            signal Xexit_169_symbol: Boolean;
-            signal binary_84_inputs_170_symbol : Boolean;
-            signal rr_173_symbol : Boolean;
-            signal ra_174_symbol : Boolean;
-            signal cr_175_symbol : Boolean;
-            signal ca_176_symbol : Boolean;
-            -- 
-          begin -- 
-            binary_84_167_start <= Xentry_165_symbol; -- control passed to block
-            Xentry_168_symbol  <= binary_84_167_start; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85/binary_84/$entry
-            binary_84_inputs_170: Block -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85/binary_84/binary_84_inputs 
-              signal binary_84_inputs_170_start: Boolean;
-              signal Xentry_171_symbol: Boolean;
-              signal Xexit_172_symbol: Boolean;
+            binary_100_222_start <= Xentry_220_symbol; -- control passed to block
+            Xentry_223_symbol  <= binary_100_222_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100/$entry
+            binary_100_inputs_225: Block -- branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100/binary_100_inputs 
+              signal binary_100_inputs_225_start: Boolean;
+              signal Xentry_226_symbol: Boolean;
+              signal Xexit_227_symbol: Boolean;
               -- 
             begin -- 
-              binary_84_inputs_170_start <= Xentry_168_symbol; -- control passed to block
-              Xentry_171_symbol  <= binary_84_inputs_170_start; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85/binary_84/binary_84_inputs/$entry
-              Xexit_172_symbol <= Xentry_171_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85/binary_84/binary_84_inputs/$exit
-              binary_84_inputs_170_symbol <= Xexit_172_symbol; -- control passed from block 
+              binary_100_inputs_225_start <= Xentry_223_symbol; -- control passed to block
+              Xentry_226_symbol  <= binary_100_inputs_225_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100/binary_100_inputs/$entry
+              Xexit_227_symbol <= Xentry_226_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100/binary_100_inputs/$exit
+              binary_100_inputs_225_symbol <= Xexit_227_symbol; -- control passed from block 
               -- 
-            end Block; -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85/binary_84/binary_84_inputs
-            rr_173_symbol <= binary_84_inputs_170_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85/binary_84/rr
-            binary_84_inst_req_0 <= rr_173_symbol; -- link to DP
-            ra_174_symbol <= binary_84_inst_ack_0; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85/binary_84/ra
-            cr_175_symbol <= ra_174_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85/binary_84/cr
-            binary_84_inst_req_1 <= cr_175_symbol; -- link to DP
-            ca_176_symbol <= binary_84_inst_ack_1; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85/binary_84/ca
-            Xexit_169_symbol <= ca_176_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85/binary_84/$exit
-            binary_84_167_symbol <= Xexit_169_symbol; -- control passed from block 
+            end Block; -- branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100/binary_100_inputs
+            rr_228_symbol <= binary_100_inputs_225_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100/rr
+            binary_100_inst_req_0 <= rr_228_symbol; -- link to DP
+            ra_229_symbol <= binary_100_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100/ra
+            cr_230_symbol <= ra_229_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100/cr
+            binary_100_inst_req_1 <= cr_230_symbol; -- link to DP
+            ca_231_symbol <= binary_100_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100/ca
+            Xexit_224_symbol <= ca_231_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100/$exit
+            binary_100_222_symbol <= Xexit_224_symbol; -- control passed from block 
             -- 
-          end Block; -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85/binary_84
-          Xexit_166_symbol <= binary_84_167_symbol; -- transition branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85/$exit
-          assign_stmt_85_164_symbol <= Xexit_166_symbol; -- control passed from block 
+          end Block; -- branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100
+          Xexit_221_symbol <= binary_100_222_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/$exit
+          assign_stmt_101_219_symbol <= Xexit_221_symbol; -- control passed from block 
           -- 
-        end Block; -- branch_block_stmt_14/parallel_block_stmt_70/assign_stmt_85
-        Xexit_137_block : Block -- non-trivial join transition branch_block_stmt_14/parallel_block_stmt_70/$exit 
-          signal Xexit_137_predecessors: BooleanArray(2 downto 0);
-          signal Xexit_137_p0_pred: BooleanArray(0 downto 0);
-          signal Xexit_137_p0_succ: BooleanArray(0 downto 0);
-          signal Xexit_137_p1_pred: BooleanArray(0 downto 0);
-          signal Xexit_137_p1_succ: BooleanArray(0 downto 0);
-          signal Xexit_137_p2_pred: BooleanArray(0 downto 0);
-          signal Xexit_137_p2_succ: BooleanArray(0 downto 0);
+        end Block; -- branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101
+        assign_stmt_106_232: Block -- branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106 
+          signal assign_stmt_106_232_start: Boolean;
+          signal Xentry_233_symbol: Boolean;
+          signal Xexit_234_symbol: Boolean;
+          signal binary_105_235_symbol : Boolean;
           -- 
         begin -- 
-          Xexit_137_0_place: Place -- 
-            generic map(marking => false)
-            port map( -- 
-              Xexit_137_p0_pred, Xexit_137_p0_succ, Xexit_137_predecessors(0), clk, reset-- 
-            ); -- 
-          Xexit_137_p0_succ(0) <=  Xexit_137_symbol;
-          Xexit_137_p0_pred(0) <=  assign_stmt_76_138_symbol;
-          Xexit_137_1_place: Place -- 
-            generic map(marking => false)
-            port map( -- 
-              Xexit_137_p1_pred, Xexit_137_p1_succ, Xexit_137_predecessors(1), clk, reset-- 
-            ); -- 
-          Xexit_137_p1_succ(0) <=  Xexit_137_symbol;
-          Xexit_137_p1_pred(0) <=  assign_stmt_80_156_symbol;
-          Xexit_137_2_place: Place -- 
-            generic map(marking => false)
-            port map( -- 
-              Xexit_137_p2_pred, Xexit_137_p2_succ, Xexit_137_predecessors(2), clk, reset-- 
-            ); -- 
-          Xexit_137_p2_succ(0) <=  Xexit_137_symbol;
-          Xexit_137_p2_pred(0) <=  assign_stmt_85_164_symbol;
-          Xexit_137_symbol <= AndReduce(Xexit_137_predecessors); 
-          -- 
-        end Block; -- non-trivial join transition branch_block_stmt_14/parallel_block_stmt_70/$exit
-        parallel_block_stmt_70_135_symbol <= Xexit_137_symbol; -- control passed from block 
-        -- 
-      end Block; -- branch_block_stmt_14/parallel_block_stmt_70
-      if_stmt_87_eval_test_177: Block -- branch_block_stmt_14/if_stmt_87_eval_test 
-        signal if_stmt_87_eval_test_177_start: Boolean;
-        signal Xentry_178_symbol: Boolean;
-        signal Xexit_179_symbol: Boolean;
-        signal binary_90_180_symbol : Boolean;
-        signal branch_req_190_symbol : Boolean;
-        -- 
-      begin -- 
-        if_stmt_87_eval_test_177_start <= if_stmt_87_x_xentry_x_xx_x17_symbol; -- control passed to block
-        Xentry_178_symbol  <= if_stmt_87_eval_test_177_start; -- transition branch_block_stmt_14/if_stmt_87_eval_test/$entry
-        binary_90_180: Block -- branch_block_stmt_14/if_stmt_87_eval_test/binary_90 
-          signal binary_90_180_start: Boolean;
-          signal Xentry_181_symbol: Boolean;
-          signal Xexit_182_symbol: Boolean;
-          signal binary_90_inputs_183_symbol : Boolean;
-          signal rr_186_symbol : Boolean;
-          signal ra_187_symbol : Boolean;
-          signal cr_188_symbol : Boolean;
-          signal ca_189_symbol : Boolean;
-          -- 
-        begin -- 
-          binary_90_180_start <= Xentry_178_symbol; -- control passed to block
-          Xentry_181_symbol  <= binary_90_180_start; -- transition branch_block_stmt_14/if_stmt_87_eval_test/binary_90/$entry
-          binary_90_inputs_183: Block -- branch_block_stmt_14/if_stmt_87_eval_test/binary_90/binary_90_inputs 
-            signal binary_90_inputs_183_start: Boolean;
-            signal Xentry_184_symbol: Boolean;
-            signal Xexit_185_symbol: Boolean;
+          assign_stmt_106_232_start <= Xentry_13_symbol; -- control passed to block
+          Xentry_233_symbol  <= assign_stmt_106_232_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/$entry
+          binary_105_235: Block -- branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105 
+            signal binary_105_235_start: Boolean;
+            signal Xentry_236_symbol: Boolean;
+            signal Xexit_237_symbol: Boolean;
+            signal binary_105_inputs_238_symbol : Boolean;
+            signal rr_241_symbol : Boolean;
+            signal ra_242_symbol : Boolean;
+            signal cr_243_symbol : Boolean;
+            signal ca_244_symbol : Boolean;
             -- 
           begin -- 
-            binary_90_inputs_183_start <= Xentry_181_symbol; -- control passed to block
-            Xentry_184_symbol  <= binary_90_inputs_183_start; -- transition branch_block_stmt_14/if_stmt_87_eval_test/binary_90/binary_90_inputs/$entry
-            Xexit_185_symbol <= Xentry_184_symbol; -- transition branch_block_stmt_14/if_stmt_87_eval_test/binary_90/binary_90_inputs/$exit
-            binary_90_inputs_183_symbol <= Xexit_185_symbol; -- control passed from block 
+            binary_105_235_start <= Xentry_233_symbol; -- control passed to block
+            Xentry_236_symbol  <= binary_105_235_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105/$entry
+            binary_105_inputs_238: Block -- branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105/binary_105_inputs 
+              signal binary_105_inputs_238_start: Boolean;
+              signal Xentry_239_symbol: Boolean;
+              signal Xexit_240_symbol: Boolean;
+              -- 
+            begin -- 
+              binary_105_inputs_238_start <= Xentry_236_symbol; -- control passed to block
+              Xentry_239_symbol  <= binary_105_inputs_238_start; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105/binary_105_inputs/$entry
+              Xexit_240_symbol <= Xentry_239_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105/binary_105_inputs/$exit
+              binary_105_inputs_238_symbol <= Xexit_240_symbol; -- control passed from block 
+              -- 
+            end Block; -- branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105/binary_105_inputs
+            rr_241_symbol <= binary_105_inputs_238_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105/rr
+            binary_105_inst_req_0 <= rr_241_symbol; -- link to DP
+            ra_242_symbol <= binary_105_inst_ack_0; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105/ra
+            cr_243_symbol <= ra_242_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105/cr
+            binary_105_inst_req_1 <= cr_243_symbol; -- link to DP
+            ca_244_symbol <= binary_105_inst_ack_1; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105/ca
+            Xexit_237_symbol <= ca_244_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105/$exit
+            binary_105_235_symbol <= Xexit_237_symbol; -- control passed from block 
             -- 
-          end Block; -- branch_block_stmt_14/if_stmt_87_eval_test/binary_90/binary_90_inputs
-          rr_186_symbol <= binary_90_inputs_183_symbol; -- transition branch_block_stmt_14/if_stmt_87_eval_test/binary_90/rr
-          binary_90_inst_req_0 <= rr_186_symbol; -- link to DP
-          ra_187_symbol <= binary_90_inst_ack_0; -- transition branch_block_stmt_14/if_stmt_87_eval_test/binary_90/ra
-          cr_188_symbol <= ra_187_symbol; -- transition branch_block_stmt_14/if_stmt_87_eval_test/binary_90/cr
-          binary_90_inst_req_1 <= cr_188_symbol; -- link to DP
-          ca_189_symbol <= binary_90_inst_ack_1; -- transition branch_block_stmt_14/if_stmt_87_eval_test/binary_90/ca
-          Xexit_182_symbol <= ca_189_symbol; -- transition branch_block_stmt_14/if_stmt_87_eval_test/binary_90/$exit
-          binary_90_180_symbol <= Xexit_182_symbol; -- control passed from block 
+          end Block; -- branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105
+          Xexit_234_symbol <= binary_105_235_symbol; -- transition branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/$exit
+          assign_stmt_106_232_symbol <= Xexit_234_symbol; -- control passed from block 
           -- 
-        end Block; -- branch_block_stmt_14/if_stmt_87_eval_test/binary_90
-        branch_req_190_symbol <= binary_90_180_symbol; -- transition branch_block_stmt_14/if_stmt_87_eval_test/branch_req
-        if_stmt_87_branch_req_0 <= branch_req_190_symbol; -- link to DP
-        Xexit_179_symbol <= branch_req_190_symbol; -- transition branch_block_stmt_14/if_stmt_87_eval_test/$exit
-        if_stmt_87_eval_test_177_symbol <= Xexit_179_symbol; -- control passed from block 
-        -- 
-      end Block; -- branch_block_stmt_14/if_stmt_87_eval_test
-      binary_90_place_191_symbol  <=  if_stmt_87_eval_test_177_symbol; -- place branch_block_stmt_14/binary_90_place (optimized away) 
-      if_stmt_87_if_link_192: Block -- branch_block_stmt_14/if_stmt_87_if_link 
-        signal if_stmt_87_if_link_192_start: Boolean;
-        signal Xentry_193_symbol: Boolean;
-        signal Xexit_194_symbol: Boolean;
-        signal if_choice_transition_195_symbol : Boolean;
-        -- 
-      begin -- 
-        if_stmt_87_if_link_192_start <= binary_90_place_191_symbol; -- control passed to block
-        Xentry_193_symbol  <= if_stmt_87_if_link_192_start; -- transition branch_block_stmt_14/if_stmt_87_if_link/$entry
-        if_choice_transition_195_symbol <= if_stmt_87_branch_ack_1; -- transition branch_block_stmt_14/if_stmt_87_if_link/if_choice_transition
-        Xexit_194_symbol <= if_choice_transition_195_symbol; -- transition branch_block_stmt_14/if_stmt_87_if_link/$exit
-        if_stmt_87_if_link_192_symbol <= Xexit_194_symbol; -- control passed from block 
-        -- 
-      end Block; -- branch_block_stmt_14/if_stmt_87_if_link
-      if_stmt_87_else_link_196: Block -- branch_block_stmt_14/if_stmt_87_else_link 
-        signal if_stmt_87_else_link_196_start: Boolean;
-        signal Xentry_197_symbol: Boolean;
-        signal Xexit_198_symbol: Boolean;
-        signal else_choice_transition_199_symbol : Boolean;
-        -- 
-      begin -- 
-        if_stmt_87_else_link_196_start <= binary_90_place_191_symbol; -- control passed to block
-        Xentry_197_symbol  <= if_stmt_87_else_link_196_start; -- transition branch_block_stmt_14/if_stmt_87_else_link/$entry
-        else_choice_transition_199_symbol <= if_stmt_87_branch_ack_0; -- transition branch_block_stmt_14/if_stmt_87_else_link/else_choice_transition
-        Xexit_198_symbol <= else_choice_transition_199_symbol; -- transition branch_block_stmt_14/if_stmt_87_else_link/$exit
-        if_stmt_87_else_link_196_symbol <= Xexit_198_symbol; -- control passed from block 
-        -- 
-      end Block; -- branch_block_stmt_14/if_stmt_87_else_link
-      stmt_91_x_xentry_x_xx_x200_symbol  <=  if_stmt_87_if_link_192_symbol; -- place branch_block_stmt_14/stmt_91__entry__ (optimized away) 
-      stmt_91_x_xexit_x_xx_x201_symbol  <=  stmt_91_202_symbol; -- place branch_block_stmt_14/stmt_91__exit__ (optimized away) 
-      stmt_91_202: Block -- branch_block_stmt_14/stmt_91 
-        signal stmt_91_202_start: Boolean;
-        signal Xentry_203_symbol: Boolean;
-        signal Xexit_204_symbol: Boolean;
-        -- 
-      begin -- 
-        stmt_91_202_start <= stmt_91_x_xentry_x_xx_x200_symbol; -- control passed to block
-        Xentry_203_symbol  <= stmt_91_202_start; -- transition branch_block_stmt_14/stmt_91/$entry
-        Xexit_204_symbol <= Xentry_203_symbol; -- transition branch_block_stmt_14/stmt_91/$exit
-        stmt_91_202_symbol <= Xexit_204_symbol; -- control passed from block 
-        -- 
-      end Block; -- branch_block_stmt_14/stmt_91
-      loopback_205_symbol  <=  if_stmt_87_else_link_196_symbol; -- place branch_block_stmt_14/loopback (optimized away) 
-      branch_block_stmt_14_x_xentry_x_xx_xPhiReq_206: Block -- branch_block_stmt_14/branch_block_stmt_14__entry___PhiReq 
-        signal branch_block_stmt_14_x_xentry_x_xx_xPhiReq_206_start: Boolean;
-        signal Xentry_207_symbol: Boolean;
-        signal Xexit_208_symbol: Boolean;
-        signal phi_stmt_16_req_209_symbol : Boolean;
-        signal phi_stmt_20_req_210_symbol : Boolean;
-        signal phi_stmt_24_req_211_symbol : Boolean;
-        -- 
-      begin -- 
-        branch_block_stmt_14_x_xentry_x_xx_xPhiReq_206_start <= branch_block_stmt_14_x_xentry_x_xx_x6_symbol; -- control passed to block
-        Xentry_207_symbol  <= branch_block_stmt_14_x_xentry_x_xx_xPhiReq_206_start; -- transition branch_block_stmt_14/branch_block_stmt_14__entry___PhiReq/$entry
-        phi_stmt_16_req_209_symbol <= Xentry_207_symbol; -- transition branch_block_stmt_14/branch_block_stmt_14__entry___PhiReq/phi_stmt_16_req
-        phi_stmt_16_req_0 <= phi_stmt_16_req_209_symbol; -- link to DP
-        phi_stmt_20_req_210_symbol <= Xentry_207_symbol; -- transition branch_block_stmt_14/branch_block_stmt_14__entry___PhiReq/phi_stmt_20_req
-        phi_stmt_20_req_0 <= phi_stmt_20_req_210_symbol; -- link to DP
-        phi_stmt_24_req_211_symbol <= Xentry_207_symbol; -- transition branch_block_stmt_14/branch_block_stmt_14__entry___PhiReq/phi_stmt_24_req
-        phi_stmt_24_req_0 <= phi_stmt_24_req_211_symbol; -- link to DP
-        Xexit_208_block : Block -- non-trivial join transition branch_block_stmt_14/branch_block_stmt_14__entry___PhiReq/$exit 
-          signal Xexit_208_predecessors: BooleanArray(2 downto 0);
-          signal Xexit_208_p0_pred: BooleanArray(0 downto 0);
-          signal Xexit_208_p0_succ: BooleanArray(0 downto 0);
-          signal Xexit_208_p1_pred: BooleanArray(0 downto 0);
-          signal Xexit_208_p1_succ: BooleanArray(0 downto 0);
-          signal Xexit_208_p2_pred: BooleanArray(0 downto 0);
-          signal Xexit_208_p2_succ: BooleanArray(0 downto 0);
+        end Block; -- branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106
+        Xexit_14_block : Block -- non-trivial join transition branch_block_stmt_21/parallel_block_stmt_40/$exit 
+          signal Xexit_14_predecessors: BooleanArray(3 downto 0);
+          signal Xexit_14_p0_pred: BooleanArray(0 downto 0);
+          signal Xexit_14_p0_succ: BooleanArray(0 downto 0);
+          signal Xexit_14_p1_pred: BooleanArray(0 downto 0);
+          signal Xexit_14_p1_succ: BooleanArray(0 downto 0);
+          signal Xexit_14_p2_pred: BooleanArray(0 downto 0);
+          signal Xexit_14_p2_succ: BooleanArray(0 downto 0);
+          signal Xexit_14_p3_pred: BooleanArray(0 downto 0);
+          signal Xexit_14_p3_succ: BooleanArray(0 downto 0);
           -- 
         begin -- 
-          Xexit_208_0_place: Place -- 
+          Xexit_14_0_place: Place -- 
             generic map(marking => false)
             port map( -- 
-              Xexit_208_p0_pred, Xexit_208_p0_succ, Xexit_208_predecessors(0), clk, reset-- 
+              Xexit_14_p0_pred, Xexit_14_p0_succ, Xexit_14_predecessors(0), clk, reset-- 
             ); -- 
-          Xexit_208_p0_succ(0) <=  Xexit_208_symbol;
-          Xexit_208_p0_pred(0) <=  phi_stmt_16_req_209_symbol;
-          Xexit_208_1_place: Place -- 
+          Xexit_14_p0_succ(0) <=  Xexit_14_symbol;
+          Xexit_14_p0_pred(0) <=  series_block_stmt_41_15_symbol;
+          Xexit_14_1_place: Place -- 
             generic map(marking => false)
             port map( -- 
-              Xexit_208_p1_pred, Xexit_208_p1_succ, Xexit_208_predecessors(1), clk, reset-- 
+              Xexit_14_p1_pred, Xexit_14_p1_succ, Xexit_14_predecessors(1), clk, reset-- 
             ); -- 
-          Xexit_208_p1_succ(0) <=  Xexit_208_symbol;
-          Xexit_208_p1_pred(0) <=  phi_stmt_20_req_210_symbol;
-          Xexit_208_2_place: Place -- 
+          Xexit_14_p1_succ(0) <=  Xexit_14_symbol;
+          Xexit_14_p1_pred(0) <=  series_block_stmt_71_127_symbol;
+          Xexit_14_2_place: Place -- 
             generic map(marking => false)
             port map( -- 
-              Xexit_208_p2_pred, Xexit_208_p2_succ, Xexit_208_predecessors(2), clk, reset-- 
+              Xexit_14_p2_pred, Xexit_14_p2_succ, Xexit_14_predecessors(2), clk, reset-- 
             ); -- 
-          Xexit_208_p2_succ(0) <=  Xexit_208_symbol;
-          Xexit_208_p2_pred(0) <=  phi_stmt_24_req_211_symbol;
-          Xexit_208_symbol <= AndReduce(Xexit_208_predecessors); 
+          Xexit_14_p2_succ(0) <=  Xexit_14_symbol;
+          Xexit_14_p2_pred(0) <=  assign_stmt_101_219_symbol;
+          Xexit_14_3_place: Place -- 
+            generic map(marking => false)
+            port map( -- 
+              Xexit_14_p3_pred, Xexit_14_p3_succ, Xexit_14_predecessors(3), clk, reset-- 
+            ); -- 
+          Xexit_14_p3_succ(0) <=  Xexit_14_symbol;
+          Xexit_14_p3_pred(0) <=  assign_stmt_106_232_symbol;
+          Xexit_14_symbol <= AndReduce(Xexit_14_predecessors); 
           -- 
-        end Block; -- non-trivial join transition branch_block_stmt_14/branch_block_stmt_14__entry___PhiReq/$exit
-        branch_block_stmt_14_x_xentry_x_xx_xPhiReq_206_symbol <= Xexit_208_symbol; -- control passed from block 
+        end Block; -- non-trivial join transition branch_block_stmt_21/parallel_block_stmt_40/$exit
+        parallel_block_stmt_40_12_symbol <= Xexit_14_symbol; -- control passed from block 
         -- 
-      end Block; -- branch_block_stmt_14/branch_block_stmt_14__entry___PhiReq
-      loopback_PhiReq_212: Block -- branch_block_stmt_14/loopback_PhiReq 
-        signal loopback_PhiReq_212_start: Boolean;
-        signal Xentry_213_symbol: Boolean;
-        signal Xexit_214_symbol: Boolean;
-        signal phi_stmt_16_req_215_symbol : Boolean;
-        signal phi_stmt_20_req_216_symbol : Boolean;
-        signal phi_stmt_24_req_217_symbol : Boolean;
+      end Block; -- branch_block_stmt_21/parallel_block_stmt_40
+      if_stmt_108_eval_test_245: Block -- branch_block_stmt_21/if_stmt_108_eval_test 
+        signal if_stmt_108_eval_test_245_start: Boolean;
+        signal Xentry_246_symbol: Boolean;
+        signal Xexit_247_symbol: Boolean;
+        signal binary_111_248_symbol : Boolean;
+        signal branch_req_258_symbol : Boolean;
         -- 
       begin -- 
-        loopback_PhiReq_212_start <= loopback_205_symbol; -- control passed to block
-        Xentry_213_symbol  <= loopback_PhiReq_212_start; -- transition branch_block_stmt_14/loopback_PhiReq/$entry
-        phi_stmt_16_req_215_symbol <= Xentry_213_symbol; -- transition branch_block_stmt_14/loopback_PhiReq/phi_stmt_16_req
-        phi_stmt_16_req_1 <= phi_stmt_16_req_215_symbol; -- link to DP
-        phi_stmt_20_req_216_symbol <= Xentry_213_symbol; -- transition branch_block_stmt_14/loopback_PhiReq/phi_stmt_20_req
-        phi_stmt_20_req_1 <= phi_stmt_20_req_216_symbol; -- link to DP
-        phi_stmt_24_req_217_symbol <= Xentry_213_symbol; -- transition branch_block_stmt_14/loopback_PhiReq/phi_stmt_24_req
-        phi_stmt_24_req_1 <= phi_stmt_24_req_217_symbol; -- link to DP
-        Xexit_214_block : Block -- non-trivial join transition branch_block_stmt_14/loopback_PhiReq/$exit 
-          signal Xexit_214_predecessors: BooleanArray(2 downto 0);
-          signal Xexit_214_p0_pred: BooleanArray(0 downto 0);
-          signal Xexit_214_p0_succ: BooleanArray(0 downto 0);
-          signal Xexit_214_p1_pred: BooleanArray(0 downto 0);
-          signal Xexit_214_p1_succ: BooleanArray(0 downto 0);
-          signal Xexit_214_p2_pred: BooleanArray(0 downto 0);
-          signal Xexit_214_p2_succ: BooleanArray(0 downto 0);
-          -- 
-        begin -- 
-          Xexit_214_0_place: Place -- 
-            generic map(marking => false)
-            port map( -- 
-              Xexit_214_p0_pred, Xexit_214_p0_succ, Xexit_214_predecessors(0), clk, reset-- 
-            ); -- 
-          Xexit_214_p0_succ(0) <=  Xexit_214_symbol;
-          Xexit_214_p0_pred(0) <=  phi_stmt_16_req_215_symbol;
-          Xexit_214_1_place: Place -- 
-            generic map(marking => false)
-            port map( -- 
-              Xexit_214_p1_pred, Xexit_214_p1_succ, Xexit_214_predecessors(1), clk, reset-- 
-            ); -- 
-          Xexit_214_p1_succ(0) <=  Xexit_214_symbol;
-          Xexit_214_p1_pred(0) <=  phi_stmt_20_req_216_symbol;
-          Xexit_214_2_place: Place -- 
-            generic map(marking => false)
-            port map( -- 
-              Xexit_214_p2_pred, Xexit_214_p2_succ, Xexit_214_predecessors(2), clk, reset-- 
-            ); -- 
-          Xexit_214_p2_succ(0) <=  Xexit_214_symbol;
-          Xexit_214_p2_pred(0) <=  phi_stmt_24_req_217_symbol;
-          Xexit_214_symbol <= AndReduce(Xexit_214_predecessors); 
-          -- 
-        end Block; -- non-trivial join transition branch_block_stmt_14/loopback_PhiReq/$exit
-        loopback_PhiReq_212_symbol <= Xexit_214_symbol; -- control passed from block 
-        -- 
-      end Block; -- branch_block_stmt_14/loopback_PhiReq
-      merge_stmt_15_PhiReqMerge_218_symbol  <=  branch_block_stmt_14_x_xentry_x_xx_xPhiReq_206_symbol or loopback_PhiReq_212_symbol; -- place branch_block_stmt_14/merge_stmt_15_PhiReqMerge (optimized away) 
-      merge_stmt_15_PhiAck_219: Block -- branch_block_stmt_14/merge_stmt_15_PhiAck 
-        signal merge_stmt_15_PhiAck_219_start: Boolean;
-        signal Xentry_220_symbol: Boolean;
-        signal Xexit_221_symbol: Boolean;
-        signal phi_stmt_16_ack_222_symbol : Boolean;
-        signal phi_stmt_20_ack_223_symbol : Boolean;
-        signal phi_stmt_24_ack_224_symbol : Boolean;
-        -- 
-      begin -- 
-        merge_stmt_15_PhiAck_219_start <= merge_stmt_15_PhiReqMerge_218_symbol; -- control passed to block
-        Xentry_220_symbol  <= merge_stmt_15_PhiAck_219_start; -- transition branch_block_stmt_14/merge_stmt_15_PhiAck/$entry
-        phi_stmt_16_ack_222_symbol <= phi_stmt_16_ack_0; -- transition branch_block_stmt_14/merge_stmt_15_PhiAck/phi_stmt_16_ack
-        phi_stmt_20_ack_223_symbol <= phi_stmt_20_ack_0; -- transition branch_block_stmt_14/merge_stmt_15_PhiAck/phi_stmt_20_ack
-        phi_stmt_24_ack_224_symbol <= phi_stmt_24_ack_0; -- transition branch_block_stmt_14/merge_stmt_15_PhiAck/phi_stmt_24_ack
-        Xexit_221_block : Block -- non-trivial join transition branch_block_stmt_14/merge_stmt_15_PhiAck/$exit 
-          signal Xexit_221_predecessors: BooleanArray(2 downto 0);
-          signal Xexit_221_p0_pred: BooleanArray(0 downto 0);
-          signal Xexit_221_p0_succ: BooleanArray(0 downto 0);
-          signal Xexit_221_p1_pred: BooleanArray(0 downto 0);
-          signal Xexit_221_p1_succ: BooleanArray(0 downto 0);
-          signal Xexit_221_p2_pred: BooleanArray(0 downto 0);
-          signal Xexit_221_p2_succ: BooleanArray(0 downto 0);
+        if_stmt_108_eval_test_245_start <= if_stmt_108_x_xentry_x_xx_x11_symbol; -- control passed to block
+        Xentry_246_symbol  <= if_stmt_108_eval_test_245_start; -- transition branch_block_stmt_21/if_stmt_108_eval_test/$entry
+        binary_111_248: Block -- branch_block_stmt_21/if_stmt_108_eval_test/binary_111 
+          signal binary_111_248_start: Boolean;
+          signal Xentry_249_symbol: Boolean;
+          signal Xexit_250_symbol: Boolean;
+          signal binary_111_inputs_251_symbol : Boolean;
+          signal rr_254_symbol : Boolean;
+          signal ra_255_symbol : Boolean;
+          signal cr_256_symbol : Boolean;
+          signal ca_257_symbol : Boolean;
           -- 
         begin -- 
-          Xexit_221_0_place: Place -- 
-            generic map(marking => false)
-            port map( -- 
-              Xexit_221_p0_pred, Xexit_221_p0_succ, Xexit_221_predecessors(0), clk, reset-- 
-            ); -- 
-          Xexit_221_p0_succ(0) <=  Xexit_221_symbol;
-          Xexit_221_p0_pred(0) <=  phi_stmt_16_ack_222_symbol;
-          Xexit_221_1_place: Place -- 
-            generic map(marking => false)
-            port map( -- 
-              Xexit_221_p1_pred, Xexit_221_p1_succ, Xexit_221_predecessors(1), clk, reset-- 
-            ); -- 
-          Xexit_221_p1_succ(0) <=  Xexit_221_symbol;
-          Xexit_221_p1_pred(0) <=  phi_stmt_20_ack_223_symbol;
-          Xexit_221_2_place: Place -- 
-            generic map(marking => false)
-            port map( -- 
-              Xexit_221_p2_pred, Xexit_221_p2_succ, Xexit_221_predecessors(2), clk, reset-- 
-            ); -- 
-          Xexit_221_p2_succ(0) <=  Xexit_221_symbol;
-          Xexit_221_p2_pred(0) <=  phi_stmt_24_ack_224_symbol;
-          Xexit_221_symbol <= AndReduce(Xexit_221_predecessors); 
+          binary_111_248_start <= Xentry_246_symbol; -- control passed to block
+          Xentry_249_symbol  <= binary_111_248_start; -- transition branch_block_stmt_21/if_stmt_108_eval_test/binary_111/$entry
+          binary_111_inputs_251: Block -- branch_block_stmt_21/if_stmt_108_eval_test/binary_111/binary_111_inputs 
+            signal binary_111_inputs_251_start: Boolean;
+            signal Xentry_252_symbol: Boolean;
+            signal Xexit_253_symbol: Boolean;
+            -- 
+          begin -- 
+            binary_111_inputs_251_start <= Xentry_249_symbol; -- control passed to block
+            Xentry_252_symbol  <= binary_111_inputs_251_start; -- transition branch_block_stmt_21/if_stmt_108_eval_test/binary_111/binary_111_inputs/$entry
+            Xexit_253_symbol <= Xentry_252_symbol; -- transition branch_block_stmt_21/if_stmt_108_eval_test/binary_111/binary_111_inputs/$exit
+            binary_111_inputs_251_symbol <= Xexit_253_symbol; -- control passed from block 
+            -- 
+          end Block; -- branch_block_stmt_21/if_stmt_108_eval_test/binary_111/binary_111_inputs
+          rr_254_symbol <= binary_111_inputs_251_symbol; -- transition branch_block_stmt_21/if_stmt_108_eval_test/binary_111/rr
+          binary_111_inst_req_0 <= rr_254_symbol; -- link to DP
+          ra_255_symbol <= binary_111_inst_ack_0; -- transition branch_block_stmt_21/if_stmt_108_eval_test/binary_111/ra
+          cr_256_symbol <= ra_255_symbol; -- transition branch_block_stmt_21/if_stmt_108_eval_test/binary_111/cr
+          binary_111_inst_req_1 <= cr_256_symbol; -- link to DP
+          ca_257_symbol <= binary_111_inst_ack_1; -- transition branch_block_stmt_21/if_stmt_108_eval_test/binary_111/ca
+          Xexit_250_symbol <= ca_257_symbol; -- transition branch_block_stmt_21/if_stmt_108_eval_test/binary_111/$exit
+          binary_111_248_symbol <= Xexit_250_symbol; -- control passed from block 
           -- 
-        end Block; -- non-trivial join transition branch_block_stmt_14/merge_stmt_15_PhiAck/$exit
-        merge_stmt_15_PhiAck_219_symbol <= Xexit_221_symbol; -- control passed from block 
+        end Block; -- branch_block_stmt_21/if_stmt_108_eval_test/binary_111
+        branch_req_258_symbol <= binary_111_248_symbol; -- transition branch_block_stmt_21/if_stmt_108_eval_test/branch_req
+        if_stmt_108_branch_req_0 <= branch_req_258_symbol; -- link to DP
+        Xexit_247_symbol <= branch_req_258_symbol; -- transition branch_block_stmt_21/if_stmt_108_eval_test/$exit
+        if_stmt_108_eval_test_245_symbol <= Xexit_247_symbol; -- control passed from block 
         -- 
-      end Block; -- branch_block_stmt_14/merge_stmt_15_PhiAck
-      if0_PhiReq_225: Block -- branch_block_stmt_14/if0_PhiReq 
-        signal if0_PhiReq_225_start: Boolean;
-        signal Xentry_226_symbol: Boolean;
-        signal Xexit_227_symbol: Boolean;
-        signal phi_stmt_56_req_228_symbol : Boolean;
-        -- 
-      begin -- 
-        if0_PhiReq_225_start <= if0_101_symbol; -- control passed to block
-        Xentry_226_symbol  <= if0_PhiReq_225_start; -- transition branch_block_stmt_14/if0_PhiReq/$entry
-        phi_stmt_56_req_228_symbol <= Xentry_226_symbol; -- transition branch_block_stmt_14/if0_PhiReq/phi_stmt_56_req
-        phi_stmt_56_req_1 <= phi_stmt_56_req_228_symbol; -- link to DP
-        Xexit_227_symbol <= phi_stmt_56_req_228_symbol; -- transition branch_block_stmt_14/if0_PhiReq/$exit
-        if0_PhiReq_225_symbol <= Xexit_227_symbol; -- control passed from block 
-        -- 
-      end Block; -- branch_block_stmt_14/if0_PhiReq
-      if1_PhiReq_229: Block -- branch_block_stmt_14/if1_PhiReq 
-        signal if1_PhiReq_229_start: Boolean;
-        signal Xentry_230_symbol: Boolean;
-        signal Xexit_231_symbol: Boolean;
-        signal phi_stmt_56_req_232_symbol : Boolean;
+      end Block; -- branch_block_stmt_21/if_stmt_108_eval_test
+      binary_111_place_259_symbol  <=  if_stmt_108_eval_test_245_symbol; -- place branch_block_stmt_21/binary_111_place (optimized away) 
+      if_stmt_108_if_link_260: Block -- branch_block_stmt_21/if_stmt_108_if_link 
+        signal if_stmt_108_if_link_260_start: Boolean;
+        signal Xentry_261_symbol: Boolean;
+        signal Xexit_262_symbol: Boolean;
+        signal if_choice_transition_263_symbol : Boolean;
         -- 
       begin -- 
-        if1_PhiReq_229_start <= if1_100_symbol; -- control passed to block
-        Xentry_230_symbol  <= if1_PhiReq_229_start; -- transition branch_block_stmt_14/if1_PhiReq/$entry
-        phi_stmt_56_req_232_symbol <= Xentry_230_symbol; -- transition branch_block_stmt_14/if1_PhiReq/phi_stmt_56_req
-        phi_stmt_56_req_0 <= phi_stmt_56_req_232_symbol; -- link to DP
-        Xexit_231_symbol <= phi_stmt_56_req_232_symbol; -- transition branch_block_stmt_14/if1_PhiReq/$exit
-        if1_PhiReq_229_symbol <= Xexit_231_symbol; -- control passed from block 
+        if_stmt_108_if_link_260_start <= binary_111_place_259_symbol; -- control passed to block
+        Xentry_261_symbol  <= if_stmt_108_if_link_260_start; -- transition branch_block_stmt_21/if_stmt_108_if_link/$entry
+        if_choice_transition_263_symbol <= if_stmt_108_branch_ack_1; -- transition branch_block_stmt_21/if_stmt_108_if_link/if_choice_transition
+        Xexit_262_symbol <= if_choice_transition_263_symbol; -- transition branch_block_stmt_21/if_stmt_108_if_link/$exit
+        if_stmt_108_if_link_260_symbol <= Xexit_262_symbol; -- control passed from block 
         -- 
-      end Block; -- branch_block_stmt_14/if1_PhiReq
-      merge_stmt_55_PhiReqMerge_233_symbol  <=  if0_PhiReq_225_symbol or if1_PhiReq_229_symbol; -- place branch_block_stmt_14/merge_stmt_55_PhiReqMerge (optimized away) 
-      merge_stmt_55_PhiAck_234: Block -- branch_block_stmt_14/merge_stmt_55_PhiAck 
-        signal merge_stmt_55_PhiAck_234_start: Boolean;
-        signal Xentry_235_symbol: Boolean;
-        signal Xexit_236_symbol: Boolean;
-        signal phi_stmt_56_ack_237_symbol : Boolean;
+      end Block; -- branch_block_stmt_21/if_stmt_108_if_link
+      if_stmt_108_else_link_264: Block -- branch_block_stmt_21/if_stmt_108_else_link 
+        signal if_stmt_108_else_link_264_start: Boolean;
+        signal Xentry_265_symbol: Boolean;
+        signal Xexit_266_symbol: Boolean;
+        signal else_choice_transition_267_symbol : Boolean;
         -- 
       begin -- 
-        merge_stmt_55_PhiAck_234_start <= merge_stmt_55_PhiReqMerge_233_symbol; -- control passed to block
-        Xentry_235_symbol  <= merge_stmt_55_PhiAck_234_start; -- transition branch_block_stmt_14/merge_stmt_55_PhiAck/$entry
-        phi_stmt_56_ack_237_symbol <= phi_stmt_56_ack_0; -- transition branch_block_stmt_14/merge_stmt_55_PhiAck/phi_stmt_56_ack
-        Xexit_236_symbol <= phi_stmt_56_ack_237_symbol; -- transition branch_block_stmt_14/merge_stmt_55_PhiAck/$exit
-        merge_stmt_55_PhiAck_234_symbol <= Xexit_236_symbol; -- control passed from block 
+        if_stmt_108_else_link_264_start <= binary_111_place_259_symbol; -- control passed to block
+        Xentry_265_symbol  <= if_stmt_108_else_link_264_start; -- transition branch_block_stmt_21/if_stmt_108_else_link/$entry
+        else_choice_transition_267_symbol <= if_stmt_108_branch_ack_0; -- transition branch_block_stmt_21/if_stmt_108_else_link/else_choice_transition
+        Xexit_266_symbol <= else_choice_transition_267_symbol; -- transition branch_block_stmt_21/if_stmt_108_else_link/$exit
+        if_stmt_108_else_link_264_symbol <= Xexit_266_symbol; -- control passed from block 
         -- 
-      end Block; -- branch_block_stmt_14/merge_stmt_55_PhiAck
-      Xexit_5_symbol <= branch_block_stmt_14_x_xexit_x_xx_x7_symbol; -- transition branch_block_stmt_14/$exit
-      branch_block_stmt_14_3_symbol <= Xexit_5_symbol; -- control passed from block 
+      end Block; -- branch_block_stmt_21/if_stmt_108_else_link
+      stmt_112_x_xentry_x_xx_x268_symbol  <=  if_stmt_108_if_link_260_symbol; -- place branch_block_stmt_21/stmt_112__entry__ (optimized away) 
+      stmt_112_x_xexit_x_xx_x269_symbol  <=  stmt_112_270_symbol; -- place branch_block_stmt_21/stmt_112__exit__ (optimized away) 
+      stmt_112_270: Block -- branch_block_stmt_21/stmt_112 
+        signal stmt_112_270_start: Boolean;
+        signal Xentry_271_symbol: Boolean;
+        signal Xexit_272_symbol: Boolean;
+        -- 
+      begin -- 
+        stmt_112_270_start <= stmt_112_x_xentry_x_xx_x268_symbol; -- control passed to block
+        Xentry_271_symbol  <= stmt_112_270_start; -- transition branch_block_stmt_21/stmt_112/$entry
+        Xexit_272_symbol <= Xentry_271_symbol; -- transition branch_block_stmt_21/stmt_112/$exit
+        stmt_112_270_symbol <= Xexit_272_symbol; -- control passed from block 
+        -- 
+      end Block; -- branch_block_stmt_21/stmt_112
+      loopback_273_symbol  <=  if_stmt_108_else_link_264_symbol; -- place branch_block_stmt_21/loopback (optimized away) 
+      branch_block_stmt_21_x_xentry_x_xx_xPhiReq_274: Block -- branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq 
+        signal branch_block_stmt_21_x_xentry_x_xx_xPhiReq_274_start: Boolean;
+        signal Xentry_275_symbol: Boolean;
+        signal Xexit_276_symbol: Boolean;
+        signal phi_stmt_23_req_277_symbol : Boolean;
+        signal phi_stmt_27_req_278_symbol : Boolean;
+        signal phi_stmt_31_req_279_symbol : Boolean;
+        signal phi_stmt_35_req_280_symbol : Boolean;
+        -- 
+      begin -- 
+        branch_block_stmt_21_x_xentry_x_xx_xPhiReq_274_start <= branch_block_stmt_21_x_xentry_x_xx_x6_symbol; -- control passed to block
+        Xentry_275_symbol  <= branch_block_stmt_21_x_xentry_x_xx_xPhiReq_274_start; -- transition branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq/$entry
+        phi_stmt_23_req_277_symbol <= Xentry_275_symbol; -- transition branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq/phi_stmt_23_req
+        phi_stmt_23_req_0 <= phi_stmt_23_req_277_symbol; -- link to DP
+        phi_stmt_27_req_278_symbol <= Xentry_275_symbol; -- transition branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq/phi_stmt_27_req
+        phi_stmt_27_req_0 <= phi_stmt_27_req_278_symbol; -- link to DP
+        phi_stmt_31_req_279_symbol <= Xentry_275_symbol; -- transition branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq/phi_stmt_31_req
+        phi_stmt_31_req_0 <= phi_stmt_31_req_279_symbol; -- link to DP
+        phi_stmt_35_req_280_symbol <= Xentry_275_symbol; -- transition branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq/phi_stmt_35_req
+        phi_stmt_35_req_0 <= phi_stmt_35_req_280_symbol; -- link to DP
+        Xexit_276_block : Block -- non-trivial join transition branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq/$exit 
+          signal Xexit_276_predecessors: BooleanArray(3 downto 0);
+          signal Xexit_276_p0_pred: BooleanArray(0 downto 0);
+          signal Xexit_276_p0_succ: BooleanArray(0 downto 0);
+          signal Xexit_276_p1_pred: BooleanArray(0 downto 0);
+          signal Xexit_276_p1_succ: BooleanArray(0 downto 0);
+          signal Xexit_276_p2_pred: BooleanArray(0 downto 0);
+          signal Xexit_276_p2_succ: BooleanArray(0 downto 0);
+          signal Xexit_276_p3_pred: BooleanArray(0 downto 0);
+          signal Xexit_276_p3_succ: BooleanArray(0 downto 0);
+          -- 
+        begin -- 
+          Xexit_276_0_place: Place -- 
+            generic map(marking => false)
+            port map( -- 
+              Xexit_276_p0_pred, Xexit_276_p0_succ, Xexit_276_predecessors(0), clk, reset-- 
+            ); -- 
+          Xexit_276_p0_succ(0) <=  Xexit_276_symbol;
+          Xexit_276_p0_pred(0) <=  phi_stmt_23_req_277_symbol;
+          Xexit_276_1_place: Place -- 
+            generic map(marking => false)
+            port map( -- 
+              Xexit_276_p1_pred, Xexit_276_p1_succ, Xexit_276_predecessors(1), clk, reset-- 
+            ); -- 
+          Xexit_276_p1_succ(0) <=  Xexit_276_symbol;
+          Xexit_276_p1_pred(0) <=  phi_stmt_27_req_278_symbol;
+          Xexit_276_2_place: Place -- 
+            generic map(marking => false)
+            port map( -- 
+              Xexit_276_p2_pred, Xexit_276_p2_succ, Xexit_276_predecessors(2), clk, reset-- 
+            ); -- 
+          Xexit_276_p2_succ(0) <=  Xexit_276_symbol;
+          Xexit_276_p2_pred(0) <=  phi_stmt_31_req_279_symbol;
+          Xexit_276_3_place: Place -- 
+            generic map(marking => false)
+            port map( -- 
+              Xexit_276_p3_pred, Xexit_276_p3_succ, Xexit_276_predecessors(3), clk, reset-- 
+            ); -- 
+          Xexit_276_p3_succ(0) <=  Xexit_276_symbol;
+          Xexit_276_p3_pred(0) <=  phi_stmt_35_req_280_symbol;
+          Xexit_276_symbol <= AndReduce(Xexit_276_predecessors); 
+          -- 
+        end Block; -- non-trivial join transition branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq/$exit
+        branch_block_stmt_21_x_xentry_x_xx_xPhiReq_274_symbol <= Xexit_276_symbol; -- control passed from block 
+        -- 
+      end Block; -- branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq
+      loopback_PhiReq_281: Block -- branch_block_stmt_21/loopback_PhiReq 
+        signal loopback_PhiReq_281_start: Boolean;
+        signal Xentry_282_symbol: Boolean;
+        signal Xexit_283_symbol: Boolean;
+        signal phi_stmt_23_req_284_symbol : Boolean;
+        signal phi_stmt_27_req_285_symbol : Boolean;
+        signal phi_stmt_31_req_286_symbol : Boolean;
+        signal phi_stmt_35_req_287_symbol : Boolean;
+        -- 
+      begin -- 
+        loopback_PhiReq_281_start <= loopback_273_symbol; -- control passed to block
+        Xentry_282_symbol  <= loopback_PhiReq_281_start; -- transition branch_block_stmt_21/loopback_PhiReq/$entry
+        phi_stmt_23_req_284_symbol <= Xentry_282_symbol; -- transition branch_block_stmt_21/loopback_PhiReq/phi_stmt_23_req
+        phi_stmt_23_req_1 <= phi_stmt_23_req_284_symbol; -- link to DP
+        phi_stmt_27_req_285_symbol <= Xentry_282_symbol; -- transition branch_block_stmt_21/loopback_PhiReq/phi_stmt_27_req
+        phi_stmt_27_req_1 <= phi_stmt_27_req_285_symbol; -- link to DP
+        phi_stmt_31_req_286_symbol <= Xentry_282_symbol; -- transition branch_block_stmt_21/loopback_PhiReq/phi_stmt_31_req
+        phi_stmt_31_req_1 <= phi_stmt_31_req_286_symbol; -- link to DP
+        phi_stmt_35_req_287_symbol <= Xentry_282_symbol; -- transition branch_block_stmt_21/loopback_PhiReq/phi_stmt_35_req
+        phi_stmt_35_req_1 <= phi_stmt_35_req_287_symbol; -- link to DP
+        Xexit_283_block : Block -- non-trivial join transition branch_block_stmt_21/loopback_PhiReq/$exit 
+          signal Xexit_283_predecessors: BooleanArray(3 downto 0);
+          signal Xexit_283_p0_pred: BooleanArray(0 downto 0);
+          signal Xexit_283_p0_succ: BooleanArray(0 downto 0);
+          signal Xexit_283_p1_pred: BooleanArray(0 downto 0);
+          signal Xexit_283_p1_succ: BooleanArray(0 downto 0);
+          signal Xexit_283_p2_pred: BooleanArray(0 downto 0);
+          signal Xexit_283_p2_succ: BooleanArray(0 downto 0);
+          signal Xexit_283_p3_pred: BooleanArray(0 downto 0);
+          signal Xexit_283_p3_succ: BooleanArray(0 downto 0);
+          -- 
+        begin -- 
+          Xexit_283_0_place: Place -- 
+            generic map(marking => false)
+            port map( -- 
+              Xexit_283_p0_pred, Xexit_283_p0_succ, Xexit_283_predecessors(0), clk, reset-- 
+            ); -- 
+          Xexit_283_p0_succ(0) <=  Xexit_283_symbol;
+          Xexit_283_p0_pred(0) <=  phi_stmt_23_req_284_symbol;
+          Xexit_283_1_place: Place -- 
+            generic map(marking => false)
+            port map( -- 
+              Xexit_283_p1_pred, Xexit_283_p1_succ, Xexit_283_predecessors(1), clk, reset-- 
+            ); -- 
+          Xexit_283_p1_succ(0) <=  Xexit_283_symbol;
+          Xexit_283_p1_pred(0) <=  phi_stmt_27_req_285_symbol;
+          Xexit_283_2_place: Place -- 
+            generic map(marking => false)
+            port map( -- 
+              Xexit_283_p2_pred, Xexit_283_p2_succ, Xexit_283_predecessors(2), clk, reset-- 
+            ); -- 
+          Xexit_283_p2_succ(0) <=  Xexit_283_symbol;
+          Xexit_283_p2_pred(0) <=  phi_stmt_31_req_286_symbol;
+          Xexit_283_3_place: Place -- 
+            generic map(marking => false)
+            port map( -- 
+              Xexit_283_p3_pred, Xexit_283_p3_succ, Xexit_283_predecessors(3), clk, reset-- 
+            ); -- 
+          Xexit_283_p3_succ(0) <=  Xexit_283_symbol;
+          Xexit_283_p3_pred(0) <=  phi_stmt_35_req_287_symbol;
+          Xexit_283_symbol <= AndReduce(Xexit_283_predecessors); 
+          -- 
+        end Block; -- non-trivial join transition branch_block_stmt_21/loopback_PhiReq/$exit
+        loopback_PhiReq_281_symbol <= Xexit_283_symbol; -- control passed from block 
+        -- 
+      end Block; -- branch_block_stmt_21/loopback_PhiReq
+      merge_stmt_22_PhiReqMerge_288_symbol  <=  branch_block_stmt_21_x_xentry_x_xx_xPhiReq_274_symbol or loopback_PhiReq_281_symbol; -- place branch_block_stmt_21/merge_stmt_22_PhiReqMerge (optimized away) 
+      merge_stmt_22_PhiAck_289: Block -- branch_block_stmt_21/merge_stmt_22_PhiAck 
+        signal merge_stmt_22_PhiAck_289_start: Boolean;
+        signal Xentry_290_symbol: Boolean;
+        signal Xexit_291_symbol: Boolean;
+        signal phi_stmt_23_ack_292_symbol : Boolean;
+        signal phi_stmt_27_ack_293_symbol : Boolean;
+        signal phi_stmt_31_ack_294_symbol : Boolean;
+        signal phi_stmt_35_ack_295_symbol : Boolean;
+        -- 
+      begin -- 
+        merge_stmt_22_PhiAck_289_start <= merge_stmt_22_PhiReqMerge_288_symbol; -- control passed to block
+        Xentry_290_symbol  <= merge_stmt_22_PhiAck_289_start; -- transition branch_block_stmt_21/merge_stmt_22_PhiAck/$entry
+        phi_stmt_23_ack_292_symbol <= phi_stmt_23_ack_0; -- transition branch_block_stmt_21/merge_stmt_22_PhiAck/phi_stmt_23_ack
+        phi_stmt_27_ack_293_symbol <= phi_stmt_27_ack_0; -- transition branch_block_stmt_21/merge_stmt_22_PhiAck/phi_stmt_27_ack
+        phi_stmt_31_ack_294_symbol <= phi_stmt_31_ack_0; -- transition branch_block_stmt_21/merge_stmt_22_PhiAck/phi_stmt_31_ack
+        phi_stmt_35_ack_295_symbol <= phi_stmt_35_ack_0; -- transition branch_block_stmt_21/merge_stmt_22_PhiAck/phi_stmt_35_ack
+        Xexit_291_block : Block -- non-trivial join transition branch_block_stmt_21/merge_stmt_22_PhiAck/$exit 
+          signal Xexit_291_predecessors: BooleanArray(3 downto 0);
+          signal Xexit_291_p0_pred: BooleanArray(0 downto 0);
+          signal Xexit_291_p0_succ: BooleanArray(0 downto 0);
+          signal Xexit_291_p1_pred: BooleanArray(0 downto 0);
+          signal Xexit_291_p1_succ: BooleanArray(0 downto 0);
+          signal Xexit_291_p2_pred: BooleanArray(0 downto 0);
+          signal Xexit_291_p2_succ: BooleanArray(0 downto 0);
+          signal Xexit_291_p3_pred: BooleanArray(0 downto 0);
+          signal Xexit_291_p3_succ: BooleanArray(0 downto 0);
+          -- 
+        begin -- 
+          Xexit_291_0_place: Place -- 
+            generic map(marking => false)
+            port map( -- 
+              Xexit_291_p0_pred, Xexit_291_p0_succ, Xexit_291_predecessors(0), clk, reset-- 
+            ); -- 
+          Xexit_291_p0_succ(0) <=  Xexit_291_symbol;
+          Xexit_291_p0_pred(0) <=  phi_stmt_23_ack_292_symbol;
+          Xexit_291_1_place: Place -- 
+            generic map(marking => false)
+            port map( -- 
+              Xexit_291_p1_pred, Xexit_291_p1_succ, Xexit_291_predecessors(1), clk, reset-- 
+            ); -- 
+          Xexit_291_p1_succ(0) <=  Xexit_291_symbol;
+          Xexit_291_p1_pred(0) <=  phi_stmt_27_ack_293_symbol;
+          Xexit_291_2_place: Place -- 
+            generic map(marking => false)
+            port map( -- 
+              Xexit_291_p2_pred, Xexit_291_p2_succ, Xexit_291_predecessors(2), clk, reset-- 
+            ); -- 
+          Xexit_291_p2_succ(0) <=  Xexit_291_symbol;
+          Xexit_291_p2_pred(0) <=  phi_stmt_31_ack_294_symbol;
+          Xexit_291_3_place: Place -- 
+            generic map(marking => false)
+            port map( -- 
+              Xexit_291_p3_pred, Xexit_291_p3_succ, Xexit_291_predecessors(3), clk, reset-- 
+            ); -- 
+          Xexit_291_p3_succ(0) <=  Xexit_291_symbol;
+          Xexit_291_p3_pred(0) <=  phi_stmt_35_ack_295_symbol;
+          Xexit_291_symbol <= AndReduce(Xexit_291_predecessors); 
+          -- 
+        end Block; -- non-trivial join transition branch_block_stmt_21/merge_stmt_22_PhiAck/$exit
+        merge_stmt_22_PhiAck_289_symbol <= Xexit_291_symbol; -- control passed from block 
+        -- 
+      end Block; -- branch_block_stmt_21/merge_stmt_22_PhiAck
+      Xexit_5_symbol <= branch_block_stmt_21_x_xexit_x_xx_x7_symbol; -- transition branch_block_stmt_21/$exit
+      branch_block_stmt_21_3_symbol <= Xexit_5_symbol; -- control passed from block 
       -- 
-    end Block; -- branch_block_stmt_14
-    assign_stmt_100_238: Block -- assign_stmt_100 
-      signal assign_stmt_100_238_start: Boolean;
-      signal Xentry_239_symbol: Boolean;
-      signal Xexit_240_symbol: Boolean;
-      signal binary_99_241_symbol : Boolean;
+    end Block; -- branch_block_stmt_21
+    assign_stmt_121_296: Block -- assign_stmt_121 
+      signal assign_stmt_121_296_start: Boolean;
+      signal Xentry_297_symbol: Boolean;
+      signal Xexit_298_symbol: Boolean;
+      signal binary_120_299_symbol : Boolean;
       -- 
     begin -- 
-      assign_stmt_100_238_start <= branch_block_stmt_14_3_symbol; -- control passed to block
-      Xentry_239_symbol  <= assign_stmt_100_238_start; -- transition assign_stmt_100/$entry
-      binary_99_241: Block -- assign_stmt_100/binary_99 
-        signal binary_99_241_start: Boolean;
-        signal Xentry_242_symbol: Boolean;
-        signal Xexit_243_symbol: Boolean;
-        signal binary_99_inputs_244_symbol : Boolean;
-        signal rr_247_symbol : Boolean;
-        signal ra_248_symbol : Boolean;
-        signal cr_249_symbol : Boolean;
-        signal ca_250_symbol : Boolean;
+      assign_stmt_121_296_start <= branch_block_stmt_21_3_symbol; -- control passed to block
+      Xentry_297_symbol  <= assign_stmt_121_296_start; -- transition assign_stmt_121/$entry
+      binary_120_299: Block -- assign_stmt_121/binary_120 
+        signal binary_120_299_start: Boolean;
+        signal Xentry_300_symbol: Boolean;
+        signal Xexit_301_symbol: Boolean;
+        signal binary_120_inputs_302_symbol : Boolean;
+        signal rr_305_symbol : Boolean;
+        signal ra_306_symbol : Boolean;
+        signal cr_307_symbol : Boolean;
+        signal ca_308_symbol : Boolean;
         -- 
       begin -- 
-        binary_99_241_start <= Xentry_239_symbol; -- control passed to block
-        Xentry_242_symbol  <= binary_99_241_start; -- transition assign_stmt_100/binary_99/$entry
-        binary_99_inputs_244: Block -- assign_stmt_100/binary_99/binary_99_inputs 
-          signal binary_99_inputs_244_start: Boolean;
-          signal Xentry_245_symbol: Boolean;
-          signal Xexit_246_symbol: Boolean;
+        binary_120_299_start <= Xentry_297_symbol; -- control passed to block
+        Xentry_300_symbol  <= binary_120_299_start; -- transition assign_stmt_121/binary_120/$entry
+        binary_120_inputs_302: Block -- assign_stmt_121/binary_120/binary_120_inputs 
+          signal binary_120_inputs_302_start: Boolean;
+          signal Xentry_303_symbol: Boolean;
+          signal Xexit_304_symbol: Boolean;
           -- 
         begin -- 
-          binary_99_inputs_244_start <= Xentry_242_symbol; -- control passed to block
-          Xentry_245_symbol  <= binary_99_inputs_244_start; -- transition assign_stmt_100/binary_99/binary_99_inputs/$entry
-          Xexit_246_symbol <= Xentry_245_symbol; -- transition assign_stmt_100/binary_99/binary_99_inputs/$exit
-          binary_99_inputs_244_symbol <= Xexit_246_symbol; -- control passed from block 
+          binary_120_inputs_302_start <= Xentry_300_symbol; -- control passed to block
+          Xentry_303_symbol  <= binary_120_inputs_302_start; -- transition assign_stmt_121/binary_120/binary_120_inputs/$entry
+          Xexit_304_symbol <= Xentry_303_symbol; -- transition assign_stmt_121/binary_120/binary_120_inputs/$exit
+          binary_120_inputs_302_symbol <= Xexit_304_symbol; -- control passed from block 
           -- 
-        end Block; -- assign_stmt_100/binary_99/binary_99_inputs
-        rr_247_symbol <= binary_99_inputs_244_symbol; -- transition assign_stmt_100/binary_99/rr
-        binary_99_inst_req_0 <= rr_247_symbol; -- link to DP
-        ra_248_symbol <= binary_99_inst_ack_0; -- transition assign_stmt_100/binary_99/ra
-        cr_249_symbol <= ra_248_symbol; -- transition assign_stmt_100/binary_99/cr
-        binary_99_inst_req_1 <= cr_249_symbol; -- link to DP
-        ca_250_symbol <= binary_99_inst_ack_1; -- transition assign_stmt_100/binary_99/ca
-        Xexit_243_symbol <= ca_250_symbol; -- transition assign_stmt_100/binary_99/$exit
-        binary_99_241_symbol <= Xexit_243_symbol; -- control passed from block 
+        end Block; -- assign_stmt_121/binary_120/binary_120_inputs
+        rr_305_symbol <= binary_120_inputs_302_symbol; -- transition assign_stmt_121/binary_120/rr
+        binary_120_inst_req_0 <= rr_305_symbol; -- link to DP
+        ra_306_symbol <= binary_120_inst_ack_0; -- transition assign_stmt_121/binary_120/ra
+        cr_307_symbol <= ra_306_symbol; -- transition assign_stmt_121/binary_120/cr
+        binary_120_inst_req_1 <= cr_307_symbol; -- link to DP
+        ca_308_symbol <= binary_120_inst_ack_1; -- transition assign_stmt_121/binary_120/ca
+        Xexit_301_symbol <= ca_308_symbol; -- transition assign_stmt_121/binary_120/$exit
+        binary_120_299_symbol <= Xexit_301_symbol; -- control passed from block 
         -- 
-      end Block; -- assign_stmt_100/binary_99
-      Xexit_240_symbol <= binary_99_241_symbol; -- transition assign_stmt_100/$exit
-      assign_stmt_100_238_symbol <= Xexit_240_symbol; -- control passed from block 
+      end Block; -- assign_stmt_121/binary_120
+      Xexit_298_symbol <= binary_120_299_symbol; -- transition assign_stmt_121/$exit
+      assign_stmt_121_296_symbol <= Xexit_298_symbol; -- control passed from block 
       -- 
-    end Block; -- assign_stmt_100
-    Xexit_2_symbol <= assign_stmt_100_238_symbol; -- transition $exit
+    end Block; -- assign_stmt_121
+    Xexit_2_symbol <= assign_stmt_121_296_symbol; -- transition $exit
     fin  <=  '1' when Xexit_2_symbol else '0'; -- fin symbol when control-path exits
     -- 
   end Block; -- control-path
   -- the data path
   data_path: Block -- 
-    signal binary_33_wire : std_logic_vector(9 downto 0);
-    signal binary_35_wire : std_logic_vector(10 downto 0);
-    signal binary_42_wire : std_logic_vector(10 downto 0);
-    signal binary_50_wire : std_logic_vector(0 downto 0);
-    signal binary_64_wire : std_logic_vector(0 downto 0);
-    signal binary_66_wire : std_logic_vector(10 downto 0);
-    signal binary_74_wire : std_logic_vector(10 downto 0);
-    signal binary_90_wire : std_logic_vector(0 downto 0);
-    signal count_85 : std_logic_vector(3 downto 0);
-    signal count_in_24 : std_logic_vector(3 downto 0);
-    signal expr_18_wire_constant : std_logic_vector(9 downto 0);
-    signal expr_22_wire_constant : std_logic_vector(9 downto 0);
-    signal expr_26_wire_constant : std_logic_vector(3 downto 0);
-    signal expr_36_wire_constant : std_logic_vector(3 downto 0);
-    signal expr_43_wire_constant : std_logic_vector(3 downto 0);
+    signal a_0_31 : std_logic_vector(9 downto 0);
+    signal a_1_106 : std_logic_vector(9 downto 0);
+    signal binary_111_wire : std_logic_vector(0 downto 0);
+    signal binary_45_wire : std_logic_vector(0 downto 0);
+    signal binary_48_wire : std_logic_vector(9 downto 0);
+    signal binary_50_wire : std_logic_vector(10 downto 0);
+    signal binary_52_wire : std_logic_vector(10 downto 0);
+    signal binary_55_wire : std_logic_vector(10 downto 0);
+    signal binary_57_wire : std_logic_vector(10 downto 0);
+    signal binary_60_wire : std_logic_vector(0 downto 0);
+    signal binary_62_wire : std_logic_vector(10 downto 0);
+    signal binary_75_wire : std_logic_vector(0 downto 0);
+    signal binary_78_wire : std_logic_vector(9 downto 0);
+    signal binary_80_wire : std_logic_vector(10 downto 0);
+    signal binary_82_wire : std_logic_vector(10 downto 0);
+    signal binary_85_wire : std_logic_vector(10 downto 0);
+    signal binary_87_wire : std_logic_vector(10 downto 0);
+    signal binary_93_wire : std_logic_vector(10 downto 0);
+    signal ctr_101 : std_logic_vector(10 downto 0);
+    signal ctr_35 : std_logic_vector(10 downto 0);
+    signal expr_104_wire_constant : std_logic_vector(3 downto 0);
+    signal expr_110_wire_constant : std_logic_vector(3 downto 0);
+    signal expr_25_wire_constant : std_logic_vector(9 downto 0);
+    signal expr_29_wire_constant : std_logic_vector(9 downto 0);
+    signal expr_44_wire_constant : std_logic_vector(3 downto 0);
+    signal expr_51_wire_constant : std_logic_vector(3 downto 0);
+    signal expr_56_wire_constant : std_logic_vector(3 downto 0);
+    signal expr_59_wire_constant : std_logic_vector(3 downto 0);
     signal expr_63_wire_constant : std_logic_vector(3 downto 0);
-    signal expr_67_wire_constant : std_logic_vector(3 downto 0);
-    signal expr_73_wire_constant : std_logic_vector(3 downto 0);
-    signal expr_83_wire_constant : std_logic_vector(3 downto 0);
-    signal expr_89_wire_constant : std_logic_vector(3 downto 0);
-    signal nu_56 : std_logic_vector(10 downto 0);
-    signal nu_else_45 : std_logic_vector(10 downto 0);
-    signal nu_if_38 : std_logic_vector(10 downto 0);
-    signal nv_69 : std_logic_vector(10 downto 0);
-    signal simple_obj_ref_34_wire_constant : std_logic_vector(0 downto 0);
-    signal simple_obj_ref_41_wire_constant : std_logic_vector(0 downto 0);
-    signal u_76 : std_logic_vector(9 downto 0);
-    signal u_in_16 : std_logic_vector(9 downto 0);
-    signal v_80 : std_logic_vector(9 downto 0);
-    signal v_in_20 : std_logic_vector(9 downto 0);
+    signal expr_74_wire_constant : std_logic_vector(3 downto 0);
+    signal expr_81_wire_constant : std_logic_vector(3 downto 0);
+    signal expr_86_wire_constant : std_logic_vector(3 downto 0);
+    signal expr_92_wire_constant : std_logic_vector(3 downto 0);
+    signal expr_99_wire_constant : std_logic_vector(3 downto 0);
+    signal nu_89 : std_logic_vector(10 downto 0);
+    signal nv_65 : std_logic_vector(10 downto 0);
+    signal simple_obj_ref_37_wire_constant : std_logic_vector(10 downto 0);
+    signal simple_obj_ref_49_wire_constant : std_logic_vector(0 downto 0);
+    signal simple_obj_ref_54_wire_constant : std_logic_vector(0 downto 0);
+    signal simple_obj_ref_79_wire_constant : std_logic_vector(0 downto 0);
+    signal simple_obj_ref_84_wire_constant : std_logic_vector(0 downto 0);
+    signal ternary_58_wire : std_logic_vector(10 downto 0);
+    signal u_95 : std_logic_vector(9 downto 0);
+    signal u_in_23 : std_logic_vector(9 downto 0);
+    signal v_69 : std_logic_vector(9 downto 0);
+    signal v_in_27 : std_logic_vector(9 downto 0);
+    signal xxsum_modxxcount : std_logic_vector(10 downto 0);
     signal xxsum_modxxz1 : std_logic_vector(0 downto 0);
     signal xxsum_modxxz9 : std_logic_vector(8 downto 0);
     -- 
   begin -- 
-    expr_18_wire_constant <= "0000000000";
-    expr_22_wire_constant <= "0000000000";
-    expr_26_wire_constant <= "0000";
-    expr_36_wire_constant <= "0001";
-    expr_43_wire_constant <= "0001";
-    expr_63_wire_constant <= "0000";
-    expr_67_wire_constant <= "0001";
-    expr_73_wire_constant <= "0001";
-    expr_83_wire_constant <= "0001";
-    expr_89_wire_constant <= "1010";
-    simple_obj_ref_34_wire_constant <= "0";
-    simple_obj_ref_41_wire_constant <= "0";
+    expr_104_wire_constant <= "0001";
+    expr_110_wire_constant <= "0000";
+    expr_25_wire_constant <= "0000000000";
+    expr_29_wire_constant <= "0000000000";
+    expr_44_wire_constant <= "0000";
+    expr_51_wire_constant <= "0001";
+    expr_56_wire_constant <= "0001";
+    expr_59_wire_constant <= "0000";
+    expr_63_wire_constant <= "0001";
+    expr_74_wire_constant <= "0000";
+    expr_81_wire_constant <= "0001";
+    expr_86_wire_constant <= "0001";
+    expr_92_wire_constant <= "0001";
+    expr_99_wire_constant <= "0001";
+    simple_obj_ref_37_wire_constant <= "10000000000";
+    simple_obj_ref_49_wire_constant <= "0";
+    simple_obj_ref_54_wire_constant <= "0";
+    simple_obj_ref_79_wire_constant <= "0";
+    simple_obj_ref_84_wire_constant <= "0";
+    xxsum_modxxcount <= "10000000000";
     xxsum_modxxz1 <= "0";
     xxsum_modxxz9 <= "000000000";
-    phi_stmt_16: Block -- phi operator 
+    phi_stmt_23: Block -- phi operator 
       signal idata: std_logic_vector(19 downto 0);
       signal req: BooleanArray(1 downto 0);
       --
     begin -- 
-      idata <= expr_18_wire_constant & u_76;
-      req <= phi_stmt_16_req_0 & phi_stmt_16_req_1;
+      idata <= expr_25_wire_constant & u_95;
+      req <= phi_stmt_23_req_0 & phi_stmt_23_req_1;
       phi: PhiBase -- 
         generic map( -- 
           num_reqs => 2,
           data_width => 10) -- 
         port map( -- 
           req => req, 
-          ack => phi_stmt_16_ack_0,
+          ack => phi_stmt_23_ack_0,
           idata => idata,
-          odata => u_in_16,
+          odata => u_in_23,
           clk => clk,
           reset => reset ); -- 
       -- 
-    end Block; -- phi operator phi_stmt_16
-    phi_stmt_20: Block -- phi operator 
+    end Block; -- phi operator phi_stmt_23
+    phi_stmt_27: Block -- phi operator 
       signal idata: std_logic_vector(19 downto 0);
       signal req: BooleanArray(1 downto 0);
       --
     begin -- 
-      idata <= expr_22_wire_constant & v_80;
-      req <= phi_stmt_20_req_0 & phi_stmt_20_req_1;
+      idata <= expr_29_wire_constant & v_69;
+      req <= phi_stmt_27_req_0 & phi_stmt_27_req_1;
       phi: PhiBase -- 
         generic map( -- 
           num_reqs => 2,
           data_width => 10) -- 
         port map( -- 
           req => req, 
-          ack => phi_stmt_20_ack_0,
+          ack => phi_stmt_27_ack_0,
           idata => idata,
-          odata => v_in_20,
+          odata => v_in_27,
           clk => clk,
           reset => reset ); -- 
       -- 
-    end Block; -- phi operator phi_stmt_20
-    phi_stmt_24: Block -- phi operator 
-      signal idata: std_logic_vector(7 downto 0);
+    end Block; -- phi operator phi_stmt_27
+    phi_stmt_31: Block -- phi operator 
+      signal idata: std_logic_vector(19 downto 0);
       signal req: BooleanArray(1 downto 0);
       --
     begin -- 
-      idata <= expr_26_wire_constant & count_85;
-      req <= phi_stmt_24_req_0 & phi_stmt_24_req_1;
+      idata <= a & a_1_106;
+      req <= phi_stmt_31_req_0 & phi_stmt_31_req_1;
       phi: PhiBase -- 
         generic map( -- 
           num_reqs => 2,
-          data_width => 4) -- 
+          data_width => 10) -- 
         port map( -- 
           req => req, 
-          ack => phi_stmt_24_ack_0,
+          ack => phi_stmt_31_ack_0,
           idata => idata,
-          odata => count_in_24,
+          odata => a_0_31,
           clk => clk,
           reset => reset ); -- 
       -- 
-    end Block; -- phi operator phi_stmt_24
-    phi_stmt_56: Block -- phi operator 
+    end Block; -- phi operator phi_stmt_31
+    phi_stmt_35: Block -- phi operator 
       signal idata: std_logic_vector(21 downto 0);
       signal req: BooleanArray(1 downto 0);
       --
     begin -- 
-      idata <= nu_if_38 & nu_else_45;
-      req <= phi_stmt_56_req_0 & phi_stmt_56_req_1;
+      idata <= simple_obj_ref_37_wire_constant & ctr_101;
+      req <= phi_stmt_35_req_0 & phi_stmt_35_req_1;
       phi: PhiBase -- 
         generic map( -- 
           num_reqs => 2,
           data_width => 11) -- 
         port map( -- 
           req => req, 
-          ack => phi_stmt_56_ack_0,
+          ack => phi_stmt_35_ack_0,
           idata => idata,
-          odata => nu_56,
+          odata => ctr_35,
           clk => clk,
           reset => reset ); -- 
       -- 
-    end Block; -- phi operator phi_stmt_56
-    type_cast_75_inst: RegisterBase generic map(in_data_width => 11,out_data_width => 10) -- 
-      port map( din => binary_74_wire, dout => u_76, req => type_cast_75_inst_req_0, ack => type_cast_75_inst_ack_0, clk => clk, reset => reset); -- 
-    type_cast_79_inst: RegisterBase generic map(in_data_width => 11,out_data_width => 10) -- 
-      port map( din => nv_69, dout => v_80, req => type_cast_79_inst_req_0, ack => type_cast_79_inst_ack_0, clk => clk, reset => reset); -- 
-    if_stmt_47_branch: Block -- 
+    end Block; -- phi operator phi_stmt_35
+    ternary_58_inst: SelectBase generic map(data_width => 11) -- 
+      port map( x => binary_52_wire, y => binary_57_wire, sel => binary_45_wire, z => ternary_58_wire, req => ternary_58_inst_req_0, ack => ternary_58_inst_ack_0, clk => clk, reset => reset); -- 
+    ternary_88_inst: SelectBase generic map(data_width => 11) -- 
+      port map( x => binary_82_wire, y => binary_87_wire, sel => binary_75_wire, z => nu_89, req => ternary_88_inst_req_0, ack => ternary_88_inst_ack_0, clk => clk, reset => reset); -- 
+    type_cast_68_inst: RegisterBase generic map(in_data_width => 11,out_data_width => 10) -- 
+      port map( din => nv_65, dout => v_69, req => type_cast_68_inst_req_0, ack => type_cast_68_inst_ack_0, clk => clk, reset => reset); -- 
+    type_cast_94_inst: RegisterBase generic map(in_data_width => 11,out_data_width => 10) -- 
+      port map( din => binary_93_wire, dout => u_95, req => type_cast_94_inst_req_0, ack => type_cast_94_inst_ack_0, clk => clk, reset => reset); -- 
+    if_stmt_108_branch: Block -- 
       -- branch-block
       signal condition_sig : std_logic_vector(0 downto 0);
       begin 
-      condition_sig <= binary_50_wire;
+      condition_sig <= binary_111_wire;
       branch_instance: BranchBase -- 
         generic map( condition_width => 1)
         port map( -- 
           condition => condition_sig,
-          req => if_stmt_47_branch_req_0,
-          ack0 => if_stmt_47_branch_ack_0,
-          ack1 => if_stmt_47_branch_ack_1,
+          req => if_stmt_108_branch_req_0,
+          ack0 => if_stmt_108_branch_ack_0,
+          ack1 => if_stmt_108_branch_ack_1,
           clk => clk,
           reset => reset); -- 
       --
     end Block; -- branch-block
-    if_stmt_87_branch: Block -- 
-      -- branch-block
-      signal condition_sig : std_logic_vector(0 downto 0);
-      begin 
-      condition_sig <= binary_90_wire;
-      branch_instance: BranchBase -- 
-        generic map( condition_width => 1)
-        port map( -- 
-          condition => condition_sig,
-          req => if_stmt_87_branch_req_0,
-          ack0 => if_stmt_87_branch_ack_0,
-          ack1 => if_stmt_87_branch_ack_1,
-          clk => clk,
-          reset => reset); -- 
-      --
-    end Block; -- branch-block
-    -- shared split operator group (0) : binary_33_inst 
+    -- shared split operator group (0) : binary_100_inst 
     SplitOperatorGroup0: Block -- 
-      signal data_in: std_logic_vector(19 downto 0);
-      signal data_out: std_logic_vector(9 downto 0);
+      signal data_in: std_logic_vector(10 downto 0);
+      signal data_out: std_logic_vector(10 downto 0);
       signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
       -- 
     begin -- 
-      data_in <= u_in_16 & b;
-      binary_33_wire <= data_out(9 downto 0);
+      data_in <= ctr_35;
+      ctr_101 <= data_out(10 downto 0);
       UnsharedOperator: UnsharedOperatorBase -- 
         generic map ( -- 
-          operator_id => "ApIntAdd",
+          operator_id => "ApIntLSHR",
           input1_is_int => true, 
           input1_characteristic_width => 0, 
           input1_mantissa_width    => 0, 
-          iwidth_1  => 10,
+          iwidth_1  => 11,
           input2_is_int => true, 
           input2_characteristic_width => 0, 
           input2_mantissa_width => 0, 
-          iwidth_2      => 10, 
-          num_inputs    => 2,
+          iwidth_2      => 0, 
+          num_inputs    => 1,
           output_is_int => true,
           output_characteristic_width  => 0, 
           output_mantissa_width => 0, 
-          owidth => 10,
-          constant_operand => "0",
-          use_constant  => false,
+          owidth => 11,
+          constant_operand => "0001",
+          use_constant  => true,
           zero_delay => false, 
           flow_through => false--
         ) 
         port map ( -- 
-          reqL => binary_33_inst_req_0,
-          ackL => binary_33_inst_ack_0,
-          reqR => binary_33_inst_req_1,
-          ackR => binary_33_inst_ack_1,
+          reqL => binary_100_inst_req_0,
+          ackL => binary_100_inst_ack_0,
+          reqR => binary_100_inst_req_1,
+          ackR => binary_100_inst_ack_1,
           dataL => data_in, 
           dataR => data_out,
           clk => clk,
           reset => reset); -- 
       -- 
     end Block; -- split operator group 0
-    -- shared split operator group (1) : binary_35_inst 
+    -- shared split operator group (1) : binary_105_inst 
     SplitOperatorGroup1: Block -- 
       signal data_in: std_logic_vector(9 downto 0);
-      signal data_out: std_logic_vector(10 downto 0);
+      signal data_out: std_logic_vector(9 downto 0);
       signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
       -- 
     begin -- 
-      data_in <= binary_33_wire;
-      binary_35_wire <= data_out(10 downto 0);
+      data_in <= a_0_31;
+      a_1_106 <= data_out(9 downto 0);
       UnsharedOperator: UnsharedOperatorBase -- 
         generic map ( -- 
-          operator_id => "ApConcat",
+          operator_id => "ApIntLSHR",
           input1_is_int => true, 
           input1_characteristic_width => 0, 
           input1_mantissa_width    => 0, 
@@ -1409,196 +1751,32 @@ begin --
           output_is_int => true,
           output_characteristic_width  => 0, 
           output_mantissa_width => 0, 
-          owidth => 11,
-          constant_operand => "0",
+          owidth => 10,
+          constant_operand => "0001",
           use_constant  => true,
           zero_delay => false, 
-          flow_through => true--
+          flow_through => false--
         ) 
         port map ( -- 
-          reqL => binary_35_inst_req_0,
-          ackL => binary_35_inst_ack_0,
-          reqR => binary_35_inst_req_1,
-          ackR => binary_35_inst_ack_1,
+          reqL => binary_105_inst_req_0,
+          ackL => binary_105_inst_ack_0,
+          reqR => binary_105_inst_req_1,
+          ackR => binary_105_inst_ack_1,
           dataL => data_in, 
           dataR => data_out,
           clk => clk,
           reset => reset); -- 
       -- 
     end Block; -- split operator group 1
-    -- shared split operator group (2) : binary_37_inst 
+    -- shared split operator group (2) : binary_111_inst 
     SplitOperatorGroup2: Block -- 
       signal data_in: std_logic_vector(10 downto 0);
-      signal data_out: std_logic_vector(10 downto 0);
-      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
-      -- 
-    begin -- 
-      data_in <= binary_35_wire;
-      nu_if_38 <= data_out(10 downto 0);
-      UnsharedOperator: UnsharedOperatorBase -- 
-        generic map ( -- 
-          operator_id => "ApIntLSHR",
-          input1_is_int => true, 
-          input1_characteristic_width => 0, 
-          input1_mantissa_width    => 0, 
-          iwidth_1  => 11,
-          input2_is_int => true, 
-          input2_characteristic_width => 0, 
-          input2_mantissa_width => 0, 
-          iwidth_2      => 0, 
-          num_inputs    => 1,
-          output_is_int => true,
-          output_characteristic_width  => 0, 
-          output_mantissa_width => 0, 
-          owidth => 11,
-          constant_operand => "0001",
-          use_constant  => true,
-          zero_delay => false, 
-          flow_through => false--
-        ) 
-        port map ( -- 
-          reqL => binary_37_inst_req_0,
-          ackL => binary_37_inst_ack_0,
-          reqR => binary_37_inst_req_1,
-          ackR => binary_37_inst_ack_1,
-          dataL => data_in, 
-          dataR => data_out,
-          clk => clk,
-          reset => reset); -- 
-      -- 
-    end Block; -- split operator group 2
-    -- shared split operator group (3) : binary_42_inst 
-    SplitOperatorGroup3: Block -- 
-      signal data_in: std_logic_vector(9 downto 0);
-      signal data_out: std_logic_vector(10 downto 0);
-      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
-      -- 
-    begin -- 
-      data_in <= u_in_16;
-      binary_42_wire <= data_out(10 downto 0);
-      UnsharedOperator: UnsharedOperatorBase -- 
-        generic map ( -- 
-          operator_id => "ApConcat",
-          input1_is_int => true, 
-          input1_characteristic_width => 0, 
-          input1_mantissa_width    => 0, 
-          iwidth_1  => 10,
-          input2_is_int => true, 
-          input2_characteristic_width => 0, 
-          input2_mantissa_width => 0, 
-          iwidth_2      => 0, 
-          num_inputs    => 1,
-          output_is_int => true,
-          output_characteristic_width  => 0, 
-          output_mantissa_width => 0, 
-          owidth => 11,
-          constant_operand => "0",
-          use_constant  => true,
-          zero_delay => false, 
-          flow_through => true--
-        ) 
-        port map ( -- 
-          reqL => binary_42_inst_req_0,
-          ackL => binary_42_inst_ack_0,
-          reqR => binary_42_inst_req_1,
-          ackR => binary_42_inst_ack_1,
-          dataL => data_in, 
-          dataR => data_out,
-          clk => clk,
-          reset => reset); -- 
-      -- 
-    end Block; -- split operator group 3
-    -- shared split operator group (4) : binary_44_inst 
-    SplitOperatorGroup4: Block -- 
-      signal data_in: std_logic_vector(10 downto 0);
-      signal data_out: std_logic_vector(10 downto 0);
-      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
-      -- 
-    begin -- 
-      data_in <= binary_42_wire;
-      nu_else_45 <= data_out(10 downto 0);
-      UnsharedOperator: UnsharedOperatorBase -- 
-        generic map ( -- 
-          operator_id => "ApIntLSHR",
-          input1_is_int => true, 
-          input1_characteristic_width => 0, 
-          input1_mantissa_width    => 0, 
-          iwidth_1  => 11,
-          input2_is_int => true, 
-          input2_characteristic_width => 0, 
-          input2_mantissa_width => 0, 
-          iwidth_2      => 0, 
-          num_inputs    => 1,
-          output_is_int => true,
-          output_characteristic_width  => 0, 
-          output_mantissa_width => 0, 
-          owidth => 11,
-          constant_operand => "0001",
-          use_constant  => true,
-          zero_delay => false, 
-          flow_through => false--
-        ) 
-        port map ( -- 
-          reqL => binary_44_inst_req_0,
-          ackL => binary_44_inst_ack_0,
-          reqR => binary_44_inst_req_1,
-          ackR => binary_44_inst_ack_1,
-          dataL => data_in, 
-          dataR => data_out,
-          clk => clk,
-          reset => reset); -- 
-      -- 
-    end Block; -- split operator group 4
-    -- shared split operator group (5) : binary_50_inst 
-    SplitOperatorGroup5: Block -- 
-      signal data_in: std_logic_vector(13 downto 0);
       signal data_out: std_logic_vector(0 downto 0);
       signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
       -- 
     begin -- 
-      data_in <= a & count_in_24;
-      binary_50_wire <= data_out(0 downto 0);
-      UnsharedOperator: UnsharedOperatorBase -- 
-        generic map ( -- 
-          operator_id => "ApBitsel",
-          input1_is_int => true, 
-          input1_characteristic_width => 0, 
-          input1_mantissa_width    => 0, 
-          iwidth_1  => 10,
-          input2_is_int => true, 
-          input2_characteristic_width => 0, 
-          input2_mantissa_width => 0, 
-          iwidth_2      => 4, 
-          num_inputs    => 2,
-          output_is_int => true,
-          output_characteristic_width  => 0, 
-          output_mantissa_width => 0, 
-          owidth => 1,
-          constant_operand => "0",
-          use_constant  => false,
-          zero_delay => false, 
-          flow_through => true--
-        ) 
-        port map ( -- 
-          reqL => binary_50_inst_req_0,
-          ackL => binary_50_inst_ack_0,
-          reqR => binary_50_inst_req_1,
-          ackR => binary_50_inst_ack_1,
-          dataL => data_in, 
-          dataR => data_out,
-          clk => clk,
-          reset => reset); -- 
-      -- 
-    end Block; -- split operator group 5
-    -- shared split operator group (6) : binary_64_inst 
-    SplitOperatorGroup6: Block -- 
-      signal data_in: std_logic_vector(10 downto 0);
-      signal data_out: std_logic_vector(0 downto 0);
-      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
-      -- 
-    begin -- 
-      data_in <= nu_56;
-      binary_64_wire <= data_out(0 downto 0);
+      data_in <= ctr_101;
+      binary_111_wire <= data_out(0 downto 0);
       UnsharedOperator: UnsharedOperatorBase -- 
         generic map ( -- 
           operator_id => "ApBitsel",
@@ -1621,229 +1799,24 @@ begin --
           flow_through => true--
         ) 
         port map ( -- 
-          reqL => binary_64_inst_req_0,
-          ackL => binary_64_inst_ack_0,
-          reqR => binary_64_inst_req_1,
-          ackR => binary_64_inst_ack_1,
+          reqL => binary_111_inst_req_0,
+          ackL => binary_111_inst_ack_0,
+          reqR => binary_111_inst_req_1,
+          ackR => binary_111_inst_ack_1,
           dataL => data_in, 
           dataR => data_out,
           clk => clk,
           reset => reset); -- 
       -- 
-    end Block; -- split operator group 6
-    -- shared split operator group (7) : binary_66_inst 
-    SplitOperatorGroup7: Block -- 
-      signal data_in: std_logic_vector(10 downto 0);
-      signal data_out: std_logic_vector(10 downto 0);
-      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
-      -- 
-    begin -- 
-      data_in <= binary_64_wire & v_in_20;
-      binary_66_wire <= data_out(10 downto 0);
-      UnsharedOperator: UnsharedOperatorBase -- 
-        generic map ( -- 
-          operator_id => "ApConcat",
-          input1_is_int => true, 
-          input1_characteristic_width => 0, 
-          input1_mantissa_width    => 0, 
-          iwidth_1  => 1,
-          input2_is_int => true, 
-          input2_characteristic_width => 0, 
-          input2_mantissa_width => 0, 
-          iwidth_2      => 10, 
-          num_inputs    => 2,
-          output_is_int => true,
-          output_characteristic_width  => 0, 
-          output_mantissa_width => 0, 
-          owidth => 11,
-          constant_operand => "0",
-          use_constant  => false,
-          zero_delay => false, 
-          flow_through => true--
-        ) 
-        port map ( -- 
-          reqL => binary_66_inst_req_0,
-          ackL => binary_66_inst_ack_0,
-          reqR => binary_66_inst_req_1,
-          ackR => binary_66_inst_ack_1,
-          dataL => data_in, 
-          dataR => data_out,
-          clk => clk,
-          reset => reset); -- 
-      -- 
-    end Block; -- split operator group 7
-    -- shared split operator group (8) : binary_68_inst 
-    SplitOperatorGroup8: Block -- 
-      signal data_in: std_logic_vector(10 downto 0);
-      signal data_out: std_logic_vector(10 downto 0);
-      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
-      -- 
-    begin -- 
-      data_in <= binary_66_wire;
-      nv_69 <= data_out(10 downto 0);
-      UnsharedOperator: UnsharedOperatorBase -- 
-        generic map ( -- 
-          operator_id => "ApIntLSHR",
-          input1_is_int => true, 
-          input1_characteristic_width => 0, 
-          input1_mantissa_width    => 0, 
-          iwidth_1  => 11,
-          input2_is_int => true, 
-          input2_characteristic_width => 0, 
-          input2_mantissa_width => 0, 
-          iwidth_2      => 0, 
-          num_inputs    => 1,
-          output_is_int => true,
-          output_characteristic_width  => 0, 
-          output_mantissa_width => 0, 
-          owidth => 11,
-          constant_operand => "0001",
-          use_constant  => true,
-          zero_delay => false, 
-          flow_through => false--
-        ) 
-        port map ( -- 
-          reqL => binary_68_inst_req_0,
-          ackL => binary_68_inst_ack_0,
-          reqR => binary_68_inst_req_1,
-          ackR => binary_68_inst_ack_1,
-          dataL => data_in, 
-          dataR => data_out,
-          clk => clk,
-          reset => reset); -- 
-      -- 
-    end Block; -- split operator group 8
-    -- shared split operator group (9) : binary_74_inst 
-    SplitOperatorGroup9: Block -- 
-      signal data_in: std_logic_vector(10 downto 0);
-      signal data_out: std_logic_vector(10 downto 0);
-      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
-      -- 
-    begin -- 
-      data_in <= nu_56;
-      binary_74_wire <= data_out(10 downto 0);
-      UnsharedOperator: UnsharedOperatorBase -- 
-        generic map ( -- 
-          operator_id => "ApIntLSHR",
-          input1_is_int => true, 
-          input1_characteristic_width => 0, 
-          input1_mantissa_width    => 0, 
-          iwidth_1  => 11,
-          input2_is_int => true, 
-          input2_characteristic_width => 0, 
-          input2_mantissa_width => 0, 
-          iwidth_2      => 0, 
-          num_inputs    => 1,
-          output_is_int => true,
-          output_characteristic_width  => 0, 
-          output_mantissa_width => 0, 
-          owidth => 11,
-          constant_operand => "0001",
-          use_constant  => true,
-          zero_delay => false, 
-          flow_through => true--
-        ) 
-        port map ( -- 
-          reqL => binary_74_inst_req_0,
-          ackL => binary_74_inst_ack_0,
-          reqR => binary_74_inst_req_1,
-          ackR => binary_74_inst_ack_1,
-          dataL => data_in, 
-          dataR => data_out,
-          clk => clk,
-          reset => reset); -- 
-      -- 
-    end Block; -- split operator group 9
-    -- shared split operator group (10) : binary_84_inst 
-    SplitOperatorGroup10: Block -- 
-      signal data_in: std_logic_vector(3 downto 0);
-      signal data_out: std_logic_vector(3 downto 0);
-      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
-      -- 
-    begin -- 
-      data_in <= count_in_24;
-      count_85 <= data_out(3 downto 0);
-      UnsharedOperator: UnsharedOperatorBase -- 
-        generic map ( -- 
-          operator_id => "ApIntAdd",
-          input1_is_int => true, 
-          input1_characteristic_width => 0, 
-          input1_mantissa_width    => 0, 
-          iwidth_1  => 4,
-          input2_is_int => true, 
-          input2_characteristic_width => 0, 
-          input2_mantissa_width => 0, 
-          iwidth_2      => 0, 
-          num_inputs    => 1,
-          output_is_int => true,
-          output_characteristic_width  => 0, 
-          output_mantissa_width => 0, 
-          owidth => 4,
-          constant_operand => "0001",
-          use_constant  => true,
-          zero_delay => false, 
-          flow_through => false--
-        ) 
-        port map ( -- 
-          reqL => binary_84_inst_req_0,
-          ackL => binary_84_inst_ack_0,
-          reqR => binary_84_inst_req_1,
-          ackR => binary_84_inst_ack_1,
-          dataL => data_in, 
-          dataR => data_out,
-          clk => clk,
-          reset => reset); -- 
-      -- 
-    end Block; -- split operator group 10
-    -- shared split operator group (11) : binary_90_inst 
-    SplitOperatorGroup11: Block -- 
-      signal data_in: std_logic_vector(3 downto 0);
-      signal data_out: std_logic_vector(0 downto 0);
-      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
-      -- 
-    begin -- 
-      data_in <= count_85;
-      binary_90_wire <= data_out(0 downto 0);
-      UnsharedOperator: UnsharedOperatorBase -- 
-        generic map ( -- 
-          operator_id => "ApIntEq",
-          input1_is_int => true, 
-          input1_characteristic_width => 0, 
-          input1_mantissa_width    => 0, 
-          iwidth_1  => 4,
-          input2_is_int => true, 
-          input2_characteristic_width => 0, 
-          input2_mantissa_width => 0, 
-          iwidth_2      => 0, 
-          num_inputs    => 1,
-          output_is_int => true,
-          output_characteristic_width  => 0, 
-          output_mantissa_width => 0, 
-          owidth => 1,
-          constant_operand => "1010",
-          use_constant  => true,
-          zero_delay => false, 
-          flow_through => false--
-        ) 
-        port map ( -- 
-          reqL => binary_90_inst_req_0,
-          ackL => binary_90_inst_ack_0,
-          reqR => binary_90_inst_req_1,
-          ackR => binary_90_inst_ack_1,
-          dataL => data_in, 
-          dataR => data_out,
-          clk => clk,
-          reset => reset); -- 
-      -- 
-    end Block; -- split operator group 11
-    -- shared split operator group (12) : binary_99_inst 
-    SplitOperatorGroup12: Block -- 
+    end Block; -- split operator group 2
+    -- shared split operator group (3) : binary_120_inst 
+    SplitOperatorGroup3: Block -- 
       signal data_in: std_logic_vector(19 downto 0);
       signal data_out: std_logic_vector(19 downto 0);
       signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
       -- 
     begin -- 
-      data_in <= u_76 & v_80;
+      data_in <= u_95 & v_69;
       aXb <= data_out(19 downto 0);
       UnsharedOperator: UnsharedOperatorBase -- 
         generic map ( -- 
@@ -1867,16 +1840,672 @@ begin --
           flow_through => false--
         ) 
         port map ( -- 
-          reqL => binary_99_inst_req_0,
-          ackL => binary_99_inst_ack_0,
-          reqR => binary_99_inst_req_1,
-          ackR => binary_99_inst_ack_1,
+          reqL => binary_120_inst_req_0,
+          ackL => binary_120_inst_ack_0,
+          reqR => binary_120_inst_req_1,
+          ackR => binary_120_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 3
+    -- shared split operator group (4) : binary_45_inst 
+    SplitOperatorGroup4: Block -- 
+      signal data_in: std_logic_vector(9 downto 0);
+      signal data_out: std_logic_vector(0 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= a_0_31;
+      binary_45_wire <= data_out(0 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApBitsel",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 10,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 0, 
+          num_inputs    => 1,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 1,
+          constant_operand => "0000",
+          use_constant  => true,
+          zero_delay => false, 
+          flow_through => true--
+        ) 
+        port map ( -- 
+          reqL => binary_45_inst_req_0,
+          ackL => binary_45_inst_ack_0,
+          reqR => binary_45_inst_req_1,
+          ackR => binary_45_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 4
+    -- shared split operator group (5) : binary_48_inst 
+    SplitOperatorGroup5: Block -- 
+      signal data_in: std_logic_vector(19 downto 0);
+      signal data_out: std_logic_vector(9 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= u_in_23 & b;
+      binary_48_wire <= data_out(9 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApIntAdd",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 10,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 10, 
+          num_inputs    => 2,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 10,
+          constant_operand => "0",
+          use_constant  => false,
+          zero_delay => false, 
+          flow_through => false--
+        ) 
+        port map ( -- 
+          reqL => binary_48_inst_req_0,
+          ackL => binary_48_inst_ack_0,
+          reqR => binary_48_inst_req_1,
+          ackR => binary_48_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 5
+    -- shared split operator group (6) : binary_50_inst 
+    SplitOperatorGroup6: Block -- 
+      signal data_in: std_logic_vector(9 downto 0);
+      signal data_out: std_logic_vector(10 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= binary_48_wire;
+      binary_50_wire <= data_out(10 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApConcat",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 10,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 0, 
+          num_inputs    => 1,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 11,
+          constant_operand => "0",
+          use_constant  => true,
+          zero_delay => false, 
+          flow_through => true--
+        ) 
+        port map ( -- 
+          reqL => binary_50_inst_req_0,
+          ackL => binary_50_inst_ack_0,
+          reqR => binary_50_inst_req_1,
+          ackR => binary_50_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 6
+    -- shared split operator group (7) : binary_52_inst 
+    SplitOperatorGroup7: Block -- 
+      signal data_in: std_logic_vector(10 downto 0);
+      signal data_out: std_logic_vector(10 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= binary_50_wire;
+      binary_52_wire <= data_out(10 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApIntLSHR",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 11,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 0, 
+          num_inputs    => 1,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 11,
+          constant_operand => "0001",
+          use_constant  => true,
+          zero_delay => false, 
+          flow_through => true--
+        ) 
+        port map ( -- 
+          reqL => binary_52_inst_req_0,
+          ackL => binary_52_inst_ack_0,
+          reqR => binary_52_inst_req_1,
+          ackR => binary_52_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 7
+    -- shared split operator group (8) : binary_55_inst 
+    SplitOperatorGroup8: Block -- 
+      signal data_in: std_logic_vector(9 downto 0);
+      signal data_out: std_logic_vector(10 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= u_in_23;
+      binary_55_wire <= data_out(10 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApConcat",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 10,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 0, 
+          num_inputs    => 1,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 11,
+          constant_operand => "0",
+          use_constant  => true,
+          zero_delay => false, 
+          flow_through => true--
+        ) 
+        port map ( -- 
+          reqL => binary_55_inst_req_0,
+          ackL => binary_55_inst_ack_0,
+          reqR => binary_55_inst_req_1,
+          ackR => binary_55_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 8
+    -- shared split operator group (9) : binary_57_inst 
+    SplitOperatorGroup9: Block -- 
+      signal data_in: std_logic_vector(10 downto 0);
+      signal data_out: std_logic_vector(10 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= binary_55_wire;
+      binary_57_wire <= data_out(10 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApIntLSHR",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 11,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 0, 
+          num_inputs    => 1,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 11,
+          constant_operand => "0001",
+          use_constant  => true,
+          zero_delay => false, 
+          flow_through => true--
+        ) 
+        port map ( -- 
+          reqL => binary_57_inst_req_0,
+          ackL => binary_57_inst_ack_0,
+          reqR => binary_57_inst_req_1,
+          ackR => binary_57_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 9
+    -- shared split operator group (10) : binary_60_inst 
+    SplitOperatorGroup10: Block -- 
+      signal data_in: std_logic_vector(10 downto 0);
+      signal data_out: std_logic_vector(0 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= ternary_58_wire;
+      binary_60_wire <= data_out(0 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApBitsel",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 11,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 0, 
+          num_inputs    => 1,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 1,
+          constant_operand => "0000",
+          use_constant  => true,
+          zero_delay => false, 
+          flow_through => true--
+        ) 
+        port map ( -- 
+          reqL => binary_60_inst_req_0,
+          ackL => binary_60_inst_ack_0,
+          reqR => binary_60_inst_req_1,
+          ackR => binary_60_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 10
+    -- shared split operator group (11) : binary_62_inst 
+    SplitOperatorGroup11: Block -- 
+      signal data_in: std_logic_vector(10 downto 0);
+      signal data_out: std_logic_vector(10 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= binary_60_wire & v_in_27;
+      binary_62_wire <= data_out(10 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApConcat",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 1,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 10, 
+          num_inputs    => 2,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 11,
+          constant_operand => "0",
+          use_constant  => false,
+          zero_delay => false, 
+          flow_through => true--
+        ) 
+        port map ( -- 
+          reqL => binary_62_inst_req_0,
+          ackL => binary_62_inst_ack_0,
+          reqR => binary_62_inst_req_1,
+          ackR => binary_62_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 11
+    -- shared split operator group (12) : binary_64_inst 
+    SplitOperatorGroup12: Block -- 
+      signal data_in: std_logic_vector(10 downto 0);
+      signal data_out: std_logic_vector(10 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= binary_62_wire;
+      nv_65 <= data_out(10 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApIntLSHR",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 11,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 0, 
+          num_inputs    => 1,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 11,
+          constant_operand => "0001",
+          use_constant  => true,
+          zero_delay => false, 
+          flow_through => false--
+        ) 
+        port map ( -- 
+          reqL => binary_64_inst_req_0,
+          ackL => binary_64_inst_ack_0,
+          reqR => binary_64_inst_req_1,
+          ackR => binary_64_inst_ack_1,
           dataL => data_in, 
           dataR => data_out,
           clk => clk,
           reset => reset); -- 
       -- 
     end Block; -- split operator group 12
+    -- shared split operator group (13) : binary_75_inst 
+    SplitOperatorGroup13: Block -- 
+      signal data_in: std_logic_vector(9 downto 0);
+      signal data_out: std_logic_vector(0 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= a_0_31;
+      binary_75_wire <= data_out(0 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApBitsel",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 10,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 0, 
+          num_inputs    => 1,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 1,
+          constant_operand => "0000",
+          use_constant  => true,
+          zero_delay => false, 
+          flow_through => true--
+        ) 
+        port map ( -- 
+          reqL => binary_75_inst_req_0,
+          ackL => binary_75_inst_ack_0,
+          reqR => binary_75_inst_req_1,
+          ackR => binary_75_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 13
+    -- shared split operator group (14) : binary_78_inst 
+    SplitOperatorGroup14: Block -- 
+      signal data_in: std_logic_vector(19 downto 0);
+      signal data_out: std_logic_vector(9 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= u_in_23 & b;
+      binary_78_wire <= data_out(9 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApIntAdd",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 10,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 10, 
+          num_inputs    => 2,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 10,
+          constant_operand => "0",
+          use_constant  => false,
+          zero_delay => false, 
+          flow_through => false--
+        ) 
+        port map ( -- 
+          reqL => binary_78_inst_req_0,
+          ackL => binary_78_inst_ack_0,
+          reqR => binary_78_inst_req_1,
+          ackR => binary_78_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 14
+    -- shared split operator group (15) : binary_80_inst 
+    SplitOperatorGroup15: Block -- 
+      signal data_in: std_logic_vector(9 downto 0);
+      signal data_out: std_logic_vector(10 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= binary_78_wire;
+      binary_80_wire <= data_out(10 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApConcat",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 10,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 0, 
+          num_inputs    => 1,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 11,
+          constant_operand => "0",
+          use_constant  => true,
+          zero_delay => false, 
+          flow_through => true--
+        ) 
+        port map ( -- 
+          reqL => binary_80_inst_req_0,
+          ackL => binary_80_inst_ack_0,
+          reqR => binary_80_inst_req_1,
+          ackR => binary_80_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 15
+    -- shared split operator group (16) : binary_82_inst 
+    SplitOperatorGroup16: Block -- 
+      signal data_in: std_logic_vector(10 downto 0);
+      signal data_out: std_logic_vector(10 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= binary_80_wire;
+      binary_82_wire <= data_out(10 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApIntLSHR",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 11,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 0, 
+          num_inputs    => 1,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 11,
+          constant_operand => "0001",
+          use_constant  => true,
+          zero_delay => false, 
+          flow_through => true--
+        ) 
+        port map ( -- 
+          reqL => binary_82_inst_req_0,
+          ackL => binary_82_inst_ack_0,
+          reqR => binary_82_inst_req_1,
+          ackR => binary_82_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 16
+    -- shared split operator group (17) : binary_85_inst 
+    SplitOperatorGroup17: Block -- 
+      signal data_in: std_logic_vector(9 downto 0);
+      signal data_out: std_logic_vector(10 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= u_in_23;
+      binary_85_wire <= data_out(10 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApConcat",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 10,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 0, 
+          num_inputs    => 1,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 11,
+          constant_operand => "0",
+          use_constant  => true,
+          zero_delay => false, 
+          flow_through => true--
+        ) 
+        port map ( -- 
+          reqL => binary_85_inst_req_0,
+          ackL => binary_85_inst_ack_0,
+          reqR => binary_85_inst_req_1,
+          ackR => binary_85_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 17
+    -- shared split operator group (18) : binary_87_inst 
+    SplitOperatorGroup18: Block -- 
+      signal data_in: std_logic_vector(10 downto 0);
+      signal data_out: std_logic_vector(10 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= binary_85_wire;
+      binary_87_wire <= data_out(10 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApIntLSHR",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 11,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 0, 
+          num_inputs    => 1,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 11,
+          constant_operand => "0001",
+          use_constant  => true,
+          zero_delay => false, 
+          flow_through => true--
+        ) 
+        port map ( -- 
+          reqL => binary_87_inst_req_0,
+          ackL => binary_87_inst_ack_0,
+          reqR => binary_87_inst_req_1,
+          ackR => binary_87_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 18
+    -- shared split operator group (19) : binary_93_inst 
+    SplitOperatorGroup19: Block -- 
+      signal data_in: std_logic_vector(10 downto 0);
+      signal data_out: std_logic_vector(10 downto 0);
+      signal reqR, ackR, reqL, ackL : BooleanArray( 0 downto 0);
+      -- 
+    begin -- 
+      data_in <= nu_89;
+      binary_93_wire <= data_out(10 downto 0);
+      UnsharedOperator: UnsharedOperatorBase -- 
+        generic map ( -- 
+          operator_id => "ApIntLSHR",
+          input1_is_int => true, 
+          input1_characteristic_width => 0, 
+          input1_mantissa_width    => 0, 
+          iwidth_1  => 11,
+          input2_is_int => true, 
+          input2_characteristic_width => 0, 
+          input2_mantissa_width => 0, 
+          iwidth_2      => 0, 
+          num_inputs    => 1,
+          output_is_int => true,
+          output_characteristic_width  => 0, 
+          output_mantissa_width => 0, 
+          owidth => 11,
+          constant_operand => "0001",
+          use_constant  => true,
+          zero_delay => false, 
+          flow_through => true--
+        ) 
+        port map ( -- 
+          reqL => binary_93_inst_req_0,
+          ackL => binary_93_inst_ack_0,
+          reqR => binary_93_inst_req_1,
+          ackR => binary_93_inst_ack_1,
+          dataL => data_in, 
+          dataR => data_out,
+          clk => clk,
+          reset => reset); -- 
+      -- 
+    end Block; -- split operator group 19
     -- 
   end Block; -- data_path
   -- 
@@ -1977,6 +2606,7 @@ architecture Default of test_system_Test_Bench is --
   signal sum_mod_fin   : std_logic := '0';
   -- 
 begin --
+
   clk <= not clk after 5 ns;
   sum_mod_a <= (1 => '1', 0 => '1', others => '0');
   sum_mod_b <= (1 => '1', 0 => '1', others => '0');

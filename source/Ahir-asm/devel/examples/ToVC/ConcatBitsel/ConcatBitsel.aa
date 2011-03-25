@@ -6,36 +6,32 @@ $is
 {
         $constant z9 : $uint<9> := 0
 	$constant z1 : $uint<1> := 0
+        $constant count: $uint<11> := _b10000000000 
 	$branchblock[mainloop]
 	{
 		$merge $entry loopback
-			$phi u_in := 0 $on $entry %ds:u $on loopback
-			$phi v_in := 0 $on $entry %ds:v $on loopback
-			$phi count_in := 0 $on $entry %ds:count $on loopback
+			$phi u_in := 0 $on $entry %nxt%ub:u $on loopback
+			$phi v_in := 0 $on $entry %nxt%vb:v $on loopback
+			$phi a_0  := a $on $entry %nxt:a_1 $on loopback
+			$phi ctr  := count $on $entry %nxt:ctr $on loopback
 		$endmerge
-		$parallelblock[next] {
-			nu_if := (((u_in + b) && z1) >> 1)
-			nu_else := ((u_in && z1) >> 1)
-		}
-		$if (a [] count_in) $then
-			$place [if1]
-		$else
-			$place [if0]
-		$endif   
-		$merge $entry if1 if0 
-			$phi nu := %next:nu_if $on if1 %next:nu_else $on if0
-		$endmerge 
-		// bit 0 of nu contains the shift-in bit for the lower
-		// half.
-		nv := (((nu [] 0) && v_in) >> 1)
-		$parallelblock[ds] 
+		
+		$parallelblock[nxt]
 		{
-			u := ($cast ($uint<10>) (nu >> 1))
+		   $seriesblock[vb] {
+			nv := (( (($mux (a_0 [] 0) (((u_in + b) && z1) >> 1) ((u_in && z1) >> 1)) [] 0) && v_in) >> 1)
 			v := ($cast ($uint<10>) nv)
-			count := (count_in + 1)
+		   }
+		   $seriesblock[ub] {
+			nu := ($mux (a_0 [] 0) (((u_in + b) && z1) >> 1) ((u_in && z1) >> 1))
+			u := ($cast ($uint<10>) (nu >> 1))
+		   }
+		   ctr := (../:ctr >> 1)
+		   a_1 := (a_0 >> 1)
 		}
-		$if (%ds:count == 10) $then $null $else $place [loopback] $endif
-	}
-	aXb := (%mainloop%ds:u && %mainloop%ds:v)	
 
+
+		$if (%nxt:ctr [] 0) $then $null $else $place [loopback] $endif
+	}
+	aXb := (%mainloop%nxt%ub:u && %mainloop%nxt%vb:v)	
 }

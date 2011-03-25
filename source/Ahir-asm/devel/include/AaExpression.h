@@ -391,6 +391,7 @@ class AaArrayObjectReference: public AaObjectReference
 
   // indices will in general be expressions
   vector<AaExpression*> _indices;
+  AaSimpleObjectReference* _pointer_ref;
 
  public:
 
@@ -415,6 +416,8 @@ class AaArrayObjectReference: public AaObjectReference
   virtual void Print(ostream& ofile); 
   AaExpression* Get_Array_Index(unsigned int idx);
   virtual void Set_Object(AaRoot* obj); 
+
+
 
   virtual string Kind() {return("AaArrayObjectReference");}
   virtual void Map_Source_References(set<AaRoot*>& source_objects); // important
@@ -446,7 +449,7 @@ class AaArrayObjectReference: public AaObjectReference
   virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string);
   virtual void Update_Type();
   virtual int Get_Base_Address();
-
+  virtual string Get_VC_Base_Address_Name();
 };
 
 
@@ -465,7 +468,7 @@ class AaPointerDereferenceExpression: public AaObjectReference
   virtual void Print(ostream& ofile);
   virtual void PrintC(ofstream& ofile, string tab_string);
 
-  virtual void Evaluate() {} // do nothing.
+  virtual void Evaluate() {this->_reference_to_object->Evaluate();}
   virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
 
   virtual void Map_Source_References(set<AaRoot*>& source_objects); // important
@@ -484,8 +487,11 @@ class AaPointerDereferenceExpression: public AaObjectReference
 
   virtual string Get_VC_Name() {return("ptr_deref_" + Int64ToStr(this->Get_Index()));}
   virtual string Get_VC_Memory_Space_Name();
+  virtual int Get_Base_Address();
   virtual int Get_Word_Size();
   virtual int Get_Address_Width();
+  virtual AaType* Get_Base_Address_Type();
+  virtual string Get_VC_Base_Address_Name();
 };
 
 

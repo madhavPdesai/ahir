@@ -982,14 +982,14 @@ vc_ArrayType[vcSystem* sys] returns [vcType* t]
 ;
 
 //----------------------------------------------------------------------------------------------------------
-// vc_Record_Type: Record (LPAREN (vc_Type) (COMMA vc_Type)*  RPAREN)
+// vc_Record_Type: Record (LT_OP (vc_Type) GT_OP)+
 //----------------------------------------------------------------------------------------------------------
 vc_RecordType[vcSystem* sys] returns [vcType* t]
 {
 	vcRecordType* rt;
 	vcType* et;
 	vector<vcType*> etypes;
-}: RECORD LBRACKET (et = vc_Type[sys] {etypes.push_back(et);}) (COMMA t = vc_Type[sys] {etypes.push_back(et);})* RBRACKET
+}: RECORD (LT_OP (et = vc_Type[sys] {etypes.push_back(et);}) GT_OP)+
 { rt = Make_Record_Type(etypes); t = (vcType*) rt; etypes.clear();}
 ;
 

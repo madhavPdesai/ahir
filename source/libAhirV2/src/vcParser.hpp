@@ -273,6 +273,8 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_24;
 	static const unsigned long _tokenSet_25_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_25;
+	static const unsigned long _tokenSet_26_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_26;
 };
 
 #endif /*INC_vcParser_hpp_*/

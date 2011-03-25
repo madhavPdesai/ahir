@@ -489,8 +489,7 @@ AaNullStatement::AaNullStatement(AaScope* parent_tpr):AaStatement(parent_tpr) {}
 AaNullStatement::~AaNullStatement() {};
 void AaNullStatement::Write_VC_Control_Path(ostream& ofile)
 {
-  ofile << "// control-path for: ";
-  this->Print(ofile);
+  ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
     
@@ -530,11 +529,12 @@ void AaAssignmentStatement::Print(ostream& ofile)
   this->Get_Target()->Print(ofile);
   ofile << " := ";
   this->Get_Source()->Print(ofile);
+
   if(this->Get_Target()->Get_Type())
     {
-      ofile <<" // target type -> ";
+      ofile << " // target:  ";
       this->Get_Target()->Get_Type()->Print(ofile);
-      ofile << ", memory spaces: source -> " 
+      ofile << ", mem spaces: source -> " 
 	    << 	(this->_source->Get_Addressed_Object_Representative() ?
 		 IntToStr(this->_source->
 			  Get_Addressed_Object_Representative()
@@ -619,8 +619,7 @@ void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
     }
 
 
-  ofile << "// control-path for: ";
-  this->Print(ofile);
+  ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
 
@@ -656,8 +655,7 @@ void AaAssignmentStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
   if(this->Is_Constant())
     {
-      ofile << "// constant declarations for: ";
-      this->Print(ofile);
+      ofile << "// " << this->To_String() << endl;
       ofile << "// " << this->Get_Source_Info() << endl;
 
       // declare the target as a constant...
@@ -667,14 +665,16 @@ void AaAssignmentStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 				    ofile);
     }
   else
-    this->_source->Write_VC_Constant_Wire_Declarations(ofile);
+    {
+      this->_source->Write_VC_Constant_Wire_Declarations(ofile);
+      this->_target->Write_VC_Constant_Wire_Declarations(ofile);
+    }
 }
 void AaAssignmentStatement::Write_VC_Wire_Declarations(ostream& ofile)
 {
   if(!this->Is_Constant())
     {
-      ofile << "// wire-declarations for: ";
-      this->Print(ofile);
+      ofile << "// " << this->To_String() << endl;
       ofile << "// " << this->Get_Source_Info() << endl;
 
 
@@ -698,8 +698,7 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
   if(!this->Is_Constant())
     {
 
-      ofile << "// data-path instances for: ";
-      this->Print(ofile);
+      ofile << "// " << this->To_String() << endl;
       ofile << "// " << this->Get_Source_Info() << endl;
 
       if(this->_target->Is_Implicit_Variable_Reference())
@@ -738,8 +737,7 @@ void AaAssignmentStatement::Write_VC_Links(string hier_id,ostream& ofile)
   if(!this->Is_Constant())
     {
 
-      ofile << "// CP-DP links for: ";
-      this->Print(ofile);
+      ofile << "// " << this->To_String() << endl;
       ofile << "// " << this->Get_Source_Info() << endl;
 
 
@@ -1182,10 +1180,8 @@ void AaCallStatement::Write_Outarg_Copy_Code(ofstream& ofile,string tab_string)
 void AaCallStatement::Write_VC_Control_Path(ostream& ofile)
 {
 
-  ofile << "// control path for: ";
-  this->Print(ofile);
+  ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
-
 
   ofile << ";;[" << this->Get_VC_Name() << "] { // call statement " << this->Get_Source_Info() << endl;
   ofile << "||[" << this->Get_VC_Name() << "_in_args_] { // input arguments" << endl;
@@ -1220,8 +1216,7 @@ void AaCallStatement::Write_VC_Wire_Declarations(ostream& ofile)
 void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 {
 
-  ofile << "// datapath instances for: ";
-  this->Print(ofile);
+  ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
  
@@ -1251,9 +1246,10 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 void AaCallStatement::Write_VC_Links(string hier_id, ostream& ofile)
 {
 
-  ofile << "// CP-DP links for: ";
-  this->Print(ofile);
+  ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
+
+
 
   vector<string> reqs, acks;
 
@@ -1493,7 +1489,7 @@ void AaBlockStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 
 void AaBlockStatement::Write_VC_Wire_Declarations(ostream& ofile)
 {
-  ofile << "// wire-declarations for block " << this->Get_Hierarchical_Name() << endl;
+  ofile << "// block " << this->Get_Hierarchical_Name() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
   if(this->_statement_sequence != NULL)
@@ -1636,6 +1632,7 @@ void AaForkBlockStatement::Print(ostream& ofile)
 
 void AaForkBlockStatement::Write_VC_Control_Path(ostream& ofile)
 {
+
   ofile << "// control-path for fork-block " << this->Get_Hierarchical_Name() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
@@ -2126,6 +2123,13 @@ void AaMergeStatement::Write_VC_Control_Path(string source_link, ostream& ofile)
 	  ofile << "||[" << Make_VC_Legal(mplace) << "_PhiReq] {" << endl; 
 	  if(phi_dependency_map[mlabel].size() > 0)
 	    {
+	      
+	      // TODO
+	      // there is a bug here..
+	      // you must compute the phi-statement select expressions
+	      // before requesting the phi-statement.
+	      // careful..
+
 	      for(set<AaPhiStatement*>::iterator siter = phi_dependency_map[mlabel].begin();
 		  siter != phi_dependency_map[mlabel].end();
 		  siter++)
@@ -2191,7 +2195,7 @@ void AaMergeStatement::Write_VC_Wire_Declarations(ostream& ofile)
 {
   if(_statement_sequence != NULL)
     {
-      ofile << "// wire-declarations for merge  " << endl;
+      ofile << "// merge-statement  " << endl;
       ofile << "// " << this->Get_Source_Info() << endl;
 
 
@@ -2392,8 +2396,7 @@ void AaPhiStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 void AaPhiStatement::Write_VC_Wire_Declarations(ostream& ofile)
 {
 
-  ofile << "// wire-declarations for phi:  ";
-  this->Print(ofile);
+  ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
 
@@ -2406,8 +2409,7 @@ void AaPhiStatement::Write_VC_Wire_Declarations(ostream& ofile)
 // Some ordering problem here!
 void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 {
-  ofile << "// datapath-instances for phi:  ";
-  this->Print(ofile);
+  ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
 
@@ -2772,8 +2774,7 @@ void AaSwitchStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 
 void AaSwitchStatement::Write_VC_Wire_Declarations(ostream& ofile)
 {
-  ofile << "// wire-declarations  for switch  ";
-  ofile << endl;
+  ofile << "// switch-statement  " << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
   // wire declarations..
@@ -3085,7 +3086,7 @@ void AaIfStatement::Write_C_Function_Body(ofstream& ofile)
 void AaIfStatement::Write_VC_Control_Path(string sink_element, ostream& ofile)
 {
 
-  ofile << "// control-path  for if  ";
+  ofile << "// if-statement  ";
   ofile << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
@@ -3093,7 +3094,6 @@ void AaIfStatement::Write_VC_Control_Path(string sink_element, ostream& ofile)
   AaScope* pscope = this->Get_Scope();
   assert(pscope->Is("AaBranchBlockStatement"));
 
-  ofile << "//---------------------    if statement " << this->Get_Source_Info() << "  --------------------------" << endl;
   // first the CP for the test expression
   string eval_test_region = this->Get_VC_Name() + "_eval_test";
   string if_link = this->Get_VC_Name() + "_if_link";
@@ -3135,8 +3135,6 @@ void AaIfStatement::Write_VC_Control_Path(string sink_element, ostream& ofile)
 							       sink_element,
 							       ofile);
     }
-
-  ofile << "//---------------------  end of if statement " << this->Get_Source_Info() << "  --------------------------" << endl;
 }
 
 void AaIfStatement::Write_VC_Constant_Declarations(ostream& ofile)
@@ -3150,7 +3148,7 @@ void AaIfStatement::Write_VC_Constant_Declarations(ostream& ofile)
 void AaIfStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
 
-  ofile << "// constant-declarations for if  ";
+  ofile << "// if-statement  ";
   ofile << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
@@ -3166,7 +3164,7 @@ void AaIfStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 }
 void AaIfStatement::Write_VC_Wire_Declarations(ostream& ofile)
 {
-  ofile << "// wire-declarations for if  ";
+  ofile << "// if statement  ";
   ofile << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 

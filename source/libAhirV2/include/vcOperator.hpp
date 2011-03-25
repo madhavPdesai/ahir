@@ -493,7 +493,7 @@ protected:
   vcWire* _z;
 
 public:
-  vcSelect(string id, vcWire* x, vcWire* y, vcWire* sel, vcWire* z);
+  vcSelect(string id, vcWire* sel, vcWire* x, vcWire* y, vcWire* z);
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcSelect");}
   friend class vcDataPath;

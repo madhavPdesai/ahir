@@ -706,10 +706,16 @@ void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
     {
       vcSelect* s = (*iter).second;
       ofile << s->Get_VHDL_Id() << ": SelectBase generic map(data_width => " << s->_z->Get_Size() << ") -- {" << endl;
-      ofile << " port map( x => " << s->_x->Get_VHDL_Id() << ", y => " << s->_y->Get_VHDL_Id() << ", => " 
-	    << s->_sel->Get_VHDL_Id() << ", z => " << s->_z->Get_VHDL_Id() 
+      ofile << " port map( x => " 
+	    << s->_x->Get_VHDL_Id() 
+	    << ", y => " 
+	    << s->_y->Get_VHDL_Id() 
+	    << ", sel => " 
+	    << s->_sel->Get_VHDL_Id() 
+	    << ", z => " << s->_z->Get_VHDL_Id() 
 	    << ", req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol() 
-	    << ", ack => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol() << ", clk => clk, reset => reset); -- }" << endl;
+	    << ", ack => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol() 
+	    << ", clk => clk, reset => reset); -- }" << endl;
     }
 }
 

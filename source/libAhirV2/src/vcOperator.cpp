@@ -458,7 +458,7 @@ void vcBinaryOperator::Print(ostream& ofile)
 	<< endl;
 }
 
-vcSelect::vcSelect(string id, vcWire* x, vcWire* y, vcWire* sel, vcWire* z):vcOperator(id)
+vcSelect::vcSelect(string id, vcWire* sel, vcWire* x, vcWire* y, vcWire* z):vcOperator(id)
 {
   this->_x = x;
   _x->Connect_Receiver(this);

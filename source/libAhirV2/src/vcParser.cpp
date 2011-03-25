@@ -3065,33 +3065,30 @@ vcType*  vcParser::vc_RecordType(
 	
 	try {      // for error handling
 		match(RECORD);
-		match(LBRACKET);
-		{
-		et=vc_Type(sys);
-#line 992 "vc.g"
-		etypes.push_back(et);
-#line 3074 "vcParser.cpp"
-		}
-		{ // ( ... )*
+		{ // ( ... )+
+		int _cnt191=0;
 		for (;;) {
-			if ((LA(1) == COMMA)) {
-				match(COMMA);
-				t=vc_Type(sys);
+			if ((LA(1) == LT_OP) && (_tokenSet_26.member(LA(2)))) {
+				match(LT_OP);
+				{
+				et=vc_Type(sys);
 #line 992 "vc.g"
 				etypes.push_back(et);
-#line 3083 "vcParser.cpp"
+#line 3078 "vcParser.cpp"
+				}
+				match(GT_OP);
 			}
 			else {
-				goto _loop191;
+				if ( _cnt191>=1 ) { goto _loop191; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
 			}
 			
+			_cnt191++;
 		}
 		_loop191:;
-		} // ( ... )*
-		match(RBRACKET);
+		}  // ( ... )+
 #line 993 "vc.g"
 		rt = Make_Record_Type(etypes); t = (vcType*) rt; etypes.clear();
-#line 3095 "vcParser.cpp"
+#line 3092 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
@@ -3105,14 +3102,14 @@ vcType*  vcParser::vc_IntType(
 ) {
 #line 939 "vc.g"
 	vcType* t;
-#line 3109 "vcParser.cpp"
+#line 3106 "vcParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  i = ANTLR_USE_NAMESPACE(antlr)nullToken;
 #line 939 "vc.g"
 	
 		vcIntType* it;
 		unsigned int w;
 	
-#line 3116 "vcParser.cpp"
+#line 3113 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(INT);
@@ -3121,11 +3118,11 @@ vcType*  vcParser::vc_IntType(
 		match(UINTEGER);
 #line 944 "vc.g"
 		w = atoi(i->getText().c_str());
-#line 3125 "vcParser.cpp"
+#line 3122 "vcParser.cpp"
 		match(GT_OP);
 #line 944 "vc.g"
 		it = Make_Integer_Type(w); t = (vcType*)it;
-#line 3129 "vcParser.cpp"
+#line 3126 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
@@ -3139,7 +3136,7 @@ vcType*  vcParser::vc_FloatType(
 ) {
 #line 950 "vc.g"
 	vcType* t;
-#line 3143 "vcParser.cpp"
+#line 3140 "vcParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  cid = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  mid = ANTLR_USE_NAMESPACE(antlr)nullToken;
 #line 950 "vc.g"
@@ -3147,7 +3144,7 @@ vcType*  vcParser::vc_FloatType(
 		vcFloatType* ft;
 		unsigned int c,m;
 	
-#line 3151 "vcParser.cpp"
+#line 3148 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(FLOAT);
@@ -3156,17 +3153,17 @@ vcType*  vcParser::vc_FloatType(
 		match(UINTEGER);
 #line 955 "vc.g"
 		c = atoi(cid->getText().c_str());
-#line 3160 "vcParser.cpp"
+#line 3157 "vcParser.cpp"
 		match(COMMA);
 		mid = LT(1);
 		match(UINTEGER);
 #line 955 "vc.g"
 		m = atoi(mid->getText().c_str());
-#line 3166 "vcParser.cpp"
+#line 3163 "vcParser.cpp"
 		match(GT_OP);
 #line 956 "vc.g"
 		ft = Make_Float_Type(c,m); t = (vcType*)ft;
-#line 3170 "vcParser.cpp"
+#line 3167 "vcParser.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
@@ -3180,7 +3177,7 @@ vcType*  vcParser::vc_PointerType(
 ) {
 #line 963 "vc.g"
 	vcType* t;
-#line 3184 "vcParser.cpp"
+#line 3181 "vcParser.cpp"
 	ANTLR_USE_NAMESPACE(antlr)RefToken  sid = ANTLR_USE_NAMESPACE(antlr)nullToken;
 	ANTLR_USE_NAMESPACE(antlr)RefToken  mid = ANTLR_USE_NAMESPACE(antlr)nullToken;
 #line 963 "vc.g"
@@ -3188,7 +3185,7 @@ vcType*  vcParser::vc_PointerType(
 		vcPointerType* pt;
 	string scope_id, space_id;
 	
-#line 3192 "vcParser.cpp"
+#line 3189 "vcParser.cpp"
 	
 	try {      // for error handling
 		match(POINTER);
@@ -3200,7 +3197,7 @@ vcType*  vcParser::vc_PointerType(
 			match(DIV_OP);
 #line 968 "vc.g"
 			scope_id = sid->getText();
-#line 3204 "vcParser.cpp"
+#line 3201 "vcParser.cpp"
 		}
 		else if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == GT_OP)) {
 		}
@@ -3213,7 +3210,7 @@ vcType*  vcParser::vc_PointerType(
 		match(SIMPLE_IDENTIFIER);
 #line 969 "vc.g"
 		space_id = mid->getText(); pt = Make_Pointer_Type(sys, scope_id,space_id); t = (vcType*) pt;
-#line 3217 "vcParser.cpp"
+#line 3214 "vcParser.cpp"
 		match(GT_OP);
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
@@ -3366,12 +3363,12 @@ const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_4(_tokenSet_4_data_,8
 const unsigned long vcParser::_tokenSet_5_data_[] = { 4352UL, 0UL, 0UL, 0UL };
 // RBRACE OBJECT 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_5(_tokenSet_5_data_,4);
-const unsigned long vcParser::_tokenSet_6_data_[] = { 9490770UL, 2952790008UL, 4196309UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+const unsigned long vcParser::_tokenSet_6_data_[] = { 9490770UL, 2952790008UL, 4195221UL, 0UL, 0UL, 0UL, 0UL, 0UL };
 // EOF PIPE MEMORYSPACE RBRACE OBJECT MODULE SIMPLE_IDENTIFIER DIV_OP CONTROLPATH 
 // PLUS_OP MINUS_OP MUL_OP SHL_OP SHR_OP GT_OP GE_OP EQ_OP LT_OP LE_OP 
 // NEQ_OP BITSEL_OP CONCAT_OP OR_OP AND_OP XOR_OP NOR_OP NAND_OP XNOR_OP 
 // NOT_OP BRANCH_OP SELECT_OP ASSIGN_OP EQUIVALENCE_OP CALL IOPORT OUT 
-// LOAD STORE PHI RBRACKET CONSTANT INTERMEDIATE WIRE COMMA ATTRIBUTE 
+// LOAD STORE PHI CONSTANT INTERMEDIATE WIRE ATTRIBUTE 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_6(_tokenSet_6_data_,8);
 const unsigned long vcParser::_tokenSet_7_data_[] = { 8388672UL, 2147483648UL, 0UL, 0UL };
 // MEMORYSPACE CONTROLPATH OUT 
@@ -3447,5 +3444,8 @@ const unsigned long vcParser::_tokenSet_25_data_[] = { 1327442UL, 805306360UL, 4
 // ASSIGN_OP EQUIVALENCE_OP CALL IOPORT LOAD STORE PHI CONSTANT INTERMEDIATE 
 // WIRE COMMA "M" ATTRIBUTE 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_25(_tokenSet_25_data_,8);
+const unsigned long vcParser::_tokenSet_26_data_[] = { 0UL, 0UL, 3080192UL, 0UL, 0UL, 0UL, 0UL, 0UL };
+// INT FLOAT POINTER ARRAY RECORD 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_26(_tokenSet_26_data_,8);
 
 

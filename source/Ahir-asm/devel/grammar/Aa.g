@@ -1081,17 +1081,17 @@ aA_Pointer_Type_Reference[AaScope* scope] returns [AaScalarType* ret_type]
     ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Array_Type_Reference: ARRAY (LBRACKET UINTEGER RBRACKET)+ OF aA_Scalar_Type_Reference
+// aA_Array_Type_Reference: ARRAY (LBRACKET UINTEGER RBRACKET)+ OF aA_Type_Reference
 //----------------------------------------------------------------------------------------------------------
 aA_Array_Type_Reference[AaScope* scope] returns [AaType* ref_type]
 {
     vector<unsigned int> dims;
-    AaScalarType* element_type;
+    AaType* element_type;
 }
     : ARRAY 
         (LBRACKET ds:UINTEGER { dims.push_back(atoi(ds->getText().c_str())); } RBRACKET)+
         OF 
-        (element_type = aA_Scalar_Type_Reference[scope])
+        (element_type = aA_Type_Reference[scope])
         {
             ref_type = AaProgram::Make_Array_Type(element_type,dims);
         }
@@ -1110,7 +1110,7 @@ aA_Record_Type_Reference[AaScope* scope] returns [AaType* ref_type]
 ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Object_Reference : HIEARCHICAL_IDENTIFIER (LBRACKET Aa_Object_Reference RBRACKET)*
+// aA_Object_Reference : HIERARCHICAL_IDENTIFIER (LBRACKET Aa_Object_Reference RBRACKET)*
 //----------------------------------------------------------------------------------------------------------
 aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
 {
@@ -1164,6 +1164,7 @@ aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
 
             obj_ref->Set_Object_Root_Name(root_name);
             obj_ref->Set_Line_Number(sid->getLine());
+            obj_ref->Set_Search_Ancestor_Level(search_ancestor_level);
         }
     ;
 
@@ -1346,6 +1347,7 @@ FLOAT          : "$float"   ;
 POINTER        : "$pointer" ;
 NuLL           : "$null";
 ARRAY          : "$array";
+RECORD         : "$record";
 
 // type cast
 CAST : "$cast";
