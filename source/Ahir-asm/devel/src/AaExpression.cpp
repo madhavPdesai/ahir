@@ -303,6 +303,8 @@ AaType* AaObjectReference::Get_Address_Type(vector<AaExpression*>* address_expre
 }
 
 
+
+
 //---------------------------------------------------------------------
 // AaConstantLiteralReference: public AaObjectReference
 //---------------------------------------------------------------------
@@ -1208,18 +1210,16 @@ void AaArrayObjectReference::Write_VC_Wire_Declarations(bool skip_immediate, ost
 
 int AaObjectReference::Get_Word_Size()
 {
+  assert(this->_object);
   int word_size = -1;
-  if(this->_object->Get_Type() && this->_object->Get_Type()->Is_Pointer_Type())
-    {
-      if(this->_object->Is("AaStorageObject"))
-	word_size = ((AaStorageObject*)(this->_object))->Get_Addressed_Object_Representative()->Get_Word_Size();
-      else if(this->_object->Is("AaExpression"))
-	{
-	  word_size = ((AaExpression*)(this->_object))->Get_Addressed_Object_Representative()->Get_Word_Size();
-	}
-    }
-  else if(this->_object->Is("AaStorageObject"))
+
+  if(this->_object->Is("AaStorageObject"))
     word_size = ((AaStorageObject*)(this->_object))->Get_Word_Size();
+  else if(this->_object->Is_Expression())
+    {
+      assert(((AaExpression*)(this->_object))->Get_Addressed_Object_Representative() != NULL);
+      word_size = ((AaExpression*)(this->_object))->Get_Addressed_Object_Representative()->Get_Word_Size();
+    }
   
   assert(word_size  > 0);
   return(word_size);
@@ -1493,30 +1493,33 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 
 void AaPointerDereferenceExpression::Write_VC_Control_Path( ostream& ofile)
 { 
+  ofile << "// " << this->To_String() << endl;
+  this->_reference_to_object->Write_VC_Control_Path(ofile);
   this->Write_VC_Load_Control_Path(NULL,NULL,ofile);
 }
 
 void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target( ostream& ofile)
 {
+  ofile << "// " << this->To_String() << endl;
+  this->_reference_to_object->Write_VC_Control_Path(ofile);
   this->Write_VC_Store_Control_Path(NULL,NULL,ofile);
 }
 
 void AaPointerDereferenceExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 { 
+  ofile << "// " << this->To_String() << endl;
   this->_reference_to_object->Write_VC_Constant_Wire_Declarations(ofile);
   this->Write_VC_Load_Store_Constants(NULL,NULL,ofile);
 }
 
 void AaPointerDereferenceExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
+  ofile << "// " << this->To_String() << endl;
   if(!skip_immediate)
     {
      
       if(!skip_immediate)
 	{
-
-	  ofile << "// " << this->To_String() << endl;
-	  
 	  Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Driver_Name(),
 						 this->Get_Type(),
 						 ofile);
@@ -1528,7 +1531,7 @@ void AaPointerDereferenceExpression::Write_VC_Wire_Declarations(bool skip_immedi
 void AaPointerDereferenceExpression::Write_VC_Wire_Declarations_As_Target(ostream& ofile)
 { 
   ofile << "// " << this->To_String() << endl;
-  
+  this->_reference_to_object->Write_VC_Wire_Declarations(false,ofile);  
   Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Driver_Name(),
 					 this->Get_Type(),
 					 ofile);
@@ -1536,6 +1539,8 @@ void AaPointerDereferenceExpression::Write_VC_Wire_Declarations_As_Target(ostrea
 }
 void AaPointerDereferenceExpression::Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source)
 {
+  ofile << "// " << this->To_String() << endl;
+  this->_reference_to_object->Write_VC_Datapath_Instances(NULL, ofile);  
   // address will arrive from base.
   this->Write_VC_Store_Data_Path(NULL,
 				 NULL,
@@ -1544,6 +1549,9 @@ void AaPointerDereferenceExpression::Write_VC_Datapath_Instances_As_Target( ostr
 }
 void AaPointerDereferenceExpression::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
 { 
+
+  ofile << "// " << this->To_String() << endl;
+  this->_reference_to_object->Write_VC_Datapath_Instances(NULL, ofile);  
   this->Write_VC_Load_Data_Path(NULL,
 				NULL,
 				((target != NULL) ? target : this),
@@ -1551,6 +1559,7 @@ void AaPointerDereferenceExpression::Write_VC_Datapath_Instances(AaExpression* t
 }
 void AaPointerDereferenceExpression::Write_VC_Links(string hier_id, ostream& ofile)
 { 
+  this->_reference_to_object->Write_VC_Links(hier_id,ofile);
   this->Write_VC_Load_Links(hier_id,
 			    NULL,
 			    NULL,
@@ -1558,6 +1567,7 @@ void AaPointerDereferenceExpression::Write_VC_Links(string hier_id, ostream& ofi
 }
 void AaPointerDereferenceExpression::Write_VC_Links_As_Target(string hier_id, ostream& ofile)
 { 
+  this->_reference_to_object->Write_VC_Links(hier_id,ofile);
   this->Write_VC_Store_Links(hier_id,
 			     NULL,
 			     NULL,

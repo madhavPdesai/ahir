@@ -85,6 +85,9 @@ class AaObject: public AaRoot
     {
       return(this->_addressed_object_representative);
     }
+
+  virtual AaValue* Get_Expression_Value() {return(NULL);}
+
 };
 
 // interface object: function arguments

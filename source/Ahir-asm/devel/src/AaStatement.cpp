@@ -522,7 +522,35 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
 
   this->_source->Add_Target(this->_target);
 }
+
 AaAssignmentStatement::~AaAssignmentStatement() {};
+
+
+string AaAssignmentStatement::Debug_Info()
+{
+  string ret_string;
+  AaType* tt;
+  AaType* st;
+
+  tt = this->Get_Target()->Get_Type();
+  AaStorageObject* tms =  this->_target->Get_Addressed_Object_Representative();
+
+  st = this->Get_Source()->Get_Type();
+  AaStorageObject* sms =  this->_source->Get_Addressed_Object_Representative();
+
+  ret_string =  "target-type =   ";
+  ret_string += (tt ? tt->To_String() : "unknown") + "\n";
+  ret_string += "target-memory-space = ";
+  ret_string += (tms ?  IntToStr(tms->Get_Mem_Space_Index()) : " none") + "\n";
+
+  ret_string += "source-type = " ;
+  ret_string += (st ? st->To_String() : "unknown") + "\n";
+  ret_string += "source-memory-space = ";
+  ret_string += (sms ?  IntToStr(sms->Get_Mem_Space_Index()) : " none") + "\n";
+
+  return(ret_string);
+}
+
 void AaAssignmentStatement::Print(ostream& ofile)
 {
   ofile << this->Tab();
@@ -530,23 +558,6 @@ void AaAssignmentStatement::Print(ostream& ofile)
   ofile << " := ";
   this->Get_Source()->Print(ofile);
 
-  if(this->Get_Target()->Get_Type())
-    {
-      ofile << " // target:  ";
-      this->Get_Target()->Get_Type()->Print(ofile);
-      ofile << ", mem spaces: source -> " 
-	    << 	(this->_source->Get_Addressed_Object_Representative() ?
-		 IntToStr(this->_source->
-			  Get_Addressed_Object_Representative()
-			  ->Get_Mem_Space_Index()) :
-		 "none")
-	    << ", target -> "
-	    << 	(this->_target->Get_Addressed_Object_Representative() ?
-		 IntToStr(this->_target->
-			  Get_Addressed_Object_Representative()->
-			  Get_Mem_Space_Index()) :
-		 "none");
-    }
   ofile << endl;
 }
 void AaAssignmentStatement::Map_Source_References()

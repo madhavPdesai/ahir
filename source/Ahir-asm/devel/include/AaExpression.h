@@ -312,6 +312,7 @@ class AaObjectReference: public AaExpression
   virtual string Get_VC_Word_Offset_Name(int idx);
   virtual string Get_VC_Offset_Scale_Factor_Name(int idx);
   virtual AaType* Get_Base_Address_Type();
+  virtual int Get_Access_Width();
 
 };
 
@@ -450,6 +451,8 @@ class AaArrayObjectReference: public AaObjectReference
   virtual void Update_Type();
   virtual int Get_Base_Address();
   virtual string Get_VC_Base_Address_Name();
+
+  virtual int Get_Access_Width();
 };
 
 
@@ -492,6 +495,8 @@ class AaPointerDereferenceExpression: public AaObjectReference
   virtual int Get_Address_Width();
   virtual AaType* Get_Base_Address_Type();
   virtual string Get_VC_Base_Address_Name();
+
+  virtual int Get_Access_Width();
 };
 
 
@@ -525,6 +530,15 @@ class AaAddressOfExpression: public AaObjectReference
   string Get_VC_Name() {return("addr_of_" + Int64ToStr(this->Get_Index()));}
 
   virtual void Evaluate();
+
+  virtual string Get_VC_Memory_Space_Name();
+  virtual int Get_Base_Address();
+  virtual int Get_Word_Size();
+  virtual int Get_Address_Width();
+  virtual AaType* Get_Base_Address_Type();
+  virtual string Get_VC_Base_Address_Name();
+
+  virtual int Get_Access_Width();
 };
 
 

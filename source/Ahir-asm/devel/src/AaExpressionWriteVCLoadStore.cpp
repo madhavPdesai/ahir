@@ -93,6 +93,8 @@ void AaObjectReference::Write_VC_Load_Store_Wires(vector<AaExpression*>* address
   int base_address = this->Get_Base_Address();
   AaUintType* addr_type = AaProgram::Make_Uinteger_Type(this->Get_Address_Width());
 
+  int nwords = (address_expressions ? scale_factors->back() : (this->Get_Type()->Size() / this->Get_Word_Size()));
+  
   if(offset_value < 0 || base_address < 0)
     {
       // this yields the offset+base
@@ -103,7 +105,6 @@ void AaObjectReference::Write_VC_Load_Store_Wires(vector<AaExpression*>* address
       
       // well, now you need to generate the individual word addresses
       // out of the root address.
-      int nwords = (address_expressions ? scale_factors->back() : (this->Get_Type()->Size() / this->Get_Word_Size()));
       for(int idx = 0; idx < nwords; idx++)
 	{
 	  // the address for each of the individual words being accessed.
@@ -116,7 +117,7 @@ void AaObjectReference::Write_VC_Load_Store_Wires(vector<AaExpression*>* address
   
   // there is also a data wire for each word.
   AaUintType* data_type = AaProgram::Make_Uinteger_Type(this->Get_Word_Size());
-  for(int idx = 0; idx < (this->Get_Type()->Size()/this->Get_Word_Size()); idx++)
+  for(int idx = 0; idx < nwords; idx++)
     {
       // the data for each of the individual words being accessed.
       Write_VC_Wire_Declaration(this->Get_VC_Name() + "_data_" 
@@ -195,8 +196,10 @@ void AaObjectReference::Write_VC_Load_Store_Control_Path(vector<AaExpression*>* 
     }
 
   // in parallel access the words.
+  // how many words?
+  int nwords = (address_expressions ? scale_factors->back() : (this->Get_Type()->Size() / this->Get_Word_Size()));
   ofile << "||[word_access] {" << endl;
-  for(int idx = 0; idx < (this->Get_Type()->Size() / this->Get_Word_Size()); idx++)
+  for(int idx = 0; idx < nwords; idx++)
     {
       // each word access.
       ofile << ";;[word_access_" << idx << "] {" << endl
@@ -224,9 +227,9 @@ void AaObjectReference::Write_VC_Load_Store_Data_Path(vector<AaExpression*>* add
 
 
   bool scale_flag = (this->Get_Type()->Size() > this->Get_Word_Size());
-  for(int idx = 0;
-      idx < (this->Get_Type()->Size() / this->Get_Word_Size());
-      idx++)
+  int nwords = (address_expressions ? scale_factors->back() : (this->Get_Type()->Size() / this->Get_Word_Size()));
+
+  for(int idx = 0; idx < nwords;  idx++)
     {
       // load-store operator
       if(read_or_write == "read")
@@ -254,7 +257,7 @@ void AaObjectReference::Write_VC_Load_Store_Data_Path(vector<AaExpression*>* add
   // equivalence operator.
   vector<string> inwires;
   vector<string> outwires;
-  for(int idx = 0; idx < ((this->Get_Type()->Size())/this->Get_Word_Size()); idx++)
+  for(int idx = 0; idx < nwords; idx++)
     {
       if(read_or_write == "read")
 	{
@@ -341,7 +344,8 @@ void AaObjectReference::Write_VC_Address_Calculation_Constants(vector<AaExpressi
 						      scale_factors,
 						      ofile);
 
-  int nwords = (address_expressions ? scale_factors->back() : (this->Get_Type()->Size() / this->Get_Word_Size()));
+  int nwords = (address_expressions ? scale_factors->back() : 
+		(this->Get_Type()->Size() / this->Get_Word_Size()));
   AaUintType* addr_type = AaProgram::Make_Uinteger_Type(this->Get_Address_Width());      
 
   // must be a constant address..
@@ -427,18 +431,19 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Constants(vector<AaExp
     {
       if(offset_value < 0)
 	{
-	  //TODO print the base address constant.
+	  Write_VC_Constant_Declaration(this->Get_VC_Base_Address_Name() + "_resized",
+					addr_type,
+					IntToStr(base_addr),
+					ofile);
 	}
       else
 	{
 	  int final_root_address = base_addr + offset_value;
-	  AaValue* v = Make_Aa_Value(this->Get_Scope(),this->Get_Type());
-	  v->Set_Value(IntToStr(final_root_address));
 	  Write_VC_Constant_Declaration(this->Get_VC_Root_Address_Name(),
 					addr_type,
-					v,
+					IntToStr(final_root_address),
 					ofile);
-	  delete v;
+	
 	}
     }
 }
@@ -492,6 +497,13 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Wires(vector<AaExpress
     }
 
   int base_addr = this->Get_Base_Address();
+  if(base_addr < 0)
+    {
+      Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Base_Address_Name() + "_resized",
+					     addr_type,
+					     ofile);
+    }
+
   if(offset_val < 0 || base_addr < 0)
     {
       Write_VC_Wire_Declaration(this->Get_VC_Root_Address_Name(),
@@ -514,9 +526,8 @@ void AaObjectReference::Write_VC_Address_Calculation_Control_Path(vector<AaExpre
     {
       ofile << ";;[" << this->Get_VC_Name() << "_addr_gen] {" << endl;
 
-      // this gives the offset
-      if(offset_val < 0)
-	this->Write_VC_Root_Address_Calculation_Control_Path(indices,scale_factors,ofile);
+      
+      this->Write_VC_Root_Address_Calculation_Control_Path(indices,scale_factors,ofile);
       
       // individual word addresses (in parallel)
       int nwords = (indices ? scale_factors->back() : (this->Get_Type()->Size() / this->Get_Word_Size()));
@@ -617,10 +628,7 @@ void AaObjectReference::Write_VC_Address_Calculation_Links(string hier_id,
       //  ofile << ";;[" << this->Get_VC_Name() << "_addr_gen] {" << endl;
       hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Name() + "_addr_gen");
 
-      if(offset_val < 0)
-	{
-	  this->Write_VC_Root_Address_Calculation_Links(hier_id,indices,scale_factors,ofile);
-	}
+      this->Write_VC_Root_Address_Calculation_Links(hier_id,indices,scale_factors,ofile);
 
       // individual word addresses (in parallel)
       int nwords = (indices ? scale_factors->back() : (this->Get_Type()->Size() / this->Get_Word_Size()));
@@ -674,6 +682,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Control_Path(vector<Aa
   
   bool all_indices_zero = (offset_val == 0);
   int num_non_constant = 0;
+  bool const_index_flag = false;
 
   if(offset_val < 0)
     {
@@ -703,6 +712,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Control_Path(vector<Aa
 	  else
 	    {
 	      
+	      const_index_flag = true;
 	      if((*index_vector)[idx]->Get_Expression_Value()->To_Integer() != 0)
 		all_indices_zero = false;
 	    }
@@ -711,9 +721,10 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Control_Path(vector<Aa
       
       // then add them up.
       ofile << ";;[add_indices] {" << endl;
+      int num_index_adds = (num_non_constant + (const_index_flag ? 1 : 0)) - 1;
       if(index_vector->size() > 1)
 	{
-	  for(int idx = 1; idx < num_non_constant; idx++)
+	  for(int idx = 1; idx <= num_index_adds; idx++)
 	    {
 	      string prefix = "partial_sum_" + IntToStr(idx);
 	      ofile << "$T [" << prefix << "_rr] $T [" << prefix << "_ra] $T [" 
@@ -765,16 +776,20 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
   AaUintType* addr_type = AaProgram::Make_Uinteger_Type(this->Get_Address_Width());
   vector<AaExpression*> non_constant_indices;
   bool all_indices_zero = (offset_val == 0);
+  bool const_index_flag = false;
   if(offset_val < 0 || base_addr < 0)
     {
       if(offset_val < 0)
-	{
+	{ 
+	  // at least one index is not a constant.
 	  for(int idx = 0; idx < index_vector->size(); idx++)
 	    {
 	      // if the index is a constant dont bother to compute it..
 	      if(!(*index_vector)[idx]->Is_Constant())
 		{
 		  AaExpression* iexpr = (*index_vector)[idx];
+		  iexpr->Write_VC_Datapath_Instances(NULL,ofile);
+
 		  non_constant_indices.push_back(iexpr);
 		  
 		  // resize index.
@@ -809,16 +824,32 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 						    ofile);
 		    }
 		}
+	      else
+		{
+		  const_index_flag = true;
+		}
 	    }
 	  
 	  
-	  string last_sum = ((non_constant_indices.size() < index_vector->size())?
-			     this->Get_VC_Offset_Constant_Part_Name() : non_constant_indices[0]->Get_VC_Name() + "_scaled");
+	  string last_sum;
+	  
+	  if(const_index_flag)
+	    last_sum = this->Get_VC_Offset_Constant_Part_Name();
+	  else 
+	    last_sum = non_constant_indices[0]->Get_VC_Name() + "_scaled";
 	  
 	  // add indices.. chain of adders.
-	  for(int idx = 1; idx < non_constant_indices.size(); idx++)
+	  int num_index_adds = (non_constant_indices.size() + (const_index_flag ? 1 : 0)) - 1;
+	  for(int idx = 1; idx <= num_index_adds; idx++)
 	    {
-	      AaExpression* expr = non_constant_indices[idx];
+
+	      AaExpression* expr;
+	      if(const_index_flag)
+		expr = non_constant_indices[idx-1];	      
+	      else
+		expr = non_constant_indices[idx];	      
+	      
+
 	      Write_VC_Binary_Operator(__PLUS,
 				       this->Get_VC_Name() + "_index_sum_" + IntToStr(idx),
 				       expr->Get_VC_Name() + "_scaled",
@@ -870,7 +901,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 				   this->Get_VC_Name() + "_root_address_inst",
 				   this->Get_VC_Offset_Name(),
 				   addr_type,
-				   ((base_addr < 0) ? this->Get_VC_Base_Address_Name() + "_resized" : this->Get_VC_Base_Address_Name()),
+				   this->Get_VC_Base_Address_Name() + "_resized",
 				   addr_type,
 				   this->Get_VC_Root_Address_Name(),
 				   addr_type,
@@ -878,10 +909,8 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 	}
       else
 	{
-	  string op_name = ((base_addr != 0) ? ((base_addr < 0) ? 
-						   this->Get_VC_Base_Address_Name() + "_resized" : this->Get_VC_Base_Address_Name()) 
-			    :
-			    this->Get_VC_Offset_Name());
+	  string op_name = ((base_addr != 0) ? (this->Get_VC_Base_Address_Name() + "_resized")
+			    : this->Get_VC_Offset_Name());
 	  Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_root_address_inst",
 					op_name,
 					this->Get_VC_Root_Address_Name(),
@@ -904,6 +933,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Links(string hier_id,
   
   bool all_indices_zero = (offset_val == 0);
   int num_non_constant = 0;
+  bool const_index_flag = false;
 
   vector<string> reqs;
   vector<string> acks;
@@ -955,6 +985,8 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Links(string hier_id,
 		  acks.clear();
 		}
 	    }
+	  else
+	    const_index_flag = true;
 	}
 	  
 
@@ -962,7 +994,8 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Links(string hier_id,
       nhid = Augment_Hier_Id(hier_id, "add_indices");
       if(indices->size() > 1)
 	{
-	  for(int idx = 1; idx < num_non_constant; idx++)
+	  int num_index_adds = (num_non_constant + (const_index_flag ? 1 : 0)) - 1;
+	  for(int idx = 1; idx <= num_index_adds; idx++)
 	    {
 	      string prefix = "partial_sum_" + IntToStr(idx);
 	      reqs.push_back(nhid + "/" + prefix + "_rr");
@@ -1035,13 +1068,12 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Links(string hier_id,
 string AaObjectReference::Get_VC_Memory_Space_Name()
 {
 
-
   if(this->_object->Is("AaStorageObject"))
     {
       AaStorageObject* so = ((AaStorageObject*)(this->_object));
       return(so->Get_VC_Memory_Space_Name());
     }
-  else if(this->_object->Is("AaExpression"))
+  else if(this->_object->Is_Expression())
     {
       AaStorageObject* so = ((AaExpression*)(this->_object))->Get_Addressed_Object_Representative();
       return(so->Get_VC_Memory_Space_Name());
@@ -1056,14 +1088,22 @@ int AaObjectReference::Get_Base_Address()
       AaStorageObject* so = ((AaStorageObject*)(this->_object));
       return(so->Get_Base_Address());
     }
-  else if(this->_object->Is("AaExpression"))
+  else if(this->_object->Is_Expression())
     {
       AaValue* eval = this->_object->Get_Expression_Value();
       if(eval != NULL)
 	return(eval->To_Integer());
+      else
+	return(-1);
     }
   else
     return(-1);
+}
+
+// what is the access width?
+int AaObjectReference::Get_Access_Width()
+{
+  assert(0);
 }
 
 
@@ -1074,7 +1114,7 @@ int AaObjectReference::Get_Address_Width()
     {
       so = ((AaStorageObject*)(this->_object));
     }
-  else if(this->_object->Is("AaExpression"))
+  else if(this->_object->Is_Expression())
     {
       so = ((AaExpression*)(this->_object))->Get_Addressed_Object_Representative();
     }
@@ -1089,7 +1129,7 @@ string AaObjectReference::Get_VC_Base_Address_Name()
       AaStorageObject* so = ((AaStorageObject*)(this->_object));
       return(so->Get_VC_Base_Address_Name());
     }
-  else if(this->_object->Is("AaExpression"))
+  else if(this->_object->Is_Expression())
     {
       return(((AaExpression*)(this->_object))->Get_VC_Driver_Name());
     }
@@ -1144,11 +1184,19 @@ int AaArrayObjectReference::Get_Base_Address()
     {
       if(this->_object->Get_Expression_Value() != NULL)
 	return(this->_object->Get_Expression_Value()->To_Integer());
+      else
+	return(-1);
     }
   else
     return(this->AaObjectReference::Get_Base_Address());
 }
 
+
+// what is the access width?
+int AaArrayObjectReference::Get_Access_Width()
+{
+  assert(0);
+}
 
 string AaArrayObjectReference::Get_VC_Base_Address_Name()
 {
@@ -1164,7 +1212,7 @@ string AaArrayObjectReference::Get_VC_Base_Address_Name()
 	  return(so->Get_VC_Base_Address_Name());
 	}
     }
-  else if(this->_object->Is("AaExpression"))
+  else if(this->_object->Is_Expression())
     {
       return(((AaExpression*)(this->_object))->Get_VC_Driver_Name());
     }
@@ -1182,6 +1230,11 @@ string AaPointerDereferenceExpression::Get_VC_Memory_Space_Name()
     {
       AaRoot::Error("could not associate memory space with pointer ", this);
     }
+}
+
+int AaPointerDereferenceExpression::Get_Access_Width()
+{
+  assert(0);
 }
 
 int AaPointerDereferenceExpression::Get_Word_Size()
@@ -1227,5 +1280,36 @@ string AaPointerDereferenceExpression::Get_VC_Base_Address_Name()
 {
   return(this->_reference_to_object->Get_VC_Driver_Name());
 }
+
+
+string AaAddressOfExpression::Get_VC_Memory_Space_Name()
+{
+  return(this->_storage_object->Get_VC_Memory_Space_Name());
+}
+int AaAddressOfExpression::Get_Base_Address()
+{
+  return this->_storage_object->Get_Base_Address();
+}
+int AaAddressOfExpression::Get_Access_Width()
+{
+  assert(0);
+}
+int AaAddressOfExpression::Get_Word_Size()
+{
+  return this->_storage_object->Get_Word_Size();
+}
+int AaAddressOfExpression::Get_Address_Width()
+{
+  return this->_storage_object->Get_Address_Width();
+}
+AaType* AaAddressOfExpression::Get_Base_Address_Type()
+{
+  return(AaProgram::Make_Uinteger_Type(this->Get_Address_Width()));
+}
+string AaAddressOfExpression::Get_VC_Base_Address_Name()
+{
+  return(this->_storage_object->Get_VC_Base_Address_Name());
+}
+
 
 

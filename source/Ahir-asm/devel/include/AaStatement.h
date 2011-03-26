@@ -108,6 +108,11 @@ class AaStatement: public AaScope
 	   IntToStr(this->Get_Line_Number())); 
   }
 
+  virtual string Debug_Info()
+  {
+    return(this->Get_Source_Info());
+  };
+
   virtual string Get_Line_Directive()
   {
     return(string("#line ") + IntToStr(this->Get_Line_Number()) + " \"" + this->Get_File_Name() + "\"\n");
@@ -269,6 +274,8 @@ class AaAssignmentStatement: public AaStatement
   virtual string Kind() {return("AaAssignmentStatement");}
   virtual void Map_Source_References();
 
+
+  virtual string Debug_Info();
 
   virtual string Get_C_Name()
   {
