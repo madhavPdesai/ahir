@@ -994,40 +994,40 @@ vc_ScalarType[vcSystem* sys] returns[vcType* t]
 : (t =  vc_IntType[sys] ) | (t = vc_FloatType[sys]) | (t =  vc_PointerType[sys] ) ;
 
 //----------------------------------------------------------------------------------------------------------
-// vc_IntType : INT LT_OP UINTEGER GT_OP
+// vc_IntType : INT ULT_OP UINTEGER UGT_OP
 //----------------------------------------------------------------------------------------------------------
 vc_IntType[vcSystem* sys] returns [vcType* t]
 {
 	vcIntType* it;
 	unsigned int w;
 }
-: INT LT_OP i:UINTEGER {w = atoi(i->getText().c_str());} GT_OP {it = Make_Integer_Type(w); t = (vcType*)it;}
+: INT ULT_OP i:UINTEGER {w = atoi(i->getText().c_str());} UGT_OP {it = Make_Integer_Type(w); t = (vcType*)it;}
 ;
 
 //----------------------------------------------------------------------------------------------------------
-// vc_FloatType: FLOAT LT_OP UINTEGER COMMA UINTEGER GT_OP
+// vc_FloatType: FLOAT ULT_OP UINTEGER COMMA UINTEGER UGT_OP
 //----------------------------------------------------------------------------------------------------------
 vc_FloatType[vcSystem* sys] returns [vcType* t]
 {
 	vcFloatType* ft;
 	unsigned int c,m;
 }
-: FLOAT LT_OP cid:UINTEGER {c = atoi(cid->getText().c_str());} COMMA mid:UINTEGER {m = atoi(mid->getText().c_str());}
-GT_OP {ft = Make_Float_Type(c,m); t = (vcType*)ft;}
+: FLOAT ULT_OP cid:UINTEGER {c = atoi(cid->getText().c_str());} COMMA mid:UINTEGER {m = atoi(mid->getText().c_str());}
+UGT_OP {ft = Make_Float_Type(c,m); t = (vcType*)ft;}
 ;
 
 
 //----------------------------------------------------------------------------------------------------------
-// vc_PointerType : POINTER LT_OP (vc_Identifier DIV_OP)? vc_Identifier GT_OP
+// vc_PointerType : POINTER ULT_OP (vc_Identifier DIV_OP)? vc_Identifier UGT_OP
 //----------------------------------------------------------------------------------------------------------
 vc_PointerType[vcSystem* sys] returns [vcType* t]
 { 
 	vcPointerType* pt;
         string scope_id, space_id;
 }:
-POINTER LT_OP (sid:SIMPLE_IDENTIFIER DIV_OP {scope_id = sid->getText();})? mid:SIMPLE_IDENTIFIER
+POINTER ULT_OP (sid:SIMPLE_IDENTIFIER DIV_OP {scope_id = sid->getText();})? mid:SIMPLE_IDENTIFIER
 {space_id = mid->getText(); pt = Make_Pointer_Type(sys, scope_id,space_id); t = (vcType*) pt;} 
-GT_OP
+UGT_OP
 ;
 //----------------------------------------------------------------------------------------------------------
 // vc_Array_Type: ARRAY (LBRACKET UINTEGER RBRACKET) OF vc_ScalarType
@@ -1042,14 +1042,14 @@ vc_ArrayType[vcSystem* sys] returns [vcType* t]
 ;
 
 //----------------------------------------------------------------------------------------------------------
-// vc_Record_Type: Record (LT_OP (vc_Type) GT_OP)+
+// vc_Record_Type: Record (ULT_OP (vc_Type) UGT_OP)+
 //----------------------------------------------------------------------------------------------------------
 vc_RecordType[vcSystem* sys] returns [vcType* t]
 {
 	vcRecordType* rt;
 	vcType* et;
 	vector<vcType*> etypes;
-}: RECORD (LT_OP (et = vc_Type[sys] {etypes.push_back(et);}) GT_OP)+
+}: RECORD (ULT_OP (et = vc_Type[sys] {etypes.push_back(et);}) UGT_OP)+
 { rt = Make_Record_Type(etypes); t = (vcType*) rt; etypes.clear();}
 ;
 

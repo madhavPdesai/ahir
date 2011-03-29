@@ -136,10 +136,17 @@ AaType* AaArrayType::Get_Element_Type(int idx)
 
 AaType* AaArrayType::Get_Element_Type(int start_idx, vector<AaExpression*>& indices)
 {
+  // from indices[start_idx] to indices[indices.size()-1] 
+  // is the depth of the  indexing.
   int depth = (indices.size() - start_idx);
+
+  // if depth is less than or equal to the
+  // dimension of the array type, then return
+  // the element at depth-1
   if(depth <= this->_dimension.size())
     return(this->Get_Element_Type(depth-1));
   else
+    // return the element of the element from start_idx + dim
     {
       return(this->Get_Element_Type()->Get_Element_Type(start_idx + this->_dimension.size(),
 							indices));

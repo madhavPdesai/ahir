@@ -415,9 +415,9 @@ $module [shift_and_add_multiplier]
     // file ConcatBitsel.aa, line 10
     // constant-object-declarations for block %shift_and_add_multiplier
     // file ConcatBitsel.aa, line 2
-    $constant $W[xxshift_and_add_multiplierxxz9] : $int<9> := _b000000000
-    $constant $W[xxshift_and_add_multiplierxxz1] : $int<1> := _b0
-    $constant $W[xxshift_and_add_multiplierxxcount] : $int<11> := _b10000000000
+    $constant $W[xxshift_and_add_multiplierxxz9] : $int<9> := _b000000000// 0
+    $constant $W[xxshift_and_add_multiplierxxz1] : $int<1> := _b0// 0
+    $constant $W[xxshift_and_add_multiplierxxcount] : $int<11> := _b10000000000// 1024
     // constant-declarations for block %shift_and_add_multiplier%mainloop
     // file ConcatBitsel.aa, line 10
     // constant-declarations for block %shift_and_add_multiplier%mainloop%
@@ -425,59 +425,59 @@ $module [shift_and_add_multiplier]
     // constant-declarations for phi:  			$phi u_in := 			  0  $on $entry			  %nxt%ub:u $on loopback // type of target is $uint<10>
     // file ConcatBitsel.aa, line 13
     // 0 
-    $constant $W[expr_25_wire_constant] : $int<10> := _b0000000000
+    $constant $W[expr_25_wire_constant] : $int<10> := _b0000000000// 0
     // constant-declarations for phi:  			$phi v_in := 			  0  $on $entry			  %nxt%vb:v $on loopback // type of target is $uint<10>
     // file ConcatBitsel.aa, line 14
     // 0 
-    $constant $W[expr_29_wire_constant] : $int<10> := _b0000000000
+    $constant $W[expr_29_wire_constant] : $int<10> := _b0000000000// 0
     // constant-declarations for phi:  			$phi a_0 := 			  a $on $entry			  (a_0 >> 1 ) $on loopback // type of target is $uint<10>
     // file ConcatBitsel.aa, line 15
     // 1 
-    $constant $W[expr_35_wire_constant] : $int<4> := _b0001
+    $constant $W[expr_35_wire_constant] : $int<4> := _b0001// 1
     // constant-declarations for phi:  			$phi ctr := 			  count $on $entry			  %nxt:ctr $on loopback // type of target is $uint<11>
     // file ConcatBitsel.aa, line 16
     // count
-    $constant $W[simple_obj_ref_39_wire_constant] : $int<11> := _b10000000000
+    $constant $W[simple_obj_ref_39_wire_constant] : $int<11> := _b10000000000// 1024
     // constant-declarations for block %shift_and_add_multiplier%mainloop%nxt
     // file ConcatBitsel.aa, line 19
     // constant-declarations for block %shift_and_add_multiplier%mainloop%nxt%vb
     // file ConcatBitsel.aa, line 21
     // ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) ) 
     // 0 
-    $constant $W[expr_46_wire_constant] : $int<4> := _b0000
+    $constant $W[expr_46_wire_constant] : $int<4> := _b0000// 0
     // z1
-    $constant $W[simple_obj_ref_51_wire_constant] : $int<1> := _b0
+    $constant $W[simple_obj_ref_51_wire_constant] : $int<1> := _b0// 0
     // 1 
-    $constant $W[expr_53_wire_constant] : $int<4> := _b0001
+    $constant $W[expr_53_wire_constant] : $int<4> := _b0001// 1
     // z1
-    $constant $W[simple_obj_ref_56_wire_constant] : $int<1> := _b0
+    $constant $W[simple_obj_ref_56_wire_constant] : $int<1> := _b0// 0
     // 1 
-    $constant $W[expr_58_wire_constant] : $int<4> := _b0001
+    $constant $W[expr_58_wire_constant] : $int<4> := _b0001// 1
     // 0 
-    $constant $W[expr_61_wire_constant] : $int<4> := _b0000
+    $constant $W[expr_61_wire_constant] : $int<4> := _b0000// 0
     // 1 
-    $constant $W[expr_65_wire_constant] : $int<4> := _b0001
+    $constant $W[expr_65_wire_constant] : $int<4> := _b0001// 1
     // constant-declarations for block %shift_and_add_multiplier%mainloop%nxt%ub
     // file ConcatBitsel.aa, line 25
     // ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) ) 
     // 0 
-    $constant $W[expr_76_wire_constant] : $int<4> := _b0000
+    $constant $W[expr_76_wire_constant] : $int<4> := _b0000// 0
     // z1
-    $constant $W[simple_obj_ref_81_wire_constant] : $int<1> := _b0
+    $constant $W[simple_obj_ref_81_wire_constant] : $int<1> := _b0// 0
     // 1 
-    $constant $W[expr_83_wire_constant] : $int<4> := _b0001
+    $constant $W[expr_83_wire_constant] : $int<4> := _b0001// 1
     // z1
-    $constant $W[simple_obj_ref_86_wire_constant] : $int<1> := _b0
+    $constant $W[simple_obj_ref_86_wire_constant] : $int<1> := _b0// 0
     // 1 
-    $constant $W[expr_88_wire_constant] : $int<4> := _b0001
+    $constant $W[expr_88_wire_constant] : $int<4> := _b0001// 1
     // 1 
-    $constant $W[expr_94_wire_constant] : $int<4> := _b0001
+    $constant $W[expr_94_wire_constant] : $int<4> := _b0001// 1
     // 1 
-    $constant $W[expr_101_wire_constant] : $int<4> := _b0001
+    $constant $W[expr_101_wire_constant] : $int<4> := _b0001// 1
     // if-statement  
     // file ConcatBitsel.aa, line 34
     // 0 
-    $constant $W[expr_107_wire_constant] : $int<4> := _b0000
+    $constant $W[expr_107_wire_constant] : $int<4> := _b0000// 0
     // block %shift_and_add_multiplier%mainloop
     // file ConcatBitsel.aa, line 10
     // merge-statement  
@@ -803,13 +803,13 @@ $module [test_bench]
     // file ConcatBitsel.aa, line 40
     // 	a := 23 
     // file ConcatBitsel.aa, line 45
-    $constant $W[a_124] : $int<10> := _b0000010111
+    $constant $W[a_124] : $int<10> := _b0000010111 // 23
     // 	b := 17 
     // file ConcatBitsel.aa, line 46
-    $constant $W[b_127] : $int<10> := _b0000010001
+    $constant $W[b_127] : $int<10> := _b0000010001 // 17
     // 	c := (a * b)
     // file ConcatBitsel.aa, line 47
-    $constant $W[c_132] : $int<10> := _b0110000111
+    $constant $W[c_132] : $int<10> := _b0110000111 // 391
     // wire declarations for: 	$call shift_and_add_multiplier (a b ) (d )
     // file ConcatBitsel.aa, line 48
     // d

@@ -3314,15 +3314,15 @@ vcType*  vcParser::vc_RecordType(
 		{ // ( ... )+
 		int _cnt204=0;
 		for (;;) {
-			if ((LA(1) == LT_OP)) {
-				match(LT_OP);
+			if ((LA(1) == ULT_OP) && (_tokenSet_26.member(LA(2)))) {
+				match(ULT_OP);
 				{
 				et=vc_Type(sys);
 #line 1052 "vc.g"
 				etypes.push_back(et);
 #line 3324 "vcParser.cpp"
 				}
-				match(GT_OP);
+				match(UGT_OP);
 			}
 			else {
 				if ( _cnt204>=1 ) { goto _loop204; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());}
@@ -3359,13 +3359,13 @@ vcType*  vcParser::vc_IntType(
 	
 	try {      // for error handling
 		match(INT);
-		match(LT_OP);
+		match(ULT_OP);
 		i = LT(1);
 		match(UINTEGER);
 #line 1004 "vc.g"
 		w = atoi(i->getText().c_str());
 #line 3368 "vcParser.cpp"
-		match(GT_OP);
+		match(UGT_OP);
 #line 1004 "vc.g"
 		it = Make_Integer_Type(w); t = (vcType*)it;
 #line 3372 "vcParser.cpp"
@@ -3394,7 +3394,7 @@ vcType*  vcParser::vc_FloatType(
 	
 	try {      // for error handling
 		match(FLOAT);
-		match(LT_OP);
+		match(ULT_OP);
 		cid = LT(1);
 		match(UINTEGER);
 #line 1015 "vc.g"
@@ -3406,7 +3406,7 @@ vcType*  vcParser::vc_FloatType(
 #line 1015 "vc.g"
 		m = atoi(mid->getText().c_str());
 #line 3409 "vcParser.cpp"
-		match(GT_OP);
+		match(UGT_OP);
 #line 1016 "vc.g"
 		ft = Make_Float_Type(c,m); t = (vcType*)ft;
 #line 3413 "vcParser.cpp"
@@ -3435,7 +3435,7 @@ vcType*  vcParser::vc_PointerType(
 	
 	try {      // for error handling
 		match(POINTER);
-		match(LT_OP);
+		match(ULT_OP);
 		{
 		if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == DIV_OP)) {
 			sid = LT(1);
@@ -3445,7 +3445,7 @@ vcType*  vcParser::vc_PointerType(
 			scope_id = sid->getText();
 #line 3447 "vcParser.cpp"
 		}
-		else if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == GT_OP)) {
+		else if ((LA(1) == SIMPLE_IDENTIFIER) && (LA(2) == UGT_OP)) {
 		}
 		else {
 			throw ANTLR_USE_NAMESPACE(antlr)NoViableAltException(LT(1), getFilename());
@@ -3457,7 +3457,7 @@ vcType*  vcParser::vc_PointerType(
 #line 1029 "vc.g"
 		space_id = mid->getText(); pt = Make_Pointer_Type(sys, scope_id,space_id); t = (vcType*) pt;
 #line 3460 "vcParser.cpp"
-		match(GT_OP);
+		match(UGT_OP);
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
@@ -3563,8 +3563,6 @@ const char* vcParser::tokenNames[] = {
 	"\"C\"",
 	"\"M\"",
 	"INT",
-	"LT_OP",
-	"GT_OP",
 	"FLOAT",
 	"POINTER",
 	"ARRAY",
@@ -3605,7 +3603,7 @@ const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_1(_tokenSet_1_data_,8
 const unsigned long vcParser::_tokenSet_2_data_[] = { 8405074UL, 0UL, 3670016UL, 0UL, 0UL, 0UL, 0UL, 0UL };
 // EOF PIPE MEMORYSPACE MODULE CONTROLPATH CONSTANT INTERMEDIATE WIRE 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_2(_tokenSet_2_data_,8);
-const unsigned long vcParser::_tokenSet_3_data_[] = { 1065298UL, 4294967288UL, 3756799UL, 16UL, 0UL, 0UL, 0UL, 0UL };
+const unsigned long vcParser::_tokenSet_3_data_[] = { 1065298UL, 4294967288UL, 3756799UL, 4UL, 0UL, 0UL, 0UL, 0UL };
 // EOF PIPE MEMORYSPACE RBRACE MODULE DIV_OP PLUS_OP MINUS_OP MUL_OP SHL_OP 
 // SHR_OP UGT_OP UGE_OP EQ_OP ULT_OP ULE_OP NEQ_OP BITSEL_OP CONCAT_OP 
 // OR_OP AND_OP XOR_OP NOR_OP NAND_OP XNOR_OP SHRA_OP SGT_OP SGE_OP SLT_OP 
@@ -3622,14 +3620,14 @@ const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_4(_tokenSet_4_data_,8
 const unsigned long vcParser::_tokenSet_5_data_[] = { 4352UL, 0UL, 0UL, 0UL };
 // RBRACE OBJECT 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_5(_tokenSet_5_data_,4);
-const unsigned long vcParser::_tokenSet_6_data_[] = { 9490770UL, 4294967288UL, 1077500671UL, 16UL, 0UL, 0UL, 0UL, 0UL };
+const unsigned long vcParser::_tokenSet_6_data_[] = { 9490770UL, 4294967288UL, 3758847UL, 4UL, 0UL, 0UL, 0UL, 0UL };
 // EOF PIPE MEMORYSPACE RBRACE OBJECT MODULE SIMPLE_IDENTIFIER DIV_OP CONTROLPATH 
 // PLUS_OP MINUS_OP MUL_OP SHL_OP SHR_OP UGT_OP UGE_OP EQ_OP ULT_OP ULE_OP 
 // NEQ_OP BITSEL_OP CONCAT_OP OR_OP AND_OP XOR_OP NOR_OP NAND_OP XNOR_OP 
 // SHRA_OP SGT_OP SGE_OP SLT_OP SLE_OP NOT_OP StoS_ASSIGN_OP StoU_ASSIGN_OP 
 // UtoS_ASSIGN_OP FtoS_ASSIGN_OP FtoU_ASSIGN_OP StoF_ASSIGN_OP UtoF_ASSIGN_OP 
 // BRANCH_OP SELECT_OP ASSIGN_OP EQUIVALENCE_OP CALL IOPORT OUT LOAD STORE 
-// PHI CONSTANT INTERMEDIATE WIRE GT_OP ATTRIBUTE 
+// PHI CONSTANT INTERMEDIATE WIRE ATTRIBUTE 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_6(_tokenSet_6_data_,8);
 const unsigned long vcParser::_tokenSet_7_data_[] = { 8388672UL, 0UL, 2048UL, 0UL, 0UL, 0UL, 0UL, 0UL };
 // MEMORYSPACE CONTROLPATH OUT 
@@ -3640,13 +3638,13 @@ const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_8(_tokenSet_8_data_,4
 const unsigned long vcParser::_tokenSet_9_data_[] = { 2617245696UL, 0UL, 0UL, 0UL };
 // SERIESBLOCK PARALLELBLOCK BRANCHBLOCK FORKBLOCK 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_9(_tokenSet_9_data_,4);
-const unsigned long vcParser::_tokenSet_10_data_[] = { 33024UL, 4UL, 0UL, 16UL, 0UL, 0UL, 0UL, 0UL };
+const unsigned long vcParser::_tokenSet_10_data_[] = { 33024UL, 4UL, 0UL, 4UL, 0UL, 0UL, 0UL, 0UL };
 // RBRACE SIMPLE_IDENTIFIER DATAPATH ATTRIBUTE 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_10(_tokenSet_10_data_,8);
-const unsigned long vcParser::_tokenSet_11_data_[] = { 33024UL, 0UL, 0UL, 16UL, 0UL, 0UL, 0UL, 0UL };
+const unsigned long vcParser::_tokenSet_11_data_[] = { 33024UL, 0UL, 0UL, 4UL, 0UL, 0UL, 0UL, 0UL };
 // RBRACE SIMPLE_IDENTIFIER ATTRIBUTE 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_11(_tokenSet_11_data_,8);
-const unsigned long vcParser::_tokenSet_12_data_[] = { 1048832UL, 4294967288UL, 3756799UL, 16UL, 0UL, 0UL, 0UL, 0UL };
+const unsigned long vcParser::_tokenSet_12_data_[] = { 1048832UL, 4294967288UL, 3756799UL, 4UL, 0UL, 0UL, 0UL, 0UL };
 // RBRACE DIV_OP PLUS_OP MINUS_OP MUL_OP SHL_OP SHR_OP UGT_OP UGE_OP EQ_OP 
 // ULT_OP ULE_OP NEQ_OP BITSEL_OP CONCAT_OP OR_OP AND_OP XOR_OP NOR_OP 
 // NAND_OP XNOR_OP SHRA_OP SGT_OP SGE_OP SLT_OP SLE_OP NOT_OP StoS_ASSIGN_OP 
@@ -3661,7 +3659,7 @@ const unsigned long vcParser::_tokenSet_14_data_[] = { 1618903040UL, 3UL, 0UL, 0
 // SIMPLE_IDENTIFIER LPAREN RPAREN OPEN DIV_OP ENTRY EXIT MERGE BRANCH 
 // JOIN FORK 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_14(_tokenSet_14_data_,4);
-const unsigned long vcParser::_tokenSet_15_data_[] = { 2673901824UL, 0UL, 0UL, 16UL, 0UL, 0UL, 0UL, 0UL };
+const unsigned long vcParser::_tokenSet_15_data_[] = { 2673901824UL, 0UL, 0UL, 4UL, 0UL, 0UL, 0UL, 0UL };
 // RBRACE SIMPLE_IDENTIFIER ENTRY EXIT PLACE TRANSITION SERIESBLOCK PARALLELBLOCK 
 // BRANCHBLOCK FORKBLOCK ATTRIBUTE 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_15(_tokenSet_15_data_,8);
@@ -3690,10 +3688,10 @@ const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_21(_tokenSet_21_data_
 const unsigned long vcParser::_tokenSet_22_data_[] = { 131072UL, 0UL, 125829120UL, 0UL, 0UL, 0UL, 0UL, 0UL };
 // LPAREN BINARYSTRING HEXSTRING MINUS "C" 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_22(_tokenSet_22_data_,8);
-const unsigned long vcParser::_tokenSet_23_data_[] = { 33026UL, 0UL, 2231552UL, 16UL, 0UL, 0UL, 0UL, 0UL };
+const unsigned long vcParser::_tokenSet_23_data_[] = { 33026UL, 0UL, 2231552UL, 4UL, 0UL, 0UL, 0UL, 0UL };
 // EOF RBRACE SIMPLE_IDENTIFIER INLINE IN OUT LBRACKET WIRE ATTRIBUTE 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_23(_tokenSet_23_data_,8);
-const unsigned long vcParser::_tokenSet_24_data_[] = { 1327442UL, 4294967288UL, 7951103UL, 16UL, 0UL, 0UL, 0UL, 0UL };
+const unsigned long vcParser::_tokenSet_24_data_[] = { 1327442UL, 4294967288UL, 7951103UL, 4UL, 0UL, 0UL, 0UL, 0UL };
 // EOF PIPE MEMORYSPACE RBRACE MODULE RPAREN DIV_OP PLUS_OP MINUS_OP MUL_OP 
 // SHL_OP SHR_OP UGT_OP UGE_OP EQ_OP ULT_OP ULE_OP NEQ_OP BITSEL_OP CONCAT_OP 
 // OR_OP AND_OP XOR_OP NOR_OP NAND_OP XNOR_OP SHRA_OP SGT_OP SGE_OP SLT_OP 
@@ -3702,7 +3700,7 @@ const unsigned long vcParser::_tokenSet_24_data_[] = { 1327442UL, 4294967288UL, 
 // EQUIVALENCE_OP CALL IOPORT LOAD STORE PHI CONSTANT INTERMEDIATE WIRE 
 // COMMA ATTRIBUTE 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_24(_tokenSet_24_data_,8);
-const unsigned long vcParser::_tokenSet_25_data_[] = { 1327442UL, 4294967288UL, 142168831UL, 16UL, 0UL, 0UL, 0UL, 0UL };
+const unsigned long vcParser::_tokenSet_25_data_[] = { 1327442UL, 4294967288UL, 142168831UL, 4UL, 0UL, 0UL, 0UL, 0UL };
 // EOF PIPE MEMORYSPACE RBRACE MODULE RPAREN DIV_OP PLUS_OP MINUS_OP MUL_OP 
 // SHL_OP SHR_OP UGT_OP UGE_OP EQ_OP ULT_OP ULE_OP NEQ_OP BITSEL_OP CONCAT_OP 
 // OR_OP AND_OP XOR_OP NOR_OP NAND_OP XNOR_OP SHRA_OP SGT_OP SGE_OP SLT_OP 
@@ -3711,5 +3709,8 @@ const unsigned long vcParser::_tokenSet_25_data_[] = { 1327442UL, 4294967288UL, 
 // EQUIVALENCE_OP CALL IOPORT LOAD STORE PHI CONSTANT INTERMEDIATE WIRE 
 // COMMA "M" ATTRIBUTE 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_25(_tokenSet_25_data_,8);
+const unsigned long vcParser::_tokenSet_26_data_[] = { 0UL, 0UL, 4026531840UL, 2UL, 0UL, 0UL, 0UL, 0UL };
+// INT FLOAT POINTER ARRAY RECORD 
+const ANTLR_USE_NAMESPACE(antlr)BitSet vcParser::_tokenSet_26(_tokenSet_26_data_,8);
 
 
