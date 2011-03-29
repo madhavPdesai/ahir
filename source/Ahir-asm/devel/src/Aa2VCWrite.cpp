@@ -31,7 +31,7 @@ void Write_VC_Constant_Declaration(string name, AaType* type, AaValue* value, os
 {
   Write_VC_Constant_Declaration(name,
 				type->Get_VC_Name(),
-				value->To_VC_String(),
+				value->To_VC_String() + "// " + value->To_C_String(),
 				ofile);
 }
 
@@ -98,7 +98,26 @@ void Write_VC_Unary_Operator(AaOperation op,
     }
   else
     {
-      op_name = ":=";
+      if(op == __NOP)
+	{
+	  // the assign operation is multifaceted!
+	  string src_kind, dest_kind;
+
+	  dest_kind = ((target_type->Is("AaFloatType")) ? "F" :
+		       (target_type->Is("AaIntType") ? "S" : "U"));
+
+	  src_kind = ((src_type->Is("AaFloatType")) ? "F" :
+		       (src_type->Is("AaIntType") ? "S" : "U"));
+
+	  if(dest_kind != src_kind || (dest_kind != "U" && dest_kind != "F"))
+	    op_name = "$" + dest_kind + ":=$" + src_kind;
+	  else
+	    op_name = ":=";
+	}
+      else
+	{
+	  assert(0);
+	}
     }
 
   ofile << op_name << " [" << inst_name << "] "
@@ -117,6 +136,7 @@ void Write_VC_Binary_Operator(AaOperation op,
 			      ostream& ofile)
 {
   string op_name;
+
   if(op == __OR) op_name = "|";
   else if(op == __AND) op_name = "&";
   else if(op == __XOR) op_name = "^";
@@ -126,7 +146,13 @@ void Write_VC_Binary_Operator(AaOperation op,
   else if(op == __SHL) op_name = "<<";
   //\todo: for SHR, if the types of src1,src2 are integer,
   //       then we use the signed version.
-  else if(op == __SHR) op_name = ">>";
+  else if(op == __SHR)
+    {
+      if(target_type->Is("AaIntType"))
+	op_name = "$S>>$S";
+      else
+	op_name = ">>";
+    }
   else if(op == __PLUS) op_name = "+";
   else if(op == __MINUS) op_name = "-";
   else if(op == __MUL) op_name = "*";
@@ -136,10 +162,34 @@ void Write_VC_Binary_Operator(AaOperation op,
   //
   //\todo: for comparisons, if the types of src1,src2 are integer,
   //       then we use the signed version.
-  else if(op == __LESS) op_name = "<";
-  else if(op == __LESSEQUAL) op_name = "<=";
-  else if(op == __GREATER) op_name = ">";
-  else if(op == __GREATEREQUAL) op_name = ">=";
+  else if(op == __LESS)
+    {
+      if(src1_type->Is("AaIntType") || src1_type->Is("AaFloatType"))
+	op_name = "$S<$S";
+      else
+	op_name = "<";
+    }
+  else if(op == __LESSEQUAL) 
+    {
+      if(src1_type->Is("AaIntType") || src1_type->Is("AaFloatType"))
+	op_name = "$S<=$S";
+      else 
+	op_name = "<=";
+    }
+  else if(op == __GREATER)
+    {
+      if(src1_type->Is("AaIntType") || src1_type->Is("AaFloatType"))
+	op_name = "$S>$S";
+      else 
+	op_name = ">";
+    }
+  else if(op == __GREATEREQUAL)
+    {
+      if(src1_type->Is("AaIntType") || src1_type->Is("AaFloatType"))
+	op_name = "$S>=$S";
+      else 
+	op_name = ">=";
+    }
   else if(op == __CONCAT) op_name = "&&";
   else if(op == __BITSEL) op_name = "[]";
   else

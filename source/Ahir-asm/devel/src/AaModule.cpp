@@ -277,7 +277,8 @@ void AaModule::Propagate_Constants()
 
 void AaModule::Write_VC_Model(ostream& ofile)
 {
-  this->Propagate_Constants();
+
+  //  this->Propagate_Constants();
 
   ofile << "$module [" << this->Get_Label() << "] {" << endl;
   if(_input_args.size() > 0)

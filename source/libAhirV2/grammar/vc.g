@@ -14,6 +14,8 @@ header "post_include_hpp" {
 #include <vcHeader.hpp>
 #include <antlr/RecognitionException.hpp>
 	ANTLR_USING_NAMESPACE(antlr)
+#define NOT_FOUND__(str, w, wid,token_id)      if(w == NULL)\
+         vcSystem::Error(string("did not find ") + str + " " +  wid + ": line " + IntToStr(token_id->getLine()));
 }
 
 options {
@@ -132,7 +134,7 @@ vc_Link[vcModule* m]
 :  dpeid:SIMPLE_IDENTIFIER 
        {
           dpe = m->Get_Data_Path()->Find_DPE(dpeid->getText()); 
-          assert(dpe != NULL);
+          NOT_FOUND__("datapath-element",dpe,dpeid->getText(),dpeid)
        }
        EQUIVALENT
         LPAREN  
@@ -153,9 +155,7 @@ vc_Link[vcModule* m]
                                     tid += "/";
                                 tid += ref_vec[idx];
                             }
-
-                        vcSystem::Error("could not find transition " + tid + ": line " +
-                                        IntToStr(dpeid->getLine()));
+                        NOT_FOUND__("transition",t,tid,dpeid)
                     }
                  ref_vec.clear();
 
@@ -181,8 +181,7 @@ vc_Link[vcModule* m]
                                 tid += ref_vec[idx];
                             }
 
-                        vcSystem::Error("could not find transition " + tid + ": line " +
-                                        IntToStr(dpeid->getLine()));
+                        NOT_FOUND__("transition",t,tid,dpeid)
                     }
                  ref_vec.clear();
 
@@ -444,11 +443,11 @@ vc_BinaryOperator_Instantiation[vcDataPath* dp]
   (div_id:DIV_OP {op_id = div_id->getText();}) |
   (shl_id:SHL_OP  {op_id = shl_id->getText();}) |
   (shr_id:SHR_OP  {op_id = shr_id->getText();}) |
-  (gt_id:GT_OP  {op_id = gt_id->getText();}) |
-  (ge_id:GE_OP  {op_id = ge_id->getText();}) |
+  (gt_id:UGT_OP  {op_id = gt_id->getText();}) |
+  (ge_id:UGE_OP  {op_id = ge_id->getText();}) |
   (eq_id:EQ_OP  {op_id = eq_id->getText();}) |
-  (lt_id:LT_OP  {op_id = lt_id->getText();}) |
-  (le_id:LE_OP  {op_id = le_id->getText();}) |
+  (lt_id:ULT_OP  {op_id = lt_id->getText();}) |
+  (le_id:ULE_OP  {op_id = le_id->getText();}) |
   (neq_id:NEQ_OP  {op_id = neq_id->getText();}) |
   (bitsel_id:BITSEL_OP  {op_id = bitsel_id->getText();}) |
   (concat_id:CONCAT_OP  {op_id = concat_id->getText();}) |
@@ -457,13 +456,31 @@ vc_BinaryOperator_Instantiation[vcDataPath* dp]
   (xor_id:XOR_OP  {op_id = xor_id->getText();}) |
   (nor_id:NOR_OP  {op_id = nor_id->getText();}) |
   (nand_id:NAND_OP  {op_id = nand_id->getText();}) |
-  (xnor_id:XNOR_OP  {op_id = xnor_id->getText();})) id = vc_Label 
- LPAREN 
-    wid = vc_Identifier {x = dp->Find_Wire(wid); assert(x != NULL);}
-    wid = vc_Identifier {y = dp->Find_Wire(wid); assert(x != NULL);}
+  (xnor_id:XNOR_OP  {op_id = xnor_id->getText();}) |
+  (shra_id:SHRA_OP  {op_id = shra_id->getText();}) |
+  (sgt_id:SGT_OP  {op_id = sgt_id->getText();}) |
+  (sge_id:SGE_OP  {op_id = sge_id->getText();}) |
+  (slt_id:SLT_OP  {op_id = slt_id->getText();}) |
+  (sle_id:SLE_OP  {op_id = sle_id->getText();})) id = vc_Label 
+ lpid: LPAREN 
+    wid = vc_Identifier 
+     {
+       x = dp->Find_Wire(wid);
+       NOT_FOUND__("wire",x,wid,lpid)
+      }
+    wid = vc_Identifier 
+     {
+       y = dp->Find_Wire(wid); 
+       NOT_FOUND__("wire", y,wid,lpid)
+
+     }
  RPAREN
- LPAREN
-    wid = vc_Identifier {z = dp->Find_Wire(wid); assert(z != NULL);}
+ lpid2: LPAREN
+    wid = vc_Identifier 
+     {
+       z = dp->Find_Wire(wid);
+       NOT_FOUND__("wire", z,wid,lpid2)
+     }
  RPAREN
  { new_op = new vcBinarySplitOperator(id,op_id,x,y,z); dp->Add_Split_Operator(new_op);}   
 ;
@@ -483,15 +500,31 @@ vc_UnaryOperator_Instantiation[vcDataPath* dp]
   vcWire* z = NULL;
 }
 :
-  (not_id: NOT_OP {op_id = not_id->getText();})
+
+  // losts of unary assignment forms are possible!
+  ((not_id: NOT_OP {op_id = not_id->getText();}) |
+   (ss_assign_id: StoS_ASSIGN_OP {op_id = ss_assign_id->getText();}) |
+   (su_assign_id: StoU_ASSIGN_OP {op_id = su_assign_id->getText();}) |
+   (us_assign_id: UtoS_ASSIGN_OP {op_id = us_assign_id->getText();}) |
+   (fs_assign_id: FtoS_ASSIGN_OP {op_id = fs_assign_id->getText();}) |
+   (fu_assign_id: FtoU_ASSIGN_OP {op_id = fu_assign_id->getText();}) |
+   (sf_assign_id: StoF_ASSIGN_OP {op_id = sf_assign_id->getText();}) |
+   (uf_assign_id: UtoF_ASSIGN_OP {op_id = uf_assign_id->getText();}) )
     id = vc_Label 
- LPAREN 
-    wid = vc_Identifier {x = dp->Find_Wire(wid); assert(x != NULL);}
+ lpid: LPAREN 
+    wid = vc_Identifier {
+      x = dp->Find_Wire(wid); 
+      NOT_FOUND__("wire",x,wid,lpid)
+     }
  RPAREN
- LPAREN
-    wid = vc_Identifier {z = dp->Find_Wire(wid); assert(z != NULL);}
+ lpid2: LPAREN
+    wid = vc_Identifier 
+    {
+       z = dp->Find_Wire(wid); 
+       NOT_FOUND__("wire", z,wid,lpid2)
+    }
  RPAREN
- { new_op = new vcUnarySplitOperator(id,op_id,x,z); dp->Add_Split_Operator(new_op);}
+    { new_op = new vcUnarySplitOperator(id,op_id,x,z); dp->Add_Split_Operator(new_op);}
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
@@ -506,9 +539,10 @@ vc_Branch_Instantiation[vcDataPath* dp]
   vcWire* x;
 }
 :
- BRANCH_OP id = vc_Label
+ br_id: BRANCH_OP id = vc_Label
  LPAREN 
-    (wid = vc_Identifier {x = dp->Find_Wire(wid); assert(x != NULL); wires.push_back(x);})+
+    (wid = vc_Identifier {x = dp->Find_Wire(wid); NOT_FOUND__("wire",x,wid,br_id)
+                          wires.push_back(x);})+
  RPAREN
  { new_op = new vcBranch(id,wires); dp->Add_Branch(new_op);}   
 ;
@@ -530,14 +564,14 @@ vc_Select_Instantiation[vcDataPath* dp]
   vcValue* val = NULL;
 }
 :
- SELECT_OP id = vc_Label
+ sel_id:SELECT_OP id = vc_Label
  LPAREN 
-    wid = vc_Identifier {sel = dp->Find_Wire(wid); assert(sel != NULL);}
-    wid = vc_Identifier {x = dp->Find_Wire(wid); assert(x != NULL);}
-    wid = vc_Identifier {y = dp->Find_Wire(wid); assert(x != NULL);}
+    wid = vc_Identifier {sel = dp->Find_Wire(wid); NOT_FOUND__("wire",sel,wid,sel_id) }
+    wid = vc_Identifier {x = dp->Find_Wire(wid); NOT_FOUND__("wire",x,wid,sel_id) }
+    wid = vc_Identifier {y = dp->Find_Wire(wid); NOT_FOUND__("wire",y,wid,sel_id) }
  RPAREN
  LPAREN
-    wid = vc_Identifier {z = dp->Find_Wire(wid); assert(z != NULL);}
+    wid = vc_Identifier {z = dp->Find_Wire(wid); NOT_FOUND__("wire",z,wid,sel_id) }
  RPAREN
  { new_op = new vcSelect(id,sel,x,y,z); dp->Add_Select(new_op);}   
 ;
@@ -555,8 +589,12 @@ vc_Register_Instantiation[vcDataPath* dp]
   string id;
   string din;
   string dout;
-}: ASSIGN_OP id = vc_Label LPAREN din = vc_Identifier { x = dp->Find_Wire(din); assert(x != NULL);} RPAREN
-                           LPAREN dout = vc_Identifier { y = dp->Find_Wire(dout); assert(y != NULL);} RPAREN
+}: as_id: ASSIGN_OP id = vc_Label LPAREN din = vc_Identifier { x = dp->Find_Wire(din); 
+                               NOT_FOUND__("wire",x,din,as_id) }
+                          RPAREN
+                          LPAREN dout = vc_Identifier { y = dp->Find_Wire(dout); 
+                               NOT_FOUND__("wire",y,dout,as_id) }
+                          RPAREN
    {  
       new_reg = new vcRegister(id, x, y); dp->Add_Register(new_reg);
    }
@@ -577,11 +615,21 @@ vc_Equivalence_Instantiation[vcDataPath* dp]
     string wid;
 }
     :
-        EQUIVALENCE_OP id = vc_Label LPAREN
-        (wid = vc_Identifier { w = dp->Find_Wire(wid); assert(w); inwires.push_back(w);})+
+        eq_id: EQUIVALENCE_OP id = vc_Label LPAREN
+        (wid = vc_Identifier 
+         { 
+           w = dp->Find_Wire(wid); 
+           NOT_FOUND__("wire",w,wid,eq_id) 
+           inwires.push_back(w);
+         })+
         RPAREN
         LPAREN
-        (wid = vc_Identifier { w = dp->Find_Wire(wid); assert(w); outwires.push_back(w);})+
+        (wid = vc_Identifier 
+         { 
+            w = dp->Find_Wire(wid); 
+            NOT_FOUND__("wire",w,wid,eq_id) 
+            outwires.push_back(w);
+         })+
         RPAREN 
         {
             nm = new vcEquivalence(id,inwires,outwires);
@@ -607,8 +655,12 @@ vc_Call_Instantiation[vcSystem* sys, vcDataPath* dp]
 }
 :
   CALL (INLINE {inline_flag = true;})? id = vc_Label MODULE mid=vc_Identifier {m = sys->Find_Module(mid); assert(m != NULL);}
-       LPAREN (mid = vc_Identifier {vcWire* w = dp->Find_Wire(mid); assert(w != NULL); inwires.push_back(w);})* RPAREN
-       LPAREN (mid = vc_Identifier {vcWire* w = dp->Find_Wire(mid); assert(w != NULL); outwires.push_back(w);})* RPAREN
+       lpid1: LPAREN (mid = vc_Identifier {vcWire* w = dp->Find_Wire(mid); 
+                                    NOT_FOUND__("wire",w,mid,lpid1)
+                                    inwires.push_back(w);})* RPAREN
+       lpid2: LPAREN (mid = vc_Identifier {vcWire* w = dp->Find_Wire(mid); 
+                                    NOT_FOUND__("wire",w,mid,lpid2)
+                                    outwires.push_back(w);})* RPAREN
        { nc = new vcCall(id, m, inwires, outwires, inline_flag); dp->Add_Call(nc);} 
 ;
 
@@ -621,27 +673,25 @@ vc_IOPort_Instantiation[vcDataPath* dp]
  vcWire* w;
  bool in_flag = false;
 }
-: IOPORT (( IN {in_flag = true;})  | OUT)  id = vc_Label LPAREN in_id = vc_Identifier RPAREN 
-    LPAREN out_id = vc_Identifier RPAREN
+: ipid: IOPORT (( IN {in_flag = true;})  | OUT)  id = vc_Label LPAREN in_id = vc_Identifier RPAREN 
+    lpid: LPAREN out_id = vc_Identifier RPAREN
        {
           if(in_flag)
           {
             w = dp->Find_Wire(out_id);
-            if(w == NULL)
-               vcSystem::Error("could not find wire named " + out_id);
-
+            NOT_FOUND__("wire",w,out_id,lpid)
             pipe_id = in_id;
           }
           else
           {
             w = dp->Find_Wire(in_id);
-            if(w == NULL)
-               vcSystem::Error("could not find wire named " + in_id);
- 
+            NOT_FOUND__("wire",w,in_id,ipid);
             pipe_id = out_id;
           }
 
-          assert(w != NULL);
+
+  
+
           if(w->Get_Type()->Size() != dp->Get_Parent()->Get_Parent()->Get_Pipe_Width(pipe_id))
              vcSystem::Error("Pipe " + pipe_id + " width does not match wire width on IOport " + id);
 
@@ -680,13 +730,17 @@ vc_Load_Instantiation[vcSystem* sys, vcDataPath* dp]
    vcMemorySpace* ms;
    bool is_load = false;
 }
-:  LOAD id = vc_Label FROM (m_id = vc_Identifier DIV_OP)? ms_id = vc_Identifier 
+:  ldid: LOAD id = vc_Label FROM (m_id = vc_Identifier DIV_OP)? ms_id = vc_Identifier 
      {
        ms = sys->Find_Memory_Space(m_id,ms_id); 
-       assert(ms != NULL);
+       NOT_FOUND__("memory-space", ms, (m_id+"/"+ms_id),ldid)
      }
-   LPAREN    wid = vc_Identifier {addr = dp->Find_Wire(wid); assert(addr != NULL);} RPAREN
-   LPAREN    wid = vc_Identifier {data = dp->Find_Wire(wid); assert(data != NULL);} RPAREN
+   LPAREN    wid = vc_Identifier {addr = dp->Find_Wire(wid); 
+                       NOT_FOUND__("wire",addr,wid,ldid);
+              } RPAREN
+   LPAREN    wid = vc_Identifier {data = dp->Find_Wire(wid); 
+                       NOT_FOUND__("wire",data,wid,ldid);
+              } RPAREN
    {
          vcLoad* nl = new vcLoad(id, ms, addr, data);
          dp->Add_Load(nl);
@@ -707,13 +761,17 @@ vc_Store_Instantiation[vcSystem* sys, vcDataPath* dp]
    vcMemorySpace* ms;
    bool is_load = false;
 }
-:  STORE id = vc_Label TO (m_id = vc_Identifier DIV_OP)? ms_id = vc_Identifier 
+:  st_id: STORE id = vc_Label TO (m_id = vc_Identifier DIV_OP)? ms_id = vc_Identifier 
      {
        ms = sys->Find_Memory_Space(m_id,ms_id); 
-       assert(ms != NULL);
+       NOT_FOUND__("memory-space", ms, (m_id+"/"+ms_id),st_id)
      }
-   LPAREN    wid = vc_Identifier {addr = dp->Find_Wire(wid); assert(addr != NULL);} 
-             wid = vc_Identifier {data = dp->Find_Wire(wid); assert(data != NULL);} RPAREN
+   LPAREN    wid = vc_Identifier {addr = dp->Find_Wire(wid); 
+                 NOT_FOUND__("wire",addr,wid,st_id);
+              } 
+             wid = vc_Identifier {data = dp->Find_Wire(wid); 
+                 NOT_FOUND__("data",addr,wid,st_id);              
+              } RPAREN
    {
          vcStore* ns = new vcStore(id, ms, addr, data);
          dp->Add_Store(ns);
@@ -731,12 +789,14 @@ vc_Phi_Instantiation[vcDataPath* dp]
   vcWire* outwire;
   vcPhi* phi;
   vector<vcWire*> inwires;
-}: PHI lbl = vc_Label LPAREN ( id = vc_Identifier { tw = dp->Find_Wire(id); assert(tw != NULL); inwires.push_back(tw);})+ RPAREN
+}: p_id:PHI lbl = vc_Label LPAREN ( id = vc_Identifier { tw = dp->Find_Wire(id); 
+         NOT_FOUND__("wire",tw,id,p_id);
+         inwires.push_back(tw);})+ RPAREN
    LPAREN
    id = vc_Identifier 
     { 
          outwire = dp->Find_Wire(id); 
-         assert(outwire != NULL); 
+         NOT_FOUND__("wire",outwire,id,p_id);
          phi = new vcPhi(lbl,inwires, outwire); 
          dp->Add_Phi(phi);
     }
@@ -1102,17 +1162,18 @@ MUL_OP           : "*";
 DIV_OP           : '/'; // note: character literal
 SHL_OP           : "<<";
 SHR_OP           : ">>";
-GT_OP            : ">";
-GE_OP            : ">=";
+SGT_OP           : "$S>$S";
+SGE_OP           : "$S>=$S";
 EQ_OP            : "==";
-LT_OP            : "<";
-LE_OP            : "<=";
-UGT_OP           : "|>|";
-UGE_OP           : "|>=|";
-ULT_OP           : "|<|";
-ULE_OP           : "|<=|";
+SLT_OP           : "$S<$S";
+SLE_OP           : "$S<=$S";
+UGT_OP           : ">";
+UGE_OP           : ">=";
+ULT_OP           : "<";
+ULE_OP           : "<=";
 NEQ_OP           : "!=";
-UNORDERED_OP     : "><";
+ORDERED_OP       : "</=/>";
+UNORDERED_OP     : "!</=/>";
 BITSEL_OP        : "[]";
 CONCAT_OP        : "&&";
 BRANCH_OP        : "==0?";
@@ -1126,9 +1187,28 @@ NOR_OP           : "~|";
 NAND_OP          : "~&";
 XNOR_OP          : "~^";
 
+
 EQUIVALENCE_OP    : "&/";
 
 OPEN             : "$open";
+
+// signed version of SHR.
+// lhs and rhs are both considered
+// signed numbers.
+SHRA_OP          : ">>$S";
+
+// signed assigns ... there
+// are many forms..
+UtoS_ASSIGN_OP  : "$S:=$U"; 
+StoS_ASSIGN_OP  : "$S:=$S"; 
+StoU_ASSIGN_OP  : "$U:=$S";
+// UtoU is the default..
+
+// FP <-> int conversions.
+FtoS_ASSIGN_OP : "$S:=$F";
+FtoU_ASSIGN_OP : "$U:=$F";
+StoF_ASSIGN_OP : "$F:=$S";
+UtoF_ASSIGN_OP : "$F:=$U";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

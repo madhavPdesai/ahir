@@ -1,23 +1,25 @@
-// pipe-declarations for block %sum_mod
+// pipe-declarations for block %shift_and_add_multiplier
 // file ConcatBitsel.aa, line 2
-// pipe-declarations for block %sum_mod%mainloop
+// pipe-declarations for block %shift_and_add_multiplier%mainloop
 // file ConcatBitsel.aa, line 10
-// pipe-declarations for block %sum_mod%mainloop%
+// pipe-declarations for block %shift_and_add_multiplier%mainloop%
 // file ConcatBitsel.aa, line 12
-// pipe-declarations for block %sum_mod%mainloop%nxt
+// pipe-declarations for block %shift_and_add_multiplier%mainloop%nxt
 // file ConcatBitsel.aa, line 19
-// pipe-declarations for block %sum_mod%mainloop%nxt%vb
+// pipe-declarations for block %shift_and_add_multiplier%mainloop%nxt%vb
 // file ConcatBitsel.aa, line 21
-// pipe-declarations for block %sum_mod%mainloop%nxt%ub
+// pipe-declarations for block %shift_and_add_multiplier%mainloop%nxt%ub
 // file ConcatBitsel.aa, line 25
-$module [sum_mod] 
+// pipe-declarations for block %test_bench
+// file ConcatBitsel.aa, line 40
+$module [shift_and_add_multiplier] 
 {
   $in a:$int<10> b:$int<10>
   $out aXb:$int<20>
   $CP 
   {
     // begin control-path 
-    // control-path for branch block %sum_mod%mainloop
+    // control-path for branch block %shift_and_add_multiplier%mainloop
     // file ConcatBitsel.aa, line 10
     <>[branch_block_stmt_21] // Branch Block file ConcatBitsel.aa, line 10
     {
@@ -26,67 +28,67 @@ $module [sum_mod]
       $P [branch_block_stmt_21__exit__]
       branch_block_stmt_21__exit__ |-> ($exit)
       $P [merge_stmt_22__exit__] 
-      $P [parallel_block_stmt_40__entry__] 
-      $P [parallel_block_stmt_40__exit__] 
-      $P [if_stmt_108__entry__] 
-      ||[parallel_block_stmt_40] // parallel block file ConcatBitsel.aa, line 19
+      $P [parallel_block_stmt_42__entry__] 
+      $P [parallel_block_stmt_42__exit__] 
+      $P [if_stmt_105__entry__] 
+      ||[parallel_block_stmt_42] // parallel block file ConcatBitsel.aa, line 19
       {
-        ;;[series_block_stmt_41] // series block file ConcatBitsel.aa, line 21
+        ;;[series_block_stmt_43] // series block file ConcatBitsel.aa, line 21
         {
-          // 				nv := (((( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 ) && v_in) >> 1 ) // target:  $uint<11>, mem spaces: source -> none, target -> none
+          // 				nv := (((( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 ) && v_in) >> 1 )
           // file ConcatBitsel.aa, line 22
-          ;;[assign_stmt_65] // file ConcatBitsel.aa, line 22
+          ;;[assign_stmt_67] // file ConcatBitsel.aa, line 22
           {
             // (((( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 ) && v_in) >> 1 )
-            ;;[binary_64] 
+            ;;[binary_66] 
             {
               // binary expression 
-              ||[binary_64_inputs] 
+              ||[binary_66_inputs] 
               {
                 // ((( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 ) && v_in)
-                ;;[binary_62] 
+                ;;[binary_64] 
                 {
                   // binary expression 
-                  ||[binary_62_inputs] 
+                  ||[binary_64_inputs] 
                   {
                     // (( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 )
-                    ;;[binary_60] 
+                    ;;[binary_62] 
                     {
                       // binary expression 
-                      ||[binary_60_inputs] 
+                      ||[binary_62_inputs] 
                       {
                         // ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) ) 
-                        ;;[ternary_58] 
+                        ;;[ternary_60] 
                         {
                           // ternary expression: 
-                          ||[ternary_58_inputs] 
+                          ||[ternary_60_inputs] 
                           {
                             // (a_0 [] 0 )
-                            ;;[binary_45] 
+                            ;;[binary_47] 
                             {
                               // binary expression 
-                              ||[binary_45_inputs] 
+                              ||[binary_47_inputs] 
                               {
                               }
                               $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
                             }
                             // (((u_in + b) && z1) >> 1 )
-                            ;;[binary_52] 
+                            ;;[binary_54] 
                             {
                               // binary expression 
-                              ||[binary_52_inputs] 
+                              ||[binary_54_inputs] 
                               {
                                 // ((u_in + b) && z1)
-                                ;;[binary_50] 
+                                ;;[binary_52] 
                                 {
                                   // binary expression 
-                                  ||[binary_50_inputs] 
+                                  ||[binary_52_inputs] 
                                   {
                                     // (u_in + b)
-                                    ;;[binary_48] 
+                                    ;;[binary_50] 
                                     {
                                       // binary expression 
-                                      ||[binary_48_inputs] 
+                                      ||[binary_50_inputs] 
                                       {
                                       }
                                       $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
@@ -98,16 +100,16 @@ $module [sum_mod]
                               $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
                             }
                             // ((u_in && z1) >> 1 )
-                            ;;[binary_57] 
+                            ;;[binary_59] 
                             {
                               // binary expression 
-                              ||[binary_57_inputs] 
+                              ||[binary_59_inputs] 
                               {
                                 // (u_in && z1)
-                                ;;[binary_55] 
+                                ;;[binary_57] 
                                 {
                                   // binary expression 
-                                  ||[binary_55_inputs] 
+                                  ||[binary_57_inputs] 
                                   {
                                   }
                                   $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
@@ -128,59 +130,59 @@ $module [sum_mod]
               $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
             }
           }
-          // end assignment statement assign_stmt_65
-          // 				v := ( $cast ($uint<10>) nv ) // target:  $uint<10>, mem spaces: source -> none, target -> none
+          // end assignment statement assign_stmt_67
+          // 				v := ( $cast ($uint<10>) nv )
           // file ConcatBitsel.aa, line 23
-          ;;[assign_stmt_69] // file ConcatBitsel.aa, line 23
+          ;;[assign_stmt_71] // file ConcatBitsel.aa, line 23
           {
             // ( $cast ($uint<10>) nv )
-            ;;[type_cast_68] 
+            ;;[type_cast_70] 
             {
               // type-cast expression
               $T [req] $T [ack] //  type-conversion.. 
             }
           }
-          // end assignment statement assign_stmt_69
+          // end assignment statement assign_stmt_71
         }
-        // end series block series_block_stmt_41
-        ;;[series_block_stmt_71] // series block file ConcatBitsel.aa, line 25
+        // end series block series_block_stmt_43
+        ;;[series_block_stmt_73] // series block file ConcatBitsel.aa, line 25
         {
-          // 				nu := ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  // target:  $uint<11>, mem spaces: source -> none, target -> none
+          // 				nu := ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) ) 
           // file ConcatBitsel.aa, line 26
-          ;;[assign_stmt_89] // file ConcatBitsel.aa, line 26
+          ;;[assign_stmt_91] // file ConcatBitsel.aa, line 26
           {
             // ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) ) 
-            ;;[ternary_88] 
+            ;;[ternary_90] 
             {
               // ternary expression: 
-              ||[ternary_88_inputs] 
+              ||[ternary_90_inputs] 
               {
                 // (a_0 [] 0 )
-                ;;[binary_75] 
+                ;;[binary_77] 
                 {
                   // binary expression 
-                  ||[binary_75_inputs] 
+                  ||[binary_77_inputs] 
                   {
                   }
                   $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
                 }
                 // (((u_in + b) && z1) >> 1 )
-                ;;[binary_82] 
+                ;;[binary_84] 
                 {
                   // binary expression 
-                  ||[binary_82_inputs] 
+                  ||[binary_84_inputs] 
                   {
                     // ((u_in + b) && z1)
-                    ;;[binary_80] 
+                    ;;[binary_82] 
                     {
                       // binary expression 
-                      ||[binary_80_inputs] 
+                      ||[binary_82_inputs] 
                       {
                         // (u_in + b)
-                        ;;[binary_78] 
+                        ;;[binary_80] 
                         {
                           // binary expression 
-                          ||[binary_78_inputs] 
+                          ||[binary_80_inputs] 
                           {
                           }
                           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
@@ -192,16 +194,16 @@ $module [sum_mod]
                   $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
                 }
                 // ((u_in && z1) >> 1 )
-                ;;[binary_87] 
+                ;;[binary_89] 
                 {
                   // binary expression 
-                  ||[binary_87_inputs] 
+                  ||[binary_89_inputs] 
                   {
                     // (u_in && z1)
-                    ;;[binary_85] 
+                    ;;[binary_87] 
                     {
                       // binary expression 
-                      ||[binary_85_inputs] 
+                      ||[binary_87_inputs] 
                       {
                       }
                       $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
@@ -213,20 +215,20 @@ $module [sum_mod]
               $T [req] $T [ack] // select req/ack
             }
           }
-          // end assignment statement assign_stmt_89
-          // 				u := ( $cast ($uint<10>) (nu >> 1 ) ) // target:  $uint<10>, mem spaces: source -> none, target -> none
+          // end assignment statement assign_stmt_91
+          // 				u := ( $cast ($uint<10>) (nu >> 1 ) )
           // file ConcatBitsel.aa, line 27
-          ;;[assign_stmt_95] // file ConcatBitsel.aa, line 27
+          ;;[assign_stmt_97] // file ConcatBitsel.aa, line 27
           {
             // ( $cast ($uint<10>) (nu >> 1 ) )
-            ;;[type_cast_94] 
+            ;;[type_cast_96] 
             {
               // type-cast expression
               // (nu >> 1 )
-              ;;[binary_93] 
+              ;;[binary_95] 
               {
                 // binary expression 
-                ||[binary_93_inputs] 
+                ||[binary_95_inputs] 
                 {
                 }
                 $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
@@ -234,101 +236,136 @@ $module [sum_mod]
               $T [req] $T [ack] //  type-conversion.. 
             }
           }
-          // end assignment statement assign_stmt_95
+          // end assignment statement assign_stmt_97
         }
-        // end series block series_block_stmt_71
-        // 			ctr := (../:ctr >> 1 ) // target:  $uint<11>, mem spaces: source -> none, target -> none
+        // end series block series_block_stmt_73
+        // 			ctr := (../:ctr >> 1 )
         // file ConcatBitsel.aa, line 29
-        ;;[assign_stmt_101] // file ConcatBitsel.aa, line 29
+        ;;[assign_stmt_103] // file ConcatBitsel.aa, line 29
         {
           // (../:ctr >> 1 )
-          ;;[binary_100] 
+          ;;[binary_102] 
           {
             // binary expression 
-            ||[binary_100_inputs] 
+            ||[binary_102_inputs] 
             {
             }
             $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
           }
         }
-        // end assignment statement assign_stmt_101
-        // 			a_1 := (a_0 >> 1 ) // target:  $uint<10>, mem spaces: source -> none, target -> none
-        // file ConcatBitsel.aa, line 30
-        ;;[assign_stmt_106] // file ConcatBitsel.aa, line 30
-        {
-          // (a_0 >> 1 )
-          ;;[binary_105] 
-          {
-            // binary expression 
-            ||[binary_105_inputs] 
-            {
-            }
-            $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
-          }
-        }
-        // end assignment statement assign_stmt_106
+        // end assignment statement assign_stmt_103
       }
-      // end parallel block parallel_block_stmt_40
-      parallel_block_stmt_40__entry__ |-> (parallel_block_stmt_40)
-      parallel_block_stmt_40__exit__ <-| (parallel_block_stmt_40)
+      // end parallel block parallel_block_stmt_42
+      parallel_block_stmt_42__entry__ |-> (parallel_block_stmt_42)
+      parallel_block_stmt_42__exit__ <-| (parallel_block_stmt_42)
       // if-statement  
       // file ConcatBitsel.aa, line 34
-      ;;[if_stmt_108_eval_test] 
+      ;;[if_stmt_105_eval_test] 
       {
         // test expression evaluate and trigger branch 
         // (%nxt:ctr [] 0 )
-        ;;[binary_111] 
+        ;;[binary_108] 
         {
           // binary expression 
-          ||[binary_111_inputs] 
+          ||[binary_108_inputs] 
           {
           }
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         $T [branch_req] 
       }
-      if_stmt_108__entry__ |-> (if_stmt_108_eval_test)
-      $P [binary_111_place]
-      binary_111_place <-| (if_stmt_108_eval_test)
-      ;;[if_stmt_108_if_link] 
+      if_stmt_105__entry__ |-> (if_stmt_105_eval_test)
+      $P [binary_108_place]
+      binary_108_place <-| (if_stmt_105_eval_test)
+      ;;[if_stmt_105_if_link] 
       {
         $T [if_choice_transition] 
       }
-      ;;[if_stmt_108_else_link] 
+      ;;[if_stmt_105_else_link] 
       {
         $T [else_choice_transition] 
       }
-      binary_111_place |-> (if_stmt_108_if_link if_stmt_108_else_link)
-      $P [stmt_112__entry__] 
-      $P [stmt_112__exit__] 
+      binary_108_place |-> (if_stmt_105_if_link if_stmt_105_else_link)
+      $P [stmt_109__entry__] 
+      $P [stmt_109__exit__] 
       // 			$null
-      // file ConcatBitsel.aa, line 0
-      ;;[stmt_112] 
+      // file ConcatBitsel.aa, line 10309976
+      ;;[stmt_109] 
       {
       }
-      stmt_112__entry__ |-> (stmt_112)
-      stmt_112__exit__ <-| (stmt_112)
-      stmt_112__entry__ <-| (if_stmt_108_if_link)
-      stmt_112__exit__ |-> (branch_block_stmt_21__exit__)
+      stmt_109__entry__ |-> (stmt_109)
+      stmt_109__exit__ <-| (stmt_109)
+      stmt_109__entry__ <-| (if_stmt_105_if_link)
+      stmt_109__exit__ |-> (branch_block_stmt_21__exit__)
       $P [loopback]
-      loopback <-| (if_stmt_108_else_link)
+      loopback <-| (if_stmt_105_else_link)
       // control-path for merge  
       // file ConcatBitsel.aa, line 12
       //---------------------   merge statement file ConcatBitsel.aa, line 12  --------------------------
       ||[branch_block_stmt_21__entry___PhiReq] 
       {
-        $T [phi_stmt_23_req] 
-        $T [phi_stmt_27_req] 
-        $T [phi_stmt_31_req] 
-        $T [phi_stmt_35_req] 
+        ;;[phi_stmt_23] 
+        {
+          // sources for 			$phi u_in := 			  0  $on $entry			  %nxt%ub:u $on loopback // type of target is $uint<10>
+          $T [phi_stmt_23_req] 
+        }
+        ;;[phi_stmt_27] 
+        {
+          // sources for 			$phi v_in := 			  0  $on $entry			  %nxt%vb:v $on loopback // type of target is $uint<10>
+          $T [phi_stmt_27_req] 
+        }
+        ;;[phi_stmt_31] 
+        {
+          // sources for 			$phi a_0 := 			  a $on $entry			  (a_0 >> 1 ) $on loopback // type of target is $uint<10>
+          // (a_0 >> 1 )
+          ;;[binary_36] 
+          {
+            // binary expression 
+            ||[binary_36_inputs] 
+            {
+            }
+            $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+          }
+          $T [phi_stmt_31_req] 
+        }
+        ;;[phi_stmt_37] 
+        {
+          // sources for 			$phi ctr := 			  count $on $entry			  %nxt:ctr $on loopback // type of target is $uint<11>
+          $T [phi_stmt_37_req] 
+        }
       }
       branch_block_stmt_21__entry__ |-> (branch_block_stmt_21__entry___PhiReq)
       ||[loopback_PhiReq] 
       {
-        $T [phi_stmt_23_req] 
-        $T [phi_stmt_27_req] 
-        $T [phi_stmt_31_req] 
-        $T [phi_stmt_35_req] 
+        ;;[phi_stmt_23] 
+        {
+          // sources for 			$phi u_in := 			  0  $on $entry			  %nxt%ub:u $on loopback // type of target is $uint<10>
+          $T [phi_stmt_23_req] 
+        }
+        ;;[phi_stmt_27] 
+        {
+          // sources for 			$phi v_in := 			  0  $on $entry			  %nxt%vb:v $on loopback // type of target is $uint<10>
+          $T [phi_stmt_27_req] 
+        }
+        ;;[phi_stmt_31] 
+        {
+          // sources for 			$phi a_0 := 			  a $on $entry			  (a_0 >> 1 ) $on loopback // type of target is $uint<10>
+          // (a_0 >> 1 )
+          ;;[binary_36] 
+          {
+            // binary expression 
+            ||[binary_36_inputs] 
+            {
+            }
+            $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+          }
+          $T [phi_stmt_31_req] 
+        }
+        ;;[phi_stmt_37] 
+        {
+          // sources for 			$phi ctr := 			  count $on $entry			  %nxt:ctr $on loopback // type of target is $uint<11>
+          $T [phi_stmt_37_req] 
+        }
       }
       loopback |-> (loopback_PhiReq)
       $P [merge_stmt_22_PhiReqMerge] 
@@ -338,52 +375,52 @@ $module [sum_mod]
         $T [phi_stmt_23_ack] 
         $T [phi_stmt_27_ack] 
         $T [phi_stmt_31_ack] 
-        $T [phi_stmt_35_ack] 
+        $T [phi_stmt_37_ack] 
       }
       merge_stmt_22_PhiReqMerge |-> (merge_stmt_22_PhiAck)
       merge_stmt_22__exit__ <-| (merge_stmt_22_PhiAck)
       //---------------------  end of merge statement file ConcatBitsel.aa, line 12  --------------------------
-      parallel_block_stmt_40__entry__ <-| (merge_stmt_22__exit__)
-      if_stmt_108__entry__ <-| (parallel_block_stmt_40__exit__)
+      parallel_block_stmt_42__entry__ <-| (merge_stmt_22__exit__)
+      if_stmt_105__entry__ <-| (parallel_block_stmt_42__exit__)
     }
-    // 	aXb := (%mainloop%nxt%ub:u && %mainloop%nxt%vb:v) // target:  $uint<20>, mem spaces: source -> none, target -> none
+    // 	aXb := (%mainloop%nxt%ub:u && %mainloop%nxt%vb:v)
     // file ConcatBitsel.aa, line 36
-    ;;[assign_stmt_121] // file ConcatBitsel.aa, line 36
+    ;;[assign_stmt_118] // file ConcatBitsel.aa, line 36
     {
       // (%mainloop%nxt%ub:u && %mainloop%nxt%vb:v)
-      ;;[binary_120] 
+      ;;[binary_117] 
       {
         // binary expression 
-        ||[binary_120_inputs] 
+        ||[binary_117_inputs] 
         {
         }
         $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
       }
     }
-    // end assignment statement assign_stmt_121
+    // end assignment statement assign_stmt_118
   }
   // end control-path
   $DP 
   {
     // begin data-path 
-    // constant-object-declarations for block %sum_mod%mainloop%
+    // constant-object-declarations for block %shift_and_add_multiplier%mainloop%
     // file ConcatBitsel.aa, line 12
-    // constant-object-declarations for block %sum_mod%mainloop%nxt%vb
+    // constant-object-declarations for block %shift_and_add_multiplier%mainloop%nxt%vb
     // file ConcatBitsel.aa, line 21
-    // constant-object-declarations for block %sum_mod%mainloop%nxt%ub
+    // constant-object-declarations for block %shift_and_add_multiplier%mainloop%nxt%ub
     // file ConcatBitsel.aa, line 25
-    // constant-object-declarations for block %sum_mod%mainloop%nxt
+    // constant-object-declarations for block %shift_and_add_multiplier%mainloop%nxt
     // file ConcatBitsel.aa, line 19
-    // constant-object-declarations for block %sum_mod%mainloop
+    // constant-object-declarations for block %shift_and_add_multiplier%mainloop
     // file ConcatBitsel.aa, line 10
-    // constant-object-declarations for block %sum_mod
+    // constant-object-declarations for block %shift_and_add_multiplier
     // file ConcatBitsel.aa, line 2
-    $constant $W[xxsum_modxxz9] : $int<9> := _b000000000
-    $constant $W[xxsum_modxxz1] : $int<1> := _b0
-    $constant $W[xxsum_modxxcount] : $int<11> := _b10000000000
-    // constant-declarations for block %sum_mod%mainloop
+    $constant $W[xxshift_and_add_multiplierxxz9] : $int<9> := _b000000000
+    $constant $W[xxshift_and_add_multiplierxxz1] : $int<1> := _b0
+    $constant $W[xxshift_and_add_multiplierxxcount] : $int<11> := _b10000000000
+    // constant-declarations for block %shift_and_add_multiplier%mainloop
     // file ConcatBitsel.aa, line 10
-    // constant-declarations for block %sum_mod%mainloop%
+    // constant-declarations for block %shift_and_add_multiplier%mainloop%
     // file ConcatBitsel.aa, line 12
     // constant-declarations for phi:  			$phi u_in := 			  0  $on $entry			  %nxt%ub:u $on loopback // type of target is $uint<10>
     // file ConcatBitsel.aa, line 13
@@ -393,293 +430,413 @@ $module [sum_mod]
     // file ConcatBitsel.aa, line 14
     // 0 
     $constant $W[expr_29_wire_constant] : $int<10> := _b0000000000
-    // constant-declarations for phi:  			$phi a_0 := 			  a $on $entry			  %nxt:a_1 $on loopback // type of target is $uint<10>
+    // constant-declarations for phi:  			$phi a_0 := 			  a $on $entry			  (a_0 >> 1 ) $on loopback // type of target is $uint<10>
     // file ConcatBitsel.aa, line 15
+    // 1 
+    $constant $W[expr_35_wire_constant] : $int<4> := _b0001
     // constant-declarations for phi:  			$phi ctr := 			  count $on $entry			  %nxt:ctr $on loopback // type of target is $uint<11>
     // file ConcatBitsel.aa, line 16
-    $constant $W[simple_obj_ref_37_wire_constant] : $int<11> := _b10000000000
-    // constant-declarations for block %sum_mod%mainloop%nxt
+    // count
+    $constant $W[simple_obj_ref_39_wire_constant] : $int<11> := _b10000000000
+    // constant-declarations for block %shift_and_add_multiplier%mainloop%nxt
     // file ConcatBitsel.aa, line 19
-    // constant-declarations for block %sum_mod%mainloop%nxt%vb
+    // constant-declarations for block %shift_and_add_multiplier%mainloop%nxt%vb
     // file ConcatBitsel.aa, line 21
     // ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) ) 
     // 0 
-    $constant $W[expr_44_wire_constant] : $int<4> := _b0000
-    $constant $W[simple_obj_ref_49_wire_constant] : $int<1> := _b0
+    $constant $W[expr_46_wire_constant] : $int<4> := _b0000
+    // z1
+    $constant $W[simple_obj_ref_51_wire_constant] : $int<1> := _b0
     // 1 
-    $constant $W[expr_51_wire_constant] : $int<4> := _b0001
-    $constant $W[simple_obj_ref_54_wire_constant] : $int<1> := _b0
+    $constant $W[expr_53_wire_constant] : $int<4> := _b0001
+    // z1
+    $constant $W[simple_obj_ref_56_wire_constant] : $int<1> := _b0
     // 1 
-    $constant $W[expr_56_wire_constant] : $int<4> := _b0001
+    $constant $W[expr_58_wire_constant] : $int<4> := _b0001
     // 0 
-    $constant $W[expr_59_wire_constant] : $int<4> := _b0000
+    $constant $W[expr_61_wire_constant] : $int<4> := _b0000
     // 1 
-    $constant $W[expr_63_wire_constant] : $int<4> := _b0001
-    // constant-declarations for block %sum_mod%mainloop%nxt%ub
+    $constant $W[expr_65_wire_constant] : $int<4> := _b0001
+    // constant-declarations for block %shift_and_add_multiplier%mainloop%nxt%ub
     // file ConcatBitsel.aa, line 25
     // ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) ) 
     // 0 
-    $constant $W[expr_74_wire_constant] : $int<4> := _b0000
-    $constant $W[simple_obj_ref_79_wire_constant] : $int<1> := _b0
+    $constant $W[expr_76_wire_constant] : $int<4> := _b0000
+    // z1
+    $constant $W[simple_obj_ref_81_wire_constant] : $int<1> := _b0
     // 1 
-    $constant $W[expr_81_wire_constant] : $int<4> := _b0001
-    $constant $W[simple_obj_ref_84_wire_constant] : $int<1> := _b0
+    $constant $W[expr_83_wire_constant] : $int<4> := _b0001
+    // z1
+    $constant $W[simple_obj_ref_86_wire_constant] : $int<1> := _b0
     // 1 
-    $constant $W[expr_86_wire_constant] : $int<4> := _b0001
+    $constant $W[expr_88_wire_constant] : $int<4> := _b0001
     // 1 
-    $constant $W[expr_92_wire_constant] : $int<4> := _b0001
+    $constant $W[expr_94_wire_constant] : $int<4> := _b0001
     // 1 
-    $constant $W[expr_99_wire_constant] : $int<4> := _b0001
-    // 1 
-    $constant $W[expr_104_wire_constant] : $int<4> := _b0001
+    $constant $W[expr_101_wire_constant] : $int<4> := _b0001
     // if-statement  
     // file ConcatBitsel.aa, line 34
     // 0 
-    $constant $W[expr_110_wire_constant] : $int<4> := _b0000
-    // block %sum_mod%mainloop
+    $constant $W[expr_107_wire_constant] : $int<4> := _b0000
+    // block %shift_and_add_multiplier%mainloop
     // file ConcatBitsel.aa, line 10
     // merge-statement  
     // file ConcatBitsel.aa, line 12
     // 			$phi u_in := 			  0  $on $entry			  %nxt%ub:u $on loopback // type of target is $uint<10>
     // file ConcatBitsel.aa, line 13
+    // u_in
     $W[u_in_23] : $int<10>
     // 			$phi v_in := 			  0  $on $entry			  %nxt%vb:v $on loopback // type of target is $uint<10>
     // file ConcatBitsel.aa, line 14
+    // v_in
     $W[v_in_27] : $int<10>
-    // 			$phi a_0 := 			  a $on $entry			  %nxt:a_1 $on loopback // type of target is $uint<10>
+    // 			$phi a_0 := 			  a $on $entry			  (a_0 >> 1 ) $on loopback // type of target is $uint<10>
     // file ConcatBitsel.aa, line 15
+    // (a_0 >> 1 )
+    $intermediate $W[binary_36_wire] : $int<10>
+    // a_0
     $W[a_0_31] : $int<10>
     // 			$phi ctr := 			  count $on $entry			  %nxt:ctr $on loopback // type of target is $uint<11>
     // file ConcatBitsel.aa, line 16
-    $W[ctr_35] : $int<11>
-    // block %sum_mod%mainloop%nxt
+    // ctr
+    $W[ctr_37] : $int<11>
+    // block %shift_and_add_multiplier%mainloop%nxt
     // file ConcatBitsel.aa, line 19
-    // block %sum_mod%mainloop%nxt%vb
+    // block %shift_and_add_multiplier%mainloop%nxt%vb
     // file ConcatBitsel.aa, line 21
-    // 				nv := (((( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 ) && v_in) >> 1 ) // target:  $uint<11>, mem spaces: source -> none, target -> none
+    // 				nv := (((( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 ) && v_in) >> 1 )
     // file ConcatBitsel.aa, line 22
     // (a_0 [] 0 )
-    $intermediate $W[binary_45_wire] : $int<1>
+    $intermediate $W[binary_47_wire] : $int<1>
     // (u_in + b)
-    $intermediate $W[binary_48_wire] : $int<10>
+    $intermediate $W[binary_50_wire] : $int<10>
     // ((u_in + b) && z1)
-    $intermediate $W[binary_50_wire] : $int<11>
-    // (((u_in + b) && z1) >> 1 )
     $intermediate $W[binary_52_wire] : $int<11>
+    // (((u_in + b) && z1) >> 1 )
+    $intermediate $W[binary_54_wire] : $int<11>
     // (u_in && z1)
-    $intermediate $W[binary_55_wire] : $int<11>
-    // ((u_in && z1) >> 1 )
     $intermediate $W[binary_57_wire] : $int<11>
+    // ((u_in && z1) >> 1 )
+    $intermediate $W[binary_59_wire] : $int<11>
     // ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) ) 
-    $intermediate $W[ternary_58_wire] : $int<11>
+    $intermediate $W[ternary_60_wire] : $int<11>
     // (( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 )
-    $intermediate $W[binary_60_wire] : $int<1>
+    $intermediate $W[binary_62_wire] : $int<1>
     // ((( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 ) && v_in)
-    $intermediate $W[binary_62_wire] : $int<11>
-    $W[nv_65] : $int<11>
-    // 				v := ( $cast ($uint<10>) nv ) // target:  $uint<10>, mem spaces: source -> none, target -> none
+    $intermediate $W[binary_64_wire] : $int<11>
+    // nv
+    $W[nv_67] : $int<11>
+    // 				v := ( $cast ($uint<10>) nv )
     // file ConcatBitsel.aa, line 23
-    $W[v_69] : $int<10>
-    // block %sum_mod%mainloop%nxt%ub
+    // v
+    $W[v_71] : $int<10>
+    // block %shift_and_add_multiplier%mainloop%nxt%ub
     // file ConcatBitsel.aa, line 25
-    // 				nu := ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  // target:  $uint<11>, mem spaces: source -> none, target -> none
+    // 				nu := ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) ) 
     // file ConcatBitsel.aa, line 26
     // (a_0 [] 0 )
-    $intermediate $W[binary_75_wire] : $int<1>
+    $intermediate $W[binary_77_wire] : $int<1>
     // (u_in + b)
-    $intermediate $W[binary_78_wire] : $int<10>
+    $intermediate $W[binary_80_wire] : $int<10>
     // ((u_in + b) && z1)
-    $intermediate $W[binary_80_wire] : $int<11>
-    // (((u_in + b) && z1) >> 1 )
     $intermediate $W[binary_82_wire] : $int<11>
+    // (((u_in + b) && z1) >> 1 )
+    $intermediate $W[binary_84_wire] : $int<11>
     // (u_in && z1)
-    $intermediate $W[binary_85_wire] : $int<11>
-    // ((u_in && z1) >> 1 )
     $intermediate $W[binary_87_wire] : $int<11>
-    $W[nu_89] : $int<11>
-    // 				u := ( $cast ($uint<10>) (nu >> 1 ) ) // target:  $uint<10>, mem spaces: source -> none, target -> none
+    // ((u_in && z1) >> 1 )
+    $intermediate $W[binary_89_wire] : $int<11>
+    // nu
+    $W[nu_91] : $int<11>
+    // 				u := ( $cast ($uint<10>) (nu >> 1 ) )
     // file ConcatBitsel.aa, line 27
     // (nu >> 1 )
-    $intermediate $W[binary_93_wire] : $int<11>
-    $W[u_95] : $int<10>
-    // 			ctr := (../:ctr >> 1 ) // target:  $uint<11>, mem spaces: source -> none, target -> none
+    $intermediate $W[binary_95_wire] : $int<11>
+    // u
+    $W[u_97] : $int<10>
+    // 			ctr := (../:ctr >> 1 )
     // file ConcatBitsel.aa, line 29
-    $W[ctr_101] : $int<11>
-    // 			a_1 := (a_0 >> 1 ) // target:  $uint<10>, mem spaces: source -> none, target -> none
-    // file ConcatBitsel.aa, line 30
-    $W[a_1_106] : $int<10>
+    // ctr
+    $W[ctr_103] : $int<11>
     // if statement  
     // file ConcatBitsel.aa, line 34
     // (%nxt:ctr [] 0 )
-    $intermediate $W[binary_111_wire] : $int<1>
-    // 	aXb := (%mainloop%nxt%ub:u && %mainloop%nxt%vb:v) // target:  $uint<20>, mem spaces: source -> none, target -> none
+    $intermediate $W[binary_108_wire] : $int<1>
+    // 	aXb := (%mainloop%nxt%ub:u && %mainloop%nxt%vb:v)
     // file ConcatBitsel.aa, line 36
-    // datapath-instances for block %sum_mod%mainloop
+    // aXb
+    // datapath-instances for block %shift_and_add_multiplier%mainloop
     // file ConcatBitsel.aa, line 10
     // data-path instances for merge  
     // file ConcatBitsel.aa, line 12
     // 			$phi u_in := 			  0  $on $entry			  %nxt%ub:u $on loopback // type of target is $uint<10>
     // file ConcatBitsel.aa, line 13
-    $phi [phi_stmt_23] (expr_25_wire_constant u_95) ( u_in_23 )
+    $phi [phi_stmt_23] (expr_25_wire_constant u_97) ( u_in_23 )
     // 			$phi v_in := 			  0  $on $entry			  %nxt%vb:v $on loopback // type of target is $uint<10>
     // file ConcatBitsel.aa, line 14
-    $phi [phi_stmt_27] (expr_29_wire_constant v_69) ( v_in_27 )
-    // 			$phi a_0 := 			  a $on $entry			  %nxt:a_1 $on loopback // type of target is $uint<10>
+    $phi [phi_stmt_27] (expr_29_wire_constant v_71) ( v_in_27 )
+    // 			$phi a_0 := 			  a $on $entry			  (a_0 >> 1 ) $on loopback // type of target is $uint<10>
     // file ConcatBitsel.aa, line 15
-    $phi [phi_stmt_31] (a a_1_106) ( a_0_31 )
+    // (a_0 >> 1 )
+    >>[binary_36_inst] (a_0_31 expr_35_wire_constant) (binary_36_wire)
+    $phi [phi_stmt_31] (a binary_36_wire) ( a_0_31 )
     // 			$phi ctr := 			  count $on $entry			  %nxt:ctr $on loopback // type of target is $uint<11>
     // file ConcatBitsel.aa, line 16
-    $phi [phi_stmt_35] (simple_obj_ref_37_wire_constant ctr_101) ( ctr_35 )
-    // datapath-instances for block %sum_mod%mainloop%nxt
+    $phi [phi_stmt_37] (simple_obj_ref_39_wire_constant ctr_103) ( ctr_37 )
+    // datapath-instances for block %shift_and_add_multiplier%mainloop%nxt
     // file ConcatBitsel.aa, line 19
-    // datapath-instances for block %sum_mod%mainloop%nxt%vb
+    // datapath-instances for block %shift_and_add_multiplier%mainloop%nxt%vb
     // file ConcatBitsel.aa, line 21
-    // 				nv := (((( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 ) && v_in) >> 1 ) // target:  $uint<11>, mem spaces: source -> none, target -> none
+    // 				nv := (((( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 ) && v_in) >> 1 )
     // file ConcatBitsel.aa, line 22
     // (a_0 [] 0 )
-    [][binary_45_inst] (a_0_31 expr_44_wire_constant) (binary_45_wire)
+    [][binary_47_inst] (a_0_31 expr_46_wire_constant) (binary_47_wire)
     // (u_in + b)
-    +[binary_48_inst] (u_in_23 b) (binary_48_wire)
+    +[binary_50_inst] (u_in_23 b) (binary_50_wire)
     // ((u_in + b) && z1)
-    &&[binary_50_inst] (binary_48_wire simple_obj_ref_49_wire_constant) (binary_50_wire)
+    &&[binary_52_inst] (binary_50_wire simple_obj_ref_51_wire_constant) (binary_52_wire)
     // (((u_in + b) && z1) >> 1 )
-    >>[binary_52_inst] (binary_50_wire expr_51_wire_constant) (binary_52_wire)
+    >>[binary_54_inst] (binary_52_wire expr_53_wire_constant) (binary_54_wire)
     // (u_in && z1)
-    &&[binary_55_inst] (u_in_23 simple_obj_ref_54_wire_constant) (binary_55_wire)
+    &&[binary_57_inst] (u_in_23 simple_obj_ref_56_wire_constant) (binary_57_wire)
     // ((u_in && z1) >> 1 )
-    >>[binary_57_inst] (binary_55_wire expr_56_wire_constant) (binary_57_wire)
+    >>[binary_59_inst] (binary_57_wire expr_58_wire_constant) (binary_59_wire)
     // ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) ) 
-    ? [ternary_58_inst] (binary_45_wire binary_52_wire binary_57_wire) (ternary_58_wire)
+    ? [ternary_60_inst] (binary_47_wire binary_54_wire binary_59_wire) (ternary_60_wire)
     // (( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 )
-    [][binary_60_inst] (ternary_58_wire expr_59_wire_constant) (binary_60_wire)
+    [][binary_62_inst] (ternary_60_wire expr_61_wire_constant) (binary_62_wire)
     // ((( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 ) && v_in)
-    &&[binary_62_inst] (binary_60_wire v_in_27) (binary_62_wire)
+    &&[binary_64_inst] (binary_62_wire v_in_27) (binary_64_wire)
     // (((( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 ) && v_in) >> 1 )
-    >>[binary_64_inst] (binary_62_wire expr_63_wire_constant) (nv_65)
-    // 				v := ( $cast ($uint<10>) nv ) // target:  $uint<10>, mem spaces: source -> none, target -> none
+    >>[binary_66_inst] (binary_64_wire expr_65_wire_constant) (nv_67)
+    // 				v := ( $cast ($uint<10>) nv )
     // file ConcatBitsel.aa, line 23
     // ( $cast ($uint<10>) nv )
-    := [type_cast_68_inst] (nv_65) (v_69)
-    // datapath-instances for block %sum_mod%mainloop%nxt%ub
+    := [type_cast_70_inst] (nv_67) (v_71)
+    // datapath-instances for block %shift_and_add_multiplier%mainloop%nxt%ub
     // file ConcatBitsel.aa, line 25
-    // 				nu := ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  // target:  $uint<11>, mem spaces: source -> none, target -> none
+    // 				nu := ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) ) 
     // file ConcatBitsel.aa, line 26
     // (a_0 [] 0 )
-    [][binary_75_inst] (a_0_31 expr_74_wire_constant) (binary_75_wire)
+    [][binary_77_inst] (a_0_31 expr_76_wire_constant) (binary_77_wire)
     // (u_in + b)
-    +[binary_78_inst] (u_in_23 b) (binary_78_wire)
+    +[binary_80_inst] (u_in_23 b) (binary_80_wire)
     // ((u_in + b) && z1)
-    &&[binary_80_inst] (binary_78_wire simple_obj_ref_79_wire_constant) (binary_80_wire)
+    &&[binary_82_inst] (binary_80_wire simple_obj_ref_81_wire_constant) (binary_82_wire)
     // (((u_in + b) && z1) >> 1 )
-    >>[binary_82_inst] (binary_80_wire expr_81_wire_constant) (binary_82_wire)
+    >>[binary_84_inst] (binary_82_wire expr_83_wire_constant) (binary_84_wire)
     // (u_in && z1)
-    &&[binary_85_inst] (u_in_23 simple_obj_ref_84_wire_constant) (binary_85_wire)
+    &&[binary_87_inst] (u_in_23 simple_obj_ref_86_wire_constant) (binary_87_wire)
     // ((u_in && z1) >> 1 )
-    >>[binary_87_inst] (binary_85_wire expr_86_wire_constant) (binary_87_wire)
+    >>[binary_89_inst] (binary_87_wire expr_88_wire_constant) (binary_89_wire)
     // ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) ) 
-    ? [ternary_88_inst] (binary_75_wire binary_82_wire binary_87_wire) (nu_89)
-    // 				u := ( $cast ($uint<10>) (nu >> 1 ) ) // target:  $uint<10>, mem spaces: source -> none, target -> none
+    ? [ternary_90_inst] (binary_77_wire binary_84_wire binary_89_wire) (nu_91)
+    // 				u := ( $cast ($uint<10>) (nu >> 1 ) )
     // file ConcatBitsel.aa, line 27
     // (nu >> 1 )
-    >>[binary_93_inst] (nu_89 expr_92_wire_constant) (binary_93_wire)
+    >>[binary_95_inst] (nu_91 expr_94_wire_constant) (binary_95_wire)
     // ( $cast ($uint<10>) (nu >> 1 ) )
-    := [type_cast_94_inst] (binary_93_wire) (u_95)
-    // 			ctr := (../:ctr >> 1 ) // target:  $uint<11>, mem spaces: source -> none, target -> none
+    := [type_cast_96_inst] (binary_95_wire) (u_97)
+    // 			ctr := (../:ctr >> 1 )
     // file ConcatBitsel.aa, line 29
     // (../:ctr >> 1 )
-    >>[binary_100_inst] (ctr_35 expr_99_wire_constant) (ctr_101)
-    // 			a_1 := (a_0 >> 1 ) // target:  $uint<10>, mem spaces: source -> none, target -> none
-    // file ConcatBitsel.aa, line 30
-    // (a_0 >> 1 )
-    >>[binary_105_inst] (a_0_31 expr_104_wire_constant) (a_1_106)
+    >>[binary_102_inst] (ctr_37 expr_101_wire_constant) (ctr_103)
     // datapath-instances for if  
     // file ConcatBitsel.aa, line 34
     // (%nxt:ctr [] 0 )
-    [][binary_111_inst] (ctr_101 expr_110_wire_constant) (binary_111_wire)
-    ==0? [if_stmt_108_branch] (binary_111_wire)
-    // 	aXb := (%mainloop%nxt%ub:u && %mainloop%nxt%vb:v) // target:  $uint<20>, mem spaces: source -> none, target -> none
+    [][binary_108_inst] (ctr_103 expr_107_wire_constant) (binary_108_wire)
+    ==0? [if_stmt_105_branch] (binary_108_wire)
+    // 	aXb := (%mainloop%nxt%ub:u && %mainloop%nxt%vb:v)
     // file ConcatBitsel.aa, line 36
     // (%mainloop%nxt%ub:u && %mainloop%nxt%vb:v)
-    &&[binary_120_inst] (u_95 v_69) (aXb)
+    &&[binary_117_inst] (u_97 v_71) (aXb)
   }
   // end data-path
-  // CP-DP links for block %sum_mod%mainloop
+  // CP-DP links for block %shift_and_add_multiplier%mainloop
   // file ConcatBitsel.aa, line 10
   // CP-DP links for merge  
   // file ConcatBitsel.aa, line 12
-  phi_stmt_23 <=> (branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq/phi_stmt_23_req branch_block_stmt_21/loopback_PhiReq/phi_stmt_23_req) (branch_block_stmt_21/merge_stmt_22_PhiAck/phi_stmt_23_ack)
-  phi_stmt_27 <=> (branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq/phi_stmt_27_req branch_block_stmt_21/loopback_PhiReq/phi_stmt_27_req) (branch_block_stmt_21/merge_stmt_22_PhiAck/phi_stmt_27_ack)
-  phi_stmt_31 <=> (branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq/phi_stmt_31_req branch_block_stmt_21/loopback_PhiReq/phi_stmt_31_req) (branch_block_stmt_21/merge_stmt_22_PhiAck/phi_stmt_31_ack)
-  phi_stmt_35 <=> (branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq/phi_stmt_35_req branch_block_stmt_21/loopback_PhiReq/phi_stmt_35_req) (branch_block_stmt_21/merge_stmt_22_PhiAck/phi_stmt_35_ack)
-  // CP-DP links for block %sum_mod%mainloop%nxt
+  phi_stmt_23 <=> (branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq/phi_stmt_23/phi_stmt_23_req branch_block_stmt_21/loopback_PhiReq/phi_stmt_23/phi_stmt_23_req) (branch_block_stmt_21/merge_stmt_22_PhiAck/phi_stmt_23_ack)
+  phi_stmt_27 <=> (branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq/phi_stmt_27/phi_stmt_27_req branch_block_stmt_21/loopback_PhiReq/phi_stmt_27/phi_stmt_27_req) (branch_block_stmt_21/merge_stmt_22_PhiAck/phi_stmt_27_ack)
+  // (a_0 >> 1 )
+  binary_36_inst <=> (branch_block_stmt_21/loopback_PhiReq/phi_stmt_31/binary_36/rr branch_block_stmt_21/loopback_PhiReq/phi_stmt_31/binary_36/cr) (branch_block_stmt_21/loopback_PhiReq/phi_stmt_31/binary_36/ra branch_block_stmt_21/loopback_PhiReq/phi_stmt_31/binary_36/ca)
+  phi_stmt_31 <=> (branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq/phi_stmt_31/phi_stmt_31_req branch_block_stmt_21/loopback_PhiReq/phi_stmt_31/phi_stmt_31_req) (branch_block_stmt_21/merge_stmt_22_PhiAck/phi_stmt_31_ack)
+  phi_stmt_37 <=> (branch_block_stmt_21/branch_block_stmt_21__entry___PhiReq/phi_stmt_37/phi_stmt_37_req branch_block_stmt_21/loopback_PhiReq/phi_stmt_37/phi_stmt_37_req) (branch_block_stmt_21/merge_stmt_22_PhiAck/phi_stmt_37_ack)
+  // CP-DP links for block %shift_and_add_multiplier%mainloop%nxt
   // file ConcatBitsel.aa, line 19
-  // CP-DP links for block %sum_mod%mainloop%nxt%vb
+  // CP-DP links for block %shift_and_add_multiplier%mainloop%nxt%vb
   // file ConcatBitsel.aa, line 21
-  // 				nv := (((( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 ) && v_in) >> 1 ) // target:  $uint<11>, mem spaces: source -> none, target -> none
+  // 				nv := (((( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 ) && v_in) >> 1 )
   // file ConcatBitsel.aa, line 22
   // (a_0 [] 0 )
-  binary_45_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_45/ca)
+  binary_47_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_47/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_47/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_47/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_47/ca)
   // (u_in + b)
-  binary_48_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/binary_50_inputs/binary_48/ca)
+  binary_50_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_54/binary_54_inputs/binary_52/binary_52_inputs/binary_50/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_54/binary_54_inputs/binary_52/binary_52_inputs/binary_50/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_54/binary_54_inputs/binary_52/binary_52_inputs/binary_50/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_54/binary_54_inputs/binary_52/binary_52_inputs/binary_50/ca)
   // ((u_in + b) && z1)
-  binary_50_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/binary_52_inputs/binary_50/ca)
+  binary_52_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_54/binary_54_inputs/binary_52/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_54/binary_54_inputs/binary_52/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_54/binary_54_inputs/binary_52/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_54/binary_54_inputs/binary_52/ca)
   // (((u_in + b) && z1) >> 1 )
-  binary_52_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_52/ca)
+  binary_54_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_54/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_54/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_54/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_54/ca)
   // (u_in && z1)
-  binary_55_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/binary_57_inputs/binary_55/ca)
+  binary_57_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_59/binary_59_inputs/binary_57/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_59/binary_59_inputs/binary_57/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_59/binary_59_inputs/binary_57/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_59/binary_59_inputs/binary_57/ca)
   // ((u_in && z1) >> 1 )
-  binary_57_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ternary_58_inputs/binary_57/ca)
+  binary_59_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_59/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_59/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_59/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ternary_60_inputs/binary_59/ca)
   // ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) ) 
-  ternary_58_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/req) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/binary_60_inputs/ternary_58/ack)
+  ternary_60_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/req) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/binary_62_inputs/ternary_60/ack)
   // (( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 )
-  binary_60_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/binary_62_inputs/binary_60/ca)
+  binary_62_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/binary_64_inputs/binary_62/ca)
   // ((( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 ) && v_in)
-  binary_62_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/binary_64_inputs/binary_62/ca)
+  binary_64_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/binary_66_inputs/binary_64/ca)
   // (((( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  [] 0 ) && v_in) >> 1 )
-  binary_64_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_65/binary_64/ca)
-  // 				v := ( $cast ($uint<10>) nv ) // target:  $uint<10>, mem spaces: source -> none, target -> none
+  binary_66_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_67/binary_66/ca)
+  // 				v := ( $cast ($uint<10>) nv )
   // file ConcatBitsel.aa, line 23
   // ( $cast ($uint<10>) nv )
-  type_cast_68_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_69/type_cast_68/req) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_41/assign_stmt_69/type_cast_68/ack)
-  // CP-DP links for block %sum_mod%mainloop%nxt%ub
+  type_cast_70_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_71/type_cast_70/req) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_43/assign_stmt_71/type_cast_70/ack)
+  // CP-DP links for block %shift_and_add_multiplier%mainloop%nxt%ub
   // file ConcatBitsel.aa, line 25
-  // 				nu := ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) )  // target:  $uint<11>, mem spaces: source -> none, target -> none
+  // 				nu := ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) ) 
   // file ConcatBitsel.aa, line 26
   // (a_0 [] 0 )
-  binary_75_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_75/ca)
+  binary_77_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_77/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_77/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_77/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_77/ca)
   // (u_in + b)
-  binary_78_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/binary_80_inputs/binary_78/ca)
+  binary_80_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_84/binary_84_inputs/binary_82/binary_82_inputs/binary_80/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_84/binary_84_inputs/binary_82/binary_82_inputs/binary_80/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_84/binary_84_inputs/binary_82/binary_82_inputs/binary_80/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_84/binary_84_inputs/binary_82/binary_82_inputs/binary_80/ca)
   // ((u_in + b) && z1)
-  binary_80_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/binary_82_inputs/binary_80/ca)
+  binary_82_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_84/binary_84_inputs/binary_82/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_84/binary_84_inputs/binary_82/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_84/binary_84_inputs/binary_82/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_84/binary_84_inputs/binary_82/ca)
   // (((u_in + b) && z1) >> 1 )
-  binary_82_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_82/ca)
+  binary_84_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_84/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_84/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_84/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_84/ca)
   // (u_in && z1)
-  binary_85_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/binary_87_inputs/binary_85/ca)
+  binary_87_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_89/binary_89_inputs/binary_87/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_89/binary_89_inputs/binary_87/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_89/binary_89_inputs/binary_87/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_89/binary_89_inputs/binary_87/ca)
   // ((u_in && z1) >> 1 )
-  binary_87_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ternary_88_inputs/binary_87/ca)
+  binary_89_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_89/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_89/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_89/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ternary_90_inputs/binary_89/ca)
   // ( $mux (a_0 [] 0 ) (((u_in + b) && z1) >> 1 )  ((u_in && z1) >> 1 ) ) 
-  ternary_88_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/req) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_89/ternary_88/ack)
-  // 				u := ( $cast ($uint<10>) (nu >> 1 ) ) // target:  $uint<10>, mem spaces: source -> none, target -> none
+  ternary_90_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/req) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_91/ternary_90/ack)
+  // 				u := ( $cast ($uint<10>) (nu >> 1 ) )
   // file ConcatBitsel.aa, line 27
   // (nu >> 1 )
-  binary_93_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93/rr branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93/cr) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93/ra branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/binary_93/ca)
+  binary_95_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_97/type_cast_96/binary_95/rr branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_97/type_cast_96/binary_95/cr) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_97/type_cast_96/binary_95/ra branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_97/type_cast_96/binary_95/ca)
   // ( $cast ($uint<10>) (nu >> 1 ) )
-  type_cast_94_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/req) (branch_block_stmt_21/parallel_block_stmt_40/series_block_stmt_71/assign_stmt_95/type_cast_94/ack)
-  // 			ctr := (../:ctr >> 1 ) // target:  $uint<11>, mem spaces: source -> none, target -> none
+  type_cast_96_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_97/type_cast_96/req) (branch_block_stmt_21/parallel_block_stmt_42/series_block_stmt_73/assign_stmt_97/type_cast_96/ack)
+  // 			ctr := (../:ctr >> 1 )
   // file ConcatBitsel.aa, line 29
   // (../:ctr >> 1 )
-  binary_100_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100/rr branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100/cr) (branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100/ra branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_101/binary_100/ca)
-  // 			a_1 := (a_0 >> 1 ) // target:  $uint<10>, mem spaces: source -> none, target -> none
-  // file ConcatBitsel.aa, line 30
-  // (a_0 >> 1 )
-  binary_105_inst <=> (branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105/rr branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105/cr) (branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105/ra branch_block_stmt_21/parallel_block_stmt_40/assign_stmt_106/binary_105/ca)
+  binary_102_inst <=> (branch_block_stmt_21/parallel_block_stmt_42/assign_stmt_103/binary_102/rr branch_block_stmt_21/parallel_block_stmt_42/assign_stmt_103/binary_102/cr) (branch_block_stmt_21/parallel_block_stmt_42/assign_stmt_103/binary_102/ra branch_block_stmt_21/parallel_block_stmt_42/assign_stmt_103/binary_102/ca)
   // CP-DP links for if  
   // file ConcatBitsel.aa, line 34
   // (%nxt:ctr [] 0 )
-  binary_111_inst <=> (branch_block_stmt_21/if_stmt_108_eval_test/binary_111/rr branch_block_stmt_21/if_stmt_108_eval_test/binary_111/cr) (branch_block_stmt_21/if_stmt_108_eval_test/binary_111/ra branch_block_stmt_21/if_stmt_108_eval_test/binary_111/ca)
-  if_stmt_108_branch <=> (branch_block_stmt_21/if_stmt_108_eval_test/branch_req) (branch_block_stmt_21/if_stmt_108_else_link/else_choice_transition branch_block_stmt_21/if_stmt_108_if_link/if_choice_transition)
-  // 	aXb := (%mainloop%nxt%ub:u && %mainloop%nxt%vb:v) // target:  $uint<20>, mem spaces: source -> none, target -> none
+  binary_108_inst <=> (branch_block_stmt_21/if_stmt_105_eval_test/binary_108/rr branch_block_stmt_21/if_stmt_105_eval_test/binary_108/cr) (branch_block_stmt_21/if_stmt_105_eval_test/binary_108/ra branch_block_stmt_21/if_stmt_105_eval_test/binary_108/ca)
+  if_stmt_105_branch <=> (branch_block_stmt_21/if_stmt_105_eval_test/branch_req) (branch_block_stmt_21/if_stmt_105_else_link/else_choice_transition branch_block_stmt_21/if_stmt_105_if_link/if_choice_transition)
+  // 	aXb := (%mainloop%nxt%ub:u && %mainloop%nxt%vb:v)
   // file ConcatBitsel.aa, line 36
   // (%mainloop%nxt%ub:u && %mainloop%nxt%vb:v)
-  binary_120_inst <=> (assign_stmt_121/binary_120/rr assign_stmt_121/binary_120/cr) (assign_stmt_121/binary_120/ra assign_stmt_121/binary_120/ca)
+  binary_117_inst <=> (assign_stmt_118/binary_117/rr assign_stmt_118/binary_117/cr) (assign_stmt_118/binary_117/ra assign_stmt_118/binary_117/ca)
+}
+$module [test_bench] 
+{
+  $out ret_success:$int<1>
+  $CP 
+  {
+    // begin control-path 
+    // 	a := 23 
+    // file ConcatBitsel.aa, line 45
+    ;;[assign_stmt_124] // file ConcatBitsel.aa, line 45
+    {
+      $T [dummy] // assignment evaluates to a constant 
+    }
+    // end assignment statement assign_stmt_124
+    // 	b := 17 
+    // file ConcatBitsel.aa, line 46
+    ;;[assign_stmt_127] // file ConcatBitsel.aa, line 46
+    {
+      $T [dummy] // assignment evaluates to a constant 
+    }
+    // end assignment statement assign_stmt_127
+    // 	c := (a * b)
+    // file ConcatBitsel.aa, line 47
+    ;;[assign_stmt_132] // file ConcatBitsel.aa, line 47
+    {
+      $T [dummy] // assignment evaluates to a constant 
+    }
+    // end assignment statement assign_stmt_132
+    // 	$call shift_and_add_multiplier (a b ) (d )
+    // file ConcatBitsel.aa, line 48
+    ;;[call_stmt_136] 
+    {
+      // call statement file ConcatBitsel.aa, line 48
+      ||[call_stmt_136_in_args_] 
+      {
+        // input arguments
+      }
+      $T [crr] $T [cra] $T [ccr] $T [cca]
+      ||[call_stmt_136_out_args_] 
+      {
+        // output arguments
+      }
+    }
+    // end call-statement call_stmt_136
+    // 	ret_success := (c == ( $cast ($uint<10>) d ))
+    // file ConcatBitsel.aa, line 49
+    ;;[assign_stmt_142] // file ConcatBitsel.aa, line 49
+    {
+      // (c == ( $cast ($uint<10>) d ))
+      ;;[binary_141] 
+      {
+        // binary expression 
+        ||[binary_141_inputs] 
+        {
+          // ( $cast ($uint<10>) d )
+          ;;[type_cast_140] 
+          {
+            // type-cast expression
+            $T [req] $T [ack] //  type-conversion.. 
+          }
+        }
+        $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+      }
+    }
+    // end assignment statement assign_stmt_142
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %test_bench
+    // file ConcatBitsel.aa, line 40
+    // 	a := 23 
+    // file ConcatBitsel.aa, line 45
+    $constant $W[a_124] : $int<10> := _b0000010111
+    // 	b := 17 
+    // file ConcatBitsel.aa, line 46
+    $constant $W[b_127] : $int<10> := _b0000010001
+    // 	c := (a * b)
+    // file ConcatBitsel.aa, line 47
+    $constant $W[c_132] : $int<10> := _b0110000111
+    // wire declarations for: 	$call shift_and_add_multiplier (a b ) (d )
+    // file ConcatBitsel.aa, line 48
+    // d
+    $W[d_136] : $int<20>
+    // 	ret_success := (c == ( $cast ($uint<10>) d ))
+    // file ConcatBitsel.aa, line 49
+    // ( $cast ($uint<10>) d )
+    $intermediate $W[type_cast_140_wire] : $int<10>
+    // ret_success
+    // 	$call shift_and_add_multiplier (a b ) (d )
+    // file ConcatBitsel.aa, line 48
+    $call [call_stmt_136_call] $module shift_and_add_multiplier(a_124 b_127) (d_136)
+    // 	ret_success := (c == ( $cast ($uint<10>) d ))
+    // file ConcatBitsel.aa, line 49
+    // ( $cast ($uint<10>) d )
+    := [type_cast_140_inst] (d_136) (type_cast_140_wire)
+    // (c == ( $cast ($uint<10>) d ))
+    ==[binary_141_inst] (c_132 type_cast_140_wire) (ret_success)
+  }
+  // end data-path
+  // 	$call shift_and_add_multiplier (a b ) (d )
+  // file ConcatBitsel.aa, line 48
+  call_stmt_136_call <=> (call_stmt_136/crr call_stmt_136/ccr) (call_stmt_136/cra call_stmt_136/cca)
+  // 	ret_success := (c == ( $cast ($uint<10>) d ))
+  // file ConcatBitsel.aa, line 49
+  // ( $cast ($uint<10>) d )
+  type_cast_140_inst <=> (assign_stmt_142/binary_141/binary_141_inputs/type_cast_140/req) (assign_stmt_142/binary_141/binary_141_inputs/type_cast_140/ack)
+  // (c == ( $cast ($uint<10>) d ))
+  binary_141_inst <=> (assign_stmt_142/binary_141/rr assign_stmt_142/binary_141/cr) (assign_stmt_142/binary_141/ra assign_stmt_142/binary_141/ca)
 }

@@ -605,19 +605,11 @@ bool AaAssignmentStatement::Can_Block()
 void AaAssignmentStatement::Write_C_Struct(ofstream& ofile)
 {
   this->AaStatement::Write_C_Struct(ofile);
-  if(this->_target->Is("AaPointerDereferenceExpression"))
-   {
-   }
-  else if(this->_target->Is_Object_Reference() && (((AaObjectReference*)this->_target)->Get_Object() == this))
+  if((this->_target->Is("AaSimpleObjectReference")) &&
+     (((AaObjectReference*)this->_target)->Get_Object() == this))
     {
-      ofile << this->Tab() 
-	    << this->_target->Get_Type()->CName() 
-	    << " "
-	    << ((AaObjectReference*)this->_target)->Get_Object_Ref_String()
-	    << ";" << endl;
+      ((AaSimpleObjectReference*)(this->_target))->PrintC_Header_Entry(ofile);
     }
-  else if(!this->_target->Is_Object_Reference())
-    assert(0);
 }
 
 void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
@@ -672,7 +664,8 @@ void AaAssignmentStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
       // declare the target as a constant...
       Write_VC_Constant_Declaration(this->_target->Get_VC_Constant_Name(),
 				    this->_target->Get_Type()->Get_VC_Name(),
-				    this->_target->Get_Expression_Value()->To_VC_String(),
+				    this->_target->Get_Expression_Value()->To_VC_String() + " // " +
+				    this->_target->Get_Expression_Value()->To_C_String(),
 				    ofile);
     }
   else
@@ -938,11 +931,8 @@ void AaCallStatement::Write_C_Struct(ofstream& ofile)
     {
       if(this->_output_args[i]->Get_Object() == this)
 	{
-	  ofile << this->Tab() 
-		<< this->_output_args[i]->Get_Type()->CName() 
-		<< " "
-		<< this->_output_args[i]->Get_Object_Ref_String()
-		<< ";" << endl;
+	  if(this->_output_args[i]->Is("AaSimpleObjectReference"))
+	    ((AaSimpleObjectReference*)(this->_output_args[i]))->PrintC_Header_Entry(ofile);
 	}
     }
 
@@ -2131,26 +2121,27 @@ void AaMergeStatement::Write_VC_Control_Path(string source_link, ostream& ofile)
 
       if(mplace  != "")
 	{
+
 	  ofile << "||[" << Make_VC_Legal(mplace) << "_PhiReq] {" << endl; 
 	  if(phi_dependency_map[mlabel].size() > 0)
 	    {
-	      
-	      // TODO
-	      // there is a bug here..
-	      // you must compute the phi-statement select expressions
-	      // before requesting the phi-statement.
-	      // careful..
-
 	      for(set<AaPhiStatement*>::iterator siter = phi_dependency_map[mlabel].begin();
 		  siter != phi_dependency_map[mlabel].end();
 		  siter++)
 		{
+		  ofile << ";;[" << (*siter)->Get_VC_Name() << "] {" << endl;
+		    
+		  // the sources to the phi must be computed.
+		  (*siter)->Write_VC_Source_Control_Paths(ofile);
+
+		  // issue a req to the phi.
 		  ofile << "$T [" << (*siter)->Get_VC_Name() << "_req] " << endl;
+		  ofile << "}" << endl;
 		}
 	    }
 	  else
 	    {
-	      ofile << "$T [dummy]" << endl;
+	      ofile << "// no phi statements in merge.." << endl;
 	    }
 	  ofile << "}" << endl;
 
@@ -2178,6 +2169,11 @@ void AaMergeStatement::Write_VC_Control_Path(string source_link, ostream& ofile)
   // now a parallel region, in which we wait for all
   // the acks from the phi statements associated with
   // this merge statement.
+  // 
+  // note that the delay from the req to the phi
+  // to this transition should be at most one tick..
+  // 
+  //
   ofile << "||[" << this->Get_VC_Name() << "_PhiAck] {" << endl;
 
   if(_statement_sequence)
@@ -2237,6 +2233,8 @@ void AaMergeStatement::Write_VC_Links(string hier_id, ostream& ofile)
 
   if(_statement_sequence)
     {
+
+
       for(int idx = 0; idx < _statement_sequence->Get_Statement_Count(); idx++)
 	{
 	  AaStatement* stmt = _statement_sequence->Get_Statement(idx);
@@ -2244,17 +2242,32 @@ void AaMergeStatement::Write_VC_Links(string hier_id, ostream& ofile)
 
 	  vector<string> reqs;
 	  AaPhiStatement* phi_stmt = (AaPhiStatement*) stmt;
+
+
+
+
+
+	  // phi reqs..
 	  for(int pidx = 0; pidx < phi_stmt->_source_pairs.size(); pidx++)
 	    {
+
 	      string mlabel = phi_stmt->_source_pairs[pidx].first;
 	      string mplace = ((mlabel == "$entry") ? this->_vc_source_link : mlabel);
-	      reqs.push_back(hier_id + 
-			     "/" + 
-			     Make_VC_Legal(mplace) + "_PhiReq/" + 
-			     phi_stmt->Get_VC_Name() + "_req");
+
+	      // in the request block, you compute the inputs and then  hang the
+	      // req..
+	      string req_hier_id = Augment_Hier_Id(hier_id , Make_VC_Legal(mplace) + "_PhiReq/" + 
+						   phi_stmt->Get_VC_Name());
+
+	      // finish all the sources for the phi's...
+	      phi_stmt->_source_pairs[pidx].second->Write_VC_Links(req_hier_id,ofile);
+
+	      reqs.push_back(req_hier_id + "/" + phi_stmt->Get_VC_Name() + "_req");
 	    }
+
+	  
 	  string ack_name = hier_id + "/"  +  this->Get_VC_Name() + "_PhiAck/" + 
-	    stmt->Get_VC_Name() + "_ack";
+	    phi_stmt->Get_VC_Name() + "_ack";
 
 	  vector<string> acks;
 	  acks.push_back(ack_name);
@@ -2369,13 +2382,10 @@ void AaPhiStatement::PrintC(ofstream& ofile,string tab_string)
 void AaPhiStatement::Write_C_Struct(ofstream& ofile)
 {
   this->AaStatement::Write_C_Struct(ofile);
-  if(this->_target->Get_Object() == this)
+  if((this->_target->Is("AaSimpleObjectReference")) &&
+     (((AaObjectReference*)this->_target)->Get_Object() == this))
     {
-      ofile << this->Tab() 
-	    << this->_target->Get_Type()->CName() 
-	    << " "
-	    << this->_target->Get_Object_Ref_String()
-	    << ";" << endl;
+      ((AaSimpleObjectReference*)(this->_target))->PrintC_Header_Entry(ofile);
     }
 }
 
@@ -2388,10 +2398,27 @@ void AaPhiStatement::Write_VC_Control_Path(ostream& ofile)
 
   // the phi-statement is totally handled by
   // the AaMergeStatement which contains it.
-  ofile << ";;[" << this->Get_VC_Name() << "] { " 
-	<< "$T [dummy] " << endl
-	<< "}" << endl;
+
+  // however, the source expressions need to be handled..
+  // separately..
+
 }
+
+
+// the merge statement calls this
+void AaPhiStatement::Write_VC_Source_Control_Paths(ostream& ofile)
+{
+  ofile << "// sources for " << this->To_String();
+  for(int idx = 0; idx < _source_pairs.size(); idx++)
+    _source_pairs[idx].second->Write_VC_Control_Path(ofile);
+}
+
+void AaPhiStatement::Write_VC_Source_Links(string hier_id, ostream& ofile)
+{
+  // obsolete, never to be called.
+  assert(0);
+}
+
 
 void AaPhiStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
@@ -2426,8 +2453,13 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
   vector<pair<string,AaType*> > sources;
   for(int i = 0; i < _source_pairs.size(); i++)
-    sources.push_back(pair<string,AaType*>(_source_pairs[i].second->Get_VC_Driver_Name(),
-					   _source_pairs[i].second->Get_Type()));
+    {
+      sources.push_back(pair<string,AaType*>(_source_pairs[i].second->Get_VC_Driver_Name(),
+					     _source_pairs[i].second->Get_Type()));
+
+      // write the data-path..
+      _source_pairs[i].second->Write_VC_Datapath_Instances(NULL,ofile);
+    }
 
   Write_VC_Phi_Operator(this->Get_VC_Name(),
 			sources,

@@ -1,5 +1,5 @@
 // a simple example.. of a shift and add multiplier..
-$module [sum_mod]
+$module [shift_and_add_multiplier]
     $in (a:$uint<10> b:$uint<10>)
     $out (aXb:$uint<20>) 
 $is
@@ -12,7 +12,7 @@ $is
 		$merge $entry loopback
 			$phi u_in := 0 $on $entry %nxt%ub:u $on loopback
 			$phi v_in := 0 $on $entry %nxt%vb:v $on loopback
-			$phi a_0  := a $on $entry %nxt:a_1 $on loopback
+			$phi a_0  := a $on $entry (a_0 >> 1) $on loopback
 			$phi ctr  := count $on $entry %nxt:ctr $on loopback
 		$endmerge
 		
@@ -27,11 +27,24 @@ $is
 			u := ($cast ($uint<10>) (nu >> 1))
 		   }
 		   ctr := (../:ctr >> 1)
-		   a_1 := (a_0 >> 1)
+		   // a_1 := (a_0 >> 1)
 		}
 
 
 		$if (%nxt:ctr [] 0) $then $null $else $place [loopback] $endif
 	}
 	aXb := (%mainloop%nxt%ub:u && %mainloop%nxt%vb:v)	
+}
+
+
+$module [test_bench] 
+	$in ()
+	$out (ret_success: $uint<1>)
+$is
+{
+	a := 23
+	b := 17
+	c := (a*b)
+	$call shift_and_add_multiplier (a b) (d)
+	ret_success := (c == ($cast ($uint<10>) d))
 }

@@ -269,7 +269,7 @@ class AaArrayType: public AaType
   }
 
 
-  virtual void Fill_LAU_Set(set<int>& s) {s.insert(this->Get_Element_Type()->Size());}
+  virtual void Fill_LAU_Set(set<int>& s) {this->Get_Element_Type()->Fill_LAU_Set(s);}
   virtual int Get_Data_Width() {return(this->Get_Element_Type()->Get_Data_Width());}
 
   virtual int Number_Of_Elements()
@@ -321,9 +321,10 @@ public:
     ofile << "$record ";
     for(int idx = 0; idx < _element_types.size(); idx++)
       {
-	ofile << "< ";
+	// note the spaces before and after >
+	ofile << " < ";
 	_element_types[idx]->Print(ofile);
-	ofile << " >";
+	ofile << " > ";
       }
   }
 
@@ -333,9 +334,9 @@ public:
     ret_val =  "$record ";
     for(int idx = 0; idx < _element_types.size(); idx++)
       {
-	ret_val += "< ";
+	ret_val += " < ";
 	ret_val += _element_types[idx]->Get_VC_Name();
-	ret_val += " >";
+	ret_val += " > ";
       }
     return(ret_val);
   }
@@ -356,10 +357,7 @@ public:
   {
     for(int idx = 0; idx < this->_element_types.size(); idx++)
       {
-	if(this->_element_types[idx]->Is_Scalar_Type())
-	  s.insert(this->Get_Element_Type(idx)->Size());
-	else
-	  this->_element_types[idx]->Fill_LAU_Set(s);
+	this->_element_types[idx]->Fill_LAU_Set(s);
       }
   }
   
@@ -368,14 +366,35 @@ public:
     return(this->Get_Element_Type(idx)->Get_Data_Width());
   }
 
-
   virtual string CName() 
   {
     return("Struct_" + Int64ToStr(this->Get_Index()));
   }  
 
-
   virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
+
+  void PrintC_Declaration(ofstream& ofile)
+  {
+    ofile << "typedef struct __" << CName() << " { " << endl;
+    for(int idx = 0; idx < this->_element_types.size(); idx++)
+      {
+	AaType* t = this->_element_types[idx];
+
+	if(t->Is_Array_Type())
+	  {
+	    AaArrayType* at = (AaArrayType*) t;
+	    ofile << at->CBaseName() << " "
+		  << "f_" << IntToStr(idx)
+		  <<  at->CDim() << ";" << endl;
+	  }
+	else
+	  {
+	    ofile << t->CName() << " ";
+	    ofile << "f_" << IntToStr(idx) << ";" << endl;
+	  }
+      }
+    ofile << "} " << CName() << ";" << endl;
+  }
 };
 
 

@@ -13,17 +13,19 @@
 #include <vcHeader.hpp>
 #include <antlr/RecognitionException.hpp>
 	ANTLR_USING_NAMESPACE(antlr)
+#define NOT_FOUND__(str, w, wid,token_id)      if(w == NULL)\
+         vcSystem::Error(string("did not find ") + str + " " +  wid + ": line " + IntToStr(token_id->getLine()));
 
-#line 18 "vcParser.hpp"
+#line 20 "vcParser.hpp"
 class CUSTOM_API vcParser : public ANTLR_USE_NAMESPACE(antlr)LLkParser, public vcParserTokenTypes
 {
-#line 30 "vc.g"
+#line 32 "vc.g"
 
 	void reportError(RecognitionException &re )
 	{
 		vcSystem::Error("Parsing Exception: " + re.toString());
 	}
-#line 22 "vcParser.hpp"
+#line 24 "vcParser.hpp"
 public:
 	void initializeASTFactory( ANTLR_USE_NAMESPACE(antlr)ASTFactory& factory );
 protected:
@@ -214,10 +216,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 112;
+	static const int NUM_TOKENS = 123;
 #else
 	enum {
-		NUM_TOKENS = 112
+		NUM_TOKENS = 123
 	};
 #endif
 	
@@ -273,8 +275,6 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_24;
 	static const unsigned long _tokenSet_25_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_25;
-	static const unsigned long _tokenSet_26_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_26;
 };
 
 #endif /*INC_vcParser_hpp_*/

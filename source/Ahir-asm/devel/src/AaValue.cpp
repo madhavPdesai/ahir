@@ -33,71 +33,116 @@ bool AaStringValue::Equals(AaValue* other)
   return(other->Is("AaStringValue") && (other->Get_Value_String() == this->Get_Value_String()));
 
 }
-AaIntValue::AaIntValue(AaScope* s, int w):AaValue(s,AaProgram::Make_Integer_Type((unsigned int) w))
+AaUintValue::AaUintValue(AaScope* s, int w):AaValue(s,AaProgram::Make_Integer_Type((unsigned int) w))
 {
-  _value = new IntValue(w);
+  _value = NULL;
 }
-void AaIntValue::Set_Value(string format)
+
+void AaUintValue::Make_Value(int w)
 {
-  IntValue tmp(_value->_width,format);
-  _value->Swap(tmp);
+  _value = new Unsigned(w);
 }
-void AaIntValue::Assign(AaType* t, AaValue* expr_value)
+void AaUintValue::Set_Value(string format)
 {
-  if(expr_value->Is("AaIntValue"))
+  Unsigned tmp(((Unsigned*)_value)->_width,format);
+  ((Unsigned*)_value)->Swap(tmp);
+}
+void AaUintValue::Assign(AaType* t, AaValue* expr_value)
+{
+  if(expr_value->Is("AaUintValue"))
     {
-      
-      if(t->Is("AaIntType"))
-	this->_value->Signed_Assign(*(((AaIntValue*)expr_value)->_value));
-      else
-	this->_value->Unsigned_Assign(*(((AaIntValue*)expr_value)->_value));
+      ((Unsigned*)(this->_value))->Assign(*((Unsigned*)(expr_value->Get_Value())));
+    }
+  else if(expr_value->Is("AaIntValue"))
+    {
+      ((Unsigned*)(this->_value))->Assign(*((Signed*)(expr_value->Get_Value())));
     }
   else if(expr_value->Is("AaFloatValue"))
     {
-      ((AaFloatValue*)expr_value)->_value->To_Integer(*(this->_value));
+      ((Float*)(expr_value->Get_Value()))->To_Unsigned(*((Unsigned*)(this->Get_Value())));
     }
 }
 
-bool AaIntValue::Equals(AaValue* other)
+bool AaUintValue::Equals(AaValue* other)
 {
-  return(other->Is("AaIntValue") && _value->Equal(*(((AaIntValue*)other)->_value)));
+  return(other->Is("AaUintValue") && 
+	 ((Unsigned*)(_value))->Equal(*((Unsigned*)(other->Get_Value()))));
 }
+
+AaIntValue::AaIntValue(AaScope* s, int width):AaUintValue(s,width)
+{
+}
+void AaIntValue::Make_Value(int w)
+{
+  _value = new Signed(w);
+}
+void AaIntValue::Set_Value(string format)
+{
+  Signed tmp(((Signed*)_value)->_width,format);
+  ((Signed*)(_value))->Swap(tmp);
+}
+void AaIntValue::Assign(AaType* target_type, AaValue* expr_value)
+{
+  if(expr_value->Is("AaUintValue"))
+    {
+      ((Signed*)(this->_value))->Assign(*((Unsigned*)(expr_value->Get_Value())));
+    }
+  else if(expr_value->Is("AaIntValue"))
+    {
+      ((Signed*)(this->_value))->Assign(*((Signed*)(expr_value->Get_Value())));
+    }
+  else if(expr_value->Is("AaFloatValue"))
+    {
+      ((Float*)(expr_value->Get_Value()))->To_Signed(*((Signed*)(this->Get_Value())));
+    }
+}
+
+
 AaFloatValue::AaFloatValue(AaScope* s, int c, int m):
   AaValue(s,AaProgram::Make_Float_Type((unsigned int)c, (unsigned int) m))
 {
-  _value = new FloatValue(c,m);
+  _value = new Float(c,m);
 }
 bool AaFloatValue::Equals(AaValue* other)
 {
-  return(other->Is("AaFloatValue") && _value->Equal(*(((AaFloatValue*)other)->_value)));
+  return(other->Is("AaFloatValue") && 
+	 ((Float*)(_value))->Equal(*((Float*)(other->Get_Value()))));
 }
 
 void AaFloatValue::Set_Value(string init_value)
 {
-  FloatValue tmp(_value->_characteristic_width, _value->_mantissa_width, init_value);
-  _value->Swap(tmp);
+  assert(init_value.size() > 2 && init_value[0] == '_' && init_value[1] == 'f');
+  Float tmp(_value->_characteristic_width, _value->_mantissa_width, init_value.substr(2));
+  ((Float*)(_value))->Swap(tmp);
 }
 
 void AaFloatValue::Assign(AaType* target_type, AaValue* expr_value)
 {
   if(expr_value->Is("AaFloatValue"))
     {
-      this->_value->Assign(*(((AaFloatValue*)expr_value)->_value));
+      ((Float*)(this->_value))->Assign(*((Float*)(expr_value->Get_Value())));
+    }
+  else if(expr_value->Is("AaUintValue"))
+    {
+      *(this->_value) = 
+	((Unsigned*)(expr_value->Get_Value()))->To_Float(this->_value->_characteristic_width,
+							 this->_value->_mantissa_width);
     }
   else if(expr_value->Is("AaIntValue"))
     {
-      if(target_type->Is("AaIntType"))
-	{
-	  *(this->_value) = ((AaIntValue*)expr_value)->_value
-	    ->Signed_To_Float(this->_value->_characteristic_width,
-			      this->_value->_mantissa_width);
-	}
-      else if(target_type->Is("AaUintType") || target_type->Is("AaPointerType"))
-	{
-	  *(this->_value) = ((AaIntValue*)expr_value)->_value->To_Float(this->_value->_characteristic_width,
-									this->_value->_mantissa_width);
-	}
+      *(this->_value) = 
+	((Signed*)(expr_value->Get_Value()))->To_Float(this->_value->_characteristic_width,
+							 this->_value->_mantissa_width);
     }
+}
+
+string AaFloatValue::To_VC_String()
+{
+  int w = this->Get_Type()->Size();
+  Unsigned tmp = Signed(w);
+
+  ((Float*)this->Get_Value())->Bit_Cast(tmp);
+  return("_b" + tmp.To_String());
 }
 
 
@@ -298,10 +343,17 @@ bool AaRecordValue::Equals(AaValue* other)
 AaValue* Make_Aa_Value(AaScope* scope, AaType* t)
 {
   AaValue* ret_value = NULL;
-  if(t->Is_Integer_Type())
+  if(t->Is("AaUintType") || t->Is("AaPointerType"))
+    {
+      ret_value = new AaUintValue(scope,
+				 t->Size());
+      ((AaUintValue*)ret_value)->Make_Value(t->Size());
+    }
+  else if(t->Is("AaIntType"))
     {
       ret_value = new AaIntValue(scope,
 				 t->Size());
+      ((AaIntValue*)ret_value)->Make_Value(t->Size());
     }
   else if(t->Is_Float_Type())
     {
@@ -331,134 +383,126 @@ AaValue* Make_Aa_Value(AaScope* scope, AaType* t,vector<string>& literals)
 
 AaValue* Perform_Unary_Operation(AaOperation op, AaValue* v)
 {
-  AaIntValue* iv = NULL;
-  AaIntValue* irv = NULL;
+  AaUintValue* iv = NULL;
+  AaUintValue* irv = NULL;
   AaFloatValue* fv = NULL;
   AaFloatValue* frv = NULL;
 
-  vector<string> dummy;
-  if(v->Is("AaIntValue"))
+  if(op == __NOT)
     {
-      iv = (AaIntValue*) v;
-      irv = (AaIntValue*) Make_Aa_Value(v->Get_Scope(),v->Get_Type(),dummy);
-      (*irv)._value = (*iv)._value;
+      assert(v->Is_IntValue());
 
-      if(op == __NOT)
-	{
-	  ((AaIntValue*)irv)->_value->Complement();
-	  return(irv);
-	}
-      else
-	{
-	  delete irv;
-	  irv = NULL;
-	}
+      AaValue* irv = Make_Aa_Value(v->Get_Scope(),v->Get_Type());
+      irv->Assign(v->Get_Type(),v);
+      ((Unsigned*)(irv->Get_Value()))->Complement();
       return(irv);
+
     }
   else
-    return(NULL);
+    {
+      //
+      // int-to-float etc not yet implemented...
+      //
+      return(NULL);
+    }
+
 }
 
 AaValue* Perform_Binary_Operation(AaOperation op, AaValue* u, AaValue* v)
 {
 
-  if(u->Is("AaIntValue") && v->Is("AaIntValue"))
+  if(u->Is_IntValue() && v->Is_IntValue())
     {
-      vector<string> dummy;
 
-      AaIntValue* irv = (AaIntValue*) 
-	Make_Aa_Value(u->Get_Scope(),u->Get_Type(),dummy);
-      (*irv)._value = ((AaIntValue*)u)->_value;
+      AaValue* irv = Make_Aa_Value(u->Get_Scope(),u->Get_Type());
+      irv->Assign(u->Get_Type(),u);
 
-      AaIntValue* vv = (AaIntValue*) v;
-
-      AaIntValue* icrv = (AaIntValue*)
-	Make_Aa_Value(u->Get_Scope(),AaProgram::Make_Uinteger_Type(1),dummy);
+      Unsigned* irvv = ((Unsigned*)(irv->Get_Value()));
+      Unsigned* vv = ((Unsigned*)(v->Get_Value()));
+      AaValue* icrv =  Make_Aa_Value(u->Get_Scope(),AaProgram::Make_Uinteger_Type(1));
+      Unsigned* icrvv = ((Unsigned*)(icrv->Get_Value()));
       
       if(op == __OR)
 	{
-	  irv->_value->Or(*((*vv)._value)); return(irv);
+	  irvv->Or(*vv); return(irv);
 	}
       else if(op == __AND)
 	{
-	  irv->_value->And(*((*vv)._value)); return(irv);
+	  irvv->And(*vv); return(irv);
 	}
       else if(op == __NOR)
 	{ 
-	  irv->_value->Nor(*((*vv)._value)); return(irv);
+	  irvv->Nor(*vv); return(irv);
 	}
       else if(op == __NAND)
 	{ 
-	  irv->_value->Nand(*((*vv)._value)); return(irv);
+	  irvv->Nand(*vv); return(irv);
 	}
       else if(op == __XOR)
 	{ 
-	  irv->_value->Xor(*((*vv)._value)); return(irv);
+	  irvv->Xor(*vv); return(irv);
 	}
       else if(op == __XNOR)
 	{ 
-	  irv->_value->Xnor(*((*vv)._value)); return(irv);
+	  irvv->Xnor(*vv); return(irv);
 	}
       else if(op == __SHL)
 	{ 
-	  irv->_value->Shift_Left(((*vv)._value)->To_Integer()); return(irv);
+	  irvv->Shift_Left(vv->To_Integer()); return(irv);
 	}
       else if(op == __SHR)
 	{ 
-	  if(u->Get_Type()->Is("AaIntType"))
-	    irv->_value->Shift_Right_Signed(((*vv)._value)->To_Integer());
-	  else 
-	    irv->_value->Shift_Right(((*vv)._value)->To_Integer()); 
+	  irvv->Shift_Right(vv->To_Integer());
 	  return(irv);
 	}
       else if(op == __PLUS)
 	{ 
-	  irv->_value->Add(*((*vv)._value)); return(irv);
+	  irvv->Add(*vv); return(irv);
 	}
       else if(op == __MINUS)
 	{ 
-	  irv->_value->Subtract(*((*vv)._value)); return(irv);
+	  irvv->Subtract(*vv); return(irv);
 	}
       else if(op == __DIV)
 	{ 
-	  irv->_value->Divide(*((*vv)._value)); return(irv);
+	  irvv->Divide(*vv); return(irv);
 	}
       else if(op == __MUL)
 	{ 
-	  irv->_value->Multiply(*((*vv)._value)); return(irv);
+	  irvv->Multiply(*vv); return(irv);
 	}
       else if(op == __EQUAL)
 	{ 
-	  icrv->_value->Set_Bit(0,irv->_value->Equal(*((*vv)._value))); return(icrv);
+	  icrvv->Set_Bit(0,irvv->Equal(*vv)); return(icrv);
 	}
       else if(op == __NOTEQUAL)
 	{ 
-	  icrv->_value->Set_Bit(0,!irv->_value->Equal(*((*vv)._value))); return(icrv);
+	  icrvv->Set_Bit(0,!irvv->Equal(*vv)); return(icrv);
 	}
       else if(op == __LESS)
 	{ 
-	  icrv->_value->Set_Bit(0,irv->_value->Less_Than(*((*vv)._value))); return(icrv);
+	  icrvv->Set_Bit(0,irvv->Less_Than(*vv)); return(icrv);
 	}
       else if(op == __LESSEQUAL)
 	{
-	  icrv->_value->Set_Bit(0,irv->_value->Less_Equal(*((*vv)._value))); return(icrv); 
+	  icrvv->Set_Bit(0,irvv->Less_Equal(*vv)); return(icrv); 
 	}
       else if(op == __GREATER)
 	{ 
-	  icrv->_value->Set_Bit(0,irv->_value->Greater(*((*vv)._value))); return(icrv); 
+	  icrvv->Set_Bit(0,irvv->Greater(*vv)); return(icrv); 
 	}
       else if(op == __GREATEREQUAL)
 	{ 
-	  icrv->_value->Set_Bit(0,irv->_value->Greater_Equal(*((*vv)._value))); return(icrv); 
+	  icrvv->Set_Bit(0,irvv->Greater_Equal(*vv)); return(icrv); 
 	}
       else if(op == __CONCAT)
 	{ 
-	  irv->_value->Concatenate(*((*vv)._value)); 
+	  irvv->Concatenate(*vv); 
 	  return(irv);
 	}
       else if(op == __BITSEL)
 	{
-	  icrv->_value->Set_Bit(0,irv->_value->Get_Bit(vv->_value->To_Integer()));
+	  icrvv->Set_Bit(0,irvv->Get_Bit(vv->To_Integer()));
 	  return(icrv);
 	}
       else
@@ -471,55 +515,55 @@ AaValue* Perform_Binary_Operation(AaOperation op, AaValue* u, AaValue* v)
     }
   else if(u->Is("AaFloatValue") && v->Is("AaFloatValue"))
     {
-      vector<string> dummy;
 
-      AaFloatValue* frv = (AaFloatValue*) 
-	Make_Aa_Value(u->Get_Scope(),u->Get_Type(),dummy);
-      (*frv)._value = ((AaFloatValue*)u)->_value;
+      AaValue* frv = Make_Aa_Value(u->Get_Scope(),u->Get_Type());
+      frv->Assign(u->Get_Type(),u);
 
-      AaFloatValue* vv = (AaFloatValue*) v;
+      Float* frvv = (Float*)(frv->Get_Value());
 
-      AaIntValue* icrv = (AaIntValue*)
-	Make_Aa_Value(u->Get_Scope(),AaProgram::Make_Uinteger_Type(1),dummy);
+      AaValue* icrv = Make_Aa_Value(u->Get_Scope(),AaProgram::Make_Uinteger_Type(1));
+      Unsigned* icrvv = (Unsigned*)(icrv->Get_Value());
+
+      Float* vv = ((Float*)(v->Get_Value()));
       if(op == __PLUS)
 	{ 
-	  frv->_value->Add(*((*vv)._value)); return(frv);
+	  frvv->Add(*vv); return(frv);
 	}
       else if(op == __MINUS)
 	{ 
-	  frv->_value->Subtract(*((*vv)._value)); return(frv);
+	  frvv->Subtract(*vv); return(frv);
 	}
       else if(op == __DIV)
 	{ 
-	  frv->_value->Divide(*((*vv)._value)); return(frv);
+	  frvv->Divide(*vv); return(frv);
 	}
       else if(op == __MUL)
 	{ 
-	  frv->_value->Multiply(*((*vv)._value)); return(frv);
+	  frvv->Multiply(*vv); return(frv);
 	}
       else if(op == __EQUAL)
 	{ 
-	  icrv->_value->Set_Bit(0,frv->_value->Equal(*((*vv)._value))); return(icrv);
+	  icrvv->Set_Bit(0,frvv->Equal(*vv)); return(icrv);
 	}
       else if(op == __NOTEQUAL)
 	{ 
-	  icrv->_value->Set_Bit(0,!frv->_value->Equal(*((*vv)._value))); return(icrv);
+	  icrvv->Set_Bit(0,!frvv->Equal(*vv)); return(icrv);
 	}
       else if(op == __LESS)
 	{ 
-	  icrv->_value->Set_Bit(0,frv->_value->Less_Than(*((*vv)._value))); return(icrv);
+	  icrvv->Set_Bit(0,frvv->Less_Than(*vv)); return(icrv);
 	}
       else if(op == __LESSEQUAL)
 	{
-	  icrv->_value->Set_Bit(0,frv->_value->Less_Equal(*((*vv)._value))); return(icrv); 
+	  icrvv->Set_Bit(0,frvv->Less_Equal(*vv)); return(icrv); 
 	}
       else if(op == __GREATER)
 	{ 
-	  icrv->_value->Set_Bit(0,frv->_value->Greater(*((*vv)._value))); return(icrv); 
+	  icrvv->Set_Bit(0,frvv->Greater(*vv)); return(icrv); 
 	}
       else if(op == __GREATEREQUAL)
 	{ 
-	  icrv->_value->Set_Bit(0,frv->_value->Greater_Equal(*((*vv)._value))); return(icrv); 
+	  icrvv->Set_Bit(0,frvv->Greater_Equal(*vv)); return(icrv); 
 	}
       else
 	{

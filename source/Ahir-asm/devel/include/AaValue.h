@@ -13,9 +13,14 @@ using namespace _base_value_;
 class AaValue: public AaRoot
 {
   AaType* _type;
+
+ protected:
+  AaValue(AaScope* scope,AaType* t);
+
+
  public:
   AaScope* _scope;
-  AaValue(AaScope* scope,AaType* t);
+
   ~AaValue();
 
   virtual string Get_Value_String() {assert(0);}
@@ -29,6 +34,7 @@ class AaValue: public AaRoot
   virtual bool Is_ArrayValue() {return(false);}
   virtual bool Is_RecordValue() {return(false);}
 
+  virtual string To_C_String() {assert(0);}
   virtual string To_VC_String() {assert(0);} //todo
 
   virtual bool Equals(AaValue* other) {return(false);}
@@ -41,6 +47,11 @@ class AaValue: public AaRoot
 
   virtual unsigned int Eat(unsigned int init_id, vector<string>& init_vals) {assert(0);}
   virtual AaValue* Get_Element(vector<int>& indices) { assert(0); }
+
+  virtual Value* Get_Value() {assert(0);}
+
+  friend AaValue* Make_Aa_Value(AaScope* scope, AaType* t);
+  friend AaValue* Make_Aa_Value(AaScope* scope, AaType* t, vector<string>& literals);
 };
 
 
@@ -60,11 +71,13 @@ class AaStringValue: public AaValue
   virtual bool Equals(AaValue* other); // todo
 };
 
-class AaIntValue: public AaValue
+class AaUintValue: public AaValue
 {
  public:
-  IntValue* _value;
-  AaIntValue(AaScope* s, int width);
+  Value* _value;
+
+  virtual Value* Get_Value() {return(_value);}
+  AaUintValue(AaScope* s, int width);
   virtual void Set_Value(string format);
   virtual unsigned int Eat(unsigned int init_id, vector<string>& init_vals) 
   {
@@ -73,11 +86,13 @@ class AaIntValue: public AaValue
     return(init_id + 1);
   }
 
-  void Assign(AaType* target_type, AaValue* expr_value);
+  virtual void Assign(AaType* target_type, AaValue* expr_value);
 
-  virtual string Kind() {return("AaIntValue");}
+  virtual string Kind() {return("AaUintValue");}
   virtual bool Is_IntValue() {return(true);}
+
   virtual bool Equals(AaValue* other); 
+  virtual void Make_Value(int w);
   virtual int To_Integer()
   {
     if(this->_value)
@@ -95,14 +110,31 @@ class AaIntValue: public AaValue
 
   virtual string To_VC_String()
   {
-    return(this->_value->To_String());
+    return("_b" + this->_value->To_String());
   }
+
+  virtual string To_C_String() 
+  {
+    return(IntToStr(this->To_Integer()));
+  }
+};
+
+class AaIntValue: public AaUintValue
+{
+ public:
+  AaIntValue(AaScope* s, int width);
+  virtual void Make_Value(int w);
+  virtual void Set_Value(string format);
+  virtual void Assign(AaType* target_type, AaValue* expr_value);
+
+  virtual string Kind() {return("AaIntValue");}
 };
 
 class AaFloatValue: public AaValue
 {
  public:
-  FloatValue* _value;
+  Float* _value;
+  virtual Value* Get_Value() {return(_value);}
   virtual string Kind() {return("AaFloatValue");}
   AaFloatValue(AaScope* s, int c, int m);
   void Assign(AaType* target_type, AaValue* expr_value);
@@ -118,11 +150,16 @@ class AaFloatValue: public AaValue
   virtual bool Is_FloatValue() {return(true);}
   virtual bool Equals(AaValue* other); 
 
-  virtual string To_VC_String()
-  {
-    return(this->_value->To_String());
-  }
 
+  virtual string To_VC_String();
+
+  virtual string To_C_String() 
+  {
+    char buffer[256];
+    sprintf(buffer,"%le", this->_value->To_Double());
+    string ret_string = buffer;
+    return(ret_string);
+  }
 
 };
 
@@ -157,6 +194,18 @@ class AaArrayValue: public AaValue
     ret_val += ")";
     return(ret_val);
   }
+  virtual string To_C_String()
+  {
+    string ret_val = "{";
+    for(int idx = 0; idx < _value_vector.size(); idx++)
+      {
+	if(idx > 0)
+	  ret_val += ",";
+	ret_val += this->_value_vector[idx]->To_C_String();
+      }
+    ret_val += "}";
+    return(ret_val);
+  }
 };
 
 class AaRecordValue: public AaValue
@@ -184,10 +233,24 @@ class AaRecordValue: public AaValue
     ret_val += ")";
     return(ret_val);
   }
+  virtual string To_C_String()
+  {
+    string ret_val = "{";
+    for(int idx = 0; idx < _value_vector.size(); idx++)
+      {
+	if(idx > 0)
+	  ret_val += ",";
+	ret_val += this->_value_vector[idx]->To_C_String();
+      }
+    ret_val += "}";
+    return(ret_val);
+  }
+
   virtual bool Equals(AaValue* other); 
   void Assign(AaType* target_type, AaValue* expr_value);
 };
 
+// All values must be made through these two functions!
 AaValue* Make_Aa_Value(AaScope* scope, AaType* t);
 AaValue* Make_Aa_Value(AaScope* scope, AaType* t, vector<string>& literals);
 AaValue* Perform_Unary_Operation(AaOperation op, AaValue* v);

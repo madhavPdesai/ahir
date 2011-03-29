@@ -337,11 +337,13 @@ vcBinarySplitOperator::vcBinarySplitOperator(string id, string op_id, vcWire* x,
 
   if(x->Is("vcConstantWire"))
     {
+      // both cannot be constants!
+      assert(!y->Is("vcConstantWire"));
       if(Is_Symmetric_Op(op_id))
 	{
 	  vcWire* tmp = y;
 	  y = x;
-	  x = y;
+	  x = tmp;
 	}
     }
   
@@ -551,14 +553,16 @@ void vcBranch::Print(ostream& ofile)
 bool Is_Shift_Op(string vc_op_id)
 {
   bool ret_val = false;
-  if(vc_op_id == vcLexerKeywords[__SHL_OP]           ) { ret_val = true;} 
+  if(vc_op_id == vcLexerKeywords[__SHL_OP]                ) { ret_val = true;} 
   else if(vc_op_id == vcLexerKeywords[__SHR_OP]           ) { ret_val = true;} 
+  else if(vc_op_id == vcLexerKeywords[__SHRA_OP]          ) { ret_val = true;} 
   return(ret_val);
 }
+
 bool Is_Trivial_Op(string vc_op_id)
 {
   bool ret_val = false;
-  if(vc_op_id == vcLexerKeywords[__BITSEL_OP]        )      { ret_val = true;      } 
+  if(vc_op_id == vcLexerKeywords[__BITSEL_OP]             ) { ret_val = true;      } 
   else if(vc_op_id == vcLexerKeywords[__CONCAT_OP]        ) { ret_val = true; } 
   else if(vc_op_id == vcLexerKeywords[__OR_OP]            ) { ret_val = true; }
   else if(vc_op_id == vcLexerKeywords[__AND_OP]           ) { ret_val = true; }
@@ -566,15 +570,19 @@ bool Is_Trivial_Op(string vc_op_id)
   else if(vc_op_id == vcLexerKeywords[__NOR_OP]           ) { ret_val = true; }
   else if(vc_op_id == vcLexerKeywords[__NAND_OP]          ) { ret_val = true; }
   else if(vc_op_id == vcLexerKeywords[__XNOR_OP]          ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__ASSIGN_OP]        ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__UtoS_ASSIGN_OP]   ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__StoU_ASSIGN_OP]   ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__StoS_ASSIGN_OP]   ) { ret_val = true; }
   return(ret_val);
 }
 
 bool Is_Symmetric_Op(string vc_op_id)
 {
   bool ret_val = false;
-  if(vc_op_id == vcLexerKeywords[__PLUS_OP]        )      { ret_val = true;      } 
-  else if(vc_op_id == vcLexerKeywords[__MUL_OP]        ) { ret_val = true; } 
-  else if(vc_op_id == vcLexerKeywords[__EQ_OP]        ) { ret_val = true; } 
+  if(vc_op_id == vcLexerKeywords[__PLUS_OP]               )      { ret_val = true;      } 
+  else if(vc_op_id == vcLexerKeywords[__MUL_OP]           ) { ret_val = true; } 
+  else if(vc_op_id == vcLexerKeywords[__EQ_OP]            ) { ret_val = true; } 
   else if(vc_op_id == vcLexerKeywords[__OR_OP]            ) { ret_val = true; }
   else if(vc_op_id == vcLexerKeywords[__AND_OP]           ) { ret_val = true; }
   else if(vc_op_id == vcLexerKeywords[__XOR_OP]           ) { ret_val = true; }
@@ -586,7 +594,15 @@ bool Is_Symmetric_Op(string vc_op_id)
 
 bool Is_Unary_Op(string vc_op_id)
 {
-  return(vc_op_id == vcLexerKeywords[__NOT_OP]);
+  return((vc_op_id == vcLexerKeywords[__NOT_OP]) ||
+	 (vc_op_id == vcLexerKeywords[__ASSIGN_OP]) ||
+	 (vc_op_id == vcLexerKeywords[__StoS_ASSIGN_OP]) ||
+	 (vc_op_id == vcLexerKeywords[__UtoS_ASSIGN_OP]) ||
+	 (vc_op_id == vcLexerKeywords[__StoU_ASSIGN_OP]) ||
+	 (vc_op_id == vcLexerKeywords[__FtoS_ASSIGN_OP]) ||
+	 (vc_op_id == vcLexerKeywords[__FtoU_ASSIGN_OP]) ||
+	 (vc_op_id == vcLexerKeywords[__UtoF_ASSIGN_OP]) ||
+	 (vc_op_id == vcLexerKeywords[__StoF_ASSIGN_OP]));
 }
 
 string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
@@ -594,7 +610,8 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
 
   string ret_string;
 
-  if(in_type->Kind() == "vcIntType" || in_type->Kind() == "vcPointerType")
+  if((in_type->Kind() == "vcIntType" || in_type->Kind() == "vcPointerType") &&
+     (out_type->Kind() == "vcIntType" || out_type->Kind() == "vcPointerType"))
     {
       if(vc_op_id == vcLexerKeywords[__PLUS_OP]          ) { ret_string = "ApIntAdd";} 
       else if(vc_op_id == vcLexerKeywords[__MINUS_OP]         ) { ret_string = "ApIntSub";} 
@@ -602,12 +619,12 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
       else if(vc_op_id == vcLexerKeywords[__DIV_OP]           ) { ret_string = "ApIntDiv";} 
       else if(vc_op_id == vcLexerKeywords[__SHL_OP]           ) { ret_string = "ApIntSHL";} 
       else if(vc_op_id == vcLexerKeywords[__SHR_OP]           ) { ret_string = "ApIntLSHR";} 
-      //\todo: ASHR to be added here..
-      else if(vc_op_id == vcLexerKeywords[__GT_OP]            ) { ret_string = "ApIntSgt";} 
-      else if(vc_op_id == vcLexerKeywords[__GE_OP]            ) { ret_string = "ApIntSge"  ;} 
+      else if(vc_op_id == vcLexerKeywords[__SHRA_OP]          ) { ret_string = "ApIntASHR";} 
+      else if(vc_op_id == vcLexerKeywords[__SGT_OP]            ) { ret_string = "ApIntSgt";} 
+      else if(vc_op_id == vcLexerKeywords[__SGE_OP]            ) { ret_string = "ApIntSge"  ;} 
       else if(vc_op_id == vcLexerKeywords[__EQ_OP]            ) { ret_string = "ApIntEq"  ;} 
-      else if(vc_op_id == vcLexerKeywords[__LT_OP]            ) { ret_string = "ApIntSlt"  ;} 
-      else if(vc_op_id == vcLexerKeywords[__LE_OP]            ) { ret_string = "ApIntSle"  ;}
+      else if(vc_op_id == vcLexerKeywords[__SLT_OP]            ) { ret_string = "ApIntSlt"  ;} 
+      else if(vc_op_id == vcLexerKeywords[__SLE_OP]            ) { ret_string = "ApIntSle"  ;}
       else if(vc_op_id == vcLexerKeywords[__UGT_OP]           ) { ret_string = "ApIntUgt"  ;}
       else if(vc_op_id == vcLexerKeywords[__UGE_OP]           ) { ret_string = "ApIntUge"  ;}
       else if(vc_op_id == vcLexerKeywords[__ULT_OP]           ) { ret_string = "ApIntUlt"  ;}
@@ -626,7 +643,7 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
       else { vcSystem::Error("unsupported int X int -> int operation " + vc_op_id);}
     }
 
-  if(in_type->Kind() == "vcFloatType" || out_type->Kind() == "vcFloatType")
+  if(in_type->Kind() == "vcFloatType" && out_type->Kind() == "vcFloatType")
     {
       if(vc_op_id == vcLexerKeywords[__PLUS_OP]          ) { ret_string = "ApFloatAdd";} 
       else if(vc_op_id == vcLexerKeywords[__MINUS_OP]         ) { ret_string = "ApFloatSub";} 
@@ -634,30 +651,38 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
       else if(vc_op_id == vcLexerKeywords[__DIV_OP]           ) { ret_string = "ApFloatDiv";} 
       else if(vc_op_id == vcLexerKeywords[__ASSIGN_OP]        ) 
 	{ 
-	  if(in_type == out_type) ret_string = "ApAssign";
-	  else ret_string = "ApFloatResize" ;
+	  if(in_type == out_type) 
+	    ret_string = "ApAssign";
+	  else 
+	    ret_string = "ApFloatResize" ;
 	}
-      else { vcSystem::Error("unsupported float X float -> float operation " + vc_op_id);}
+      else { vcSystem::Error("unsupported float <-> float operation " + vc_op_id);}
     }
 
   if(in_type->Kind() == "vcFloatType" && out_type->Kind() == "vcIntType")
     {
-      if(vc_op_id == vcLexerKeywords[__GT_OP]            ) { ret_string = "ApFloatGt;}" ;} 
-      else if(vc_op_id == vcLexerKeywords[__GE_OP]            ) { ret_string = "ApFloatGe"  ;} 
-      else if(vc_op_id == vcLexerKeywords[__EQ_OP]            ) { ret_string = "ApFloatEq"  ;} 
-      else if(vc_op_id == vcLexerKeywords[__LT_OP]            ) { ret_string = "ApFloatLt"  ;} 
-      else if(vc_op_id == vcLexerKeywords[__LE_OP]            ) { ret_string = "ApFloatLe"  ;}
-      else if(vc_op_id == vcLexerKeywords[__NEQ_OP]           ) { ret_string = "ApFloatNe"  ;} 
-      else if(vc_op_id == vcLexerKeywords[__UNORDERED_OP]     ) { ret_string = "ApFloatUnordered";}
+      if(vc_op_id == vcLexerKeywords[__SGT_OP]            ) { ret_string = "ApFloatOgt;}" ;} 
+      else if(vc_op_id == vcLexerKeywords[__SGE_OP]            ) { ret_string = "ApFloatOge"  ;} 
+      else if(vc_op_id == vcLexerKeywords[__EQ_OP]            ) { ret_string = "ApFloatOeq"  ;} 
+      else if(vc_op_id == vcLexerKeywords[__SLT_OP]            ) { ret_string = "ApFloatOlt"  ;} 
+      else if(vc_op_id == vcLexerKeywords[__SLE_OP]            ) { ret_string = "ApFloatOle"  ;}
+      else if(vc_op_id == vcLexerKeywords[__NEQ_OP]           ) { ret_string = "ApFloatOne"  ;} 
+      // unordered float comparisons not supported as of now..
       else if(vc_op_id == vcLexerKeywords[__BITSEL_OP]        ) { ret_string = "ApBitsel"   ;} 
       else if(vc_op_id == vcLexerKeywords[__CONCAT_OP]        ) { ret_string = "ApConcat"   ;} 
-      else if(vc_op_id == vcLexerKeywords[__ASSIGN_OP]        ) { ret_string = "ApFloatToApInt";} // always signed
-      else { vcSystem::Error("unsupported float X float -> int operation " + vc_op_id);}
-    }
+      else if(vc_op_id == vcLexerKeywords[__FtoS_ASSIGN_OP]        ) { ret_string = "ApFloatToApIntSigned";}
+      else if(vc_op_id == vcLexerKeywords[__FtoU_ASSIGN_OP]        ) { ret_string = "ApFloatToApIntUnsigned";}
 
+      else { vcSystem::Error("unsupported float <-> int operation " + vc_op_id);}
+    }
   if((in_type->Is("vcIntType") || in_type->Is("vcPointerType")) && out_type->Kind() == "vcFloatType")
     {
-      if(vc_op_id == vcLexerKeywords[__ASSIGN_OP] ) { ret_string = "ApIntToApFloat";} // always a signed number..
+      if(vc_op_id == vcLexerKeywords[__ASSIGN_OP] ) { ret_string = "ApIntUnsignedToApFloat";}
+      else if(vc_op_id == vcLexerKeywords[__StoF_ASSIGN_OP]        ) { ret_string = "ApIntSignedToApFloat";}
+      else if(vc_op_id == vcLexerKeywords[__UtoF_ASSIGN_OP]        ) 
+	{ 
+	  ret_string = "ApIntUnsignedToApFloat";
+	}      
       else { vcSystem::Error("unsupported int -> float operation " + vc_op_id);}
     }
 

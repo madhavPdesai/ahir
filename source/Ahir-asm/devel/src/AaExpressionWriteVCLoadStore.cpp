@@ -362,20 +362,10 @@ void AaObjectReference::Write_VC_Address_Calculation_Constants(vector<AaExpressi
 						ofile);
 	}
     }
-  else
+  else 
+    // address was not a constant, individual word offsets
+    // will come into play!
     {
-      // scale factors are needed in the data path
-      if(scale_factors != NULL)
-	{
-	  for(int idx = 0; idx < scale_factors->size(); idx++)
-	    {
-	      Write_VC_Constant_Declaration(this->Get_VC_Offset_Scale_Factor_Name(idx),
-					    addr_type,
-					    IntToStr((*scale_factors)[idx]),
-					    ofile);
-	    }
-	}
-
       for(int idx =0; idx < nwords; idx++)
 	{
 	  Write_VC_Constant_Declaration(this->Get_VC_Word_Offset_Name(idx),
@@ -429,8 +419,10 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Constants(vector<AaExp
   int base_addr = this->Get_Base_Address();
   if(base_addr >= 0)
     {
+      // base address is a constant
       if(offset_value < 0)
 	{
+	  // base address is constant, offset is not.
 	  Write_VC_Constant_Declaration(this->Get_VC_Base_Address_Name() + "_resized",
 					addr_type,
 					IntToStr(base_addr),
@@ -438,12 +430,41 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Constants(vector<AaExp
 	}
       else
 	{
+
+	  // both base and offset are constants
 	  int final_root_address = base_addr + offset_value;
 	  Write_VC_Constant_Declaration(this->Get_VC_Root_Address_Name(),
 					addr_type,
 					IntToStr(final_root_address),
 					ofile);
 	
+	}
+    }
+  else if(offset_value > 0) // final offset needs to be declared.
+    {
+
+      // base is not constant, offset is a constant.
+      Write_VC_Constant_Declaration(this->Get_VC_Offset_Name(),
+				    addr_type,
+				    IntToStr(offset_value),
+				    ofile);
+    }
+
+
+  // scale factors are needed in the data path
+  if(offset_value < 0)
+    {
+      // offset will need to be calculated.. ergo constants
+      // will be needed
+      if(scale_factors != NULL)
+	{
+	  for(int idx = 0; idx < scale_factors->size(); idx++)
+	    {
+	      Write_VC_Constant_Declaration(this->Get_VC_Offset_Scale_Factor_Name(idx),
+					    addr_type,
+					    IntToStr((*scale_factors)[idx]),
+					    ofile);
+	    }
 	}
     }
 }
@@ -457,9 +478,14 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Wires(vector<AaExpress
   if(address_expressions)
     offset_val = this->Evaluate(address_expressions,scale_factors);
   AaUintType* addr_type = AaProgram::Make_Uinteger_Type(this->Get_Address_Width());
+  bool const_flag = false;
   
+  // if offset_val is not statically known, calculate it..
   if(offset_val < 0)
     {
+
+      // offset is not constant... calculation is needed.
+
       vector<int> non_constant_indices;
       int sum_counter = 0;
       for(int idx = 0; idx < address_expressions->size(); idx++)
@@ -467,20 +493,31 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Wires(vector<AaExpress
 	  AaExpression* idx_expr = (*address_expressions)[idx];
 	  if(!idx_expr->Is_Constant())
 	    {
-	      idx_expr->Write_VC_Wire_Declarations(false, ofile);
+	      // for each non-constant index, there will be a resized version.
+	      // and a a scaled version
+	      idx_expr->Write_VC_Wire_Declarations(false, ofile); // this is the index wire.
 	      Write_VC_Intermediate_Wire_Declaration(idx_expr->Get_VC_Name() + "_resized",
 						     addr_type,
-						     ofile);
+						     ofile); // the resized version
 	      Write_VC_Intermediate_Wire_Declaration(idx_expr->Get_VC_Name() + "_scaled",
 						     addr_type,
-						     ofile);
-	      non_constant_indices.push_back(idx);
+						     ofile); // the scaled version.
+	      non_constant_indices.push_back(idx); // remember, to add them later.
+	    }
+	  else
+	    {
+	      const_flag = true;
+	      
 	    }
 	}
 	      
-      if(non_constant_indices.size() > 1)
+
+      // partial sums..
+      int num_to_be_added = (non_constant_indices.size() > 0 ? 
+			     non_constant_indices.size() + (const_flag ? 1 : 0) : 0);
+      if(num_to_be_added > 1)
 	{
-	  for(int idx = 1; idx < non_constant_indices.size(); idx++)
+	  for(int idx = 1; idx < num_to_be_added; idx++)
 	    {
 	      Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Name() + "_index_partial_sum_" +
 						     IntToStr(idx),
@@ -499,6 +536,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Wires(vector<AaExpress
   int base_addr = this->Get_Base_Address();
   if(base_addr < 0)
     {
+      // resized version of the base-address.
       Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Base_Address_Name() + "_resized",
 					     addr_type,
 					     ofile);
@@ -506,6 +544,8 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Wires(vector<AaExpress
 
   if(offset_val < 0 || base_addr < 0)
     {
+      // if either offset or base are constants, need
+      // to declare the final root address wire.
       Write_VC_Wire_Declaration(this->Get_VC_Root_Address_Name(),
 				addr_type,
 				ofile);
@@ -684,8 +724,12 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Control_Path(vector<Aa
   int num_non_constant = 0;
   bool const_index_flag = false;
 
+  // if offset value is < 0, then it is not known at compile time.
+  // calculate it at run time.
   if(offset_val < 0)
     {
+
+      // indices will need to be scaled
       ofile << "||[scale_indices] {" << endl;
       
       for(int idx = 0; idx < index_vector->size(); idx++)
@@ -694,7 +738,6 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Control_Path(vector<Aa
 	  if(!(*index_vector)[idx]->Is_Constant())
 	    {
 	      num_non_constant++;
-	      all_indices_zero = false;
 	      ofile << ";;[idx_" << IntToStr(idx) << "] {" << endl;
 	      (*index_vector)[idx]->Write_VC_Control_Path(ofile);
 	      
@@ -711,10 +754,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Control_Path(vector<Aa
 	    }
 	  else
 	    {
-	      
 	      const_index_flag = true;
-	      if((*index_vector)[idx]->Get_Expression_Value()->To_Integer() != 0)
-		all_indices_zero = false;
 	    }
 	}
       ofile << "}" << endl;
@@ -1189,6 +1229,54 @@ int AaArrayObjectReference::Get_Base_Address()
     }
   else
     return(this->AaObjectReference::Get_Base_Address());
+}
+
+
+// what is the address width corresponding to 
+// a memory-access or address calculation for a
+// an indexed reference.
+// 
+// if _object has pointer type, then the
+// address width is determined by the
+// addressed object representative.
+// 
+// else if _object has non-pointer type,
+// the address width is determined by the
+// _object itself, since it must be 
+// a storage object.
+int AaArrayObjectReference::Get_Address_Width()
+{
+  AaStorageObject* so = NULL;
+  assert(this->_object);
+  if(this->Get_Object_Type() && this->Get_Object_Type()->Is_Pointer_Type())
+    {
+      so = this->Get_Addressed_Object_Representative();
+    }
+  else
+    {
+      assert(this->_object->Is("AaStorageObject"));
+      so = ((AaStorageObject*) (this->_object));
+    }
+  assert(so != NULL);
+  return(so->Get_Address_Width());
+}
+
+
+int AaArrayObjectReference::Get_Word_Size()
+{
+  AaStorageObject* so = NULL;
+  assert(this->_object);
+  if(this->Get_Object_Type() && this->Get_Object_Type()->Is_Pointer_Type())
+    {
+      so = this->Get_Addressed_Object_Representative();
+    }
+  else
+    {
+      assert(this->_object->Is("AaStorageObject"));
+      so = ((AaStorageObject*) (this->_object));
+    }
+  assert(so != NULL);
+  return(so->Get_Word_Size());
 }
 
 

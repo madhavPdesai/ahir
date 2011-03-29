@@ -102,6 +102,29 @@ void AaObject::Print(ostream& ofile)
   ofile << " ";
 }
 
+void AaObject::PrintC(ofstream& ofile, string tab_string)
+{
+  AaType* t = this->Get_Type();
+  if(!t->Is_Pointer_Type())
+    {
+      ofile << tab_string << this->Get_Type()->CName() 
+	    << " " 
+	    << this->Get_Name()
+	    << this->Get_Type()->CDim();
+      ofile << ";" << endl;
+    }
+  else
+    {
+      AaType* ref_type = ((AaPointerType*)t)->Get_Ref_Type();
+      ofile << tab_string << ref_type->CName() 
+	    << " (*" 
+	    << this->Get_Name()
+	    << ") "
+	    << ref_type->CDim();
+      ofile << ";" << endl;
+    }
+}
+
 void AaObject::Write_VC_Model(ostream& ofile)
 {
   ofile << this->Get_VC_Name() << ":";  this->Get_Type()->Write_VC_Model(ofile);

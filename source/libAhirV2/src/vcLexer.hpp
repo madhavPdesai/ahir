@@ -13,12 +13,14 @@
 #include <vcHeader.hpp>
 #include <antlr/RecognitionException.hpp>
 	ANTLR_USING_NAMESPACE(antlr)
+#define NOT_FOUND__(str, w, wid,token_id)      if(w == NULL)\
+         vcSystem::Error(string("did not find ") + str + " " +  wid + ": line " + IntToStr(token_id->getLine()));
 
-#line 18 "vcLexer.hpp"
+#line 20 "vcLexer.hpp"
 class CUSTOM_API vcLexer : public ANTLR_USE_NAMESPACE(antlr)CharScanner, public vcParserTokenTypes
 {
 #line 1 "vc.g"
-#line 22 "vcLexer.hpp"
+#line 24 "vcLexer.hpp"
 private:
 	void initLiterals();
 public:
@@ -101,16 +103,17 @@ public:
 	public: void mDIV_OP(bool _createToken);
 	public: void mSHL_OP(bool _createToken);
 	public: void mSHR_OP(bool _createToken);
-	public: void mGT_OP(bool _createToken);
-	public: void mGE_OP(bool _createToken);
+	public: void mSGT_OP(bool _createToken);
+	public: void mSGE_OP(bool _createToken);
 	public: void mEQ_OP(bool _createToken);
-	public: void mLT_OP(bool _createToken);
-	public: void mLE_OP(bool _createToken);
+	public: void mSLT_OP(bool _createToken);
+	public: void mSLE_OP(bool _createToken);
 	public: void mUGT_OP(bool _createToken);
 	public: void mUGE_OP(bool _createToken);
 	public: void mULT_OP(bool _createToken);
 	public: void mULE_OP(bool _createToken);
 	public: void mNEQ_OP(bool _createToken);
+	public: void mORDERED_OP(bool _createToken);
 	public: void mUNORDERED_OP(bool _createToken);
 	public: void mBITSEL_OP(bool _createToken);
 	public: void mCONCAT_OP(bool _createToken);
@@ -126,6 +129,14 @@ public:
 	public: void mXNOR_OP(bool _createToken);
 	public: void mEQUIVALENCE_OP(bool _createToken);
 	public: void mOPEN(bool _createToken);
+	public: void mSHRA_OP(bool _createToken);
+	public: void mUtoS_ASSIGN_OP(bool _createToken);
+	public: void mStoS_ASSIGN_OP(bool _createToken);
+	public: void mStoU_ASSIGN_OP(bool _createToken);
+	public: void mFtoS_ASSIGN_OP(bool _createToken);
+	public: void mFtoU_ASSIGN_OP(bool _createToken);
+	public: void mStoF_ASSIGN_OP(bool _createToken);
+	public: void mUtoF_ASSIGN_OP(bool _createToken);
 	public: void mUINTEGER(bool _createToken);
 	protected: void mDIGIT(bool _createToken);
 	public: void mWHITESPACE(bool _createToken);

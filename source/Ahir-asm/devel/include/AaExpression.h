@@ -129,6 +129,8 @@ class AaExpression: public AaRoot
 
   virtual void Evaluate() {if(!_already_evaluated) _already_evaluated = true;};
   virtual void Assign_Expression_Value(AaValue* expr_value);
+
+
 };
 
 
@@ -196,6 +198,7 @@ class AaObjectReference: public AaExpression
   virtual void Evaluate();
   void PrintAddressOfC(ofstream& ofile, string tab_string) {}
   virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string) {}
+
 
 
   virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
@@ -303,6 +306,8 @@ class AaObjectReference: public AaExpression
   virtual int Get_Base_Address();
   virtual int Get_Address_Width();
   virtual int Get_Word_Size();
+
+
   virtual string Get_VC_Base_Address_Name();
   virtual string Get_VC_Word_Address_Name(int idx);
 
@@ -313,6 +318,7 @@ class AaObjectReference: public AaExpression
   virtual string Get_VC_Offset_Scale_Factor_Name(int idx);
   virtual AaType* Get_Base_Address_Type();
   virtual int Get_Access_Width();
+  virtual void Assign_Expression_Value(AaValue* expr_value);
 
 };
 
@@ -320,12 +326,16 @@ class AaObjectReference: public AaExpression
 class AaConstantLiteralReference: public AaObjectReference
 {
   vector<string> _literals;
+  bool _scalar_flag;
  public:
   AaConstantLiteralReference(AaScope* scope_tpr, 
 			     string literal_string,  
 			     vector<string>& literals);
   ~AaConstantLiteralReference();
   vector<string>& Get_Literals() {return(_literals);}
+  void Set_Scalar_Flag(bool v) {_scalar_flag = v;}
+  bool Get_Scalar_Flag() {return(_scalar_flag);}
+
   virtual string Kind() {return("AaConstantLiteralReference");}
   virtual void Map_Source_References(set<AaRoot*>& source_objects) {} // do nothing
   virtual void PrintC(ofstream& ofile, string tab_string);
@@ -349,6 +359,7 @@ class AaSimpleObjectReference: public AaObjectReference
   virtual string Kind() {return("AaSimpleObjectReference");}
   virtual void Set_Object(AaRoot* obj);
   virtual void PrintC(ofstream& ofile, string tab_string);
+  virtual void PrintC_Header_Entry(ofstream& ofile);
 
 
 
@@ -448,9 +459,17 @@ class AaArrayObjectReference: public AaObjectReference
   string Get_VC_Name() {return("array_obj_ref_" + Int64ToStr(this->Get_Index()));}
   virtual void Print_AddressOf_C(ofstream& ofile, string tab_string);
   virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string);
+  void Print_Indexed_C(AaType* t, int start_id, vector<AaExpression*>* indices, ofstream& ofile);
+
   virtual void Update_Type();
+
+
   virtual int Get_Base_Address();
   virtual string Get_VC_Base_Address_Name();
+  virtual int Get_Address_Width();
+  virtual int Get_Word_Size();
+
+
 
   virtual int Get_Access_Width();
 };

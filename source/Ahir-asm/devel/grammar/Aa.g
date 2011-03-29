@@ -1178,6 +1178,7 @@ aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReferenc
         vector<string> literals;
         unsigned int line_number;
         unsigned int dlno;
+        bool scalar_flag = true;
     }
     : 
           (           
@@ -1185,19 +1186,20 @@ aA_Constant_Literal_Reference[AaScope* scope] returns [AaConstantLiteralReferenc
            |
             (lid:LESS  {full_name += lid->getText(); line_number = lid->getLine();}
             (aA_Integer_Literal_Reference[full_name,literals,dlno])+
-              gid:GREATER {full_name += gid->getText();} )
+              gid:GREATER {full_name += gid->getText(); scalar_flag = false;} )
            | 
            (aA_Float_Literal_Reference[full_name,literals,dlno])
            |
            (llid:LESS { full_name += llid->getText(); line_number = llid->getLine();}
               (aA_Float_Literal_Reference[full_name,literals,dlno])+ ggid:GREATER 
-                      {full_name += ggid->getText();})
+                      {full_name += ggid->getText(); scalar_flag = false;})
          )
 
         {
                 obj_ref = new AaConstantLiteralReference(scope,full_name,literals);
                 obj_ref->Set_Line_Number(line_number);
                 full_name.clear();
+                obj_ref->Set_Scalar_Flag(scalar_flag);
         }
 ;
 
@@ -1226,11 +1228,11 @@ aA_Integer_Literal_Reference[string& full_name, vector<string>& literals, unsign
                
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Float_Literal_Reference : (MINUS)? UFLOAT
+// aA_Float_Literal_Reference : FLOAT
 //----------------------------------------------------------------------------------------------------------
 aA_Float_Literal_Reference[string& full_name, vector<string>& literals, unsigned int& line_number]
 :
-   ( "_f" MINUS {full_name += '-';})?  iid: UFLOAT 
+   iid: FLOATCONST 
            { 
                full_name += iid->getText(); 
                line_number = iid->getLine(); 
@@ -1358,8 +1360,9 @@ ADDRESS_OF_OP   : "@";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;
-UFLOAT : DIGIT '.' (DIGIT)+ 'e' ('+' | '-') UINTEGER;
+FLOATCONST : "_f" ('-')? DIGIT '.' (DIGIT)+ 'e' ('+' | '-') (DIGIT)+;
 BINARY : "_b"  ('0' | '1')+ ;
+
 
 // White spaces (only "\n" is newline)
 WHITESPACE: (	' ' |'\t' | '\f' | '\r' | '\n' { newline(); } ) 

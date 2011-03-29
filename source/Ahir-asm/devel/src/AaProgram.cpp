@@ -209,8 +209,8 @@ AaRecordType* AaProgram::Make_Record_Type(vector<AaType*>& etypes)
   string tid = "record<";
   for(int idx = 0; idx < etypes.size(); idx++)
     {
-      assert(etypes[idx]->Get_Index() > 0);
-      if(idx > 0)
+      assert(etypes[idx]->Get_Index() >= 0);
+      if(idx >= 0)
 	tid += ",";
       tid += IntToStr(etypes[idx]->Get_Index());
     }
@@ -518,11 +518,18 @@ void AaProgram::Coalesce_Storage()
 
 void AaProgram::Elaborate()
 {
+  AaRoot::Info("elaborating the program .... initializing the call-graph");
   AaProgram::Init_Call_Graph();
+  AaRoot::Info("mapping object references..");
   AaProgram::Map_Source_References();
+  AaRoot::Info("checking for cycles in the call-graph ... ");
   AaProgram::Check_For_Cycles_In_Call_Graph();
+  AaRoot::Info("propagating types in the program ... ");
   AaProgram::Propagate_Types();
+  AaRoot::Info("coalescing storage into distinct memory spaces ... ");
   AaProgram::Coalesce_Storage();
+  AaRoot::Info("propagating constants in the program ... ");
+  AaProgram::Propagate_Constants();
 }
 
 void AaProgram::Write_C_Model()
@@ -538,7 +545,19 @@ void AaProgram::Write_C_Model()
 
 
   header_file << "#include <Aa2C.h>" << endl;
+  // declare all the record types that you have encountered.
+
   source_file << "#include <" << header << ">" << endl;
+  for(std::map<string,AaType*,StringCompare>::iterator miter = AaProgram::_type_map.begin();
+      miter != AaProgram::_type_map.end();
+      miter++)
+    {
+      AaType* t = (*miter).second;
+      if(t->Is("AaRecordType"))
+	{
+	  ((AaRecordType*)t)->PrintC_Declaration(header_file);
+	}
+    }
   
 
   for(std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.begin();

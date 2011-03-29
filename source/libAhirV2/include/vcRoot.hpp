@@ -80,11 +80,11 @@ enum vcLexerKeytags
     __DIV_OP           , 
     __SHL_OP           , 
     __SHR_OP           , 
-    __GT_OP            , 
-    __GE_OP            , 
+    __SGT_OP            , 
+    __SGE_OP            , 
     __EQ_OP            , 
-    __LT_OP            , 
-    __LE_OP            , 
+    __SLT_OP            , 
+    __SLE_OP            , 
     __UGT_OP           ,
     __UGE_OP           ,
     __ULT_OP           ,
@@ -104,7 +104,15 @@ enum vcLexerKeytags
     __NAND_OP          ,
     __XNOR_OP          ,
     __EQUIVALENCE_OP,
-    __OPEN
+    __OPEN,
+    __SHRA_OP,
+    __UtoS_ASSIGN_OP , 
+    __StoS_ASSIGN_OP , 
+    __StoU_ASSIGN_OP ,
+    __FtoS_ASSIGN_OP,
+    __FtoU_ASSIGN_OP ,
+    __StoF_ASSIGN_OP ,
+    __UtoF_ASSIGN_OP 
   };
 
 static char *vcLexerKeywords[] = 
@@ -182,15 +190,15 @@ static char *vcLexerKeywords[] =
       "/",
       "<<",
       ">>",
+      "$S>$S",
+      "$S>=$S",
+      "==",
+      "$S<$S",
+      "$S<=$S",
       ">",
       ">=",
-      "==",
       "<",
       "<=",
-      "|>|",
-      "|>=|",
-      "|<|",
-      "|<=|",
       "!=",
       "><", // unordered op.
       "[]",
@@ -206,7 +214,19 @@ static char *vcLexerKeywords[] =
       "~&",
       "~^",
       "&/",
-      "$open"
+      "$open",
+      // signed shr
+      ">>$S",
+      // type-conversions
+      // int <-> int 
+      "$S:=$U", 
+      "$S:=$S", 
+      "$U:=$S",
+      // int <-> float
+      "$S:=$F",
+      "$U:=$F",
+      "$F:=$S",
+      "$F:=$U"
   };
 
 string To_VHDL(string x);

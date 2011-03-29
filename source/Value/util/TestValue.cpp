@@ -4,11 +4,11 @@ using namespace _base_value_;
 
 int main()
 {
-  IntValue a(16,"_b0000000000000000");
-  IntValue b(16,"_b1111111111111111");
+  Unsigned b(4,"_b1111");
+  Unsigned a(4,"_b0000");
 
+  cout << "Word-size is " << __WORD_SIZE__ << endl;
   cout << a.To_String() << " a" << endl << b.To_String() << " b" << endl;
-
   a.Add(b);
   cout << a.To_String() << " a = a + b " <<  endl;
   a.Subtract(b);
@@ -17,16 +17,41 @@ int main()
   cout << a.To_String() << " a = a*b " << endl;
   a.Divide(b);
   cout << a.To_String() << " a = a/b " << endl;
-  a.Concatenate(b);
-  cout << a.To_String() << " a = Concatenate(a,b) " << endl;
-  a.Concatenate(b);
-  cout << a.To_String() << " a = Concatenate(a,b) " << endl;
-  a.Concatenate(b);
-  cout << a.To_String() <<" a = Concatenate(a,b) " <<  endl;
-  a.Concatenate(b);
-  cout << a.To_String() <<" a = Concatenate(a,b) " <<  endl;
 
-  IntValue one_val(80);
+  a.Concatenate(b);
+  cout << a.To_String() << " a = Concatenate(a,b) " << endl;
+  a.Concatenate(b);
+  cout << a.To_String() << " a = Concatenate(a,b) " << endl;
+  a.Concatenate(b);
+  cout << a.To_String() <<" a = Concatenate(a,b) " <<  endl;
+  a.Concatenate(b);
+  cout << a.To_String() <<" a = Concatenate(a,b) " <<  endl;
+  a.Concatenate(b);
+  cout << a.To_String() <<" a = Concatenate(a,b) " <<  endl;
+  a.Concatenate(b);
+  cout << a.To_String() <<" a = Concatenate(a,b) " <<  endl;
+  a.Concatenate(b);
+  cout << a.To_String() <<" a = Concatenate(a,b) " <<  endl;
+  a.Concatenate(b);
+  cout << a.To_String() <<" a = Concatenate(a,b) " <<  endl;
+  a.Concatenate(b);
+  cout << a.To_String() <<" a = Concatenate(a,b) " <<  endl;
+  a.Concatenate(b);
+  cout << a.To_String() <<" a = Concatenate(a,b) " <<  endl;
+  a.Concatenate(b);
+  cout << a.To_String() <<" a = Concatenate(a,b) " <<  endl;
+  a.Concatenate(b);
+  cout << a.To_String() <<" a = Concatenate(a,b) " <<  endl;
+  a.Concatenate(b);
+  cout << a.To_String() <<" a = Concatenate(a,b) " <<  endl;
+  a.Concatenate(b);
+  cout << a.To_String() <<" a = Concatenate(a,b) " << " width " << a._width <<  endl;
+  a.Concatenate(b);
+  cout << a.To_String() <<" a = Concatenate(a,b) " << " width " << a._width <<  endl;
+  a.Concatenate(b);
+  cout << a.To_String() <<" a = Concatenate(a,b) " << " width " << a._width <<  endl;
+
+  Unsigned one_val(68);
   one_val.Increment();
   a.Add(one_val);
   cout << a.To_String() << " a = a + 1" << endl;
@@ -42,12 +67,15 @@ int main()
   a.Rotate_Right();
   cout << a.To_String() << " a = ROR(a)" << endl;
 
-  a.Shift_Right_Signed();
-  cout << a.To_String() << " a = SHRA(a)" << endl;
+  Signed sa (a._width);
+  sa.Assign(a);
+
+  sa.Shift_Right();
+  cout << sa.To_String() << " sa = SHRA(a)" << endl;
 
 
-  FloatValue c(8,23,"2.5");
-  FloatValue d(8,23,"5.0");
+  Float c(8,23,"2.5");
+  Float d(8,23,"5.0");
 
   c.Add(d);
   cout << c.To_String() << endl;
@@ -58,7 +86,7 @@ int main()
   c.Divide(d);
   cout << c.To_String() << endl;
 
-  FloatValue e(11,52,"247.5");
+  Float e(11,52,"247.5");
   c.Assign(e);
   cout << c.To_String() << endl;
 

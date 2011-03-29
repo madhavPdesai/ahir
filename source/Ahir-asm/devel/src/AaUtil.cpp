@@ -11,7 +11,7 @@ string Tab_(unsigned int n)
   return(ret_string);
 }
 
-string IntToStr(unsigned int x)
+string IntToStr(int x)
 {
   ostringstream string_stream(ostringstream::out);
   string_stream << x;

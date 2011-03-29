@@ -45,14 +45,7 @@ class AaObject: public AaRoot
   virtual string Kind() {return("AaObject");}
   virtual bool Is_Object() {return(true); }
 
-  virtual void PrintC(ofstream& ofile, string tab_string)
-  {
-    ofile << tab_string << this->Get_Type()->CName() 
-	  << " " 
-	  << this->Get_Name()
-	  << this->Get_Type()->CDim();
-    ofile << ";" << endl;
-  }
+  virtual void PrintC(ofstream& ofile, string tab_string);
 
   virtual string CRef()
   {
@@ -103,7 +96,6 @@ class AaInterfaceObject: public AaObject
   ~AaInterfaceObject();
   virtual string Kind() {return("AaInterfaceObject");}
   // uses AaObject::Print method
-
 };
 
 class AaConstantObject: public AaObject

@@ -36,41 +36,51 @@ namespace _base_value_
   typedef uint64_t UWord;
   typedef int64_t  SWord;
 
-#define __WORD_SIZE__ sizeof(UWord)
+#define __WORD_SIZE__ (sizeof(UWord)*8)
+
+  class Float;
+  class Signed;
 
   class Value
   {
 
   public:
     Value();
-
+    
     virtual string To_String() {assert(0);}
     virtual SWord To_Integer() {assert(0);}
     virtual UWord To_Uinteger() {assert(0);}
     virtual float To_Float() {assert(0);}
     virtual double To_Double() {assert(0);}
     virtual bool To_Boolean(){assert(0);}
+    virtual bool Bit_Cast(Value& other) {assert(0);}
+
+    virtual string Kind() {return("Value");}
 
   };
 
-  class FloatValue;
+
+
   // two's complement integer with _width bits.
-  class IntValue: public Value
+  // all arithmetic is assuming that is is unsigned.
+  class Unsigned: public Value
   {
 
   public:
     int _width;
     UWord* _bit_field;
 
-    ~IntValue();
-    IntValue();
-    IntValue(int width);
+    ~Unsigned();
+    Unsigned();
+    Unsigned(int width);
 
     // init_value is either a decimal string (e.g. "-135", "2490")
     // or a binary string (with _b as the first two characters)
     // e.g. "_b1010"
-    IntValue(int width, string initial_value);
-    IntValue(const IntValue&);
+    Unsigned(int width, string initial_value);
+    Unsigned(const Unsigned&);
+
+    virtual string Kind() {return("Unsigned");}
 
     int Width() {return(_width);}
     int Array_Size()
@@ -83,75 +93,123 @@ namespace _base_value_
 
     virtual SWord To_Integer();
     virtual UWord To_Uinteger();
-
+    virtual bool Is_Negative() {return(false);}
     virtual bool To_Boolean();
 
-    string To_String();
+    // bit other into this.
+    virtual bool Bit_Cast(Value& other) {assert(0);}
+    virtual UWord AtoI(string ival);
+    
 
-    FloatValue To_Float(int characteristic, int mantissa);
-    FloatValue Signed_To_Float(int characteristic, int mantissa);
+    virtual string To_String();
+    virtual string To_C_String();
+    virtual Float To_Float(int characteristic, int mantissa);
 
     // assignment operator
-    void Swap(const IntValue& v);
-    IntValue& operator=(const IntValue v);
+    virtual void Swap(const Unsigned& v);
+    virtual Unsigned& operator=(const Unsigned v);
+    virtual Unsigned& operator=(const Signed v);
 
     // +=, *=, -=
-    void Add(IntValue&);
-    void Multiply(IntValue&);
-    void Subtract(IntValue&);
-    void Divide(IntValue&);
+    void Add(Unsigned&);
+    void Multiply(Unsigned&);
+    void Subtract(Unsigned&);
+    void Divide(Unsigned&);
     void Negate();
 
-    void Signed_Assign(IntValue&);
-    void Unsigned_Assign(IntValue&);
+    virtual void Assign(Unsigned&);
+    virtual void Assign(Signed&);
 
     void Increment();
     void Decrement();
 
     void Complement();
-    void And(IntValue&);
-    void Or(IntValue&);
-    void Xor(IntValue&);
-    void Nand(IntValue&);
-    void Nor(IntValue&);
-    void Xnor(IntValue&);
-    void Concatenate(IntValue&);
+    void And(Unsigned&);
+    void Or(Unsigned&);
+    void Xor(Unsigned&);
+    void Nand(Unsigned&);
+    void Nor(Unsigned&);
+    void Xnor(Unsigned&);
+    void Concatenate(Unsigned&);
 
     // todo: shift operators.
     void Shift_Left();
     void Shift_Left(int idx);
     void Shift_Right();
-    void Shift_Right(int idx);
-
-    void Shift_Right_Signed();
-    void Shift_Right_Signed(int idx);
+    virtual void Shift_Right(int idx);
 
     void Rotate_Left();
     void Rotate_Left(int idx);
     void Rotate_Right();
     void Rotate_Right(int idx);
     
-    bool Greater(IntValue&);
-    bool Less_Than(IntValue&);
-    bool Greater_Equal(IntValue&);
-    bool Less_Equal(IntValue&);
-    bool Equal(IntValue&);
-    
-    bool Signed_Less(IntValue&);
-    bool Signed_Greater(IntValue&);
-    bool Signed_Less_Equal(IntValue&);
-    bool Signed_Greater_Equal(IntValue&);
+    virtual bool Greater(Unsigned&);
+    virtual bool Less_Than(Unsigned&);
+    virtual bool Greater_Equal(Unsigned&);
+    virtual bool Less_Equal(Unsigned&);
+
+    bool Equal(Unsigned&);
 
     // bit-field.
     bool Get_Bit(int idx);
     void Set_Bit(int idx, bool v);
 
+    virtual void Sign_Extend() 
+    {
+    }
+
+  };
+
+
+  class Signed: public Unsigned
+  {
+
+  public:
+    ~Signed();
+    Signed();
+    Signed(int width);
+
+    virtual string Kind() {return("Signed");}
+
+    // init_value is either a decimal string (e.g. "-135", "2490")
+    // or a binary string (with _b as the first two characters)
+    // e.g. "_b1010"
+    Signed(int width, string initial_value);
+    Signed(const Signed&);
+
+    virtual UWord AtoI(string ival);
+
+    virtual string To_String();
+    virtual string To_C_String();
+    virtual Float To_Float(int characteristic, int mantissa);
+
+    virtual SWord To_Integer();
+    virtual UWord To_Uinteger();
+    virtual bool Is_Negative();
+
+
+    // 
+    virtual void Assign(Unsigned&);
+    virtual void Assign(Signed&);
+
+    // assignment operator
+    void Swap(const Signed& v);
+    Signed& operator=(const Signed v);
+    Signed& operator=(const Unsigned v);
+
+    virtual void Shift_Right();
+    bool Greater(Signed&);
+    bool Less_Than(Signed&);
+    bool Greater_Equal(Signed&);
+    bool Less_Equal(Signed&);
+
+    virtual void Sign_Extend();
   };
 
 
 
   // sign + characteristic (exponent) + mantissa.
-  class FloatValue: public Value
+  class Float: public Value
   {
   public:
     union
@@ -163,8 +221,10 @@ namespace _base_value_
     int _characteristic_width;
     int _mantissa_width;
 
-    FloatValue(int characteristic_width, int mantissa_width);
-    FloatValue(int characteristic_width, int mantissa_width, string float_value);
+    virtual string Kind() {return("Float");}
+
+    Float(int characteristic_width, int mantissa_width);
+    Float(int characteristic_width, int mantissa_width, string float_value);
 
     bool Is_float32()
     {
@@ -191,7 +251,7 @@ namespace _base_value_
     }
 
     // assignment operator
-    void Swap(const FloatValue& v)
+    void Swap(const Float& v)
     {
       _characteristic_width = v._characteristic_width;
       _mantissa_width = v._mantissa_width;
@@ -201,30 +261,34 @@ namespace _base_value_
 	data._double_value = v.data._double_value;
 
     }
-    FloatValue& operator=(FloatValue v)
+    Float& operator=(Float v)
     {
       this->Swap(v);
       return(*this);
     }
 
     // +=, *=, -=
-    void Add(FloatValue&) ;
-    void Multiply(FloatValue&) ;
-    void Subtract(FloatValue&) ;
-    void Divide(FloatValue&) ;
+    void Add(Float&) ;
+    void Multiply(Float&) ;
+    void Subtract(Float&) ;
+    void Divide(Float&) ;
 
 
-    bool Greater( FloatValue& t);
-    bool Less_Than( FloatValue& t);
-    bool Greater_Equal( FloatValue& t);
-    bool Less_Equal( FloatValue& t);
-    bool Equal( FloatValue& t);
+    bool Greater( Float& t);
+    bool Less_Than( Float& t);
+    bool Greater_Equal( Float& t);
+    bool Less_Equal( Float& t);
+    bool Equal( Float& t);
 
-    void Assign(FloatValue& t);
-    void To_Integer(IntValue&);
+    void Assign(Float& t);
+    void To_Signed(Signed&);
+    void To_Unsigned(Unsigned&);
 
     virtual string To_String();
+    virtual string To_C_String();
 
+    void Bit_Cast(Unsigned& other);
+ 
   };
 
 

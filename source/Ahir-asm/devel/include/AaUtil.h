@@ -7,7 +7,7 @@
 string Tab_(unsigned int n);
 
 // IntToStr
-string IntToStr(unsigned int x);
+string IntToStr(int x);
 string Int64ToStr(int64_t x);
 
 // string compare
