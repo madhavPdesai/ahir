@@ -17,6 +17,8 @@ class AaExpression: public AaRoot
   // the containing scope of this expression
   AaScope* _scope;
   bool _coalesce_flag;
+  bool _is_target;
+
 
  protected:
   // type of the expression
@@ -51,6 +53,9 @@ class AaExpression: public AaRoot
   AaExpression(AaScope* scope_tpr);
   ~AaExpression();
   virtual string Kind() {return("AaExpression");}
+
+  void Set_Is_Target(bool v) {_is_target = v;}
+  bool Get_Is_Target() {return(_is_target);}
 
   virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
   AaStorageObject* Get_Addressed_Object_Representative() 
@@ -478,6 +483,7 @@ class AaArrayObjectReference: public AaObjectReference
 class AaPointerDereferenceExpression: public AaObjectReference
 {
   AaObjectReference* _reference_to_object;
+
  public:
 
   AaPointerDereferenceExpression(AaScope* scope, AaObjectReference* obj_ref);
@@ -486,6 +492,8 @@ class AaPointerDereferenceExpression: public AaObjectReference
   {
     return(_reference_to_object);
   }
+
+
 
   virtual void Print(ostream& ofile);
   virtual void PrintC(ofstream& ofile, string tab_string);
@@ -516,6 +524,11 @@ class AaPointerDereferenceExpression: public AaObjectReference
   virtual string Get_VC_Base_Address_Name();
 
   virtual int Get_Access_Width();
+  virtual void Assign_Expression_Value(AaValue* expr_value)
+  {
+    // cannot assign a fixed value to a stored 
+    // object..
+  }
 };
 
 

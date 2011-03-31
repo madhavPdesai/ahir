@@ -308,7 +308,7 @@ class AaCallStatement: public AaStatement
 
   string _function_name;
   AaRoot* _called_module;
-  vector<AaObjectReference*> _input_args;
+  vector<AaExpression*> _input_args;
   vector<AaObjectReference*> _output_args;
  public:
   unsigned int Get_Number_Of_Input_Args() {return(this->_input_args.size());}
@@ -319,13 +319,13 @@ class AaCallStatement: public AaStatement
 
   AaCallStatement(AaScope* scope_tpr,
 		  string func_name,
-		  vector<AaObjectReference*>& inargs, 
+		  vector<AaExpression*>& inargs, 
 		  vector<AaObjectReference*>& outargs,
 		  int lineno);
 
   ~AaCallStatement();
   
-  AaObjectReference* Get_Input_Arg(unsigned int index);
+  AaExpression* Get_Input_Arg(unsigned int index);
   AaObjectReference* Get_Output_Arg(unsigned int index);
   
   virtual void Print(ostream& ofile); 
@@ -367,6 +367,7 @@ class AaCallStatement: public AaStatement
 
   virtual void Write_VC_Control_Path(ostream& ofile);
   
+  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);

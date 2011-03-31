@@ -179,7 +179,7 @@ aA_Out_Args[AaModule* parent]
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Atomic_Statement : aA_Assignment_Statement | aA_Call_Statemet | aA_Null_Statement | aA_Block_Statement
+// aA_Atomic_Statement : aA_Assignment_Statement | aA_Call_Statement | aA_Null_Statement | aA_Block_Statement
 //-----------------------------------------------------------------------------------------------
 aA_Atomic_Statement[AaScope* scope] returns [AaStatement* stmt]
     : stmt = aA_Assignment_Statement[scope] |
@@ -223,7 +223,7 @@ aA_Assignment_Statement[AaScope* scope] returns[AaStatement* new_stmt]
 //-----------------------------------------------------------------------------------------------
 aA_Call_Statement[AaScope* scope] returns[AaStatement* new_stmt]
 {
-    vector<AaObjectReference*> input_args;
+    vector<AaExpression*> input_args;
     vector<AaObjectReference*> output_args;
     string func_name = "";
 }
@@ -699,18 +699,18 @@ aA_If_Statement[AaBranchBlockStatement* scope] returns [AaIfStatement* new_is]
 
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Argv_In : (LPAREN (aA_Object_Reference)* RPAREN)
+// aA_Argv_In : (LPAREN (aA_Expression)* RPAREN)
 //----------------------------------------------------------------------------------------------------------
 // Input args to a function call can be arbitrary (ie global-local-pipe and array refs are permitted)
 //----------------------------------------------------------------------------------------------------------
 
-aA_Argv_In[AaScope* scope, vector<AaObjectReference*>& args]
+aA_Argv_In[AaScope* scope, vector<AaExpression*>& args]
 {       
-    AaObjectReference* obj = NULL;
+    AaExpression* obj = NULL;
 }       
     : LPAREN 
             (
-                obj = aA_Object_Reference[scope] 
+                obj = aA_Expression[scope] 
                 { 
                     args.push_back(obj); 
                 }

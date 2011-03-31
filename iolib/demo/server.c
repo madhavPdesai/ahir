@@ -1,9 +1,12 @@
 #include "../iolib.h"
+#define RUN
+
 #ifdef RUN
 #include <stdio.h>
-#endif
-
+int main(void)
+#else
 int start(void)
+#endif
 {
   int i;
   uint32_t apl;

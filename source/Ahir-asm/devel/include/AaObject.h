@@ -135,6 +135,8 @@ class AaStorageObject: public AaObject
   // if this is a pointer, a representative
   // of the set of objects to which it can refere.
 
+  bool _is_written_into;
+  bool _is_read_from;
 
  public:
 
@@ -155,6 +157,12 @@ class AaStorageObject: public AaObject
 
   void Set_Address_Width(int a) { _address_width = a; }
   int Get_Address_Width() {return(_address_width);}
+
+  void Set_Is_Written_Into(bool v) { _is_written_into = v; }
+  bool Get_Is_Written_Into() { return(_is_written_into); }
+
+  void Set_Is_Read_From(bool v) { _is_read_from = v; }
+  bool Get_Is_Read_From() { return(_is_read_from); }
 
   virtual bool Is_Storage_Object() {return(true);}
 

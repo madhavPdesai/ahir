@@ -57,34 +57,16 @@ namespace {
 
     bool is_ioport_identifier(GlobalVariable &G)
     {
-      bool is_ioport = true;
+      bool is_ioport = false;
       
-      for (llvm::Value::use_iterator ui = G.use_begin(), ue = G.use_end();
-           ui != ue; ++ui) {
-        User *user = *ui;
-        
-        if (BitCastInst *inst = dyn_cast<BitCastInst>(user)) {
-          if (inst->getNumUses() > 1) {
-            is_ioport = false;
-            break;
-          }
-          
-          IOCode ioc = get_io_code(*(inst->use_begin()));
-          if (ioc == NOT_IO) {
-            is_ioport = false;
-            break;
-          }
-        } else {
-          if (Constant *konst = dyn_cast<Constant>(user)) {
-            if (!isConstantUsed(konst))
-              continue;
-          }
-          
-          is_ioport = false;
-          break;
-        }
-      }
-      
+      if(isa<Constant>(G))
+	{
+	  std::string val = locate_portname_for_io_call(G.getOperand(0));
+	  if(val != "")
+	    {
+	      is_ioport = true;
+	    }
+	}
       return is_ioport;
     }
 
@@ -100,16 +82,20 @@ namespace {
         if (!is_ioport_identifier(*gi))
 	   write_storage_object(*gi);
       }
+
+      
+      for (llvm::Module::iterator fi = M.begin(), fe = M.end();
+           fi != fe; ++fi) {
+	aa_writer->Collect_Pipes(*fi);
+      }
+
+      aa_writer->Print_Pipe_Declarations(std::cout);
   
       for (llvm::Module::iterator fi = M.begin(), fe = M.end();
            fi != fe; ++fi) {
         runOnFunction(*fi);
       }
 
-      /* 
-	cdfg::Printer printer;
-      	printer.print(cbuilder->program, ".cdfg.xml");
-	*/
   
       return false; // we didn't touch anything
     }
@@ -118,13 +104,13 @@ namespace {
     {
       std::string fname = F.getNameStr();
 
-      std::cerr<<"// Info: visiting function " << fname << std::endl;
+      std::cerr<<"Info: visiting function " << fname << std::endl;
 
       aa_writer->clear();
 
       if (F.isDeclaration())
       {
-	std::cerr<<"// Info: ignoring external function " << fname << std::endl;
+	std::cerr<<"Info: ignoring external function " << fname << std::endl;
         return;
       }
 
@@ -137,10 +123,7 @@ namespace {
 	    {
 	      std::string bbname = "bb_" + int_to_str(idx);
 	      (*iter).setName(bbname);
-	      std::cerr << "//Info: assigned a name to anonymous block: " << bbname << std::endl;
 	    }
-	  else
-	    std::cerr << "//Info: found a named block: " << (*iter).getNameStr() << std::endl;
 
 	  idx++;
 	}
@@ -168,16 +151,11 @@ namespace {
 	  TerminatorInst *T = bb->getTerminator();
 	  if(T->getNumSuccessors() == 0)
 	    {
-	      std::cerr << "//Info:  Basic block " << bb->getNameStr() << " terminator has no successors" 
-			<< std::endl;
 	    }
 
 	  for (unsigned i = 0, e = T->getNumSuccessors(); i != e; ++i) 
 	    {
 	      BasicBlock *S = T->getSuccessor(i);
-
-	      // add dependency.
-	      std::cerr << "//Info: Basic block dependency : " << bb->getNameStr() << " -> " << S->getNameStr() << std::endl;
 	      aa_writer->add_bb_predecessor_map_entry(S->getNameStr(),bb->getNameStr());
 
 	      if (blocks_queued.count(S) != 0)
@@ -203,6 +181,8 @@ namespace {
 	std::cout << " $out (";
 	const llvm::Type* ret_type = F.getReturnType();
 	bool has_ret_val = true;
+	if(ret_type->isVoidTy())
+	  has_ret_val = false;
 
 	if(has_ret_val)
 	   std::cout << "ret_val__ : " << get_aa_type_name(ret_type);

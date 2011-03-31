@@ -509,7 +509,8 @@ vc_UnaryOperator_Instantiation[vcDataPath* dp]
    (fs_assign_id: FtoS_ASSIGN_OP {op_id = fs_assign_id->getText();}) |
    (fu_assign_id: FtoU_ASSIGN_OP {op_id = fu_assign_id->getText();}) |
    (sf_assign_id: StoF_ASSIGN_OP {op_id = sf_assign_id->getText();}) |
-   (uf_assign_id: UtoF_ASSIGN_OP {op_id = uf_assign_id->getText();}) )
+   (uf_assign_id: UtoF_ASSIGN_OP {op_id = uf_assign_id->getText();}) |
+   (ff_assign_id: FtoF_ASSIGN_OP {op_id = ff_assign_id->getText();}) )
     id = vc_Label 
  lpid: LPAREN 
     wid = vc_Identifier {
@@ -920,6 +921,9 @@ vc_Value[vcType* t] returns [vcValue* v]
 	vector<vcValue*> evalues;
 	vcValue* ev;
 
+	string vstring;
+	string format;
+
 	if(t->Is("vcArrayType"))
 		etypes.push_back(((vcArrayType*)t)->Get_Element_Type());
 	else if(t->Is("vcRecordType"))
@@ -929,7 +933,18 @@ vc_Value[vcType* t] returns [vcValue* v]
 			etypes.push_back(((vcRecordType*)t)->Get_Element_Type(i));
 	}
 }:
-(v = vc_IntValue[t] | v = vc_FloatValue[t]) | 
+
+(
+  ( (bid: BINARYSTRING { vstring = bid->getText(); format = "binary";} ) |
+    (hid: HEXSTRING { vstring = hid->getText(); format = "hexadecimal";})
+  )
+    {
+	if(t->Is("vcIntType") || t->Is("vcPointerType"))
+	   v = (vcValue*) (new vcIntValue((vcIntType*)t,vstring.substr(2),format));
+        else if(t->Is("vcFloatType"))
+	   v = (vcValue*) (new vcFloatValue((vcFloatType*)t,vstring.substr(2),format));
+    }
+) | 
 (
  sid: LPAREN 
  ev = vc_Value[etypes[idx]] {evalues.push_back(ev);} 
@@ -947,39 +962,6 @@ vc_Value[vcType* t] returns [vcValue* v]
  )
 ;
 
-
-//----------------------------------------------------------------------------------------------------------
-// vc_IntValue: BINARYSTRING | HEXSTRING
-//----------------------------------------------------------------------------------------------------------
-vc_IntValue[vcType* t] returns[vcValue* v]
-{
-	string vstring;
-	string format;
-	assert(t->Is("vcIntType") || t->Is("vcPointerType"));
-}: ((bid: BINARYSTRING { vstring = bid->getText(); format = "binary";} ) |
-(hid: HEXSTRING { vstring = hid->getText(); format = "hexadecimal";}))
-{
-	v = (vcValue*) (new vcIntValue((vcIntType*)t,vstring.substr(2),format));
-}
-;
-
-//----------------------------------------------------------------------------------------------------------
-// vc_FloatValue: (MINUS)?  "C" vc_IntValue "M" vc_IntValue
-//----------------------------------------------------------------------------------------------------------
-vc_FloatValue[vcType* t] returns[vcValue* v]
-{
-	string vstring;
-	string format;
-	assert(t->Is("vcFloatType"));
-	char sign_value = 0;
-	vcValue* cv;
-	vcValue* mv;
-        assert(t != NULL && t->Is("vcFloatType"));
-}:  (MINUS {sign_value = 1;})? "C" cv = vc_IntValue[((vcFloatType*)t)->Get_Characteristic_Type()] "M" mv = vc_IntValue[((vcFloatType*)t)->Get_Mantissa_Type()]
-{
-	v = (vcValue*) (new vcFloatValue((vcFloatType*)t,sign_value, (vcIntValue*)cv, (vcIntValue*)mv));
-}
-;
 
 //----------------------------------------------------------------------------------------------------------
 // vc_Type : vc_ScalarType | vc_ArrayType | vc_RecordType 
@@ -1209,6 +1191,9 @@ FtoS_ASSIGN_OP : "$S:=$F";
 FtoU_ASSIGN_OP : "$U:=$F";
 StoF_ASSIGN_OP : "$F:=$S";
 UtoF_ASSIGN_OP : "$F:=$U";
+
+// FP <-> FP conversions.
+FtoF_ASSIGN_OP : "$F:=$F";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

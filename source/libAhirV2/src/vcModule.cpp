@@ -286,17 +286,21 @@ void vcModule::Print_VHDL_Argument_Signals(ostream& ofile)
 
   for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
     {
-      ofile << "signal " << prefix << _ordered_input_arguments[idx] << " : " ;
       vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
       assert(w != NULL);
+
+      ofile << "signal " << prefix << w->Get_VHDL_Id() << " : " ;
+
       ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
     }
 
   for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
     {
-      ofile << "signal " <<  prefix << _ordered_output_arguments[idx] << " : " ;
       vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
       assert(w != NULL);
+
+      ofile << "signal " <<  prefix << w->Get_VHDL_Id() << " : " ;
+
       ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
     }
 
@@ -313,17 +317,21 @@ void  vcModule::Print_VHDL_System_Argument_Signals(ostream& ofile)
   string prefix = this->Get_VHDL_Id() +  "_";
   for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
     {
-      ofile << "signal " << prefix << _ordered_input_arguments[idx] << " : " ;
       vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
       assert(w != NULL);
+
+      ofile << "signal " << prefix << w->Get_VHDL_Id() << " : " ;
+
       ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
     }
 
   for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
     {
-      ofile << "signal " << prefix << _ordered_output_arguments[idx] << " :  " ;
       vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
       assert(w != NULL);
+
+      ofile << "signal " << prefix << w->Get_VHDL_Id() << " :  " ;
+
       ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
     }
 
@@ -338,13 +346,14 @@ void  vcModule::Print_VHDL_System_Argument_Signals(ostream& ofile)
 string vcModule::Print_VHDL_System_Argument_Ports(string semi_colon,ostream& ofile)
 {
   string prefix = this->Get_VHDL_Id() +  "_";
-  ofile << semi_colon << endl;
   for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
     {
       ofile << semi_colon << endl;
-      ofile << prefix << _ordered_input_arguments[idx] << " : in " ;
       vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
       assert(w != NULL);
+
+      ofile << prefix << w->Get_VHDL_Id() << " : in " ;
+
       ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0)";
       semi_colon = ";";
     }
@@ -352,9 +361,12 @@ string vcModule::Print_VHDL_System_Argument_Ports(string semi_colon,ostream& ofi
   for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
     {
       ofile << semi_colon << endl;
-      ofile << prefix << _ordered_output_arguments[idx] << " : out " ;
+
       vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
       assert(w != NULL);
+
+      ofile << prefix << w->Get_VHDL_Id() << " : out " ;
+
       ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0)";
       semi_colon = ";";
     }
@@ -373,22 +385,21 @@ string vcModule::Print_VHDL_System_Argument_Ports(string semi_colon,ostream& ofi
 string vcModule::Print_VHDL_System_Instance_Port_Map(string comma,ostream& ofile)
 {
   string prefix = this->Get_VHDL_Id() +  "_";
-  ofile << comma << endl;
   for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
     {
       ofile << comma << endl;
-      ofile << prefix << _ordered_input_arguments[idx] 
+      ofile << prefix << To_VHDL(_ordered_input_arguments[idx]) 
 	    << " => "
-	    << prefix << _ordered_input_arguments[idx];
+	    << prefix << To_VHDL(_ordered_input_arguments[idx]);
       comma = ",";
     }
 
   for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
     {
       ofile << comma << endl;
-      ofile << prefix << _ordered_output_arguments[idx] 
+      ofile << prefix << To_VHDL(_ordered_output_arguments[idx]) 
 	    << " => " 
-	    << prefix << _ordered_output_arguments[idx] ;
+	    << prefix << To_VHDL(_ordered_output_arguments[idx]) ;
       comma = ",";
     }
 
@@ -407,13 +418,14 @@ string vcModule::Print_VHDL_System_Instance_Port_Map(string comma,ostream& ofile
 string vcModule::Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile)
 {
   
-  ofile << semi_colon << endl;
   for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
     {
       ofile << semi_colon << endl;
-      ofile << "     " << _ordered_input_arguments[idx] << " : in " ;
+
       vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
       assert(w != NULL);
+
+      ofile << "     " << w->Get_VHDL_Id() << " : in " ;
       ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0)";
       semi_colon = ";";
     }
@@ -421,9 +433,11 @@ string vcModule::Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile)
   for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
     {
       ofile << semi_colon << endl;
-      ofile << "     " << _ordered_output_arguments[idx] << " : out " ;
       vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
       assert(w != NULL);
+
+      ofile << "     " << w->Get_VHDL_Id() << " : out " ;
+
       ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0)";
       semi_colon = ";";
     }
@@ -623,7 +637,7 @@ void vcModule::Print_VHDL_In_Arg_Disconcatenation(ostream& ofile)
       vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
       assert(w != NULL);
 
-      ofile << prefix << _ordered_input_arguments[idx] << " <= " 
+      ofile << prefix << w->Get_VHDL_Id() << " <= " 
 	    << prefix << "in_args(" << lindex << " downto " << ((lindex+1) - w->Get_Size()) << ");" << endl;
       lindex = lindex - w->Get_Size();
     }
@@ -639,7 +653,10 @@ void vcModule::Print_VHDL_Out_Arg_Concatenation(ostream& ofile)
       if(idx > 0)
 	ofile << "& ";
       
-      ofile << prefix << _ordered_output_arguments[idx] << " ";
+      vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
+      assert(w != NULL);
+
+      ofile << prefix << w->Get_VHDL_Id() << " ";
     }
   ofile << ";" << endl;
 }
@@ -737,14 +754,16 @@ string vcModule::Print_VHDL_Argument_Port_Map(string  comma, ostream& ofile)
   for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
     { 
       ofile << comma << endl;
-      ofile << _ordered_input_arguments[idx] << " => " <<  prefix << _ordered_input_arguments[idx];
+      ofile << To_VHDL(_ordered_input_arguments[idx]) << " => " 
+	    <<  prefix << To_VHDL(_ordered_input_arguments[idx]);
       comma = ",";
     }
   
   for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
     { 
       ofile << comma << endl;
-      ofile << _ordered_output_arguments[idx] << " => " <<  prefix << _ordered_output_arguments[idx];
+      ofile << To_VHDL(_ordered_output_arguments[idx]) << " => " 
+	    <<  prefix << To_VHDL(_ordered_output_arguments[idx]);
       comma = ",";
     }
 

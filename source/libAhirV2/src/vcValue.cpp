@@ -1,6 +1,18 @@
 #include <vcType.hpp>
 #include <vcValue.hpp>
 
+// truncate s to size characters.
+string Truncate(int size, string s)
+{
+  assert(s.size() >= size);
+  if(s.size() > size)
+    {
+      return(s.substr(size - s.size()));
+    }
+  else
+    return(s);
+}
+
 string Hex_To_Binary(string s) // s is assumed to be little endian 
 {
   string ret_string;
@@ -337,64 +349,47 @@ vcPointerValue::vcPointerValue(vcPointerType* t, string value):vcIntValue((vcInt
 {
 }
 
-vcFloatValue::vcFloatValue(vcFloatType* t, char sgn, vcIntValue* cvalue, vcIntValue* mvalue):vcValue((vcType*)t)
+vcFloatValue::vcFloatValue(vcFloatType* t, string big_endian_value, string format):vcValue((vcType*)t)
 {
-  this->_sign = sgn;
-  this->_characteristic = cvalue;
-  this->_mantissa = mvalue;
+  // number of bits must be exactly as expected..
+
+  if(format == "binary")
+    {
+      assert((t)->Size() == big_endian_value.size());
+      assert(big_endian_value.size() == t->Size());
+      this->_value = Reverse(big_endian_value);
+    }
+  else 
+    {
+      this->_value = Reverse(Truncate(t->Size(),Hex_To_Binary(Reverse(big_endian_value))));
+    }
+}
+
+int vcFloatValue::Get_Characteristic_Width()
+{
+  return(((vcFloatType*)_type)->Get_Characteristic_Width());
+}
+
+int vcFloatValue::Get_Mantissa_Width()
+{
+  return(((vcFloatType*)_type)->Get_Mantissa_Width());
+}
+
+bool operator==(vcFloatValue& u, vcFloatValue& v)
+{
+  return(u.Get_Value() == v.Get_Value());
 }
 
 void vcFloatValue::Print(ostream& ofile)
 {
-  ofile << (this->_sign ? "-" : " ") << "C";
-  this->_characteristic->Print(ofile);
-  ofile << "M";
-  this->_mantissa->Print(ofile);
-  ofile << " ";
+  ofile << "_b" << Reverse(this->_value) << " ";
 }
 
 string vcFloatValue::To_VHDL_String()
 {
-  string ret_string;
-  ret_string += '"';
-  ret_string = ret_string + (this->_sign ? "1" : "0");
-  ret_string = ret_string + Reverse(this->_characteristic->Get_Value()) + Reverse(this->_mantissa->Get_Value());
-  ret_string += '"';
-  return(ret_string);
+  return('"' + Reverse(this->_value) + '"');
 }
 
-// assignment operator
-vcFloatValue& vcFloatValue::operator=( vcFloatValue& v)
-{
-  this->_sign = v.Get_Sign();
-
-  // dont delete anything!
-  this->_characteristic = v.Get_Characteristic();
-  this->_mantissa = v.Get_Mantissa();
-}
-
-
-vcFloatValue& vcFloatValue::operator+=(vcFloatValue) { assert(0);}
-vcFloatValue& vcFloatValue::operator*=(vcFloatValue) { assert(0);}
-vcFloatValue& vcFloatValue::operator-=(vcFloatValue) { assert(0);}
-vcFloatValue& vcFloatValue::operator/=(vcFloatValue) { assert(0);}
-
-vcFloatValue operator+(vcFloatValue& s, vcFloatValue& t) { assert(0);}
-vcFloatValue operator-(vcFloatValue& s, vcFloatValue& t) { assert(0);}
-vcFloatValue operator*(vcFloatValue& s, vcFloatValue& t) { assert(0);}
-vcFloatValue operator/(vcFloatValue& s, vcFloatValue& t) { assert(0);}
-
-bool operator>(vcFloatValue& s, vcFloatValue& t) {assert(0);}
-bool operator<(vcFloatValue& s, vcFloatValue& t) {assert(0);}
-bool operator>=(vcFloatValue& s, vcFloatValue& t) {assert(0);}
-
-bool operator==(vcFloatValue& s, vcFloatValue& t) 
-{
-  if((s._sign == t._sign) && (*(s._characteristic) == *(t._characteristic)) &&  (*(s._mantissa) == *(t._mantissa)))
-    return(true);
-  else
-    return(false);
-}
 
 vcArrayValue::vcArrayValue(vcArrayType* t, vector<vcValue*>& values):vcValue((vcType*)t)
 {

@@ -158,6 +158,10 @@ AaStorageObject::AaStorageObject(AaScope* parent_tpr,string oname, AaType* otype
 		   AaConstantLiteralReference* initial_value):AaObject(parent_tpr,oname,otype) 
 {
   this->Set_Value(initial_value);
+
+  _is_written_into = false;
+  _is_read_from = false;
+
   AaProgram::Add_Storage_Dependency_Graph_Vertex(this);
 };
 AaStorageObject::~AaStorageObject() {};

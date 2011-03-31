@@ -46,7 +46,6 @@ protected:
 
 class vcIntValue: public vcValue
 {
-
   // value is a binary string of characters
   // each of which can be 0 or 1.
   string _value;
@@ -94,43 +93,30 @@ public:
 
 class vcFloatValue: public vcValue
 {
-  char _sign;
-  vcIntValue* _characteristic;
-  vcIntValue* _mantissa;
 
- public:
+protected:
+  // value is a binary string of characters
+  // each of which can be 0 or 1.
+  string _value;
 
-  vcFloatValue(vcFloatType* t, char sgn, vcIntValue* cvalue, vcIntValue* mvalue);
-  char Get_Sign() {return(this->_sign);}
-  vcIntValue* Get_Characteristic() {return(this->_characteristic);}
-  vcIntValue* Get_Mantissa() {return(this->_mantissa);}
+public:
+  vcFloatValue(vcFloatType* t, string value, string format);
+  string Get_Value() {return(this->_value);}
+
+  int Get_Characteristic_Width();
+  int Get_Mantissa_Width();
   
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcFloatValue");}
-
-  // assignment operator
-  vcFloatValue& operator=(vcFloatValue& v);
-
-  // +=, *=, -=
-  vcFloatValue& operator+=(vcFloatValue) ;
-  vcFloatValue& operator*=(vcFloatValue) ;
-  vcFloatValue& operator-=(vcFloatValue) ;
-  vcFloatValue& operator/=(vcFloatValue) ;
+  
   virtual string To_VHDL_String();
-
-  friend bool operator==(vcFloatValue& s, vcFloatValue& t) ;
-
+  
+  friend bool operator==(vcFloatValue&, vcFloatValue&);
 };
 
-vcFloatValue operator+(vcFloatValue& s, vcFloatValue& t) ;
-vcFloatValue operator-(vcFloatValue& s, vcFloatValue& t) ;
-vcFloatValue operator*(vcFloatValue& s, vcFloatValue& t) ;
-vcFloatValue operator/(vcFloatValue& s, vcFloatValue& t) ; 
+bool operator==(vcFloatValue&, vcFloatValue&);
+  
 
-bool operator>(vcFloatValue& s, vcFloatValue& t) ;
-bool operator<(vcFloatValue& s, vcFloatValue& t) ;
-bool operator>=(vcFloatValue& s, vcFloatValue& t) ;
-bool operator==(vcFloatValue& s, vcFloatValue& t) ;
 
 class vcArrayValue: public vcValue
 {

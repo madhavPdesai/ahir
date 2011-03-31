@@ -624,7 +624,7 @@ void vcDataPath::Print_VHDL(ostream& ofile)
       iter++)
     {
       if((*iter).second->Is("vcConstantWire"))
-	ofile << (*iter).first << " <= " << ((vcConstantWire*)((*iter).second))->Get_Value()->To_VHDL_String() << ";" << endl;
+	ofile << ((*iter).second)->Get_VHDL_Id() << " <= " << ((vcConstantWire*)((*iter).second))->Get_Value()->To_VHDL_String() << ";" << endl;
     }
 
   // now instantiate each group. 
@@ -726,6 +726,7 @@ void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
       iter++)
     {
       vcRegister* s = (*iter).second;
+
       ofile << s->Get_VHDL_Id() << ": RegisterBase generic map(in_data_width => " << s->_din->Get_Size()  << "," 
 	    << "out_data_width => " << s->_dout->Get_Size() << ") -- {" << endl;
       ofile << " port map( din => " << s->_din->Get_VHDL_Id() << "," 

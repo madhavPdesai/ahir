@@ -249,8 +249,6 @@ package body OperatorPackage is
   begin
     if id = "ApIntNot" then					
       ApIntNot_proc(To_apint(x), result_var);
-    elsif id = "ApIntAssign" then
-      result_var := x;
     elsif id = "ApIntToApIntSigned" then					
       ApIntToApIntSigned_proc(To_apint(x), result_var);
     elsif id = "ApIntToApIntUnsigned" then					

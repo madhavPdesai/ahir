@@ -1,4 +1,5 @@
 #include "../iolib.h"
+#define RUN
 
 #ifdef RUN
 #include <stdlib.h>

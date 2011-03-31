@@ -21,6 +21,8 @@ class AaMemorySpace: public AaRoot
  AaMemorySpace(int msi):AaRoot() 
     { 
       _mem_space_index = msi;
+      _is_written_into = false;
+      _is_read_from = false;
     }
 
   int _mem_space_index;
@@ -28,6 +30,10 @@ class AaMemorySpace: public AaRoot
   int _word_size;
   int _address_width;
   int _max_access_width;
+
+  bool _is_written_into;
+  bool _is_read_from;
+
 
   set<AaStorageObject*,AaRootCompare> _objects;
   set<AaModule*> _modules;

@@ -5,6 +5,8 @@
 #include <set>
 #include <map>
 #include <string>
+#include <iostream>
+
 namespace llvm {
   class TargetData;
   class AliasAnalysis;
@@ -21,6 +23,7 @@ namespace Aa {
 
     std::map<std::string,std::set<std::string> > bb_predecessor_map;
     std::map<llvm::Value*, std::string> value_name_map;
+    std::map<std::string,std::string> pipe_map;
 
     bool _return_flag;
     void Set_Return_Flag(bool v) {_return_flag = v;}
@@ -31,6 +34,10 @@ namespace Aa {
       clear_bb_predecessor_map(); 
       value_name_map.clear();
     }
+
+    void Collect_Pipes(llvm::Function& F);
+    void Add_Pipe(std::string pname, std::string aa_type_name);
+    void Print_Pipe_Declarations(std::ostream& ofile);
 
     void start_program(std::string id);
     void print_storage(llvm::GlobalVariable &G);

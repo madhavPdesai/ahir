@@ -158,8 +158,9 @@ begin
           if(sr_req_in(W) = '1' and
              (sr_addr_in(((W+1)*addr_width)-1 downto W*addr_width) = Natural_To_SLV(REG,addr_width)))
           then
-            sr_pending(W) := '1';
+            -- sr_pending(W) := '1';
             if(sc_ack_flag(W) = '0' or sc_req_in(W) = '1') then
+
               -- room for operation
               sc_ack_set(W) := '1';
               register_array_var(REG) := sr_data_in(((W+1)*data_width)-1 downto W*data_width);
@@ -177,8 +178,9 @@ begin
           if(lr_req_in(R) = '1' and
              lr_addr_in(((R+1)*addr_width)-1 downto R*addr_width) = Natural_To_SLV(REG,addr_width))
           then
-            lr_pending(R) := '1';
+            -- lr_pending(R) := '1';
             if(lc_ack_flag(R) = '0' or lc_req_in(R) = '1') then
+		-- set the lc_ack flag if the current flag is cleared
               lc_data_out_var(((R+1)*data_width)-1 downto R*data_width) := register_array(REG);
               lc_tag_out_var(((R+1)*tag_width)-1 downto R*tag_width) :=
                 lr_tag_in(((R+1)*tag_width)-1 downto R*tag_width);
@@ -200,10 +202,14 @@ begin
     -- lc/sc ack clears.
     if(clock'event and clock = '1') then                
       for W in 0 to num_stores-1 loop
-        if(sr_pending(W) = '0' and sc_ack_flag(W) = '1' and sc_req_in(W) = '1') then
+
+	-- if ack and req are both asserted, clear
+	-- it unless asked to set it.
+        if(sc_ack_flag(W) = '1' and sc_req_in(W) = '1') then
           sc_ack_clear(W) := '1';
         end if;
 
+	-- set dominant!
         if(sc_ack_set(W) = '1') then
           sc_ack_flag(W) <= '1';
         elsif (sc_ack_clear(W) = '1') then
@@ -214,10 +220,14 @@ begin
 
     if(clock'event and clock = '1') then                
       for R in 0 to num_loads-1 loop
-        if(lr_pending(R) = '0' and lc_ack_flag(R) = '1' and lc_req_in(R) = '1') then
+
+	-- if ack and req are both asserted, clear
+	-- it unless asked to set it.
+        if(lc_ack_flag(R) = '1' and lc_req_in(R) = '1') then
           lc_ack_clear(R) := '1';
         end if;
 
+	-- set dominant!
         if(lc_ack_set(R) = '1') then
           lc_ack_flag(R) <= '1';
         elsif (lc_ack_clear(R) = '1') then

@@ -83,6 +83,28 @@ void Write_VC_Equivalence_Operator(string inst_name,
   ofile << ") " << endl;
 
 }
+
+bool Is_Trivial_VC_Type_Conversion(AaType* src_type, AaType* target_type)
+{
+  bool ret_val;
+
+  // the assign operation is multifaceted!
+  string src_kind, dest_kind;
+  
+  dest_kind = ((target_type->Is("AaFloatType")) ? "F" :
+	       (target_type->Is("AaIntType") ? "S" : "U"));
+  
+  src_kind = ((src_type->Is("AaFloatType")) ? "F" :
+	      (src_type->Is("AaIntType") ? "S" : "U"));
+  
+  if((target_type == src_type) || ( (dest_kind == "U" && src_kind == "U")))
+      ret_val = true;
+  else
+    ret_val = false;
+
+  return(ret_val);
+}
+
 void Write_VC_Unary_Operator(AaOperation op, 
 			     string inst_name, 
 			     string src_name, 
@@ -109,10 +131,14 @@ void Write_VC_Unary_Operator(AaOperation op,
 	  src_kind = ((src_type->Is("AaFloatType")) ? "F" :
 		       (src_type->Is("AaIntType") ? "S" : "U"));
 
-	  if(dest_kind != src_kind || (dest_kind != "U" && dest_kind != "F"))
-	    op_name = "$" + dest_kind + ":=$" + src_kind;
+	  if((target_type == src_type) || ( (dest_kind == "U" && src_kind == "U")))
+	    {
+	      // just register it..
+	      op_name = ":=";
+	    }
 	  else
-	    op_name = ":=";
+	    op_name = "$" + dest_kind + ":=$" + src_kind;
+
 	}
       else
 	{

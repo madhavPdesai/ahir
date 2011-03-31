@@ -39,16 +39,59 @@ namespace Aa {
   {
     if(isa<llvm::GetElementPtrInst>(&I))
       {
+
 	llvm::GetElementPtrInst& eI = static_cast<llvm::GetElementPtrInst&>(I);
+	bool is_global = isa<GlobalVariable>(eI.getPointerOperand());
+	std::string root_name = get_name(eI.getPointerOperand());
+
+	// if it takes the reference of a constant string which is a pointer-id      
+	if(is_global)
+	  {
+	    std::string port_name = to_aa(locate_portname_for_io_call(eI.getPointerOperand()));
+	    if(this->pipe_map.find(port_name) != this->pipe_map.end())
+	      {
+		std::cerr << "Info: ignoring get-element-ptr to " 
+			  << root_name 
+			  << " since it points to a constant string which is a pipe-id" 
+			  << std::endl;
+		return;
+	      }
+	  }
+
+
+
+	// get element-ptr is of this form
+	//  a = p[i0][i1][i2]..[ik]
+	//
+	// p is always a pointer.  If it was declared
+	// to point to a statically allocated or global
+	// object a, then p is anchored to a particular value,
+	// and we will treat p as the name of
+	// the object, and in Aa, the reference will
+	// be of the form
+	//     &(a[i1][i2]...[ik])
+	// because i0 must be 0. If i0 is not zero,
+	// this would be an error because what does
+	// p point to?
+	//
+	// if not declared in an alloca/global, then
+	// p is a floating pointer, and can point to
+	// "anything". Thus, we treat the reference
+	// as an address calculation
+	//   p[i0][i1]...[ik]
+	//
 	std::string inst_name = I.getNameStr();
 	std::cout << inst_name << " := @(" ;
 
+	// if the ptr-operand corresponds to either an alloca
+	// or a global, then this ptr must point to a declared
+	// object.  
 	bool is_alloca = isa<AllocaInst>(eI.getPointerOperand());
-	std::string root_name = get_name(eI.getPointerOperand());
+
 	std::cout << root_name;
 	if(eI.getNumIndices() > 1)
 	  {
-	    if(is_alloca)
+	    if(is_alloca || is_global)
 	      {
 		for(int idx = 2; idx < eI.getNumOperands(); idx++)
 		  {
@@ -77,28 +120,82 @@ namespace Aa {
 
   std::string AaWriter::get_name(llvm::Value* v)
   {
-
+    std::string ret_string;
     if(isa<llvm::Constant>(*v))
       {
-	return(get_aa_constant_string(dyn_cast<Constant>(v)));
+	ret_string = (get_aa_constant_string(dyn_cast<Constant>(v)));
       }
     else
       {
 	if(v->getNameStr() != "")
-	  return(v->getNameStr());
+	  ret_string = (v->getNameStr());
 	else
 	  {
 	    if(value_name_map.find(v) != value_name_map.end())
-	      return(value_name_map[v]);
+	      ret_string = (value_name_map[v]);
 	    else
 	      {
-		std::string new_val = "v" + int_to_str(value_name_map.size());
+		std::string new_val = "oBjEct_" + int_to_str(value_name_map.size());
 		value_name_map[v] = new_val;
-		return(new_val);
+		ret_string = (new_val);
 	      }
 	  }
       }
+    return(to_aa(ret_string));
   }
+
+  void AaWriter::Collect_Pipes(llvm::Function& F)
+  {
+    for(llvm::Function::iterator i = F.begin(), e = F.end(); i != e; ++i)
+      {
+	llvm::BasicBlock& bb = *i;
+	for(llvm::BasicBlock::iterator bi = bb.begin(), be = bb.end(); bi != be; ++bi)
+	  {
+	    if(isa<CallInst>(*bi))
+	      {
+		CallInst& C = static_cast<CallInst&>(*bi);
+		IOCode ioc = get_io_code(C);
+		  
+		if(!(ioc == NOT_IO))
+		  {
+		    std::string portname = to_aa(locate_portname_for_io_call(C.getArgOperand(0)));
+		    assert(portname != "");
+		      
+		    std::string type_name = get_aa_type_name(ioc);
+		    this->Add_Pipe(portname,type_name);
+		  }
+	      }
+	  }
+      } 
+  }
+
+  void AaWriter::Add_Pipe(std::string portname, std::string type_name)
+  {
+    if(this->pipe_map.find(portname) == this->pipe_map.end())
+      {
+	this->pipe_map[portname] = type_name;
+      }
+    else
+      {
+	std::string old_type_name = this->pipe_map[portname];
+	if(old_type_name != type_name)
+	  {
+	    std::cerr << "Error: conflicting types for pipe " << portname << std::endl;
+	  }
+      }
+  }
+
+  void AaWriter::Print_Pipe_Declarations(std::ostream& ofile)
+  {
+    for(std::map<std::string,std::string>::iterator i = this->pipe_map.begin(), e = this->pipe_map.end();
+	i != e;
+	i++)
+      {
+	ofile << "$pipe " << (*i).first << " : " << (*i).second << std::endl;
+      }
+  }
+
+
 }
 
 using namespace Aa;
@@ -152,7 +249,7 @@ namespace {
 	{
 	  if((*iiter).getNameStr() == "")
 	    {
-	      std::string iname = "I_" + int_to_str(iidx); 
+	      std::string iname = "iNsTr_" + int_to_str(iidx); 
 	      (*iiter).setName(iname);
 	      iidx++;
 
@@ -212,16 +309,32 @@ namespace {
       unsigned opcode = I.getOpcode();
       
       ntype = llvm_opcode_to_string(opcode);
+      std::string op1 = get_name(I.getOperand(0));
+      std::string op2 = get_name(I.getOperand(1));
 
-      std::cout << iname << " := (";
-      std::cout << get_name(I.getOperand(0)) << " " << ntype << " " << get_name(I.getOperand(1)) << ")" << std::endl;
+      // TODO: if binary operator is shra then need to cast 
+      //       the operands to $int!
+      if(opcode == Instruction::AShr)
+	{
+	    int size = I.getType()->getScalarSizeInBits();
+	    std::cout << iname << " :=  ( ($cast ( $int<" << size << ">) "  <<  op1  << ") "
+		      << ntype 
+		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" 
+		      << std::endl;
+	}
+      else
+	{
+	  std::cout << iname << " := (";
+	  std::cout << op1 << " " << ntype << " " << op2 << ")" << std::endl;
+	}
     }
+
 
     void visitReturnInst(ReturnInst &R)
     {
 	if(R.getReturnValue())
 	{
-		std::cout << "stored_ret_value__ := " 
+		std::cout << "stored_ret_val__ := " 
 			<< get_name(R.getReturnValue()) << std::endl;
 	}
 	std::cout << "$place [return__]" << std::endl;
@@ -231,8 +344,6 @@ namespace {
     void visitAllocaInst(AllocaInst &I)
     {
 	std::string iname = I.getName();
-	std::cerr << "//    In alloca " << iname << std::endl;
-
 	const llvm::PointerType* ptr = dyn_cast<PointerType>(I.getType());
 	const llvm::Type* el_type = ptr->getElementType();
 
@@ -247,27 +358,53 @@ namespace {
     void visitCallInst(CallInst &C)
     {
 	std::string cname = C.getName();
-	const llvm::Function* called_function  = C.getCalledFunction();
-	const llvm::Type* called_function_return_type = called_function->getReturnType();
-	bool has_ret_val = true;
 
-	std::cout << "$call " << called_function->getNameStr();
-	std::cout << " (";
-	for(int idx = 0; idx < C.getNumArgOperands(); idx++)
-		std::cout << get_name(C.getArgOperand(idx)) << " ";
-	std::cout << ") " ;
+	IOCode ioc = get_io_code(C);
+	if(ioc == NOT_IO)
+	  {
+	    const llvm::Function* called_function  = C.getCalledFunction();
+	    const llvm::Type* called_function_return_type = called_function->getReturnType();
 
-	std::cout << " (";
-	if(has_ret_val)
-		std::cout << C.getNameStr();
-	std::cout << ")" << std::endl;
-	
+	    bool has_ret_val = true;
+	    if(C.getType()->isVoidTy())
+	      has_ret_val = false;
+	    
+	    std::cout << "$call " << called_function->getNameStr();
+	    std::cout << " (";
+	    for(int idx = 0; idx < C.getNumArgOperands(); idx++)
+	      std::cout << get_name(C.getArgOperand(idx)) << " ";
+	    std::cout << ") " ;
+	    
+	    std::cout << " (";
+	    if(has_ret_val)
+	      std::cout << C.getNameStr();
+	    std::cout << ")" << std::endl;
+	  }
+	else
+	  {
+	    std::string portname = to_aa(locate_portname_for_io_call(C.getArgOperand(0)));
+	    if(ioc == READ_FLOAT32 || ioc == READ_UINT32)
+	      {
+		std::cout << C.getNameStr() <<  " := " <<  portname << std::endl;
+	      }
+	    else 
+	      {
+		std::string wname = get_name(C.getArgOperand(1));
+		std::cout << portname << " := " << wname << std::endl;
+	      }
+	  }
     }
 
     void visitCastInst(CastInst& C)
     {
-	std::string cname = C.getName();
-	std::cout << "//    In visitCastInst " << cname << std::endl;
+      // TODO: i/o port stuff..
+      std::string cname = C.getName();
+      std::cout << "//    In visitCastInst " << cname << std::endl;
+      const llvm::Type *dest = C.getDestTy();
+      llvm::Value *val = C.getOperand(0);
+      
+      std::cout << C.getNameStr() << " := ($cast (" << get_aa_type_name(dest) << ") "  << get_name(val) << ")"
+		<< std::endl;
     }
 
     void visitLoadInst(LoadInst &L)
@@ -276,7 +413,8 @@ namespace {
 	std::cout << lname << " := " ;
 
 	bool is_alloca = isa<AllocaInst>(L.getPointerOperand());
-	if(is_alloca)
+	bool is_global = isa<GlobalVariable>(L.getPointerOperand());
+	if(is_alloca || is_global)
 		std::cout << get_name(L.getPointerOperand()) << std::endl;
 	else
 		std::cout << "->(" << get_name(L.getPointerOperand()) << ") " << std::endl;
@@ -286,8 +424,10 @@ namespace {
     void visitStoreInst(StoreInst &S)
     {
 	std::string sname = S.getName();
+
 	bool is_alloca = isa<AllocaInst>(S.getPointerOperand());
-	if(is_alloca)
+	bool is_global = isa<GlobalVariable>(S.getPointerOperand());
+	if(is_alloca || is_global)
 		std::cout << get_name(S.getPointerOperand()) << " := ";
 	else
 		std::cout << "->(" << get_name(S.getPointerOperand()) << ") := ";

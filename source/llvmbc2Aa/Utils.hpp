@@ -26,12 +26,15 @@ namespace Aa {
   std::string getTypeDescription(const llvm::Type *type);
   std::string getTypeName(const llvm::Type *type);
   
+  std::string to_aa(std::string x);
   std::string getValue(const llvm::Constant *konst);
   IOCode get_io_code(llvm::Use &u);
   IOCode get_io_code(llvm::User *u);
   IOCode get_io_code(llvm::CallInst &C);
+  std::string locate_portname_for_io_call(llvm::Value *strptr);
   void write_storage_object(llvm::GlobalVariable &G);
   std::string get_aa_type_name(const llvm::Type* ptr);
+  std::string get_aa_type_name(IOCode ioc);
   std::string get_aa_value_string(const llvm::Value* val);
   std::string get_aa_constant_string(llvm::Constant *konst);
   std::string int_to_str(int a);

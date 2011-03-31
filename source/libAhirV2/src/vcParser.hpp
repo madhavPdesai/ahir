@@ -181,12 +181,6 @@ public:
 	public: vcValue*  vc_Value(
 		vcType* t
 	);
-	public: vcValue*  vc_IntValue(
-		vcType* t
-	);
-	public: vcValue*  vc_FloatValue(
-		vcType* t
-	);
 	public: vcType*  vc_ScalarType(
 		vcSystem* sys
 	);
@@ -216,10 +210,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 121;
+	static const int NUM_TOKENS = 119;
 #else
 	enum {
-		NUM_TOKENS = 121
+		NUM_TOKENS = 119
 	};
 #endif
 	
@@ -273,10 +267,6 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_23;
 	static const unsigned long _tokenSet_24_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_24;
-	static const unsigned long _tokenSet_25_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_25;
-	static const unsigned long _tokenSet_26_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_26;
 };
 
 #endif /*INC_vcParser_hpp_*/

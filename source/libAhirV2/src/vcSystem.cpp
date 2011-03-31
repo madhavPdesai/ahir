@@ -236,6 +236,40 @@ void vcSystem::Print_VHDL_Test_Bench(ostream& ofile)
   this->Print_VHDL_Component(ofile);
   this->Print_VHDL_Test_Bench_Signals(ofile);
   ofile << "-- }\n begin --{" << endl;
+
+
+  ofile << "-- clock/reset generation " << endl;
+  ofile << "clk <= not clk after 5 ns;" << endl;
+  ofile << "process" << endl;
+  ofile << "begin --{" << endl;
+  ofile << "wait until clk = '1';" << endl;
+  ofile << "reset <= '0';" << endl;
+  ofile << "wait;" << endl;
+  ofile << "--}" << endl << "end process;" << endl << endl;
+
+  ofile << "-- a rudimentary tb.. will start all the top-level modules .." << endl;
+  for(set<vcModule*,vcRoot_Compare>::iterator iter = _top_module_set.begin();
+      iter != _top_module_set.end();
+      iter++)
+    {
+      string prefix = (*iter)->Get_VHDL_Id() + "_";
+      string start = prefix + "start";
+      string fin = prefix + "fin";
+
+      ofile << "process" << endl;
+      ofile << "begin --{" << endl;
+      ofile << "wait until clk = '1';" << endl;
+      ofile << start << " <= '1';" << endl;
+      ofile << "wait until clk = '1';" << endl;
+      ofile << start << " <= '0';" << endl;
+      ofile << "while " << fin << " /= '1' loop -- {" << endl;
+      ofile << "wait until clk = '1';" << endl;
+      ofile << "-- } " << endl << "end loop;" << endl;
+      ofile << "wait;" << endl;
+      ofile << "--}" << endl << "end process;" << endl << endl;
+    }
+
+
   this->Print_VHDL_Instance(ofile);
   ofile << "-- }\n end Default;" << endl;
 }

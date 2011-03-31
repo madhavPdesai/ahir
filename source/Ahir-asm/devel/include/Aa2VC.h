@@ -87,4 +87,5 @@ void Write_VC_Select_Operator(string inst_name,
 			      ostream& ofile);
 
 
+bool Is_Trivial_VC_Type_Conversion(AaType* from, AaType* to);
 #endif

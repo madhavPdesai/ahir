@@ -32,6 +32,7 @@ string AaStatement::Tab()
 //                   redeclaration error!
 void AaStatement::Map_Target(AaObjectReference* obj_ref) 
 {
+
   string obj_ref_root_name =obj_ref->Get_Object_Root_Name();
   bool err_flag = false;
   AaScope* search_scope = this->Get_Scope()->Get_Ancestor_Scope(obj_ref->Get_Search_Ancestor_Level());
@@ -117,6 +118,9 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
 
       if(child->Is_Expression())
 	obj_ref->Add_Target((AaExpression*) child);
+
+      if(child->Is_Storage_Object())
+	((AaStorageObject*)child)->Set_Is_Written_Into(true);
 
       // obj_ref -> child
       child->Add_Target_Reference(obj_ref); // obj_ref uses child as a target
@@ -507,7 +511,9 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
   assert(tgt); assert(src);
 
   this->Set_Line_Number(lineno);
+
   this->_target = tgt;
+  this->_target->Set_Is_Target(true);
 
   if(tgt->Is_Object_Reference())
     this->Map_Target((AaObjectReference*)tgt);
@@ -562,7 +568,9 @@ void AaAssignmentStatement::Print(ostream& ofile)
 }
 void AaAssignmentStatement::Map_Source_References()
 {
-  this->_target->Map_Source_References(this->_target_objects);
+  if(this->_target->Is("AaPointerDereferenceExpression"))
+     this->_target->Map_Source_References(this->_target_objects);
+
   AaProgram::Add_Type_Dependency(this->_target,this->_source);
 
   this->_source->Map_Source_References(this->_source_objects);
@@ -798,7 +806,7 @@ void AaAssignmentStatement::Propagate_Constants()
 //---------------------------------------------------------------------
 AaCallStatement::AaCallStatement(AaScope* parent_tpr,
 				 string func_name,
-				 vector<AaObjectReference*>& inargs, 
+				 vector<AaExpression*>& inargs, 
 				 vector<AaObjectReference*>& outargs,
 				 int lineno): AaStatement(parent_tpr)
 {
@@ -816,11 +824,12 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
     {
       this->_output_args.push_back(outargs[i]);
       this->Map_Target(outargs[i]);
+      outargs[i]->Set_Is_Target(true);
     }
 }
 AaCallStatement::~AaCallStatement() {};
   
-AaObjectReference* AaCallStatement::Get_Input_Arg(unsigned int index)
+AaExpression* AaCallStatement::Get_Input_Arg(unsigned int index)
 {
   assert(index < this->Get_Number_Of_Input_Args());
   return(this->_input_args[index]);
@@ -1201,11 +1210,19 @@ void AaCallStatement::Write_VC_Control_Path(ostream& ofile)
 }
 
 
+void AaCallStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
+{
+  ofile << "// " << this->To_String() << endl;
+  ofile << "// " << this->Get_Source_Info() << endl;
+
+ for(int idx = 0; idx < _input_args.size(); idx++)
+   _input_args[idx]->Write_VC_Constant_Wire_Declarations(ofile);
+
+}
 void AaCallStatement::Write_VC_Wire_Declarations(ostream& ofile)
 {
 
-  ofile << "// wire declarations for: ";
-  this->Print(ofile);
+  ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
 
@@ -2313,6 +2330,8 @@ void AaPhiStatement::Print(ostream& ofile)
 void AaPhiStatement::Set_Target(AaObjectReference* tgt)
 { 
   this->_target = tgt; 
+  this->_target->Set_Is_Target(true);
+
   this->Map_Target(tgt); 
 
   if(this->_source_pairs.size() > 0)

@@ -602,7 +602,8 @@ bool Is_Unary_Op(string vc_op_id)
 	 (vc_op_id == vcLexerKeywords[__FtoS_ASSIGN_OP]) ||
 	 (vc_op_id == vcLexerKeywords[__FtoU_ASSIGN_OP]) ||
 	 (vc_op_id == vcLexerKeywords[__UtoF_ASSIGN_OP]) ||
-	 (vc_op_id == vcLexerKeywords[__StoF_ASSIGN_OP]));
+	 (vc_op_id == vcLexerKeywords[__StoF_ASSIGN_OP]) ||
+	 (vc_op_id == vcLexerKeywords[__FtoF_ASSIGN_OP]));
 }
 
 string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
@@ -632,7 +633,8 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
       else if(vc_op_id == vcLexerKeywords[__NEQ_OP]           ) { ret_string = "ApIntNeq"  ;} 
       else if(vc_op_id == vcLexerKeywords[__BITSEL_OP]        ) { ret_string = "ApBitsel"  ;} 
       else if(vc_op_id == vcLexerKeywords[__CONCAT_OP]        ) { ret_string = "ApConcat"  ;} 
-      else if(vc_op_id == vcLexerKeywords[__ASSIGN_OP]        ) { ret_string = "ApAssign" ;}
+      else if(vc_op_id == vcLexerKeywords[__ASSIGN_OP]        ) { ret_string = "ApIntToApIntUnsigned" ;}
+      else if(vc_op_id == vcLexerKeywords[__StoS_ASSIGN_OP]   ) { ret_string = "ApIntToApIntSigned" ;}
       else if(vc_op_id == vcLexerKeywords[__NOT_OP]           ) { ret_string = "ApIntNot"  ;}
       else if(vc_op_id == vcLexerKeywords[__OR_OP]            ) { ret_string = "ApIntOr"  ;}
       else if(vc_op_id == vcLexerKeywords[__AND_OP]           ) { ret_string = "ApIntAnd"  ;}
@@ -645,17 +647,12 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
 
   if(in_type->Kind() == "vcFloatType" && out_type->Kind() == "vcFloatType")
     {
-      if(vc_op_id == vcLexerKeywords[__PLUS_OP]          ) { ret_string = "ApFloatAdd";} 
+      if(vc_op_id == vcLexerKeywords[__PLUS_OP]               ) { ret_string = "ApFloatAdd";} 
       else if(vc_op_id == vcLexerKeywords[__MINUS_OP]         ) { ret_string = "ApFloatSub";} 
       else if(vc_op_id == vcLexerKeywords[__MUL_OP]           ) { ret_string = "ApFloatMul";} 
       else if(vc_op_id == vcLexerKeywords[__DIV_OP]           ) { ret_string = "ApFloatDiv";} 
-      else if(vc_op_id == vcLexerKeywords[__ASSIGN_OP]        ) 
-	{ 
-	  if(in_type == out_type) 
-	    ret_string = "ApAssign";
-	  else 
-	    ret_string = "ApFloatResize" ;
-	}
+      else if(vc_op_id == vcLexerKeywords[__ASSIGN_OP]        ) { ret_string = "ApFloatResize";}
+      else if(vc_op_id == vcLexerKeywords[__FtoF_ASSIGN_OP]   ) { ret_string = "ApFloatResize";}
       else { vcSystem::Error("unsupported float <-> float operation " + vc_op_id);}
     }
 

@@ -443,6 +443,15 @@ void AaProgram::Coalesce_Storage()
 	    {
 	      
 	      new_ms->_objects.insert((AaStorageObject*)u);
+
+	      if(((AaStorageObject*)u)->Get_Is_Written_Into())
+		{
+		  new_ms->_is_written_into = true;
+		}
+	      if(((AaStorageObject*)u)->Get_Is_Read_From())
+		{
+		  new_ms->_is_read_from = true;
+		}
 	      
 	      ((AaStorageObject*)u)->Set_Mem_Space_Index(idx);
 	      ((AaStorageObject*)u)->Get_Type()->Fill_LAU_Set(lau_set);
@@ -460,7 +469,14 @@ void AaProgram::Coalesce_Storage()
 	    }
 	  else if(u->Is("AaPointerDereferenceExpression"))
 	    {
+
 	      AaPointerDereferenceExpression* pu = ((AaPointerDereferenceExpression*)u);
+
+	      if(pu->Get_Is_Target())
+		new_ms->_is_written_into = true;
+	      else
+		new_ms->_is_read_from = true;
+
 	      AaType* ptype = pu->Get_Reference_To_Object()->Get_Type();
 	      assert(ptype != NULL && ptype->Is_Pointer_Type());
 
@@ -471,7 +487,18 @@ void AaProgram::Coalesce_Storage()
 	    assert(0);
 	}
 
-
+      if(!new_ms->_is_written_into)
+	{
+	  AaRoot::Error("memory space " + new_ms->Get_VC_Identifier() 
+			+ " is not written into in the program", NULL);
+	}
+      if(!new_ms->_is_read_from)
+	{
+	  AaRoot::Error("memory space " +
+			new_ms->Get_VC_Identifier() +
+			" is not read from in the program", NULL);
+	}
+	    
       // find the lcm
       int word_size = LCM(lau_set);
       int max_access_width = *(lau_set.rbegin());
@@ -580,9 +607,10 @@ void AaProgram::Write_C_Model()
 
 
 void AaProgram::Write_VC_Model(int default_space_pointer_width,
-				 int default_space_word_size,
-				 ostream& ofile)
+			       int default_space_word_size,
+			       ostream& ofile)
 {
+
   AaProgram::Write_VC_Pipe_Declarations(ofile);
   AaProgram::Write_VC_Constant_Declarations(ofile);
 
@@ -653,6 +681,7 @@ void AaProgram::Write_VC_Memory_Spaces(ostream& ofile)
       iter != AaProgram::_memory_space_map.end();
       iter++)
     {
+
       if((*iter).second->_modules.size() != 1)
 	(*iter).second->Write_VC_Model(ofile);
     }

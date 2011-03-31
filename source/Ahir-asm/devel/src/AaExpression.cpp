@@ -25,6 +25,7 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
   this->_already_evaluated = false;
   this->_addressed_object_representative = NULL;
   this->_coalesce_flag = false;
+  this->_is_target = false;
 }
 AaExpression::~AaExpression() {};
 
@@ -245,13 +246,18 @@ void AaObjectReference::Map_Source_References(set<AaRoot*>& source_objects)
 	  this->Set_Object(child);
 
 	  child->Add_Source_Reference(this);  // child -> this (this uses child as a source)
-	  this->Add_Target_Reference(child);  // this  -> child (child uses this as a target)
+	  this->Add_Target_Reference(child);  // this  <- child (child uses this as a target)
 
 	  if(child->Is_Expression())
 	    ((AaExpression*)child)->Add_Target(this);
 
 	  if(child->Is_Object())
-	    source_objects.insert(child);
+	    {
+	      source_objects.insert(child);
+
+	      if(child->Is("AaStorageObject"))
+		((AaStorageObject*)child)->Set_Is_Read_From(true);
+	    }
 	}
     }
 }
@@ -2033,7 +2039,14 @@ void AaTypeCastExpression::Write_VC_Control_Path(ostream& ofile)
       
       ofile << ";;[" << this->Get_VC_Name() << "] { // type-cast expression" << endl;
       this->_rest->Write_VC_Control_Path(ofile);
-      ofile << "$T [req] $T [ack] //  type-conversion.. " << endl;
+
+      // either it will be a register or a split conversion
+      // operator..
+      if(Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
+	ofile << "$T [req] $T [ack] //  type-conversion.. " << endl;
+      else
+	ofile << "$T [rr] $T [ra] $T [cr] $T [ca] //  type-conversion.. " << endl;
+
       ofile << "}" << endl;
     }
 }
@@ -2095,16 +2108,8 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 
       this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
 
-      if(!this->Get_Type()->Is_Uinteger_Type() && 
-	 !this->_rest->Get_Type()->Is_Uinteger_Type())
-	{
-	  AaRoot::Error("For vc2vhdl, type-cast operations not yet correctly implemented except for $uint -> $uint conversions",this);
-	}
-
 
       ofile << "// " << this->To_String() << endl;
-
-
       Write_VC_Unary_Operator(__NOP,
 			      this->Get_VC_Datapath_Instance_Name(),
 			      this->_rest->Get_VC_Driver_Name(),
@@ -2117,9 +2122,6 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 
 void AaTypeCastExpression::Write_VC_Links(string hier_id, ostream& ofile)
 {
-
-
-
   if(!this->Is_Constant())
     {
 
@@ -2129,9 +2131,22 @@ void AaTypeCastExpression::Write_VC_Links(string hier_id, ostream& ofile)
       ofile << "// " << this->To_String() << endl;
       
       vector<string> reqs,acks;
-      reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/req");
-      acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ack");
-      Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
+
+      if(Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
+	{
+	  reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/req");
+	  acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ack");
+	  Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
+	}
+      else
+	{
+	  reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/rr");
+	  reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/cr");
+	  acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ra");
+	  acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ca");
+
+	  Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
+	}
     }
 }
 
