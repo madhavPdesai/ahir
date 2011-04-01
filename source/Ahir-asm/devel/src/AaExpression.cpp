@@ -2307,6 +2307,7 @@ AaBinaryExpression::AaBinaryExpression(AaScope* parent_tpr,AaOperation op, AaExp
   else if(Is_Shift_Operation(op))
     {
       AaProgram::Add_Type_Dependency(first,this);
+      AaProgram::Add_Type_Dependency(first,second);
     }
   else if(!Is_Concat_Operation(op))
     {
@@ -2358,7 +2359,9 @@ void AaBinaryExpression::Update_Type()
     {
       if((this->_second->Get_Type() == NULL) && (this->_first->Get_Type() != NULL))
 	{
-	  this->_second->Set_Type(AaProgram::Make_Uinteger_Type(CeilLog2(this->_first->Get_Type()->Size()-1)));
+	  // both arguments of a shift-operator must have the same
+	  // width!
+	  this->_second->Set_Type(this->_first->Get_Type());
 	}
     }
 }

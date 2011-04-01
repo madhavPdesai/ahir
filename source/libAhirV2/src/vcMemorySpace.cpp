@@ -232,78 +232,146 @@ string vcMemorySpace::Get_Aggregate_Section(string pid, int hindex, int lindex)
 
 void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 {
-  if(this->Get_Capacity() <= vcSystem::_register_bank_threshold)
+  if(_num_loads == 0)
     {
-      // instantiate a register bank..
-      ofile << "RegisterBank_" << this->Get_VHDL_Id() << ": register_bank -- {" << endl;
-      ofile << "generic map(-- {" << endl;
-      ofile << "num_loads => " << this->Get_Num_Loads() << "," << endl
-	    << "num_stores => " << this->Get_Num_Stores() << "," << endl
-	    << "addr_width => " << this->Get_Address_Width() << "," << endl
-	    << "data_width => " << this->Get_Word_Size() << "," << endl
-	    << "tag_width => " << this->Get_Tag_Length() << "," << endl
-	    << "num_registers => " << this->Get_Capacity()
-	    << ") -- }" << endl;
-      ofile << "port map(-- {" << endl;
-      ofile 
-	<< "lr_addr_in => " << this->Get_VHDL_Id() << "_lr_addr," << endl
-	<< "lr_req_in => " << this->Get_VHDL_Id() << "_lr_req," << endl
-	<< "lr_ack_out => " << this->Get_VHDL_Id() << "_lr_ack," << endl
-	<< "lr_tag_in => " << this->Get_VHDL_Id() << "_lr_tag," << endl
-	<< "lc_req_in => " << this->Get_VHDL_Id() << "_lc_req," << endl
-	<< "lc_ack_out => " << this->Get_VHDL_Id() << "_lc_ack," << endl
-	<< "lc_data_out => " << this->Get_VHDL_Id() << "_lc_data," << endl
-	<< "lc_tag_out => " << this->Get_VHDL_Id() << "_lc_tag," << endl
-	<< "sr_addr_in => " << this->Get_VHDL_Id() << "_sr_addr," << endl
-	<< "sr_data_in => " << this->Get_VHDL_Id() << "_sr_data," << endl
-	<< "sr_req_in => " << this->Get_VHDL_Id() << "_sr_req," << endl
-	<< "sr_ack_out => " << this->Get_VHDL_Id() << "_sr_ack," << endl
-	<< "sr_tag_in => " << this->Get_VHDL_Id() << "_sr_tag," << endl
-	<< "sc_req_in=> " << this->Get_VHDL_Id() << "_sc_req," << endl
-	<< "sc_ack_out => " << this->Get_VHDL_Id() << "_sc_ack," << endl
-	<< "sc_tag_out => " << this->Get_VHDL_Id() << "_sc_tag," << endl
-	<< "clock => clk," << endl
-	<< "reset => reset";
-      ofile << "); -- }  }" << endl;
+
+
+      if(_num_stores > 0)
+	{
+	  vcSystem::Warning("memory space " + this->Get_VHDL_Id() + " is not read from... dummy used");
+	  // dummy write-only memory..
+	  // instantiate a register bank..
+	  ofile << "dummyWOM_" << this->Get_VHDL_Id() << ": dummy_write_only_memory_subsystem -- {" << endl;
+	  ofile << "generic map(-- {" << endl;
+	  ofile << "num_stores => " << this->Get_Num_Stores() << "," << endl
+		<< "addr_width => " << this->Get_Address_Width() << "," << endl
+		<< "data_width => " << this->Get_Word_Size() << "," << endl
+		<< "tag_width => " << this->Get_Tag_Length() << endl
+		<< ") -- }" << endl;
+	  ofile << "port map(-- {" << endl;
+	  ofile << "sr_addr_in => " << this->Get_VHDL_Id() << "_sr_addr," << endl
+	    << "sr_data_in => " << this->Get_VHDL_Id() << "_sr_data," << endl
+	    << "sr_req_in => " << this->Get_VHDL_Id() << "_sr_req," << endl
+	    << "sr_ack_out => " << this->Get_VHDL_Id() << "_sr_ack," << endl
+	    << "sr_tag_in => " << this->Get_VHDL_Id() << "_sr_tag," << endl
+	    << "sc_req_in=> " << this->Get_VHDL_Id() << "_sc_req," << endl
+	    << "sc_ack_out => " << this->Get_VHDL_Id() << "_sc_ack," << endl
+	    << "sc_tag_out => " << this->Get_VHDL_Id() << "_sc_tag," << endl
+	    << "clock => clk," << endl
+	    << "reset => reset";
+	  ofile << "); -- }  }" << endl;
+	}
+      else
+	vcSystem::Warning("memory space " + this->Get_VHDL_Id() + " is not used... omitted!");
     }
-  else
+  
+  if(_num_stores == 0)
     {
-      ofile << "MemorySpace_" << this->Get_VHDL_Id() << ": memory_subsystem -- {" << endl;
-      ofile << "generic map(-- {" << endl;
-      ofile << "num_loads => " << this->Get_Num_Loads() << "," << endl
-	    << "num_stores => " << this->Get_Num_Stores() << "," << endl
-	    << "addr_width => " << this->Get_Address_Width() << "," << endl
-	    << "data_width => " << this->Get_Word_Size() << "," << endl
-	    << "tag_width => " << this->Get_Tag_Length() << "," << endl
-	// the following parameters are hard-wired.. but 
-	// it may be a good idea to expose them!
-	    << "number_of_banks => " << this->Calculate_Number_Of_Banks() << "," << endl
-	    << "mux_degree => 2," << endl
-	    << "demux_degree => 2," << endl
-	    << "base_bank_addr_width => " << this->Calculate_Base_Bank_Address_Width() << "," << endl
-	    << "base_bank_data_width => " << this->Calculate_Base_Bank_Data_Width() << endl 
-	    << ") -- }" << endl;
-      ofile << "port map(-- {" << endl;
-      ofile 
-	<< "lr_addr_in => " << this->Get_VHDL_Id() << "_lr_addr," << endl
-	<< "lr_req_in => " << this->Get_VHDL_Id() << "_lr_req," << endl
-	<< "lr_ack_out => " << this->Get_VHDL_Id() << "_lr_ack," << endl
-	<< "lr_tag_in => " << this->Get_VHDL_Id() << "_lr_tag," << endl
-	<< "lc_req_in => " << this->Get_VHDL_Id() << "_lc_req," << endl
-	<< "lc_ack_out => " << this->Get_VHDL_Id() << "_lc_ack," << endl
-	<< "lc_data_out => " << this->Get_VHDL_Id() << "_lc_data," << endl
-	<< "lc_tag_out => " << this->Get_VHDL_Id() << "_lc_tag," << endl
-	<< "sr_addr_in => " << this->Get_VHDL_Id() << "_sr_addr," << endl
-	<< "sr_data_in => " << this->Get_VHDL_Id() << "_sr_data," << endl
-	<< "sr_req_in => " << this->Get_VHDL_Id() << "_sr_req," << endl
-	<< "sr_ack_out => " << this->Get_VHDL_Id() << "_sr_ack," << endl
-	<< "sr_tag_in => " << this->Get_VHDL_Id() << "_sr_tag," << endl
-	<< "sc_req_in=> " << this->Get_VHDL_Id() << "_sc_req," << endl
-	<< "sc_ack_out => " << this->Get_VHDL_Id() << "_sc_ack," << endl
-	<< "sc_tag_out => " << this->Get_VHDL_Id() << "_sc_tag," << endl
-	<< "clock => clk," << endl
-	<< "reset => reset";
-      ofile << "); -- }  }" << endl;
+
+      if(_num_loads > 0)
+	{
+	  vcSystem::Warning("memory space " + this->Get_VHDL_Id() + " is not written into... dummy used");
+	  // dummy read-only memory..
+	  // instantiate a register bank..
+	  ofile << "dummyROM_" << this->Get_VHDL_Id() << ": dummy_read_only_memory_subsystem -- {" << endl;
+	  ofile << "generic map(-- {" << endl;
+	  ofile << "num_loads => " << this->Get_Num_Loads() << "," << endl
+		<< "addr_width => " << this->Get_Address_Width() << "," << endl
+		<< "data_width => " << this->Get_Word_Size() << "," << endl
+		<< "tag_width => " << this->Get_Tag_Length() << endl
+		<< ") -- }" << endl;
+	  ofile << "port map(-- {" << endl;
+	  ofile << "lr_addr_in => " << this->Get_VHDL_Id() << "_lr_addr," << endl
+		<< "lr_req_in => " << this->Get_VHDL_Id() << "_lr_req," << endl
+		<< "lr_ack_out => " << this->Get_VHDL_Id() << "_lr_ack," << endl
+		<< "lr_tag_in => " << this->Get_VHDL_Id() << "_lr_tag," << endl
+		<< "lc_req_in => " << this->Get_VHDL_Id() << "_lc_req," << endl
+		<< "lc_ack_out => " << this->Get_VHDL_Id() << "_lc_ack," << endl
+		<< "lc_data_out => " << this->Get_VHDL_Id() << "_lc_data," << endl
+		<< "lc_tag_out => " << this->Get_VHDL_Id() << "_lc_tag," << endl
+		<< "clock => clk," << endl
+		<< "reset => reset";
+	  ofile << "); -- }  }" << endl;
+	}
+      else
+	vcSystem::Warning("memory space " + this->Get_VHDL_Id() + " is not used... omitted!");
+    }
+
+  if(_num_loads > 0 && _num_stores > 0)
+    {
+      if(this->Get_Capacity() <= vcSystem::_register_bank_threshold)
+	{
+	  // instantiate a register bank..
+	  ofile << "RegisterBank_" << this->Get_VHDL_Id() << ": register_bank -- {" << endl;
+	  ofile << "generic map(-- {" << endl;
+	  ofile << "num_loads => " << this->Get_Num_Loads() << "," << endl
+		<< "num_stores => " << this->Get_Num_Stores() << "," << endl
+		<< "addr_width => " << this->Get_Address_Width() << "," << endl
+		<< "data_width => " << this->Get_Word_Size() << "," << endl
+		<< "tag_width => " << this->Get_Tag_Length() << "," << endl
+		<< "num_registers => " << this->Get_Capacity()
+		<< ") -- }" << endl;
+	  ofile << "port map(-- {" << endl;
+	  ofile 
+	    << "lr_addr_in => " << this->Get_VHDL_Id() << "_lr_addr," << endl
+	    << "lr_req_in => " << this->Get_VHDL_Id() << "_lr_req," << endl
+	    << "lr_ack_out => " << this->Get_VHDL_Id() << "_lr_ack," << endl
+	    << "lr_tag_in => " << this->Get_VHDL_Id() << "_lr_tag," << endl
+	    << "lc_req_in => " << this->Get_VHDL_Id() << "_lc_req," << endl
+	    << "lc_ack_out => " << this->Get_VHDL_Id() << "_lc_ack," << endl
+	    << "lc_data_out => " << this->Get_VHDL_Id() << "_lc_data," << endl
+	    << "lc_tag_out => " << this->Get_VHDL_Id() << "_lc_tag," << endl
+	    << "sr_addr_in => " << this->Get_VHDL_Id() << "_sr_addr," << endl
+	    << "sr_data_in => " << this->Get_VHDL_Id() << "_sr_data," << endl
+	    << "sr_req_in => " << this->Get_VHDL_Id() << "_sr_req," << endl
+	    << "sr_ack_out => " << this->Get_VHDL_Id() << "_sr_ack," << endl
+	    << "sr_tag_in => " << this->Get_VHDL_Id() << "_sr_tag," << endl
+	    << "sc_req_in=> " << this->Get_VHDL_Id() << "_sc_req," << endl
+	    << "sc_ack_out => " << this->Get_VHDL_Id() << "_sc_ack," << endl
+	    << "sc_tag_out => " << this->Get_VHDL_Id() << "_sc_tag," << endl
+	    << "clock => clk," << endl
+	    << "reset => reset";
+	  ofile << "); -- }  }" << endl;
+	}
+      else
+	{
+	  ofile << "MemorySpace_" << this->Get_VHDL_Id() << ": memory_subsystem -- {" << endl;
+	  ofile << "generic map(-- {" << endl;
+	  ofile << "num_loads => " << this->Get_Num_Loads() << "," << endl
+		<< "num_stores => " << this->Get_Num_Stores() << "," << endl
+		<< "addr_width => " << this->Get_Address_Width() << "," << endl
+		<< "data_width => " << this->Get_Word_Size() << "," << endl
+		<< "tag_width => " << this->Get_Tag_Length() << "," << endl
+	    // the following parameters are hard-wired.. but 
+	    // it may be a good idea to expose them!
+		<< "number_of_banks => " << this->Calculate_Number_Of_Banks() << "," << endl
+		<< "mux_degree => 2," << endl
+		<< "demux_degree => 2," << endl
+		<< "base_bank_addr_width => " << this->Calculate_Base_Bank_Address_Width() << "," << endl
+		<< "base_bank_data_width => " << this->Calculate_Base_Bank_Data_Width() << endl 
+		<< ") -- }" << endl;
+	  ofile << "port map(-- {" << endl;
+	  ofile 
+	    << "lr_addr_in => " << this->Get_VHDL_Id() << "_lr_addr," << endl
+	    << "lr_req_in => " << this->Get_VHDL_Id() << "_lr_req," << endl
+	    << "lr_ack_out => " << this->Get_VHDL_Id() << "_lr_ack," << endl
+	    << "lr_tag_in => " << this->Get_VHDL_Id() << "_lr_tag," << endl
+	    << "lc_req_in => " << this->Get_VHDL_Id() << "_lc_req," << endl
+	    << "lc_ack_out => " << this->Get_VHDL_Id() << "_lc_ack," << endl
+	    << "lc_data_out => " << this->Get_VHDL_Id() << "_lc_data," << endl
+	    << "lc_tag_out => " << this->Get_VHDL_Id() << "_lc_tag," << endl
+	    << "sr_addr_in => " << this->Get_VHDL_Id() << "_sr_addr," << endl
+	    << "sr_data_in => " << this->Get_VHDL_Id() << "_sr_data," << endl
+	    << "sr_req_in => " << this->Get_VHDL_Id() << "_sr_req," << endl
+	    << "sr_ack_out => " << this->Get_VHDL_Id() << "_sr_ack," << endl
+	    << "sr_tag_in => " << this->Get_VHDL_Id() << "_sr_tag," << endl
+	    << "sc_req_in=> " << this->Get_VHDL_Id() << "_sc_req," << endl
+	    << "sc_ack_out => " << this->Get_VHDL_Id() << "_sc_ack," << endl
+	    << "sc_tag_out => " << this->Get_VHDL_Id() << "_sc_tag," << endl
+	    << "clock => clk," << endl
+	    << "reset => reset";
+	  ofile << "); -- }  }" << endl;
+	}
     }
 }
 

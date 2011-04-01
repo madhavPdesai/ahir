@@ -489,14 +489,14 @@ void AaProgram::Coalesce_Storage()
 
       if(!new_ms->_is_written_into)
 	{
-	  AaRoot::Error("memory space " + new_ms->Get_VC_Identifier() 
-			+ " is not written into in the program", NULL);
+	  AaRoot::Warning("memory space " + new_ms->Get_VC_Identifier() 
+			  + " is not written into in the program", NULL);
 	}
       if(!new_ms->_is_read_from)
 	{
-	  AaRoot::Error("memory space " +
-			new_ms->Get_VC_Identifier() +
-			" is not read from in the program", NULL);
+	  AaRoot::Warning("memory space " +
+			  new_ms->Get_VC_Identifier() +
+			  " is not read from in the program", NULL);
 	}
 	    
       // find the lcm
