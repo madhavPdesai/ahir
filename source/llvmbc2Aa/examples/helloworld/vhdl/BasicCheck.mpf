@@ -1067,6 +1067,6 @@ XML_DoubleClick = Edit
 XML_CustomDoubleClick = 
 LOGFILE_DoubleClick = Edit
 LOGFILE_CustomDoubleClick = 
-EditorState = {tabbed horizontal 1} {/home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiter.vhd 0 0} {/home/madhav/ahirgit/AHIR/source/llvmbc2Aa/examples/helloworld/vhdl/system.vhdl 0 1}
+EditorState = {tabbed horizontal 1} {/home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiter.vhd 0 1} {/home/madhav/ahirgit/AHIR/source/llvmbc2Aa/examples/helloworld/vhdl/system.vhdl 0 0}
 Project_Major_Version = 6
 Project_Minor_Version = 2

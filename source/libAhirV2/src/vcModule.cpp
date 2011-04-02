@@ -304,8 +304,12 @@ void vcModule::Print_VHDL_Argument_Signals(ostream& ofile)
       ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
     }
 
-  ofile << "signal " <<  prefix << "in_args    : std_logic_vector(" << this->Get_In_Arg_Width()-1 << " downto 0);"  << endl;
-  ofile <<  "signal " << prefix << "out_args   : std_logic_vector(" << this->Get_Out_Arg_Width()-1 << " downto 0);"  << endl;
+  if(this->Get_In_Arg_Width() > 0)
+    ofile << "signal " <<  prefix << "in_args    : std_logic_vector(" << this->Get_In_Arg_Width()-1 << " downto 0);"  << endl;
+
+  if(this->Get_Out_Arg_Width() > 0)
+    ofile <<  "signal " << prefix << "out_args   : std_logic_vector(" << this->Get_Out_Arg_Width()-1 << " downto 0);"  << endl;
+
   ofile <<  "signal " << prefix << "tag_in    : std_logic_vector(" << this->Get_Callee_Tag_Length()-1 << " downto 0);"  << endl;
   ofile <<  "signal " << prefix << "tag_out   : std_logic_vector(" << this->Get_Callee_Tag_Length()-1 << " downto 0);"  << endl;
   ofile <<  "signal " << prefix << "start : std_logic;"  << endl;
@@ -636,7 +640,7 @@ void vcModule::Print_VHDL_In_Arg_Disconcatenation(ostream& ofile)
     {
       vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
       assert(w != NULL);
-
+      
       ofile << prefix << w->Get_VHDL_Id() << " <= " 
 	    << prefix << "in_args(" << lindex << " downto " << ((lindex+1) - w->Get_Size()) << ");" << endl;
       lindex = lindex - w->Get_Size();
@@ -647,18 +651,21 @@ void vcModule::Print_VHDL_Out_Arg_Concatenation(ostream& ofile)
 {
   string prefix = this->Get_VHDL_Id() + "_";
 
-  ofile << prefix << "out_args <= ";
-  for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
+  if(this->Get_Out_Arg_Width() > 0)
     {
-      if(idx > 0)
-	ofile << "& ";
-      
-      vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
-      assert(w != NULL);
-
-      ofile << prefix << w->Get_VHDL_Id() << " ";
+      ofile << prefix << "out_args <= ";
+      for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
+	{
+	  if(idx > 0)
+	    ofile << "& ";
+	  
+	  vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
+	  assert(w != NULL);
+	  
+	  ofile << prefix << w->Get_VHDL_Id() << " ";
+	}
+      ofile << ";" << endl;
     }
-  ofile << ";" << endl;
 }
 
 void vcModule::Print_VHDL_Call_Arbiter_Instantiation(ostream& ofile)

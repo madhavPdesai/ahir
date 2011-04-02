@@ -3,7 +3,7 @@
 // but use a switch in one case, and an if in the other..
 $module [sum_mod]
     $in (a:$uint<10>)
-    $out (b: $uint<10> c: $uint<10>)
+    $out (b: $uint<10> test: $uint<1>)
 $is
 {
 		$branchblock[bb1] {
@@ -18,6 +18,20 @@ $is
 							$when 3 $then $place [loopback]
 							$default $null $endswitch 
 		}
+		$branchblock[bb2] {
+			$merge $entry loopback 
+				$phi loop_counter := a $on $entry new_loop_counter $on loopback
+				$phi temp_t := 0 $on $entry t $on loopback
+			$endmerge	
+			new_loop_counter := (loop_counter - 1)
+                	t := (temp_t + 1)
+			$if (new_loop_counter > 0)  
+			$then 
+				$place [loopback] 
+			$else
+				$null
+			$endif
+		}
 		b := %bb1:t
-		c := %bb1:t
+		test := (%bb1:t == %bb2:t)
 }

@@ -80,7 +80,7 @@ namespace Aa {
 	// as an address calculation
 	//   p[i0][i1]...[ik]
 	//
-	std::string inst_name = I.getNameStr();
+	std::string inst_name = to_aa(I.getNameStr());
 	std::cout << inst_name << " := @(" ;
 
 	// if the ptr-operand corresponds to either an alloca
@@ -128,7 +128,7 @@ namespace Aa {
     else
       {
 	if(v->getNameStr() != "")
-	  ret_string = (v->getNameStr());
+	  ret_string = to_aa(v->getNameStr());
 	else
 	  {
 	    if(value_name_map.find(v) != value_name_map.end())
@@ -137,11 +137,11 @@ namespace Aa {
 	      {
 		std::string new_val = "oBjEct_" + int_to_str(value_name_map.size());
 		value_name_map[v] = new_val;
-		ret_string = (new_val);
+		ret_string = to_aa(new_val);
 	      }
 	  }
       }
-    return(to_aa(ret_string));
+    return(ret_string);
   }
 
   void AaWriter::Collect_Pipes(llvm::Function& F)
@@ -239,7 +239,7 @@ namespace {
 
     void visitBasicBlock(BasicBlock &BB)
     {
-      std::string bb_name = BB.getNameStr();
+      std::string bb_name = to_aa(BB.getNameStr());
       std::cout << "//begin: basic-block " << bb_name << std::endl;
 
       // first name all instructions.
@@ -263,7 +263,7 @@ namespace {
 	      siter != this->bb_predecessor_map[bb_name].end();
 	      siter++)
 	    {
-	      std::cout << " " << (*siter) << "_" << bb_name;
+	      std::cout << " " << to_aa(*siter) << "_" << to_aa(bb_name);
 	    }
 	  std::cout << std::endl;
 
@@ -284,7 +284,7 @@ namespace {
 
     void Write_PHI_Node(llvm::PHINode& pnode) 
     {
-      std::string phi_name = pnode.getName();
+      std::string phi_name = to_aa(pnode.getNameStr());
       int num_sources = pnode.getNumIncomingValues();
       std::cout << "$phi " << phi_name << " :=  ";
 
@@ -295,15 +295,16 @@ namespace {
 	  BasicBlock *inbb = pnode.getIncomingBlock(i);
 	  std::string val_id = this->get_name(inval);
 
-	  std::cout << val_id << " $on " << inbb->getNameStr() << "_"
-		    << parent->getNameStr() << " ";
+	  std::cout << "( $cast (" << get_aa_type_name(inval->getType()) 
+		    << ") " << val_id << ") $on " << get_name(inbb) << "_"
+		    << get_name(parent) << " ";
 	}
       std::cout << std::endl;
     }
 
     void visitBinaryOperator(BinaryOperator &I)
     {
-      std::string iname = I.getName();
+      std::string iname = to_aa(I.getNameStr());
       
       std::string ntype;
       unsigned opcode = I.getOpcode();
@@ -343,11 +344,11 @@ namespace {
   
     void visitAllocaInst(AllocaInst &I)
     {
-	std::string iname = I.getName();
-	const llvm::PointerType* ptr = dyn_cast<PointerType>(I.getType());
-	const llvm::Type* el_type = ptr->getElementType();
-
-	std::cout << "$storage " << iname << " : " << get_aa_type_name(el_type) << std::endl;
+      std::string iname = to_aa(I.getNameStr());
+      const llvm::PointerType* ptr = dyn_cast<PointerType>(I.getType());
+      const llvm::Type* el_type = ptr->getElementType();
+      
+      std::cout << "$storage " << iname << " : " << get_aa_type_name(el_type) << std::endl;
     }
 
     void visitPHINode(PHINode &P)
@@ -357,7 +358,7 @@ namespace {
 
     void visitCallInst(CallInst &C)
     {
-	std::string cname = C.getName();
+      std::string cname = to_aa(C.getNameStr());
 
 	IOCode ioc = get_io_code(C);
 	if(ioc == NOT_IO)
@@ -369,7 +370,7 @@ namespace {
 	    if(C.getType()->isVoidTy())
 	      has_ret_val = false;
 	    
-	    std::cout << "$call " << called_function->getNameStr();
+	    std::cout << "$call " << to_aa(called_function->getNameStr());
 	    std::cout << " (";
 	    for(int idx = 0; idx < C.getNumArgOperands(); idx++)
 	      std::cout << get_name(C.getArgOperand(idx)) << " ";
@@ -377,7 +378,7 @@ namespace {
 	    
 	    std::cout << " (";
 	    if(has_ret_val)
-	      std::cout << C.getNameStr();
+	      std::cout << to_aa(C.getNameStr());
 	    std::cout << ")" << std::endl;
 	  }
 	else
@@ -385,7 +386,7 @@ namespace {
 	    std::string portname = to_aa(locate_portname_for_io_call(C.getArgOperand(0)));
 	    if(ioc == READ_FLOAT32 || ioc == READ_UINT32)
 	      {
-		std::cout << C.getNameStr() <<  " := " <<  portname << std::endl;
+		std::cout << to_aa(C.getNameStr()) <<  " := " <<  portname << std::endl;
 	      }
 	    else 
 	      {
@@ -398,46 +399,46 @@ namespace {
     void visitCastInst(CastInst& C)
     {
       // TODO: i/o port stuff..
-      std::string cname = C.getName();
+      std::string cname = to_aa(C.getNameStr());
       std::cout << "//    In visitCastInst " << cname << std::endl;
       const llvm::Type *dest = C.getDestTy();
       llvm::Value *val = C.getOperand(0);
       
-      std::cout << C.getNameStr() << " := ($cast (" << get_aa_type_name(dest) << ") "  << get_name(val) << ")"
+      std::cout << cname << " := ($cast (" << get_aa_type_name(dest) << ") "  << get_name(val) << ")"
 		<< std::endl;
     }
 
     void visitLoadInst(LoadInst &L)
     {
-	std::string lname = L.getName();
-	std::cout << lname << " := " ;
-
-	bool is_alloca = isa<AllocaInst>(L.getPointerOperand());
-	bool is_global = isa<GlobalVariable>(L.getPointerOperand());
-	if(is_alloca || is_global)
-		std::cout << get_name(L.getPointerOperand()) << std::endl;
-	else
-		std::cout << "->(" << get_name(L.getPointerOperand()) << ") " << std::endl;
-
+      std::string lname = to_aa(L.getNameStr());
+      std::cout << lname << " := " ;
+      
+      bool is_alloca = isa<AllocaInst>(L.getPointerOperand());
+      bool is_global = isa<GlobalVariable>(L.getPointerOperand());
+      if(is_alloca || is_global)
+	std::cout << get_name(L.getPointerOperand()) << std::endl;
+      else
+	std::cout << "->(" << get_name(L.getPointerOperand()) << ") " << std::endl;
+      
     }
 
     void visitStoreInst(StoreInst &S)
     {
-	std::string sname = S.getName();
-
-	bool is_alloca = isa<AllocaInst>(S.getPointerOperand());
-	bool is_global = isa<GlobalVariable>(S.getPointerOperand());
-	if(is_alloca || is_global)
-		std::cout << get_name(S.getPointerOperand()) << " := ";
-	else
-		std::cout << "->(" << get_name(S.getPointerOperand()) << ") := ";
-
-	std::cout << get_name(S.getValueOperand()) << std::endl;
+      std::string sname = to_aa(S.getNameStr());
+      
+      bool is_alloca = isa<AllocaInst>(S.getPointerOperand());
+      bool is_global = isa<GlobalVariable>(S.getPointerOperand());
+      if(is_alloca || is_global)
+	std::cout << get_name(S.getPointerOperand()) << " := ";
+      else
+	std::cout << "->(" << get_name(S.getPointerOperand()) << ") := ";
+      
+      std::cout << get_name(S.getValueOperand()) << std::endl;
     }
-
+    
     void visitCmpInst(CmpInst &C)
     {
-	std::string cname = C.getName();
+      std::string cname = to_aa(C.getNameStr());
 
 	std::string op1 = get_name(C.getOperand(0));
 	std::string op2 = get_name(C.getOperand(1));
@@ -505,30 +506,30 @@ namespace {
 
     void visitSelectInst(SelectInst &S)
     {
-	std::string sname = S.getName();
-	std::cout << sname << " := ( $mux " << get_name(S.getCondition()) 
-		  << " " << get_name(S.getTrueValue()) 
-		  << " " << get_name(S.getFalseValue()) << ")" << std::endl;
+      std::string sname = to_aa( S.getNameStr());
+      std::cout << sname << " := ( $mux " << get_name(S.getCondition()) 
+		<< " " << get_name(S.getTrueValue()) 
+		<< " " << get_name(S.getFalseValue()) << ")" << std::endl;
     }
 
     void visitBranchInst(BranchInst &br)
     {
-	std::string brname = br.getName();
-	BasicBlock* from_bb = br.getParent();
+      std::string brname = to_aa(br.getNameStr());
+      BasicBlock* from_bb = br.getParent();
 	if(br.isUnconditional())
 	  {
 
 	    BasicBlock* to_bb = br.getSuccessor(0);
-	    std::cout << "$place [" << from_bb->getNameStr() << "_" << to_bb->getNameStr() << "]" << std::endl;
+	    std::cout << "$place [" << get_name(from_bb) << "_" << get_name(to_bb) << "]" << std::endl;
 	  }
 	else
 	  {
 	    BasicBlock* dest0 = br.getSuccessor(0);
 	    BasicBlock* dest1 = br.getSuccessor(1);
 	    std::cout << "$if " << get_name(br.getCondition()) << " $then " ;
-	    std::cout << " $place [" << from_bb->getNameStr() << "_" << dest0->getNameStr() << "] ";
+	    std::cout << " $place [" << get_name(from_bb) << "_" << get_name(dest0) << "] ";
 	    std::cout << "$else ";
-	    std::cout << "$place [" << from_bb->getNameStr() << "_" << dest1->getNameStr() << "] ";
+	    std::cout << "$place [" << get_name(from_bb) << "_" << get_name(dest1) << "] ";
 	    std::cout << "$endif " << std::endl;
 	  }
     }

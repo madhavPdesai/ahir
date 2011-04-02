@@ -35,7 +35,7 @@ sum_mod_ (sum_mod_State * __top)
 	{
 	  if (1)
 	    {
-	      (__top->I).__val = (__top->b).__val;	//  file BranchBlock.aa, line 8
+	      (__top->I).__val = (__top->b).__val;	// file BranchBlock.aa, line 8
 	      __top->_assign_line_8_entry = 0;
 	      __top->_assign_line_8_exit = 1;
 	    }
@@ -117,7 +117,7 @@ sum_mod_ (sum_mod_State * __top)
 	    {
 	      if (1)
 		{
-		  (__top->bb.s).__val = __PLUS ((__top->bb.s1).__val, (__top->a).__val);	//  file BranchBlock.aa, line 13
+		  (__top->bb.s).__val = __PLUS ((__top->bb.s1).__val, (__top->a).__val);	// file BranchBlock.aa, line 13
 		  __top->bb._assign_line_13_entry = 0;
 		  __top->bb._assign_line_13_exit = 1;
 		}
@@ -137,7 +137,7 @@ sum_mod_ (sum_mod_State * __top)
 	    {
 	      if (1)
 		{
-		  (__top->I).__val = __MINUS ((__top->I).__val, 1);	//  file BranchBlock.aa, line 14
+		  (__top->I).__val = __MINUS ((__top->I).__val, 1);	// file BranchBlock.aa, line 14
 		  __top->bb._assign_line_14_entry = 0;
 		  __top->bb._assign_line_14_exit = 1;
 		}
@@ -243,7 +243,7 @@ sum_mod_ (sum_mod_State * __top)
 	{
 	  if (1)
 	    {
-	      (__top->c).__val = (__top->bb.s).__val;	//  file BranchBlock.aa, line 17
+	      (__top->c).__val = (__top->bb.s).__val;	// file BranchBlock.aa, line 17
 	      __top->_assign_line_17_entry = 0;
 	      __top->_assign_line_17_exit = 1;
 	    }

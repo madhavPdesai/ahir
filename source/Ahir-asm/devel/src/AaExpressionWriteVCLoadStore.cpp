@@ -740,9 +740,13 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Control_Path(vector<Aa
 	      num_non_constant++;
 	      ofile << ";;[idx_" << IntToStr(idx) << "] {" << endl;
 	      (*index_vector)[idx]->Write_VC_Control_Path(ofile);
-	      
 
-	      ofile << "$T [index_resize_req] $T [index_resize_ack] // resize index to address-width" << endl;
+	      if((*index_vector)[idx]->Get_Type()->Is_Uinteger_Type())
+		ofile << "$T [index_resize_req] $T [index_resize_ack] // resize index to address-width" << endl;
+	      else
+		ofile << "$T [index_resize_rr] $T [index_resize_ra] $T [index_resize_cr] $T [index_resize_ca]  // resize index to address-width" << endl;
+
+		
 	      if((*scale_factors)[idx] > 1)
 		{
 		  ofile << "$T [scale_rr] $T [scale_ra] $T [scale_cr] $T [scale_ca] // scale index." << endl;
@@ -995,10 +999,20 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Links(string hier_id,
 	      string nnhid = Augment_Hier_Id(nhid,"idx_" + IntToStr(idx));
 	      ///// nnhid
 	      (*indices)[idx]->Write_VC_Links(nnhid,ofile);
-	      
 
-	      reqs.push_back(nnhid + "/index_resize_req");
-	      acks.push_back(nnhid + "/index_resize_ack");
+
+	      if((*indices)[idx]->Get_Type()->Is_Uinteger_Type())	      
+		{
+		  reqs.push_back(nnhid + "/index_resize_req");
+		  acks.push_back(nnhid + "/index_resize_ack");
+		}
+	      else
+		{
+		  reqs.push_back(nnhid + "/index_resize_rr");
+		  acks.push_back(nnhid + "/index_resize_ra");
+		  reqs.push_back(nnhid + "/index_resize_cr");
+		  acks.push_back(nnhid + "/index_resize_ca");
+		}
 	      inst_name = this->Get_VC_Name() + "_index_" + IntToStr(idx) + "_resize";
 	      Write_VC_Link(inst_name,reqs,acks,ofile);
 	      reqs.clear();

@@ -275,6 +275,7 @@ vcTransition::vcTransition(vcCPElement* parent, string id):vcCPElement(parent, i
 {
   _is_input = false;
   _is_output = false;
+  _is_dead = false;
 }
 
 
@@ -292,9 +293,16 @@ void vcTransition::Print(ostream& ofile)
 //
 void vcTransition::Print_VHDL(ostream& ofile)
 {
+  if(this->Get_Is_Dead())
+  {
+	// it will never ever fire... tie it to false.
+      ofile << this->Get_Exit_Symbol() << " <= false;" << endl;
+      return;
+  }
 
   // every transition has at least one predecessor (entry of control-path has no
   // explicit predecessor, but does have an implicit one.
+  
   if(this->Get_Number_Of_Predecessors() > 1)
     {
 
@@ -371,7 +379,7 @@ string vcTransition::Get_CP_To_DP_Symbol()
 	  ret_string += _dp_link[idx].first->Get_Id() + "_" + "req_" + IntToStr(req_idx);
 	}
     }
-  return(ret_string);
+  return(To_VHDL(ret_string));
 }
 string vcTransition::Get_DP_To_CP_Symbol()
 {
@@ -387,7 +395,7 @@ string vcTransition::Get_DP_To_CP_Symbol()
 	  ret_string += _dp_link[idx].first->Get_Id() + "_" + "ack_" + IntToStr(ack_idx);
 	}
     }
-  return(ret_string);
+  return(To_VHDL(ret_string));
 }
 vcPlace::vcPlace(vcCPElement* parent, string id, unsigned int init_marking):vcCPElement(parent, id)
 {

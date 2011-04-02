@@ -38,6 +38,14 @@ package BaseComponents is
       reset : in  std_logic);
   end component;
 
+  component join is
+     generic ( use_symbol_in: boolean := false);  
+     port ( preds      : in   BooleanArray;
+    	symbol_in  : in   boolean;
+    	symbol_out : out  boolean;
+	clk: in std_logic;
+	reset: in std_logic);
+  end component;
 
   -----------------------------------------------------------------------------
   -- miscellaneous

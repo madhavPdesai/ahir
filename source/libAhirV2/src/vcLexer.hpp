@@ -138,6 +138,7 @@ public:
 	public: void mStoF_ASSIGN_OP(bool _createToken);
 	public: void mUtoF_ASSIGN_OP(bool _createToken);
 	public: void mFtoF_ASSIGN_OP(bool _createToken);
+	public: void mDEAD(bool _createToken);
 	public: void mUINTEGER(bool _createToken);
 	protected: void mDIGIT(bool _createToken);
 	public: void mWHITESPACE(bool _createToken);

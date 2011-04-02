@@ -31,11 +31,11 @@ typedef struct sum_mod_State__
     unsigned int _switch_line_15_entry:1;
     unsigned int _switch_line_15_in_progress:1;
     unsigned int _switch_line_15_exit:1;
-    unsigned int loopback:1;
     unsigned int _place_line_15_entry:1;
     unsigned int _null_line_0_entry:1;
     unsigned int _null_line_0_in_progress:1;
     unsigned int _null_line_0_exit:1;
+    unsigned int loopback:1;
   } bb;
   unsigned int _assign_line_17_entry:1;
   unsigned int _assign_line_17_in_progress:1;

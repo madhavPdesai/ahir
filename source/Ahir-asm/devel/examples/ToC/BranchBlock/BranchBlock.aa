@@ -1,10 +1,10 @@
 // a simple example.. of the use of a branch block
 $module [sum_mod]
-    $in (a $uint<10> b $uint<10>)
-    $out (c $uint<10>)
+    $in (a: $uint<10> b: $uint<10>)
+    $out (c: $uint<10>)
 $is
 {
-	$storage I $uint<10> 
+	$storage I: $uint<10> 
 	I := b
 	$branchblock[bb] {
 		$merge $entry loopback

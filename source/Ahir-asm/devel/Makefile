@@ -35,6 +35,7 @@ OBJS=$(OBJ)/AaLexer.o $(OBJ)/AaParser.o\
 		$(OBJ)/AaExpression.o\
 		$(OBJ)/AaExpressionWriteVCLoadStore.o\
 		$(OBJ)/AaStatement.o\
+		$(OBJ)/AaStatementWriteVCOptimized.o\
 		$(OBJ)/AaModule.o\
 		$(OBJ)/AaProgram.o\
 		$(OBJ)/AaUtil.o\
@@ -82,6 +83,9 @@ $(OBJ)/AaProgram.o: $(SRC)/AaProgram.cpp $(HEADERS)
 
 $(OBJ)/AaStatement.o: $(SRC)/AaStatement.cpp $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/AaStatement.cpp -o $(OBJ)/AaStatement.o
+
+$(OBJ)/AaStatementWriteVCOptimized.o: $(SRC)/AaStatementWriteVCOptimized.cpp $(HEADERS)
+	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/AaStatementWriteVCOptimized.cpp -o $(OBJ)/AaStatementWriteVCOptimized.o
 
 $(OBJ)/AaModule.o: $(SRC)/AaModule.cpp $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/AaModule.cpp -o $(OBJ)/AaModule.o

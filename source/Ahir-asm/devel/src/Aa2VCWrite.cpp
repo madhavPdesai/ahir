@@ -87,18 +87,9 @@ void Write_VC_Equivalence_Operator(string inst_name,
 bool Is_Trivial_VC_Type_Conversion(AaType* src_type, AaType* target_type)
 {
   bool ret_val;
-
-  // the assign operation is multifaceted!
-  string src_kind, dest_kind;
-  
-  dest_kind = ((target_type->Is("AaFloatType")) ? "F" :
-	       (target_type->Is("AaIntType") ? "S" : "U"));
-  
-  src_kind = ((src_type->Is("AaFloatType")) ? "F" :
-	      (src_type->Is("AaIntType") ? "S" : "U"));
-  
-  if((target_type == src_type) || ( (dest_kind == "U" && src_kind == "U")))
-      ret_val = true;
+  if((target_type == src_type) || 
+     (target_type->Is_Uinteger_Type() && src_type->Is_Uinteger_Type()))
+    ret_val = true;
   else
     ret_val = false;
 
@@ -175,7 +166,7 @@ void Write_VC_Binary_Operator(AaOperation op,
   else if(op == __SHR)
     {
       if(target_type->Is("AaIntType"))
-	op_name = "$S>>$S";
+	op_name = "$S>>";
       else
 	op_name = ">>";
     }

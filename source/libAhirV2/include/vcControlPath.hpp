@@ -110,28 +110,38 @@ class vcDatapathElement;
 enum vcTransitionType
   {
     _IN_TRANSITION,
-    _OUT_TRANSITION
+    _OUT_TRANSITION,
+    _DEAD_TRANSITION
   };
 class vcTransition: public vcCPElement
 {
   vector<pair<vcDatapathElement*,vcTransitionType> > _dp_link;
   bool _is_input;
   bool _is_output;
+  bool _is_dead;
 
 public:
   vcTransition(vcCPElement* parent, string id);
   void Add_DP_Link(vcDatapathElement* dpe,vcTransitionType ltype)
   {
+    if(_is_dead)
+	assert(0);
+
     if(ltype == _IN_TRANSITION)
       _is_input = true;
-    else
+    else if(ltype == _OUT_TRANSITION)
       _is_output = true;
+    else
+	assert(0);
 
     this->_dp_link.push_back(pair<vcDatapathElement*,vcTransitionType>(dpe,ltype));
   }
 
   bool Get_Is_Input() { return(_is_input);}
   bool Get_Is_Output() { return(_is_output);}
+
+  void Set_Is_Dead(bool v) {this->_is_dead = v;}
+  bool Get_Is_Dead() {return(this->_is_dead);}
 
   virtual void Print(ostream& ofile);
   virtual void Print_VHDL(ostream& ofile);

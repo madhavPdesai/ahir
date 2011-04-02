@@ -156,7 +156,7 @@ namespace {
 	  for (unsigned i = 0, e = T->getNumSuccessors(); i != e; ++i) 
 	    {
 	      BasicBlock *S = T->getSuccessor(i);
-	      aa_writer->add_bb_predecessor_map_entry(S->getNameStr(),bb->getNameStr());
+	      aa_writer->add_bb_predecessor_map_entry(to_aa(S->getNameStr()),to_aa(bb->getNameStr()));
 
 	      if (blocks_queued.count(S) != 0)
 		continue;

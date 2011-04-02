@@ -1,16 +1,8 @@
-/home/madhav/ahirgit/AHIR/vhdl/control-path/place.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/place.vhdl
+/home/madhav/ahirgit/AHIR/vhdl/packagesV2/Types.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Types.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Loading package std_logic_1164
--- Loading package types
--- Loading package numeric_std
--- Loading package textio
--- Loading package math_utility_pkg
--- Loading package fixed_pkg
--- Loading package float_pkg
--- Loading package subprograms
--- Compiling entity place
--- Compiling architecture default_arch of place
+-- Compiling package types
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/float_pkg_c.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/float_pkg_c.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -25,11 +17,19 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package float_pkg
 ** Warning: [3] /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/float_pkg_c.vhd(6253): Range 2 to 1 is null.
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Types.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Types.vhd
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/control-path/place.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/place.vhdl
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Loading package std_logic_1164
--- Compiling package types
+-- Loading package types
+-- Loading package numeric_std
+-- Loading package textio
+-- Loading package math_utility_pkg
+-- Loading package fixed_pkg
+-- Loading package float_pkg
+-- Loading package subprograms
+-- Compiling entity place
+-- Compiling architecture default_arch of place
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBase.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBase.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -46,6 +46,12 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity phibase
 -- Compiling architecture behave of phibase
 
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_component_pack.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_component_pack.vhd
+Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Compiling package mem_component_pack
+
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/fixed_pkg_c.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/fixed_pkg_c.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
@@ -59,11 +65,30 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package fixed_pkg
 ** Warning: [3] /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/fixed_pkg_c.vhd(6900): Range 2 to 1 is null.
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_component_pack.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_component_pack.vhd
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Loading package std_logic_1164
--- Compiling package mem_component_pack
+-- Loading package numeric_std
+-- Loading package types
+-- Loading package textio
+-- Loading package math_utility_pkg
+-- Loading package fixed_pkg
+-- Loading package float_pkg
+-- Loading package subprograms
+-- Loading package utilities
+-- Loading package operatorpackage
+-- Loading package basecomponents
+-- Loading package floatoperatorpackage
+-- Compiling entity unsharedoperatorbase
+-- Compiling architecture vanilla of unsharedoperatorbase
+** Warning: [5] /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd(37): Nonresolved signal 'ackl' may have multiple sources.
+  Drivers:
+    /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd(83):Conditional signal assignment line__83
+    /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd(89):Conditional signal assignment line__89
+    /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd(106):Process line__106
+       Driven at:
+          /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd(110)
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_bank.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_bank.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -104,6 +129,17 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity demerge_tree
 -- Compiling architecture opt_pipeline of demerge_tree
 
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_demux.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_demux.vhd
+Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Loading package mem_function_pack
+-- Loading package merge_functions
+-- Loading package mem_component_pack
+-- Compiling entity mem_demux
+-- Compiling architecture behave of mem_demux
+
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputDemuxBase.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputDemuxBase.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
@@ -118,17 +154,6 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package utilities
 -- Compiling entity outputdemuxbase
 -- Compiling architecture behave of outputdemuxbase
-
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_demux.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_demux.vhd
-Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Loading package numeric_std
--- Loading package mem_function_pack
--- Loading package merge_functions
--- Loading package mem_component_pack
--- Compiling entity mem_demux
--- Compiling architecture behave of mem_demux
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreReqShared.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreReqShared.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -358,6 +383,23 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity registerbase
 -- Compiling architecture arch of registerbase
 
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/GenericCombinationalOperator.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/GenericCombinationalOperator.vhd
+Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Loading package types
+-- Loading package textio
+-- Loading package math_utility_pkg
+-- Loading package fixed_pkg
+-- Loading package float_pkg
+-- Loading package subprograms
+-- Loading package utilities
+-- Loading package operatorpackage
+-- Loading package floatoperatorpackage
+-- Compiling entity genericcombinationaloperator
+-- Compiling architecture vanilla of genericcombinationaloperator
+
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BranchBase.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BranchBase.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
@@ -387,6 +429,7 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package utilities
 -- Loading package operatorpackage
 -- Loading package floatoperatorpackage
+-- Loading package basecomponents
 -- Compiling entity splitoperatorbase
 -- Compiling architecture vanilla of splitoperatorbase
 
@@ -397,31 +440,6 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package numeric_std
 -- Compiling entity mem_repeater
 -- Compiling architecture behave of mem_repeater
-
-} {} {}} /home/madhav/ahirgit/AHIR/source/Ahir-asm/devel/examples/ToVC/BranchBlock/system.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/source/Ahir-asm/devel/examples/ToVC/BranchBlock/system.vhdl
-Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Compiling package vc_system_package
--- Loading package memory_subsystem_package
--- Loading package types
--- Loading package numeric_std
--- Loading package textio
--- Loading package math_utility_pkg
--- Loading package fixed_pkg
--- Loading package float_pkg
--- Loading package subprograms
--- Loading package components
--- Loading package basecomponents
--- Loading package utilities
--- Loading package operatorpackage
--- Loading package vc_system_package
--- Compiling entity sum_mod
--- Compiling architecture default of sum_mod
--- Compiling entity test_system
--- Compiling architecture default of test_system
--- Compiling entity test_system_test_bench
--- Compiling architecture default of test_system_test_bench
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorSharedTB.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorSharedTB.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -633,6 +651,17 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity selectbase
 -- Compiling architecture arch of selectbase
 
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_tree.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_tree.vhd
+Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Loading package mem_function_pack
+-- Loading package merge_functions
+-- Loading package mem_component_pack
+-- Compiling entity merge_tree
+-- Compiling architecture pipelined of merge_tree
+
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreCompleteShared.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreCompleteShared.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
@@ -649,17 +678,6 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity storecompleteshared
 -- Compiling architecture behave of storecompleteshared
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_tree.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_tree.vhd
-Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Loading package numeric_std
--- Loading package mem_function_pack
--- Loading package merge_functions
--- Loading package mem_component_pack
--- Compiling entity merge_tree
--- Compiling architecture pipelined of merge_tree
-
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_functions.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_functions.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
@@ -670,13 +688,6 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling package body merge_functions
 -- Loading package merge_functions
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BypassRegister.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BypassRegister.vhd
-Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Compiling entity bypassregister
--- Compiling architecture behave of bypassregister
-
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/packagesV2/BaseComponents.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/BaseComponents.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
@@ -685,35 +696,17 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package types
 -- Compiling package basecomponents
 
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BypassRegister.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BypassRegister.vhd
+Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Compiling entity bypassregister
+-- Compiling architecture behave of bypassregister
+
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/math_utility_pkg.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/math_utility_pkg.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Compiling package math_utility_pkg
-
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnitaryOperatorBase.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnitaryOperatorBase.vhd
-Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Loading package numeric_std
--- Loading package types
--- Loading package textio
--- Loading package math_utility_pkg
--- Loading package fixed_pkg
--- Loading package float_pkg
--- Loading package subprograms
--- Loading package utilities
--- Loading package operatorpackage
--- Loading package basecomponents
--- Loading package floatoperatorpackage
--- Compiling entity unitaryoperatorbase
--- Compiling architecture vanilla of unitaryoperatorbase
-** Warning: [5] /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnitaryOperatorBase.vhd(38): Nonresolved signal 'ack' may have multiple sources.
-  Drivers:
-    /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnitaryOperatorBase.vhd(196):Conditional signal assignment line__196
-    /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnitaryOperatorBase.vhd(202):Conditional signal assignment line__202
-    /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnitaryOperatorBase.vhd(219):Process line__219
-       Driven at:
-          /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnitaryOperatorBase.vhd(223)
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_bank_base.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_bank_base.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -759,22 +752,6 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity loadcompleteshared
 -- Compiling architecture vanilla of loadcompleteshared
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallMediator.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallMediator.vhd
-Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Loading package numeric_std
--- Loading package types
--- Loading package textio
--- Loading package math_utility_pkg
--- Loading package fixed_pkg
--- Loading package float_pkg
--- Loading package subprograms
--- Loading package utilities
--- Loading package basecomponents
--- Compiling entity callmediator
--- Compiling architecture struct of callmediator
-
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitary.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitary.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
@@ -790,5 +767,21 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package basecomponents
 -- Compiling entity callarbiterunitary
 -- Compiling architecture struct of callarbiterunitary
+
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallMediator.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallMediator.vhd
+Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Loading package types
+-- Loading package textio
+-- Loading package math_utility_pkg
+-- Loading package fixed_pkg
+-- Loading package float_pkg
+-- Loading package subprograms
+-- Loading package utilities
+-- Loading package basecomponents
+-- Compiling entity callmediator
+-- Compiling architecture struct of callmediator
 
 } {} {}}

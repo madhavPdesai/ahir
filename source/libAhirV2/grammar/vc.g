@@ -243,17 +243,21 @@ vc_CPPlace[vcCPElement* p] returns[vcCPElement* cpe]
 
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPTransition: TRANSITION vc_Label (IN | OUT | HIDDEN)
+// vc_CPTransition: TRANSITION vc_Label (DEAD)?
 //-----------------------------------------------------------------------------------------------
 vc_CPTransition[vcCPElement* p] returns[vcCPElement* cpe]
 { 
    string id;
+   bool dead_flag = false;
 }
-: TRANSITION id = vc_Label
+: TRANSITION id = vc_Label (DEAD {dead_flag = true;} )?
   {
     cpe = NULL;
     if(p->Find_CPElement(id) == NULL) 
+    {
        cpe = (vcCPElement*) (new vcTransition(p,id));
+	((vcTransition*)cpe)->Set_Is_Dead(dead_flag);
+    }
   }
   ;
 
@@ -655,7 +659,8 @@ vc_Call_Instantiation[vcSystem* sys, vcDataPath* dp]
   vector<vcWire*> outwires;
 }
 :
-  CALL (INLINE {inline_flag = true;})? id = vc_Label MODULE mid=vc_Identifier {m = sys->Find_Module(mid); assert(m != NULL);}
+  cid:CALL (INLINE {inline_flag = true;})? id = vc_Label MODULE mid=vc_Identifier 
+       {m = sys->Find_Module(mid); NOT_FOUND__("module",m,mid,cid) }
        lpid1: LPAREN (mid = vc_Identifier {vcWire* w = dp->Find_Wire(mid); 
                                     NOT_FOUND__("wire",w,mid,lpid1)
                                     inwires.push_back(w);})* RPAREN
@@ -1177,7 +1182,7 @@ OPEN             : "$open";
 // signed version of SHR.
 // lhs and rhs are both considered
 // signed numbers.
-SHRA_OP          : ">>$S";
+SHRA_OP          : "$S>>";
 
 // signed assigns ... there
 // are many forms..
@@ -1194,6 +1199,9 @@ UtoF_ASSIGN_OP : "$F:=$U";
 
 // FP <-> FP conversions.
 FtoF_ASSIGN_OP : "$F:=$F";
+
+// dead transitions..
+DEAD : "$dead";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

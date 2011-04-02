@@ -217,7 +217,7 @@ static char *vcLexerKeywords[] =
       "&/",
       "$open",
       // signed shr
-      ">>$S",
+      "$S>>",
       // type-conversions
       // int <-> int 
       "$S:=$U", 

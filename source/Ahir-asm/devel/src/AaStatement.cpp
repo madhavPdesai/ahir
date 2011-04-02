@@ -625,7 +625,7 @@ void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
 
   if(!this->_source->Get_Type()->Is_Scalar_Type())
     {
-      AaRoot::Error("LHS of assignment statement must evaluate to a scalar!",this);
+      AaRoot::Error("RHS of assignment statement must evaluate to a scalar!",this);
       return;
     }
 
@@ -1371,6 +1371,7 @@ void AaBlockStatement::Write_C_Struct(ofstream& ofile)
       this->_statement_sequence->Write_C_Struct(ofile);
     }
 
+  this->Write_C_Struct_Extra(ofile);
   if(this->Get_Label() != "")
     ofile << "} " << this->Get_Label() << ";" << endl;
 }
@@ -1696,6 +1697,16 @@ void AaBranchBlockStatement::Print(ostream& ofile)
   this->AaBlockStatement::Print(ofile);
 }
 
+void AaBranchBlockStatement::Write_C_Struct_Extra(ofstream& ofile)
+{
+  for(set<string>::iterator iter = _merged_places.begin(), fiter = _merged_places.end();
+      iter != fiter;
+      iter++)
+    {
+      ofile << this->Tab() << "unsigned int " << (*iter) << " : 1;" << endl;
+    }
+}
+
 void AaBranchBlockStatement::Write_VC_Control_Path(ostream& ofile)
 {
   ofile << "// control-path for branch block " << this->Get_Hierarchical_Name() << endl;
@@ -1733,25 +1744,14 @@ void AaBranchBlockStatement::Write_VC_Control_Path(string source_link,
 	  AaStatement* stmt = sseq->Get_Statement(idx);
 	  if(!stmt->Is("AaPlaceStatement"))
 	    {
-	      // every statement other than a place and merge has an entry
-	      // place
-	      if(!stmt->Is("AaMergeStatement"))
-		ofile << "$P [" << stmt->Get_VC_Name() << "__entry__] " << endl;
-	      
-	      // if and switch statements do not exit places.
-	      if(!stmt->Is("AaSwitchStatement") && !stmt->Is("AaIfStatement"))
-		ofile << "$P [" << stmt->Get_VC_Name() << "__exit__] " << endl;
+	      ofile << "$P [" << stmt->Get_VC_Entry_Place_Name() << "] " << endl;
+	      ofile << "$P [" << stmt->Get_VC_Exit_Place_Name() << "] " << endl;
 	    }
+	  else
+	    // place statement..
+	    stmt->Write_VC_Control_Path(ofile);	    
 	}
 
-      // now the place statements.
-      for(int idx = 0; idx  < sseq->Get_Statement_Count(); idx++)
-	{
-	  AaStatement* stmt = sseq->Get_Statement(idx);
-	  if(stmt->Is("AaPlaceStatement"))
-	    stmt->Write_VC_Control_Path(ofile);
-	}
-	
 
       // next all except the merges.
       for(int idx = 0; idx  < sseq->Get_Statement_Count(); idx++)
@@ -1759,26 +1759,14 @@ void AaBranchBlockStatement::Write_VC_Control_Path(string source_link,
 	  AaStatement* stmt = sseq->Get_Statement(idx);
 	  if(!stmt->Is("AaMergeStatement") && !stmt->Is("AaPlaceStatement"))
 	    {
-	      if(stmt->Is("AaSwitchStatement") || stmt->Is("AaIfStatement"))
-		{
-		  // note that If/Switch statements will not have
-		  // an exit place. Their statement-sequences will
-		  // terminate in a specified sink place.
-		  string l_sink_link;
-		  if(idx+1 < sseq->Get_Statement_Count())
-		    l_sink_link = sseq->Get_Statement(idx+1)->Get_VC_Entry_Place_Name();
-		  else
-		    l_sink_link = sink_link;
-		    
-		  stmt->Write_VC_Control_Path(l_sink_link,ofile);
-		}
-	      else
-		stmt->Write_VC_Control_Path(ofile);
+	      stmt->Write_VC_Control_Path(ofile);
 		
 	      // control regulated by __entry__ and __exit__ places..
 	      // except for switch and if statements..
 	      if(!stmt->Is("AaSwitchStatement") && !stmt->Is("AaIfStatement"))
 		{
+		  // for switch and if, the control flow is a bit more complicated..
+		  // we do not create an explicit CP region for these statements..
 		  ofile << stmt->Get_VC_Name() << "__entry__ |-> (" << stmt->Get_VC_Name() << ")" << endl;
 		  ofile << stmt->Get_VC_Name() << "__exit__ <-| (" << stmt->Get_VC_Name() << ")" << endl;
 		}
@@ -1791,20 +1779,7 @@ void AaBranchBlockStatement::Write_VC_Control_Path(string source_link,
 	  AaStatement* stmt = sseq->Get_Statement(idx);
 	  if(stmt->Is("AaMergeStatement"))
 	    {
-	      string l_source_link;
-	      
-
-	      if(idx > 0)
-		{
-		 
-		  AaStatement* prev = sseq->Get_Statement(idx-1);
-		  if(!prev->Is("AaIfStatement") && !prev->Is("AaSwitchStatement"))
-		    l_source_link = sseq->Get_Statement(idx-1)->Get_VC_Exit_Place_Name();
-		}
-	      else
-		l_source_link = source_link;
-		    
-	      stmt->Write_VC_Control_Path(l_source_link, ofile);
+	      stmt->Write_VC_Control_Path(ofile);
 	    }
 	}
 	
@@ -1818,35 +1793,30 @@ void AaBranchBlockStatement::Write_VC_Control_Path(string source_link,
 	  AaStatement* prev_stmt = sseq->Get_Previous_Statement(stmt);
 	  if(prev_stmt == NULL)
 	    {
-	      if(!stmt->Is("AaMergeStatement"))
-		ofile << stmt->Get_VC_Entry_Place_Name() << " <-| (" << source_link << ")" << endl;
+	      ofile << stmt->Get_VC_Entry_Place_Name() << " <-| (" << source_link << ")" << endl;
 	    }
 	  else
 	    {
-	      if(!prev_stmt->Is("AaPlaceStatement") && 
-		 !prev_stmt->Is("AaSwitchStatement") &&
-		 !prev_stmt->Is("AaIfStatement"))		  
+	      if(!prev_stmt->Is("AaPlaceStatement"))
 		{
-
-		  if(!stmt->Is("AaMergeStatement"))
-		    {
-		      ofile << stmt->Get_VC_Entry_Place_Name() 
-			    << " <-| (" 
-			    << prev_stmt->Get_VC_Exit_Place_Name() 
-			    << ")" << endl;
-		    }
+		  ofile << stmt->Get_VC_Entry_Place_Name() 
+			<< " <-| (" 
+			<< prev_stmt->Get_VC_Exit_Place_Name() 
+			<< ")" << endl;
 		}
 	    }
 
-	  // stmt must pass control to its successor..
 	  AaStatement* next_stmt = sseq->Get_Next_Statement(stmt);
-	  if(next_stmt == NULL 
-	     && !stmt->Is("AaPlaceStatement") 
-	     && !stmt->Is("AaSwitchStatement") 
-	     && !stmt->Is("AaIfStatement"))
+	  // the last statement needs to be linked up to the sink_link
+	  // (not if it is a place statement, obviously!)
+	  if(next_stmt == NULL)
 	    {
-	      ofile << stmt->Get_VC_Exit_Place_Name() << " |-> (" << sink_link << ")" << endl;
+	      if(!stmt->Is("AaPlaceStatement"))
+		{
+		  ofile << stmt->Get_VC_Exit_Place_Name() << " |-> (" << sink_link << ")" << endl;
+		}
 	    }
+
 	}
     }
   else 
@@ -2022,7 +1992,7 @@ void AaMergeStatement::Map_Source_References()
 	      if(child->Is("AaPlaceStatement"))
 		{
 		  this->_wait_on_statements.push_back((AaPlaceStatement*)child);
-		  ((AaPlaceStatement*)child)->Increment_Merge_Count();
+		  ((AaPlaceStatement*)child)->Mark_As_Merged();
 		}
 	      else
 		AaRoot::Error("did not find place statement with label " + this->_merge_label_vector[i],this);
@@ -2094,13 +2064,18 @@ void AaMergeStatement::Write_Entry_Transfer_Code(ofstream& ofile)
 }
 
 
-void AaMergeStatement::Write_VC_Control_Path(string source_link, ostream& ofile)
+void AaMergeStatement::Write_VC_Control_Path(ostream& ofile)
 {
-
-  this->_vc_source_link = source_link;
 
   ofile << "// control-path for merge  " << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
+  string source_link = this->Get_VC_Entry_Place_Name();
+
+  // make a dead-region
+  string dead_link = this->Get_VC_Name() + "_dead_link";
+  ofile << ";;[" << dead_link << "] { $T [dead_transition] $dead } " << endl;
+  ofile << source_link << " |-> (" << dead_link << ")" << endl;
+  ofile << this->Get_VC_Exit_Place_Name() <<  " <-|  (" << dead_link << ")" << endl;
 
 
   // first, for each element of the merge-label set,
@@ -2177,7 +2152,7 @@ void AaMergeStatement::Write_VC_Control_Path(string source_link, ostream& ofile)
       iter++)
     {
       string mlabel = (*iter);
-      string mplace = ((mlabel == "$entry") ? source_link : mlabel);
+      string mplace = ((mlabel == "$entry") ? this->Get_VC_Entry_Place_Name() : mlabel);
       if(mplace != "")
 	ofile << " " << Make_VC_Legal(mplace) << "_PhiReq "; 
     }
@@ -2209,7 +2184,7 @@ void AaMergeStatement::Write_VC_Control_Path(string source_link, ostream& ofile)
 
   // the PhiAck parallel CPR merges into the exit place for this merge
   ofile << this->Get_VC_Name() << "_PhiReqMerge |-> (" << this->Get_VC_Name() << "_PhiAck)" << endl;
-  ofile << this->Get_VC_Name() << "__exit__ <-| (" << this->Get_VC_Name() << "_PhiAck)" << endl;
+  ofile << this->Get_VC_Exit_Place_Name() << "  <-| (" << this->Get_VC_Name() << "_PhiAck)" << endl;
 
   // thats it..
   ofile << "//---------------------  end of merge statement " << this->Get_Source_Info() << "  --------------------------" << endl;
@@ -2269,7 +2244,7 @@ void AaMergeStatement::Write_VC_Links(string hier_id, ostream& ofile)
 	    {
 
 	      string mlabel = phi_stmt->_source_pairs[pidx].first;
-	      string mplace = ((mlabel == "$entry") ? this->_vc_source_link : mlabel);
+	      string mplace = ((mlabel == "$entry") ? this->Get_VC_Entry_Place_Name() : mlabel);
 
 	      // in the request block, you compute the inputs and then  hang the
 	      // req..
@@ -2686,7 +2661,7 @@ void AaSwitchStatement::Write_C_Function_Body(ofstream& ofile)
   ofile << "// -------------------------------------------------------------------------------------------" << endl;
 }
 
-void AaSwitchStatement::Write_VC_Control_Path(string sink_link, ostream& ofile)
+void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
 {
 
   ofile << "// control-path for switch  ";
@@ -2694,11 +2669,21 @@ void AaSwitchStatement::Write_VC_Control_Path(string sink_link, ostream& ofile)
   ofile << "// " << this->Get_Source_Info() << endl;
 
 
+  string exit_place = this->Get_VC_Exit_Place_Name();
+
+  // first declare a dead region.
+  string dead_link = this->Get_VC_Name() + "_dead_link";
+  ofile << ";;[" << dead_link << "] { $T [dead_transition] $dead } " << endl;
+
+  // tie up the dead link..
+  ofile << this->Get_VC_Entry_Place_Name() << " |-> (" << dead_link << ")" << endl;
+  ofile << exit_place << " <-| (" << dead_link << ")" << endl;
+  
+
   AaScope* pscope = this->Get_Scope();
   assert(pscope->Is("AaBranchBlockStatement"));
 
   // first evaluate the switch expression..
-
   ofile << "//---------------------    switch statement " << this->Get_Source_Info() << "  --------------------------" << endl;
   ofile << "$P [" << this->Get_VC_Name() << "__condition_check_place__] " << endl;
 
@@ -2743,7 +2728,7 @@ void AaSwitchStatement::Write_VC_Control_Path(string sink_link, ostream& ofile)
   ofile << this->Get_VC_Name() << "__select__ <-| (" << this->Get_VC_Name() << "__condition_check__)" << endl;
   // follow the place by "n+1" choices.  The +1 choice
   // corresponds to the default..
-  string sink_element = sink_link;
+
   for(int idx = 0; idx < _choice_pairs.size(); idx++)
     {
       ofile << "// switch choice " << idx << endl;
@@ -2758,7 +2743,7 @@ void AaSwitchStatement::Write_VC_Control_Path(string sink_link, ostream& ofile)
 
       ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(source_element,
 							       _choice_pairs[idx].second,
-							       sink_element,
+							       exit_place,
 							       ofile);
     }
   if(_default_sequence != NULL)
@@ -2779,7 +2764,7 @@ void AaSwitchStatement::Write_VC_Control_Path(string sink_link, ostream& ofile)
       ofile << "// switch default choice " << endl;
       ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(source_element,
 							       _default_sequence,
-							       sink_element, 
+							       exit_place,
 							       ofile);
     }
 
@@ -2801,6 +2786,7 @@ void AaSwitchStatement::Write_VC_Control_Path(string sink_link, ostream& ofile)
       ofile << " " << source_element;
     }
   ofile << ")" << endl;
+
   
   ofile << "//---------------------   end of switch statement " << this->Get_Source_Info() << "  --------------------------" << endl;
 }
@@ -2890,7 +2876,7 @@ void AaSwitchStatement::Write_VC_Datapath_Instances(ostream& ofile)
   if(this->_default_sequence != NULL)
     {
       // one branch instance for the default.
-      Write_VC_Branch_Instance(this->Get_VC_Name() + "_branch_default_",
+      Write_VC_Branch_Instance(this->Get_VC_Name() + "_branch_default",
 			       default_branch_inputs,
 			       ofile);
       this->_default_sequence->Write_VC_Datapath_Instances(ofile);
@@ -2950,7 +2936,7 @@ void AaSwitchStatement::Write_VC_Links(string hier_id, ostream& ofile)
       reqs.push_back(req_hier_id + "/$exit");
       acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_choice_default/ack0");
       acks.push_back("$open"); // ack1 is ignored.
-      Write_VC_Link(this->Get_VC_Name() + "_branch_default_",reqs,acks,ofile);
+      Write_VC_Link(this->Get_VC_Name() + "_branch_default",reqs,acks,ofile);
       reqs.clear();
       acks.clear();
 
@@ -3145,13 +3131,29 @@ void AaIfStatement::Write_C_Function_Body(ofstream& ofile)
   ofile << "// -------------------------------------------------------------------------------------------" << endl;
 }
 
-void AaIfStatement::Write_VC_Control_Path(string sink_element, ostream& ofile)
+
+void AaIfStatement::Write_VC_Control_Path(ostream& ofile)
 {
 
   ofile << "// if-statement  ";
   ofile << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
+  string exit_place = this->Get_VC_Exit_Place_Name();
+
+  // a dead-link: to show that the normal path of control
+  // flow is from entry to exit.. but this normal path is
+  // not taken.
+  //
+  // this is needed because we do structure checks on
+  // CP regions which would fail otherwise.
+  string dead_link = this->Get_VC_Name() + "_dead_link";
+  ofile << ";;[" << dead_link << "] { $T [dead_transition] $dead } " << endl;
+
+  // tie up the dead link..
+  ofile << this->Get_VC_Entry_Place_Name() << " |-> (" << dead_link << ")" << endl;
+  ofile << exit_place << " <-| (" << dead_link << ")" << endl;
+  
 
   AaScope* pscope = this->Get_Scope();
   assert(pscope->Is("AaBranchBlockStatement"));
@@ -3160,6 +3162,7 @@ void AaIfStatement::Write_VC_Control_Path(string sink_element, ostream& ofile)
   string eval_test_region = this->Get_VC_Name() + "_eval_test";
   string if_link = this->Get_VC_Name() + "_if_link";
   string else_link = this->Get_VC_Name() + "_else_link";
+
 
   ofile << ";;[" << eval_test_region << "] { // test expression evaluate and trigger branch "  << endl;
   this->_test_expression->Write_VC_Control_Path(ofile);
@@ -3174,6 +3177,7 @@ void AaIfStatement::Write_VC_Control_Path(string sink_element, ostream& ofile)
 
   ofile << ";;[" << if_link << "] { $T [if_choice_transition] } " << endl;
   ofile << ";;[" << else_link << "] { $T [else_choice_transition] } " << endl;
+
   ofile << _test_expression->Get_VC_Name() << "_place |-> (" << test_place_successors << ")" << endl;  
 
   AaStatement* last_if = NULL;
@@ -3182,21 +3186,24 @@ void AaIfStatement::Write_VC_Control_Path(string sink_element, ostream& ofile)
   AaStatement* first_else = NULL;
 
 
+
   // now the if-sequence of statments
   if(_if_sequence != NULL)
     {
       ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(if_link,
 							       _if_sequence,
-							       sink_element,
+							       exit_place,
 							       ofile);
     }
   if(_else_sequence != NULL)
     {
       ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(else_link,
 							       _else_sequence,
-							       sink_element,
+							       exit_place,
 							       ofile);
     }
+
+  ofile << exit_place << " <-| (" << dead_link << ")" << endl;
 }
 
 void AaIfStatement::Write_VC_Constant_Declarations(ostream& ofile)
@@ -3313,7 +3320,6 @@ void AaIfStatement::Propagate_Constants()
 AaPlaceStatement::AaPlaceStatement(AaBranchBlockStatement* parent_tpr,string lbl):AaStatement(parent_tpr) 
 {
   this->_label = lbl;
-  this->_merge_count = 0;
   parent_tpr->Map_Child(lbl,this);
 };
 AaPlaceStatement::~AaPlaceStatement() {};
@@ -3321,7 +3327,6 @@ void AaPlaceStatement::Write_C_Struct(ofstream& ofile)
 {
   this->Err_Check();
 
-  ofile << this->Tab() << "unsigned int " << this->Get_Place_Name() << ": 1;" << endl;
   ofile << this->Tab() << "unsigned int " << this->Get_Entry_Name() << ": 1;" << endl;
   // NOTE: no exit flag!
 

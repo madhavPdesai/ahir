@@ -46,6 +46,7 @@ class AaStatement: public AaScope
   virtual void Increment_Tab_Depth() { this->_tab_depth += 1; }
 
   virtual bool Is_Statement() { return(true);}
+  virtual bool Is_Control_Flow_Statement() {return(false);}
 
   void Set_Index_In_Sequence(int id) {this->_index_in_sequence = id;}
   int Get_Index_In_Sequence() {return(this->_index_in_sequence);}
@@ -58,6 +59,7 @@ class AaStatement: public AaScope
   virtual void Map_Source_References() { assert(0);}
 
   virtual void Write_C_Struct(ofstream& ofile);
+  virtual void Write_C_Struct_Extra(ofstream& ofile) {}
   virtual void Write_C_Function_Header(ofstream& ofile);
   virtual void Write_C_Function_Body(ofstream& ofile);
 
@@ -126,6 +128,8 @@ class AaStatement: public AaScope
 
   virtual void Write_VC_Control_Path(ostream& ofile) { assert(0);}
   virtual void Write_VC_Control_Path(string sink_link, ostream& ofile) { assert(0);}
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile) {assert(0);}
+  virtual void Write_VC_Control_Path_Optimized(string sink_link, ostream& ofile) { assert(0);}
 
   virtual void Write_VC_Pipe_Declarations(ostream& ofile) {}
   virtual void Write_VC_Memory_Space_Declarations(ostream& ofile) {}
@@ -133,11 +137,15 @@ class AaStatement: public AaScope
   virtual void Write_VC_Wire_Declarations(ostream& ofile) {}
   virtual void Write_VC_Datapath_Instances(ostream& ofile) {}
   virtual void Write_VC_Links(string hier_id, ostream& ofile) {}
+  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile) {}
 
   virtual void Propagate_Constants() {}
 
   virtual string Get_VC_Entry_Place_Name() { return(this->Get_VC_Name() + "__entry__");}
   virtual string Get_VC_Exit_Place_Name() { return(this->Get_VC_Name() + "__exit__");}
+
+  virtual string Get_VC_Entry_Transition_Name() { return(this->Get_VC_Name() + "__entry__");}
+  virtual string Get_VC_Exit_Transition_Name() { return(this->Get_VC_Name() + "__exit__");}
 
 };
 
@@ -201,12 +209,16 @@ class AaStatementSequence: public AaScope
   virtual void Write_Clear_Exit_Flags_Code(ostream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile); 
+  void Write_VC_Control_Path_Optimized(ostream& ofile);
+  string Get_Segment_Name();
+
   virtual void Write_VC_Pipe_Declarations(ostream& ofile);
   virtual void Write_VC_Memory_Space_Declarations(ostream& ofile);
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
+  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
   AaStatement* Get_Next_Statement(AaStatement* stmt);
   AaStatement* Get_Previous_Statement(AaStatement* stmt);
@@ -247,6 +259,8 @@ class AaNullStatement: public AaStatement
 
   virtual bool Can_Block() { return(false); }
   virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
+
 };
 
 
@@ -289,6 +303,7 @@ class AaAssignmentStatement: public AaStatement
   virtual void Write_C_Struct(ofstream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
 
   virtual bool Is_Constant();
 
@@ -296,6 +311,7 @@ class AaAssignmentStatement: public AaStatement
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
+  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
   virtual void Propagate_Constants(); 
   virtual string Get_VC_Name() {return("assign_stmt_" + Int64ToStr(this->Get_Index()));}
@@ -366,11 +382,13 @@ class AaCallStatement: public AaStatement
   virtual void Write_Outarg_Copy_Code(ofstream& ofile,string tab_string);
 
   virtual void Write_VC_Control_Path(ostream& ofile);
-  
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
+
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
+  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
   virtual void Propagate_Constants();
   virtual string Get_VC_Name() {return("call_stmt_" + Int64ToStr(this->Get_Index()));}
@@ -497,7 +515,7 @@ class AaBlockStatement: public AaStatement
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
-
+  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
   virtual string Get_VC_Name() {return("block_stmt_" + Int64ToStr(this->Get_Index()));}
 
@@ -534,6 +552,7 @@ class AaSeriesBlockStatement: public AaBlockStatement
     this->_statement_sequence->Write_VC_Control_Path(ofile);
     ofile << "} // end series block " << this->Get_VC_Name() << endl;
   }
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
 
   virtual string Get_VC_Name() {return ("series_block_stmt_" + Int64ToStr(this->Get_Index()));}
 
@@ -560,6 +579,7 @@ class AaParallelBlockStatement: public AaBlockStatement
     this->_statement_sequence->Write_VC_Control_Path(ofile);
     ofile << "} // end parallel block " << this->Get_VC_Name() << endl;
   }
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
 
   virtual string Get_VC_Name() {return("parallel_block_stmt_" + Int64ToStr(this->Get_Index()));}
 };
@@ -577,23 +597,46 @@ class AaForkBlockStatement: public AaParallelBlockStatement
   virtual string Kind() {return("AaForkBlockStatement");}
 
   virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
 
   virtual string Get_VC_Name() {return("fork_block_stmt_" + Int64ToStr(this->Get_Index()));}
 };
 
 class AaBranchBlockStatement: public AaSeriesBlockStatement
 {
+  set<string> _merged_places;
+
  public:
   AaBranchBlockStatement(AaScope* scope, string label);
   ~AaBranchBlockStatement();
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaBranchBlockStatement");}
 
+  void Add_Merged_Place(string place_name)
+  {
+    if(_merged_places.find(place_name) == _merged_places.end())
+      _merged_places.insert(place_name);
+    else
+      AaRoot::Error("place " + place_name + " is merged more than once in branch block: ", this);
+  }
+
+  bool Is_A_Merged_Place(string place_name)
+  {
+    return(_merged_places.find(place_name) != _merged_places.end());
+  }
+
+  virtual void Write_C_Struct_Extra(ofstream& ofile);
+
   virtual void Write_VC_Control_Path(ostream& ofile);
   void Write_VC_Control_Path(string source_link,
 			     AaStatementSequence* sseq,
 			     string sink_link,
 			     ostream& ofile);
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
+  void Write_VC_Control_Path_Optimized(string source_link,
+				       AaStatementSequence* sseq,
+				       string sink_link,
+				       ostream& ofile);
 
   virtual string Get_VC_Name() {return("branch_block_stmt_" + Int64ToStr(this->Get_Index()));}
 };
@@ -625,7 +668,10 @@ class AaJoinForkStatement: public AaParallelBlockStatement
 
 
   virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
+
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
+  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
   virtual string Get_VC_Name() {return("join_fork_stmt_" + Int64ToStr(this->Get_Index()));}
 
@@ -636,20 +682,14 @@ class AaJoinForkStatement: public AaParallelBlockStatement
 class AaPlaceStatement: public AaStatement
 {
   string _label;
-  int _merge_count;
  public:
   AaPlaceStatement(AaBranchBlockStatement* parent_tpr, string lbl);
   ~AaPlaceStatement();
   virtual string Get_Label() {return(this->_label);}
-  void Increment_Merge_Count()
+
+  void Mark_As_Merged()
   {
-
-    if(this->_merge_count > 0)
-      {
-	AaRoot::Error("place merges into more than one merge statement!",this);
-      }
-
-    this->_merge_count++;
+    ((AaBranchBlockStatement*)this->Get_Scope())->Add_Merged_Place(this->Get_Label());
   }
 
   virtual string Get_Place_Name() { return(this->Get_Label()); }
@@ -663,6 +703,7 @@ class AaPlaceStatement: public AaStatement
   virtual string Kind() {return("AaPlaceStatement");}
   virtual void Map_Source_References() {} // do nothing
 
+  virtual bool Is_Control_Flow_Statement() {return(true);}
   virtual string Get_C_Name()
   {
     return("_place_line_" +   IntToStr(this->Get_Line_Number()));
@@ -680,7 +721,7 @@ class AaPlaceStatement: public AaStatement
 
   virtual void Err_Check()
   {
-    if(this->_merge_count == 0)
+    if(!((AaBranchBlockStatement*)this->Get_Scope())->Is_A_Merged_Place(this->Get_Label()))
       {
 	AaRoot::Error("place is not cleared by any merge ", this);
       }
@@ -692,6 +733,12 @@ class AaPlaceStatement: public AaStatement
   {
     ofile << "$P [" << this->Get_VC_Name() << "]" << endl;
   }
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile)
+  {
+    ofile << "$P [" << this->Get_VC_Name() << "]" << endl;
+  }
+
+
 
   virtual string Get_VC_Entry_Place_Name() { return(this->Get_VC_Name()); }
   virtual string Get_VC_Exit_Place_Name() { return(this->Get_VC_Name()); }
@@ -750,15 +797,17 @@ class AaMergeStatement: public AaSeriesBlockStatement
     return(this->Get_Struct_Dereference() +  this->Get_Merge_From_Entry());
   }
 
-  virtual void Write_VC_Control_Path(string source_link, ostream& ofile);
+  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
 
 
   virtual string Get_VC_Name() {return("merge_stmt_" + Int64ToStr(this->Get_Index()));}
-  virtual string Get_VC_Entry_Place_Name() {return("");}
+  virtual string Get_VC_Entry_Place_Name() {return(this->Get_VC_Name() + "__entry__");}
 
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
+  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
 };
 
@@ -791,6 +840,7 @@ class AaPhiStatement: public AaStatement
   void Write_C_Struct(ofstream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
 
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
@@ -851,6 +901,8 @@ class AaSwitchStatement: public AaStatement
   }
 
 
+  virtual bool Is_Control_Flow_Statement() {return(true);}
+
   virtual void Write_C_Struct(ofstream& ofile);
   virtual void Write_C_Function_Body(ofstream& ofile);
 
@@ -859,18 +911,20 @@ class AaSwitchStatement: public AaStatement
     return(this->Get_Scope()->Get_Struct_Dereference());
   }
 
-  virtual void Write_VC_Control_Path(string sink_link, ostream& ofile);
+  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
 
   virtual void Write_VC_Constant_Declarations(ostream& ofile);
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
+  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
   virtual void Propagate_Constants(); 
 
   virtual string Get_VC_Name() {return("switch_stmt_" + Int64ToStr(this->Get_Index()));}
-  virtual string Get_VC_Exit_Place_Name() {return("");}
+  virtual string Get_VC_Exit_Place_Name() {return(this->Get_VC_Name() + "__exit__");}
 };
 
 
@@ -907,6 +961,8 @@ class AaIfStatement: public AaStatement
     return("_if_line_" +   IntToStr(this->Get_Line_Number()));
   }
 
+  virtual bool Is_Control_Flow_Statement() {return(true);}
+
   virtual void Write_C_Struct(ofstream& ofile);
   virtual void Write_C_Function_Body(ofstream& ofile);
 
@@ -915,17 +971,19 @@ class AaIfStatement: public AaStatement
     return(this->Get_Scope()->Get_Struct_Dereference());
   }
 
-  virtual void Write_VC_Control_Path(string sink_link, ostream& ofile);
+  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
 
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
   virtual void Write_VC_Links(string hier_id,ostream& ofile);
+  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
   virtual void Propagate_Constants(); 
 
   virtual string Get_VC_Name() {return("if_stmt_" + Int64ToStr(this->Get_Index()));}
-  virtual string Get_VC_Exit_Place_Name() {return("");}
+  virtual string Get_VC_Exit_Place_Name() {return(this->Get_VC_Name() + "__exit__");}
 };
 
 

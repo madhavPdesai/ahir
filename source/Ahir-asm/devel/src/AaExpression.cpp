@@ -2108,7 +2108,6 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 
       this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
 
-
       ofile << "// " << this->To_String() << endl;
       Write_VC_Unary_Operator(__NOP,
 			      this->Get_VC_Datapath_Instance_Name(),
@@ -2181,6 +2180,7 @@ void AaUnaryExpression::Write_VC_Control_Path(ostream& ofile)
     {
       ofile << ";;[" << this->Get_VC_Name() << "] { // unary expression " << endl;
       this->_rest->Write_VC_Control_Path(ofile);
+
       ofile << "$T [rr] $T [ra] $T [cr] $T [ca] //(split) unary operation" << endl;
       ofile << "}" << endl;
     }

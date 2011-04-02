@@ -1666,8 +1666,10 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
       // make a block
       ofile << "CallGroup" << idx << ": Block -- {" << endl;
       // in and out data.
-      ofile << "signal data_in: std_logic_vector(" << in_width-1 << " downto 0);" << endl;
-      ofile << "signal data_out: std_logic_vector(" << out_width-1 << " downto 0);" << endl;
+      if(called_module->Get_In_Arg_Width() > 0)
+	ofile << "signal data_in: std_logic_vector(" << in_width-1 << " downto 0);" << endl;
+      if(called_module->Get_Out_Arg_Width() > 0)
+	ofile << "signal data_out: std_logic_vector(" << out_width-1 << " downto 0);" << endl;
       // in and out acks.
       ofile << "signal reqR, ackR, reqL, ackL : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
 
@@ -1679,9 +1681,12 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
       this->Print_VHDL_Disconcatenate_Ack("ackR",ackR,ofile);
 	
       // concatenate data_in
-      this->Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
+      if(called_module->Get_In_Arg_Width() > 0)
+	this->Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
+
       // disconcatenate data_out
-      this->Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
+      if(called_module->Get_Out_Arg_Width() > 0)
+	this->Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
 
       vcModule* m = this->Get_Parent();
       // now the operator instances 
