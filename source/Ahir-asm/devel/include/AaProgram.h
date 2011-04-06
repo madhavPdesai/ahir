@@ -134,10 +134,14 @@ class AaProgram
   static void Write_VC_Model(int default_space_pointer_width,
 			     int default_space_word_size,
 			     ostream& ofile);
+  static void Write_VC_Model_Optimized(int default_space_pointer_width,
+				       int default_space_word_size,
+				       ostream& ofile);
   static void Write_VC_Pipe_Declarations(ostream& ofile);
   static void Write_VC_Constant_Declarations(ostream& ofile);
   static void Write_VC_Memory_Spaces(ostream& ofile);
   static void Write_VC_Modules(ostream& ofile);
+  static void Write_VC_Modules_Optimized(ostream& ofile);
 
   static AaMemorySpace* Get_Memory_Space(int idx);
 

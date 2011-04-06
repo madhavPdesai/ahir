@@ -186,10 +186,16 @@ class AaStorageObject: public AaObject
 
 };
 
+class AaModule;
 class AaPipeObject: public AaObject
 {
   
+  set<AaModule*> _reader_modules;
+  set<AaModule*> _writer_modules;
+
  public:
+
+  
   AaPipeObject(AaScope* scope_tpr,string oname, AaType* otype);
   ~AaPipeObject();
 
@@ -216,6 +222,10 @@ class AaPipeObject: public AaObject
 
    virtual void Write_VC_Model(ostream& ofile);
    virtual string Get_VC_Name();
+
+   void Add_Reader(AaModule* m) {_reader_modules.insert(m);}
+   void Add_Writer(AaModule* m) {_writer_modules.insert(m);}
+
 };
 
 #endif

@@ -53,6 +53,18 @@ class AaRoot
 
   virtual string Get_VC_Name() {assert(0);}
 
+  virtual string Get_VC_Start_Transition_Name() {
+    return(this->Get_VC_Name() + "_trigger_");
+  }
+
+  virtual string Get_VC_Active_Transition_Name() {
+    return(this->Get_VC_Name() + "_active_");
+  }
+
+  virtual string Get_VC_Completed_Transition_Name() {
+    return(this->Get_VC_Name() + "_completed_");
+  }
+
   virtual AaType* Get_Type() {assert(0);}
   virtual AaValue* Get_Expression_Value() {assert(0);}
 

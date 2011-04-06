@@ -31,6 +31,7 @@ public:
 
   virtual vcCPElement* Find_CPElement(string cname) {return(NULL);}
 
+  virtual bool Is_Transition() {return(false);}
   virtual void Get_Hierarchical_Ref(vector<string>& ref_vec);
   vcCPElement* Get_Parent() {return(this->_parent);}
 
@@ -86,13 +87,29 @@ public:
   vcCompatibilityLabel(vcControlPath* cp, string id);
   void Add_In_Arc(vcCompatibilityLabel* u, pair<vcTransition*, int>& arc);
   void Add_In_Arc(vcCompatibilityLabel* u);
-  vcCompatibilityLabel* Reduce();
+  vcCompatibilityLabel* Reduce(vcControlPath* cp);
 
   void Print(ostream& ofile);
 
   virtual string Kind() {return("vcCompatibilityLabel");}
 
   bool Is_Compatible(vcCompatibilityLabel* other);
+  bool Is_Join()
+  {
+    return((_labeled_in_arc.first == NULL) && (_unlabeled_in_arcs.size() > 0));
+  }
+  string Get_Join_String()
+  {
+    string ret_string = "##";
+    for(set<vcCompatibilityLabel*>::iterator iter = _unlabeled_in_arcs.begin(),
+	  fiter = _unlabeled_in_arcs.end();
+	iter != fiter;
+	iter++)
+      {
+	ret_string += (*iter)->Get_Id() + "##";
+      }
+    return(ret_string);
+  }
 
 
   friend class vcControlPath;
@@ -137,6 +154,7 @@ public:
     this->_dp_link.push_back(pair<vcDatapathElement*,vcTransitionType>(dpe,ltype));
   }
 
+  virtual bool Is_Transition() {return(false);}
   bool Get_Is_Input() { return(_is_input);}
   bool Get_Is_Output() { return(_is_output);}
 
@@ -234,6 +252,8 @@ public:
   virtual void Update_Predecessor_Successor_Links();
 
   virtual void Print_Structure(ostream& ofile);
+
+
 };
 
 class vcCPParallelBlock: public vcCPBlock
@@ -292,6 +312,7 @@ public:
   virtual bool Check_Structure(); // check that the block is well-formed.
   virtual void Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* m);
   virtual void Update_Predecessor_Successor_Links();
+  void Precedence_Order(bool reverse_flag, vcCPElement* start_element, vector<vcCPElement*>& precedence_order);
 };
 
 
@@ -303,8 +324,9 @@ class vcControlPath: public vcCPSeriesBlock
   vector<vcCPElement*> _bfs_ordered_labels;
 
   map<vcCompatibilityLabel*, set<vcCompatibilityLabel*> > _label_descendent_map;
+  map<vcCompatibilityLabel*, set<vcCompatibilityLabel*> > _compatible_label_map;
 
-
+  map<string, vcCompatibilityLabel*> _join_label_map;
 
 public:
   static int _free_index;
@@ -332,6 +354,23 @@ public:
 
   virtual void Print_VHDL_Start_Symbol_Assignment(ostream& ofile);
   virtual void Print_VHDL_Exit_Symbol_Assignment(ostream& ofile);
+
+  vcCompatibilityLabel* Find_Or_Map_Join_Label(string sid, vcCompatibilityLabel* t)
+  {
+    if(_join_label_map.find(sid) == _join_label_map.end())
+      {
+	_join_label_map[sid] = t;
+	return(t);
+      }
+    else
+      {
+	return(_join_label_map[sid]);
+      }
+  }
+
+  void Update_Compatibility_Map();
+  void Mark_As_Compatible(set<vcCompatibilityLabel*>& uset, set<vcCompatibilityLabel*>& vset);
+  void Print_Compatibility_Map(ostream& ofile);
 };
 
 

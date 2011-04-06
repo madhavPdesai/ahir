@@ -24,7 +24,13 @@ class AaModule: public AaSeriesBlockStatement
   bool _foreign_flag;
   bool _inline_flag;
 
+  // memory spaces and pipes accessed by
+  // this module.
   vector<AaMemorySpace*> _memory_spaces;
+
+  set<AaPipeObject*> _write_pipes;
+  set<AaPipeObject*> _read_pipes;
+
  public:
   AaModule(string fname); // Modules have NULL parent (parent is the program)
   ~AaModule();
@@ -65,17 +71,34 @@ class AaModule: public AaSeriesBlockStatement
   void Write_Source(ofstream& ofile);
 
   void Write_VC_Model(ostream& ofile);
+  void Write_VC_Model(bool opt_flag, ostream& ofile);
 
-  void Write_VC_Control_Path(ostream& ofile);
+
+  void Write_VC_Control_Path(bool opt_flag, ostream& ofile);
+
+
   void Write_VC_Data_Path(ostream& ofile);
   void Write_VC_Memory_Spaces(ostream& ofile);
-  void Write_VC_Links(ostream& ofile);
+  void Write_VC_Links(bool opt_flag, ostream& ofile);
+
+  void Write_VC_Model_Optimized(ostream& ofile);
 
   void Propagate_Constants();
   void Add_Memory_Space(AaMemorySpace* ms)
   {
     _memory_spaces.push_back(ms);
   }
+
+  void Add_Write_Pipe(AaPipeObject* obj)
+  {
+    _write_pipes.insert(obj);
+  }
+
+  void Add_Read_Pipe(AaPipeObject* obj)
+  {
+    _read_pipes.insert(obj);
+  }
+
 };
 
 #endif

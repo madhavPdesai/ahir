@@ -211,6 +211,7 @@ void AaObjectReference::Propagate_Addressed_Object_Representative(AaStorageObjec
   this->AaExpression::Propagate_Addressed_Object_Representative(obj);
 }
 
+
 void AaObjectReference::Map_Source_References(set<AaRoot*>& source_objects)
 {
   AaScope* search_scope = NULL;
@@ -243,6 +244,15 @@ void AaObjectReference::Map_Source_References(set<AaRoot*>& source_objects)
       // child -> obj_ref
       if(child != this)
 	{
+
+	  if(child->Is("AaPipeObject"))
+	    {
+	      AaScope* root = this->Get_Scope()->Get_Root_Scope();
+	      assert(root->Is("AaModule"));
+	      ((AaPipeObject*)child)->Add_Reader((AaModule*)root);
+	      ((AaModule*)root)->Add_Read_Pipe((AaPipeObject*)child);
+	    }
+
 	  this->Set_Object(child);
 
 	  child->Add_Source_Reference(this);  // child -> this (this uses child as a source)
@@ -606,7 +616,8 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target( ostream& ofile)
 
 bool AaSimpleObjectReference::Is_Implicit_Object() 
 {
-  return(this->_object == NULL);
+  // dead code .. should never be called.
+  assert(0);
 }
 
 // return true if the expression points
@@ -614,11 +625,26 @@ bool AaSimpleObjectReference::Is_Implicit_Object()
 // (either a statement or an interface object).
 bool AaSimpleObjectReference::Is_Implicit_Variable_Reference()
 {
-  return((this->_object == NULL) ||
-	 this->_object->Is("AaInterfaceObject") ||
-	 this->_object->Is_Statement() ||
-	 (this->_object->Is_Expression() && 
-	  ((AaExpression*)this->_object)->Is_Implicit_Variable_Reference()));
+  return(this->Get_Root_Object() != NULL);
+}
+
+AaRoot* AaSimpleObjectReference::Get_Root_Object()
+{
+  assert(this->_object != NULL);
+  if(this->_object->Is("AaSimpleObjectReference"))
+    {
+      return(((AaSimpleObjectReference*)this->_object)->Get_Root_Object());
+    }
+  else if(this->_object->Is("AaInterfaceObject"))
+    {
+      return(this->_object);
+    }
+  else if(this->_object->Is_Statement())
+    {
+      return(this->_object);
+    }
+  else
+    return(NULL);
 }
 
 void AaSimpleObjectReference::Update_Type()
@@ -912,6 +938,12 @@ void AaArrayObjectReference::Map_Source_References(set<AaRoot*>& source_objects)
     this->_indices[i]->Map_Source_References(source_objects);
 }
 
+void AaArrayObjectReference::Map_Source_References_As_Target(set<AaRoot*>& source_objects)
+{
+  for(unsigned int i=0; i < this->_indices.size(); i++)
+    this->_indices[i]->Map_Source_References(source_objects);
+}
+
 void AaArrayObjectReference::Evaluate()
 {
   AaArrayType* at = NULL;
@@ -928,6 +960,10 @@ void AaArrayObjectReference::Evaluate()
   if(!_already_evaluated)
     {
       _already_evaluated = true;
+
+      if(this->_pointer_ref)
+	this->_pointer_ref->Evaluate();
+
       bool all_indices_constants = true;
       vector<int> index_vector;
       for(int idx = 0; idx < _indices.size(); idx++)
@@ -1145,9 +1181,6 @@ void AaArrayObjectReference::Print_BaseStructRef_C(ofstream& ofile, string tab_s
 //
 void AaArrayObjectReference::Write_VC_Control_Path( ostream& ofile)
 {
-  string ps;
-  this->AaRoot::Print(ps);
-
   if(!this->Is_Constant())
     {
 
@@ -1414,7 +1447,6 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 
 void AaArrayObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
 {
-
 
   if(this->Is_Constant())
     return;

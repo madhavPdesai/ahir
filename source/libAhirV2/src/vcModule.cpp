@@ -247,6 +247,7 @@ void vcModule::Print_Control_Structure(ostream& ofile)
 {
   this->_control_path->Print_Structure(ofile);
   this->_control_path->Print_Compatibility_Labels(ofile);
+  this->_control_path->Print_Compatibility_Map(ofile);
   this->Print_Compatible_Operator_Groups(ofile);
 }
 

@@ -275,7 +275,19 @@ void AaModule::Propagate_Constants()
     this->_statement_sequence->Propagate_Constants();
 }
 
+
+
 void AaModule::Write_VC_Model(ostream& ofile)
+{
+  this->Write_VC_Model(false,ofile);
+}
+
+void AaModule::Write_VC_Model_Optimized(ostream& ofile)
+{
+  this->Write_VC_Model(true,ofile);
+}
+
+void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)
 {
 
   //  this->Propagate_Constants();
@@ -308,26 +320,38 @@ void AaModule::Write_VC_Model(ostream& ofile)
   ofile << endl;
 
   this->Write_VC_Memory_Spaces(ofile);  
-  this->Write_VC_Control_Path(ofile);
+  this->Write_VC_Control_Path(opt_flag, ofile);
   this->Write_VC_Data_Path(ofile);
-  this->Write_VC_Links(ofile);
+  this->Write_VC_Links(opt_flag, ofile);
 
   ofile << "}";
 }
 
-void AaModule::Write_VC_Links(ostream& ofile)
+void AaModule::Write_VC_Links(bool opt_flag, ostream& ofile)
 {
   if(this->_statement_sequence)
-    this->_statement_sequence->Write_VC_Links("",ofile);
+    {
+      if(opt_flag)
+	this->Write_VC_Links_Optimized_Base("",ofile);
+      else
+	this->_statement_sequence->Write_VC_Links("",ofile);
+    }
 }
 
-void AaModule::Write_VC_Control_Path(ostream& ofile)
+void AaModule::Write_VC_Control_Path(bool opt_flag, ostream& ofile)
 {
   ofile << "$CP { // begin control-path " << endl;
   // for each statement, print a CP region.
-  for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+  if(!opt_flag)
     {
-      this->_statement_sequence->Get_Statement(idx)->Write_VC_Control_Path(ofile);
+      for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+	{
+	  this->_statement_sequence->Get_Statement(idx)->Write_VC_Control_Path(ofile);
+	}
+    }
+  else
+    {
+      this->Write_VC_Control_Path_Optimized_Base(ofile);
     }
   ofile << "} // end control-path" << endl;
 }

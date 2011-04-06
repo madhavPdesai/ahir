@@ -618,6 +618,18 @@ void AaProgram::Write_VC_Model(int default_space_pointer_width,
   AaProgram::Write_VC_Modules(ofile);
 }
 
+void AaProgram::Write_VC_Model_Optimized(int default_space_pointer_width,
+					 int default_space_word_size,
+					 ostream& ofile)
+{
+
+  AaProgram::Write_VC_Pipe_Declarations(ofile);
+  AaProgram::Write_VC_Constant_Declarations(ofile);
+
+  AaProgram::Write_VC_Memory_Spaces(ofile);
+  AaProgram::Write_VC_Modules_Optimized(ofile);
+}
+
 AaMemorySpace* AaProgram::Get_Memory_Space(int idx)
 {
   if(AaProgram::_memory_space_map.find(idx) != AaProgram::_memory_space_map.end())
@@ -693,6 +705,16 @@ void AaProgram::Write_VC_Modules(ostream& ofile)
   for(int idx =0; idx < AaProgram::_ordered_module_vector.size(); idx++)
     {
       AaProgram::_ordered_module_vector[idx]->Write_VC_Model(ofile);
+    }
+}
+
+
+
+void AaProgram::Write_VC_Modules_Optimized(ostream& ofile)
+{
+  for(int idx =0; idx < AaProgram::_ordered_module_vector.size(); idx++)
+    {
+      AaProgram::_ordered_module_vector[idx]->Write_VC_Model_Optimized(ofile);
     }
 }
 

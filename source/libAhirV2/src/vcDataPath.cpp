@@ -327,9 +327,7 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
 	      dpe_iter++)
 	    {
 	      pair<vcCompatibilityLabel*, vcCompatibilityLabel*> I2 = this->Get_Label_Interval(cp,*dpe_iter);
-
-	      if(!((I1.second == I2.first) || cp->Lesser(I1.second, I2.first) ||
-		   (I2.second == I1.first) || cp->Lesser(I2.second, I1.first)))
+	      if(!(cp->Are_Compatible(I1.first,I2.first) && cp->Are_Compatible(I1.second,I2.second)))
 		{
 		  is_compatible = false;
 		  break;

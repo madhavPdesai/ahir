@@ -47,6 +47,7 @@ class AaStatement: public AaScope
 
   virtual bool Is_Statement() { return(true);}
   virtual bool Is_Control_Flow_Statement() {return(false);}
+  virtual bool Is_Block_Statement() {return(false);}
 
   void Set_Index_In_Sequence(int id) {this->_index_in_sequence = id;}
   int Get_Index_In_Sequence() {return(this->_index_in_sequence);}
@@ -129,6 +130,10 @@ class AaStatement: public AaScope
   virtual void Write_VC_Control_Path(ostream& ofile) { assert(0);}
   virtual void Write_VC_Control_Path(string sink_link, ostream& ofile) { assert(0);}
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile) {assert(0);}
+  virtual void Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elements,
+					       map<string,vector<AaExpression*> >& ls_map,
+					       map<string,vector<AaExpression*> >& pipe_map,
+					       ostream& ofile) {assert(0);}
   virtual void Write_VC_Control_Path_Optimized(string sink_link, ostream& ofile) { assert(0);}
 
   virtual void Write_VC_Pipe_Declarations(ostream& ofile) {}
@@ -145,6 +150,7 @@ class AaStatement: public AaScope
   virtual string Get_VC_Exit_Place_Name() { return(this->Get_VC_Name() + "__exit__");}
 
   virtual string Get_VC_Entry_Transition_Name() { return(this->Get_VC_Name() + "__entry__");}
+  virtual string Get_VC_Entry_Active_Transition_Name() { return(this->Get_VC_Name() + "__entry__");}
   virtual string Get_VC_Exit_Transition_Name() { return(this->Get_VC_Name() + "__exit__");}
 
 };
@@ -210,7 +216,8 @@ class AaStatementSequence: public AaScope
 
   virtual void Write_VC_Control_Path(ostream& ofile); 
   void Write_VC_Control_Path_Optimized(ostream& ofile);
-  string Get_Segment_Name();
+
+
 
   virtual void Write_VC_Pipe_Declarations(ostream& ofile);
   virtual void Write_VC_Memory_Space_Declarations(ostream& ofile);
@@ -233,6 +240,42 @@ class AaStatementSequence: public AaScope
   {
     for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
       this->_statement_sequence[i]->Write_VC_Constant_Declarations(ofile);
+  }
+
+  virtual string Get_VC_Name()
+  {
+    assert(this->_statement_sequence.size() > 0);
+    AaStatement* first = this->_statement_sequence[0];
+    AaStatement* last = this->_statement_sequence[this->_statement_sequence.size() -1];
+
+    if(first == last)
+      return(first->Get_VC_Name());
+    else
+      return(first->Get_VC_Name() + "_to_" + last->Get_VC_Name());
+  };
+
+  virtual string Get_VC_Entry_Place_Name()
+  {
+    assert(this->_statement_sequence.size() > 0);
+    AaStatement* first = this->_statement_sequence[0];
+    AaStatement* last = this->_statement_sequence[this->_statement_sequence.size() -1];
+
+    if(first == last)
+      return(first->Get_VC_Entry_Place_Name());
+    else
+      return(this->Get_VC_Name() + "__entry__");
+  }
+
+  virtual string Get_VC_Exit_Place_Name()
+  {
+    assert(this->_statement_sequence.size() > 0);
+    AaStatement* first = this->_statement_sequence[0];
+    AaStatement* last = this->_statement_sequence[this->_statement_sequence.size() -1];
+
+    if(first == last)
+      return(first->Get_VC_Exit_Place_Name());
+    else
+      return(this->Get_VC_Name() + "__exit__");
   }
 
 };
@@ -300,10 +343,19 @@ class AaAssignmentStatement: public AaStatement
   virtual bool Can_Block();
   virtual void PrintC(ofstream& ofile, string tab_string);
 
+
   virtual void Write_C_Struct(ofstream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
+
+
+  // this is the big one!
+  virtual void Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elements,
+					       map<string, vector<AaExpression*> >& ls_map,
+					       map<string,vector<AaExpression*> >& pipe_map,
+					       ostream& ofile);
+
 
   virtual bool Is_Constant();
 
@@ -380,10 +432,15 @@ class AaCallStatement: public AaStatement
   virtual void PrintC(ofstream& ofile, string tab_string);
   virtual void Write_Inarg_Copy_Code(ofstream& ofile,string tab_string);
   virtual void Write_Outarg_Copy_Code(ofstream& ofile,string tab_string);
-
   virtual void Write_VC_Control_Path(ostream& ofile);
-  virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
-
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile)
+  {
+    assert(0);
+  }
+  virtual void Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elements,
+					       map<string, vector<AaExpression*> >& ls_map,
+					       map<string,vector<AaExpression*> >& pipe_map,
+					       ostream& ofile);
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
@@ -405,6 +462,7 @@ class AaBlockStatement: public AaStatement
 
  public:
   virtual string Get_Label() { return(this->_label);}
+  virtual bool Is_Block_Statement() {return(true);}
   virtual unsigned int Get_Statement_Count() 
   {
     return((this->_statement_sequence ? this->_statement_sequence->Get_Statement_Count() : 0)); 
@@ -417,6 +475,7 @@ class AaBlockStatement: public AaStatement
   {
     this->_statement_sequence = statement_sequence;
   }
+
 
   virtual void Coalesce_Storage();
 
@@ -515,7 +574,14 @@ class AaBlockStatement: public AaStatement
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
+
+  void Identify_Maximal_Sequences(AaStatementSequence* sseq, 
+				  vector<AaStatementSequence*>& linear_segment_vector);
+
+  void Destroy_Maximal_Sequences(vector<AaStatementSequence*>& linear_segment_vector);
   virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
+  virtual void Write_VC_Links_Optimized(string hier_id, AaStatement* stmt, ostream& ofile);
+  virtual void Write_VC_Links_Optimized(string hier_id, AaStatementSequence* seq, ostream& ofile);
 
   virtual string Get_VC_Name() {return("block_stmt_" + Int64ToStr(this->Get_Index()));}
 
@@ -529,6 +595,19 @@ class AaBlockStatement: public AaStatement
   {
     return(this->_statement_sequence->Get_Previous_Statement(stmt));
   }
+
+
+  virtual void Write_VC_Control_Path_Optimized(AaStatementSequence* sseq,
+					       ostream& ofile);
+  virtual void Write_VC_Control_Path_Optimized(AaStatement* stmt,
+					       ostream& ofile);
+
+
+  
+  void Write_VC_Load_Store_Dependencies(map<string,vector<AaExpression*> >& load_store_dep_map,
+					ostream& ofile);
+  void Write_VC_Pipe_Dependencies(map<string,vector<AaExpression*> >& pipe_map,
+					ostream& ofile);
 
   virtual void Propagate_Constants();
 };
@@ -553,8 +632,13 @@ class AaSeriesBlockStatement: public AaBlockStatement
     ofile << "} // end series block " << this->Get_VC_Name() << endl;
   }
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
+  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
   virtual string Get_VC_Name() {return ("series_block_stmt_" + Int64ToStr(this->Get_Index()));}
+  
+  
+  void Write_VC_Links_Optimized_Base(string hier_id, ostream& ofile);
+  void Write_VC_Control_Path_Optimized_Base(ostream& ofile);
 
 };
 
@@ -579,7 +663,9 @@ class AaParallelBlockStatement: public AaBlockStatement
     this->_statement_sequence->Write_VC_Control_Path(ofile);
     ofile << "} // end parallel block " << this->Get_VC_Name() << endl;
   }
+
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
+  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
   virtual string Get_VC_Name() {return("parallel_block_stmt_" + Int64ToStr(this->Get_Index()));}
 };
@@ -598,6 +684,7 @@ class AaForkBlockStatement: public AaParallelBlockStatement
 
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
+  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
   virtual string Get_VC_Name() {return("fork_block_stmt_" + Int64ToStr(this->Get_Index()));}
 };
@@ -637,6 +724,7 @@ class AaBranchBlockStatement: public AaSeriesBlockStatement
 				       AaStatementSequence* sseq,
 				       string sink_link,
 				       ostream& ofile);
+  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
   virtual string Get_VC_Name() {return("branch_block_stmt_" + Int64ToStr(this->Get_Index()));}
 };
@@ -911,8 +999,11 @@ class AaSwitchStatement: public AaStatement
     return(this->Get_Scope()->Get_Struct_Dereference());
   }
 
+
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
+  void Write_VC_Control_Path(bool optimize_flag, ostream& ofile);
+
 
   virtual void Write_VC_Constant_Declarations(ostream& ofile);
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
@@ -920,6 +1011,7 @@ class AaSwitchStatement: public AaStatement
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
   virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
+  void Write_VC_Links(bool opt_flag, string hier_id,ostream& ofile);
 
   virtual void Propagate_Constants(); 
 
@@ -973,12 +1065,16 @@ class AaIfStatement: public AaStatement
 
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
+  void Write_VC_Control_Path(bool optimize_flag, ostream& ofile);
 
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
+
   virtual void Write_VC_Links(string hier_id,ostream& ofile);
   virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
+  void Write_VC_Links(bool opt_flag, string hier_id,ostream& ofile);
+
 
   virtual void Propagate_Constants(); 
 

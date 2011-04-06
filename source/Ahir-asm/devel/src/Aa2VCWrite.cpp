@@ -366,3 +366,23 @@ void Write_VC_Select_Operator(string inst_name,
 }
 
 
+void Write_VC_Load_Store_Dependency(AaExpression* src,
+				    AaExpression* tgt,
+				    ostream& ofile)
+{
+  ofile << "// " << src->To_String() << (src->Is_Load() ? "(load)" : "(store)" )
+	<<  " -> " 
+	<< tgt->To_String()  << (tgt->Is_Load() ? "(load)" : "(store)" ) << endl;
+  
+  ofile << tgt->Get_VC_Start_Transition_Name() << " <-& (" 
+	<< src->Get_VC_Active_Transition_Name() << ")" << endl;
+}
+
+
+void Write_VC_Pipe_Dependency(AaExpression* src,
+			      AaExpression* tgt,
+			      ostream& ofile)
+{
+  string tgt_start = (tgt->Get_VC_Start_Transition_Name());
+  ofile << tgt_start << " <-& (" <<  src->Get_VC_Complete_Region_Name() << ")" << endl;
+}

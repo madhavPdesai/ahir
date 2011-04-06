@@ -50,6 +50,13 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
       err_flag = true;
     }
   
+  if(child != NULL && child->Is("AaPipeObject"))
+    {
+      AaScope* root = this->Get_Root_Scope();
+      assert(root->Is("AaModule"));
+      ((AaPipeObject*)child)->Add_Writer((AaModule*)root);
+      ((AaModule*)root)->Add_Write_Pipe((AaPipeObject*)child);
+    }
 
   bool is_array_ref = obj_ref->Is("AaArrayObjectReference");
   bool is_pointer_deref = obj_ref->Is("AaPointerDereference");
@@ -568,9 +575,7 @@ void AaAssignmentStatement::Print(ostream& ofile)
 }
 void AaAssignmentStatement::Map_Source_References()
 {
-  if(this->_target->Is("AaPointerDereferenceExpression"))
-     this->_target->Map_Source_References(this->_target_objects);
-
+  this->_target->Map_Source_References_As_Target(this->_source_objects);
   AaProgram::Add_Type_Dependency(this->_target,this->_source);
 
   this->_source->Map_Source_References(this->_source_objects);
@@ -911,6 +916,7 @@ void AaCallStatement::Map_Source_References()
     }
   for(unsigned int i=0; i < this->_output_args.size(); i++)
     {
+      this->_output_args[i]->Map_Source_References_As_Target(this->_source_objects);
       if(called_module != NULL)
 	{
 	  // outarg <- outargument
@@ -1267,11 +1273,7 @@ void AaCallStatement::Write_VC_Links(string hier_id, ostream& ofile)
   ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
-
-
   vector<string> reqs, acks;
-
-  
   if(hier_id != "")
     hier_id = hier_id + "/" + this->Get_VC_Name();
   else
@@ -1816,7 +1818,6 @@ void AaBranchBlockStatement::Write_VC_Control_Path(string source_link,
 		  ofile << stmt->Get_VC_Exit_Place_Name() << " |-> (" << sink_link << ")" << endl;
 		}
 	    }
-
 	}
     }
   else 
@@ -2661,7 +2662,13 @@ void AaSwitchStatement::Write_C_Function_Body(ofstream& ofile)
   ofile << "// -------------------------------------------------------------------------------------------" << endl;
 }
 
-void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
+
+void AaSwitchStatement::Write_VC_Control_Path( ostream& ofile)
+{
+  this->Write_VC_Control_Path(false,ofile);
+}
+void AaSwitchStatement::Write_VC_Control_Path(bool optimize_flag,
+					      ostream& ofile)
 {
 
   ofile << "// control-path for switch  ";
@@ -2741,10 +2748,17 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
       string source_element = this->Get_VC_Name() + "_choice_" + IntToStr(idx);
       ofile << ";;[" << source_element  << "] { $T [ack1]  // ack0 will be ignored..\n }"  << endl;
 
-      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(source_element,
-							       _choice_pairs[idx].second,
-							       exit_place,
-							       ofile);
+      if(optimize_flag)
+	((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path_Optimized(source_element,
+									   _choice_pairs[idx].second,
+									   exit_place,
+									   ofile);
+      else
+	((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(source_element,
+								 _choice_pairs[idx].second,
+								 exit_place,
+								 ofile);
+
     }
   if(_default_sequence != NULL)
     {
@@ -2762,10 +2776,17 @@ void AaSwitchStatement::Write_VC_Control_Path(ostream& ofile)
       // operator whose input is the concatenation of the comparisons
       // carried out in the condition-check parallel block
       ofile << "// switch default choice " << endl;
-      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(source_element,
-							       _default_sequence,
-							       exit_place,
-							       ofile);
+
+      if(!optimize_flag)
+	((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(source_element,
+								 _default_sequence,
+								 exit_place,
+								 ofile);
+      else
+	((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path_Optimized(source_element,
+									   _default_sequence,
+									   exit_place,
+									   ofile);
     }
 
   // select will branch off to one of the choice
@@ -2885,6 +2906,12 @@ void AaSwitchStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 void AaSwitchStatement::Write_VC_Links(string hier_id, ostream& ofile)
 {
+  this->Write_VC_Links(false,hier_id,ofile);
+}
+
+void AaSwitchStatement::Write_VC_Links(bool optimize_flag,
+				       string hier_id, ostream& ofile)
+{
 
   ofile << "// CP-DP links for switch  ";
   ofile << endl;
@@ -2924,7 +2951,11 @@ void AaSwitchStatement::Write_VC_Links(string hier_id, ostream& ofile)
       acks.clear();
 
       // choice sequence has links too..
-      this->_choice_pairs[idx].second->Write_VC_Links(hier_id, ofile);
+      if(!optimize_flag)
+	this->_choice_pairs[idx].second->Write_VC_Links(hier_id, ofile);
+      else
+	this->_choice_pairs[idx].second->Write_VC_Links_Optimized(hier_id, ofile);
+
     }
 
   // link for the default branch.
@@ -2941,7 +2972,11 @@ void AaSwitchStatement::Write_VC_Links(string hier_id, ostream& ofile)
       acks.clear();
 
       // default sequence has links too..
-      this->_default_sequence->Write_VC_Links(hier_id,ofile);
+      if(!optimize_flag)
+	this->_default_sequence->Write_VC_Links(hier_id,ofile);
+      else
+	this->_default_sequence->Write_VC_Links_Optimized(hier_id,ofile);
+
     }
 }
 
@@ -3132,7 +3167,13 @@ void AaIfStatement::Write_C_Function_Body(ofstream& ofile)
 }
 
 
+
 void AaIfStatement::Write_VC_Control_Path(ostream& ofile)
+{
+  this->Write_VC_Control_Path(false,ofile);
+}
+
+void AaIfStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofile)
 {
 
   ofile << "// if-statement  ";
@@ -3166,6 +3207,7 @@ void AaIfStatement::Write_VC_Control_Path(ostream& ofile)
 
   ofile << ";;[" << eval_test_region << "] { // test expression evaluate and trigger branch "  << endl;
   this->_test_expression->Write_VC_Control_Path(ofile);
+    
   ofile << " $T [branch_req] " << endl;
   ofile << "}" << endl;
   ofile << this->Get_VC_Name() << "__entry__ |-> (" << eval_test_region << ")" << endl;
@@ -3186,21 +3228,34 @@ void AaIfStatement::Write_VC_Control_Path(ostream& ofile)
   AaStatement* first_else = NULL;
 
 
-
   // now the if-sequence of statments
   if(_if_sequence != NULL)
     {
-      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(if_link,
-							       _if_sequence,
-							       exit_place,
-							       ofile);
+
+      if(!optimize_flag)
+	((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(if_link,
+								 _if_sequence,
+								 exit_place,
+								 ofile);
+      else
+	((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path_Optimized(if_link,
+									   _if_sequence,
+									   exit_place,
+									   ofile);
+	
     }
   if(_else_sequence != NULL)
     {
-      ((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(else_link,
-							       _else_sequence,
-							       exit_place,
-							       ofile);
+      if(!optimize_flag)
+	((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path(else_link,
+								 _else_sequence,
+								 exit_place,
+								 ofile);
+      else
+	((AaBranchBlockStatement*)pscope)->Write_VC_Control_Path_Optimized(else_link,
+									   _else_sequence,
+									   exit_place,
+									   ofile);
     }
 
   ofile << exit_place << " <-| (" << dead_link << ")" << endl;
@@ -3277,6 +3332,11 @@ void AaIfStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 void AaIfStatement::Write_VC_Links(string hier_id,ostream& ofile)
 {
+  this->Write_VC_Links(false,hier_id,ofile);
+}
+
+void AaIfStatement::Write_VC_Links(bool optimize_flag, string hier_id,ostream& ofile)
+{
 
   ofile << "// CP-DP links for if  ";
   ofile << endl;
@@ -3293,10 +3353,21 @@ void AaIfStatement::Write_VC_Links(string hier_id,ostream& ofile)
   Write_VC_Link(this->Get_VC_Name()+"_branch",reqs,acks,ofile);
 
   if(this->_if_sequence)
-    this->_if_sequence->Write_VC_Links(hier_id,ofile);
+    {
+      if(!optimize_flag)
+	this->_if_sequence->Write_VC_Links(hier_id,ofile);
+      else
+	this->_if_sequence->Write_VC_Links_Optimized(hier_id,ofile);
+	
+    }
 
   if(this->_else_sequence)
-    this->_else_sequence->Write_VC_Links(hier_id,ofile);
+    {
+      if(!optimize_flag)
+	this->_else_sequence->Write_VC_Links(hier_id,ofile);
+      else
+	this->_else_sequence->Write_VC_Links_Optimized(hier_id,ofile);
+    }
 }
 
 void AaIfStatement::Propagate_Constants()

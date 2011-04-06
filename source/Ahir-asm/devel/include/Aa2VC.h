@@ -2,6 +2,11 @@
 #define __AA2VC__
 
 #include <AaIncludes.h>
+
+#define __T(x) ofile << "$T[" << x << "] " << endl; 
+#define __J(x,y) ofile << x << " <-& (" << y << ")" << endl;
+#define __F(x,y) ofile << x << " &-> (" << y << ")" << endl;
+
 void Write_VC_Equivalence_Operator(string inst_name,
 				   string input,
 				   string output,
@@ -88,4 +93,12 @@ void Write_VC_Select_Operator(string inst_name,
 
 
 bool Is_Trivial_VC_Type_Conversion(AaType* from, AaType* to);
+
+void Write_VC_Load_Store_Dependency(AaExpression* src,
+				    AaExpression* tgt,
+				    ostream& ofile);
+
+void Write_VC_Pipe_Dependency(AaExpression* src,
+			      AaExpression* tgt,
+			      ostream& ofile);
 #endif
