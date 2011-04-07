@@ -8,7 +8,7 @@ class vcCPElement: public vcRoot
 {
 
 protected:
-  int _index;
+  int64_t _index;
   vcCPElement* _parent;
   vector<vcCPElement*> _predecessors;
   vector<vcCPElement*> _successors;
@@ -61,14 +61,14 @@ public:
   virtual void Print_Structure(ostream& ofile) {}
 
   //  string Get_VHDL_Id() {return("cp_" + IntToStr(this->Get_Index()));}
-  string Get_VHDL_Id() {return(To_VHDL(this->Get_Id()+ "_" + IntToStr(this->Get_Index())));}
+  string Get_VHDL_Id() {return(To_VHDL(this->Get_Id()+ "_" + Int64ToStr(this->Get_Index())));}
 
   virtual string Get_Exit_Symbol() {return(this->Get_VHDL_Id() + "_symbol");}
   virtual string Get_Start_Symbol(){return(this->Get_VHDL_Id() + "_start");}
 
   virtual string Get_Always_True_Symbol() {return("always_true_symbol");}
 
-  virtual int Get_Index() {return(this->_index);}
+  virtual int64_t Get_Index() {return(this->_index);}
 };
 
 
@@ -294,8 +294,8 @@ public:
 
 class vcCPForkBlock: public vcCPParallelBlock
 {
-  map<vcTransition*, vector<vcCPElement*>, vcRoot_Compare > _fork_map;
-  map<vcTransition*, vector<vcCPElement*>, vcRoot_Compare > _join_map;
+  map<vcTransition*, set<vcCPElement*>, vcRoot_Compare > _fork_map;
+  map<vcTransition*, set<vcCPElement*>, vcRoot_Compare > _join_map;
 
   set<vcCPElement*> _forked_elements;
   set<vcCPElement*> _joined_elements;
@@ -313,6 +313,8 @@ public:
   virtual void Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* m);
   virtual void Update_Predecessor_Successor_Links();
   void Precedence_Order(bool reverse_flag, vcCPElement* start_element, vector<vcCPElement*>& precedence_order);
+  void Add_Join_Point(vcTransition* jp, vcCPElement* jre);
+  void Add_Fork_Point(vcTransition* fp, vcCPElement* fre);
 };
 
 
@@ -328,8 +330,9 @@ class vcControlPath: public vcCPSeriesBlock
 
   map<string, vcCompatibilityLabel*> _join_label_map;
 
+
 public:
-  static int _free_index;
+  static int64_t _free_index;
 
   virtual string Kind() {return("vcControlPath");}
 

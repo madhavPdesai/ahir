@@ -1743,10 +1743,31 @@ void AaBranchBlockStatement::Write_VC_Control_Path(string source_link,
       // in the sequence..
       for(int idx = 0; idx  < sseq->Get_Statement_Count(); idx++)
 	{
+	  AaStatement* prev = (idx > 0 ? sseq->Get_Statement(idx-1) : NULL);
 	  AaStatement* stmt = sseq->Get_Statement(idx);
 	  if(!stmt->Is("AaPlaceStatement"))
 	    {
-	      ofile << "$P [" << stmt->Get_VC_Entry_Place_Name() << "] " << endl;
+	      if(!stmt->Is("AaMergeStatement"))
+		ofile << "$P [" << stmt->Get_VC_Entry_Place_Name() << "] " << endl;
+	      else
+		{
+		  if(prev == NULL || !prev->Is("AaPlaceStatement"))
+		    {
+
+		      AaMergeStatement* ms = ((AaMergeStatement*)stmt);
+		      if(ms->Has_Merge_Label("$entry"))
+			{
+			  if(prev != NULL && prev->Is("AaPlaceStatement"))
+			    {
+			      AaRoot::Error("merge statement specifies a merge from entry which is unreachable.",
+					    stmt);
+			    }
+			}
+		      ms->Set_Has_Entry_Place(true);
+		      ofile << "$P [" << stmt->Get_VC_Entry_Place_Name() << "] " << endl;
+		    }
+		}
+
 	      ofile << "$P [" << stmt->Get_VC_Exit_Place_Name() << "] " << endl;
 	    }
 	  else
@@ -1805,6 +1826,7 @@ void AaBranchBlockStatement::Write_VC_Control_Path(string source_link,
 			<< " <-| (" 
 			<< prev_stmt->Get_VC_Exit_Place_Name() 
 			<< ")" << endl;
+
 		}
 	    }
 
@@ -1957,7 +1979,9 @@ void AaJoinForkStatement::Write_VC_Links(string hier_id, ostream& ofile)
 AaMergeStatement::AaMergeStatement(AaBranchBlockStatement* scope):AaSeriesBlockStatement((AaScope*)scope,"") 
 {
   this->_wait_on_entry = 0;
+  this->_has_entry_place = 0;
 }
+
 AaMergeStatement::~AaMergeStatement() {}
 void AaMergeStatement::Print(ostream& ofile)
 {
@@ -2072,12 +2096,23 @@ void AaMergeStatement::Write_VC_Control_Path(ostream& ofile)
   ofile << "// " << this->Get_Source_Info() << endl;
   string source_link = this->Get_VC_Entry_Place_Name();
 
-  // make a dead-region
-  string dead_link = this->Get_VC_Name() + "_dead_link";
-  ofile << ";;[" << dead_link << "] { $T [dead_transition] $dead } " << endl;
-  ofile << source_link << " |-> (" << dead_link << ")" << endl;
-  ofile << this->Get_VC_Exit_Place_Name() <<  " <-|  (" << dead_link << ")" << endl;
 
+  // this has an entry place (because its predecessor
+  // was not a place statement).
+  //
+  // to preserve static connectivity of the containing
+  // branch region, we introduce a dead link
+  // connection from the entry place to the exit place
+  // (otherwise there will be a dangle.. which is flagged
+  // as an error).
+  if(this->_has_entry_place)
+    {
+      string dead_link = this->Get_VC_Name() + "_dead_link";
+      ofile << ";;[" << dead_link << "] { $T [dead_transition] $dead } " << endl;
+      // tie up the dead link..
+      ofile << this->Get_VC_Entry_Place_Name() << " |-> (" << dead_link << ")" << endl;
+      ofile << this->Get_VC_Exit_Place_Name() << " <-| (" << dead_link << ")" << endl;
+    }
 
   // first, for each element of the merge-label set,
   // find the phi statements that depend on it.

@@ -4,7 +4,7 @@
 #include <vcDataPath.hpp>
 #include <vcSystem.hpp>
 
-int vcControlPath::_free_index = 0;
+int64_t vcControlPath::_free_index = 0;
 
 vcCompatibilityLabel::vcCompatibilityLabel(vcControlPath* cp, string id): vcCPElement(cp,id)
 {
@@ -819,8 +819,24 @@ void vcCPBranchBlock::Add_Merge_Point(string merge_place, string merge_region)
   vcCPElement* mp = this->Find_CPElement(merge_place);
   vcCPElement* mr = this->Find_CPElement(merge_region);
 
-  assert(mp != NULL && mp->Is("vcPlace"));
-  assert(mr != NULL);
+  if(mp == NULL)
+    {
+      vcSystem::Error("did not find place " + merge_place);
+      return;
+    }
+
+  if(!mp->Is("vcPlace"))
+    {
+      vcSystem::Error("merge point " + merge_place + " is not a place");
+      return;
+    }
+
+  if(mr == NULL)
+    {
+      vcSystem::Error("merged region " + merge_region + " not found");
+      return;
+    }
+
   this->_merge_map[(vcPlace*)mp].push_back(mr);
 }
 
@@ -932,6 +948,30 @@ vcCPForkBlock::vcCPForkBlock(vcCPBlock* p, string id):vcCPParallelBlock(p, id)
 }
 
 
+
+void vcCPForkBlock::Add_Fork_Point(vcTransition* fp, vcCPElement* fre)
+{
+
+  if((this->_fork_map.find(fp) == this->_fork_map.end())
+     ||
+     (this->_fork_map[fp].find(fre) == this->_fork_map[fp].end()))
+    {
+      this->_fork_map[((vcTransition*)fp)].insert(fre);
+      this->_forked_elements.insert(fre);
+      
+      
+      fp->Add_Successor(fre);
+      
+      if(fre->Is_Transition())
+	{
+	  this->Add_Join_Point((vcTransition*)fre, fp);
+	}
+      else
+	fre->Add_Predecessor(fp);
+    }
+}
+
+
 void vcCPForkBlock::Add_Fork_Point(string& fork_name, vector<string>& fork_cpe_vec)
 {
   vcCPElement* fp = this->Find_CPElement(fork_name);
@@ -953,9 +993,30 @@ void vcCPForkBlock::Add_Fork_Point(string& fork_name, vector<string>& fork_cpe_v
 	      vcSystem::Error("did not find forked region " + fork_cpe_vec[idx]);
 	      return;
 	    }
-	  this->_fork_map[((vcTransition*)fp)].push_back(fre);
-	  this->_forked_elements.insert(fre);
+	  else 
+	    this->Add_Fork_Point((vcTransition*)fp, fre);
 	}
+    }
+}
+
+void vcCPForkBlock::Add_Join_Point(vcTransition* jp, vcCPElement* jre)
+{
+
+  if((this->_join_map.find(jp) == this->_join_map.end())
+     ||
+     (this->_join_map[jp].find(jre) == this->_join_map[jp].end()))
+    {
+      this->_join_map[((vcTransition*)jp)].insert(jre);
+      this->_joined_elements.insert(jre);
+      
+      jp->Add_Predecessor(jre);
+      
+      if(jre->Is_Transition())
+	{
+	  this->Add_Fork_Point((vcTransition*)jre, jp);
+	}
+      else
+	jre->Add_Successor(jp);
     }
 }
 
@@ -976,40 +1037,45 @@ void vcCPForkBlock::Add_Join_Point(string& join_name, vector<string>& join_cpe_v
 	      vcSystem::Error("did not find joined region " + join_cpe_vec[idx]);
 	      return;
 	    }
-	  this->_join_map[((vcTransition*)jp)].push_back(jre);
-	  this->_joined_elements.insert(jre);
+	  else
+	    this->Add_Join_Point((vcTransition*)jp,jre);
 	}
     }
 }
+
 void vcCPForkBlock::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__FORKBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
   this->Print_Elements(ofile);
 
 
-  for(map<vcTransition*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = _fork_map.begin();
+  for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _fork_map.begin();
       iter != _fork_map.end();
       iter++)
     {
       ofile << (*iter).first->Get_Id() << " " << 
 	vcLexerKeywords[__FORK] << " (" ;
-      for(int idx = 0; idx < (*iter).second.size(); idx++)
+      for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
+	  siter != sfiter;
+	  siter++)
 	{
-	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
+	  ofile << " " << (*siter)->Get_Id() << " ";
 	}
       ofile << ")" << endl;
     }
 
 
-  for(map<vcTransition*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = _join_map.begin();
+  for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _join_map.begin();
       iter != _join_map.end();
       iter++)
     {
       ofile <<  (*iter).first->Get_Id() << " " << 
 	vcLexerKeywords[__JOIN] << " (" ;
-      for(int idx = 0; idx < (*iter).second.size(); idx++)
+      for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
+	  siter != sfiter;
+	  siter++)
 	{
-	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
+	  ofile << " " << (*siter)->Get_Id() << " ";
 	}
       ofile << ")" << endl;
     }
@@ -1125,12 +1191,9 @@ void vcCPForkBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label,
 
       if(reachable_elements[idx]->Is("vcTransition"))
 	{
-
-
-
 	  vcTransition* t = (vcTransition*) reachable_elements[idx];
 
-	  map<vcTransition*, vector<vcCPElement*>, vcRoot_Compare>::iterator join_iter = this->_join_map.find(t);
+	  map<vcTransition*, set<vcCPElement*>, vcRoot_Compare>::iterator join_iter = this->_join_map.find(t);
 	  if(join_iter != this->_join_map.end())
 	    {
 
@@ -1141,9 +1204,12 @@ void vcCPForkBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label,
 		  vcCompatibilityLabel* nl = cp->Make_Compatibility_Label(id);
 
 		  // multiple incoming..
-		  for(int idx2 = 0; idx2 < (*join_iter).second.size(); idx2++)
+		  for(set<vcCPElement*>::iterator siter = (*join_iter).second.begin(), 
+			sfiter = (*join_iter).second.end();
+		      siter != sfiter;
+		      siter++)
 		    {
-		      vcCPElement* cpe = (*join_iter).second[idx2];
+		      vcCPElement* cpe = (*siter);
 		      assert(cpe->Get_Compatibility_Label());
 		      
 		      nl->Add_In_Arc(cpe->Get_Compatibility_Label());
@@ -1159,19 +1225,24 @@ void vcCPForkBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label,
 		}
 	      else
 		{// trivial join, inherit the label of the predecessor
-		  t->Compute_Compatibility_Labels((*join_iter).second.front()->Get_Compatibility_Label(),cp);
+		  t->Compute_Compatibility_Labels((*((*join_iter).second.begin()))->Get_Compatibility_Label(),cp);
 		}
 	    }
 
 	  // is it a fork?
-	  map<vcTransition*, vector<vcCPElement*>, vcRoot_Compare>::iterator fork_iter = this->_fork_map.find(t);
+	  map<vcTransition*, set<vcCPElement*>, vcRoot_Compare>::iterator fork_iter = this->_fork_map.find(t);
 	  if(fork_iter != this->_fork_map.end())
 	    {
 	      // ok, t was a fork
 	      if((*fork_iter).second.size() > 1)
 		{
 		  // t has multiple successors
-		  for(int idx2 = 0; idx2 < (*fork_iter).second.size(); idx2++)
+		  
+		  int idx2 = 0;
+		  for(set<vcCPElement*>::iterator siter = (*fork_iter).second.begin(), 
+			sfiter = (*fork_iter).second.end();
+		      siter != sfiter;
+		      siter++)
 		    {
 
 		      // for each, create a new label
@@ -1181,12 +1252,14 @@ void vcCPForkBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label,
 		      nl->Add_In_Arc(t->Get_Compatibility_Label(), npair);
 
 		      // propagate the label into the successor
-		      (*fork_iter).second[idx2]->Compute_Compatibility_Labels(nl,cp);
+		      (*siter)->Compute_Compatibility_Labels(nl,cp);
+
+		      idx2++;
 		    }
 		}
 	      else
 		{
-		  (*fork_iter).second.front()->Compute_Compatibility_Labels(t->Get_Compatibility_Label(),cp);
+		  (*((*fork_iter).second.begin()))->Compute_Compatibility_Labels(t->Get_Compatibility_Label(),cp);
 		}
 	    }
 	}
@@ -1195,35 +1268,6 @@ void vcCPForkBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label,
 
 void vcCPForkBlock::Update_Predecessor_Successor_Links()
 {
-
-  // forks
-  for(map<vcTransition*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = this->_fork_map.begin();
-      iter != this->_fork_map.end();
-      iter++)
-    {
-      vcTransition* t = (*iter).first;
-      for(int idx = 0; idx < (*iter).second.size(); idx++)
-	{
-	  vcCPElement* e = (*iter).second[idx];
-	  e->Add_Predecessor(t);
-	  t->Add_Successor(e);
-	}
-    }
-
-  // joins
-  for(map<vcTransition*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = this->_join_map.begin();
-      iter != this->_join_map.end();
-      iter++)
-    {
-      vcTransition* t = (*iter).first;
-      for(int idx = 0; idx < (*iter).second.size(); idx++)
-	{
-	  vcCPElement* e = (*iter).second[idx];
-	  e->Add_Successor(t);
-	  t->Add_Predecessor(e);
-	}
-    }
-
 
   // those that were not covered by explicit fork/join declarations
   vector<vcCPElement*> unforked_elements;
@@ -1247,11 +1291,7 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
     {
       for(int idx = 0; idx < unforked_elements.size(); idx++)
 	{
-	  // entry -> exit link may be introduced here.
-	  // (if not explicitly specified).
-	  this->_entry->Add_Successor(unforked_elements[idx]);
-	  unforked_elements[idx]->Add_Predecessor(this->_entry);
-	  this->_fork_map[this->_entry].push_back(unforked_elements[idx]);
+	  this->Add_Fork_Point(this->_entry,unforked_elements[idx]);
 	}
     }
 
@@ -1262,23 +1302,15 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
     {
       for(int idx = 0; idx < unjoined_elements.size(); idx++)
 	{
-	  if(unjoined_elements[idx] != this->_exit)
-	    {
-	      this->_exit->Add_Predecessor(unjoined_elements[idx]);
-	      unjoined_elements[idx]->Add_Successor(this->_exit);
-	      this->_join_map[this->_exit].push_back(unjoined_elements[idx]);
-	    }
+	  this->Add_Join_Point(this->_exit, unjoined_elements[idx]);
 	}
     }
 
   if(this->_exit->Get_Predecessors().size() == 0 || this->_entry->Get_Successors().size() == 0)
     {
-      this->_join_map[this->_exit].push_back(this->_entry);
-      this->_fork_map[this->_entry].push_back(this->_exit);
-      this->_entry->Add_Successor(this->_exit);
-      this->_exit->Add_Predecessor(this->_entry);
+      // will take care of both sides..
+      this->Add_Fork_Point(this->_entry, this->_exit);
     }
-
 
   this->vcCPBlock::Update_Predecessor_Successor_Links();
 }
@@ -1378,17 +1410,6 @@ void vcControlPath::Update_Compatibility_Map()
 	      fork_map[w->_labeled_in_arc.second.first].insert(_label_descendent_map[w].begin(),
 							       _label_descendent_map[w].end());
 	    }
-	  else
-	    {
-	      // all descendents of w are compatible
-	      set<vcCompatibilityLabel*> tset;
-	      tset.insert(w);
-	      this->Mark_As_Compatible(fork_map[NULL],tset);
-	      this->Mark_As_Compatible(fork_map[NULL],_label_descendent_map[w]);
-	      fork_map[NULL].insert(_label_descendent_map[w].begin(),
-				    _label_descendent_map[w].end());
-	      
-	    }
 	}
       
       for(map<vcTransition*,set<vcCompatibilityLabel*> >::iterator citer = fork_map.begin(),
@@ -1420,7 +1441,21 @@ void vcControlPath::Print_Compatibility_Map(ostream& ofile)
 	  siter != sfiter;
 	  siter++)
 	{
-	  ofile << "\t" << (*iter).first->Get_Id() << "\t" << (*siter)->Get_Id() << endl;
+	  ofile << (*iter).first->Get_Id() << " === " << (*siter)->Get_Id() << endl;
+	}
+    }
+
+  for(map<vcCompatibilityLabel*,set<vcCompatibilityLabel*> >::iterator iter = _label_descendent_map.begin(),
+	fiter = _label_descendent_map.end();
+      iter != fiter;
+      iter++)
+    {
+      for(set<vcCompatibilityLabel*>::iterator siter = (*iter).second.begin(),
+	    sfiter = (*iter).second.end();
+	  siter != sfiter;
+	  siter++)
+	{
+	  ofile << (*iter).first->Get_Id() << " >== " << (*siter)->Get_Id() << endl;
 	}
     }
 }
@@ -1537,29 +1572,35 @@ bool vcControlPath::Greater(vcCompatibilityLabel* v, vcCompatibilityLabel* u)
 
 vcCompatibilityLabel* vcControlPath::Make_Compatibility_Label(string id)
 {
+
+#ifdef DEBUG
+#else
+  id = "cL" + Int64ToStr(vcControlPath::_free_index);
+#endif 
+
   vcCompatibilityLabel* nl = new vcCompatibilityLabel(this,id);
   this->_compatibility_label_set.insert(nl);
   return(nl);
 }
 
-void vcControlPath::Delete_Compatibility_Label(vcCompatibilityLabel* nl)
-{
-  if(_compatibility_label_set.find(nl) != _compatibility_label_set.end())
-    {
-      _compatibility_label_set.erase(nl);
-      delete nl;
-    }
-}
+ void vcControlPath::Delete_Compatibility_Label(vcCompatibilityLabel* nl)
+ {
+   if(_compatibility_label_set.find(nl) != _compatibility_label_set.end())
+     {
+       _compatibility_label_set.erase(nl);
+       delete nl;
+     }
+ }
 
-bool vcControlPath::Check_Structure()
-{
-  this->vcCPSeriesBlock::Update_Predecessor_Successor_Links();
-  this->vcCPSeriesBlock::Check_Structure();
-}
+ bool vcControlPath::Check_Structure()
+ {
+   this->vcCPSeriesBlock::Update_Predecessor_Successor_Links();
+   this->vcCPSeriesBlock::Check_Structure();
+ }
 
-void vcControlPath::Print_Compatibility_Labels(ostream& ofile)
-{
-  ofile << "Label Summary " << endl;
+ void vcControlPath::Print_Compatibility_Labels(ostream& ofile)
+ {
+   ofile << "Label Summary " << endl;
   for(set<vcCompatibilityLabel*>::iterator iter = _compatibility_label_set.begin();
       iter != _compatibility_label_set.end();
       iter++)

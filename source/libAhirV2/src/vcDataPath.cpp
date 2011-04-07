@@ -327,7 +327,10 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
 	      dpe_iter++)
 	    {
 	      pair<vcCompatibilityLabel*, vcCompatibilityLabel*> I2 = this->Get_Label_Interval(cp,*dpe_iter);
-	      if(!(cp->Are_Compatible(I1.first,I2.first) && cp->Are_Compatible(I1.second,I2.second)))
+	      if(!cp->Are_Compatible(I1.first,I2.first) ||
+		 !cp->Are_Compatible(I1.second,I2.second) ||
+		 !cp->Are_Compatible(I1.first,I2.second) ||
+		 !cp->Are_Compatible(I1.second,I2.first))
 		{
 		  is_compatible = false;
 		  break;
@@ -335,6 +338,10 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
 	    }
 	  if(is_compatible)
 	    {
+	      std::cerr << "Info: " << dpe->Get_Id() << " (" << I1.first->Get_Id() 
+			<< ", " << I1.second->Get_Id() << ")  included in " 
+			<< dpe->Kind() << " group "
+			<< IntToStr(idx) << endl;
 	      new_group = false;
 	      dpe_group[idx].insert(dpe);
 	      break;
@@ -344,6 +351,10 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
 
   if(new_group)
     {
+      std::cerr << "Info: " << dpe->Get_Id() << " (" << I1.first->Get_Id() 
+		<< ", " << I1.second->Get_Id() << ")  included in " 
+		<< dpe->Kind() << " group "
+		<< IntToStr(dpe_group.size()) << endl;
       set<vcDatapathElement*> nset;
       nset.insert(dpe);
       dpe_group.push_back(nset);
@@ -374,6 +385,11 @@ void vcDataPath::Print_Compatible_Operator_Groups(ostream& ofile, vector<set<vcD
 	  iter++)
 	{
 	  ofile << (*iter)->Get_Id() << endl;
+	  ofile << "   ("
+		<< (*iter)->_reqs.front()->Get_Compatibility_Label()->Get_Id()
+		<< ","
+		<< (*iter)->_acks.back()->Get_Compatibility_Label()->Get_Id()
+		<< ")" << endl;
 	}
       
       ofile << "} " << endl;

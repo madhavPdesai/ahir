@@ -145,7 +145,7 @@ package memory_subsystem_package is
     );
    end component dummy_read_only_memory_subsystem;
 
-   component dummy_write_only_memory_subsytem is
+   component dummy_write_only_memory_subsystem is
   	generic( num_stores            : natural := 10;
           addr_width            : natural := 9;
           data_width            : natural := 5;
@@ -182,6 +182,6 @@ package memory_subsystem_package is
     clock : in std_logic;  -- only rising edge is used to trigger activity.
     reset : in std_logic               -- active high.
     );
-    end component dummy_write_only_memory_subsytem;
+    end component dummy_write_only_memory_subsystem;
 
 end memory_subsystem_package;

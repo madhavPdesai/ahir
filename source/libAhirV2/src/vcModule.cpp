@@ -327,7 +327,7 @@ void  vcModule::Print_VHDL_System_Argument_Signals(ostream& ofile)
 
       ofile << "signal " << prefix << w->Get_VHDL_Id() << " : " ;
 
-      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
+      ofile << " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0) := (others => '0');" << endl;
     }
 
   for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)

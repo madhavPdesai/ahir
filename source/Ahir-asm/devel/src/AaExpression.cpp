@@ -838,6 +838,8 @@ AaArrayObjectReference::AaArrayObjectReference(AaScope* parent_tpr,
 					       string object_id, 
 					       vector<AaExpression*>& index_list):AaObjectReference(parent_tpr,object_id)
 {
+
+  this->_pointer_ref = NULL;
   for(unsigned int i  = 0; i < index_list.size(); i++)
     this->_indices.push_back(index_list[i]);
 }
@@ -1464,6 +1466,7 @@ void AaArrayObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
 
       if(this->_object->Is_Storage_Object())
 	{
+	  assert(this->_pointer_ref);
 	  // the object needs to be loaded..  
 	  // do the needful..
 	  this->_pointer_ref->Write_VC_Links(hier_id,ofile);

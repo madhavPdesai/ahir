@@ -345,6 +345,8 @@ class AaAssignmentStatement: public AaStatement
 
 
   virtual void Write_C_Struct(ofstream& ofile);
+  void Write_VC_WAR_Dependencies(set<AaRoot*>& visited_elements,
+				 ostream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
@@ -839,6 +841,7 @@ class AaMergeStatement: public AaSeriesBlockStatement
   set<string,StringCompare> _merge_label_set;
   vector<AaPlaceStatement*> _wait_on_statements;
 
+  bool _has_entry_place;
   unsigned char _wait_on_entry;
 
 
@@ -854,11 +857,21 @@ class AaMergeStatement: public AaSeriesBlockStatement
       }
   }
 
+  bool Has_Merge_Label(string lbl)
+  {
+    return(this->_merge_label_set.find(lbl) != this->_merge_label_set.end());
+  }
+
   AaMergeStatement(AaBranchBlockStatement* scope);
   ~AaMergeStatement();
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaMergeStatement");}
+
+  void Set_Has_Entry_Place(bool v)
+  {
+    _has_entry_place = v;
+  }
 
 
   virtual void Map_Source_References();

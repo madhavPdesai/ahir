@@ -898,6 +898,7 @@ aA_Binary_Op returns [AaOperation op] :
         ( id_less:LESS { op = __LESS;}) | 
         ( id_lessequal:LESSEQUAL { op = __LESSEQUAL;}) | 
         ( id_greater:GREATER { op = __GREATER;}) | 
+        ( id_greaterequal:GREATEREQUAL { op = __GREATEREQUAL;}) | 
         ( id_bitsel:BITSEL { op = __BITSEL;}) | 
         ( id_concat:CONCAT { op = __CONCAT;})  
     ;

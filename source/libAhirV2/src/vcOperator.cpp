@@ -630,7 +630,7 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
       else if(vc_op_id == vcLexerKeywords[__UGE_OP]           ) { ret_string = "ApIntUge"  ;}
       else if(vc_op_id == vcLexerKeywords[__ULT_OP]           ) { ret_string = "ApIntUlt"  ;}
       else if(vc_op_id == vcLexerKeywords[__ULE_OP]           ) { ret_string = "ApIntUle"  ;}
-      else if(vc_op_id == vcLexerKeywords[__NEQ_OP]           ) { ret_string = "ApIntNeq"  ;} 
+      else if(vc_op_id == vcLexerKeywords[__NEQ_OP]           ) { ret_string = "ApIntNe"  ;} 
       else if(vc_op_id == vcLexerKeywords[__BITSEL_OP]        ) { ret_string = "ApBitsel"  ;} 
       else if(vc_op_id == vcLexerKeywords[__CONCAT_OP]        ) { ret_string = "ApConcat"  ;} 
       else if(vc_op_id == vcLexerKeywords[__ASSIGN_OP]        ) { ret_string = "ApIntToApIntUnsigned" ;}
@@ -660,7 +660,7 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
 
   if(in_type->Kind() == "vcFloatType" && out_type->Kind() == "vcIntType")
     {
-      if(vc_op_id == vcLexerKeywords[__SGT_OP]            ) { ret_string = "ApFloatOgt;}" ;} 
+      if(vc_op_id == vcLexerKeywords[__SGT_OP]            ) { ret_string = "ApFloatOgt" ;} 
       else if(vc_op_id == vcLexerKeywords[__SGE_OP]            ) { ret_string = "ApFloatOge"  ;} 
       else if(vc_op_id == vcLexerKeywords[__EQ_OP]            ) { ret_string = "ApFloatOeq"  ;} 
       else if(vc_op_id == vcLexerKeywords[__SLT_OP]            ) { ret_string = "ApFloatOlt"  ;} 

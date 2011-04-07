@@ -318,9 +318,10 @@ namespace {
       if(opcode == Instruction::AShr)
 	{
 	    int size = I.getType()->getScalarSizeInBits();
-	    std::cout << iname << " :=  ( ($cast ( $int<" << size << ">) "  <<  op1  << ") "
+	    // take it to int and back to uint...
+	    std::cout << iname << " :=  ($cast ($uint<" << size << ">) ( ($cast ( $int<" << size << ">) "  <<  op1  << ") "
 		      << ntype 
-		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" 
+		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " )))" 
 		      << std::endl;
 	}
       else
@@ -400,7 +401,7 @@ namespace {
     {
       // TODO: i/o port stuff..
       std::string cname = to_aa(C.getNameStr());
-      std::cout << "//    In visitCastInst " << cname << std::endl;
+
       const llvm::Type *dest = C.getDestTy();
       llvm::Value *val = C.getOperand(0);
       
@@ -411,6 +412,8 @@ namespace {
     void visitLoadInst(LoadInst &L)
     {
       std::string lname = to_aa(L.getNameStr());
+      std::cout << "// load " << std::endl;
+
       std::cout << lname << " := " ;
       
       bool is_alloca = isa<AllocaInst>(L.getPointerOperand());
@@ -442,6 +445,7 @@ namespace {
 
 	std::string op1 = get_name(C.getOperand(0));
 	std::string op2 = get_name(C.getOperand(1));
+	std::cout << "// compare instruction" << std::endl;
 
 	std::cout << cname << " := " ;
 
@@ -489,6 +493,16 @@ namespace {
 	    int size = C.getOperand(0)->getType()->getScalarSizeInBits();
 	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") >= " 
 		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
+	  }
+	else if(cmp_op == CmpInst::ICMP_NE)
+	  {
+	    int size = C.getOperand(0)->getType()->getScalarSizeInBits();
+	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") != " 
+		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
+	  }
+	else if(cmp_op == CmpInst::FCMP_UNE || cmp_op == CmpInst::FCMP_ONE)
+	  {
+	    std::cout << "(" <<  op1 << " != " << op2 << " )" << std::endl;
 	  }
 	else if(cmp_op == CmpInst::FCMP_FALSE)
 	  {

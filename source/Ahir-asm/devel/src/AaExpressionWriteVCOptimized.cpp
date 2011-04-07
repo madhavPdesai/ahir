@@ -137,6 +137,9 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visi
 	  // record the pipe!
 	  pipe_map[this->_object->Get_VC_Name()].push_back(this);
 	}
+
+      // at the end!
+      visited_elements.insert(this);
     }
 }
 void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(set<AaRoot*>& visited_elements,
@@ -276,7 +279,8 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
 	    {
 	      // please load the object.
 	      this->_pointer_ref->Write_VC_Control_Path_Optimized(visited_elements,ls_map,pipe_map,ofile);
-	      __J(base_addr_calc, this->_pointer_ref->Get_VC_Complete_Region_Name());
+	      if(!this->_pointer_ref->Is_Constant())
+		__J(base_addr_calc, this->_pointer_ref->Get_VC_Complete_Region_Name());
 	      
 	    }
 	  else if(this->_object->Is_Expression())
@@ -325,6 +329,8 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
 
 	  ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
 	}
+      
+      visited_elements.insert(this);
     }
 
 }
@@ -366,10 +372,12 @@ void AaArrayObjectReference::Write_VC_Control_Path_As_Target_Optimized(set<AaRoo
 void AaPointerDereferenceExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
   this->_reference_to_object->Write_VC_Links_Optimized(hier_id,ofile);
+
   this->AaObjectReference::Write_VC_Load_Links_Optimized(hier_id,
 							 NULL,
 							 NULL,
 							 ofile);
+
 }
 void AaPointerDereferenceExpression::Write_VC_Links_As_Target_Optimized(string hier_id, ostream& ofile)
 {
@@ -378,6 +386,7 @@ void AaPointerDereferenceExpression::Write_VC_Links_As_Target_Optimized(string h
 							  NULL,
 							  NULL,
 							  ofile);
+
 }
 
 void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elements,
@@ -545,16 +554,16 @@ void AaTypeCastExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofi
       vector<string> reqs,acks;
       if(Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
 	{
-	  reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/req");
-	  acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ack");
+	  reqs.push_back(hier_id + "/req");
+	  acks.push_back(hier_id + "/ack");
 	  Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
 	}
       else
 	{
-	  reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/rr");
-	  reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/cr");
-	  acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ra");
-	  acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ca");
+	  reqs.push_back(hier_id + "/rr");
+	  reqs.push_back(hier_id + "/cr");
+	  acks.push_back(hier_id + "/ra");
+	  acks.push_back(hier_id + "/ca");
 
 	  Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
 	}
@@ -654,7 +663,9 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_el
 						   ofile);
 
 
-      __J(this->Get_VC_Active_Transition_Name(),this->_rest->Get_VC_Complete_Region_Name());
+      if(!this->_rest->Is_Constant())
+	__J(this->Get_VC_Active_Transition_Name(),this->_rest->Get_VC_Complete_Region_Name());
+
       ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] { // unary expression " << endl;      
       ofile << "$T [rr] $T [ra] $T [cr] $T [ca] //(split) unary operation" << endl;
       ofile << "}" << endl;

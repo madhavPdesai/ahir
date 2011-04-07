@@ -33,6 +33,25 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
   assert(0);
 }
 
+void AaAssignmentStatement::Write_VC_WAR_Dependencies(set<AaRoot*>& visited_elements,
+						      ostream& ofile)
+{
+  for(set<AaRoot*>::iterator iter = _source_references.begin(), fiter = _source_references.end();
+      iter != fiter;
+      iter++)
+    {
+      if((*iter)->Is_Expression() && (visited_elements.find(*iter) != visited_elements.end()))
+	{
+	  AaExpression* expr = (AaExpression*)(*iter);
+	  if(!expr->Is_Constant())
+	    {
+	      ofile << "// WAR dependency: " << this->To_String() << " before " << expr->To_String() << endl;
+	      __J(this->Get_VC_Active_Transition_Name(), expr->Get_VC_Complete_Region_Name());
+	    }
+	}
+    }
+}
+
 
 void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elements,
 							    map<string, vector<AaExpression*> >& ls_map,
@@ -50,12 +69,20 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
       __T(this->Get_VC_Active_Transition_Name());
       __T(this->Get_VC_Completed_Transition_Name());
 
+      // before doing anything else get the WAR dependencies
+      // out of the way.
+      this->Write_VC_WAR_Dependencies(visited_elements,ofile);
+
       // write the source side expressions and their 
       // dependencies..
-      this->_source->Write_VC_Control_Path_Optimized(visited_elements,
-						     ls_map,pipe_map,
-						     ofile);
-      __J(this->Get_VC_Active_Transition_Name(), _source->Get_VC_Complete_Region_Name());
+      if(!this->_source->Is_Constant())
+	{
+	  this->_source->Write_VC_Control_Path_Optimized(visited_elements,
+							 ls_map,pipe_map,
+							 ofile);
+	  
+	  __J(this->Get_VC_Active_Transition_Name(), _source->Get_VC_Complete_Region_Name());
+	}
       
       
       this->_target->Write_VC_Control_Path_As_Target_Optimized(visited_elements,
@@ -432,6 +459,7 @@ Write_VC_Pipe_Dependencies(map<string,vector<AaExpression*> >& pipe_map,
       iter++)
     {
       
+      ofile << "// pipe read/write dependencies for pipe " << (*iter).first << endl;
       AaExpression* last_expr = NULL;
       for(int idx = 0, fidx = (*iter).second.size(); idx < fidx; idx++)
 	{
@@ -669,120 +697,149 @@ void AaBranchBlockStatement::Write_VC_Control_Path_Optimized(string source_link,
 							     string sink_link,
 							     ostream& ofile)
 {
-
+  bool dummy_flag = true;
   if(sseq->Get_Statement_Count() > 0)
     {
       vector<AaStatementSequence* > linear_segment_vector;
       this->Identify_Maximal_Sequences(sseq,linear_segment_vector);
-      
-      
-      // first write out the places..
-      for(int idx = 0, fidx = linear_segment_vector.size();  idx < fidx; idx++)
+
+      if(linear_segment_vector.size() > 0)
 	{
+	  dummy_flag = false;
 	  
-	  AaStatementSequence* sseq = linear_segment_vector[idx];
-	  AaStatement* stmt = sseq->Get_Statement(0);
-	  
-	  if(!stmt->Is("AaPlaceStatement"))
+	  // first write out the places..
+	  for(int idx = 0, fidx = linear_segment_vector.size();  idx < fidx; idx++)
 	    {
-	      ofile << "$P [" << sseq->Get_VC_Entry_Place_Name() << "] " << endl;
-	      ofile << "$P [" << sseq->Get_VC_Exit_Place_Name() << "] " << endl;	  
-	    }
-	  else
-	    stmt->Write_VC_Control_Path(ofile);
-	}
-      
-      // second pass, all except merges.
-      for(int idx = 0, fidx = linear_segment_vector.size();  idx < fidx; idx++)
-	{
-	  AaStatementSequence* sseq = linear_segment_vector[idx];
-	  AaStatement* stmt = sseq->Get_Statement(0);
-	  
-	  if(!stmt->Is("AaMergeStatement") && !stmt->Is("AaPlaceStatement"))
-	    {
-	      if(stmt->Is_Block_Statement() || stmt->Is_Control_Flow_Statement())
-		stmt->Write_VC_Control_Path_Optimized(ofile);
-	      else 
-		this->AaBlockStatement::Write_VC_Control_Path_Optimized(sseq,ofile);
-	      
-	      
-	      // control regulated by __entry__ and __exit__ places..
-	      // except for switch and if statements..
-	      if(!stmt->Is("AaSwitchStatement") && !stmt->Is("AaIfStatement"))
+	      AaStatementSequence* sseq = linear_segment_vector[idx];
+	      AaStatement* stmt = sseq->Get_Statement(0);
+	      AaStatement* prev = NULL;
+	      if(idx > 0)
 		{
-		  // for switch and if, the control flow is a bit more complicated..
-		  // we do not create an explicit CP region for these statements..
-		  ofile << sseq->Get_VC_Entry_Place_Name() << " |-> (" << sseq->Get_VC_Name() << ")" << endl;
-		  ofile << sseq->Get_VC_Exit_Place_Name() << " <-| (" << sseq->Get_VC_Name() << ")" << endl;
+		  prev = linear_segment_vector[idx-1]->Get_Statement(0);
 		}
-	    }
-	}
-      
-      // third pass, the merges.
-      for(int idx = 0, fidx = linear_segment_vector.size();  idx < fidx; idx++)
-	{
-	  AaStatementSequence* sseq = linear_segment_vector[idx];
-	  AaStatement* stmt = sseq->Get_Statement(0);
-	  
-	  if(stmt->Is("AaMergeStatement"))
-	    {
-	      stmt->Write_VC_Control_Path(ofile);	  
-	    }
-	}
-      
-      
-      // finally, control transfer.
-      for(int idx = 0, fidx = linear_segment_vector.size();  idx < fidx; idx++)
-	{
-	  AaStatementSequence* sseq = linear_segment_vector[idx];
-	  AaStatement* stmt = sseq->Get_Statement(0);
-	  
-	  AaStatementSequence* prev = NULL;
-	  AaStatementSequence* next = NULL;
-	  
-	  if(idx > 0)
-	    prev = linear_segment_vector[idx-1];
-	  if(idx < fidx-1)
-	    {
-	      next = linear_segment_vector[idx+1];
-	    }
-	  
-	  // stmt gets control from its predecessor..
-	  AaStatement* prev_stmt = (prev != NULL ? prev->Get_Statement(0) : NULL);
-	  AaStatement* next_stmt = (next != NULL ? next->Get_Statement(0) : NULL);
-	  if(prev_stmt == NULL)
-	    {
-	      ofile << sseq->Get_VC_Entry_Place_Name() << " <-| (" << source_link << ")" << endl;
-	    }
-	  else
-	    {
-	      if(!prev_stmt->Is("AaPlaceStatement"))
-		{
-		  ofile << sseq->Get_VC_Entry_Place_Name() 
-			<< " <-| (" 
-			<< prev->Get_VC_Exit_Place_Name() 
-			<< ")" << endl;
-		}
-	    }
-	  
-	  if(next_stmt == NULL)
-	    {
+	      
 	      if(!stmt->Is("AaPlaceStatement"))
 		{
-		  ofile << sseq->Get_VC_Exit_Place_Name() << " |-> (" << sink_link << ")" << endl;
+		  if(!stmt->Is("AaMergeStatement"))
+		    ofile << "$P [" << sseq->Get_VC_Entry_Place_Name() << "] " << endl;
+		  else
+		    {
+		      if(prev == NULL || !prev->Is("AaPlaceStatement"))
+			{
+			  
+			  AaMergeStatement* ms = ((AaMergeStatement*)stmt);
+			  if(ms->Has_Merge_Label("$entry"))
+			    {
+			      if(prev != NULL && prev->Is("AaPlaceStatement"))
+				{
+				  AaRoot::Error("merge statement specifies a merge from entry which is unreachable.",
+						stmt);
+				}
+			    }
+			  ms->Set_Has_Entry_Place(true);
+			  ofile << "$P [" << stmt->Get_VC_Entry_Place_Name() << "] " << endl;
+			}
+		    }
+		  ofile << "$P [" << sseq->Get_VC_Exit_Place_Name() << "] " << endl;	  
+		}
+	      else
+		stmt->Write_VC_Control_Path_Optimized(ofile);
+	    }
+	  
+	  // second pass, all except merges.
+	  for(int idx = 0, fidx = linear_segment_vector.size();  idx < fidx; idx++)
+	    {
+	      AaStatementSequence* sseq = linear_segment_vector[idx];
+	      AaStatement* stmt = sseq->Get_Statement(0);
+	      
+	      if(!stmt->Is("AaMergeStatement") && !stmt->Is("AaPlaceStatement"))
+		{
+		  if(stmt->Is_Block_Statement() || stmt->Is_Control_Flow_Statement())
+		    stmt->Write_VC_Control_Path_Optimized(ofile);
+		  else 
+		    this->AaBlockStatement::Write_VC_Control_Path_Optimized(sseq,ofile);
+		  
+		  
+		  // control regulated by __entry__ and __exit__ places..
+		  // except for switch and if statements..
+		  if(!stmt->Is("AaSwitchStatement") && !stmt->Is("AaIfStatement"))
+		    {
+		      // for switch and if, the control flow is a bit more complicated..
+		      // we do not create an explicit CP region for these statements..
+		      ofile << sseq->Get_VC_Entry_Place_Name() << " |-> (" << sseq->Get_VC_Name() << ")" << endl;
+		      ofile << sseq->Get_VC_Exit_Place_Name() << " <-| (" << sseq->Get_VC_Name() << ")" << endl;
+		    }
+		}
+	    }
+	  
+	  // third pass, the merges.
+	  for(int idx = 0, fidx = linear_segment_vector.size();  idx < fidx; idx++)
+	    {
+	      AaStatementSequence* sseq = linear_segment_vector[idx];
+	      AaStatement* stmt = sseq->Get_Statement(0);
+	      
+	      if(stmt->Is("AaMergeStatement"))
+		{
+		  stmt->Write_VC_Control_Path(ofile);	  
+		}
+	    }
+	  
+	  
+	  // finally, control transfer.
+	  for(int idx = 0, fidx = linear_segment_vector.size();  idx < fidx; idx++)
+	    {
+	      AaStatementSequence* sseq = linear_segment_vector[idx];
+	      AaStatement* stmt = sseq->Get_Statement(0);
+	      
+	      AaStatementSequence* prev = NULL;
+	      AaStatementSequence* next = NULL;
+	      
+	      if(idx > 0)
+		prev = linear_segment_vector[idx-1];
+	      if(idx < fidx-1)
+		{
+		  next = linear_segment_vector[idx+1];
 		}
 	      
-	    }
-	} 
+	      // stmt gets control from its predecessor..
+	      AaStatement* prev_stmt = (prev != NULL ? prev->Get_Statement(0) : NULL);
+	      AaStatement* next_stmt = (next != NULL ? next->Get_Statement(0) : NULL);
+	      if(prev_stmt == NULL)
+		{
+		  ofile << sseq->Get_VC_Entry_Place_Name() << " <-| (" << source_link << ")" << endl;
+		}
+	      else
+		{
+		  if(!prev_stmt->Is("AaPlaceStatement"))
+		    {
+		      ofile << sseq->Get_VC_Entry_Place_Name() 
+			    << " <-| (" 
+			    << prev->Get_VC_Exit_Place_Name() 
+			    << ")" << endl;
+		    }
+		}
+	      
+	      if(next_stmt == NULL)
+		{
+		  if(!stmt->Is("AaPlaceStatement"))
+		    {
+		      ofile << sseq->Get_VC_Exit_Place_Name() << " |-> (" << sink_link << ")" << endl;
+		    }
+		  
+		}
+	    } 
+	  
+	  // clean up..
+	  this->Destroy_Maximal_Sequences(linear_segment_vector);
+	}      
+    }
 
-      // clean up..
-      this->Destroy_Maximal_Sequences(linear_segment_vector);
-    }      
-  else 
+  if(dummy_flag)
     {
-      ofile << "$P [dummy_place_] " << endl;
-      ofile << "dummy___place___ <-| (" << source_link << ")" << endl;
-      ofile << "dummy___place___ |-> (" << sink_link  << ")" << endl;
+      string plname = source_link + "_to_" + sink_link;
+      __Place(plname);
+      ofile << plname << " <-| (" << source_link << ")" << endl;
+      ofile << plname << " |-> (" << sink_link << ")" << endl;
     }
 }
 
@@ -914,20 +971,20 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 // AaSwitchStatement
 void AaSwitchStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 {
-  this->Write_VC_Control_Path(ofile);
+  this->Write_VC_Control_Path(true, ofile);
 }
 void AaSwitchStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
-  this->Write_VC_Links(hier_id, ofile);
+  this->Write_VC_Links(true, hier_id, ofile);
 }
 
 // AaIfStatement
 void AaIfStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 {
-  this->Write_VC_Control_Path(ofile);  
+  this->Write_VC_Control_Path(true, ofile);  
 }
 
 void AaIfStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
-  this->Write_VC_Links(hier_id,ofile);
+  this->Write_VC_Links(true, hier_id,ofile);
 }

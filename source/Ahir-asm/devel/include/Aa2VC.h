@@ -4,6 +4,7 @@
 #include <AaIncludes.h>
 
 #define __T(x) ofile << "$T[" << x << "] " << endl; 
+#define __Place(x) ofile << "$P[" << x << "] " << endl; 
 #define __J(x,y) ofile << x << " <-& (" << y << ")" << endl;
 #define __F(x,y) ofile << x << " &-> (" << y << ")" << endl;
 
