@@ -32,6 +32,8 @@ int main(int argc, char* argv[])
 {
 
 
+
+
   string sys_name = "test_system";
   vcSystem test_system(sys_name);
   
@@ -118,6 +120,7 @@ int main(int argc, char* argv[])
 	  test_system.Set_As_Top_Module(*iter);
 	}
       test_system.Elaborate();
+      cout << "-- VHDL produced by vc2vhdl from virtual circuit (vc) description " << endl;
       test_system.Print_VHDL(cout);
       test_system.Print_VHDL_Test_Bench(cout);
     }

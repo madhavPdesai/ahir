@@ -31,6 +31,7 @@ struct option long_options[] = {
 int main(int argc, char* argv[])
 {
 
+  cout << "// Virtual circuit produced from Aa description by Aa2VC " << endl;
   signal(SIGSEGV, Handle_Segfault);
 
   signal(SIGSEGV, Handle_Segfault);
@@ -92,4 +93,4 @@ int main(int argc, char* argv[])
 
 
   return(0);
-    }
+}

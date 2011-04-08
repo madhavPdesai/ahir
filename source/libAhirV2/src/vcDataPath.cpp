@@ -338,10 +338,13 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
 	    }
 	  if(is_compatible)
 	    {
-	      std::cerr << "Info: " << dpe->Get_Id() << " (" << I1.first->Get_Id() 
-			<< ", " << I1.second->Get_Id() << ")  included in " 
-			<< dpe->Kind() << " group "
-			<< IntToStr(idx) << endl;
+	      if(vcSystem::_verbose_flag)
+		{
+		  std::cerr << "Info: " << dpe->Get_Id() << " (" << I1.first->Get_Id() 
+			    << ", " << I1.second->Get_Id() << ")  included in " 
+			    << dpe->Kind() << " group "
+			    << IntToStr(idx) << endl;
+		}
 	      new_group = false;
 	      dpe_group[idx].insert(dpe);
 	      break;
@@ -351,10 +354,12 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
 
   if(new_group)
     {
-      std::cerr << "Info: " << dpe->Get_Id() << " (" << I1.first->Get_Id() 
-		<< ", " << I1.second->Get_Id() << ")  included in " 
-		<< dpe->Kind() << " group "
-		<< IntToStr(dpe_group.size()) << endl;
+      if(vcSystem::_verbose_flag)
+	std::cerr << "Info: " << dpe->Get_Id() << " (" << I1.first->Get_Id() 
+		  << ", " << I1.second->Get_Id() << ")  included in " 
+		  << dpe->Kind() << " group "
+		  << IntToStr(dpe_group.size()) << endl;
+
       set<vcDatapathElement*> nset;
       nset.insert(dpe);
       dpe_group.push_back(nset);

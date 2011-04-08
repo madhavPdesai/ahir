@@ -1,3 +1,7 @@
+//
+// authors: Madhav Desai, Sameer Sahasrabudhe
+// copyright:  Indian Institute of Technology, Bombay
+//
 #include <llvm/Module.h>
 #include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/PassManager.h>
@@ -48,8 +52,10 @@ int main(int argc, char **argv)
 {
 
   signal(SIGSEGV, Handle_Segfault);
+
+  std::cout << "// Aa code produced by llvm2aa (version 1.0)" << std::endl;
   cl::ParseCommandLineOptions(argc, argv,
-                                ".bc -> .aa backend for LLVM\n");
+                                "llvm-to-aa .o -> .aa front-end\n");
     sys::PrintStackTraceOnErrorSignal();
 
     std::string ErrorMessage;

@@ -401,6 +401,9 @@ void AaProgram::Add_Storage_Dependency_Graph_Vertex(AaRoot* u)
 // dependency graph correspond to memory spaces.
 void AaProgram::Coalesce_Storage()
 {
+
+  AaRoot::Info("Coalescing storage ");
+
   // basically a DFS starting from the storage objects (at each level in the program)
   for(map<string,AaObject*,StringCompare>::iterator obj_iter = _objects.begin();
       obj_iter != _objects.end();
@@ -428,6 +431,8 @@ void AaProgram::Coalesce_Storage()
     }
 
   int num_comps = AaProgram::_storage_dependency_graph.Connected_Components(AaProgram::_storage_eq_class_map);
+  AaRoot::Info("Finished coalescing storage.. identified " + IntToStr(num_comps) + " disjoint memory spaces");
+
   for(int idx = 0; idx < AaProgram::_storage_eq_class_map.size(); idx++)
     {
       set<int> lau_set;
@@ -613,11 +618,13 @@ void AaProgram::Write_VC_Model(int default_space_pointer_width,
 			       ostream& ofile)
 {
 
+  AaRoot::Info("Writing VC model.. ");
   AaProgram::Write_VC_Pipe_Declarations(ofile);
   AaProgram::Write_VC_Constant_Declarations(ofile);
 
   AaProgram::Write_VC_Memory_Spaces(ofile);
   AaProgram::Write_VC_Modules(ofile);
+  AaRoot::Info("Done writing VC model.. ");
 }
 
 void AaProgram::Write_VC_Model_Optimized(int default_space_pointer_width,
@@ -625,11 +632,13 @@ void AaProgram::Write_VC_Model_Optimized(int default_space_pointer_width,
 					 ostream& ofile)
 {
 
+  AaRoot::Info("Writing optimized VC model.. ");
   AaProgram::Write_VC_Pipe_Declarations(ofile);
   AaProgram::Write_VC_Constant_Declarations(ofile);
 
   AaProgram::Write_VC_Memory_Spaces(ofile);
   AaProgram::Write_VC_Modules_Optimized(ofile);
+  AaRoot::Info("Done writing optimized VC model.. ");
 }
 
 AaMemorySpace* AaProgram::Get_Memory_Space(int idx)

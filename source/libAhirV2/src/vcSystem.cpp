@@ -8,6 +8,7 @@
 #include <vcModule.hpp>
 #include <vcSystem.hpp>
 
+bool vcSystem::_verbose_flag = false;
 bool vcSystem::_error_flag = false;
 
 // if there are at most 16 addressable locations in a memory space, make
@@ -192,6 +193,8 @@ void vcSystem::Print_Control_Structure(ostream& ofile)
 void  vcSystem::Print_VHDL(ostream& ofile)
 {
 
+  cerr << "Info: printing VHDL model" << endl;
+
   // print types.
   ofile << "library ieee;" << endl
 	<< "use ieee.std_logic_1164.all;" << endl;
@@ -207,12 +210,16 @@ void  vcSystem::Print_VHDL(ostream& ofile)
       moditer != _modules.end();
       moditer++)
     {
+
+      cerr << "Info: printing VHDL model for module " << (*moditer).first << endl;
       (*moditer).second->Print_VHDL(ofile);
     }
 
   this->Print_VHDL_Inclusions(ofile);
   this->Print_VHDL_Entity(ofile);
   this->Print_VHDL_Architecture(ofile);
+
+  cerr << "Info: finished printing VHDL model" << endl;
 }
 
 void vcSystem::Print_VHDL_Constant_Declarations(ostream& ofile)

@@ -61,6 +61,9 @@ namespace Aa {
     virtual void visitAllocaInst(llvm::AllocaInst &I) { visitInstruction(I); }
     virtual void visitPHINode(llvm::PHINode &I) { visitInstruction(I); }
     virtual void visitCallInst(llvm::CallInst &I) { visitInstruction(I); }
+    virtual void visitSExtInst(llvm::SExtInst& C)  { visitInstruction(C); }
+    virtual void visitSIToFPInst(llvm::SIToFPInst& C) { visitInstruction(C); }
+    virtual void visitFPToSIInst(llvm::FPToSIInst& C) { visitInstruction(C); }
     virtual void visitCastInst(llvm::CastInst &I) { visitInstruction(I); }
     virtual void visitLoadInst(llvm::LoadInst &I) { visitInstruction(I); }
     virtual void visitStoreInst(llvm::StoreInst &I) { visitInstruction(I); }

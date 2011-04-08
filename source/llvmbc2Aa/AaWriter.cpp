@@ -406,8 +406,9 @@ namespace {
 
       llvm::Value *val = C.getOperand(0);
 
+      std::cout << cname << " := " ;
       // cout = (bit-cast uint) ((int) val)
-      std::cout << cname << " := ($bitcast (" << get_aa_type_name(dest) << ") ( cast ("  
+      std::cout << " ($bitcast (" << get_aa_type_name(dest) << ") ( $cast ("  
 		<< "$int< " << size << " > ) " 
 		<< get_name(val) << ") )"
 		<< std::endl;	  
@@ -423,8 +424,10 @@ namespace {
 
       llvm::Value *val = C.getOperand(0);
 
+
+      std::cout << cname << " := ";
       // cout = ((destType) ((bitcast int) val)) 
-      std::cout << cname << " := ( $cast ("  
+      std::cout << " ( $cast ("  
 		<< get_aa_type_name(dest) << ") "  
 		<<  " ( $bitcast ( $int< " 
 		<< size << " > ) " 
@@ -442,6 +445,7 @@ namespace {
 
       llvm::Value *val = C.getOperand(0);
 
+      std::cout << cname << " := ";
       // cout = (bitcast uint) ((int) val) 
       std::cout << "( $bitcast (" << get_aa_type_name(dest) << " ) " 
 		<< "( $cast ( $int< " << size << " > ) " 

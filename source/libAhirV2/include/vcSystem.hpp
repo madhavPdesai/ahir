@@ -34,6 +34,8 @@ class vcSystem: public vcRoot
 
   static bool _error_flag;
  public:
+  static bool _verbose_flag;
+
   vcSystem(string id);
   virtual void Print(ostream& ofile);
 
