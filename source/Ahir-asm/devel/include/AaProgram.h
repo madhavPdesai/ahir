@@ -72,9 +72,12 @@ class AaProgram
   // u and v must be in the same memory space!
   static AaUGraphBase _storage_dependency_graph;
 
+  
+
  public:
   static int _pointer_width;
   static string _current_file_name;
+  static bool _verbose_flag;
 
   AaProgram();
   ~AaProgram();

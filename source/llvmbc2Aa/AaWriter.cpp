@@ -319,9 +319,9 @@ namespace {
 	{
 	    int size = I.getType()->getScalarSizeInBits();
 	    // take it to int and back to uint...
-	    std::cout << iname << " :=  ($cast ($uint<" << size << ">) ( ($cast ( $int<" << size << ">) "  <<  op1  << ") "
+	    std::cout << iname << " :=  ($bitcast ($uint<" << size << ">) ( ($bitcast ( $int<" << size << ">) "  <<  op1  << ") "
 		      << ntype 
-		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " )))" 
+		      << "  ($bitcast ( $int<" << size << ">) "  <<   op2 << " )))" 
 		      << std::endl;
 	}
       else
@@ -397,15 +397,69 @@ namespace {
 	  }
     }
 
+    void visitSExtInst(SExtInst& C)
+    {
+      std::string cname = to_aa(C.getNameStr());
+
+      const llvm::Type *dest = C.getDestTy();
+      int size = dest->getScalarSizeInBits();
+
+      llvm::Value *val = C.getOperand(0);
+
+      // cout = (bit-cast uint) ((int) val)
+      std::cout << cname << " := ($bitcast (" << get_aa_type_name(dest) << ") ( cast ("  
+		<< "$int< " << size << " > ) " 
+		<< get_name(val) << ") )"
+		<< std::endl;	  
+
+    }
+
+    void visitSIToFPInst(SIToFPInst& C)
+    {
+      std::string cname = to_aa(C.getNameStr());
+
+      const llvm::Type *dest = C.getDestTy();
+      int size = dest->getScalarSizeInBits();
+
+      llvm::Value *val = C.getOperand(0);
+
+      // cout = ((destType) ((bitcast int) val)) 
+      std::cout << cname << " := ( $cast ("  
+		<< get_aa_type_name(dest) << ") "  
+		<<  " ( $bitcast ( $int< " 
+		<< size << " > ) " 
+		<< get_name(val) 
+		<< ") ) "
+		<< std::endl;	  
+    }
+
+    void visitFPToSIInst(FPToSIInst& C)
+    {
+      std::string cname = to_aa(C.getNameStr());
+
+      const llvm::Type *dest = C.getDestTy();
+      int size = dest->getScalarSizeInBits();
+
+      llvm::Value *val = C.getOperand(0);
+
+      // cout = (bitcast uint) ((int) val) 
+      std::cout << "( $bitcast (" << get_aa_type_name(dest) << " ) " 
+		<< "( $cast ( $int< " << size << " > ) " 
+		<< get_name(val) << ") )" << std::endl; 
+    }
+
     void visitCastInst(CastInst& C)
     {
       // TODO: i/o port stuff..
       std::string cname = to_aa(C.getNameStr());
 
       const llvm::Type *dest = C.getDestTy();
+      int size = dest->getScalarSizeInBits();
+
       llvm::Value *val = C.getOperand(0);
-      
-      std::cout << cname << " := ($cast (" << get_aa_type_name(dest) << ") "  << get_name(val) << ")"
+
+      std::cout << cname << " := ($cast (" 
+		<< get_aa_type_name(dest) << ") "  << get_name(val) << ")"
 		<< std::endl;
     }
 

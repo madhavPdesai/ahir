@@ -551,14 +551,14 @@ string AaAssignmentStatement::Debug_Info()
   st = this->Get_Source()->Get_Type();
   AaStorageObject* sms =  this->_source->Get_Addressed_Object_Representative();
 
-  ret_string =  "target-type =   ";
+  ret_string =  "// target-type =   ";
   ret_string += (tt ? tt->To_String() : "unknown") + "\n";
-  ret_string += "target-memory-space = ";
+  ret_string += "// target-memory-space = ";
   ret_string += (tms ?  IntToStr(tms->Get_Mem_Space_Index()) : " none") + "\n";
 
-  ret_string += "source-type = " ;
+  ret_string += "// source-type = " ;
   ret_string += (st ? st->To_String() : "unknown") + "\n";
-  ret_string += "source-memory-space = ";
+  ret_string += "// source-memory-space = ";
   ret_string += (sms ?  IntToStr(sms->Get_Mem_Space_Index()) : " none") + "\n";
 
   return(ret_string);
@@ -570,6 +570,9 @@ void AaAssignmentStatement::Print(ostream& ofile)
   this->Get_Target()->Print(ofile);
   ofile << " := ";
   this->Get_Source()->Print(ofile);
+
+  if(AaProgram::_verbose_flag)
+    ofile << endl << Debug_Info();
 
   ofile << endl;
 }

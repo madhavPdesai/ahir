@@ -753,6 +753,7 @@ class AaTypeCastExpression: public AaExpression
 {
   AaType* _to_type;
   AaExpression* _rest;
+  bool _bit_cast;
  public:
 
   AaType* Get_To_Type() {return(this->_to_type);}
@@ -760,6 +761,9 @@ class AaTypeCastExpression: public AaExpression
 
   AaTypeCastExpression(AaScope* scope, AaType* ref_type, AaExpression *rest);
   ~AaTypeCastExpression();
+
+  void Set_Bit_Cast(bool v) { _bit_cast = v;}
+
   void Print(ostream& ofile);
   virtual string Kind() {return("AaTypeCastExpression");}
   virtual void Map_Source_References(set<AaRoot*>& source_objects) 

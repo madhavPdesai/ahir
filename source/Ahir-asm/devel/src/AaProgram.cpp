@@ -7,6 +7,8 @@
 
 // static members of AaProgram..
 int AaProgram::_pointer_width = 32;
+bool AaProgram::_verbose_flag = false;
+
 string AaProgram::_current_file_name;
 std::map<string,AaType*,StringCompare>   AaProgram::_type_map;
 std::map<string,AaObject*,StringCompare> AaProgram::_objects;

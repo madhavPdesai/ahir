@@ -660,13 +660,13 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
 
   if(in_type->Kind() == "vcFloatType" && out_type->Kind() == "vcIntType")
     {
-      if(vc_op_id == vcLexerKeywords[__SGT_OP]            ) { ret_string = "ApFloatOgt" ;} 
-      else if(vc_op_id == vcLexerKeywords[__SGE_OP]            ) { ret_string = "ApFloatOge"  ;} 
-      else if(vc_op_id == vcLexerKeywords[__EQ_OP]            ) { ret_string = "ApFloatOeq"  ;} 
-      else if(vc_op_id == vcLexerKeywords[__SLT_OP]            ) { ret_string = "ApFloatOlt"  ;} 
-      else if(vc_op_id == vcLexerKeywords[__SLE_OP]            ) { ret_string = "ApFloatOle"  ;}
-      else if(vc_op_id == vcLexerKeywords[__NEQ_OP]           ) { ret_string = "ApFloatOne"  ;} 
-      // unordered float comparisons not supported as of now..
+      // all float comparison operations will be unordered.. (no exception handling!)
+      if(vc_op_id == vcLexerKeywords[__SGT_OP]            ) { ret_string = "ApFloatUgt" ;} 
+      else if(vc_op_id == vcLexerKeywords[__SGE_OP]            ) { ret_string = "ApFloatUge"  ;} 
+      else if(vc_op_id == vcLexerKeywords[__EQ_OP]            ) { ret_string = "ApFloatUeq"  ;} 
+      else if(vc_op_id == vcLexerKeywords[__SLT_OP]            ) { ret_string = "ApFloatUlt"  ;} 
+      else if(vc_op_id == vcLexerKeywords[__SLE_OP]            ) { ret_string = "ApFloatUle"  ;}
+      else if(vc_op_id == vcLexerKeywords[__NEQ_OP]           ) { ret_string = "ApFloatUne"  ;} 
       else if(vc_op_id == vcLexerKeywords[__BITSEL_OP]        ) { ret_string = "ApBitsel"   ;} 
       else if(vc_op_id == vcLexerKeywords[__CONCAT_OP]        ) { ret_string = "ApConcat"   ;} 
       else if(vc_op_id == vcLexerKeywords[__FtoS_ASSIGN_OP]        ) { ret_string = "ApFloatToApIntSigned";}
@@ -676,11 +676,11 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
     }
   if((in_type->Is("vcIntType") || in_type->Is("vcPointerType")) && out_type->Kind() == "vcFloatType")
     {
-      if(vc_op_id == vcLexerKeywords[__ASSIGN_OP] ) { ret_string = "ApIntUnsignedToApFloat";}
-      else if(vc_op_id == vcLexerKeywords[__StoF_ASSIGN_OP]        ) { ret_string = "ApIntSignedToApFloat";}
+      if(vc_op_id == vcLexerKeywords[__ASSIGN_OP] ) { ret_string = "ApIntToApFloatUnsigned";}
+      else if(vc_op_id == vcLexerKeywords[__StoF_ASSIGN_OP]        ) { ret_string = "ApIntToApFloatSigned";}
       else if(vc_op_id == vcLexerKeywords[__UtoF_ASSIGN_OP]        ) 
 	{ 
-	  ret_string = "ApIntUnsignedToApFloat";
+	  ret_string = "ApIntToApFloatUnsigned";
 	}      
       else { vcSystem::Error("unsupported int -> float operation " + vc_op_id);}
     }

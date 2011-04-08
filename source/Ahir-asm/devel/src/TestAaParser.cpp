@@ -17,6 +17,8 @@ void Handle_Segfault(int signal)
 int main(int argc, char* argv[])
 {
 
+  AaProgram::_verbose_flag = true;
+
   signal(SIGSEGV, Handle_Segfault);
 
   if(argc < 2)

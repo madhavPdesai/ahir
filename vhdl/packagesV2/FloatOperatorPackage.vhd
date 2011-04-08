@@ -8,7 +8,7 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 	
 library ieee_proposed;	
--- use ieee_proposed.math_utility_pkg.all;	
+use ieee_proposed.math_utility_pkg.all;	
 use ieee_proposed.fixed_pkg.all;	
 use ieee_proposed.float_pkg.all;	
 
@@ -174,28 +174,21 @@ package body FloatOperatorPackage is
   begin
      result := To_ISLV(to_apint(to_unsigned(to_float(l),result'length)));
   end ApFloatToApIntUnsigned_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApIntToApFloatSigned_proc (l : in apint; result : out IStdLogicVector) is					
-     variable exponent_width: integer;
-     variable fraction_width: integer;
-  begin
-   fraction_width := - result'low;
-   -- todo: why does ghdl barf on this?
-   -- result := To_ISLV(to_apfloat(to_float(to_signed(l),exponent_width,fraction_width,round_zero)));
-  end ApIntToApFloatSigned_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApIntToApFloatUnsigned_proc (l : in apint; result : out IStdLogicVector) is					
-     variable exponent_width: integer;
-     variable fraction_width: integer;
-  begin
-   -- todo: why does ghdl barf on this?
-   -- result := To_ISLV(to_apfloat(to_float(to_unsigned(l),exponent_width,fraction_width,round_zero)));
-  end ApIntToApFloatUnsigned_proc; 				
-  ---------------------------------------------------------------------
 
-   -----------------------------------------------------------------------------	
+ ---------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  procedure ApIntToApFloatSigned_proc (l : in apint; result : out IStdLogicVector) is
+  begin
+   result := To_ISLV(to_apfloat(to_float(to_signed(l),result'high,-result'low,round_zero)));
+  end ApIntToApFloatSigned_proc;
+  ---------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  procedure ApIntToApFloatUnsigned_proc (l : in apint; result : out IStdLogicVector) is
+  begin
+   result := To_ISLV(to_apfloat(to_float(to_unsigned(l),result'high,-result'low,round_zero)));
+  end ApIntToApFloatUnsigned_proc;
+  ---------------------------------------------------------------------
+  -----------------------------------------------------------------------------	
   procedure TwoInputFloatOperation(constant id : in string; x, y : in IStdLogicVector; result : out IStdLogicVector) is	
     variable result_var : IStdLogicVector(result'high downto result'low);	
     variable temp_int: integer;

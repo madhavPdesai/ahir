@@ -2035,6 +2035,7 @@ void AaAddressOfExpression::Write_VC_Links_As_Target(string hier_id, ostream& of
 //---------------------------------------------------------------------
 AaTypeCastExpression::AaTypeCastExpression(AaScope* parent, AaType* ref_type,AaExpression* rest):AaExpression(parent)
 {
+  this->_bit_cast = false;
   this->_to_type = ref_type;
   this->_type = ref_type;
   this->_rest = rest;
@@ -2045,7 +2046,8 @@ AaTypeCastExpression::AaTypeCastExpression(AaScope* parent, AaType* ref_type,AaE
 AaTypeCastExpression::~AaTypeCastExpression() {};
 void AaTypeCastExpression::Print(ostream& ofile)
 {
-  ofile << "( $cast (" ;
+  string cast_name = (_bit_cast ? "$bitcast" : "$cast");
+  ofile << "(" << cast_name << " (" ;
   this->Get_To_Type()->Print(ofile);
   ofile << ") ";
   this->Get_Rest()->Print(ofile);
@@ -2055,6 +2057,11 @@ void AaTypeCastExpression::Print(ostream& ofile)
 
 void AaTypeCastExpression::PrintC(ofstream& ofile, string tab_string)
 {
+  if(this->_bit_cast)
+    {
+      AaRoot::Error("bit-cast not supported in Aa2VC", this);
+    }
+
   if(this->_rest->Get_Type() && this->_rest->Get_Type()->Is("AaPointerType"))
     ofile << tab_string << "(" << "(" << this->_to_type->CBaseName() << ") ";
   else
@@ -2077,7 +2084,7 @@ void AaTypeCastExpression::Write_VC_Control_Path(ostream& ofile)
 
       // either it will be a register or a split conversion
       // operator..
-      if(Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
+      if(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
 	ofile << "$T [req] $T [ack] //  type-conversion.. " << endl;
       else
 	ofile << "$T [rr] $T [ra] $T [cr] $T [ca] //  type-conversion.. " << endl;
@@ -2144,13 +2151,24 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
       this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
 
       ofile << "// " << this->To_String() << endl;
-      Write_VC_Unary_Operator(__NOP,
-			      this->Get_VC_Datapath_Instance_Name(),
-			      this->_rest->Get_VC_Driver_Name(),
-			      this->_rest->Get_Type(),
-			      (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name()),
-			      this->Get_Type(),
-			      ofile);
+      if(_bit_cast)
+	{
+	  Write_VC_Register(this->Get_VC_Datapath_Instance_Name(),
+			    this->_rest->Get_VC_Driver_Name(),
+			    (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name()),
+			    ofile);
+			    
+	}
+      else
+	{
+	  Write_VC_Unary_Operator(__NOP,
+				  this->Get_VC_Datapath_Instance_Name(),
+				  this->_rest->Get_VC_Driver_Name(),
+				  this->_rest->Get_Type(),
+				  (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name()),
+				  this->Get_Type(),
+				  ofile);
+	}
     }
 }
 
@@ -2166,7 +2184,7 @@ void AaTypeCastExpression::Write_VC_Links(string hier_id, ostream& ofile)
       
       vector<string> reqs,acks;
 
-      if(Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
+      if(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
 	{
 	  reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/req");
 	  acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ack");

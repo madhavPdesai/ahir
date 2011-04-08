@@ -142,6 +142,17 @@ void Write_VC_Unary_Operator(AaOperation op,
 	<< "(" << target_name << ")" << endl;
 }
 
+
+void Write_VC_Register( string inst_name, 
+			string src_name, 
+			string target_name,
+			ostream& ofile)
+{
+  ofile << ":= [" << inst_name << "] " 
+	<< "(" << src_name << ") "
+	<< "(" << target_name << ")" << endl;
+}
+
 void Write_VC_Binary_Operator(AaOperation op, 
 			      string inst_name, 
 			      string src1, 

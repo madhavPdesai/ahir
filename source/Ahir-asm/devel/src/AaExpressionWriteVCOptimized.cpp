@@ -552,7 +552,7 @@ void AaTypeCastExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofi
       hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Complete_Region_Name());
 
       vector<string> reqs,acks;
-      if(Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
+      if(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
 	{
 	  reqs.push_back(hier_id + "/req");
 	  acks.push_back(hier_id + "/ack");
@@ -599,8 +599,8 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited
       // either it will be a register or a split conversion
       // operator..
       ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "]{ " << endl;
-      if(Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
-	ofile << "$T [req] $T [ack] //  type-conversion.. " << endl;
+      if(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
+	ofile << "$T [req] $T [ack] //  type-conversion (bit-cast) " << endl;
       else
 	ofile << "$T [rr] $T [ra] $T [cr] $T [ca] //  type-conversion.. " << endl;
       ofile << "}" << endl;

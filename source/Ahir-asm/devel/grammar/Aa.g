@@ -803,6 +803,7 @@ aA_Unary_Expression[AaScope* scope] returns [AaExpression* expr]
     AaExpression* rest = NULL;
     AaType* to_type = NULL;
     expr = NULL;
+    bool bit_cast = false;
 }   
     :   
         lpid: LPAREN 
@@ -816,12 +817,13 @@ aA_Unary_Expression[AaScope* scope] returns [AaExpression* expr]
              )   
                 |
             (
-                CAST
+                (CAST | (BITCAST {bit_cast = true;}))
 
                 LPAREN (to_type = aA_Type_Reference[scope]) RPAREN
                 (rest = aA_Expression[scope] )
                 {   
                     expr = new AaTypeCastExpression(scope,to_type,rest);
+                    ((AaTypeCastExpression*)expr)->Set_Bit_Cast(bit_cast);
                 }
             )
         )
@@ -1354,6 +1356,7 @@ RECORD         : "$record";
 
 // type cast
 CAST : "$cast";
+BITCAST : "$bitcast";
 
 // pointer reference.
 DEREFERENCE_OP : "->";
