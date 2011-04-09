@@ -554,12 +554,18 @@ string AaAssignmentStatement::Debug_Info()
   ret_string =  "// target-type =   ";
   ret_string += (tt ? tt->To_String() : "unknown") + "\n";
   ret_string += "// target-memory-space = ";
-  ret_string += (tms ?  IntToStr(tms->Get_Mem_Space_Index()) : " none") + "\n";
+  if(tms != NULL && tms->Is_Foreign_Storage_Object())
+    ret_string += tms->Get_Name() + "\n";
+  else
+    ret_string += (tms ?  IntToStr(tms->Get_Mem_Space_Index()) : " none") + "\n";
 
   ret_string += "// source-type = " ;
   ret_string += (st ? st->To_String() : "unknown") + "\n";
   ret_string += "// source-memory-space = ";
-  ret_string += (sms ?  IntToStr(sms->Get_Mem_Space_Index()) : " none") + "\n";
+  if(sms != NULL && sms->Is_Foreign_Storage_Object())
+    ret_string += sms->Get_Name() + "\n";
+  else
+    ret_string += (sms ?  IntToStr(sms->Get_Mem_Space_Index()) : " none") + "\n";
 
   return(ret_string);
 }
@@ -875,12 +881,12 @@ void AaCallStatement::Print(ostream& ofile)
 
 }
 
-
 void AaCallStatement::Map_Source_References()
 {
   AaModule* called_module = AaProgram::Find_Module(this->_function_name);
   if(called_module != NULL)
     {
+      called_module->Increment_Number_Of_Times_Called();
       this->Set_Called_Module(called_module);
 
       AaScope* root_scope = this->Get_Root_Scope();
@@ -1203,14 +1209,14 @@ void AaCallStatement::Write_VC_Control_Path(ostream& ofile)
   ofile << "// " << this->Get_Source_Info() << endl;
 
   ofile << ";;[" << this->Get_VC_Name() << "] { // call statement " << this->Get_Source_Info() << endl;
-  ofile << "||[" << this->Get_VC_Name() << "_in_args_] { // input arguments" << endl;
+  ofile << "||[in_args] { // input arguments" << endl;
   for(int idx = 0; idx < _input_args.size(); idx++)
     _input_args[idx]->Write_VC_Control_Path(ofile);
   ofile << "}" << endl;
 
   ofile << "$T [crr] $T [cra] $T [ccr] $T [cca]" << endl;
 
-  ofile << "||[" << this->Get_VC_Name() << "_out_args_] { // output arguments" << endl;
+  ofile << "||[out_args] { // output arguments" << endl;
   for(int idx = 0; idx < _output_args.size(); idx++)
     _output_args[idx]->Write_VC_Control_Path_As_Target(ofile);
   ofile << "}" << endl;
@@ -1238,7 +1244,22 @@ void AaCallStatement::Write_VC_Wire_Declarations(ostream& ofile)
  for(int idx = 0; idx < _input_args.size(); idx++)
    _input_args[idx]->Write_VC_Wire_Declarations(false, ofile);
  for(int idx = 0; idx < _output_args.size(); idx++)
-   _output_args[idx]->Write_VC_Wire_Declarations_As_Target(ofile);
+   {
+     if(!_output_args[idx]->Is_Implicit_Variable_Reference())
+       {
+	 // will have to explicitly declare this wire.
+	 // because a normal store target always
+	 // has a declared source.  In the case of the
+	 // call statement, this declared source is absent.
+	 // hence declare it.
+	 Write_VC_Wire_Declaration(_output_args[idx]->Get_VC_Driver_Name(),
+				   _output_args[idx]->Get_Type(),
+				   ofile);
+       }
+
+     // the remaining wires needed ..
+     _output_args[idx]->Write_VC_Wire_Declarations_As_Target(ofile);
+   }
 }
 void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 {
@@ -1276,20 +1297,20 @@ void AaCallStatement::Write_VC_Links(string hier_id, ostream& ofile)
   ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
+  hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Name());
+
   vector<string> reqs, acks;
-  if(hier_id != "")
-    hier_id = hier_id + "/" + this->Get_VC_Name();
-  else
-    hier_id = this->Get_VC_Name();
 
   for(int idx = 0; idx < _input_args.size(); idx++)
     {
-      _input_args[idx]->Write_VC_Links(hier_id + "/_in_args_", ofile);
+      string ih = Augment_Hier_Id(hier_id, "in_args");
+      _input_args[idx]->Write_VC_Links(ih, ofile);
 
     }
   for(int idx = 0; idx < _output_args.size(); idx++)
     {
-      _output_args[idx]->Write_VC_Links(hier_id + "/_out_args_", ofile);
+      string oh = Augment_Hier_Id(hier_id,"out_args");
+      _output_args[idx]->Write_VC_Links_As_Target(oh, ofile);
     }
 
   reqs.push_back(hier_id + "/crr");
@@ -1322,6 +1343,23 @@ AaBlockStatement::AaBlockStatement(AaScope* scope,string label):AaStatement(scop
 }
 
 AaBlockStatement::~AaBlockStatement() {}
+
+void AaBlockStatement::Add_Object(AaObject* obj) 
+{ 
+  if(this->Find_Child_Here(obj->Get_Name()) == NULL)
+    { 
+      this->_objects.push_back(obj);
+      this->Map_Child(obj->Get_Name(),obj);
+      if(obj->Is("AaStorageObject"))
+	{
+	  AaProgram::Add_Storage_Dependency_Graph_Vertex(obj);
+	}
+    }
+  else
+    {
+      AaRoot::Error("object " + obj->Get_Name() + " already exists in " + this->Get_Label(),obj);
+    }
+}
 
 void AaBlockStatement::Coalesce_Storage()
 {

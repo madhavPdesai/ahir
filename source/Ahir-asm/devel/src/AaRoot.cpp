@@ -41,10 +41,14 @@ void AaRoot::Error(string msg,AaRoot* r)
 { 
   cerr << "Error: " << msg;
   if(r != NULL)
-    cerr << " :line " << r->Get_Line_Number();
+    {
+      cerr << ": file " << r->Get_File_Name() << ", line " << r->Get_Line_Number();
+    }
+
   cerr << endl;
   AaRoot::_error_flag = true;
 }
+
 void AaRoot::Warning(string msg,AaRoot* r) 
 { 
   cerr << "Warning: " << msg;

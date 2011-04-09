@@ -736,6 +736,15 @@ void vcModule::Print_VHDL_Call_Arbiter_Instantiation(ostream& ofile)
 
 void vcModule::Print_VHDL_Instance(ostream& ofile)
 {
+
+  if((this->Get_Num_Calls() == 0) && !this->Get_Parent()->Is_A_Top_Module(this))
+    {
+      std::cerr << "Warning:  tying the init signal for module " << this->Get_Label() 
+		<< " to 0" << endl;
+      string prefix  = this->Get_VHDL_Id() + "_";
+      ofile << prefix << "start <= '0';" << endl;
+    }
+
   string instance_id = this->Get_VHDL_Id() + "_instance";
   ofile << instance_id << ":" << this->Get_VHDL_Id() << "-- {" << endl;
   ofile << "port map(-- {\n ";

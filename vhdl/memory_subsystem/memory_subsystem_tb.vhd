@@ -32,10 +32,10 @@ architecture behave of memory_subsystem_tb is
          clock, reset  : in std_logic);
   end component;
 
-  constant num_loads: natural := 5;
+  constant num_loads: natural := 2;
   constant num_stores: natural := num_loads;
-  constant data_width : natural := 16;
-  constant addr_width : natural := 8;
+  constant data_width : natural := 28;
+  constant addr_width : natural := 10;
   constant tag_width : natural := Ceil_Log2(num_loads);
   constant iteration_count : natural := (2**addr_width) - 1;
 
@@ -103,11 +103,11 @@ begin
       tag_width  => tag_width,
       num_loads  => num_loads,
       num_stores => num_stores,
-      number_of_banks => 1,
-      mux_degree => 4,
-      demux_degree => 10,
-	base_bank_addr_width => 8,
-	base_bank_data_width => 8)
+      number_of_banks => 4,
+      mux_degree => 2,
+      demux_degree => 2,
+	base_bank_addr_width => 10,
+	base_bank_data_width => 7)
     port map (
         lr_addr_in   => lr_addr_in,
         lr_tag_in    => lr_tag_in,

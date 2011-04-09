@@ -195,6 +195,24 @@ namespace Aa {
       }
   }
 
+  void AaWriter::name_all_instructions(llvm::BasicBlock &BB, int& iidx)
+  {
+
+    // first name all instructions.
+    for(llvm::BasicBlock::iterator iiter = BB.begin(),fiter = BB.end(); 
+	iiter != fiter;  ++iiter)
+      {
+	if((*iiter).getNameStr() == "")
+	  {
+	    std::string iname = "iNsTr_" + int_to_str(iidx); 
+	    (*iiter).setName(iname);
+	    iidx++;
+	  }
+      }
+  }
+
+
+
 
 }
 
@@ -241,20 +259,6 @@ namespace {
     {
       std::string bb_name = to_aa(BB.getNameStr());
       std::cout << "//begin: basic-block " << bb_name << std::endl;
-
-      // first name all instructions.
-      int iidx = 0;
-      for(llvm::BasicBlock::iterator iiter = BB.begin(),fiter = BB.end(); 
-	  iiter != fiter;  ++iiter)
-	{
-	  if((*iiter).getNameStr() == "")
-	    {
-	      std::string iname = "iNsTr_" + int_to_str(iidx); 
-	      (*iiter).setName(iname);
-	      iidx++;
-
-	    }
-	}
 
       if(this->bb_predecessor_map[bb_name].size() > 0)
 	{

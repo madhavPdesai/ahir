@@ -53,7 +53,8 @@ class AaProgram
   static std::map<int,set<AaRoot*> > _storage_eq_class_map;
   static std::map<int,set<AaModule*> > _storage_index_module_coverage_map;
   static std::map<int,AaMemorySpace*> _memory_space_map;
-  
+  static std::map<AaType*,AaForeignStorageObject*> _foreign_storage_map;
+
   // recoalesce set.
   static set<AaObject*> _recoalesce_set;
 
@@ -76,6 +77,8 @@ class AaProgram
 
  public:
   static int _pointer_width;
+  static int _foreign_word_size;
+  static int _foreign_address_width;
   static string _current_file_name;
   static bool _verbose_flag;
 
@@ -149,6 +152,8 @@ class AaProgram
   static AaMemorySpace* Get_Memory_Space(int idx);
 
   static void Add_To_Recoalesce_Set(AaObject* obj);
+
+  static AaForeignStorageObject* Make_Foreign_Storage_Object(AaType* t);
 };
 
 

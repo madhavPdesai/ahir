@@ -46,5 +46,11 @@ int main(int argc, char* argv[])
     cerr << "Error: there were errors during elaboration, check the log" << endl;
   else
     AaProgram::Print(cout);
+
+  if(AaRoot::Get_Error_Flag())
+    {
+      cerr << "Error: there were errors during elaboration, check the log" << endl;
+      return(1);
+    }
   return(0);
 }

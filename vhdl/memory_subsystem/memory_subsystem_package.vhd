@@ -11,7 +11,7 @@ package memory_subsystem_package is
       addr_width      : natural;
       data_width      : natural;
       tag_width       : natural;
-      number_of_banks : natural;
+      number_of_banks : natural; -- must be a power of 2!
       mux_degree      : natural;
       demux_degree    : natural;
       base_bank_addr_width: natural;

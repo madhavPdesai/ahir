@@ -594,6 +594,12 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
       if(!this->Is_A_Top_Module((*moditer).second))
 	{
 
+	  if((*moditer).second->Get_Num_Calls() == 0)
+	    {
+	      std::cerr << "Warning:  module " << (*moditer).second->Get_Label() << " is not called from within the system, and is not marked as a top-module!" << std::endl;
+	    }
+
+
 	  ofile << "-- argument signals for module " << (*moditer).second->Get_VHDL_Id() << endl;
 	  (*moditer).second->Print_VHDL_Argument_Signals(ofile);
 	  if((*moditer).second->Get_Num_Calls() > 0)

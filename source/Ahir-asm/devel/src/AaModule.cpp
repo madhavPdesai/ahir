@@ -17,6 +17,9 @@
 //---------------------------------------------------------------------
 AaModule::AaModule(string fname): AaSeriesBlockStatement(NULL,fname)
 {
+  _foreign_flag = false;
+  _inline_flag = false;
+  _number_of_times_called = 0;
 }
 
 void AaModule::Add_Argument(AaInterfaceObject* obj)
@@ -276,6 +279,54 @@ void AaModule::Propagate_Constants()
 }
 
 
+void AaModule::Set_Foreign_Object_Representatives()
+{
+	
+  bool is_root = (this->Get_Number_Of_Times_Called() ==  0);
+	
+  if(is_root)
+    {
+      for(int idx = 0,  fidx = this->Get_Number_Of_Input_Arguments(); 
+	  idx < fidx;
+	  idx++)
+	{
+	  AaInterfaceObject* inobj = this->Get_Input_Argument(idx);
+	  if(inobj->Get_Type()->Is_Pointer_Type())
+	    {
+		    
+	      AaRoot::Info("input argument " + inobj->Get_Name() + " of module " + this->Get_Label()
+			   + " points to foreign storage ");
+	      AaType* el_type = ((AaPointerType*)inobj->Get_Type())->Get_Ref_Type();
+	      AaForeignStorageObject* fobj = AaProgram::Make_Foreign_Storage_Object(el_type);
+
+	      fobj->Add_Source_Reference(inobj);  // inobj uses fobj as a source
+	      inobj->Add_Target_Reference(fobj);  // fobj uses inobj as a target
+
+	      inobj->Propagate_Addressed_Object_Representative(fobj);
+	    }
+	}
+	    
+      for(int idx = 0,  fidx = this->Get_Number_Of_Output_Arguments(); 
+	  idx < fidx;
+	  idx++)
+	{
+	  AaInterfaceObject* outobj = this->Get_Output_Argument(idx);
+	  if(outobj->Get_Type()->Is_Pointer_Type())
+	    {
+		    
+	      AaRoot::Info("input argument " + outobj->Get_Name() + " of module " + this->Get_Label()
+			   + " points to foreign storage ");
+	      AaType* el_type = ((AaPointerType*)outobj->Get_Type())->Get_Ref_Type();
+	      AaForeignStorageObject* fobj = AaProgram::Make_Foreign_Storage_Object(el_type);
+
+	      fobj->Add_Source_Reference(outobj);  // fobj uses outobj as a source
+	      outobj->Add_Target_Reference(fobj);  // outobj uses fobj as a target
+
+	      outobj->Propagate_Addressed_Object_Representative(fobj);
+	    }
+	}
+    }
+}
 
 void AaModule::Write_VC_Model(ostream& ofile)
 {

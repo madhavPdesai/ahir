@@ -49,6 +49,7 @@ namespace Aa {
     }
 
     std::string get_name(llvm::Value* v);
+    void name_all_instructions(llvm::BasicBlock &BB, int& iidx);
 
     virtual void initialise_with_function(llvm::Function &F) = 0;
     virtual void finalise_function() = 0;

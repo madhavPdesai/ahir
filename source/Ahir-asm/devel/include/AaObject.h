@@ -70,7 +70,7 @@ class AaObject: public AaRoot
   virtual bool Is_Constant() {return(false);}
   virtual string Get_VC_Memory_Space_Name() {assert(0);}
 
-  bool Set_Addressed_Object_Representative(AaStorageObject* obj);
+  virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
   void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
   void Coalesce_Storage();
 
@@ -124,6 +124,8 @@ class AaConstantObject: public AaObject
 
 class AaStorageObject: public AaObject
 {
+
+ protected:
   // objects will be stored in memory
   //
   int _base_address;    // location of "base" of object.
@@ -146,23 +148,23 @@ class AaStorageObject: public AaObject
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaStorageObject");}
 
-  void Set_Mem_Space_Index(int id) { _mem_space_index = id;}
-  int Get_Mem_Space_Index() {return(_mem_space_index);}
+  virtual void Set_Mem_Space_Index(int id) { _mem_space_index = id;}
+  virtual int Get_Mem_Space_Index() {return(_mem_space_index);}
 
-  void Set_Base_Address(int a) { _base_address = a; }
-  int Get_Base_Address() {return(_base_address);}
+  virtual void Set_Base_Address(int a) { _base_address = a; }
+  virtual int Get_Base_Address() {return(_base_address);}
 
-  void Set_Word_Size(int a) { _word_size = a; }
-  int Get_Word_Size() {return(_word_size);}
+  virtual void Set_Word_Size(int a) { _word_size = a; }
+  virtual int Get_Word_Size() {return(_word_size);}
+  
+  virtual void Set_Address_Width(int a) { _address_width = a; }
+  virtual int Get_Address_Width() {return(_address_width);}
 
-  void Set_Address_Width(int a) { _address_width = a; }
-  int Get_Address_Width() {return(_address_width);}
+  virtual void Set_Is_Written_Into(bool v) { _is_written_into = v; }
+  virtual bool Get_Is_Written_Into() { return(_is_written_into); }
 
-  void Set_Is_Written_Into(bool v) { _is_written_into = v; }
-  bool Get_Is_Written_Into() { return(_is_written_into); }
-
-  void Set_Is_Read_From(bool v) { _is_read_from = v; }
-  bool Get_Is_Read_From() { return(_is_read_from); }
+  virtual void Set_Is_Read_From(bool v) { _is_read_from = v; }
+  virtual bool Get_Is_Read_From() { return(_is_read_from); }
 
   virtual bool Is_Storage_Object() {return(true);}
 
@@ -183,6 +185,37 @@ class AaStorageObject: public AaObject
     return(this->Get_VC_Name() + "_base_address");
   }
 
+
+
+};
+
+
+class AaForeignStorageObject: public AaStorageObject
+{
+
+ public:
+  AaForeignStorageObject(AaType* otype, int word_size, int address_width);
+
+  virtual void Print(ostream& ofile) {assert(0);}
+  virtual string Kind() {return("AaForeignStorageObject");}
+
+  virtual void Set_Mem_Space_Index(int id) {assert(0);}
+  virtual int Get_Mem_Space_Index() { assert(0); }
+
+  virtual bool Is_Storage_Object() {return(true);}
+  virtual bool Is_Foreign_Storage_Object() {return(true); }
+
+  virtual string Get_VC_Memory_Space_Name()
+  {
+    return("FOREIGN_MEMORY_SPACE");
+  }
+  
+  virtual void Write_VC_Load_Store_Constants(ostream& ofile)
+  {
+    // nothing.
+  }
+
+  virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
 
 };
 

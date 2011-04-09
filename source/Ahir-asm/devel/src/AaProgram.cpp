@@ -6,7 +6,19 @@
 //---------------------------------------------------------------------
 
 // static members of AaProgram..
+
+
+// the foreign memory space is assumed to have
+// a word-size of 8 bits and an address width
+// of 32 bits .. (nothing sacred about this,
+// but this will be used in doing pointer arithmetic).
+int AaProgram::_foreign_word_size = 8;
+int AaProgram::_foreign_address_width = 32;
+
+// all pointers in the program are assumed to
+// be 32 bits wide (override if you wish..)
 int AaProgram::_pointer_width = 32;
+
 bool AaProgram::_verbose_flag = false;
 
 string AaProgram::_current_file_name;
@@ -17,7 +29,7 @@ std::map<int,set<AaRoot*> > AaProgram::_storage_eq_class_map;
 std::vector<AaModule*> AaProgram::_ordered_module_vector;
 std::map<int,set<AaModule*> > AaProgram::_storage_index_module_coverage_map;
 std::map<int,AaMemorySpace*> AaProgram::_memory_space_map;
-
+std::map<AaType*,AaForeignStorageObject*> AaProgram::_foreign_storage_map;
 std::set<AaObject*> AaProgram::_recoalesce_set;
 
 AaGraphBase AaProgram::_call_graph;
@@ -92,6 +104,9 @@ void AaProgram::Print(ostream& ofile)
 void AaProgram::Add_Object(AaObject* obj) 
 { 
   assert(AaProgram::Find_Object(obj->Get_Name()) == NULL); 
+  if(obj->Is("AaStorageObject"))
+    AaProgram::Add_Storage_Dependency_Graph_Vertex(obj);
+
   AaProgram::_objects[obj->Get_Name()] = obj;
 }
 
@@ -390,6 +405,27 @@ void AaProgram::Add_Storage_Dependency_Graph_Vertex(AaRoot* u)
   AaProgram::_storage_dependency_graph.Add_Vertex(u);
 }
 
+AaForeignStorageObject* AaProgram::Make_Foreign_Storage_Object(AaType* t)
+{
+  AaForeignStorageObject* ret_obj = NULL;
+
+  if((t->Size() % AaProgram::_foreign_word_size) != 0)
+    {
+      AaRoot::Error("foreign pointer points to an object whose size ("
+		    + IntToStr(t->Size()) 
+		    + ") is not a multiple of the foreign word-size (" + IntToStr(AaProgram::_foreign_word_size) + ")", NULL);
+    }
+  
+  if(AaProgram::_foreign_storage_map.find(t) == AaProgram::_foreign_storage_map.end())
+    {
+      ret_obj = new AaForeignStorageObject(t, AaProgram::_foreign_word_size, AaProgram::_foreign_address_width);
+      AaProgram::_foreign_storage_map[t] = ret_obj;
+    }
+  else
+    ret_obj = AaProgram::_foreign_storage_map[t];
+
+}
+
 // try to identify sets of objects which must reside in the
 // same memory space.
 //
@@ -401,9 +437,17 @@ void AaProgram::Add_Storage_Dependency_Graph_Vertex(AaRoot* u)
 // dependency graph correspond to memory spaces.
 void AaProgram::Coalesce_Storage()
 {
+  AaRoot::Info("Marking foreign pointers in modules which are not called from the program");
+  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+      miter != AaProgram::_modules.end();
+      miter++)
+    {
+      AaModule* m =(*miter).second;
+      m->Set_Foreign_Object_Representatives();
+    }
 
-  AaRoot::Info("Coalescing storage ");
 
+  AaRoot::Info("Coalescing storage from native objects..");
   // basically a DFS starting from the storage objects (at each level in the program)
   for(map<string,AaObject*,StringCompare>::iterator obj_iter = _objects.begin();
       obj_iter != _objects.end();
@@ -412,7 +456,7 @@ void AaProgram::Coalesce_Storage()
       if(((*obj_iter).second)->Is("AaStorageObject"))
 	((*obj_iter).second)->Coalesce_Storage();
     }
-
+  
 
   for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
       miter != AaProgram::_modules.end();
@@ -420,18 +464,17 @@ void AaProgram::Coalesce_Storage()
     {
       (*miter).second->Coalesce_Storage();
     }
-
+  
   while(AaProgram::_recoalesce_set.size() > 0)
     {
       AaObject* top_obj = *(AaProgram::_recoalesce_set.begin());
       AaProgram::_recoalesce_set.erase(top_obj);
       AaRoot::Info("Recoalescing from " + top_obj->Get_Name());
-
       top_obj->Coalesce_Storage();
     }
 
   int num_comps = AaProgram::_storage_dependency_graph.Connected_Components(AaProgram::_storage_eq_class_map);
-  AaRoot::Info("Finished coalescing storage.. identified " + IntToStr(num_comps) + " disjoint memory spaces");
+  AaRoot::Info("Finished coalescing storage.. identified " + IntToStr(num_comps) + " disjoint memory space(s)");
 
   for(int idx = 0; idx < AaProgram::_storage_eq_class_map.size(); idx++)
     {
@@ -493,6 +536,7 @@ void AaProgram::Coalesce_Storage()
 	  else
 	    assert(0);
 	}
+
 
       if(!new_ms->_is_written_into)
 	{

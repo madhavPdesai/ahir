@@ -926,8 +926,8 @@ aA_Storage_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         }
         : (st:STORAGE aA_Object_Declaration_Base[scope,oname,otype,initial_value])
         {
-
             obj = new AaStorageObject(scope,oname,otype,NULL);
+
             obj->Set_Line_Number(st->getLine());
             if(initial_value != NULL)
             {

@@ -140,6 +140,7 @@ namespace {
 
       queue.push_back(&(F.getEntryBlock()));
       blocks_queued.insert(&(F.getEntryBlock()));
+      int iidx = 0;
 
       while (!queue.empty()) 
 	{
@@ -147,6 +148,8 @@ namespace {
 	  queue.pop_front();
 	  
 	  curr_block = bb;
+
+	  aa_writer->name_all_instructions(*bb,iidx);
 	  
 	  TerminatorInst *T = bb->getTerminator();
 	  if(T->getNumSuccessors() == 0)
@@ -195,7 +198,8 @@ namespace {
 
 	
 	std::cout << "$branchblock [" << fname << "] {"  << std::endl;
-	// visit the basic blocks..
+
+	// visit the basic blocks.. twice.
 	for(llvm::Function::iterator iter = F.begin(); iter != F.end(); ++iter)
 	  {
 	    llvm::BasicBlock* pred = (*iter).getSinglePredecessor();

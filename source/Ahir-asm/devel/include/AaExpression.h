@@ -144,6 +144,11 @@ class AaExpression: public AaRoot
       return(this->Get_VC_Wire_Name());
   }
 
+  virtual string Get_VC_Resized_Base_Address_Name()
+  {
+    return(this->Get_VC_Name() + "_resized_base_address");
+  }
+
   virtual string Get_VC_Receiver_Name()
   {
     return(this->Get_VC_Wire_Name());

@@ -31,9 +31,20 @@ class AaModule: public AaSeriesBlockStatement
   set<AaPipeObject*> _write_pipes;
   set<AaPipeObject*> _read_pipes;
 
+  int _number_of_times_called;
+
  public:
   AaModule(string fname); // Modules have NULL parent (parent is the program)
   ~AaModule();
+
+  void Increment_Number_Of_Times_Called()
+  {
+    _number_of_times_called++;
+  }
+  int Get_Number_Of_Times_Called()
+  {
+    return(_number_of_times_called);
+  }
 
   void Set_Foreign_Flag(bool ff) { this->_foreign_flag = ff; }
   bool Get_Foreign_Flag() {return(this->_foreign_flag);}
@@ -48,6 +59,7 @@ class AaModule: public AaSeriesBlockStatement
   {
     return(this->_input_args[index]);
   }
+
 
   unsigned int Get_Number_Of_Output_Arguments() {return(this->_output_args.size());}
   AaInterfaceObject* Get_Output_Argument(unsigned int index)
@@ -66,6 +78,7 @@ class AaModule: public AaSeriesBlockStatement
   virtual AaRoot* Find_Child(string tag);
   virtual void Map_Source_References();
 
+  void Set_Foreign_Object_Representatives();
   string Get_Structure_Name() { return(this->Get_Label() + "_State"); }
   void Write_Header(ofstream& ofile);
   void Write_Source(ofstream& ofile);

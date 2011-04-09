@@ -423,7 +423,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Constants(vector<AaExp
       if(offset_value < 0)
 	{
 	  // base address is constant, offset is not.
-	  Write_VC_Constant_Declaration(this->Get_VC_Base_Address_Name() + "_resized",
+	  Write_VC_Constant_Declaration(this->Get_VC_Resized_Base_Address_Name(),
 					addr_type,
 					IntToStr(base_addr),
 					ofile);
@@ -537,7 +537,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Wires(vector<AaExpress
   if(base_addr < 0)
     {
       // resized version of the base-address.
-      Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Base_Address_Name() + "_resized",
+      Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Resized_Base_Address_Name(),
 					     addr_type,
 					     ofile);
     }
@@ -925,7 +925,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 				      this->Get_VC_Name() + "_base_resize",				  
 				      this->Get_VC_Base_Address_Name(),
 				      base_addr_type,
-				      this->Get_VC_Base_Address_Name() + "_resized",
+				      this->Get_VC_Resized_Base_Address_Name(),
 				      addr_type,
 				      ofile);
 	    }
@@ -933,7 +933,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 	    {
 	      Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_base_resize",				  
 					    this->Get_VC_Base_Address_Name(),					    
-					    this->Get_VC_Base_Address_Name() + "_resized",
+					    this->Get_VC_Resized_Base_Address_Name(),
 					    ofile);
 	    }
 	}
@@ -945,7 +945,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 				   this->Get_VC_Name() + "_root_address_inst",
 				   this->Get_VC_Offset_Name(),
 				   addr_type,
-				   this->Get_VC_Base_Address_Name() + "_resized",
+				   this->Get_VC_Resized_Base_Address_Name(),
 				   addr_type,
 				   this->Get_VC_Root_Address_Name(),
 				   addr_type,
@@ -953,7 +953,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 	}
       else
 	{
-	  string op_name = ((base_addr != 0) ? (this->Get_VC_Base_Address_Name() + "_resized")
+	  string op_name = ((base_addr != 0) ? (this->Get_VC_Resized_Base_Address_Name())
 			    : this->Get_VC_Offset_Name());
 	  Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_root_address_inst",
 					op_name,
@@ -1122,7 +1122,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Links(string hier_id,
 string AaObjectReference::Get_VC_Memory_Space_Name()
 {
 
-  if(this->_object->Is("AaStorageObject"))
+  if(this->_object->Is_Storage_Object())
     {
       AaStorageObject* so = ((AaStorageObject*)(this->_object));
       return(so->Get_VC_Memory_Space_Name());
@@ -1137,7 +1137,7 @@ string AaObjectReference::Get_VC_Memory_Space_Name()
 // if the object reference is to an indexed expression..
 int AaObjectReference::Get_Base_Address()
 {
-  if(this->_object->Is("AaStorageObject"))
+  if(this->_object->Is_Storage_Object())
     {
       AaStorageObject* so = ((AaStorageObject*)(this->_object));
       return(so->Get_Base_Address());
@@ -1164,7 +1164,7 @@ int AaObjectReference::Get_Access_Width()
 int AaObjectReference::Get_Address_Width()
 {
   AaStorageObject* so = NULL;
-  if(this->_object->Is("AaStorageObject"))
+  if(this->_object->Is_Storage_Object())
     {
       so = ((AaStorageObject*)(this->_object));
     }
@@ -1178,7 +1178,7 @@ int AaObjectReference::Get_Address_Width()
 
 string AaObjectReference::Get_VC_Base_Address_Name()
 {
-  if(this->_object->Is("AaStorageObject"))
+  if(this->_object->Is_Storage_Object())
     {
       AaStorageObject* so = ((AaStorageObject*)(this->_object));
       return(so->Get_VC_Base_Address_Name());
@@ -1268,7 +1268,7 @@ int AaArrayObjectReference::Get_Address_Width()
     }
   else
     {
-      assert(this->_object->Is("AaStorageObject"));
+      assert(this->_object->Is_Storage_Object());
       so = ((AaStorageObject*) (this->_object));
     }
   assert(so != NULL);
@@ -1286,7 +1286,7 @@ int AaArrayObjectReference::Get_Word_Size()
     }
   else
     {
-      assert(this->_object->Is("AaStorageObject"));
+      assert(this->_object->Is_Storage_Object());
       so = ((AaStorageObject*) (this->_object));
     }
   assert(so != NULL);
@@ -1302,7 +1302,7 @@ int AaArrayObjectReference::Get_Access_Width()
 
 string AaArrayObjectReference::Get_VC_Base_Address_Name()
 {
-  if(this->_object->Is("AaStorageObject"))
+  if(this->_object->Is_Storage_Object())
     {
       if(this->Get_Object_Type()->Is_Pointer_Type())
 	{
@@ -1319,6 +1319,7 @@ string AaArrayObjectReference::Get_VC_Base_Address_Name()
       return(((AaExpression*)(this->_object))->Get_VC_Driver_Name());
     }
 
+  return("ErrorNoBaseAddress");
 }
 
 string AaPointerDereferenceExpression::Get_VC_Memory_Space_Name()
@@ -1332,6 +1333,7 @@ string AaPointerDereferenceExpression::Get_VC_Memory_Space_Name()
     {
       AaRoot::Error("could not associate memory space with pointer ", this);
     }
+  return("ErrorNoMemorySpace");
 }
 
 int AaPointerDereferenceExpression::Get_Access_Width()

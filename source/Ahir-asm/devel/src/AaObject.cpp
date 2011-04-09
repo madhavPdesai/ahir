@@ -41,9 +41,17 @@ bool AaObject::Set_Addressed_Object_Representative(AaStorageObject* obj)
 	}
       else
 	{
-	  if(obj != this->_addressed_object_representative)
+	  if(this->_addressed_object_representative->Is_Foreign_Storage_Object() !=
+	     obj->Is_Foreign_Storage_Object())
+	    { 
+	      AaRoot::Error("cannot coalesce a foreign storage object with native storage object ", NULL);
+	    }
+	  else if(!this->_addressed_object_representative->Is_Foreign_Storage_Object())
 	    {
-	      AaProgram::Add_Storage_Dependency(obj,this->_addressed_object_representative);
+	      if(obj != this->_addressed_object_representative)
+		{
+		  AaProgram::Add_Storage_Dependency(obj,this->_addressed_object_representative);
+		}
 	    }
 	}
     }
@@ -151,6 +159,7 @@ AaInterfaceObject::AaInterfaceObject(AaScope* parent_tpr,
 }
 AaInterfaceObject::~AaInterfaceObject() {};
 
+
 //---------------------------------------------------------------------
 // AaStorageObject
 //---------------------------------------------------------------------
@@ -162,9 +171,10 @@ AaStorageObject::AaStorageObject(AaScope* parent_tpr,string oname, AaType* otype
   _is_written_into = false;
   _is_read_from = false;
 
-  AaProgram::Add_Storage_Dependency_Graph_Vertex(this);
+
 };
 AaStorageObject::~AaStorageObject() {};
+
 void AaStorageObject::Print(ostream& ofile)
 {
   ofile << this->Tab();
@@ -217,6 +227,27 @@ void AaStorageObject::Write_VC_Load_Store_Constants(ostream& ofile)
 				ofile);
 }
 
+//---------------------------------------------------------------------
+// AaForeignStorageObject
+//---------------------------------------------------------------------
+AaForeignStorageObject::AaForeignStorageObject(AaType* otype, int word_size, int address_width)
+  : AaStorageObject(NULL,"foreign("+otype->To_String() + ")",otype,NULL)
+{
+  _word_size = word_size;
+  _address_width = address_width;
+}
+
+bool AaForeignStorageObject::Set_Addressed_Object_Representative(AaStorageObject* obj)
+{
+  if(obj != NULL && !obj->Is_Foreign_Storage_Object())
+    {
+      AaRoot::Error("foreign storage object cannot be coalesced with native storage object", obj);
+    }
+  else if(obj != NULL)
+    {
+      this->_addressed_object_representative = obj;
+    }
+}
 
 //---------------------------------------------------------------------
 // AaPipeObject

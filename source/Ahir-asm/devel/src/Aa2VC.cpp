@@ -31,7 +31,7 @@ struct option long_options[] = {
 int main(int argc, char* argv[])
 {
 
-  cout << "// Virtual circuit produced from Aa description by Aa2VC " << endl;
+
   signal(SIGSEGV, Handle_Segfault);
 
   signal(SIGSEGV, Handle_Segfault);
@@ -85,6 +85,7 @@ int main(int argc, char* argv[])
     cerr << "Error: there were errors during elaboration, check the log" << endl;
   else
     {
+      cout << "// Virtual circuit produced from Aa description by Aa2VC " << endl;
       if(opt_flag)
 	AaProgram::Write_VC_Model_Optimized(32,8,cout);
       else

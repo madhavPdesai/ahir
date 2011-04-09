@@ -244,7 +244,7 @@ void AaCallStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
     _input_args[idx]->Write_VC_Links_Optimized(hier_id,ofile);
 
   for(int idx = 0; idx < _output_args.size(); idx++)
-    _output_args[idx]->Write_VC_Links_Optimized(hier_id,ofile);
+    _output_args[idx]->Write_VC_Links_As_Target_Optimized(hier_id,ofile);
 
   vector<string> reqs;
   vector<string> acks;

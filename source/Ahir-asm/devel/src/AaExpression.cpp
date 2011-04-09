@@ -43,9 +43,17 @@ bool AaExpression::Set_Addressed_Object_Representative(AaStorageObject* obj)
    }
  else
    {
-     if(obj != this->_addressed_object_representative)
+     if(this->_addressed_object_representative->Is_Foreign_Storage_Object() !=
+	obj->Is_Foreign_Storage_Object())
        {
-	 AaProgram::Add_Storage_Dependency(obj,this->_addressed_object_representative);
+	 AaRoot::Error("cannot coalesce a foreign storage object with a native storage object",this);
+       }
+     else if(!this->_addressed_object_representative->Is_Foreign_Storage_Object())
+       {
+	 if(obj != this->_addressed_object_representative)
+	   {
+	     AaProgram::Add_Storage_Dependency(obj,this->_addressed_object_representative);
+	   }
        }
    }
   return(new_flag);
@@ -727,7 +735,6 @@ void AaSimpleObjectReference::Write_VC_Wire_Declarations_As_Target(ostream& ofil
 				    this->Get_Type(),
 				    ofile);
 	}
-
 
       if(this->_object->Is("AaStorageObject"))
 	{
@@ -1594,14 +1601,21 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
   if(!this->Get_Coalesce_Flag())
     {
       this->Set_Coalesce_Flag(true);
+
       if((obj != NULL) && this->Get_Addressed_Object_Representative() == NULL)
 	{
-	  AaProgram::Add_Storage_Dependency(this,obj);
+	  if(this->Get_Is_Target())
+	    obj->Set_Is_Written_Into(true);
+	  else
+	    obj->Set_Is_Read_From(true);
+
+	  if(!obj->Is_Foreign_Storage_Object())
+	    AaProgram::Add_Storage_Dependency(this,obj);
 	}
       
       this->Set_Addressed_Object_Representative(obj);
       
-      // broken.. fix it..
+
       // what should you propagate forward?
       // _reference_to_object points to a pointer p.
       // p has an addressed object representative obj1.
@@ -1610,6 +1624,14 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
       AaStorageObject* obj1 = _reference_to_object->Get_Addressed_Object_Representative();
       if(obj1 != NULL)
 	{
+
+	  if(obj1->Is_Foreign_Storage_Object())
+	    {
+	      AaRoot::Error("pointer dereference to foreign object!", this);
+	      this->Set_Coalesce_Flag(false);
+	      return;
+	    }
+
 	  AaStorageObject* obj2 = obj1->Get_Addressed_Object_Representative();
 	  if(obj2 != NULL)
 	    {
@@ -1629,6 +1651,12 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 void AaPointerDereferenceExpression::Write_VC_Control_Path( ostream& ofile)
 { 
   ofile << "// " << this->To_String() << endl;
+  if(this->Get_Addressed_Object_Representative()
+     && this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+    {
+      AaRoot::Error("pointer dereference to foreign object!", this);
+      return;
+    }
   this->_reference_to_object->Write_VC_Control_Path(ofile);
   this->Write_VC_Load_Control_Path(NULL,NULL,ofile);
 }
@@ -1636,6 +1664,12 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path( ostream& ofile)
 void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target( ostream& ofile)
 {
   ofile << "// " << this->To_String() << endl;
+  if(this->Get_Addressed_Object_Representative()
+     && this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+    {
+      AaRoot::Error("pointer dereference to foreign object!", this);
+      return;
+    }
   this->_reference_to_object->Write_VC_Control_Path(ofile);
   this->Write_VC_Store_Control_Path(NULL,NULL,ofile);
 }

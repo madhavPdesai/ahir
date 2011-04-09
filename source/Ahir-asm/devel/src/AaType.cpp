@@ -77,6 +77,13 @@ AaType* AaPointerType::Get_Element_Type(int start_idx, vector<AaExpression*>& in
   return(AaProgram::Make_Pointer_Type(ref_type));
 }
 
+void AaPointerType::Write_VC_Model(ostream& ofile)
+{ 
+  
+  ofile << "$int<" << AaProgram::_pointer_width << "> " ;
+}
+
+
 //---------------------------------------------------------------------
 //AaFloatType
 //---------------------------------------------------------------------

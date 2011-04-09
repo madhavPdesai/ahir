@@ -152,12 +152,7 @@ class AaPointerType: public AaUintType
 
   AaType* Get_Ref_Type() {return(this->_ref_type);}
 
-  virtual void Write_VC_Model(ostream& ofile) 
-  { 
-    // need to identify potential memory spaces!
-    //\todo: this will change.
-    ofile << "$pointer<default>";
-  }
+  virtual void Write_VC_Model(ostream& ofile);
 
   virtual string Get_VC_Name() 
   {

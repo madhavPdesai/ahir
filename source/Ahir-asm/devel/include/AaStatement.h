@@ -481,18 +481,7 @@ class AaBlockStatement: public AaStatement
 
   virtual void Coalesce_Storage();
 
-  virtual void Add_Object(AaObject* obj) 
-  { 
-    if(this->Find_Child_Here(obj->Get_Name()) == NULL)
-    { 
-    	this->_objects.push_back(obj);
-    	this->Map_Child(obj->Get_Name(),obj);
-    }
-    else
-    {
-      AaRoot::Error("object " + obj->Get_Name() + " already exists in " + this->Get_Label(),obj);
-    }
-  }
+  virtual void Add_Object(AaObject* obj);
   virtual void Print_Objects(ostream &ofile)
   {
     if(this->_objects.size() > 0)

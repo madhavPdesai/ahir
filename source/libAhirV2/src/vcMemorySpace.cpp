@@ -378,8 +378,17 @@ void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 
 int vcMemorySpace::Calculate_Number_Of_Banks()
 {
-  int num_banks = CeilLog2(this->Get_Num_Loads() + this->Get_Num_Stores());
-  if(CeilLog2(num_banks) < this->Get_Address_Width())
+  // the number of banks must be a power of 2
+  int max_reqs = MAX(this->Get_Num_Loads(),this->Get_Num_Stores());
+
+  // keep the maximum number of banks to 4.
+  int num_banks = 1;
+  if(max_reqs >= 2)
+    num_banks = 2;
+  else if(max_reqs > 8)
+    num_banks = 4;
+
+  if(CeilLog2(num_banks-1) < this->Get_Address_Width())
     {
       return(num_banks);
     }
