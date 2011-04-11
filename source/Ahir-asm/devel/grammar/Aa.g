@@ -1029,8 +1029,20 @@ aA_Type_Reference[AaScope* scope] returns [AaType* ref_type]
     :  (ref_type = aA_Scalar_Type_Reference[scope]) |
         (ref_type = aA_Array_Type_Reference[scope]) |
           (ref_type = aA_Record_Type_Reference[scope]) |
-            (ref_type = aA_Pointer_Type_Reference[scope])
+            (ref_type = aA_Pointer_Type_Reference[scope]) |
+		(ref_type = aA_Void_Type_Reference[scope])
     ;
+
+//----------------------------------------------------------------------------------------------------------
+// aA_Void_Type_Reference: VOID
+//----------------------------------------------------------------------------------------------------------
+aA_Void_Type_Reference[AaScope* scope] returns [AaType* ret_type]
+{
+  ret_type = NULL;
+}
+:
+  VOID {ret_type = (AaType*) AaProgram::Make_Void_Type();}
+;
 
 //----------------------------------------------------------------------------------------------------------
 // aA_Uint_Type_Reference : UINT LESS UINTEGER GREATER
@@ -1394,6 +1406,9 @@ BITCAST : "$bitcast";
 // pointer reference.
 DEREFERENCE_OP : "->";
 ADDRESS_OF_OP   : "@";
+
+// VOID
+VOID            : "$void";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

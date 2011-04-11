@@ -163,9 +163,9 @@ namespace Aa {
 		      
 		    std::string type_name;
 		    if(is_io_write(ioc))
-		      type_name = get_aa_type_name(C.getArgOperand(1)->getType());
+		      type_name = get_aa_type_name(C.getArgOperand(1)->getType(),*_module);
 		    else
-		      type_name = get_aa_type_name(C.getCalledFunction()->getType());
+		      type_name = get_aa_type_name(C.getCalledFunction()->getType(),*_module);
 		    
 		    this->Add_Pipe(portname,type_name);
 		  }
@@ -304,7 +304,7 @@ namespace {
 	  BasicBlock *inbb = pnode.getIncomingBlock(i);
 	  std::string val_id = this->get_name(inval);
 
-	  std::cout << "( $cast (" << get_aa_type_name(inval->getType()) 
+	  std::cout << "( $cast (" << get_aa_type_name(inval->getType(),*_module) 
 		    << ") " << val_id << ") $on " << get_name(inbb) << "_"
 		    << get_name(parent) << " ";
 	}
@@ -358,7 +358,7 @@ namespace {
       const llvm::PointerType* ptr = dyn_cast<PointerType>(I.getType());
       const llvm::Type* el_type = ptr->getElementType();
       
-      std::cout << "$storage " << iname << " : " << get_aa_type_name(el_type) << std::endl;
+      std::cout << "$storage " << iname << " : " << get_aa_type_name(el_type,*_module) << std::endl;
     }
 
     void visitPHINode(PHINode &P)
@@ -424,7 +424,7 @@ namespace {
 
       std::cout << cname << " := " ;
       // cout = (bit-cast uint) ((int) val)
-      std::cout << " ($bitcast (" << get_aa_type_name(dest) << ") ( $cast ("  
+      std::cout << " ($bitcast (" << get_aa_type_name(dest,*_module) << ") ( $cast ("  
 		<< "$int< " << size << " > ) " 
 		<< get_name(val) << ") )"
 		<< std::endl;	  
@@ -444,7 +444,7 @@ namespace {
       std::cout << cname << " := ";
       // cout = ((destType) ((bitcast int) val)) 
       std::cout << " ( $cast ("  
-		<< get_aa_type_name(dest) << ") "  
+		<< get_aa_type_name(dest,*_module) << ") "  
 		<<  " ( $bitcast ( $int< " 
 		<< size << " > ) " 
 		<< get_name(val) 
@@ -463,7 +463,7 @@ namespace {
 
       std::cout << cname << " := ";
       // cout = (bitcast uint) ((int) val) 
-      std::cout << "( $bitcast (" << get_aa_type_name(dest) << " ) " 
+      std::cout << "( $bitcast (" << get_aa_type_name(dest,*_module) << " ) " 
 		<< "( $cast ( $int< " << size << " > ) " 
 		<< get_name(val) << ") )" << std::endl; 
     }
@@ -479,7 +479,7 @@ namespace {
       llvm::Value *val = C.getOperand(0);
 
       std::cout << cname << " := ($cast (" 
-		<< get_aa_type_name(dest) << ") "  << get_name(val) << ")"
+		<< get_aa_type_name(dest,*_module) << ") "  << get_name(val) << ")"
 		<< std::endl;
     }
 

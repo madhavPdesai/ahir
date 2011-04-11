@@ -53,6 +53,29 @@ class AaType: public AaRoot
   }
 };
 
+class AaVoidType: public AaType
+{
+   public:
+	AaVoidType():AaType(NULL)
+        {
+	}
+
+	AaVoidType(AaScope* s): AaType(s)
+	{
+	}
+
+	void Print(ostream& ofile)
+	{
+		ofile << " $void " ;
+	}
+
+	int Size()
+	{
+		return(0);
+	}
+
+};
+
 class AaScalarType: public AaType
 {
 

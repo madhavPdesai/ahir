@@ -93,6 +93,7 @@ namespace {
       AA = &getAnalysis<AliasAnalysis>();
     
       aa_writer = AaWriter_New(TD, AA);  
+      aa_writer->Set_Module(&M);
 
       for (llvm::Module::global_iterator gi = M.global_begin(), ge = M.global_end();
            gi != ge; ++gi) {
@@ -100,7 +101,7 @@ namespace {
 	  {
 	    // not if it is a pointer to a function
 	    if(!(*gi).getType()->isFunctionTy())
-	      write_storage_object(*gi);
+	      write_storage_object(*gi,M);
 	  }
       }
 
@@ -200,7 +201,7 @@ namespace {
 	{
 	  
 	  std::cout << (*args).getNameStr() << " : "
-		    << get_aa_type_name((*args).getType()) << " ";
+		    << get_aa_type_name((*args).getType(), aa_writer->Get_Module()) << " ";
 	}
 	std::cout << ")" << std::endl;
 	std::cout << " $out (";
@@ -210,13 +211,13 @@ namespace {
 	  has_ret_val = false;
 
 	if(has_ret_val)
-	   std::cout << "ret_val__ : " << get_aa_type_name(ret_type);
+	   std::cout << "ret_val__ : " << get_aa_type_name(ret_type, aa_writer->Get_Module());
 	std::cout << ")" << std::endl;
 
 	std::cout << " $is " << std::endl<< "{" << std::endl;
 
 	if(has_ret_val)
-		std::cout << "$storage stored_ret_val__ : " << get_aa_type_name(ret_type) << std::endl;
+		std::cout << "$storage stored_ret_val__ : " << get_aa_type_name(ret_type, aa_writer->Get_Module()) << std::endl;
 
 	
 	std::cout << "$branchblock [" << fname << "] {"  << std::endl;

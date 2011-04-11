@@ -20,12 +20,15 @@ namespace Aa {
     AaWriter(llvm::TargetData *_TD, llvm::AliasAnalysis *_AA);
     llvm::TargetData *TD;
     llvm::AliasAnalysis *AA;
+    llvm::Module* _module;
 
     std::map<std::string,std::set<std::string> > bb_predecessor_map;
     std::map<llvm::Value*, std::string> value_name_map;
     std::map<std::string,std::string> pipe_map;
 
     bool _return_flag;
+    void Set_Module(llvm::Module* tst) {_module = tst;}
+    llvm::Module& Get_Module() {return(*_module);}
     void Set_Return_Flag(bool v) {_return_flag = v;}
     bool Get_Return_Flag() {return(_return_flag);}
 

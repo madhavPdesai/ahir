@@ -22,6 +22,7 @@ int AaProgram::_pointer_width = 32;
 bool AaProgram::_verbose_flag = false;
 
 string AaProgram::_current_file_name;
+AaVoidType* AaProgram::_void_type = NULL;
 std::map<string,AaType*,StringCompare>   AaProgram::_type_map;
 std::map<string,AaObject*,StringCompare> AaProgram::_objects;
 std::map<string,AaModule*,StringCompare> AaProgram::_modules;
@@ -152,6 +153,14 @@ AaModule* AaProgram::Find_Module(string obj_name)
 void AaProgram::Add_Call_Pair(AaModule* caller, AaModule* callee)
 {
   AaProgram::_call_graph.Add_Edge((AaRoot*)caller,(AaRoot*)callee);
+}
+
+
+AaVoidType* AaProgram::Make_Void_Type()
+{
+	if(AaProgram::_void_type == NULL)
+		AaProgram::_void_type = new AaVoidType(NULL);
+	return(AaProgram::_void_type);
 }
 
 AaUintType* AaProgram::Make_Uinteger_Type(unsigned int w)

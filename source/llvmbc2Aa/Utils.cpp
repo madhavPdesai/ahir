@@ -175,6 +175,9 @@ std::string Aa::to_aa(std::string x)
   std::string ret_string;
   for(int i = 0; i < x.size(); i++)
     {
+      if(i == 0 && !isalpha(x[i]))
+	ret_string += "x";
+
       if(x[i] != 0)
 	{
 	  if(isalnum(x[i]) || x[i] == '_')
@@ -261,21 +264,32 @@ std::string Aa::locate_portname_for_io_call(llvm::Value *strptr)
   }
   
   if(konst != NULL)
-    ret_string = konst->getAsString();
+  {
+    if(konst->isString())
+    	ret_string = konst->getAsString();
+  }
 
   return(ret_string);
 }
 
-std::string Aa::get_aa_type_name(const llvm::Type* ptr)
+std::string Aa::get_aa_type_name(const llvm::Type* ptr, llvm::Module& tst)
 {
-  std::string ret_string;
-  // if ptr is a pointer.
+
+  if(ptr->isVoidTy())
+	return("$void");
+  std::string ret_string = tst.getTypeName(ptr);
+  if(ret_string != "")
+	return(to_aa(ret_string));
+
+  
+
+  
   if(isa<PointerType>(ptr))
     {
       ret_string = "$pointer< ";
       const llvm::PointerType *ptr_pointer = dyn_cast<llvm::PointerType>(ptr);
       const llvm::Type* el_type = ptr_pointer->getElementType();
-      ret_string += get_aa_type_name(el_type);
+      ret_string += get_aa_type_name(el_type,tst);
       ret_string += " >"; 
     }
   else if(isa<ArrayType>(ptr) || isa<VectorType>(ptr))
@@ -295,7 +309,7 @@ std::string Aa::get_aa_type_name(const llvm::Type* ptr)
 	}
       
       ret_string = "$array [" + int_to_str(dim) + "] $of ";
-      ret_string += get_aa_type_name(el_type);
+      ret_string += get_aa_type_name(el_type,tst);
     }
   else if(isa<StructType>(ptr))
     {
@@ -304,7 +318,7 @@ std::string Aa::get_aa_type_name(const llvm::Type* ptr)
       for(int idx = 0; idx < ptr_struct->getNumElements(); idx++)
 	{
 	  ret_string += "< " ;
-	  ret_string += get_aa_type_name(ptr_struct->getElementType(idx));
+	  ret_string += get_aa_type_name(ptr_struct->getElementType(idx),tst);
 	  ret_string += " > ";
 	}
     }
@@ -326,6 +340,11 @@ std::string Aa::get_aa_type_name(const llvm::Type* ptr)
     {
       ret_string = "$void";
     }
+  else if(ptr->isFunctionTy())
+    {
+      std::cerr << "Warning: function type converted to void*" << std::endl;
+      ret_string = "$pointer < $void > ";
+    } 
   else
     {
       std::cerr << "Error: unsupported type" << std::endl;
@@ -340,7 +359,7 @@ std::string Aa::get_aa_value_string(const llvm::Value* val)
 }
 
 
-void Aa::write_storage_object(llvm::GlobalVariable &G)
+void Aa::write_storage_object(llvm::GlobalVariable &G, llvm::Module& tst)
 {
     const llvm::Type *ptr = G.getType();
 
@@ -350,7 +369,7 @@ void Aa::write_storage_object(llvm::GlobalVariable &G)
     assert(pptr != NULL);
     const llvm::Type* el_type = pptr->getElementType();
     assert(el_type);
-    std::string type_name = get_aa_type_name(el_type); 
+    std::string type_name = get_aa_type_name(el_type,tst); 
 
     if (G.hasInitializer()) {
       	llvm::Constant *init = G.getInitializer();

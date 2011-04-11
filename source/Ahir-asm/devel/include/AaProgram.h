@@ -81,6 +81,7 @@ class AaProgram
   static int _foreign_address_width;
   static string _current_file_name;
   static bool _verbose_flag;
+  static AaVoidType* _void_type;
 
   AaProgram();
   ~AaProgram();
@@ -95,6 +96,7 @@ class AaProgram
 
   static void Add_Call_Pair(AaModule* caller, AaModule* callee);
 
+  static AaVoidType* Make_Void_Type();
   static AaUintType* Make_Uinteger_Type(unsigned int w);
 
   static AaIntType* Make_Integer_Type(unsigned int w);
