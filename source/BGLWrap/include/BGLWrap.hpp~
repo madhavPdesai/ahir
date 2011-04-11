@@ -126,11 +126,6 @@ class GraphBase
     return(this->_bgl_graph[v]._aa_rep);
   }
 
-  // type propagation dfs: fill list of
-  // vertices whose type cannot be determined
-  // return true if all ok false otherwise.
-  bool Type_Propagate_Dfs(void* start_point,vector<void*>& unvisited_vertices);
-
   // cycle detection dfs: return number of back-edges and
   // report elementary cycles detected during traversal
   bool Cycle_Detect_Dfs()

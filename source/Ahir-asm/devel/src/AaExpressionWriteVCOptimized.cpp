@@ -631,10 +631,11 @@ void AaUnaryExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 
       hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Complete_Region_Name());
       vector<string> reqs,acks;
-      reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/rr");
-      reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/cr");
-      acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ra");
-      acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ca");
+      reqs.push_back(hier_id + "/rr");
+      reqs.push_back(hier_id + "/cr");
+      acks.push_back(hier_id + "/ra");
+      acks.push_back(hier_id + "/ca");
+
       Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
     }
 }

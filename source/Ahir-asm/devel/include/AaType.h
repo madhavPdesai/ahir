@@ -303,93 +303,131 @@ class AaArrayType: public AaType
 
 class AaRecordType: public AaType
 {
+  string _record_type_name;
+  bool _is_named;
   vector<AaType*> _element_types;
-public:
+ public:
   virtual bool Is_Record_Type() {return(true);}
+
+
   AaRecordType(AaScope* s, vector<AaType*>& element_types):AaType(s)
     {
+      _is_named = false;
       _element_types = element_types;
     }
-
-  void Print(ostream& ofile)
-  {
-    ofile << "$record ";
-    for(int idx = 0; idx < _element_types.size(); idx++)
-      {
-	// note the spaces before and after >
-	ofile << " < ";
-	_element_types[idx]->Print(ofile);
-	ofile << " > ";
-      }
-  }
-
-  virtual string Get_VC_Name() 
-  {
-    string ret_val;
-    ret_val =  "$record ";
-    for(int idx = 0; idx < _element_types.size(); idx++)
-      {
-	ret_val += " < ";
-	ret_val += _element_types[idx]->Get_VC_Name();
-	ret_val += " > ";
-      }
-    return(ret_val);
-  }
-
-  virtual string Kind() { return("AaRecordType"); }
-  virtual int Size() 
-  { 
-    int ret_val = 0;
-    for(int i = 0; i < this->_element_types.size(); i++)
-      ret_val += this->_element_types[i]->Size();
-    return(ret_val);
-  }
-
-  virtual AaType* Get_Element_Type(int idx) {return(this->_element_types[idx]);}
-  int Get_Number_Of_Elements() {return(this->_element_types.size());}
-
-  virtual void Fill_LAU_Set(set<int>& s) 
-  {
-    for(int idx = 0; idx < this->_element_types.size(); idx++)
-      {
-	this->_element_types[idx]->Fill_LAU_Set(s);
-      }
-  }
+    
+    AaRecordType(AaScope* s, string name);
+    void Add_Element_Type(AaType* t)
+    {
+      _element_types.push_back(t);
+    }
   
-  int Get_Data_Width(int idx) 
-  {
-    return(this->Get_Element_Type(idx)->Get_Data_Width());
-  }
+    void Print(ostream& ofile)
+    {
+      if(_is_named)
+	{
+	  ofile << " " << this->_record_type_name << " ";
+	  return;
+	}
+      
+      ofile << "$record ";
+      for(int idx = 0; idx < _element_types.size(); idx++)
+	{
+	  // note the spaces before and after >
+	  ofile << " < ";
+	  _element_types[idx]->Print(ofile);
+	  ofile << " > ";
+	}
+    }
 
-  virtual string CName() 
-  {
-    return("Struct_" + Int64ToStr(this->Get_Index()));
-  }  
+    void Print_Declaration(ostream& ofile)
+    {
+      if(_is_named)
+	{
+	  ofile << "$record ";
+	  ofile << "[" << this->_record_type_name << "] ";
+	  for(int idx = 0; idx < _element_types.size(); idx++)
+	    {
+	      // note the spaces before and after >
+	      ofile << " < ";
+	      _element_types[idx]->Print(ofile);
+	      ofile << " > ";
+	    }
+	  
+	  ofile << endl;
+	}
+    }
 
-  virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
+    
+    
+    virtual string Get_VC_Name() 
+    {
+      string ret_val;
+      ret_val =  "$record ";
+      for(int idx = 0; idx < _element_types.size(); idx++)
+	{
+	  ret_val += " < ";
+	  ret_val += _element_types[idx]->Get_VC_Name();
+	  ret_val += " > ";
+	}
+      return(ret_val);
+    }
 
-  void PrintC_Declaration(ofstream& ofile)
-  {
-    ofile << "typedef struct __" << CName() << " { " << endl;
-    for(int idx = 0; idx < this->_element_types.size(); idx++)
-      {
-	AaType* t = this->_element_types[idx];
-
-	if(t->Is_Array_Type())
-	  {
-	    AaArrayType* at = (AaArrayType*) t;
-	    ofile << at->CBaseName() << " "
-		  << "f_" << IntToStr(idx)
-		  <<  at->CDim() << ";" << endl;
-	  }
-	else
-	  {
-	    ofile << t->CName() << " ";
-	    ofile << "f_" << IntToStr(idx) << ";" << endl;
-	  }
-      }
-    ofile << "} " << CName() << ";" << endl;
-  }
+    
+    virtual string Kind() { return("AaRecordType"); }
+    virtual int Size() 
+    { 
+      int ret_val = 0;
+      for(int i = 0; i < this->_element_types.size(); i++)
+	ret_val += this->_element_types[i]->Size();
+      return(ret_val);
+    }
+    
+    virtual AaType* Get_Element_Type(int idx) {return(this->_element_types[idx]);}
+    int Get_Number_Of_Elements() {return(this->_element_types.size());}
+    
+    virtual void Fill_LAU_Set(set<int>& s) 
+    {
+      for(int idx = 0; idx < this->_element_types.size(); idx++)
+	{
+	  this->_element_types[idx]->Fill_LAU_Set(s);
+	}
+    }
+    
+    int Get_Data_Width(int idx) 
+    {
+      return(this->Get_Element_Type(idx)->Get_Data_Width());
+    }
+    
+    virtual string CName() 
+    {
+      return("Struct_" + Int64ToStr(this->Get_Index()));
+    }  
+    
+    virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
+    
+    void PrintC_Declaration(ofstream& ofile)
+    {
+      ofile << "typedef struct __" << CName() << " { " << endl;
+      for(int idx = 0; idx < this->_element_types.size(); idx++)
+	{
+	  AaType* t = this->_element_types[idx];
+	  
+	  if(t->Is_Array_Type())
+	    {
+	      AaArrayType* at = (AaArrayType*) t;
+	      ofile << at->CBaseName() << " "
+		    << "f_" << IntToStr(idx)
+		    <<  at->CDim() << ";" << endl;
+	    }
+	  else
+	    {
+	      ofile << t->CName() << " ";
+	      ofile << "f_" << IntToStr(idx) << ";" << endl;
+	    }
+	}
+      ofile << "} " << CName() << ";" << endl;
+    }
 };
 
 

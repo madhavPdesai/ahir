@@ -31,6 +31,10 @@ namespace Aa {
   IOCode get_io_code(llvm::Use &u);
   IOCode get_io_code(llvm::User *u);
   IOCode get_io_code(llvm::CallInst &C);
+
+  bool is_io_read(IOCode ioc);
+  bool is_io_write(IOCode ioc);
+
   std::string locate_portname_for_io_call(llvm::Value *strptr);
   void write_storage_object(llvm::GlobalVariable &G);
   std::string get_aa_type_name(const llvm::Type* ptr);

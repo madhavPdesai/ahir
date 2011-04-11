@@ -88,6 +88,7 @@ aA_Program
     AaModule* nf = NULL;
     AaObject* obj = NULL;
     AaScope* null_scope = NULL;
+    AaType* nt;
 }
     :
         (
@@ -95,6 +96,10 @@ aA_Program
             |
             (  
                     obj = aA_Object_Declaration[null_scope]  {AaProgram::Add_Object(obj);}
+            )
+            |
+            (
+                    nt = aA_Named_Record_Type_Declaration[null_scope]
             )
         )*
     ;
@@ -1014,8 +1019,7 @@ aA_Interface_Object_Declaration[AaModule* scope, string mode] returns [AaInterfa
 aA_Scalar_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
      :  (ref_type = aA_Uint_Type_Reference[scope]) |
       (ref_type = aA_Int_Type_Reference[scope]) |
-      (ref_type = aA_Float_Type_Reference[scope]) |
-      (ref_type = aA_Pointer_Type_Reference[scope]) 
+      (ref_type = aA_Float_Type_Reference[scope]) 
     ;
     
 //----------------------------------------------------------------------------------------------------------
@@ -1024,7 +1028,8 @@ aA_Scalar_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 aA_Type_Reference[AaScope* scope] returns [AaType* ref_type]
     :  (ref_type = aA_Scalar_Type_Reference[scope]) |
         (ref_type = aA_Array_Type_Reference[scope]) |
-          (ref_type = aA_Record_Type_Reference[scope])
+          (ref_type = aA_Record_Type_Reference[scope]) |
+            (ref_type = aA_Pointer_Type_Reference[scope])
     ;
 
 //----------------------------------------------------------------------------------------------------------
@@ -1076,9 +1081,13 @@ aA_Float_Type_Reference[AaScope* scope] returns [AaScalarType* ref_type]
 aA_Pointer_Type_Reference[AaScope* scope] returns [AaScalarType* ret_type]
 {
    AaType* ref_type;
+   bool named_flag = false;
 }
-    : POINTER LESS ref_type = aA_Type_Reference[scope] GREATER 
+    : POINTER LESS ((ref_type = aA_Type_Reference[scope]) | (tid: SIMPLE_IDENTIFIER {named_flag =true;}))  GREATER 
         { 
+            if(named_flag)
+               ref_type = AaProgram::Find_Named_Record_Type(tid->getText());
+
             ret_type = AaProgram::Make_Pointer_Type(ref_type);
         }
     ;
@@ -1112,8 +1121,32 @@ aA_Record_Type_Reference[AaScope* scope] returns [AaType* ref_type]
 { rt = AaProgram::Make_Record_Type(etypes); ref_type = (AaType*) rt; etypes.clear();}
 ;
 
+
+
 //----------------------------------------------------------------------------------------------------------
-// aA_Object_Reference : HIERARCHICAL_IDENTIFIER (LBRACKET Aa_Object_Reference RBRACKET)*
+// aA_Named_Record_Type_Declaration: RECORD LBRACKET IDENTIFIER RBRACKET (LESS (aA_Type_Reference) GREATER)+
+//----------------------------------------------------------------------------------------------------------
+aA_Named_Record_Type_Declaration[AaScope* scope] returns [AaType* ref_type]
+{
+	AaRecordType* rt;
+	AaType* et;
+        string id;
+}: rid:RECORD id = aA_Label 
+      {
+          rt = AaProgram::Make_Named_Record_Type(id);
+          if(rt->Get_Number_Of_Elements() > 0)
+          { 
+             AaRoot::Error("named record type " + id + " redeclared on line " + IntToStr(rid->getLine()),
+                           NULL);
+          }
+      } 
+      (LESS et = aA_Type_Reference[scope] {rt->Add_Element_Type(et);} GREATER)+
+;
+
+
+
+//----------------------------------------------------------------------------------------------------------
+// aA_Object_Reference : HIERARCHICAL_ENTIFIER (LBRACKET Aa_Object_Reference RBRACKET)*
 //----------------------------------------------------------------------------------------------------------
 aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
 {

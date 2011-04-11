@@ -102,6 +102,8 @@ class AaProgram
   static AaArrayType* Make_Array_Type(AaType* etype, vector<unsigned int>& dims);
   static AaPointerType* Make_Pointer_Type(AaType* ref_type);
   static AaRecordType* Make_Record_Type(vector<AaType*>& element_types);
+  static AaRecordType* Make_Named_Record_Type(string rname);
+  static AaRecordType* Find_Named_Record_Type(string rname);
 
   static void Map_Source_References();
 

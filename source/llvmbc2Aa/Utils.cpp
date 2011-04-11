@@ -70,7 +70,7 @@ std::string Aa::get_aa_constant_string(llvm::Constant *konst)
 	  std::ostringstream id;
 
 	  //TODO: revisit.
-	  ret_val =  g->getNameStr();
+	  ret_val =  to_aa(g->getNameStr());
 	} 
       else 
 	{
@@ -186,6 +186,20 @@ std::string Aa::to_aa(std::string x)
   return(ret_string);
 }
 
+bool Aa::is_io_read(IOCode ioc)
+{
+  if(ioc == READ_UINT32 || ioc == READ_FLOAT32)
+    return(true);
+  else
+    return(false);
+}
+bool Aa::is_io_write(IOCode ioc)
+{
+  if(ioc == WRITE_UINT32 || ioc == WRITE_FLOAT32)
+    return(true);
+  else
+    return(false);
+}
 IOCode Aa::get_io_code(Use &u)
 {
   return get_io_code(u.getUser());
@@ -200,7 +214,11 @@ IOCode Aa::get_io_code(User *u)
 IOCode Aa::get_io_code(CallInst &C)
 {
   llvm::Function *f = C.getCalledFunction();
-  assert(f && "function pointers are not currently supported");
+
+  if(f == NULL)
+    {
+      return NOT_IO;
+    }
   
   if (!f->isDeclaration())
     return NOT_IO;
@@ -265,26 +283,29 @@ std::string Aa::get_aa_type_name(const llvm::Type* ptr)
 
       const llvm::SequentialType *ptr_seq = dyn_cast<llvm::SequentialType>(ptr);
       const llvm::Type* el_type = ptr_seq->getElementType();
-
-      if(isa<PointerType>(el_type) || !isa<CompositeType>(el_type))
-	{
-	  int dim = 0;
-	  const llvm::ArrayType* ptr_array = dyn_cast<llvm::ArrayType>(ptr);
-	  if(ptr_array != NULL)
-	    dim = ptr_array->getNumElements();
-	  else
-	    {
-	      const llvm::VectorType* ptr_vec = dyn_cast<llvm::VectorType>(ptr);
-	      dim = ptr_vec->getNumElements();
-	    }
-	  
-	  ret_string = "$array [" + int_to_str(dim) + "] $of ";
-	  ret_string += get_aa_type_name(el_type);
-	}
+      
+      int dim = 0;
+      const llvm::ArrayType* ptr_array = dyn_cast<llvm::ArrayType>(ptr);
+      if(ptr_array != NULL)
+	dim = ptr_array->getNumElements();
       else
 	{
-	  std::cerr <<"Error: at present elements of array types must be scalars." << std::endl;
-	  ret_string = "Unsupported_Array_Type";
+	  const llvm::VectorType* ptr_vec = dyn_cast<llvm::VectorType>(ptr);
+	  dim = ptr_vec->getNumElements();
+	}
+      
+      ret_string = "$array [" + int_to_str(dim) + "] $of ";
+      ret_string += get_aa_type_name(el_type);
+    }
+  else if(isa<StructType>(ptr))
+    {
+      const llvm::StructType *ptr_struct = dyn_cast<llvm::StructType>(ptr);
+      ret_string = "$struct ";
+      for(int idx = 0; idx < ptr_struct->getNumElements(); idx++)
+	{
+	  ret_string += "< " ;
+	  ret_string += get_aa_type_name(ptr_struct->getElementType(idx));
+	  ret_string += " > ";
 	}
     }
   else if(isa<IntegerType>(ptr))
@@ -301,10 +322,14 @@ std::string Aa::get_aa_type_name(const llvm::Type* ptr)
     {
       ret_string = "$float<11,52>";
     }
+  else if(ptr->isVoidTy())
+    {
+      ret_string = "$void";
+    }
   else
     {
       std::cerr << "Error: unsupported type" << std::endl;
-      ret_string = "Unsupported_Array_Type";
+      ret_string = "Unsupported_Type";
     }
   return(ret_string);
 }

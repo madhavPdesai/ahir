@@ -20,9 +20,9 @@ void Handle_Segfault(int signal)
 void Usage_Vc2VHDL()
 {
   cerr << "Usage: " << endl;
-  cerr << "vc2vhdl -f <vc-file> [-f <vc-file>...] -t <top-module> [-t <top-module>...] " << endl << endl;
+  cerr << "vc2vhdl [-O] -f <vc-file> [-f <vc-file>...] -t <top-module> [-t <top-module>...] " << endl << endl;
   cerr << "specify vc-files using -f, top-modules in system using -t.. for example" << endl
-       << "    vc2vhdl -t foo -f file1.vc -f file2.vc -t bar" << endl;
+       << "    vc2vhdl -O -t foo -f file1.vc -f file2.vc -t bar" << endl;
   cerr << "file1.vc and file2.vc will be parsed in order, and the instantiated " << endl
        << "system will have modules foo and bar as top-modules. " << endl;
 }
@@ -30,8 +30,6 @@ void Usage_Vc2VHDL()
 
 int main(int argc, char* argv[])
 {
-
-
 
 
   string sys_name = "test_system";
@@ -61,10 +59,11 @@ int main(int argc, char* argv[])
   string mod_name;
   string opt_string;
 
+  vcSystem::_opt_flag = false;
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:f:",
+		      "t:f:O",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -84,6 +83,9 @@ int main(int argc, char* argv[])
 	case 't':
 	  mod_name = string(optarg);	
 	  top_modules.insert(mod_name);
+	  break;
+	case 'O':
+	  vcSystem::_opt_flag = true;
 	  break;
 	case '?':		  // incorrect option
 	  opt_string = opt;
@@ -119,6 +121,7 @@ int main(int argc, char* argv[])
 	{
 	  test_system.Set_As_Top_Module(*iter);
 	}
+
       test_system.Elaborate();
       cout << "-- VHDL produced by vc2vhdl from virtual circuit (vc) description " << endl;
       test_system.Print_VHDL(cout);

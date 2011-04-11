@@ -10,6 +10,7 @@
 
 bool vcSystem::_verbose_flag = false;
 bool vcSystem::_error_flag = false;
+bool vcSystem::_opt_flag = false;
 
 // if there are at most 16 addressable locations in a memory space, make
 // it a register bank (instead of a memory subsystem)
@@ -127,6 +128,7 @@ void vcSystem::Elaborate()
   this->Check_Control_Structure();
   this->Compute_Compatibility_Labels();
   this->Compute_Maximal_Groups();
+  
 
 }
  
@@ -147,7 +149,6 @@ bool vcSystem::Get_Error_Flag()
 {
   return(vcSystem::_error_flag);
 }
-
 
 
 

@@ -32,6 +32,7 @@ public:
   virtual vcCPElement* Find_CPElement(string cname) {return(NULL);}
 
   virtual bool Is_Transition() {return(false);}
+  virtual bool Is_Place() {return(false);}
   virtual void Get_Hierarchical_Ref(vector<string>& ref_vec);
   vcCPElement* Get_Parent() {return(this->_parent);}
 
@@ -69,6 +70,23 @@ public:
   virtual string Get_Always_True_Symbol() {return("always_true_symbol");}
 
   virtual int64_t Get_Index() {return(this->_index);}
+
+
+  virtual void Construct_CPElement_Group_Graph(vcControlPath* cp);
+  virtual void Construct_CPElement_Group_Graph(vcControlPath* cp,
+					       vector<vcCPElement*>& preds,
+					       vector<vcCPElement*>& succs);
+  
+  virtual vcCPElement* Get_Exit_Element()
+  {
+    return(this);
+  }
+
+  virtual vcCPElement* Get_Entry_Element()
+  {
+    return(this);
+  }
+
 };
 
 
@@ -154,7 +172,7 @@ public:
     this->_dp_link.push_back(pair<vcDatapathElement*,vcTransitionType>(dpe,ltype));
   }
 
-  virtual bool Is_Transition() {return(false);}
+  virtual bool Is_Transition() {return(true);}
   bool Get_Is_Input() { return(_is_input);}
   bool Get_Is_Output() { return(_is_output);}
 
@@ -174,7 +192,6 @@ public:
   string Get_CP_To_DP_Symbol();
 
 
-
 };
 
 class vcPlace: public vcCPElement
@@ -184,11 +201,13 @@ public:
   vcPlace(vcCPElement* parent, string id, unsigned int init_marking);
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcPlace");}
+  virtual bool Is_Place() {return(true);}
 
   virtual void Print_VHDL(ostream& ofile);
 
 
   friend class ControlPath;
+
 };
 
 class vcCPBlock: public vcCPElement
@@ -233,6 +252,16 @@ public:
   virtual void Print_VHDL_Exit_Symbol_Assignment(ostream& ofile);
 
   void Print_Missing_Elements(set<vcCPElement*>& visited_set); // print to cerr
+  virtual void Construct_CPElement_Group_Graph(vcControlPath* cp);
+
+  virtual vcCPElement* Get_Exit_Element()
+  {
+    return(this->_exit);
+  }
+  virtual vcCPElement* Get_Entry_Element()
+  {
+    return(this->_entry);
+  }
 };
 
 class vcCPSeriesBlock: public vcCPBlock
@@ -318,6 +347,61 @@ public:
 };
 
 
+class vcCPElementGroup: public vcRoot
+{
+  int64_t _group_index;
+  set<vcCPElement*> _elements;
+
+  set<vcCPElementGroup*> _successors;
+  set<vcCPElementGroup*> _predecessors;
+
+  bool _has_input_transition;
+  bool _has_output_transition;
+  bool _has_dead_transition;
+
+  bool _is_join;
+  bool _is_fork;
+  bool _is_merge;
+  bool _is_branch;
+
+  vcTransition* _input_transition;
+  vector<vcTransition*> _output_transitions;
+
+public:
+  vcCPElementGroup(int64_t group_index):vcRoot()
+  {
+    _has_input_transition = false;
+    _has_output_transition = false;
+    _has_dead_transition = false;
+    _group_index = group_index;
+    _is_join = false;
+    _is_fork = false;
+    _is_merge = false;
+    _is_branch = false;
+    _input_transition = NULL;
+  }
+
+
+  void Add_Successor(vcCPElementGroup* g)
+  {
+    _successors.insert(g);
+  }
+
+  void Add_Predecessor(vcCPElementGroup* g)
+  {
+    _predecessors.insert(g);
+  }
+
+  int64_t Get_Group_Index() {return(_group_index);}
+  void Add_Element(vcCPElement* cpe);
+
+
+  bool Can_Add_Element(vcCPElement* cpe);
+  friend class vcCPElement;
+
+  void Print(ostream& ofile);
+  void Print_VHDL(ostream& ofile);
+};
 
 class vcControlPath: public vcCPSeriesBlock
 {
@@ -328,8 +412,11 @@ class vcControlPath: public vcCPSeriesBlock
   map<vcCompatibilityLabel*, set<vcCompatibilityLabel*> > _label_descendent_map;
   map<vcCompatibilityLabel*, set<vcCompatibilityLabel*> > _compatible_label_map;
 
+
   map<string, vcCompatibilityLabel*> _join_label_map;
 
+  map<int, vcCPElementGroup*> _cpelement_group_index_map;
+  map<vcCPElement*, vcCPElementGroup*> _cpelement_to_group_map;
 
 public:
   static int64_t _free_index;
@@ -340,6 +427,16 @@ public:
   vcTransition* Find_Transition(vector<string>& hier_ref);
   vcPlace* Find_Place(vector<string>& hier_ref);
   virtual void Print(ostream& ofile);
+
+  vcCPElementGroup* Make_New_Group();
+  vcCPElementGroup* Get_Group(int grp_index);
+  vcCPElementGroup* Get_Group(vcCPElement* cpe);
+
+  void Construct_Reduced_Group_Graph();
+  void Add_To_Group(vcCPElement* cpe, vcCPElementGroup* group);
+  void Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to);
+  void Print_Groups(ostream& ofile);
+
 
   virtual void Get_Hierarchical_Ref(vector<string>& ref_vec) {return;}
   void Compute_Compatibility_Labels();
@@ -357,6 +454,7 @@ public:
 
   virtual void Print_VHDL_Start_Symbol_Assignment(ostream& ofile);
   virtual void Print_VHDL_Exit_Symbol_Assignment(ostream& ofile);
+  virtual void Print_VHDL_Optimized(ostream& ofile);
 
   vcCompatibilityLabel* Find_Or_Map_Join_Label(string sid, vcCompatibilityLabel* t)
   {

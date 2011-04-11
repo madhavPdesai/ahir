@@ -72,6 +72,18 @@ AaProgram::~AaProgram() {};
 
 void AaProgram::Print(ostream& ofile)
 {
+
+  // print named types
+  for(std::map<string,AaType*>::iterator iter = AaProgram::_type_map.begin(),
+	fiter = AaProgram::_type_map.end();
+      iter != fiter;
+      iter++)
+    {
+      AaType* t = (*iter).second;
+      if(t->Is("AaRecordType"))
+	((AaRecordType*)t)->Print_Declaration(ofile);
+    }
+
   for(std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.begin();
       miter != AaProgram::_objects.end();
       miter++)
@@ -245,6 +257,30 @@ AaRecordType* AaProgram::Make_Record_Type(vector<AaType*>& etypes)
       AaProgram::_type_map[tid] = ret_type;
     }
   return(ret_type);
+}
+
+AaRecordType* AaProgram::Make_Named_Record_Type(string rname)
+{
+  AaRecordType* rt = NULL;
+  if(AaProgram::_type_map.find(rname) == AaProgram::_type_map.end())
+    {
+      rt = new AaRecordType(NULL,rname);
+      AaProgram::_type_map[rname] = rt;
+    }
+  else
+    {
+      AaType* t = AaProgram::_type_map[rname];
+      assert(t->Is("AaRecordType"));
+      rt = (AaRecordType*)t;
+    }
+
+  return(rt);
+}
+
+AaRecordType* AaProgram::Find_Named_Record_Type(string rname)
+{
+  AaRecordType* rt = AaProgram::Make_Named_Record_Type(rname);
+  return(rt);
 }
 
 void AaProgram::Init_Call_Graph()

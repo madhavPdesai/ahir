@@ -57,16 +57,33 @@ namespace {
 
     bool is_ioport_identifier(GlobalVariable &G)
     {
-      bool is_ioport = false;
+      bool is_ioport = true;
       
-      if(isa<Constant>(G))
-	{
-	  std::string val = locate_portname_for_io_call(G.getOperand(0));
-	  if(val != "")
-	    {
-	      is_ioport = true;
-	    }
-	}
+      for (llvm::Value::use_iterator ui = G.use_begin(), ue = G.use_end();
+           ui != ue; ++ui) {
+        User *user = *ui;
+	
+        if (BitCastInst *inst = dyn_cast<BitCastInst>(user)) {
+          if (inst->getNumUses() > 1) {
+            is_ioport = false;
+            break;
+          }
+          
+          IOCode ioc = get_io_code(*(inst->use_begin()));
+          if (ioc == NOT_IO) {
+            is_ioport = false;
+            break;
+          }
+        } else {
+          if (Constant *konst = dyn_cast<Constant>(user)) {
+            if (!isConstantUsed(konst))
+              continue;
+          }
+          
+          is_ioport = false;
+          break;
+        }
+      }
       return is_ioport;
     }
 
@@ -80,7 +97,11 @@ namespace {
       for (llvm::Module::global_iterator gi = M.global_begin(), ge = M.global_end();
            gi != ge; ++gi) {
         if (!is_ioport_identifier(*gi))
-	   write_storage_object(*gi);
+	  {
+	    // not if it is a pointer to a function
+	    if(!(*gi).getType()->isFunctionTy())
+	      write_storage_object(*gi);
+	  }
       }
 
       
@@ -177,8 +198,9 @@ namespace {
 		args != Eargs;
 		++args)
 	{
-		std::cout << (*args).getNameStr() << " : "
-			  << get_aa_type_name((*args).getType()) << " ";
+	  
+	  std::cout << (*args).getNameStr() << " : "
+		    << get_aa_type_name((*args).getType()) << " ";
 	}
 	std::cout << ")" << std::endl;
 	std::cout << " $out (";

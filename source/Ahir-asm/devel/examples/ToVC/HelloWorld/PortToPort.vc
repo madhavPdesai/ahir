@@ -1,126 +1,138 @@
+// Virtual circuit produced from Aa description by Aa2VC 
 // pipe-declarations for block %sum_mod
-//  file PortToPort.aa, line 2
+// file PortToPort.aa, line 2
 $module [sum_mod] 
 {
   $in a:$int<10> b:$int<10>
   $out c:$int<10>
-  // memory-space-declarations for block %sum_mod
-  //  file PortToPort.aa, line 2
   $CP 
   {
     // begin control-path 
-    // control-path for: 	d :=  ( ~ c0 ) // type of target is $uint<10>
-    //  file PortToPort.aa, line 11
-    ;;[assign_stmt_14] //  file PortToPort.aa, line 11
+    ::[assign_stmt_15_to_assign_stmt_33] 
     {
-      $T [dummy] // assignment evaluates to a constant 
-    }
-    // end assignment statement assign_stmt_14
-    // control-path for: 	e :=  ( ~  ( ~ c1 ) ) // type of target is $uint<10>
-    //  file PortToPort.aa, line 12
-    ;;[assign_stmt_19] //  file PortToPort.aa, line 12
-    {
-      $T [dummy] // assignment evaluates to a constant 
-    }
-    // end assignment statement assign_stmt_19
-    // control-path for: 	d1 := (( ( ~ a ) + d) + e) // type of target is $uint<10>
-    //  file PortToPort.aa, line 14
-    ;;[assign_stmt_27] //  file PortToPort.aa, line 14
-    {
-      // control-path for expression: (( ( ~ a ) + d) + e)
-      ;;[binary_26] 
+      // 	d1 := ((( ~ a ) + d) + e)
+      // file PortToPort.aa, line 14
+      $T[assign_stmt_28_active_] 
+      $T[assign_stmt_28_completed_] 
+      // ((( ~ a ) + d) + e)
+      $T[binary_27_active_] 
+      $T[binary_27_trigger_] 
+      binary_27_active_ <-& (binary_27_trigger_)
+      // (( ~ a ) + d)
+      $T[binary_25_active_] 
+      $T[binary_25_trigger_] 
+      binary_25_active_ <-& (binary_25_trigger_)
+      // ( ~ a )
+      $T[unary_23_active_] 
+      $T[unary_23_trigger_] 
+      unary_23_active_ <-& (unary_23_trigger_)
+      // a
+      // implicit reference
+      $T[simple_obj_ref_22_complete] 
+      unary_23_active_ <-& (simple_obj_ref_22_complete)
+      ;;[unary_23_complete] 
       {
-        // binary expression: (( ( ~ a ) + d) + e)
-        ||[binary_26_inputs] 
-        {
-          // control-path for expression: ( ( ~ a ) + d)
-          ;;[binary_24] 
-          {
-            // binary expression: ( ( ~ a ) + d)
-            ||[binary_24_inputs] 
-            {
-              // control-path for expression:  ( ~ a )
-              ;;[unary_22] 
-              {
-                // unary expression:  ( ~ a )
-                // CP for expression: a
-                $T [rr] $T [ra] $T [cr] $T [ca] //(split) unary operation
-              }
-            }
-            $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
-          }
-        }
+        // unary expression 
+        $T [rr] $T [ra] $T [cr] $T [ca] //(split) unary operation
+      }
+      unary_23_active_ &-> (unary_23_complete)
+      binary_25_active_ <-& (unary_23_complete)
+      ;;[binary_25_complete] 
+      {
+        // binary expression 
         $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
       }
-      // CP for expression: d1
-    }
-    // end assignment statement assign_stmt_27
-    // control-path for: 	c := (d1 + b) // type of target is $uint<10>
-    //  file PortToPort.aa, line 16
-    ;;[assign_stmt_32] //  file PortToPort.aa, line 16
-    {
-      // control-path for expression: (d1 + b)
-      ;;[binary_31] 
+      binary_25_active_ &-> (binary_25_complete)
+      binary_27_active_ <-& (binary_25_complete)
+      ;;[binary_27_complete] 
       {
-        // binary expression: (d1 + b)
-        ||[binary_31_inputs] 
-        {
-          // CP for expression: d1
-          // CP for expression: b
-        }
+        // binary expression 
         $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
       }
-      // CP for expression: c
+      binary_27_active_ &-> (binary_27_complete)
+      assign_stmt_28_active_ <-& (binary_27_complete)
+      // d1
+      // implicit reference
+      assign_stmt_28_completed_ <-& (assign_stmt_28_active_)
+      // 	c := (d1 + b)
+      // file PortToPort.aa, line 16
+      $T[assign_stmt_33_active_] 
+      $T[assign_stmt_33_completed_] 
+      // (d1 + b)
+      $T[binary_32_active_] 
+      $T[binary_32_trigger_] 
+      binary_32_active_ <-& (binary_32_trigger_)
+      // d1
+      // implicit reference
+      $T[simple_obj_ref_30_complete] 
+      simple_obj_ref_30_complete <-& (assign_stmt_28_completed_)
+      // b
+      // implicit reference
+      $T[simple_obj_ref_31_complete] 
+      binary_32_active_ <-& (simple_obj_ref_30_complete)
+      binary_32_active_ <-& (simple_obj_ref_31_complete)
+      ;;[binary_32_complete] 
+      {
+        // binary expression 
+        $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+      }
+      binary_32_active_ &-> (binary_32_complete)
+      assign_stmt_33_active_ <-& (binary_32_complete)
+      // c
+      // implicit reference
+      assign_stmt_33_completed_ <-& (assign_stmt_33_active_)
+      // load-store dependencies..
     }
-    // end assignment statement assign_stmt_32
   }
   // end control-path
   $DP 
   {
     // begin data-path 
     // constant-object-declarations for block %sum_mod
-    //  file PortToPort.aa, line 2
-    $constant $W[constant_c0_6] : $int<10> := _b0000001111
-    $constant $W[constant_c1_9] : $int<10> := _b0001010111
-    // constant declarations for: 	d :=  ( ~ c0 ) // type of target is $uint<10>
-    //  file PortToPort.aa, line 11
-    $constant $W[d_14] : $int<10> := _b1111110000
-    // constant declarations for: 	e :=  ( ~  ( ~ c1 ) ) // type of target is $uint<10>
-    //  file PortToPort.aa, line 12
-    $constant $W[e_19] : $int<10> := _b0001010111
-    // wire-declarations for: 	d1 := (( ( ~ a ) + d) + e) // type of target is $uint<10>
-    //  file PortToPort.aa, line 14
-    // wire-declarations for expression:  ( ~ a )
-    $W[unary_22_wire] : $int<10>
-    // wire-declarations for expression: ( ( ~ a ) + d)
-    $W[binary_24_wire] : $int<10>
-    $W[d1_27] : $int<10>
-    // wire-declarations for: 	c := (d1 + b) // type of target is $uint<10>
-    //  file PortToPort.aa, line 16
-    // data-path instances for: 	d1 := (( ( ~ a ) + d) + e) // type of target is $uint<10>
-    //  file PortToPort.aa, line 14
-    // data-path instances for expression:  ( ~ a )
-    ~ [unary_22_inst] (a) (unary_22_wire)
-    // data-path-instances for expression: ( ( ~ a ) + d)
-    +[binary_24_inst] (unary_22_wire d_14) (binary_24_wire)
-    // data-path-instances for expression: (( ( ~ a ) + d) + e)
-    +[binary_26_inst] (binary_24_wire e_19) (d1_27)
-    // data-path instances for: 	c := (d1 + b) // type of target is $uint<10>
-    //  file PortToPort.aa, line 16
-    // data-path-instances for expression: (d1 + b)
-    +[binary_31_inst] (d1_27 b) (c)
+    // file PortToPort.aa, line 2
+    $constant $W[xxsum_modxxc0] : $int<10> := _b0000001111// 15
+    $constant $W[xxsum_modxxc1] : $int<10> := _b0001010111// 87
+    // 	d := ( ~ c0 )
+    // file PortToPort.aa, line 11
+    $constant $W[d_15] : $int<10> := _b0000000000 // 0
+    // 	e := ( ~ ( ~ c1 ) )
+    // file PortToPort.aa, line 12
+    $constant $W[e_20] : $int<10> := _b0000000000 // 0
+    // 	d1 := ((( ~ a ) + d) + e)
+    // file PortToPort.aa, line 14
+    // ( ~ a )
+    $intermediate $W[unary_23_wire] : $int<10>
+    // (( ~ a ) + d)
+    $intermediate $W[binary_25_wire] : $int<10>
+    // d1
+    $W[d1_28] : $int<10>
+    // 	c := (d1 + b)
+    // file PortToPort.aa, line 16
+    // c
+    // 	d1 := ((( ~ a ) + d) + e)
+    // file PortToPort.aa, line 14
+    // ( ~ a )
+    ~ [unary_23_inst] (a) (unary_23_wire)
+    // (( ~ a ) + d)
+    +[binary_25_inst] (unary_23_wire d_15) (binary_25_wire)
+    // ((( ~ a ) + d) + e)
+    +[binary_27_inst] (binary_25_wire e_20) (d1_28)
+    // 	c := (d1 + b)
+    // file PortToPort.aa, line 16
+    // (d1 + b)
+    +[binary_32_inst] (d1_28 b) (c)
   }
   // end data-path
-  // CP-DP links for: 	d1 := (( ( ~ a ) + d) + e) // type of target is $uint<10>
-  //  file PortToPort.aa, line 14
-  // CP-DP links for expression:  ( ~ a )
-  unary_22_inst <=> (assign_stmt_27/binary_26/binary_26_inputs/binary_24/binary_24_inputs/unary_22/rr assign_stmt_27/binary_26/binary_26_inputs/binary_24/binary_24_inputs/unary_22/cr) (assign_stmt_27/binary_26/binary_26_inputs/binary_24/binary_24_inputs/unary_22/ra assign_stmt_27/binary_26/binary_26_inputs/binary_24/binary_24_inputs/unary_22/ca)
-  // CP-DP links for expression: ( ( ~ a ) + d)
-  binary_24_inst <=> (assign_stmt_27/binary_26/binary_26_inputs/binary_24/rr assign_stmt_27/binary_26/binary_26_inputs/binary_24/cr) (assign_stmt_27/binary_26/binary_26_inputs/binary_24/ra assign_stmt_27/binary_26/binary_26_inputs/binary_24/ca)
-  // CP-DP links for expression: (( ( ~ a ) + d) + e)
-  binary_26_inst <=> (assign_stmt_27/binary_26/rr assign_stmt_27/binary_26/cr) (assign_stmt_27/binary_26/ra assign_stmt_27/binary_26/ca)
-  // CP-DP links for: 	c := (d1 + b) // type of target is $uint<10>
-  //  file PortToPort.aa, line 16
-  // CP-DP links for expression: (d1 + b)
-  binary_31_inst <=> (assign_stmt_32/binary_31/rr assign_stmt_32/binary_31/cr) (assign_stmt_32/binary_31/ra assign_stmt_32/binary_31/ca)
+  // 	d1 := ((( ~ a ) + d) + e)
+  // file PortToPort.aa, line 14
+  // ( ~ a )
+  unary_23_inst <=> (assign_stmt_15_to_assign_stmt_33/unary_23_complete/rr assign_stmt_15_to_assign_stmt_33/unary_23_complete/cr) (assign_stmt_15_to_assign_stmt_33/unary_23_complete/ra assign_stmt_15_to_assign_stmt_33/unary_23_complete/ca)
+  // (( ~ a ) + d)
+  binary_25_inst <=> (assign_stmt_15_to_assign_stmt_33/binary_25_complete/rr assign_stmt_15_to_assign_stmt_33/binary_25_complete/cr) (assign_stmt_15_to_assign_stmt_33/binary_25_complete/ra assign_stmt_15_to_assign_stmt_33/binary_25_complete/ca)
+  // ((( ~ a ) + d) + e)
+  binary_27_inst <=> (assign_stmt_15_to_assign_stmt_33/binary_27_complete/rr assign_stmt_15_to_assign_stmt_33/binary_27_complete/cr) (assign_stmt_15_to_assign_stmt_33/binary_27_complete/ra assign_stmt_15_to_assign_stmt_33/binary_27_complete/ca)
+  // 	c := (d1 + b)
+  // file PortToPort.aa, line 16
+  // (d1 + b)
+  binary_32_inst <=> (assign_stmt_15_to_assign_stmt_33/binary_32_complete/rr assign_stmt_15_to_assign_stmt_33/binary_32_complete/cr) (assign_stmt_15_to_assign_stmt_33/binary_32_complete/ra assign_stmt_15_to_assign_stmt_33/binary_32_complete/ca)
 }

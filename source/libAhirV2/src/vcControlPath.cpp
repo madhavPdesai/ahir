@@ -529,6 +529,7 @@ void vcCPBlock::Print_Structure(ostream& ofile)
     {
       this->_elements[idx]->Print_Structure(ofile);
     }
+
 }
 
 
@@ -1596,6 +1597,7 @@ vcCompatibilityLabel* vcControlPath::Make_Compatibility_Label(string id)
  {
    this->vcCPSeriesBlock::Update_Predecessor_Successor_Links();
    this->vcCPSeriesBlock::Check_Structure();
+   this->Construct_Reduced_Group_Graph();
  }
 
  void vcControlPath::Print_Compatibility_Labels(ostream& ofile)

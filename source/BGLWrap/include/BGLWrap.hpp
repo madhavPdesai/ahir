@@ -1,5 +1,5 @@
-#ifndef Aa_Bgl_Wrap__
-#define Aa_Bgl_Wrap__
+#ifndef __Bgl_Wrap__
+#define __Bgl_Wrap__
 
 #include <string>                    // for std::string
 #include <iostream>                  // for std::cout, std::endl

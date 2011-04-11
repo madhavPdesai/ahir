@@ -161,7 +161,12 @@ namespace Aa {
 		    std::string portname = to_aa(locate_portname_for_io_call(C.getArgOperand(0)));
 		    assert(portname != "");
 		      
-		    std::string type_name = get_aa_type_name(ioc);
+		    std::string type_name;
+		    if(is_io_write(ioc))
+		      type_name = get_aa_type_name(C.getArgOperand(1)->getType());
+		    else
+		      type_name = get_aa_type_name(C.getCalledFunction()->getType());
+		    
 		    this->Add_Pipe(portname,type_name);
 		  }
 	      }
@@ -369,6 +374,13 @@ namespace {
 	if(ioc == NOT_IO)
 	  {
 	    const llvm::Function* called_function  = C.getCalledFunction();
+
+	    if(called_function == NULL)
+	      {
+		std::cerr << "Error: indirect function call instruction " << cname << " not supported" << std::endl;
+		return;
+	      }
+	    
 	    const llvm::Type* called_function_return_type = called_function->getReturnType();
 
 	    bool has_ret_val = true;

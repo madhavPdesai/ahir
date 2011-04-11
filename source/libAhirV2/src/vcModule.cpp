@@ -246,6 +246,7 @@ void vcModule::Compute_Compatibility_Labels()
 void vcModule::Print_Control_Structure(ostream& ofile)
 {
   this->_control_path->Print_Structure(ofile);
+  this->_control_path->Print_Groups(ofile);
   this->_control_path->Print_Compatibility_Labels(ofile);
   this->_control_path->Print_Compatibility_Map(ofile);
   this->Print_Compatible_Operator_Groups(ofile);
@@ -555,7 +556,10 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
   // the always true signal, tied to true..
   ofile << ((vcCPElement*)(this->_control_path))->Get_Always_True_Symbol() << " <= true; " << endl;
 
-  this->_control_path->Print_VHDL(ofile);
+  if(vcSystem::_opt_flag)
+    this->_control_path->Print_VHDL_Optimized(ofile);
+  else
+    this->_control_path->Print_VHDL(ofile);
 
   ofile << endl << endl;
 

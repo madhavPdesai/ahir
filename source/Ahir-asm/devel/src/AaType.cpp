@@ -163,7 +163,11 @@ AaType* AaArrayType::Get_Element_Type(int start_idx, vector<AaExpression*>& indi
 //---------------------------------------------------------------------
 // AaRecordType
 //---------------------------------------------------------------------
-
+AaRecordType::AaRecordType(AaScope* s, string name):AaType(s)
+{
+  _record_type_name = name;
+  _is_named = true;
+}
 
 AaType* AaRecordType::Get_Element_Type(int start_idx, vector<AaExpression*>& indices)
 {

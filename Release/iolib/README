@@ -1,0 +1,5 @@
+the iolib library.
+  you will need it if you want to compile your C/C++
+  programs which use pipes.
+
+the demo/ directory contains an example
