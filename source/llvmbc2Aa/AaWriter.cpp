@@ -519,6 +519,12 @@ namespace {
 
 	std::string op1 = get_name(C.getOperand(0));
 	std::string op2 = get_name(C.getOperand(1));
+
+	if((op1 == "") | (op2 == ""))
+	{
+		std::cerr << "Error: anonymous operand in compare instruction " << cname << 			std::endl;
+	}
+
 	std::cout << "// compare instruction" << std::endl;
 
 	std::cout << cname << " := " ;

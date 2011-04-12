@@ -36,6 +36,7 @@ namespace Aa {
   bool is_io_write(IOCode ioc);
 
   std::string locate_portname_for_io_call(llvm::Value *strptr);
+  void write_type_declaration(llvm::Type *T,llvm::Module& tst);
   void write_storage_object(llvm::GlobalVariable &G,llvm::Module& tst);
   std::string get_aa_type_name(const llvm::Type* ptr, llvm::Module& tst);
   std::string get_aa_type_name(IOCode ioc);

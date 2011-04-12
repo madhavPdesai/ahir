@@ -359,11 +359,32 @@ std::string Aa::get_aa_value_string(const llvm::Value* val)
 }
 
 
+void Aa::write_type_declaration(llvm::Type *T, llvm::Module& tst)
+{
+  std::string type_name = to_aa(tst.getTypeName(T));
+  if(type_name == "")
+	return;
+
+  if(!T->isStructTy())
+	return;
+
+  std::cout << "$record [" << type_name << "] ";
+  const llvm::StructType *ptr_struct = dyn_cast<llvm::StructType>(T);
+  for(int idx = 0; idx < ptr_struct->getNumElements(); idx++)
+  {
+	  std::cout << "< " ;
+	  std::cout << get_aa_type_name(ptr_struct->getElementType(idx),tst);
+	  std::cout << " > ";
+  }
+  std::cout << std::endl;
+}
+
+
 void Aa::write_storage_object(llvm::GlobalVariable &G, llvm::Module& tst)
 {
     const llvm::Type *ptr = G.getType();
 
-    std::string obj_name = to_aa(G.getNameStr());
+    std::string obj_name = to_aa(G.getName());
     const llvm::PointerType* pptr = dyn_cast<PointerType>(G.getType());
 
     assert(pptr != NULL);

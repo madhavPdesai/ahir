@@ -947,7 +947,7 @@ aA_Storage_Object_Declaration[AaScope* scope] returns [AaObject* obj]
 //----------------------------------------------------------------------------------------------------------
 aA_Object_Declaration_Base[AaScope* scope, string& oname, AaType*& otype, AaConstantLiteralReference*& initial_value]
         : (id:SIMPLE_IDENTIFIER { oname = id->getText(); }) COLON
-            (otype = aA_Type_Reference[scope])
+            ((otype = aA_Type_Reference[scope]) | (otype = aA_Named_Type_Reference[scope]))
             (ASSIGNEQUAL initial_value = aA_Constant_Literal_Reference[scope])?
         ;
 
@@ -1030,8 +1030,18 @@ aA_Type_Reference[AaScope* scope] returns [AaType* ref_type]
         (ref_type = aA_Array_Type_Reference[scope]) |
           (ref_type = aA_Record_Type_Reference[scope]) |
             (ref_type = aA_Pointer_Type_Reference[scope]) |
-		(ref_type = aA_Void_Type_Reference[scope])
+		(ref_type = aA_Void_Type_Reference[scope]) 
     ;
+
+//----------------------------------------------------------------------------------------------------------
+// aA_Named_Type_Reference: SIMPLE_IDENTIFIER
+//----------------------------------------------------------------------------------------------------------
+aA_Named_Type_Reference[AaScope* scope] returns [AaType* ret_type]
+{
+  ret_type = NULL;
+}
+: id:SIMPLE_IDENTIFIER {ret_type = AaProgram::Make_Named_Record_Type(id->getText());}
+;
 
 //----------------------------------------------------------------------------------------------------------
 // aA_Void_Type_Reference: VOID
@@ -1115,7 +1125,7 @@ aA_Array_Type_Reference[AaScope* scope] returns [AaType* ref_type]
     : ARRAY 
         (LBRACKET ds:UINTEGER { dims.push_back(atoi(ds->getText().c_str())); } RBRACKET)+
         OF 
-        (element_type = aA_Type_Reference[scope])
+        ((element_type = aA_Type_Reference[scope]) | (element_type = aA_Named_Type_Reference[scope]))
         {
             ref_type = AaProgram::Make_Array_Type(element_type,dims);
         }
@@ -1129,7 +1139,7 @@ aA_Record_Type_Reference[AaScope* scope] returns [AaType* ref_type]
 	AaRecordType* rt;
 	AaType* et;
 	vector<AaType*> etypes;
-}: RECORD  (LESS et = aA_Type_Reference[scope] {etypes.push_back(et);} GREATER)+
+}: RECORD  (LESS ((et = aA_Type_Reference[scope]) | (et = aA_Named_Type_Reference[scope]))  {etypes.push_back(et);} GREATER)+
 { rt = AaProgram::Make_Record_Type(etypes); ref_type = (AaType*) rt; etypes.clear();}
 ;
 
@@ -1152,7 +1162,7 @@ aA_Named_Record_Type_Declaration[AaScope* scope] returns [AaType* ref_type]
                            NULL);
           }
       } 
-      (LESS et = aA_Type_Reference[scope] {rt->Add_Element_Type(et);} GREATER)+
+      (LESS ((et = aA_Type_Reference[scope]) | (et = aA_Named_Type_Reference[scope])) {rt->Add_Element_Type(et);} GREATER)+
 ;
 
 

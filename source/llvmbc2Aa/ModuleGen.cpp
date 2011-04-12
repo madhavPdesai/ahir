@@ -6,6 +6,7 @@
 #include <llvm/Module.h>
 #include <llvm/GlobalVariable.h>
 #include <llvm/Analysis/AliasAnalysis.h>
+#include <llvm/TypeSymbolTable.h>
 
 #include <sstream>
 #include <list>
@@ -95,23 +96,45 @@ namespace {
       aa_writer = AaWriter_New(TD, AA);  
       aa_writer->Set_Module(&M);
 
+	// first the global named types 
+	// (note: only structures need to be declared).
+      llvm::TypeSymbolTable& tst = M.getTypeSymbolTable();
+      for(std::map<const std::string, const Type*>::iterator ti = tst.begin(), tf = tst.end();
+	ti != tf;
+	ti++)
+      {
+		llvm::Type* t = (llvm::Type*) (*ti).second;
+		if(t->isStructTy())
+		{
+			write_type_declaration(t,M);
+		}
+      }
+
+	// collect all the pipes declared in the module..
+	// you will need to scan every instruction in every
+	// function to find the calls to io write/read functions.
+      for (llvm::Module::iterator fi = M.begin(), fe = M.end();
+           fi != fe; ++fi) {
+	aa_writer->Collect_Pipes(*fi);
+      }
+	// declare the pipes.
+      aa_writer->Print_Pipe_Declarations(std::cout);
+
       for (llvm::Module::global_iterator gi = M.global_begin(), ge = M.global_end();
            gi != ge; ++gi) {
         if (!is_ioport_identifier(*gi))
 	  {
 	    // not if it is a pointer to a function
 	    if(!(*gi).getType()->isFunctionTy())
-	      write_storage_object(*gi,M);
+	    {
+		std::string gname = aa_writer->get_name(&(*gi));
+		std::cerr << "Info: declaring global " << gname << std::endl;
+	      	write_storage_object(*gi,M);
+	    }
 	  }
       }
 
       
-      for (llvm::Module::iterator fi = M.begin(), fe = M.end();
-           fi != fe; ++fi) {
-	aa_writer->Collect_Pipes(*fi);
-      }
-
-      aa_writer->Print_Pipe_Declarations(std::cout);
   
       for (llvm::Module::iterator fi = M.begin(), fe = M.end();
            fi != fe; ++fi) {
@@ -124,6 +147,8 @@ namespace {
 
     void runOnFunction(llvm::Function &F)
     {
+      aa_writer->initialise_with_function(F);
+
       std::string fname = F.getNameStr();
 
       std::cerr<<"Info: visiting function " << fname << std::endl;
@@ -151,8 +176,6 @@ namespace {
 	}
 
     
-      //TODO: is this needed?
-      //   cbuilder->initialise_with_function(F);
 
       // BFS to figure out predecessors of a block, since there
       // appears to be (?) no way of getting them from llvm.
@@ -191,16 +214,15 @@ namespace {
 	    }
 	}
 
-      std::cout << "$module [" << fname << "] " << std::endl;
+      std::cout << "$module [" << to_aa(fname) << "] " << std::endl;
 
-      std::cout << "// arguments" << std::endl;
 	std::cout << " $in (";
 	for(Function::arg_iterator args = F.arg_begin(), Eargs = F.arg_end();
 		args != Eargs;
 		++args)
 	{
 	  
-	  std::cout << (*args).getNameStr() << " : "
+	  std::cout << to_aa((*args).getNameStr()) << " : "
 		    << get_aa_type_name((*args).getType(), aa_writer->Get_Module()) << " ";
 	}
 	std::cout << ")" << std::endl;
@@ -220,12 +242,12 @@ namespace {
 		std::cout << "$storage stored_ret_val__ : " << get_aa_type_name(ret_type, aa_writer->Get_Module()) << std::endl;
 
 	
-	std::cout << "$branchblock [" << fname << "] {"  << std::endl;
+	std::cout << "$branchblock [body] {"  << std::endl;
 
-	// visit the basic blocks.. twice.
+	// visit the basic blocks.. this time all instructions
+	// have been named ..
 	for(llvm::Function::iterator iter = F.begin(); iter != F.end(); ++iter)
 	  {
-	    llvm::BasicBlock* pred = (*iter).getSinglePredecessor();
 	    aa_writer->visit(*iter);
 	  }
 	
@@ -240,8 +262,7 @@ namespace {
 	
 	std::cout << "}" << std::endl;
 	
-	//TODO: is this needed?
-	// cbuilder->finalise_function();
+	aa_writer->finalise_function();
     }
     
   };
