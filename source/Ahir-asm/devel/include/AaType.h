@@ -44,8 +44,14 @@ class AaType: public AaRoot
 
   virtual int Get_Data_Width() {assert(0);}
 
-  virtual AaType* Get_Element_Type(int idx) {assert(0);}
-  virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices) {assert(0);}
+  virtual AaType* Get_Element_Type(int idx) 
+  {
+    assert(0);
+  }
+  virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices) 
+  {
+    assert(0);
+  }
 
   virtual string CPointerDereference()
   {

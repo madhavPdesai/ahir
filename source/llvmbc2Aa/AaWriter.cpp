@@ -42,13 +42,13 @@ namespace Aa {
 
 	llvm::GetElementPtrInst& eI = static_cast<llvm::GetElementPtrInst&>(I);
 	bool is_global = isa<GlobalVariable>(eI.getPointerOperand());
-	std::string root_name = get_name(eI.getPointerOperand());
+	std::string root_name = to_aa(get_name(eI.getPointerOperand()));
 
 	// if it takes the reference of a constant string which is a pointer-id      
 	if(is_global)
 	  {
 	    std::string port_name = to_aa(locate_portname_for_io_call(eI.getPointerOperand()));
-	    if(this->pipe_map.find(port_name) != this->pipe_map.end())
+	    if(this->Is_Pipe(port_name))
 	      {
 		std::cerr << "Info: ignoring get-element-ptr to " 
 			  << root_name 
@@ -56,7 +56,13 @@ namespace Aa {
 			  << std::endl;
 		return;
 	      }
+
 	  }
+
+	// if the ptr-operand corresponds to either an alloca
+	// or a global, then this ptr must point to a declared
+	// object.  
+	bool is_alloca = isa<AllocaInst>(eI.getPointerOperand());
 
 
 
@@ -69,7 +75,7 @@ namespace Aa {
 	// and we will treat p as the name of
 	// the object, and in Aa, the reference will
 	// be of the form
-	//     &(a[i1][i2]...[ik])
+	//     @(a[i1][i2]...[ik])
 	// because i0 must be 0. If i0 is not zero,
 	// this would be an error because what does
 	// p point to?
@@ -81,36 +87,41 @@ namespace Aa {
 	//   p[i0][i1]...[ik]
 	//
 	std::string inst_name = to_aa(I.getNameStr());
-	std::cout << inst_name << " := @(" ;
 
-	// if the ptr-operand corresponds to either an alloca
-	// or a global, then this ptr must point to a declared
-	// object.  
-	bool is_alloca = isa<AllocaInst>(eI.getPointerOperand());
+	if(is_alloca || is_global)
+	  {
+	    std::cout << inst_name << " := @(" ;
+	  }
+	else
+	  {
+	    std::cout << inst_name << " := " ;
+	  }
 
 	std::cout << root_name;
-	if(eI.getNumIndices() > 1)
+
+	if(is_alloca || is_global)
 	  {
-	    if(is_alloca || is_global)
+	    for(int idx = 2; idx < eI.getNumOperands(); idx++)
 	      {
-		for(int idx = 2; idx < eI.getNumOperands(); idx++)
-		  {
-		    std::cout << "[";
-		    std::cout << get_name(eI.getOperand(idx));
-		    std::cout << "]";
-		  }
-	      }
-	    else
-	      {
-		for(int idx = 1; idx < eI.getNumOperands(); idx++)
-		  {
-		    std::cout << "[";
-		    std::cout << get_name(eI.getOperand(idx));
-		    std::cout << "]";
-		  }
+		std::cout << "[";
+		std::cout << get_name(eI.getOperand(idx));
+		std::cout << "]";
 	      }
 	  }
-	std::cout << ")" << std::endl;
+	else
+	  {
+	    for(int idx = 1; idx < eI.getNumOperands(); idx++)
+	      {
+		std::cout << "[";
+		std::cout << get_name(eI.getOperand(idx));
+		std::cout << "]";
+	      }
+	  }
+
+	if(is_alloca || is_global)
+	  std::cout << ")" << std::endl;
+	else
+	  std::cout << std::endl;
       }
     else
       {
@@ -138,6 +149,7 @@ namespace Aa {
 		std::string new_val = "oBjEct_" + int_to_str(value_name_map.size());
 		value_name_map[v] = new_val;
 		ret_string = to_aa(new_val);
+		v->setName(ret_string);
 	      }
 	  }
       }
@@ -159,19 +171,21 @@ namespace Aa {
 		if(!(ioc == NOT_IO))
 		  {
 		    std::string portname = to_aa(locate_portname_for_io_call(C.getArgOperand(0)));
-		    assert(portname != "");
-		      
-		    std::string type_name;
-		    if(is_io_write(ioc))
-		      type_name = get_aa_type_name(C.getArgOperand(1)->getType(),*_module);
-		    else
-		      type_name = get_aa_type_name(C.getCalledFunction()->getType(),*_module);
-		    
-		    this->Add_Pipe(portname,type_name);
+		    if(portname != "")
+		      {
+			std::string type_name;
+			type_name = get_aa_type_name(ioc);
+			this->Add_Pipe(portname,type_name);
+		      }
 		  }
 	      }
 	  }
       } 
+  }
+
+  bool AaWriter::Is_Pipe(std::string port_name)
+  {
+    return(this->pipe_map.find(port_name) != this->pipe_map.end());
   }
 
   void AaWriter::Add_Pipe(std::string portname, std::string type_name)
@@ -369,20 +383,20 @@ namespace {
     void visitCallInst(CallInst &C)
     {
       std::string cname = to_aa(C.getNameStr());
-
-	IOCode ioc = get_io_code(C);
-	if(ioc == NOT_IO)
+      const llvm::Function* called_function  = C.getCalledFunction();
+      if(called_function == NULL)
+	{
+	  std::cerr << "Error: indirect function call instruction " << cname << " not supported" << std::endl;
+	  return;
+	}
+      
+      const llvm::Type* called_function_return_type = called_function->getReturnType();
+      std::string ret_type_name = get_aa_type_name(called_function_return_type,*_module);
+      
+      IOCode ioc = get_io_code(C);
+      if(ioc == NOT_IO)
 	  {
-	    const llvm::Function* called_function  = C.getCalledFunction();
-
-	    if(called_function == NULL)
-	      {
-		std::cerr << "Error: indirect function call instruction " << cname << " not supported" << std::endl;
-		return;
-	      }
 	    
-	    const llvm::Type* called_function_return_type = called_function->getReturnType();
-
 	    bool has_ret_val = true;
 	    if(C.getType()->isVoidTy())
 	      has_ret_val = false;
@@ -401,14 +415,43 @@ namespace {
 	else
 	  {
 	    std::string portname = to_aa(locate_portname_for_io_call(C.getArgOperand(0)));
-	    if(ioc == READ_FLOAT32 || ioc == READ_UINT32)
+	    std::string port_type_name = this->pipe_map[portname];
+
+	    if(is_io_read(ioc))
 	      {
-		std::cout << to_aa(C.getNameStr()) <<  " := " <<  portname << std::endl;
+		if(portname != "")
+		  std::cout << to_aa(C.getNameStr()) <<  " := " 
+			    << "($bitcast (" << ret_type_name << " ) "
+			    <<  portname << " ) " 
+			    << std::endl;
+		else
+		  {
+		    std::cerr << "Warning: call statement " << to_aa(C.getNameStr())
+			      << " is an io read, but the port name is not statically known"
+			      << std::endl;
+		    std::cout << "// io-read tied to 0, because it is not possible to id the pipe" 
+			      << std::endl;
+		    std::cout << to_aa(C.getNameStr()) <<  " := " <<  get_zero_value(C.getType())
+			      << std::endl;
+		  }
+		
 	      }
 	    else 
 	      {
 		std::string wname = get_name(C.getArgOperand(1));
-		std::cout << portname << " := " << wname << std::endl;
+		if(portname != "")
+		  std::cout << portname << " := " 
+			    << "($bitcast ( " << port_type_name << " ) " 
+			    << wname << " )"
+			    << std::endl;
+		else
+		  {
+		    std::cerr << "Warning: call statement " << to_aa(C.getNameStr())
+			      << " is an io write, but the port name is not statically known"
+			      << std::endl;
+		    std::cout << "// io-write ignored, because it is not possible to id the pipe" 
+			      << std::endl;
+		  }
 	      }
 	  }
     }
@@ -492,6 +535,16 @@ namespace {
       
       bool is_alloca = isa<AllocaInst>(L.getPointerOperand());
       bool is_global = isa<GlobalVariable>(L.getPointerOperand());
+
+      if(isa<UndefValue>(L.getPointerOperand()))
+	{
+	  std::cerr << "Warning: load with undef pointer" << std::endl;
+	  std::cout << "// load with undef pointer" << std::endl;
+	  std::cout << get_zero_value(L.getType()) << std::endl;
+
+	  return;
+	}
+
       if(is_alloca || is_global)
 	std::cout << get_name(L.getPointerOperand()) << std::endl;
       else
@@ -505,6 +558,15 @@ namespace {
       
       bool is_alloca = isa<AllocaInst>(S.getPointerOperand());
       bool is_global = isa<GlobalVariable>(S.getPointerOperand());
+
+      if((isa<UndefValue>(S.getPointerOperand())) ||
+	 (isa<UndefValue>(S.getValueOperand())))
+	{
+	  std::cerr << "Warning: ignoring store with undef pointer or value" << std::endl;
+	  std::cout << "// skipped with undef pointer and/or value" << std::endl;
+	  return;
+	}
+
       if(is_alloca || is_global)
 	std::cout << get_name(S.getPointerOperand()) << " := ";
       else

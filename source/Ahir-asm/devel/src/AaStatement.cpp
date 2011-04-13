@@ -572,16 +572,61 @@ string AaAssignmentStatement::Debug_Info()
 
 void AaAssignmentStatement::Print(ostream& ofile)
 {
-  ofile << this->Tab();
-  this->Get_Target()->Print(ofile);
-  ofile << " := ";
-  this->Get_Source()->Print(ofile);
+  int twidth = this->Get_Target()->Get_Type()->Size();
+  int swidth = this->Get_Source()->Get_Type()->Size();
+  int awidth = AaProgram::_foreign_address_width;
+
+  if(this->Get_Target()->Is_Foreign_Store() && this->Get_Source()->Is_Foreign_Load())
+    {
+      AaPointerDereferenceExpression *ptgt = (AaPointerDereferenceExpression*)(this->Get_Target());
+      AaPointerDereferenceExpression *psrc = (AaPointerDereferenceExpression*)(this->Get_Source());
+
+      // first load and then store.
+      ofile << "$call extmem_load_" << swidth
+	    << " ( ($bitcast ( $uint<" << awidth << " > ) "
+	    <<  psrc->Get_Reference_To_Object()->To_String() << ")) ("
+	    << " (as_" << this->Get_Index() << "_ld_result)" << endl;
+      ofile << "$call extmem_store_" << twidth
+	    << " ( ($bitcast ($uint<" << awidth << "> )"
+	    << ptgt->Get_Reference_To_Object()->To_String() << ") "
+	    << " ( $bitcast ( $uint<" << twidth << ">)" 
+	    << " as_" << this->Get_Index() << "_ld_result)) ()" << endl;
+    }
+  else if(this->Get_Source()->Is_Foreign_Load())
+    {
+      AaPointerDereferenceExpression *psrc = (AaPointerDereferenceExpression*)(this->Get_Source());
+
+      ofile << "$call extmem_load_" << swidth
+	    << " ( ($bitcast ($uint<" <<  awidth << "> )"
+	    << psrc->Get_Reference_To_Object()->To_String() << ")) ("
+	    << "  as_" << this->Get_Index() << "_ld_result)" << endl;
+      ofile << this->Get_Target()->To_String() << " :=  "
+	    << " ( $bitcast (" << this->Get_Target()->Get_Type()->To_String() << " )" 
+	    << " as_" << this->Get_Index() << "_ld_result)" << endl;
+    }
+  else if(this->Get_Target()->Is_Foreign_Store())
+    {
+      AaPointerDereferenceExpression *ptgt = (AaPointerDereferenceExpression*)(this->Get_Target());
+      ofile << "$call extmem_store_" << twidth
+	    << " ( ($bitcast ($uint<" << awidth << "> )"
+	    << ptgt->Get_Reference_To_Object()->To_String() << ") "
+	    << " ( $bitcast ( $uint<" << twidth << "> )"
+	    << this->Get_Source()->To_String() << "))  ()" << endl;
+    }
+  else
+    {
+      ofile << this->Tab();
+      this->Get_Target()->Print(ofile);
+      ofile << " := ";
+      this->Get_Source()->Print(ofile);
+    }
 
   if(AaProgram::_verbose_flag)
     ofile << endl << Debug_Info();
 
   ofile << endl;
 }
+
 void AaAssignmentStatement::Map_Source_References()
 {
   this->_target->Map_Source_References_As_Target(this->_source_objects);

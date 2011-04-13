@@ -1171,6 +1171,8 @@ int AaObjectReference::Get_Address_Width()
   else if(this->_object->Is_Expression())
     {
       so = ((AaExpression*)(this->_object))->Get_Addressed_Object_Representative();
+      if(so == NULL)
+	return(AaProgram::_foreign_address_width);
     }
   assert(so);
   return(so->Get_Address_Width());
@@ -1186,6 +1188,10 @@ string AaObjectReference::Get_VC_Base_Address_Name()
   else if(this->_object->Is_Expression())
     {
       return(((AaExpression*)(this->_object))->Get_VC_Driver_Name());
+    }
+  else if(this->_object->Is("AaInterfaceObject"))
+    {
+      return(((AaObject*)(this->_object))->Get_VC_Name());
     }
 }
 
@@ -1265,6 +1271,8 @@ int AaArrayObjectReference::Get_Address_Width()
   if(this->Get_Object_Type() && this->Get_Object_Type()->Is_Pointer_Type())
     {
       so = this->Get_Addressed_Object_Representative();
+      if(so == NULL || so->Is_Foreign_Storage_Object())
+	return(AaProgram::_foreign_address_width);
     }
   else
     {
@@ -1283,6 +1291,8 @@ int AaArrayObjectReference::Get_Word_Size()
   if(this->Get_Object_Type() && this->Get_Object_Type()->Is_Pointer_Type())
     {
       so = this->Get_Addressed_Object_Representative();
+      if(so == NULL || so->Is_Foreign_Storage_Object())
+	return(AaProgram::_foreign_word_size);
     }
   else
     {
@@ -1317,6 +1327,10 @@ string AaArrayObjectReference::Get_VC_Base_Address_Name()
   else if(this->_object->Is_Expression())
     {
       return(((AaExpression*)(this->_object))->Get_VC_Driver_Name());
+    }
+  else if(this->_object->Is("AaInterfaceObject"))
+    {
+      return(((AaObject*)(this->_object))->Get_VC_Name());
     }
 
   return("ErrorNoBaseAddress");

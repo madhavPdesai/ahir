@@ -75,6 +75,12 @@ pair<vcCompatibilityLabel*,vcCompatibilityLabel*> vcDataPath::Get_Label_Interval
   if(_dpe_label_interval_map.find(dpe) != _dpe_label_interval_map.end())
     return(_dpe_label_interval_map[dpe]);
 
+  if(dpe->_reqs.front() == NULL || dpe->_acks.back() == NULL)
+    {
+      vcSystem::Error("data-path-element " + dpe->Get_Id() + " has null reqs/acks");
+      return(pair<vcCompatibilityLabel*,vcCompatibilityLabel*>(NULL,NULL));
+    }
+
   pair<vcCompatibilityLabel*,vcCompatibilityLabel*> ret_pair(dpe->_reqs.front()->Get_Compatibility_Label(),
 							     dpe->_acks.back()->Get_Compatibility_Label());
   for(int idx = 0; idx < dpe->_reqs.size(); idx++)
@@ -316,6 +322,9 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
 {
   pair<vcCompatibilityLabel*, vcCompatibilityLabel*> I1 = this->Get_Label_Interval(cp,dpe);
 
+  if(I1.first == NULL && I1.second == NULL)
+    return;
+
   bool new_group = true;
   for(int idx = 0; idx < dpe_group.size(); idx++)
     {
@@ -327,6 +336,9 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
 	      dpe_iter++)
 	    {
 	      pair<vcCompatibilityLabel*, vcCompatibilityLabel*> I2 = this->Get_Label_Interval(cp,*dpe_iter);
+	      if(I2.first == NULL || I2.second == NULL)
+		return;
+
 	      if(!cp->Are_Compatible(I1.first,I2.first) ||
 		 !cp->Are_Compatible(I1.second,I2.second) ||
 		 !cp->Are_Compatible(I1.first,I2.second) ||
@@ -389,7 +401,7 @@ void vcDataPath::Print_Compatible_Operator_Groups(ostream& ofile, vector<set<vcD
 	  iter != dpe_groups[idx].end();
 	  iter++)
 	{
-	  ofile << (*iter)->Get_Id() << endl;
+	  ofile << (*iter)->Get_Id() << "  ";
 	  ofile << "   ("
 		<< (*iter)->_reqs.front()->Get_Compatibility_Label()->Get_Id()
 		<< ","
@@ -674,9 +686,13 @@ void vcDataPath::Print_VHDL_Phi_Instances(ostream& ofile)
       int num_reqs = p->Get_Inwires().size();
       int idata_width = num_reqs*odata_width;
 
-      assert(p->Get_Number_Of_Reqs() == num_reqs);
-      assert(p->Get_Number_Of_Acks() == 1);
-      
+      if((p->Get_Number_Of_Reqs() < num_reqs) ||
+	 (p->Get_Number_Of_Acks() != 1))
+	{
+	  vcSystem::Error("phi operator " + p->Get_Id() + " has inadequate/incorrect req-ack links");
+	  return;
+	}
+
       ofile << p->Get_VHDL_Id() << ": Block -- phi operator {" << endl;
       ofile << "signal idata: std_logic_vector(" << idata_width-1 << " downto 0);" << endl;
       ofile << "signal req: BooleanArray(" << num_reqs-1 << " downto 0);" << endl;

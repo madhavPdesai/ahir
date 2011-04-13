@@ -24,7 +24,6 @@ int main(int argc, char* argv[])
   if(argc < 2)
     {
       cerr << "Usage: TestAaParser <filename>" << endl;
-
       exit(1);
     }
 

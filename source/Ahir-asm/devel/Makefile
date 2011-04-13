@@ -47,11 +47,14 @@ DEFS=-DDebug
 CXXFLAGS=-g
 
 
-all : aNTLR $(BIN)/TestAaParser $(INCL)/Aa2C.h $(BIN)/Aa2C $(GRMR)/AaParser.html  $(BIN)/Aa2VC
+all : aNTLR $(BIN)/TestAaParser $(BIN)/AaLinkExtMem $(INCL)/Aa2C.h $(BIN)/Aa2C $(GRMR)/AaParser.html  $(BIN)/Aa2VC
 
 
 $(BIN)/TestAaParser : $(OBJS) $(OBJ)/TestAaParser.o
 	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/TestAaParser.o  $(OBJS) -lantlr-4.0.3 -lValue -o $(BIN)/TestAaParser 
+
+$(BIN)/AaLinkExtMem : $(OBJS) $(OBJ)/AaLinkExtMem.o
+	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/AaLinkExtMem.o  $(OBJS) -lantlr-4.0.3 -lValue -o $(BIN)/AaLinkExtMem 
 
 $(INCL)/Aa2C.h: $(BIN)/AaWriteCHeader
 	$(BIN)/AaWriteCHeader > $(INCL)/Aa2C.h
@@ -124,6 +127,9 @@ $(OBJ)/AaExpressionWriteVCOptimized.o: $(SRC)/AaExpressionWriteVCOptimized.cpp $
 
 $(OBJ)/TestAaParser.o: $(SRC)/TestAaParser.cpp $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/TestAaParser.cpp  -o $(OBJ)/TestAaParser.o
+
+$(OBJ)/AaLinkExtMem.o: $(SRC)/AaLinkExtMem.cpp $(HEADERS)
+	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/AaLinkExtMem.cpp  -o $(OBJ)/AaLinkExtMem.o
 
 $(OBJ)/AaLexer.o: $(GRMR)/AaLexer.cpp $(GRMR)/AaLexer.hpp 
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(GRMR)/AaLexer.cpp -o $(OBJ)/AaLexer.o

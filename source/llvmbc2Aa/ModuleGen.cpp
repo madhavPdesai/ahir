@@ -30,8 +30,36 @@ namespace {
   struct ModuleGenPass : public ModulePass {
 
     static char ID;
-    ModuleGenPass() : ModulePass(ID) {};
+    std::set<std::string> module_names;
+    bool _consider_all_functions;
+
+    ModuleGenPass() : ModulePass(ID) 
+    {
+    }
+
+    ModuleGenPass(const std::string& mlist_file) : ModulePass(ID) 
+    {
+      _consider_all_functions = true;
+      if(mlist_file != "")
+	{
+	  std::ifstream mlist(mlist_file.c_str());
+	  if (mlist.is_open()) {
+	    
+	    while (mlist.good()) {
+	      std::string line;
+	      std::getline(mlist, line);
+	      module_names.insert(line);
+	      _consider_all_functions = false;
+	    }
+	    mlist.close();
+	  }
+	}
+      if(_consider_all_functions)
+	std::cerr << "Warning: no modules specified.. will translate all functions" << std::endl;
+    };
     
+
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<AliasAnalysis>();
       AU.addRequired<TargetData>();
@@ -59,6 +87,10 @@ namespace {
     bool is_ioport_identifier(GlobalVariable &G)
     {
       bool is_ioport = true;
+      std::string gname = G.getName();
+
+      if(aa_writer->Is_Pipe(gname))
+	return(true);
       
       for (llvm::Value::use_iterator ui = G.use_begin(), ue = G.use_end();
            ui != ue; ++ui) {
@@ -127,21 +159,31 @@ namespace {
 	    // not if it is a pointer to a function
 	    if(!(*gi).getType()->isFunctionTy())
 	    {
-		std::string gname = aa_writer->get_name(&(*gi));
-		std::cerr << "Info: declaring global " << gname << std::endl;
-	      	write_storage_object(*gi,M);
+	      std::string obj_name = to_aa(aa_writer->get_name(&(*gi)));
+	      if(!aa_writer->Is_Pipe(obj_name))
+		write_storage_object(obj_name, *gi,M);
 	    }
 	  }
       }
 
-      
-  
+        
       for (llvm::Module::iterator fi = M.begin(), fe = M.end();
-           fi != fe; ++fi) {
-        runOnFunction(*fi);
-      }
-
-  
+           fi != fe; ++fi) 
+	{
+	  std::string fname = (*fi).getNameStr();
+	  if((module_names.count(fname) > 0) || _consider_all_functions)
+	    {
+	      runOnFunction(*fi);
+	    }
+	  else
+	    {
+	      std::cerr << "Info: skipping function " 
+			<< fname 
+			<< " not specified in -modules" 
+			<< std::endl;
+	    }
+	}
+      
       return false; // we didn't touch anything
     }
 
@@ -274,6 +316,6 @@ namespace {
 
 namespace Aa {
 
-  ModulePass* createModuleGenPass() { return new ModuleGenPass(); }
+  ModulePass* createModuleGenPass(const std::string& module_list) { return new ModuleGenPass(module_list); }
 }
 

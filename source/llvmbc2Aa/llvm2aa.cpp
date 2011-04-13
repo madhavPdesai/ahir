@@ -27,7 +27,7 @@ using namespace llvm;
 
 namespace Aa {
   FunctionPass* createLowerConstantExprPass();
-  ModulePass* createModuleGenPass();
+  ModulePass* createModuleGenPass(const std::string &mlist_file);
 }
 
 #include <signal.h>
@@ -44,6 +44,10 @@ OptimizationList(cl::desc("Optimizations available:"));
 
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bytecode>"));
+
+static cl::opt<std::string>
+ModuleListFile("modules", cl::desc("A file containing a list of modules to be translated")
+               , cl::value_desc("filename"));
 
 // static cl::opt<bool>
 // Force("f", cl::desc("Overwrite output files"));
@@ -103,7 +107,14 @@ int main(int argc, char **argv)
     Passes.add(createUnifyFunctionExitNodesPass());
     Passes.add(createPrintModulePass(&RawOut));
 
-    Passes.add(Aa::createModuleGenPass());
+    Pass *P = Aa::createModuleGenPass(ModuleListFile);
+    if(P != NULL)
+      Passes.add(P);
+    else
+      {
+	std::cerr << argv[0] << ": cannot create module-gen pass"<< std::endl;
+	return(1);
+      }
 
     Passes.run(M);
     return 0;

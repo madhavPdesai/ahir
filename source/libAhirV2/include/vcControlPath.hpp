@@ -18,8 +18,10 @@ public:
 
   vcCPElement(vcCPElement* parent, string id);
 
-  void Add_Successor(vcCPElement* cpe) { this->_successors.push_back(cpe);}
-  void Add_Predecessor(vcCPElement* cpe) { this->_predecessors.push_back(cpe);}
+  void Add_Successor(vcCPElement* cpe);
+  void Add_Predecessor(vcCPElement* cpe);
+
+
 
   virtual int Get_Number_Of_Predecessors() { return(this->_predecessors.size());}
   int Get_Number_Of_Successors() {return(this->_successors.size());}

@@ -67,9 +67,7 @@ Unsigned::Unsigned(int n, string init_value)
 	{
 	  cerr << "Warning: binary initialization string is longer than integer width" << endl;
 	  cerr << "          the initial value will be truncated to the least-significant bits. " << endl;
-	}
-      else
-	{
+
 	  int bit_count = 0;
 	  for(int idx = init_value.size()-1; idx >= 2; idx--)
 	    {

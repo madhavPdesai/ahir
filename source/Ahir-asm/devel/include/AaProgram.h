@@ -54,6 +54,7 @@ class AaProgram
   static std::map<int,set<AaModule*> > _storage_index_module_coverage_map;
   static std::map<int,AaMemorySpace*> _memory_space_map;
   static std::map<AaType*,AaForeignStorageObject*> _foreign_storage_map;
+  static std::set<int> _extmem_access_widths;
 
   // recoalesce set.
   static set<AaObject*> _recoalesce_set;
@@ -87,6 +88,11 @@ class AaProgram
   ~AaProgram();
 
   static void Print(ostream& ofile);
+  static void Print_ExtMem_Access_Modules(ostream& ofile);
+  static void Add_ExtMem_Access_Width(int u)
+    {
+      AaProgram::_extmem_access_widths.insert(u);
+    }
 
   static void Add_Object(AaObject* obj);
   static void Add_Module(AaModule* obj);

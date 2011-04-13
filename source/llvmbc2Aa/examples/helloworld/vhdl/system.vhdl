@@ -1,3 +1,4 @@
+-- VHDL produced by vc2vhdl from virtual circuit (vc) description 
 library ieee;
 use ieee.std_logic_1164.all;
 package vc_system_package is -- 
@@ -39,65 +40,65 @@ architecture Default of main is --
   -- always true...
   signal always_true_symbol: Boolean;
   -- links between control-path and data-path
-  signal simple_obj_ref_177_store_0_req_0 : boolean;
-  signal simple_obj_ref_183_load_0_req_0 : boolean;
-  signal simple_obj_ref_177_store_0_ack_1 : boolean;
-  signal simple_obj_ref_169_gather_scatter_req_0 : boolean;
-  signal simple_obj_ref_145_store_0_req_0 : boolean;
-  signal simple_obj_ref_177_gather_scatter_req_0 : boolean;
+  signal simple_obj_ref_183_load_0_req_1 : boolean;
   signal binary_154_inst_ack_1 : boolean;
   signal binary_154_inst_req_1 : boolean;
-  signal simple_obj_ref_145_store_0_ack_0 : boolean;
-  signal simple_obj_ref_177_gather_scatter_ack_0 : boolean;
-  signal simple_obj_ref_164_gather_scatter_req_0 : boolean;
   signal binary_154_inst_ack_0 : boolean;
-  signal simple_obj_ref_164_store_0_req_0 : boolean;
+  signal simple_obj_ref_145_store_0_req_0 : boolean;
+  signal simple_obj_ref_177_gather_scatter_ack_0 : boolean;
+  signal simple_obj_ref_177_gather_scatter_req_0 : boolean;
   signal binary_154_inst_req_0 : boolean;
+  signal simple_obj_ref_183_load_0_req_0 : boolean;
+  signal simple_obj_ref_164_store_0_ack_0 : boolean;
+  signal simple_obj_ref_169_gather_scatter_ack_0 : boolean;
   signal simple_obj_ref_138_store_0_ack_1 : boolean;
   signal simple_obj_ref_138_store_0_req_1 : boolean;
-  signal simple_obj_ref_183_gather_scatter_ack_0 : boolean;
-  signal simple_obj_ref_183_gather_scatter_req_0 : boolean;
-  signal simple_obj_ref_177_store_0_req_1 : boolean;
-  signal simple_obj_ref_175_gather_scatter_ack_0 : boolean;
-  signal simple_obj_ref_175_gather_scatter_req_0 : boolean;
-  signal simple_obj_ref_149_gather_scatter_ack_0 : boolean;
-  signal simple_obj_ref_149_gather_scatter_req_0 : boolean;
-  signal simple_obj_ref_183_load_0_ack_0 : boolean;
-  signal simple_obj_ref_145_gather_scatter_req_0 : boolean;
-  signal simple_obj_ref_138_store_0_ack_0 : boolean;
-  signal simple_obj_ref_177_store_0_ack_0 : boolean;
-  signal simple_obj_ref_138_store_0_req_0 : boolean;
   signal simple_obj_ref_164_gather_scatter_ack_0 : boolean;
+  signal simple_obj_ref_183_gather_scatter_ack_0 : boolean;
+  signal simple_obj_ref_164_store_0_req_0 : boolean;
+  signal simple_obj_ref_177_store_0_req_0 : boolean;
+  signal simple_obj_ref_183_gather_scatter_req_0 : boolean;
+  signal simple_obj_ref_175_gather_scatter_ack_0 : boolean;
+  signal simple_obj_ref_149_gather_scatter_ack_0 : boolean;
+  signal simple_obj_ref_175_gather_scatter_req_0 : boolean;
   signal simple_obj_ref_175_load_0_ack_1 : boolean;
+  signal simple_obj_ref_169_gather_scatter_req_0 : boolean;
+  signal simple_obj_ref_149_gather_scatter_req_0 : boolean;
+  signal simple_obj_ref_169_store_0_ack_0 : boolean;
+  signal simple_obj_ref_177_store_0_req_1 : boolean;
+  signal simple_obj_ref_138_store_0_ack_0 : boolean;
+  signal simple_obj_ref_138_store_0_req_0 : boolean;
   signal simple_obj_ref_175_load_0_req_1 : boolean;
+  signal simple_obj_ref_169_store_0_req_0 : boolean;
   signal simple_obj_ref_149_load_0_ack_1 : boolean;
-  signal simple_obj_ref_149_load_0_req_1 : boolean;
   signal simple_obj_ref_183_load_0_ack_1 : boolean;
-  signal simple_obj_ref_138_gather_scatter_ack_0 : boolean;
+  signal simple_obj_ref_149_load_0_req_1 : boolean;
+  signal simple_obj_ref_145_gather_scatter_ack_0 : boolean;
   signal call_stmt_144_call_ack_1 : boolean;
-  signal simple_obj_ref_138_gather_scatter_req_0 : boolean;
+  signal simple_obj_ref_138_gather_scatter_ack_0 : boolean;
   signal simple_obj_ref_175_load_0_ack_0 : boolean;
   signal call_stmt_144_call_req_1 : boolean;
-  signal simple_obj_ref_164_store_0_ack_0 : boolean;
   signal simple_obj_ref_175_load_0_req_0 : boolean;
+  signal simple_obj_ref_138_gather_scatter_req_0 : boolean;
   signal simple_obj_ref_149_load_0_ack_0 : boolean;
   signal simple_obj_ref_149_load_0_req_0 : boolean;
-  signal simple_obj_ref_169_store_0_ack_0 : boolean;
-  signal if_stmt_157_branch_ack_0 : boolean;
-  signal simple_obj_ref_183_load_0_req_1 : boolean;
+  signal simple_obj_ref_164_gather_scatter_req_0 : boolean;
+  signal simple_obj_ref_164_store_0_ack_1 : boolean;
+  signal if_stmt_157_branch_ack_1 : boolean;
   signal call_stmt_144_call_ack_0 : boolean;
   signal call_stmt_144_call_req_0 : boolean;
-  signal simple_obj_ref_169_store_0_req_0 : boolean;
-  signal if_stmt_157_branch_ack_1 : boolean;
-  signal simple_obj_ref_145_gather_scatter_ack_0 : boolean;
-  signal simple_obj_ref_169_store_0_req_1 : boolean;
-  signal simple_obj_ref_164_store_0_ack_1 : boolean;
+  signal simple_obj_ref_177_store_0_ack_1 : boolean;
+  signal simple_obj_ref_164_store_0_req_1 : boolean;
+  signal simple_obj_ref_145_gather_scatter_req_0 : boolean;
+  signal simple_obj_ref_183_load_0_ack_0 : boolean;
   signal if_stmt_157_branch_req_0 : boolean;
   signal simple_obj_ref_145_store_0_ack_1 : boolean;
-  signal simple_obj_ref_164_store_0_req_1 : boolean;
   signal simple_obj_ref_145_store_0_req_1 : boolean;
   signal simple_obj_ref_169_store_0_ack_1 : boolean;
-  signal simple_obj_ref_169_gather_scatter_ack_0 : boolean;
+  signal simple_obj_ref_169_store_0_req_1 : boolean;
+  signal simple_obj_ref_177_store_0_ack_0 : boolean;
+  signal if_stmt_157_branch_ack_0 : boolean;
+  signal simple_obj_ref_145_store_0_ack_0 : boolean;
   signal memory_space_10_lr_req :  std_logic_vector(0 downto 0);
   signal memory_space_10_lr_ack : std_logic_vector(0 downto 0);
   signal memory_space_10_lr_addr : std_logic_vector(0 downto 0);
@@ -1575,7 +1576,7 @@ begin --
     signal expr_153_wire_constant : std_logic_vector(31 downto 0);
     signal expr_165_wire_constant : std_logic_vector(31 downto 0);
     signal expr_170_wire_constant : std_logic_vector(31 downto 0);
-    signal iNsTr_05_176 : std_logic_vector(31 downto 0);
+    signal iNsTr_11_176 : std_logic_vector(31 downto 0);
     signal iNsTr_2_144 : std_logic_vector(31 downto 0);
     signal iNsTr_4_150 : std_logic_vector(31 downto 0);
     signal iNsTr_5_156 : std_logic_vector(0 downto 0);
@@ -1595,16 +1596,16 @@ begin --
     signal simple_obj_ref_177_word_address_0 : std_logic_vector(0 downto 0);
     signal simple_obj_ref_183_data_0 : std_logic_vector(31 downto 0);
     signal simple_obj_ref_183_word_address_0 : std_logic_vector(0 downto 0);
-    signal xxmainxxmainxxc_base_address : std_logic_vector(0 downto 0);
-    signal xxmainxxmainxxiNsTr_0_base_address : std_logic_vector(0 downto 0);
+    signal xxmainxxbodyxxc_base_address : std_logic_vector(0 downto 0);
+    signal xxmainxxbodyxxiNsTr_0_base_address : std_logic_vector(0 downto 0);
     signal xxmainxxstored_ret_val_x_xx_xbase_address : std_logic_vector(0 downto 0);
     -- 
   begin -- 
     expr_139_wire_constant <= "00000000000000000000000000000000";
-    expr_141_wire_constant <= "00000000000000000000000000000101";
-    expr_142_wire_constant <= "00000000000000000000000000000010";
-    expr_153_wire_constant <= "00000000000000000000000000000100";
-    expr_165_wire_constant <= "00000000000000000000000000000001";
+    expr_141_wire_constant <= "00000000000000000000000000000000";
+    expr_142_wire_constant <= "00000000000000000000000000000000";
+    expr_153_wire_constant <= "00000000000000000000000000000000";
+    expr_165_wire_constant <= "00000000000000000000000000000000";
     expr_170_wire_constant <= "00000000000000000000000000000000";
     simple_obj_ref_138_word_address_0 <= "0";
     simple_obj_ref_145_word_address_0 <= "0";
@@ -1614,8 +1615,8 @@ begin --
     simple_obj_ref_175_word_address_0 <= "0";
     simple_obj_ref_177_word_address_0 <= "0";
     simple_obj_ref_183_word_address_0 <= "0";
-    xxmainxxmainxxc_base_address <= "0";
-    xxmainxxmainxxiNsTr_0_base_address <= "0";
+    xxmainxxbodyxxc_base_address <= "0";
+    xxmainxxbodyxxiNsTr_0_base_address <= "0";
     xxmainxxstored_ret_val_x_xx_xbase_address <= "0";
     simple_obj_ref_138_gather_scatter: Block -- 
       signal aggregated_sig: std_logic_vector(31 downto 0); --
@@ -1662,14 +1663,14 @@ begin --
     begin -- 
       simple_obj_ref_175_gather_scatter_ack_0 <= simple_obj_ref_175_gather_scatter_req_0;
       aggregated_sig <= simple_obj_ref_175_data_0;
-      iNsTr_05_176 <= aggregated_sig(31 downto 0);
+      iNsTr_11_176 <= aggregated_sig(31 downto 0);
       --
     end Block;
     simple_obj_ref_177_gather_scatter: Block -- 
       signal aggregated_sig: std_logic_vector(31 downto 0); --
     begin -- 
       simple_obj_ref_177_gather_scatter_ack_0 <= simple_obj_ref_177_gather_scatter_req_0;
-      aggregated_sig <= iNsTr_05_176;
+      aggregated_sig <= iNsTr_11_176;
       simple_obj_ref_177_data_0 <= aggregated_sig(31 downto 0);
       --
     end Block;
@@ -1722,7 +1723,7 @@ begin --
           output_characteristic_width  => 0, 
           output_mantissa_width => 0, 
           owidth => 1,
-          constant_operand => "00000000000000000000000000000100",
+          constant_operand => "00000000000000000000000000000000",
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -1855,27 +1856,27 @@ begin --
         ); -- 
       -- 
     end Block; -- load group 2
-    -- shared store operator group (0) : simple_obj_ref_164_store_0 simple_obj_ref_169_store_0 simple_obj_ref_138_store_0 
+    -- shared store operator group (0) : simple_obj_ref_169_store_0 simple_obj_ref_164_store_0 simple_obj_ref_138_store_0 
     StoreGroup0: Block -- 
       signal addr_in: std_logic_vector(2 downto 0);
       signal data_in: std_logic_vector(95 downto 0);
       signal reqR, ackR, reqL, ackL : BooleanArray( 2 downto 0);
       -- 
     begin -- 
-      reqL(2) <= simple_obj_ref_164_store_0_req_0;
-      reqL(1) <= simple_obj_ref_169_store_0_req_0;
+      reqL(2) <= simple_obj_ref_169_store_0_req_0;
+      reqL(1) <= simple_obj_ref_164_store_0_req_0;
       reqL(0) <= simple_obj_ref_138_store_0_req_0;
-      simple_obj_ref_164_store_0_ack_0 <= ackL(2);
-      simple_obj_ref_169_store_0_ack_0 <= ackL(1);
+      simple_obj_ref_169_store_0_ack_0 <= ackL(2);
+      simple_obj_ref_164_store_0_ack_0 <= ackL(1);
       simple_obj_ref_138_store_0_ack_0 <= ackL(0);
-      reqR(2) <= simple_obj_ref_164_store_0_req_1;
-      reqR(1) <= simple_obj_ref_169_store_0_req_1;
+      reqR(2) <= simple_obj_ref_169_store_0_req_1;
+      reqR(1) <= simple_obj_ref_164_store_0_req_1;
       reqR(0) <= simple_obj_ref_138_store_0_req_1;
-      simple_obj_ref_164_store_0_ack_1 <= ackR(2);
-      simple_obj_ref_169_store_0_ack_1 <= ackR(1);
+      simple_obj_ref_169_store_0_ack_1 <= ackR(2);
+      simple_obj_ref_164_store_0_ack_1 <= ackR(1);
       simple_obj_ref_138_store_0_ack_1 <= ackR(0);
-      addr_in <= simple_obj_ref_164_word_address_0 & simple_obj_ref_169_word_address_0 & simple_obj_ref_138_word_address_0;
-      data_in <= simple_obj_ref_164_data_0 & simple_obj_ref_169_data_0 & simple_obj_ref_138_data_0;
+      addr_in <= simple_obj_ref_169_word_address_0 & simple_obj_ref_164_word_address_0 & simple_obj_ref_138_word_address_0;
+      data_in <= simple_obj_ref_169_data_0 & simple_obj_ref_164_data_0 & simple_obj_ref_138_data_0;
       StoreReq: StoreReqShared -- 
         generic map ( addr_width => 1,
         data_width => 32,
@@ -3908,7 +3909,6 @@ begin --
   data_path: Block -- 
     signal expr_98_wire_constant : std_logic_vector(31 downto 0);
     signal iNsTr_10_95 : std_logic_vector(31 downto 0);
-    signal iNsTr_10_95_resized : std_logic_vector(0 downto 0);
     signal iNsTr_12_104 : std_logic_vector(31 downto 0);
     signal iNsTr_13_108 : std_logic_vector(31 downto 0);
     signal iNsTr_14_113 : std_logic_vector(31 downto 0);
@@ -3929,6 +3929,7 @@ begin --
     signal ptr_deref_88_wire : std_logic_vector(31 downto 0);
     signal ptr_deref_88_word_address_0 : std_logic_vector(0 downto 0);
     signal ptr_deref_97_data_0 : std_logic_vector(31 downto 0);
+    signal ptr_deref_97_resized_base_address : std_logic_vector(0 downto 0);
     signal ptr_deref_97_root_address : std_logic_vector(0 downto 0);
     signal ptr_deref_97_wire : std_logic_vector(31 downto 0);
     signal ptr_deref_97_word_address_0 : std_logic_vector(0 downto 0);
@@ -3945,22 +3946,22 @@ begin --
     signal simple_obj_ref_68_word_address_0 : std_logic_vector(0 downto 0);
     signal simple_obj_ref_80_data_0 : std_logic_vector(31 downto 0);
     signal simple_obj_ref_80_word_address_0 : std_logic_vector(0 downto 0);
+    signal xxsubxxbodyxxiNsTr_0_base_address : std_logic_vector(0 downto 0);
+    signal xxsubxxbodyxxiNsTr_1_base_address : std_logic_vector(0 downto 0);
+    signal xxsubxxbodyxxt_base_address : std_logic_vector(0 downto 0);
     signal xxsubxxstored_ret_val_x_xx_xbase_address : std_logic_vector(0 downto 0);
-    signal xxsubxxsubxxiNsTr_0_base_address : std_logic_vector(0 downto 0);
-    signal xxsubxxsubxxiNsTr_1_base_address : std_logic_vector(0 downto 0);
-    signal xxsubxxsubxxt_base_address : std_logic_vector(0 downto 0);
     -- 
   begin -- 
-    expr_98_wire_constant <= "00000000000000000000000000000001";
+    expr_98_wire_constant <= "00000000000000000000000000000000";
     iNsTr_10_95 <= "00000000000000000000000000000000";
     iNsTr_12_104 <= "00000000000000000000000000000000";
-    iNsTr_14_113 <= "00000000000000000000000000000001";
+    iNsTr_14_113 <= "00000000000000000000000000000000";
     iNsTr_5_74 <= "00000000000000000000000000000000";
-    iNsTr_8_86 <= "00000000000000000000000000000001";
+    iNsTr_8_86 <= "00000000000000000000000000000000";
     ptr_deref_107_word_address_0 <= "0";
-    ptr_deref_116_word_address_0 <= "1";
+    ptr_deref_116_word_address_0 <= "0";
     ptr_deref_76_word_address_0 <= "0";
-    ptr_deref_88_word_address_0 <= "1";
+    ptr_deref_88_word_address_0 <= "0";
     ptr_deref_97_word_offset_0 <= "0";
     simple_obj_ref_122_word_address_0 <= "0";
     simple_obj_ref_128_word_address_0 <= "0";
@@ -3968,12 +3969,12 @@ begin --
     simple_obj_ref_64_word_address_0 <= "0";
     simple_obj_ref_68_word_address_0 <= "0";
     simple_obj_ref_80_word_address_0 <= "0";
+    xxsubxxbodyxxiNsTr_0_base_address <= "0";
+    xxsubxxbodyxxiNsTr_1_base_address <= "0";
+    xxsubxxbodyxxt_base_address <= "0";
     xxsubxxstored_ret_val_x_xx_xbase_address <= "0";
-    xxsubxxsubxxiNsTr_0_base_address <= "0";
-    xxsubxxsubxxiNsTr_1_base_address <= "0";
-    xxsubxxsubxxt_base_address <= "0";
     ptr_deref_97_base_resize: RegisterBase generic map(in_data_width => 32,out_data_width => 1) -- 
-      port map( din => iNsTr_10_95, dout => iNsTr_10_95_resized, req => ptr_deref_97_base_resize_req_0, ack => ptr_deref_97_base_resize_ack_0, clk => clk, reset => reset); -- 
+      port map( din => iNsTr_10_95, dout => ptr_deref_97_resized_base_address, req => ptr_deref_97_base_resize_req_0, ack => ptr_deref_97_base_resize_ack_0, clk => clk, reset => reset); -- 
     ptr_deref_107_gather_scatter: Block -- 
       signal aggregated_sig: std_logic_vector(31 downto 0); --
     begin -- 
@@ -4026,7 +4027,7 @@ begin --
       signal aggregated_sig: std_logic_vector(0 downto 0); --
     begin -- 
       ptr_deref_97_root_address_inst_ack_0 <= ptr_deref_97_root_address_inst_req_0;
-      aggregated_sig <= iNsTr_10_95_resized;
+      aggregated_sig <= ptr_deref_97_resized_base_address;
       ptr_deref_97_root_address <= aggregated_sig(0 downto 0);
       --
     end Block;
@@ -5890,9 +5891,9 @@ begin --
     signal simple_obj_ref_42_word_address_0 : std_logic_vector(0 downto 0);
     signal simple_obj_ref_48_data_0 : std_logic_vector(31 downto 0);
     signal simple_obj_ref_48_word_address_0 : std_logic_vector(0 downto 0);
+    signal xxsub_slavexxbodyxxiNsTr_0_base_address : std_logic_vector(0 downto 0);
+    signal xxsub_slavexxbodyxxiNsTr_1_base_address : std_logic_vector(0 downto 0);
     signal xxsub_slavexxstored_ret_val_x_xx_xbase_address : std_logic_vector(0 downto 0);
-    signal xxsub_slavexxsub_slavexxiNsTr_0_base_address : std_logic_vector(0 downto 0);
-    signal xxsub_slavexxsub_slavexxiNsTr_1_base_address : std_logic_vector(0 downto 0);
     -- 
   begin -- 
     iNsTr_4_21 <= "00000000000000000000000000000000";
@@ -5903,9 +5904,9 @@ begin --
     simple_obj_ref_35_word_address_0 <= "0";
     simple_obj_ref_42_word_address_0 <= "0";
     simple_obj_ref_48_word_address_0 <= "0";
+    xxsub_slavexxbodyxxiNsTr_0_base_address <= "0";
+    xxsub_slavexxbodyxxiNsTr_1_base_address <= "0";
     xxsub_slavexxstored_ret_val_x_xx_xbase_address <= "0";
-    xxsub_slavexxsub_slavexxiNsTr_0_base_address <= "0";
-    xxsub_slavexxsub_slavexxiNsTr_1_base_address <= "0";
     ptr_deref_24_gather_scatter: Block -- 
       signal aggregated_sig: std_logic_vector(31 downto 0); --
     begin -- 

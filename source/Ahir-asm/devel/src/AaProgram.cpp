@@ -32,6 +32,7 @@ std::map<int,set<AaModule*> > AaProgram::_storage_index_module_coverage_map;
 std::map<int,AaMemorySpace*> AaProgram::_memory_space_map;
 std::map<AaType*,AaForeignStorageObject*> AaProgram::_foreign_storage_map;
 std::set<AaObject*> AaProgram::_recoalesce_set;
+std::set<int> AaProgram::_extmem_access_widths;
 
 AaGraphBase AaProgram::_call_graph;
 AaUGraphBase AaProgram::_type_dependency_graph;
@@ -69,6 +70,40 @@ string AaMemorySpace::Get_VC_Identifier()
 
 AaProgram::AaProgram() {}
 AaProgram::~AaProgram() {};
+
+
+void AaProgram::Print_ExtMem_Access_Modules(ostream& ofile)
+{
+  for(set<int>::iterator iter = _extmem_access_widths.begin(), fiter = _extmem_access_widths.end();
+      iter != fiter;
+      iter++)
+    {
+      int width = (*iter);
+      int awidth = AaProgram::_foreign_address_width;
+
+      ofile << "$pipe extmem_read_address_" << width << " : $uint<" << awidth << " >" << endl;
+      ofile << "$pipe extmem_read_data_" << width << " : $uint<" << width << " >" << endl;
+      ofile << "$pipe extmem_write_address_" << width << " : $uint<" << awidth << " >" << endl;
+      ofile << "$pipe extmem_write_data_" << width << " : $uint<" << width << " >" << endl;
+      
+      ofile << "$module [extmem_load_" << width << "] "
+	    << " $in (addr: $uint<" << awidth << "> )" << endl
+	    << " $out (data: $uint<" << width << "> )" << endl
+	    << " $is {" << endl
+	    << " extmem_read_address_" << width << " := addr" << endl
+	    << " data := extmem_read_data_" << width << endl
+	    << "}" << endl;
+      
+      ofile << "$module [extmem_store_" << width << "] "
+	    << " $in (addr: $uint<" << awidth << "> "
+	    << " data: $uint<" << width << "> )" << endl
+	    << " $out () " << endl
+	    << " $is {" << endl
+	    << " extmem_write_address_" << width << " := addr" << endl
+	    << " extmem_write_data_" << width << " := data" << endl
+	    << "}" << endl;
+    }
+}
 
 
 void AaProgram::Print(ostream& ofile)
@@ -453,14 +488,6 @@ void AaProgram::Add_Storage_Dependency_Graph_Vertex(AaRoot* u)
 AaForeignStorageObject* AaProgram::Make_Foreign_Storage_Object(AaType* t)
 {
   AaForeignStorageObject* ret_obj = NULL;
-
-  if((t->Size() % AaProgram::_foreign_word_size) != 0)
-    {
-      AaRoot::Error("foreign pointer points to an object whose size ("
-		    + IntToStr(t->Size()) 
-		    + ") is not a multiple of the foreign word-size (" + IntToStr(AaProgram::_foreign_word_size) + ")", NULL);
-    }
-  
   if(AaProgram::_foreign_storage_map.find(t) == AaProgram::_foreign_storage_map.end())
     {
       ret_obj = new AaForeignStorageObject(t, AaProgram::_foreign_word_size, AaProgram::_foreign_address_width);
@@ -468,7 +495,6 @@ AaForeignStorageObject* AaProgram::Make_Foreign_Storage_Object(AaType* t)
     }
   else
     ret_obj = AaProgram::_foreign_storage_map[t];
-
 }
 
 // try to identify sets of objects which must reside in the
@@ -528,11 +554,13 @@ void AaProgram::Coalesce_Storage()
 
       AaMemorySpace* new_ms = new AaMemorySpace(idx);
       AaProgram::_memory_space_map[idx] = new_ms;
+      bool soltero = (AaProgram::_storage_eq_class_map[idx].size() == 1);
 
       for(set<AaRoot*>::iterator iter = AaProgram::_storage_eq_class_map[idx].begin();
 	  iter !=  AaProgram::_storage_eq_class_map[idx].end();
 	  iter++)
 	{
+
 	  AaRoot* u = (*iter);
 	  if(u->Is("AaStorageObject"))
 	    {
@@ -565,6 +593,7 @@ void AaProgram::Coalesce_Storage()
 	  else if(u->Is("AaPointerDereferenceExpression"))
 	    {
 
+
 	      AaPointerDereferenceExpression* pu = ((AaPointerDereferenceExpression*)u);
 
 	      if(pu->Get_Is_Target())
@@ -577,6 +606,11 @@ void AaProgram::Coalesce_Storage()
 
 	      int acc_width = ((AaPointerType*)ptype)->Get_Ref_Type()->Size();
 	      lau_set.insert(acc_width);
+
+	      if(pu->Get_Addressed_Object_Representative() == NULL)
+		{
+		  AaProgram::Add_ExtMem_Access_Width(acc_width);
+		}
 	    }
 	  else
 	    assert(0);

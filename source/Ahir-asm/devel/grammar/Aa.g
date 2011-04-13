@@ -1162,7 +1162,7 @@ aA_Named_Record_Type_Declaration[AaScope* scope] returns [AaType* ref_type]
                            NULL);
           }
       } 
-      (LESS ((et = aA_Type_Reference[scope]) | (et = aA_Named_Type_Reference[scope])) {rt->Add_Element_Type(et);} GREATER)+
+      (LESS ((et = aA_Type_Reference[scope]) | (et = aA_Named_Type_Reference[scope])) {rt->Add_Element_Type(et);} GREATER)*
 ;
 
 

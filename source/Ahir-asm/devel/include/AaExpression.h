@@ -57,7 +57,8 @@ class AaExpression: public AaRoot
   void Set_Is_Target(bool v) {_is_target = v;}
   bool Get_Is_Target() {return(_is_target);}
 
-
+  virtual bool Is_Foreign_Store() {return false;}
+  virtual bool Is_Foreign_Load() {return false;}
 
 
   virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
@@ -373,6 +374,7 @@ class AaObjectReference: public AaExpression
   virtual bool Is_Store();
 
 
+
   // control-path optimizations.
   void Write_VC_Load_Control_Path_Optimized(set<AaRoot*>& visited_elements,
 					    map<string, vector<AaExpression*> >& ls_map,
@@ -643,6 +645,8 @@ class AaPointerDereferenceExpression: public AaObjectReference
 
   virtual bool Is_Load() {return(!this->Get_Is_Target());}
   virtual bool Is_Store(){return(this->Get_Is_Target()); }
+  virtual bool Is_Foreign_Store();
+  virtual bool Is_Foreign_Load();
 
   virtual void Print(ostream& ofile);
   virtual void PrintC(ofstream& ofile, string tab_string);

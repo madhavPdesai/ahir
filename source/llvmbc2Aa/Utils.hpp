@@ -18,6 +18,7 @@ namespace Aa {
     NOT_IO
     , READ_UINT32, WRITE_UINT32
     , READ_FLOAT32, WRITE_FLOAT32
+    , READ_UINTPTR, WRITE_UINTPTR
   } IOCode;
 
   unsigned getTypeSizeInBits(llvm::TargetData *TD, const llvm::Type *type);
@@ -37,8 +38,9 @@ namespace Aa {
 
   std::string locate_portname_for_io_call(llvm::Value *strptr);
   void write_type_declaration(llvm::Type *T,llvm::Module& tst);
-  void write_storage_object(llvm::GlobalVariable &G,llvm::Module& tst);
+  void write_storage_object(std::string& obj_name, llvm::GlobalVariable &G,llvm::Module& tst);
   std::string get_aa_type_name(const llvm::Type* ptr, llvm::Module& tst);
+  std::string get_zero_value(const llvm::Type* ptr);
   std::string get_aa_type_name(IOCode ioc);
   std::string get_aa_value_string(const llvm::Value* val);
   std::string get_aa_constant_string(llvm::Constant *konst);

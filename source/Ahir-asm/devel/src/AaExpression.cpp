@@ -1613,6 +1613,11 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 	    AaProgram::Add_Storage_Dependency(this,obj);
 	}
       
+      if(obj->Is_Foreign_Storage_Object())
+	{
+	  AaProgram::Add_ExtMem_Access_Width(this->Get_Type()->Size());
+	}
+
       this->Set_Addressed_Object_Representative(obj);
       
 
@@ -1624,14 +1629,6 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
       AaStorageObject* obj1 = _reference_to_object->Get_Addressed_Object_Representative();
       if(obj1 != NULL)
 	{
-
-	  if(obj1->Is_Foreign_Storage_Object())
-	    {
-	      AaRoot::Error("pointer dereference to foreign object!", this);
-	      this->Set_Coalesce_Flag(false);
-	      return;
-	    }
-
 	  AaStorageObject* obj2 = obj1->Get_Addressed_Object_Representative();
 	  if(obj2 != NULL)
 	    {
@@ -1648,13 +1645,29 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
     }
 }
 
+bool AaPointerDereferenceExpression::Is_Foreign_Store()
+{
+  return(this->Is_Store() &&
+	 ((this->Get_Addressed_Object_Representative() == NULL) ||
+	  (this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())));
+}
+
+bool AaPointerDereferenceExpression::Is_Foreign_Load()
+{
+  return(this->Is_Load() &&
+	 ((this->Get_Addressed_Object_Representative() == NULL) ||
+	  (this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())));
+}
+
 void AaPointerDereferenceExpression::Write_VC_Control_Path( ostream& ofile)
 { 
   ofile << "// " << this->To_String() << endl;
-  if(this->Get_Addressed_Object_Representative()
-     && this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+
+  if((this->Get_Addressed_Object_Representative() == NULL)
+     || this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
     {
       AaRoot::Error("pointer dereference to foreign object!", this);
+      ofile << "// foreign memory space access omitted!" << endl;
       return;
     }
   this->_reference_to_object->Write_VC_Control_Path(ofile);
@@ -1664,10 +1677,11 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path( ostream& ofile)
 void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target( ostream& ofile)
 {
   ofile << "// " << this->To_String() << endl;
-  if(this->Get_Addressed_Object_Representative()
-     && this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+  if((this->Get_Addressed_Object_Representative() == NULL)
+     || this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
     {
       AaRoot::Error("pointer dereference to foreign object!", this);
+      ofile << "// foreign memory space access omitted!" << endl;
       return;
     }
   this->_reference_to_object->Write_VC_Control_Path(ofile);
@@ -1677,6 +1691,13 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target( ostream& o
 void AaPointerDereferenceExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 { 
   ofile << "// " << this->To_String() << endl;
+  if((this->Get_Addressed_Object_Representative() == NULL)
+     || this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+    {
+      ofile << "// foreign memory space access omitted!" << endl;
+      return;
+    }
+
   this->_reference_to_object->Write_VC_Constant_Wire_Declarations(ofile);
   this->Write_VC_Load_Store_Constants(NULL,NULL,ofile);
 }
@@ -1684,6 +1705,15 @@ void AaPointerDereferenceExpression::Write_VC_Constant_Wire_Declarations(ostream
 void AaPointerDereferenceExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
   ofile << "// " << this->To_String() << endl;
+
+  if((this->Get_Addressed_Object_Representative() == NULL)
+     || this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+    {
+      ofile << "// foreign memory space access omitted!" << endl;
+      return;
+    }
+
+  
   if(!skip_immediate)
     {
      
@@ -1700,6 +1730,15 @@ void AaPointerDereferenceExpression::Write_VC_Wire_Declarations(bool skip_immedi
 void AaPointerDereferenceExpression::Write_VC_Wire_Declarations_As_Target(ostream& ofile)
 { 
   ofile << "// " << this->To_String() << endl;
+
+  if((this->Get_Addressed_Object_Representative() == NULL)
+     || this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+    {
+      ofile << "// foreign memory space access omitted!" << endl;
+      return;
+    }
+
+
   this->_reference_to_object->Write_VC_Wire_Declarations(false,ofile);  
   Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Driver_Name(),
 					 this->Get_Type(),
@@ -1709,6 +1748,14 @@ void AaPointerDereferenceExpression::Write_VC_Wire_Declarations_As_Target(ostrea
 void AaPointerDereferenceExpression::Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source)
 {
   ofile << "// " << this->To_String() << endl;
+  if((this->Get_Addressed_Object_Representative() == NULL)
+     || this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+    {
+      ofile << "// foreign memory space access omitted!" << endl;
+      return;
+    }
+
+
   this->_reference_to_object->Write_VC_Datapath_Instances(NULL, ofile);  
   // address will arrive from base.
   this->Write_VC_Store_Data_Path(NULL,
@@ -1720,6 +1767,13 @@ void AaPointerDereferenceExpression::Write_VC_Datapath_Instances(AaExpression* t
 { 
 
   ofile << "// " << this->To_String() << endl;
+  if((this->Get_Addressed_Object_Representative() == NULL)
+     || this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+    {
+      ofile << "// foreign memory space access omitted!" << endl;
+      return;
+    }
+
   this->_reference_to_object->Write_VC_Datapath_Instances(NULL, ofile);  
   this->Write_VC_Load_Data_Path(NULL,
 				NULL,
@@ -1728,20 +1782,38 @@ void AaPointerDereferenceExpression::Write_VC_Datapath_Instances(AaExpression* t
 }
 void AaPointerDereferenceExpression::Write_VC_Links(string hier_id, ostream& ofile)
 { 
+  ofile << "// " << this->To_String() << endl;
+  if((this->Get_Addressed_Object_Representative() == NULL)
+     || this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+    {
+      ofile << "// foreign memory space access omitted!" << endl;
+      return;
+    }
+
   this->_reference_to_object->Write_VC_Links(hier_id,ofile);
   this->Write_VC_Load_Links(hier_id,
 			    NULL,
 			    NULL,
 			    ofile);
 }
+
 void AaPointerDereferenceExpression::Write_VC_Links_As_Target(string hier_id, ostream& ofile)
 { 
+  ofile << "// " << this->To_String() << endl;
+  if((this->Get_Addressed_Object_Representative() == NULL)
+     || this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+    {
+      ofile << "// foreign memory space access omitted!" << endl;
+      return;
+    }
+
   this->_reference_to_object->Write_VC_Links(hier_id,ofile);
   this->Write_VC_Store_Links(hier_id,
 			     NULL,
 			     NULL,
 			     ofile);
 }
+
 
 //---------------------------------------------------------------------
 // AaAddressOfExpression
@@ -2606,9 +2678,6 @@ AaTernaryExpression::AaTernaryExpression(AaScope* parent_tpr,
   
   this->_test = test;
   test->Add_Target(this);
-
-  assert(test->Get_Type() && test->Get_Type()->Is("AaUintType") &&
-	 (((AaUintType*)(test->Get_Type()))->Get_Width() == 1));
 
   if(iftrue)
     {

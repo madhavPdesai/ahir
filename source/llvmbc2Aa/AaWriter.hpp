@@ -41,6 +41,7 @@ namespace Aa {
     void Collect_Pipes(llvm::Function& F);
     void Add_Pipe(std::string pname, std::string aa_type_name);
     void Print_Pipe_Declarations(std::ostream& ofile);
+    bool Is_Pipe(std::string port_name);
 
     void start_program(std::string id);
     void print_storage(llvm::GlobalVariable &G);

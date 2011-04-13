@@ -365,28 +365,38 @@ void AaArrayObjectReference::Write_VC_Control_Path_As_Target_Optimized(set<AaRoo
 }
 
 
-
-
-
 // AaPointerDereferenceExpression
 void AaPointerDereferenceExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
-  this->_reference_to_object->Write_VC_Links_Optimized(hier_id,ofile);
+  if((this->Get_Addressed_Object_Representative() == NULL)
+     || this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+    {
+      ofile << "// foreign memory space access omitted!" << endl;
+      return;
+    }
 
+  this->_reference_to_object->Write_VC_Links_Optimized(hier_id,ofile);
   this->AaObjectReference::Write_VC_Load_Links_Optimized(hier_id,
 							 NULL,
 							 NULL,
 							 ofile);
-
 }
+
 void AaPointerDereferenceExpression::Write_VC_Links_As_Target_Optimized(string hier_id, ostream& ofile)
 {
+  if((this->Get_Addressed_Object_Representative() == NULL)
+     || this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+    {
+      ofile << "// foreign memory space access omitted!" << endl;
+      return;
+    }
+
+
   this->_reference_to_object->Write_VC_Links_Optimized(hier_id,ofile);
   this->AaObjectReference::Write_VC_Store_Links_Optimized(hier_id,
 							  NULL,
 							  NULL,
 							  ofile);
-
 }
 
 void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elements,
@@ -395,6 +405,14 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(set<AaRoot*
 								     ostream& ofile)
 {
   ofile << "// " << this->To_String() << endl;
+  if((this->Get_Addressed_Object_Representative() == NULL)
+     || this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+    {
+      AaRoot::Error("pointer dereference to foreign object!", this);
+      ofile << "// foreign memory space access omitted!" << endl;
+      return;
+    }
+
   __T(this->Get_VC_Start_Transition_Name());
   __T(this->Get_VC_Active_Transition_Name());
   
@@ -424,6 +442,15 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(s
 									       ostream& ofile)
 {
   ofile << "// " << this->To_String() << endl;
+  if((this->Get_Addressed_Object_Representative() == NULL)
+     || this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+    {
+      AaRoot::Error("pointer dereference to foreign object!", this);
+      ofile << "// foreign memory space access omitted!" << endl;
+      return;
+    }
+
+
   __T(this->Get_VC_Start_Transition_Name());
   __T(this->Get_VC_Active_Transition_Name());
 
