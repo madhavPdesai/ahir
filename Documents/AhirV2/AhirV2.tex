@@ -113,25 +113,62 @@ The other tools in the chain are described below.
 This tool takes LLVM byte code and converts it into an
 \Aa file.
 \begin{verbatim}
-llvm2aa bytecode.o > bytecode.aa
+llvm2aa [-modules=<listfile>] bytecode.o > bytecode.aa
 \end{verbatim}
 The generated \Aa code is sent to {\bf stdout} and all informational
 messages are sent to {\bf stderr}.  On success, the tool returns 0.
 
+The option 
+\begin{verbatim}
+-modules=listfile
+\end{verbatim}
+can be used to specify the list of functions in the bytecode
+which should be converted to \Aa.  If absent, all functions
+are converted.
+
+\subsection{{\bf AaLinkExtMem}}
+
+This tool takes a list of \Aa files, elaborates the program,
+does memory space decomposition.  The externally visible memory space is
+linked in one of two ways: either it is assumed to be external
+and all accesses to it are routed out of the \Aa program,
+or it is assumed to be internal and assumed to consist of
+a memory object (an array of bytes).  External pointer dereferences
+are handled as if they are directed at this memory object.
+\begin{verbatim}
+AaLinkExtMem [-I n] [-E obj-name] bytecode.o > bytecode.aa
+\end{verbatim}
+The generated \Aa code is sent to {\bf stdout} and all informational
+messages are sent to {\bf stderr}.  On success, the tool returns 0.
+
+The options:
+\begin{itemize}
+\item {\bf -I n}: specifies that external references to memory
+are to be mapped as if they are to an internal object whose size
+is $n$ bytes.
+\item {\bf -E obj-name} : specifies that the object to which
+external references are mapped is to be named obj-name.
+\end{itemize}
+If the {\bf -I} option is not used, then all external memory
+references are routed out of the \Aa program through pipes.
 
 \subsection{{\bf Aa2VC}}
 
 This tool takes a list of \Aa programs and converts them
 to a \vC description. 
 \begin{verbatim}
-Aa2VC [-O] file1.aa file2.aa ...  > result.vc
+Aa2VC [-O] [-I obj-name] file1.aa file2.aa ...  > result.vc
 \end{verbatim}
 The generated \vC code is sent to {\bf stdout} and all informational
 messages are sent to {\bf stderr}.  On success the tool returns 0.
 
-The tool performs memory space decomposition and if the {\bf -O} option
-is specified, it also attempts to parallelize sequential code using 
-dependency analysis.
+The options:
+\begin{itemize}
+\item {\bf -O} : if used, sequential statement blocks are parallelized
+by doing dependency analysis.
+\item {\bf -I obj-name} : if specified, all external memory references
+are considered as being directed at the storage object named obj-name.
+\end{itemize}
 
 \subsection{\bf vc2vhdl}
 
@@ -159,7 +196,7 @@ using  {\bf vcFormat} as follows
 vcFormat < unformatted-vc/aa-file  > formatted-vc/aa-file
 \end{verbatim}
 and similarly use {\bf vhdlFormat} to format generated
-VHDL file.
+VHDL files.
 
 
 \section{An example} \label{sec:Example}
@@ -342,6 +379,40 @@ There are ports corresponding to the arguments of the top-level module,
 and the add\_start/add\_fin is a handshake pair.  One sets of the inputs,
 starts the system and waits until the fin is asserted.  After the fin
 is asserted, one has the return value of at the appropriate port.
+
+\section{External and internal memory spaces}
+
+Consider the following C program:
+\begin{verbatim}
+int main(int* b)
+{
+   int q[2];
+   q[0] = *b;
+   q[1] = q[0];
+   return(q[1]);
+}
+\end{verbatim}
+When this program is mapped to a circuit, we identify 
+two distinct memory spaces, one which contains the
+array $q$ and the other corresponding to the 
+external world (the one referred to by the pointer $b$).
+Where is the external memory physically located?  In 
+the AhirV2 flow, we can either locate it outside
+the system or inside the system which is being 
+described by this program.
+
+If the external memory is to be placed outside, then
+accesses to it from within the system must be routed
+outside the system.  On the other hand if it is
+to be placed inside, a storage object corresponding 
+to it must be created and all accesses to the external
+memory must be directed at this storage object.
+Further, the external world must have a mechanism for
+accessing this storage object.
+
+Both options are supported in the AhirV2 flow through
+the utility {\bf AaLinkExtMem} described earlier.
+
 
 \section{Handling complex programs}
 

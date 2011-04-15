@@ -236,7 +236,7 @@ string To_Alphanumeric(string x)
   return(ret_string);
 }
 
-int LCM(set<int>::iterator iL, set<int>::iterator iR)
+int GCD(set<int>::iterator iL, set<int>::iterator iR)
 {
   int ret_val = 0;
   if(iL != iR)
@@ -246,7 +246,7 @@ int LCM(set<int>::iterator iL, set<int>::iterator iR)
       set<int>::iterator nextiL = iL;
       nextiL++;
 
-      int r_val = LCM(nextiL,iR);
+      int r_val = GCD(nextiL,iR);
 
       if(r_val > 0)
 	{
@@ -260,9 +260,9 @@ int LCM(set<int>::iterator iL, set<int>::iterator iR)
   return(ret_val);
 }
 
-int LCM(set<int>& s)
+int GCD(set<int>& s)
 {
-  return(LCM(s.begin(), s.end()));
+  return(GCD(s.begin(), s.end()));
 }
 
 string Augment_Hier_Id(string hid, string suffix)

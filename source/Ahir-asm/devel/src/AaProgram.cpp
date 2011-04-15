@@ -18,8 +18,11 @@ int AaProgram::_foreign_address_width = 32;
 // all pointers in the program are assumed to
 // be 32 bits wide (override if you wish..)
 int AaProgram::_pointer_width = 32;
-
+bool AaProgram::_keep_extmem_inside = false;
 bool AaProgram::_verbose_flag = false;
+AaStorageObject* AaProgram::_extmem_object = NULL;
+string AaProgram::_extmem_object_name;
+int AaProgram::_extmem_size;
 
 string AaProgram::_current_file_name;
 AaVoidType* AaProgram::_void_type = NULL;
@@ -33,6 +36,10 @@ std::map<int,AaMemorySpace*> AaProgram::_memory_space_map;
 std::map<AaType*,AaForeignStorageObject*> AaProgram::_foreign_storage_map;
 std::set<AaObject*> AaProgram::_recoalesce_set;
 std::set<int> AaProgram::_extmem_access_widths;
+std::set<AaType*> AaProgram::_extmem_access_types;
+std::set<AaPointerDereferenceExpression*> AaProgram::_pointer_dereferences;
+
+
 
 AaGraphBase AaProgram::_call_graph;
 AaUGraphBase AaProgram::_type_dependency_graph;
@@ -72,35 +79,119 @@ AaProgram::AaProgram() {}
 AaProgram::~AaProgram() {};
 
 
+void AaProgram::Make_Extmem_Object()
+{
+  AaType* el_type = AaProgram::Make_Uinteger_Type(AaProgram::_foreign_word_size);
+
+  vector<unsigned int> dims;
+  dims.push_back(AaProgram::_extmem_size);
+
+  AaType* obj_type = AaProgram::Make_Array_Type(el_type,dims);
+
+  AaProgram::_extmem_object = new AaStorageObject(NULL,AaProgram::_extmem_object_name,obj_type,NULL);
+}
+
 void AaProgram::Print_ExtMem_Access_Modules(ostream& ofile)
 {
-  for(set<int>::iterator iter = _extmem_access_widths.begin(), fiter = _extmem_access_widths.end();
-      iter != fiter;
-      iter++)
+  if(AaProgram::_extmem_object != NULL)
     {
-      int width = (*iter);
-      int awidth = AaProgram::_foreign_address_width;
+      AaProgram::_extmem_object->Print(ofile);
+      ofile << endl;
+    }
 
-      ofile << "$pipe extmem_read_address_" << width << " : $uint<" << awidth << " >" << endl;
-      ofile << "$pipe extmem_read_data_" << width << " : $uint<" << width << " >" << endl;
-      ofile << "$pipe extmem_write_address_" << width << " : $uint<" << awidth << " >" << endl;
-      ofile << "$pipe extmem_write_data_" << width << " : $uint<" << width << " >" << endl;
+  if(!AaProgram::_keep_extmem_inside)
+    {
+      for(set<int>::iterator iter = _extmem_access_widths.begin(), fiter = _extmem_access_widths.end();
+	  iter != fiter;
+	  iter++)
+	{
+	  int width = (*iter);
+	  int awidth = AaProgram::_foreign_address_width;
+	  
+	  ofile << "$pipe extmem_read_address_" << width << " : $uint<" << awidth << " >" << endl;
+	  ofile << "$pipe extmem_read_data_" << width << " : $uint<" << width << " >" << endl;
+	  ofile << "$pipe extmem_write_address_" << width << " : $uint<" << awidth << " >" << endl;
+	  ofile << "$pipe extmem_write_data_" << width << " : $uint<" << width << " >" << endl;
+	  
+	  ofile << "$module [extmem_load_" << width << "] "
+		<< " $in (addr: $uint<" << awidth << "> )" << endl
+		<< " $out (data: $uint<" << width << "> )" << endl
+		<< " $is {" << endl
+		<< " extmem_read_address_" << width << " := addr" << endl
+		<< " data := extmem_read_data_" << width << endl
+		<< "}" << endl;
+	  
+	  ofile << "$module [extmem_store_" << width << "] "
+		<< " $in (addr: $uint<" << awidth << "> "
+		<< " data: $uint<" << width << "> )" << endl
+		<< " $out () " << endl
+		<< " $is {" << endl
+		<< " extmem_write_address_" << width << " := addr" << endl
+		<< " extmem_write_data_" << width << " := data" << endl
+		<< "}" << endl;
+	}
+
+
+      for(set<AaType*>::iterator iter = _extmem_access_types.begin(), fiter = _extmem_access_types.end();
+	  iter != fiter;
+	  iter++)
+	{
+	  
+	  int width = (*iter)->Size();
+	  int index = (*iter)->Get_Index();
+	  int awidth = AaProgram::_foreign_address_width;
+
+	  ofile << "$module [extmem_load_for_type_" << index << "] "
+		<< " $in (addr: $uint<" << awidth << "> )" << endl
+		<< " $out (data: " << (*iter)->To_String() << " )" << endl
+		<< " $is {" << endl
+		<< " $call extmem_load_" << width << " ( addr ) "
+		<< " ( t_data ) " << endl;
+	  ofile << " data := ($bitcast ( " << (*iter)->To_String() << " ) t_data) " << endl;
+	  ofile << "}" << endl;
+	  
+	  ofile << "$module [extmem_store_for_type_" << index << "] "
+		<< " $in (addr: $uint<" << awidth << "> "
+		<< " data: " << (*iter)->To_String() << " )" << endl
+		<< " $out () " << endl
+		<< " $is {" << endl
+		<< " t_data := ($bitcast ($uint< "  << width << " > ) data  )" << endl;
+	  ofile << " $call extmem_store_" << width 
+		<< " (addr t_data) () " << endl;
+	  ofile << "}" << endl;
+	}
+    }
+  else
+    {// add a module which provides a link for the outside
+      // world to access the inside world..
+      int width =  AaProgram::_foreign_word_size;
+      int awidth = AaProgram::_foreign_address_width;
       
-      ofile << "$module [extmem_load_" << width << "] "
-	    << " $in (addr: $uint<" << awidth << "> )" << endl
-	    << " $out (data: $uint<" << width << "> )" << endl
-	    << " $is {" << endl
-	    << " extmem_read_address_" << width << " := addr" << endl
-	    << " data := extmem_read_data_" << width << endl
-	    << "}" << endl;
+      ofile << "$pipe mem_read_address_in : $uint<" << awidth << " >" << endl;
+      ofile << "$pipe mem_read_data_out  : $uint<" << width << " >" << endl;
+      ofile << "$pipe mem_write_address_in  : $uint<" << awidth << " >" << endl;
+      ofile << "$pipe mem_write_data_in  : $uint<" << width << " >" << endl;
       
-      ofile << "$module [extmem_store_" << width << "] "
-	    << " $in (addr: $uint<" << awidth << "> "
-	    << " data: $uint<" << width << "> )" << endl
-	    << " $out () " << endl
-	    << " $is {" << endl
-	    << " extmem_write_address_" << width << " := addr" << endl
-	    << " extmem_write_data_" << width << " := data" << endl
+      int addr_scale_factor = width/AaProgram::_extmem_object->Get_Word_Size();
+      int base_addr = AaProgram::_extmem_object->Get_Base_Address();
+      ofile << "$module [mem_load__] " << endl
+	    << " $in ()" << endl
+	    << " $out ()" << endl
+	    << " $is {" << endl;
+      ofile << " mem_read_data_out := " << endl;
+      ofile << AaProgram::_extmem_object_name << "[ " 
+	    << "((mem_read_address_in * " << addr_scale_factor
+	    << " ) + " << base_addr << ") ]" << endl;
+      ofile << "}" << endl;
+      
+      ofile << "$module [mem_store__] " << endl
+	    << " $in ()" << endl
+	    << " $out ()" << endl
+	    << " $is {" << endl;
+      ofile << AaProgram::_extmem_object_name << "[ " 
+		<< "((mem_write_address_in * " << addr_scale_factor
+	    << " ) + " << base_addr << ") ] := "
+	    << " mem_write_data_in " 
 	    << "}" << endl;
     }
 }
@@ -149,11 +240,29 @@ void AaProgram::Print(ostream& ofile)
     }
 }
 
+void AaProgram::Add_ExtMem_Access_Type(AaType* t)
+{
+  if(t == NULL)
+    return;
+
+  AaProgram::_extmem_access_types.insert(t);
+  AaProgram::Add_ExtMem_Access_Width(t->Size());
+}
+
 void AaProgram::Add_Object(AaObject* obj) 
 { 
   assert(AaProgram::Find_Object(obj->Get_Name()) == NULL); 
   if(obj->Is("AaStorageObject"))
-    AaProgram::Add_Storage_Dependency_Graph_Vertex(obj);
+    {
+      if(obj->Get_Name() == AaProgram::_extmem_object_name)
+	{
+	  AaRoot::Info("external memory accesses will be assumed to point to internal object "
+		       + obj->Get_Name());
+	  AaProgram::_extmem_object = (AaStorageObject*)obj;
+
+	}
+      AaProgram::Add_Storage_Dependency_Graph_Vertex(obj);
+    }
 
   AaProgram::_objects[obj->Get_Name()] = obj;
 }
@@ -172,7 +281,7 @@ void AaProgram::Add_Module(AaModule* obj)
 { 
   assert(AaProgram::Find_Module(obj->Get_Label()) == NULL); 
   AaProgram::_modules[obj->Get_Label()] = obj;
-  AaProgram::_ordered_module_vector.push_back(obj);
+
 
 }
 
@@ -355,6 +464,19 @@ void AaProgram::Check_For_Cycles_In_Call_Graph()
     {
       AaRoot::Error("cycle(s) in module call graph are not permitted",NULL);
     }
+
+  vector<AaRoot*> prec_order;
+  AaProgram::_call_graph.Topological_Sort(prec_order);
+  std::cerr << "Info: module order:" << endl;
+  for(int idx = 0; idx < prec_order.size(); idx++)
+    {
+      AaModule* m = ((AaModule*)(prec_order[idx]));
+      if( m != NULL)
+	{
+	  std::cerr << "\t" << m->Get_Label() << endl;
+	  AaProgram::_ordered_module_vector.push_back(m);
+	}
+    }
 }
 
 void AaProgram::Add_Type_Dependency(AaRoot* u, AaRoot* v)
@@ -508,6 +630,7 @@ AaForeignStorageObject* AaProgram::Make_Foreign_Storage_Object(AaType* t)
 // dependency graph correspond to memory spaces.
 void AaProgram::Coalesce_Storage()
 {
+
   AaRoot::Info("Marking foreign pointers in modules which are not called from the program");
   for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
       miter != AaProgram::_modules.end();
@@ -542,6 +665,44 @@ void AaProgram::Coalesce_Storage()
       AaProgram::_recoalesce_set.erase(top_obj);
       AaRoot::Info("Recoalescing from " + top_obj->Get_Name());
       top_obj->Coalesce_Storage();
+    }
+
+  // all "unknown" memory access will be assumed to point to
+  // _extmem_object if this object is not null..
+  if(AaProgram::_extmem_object != NULL)
+    {
+      for(set<AaPointerDereferenceExpression*>::iterator piter = AaProgram::_pointer_dereferences.begin(),
+	    fpiter = AaProgram::_pointer_dereferences.end();
+	  piter != fpiter;
+	  piter++)
+	{
+	  AaPointerDereferenceExpression* pu = (*piter);
+	  
+	  if(pu->Get_Addressed_Object_Representative() == NULL)
+	    {
+	      pu->Set_Addressed_Object_Representative(AaProgram::_extmem_object);
+	      AaRoot::Warning("pointer dereference linked to extmem-pool :", pu);
+	      AaProgram::Add_Storage_Dependency(pu,AaProgram::_extmem_object);
+	    }
+	}
+    }
+  else
+    {
+
+      for(set<AaPointerDereferenceExpression*>::iterator piter = AaProgram::_pointer_dereferences.begin(),
+	    fpiter = AaProgram::_pointer_dereferences.end();
+	  piter != fpiter;
+	  piter++)
+	{
+	  AaPointerDereferenceExpression* pu = (*piter);
+	  
+	  AaObject* obj = pu->Get_Addressed_Object_Representative();
+
+	  if(obj == NULL || obj->Is_Foreign_Storage_Object())
+	    {
+	      AaProgram::Add_ExtMem_Access_Type(pu->Get_Type());
+	    }
+	}
     }
 
   int num_comps = AaProgram::_storage_dependency_graph.Connected_Components(AaProgram::_storage_eq_class_map);
@@ -609,13 +770,17 @@ void AaProgram::Coalesce_Storage()
 
 	      if(pu->Get_Addressed_Object_Representative() == NULL)
 		{
-		  AaProgram::Add_ExtMem_Access_Width(acc_width);
+		  if(!AaProgram::_keep_extmem_inside)
+		    AaProgram::Add_ExtMem_Access_Width(acc_width);
+		  else
+		    {
+		      assert(0);
+		    }
 		}
 	    }
 	  else
 	    assert(0);
 	}
-
 
       if(!new_ms->_is_written_into)
 	{
@@ -629,8 +794,8 @@ void AaProgram::Coalesce_Storage()
 			  " is not read from in the program", NULL);
 	}
 	    
-      // find the lcm
-      int word_size = LCM(lau_set);
+      // find the gcd
+      int word_size = GCD(lau_set);
       int max_access_width = *(lau_set.rbegin());
       int base_address = 0;
       int addr_width = CeilLog2((total_size/word_size)-1);

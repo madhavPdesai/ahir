@@ -1530,6 +1530,7 @@ AaPointerDereferenceExpression::AaPointerDereferenceExpression(AaScope* scope,
   
   obj_ref->Add_Target(this);
   AaProgram::Add_Storage_Dependency_Graph_Vertex(this);
+  AaProgram::_pointer_dereferences.insert(this);
 }
 
 
@@ -1540,7 +1541,7 @@ void AaPointerDereferenceExpression::Print(ostream& ofile)
   this->_reference_to_object->Print(ofile);
   ofile << ")";
   
-  if(_addressed_object_representative == NULL)
+  if(_addressed_object_representative == NULL && !AaProgram::_keep_extmem_inside)
     {
       AaRoot::Error("illegal pointer-dereference expression... not associated with any memory space!", this);
     }
@@ -1613,11 +1614,6 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 	    AaProgram::Add_Storage_Dependency(this,obj);
 	}
       
-      if(obj->Is_Foreign_Storage_Object())
-	{
-	  AaProgram::Add_ExtMem_Access_Width(this->Get_Type()->Size());
-	}
-
       this->Set_Addressed_Object_Representative(obj);
       
 
@@ -1677,6 +1673,8 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path( ostream& ofile)
 void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target( ostream& ofile)
 {
   ofile << "// " << this->To_String() << endl;
+
+
   if((this->Get_Addressed_Object_Representative() == NULL)
      || this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
     {

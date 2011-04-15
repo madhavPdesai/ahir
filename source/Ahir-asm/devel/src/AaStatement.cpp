@@ -572,46 +572,45 @@ string AaAssignmentStatement::Debug_Info()
 
 void AaAssignmentStatement::Print(ostream& ofile)
 {
+  assert(this->Get_Target()->Get_Type() && this->Get_Source()->Get_Type());
   int twidth = this->Get_Target()->Get_Type()->Size();
   int swidth = this->Get_Source()->Get_Type()->Size();
   int awidth = AaProgram::_foreign_address_width;
+  bool flag = AaProgram::_keep_extmem_inside;
 
-  if(this->Get_Target()->Is_Foreign_Store() && this->Get_Source()->Is_Foreign_Load())
+  if(!flag && this->Get_Target()->Is_Foreign_Store() && this->Get_Source()->Is_Foreign_Load())
     {
       AaPointerDereferenceExpression *ptgt = (AaPointerDereferenceExpression*)(this->Get_Target());
       AaPointerDereferenceExpression *psrc = (AaPointerDereferenceExpression*)(this->Get_Source());
 
       // first load and then store.
-      ofile << "$call extmem_load_" << swidth
+      ofile << "$seriesblock [as_" << this->Get_Index() << "_ext_mem_access] {";
+      ofile << "$call extmem_load_for_type_" << this->Get_Target()->Get_Type()->Get_Index()
 	    << " ( ($bitcast ( $uint<" << awidth << " > ) "
 	    <<  psrc->Get_Reference_To_Object()->To_String() << ")) ("
 	    << " (as_" << this->Get_Index() << "_ld_result)" << endl;
-      ofile << "$call extmem_store_" << twidth
+      ofile << "$call extmem_store_for_type_" << this->Get_Source()->Get_Type()->Get_Index()
 	    << " ( ($bitcast ($uint<" << awidth << "> )"
 	    << ptgt->Get_Reference_To_Object()->To_String() << ") "
-	    << " ( $bitcast ( $uint<" << twidth << ">)" 
-	    << " as_" << this->Get_Index() << "_ld_result)) ()" << endl;
+	    << "( as_" << this->Get_Index() << "_ld_result)) ()" << endl;
+      ofile << "}" << endl;
     }
-  else if(this->Get_Source()->Is_Foreign_Load())
+  else if(!flag && this->Get_Source()->Is_Foreign_Load())
     {
       AaPointerDereferenceExpression *psrc = (AaPointerDereferenceExpression*)(this->Get_Source());
 
-      ofile << "$call extmem_load_" << swidth
+      ofile << "$call extmem_load_for_type_" << this->Get_Target()->Get_Type()->Get_Index() 
 	    << " ( ($bitcast ($uint<" <<  awidth << "> )"
-	    << psrc->Get_Reference_To_Object()->To_String() << ")) ("
-	    << "  as_" << this->Get_Index() << "_ld_result)" << endl;
-      ofile << this->Get_Target()->To_String() << " :=  "
-	    << " ( $bitcast (" << this->Get_Target()->Get_Type()->To_String() << " )" 
-	    << " as_" << this->Get_Index() << "_ld_result)" << endl;
+	    << "  " << psrc->Get_Reference_To_Object()->To_String() << ")) ("
+	    << this->Get_Target()->To_String() << ")" << endl;
     }
-  else if(this->Get_Target()->Is_Foreign_Store())
+  else if(!flag && this->Get_Target()->Is_Foreign_Store())
     {
       AaPointerDereferenceExpression *ptgt = (AaPointerDereferenceExpression*)(this->Get_Target());
-      ofile << "$call extmem_store_" << twidth
+      ofile << "$call extmem_store_for_type_" << this->Get_Source()->Get_Type()->Get_Index()
 	    << " ( ($bitcast ($uint<" << awidth << "> )"
 	    << ptgt->Get_Reference_To_Object()->To_String() << ") "
-	    << " ( $bitcast ( $uint<" << twidth << "> )"
-	    << this->Get_Source()->To_String() << "))  ()" << endl;
+	    << " " << this->Get_Source()->To_String() << ")  ()" << endl;
     }
   else
     {

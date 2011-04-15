@@ -295,19 +295,35 @@ void AaModule::Set_Foreign_Object_Representatives()
 	    {
 	      AaRoot::Info("input argument " + inobj->Get_Name() + " of module " + this->Get_Label()
 			   + " points to foreign storage ");
-	      AaType* el_type = ((AaPointerType*)inobj->Get_Type())->Get_Ref_Type();
 
-	      AaForeignStorageObject* fobj = AaProgram::Make_Foreign_Storage_Object(el_type);
+	      AaStorageObject* fobj = NULL;
+	      if(!AaProgram::_keep_extmem_inside)
+		{
+		  AaType* el_type = ((AaPointerType*)inobj->Get_Type())->Get_Ref_Type();
+		  fobj = AaProgram::Make_Foreign_Storage_Object(el_type);
+		}
+	      else
+		fobj = AaProgram::Get_Extmem_Object();
+
 	      fobj->Add_Source_Reference(inobj);  // inobj uses fobj as a source
 	      inobj->Add_Target_Reference(fobj);  // fobj uses inobj as a target
 	      inobj->Propagate_Addressed_Object_Representative(fobj);
 	    }
 	  else
 	    {
+	      AaStorageObject* fobj = NULL;
+
 	      // not a pointer, so we cannot say anything about the
 	      // type of the object to which it points.
-	      AaForeignStorageObject* fobj = 
-		AaProgram::Make_Foreign_Storage_Object(AaProgram::Make_Void_Type());
+	      if(!AaProgram::_keep_extmem_inside)
+		{
+		  fobj = AaProgram::Make_Foreign_Storage_Object(AaProgram::Make_Void_Type());
+		}
+	      else
+		fobj = AaProgram::Get_Extmem_Object();
+
+
+
 	      fobj->Add_Source_Reference(inobj);  // inobj uses fobj as a source
 	      inobj->Add_Target_Reference(fobj);  // fobj uses inobj as a target
 	      inobj->Propagate_Addressed_Object_Representative(fobj);
@@ -324,8 +340,16 @@ void AaModule::Set_Foreign_Object_Representatives()
 		    
 	      AaRoot::Info("output argument " + outobj->Get_Name() + " of module " + this->Get_Label()
 			   + " points to foreign storage ");
-	      AaType* el_type = ((AaPointerType*)outobj->Get_Type())->Get_Ref_Type();
-	      AaForeignStorageObject* fobj = AaProgram::Make_Foreign_Storage_Object(el_type);
+
+	      AaStorageObject* fobj = NULL;
+	      if(!AaProgram::_keep_extmem_inside)
+		{
+		  AaType* el_type = ((AaPointerType*)outobj->Get_Type())->Get_Ref_Type();
+		  fobj = AaProgram::Make_Foreign_Storage_Object(el_type);
+		}
+	      else
+		fobj = AaProgram::Get_Extmem_Object();
+
 
 	      fobj->Add_Source_Reference(outobj);  // fobj uses outobj as a source
 	      outobj->Add_Target_Reference(fobj);  // outobj uses fobj as a target
@@ -334,10 +358,17 @@ void AaModule::Set_Foreign_Object_Representatives()
 	    }
 	  else
 	    {
+	      AaStorageObject* fobj = NULL;
 	      // not a pointer, so we cannot say anything about the
 	      // type of the object to which it points.
-	      AaForeignStorageObject* fobj = 
-		AaProgram::Make_Foreign_Storage_Object(AaProgram::Make_Void_Type());
+	      if(!AaProgram::_keep_extmem_inside)
+		{
+		  fobj = AaProgram::Make_Foreign_Storage_Object(AaProgram::Make_Void_Type());
+		}
+	      else
+		fobj = AaProgram::Get_Extmem_Object();
+
+
 	      fobj->Add_Source_Reference(outobj);  // fobj uses outobj as a source
 	      outobj->Add_Target_Reference(fobj);  // outobj uses fobj as a target
 	      outobj->Propagate_Addressed_Object_Representative(fobj);

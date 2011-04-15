@@ -10,6 +10,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/connected_components.hpp>
+#include <boost/graph/topological_sort.hpp>
 
 
 using namespace boost;
@@ -142,6 +143,18 @@ class AaGraphBase
     boost::depth_first_search(this->_bgl_graph, visitor(vis));
 
     return(cycle_found);
+  }
+
+  // topological sort.
+  bool Topological_Sort(vector<AaRoot*>& prec_order)
+  {
+    std::deque<Vertex> reverse_prec_order;
+    boost::topological_sort(this->_bgl_graph,std::front_inserter(reverse_prec_order));
+
+    for(int idx = reverse_prec_order.size()-1; idx >= 0; idx--)
+      {
+	prec_order.push_back(this->_bgl_graph[reverse_prec_order[idx] ]._aa_rep);
+      }
   }
 
 };

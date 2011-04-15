@@ -102,20 +102,6 @@ class AaStatement: public AaScope
 
   virtual void PrintC(ofstream& ofile, string tab_string) { assert(0); }
 
-  virtual string Get_Source_Info() 
-  {
-     return(string("file ") 
-	   + this->Get_File_Name() 
-	   + ", line " 
-	   + 
-	   IntToStr(this->Get_Line_Number())); 
-  }
-
-  virtual string Debug_Info()
-  {
-    return(this->Get_Source_Info());
-  };
-
   virtual string Get_Line_Directive()
   {
     return(string("#line ") + IntToStr(this->Get_Line_Number()) + " \"" + this->Get_File_Name() + "\"\n");

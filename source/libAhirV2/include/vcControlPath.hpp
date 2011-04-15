@@ -74,10 +74,8 @@ public:
   virtual int64_t Get_Index() {return(this->_index);}
 
 
-  virtual void Construct_CPElement_Group_Graph(vcControlPath* cp);
-  virtual void Construct_CPElement_Group_Graph(vcControlPath* cp,
-					       vector<vcCPElement*>& preds,
-					       vector<vcCPElement*>& succs);
+  virtual void Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp) {}
+  virtual void Connect_CPElement_Group_Graph(vcControlPath* cp);
   
   virtual vcCPElement* Get_Exit_Element()
   {
@@ -130,6 +128,8 @@ public:
       }
     return(ret_string);
   }
+
+
 
 
   friend class vcControlPath;
@@ -193,6 +193,7 @@ public:
   string Get_DP_To_CP_Symbol();
   string Get_CP_To_DP_Symbol();
 
+  virtual void Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp);
 
 };
 
@@ -206,7 +207,7 @@ public:
   virtual bool Is_Place() {return(true);}
 
   virtual void Print_VHDL(ostream& ofile);
-
+  virtual void Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp);
 
   friend class ControlPath;
 
@@ -254,7 +255,8 @@ public:
   virtual void Print_VHDL_Exit_Symbol_Assignment(ostream& ofile);
 
   void Print_Missing_Elements(set<vcCPElement*>& visited_set); // print to cerr
-  virtual void Construct_CPElement_Group_Graph(vcControlPath* cp);
+  virtual void Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp);
+  virtual void Connect_CPElement_Group_Graph(vcControlPath* cp);
 
   virtual vcCPElement* Get_Exit_Element()
   {
@@ -349,6 +351,7 @@ public:
 };
 
 
+class vcControlPath;
 class vcCPElementGroup: public vcRoot
 {
   int64_t _group_index;
@@ -357,6 +360,8 @@ class vcCPElementGroup: public vcRoot
   set<vcCPElementGroup*> _successors;
   set<vcCPElementGroup*> _predecessors;
 
+  bool _has_transition;
+  bool _has_place;
   bool _has_input_transition;
   bool _has_output_transition;
   bool _has_dead_transition;
@@ -370,12 +375,14 @@ class vcCPElementGroup: public vcRoot
   vector<vcTransition*> _output_transitions;
 
 public:
-  vcCPElementGroup(int64_t group_index):vcRoot()
+  vcCPElementGroup():vcRoot()
   {
+    _has_transition = false;
+    _has_place = false;
     _has_input_transition = false;
     _has_output_transition = false;
     _has_dead_transition = false;
-    _group_index = group_index;
+    _group_index = -1;
     _is_join = false;
     _is_fork = false;
     _is_merge = false;
@@ -383,6 +390,10 @@ public:
     _input_transition = NULL;
   }
 
+  void Set_Group_Index(int64_t idx)
+  {
+    _group_index = idx;
+  }
 
   void Add_Successor(vcCPElementGroup* g)
   {
@@ -398,11 +409,13 @@ public:
   void Add_Element(vcCPElement* cpe);
 
 
-  bool Can_Add_Element(vcCPElement* cpe);
+  bool Can_Absorb(vcCPElementGroup* g);
   friend class vcCPElement;
 
   void Print(ostream& ofile);
   void Print_VHDL(ostream& ofile);
+
+  friend class vcControlPath;
 };
 
 class vcControlPath: public vcCPSeriesBlock
@@ -417,7 +430,7 @@ class vcControlPath: public vcCPSeriesBlock
 
   map<string, vcCompatibilityLabel*> _join_label_map;
 
-  map<int, vcCPElementGroup*> _cpelement_group_index_map;
+  set<vcCPElementGroup*, vcRoot_Compare> _cpelement_groups;
   map<vcCPElement*, vcCPElementGroup*> _cpelement_to_group_map;
 
 public:
@@ -431,10 +444,14 @@ public:
   virtual void Print(ostream& ofile);
 
   vcCPElementGroup* Make_New_Group();
-  vcCPElementGroup* Get_Group(int grp_index);
+  vcCPElementGroup* Delete_Group(vcCPElement* g);
   vcCPElementGroup* Get_Group(vcCPElement* cpe);
 
+
   void Construct_Reduced_Group_Graph();
+  void Reduce_CPElement_Group_Graph();
+  void Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole);
+
   void Add_To_Group(vcCPElement* cpe, vcCPElementGroup* group);
   void Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to);
   void Print_Groups(ostream& ofile);

@@ -1,11 +1,4 @@
 // a simple example..
-$module [sum_mod]
-    $in (a:$uint<10> b:$uint<10>)
-    $out (c:$uint<10>)
-$is
-{
-	c := (a + b)
-}
 
 $module [main]
    $in (a:$uint<10> b:$uint<10>) $out(c: $uint<10> d : $uint<10>)
@@ -27,4 +20,12 @@ $is
 			d := (%x2:s + %x2:t)
 		}
 	}
+}
+
+$module [sum_mod]
+    $in (a:$uint<10> b:$uint<10>)
+    $out (c:$uint<10>)
+$is
+{
+	c := (a + b)
 }

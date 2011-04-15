@@ -34,11 +34,9 @@ int main(int argc, char* argv[])
 
   signal(SIGSEGV, Handle_Segfault);
 
-  signal(SIGSEGV, Handle_Segfault);
-
   if(argc < 2)
     {
-      cerr << "Usage: Aa2VC [-O] <filename> (<filename>) ... " << endl;
+      cerr << "Usage: Aa2VC [-O] [-I <extmem-obj-name>] <filename> (<filename>) ... " << endl;
       exit(1);
     }
 
@@ -51,13 +49,17 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "O",
+		      "OI:",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
 	{
 	case 'O':
 	  opt_flag = true;
+	  break;
+	case 'I':
+	  AaProgram::_keep_extmem_inside  = true;
+	  AaProgram::_extmem_object_name = optarg;
 	  break;
 	default:
 	  cerr << "Error: unknown option " << opt << endl;

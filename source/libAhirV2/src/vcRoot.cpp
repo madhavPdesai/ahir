@@ -51,19 +51,7 @@ int CeilLog2(int n)
 
 bool vcRoot_Compare::operator() (vcRoot* s, vcRoot* t) const
 {
-  const char *s1 = s->Get_Id().c_str ();
-  const char *s2 = t->Get_Id().c_str ();
-
-  for (int i = 0; s2[i]; i++)
-    {
-      if (!s1[i])
-        return ((!s2[i]) ? false : true);
-      else if (s1[i] < s2[i])
-        return true;
-      else if (s1[i] > s2[i])
-        return false;
-    }
-  return false;
+  return(s->Get_Root_Index() < t->Get_Root_Index());
 }
 
 

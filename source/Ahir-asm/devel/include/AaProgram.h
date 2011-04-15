@@ -54,11 +54,17 @@ class AaProgram
   static std::map<int,set<AaModule*> > _storage_index_module_coverage_map;
   static std::map<int,AaMemorySpace*> _memory_space_map;
   static std::map<AaType*,AaForeignStorageObject*> _foreign_storage_map;
+
+  static std::set<AaType*> _extmem_access_types;
   static std::set<int> _extmem_access_widths;
+
+
+  // external memory object.
+  static AaStorageObject* _extmem_object;
 
   // recoalesce set.
   static set<AaObject*> _recoalesce_set;
-
+  
   // modules should be printed in the order in which
   // they were encountered.
   static vector<AaModule*> _ordered_module_vector;
@@ -82,13 +88,28 @@ class AaProgram
   static int _foreign_address_width;
   static string _current_file_name;
   static bool _verbose_flag;
+
+  static bool _keep_extmem_inside;
+  static int _extmem_size;
+
+  static std::set<AaPointerDereferenceExpression*> _pointer_dereferences;
+
   static AaVoidType* _void_type;
+  static string _extmem_object_name;
 
   AaProgram();
   ~AaProgram();
 
+  static void Make_Extmem_Object();
+  static AaStorageObject* Get_Extmem_Object()
+    {
+      return(AaProgram::_extmem_object);
+    }
+
   static void Print(ostream& ofile);
   static void Print_ExtMem_Access_Modules(ostream& ofile);
+  static void Add_ExtMem_Access_Type(AaType* t);
+
   static void Add_ExtMem_Access_Width(int u)
     {
       AaProgram::_extmem_access_widths.insert(u);

@@ -115,6 +115,22 @@ class AaRoot
 
   virtual void Err_Check() {}
 
+  virtual string Get_Source_Info() 
+  {
+     return(string("file ") 
+	   + this->Get_File_Name() 
+	   + ", line " 
+	   + 
+	   IntToStr(this->Get_Line_Number())); 
+  }
+
+  virtual string Debug_Info()
+  {
+    return(this->Get_Source_Info());
+  };
+
+
+
 };
 
 struct AaRootCompare:public binary_function
