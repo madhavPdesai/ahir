@@ -2,10 +2,11 @@
 // instantiate two branch blocks which do the same thing,
 // but use a switch in one case, and an if in the other..
 $module [sum_mod]
-    $in (a:$uint<10>)
+    $in ()
     $out (b: $uint<10> test: $uint<1>)
 $is
 {
+		a := ($cast ($uint<10>) _b11)
 		$branchblock[bb1] {
 			$merge $entry loopback 
 				$phi loop_counter := a $on $entry new_loop_counter $on loopback

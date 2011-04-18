@@ -47,8 +47,8 @@ namespace Aa {
 	// if it takes the reference of a constant string which is a pointer-id      
 	if(is_global)
 	  {
-	    std::string port_name = to_aa(locate_portname_for_io_call(eI.getPointerOperand()));
-	    if(this->Is_Pipe(port_name))
+	    //	    std::string port_name = to_aa(locate_portname_for_io_call(eI.getPointerOperand()));
+	    if(this->Is_Pipe(root_name))
 	      {
 		std::cerr << "Info: ignoring get-element-ptr to " 
 			  << root_name 
@@ -193,6 +193,7 @@ namespace Aa {
     if(this->pipe_map.find(portname) == this->pipe_map.end())
       {
 	this->pipe_map[portname] = type_name;
+	std::cerr << "Info: added pipe " << portname << " with type " << type_name << std::endl;
       }
     else
       {
@@ -544,7 +545,7 @@ namespace {
 
 	  return;
 	}
-
+      
       if(is_alloca || is_global)
 	std::cout << get_name(L.getPointerOperand()) << std::endl;
       else

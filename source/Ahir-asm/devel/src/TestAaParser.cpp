@@ -10,7 +10,7 @@ using namespace antlr;
 
 void Handle_Segfault(int signal)
 {
-  AaRoot::Error("segmentation fault! giving up!!", NULL);
+  AaRoot::Error("in AaAnalyze: segmentation fault! giving up!!", NULL);
   exit(-1);
 }
 

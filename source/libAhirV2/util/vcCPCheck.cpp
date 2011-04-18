@@ -7,7 +7,7 @@ using namespace std;
 
 void Handle_Segfault(int signal)
 {
-  vcSystem::Error("segmentation fault! giving up!!");
+  vcSystem::Error("in vcAnalyze: segmentation fault! giving up!!");
   exit(-1);
 }
 
@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 
   if(argc < 2)
     {
-      cerr << "Usage: TestVcParser <filename> <filename> ... " << endl;
+      cerr << "Usage: vcAnalyze <filename> <filename> ... " << endl;
 
       exit(1);
     }

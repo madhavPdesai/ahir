@@ -3378,7 +3378,6 @@ void AaIfStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofile)
 									   ofile);
     }
 
-  ofile << exit_place << " <-| (" << dead_link << ")" << endl;
 }
 
 void AaIfStatement::Write_VC_Constant_Declarations(ostream& ofile)

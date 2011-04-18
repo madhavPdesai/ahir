@@ -17,7 +17,7 @@ int option_index = 0;
 
 void Handle_Segfault(int signal)
 {
-  AaRoot::Error("segmentation fault! giving up!!", NULL);
+  AaRoot::Error("in Aa2VC: segmentation fault! giving up!!", NULL);
   exit(-1);
 }
 

@@ -13,7 +13,7 @@ struct option long_options[] = {
 
 void Handle_Segfault(int signal)
 {
-  vcSystem::Error("segmentation fault! giving up!!");
+  vcSystem::Error("in vc2vhdl: segmentation fault! giving up!!");
   exit(-1);
 }
 

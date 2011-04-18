@@ -33,7 +33,7 @@ namespace Aa {
 #include <signal.h>
 void Handle_Segfault(int signal)
 {
-  std::cerr << "Error: segmentation fault! giving up!!" << std::endl;
+  std::cerr << "Error: in llvm2aa: segmentation fault! giving up!!" << std::endl;
   exit(-1);
 }
 
