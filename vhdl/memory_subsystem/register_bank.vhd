@@ -159,7 +159,7 @@ begin
              (sr_addr_in(((W+1)*addr_width)-1 downto W*addr_width) = Natural_To_SLV(REG,addr_width)))
           then
             -- sr_pending(W) := '1';
-            if(sc_ack_flag(W) = '0' or sc_req_in(W) = '1') then
+            if(sc_ack_flag(W) = '0') then
 
               -- room for operation
               sc_ack_set(W) := '1';
@@ -179,7 +179,7 @@ begin
              lr_addr_in(((R+1)*addr_width)-1 downto R*addr_width) = Natural_To_SLV(REG,addr_width))
           then
             -- lr_pending(R) := '1';
-            if(lc_ack_flag(R) = '0' or lc_req_in(R) = '1') then
+            if(lc_ack_flag(R) = '0') then
 		-- set the lc_ack flag if the current flag is cleared
               lc_data_out_var(((R+1)*data_width)-1 downto R*data_width) := register_array(REG);
               lc_tag_out_var(((R+1)*tag_width)-1 downto R*tag_width) :=

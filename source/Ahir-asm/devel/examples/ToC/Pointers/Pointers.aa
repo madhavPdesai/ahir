@@ -21,11 +21,13 @@ $module [passpointer]
 $is
 {
 	u := a
-        v := b
+        v := a
 	pu := @(u)
 	pv := @(v)
-        px := ($mux (a>0) pu pv)
-	q  := ($cast ($uint<32>) px)
+        t := ->(pu)
+        s := ->(pv)
+        t1 := ($mux (a>0) s t)
+	q  := ($cast ($uint<32>) t1)
 	$call increment (q) (b)
 }
 

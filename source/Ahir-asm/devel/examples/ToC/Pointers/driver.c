@@ -2,11 +2,11 @@
 #include <aa_c_model.h>
 int main(int argc, char* argv[])
 {
-	uint_32 a, b;
+	uint_32 a[2],b;
 
-	a.__val = 3;
+	a[0].__val = (uint32_t) &a;
 
-	passpointer(a,&b);
+	passpointer(a[0],&b);
 
 
 	printf("%d\n",b.__val);

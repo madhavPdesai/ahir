@@ -851,12 +851,11 @@ bool AaAssignmentStatement::Is_Constant()
 void AaAssignmentStatement::Propagate_Constants()
 {
   this->_source->Evaluate();
-  if(this->_source->Is_Constant())
+  this->_target->Evaluate();
+  if(this->_source->Is_Constant() && this->_target->Is_Implicit_Variable_Reference())
     {
       this->_target->Assign_Expression_Value(this->_source->Get_Expression_Value());
     }
-  else
-    this->_target->Evaluate();
 }
 
 //---------------------------------------------------------------------

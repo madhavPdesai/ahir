@@ -99,7 +99,10 @@ $is
 \end{verbatim}
 In this example, {\em sum} is 
 a module which has two inputs and a single output.
-The type of the inputs and the output is \$uint<32>
+The type of the inputs and the output is 
+\begin{verbatim}
+$uint<32>
+\end{verbatim}
 which is an unsigned 32-bit integer (More details
 on types are given in Section \ref{sec:Types}).
 
@@ -576,7 +579,7 @@ For example
 $pointer< $uint<32> > 
 \end{verbatim}
 is a pointer which refers to a storage
-object of type \$uint<32>.
+object of type \begin{verbatim}$uint<32>\end{verbatim}
 \item Floats: A float is parametrized by
 two integers, the width of the exponent,
 and the width of the mantissa.  
@@ -598,8 +601,7 @@ and
 \begin{verbatim}
 $float<11,52> 
 \end{verbatim}
-respectively.  Currently, \$float<8,23> 
-and \$float<11,42> are the
+respectively.  Currently, these are the
 only float types that are supported.
 \end{itemize}
 
@@ -633,7 +635,17 @@ For example:
 \begin{verbatim}
 $record <$uint<32> > <$array [10] $of $uint<32> > 
 \end{verbatim}
+\item Named record types are used to avoid the circular
+reference problem (for example, when a record has a pointer to
+itself).
+\begin{verbatim}
+$record [myrec] <$uint<32> >  <$pointer<myrec> >
+\end{verbatim}
+defines a record type with name myrec, one of whose
+fields is a pointer to myrec.
 \end{itemize}
+
+
 
 \section{Expressions} \label{sec:Expressions}
 
@@ -776,8 +788,8 @@ Such an expression can occur {\bf only} as
 the target or source of a simple assignment statement.
 For example
 \begin{verbatim}
-a = ->(ptr)
-->(ptr) = (a+1)
+a := ->(ptr)
+->(ptr) := (a+1)
 \end{verbatim}
 
 \section{Address-of expressions}
@@ -792,7 +804,7 @@ an expression can occur {\bf only} as a source
 of a simple assignment statement.
 For example
 \begin{verbatim}
-ptr = @(a)
+ptr := @(a)
 \end{verbatim}
 
 \section{Unary expressions}

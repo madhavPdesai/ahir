@@ -14,18 +14,19 @@ extern char *optarg;
 int opt;
 int option_index = 0;
 
+struct option long_options[] = {
+    {"relaxed-component-visibility", 0, 0, 0},
+    {"depend", required_argument, 0, 0},
+    {0, 0, 0, 0}
+};
+
+
 
 void Handle_Segfault(int signal)
 {
   AaRoot::Error("in Aa2VC: segmentation fault! giving up!!", NULL);
   exit(-1);
 }
-
-struct option long_options[] = {
-    {"relaxed-component-visibility", 0, 0, 0},
-    {"depend", required_argument, 0, 0},
-    {0, 0, 0, 0}
-};
 
 
 int main(int argc, char* argv[])

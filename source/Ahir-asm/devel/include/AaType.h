@@ -80,6 +80,9 @@ class AaVoidType: public AaType
 		return(0);
 	}
 
+	virtual string Kind() {return("AaVoidType");}
+	virtual string CDim() {return("");}
+
 };
 
 class AaScalarType: public AaType

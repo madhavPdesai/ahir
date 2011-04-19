@@ -2166,11 +2166,7 @@ void AaTypeCastExpression::PrintC(ofstream& ofile, string tab_string)
       AaRoot::Error("bit-cast not supported in Aa2VC", this);
     }
 
-  if(this->_rest->Get_Type() && this->_rest->Get_Type()->Is("AaPointerType"))
-    ofile << tab_string << "(" << "(" << this->_to_type->CBaseName() << ") ";
-  else
-    ofile << tab_string << "(" << "(" << this->_to_type->CName() << ") ";
-
+  ofile << tab_string << "(" << "(" << this->_to_type->CBaseName() << ") ";
   this->_rest->PrintC(ofile,"");
   ofile << ")";
 }
