@@ -1,6 +1,6 @@
 \documentclass{article}
 
-\title{AhirV2: from algorithms to hardware}
+\title{AhirV2: from algorithms to hardware \\ A tutorial introduction}
 \author{Madhav Desai \\ Department of Electrical Engineering \\ Indian Institute of Technology \\
 	Mumbai 400076 India}
 
@@ -102,7 +102,7 @@ competitive.
 \section{The tools}
 
 We assume that you have access to either {\bf llvm-gcc}
-of {\bf clang} as the front-end compiler which generates
+or {\bf clang} as the front-end compiler which generates
 LLVM byte-code from C/C++.  The current AhirV2 toolset
 is consistent with llvm 2.8 and clang 2.8.
 
@@ -113,18 +113,22 @@ The other tools in the chain are described below.
 This tool takes LLVM byte code and converts it into an
 \Aa file.
 \begin{verbatim}
-llvm2aa [-modules=<listfile>] bytecode.o > bytecode.aa
+llvm2aa [-modules=<listfile>] [-storageinit] bytecode.o > bytecode.aa
 \end{verbatim}
 The generated \Aa code is sent to {\bf stdout} and all informational
 messages are sent to {\bf stderr}.  On success, the tool returns 0.
 
-The option 
-\begin{verbatim}
--modules=listfile
-\end{verbatim}
-can be used to specify the list of functions in the bytecode
-which should be converted to \Aa.  If absent, all functions
+The options:
+\begin{itemize}
+\item {\bf -modules=listfile} : Specify the list of functions in the bytecode
+which should be converted to \Aa.   The names of these functions should be
+listed in the text-file listfile. If absent, all functions
 are converted.
+\item {\bf -storageinit} :  Storage objects in the llvm bytecode
+are explicitly initialized in the generated \Aa code.   An initializer
+routine {\bf global\_storage\_initializer\_} is instantiated in
+the \Aa code for this purpose.
+\end{itemize}
 
 \subsection{{\bf AaLinkExtMem}}
 
@@ -152,6 +156,7 @@ external references are mapped is to be named obj-name.
 If the {\bf -I} option is not used, then all external memory
 references are routed out of the \Aa program through pipes.
 
+
 \subsection{{\bf Aa2VC}}
 
 This tool takes a list of \Aa programs and converts them
@@ -175,11 +180,20 @@ are considered as being directed at the storage object named obj-name.
 Takes a collection of \vC descriptions and converts them to
 VHDL.
 \begin{verbatim}
-vc2vhdl -t foo [-t bar -t bar2 ...]  -f file1.vc -f file2.vc ...  > system.vhdl
+vc2vhdl [-O] -t foo [-t bar -t bar2 ...]  -f file1.vc -f file2.vc ...  > system.vhdl
 \end{verbatim}
-Using the {\bf -t} option, one can specify the modules which are to be 
+
+The options:
+\begin{itemize}
+\item {\bf -t} : to specify the modules which are to be 
 accessible from the ports of the generated VHDL system.
-Using the {\bf -f} option, one specifies the \vC files to be analyzed.
+Multiple top-level modules can be specified in this way.
+\item {\bf -f} : specifies the \vC files to be analyzed. 
+Multiple \vC files may be specified.
+\item {\bf -O} : optimize the generated VHDL by compacting
+the control-path.  This does not change the resulting
+hardware, but makes the generated VHDL file smaller.
+\end{itemize}
 
 The tool performs concurrency analysis to determine operations which
 can be mapped to the same physical operator without the need for
@@ -413,6 +427,162 @@ accessing this storage object.
 Both options are supported in the AhirV2 flow through
 the utility {\bf AaLinkExtMem} described earlier.
 
+
+\subsection{Keeping the external memory outside the system}
+
+For this example, if you want to keep the external memory
+outside, you will have to go through the following sequence
+\begin{verbatim}
+# first use clang (or llvm-gcc) to generate llvm-byte-code
+clang -std=gnu89 -emit-llvm -c foo.c
+#
+# disassemble so that you can make sense of the llvm bc.
+llvm-dis foo.o
+#
+# OK, now take the llvm byte code
+# and generate an Aa description.
+# use the storageinit option to initialize
+# global storage.
+# (the pipe to vcFormat is to prettify the output)
+ llvm2aa -storageinit foo.o | vcFormat > foo.o.aa
+#
+#
+# Do an Aa -> Aa transformation: map external
+# memory outside..
+AaLinkExtMem foo.o.aa | vcFormat > foo.o.memlinked.ExternalOutside.aa
+#
+# Now take the Aa code and generate a virtual
+# circuit..
+# the -O flag does dependency analysis in straight-line
+# code and parallelizes it.
+#
+Aa2VC -O foo.o.memlinked.ExternalOutside.aa | vcFormat\
+                 > foo.o.memlinked.ExternalOutside.aa.vc
+#
+# finally, generate vhdl from the vc description.  Note that
+# you will have to mark the module foo as well as the
+# extmem_store_32/load_32 modules as top-level modules
+# so that it is possible for the outside world to serve
+# requests made from inside.
+#
+vc2vhdl -O -t foo -t extmem_store_32 -t extmem_load_32\ 
+         -f foo.o.memlinked.ExternalOutside.aa.vc | vhdlFormat\
+              > foo_o_aa_memlinked_external_outside_vc.vhdl
+
+\end{verbatim}
+
+If you look at the generate top-level VHDL entity, its ports
+will be
+\begin{verbatim}
+entity test_system is  -- system
+  port (--
+    foo_b : in  std_logic_vector(31 downto 0);
+    foo_ret_val_x_x : out  std_logic_vector(31 downto 0);
+    foo_tag_in: in std_logic_vector(0 downto 0);
+    foo_tag_out: out std_logic_vector(0 downto 0);
+    foo_start : in std_logic;
+    foo_fin   : out std_logic;
+    clk : in std_logic;
+    reset : in std_logic;
+    extmem_read_address_32_pipe_read_data: out std_logic_vector(31 downto 0);
+    extmem_read_address_32_pipe_read_req : in std_logic_vector(0 downto 0);
+    extmem_read_address_32_pipe_read_ack : out std_logic_vector(0 downto 0);
+    extmem_read_data_32_pipe_write_data: in std_logic_vector(31 downto 0);
+    extmem_read_data_32_pipe_write_req : in std_logic_vector(0 downto 0);
+    extmem_read_data_32_pipe_write_ack : out std_logic_vector(0 downto 0);
+    extmem_write_address_32_pipe_read_data: out std_logic_vector(31 downto 0);
+    extmem_write_address_32_pipe_read_req : in std_logic_vector(0 downto 0);
+    extmem_write_address_32_pipe_read_ack : out std_logic_vector(0 downto 0);
+    extmem_write_data_32_pipe_read_data: out std_logic_vector(31 downto 0);
+    extmem_write_data_32_pipe_read_req : in std_logic_vector(0 downto 0);
+    extmem_write_data_32_pipe_read_ack : out std_logic_vector(0 downto 0)); --
+  --
+end entity;
+\end{verbatim}
+The external memory read and write address and data are clearly
+visible.   The outside world is responsible for serving the
+read/write requests made from the inside.
+
+\subsection{Keeping the external memory inside the system}
+
+For this example, if you want to keep the external memory
+outside, you will have to go through the following sequence
+\begin{verbatim}
+# use clang (or llvm-gcc) to generate llvm-byte-code
+clang -std=gnu89 -emit-llvm -c foo.c
+#
+# disassemble so that you can make sense of the llvm bc.
+llvm-dis foo.o
+#
+# OK, now take the llvm byte code
+# and generate an Aa description.
+# use the storageinit option to initialize
+# global storage.
+# (the pipe to vcFormat is to prettify the output)
+ llvm2aa -storageinit foo.o | vcFormat > foo.o.aa
+#
+#
+# Do an Aa -> Aa transformation: map external
+# memory to a storage area inside the system...
+# -I 1024 says that the amount of memory that will be
+# referred to is 1024 bytes.
+# -E mempool says that the storage object corresponding
+# to external memory is named mempool.
+AaLinkExtMem  -I 1024 -E mempool foo.o.aa | vcFormat\
+               > foo.o.memlinked.ExternalInside.aa
+#
+# Now take the Aa code and generate a virtual
+# circuit..
+# the -O flag does dependency analysis in straight-line
+# code and parallelizes it.
+# the -I mempool option says that external memory is
+# to be mapped inside the system to object mempool..
+#
+Aa2VC -O -I mempool foo.o.memlinked.ExternalInside.aa\
+           | vcFormat > foo.o.memlinked.ExternalInside.aa.vc
+#
+# finally, generate vhdl from the vc description.
+# note that you will have to mark mem_load__ and mem_store__
+# as top-level modules, so that the external world can
+# access its memory pool inside the system.
+#
+vc2vhdl -O -t foo -t mem_load__ -t mem_store__ \ 
+     -f foo.o.memlinked.ExternalInside.aa.vc\
+       | vhdlFormat > foo_o_aa_memlinked_external_inside_vc.vhdl
+\end{verbatim}
+
+The generated top-level VHDL entity has the following
+ports:
+\begin{verbatim}
+entity test_system is  -- system
+  port (--
+    foo_b : in  std_logic_vector(31 downto 0);
+    foo_ret_val_x_x : out  std_logic_vector(31 downto 0);
+    foo_tag_in: in std_logic_vector(0 downto 0);
+    foo_tag_out: out std_logic_vector(0 downto 0);
+    foo_start : in std_logic;
+    foo_fin   : out std_logic;
+    mem_load_x_x_address : in  std_logic_vector(31 downto 0);
+    mem_load_x_x_data : out  std_logic_vector(7 downto 0);
+    mem_load_x_x_tag_in: in std_logic_vector(0 downto 0);
+    mem_load_x_x_tag_out: out std_logic_vector(0 downto 0);
+    mem_load_x_x_start : in std_logic;
+    mem_load_x_x_fin   : out std_logic;
+    mem_store_x_x_address : in  std_logic_vector(31 downto 0);
+    mem_store_x_x_data : in  std_logic_vector(7 downto 0);
+    mem_store_x_x_tag_in: in std_logic_vector(0 downto 0);
+    mem_store_x_x_tag_out: out std_logic_vector(0 downto 0);
+    mem_store_x_x_start : in std_logic;
+    mem_store_x_x_fin   : out std_logic;
+    clk : in std_logic;
+    reset : in std_logic); --
+  --
+end entity;
+\end{verbatim}
+
+The system provides a memory load and memory store
+port to the external world (through the mem\_load.. and mem\_store..)
+ports.
 
 \section{Handling complex programs}
 

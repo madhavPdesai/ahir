@@ -27,7 +27,7 @@ using namespace llvm;
 
 namespace Aa {
   FunctionPass* createLowerConstantExprPass();
-  ModulePass* createModuleGenPass(const std::string &mlist_file);
+  ModulePass* createModuleGenPass(const std::string &mlist_file, bool create_initializers);
 }
 
 #include <signal.h>
@@ -49,8 +49,8 @@ static cl::opt<std::string>
 ModuleListFile("modules", cl::desc("A file containing a list of modules to be translated")
                , cl::value_desc("filename"));
 
-// static cl::opt<bool>
-// Force("f", cl::desc("Overwrite output files"));
+static cl::opt<bool>
+  WriteStorageInitializers("storageinit", cl::desc("set to true if you want storage initializers to be generated"));
 
 int main(int argc, char **argv)
 {
@@ -107,7 +107,7 @@ int main(int argc, char **argv)
     Passes.add(createUnifyFunctionExitNodesPass());
     Passes.add(createPrintModulePass(&RawOut));
 
-    Pass *P = Aa::createModuleGenPass(ModuleListFile);
+    Pass *P = Aa::createModuleGenPass(ModuleListFile,WriteStorageInitializers);
     if(P != NULL)
       Passes.add(P);
     else
@@ -116,6 +116,17 @@ int main(int argc, char **argv)
 	return(1);
       }
 
+      
+    if(WriteStorageInitializers)
+      {
+	std::cerr << "Info: -storageinit=true: storage initializers will be generated" << std::endl;
+      }
+    else
+      {
+	std::cerr << "Info: -storageinit=false: storage initializers will not be generated" << std::endl;
+      }
+
+    
     Passes.run(M);
     return 0;
 }

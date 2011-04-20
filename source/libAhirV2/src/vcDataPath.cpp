@@ -83,21 +83,6 @@ pair<vcCompatibilityLabel*,vcCompatibilityLabel*> vcDataPath::Get_Label_Interval
 
   pair<vcCompatibilityLabel*,vcCompatibilityLabel*> ret_pair(dpe->_reqs.front()->Get_Compatibility_Label(),
 							     dpe->_acks.back()->Get_Compatibility_Label());
-  for(int idx = 0; idx < dpe->_reqs.size(); idx++)
-    {
-      assert((ret_pair.first == dpe->_reqs[idx]->Get_Compatibility_Label()) || 
-	     cp->Lesser(ret_pair.first,dpe->_reqs[idx]->Get_Compatibility_Label()));
-      assert((ret_pair.second == dpe->_reqs[idx]->Get_Compatibility_Label()) || 
-	     cp->Greater(ret_pair.second,dpe->_reqs[idx]->Get_Compatibility_Label()));
-    }
-  for(int idx = 0; idx < dpe->_acks.size(); idx++)
-    {
-      assert((ret_pair.first == dpe->_acks[idx]->Get_Compatibility_Label()) || 
-	     cp->Lesser(ret_pair.first,dpe->_acks[idx]->Get_Compatibility_Label()));
-      assert((ret_pair.second == dpe->_acks[idx]->Get_Compatibility_Label()) || 
-	     cp->Greater(ret_pair.second,dpe->_acks[idx]->Get_Compatibility_Label()));
-    }
-
   _dpe_label_interval_map[dpe] = ret_pair;
   return(ret_pair);
 }

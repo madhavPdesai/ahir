@@ -167,31 +167,27 @@ void AaProgram::Print_ExtMem_Access_Modules(ostream& ofile)
       int width =  AaProgram::_foreign_word_size;
       int awidth = AaProgram::_foreign_address_width;
       
-      ofile << "$pipe mem_read_address_in : $uint<" << awidth << " >" << endl;
-      ofile << "$pipe mem_read_data_out  : $uint<" << width << " >" << endl;
-      ofile << "$pipe mem_write_address_in  : $uint<" << awidth << " >" << endl;
-      ofile << "$pipe mem_write_data_in  : $uint<" << width << " >" << endl;
-      
       int addr_scale_factor = width/AaProgram::_extmem_object->Get_Word_Size();
       int base_addr = AaProgram::_extmem_object->Get_Base_Address();
-      ofile << "$module [mem_load__] " << endl
-	    << " $in ()" << endl
-	    << " $out ()" << endl
-	    << " $is {" << endl;
-      ofile << " mem_read_data_out := " << endl;
+      ofile << "$module [mem_load__] " << endl;
+      ofile << "$in (address : $uint<" << awidth << " > ) " << endl;
+      ofile << "$out (data : $uint<" << width << " > ) " << endl;
+      ofile << " $is {" << endl;
+      ofile << " data := " << endl;
       ofile << AaProgram::_extmem_object_name << "[ " 
-	    << "((mem_read_address_in * " << addr_scale_factor
+	    << "((address * " << addr_scale_factor
 	    << " ) + " << base_addr << ") ]" << endl;
       ofile << "}" << endl;
       
-      ofile << "$module [mem_store__] " << endl
-	    << " $in ()" << endl
-	    << " $out ()" << endl
+      ofile << "$module [mem_store__] " << endl;
+      ofile << "$in (address : $uint<" << awidth << " > " 
+	    << "data : $uint<" << width << " > ) " << endl;
+      ofile << " $out ()" << endl
 	    << " $is {" << endl;
       ofile << AaProgram::_extmem_object_name << "[ " 
-		<< "((mem_write_address_in * " << addr_scale_factor
+		<< "((address * " << addr_scale_factor
 	    << " ) + " << base_addr << ") ] := "
-	    << " mem_write_data_in " 
+	    << " data " 
 	    << "}" << endl;
     }
 }

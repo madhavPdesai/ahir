@@ -32,14 +32,17 @@ namespace {
     static char ID;
     std::set<std::string> module_names;
     bool _consider_all_functions;
+    bool _create_initializers;
 
     ModuleGenPass() : ModulePass(ID) 
     {
     }
 
-    ModuleGenPass(const std::string& mlist_file) : ModulePass(ID) 
+    ModuleGenPass(const std::string& mlist_file, bool create_initializers) : ModulePass(ID) 
     {
       _consider_all_functions = true;
+      _create_initializers = create_initializers;
+
       if(mlist_file != "")
 	{
 	  std::ifstream mlist(mlist_file.c_str());
@@ -163,7 +166,7 @@ namespace {
 	      std::string obj_name = to_aa(aa_writer->get_name(&(*gi)));
 	      if(!aa_writer->Is_Pipe(obj_name))
 		{
-		  write_storage_object(obj_name, *gi,M, objects_to_be_initialized);
+		  write_storage_object(obj_name, *gi,M, objects_to_be_initialized, _create_initializers);
 		}
 	    }
 	  }
@@ -332,6 +335,9 @@ namespace {
 
 namespace Aa {
 
-  ModulePass* createModuleGenPass(const std::string& module_list) { return new ModuleGenPass(module_list); }
+  ModulePass* createModuleGenPass(const std::string& module_list, bool create_initializers) 
+  { 
+    return new ModuleGenPass(module_list, create_initializers); 
+  }
 }
 

@@ -478,7 +478,8 @@ void Aa::write_type_declaration(llvm::Type *T, llvm::Module& tst)
 
 
 void Aa::write_storage_object(std::string& obj_name, llvm::GlobalVariable &G, llvm::Module& tst,
-			      std::vector<std::string>& init_obj_vector)
+			      std::vector<std::string>& init_obj_vector,
+			      bool create_initializer)
 {
     const llvm::Type *ptr = G.getType();
     const llvm::PointerType* pptr = dyn_cast<PointerType>(G.getType());
@@ -499,12 +500,19 @@ void Aa::write_storage_object(std::string& obj_name, llvm::GlobalVariable &G, ll
       	llvm::Constant *init = G.getInitializer();
 	if(!isa<UndefValue>(init))
 	  {
-	    init_obj_vector.push_back(obj_name + "_initializer_");
-
-	    std::cerr << "Info: Initial value specified for " << obj_name << ": will create initializer module" << std::endl;
-	    std::cout << "$module [" << obj_name << "_initializer_] $in () $out () $is {" << std::endl;
-	    write_storage_initializer_statements(obj_name,init);
-	    std::cout << "}" << std::endl;
+	    if(create_initializer)
+	      {
+		init_obj_vector.push_back(obj_name + "_initializer_");
+		
+		std::cerr << "Info: Initial value specified for " << obj_name << ": will create initializer module" << std::endl;
+		std::cout << "$module [" << obj_name << "_initializer_] $in () $out () $is {" << std::endl;
+		write_storage_initializer_statements(obj_name,init);
+		std::cout << "}" << std::endl;
+	      }
+	    else
+	      {
+		std::cerr << "Warning: Initial value specified for " << obj_name << " will be ignored" << std::endl;		
+	      }
 	  }
       }
 }
