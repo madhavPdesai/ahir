@@ -38,7 +38,8 @@ namespace Aa {
 
   std::string locate_portname_for_io_call(llvm::Value *strptr);
   void write_type_declaration(llvm::Type *T,llvm::Module& tst);
-  void write_storage_object(std::string& obj_name, llvm::GlobalVariable &G,llvm::Module& tst);
+  void write_storage_object(std::string& obj_name, llvm::GlobalVariable &G,llvm::Module& tst,
+			    std::vector<std::string>& init_obj_vector);
   std::string get_aa_type_name(const llvm::Type* ptr, llvm::Module& tst);
   std::string get_zero_value(const llvm::Type* ptr);
   std::string get_aa_type_name(IOCode ioc);
@@ -46,6 +47,10 @@ namespace Aa {
   std::string get_aa_constant_string(llvm::Constant *konst);
   std::string int_to_str(int a);
   std::string llvm_opcode_to_string(unsigned op_code);
+
+  void write_zero_initializer_recursive(std::string prefix,const llvm::Type* ptr, int depth);
+  void write_storage_initializer_statements(std::string& prefix, llvm::Constant* konst);
+  int number_of_bits_needed_to_represent(int m);
 }
 
 #endif

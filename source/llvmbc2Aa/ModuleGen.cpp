@@ -152,6 +152,7 @@ namespace {
 	// declare the pipes.
       aa_writer->Print_Pipe_Declarations(std::cout);
 
+      std::vector<std::string> objects_to_be_initialized;
       for (llvm::Module::global_iterator gi = M.global_begin(), ge = M.global_end();
            gi != ge; ++gi) {
         if (!is_ioport_identifier(*gi))
@@ -161,12 +162,27 @@ namespace {
 	    {
 	      std::string obj_name = to_aa(aa_writer->get_name(&(*gi)));
 	      if(!aa_writer->Is_Pipe(obj_name))
-		write_storage_object(obj_name, *gi,M);
+		{
+		  write_storage_object(obj_name, *gi,M, objects_to_be_initialized);
+		}
 	    }
 	  }
       }
 
-        
+      if(objects_to_be_initialized.size() > 0)
+	{
+	  std::cerr << "Info: generating storage initialization module which calls all initializers in parallel" << std::endl;
+	  std::cout << "$module [global_storage_initializer_] $in () $out () $is {" << std::endl;
+	  std::cout << "$parallelblock [pb] { " << std::endl;
+	  for(int idx = 0, fidx = objects_to_be_initialized.size(); idx < fidx; idx++)
+	    {
+	      std::cout << "$call " << objects_to_be_initialized[idx] << " () () " << std::endl;
+	    }
+	  std::cout << "}" << std::endl;
+	  std::cout << "}" << std::endl;
+	}
+
+      
       for (llvm::Module::iterator fi = M.begin(), fe = M.end();
            fi != fe; ++fi) 
 	{

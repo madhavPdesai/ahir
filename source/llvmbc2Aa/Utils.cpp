@@ -380,7 +380,6 @@ std::string Aa::get_aa_type_name(const llvm::Type* ptr, llvm::Module& tst)
 	return(to_aa(ret_string));
 
   
-
   
   if(isa<PointerType>(ptr))
     {
@@ -478,21 +477,15 @@ void Aa::write_type_declaration(llvm::Type *T, llvm::Module& tst)
 }
 
 
-void Aa::write_storage_object(std::string& obj_name, llvm::GlobalVariable &G, llvm::Module& tst)
+void Aa::write_storage_object(std::string& obj_name, llvm::GlobalVariable &G, llvm::Module& tst,
+			      std::vector<std::string>& init_obj_vector)
 {
     const llvm::Type *ptr = G.getType();
-
     const llvm::PointerType* pptr = dyn_cast<PointerType>(G.getType());
-
     assert(pptr != NULL);
     const llvm::Type* el_type = pptr->getElementType();
     assert(el_type);
     std::string type_name = get_aa_type_name(el_type,tst); 
-
-    if (G.hasInitializer()) {
-      	llvm::Constant *init = G.getInitializer();
-	std::cerr << "Warning: Initial value for " << obj_name << " ignored" << std::endl;
-    }
     
     if(obj_name == "")
       {
@@ -501,8 +494,115 @@ void Aa::write_storage_object(std::string& obj_name, llvm::GlobalVariable &G, ll
       }
     
     std::cout << "$storage " << to_aa(obj_name) << ":" << type_name << std::endl;
+    if (G.hasInitializer()) 
+      {
+      	llvm::Constant *init = G.getInitializer();
+	if(!isa<UndefValue>(init))
+	  {
+	    init_obj_vector.push_back(obj_name + "_initializer_");
+
+	    std::cerr << "Info: Initial value specified for " << obj_name << ": will create initializer module" << std::endl;
+	    std::cout << "$module [" << obj_name << "_initializer_] $in () $out () $is {" << std::endl;
+	    write_storage_initializer_statements(obj_name,init);
+	    std::cout << "}" << std::endl;
+	  }
+      }
+}
+void Aa::write_storage_initializer_statements(std::string& prefix, llvm::Constant* konst)
+{
+  const llvm::Type *konst_type = konst->getType();
+
+  if(isa<GlobalVariable>(konst))
+    {
+      llvm::GlobalVariable* gv = dyn_cast<GlobalVariable>(konst);
+      if(gv->isConstant())
+	{
+	  konst = gv->getInitializer();
+	}
+    }
+    
+  if(isa<ConstantInt>(konst) || isa<ConstantFP>(konst))
+    {
+      std::cout << prefix << " := " << get_aa_constant_string(konst) << std::endl;
+    }
+  else if(isa<ConstantPointerNull>(konst))
+    {
+      std::cout << prefix << " := _b0" << std::endl;
+    }
+  else if(isa<ConstantArray>(konst) || isa<ConstantVector>(konst) 
+	  || isa<ConstantStruct>(konst))
+    {
+      int dim = konst->getNumOperands();
+      for (unsigned int i = 0; i != konst->getNumOperands(); ++i) 
+	{
+	  std::string forward_prefix = prefix + "[" +  int_to_str(i) + "]";
+	  llvm::Value *el = konst->getOperand(i);
+	  assert(isa<llvm::Constant>(el) && "constants expected here");
+	  write_storage_initializer_statements(forward_prefix,cast<llvm::Constant>(el));
+	}
+    }
+  else if(isa<ConstantAggregateZero>(konst))
+    {
+      write_zero_initializer_recursive(prefix,konst->getType(),0);      
+    }
+  else
+    {
+      std::cerr << "Error: constant must be one of int/fp/array/struct/vector/aggregate-zero/pointer-null" 
+		<< std::endl;
+      std::cout << prefix << " := UNSUPPORTED_CONSTANT";
+    }
 }
 
+
+void Aa::write_zero_initializer_recursive(std::string prefix,const llvm::Type* ptr, int depth)
+{
+  
+  if(isa<PointerType>(ptr) || isa<IntegerType>(ptr) )
+    {
+      std::cout << prefix << " := _b0" << std::endl;
+    }
+  else if(ptr->isFloatTy() || ptr->isDoubleTy())
+    {
+      std::cout << prefix << " := _f0.0e+0" << std::endl;
+    }
+  else if(isa<ArrayType>(ptr) || isa<VectorType>(ptr))
+    {
+      const llvm::SequentialType *ptr_seq = dyn_cast<llvm::SequentialType>(ptr);
+      const llvm::Type* el_type = ptr_seq->getElementType();
+      
+      int dim = 0;
+      const llvm::ArrayType* ptr_array = dyn_cast<llvm::ArrayType>(ptr);
+      if(ptr_array != NULL)
+	dim = ptr_array->getNumElements();
+      else
+	{
+	  const llvm::VectorType* ptr_vec = dyn_cast<llvm::VectorType>(ptr);
+	  dim = ptr_vec->getNumElements();
+	}
+      
+      std::cout << "$branchblock [zeroinit_" << depth << "] {" << std::endl;
+      std::cout << "$merge $entry loopback " << std::endl;
+      std::cout << "$phi I_" << depth << " :=  ($cast ($uint< "
+		<< number_of_bits_needed_to_represent(dim) 
+		<< " >) 0) $on $entry next_I $on loopback" << std::endl;
+      std::cout << "$endmerge " << std::endl;
+      std::cout << "next_I := (I_" << depth << " + 1)" << std::endl;
+      std::string forward_prefix = prefix + "[I_" + int_to_str(depth) + "]";
+      write_zero_initializer_recursive(forward_prefix, el_type,depth+1);
+      std::cout << "$if (next_I < " << dim << ") $then $place [loopback] $else $null $endif" << std::endl;
+      std::cout << "}" << std::endl;
+    }
+  else if(isa<StructType>(ptr))
+    {
+      const llvm::StructType *ptr_struct = dyn_cast<llvm::StructType>(ptr);
+      for(int idx = 0; idx < ptr_struct->getNumElements(); idx++)
+	{
+	  std::string forward_prefix = prefix + "[" + int_to_str(idx) + "]";
+	  const llvm::Type* el_type = ptr_struct->getElementType(idx);
+	  write_zero_initializer_recursive(forward_prefix, el_type,depth+1);
+	}
+    }
+}
 
 std::string Aa::int_to_str(int a)
 {
@@ -514,6 +614,16 @@ std::string Aa::int_to_str(int a)
 	return(ret_string);
 }
 
+int Aa::number_of_bits_needed_to_represent(int m)
+{
+  int ret_val = 1;
+  while(m > 1)
+    {
+      m = m/2;
+      ret_val++;
+    }
+  return(ret_val);
+}
 
 std::string Aa::llvm_opcode_to_string(unsigned opcode)
 {
