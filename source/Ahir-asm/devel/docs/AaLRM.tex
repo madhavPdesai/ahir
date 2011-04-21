@@ -386,7 +386,7 @@ $if (a != 0) $then
    q := (r + s)
    t := 0
 $else
-   qdash :  (r - s)
+   qdash :=  (r - s)
 $endif
 \end{verbatim}
 If the control token reaches the end of a selected
@@ -479,7 +479,7 @@ parallel, fork and branch block
 statements enables the programmer to describe a highly concurrent
 structured system with complex branching behaviour.  
 The resulting control flow structure is a
-type-2 petri-net with provable liveness and safety properties \cite{ref:SameerPhD}.
+petri-net with provable liveness and safety properties \cite{ref:SameerPhD}.
 
 \section{Scoping Rules} \label{sec:Scopes}
 
@@ -518,7 +518,7 @@ a            look for variable a in current scope;
 
 :a           same as the previous case
 
-../:a          look for variable a starting from the parent of
+../:a        look for variable a starting from the parent of
              the current scope.
 
 %p:a         look for variable a starting from the child scope 
@@ -933,6 +933,7 @@ Note the parentheses delimiting the expression.
 For example
 \begin{verbatim}
 ($mux a (b+1) (c+d))
+\end{verbatim}
 
 
 \section{Foreign Modules}
