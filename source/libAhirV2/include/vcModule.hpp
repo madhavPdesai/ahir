@@ -62,10 +62,17 @@ class vcModule: public vcRoot
   int Get_In_Arg_Width();
   int Get_Out_Arg_Width();
 
+  int Get_Number_Of_Input_Arguments()
+  {
+    return(_ordered_input_arguments.size());
+  }
+  int Get_Number_Of_Output_Arguments()
+  {
+    return(_ordered_output_arguments.size());
+  }
+
   vcMemorySpace* Find_Memory_Space(string ms_name);
   vcType* Get_Argument_Type(string arg_name, string mode /* "in" or "out" */);
-
-
 
   vcWire* Get_Argument(string arg_name, string mode);
   string Get_Input_Argument(int idx)

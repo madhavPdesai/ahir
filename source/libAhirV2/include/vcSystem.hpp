@@ -36,6 +36,8 @@ class vcSystem: public vcRoot
  public:
   static bool _verbose_flag;
   static bool _opt_flag;
+  static bool _vhpi_tb_flag;
+
   vcSystem(string id);
   virtual void Print(ostream& ofile);
 
@@ -126,6 +128,7 @@ class vcSystem: public vcRoot
   // VHDL related stuff... 
   virtual void Print_VHDL(ostream& ofile);
   void Print_VHDL_Test_Bench(ostream& ofile);
+  void Print_VHDL_Vhpi_Test_Bench(ostream& ofile);
   void Print_VHDL_Component(ostream& ofile);
   void Print_VHDL_Entity(ostream& ofile);
   void Print_VHDL_Architecture(ostream& ofile);

@@ -1,11 +1,11 @@
-#ifndef _Vhpi_h
-#define _Vhpi_h
+#ifndef __Vhpi_h__
+#define __Vhpi_h__
+
 // author: Madhav P. Desai
 // jacket functions to enable VHPI direct interface
 // to VHDL only simulators supporting VHPI.  
 
-#define MAX_BUF_SIZE 1024
-
+typedef struct _Port Port;
 struct _Port
 {
   int index;
@@ -13,7 +13,7 @@ struct _Port
   char* port_value;
 };
 
-typedef struct _PortList PortList;
+typedef struct _PortLink PortLink;
 struct _PortLink
 {
   Port* port;
@@ -59,7 +59,7 @@ struct _JobList
   JobLink* tail;
 };
 
-void   Vhpi_Initialize(char* init_file_name);
+void   Vhpi_Initialize();
 void   Vhpi_Close();
 void   Vhpi_Listen();
 void   Vhpi_Send();

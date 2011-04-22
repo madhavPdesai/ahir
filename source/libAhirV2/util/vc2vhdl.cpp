@@ -20,7 +20,7 @@ void Handle_Segfault(int signal)
 void Usage_Vc2VHDL()
 {
   cerr << "Usage: " << endl;
-  cerr << "vc2vhdl [-O] -f <vc-file> [-f <vc-file>...] -t <top-module> [-t <top-module>...] " << endl << endl;
+  cerr << "vc2vhdl [-O] [-C] -f <vc-file> [-f <vc-file>...] -t <top-module> [-t <top-module>...] " << endl << endl;
   cerr << "specify vc-files using -f, top-modules in system using -t.. for example" << endl
        << "    vc2vhdl -O -t foo -f file1.vc -f file2.vc -t bar" << endl;
   cerr << "file1.vc and file2.vc will be parsed in order, and the instantiated " << endl
@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:f:O",
+		      "t:f:OC",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -86,6 +86,11 @@ int main(int argc, char* argv[])
 	  break;
 	case 'O':
 	  vcSystem::_opt_flag = true;
+	  cerr << "Info: -O option selected: will flatten and reduce control path" << endl;
+	  break;
+	case 'C':
+	  vcSystem::_vhpi_tb_flag = true;
+	  cerr << "Info: -C option selected: will generate testbench with VHPI link" << endl;
 	  break;
 	case '?':		  // incorrect option
 	  opt_string = opt;
@@ -125,7 +130,11 @@ int main(int argc, char* argv[])
       test_system.Elaborate();
       cout << "-- VHDL produced by vc2vhdl from virtual circuit (vc) description " << endl;
       test_system.Print_VHDL(cout);
-      test_system.Print_VHDL_Test_Bench(cout);
+
+      if(vcSystem::_vhpi_tb_flag)
+	test_system.Print_VHDL_Vhpi_Test_Bench(cout);
+      else
+	test_system.Print_VHDL_Test_Bench(cout);
     }
 
   return(0);

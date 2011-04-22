@@ -12,19 +12,17 @@ package Vhpi_Package is
   -- types
   -----------------------------------------------------------------------------
   subtype VhpiString is string(1 to c_vhpi_max_string_length);
-  subtype Word is bit_vector(c_word_length-1 downto 0);
-  subtype Handle is integer; -- integer used to keep  context. 
-  type VhpiPortType is array(natural range <>) of Word;
-  type VhpiHandleArray is array(natural range <>) of Handle;
 
   -----------------------------------------------------------------------------
   -- utility functions
   -----------------------------------------------------------------------------
   function Minimum(x,y: integer) return integer; -- returns minimum
   function Pack_String(x: string) return VhpiString; -- converts x to null terminated string
+  function Pack_String(x: std_logic_vector) return VhpiString; -- converts slv x to null terminated string
+  function Unpack_String(x: VhpiString; lgth: integer) return std_logic_vector; -- convert null term string to slv
+  function To_Std_Logic(x: VhpiString) return std_logic; -- string to sl
+  function To_String(x: std_logic) return VhpiString; -- string to sl
   function Convert_To_String(val : natural) return STRING; -- convert val to string.
-  function Pack_Word(x: bit_vector) return Word;  -- todo
-  function Unpack_Word (x : Word; lgth: integer) return bit_vector;  -- todo
   
 
   -----------------------------------------------------------------------------
@@ -42,10 +40,10 @@ package Vhpi_Package is
   procedure Vhpi_Send(); 
   attribute foreign of Vhpi_Send : procedure is "VHPIDIRECT Vhpi_Send";
 
-  procedure Vhpi_Set_Port_Value(port_name: in VhpiString; port_value: in Word);
+  procedure Vhpi_Set_Port_Value(port_name: in VhpiString; port_value: in VhpiString);
   attribute foreign of Vhpi_Set_Port_Value: procedure is "VHPIDIRECT Vhpi_Set_Port_Value";
   
-  procedure Vhpi_Get_Port_Value(port_name: in VhpiString; port_value : out Word);
+  procedure Vhpi_Get_Port_Value(port_name: in VhpiString; port_value : out VhpiString);
   attribute foreign of Vhpi_Get_Port_Value : procedure is "VHPIDIRECT Vhpi_Get_Port_Value";
   
 end Vhpi_Package;
@@ -81,6 +79,52 @@ package body Vhpi_Package is
 	ret_var(strlen+1) := nul;
 	return(ret_var); 
   end Pack_String;
+  
+  function Pack_String(x: std_logic_vector) return VhpiString is
+    alias lx : std_logic_vector(1 to x'length) is x;
+    variable strlen: integer;
+    variable ret_var : VhpiString;
+  begin
+    strlen := Minimum(c_vhpi_max_string_length-1,x'length);
+    for I in 1 to strlen loop
+      if(lx(I) = '1') then 
+        ret_var(I) := '1';
+      else
+        ret_var(I) := '0';
+      end if;
+    end loop;
+    ret_var(strlen+1) := nul;
+    return(ret_var); 
+  end Pack_String;
+  
+  function Unpack_String(x: VhpiString; lgth: integer) return std_logic_vector is
+    variable ret_var : std_logic_vector(1 to lgth);
+    variable strlen: integer;
+  begin
+    strlen := Minimum(c_vhpi_max_string_length-1,lgth);
+    for I in 1 to strlen loop
+      if(x(I) = '1') then 
+        ret_var(I) := '1';
+      else
+        ret_var(I) := '0';
+      end if;
+    end loop;
+    return(ret_var);     
+  end Unpack_String;
+
+  function To_Std_Logic(x: VhpiString) return std_logic is
+    variable s: std_logic_vector(0 downto 0);
+  begin
+    s := Unpack_String(x,1);
+    return(s(0));
+  end To_Std_Logic;
+
+  function To_String(x: std_logic) return VhpiString is
+    variable s: std_logic_vector(0 downto 0);
+  begin
+   s(0) := x;
+   return(Pack_String(s));
+  end To_String;
 
   -- Thanks to: D. Calvet calvet@hep.saclay.cea.fr
   function Convert_To_String(val : NATURAL) return STRING is
@@ -98,26 +142,6 @@ package body Vhpi_Package is
 	end loop;
 	return result((pos-1) downto 1);
   end Convert_To_String;
-
-  function Pack_Word(x: bit_vector) return Word is
-    alias lx : bit_vector(1 to x'length) is x;
-    variable ret_var : bit_vector(1 to Word'length);
-  begin
-    ret_var := (others => '0');
-    for I in 1 to Minimum(lx'length,ret_var'length) loop
-      ret_var(I) := lx(I);
-    end loop;  -- I
-  end Pack_Word;
-  
-  function Unpack_Word (x : Word; lgth: integer) return bit_vector is
-    alias lx : bit_vector(1 to x'length) is x;
-    variable ret_var : bit_vector(1 to lgth);
-  begin
-    ret_var := (others => '0');
-    for I in 1 to Minimum(lx'length,ret_var'length) loop
-      ret_var(I) := lx(I);
-    end loop;  -- I    
-  end Unpack_Word;
 
   -----------------------------------------------------------------------------
   -- subprogram bodies for foreign vhpi routines.  will never be called
@@ -143,12 +167,12 @@ package body Vhpi_Package is
     assert false  report "fatal: this should never be called" severity failure;
   end Vhpi_Send;
   
-  procedure Vhpi_Set_Port_Value(port_name: in VhpiString; port_value: in Word) is
+  procedure Vhpi_Set_Port_Value(port_name: in VhpiString; port_value: in VhpiString) is
   begin
     assert false  report "fatal: this should never be called" severity failure;
   end Vhpi_Set_Port_Value;    
   
-  procedure  Vhpi_Get_Port_Value(port_name : in  VhpiString;  port_value: out Word)is
+  procedure  Vhpi_Get_Port_Value(port_name : in  VhpiString;  port_value: out VhpiString)is
   begin
     assert false  report "fatal: this should never be called" severity failure;
   end Vhpi_Get_Port_Value;        

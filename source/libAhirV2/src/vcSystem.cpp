@@ -8,9 +8,14 @@
 #include <vcModule.hpp>
 #include <vcSystem.hpp>
 
+// optionflags 
 bool vcSystem::_verbose_flag = false;
-bool vcSystem::_error_flag = false;
 bool vcSystem::_opt_flag = false;
+bool vcSystem::_vhpi_tb_flag = false;
+
+
+// set on error.
+bool vcSystem::_error_flag = false;
 
 // if there are at most 16 addressable locations in a memory space, make
 // it a register bank (instead of a memory subsystem)
@@ -277,6 +282,170 @@ void vcSystem::Print_VHDL_Test_Bench(ostream& ofile)
       ofile << "--}" << endl << "end process;" << endl << endl;
     }
 
+
+  this->Print_VHDL_Instance(ofile);
+  ofile << "-- }\n end Default;" << endl;
+}
+
+
+void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile) 
+{
+  this->Print_VHDL_Inclusions(ofile);
+  ofile << "use work.Vhpi_Package.all;" << endl;
+
+  ofile << "entity " << this->Get_VHDL_Id() << "_Test_Bench is -- {" << endl;
+  ofile << "-- }\n end entity;" << endl;
+
+  ofile << "architecture VhpiLink of " << this->Get_VHDL_Id() << "_Test_Bench is -- {" << endl;
+  this->Print_VHDL_Component(ofile);
+  this->Print_VHDL_Test_Bench_Signals(ofile);
+  ofile << "-- }\n begin --{" << endl;
+
+
+  ofile << "-- clock/reset generation " << endl;
+  ofile << "clk <= not clk after 5 ns;" << endl;
+  ofile << "process" << endl;
+  ofile << "begin --{" << endl;
+  ofile << "Vhpi_Initialize;" << endl;
+  ofile << "wait until clk = '1';" << endl;
+  ofile << "reset <= '0';" << endl;
+  ofile << "while true loop --{" << endl;
+  ofile << "wait until clk = '1';" << endl;
+  ofile << "Vhpi_Listen;" << endl;
+  ofile << "Vhpi_Send;" << endl;
+  ofile << "--}" << endl << "end loop;" << endl;
+  ofile << "wait;" << endl;
+  ofile << "--}" << endl << "end process;" << endl << endl;
+
+  ofile << "-- connect all the top-level modules to Vhpi" << endl;
+  for(set<vcModule*,vcRoot_Compare>::iterator iter = _top_module_set.begin();
+      iter != _top_module_set.end();
+      iter++)
+    {
+      vcModule* m = (*iter);
+      string prefix = m->Get_VHDL_Id() + "_";
+      string start = prefix + "start";
+      string fin = prefix + "fin";
+
+      ofile << "process" << endl;
+      ofile << "variable val_string, obj_ref: VhpiString;" << endl;
+      ofile << "begin --{" << endl;
+      ofile << "wait until reset  '0';" << endl;
+      ofile << "while true loop -- {" << endl;
+      ofile << "wait until clk = '0';" << endl;
+
+      // now read all inputs 
+      // first the req.
+      ofile << "obj_ref := Pack_String("
+	    << '"' << m->Get_Id() << " req" << '"' << ");" << endl;
+      ofile << "Vhpi_Get_Port_Value(obj_ref,val_string);" << endl;
+      ofile << start << " <= To_Std_Logic(val_string);" << endl;
+
+      // the input arguments
+      for(int idx = 0; idx < m->Get_Number_Of_Input_Arguments(); idx++)
+	{
+	  ofile << "obj_ref := Pack_String("
+		<< '"' << m->Get_Id() << " " << idx << '"' << ");" << endl;
+	  ofile << "Vhpi_Get_Port_Value(obj_ref,val_string);" << endl;
+
+	  vcWire* w = m->Get_Argument(m->Get_Input_Argument(idx),"in");
+	  string arg_name = prefix + w->Get_VHDL_Id();
+	  ofile << arg_name << " <= Unpack_String(val_string," << w->Get_Size() << ");" << endl;
+	}
+
+      // write all the outputs.
+      // first the ack.
+      ofile << "obj_ref := Pack_String("
+	    << '"' << m->Get_Id() << " ack" << '"' << ");" << endl;
+      ofile << "val_string := To_String(" << fin << ");" << endl;
+      ofile << "Vhpi_Set_Port_Value(obj_ref,val_string);" << endl;
+
+      // the output arguments.
+      for(int idx = 0; idx < m->Get_Number_Of_Input_Arguments(); idx++)
+	{
+	  ofile << "obj_ref := Pack_String("
+		<< '"' << m->Get_Id() << " " << idx << '"' << ");" << endl;
+
+	  vcWire* w = m->Get_Argument(m->Get_Output_Argument(idx),"out");
+	  string arg_name = prefix + w->Get_VHDL_Id();
+	  ofile << "val_string <= Pack_String(" << arg_name << ");" << endl;
+
+	  ofile << "Vhpi_Set_Port_Value(obj_ref,val_string);" << endl;
+	}
+      
+      ofile << "-- }" << endl << "end loop;" << endl;
+      ofile << "--}" << endl << "end process;" << endl << endl;
+    }
+
+
+  // connect all top-level ports to Vhpi..
+  for(map<string, int>::iterator pipe_iter = _pipe_map.begin();
+      pipe_iter != _pipe_map.end();
+      pipe_iter++)
+    {
+      string pipe_id = (*pipe_iter).first;
+      int pipe_width = (*pipe_iter).second;
+      
+      int num_reads = this->Get_Num_Pipe_Reads(pipe_id);
+      int num_writes = this->Get_Num_Pipe_Writes(pipe_id);
+      
+      // skip internal pipes.
+      if(num_reads > 0 && num_writes > 0)
+	continue;
+
+      ofile << "process" << endl;
+      ofile << "variable val_string, obj_ref: VhpiString;" << endl;
+      ofile << "begin --{" << endl;
+      ofile << "wait until reset  '0';" << endl;
+      ofile << "while true loop -- {" << endl;
+      ofile << "wait until clk = '0';" << endl;
+
+      if(num_reads > 0 && num_writes ==  0)
+	{
+	  // an input pipe.  read req, input argument and write ack..
+	  ofile << "obj_ref := Pack_String("
+		<< '"' << pipe_id << " req" << '"' << ");" << endl;
+	  ofile << "Vhpi_Get_Port_Value(obj_ref,val_string);" << endl;
+	  ofile << pipe_id  << "_pipe_write_req <= Unpack_String(val_string,1);" << endl;
+	  
+	  ofile << "obj_ref := Pack_String("
+		<< '"' << pipe_id << " 0" << '"' << ");" << endl;
+	  ofile << "Vhpi_Get_Port_Value(obj_ref,val_string);" << endl;
+	      
+	  string arg_name = pipe_id + "_pipe_write_data";
+	  ofile << arg_name << " <= Unpack_String(val_string," << pipe_width << ");" << endl;
+
+	  ofile << "obj_ref := Pack_String("
+		<< '"' << pipe_id << " ack" << '"' << ");" << endl;
+	  ofile << "val_string := Pack_String(" << pipe_id << "_pipe_write_ack" << ");" << endl;
+	  ofile << "Vhpi_Set_Port_Value(obj_ref,val_string);" << endl;
+	}
+      else if(num_reads == 0 && num_writes >  0)
+	{
+	  // an output pipe.  read req, write output argument and ack..
+	  ofile << "obj_ref := Pack_String("
+		<< '"' << pipe_id << " req" << '"' << ");" << endl;
+	  ofile << "Vhpi_Get_Port_Value(obj_ref,val_string);" << endl;
+	  ofile << pipe_id  << "_pipe_read_req <= Unpack_String(val_string,1);" << endl;
+
+
+	  ofile << "obj_ref := Pack_String("
+		<< '"' << pipe_id << " " << 0 << '"' << ");" << endl;
+	  string arg_name = pipe_id + "_pipe_read_data";
+	  ofile << "val_string <= Pack_String(" << arg_name << ");" << endl;
+	  ofile << "Vhpi_Set_Port_Value(obj_ref,val_string);" << endl;
+
+	  ofile << "obj_ref := Pack_String("
+		<< '"' << pipe_id << " ack" << '"' << ");" << endl;
+	  ofile << "val_string := Pack_String(" << pipe_id << "_pipe_read_ack" << ");" << endl;
+	  ofile << "Vhpi_Set_Port_Value(obj_ref,val_string);" << endl;
+	}
+
+
+      ofile << "-- }" << endl << "end loop;" << endl;
+      ofile << "--}" << endl << "end process;" << endl << endl;
+     
+    }
 
   this->Print_VHDL_Instance(ofile);
   ofile << "-- }\n end Default;" << endl;

@@ -8,9 +8,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include "Vhpi.h"
+#include <SocketLib.h>
+#include <Vhpi.h>
 
-#define MAX_CLIENT_SOCKET_COUNT 65536
 #define z32__ "00000000000000000000000000000000"
 
 #define APPEND(lst,lnk) if(lst.tail)\
@@ -54,15 +54,8 @@
     }
 
 
-// maximum id..
-int max_socket_id = 0;
-
 // server socket
 int server_socket_id = -1;
-
-// client socket array
-int client_sockets[MAX_CLIENT_SOCKET_COUNT];
-int client_socket_count = 0;
 
 // joblist.
 JobList new_jobs;
@@ -109,20 +102,21 @@ void Unsigned_To_Bit_Vector(unsigned x, char* a)
 
 void Copy_Value(char* dest, int dsize, char* src, int ssize)
 {
+  int idx;
   if(dsize >= ssize)
     {
-      for(int idx = 0; idx < dsize-ssize; idx++)
+      for(idx = 0; idx < dsize-ssize; idx++)
 	{
 	  *(dest + idx) = '0';
 	}
-      for(int idx = 0; idx < ssize; idx++)
+      for(idx = 0; idx < ssize; idx++)
 	{
 	  *(dest + (dsize-ssize) + idx) = *(src+idx);
 	}
     }
   else
     {
-      for(int idx = (ssize-dsize); idx < ssize; idx++)
+      for(idx = (ssize-dsize); idx < ssize; idx++)
        {
 	 *(dest + (idx - (ssize - dsize))) = *(src + idx);
        }
@@ -133,114 +127,63 @@ void Copy_Value(char* dest, int dsize, char* src, int ssize)
 }
 
 
+void Delete_Port(Port* port)
+{
+  cfree(port->port_value);
+  cfree(port);
+}
+
+void Delete_JobLink(JobLink* top)
+{
+  cfree(top->name);
+
+  Delete_Port(top->req_port);
+  Delete_Port(top->ack_port);
+
+
+  PortLink* nextplink = NULL;
+  PortLink* plink = top->inports.head;
+  while(plink != NULL)
+    {
+      nextplink = plink->next;
+      Delete_Port(plink->port);
+      cfree(plink);
+      
+      plink = nextplink;
+    }
+  top->inports.head = top->inports.tail = NULL;
+
+
+  plink = top->outports.head;
+  while(plink != NULL)
+    {
+      nextplink = plink->next;
+      Delete_Port(plink->port);
+      cfree(plink);
+      
+      plink = nextplink;
+    }
+  top->outports.head = top->outports.tail = NULL;
+
+  cfree(top);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // network-related stuff.
 ///////////////////////////////////////////////////////////////////////////////////////////////
-int Create_Server(int port_number)
-{
-  int sockfd;
-  struct sockaddr_in serv_addr;
-  sockfd = socket(PF_LOCAL, SOCK_SEQPACKET, 0);
-  fprintf(stderr, "Info: opening socket for server on port %d \n",port_number);
-
-  if (sockfd < 0)
-    fprintf(stderr, "Error: in opening socket on port %d\n", port_number);
-
-  bzero((char *) &serv_addr, sizeof(serv_addr));
-  serv_addr.sin_family = AF_INET;
-  serv_addr.sin_addr.s_addr = INADDR_ANY;
-  serv_addr.sin_port = htons(portno);
-
-  if (bind(sockfd, (struct sockaddr *) &serv_addr,
-	   sizeof(serv_addr)) < 0)
-    {
-      fprintf(stderr,"Error: could not bind socket to port %d\n",port_number);
-      close(sockfd);
-      sockfd= -1;
-    }
-  else
-    fprintf(stderr,"Info: finished binding socket to port %d\n",port_number);
-  
-  return sockfd;
-}
-
-int Connect_To_Client(int server_fd)
-{
-  int ret_val = 1;
-  if(client_socket_count > MAX_CLIENT_SOCKET_COUNT)
-    {
-      return(0);
-    }
-
-  int newsockfd = 0;
-  int clilen;
-  struct sockaddr_in  cli_addr;
-  fd_set c_set;
-  struct timeval time_limit;
-
-  time_limit.tv_sec = 0;
-  time_limit.tv_usec = 1000;
-
-  FD_SET(server_fd,&c_set);
-  int npending = select(max_socket_id + 1, &c_set,NULL,NULL,&time_limit);
-
-  while(npending > 0)
-    {
-      
-      clilen = sizeof(cli_addr);
-      newsockfd = accept(server_fd,
-			 (struct sockaddr *) &cli_addr,
-			 &clilen);
-      if (newsockfd > 0)
-	{
-	  fprintf(stderr,"Info: new client connection %d\n",newsockfd);
-	  max_socket_id = (max_socket_id < newsockfd ? newsockfd : max_socket_id);
-
-	  client_sockets[client_socket_count] = newsockfd;
-	  client_socket_count++;
-	}
-      else
-	{
-	  fprintf(stderr,"Error: failed in accept()\n");	
-	  ret_val = 0;
-	}
-
-      npending--;
-    }
-
-  return(ret_val);
-}
-
-
-int Can_Write_To_Socket(int socket_id)
-{
-  struct time_limit;
-  time_limit.tv_sec = 0;
-  time_limit.tv_usec = 1000;
-  fd_set c_set;
-  FD_ZERO(&c_set);
-  FD_SET(socket_id,&c_set);      
-  int npending = select(max_socket_id + 1, NULL, &c_set,NULL,&time_limit);
-
-  if(npending > 0)
-    return(1);
-  else
-    return(0);
-}
-
 
 // dang! parsing with strtok again!
-void Read_And_Append_To_JobList(int socket_id,JobList* jobs)
+void Read_And_Append_To_JobList(int socket_id,JobList jobs)
 {
   char receive_buffer[MAX_BUF_SIZE];
 
-  JobList* new_job = NULL;
+  JobLink* new_job = NULL;
 
   // no need for select.. this socket is ready..
   int n = read(socket_id,receive_buffer,MAX_BUF_SIZE);
   if(n > 0)
     {
-      new_job = (JobList*) calloc(1,sizeof(JobList));
+      new_job = (JobLink*) calloc(1,sizeof(JobLink));
       new_job->socket_id = socket_id;
 
       // format:  "piperead/pipewrite/call  name  num-inp (value)* num-op (width)* 
@@ -292,9 +235,10 @@ void Read_And_Append_To_JobList(int socket_id,JobList* jobs)
       int ninp = atoi(num_inputs);
 
       // read each input value..
-      for(int idx = 0; idx < ninp; idx++)
+      int idx;
+      for(idx = 0; idx < ninp; idx++)
 	{
-	  char* ip_value = strtok(NULL," ",&save_ptr);
+	  char* ip_value = strtok_r(NULL," ",&save_ptr);
 	  assert(ip_value != NULL);
 
 	  // each input is  a port.
@@ -302,8 +246,11 @@ void Read_And_Append_To_JobList(int socket_id,JobList* jobs)
 	  p->index = idx;
 	  p->width = strlen(ip_value);
 	  p->port_value = strdup(ip_value);
+	  
+	  PortLink* plink = (PortLink*) calloc(1,sizeof(PortLink));
+	  plink->port = p;
 
-	  APPEND(new_job->inports, p);
+	  APPEND(new_job->inports, plink);
 	}
       
       // the number of outputs?
@@ -312,7 +259,7 @@ void Read_And_Append_To_JobList(int socket_id,JobList* jobs)
       int nops = atoi(num_outputs);
 
       // get the output widths.
-      for(int idx = 0; idx < nops; idx++)
+      for(idx = 0; idx < nops; idx++)
 	{
 	  char* ip_width = strtok_r(NULL," ",&save_ptr);
 	  assert(ip_width != NULL);
@@ -325,11 +272,14 @@ void Read_And_Append_To_JobList(int socket_id,JobList* jobs)
 	  p->width = iw;
 	  p->port_value = (char*) calloc(1, (iw+2)*sizeof(char));
 
-	  APPEND(new_jobs->outports, p);
+	  PortLink* plink = (PortLink*) calloc(1,sizeof(PortLink));
+	  plink->port = p;
+
+	  APPEND(new_job->outports, plink);
 	}
 
       // append the job.
-      APPEND(new_jobs,new_job);
+      APPEND(jobs,new_job);
     }
 }
 
@@ -338,6 +288,11 @@ void Read_And_Append_To_JobList(int socket_id,JobList* jobs)
 ///////////////////////////////////////////////////////////////////////////////////////////////
 void  Vhpi_Initialize()
 {
+
+#ifndef GHDL
+  signal(SIGINT,  Vhpi_Close);
+  signal(SIGTERM, Vhpi_Close);
+#endif
 
   new_jobs.head = NULL;
   new_jobs.tail = NULL;
@@ -354,15 +309,16 @@ void  Vhpi_Initialize()
   while(try_limit > 0)
     {
 
-      server_socket_id = Create_Server(9999);
+      server_socket_id = create_server(DEFAULT_SERVER_PORT,DEFAULT_MAX_CONNECTIONS);
       if(server_socket_id > 0)
 	{
-	  max_socket_id = server_socket_id;
-	  fprintf(stderr,"Info: success: started the server on port 9999\n");
+	  fprintf(stderr,"Info: success: started the server on port %d\n",
+		  DEFAULT_SERVER_PORT);
 	  break;
 	}
       else
-	fprintf(stderr,"Info: could not start server on port 9999, will try again\n");
+	fprintf(stderr,"Info: could not start server on port %d, will try again\n",
+		DEFAULT_SERVER_PORT);
 
       usleep(1000);
 
@@ -370,18 +326,18 @@ void  Vhpi_Initialize()
 
       if(try_limit == 0)
 	{
-	  fprintf(stderr,"Error: tried to start server on port 9999, failed.. giving up\n");
+	  fprintf(stderr,"Error: tried to start server on port %d, failed.. giving up\n",
+		  DEFAULT_SERVER_PORT);
 	  exit(-1);
 	}
     }
-
-  // ok. listen.. 256 connections should be enough..
-  listen(server_socket_id,256);
 }
 
 void  Vhpi_Close()
 {
   // close all connections and the socket.
+  fprintf(stderr,"Info: closing VHPI link\n");
+  close(server_socket_id);
 }
 
 
@@ -393,7 +349,7 @@ void  Vhpi_Send()
   char spacer_string[2];
   sprintf(spacer_string, " ");
   JobLink* top, *next;
-  PortLink* plink;
+
 
   // first look at all active jobs and see if they
   // can be moved to completed status.
@@ -417,12 +373,10 @@ void  Vhpi_Send()
 
   // look at all completed jobs and send 
   // the data..
-  prev = NULL;
-
   top = finished_jobs.head;
   while(top != NULL)
     {
-      if(Can_Write_To_Socket(top->socket_id))
+      if(can_write_to_socket(top->socket_id))
 	{
 	  if(top->is_pipe_read_access) 
 	    {
@@ -435,10 +389,11 @@ void  Vhpi_Send()
 	  else if(top->is_module_access)
 	    {
 	      sprintf(send_buffer,"");
+	      PortLink* oplink;
 	      for(oplink = top->outports.head; oplink != NULL; oplink = oplink->next)
 		{
-		  send_buffer = strcat(send_buffer,oplink->port->port_value);
-		  send_buffer = strcat(send_buffer,spacer_string);
+		  strcat(send_buffer,oplink->port->port_value);
+		  strcat(send_buffer,spacer_string);
 		}
 	    }
 	  write(top->socket_id,send_buffer,strlen(send_buffer)+1);
@@ -459,32 +414,13 @@ void  Vhpi_Send()
 
 void  Vhpi_Listen()
 {
-  // listen for new connections and
-  Connect_To_Client(server_socket_id);
-
-  // now check if any of the clients have anything 
-  // worth reading..
-  struct time_limit;
-  time_limit.tv_sec = 0;
-  time_limit.tv_usec = 1000;
-  fd_set c_set;
-  FD_ZERO(&c_set);
-  for(int idx = 0; idx < client_socket_count; idx++)
+  int new_sock;
+  while((new_sock = connect_to_client(server_socket_id)) > 0)
     {
-      FD_SET(client_sockets[idx],&c_set);      
+      // if the client has connected "just now"
+      // it must send something!
+      Read_And_Append_To_JobList(new_sock,new_jobs);
     }
-  int npending = select(max_socket_id + 1, &c_set,NULL,NULL,&time_limit);
-  if(npending > 0)
-    {
-      for(int idx = 0; idx < client_socket_count; idx++)
-	{
-	  if(FD_ISSET(client_sockets[idx],&c_set))
-	    {
-	      Read_And_Append_To_JobList(client_sockets[idx],new_jobs);
-	    }
-	}
-    }
-  FD_ZERO(&c_set);
 }
 
 
@@ -504,7 +440,7 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 	{
 	  if(strcmp(index_string, "ack") == 0)
 	    {
-	      Copy_Value(jlink->ack_port->value,
+	      Copy_Value(jlink->ack_port->port_value,
 			 1,
 			 port_value,
 			 32);
@@ -568,14 +504,14 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
     {
       if(strcmp(index_string, "req") == 0)
 	{
-	  Copy_Value(port_value, 32, jlink->req_port->value, 1);
+	  Copy_Value(port_value, 32, jlink->req_port->port_value, 1);
 	  if(jlink->is_module_access)
 	    {
 	      //
 	      // reset the port value.. this makes
 	      // it a pulse.
 	      //
-	      *(jlink->req_port->value) = '0';
+	      *(jlink->req_port->port_value) = '0';
 	    }
 	}
       else
