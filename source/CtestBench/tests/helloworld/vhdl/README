@@ -27,6 +27,9 @@ See the attached BasicCheck.mpf project file to see how.
 get the Modelsim <-> C link configured).
 
 Now start ./testbench 389 in one shell
+(the 389 is just a random initial value given to foo bar and inpipe,
+ after execution, foo and bar should both return the same value
+ (389) and you should see 3 X 389 (1167) emerge from outpipe.)
 and start the Modelsim simulation of work.test_system_test_bench
 in another shell and you will see that everything runs great!
 
