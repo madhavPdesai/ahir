@@ -72,7 +72,7 @@ void  append_uint64_t_inner(char* str, uint64_t u, int W)
   // null terminate
   for(idx = 0; idx < W; idx++)
     tbuf[idx] = '0';
-  tbuf[64] = 0;
+  tbuf[W] = 0;
 
   strcat(str," ");
 

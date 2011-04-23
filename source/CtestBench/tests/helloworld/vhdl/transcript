@@ -10,72 +10,6 @@
 # //
 # OpenFile BasicCheck.mpf 
 # Loading project BasicCheck
-vsim -novoptwork.test_system_test_bench
-# No design specified
-vsim -novopt work.test_system_test_bench
-# vsim -novopt work.test_system_test_bench 
-# Loading /cad/modelsim/modeltech/linux/../std.standard
-# Loading /cad/modelsim/modeltech/linux/../ieee.std_logic_1164(body)
-# Loading work.memory_subsystem_package
-# Loading work.types
-# Loading /cad/modelsim/modeltech/linux/../ieee.numeric_std(body)
-# Loading /cad/modelsim/modeltech/linux/../std.textio(body)
-# Loading work.math_utility_pkg
-# Loading /cad/modelsim/modeltech/linux/../ieee.math_real(body)
-# Loading work.fixed_pkg(body)
-# Loading work.float_pkg(body)
-# Loading work.subprograms(body)
-# Loading work.components
-# Loading work.basecomponents
-# Loading work.utilities(body)
-# Loading work.operatorpackage(body)
-# Loading work.vc_system_package
-# Loading work.utility_package(body)
-# Loading work.modelsim_fli_foreign(body)
-# Loading /home/madhav/ahirgit/AHIR/source/CtestBench/lib//libModelsimFLI.so
-# Loading work.test_system_test_bench(vhpilink)
-# Loading work.test_system(default)
-# Loading work.bar(default)
-# Loading work.registerbase(arch)
-# Loading work.floatoperatorpackage(body)
-# Loading work.unsharedoperatorbase(vanilla)
-# Loading work.genericcombinationaloperator(vanilla)
-# Loading work.bypassregister(behave)
-# Loading work.loadreqshared(vanilla)
-# Loading work.inputmuxbase(behave)
-# Loading work.loadcompleteshared(vanilla)
-# Loading work.outputdemuxbase(behave)
-# Loading work.storereqshared(vanilla)
-# Loading work.storecompleteshared(behave)
-# Loading work.inputport(base)
-# Loading work.outputport(base)
-# Loading work.mem_function_pack(body)
-# Loading work.merge_functions(body)
-# Loading work.mem_component_pack
-# Loading work.register_bank(default)
-# Loading work.foo(default)
-# Loading work.pipebase(default_arch)
-# Loading work.outputportlevel(base)
-# Loading work.shiftrepeaterbase(behave)
-# Loading work.repeaterbase(behave)
-# Loading work.inputportlevel(default_arch)
-add wave sim:/test_system_test_bench/*
-run 100 ns
-# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
-#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/outpipe_pipe/rptr/ifgen/repgen__0/rptr
-# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
-#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/outpipe_pipe/rptr/ifgen/repgen__0/rptr
-# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
-#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/midpipe_pipe/rptr/ifgen/repgen__0/rptr
-# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
-#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/midpipe_pipe/rptr/ifgen/repgen__0/rptr
-# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
-#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/inpipe_pipe/rptr/ifgen/repgen__0/rptr
-# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
-#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/inpipe_pipe/rptr/ifgen/repgen__0/rptr
-run 100 ns
-quit -sim
-# Compile of Vhpi_Package.vhdl was successful.
 # vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/base_bank.vhd 
 # Compile of base_bank.vhd was successful.
 # vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_component_pack.vhd 
@@ -327,7 +261,7 @@ vsim -novopt work.test_system_test_bench
 # Refreshing ./work.inputportlevel(default_arch)
 # Loading work.inputportlevel(default_arch)
 add wave sim:/test_system_test_bench/*
-run 100 ns
+run 300 ns
 # ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
 #    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/outpipe_pipe/rptr/ifgen/repgen__0/rptr
 # ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
@@ -340,11 +274,68 @@ run 100 ns
 #    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/inpipe_pipe/rptr/ifgen/repgen__0/rptr
 # ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
 #    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/inpipe_pipe/rptr/ifgen/repgen__0/rptr
-run 100 ns
-run 100 ns
 quit -sim
+add wave sim:/test_system_test_bench/*
+# Unrecognized dataset prefix: sim
 vsim -novopt work.test_system_test_bench
 # vsim -novopt work.test_system_test_bench 
-# ** Error: Failure to obtain a VHDL simulation license.
-# Error loading design
+# Loading /cad/modelsim/modeltech/linux/../std.standard
+# Loading /cad/modelsim/modeltech/linux/../ieee.std_logic_1164(body)
+# Loading work.memory_subsystem_package
+# Loading work.types
+# Loading /cad/modelsim/modeltech/linux/../ieee.numeric_std(body)
+# Loading /cad/modelsim/modeltech/linux/../std.textio(body)
+# Loading work.math_utility_pkg
+# Loading /cad/modelsim/modeltech/linux/../ieee.math_real(body)
+# Loading work.fixed_pkg(body)
+# Loading work.float_pkg(body)
+# Loading work.subprograms(body)
+# Loading work.components
+# Loading work.basecomponents
+# Loading work.utilities(body)
+# Loading work.operatorpackage(body)
+# Loading work.vc_system_package
+# Loading work.utility_package(body)
+# Loading work.modelsim_fli_foreign(body)
+# Loading /home/madhav/ahirgit/AHIR/source/CtestBench/lib//libModelsimFLI.so
+# Loading work.test_system_test_bench(vhpilink)
+# Loading work.test_system(default)
+# Loading work.bar(default)
+# Loading work.registerbase(arch)
+# Loading work.floatoperatorpackage(body)
+# Loading work.unsharedoperatorbase(vanilla)
+# Loading work.genericcombinationaloperator(vanilla)
+# Loading work.bypassregister(behave)
+# Loading work.loadreqshared(vanilla)
+# Loading work.inputmuxbase(behave)
+# Loading work.loadcompleteshared(vanilla)
+# Loading work.outputdemuxbase(behave)
+# Loading work.storereqshared(vanilla)
+# Loading work.storecompleteshared(behave)
+# Loading work.inputport(base)
+# Loading work.outputport(base)
+# Loading work.mem_function_pack(body)
+# Loading work.merge_functions(body)
+# Loading work.mem_component_pack
+# Loading work.register_bank(default)
+# Loading work.foo(default)
+# Loading work.pipebase(default_arch)
+# Loading work.outputportlevel(base)
+# Loading work.shiftrepeaterbase(behave)
+# Loading work.repeaterbase(behave)
+# Loading work.inputportlevel(default_arch)
+add wave sim:/test_system_test_bench/*
+run 300 ns
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/outpipe_pipe/rptr/ifgen/repgen__0/rptr
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/outpipe_pipe/rptr/ifgen/repgen__0/rptr
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/midpipe_pipe/rptr/ifgen/repgen__0/rptr
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/midpipe_pipe/rptr/ifgen/repgen__0/rptr
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/inpipe_pipe/rptr/ifgen/repgen__0/rptr
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/inpipe_pipe/rptr/ifgen/repgen__0/rptr
 quit
