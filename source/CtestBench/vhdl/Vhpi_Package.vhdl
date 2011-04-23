@@ -1,6 +1,8 @@
 -- author: Madhav P. Desai
+library ieee;
+use ieee.std_logic_1164.all;
 
-package Vhpi_Package is
+package Utility_Package is
 
   -----------------------------------------------------------------------------
   -- constants
@@ -17,38 +19,16 @@ package Vhpi_Package is
   -- utility functions
   -----------------------------------------------------------------------------
   function Minimum(x,y: integer) return integer; -- returns minimum
-  function Pack_String(x: string) return VhpiString; -- converts x to null terminated string
-  function Pack_String(x: std_logic_vector) return VhpiString; -- converts slv x to null terminated string
+  function Pack_String_To_Vhpi_String(x: string) return VhpiString; -- converts x to null terminated string
+  function Pack_SLV_To_Vhpi_String(x: std_logic_vector) return VhpiString; -- converts slv x to null terminated string
   function Unpack_String(x: VhpiString; lgth: integer) return std_logic_vector; -- convert null term string to slv
   function To_Std_Logic(x: VhpiString) return std_logic; -- string to sl
   function To_String(x: std_logic) return VhpiString; -- string to sl
   function Convert_To_String(val : natural) return STRING; -- convert val to string.
-  
 
-  -----------------------------------------------------------------------------
-  -- foreign Vhpi function
-  -----------------------------------------------------------------------------
-  procedure  Vhpi_Initialize(x: in string(1 to 1024);
-  attribute foreign of Vhpi_Initialize : procedure is "VHPIDIRECT Vhpi_Initialize";
-  
-  procedure Vhpi_Close(); -- close .
-  attribute foreign of Vhpi_Close : procedure is "VHPIDIRECT Vhpi_Close";
+end package Utility_Package;
 
-  procedure Vhpi_Listen();
-  attribute foreign of Vhpi_Listen : procedure is "VHPIDIRECT Vhpi_Listen";
-
-  procedure Vhpi_Send(); 
-  attribute foreign of Vhpi_Send : procedure is "VHPIDIRECT Vhpi_Send";
-
-  procedure Vhpi_Set_Port_Value(port_name: in VhpiString; port_value: in VhpiString);
-  attribute foreign of Vhpi_Set_Port_Value: procedure is "VHPIDIRECT Vhpi_Set_Port_Value";
-  
-  procedure Vhpi_Get_Port_Value(port_name: in VhpiString; port_value : out VhpiString);
-  attribute foreign of Vhpi_Get_Port_Value : procedure is "VHPIDIRECT Vhpi_Get_Port_Value";
-  
-end Vhpi_Package;
-
-package body Vhpi_Package is
+package body Utility_Package is
 
   -----------------------------------------------------------------------------
   -- utility functions
@@ -67,7 +47,7 @@ package body Vhpi_Package is
     return(ret_var);
   end Ceiling;
 
-  function Pack_String(x:  string) return VhpiString is
+  function Pack_String_To_Vhpi_String(x:  string) return VhpiString is
      alias lx: string(1 to x'length) is x;
      variable strlen: integer;
      variable ret_var : VhpiString;
@@ -78,9 +58,9 @@ package body Vhpi_Package is
 	end loop;
 	ret_var(strlen+1) := nul;
 	return(ret_var); 
-  end Pack_String;
+  end Pack_String_To_Vhpi_String;
   
-  function Pack_String(x: std_logic_vector) return VhpiString is
+  function Pack_SLV_To_Vhpi_String(x: std_logic_vector) return VhpiString is
     alias lx : std_logic_vector(1 to x'length) is x;
     variable strlen: integer;
     variable ret_var : VhpiString;
@@ -95,7 +75,7 @@ package body Vhpi_Package is
     end loop;
     ret_var(strlen+1) := nul;
     return(ret_var); 
-  end Pack_String;
+  end Pack_SLV_To_Vhpi_String;
   
   function Unpack_String(x: VhpiString; lgth: integer) return std_logic_vector is
     variable ret_var : std_logic_vector(1 to lgth);
@@ -123,7 +103,7 @@ package body Vhpi_Package is
     variable s: std_logic_vector(0 downto 0);
   begin
    s(0) := x;
-   return(Pack_String(s));
+   return(Pack_SLV_To_Vhpi_String(s));
   end To_String;
 
   -- Thanks to: D. Calvet calvet@hep.saclay.cea.fr
@@ -143,26 +123,58 @@ package body Vhpi_Package is
 	return result((pos-1) downto 1);
   end Convert_To_String;
 
+end Utility_Package;
+
+library ieee;
+use ieee.std_logic_1164.all;
+library work;
+use work.Utility_Package.all;
+package Vhpi_Foreign is
+
+  -----------------------------------------------------------------------------
+  -- foreign Vhpi function
+  -----------------------------------------------------------------------------
+  procedure  Vhpi_Initialize;
+  attribute foreign of Vhpi_Initialize : procedure is "VHPIDIRECT Vhpi_Initialize";
+  
+  procedure Vhpi_Close; -- close .
+  attribute foreign of Vhpi_Close : procedure is "VHPIDIRECT Vhpi_Close";
+
+  procedure Vhpi_Listen;
+  attribute foreign of Vhpi_Listen : procedure is "VHPIDIRECT Vhpi_Listen";
+
+  procedure Vhpi_Send; 
+  attribute foreign of Vhpi_Send : procedure is "VHPIDIRECT Vhpi_Send";
+
+  procedure Vhpi_Set_Port_Value(port_name: in VhpiString; port_value: in VhpiString);
+  attribute foreign of Vhpi_Set_Port_Value: procedure is "VHPIDIRECT Vhpi_Set_Port_Value";
+  
+  procedure Vhpi_Get_Port_Value(port_name: in VhpiString; port_value : out VhpiString);
+  attribute foreign of Vhpi_Get_Port_Value : procedure is "VHPIDIRECT Vhpi_Get_Port_Value";
+  
+end Vhpi_Foreign;
+  
+package body Vhpi_Foreign is
+
   -----------------------------------------------------------------------------
   -- subprogram bodies for foreign vhpi routines.  will never be called
   -----------------------------------------------------------------------------
-  procedure  Vhpi_Initialize(x: in string(1 to 1024)) is
+  procedure  Vhpi_Initialize is
   begin
     assert false  report "fatal: this should never be called" severity failure;
-    return 0;
   end Vhpi_Initialize;
   
-  procedure Vhpi_Close() is
+  procedure Vhpi_Close is
   begin
     assert false  report "fatal: this should never be called" severity failure;
   end Vhpi_Close;
 
-  procedure Vhpi_Listen() is
+  procedure Vhpi_Listen is
   begin
     assert false  report "fatal: this should never be called" severity failure;
   end Vhpi_Listen;
 
-  procedure Vhpi_Send() is
+  procedure Vhpi_Send is
   begin
     assert false  report "fatal: this should never be called" severity failure;
   end Vhpi_Send;
@@ -177,4 +189,70 @@ package body Vhpi_Package is
     assert false  report "fatal: this should never be called" severity failure;
   end Vhpi_Get_Port_Value;        
 
-end Vhpi_Package;
+end Vhpi_Foreign;
+
+
+
+library ieee;
+use ieee.std_logic_1164.all;
+library work;
+use work.Utility_Package.all;
+package Modelsim_FLI_Foreign is
+
+  -----------------------------------------------------------------------------
+  -- foreign Modelsim FLI functions
+  -----------------------------------------------------------------------------
+  procedure  Modelsim_FLI_Initialize;
+  attribute foreign of Modelsim_FLI_Initialize : procedure is "Modelsim_FLI_Initialize libModelsimFLI.so";
+
+  procedure Modelsim_FLI_Close; -- close .
+  attribute foreign of Modelsim_FLI_Close : procedure is "Modelsim_FLI_Close libModelsimFLI.so";
+
+  procedure Modelsim_FLI_Listen;
+  attribute foreign of Modelsim_FLI_Listen : procedure is "Modelsim_FLI_Listen libModelsimFLI.so";
+
+  procedure Modelsim_FLI_Send; 
+  attribute foreign of Modelsim_FLI_Send : procedure is "Modelsim_FLI_Send libModelsimFLI.so";
+
+  procedure Modelsim_FLI_Set_Port_Value(port_name: in VhpiString; port_value: in VhpiString);
+  attribute foreign of Modelsim_FLI_Set_Port_Value: procedure is "Modelsim_FLI_Set_Port_Value libModelsimFLI.so";
+  
+  procedure Modelsim_FLI_Get_Port_Value(port_name: in VhpiString; port_value : out VhpiString);
+  attribute foreign of Modelsim_FLI_Get_Port_Value : procedure is "Modelsim_FLI_Get_Port_Value libModelsimFLI.so";
+  
+end Modelsim_FLI_Foreign;
+
+package body Modelsim_FLI_Foreign is
+  
+  procedure Modelsim_FLI_Initialize is
+  begin
+    assert false  report "fatal: this should never be called" severity failure;    
+  end procedure;
+  
+  procedure Modelsim_FLI_Close is
+  begin
+    assert false  report "fatal: this should never be called" severity failure;    
+  end procedure;
+    
+  procedure Modelsim_FLI_Listen is
+  begin
+    assert false  report "fatal: this should never be called" severity failure;    
+  end procedure;    
+
+  procedure Modelsim_FLI_Send is
+  begin
+    assert false  report "fatal: this should never be called" severity failure;    
+  end procedure;
+  
+  procedure Modelsim_FLI_Set_Port_Value(port_name: in VhpiString; port_value: in VhpiString) is
+  begin
+    assert false  report "fatal: this should never be called" severity failure;    
+  end procedure;
+  
+  procedure Modelsim_FLI_Get_Port_Value(port_name: in VhpiString; port_value : out VhpiString) is
+  begin
+    assert false  report "fatal: this should never be called" severity failure;    
+  end procedure;
+  
+end Modelsim_FLI_Foreign;
+  

@@ -1,1 +1,39 @@
-Aa2VC will generate C testbench related code..
+include
+	includes
+lib
+	three libraries in here.
+		- libVhpi.so 
+			for connecting to a simulator that supports
+			Vhpi
+		- libModelsimFLI.so
+			for connecting to modelsim
+
+		- libSocketLib.so
+			stubs for pipes and socket utilities.
+
+three object directories for the three libs.
+	objModelsimFLI
+	objSocketLib
+	objVhpi
+
+
+README
+	this file
+
+
+SConstruct
+	sconstruct.
+
+src
+	the source
+
+tests
+	one testcase
+
+util
+	test programs
+
+vhdl
+	Vhpi_Package.vhdl contains all the
+	foreign procedure declarations necessary to hook up
+	a VHDL simulator to the outside world.

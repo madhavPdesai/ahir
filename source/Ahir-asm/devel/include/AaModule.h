@@ -112,6 +112,10 @@ class AaModule: public AaSeriesBlockStatement
     _read_pipes.insert(obj);
   }
 
+  void Write_VHDL_C_Stub_Prefix(ostream& ofile);
+  void Write_VHDL_C_Stub_Header(ostream& ofile);
+  void Write_VHDL_C_Stub_Source(ostream& ofile);
+
 };
 
 #endif

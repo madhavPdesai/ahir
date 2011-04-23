@@ -896,6 +896,37 @@ void AaProgram::Write_C_Model()
 }
 
 
+void AaProgram::Write_VHDL_C_Stubs()
+{
+
+  ofstream header_file;
+  string header = "vhdlCStubs.h";
+  header_file.open(header.c_str());
+  
+  ofstream source_file;
+  string source = "vhdlCStubs.c";
+  source_file.open(source.c_str());
+
+  header_file << "#include <stdlib.h>" << endl
+	      << "#include <stdint.h>" << endl
+	      << "#include <SocketLib.h>" << endl;
+
+  // declare all the record types that you have encountered.
+  source_file << "#include <" << header << ">" << endl;
+
+  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+      miter != AaProgram::_modules.end();
+      miter++)
+    {
+      (*miter).second->Write_VHDL_C_Stub_Header(header_file);
+      (*miter).second->Write_VHDL_C_Stub_Source(source_file);
+    }
+
+  header_file.close();
+  source_file.close();
+}
+
+
 
 void AaProgram::Write_VC_Model(int default_space_pointer_width,
 			       int default_space_word_size,

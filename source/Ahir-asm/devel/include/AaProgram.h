@@ -185,6 +185,8 @@ class AaProgram
   static void Add_To_Recoalesce_Set(AaObject* obj);
 
   static AaForeignStorageObject* Make_Foreign_Storage_Object(AaType* t);
+
+  static void Write_VHDL_C_Stubs();
 };
 
 

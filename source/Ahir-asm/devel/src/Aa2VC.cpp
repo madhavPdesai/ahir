@@ -32,12 +32,12 @@ void Handle_Segfault(int signal)
 int main(int argc, char* argv[])
 {
 
-
+  bool write_vhdl_c_stubs = false;
   signal(SIGSEGV, Handle_Segfault);
 
   if(argc < 2)
     {
-      cerr << "Usage: Aa2VC [-O] [-I <extmem-obj-name>] <filename> (<filename>) ... " << endl;
+      cerr << "Usage: Aa2VC [-O] [-C] [-I <extmem-obj-name>] <filename> (<filename>) ... " << endl;
       exit(1);
     }
 
@@ -50,13 +50,18 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "OI:",
+		      "OCI:",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
 	{
 	case 'O':
 	  opt_flag = true;
+	  std::cerr << "Info: -O option selected, will parallelize straight-line sequences" << endl;
+	  break;
+	case 'C':
+	  write_vhdl_c_stubs = true;
+	  std::cerr << "Info: -C option selected, will generate C-stubs for mixed simulation" << endl;
 	  break;
 	case 'I':
 	  AaProgram::_keep_extmem_inside  = true;
@@ -93,6 +98,9 @@ int main(int argc, char* argv[])
 	AaProgram::Write_VC_Model_Optimized(32,8,cout);
       else
 	AaProgram::Write_VC_Model(32,8,cout);
+
+      if(write_vhdl_c_stubs)
+	AaProgram::Write_VHDL_C_Stubs();
     }
 
 

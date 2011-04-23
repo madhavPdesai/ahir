@@ -117,7 +117,17 @@ class AaUintType: public AaScalarType
   }
   virtual string CBaseName() 
   {
-    return("uint" + IntToStr(this->Get_Width()) + "_t");
+    int width;
+    int raw_width = this->Get_Width();
+    if(raw_width <= 8)
+      width = 8;
+    else if(raw_width <= 16)
+      width = 16;
+    else if(raw_width <= 32)
+      width = 32;
+    else
+      width = 64;
+    return("uint" + IntToStr(width) + "_t");
   }
   virtual int Size() {return(this->_width);}
   virtual int Get_Data_Width() {return(this->Size());}
@@ -153,7 +163,17 @@ class AaIntType: public AaUintType
 
   virtual string CBaseName() 
   {
-    return("int" + IntToStr(this->Get_Width()) + "_t");
+    int width;
+    int raw_width = this->Get_Width();
+    if(raw_width <= 8)
+      width = 8;
+    else if(raw_width <= 16)
+      width = 16;
+    else if(raw_width <= 32)
+      width = 32;
+    else
+      width = 64;
+    return("int" + IntToStr(width) + "_t");
   }
 
   virtual bool Is_Uinteger_Type() {return(false);}
