@@ -1,6 +1,8 @@
 #ifndef __Vhpi_h__
 #define __Vhpi_h__
 
+#include <stdint.h>
+
 // author: Madhav P. Desai
 // jacket functions to enable VHPI direct interface
 // to VHDL only simulators supporting VHPI.  
@@ -50,6 +52,8 @@ struct _JobLink
 
   JobLink* next;
   JobLink* prev;
+
+  int64_t index;
 };
 
 typedef struct _JobList JobList;

@@ -11,6 +11,8 @@
 #include <SocketLib.h>
 #include <Vhpi.h>
 
+#define LOG_FILE "vhpi.log"
+
 #define z32__ "00000000000000000000000000000000"
 
 #define APPEND(lst,lnk) if(lst.tail)\
@@ -53,6 +55,11 @@
       lnk->prev = lnk->next = NULL;\
     }
 
+// cycle count;
+int cycle_count = 0;
+
+// free job index
+int64_t free_job_index = 0;
 
 // server socket
 int server_socket_id = -1;
@@ -108,13 +115,19 @@ void Copy_Value(char* dest, char* src)
 
 void Delete_Port(Port* port)
 {
-  cfree(port->port_value);
-  cfree(port);
+  if(port != NULL)
+    {
+      if(port->port_value)
+	cfree(port->port_value);
+      
+      cfree(port);
+    }
 }
 
 void Delete_JobLink(JobLink* top)
 {
-  cfree(top->name);
+  if(top->name)
+    free(top->name);
 
   Delete_Port(top->req_port);
   Delete_Port(top->ack_port);
@@ -154,10 +167,17 @@ void Delete_JobLink(JobLink* top)
 // dang! parsing with strtok again!
 void Append_To_JobList(char* receive_buffer,int socket_id, JobList *jobs)
 {
+
+#ifdef DEBUG
+  fprintf(stderr,"Info: appending to JobList in cycle %d\n", cycle_count);
+#endif 
+
   JobLink* new_job = NULL;
 
   new_job = (JobLink*) calloc(1,sizeof(JobLink));
   new_job->socket_id = socket_id;
+  new_job->index = free_job_index;
+  free_job_index++;
   
       // format:  "piperead/pipewrite/call  name  num-inp (value)* num-op (width)* 
   char* save_ptr;
@@ -179,8 +199,9 @@ void Append_To_JobList(char* receive_buffer,int socket_id, JobList *jobs)
   else
     {
       fprintf(stderr,"Error: unknown request type : %s\n", type_of_request);
+      Delete_JobLink(new_job);
       return;
-	}
+    }
   
   
   char* name = strtok_r(NULL," ",&save_ptr);
@@ -253,6 +274,10 @@ void Append_To_JobList(char* receive_buffer,int socket_id, JobList *jobs)
 
   // append the job.
   APPEND((*jobs),new_job);
+
+#ifdef DEBUG
+  fprintf(stderr,"Info: finished appending job to JobList in cycle %d\n", cycle_count);
+#endif 
 }
 
 static void Vhpi_Exit(int sig)
@@ -323,6 +348,11 @@ void  Vhpi_Close()
 // out the resulting port values..
 void  Vhpi_Send()
 {
+
+#ifdef DEBUG
+  fprintf(stderr,"Info: sending in cycle %d\n", cycle_count);
+#endif 
+
   char send_buffer[MAX_BUF_SIZE];
   char spacer_string[2];
   sprintf(spacer_string, " ");
@@ -339,6 +369,14 @@ void  Vhpi_Send()
 	  next = top->next;
 	  
 	  REMOVE(active_jobs,top);
+
+	  FILE* log_file = fopen(LOG_FILE,"a");
+	  fprintf(log_file,"cycle %d finished job %s(%d)\n",
+		  cycle_count,
+		  top->name,
+		  top->index);
+	  fclose(log_file);
+
 	  APPEND(finished_jobs,top);
 
 	  top = next;
@@ -375,8 +413,15 @@ void  Vhpi_Send()
 		}
 	    }
 
+#ifdef DEBUG
+	  fprintf(stderr,"Info: trying to send message %s in  %d\n", send_buffer, cycle_count);
+#endif 
 
 	  send(top->socket_id,send_buffer,strlen(send_buffer)+1,0);
+
+#ifdef DEBUG
+	  fprintf(stderr,"Info: successfully message %s in  %d\n", send_buffer, cycle_count);
+#endif 
 
 	  next = top->next;
 
@@ -394,6 +439,12 @@ void  Vhpi_Send()
 
 void  Vhpi_Listen()
 {
+  cycle_count++;
+
+#ifdef DEBUG
+  fprintf(stderr,"Info: listening in cycle %d\n", cycle_count);
+#endif 
+
   int new_sock;
   while((new_sock = connect_to_client(server_socket_id)) > 0)
     {
@@ -405,16 +456,27 @@ void  Vhpi_Listen()
 
       if(n > 0)
 	{
+#ifdef DEBUG
 	  fprintf(stderr,"Info: received message from client %d: %s\n", new_sock, receive_buffer);
+#endif
 	  Append_To_JobList(receive_buffer, new_sock, &new_jobs);
 	}
     }
+
+#ifdef DEBUG
+  fprintf(stderr,"Info: finished listening in cycle %d\n", cycle_count);
+#endif 
 }
 
 
 
 void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 {
+
+#ifdef DEBUG
+  fprintf(stderr,"Info: setting %s to %s in cycle %d\n",port_name,port_value, cycle_count);
+#endif 
+
   char* save_ptr;
   char* obj_name = strtok_r(port_name," ",&save_ptr);
   char* index_string = strtok_r(NULL," ",&save_ptr);
@@ -441,6 +503,9 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 		  if(index == 0)
 		    {
 		      Copy_Value(plink->port->port_value,port_value);
+#ifdef DEBUG
+  fprintf(stderr,"Info: finished setting %s to %s in cycle %d\n",port_name,port_value, cycle_count);
+#endif 
 		      break;
 		    }
 		  index--;
@@ -453,7 +518,10 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
 {
 
-  fprintf(stderr,"Info: getting value of port %s\n", port_name);
+#ifdef DEBUG
+  fprintf(stderr,"Info: getting value of port %s in cycle %d\n",port_name,cycle_count);
+#endif 
+  char found_one = 0;
   char* save_ptr;
   char* obj_name = strtok_r(port_name," ",&save_ptr);
   char* index_string = strtok_r(NULL," ",&save_ptr);
@@ -481,6 +549,14 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
 	    {
 	      REMOVE(new_jobs,jlink);
 	      APPEND(active_jobs,jlink);
+
+	      FILE* log_file = fopen(LOG_FILE,"a");
+	      fprintf(log_file,"cycle %d started job %s(%d)\n",
+		      cycle_count,
+		      jlink->name,
+		      jlink->index);
+	      fclose(log_file);
+
 	      break;
 	    }
 	}
@@ -491,6 +567,7 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
       if(strcmp(index_string, "req") == 0)
 	{
 	  Copy_Value(port_value,jlink->req_port->port_value);
+	  found_one = 1;
 	  if(jlink->is_module_access)
 	    {
 	      //
@@ -509,6 +586,7 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
 	      if(index == 0)
 		{
 		  Copy_Value(port_value, plink->port->port_value);
+		  found_one = 1;
 		  break;
 		}
 	      index--;
@@ -521,7 +599,12 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
       sprintf(port_value,z32__);
     }
 
-  fprintf(stderr,"Info: returning value of port %s as %s\n", port_name, port_value);
+#ifdef DEBUG
+  if(found_one)
+    fprintf(stderr,"Info: returning value of port %s as %s\n", port_name, port_value);
+  else
+    fprintf(stderr,"Info: port %s not active, returning %s\n", port_name, port_value);
+#endif
 }
 
 

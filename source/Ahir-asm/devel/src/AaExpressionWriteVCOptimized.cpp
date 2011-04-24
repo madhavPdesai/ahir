@@ -290,7 +290,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
 		{
 		  if(visited_elements.find(root) != visited_elements.end())
 		    {
-		      __J(base_addr_calc, ((AaStatement*)root)->Get_VC_Exit_Transition_Name());
+		      __J(base_addr_calc, ((AaStatement*)root)->Get_VC_Completed_Transition_Name());
 		    }
 		}
 	    }

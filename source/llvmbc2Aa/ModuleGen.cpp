@@ -276,16 +276,18 @@ namespace {
 	}
 
       std::cout << "$module [" << to_aa(fname) << "] " << std::endl;
+      
 
-	std::cout << " $in (";
-	for(Function::arg_iterator args = F.arg_begin(), Eargs = F.arg_end();
-		args != Eargs;
-		++args)
+      std::cout << " $in (";
+      for(Function::arg_iterator args = F.arg_begin(), Eargs = F.arg_end();
+	  args != Eargs;
+	  ++args)
 	{
 	  
 	  std::cout << to_aa((*args).getNameStr()) << " : "
 		    << get_aa_type_name((*args).getType(), aa_writer->Get_Module()) << " ";
 	}
+
 	std::cout << ")" << std::endl;
 	std::cout << " $out (";
 	const llvm::Type* ret_type = F.getReturnType();

@@ -1603,6 +1603,7 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
     {
       this->Set_Coalesce_Flag(true);
 
+      // why are we doing this?
       if((obj != NULL) && this->Get_Addressed_Object_Representative() == NULL)
 	{
 	  if(this->Get_Is_Target())
@@ -1613,18 +1614,35 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 	  if(!obj->Is_Foreign_Storage_Object())
 	    AaProgram::Add_Storage_Dependency(this,obj);
 	}
-      
+
+      // OK. this gets the addressed object representative...
+      // not really necessary but..
       this->Set_Addressed_Object_Representative(obj);
-      
+
+      AaStorageObject* obj1 = _reference_to_object->Get_Addressed_Object_Representative();
+      if(this->Get_Is_Target())
+	{
+	  // OK. now reference_to_object is a pointer..
+	  this->_reference_to_object->Propagate_Addressed_Object_Representative(obj);      
+
+	  // obj1 has a value which can point to obj.
+	  if(obj1 != NULL)
+	    obj1->Propagate_Addressed_Object_Representative(obj);
+	}
 
       // what should you propagate forward?
       // _reference_to_object points to a pointer p.
       // p has an addressed object representative obj1.
       // obj1 has an addressed object representative obj2.
       // ->(p) propagates obj2
-      AaStorageObject* obj1 = _reference_to_object->Get_Addressed_Object_Representative();
       if(obj1 != NULL)
 	{
+	  // ok: the stored value pointed to by this expression
+	  // can point to obj1.. and also to obj
+	  AaProgram::Add_Storage_Dependency(obj,obj1);
+	  
+	  // now the memory space pointed to by obj1.. what
+	  // is its representative?  This must go forward..
 	  AaStorageObject* obj2 = obj1->Get_Addressed_Object_Representative();
 	  if(obj2 != NULL)
 	    {
@@ -1637,6 +1655,7 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 		}
 	    }
 	}
+
       this->Set_Coalesce_Flag(false);
     }
 }

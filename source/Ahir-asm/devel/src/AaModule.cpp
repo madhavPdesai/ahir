@@ -424,7 +424,7 @@ void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)
   this->Write_VC_Data_Path(ofile);
   this->Write_VC_Links(opt_flag, ofile);
 
-  ofile << "}";
+  ofile << "}" << endl;
 }
 
 void AaModule::Write_VC_Links(bool opt_flag, ostream& ofile)
@@ -541,8 +541,16 @@ void AaModule::Write_VHDL_C_Stub_Source(ostream& ofile)
   ofile << "append_int(buffer," << this->Get_Number_Of_Input_Arguments() << ");" << endl;
   for(int idx = 0; idx < this->Get_Number_Of_Input_Arguments(); idx++)
     {
-      ofile << "append_" << this->Get_Input_Argument(idx)->Get_Type()->CBaseName() 
-	    << "(buffer," <<  this->Get_Input_Argument(idx)->Get_Name() << ");" << endl;
+      AaType* t = this->Get_Input_Argument(idx)->Get_Type();
+      if(!t->Is_Pointer_Type())
+	ofile << "append_" << this->Get_Input_Argument(idx)->Get_Type()->CBaseName() 
+	      << "(buffer," <<  this->Get_Input_Argument(idx)->Get_Name() << ");" << endl;
+      else
+	{
+	  ofile << "append_uint32_t" 
+		<< "(buffer,(uint32_t) " 
+		<<  this->Get_Input_Argument(idx)->Get_Name() << ");" << endl;	  
+	}
     }
       
   ofile << "append_int(buffer," << this->Get_Number_Of_Output_Arguments() << ");" << endl;
@@ -561,19 +569,40 @@ void AaModule::Write_VHDL_C_Stub_Source(ostream& ofile)
  else if(this->Get_Number_Of_Output_Arguments() == 1)
    {
      AaType* ret_type = this->Get_Output_Argument(0)->Get_Type();
-     ofile << ret_type->CBaseName() 
-	   << " "
-	   << this->Get_Output_Argument(0)->Get_Name() << " = " ;
-     ofile << "get_" << ret_type->CBaseName() << "(buffer,&ss);" << endl;
-     ofile << "return(" << this->Get_Output_Argument(0)->Get_Name() << ");" << endl;
+     if(!ret_type->Is_Pointer_Type())
+       {
+	 ofile << ret_type->CBaseName() 
+	       << " "
+	       << this->Get_Output_Argument(0)->Get_Name() << " = " ;
+	 ofile << "get_" << ret_type->CBaseName() << "(buffer,&ss);" << endl;
+	 ofile << "return(" << this->Get_Output_Argument(0)->Get_Name() << ");" << endl;
+       }
+     else
+       {
+	 ofile << ret_type->CBaseName() 
+	       << " "
+	       << this->Get_Output_Argument(0)->Get_Name() << " = (" 
+	       << ret_type->CBaseName() << ") ";
+	 ofile << "get_uint32_t(buffer,&ss);" << endl;
+	 ofile << "return(" << this->Get_Output_Argument(0)->Get_Name() << ");" << endl;
+       }
    }
  else
    {
      for(int idx = 0; idx < this->Get_Number_Of_Output_Arguments(); idx++)
        {
 	 AaType* ret_type = this->Get_Output_Argument(idx)->Get_Type();
-	 ofile << "*" << this->Get_Output_Argument(idx)->Get_Name() << " = " ;
-	 ofile << "get_" << ret_type->CBaseName() << "(buffer,&ss);" << endl;
+	 if(!ret_type->Is_Pointer_Type())
+	   {
+	     ofile << "*" << this->Get_Output_Argument(idx)->Get_Name() << " = " ;
+	     ofile << "get_" << ret_type->CBaseName() << "(buffer,&ss);" << endl;
+	   }
+	 else
+	   {
+	     ofile << "*" << this->Get_Output_Argument(idx)->Get_Name() << " = (" 
+		   << ret_type->CBaseName() << ") " ;
+	     ofile << "get_uint32_t(buffer,&ss);" << endl;
+	   }
        }
 
      ofile << "return;" << endl;

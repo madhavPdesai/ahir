@@ -6,6 +6,19 @@
 using namespace std;
 using namespace antlr;
 
+// command-line parsing
+extern int optind;
+extern char *optarg;
+int opt;
+int option_index = 0;
+
+struct option long_options[] = {
+    {"relaxed-component-visibility", 0, 0, 0},
+    {"depend", required_argument, 0, 0},
+    {0, 0, 0, 0}
+};
+
+
 
 
 void Handle_Segfault(int signal)
@@ -16,22 +29,44 @@ void Handle_Segfault(int signal)
 
 int main(int argc, char* argv[])
 {
-
   AaProgram::_verbose_flag = true;
 
   signal(SIGSEGV, Handle_Segfault);
 
   if(argc < 2)
     {
-      cerr << "Usage: TestAaParser <filename>" << endl;
+      cerr << "Usage: AaAnalyze [-I <extmem-obj-name>] <filename> (<filename>) ... " << endl;
       exit(1);
     }
 
+  string fname;
+  string mod_name;
+  string opt_string;
+  bool opt_flag = false;
 
-  ifstream infile;
-  string filename = argv[1];
+  while ((opt = 
+	  getopt_long(argc, 
+		      argv, 
+		      "I:",
+		      long_options, &option_index)) != -1)
+    {
+      switch (opt)
+	{
+	case 'I':
+	  AaProgram::_keep_extmem_inside  = true;
+	  AaProgram::_extmem_object_name = optarg;
+	  AaProgram::Make_Extmem_Object();
+	  break;
+	default:
+	  cerr << "Error: unknown option " << opt << endl;
+	}
+    }
 
-  AaParse(filename);
+  for(int i = optind; i < argc; i++)
+    {
+      string filename = argv[i];      
+      AaParse(filename);
+    }
 
   if(AaRoot::Get_Error_Flag())
     {

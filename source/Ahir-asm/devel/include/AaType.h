@@ -198,7 +198,7 @@ class AaPointerType: public AaUintType
 
   virtual string CBaseName() 
   {
-    return(this->CName());
+    return(this->_ref_type->CBaseName() + "*");
   }
 
 

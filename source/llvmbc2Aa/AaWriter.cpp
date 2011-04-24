@@ -59,12 +59,6 @@ namespace Aa {
 
 	  }
 
-	// if the ptr-operand corresponds to either an alloca
-	// or a global, then this ptr must point to a declared
-	// object.  
-	bool is_alloca = isa<AllocaInst>(eI.getPointerOperand());
-
-
 
 	// get element-ptr is of this form
 	//  a = p[i0][i1][i2]..[ik]
@@ -88,7 +82,7 @@ namespace Aa {
 	//
 	std::string inst_name = to_aa(I.getNameStr());
 
-	if(is_alloca || is_global)
+	if(is_global)
 	  {
 	    std::cout << inst_name << " := @(" ;
 	  }
@@ -99,7 +93,7 @@ namespace Aa {
 
 	std::cout << root_name;
 
-	if(is_alloca || is_global)
+	if(is_global)
 	  {
 	    for(int idx = 2; idx < eI.getNumOperands(); idx++)
 	      {
@@ -118,7 +112,7 @@ namespace Aa {
 	      }
 	  }
 
-	if(is_alloca || is_global)
+	if(is_global)
 	  std::cout << ")" << std::endl;
 	else
 	  std::cout << std::endl;
@@ -280,6 +274,22 @@ namespace {
       std::string bb_name = to_aa(BB.getNameStr());
       std::cout << "//begin: basic-block " << bb_name << std::endl;
 
+      // the alloca objects.
+      for(llvm::BasicBlock::iterator iiter = BB.begin(),fiter = BB.end(); 
+	  iiter != fiter;  ++iiter)
+	{
+	  if(isa<AllocaInst>(*iiter))
+	    {
+	      llvm::AllocaInst& I = static_cast<AllocaInst&>(*iiter);
+	      std::string iname = to_aa(I.getNameStr());
+	      const llvm::PointerType* ptr = dyn_cast<PointerType>(I.getType());
+	      const llvm::Type* el_type = ptr->getElementType();
+      
+	      std::cout << "$storage " 
+			<< iname << "_alloc : " << get_aa_type_name(el_type,*_module) << std::endl;
+
+	    }
+	}
       if(this->bb_predecessor_map[bb_name].size() > 0)
 	{
 	  std::cout << "$merge";
@@ -373,7 +383,7 @@ namespace {
       const llvm::PointerType* ptr = dyn_cast<PointerType>(I.getType());
       const llvm::Type* el_type = ptr->getElementType();
       
-      std::cout << "$storage " << iname << " : " << get_aa_type_name(el_type,*_module) << std::endl;
+      std::cout << iname << " := @(" << iname << "_alloc)" << std::endl;
     }
 
     void visitPHINode(PHINode &P)
@@ -402,10 +412,32 @@ namespace {
 	    if(C.getType()->isVoidTy())
 	      has_ret_val = false;
 	    
-	    std::cout << "$call " << to_aa(called_function->getNameStr());
+	    std::vector<const llvm::Type*>  argument_types;
+	    for(llvm::Function::const_arg_iterator args = (*called_function).arg_begin(), 
+		  Eargs = (*called_function).arg_end();
+		args != Eargs;
+		++args)
+	      {
+		argument_types.push_back((*args).getType());
+	      }
+
+	    std::string fname = to_aa(called_function->getNameStr());
+	    std::cout << "$call " << fname ;
 	    std::cout << " (";
 	    for(int idx = 0; idx < C.getNumArgOperands(); idx++)
-	      std::cout << get_name(C.getArgOperand(idx)) << " ";
+	      {
+		const llvm::Type* arg_type = (idx < argument_types.size() ? argument_types[idx] : NULL);
+
+		if(arg_type == NULL || (arg_type == C.getArgOperand(idx)->getType()))
+		  std::cout << get_name(C.getArgOperand(idx)) << " ";
+		else
+		  {
+		    std::cout << "($bitcast (" << get_aa_type_name(C.getArgOperand(idx)->getType(),
+								   *_module)
+			      << ") "
+			      << get_name(C.getArgOperand(idx)) << ") ";
+		  }
+	      }
 	    std::cout << ") " ;
 	    
 	    std::cout << " (";
@@ -534,7 +566,6 @@ namespace {
 
       std::cout << lname << " := " ;
       
-      bool is_alloca = isa<AllocaInst>(L.getPointerOperand());
       bool is_global = isa<GlobalVariable>(L.getPointerOperand());
 
       if(isa<UndefValue>(L.getPointerOperand()))
@@ -546,7 +577,7 @@ namespace {
 	  return;
 	}
       
-      if(is_alloca || is_global)
+      if(is_global)
 	std::cout << get_name(L.getPointerOperand()) << std::endl;
       else
 	std::cout << "->(" << get_name(L.getPointerOperand()) << ") " << std::endl;
@@ -557,7 +588,6 @@ namespace {
     {
       std::string sname = to_aa(S.getNameStr());
       
-      bool is_alloca = isa<AllocaInst>(S.getPointerOperand());
       bool is_global = isa<GlobalVariable>(S.getPointerOperand());
 
       if((isa<UndefValue>(S.getPointerOperand())) ||
@@ -568,7 +598,7 @@ namespace {
 	  return;
 	}
 
-      if(is_alloca || is_global)
+      if(is_global)
 	std::cout << get_name(S.getPointerOperand()) << " := ";
       else
 	std::cout << "->(" << get_name(S.getPointerOperand()) << ") := ";

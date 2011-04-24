@@ -10,54 +10,256 @@
 # //
 # OpenFile BasicCheck.mpf 
 # Loading project BasicCheck
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/base_bank.vhd 
+# Compile of base_bank.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_component_pack.vhd 
+# Compile of mem_component_pack.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_function_pack.vhd 
+# Compile of mem_function_pack.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_repeater.vhd 
+# Compile of mem_repeater.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_shift_repeater.vhd 
+# Compile of mem_shift_repeater.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_bank.vhd 
+# Compile of memory_bank.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem_package.vhd 
+# Compile of memory_subsystem_package.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_functions.vhd 
+# Compile of merge_functions.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_tree.vhd 
+# Compile of merge_tree.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/register_bank.vhd 
+# Compile of register_bank.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/register_bank_tb.vhd 
+# Compile of register_bank_tb.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BypassRegister.vhd 
+# Compile of BypassRegister.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/RepeaterBase.vhd 
+# Compile of RepeaterBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Types.vhd 
+# Compile of Types.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/math_utility_pkg.vhd 
+# Compile of math_utility_pkg.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/combinational_merge.vhd 
+# Compile of combinational_merge.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/demerge_tree.vhd 
+# Compile of demerge_tree.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/demerge_tree_wrap.vhd 
+# Compile of demerge_tree_wrap.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_demux.vhd 
+# Compile of mem_demux.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_test_block.vhd 
+# Compile of mem_test_block.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_bank_base.vhd 
+# Compile of memory_bank_base.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem.vhd 
+# Compile of memory_subsystem.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem_core.vhd 
+# Compile of memory_subsystem_core.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem_tb.vhd 
+# Compile of memory_subsystem_tb.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_box_with_repeater.vhd 
+# Compile of merge_box_with_repeater.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Components.vhd 
+# Compile of Components.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/fixed_pkg_c.vhd 
+# Compile of fixed_pkg_c.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/float_pkg_c.vhd 
+# Compile of float_pkg_c.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Subprograms.vhd 
+# Compile of Subprograms.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Utilities.vhd 
+# Compile of Utilities.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/place.vhdl 
+# Compile of place.vhdl was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/transition.vhdl 
+# Compile of transition.vhdl was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BranchBase.vhd 
+# Compile of BranchBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputMuxBase.vhd 
+# Compile of InputMuxBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortLevel.vhd 
+# Compile of InputPortLevel.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortLevelNoData.vhd 
+# Compile of InputPortLevelNoData.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputDemuxBase.vhd 
+# Compile of OutputDemuxBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputDemuxBaseNoData.vhd 
+# Compile of OutputDemuxBaseNoData.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBase.vhd 
+# Compile of PhiBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PortTBWrap.vhd 
+# Compile of PortTBWrap.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/RegisterBase.vhd 
+# Compile of RegisterBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SelectBase.vhd 
+# Compile of SelectBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/FloatOperatorPackage.vhd 
+# Compile of FloatOperatorPackage.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/OperatorPackage.vhd 
+# Compile of OperatorPackage.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/GenericCombinationalOperator.vhd 
+# Compile of GenericCombinationalOperator.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/BaseComponents.vhd 
+# Compile of BaseComponents.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/control_delay_element.vhdl 
+# Compile of control_delay_element.vhdl was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterNoInargsNoOutargs.vhd 
+# Compile of CallArbiterNoInargsNoOutargs.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitaryNoInargs.vhd 
+# Compile of CallArbiterUnitaryNoInargs.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputMuxBaseNoData.vhd 
+# Compile of InputMuxBaseNoData.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputPortNoData.vhd 
+# Compile of OutputPortNoData.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiter.vhd 
+# Compile of CallArbiter.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterNoInArgs.vhd 
+# Compile of CallArbiterNoInArgs.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterNoOutArgs.vhd 
+# Compile of CallArbiterNoOutArgs.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitary.vhd 
+# Compile of CallArbiterUnitary.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitaryNoInargsNoOutargs.vhd 
+# Compile of CallArbiterUnitaryNoInargsNoOutargs.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitaryNoOutargs.vhd 
+# Compile of CallArbiterUnitaryNoOutargs.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallMediator.vhd 
+# Compile of CallMediator.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPort.vhd 
+# Compile of InputPort.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortNoData.vhd 
+# Compile of InputPortNoData.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/LoadCompleteShared.vhd 
+# Compile of LoadCompleteShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/LoadReqShared.vhd 
+# Compile of LoadReqShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputPort.vhd 
+# Compile of OutputPort.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputPortLevel.vhd 
+# Compile of OutputPortLevel.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputPortLevelNoData.vhd 
+# Compile of OutputPortLevelNoData.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBaseTB.vhd 
+# Compile of PhiBaseTB.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PipeBase.vhd 
+# Compile of PipeBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PortTB.vhd 
+# Compile of PortTB.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/ShiftRepeaterBase.vhd 
+# Compile of ShiftRepeaterBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorBase.vhd 
+# Compile of SplitOperatorBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorShared.vhd 
+# Compile of SplitOperatorShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorSharedTB.vhd 
+# Compile of SplitOperatorSharedTB.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorSharedTBWrap.vhd 
+# Compile of SplitOperatorSharedTBWrap.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreCompleteShared.vhd 
+# Compile of StoreCompleteShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreReqShared.vhd 
+# Compile of StoreReqShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd 
+# Compile of UnsharedOperatorBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/dummy_read_only_memory_subsystem.vhd 
+# Compile of dummy_read_only_memory_subsystem.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/dummy_write_only_memory_subsystem.vhd 
+# Compile of dummy_write_only_memory_subsystem.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/join.vhdl 
+# Compile of join.vhdl was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/join_with_input.vhdl 
+# Compile of join_with_input.vhdl was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/source/CtestBench/tests/helloworld/vhdl/system.vhdl 
+# Compile of system.vhdl was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/source/CtestBench/vhdl/Vhpi_Package.vhdl 
+# Compile of Vhpi_Package.vhdl was successful.
 vsim -novopt work.test_system_test_bench
 # vsim -novopt work.test_system_test_bench 
 # Loading /cad/modelsim/modeltech/linux/../std.standard
 # Loading /cad/modelsim/modeltech/linux/../ieee.std_logic_1164(body)
+# Refreshing ./work.memory_subsystem_package
 # Loading work.memory_subsystem_package
+# Refreshing ./work.types
 # Loading work.types
 # Loading /cad/modelsim/modeltech/linux/../ieee.numeric_std(body)
 # Loading /cad/modelsim/modeltech/linux/../std.textio(body)
+# Refreshing ./work.math_utility_pkg
 # Loading work.math_utility_pkg
 # Loading /cad/modelsim/modeltech/linux/../ieee.math_real(body)
+# Refreshing ./work.fixed_pkg(body)
 # Loading work.fixed_pkg(body)
+# Refreshing ./work.float_pkg(body)
 # Loading work.float_pkg(body)
+# Refreshing ./work.subprograms(body)
 # Loading work.subprograms(body)
+# Refreshing ./work.components
 # Loading work.components
+# Refreshing ./work.basecomponents
 # Loading work.basecomponents
+# Refreshing ./work.utilities(body)
 # Loading work.utilities(body)
+# Refreshing ./work.operatorpackage(body)
 # Loading work.operatorpackage(body)
+# Refreshing ./work.vc_system_package
 # Loading work.vc_system_package
+# Refreshing ./work.utility_package(body)
 # Loading work.utility_package(body)
+# Refreshing ./work.modelsim_fli_foreign(body)
 # Loading work.modelsim_fli_foreign(body)
 # Loading /home/madhav/ahirgit/AHIR/source/CtestBench/lib//libModelsimFLI.so
+# Refreshing ./work.test_system_test_bench(vhpilink)
 # Loading work.test_system_test_bench(vhpilink)
+# Refreshing ./work.test_system(default)
 # Loading work.test_system(default)
+# Refreshing ./work.bar(default)
 # Loading work.bar(default)
+# Refreshing ./work.registerbase(arch)
 # Loading work.registerbase(arch)
+# Refreshing ./work.floatoperatorpackage(body)
 # Loading work.floatoperatorpackage(body)
+# Refreshing ./work.unsharedoperatorbase(vanilla)
 # Loading work.unsharedoperatorbase(vanilla)
+# Refreshing ./work.genericcombinationaloperator(vanilla)
 # Loading work.genericcombinationaloperator(vanilla)
+# Refreshing ./work.bypassregister(behave)
 # Loading work.bypassregister(behave)
+# Refreshing ./work.loadreqshared(vanilla)
 # Loading work.loadreqshared(vanilla)
+# Refreshing ./work.inputmuxbase(behave)
 # Loading work.inputmuxbase(behave)
+# Refreshing ./work.loadcompleteshared(vanilla)
 # Loading work.loadcompleteshared(vanilla)
+# Refreshing ./work.outputdemuxbase(behave)
 # Loading work.outputdemuxbase(behave)
+# Refreshing ./work.storereqshared(vanilla)
 # Loading work.storereqshared(vanilla)
+# Refreshing ./work.storecompleteshared(behave)
 # Loading work.storecompleteshared(behave)
+# Refreshing ./work.inputport(base)
 # Loading work.inputport(base)
+# Refreshing ./work.outputport(base)
 # Loading work.outputport(base)
+# Refreshing ./work.mem_function_pack(body)
 # Loading work.mem_function_pack(body)
+# Refreshing ./work.merge_functions(body)
 # Loading work.merge_functions(body)
+# Refreshing ./work.mem_component_pack
 # Loading work.mem_component_pack
+# Refreshing ./work.register_bank(default)
 # Loading work.register_bank(default)
+# Refreshing ./work.foo(default)
 # Loading work.foo(default)
+# Refreshing ./work.pipebase(default_arch)
 # Loading work.pipebase(default_arch)
+# Refreshing ./work.outputportlevel(base)
 # Loading work.outputportlevel(base)
+# Refreshing ./work.shiftrepeaterbase(behave)
 # Loading work.shiftrepeaterbase(behave)
+# Refreshing ./work.repeaterbase(behave)
 # Loading work.repeaterbase(behave)
+# Refreshing ./work.inputportlevel(default_arch)
 # Loading work.inputportlevel(default_arch)
-add wave sim:/test_system_test_bench/*
 run 300 ns
 # ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
 #    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/outpipe_pipe/rptr/ifgen/repgen__0/rptr
@@ -71,4 +273,4 @@ run 300 ns
 #    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/inpipe_pipe/rptr/ifgen/repgen__0/rptr
 # ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
 #    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/inpipe_pipe/rptr/ifgen/repgen__0/rptr
-quit
+quit -sim
