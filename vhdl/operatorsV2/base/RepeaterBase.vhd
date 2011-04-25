@@ -2,6 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+-- This is broken!  Needs serious fixing!
 -- effectively a two entry queue.
 -- used to break combinational paths
 -- at the cost of a single cycle delay from input

@@ -959,6 +959,9 @@ void AaCallStatement::Map_Source_References()
       this->_input_args[i]->Map_Source_References(this->_source_objects);
       if(called_module != NULL)
 	{
+	  // transfer the type of inarg to inargument.
+	  this->_input_args[i]->Set_Type(called_module->Get_Input_Argument(i)->Get_Type());
+
 	  // inarg -> inargument
 	  this->_input_args[i]->Add_Source_Reference(called_module->Get_Input_Argument(i));
 	  called_module->Get_Input_Argument(i)->Add_Target_Reference(this->_input_args[i]);
@@ -971,6 +974,10 @@ void AaCallStatement::Map_Source_References()
       this->_output_args[i]->Map_Source_References_As_Target(this->_source_objects);
       if(called_module != NULL)
 	{
+
+	  // transfer the type of outarg to ioutargument.
+	  this->_output_args[i]->Set_Type(called_module->Get_Output_Argument(i)->Get_Type());
+
 	  // outarg <- outargument
 	  this->_output_args[i]->Add_Target_Reference(called_module->Get_Output_Argument(i));
 	  called_module->Get_Output_Argument(i)->Add_Source_Reference(this->_output_args[i]);

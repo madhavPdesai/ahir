@@ -241,31 +241,21 @@ package BaseComponents is
   end component RegisterBase;
 
   -----------------------------------------------------------------------------
-  -- repeater
+  -- queue
   -----------------------------------------------------------------------------
-  component RepeaterBase 
-    generic(data_width: integer := 32);
+  
+  component QueueBase 
+    generic(queue_depth: integer := 2; data_width: integer := 32);
     port(clk: in std_logic;
-       reset: in std_logic;
-       data_in: in std_logic_vector(data_width-1 downto 0);
-       req_in: in std_logic;
-       ack_out : out std_logic;
-       data_out: out std_logic_vector(data_width-1 downto 0);
-       req_out : out std_logic;
-       ack_in: in std_logic);
-   end component RepeaterBase;
+         reset: in std_logic;
+         data_in: in std_logic_vector(data_width-1 downto 0);
+         push_req: in std_logic;
+         push_ack: out std_logic;
+         data_out: out std_logic_vector(data_width-1 downto 0);
+         pop_ack : out std_logic;
+         pop_req: in std_logic);
+  end component QueueBase;
 
-  component ShiftRepeaterBase 
-   generic(data_width: integer := 32; number_of_stages: natural := 1);
-    port(clk: in std_logic;
-       reset: in std_logic;
-       data_in: in std_logic_vector(data_width-1 downto 0);
-       req_in: in std_logic;
-       ack_out : out std_logic;
-       data_out: out std_logic_vector(data_width-1 downto 0);
-       req_out : out std_logic;
-       ack_in: in std_logic);
-  end component ShiftRepeaterBase;
 
   -----------------------------------------------------------------------------
   -- pipe

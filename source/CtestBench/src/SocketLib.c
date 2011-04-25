@@ -1,4 +1,5 @@
 #include <string.h>
+#include <fcntl.h>
 #include <SocketLib.h>
 
 // get a string out of  the string buffer.
@@ -15,17 +16,25 @@ void  append_string(char* strbuf, char* str)
 uint64_t get_uint64_t(char* str, char** save_str)
 {
   char* pstr = strtok_r(str," ", save_str);
+  if(pstr == NULL)
+  {
+	fprintf(stderr,"Error: tried to parse empty string in get_ function\n");
+	return(0);
+  }
 
   uint64_t ret_val  = 0;
   int max_index = strlen(pstr) - 1;
   int pos = 0;
   while(max_index >= 0)
     {
-      if(*(pstr+max_index) == '1') 
+      if(pstr[max_index] == '1') 
 	{
 	  ret_val |= (1 << pos);
 	}
+
       pos++;
+      max_index--;
+
       if(pos == 64)
 	break;
     }
@@ -78,12 +87,15 @@ void  append_uint64_t_inner(char* str, uint64_t u, int W)
 
   int max_index = strlen(str) - 1;
   int pos = 0;
+
   while(max_index >= 0)
     {
       if((u >> pos) & 1)
 	{
 	  tbuf[(W-1)-pos] = '1';
 	}
+
+      max_index--;
       pos++;
 
       if(pos == W)
@@ -194,7 +206,7 @@ int connect_to_client(int server_fd)
 {
   int ret_val = 1;
   int newsockfd = -1;
-  int clilen;
+  socklen_t clilen;
   struct sockaddr_in  cli_addr;
   fd_set c_set;
   struct timeval time_limit;
@@ -202,11 +214,13 @@ int connect_to_client(int server_fd)
   time_limit.tv_sec = 0;
   time_limit.tv_usec = 1000;
 
+  clilen = sizeof(cli_addr);
+
+  FD_ZERO(&c_set);
   FD_SET(server_fd,&c_set);
-  
-  if(select(server_fd+1, &c_set,NULL,NULL,&time_limit) > 0)
+  select(server_fd+1, &c_set,NULL,NULL,&time_limit);
+  if(FD_ISSET(server_fd,&c_set))
     {
-      clilen = sizeof(cli_addr);
       newsockfd = accept(server_fd,(struct sockaddr *) &cli_addr,&clilen);
 
       if (newsockfd >= 0)
@@ -215,7 +229,7 @@ int connect_to_client(int server_fd)
 	}
       else
 	{
-	  fprintf(stderr,"Error: failed in accept()\n");	
+	  fprintf(stderr,"Info: failed in accept()\n");	
 	}
     }
 
@@ -239,7 +253,7 @@ int can_read_from_socket(int socket_id)
 
   int npending = select(socket_id + 1, &c_set, NULL,NULL,&time_limit);
 
-  return(npending > 0);
+  return(FD_ISSET(socket_id,&c_set));
 }
 
 
@@ -259,7 +273,7 @@ int can_write_to_socket(int socket_id)
 
   int npending = select(socket_id + 1, NULL, &c_set,NULL,&time_limit);
 
-  return(npending > 0);
+  return(FD_ISSET(socket_id,&c_set));
 }
 
 
@@ -270,32 +284,14 @@ int receive_string(int sock_id, char* buffer)
 
   while(1)
     {
-      if(!can_read_from_socket(sock_id))
-	usleep(1000);
-      else
+      if(can_read_from_socket(sock_id))
 	break;
+      else
+	usleep(1000);
     }
 
   
-  while(1)
-    {
-      int ok = recv(sock_id,buffer+nbytes,1,0);
-
-      if(ok)
-	{
-	  if(buffer[nbytes] == 0)
-	    break;
-	  
-	  if(nbytes == MAX_BUF_SIZE-1)
-	    {
-	      buffer[nbytes] = 0;
-	      nbytes--;
-	      break;
-	    }
-	  
-	  nbytes++;      
-	}
-    }
+  nbytes = recv(sock_id,buffer,MAX_BUF_SIZE,0);
 
   return(nbytes);
 }
@@ -364,17 +360,18 @@ void send_packet_and_wait_for_response(char* buffer, char* server_host_address, 
 
       fprintf(stderr, "Info: sent message %s to server\n", buffer);
 
-      int nbytes = receive_string(sockfd,buffer);
-
-      if(nbytes > 0)
+      while( (n = receive_string(sockfd,buffer)) <= 0)
 	{
-	  fprintf(stderr, "Info: received message %s from server\n", buffer);	  
 	}
-      else
-	{
-	  fprintf(stderr,"Error: null message received from server\n");
-	}
+	  
+     fprintf(stderr, "Info: received message %s from server\n", buffer);	  
     }
 }
 
 
+void set_non_blocking(int sock_id)
+{
+  int x;
+  x=fcntl(sock_id,F_GETFL,0);
+  fcntl(sock_id,F_SETFL,x | O_NONBLOCK);
+}

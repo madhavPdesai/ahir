@@ -25,7 +25,7 @@
 
 // unlikely to have more than 16 active
 // threads talking to the TB?
-#define DEFAULT_MAX_CONNECTIONS 16
+#define DEFAULT_MAX_CONNECTIONS 256
 
 // get a string out of  the string buffer.
 char*    get_string(char* str, char** save_str);
@@ -102,5 +102,7 @@ void  send_packet_and_wait_for_response(char* buffer, char* server_host_name, in
 
 
 
+// set a socket into non-blocking mode
+void set_non_blocking(int sock_id);
 
 #endif 

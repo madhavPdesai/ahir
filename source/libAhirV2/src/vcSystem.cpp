@@ -365,7 +365,7 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
       ofile << simulator_prefix << "Set_Port_Value(obj_ref,val_string);" << endl;
 
       // the output arguments.
-      for(int idx = 0; idx < m->Get_Number_Of_Input_Arguments(); idx++)
+      for(int idx = 0; idx < m->Get_Number_Of_Output_Arguments(); idx++)
 	{
 	  ofile << "obj_ref := Pack_String_To_Vhpi_String("
 		<< '"' << m->Get_Id() << " " << idx << '"' << ");" << endl;

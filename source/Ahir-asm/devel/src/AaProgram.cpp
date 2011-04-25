@@ -89,6 +89,7 @@ void AaProgram::Make_Extmem_Object()
   AaType* obj_type = AaProgram::Make_Array_Type(el_type,dims);
 
   AaProgram::_extmem_object = new AaStorageObject(NULL,AaProgram::_extmem_object_name,obj_type,NULL);
+  AaProgram::Add_Storage_Dependency_Graph_Vertex(AaProgram::_extmem_object);
 }
 
 void AaProgram::Print_ExtMem_Access_Modules(ostream& ofile)
@@ -772,6 +773,15 @@ void AaProgram::Coalesce_Storage()
 		    {
 		      assert(0);
 		    }
+		}
+
+	      AaScope* p_scope = pu->Get_Scope();
+	      if(p_scope != NULL)
+		{
+		  AaScope* root_p_scope = p_scope->Get_Root_Scope();
+		  assert(root_p_scope->Is("AaModule"));
+		  AaProgram::_storage_index_module_coverage_map[idx].insert((AaModule*) root_p_scope);
+		  new_ms->_modules.insert((AaModule*)root_p_scope);
 		}
 	    }
 	  else

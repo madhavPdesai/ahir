@@ -46,15 +46,15 @@ begin  -- default_arch
       clk   => clk,
       reset => reset);
 
-  rptr : ShiftRepeaterBase generic map (
-    data_width       => data_width,
-    number_of_stages => depth)
+  queue : QueueBase generic map (
+    queue_depth => depth + 1,
+    data_width       => data_width)
     port map (
-      req_in   => pipe_req,
-      ack_out  => pipe_ack,
+      push_req   => pipe_req,
+      push_ack => pipe_ack,
       data_in  => pipe_data,
-      req_out  => pipe_req_repeated,
-      ack_in   => pipe_ack_repeated,
+      pop_req  => pipe_req_repeated,
+      pop_ack  => pipe_ack_repeated,
       data_out => pipe_data_repeated,
       clk      => clk,
       reset    => reset);
@@ -67,8 +67,8 @@ begin  -- default_arch
       req => read_req,
       ack => read_ack,
       data => read_data,
-      oreq => pipe_ack_repeated,        -- cross-over, drives ack
-      oack => pipe_req_repeated,        -- cross-over, receives req
+      oreq => pipe_req_repeated,       
+      oack => pipe_ack_repeated,       
       odata => pipe_data_repeated,
       clk => clk,
       reset => reset);
