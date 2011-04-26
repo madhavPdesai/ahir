@@ -84,10 +84,13 @@ A testbench for checking port implementations
 Resizing register implementation
 	RegisterBase.vhd
 		a single cycle delay
-	RepeaterBase.vhd
-		a double buffered repeater, to 
+
+Queue
+	QueueBase.vhd
+		a simple queue implementation, to 
 		ensure full rate communication without
 		compromising combinational delay.
+		used in PipeBase
 
 The select operator
 	SelectBase.vhd

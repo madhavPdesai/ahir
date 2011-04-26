@@ -30,7 +30,7 @@ SConstruct
 src
 	the source
 
-tests
+examples
 	three testcases
 
 util
