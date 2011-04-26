@@ -1,7 +1,7 @@
 An implementation of all the data-path operators needed to 
 generate a VHDL netlist from a VC description. For book-keeping
 reasons, the control-path related elements are kept in the
-folder ../control-path
+folder ../../control-path
 
 There is some redundancy but this keeps things simpler.
 

@@ -13,13 +13,6 @@ The organization
 		The V2 flow examples are scattered in
 		the source/ area.
 
-	iolib
-		library of read/write methods which
-		use named pipes (useful for describing 
-		parallel algorithms communicating through pipes).
-		This is for V1.  
-
-		For V2, there is a separate library 
 
 	make_release.sh
 		a shell script which generates a release
@@ -31,15 +24,17 @@ The organization
 	Release
 		the release directory
 
-	source
-		all AhirV2 stuff is here.  Should
-		rename it to v2.
+	v2
+		all AhirV2 stuff is here.  
 
-	toolset
+	v1
 		all AhirV1 stuff is here.  Should
 		make a directory called v1 and move
 		this into that.
 
 	vhdl
 		all VHDL code...  this should be
-		split into the v1 and v2 area.
+		split into the v1 and v2 area, but 
+		there are enough things in common 
+		that it doesnt make sense to separate
+		it.
