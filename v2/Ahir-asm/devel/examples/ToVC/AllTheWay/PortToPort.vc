@@ -1,0 +1,127 @@
+// pipe-declarations for block %sum_mod
+//  file PortToPort.aa, line 2
+// pipe-declarations for block %sum_mod%pb
+//  file PortToPort.aa, line 7
+$module [sum_mod] 
+{
+  $in a:$int<10> b:$int<10>
+  $out c:$int<10>
+  // memory-space-declarations for block %sum_mod
+  //  file PortToPort.aa, line 2
+  // memory-space-declarations for block %sum_mod%pb
+  //  file PortToPort.aa, line 7
+  // memory-space-declarations for block %sum_mod%pb
+  //  file PortToPort.aa, line 7
+  $CP 
+  {
+    // begin control-path 
+    ||[parallel_block_stmt_5] // parallel block  file PortToPort.aa, line 7
+    {
+      // control-path for: 		d := (a + b) // type of target is $uint<10>
+      //  file PortToPort.aa, line 8
+      ;;[assign_stmt_10] //  file PortToPort.aa, line 8
+      {
+        // control-path for expression: (a + b)
+        ;;[binary_9] 
+        {
+          // binary expression: (a + b)
+          ||[binary_9_inputs] 
+          {
+            // CP for expression: a
+            // CP for expression: b
+          }
+          $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+        }
+        // CP for expression: d
+      }
+      // end assignment statement assign_stmt_10
+      // control-path for: 		e := (a - b) // type of target is $uint<10>
+      //  file PortToPort.aa, line 9
+      ;;[assign_stmt_15] //  file PortToPort.aa, line 9
+      {
+        // control-path for expression: (a - b)
+        ;;[binary_14] 
+        {
+          // binary expression: (a - b)
+          ||[binary_14_inputs] 
+          {
+            // CP for expression: a
+            // CP for expression: b
+          }
+          $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+        }
+        // CP for expression: e
+      }
+      // end assignment statement assign_stmt_15
+    }
+    // end parallel block parallel_block_stmt_5
+    // control-path for: 	c := (%pb:d + %pb:e) // type of target is $uint<10>
+    //  file PortToPort.aa, line 11
+    ;;[assign_stmt_21] //  file PortToPort.aa, line 11
+    {
+      // control-path for expression: (%pb:d + %pb:e)
+      ;;[binary_20] 
+      {
+        // binary expression: (%pb:d + %pb:e)
+        ||[binary_20_inputs] 
+        {
+          // CP for expression: %pb:d
+          // CP for expression: %pb:e
+        }
+        $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+      }
+      // CP for expression: c
+    }
+    // end assignment statement assign_stmt_21
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %sum_mod%pb
+    //  file PortToPort.aa, line 7
+    // constant-object-declarations for block %sum_mod
+    //  file PortToPort.aa, line 2
+    // constant-declarations for block %sum_mod%pb
+    //  file PortToPort.aa, line 7
+    // wire-declarations for block %sum_mod%pb
+    //  file PortToPort.aa, line 7
+    // wire-declarations for: 		d := (a + b) // type of target is $uint<10>
+    //  file PortToPort.aa, line 8
+    $W[d_10] : $int<10>
+    // wire-declarations for: 		e := (a - b) // type of target is $uint<10>
+    //  file PortToPort.aa, line 9
+    $W[e_15] : $int<10>
+    // wire-declarations for: 	c := (%pb:d + %pb:e) // type of target is $uint<10>
+    //  file PortToPort.aa, line 11
+    // datapath-instances for block %sum_mod%pb
+    //  file PortToPort.aa, line 7
+    // data-path instances for: 		d := (a + b) // type of target is $uint<10>
+    //  file PortToPort.aa, line 8
+    // data-path-instances for expression: (a + b)
+    +[binary_9_inst] (a b) (d_10)
+    // data-path instances for: 		e := (a - b) // type of target is $uint<10>
+    //  file PortToPort.aa, line 9
+    // data-path-instances for expression: (a - b)
+    -[binary_14_inst] (a b) (e_15)
+    // data-path instances for: 	c := (%pb:d + %pb:e) // type of target is $uint<10>
+    //  file PortToPort.aa, line 11
+    // data-path-instances for expression: (%pb:d + %pb:e)
+    +[binary_20_inst] (d_10 e_15) (c)
+  }
+  // end data-path
+  // CP-DP links for block %sum_mod%pb
+  //  file PortToPort.aa, line 7
+  // CP-DP links for: 		d := (a + b) // type of target is $uint<10>
+  //  file PortToPort.aa, line 8
+  // CP-DP links for expression: (a + b)
+  binary_9_inst <=> (parallel_block_stmt_5/assign_stmt_10/binary_9/rr parallel_block_stmt_5/assign_stmt_10/binary_9/cr) (parallel_block_stmt_5/assign_stmt_10/binary_9/ra parallel_block_stmt_5/assign_stmt_10/binary_9/ca)
+  // CP-DP links for: 		e := (a - b) // type of target is $uint<10>
+  //  file PortToPort.aa, line 9
+  // CP-DP links for expression: (a - b)
+  binary_14_inst <=> (parallel_block_stmt_5/assign_stmt_15/binary_14/rr parallel_block_stmt_5/assign_stmt_15/binary_14/cr) (parallel_block_stmt_5/assign_stmt_15/binary_14/ra parallel_block_stmt_5/assign_stmt_15/binary_14/ca)
+  // CP-DP links for: 	c := (%pb:d + %pb:e) // type of target is $uint<10>
+  //  file PortToPort.aa, line 11
+  // CP-DP links for expression: (%pb:d + %pb:e)
+  binary_20_inst <=> (assign_stmt_21/binary_20/rr assign_stmt_21/binary_20/cr) (assign_stmt_21/binary_20/ra assign_stmt_21/binary_20/ca)
+}

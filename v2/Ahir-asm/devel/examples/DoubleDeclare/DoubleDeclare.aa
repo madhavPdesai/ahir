@@ -1,0 +1,25 @@
+// an example to illustrate some declaration and
+// type errors.
+$module [sum_mod]
+    $in (low $uint<10> high $uint<10>)
+    $out (sum $uint<32>)
+$is
+{
+   $constant a $uint<10>
+
+   // write to constant not allowed
+   a := (low + high) 
+
+   // b is not declared anywhere
+   sum := b
+ 
+   // two writes to sum, not allowed
+   // also, type conflict on sum and low
+   sum := low
+
+   // OK
+   q := (low + high)
+
+  // problem: redeclaration of q
+   q := low     
+}

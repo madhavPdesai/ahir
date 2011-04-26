@@ -1,4 +1,0 @@
-
-
-source_files = Glob("*.c")
-Library('io', source_files)

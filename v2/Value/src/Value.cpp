@@ -1,0 +1,859 @@
+#include <Value.hpp>
+using namespace std;
+using namespace _base_value_;
+Value::Value()
+{
+}
+
+Unsigned::~Unsigned()
+{
+  if(this->_bit_field)
+    delete [] _bit_field;
+}
+
+Unsigned::Unsigned():Value()
+{
+  this->_bit_field = NULL;
+  this->_width = 0;
+}
+
+Unsigned::Unsigned(int n): Value()
+{
+  assert(n > 0);
+  _width = n;
+
+  this->_bit_field = new UWord[(this->Array_Size())];
+  for(int idx = 0; idx < this->Array_Size() ; idx++)
+    this->_bit_field[idx] = 0;
+}
+
+
+Unsigned::Unsigned(int n, string init_value)
+{
+  assert(n > 0);
+
+  string format;
+  if(init_value.size() > 2)
+    {
+      if((init_value[0] == '_') && (init_value[1] == 'b'))
+	format = "binary";
+      else
+	format = "decimal";
+    }
+  else
+    format = "decimal";
+
+  _width = n;
+  _bit_field = new UWord[this->Array_Size()];
+
+  for(int idx = 0; idx < this->Array_Size(); idx++)
+    _bit_field[idx] = 0;
+
+  if(format == "decimal")
+    {
+      if(n > 32)
+	{
+	  cerr << "Error: decimal format can be used for integers which are up to 32 bits wide" << endl;
+	  cerr << "          the initial value will be ignored " << endl;
+	}
+      else
+	{
+	  _bit_field[0] = this->AtoI(init_value.c_str());
+	}
+    }
+  else if(format == "binary")
+    {
+      if(init_value.size()-2 > _width)
+	{
+	  cerr << "Warning: binary initialization string is longer than integer width" << endl;
+	  cerr << "          the initial value will be truncated to the least-significant bits. " << endl;
+	}
+
+      int bit_count = 0;
+      for(int idx = init_value.size()-1; idx >= 2; idx--)
+	{
+	  bit_count++;
+	  int actual_index = (init_value.size()-1) - idx;
+	  if(init_value[idx] == '1')
+	    this->Set_Bit(actual_index,true);
+	  else
+	    this->Set_Bit(actual_index,false);
+	  
+	  if(bit_count == _width)
+	    break;
+	}
+    }
+}
+
+Unsigned::Unsigned(const Unsigned& v):Value()
+{
+  _width = v._width;
+  _bit_field = new UWord[this->Array_Size()];
+  for(int idx = 0; idx < this->Array_Size(); idx++)
+    _bit_field[idx] = v._bit_field[idx];
+}
+
+
+UWord Unsigned::AtoI(string ival)
+{
+  return((UWord)(atoi(ival.c_str())));
+}
+
+bool Unsigned::To_Boolean()
+{
+  bool ret_val = false;
+  for(int idx = 0; idx < this->Array_Size(); idx++)
+    {
+      if(_bit_field[idx] != 0)
+	{
+	  ret_val = true;
+	  break;
+	}
+    }
+  return(ret_val);
+}
+UWord Unsigned::To_Uinteger()
+{
+  return(_bit_field[0]);
+}
+
+SWord Unsigned::To_Integer()
+{
+  SWord int_val;
+  int_val = _bit_field[0]; // ugly but can it be done better?
+  return(int_val);
+}
+
+string Unsigned::To_String()
+{
+  string ret_value;
+  for(int idx = _width-1; idx >= 0; idx--)
+    {
+      ret_value.push_back((this->Get_Bit(idx) ? '1' : '0'));
+    }
+  return(ret_value);
+}
+
+string Unsigned::To_C_String()
+{
+  ostringstream string_stream(ostringstream::out);
+  string_stream << this->_bit_field[0];
+  return(string_stream.str());
+}
+
+
+Float Unsigned::To_Float(int characteristic, int mantissa)
+{
+  Float ret_val = Float(characteristic,mantissa);
+  if(_width > 64)
+    {
+      cerr << "Error: int<->float conversion supported only for integers which are up to 64 bits wide" 
+	   << endl;
+      cerr << "          the initial value will be ignored " << endl;
+      return(ret_val);
+    }
+
+  if(characteristic + mantissa == 31)
+    ret_val.data._float_value = (float) _bit_field[0];
+  else if(characteristic+mantissa == 63)
+    ret_val.data._double_value = (double) _bit_field[0];
+
+  return(ret_val);
+}
+
+
+
+
+void Unsigned::Swap(const Unsigned& v)
+{
+
+  // clean up
+  if(_bit_field)
+    {
+      delete [] _bit_field;
+      _bit_field = NULL;
+    }
+
+
+  _width = v._width;
+  _bit_field = new UWord[this->Array_Size()];
+  for(int idx = 0; idx < this->Array_Size(); idx++)
+    _bit_field[idx] = 0;
+
+  this->Assign((Unsigned&) v);
+}
+
+Unsigned& Unsigned::operator=(Unsigned v)
+{
+
+  this->Swap(v);
+  return(*this);
+}
+
+Unsigned& Unsigned::operator=(Signed v)
+{
+  this->Swap(v);
+  return(*this);
+}
+
+
+void Unsigned::Add(Unsigned& b)
+{
+  bool carry = false;
+  assert(this->_width == b.Width());
+
+  for(int idx = 0; idx < b.Width(); idx++)
+    {
+      bool abit = this->Get_Bit(idx);
+      bool bbit = b.Get_Bit(idx);
+      bool sum = (abit ^ bbit ^ carry);
+      this->Set_Bit(idx,sum);
+      carry = (abit & bbit) | ((abit | bbit) & carry);
+    }
+
+  this->Sign_Extend();
+}
+
+void Unsigned::Multiply(Unsigned& b )
+{
+  assert(this->_width == b.Width());
+
+  if(b.Width() > 64)
+    {
+      cerr << "Error: multiply supported for integers which are up to 64 bits wide" << endl;
+      cerr << "          will return junk " << endl;
+      return;
+    }
+
+  this->_bit_field[0] = this->_bit_field[0] * b._bit_field[0];
+}
+
+void Unsigned::Subtract(Unsigned& b)
+{
+  assert(_width == b.Width());
+  Unsigned one_val(b.Width(),"_b1");
+
+  Unsigned tmp(b.Width());
+  tmp = b;
+  tmp.Complement();
+  tmp.Add(one_val);
+  
+  this->Add(tmp);
+}
+
+void Unsigned::Divide(Unsigned& b)
+{
+  assert(_width == b.Width());
+  if(_width > 64)
+    {
+      cerr << "Error: divide supported for integers which are up to 64 bits wide" << endl;
+      cerr << "          will return junk " << endl;
+      return;
+    }
+  
+  this->_bit_field[0] = this->_bit_field[0] / b._bit_field[0];
+}
+
+
+// unsigned int <-> int type conversion
+void Unsigned::Assign(Unsigned& v)
+{
+  for(int idx = 0; idx < this->Array_Size() ; idx++)
+    this->_bit_field[idx] = 0;
+
+
+  for(int idx = 0; idx < __MIN__(this->Array_Size(),v.Array_Size()); idx++)
+    _bit_field[idx] = v._bit_field[idx];
+}
+
+
+void Unsigned::Assign(Signed& v)
+{
+
+  for(int idx = 0; idx < this->Array_Size() ; idx++)
+    this->_bit_field[idx] = 0;
+
+  bool sign_bit = v.Get_Bit(v.Width() - 1);
+  if(!sign_bit)
+    {
+      // if v is negative, this will be 0.
+      for(int idx = 0; idx < __MIN__(_width,v.Width()); idx++)
+	{
+	  this->Set_Bit(idx, v.Get_Bit(idx));
+	}
+      for(int idx = v.Width(); idx < _width; idx++)
+	this->Set_Bit(idx,false);
+    }
+}
+
+bool Unsigned::Get_Bit(int idx)
+{
+  int word_index = idx/__WORD_SIZE__;
+  int bit_index  = idx%__WORD_SIZE__;
+
+  assert(word_index < this->Array_Size());
+  
+  UWord mask_bit = 1;
+  if(_bit_field[word_index] & (mask_bit << bit_index))
+    return(true);
+  else
+    return(false);
+}
+
+
+void Unsigned::Set_Bit(int idx, bool v)
+{
+  int word_index = idx/__WORD_SIZE__;
+  int bit_index  = idx%__WORD_SIZE__;
+
+  UWord bit_mask = 1;
+  if(word_index < this->Array_Size())
+    {
+      bit_mask = (bit_mask << bit_index);
+      UWord and_mask = ~bit_mask;
+      _bit_field[word_index] = (_bit_field[word_index] &  and_mask) | (v ? bit_mask : 0);
+    }
+}
+
+
+void Unsigned::Negate()
+{
+  Unsigned one_val(this->Width());
+  one_val.Set_Bit(0,true);
+
+  this->Complement();
+  this->Add(one_val);
+}
+
+void Unsigned::Increment()
+{
+  Unsigned one_val(this->Width());
+  one_val.Set_Bit(0,true);
+  this->Add(one_val);
+}
+
+void Unsigned::Decrement()
+{
+  Unsigned one_val(this->Width());
+  one_val.Set_Bit(0,true);
+  this->Subtract(one_val);
+}
+
+void Unsigned::Complement()
+{
+  for(int idx = 0; idx < this->Array_Size(); idx++)
+    _bit_field[idx] = ~(_bit_field[idx]);
+
+}
+
+void Unsigned::And(Unsigned& b)
+{
+  assert(this->Width() == b.Width());
+  for(int idx = 0; idx < this->Array_Size(); idx++)
+    this->_bit_field[idx] = (this->_bit_field[idx] & b._bit_field[idx]);
+}
+
+void Unsigned::Or(Unsigned& b)
+{
+  assert(this->Width() == b.Width());
+  for(int idx = 0; idx < this->Array_Size(); idx++)
+    this->_bit_field[idx] = (this->_bit_field[idx] | b._bit_field[idx]);
+}
+
+void Unsigned::Xor(Unsigned& b)
+{
+  assert(this->Width() == b.Width());
+  for(int idx = 0; idx < this->Array_Size(); idx++)
+    this->_bit_field[idx] = (this->_bit_field[idx] ^ b._bit_field[idx]);
+}
+void Unsigned::Nand(Unsigned& b)
+{
+  this->And(b);
+  this->Complement();
+}
+void Unsigned::Nor(Unsigned& b)
+{
+  this->Or(b);
+  this->Complement();
+}
+void Unsigned::Xnor(Unsigned& b)
+{
+  this->Xor(b);
+  this->Complement();
+}
+
+void Unsigned::Concatenate(Unsigned& b)
+{
+  Unsigned tmp(_width + b._width);
+
+  for(int idx = 0; idx < b.Width(); idx++)
+    {
+      tmp.Set_Bit(idx, (b.Get_Bit(idx) ? true : false));
+    }
+  for(int idx = 0; idx < this->_width; idx++)
+    {
+      tmp.Set_Bit(idx + b.Width(), (this->Get_Bit(idx) ? true : false));
+    }
+
+  this->Swap(tmp);
+}
+
+void Unsigned::Shift_Left()
+{
+  for(int idx = this->Width()-1; idx > 0; idx--)
+    this->Set_Bit(idx,this->Get_Bit(idx-1));
+  this->Set_Bit(0,false);
+}
+
+void Unsigned::Shift_Left(int idx)
+{
+  for(int i= 0; i < idx; i++)
+    this->Shift_Left();
+}
+
+void Unsigned::Shift_Right()
+{
+  for(int idx = 0; idx < this->Width()-1; idx++)
+    this->Set_Bit(idx,this->Get_Bit(idx+1));
+  this->Set_Bit(this->Width()-1,false);
+}
+void Unsigned::Shift_Right(int idx)
+{
+  for(int i = 0; i < idx; i++)
+    this->Shift_Right();
+}
+
+
+void Unsigned::Rotate_Left()
+{
+  bool high_bit = this->Get_Bit(this->Width()-1);
+  this->Shift_Left();
+  this->Set_Bit(0,high_bit);
+}
+void Unsigned::Rotate_Left(int idx)
+{
+ for(int i = 0; i < idx; i++)
+    this->Rotate_Left(idx);
+}
+void Unsigned::Rotate_Right()
+{
+  bool low_bit = this->Get_Bit(0);
+  this->Shift_Right();
+  this->Set_Bit(this->Width()-1,low_bit);
+}
+void Unsigned::Rotate_Right(int idx)
+{
+ for(int i = 0; i < idx; i++)
+    this->Rotate_Right(idx);
+}
+
+bool Unsigned::Greater(Unsigned& b)
+{
+  bool ret_val = true;
+  assert(this->Width() == b.Width());
+  for(int idx = this->Width()-1; idx >= 0; idx--)
+    {
+      if((!this->Get_Bit(idx) && b.Get_Bit(idx)))
+	{
+	  ret_val = false;
+	  break;
+	}
+      else if(this->Get_Bit(idx) && !b.Get_Bit(idx))
+	break;
+    }
+
+  return(ret_val);
+}
+
+bool Unsigned::Less_Than(Unsigned& b)
+{
+  return(b.Greater(*this));
+}
+bool Unsigned::Greater_Equal(Unsigned& b)
+{
+  return(this->Greater(b) && !b.Greater(*this));
+}
+
+bool Unsigned::Less_Equal(Unsigned& b)
+{
+  return(this->Less_Than(b) && !this->Greater(b));
+}
+bool Unsigned::Equal(Unsigned& b)
+{
+  return(!this->Greater(b) && !this->Less_Than(b));
+}
+
+Signed::~Signed()
+{
+}
+
+Signed::Signed():Unsigned()
+{
+}
+
+Signed::Signed(int n): Unsigned(n)
+{
+}
+
+
+Signed::Signed(int n, string init_value):Unsigned(n,init_value)
+{
+}
+
+Signed::Signed(const Signed& v):Unsigned(v._width)
+{
+
+  for(int idx = 0; idx < this->Array_Size(); idx++)
+    _bit_field[idx] = v._bit_field[idx];
+
+  this->Sign_Extend();
+}
+
+UWord Signed::AtoI(string ival)
+{
+  int u_word;
+  int s_word;
+  s_word = atoi(ival.c_str());
+  u_word = *((UWord*)(&s_word));
+  return(u_word);
+}
+
+void Signed::Sign_Extend()
+{
+  bool sign_bit = this->Get_Bit(_width-1);
+  for(int idx = __WORD_SIZE__-1; idx >= _width; idx--)
+    this->Set_Bit(idx,sign_bit);
+}
+
+string Signed::To_String()
+{
+  //bits are bits..
+  return(this->Unsigned::To_String());
+}
+string Signed::To_C_String()
+{
+  SWord val = *((SWord*)(&(_bit_field[0])));
+  ostringstream string_stream(ostringstream::out);
+  string_stream << val;
+  return(string_stream.str());
+}
+
+// unsigned int <-> int type conversion
+void Signed::Assign(Unsigned& v)
+{
+  for(int idx = 0; idx < this->Array_Size(); idx++)
+    _bit_field[idx] = 0;
+
+  for(int idx = 0; idx < __MIN__(this->Array_Size(),v.Array_Size()); idx++)
+    _bit_field[idx] = v._bit_field[idx];
+
+  this->Sign_Extend();
+}
+
+
+void Signed::Assign(Signed& v)
+{
+  for(int idx = 0; idx < this->Array_Size(); idx++)
+    _bit_field[idx] = 0;
+
+  bool sign_bit = v.Get_Bit(v.Width() - 1);
+  for(int idx = 0; idx < __MIN__(_width,v.Width()); idx++)
+    {
+      this->Set_Bit(idx, v.Get_Bit(idx));
+    }
+  // sign extend if necessary
+  for(int idx = v.Width(); idx < _width; idx++)
+    this->Set_Bit(idx,sign_bit);
+
+  this->Sign_Extend();
+}
+
+//UWord Unsigned::To_Uinteger()
+
+SWord Signed::To_Integer()
+{
+  SWord int_val = *((SWord*)(&_bit_field[0]));
+  return(int_val);
+}
+
+UWord Signed::To_Uinteger()
+{
+  UWord int_val = *((UWord*) (&(_bit_field[0])));
+  return(int_val);
+}
+
+
+bool Signed::Is_Negative()
+{
+  // top bit
+  return(this->Get_Bit(this->_width-1));
+}
+
+
+void Signed::Swap(const Signed& v)
+{
+  if(_bit_field)
+    {
+      delete [] _bit_field;
+      _bit_field = NULL;
+    }
+  _width = v._width;
+
+  _bit_field = new UWord[this->Array_Size()];
+  for(int idx = 0; idx < this->Array_Size(); idx++)
+    _bit_field[idx] = 0;
+  
+  this->Assign((Signed&) v);
+}
+
+Signed& Signed::operator=(const Signed v)
+{
+  this->Swap((Signed&) v);
+}
+
+Signed& Signed::operator=(Unsigned v)
+{
+
+  if(_bit_field)
+    {
+      delete [] _bit_field;
+      _bit_field = NULL;
+    }
+  _width = v._width;
+
+  _bit_field = new UWord[this->Array_Size()];
+  for(int idx = 0; idx < this->Array_Size(); idx++)
+    _bit_field[idx] = 0;
+
+  this->Assign((Unsigned&)v);
+  return(*this);
+}
+
+
+
+
+void Signed::Shift_Right()
+{
+  bool sign_bit = this->Get_Bit(this->Width()-1);
+  this->Unsigned::Shift_Right();
+  this->Set_Bit(this->Width()-1,sign_bit);
+}
+
+bool Signed::Greater(Signed& other)
+{
+  if(this->Is_Negative() && !other.Is_Negative())
+    return(false);
+  else if(!this->Is_Negative() && other.Is_Negative())
+    return(true);
+  else if(this->Is_Negative())
+    return(other.Unsigned::Greater(*this));
+  else
+    return(this->Unsigned::Greater(other));
+    
+}
+
+bool Signed::Less_Than(Signed& b)
+{
+  return(b.Greater(*this));
+}
+bool Signed::Greater_Equal(Signed& b)
+{
+  return(this->Greater(b) && !b.Greater(*this));
+}
+bool Signed::Less_Equal(Signed& b)
+{
+  return(this->Less_Than(b) && !this->Greater(b));
+}
+
+
+
+Float Signed::To_Float(int characteristic, int mantissa_width)
+{
+  Float ret_val = Float(characteristic,mantissa_width);
+  if(_width > 64)
+    {
+      cerr << "Error: int<->float conversion supported only for integers which are up to 64 bits wide" 
+	   << endl;
+      cerr << "          the initial value will be ignored " << endl;
+      return(ret_val);
+    }
+
+  if(ret_val.Is_float32())
+    ret_val.data._float_value = (float) ((SWord)(_bit_field[0]));
+  else if(ret_val.Is_double64())
+    ret_val.data._double_value = (double)((SWord)( _bit_field[0]));
+
+  return(ret_val);
+}
+
+Float::Float(int characteristic_width, int mantissa_width):Value()
+{
+  if(characteristic_width + mantissa_width == 31)
+    this->data._float_value = 0;
+  else if(characteristic_width + mantissa_width == 63)
+    this->data._double_value = 0;
+  else
+    {
+      cerr << "Error: IEEE float and double precision are the only supported floating point formats" 
+	   << endl;
+    }
+
+  _characteristic_width = characteristic_width;
+  _mantissa_width = mantissa_width;
+
+}
+Float::Float(int characteristic_width, int mantissa_width, string float_value):Value()
+{
+
+  _characteristic_width = characteristic_width;
+  _mantissa_width = mantissa_width;
+
+  if(this->Is_float32())
+    this->data._float_value = atof(float_value.c_str());
+  else if(this->Is_double64())
+    this->data._double_value = atof(float_value.c_str());
+  else
+    {
+      cerr << "Error: IEEE float and double precision are the only supported floating point formats" 
+	   << endl;
+    }
+}
+
+
+    // +=, *=, -=
+void Float::Add(Float& v)
+{
+  assert((_characteristic_width == v._characteristic_width) && (_mantissa_width == v._mantissa_width));
+  if(this->Is_float32())
+    this->data._float_value += v.data._float_value;
+  else   if(this->Is_double64())
+    this->data._double_value += v.data._double_value;
+
+}
+void Float::Multiply(Float& v) 
+{
+  assert((_characteristic_width == v._characteristic_width) && (_mantissa_width == v._mantissa_width));
+  if(this->Is_float32())
+    this->data._float_value *= v.data._float_value;
+  else   if(this->Is_double64())
+    this->data._double_value *= v.data._double_value;
+}
+
+void Float::Subtract(Float& v)
+{
+  assert((_characteristic_width == v._characteristic_width) && (_mantissa_width == v._mantissa_width));
+  if(this->Is_float32())
+    this->data._float_value -= v.data._float_value;
+  else   if(this->Is_double64())
+    this->data._double_value -= v.data._double_value;
+}
+
+void Float::Divide(Float& v)
+{
+  assert((_characteristic_width == v._characteristic_width) && (_mantissa_width == v._mantissa_width));
+  if(this->Is_float32())
+    this->data._float_value /= v.data._float_value;
+  else   if(this->Is_double64())
+    this->data._double_value /= v.data._double_value;
+}
+
+void Float::Assign(Float& v)
+{
+  if(this->Is_float32())
+    {
+      if(v.Is_float32())
+	this->data._float_value = v.data._float_value;
+      else
+	this->data._float_value = v.data._double_value;
+    }
+  else   if(this->Is_double64())
+    {
+      if(v.Is_float32())
+	this->data._double_value = v.data._float_value;
+      else 
+	this->data._double_value = v.data._double_value;
+    }
+}
+
+void Float::To_Unsigned(Unsigned& v)
+{
+  if(this->Is_float32())
+    v._bit_field[0] = (UWord)(this->data._float_value);
+  else   if(this->Is_double64())
+    v._bit_field[0] = (UWord)(this->data._double_value);
+}
+
+void Float::To_Signed(Signed& v)
+{
+  SWord tmp;
+  if(this->Is_float32())
+    {
+      tmp = (SWord) (this->data._float_value);
+    }
+  else   if(this->Is_double64())
+    {
+      tmp = (SWord) (this->data._double_value);
+    }
+  v._bit_field[0] = *((UWord*) (&tmp));
+}
+
+void Float::Bit_Cast(Unsigned& other)
+{
+  void* tmp;
+  if(this->Is_float32())
+    {
+      tmp = (void*) &(this->data._float_value);
+    }
+  else   if(this->Is_double64())
+    {
+      tmp = (void*) &(this->data._double_value);
+    }
+  other._bit_field[0] = *((UWord*)tmp);
+}
+
+string Float::To_String()
+{
+  char buffer[1024];
+  if(this->Is_float32())
+    sprintf(buffer,"%e",this->data._float_value);
+  else   if(this->Is_double64())
+    sprintf(buffer,"%le",this->data._double_value);
+
+  string ret_string = buffer;
+  return(ret_string);
+}
+
+string Float::To_C_String()
+{
+  return(this->To_String());
+}
+
+
+
+bool Float::Greater(Float& t)
+{
+  bool ret_val;
+  assert((this->_characteristic_width == t._characteristic_width) && (this->_mantissa_width == t._mantissa_width));
+  if(this->Is_float32())
+    ret_val = (this->data._float_value > t.data._float_value);
+  else   if(this->Is_double64())
+    ret_val = (this->data._float_value < t.data._float_value);
+  return(ret_val);  
+
+}
+bool Float::Less_Than(Float& t)
+{
+  return(t.Greater(*this));
+}
+bool Float::Greater_Equal(Float& t)
+{
+  return (!this->Less_Than(t));
+}
+bool Float::Less_Equal(Float& t)
+{
+  return (!this->Greater(t));
+}
+bool Float::Equal(Float& t)
+{
+  return(!(this->Less_Than(t) || this->Greater(t)));
+}

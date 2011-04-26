@@ -1,0 +1,17 @@
+// a simple example.. to illustrate the use of a fork
+$module [sum_mod]
+    $in (a:$uint<10> b:$uint<10> c:$uint<10> d:$uint<10>)
+    $out (result:$uint<10>)
+$is
+{
+	$forkblock[p] {
+		$seriesblock[s1] { q := (a + b) }
+		$seriesblock[s2] { r := (c + d) }
+		
+		$join s1 s2 $fork 
+			s := (%s1:q - %s2:r) 
+			t := (%s1:q + %s2:r) 
+		$endjoin
+	}
+	result := (%p:s + %p:t)
+}

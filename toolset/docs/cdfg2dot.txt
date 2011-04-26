@@ -1,9 +1,0 @@
-
-cdfg2dot - Dump a GraphViz ``dot'' representation for each
-           control-path in the AHIR description.
-
-cdfg2dot <inputfile>
-
-Simply invoke the utility with an argument specifying the input AHIR
-description. The result is a set of ``.dot'' files, one for each
-control-path in the AHIR description.

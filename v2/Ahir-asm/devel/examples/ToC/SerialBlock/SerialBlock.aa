@@ -1,0 +1,19 @@
+// a simple example.. which illustrates
+// some of the binary operators 
+$module [sum_mod]
+    $in (a $uint<10> b $uint<10>)
+    $out (c $uint<10>)
+$is
+{
+	$storage x $uint<10>
+        x := ( a + b )
+        x := ( x - b )
+        x := ( x * b )
+ 	x := ( x ~| b )
+ 	x := ( x ~& b )
+	x := ( x ~^ b )
+	x := ( x ^ b )
+ 	x := ( x & b )
+ 	x := ( x | b )
+	c := x
+}

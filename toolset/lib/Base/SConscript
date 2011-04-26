@@ -1,7 +1,0 @@
-
-Import('env')
-
-source_files = Glob('*.cpp')
-env.Append(all_sources = Glob('*.[hc]pp'))
-
-env.Library('Base', source_files)

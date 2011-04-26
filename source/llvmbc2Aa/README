@@ -1,3 +1,0 @@
-run scons to build.
-
-assumes that llvm (2.8) is already installed.

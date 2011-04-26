@@ -1,0 +1,45 @@
+This is the ahir git repository.
+
+The organization
+	antlr2
+		contains antlrv2 jar and includes.
+
+	Documents
+		documentation
+
+
+	examples
+		examples from the AHIR V1 flow.
+		The V2 flow examples are scattered in
+		the source/ area.
+
+	iolib
+		library of read/write methods which
+		use named pipes (useful for describing 
+		parallel algorithms communicating through pipes).
+		This is for V1.  
+
+		For V2, there is a separate library 
+
+	make_release.sh
+		a shell script which generates a release
+		(binaries, docs).
+
+	README
+		this file.
+
+	Release
+		the release directory
+
+	source
+		all AhirV2 stuff is here.  Should
+		rename it to v2.
+
+	toolset
+		all AhirV1 stuff is here.  Should
+		make a directory called v1 and move
+		this into that.
+
+	vhdl
+		all VHDL code...  this should be
+		split into the v1 and v2 area.

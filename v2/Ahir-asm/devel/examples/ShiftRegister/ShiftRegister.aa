@@ -1,0 +1,30 @@
+// a simple example.. of a shift-register.
+// Internal pipes are useful!
+$module [shiftregister]
+	$in()
+	$out()
+$is
+{
+	$pipe inpipe $uint<10>
+	$pipe outpipe $uint<10>
+
+	$parallelblock[p1]
+	{
+		$pipe midpipe $uint<10>
+		$branchblock[b1]
+		{
+			$merge $entry loopback $endmerge
+			a := inpipe
+			midpipe := a  // pipe is always written into
+			$place [loopback]
+		}
+
+		$branchblock[b2]
+		{
+			$merge $entry loopback $endmerge
+			a := midpipe
+			outpipe := a // pipe is always read from.
+			$place [loopback]
+		}
+	}
+}

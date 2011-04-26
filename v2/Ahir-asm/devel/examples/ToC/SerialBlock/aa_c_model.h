@@ -1,0 +1,43 @@
+#include <Aa2C.h>
+typedef struct sum_mod_State__
+{
+  uint_10 a;
+  uint_10 b;
+  uint_10 c;
+  uint_10 x;
+  unsigned int _assign_line_9_entry:1;
+  unsigned int _assign_line_9_in_progress:1;
+  unsigned int _assign_line_9_exit:1;
+  unsigned int _assign_line_10_entry:1;
+  unsigned int _assign_line_10_in_progress:1;
+  unsigned int _assign_line_10_exit:1;
+  unsigned int _assign_line_11_entry:1;
+  unsigned int _assign_line_11_in_progress:1;
+  unsigned int _assign_line_11_exit:1;
+  unsigned int _assign_line_12_entry:1;
+  unsigned int _assign_line_12_in_progress:1;
+  unsigned int _assign_line_12_exit:1;
+  unsigned int _assign_line_13_entry:1;
+  unsigned int _assign_line_13_in_progress:1;
+  unsigned int _assign_line_13_exit:1;
+  unsigned int _assign_line_14_entry:1;
+  unsigned int _assign_line_14_in_progress:1;
+  unsigned int _assign_line_14_exit:1;
+  unsigned int _assign_line_15_entry:1;
+  unsigned int _assign_line_15_in_progress:1;
+  unsigned int _assign_line_15_exit:1;
+  unsigned int _assign_line_16_entry:1;
+  unsigned int _assign_line_16_in_progress:1;
+  unsigned int _assign_line_16_exit:1;
+  unsigned int _assign_line_17_entry:1;
+  unsigned int _assign_line_17_in_progress:1;
+  unsigned int _assign_line_17_exit:1;
+  unsigned int _assign_line_18_entry:1;
+  unsigned int _assign_line_18_in_progress:1;
+  unsigned int _assign_line_18_exit:1;
+  unsigned sum_mod_entry:1;
+  unsigned sum_mod_in_progress:1;
+  unsigned sum_mod_exit:1;
+} sum_mod_State;
+sum_mod_State *sum_mod_ (sum_mod_State *);
+int sum_mod (uint_10, uint_10, uint_10 *);

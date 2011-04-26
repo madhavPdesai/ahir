@@ -1,0 +1,12 @@
+
+Import('env')
+
+source_files = Glob('*.cpp')
+env.Append(all_sources = Glob('*.[hc]pp'))
+
+local = env.Clone()
+
+local.Program('link-ahir', source_files)
+
+local.AppendUnique(LIBS = ['AHIR', 'Base'])
+local.AppendUnique(LIBPATH = ['#/lib/Base', '#/lib/AHIR'])

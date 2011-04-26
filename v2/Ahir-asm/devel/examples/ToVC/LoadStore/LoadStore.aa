@@ -1,0 +1,13 @@
+$storage buffer: $uint<10>
+$storage scratch: $array[32] $of $uint<10>
+
+// a simple example..
+$module [sum_mod]
+    $in (a:$uint<10>)
+    $out (b:$uint<10>)
+$is
+{
+	buffer := a // write to buffer
+        scratch[0] := buffer // read from buffer, write to scratch[0]
+	b := scratch[0] // read from scratch[0]
+}

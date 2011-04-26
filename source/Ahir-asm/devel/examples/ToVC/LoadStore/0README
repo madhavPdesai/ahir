@@ -1,3 +1,0 @@
-A simple test-case to check if load/store is basically OK.
-Note: two cases are covered, an array and a scalar
-declared as storage.

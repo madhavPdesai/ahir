@@ -1,6 +1,0 @@
-
-lower_dirs = Split('CDFG Base AHIR')
-
-lower_scripts = map(lambda x : x + '/SConscript', lower_dirs)
-
-SConscript(lower_scripts)

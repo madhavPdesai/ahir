@@ -1,0 +1,1117 @@
+# //  ModelSim SE 6.2f Jan 13 2007 Linux 2.6.15-1.2054_FC5
+# //
+# //  Copyright 1991-2007 Mentor Graphics Corporation
+# //              All Rights Reserved.
+# //
+# //  THIS WORK CONTAINS TRADE SECRET AND 
+# //  PROPRIETARY INFORMATION WHICH IS THE PROPERTY
+# //  OF MENTOR GRAPHICS CORPORATION OR ITS LICENSORS
+# //  AND IS SUBJECT TO LICENSE TERMS.
+# //
+# OpenFile BasicCheck.mpf 
+# Loading project BasicCheck
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/base_bank.vhd 
+# Compile of base_bank.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_component_pack.vhd 
+# Compile of mem_component_pack.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_function_pack.vhd 
+# Compile of mem_function_pack.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_repeater.vhd 
+# Compile of mem_repeater.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_shift_repeater.vhd 
+# Compile of mem_shift_repeater.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_bank.vhd 
+# Compile of memory_bank.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem_package.vhd 
+# Compile of memory_subsystem_package.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_functions.vhd 
+# Compile of merge_functions.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_tree.vhd 
+# Compile of merge_tree.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BypassRegister.vhd 
+# Compile of BypassRegister.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Types.vhd 
+# Compile of Types.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/math_utility_pkg.vhd 
+# Compile of math_utility_pkg.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/combinational_merge.vhd 
+# Compile of combinational_merge.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/demerge_tree.vhd 
+# Compile of demerge_tree.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/demerge_tree_wrap.vhd 
+# Compile of demerge_tree_wrap.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_demux.vhd 
+# Compile of mem_demux.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_test_block.vhd 
+# Compile of mem_test_block.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_bank_base.vhd 
+# Compile of memory_bank_base.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem.vhd 
+# Compile of memory_subsystem.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem_core.vhd 
+# Compile of memory_subsystem_core.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem_tb.vhd 
+# Compile of memory_subsystem_tb.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_box_with_repeater.vhd 
+# Compile of merge_box_with_repeater.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Components.vhd 
+# Compile of Components.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/fixed_pkg_c.vhd 
+# Compile of fixed_pkg_c.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/float_pkg_c.vhd 
+# Compile of float_pkg_c.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Subprograms.vhd 
+# Compile of Subprograms.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Utilities.vhd 
+# Compile of Utilities.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/place.vhdl 
+# Compile of place.vhdl was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/transition.vhdl 
+# Compile of transition.vhdl was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BranchBase.vhd 
+# Compile of BranchBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputMuxBase.vhd 
+# Compile of InputMuxBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortLevel.vhd 
+# Compile of InputPortLevel.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputDemuxBase.vhd 
+# Compile of OutputDemuxBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBase.vhd 
+# Compile of PhiBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PortTBWrap.vhd 
+# Compile of PortTBWrap.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/RegisterBase.vhd 
+# Compile of RegisterBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SelectBase.vhd 
+# Compile of SelectBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/FloatOperatorPackage.vhd 
+# Compile of FloatOperatorPackage.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/OperatorPackage.vhd 
+# Compile of OperatorPackage.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorBase.vhd 
+# vcom_capture -work work -2002 -explicit -novopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/register_bank.vhd 
+# Compile of register_bank.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/RepeaterBase.vhd 
+# Compile of RepeaterBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/BaseComponents.vhd 
+# Compile of BaseComponents.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PipeBase.vhd 
+# Compile of PipeBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiter.vhd 
+# Compile of CallArbiter.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitary.vhd 
+# Compile of CallArbiterUnitary.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallMediator.vhd 
+# Compile of CallMediator.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPort.vhd 
+# Compile of InputPort.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/LoadCompleteShared.vhd 
+# Compile of LoadCompleteShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/LoadReqShared.vhd 
+# Compile of LoadReqShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputPort.vhd 
+# Compile of OutputPort.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBaseTB.vhd 
+# Compile of PhiBaseTB.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorShared.vhd 
+# Compile of SplitOperatorShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorSharedTBWrap.vhd 
+# Compile of SplitOperatorSharedTBWrap.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreCompleteShared.vhd 
+# Compile of StoreCompleteShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreReqShared.vhd 
+# Compile of StoreReqShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorSharedTB.vhd 
+# Compile of SplitOperatorSharedTB.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnitaryOperatorBase.vhd 
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputPortLevel.vhd 
+# Compile of OutputPortLevel.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/ShiftRepeaterBase.vhd 
+# Compile of ShiftRepeaterBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/source/Ahir-asm/devel/examples/ToVC/BranchBlock/system.vhdl 
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorBase.vhd 
+# Compile of SplitOperatorBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnitaryOperatorBase.vhd 
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/source/Ahir-asm/devel/examples/ToVC/BranchBlock/system.vhdl 
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnitaryOperatorBase.vhd 
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/source/Ahir-asm/devel/examples/ToVC/BranchBlock/system.vhdl 
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnitaryOperatorBase.vhd 
+# Compile of UnitaryOperatorBase.vhd failed.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/source/Ahir-asm/devel/examples/ToVC/BranchBlock/system.vhdl 
+# Compile of system.vhdl failed.
+# Compile of UnsharedOperatorBase.vhd was successful with warnings.
+# Compile of system.vhdl failed with 1 errors.
+# Compile of system.vhdl was successful.
+# Load canceled
+vsim -novopt work.test_system_test_bench
+# vsim -novopt work.test_system_test_bench 
+# Loading /cad/modelsim/modeltech/linux/../std.standard
+# Loading /cad/modelsim/modeltech/linux/../ieee.std_logic_1164(body)
+# Refreshing ./work.memory_subsystem_package
+# Loading work.memory_subsystem_package
+# Refreshing ./work.types
+# Loading work.types
+# Loading /cad/modelsim/modeltech/linux/../ieee.numeric_std(body)
+# Loading /cad/modelsim/modeltech/linux/../std.textio(body)
+# Refreshing ./work.math_utility_pkg
+# Loading work.math_utility_pkg
+# Loading /cad/modelsim/modeltech/linux/../ieee.math_real(body)
+# Refreshing ./work.fixed_pkg(body)
+# Loading work.fixed_pkg(body)
+# Refreshing ./work.float_pkg(body)
+# Loading work.float_pkg(body)
+# Refreshing ./work.subprograms(body)
+# Loading work.subprograms(body)
+# Refreshing ./work.components
+# Loading work.components
+# Refreshing ./work.basecomponents
+# Loading work.basecomponents
+# Refreshing ./work.utilities(body)
+# Loading work.utilities(body)
+# Refreshing ./work.operatorpackage(body)
+# Loading work.operatorpackage(body)
+# Refreshing ./work.vc_system_package
+# Loading work.vc_system_package
+# Refreshing ./work.test_system_test_bench(default)
+# Loading work.test_system_test_bench(default)
+# Refreshing ./work.test_system(default)
+# Loading work.test_system(default)
+# Refreshing ./work.sum_mod(default)
+# Loading work.sum_mod(default)
+# Refreshing ./work.place(default_arch)
+# Loading work.place(default_arch)
+# Refreshing ./work.phibase(behave)
+# Loading work.phibase(behave)
+# Refreshing ./work.registerbase(arch)
+# Loading work.registerbase(arch)
+# Refreshing ./work.branchbase(behave)
+# Loading work.branchbase(behave)
+# Refreshing ./work.floatoperatorpackage(body)
+# Loading work.floatoperatorpackage(body)
+# Refreshing ./work.unsharedoperatorbase(vanilla)
+# Loading work.unsharedoperatorbase(vanilla)
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# Refreshing ./work.bypassregister(behave)
+# Loading work.bypassregister(behave)
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup1/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+add wave sim:/test_system_test_bench/test_system_instance/*
+add wave sim:/test_system_test_bench/*
+run 100 ns
+run 100 ns
+run 100 ns
+run 1000 ns
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/*
+run 100 ns
+run 100 ns
+restart -f
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup1/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+run 200 ns
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_5_3/*
+restart -f
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup1/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+run 100 ns
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_5_3/assign_stmt_25_29/assign_stmt_25_29_start
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_5_3/assign_stmt_25_29/xentry_30_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_5_3/assign_stmt_25_29/xexit_31_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_5_3/assign_stmt_25_29/binary_24_32_symbol
+restart -f
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup1/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+run 100 ns
+quit -sim
+# Compile of system.vhdl was successful.
+vsim -novopt work.test_system_test_bench
+# vsim -novopt work.test_system_test_bench 
+# Loading /cad/modelsim/modeltech/linux/../std.standard
+# Loading /cad/modelsim/modeltech/linux/../ieee.std_logic_1164(body)
+# Loading work.memory_subsystem_package
+# Loading work.types
+# Loading /cad/modelsim/modeltech/linux/../ieee.numeric_std(body)
+# Loading /cad/modelsim/modeltech/linux/../std.textio(body)
+# Loading work.math_utility_pkg
+# Loading /cad/modelsim/modeltech/linux/../ieee.math_real(body)
+# Loading work.fixed_pkg(body)
+# Loading work.float_pkg(body)
+# Loading work.subprograms(body)
+# Loading work.components
+# Loading work.basecomponents
+# Loading work.utilities(body)
+# Loading work.operatorpackage(body)
+# Refreshing ./work.vc_system_package
+# Loading work.vc_system_package
+# Refreshing ./work.test_system_test_bench(default)
+# Loading work.test_system_test_bench(default)
+# Refreshing ./work.test_system(default)
+# Loading work.test_system(default)
+# Refreshing ./work.sum_mod(default)
+# Loading work.sum_mod(default)
+# Loading work.place(default_arch)
+# Loading work.phibase(behave)
+# Loading work.registerbase(arch)
+# Loading work.branchbase(behave)
+# Loading work.floatoperatorpackage(body)
+# Loading work.unsharedoperatorbase(vanilla)
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# Loading work.bypassregister(behave)
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup1/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+add wave sim:/test_system_test_bench/*
+run 100 ns
+quit -sim
+# Compile of system.vhdl was successful.
+vsim -novopt work.test_system_test_bench
+# vsim -novopt work.test_system_test_bench 
+# Loading /cad/modelsim/modeltech/linux/../std.standard
+# Loading /cad/modelsim/modeltech/linux/../ieee.std_logic_1164(body)
+# Loading work.memory_subsystem_package
+# Loading work.types
+# Loading /cad/modelsim/modeltech/linux/../ieee.numeric_std(body)
+# Loading /cad/modelsim/modeltech/linux/../std.textio(body)
+# Loading work.math_utility_pkg
+# Loading /cad/modelsim/modeltech/linux/../ieee.math_real(body)
+# Loading work.fixed_pkg(body)
+# Loading work.float_pkg(body)
+# Loading work.subprograms(body)
+# Loading work.components
+# Loading work.basecomponents
+# Loading work.utilities(body)
+# Loading work.operatorpackage(body)
+# Refreshing ./work.vc_system_package
+# Loading work.vc_system_package
+# Refreshing ./work.test_system_test_bench(default)
+# Loading work.test_system_test_bench(default)
+# Refreshing ./work.test_system(default)
+# Loading work.test_system(default)
+# Refreshing ./work.sum_mod(default)
+# Loading work.sum_mod(default)
+# Loading work.place(default_arch)
+# Loading work.phibase(behave)
+# Loading work.registerbase(arch)
+# Loading work.branchbase(behave)
+# Loading work.floatoperatorpackage(body)
+# Loading work.unsharedoperatorbase(vanilla)
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# Loading work.bypassregister(behave)
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup1/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+add wave sim:/test_system_test_bench/*
+run 1000 ns
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/data_path/loop_counter_7
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/data_path/new_loop_counter_20
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/data_path/t_25
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/data_path/temp_t_11
+restart -f
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup1/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+run 100 ns
+run 100 ns
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/unsharedoperator/*
+
+restart -f
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup1/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+run 100 ns
+run 100 ns
+quit -sim
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/base_bank.vhd 
+# Compile of base_bank.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_component_pack.vhd 
+# Compile of mem_component_pack.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_function_pack.vhd 
+# Compile of mem_function_pack.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_repeater.vhd 
+# Compile of mem_repeater.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_shift_repeater.vhd 
+# Compile of mem_shift_repeater.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_bank.vhd 
+# Compile of memory_bank.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem_package.vhd 
+# Compile of memory_subsystem_package.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_functions.vhd 
+# Compile of merge_functions.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_tree.vhd 
+# Compile of merge_tree.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BypassRegister.vhd 
+# Compile of BypassRegister.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Types.vhd 
+# Compile of Types.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/math_utility_pkg.vhd 
+# Compile of math_utility_pkg.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/combinational_merge.vhd 
+# Compile of combinational_merge.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/demerge_tree.vhd 
+# Compile of demerge_tree.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/demerge_tree_wrap.vhd 
+# Compile of demerge_tree_wrap.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_demux.vhd 
+# Compile of mem_demux.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_test_block.vhd 
+# Compile of mem_test_block.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_bank_base.vhd 
+# Compile of memory_bank_base.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem.vhd 
+# Compile of memory_subsystem.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem_core.vhd 
+# Compile of memory_subsystem_core.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem_tb.vhd 
+# Compile of memory_subsystem_tb.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_box_with_repeater.vhd 
+# Compile of merge_box_with_repeater.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Components.vhd 
+# Compile of Components.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/fixed_pkg_c.vhd 
+# Compile of fixed_pkg_c.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/float_pkg_c.vhd 
+# Compile of float_pkg_c.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Subprograms.vhd 
+# Compile of Subprograms.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Utilities.vhd 
+# Compile of Utilities.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/place.vhdl 
+# Compile of place.vhdl was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/transition.vhdl 
+# Compile of transition.vhdl was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BranchBase.vhd 
+# Compile of BranchBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputMuxBase.vhd 
+# Compile of InputMuxBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortLevel.vhd 
+# Compile of InputPortLevel.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputDemuxBase.vhd 
+# Compile of OutputDemuxBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBase.vhd 
+# Compile of PhiBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PortTBWrap.vhd 
+# Compile of PortTBWrap.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/RegisterBase.vhd 
+# Compile of RegisterBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SelectBase.vhd 
+# Compile of SelectBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/FloatOperatorPackage.vhd 
+# Compile of FloatOperatorPackage.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/OperatorPackage.vhd 
+# Compile of OperatorPackage.vhd was successful.
+# vcom_capture -work work -2002 -explicit -novopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/register_bank.vhd 
+# Compile of register_bank.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/RepeaterBase.vhd 
+# Compile of RepeaterBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/BaseComponents.vhd 
+# Compile of BaseComponents.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PipeBase.vhd 
+# Compile of PipeBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiter.vhd 
+# Compile of CallArbiter.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitary.vhd 
+# Compile of CallArbiterUnitary.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallMediator.vhd 
+# Compile of CallMediator.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPort.vhd 
+# Compile of InputPort.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/LoadCompleteShared.vhd 
+# Compile of LoadCompleteShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/LoadReqShared.vhd 
+# Compile of LoadReqShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputPort.vhd 
+# Compile of OutputPort.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBaseTB.vhd 
+# Compile of PhiBaseTB.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorShared.vhd 
+# Compile of SplitOperatorShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorSharedTBWrap.vhd 
+# Compile of SplitOperatorSharedTBWrap.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreCompleteShared.vhd 
+# Compile of StoreCompleteShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreReqShared.vhd 
+# Compile of StoreReqShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorSharedTB.vhd 
+# Compile of SplitOperatorSharedTB.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputPortLevel.vhd 
+# Compile of OutputPortLevel.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/ShiftRepeaterBase.vhd 
+# Compile of ShiftRepeaterBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorBase.vhd 
+# Compile of SplitOperatorBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/source/Ahir-asm/devel/examples/ToVC/BranchBlock/system.vhdl 
+# Compile of system.vhdl was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd 
+# Compile of UnsharedOperatorBase.vhd was successful.
+# Load canceled
+vsim -novopt work.test_system_test_bench
+# vsim -novopt work.test_system_test_bench 
+# Loading /cad/modelsim/modeltech/linux/../std.standard
+# Loading /cad/modelsim/modeltech/linux/../ieee.std_logic_1164(body)
+# Refreshing ./work.memory_subsystem_package
+# Loading work.memory_subsystem_package
+# Refreshing ./work.types
+# Loading work.types
+# Loading /cad/modelsim/modeltech/linux/../ieee.numeric_std(body)
+# Loading /cad/modelsim/modeltech/linux/../std.textio(body)
+# Refreshing ./work.math_utility_pkg
+# Loading work.math_utility_pkg
+# Loading /cad/modelsim/modeltech/linux/../ieee.math_real(body)
+# Refreshing ./work.fixed_pkg(body)
+# Loading work.fixed_pkg(body)
+# Refreshing ./work.float_pkg(body)
+# Loading work.float_pkg(body)
+# Refreshing ./work.subprograms(body)
+# Loading work.subprograms(body)
+# Refreshing ./work.components
+# Loading work.components
+# Refreshing ./work.basecomponents
+# Loading work.basecomponents
+# Refreshing ./work.utilities(body)
+# Loading work.utilities(body)
+# Refreshing ./work.operatorpackage(body)
+# Loading work.operatorpackage(body)
+# Refreshing ./work.vc_system_package
+# Loading work.vc_system_package
+# Refreshing ./work.test_system_test_bench(default)
+# Loading work.test_system_test_bench(default)
+# Refreshing ./work.test_system(default)
+# Loading work.test_system(default)
+# Refreshing ./work.sum_mod(default)
+# Loading work.sum_mod(default)
+# Refreshing ./work.place(default_arch)
+# Loading work.place(default_arch)
+# Refreshing ./work.phibase(behave)
+# Loading work.phibase(behave)
+# Refreshing ./work.registerbase(arch)
+# Loading work.registerbase(arch)
+# Refreshing ./work.branchbase(behave)
+# Loading work.branchbase(behave)
+# Refreshing ./work.floatoperatorpackage(body)
+# Loading work.floatoperatorpackage(body)
+# Refreshing ./work.unsharedoperatorbase(vanilla)
+# Loading work.unsharedoperatorbase(vanilla)
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# Refreshing ./work.bypassregister(behave)
+# Loading work.bypassregister(behave)
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup1/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+# ** Warning: (vsim-3473) Component instance "comb_block : genericcombinationaloperator" is not bound.
+#    Time: 0 ns  Iteration: 0  Region: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator  File: /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
+quit -sim
+# Compile of GenericCombinationalOperator.vhd was successful.
+vsim -novopt work.test_system_test_bench
+# vsim -novopt work.test_system_test_bench 
+# Loading /cad/modelsim/modeltech/linux/../std.standard
+# Loading /cad/modelsim/modeltech/linux/../ieee.std_logic_1164(body)
+# Loading work.memory_subsystem_package
+# Loading work.types
+# Loading /cad/modelsim/modeltech/linux/../ieee.numeric_std(body)
+# Loading /cad/modelsim/modeltech/linux/../std.textio(body)
+# Loading work.math_utility_pkg
+# Loading /cad/modelsim/modeltech/linux/../ieee.math_real(body)
+# Loading work.fixed_pkg(body)
+# Loading work.float_pkg(body)
+# Loading work.subprograms(body)
+# Loading work.components
+# Loading work.basecomponents
+# Loading work.utilities(body)
+# Loading work.operatorpackage(body)
+# Loading work.vc_system_package
+# Loading work.test_system_test_bench(default)
+# Loading work.test_system(default)
+# Loading work.sum_mod(default)
+# Loading work.place(default_arch)
+# Loading work.phibase(behave)
+# Loading work.registerbase(arch)
+# Loading work.branchbase(behave)
+# Loading work.floatoperatorpackage(body)
+# Loading work.unsharedoperatorbase(vanilla)
+# Refreshing ./work.genericcombinationaloperator(vanilla)
+# Loading work.genericcombinationaloperator(vanilla)
+# Loading work.bypassregister(behave)
+# Load canceled
+add wave sim:/test_system_test_bench/*
+run 1000 ns
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+quit -sim
+# Break key hit 
+# Compile of system.vhdl was successful.
+vsim -novopt work.test_system_test_bench
+# vsim -novopt work.test_system_test_bench 
+# Loading /cad/modelsim/modeltech/linux/../std.standard
+# Loading /cad/modelsim/modeltech/linux/../ieee.std_logic_1164(body)
+# Loading work.memory_subsystem_package
+# Loading work.types
+# Loading /cad/modelsim/modeltech/linux/../ieee.numeric_std(body)
+# Loading /cad/modelsim/modeltech/linux/../std.textio(body)
+# Loading work.math_utility_pkg
+# Loading /cad/modelsim/modeltech/linux/../ieee.math_real(body)
+# Loading work.fixed_pkg(body)
+# Loading work.float_pkg(body)
+# Loading work.subprograms(body)
+# Loading work.components
+# Loading work.basecomponents
+# Loading work.utilities(body)
+# Loading work.operatorpackage(body)
+# Refreshing ./work.vc_system_package
+# Loading work.vc_system_package
+# Refreshing ./work.test_system_test_bench(default)
+# Loading work.test_system_test_bench(default)
+# Refreshing ./work.test_system(default)
+# Loading work.test_system(default)
+# Refreshing ./work.sum_mod(default)
+# Loading work.sum_mod(default)
+# Loading work.place(default_arch)
+# Loading work.phibase(behave)
+# Loading work.registerbase(arch)
+# Loading work.branchbase(behave)
+# Refreshing ./work.splitoperatorshared(vanilla)
+# Loading work.splitoperatorshared(vanilla)
+# Refreshing ./work.inputmuxbase(behave)
+# Loading work.inputmuxbase(behave)
+# Loading work.floatoperatorpackage(body)
+# Refreshing ./work.splitoperatorbase(vanilla)
+# Loading work.splitoperatorbase(vanilla)
+# Loading work.genericcombinationaloperator(vanilla)
+# Refreshing ./work.outputdemuxbase(behave)
+# Loading work.outputdemuxbase(behave)
+# Loading work.unsharedoperatorbase(vanilla)
+# Loading work.bypassregister(behave)
+add wave sim:/test_system_test_bench/*
+run 100 ns
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 35 ns  Iteration: 14  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Error: in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)
+#    Time: 75 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/splitoperator
+run 100 ns
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/*
+restart -f
+run 100 ns
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 35 ns  Iteration: 14  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Error: in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)
+#    Time: 75 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/splitoperator
+restart -f
+run 35
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 35 ns  Iteration: 14  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+run 0 ns
+run 1 ns
+run 
+# ** Error: in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)
+#    Time: 75 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/splitoperator
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/*
+restart -f
+run 100 ns
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 35 ns  Iteration: 14  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Error: in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)
+#    Time: 75 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/splitoperator
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/binary_20_inst_req_0
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/binary_55_inst_req_0
+restart -f
+run 100 ns
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 35 ns  Iteration: 14  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Error: in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)
+#    Time: 75 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/splitoperator
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/sum_mod_cp_0_start
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/xentry_1_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/xexit_2_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_6_3_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/assign_stmt_73_233_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/assign_stmt_78_238_symbol
+restart -f
+run 100 ns
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 35 ns  Iteration: 14  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Error: in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)
+#    Time: 75 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/splitoperator
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/branch_block_stmt_41_129_start
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/xentry_130_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/xexit_131_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/branch_block_stmt_41_x_xentry_x_xx_x132_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/branch_block_stmt_41_x_xexit_x_xx_x133_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/merge_stmt_42_x_xentry_x_xx_x134_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/merge_stmt_42_x_xexit_x_xx_x135_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/assign_stmt_56_x_xentry_x_xx_x136_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/assign_stmt_56_x_xexit_x_xx_x137_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/assign_stmt_61_x_xentry_x_xx_x138_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/assign_stmt_61_x_xexit_x_xx_x139_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/if_stmt_62_x_xentry_x_xx_x140_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/if_stmt_62_x_xexit_x_xx_x141_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/assign_stmt_56_142_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/assign_stmt_61_155_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/if_stmt_62_dead_link_168_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/if_stmt_62_eval_test_172_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/binary_65_place_186_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/if_stmt_62_if_link_187_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/if_stmt_62_else_link_191_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/loopback_195_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/stmt_68_x_xentry_x_xx_x196_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/stmt_68_x_xexit_x_xx_x197_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/stmt_68_198_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/merge_stmt_42_dead_link_201_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/merge_stmt_42_x_xentry_x_xx_xphireq_205_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/loopback_phireq_216_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/merge_stmt_42_phireqmerge_227_symbol
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_41_129/merge_stmt_42_phiack_228_symbol
+restart -f
+run 100 ns
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 35 ns  Iteration: 14  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Error: in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)
+#    Time: 75 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/splitoperator
+add wave sim:/test_system_test_bench/test_system_instance/sum_mod_instance/sum_mod_cp_0/branch_block_stmt_6_3/*
+restart -f
+run 100 ns
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 35 ns  Iteration: 14  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Error: in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)
+#    Time: 75 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup0/splitoperator
+quit -sim
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/base_bank.vhd 
+# Compile of base_bank.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_component_pack.vhd 
+# Compile of mem_component_pack.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_function_pack.vhd 
+# Compile of mem_function_pack.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_repeater.vhd 
+# Compile of mem_repeater.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_shift_repeater.vhd 
+# Compile of mem_shift_repeater.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_bank.vhd 
+# Compile of memory_bank.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem_package.vhd 
+# Compile of memory_subsystem_package.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_functions.vhd 
+# Compile of merge_functions.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_tree.vhd 
+# Compile of merge_tree.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BypassRegister.vhd 
+# Compile of BypassRegister.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Types.vhd 
+# Compile of Types.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/math_utility_pkg.vhd 
+# Compile of math_utility_pkg.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/combinational_merge.vhd 
+# Compile of combinational_merge.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/demerge_tree.vhd 
+# Compile of demerge_tree.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/demerge_tree_wrap.vhd 
+# Compile of demerge_tree_wrap.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_demux.vhd 
+# Compile of mem_demux.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_test_block.vhd 
+# Compile of mem_test_block.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_bank_base.vhd 
+# Compile of memory_bank_base.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem.vhd 
+# Compile of memory_subsystem.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem_core.vhd 
+# Compile of memory_subsystem_core.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem_tb.vhd 
+# Compile of memory_subsystem_tb.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_box_with_repeater.vhd 
+# Compile of merge_box_with_repeater.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Components.vhd 
+# Compile of Components.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/fixed_pkg_c.vhd 
+# Compile of fixed_pkg_c.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/float_pkg_c.vhd 
+# Compile of float_pkg_c.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Subprograms.vhd 
+# Compile of Subprograms.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Utilities.vhd 
+# Compile of Utilities.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/place.vhdl 
+# Compile of place.vhdl was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/transition.vhdl 
+# Compile of transition.vhdl was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BranchBase.vhd 
+# Compile of BranchBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputMuxBase.vhd 
+# Compile of InputMuxBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortLevel.vhd 
+# Compile of InputPortLevel.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputDemuxBase.vhd 
+# Compile of OutputDemuxBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBase.vhd 
+# Compile of PhiBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PortTBWrap.vhd 
+# Compile of PortTBWrap.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/RegisterBase.vhd 
+# Compile of RegisterBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SelectBase.vhd 
+# Compile of SelectBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/FloatOperatorPackage.vhd 
+# Compile of FloatOperatorPackage.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/OperatorPackage.vhd 
+# Compile of OperatorPackage.vhd was successful.
+# vcom_capture -work work -2002 -explicit -novopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/register_bank.vhd 
+# Compile of register_bank.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/RepeaterBase.vhd 
+# Compile of RepeaterBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/BaseComponents.vhd 
+# Compile of BaseComponents.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PipeBase.vhd 
+# Compile of PipeBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiter.vhd 
+# Compile of CallArbiter.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitary.vhd 
+# Compile of CallArbiterUnitary.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallMediator.vhd 
+# Compile of CallMediator.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPort.vhd 
+# Compile of InputPort.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/LoadCompleteShared.vhd 
+# Compile of LoadCompleteShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/LoadReqShared.vhd 
+# Compile of LoadReqShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputPort.vhd 
+# Compile of OutputPort.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBaseTB.vhd 
+# Compile of PhiBaseTB.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorShared.vhd 
+# Compile of SplitOperatorShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorSharedTBWrap.vhd 
+# Compile of SplitOperatorSharedTBWrap.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreCompleteShared.vhd 
+# Compile of StoreCompleteShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreReqShared.vhd 
+# Compile of StoreReqShared.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorSharedTB.vhd 
+# Compile of SplitOperatorSharedTB.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputPortLevel.vhd 
+# Compile of OutputPortLevel.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/ShiftRepeaterBase.vhd 
+# Compile of ShiftRepeaterBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/SplitOperatorBase.vhd 
+# Compile of SplitOperatorBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/source/Ahir-asm/devel/examples/ToVC/BranchBlock/system.vhdl 
+# Compile of system.vhdl was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd 
+# Compile of UnsharedOperatorBase.vhd was successful.
+# vcom_capture -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/GenericCombinationalOperator.vhd 
+# Compile of GenericCombinationalOperator.vhd was successful.
+vsim -novopt ahir.test_system_test_bench
+# vsim -novopt ahir.test_system_test_bench 
+# Loading /cad/modelsim/modeltech/linux/../std.standard
+# Loading /cad/modelsim/modeltech/linux/../ieee.std_logic_1164(body)
+# Refreshing work.memory_subsystem_package
+# Loading work.memory_subsystem_package
+# Refreshing work.types
+# Loading work.types
+# Loading /cad/modelsim/modeltech/linux/../ieee.numeric_std(body)
+# Loading /cad/modelsim/modeltech/linux/../std.textio(body)
+# Refreshing work.math_utility_pkg
+# Loading work.math_utility_pkg
+# Loading /cad/modelsim/modeltech/linux/../ieee.math_real(body)
+# Refreshing work.fixed_pkg(body)
+# Loading work.fixed_pkg(body)
+# Refreshing work.float_pkg(body)
+# Loading work.float_pkg(body)
+# Refreshing work.subprograms(body)
+# Loading work.subprograms(body)
+# Refreshing work.components
+# Loading work.components
+# Refreshing work.basecomponents
+# Loading work.basecomponents
+# Refreshing work.utilities(body)
+# Loading work.utilities(body)
+# Refreshing work.operatorpackage(body)
+# Loading work.operatorpackage(body)
+# Refreshing work.vc_system_package
+# Loading work.vc_system_package
+# Refreshing work.test_system_test_bench(default)
+# Loading work.test_system_test_bench(default)
+# Refreshing work.test_system(default)
+# Loading work.test_system(default)
+# Refreshing work.sum_mod(default)
+# Loading work.sum_mod(default)
+# Refreshing work.place(default_arch)
+# Loading work.place(default_arch)
+# Refreshing work.phibase(behave)
+# Loading work.phibase(behave)
+# Refreshing work.registerbase(arch)
+# Loading work.registerbase(arch)
+# Refreshing work.branchbase(behave)
+# Loading work.branchbase(behave)
+# Refreshing work.splitoperatorshared(vanilla)
+# Loading work.splitoperatorshared(vanilla)
+# Refreshing work.inputmuxbase(behave)
+# Loading work.inputmuxbase(behave)
+# Refreshing work.floatoperatorpackage(body)
+# Loading work.floatoperatorpackage(body)
+# Refreshing work.splitoperatorbase(vanilla)
+# Loading work.splitoperatorbase(vanilla)
+# Refreshing work.genericcombinationaloperator(vanilla)
+# Loading work.genericcombinationaloperator(vanilla)
+# Refreshing work.outputdemuxbase(behave)
+# Loading work.outputdemuxbase(behave)
+# Refreshing work.unsharedoperatorbase(vanilla)
+# Loading work.unsharedoperatorbase(vanilla)
+# Refreshing work.bypassregister(behave)
+# Loading work.bypassregister(behave)
+add wave sim:/test_system_test_bench/*
+
+run 100 ns
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 0 ns  Iteration: 0  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup4/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup5/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup6/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup2/unsharedoperator/comb_block/singleoperandwithconstant/singleoperandwithconstantintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 5 ns  Iteration: 5  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 35 ns  Iteration: 14  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 85 ns  Iteration: 14  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+run 100 ns
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 135 ns  Iteration: 14  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+# ** Warning: NUMERIC_STD."=": metavalue detected, returning FALSE
+#    Time: 185 ns  Iteration: 14  Instance: /test_system_test_bench/test_system_instance/sum_mod_instance/data_path/splitoperatorgroup3/unsharedoperator/comb_block/twooperand/twoopintintint
+run 100 ns
+run 1000 ns

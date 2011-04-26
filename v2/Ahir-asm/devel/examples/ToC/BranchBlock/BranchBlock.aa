@@ -1,0 +1,18 @@
+// a simple example.. of the use of a branch block
+$module [sum_mod]
+    $in (a: $uint<10> b: $uint<10>)
+    $out (c: $uint<10>)
+$is
+{
+	$storage I: $uint<10> 
+	I := b
+	$branchblock[bb] {
+		$merge $entry loopback
+			$phi s1 := 0 $on $entry s $on loopback
+		$endmerge	
+		s := (s1 + a)
+		I := (I - 1)
+		$switch (I > 0) $when 1 $then $place [loopback] $default $null $endswitch 
+	}
+	c := %bb:s
+}

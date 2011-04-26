@@ -1,0 +1,48 @@
+
+analyse-ahir - Run various analyses on an AHIR description.
+
+analyse-ahir [options] <inputfile>
+
+The following options are available:
+
+--help
+ 
+  Generate a brief message describing available options.
+
+--verify-type2 <inputfile>
+
+  Read an AHIR description from an XML file and verify every
+  control-path for Type-2 constraints.
+
+--create-labelss <inputfile>
+
+  Read an AHIR description from an XML file and create and verify an
+  LRG for each control-path. The LRG for each control-path is dumped
+  in an XML file using the Boost Serialization library. It can be read
+  by any utility using the LRGReader available in libAHIR.
+
+--reuse <inputfile>
+
+  Read an AHIR description and mark data-path operators for reuse
+  using a static compatibility analysis. The result is stored in a
+  file called ``foo.ahir_shared.xml'' where ``foo'' is the name of the
+  AHIR program described in the input file. Data-paths in the
+  resulting AHIR description, contain additional ``wrapper'' elements
+  that specify groups of data-path operators that should be mapped to
+  the same instance in hardware.
+
+--verify-cps
+
+  This is a built-in self-test that checks Type-2 verification and LRG
+  generation using a set of internally defined control-paths. The
+  control-paths and their LRGs used are dumped in separate XML files.
+  Note:
+    1. For the control-path called ``forky'', the generated LRG is
+       re-read and verified in order to check the LRGReader. The
+       scanned LRG is again dumped in a separate XML file for external
+       verification.
+    2. The control-path called ``failure'' violates Type-2
+       constraints. The tool should report a failure when verifying
+       this control-path.
+    3. This option ignores any AHIR description provided as an
+       argument.

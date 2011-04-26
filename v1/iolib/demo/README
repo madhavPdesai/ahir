@@ -1,0 +1,12 @@
+
+The demo consists of two process --- a client and a server ---
+communicating over two channels. The client generates a sequence of
+integers that it sends to the server, one at a time. The server
+receives each integer and converts it to a single-precision float,
+which is sent back on a separate channel. The client checks the
+floating point values and reports success.
+
+Note: Run the executables ./client and ./server in separate terminals
+to keep the output readable. Invoking them on the same terminal using
+'&' interleaves the output, making it difficult to read.
+

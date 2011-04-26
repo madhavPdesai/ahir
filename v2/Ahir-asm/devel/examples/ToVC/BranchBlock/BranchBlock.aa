@@ -1,0 +1,38 @@
+// a simple example.. of the use of a branch block
+// instantiate two branch blocks which do the same thing,
+// but use a switch in one case, and an if in the other..
+$module [sum_mod]
+    $in ()
+    $out (b: $uint<10> test: $uint<1>)
+$is
+{
+		a := ($cast ($uint<10>) _b11)
+		$branchblock[bb1] {
+			$merge $entry loopback 
+				$phi loop_counter := a $on $entry new_loop_counter $on loopback
+				$phi temp_t := 0 $on $entry t $on loopback
+			$endmerge	
+			new_loop_counter := (loop_counter - 1)
+                	t := (temp_t + 1)
+			$switch new_loop_counter $when 1 $then $place [loopback] 
+							$when 2 $then $place [loopback]
+							$when 3 $then $place [loopback]
+							$default $null $endswitch 
+		}
+		$branchblock[bb2] {
+			$merge $entry loopback 
+				$phi loop_counter := a $on $entry new_loop_counter $on loopback
+				$phi temp_t := 0 $on $entry t $on loopback
+			$endmerge	
+			new_loop_counter := (loop_counter - 1)
+                	t := (temp_t + 1)
+			$if (new_loop_counter > 0)  
+			$then 
+				$place [loopback] 
+			$else
+				$null
+			$endif
+		}
+		b := %bb1:t
+		test := (%bb1:t == %bb2:t)
+}

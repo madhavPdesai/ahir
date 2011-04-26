@@ -1,0 +1,146 @@
+// $pipe  inpipe : $uint<10> 
+// in scope  top-level
+$pipe [inpipe] 10
+// $pipe  outpipe : $uint<10> 
+// in scope  top-level
+$pipe [outpipe] 10
+// $pipe  stage0 : $uint<10> 
+// in scope  top-level
+$pipe [stage0] 10
+// $pipe  stage1 : $uint<10> 
+// in scope  top-level
+$pipe [stage1] 10
+// pipe-declarations for block %sum_mod
+//  file ShiftRegister.aa, line 6
+// pipe-declarations for block %sum_mod%sr
+//  file ShiftRegister.aa, line 11
+$module [sum_mod] 
+{
+  $in a:$int<10>
+  $out b:$int<10>
+  // memory-space-declarations for block %sum_mod
+  //  file ShiftRegister.aa, line 6
+  // memory-space-declarations for block %sum_mod%sr
+  //  file ShiftRegister.aa, line 11
+  // memory-space-declarations for block %sum_mod%sr
+  //  file ShiftRegister.aa, line 11
+  $CP 
+  {
+    // begin control-path 
+    ||[parallel_block_stmt_8] // parallel block  file ShiftRegister.aa, line 11
+    {
+      // control-path for: 		stage0 := inpipe // type of target is $uint<10>
+      //  file ShiftRegister.aa, line 13
+      ;;[assign_stmt_11] //  file ShiftRegister.aa, line 13
+      {
+        // CP for expression: inpipe
+        ;;[simple_obj_ref_10] 
+        {
+          // pipe read: inpipe
+          $T [req] $T [ack] 
+        }
+        // CP for expression: stage0
+        ;;[simple_obj_ref_9] 
+        {
+          // pipe write stage0
+          $T [pipe_wreq] $T [pipe_wack] 
+        }
+      }
+      // end assignment statement assign_stmt_11
+      // control-path for: 		stage1 := stage0 // type of target is $uint<10>
+      //  file ShiftRegister.aa, line 14
+      ;;[assign_stmt_14] //  file ShiftRegister.aa, line 14
+      {
+        // CP for expression: stage0
+        ;;[simple_obj_ref_13] 
+        {
+          // pipe read: stage0
+          $T [req] $T [ack] 
+        }
+        // CP for expression: stage1
+        ;;[simple_obj_ref_12] 
+        {
+          // pipe write stage1
+          $T [pipe_wreq] $T [pipe_wack] 
+        }
+      }
+      // end assignment statement assign_stmt_14
+      // control-path for: 		outpipe := stage1 // type of target is $uint<10>
+      //  file ShiftRegister.aa, line 15
+      ;;[assign_stmt_17] //  file ShiftRegister.aa, line 15
+      {
+        // CP for expression: stage1
+        ;;[simple_obj_ref_16] 
+        {
+          // pipe read: stage1
+          $T [req] $T [ack] 
+        }
+        // CP for expression: outpipe
+        ;;[simple_obj_ref_15] 
+        {
+          // pipe write outpipe
+          $T [pipe_wreq] $T [pipe_wack] 
+        }
+      }
+      // end assignment statement assign_stmt_17
+    }
+    // end parallel block parallel_block_stmt_8
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %sum_mod%sr
+    //  file ShiftRegister.aa, line 11
+    // constant-object-declarations for block %sum_mod
+    //  file ShiftRegister.aa, line 6
+    // constant-declarations for block %sum_mod%sr
+    //  file ShiftRegister.aa, line 11
+    // wire-declarations for block %sum_mod%sr
+    //  file ShiftRegister.aa, line 11
+    // wire-declarations for: 		stage0 := inpipe // type of target is $uint<10>
+    //  file ShiftRegister.aa, line 13
+    $W[simple_obj_ref_10_wire] : $int<10>
+    // wire-declarations for: 		stage1 := stage0 // type of target is $uint<10>
+    //  file ShiftRegister.aa, line 14
+    $W[simple_obj_ref_13_wire] : $int<10>
+    // wire-declarations for: 		outpipe := stage1 // type of target is $uint<10>
+    //  file ShiftRegister.aa, line 15
+    $W[simple_obj_ref_16_wire] : $int<10>
+    // datapath-instances for block %sum_mod%sr
+    //  file ShiftRegister.aa, line 11
+    // data-path instances for: 		stage0 := inpipe // type of target is $uint<10>
+    //  file ShiftRegister.aa, line 13
+    $ioport $in [simple_obj_ref_10_inst] (inpipe) (simple_obj_ref_10_wire)
+    $ioport $out [simple_obj_ref_9_inst]  (simple_obj_ref_10_wire) (stage0)
+    // data-path instances for: 		stage1 := stage0 // type of target is $uint<10>
+    //  file ShiftRegister.aa, line 14
+    $ioport $in [simple_obj_ref_13_inst] (stage0) (simple_obj_ref_13_wire)
+    $ioport $out [simple_obj_ref_12_inst]  (simple_obj_ref_13_wire) (stage1)
+    // data-path instances for: 		outpipe := stage1 // type of target is $uint<10>
+    //  file ShiftRegister.aa, line 15
+    $ioport $in [simple_obj_ref_16_inst] (stage1) (simple_obj_ref_16_wire)
+    $ioport $out [simple_obj_ref_15_inst]  (simple_obj_ref_16_wire) (outpipe)
+  }
+  // end data-path
+  // CP-DP links for block %sum_mod%sr
+  //  file ShiftRegister.aa, line 11
+  // CP-DP links for: 		stage0 := inpipe // type of target is $uint<10>
+  //  file ShiftRegister.aa, line 13
+  // CP-DP links for expression: stage0
+  simple_obj_ref_9_inst <=> (parallel_block_stmt_8/assign_stmt_11/simple_obj_ref_9/pipe_wreq) (parallel_block_stmt_8/assign_stmt_11/simple_obj_ref_9/pipe_wack)
+  // CP-DP links for expression: inpipe
+  simple_obj_ref_10_inst <=> (parallel_block_stmt_8/assign_stmt_11/simple_obj_ref_10/req) (parallel_block_stmt_8/assign_stmt_11/simple_obj_ref_10/ack)
+  // CP-DP links for: 		stage1 := stage0 // type of target is $uint<10>
+  //  file ShiftRegister.aa, line 14
+  // CP-DP links for expression: stage1
+  simple_obj_ref_12_inst <=> (parallel_block_stmt_8/assign_stmt_14/simple_obj_ref_12/pipe_wreq) (parallel_block_stmt_8/assign_stmt_14/simple_obj_ref_12/pipe_wack)
+  // CP-DP links for expression: stage0
+  simple_obj_ref_13_inst <=> (parallel_block_stmt_8/assign_stmt_14/simple_obj_ref_13/req) (parallel_block_stmt_8/assign_stmt_14/simple_obj_ref_13/ack)
+  // CP-DP links for: 		outpipe := stage1 // type of target is $uint<10>
+  //  file ShiftRegister.aa, line 15
+  // CP-DP links for expression: outpipe
+  simple_obj_ref_15_inst <=> (parallel_block_stmt_8/assign_stmt_17/simple_obj_ref_15/pipe_wreq) (parallel_block_stmt_8/assign_stmt_17/simple_obj_ref_15/pipe_wack)
+  // CP-DP links for expression: stage1
+  simple_obj_ref_16_inst <=> (parallel_block_stmt_8/assign_stmt_17/simple_obj_ref_16/req) (parallel_block_stmt_8/assign_stmt_17/simple_obj_ref_16/ack)
+}

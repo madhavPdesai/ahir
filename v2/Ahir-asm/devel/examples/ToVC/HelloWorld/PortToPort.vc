@@ -1,0 +1,138 @@
+// Virtual circuit produced from Aa description by Aa2VC 
+// pipe-declarations for block %sum_mod
+// file PortToPort.aa, line 2
+$module [sum_mod] 
+{
+  $in a:$int<10> b:$int<10>
+  $out c:$int<10>
+  $CP 
+  {
+    // begin control-path 
+    ::[assign_stmt_15_to_assign_stmt_33] 
+    {
+      // 	d1 := ((( ~ a ) + d) + e)
+      // file PortToPort.aa, line 14
+      $T[assign_stmt_28_active_] 
+      $T[assign_stmt_28_completed_] 
+      // ((( ~ a ) + d) + e)
+      $T[binary_27_active_] 
+      $T[binary_27_trigger_] 
+      binary_27_active_ <-& (binary_27_trigger_)
+      // (( ~ a ) + d)
+      $T[binary_25_active_] 
+      $T[binary_25_trigger_] 
+      binary_25_active_ <-& (binary_25_trigger_)
+      // ( ~ a )
+      $T[unary_23_active_] 
+      $T[unary_23_trigger_] 
+      unary_23_active_ <-& (unary_23_trigger_)
+      // a
+      // implicit reference
+      $T[simple_obj_ref_22_complete] 
+      unary_23_active_ <-& (simple_obj_ref_22_complete)
+      ;;[unary_23_complete] 
+      {
+        // unary expression 
+        $T [rr] $T [ra] $T [cr] $T [ca] //(split) unary operation
+      }
+      unary_23_active_ &-> (unary_23_complete)
+      binary_25_active_ <-& (unary_23_complete)
+      ;;[binary_25_complete] 
+      {
+        // binary expression 
+        $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+      }
+      binary_25_active_ &-> (binary_25_complete)
+      binary_27_active_ <-& (binary_25_complete)
+      ;;[binary_27_complete] 
+      {
+        // binary expression 
+        $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+      }
+      binary_27_active_ &-> (binary_27_complete)
+      assign_stmt_28_active_ <-& (binary_27_complete)
+      // d1
+      // implicit reference
+      assign_stmt_28_completed_ <-& (assign_stmt_28_active_)
+      // 	c := (d1 + b)
+      // file PortToPort.aa, line 16
+      $T[assign_stmt_33_active_] 
+      $T[assign_stmt_33_completed_] 
+      // (d1 + b)
+      $T[binary_32_active_] 
+      $T[binary_32_trigger_] 
+      binary_32_active_ <-& (binary_32_trigger_)
+      // d1
+      // implicit reference
+      $T[simple_obj_ref_30_complete] 
+      simple_obj_ref_30_complete <-& (assign_stmt_28_completed_)
+      // b
+      // implicit reference
+      $T[simple_obj_ref_31_complete] 
+      binary_32_active_ <-& (simple_obj_ref_30_complete)
+      binary_32_active_ <-& (simple_obj_ref_31_complete)
+      ;;[binary_32_complete] 
+      {
+        // binary expression 
+        $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+      }
+      binary_32_active_ &-> (binary_32_complete)
+      assign_stmt_33_active_ <-& (binary_32_complete)
+      // c
+      // implicit reference
+      assign_stmt_33_completed_ <-& (assign_stmt_33_active_)
+      // load-store dependencies..
+    }
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %sum_mod
+    // file PortToPort.aa, line 2
+    $constant $W[xxsum_modxxc0] : $int<10> := _b0000001111// 15
+    $constant $W[xxsum_modxxc1] : $int<10> := _b0001010111// 87
+    // 	d := ( ~ c0 )
+    // file PortToPort.aa, line 11
+    $constant $W[d_15] : $int<10> := _b0000000000 // 0
+    // 	e := ( ~ ( ~ c1 ) )
+    // file PortToPort.aa, line 12
+    $constant $W[e_20] : $int<10> := _b0000000000 // 0
+    // 	d1 := ((( ~ a ) + d) + e)
+    // file PortToPort.aa, line 14
+    // ( ~ a )
+    $intermediate $W[unary_23_wire] : $int<10>
+    // (( ~ a ) + d)
+    $intermediate $W[binary_25_wire] : $int<10>
+    // d1
+    $W[d1_28] : $int<10>
+    // 	c := (d1 + b)
+    // file PortToPort.aa, line 16
+    // c
+    // 	d1 := ((( ~ a ) + d) + e)
+    // file PortToPort.aa, line 14
+    // ( ~ a )
+    ~ [unary_23_inst] (a) (unary_23_wire)
+    // (( ~ a ) + d)
+    +[binary_25_inst] (unary_23_wire d_15) (binary_25_wire)
+    // ((( ~ a ) + d) + e)
+    +[binary_27_inst] (binary_25_wire e_20) (d1_28)
+    // 	c := (d1 + b)
+    // file PortToPort.aa, line 16
+    // (d1 + b)
+    +[binary_32_inst] (d1_28 b) (c)
+  }
+  // end data-path
+  // 	d1 := ((( ~ a ) + d) + e)
+  // file PortToPort.aa, line 14
+  // ( ~ a )
+  unary_23_inst <=> (assign_stmt_15_to_assign_stmt_33/unary_23_complete/rr assign_stmt_15_to_assign_stmt_33/unary_23_complete/cr) (assign_stmt_15_to_assign_stmt_33/unary_23_complete/ra assign_stmt_15_to_assign_stmt_33/unary_23_complete/ca)
+  // (( ~ a ) + d)
+  binary_25_inst <=> (assign_stmt_15_to_assign_stmt_33/binary_25_complete/rr assign_stmt_15_to_assign_stmt_33/binary_25_complete/cr) (assign_stmt_15_to_assign_stmt_33/binary_25_complete/ra assign_stmt_15_to_assign_stmt_33/binary_25_complete/ca)
+  // ((( ~ a ) + d) + e)
+  binary_27_inst <=> (assign_stmt_15_to_assign_stmt_33/binary_27_complete/rr assign_stmt_15_to_assign_stmt_33/binary_27_complete/cr) (assign_stmt_15_to_assign_stmt_33/binary_27_complete/ra assign_stmt_15_to_assign_stmt_33/binary_27_complete/ca)
+  // 	c := (d1 + b)
+  // file PortToPort.aa, line 16
+  // (d1 + b)
+  binary_32_inst <=> (assign_stmt_15_to_assign_stmt_33/binary_32_complete/rr assign_stmt_15_to_assign_stmt_33/binary_32_complete/cr) (assign_stmt_15_to_assign_stmt_33/binary_32_complete/ra assign_stmt_15_to_assign_stmt_33/binary_32_complete/ca)
+}

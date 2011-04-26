@@ -1,4 +1,0 @@
-
-The LLVM based testcase generator for the VHDL library.
-
-It currently generates testcases only for ApInt binary operations.

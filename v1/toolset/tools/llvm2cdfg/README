@@ -1,0 +1,29 @@
+
+# Configuring:
+
+This assumes that LLVM is already installed and available through various
+environment variables.  Use the provided configure script to generate
+Makefile.common
+
+./configure --with-llvmsrc=$LLVM_SRC_DIR --with-llvmobj=$LLVM_OBJ_DIR
+
+Makefile.common is used by the Makefile.
+
+=============================================================================
+*** Here be dragons: ***
+The configure script can be generated using AutoRegen.sh in autoconf. But the
+configure.ac script uses some hardcoded locations for LLVM ... unless you
+really need to do this, do not try to regenerate configure.
+=============================================================================
+
+# Compiling:
+
+Run make.
+
+The Makefile specifies two directories - libs and tools - that are compiled in
+the same order. Once compilation is done, irgen is available in Debug/bin or
+Release/bin
+
+# Installing:
+
+Not done here. Only possible in the Project root.
