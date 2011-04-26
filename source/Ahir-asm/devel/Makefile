@@ -1,13 +1,13 @@
 # a simple makefile which builds all the Aa related tools
 AAHOME=.
-AHIRHOME=../../toolset/lib
+AHIRHOME=../../../
 SRC=$(AAHOME)/src
 INCL=$(AAHOME)/include
 OBJ=$(AAHOME)/obj
 GRMR=$(AAHOME)/grammar
 BIN=$(AAHOME)/bin
 DOC=$(AAHOME)/docs
-ANTLR2=../antlr2
+ANTLR2=$(AHIRHOME)antlr2
 VALUEINCLUDE=../../Value/include
 VALUELIB=../../Value/lib
 INCLUDES=-I$(AAHOME)/include -I$(GRMR) -I$(ANTLR2) -I$(VALUEINCLUDE)
@@ -47,11 +47,11 @@ DEFS=-DDebug
 CXXFLAGS=-g
 
 
-all : aNTLR $(BIN)/TestAaParser $(BIN)/AaLinkExtMem $(INCL)/Aa2C.h $(BIN)/Aa2C $(GRMR)/AaParser.html  $(BIN)/Aa2VC
+all : aNTLR $(BIN)/AaAnalyze $(BIN)/AaLinkExtMem $(INCL)/Aa2C.h $(BIN)/Aa2C $(GRMR)/AaParser.html  $(BIN)/Aa2VC
 
 
-$(BIN)/TestAaParser : $(OBJS) $(OBJ)/TestAaParser.o
-	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/TestAaParser.o  $(OBJS) -lantlr-4.0.3 -lValue -o $(BIN)/TestAaParser 
+$(BIN)/AaAnalyze : $(OBJS) $(OBJ)/TestAaParser.o
+	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/TestAaParser.o  $(OBJS) -lantlr-4.0.3 -lValue -o $(BIN)/AaAnalyze 
 
 $(BIN)/AaLinkExtMem : $(OBJS) $(OBJ)/AaLinkExtMem.o
 	g++ $(CXXFLAGS) $(LIBS) $(OBJ)/AaLinkExtMem.o  $(OBJS) -lantlr-4.0.3 -lValue -o $(BIN)/AaLinkExtMem 

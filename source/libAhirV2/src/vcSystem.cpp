@@ -337,6 +337,28 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
       ofile << "while true loop -- {" << endl;
       ofile << "wait until clk = '0';" << endl;
 
+      // write all the outputs.  this must be done first
+      // because there could be output -> input dependencies.
+      // first the ack.
+      ofile << "obj_ref := Pack_String_To_Vhpi_String("
+	    << '"' << m->Get_Id() << " ack" << '"' << ");" << endl;
+      ofile << "val_string := To_String(" << fin << ");" << endl;
+      ofile << simulator_prefix << "Set_Port_Value(obj_ref,val_string);" << endl;
+
+      // the output arguments.
+      for(int idx = 0; idx < m->Get_Number_Of_Output_Arguments(); idx++)
+	{
+	  ofile << "obj_ref := Pack_String_To_Vhpi_String("
+		<< '"' << m->Get_Id() << " " << idx << '"' << ");" << endl;
+
+	  vcWire* w = m->Get_Argument(m->Get_Output_Argument(idx),"out");
+	  string arg_name = prefix + w->Get_VHDL_Id();
+
+	  ofile << "val_string := Pack_SLV_To_Vhpi_String(" << arg_name << ");" << endl;
+
+	  ofile << simulator_prefix << "Set_Port_Value(obj_ref,val_string);" << endl;
+	}
+
       // now read all inputs 
       // first the req.
       ofile << "obj_ref := Pack_String_To_VHPI_String("
@@ -357,26 +379,6 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 	  ofile << arg_name << " <= Unpack_String(val_string," << w->Get_Size() << ");" << endl;
 	}
 
-      // write all the outputs.
-      // first the ack.
-      ofile << "obj_ref := Pack_String_To_Vhpi_String("
-	    << '"' << m->Get_Id() << " ack" << '"' << ");" << endl;
-      ofile << "val_string := To_String(" << fin << ");" << endl;
-      ofile << simulator_prefix << "Set_Port_Value(obj_ref,val_string);" << endl;
-
-      // the output arguments.
-      for(int idx = 0; idx < m->Get_Number_Of_Output_Arguments(); idx++)
-	{
-	  ofile << "obj_ref := Pack_String_To_Vhpi_String("
-		<< '"' << m->Get_Id() << " " << idx << '"' << ");" << endl;
-
-	  vcWire* w = m->Get_Argument(m->Get_Output_Argument(idx),"out");
-	  string arg_name = prefix + w->Get_VHDL_Id();
-
-	  ofile << "val_string := Pack_SLV_To_Vhpi_String(" << arg_name << ");" << endl;
-
-	  ofile << simulator_prefix << "Set_Port_Value(obj_ref,val_string);" << endl;
-	}
       
       ofile << "-- }" << endl << "end loop;" << endl;
       ofile << "--}" << endl << "end process;" << endl << endl;
@@ -407,6 +409,11 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 
       if(num_reads > 0 && num_writes ==  0)
 	{
+	  ofile << "obj_ref := Pack_String_To_Vhpi_String("
+		<< '"' << pipe_id << " ack" << '"' << ");" << endl;
+	  ofile << "val_string := Pack_SLV_To_Vhpi_String(" << pipe_id << "_pipe_write_ack" << ");" << endl;
+	  ofile << simulator_prefix << "Set_Port_Value(obj_ref,val_string);" << endl;
+
 	  // an input pipe.  read req, input argument and write ack..
 	  ofile << "obj_ref := Pack_String_To_Vhpi_String("
 		<< '"' << pipe_id << " req" << '"' << ");" << endl;
@@ -420,19 +427,16 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 	  string arg_name = pipe_id + "_pipe_write_data";
 	  ofile << arg_name << " <= Unpack_String(val_string," << pipe_width << ");" << endl;
 
-	  ofile << "obj_ref := Pack_String_To_Vhpi_String("
-		<< '"' << pipe_id << " ack" << '"' << ");" << endl;
-	  ofile << "val_string := Pack_SLV_To_Vhpi_String(" << pipe_id << "_pipe_write_ack" << ");" << endl;
-	  ofile << simulator_prefix << "Set_Port_Value(obj_ref,val_string);" << endl;
 	}
       else if(num_reads == 0 && num_writes >  0)
 	{
-	  // an output pipe.  read req, write output argument and ack..
+	  // is an output pipe: first write back the ack
+ 	  // if the ack is asserted, the corresponding req
+          // will be deasserted immediately.
 	  ofile << "obj_ref := Pack_String_To_Vhpi_String("
-		<< '"' << pipe_id << " req" << '"' << ");" << endl;
-	  ofile << simulator_prefix << "Get_Port_Value(obj_ref,val_string);" << endl;
-	  ofile << pipe_id  << "_pipe_read_req <= Unpack_String(val_string,1);" << endl;
-
+		<< '"' << pipe_id << " ack" << '"' << ");" << endl;
+	  ofile << "val_string := Pack_SLV_To_Vhpi_String(" << pipe_id << "_pipe_read_ack" << ");" << endl;
+	  ofile << simulator_prefix << "Set_Port_Value(obj_ref,val_string);" << endl;
 
 	  ofile << "obj_ref := Pack_String_To_Vhpi_String("
 		<< '"' << pipe_id << " " << 0 << '"' << ");" << endl;
@@ -440,10 +444,14 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 	  ofile << "val_string := Pack_SLV_To_Vhpi_String(" << arg_name << ");" << endl;
 	  ofile << simulator_prefix << "Set_Port_Value(obj_ref,val_string);" << endl;
 
+	  // an output pipe.  read req, write output argument and ack..
 	  ofile << "obj_ref := Pack_String_To_Vhpi_String("
-		<< '"' << pipe_id << " ack" << '"' << ");" << endl;
-	  ofile << "val_string := Pack_SLV_To_Vhpi_String(" << pipe_id << "_pipe_read_ack" << ");" << endl;
-	  ofile << simulator_prefix << "Set_Port_Value(obj_ref,val_string);" << endl;
+		<< '"' << pipe_id << " req" << '"' << ");" << endl;
+	  ofile << simulator_prefix << "Get_Port_Value(obj_ref,val_string);" << endl;
+	  ofile << pipe_id  << "_pipe_read_req <= Unpack_String(val_string,1);" << endl;
+
+
+
 	}
 
 
