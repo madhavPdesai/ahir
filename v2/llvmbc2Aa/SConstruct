@@ -5,8 +5,9 @@ local = env.Clone()
 
 local.ParseConfig('llvm-config --cxxflags --ldflags --libs bitreader bitwriter instrumentation scalaropts ipo')
 
-source_files = Glob('*.cpp')
-local.Append(all_sources = Glob('*.[hc]pp'))
+VariantDir('obj','src',duplicate=0)
+source_files = Glob('obj/*.cpp')
 
-local.Program('llvm2aa', source_files, CCFLAGS = '-g')
+local.Append(CPPPATH = './include')
+local.Program('bin/llvm2aa', source_files, CCFLAGS = '-g')
 

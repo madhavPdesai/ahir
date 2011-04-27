@@ -5,6 +5,7 @@
 	Mumbai 400076 India}
 
 \newcommand{\Aa}{{\bf Aa}~}
+\newcommand{\vC}{{\bf vC}~}
 
 \begin{document}
 \maketitle
@@ -775,7 +776,7 @@ whose root is a pointer evaluates to a
 pointer of some element type.
 \end{itemize}
 
-\section{Pointer de-reference expressions}
+\subsection{Pointer de-reference expressions}
 
 If {\bf ptr} is a pointer to a scalar object,
 then the expression 
@@ -792,7 +793,7 @@ a := ->(ptr)
 ->(ptr) := (a+1)
 \end{verbatim}
 
-\section{Address-of expressions}
+\subsection{Address-of expressions}
 
 If {\bf a} is a declared {\bf storage} object,
 then
@@ -807,7 +808,7 @@ For example
 ptr := @(a)
 \end{verbatim}
 
-\section{Unary expressions}
+\subsection{Unary expressions}
 
 These can be of three types:
 \begin{itemize}
@@ -868,7 +869,7 @@ The parentheses around a unary expression are
 {\bf required}.
 
 
-\section{Binary expressions}
+\subsection{Binary expressions}
 
 These are of the
 form
@@ -920,7 +921,7 @@ the usual way.  Note that when specifying an
 expression, you {\bf must} use parentheses around
 each expression.
 
-\section{Ternary expressions}
+\subsection{Ternary expressions}
 
 There is only one
 form for the ternary expression.
@@ -934,6 +935,70 @@ For example
 \begin{verbatim}
 ($mux a (b+1) (c+d))
 \end{verbatim}
+
+
+\section{Memory Spaces}
+
+An \Aa program can contain declarations to storage objects.  These
+storage objects need to be grouped into memory spaces using
+the following rule: two storage objects are put in the same
+memory space if there is a value in the program which
+is infected by (determined by) the values of pointers to the two objects.
+
+To understand this concept, consider the following
+example
+\begin{verbatim}
+$module [foo] 
+  $in (a: $uint<32>)
+  $out (b: $uint<32>) 
+$is
+{
+   $storage u: $uint<32>
+   $storage v: $uint<32>
+   $storage w: $uint<32>
+
+   w := a
+   ptr := @(u)
+   ->(ptr) := w
+   ptr := @(v)
+   ->ptr := u
+   b := u
+}
+\end{verbatim}
+Now consider the object {\bf ptr}, which can hold a value which
+is a pointer to either {\bf u} or a pointer to {\bf v}.  Thus,
+{\bf u} and {\bf v} must belong to the same memory space.
+However, {\bf w} can sit in a memory space by itself.  The
+store accesses implied by the $->(ptr)$ will point to the
+memory space which contains {\bf u} and {\bf v}.
+
+
+What should we do in the following case?
+\begin{verbatim}
+$module [foo]
+   $in (a : $uint<32>)
+   $out (b: $uint<32>)
+$is
+{
+   $storage u: $uint<32> 
+   $storage ptr: $uint<32>
+   ptr := ($bitcast ($pointer<$uint<32> >) a)
+   tmp := ->(ptr)
+   ptr := @(u)
+   ->(ptr) := tmp
+   b := u
+}
+\end{verbatim}
+In this case, {\bf ptr} takes the value of $a$,
+and as a pointer, it must point to 
+an {\bf external} object.  Since ptr can 
+point to this external object and also to {\bf u},
+the external object and {\bf u} must be kept in
+the same memory space.  In this case, the external
+object needs
+to be made internal, and moved {\bf inside} the system.  
+This is done by the {\bf AaLinkExtMem} utility
+which is described in a separate document.
 
 
 \section{Foreign Modules}
