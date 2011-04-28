@@ -97,32 +97,69 @@ architecture Default of register_bank is
   signal sc_tag_out_sig : std_logic_vector((num_stores*tag_width)-1 downto 0);
   signal lc_tag_out_sig : std_logic_vector((num_loads*tag_width)-1 downto 0);
     
-
-
-  
 begin
 
   assert(2**addr_width >= num_registers) report "not enough address bits" severity failure;
+
+
+  -- the read process. fully parallel reads.
+  ReadGen: for R in 0 to num_loads-1 generate
+
+    process(clock,lr_req_in,lc_ack_flag,reset)
+      variable ack_var : std_logic;
+      variable index : integer;
+                                 
+    begin
+      ack_var := '0';
+      index := To_Integer(lr_addr_in(((R+1)*addr_width)-1 downto R*addr_width));
+      
+      if(lr_req_in(R) = '1' and lc_ack_flag(R) = '0') then
+        ack_var := '1';
+      end if;
+      
+      lr_ack_out(R) <= ack_var;
+      
+      if(clock'event and clock = '1') then
+        if(reset = '1') then
+          lc_ack_flag(R) <= '0';
+        else
+          if(ack_var = '1') then
+            assert index < num_registers report "index into register array exceeds number of registers.." severity error;
+
+            if(index < num_registers) then
+              lc_data_out_sig(((R+1)*data_width)-1 downto R*data_width) <= register_array(index);
+            end if;
+            
+            lc_tag_out_sig(((R+1)*tag_width)-1 downto R*tag_width) <=
+              lr_tag_in(((R+1)*tag_width)-1 downto R*tag_width);
+            lc_ack_flag(R) <= '1';
+          elsif lc_ack_flag(R) = '1' and lc_req_in(R) = '1' then
+            lc_ack_flag(R) <= '0';
+          end if;
+        end if;
+      end if;
+    end process;
+    
+  end generate ReadGen;
   
-  -- read/write will take one cycle
+  -- the write process
+  -- for each register. loop across those who want to write in
+  -- and find the lowest index which wins.
   process(clock,
-          sr_addr_in,
-          lr_addr_in,
+	  reset,
           sr_req_in,
-          lr_req_in,
-          sc_ack_flag,
-          lc_ack_flag,
+          sr_addr_in,
+          sr_data_in,
           sr_tag_in,
-          lr_tag_in,
           sc_req_in,
-          lc_req_in,
+          sc_ack_flag,
+	  sc_tag_out_sig,
           register_array)
     
-    variable sc_ack_set, sc_ack_clear, sr_pending : std_logic_vector(num_stores-1 downto 0);
-    variable lc_ack_set, lc_ack_clear, lr_pending : std_logic_vector(num_loads-1 downto 0);
-    variable lc_data_out_var : std_logic_vector((num_loads*data_width)-1 downto 0);
+    variable sc_ack_set, sc_ack_clear: std_logic_vector(num_stores-1 downto 0);
+    variable sr_pending : std_logic_vector(num_registers-1 downto 0);
+    
     variable sc_tag_out_var : std_logic_vector((num_stores*tag_width)-1 downto 0);
-    variable lc_tag_out_var : std_logic_vector((num_loads*tag_width)-1 downto 0);
     variable register_array_var : DataArray(num_registers-1 downto 0);
     
   begin
@@ -130,72 +167,46 @@ begin
 
     sc_ack_set := (others => '0');
     sc_ack_clear := (others => '0');
-    lc_ack_set := (others => '0');
-    lc_ack_clear := (others => '0');
-    
     sr_pending := (others => '0');
-    lr_pending := (others => '0');
 
-    lc_data_out_var := lc_data_out_sig;
+
+
     sc_tag_out_var := sc_tag_out_sig;
-    lc_tag_out_var := lc_tag_out_sig;
 
     register_array_var := register_array;
     
     
     if(reset = '1') then
       sc_ack_clear := (others => '1');
-      lc_ack_clear := (others => '1');
     else
-      
       
       -- for each register.
       for REG  in 0 to num_registers-1 loop
 
         -- writes: for each reg, lowest index succeeds.
         for W in 0 to num_stores-1 loop
-          -- if there is a store request.
-          if(sr_req_in(W) = '1' and
+          -- if W is a store request to this register
+          -- and no j
+          if(sr_pending(REG) = '0' and
+             sr_req_in(W) = '1' and
+             sc_ack_flag(W) = '0' and 
              (sr_addr_in(((W+1)*addr_width)-1 downto W*addr_width) = Natural_To_SLV(REG,addr_width)))
           then
-            -- sr_pending(W) := '1';
-            if(sc_ack_flag(W) = '0' or sc_req_in(W) = '1') then
+            sr_pending(REG) := '1';
+            sc_ack_set(W) := '1';
+            register_array_var(REG) := sr_data_in(((W+1)*data_width)-1 downto W*data_width);
+            sc_tag_out_var(((W+1)*tag_width)-1 downto W*tag_width) :=
+              sr_tag_in(((W+1)*tag_width)-1 downto W*tag_width);
 
-              -- room for operation
-              sc_ack_set(W) := '1';
-              register_array_var(REG) := sr_data_in(((W+1)*data_width)-1 downto W*data_width);
-              sc_tag_out_var(((W+1)*tag_width)-1 downto W*tag_width) := sr_tag_in(((W+1)*tag_width)-1 downto W*tag_width);
-              exit;                     -- lowest index succeeds.
-              
-            end if;
+            exit;
           end if;
         end loop;  -- W
-
-        
-        -- read from REG =>  all can succeed
-        for R in 0 to num_loads-1 loop
-
-          if(lr_req_in(R) = '1' and
-             lr_addr_in(((R+1)*addr_width)-1 downto R*addr_width) = Natural_To_SLV(REG,addr_width))
-          then
-            -- lr_pending(R) := '1';
-            if(lc_ack_flag(R) = '0' or lc_req_in(R) = '1') then
-		-- set the lc_ack flag if the current flag is cleared
-              lc_data_out_var(((R+1)*data_width)-1 downto R*data_width) := register_array(REG);
-              lc_tag_out_var(((R+1)*tag_width)-1 downto R*tag_width) :=
-                lr_tag_in(((R+1)*tag_width)-1 downto R*tag_width);
-              lc_ack_set(R) := '1';
-            end if;
-          end if;
-        end loop;  -- R
       end loop;  -- REG
     end if;      
 
     -- output latches and registers
     if(clock'event and clock = '1') then
       register_array <= register_array_var;
-      lc_data_out_sig <= lc_data_out_var;
-      lc_tag_out_sig <= lc_tag_out_var;
       sc_tag_out_sig <= sc_tag_out_var;
     end if;
     
@@ -218,28 +229,7 @@ begin
       end loop;
     end if;      
 
-    if(clock'event and clock = '1') then                
-      for R in 0 to num_loads-1 loop
-
-	-- if ack and req are both asserted, clear
-	-- it unless asked to set it.
-        if(lc_ack_flag(R) = '1' and lc_req_in(R) = '1') then
-          lc_ack_clear(R) := '1';
-        end if;
-
-	-- set dominant!
-        if(lc_ack_set(R) = '1') then
-          lc_ack_flag(R) <= '1';
-        elsif (lc_ack_clear(R) = '1') then
-          lc_ack_flag(R) <= '0';
-        end if;
-        
-      end loop;
-    end if;      
-
     sr_ack_out <= sc_ack_set;
-    lr_ack_out <= lc_ack_set;
-
   end process;
 
   sc_ack_out <= sc_ack_flag;

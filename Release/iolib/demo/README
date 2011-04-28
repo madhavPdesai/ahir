@@ -6,6 +6,9 @@ receives each integer and converts it to a single-precision float,
 which is sent back on a separate channel. The client checks the
 floating point values and reports success.
 
+Added: tests for write/read_pointer, write/read_uint64/16/8/ 
+
+
 Note: Run the executables ./client and ./server in separate terminals
 to keep the output readable. Invoking them on the same terminal using
 '&' interleaves the output, making it difficult to read.

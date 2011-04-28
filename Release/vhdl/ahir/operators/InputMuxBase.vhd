@@ -111,6 +111,7 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   process(reqF,dataP)
   begin
+      dataR <= (others => '0');
       for J in 0 to nreqs-1 loop
         if(reqF(J) = '1') then
       		dataR <= dataP(J);

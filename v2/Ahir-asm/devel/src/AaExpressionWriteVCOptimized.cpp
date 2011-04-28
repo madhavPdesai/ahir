@@ -1302,18 +1302,23 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(set<AaRoot*>& visited_e
       // index was not zero and base was not zero..
       // we need to add two numbers, at most one of which
       // can be a constant..
+      ofile << "$T [" << this->Get_VC_Name() << "_base_plus_offset_trigger]" << endl;
       ofile << ";;[" << this->Get_VC_Name() << "_base_plus_offset] {" << endl;
       ofile << "$T [plus_base_rr] $T [plus_base_ra] $T [plus_base_cr] $T [plus_base_ca] // offset+base" 
 	    << endl;
       ofile << "}" << endl;
+	
+      __F((this->Get_VC_Name() + "_base_plus_offset_trigger"),
+		(this->Get_VC_Name() + "_base_plus_offset"));
+
 
       if(base_addr < 0)
 	{
-	  __F(base_address_resized,(this->Get_VC_Name() + "_base_plus_offset"));
+	  __F(base_address_resized,(this->Get_VC_Name() + "_base_plus_offset_trigger"));
 	}
       if(offset_val < 0)
 	{
-	  __F(offset_calculated,(this->Get_VC_Name() + "_base_plus_offset"));
+	  __F(offset_calculated,(this->Get_VC_Name() + "_base_plus_offset_trigger"));
 	}
     }
   else 

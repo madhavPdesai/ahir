@@ -25,7 +25,7 @@ README
 
 
 SConstruct
-	sconstruct.
+	this build the three libraries listed above.
 
 src
 	the source
