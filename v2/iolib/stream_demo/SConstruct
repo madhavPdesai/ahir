@@ -1,0 +1,3 @@
+
+Program('client', ['client.c', '../libio.a'], CCFLAGS = ' -g')
+Program('server', ['server.c', '../libio.a'], CCFLAGS = ' -g')
