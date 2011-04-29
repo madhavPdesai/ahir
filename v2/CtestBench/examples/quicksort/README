@@ -1,0 +1,16 @@
+This example illustrates how you can use your "normal" software
+to verify the hardware generated out of the AhirV2 flow.
+
+We take the program  quicksort.c
+
+This program describes a system consisting of a
+main function which communicate with
+the environment through pipes.
+
+The multi-threaded program testbench.c will 
+verify it (see sub-directory vhdl/).
+
+Run compile.sh to generate all the files 
+(as in the helloworld example).
+
+Go to vhdl/ and follow the README

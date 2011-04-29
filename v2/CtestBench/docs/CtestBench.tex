@@ -1,0 +1,40 @@
+\documentclass{article}
+
+\title{On verifying AhirV2 generated VHDL using software testbenches}
+\author{Madhav Desai \\ Department of Electrical Engineering \\ Indian Institute of Technology \\
+	Mumbai 400076 India}
+
+\newcommand{\Aa}{{\bf Aa}~}
+\newcommand{\vC}{{\bf vC}~}
+
+\begin{document}
+\maketitle
+
+
+The AhirV2 tool chain can be used to convert parts of a C program to VHDL
+(essentially, some of the functions in a program are mapped to VHDL).
+To verify the resulting VHDL, one would like to simulate it in a
+VHDL simulator (such as Modelsim from Mentor Graphics).  The most
+natural way to do this is to use the original program itself
+as a testbench for this purpose.
+
+\begin{itemize}
+\item Stubs are created for the set of functions which are mapped to  
+VHDL by the AhirV2 flow.
+\item The software testbench is compiled and linked with these stubs.
+\item Whenever a stub function is called, it tries to connect with
+a server created by the VHDL simulation process.
+\item The VHDL simulation process listens for calls from the stubs
+and exchanges data between the stubs and the actual VHDL being simulated.
+\end{itemize}
+
+
+We assume that you have a {\bf Release} directory of the AhirV2 flow
+installed.   The Release/bin subdirectory contains the binaries for
+the translation of LLVM-byte-code down to a VHDL description. 
+The Release/vhdl directory contains VHDL library elements that 
+are instantiated in this VHDL description.  The Release/CtestBench 
+directory contains the libraries and headers that you will need.  
+Please see Release/CtestBench/examples/helloworld for an 
+illustration of the whole flow.
+\end{document}
