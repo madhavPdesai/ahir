@@ -362,6 +362,7 @@ void send_packet_and_wait_for_response(char* buffer, char* server_host_address, 
 
       while( (n = receive_string(sockfd,buffer)) <= 0)
 	{
+		usleep(1000);
 	}
 	  
      fprintf(stderr, "Info: received message %s from server\n", buffer);	  
