@@ -1,5 +1,4 @@
 #include <SocketLib.h>
-#include <Vhpi.h>
 #include <vhdlCStubs.h>
 #include <pthread.h>
 #include <signal.h>

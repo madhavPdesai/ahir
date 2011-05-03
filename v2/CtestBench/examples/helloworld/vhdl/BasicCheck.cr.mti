@@ -1,16 +1,8 @@
-/home/madhav/ahirgit/AHIR/vhdl/control-path/place.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/place.vhdl
+/home/madhav/ahirgit/AHIR/vhdl/packagesV2/Types.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Types.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Loading package std_logic_1164
--- Loading package types
--- Loading package numeric_std
--- Loading package textio
--- Loading package math_utility_pkg
--- Loading package fixed_pkg
--- Loading package float_pkg
--- Loading package subprograms
--- Compiling entity place
--- Compiling architecture default_arch of place
+-- Compiling package types
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/float_pkg_c.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/float_pkg_c.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -25,26 +17,19 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package float_pkg
 ** Warning: [3] /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/float_pkg_c.vhd(6253): Range 2 to 1 is null.
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Types.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Types.vhd
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/control-path/place.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/place.vhdl
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Loading package std_logic_1164
--- Compiling package types
-
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBase.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBase.vhd
-Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Loading package numeric_std
 -- Loading package types
+-- Loading package numeric_std
 -- Loading package textio
 -- Loading package math_utility_pkg
 -- Loading package fixed_pkg
 -- Loading package float_pkg
 -- Loading package subprograms
--- Loading package utilities
--- Compiling entity phibase
--- Compiling architecture behave of phibase
+-- Compiling entity place
+-- Compiling architecture default_arch of place
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortNoData.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortNoData.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -63,6 +48,27 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity inputportnodata
 -- Compiling architecture base of inputportnodata
 
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBase.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBase.vhd
+Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Loading package types
+-- Loading package textio
+-- Loading package math_utility_pkg
+-- Loading package fixed_pkg
+-- Loading package float_pkg
+-- Loading package subprograms
+-- Loading package utilities
+-- Compiling entity phibase
+-- Compiling architecture behave of phibase
+
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_component_pack.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_component_pack.vhd
+Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Compiling package mem_component_pack
+
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/fixed_pkg_c.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/fixed_pkg_c.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
@@ -76,11 +82,20 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package fixed_pkg
 ** Warning: [3] /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/fixed_pkg_c.vhd(6900): Range 2 to 1 is null.
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_component_pack.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_component_pack.vhd
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/control-path/join.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/join.vhdl
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Loading package std_logic_1164
--- Compiling package mem_component_pack
+-- Loading package types
+-- Loading package numeric_std
+-- Loading package textio
+-- Loading package math_utility_pkg
+-- Loading package fixed_pkg
+-- Loading package float_pkg
+-- Loading package subprograms
+-- Loading package basecomponents
+-- Compiling entity join
+-- Compiling architecture default_arch of join
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterNoInArgs.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterNoInArgs.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -97,21 +112,6 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package basecomponents
 -- Compiling entity callarbiternoinargs
 -- Compiling architecture struct of callarbiternoinargs
-
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/control-path/join.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/join.vhdl
-Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Loading package types
--- Loading package numeric_std
--- Loading package textio
--- Loading package math_utility_pkg
--- Loading package fixed_pkg
--- Loading package float_pkg
--- Loading package subprograms
--- Loading package basecomponents
--- Compiling entity join
--- Compiling architecture default_arch of join
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/UnsharedOperatorBase.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -165,15 +165,12 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity porttb
 -- Compiling architecture behave of porttb
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/RepeaterBase.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/RepeaterBase.vhd
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/RepeaterBase.vhd {0 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/RepeaterBase.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Loading package numeric_std
--- Compiling entity repeaterbase
--- Compiling architecture behave of repeaterbase
+** Error: (vcom-7) Failed to open design unit file "/home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/RepeaterBase.vhd" in read mode.
+No such file or directory. (errno = ENOENT)
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/dummy_read_only_memory_subsystem.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/dummy_read_only_memory_subsystem.vhd
+} {3.0 4.0} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/dummy_read_only_memory_subsystem.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/dummy_read_only_memory_subsystem.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Loading package std_logic_1164
@@ -247,22 +244,12 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity outputdemuxbase
 -- Compiling architecture behave of outputdemuxbase
 
-} {} {}} /home/madhav/ahirgit/AHIR/source/CtestBench/vhdl/Vhpi_Package.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/source/CtestBench/vhdl/Vhpi_Package.vhdl
+} {} {}} /home/madhav/ahirgit/AHIR/source/CtestBench/vhdl/Vhpi_Package.vhdl {0 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/source/CtestBench/vhdl/Vhpi_Package.vhdl
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Compiling package utility_package
--- Compiling package body utility_package
--- Loading package utility_package
--- Loading package utility_package
--- Compiling package vhpi_foreign
--- Compiling package body vhpi_foreign
--- Loading package vhpi_foreign
--- Compiling package modelsim_fli_foreign
--- Compiling package body modelsim_fli_foreign
--- Loading package modelsim_fli_foreign
+** Error: (vcom-7) Failed to open design unit file "/home/madhav/ahirgit/AHIR/source/CtestBench/vhdl/Vhpi_Package.vhdl" in read mode.
+No such file or directory. (errno = ENOENT)
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreReqShared.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreReqShared.vhd
+} {3.0 4.0} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreReqShared.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreReqShared.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Loading package std_logic_1164
@@ -369,17 +356,12 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package std_logic_1164
 -- Compiling package memory_subsystem_package
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/ShiftRepeaterBase.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/ShiftRepeaterBase.vhd
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/ShiftRepeaterBase.vhd {0 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/ShiftRepeaterBase.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Loading package numeric_std
--- Loading package types
--- Loading package basecomponents
--- Compiling entity shiftrepeaterbase
--- Compiling architecture behave of shiftrepeaterbase
+** Error: (vcom-7) Failed to open design unit file "/home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/ShiftRepeaterBase.vhd" in read mode.
+No such file or directory. (errno = ENOENT)
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBaseTB.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBaseTB.vhd
+} {3.0 4.0} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBaseTB.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PhiBaseTB.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Loading package std_logic_1164
@@ -682,20 +664,32 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity callarbiterunitarynoinargsnooutargs
 -- Compiling architecture struct of callarbiterunitarynoinargsnooutargs
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortLevel.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortLevel.vhd
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiter.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiter.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Loading package std_logic_1164
--- Loading package types
 -- Loading package numeric_std
+-- Loading package types
 -- Loading package textio
 -- Loading package math_utility_pkg
 -- Loading package fixed_pkg
 -- Loading package float_pkg
 -- Loading package subprograms
 -- Loading package utilities
--- Compiling entity inputportlevel
--- Compiling architecture default_arch of inputportlevel
+-- Loading package basecomponents
+-- Compiling entity callarbiter
+-- Compiling architecture struct of callarbiter
+
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem.vhd
+Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Loading package mem_function_pack
+-- Loading package merge_functions
+-- Loading package mem_component_pack
+-- Compiling entity memory_subsystem
+-- Compiling architecture bufwrap of memory_subsystem
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputMuxBase.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputMuxBase.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -712,32 +706,20 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity inputmuxbase
 -- Compiling architecture behave of inputmuxbase
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/memory_subsystem.vhd
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortLevel.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortLevel.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Loading package std_logic_1164
--- Loading package numeric_std
--- Loading package mem_function_pack
--- Loading package merge_functions
--- Loading package mem_component_pack
--- Compiling entity memory_subsystem
--- Compiling architecture bufwrap of memory_subsystem
-
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiter.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiter.vhd
-Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Loading package numeric_std
 -- Loading package types
+-- Loading package numeric_std
 -- Loading package textio
 -- Loading package math_utility_pkg
 -- Loading package fixed_pkg
 -- Loading package float_pkg
 -- Loading package subprograms
 -- Loading package utilities
--- Loading package basecomponents
--- Compiling entity callarbiter
--- Compiling architecture struct of callarbiter
+-- Compiling entity inputportlevel
+-- Compiling architecture default_arch of inputportlevel
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputPortLevel.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputPortLevel.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -780,15 +762,6 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling package body mem_function_pack
 -- Loading package mem_function_pack
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_shift_repeater.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_shift_repeater.vhd
-Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Loading package numeric_std
--- Loading package mem_component_pack
--- Compiling entity mem_shift_repeater
--- Compiling architecture behave of mem_shift_repeater
-
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PipeBase.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/PipeBase.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
@@ -804,6 +777,15 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package basecomponents
 -- Compiling entity pipebase
 -- Compiling architecture default_arch of pipebase
+
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_shift_repeater.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/mem_shift_repeater.vhd
+Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Loading package mem_component_pack
+-- Compiling entity mem_shift_repeater
+-- Compiling architecture behave of mem_shift_repeater
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Utilities.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/Utilities.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -834,21 +816,6 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity selectbase
 -- Compiling architecture arch of selectbase
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortLevelNoData.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortLevelNoData.vhd
-Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Loading package types
--- Loading package numeric_std
--- Loading package textio
--- Loading package math_utility_pkg
--- Loading package fixed_pkg
--- Loading package float_pkg
--- Loading package subprograms
--- Loading package utilities
--- Compiling entity inputportlevelnodata
--- Compiling architecture default_arch of inputportlevelnodata
-
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputMuxBaseNoData.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputMuxBaseNoData.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
@@ -864,16 +831,20 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity inputmuxbasenodata
 -- Compiling architecture behave of inputmuxbasenodata
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_tree.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_tree.vhd
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortLevelNoData.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/InputPortLevelNoData.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Loading package std_logic_1164
+-- Loading package types
 -- Loading package numeric_std
--- Loading package mem_function_pack
--- Loading package merge_functions
--- Loading package mem_component_pack
--- Compiling entity merge_tree
--- Compiling architecture pipelined of merge_tree
+-- Loading package textio
+-- Loading package math_utility_pkg
+-- Loading package fixed_pkg
+-- Loading package float_pkg
+-- Loading package subprograms
+-- Loading package utilities
+-- Compiling entity inputportlevelnodata
+-- Compiling architecture default_arch of inputportlevelnodata
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreCompleteShared.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/StoreCompleteShared.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -891,6 +862,27 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity storecompleteshared
 -- Compiling architecture behave of storecompleteshared
 
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_tree.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_tree.vhd
+Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Loading package mem_function_pack
+-- Loading package merge_functions
+-- Loading package mem_component_pack
+-- Compiling entity merge_tree
+-- Compiling architecture pipelined of merge_tree
+
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_functions.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_functions.vhd
+Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Loading package mem_function_pack
+-- Compiling package merge_functions
+-- Compiling package body merge_functions
+-- Loading package merge_functions
+
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputDemuxBaseNoData.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/OutputDemuxBaseNoData.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
@@ -906,15 +898,12 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity outputdemuxbasenodata
 -- Compiling architecture behave of outputdemuxbasenodata
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_functions.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/memory_subsystem/merge_functions.vhd
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BypassRegister.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BypassRegister.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Loading package std_logic_1164
--- Loading package numeric_std
--- Loading package mem_function_pack
--- Compiling package merge_functions
--- Compiling package body merge_functions
--- Loading package merge_functions
+-- Compiling entity bypassregister
+-- Compiling architecture behave of bypassregister
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/packagesV2/BaseComponents.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/packagesV2/BaseComponents.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -924,19 +913,10 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package types
 -- Compiling package basecomponents
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BypassRegister.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/BypassRegister.vhd
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/control-path/join_with_input.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/join_with_input.vhdl
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Loading package std_logic_1164
--- Compiling entity bypassregister
--- Compiling architecture behave of bypassregister
-
-} {} {}} /home/madhav/ahirgit/AHIR/source/CtestBench/tests/helloworld/vhdl/system.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/source/CtestBench/tests/helloworld/vhdl/system.vhdl
-Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Compiling package vc_system_package
--- Loading package memory_subsystem_package
 -- Loading package types
 -- Loading package numeric_std
 -- Loading package textio
@@ -944,25 +924,14 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package fixed_pkg
 -- Loading package float_pkg
 -- Loading package subprograms
--- Loading package components
 -- Loading package basecomponents
--- Loading package utilities
--- Loading package operatorpackage
--- Loading package vc_system_package
--- Compiling entity bar
--- Compiling architecture default of bar
--- Compiling entity foo
--- Compiling architecture default of foo
--- Compiling entity mem_load_x_x
--- Compiling architecture default of mem_load_x_x
--- Compiling entity mem_store_x_x
--- Compiling architecture default of mem_store_x_x
--- Compiling entity test_system
--- Compiling architecture default of test_system
--- Loading package utility_package
--- Loading package modelsim_fli_foreign
--- Compiling entity test_system_test_bench
--- Compiling architecture vhpilink of test_system_test_bench
+-- Compiling entity join_with_input
+-- Compiling architecture default_arch of join_with_input
+
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/math_utility_pkg.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/math_utility_pkg.vhd
+Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
+-- Loading package standard
+-- Compiling package math_utility_pkg
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterNoInargsNoOutargs.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterNoInargsNoOutargs.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
@@ -980,27 +949,12 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity callarbiternoinargsnooutargs
 -- Compiling architecture struct of callarbiternoinargsnooutargs
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/math_utility_pkg.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/ieee_proposed/math_utility_pkg.vhd
+} {} {}} /home/madhav/ahirgit/AHIR/source/CtestBench/tests/helloworld/vhdl/system.vhdl {0 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/source/CtestBench/tests/helloworld/vhdl/system.vhdl
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Compiling package math_utility_pkg
+** Error: (vcom-7) Failed to open design unit file "/home/madhav/ahirgit/AHIR/source/CtestBench/tests/helloworld/vhdl/system.vhdl" in read mode.
+No such file or directory. (errno = ENOENT)
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/control-path/join_with_input.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/control-path/join_with_input.vhdl
-Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Loading package types
--- Loading package numeric_std
--- Loading package textio
--- Loading package math_utility_pkg
--- Loading package fixed_pkg
--- Loading package float_pkg
--- Loading package subprograms
--- Loading package basecomponents
--- Compiling entity join_with_input
--- Compiling architecture default_arch of join_with_input
-
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitaryNoInargs.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitaryNoInargs.vhd
+} {3.0 4.0} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitaryNoInargs.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitaryNoInargs.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
 -- Loading package std_logic_1164
@@ -1091,22 +1045,6 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Compiling entity loadcompleteshared
 -- Compiling architecture vanilla of loadcompleteshared
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitary.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitary.vhd
-Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
--- Loading package standard
--- Loading package std_logic_1164
--- Loading package numeric_std
--- Loading package types
--- Loading package textio
--- Loading package math_utility_pkg
--- Loading package fixed_pkg
--- Loading package float_pkg
--- Loading package subprograms
--- Loading package utilities
--- Loading package basecomponents
--- Compiling entity callarbiterunitary
--- Compiling architecture struct of callarbiterunitary
-
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallMediator.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallMediator.vhd
 Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package standard
@@ -1122,5 +1060,21 @@ Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
 -- Loading package basecomponents
 -- Compiling entity callmediator
 -- Compiling architecture struct of callmediator
+
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitary.vhd {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/operatorsV2/base/CallArbiterUnitary.vhd
+Model Technology ModelSim SE vcom 6.2f Compiler 2007.01 Jan 13 2007
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Loading package types
+-- Loading package textio
+-- Loading package math_utility_pkg
+-- Loading package fixed_pkg
+-- Loading package float_pkg
+-- Loading package subprograms
+-- Loading package utilities
+-- Loading package basecomponents
+-- Compiling entity callarbiterunitary
+-- Compiling architecture struct of callarbiterunitary
 
 } {} {}}

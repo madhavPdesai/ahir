@@ -771,7 +771,7 @@ void AaProgram::Coalesce_Storage()
 		    AaProgram::Add_ExtMem_Access_Width(acc_width);
 		  else
 		    {
-		      assert(0);
+			AaRoot::Error("pointer dereference expression is no associated with any memory space",pu);
 		    }
 		}
 
@@ -784,8 +784,12 @@ void AaProgram::Coalesce_Storage()
 		  new_ms->_modules.insert((AaModule*)root_p_scope);
 		}
 	    }
+	  else if(u->Is("AaForeignStorageObject"))
+	    {
+	    	AaRoot::Warning("foreign storage object ignored in memory space identification",NULL);
+	    }
 	  else
-	    assert(0);
+		assert(0);
 	}
 
       if(!new_ms->_is_written_into)
@@ -799,7 +803,13 @@ void AaProgram::Coalesce_Storage()
 			  new_ms->Get_VC_Identifier() +
 			  " is not read from in the program", NULL);
 	}
-	    
+
+      if(lau_set.size() == 0)
+      {
+	AaRoot::Warning("memory space " + new_ms->Get_VC_Identifier() + " has no objects", NULL);
+	continue;
+      }	    
+
       // find the gcd
       int word_size = GCD(lau_set);
       int max_access_width = *(lau_set.rbegin());
