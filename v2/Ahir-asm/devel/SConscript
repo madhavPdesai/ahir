@@ -1,0 +1,9 @@
+import os
+# just call make
+env = Environment()
+
+if not env.GetOption('clean'):
+	os.system('make')
+else:
+	os.system('make clean')
+
