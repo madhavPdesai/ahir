@@ -1,9 +1,23 @@
 import os
-# just call make
-env = Environment()
 
-if not env.GetOption('clean'):
-	os.system('make')
-else:
-	os.system('make clean')
+env = Environment(ENV = {'PATH' : os.environ['PATH']})
+
+# use a path to get to the antlr jar "later"
+# also: how does one force the action if the source has changed?
+ant = Builder(action = 'java -cp  ../antlr2/antlr.jar antlr.Tool -o Ahir-asm/devel/src $SOURCE')
+
+env.Prepend(BUILDERS = {'antlr' : ant})
+env.Append(CPPPATH = './src/:./include:../../../antlr2/:./grammar/:../../Value/include')
+
+VariantDir('obj','src',duplicate=0)
+env.antlr(['obj/AaLexer.cpp','obj/AaParser.cpp'], 'grammar/Aa.g')
+
+env.Library('lib/libAa', Glob('obj/*.cpp'), CCFLAGS='-g ')
+env.Program('bin/AaAnalyze', 'util/TestAaParser.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa', 'antlr-4.0.3' , 'Value'], LIBPATH=Split('../../../antlr2/ ./lib/ ../../Value/lib/'))
+env.Program('bin/Aa2VC', 'util/Aa2VC.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa', 'antlr-4.0.3' , 'Value'], LIBPATH=Split('../../../antlr2/ ./lib/ ../../Value/lib/'))
+env.Program('bin/Aa2C', 'util/Aa2C.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa', 'antlr-4.0.3' , 'Value'], LIBPATH=Split('../../../antlr2/ ./lib/ ../../Value/lib/'))
+env.Program('bin/AaLinkExtMem', 'util/AaLinkExtMem.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa', 'antlr-4.0.3' , 'Value'], LIBPATH=Split('../../../antlr2/ ./lib/ ../../Value/lib/'))
+
+
+
 

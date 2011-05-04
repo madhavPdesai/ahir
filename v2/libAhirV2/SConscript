@@ -4,7 +4,7 @@ env = Environment(ENV = {'PATH' : os.environ['PATH']})
 
 # use a path to get to the antlr jar "later"
 # also: how does one force the action if the source has changed?
-ant = Builder(action = 'java -cp  ../antlr2/antlr.jar antlr.Tool -o src $SOURCE')
+ant = Builder(action = 'java -cp  ../antlr2/antlr.jar antlr.Tool -o libAhirV2/src $SOURCE')
 
 env.Prepend(BUILDERS = {'antlr' : ant})
 env.Append(CPPPATH = './src/:./include:../../antlr2/')
