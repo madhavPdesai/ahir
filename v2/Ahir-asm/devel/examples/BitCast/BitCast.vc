@@ -1,0 +1,42 @@
+// pipe-declarations for block %sum_mod
+// file BitCast.aa, line 2
+$module [sum_mod] 
+{
+  $in a:$int<10>
+  $out b:$int<10>
+  $CP 
+  {
+    // begin control-path 
+    // 	b := ($bitcast ($uint<10>) a )
+    // file BitCast.aa, line 7
+    ;;[assign_stmt_8] // file BitCast.aa, line 7
+    {
+      // ($bitcast ($uint<10>) a )
+      ;;[type_cast_7] 
+      {
+        // type-cast expression
+        $T [req] $T [ack] //  type-conversion.. 
+      }
+    }
+    // end assignment statement assign_stmt_8
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %sum_mod
+    // file BitCast.aa, line 2
+    // 	b := ($bitcast ($uint<10>) a )
+    // file BitCast.aa, line 7
+    // b
+    // 	b := ($bitcast ($uint<10>) a )
+    // file BitCast.aa, line 7
+    // ($bitcast ($uint<10>) a )
+    := [type_cast_7_inst] (a) (b)
+  }
+  // end data-path
+  // 	b := ($bitcast ($uint<10>) a )
+  // file BitCast.aa, line 7
+  // ($bitcast ($uint<10>) a )
+  type_cast_7_inst <=> (assign_stmt_8/type_cast_7/req) (assign_stmt_8/type_cast_7/ack)
+}

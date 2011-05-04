@@ -1,0 +1,49 @@
+$module[foo] 
+{ 
+        $controlpath 
+	{ 
+		$seriesblock[main] 
+		{ 
+			$forkblock[f] {
+				$seriesblock[s1]{
+					$transition [req] $out $transition [ack] $in
+				}
+				$seriesblock[s2]{
+					$transition [req] $out $transition [ack] $in
+				}
+				$seriesblock[s3]{
+					$transition [req] $out $transition [ack] $in
+				}
+				$seriesblock[s4]{
+					$transition [req] $out $transition [ack] $in
+				}
+				$seriesblock[s5]{
+					$transition [req] $out $transition [ack] $in
+				}
+				$seriesblock[s6]{
+					$transition [req] $out $transition [ack] $in
+				}
+				$seriesblock[s7]{
+					$transition [req] $out $transition [ack] $in
+				}
+				$seriesblock[s8]{
+					$transition [req] $out $transition [ack] $in
+				}
+				$transition [j1] $hidden
+				$transition [j2] $hidden
+				$transition [j3] $hidden
+				$transition [j4] $hidden
+				$from $entry $fork s1 s2
+				$at j1 $join s1
+				$at j2 $join s2
+				$from j1 $fork s3 s5
+				$from j2 $fork s4 s6
+				$at j3 $join s4 s5
+				$at j4 $join s3 s6
+				$from j3 $fork s7
+				$from j4 $fork s8
+				$at $exit $join s7 s8
+			}
+		}
+	}
+}

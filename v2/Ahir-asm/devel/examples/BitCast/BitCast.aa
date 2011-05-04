@@ -1,0 +1,8 @@
+// a simple example..
+$module [sum_mod]
+    $in (a: $int<10>)
+    $out (b: $uint<10>)
+$is
+{
+	b := ($bitcast ($uint<10>) a)
+}

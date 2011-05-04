@@ -412,7 +412,7 @@ std::string Aa::get_aa_type_name(const llvm::Type* ptr, llvm::Module& tst)
   else if(isa<StructType>(ptr))
     {
       const llvm::StructType *ptr_struct = dyn_cast<llvm::StructType>(ptr);
-      ret_string = "$struct ";
+      ret_string = "$record ";
       for(int idx = 0; idx < ptr_struct->getNumElements(); idx++)
 	{
 	  ret_string += "< " ;

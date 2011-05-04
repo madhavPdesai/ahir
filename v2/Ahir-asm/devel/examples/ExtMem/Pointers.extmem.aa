@@ -1,0 +1,47 @@
+$pipe extmem_read_address_32 : $uint<32 >
+$pipe extmem_read_data_32 : $uint<32 >
+$pipe extmem_write_address_32 : $uint<32 >
+$pipe extmem_write_data_32 : $uint<32 >
+$module [extmem_load_32]  $in (addr: $uint<32> )
+$out (data: $uint<32> )
+$is 
+{
+  extmem_read_address_32 := addr
+  data := extmem_read_data_32
+}
+$module [extmem_store_32]  $in (addr: $uint<32>  data: $uint<32> )
+$out () 
+$is 
+{
+  extmem_write_address_32 := addr
+  extmem_write_data_32 := data
+}
+$module [extmem_load_for_type_1]  $in (addr: $uint<32> )
+$out (data: $uint<32> )
+$is 
+{
+  $call extmem_load_32 ( addr )  ( t_data ) 
+  data := ($bitcast ( $uint<32> ) t_data) 
+}
+$module [extmem_store_for_type_1]  $in (addr: $uint<32>  data: $uint<32> )
+$out () 
+$is 
+{
+  t_data := ($bitcast ($uint< 32 > ) data  )
+  $call extmem_store_32 (addr t_data) () 
+}
+$module [passpointer]
+$in ( a : $pointer< $uint<32> >  )
+$out ( b : $uint<32>  )
+$is
+{
+  $storage  u : $array[16][16] $of $uint<32> // memory space index = 0  base address = 0  word size = 32
+  u[0 ][1 ] := ($cast ($uint<32>) a )
+  p := @(u[0 ])
+  q := p[1 ][0 ]
+  $call extmem_load_for_type_1 ( ($bitcast ($uint<32> )  a)) (r)
+  s := ->(q)
+  b := (r + s)
+}
+// Memory space 0: %passpointer:u 
+// Memory space 1: 

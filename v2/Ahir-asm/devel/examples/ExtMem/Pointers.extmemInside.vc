@@ -1,0 +1,588 @@
+// Virtual circuit produced from Aa description by Aa2VC 
+// $pipe  mem_read_address_in : $uint<32> 
+// in scope  top-level
+$pipe [mem_read_address_in] 32
+// $pipe  mem_read_data_out : $uint<8> 
+// in scope  top-level
+$pipe [mem_read_data_out] 8
+// $pipe  mem_write_address_in : $uint<32> 
+// in scope  top-level
+$pipe [mem_write_address_in] 32
+// $pipe  mem_write_data_in : $uint<8> 
+// in scope  top-level
+$pipe [mem_write_data_in] 8
+// pipe-declarations for block %mem_load__
+// file Pointers.extmemInside.aa, line 7
+// pipe-declarations for block %mem_store__
+// file Pointers.extmemInside.aa, line 15
+// pipe-declarations for block %passpointer
+// file Pointers.extmemInside.aa, line 22
+// load store constants for object extmem_pool__
+$constant $W[extmem_pool___base_address] : $int<10> := _b0000000000
+$memoryspace [memory_space_0] 
+{
+  $capacity 1024
+  $datawidth 8
+  $addrwidth 10
+  // $storage  extmem_pool__ : $array[1024] $of $uint<8> // memory space index = 0  base address = 0  word size = 8
+  // in scope  top-level
+  $object [extmem_pool__] : $array[1024] $of $int<8>
+}
+$module [mem_load__] 
+{
+  $CP 
+  {
+    // begin control-path 
+    // 	mem_read_data_out := extmem_pool__[((mem_read_address_in * 1 ) + 0 )]
+    // file Pointers.extmemInside.aa, line 12
+    ;;[assign_stmt_16] // file Pointers.extmemInside.aa, line 12
+    {
+      // extmem_pool__[((mem_read_address_in * 1 ) + 0 )]
+      ;;[array_obj_ref_15] 
+      {
+        // load 
+        ;;[array_obj_ref_15_addr_gen] 
+        {
+          ||[scale_indices] 
+          {
+            ;;[idx_0] 
+            {
+              // ((mem_read_address_in * 1 ) + 0 )
+              ;;[binary_14] 
+              {
+                // binary expression 
+                ||[binary_14_inputs] 
+                {
+                  // (mem_read_address_in * 1 )
+                  ;;[binary_12] 
+                  {
+                    // binary expression 
+                    ||[binary_12_inputs] 
+                    {
+                      // mem_read_address_in
+                      ;;[simple_obj_ref_10] 
+                      {
+                        // pipe read
+                        $T [req] $T [ack] 
+                      }
+                    }
+                    $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+                  }
+                }
+                $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+              }
+              $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
+              $T [scale_rename_req] $T [scale_rename_ack] // rename 
+            }
+          }
+          ;;[add_indices] 
+          {
+            $T [final_index_req] $T [final_index_ack] // rename
+          }
+          $T [sum_rename_req] $T [sum_rename_ack] // one gets through 
+          $T [root_rename_req] $T [root_rename_ack]
+        }
+        ;;[array_obj_ref_15_read] 
+        {
+          ||[word_access] 
+          {
+            ;;[word_access_0] 
+            {
+              $T [rr] $T [ra] $T [cr] $T [ca]
+            }
+          }
+          $T [merge_req] $T [merge_ack]
+        }
+      }
+      // mem_read_data_out
+      ;;[simple_obj_ref_9] 
+      {
+        // pipe write mem_read_data_out
+        $T [pipe_wreq] $T [pipe_wack] 
+      }
+    }
+    // end assignment statement assign_stmt_16
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %mem_load__
+    // file Pointers.extmemInside.aa, line 7
+    // extmem_pool__[((mem_read_address_in * 1 ) + 0 )]
+    // 1 
+    $constant $W[expr_11_wire_constant] : $int<32> := _b00000000000000000000000000000001// 1
+    // 0 
+    $constant $W[expr_13_wire_constant] : $int<32> := _b00000000000000000000000000000000// 0
+    $constant $W[array_obj_ref_15_resized_base_address] : $int<10> := _b0000000000// 0
+    $constant $W[array_obj_ref_15_offset_scale_factor_0] : $int<10> := _b0000000001// 1
+    $constant $W[array_obj_ref_15_word_offset_0] : $int<10> := _b0000000000// 0
+    // 	mem_read_data_out := extmem_pool__[((mem_read_address_in * 1 ) + 0 )]
+    // file Pointers.extmemInside.aa, line 12
+    // extmem_pool__[((mem_read_address_in * 1 ) + 0 )]
+    // mem_read_address_in
+    $W[simple_obj_ref_10_wire] : $int<32>
+    // (mem_read_address_in * 1 )
+    $intermediate $W[binary_12_wire] : $int<32>
+    // ((mem_read_address_in * 1 ) + 0 )
+    $intermediate $W[binary_14_wire] : $int<32>
+    $intermediate $W[binary_14_resized] : $int<10>
+    $intermediate $W[binary_14_scaled] : $int<10>
+    $W[array_obj_ref_15_final_offset] : $int<10>
+    $W[array_obj_ref_15_root_address] : $int<10>
+    $W[array_obj_ref_15_word_address_0] : $pointer<memory_space_0>
+    $W[array_obj_ref_15_data_0] : $int<8>
+    $W[array_obj_ref_15_wire] : $int<8>
+    // mem_read_data_out
+    // 	mem_read_data_out := extmem_pool__[((mem_read_address_in * 1 ) + 0 )]
+    // file Pointers.extmemInside.aa, line 12
+    // extmem_pool__[((mem_read_address_in * 1 ) + 0 )]
+    // mem_read_address_in
+    $ioport $in [simple_obj_ref_10_inst] (mem_read_address_in) (simple_obj_ref_10_wire)
+    // (mem_read_address_in * 1 )
+    *[binary_12_inst] (simple_obj_ref_10_wire expr_11_wire_constant) (binary_12_wire)
+    // ((mem_read_address_in * 1 ) + 0 )
+    +[binary_14_inst] (binary_12_wire expr_13_wire_constant) (binary_14_wire)
+    := [array_obj_ref_15_index_0_resize] (binary_14_wire) (binary_14_resized)
+    &/ [array_obj_ref_15_index_0_rename] (binary_14_resized) (binary_14_scaled) 
+    := [array_obj_ref_15_offset_inst] (binary_14_scaled) (array_obj_ref_15_final_offset)
+    &/ [array_obj_ref_15_root_address_inst] (array_obj_ref_15_final_offset) (array_obj_ref_15_root_address) 
+    &/ [array_obj_ref_15_addr_0] (array_obj_ref_15_root_address) (array_obj_ref_15_word_address_0) 
+    $load [array_obj_ref_15_load_0] $from memory_space_0 (array_obj_ref_15_word_address_0) (array_obj_ref_15_data_0)
+    &/ [array_obj_ref_15_gather_scatter] (array_obj_ref_15_data_0) (array_obj_ref_15_wire) 
+    // mem_read_data_out
+    $ioport $out [simple_obj_ref_9_inst]  (array_obj_ref_15_wire) (mem_read_data_out)
+  }
+  // end data-path
+  // 	mem_read_data_out := extmem_pool__[((mem_read_address_in * 1 ) + 0 )]
+  // file Pointers.extmemInside.aa, line 12
+  // mem_read_data_out
+  simple_obj_ref_9_inst <=> (assign_stmt_16/simple_obj_ref_9/pipe_wreq) (assign_stmt_16/simple_obj_ref_9/pipe_wack)
+  // extmem_pool__[((mem_read_address_in * 1 ) + 0 )]
+  // mem_read_address_in
+  simple_obj_ref_10_inst <=> (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/scale_indices/idx_0/binary_14/binary_14_inputs/binary_12/binary_12_inputs/simple_obj_ref_10/req) (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/scale_indices/idx_0/binary_14/binary_14_inputs/binary_12/binary_12_inputs/simple_obj_ref_10/ack)
+  // (mem_read_address_in * 1 )
+  binary_12_inst <=> (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/scale_indices/idx_0/binary_14/binary_14_inputs/binary_12/rr assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/scale_indices/idx_0/binary_14/binary_14_inputs/binary_12/cr) (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/scale_indices/idx_0/binary_14/binary_14_inputs/binary_12/ra assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/scale_indices/idx_0/binary_14/binary_14_inputs/binary_12/ca)
+  // ((mem_read_address_in * 1 ) + 0 )
+  binary_14_inst <=> (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/scale_indices/idx_0/binary_14/rr assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/scale_indices/idx_0/binary_14/cr) (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/scale_indices/idx_0/binary_14/ra assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/scale_indices/idx_0/binary_14/ca)
+  array_obj_ref_15_index_0_resize <=> (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/scale_indices/idx_0/index_resize_req) (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/scale_indices/idx_0/index_resize_ack)
+  array_obj_ref_15_index_0_rename <=> (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/scale_indices/idx_0/scale_rename_req) (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/scale_indices/idx_0/scale_rename_ack)
+  array_obj_ref_15_offset_inst <=> (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/add_indices/final_index_req) (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/add_indices/final_index_ack)
+  array_obj_ref_15_root_address_inst <=> (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/sum_rename_req) (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/sum_rename_ack)
+  array_obj_ref_15_addr_0 <=> (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/root_rename_req) (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_addr_gen/root_rename_ack)
+  array_obj_ref_15_gather_scatter <=> (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_read/merge_req) (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_read/merge_ack)
+  array_obj_ref_15_load_0 <=> (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_read/word_access/word_access_0/rr assign_stmt_16/array_obj_ref_15/array_obj_ref_15_read/word_access/word_access_0/cr) (assign_stmt_16/array_obj_ref_15/array_obj_ref_15_read/word_access/word_access_0/ra assign_stmt_16/array_obj_ref_15/array_obj_ref_15_read/word_access/word_access_0/ca)
+}
+$module [mem_store__] 
+{
+  $CP 
+  {
+    // begin control-path 
+    // 	extmem_pool__[((mem_write_address_in * 1 ) + 0 )] := mem_write_data_in
+    // file Pointers.extmemInside.aa, line 20
+    ;;[assign_stmt_26] // file Pointers.extmemInside.aa, line 20
+    {
+      // mem_write_data_in
+      ;;[simple_obj_ref_25] 
+      {
+        // pipe read
+        $T [req] $T [ack] 
+      }
+      // extmem_pool__[((mem_write_address_in * 1 ) + 0 )]
+      ;;[array_obj_ref_24] 
+      {
+        // store 
+        ;;[array_obj_ref_24_addr_gen] 
+        {
+          ||[scale_indices] 
+          {
+            ;;[idx_0] 
+            {
+              // ((mem_write_address_in * 1 ) + 0 )
+              ;;[binary_23] 
+              {
+                // binary expression 
+                ||[binary_23_inputs] 
+                {
+                  // (mem_write_address_in * 1 )
+                  ;;[binary_21] 
+                  {
+                    // binary expression 
+                    ||[binary_21_inputs] 
+                    {
+                      // mem_write_address_in
+                      ;;[simple_obj_ref_19] 
+                      {
+                        // pipe read
+                        $T [req] $T [ack] 
+                      }
+                    }
+                    $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+                  }
+                }
+                $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+              }
+              $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
+              $T [scale_rename_req] $T [scale_rename_ack] // rename 
+            }
+          }
+          ;;[add_indices] 
+          {
+            $T [final_index_req] $T [final_index_ack] // rename
+          }
+          $T [sum_rename_req] $T [sum_rename_ack] // one gets through 
+          $T [root_rename_req] $T [root_rename_ack]
+        }
+        ;;[array_obj_ref_24_write] 
+        {
+          $T [split_req] $T [split_ack]
+          ||[word_access] 
+          {
+            ;;[word_access_0] 
+            {
+              $T [rr] $T [ra] $T [cr] $T [ca]
+            }
+          }
+        }
+      }
+    }
+    // end assignment statement assign_stmt_26
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %mem_store__
+    // file Pointers.extmemInside.aa, line 15
+    // extmem_pool__[((mem_write_address_in * 1 ) + 0 )]
+    // 1 
+    $constant $W[expr_20_wire_constant] : $int<32> := _b00000000000000000000000000000001// 1
+    // 0 
+    $constant $W[expr_22_wire_constant] : $int<32> := _b00000000000000000000000000000000// 0
+    $constant $W[array_obj_ref_24_resized_base_address] : $int<10> := _b0000000000// 0
+    $constant $W[array_obj_ref_24_offset_scale_factor_0] : $int<10> := _b0000000001// 1
+    $constant $W[array_obj_ref_24_word_offset_0] : $int<10> := _b0000000000// 0
+    // 	extmem_pool__[((mem_write_address_in * 1 ) + 0 )] := mem_write_data_in
+    // file Pointers.extmemInside.aa, line 20
+    // mem_write_data_in
+    $W[simple_obj_ref_25_wire] : $int<8>
+    // extmem_pool__[((mem_write_address_in * 1 ) + 0 )]
+    // mem_write_address_in
+    $W[simple_obj_ref_19_wire] : $int<32>
+    // (mem_write_address_in * 1 )
+    $intermediate $W[binary_21_wire] : $int<32>
+    // ((mem_write_address_in * 1 ) + 0 )
+    $intermediate $W[binary_23_wire] : $int<32>
+    $intermediate $W[binary_23_resized] : $int<10>
+    $intermediate $W[binary_23_scaled] : $int<10>
+    $W[array_obj_ref_24_final_offset] : $int<10>
+    $W[array_obj_ref_24_root_address] : $int<10>
+    $W[array_obj_ref_24_word_address_0] : $pointer<memory_space_0>
+    $W[array_obj_ref_24_data_0] : $int<8>
+    // 	extmem_pool__[((mem_write_address_in * 1 ) + 0 )] := mem_write_data_in
+    // file Pointers.extmemInside.aa, line 20
+    // mem_write_data_in
+    $ioport $in [simple_obj_ref_25_inst] (mem_write_data_in) (simple_obj_ref_25_wire)
+    // extmem_pool__[((mem_write_address_in * 1 ) + 0 )]
+    // mem_write_address_in
+    $ioport $in [simple_obj_ref_19_inst] (mem_write_address_in) (simple_obj_ref_19_wire)
+    // (mem_write_address_in * 1 )
+    *[binary_21_inst] (simple_obj_ref_19_wire expr_20_wire_constant) (binary_21_wire)
+    // ((mem_write_address_in * 1 ) + 0 )
+    +[binary_23_inst] (binary_21_wire expr_22_wire_constant) (binary_23_wire)
+    := [array_obj_ref_24_index_0_resize] (binary_23_wire) (binary_23_resized)
+    &/ [array_obj_ref_24_index_0_rename] (binary_23_resized) (binary_23_scaled) 
+    := [array_obj_ref_24_offset_inst] (binary_23_scaled) (array_obj_ref_24_final_offset)
+    &/ [array_obj_ref_24_root_address_inst] (array_obj_ref_24_final_offset) (array_obj_ref_24_root_address) 
+    &/ [array_obj_ref_24_addr_0] (array_obj_ref_24_root_address) (array_obj_ref_24_word_address_0) 
+    $store [array_obj_ref_24_store_0] $to memory_space_0 (array_obj_ref_24_word_address_0 array_obj_ref_24_data_0)
+    &/ [array_obj_ref_24_gather_scatter] (simple_obj_ref_25_wire) (array_obj_ref_24_data_0) 
+  }
+  // end data-path
+  // 	extmem_pool__[((mem_write_address_in * 1 ) + 0 )] := mem_write_data_in
+  // file Pointers.extmemInside.aa, line 20
+  // mem_write_address_in
+  simple_obj_ref_19_inst <=> (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/scale_indices/idx_0/binary_23/binary_23_inputs/binary_21/binary_21_inputs/simple_obj_ref_19/req) (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/scale_indices/idx_0/binary_23/binary_23_inputs/binary_21/binary_21_inputs/simple_obj_ref_19/ack)
+  // (mem_write_address_in * 1 )
+  binary_21_inst <=> (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/scale_indices/idx_0/binary_23/binary_23_inputs/binary_21/rr assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/scale_indices/idx_0/binary_23/binary_23_inputs/binary_21/cr) (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/scale_indices/idx_0/binary_23/binary_23_inputs/binary_21/ra assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/scale_indices/idx_0/binary_23/binary_23_inputs/binary_21/ca)
+  // ((mem_write_address_in * 1 ) + 0 )
+  binary_23_inst <=> (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/scale_indices/idx_0/binary_23/rr assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/scale_indices/idx_0/binary_23/cr) (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/scale_indices/idx_0/binary_23/ra assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/scale_indices/idx_0/binary_23/ca)
+  array_obj_ref_24_index_0_resize <=> (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/scale_indices/idx_0/index_resize_req) (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/scale_indices/idx_0/index_resize_ack)
+  array_obj_ref_24_index_0_rename <=> (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/scale_indices/idx_0/scale_rename_req) (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/scale_indices/idx_0/scale_rename_ack)
+  array_obj_ref_24_offset_inst <=> (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/add_indices/final_index_req) (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/add_indices/final_index_ack)
+  array_obj_ref_24_root_address_inst <=> (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/sum_rename_req) (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/sum_rename_ack)
+  array_obj_ref_24_addr_0 <=> (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/root_rename_req) (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_addr_gen/root_rename_ack)
+  array_obj_ref_24_gather_scatter <=> (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_write/split_req) (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_write/split_ack)
+  array_obj_ref_24_store_0 <=> (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_write/word_access/word_access_0/rr assign_stmt_26/array_obj_ref_24/array_obj_ref_24_write/word_access/word_access_0/cr) (assign_stmt_26/array_obj_ref_24/array_obj_ref_24_write/word_access/word_access_0/ra assign_stmt_26/array_obj_ref_24/array_obj_ref_24_write/word_access/word_access_0/ca)
+  // mem_write_data_in
+  simple_obj_ref_25_inst <=> (assign_stmt_26/simple_obj_ref_25/req) (assign_stmt_26/simple_obj_ref_25/ack)
+}
+$module [passpointer] 
+{
+  $in a:$int<32> 
+  $out b:$int<32>
+  $memoryspace [memory_space_1] 
+  {
+    $capacity 256
+    $datawidth 32
+    $addrwidth 8
+    // 	$storage  u : $array[16][16] $of $uint<32> // memory space index = 1  base address = 0  word size = 32
+    // in scope  %passpointer
+    $object [xxpasspointerxxu] : $array[256] $of $int<32>
+  }
+  $CP 
+  {
+    // begin control-path 
+    // 	u[0 ][1 ] := ($cast ($uint<32>) a )
+    // file Pointers.extmemInside.aa, line 28
+    ;;[assign_stmt_39] // file Pointers.extmemInside.aa, line 28
+    {
+      // ($cast ($uint<32>) a )
+      ;;[type_cast_38] 
+      {
+        // type-cast expression
+        $T [req] $T [ack] //  type-conversion.. 
+      }
+      // u[0 ][1 ]
+      ;;[array_obj_ref_36] 
+      {
+        // store 
+        ;;[array_obj_ref_36_write] 
+        {
+          $T [split_req] $T [split_ack]
+          ||[word_access] 
+          {
+            ;;[word_access_0] 
+            {
+              $T [rr] $T [ra] $T [cr] $T [ca]
+            }
+          }
+        }
+      }
+    }
+    // end assignment statement assign_stmt_39
+    // 	p := @(u[0 ])
+    // file Pointers.extmemInside.aa, line 33
+    ;;[assign_stmt_44] // file Pointers.extmemInside.aa, line 33
+    {
+      $T [dummy] // assignment evaluates to a constant 
+    }
+    // end assignment statement assign_stmt_44
+    // 	q := p[1 ][0 ]
+    // file Pointers.extmemInside.aa, line 38
+    ;;[assign_stmt_49] // file Pointers.extmemInside.aa, line 38
+    {
+      $T [dummy] // assignment evaluates to a constant 
+    }
+    // end assignment statement assign_stmt_49
+    // 	r := ->(a)
+    // file Pointers.extmemInside.aa, line 43
+    ;;[assign_stmt_53] // file Pointers.extmemInside.aa, line 43
+    {
+      // ->(a)
+      ;;[ptr_deref_52] 
+      {
+        // load 
+        ;;[ptr_deref_52_addr_gen] 
+        {
+          $T [base_resize_req] $T [base_resize_ack]
+          $T [sum_rename_req] $T [sum_rename_ack] // one gets through 
+          ||[words] 
+          {
+            ;;[word_0] 
+            {
+              $T [rr] $T [ra] $T [cr] $T [ca]
+            }
+            ;;[word_1] 
+            {
+              $T [rr] $T [ra] $T [cr] $T [ca]
+            }
+            ;;[word_2] 
+            {
+              $T [rr] $T [ra] $T [cr] $T [ca]
+            }
+            ;;[word_3] 
+            {
+              $T [rr] $T [ra] $T [cr] $T [ca]
+            }
+          }
+        }
+        ;;[ptr_deref_52_read] 
+        {
+          ||[word_access] 
+          {
+            ;;[word_access_0] 
+            {
+              $T [rr] $T [ra] $T [cr] $T [ca]
+            }
+            ;;[word_access_1] 
+            {
+              $T [rr] $T [ra] $T [cr] $T [ca]
+            }
+            ;;[word_access_2] 
+            {
+              $T [rr] $T [ra] $T [cr] $T [ca]
+            }
+            ;;[word_access_3] 
+            {
+              $T [rr] $T [ra] $T [cr] $T [ca]
+            }
+          }
+          $T [merge_req] $T [merge_ack]
+        }
+      }
+    }
+    // end assignment statement assign_stmt_53
+    // 	s := ->(q)
+    // file Pointers.extmemInside.aa, line 48
+    ;;[assign_stmt_57] // file Pointers.extmemInside.aa, line 48
+    {
+      // ->(q)
+      ;;[ptr_deref_56] 
+      {
+        // load 
+        ;;[ptr_deref_56_read] 
+        {
+          ||[word_access] 
+          {
+            ;;[word_access_0] 
+            {
+              $T [rr] $T [ra] $T [cr] $T [ca]
+            }
+          }
+          $T [merge_req] $T [merge_ack]
+        }
+      }
+    }
+    // end assignment statement assign_stmt_57
+    // 	b := (r + s)
+    // file Pointers.extmemInside.aa, line 53
+    ;;[assign_stmt_62] // file Pointers.extmemInside.aa, line 53
+    {
+      // (r + s)
+      ;;[binary_61] 
+      {
+        // binary expression 
+        ||[binary_61_inputs] 
+        {
+        }
+        $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+      }
+    }
+    // end assignment statement assign_stmt_62
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %passpointer
+    // file Pointers.extmemInside.aa, line 22
+    // load store constants for object %passpointer:u
+    $constant $W[xxpasspointerxxu_base_address] : $int<8> := _b00000000
+    // u[0 ][1 ]
+    $constant $W[array_obj_ref_36_word_address_0] : $pointer<passpointer/memory_space_1> := _b00000001
+    // 	p := @(u[0 ])
+    // file Pointers.extmemInside.aa, line 33
+    $constant $W[p_44] : $int<32> := _b00000000000000000000000000000000 // 0
+    // 	q := p[1 ][0 ]
+    // file Pointers.extmemInside.aa, line 38
+    $constant $W[q_49] : $int<32> := _b00000000000000000000000000010000 // 16
+    // ->(a)
+    $constant $W[ptr_deref_52_word_offset_0] : $int<10> := _b0000000000// 0
+    $constant $W[ptr_deref_52_word_offset_1] : $int<10> := _b0000000001// 1
+    $constant $W[ptr_deref_52_word_offset_2] : $int<10> := _b0000000010// 2
+    $constant $W[ptr_deref_52_word_offset_3] : $int<10> := _b0000000011// 3
+    // ->(q)
+    $constant $W[ptr_deref_56_word_address_0] : $pointer<passpointer/memory_space_1> := _b00010000
+    // 	u[0 ][1 ] := ($cast ($uint<32>) a )
+    // file Pointers.extmemInside.aa, line 28
+    // ($cast ($uint<32>) a )
+    $intermediate $W[type_cast_38_wire] : $int<32>
+    // u[0 ][1 ]
+    $W[array_obj_ref_36_data_0] : $int<32>
+    // 	r := ->(a)
+    // file Pointers.extmemInside.aa, line 43
+    // ->(a)
+    $intermediate $W[ptr_deref_52_resized_base_address] : $int<10>
+    $W[ptr_deref_52_root_address] : $int<10>
+    $W[ptr_deref_52_word_address_0] : $pointer<memory_space_0>
+    $W[ptr_deref_52_word_address_1] : $pointer<memory_space_0>
+    $W[ptr_deref_52_word_address_2] : $pointer<memory_space_0>
+    $W[ptr_deref_52_word_address_3] : $pointer<memory_space_0>
+    $W[ptr_deref_52_data_0] : $int<8>
+    $W[ptr_deref_52_data_1] : $int<8>
+    $W[ptr_deref_52_data_2] : $int<8>
+    $W[ptr_deref_52_data_3] : $int<8>
+    // r
+    $W[r_53] : $int<32>
+    // 	s := ->(q)
+    // file Pointers.extmemInside.aa, line 48
+    // ->(q)
+    $W[ptr_deref_56_data_0] : $int<32>
+    // s
+    $W[s_57] : $int<32>
+    // 	b := (r + s)
+    // file Pointers.extmemInside.aa, line 53
+    // b
+    // 	u[0 ][1 ] := ($cast ($uint<32>) a )
+    // file Pointers.extmemInside.aa, line 28
+    // ($cast ($uint<32>) a )
+    := [type_cast_38_inst] (a) (type_cast_38_wire)
+    // u[0 ][1 ]
+    $store [array_obj_ref_36_store_0] $to passpointer/memory_space_1 (array_obj_ref_36_word_address_0 array_obj_ref_36_data_0)
+    &/ [array_obj_ref_36_gather_scatter] (type_cast_38_wire) (array_obj_ref_36_data_0) 
+    // 	r := ->(a)
+    // file Pointers.extmemInside.aa, line 43
+    // ->(a)
+    := [ptr_deref_52_base_resize] (a) (ptr_deref_52_resized_base_address)
+    &/ [ptr_deref_52_root_address_inst] (ptr_deref_52_resized_base_address) (ptr_deref_52_root_address) 
+    +[ptr_deref_52_addr_0] (ptr_deref_52_root_address ptr_deref_52_word_offset_0) (ptr_deref_52_word_address_0)
+    +[ptr_deref_52_addr_1] (ptr_deref_52_root_address ptr_deref_52_word_offset_1) (ptr_deref_52_word_address_1)
+    +[ptr_deref_52_addr_2] (ptr_deref_52_root_address ptr_deref_52_word_offset_2) (ptr_deref_52_word_address_2)
+    +[ptr_deref_52_addr_3] (ptr_deref_52_root_address ptr_deref_52_word_offset_3) (ptr_deref_52_word_address_3)
+    $load [ptr_deref_52_load_0] $from memory_space_0 (ptr_deref_52_word_address_0) (ptr_deref_52_data_0)
+    $load [ptr_deref_52_load_1] $from memory_space_0 (ptr_deref_52_word_address_1) (ptr_deref_52_data_1)
+    $load [ptr_deref_52_load_2] $from memory_space_0 (ptr_deref_52_word_address_2) (ptr_deref_52_data_2)
+    $load [ptr_deref_52_load_3] $from memory_space_0 (ptr_deref_52_word_address_3) (ptr_deref_52_data_3)
+    &/ [ptr_deref_52_gather_scatter] (ptr_deref_52_data_0 ptr_deref_52_data_1 ptr_deref_52_data_2 ptr_deref_52_data_3) (r_53) 
+    // 	s := ->(q)
+    // file Pointers.extmemInside.aa, line 48
+    // ->(q)
+    $load [ptr_deref_56_load_0] $from passpointer/memory_space_1 (ptr_deref_56_word_address_0) (ptr_deref_56_data_0)
+    &/ [ptr_deref_56_gather_scatter] (ptr_deref_56_data_0) (s_57) 
+    // 	b := (r + s)
+    // file Pointers.extmemInside.aa, line 53
+    // (r + s)
+    +[binary_61_inst] (r_53 s_57) (b)
+  }
+  // end data-path
+  // 	u[0 ][1 ] := ($cast ($uint<32>) a )
+  // file Pointers.extmemInside.aa, line 28
+  array_obj_ref_36_gather_scatter <=> (assign_stmt_39/array_obj_ref_36/array_obj_ref_36_write/split_req) (assign_stmt_39/array_obj_ref_36/array_obj_ref_36_write/split_ack)
+  array_obj_ref_36_store_0 <=> (assign_stmt_39/array_obj_ref_36/array_obj_ref_36_write/word_access/word_access_0/rr assign_stmt_39/array_obj_ref_36/array_obj_ref_36_write/word_access/word_access_0/cr) (assign_stmt_39/array_obj_ref_36/array_obj_ref_36_write/word_access/word_access_0/ra assign_stmt_39/array_obj_ref_36/array_obj_ref_36_write/word_access/word_access_0/ca)
+  // ($cast ($uint<32>) a )
+  type_cast_38_inst <=> (assign_stmt_39/type_cast_38/req) (assign_stmt_39/type_cast_38/ack)
+  // 	r := ->(a)
+  // file Pointers.extmemInside.aa, line 43
+  // ->(a)
+  ptr_deref_52_base_resize <=> (assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/base_resize_req) (assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/base_resize_ack)
+  ptr_deref_52_root_address_inst <=> (assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/sum_rename_req) (assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/sum_rename_ack)
+  ptr_deref_52_addr_0 <=> (assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_0/rr assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_0/cr) (assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_0/ra assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_0/ca)
+  ptr_deref_52_addr_1 <=> (assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_1/rr assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_1/cr) (assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_1/ra assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_1/ca)
+  ptr_deref_52_addr_2 <=> (assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_2/rr assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_2/cr) (assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_2/ra assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_2/ca)
+  ptr_deref_52_addr_3 <=> (assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_3/rr assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_3/cr) (assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_3/ra assign_stmt_53/ptr_deref_52/ptr_deref_52_addr_gen/words/word_3/ca)
+  ptr_deref_52_gather_scatter <=> (assign_stmt_53/ptr_deref_52/ptr_deref_52_read/merge_req) (assign_stmt_53/ptr_deref_52/ptr_deref_52_read/merge_ack)
+  ptr_deref_52_load_0 <=> (assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_0/rr assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_0/cr) (assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_0/ra assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_0/ca)
+  ptr_deref_52_load_1 <=> (assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_1/rr assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_1/cr) (assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_1/ra assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_1/ca)
+  ptr_deref_52_load_2 <=> (assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_2/rr assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_2/cr) (assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_2/ra assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_2/ca)
+  ptr_deref_52_load_3 <=> (assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_3/rr assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_3/cr) (assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_3/ra assign_stmt_53/ptr_deref_52/ptr_deref_52_read/word_access/word_access_3/ca)
+  // 	s := ->(q)
+  // file Pointers.extmemInside.aa, line 48
+  // ->(q)
+  ptr_deref_56_gather_scatter <=> (assign_stmt_57/ptr_deref_56/ptr_deref_56_read/merge_req) (assign_stmt_57/ptr_deref_56/ptr_deref_56_read/merge_ack)
+  ptr_deref_56_load_0 <=> (assign_stmt_57/ptr_deref_56/ptr_deref_56_read/word_access/word_access_0/rr assign_stmt_57/ptr_deref_56/ptr_deref_56_read/word_access/word_access_0/cr) (assign_stmt_57/ptr_deref_56/ptr_deref_56_read/word_access/word_access_0/ra assign_stmt_57/ptr_deref_56/ptr_deref_56_read/word_access/word_access_0/ca)
+  // 	b := (r + s)
+  // file Pointers.extmemInside.aa, line 53
+  // (r + s)
+  binary_61_inst <=> (assign_stmt_62/binary_61/rr assign_stmt_62/binary_61/cr) (assign_stmt_62/binary_61/ra assign_stmt_62/binary_61/ca)
+}

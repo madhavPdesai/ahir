@@ -1,0 +1,225 @@
+Structure of Series Region  {
+$entry
+	 (label =  cL27)
+	 -> 
+		main
+
+main
+	 (label =  cL27)
+	 -> 
+		$exit
+
+$exit
+	 (label =  cL27)
+	 -> 
+
+}
+Structure of Series Region main {
+main/$entry
+	 (label =  cL27)
+	 -> 
+		main/f
+
+main/f
+	 (label =  cL27)
+	 -> 
+		main/req1
+
+main/req1
+	 (label =  cL27)
+	 -> 
+		main/ack1
+
+main/ack1
+	 (label =  cL27)
+	 -> 
+		main/req2
+
+main/req2
+	 (label =  cL27)
+	 -> 
+		main/ack2
+
+main/ack2
+	 (label =  cL27)
+	 -> 
+		main/$exit
+
+main/$exit
+	 (label =  cL27)
+	 -> 
+
+}
+Structure of  Region main/f {
+main/f/$entry
+	 (label =  cL27)
+	 -> 
+		main/f/s1
+		main/f/s2
+
+main/f/s1
+	 (label =  cL28)
+	 -> 
+		main/f/$exit
+
+main/f/s2
+	 (label =  cL29)
+	 -> 
+		main/f/$exit
+
+main/f/$exit
+	 (label =  cL27)
+	 -> 
+
+}
+Structure of Series Region main/f/s1 {
+main/f/s1/$entry
+	 (label =  cL28)
+	 -> 
+		main/f/s1/req1
+
+main/f/s1/req1
+	 (label =  cL28)
+	 -> 
+		main/f/s1/ack1
+
+main/f/s1/ack1
+	 (label =  cL28)
+	 -> 
+		main/f/s1/req2
+
+main/f/s1/req2
+	 (label =  cL28)
+	 -> 
+		main/f/s1/ack2
+
+main/f/s1/ack2
+	 (label =  cL28)
+	 -> 
+		main/f/s1/$exit
+
+main/f/s1/$exit
+	 (label =  cL28)
+	 -> 
+
+}
+Structure of Series Region main/f/s2 {
+main/f/s2/$entry
+	 (label =  cL29)
+	 -> 
+		main/f/s2/req1
+
+main/f/s2/req1
+	 (label =  cL29)
+	 -> 
+		main/f/s2/ack1
+
+main/f/s2/ack1
+	 (label =  cL29)
+	 -> 
+		main/f/s2/req2
+
+main/f/s2/req2
+	 (label =  cL29)
+	 -> 
+		main/f/s2/ack2
+
+main/f/s2/ack2
+	 (label =  cL29)
+	 -> 
+		main/f/s2/$exit
+
+main/f/s2/$exit
+	 (label =  cL29)
+	 -> 
+
+}
+CP-element group 0 fork  output 
+predecessors 
+successors 1 3 
+	$entry
+	main/$entry
+	main/f/$entry
+	main/f/s1/$entry
+	main/f/s1/req1
+	main/f/s2/$entry
+	main/f/s2/req1
+CP-element group 1 input  output 
+predecessors 0 
+successors 2 
+	main/f/s1/req2
+	main/f/s1/ack1
+CP-element group 2 input 
+predecessors 1 
+successors 5 
+	main/f/s1/$exit
+	main/f/s1/ack2
+CP-element group 3 input  output 
+predecessors 0 
+successors 4 
+	main/f/s2/ack1
+	main/f/s2/req2
+CP-element group 4 input 
+predecessors 3 
+successors 5 
+	main/f/s2/$exit
+	main/f/s2/ack2
+CP-element group 5
+predecessors 2 4 
+successors 
+CP-element group 6 output 
+predecessors 
+successors 7 
+	main/req1
+CP-element group 7 input  output 
+predecessors 6 
+successors 8 
+	main/ack1
+	main/req2
+CP-element group 8 input 
+predecessors 7 
+successors 
+	$exit
+	main/$exit
+	main/ack2
+Label Summary 
+	label cL27 : 
+
+
+	label cL28 : 
+	 labeled predecessor (cL27, main/f/$entry, 0)
+
+	label cL29 : 
+	 labeled predecessor (cL27, main/f/$entry, 1)
+
+Label Transitive Closure 
+cL27 ==> 
+	cL27
+	cL28
+	cL29
+
+cL28 ==> 
+	cL28
+
+cL29 ==> 
+	cL29
+
+Label Compatibility Map:
+cL27 >== cL27
+cL27 >== cL28
+cL27 >== cL29
+cL28 >== cL28
+cL29 >== cL29
+Compatible share-able operator groups 
+Operator vcBinarySplitOperator (+)
+{ 
+a1
+   (cL28,cL28)
+a3
+   (cL27,cL27)
+} 
+Operator vcBinarySplitOperator (+)
+{ 
+a2
+   (cL29,cL29)
+} 

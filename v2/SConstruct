@@ -1,0 +1,1 @@
+SConscript(['Value/SConscript', 'iolib/SConscript', 'llvmbc2Aa/SConscript', 'libAhirV2/SConscript','Ahir-asm/devel/SConscript'])

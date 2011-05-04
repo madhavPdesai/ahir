@@ -1,0 +1,536 @@
+$storage int_x:$array [6] $of $uint<32>
+$storage int_y:$array [6] $of $uint<32>
+$storage int_arith:$array [3] $of $uint<32>
+$storage int_cmp:$array [6] $of $uint<32>
+$storage int_shift:$array [2] $of $uint<32>
+$storage short_x:$array [6] $of $uint<16>
+$storage short_y:$array [6] $of $uint<16>
+$storage short_arith:$array [3] $of $uint<16>
+$storage short_cmp:$array [6] $of $uint<16>
+$storage short_shift:$array [2] $of $uint<16>
+$storage float_x:$array [6] $of $float<8,23>
+$storage float_y:$array [6] $of $float<8,23>
+$storage float_arith:$array [3] $of $float<8,23>
+$storage float_cmp:$array [6] $of $uint<32>
+$module [test_ints] 
+// arguments
+ $in ()
+ $out (ret_val__ : $uint<32>)
+ $is 
+{
+$storage stored_ret_val__ : $uint<32>
+$branchblock [test_ints] {
+//begin: basic-block bb_0
+iNsTr_0 := @(int_x[_b00000000000000000000000000000000])
+// load 
+iNsTr_1 := ->(iNsTr_0) 
+iNsTr_2 := @(int_y[_b00000000000000000000000000000000])
+// load 
+iNsTr_3 := ->(iNsTr_2) 
+iNsTr_4 := (iNsTr_3 + iNsTr_1)
+iNsTr_5 := @(int_arith[_b00000000000000000000000000000000])
+->(iNsTr_5) := iNsTr_4
+iNsTr_7 := @(int_x[_b00000000000000000000000000000001])
+// load 
+iNsTr_8 := ->(iNsTr_7) 
+iNsTr_9 := @(int_y[_b00000000000000000000000000000001])
+// load 
+iNsTr_10 := ->(iNsTr_9) 
+iNsTr_11 := (iNsTr_8 - iNsTr_10)
+iNsTr_12 := @(int_arith[_b00000000000000000000000000000001])
+->(iNsTr_12) := iNsTr_11
+iNsTr_14 := @(int_x[_b00000000000000000000000000000010])
+// load 
+iNsTr_15 := ->(iNsTr_14) 
+iNsTr_16 := @(int_y[_b00000000000000000000000000000010])
+// load 
+iNsTr_17 := ->(iNsTr_16) 
+iNsTr_18 := (iNsTr_17 * iNsTr_15)
+iNsTr_19 := @(int_arith[_b00000000000000000000000000000010])
+->(iNsTr_19) := iNsTr_18
+// compare instruction
+iNsTr_21 := ( ($cast ( $int<32>) iNsTr_1) >  ($cast ( $int<32>) iNsTr_3 ) )
+iNsTr_22 := ($cast ($uint<32>) iNsTr_21)
+iNsTr_23 := @(int_cmp[_b00000000000000000000000000000000])
+->(iNsTr_23) := iNsTr_22
+// compare instruction
+iNsTr_25 := ( ($cast ( $int<32>) iNsTr_8) >=   ($cast ( $int<32>) iNsTr_10 ) )
+iNsTr_26 := ($cast ($uint<32>) iNsTr_25)
+iNsTr_27 := @(int_cmp[_b00000000000000000000000000000001])
+->(iNsTr_27) := iNsTr_26
+// compare instruction
+iNsTr_29 := ( ($cast ( $int<32>) iNsTr_15) <   ($cast ( $int<32>) iNsTr_17 ) )
+iNsTr_30 := ($cast ($uint<32>) iNsTr_29)
+iNsTr_31 := @(int_cmp[_b00000000000000000000000000000010])
+->(iNsTr_31) := iNsTr_30
+iNsTr_33 := @(int_x[_b00000000000000000000000000000011])
+// load 
+iNsTr_34 := ->(iNsTr_33) 
+iNsTr_35 := @(int_y[_b00000000000000000000000000000011])
+// load 
+iNsTr_36 := ->(iNsTr_35) 
+// compare instruction
+iNsTr_37 := ( ($cast ( $int<32>) iNsTr_34) <=   ($cast ( $int<32>) iNsTr_36 ) )
+iNsTr_38 := ($cast ($uint<32>) iNsTr_37)
+iNsTr_39 := @(int_cmp[_b00000000000000000000000000000011])
+->(iNsTr_39) := iNsTr_38
+iNsTr_41 := @(int_x[_b00000000000000000000000000000100])
+// load 
+iNsTr_42 := ->(iNsTr_41) 
+iNsTr_43 := @(int_y[_b00000000000000000000000000000100])
+// load 
+iNsTr_44 := ->(iNsTr_43) 
+// compare instruction
+iNsTr_45 := (iNsTr_42 == iNsTr_44 )
+iNsTr_46 := ($cast ($uint<32>) iNsTr_45)
+iNsTr_47 := @(int_cmp[_b00000000000000000000000000000100])
+->(iNsTr_47) := iNsTr_46
+iNsTr_49 := @(int_x[_b00000000000000000000000000000101])
+// load 
+iNsTr_50 := ->(iNsTr_49) 
+iNsTr_51 := @(int_y[_b00000000000000000000000000000101])
+// load 
+iNsTr_52 := ->(iNsTr_51) 
+// compare instruction
+iNsTr_53 := ( ($cast ( $int<32>) iNsTr_50) !=   ($cast ( $int<32>) iNsTr_52 ) )
+iNsTr_54 := ($cast ($uint<32>) iNsTr_53)
+iNsTr_55 := @(int_cmp[_b00000000000000000000000000000101])
+->(iNsTr_55) := iNsTr_54
+iNsTr_57 :=  ( ($cast ( $int<32>) iNsTr_1) >>  ($cast ( $int<32>) _b00000000000000000000000000000100 ) )
+iNsTr_58 := @(int_shift[_b00000000000000000000000000000000])
+->(iNsTr_58) := iNsTr_57
+iNsTr_60 := (iNsTr_3 << _b00000000000000000000000000000100)
+iNsTr_61 := @(int_shift[_b00000000000000000000000000000001])
+->(iNsTr_61) := iNsTr_60
+iNsTr_63 := (iNsTr_11 & iNsTr_4)
+iNsTr_64 := (iNsTr_63 | iNsTr_18)
+iNsTr_65 := (iNsTr_64 ^ iNsTr_57)
+iNsTr_66 := (iNsTr_65 ^ iNsTr_60)
+stored_ret_val__ := iNsTr_66
+$place [return__]
+$merge return__ $endmerge
+ret_val__ := stored_ret_val__ 
+}
+}
+$module [test_shorts] 
+// arguments
+ $in ()
+ $out (ret_val__ : $uint<16>)
+ $is 
+{
+$storage stored_ret_val__ : $uint<16>
+$branchblock [test_shorts] {
+//begin: basic-block bb_0
+iNsTr_0 := @(short_x[_b00000000000000000000000000000000])
+// load 
+iNsTr_1 := ->(iNsTr_0) 
+iNsTr_2 := @(short_y[_b00000000000000000000000000000000])
+// load 
+iNsTr_3 := ->(iNsTr_2) 
+iNsTr_4 := (iNsTr_3 + iNsTr_1)
+iNsTr_5 := @(short_arith[_b00000000000000000000000000000000])
+->(iNsTr_5) := iNsTr_4
+iNsTr_7 := @(short_x[_b00000000000000000000000000000001])
+// load 
+iNsTr_8 := ->(iNsTr_7) 
+iNsTr_9 := @(short_y[_b00000000000000000000000000000001])
+// load 
+iNsTr_10 := ->(iNsTr_9) 
+iNsTr_11 := (iNsTr_8 - iNsTr_10)
+iNsTr_12 := @(short_arith[_b00000000000000000000000000000001])
+->(iNsTr_12) := iNsTr_11
+iNsTr_14 := @(short_x[_b00000000000000000000000000000010])
+// load 
+iNsTr_15 := ->(iNsTr_14) 
+iNsTr_16 := @(short_y[_b00000000000000000000000000000010])
+// load 
+iNsTr_17 := ->(iNsTr_16) 
+iNsTr_18 := (iNsTr_17 * iNsTr_15)
+iNsTr_19 := @(short_arith[_b00000000000000000000000000000010])
+->(iNsTr_19) := iNsTr_18
+// compare instruction
+iNsTr_21 := (iNsTr_1 > iNsTr_3 )
+iNsTr_22 := ($cast ($uint<16>) iNsTr_21)
+iNsTr_23 := @(short_cmp[_b00000000000000000000000000000000])
+->(iNsTr_23) := iNsTr_22
+// compare instruction
+iNsTr_25 := (iNsTr_8 >= iNsTr_10 )
+iNsTr_26 := ($cast ($uint<16>) iNsTr_25)
+iNsTr_27 := @(short_cmp[_b00000000000000000000000000000001])
+->(iNsTr_27) := iNsTr_26
+// compare instruction
+iNsTr_29 := (iNsTr_15 < iNsTr_17 )
+iNsTr_30 := ($cast ($uint<16>) iNsTr_29)
+iNsTr_31 := @(short_cmp[_b00000000000000000000000000000010])
+->(iNsTr_31) := iNsTr_30
+iNsTr_33 := @(short_x[_b00000000000000000000000000000011])
+// load 
+iNsTr_34 := ->(iNsTr_33) 
+iNsTr_35 := @(short_y[_b00000000000000000000000000000011])
+// load 
+iNsTr_36 := ->(iNsTr_35) 
+// compare instruction
+iNsTr_37 := (iNsTr_34 <= iNsTr_36 )
+iNsTr_38 := ($cast ($uint<16>) iNsTr_37)
+iNsTr_39 := @(short_cmp[_b00000000000000000000000000000011])
+->(iNsTr_39) := iNsTr_38
+iNsTr_41 := @(short_x[_b00000000000000000000000000000100])
+// load 
+iNsTr_42 := ->(iNsTr_41) 
+iNsTr_43 := @(short_y[_b00000000000000000000000000000100])
+// load 
+iNsTr_44 := ->(iNsTr_43) 
+// compare instruction
+iNsTr_45 := (iNsTr_42 == iNsTr_44 )
+iNsTr_46 := ($cast ($uint<16>) iNsTr_45)
+iNsTr_47 := @(short_cmp[_b00000000000000000000000000000100])
+->(iNsTr_47) := iNsTr_46
+iNsTr_49 := @(short_x[_b00000000000000000000000000000101])
+// load 
+iNsTr_50 := ->(iNsTr_49) 
+iNsTr_51 := @(short_y[_b00000000000000000000000000000101])
+// load 
+iNsTr_52 := ->(iNsTr_51) 
+// compare instruction
+iNsTr_53 := ( ($cast ( $int<16>) iNsTr_50) !=   ($cast ( $int<16>) iNsTr_52 ) )
+iNsTr_54 := ($cast ($uint<16>) iNsTr_53)
+iNsTr_55 := @(short_cmp[_b00000000000000000000000000000101])
+->(iNsTr_55) := iNsTr_54
+iNsTr_57 := (iNsTr_1 >> _b0000000000000100)
+iNsTr_58 := @(short_shift[_b00000000000000000000000000000000])
+->(iNsTr_58) := iNsTr_57
+iNsTr_60 := (iNsTr_3 << _b0000000000000100)
+iNsTr_61 := @(short_shift[_b00000000000000000000000000000001])
+->(iNsTr_61) := iNsTr_60
+iNsTr_63 := (iNsTr_11 & iNsTr_4)
+iNsTr_64 := (iNsTr_63 | iNsTr_18)
+iNsTr_65 := (iNsTr_64 ^ iNsTr_57)
+iNsTr_66 := (iNsTr_65 ^ iNsTr_60)
+stored_ret_val__ := iNsTr_66
+$place [return__]
+$merge return__ $endmerge
+ret_val__ := stored_ret_val__ 
+}
+}
+$module [test_floats] 
+// arguments
+ $in ()
+ $out (ret_val__ : $float<8,23>)
+ $is 
+{
+$storage stored_ret_val__ : $float<8,23>
+$branchblock [test_floats] {
+//begin: basic-block bb_0
+iNsTr_0 := @(float_x[_b00000000000000000000000000000000])
+// load 
+iNsTr_1 := ->(iNsTr_0) 
+iNsTr_2 := @(float_y[_b00000000000000000000000000000000])
+// load 
+iNsTr_3 := ->(iNsTr_2) 
+iNsTr_4 := (iNsTr_1 + iNsTr_3)
+iNsTr_5 := @(float_arith[_b00000000000000000000000000000000])
+->(iNsTr_5) := iNsTr_4
+iNsTr_7 := @(float_x[_b00000000000000000000000000000001])
+// load 
+iNsTr_8 := ->(iNsTr_7) 
+iNsTr_9 := @(float_y[_b00000000000000000000000000000001])
+// load 
+iNsTr_10 := ->(iNsTr_9) 
+iNsTr_11 := (iNsTr_8 - iNsTr_10)
+iNsTr_12 := @(float_arith[_b00000000000000000000000000000001])
+->(iNsTr_12) := iNsTr_11
+iNsTr_14 := @(float_x[_b00000000000000000000000000000010])
+// load 
+iNsTr_15 := ->(iNsTr_14) 
+iNsTr_16 := @(float_y[_b00000000000000000000000000000010])
+// load 
+iNsTr_17 := ->(iNsTr_16) 
+iNsTr_18 := (iNsTr_15 * iNsTr_17)
+iNsTr_19 := @(float_arith[_b00000000000000000000000000000010])
+->(iNsTr_19) := iNsTr_18
+// compare instruction
+iNsTr_21 := (iNsTr_1 > iNsTr_3 )
+iNsTr_22 := ($cast ($uint<32>) iNsTr_21)
+iNsTr_23 := @(float_cmp[_b00000000000000000000000000000000])
+->(iNsTr_23) := iNsTr_22
+// compare instruction
+iNsTr_25 := (iNsTr_8 >= iNsTr_10 )
+iNsTr_26 := ($cast ($uint<32>) iNsTr_25)
+iNsTr_27 := @(float_cmp[_b00000000000000000000000000000001])
+->(iNsTr_27) := iNsTr_26
+// compare instruction
+iNsTr_29 := (iNsTr_15 < iNsTr_17 )
+iNsTr_30 := ($cast ($uint<32>) iNsTr_29)
+iNsTr_31 := @(float_cmp[_b00000000000000000000000000000010])
+->(iNsTr_31) := iNsTr_30
+iNsTr_33 := @(float_x[_b00000000000000000000000000000011])
+// load 
+iNsTr_34 := ->(iNsTr_33) 
+iNsTr_35 := @(float_y[_b00000000000000000000000000000011])
+// load 
+iNsTr_36 := ->(iNsTr_35) 
+// compare instruction
+iNsTr_37 := (iNsTr_34 <= iNsTr_36 )
+iNsTr_38 := ($cast ($uint<32>) iNsTr_37)
+iNsTr_39 := @(float_cmp[_b00000000000000000000000000000011])
+->(iNsTr_39) := iNsTr_38
+iNsTr_41 := @(float_x[_b00000000000000000000000000000100])
+// load 
+iNsTr_42 := ->(iNsTr_41) 
+iNsTr_43 := @(float_y[_b00000000000000000000000000000100])
+// load 
+iNsTr_44 := ->(iNsTr_43) 
+// compare instruction
+iNsTr_45 := (iNsTr_42 == iNsTr_44 )
+iNsTr_46 := ($cast ($uint<32>) iNsTr_45)
+iNsTr_47 := @(float_cmp[_b00000000000000000000000000000100])
+->(iNsTr_47) := iNsTr_46
+iNsTr_49 := @(float_x[_b00000000000000000000000000000101])
+// load 
+iNsTr_50 := ->(iNsTr_49) 
+iNsTr_51 := @(float_y[_b00000000000000000000000000000101])
+// load 
+iNsTr_52 := ->(iNsTr_51) 
+// compare instruction
+iNsTr_53 := (iNsTr_50 != iNsTr_52 )
+iNsTr_54 := ($cast ($uint<32>) iNsTr_53)
+iNsTr_55 := @(float_cmp[_b00000000000000000000000000000101])
+->(iNsTr_55) := iNsTr_54
+iNsTr_57 := (iNsTr_4 + iNsTr_11)
+iNsTr_58 := (iNsTr_57 - iNsTr_18)
+iNsTr_59 := (iNsTr_58 + _f0.000000e+00)
+stored_ret_val__ := iNsTr_59
+$place [return__]
+$merge return__ $endmerge
+ret_val__ := stored_ret_val__ 
+}
+}
+$module [start] 
+// arguments
+ $in ()
+ $out (ret_val__ : $uint<32>)
+ $is 
+{
+$storage stored_ret_val__ : $uint<32>
+$branchblock [start] {
+//begin: basic-block bb_0
+iNsTr_0 := @(int_x[_b00000000000000000000000000000000])
+->(iNsTr_0) := _b10110110101101010110111000101000
+iNsTr_2 := @(int_y[_b00000000000000000000000000000000])
+->(iNsTr_2) := _b01101101011010101101110001010001
+iNsTr_4 := @(int_x[_b00000000000000000000000000000001])
+->(iNsTr_4) := _b11011010110101011011100010100010
+iNsTr_6 := @(int_y[_b00000000000000000000000000000001])
+->(iNsTr_6) := _b10110101101010110111000101000101
+iNsTr_8 := @(int_x[_b00000000000000000000000000000010])
+->(iNsTr_8) := _b01101011010101101110001010001011
+iNsTr_10 := @(int_y[_b00000000000000000000000000000010])
+->(iNsTr_10) := _b11010110101011011100010100010111
+iNsTr_12 := @(int_x[_b00000000000000000000000000000011])
+->(iNsTr_12) := _b10101101010110111000101000101111
+iNsTr_14 := @(int_y[_b00000000000000000000000000000011])
+->(iNsTr_14) := _b01011010101101110001010001011111
+iNsTr_16 := @(int_x[_b00000000000000000000000000000100])
+->(iNsTr_16) := _b10110101011011100010100010111111
+iNsTr_18 := @(int_y[_b00000000000000000000000000000100])
+->(iNsTr_18) := _b01101010110111000101000101111110
+iNsTr_20 := @(int_x[_b00000000000000000000000000000101])
+->(iNsTr_20) := _b11010101101110001010001011111100
+iNsTr_22 := @(int_y[_b00000000000000000000000000000101])
+->(iNsTr_22) := _b10101011011100010100010111111001
+iNsTr_24 := @(short_x[_b00000000000000000000000000000000])
+->(iNsTr_24) := _b1000101111110010
+iNsTr_26 := @(short_y[_b00000000000000000000000000000000])
+->(iNsTr_26) := _b0001011111100101
+iNsTr_28 := @(short_x[_b00000000000000000000000000000001])
+->(iNsTr_28) := _b0010111111001011
+iNsTr_30 := @(short_y[_b00000000000000000000000000000001])
+->(iNsTr_30) := _b0101111110010111
+iNsTr_32 := @(short_x[_b00000000000000000000000000000010])
+->(iNsTr_32) := _b1011111100101110
+iNsTr_34 := @(short_y[_b00000000000000000000000000000010])
+->(iNsTr_34) := _b0111111001011101
+iNsTr_36 := @(short_x[_b00000000000000000000000000000011])
+->(iNsTr_36) := _b1111110010111011
+iNsTr_38 := @(short_y[_b00000000000000000000000000000011])
+->(iNsTr_38) := _b1111100101110110
+iNsTr_40 := @(short_x[_b00000000000000000000000000000100])
+->(iNsTr_40) := _b1111001011101101
+iNsTr_42 := @(short_y[_b00000000000000000000000000000100])
+->(iNsTr_42) := _b1110010111011010
+iNsTr_44 := @(short_x[_b00000000000000000000000000000101])
+->(iNsTr_44) := _b1100101110110100
+iNsTr_46 := @(short_y[_b00000000000000000000000000000101])
+->(iNsTr_46) := _b1001011101101001
+iNsTr_48 := @(float_x[_b00000000000000000000000000000000])
+->(iNsTr_48) := _f5.523700e-02
+iNsTr_50 := @(float_x[_b00000000000000000000000000000001])
+->(iNsTr_50) := _f6.150510e-01
+iNsTr_52 := @(float_x[_b00000000000000000000000000000010])
+->(iNsTr_52) := _f-1.964783e+00
+iNsTr_54 := @(float_x[_b00000000000000000000000000000011])
+->(iNsTr_54) := _f5.401600e-02
+iNsTr_56 := @(float_x[_b00000000000000000000000000000100])
+->(iNsTr_56) := _f8.003540e-01
+iNsTr_58 := @(float_x[_b00000000000000000000000000000101])
+->(iNsTr_58) := _f1.106262e+00
+iNsTr_60 := @(float_y[_b00000000000000000000000000000000])
+->(iNsTr_60) := _f-3.244020e-01
+iNsTr_62 := @(float_y[_b00000000000000000000000000000001])
+->(iNsTr_62) := _f-1.755798e+00
+iNsTr_64 := @(float_y[_b00000000000000000000000000000010])
+->(iNsTr_64) := _f1.130188e+00
+iNsTr_66 := @(float_y[_b00000000000000000000000000000011])
+->(iNsTr_66) := _f-1.625370e-01
+iNsTr_68 := @(float_y[_b00000000000000000000000000000100])
+->(iNsTr_68) := _f7.305900e-02
+iNsTr_70 := @(float_y[_b00000000000000000000000000000101])
+->(iNsTr_70) := _f3.096310e-01
+iNsTr_72 := @(int_x[_b00000000000000000000000000000000])
+// load 
+iNsTr_73 := ->(iNsTr_72) 
+iNsTr_74 := @(int_y[_b00000000000000000000000000000000])
+// load 
+iNsTr_75 := ->(iNsTr_74) 
+iNsTr_76 := (iNsTr_75 + iNsTr_73)
+iNsTr_77 := @(int_arith[_b00000000000000000000000000000000])
+->(iNsTr_77) := iNsTr_76
+iNsTr_79 := @(int_x[_b00000000000000000000000000000001])
+// load 
+iNsTr_80 := ->(iNsTr_79) 
+iNsTr_81 := @(int_y[_b00000000000000000000000000000001])
+// load 
+iNsTr_82 := ->(iNsTr_81) 
+iNsTr_83 := (iNsTr_80 - iNsTr_82)
+iNsTr_84 := @(int_arith[_b00000000000000000000000000000001])
+->(iNsTr_84) := iNsTr_83
+iNsTr_86 := @(int_x[_b00000000000000000000000000000010])
+// load 
+iNsTr_87 := ->(iNsTr_86) 
+iNsTr_88 := @(int_y[_b00000000000000000000000000000010])
+// load 
+iNsTr_89 := ->(iNsTr_88) 
+iNsTr_90 := (iNsTr_89 * iNsTr_87)
+iNsTr_91 := @(int_arith[_b00000000000000000000000000000010])
+->(iNsTr_91) := iNsTr_90
+// compare instruction
+iNsTr_93 := ( ($cast ( $int<32>) iNsTr_73) >  ($cast ( $int<32>) iNsTr_75 ) )
+iNsTr_94 := ($cast ($uint<32>) iNsTr_93)
+iNsTr_95 := @(int_cmp[_b00000000000000000000000000000000])
+->(iNsTr_95) := iNsTr_94
+// compare instruction
+iNsTr_97 := ( ($cast ( $int<32>) iNsTr_80) >=   ($cast ( $int<32>) iNsTr_82 ) )
+iNsTr_98 := ($cast ($uint<32>) iNsTr_97)
+iNsTr_99 := @(int_cmp[_b00000000000000000000000000000001])
+->(iNsTr_99) := iNsTr_98
+// compare instruction
+iNsTr_101 := ( ($cast ( $int<32>) iNsTr_87) <   ($cast ( $int<32>) iNsTr_89 ) )
+iNsTr_102 := ($cast ($uint<32>) iNsTr_101)
+iNsTr_103 := @(int_cmp[_b00000000000000000000000000000010])
+->(iNsTr_103) := iNsTr_102
+iNsTr_105 := @(int_x[_b00000000000000000000000000000011])
+// load 
+iNsTr_106 := ->(iNsTr_105) 
+iNsTr_107 := @(int_y[_b00000000000000000000000000000011])
+// load 
+iNsTr_108 := ->(iNsTr_107) 
+// compare instruction
+iNsTr_109 := ( ($cast ( $int<32>) iNsTr_106) <=   ($cast ( $int<32>) iNsTr_108 ) )
+iNsTr_110 := ($cast ($uint<32>) iNsTr_109)
+iNsTr_111 := @(int_cmp[_b00000000000000000000000000000011])
+->(iNsTr_111) := iNsTr_110
+iNsTr_113 := @(int_x[_b00000000000000000000000000000100])
+// load 
+iNsTr_114 := ->(iNsTr_113) 
+iNsTr_115 := @(int_y[_b00000000000000000000000000000100])
+// load 
+iNsTr_116 := ->(iNsTr_115) 
+// compare instruction
+iNsTr_117 := (iNsTr_114 == iNsTr_116 )
+iNsTr_118 := ($cast ($uint<32>) iNsTr_117)
+iNsTr_119 := @(int_cmp[_b00000000000000000000000000000100])
+->(iNsTr_119) := iNsTr_118
+iNsTr_121 := @(int_x[_b00000000000000000000000000000101])
+// load 
+iNsTr_122 := ->(iNsTr_121) 
+iNsTr_123 := @(int_y[_b00000000000000000000000000000101])
+// load 
+iNsTr_124 := ->(iNsTr_123) 
+// compare instruction
+iNsTr_125 := ( ($cast ( $int<32>) iNsTr_122) !=   ($cast ( $int<32>) iNsTr_124 ) )
+iNsTr_126 := ($cast ($uint<32>) iNsTr_125)
+iNsTr_127 := @(int_cmp[_b00000000000000000000000000000101])
+->(iNsTr_127) := iNsTr_126
+iNsTr_129 :=  ( ($cast ( $int<32>) iNsTr_73) >>  ($cast ( $int<32>) _b00000000000000000000000000000100 ) )
+iNsTr_130 := @(int_shift[_b00000000000000000000000000000000])
+->(iNsTr_130) := iNsTr_129
+iNsTr_132 := (iNsTr_75 << _b00000000000000000000000000000100)
+iNsTr_133 := @(int_shift[_b00000000000000000000000000000001])
+->(iNsTr_133) := iNsTr_132
+iNsTr_135 := (iNsTr_83 & iNsTr_76)
+iNsTr_136 := (iNsTr_90 | iNsTr_135)
+iNsTr_137 := @(float_arith[_b00000000000000000000000000000000])
+->(iNsTr_137) := _f-2.691650e-01
+iNsTr_139 := @(float_arith[_b00000000000000000000000000000001])
+->(iNsTr_139) := _f2.370849e+00
+iNsTr_141 := @(float_arith[_b00000000000000000000000000000010])
+->(iNsTr_141) := _f-2.220574e+00
+iNsTr_143 := @(float_cmp[_b00000000000000000000000000000000])
+->(iNsTr_143) := _b00000000000000000000000000000001
+iNsTr_145 := @(float_cmp[_b00000000000000000000000000000001])
+->(iNsTr_145) := _b00000000000000000000000000000001
+iNsTr_147 := @(float_cmp[_b00000000000000000000000000000010])
+->(iNsTr_147) := _b00000000000000000000000000000001
+iNsTr_149 := @(float_cmp[_b00000000000000000000000000000011])
+->(iNsTr_149) := _b00000000000000000000000000000000
+iNsTr_151 := @(float_cmp[_b00000000000000000000000000000100])
+->(iNsTr_151) := _b00000000000000000000000000000000
+iNsTr_153 := @(float_cmp[_b00000000000000000000000000000101])
+->(iNsTr_153) := _b00000000000000000000000000000001
+iNsTr_155 := @(short_arith[_b00000000000000000000000000000000])
+->(iNsTr_155) := _b1010001111010111
+iNsTr_157 := @(short_arith[_b00000000000000000000000000000001])
+->(iNsTr_157) := _b1101000000110100
+iNsTr_159 := @(short_arith[_b00000000000000000000000000000010])
+->(iNsTr_159) := _b0001011110110110
+iNsTr_161 := @(short_cmp[_b00000000000000000000000000000000])
+->(iNsTr_161) := _b0000000000000001
+iNsTr_163 := @(short_cmp[_b00000000000000000000000000000001])
+->(iNsTr_163) := _b0000000000000000
+iNsTr_165 := @(short_cmp[_b00000000000000000000000000000010])
+->(iNsTr_165) := _b0000000000000000
+iNsTr_167 := @(short_cmp[_b00000000000000000000000000000011])
+->(iNsTr_167) := _b0000000000000000
+iNsTr_169 := @(short_cmp[_b00000000000000000000000000000100])
+->(iNsTr_169) := _b0000000000000000
+iNsTr_171 := @(short_cmp[_b00000000000000000000000000000101])
+->(iNsTr_171) := _b0000000000000001
+iNsTr_173 := @(short_shift[_b00000000000000000000000000000000])
+->(iNsTr_173) := _b0000100010111111
+iNsTr_175 := @(short_shift[_b00000000000000000000000000000001])
+->(iNsTr_175) := _b0111111001010000
+iNsTr_177 := (iNsTr_132 ^ iNsTr_129)
+iNsTr_178 := (iNsTr_177 ^ iNsTr_136)
+iNsTr_179 := (iNsTr_178 ^ _b11111111111111111110000101011101)
+stored_ret_val__ := iNsTr_179
+$place [return__]
+$merge return__ $endmerge
+ret_val__ := stored_ret_val__ 
+}
+}
+$module [main] 
+// arguments
+ $in ()
+ $out (ret_val__ : $uint<32>)
+ $is 
+{
+$storage stored_ret_val__ : $uint<32>
+$branchblock [main] {
+//begin: basic-block bb_0
+$call start ()  (iNsTr_0)
+stored_ret_val__ := iNsTr_0
+$place [return__]
+$merge return__ $endmerge
+ret_val__ := stored_ret_val__ 
+}
+}
