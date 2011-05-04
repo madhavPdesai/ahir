@@ -26,6 +26,8 @@ The organization
 
 	v2
 		all AhirV2 stuff is here.  
+		
+		to build, use scons.
 
 	v1
 		all AhirV1 stuff is here.  Should
