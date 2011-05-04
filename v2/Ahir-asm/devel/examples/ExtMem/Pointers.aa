@@ -1,0 +1,19 @@
+
+$module [passpointer]
+    $in (a:$pointer<$uint<32> >)
+    $out (b:$uint<32>)
+$is
+{
+	$storage u: $array [16][16] $of $uint<32>
+
+	u[0][1] := ($cast ($uint<32>) a)
+	p := @(u[0])
+
+	q := p[1][0]
+
+        r := ->(a)
+	s := ->(q)
+      
+        b := (r + s)
+}
+

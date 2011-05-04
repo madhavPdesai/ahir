@@ -1,0 +1,60 @@
+
+$storage  extmem_pool__ : $array[1024] $of $uint<8> // memory space index = 1  base address = 0  word size = 8
+$pipe mem_read_address_in : $uint<32 >
+$pipe mem_read_data_out  : $uint<8 >
+$pipe mem_write_address_in  : $uint<32 >
+$pipe mem_write_data_in  : $uint<8 >
+$module [mem_load__] 
+$in ()
+$out ()
+$is 
+{
+  mem_read_data_out := 
+  extmem_pool__[ ((mem_read_address_in * 1 ) + 0) ]
+}
+$module [mem_store__] 
+$in ()
+$out ()
+$is 
+{
+  extmem_pool__[ ((mem_write_address_in * 1 ) + 0) ] :=  mem_write_data_in 
+}
+$module [passpointer]
+$in ( a : $pointer< $uint<32> >  )
+$out ( b : $uint<32>  )
+$is
+{
+  $storage  u : $array[16][16] $of $uint<32> // memory space index = 0  base address = 0  word size = 32
+  u[0 ][1 ] := ($cast ($uint<32>) a )
+  // target-type =   $uint<32>
+  // target-memory-space = 1
+  // source-type = $uint<32>
+  // source-memory-space = 1
+  p := @(u[0 ])
+  // target-type =   $pointer< $array[16] $of $uint<32> >
+  // target-memory-space = 0
+  // source-type = $pointer< $array[16] $of $uint<32> >
+  // source-memory-space = 0
+  q := p[1 ][0 ]
+  // target-type =   $pointer< $uint<32> >
+  // target-memory-space = 0
+  // source-type = $pointer< $uint<32> >
+  // source-memory-space = 0
+  r := ->(a)
+  // target-type =   $uint<32>
+  // target-memory-space =  none
+  // source-type = $uint<32>
+  // source-memory-space = 1
+  s := ->(q)
+  // target-type =   $uint<32>
+  // target-memory-space = 1
+  // source-type = $uint<32>
+  // source-memory-space = 0
+  b := (r + s)
+  // target-type =   $uint<32>
+  // target-memory-space = 1
+  // source-type = $uint<32>
+  // source-memory-space = 1
+}
+// Memory space 0: %passpointer:u 
+// Memory space 1: extmem_pool__ 

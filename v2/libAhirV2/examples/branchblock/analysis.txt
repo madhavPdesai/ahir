@@ -1,0 +1,250 @@
+Structure of Series Region  {
+$entry
+	 (label =  cL33)
+	 -> 
+		main
+
+main
+	 (label =  cL33)
+	 -> 
+		$exit
+
+$exit
+	 (label =  cL33)
+	 -> 
+
+}
+Structure of Series Region main {
+main/$entry
+	 (label =  cL33)
+	 -> 
+		main/initial
+
+main/initial
+	 (label =  cL33)
+	 -> 
+		main/setup
+
+main/setup
+	 (label =  cL33)
+	 -> 
+		main/branch
+
+main/branch
+	 (label =  cL33)
+	 -> 
+		main/sub0
+		main/sub1
+
+main/sub0
+	 (label =  cL33)
+	 -> 
+		main/merge
+
+main/sub1
+	 (label =  cL33)
+	 -> 
+		main/merge
+
+main/merge
+	 (label =  cL33)
+	 -> 
+		main/phi
+
+main/phi
+	 (label =  cL33)
+	 -> 
+		main/final
+
+main/final
+	 (label =  cL33)
+	 -> 
+		main/$exit
+
+main/$exit
+	 (label =  cL33)
+	 -> 
+
+}
+Structure of Series Region main/setup {
+main/setup/$entry
+	 (label =  cL33)
+	 -> 
+		main/setup/req_a_gt_b_R
+
+main/setup/req_a_gt_b_R
+	 (label =  cL33)
+	 -> 
+		main/setup/ack_a_gt_b_R
+
+main/setup/ack_a_gt_b_R
+	 (label =  cL33)
+	 -> 
+		main/setup/req_a_gt_b_C
+
+main/setup/req_a_gt_b_C
+	 (label =  cL33)
+	 -> 
+		main/setup/ack_a_gt_b_C
+
+main/setup/ack_a_gt_b_C
+	 (label =  cL33)
+	 -> 
+		main/setup/$exit
+
+main/setup/$exit
+	 (label =  cL33)
+	 -> 
+
+}
+Structure of Series Region main/sub0 {
+main/sub0/$entry
+	 (label =  cL33)
+	 -> 
+		main/sub0/req_sub0_R
+
+main/sub0/req_sub0_R
+	 (label =  cL33)
+	 -> 
+		main/sub0/ack_sub0_R
+
+main/sub0/ack_sub0_R
+	 (label =  cL33)
+	 -> 
+		main/sub0/req_sub0_C
+
+main/sub0/req_sub0_C
+	 (label =  cL33)
+	 -> 
+		main/sub0/$exit
+
+main/sub0/$exit
+	 (label =  cL33)
+	 -> 
+
+}
+Structure of Series Region main/sub1 {
+main/sub1/$entry
+	 (label =  cL33)
+	 -> 
+		main/sub1/req_sub1_R
+
+main/sub1/req_sub1_R
+	 (label =  cL33)
+	 -> 
+		main/sub1/ack_sub1_R
+
+main/sub1/ack_sub1_R
+	 (label =  cL33)
+	 -> 
+		main/sub1/req_sub1_C
+
+main/sub1/req_sub1_C
+	 (label =  cL33)
+	 -> 
+		main/sub1/$exit
+
+main/sub1/$exit
+	 (label =  cL33)
+	 -> 
+
+}
+Structure of Series Region main/phi {
+main/phi/$entry
+	 (label =  cL33)
+	 -> 
+		main/phi/ack_phi
+
+main/phi/ack_phi
+	 (label =  cL33)
+	 -> 
+		main/phi/$exit
+
+main/phi/$exit
+	 (label =  cL33)
+	 -> 
+
+}
+CP-element group 0 output 
+predecessors 
+successors 1 
+	$entry
+	main/initial
+	main/$entry
+	main/setup/$entry
+	main/setup/req_a_gt_b_R
+CP-element group 1 input  output 
+predecessors 0 
+successors 2 
+	main/setup/ack_a_gt_b_R
+	main/setup/req_a_gt_b_C
+CP-element group 2 branch  input  output 
+predecessors 1 
+successors 6 3 
+	main/setup/$exit
+	main/setup/ack_a_gt_b_C
+	main/branch
+CP-element group 3 input  output 
+predecessors 2 
+successors 4 
+	main/sub0/$entry
+	main/sub0/req_sub0_R
+CP-element group 4 input  output 
+predecessors 3 
+successors 5 
+	main/sub0/ack_sub0_R
+	main/sub0/req_sub0_C
+CP-element group 5 input  output 
+predecessors 4 
+successors 9 
+	main/sub0/$exit
+CP-element group 6 input  output 
+predecessors 2 
+successors 7 
+	main/sub1/$entry
+	main/sub1/req_sub1_R
+CP-element group 7 input  output 
+predecessors 6 
+successors 8 
+	main/sub1/ack_sub1_R
+	main/sub1/req_sub1_C
+CP-element group 8 input  output 
+predecessors 7 
+successors 9 
+	main/sub1/$exit
+CP-element group 9 merge 
+predecessors 8 5 
+successors 10 
+	main/merge
+CP-element group 10 input 
+predecessors 9 
+successors 
+	$exit
+	main/$exit
+	main/phi/$entry
+	main/phi/$exit
+	main/phi/ack_phi
+	main/final
+Label Summary 
+	label cL33 : 
+
+
+Label Transitive Closure 
+cL33 ==> 
+	cL33
+
+Label Compatibility Map:
+cL33 >== cL33
+Compatible share-able operator groups 
+Operator vcBinarySplitOperator (>)
+{ 
+a_gt_b
+   (cL33,cL33)
+} 
+Operator vcBinarySplitOperator (-)
+{ 
+sub1
+   (cL33,cL33)
+sub0
+   (cL33,cL33)
+} 

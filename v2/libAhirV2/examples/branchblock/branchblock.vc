@@ -1,0 +1,72 @@
+$module[foo] 
+{ 
+	$in  a:$int<32> b:$int<32>  $out c:$int<32> 
+        $CP 
+	{ 
+		<>[main] 
+		{ 
+			// start things off..			
+			$P [initial]
+			initial <-| ($entry)
+
+			;;[setup] 
+			{ 
+				// implicit T $entry
+				$T [req_a_gt_b_R] 
+				$T [ack_a_gt_b_R] 
+				$T [req_a_gt_b_C] 
+				$T [ack_a_gt_b_C] 
+			  	// implicit T $exit
+			} 
+			initial |-> (setup)
+
+			$P [branch]
+			;;[sub0] 
+			{
+				$T [req_sub0_R]
+				$T [ack_sub0_R] 
+				$T [req_sub0_C] 
+			}
+			;;[sub1] 
+			{
+				$T [req_sub1_R]
+				$T [ack_sub1_R] 
+				$T [req_sub1_C] 
+			}
+			$P [merge]
+			;;[phi]
+			{
+				$T [ack_phi] 
+			} 
+			branch <-| (setup)
+			branch |-> (sub0 sub1)
+
+			merge <-| (sub0 sub1)
+			merge |-> (phi)
+
+			// closing 
+			$P [final]
+			final <-| (phi)
+			final |-> ($exit)
+		}
+	}
+	$DP 
+	{ 
+		$W [p] : $int<1>
+		$W [q] : $int<32>
+		$W [r] : $int<32>
+		
+		> [a_gt_b] (a b) (p)
+		==0? [branch] ( a )
+		- [sub1] (a b) (q)
+		- [sub0] (b a) (r)
+		$phi [resolve] (q r) (c)
+	}
+
+	// links
+	a_gt_b <=> (main/setup/req_a_gt_b_R main/setup/req_a_gt_b_C) (main/setup/ack_a_gt_b_R main/setup/ack_a_gt_b_C) 
+	sub0 <=> (main/sub0/req_sub0_R main/sub0/req_sub0_C) (main/sub0/ack_sub0_R main/sub0/$exit)
+	sub1 <=> (main/sub1/req_sub1_R main/sub1/req_sub1_C) (main/sub1/ack_sub1_R main/sub1/$exit)
+	branch <=> (main/setup/$exit) (main/sub0/$entry main/sub1/$entry)
+	resolve <=> (main/sub0/$exit main/sub1/$exit) (main/phi/ack_phi)
+}

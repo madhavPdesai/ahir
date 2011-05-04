@@ -1,0 +1,65 @@
+$memoryspace [global] 
+{
+    $capacity 1024 $datawidth 8 $addrwidth 10
+    $object [pool] : $array [1024] $of $int<8>
+}
+
+$module[foo] 
+{ 
+	$in a:$int<10> b:$int<10> 
+	$memoryspace [local] 
+	{
+    		$capacity 16 $datawidth 8 $addrwidth 4
+	}
+		
+        $CP 
+	{ 
+		;;[main] 
+		{ 
+
+			// load from global using a
+			$T [r1] 
+			$T [a1] 
+			$T [r2] 
+			$T [a2] 
+			
+			// write to local 
+			$T [r3] 
+			$T [a3] 
+			$T [r4] 
+			$T [a4] 
+			
+			// load from local
+			$T [r5] 
+			$T [a5] 
+			$T [r6] 
+			$T [a6] 
+
+			// write to global
+			$T [r7] 
+			$T [a7] 
+			$T [r8] 
+			$T [a8] 
+		}
+	}
+	$DP 
+	{ 
+
+		$W d1 : $int<8>
+		$W d2 : $int<8>
+		$W d3 : $int<8>
+		$W d4 : $int<8>
+
+		$constant $W lp : $pointer<foo/local> := _b0101
+
+		$load [RfromG] $from global (a) (d1)
+		$store [WtoL] $to foo/local (lp d1) 
+		$load [RfromL] $from foo/local (lp) (d3)
+		$store [WtoG] $to global (b d3)
+	}
+
+	RfromG <=> (main/r1 main/r2) (main/a1 main/a2)
+	WtoL   <=>  (main/r3 main/r4) (main/a3 main/a4)
+	RfromL <=> (main/r5 main/r6) (main/a5 main/a6)
+	WtoG   <=>  (main/r7 main/r8) (main/a7 main/a8)
+}

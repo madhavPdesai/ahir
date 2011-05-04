@@ -1,0 +1,485 @@
+// Virtual circuit produced from Aa description by Aa2VC 
+// $pipe  extmem_read_address_32 : $uint<32> 
+// in scope  top-level
+$pipe [extmem_read_address_32] 32
+// $pipe  extmem_read_data_32 : $uint<32> 
+// in scope  top-level
+$pipe [extmem_read_data_32] 32
+// $pipe  extmem_write_address_32 : $uint<32> 
+// in scope  top-level
+$pipe [extmem_write_address_32] 32
+// $pipe  extmem_write_data_32 : $uint<32> 
+// in scope  top-level
+$pipe [extmem_write_data_32] 32
+// pipe-declarations for block %extmem_load_32
+// file Pointers.extmem.aa, line 5
+// pipe-declarations for block %extmem_load_for_type_1
+// file Pointers.extmem.aa, line 19
+// pipe-declarations for block %extmem_store_32
+// file Pointers.extmem.aa, line 12
+// pipe-declarations for block %extmem_store_for_type_1
+// file Pointers.extmem.aa, line 26
+// pipe-declarations for block %passpointer
+// file Pointers.extmem.aa, line 33
+$module [extmem_load_32] 
+{
+  $in addr:$int<32>
+  $out data:$int<32>
+  $CP 
+  {
+    // begin control-path 
+    // 	extmem_read_address_32 := addr
+    // file Pointers.extmem.aa, line 9
+    ;;[assign_stmt_10] // file Pointers.extmem.aa, line 9
+    {
+      // extmem_read_address_32
+      ;;[simple_obj_ref_8] 
+      {
+        // pipe write extmem_read_address_32
+        $T [pipe_wreq] $T [pipe_wack] 
+      }
+    }
+    // end assignment statement assign_stmt_10
+    // 	data := extmem_read_data_32
+    // file Pointers.extmem.aa, line 10
+    ;;[assign_stmt_13] // file Pointers.extmem.aa, line 10
+    {
+      // extmem_read_data_32
+      ;;[simple_obj_ref_12] 
+      {
+        // pipe read
+        $T [req] $T [ack] 
+      }
+    }
+    // end assignment statement assign_stmt_13
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %extmem_load_32
+    // file Pointers.extmem.aa, line 5
+    // 	extmem_read_address_32 := addr
+    // file Pointers.extmem.aa, line 9
+    // extmem_read_address_32
+    // 	data := extmem_read_data_32
+    // file Pointers.extmem.aa, line 10
+    // data
+    // 	extmem_read_address_32 := addr
+    // file Pointers.extmem.aa, line 9
+    // extmem_read_address_32
+    $ioport $out [simple_obj_ref_8_inst]  (addr) (extmem_read_address_32)
+    // 	data := extmem_read_data_32
+    // file Pointers.extmem.aa, line 10
+    // extmem_read_data_32
+    $ioport $in [simple_obj_ref_12_inst] (extmem_read_data_32) (data)
+  }
+  // end data-path
+  // 	extmem_read_address_32 := addr
+  // file Pointers.extmem.aa, line 9
+  // extmem_read_address_32
+  simple_obj_ref_8_inst <=> (assign_stmt_10/simple_obj_ref_8/pipe_wreq) (assign_stmt_10/simple_obj_ref_8/pipe_wack)
+  // 	data := extmem_read_data_32
+  // file Pointers.extmem.aa, line 10
+  // extmem_read_data_32
+  simple_obj_ref_12_inst <=> (assign_stmt_13/simple_obj_ref_12/req) (assign_stmt_13/simple_obj_ref_12/ack)
+}
+$module [extmem_store_32] 
+{
+  $in addr:$int<32> data:$int<32>
+  $CP 
+  {
+    // begin control-path 
+    // 	extmem_write_address_32 := addr
+    // file Pointers.extmem.aa, line 16
+    ;;[assign_stmt_20] // file Pointers.extmem.aa, line 16
+    {
+      // extmem_write_address_32
+      ;;[simple_obj_ref_18] 
+      {
+        // pipe write extmem_write_address_32
+        $T [pipe_wreq] $T [pipe_wack] 
+      }
+    }
+    // end assignment statement assign_stmt_20
+    // 	extmem_write_data_32 := data
+    // file Pointers.extmem.aa, line 17
+    ;;[assign_stmt_23] // file Pointers.extmem.aa, line 17
+    {
+      // extmem_write_data_32
+      ;;[simple_obj_ref_21] 
+      {
+        // pipe write extmem_write_data_32
+        $T [pipe_wreq] $T [pipe_wack] 
+      }
+    }
+    // end assignment statement assign_stmt_23
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %extmem_store_32
+    // file Pointers.extmem.aa, line 12
+    // 	extmem_write_address_32 := addr
+    // file Pointers.extmem.aa, line 16
+    // extmem_write_address_32
+    // 	extmem_write_data_32 := data
+    // file Pointers.extmem.aa, line 17
+    // extmem_write_data_32
+    // 	extmem_write_address_32 := addr
+    // file Pointers.extmem.aa, line 16
+    // extmem_write_address_32
+    $ioport $out [simple_obj_ref_18_inst]  (addr) (extmem_write_address_32)
+    // 	extmem_write_data_32 := data
+    // file Pointers.extmem.aa, line 17
+    // extmem_write_data_32
+    $ioport $out [simple_obj_ref_21_inst]  (data) (extmem_write_data_32)
+  }
+  // end data-path
+  // 	extmem_write_address_32 := addr
+  // file Pointers.extmem.aa, line 16
+  // extmem_write_address_32
+  simple_obj_ref_18_inst <=> (assign_stmt_20/simple_obj_ref_18/pipe_wreq) (assign_stmt_20/simple_obj_ref_18/pipe_wack)
+  // 	extmem_write_data_32 := data
+  // file Pointers.extmem.aa, line 17
+  // extmem_write_data_32
+  simple_obj_ref_21_inst <=> (assign_stmt_23/simple_obj_ref_21/pipe_wreq) (assign_stmt_23/simple_obj_ref_21/pipe_wack)
+}
+$module [extmem_load_for_type_1] 
+{
+  $in addr:$int<32>
+  $out data:$int<32>
+  $CP 
+  {
+    // begin control-path 
+    // 	$call extmem_load_32 (addr ) (t_data )
+    // file Pointers.extmem.aa, line 23
+    ;;[call_stmt_30] 
+    {
+      // call statement file Pointers.extmem.aa, line 23
+      ||[in_args] 
+      {
+        // input arguments
+      }
+      $T [crr] $T [cra] $T [ccr] $T [cca]
+      ||[out_args] 
+      {
+        // output arguments
+      }
+    }
+    // end call-statement call_stmt_30
+    // 	data := ($bitcast ($uint<32>) t_data )
+    // file Pointers.extmem.aa, line 24
+    ;;[assign_stmt_34] // file Pointers.extmem.aa, line 24
+    {
+      // ($bitcast ($uint<32>) t_data )
+      ;;[type_cast_33] 
+      {
+        // type-cast expression
+        $T [req] $T [ack] //  type-conversion.. 
+      }
+    }
+    // end assignment statement assign_stmt_34
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %extmem_load_for_type_1
+    // file Pointers.extmem.aa, line 19
+    // 	$call extmem_load_32 (addr ) (t_data )
+    // file Pointers.extmem.aa, line 23
+    // 	$call extmem_load_32 (addr ) (t_data )
+    // file Pointers.extmem.aa, line 23
+    // t_data
+    $W[t_data_30] : $int<32>
+    // 	data := ($bitcast ($uint<32>) t_data )
+    // file Pointers.extmem.aa, line 24
+    // data
+    // 	$call extmem_load_32 (addr ) (t_data )
+    // file Pointers.extmem.aa, line 23
+    $call [call_stmt_30_call] $module extmem_load_32(addr) (t_data_30)
+    // 	data := ($bitcast ($uint<32>) t_data )
+    // file Pointers.extmem.aa, line 24
+    // ($bitcast ($uint<32>) t_data )
+    := [type_cast_33_inst] (t_data_30) (data)
+  }
+  // end data-path
+  // 	$call extmem_load_32 (addr ) (t_data )
+  // file Pointers.extmem.aa, line 23
+  call_stmt_30_call <=> (call_stmt_30/crr call_stmt_30/ccr) (call_stmt_30/cra call_stmt_30/cca)
+  // 	data := ($bitcast ($uint<32>) t_data )
+  // file Pointers.extmem.aa, line 24
+  // ($bitcast ($uint<32>) t_data )
+  type_cast_33_inst <=> (assign_stmt_34/type_cast_33/req) (assign_stmt_34/type_cast_33/ack)
+}
+$module [extmem_store_for_type_1] 
+{
+  $in addr:$int<32> data:$int<32>
+  $CP 
+  {
+    // begin control-path 
+    // 	t_data := ($bitcast ($uint<32>) data )
+    // file Pointers.extmem.aa, line 30
+    ;;[assign_stmt_42] // file Pointers.extmem.aa, line 30
+    {
+      // ($bitcast ($uint<32>) data )
+      ;;[type_cast_41] 
+      {
+        // type-cast expression
+        $T [req] $T [ack] //  type-conversion.. 
+      }
+    }
+    // end assignment statement assign_stmt_42
+    // 	$call extmem_store_32 (addr t_data ) ()
+    // file Pointers.extmem.aa, line 31
+    ;;[call_stmt_45] 
+    {
+      // call statement file Pointers.extmem.aa, line 31
+      ||[in_args] 
+      {
+        // input arguments
+      }
+      $T [crr] $T [cra] $T [ccr] $T [cca]
+      ||[out_args] 
+      {
+        // output arguments
+      }
+    }
+    // end call-statement call_stmt_45
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %extmem_store_for_type_1
+    // file Pointers.extmem.aa, line 26
+    // 	$call extmem_store_32 (addr t_data ) ()
+    // file Pointers.extmem.aa, line 31
+    // 	t_data := ($bitcast ($uint<32>) data )
+    // file Pointers.extmem.aa, line 30
+    // t_data
+    $W[t_data_42] : $int<32>
+    // 	$call extmem_store_32 (addr t_data ) ()
+    // file Pointers.extmem.aa, line 31
+    // 	t_data := ($bitcast ($uint<32>) data )
+    // file Pointers.extmem.aa, line 30
+    // ($bitcast ($uint<32>) data )
+    := [type_cast_41_inst] (data) (t_data_42)
+    // 	$call extmem_store_32 (addr t_data ) ()
+    // file Pointers.extmem.aa, line 31
+    $call [call_stmt_45_call] $module extmem_store_32(addr t_data_42) ()
+  }
+  // end data-path
+  // 	t_data := ($bitcast ($uint<32>) data )
+  // file Pointers.extmem.aa, line 30
+  // ($bitcast ($uint<32>) data )
+  type_cast_41_inst <=> (assign_stmt_42/type_cast_41/req) (assign_stmt_42/type_cast_41/ack)
+  // 	$call extmem_store_32 (addr t_data ) ()
+  // file Pointers.extmem.aa, line 31
+  call_stmt_45_call <=> (call_stmt_45/crr call_stmt_45/ccr) (call_stmt_45/cra call_stmt_45/cca)
+}
+$module [passpointer] 
+{
+  $in a:$int<32> 
+  $out b:$int<32>
+  $memoryspace [memory_space_0] 
+  {
+    $capacity 256
+    $datawidth 32
+    $addrwidth 8
+    // 	$storage  u : $array[16][16] $of $uint<32> // memory space index = 0  base address = 0  word size = 32
+    // in scope  %passpointer
+    $object [xxpasspointerxxu] : $array[256] $of $int<32>
+  }
+  $CP 
+  {
+    // begin control-path 
+    // 	u[0 ][1 ] := ($cast ($uint<32>) a )
+    // file Pointers.extmem.aa, line 39
+    ;;[assign_stmt_58] // file Pointers.extmem.aa, line 39
+    {
+      // ($cast ($uint<32>) a )
+      ;;[type_cast_57] 
+      {
+        // type-cast expression
+        $T [req] $T [ack] //  type-conversion.. 
+      }
+      // u[0 ][1 ]
+      ;;[array_obj_ref_55] 
+      {
+        // store 
+        ;;[array_obj_ref_55_write] 
+        {
+          $T [split_req] $T [split_ack]
+          ||[word_access] 
+          {
+            ;;[word_access_0] 
+            {
+              $T [rr] $T [ra] $T [cr] $T [ca]
+            }
+          }
+        }
+      }
+    }
+    // end assignment statement assign_stmt_58
+    // 	p := @(u[0 ])
+    // file Pointers.extmem.aa, line 40
+    ;;[assign_stmt_63] // file Pointers.extmem.aa, line 40
+    {
+      $T [dummy] // assignment evaluates to a constant 
+    }
+    // end assignment statement assign_stmt_63
+    // 	q := p[1 ][0 ]
+    // file Pointers.extmem.aa, line 41
+    ;;[assign_stmt_68] // file Pointers.extmem.aa, line 41
+    {
+      $T [dummy] // assignment evaluates to a constant 
+    }
+    // end assignment statement assign_stmt_68
+    // 	$call extmem_load_for_type_1 (($bitcast ($uint<32>) a ) ) (r )
+    // file Pointers.extmem.aa, line 42
+    ;;[call_stmt_72] 
+    {
+      // call statement file Pointers.extmem.aa, line 42
+      ||[in_args] 
+      {
+        // input arguments
+        // ($bitcast ($uint<32>) a )
+        ;;[type_cast_70] 
+        {
+          // type-cast expression
+          $T [req] $T [ack] //  type-conversion.. 
+        }
+      }
+      $T [crr] $T [cra] $T [ccr] $T [cca]
+      ||[out_args] 
+      {
+        // output arguments
+      }
+    }
+    // end call-statement call_stmt_72
+    // 	s := ->(q)
+    // file Pointers.extmem.aa, line 43
+    ;;[assign_stmt_76] // file Pointers.extmem.aa, line 43
+    {
+      // ->(q)
+      ;;[ptr_deref_75] 
+      {
+        // load 
+        ;;[ptr_deref_75_read] 
+        {
+          ||[word_access] 
+          {
+            ;;[word_access_0] 
+            {
+              $T [rr] $T [ra] $T [cr] $T [ca]
+            }
+          }
+          $T [merge_req] $T [merge_ack]
+        }
+      }
+    }
+    // end assignment statement assign_stmt_76
+    // 	b := (r + s)
+    // file Pointers.extmem.aa, line 44
+    ;;[assign_stmt_81] // file Pointers.extmem.aa, line 44
+    {
+      // (r + s)
+      ;;[binary_80] 
+      {
+        // binary expression 
+        ||[binary_80_inputs] 
+        {
+        }
+        $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+      }
+    }
+    // end assignment statement assign_stmt_81
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %passpointer
+    // file Pointers.extmem.aa, line 33
+    // load store constants for object %passpointer:u
+    $constant $W[xxpasspointerxxu_base_address] : $int<8> := _b00000000
+    // u[0 ][1 ]
+    $constant $W[array_obj_ref_55_word_address_0] : $pointer<passpointer/memory_space_0> := _b00000001
+    // 	p := @(u[0 ])
+    // file Pointers.extmem.aa, line 40
+    $constant $W[p_63] : $int<32> := _b00000000000000000000000000000000 // 0
+    // 	q := p[1 ][0 ]
+    // file Pointers.extmem.aa, line 41
+    $constant $W[q_68] : $int<32> := _b00000000000000000000000000010000 // 16
+    // 	$call extmem_load_for_type_1 (($bitcast ($uint<32>) a ) ) (r )
+    // file Pointers.extmem.aa, line 42
+    // ->(q)
+    $constant $W[ptr_deref_75_word_address_0] : $pointer<passpointer/memory_space_0> := _b00010000
+    // 	u[0 ][1 ] := ($cast ($uint<32>) a )
+    // file Pointers.extmem.aa, line 39
+    // ($cast ($uint<32>) a )
+    $intermediate $W[type_cast_57_wire] : $int<32>
+    // u[0 ][1 ]
+    $W[array_obj_ref_55_data_0] : $int<32>
+    // 	$call extmem_load_for_type_1 (($bitcast ($uint<32>) a ) ) (r )
+    // file Pointers.extmem.aa, line 42
+    // ($bitcast ($uint<32>) a )
+    $intermediate $W[type_cast_70_wire] : $int<32>
+    // r
+    $W[r_72] : $int<32>
+    // 	s := ->(q)
+    // file Pointers.extmem.aa, line 43
+    // ->(q)
+    $W[ptr_deref_75_data_0] : $int<32>
+    // s
+    $W[s_76] : $int<32>
+    // 	b := (r + s)
+    // file Pointers.extmem.aa, line 44
+    // b
+    // 	u[0 ][1 ] := ($cast ($uint<32>) a )
+    // file Pointers.extmem.aa, line 39
+    // ($cast ($uint<32>) a )
+    := [type_cast_57_inst] (a) (type_cast_57_wire)
+    // u[0 ][1 ]
+    $store [array_obj_ref_55_store_0] $to passpointer/memory_space_0 (array_obj_ref_55_word_address_0 array_obj_ref_55_data_0)
+    &/ [array_obj_ref_55_gather_scatter] (type_cast_57_wire) (array_obj_ref_55_data_0) 
+    // 	$call extmem_load_for_type_1 (($bitcast ($uint<32>) a ) ) (r )
+    // file Pointers.extmem.aa, line 42
+    // ($bitcast ($uint<32>) a )
+    := [type_cast_70_inst] (a) (type_cast_70_wire)
+    $call [call_stmt_72_call] $module extmem_load_for_type_1(type_cast_70_wire) (r_72)
+    // 	s := ->(q)
+    // file Pointers.extmem.aa, line 43
+    // ->(q)
+    $load [ptr_deref_75_load_0] $from passpointer/memory_space_0 (ptr_deref_75_word_address_0) (ptr_deref_75_data_0)
+    &/ [ptr_deref_75_gather_scatter] (ptr_deref_75_data_0) (s_76) 
+    // 	b := (r + s)
+    // file Pointers.extmem.aa, line 44
+    // (r + s)
+    +[binary_80_inst] (r_72 s_76) (b)
+  }
+  // end data-path
+  // 	u[0 ][1 ] := ($cast ($uint<32>) a )
+  // file Pointers.extmem.aa, line 39
+  array_obj_ref_55_gather_scatter <=> (assign_stmt_58/array_obj_ref_55/array_obj_ref_55_write/split_req) (assign_stmt_58/array_obj_ref_55/array_obj_ref_55_write/split_ack)
+  array_obj_ref_55_store_0 <=> (assign_stmt_58/array_obj_ref_55/array_obj_ref_55_write/word_access/word_access_0/rr assign_stmt_58/array_obj_ref_55/array_obj_ref_55_write/word_access/word_access_0/cr) (assign_stmt_58/array_obj_ref_55/array_obj_ref_55_write/word_access/word_access_0/ra assign_stmt_58/array_obj_ref_55/array_obj_ref_55_write/word_access/word_access_0/ca)
+  // ($cast ($uint<32>) a )
+  type_cast_57_inst <=> (assign_stmt_58/type_cast_57/req) (assign_stmt_58/type_cast_57/ack)
+  // 	$call extmem_load_for_type_1 (($bitcast ($uint<32>) a ) ) (r )
+  // file Pointers.extmem.aa, line 42
+  // ($bitcast ($uint<32>) a )
+  type_cast_70_inst <=> (call_stmt_72/in_args/type_cast_70/req) (call_stmt_72/in_args/type_cast_70/ack)
+  call_stmt_72_call <=> (call_stmt_72/crr call_stmt_72/ccr) (call_stmt_72/cra call_stmt_72/cca)
+  // 	s := ->(q)
+  // file Pointers.extmem.aa, line 43
+  // ->(q)
+  ptr_deref_75_gather_scatter <=> (assign_stmt_76/ptr_deref_75/ptr_deref_75_read/merge_req) (assign_stmt_76/ptr_deref_75/ptr_deref_75_read/merge_ack)
+  ptr_deref_75_load_0 <=> (assign_stmt_76/ptr_deref_75/ptr_deref_75_read/word_access/word_access_0/rr assign_stmt_76/ptr_deref_75/ptr_deref_75_read/word_access/word_access_0/cr) (assign_stmt_76/ptr_deref_75/ptr_deref_75_read/word_access/word_access_0/ra assign_stmt_76/ptr_deref_75/ptr_deref_75_read/word_access/word_access_0/ca)
+  // 	b := (r + s)
+  // file Pointers.extmem.aa, line 44
+  // (r + s)
+  binary_80_inst <=> (assign_stmt_81/binary_80/rr assign_stmt_81/binary_80/cr) (assign_stmt_81/binary_80/ra assign_stmt_81/binary_80/ca)
+}

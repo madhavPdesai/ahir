@@ -1,0 +1,153 @@
+$pipe [inpipe] 8
+$pipe [outpipe] 8
+$pipe [midpipe] 8
+
+$memoryspace [global] 
+{
+    $capacity 16 $datawidth 8 $addrwidth 4
+    $object [pool] : $array [16] $of $int<8>
+}
+
+$module[add]
+{
+	$in a:$int<8> b:$int<8>  $out c:$int<8> 
+	$CP
+	{
+		;;[main]
+		{
+			$T [req1] $T [ack1] $T [req2] $T [ack2] 
+		}
+	}
+	$DP
+	{
+		+ [a1] (a b) (c)
+	}
+	a1 <=> (main/req1 main/req2) (main/ack1 main/ack2) 
+}
+
+$module[stage1]
+{
+	$in a:$int<8> $out ret:$int<1>
+	$CP
+	{
+		;;[null_assign]
+		{
+			$T [narr] $T [nara] $T [nacr] $T [naca]
+		}
+		;;[main]
+		{
+			// read pipe
+			$T [prr] $T [pra]
+			// add 
+			$T [arr] $T [ara] $T [acr] $T [aca]
+			// in parallel, write to pipe 
+			||[par]
+			{
+				;;[mem]
+				{
+					$T [srr] $T [sra] $T [scr] $T [sca]
+				}
+				;;[pipe]
+				{
+					$T [pwr] $T [pwa]
+				}
+			}
+		}
+		
+	}
+	$DP
+	{
+		$W pipe_data : $int<8>
+		$W add_result: $int<8>
+		$constant $W atrue: $int<1> := _b1
+		$constant $W store_addr: $pointer<global> := _b0000
+		$call [add1] $module add (pipe_data a) (add_result)
+		:= [assign1] (atrue) (ret)
+		$store [store1] $to global (store_addr add_result)
+		$ioport $out [outport] (add_result) (midpipe)	
+	}
+
+	add1 <=> (main/arr main/acr) (main/ara main/aca)
+	store1 <=> (main/par/mem/srr main/par/mem/scr) (main/par/mem/sra main/par/mem/sca) 
+	outport <=> (main/par/pipe/pwr) (main/par/pipe/pwa)
+	assign1 <=> (null_assign/narr null_assign/nacr) (null_assign/nara null_assign/naca)
+}
+
+$module[stage2]
+{
+	$in a:$int<8> $out ret:$int<1>
+	$CP
+	{
+		;;[null_assign]
+		{
+			$T [narr] $T [nara] $T [nacr] $T [naca]
+		}
+		;;[main]
+		{
+			// in parallel, read from pipe and mem.
+			||[par]
+			{
+				;;[mem]
+				{
+					$T [lrr] $T [lra] $T [lcr] $T [lca]
+				}
+				;;[pipe]
+				{
+					$T [prr] $T [pra]
+				}
+			}
+			// add 
+			$T [arr] $T [ara] $T [acr] $T [aca]
+			// write to pipe
+			$T [pwr] $T [pwa]
+		}
+		
+	}
+	$DP
+	{
+		$W pipe_data : $int<8>
+		$W load_data : $int<8>
+		$W add_result: $int<8>
+		$W load_result: $int<8>
+		$constant $W load_addr: $pointer<global> := _b0000
+                $constant $W ret_const: $int<1> := _b0
+
+		$load [load1] $from global (load_addr) (load_result)
+		$call [add1] $module add (pipe_data a) (add_result)
+		:= [assign1] (ret_const) (ret)
+		$ioport $in [inport] (midpipe) (pipe_data)	
+		$ioport $out [outport] (add_result) (outpipe)	
+	}
+
+	add1 <=> (main/arr main/acr) (main/ara main/aca)
+	load1 <=> (main/par/mem/lrr main/par/mem/lcr) (main/par/mem/lra main/par/mem/lca) 
+	inport <=> (main/par/pipe/prr) (main/par/pipe/pra)
+	outport <=> (main/pwr) (main/pwa)
+	assign1 <=> (null_assign/narr null_assign/nacr) (null_assign/nara null_assign/naca)
+}
+
+$module [top]
+{
+	$CP
+	{
+		;;[stage1]
+		{
+			$T [rr] $T [ra] $T [cr] $T [ca]
+		}
+		;;[stage2]
+		{
+			$T [rr] $T [ra] $T [cr] $T [ca]
+		}
+	}
+	$DP
+	{
+		$constant $W input: $int<8> := _b01010101
+		$W r1: $int<1>
+		$W r2: $int<1>
+
+		$call [s1] $module stage1 (input) (r1)
+		$call [s2] $module stage2 (input) (r2)
+	}
+	s1 <=> (stage1/rr stage1/cr) (stage1/ra stage1/ca)
+	s2 <=> (stage2/rr stage2/cr) (stage2/ra stage2/ca)
+}

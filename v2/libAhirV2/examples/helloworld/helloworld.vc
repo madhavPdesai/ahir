@@ -1,0 +1,34 @@
+$module[foo] 
+{ 
+	$in a:$int<32> b:$int<32> p:$int<32> q:$int<32> $out c:$int<32> 
+        $CP 
+	{ 
+		;;[main] 
+		{ 
+			::[f] {
+				;;[s1]{
+					$T [req1] $T [ack1] $T [req2] $T [ack2] 
+				}
+				;;[s2]{
+					$T [req1] $T [ack1] $T [req2] $T [ack2] 
+				}
+				$entry &-> (s1 s2)
+				$exit <-& (s1 s2)
+			}
+			$T [req1] $T [ack1] $T [req2] $T [ack2] 
+		}
+	}
+	$DP 
+	{ 
+		$W [t] : $int<32>
+		$W [s] : $int<32>
+		
+		+ [a1] (a b) (t)
+		+ [a2] (p q) (s)
+		+ [a3] (t s) (c)
+	}
+
+	a1 <=> (main/f/s1/req1 main/f/s1/req2) (main/f/s1/ack1 main/f/s1/ack2) 
+	a2 <=> (main/f/s2/req1 main/f/s2/req2) (main/f/s2/ack1 main/f/s2/ack2) 
+	a3 <=> (main/req1 main/req2) (main/ack1 main/ack2) 
+}

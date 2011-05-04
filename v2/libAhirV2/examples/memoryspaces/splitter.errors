@@ -1,0 +1,22 @@
+
+ ERROR : syntax error, unexpected t_RightParen, expecting t_Identifier error at line number 34 in file foo.vhdl !!
+
+ ERROR : syntax error, unexpected t_SIGNAL, expecting t_IS error at line number 37 in file foo.vhdl !!
+
+ ERROR : syntax error, unexpected t_Identifier, expecting t_Semicolon error at line number 148 in file foo.vhdl !!
+
+ ERROR : syntax error, unexpected t_Semicolon, expecting t_RightParen or t_Comma error at line number 166 in file foo.vhdl !!
+
+ ERROR : syntax error, unexpected t_Semicolon, expecting t_RightParen or t_Comma error at line number 176 in file foo.vhdl !!
+
+ ERROR : syntax error, unexpected t_Semicolon, expecting t_RightParen or t_Comma error at line number 197 in file foo.vhdl !!
+
+ ERROR : syntax error, unexpected t_RightParen, expecting t_Identifier error at line number 34 in file foo.vhdl !!
+
+ ERROR : syntax error, unexpected t_Semicolon, expecting t_Identifier error at line number 19 in file foo.vhdl !!
+
+ ERROR : syntax error, unexpected t_SIGNAL, expecting t_IS error at line number 39 in file foo.vhdl !!
+
+ ERROR : syntax error, unexpected t_Identifier, expecting t_USE error at line number 317 in file foo.vhdl !!
+
+ ERROR : syntax error, unexpected t_Identifier, expecting t_USE error at line number 436 in file foo.vhdl !!
