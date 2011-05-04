@@ -116,7 +116,7 @@ enum vcLexerKeytags
     __FtoF_ASSIGN_OP
   };
 
-static char *vcLexerKeywords[] = 
+static string vcLexerKeywords[] = 
   {   "$attribute"		,
       "$dpe"		,
       "$lib"		,

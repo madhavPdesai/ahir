@@ -9,6 +9,7 @@
 #include <sstream>
 #include <deque>
 #include "Utils.hpp"
+#include <stdio.h>
 
 using namespace llvm;
 using namespace Aa;

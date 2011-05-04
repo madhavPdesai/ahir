@@ -1,18 +1,18 @@
 import os
 
-modelsimpath = ['/cad/modelsim/modeltech/gcc-4.0.2-rhe21/bin']
+#modelsimpath = ['/cad/modelsim/modeltech/gcc-4.0.2-rhe21/bin']
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
 
 env.Append(CPPPATH = './src/:./include:/cad/modelsim/modeltech/include')
 
-modelsim = env.Clone()
-modelsim.PrependENVPath('PATH',modelsimpath)
+#modelsim = env.Clone()
+#modelsim.PrependENVPath('PATH',modelsimpath)
 
-VariantDir('objModelsimFLI','src',duplicate=0)
+#VariantDir('objModelsimFLI','src',duplicate=0)
 VariantDir('objVhpi','src',duplicate=0)
 VariantDir('objSocketLib','src',duplicate=0)
 
-modelsim.SharedLibrary('lib/libModelsimFLI', ['objModelsimFLI/SocketLib.c','objModelsimFLI/Vhpi.c'], CCFLAGS='-g -m32 -DMODELSIM ')
+#modelsim.SharedLibrary('lib/libModelsimFLI', ['objModelsimFLI/SocketLib.c','objModelsimFLI/Vhpi.c'], CCFLAGS='-g -m32 -DMODELSIM ')
 env.SharedLibrary('lib/libVhpi', ['objVhpi/Vhpi.c','objVhpi/SocketLib.c'], CCFLAGS='-g ')
 env.SharedLibrary('lib/libSocketLib', ['objSocketLib/SocketLib.c','objSocketLib/Pipes.c'], CCFLAGS='-g ')
 

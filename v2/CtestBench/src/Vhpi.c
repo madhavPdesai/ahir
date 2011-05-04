@@ -418,7 +418,7 @@ void  Vhpi_Send()
 	  fprintf(log_file,"cycle %d finished job %s(%d)\n",
 		  cycle_count,
 		  top->name,
-		  top->index);
+		  (int) top->index);
 
 	  APPEND(finished_jobs,top);
 
@@ -637,7 +637,7 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
 	      fprintf(log_file,"cycle %d started job %s(%d)\n",
 		      cycle_count,
 		      jlink->name,
-		      jlink->index);
+		      (int) jlink->index);
 
 	      break;
 	    }

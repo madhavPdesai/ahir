@@ -32,6 +32,11 @@
 #include <antlr/BitSet.hpp>
 #include <antlr/LexerSharedInputState.hpp>
 
+#ifndef NO_STRCASECMP
+#include <strings.h>
+#include <stdio.h>
+#endif
+
 #ifdef ANTLR_CXX_SUPPORTS_NAMESPACE
 namespace antlr {
 #endif
