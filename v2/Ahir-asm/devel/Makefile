@@ -76,19 +76,6 @@ $(BIN)/Aa2VC : $(OBJS) $(OBJ)/Aa2VC.o
 $(OBJ)/TestAaParser.o: $(UTIL)/TestAaParser.cpp $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(UTIL)/TestAaParser.cpp  -o $(OBJ)/TestAaParser.o
 
-<<<<<<< HEAD
-$(OBJ)/Aa2C.o : $(SRC)/Aa2C.cpp  $(INCL)/Aa2C.h $(HEADERS)
-	$(GCC) $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/Aa2C.cpp -o $(OBJ)/Aa2C.o
-
-$(OBJ)/Aa2VC.o : $(SRC)/Aa2VC.cpp  $(HEADERS)
-	$(GCC) $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/Aa2VC.cpp -o $(OBJ)/Aa2VC.o
-
-$(OBJ)/Aa2VCWrite.o : $(SRC)/Aa2VCWrite.cpp  $(HEADERS)
-	$(GCC) $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/Aa2VCWrite.cpp -o $(OBJ)/Aa2VCWrite.o
-
-$(OBJ)/AaWriteCHeader.o : $(SRC)/AaWriteCHeader.cpp  $(HEADERS)
-	$(GCC) $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/AaWriteCHeader.cpp -o $(OBJ)/AaWriteCHeader.o
-=======
 $(OBJ)/AaLinkExtMem.o: $(UTIL)/AaLinkExtMem.cpp $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(UTIL)/AaLinkExtMem.cpp  -o $(OBJ)/AaLinkExtMem.o
 
@@ -100,7 +87,6 @@ $(OBJ)/Aa2VC.o : $(UTIL)/Aa2VC.cpp  $(HEADERS)
 
 $(OBJ)/AaWriteCHeader.o : $(UTIL)/AaWriteCHeader.cpp  $(HEADERS)
 	g++ $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(UTIL)/AaWriteCHeader.cpp -o $(OBJ)/AaWriteCHeader.o
->>>>>>> a8e97d43154ffbc2720cf23078d9769cc3cf6abe
 
 #### Other objects (all source files from src/) #### 
 
@@ -150,14 +136,6 @@ $(OBJ)/AaExpressionWriteVCLoadStore.o: $(SRC)/AaExpressionWriteVCLoadStore.cpp $
 $(OBJ)/AaExpressionWriteVCOptimized.o: $(SRC)/AaExpressionWriteVCOptimized.cpp $(HEADERS)
 	$(GCC) $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/AaExpressionWriteVCOptimized.cpp -o $(OBJ)/AaExpressionWriteVCOptimized.o
 
-<<<<<<< HEAD
-$(OBJ)/TestAaParser.o: $(SRC)/TestAaParser.cpp $(HEADERS)
-	$(GCC) $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/TestAaParser.cpp  -o $(OBJ)/TestAaParser.o
-
-$(OBJ)/AaLinkExtMem.o: $(SRC)/AaLinkExtMem.cpp $(HEADERS)
-	$(GCC) $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(SRC)/AaLinkExtMem.cpp  -o $(OBJ)/AaLinkExtMem.o
-=======
->>>>>>> a8e97d43154ffbc2720cf23078d9769cc3cf6abe
 
 $(OBJ)/AaLexer.o: $(GRMR)/AaLexer.cpp $(GRMR)/AaLexer.hpp 
 	$(GCC) $(DEFS) $(INCLUDES) $(CXXFLAGS) -c $(GRMR)/AaLexer.cpp -o $(OBJ)/AaLexer.o
