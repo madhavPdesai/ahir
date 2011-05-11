@@ -23,6 +23,7 @@ class AaMemorySpace: public AaRoot
       _mem_space_index = msi;
       _is_written_into = false;
       _is_read_from = false;
+      _is_global = false;
     }
 
   int _mem_space_index;
@@ -33,6 +34,7 @@ class AaMemorySpace: public AaRoot
 
   bool _is_written_into;
   bool _is_read_from;
+  bool _is_global;
 
 
   set<AaStorageObject*,AaRootCompare> _objects;
@@ -40,6 +42,10 @@ class AaMemorySpace: public AaRoot
 
   void Write_VC_Model(ostream& ofile);
   string Get_VC_Identifier();
+
+  void Set_Is_Global(bool v) {_is_global = v;}
+  bool Get_Is_Global() {return(_is_global);}
+
 };
 
 // The program, a list of modules etc...

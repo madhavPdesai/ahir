@@ -55,7 +55,6 @@ int main(int argc, char* argv[])
 	case 'I':
 	  AaProgram::_keep_extmem_inside  = true;
 	  AaProgram::_extmem_object_name = optarg;
-	  AaProgram::Make_Extmem_Object();
 	  break;
 	default:
 	  cerr << "Error: unknown option " << opt << endl;

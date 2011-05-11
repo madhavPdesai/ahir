@@ -11,10 +11,10 @@ use ahir.BaseComponents.all;
 entity LoadReqShared is
     generic
     (
-	addr_width: integer;
-      	num_reqs : integer; -- how many requesters?
-	tag_length: integer;
-	no_arbitration: Boolean
+	addr_width: integer := 8;
+      	num_reqs : integer := 1; -- how many requesters?
+	tag_length: integer := 1;
+	no_arbitration: Boolean := true
     );
   port (
     -- req/ack follow pulse protocol

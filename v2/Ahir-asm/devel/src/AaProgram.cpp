@@ -69,7 +69,7 @@ void AaMemorySpace::Write_VC_Model(ostream& ofile)
 
 string AaMemorySpace::Get_VC_Identifier()
 {
-  if(this->_modules.size() == 1)
+  if(!this->_is_global && this->_modules.size() == 1)
     return((*(this->_modules.begin()))->Get_Label() + "/memory_space_" + IntToStr(_mem_space_index));
   else
     return("memory_space_" + IntToStr(_mem_space_index));
@@ -614,6 +614,8 @@ AaForeignStorageObject* AaProgram::Make_Foreign_Storage_Object(AaType* t)
     }
   else
     ret_obj = AaProgram::_foreign_storage_map[t];
+
+  return(ret_obj);
 }
 
 // try to identify sets of objects which must reside in the
@@ -743,10 +745,16 @@ void AaProgram::Coalesce_Storage()
 	      if(p_scope != NULL)
 		{
 		  AaScope* root_p_scope = p_scope->Get_Root_Scope();
+
 		  assert(root_p_scope->Is("AaModule"));
-		  AaProgram::_storage_index_module_coverage_map[idx].insert((AaModule*) root_p_scope);
 		  new_ms->_modules.insert((AaModule*)root_p_scope);
+
+		  AaProgram::_storage_index_module_coverage_map[idx].insert((AaModule*) root_p_scope);
+
 		}
+	      else
+		new_ms->Set_Is_Global(true);
+
 	    }
 	  else if(u->Is("AaPointerDereferenceExpression"))
 	    {
@@ -779,10 +787,16 @@ void AaProgram::Coalesce_Storage()
 	      if(p_scope != NULL)
 		{
 		  AaScope* root_p_scope = p_scope->Get_Root_Scope();
+
 		  assert(root_p_scope->Is("AaModule"));
-		  AaProgram::_storage_index_module_coverage_map[idx].insert((AaModule*) root_p_scope);
 		  new_ms->_modules.insert((AaModule*)root_p_scope);
+
+		  AaProgram::_storage_index_module_coverage_map[idx].insert((AaModule*) root_p_scope);
+
 		}
+	      else
+		new_ms->Set_Is_Global(true);
+
 	    }
 	  else if(u->Is("AaForeignStorageObject"))
 	    {
@@ -846,7 +860,7 @@ void AaProgram::Coalesce_Storage()
       miter++)
     {
       AaMemorySpace* ms = (*miter).second;
-      if(ms->_modules.size() == 1)
+      if(!ms->Get_Is_Global() && (ms->_modules.size() == 1 ))
 	{
 	  (*(ms->_modules.begin()))->Add_Memory_Space(ms);
 	}
@@ -1040,7 +1054,7 @@ void AaProgram::Write_VC_Memory_Spaces(ostream& ofile)
       iter++)
     {
 
-      if((*iter).second->_modules.size() != 1)
+      if((*iter).second->Get_Is_Global() || ((*iter).second->_modules.size() != 1))
 	(*iter).second->Write_VC_Model(ofile);
     }
 }
