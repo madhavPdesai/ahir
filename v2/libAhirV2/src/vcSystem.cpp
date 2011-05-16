@@ -841,25 +841,36 @@ void vcSystem::Print_VHDL_Pipe_Instances(ostream& ofile)
       string pipe_id = To_VHDL((*pipe_iter).first);
       int pipe_width = (*pipe_iter).second;
       
-      int num_reads = MAX(this->Get_Num_Pipe_Reads(pipe_id),1);
-      int num_writes = MAX(this->Get_Num_Pipe_Writes(pipe_id), 1);
+      int num_reads = this->Get_Num_Pipe_Reads(pipe_id);
+      int num_writes = this->Get_Num_Pipe_Writes(pipe_id);
      
-      ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
-      ofile << "generic map( -- { " << endl;
-	  ofile << "num_reads => " << num_reads << "," << endl;
-	  ofile << "num_writes => " << num_writes << "," << endl;
-	  ofile << "data_width => " << pipe_width << "," << endl;
-	  ofile << "depth => 1 --}\n)" << endl;
-	  ofile << "port map( -- { " << endl;
-	  ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 
-		<< "read_ack => " << pipe_id << "_pipe_read_ack," << endl 
-		<< "read_data => "<< pipe_id << "_pipe_read_data," << endl 
-		<< "write_req => " << pipe_id << "_pipe_write_req," << endl 
-		<< "write_ack => " << pipe_id << "_pipe_write_ack," << endl 
-		<< "write_data => "<< pipe_id << "_pipe_write_data," << endl 
-		<< "clk => clk,"
-		<< "reset => reset -- }\n ); -- }" << endl;
+      if(num_reads > 0 || num_writes > 0)
+      {
+        num_reads = MAX(num_reads,1);
+        num_writes = MAX(num_writes,1);
+
+        ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
+        ofile << "generic map( -- { " << endl;
+	    ofile << "num_reads => " << num_reads << "," << endl;
+	    ofile << "num_writes => " << num_writes << "," << endl;
+	    ofile << "data_width => " << pipe_width << "," << endl;
+	    ofile << "depth => 1 --}\n)" << endl;
+	    ofile << "port map( -- { " << endl;
+	    ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 
+		  << "read_ack => " << pipe_id << "_pipe_read_ack," << endl 
+		  << "read_data => "<< pipe_id << "_pipe_read_data," << endl 
+		  << "write_req => " << pipe_id << "_pipe_write_req," << endl 
+		  << "write_ack => " << pipe_id << "_pipe_write_ack," << endl 
+		  << "write_data => "<< pipe_id << "_pipe_write_data," << endl 
+		  << "clk => clk,"
+		  << "reset => reset -- }\n ); -- }" << endl;
+       }
+       else
+ 	{
+		vcSystem::Warning("pipe " + pipe_id + " not used in the system, ignored");
+	}
     }
+	
 }
 
 void  vcSystem::Print_VHDL_Inclusions(ostream& ofile)
