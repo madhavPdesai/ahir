@@ -830,4 +830,33 @@ package BaseComponents is
       reset : in std_logic);
   end component StoreCompleteShared;
 
+
+  -----------------------------------------------------------------------------
+  -- protocol translation, priority encoding
+  -----------------------------------------------------------------------------
+  component Pulse_To_Level_Translate_Entity 
+    generic ( suppr_imm_ack : boolean := true);
+    port( rL : in boolean;
+          rR : out std_logic;
+          aL : out boolean;
+          aR : in std_logic;
+          en : out std_logic;
+          clk : in std_logic;
+          reset : in std_logic);
+  end component;
+
+  component Request_Priority_Encode_Entity
+    generic (
+      num_reqs : integer := 1);
+    port (
+      clk,reset : in std_logic;
+      reqR : in std_logic_vector;
+      ackR: out std_logic_vector;
+      reqF_in : in std_logic_vector;
+      reqF_out : out std_logic_vector;
+      req_s : out std_logic;
+      ack_s : in std_logic);
+  end component;
+
+
 end BaseComponents;

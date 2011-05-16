@@ -11,22 +11,22 @@ use ahir.FloatOperatorPackage.all;
 entity GenericCombinationalOperator is
   generic
     (
-      operator_id   : string;          -- operator id
+      operator_id   : string := "ApIntAdd";          -- operator id
       input1_is_int : Boolean := true; -- false means float
       input1_characteristic_width : integer := 0; -- characteristic width if input1 is float
       input1_mantissa_width       : integer := 0; -- mantissa width if input1 is float
-      iwidth_1      : integer;    -- width of input1
+      iwidth_1      : integer := 4;    -- width of input1
       input2_is_int : Boolean := true; -- false means float
       input2_characteristic_width : integer := 0; -- characteristic width if input2 is float
       input2_mantissa_width       : integer := 0; -- mantissa width if input2 is float
-      iwidth_2      : integer;    -- width of input2
-      num_inputs    : integer := 2;    -- can be 1 or 2.
+      iwidth_2      : integer := 0;    -- width of input2
+      num_inputs    : integer := 1;    -- can be 1 or 2.
       output_is_int : Boolean := true;  -- false means that the output is a float
       output_characteristic_width : integer := 0;
       output_mantissa_width       : integer := 0;
-      owidth        : integer;          -- width of output.
-      constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
-      use_constant  : boolean := false
+      owidth        : integer := 4;          -- width of output.
+      constant_operand : std_logic_vector := "0001"; -- constant operand.. (it is always the second operand)
+      use_constant  : boolean := true
       );
   port (
     data_in       : in  std_logic_vector(iwidth_1 + iwidth_2 - 1 downto 0);
@@ -42,19 +42,17 @@ begin  -- Behave
   assert((num_inputs = 1) or (num_inputs = 2)) report "either 1 or 2 inputs" severity failure;
 
   TwoOperand : if num_inputs = 2 generate
-
     -- int x int -> int
     TwoOpIntIntInt: if input1_is_int and input2_is_int and output_is_int generate
       process(data_in)
-        
-        variable   result_var   : IStdLogicVector(owidth-1 downto 0);
-        variable op1: IStdLogicVector(iwidth_1-1 downto 0);
-        variable op2: IStdLogicVector(iwidth_2-1 downto 0);
+        variable   result_var : std_logic_vector(owidth-1 downto 0);
+        variable op1: std_logic_vector(iwidth_1-1 downto 0);
+        variable op2: std_logic_vector(iwidth_2-1 downto 0);
       begin
-        op1 := To_ISLV(data_in(iwidth-1 downto iwidth_2));
-        op2 := To_ISLV(data_in(iwidth_2-1 downto 0));
+        op1 := data_in(iwidth-1 downto iwidth_2);
+        op2 := data_in(iwidth_2-1 downto 0);
         TwoInputOperation(operator_id, op1, op2,result_var);
-        result <= To_SLV(result_var);
+        result <= result_var;
       end process;
     end generate TwoOpIntIntInt;
 
@@ -100,10 +98,10 @@ begin  -- Behave
 
     SingleOperandNoConstantIntInt: if input1_is_int and output_is_int generate
       process(data_in)
-        variable   result_var    : IStdLogicVector(owidth-1 downto 0);
+        variable   result_var    : std_logic_vector(owidth-1 downto 0);
       begin
-        SingleInputOperation(operator_id, To_ISLV(data_in), result_var);
-        result <= To_SLV(result_var);
+        SingleInputOperation(operator_id, data_in, result_var);
+        result <= result_var;
       end process;
     end generate SingleOperandNoConstantIntInt;
     
@@ -142,15 +140,22 @@ begin  -- Behave
   SingleOperandWithConstant : if num_inputs = 1 and use_constant generate
 
     SingleOperandWithConstantIntInt: if input1_is_int and output_is_int generate
-      process(data_in)
-        variable   result_var    : IStdLogicVector(owidth-1 downto 0);
-      begin
-        TwoInputOperation(operator_id,
-                          To_ISLV(data_in(iwidth-1 downto 0)), 
-                          To_ISLV(constant_operand),
-                          result_var); 
-        result <= To_SLV(result_var);
-      end process;
+      SigBlock: block
+        signal op2_sig : std_logic_vector(constant_operand'length-1 downto 0);
+      begin  -- block SigBlock
+        -- TODO: changes here.
+        op2_sig <= constant_operand;
+
+        process(data_in,op2_sig)
+          variable   result_var    : std_logic_vector(owidth-1 downto 0);
+        begin
+          TwoInputOperation(operator_id,
+                            data_in,
+                            op2_sig,
+                            result_var); 
+          result <= result_var;
+        end process;
+      end block SigBlock;
     end generate SingleOperandWithConstantIntInt;
 
     SingleOperandWithConstantFloatInt: if (not input1_is_int) and output_is_int generate
@@ -181,4 +186,6 @@ begin  -- Behave
   end generate SingleOperandWithConstant;
   
 end Vanilla;
+
+
 

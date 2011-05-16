@@ -6,13 +6,14 @@ library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
+use ahir.BaseComponents.all;
 
 entity InputMuxBase is
-  generic ( iwidth: integer;
-	   owidth: integer;
-	   twidth: integer;
-	   nreqs: integer;
-	   no_arbitration: Boolean);
+  generic ( iwidth: integer := 8;
+	   owidth: integer := 8;
+	   twidth: integer := 1;
+	   nreqs: integer := 1;
+	   no_arbitration: Boolean := false);
   port (
     -- req/ack follow pulse protocol
     reqL                 : in  BooleanArray(nreqs-1 downto 0);
@@ -30,9 +31,8 @@ end InputMuxBase;
 
 architecture Behave of InputMuxBase is
 
-  signal reqP,ackP,enP,ssig : std_logic_vector(nreqs-1 downto 0);
-  signal reqF,reqFreg : std_logic_vector(nreqs-1 downto 0);  
-  signal req_fsm_state: std_logic;
+  signal reqP,ackP,enP : std_logic_vector(nreqs-1 downto 0);
+  signal reqF : std_logic_vector(nreqs-1 downto 0);  
 
   type WordArray is array (natural range <>) of std_logic_vector(owidth-1 downto 0);
   signal data_reg, dataP : WordArray(nreqs-1 downto 0);
@@ -51,36 +51,31 @@ begin  -- Behave
   -- pulse to level translate
   -----------------------------------------------------------------------------
   P2L: for I in nreqs-1 downto 0 generate
-      P2LBlk: block
-        signal state : P2LState;
-      begin  -- block P2L          
-        Pulse_To_Level_Translate(suppr_imm_ack => suppress_immediate_ack(I),
-                                 rL => reqL(I), rR => reqP(I), aL => ackL(I), aR => ackP(I),
-                                 en => enP(I), state => state, clk => clk, reset => reset);
-      end block P2LBlk;
+    p2Linstance: Pulse_To_Level_Translate_Entity generic map(suppr_imm_ack => suppress_immediate_ack(I))
+      port map(rL => reqL(I), rR => reqP(I), aL => ackL(I), aR => ackP(I),
+               en => enP(I), clk => clk, reset => reset);     
 
-
-      process(clk)
-        variable regv : std_logic_vector(owidth-1 downto 0);
-      begin
-        if(clk'event and clk = '1') then
-          if(enP(I) = '1') then
-            Extract(dataL,I,regv);
-            data_reg(I) <= regv;
-	  end if;
+    process(clk)
+      variable regv : std_logic_vector(owidth-1 downto 0);
+    begin
+      if(clk'event and clk = '1') then
+        if(enP(I) = '1') then
+          Extract(dataL,I,regv);
+          data_reg(I) <= regv;
         end if;
-      end process;
+      end if;
+    end process;
 
-      process(enP(I),data_reg(I), dataL)
-        variable regv : std_logic_vector(owidth-1 downto 0);
-      begin
-        if(enP(I) = '0') then
-          dataP(I) <= data_reg(I);
-        else
-          Extract(dataL,I,regv);          
-	  dataP(I) <= regv;
-        end if;
-      end process;
+    process(enP(I),data_reg(I), dataL)
+      variable regv : std_logic_vector(owidth-1 downto 0);
+    begin
+      if(enP(I) = '0') then
+        dataP(I) <= data_reg(I);
+      else
+        Extract(dataL,I,regv);          
+        dataP(I) <= regv;
+      end if;
+    end process;
 
   end generate P2L;
 
@@ -95,15 +90,19 @@ begin  -- Behave
   end generate NoArbitration;
 
   Arbitration: if not no_arbitration generate
-    RequestPriorityEncode(req_fsm_state => req_fsm_state,
-                            clk => clk,
-                            reset => reset,
-                            reqR => reqP,
-                            ackR => ackP,
-                            reqF => reqF,
-                            req_s => reqR,
-                            ack_s => ackR,
-                            reqFreg => reqFreg);
+    
+    rpe : Request_Priority_Encode_Entity generic map (
+      num_reqs => reqP'length)
+      port map(
+                          clk => clk,
+                          reset => reset,
+                          reqR => reqP,
+                          ackR => ackP,
+                          reqF_in => reqF,
+                          reqF_out => reqF,
+                          req_s => reqR,
+                          ack_s => ackR);
+    
   end generate Arbitration;
 
   -----------------------------------------------------------------------------
@@ -111,25 +110,25 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   process(reqF,dataP)
   begin
-      dataR <= (others => '0');
-      for J in 0 to nreqs-1 loop
-        if(reqF(J) = '1') then
-      		dataR <= dataP(J);
-	end if;
-      end loop;
+    dataR <= (others => '0');
+    for J in 0 to nreqs-1 loop
+      if(reqF(J) = '1') then
+        dataR <= dataP(J);
+      end if;
+    end loop;
   end process;    
 
   -----------------------------------------------------------------------------
   -- tag generation
   -----------------------------------------------------------------------------
-    process(reqF)
-    begin
-      tagR <= tag0;
-      for J in reqF'range loop
-        if(reqF(J) = '1') then
-          tagR <= To_SLV(To_Unsigned(J,tagR'length));
-        end if;
-      end loop;  -- J
-    end process;
+  process(reqF)
+  begin
+    tagR <= tag0;
+    for J in reqF'range loop
+      if(reqF(J) = '1') then
+        tagR <= To_SLV(To_Unsigned(J,tagR'length));
+      end if;
+    end loop;  -- J
+  end process;
   
 end Behave;

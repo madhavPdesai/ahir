@@ -29,12 +29,17 @@ package Subprograms is
   function To_Float ( inp : ApFloat) return float;
 
   function To_Signed ( inp : ApInt) return signed;
+  function To_Signed ( inp : std_logic_vector) return signed;
   function To_Unsigned ( inp : ApInt) return unsigned;
+  function To_Unsigned ( inp : std_logic_vector) return unsigned;  
+
 
   function To_SLV ( x: ApInt) return std_logic_vector;
   function To_SLV ( x: IStdLogicVector) return std_logic_vector;
   function To_SLV ( x: ApFloat) return std_logic_vector;
   function To_SLV( x : BooleanArray) return std_logic_vector;
+  function To_SLV( x : Signed) return std_logic_vector;
+  function To_SLV( x : Unsigned) return std_logic_vector;
   
   function To_SLV (x : StdLogicArray2D) return std_logic_vector; 
   function To_SLV_Shuffle(x : StdLogicArray2D) return std_logic_vector;
@@ -286,6 +291,20 @@ package body Subprograms is
     return(ret_var);
   end To_Signed;
 
+
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function To_Signed ( inp : std_logic_vector) return signed is
+    alias linp : std_logic_vector(1 to inp'length) is inp;
+    variable ret_var : signed(1 to inp'length);
+  begin
+    for I in 1 to inp'length loop
+      ret_var(I) := linp(I);
+    end loop;  -- I
+    return(ret_var);
+  end To_Signed;
+
   -----------------------------------------------------------------------------
 
   -----------------------------------------------------------------------------
@@ -299,6 +318,21 @@ package body Subprograms is
     return(ret_var);
   end To_Unsigned;
 
+
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function To_Unsigned ( inp : std_logic_vector) return unsigned is
+    alias linp : std_logic_vector(1 to inp'length) is inp;
+    variable ret_var : unsigned(1 to inp'length);
+  begin
+    for I in 1 to inp'length loop
+      ret_var(I) := linp(I);
+    end loop;  -- I
+    return(ret_var);
+  end To_Unsigned;
+
+  
   -----------------------------------------------------------------------------
 
   -----------------------------------------------------------------------------
@@ -354,6 +388,34 @@ package body Subprograms is
     end loop;
     return(rv);
   end function To_SLV;
+
+
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function To_SLV ( x: Signed) return std_logic_vector is
+    alias lx: Signed(1 to x'length) is x;
+    variable rv: std_logic_vector(1 to x'length);
+  begin
+    for I in 1 to x'length loop
+      rv(I) := lx(I);
+    end loop;
+    return(rv);
+  end function To_SLV;
+
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function To_SLV ( x: Unsigned) return std_logic_vector is
+    alias lx: Unsigned(1 to x'length) is x;
+    variable rv: std_logic_vector(1 to x'length);
+  begin
+    for I in 1 to x'length loop
+      rv(I) := lx(I);
+    end loop;
+    return(rv);
+  end function To_SLV;
+
 
   -----------------------------------------------------------------------------
 

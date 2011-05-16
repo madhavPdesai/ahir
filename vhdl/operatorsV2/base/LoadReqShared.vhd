@@ -33,16 +33,21 @@ end LoadReqShared;
 
 architecture Vanilla of LoadReqShared is
 
-  constant ignore_tag  : boolean := no_arbitration or (reqL'length = 1);
-
   constant iwidth: integer := addr_width*num_reqs;
   constant owidth: integer := addr_width;
 
+  constant debug_flag : boolean := false;
+  
 begin  -- Behave
   assert(tag_length >= Ceil_Log2(num_reqs)) report "insufficient tag width" severity error;
 
-  assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
-    report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
+
+  -- xilinx xst does not like this assertion...
+  DbgAssert: if debug_flag generate
+    assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
+      report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;    
+  end generate DbgAssert;
+
   
   imux: InputMuxBase
   	generic map(iwidth => iwidth,
