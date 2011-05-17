@@ -77,18 +77,14 @@ begin  -- Behave
     
   end generate Arbitration;
 
-
   -----------------------------------------------------------------------------
   -- tag generation
   -----------------------------------------------------------------------------
-    process(reqF)
-    begin
-      tagR <= tag0;
-      for J in reqF'range loop
-        if(reqF(J) = '1') then
-          tagR <= To_SLV(To_Unsigned(J,tagR'length));
-        end if;
-      end loop;  -- J
-    end process;
-  
+  taggen : BinaryEncoder generic map (
+    iwidth => nreqs,
+    owidth => twidth)
+    port map (
+      din  => reqF,
+      dout => tagR);
+
 end Behave;

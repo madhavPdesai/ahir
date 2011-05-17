@@ -85,8 +85,6 @@ begin
 
   gen : for I in num_reqs-1 downto 0 generate
 
-    ackR(I) <= reqF(I) and oack;
-
     process(data,reqF(I))
        variable target: std_logic_vector(data_width-1 downto 0);
     begin

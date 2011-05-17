@@ -54,22 +54,23 @@ begin
    ----------------------------------------------------------------------------
    process(pe_call_reqs, call_mack)
      variable there_is_a_call : std_logic;
-     variable out_tag : std_logic_vector(tag_length-1 downto 0);
    begin
      there_is_a_call := OrReduce(pe_call_reqs);
-     out_tag := (others => '0');
      call_acks <= (others => '0');
      if(there_is_a_call = '1') then
        for I in num_reqs-1 downto 0 loop
          if(pe_call_reqs(I) = '1') then
-           out_tag := To_SLV(To_Unsigned(I,out_tag'length));
            call_acks(I) <= call_mack;
+           exit;
          end if;
        end loop;  -- I
      end if;
      call_mreq <= there_is_a_call;
      call_mtag <= out_tag;
    end process;
+
+   tagGen : BinaryEncoder generic map (iwidth => num_reqs, owidth => tag_length)
+     port map (din => pe_call_reqs, dout => call_mtag);   
 
    ----------------------------------------------------------------------------
    -- reverse path
@@ -98,7 +99,7 @@ begin
      begin  -- block fsm
 
        -- valid = '1' implies this index is incoming
-       valid_flag <= '1' when return_mreq = '1' and return_mtag = To_SLV(To_Unsigned(I,return_mtag'length)) else '0';
+       valid_flag <= '1' when return_mreq = '1' and (I = To_Integer(To_Unsigned(return_mtag))) else '0';
 
        -- mack if valid and mreq and (either ack bit is not set or return_reqs
        -- is asserted)

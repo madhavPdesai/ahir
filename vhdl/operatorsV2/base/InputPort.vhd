@@ -9,9 +9,9 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 
 entity InputPort is
-  generic (num_reqs: integer;
-	   data_width: integer;
-	   no_arbitration: boolean);
+  generic (num_reqs: integer := 5;
+	   data_width: integer := 8;
+	   no_arbitration: boolean := true);
   port (
     -- pulse interface with the data-path
     req        : in  BooleanArray(num_reqs-1 downto 0);
@@ -85,7 +85,6 @@ begin
 
   gen : for I in num_reqs-1 downto 0 generate
 
-    ackR(I) <= reqF(I) and oack;
 
     process(clk)
     begin

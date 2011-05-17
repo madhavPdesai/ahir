@@ -23,9 +23,6 @@ architecture behave of QueueBase is
   signal top_pointer, bottom_pointer : integer range 0 to queue_depth-1;
   signal queue_size : integer range 0 to queue_depth;
 
-  signal queue_full_sig, queue_empty_sig: std_logic;
-  signal incr_q_size, decr_q_size : std_logic;
-
   function Incr(x: integer; M: integer) return integer is
   begin
     if(x < M) then

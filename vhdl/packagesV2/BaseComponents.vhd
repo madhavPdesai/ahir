@@ -859,4 +859,13 @@ package BaseComponents is
   end component;
 
 
+  -----------------------------------------------------------------------------
+  -- BinaryEncoder: introduced because Xilinx ISE 13.1 barfs on To_Unsigned
+  -----------------------------------------------------------------------------
+  component BinaryEncoder
+    generic (iwidth: integer := 3; owidth: integer := 3);
+    port(din: in std_logic_vector(iwidth-1 downto 0);
+         dout: out std_logic_vector(owidth-1 downto 0));
+  end component;
+
 end BaseComponents;

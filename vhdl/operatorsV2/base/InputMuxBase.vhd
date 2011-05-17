@@ -9,11 +9,11 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity InputMuxBase is
-  generic ( iwidth: integer := 8;
-	   owidth: integer := 8;
-	   twidth: integer := 1;
+  generic ( iwidth: integer := 10;
+	   owidth: integer := 10;
+	   twidth: integer := 3;
 	   nreqs: integer := 1;
-	   no_arbitration: Boolean := false);
+	   no_arbitration: Boolean := true);
   port (
     -- req/ack follow pulse protocol
     reqL                 : in  BooleanArray(nreqs-1 downto 0);
@@ -114,6 +114,7 @@ begin  -- Behave
     for J in 0 to nreqs-1 loop
       if(reqF(J) = '1') then
         dataR <= dataP(J);
+        exit;
       end if;
     end loop;
   end process;    
@@ -121,14 +122,13 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   -- tag generation
   -----------------------------------------------------------------------------
-  process(reqF)
-  begin
-    tagR <= tag0;
-    for J in reqF'range loop
-      if(reqF(J) = '1') then
-        tagR <= To_SLV(To_Unsigned(J,tagR'length));
-      end if;
-    end loop;  -- J
-  end process;
+  taggen : BinaryEncoder generic map (
+    iwidth => nreqs,
+    owidth => twidth)
+    port map (
+      din  => reqF,
+      dout => tagR);
+
+
   
 end Behave;
