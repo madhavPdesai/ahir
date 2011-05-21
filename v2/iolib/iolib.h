@@ -20,4 +20,17 @@ void write_pointer(char *id, void* data);
 void write_uint16(char *id, uint16_t data);
 void write_uint8(char *id, uint8_t data);
 
+
+void read_uint64_n(const char *id, uint64_t* buf, int buf_len);
+void write_uint64_n(const char *id, uint64_t* buf, int buf_len);
+
+void read_uint32_n(const char *id, uint32_t* buf, int buf_len);
+void write_uint32_n(const char *id, uint32_t* buf, int buf_len);
+
+void read_uint16_n(const char *id, uint16_t* buf, int buf_len);
+void write_uint16_n(const char *id, uint16_t* buf, int buf_len);
+
+void read_uint8_n(const char *id, uint8_t* buf, int buf_len);
+void write_uint8_n(const char *id, uint8_t* buf, int buf_len);
+
 #endif

@@ -156,6 +156,7 @@ class vcTransition: public vcCPElement
   bool _is_input;
   bool _is_output;
   bool _is_dead;
+  bool _is_entry_transition;
 
 public:
   vcTransition(vcCPElement* parent, string id);
@@ -180,6 +181,9 @@ public:
 
   void Set_Is_Dead(bool v) {this->_is_dead = v;}
   bool Get_Is_Dead() {return(this->_is_dead);}
+
+  void Set_Is_Entry_Transition(bool v) {this->_is_entry_transition = v;}
+  bool Get_Is_Entry_Transition() {return(this->_is_entry_transition);}
 
   virtual void Print(ostream& ofile);
   virtual void Print_VHDL(ostream& ofile);
@@ -371,6 +375,8 @@ class vcCPElementGroup: public vcRoot
   bool _is_merge;
   bool _is_branch;
 
+  bool _is_cp_entry;
+
   vcTransition* _input_transition;
   vector<vcTransition*> _output_transitions;
 
@@ -388,6 +394,7 @@ public:
     _is_merge = false;
     _is_branch = false;
     _input_transition = NULL;
+    _is_cp_entry = false;
   }
 
   void Set_Group_Index(int64_t idx)

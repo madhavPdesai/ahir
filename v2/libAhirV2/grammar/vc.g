@@ -360,7 +360,7 @@ vc_CPForkBlock[vcCPBlock* cp]
  ((vc_CPRegion[fb]) | 
  ( vc_CPFork[fb] ) |
  ( vc_CPJoin[fb] ) | 
- ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} )  )+ RBRACE
+ ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} )  )* RBRACE
 { cp->Add_CPElement(fb); }
 ;
 

@@ -161,10 +161,97 @@ void Delete_JobLink(JobLink* top)
     }
   top->outports.head = top->outports.tail = NULL;
 
+  if(top->payload != NULL)
+    free(top->payload);
+
   cfree(top);
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////
+int Payload_Length(JobLink* j)
+{
+  return(j->number_of_words_requested * j->word_length/8);
+}
+
+void Print_Payload(FILE* log_file,char* send_buffer, int wlength, int nwords)
+{
+  fprintf(log_file,"Payload \n");
+  int i;
+  for(i = 0; i < nwords; i++)
+    {
+      char* ptr = send_buffer + (i*wlength/8);
+      switch(wlength)
+	{
+	case 8:
+	  fprintf(log_file,"\t %d\n", *((char*)ptr));
+	  break;
+	case 16:
+	  fprintf(log_file,"\t %d\n", *((uint16_t*)ptr));
+	  break;
+	case 32:
+	  fprintf(log_file,"\t %d\n", *((uint32_t*)ptr));
+	  break;
+	case 64:
+	  fprintf(log_file,"\t %llu\n", *((uint64_t*)ptr));
+	  break;
+	default:
+	  fprintf(log_file,"Error!\n");
+	  return;
+	}
+
+    }
+}
+
+void Pack_Value(char* payload,int wlength,int offset, char* port_value)
+{
+  char* ptr = payload + (offset*wlength/8);
+  char* ss = NULL;
+  switch(wlength)
+    {
+    case 8:
+      *((uint8_t*)ptr) = get_uint8_t(port_value,&ss);
+      break;
+    case 16:
+      *((uint16_t*)ptr) = get_uint16_t(port_value,&ss);
+      break;
+    case 32:
+      *((uint32_t*)ptr) = get_uint32_t(port_value,&ss);
+      break;
+    case 64:
+      *((uint64_t*)ptr) = get_uint64_t(port_value,&ss);
+      break;
+    default:
+      fprintf(stderr,"Error: unsupported data width %d\n", wlength);
+      return;
+    }
+}
+
+void Unpack_Value(char* payload,int wlength,int offset, char* port_value)
+{
+  char* ptr = payload + (offset*wlength/8);
+  port_value[0] = '0';
+
+  switch(wlength)
+    {
+    case 8:
+      append_uint8_t(port_value, *((uint8_t*)ptr));
+      break;
+    case 16:
+      append_uint16_t(port_value, *((uint16_t*)ptr));
+      break;
+    case 32:
+      append_uint32_t(port_value, *((uint32_t*)ptr));
+      break;
+    case 64:
+      append_uint64_t(port_value, *((uint64_t*)ptr));
+      break;
+    default:
+      fprintf(stderr,"Error: unsupported data width %d\n", wlength);
+      return;
+    }
+}
+
+////////////////////////////////////////////
+///////////////////////////////////////////////////
 // network-related stuff.
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -176,6 +263,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id)
   fprintf(log_file,"Info: appending message %s to JobList in cycle %d\n",receive_buffer , cycle_count);
   fflush(log_file);
 #endif 
+  char err_flag = 0;
 
   JobLink* new_job = NULL;
 
@@ -184,26 +272,47 @@ void Append_To_JobList(char* receive_buffer,int socket_id)
   new_job->index = free_job_index;
   free_job_index++;
   
-      // format:  "piperead/pipewrite/call  name  num-inp (value)* num-op (width)* 
+  // format:  "piperead.single/pipewrite.single/call  name  num-inp (value)* num-op (width)* 
+  // OR
+  //       :  "piperead.burst/pipewrite.burst name data_width num_words [buffer]"
   char* save_ptr;
   char* type_of_request = strtok_r(receive_buffer," ",&save_ptr);
   
   // what type of request is it?
-  if(strcmp(type_of_request,"piperead") == 0)
+  if(strcmp(type_of_request,"piperead.single") == 0)
     {
 #ifdef DEBUG
-  fprintf(log_file,"Info: pipe-read in cycle %d\n", cycle_count);
-  fflush(log_file);
+      fprintf(log_file,"Info: pipe-read in cycle %d\n", cycle_count);
+      fflush(log_file);
 #endif 
       new_job->is_pipe_read_access = 1;
     }
-  else if(strcmp(type_of_request,"pipewrite") == 0)
+  else if(strcmp(type_of_request,"piperead.burst") == 0)
     {
 #ifdef DEBUG
-  fprintf(log_file,"Info: pipe-write in cycle %d\n", cycle_count);
-  fflush(log_file);
+      fprintf(log_file,"Info: burst-pipe-read in cycle %d\n", cycle_count);
+      fflush(log_file);
+#endif 
+      new_job->is_pipe_read_access = 1;
+      new_job->is_burst_access = 1;
+    }
+  else if(strcmp(type_of_request,"pipewrite.single") == 0)
+    {
+#ifdef DEBUG
+      fprintf(log_file,"Info: pipe-write in cycle %d\n", cycle_count);
+      fflush(log_file);
 #endif 
       new_job->is_pipe_write_access = 1;
+    }
+  else if(strcmp(type_of_request,"pipewrite.burst") == 0)
+    {
+#ifdef DEBUG
+      fprintf(log_file,"Info: burst-pipe-write in cycle %d\n", cycle_count);
+      fflush(log_file);
+#endif 
+      new_job->is_pipe_write_access = 1;
+      new_job->is_burst_access = 1;
+
     }
   else if(strcmp(type_of_request,"call") == 0)
     {
@@ -223,7 +332,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id)
   
   char* name = strtok_r(NULL," ",&save_ptr);
   assert(name != NULL);
-  
+
   new_job->name = strdup(name);
 #ifdef DEBUG
   fprintf(log_file,"Info: job-name %s, in cycle %d\n", new_job->name, cycle_count);
@@ -246,63 +355,128 @@ void Append_To_JobList(char* receive_buffer,int socket_id)
   new_job->ack_port->width = 1;
   new_job->ack_port->port_value = (char*) calloc(1,2*sizeof(char));
   sprintf(new_job->ack_port->port_value,"0");
-  
-  
-  // the number of inputs?
-  char* num_inputs = strtok_r(NULL," ",&save_ptr);
-  assert(num_inputs != NULL);
-  int ninp = atoi(num_inputs);
-  
-  // read each input value..
-  int idx;
-  for(idx = 0; idx < ninp; idx++)
-    {
-      char* ip_value = strtok_r(NULL," ",&save_ptr);
-      assert(ip_value != NULL);
 
-      // each input is  a port.
-      Port* p = (Port*) calloc(1, sizeof(Port));
-      p->index = idx;
-      p->width = strlen(ip_value);
-      p->port_value = strdup(ip_value);
+
+  // if burst access, the fields are a bit different..
+  if(new_job->is_burst_access)
+    {
+      // get the data_width.
+      char* data_width_str = strtok_r(NULL," ", &save_ptr);
+      if(data_width_str == NULL)
+	{
+	  fprintf(stderr,"Error: data width in burst access not specified\n");
+	  Delete_JobLink(new_job);
+	  return;	  
+	}
+      new_job->word_length = atoi(data_width_str);
+
+      char* number_of_data_objects_str = strtok_r(NULL," ",&save_ptr);
+      if(number_of_data_objects_str == NULL)
+	{
+	  fprintf(stderr,"Error: number of data objects in burst access not specified\n");
+	  Delete_JobLink(new_job);
+	  return;	  
+	}      
+
+      new_job->number_of_words_requested = atoi(number_of_data_objects_str);
+      new_job->payload = (char*) malloc(Payload_Length(new_job));
+
+      if(new_job->is_pipe_write_access)
+	{
+	  char* payload_str = strtok_r(NULL," ",&save_ptr);
+	  if(payload_str == NULL)
+	    {
+	      fprintf(stderr,"Error: payload in write burst access not specified\n");
+	      Delete_JobLink(new_job);
+	      return;	  
+	    }
+
+	  if(*payload_str != '#')
+	    {
+	      fprintf(stderr,"Error: payload string must start with #\n");
+	      Delete_JobLink(new_job);
+	      return;
+	    }
+	
+	  if(strlen(payload_str) != Payload_Length(new_job)+2)
+	    {
+	      fprintf(stderr,"Error: payload string did not have %d bytes\n", Payload_Length(new_job));
+	      Delete_JobLink(new_job);
+	      return;
+	    }
+
+	  bcopy(new_job->payload,payload_str+1,Payload_Length(new_job));
+	}
+
 #ifdef DEBUG
-  fprintf(log_file,"Info: job-name %s inport %d set to %s in cycle %d\n", new_job->name,idx,p->port_value,cycle_count);
-  fflush(log_file);
+      fprintf(log_file,"Info: %s access on pipe %s data-width %d number-of-words %d in cycle %d\n", 
+	      type_of_request,
+	      new_job->name,
+	      new_job->word_length, 
+	      new_job->number_of_words_requested,
+	      cycle_count);
+      fflush(log_file);
+#endif 
+    }
+  else
+    {
+      
+      // the number of inputs?
+      char* num_inputs = strtok_r(NULL," ",&save_ptr);
+      assert(num_inputs != NULL);
+      int ninp = atoi(num_inputs);
+      
+      // read each input value..
+      int idx;
+      for(idx = 0; idx < ninp; idx++)
+	{
+	  char* ip_value = strtok_r(NULL," ",&save_ptr);
+	  assert(ip_value != NULL);
+	  
+	  // each input is  a port.
+	  Port* p = (Port*) calloc(1, sizeof(Port));
+	  p->index = idx;
+	  p->width = strlen(ip_value);
+	  p->port_value = strdup(ip_value);
+#ifdef DEBUG
+	  fprintf(log_file,"Info: job-name %s inport %d set to %s in cycle %d\n", new_job->name,idx,p->port_value,cycle_count);
+	  fflush(log_file);
 #endif 
 	  
-      PortLink* plink = (PortLink*) calloc(1,sizeof(PortLink));
-      plink->port = p;
+	  PortLink* plink = (PortLink*) calloc(1,sizeof(PortLink));
+	  plink->port = p;
 
-      APPEND(new_job->inports, plink);
-    }
+	  APPEND(new_job->inports, plink);
+	}
       
-  // the number of outputs?
-  char* num_outputs = strtok_r(NULL," ",&save_ptr);
-  assert(num_outputs != NULL);
-  int nops = atoi(num_outputs);
-
-  // get the output widths.
-  for(idx = 0; idx < nops; idx++)
-    {
-      char* ip_width = strtok_r(NULL," ",&save_ptr);
-      assert(ip_width != NULL);
-
-      int iw = atoi(ip_width);
-
-      // new port for each output.
-      Port* p = (Port*) calloc(1, sizeof(Port));
-      p->index = idx;
-      p->width = iw;
-      p->port_value = (char*) calloc(1, (iw+2)*sizeof(char));
+      // the number of outputs?
+      char* num_outputs = strtok_r(NULL," ",&save_ptr);
+      assert(num_outputs != NULL);
+      int nops = atoi(num_outputs);
+      
+      // get the output widths.
+      for(idx = 0; idx < nops; idx++)
+	{
+	  char* ip_width = strtok_r(NULL," ",&save_ptr);
+	  assert(ip_width != NULL);
+	  
+	  int iw = atoi(ip_width);
+	  
+	  // new port for each output.
+	  Port* p = (Port*) calloc(1, sizeof(Port));
+	  p->index = idx;
+	  p->width = iw;
+	  p->port_value = (char*) calloc(1, (iw+2)*sizeof(char));
 #ifdef DEBUG
-  fprintf(log_file,"Info: job-name %s outport %d width set to %d in cycle %d\n", new_job->name,idx,p->width,cycle_count);
-  fflush(log_file);
+	  fprintf(log_file,"Info: job-name %s outport %d width set to %d in cycle %d\n", new_job->name,idx,p->width,cycle_count);
+	  fflush(log_file);
 #endif 
-
-      PortLink* plink = (PortLink*) calloc(1,sizeof(PortLink));
-      plink->port = p;
-
-      APPEND(new_job->outports, plink);
+	  
+	  PortLink* plink = (PortLink*) calloc(1,sizeof(PortLink));
+	  plink->port = p;
+	  
+	  APPEND(new_job->outports, plink);
+	}
     }
 
   // append the job.
@@ -407,21 +581,24 @@ void  Vhpi_Send()
     {
       if(*(top->ack_port->port_value) == '1') 
 	{
+	  if(!top->is_burst_access ||
+	     (top->number_of_words_served == top->number_of_words_requested))
+	    {
 #ifdef DEBUG
-          fprintf(log_file,"Info: job %s finished in cycle %d\n", top->name, cycle_count);
-  fflush(log_file);
+	      fprintf(log_file,"Info: job %s finished in cycle %d\n", top->name, cycle_count);
+	      fflush(log_file);
 #endif 
-	  next = top->next;
-	  
-	  REMOVE(active_jobs,top);
-
-	  fprintf(log_file,"cycle %d finished job %s(%d)\n",
-		  cycle_count,
-		  top->name,
-		  (int) top->index);
-
-	  APPEND(finished_jobs,top);
-
+	      next = top->next;
+	      
+	      REMOVE(active_jobs,top);
+	      
+	      fprintf(log_file,"cycle %d finished job %s(%d)\n",
+		      cycle_count,
+		      top->name,
+		      (int) top->index);
+	      
+	      APPEND(finished_jobs,top);
+	    }
 	  top = next;
 	}
       else
@@ -443,7 +620,10 @@ void  Vhpi_Send()
 #endif 
 	  if(top->is_pipe_read_access) 
 	    {
-	      sprintf(send_buffer,"%s",top->outports.head->port->port_value);
+	      if(!top->is_burst_access)
+		sprintf(send_buffer,"%s",top->outports.head->port->port_value);
+	      else
+		bcopy(send_buffer,top->payload,Payload_Length(top));
 	    }
 	  else if( top->is_pipe_write_access)
 	    {
@@ -459,24 +639,37 @@ void  Vhpi_Send()
 		  strcat(send_buffer,spacer_string);
 		}
 	    }
-
+	  
 #ifdef DEBUG
 	  fprintf(log_file,"Info: trying to send message %s in  %d\n", send_buffer, cycle_count);
-  fflush(log_file);
+	  fflush(log_file);
 #endif 
-
-	  send(top->socket_id,send_buffer,strlen(send_buffer)+1,0);
+	  
+	  if(top->is_pipe_read_access && top->is_burst_access)
+	    {
+	      send(top->socket_id,send_buffer,Payload_Length(top),0);
+	    }
+	  else
+	    send(top->socket_id,send_buffer,strlen(send_buffer)+1,0);
 
 #ifdef DEBUG
-	  fprintf(log_file,"Info: successfully sent message %s in  %d\n", send_buffer, cycle_count);
-  fflush(log_file);
+	  if(top->is_pipe_read_access && top->is_burst_access)
+	    {
+	      fprintf(log_file, "Info: successfully sent burst-read response (data-width %d number-of-words %d) ",
+		      top->word_length, top->number_of_words_requested);
+	      Print_Payload(log_file,send_buffer,top->word_length,top->number_of_words_requested);
+	    }
+	  else
+	    fprintf(log_file,"Info: successfully sent message %s in  %d\n", send_buffer, cycle_count);
+
+	  fflush(log_file);
 #endif 
 
 	  next = top->next;
 
 	  REMOVE(finished_jobs,top);
 	  Delete_JobLink(top);
-
+	  
 	  top = next;
 	}
       else
@@ -555,31 +748,54 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 	  if(strcmp(index_string, "ack") == 0)
 	    {
 	      Copy_Value(jlink->ack_port->port_value, port_value,1);
+
 	      if(*(jlink->ack_port->port_value) == '1') 
 		{
+		  char all_done = 0;
+		  if(jlink->is_burst_access)
+		    {
+		      jlink->number_of_words_served++;
+		      if(jlink->number_of_words_served == jlink->number_of_words_requested)
+			{
+			  all_done = 1;
+			}
+		    }
+		  else
+		    all_done   = 1;
+
 		   // req must be tied to 0
-	           sprintf(jlink->req_port->port_value, "0");
+		  if(all_done != 0)
+		    sprintf(jlink->req_port->port_value, "0");
 		}
 	    }
 	  else
 	    {
-
-	      int index = atoi(index_string);
-	      PortLink* plink;
-	      for(plink = jlink->outports.head; plink != NULL; plink = plink->next)
+	      if(!jlink->is_burst_access)
 		{
-		  if(index == 0)
+		  int index = atoi(index_string);
+		  PortLink* plink;
+		  for(plink = jlink->outports.head; plink != NULL; plink = plink->next)
 		    {
-		      Copy_Value(plink->port->port_value,
-				port_value,
-				plink->port->width);
+		      if(index == 0)
+			{
+			  Copy_Value(plink->port->port_value,
+				     port_value,
+				     plink->port->width);
 #ifdef DEBUG
-  fprintf(log_file,"Info: finished setting %s to %s in cycle %d\n",port_name,port_value, cycle_count);
-  fflush(log_file);
+			  fprintf(log_file,"Info: finished setting %s to %s in cycle %d\n",port_name,port_value, cycle_count);
+			  fflush(log_file);
 #endif 
-		      break;
+			  break;
+			}
+		      index--;
 		    }
-		  index--;
+		}
+	      else
+		{
+		  if(*(jlink->ack_port->port_value) == '1') 		  
+		    {
+		      Pack_Value(jlink->payload,jlink->word_length, jlink->number_of_words_served - 1, port_value);
+		    }
 		}
 	    }
 	}
@@ -667,18 +883,26 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
 	}
       else
 	{
-	  int index = atoi(index_string);
-	  PortLink* plink;
-	  for(plink = jlink->inports.head; plink != NULL; plink = plink->next)
+
+	  if(!jlink->is_burst_access)
 	    {
-	      if(index == 0)
+	      int index = atoi(index_string);
+	      PortLink* plink;
+	      for(plink = jlink->inports.head; plink != NULL; plink = plink->next)
 		{
-		  Copy_Value(port_value, plink->port->port_value,
+		  if(index == 0)
+		    {
+		      Copy_Value(port_value, plink->port->port_value,
 					plink->port->width);
-		  found_one = 1;
-		  break;
+		      found_one = 1;
+		      break;
+		    }
+		  index--;
 		}
-	      index--;
+	    }
+	  else
+	    {
+	      Unpack_Value(jlink->payload, jlink->word_length, jlink->number_of_words_served,port_value);
 	    }
 	}
     }
@@ -686,10 +910,10 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
     {
 #ifdef DEBUG
        fprintf(log_file,"Info: did not find new or active job %s in cycle %d\n",port_name,cycle_count);
-  fflush(log_file);
+       fflush(log_file);
 #endif 
-      // didnt find it, write zero into it..
-      sprintf(port_value,z32__);
+       // didnt find it, write zero into it..
+       sprintf(port_value,z32__);
     }
 
 #ifdef DEBUG

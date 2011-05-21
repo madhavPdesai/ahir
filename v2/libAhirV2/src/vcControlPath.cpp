@@ -318,6 +318,7 @@ vcTransition::vcTransition(vcCPElement* parent, string id):vcCPElement(parent, i
   _is_input = false;
   _is_output = false;
   _is_dead = false;
+  _is_entry_transition = false;
 }
 
 
@@ -344,7 +345,6 @@ void vcTransition::Print_VHDL(ostream& ofile)
 
   // every transition has at least one predecessor (entry of control-path has no
   // explicit predecessor, but does have an implicit one.
-  
   if(this->Get_Number_Of_Predecessors() > 1)
     {
 
@@ -396,7 +396,22 @@ void vcTransition::Print_VHDL(ostream& ofile)
     }
   else
     {
-      ofile <<  this->Get_Exit_Symbol() << "  <= " << this->Get_Parent()->Get_Start_Symbol() << "; -- transition " << this->Get_Hierarchical_Id() << endl;
+      if(this->Get_Is_Entry_Transition())
+	{
+	  ofile <<  this->Get_Exit_Symbol() << "  <= " << this->Get_Parent()->Get_Start_Symbol() << "; -- transition " << this->Get_Hierarchical_Id() << endl;
+	}
+      else 
+	{
+	  if(!this->Get_Is_Input())
+	    {
+	      vcSystem::Warning("transition " + this->Get_Hierarchical_Id() + " has no predecessor: tied to false");
+	      ofile << this->Get_Exit_Symbol() << " <= false;" << endl;	  
+	    }
+	  else
+	    {
+	      vcSystem::Error("input transition " + this->Get_Hierarchical_Id() + " has no predecessor!");
+	    }
+	}
     }
 
   if(this->Get_Is_Output())
@@ -455,19 +470,30 @@ void vcPlace::Print_VHDL(ostream& ofile)
   // the place is simply optimized away to a direct connection..
   //
   ofile << this->Get_Exit_Symbol() <<  "  <=  ";
-  for(int idx = 0; idx < this->Get_Number_Of_Predecessors(); idx++)
+  if(this->Get_Number_Of_Predecessors() > 0)
     {
-      if(idx > 0)
-	ofile << " or ";
-      
-      ofile <<  this->Get_Predecessors()[idx]->Get_Exit_Symbol();
+      for(int idx = 0; idx < this->Get_Number_Of_Predecessors(); idx++)
+	{
+	  if(idx > 0)
+	    ofile << " or ";
+	  
+	  ofile <<  this->Get_Predecessors()[idx]->Get_Exit_Symbol();
+	}
     }
+  else
+    {
+      vcSystem::Warning("place " + this->Get_Hierarchical_Id() + " has no predecessors... tied to false");
+      ofile << " false ";
+    }
+
   ofile << "; -- place " << this->Get_Hierarchical_Id() << " (optimized away) " << endl;
 }
 
 vcCPBlock::vcCPBlock(vcCPBlock* parent, string id): vcCPElement((vcCPElement*)parent, id)
 {
   _entry = new vcTransition(this,vcLexerKeywords[__ENTRY]);
+  this->_entry->Set_Is_Entry_Transition(true);
+
   _exit = new vcTransition(this,vcLexerKeywords[__EXIT]);
 }
 
@@ -929,8 +955,7 @@ bool vcCPBranchBlock::Check_Structure()
       this->BFS_Order(false,this->_entry, num_visited, reachable_elements,visited_set);
       if(num_visited != (this->_elements.size() + 2))
 	{
-	  ret_flag = false;
-	  vcSystem::Error("all elements not reachable from entry in region " + this->Get_Hierarchical_Id());
+	  vcSystem::Warning("some elements are not reachable from the entry point of branch region " + this->Get_Hierarchical_Id());
 	  this->Print_Missing_Elements(visited_set);
 	}
 
@@ -941,8 +966,7 @@ bool vcCPBranchBlock::Check_Structure()
       this->BFS_Order(true, this->_exit, num_visited, reachable_elements,visited_set);
       if(num_visited != (this->_elements.size() + 2))
 	{
-	  ret_flag = false;
-	  vcSystem::Error("exit not reachable from every element in region " + this->Get_Hierarchical_Id());
+	  vcSystem::Warning("region exit not reachable from some elements in branch region " + this->Get_Hierarchical_Id());
 	  this->Print_Missing_Elements(visited_set);
 	}
     }
@@ -1134,7 +1158,7 @@ bool vcCPForkBlock::Check_Structure()
       if(num_visited != (this->_elements.size() + 2))
 	{
 	  ret_flag = false;
-	  vcSystem::Error("all elements not reachable from entry in region " + this->Get_Hierarchical_Id());
+	  vcSystem::Error("all elements not reachable from entry in fork region " + this->Get_Hierarchical_Id());
 	  this->Print_Missing_Elements(visited_set);
 	}
 
@@ -1152,7 +1176,7 @@ bool vcCPForkBlock::Check_Structure()
       if(num_visited != (this->_elements.size() + 2))
 	{
 	  ret_flag = false;
-	  vcSystem::Error("exit not reachable from every element in region " + this->Get_Hierarchical_Id());
+	  vcSystem::Error("exit not reachable from every element in fork region " + this->Get_Hierarchical_Id());
 	  this->Print_Missing_Elements(visited_set);
 	}
 

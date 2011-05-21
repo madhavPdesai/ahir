@@ -5,10 +5,12 @@
 int main (void)
 {
 	int i;
+        int jbuf[10];
+
 	for(i = 0; i < 10; i++)
-	{
-		write_uint32("xpipe",i);
-		fprintf(stderr,"wrote %d\n",i);
-	}
+		jbuf[i] = i;
+
+	write_uint32_n("xpipe",jbuf,10);
+	fprintf(stderr,"sent 0 1 ... 10\n");
 	return(0);
 }

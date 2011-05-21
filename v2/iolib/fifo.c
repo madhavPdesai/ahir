@@ -220,3 +220,84 @@ void write_uint8(char *id, uint8_t data)
   fclose(F);
   wait_for_ack(id);
 }
+
+
+
+// burst read/write..
+void read_uint64_n(const char *id, uint64_t* buf, int buf_len)
+{
+  int i;
+  for(i = 0; i < buf_len; i++)
+    {
+      buf[i] = read_uint64((char*) id);
+    }
+}
+void write_uint64_n(const char *id, uint64_t* buf, int buf_len)
+{
+  int i;
+  for(i = 0; i < buf_len; i++)
+    {
+      write_uint64((char*) id,buf[i]);
+    }
+}
+
+
+
+void read_uint32_n(const char *id, uint32_t* buf, int buf_len)
+{
+  int i;
+  for(i = 0; i < buf_len; i++)
+    {
+      buf[i] = read_uint32((char*) id);
+    }
+}
+void write_uint32_n(const char *id, uint32_t* buf, int buf_len)
+{
+  int i;
+  for(i = 0; i < buf_len; i++)
+    {
+      write_uint32((char*) id,buf[i]);
+    }
+}
+
+
+void read_uint16_n(const char *id, uint16_t* buf, int buf_len)
+{
+  int i;
+  for(i = 0; i < buf_len; i++)
+    {
+      buf[i] = read_uint16((char*) id);
+    }
+}
+void write_uint16_n(const char *id, uint16_t* buf, int buf_len)
+{
+  int i;
+  for(i = 0; i < buf_len; i++)
+    {
+      write_uint16((char*) id,buf[i]);
+    }
+}
+
+void read_uint8_n(const char *id, uint8_t* buf, int buf_len)
+{
+  int i;
+  for(i = 0; i < buf_len; i++)
+    {
+      buf[i] = read_uint8((char*) id);
+    }
+}
+
+void write_uint8_n(const char *id, uint8_t* buf, int buf_len)
+{
+  int i;
+  for(i = 0; i < buf_len; i++)
+    {
+      write_uint8((char*) id,buf[i]);
+    }
+}
+
+
+
+
+
+

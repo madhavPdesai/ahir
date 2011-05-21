@@ -307,7 +307,7 @@ int receive_string(int sock_id, char* buffer)
 // the buffer is used for the sent as well
 // as the received data.
 //
-void send_packet_and_wait_for_response(char* buffer, char* server_host_address, int server_port_number)
+void send_packet_and_wait_for_response(char* buffer, int send_len, char* server_host_address, int server_port_number)
 {
   int sockfd, n;
   struct sockaddr_in serv_addr;
@@ -356,7 +356,7 @@ void send_packet_and_wait_for_response(char* buffer, char* server_host_address, 
 	  usleep(1000);
 	}
 
-      send(sockfd,buffer, strlen(buffer)+1,0);
+      send(sockfd,buffer,send_len,0);
 
       fprintf(stderr, "Info: sent message %s to server\n", buffer);
 
@@ -365,7 +365,7 @@ void send_packet_and_wait_for_response(char* buffer, char* server_host_address, 
 		usleep(1000);
 	}
 	  
-     fprintf(stderr, "Info: received message %s from server\n", buffer);	  
+      fprintf(stderr, "Info: received message %s from server\n", buffer);	  
     }
 }
 

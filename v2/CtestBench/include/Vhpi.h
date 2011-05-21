@@ -40,10 +40,18 @@ struct _JobLink
   char request_sent;
   char ack_received;
 
+  // burst related stuff..
+  char is_burst_access;
+  int word_length; // in bytes
+  int number_of_words_requested;
+  
+  char* payload;
+
+  int number_of_words_served;
+
   int socket_id;
 
   char* name;
-
   Port* req_port;
   Port* ack_port;
 

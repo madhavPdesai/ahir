@@ -254,6 +254,14 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 	      ofile << "cp_elements(" << this->Get_Group_Index() << ") <= ";	      
 	      ofile << "cp_elements(" << (*(_predecessors.begin()))->Get_Group_Index() << ");" << endl;
 	    }
+	  else if(_predecessors.size() == 0)
+	    {
+	      if(!this->_is_cp_entry)
+		{
+		  vcSystem::Warning("CP element " + Int64ToStr(this->Get_Group_Index()) + " has no predecessors.. tie to false");
+		  ofile << "cp_elements(" << this->Get_Group_Index() << ") <= false; " << endl;	      		  
+		}
+	    }
 	}
     }
   else
@@ -503,6 +511,8 @@ void vcControlPath::Print_VHDL_Optimized(ostream& ofile)
 	<< _cpelement_groups.size()-1 
 	<< " downto 0);" << endl;
   ofile << "-- }" << endl << "begin -- {" << endl;
+
+  _cpelement_to_group_map[this->_entry]->_is_cp_entry = true;
 
   ofile << "cp_elements(" 
 	<< _cpelement_to_group_map[this->_entry]->Get_Group_Index()
