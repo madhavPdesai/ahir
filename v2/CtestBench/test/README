@@ -1,0 +1,18 @@
+A test for Ctestbench, but without using a
+simulator.
+
+Run scons to build two executables,
+Server and Client.  
+
+Server plays the role of the VHDL simulator
+and takes a single argument, the number of
+cycles for which it is to be run (keep this
+large enough that Client finished, but not
+too large, as the server keeps spinning).
+
+Client plays the role of the C testbench, which
+triggers operations in the Server using
+socket messages.  The current example
+illustrates burst mode control of pipes
+on the Server side.
+

@@ -57,6 +57,11 @@ float    bitcast_uint32_t_to_float(uint32_t u);
 uint64_t bitcast_double_to_uint64_t(double f);
 double   bitcast_uint64_t_to_double(uint64_t u);
 
+// payload handling..
+int extract_payload(char* receive_buffer,char* payload, int max_n);
+void print_payload(FILE* log_file,char* send_buffer, int wlength, int nwords);
+void pack_value(char* payload,int wlength,int offset, char* port_value);
+void unpack_value(char* payload,int wlength,int offset, char* port_value);
 
 //
 // create a server to listen for messages.

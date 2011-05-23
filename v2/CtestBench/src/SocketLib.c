@@ -71,6 +71,7 @@ double   get_double(char* str, char** ss)
 }
 
 
+// time-bomb ?  str may overflow..
 void  append_uint64_t_inner(char* str, uint64_t u, int W)
 {
   char* tbuf;
@@ -85,21 +86,16 @@ void  append_uint64_t_inner(char* str, uint64_t u, int W)
 
   strcat(str," ");
 
-  int max_index = strlen(str) - 1;
   int pos = 0;
 
-  while(max_index >= 0)
+  while(pos < W)
     {
       if((u >> pos) & 1)
 	{
 	  tbuf[(W-1)-pos] = '1';
 	}
 
-      max_index--;
       pos++;
-
-      if(pos == W)
-	break;
     }
 
   strcat(str, tbuf);
@@ -160,6 +156,111 @@ uint64_t bitcast_double_to_uint64_t(double f)
 double   bitcast_uint64_t_to_double(uint64_t u)
 {
   return(*((double*)(&u)));
+}
+
+
+int extract_payload(char* receive_buffer,char* payload, int max_n)
+{
+  int hash_pos = 0;
+  int ret_val = 0;
+  while(receive_buffer[hash_pos] != '#')
+    {
+      if(receive_buffer[hash_pos] == 0) // end of string
+	{
+	  hash_pos = -1;
+	  break;
+	}
+      hash_pos++;
+    }
+
+  if(hash_pos >= 0)
+    {
+      receive_buffer[hash_pos] = 0;
+      ret_val = max_n - (hash_pos+1);
+      bcopy(receive_buffer+(hash_pos+1),payload,ret_val);
+    }
+
+  return(ret_val);
+}
+
+
+void print_payload(FILE* log_file,char* send_buffer, int wlength, int nwords)
+{
+  fprintf(log_file,"Payload \n");
+  int i;
+  for(i = 0; i < nwords; i++)
+    {
+      char* ptr = send_buffer + (i*wlength/8);
+      switch(wlength)
+	{
+	case 8:
+	  fprintf(log_file,"\t %d\n", *((char*)ptr));
+	  break;
+	case 16:
+	  fprintf(log_file,"\t %d\n", *((uint16_t*)ptr));
+	  break;
+	case 32:
+	  fprintf(log_file,"\t %d\n", *((uint32_t*)ptr));
+	  break;
+	case 64:
+	  fprintf(log_file,"\t %llu\n", *((uint64_t*)ptr));
+	  break;
+	default:
+	  fprintf(log_file,"Error!\n");
+	  return;
+	}
+
+    }
+}
+
+void pack_value(char* payload,int wlength,int offset, char* port_value)
+{
+  char* ptr = payload + (offset*wlength/8);
+  char* ss = NULL;
+  switch(wlength)
+    {
+    case 8:
+      *((uint8_t*)ptr) = get_uint8_t(port_value,&ss);
+      break;
+    case 16:
+      *((uint16_t*)ptr) = get_uint16_t(port_value,&ss);
+      break;
+    case 32:
+      *((uint32_t*)ptr) = get_uint32_t(port_value,&ss);
+      break;
+    case 64:
+      *((uint64_t*)ptr) = get_uint64_t(port_value,&ss);
+      break;
+    default:
+      fprintf(stderr,"Error: unsupported data width %d\n", wlength);
+      return;
+    }
+}
+
+
+void unpack_value(char* payload,int wlength,int offset, char* port_value)
+{
+  char* ptr = payload + (offset*wlength/8);
+  port_value[0] = 0;
+
+  switch(wlength)
+    {
+    case 8:
+      append_uint8_t(port_value, *((uint8_t*)ptr));
+      break;
+    case 16:
+      append_uint16_t(port_value, *((uint16_t*)ptr));
+      break;
+    case 32:
+      append_uint32_t(port_value, *((uint32_t*)ptr));
+      break;
+    case 64:
+      append_uint64_t(port_value, *((uint64_t*)ptr));
+      break;
+    default:
+      fprintf(stderr,"Error: unsupported data width %d\n", wlength);
+      return;
+    }
 }
 
 //
@@ -333,19 +434,23 @@ void send_packet_and_wait_for_response(char* buffer, int send_len, char* server_
       serv_addr.sin_family = AF_INET;
       bcopy((char *)server->h_addr,(char *) &serv_addr.sin_addr.s_addr,server->h_length);
       serv_addr.sin_port = htons(server_port_number);
-      
+
+#ifdef DEBUG      
       fprintf(stderr, "Info: connecting to server %s on port %d .......... \n",
 	      server_host_address,
 	      server_port_number);
+#endif
 
       n =-1;
 
       while(n == -1)
 	n=connect(sockfd,(struct sockaddr*) &serv_addr,sizeof(serv_addr));
       
+#ifdef DEBUG      
       fprintf(stderr, "Info: successfully connected to server %s on port %d .......... \n",
 	      server_host_address,
 	      server_port_number);
+#endif
 
 
       while(1)
@@ -358,14 +463,22 @@ void send_packet_and_wait_for_response(char* buffer, int send_len, char* server_
 
       send(sockfd,buffer,send_len,0);
 
-      fprintf(stderr, "Info: sent message %s to server\n", buffer);
-
+#ifdef DEBUG
+      char payload[4096];
+      int pl = extract_payload(buffer,payload,send_len);
+      fprintf(stderr, "Info: sent message %s to server (payload of %d bytes)\n", buffer, pl);
+      if(pl > 0)
+	print_payload(stderr,payload,8,pl);
+#endif
       while( (n = receive_string(sockfd,buffer)) <= 0)
 	{
 		usleep(1000);
 	}
 	  
+#ifdef DEBUG
       fprintf(stderr, "Info: received message %s from server\n", buffer);	  
+      print_payload(stderr,buffer,8,n);
+#endif
     }
 }
 

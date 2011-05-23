@@ -110,10 +110,15 @@ void Unsigned_To_Bit_Vector(unsigned x, char* a)
 
 void Copy_Value(char* dest, char* src, int width)
 {
-	int i;
-	for(i = 0; i < width; i++)
-		dest[i] = src[i];
-	dest[i] = 0;
+
+  // skip spaces
+  while(*src == ' ')
+    src++;
+
+  int i;
+  for(i = 0; i < width; i++)
+    dest[i] = src[i];
+  dest[i] = 0;
 }
 
 
@@ -172,83 +177,7 @@ int Payload_Length(JobLink* j)
   return(j->number_of_words_requested * j->word_length/8);
 }
 
-void Print_Payload(FILE* log_file,char* send_buffer, int wlength, int nwords)
-{
-  fprintf(log_file,"Payload \n");
-  int i;
-  for(i = 0; i < nwords; i++)
-    {
-      char* ptr = send_buffer + (i*wlength/8);
-      switch(wlength)
-	{
-	case 8:
-	  fprintf(log_file,"\t %d\n", *((char*)ptr));
-	  break;
-	case 16:
-	  fprintf(log_file,"\t %d\n", *((uint16_t*)ptr));
-	  break;
-	case 32:
-	  fprintf(log_file,"\t %d\n", *((uint32_t*)ptr));
-	  break;
-	case 64:
-	  fprintf(log_file,"\t %llu\n", *((uint64_t*)ptr));
-	  break;
-	default:
-	  fprintf(log_file,"Error!\n");
-	  return;
-	}
 
-    }
-}
-
-void Pack_Value(char* payload,int wlength,int offset, char* port_value)
-{
-  char* ptr = payload + (offset*wlength/8);
-  char* ss = NULL;
-  switch(wlength)
-    {
-    case 8:
-      *((uint8_t*)ptr) = get_uint8_t(port_value,&ss);
-      break;
-    case 16:
-      *((uint16_t*)ptr) = get_uint16_t(port_value,&ss);
-      break;
-    case 32:
-      *((uint32_t*)ptr) = get_uint32_t(port_value,&ss);
-      break;
-    case 64:
-      *((uint64_t*)ptr) = get_uint64_t(port_value,&ss);
-      break;
-    default:
-      fprintf(stderr,"Error: unsupported data width %d\n", wlength);
-      return;
-    }
-}
-
-void Unpack_Value(char* payload,int wlength,int offset, char* port_value)
-{
-  char* ptr = payload + (offset*wlength/8);
-  port_value[0] = '0';
-
-  switch(wlength)
-    {
-    case 8:
-      append_uint8_t(port_value, *((uint8_t*)ptr));
-      break;
-    case 16:
-      append_uint16_t(port_value, *((uint16_t*)ptr));
-      break;
-    case 32:
-      append_uint32_t(port_value, *((uint32_t*)ptr));
-      break;
-    case 64:
-      append_uint64_t(port_value, *((uint64_t*)ptr));
-      break;
-    default:
-      fprintf(stderr,"Error: unsupported data width %d\n", wlength);
-      return;
-    }
-}
 
 ////////////////////////////////////////////
 ///////////////////////////////////////////////////
@@ -256,11 +185,11 @@ void Unpack_Value(char* payload,int wlength,int offset, char* port_value)
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
 // dang! parsing with strtok again!
-void Append_To_JobList(char* receive_buffer,int socket_id)
+void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int payload_length)
 {
 
 #ifdef DEBUG
-  fprintf(log_file,"Info: appending message %s to JobList in cycle %d\n",receive_buffer , cycle_count);
+  fprintf(log_file,"Info: appending message %s (payload of %d bytes) to JobList in cycle %d\n",receive_buffer , cycle_count,payload_length);
   fflush(log_file);
 #endif 
   char err_flag = 0;
@@ -383,29 +312,13 @@ void Append_To_JobList(char* receive_buffer,int socket_id)
 
       if(new_job->is_pipe_write_access)
 	{
-	  char* payload_str = strtok_r(NULL," ",&save_ptr);
-	  if(payload_str == NULL)
-	    {
-	      fprintf(stderr,"Error: payload in write burst access not specified\n");
-	      Delete_JobLink(new_job);
-	      return;	  
-	    }
-
-	  if(*payload_str != '#')
-	    {
-	      fprintf(stderr,"Error: payload string must start with #\n");
-	      Delete_JobLink(new_job);
-	      return;
-	    }
-	
-	  if(strlen(payload_str) != Payload_Length(new_job)+2)
+	  if(payload_length != Payload_Length(new_job))
 	    {
 	      fprintf(stderr,"Error: payload string did not have %d bytes\n", Payload_Length(new_job));
 	      Delete_JobLink(new_job);
 	      return;
 	    }
-
-	  bcopy(new_job->payload,payload_str+1,Payload_Length(new_job));
+	  bcopy(payload,new_job->payload,Payload_Length(new_job));
 	}
 
 #ifdef DEBUG
@@ -415,12 +328,13 @@ void Append_To_JobList(char* receive_buffer,int socket_id)
 	      new_job->word_length, 
 	      new_job->number_of_words_requested,
 	      cycle_count);
+      if(payload_length > 0)
+	print_payload(log_file,new_job->payload,new_job->word_length,new_job->number_of_words_requested);
       fflush(log_file);
 #endif 
     }
   else
     {
-      
       // the number of inputs?
       char* num_inputs = strtok_r(NULL," ",&save_ptr);
       assert(num_inputs != NULL);
@@ -598,8 +512,10 @@ void  Vhpi_Send()
 		      (int) top->index);
 	      
 	      APPEND(finished_jobs,top);
+	      top = next;
 	    }
-	  top = next;
+	  else
+	    top = top->next;
 	}
       else
 	{
@@ -623,7 +539,7 @@ void  Vhpi_Send()
 	      if(!top->is_burst_access)
 		sprintf(send_buffer,"%s",top->outports.head->port->port_value);
 	      else
-		bcopy(send_buffer,top->payload,Payload_Length(top));
+		bcopy(top->payload,send_buffer,Payload_Length(top));
 	    }
 	  else if( top->is_pipe_write_access)
 	    {
@@ -681,6 +597,9 @@ void  Vhpi_Send()
 
 void  Vhpi_Listen()
 {
+  char payload[4096];
+  int payload_length;
+
   cycle_count++;
 
 #ifdef DEBUG
@@ -705,11 +624,14 @@ void  Vhpi_Listen()
 		
       		if(n > 0)
 		{
+
+		  payload_length = extract_payload(receive_buffer,payload,n);
 #ifdef DEBUG
-	  		fprintf(log_file,"Info: received message from client %d: %s\n", new_sock, receive_buffer);
-  fflush(log_file);
+		  fprintf(log_file,"Info: received message from client %d: %s (payload-length=%d)\n", 
+			  new_sock, receive_buffer,payload_length);
+		  fflush(log_file);
 #endif
-	  		Append_To_JobList(receive_buffer, new_sock);
+		  Append_To_JobList(receive_buffer, new_sock,payload,payload_length);
 		}
 	}
 	else
@@ -764,7 +686,7 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 		    all_done   = 1;
 
 		   // req must be tied to 0
-		  if(all_done != 0)
+		  if(all_done)
 		    sprintf(jlink->req_port->port_value, "0");
 		}
 	    }
@@ -794,7 +716,7 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 		{
 		  if(*(jlink->ack_port->port_value) == '1') 		  
 		    {
-		      Pack_Value(jlink->payload,jlink->word_length, jlink->number_of_words_served - 1, port_value);
+		      pack_value(jlink->payload,jlink->word_length, jlink->number_of_words_served - 1, port_value);
 		    }
 		}
 	    }
@@ -902,7 +824,10 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
 	    }
 	  else
 	    {
-	      Unpack_Value(jlink->payload, jlink->word_length, jlink->number_of_words_served,port_value);
+	      // at least one word should have been served (acked) by now..
+	      assert(jlink->number_of_words_served > 0);
+	      unpack_value(jlink->payload, jlink->word_length, jlink->number_of_words_served-1,port_value);
+	      found_one = 1;
 	    }
 	}
     }
