@@ -2,11 +2,10 @@ Overview
 	This example illustrates how you can use your "normal" software
 	to verify the hardware generated out of the AhirV2 flow.
 
-Pre-requisistes
+Pre-requisites
   
         You will need clang, llvm2aa, Aa2VC and vc2vhdl to
-        run the AhirV2 flow.  These are in Release/bin
-	(../../../bin)
+        run the AhirV2 flow.  
 
 	The library ../../../iolib/libio.a is necessary to 
 	get access to the the read/write methods for inter-process
