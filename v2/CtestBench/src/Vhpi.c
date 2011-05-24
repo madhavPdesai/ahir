@@ -496,12 +496,14 @@ void  Vhpi_Send()
       if(*(top->ack_port->port_value) == '1') 
 	{
       
-          if(top->is_burst_access && top->increment_word_count)
-	  {
-		top->active_word_count++;
-		top->increment_word_count = 0;
-	  }
-
+#ifdef DEBUG
+	    if(top->is_burst_access)
+	    {
+	      fprintf(log_file,"Info: active_word_count of  %s is %d (words requested = %d) in cycle %d\n", top->name,
+			top->active_word_count, top->number_of_words_requested, vhpi_cycle_count);
+	      fflush(log_file);
+	    }
+#endif 
 	  if(!top->is_burst_access ||
 	     (top->active_word_count == top->number_of_words_requested))
 	    {
@@ -580,7 +582,7 @@ void  Vhpi_Send()
 	    {
 	      fprintf(log_file, "Info: successfully sent burst-read response (data-width %d number-of-words %d) ",
 		      top->word_length, top->number_of_words_requested);
-	      Print_Payload(log_file,send_buffer,top->word_length,top->number_of_words_requested);
+	      print_payload(log_file,send_buffer,top->word_length,top->number_of_words_requested);
 	    }
 	  else
 	    fprintf(log_file,"Info: successfully sent message %s in  %d\n", send_buffer, vhpi_cycle_count);
@@ -609,8 +611,9 @@ void  Vhpi_Listen()
 
   vhpi_cycle_count++;
 
+
 #ifdef DEBUG
-  fprintf(log_file,"Info: listening in cycle %d\n", cycle_count);
+  fprintf(log_file,"Info: listening in cycle %d\n", vhpi_cycle_count);
   fflush(log_file);
 #endif 
 
@@ -656,11 +659,6 @@ void  Vhpi_Listen()
 void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 {
 
-#ifdef DEBUG
-  fprintf(log_file,"Info: setting %s to %s in cycle %d\n",port_name,port_value, vhpi_cycle_count);
-  fflush(log_file);
-  fflush(log_file);
-#endif 
 
   char* save_ptr;
   char* obj_name = strtok_r(port_name," ",&save_ptr);
@@ -677,13 +675,22 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 	  if(strcmp(index_string, "ack") == 0)
 	    {
 	      Copy_Value(jlink->ack_port->port_value, port_value,1);
+#ifdef DEBUG
+             fprintf(log_file,"Info: set %s ack to %s in cycle %d\n",port_name,jlink->ack_port->port_value, vhpi_cycle_count);
+             fflush(log_file);
+#endif 
 
 	      if(*(jlink->ack_port->port_value) == '1') 
 		{
 		  char all_done = 0;
 		  if(jlink->is_burst_access)
 		    {
-		      jlink->increment_word_count = 1;
+		      jlink->active_word_count++;
+#ifdef DEBUG
+             fprintf(log_file,"Info: set active_word_count of %s to %d in cycle %d\n",jlink->name, jlink->active_word_count, vhpi_cycle_count);
+
+             fflush(log_file);
+#endif 
 		      if(jlink->active_word_count == jlink->number_of_words_requested)
 			{
 			  all_done = 1;
@@ -723,7 +730,12 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 		{
 		  if(*(jlink->ack_port->port_value) == '1') 		  
 		    {
-		      pack_value(jlink->payload,jlink->word_length, jlink->active_word_count, port_value);
+		      pack_value(jlink->payload,jlink->word_length, jlink->active_word_count-1, port_value);
+#ifdef DEBUG
+		      fprintf(log_file,"Info: finished setting %s word %d to %s in cycle %d\n",
+				port_name, jlink->active_word_count-1, port_value, vhpi_cycle_count);
+		      fflush(log_file);
+#endif 
 		    }
 		}
 	    }
@@ -734,10 +746,6 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
 {
 
-#ifdef DEBUG
-  fprintf(log_file,"Info: getting value of port %s in cycle %d\n",port_name,vhpi_cycle_count);
-  fflush(log_file);
-#endif 
   char found_one = 0;
   char* save_ptr;
   char* obj_name = strtok_r(port_name," ",&save_ptr);
@@ -749,10 +757,6 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
   JobLink* jlink = NULL;
   for(jlink = active_jobs.head; jlink != NULL; jlink = jlink->next)
     {
-#ifdef DEBUG
- 	 fprintf(log_file,"Info: comparing active %s with port-job-id %s in cycle %d\n",jlink->name, obj_name,vhpi_cycle_count);
-  fflush(log_file);
-#endif 
       if(strcmp(jlink->name,obj_name) == 0)
 	{
 	  break;
@@ -764,16 +768,8 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
   // the active list.
   if(jlink == NULL)
     {
-#ifdef DEBUG
-  fprintf(log_file,"Info: did not find active job %s in cycle %d\n",port_name,vhpi_cycle_count);
-  fflush(log_file);
-#endif 
       for(jlink = new_jobs.head; jlink != NULL; jlink = jlink->next)
 	{
-#ifdef DEBUG
- 	 fprintf(log_file,"Info: comparing new %s with port-job-id %s in cycle %d\n",jlink->name, obj_name,vhpi_cycle_count);
-  fflush(log_file);
-#endif 
 	  if(strcmp(jlink->name,obj_name) == 0)
 	    {
 	      REMOVE(new_jobs,jlink);
@@ -794,12 +790,6 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
       if(strcmp(index_string, "req") == 0)
 	{
 	  Copy_Value(port_value,jlink->req_port->port_value,1);
-#ifdef DEBUG
-          fprintf(log_file,"Info: copied req value %s into %s in cycle %d\n",jlink->req_port->port_value,
-										port_value,
-										vhpi_cycle_count);
-  fflush(log_file);
-#endif 
 	  found_one = 1;
 	  if(jlink->is_module_access)
 	    {
@@ -812,7 +802,6 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
 	}
       else
 	{
-
 	  if(!jlink->is_burst_access)
 	    {
 	      int index = atoi(index_string);
@@ -831,6 +820,10 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
 	    }
 	  else
 	    {
+#ifdef DEBUG
+        	fprintf(log_file,"Info: unpacking word %d of port %s in cycle %d\n", jlink->active_word_count,
+			jlink->name, vhpi_cycle_count);
+#endif
 	      unpack_value(jlink->payload, jlink->word_length, jlink->active_word_count,port_value);
 	      found_one = 1;
 	    }
@@ -848,9 +841,10 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
 
 #ifdef DEBUG
   if(found_one)
-    fprintf(log_file,"Info: returning value of port %s as %s\n", port_name, port_value);
+    fprintf(log_file,"Info: returning value of port %s (%s) as %s in cycle %d\n", port_name, index_string, port_value,
+		vhpi_cycle_count);
   else
-    fprintf(log_file,"Info: port %s not active, returning %s\n", port_name, port_value);
+    fprintf(log_file,"Info: port %s not active, returning %s in cycle %d\n", port_name, port_value, vhpi_cycle_count);
   fflush(log_file);
 #endif
 }

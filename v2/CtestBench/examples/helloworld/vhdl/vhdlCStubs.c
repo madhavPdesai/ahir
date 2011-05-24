@@ -6,7 +6,7 @@ append_int(buffer,1);
 append_uint32_t(buffer,a);
 append_int(buffer,1);
 append_int(buffer,32);
-send_packet_and_wait_for_response(buffer,"localhost",9999);
+send_packet_and_wait_for_response(buffer,strlen(buffer)+1,"localhost",9999);
 uint32_t ret_val__ = get_uint32_t(buffer,&ss);
 return(ret_val__);
 }
@@ -17,7 +17,7 @@ append_int(buffer,1);
 append_uint32_t(buffer,a);
 append_int(buffer,1);
 append_int(buffer,32);
-send_packet_and_wait_for_response(buffer,"localhost",9999);
+send_packet_and_wait_for_response(buffer,strlen(buffer)+1,"localhost",9999);
 uint32_t ret_val__ = get_uint32_t(buffer,&ss);
 return(ret_val__);
 }
@@ -28,7 +28,7 @@ append_int(buffer,1);
 append_uint32_t(buffer,address);
 append_int(buffer,1);
 append_int(buffer,8);
-send_packet_and_wait_for_response(buffer,"localhost",9999);
+send_packet_and_wait_for_response(buffer,strlen(buffer)+1,"localhost",9999);
 uint8_t data = get_uint8_t(buffer,&ss);
 return(data);
 }
@@ -39,6 +39,6 @@ append_int(buffer,2);
 append_uint32_t(buffer,address);
 append_uint8_t(buffer,data);
 append_int(buffer,0);
-send_packet_and_wait_for_response(buffer,"localhost",9999);
+send_packet_and_wait_for_response(buffer,strlen(buffer)+1,"localhost",9999);
 return;
 }

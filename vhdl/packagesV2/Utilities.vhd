@@ -9,6 +9,7 @@ use ahir.Subprograms.all;
 package Utilities is
 
   function Convert_To_String(val : integer) return STRING; -- convert val to string.
+  function Convert_SLV_To_String(val : std_logic_vector) return STRING; -- convert val to string.
   
   function Ceil (constant x, y : integer)   return integer;
 
@@ -85,6 +86,21 @@ package body Utilities is
 	return result((pos-1) downto 1);
   end Convert_To_String;
   
+  function Convert_SLV_To_String(val : std_logic_vector) return STRING is
+	alias lval: std_logic_vector(1 to val'length) is val;
+        variable ret_var: string( 1 to lval'length);
+   begin
+        for I in lval'range loop
+                if(lval(I) = '1') then
+			ret_var(I) := '1';
+		elsif (lval(I) = '0') then
+			ret_var(I) := '0';
+		else
+			ret_var(I) := 'X';
+		end if;
+        end loop;
+        return(ret_var);
+   end Convert_SLV_To_String;
     
 
   

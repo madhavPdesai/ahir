@@ -45,6 +45,7 @@ struct _JobLink
   int word_length; // in bytes
   int number_of_words_requested;
 
+  char ack_leads_req;
   char increment_word_count;
   int active_word_count;
   

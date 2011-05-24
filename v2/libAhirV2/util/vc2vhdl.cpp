@@ -20,11 +20,15 @@ void Handle_Segfault(int signal)
 void Usage_Vc2VHDL()
 {
   cerr << "Usage: " << endl;
-  cerr << "vc2vhdl [-O] [-C] -f <vc-file> [-f <vc-file>...] -t <top-module> [-t <top-module>...] " << endl << endl;
+  cerr << "vc2vhdl [-O] [-C] [-s <ghdl/modelsim>] -f <vc-file> [-f <vc-file>...] -t <top-module> [-t <top-module>...] " << endl << endl;
   cerr << "specify vc-files using -f, top-modules in system using -t.. for example" << endl
        << "    vc2vhdl -O -t foo -f file1.vc -f file2.vc -t bar" << endl;
   cerr << "file1.vc and file2.vc will be parsed in order, and the instantiated " << endl
        << "system will have modules foo and bar as top-modules. " << endl;
+  cerr << "-O option will lead to smaller VHDL files due to some compaction" << endl
+       << "-C option will produce testbench which listens on socket for foreign TB. " << endl;
+  cerr << "-s ghdl will produce a testbench which uses VHPI and can link to GHDL" << endl
+       << "-s modelsim will produce a testbench which uses Modelsim-FLI and can link to Modelsim. " << endl;
 }
 
 
@@ -58,12 +62,13 @@ int main(int argc, char* argv[])
   string fname;
   string mod_name;
   string opt_string;
+  string sim_id;
 
   vcSystem::_opt_flag = false;
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:f:OC",
+		      "t:f:OCs:",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -90,7 +95,19 @@ int main(int argc, char* argv[])
 	  break;
 	case 'C':
 	  vcSystem::_vhpi_tb_flag = true;
-	  cerr << "Info: -C option selected: will generate testbench with VHPI link" << endl;
+	  cerr << "Info: -C option selected: will generate testbench which connects to foreign link" << endl;
+	  break;
+	case 's':
+	  sim_id = string(optarg);
+	  if(sim_id == "ghdl")
+	  {
+	     cerr << "Info: -s ghdl option selected: will generate testbench with VHPI link" << endl;
+	     vcSystem::_simulator_prefix = "Vhpi_";
+	  }
+	  else 
+          {
+	     cerr << "Info: -s modelsim option selected: will generate testbench with VHPI link" << endl;
+          }
 	  break;
 	case '?':		  // incorrect option
 	  opt_string = opt;

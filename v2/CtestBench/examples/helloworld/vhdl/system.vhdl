@@ -17,6 +17,7 @@ use ahir.subprograms.all;
 use ahir.components.all;
 use ahir.basecomponents.all;
 use ahir.operatorpackage.all;
+use ahir.utilities.all;
 library work;
 use work.vc_system_package.all;
 entity bar is -- 
@@ -3212,6 +3213,7 @@ use ahir.subprograms.all;
 use ahir.components.all;
 use ahir.basecomponents.all;
 use ahir.operatorpackage.all;
+use ahir.utilities.all;
 library work;
 use work.vc_system_package.all;
 entity foo is -- 
@@ -3253,36 +3255,36 @@ architecture Default of foo is --
   -- always true...
   signal always_true_symbol: Boolean;
   -- links between control-path and data-path
-  signal simple_obj_ref_162_store_0_ack_1 : boolean;
-  signal simple_obj_ref_162_store_0_req_1 : boolean;
-  signal ptr_deref_160_gather_scatter_req_0 : boolean;
-  signal ptr_deref_160_gather_scatter_ack_0 : boolean;
-  signal ptr_deref_160_load_3_ack_1 : boolean;
-  signal simple_obj_ref_162_store_0_ack_0 : boolean;
   signal ptr_deref_160_load_3_req_1 : boolean;
+  signal ptr_deref_160_gather_scatter_ack_0 : boolean;
+  signal simple_obj_ref_162_store_0_ack_0 : boolean;
   signal simple_obj_ref_162_store_0_req_0 : boolean;
+  signal ptr_deref_160_gather_scatter_req_0 : boolean;
+  signal ptr_deref_160_load_3_ack_1 : boolean;
+  signal ptr_deref_160_load_3_ack_0 : boolean;
   signal simple_obj_ref_168_gather_scatter_ack_0 : boolean;
-  signal ptr_deref_160_load_2_ack_1 : boolean;
   signal simple_obj_ref_168_gather_scatter_req_0 : boolean;
-  signal ptr_deref_160_load_2_req_1 : boolean;
   signal simple_obj_ref_168_load_0_ack_1 : boolean;
-  signal ptr_deref_160_load_1_ack_1 : boolean;
   signal simple_obj_ref_168_load_0_req_1 : boolean;
+  signal ptr_deref_160_load_2_ack_1 : boolean;
+  signal ptr_deref_160_load_2_req_1 : boolean;
+  signal simple_obj_ref_162_gather_scatter_ack_0 : boolean;
+  signal ptr_deref_160_load_1_ack_1 : boolean;
   signal ptr_deref_160_load_1_req_1 : boolean;
   signal simple_obj_ref_168_load_0_ack_0 : boolean;
-  signal simple_obj_ref_168_load_0_req_0 : boolean;
-  signal simple_obj_ref_162_gather_scatter_ack_0 : boolean;
-  signal ptr_deref_160_load_0_ack_1 : boolean;
   signal simple_obj_ref_162_gather_scatter_req_0 : boolean;
+  signal simple_obj_ref_168_load_0_req_0 : boolean;
+  signal simple_obj_ref_162_store_0_ack_1 : boolean;
+  signal ptr_deref_160_load_0_ack_1 : boolean;
   signal ptr_deref_160_load_0_req_1 : boolean;
-  signal ptr_deref_160_load_0_ack_0 : boolean;
-  signal ptr_deref_160_load_0_req_0 : boolean;
-  signal ptr_deref_160_load_3_ack_0 : boolean;
+  signal simple_obj_ref_162_store_0_req_1 : boolean;
   signal ptr_deref_160_load_3_req_0 : boolean;
   signal ptr_deref_160_load_2_ack_0 : boolean;
   signal ptr_deref_160_load_2_req_0 : boolean;
   signal ptr_deref_160_load_1_ack_0 : boolean;
   signal ptr_deref_160_load_1_req_0 : boolean;
+  signal ptr_deref_160_load_0_ack_0 : boolean;
+  signal ptr_deref_160_load_0_req_0 : boolean;
   signal ptr_deref_120_gather_scatter_req_0 : boolean;
   signal ptr_deref_120_gather_scatter_ack_0 : boolean;
   signal ptr_deref_120_store_0_req_0 : boolean;
@@ -6407,6 +6409,7 @@ use ahir.subprograms.all;
 use ahir.components.all;
 use ahir.basecomponents.all;
 use ahir.operatorpackage.all;
+use ahir.utilities.all;
 library work;
 use work.vc_system_package.all;
 entity mem_load_x_x is -- 
@@ -6434,24 +6437,24 @@ architecture Default of mem_load_x_x is --
   -- always true...
   signal always_true_symbol: Boolean;
   -- links between control-path and data-path
-  signal binary_12_inst_ack_1 : boolean;
-  signal array_obj_ref_13_index_0_resize_req_0 : boolean;
-  signal array_obj_ref_13_index_0_resize_ack_0 : boolean;
-  signal array_obj_ref_13_index_0_rename_req_0 : boolean;
-  signal array_obj_ref_13_index_0_rename_ack_0 : boolean;
-  signal array_obj_ref_13_offset_inst_req_0 : boolean;
-  signal array_obj_ref_13_offset_inst_ack_0 : boolean;
-  signal array_obj_ref_13_root_address_inst_req_0 : boolean;
-  signal array_obj_ref_13_root_address_inst_ack_0 : boolean;
+  signal array_obj_ref_13_addr_0_req_0 : boolean;
+  signal array_obj_ref_13_addr_0_ack_0 : boolean;
+  signal binary_12_inst_req_0 : boolean;
+  signal binary_12_inst_ack_0 : boolean;
   signal binary_10_inst_req_0 : boolean;
   signal binary_10_inst_ack_0 : boolean;
   signal binary_10_inst_req_1 : boolean;
   signal binary_10_inst_ack_1 : boolean;
-  signal binary_12_inst_req_0 : boolean;
-  signal binary_12_inst_ack_0 : boolean;
+  signal array_obj_ref_13_root_address_inst_req_0 : boolean;
+  signal array_obj_ref_13_root_address_inst_ack_0 : boolean;
+  signal array_obj_ref_13_index_0_rename_ack_0 : boolean;
+  signal array_obj_ref_13_offset_inst_req_0 : boolean;
+  signal array_obj_ref_13_offset_inst_ack_0 : boolean;
+  signal array_obj_ref_13_index_0_resize_ack_0 : boolean;
+  signal array_obj_ref_13_index_0_rename_req_0 : boolean;
   signal binary_12_inst_req_1 : boolean;
-  signal array_obj_ref_13_addr_0_req_0 : boolean;
-  signal array_obj_ref_13_addr_0_ack_0 : boolean;
+  signal binary_12_inst_ack_1 : boolean;
+  signal array_obj_ref_13_index_0_resize_req_0 : boolean;
   signal array_obj_ref_13_load_0_req_0 : boolean;
   signal array_obj_ref_13_load_0_ack_0 : boolean;
   signal array_obj_ref_13_load_0_req_1 : boolean;
@@ -6973,6 +6976,7 @@ use ahir.subprograms.all;
 use ahir.components.all;
 use ahir.basecomponents.all;
 use ahir.operatorpackage.all;
+use ahir.utilities.all;
 library work;
 use work.vc_system_package.all;
 entity mem_store_x_x is -- 
@@ -7561,6 +7565,7 @@ use ahir.subprograms.all;
 use ahir.components.all;
 use ahir.basecomponents.all;
 use ahir.operatorpackage.all;
+use ahir.utilities.all;
 library work;
 use work.vc_system_package.all;
 entity test_system is  -- system 
@@ -7960,10 +7965,11 @@ use ahir.subprograms.all;
 use ahir.components.all;
 use ahir.basecomponents.all;
 use ahir.operatorpackage.all;
+use ahir.utilities.all;
 library work;
 use work.vc_system_package.all;
 use work.Utility_Package.all;
-use work.Modelsim_FLI_Foreign.all;
+use work.Vhpi_Foreign.all;
 entity test_system_Test_Bench is -- 
   -- 
 end entity;
@@ -8020,13 +8026,13 @@ begin --
   clk <= not clk after 5 ns;
   process
   begin --
-    Modelsim_FLI_Initialize;
+    Vhpi_Initialize;
     wait until clk = '1';
     reset <= '0';
     while true loop --
-      wait until clk = '1';
-      Modelsim_FLI_Listen;
-      Modelsim_FLI_Send;
+      wait until clk = '0';
+      Vhpi_Listen;
+      Vhpi_Send;
       --
     end loop;
     wait;
@@ -8039,18 +8045,20 @@ begin --
     wait until reset = '0';
     while true loop -- 
       wait until clk = '0';
-      obj_ref := Pack_String_To_Vhpi_String("bar ack");
-      val_string := To_String(bar_fin);
-      Modelsim_FLI_Set_Port_Value(obj_ref,val_string);
-      obj_ref := Pack_String_To_Vhpi_String("bar 0");
-      val_string := Pack_SLV_To_Vhpi_String(bar_ret_val_x_x);
-      Modelsim_FLI_Set_Port_Value(obj_ref,val_string);
+      wait for 1 ns;
       obj_ref := Pack_String_To_VHPI_String("bar req");
-      Modelsim_FLI_Get_Port_Value(obj_ref,val_string);
+      Vhpi_Get_Port_Value(obj_ref,val_string);
       bar_start <= To_Std_Logic(val_string);
       obj_ref := Pack_String_To_Vhpi_String("bar 0");
-      Modelsim_FLI_Get_Port_Value(obj_ref,val_string);
+      Vhpi_Get_Port_Value(obj_ref,val_string);
       bar_a <= Unpack_String(val_string,32);
+      wait until clk = '1';
+      obj_ref := Pack_String_To_Vhpi_String("bar ack");
+      val_string := To_String(bar_fin);
+      Vhpi_Set_Port_Value(obj_ref,val_string);
+      obj_ref := Pack_String_To_Vhpi_String("bar 0");
+      val_string := Pack_SLV_To_Vhpi_String(bar_ret_val_x_x);
+      Vhpi_Set_Port_Value(obj_ref,val_string);
       -- 
     end loop;
     --
@@ -8061,18 +8069,20 @@ begin --
     wait until reset = '0';
     while true loop -- 
       wait until clk = '0';
-      obj_ref := Pack_String_To_Vhpi_String("foo ack");
-      val_string := To_String(foo_fin);
-      Modelsim_FLI_Set_Port_Value(obj_ref,val_string);
-      obj_ref := Pack_String_To_Vhpi_String("foo 0");
-      val_string := Pack_SLV_To_Vhpi_String(foo_ret_val_x_x);
-      Modelsim_FLI_Set_Port_Value(obj_ref,val_string);
+      wait for 1 ns;
       obj_ref := Pack_String_To_VHPI_String("foo req");
-      Modelsim_FLI_Get_Port_Value(obj_ref,val_string);
+      Vhpi_Get_Port_Value(obj_ref,val_string);
       foo_start <= To_Std_Logic(val_string);
       obj_ref := Pack_String_To_Vhpi_String("foo 0");
-      Modelsim_FLI_Get_Port_Value(obj_ref,val_string);
+      Vhpi_Get_Port_Value(obj_ref,val_string);
       foo_a <= Unpack_String(val_string,32);
+      wait until clk = '1';
+      obj_ref := Pack_String_To_Vhpi_String("foo ack");
+      val_string := To_String(foo_fin);
+      Vhpi_Set_Port_Value(obj_ref,val_string);
+      obj_ref := Pack_String_To_Vhpi_String("foo 0");
+      val_string := Pack_SLV_To_Vhpi_String(foo_ret_val_x_x);
+      Vhpi_Set_Port_Value(obj_ref,val_string);
       -- 
     end loop;
     --
@@ -8083,15 +8093,17 @@ begin --
     wait until reset = '0';
     while true loop -- 
       wait until clk = '0';
-      obj_ref := Pack_String_To_Vhpi_String("inpipe ack");
-      val_string := Pack_SLV_To_Vhpi_String(inpipe_pipe_write_ack);
-      Modelsim_FLI_Set_Port_Value(obj_ref,val_string);
+      wait for 1 ns; 
       obj_ref := Pack_String_To_Vhpi_String("inpipe req");
-      Modelsim_FLI_Get_Port_Value(obj_ref,val_string);
+      Vhpi_Get_Port_Value(obj_ref,val_string);
       inpipe_pipe_write_req <= Unpack_String(val_string,1);
       obj_ref := Pack_String_To_Vhpi_String("inpipe 0");
-      Modelsim_FLI_Get_Port_Value(obj_ref,val_string);
+      Vhpi_Get_Port_Value(obj_ref,val_string);
       inpipe_pipe_write_data <= Unpack_String(val_string,32);
+      wait until clk = '1';
+      obj_ref := Pack_String_To_Vhpi_String("inpipe ack");
+      val_string := Pack_SLV_To_Vhpi_String(inpipe_pipe_write_ack);
+      Vhpi_Set_Port_Value(obj_ref,val_string);
       -- 
     end loop;
     --
@@ -8102,15 +8114,17 @@ begin --
     wait until reset = '0';
     while true loop -- 
       wait until clk = '0';
+      wait for 1 ns; 
+      obj_ref := Pack_String_To_Vhpi_String("outpipe req");
+      Vhpi_Get_Port_Value(obj_ref,val_string);
+      outpipe_pipe_read_req <= Unpack_String(val_string,1);
+      wait until clk = '1';
       obj_ref := Pack_String_To_Vhpi_String("outpipe ack");
       val_string := Pack_SLV_To_Vhpi_String(outpipe_pipe_read_ack);
-      Modelsim_FLI_Set_Port_Value(obj_ref,val_string);
+      Vhpi_Set_Port_Value(obj_ref,val_string);
       obj_ref := Pack_String_To_Vhpi_String("outpipe 0");
       val_string := Pack_SLV_To_Vhpi_String(outpipe_pipe_read_data);
-      Modelsim_FLI_Set_Port_Value(obj_ref,val_string);
-      obj_ref := Pack_String_To_Vhpi_String("outpipe req");
-      Modelsim_FLI_Get_Port_Value(obj_ref,val_string);
-      outpipe_pipe_read_req <= Unpack_String(val_string,1);
+      Vhpi_Set_Port_Value(obj_ref,val_string);
       -- 
     end loop;
     --

@@ -22,9 +22,26 @@ gcc -c testbench.c -I./ -I../../../include
 gcc -o testbench testbench.o vhdlCStubs.o  -L../../../lib -lSocketLib -lpthread
 
 OK.  you will now need to create a Modelsim project.
-See the attached BasicCheck.mpf project file to see how.
-(you will need to compile the file Vhpi_Package.vhdl to
-get the Modelsim <-> C link configured).
+The following files need to be compiled (into
+the corresponding libraries)
+
+library    file(s)
+
+work      ./system.vhdl
+work      ../../../vhdl/Utility_Package.vhdl 
+work      ../../../vhdl/Modelsim_FLI_Foreign.vhdl 
+
+ahir      ../../../../../vhdl/control-path/*.vhdl
+ahir      ../../../../../vhdl/memory_subsystem/*.vhd
+ahir      ../../../../../vhdl/operatorsV2/base/*.vhd
+ahir      ../../../../../vhdl/packagesV2/*.vhd
+
+ieee_proposed ../../../../vhdl/ieee_proposed/trimmed/*.vhd*
+
+
+(you will need to compile the files Utility_Package.vhdl and 
+Modelsim_FLI_Foreign.vhdl into library work in order
+to get the Modelsim <-> C link configured).
 
 Now start ./testbench 389 in one shell
 (the 389 is just a random initial value given to foo bar and inpipe,

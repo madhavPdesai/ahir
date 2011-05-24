@@ -1,0 +1,19 @@
+An example to illustrate the use of burst access
+routines write_uint*_n and read_uint*_n.
+
+prog.c contains a function int foo(int) and
+a void io_module() function.
+
+io_module() listens on pipe foo_in and triggers
+foo whenever data enters on this pipe.  When
+foo returns, io_module() sends the return value
+out on foo_out (note: io_module() runs forever
+once started).
+
+In testbench.c, we start io_module, write a stream
+of numbers to foo_in and wait for a stream of
+numbers from foo_out.  
+
+The rest of the procedure is exactly the
+same as in ../helloworld/README
+
