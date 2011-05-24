@@ -21,6 +21,7 @@ void do_foo()
   uint8_t port_buffer[1024];
   uint8_t val_buffer[1024];
 
+  fprintf(stderr,"Info: (%d) in do_foo..\n", cycle_count);
 
   if(foo_is_called)
     {
@@ -30,7 +31,7 @@ void do_foo()
       Vhpi_Set_Port_Value(port_buffer,val_buffer);
       foo_is_called = 0;
 
-      fprintf(stderr,"Info: foo ack asserted..\n");
+      fprintf(stderr,"Info: (%d) foo ack asserted..\n", cycle_count);
     }
   else
     {
@@ -39,7 +40,7 @@ void do_foo()
       sprintf(val_buffer,"0");
       Vhpi_Set_Port_Value(port_buffer,val_buffer);
 
-      fprintf(stderr,"Info: foo ack de-asserted..\n");
+      fprintf(stderr,"Info: (%d) foo ack de-asserted..\n", cycle_count);
     }
 
   // foo returns in to out.
@@ -48,7 +49,7 @@ void do_foo()
   append_uint32_t(val_buffer,foo_data);
   Vhpi_Set_Port_Value(port_buffer,val_buffer);
 
-  fprintf(stderr,"Info: foo return value set to %d..\n", foo_data);
+  fprintf(stderr,"Info: (%d) foo return value set to %d..\n", cycle_count, foo_data);
 
   // now get req.
   sprintf(port_buffer,"foo req");
@@ -57,17 +58,18 @@ void do_foo()
 
   if(foo_is_called)
     {
-      fprintf(stderr,"Info: foo req observed as asserted\n");
+      fprintf(stderr,"Info: (%d) foo req observed as asserted\n", cycle_count);
       sprintf(port_buffer,"foo 0");
       Vhpi_Get_Port_Value(port_buffer,val_buffer);
       foo_data = get_uint32_t(val_buffer,&save_ptr);
-      fprintf(stderr,"Info: foo argument value is %d..\n", foo_data);
+      fprintf(stderr,"Info: (%d) foo argument value is %d..\n", cycle_count, foo_data);
     }
 }
 
 
 void do_out_pipe()
 {
+  fprintf(stderr,"Info: (%d) in do_out_pipe..\n", cycle_count);
   uint8_t port_buffer[1024];
   uint8_t val_buffer[1024];
 
@@ -78,7 +80,7 @@ void do_out_pipe()
       sprintf(val_buffer,"1");
       Vhpi_Set_Port_Value(port_buffer,val_buffer);
       pipe_has_data = 0;
-      fprintf(stderr,"Info: outpipe ack asserted..\n");
+      fprintf(stderr,"Info: (%d) outpipe ack asserted..\n", cycle_count);
     }
   else
     {
@@ -86,7 +88,7 @@ void do_out_pipe()
       sprintf(port_buffer,"outpipe ack");
       sprintf(val_buffer,"0");
       Vhpi_Set_Port_Value(port_buffer,val_buffer);
-      fprintf(stderr,"Info: outpipe ack de-asserted..\n");
+      fprintf(stderr,"Info: (%d) outpipe ack de-asserted..\n", cycle_count);
     }
 
   // write pipe_data to out..
@@ -94,7 +96,7 @@ void do_out_pipe()
   sprintf(port_buffer,"outpipe 0");
   append_uint32_t(val_buffer,pipe_data);
   Vhpi_Set_Port_Value(port_buffer,val_buffer);
-  fprintf(stderr,"Info: outpipe data set to %d..\n", pipe_data);
+  fprintf(stderr,"Info: (%d) outpipe data set to %d..\n", cycle_count, pipe_data);
 
   // now get req.
   sprintf(port_buffer,"outpipe req");
@@ -103,13 +105,14 @@ void do_out_pipe()
 
   if(outpipe_req > 0)
     {
-      fprintf(stderr,"Info: outpipe req observed as asserted..\n");
+      fprintf(stderr,"Info: (%d) outpipe req observed as asserted..\n",cycle_count);
     }
 }
 
 void do_in_pipe()
 {
 
+  fprintf(stderr,"Info: (%d) in do_in_pipe..\n", cycle_count);
   char ack_flag = 0;
 
   uint8_t port_buffer[1024];
@@ -123,7 +126,7 @@ void do_in_pipe()
 
       sprintf(val_buffer,"1");
       Vhpi_Set_Port_Value(port_buffer,val_buffer);
-      fprintf(stderr,"Info: inpipe ack asserted..\n");
+      fprintf(stderr,"Info: (%d) inpipe ack asserted..\n", cycle_count);
 
       ack_flag = 1;
     }
@@ -133,17 +136,17 @@ void do_in_pipe()
       sprintf(port_buffer,"inpipe ack");
       sprintf(val_buffer,"0");
       Vhpi_Set_Port_Value(port_buffer,val_buffer);
-      fprintf(stderr,"Info: inpipe ack de-asserted..\n");
+      fprintf(stderr,"Info: (%d) inpipe ack de-asserted..\n", cycle_count);
     }
 
   // read inpipe if there is a free slot.
   if(ack_flag == 1)
     {
-      fprintf(stderr,"Info: inpipe has free slot..\n");
+      fprintf(stderr,"Info: (%d) inpipe has free slot..\n", cycle_count);
       sprintf(port_buffer,"inpipe 0");
       Vhpi_Get_Port_Value(port_buffer,val_buffer);
       pipe_data = get_uint32_t(val_buffer,&save_ptr);
-      fprintf(stderr,"Info: read inpipe data %d..\n", pipe_data);
+      fprintf(stderr,"Info: (%d) read inpipe data %d..\n", cycle_count, pipe_data);
       
       pipe_has_data = 1;
     }
@@ -156,7 +159,7 @@ void do_in_pipe()
 
   if(inpipe_req)
     {
-      fprintf(stderr,"Info: inpipe req observed as asserted..\n");
+      fprintf(stderr,"Info: (%d) inpipe req observed as asserted..\n", cycle_count);
     }
 
   

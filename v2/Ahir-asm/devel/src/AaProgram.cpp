@@ -943,9 +943,10 @@ void AaProgram::Write_VHDL_C_Stubs()
 
   header_file << "#include <stdlib.h>" << endl
 	      << "#include <stdint.h>" << endl
+	      << "#include <stdio.h>" << endl
+	      << "#include <string.h>" << endl
 	      << "#include <SocketLib.h>" << endl;
 
-  // declare all the record types that you have encountered.
   source_file << "#include <" << header << ">" << endl;
 
   for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();

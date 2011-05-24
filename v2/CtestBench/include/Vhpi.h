@@ -44,10 +44,12 @@ struct _JobLink
   char is_burst_access;
   int word_length; // in bytes
   int number_of_words_requested;
+
+  char increment_word_count;
+  int active_word_count;
   
   char* payload;
 
-  int number_of_words_served;
 
   int socket_id;
 

@@ -6,6 +6,7 @@ library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
+use ahir.BaseComponents.all;
 
 entity InputMuxBaseNoData is
   generic ( twidth: integer;

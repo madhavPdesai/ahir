@@ -66,7 +66,6 @@ begin
        end loop;  -- I
      end if;
      call_mreq <= there_is_a_call;
-     call_mtag <= out_tag;
    end process;
 
    tagGen : BinaryEncoder generic map (iwidth => num_reqs, owidth => tag_length)

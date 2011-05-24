@@ -559,7 +559,7 @@ void AaModule::Write_VHDL_C_Stub_Source(ostream& ofile)
       ofile << "append_int(buffer," << this->Get_Output_Argument(idx)->Get_Type()->Size() << ");" << endl;
     }
   
-  ofile << "send_packet_and_wait_for_response(buffer,\"localhost\",9999);" << endl;
+  ofile << "send_packet_and_wait_for_response(buffer,strlen(buffer)+1,\"localhost\",9999);" << endl;
   
 
  if(this->Get_Number_Of_Output_Arguments() == 0)

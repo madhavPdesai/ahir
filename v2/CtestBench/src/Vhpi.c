@@ -57,7 +57,7 @@ FILE *log_file = NULL;
     }
 
 // cycle count;
-int cycle_count = 0;
+int vhpi_cycle_count = 0;
 
 // free job index
 int64_t free_job_index = 0;
@@ -189,7 +189,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
 {
 
 #ifdef DEBUG
-  fprintf(log_file,"Info: appending message %s (payload of %d bytes) to JobList in cycle %d\n",receive_buffer , cycle_count,payload_length);
+  fprintf(log_file,"Info: appending message %s (payload of %d bytes) to JobList in cycle %d\n",receive_buffer , vhpi_cycle_count,payload_length);
   fflush(log_file);
 #endif 
   char err_flag = 0;
@@ -211,7 +211,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
   if(strcmp(type_of_request,"piperead.single") == 0)
     {
 #ifdef DEBUG
-      fprintf(log_file,"Info: pipe-read in cycle %d\n", cycle_count);
+      fprintf(log_file,"Info: pipe-read in cycle %d\n", vhpi_cycle_count);
       fflush(log_file);
 #endif 
       new_job->is_pipe_read_access = 1;
@@ -219,7 +219,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
   else if(strcmp(type_of_request,"piperead.burst") == 0)
     {
 #ifdef DEBUG
-      fprintf(log_file,"Info: burst-pipe-read in cycle %d\n", cycle_count);
+      fprintf(log_file,"Info: burst-pipe-read in cycle %d\n", vhpi_cycle_count);
       fflush(log_file);
 #endif 
       new_job->is_pipe_read_access = 1;
@@ -228,7 +228,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
   else if(strcmp(type_of_request,"pipewrite.single") == 0)
     {
 #ifdef DEBUG
-      fprintf(log_file,"Info: pipe-write in cycle %d\n", cycle_count);
+      fprintf(log_file,"Info: pipe-write in cycle %d\n", vhpi_cycle_count);
       fflush(log_file);
 #endif 
       new_job->is_pipe_write_access = 1;
@@ -236,7 +236,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
   else if(strcmp(type_of_request,"pipewrite.burst") == 0)
     {
 #ifdef DEBUG
-      fprintf(log_file,"Info: burst-pipe-write in cycle %d\n", cycle_count);
+      fprintf(log_file,"Info: burst-pipe-write in cycle %d\n", vhpi_cycle_count);
       fflush(log_file);
 #endif 
       new_job->is_pipe_write_access = 1;
@@ -246,7 +246,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
   else if(strcmp(type_of_request,"call") == 0)
     {
 #ifdef DEBUG
-  fprintf(log_file,"Info: function-call in cycle %d\n", cycle_count);
+  fprintf(log_file,"Info: function-call in cycle %d\n", vhpi_cycle_count);
   fflush(log_file);
 #endif 
       new_job->is_module_access = 1;
@@ -264,7 +264,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
 
   new_job->name = strdup(name);
 #ifdef DEBUG
-  fprintf(log_file,"Info: job-name %s, in cycle %d\n", new_job->name, cycle_count);
+  fprintf(log_file,"Info: job-name %s, in cycle %d\n", new_job->name, vhpi_cycle_count);
   fflush(log_file);
 #endif 
   
@@ -274,7 +274,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
   new_job->req_port->width = 1;
   new_job->req_port->port_value = (char*) calloc(1,2*sizeof(char));
 #ifdef DEBUG
-  fprintf(log_file,"Info: job-name %s request set to 1 in cycle %d\n", new_job->name, cycle_count);
+  fprintf(log_file,"Info: job-name %s request set to 1 in cycle %d\n", new_job->name, vhpi_cycle_count);
   fflush(log_file);
 #endif 
   sprintf(new_job->req_port->port_value,"1");
@@ -327,7 +327,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
 	      new_job->name,
 	      new_job->word_length, 
 	      new_job->number_of_words_requested,
-	      cycle_count);
+	      vhpi_cycle_count);
       if(payload_length > 0)
 	print_payload(log_file,new_job->payload,new_job->word_length,new_job->number_of_words_requested);
       fflush(log_file);
@@ -353,7 +353,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
 	  p->width = strlen(ip_value);
 	  p->port_value = strdup(ip_value);
 #ifdef DEBUG
-	  fprintf(log_file,"Info: job-name %s inport %d set to %s in cycle %d\n", new_job->name,idx,p->port_value,cycle_count);
+	  fprintf(log_file,"Info: job-name %s inport %d set to %s in cycle %d\n", new_job->name,idx,p->port_value,vhpi_cycle_count);
 	  fflush(log_file);
 #endif 
 	  
@@ -382,7 +382,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
 	  p->width = iw;
 	  p->port_value = (char*) calloc(1, (iw+2)*sizeof(char));
 #ifdef DEBUG
-	  fprintf(log_file,"Info: job-name %s outport %d width set to %d in cycle %d\n", new_job->name,idx,p->width,cycle_count);
+	  fprintf(log_file,"Info: job-name %s outport %d width set to %d in cycle %d\n", new_job->name,idx,p->width,vhpi_cycle_count);
 	  fflush(log_file);
 #endif 
 	  
@@ -397,7 +397,7 @@ void Append_To_JobList(char* receive_buffer,int socket_id, char* payload, int pa
   APPEND(new_jobs, new_job);
 
 #ifdef DEBUG
-  fprintf(log_file,"Info: finished appending job %s to JobList in cycle %d\n", new_job->name, cycle_count);
+  fprintf(log_file,"Info: finished appending job %s to JobList in cycle %d\n", new_job->name, vhpi_cycle_count);
   fflush(log_file);
 #endif 
 }
@@ -478,7 +478,7 @@ void  Vhpi_Send()
 {
 
 #ifdef DEBUG
-  fprintf(log_file,"Info: sending in cycle %d\n", cycle_count);
+  fprintf(log_file,"Info: sending in cycle %d\n", vhpi_cycle_count);
   fflush(log_file);
 #endif 
 
@@ -495,11 +495,18 @@ void  Vhpi_Send()
     {
       if(*(top->ack_port->port_value) == '1') 
 	{
+      
+          if(top->is_burst_access && top->increment_word_count)
+	  {
+		top->active_word_count++;
+		top->increment_word_count = 0;
+	  }
+
 	  if(!top->is_burst_access ||
-	     (top->number_of_words_served == top->number_of_words_requested))
+	     (top->active_word_count == top->number_of_words_requested))
 	    {
 #ifdef DEBUG
-	      fprintf(log_file,"Info: job %s finished in cycle %d\n", top->name, cycle_count);
+	      fprintf(log_file,"Info: job %s finished in cycle %d\n", top->name, vhpi_cycle_count);
 	      fflush(log_file);
 #endif 
 	      next = top->next;
@@ -507,7 +514,7 @@ void  Vhpi_Send()
 	      REMOVE(active_jobs,top);
 	      
 	      fprintf(log_file,"cycle %d finished job %s(%d)\n",
-		      cycle_count,
+		      vhpi_cycle_count,
 		      top->name,
 		      (int) top->index);
 	      
@@ -531,7 +538,7 @@ void  Vhpi_Send()
       if(can_write_to_socket(top->socket_id))
 	{
 #ifdef DEBUG
-          fprintf(log_file,"Info: sending message that job %s has finished in cycle %d\n", top->name, cycle_count);
+          fprintf(log_file,"Info: sending message that job %s has finished in cycle %d\n", top->name, vhpi_cycle_count);
   fflush(log_file);
 #endif 
 	  if(top->is_pipe_read_access) 
@@ -557,7 +564,7 @@ void  Vhpi_Send()
 	    }
 	  
 #ifdef DEBUG
-	  fprintf(log_file,"Info: trying to send message %s in  %d\n", send_buffer, cycle_count);
+	  fprintf(log_file,"Info: trying to send message %s in  %d\n", send_buffer, vhpi_cycle_count);
 	  fflush(log_file);
 #endif 
 	  
@@ -576,7 +583,7 @@ void  Vhpi_Send()
 	      Print_Payload(log_file,send_buffer,top->word_length,top->number_of_words_requested);
 	    }
 	  else
-	    fprintf(log_file,"Info: successfully sent message %s in  %d\n", send_buffer, cycle_count);
+	    fprintf(log_file,"Info: successfully sent message %s in  %d\n", send_buffer, vhpi_cycle_count);
 
 	  fflush(log_file);
 #endif 
@@ -600,7 +607,7 @@ void  Vhpi_Listen()
   char payload[4096];
   int payload_length;
 
-  cycle_count++;
+  vhpi_cycle_count++;
 
 #ifdef DEBUG
   fprintf(log_file,"Info: listening in cycle %d\n", cycle_count);
@@ -639,7 +646,7 @@ void  Vhpi_Listen()
     }
 
 #ifdef DEBUG
-  fprintf(log_file,"Info: finished listening in cycle %d\n", cycle_count);
+  fprintf(log_file,"Info: finished listening in cycle %d\n", vhpi_cycle_count);
   fflush(log_file);
 #endif 
 }
@@ -650,7 +657,7 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 {
 
 #ifdef DEBUG
-  fprintf(log_file,"Info: setting %s to %s in cycle %d\n",port_name,port_value, cycle_count);
+  fprintf(log_file,"Info: setting %s to %s in cycle %d\n",port_name,port_value, vhpi_cycle_count);
   fflush(log_file);
   fflush(log_file);
 #endif 
@@ -676,8 +683,8 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 		  char all_done = 0;
 		  if(jlink->is_burst_access)
 		    {
-		      jlink->number_of_words_served++;
-		      if(jlink->number_of_words_served == jlink->number_of_words_requested)
+		      jlink->increment_word_count = 1;
+		      if(jlink->active_word_count == jlink->number_of_words_requested)
 			{
 			  all_done = 1;
 			}
@@ -704,7 +711,7 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 				     port_value,
 				     plink->port->width);
 #ifdef DEBUG
-			  fprintf(log_file,"Info: finished setting %s to %s in cycle %d\n",port_name,port_value, cycle_count);
+			  fprintf(log_file,"Info: finished setting %s to %s in cycle %d\n",port_name,port_value, vhpi_cycle_count);
 			  fflush(log_file);
 #endif 
 			  break;
@@ -716,7 +723,7 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 		{
 		  if(*(jlink->ack_port->port_value) == '1') 		  
 		    {
-		      pack_value(jlink->payload,jlink->word_length, jlink->number_of_words_served - 1, port_value);
+		      pack_value(jlink->payload,jlink->word_length, jlink->active_word_count, port_value);
 		    }
 		}
 	    }
@@ -728,7 +735,7 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
 {
 
 #ifdef DEBUG
-  fprintf(log_file,"Info: getting value of port %s in cycle %d\n",port_name,cycle_count);
+  fprintf(log_file,"Info: getting value of port %s in cycle %d\n",port_name,vhpi_cycle_count);
   fflush(log_file);
 #endif 
   char found_one = 0;
@@ -743,7 +750,7 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
   for(jlink = active_jobs.head; jlink != NULL; jlink = jlink->next)
     {
 #ifdef DEBUG
- 	 fprintf(log_file,"Info: comparing active %s with port-job-id %s in cycle %d\n",jlink->name, obj_name,cycle_count);
+ 	 fprintf(log_file,"Info: comparing active %s with port-job-id %s in cycle %d\n",jlink->name, obj_name,vhpi_cycle_count);
   fflush(log_file);
 #endif 
       if(strcmp(jlink->name,obj_name) == 0)
@@ -758,13 +765,13 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
   if(jlink == NULL)
     {
 #ifdef DEBUG
-  fprintf(log_file,"Info: did not find active job %s in cycle %d\n",port_name,cycle_count);
+  fprintf(log_file,"Info: did not find active job %s in cycle %d\n",port_name,vhpi_cycle_count);
   fflush(log_file);
 #endif 
       for(jlink = new_jobs.head; jlink != NULL; jlink = jlink->next)
 	{
 #ifdef DEBUG
- 	 fprintf(log_file,"Info: comparing new %s with port-job-id %s in cycle %d\n",jlink->name, obj_name,cycle_count);
+ 	 fprintf(log_file,"Info: comparing new %s with port-job-id %s in cycle %d\n",jlink->name, obj_name,vhpi_cycle_count);
   fflush(log_file);
 #endif 
 	  if(strcmp(jlink->name,obj_name) == 0)
@@ -773,7 +780,7 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
 	      APPEND(active_jobs,jlink);
 
 	      fprintf(log_file,"cycle %d started job %s(%d)\n",
-		      cycle_count,
+		      vhpi_cycle_count,
 		      jlink->name,
 		      (int) jlink->index);
 
@@ -790,7 +797,7 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
 #ifdef DEBUG
           fprintf(log_file,"Info: copied req value %s into %s in cycle %d\n",jlink->req_port->port_value,
 										port_value,
-										cycle_count);
+										vhpi_cycle_count);
   fflush(log_file);
 #endif 
 	  found_one = 1;
@@ -824,9 +831,7 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
 	    }
 	  else
 	    {
-	      // at least one word should have been served (acked) by now..
-	      assert(jlink->number_of_words_served > 0);
-	      unpack_value(jlink->payload, jlink->word_length, jlink->number_of_words_served-1,port_value);
+	      unpack_value(jlink->payload, jlink->word_length, jlink->active_word_count,port_value);
 	      found_one = 1;
 	    }
 	}
@@ -834,7 +839,7 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
   else
     {
 #ifdef DEBUG
-       fprintf(log_file,"Info: did not find new or active job %s in cycle %d\n",port_name,cycle_count);
+       fprintf(log_file,"Info: did not find new or active job %s in cycle %d\n",port_name,vhpi_cycle_count);
        fflush(log_file);
 #endif 
        // didnt find it, write zero into it..
