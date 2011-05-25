@@ -1,0 +1,46 @@
+We have the following files present.
+	system.vhdl  (generated as main_o_aa_vc.vhdl in the parent directory)
+	vhdlCStubs.h
+	vhdlCStubs.c
+
+Take testbench.c from ../.
+We will need to modify testbench.c a little..  The
+following line needs to be added.
+#include <vhdlCStubs.h>
+
+More importantly, now testbench.c does not
+need to trigger io_module, which has been marked
+as free-running in the hardware.  Comment out
+the lines that create the io_module thread
+and also cancel it.
+
+Now compile the testbench using compile_testbench.sh
+
+OK.  you will now need to create a Modelsim project.
+The following files need to be compiled (into
+the corresponding libraries)
+
+library    file(s)
+
+work      ./system.vhdl
+work      ../../../vhdl/Utility_Package.vhdl 
+work      ../../../vhdl/Modelsim_FLI_Foreign.vhdl 
+
+ahir      ../../../../../vhdl/control-path/*.vhdl
+ahir      ../../../../../vhdl/memory_subsystem/*.vhd
+ahir      ../../../../../vhdl/operatorsV2/base/*.vhd
+ahir      ../../../../../vhdl/packagesV2/*.vhd
+
+ieee_proposed ../../../../vhdl/ieee_proposed/trimmed/*.vhd*
+
+
+(you will need to compile the files Utility_Package.vhdl and 
+Modelsim_FLI_Foreign.vhdl into library work in order
+to get the Modelsim <-> C link configured).
+
+Now start ./testbench in one shell
+and start the Modelsim simulation of work.test_system_test_bench
+in another shell and you will see that everything runs great!
+
+
+

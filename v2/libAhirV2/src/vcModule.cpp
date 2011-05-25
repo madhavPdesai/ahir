@@ -757,6 +757,18 @@ void vcModule::Print_VHDL_Instance(ostream& ofile)
   ofile << "-- }\n ); -- }" << endl;
 }
 
+void vcModule::Print_VHDL_Auto_Run_Instance(ostream& ofile)
+{
+  string prefix = this->Get_VHDL_Id() +  "_";
+  ofile << "-- module will be run forever " << endl;
+  ofile << prefix << "tag_in <= (others => '0');" << endl;
+  string instance_id = this->Get_VHDL_Id() + "_auto_run";
+  ofile << instance_id << ": auto_run generic map(use_delay => true)  ";
+  ofile << "port map(";
+  ofile << "clk => clk, reset => reset, start => "
+	<< prefix << "start, fin => " << prefix << "fin);" << endl;
+}
+
 void vcModule::Print_VHDL_Instance_Port_Map(ostream& ofile)
 {
 

@@ -21,6 +21,7 @@ class vcSystem: public vcRoot
 {
   map<string, vcMemorySpace*> _memory_space_map;
   set<vcModule*,vcRoot_Compare> _top_module_set;
+  set<vcModule*,vcRoot_Compare> _ever_running_top_module_set;
   map<string, vcModule*> _modules;
 
   map<string,int> _pipe_map;
@@ -109,6 +110,10 @@ class vcSystem: public vcRoot
   void Set_As_Top_Module(vcModule* module);
   void Set_As_Top_Module(string module_name);
   bool Is_A_Top_Module(vcModule* m);
+
+  void Set_As_Ever_Running_Top_Module(vcModule* module);
+  void Set_As_Ever_Running_Top_Module(string module_name);
+  bool Is_An_Ever_Running_Top_Module(vcModule* m);
 
   void Add_Memory_Space(vcMemorySpace* ms);
   vcMemorySpace* Find_Memory_Space(string module_name, string ms_name); 

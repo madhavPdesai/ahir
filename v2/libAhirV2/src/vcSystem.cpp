@@ -94,6 +94,35 @@ bool vcSystem::Is_A_Top_Module(vcModule* m)
   return(this->_top_module_set.find(m) != this->_top_module_set.end());
 }
 
+void vcSystem::Set_As_Ever_Running_Top_Module(string module_name)
+{
+  vcModule* m = this->Find_Module(module_name);
+  if(m == NULL)
+    vcSystem::Error("did not find module " + module_name + " in the system");
+  else
+  {
+    if((m->Get_Number_Of_Input_Arguments() == 0) &&
+	(m->Get_Number_Of_Output_Arguments() == 0))
+	{
+    		this->Set_As_Ever_Running_Top_Module(m);
+	}
+    else
+	{
+    		vcSystem::Error("module " + module_name + " cannot be set as ever-running (such modules cannot have in/out arguments)");
+	}
+  }
+}
+
+void vcSystem::Set_As_Ever_Running_Top_Module(vcModule* module)
+{
+  this->_ever_running_top_module_set.insert(module);
+}
+
+bool vcSystem::Is_An_Ever_Running_Top_Module(vcModule* m)
+{
+  return(this->_ever_running_top_module_set.find(m) != this->_ever_running_top_module_set.end());
+}
+
 void vcSystem::Add_Memory_Space(vcMemorySpace* ms)
 {
   assert(ms != NULL);
@@ -269,6 +298,10 @@ void vcSystem::Print_VHDL_Test_Bench(ostream& ofile)
       iter != _top_module_set.end();
       iter++)
     {
+	// if ever-running, tb doesnt get into the picture..
+      if(this->Is_An_Ever_Running_Top_Module(*iter))
+	continue;
+
       string prefix = (*iter)->Get_VHDL_Id() + "_";
       string start = prefix + "start";
       string fin = prefix + "fin";
@@ -330,6 +363,10 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
       iter++)
     {
       vcModule* m = (*iter);
+
+      if(this->Is_An_Ever_Running_Top_Module(m))
+	continue;
+
       string prefix = m->Get_VHDL_Id() + "_";
       string start = prefix + "start";
       string fin = prefix + "fin";
@@ -485,7 +522,8 @@ string vcSystem::Print_VHDL_Instance_Port_Map(string comma, ostream& ofile)
       iter != _top_module_set.end();
       iter++)
     {
-      comma = (*iter)->Print_VHDL_System_Instance_Port_Map(comma, ofile);
+      if(!this->Is_An_Ever_Running_Top_Module(*iter))
+      	comma = (*iter)->Print_VHDL_System_Instance_Port_Map(comma, ofile);
     }
 
   ofile << comma << endl << "clk => clk," << endl;
@@ -577,7 +615,8 @@ string vcSystem::Print_VHDL_System_Ports(string semi_colon, ostream& ofile)
       iter != _top_module_set.end();
       iter++)
     {
-      semi_colon = (*iter)->Print_VHDL_System_Argument_Ports(semi_colon, ofile);
+	if(!this->Is_An_Ever_Running_Top_Module(*iter))
+      		semi_colon = (*iter)->Print_VHDL_System_Argument_Ports(semi_colon, ofile);
     }
 
   ofile << semi_colon << endl << "clk : in std_logic;" << endl;
@@ -775,16 +814,19 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
       moditer != _modules.end();
       moditer++)
     {
-      ofile << "-- declarations related to module " << (*moditer).second->Get_VHDL_Id() << endl;
-      // module component declarations
-      (*moditer).second->Print_VHDL_Component(ofile);
+ 
+      vcModule* m = (*moditer).second;
 
-      if(!this->Is_A_Top_Module((*moditer).second))
+      ofile << "-- declarations related to module " << m->Get_VHDL_Id() << endl;
+      // module component declarations
+      m->Print_VHDL_Component(ofile);
+
+      if(!this->Is_A_Top_Module(m) || this->Is_An_Ever_Running_Top_Module(m))
 	{
 
-	  if((*moditer).second->Get_Num_Calls() == 0)
+	  if(m->Get_Num_Calls() == 0 && !this->Is_A_Top_Module(m))
 	    {
-	      std::cerr << "Warning:  module " << (*moditer).second->Get_Label() << " is not called from within the system, and is not marked as a top-module!" << std::endl;
+	      std::cerr << "Warning:  module " << m->Get_Label() << " is not called from within the system, and is not marked as a top-module!" << std::endl;
 	    }
 
 
@@ -796,7 +838,7 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
 	      (*moditer).second->Print_VHDL_Caller_Aggregate_Signals(ofile);
 	    }
 	}
-      else if((*moditer).second->Get_Num_Calls() > 0)
+      else if(this->Is_A_Top_Module(m) && m->Get_Num_Calls() > 0)
 	{
 	  vcSystem::Error("top-module " + (*moditer).second->Get_VHDL_Id() + " cannot be called from within the system!");
 	}
@@ -820,7 +862,13 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
 	    }
 	}
 
+
+
       (*moditer).second->Print_VHDL_Instance(ofile);
+      if(this->Is_An_Ever_Running_Top_Module((*moditer).second))
+  	{
+		(*moditer).second->Print_VHDL_Auto_Run_Instance(ofile);
+	}
     }
 
   this->Print_VHDL_Pipe_Instances(ofile);

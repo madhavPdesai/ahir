@@ -27,6 +27,8 @@
 // threads talking to the TB?
 #define DEFAULT_MAX_CONNECTIONS 256
 
+#define ADD_SPACE__(buf) strcat(buf," ")
+
 // get a string out of  the string buffer.
 char*    get_string(char* str, char** save_str);
 void     append_string(char* str_buf, char* str);

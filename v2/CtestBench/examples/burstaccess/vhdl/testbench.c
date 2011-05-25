@@ -38,7 +38,10 @@ int main(int argc, char* argv[])
 	// in parallel, start foo and bar.
 	pthread_t io_module_t, wpipe_t, rpipe_t;
 
-	pthread_create(&io_module_t,NULL,&io_module_,NULL);
+	//
+	// No need to start io_module... it is an auto-run
+	// module..
+	// pthread_create(&io_module_t,NULL,&io_module_,NULL);
 	pthread_create(&wpipe_t,NULL,&write_pipe_,(void*)pipe_in);
 	pthread_create(&rpipe_t,NULL,&read_pipe_,(void*)pipe_out);
 
@@ -52,5 +55,5 @@ int main(int argc, char* argv[])
  	   fprintf(stdout," %d ", pipe_out[i]);
 	fprintf(stdout,"\n");
 
-	pthread_cancel(io_module_t);
+	// pthread_cancel(io_module_t);
 }

@@ -13,7 +13,16 @@ once started).
 In testbench.c, we start io_module, write a stream
 of numbers to foo_in and wait for a stream of
 numbers from foo_out.  
+. SoftwareCompile.sh 
+    produces an executable testbench which does
+    exactly this.
 
-The rest of the procedure is exactly the
-same as in ../helloworld/README
+To go to VHDL, run
+. ToVHDL.sh 
+  to produce a vhdl file and the vhdlCStubs.* files.
+
+Copy the vhdl file to vhdl/system.vhdl and
+the vhdlCStubs.* to vhdl/  and continue there.
+
+Go to the vhdl area.
 

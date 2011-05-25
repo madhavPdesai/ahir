@@ -538,25 +538,25 @@ void AaModule::Write_VHDL_C_Stub_Source(ostream& ofile)
   char* ss;\
   sprintf(buffer, \"call " << this->Get_Label() << " \");" << endl;
 
-  ofile << "append_int(buffer," << this->Get_Number_Of_Input_Arguments() << ");" << endl;
+  ofile << "append_int(buffer," << this->Get_Number_Of_Input_Arguments() << "); ADD_SPACE__(buffer);" << endl;
   for(int idx = 0; idx < this->Get_Number_Of_Input_Arguments(); idx++)
     {
       AaType* t = this->Get_Input_Argument(idx)->Get_Type();
       if(!t->Is_Pointer_Type())
 	ofile << "append_" << this->Get_Input_Argument(idx)->Get_Type()->CBaseName() 
-	      << "(buffer," <<  this->Get_Input_Argument(idx)->Get_Name() << ");" << endl;
+	      << "(buffer," <<  this->Get_Input_Argument(idx)->Get_Name() << "); ADD_SPACE__(buffer);" << endl;
       else
 	{
 	  ofile << "append_uint32_t" 
 		<< "(buffer,(uint32_t) " 
-		<<  this->Get_Input_Argument(idx)->Get_Name() << ");" << endl;	  
+		<<  this->Get_Input_Argument(idx)->Get_Name() << "); ADD_SPACE__(buffer);" << endl;	  
 	}
     }
       
-  ofile << "append_int(buffer," << this->Get_Number_Of_Output_Arguments() << ");" << endl;
+  ofile << "append_int(buffer," << this->Get_Number_Of_Output_Arguments() << "); ADD_SPACE__(buffer);" << endl;
   for(int idx = 0; idx < this->Get_Number_Of_Output_Arguments(); idx++)
     {
-      ofile << "append_int(buffer," << this->Get_Output_Argument(idx)->Get_Type()->Size() << ");" << endl;
+      ofile << "append_int(buffer," << this->Get_Output_Argument(idx)->Get_Type()->Size() << "); ADD_SPACE__(buffer);" << endl;
     }
   
   ofile << "send_packet_and_wait_for_response(buffer,strlen(buffer)+1,\"localhost\",9999);" << endl;

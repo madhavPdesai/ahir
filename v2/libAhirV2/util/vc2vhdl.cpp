@@ -20,11 +20,17 @@ void Handle_Segfault(int signal)
 void Usage_Vc2VHDL()
 {
   cerr << "Usage: " << endl;
-  cerr << "vc2vhdl [-O] [-C] [-s <ghdl/modelsim>] -f <vc-file> [-f <vc-file>...] -t <top-module> [-t <top-module>...] " << endl << endl;
+  cerr << "vc2vhdl [-O] [-C] [-s <ghdl/modelsim>] -f <vc-file> [-f <vc-file>...] -t/-T <top-module> [-t/-T <top-module>...] " << endl << endl;
   cerr << "specify vc-files using -f, top-modules in system using -t.. for example" << endl
        << "    vc2vhdl -O -t foo -f file1.vc -f file2.vc -t bar" << endl;
   cerr << "file1.vc and file2.vc will be parsed in order, and the instantiated " << endl
        << "system will have modules foo and bar as top-modules. " << endl;
+  cerr << "-T mod-name will make mod-name a free-running top-level module " << endl
+	<<  " which need not be started from outside.  Such a module cannot " << endl
+	<< " have input/output arguments from/to the outside world" << endl;
+  cerr << "-t mod-name will make mod-name a top-level module which must be" << endl
+	<<  " started from outside.  Such a module can have input/output " << endl
+	<< " arguments from/to the outside world" << endl;
   cerr << "-O option will lead to smaller VHDL files due to some compaction" << endl
        << "-C option will produce testbench which listens on socket for foreign TB. " << endl;
   cerr << "-s ghdl will produce a testbench which uses VHPI and can link to GHDL" << endl
@@ -41,7 +47,9 @@ int main(int argc, char* argv[])
   
   vector<string> file_list;
   set<string> file_set;
+
   set<string> top_modules;
+  set<string> always_running_top_modules;
 
   // command-line parsing
   extern int optind;
@@ -68,7 +76,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:f:OCs:",
+		      "t:T:f:OCs:a:h",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -88,6 +96,16 @@ int main(int argc, char* argv[])
 	case 't':
 	  mod_name = string(optarg);	
 	  top_modules.insert(mod_name);
+	  cerr << "Info: module " << mod_name << " set as one of the top modules " << endl;
+	  break;
+	case 'T':
+	  mod_name = string(optarg);	
+
+	  always_running_top_modules.insert(mod_name);
+	  top_modules.insert(mod_name);
+
+	  cerr << "Info: module " << mod_name << " set as one of the ever-running top modules " << endl;
+	  cerr << "   NOTE: " << mod_name << " cannot have any input/output arguments." << endl;
 	  break;
 	case 'O':
 	  vcSystem::_opt_flag = true;
@@ -108,6 +126,9 @@ int main(int argc, char* argv[])
           {
 	     cerr << "Info: -s modelsim option selected: will generate testbench with VHPI link" << endl;
           }
+	  break;
+        case 'h':
+	  Usage_Vc2VHDL();
 	  break;
 	case '?':		  // incorrect option
 	  opt_string = opt;
@@ -142,6 +163,13 @@ int main(int argc, char* argv[])
 	  iter++)
 	{
 	  test_system.Set_As_Top_Module(*iter);
+	}
+
+      for(set<string>::iterator iter = always_running_top_modules.begin();
+	  iter != always_running_top_modules.end();
+	  iter++)
+	{
+	  test_system.Set_As_Ever_Running_Top_Module(*iter);
 	}
 
       test_system.Elaborate();

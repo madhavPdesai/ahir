@@ -53,6 +53,15 @@ package BaseComponents is
 	reset: in std_logic);
   end component;
 
+  component auto_run 
+  	generic (
+    		use_delay : boolean);
+  	port (clk   : in  std_logic;
+        	reset : in  std_logic;
+        	start: out std_logic;
+        	fin: in std_logic);
+  end component;
+
   -----------------------------------------------------------------------------
   -- miscellaneous
   -----------------------------------------------------------------------------

@@ -10,6 +10,15 @@ llvm2aa prog.o | vcFormat >  prog.o.aa
 AaLinkExtMem -I 1 -E mempool prog.o.aa | vcFormat > prog.o.linked.aa
 # take linked Aa and convert to virtual circuit.
 Aa2VC -O -I mempool -C prog.o.linked.aa | vcFormat > prog.o.linked.aa.vc
+#
 # take virtual circuit and convert to VHDL
-vc2vhdl -C -s ghdl -t io_module -f prog.o.linked.aa.vc | vhdlFormat > prog_o_linked_aa_vc.vhdl
+# NOTE: the -T option tells vc2vhdl that io_module is to be an ever-running
+# top-level module, which will not need to be started from the outside, but
+# will be free-running in the system (such modules cannot have input/output
+# arguments, but can only listen/send on pipes).
+#
+# uncomment next line if you are using modelsim
+# vc2vhdl -C -s modelsim -T io_module -f prog.o.linked.aa.vc | vhdlFormat > prog_o_linked_aa_vc.vhdl
+# comment next line if you are using modelsim
+vc2vhdl -C -s ghdl -T io_module -f prog.o.linked.aa.vc | vhdlFormat > prog_o_linked_aa_vc.vhdl
 

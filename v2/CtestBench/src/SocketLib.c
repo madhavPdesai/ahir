@@ -84,8 +84,6 @@ void  append_uint64_t_inner(char* str, uint64_t u, int W)
     tbuf[idx] = '0';
   tbuf[W] = 0;
 
-  strcat(str," ");
-
   int pos = 0;
 
   while(pos < W)

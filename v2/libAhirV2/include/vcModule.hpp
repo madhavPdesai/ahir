@@ -133,7 +133,9 @@ class vcModule: public vcRoot
   void Print_VHDL_Call_Arbiter_Instantiation(ostream& ofile);
 
   void Print_VHDL_Instance(ostream& ofile);
+  void Print_VHDL_Auto_Run_Instance(ostream& ofile);
   void Print_VHDL_Instance_Port_Map(ostream& ofile);
+
   string Print_VHDL_Argument_Port_Map(string  comma, ostream& ofile);
   string Print_VHDL_Tag_Interface_Port_Map(string comma, ostream& ofile);
   string Print_VHDL_System_Argument_Ports(string semi_colon,ostream& ofile);
