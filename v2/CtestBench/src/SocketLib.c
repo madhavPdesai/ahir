@@ -1,6 +1,12 @@
 #include <string.h>
 #include <fcntl.h>
 #include <SocketLib.h>
+void ADD_SPACE__(char* buf)
+{
+   int len = strlen(buf);
+   buf[len] = ' ';
+   buf[len+1] = 0;
+}
 
 // get a string out of  the string buffer.
 char*    get_string(char* str, char** save_str)
@@ -129,10 +135,10 @@ void     append_double(char* str, double f)
 
 // append the int in decimal form into the
 // string.
-void     append_int(char* str, int u)
+void   append_int(char* str, int u)
 {
   char buf[16];
-  sprintf(buf," %d",u);
+  sprintf(buf,"%d",u);
   strcat(str,buf);
 }
 

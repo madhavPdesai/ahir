@@ -4,16 +4,16 @@
 #include <string.h>
 #include <assert.h>
 
-#define READ__(id,t,w)  sprintf(buffer, "piperead.single %s", id);	\
-  append_int(buffer,0);\
-  append_int(buffer,1);\
+#define READ__(id,t,w)  sprintf(buffer, "piperead.single %s ", id);	\
+  append_int(buffer,0);ADD_SPACE__(buffer);\
+  append_int(buffer,1);ADD_SPACE__(buffer);\
   append_int(buffer,w);\
   send_packet_and_wait_for_response(buffer,strlen(buffer)+1,"localhost",9999);
 
 
-#define WRITE__(id,t,w) sprintf(buffer, "pipewrite.single %s", id);	\
-  append_int(buffer,1);\
-  append_##t(buffer,data);\
+#define WRITE__(id,t,w) sprintf(buffer, "pipewrite.single %s ", id);	\
+  append_int(buffer,1);ADD_SPACE__(buffer);\
+  append_##t(buffer,data);ADD_SPACE__(buffer);\
   append_int(buffer,0);\
   send_packet_and_wait_for_response(buffer,strlen(buffer)+1,"localhost",9999);
 

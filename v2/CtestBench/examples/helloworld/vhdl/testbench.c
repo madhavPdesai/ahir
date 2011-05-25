@@ -72,4 +72,9 @@ int main(int argc, char* argv[])
 	pthread_join(bar_t,NULL);
 	pthread_join(wpipe_t,NULL);
 	pthread_join(rpipe_t,NULL);
+
+ 	fprintf(stdout,"foo returns %d\n", foo_ret);
+ 	fprintf(stdout,"bar returns %d\n", bar_ret);
+ 	fprintf(stdout,"from outpipe, we read %d\n", pipe_out);
+
 }
