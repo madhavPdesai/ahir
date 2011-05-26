@@ -279,7 +279,7 @@ std::string Aa::locate_portname_for_io_call(llvm::Value *strptr)
     konst = dyn_cast<ConstantArray>(val);
     if (konst != NULL)
       break;
-    
+
     if (!isa<User>(val))
       continue;
     

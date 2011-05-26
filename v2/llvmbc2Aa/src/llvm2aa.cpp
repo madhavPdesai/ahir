@@ -101,12 +101,20 @@ int main(int argc, char **argv)
                   << "\n";
     }
 
-    Passes.add(Aa::createLowerConstantExprPass());// constant expression to arithmetic
+    // this is an important pass.. constant expressions are
+    // lower to instructions.
+    Passes.add(Aa::createLowerConstantExprPass());
+
+    // not critical, but useful.
     Passes.add(createDeadCodeEliminationPass());
     Passes.add(createCFGSimplificationPass());
     Passes.add(createUnifyFunctionExitNodesPass());
+
+    // this produces a txt file of the transformed
+    // llvm byte code (post transformations)
     Passes.add(createPrintModulePass(&RawOut));
 
+    // the Aa generation pass.
     Pass *P = Aa::createModuleGenPass(ModuleListFile,WriteStorageInitializers);
     if(P != NULL)
       Passes.add(P);
