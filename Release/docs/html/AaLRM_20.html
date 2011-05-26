@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<!-- XML file produced from file: AaLRM.tex
+     using Hyperlatex v 2.9-in-waiting-rk (oct06) (c) Otfried Cheong
+     on Emacs 22.2.1, Thu May 26 16:58:51 2011 -->
+<head>
+<title>Untitled -- Syntax</title>
+
+<style type="text/css">
+.maketitle { align : center }
+div.abstract { margin-left: 20%; margin-right: 10%; }
+h3.abstract  { align : center }
+div.verse, div.quote, div.quotation {
+  margin-left : 10%; 
+  margin-right : 10%;
+}
+dt {font-weight: bold}
+</style>
+</head>
+<body>
+<table width="100%" cellpadding="0" cellspacing="2"><tr>
+<td bgcolor="#99ccff"><a href="AaLRM_21.html"><img border="0" alt="References" src="file:/usr/share/hyperlatex/icons/next.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM.html"><img border="0" alt="Top" src="file:/usr/share/hyperlatex/icons/up.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_19.html"><img border="0" alt="Examples" src="file:/usr/share/hyperlatex/icons/previous.png"/></a></td><td align="center" bgcolor="#99ccff" width="100%"><b>Syntax</b></td></tr></table>
+<h1>Syntax</h1>
+<p>The syntax for <b>Aa</b>&nbsp;follows the following
+principles
+</p>
+<ul><li>All keywords begin with the &#36; sign.
+</li><li>The region between &#123; and &#125; defines a new scope.
+</li><li>Statements are space separated (no semicolons at all).
+</li><li>Expressions are fully parenthitized.  Thus
+<i>(a + b)</i> is a legal expression, but <i>a+b</i> is not.
+</li></ul>
+<p>The parser is implemented using 
+an LL(k) parser (written as rules to be parsed by antlr2 <a href="AaLRM_21.html#ref:antlr2">[2]</a>).
+The grammar for the parser is (using the EBNF notation) given in 
+the html file <b>AaParser.html</b> which is part of this distribution. 
+The set of tokens recognized by the lexical analyzer (or lexer).
+is available in the html file <b>AaLexer.html</b>.
+</p>
+<hr />
+<table width="100%" cellpadding="0" cellspacing="2"><tr>
+<td bgcolor="#99ccff"><a href="AaLRM_21.html"><img border="0" alt="References" src="file:/usr/share/hyperlatex/icons/next.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM.html"><img border="0" alt="Top" src="file:/usr/share/hyperlatex/icons/up.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_19.html"><img border="0" alt="Examples" src="file:/usr/share/hyperlatex/icons/previous.png"/></a></td><td align="center" bgcolor="#99ccff" width="100%"><b>Syntax</b></td></tr></table></body></html>

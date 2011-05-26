@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<!-- XML file produced from file: AaLRM.tex
+     using Hyperlatex v 2.9-in-waiting-rk (oct06) (c) Otfried Cheong
+     on Emacs 22.2.1, Thu May 26 16:58:51 2011 -->
+<head>
+<title>Untitled -- Memory Spaces</title>
+
+<style type="text/css">
+.maketitle { align : center }
+div.abstract { margin-left: 20%; margin-right: 10%; }
+h3.abstract  { align : center }
+div.verse, div.quote, div.quotation {
+  margin-left : 10%; 
+  margin-right : 10%;
+}
+dt {font-weight: bold}
+</style>
+</head>
+<body>
+<table width="100%" cellpadding="0" cellspacing="2"><tr>
+<td bgcolor="#99ccff"><a href="AaLRM_18.html"><img border="0" alt="Foreign Modules" src="file:/usr/share/hyperlatex/icons/next.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM.html"><img border="0" alt="Top" src="file:/usr/share/hyperlatex/icons/up.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_8.html"><img border="0" alt="Expressions" src="file:/usr/share/hyperlatex/icons/previous.png"/></a></td><td align="center" bgcolor="#99ccff" width="100%"><b>Memory Spaces</b></td></tr></table>
+<h1>Memory Spaces</h1>
+<p>An <b>Aa</b>&nbsp;program can contain declarations to storage objects.  These
+storage objects need to be grouped into memory spaces using
+the following rule: two storage objects are put in the same
+memory space if there is a value in the program which
+is infected by (determined by) the values of pointers to the two objects.
+</p>
+<p>To understand this concept, consider the following
+example
+</p>
+<pre>
+$module [foo] 
+  $in (a: $uint&lt;32&gt;)
+  $out (b: $uint&lt;32&gt;) 
+$is
+{
+   $storage u: $uint&lt;32&gt;
+   $storage v: $uint&lt;32&gt;
+   $storage w: $uint&lt;32&gt;
+
+   w := a
+   ptr := @(u)
+   -&gt;(ptr) := w
+   ptr := @(v)
+   -&gt;ptr := u
+   b := u
+}
+</pre>
+<p>Now consider the object <b>ptr</b>, which can hold a value which
+is a pointer to either <b>u</b> or a pointer to <b>v</b>.  Thus,
+<b>u</b> and <b>v</b> must belong to the same memory space.
+However, <b>w</b> can sit in a memory space by itself.  The
+store accesses implied by the <i>-&gt;(ptr)</i> will point to the
+memory space which contains <b>u</b> and <b>v</b>.
+</p>
+<p>What should we do in the following case?
+</p>
+<pre>
+$module [foo]
+   $in (a : $uint&lt;32&gt;)
+   $out (b: $uint&lt;32&gt;)
+$is
+{
+   $storage u: $uint&lt;32&gt; 
+   $storage ptr: $uint&lt;32&gt;
+   ptr := ($bitcast ($pointer&lt;$uint&lt;32&gt; &gt;) a)
+   tmp := -&gt;(ptr)
+   ptr := @(u)
+   -&gt;(ptr) := tmp
+   b := u
+}
+</pre>
+<p>In this case, <b>ptr</b> takes the value of <i>a</i>,
+and as a pointer, it must point to 
+an <b>external</b> object.  Since ptr can 
+point to this external object and also to <b>u</b>,
+the external object and <b>u</b> must be kept in
+the same memory space.  In this case, the external
+object needs
+to be made internal, and moved <b>inside</b> the system.  
+This is done by the <b>AaLinkExtMem</b> utility
+which is described in a separate document.
+</p>
+<hr />
+<table width="100%" cellpadding="0" cellspacing="2"><tr>
+<td bgcolor="#99ccff"><a href="AaLRM_18.html"><img border="0" alt="Foreign Modules" src="file:/usr/share/hyperlatex/icons/next.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM.html"><img border="0" alt="Top" src="file:/usr/share/hyperlatex/icons/up.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_8.html"><img border="0" alt="Expressions" src="file:/usr/share/hyperlatex/icons/previous.png"/></a></td><td align="center" bgcolor="#99ccff" width="100%"><b>Memory Spaces</b></td></tr></table></body></html>

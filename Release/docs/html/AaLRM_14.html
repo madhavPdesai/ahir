@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<!-- XML file produced from file: AaLRM.tex
+     using Hyperlatex v 2.9-in-waiting-rk (oct06) (c) Otfried Cheong
+     on Emacs 22.2.1, Thu May 26 16:58:51 2011 -->
+<head>
+<title>Untitled -- Unary expressions</title>
+
+<style type="text/css">
+.maketitle { align : center }
+div.abstract { margin-left: 20%; margin-right: 10%; }
+h3.abstract  { align : center }
+div.verse, div.quote, div.quotation {
+  margin-left : 10%; 
+  margin-right : 10%;
+}
+dt {font-weight: bold}
+</style>
+</head>
+<body>
+<table width="100%" cellpadding="0" cellspacing="2"><tr>
+<td bgcolor="#99ccff"><a href="AaLRM_15.html"><img border="0" alt="Binary expressions" src="file:/usr/share/hyperlatex/icons/next.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_8.html"><img border="0" alt="Expressions" src="file:/usr/share/hyperlatex/icons/up.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_13.html"><img border="0" alt="Address-of expressions" src="file:/usr/share/hyperlatex/icons/previous.png"/></a></td><td align="center" bgcolor="#99ccff" width="100%"><b>Unary expressions</b></td></tr></table>
+<h2>Unary expressions</h2>
+<p>These can be of three types:
+</p>
+<ul><li>The <b>cast</b>
+expression is of the form
+<pre>
+($cast (&lt;type-spec&gt;)  &lt;expression&gt;)
+</pre> <p>For example
+</p>
+<pre>
+($cast ($uint&lt;10&gt;) ../:a)
+</pre>
+<p>The cast expression takes the value of the
+specified expression and converts it to a value
+of the specified type.  This is equivalent
+to a type-cast in <b>C</b>, as for example
+in
+</p>
+<pre>
+float a;
+int b = (int) a;
+</pre>
+</li><li>The <b>bitcast</b>
+expression is of the form
+<pre>
+($bitcast (&lt;type-spec&gt;)  &lt;expression&gt;)
+</pre> <p>For example
+</p>
+<pre>
+($bitcast ($uint&lt;10&gt;) a)
+</pre>
+<p>The bitcast expression takes takes the bits
+corresponding to the value of the specified expression
+and treats them as being of the specified cast type.
+This is similar to the following in <b>C</b>
+</p>
+<pre>
+float a;
+int b = *((int*) &amp;a);
+</pre>
+<p>except that in <b>Aa</b>&nbsp;, the destination type need not
+be the same size as the source type (higher
+order bits are truncated or padded with 0
+as necessary).
+</li><li>The <b>bit-wise complement</b> expression is of the form
+<pre>
+( ~ &lt;expression&gt; )
+</pre>
+<p>The symbol for the complement is the same
+as the one used in the C programming language,
+and the evaluation of the expression proceeds in the
+usual way.
+</p>
+</li></ul>
+<p>The parentheses around a unary expression are
+<b>required</b>.
+</p>
+<hr />
+<table width="100%" cellpadding="0" cellspacing="2"><tr>
+<td bgcolor="#99ccff"><a href="AaLRM_15.html"><img border="0" alt="Binary expressions" src="file:/usr/share/hyperlatex/icons/next.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_8.html"><img border="0" alt="Expressions" src="file:/usr/share/hyperlatex/icons/up.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_13.html"><img border="0" alt="Address-of expressions" src="file:/usr/share/hyperlatex/icons/previous.png"/></a></td><td align="center" bgcolor="#99ccff" width="100%"><b>Unary expressions</b></td></tr></table></body></html>

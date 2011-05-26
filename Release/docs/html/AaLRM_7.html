@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<!-- XML file produced from file: AaLRM.tex
+     using Hyperlatex v 2.9-in-waiting-rk (oct06) (c) Otfried Cheong
+     on Emacs 22.2.1, Thu May 26 16:58:51 2011 -->
+<head>
+<title>Untitled -- Types</title>
+
+<style type="text/css">
+.maketitle { align : center }
+div.abstract { margin-left: 20%; margin-right: 10%; }
+h3.abstract  { align : center }
+div.verse, div.quote, div.quotation {
+  margin-left : 10%; 
+  margin-right : 10%;
+}
+dt {font-weight: bold}
+</style>
+</head>
+<body>
+<table width="100%" cellpadding="0" cellspacing="2"><tr>
+<td bgcolor="#99ccff"><a href="AaLRM_8.html"><img border="0" alt="Expressions" src="file:/usr/share/hyperlatex/icons/next.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM.html"><img border="0" alt="Top" src="file:/usr/share/hyperlatex/icons/up.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_6.html"><img border="0" alt="Scoping Rules" src="file:/usr/share/hyperlatex/icons/previous.png"/></a></td><td align="center" bgcolor="#99ccff" width="100%"><b>Types</b></td></tr></table>
+<h1>Types</h1>
+<p>Types in <b>Aa</b>&nbsp;can be either scalar types or composite types.
+</p>
+<p>Scalar types can be one of 
+</p>
+<ul><li>Unsigned integers:  An unsigned integer type
+has a width parameter and is specified as 
+<pre>
+$uint&lt;width&gt;
+</pre>
+<p>The width parameter can be any positive number.
+Values corresponding to this type are to be
+viewed as unsigned integers represented by 
+a binary sequence of the specified width.
+</li><li>Signed integers:  A signed integer type
+has a width parameter and is specified as 
+<pre>
+$int&lt;width&gt;
+</pre>
+<p>The width parameter can be any positive number.
+Values corresponding to this type are to be
+viewed as integers maintained in the
+two-s complement form  by 
+a binary sequence of the specified width.
+</li><li>Pointers:  A pointer is an unsigned
+integer with a default pointer width
+(set to 32 for now), which specified the
+type of object to which it points.
+For example
+<pre>
+$pointer&lt; $uint&lt;32&gt; &gt; 
+</pre>
+<p>is a pointer which refers to a storage
+object of type </p>
+<pre>$uint&lt;32&gt;</pre>
+</li><li>Floats: A float is parametrized by
+two integers, the width of the exponent,
+and the width of the mantissa.  
+The specification is
+<pre>
+$float&lt;exponent,mantissa&gt;
+</pre> <p>where the exponent and mantissa must be positive
+integers.  The float is represented by 
+a word with <i>exponent+mantissa+1</i> bits
+(with the additional bit needed for the sign).
+The standard IEEE 754 float and double
+precision representations correspond
+to
+</p>
+<pre>
+$float&lt;8,23&gt; 
+</pre>
+<p>and
+</p>
+<pre>
+$float&lt;11,52&gt; 
+</pre>
+<p>respectively.  Currently, these are the
+only float types that are supported.
+</p>
+</li></ul>
+<p>Composite types in <b>Aa</b>&nbsp;can be either
+array types or record types.
+</p>
+<ul><li>Array types in <b>Aa</b>&nbsp;have the form
+<pre>
+$array [d1][d2]...[dn] $of &lt;element-type-spec&gt;
+</pre> <p>The values <i> d1,d2, ...dn</i> must
+be positive integers, and element-type-spec
+must refer to a type.
+For exampe, 
+</p>
+<pre>
+$array [10][10] of $array [10] $of $uint&lt;32&gt;
+</pre>
+<p>is an two-dimensional array type whose
+elements are one dimensional arrays of 32-bit
+unsigned integers.
+</li><li>Record types in <b>Aa</b>&nbsp;have the form
+<pre>
+$record &lt;type-1&gt; &lt;type-2&gt; ... &lt;type-n&gt;
+</pre>
+<p>An element of such a record type is
+an aggregate whose first element is of type
+type-1, second element is of type type-2 and so on.
+For example:
+</p>
+<pre>
+$record &lt;$uint&lt;32&gt; &gt; &lt;$array [10] $of $uint&lt;32&gt; &gt; 
+</pre>
+</li><li>Named record types are used to avoid the circular
+reference problem (for example, when a record has a pointer to
+itself).
+<pre>
+$record [myrec] &lt;$uint&lt;32&gt; &gt;  &lt;$pointer&lt;myrec&gt; &gt;
+</pre>
+<p>defines a record type with name myrec, one of whose
+fields is a pointer to myrec.
+</p>
+</li></ul>
+<hr />
+<table width="100%" cellpadding="0" cellspacing="2"><tr>
+<td bgcolor="#99ccff"><a href="AaLRM_8.html"><img border="0" alt="Expressions" src="file:/usr/share/hyperlatex/icons/next.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM.html"><img border="0" alt="Top" src="file:/usr/share/hyperlatex/icons/up.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_6.html"><img border="0" alt="Scoping Rules" src="file:/usr/share/hyperlatex/icons/previous.png"/></a></td><td align="center" bgcolor="#99ccff" width="100%"><b>Types</b></td></tr></table></body></html>

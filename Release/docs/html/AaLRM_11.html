@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<!-- XML file produced from file: AaLRM.tex
+     using Hyperlatex v 2.9-in-waiting-rk (oct06) (c) Otfried Cheong
+     on Emacs 22.2.1, Thu May 26 16:58:51 2011 -->
+<head>
+<title>Untitled -- Indexed object references</title>
+
+<style type="text/css">
+.maketitle { align : center }
+div.abstract { margin-left: 20%; margin-right: 10%; }
+h3.abstract  { align : center }
+div.verse, div.quote, div.quotation {
+  margin-left : 10%; 
+  margin-right : 10%;
+}
+dt {font-weight: bold}
+</style>
+</head>
+<body>
+<table width="100%" cellpadding="0" cellspacing="2"><tr>
+<td bgcolor="#99ccff"><a href="AaLRM_12.html"><img border="0" alt="Pointer de-reference expressions" src="file:/usr/share/hyperlatex/icons/next.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_8.html"><img border="0" alt="Expressions" src="file:/usr/share/hyperlatex/icons/up.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_10.html"><img border="0" alt="Simple object references" src="file:/usr/share/hyperlatex/icons/previous.png"/></a></td><td align="center" bgcolor="#99ccff" width="100%"><b>Indexed object references</b></td></tr></table>
+<h2>Indexed object references</h2>
+<p>These have the form
+</p>
+<pre>
+&lt;scope-specifier&gt;:&lt;root-object-specifier&gt;[i1][i2]...[im]
+</pre>
+<p>The scope and root-object-specifier are interpreted in the
+same manner as before.  The indices <i>i1,i2, ...im</i>
+must be non-negative integers.   The 
+object-specifier must be one of
+</p>
+<ul><li>A storage object whose type is composite.  For
+example, if <i>a</i> is a storage object whose
+type is a two-dimensional composite type, then 
+<pre>
+a[0][1]
+</pre>
+<p>is interpreted in the usual manner.  Thus, when
+the root-object-specifier is a declared storage
+object, the indexed expression evaluates to an
+element of the object.
+</li><li>A scalar object of type pointer.  For example if <i>ptr</i> is a pointer
+to an object of type <i>T</i>, then
+<pre>
+ptr[1]
+</pre>
+<p>is a pointer which will point to the adjacent object
+of type T if we assume that ptr points to an array
+of objects of type <i>T</i>.  This is similar to the following
+evaluation in <b>C</b>
+</p>
+<pre>
+int* ptr;     // ptr points to some int a[i].
+ptr = ptr[1]  // ptr now points to a[i+1] 
+</pre>
+<p>Now, if type T is a one-dimensional array type,
+say
+</p>
+<pre>
+$array [10] of $uint&lt;32&gt;
+</pre>
+<p>then the following expression makes sense
+</p>
+<pre>
+ptr[1][2]
+</pre>
+<p>and is similar to the following evaluation in <b>C</b>
+</p>
+<pre>
+int a[10][10];
+ptr = &amp;a[0]      // points to a[0] which is
+                 // array of 10 integers
+ptr = ptr[1][2]; // ptr points to a[1][2]
+</pre> 
+<p>Thus, the evaluation of an indexed expression
+whose root is a pointer evaluates to a
+pointer of some element type.
+</p>
+</li></ul>
+<hr />
+<table width="100%" cellpadding="0" cellspacing="2"><tr>
+<td bgcolor="#99ccff"><a href="AaLRM_12.html"><img border="0" alt="Pointer de-reference expressions" src="file:/usr/share/hyperlatex/icons/next.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_8.html"><img border="0" alt="Expressions" src="file:/usr/share/hyperlatex/icons/up.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_10.html"><img border="0" alt="Simple object references" src="file:/usr/share/hyperlatex/icons/previous.png"/></a></td><td align="center" bgcolor="#99ccff" width="100%"><b>Indexed object references</b></td></tr></table></body></html>

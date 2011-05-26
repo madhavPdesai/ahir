@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<!-- XML file produced from file: AaLRM.tex
+     using Hyperlatex v 2.9-in-waiting-rk (oct06) (c) Otfried Cheong
+     on Emacs 22.2.1, Thu May 26 16:58:51 2011 -->
+<head>
+<title>Untitled -- Scoping Rules</title>
+
+<style type="text/css">
+.maketitle { align : center }
+div.abstract { margin-left: 20%; margin-right: 10%; }
+h3.abstract  { align : center }
+div.verse, div.quote, div.quotation {
+  margin-left : 10%; 
+  margin-right : 10%;
+}
+dt {font-weight: bold}
+</style>
+</head>
+<body>
+<table width="100%" cellpadding="0" cellspacing="2"><tr>
+<td bgcolor="#99ccff"><a href="AaLRM_7.html"><img border="0" alt="Types" src="file:/usr/share/hyperlatex/icons/next.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM.html"><img border="0" alt="Top" src="file:/usr/share/hyperlatex/icons/up.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_3.html"><img border="0" alt="Statements" src="file:/usr/share/hyperlatex/icons/previous.png"/></a></td><td align="center" bgcolor="#99ccff" width="100%"><b>Scoping Rules</b></td></tr></table>
+<h1>Scoping Rules</h1>
+<p>An <b>Aa</b>&nbsp;program is made of modules which in turn contain statements
+and so on.  The program thus has a hierarchy of scopes 
+(except for the program, each scope is delimited by &#123; and &#125;) with each
+scope being contained in another (except for the program itself,
+which is not contained in any scope).
+</p>
+<p>The rules for scoping are as follows:
+</p>
+<ol><li>A declared variable defined in a scope is visible
+in all descendent scopes. 
+</li><li>A reference to a variable <i>b</i> in a scope X is resolved by checking
+whether the variable is defined in that scope, and if not found there,
+by checking in the scope that contains the scope X, and so on.
+</li><li>A scope can read from variables that are defined in descendant
+scopes.  
+</li><li>A scope can read from variables that are defined in ancestor scopes.
+</li><li>A scope can only write to one of the following:
+<ul><li>an implicit variable defined in the scope.
+</li><li>a storage or pipe variable defined in the scope or an ancestor
+of the scope.
+</li><li>an output argument of a module of which the scope is a descendant.
+In this case, there can be at most one statement in the entire module
+which writes to this output argument.
+</li></ul>
+</li></ol>
+<p>A variable reference in a statement may be specified 
+as follows
+</p>
+<pre>
+a            look for variable a in current scope; 
+             if not found look in the parent.
+
+:a           same as the previous case
+
+../:a        look for variable a starting from the parent of
+             the current scope.
+
+%p:a         look for variable a starting from the child scope 
+             with label p (child scope of the current scope).
+
+../../:a     look for variable starting from the parent of
+             the parent of the current scope.
+
+%p%q:a       look for variable starting from the child scope 
+             with label q of the child scope with label p of 
+             the current scope
+
+a[10]        look for a storage variable a defined in the 
+             current scope.  If not found, look for it in
+             the parent scope, and so on.  If eventually found, 
+             access the corresponding element of the composite
+             object.
+</pre>
+<p>Thus, a generic variable reference has the form 
+</p>
+<pre> 
+    scope-reference : variable-reference 
+</pre> 
+<p>and the scoping rules forbid a scope from accessing variables
+which are not defined in either an ancestor or a descendant
+of the scope.
+</p>
+<hr />
+<table width="100%" cellpadding="0" cellspacing="2"><tr>
+<td bgcolor="#99ccff"><a href="AaLRM_7.html"><img border="0" alt="Types" src="file:/usr/share/hyperlatex/icons/next.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM.html"><img border="0" alt="Top" src="file:/usr/share/hyperlatex/icons/up.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_3.html"><img border="0" alt="Statements" src="file:/usr/share/hyperlatex/icons/previous.png"/></a></td><td align="center" bgcolor="#99ccff" width="100%"><b>Scoping Rules</b></td></tr></table></body></html>

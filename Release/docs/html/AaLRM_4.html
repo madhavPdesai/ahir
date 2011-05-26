@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<!-- XML file produced from file: AaLRM.tex
+     using Hyperlatex v 2.9-in-waiting-rk (oct06) (c) Otfried Cheong
+     on Emacs 22.2.1, Thu May 26 16:58:51 2011 -->
+<head>
+<title>Untitled -- Complete Statements</title>
+
+<style type="text/css">
+.maketitle { align : center }
+div.abstract { margin-left: 20%; margin-right: 10%; }
+h3.abstract  { align : center }
+div.verse, div.quote, div.quotation {
+  margin-left : 10%; 
+  margin-right : 10%;
+}
+dt {font-weight: bold}
+</style>
+</head>
+<body>
+<table width="100%" cellpadding="0" cellspacing="2"><tr>
+<td bgcolor="#99ccff"><a href="AaLRM_5.html"><img border="0" alt="Complete Block Statements" src="file:/usr/share/hyperlatex/icons/next.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_3.html"><img border="0" alt="Statements" src="file:/usr/share/hyperlatex/icons/up.png"/></a></td><td bgcolor="#99ccff"><img alt="" src="file:/usr/share/hyperlatex/icons/blank.png"/></td><td align="center" bgcolor="#99ccff" width="100%"><b>Complete Statements</b></td></tr></table>
+<h2>Complete Statements</h2>
+<p>Complete statements can be one of the following:
+</p>
+<ul><li>An <b>assignment</b> statement is of the form
+<pre>
+target-ref := expression
+</pre>
+<p>where <em>target-ref</em> either specifies a declared object
+or an undeclared name.  If it is an undeclared name, then
+it is an implicit variable that is attached to the
+assignment statement.  No other statement can write to this
+variable, but any statement can read from this variable
+subject to scoping rules.  Thus, every implicit variable
+is such that exactly one statement defines its value.
+When control flow reaches an assignment statement, it
+evaluates the expression, updates the value of the target
+and passes the control flow forward (we will see what this
+means in the sequel).
+Some examples of simple statements are 
+</p>
+<pre>
+a  :=  (~b)
+b  :=   (c + (d + e))
+</pre>
+<p>etc.   Expressions can be <em>unary</em>,
+<em>binary</em> or <em>ternary</em>, and are
+described in detail in Section <a href="AaLRM_8.html">*</a>.
+Details of the syntax are provided in 
+Section <a href="AaLRM_20.html">*</a>.
+</li><li>A <b>call</b> statement is of the form
+<pre>
+call-spec module-name input-arguments output-arguments
+</pre>
+<p>The call statement thus specifies a module to which control flow
+is to be passed.  The call statement may itself define new implicit
+variables through its specified targets (and thus is the only
+statement that can modify these newly defined implicit variables).
+When control flow reaches the call statement, it forwards the
+token to the called module, and finishes when the token exits
+the called module.  Recursive calls and cyclical dependencies between
+modules through call statements are not permitted in the <b>Aa</b>&nbsp;language.
+Here is an example of a call statement
+</p>
+<pre>
+// pass control to a module named foo
+// foo has two inputs and three outputs
+$call foo (p q)  (r s t)
+</pre>
+<p>Here <i>p,q,r,s,t</i> can be expressions.
+</p>
+<p>More details of the syntax are provided in 
+Section <a href="AaLRM_20.html">*</a>.
+</li><li>The <b>null</b> statement does nothing, and just passes the
+token onwards.  This is how it looks like
+<pre>
+$null
+</pre>
+</li></ul>
+<hr />
+<table width="100%" cellpadding="0" cellspacing="2"><tr>
+<td bgcolor="#99ccff"><a href="AaLRM_5.html"><img border="0" alt="Complete Block Statements" src="file:/usr/share/hyperlatex/icons/next.png"/></a></td><td bgcolor="#99ccff"><a href="AaLRM_3.html"><img border="0" alt="Statements" src="file:/usr/share/hyperlatex/icons/up.png"/></a></td><td bgcolor="#99ccff"><img alt="" src="file:/usr/share/hyperlatex/icons/blank.png"/></td><td align="center" bgcolor="#99ccff" width="100%"><b>Complete Statements</b></td></tr></table></body></html>
