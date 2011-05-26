@@ -439,22 +439,18 @@ void send_packet_and_wait_for_response(char* buffer, int send_len, char* server_
       bcopy((char *)server->h_addr,(char *) &serv_addr.sin_addr.s_addr,server->h_length);
       serv_addr.sin_port = htons(server_port_number);
 
-#ifdef DEBUG      
       fprintf(stderr, "Info: connecting to server %s on port %d .......... \n",
 	      server_host_address,
 	      server_port_number);
-#endif
 
       n =-1;
 
       while(n == -1)
 	n=connect(sockfd,(struct sockaddr*) &serv_addr,sizeof(serv_addr));
       
-#ifdef DEBUG      
       fprintf(stderr, "Info: successfully connected to server %s on port %d .......... \n",
 	      server_host_address,
 	      server_port_number);
-#endif
 
 
       while(1)

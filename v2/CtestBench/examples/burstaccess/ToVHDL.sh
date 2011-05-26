@@ -18,7 +18,7 @@ Aa2VC -O -I mempool -C prog.o.linked.aa | vcFormat > prog.o.linked.aa.vc
 # arguments, but can only listen/send on pipes).
 #
 # uncomment next line if you are using modelsim
-# vc2vhdl -C -s modelsim -T io_module -f prog.o.linked.aa.vc | vhdlFormat > prog_o_linked_aa_vc.vhdl
+ vc2vhdl -C -s modelsim -T io_module -f prog.o.linked.aa.vc | vhdlFormat > prog_o_linked_aa_vc.vhdl
 # comment next line if you are using modelsim
-vc2vhdl -C -s ghdl -T io_module -f prog.o.linked.aa.vc | vhdlFormat > prog_o_linked_aa_vc.vhdl
+# vc2vhdl -C -s ghdl -T io_module -f prog.o.linked.aa.vc | vhdlFormat > prog_o_linked_aa_vc.vhdl
 

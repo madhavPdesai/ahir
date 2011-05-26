@@ -42,7 +42,7 @@ package Subprograms is
   function To_SLV( x : Unsigned) return std_logic_vector;
   
   function To_SLV (x : StdLogicArray2D) return std_logic_vector; 
-  --function To_SLV_Shuffle(x : StdLogicArray2D) return std_logic_vector;
+  function To_SLV_Shuffle(x : StdLogicArray2D) return std_logic_vector;
 
   function To_ISLV(inp: ApInt) return IStdLogicVector;
   function To_ISLV(inp: ApFloat) return IStdLogicVector;
@@ -54,7 +54,7 @@ package Subprograms is
   function To_StdLogicArray2D( inp: std_logic_vector) return StdLogicArray2D;
   function To_StdLogicArray2D( inp: std_logic_vector; word_size: integer) return StdLogicArray2D;
 
-  --function To_StdLogicArray2D_Shuffle( inp: std_logic_vector; word_size: integer) return StdLogicArray2D;
+  function To_StdLogicArray2D_Shuffle( inp: std_logic_vector; word_size: integer) return StdLogicArray2D;
 
   function To_ApIntArray(inp : StdLogicArray2D) return ApIntArray;
   function To_ApIntArray (inp : ApInt)   return ApIntArray;
@@ -478,19 +478,22 @@ package body Subprograms is
   -----------------------------------------------------------------------------
 
   -----------------------------------------------------------------------------
-  --function To_SLV_Shuffle(x : StdLogicArray2D) return std_logic_vector is
-    --variable ret_var  : std_logic_vector((x'length(1)*x'length(2))-1 downto 0);
-    --variable lx : StdLogicArray2D(x'length(1)-1 downto 0, x'length(2)-1 downto 0);
-  --begin
-    --lx := x;
-    --for I in (x'length(1)/2)-1 downto 0 loop
-      --for J in x'length(2)-1 downto 0 loop
-        --ret_var((2*I*x'length(2))+J) := lx(I,J);
-        --ret_var((((2*I)+1)*x'length(2))+J) := lx(I+(x'length(1)/2),J);
-      --end loop;  -- J
-    --end loop;  -- I
-    --return(ret_var);
-  --end To_SLV_Shuffle;
+  function To_SLV_Shuffle(x : StdLogicArray2D) return std_logic_vector is
+    variable ret_var  : std_logic_vector((x'length(1)*x'length(2))-1 downto 0);
+    variable lx : StdLogicArray2D(x'length(1)-1 downto 0, x'length(2)-1 downto 0);
+    variable I : integer;
+  begin
+    lx := x;
+    I := 0;
+    while I < lx'length(1)/2 loop
+      for J in lx'high(2) downto lx'low(2) loop
+        ret_var((2*I*x'length(2))+J) := lx(I,J);
+        ret_var((((2*I)+1)*x'length(2))+J) := lx(I+(x'length(1)/2),J);
+      end loop;  -- J
+      I := I + 1;
+    end loop;  -- I
+    return(ret_var);
+  end To_SLV_Shuffle;
   
   -----------------------------------------------------------------------------
 
@@ -566,18 +569,21 @@ package body Subprograms is
 
   -----------------------------------------------------------------------------
   
-  --function To_StdLogicArray2D_Shuffle( inp: std_logic_vector; word_size: integer) return StdLogicArray2D is
-    --variable ret_var : StdLogicArray2D((inp'length/word_size)-1 downto 0, word_size-1 downto 0);
-    --alias linp : std_logic_vector(inp'length-1 downto 0) is inp;
-  --begin
-    --for I in (ret_var'length(1)/2)-1 downto 0 loop
-      --for J in word_size-1 downto 0 loop
-        --ret_var(I,J) := linp((2*I*word_size)+J);
-        --ret_var(I+ret_var'length(1),J) := linp((((2*I)+1)*word_size) + J);
-      --end loop;  -- J
-    --end loop;  -- I
-    --return(ret_var);
-  --end To_StdLogicArray2D_Shuffle;
+  function To_StdLogicArray2D_Shuffle( inp: std_logic_vector; word_size: integer) return StdLogicArray2D is
+    variable ret_var : StdLogicArray2D((inp'length/word_size)-1 downto 0, word_size-1 downto 0);
+    alias linp : std_logic_vector(inp'length-1 downto 0) is inp;
+    variable I : integer;
+  begin
+    I := 0;
+    while I <  (ret_var'length(1)/2)-1 loop
+      for J in word_size-1 downto 0 loop
+        ret_var(I,J) := linp((2*I*word_size)+J);
+        ret_var(I+ret_var'length(1),J) := linp((((2*I)+1)*word_size) + J);
+      end loop;  -- J
+      I := I + 1;
+    end loop;  -- I
+    return(ret_var);
+  end To_StdLogicArray2D_Shuffle;
 
 
   -----------------------------------------------------------------------------

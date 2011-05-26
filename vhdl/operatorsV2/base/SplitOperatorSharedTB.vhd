@@ -167,7 +167,7 @@ begin
      -- component instantiations
      --------------------------------------------------------------------------
      -- insert stuff which converts 2D array to SLV and back..
-     din_2_slv <= To_SLV_Shuffle(din_2);
+     din_2_slv <= To_SLquitV_Shuffle(din_2);
      dout_2 <= To_StdLogicArray2D(dout_2_slv, output_data_width);
      
      op2: SplitOperatorShared
