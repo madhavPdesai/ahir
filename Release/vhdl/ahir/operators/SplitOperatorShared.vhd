@@ -11,25 +11,25 @@ use ahir.BaseComponents.all;
 entity SplitOperatorShared is
     generic
     (
-      operator_id   : string;          -- operator id
+      operator_id   : string := "ApIntAdd";          -- operator id
       input1_is_int : Boolean := true; -- false means float
       input1_characteristic_width : integer := 0; -- characteristic width if input1 is float
       input1_mantissa_width       : integer := 0; -- mantissa width if input1 is float
-      iwidth_1      : integer;    -- width of input1
+      iwidth_1      : integer := 4;    -- width of input1
       input2_is_int : Boolean := true; -- false means float
       input2_characteristic_width : integer := 0; -- characteristic width if input2 is float
       input2_mantissa_width       : integer := 0; -- mantissa width if input2 is float
-      iwidth_2      : integer;    -- width of input2
-      num_inputs    : integer := 2;    -- can be 1 or 2.
+      iwidth_2      : integer := 0;    -- width of input2
+      num_inputs    : integer := 1;    -- can be 1 or 2.
       output_is_int : Boolean := true;  -- false means that the output is a float
       output_characteristic_width : integer := 0;
       output_mantissa_width       : integer := 0;
-      owidth        : integer;          -- width of output.
-      constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
-      use_constant  : boolean := false;
+      owidth        : integer := 4;          -- width of output.
+      constant_operand : std_logic_vector := "0001"; -- constant operand.. (it is always the second operand)
+      use_constant  : boolean := true;
       zero_delay    : boolean := false;
       no_arbitration: boolean := true;
-      num_reqs : integer -- how many requesters?
+      num_reqs : integer := 3 -- how many requesters?
     );
   port (
     -- req/ack follow level protocol
@@ -67,6 +67,7 @@ architecture Vanilla of SplitOperatorShared is
   signal itag,otag : std_logic_vector(tag_length-1 downto 0);
   signal ireq,iack, oreq, oack: std_logic;
 
+  constant debug_flag : boolean := false;
   
 begin  -- Behave
   assert ackL'length = reqL'length report "mismatched req/ack vectors" severity error;
@@ -74,8 +75,10 @@ begin  -- Behave
   assert (not zero_delay) or use_zero_delay
     report "Zero delay flag ignored for shared operators which are not exclusive " severity warning;
 
-  assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
+  DebugGen: if debug_flag generate 
+    assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
     report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
+  end generate DebugGen;
   
   imux: InputMuxBase
   	generic map(iwidth => iwidth*num_reqs,

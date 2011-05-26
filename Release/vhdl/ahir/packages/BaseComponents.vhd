@@ -53,6 +53,15 @@ package BaseComponents is
 	reset: in std_logic);
   end component;
 
+  component auto_run 
+  	generic (
+    		use_delay : boolean);
+  	port (clk   : in  std_logic;
+        	reset : in  std_logic;
+        	start: out std_logic;
+        	fin: in std_logic);
+  end component;
+
   -----------------------------------------------------------------------------
   -- miscellaneous
   -----------------------------------------------------------------------------
@@ -829,5 +838,43 @@ package BaseComponents is
       -- synchronous reset, active high
       reset : in std_logic);
   end component StoreCompleteShared;
+
+
+  -----------------------------------------------------------------------------
+  -- protocol translation, priority encoding
+  -----------------------------------------------------------------------------
+  component Pulse_To_Level_Translate_Entity 
+    generic ( suppr_imm_ack : boolean := true);
+    port( rL : in boolean;
+          rR : out std_logic;
+          aL : out boolean;
+          aR : in std_logic;
+          en : out std_logic;
+          clk : in std_logic;
+          reset : in std_logic);
+  end component;
+
+  component Request_Priority_Encode_Entity
+    generic (
+      num_reqs : integer := 1);
+    port (
+      clk,reset : in std_logic;
+      reqR : in std_logic_vector;
+      ackR: out std_logic_vector;
+      reqF_in : in std_logic_vector;
+      reqF_out : out std_logic_vector;
+      req_s : out std_logic;
+      ack_s : in std_logic);
+  end component;
+
+
+  -----------------------------------------------------------------------------
+  -- BinaryEncoder: introduced because Xilinx ISE 13.1 barfs on To_Unsigned
+  -----------------------------------------------------------------------------
+  component BinaryEncoder
+    generic (iwidth: integer := 3; owidth: integer := 3);
+    port(din: in std_logic_vector(iwidth-1 downto 0);
+         dout: out std_logic_vector(owidth-1 downto 0));
+  end component;
 
 end BaseComponents;

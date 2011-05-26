@@ -7922,14 +7922,18 @@ begin --
       write_data => outpipe_pipe_write_data,
       clk => clk,reset => reset -- 
     ); -- 
-  MemorySpace_memory_space_0: register_bank -- 
+  MemorySpace_memory_space_0: memory_subsystem -- 
     generic map(-- 
       num_loads => 25,
       num_stores => 17,
       addr_width => 5,
       data_width => 8,
       tag_width => 1,
-      num_registers => 32
+      number_of_banks => 2,
+      mux_degree => 100,
+      demux_degree => 100,
+      base_bank_addr_width => 10,
+      base_bank_data_width => 8
       ) -- 
     port map(-- 
       lr_addr_in => memory_space_0_lr_addr,

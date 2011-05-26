@@ -12,19 +12,40 @@ extern char *optarg;
 int opt;
 int option_index = 0;
 
-struct option long_options[] = {
-    {"relaxed-component-visibility", 0, 0, 0},
-    {"depend", required_argument, 0, 0},
-    {0, 0, 0, 0}
-};
-
-
-
-
 void Handle_Segfault(int signal)
 {
   AaRoot::Error("in AaLinkExtMem: segmentation fault! giving up!!", NULL);
   exit(-1);
+}
+
+void Usage_AaLinkExtMem()
+{
+
+  cerr << "brief description: reads source Aa program, adds external-memory linkages,\n and writes out modified Aa program,  " << endl;
+  cerr << "Usage: AaLinkExtMem [-v] [-I <ext-mem-size>] <filename> (<filename>) ... " << endl;
+  cerr << " options " << endl;
+  cerr <<  " -v (or --verbose): verbose, generate lots of messages about whats happening." << endl
+       <<  " -h (or --help): print help and quit.. " << endl
+       <<  " -I (or --internal_ext_mem)  <mem-size> : all orphan memory references (which cannot be resolved" << endl
+       <<  "              as pointing to an internally declared object in ths program) are assumed to" << endl
+       <<  "              point to an external memory object whose size is mem-size bytes.  This external" << endl
+       <<  "              memory object will be declared in the output program." << endl
+       <<  "  Note: if -I is absent, all orphan memory references are directed outside the system " << endl
+       <<  "        and need to be served by the outside world.  Further, the program will throw an " <<  endl
+       <<  "        error if a pointer in the program can point to an internally declared object as well as to " << endl
+       <<  "        an external object." << endl;
+  cerr <<  " -E (or --ext_mem_pool_name) <mem-pool-name>: the external memory is viewed as an object " << endl
+       <<  "              whose name is <mem-pool-name>.  This object is considered as an array of bytes" << endl
+       <<  "              whose length needs to be specified with the -I option." << endl;
+  cerr << endl;
+  cerr << "example: " << endl
+       << "    AaLinkExtMem -I 1024 -E mempool file1.aa  file2.aa" << endl;
+  cerr << "file1.aa and file2.aa will be parsed in order, the Aa program will " << endl
+       << "be analyzed for its memory structure.  The external memory object will be named  " << endl
+       << "mempool and will be considered as an array of 1024 bytes.  Access routines to this memory" << endl
+       << "object will be auto-generated in the output Aa file.  The external world can access this" << endl
+       << "memory object as a byte-addressable array with base address 0." << endl;
+
 }
 
 int main(int argc, char* argv[])
@@ -34,9 +55,22 @@ int main(int argc, char* argv[])
 
   if(argc < 2)
     {
-      cerr << "Usage: AaLinkExtMem [-v] [-I <ext-mem-size>] [-E <ext-mem-obj-name>]  <filename> (<filename>) ... " << endl;
+      Usage_AaLinkExtMem();
       return(1);
     }
+
+
+  // command-line parsing
+  struct option long_options[] =
+    {
+      /* These options set a flag. */
+      {"verbose", no_argument, 0, 'v'},
+      {"help", no_argument, 0, 'h'},
+      {"optimize", no_argument,0, 'O'},
+      {"internal_ext_mem",  required_argument, 0, 'I'},
+      {"ext_mem_pool_name",  required_argument, 0, 'E'},
+      {0, 0, 0, 0}
+    };
 
 
   string fname;
@@ -73,7 +107,7 @@ int main(int argc, char* argv[])
 	  break;
 	default:
 	  cerr << "Error: unknown option " << opt << endl;
-	  cerr << "Usage: AaLinkExtMem [-v] [-I <ext-mem-size>] <filename> (<filename>) ... " << endl;
+	  Usage_AaLinkExtMem();
 	  return(1);
 	}
     }

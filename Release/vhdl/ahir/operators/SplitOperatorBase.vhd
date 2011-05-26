@@ -12,23 +12,23 @@ use ahir.BaseComponents.all;
 entity SplitOperatorBase is
   generic
     (
-      operator_id   : string;          -- operator id
+      operator_id   : string := "ApIntAdd";          -- operator id
       input1_is_int : Boolean := true; -- false means float
       input1_characteristic_width : integer := 0; -- characteristic width if input1 is float
       input1_mantissa_width       : integer := 0; -- mantissa width if input1 is float
-      iwidth_1      : integer;    -- width of input1
+      iwidth_1      : integer := 4;    -- width of input1
       input2_is_int : Boolean := true; -- false means float
       input2_characteristic_width : integer := 0; -- characteristic width if input2 is float
       input2_mantissa_width       : integer := 0; -- mantissa width if input2 is float
-      iwidth_2      : integer;    -- width of input2
-      num_inputs    : integer := 2;    -- can be 1 or 2.
+      iwidth_2      : integer := 0;    -- width of input2
+      num_inputs    : integer := 1;    -- can be 1 or 2.
       output_is_int : Boolean := true;  -- false means that the output is a float
       output_characteristic_width : integer := 0;
       output_mantissa_width       : integer := 0;
-      owidth        : integer;          -- width of output.
-      constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
-      twidth        : integer;          -- tag width
-      use_constant  : boolean := false;
+      owidth        : integer := 4;          -- width of output.
+      constant_operand : std_logic_vector := "0001"; -- constant operand.. (it is always the second operand)
+      twidth        : integer := 1;          -- tag width
+      use_constant  : boolean := true;
       zero_delay    : boolean := false
       );
   port (

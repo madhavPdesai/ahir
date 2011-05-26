@@ -9,10 +9,7 @@ use ahir.Subprograms.all;
 package Utilities is
 
   function Convert_To_String(val : integer) return STRING; -- convert val to string.
-  
-  function To_SLV (x : unsigned) return std_logic_vector;
-
-  function To_Unsigned ( x : std_logic_vector) return unsigned;
+  function Convert_SLV_To_String(val : std_logic_vector) return STRING; -- convert val to string.
   
   function Ceil (constant x, y : integer)   return integer;
 
@@ -89,30 +86,23 @@ package body Utilities is
 	return result((pos-1) downto 1);
   end Convert_To_String;
   
-  function To_SLV (
-    x : unsigned)
-    return std_logic_vector is
-    variable ret_var : std_logic_vector(1 to x'length);
-    alias lx : unsigned(1 to x'length) is x;
-  begin
-    for I in 1 to x'length loop
-      ret_var(I) := lx(I);
-    end loop;  -- I
-    return(ret_var);
-  end To_SLV;
+  function Convert_SLV_To_String(val : std_logic_vector) return STRING is
+	alias lval: std_logic_vector(1 to val'length) is val;
+        variable ret_var: string( 1 to lval'length);
+   begin
+        for I in lval'range loop
+                if(lval(I) = '1') then
+			ret_var(I) := '1';
+		elsif (lval(I) = '0') then
+			ret_var(I) := '0';
+		else
+			ret_var(I) := 'X';
+		end if;
+        end loop;
+        return(ret_var);
+   end Convert_SLV_To_String;
     
 
-  function To_Unsigned (
-    x : std_logic_vector)
-    return unsigned is
-    variable ret_var : unsigned(1 to x'length);
-    alias lx : std_logic_vector(1 to x'length) is x;
-  begin
-    for I in 1 to x'length loop
-      ret_var(I) := lx(I);
-    end loop;  -- I
-    return(ret_var);
-  end To_Unsigned;
   
   function Ceil (
     constant x, y : integer)
@@ -132,7 +122,7 @@ package body Utilities is
     variable ret_var : integer;
   begin
     ret_var := 0;
-    if(x > 0) then
+    if(x > 1) then
       while((2**ret_var) < x) loop
         ret_var := ret_var + 1;
       end loop;

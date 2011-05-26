@@ -11,10 +11,10 @@ use ahir.BaseComponents.all;
 entity LoadCompleteShared is
     generic
     (
-      data_width: integer;
-      tag_length:  integer;
-      num_reqs : integer;
-      no_arbitration: boolean
+      data_width: integer := 8;
+      tag_length:  integer := 1;
+      num_reqs : integer := 1;
+      no_arbitration: boolean := true
     );
   port (
     -- req/ack follow level protocol

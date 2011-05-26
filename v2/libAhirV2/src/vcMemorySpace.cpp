@@ -399,9 +399,11 @@ int vcMemorySpace::Calculate_Number_Of_Banks()
 }
 int vcMemorySpace::Calculate_Base_Bank_Address_Width()
 {
+  // TODO: calculate this better...
   return(10);
 }
 int vcMemorySpace::Calculate_Base_Bank_Data_Width()
 {
+  // TODO: calculate this better...
   return(8);
 }

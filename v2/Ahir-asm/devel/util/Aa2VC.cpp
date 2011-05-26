@@ -14,11 +14,6 @@ extern char *optarg;
 int opt;
 int option_index = 0;
 
-struct option long_options[] = {
-    {"relaxed-component-visibility", 0, 0, 0},
-    {"depend", required_argument, 0, 0},
-    {0, 0, 0, 0}
-};
 
 
 
@@ -29,6 +24,31 @@ void Handle_Segfault(int signal)
 }
 
 
+void Usage_Aa2VC()
+{
+  cerr << "brief description: reads source Aa program, analyzes it,\n and writes out vC program.  " << endl;
+  cerr << "Usage: Aa2VC [-O] [-C] [-I <extmem-obj-name>] <filename> (<filename>) ... " << endl;
+  cerr << " options " << endl;
+  cerr <<  " -h (or --help): print help and quit.. " << endl
+       <<  " -I (or --internal_ext_mem_pool)  <mem-pool-name> : all orphan memory references (which cannot be resolved" << endl
+       <<  "              as pointing to an internally declared object in ths program) are assumed to" << endl
+       <<  "              point to an external memory object whose name is mem-pool-name.  This external" << endl
+       <<  "              memory object must be declared in the source Aa program." << endl;
+  cerr <<  " -O (or --optimize): try to parallelize sequences of statements by using dependency analysis" << endl;
+  cerr <<  " -C (or --c_stubs): generate C stubs for all modules. These can be used later in mixed C-VHDL simulation." << endl;
+
+  cerr << endl;
+  cerr << "example: " << endl
+       << "    Aa2VC -O -C -I mempool file1.aa  file2.aa" << endl;
+  cerr << "file1.aa and file2.aa will be parsed in order, the Aa program will " << endl
+       << "be analyzed, and a vC program will be printed.  The declared storage object  " << endl
+       << "mempool will be the target of all orphan memory accesses.  The generated vC program" << endl
+       << "will have serial code parallelized to the maximum extent possible.  Also, C-stubs" << endl
+       << "will be generated for every module in the source program." << endl;
+
+
+}
+
 int main(int argc, char* argv[])
 {
 
@@ -37,9 +57,21 @@ int main(int argc, char* argv[])
 
   if(argc < 2)
     {
-      cerr << "Usage: Aa2VC [-O] [-C] [-I <extmem-obj-name>] <filename> (<filename>) ... " << endl;
-      exit(1);
+      Usage_Aa2VC();
+      return(1);
     }
+
+
+  // command-line parsing
+  struct option long_options[] =
+    {
+      /* These options set a flag. */
+      {"help", no_argument, 0, 'h'},
+      {"optimize", no_argument,0, 'O'},
+      {"c_stubs",  no_argument, 0, 'C'},
+      {"internal_ext_mem_pool",  required_argument, 0, 'I'},
+      {0, 0, 0, 0}
+    };
 
 
   string fname;
@@ -50,7 +82,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "OCI:",
+		      "OCI:h",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -61,14 +93,19 @@ int main(int argc, char* argv[])
 	  break;
 	case 'C':
 	  write_vhdl_c_stubs = true;
-	  std::cerr << "Info: -C option selected, will generate C-stubs for mixed simulation" << endl;
+	  std::cerr << "Info: -C option selected, will generate C-stubs for mixed C-VHDL simulation" << endl;
 	  break;
 	case 'I':
 	  AaProgram::_keep_extmem_inside  = true;
 	  AaProgram::_extmem_object_name = optarg;
 	  break;
+	case 'h':
+	  Usage_Aa2VC();
+	  return(1);
 	default:
 	  cerr << "Error: unknown option " << opt << endl;
+	  Usage_Aa2VC();
+	  return(1);
 	}
     }
       

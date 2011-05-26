@@ -6,6 +6,7 @@ library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
+use ahir.BaseComponents.all;
 
 entity InputMuxBaseNoData is
   generic ( twidth: integer;
@@ -27,8 +28,7 @@ end InputMuxBaseNoData;
 architecture Behave of InputMuxBaseNoData is
 
   signal reqP,ackP,enP,ssig : std_logic_vector(nreqs-1 downto 0);
-  signal reqF,reqFreg : std_logic_vector(nreqs-1 downto 0);  
-  signal req_fsm_state: std_logic;
+  signal reqF: std_logic_vector(nreqs-1 downto 0);  
 
   constant tag0 : std_logic_vector(twidth-1 downto 0) := (others => '0');
 
@@ -45,12 +45,14 @@ begin  -- Behave
       P2LBlk: block
         signal state : P2LState;
       begin  -- block P2L          
-        Pulse_To_Level_Translate(suppr_imm_ack => suppress_immediate_ack(I),
-                                 rL => reqL(I), rR => reqP(I), aL => ackL(I), aR => ackP(I),
-                                 en => enP(I), state => state, clk => clk, reset => reset);
+        p2Linst: Pulse_To_Level_Translate_Entity
+          generic map (suppr_imm_ack => suppress_immediate_ack(I))
+          port map (rL => reqL(I), rR => reqP(I), aL => ackL(I), aR => ackP(I),
+                                 en => enP(I), clk => clk, reset => reset);
       end block P2LBlk;
 
   end generate P2L;
+  
 
 
   -----------------------------------------------------------------------------
@@ -63,29 +65,27 @@ begin  -- Behave
   end generate NoArbitration;
 
   Arbitration: if not no_arbitration generate
-    RequestPriorityEncode(req_fsm_state => req_fsm_state,
-                            clk => clk,
-                            reset => reset,
-                            reqR => reqP,
-                            ackR => ackP,
-                            reqF => reqF,
-                            req_s => reqR,
-                            ack_s => ackR,
-                            reqFreg => reqFreg);
+    rpeInst: Request_Priority_Encode_Entity
+      generic map (num_reqs => reqP'length)
+      port map( clk => clk,
+                reset => reset,
+                reqR => reqP,
+                ackR => ackP,
+                reqF_in => reqF,
+                reqF_out => reqF,
+                req_s => reqR,
+                ack_s => ackR);
+    
   end generate Arbitration;
-
 
   -----------------------------------------------------------------------------
   -- tag generation
   -----------------------------------------------------------------------------
-    process(reqF)
-    begin
-      tagR <= tag0;
-      for J in reqF'range loop
-        if(reqF(J) = '1') then
-          tagR <= To_SLV(To_Unsigned(J,tagR'length));
-        end if;
-      end loop;  -- J
-    end process;
-  
+  taggen : BinaryEncoder generic map (
+    iwidth => nreqs,
+    owidth => twidth)
+    port map (
+      din  => reqF,
+      dout => tagR);
+
 end Behave;

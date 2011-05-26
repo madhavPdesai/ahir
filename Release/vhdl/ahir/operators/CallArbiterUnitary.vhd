@@ -16,11 +16,11 @@ use ahir.BaseComponents.all;
 -- the current call has finished.
 --
 entity CallArbiterUnitary is
-  generic(num_reqs: integer;
-	  call_data_width: integer;
-	  return_data_width: integer;
-	  caller_tag_length: integer;
-          callee_tag_length: integer);
+  generic(num_reqs: integer := 3;
+	  call_data_width: integer := 16;
+	  return_data_width: integer := 8;
+	  caller_tag_length: integer := 3;
+          callee_tag_length: integer := 5);
   port ( -- ready/ready handshake on all ports
     -- ports for the caller
     call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);

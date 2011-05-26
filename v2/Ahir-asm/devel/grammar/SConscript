@@ -3,5 +3,8 @@ env = Environment(ENV = {'PATH' : os.environ['PATH']})
 # use a path to get to the antlr jar "later"
 # also: how does one force the action if the source has changed?
 ant = Builder(action = 'java -cp  ../antlr2/antlr.jar antlr.Tool  -o Ahir-asm/devel/src/ $SOURCE')
+antdoc = Builder(action = 'java -cp  ../antlr2/antlr.jar antlr.Tool -html -o Ahir-asm/devel/docs/ $SOURCE')
 env.Prepend(BUILDERS = {'antlr' : ant})
+env.Prepend(BUILDERS = {'antlrdocs' : antdoc})
 env.antlr(['../src/AaLexer.hpp', '../src/AaParser.hpp', '../src/AaLexer.cpp','../src/AaParser.cpp', 'AaParserTokenTypes.hpp','AaParserTokenTypes.txt' ], 'Aa.g')
+env.antlrdocs(['../docs/AaLexer.html', '../docs/AaParser.html'], 'Aa.g')

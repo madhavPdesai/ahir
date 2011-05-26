@@ -7,10 +7,10 @@ use ahir.merge_functions.all;
 use ahir.mem_component_pack.all;
 
 entity mem_demux is
-  generic ( g_data_width: natural;
-            g_id_width : natural;
-            g_number_of_outputs: natural;
-	    g_delay_count: natural);
+  generic ( g_data_width: natural := 10;
+            g_id_width : natural := 3;
+            g_number_of_outputs: natural := 8;
+	    g_delay_count: natural := 1);
   port(data_in: in std_logic_vector(g_data_width-1 downto 0);  -- data & id & time-stamp
        sel_in : in std_logic_vector(g_id_width-1 downto 0);
        req_in: in std_logic;

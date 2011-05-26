@@ -41,6 +41,8 @@ architecture Vanilla of StoreReqShared is
 
   signal idata: std_logic_vector(((addr_width+data_width)*num_reqs)-1 downto 0);
   signal odata: std_logic_vector((addr_width+data_width)-1 downto 0);
+
+  constant debug_flag : boolean := false;
   
 begin  -- Behave
 
@@ -58,8 +60,10 @@ begin  -- Behave
 
   assert(tag_length >= Ceil_Log2(num_reqs)) report "insufficient tag width" severity error;
 
-  assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
-    report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
+  debugCase: if debug_flag generate
+    assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
+      report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
+  end generate debugCase;
   
   imux: InputMuxBase
   	generic map(iwidth => (addr_width+data_width)*num_reqs ,

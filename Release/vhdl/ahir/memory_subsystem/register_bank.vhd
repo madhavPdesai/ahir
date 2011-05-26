@@ -105,7 +105,7 @@ begin
   -- the read process. fully parallel reads.
   ReadGen: for R in 0 to num_loads-1 generate
 
-    process(clock,lr_req_in,lc_ack_flag,reset)
+    process(clock,lr_req_in,lc_ack_flag,reset,lr_addr_in)
       variable ack_var : std_logic;
       variable index : integer;
                                  

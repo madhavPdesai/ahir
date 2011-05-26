@@ -1,5 +1,6 @@
 import os
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
+SConscript(['docs/SConscript'])
 
 local = env.Clone()
 

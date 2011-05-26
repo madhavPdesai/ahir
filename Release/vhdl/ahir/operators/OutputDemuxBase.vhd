@@ -8,11 +8,11 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 
 entity OutputDeMuxBase is
-  generic(iwidth: integer;
-	  owidth: integer;
-	  twidth: integer;
-	  nreqs: integer;
-	  no_arbitration: Boolean);
+  generic(iwidth: integer := 4;
+	  owidth: integer := 12;
+	  twidth: integer := 2;
+	  nreqs: integer := 3;
+	  no_arbitration: Boolean := true);
   port (
     -- req/ack follow level protocol
     reqL                 : in  std_logic;
@@ -76,7 +76,7 @@ begin  -- Behave
     ---------------------------------------------------------------------------
     -- valid true if this I is mentioned in tag
     ---------------------------------------------------------------------------
-    valid(I) <= '1' when (tagL = To_SLV(To_Unsigned(I,tagL'length))) else '0';
+    valid(I) <= '1' when (I = To_Integer(To_Unsigned(tagL))) else '0';
 
     ---------------------------------------------------------------------------
     -- set/clear pulse request from right

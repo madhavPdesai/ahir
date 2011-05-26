@@ -8,12 +8,12 @@ use ahir.mem_component_pack.all;
 -- TODO: some bug here.
 
 entity merge_box_with_repeater is 
-  generic (g_data_width: natural;
-           g_number_of_inputs: natural;
-           g_number_of_outputs: natural;
-           g_time_stamp_width : natural;   -- width of timestamp
-           g_tag_width : natural;  -- width of tag
-           g_pipeline_flag: integer     -- if 0, dont add pipe-line stage
+  generic (g_data_width: natural := 10;
+           g_number_of_inputs: natural := 8;
+           g_number_of_outputs: natural := 1;
+           g_time_stamp_width : natural := 3;   -- width of timestamp
+           g_tag_width : natural := 3;  -- width of tag
+           g_pipeline_flag: integer := 1     -- if 0, dont add pipe-line stage
            );            
 
   port(data_left: in  std_logic_vector((g_data_width*g_number_of_inputs)-1 downto 0);

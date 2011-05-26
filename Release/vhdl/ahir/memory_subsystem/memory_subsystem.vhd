@@ -85,7 +85,7 @@ end entity memory_subsystem;
 
 architecture bufwrap of memory_subsystem is
 
-  constant time_stamp_width : natural := 6 + Ceil_Log2(num_loads + num_stores);   --  two msb bits for identification
+  constant time_stamp_width : natural := 2 + Ceil_Log2(num_loads + num_stores);   --  two msb bits for identification
   
   signal lr_addr_in_core :std_logic_vector((num_loads*addr_width)-1 downto 0);
   signal lr_req_in_core  :std_logic_vector(num_loads-1 downto 0);

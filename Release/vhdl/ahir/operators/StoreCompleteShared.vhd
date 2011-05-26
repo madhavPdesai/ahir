@@ -9,8 +9,8 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity StoreCompleteShared is
-  generic (num_reqs: integer;
-	   tag_length: integer);
+  generic (num_reqs: integer := 3;
+	   tag_length: integer :=  3);
   port (
     -- in requester array, pulse protocol
     -- more than one requester can be active
@@ -58,7 +58,7 @@ begin  -- Behave
  		variable valid: boolean;
 	begin
 		next_flag := full_flag(I); rR := '0';
-		valid := (mtag = To_SLV(To_Unsigned(I, tag_length)));
+		valid := (I = To_Integer(To_Unsigned(mtag)));
 
 		if(reset = '1') then
 			next_flag := '0';

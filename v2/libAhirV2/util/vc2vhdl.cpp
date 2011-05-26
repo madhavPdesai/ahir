@@ -5,11 +5,8 @@
 #include <vcLexer.hpp>
 
 using namespace std;
-struct option long_options[] = {
-    {"relaxed-component-visibility", 0, 0, 0},
-    {"depend", required_argument, 0, 0},
-    {0, 0, 0, 0}
-};
+
+
 
 void Handle_Segfault(int signal)
 {
@@ -19,22 +16,43 @@ void Handle_Segfault(int signal)
 
 void Usage_Vc2VHDL()
 {
+
+  cerr << "brief description: produces unformatted VHDL from specified VC files,  " << endl;
   cerr << "Usage: " << endl;
-  cerr << "vc2vhdl [-O] [-C] [-s <ghdl/modelsim>] -f <vc-file> [-f <vc-file>...] -t/-T <top-module> [-t/-T <top-module>...] " << endl << endl;
-  cerr << "specify vc-files using -f, top-modules in system using -t.. for example" << endl
+  cerr << "vc2vhdl ... options ... " << endl;
+  cerr << " options " << endl;
+  cerr <<  " -t mod-name: will make mod-name a top-level module which must" << endl
+       <<  "              be started from outside the AHIR system.  Such a module can " << endl
+       <<  "              have input/output arguments from/to the outside world" << endl
+       <<  " Notes: " << endl
+       <<  "   1. alternate form: --top mod-name" << endl
+       <<  "   2. option can be repeated to specify multiple top-level modules" << endl;
+  cerr << endl;  
+  cerr <<  " -T mod-name: will make mod-name a free-running top-level module " << endl
+       <<  "              which need not be started from outside.  Such a module cannot " << endl
+       <<  "              have input/output arguments from/to the outside world" << endl
+       <<  " Notes: " << endl
+       <<  "   1. alternate form: --free_running_top mod-name" << endl
+       <<  "   2. option can be repeated to specify multiple top-level modules." << endl;
+  cerr << endl;
+  cerr <<  " -O: will lead to smaller VHDL files due to some compaction." << endl
+       <<  " -C: the generated system testbench connects to foreign language testbench (Ctestbench). " << endl;
+  cerr <<  " -s ghdl/modelsim: specify the simulator with which one is going to simulate the system." << endl
+       <<  "    -s ghdl: will produce a testbench which can be used in GHDL. " << endl
+       <<  "    -s modelsim: will produce a testbench which can be used in Modelsim. " << endl
+       <<  " Notes: " << endl
+       <<  "   1. this option has an effect only when -C is also specified." << endl
+       <<  "   2. the default is Modelsim." << endl;
+  cerr << endl;
+  cerr <<  " -f vcfile-name: specifies a VC file to be parsed.  Repetitions of this option can be" << endl
+       <<  "                 used to specify more than one file.  Files are parsed in the order specified." << endl
+       <<  " alternate form:  --file vcfile-name" << endl;
+  cerr << endl;
+  cerr << "example: " << endl
        << "    vc2vhdl -O -t foo -f file1.vc -f file2.vc -t bar" << endl;
   cerr << "file1.vc and file2.vc will be parsed in order, and the instantiated " << endl
-       << "system will have modules foo and bar as top-modules. " << endl;
-  cerr << "-T mod-name will make mod-name a free-running top-level module " << endl
-	<<  " which need not be started from outside.  Such a module cannot " << endl
-	<< " have input/output arguments from/to the outside world" << endl;
-  cerr << "-t mod-name will make mod-name a top-level module which must be" << endl
-	<<  " started from outside.  Such a module can have input/output " << endl
-	<< " arguments from/to the outside world" << endl;
-  cerr << "-O option will lead to smaller VHDL files due to some compaction" << endl
-       << "-C option will produce testbench which listens on socket for foreign TB. " << endl;
-  cerr << "-s ghdl will produce a testbench which uses VHPI and can link to GHDL" << endl
-       << "-s modelsim will produce a testbench which uses Modelsim-FLI and can link to Modelsim. " << endl;
+       << "system will have modules foo and bar as top-modules, which are controllable  " << endl
+       << "from outside the system." << endl;
 }
 
 
@@ -52,6 +70,20 @@ int main(int argc, char* argv[])
   set<string> always_running_top_modules;
 
   // command-line parsing
+  struct option long_options[] =
+    {
+      /* These options set a flag. */
+      {"help", no_argument, 0, 'h'},
+      {"optimize", no_argument,0, 'O'},
+      {"ctestbench",  no_argument, 0, 'C'},
+      {"simulator",  required_argument, 0, 's'},
+      {"set_as_top",  required_argument, 0, 't'},
+      {"set_as_free_running_top",  required_argument, 0, 'T'},
+      {"vcfile",    required_argument, 0, 'f'},
+      {0, 0, 0, 0}
+    };
+
+
   extern int optind;
   extern char *optarg;
   int opt;

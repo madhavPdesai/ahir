@@ -342,7 +342,7 @@ as follows
 \begin{verbatim}
 branch-block-statement :=
              branch-block-specifier block-name
-             { sequence-of-statements}
+             { branch-block-statement-sequence }
 \end{verbatim}
 The sequence of statements appearing in a branch block
 consist of
@@ -353,9 +353,9 @@ the form
 \begin{verbatim}
 switch-statement :=
          switch-spec switch-expression
-           ( expr-value  serial-statement-sequence )*
-           ( default serial-statement-sequence )?
-            
+           ( expr-value  branch-block-statement-sequence )*
+           ( default branch-block-statement-sequence )?
+         end-switch-spec
 \end{verbatim}
 The switch-expression is checked, and depending on its
 value, one of the alternative statements is selected.
@@ -376,9 +376,10 @@ statement following the switch.
 \begin{verbatim}
 if-statement :=
        if-spec test-expression 
-           serial-statement-sequence
+           branch-block-statement-sequence
        (else
-           serial-statement-sequence)?
+           branch-block-statement-sequence)?
+       end-if-spec
        
 \end{verbatim}
 For example:
@@ -1066,7 +1067,7 @@ $is
                     $storage  I:$uint<10>
                     $merge $entry loopback
                        $phi s := 0 $on $entry  s1 $on loopback
-		    $endmerge
+                    $endmerge
                     $if (I < mp) $then
                        I := (I+1)
                        s1 := ($mux (I == 0)  0 (s + mem[I]))
@@ -1078,7 +1079,7 @@ $is
                     J := (mp + 1)
                     $merge $entry loopback
                        $phi s := 0 $on $entry s1 $on loopback
-		    $endmerge
+                    $endmerge
                     $if (J < high) $then
                          J := (J+1)
                          s1 := ($mux (J == (mp+1))  0 (s + mem[J]))

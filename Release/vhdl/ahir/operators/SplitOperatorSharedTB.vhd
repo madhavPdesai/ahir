@@ -131,10 +131,9 @@ begin
 			Convert_To_String(counter) & " completed in TB " & tb_id  severity note;
 	
                 TwoInputOperation(operator_id,
-                                     To_ISLV(To_SLV(To_Unsigned(dv,input_data_width))),
-                                     To_ISLV(To_SLV(To_Unsigned(dv+1,input_data_width))),td_islv);
+                                     To_SLV(To_Unsigned(dv,input_data_width)),
+                                     To_SLV(To_Unsigned(dv+1,input_data_width)),td);
 
-		td := to_SLV(td_islv);
 
                 if(td /= (Extract(dout_2,R))) then
                   err_flag := true;

@@ -22,8 +22,7 @@ end entity;
 architecture Base of OutputPortNoData is
 
   signal reqR, ackR, eN : std_logic_vector(num_reqs-1 downto 0);
-  signal reqF, reqFreg  : std_logic_vector(num_reqs-1 downto 0);
-  signal req_fsm_state  : std_logic;
+  signal reqF: std_logic_vector(num_reqs-1 downto 0);
 
   
 begin
@@ -36,15 +35,15 @@ begin
     P2L : block
       signal state : P2LState;
     begin  -- block P2L
-      Pulse_To_Level_Translate(suppr_imm_ack => true,
-                               rL            => req(I),
-                               rR            => reqR(I),
-                               aL            => ack(I),
-                               aR            => ackR(I),
-                               en            => eN(I),
-                               state         => state,
-                               clk           => clk,
-                               reset         => reset);
+      p2LInst: Pulse_To_Level_Translate_Entity
+        generic map(suppr_imm_ack => true)
+        port map (rL            => req(I),
+                  rR            => reqR(I),
+                  aL            => ack(I),
+                  aR            => ackR(I),
+                  en            => eN(I),
+                  clk           => clk,
+                  reset         => reset);
 
     end block P2L;
     
@@ -53,16 +52,18 @@ begin
   -----------------------------------------------------------------------------
   -- request handling
   -----------------------------------------------------------------------------
-  RequestPriorityEncode(req_fsm_state => req_fsm_state,
-                        clk           => clk,
-                        reset         => reset,
-                        reqR          => reqR,
-                        ackR          => ackR,
-                        reqF          => reqF,
-                        req_s         => oreq,
-                        ack_s         => oack,
-                        reqFreg       => reqFreg);
-
+  priorityEncode: Request_Priority_Encode_Entity
+    generic map (
+      num_reqs => reqR'length)
+    port map(clk           => clk,
+             reset         => reset,
+             reqR          => reqR,
+             ackR          => ackR,
+             reqF_in          => reqF,
+             reqF_out          => reqF,
+             req_s         => oreq,
+             ack_s         => oack);
+             
   gen : for I in num_reqs-1 downto 0 generate
     ackR(I) <= reqF(I) and oack;
   end generate gen;
