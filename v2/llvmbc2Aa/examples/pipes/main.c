@@ -13,14 +13,14 @@ typedef struct pipeId_
    int w;
 } pipeId;
 
-const pipeId p1 = { "pipe1" , 4};
+const pipeId p1[1] = { { "pipe1" , 4}};
 
 int foo(int a)
 {
 	int b;
       
 
-	write_uint32(p1.id,a);
+	write_uint32(&(p1[0].id[0]),a);
 	b = read_uint32("pipe2");
 
 	return(b);

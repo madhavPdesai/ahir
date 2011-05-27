@@ -10,6 +10,7 @@
 #include <deque>
 #include "Utils.hpp"
 #include <stdio.h>
+#include <limits.h>
 
 using namespace llvm;
 using namespace Aa;
@@ -264,11 +265,129 @@ IOCode Aa::get_io_code(CallInst &C)
 }
 
 
+// the constant expression should evaluate to an i8*... konst_expr must
+// be a get-element-ptr expression.  chase down the indices until you 
+// reach an array of int8's.  return the string correspondig to the array.
+std::string Aa::locate_portname_from_constant_expression(llvm::ConstantExpr* konst_expr)
+{
+  std::string ret_string;
+
+  llvm::Constant* konst = NULL;
+  llvm::ConstantArray* konst_array = NULL;
+
+  unsigned opcode = konst_expr->getOpcode();
+  if (opcode == Instruction::GetElementPtr) 
+    {
+      std::vector<llvm::Value*> idx;
+
+      // the pointer..
+      llvm::Value *ptr = konst_expr->getOperand(0);
+      bool is_global = isa<GlobalVariable>(ptr);
+
+      if(!is_global)
+	{
+	  std::cerr << "Error: pipe name must be part of a global variable" << std::endl;
+	  return(ret_string);
+	}
+
+
+      konst = dyn_cast<Constant>(ptr);
+
+      if(konst == NULL)
+	{
+	  std::cerr << "Error: pipe name must be part of a global constant" << std::endl;
+	  return(ret_string);
+	}
+      else
+	{
+	  std::cerr << "Info: locating portname in constant GEP, starting with " << konst->getNameStr() << std::endl;
+	  
+	  // check that the first index is 0.
+	  llvm::Value* idx = konst_expr->getOperand(1);
+	  int idx_val = 0;
+	  if(isa<ConstantInt>(idx))
+	    {
+	      ConstantInt *cint= dyn_cast<ConstantInt>(idx);
+	      idx_val = cint->getLimitedValue(INT_MAX);
+	    }
+	  else
+	    {
+	      std::cerr << "Error: in locating pipe name in io call: argument to GEP is not an integer" << std::endl;
+	  return(ret_string);
+	    }
+
+	  if(idx_val != 0)
+	    {
+	      std::cerr << "Error: in locating pipe name in io call: first index to GEP must be 0" << std::endl;
+	      return(ret_string);
+	    }
+	}
+
+      
+      // walk the indices until you get to a string..
+      konst_array = dyn_cast<ConstantArray>(konst);
+      if(konst_array && konst_array->isString())
+	{
+	  ret_string = konst_array->getAsString();
+	}
+      else
+	{
+
+	  for (unsigned i = 2; i < konst_expr->getNumOperands(); ++i)
+	    {
+	      
+	      llvm::Value* idx = konst_expr->getOperand(i);
+	      int idx_val = 0;
+
+	      if(isa<ConstantInt>(idx))
+		{
+		  ConstantInt *cint= dyn_cast<ConstantInt>(idx);
+		  idx_val = cint->getLimitedValue(INT_MAX);
+		}
+	      else
+		{
+		  std::cerr << "Error: in locating pipe name in io call: argument to GEP is not an integer" << std::endl;
+		  break;
+		}
+
+	      if(!(idx_val < konst->getNumOperands()))
+		{
+		  std::cerr << "Error: in locating pipe name in io call: index in GEP out of range.." << std::endl;		  
+		  break;
+		}
+
+	      llvm::Value* element_val = konst->getOperand(idx_val);
+	      konst = dyn_cast<Constant>(element_val);
+
+	      if(konst == NULL)
+		{
+		  std::cerr << "Error: in locating pipe name in io call: in GEP reached a non-constant element.." << std::endl;		  
+		  break;
+		}
+
+	      konst_array = dyn_cast<ConstantArray>(konst);
+	      if(konst_array && konst_array->isString())
+		{
+		  ret_string = konst_array->getAsString();
+		  break;
+		}
+	    }
+	}
+    }
+  else
+    {
+      std::cerr << "Error: unsupported constant expression in io-portname location" << std::endl;
+    }
+
+  return(ret_string);
+}
+
 // hunt back till you find the string..
 std::string Aa::locate_portname_for_io_call(llvm::Value *strptr)
 {
   std::string ret_string;
   ConstantArray* konst = NULL;
+  ConstantExpr* konst_expr = NULL;
 
   std::deque<llvm::Value*> queue;
   queue.push_back(strptr);
@@ -279,6 +398,14 @@ std::string Aa::locate_portname_for_io_call(llvm::Value *strptr)
     konst = dyn_cast<ConstantArray>(val);
     if (konst != NULL)
       break;
+
+    // need to extract string from constant expression... in progress.
+    //     konst_expr = dyn_cast<ConstantExpr>(val);
+    //     if (konst_expr != NULL)
+    //     {
+    //       ret_string = locate_portname_from_constant_expression(konst_expr);
+    //       break;
+    //     }
 
     if (!isa<User>(val))
       continue;
