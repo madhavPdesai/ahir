@@ -463,10 +463,13 @@ namespace {
 			    << std::endl;
 		else
 		  {
-		    std::cerr << "Warning: call statement " << to_aa(C.getNameStr())
+		    std::cerr << "Error: call statement " << to_aa(C.getNameStr())
 			      << " is an io read, but the port name is not statically known"
 			      << std::endl;
-		    std::cout << "// io-read tied to 0, because it is not possible to id the pipe" 
+		    C.dump();
+		    std::cerr << std::endl;
+
+		    std::cout << "// ERROR: io-read tied to 0, because it is not possible to id the pipe" 
 			      << std::endl;
 		    std::cout << to_aa(C.getNameStr()) <<  " := " <<  get_zero_value(C.getType())
 			      << std::endl;
@@ -486,7 +489,8 @@ namespace {
 		    std::cerr << "Warning: call statement " << to_aa(C.getNameStr())
 			      << " is an io write, but the port name is not statically known"
 			      << std::endl;
-		    std::cout << "// io-write ignored, because it is not possible to id the pipe" 
+		    C.dump();
+		    std::cout << "// ERROR: io-write ignored, because it is not possible to id the pipe" 
 			      << std::endl;
 		  }
 	      }

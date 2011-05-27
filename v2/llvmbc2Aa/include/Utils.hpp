@@ -36,6 +36,9 @@ namespace Aa {
   bool is_io_read(IOCode ioc);
   bool is_io_write(IOCode ioc);
 
+  std::string locate_portname_from_gep_instruction(llvm::GetElementPtrInst* gep_instr);
+  std::string locate_portname_from_gep(llvm::Constant* konst,
+				       std::vector<llvm::Value*>& indices);
   std::string locate_portname_from_constant_expression(llvm::ConstantExpr* konst_expr);
   std::string locate_portname_for_io_call(llvm::Value *strptr);
   void write_type_declaration(llvm::Type *T,llvm::Module& tst);

@@ -150,7 +150,11 @@ namespace {
 	// function to find the calls to io write/read functions.
       for (llvm::Module::iterator fi = M.begin(), fe = M.end();
            fi != fe; ++fi) {
-	aa_writer->Collect_Pipes(*fi);
+	std::string fname = (*fi).getNameStr();
+	if((module_names.count(fname) > 0) || _consider_all_functions)
+	  {
+	    aa_writer->Collect_Pipes(*fi);
+	  }
       }
 	// declare the pipes.
       aa_writer->Print_Pipe_Declarations(std::cout);
