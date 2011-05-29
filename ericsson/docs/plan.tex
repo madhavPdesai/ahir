@@ -19,97 +19,70 @@ AHIR generated VHDL system can be included in the NetFPGA packet
 processing implementation framework.  
 
 The AHIR generated VHDL system is required to fit into 
-a NetFPGA user-module template (described below).  Thus,
-the AHIR generated VHDL system must be wrapped into
-a form expected by the NetFPGA user-module template.
+a NetFPGA user-module template. It is relatively easy to
+achieve this. 
+
 
 \section{Mechanism}
 
-The user module template has the form (the original
-NetFPGA module is in Verilog; we use a VHDL equivalent).
-\begin{verbatim}
-entity module_template is
-   generic (
-      DATA_WIDTH: integer := 64;
-      CTR_WIDTH: integer := 8;
-      UDP_REG_SRC_WIDTH: integer := 2
-   );
-   port (
-      in_data: in std_logic_vector(DATA_WIDTH-1 downto 0);
-      in_ctrl: in std_logic_vector(CTRL_WIDTH-1 downto 0);
-      in_wr: in std_logic;
-      in_rdy: out std_logic;
+The user module template has the form shown in Figure \ref{fig:NetFPGAUserModule}.
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.7]{NetFPGAUserModule.eps}
+  \caption{NetFPGA User Module}
+  \label{fig:NetFPGAUserModule}
+\end{figure}
+The interface is very simple: an input data and control bus,
+and an output data and control bus.
 
-      out_data: out std_logic_vector(DATA_WIDTH-1 downto 0);
-      out_ctrl: out std_logic_vector(CTRL_WIDTH-1 downto 0);
-      out_wr: out std_logic;
-      out_rdy: in std_logic;
+A generic AHIR system can have the form:
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.7]{GenericAhirSystem.eps}
+  \caption{Generic AHIR system}
+  \label{fig:GenericAhirSystem}
+\end{figure}
 
-      clk: in std_logic;
-      reset: in std_logic);
-end entity;
-\end{verbatim}
-Thus, the NetFPGA user-module template can be viewed
-as a system with a single input queue and a single output queue.
 
-The AHIR system has form:
-\begin{verbatim}
-entity ahir_system is
-   port(
-          -- for each top-level function 
-          --   (in this case int foo(int a))
-          foo_a : in std_logic_vector(31 downto 0); -- argument a
-          foo_ret_val_x_X: out std_logic_vector(31 downto 0); -- ret value
-          foo_start: in std_logic;  -- pulse to start.
-          foo_fin: out std_logic;   -- pulsed to indicate finish.
-         
-          -- for each input pipe
-          --   (in this case inpipe of type int)
-          inpipe_pipe_write_data: in std_logic_vector(31 downto 0); -- data
-          inpipe_pipe_write_req: in std_logic_vector(0 downto 0); -- ready-in
-          inpipe_pipe_write_ack: out std_logic_vector(0 downto 0); -- ready-ack.
 
-          -- for each output pipe
-          --   (in this case outpipe of type int)
-          outpipe_pipe_read_data: out std_logic_vector(31 downto 0); -- data
-          outpipe_pipe_read_req: in std_logic_vector(0 downto 0); -- ready-in
-          outpipe_pipe_read_ack: out std_logic_vector(0 downto 0); -- ready-ack.
-
-          clk: in std_logic;
-          reset: in std_logic;
-       );
-end entity;
-\end{verbatim}
-An AHIR system can thus be viewed as having
+Thus, in order to insert a generic AHIR system into a NetFPGA user-module template:
 \begin{itemize}
-\item An input queue for each top-level function.
-\item An output queue for each top-level function.
-\item An input queue for each input pipe.
-\item An output queue for each output pipe.
+\item we ensure that the only interaction of the AHIR system with the outside world is
+through four pipes: two input pipes for the input data and control, and
+two output pipes for the output data and control.
+\item The top-level modules in the AHIR system are free-running.  One solution
+would be to include two top-level free-running modules which are 
+responsible for interactions with the outside world (through the four pipes
+discussed above).
+\begin{itemize}
+\item an input-module which will collect data from the input pipes and
+forward to appropriate pipes/modules in the AHIR system.
+\item an output-module which will collect data from internal pipes/modules
+in the AHIR system and forward it to the the system output pipes.
+\end{itemize}
+\item The AHIR system would be instantiated in a {\em fixed} wrapper
+which would be responsible for the protocol matching between the AHIR
+system interface and the NetFPGA user module interface.
 \end{itemize}
 
 
-Thus, in order to insert an AHIR system into a NetFPGA user-module template,
-all we need to do is
+\section{Issues: memory management}
+
+One issue that needs to be resolved is that of memory management.
+This relates to two processes:
 \begin{itemize}
-\item Include an input-module which will collect data from the NetFPGA user-module
-input data interface.  This input-module will feed the AHIR system input queues.
-\begin{itemize}
-\item This is especially simple if the AHIR system consists of a single top-level
-function without pipes, since there is only one possible destination for the
-incoming data.
-\end{itemize}
-\item Include an output-module which will collect data from the AHIR system
-output queues
-and forward it out of the output data interface of the NetFPGA user-module.
-\begin{itemize}
-\item Especially easy if there is only one top-level function in the AHIR
-system without output pipes.
-\end{itemize}
-\item  In the general case (many top-level AHIR functions, with input and output
-pipes), we will have to implement some kind of distributor/concentrator to
-stream the data consistently between the NetFPGA user-module
-input/output queues and the AHIR system input/output queues.
+\item Initialization: if the memory subsystem in the AHIR module needs
+to be initialized, then this must be done explicitly by the outside
+world.  The llvm2aa tool can generate memory initialization modules
+that initialize the data structures in the system to their initial
+values as declared in the original C program.  These modules are
+auto-generated and need to be called once after the AHIR system
+is reset (this call-once feature can be incorporated into vc2vhdl).
+\item Exchange of information between the AHIR memory subsystem and
+the outside world:  If this is needed, it would need to be explicitly 
+built into the input/output modules.  Note that an exchange of
+information (in general) may be initiated from ``inside'' or
+from ``outside'' the AHIR system.
 \end{itemize}
 
 \section{Looking Ahead: a proposal for rapid deployment}
@@ -120,23 +93,6 @@ with the assumption that the testbench only sends/receives packets to the AHIR
 system.  Most of the basic infrastructure for this is in place.  The only
 necessary components are the input and output modules outlined in the 
 previous section.
-
-There could be three approaches:
-\begin{itemize}
-\item The input and output modules are written as VHDL modules with
-adequate parametrization.  This should work if the AHIR system is
-simple enough (consists of a system with a single top-level function
-without any input/output pipes, for example).  However, writing
-VHDL (or Verilog) implementations is a pain for more complex scenarios.
-\item The input and output modules are written as C functions and
-are included into the AHIR system.  This gives much more flexibility.
-However, in a complex AHIR system, this approach will limit the
-ability to exploit parallelism (note: we cannot use threads in these
-C functions because AhirV2 tools cannot handle threads yet).
-\item The input and output modules are written as Aa modules.  This
-gives not only flexibility, but also the ability to use the
-parallelism in the system.
-\end{itemize}
 
 Originally, Sameer had implemented the input and output module for
 a specific scenario (as documented in the previous plan).  In this
@@ -150,25 +106,36 @@ to fit into the new AhirV2 scheme).
 
 What would be easiest, in my opinion would be
 \begin{itemize}
-\item Use the parts of Sameer's code that do the protocol
+\item use the parts of Sameer's code that do the protocol
 translation (between the NetFPGA user-module and an AHIR module).
-\item Write the input and output modules in Aa.  For the moment,
-we would do so for a specific scenario (much faster to develop and
-easier to maintain).  This would remove the need to do memory 
-management from the VHDL interface code (as is done in Sameer's
-current implementation, in which the VHDL input module directly
-accesses AHIR memory).
-\item Generate the final AHIR system by including the input/output modules
-written in Aa.
-\item Instantiate the final AHIR system in a NetFPGA wrapper which 
-just does the protocol translation between NetFPGA and AHIR.
+\begin{itemize}
+\item we implement a VHDL entity {\em NetFpgaAhirSystemWrap} which 
+would instantiate an AHIR system with four interface pipes (see Figure \ref{fig:NetFpgaAhirSystemWrap}).
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.7]{NetFpgaAhirSystemWrap.eps}
+  \caption{NetFpgaAhirSystemWrap Schematic}
+  \label{fig:NetFpgaAhirSystemWrap}
+\end{figure}
 \end{itemize}
-This is indicated in Figure \ref{fig:Wrap}.   The only
-additional effort is to write the input and output modules
-and to write the wrap functionality in vc2vhdl.  This should
-take a week.
+\item write the input and output modules in C/Aa and add
+to the AHIR flow to generate the final system. 
+\begin{itemize}
+\item this can be user-written (and eventually auto-generated) for
+the specific system being generated.  Note that we will have
+to pay some attention to memory initialization and transfer of
+information between the AHIR memory subsystem and the outside
+world.
+\end{itemize}
+\item generate the final AHIR system by including the input/output modules
+written in C/Aa.
+\item Instantiate the final AHIR system in the NetFpgaAhirSystemWrap wrapper.
+\end{itemize}
+The process is indicated in Figure \ref{fig:Wrap}.   The only
+additional effort is to write the input and output modules (in C or Aa).
 
-\begin{figure}[!t]
+
+\begin{figure}
   \centering
   \includegraphics[scale=0.7]{NetFPGAWrap.eps}
   \caption{NetFPGA Wrap Flow}
