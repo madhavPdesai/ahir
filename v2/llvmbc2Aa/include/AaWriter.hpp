@@ -79,6 +79,7 @@ namespace Aa {
     virtual void visitCmpInst(llvm::CmpInst &I) { visitInstruction(I); }
     virtual void visitSelectInst(llvm::SelectInst &I) { visitInstruction(I); }
     virtual void visitBranchInst(llvm::BranchInst &I) { visitInstruction(I); }
+    virtual void visitSwitchInst(llvm::SwitchInst &I) { visitInstruction(I); }
   };
 };
 

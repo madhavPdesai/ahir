@@ -37,5 +37,11 @@ All four modules are free-running.
 
 testbench.c can be used to test prog.c (compile using SoftwareCompile.sh)
 ToVHDL.sh can be used to map prog.c to VHDL.
+	(NOTE: if you use ToVHDL.opt.sh instead you will get hardware
+               that takes 1/4 the number of cycles, because the llvm
+               optimizer is used to eliminate a lot of useless loads/stores)
+
 In subdirectory vhdl/, a modified testbench.c can be used to simulate
 (all this is exactly the same as in the burstaccess example).
+
+

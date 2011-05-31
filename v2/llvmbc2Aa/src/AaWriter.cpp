@@ -117,9 +117,11 @@ namespace Aa {
 	else
 	  std::cout << std::endl;
       }
-    else
+    else 
       {
-	assert(0 && "unsupported instruction");
+	std::cerr << "Error: unsupported instruction " << std::endl;
+	I.dump();
+	std::cerr << std::endl;
       }
   }
 
@@ -735,6 +737,25 @@ namespace {
 	    std::cout << "$place [" << get_name(from_bb) << "_" << get_name(dest1) << "] ";
 	    std::cout << "$endif " << std::endl;
 	  }
+    }
+
+    void visitSwitchInst(llvm::SwitchInst &I) 
+    { 
+      llvm::Value* test_val = I.getCondition();
+
+      BasicBlock* from_bb = I.getParent();
+      BasicBlock* to_bb = NULL;
+      std::cout << "$switch " << get_name(test_val) << std::endl;
+      for(int idx=1; idx < I.getNumCases(); idx++)
+	{
+	  std::cout << "$when " << get_aa_constant_string(I.getCaseValue(idx)) << " $then " << std::endl;
+	  to_bb = I.getSuccessor(idx);
+	  std::cout << "$place [" << get_name(from_bb) << "_" << get_name(to_bb) << "]" << std::endl;
+	}
+      std::cout << "$default " << std::endl;
+      to_bb = I.getSuccessor(0);
+      std::cout << "$place [" << get_name(from_bb) << "_" << get_name(to_bb) << "]" << std::endl;
+      std::cout << "$endswitch" << std::endl;
     }
   
   };
