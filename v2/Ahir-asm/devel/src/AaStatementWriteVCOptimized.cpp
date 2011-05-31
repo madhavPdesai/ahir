@@ -273,6 +273,7 @@ void AaBlockStatement::Identify_Maximal_Sequences(AaStatementSequence* sseq,
   //
   //   a sequence with a block statement is a single statement.
   //   a sequence with a control-flow statement is a single statement.
+  //   a sequence with a pipe-access is a single statement.
   //   a sequence with simple statements can have many statements.
   //
   //
@@ -295,7 +296,8 @@ void AaBlockStatement::Identify_Maximal_Sequences(AaStatementSequence* sseq,
 
 	  if(stmt->Is_Block_Statement() 
 	     || stmt->Is_Control_Flow_Statement()
-	     || stmt->Is("AaCallStatement"))
+	     || stmt->Is("AaCallStatement")
+	     || stmt->Can_Block())
 	    {
 	      if(linear_segment.size() == 0)
 		{

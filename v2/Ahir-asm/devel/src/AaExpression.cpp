@@ -26,6 +26,7 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
   this->_addressed_object_representative = NULL;
   this->_coalesce_flag = false;
   this->_is_target = false;
+  this->_does_pipe_access = false;
 }
 AaExpression::~AaExpression() {};
 
@@ -406,6 +407,11 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 	{
 	  AaType* obj_type = ((AaObject*)obj)->Get_Type();
 	  this->Set_Type(obj_type);
+	}
+
+      if(obj->Is_Pipe_Object())
+	{
+	  this->Set_Does_Pipe_Access(true);
 	}
     }
   else if(obj->Is_Expression())
@@ -895,6 +901,9 @@ void AaArrayObjectReference::Set_Object(AaRoot* obj)
 	  _pointer_ref->Set_Object(obj);
 	  _pointer_ref->Add_Target(this);
 	}
+
+      if(obj->Is_Pipe_Object())
+	this->Set_Does_Pipe_Access(true);
     }
   else if(obj->Is_Expression())
     {
@@ -984,7 +993,9 @@ void AaArrayObjectReference::Evaluate()
 	    }
 	  _indices[idx]->Evaluate();
 	   
-	   
+	  if(_indices[idx]->Get_Does_Pipe_Access())
+	    this->Set_Does_Pipe_Access(true);
+
 	  if(!_indices[idx]->Is_Constant())
 	    {
 	      all_indices_constants = false;
@@ -1952,6 +1963,10 @@ void AaAddressOfExpression::Evaluate()
 	    (AaArrayObjectReference*)(this->_reference_to_object);
 	  
 	  obj_ref->Evaluate();
+	  if(obj_ref->Get_Does_Pipe_Access())
+	    {
+	      this->Set_Does_Pipe_Access(true);
+	    }
 
 	  int word_size = obj_ref->Get_Word_Size();
 	  vector<int> scale_factors;
@@ -2224,6 +2239,11 @@ void AaTypeCastExpression::Evaluate()
       this->_rest->Evaluate();
       if(this->_rest->Is_Constant())
 	this->Assign_Expression_Value(this->_rest->Get_Expression_Value());
+
+      if(_rest->Get_Does_Pipe_Access())
+	{
+	  this->Set_Does_Pipe_Access(true);
+	}
     }
 }
 
@@ -2368,7 +2388,10 @@ void AaUnaryExpression::Evaluate()
       if(this->_rest->Is_Constant())
 	this->Assign_Expression_Value(Perform_Unary_Operation(this->_operation, 
 							      this->_rest->Get_Expression_Value()));
-      
+      if(_rest->Get_Does_Pipe_Access())
+	{
+	  this->Set_Does_Pipe_Access(true);
+	}
     }
 }
 
@@ -2673,6 +2696,10 @@ void AaBinaryExpression::Evaluate()
 	this->Assign_Expression_Value(Perform_Binary_Operation(this->_operation, 
 							       this->_first->Get_Expression_Value(),
 							       this->_second->Get_Expression_Value()));
+      if(_first->Get_Does_Pipe_Access() || _second->Get_Does_Pipe_Access())
+	{
+	  this->Set_Does_Pipe_Access(true);
+	}
     }
 }
 
@@ -2758,6 +2785,13 @@ void AaTernaryExpression::Evaluate()
 	    this->Assign_Expression_Value(this->_if_true->Get_Expression_Value());
 	  else
 	    this->Assign_Expression_Value(this->_if_false->Get_Expression_Value());
+	}
+
+      if( (_test->Get_Does_Pipe_Access()) ||
+	  (_if_true->Get_Does_Pipe_Access()) ||
+	  (_if_false->Get_Does_Pipe_Access()))
+	{
+	  this->Set_Does_Pipe_Access(true);
 	}
     }
 }

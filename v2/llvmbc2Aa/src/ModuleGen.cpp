@@ -33,13 +33,18 @@ namespace {
     std::set<std::string> module_names;
     bool _consider_all_functions;
     bool _create_initializers;
+    int _pointer_width;
 
     ModuleGenPass() : ModulePass(ID) 
     {
+      _pointer_width = 32;
+      _consider_all_functions = true;
+      _create_initializers = true;
     }
 
     ModuleGenPass(const std::string& mlist_file, bool create_initializers) : ModulePass(ID) 
     {
+      _pointer_width = 32;
       _consider_all_functions = true;
       _create_initializers = create_initializers;
 
@@ -130,6 +135,7 @@ namespace {
     
       aa_writer = AaWriter_New(TD, AA);  
       aa_writer->Set_Module(&M);
+      aa_writer->Set_Pointer_Width(_pointer_width);
 
 	// first the global named types 
 	// (note: only structures need to be declared).

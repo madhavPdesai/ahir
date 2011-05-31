@@ -18,7 +18,7 @@ class AaExpression: public AaRoot
   AaScope* _scope;
   bool _coalesce_flag;
   bool _is_target;
-
+  bool _does_pipe_access;
 
  protected:
   // type of the expression
@@ -53,6 +53,9 @@ class AaExpression: public AaRoot
   AaExpression(AaScope* scope_tpr);
   ~AaExpression();
   virtual string Kind() {return("AaExpression");}
+
+  void Set_Does_Pipe_Access(bool v) { _does_pipe_access = v; }
+  bool Get_Does_Pipe_Access() { return(_does_pipe_access); }
 
   void Set_Is_Target(bool v) {_is_target = v;}
   bool Get_Is_Target() {return(_is_target);}

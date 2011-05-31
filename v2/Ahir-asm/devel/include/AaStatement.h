@@ -49,6 +49,7 @@ class AaStatement: public AaScope
   virtual bool Is_Control_Flow_Statement() {return(false);}
   virtual bool Is_Block_Statement() {return(false);}
 
+
   void Set_Index_In_Sequence(int id) {this->_index_in_sequence = id;}
   int Get_Index_In_Sequence() {return(this->_index_in_sequence);}
 

@@ -26,6 +26,10 @@ namespace Aa {
     std::map<llvm::Value*, std::string> value_name_map;
     std::map<std::string,std::string> pipe_map;
 
+    int _pointer_width;
+    void Set_Pointer_Width(int w) { _pointer_width = w; }
+    int Get_Pointer_Width() { return(_pointer_width); }
+
     bool _return_flag;
     void Set_Module(llvm::Module* tst) {_module = tst;}
     llvm::Module& Get_Module() {return(*_module);}

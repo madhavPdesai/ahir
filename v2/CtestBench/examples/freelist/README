@@ -1,0 +1,41 @@
+An example to illustrate a complete AHIR system
+in "standard form".
+
+In prog.c, there are four functions which together
+form the AHIR system.
+
+
+void input_module();
+	input_module listens on pipe input_data.  Whenever
+	it receives data from the outside world, it requests
+	the free_queue_manager (using a pipe free_queue_request)
+	to give it a free slot to put the data (it listens for
+	the free slot pointer on free_queue_get). It copies the
+	data into the free slot and forwards the slot pointer
+	to pipe foo_in.
+
+
+void foo();
+	foo listens on pipe foo_in for a slot pointer. It works
+	slot data, and updates it, and when done, forwards the
+	slot pointer out on pipe foo_out.
+	
+void output_module();
+	output_module listens on pipe foo_out.  When it receives
+	a slot pointer on this pipe, it copies the slot data out
+	of memory and forwards it out of the system on pipe output_data.
+
+void free_queue_manager();
+	the queue manager listens on a request pipe (free_queue_request).
+	Depending on the nature of the request (get/put) it either
+	allocates a free slot and sends the pointer out on free_queue_get,
+	or picks up a free slot pointer from free_queue_put and updates
+	the free queue.
+
+
+All four modules are free-running.
+
+testbench.c can be used to test prog.c (compile using SoftwareCompile.sh)
+ToVHDL.sh can be used to map prog.c to VHDL.
+In subdirectory vhdl/, a modified testbench.c can be used to simulate
+(all this is exactly the same as in the burstaccess example).

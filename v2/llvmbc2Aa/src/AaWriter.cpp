@@ -351,11 +351,12 @@ namespace {
       std::string op1 = get_name(I.getOperand(0));
       std::string op2 = get_name(I.getOperand(1));
 
-      // TODO: if binary operator is shra then need to cast 
+      // if binary operator is shra then need to cast 
       //       the operands to $int!
       if(opcode == Instruction::AShr)
 	{
-	    int size = I.getType()->getScalarSizeInBits();
+	  int size = type_width(I.getType(), this->Get_Pointer_Width());
+
 	    // take it to int and back to uint...
 	    std::cout << iname << " :=  ($bitcast ($uint<" << size << ">) ( ($bitcast ( $int<" << size << ">) "  <<  op1  << ") "
 		      << ntype 
@@ -502,7 +503,7 @@ namespace {
       std::string cname = to_aa(C.getNameStr());
 
       const llvm::Type *dest = C.getDestTy();
-      int size = dest->getScalarSizeInBits();
+      int size = type_width(dest, this->Get_Pointer_Width());
 
       llvm::Value *val = C.getOperand(0);
 
@@ -520,7 +521,8 @@ namespace {
       std::string cname = to_aa(C.getNameStr());
 
       const llvm::Type *dest = C.getDestTy();
-      int size = dest->getScalarSizeInBits();
+
+      int size = type_width(dest, this->Get_Pointer_Width());
 
       llvm::Value *val = C.getOperand(0);
 
@@ -541,7 +543,8 @@ namespace {
       std::string cname = to_aa(C.getNameStr());
 
       const llvm::Type *dest = C.getDestTy();
-      int size = dest->getScalarSizeInBits();
+
+      int size = type_width(dest, this->Get_Pointer_Width());
 
       llvm::Value *val = C.getOperand(0);
 
@@ -558,7 +561,8 @@ namespace {
       std::string cname = to_aa(C.getNameStr());
 
       const llvm::Type *dest = C.getDestTy();
-      int size = dest->getScalarSizeInBits();
+
+      int size = type_width(dest, this->Get_Pointer_Width());
 
       llvm::Value *val = C.getOperand(0);
 
@@ -641,7 +645,7 @@ namespace {
 	  }
 	else if(cmp_op == CmpInst::ICMP_SLT)
 	  {
-	    int size = C.getOperand(0)->getType()->getScalarSizeInBits();
+	    int size = type_width(C.getOperand(0)->getType(), this->Get_Pointer_Width());
 	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") < " 
 		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
 	  }
@@ -651,7 +655,8 @@ namespace {
 	  }
 	else if(cmp_op == CmpInst::ICMP_SLE)
 	  {
-	    int size = C.getOperand(0)->getType()->getScalarSizeInBits();
+
+	    int size = type_width(C.getOperand(0)->getType(), this->Get_Pointer_Width());
 	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") <= " 
 		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
 	  }
@@ -661,7 +666,8 @@ namespace {
 	  }
 	else if(cmp_op == CmpInst::ICMP_SGT)
 	  {
-	    int size = C.getOperand(0)->getType()->getScalarSizeInBits();
+
+	    int size = type_width(C.getOperand(0)->getType(), this->Get_Pointer_Width());
 	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") > " 
 		      << " ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
 	  }
@@ -671,13 +677,15 @@ namespace {
 	  }
 	else if(cmp_op == CmpInst::ICMP_SGE)
 	  {
-	    int size = C.getOperand(0)->getType()->getScalarSizeInBits();
+
+	    int size = type_width(C.getOperand(0)->getType(), this->Get_Pointer_Width());
 	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") >= " 
 		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
 	  }
 	else if(cmp_op == CmpInst::ICMP_NE)
 	  {
-	    int size = C.getOperand(0)->getType()->getScalarSizeInBits();
+
+	    int size = type_width(C.getOperand(0)->getType(), this->Get_Pointer_Width());
 	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") != " 
 		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
 	  }

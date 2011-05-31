@@ -169,6 +169,7 @@ class AaStorageObject: public AaObject
   virtual bool Is_Storage_Object() {return(true);}
 
 
+
   // todo: this is the same as object, but keep it here
   //      because the initial value needs to be 
   //      updated..
@@ -258,6 +259,8 @@ class AaPipeObject: public AaObject
 
    void Add_Reader(AaModule* m) {_reader_modules.insert(m);}
    void Add_Writer(AaModule* m) {_writer_modules.insert(m);}
+
+   virtual bool Is_Pipe_Object() {return(true); }
 
 };
 

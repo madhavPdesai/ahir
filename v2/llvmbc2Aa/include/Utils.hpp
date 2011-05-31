@@ -19,6 +19,10 @@ namespace Aa {
     , READ_UINT32, WRITE_UINT32
     , READ_FLOAT32, WRITE_FLOAT32
     , READ_UINTPTR, WRITE_UINTPTR
+    , READ_POINTER, WRITE_POINTER
+    , READ_UINT16, WRITE_UINT16
+    , READ_UINT8, WRITE_UINT8
+    , READ_UINT64, WRITE_UINT64
   } IOCode;
 
   unsigned getTypeSizeInBits(llvm::TargetData *TD, const llvm::Type *type);
@@ -56,6 +60,8 @@ namespace Aa {
   void write_zero_initializer_recursive(std::string prefix,const llvm::Type* ptr, int depth);
   void write_storage_initializer_statements(std::string& prefix, llvm::Constant* konst);
   int number_of_bits_needed_to_represent(int m);
+
+  int type_width(const llvm::Type* t, int ptr_width);
 }
 
 #endif
