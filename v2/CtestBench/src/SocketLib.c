@@ -221,6 +221,7 @@ void pack_value(char* payload,int wlength,int offset, char* port_value)
 {
   char* ptr = payload + (offset*wlength/8);
   char* ss = NULL;
+
   switch(wlength)
     {
     case 8:

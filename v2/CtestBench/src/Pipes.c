@@ -3,6 +3,7 @@
 #include <SocketLib.h>
 #include <string.h>
 #include <assert.h>
+#include <Pipes.h>
 
 #define READ__(id,t,w)  sprintf(buffer, "piperead.single %s ", id);	\
   append_int(buffer,0);ADD_SPACE__(buffer);\
@@ -225,6 +226,17 @@ void write_uint8_n(const char *id, uint8_t* buf, int buf_len)
   // "pipewrite.burst id 64 buf_len buf (aligned to 8 byte boundary)"
   // with spaces separating the fields..
   WRITE_BURST__(id,8,buf_len,buf,send_len);
+}
+
+uint32_t* read_uintptr(const char *id)
+{
+	return((uint32_t*) read_pointer(id));
+
+}
+
+void write_uintptr(const char *id, uint32_t* data)
+{
+	write_pointer(id, (void*) data);
 }
 
 void* read_pointer(const char *id)

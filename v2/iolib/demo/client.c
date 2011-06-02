@@ -33,12 +33,12 @@ int start (void)
     apl16  = (uint16_t)apl;
     my_apl8  = (uint8_t)apl16;
     
-    write_uint64("apples", apl64);
+    write_uint64("apples64", apl64);
     #ifdef RUN
-    fprintf(stderr, "\n(%d.a) sent a 64-bit apple: %d.", i, apl64);
+    fprintf(stderr, "\n(%d.a) sent a 64-bit apple: %llu..", i, apl64);
     #endif
     
-    ong64 = read_float64("oranges");
+    ong64 = read_float64("oranges64");
 
     #ifdef RUN
     fprintf(stderr, "\ngot a (double) orange: %le.", ong64);
@@ -46,35 +46,35 @@ int start (void)
 
     failure |= (my_ong64 != ong64);
 
-    write_uint32("apples", apl);
+    write_uint32("apples32", apl);
     #ifdef RUN
     fprintf(stderr, "\n(%d.b) sent a 32-bit apple: %d.", i, apl);
     #endif
 
-    ong = read_float32("oranges");
+    ong = read_float32("oranges32");
     #ifdef RUN
     fprintf(stderr, "\ngot a (float) orange: %f.", ong);
     #endif
     
     failure |= (my_ong != ong);
 
-    write_uint16("apples", apl16);
+    write_uint16("apples16", apl16);
     #ifdef RUN
     fprintf(stderr, "\n(%d.c) sent a 16-bit apple: %d.", i, apl16);
     #endif
 
-    apl8 = read_uint8("oranges");
+    apl8 = read_uint8("oranges8");
     #ifdef RUN
     fprintf(stderr, "\ngot an 8-bit orange: %d.", apl8);
     #endif
 
     sptr = (void*) &apl;
-    write_pointer("apples", sptr);
+    write_pointer("apples32", sptr);
     #ifdef RUN
     fprintf(stderr, "\n(%d.d) sent a pointer apple: %d.", i, (unsigned int)sptr);
     #endif
 
-    rptr = read_pointer("oranges");
+    rptr = read_pointer("oranges32");
     #ifdef RUN
     fprintf(stderr, "\ngot a pointer orange: %d.",(unsigned int) rptr);
     #endif

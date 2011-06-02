@@ -16,13 +16,12 @@ to check the portability of this implementation. In hardware, the
 compiler replaces the API function calls by instances of suitable I/O
 elements defined in the AHIR VHDL library.
 
-The API consists of four functions: two for reading and two for
-writing, depending on the data-type --- either a 32-bit unsigned
-integer or a single precision float.
+The API consists of two classes of functions: read_T and write_T
+where T is either an unsigned type (one of uint32_t, uint64_t, uint16_t, uint8_t)
+or a pointer (void* or uint32_t*). 
+For example, for T = uint32_t, the corresponding functions are
   * read_uint32(id)
-  * read_float32(id)
   * write_uint32(id, data)
-  * write_float32(id, data)
 
 Notes:
 ======
@@ -42,7 +41,20 @@ Notes:
    special meaning in Unix path names, such as forward-slash ('/') and
    asterisk ('*').
 
-3) The current software implementation assumes that all the
+3) A particular id must be associated with read/write functions corresponding
+   to types with the same bit-width.  For example, it is legal to use
+   read_uint64("inpipe") and read_float64("inpipe") in the set of processes,
+   but it is illegal to use read_uint64("inpipe") and read_uint16("inpipe") 
+   in the set of processes which use the pipe "inpipe".  This is required
+   in order to make the software version of the library consistent with
+   the generated hardware (in hardware, each pipe will have a fixed width).
+
+   NOTE: the current library implementation does a run-time check to ensure
+   that each process obeys the restriction mentioned above.  However, there
+   is currently no inter-process run-time check for this property.
+
+
+4) The current software implementation assumes that all the
    communicating processes are running in the same directory. The
    named pipes identified by the port id's are created in the same
    directory. The user must ensure that these names do not clash with

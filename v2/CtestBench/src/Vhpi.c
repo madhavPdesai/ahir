@@ -108,17 +108,43 @@ void Unsigned_To_Bit_Vector(unsigned x, char* a)
     }
 }
 
-void Copy_Value(char* dest, char* src, int width)
+int Copy_Value(char* dest, char* src, int width)
 {
+
+  int ret_val = 0;
+
+  char src_buf[4096];
+  int src_width = 0;
 
   // skip spaces
   while(*src == ' ')
     src++;
 
+  while(1)
+    {
+      if(src[src_width] == '1' || src[src_width] == '0')
+	{
+	  src_buf[src_width] = src[src_width];
+	  src_width++;
+	}
+      else
+	break;
+    }
+  src_buf[src_width] = 0; // null-terminate
+
+  ret_val = src_width - width;
+
+  dest[width] = 0;
   int i;
-  for(i = 0; i < width; i++)
-    dest[i] = src[i];
-  dest[i] = 0;
+  for(i = 1; i <= width; i++)
+    {
+      if(i <= src_width)
+	dest[width-i] = src[src_width-i];
+      else
+	dest[width-i] = '0'; // pad with 0.
+    }
+
+  return(ret_val);
 }
 
 
@@ -656,7 +682,7 @@ void  Vhpi_Listen()
 
 
 
-void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
+void   Vhpi_Set_Port_Value(char* port_name, char* port_value, int port_width)
 {
 
 
@@ -664,7 +690,7 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
   char* obj_name = strtok_r(port_name," ",&save_ptr);
   char* index_string = strtok_r(NULL," ",&save_ptr);
   assert((obj_name != NULL) && (index_string != NULL));
-
+  int excess_bits;
 
   // look within jobs that are active.. 
   JobLink* jlink;
@@ -674,7 +700,7 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 	{
 	  if(strcmp(index_string, "ack") == 0)
 	    {
-	      Copy_Value(jlink->ack_port->port_value, port_value,1);
+	      excess_bits = Copy_Value(jlink->ack_port->port_value, port_value,1);
 #ifdef DEBUG
              fprintf(log_file,"Info: set %s ack to %s in cycle %d\n",port_name,jlink->ack_port->port_value, vhpi_cycle_count);
              fflush(log_file);
@@ -714,9 +740,22 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 		    {
 		      if(index == 0)
 			{
-			  Copy_Value(plink->port->port_value,
-				     port_value,
-				     plink->port->width);
+			  excess_bits = Copy_Value(plink->port->port_value,
+						   port_value,
+						   port_width);
+			  if(excess_bits > 0)
+			    {
+			      fprintf(stderr, "Error: %d higher bits lost in hardware -> software transfer (job %s)\n", 
+				      excess_bits,
+				      jlink->name);
+			    }
+			  else
+			    {
+			      fprintf(stderr, "Error: added %d zero-padding high bits in hardware -> software transfer (job %s)\n", 
+				      excess_bits,
+				      jlink->name);
+			    }
+
 #ifdef DEBUG
 			  fprintf(log_file,"Info: finished setting %s to %s in cycle %d\n",port_name,port_value, vhpi_cycle_count);
 			  fflush(log_file);
@@ -730,6 +769,23 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
 		{
 		  if(*(jlink->ack_port->port_value) == '1') 		  
 		    {
+
+
+		      excess_bits = port_width - jlink->word_length;
+		      if(excess_bits > 0)
+			{
+			  fprintf(stderr, "Error: %d higher bits lost in hardware -> software transfer (job %s)\n", 
+				  excess_bits,
+				  jlink->name);
+			}
+		      else
+			{
+			  fprintf(stderr, "Error: added %d zero-padding high bits in hardware -> software transfer (job %s)\n", 
+				  excess_bits,
+				  jlink->name);
+			}
+
+
 		      pack_value(jlink->payload,jlink->word_length, jlink->active_word_count-1, port_value);
 #ifdef DEBUG
 		      fprintf(log_file,"Info: finished setting %s word %d to %s in cycle %d\n",
@@ -743,7 +799,7 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value)
     }
 }
 
-void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
+void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
 {
 
   char found_one = 0;
@@ -753,6 +809,8 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
   assert((obj_name != NULL) && (index_string != NULL));
   
   int val_found = 0;
+  int excess_bits = 0;
+
   // look within jobs that are active
   JobLink* jlink = NULL;
   for(jlink = active_jobs.head; jlink != NULL; jlink = jlink->next)
@@ -810,8 +868,20 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value)
 		{
 		  if(index == 0)
 		    {
-		      Copy_Value(port_value, plink->port->port_value,
-					plink->port->width);
+		      excess_bits = Copy_Value(port_value, plink->port->port_value,
+					       plink->port->width);
+		      if(excess_bits > 0)
+			{
+			  fprintf(stderr, "Error: %d higher bits lost in software -> hardware transfer (job %s)\n", excess_bits,
+				  jlink->name);
+			}
+		      else
+			{
+			  fprintf(stderr, "Error: added %d  zero-padding higher bits in software -> hardware transfer (job %s)\n", 
+				  excess_bits,
+				  jlink->name);
+			}
+
 		      found_one = 1;
 		      break;
 		    }
@@ -887,7 +957,7 @@ void   Modelsim_FLI_Send()
   Vhpi_Send();
 }
 
-void Modelsim_FLI_Set_Port_Value(mtiVariableIdT reg_id, mtiVariableIdT reg_val_id)
+void Modelsim_FLI_Set_Port_Value(mtiVariableIdT reg_id, mtiVariableIdT reg_val_id, int reg_width)
 {
   char name_buffer[4096];
   char val_buffer[4096];
@@ -895,17 +965,17 @@ void Modelsim_FLI_Set_Port_Value(mtiVariableIdT reg_id, mtiVariableIdT reg_val_i
   Modelsim_FLI_To_String(name_buffer,reg_id);
   Modelsim_FLI_To_String(val_buffer,reg_val_id);
 
-  Vhpi_Set_Port_Value(name_buffer,val_buffer);
+  Vhpi_Set_Port_Value(name_buffer,val_buffer, reg_width);
 }
 
-void Modelsim_FLI_Get_Port_Value(mtiVariableIdT reg_id, mtiVariableIdT reg_val_id)
+void Modelsim_FLI_Get_Port_Value(mtiVariableIdT reg_id, mtiVariableIdT reg_val_id, int reg_width)
 {
   char name_buffer[4096];
   char val_buffer[4096];
   
   Modelsim_FLI_To_String(name_buffer,reg_id);
  
-  Vhpi_Get_Port_Value(name_buffer,val_buffer);
+  Vhpi_Get_Port_Value(name_buffer,val_buffer, reg_width);
   
   String_To_Modelsim_FLI(reg_val_id,val_buffer);
 }

@@ -22,6 +22,9 @@ void write_uint8(const char *id, uint8_t data);
 void read_uint8_n(const char *id, uint8_t* buf, int buf_len);
 void write_uint8_n(const char *id, uint8_t* buf, int buf_len);
 
+uint32_t* read_uintptr(const char *id);
+void write_uintptr(const char *id, uint32_t* data);
+
 void* read_pointer(const char *id);
 void write_pointer(const char *id, void* data);
 

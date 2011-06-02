@@ -9,6 +9,48 @@
 #include <string.h>
 #include <assert.h>
 
+typedef struct PipeWidthRec_ PipeWidthRec;
+struct PipeWidthRec_
+{
+  char* pipe_name;
+  int pipe_width;
+  PipeWidthRec* next;
+};
+
+PipeWidthRec* pipe_width_list = NULL;
+
+int Add_Pipe(char* pipe_name, int pipe_width)
+{
+	char no_match = 1;
+	PipeWidthRec* curr = pipe_width_list;
+	while(curr != NULL)
+	{
+		if(strcmp(curr->pipe_name,pipe_name) == 0)
+		{
+			no_match = 0;
+			if(curr->pipe_width != pipe_width)
+			{	
+				fprintf(stderr, "\nError: in iolib.. pipe %s has multiple width access (%d, %d)\n",
+					pipe_name, curr->pipe_width, pipe_width);
+				return(1);
+			}
+			break;
+		}
+		curr = curr->next;
+	}
+
+	if(no_match)
+	{
+		PipeWidthRec* new_rec = (PipeWidthRec*) malloc(sizeof(PipeWidthRec));
+		new_rec->pipe_name = strdup(pipe_name);
+		new_rec->pipe_width = pipe_width;
+		new_rec->next = pipe_width_list;
+		pipe_width_list = new_rec;
+	}
+
+	return(0);
+}
+
 static FILE* open_for_reading(char *id)
 {
   FILE *F = NULL;
@@ -57,7 +99,11 @@ void wait_for_ack(char* id)
 
 double read_float64(char *id)
 {
-  double f;
+  double f = 0.0;
+
+  if(Add_Pipe(id,64))
+	return f;
+
   FILE *F = open_for_reading(id);
   fread(&f, sizeof(double), 1, F);
   fclose(F);
@@ -67,7 +113,11 @@ double read_float64(char *id)
 
 float read_float32(char *id)
 {
-  float f;
+  float f = 0.0;
+
+  if(Add_Pipe(id,32))
+	return f;
+
   FILE *F = open_for_reading(id);
   fread(&f, sizeof(float), 1, F);
   fclose(F);
@@ -77,7 +127,11 @@ float read_float32(char *id)
 
 uint64_t read_uint64(char *id)
 {
-  uint64_t i;
+  uint64_t i = 0;
+
+  if(Add_Pipe(id,64))
+	return i;
+
   FILE *F = open_for_reading(id);
   fread(&i, sizeof(uint64_t), 1, F);
   fclose(F);
@@ -87,7 +141,9 @@ uint64_t read_uint64(char *id)
 
 uint32_t read_uint32(char *id)
 {
-  uint32_t i;
+  uint32_t i=0;
+  if(Add_Pipe(id,32))
+	return i;
   FILE *F = open_for_reading(id);
   fread(&i, sizeof(uint32_t), 1, F);
   fclose(F);
@@ -95,9 +151,17 @@ uint32_t read_uint32(char *id)
   return i;
 }
 
+uint32_t* read_uintptr(char *id)
+{
+	return((uint32_t*) read_pointer(id));
+}
+
 void* read_pointer(char *id)
 {
-  void* i;
+  void* i = NULL;
+  if(Add_Pipe(id,8*sizeof(void*)))
+	return i;
+
   FILE *F = open_for_reading(id);
   fread(&i, sizeof(void*), 1, F);
   fclose(F);
@@ -107,7 +171,9 @@ void* read_pointer(char *id)
 
 uint16_t read_uint16(char *id)
 {
-  uint16_t i;
+  uint16_t i=0;
+  if(Add_Pipe(id,16))
+	return i;
   FILE *F = open_for_reading(id);
   fread(&i, sizeof(uint16_t), 1, F);
   fclose(F);
@@ -117,7 +183,9 @@ uint16_t read_uint16(char *id)
 
 uint8_t read_uint8(char *id)
 {
-  uint8_t i;
+  uint8_t i=0;
+  if(Add_Pipe(id,8))
+	return i;
   FILE *F = open_for_reading(id);
   fread(&i, sizeof(uint8_t), 1, F);
   fclose(F);
@@ -167,6 +235,9 @@ static FILE* open_for_writing(char *id)
 
 void write_float64(char *id, double data)
 {
+  if(Add_Pipe(id,64))
+	return;
+
   FILE *F = open_for_writing(id);
   fwrite(&data, sizeof(double), 1, F);
   fclose(F);
@@ -175,6 +246,9 @@ void write_float64(char *id, double data)
 
 void write_float32(char *id, float data)
 {
+  if(Add_Pipe(id,32))
+	return;
+
   FILE *F = open_for_writing(id);
   fwrite(&data, sizeof(float), 1, F);
   fclose(F);
@@ -183,6 +257,9 @@ void write_float32(char *id, float data)
 
 void write_uint64(char *id, uint64_t data)
 {
+  if(Add_Pipe(id,64))
+	return;
+
   FILE *F = open_for_writing(id);
   fwrite(&data, sizeof(uint64_t), 1, F);
   fclose(F);
@@ -191,14 +268,23 @@ void write_uint64(char *id, uint64_t data)
 
 void write_uint32(char *id, uint32_t data)
 {
+  if(Add_Pipe(id,32))
+	return;
   FILE *F = open_for_writing(id);
   fwrite(&data, sizeof(uint32_t), 1, F);
   fclose(F);
   wait_for_ack(id);
 }
 
+void write_uintptr(char *id, uint32_t* data)
+{
+	write_pointer(id,(void*) data);
+}
+
 void write_pointer(char *id, void* data)
 {
+  if(Add_Pipe(id,8*sizeof(void*)))
+	return;
   FILE *F = open_for_writing(id);
   fwrite(&data, sizeof(void*), 1, F);
   fclose(F);
@@ -207,6 +293,8 @@ void write_pointer(char *id, void* data)
 
 void write_uint16(char *id, uint16_t data)
 {
+  if(Add_Pipe(id,16))
+	return;
   FILE *F = open_for_writing(id);
   fwrite(&data, sizeof(uint16_t), 1, F);
   fclose(F);
@@ -215,6 +303,8 @@ void write_uint16(char *id, uint16_t data)
 
 void write_uint8(char *id, uint8_t data)
 {
+  if(Add_Pipe(id,8))
+	return;
   FILE *F = open_for_writing(id);
   fwrite(&data, sizeof(uint8_t), 1, F);
   fclose(F);

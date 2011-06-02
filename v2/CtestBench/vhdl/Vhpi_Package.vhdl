@@ -20,10 +20,10 @@ package Vhpi_Foreign is
   procedure Vhpi_Send; 
   attribute foreign of Vhpi_Send : procedure is "VHPIDIRECT Vhpi_Send";
 
-  procedure Vhpi_Set_Port_Value(port_name: in VhpiString; port_value: in VhpiString);
+  procedure Vhpi_Set_Port_Value(port_name: in VhpiString; port_value: in VhpiString; port_width: in integer);
   attribute foreign of Vhpi_Set_Port_Value: procedure is "VHPIDIRECT Vhpi_Set_Port_Value";
   
-  procedure Vhpi_Get_Port_Value(port_name: in VhpiString; port_value : out VhpiString);
+  procedure Vhpi_Get_Port_Value(port_name: in VhpiString; port_value : out VhpiString; port_width : in integer);
   attribute foreign of Vhpi_Get_Port_Value : procedure is "VHPIDIRECT Vhpi_Get_Port_Value";
   
 end Vhpi_Foreign;
@@ -53,12 +53,12 @@ package body Vhpi_Foreign is
     assert false  report "fatal: this should never be called" severity failure;
   end Vhpi_Send;
   
-  procedure Vhpi_Set_Port_Value(port_name: in VhpiString; port_value: in VhpiString) is
+  procedure Vhpi_Set_Port_Value(port_name: in VhpiString; port_value: in VhpiString; port_width : in integer) is
   begin
     assert false  report "fatal: this should never be called" severity failure;
   end Vhpi_Set_Port_Value;    
   
-  procedure  Vhpi_Get_Port_Value(port_name : in  VhpiString;  port_value: out VhpiString)is
+  procedure  Vhpi_Get_Port_Value(port_name : in  VhpiString;  port_value: out VhpiString; port_width : in integer)is
   begin
     assert false  report "fatal: this should never be called" severity failure;
   end Vhpi_Get_Port_Value;        

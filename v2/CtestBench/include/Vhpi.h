@@ -78,8 +78,8 @@ void   Vhpi_Initialize();
 void   Vhpi_Close();
 void   Vhpi_Listen();
 void   Vhpi_Send();
-void   Vhpi_Set_Port_Value(char* reg_name, char* reg_value);
-void   Vhpi_Get_Port_Value(char* reg_name, char* reg_value);
+void   Vhpi_Set_Port_Value(char* reg_name, char* reg_value, int reg_width);
+void   Vhpi_Get_Port_Value(char* reg_name, char* reg_value, int reg_width);
 
 // the a$*@&% at Mentor do not support VHPI.
 #ifdef MODELSIM
@@ -89,8 +89,8 @@ void   Modelsim_FLI_Initialize();
 void   Modelsim_FLI_Close();
 void   Modelsim_FLI_Listen();
 void   Modelsim_FLI_Send();
-void Modelsim_FLI_Set_Port_Value(mtiVariableIdT reg_id, mtiVariableIdT reg_val_id);
-void Modelsim_FLI_Get_Port_Value(mtiVariableIdT reg_id, mtiVariableIdT reg_val_id);
+void Modelsim_FLI_Set_Port_Value(mtiVariableIdT reg_id, mtiVariableIdT reg_val_id, int reg_width);
+void Modelsim_FLI_Get_Port_Value(mtiVariableIdT reg_id, mtiVariableIdT reg_val_id, int reg_width);
 void Modelsim_FLI_To_String(char* ret_string, mtiVariableIdT vsim_str);
 void String_To_Modelsim_FLI(mtiVariableIdT vsim_str, char* from_string);
 
