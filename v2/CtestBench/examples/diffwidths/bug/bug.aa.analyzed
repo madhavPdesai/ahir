@@ -1,0 +1,49 @@
+$storage  mempool : $array[1] $of $uint<8> // memory space index = 0  base address = 0  word size = 8
+$module [io_module]
+$in ()
+$out ()
+$is
+{
+  $branchblock [body]
+  {
+    $storage  lenptr_alloc : $pointer< $uint<8> > // memory space index = 1  base address = 0  word size = 8
+    $storage  len8_alloc : $uint<32> // memory space index = 1  base address = 4  word size = 8
+    len8 := @(len8_alloc)
+    // target-type =   $pointer< $uint<32> >
+    // target-memory-space = 1
+    // source-type = $pointer< $uint<32> >
+    // source-memory-space = 1
+    lenptr := @(lenptr_alloc)
+    // target-type =   $pointer< $pointer< $uint<8> > >
+    // target-memory-space = 1
+    // source-type = $pointer< $pointer< $uint<8> > >
+    // source-memory-space = 1
+    iNsTr_24 := ($cast ($pointer< $uint<8> >) len8 )
+    // target-type =   $pointer< $uint<8> >
+    // target-memory-space = 1
+    // source-type = $pointer< $uint<8> >
+    // source-memory-space = 1
+    ->(lenptr) := iNsTr_24
+    // target-type =   $pointer< $uint<8> >
+    // target-memory-space = 1
+    // source-type = $pointer< $uint<8> >
+    // source-memory-space = 1
+    iNsTr_32 := ->(lenptr)
+    // target-type =   $pointer< $uint<8> >
+    // target-memory-space = 1
+    // source-type = $pointer< $uint<8> >
+    // source-memory-space = 1
+    iNsTr_33 := iNsTr_32[_b0 ]
+    // target-type =   $pointer< $uint<8> >
+    // target-memory-space = 1
+    // source-type = $pointer< $uint<8> >
+    // source-memory-space = 1
+    iNsTr_34 := ->(iNsTr_33)
+    // target-type =   $uint<8>
+    // target-memory-space = 1
+    // source-type = $uint<8>
+    // source-memory-space = 1
+  }
+}
+// Memory space 0: mempool 
+// Memory space 1: %io_module%body:len8_alloc %io_module%body:lenptr_alloc 

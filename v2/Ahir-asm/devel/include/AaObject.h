@@ -24,6 +24,8 @@ class AaObject: public AaRoot
   AaScope* _scope;
 
   AaStorageObject* _addressed_object_representative;
+  set<AaStorageObject*> _addressed_objects;
+
  public:
 
   AaType* Get_Type() {return(this->_type);}
@@ -80,6 +82,8 @@ class AaObject: public AaRoot
     }
 
   virtual AaValue* Get_Expression_Value() {return(NULL);}
+
+  set<AaStorageObject*>& Get_Addressed_Objects();
 
 };
 

@@ -1,0 +1,47 @@
+This example illustrates two things about the AHIR 
+generated hardware:
+
+1. About the AHIR memory subsystem
+
+The AHIR memory subsystem always presents
+a picture which is identical to that of the C-programmer
+(in terms of byte-ordering).
+
+A declaration of the following type
+    uint8_t buf8[4096];
+leads to storage being created in a memory subsystem.
+buf8[0] will be kept at a base-address, 
+buf8[1] will be kept at base-address+1 and so on.
+
+The following cast
+	*((uint32_t*)(buf8+i))
+will return the uint32_t whose bytes (MSB to LSB) are
+	buf8[i+3] buf8[i+2] buf8[i+1] buf8[i]
+exactly as expected.
+
+One can thus convert from bytes to uint32_t's and
+vice-versa in the usual way.
+	
+
+2.  About pipes
+
+In AHIR, a pipe must have a fixed width by which it
+is accessed.  For example, if "inpipe" is a pipe,
+then
+	read_uint32("inpipe") 
+and
+	read_uin16("inpipe")
+cannot both be called on it.
+
+If you want to send a stream of bytes into a pipe
+whose width is 32, then you will have to pack the
+bytes into uint32_t's and use write_uint32() to
+do this.  This is illustrated in testbench.c
+in which a stream of bytes is sent to a pipe
+as a stream of uint32_t's.
+
+Conversion between uint32_t streams and uint8_t
+streams in memory can be carried out in the usual
+way (see 1) inside an AHIR system.
+
+	

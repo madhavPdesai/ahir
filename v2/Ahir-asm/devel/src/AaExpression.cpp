@@ -37,6 +37,8 @@ bool AaExpression::Set_Addressed_Object_Representative(AaStorageObject* obj)
   if(obj == NULL)
     return(new_flag);
 
+
+
   if(this->_addressed_object_representative == NULL)
    {
      new_flag = true;
@@ -217,6 +219,9 @@ int AaObjectReference::Evaluate(vector<AaExpression*>* indices, vector<int>* sca
 
 void AaObjectReference::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
 {
+  if(obj != NULL)
+    this->_addressed_objects.insert(obj);
+
   this->AaExpression::Propagate_Addressed_Object_Representative(obj);
 }
 
@@ -264,8 +269,8 @@ void AaObjectReference::Map_Source_References(set<AaRoot*>& source_objects)
 
 	  this->Set_Object(child);
 
-	  child->Add_Source_Reference(this);  // child -> this (this uses child as a source)
-	  this->Add_Target_Reference(child);  // this  <- child (child uses this as a target)
+	  child->Add_Source_Reference(this);  // child -> this (child is a source of this)
+	  this->Add_Target_Reference(child);  // this <- child (this is a target of child)
 
 	  if(child->Is_Expression())
 	    ((AaExpression*)child)->Add_Target(this);
@@ -1630,24 +1635,31 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
       // not really necessary but..
       this->Set_Addressed_Object_Representative(obj);
 
-      AaStorageObject* obj1 = _reference_to_object->Get_Addressed_Object_Representative();
+      // ->(ref) can point to obj.
+      // if ref can point to obj1, then the value of
+      // obj1 can point to obj!
+      // this must be done for each obj1 that ref can point to.
       if(this->Get_Is_Target())
 	{
-	  // OK. now reference_to_object is a pointer..
-	  this->_reference_to_object->Propagate_Addressed_Object_Representative(obj);      
-
-	  // obj1 has a value which can point to obj.
-	  if(obj1 != NULL)
-	    obj1->Propagate_Addressed_Object_Representative(obj);
+	  // OK. now reference_to_object is a pointer.. is it an object?
+	  // if yes, this object can point to obj.  update.
+	  AaRoot* ref_obj =  this->_reference_to_object->Get_Object();
+	  if(ref_obj != NULL && ref_obj->Is_Storage_Object())
+	    ((AaObject*)ref_obj)->Propagate_Addressed_Object_Representative(obj);
 	}
 
-      // what should you propagate forward?
-      // _reference_to_object points to a pointer p.
-      // p has an addressed object representative obj1.
-      // obj1 has an addressed object representative obj2.
-      // ->(p) propagates obj2
-      if(obj1 != NULL)
+
+      for(set<AaStorageObject*>::iterator oiter = ((AaObjectReference*)_reference_to_object)->Get_Addressed_Objects().begin(),
+	    foiter = ((AaObjectReference*) _reference_to_object)->Get_Addressed_Objects().end();
+	  oiter != foiter;
+	  oiter++)
 	{
+	  AaStorageObject* obj1 = *oiter;
+	  if(this->Get_Is_Target())
+	    {
+	      obj1->Propagate_Addressed_Object_Representative(obj);
+	    }
+
 	  // ok: the stored value pointed to by this expression
 	  // can point to obj1.. and also to obj
 	  AaProgram::Add_Storage_Dependency(obj,obj1);
@@ -1666,7 +1678,7 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 		}
 	    }
 	}
-
+      
       this->Set_Coalesce_Flag(false);
     }
 }

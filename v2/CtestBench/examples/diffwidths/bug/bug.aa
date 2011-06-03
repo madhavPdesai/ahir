@@ -1,0 +1,20 @@
+$storage  mempool : $array[1] $of $uint<8> // memory space index = 0  base address = 0  word size = 8
+$pipe inpipe: $uint<32>
+$module [io_module]
+$in ()
+$out ()
+$is
+{
+  $branchblock [body]
+  {
+    $storage  len8_alloc : $uint<32> // memory space index = 3  base address = 4117  word size = 8
+    $storage  lenptr_alloc : $pointer< $uint<8> > // memory space index = 3  base address = 4125  word size = 8
+    len8 := @(len8_alloc)
+    lenptr := @(lenptr_alloc)
+    iNsTr_2 := ($bitcast ($uint<32>) inpipe )
+    ->(len8) := iNsTr_2
+    iNsTr_24 := ($cast ($pointer< $uint<8> >) len8 )
+    ->(lenptr) := iNsTr_24
+    iNsTr_32 := ->(lenptr)
+ }
+}

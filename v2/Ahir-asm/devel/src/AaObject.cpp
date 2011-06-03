@@ -34,6 +34,7 @@ bool AaObject::Set_Addressed_Object_Representative(AaStorageObject* obj)
   bool new_flag = false;
   if(obj != NULL)
     {
+      this->_addressed_objects.insert(obj);
       if(this->_addressed_object_representative == NULL)
 	{
 	  this->_addressed_object_representative = obj;
@@ -246,6 +247,7 @@ bool AaForeignStorageObject::Set_Addressed_Object_Representative(AaStorageObject
   else if(obj != NULL)
     {
       this->_addressed_object_representative = obj;
+      this->_addressed_objects.insert(obj);
     }
 }
 

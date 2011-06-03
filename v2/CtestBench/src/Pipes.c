@@ -69,7 +69,7 @@ void write_uint64_n(const char *id, uint64_t* buf, int buf_len)
   bzero(buffer,(strlen(id) + 25 +(buf_len*sizeof(uint64_t))));
 
   // send a message with a character string header and a variable length data field.
-  // The data field will start after the ned of the character-string, on 
+  // The data field will start after the end of the character-string, on 
   // an 8-byte boundary.
   // for example:
   // "pipewrite.burst id 64 buf_len buf (aligned to 8 byte boundary)"

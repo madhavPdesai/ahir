@@ -41,7 +41,8 @@ class AaExpression: public AaRoot
   // objects (others are connected to this representative
   // in AaProgram::_storage_dependency_graph).
   AaStorageObject* _addressed_object_representative;
-  
+
+
   bool _already_evaluated;
  public:
 
@@ -69,6 +70,7 @@ class AaExpression: public AaRoot
     {
       return(this->_addressed_object_representative);
     }
+
   virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
   virtual void Propagate_Addressed_Object_Representative();
   virtual void Set_Type(AaType* t);
@@ -188,6 +190,9 @@ class AaObjectReference: public AaExpression
 
  protected:
 
+  set<AaStorageObject*> _addressed_objects;
+
+
   // the original string which was 
   // in the source file.
   string _object_ref_string;
@@ -249,9 +254,12 @@ class AaObjectReference: public AaExpression
   void PrintAddressOfC(ofstream& ofile, string tab_string) {}
   virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string) {}
 
-
-
   virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
+  set<AaStorageObject*>& Get_Addressed_Objects()
+    {
+      return(this->_addressed_objects);
+    }
+
 
   // common operations across loads/stores.
   void Write_VC_Load_Control_Path(vector<AaExpression*>* address_expressions,
@@ -640,6 +648,7 @@ class AaPointerDereferenceExpression: public AaObjectReference
   {
     return(_reference_to_object);
   }
+
 
   virtual void Map_Source_References_As_Target(set<AaRoot*>& source_objects)
   {

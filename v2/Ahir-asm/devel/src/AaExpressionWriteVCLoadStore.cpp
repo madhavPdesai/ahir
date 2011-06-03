@@ -257,7 +257,9 @@ void AaObjectReference::Write_VC_Load_Store_Data_Path(vector<AaExpression*>* add
   // equivalence operator.
   vector<string> inwires;
   vector<string> outwires;
-  for(int idx = 0; idx < nwords; idx++)
+
+  // lower addresses to the right.
+  for(int idx = nwords-1; idx >= 0; idx--)
     {
       if(read_or_write == "read")
 	{
