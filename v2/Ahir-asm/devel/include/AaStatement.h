@@ -140,6 +140,7 @@ class AaStatement: public AaScope
   virtual string Get_VC_Entry_Active_Transition_Name() { return(this->Get_VC_Name() + "__entry__");}
   virtual string Get_VC_Exit_Transition_Name() { return(this->Get_VC_Name() + "__exit__");}
 
+  void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
 };
 
 // statement sequence (is used in block statements which lead to programs)
@@ -303,13 +304,7 @@ class AaAssignmentStatement: public AaStatement
   AaExpression* Get_Target() {return(this->_target);}
   AaExpression* Get_Source() {return(this->_source);}
 
-  virtual void Map_Targets() 
-  {
-    // only one target which can serve as a handle
-    // to this statement
-    if(this->_target->Is_Object_Reference())
-      this->Map_Target((AaObjectReference*)this->Get_Target());
-  }
+  virtual void Map_Targets();
 
   AaAssignmentStatement(AaScope* scope,AaExpression* target, AaExpression* source, int lineno);
   ~AaAssignmentStatement();
@@ -356,6 +351,8 @@ class AaAssignmentStatement: public AaStatement
 
   virtual void Propagate_Constants(); 
   virtual string Get_VC_Name() {return("assign_stmt_" + Int64ToStr(this->Get_Index()));}
+
+
 };
 
 

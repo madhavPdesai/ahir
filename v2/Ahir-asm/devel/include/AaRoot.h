@@ -118,7 +118,7 @@ class AaRoot
 
   virtual string Get_Source_Info() 
   {
-     return(string("file ") 
+     return(string(" file ") 
 	   + this->Get_File_Name() 
 	   + ", line " 
 	   + 

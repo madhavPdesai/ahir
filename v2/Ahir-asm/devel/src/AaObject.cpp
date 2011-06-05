@@ -34,7 +34,11 @@ bool AaObject::Set_Addressed_Object_Representative(AaStorageObject* obj)
   bool new_flag = false;
   if(obj != NULL)
     {
+      if(this->_addressed_objects.find(obj) == this->_addressed_objects.end())
+	new_flag = true;
+
       this->_addressed_objects.insert(obj);
+
       if(this->_addressed_object_representative == NULL)
 	{
 	  this->_addressed_object_representative = obj;
@@ -49,10 +53,7 @@ bool AaObject::Set_Addressed_Object_Representative(AaStorageObject* obj)
 	    }
 	  else if(!this->_addressed_object_representative->Is_Foreign_Storage_Object())
 	    {
-	      if(obj != this->_addressed_object_representative)
-		{
-		  AaProgram::Add_Storage_Dependency(obj,this->_addressed_object_representative);
-		}
+	      // nothing
 	    }
 	}
     }
@@ -63,8 +64,9 @@ bool AaObject::Set_Addressed_Object_Representative(AaStorageObject* obj)
 // this object.  Whenever another object a is encountered
 // and the addressed object ref of a is modified, a is added
 // to a re-coalesce set.
-void AaObject::Coalesce_Storage()
+void AaObject::Coalesce_Storage(AaStorageObject* obj)
 {
+
   // ask the expressions that depend on this
   // to propagate storage object references..
   for(set<AaRoot*>::iterator iter = _source_references.begin();
@@ -79,10 +81,11 @@ void AaObject::Coalesce_Storage()
 
 void AaObject::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
 {
+  if(AaProgram::_verbose_flag)
+    AaRoot::Info("coalescing: propagating " + (obj ? obj->Get_Name() : "null") + " from object " + this->Get_Name());
+
   if(this->Set_Addressed_Object_Representative(obj))
-    {
-      AaProgram::Add_To_Recoalesce_Set(this);
-    }
+    AaProgram::Add_To_Recoalesce_Map(this, obj);
 }
 
 string AaObject::Tab()

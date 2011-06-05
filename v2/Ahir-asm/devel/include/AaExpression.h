@@ -190,8 +190,6 @@ class AaObjectReference: public AaExpression
 
  protected:
 
-  set<AaStorageObject*> _addressed_objects;
-
 
   // the original string which was 
   // in the source file.
@@ -255,10 +253,6 @@ class AaObjectReference: public AaExpression
   virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string) {}
 
   virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
-  set<AaStorageObject*>& Get_Addressed_Objects()
-    {
-      return(this->_addressed_objects);
-    }
 
 
   // common operations across loads/stores.
@@ -483,6 +477,9 @@ class AaConstantLiteralReference: public AaObjectReference
 // simple reference (no array indices)
 class AaSimpleObjectReference: public AaObjectReference
 {
+
+  set<AaStorageObject*> _addressed_objects;
+
  public:
   AaSimpleObjectReference(AaScope* scope_tpr, string object_ref_string);
   ~AaSimpleObjectReference();
@@ -491,7 +488,7 @@ class AaSimpleObjectReference: public AaObjectReference
   virtual void PrintC(ofstream& ofile, string tab_string);
   virtual void PrintC_Header_Entry(ofstream& ofile);
 
-
+  virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
@@ -537,6 +534,11 @@ class AaSimpleObjectReference: public AaObjectReference
 					       map<string,vector<AaExpression*> >& pipe_map,
 					       ostream& ofile);
 
+
+  set<AaStorageObject*>& Get_Addressed_Objects()
+    {
+      return(this->_addressed_objects);
+    }
 
 };
 
@@ -633,12 +635,15 @@ class AaArrayObjectReference: public AaObjectReference
 					       map<string,vector<AaExpression*> >& pipe_map,
 					       ostream& ofile);
 
+  virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
+
 };
 
 
 class AaPointerDereferenceExpression: public AaObjectReference
 {
   AaObjectReference* _reference_to_object;
+  set<AaStorageObject*> _addressed_objects_from_rhs;
 
  public:
 
@@ -648,7 +653,6 @@ class AaPointerDereferenceExpression: public AaObjectReference
   {
     return(_reference_to_object);
   }
-
 
   virtual void Map_Source_References_As_Target(set<AaRoot*>& source_objects)
   {

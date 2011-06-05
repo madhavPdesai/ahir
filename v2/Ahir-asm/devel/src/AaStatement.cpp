@@ -33,6 +33,10 @@ string AaStatement::Tab()
 void AaStatement::Map_Target(AaObjectReference* obj_ref) 
 {
 
+  bool is_pointer_deref = obj_ref->Is("AaPointerDereferenceExpression");
+  if(is_pointer_deref)
+    return;
+
   string obj_ref_root_name =obj_ref->Get_Object_Root_Name();
   bool err_flag = false;
   AaScope* search_scope = this->Get_Scope()->Get_Ancestor_Scope(obj_ref->Get_Search_Ancestor_Level());
@@ -59,7 +63,7 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
     }
 
   bool is_array_ref = obj_ref->Is("AaArrayObjectReference");
-  bool is_pointer_deref = obj_ref->Is("AaPointerDereference");
+
   bool is_simple_ref = obj_ref->Is("AaSimpleObjectReference");
 
   bool from_above = ((child != NULL) && (child->Is_Expression()) && 
@@ -67,7 +71,7 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
 
   bool map_flag = (((child == NULL) || from_above) && 
 		   (search_scope == this->Get_Scope()) && 
-		   !(is_array_ref));
+		   !(is_array_ref) && !(is_pointer_deref));
 
   bool err_no_target_in_scope = ((child == NULL) && 
 				 (is_array_ref || is_pointer_deref 
@@ -126,12 +130,15 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
       if(child->Is_Expression())
 	obj_ref->Add_Target((AaExpression*) child);
 
+
       if(child->Is_Storage_Object())
 	((AaStorageObject*)child)->Set_Is_Written_Into(true);
+
 
       // obj_ref -> child
       child->Add_Target_Reference(obj_ref); // obj_ref uses child as a target
       obj_ref->Add_Source_Reference(child); // child uses obj_ref as a source
+      
 
       if(child->Is_Object())
 	{
@@ -300,6 +307,18 @@ void AaStatement::Write_C_Function_Body(ofstream& ofile)
   ofile << "// -------------------------------------------------------------------------------------------" << endl;
 }
 
+
+
+void AaStatement::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
+{
+  for(set<AaRoot*>::iterator iter = _source_references.begin();
+      iter != _source_references.end();
+      iter++)
+    {
+      if((*iter)->Is_Expression())
+	((AaExpression*)(*iter))->Propagate_Addressed_Object_Representative(obj);
+    }
+}
 
 
 
@@ -526,7 +545,7 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
     this->Map_Target((AaObjectReference*)tgt);
   else if(tgt->Is("AaPointerDereferenceExpression"))
     {
-      // nothing really.. need to map sources later..
+      this->Map_Target((AaObjectReference*)tgt);
     }
   else
     assert(0);
@@ -624,6 +643,14 @@ void AaAssignmentStatement::Print(ostream& ofile)
     ofile << endl << Debug_Info();
 
   ofile << endl;
+}
+
+void AaAssignmentStatement::Map_Targets()
+{
+  // only one target which can serve as a handle
+  // to this statement
+  if(this->_target->Is_Object_Reference())
+    this->Map_Target((AaObjectReference*)this->Get_Target());
 }
 
 void AaAssignmentStatement::Map_Source_References()
@@ -1416,7 +1443,7 @@ void AaBlockStatement::Coalesce_Storage()
   for(int idx = 0; idx < _objects.size(); idx++)
     {
       if(_objects[idx]->Is("AaStorageObject"))
-	_objects[idx]->Coalesce_Storage();
+	_objects[idx]->Coalesce_Storage(NULL);
     }
 
   if(this->_statement_sequence)

@@ -74,7 +74,7 @@ class AaObject: public AaRoot
 
   virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
   void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
-  void Coalesce_Storage();
+  void Coalesce_Storage(AaStorageObject* addr_obj);
 
   AaStorageObject* Get_Addressed_Object_Representative() 
     {
@@ -83,8 +83,11 @@ class AaObject: public AaRoot
 
   virtual AaValue* Get_Expression_Value() {return(NULL);}
 
-  set<AaStorageObject*>& Get_Addressed_Objects();
-
+  set<AaStorageObject*>& Get_Addressed_Objects()
+    {
+      return(this->_addressed_objects);
+    }
+  
 };
 
 // interface object: function arguments

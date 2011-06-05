@@ -69,7 +69,7 @@ class AaProgram
   static AaStorageObject* _extmem_object;
 
   // recoalesce set.
-  static set<AaObject*> _recoalesce_set;
+  static map<AaObject*,set<AaStorageObject*> > _recoalesce_map;
   
   // modules should be printed in the order in which
   // they were encountered.
@@ -188,7 +188,7 @@ class AaProgram
 
   static AaMemorySpace* Get_Memory_Space(int idx);
 
-  static void Add_To_Recoalesce_Set(AaObject* obj);
+  static void Add_To_Recoalesce_Map(AaObject* obj, AaStorageObject* addr_obj);
 
   static AaForeignStorageObject* Make_Foreign_Storage_Object(AaType* t);
 

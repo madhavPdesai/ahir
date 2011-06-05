@@ -38,7 +38,6 @@ bool AaExpression::Set_Addressed_Object_Representative(AaStorageObject* obj)
     return(new_flag);
 
 
-
   if(this->_addressed_object_representative == NULL)
    {
      new_flag = true;
@@ -55,7 +54,8 @@ bool AaExpression::Set_Addressed_Object_Representative(AaStorageObject* obj)
        {
 	 if(obj != this->_addressed_object_representative)
 	   {
-	     AaProgram::Add_Storage_Dependency(obj,this->_addressed_object_representative);
+	     this->_addressed_object_representative = obj;
+	     new_flag = true;
 	   }
        }
    }
@@ -68,6 +68,7 @@ void AaExpression::Propagate_Addressed_Object_Representative()
   if(!this->Get_Coalesce_Flag())
     {
       this->Set_Coalesce_Flag(true);
+
 
       AaStorageObject* obj = this->Get_Addressed_Object_Representative();
       
@@ -87,15 +88,21 @@ void AaExpression::Propagate_Addressed_Object_Representative()
 	{
 	  if((*iter)->Is_Object())
 	    ((AaObject*)(*iter))->Propagate_Addressed_Object_Representative(obj);
+	  
 	}
 
       this->Set_Coalesce_Flag(false);
     }
 }
 
+
 void AaExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
 {
+
   this->Set_Addressed_Object_Representative(obj);
+  if(AaProgram::_verbose_flag)
+    AaRoot::Info("coalescing: propagating " + (obj ? obj->Get_Name() : "null") + " from expression " + this->To_String() +
+		 this->Get_Source_Info());
   this->Propagate_Addressed_Object_Representative();
 
 }
@@ -219,9 +226,6 @@ int AaObjectReference::Evaluate(vector<AaExpression*>* indices, vector<int>* sca
 
 void AaObjectReference::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
 {
-  if(obj != NULL)
-    this->_addressed_objects.insert(obj);
-
   this->AaExpression::Propagate_Addressed_Object_Representative(obj);
 }
 
@@ -429,6 +433,12 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
       ((AaExpression*) obj)->Add_Target(this);
     }
   this->_object = obj;
+}
+
+bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObject* obj)
+{
+  this->_addressed_objects.insert(obj);
+  this->AaExpression::Set_Addressed_Object_Representative(obj);
 }
 
 void AaSimpleObjectReference::PrintC_Header_Entry(ofstream& ofile)
@@ -928,6 +938,22 @@ void AaArrayObjectReference::Set_Object(AaRoot* obj)
 
 }
 
+
+bool AaArrayObjectReference::Set_Addressed_Object_Representative(AaStorageObject* obj)
+{
+  if(this->Get_Object_Type() && this->Get_Object_Type()->Is_Pointer_Type())
+    {
+      AaStorageObject* ref = this->Get_Addressed_Object_Representative();
+
+      // pointer calculation is always done in the context of a memory
+      // space... so all storage objects pointed to by pointer calculation
+      // operation must be in the same memory space!
+      if(ref != NULL && ref != obj)
+	AaProgram::Add_Storage_Dependency(ref,obj);
+
+    }
+  this->AaExpression::Set_Addressed_Object_Representative(obj);
+}
 
 void AaArrayObjectReference::Update_Type()
 {
@@ -1543,8 +1569,8 @@ AaPointerDereferenceExpression::AaPointerDereferenceExpression(AaScope* scope,
   AaObjectReference(scope,obj_ref->Get_Object_Ref_String())
 {
   _reference_to_object = obj_ref;
-  
-  obj_ref->Add_Target(this);
+
+  obj_ref->Add_Target(this); 
   AaProgram::Add_Storage_Dependency_Graph_Vertex(this);
   AaProgram::_pointer_dereferences.insert(this);
 }
@@ -1556,11 +1582,6 @@ void AaPointerDereferenceExpression::Print(ostream& ofile)
   ofile << "->(";
   this->_reference_to_object->Print(ofile);
   ofile << ")";
-  
-  if(_addressed_object_representative == NULL && !AaProgram::_keep_extmem_inside)
-    {
-      AaRoot::Error("illegal pointer-dereference expression... not associated with any memory space!", this);
-    }
 }
   
 void AaPointerDereferenceExpression::PrintC(ofstream& ofile, string tab_string)
@@ -1613,14 +1634,29 @@ void AaPointerDereferenceExpression::Update_Type()
     }
 }
 
+
+// two ways you can get here if this is a target: you
+// can get from _reference_to_object or you can get here
+// from the RHS of an assignment statement.
+//
+// if it is from the RHS, then obj is attached as the
+// address_rep of _reference_to_object->addr_obj_rep..
+//
+// otherwise, obj is combined with this..
 void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
 {
   if(!this->Get_Coalesce_Flag())
     {
       this->Set_Coalesce_Flag(true);
 
+      bool from_ref = (obj == this->_reference_to_object->Get_Addressed_Object_Representative());
+
+      if(AaProgram::_verbose_flag)
+	AaRoot::Info("coalescing: propagating " + (obj ? obj->Get_Name() : "null") + " from expression " + this->To_String()
+		     + this->Get_Source_Info());
+
       // why are we doing this?
-      if((obj != NULL) && this->Get_Addressed_Object_Representative() == NULL)
+      if(obj != NULL && from_ref)
 	{
 	  if(this->Get_Is_Target())
 	    obj->Set_Is_Written_Into(true);
@@ -1631,54 +1667,60 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 	    AaProgram::Add_Storage_Dependency(this,obj);
 	}
 
-      // OK. this gets the addressed object representative...
-      // not really necessary but..
-      this->Set_Addressed_Object_Representative(obj);
-
-      // ->(ref) can point to obj.
-      // if ref can point to obj1, then the value of
-      // obj1 can point to obj!
-      // this must be done for each obj1 that ref can point to.
-      if(this->Get_Is_Target())
+      if(obj != NULL && !from_ref && this->Get_Is_Target())
 	{
-	  // OK. now reference_to_object is a pointer.. is it an object?
-	  // if yes, this object can point to obj.  update.
-	  AaRoot* ref_obj =  this->_reference_to_object->Get_Object();
-	  if(ref_obj != NULL && ref_obj->Is_Storage_Object())
-	    ((AaObject*)ref_obj)->Propagate_Addressed_Object_Representative(obj);
+	  _addressed_objects_from_rhs.insert(obj);
 	}
 
-
-      for(set<AaStorageObject*>::iterator oiter = ((AaObjectReference*)_reference_to_object)->Get_Addressed_Objects().begin(),
-	    foiter = ((AaObjectReference*) _reference_to_object)->Get_Addressed_Objects().end();
-	  oiter != foiter;
-	  oiter++)
+      // OK. this gets the addressed object representative...
+      // but only if it is from the reference.
+      if((this->Get_Addressed_Object_Representative()) != NULL && (obj != NULL) && from_ref)
 	{
-	  AaStorageObject* obj1 = *oiter;
-	  if(this->Get_Is_Target())
-	    {
-	      obj1->Propagate_Addressed_Object_Representative(obj);
-	    }
+	  AaProgram::Add_Storage_Dependency(obj,this->Get_Addressed_Object_Representative());
+	}
 
-	  // ok: the stored value pointed to by this expression
-	  // can point to obj1.. and also to obj
-	  AaProgram::Add_Storage_Dependency(obj,obj1);
-	  
-	  // now the memory space pointed to by obj1.. what
-	  // is its representative?  This must go forward..
-	  AaStorageObject* obj2 = obj1->Get_Addressed_Object_Representative();
-	  if(obj2 != NULL)
+      if(from_ref && obj != NULL)
+	this->Set_Addressed_Object_Representative(obj);
+
+      
+      // address rep of _reference to object 
+      if(this->Get_Is_Target())
+	{
+	  assert(_reference_to_object->Is("AaSimpleObjectReference"));
+	  set<AaStorageObject*>& ref_reps = ((AaSimpleObjectReference*)_reference_to_object)->Get_Addressed_Objects();
+	  for(set<AaStorageObject*>::iterator riter = ref_reps.begin(), friter = ref_reps.end();
+	      riter != friter;
+	      riter++)
 	    {
-	      // propagate to all expressions that are targets of this expression.
-	      for(set<AaExpression*>::iterator iter = _targets.begin();
-		  iter != _targets.end();
-		  iter++)
+	      AaStorageObject* obj1 = *riter;
+	      if(obj1 != NULL)
 		{
-		  (*(iter))->Propagate_Addressed_Object_Representative(obj2);
+		  for(set<AaStorageObject*>::iterator siter = _addressed_objects_from_rhs.begin(),
+			fsiter = _addressed_objects_from_rhs.end();
+		      siter != fsiter;
+		      siter++)
+		    {
+		      obj1->Propagate_Addressed_Object_Representative(*siter);
+		    }
 		}
 	    }
 	}
+
       
+      // now the memory space pointed to by obj.. what
+      // is its representative?  This must go forward..
+      AaStorageObject* obj2 = obj->Get_Addressed_Object_Representative();
+      if(obj2 != NULL)
+	{
+	  // propagate to all expressions that are targets of this expression.
+	  for(set<AaExpression*>::iterator iter = _targets.begin();
+	      iter != _targets.end();
+	      iter++)
+	    {
+	      (*(iter))->Propagate_Addressed_Object_Representative(obj2);
+	    }
+	}
+
       this->Set_Coalesce_Flag(false);
     }
 }
@@ -1951,6 +1993,10 @@ void AaAddressOfExpression::Propagate_Addressed_Object_Representative(AaStorageO
   // _storage_object may have an updated 
   // representative..
   this->Set_Addressed_Object_Representative(this->_storage_object);
+  if(AaProgram::_verbose_flag)
+    AaRoot::Info("coalescing: propagating " + (obj ? obj->Get_Name() : "null") + " from expression " + this->To_String()
+		 + this->Get_Source_Info());
+
   this->AaExpression::Propagate_Addressed_Object_Representative();
 
 }

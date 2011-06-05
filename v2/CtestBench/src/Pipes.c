@@ -170,7 +170,7 @@ void write_uint16_n(const char *id, uint16_t* buf, int buf_len)
 
 
   // send a message with a character string header and a variable length data field.
-  // The data field will start after the ned of the character-string, on 
+  // The data field will start after the end of the character-string, on 
   // an 8-byte boundary.
   // for example:
   // "pipewrite.burst id 64 buf_len buf (aligned to 8 byte boundary)"

@@ -34,7 +34,7 @@ std::vector<AaModule*> AaProgram::_ordered_module_vector;
 std::map<int,set<AaModule*> > AaProgram::_storage_index_module_coverage_map;
 std::map<int,AaMemorySpace*> AaProgram::_memory_space_map;
 std::map<AaType*,AaForeignStorageObject*> AaProgram::_foreign_storage_map;
-std::set<AaObject*> AaProgram::_recoalesce_set;
+std::map<AaObject*,set<AaStorageObject*> > AaProgram::_recoalesce_map;
 std::set<int> AaProgram::_extmem_access_widths;
 std::set<AaType*> AaProgram::_extmem_access_types;
 std::set<AaPointerDereferenceExpression*> AaProgram::_pointer_dereferences;
@@ -647,7 +647,7 @@ void AaProgram::Coalesce_Storage()
       obj_iter++)
     {
       if(((*obj_iter).second)->Is("AaStorageObject"))
-	((*obj_iter).second)->Coalesce_Storage();
+	((*obj_iter).second)->Coalesce_Storage(NULL);
     }
   
 
@@ -658,12 +658,19 @@ void AaProgram::Coalesce_Storage()
       (*miter).second->Coalesce_Storage();
     }
   
-  while(AaProgram::_recoalesce_set.size() > 0)
+  // recoalesce..
+  while(AaProgram::_recoalesce_map.size() > 0)
     {
-      AaObject* top_obj = *(AaProgram::_recoalesce_set.begin());
-      AaProgram::_recoalesce_set.erase(top_obj);
-      AaRoot::Info("Recoalescing from " + top_obj->Get_Name());
-      top_obj->Coalesce_Storage();
+      AaObject* top_obj = (*(AaProgram::_recoalesce_map.begin())).first;
+      set<AaStorageObject*> addr_obj_set = (*(AaProgram::_recoalesce_map.begin())).second;
+      AaProgram::_recoalesce_map.erase(top_obj);
+      for(set<AaStorageObject*>::iterator siter = addr_obj_set.begin(), fsiter = addr_obj_set.end();
+	  siter != fsiter;
+	  siter++)
+	{
+	  AaRoot::Info("Recoalescing from " + top_obj->Get_Name() + " with addressable-object " + (*siter)->Get_Name());
+	  top_obj->Coalesce_Storage(*siter);
+	}
     }
 
   // all "unknown" memory access will be assumed to point to
@@ -997,13 +1004,13 @@ AaMemorySpace* AaProgram::Get_Memory_Space(int idx)
     return(AaProgram::_memory_space_map[idx]);
   else
     return(NULL);
-
 }
 
-void AaProgram::Add_To_Recoalesce_Set(AaObject* obj)
+void AaProgram::Add_To_Recoalesce_Map(AaObject* obj, AaStorageObject* addr_obj)
 {
-  AaProgram::_recoalesce_set.insert(obj);
+  AaProgram::_recoalesce_map[obj].insert(addr_obj);
 }
+
 void AaProgram::Write_VC_Constant_Declarations(ostream& ofile)
 {
   for(map<string,AaObject*,StringCompare>::iterator iter = AaProgram::_objects.begin();
