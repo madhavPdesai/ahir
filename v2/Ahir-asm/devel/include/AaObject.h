@@ -74,7 +74,7 @@ class AaObject: public AaRoot
 
   virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
   void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
-  void Coalesce_Storage(AaStorageObject* addr_obj);
+  void Coalesce_Storage();
 
   AaStorageObject* Get_Addressed_Object_Representative() 
     {

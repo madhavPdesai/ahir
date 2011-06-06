@@ -2,6 +2,9 @@ This example illustrates how you can use your "normal" software
 to verify the hardware generated out of the AhirV2 flow.
 
 We take the program  quicksort.c
+  (as it is written this has a bug.. but here
+   we are interested in ensuring that the hardware
+   produces the same result as the software)
 
 This program describes a system consisting of a
 main function which communicate with

@@ -8693,15 +8693,15 @@ begin --
       wait until clk = '0';
       wait for 1 ns; 
       obj_ref := Pack_String_To_Vhpi_String("input_data req");
-      Vhpi_Get_Port_Value(obj_ref,val_string);
+      Vhpi_Get_Port_Value(obj_ref,val_string,1);
       input_data_pipe_write_req <= Unpack_String(val_string,1);
       obj_ref := Pack_String_To_Vhpi_String("input_data 0");
-      Vhpi_Get_Port_Value(obj_ref,val_string);
+      Vhpi_Get_Port_Value(obj_ref,val_string,32);
       input_data_pipe_write_data <= Unpack_String(val_string,32);
       wait until clk = '1';
       obj_ref := Pack_String_To_Vhpi_String("input_data ack");
       val_string := Pack_SLV_To_Vhpi_String(input_data_pipe_write_ack);
-      Vhpi_Set_Port_Value(obj_ref,val_string);
+      Vhpi_Set_Port_Value(obj_ref,val_string,1);
       -- 
     end loop;
     --
@@ -8714,15 +8714,15 @@ begin --
       wait until clk = '0';
       wait for 1 ns; 
       obj_ref := Pack_String_To_Vhpi_String("output_data req");
-      Vhpi_Get_Port_Value(obj_ref,val_string);
+      Vhpi_Get_Port_Value(obj_ref,val_string,1);
       output_data_pipe_read_req <= Unpack_String(val_string,1);
       wait until clk = '1';
       obj_ref := Pack_String_To_Vhpi_String("output_data ack");
       val_string := Pack_SLV_To_Vhpi_String(output_data_pipe_read_ack);
-      Vhpi_Set_Port_Value(obj_ref,val_string);
+      Vhpi_Set_Port_Value(obj_ref,val_string,1);
       obj_ref := Pack_String_To_Vhpi_String("output_data 0");
       val_string := Pack_SLV_To_Vhpi_String(output_data_pipe_read_data);
-      Vhpi_Set_Port_Value(obj_ref,val_string);
+      Vhpi_Set_Port_Value(obj_ref,val_string,32);
       -- 
     end loop;
     --

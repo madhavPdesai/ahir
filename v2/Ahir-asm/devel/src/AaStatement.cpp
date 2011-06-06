@@ -1443,7 +1443,7 @@ void AaBlockStatement::Coalesce_Storage()
   for(int idx = 0; idx < _objects.size(); idx++)
     {
       if(_objects[idx]->Is("AaStorageObject"))
-	_objects[idx]->Coalesce_Storage(NULL);
+	_objects[idx]->Coalesce_Storage();
     }
 
   if(this->_statement_sequence)

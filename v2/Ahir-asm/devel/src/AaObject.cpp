@@ -64,7 +64,7 @@ bool AaObject::Set_Addressed_Object_Representative(AaStorageObject* obj)
 // this object.  Whenever another object a is encountered
 // and the addressed object ref of a is modified, a is added
 // to a re-coalesce set.
-void AaObject::Coalesce_Storage(AaStorageObject* obj)
+void AaObject::Coalesce_Storage()
 {
 
   // ask the expressions that depend on this

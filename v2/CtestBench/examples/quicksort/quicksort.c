@@ -28,7 +28,7 @@ struct {                              // stack element.
 
 int top;                           // initialise stack
 
-int main()                           // overhead!
+int main_inner()                           // overhead!
 {
     int i=-1,j,n;
     void quicksort(int);
@@ -71,6 +71,8 @@ int main()                           // overhead!
 
     return 0;       // successful termination.
 }
+
+
 
 void interchange(int *x,int *y)        // swap
 {

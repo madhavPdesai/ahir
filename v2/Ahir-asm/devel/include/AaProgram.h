@@ -193,6 +193,7 @@ class AaProgram
   static AaForeignStorageObject* Make_Foreign_Storage_Object(AaType* t);
 
   static void Write_VHDL_C_Stubs();
+  static void Print_Memory_Space_Info();
 };
 
 

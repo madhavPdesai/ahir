@@ -15,7 +15,7 @@ void Exit(int sig)
 
 void *main__(void* fargs)
 {
-   main_();
+   main_inner();
 }
 
 

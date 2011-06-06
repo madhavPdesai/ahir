@@ -237,6 +237,25 @@ void AaProgram::Print(ostream& ofile)
     }
 }
 
+
+void AaProgram::Print_Memory_Space_Info()
+{
+  for(std::map<int,set<AaRoot*> >::iterator iter = AaProgram::_storage_eq_class_map.begin();
+      iter != AaProgram::_storage_eq_class_map.end();
+      iter++)
+    {
+      cerr << "Info: Memory space " << (*iter).first << ": ";
+      for(set<AaRoot*>::iterator siter = (*iter).second.begin();
+	  siter != (*iter).second.end();
+	  siter++)
+	{
+	  if((*siter)->Is("AaStorageObject"))
+	    cerr << ((AaStorageObject*)(*siter))->Get_Hierarchical_Name() << " ";
+	}
+      cerr << endl;
+    }
+}
+
 void AaProgram::Add_ExtMem_Access_Type(AaType* t)
 {
   if(t == NULL)
@@ -647,7 +666,7 @@ void AaProgram::Coalesce_Storage()
       obj_iter++)
     {
       if(((*obj_iter).second)->Is("AaStorageObject"))
-	((*obj_iter).second)->Coalesce_Storage(NULL);
+	((*obj_iter).second)->Coalesce_Storage();
     }
   
 
@@ -669,8 +688,8 @@ void AaProgram::Coalesce_Storage()
 	  siter++)
 	{
 	  AaRoot::Info("Recoalescing from " + top_obj->Get_Name() + " with addressable-object " + (*siter)->Get_Name());
-	  top_obj->Coalesce_Storage(*siter);
 	}
+      top_obj->Coalesce_Storage();
     }
 
   // all "unknown" memory access will be assumed to point to
@@ -713,6 +732,7 @@ void AaProgram::Coalesce_Storage()
 
   int num_comps = AaProgram::_storage_dependency_graph.Connected_Components(AaProgram::_storage_eq_class_map);
   AaRoot::Info("Finished coalescing storage.. identified " + IntToStr(num_comps) + " disjoint memory space(s)");
+  AaProgram::Print_Memory_Space_Info();
 
   for(int idx = 0; idx < AaProgram::_storage_eq_class_map.size(); idx++)
     {
