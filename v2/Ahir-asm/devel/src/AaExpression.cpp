@@ -1708,16 +1708,26 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 
       
       // now the memory space pointed to by obj.. what
-      // is its representative?  This must go forward..
-      AaStorageObject* obj2 = obj->Get_Addressed_Object_Representative();
-      if(obj2 != NULL)
+      // is its representative?  These must go forward..all of them.
+      if(obj != NULL)
 	{
-	  // propagate to all expressions that are targets of this expression.
-	  for(set<AaExpression*>::iterator iter = _targets.begin();
-	      iter != _targets.end();
-	      iter++)
+	  set<AaStorageObject*>& ref_reps = obj->Get_Addressed_Objects();
+	  for(set<AaStorageObject*>::iterator riter = ref_reps.begin(), friter = ref_reps.end();
+	      riter != friter;
+	      riter++)
 	    {
-	      (*(iter))->Propagate_Addressed_Object_Representative(obj2);
+	      AaStorageObject* obj2 = *riter;
+	      
+	      if(obj2 != NULL)
+		{
+		  // propagate to all expressions that are targets of this expression.
+		  for(set<AaExpression*>::iterator iter = _targets.begin();
+		      iter != _targets.end();
+		      iter++)
+		    {
+		      (*(iter))->Propagate_Addressed_Object_Representative(obj2);
+		    }
+		}
 	    }
 	}
 
@@ -1963,10 +1973,7 @@ void AaAddressOfExpression::Map_Source_References(set<AaRoot*>& source_objects)
   if(this->_reference_to_object->Get_Type())
     {
       AaType* ref_obj_type = this->_reference_to_object->Get_Type();
-      if(ref_obj_type->Is_Scalar_Type())
-	this->Set_Type(AaProgram::Make_Pointer_Type(this->_reference_to_object->Get_Type()));
-      else
-	this->Set_Type(AaProgram::Make_Pointer_Type(this->_reference_to_object->Get_Type()));
+      this->Set_Type(AaProgram::Make_Pointer_Type(ref_obj_type));
     }
 }
 
