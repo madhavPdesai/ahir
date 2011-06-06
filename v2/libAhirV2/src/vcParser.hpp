@@ -157,6 +157,9 @@ public:
 	public: void vc_Select_Instantiation(
 		vcDataPath* dp
 	);
+	public: void vc_Slice_Instantiation(
+		vcDataPath* dp
+	);
 	public: void vc_Branch_Instantiation(
 		vcDataPath* dp
 	);
@@ -210,10 +213,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 120;
+	static const int NUM_TOKENS = 121;
 #else
 	enum {
-		NUM_TOKENS = 120
+		NUM_TOKENS = 121
 	};
 #endif
 	

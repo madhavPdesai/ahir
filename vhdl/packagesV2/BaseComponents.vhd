@@ -324,6 +324,16 @@ package BaseComponents is
   end component SelectBase;
 
 
+  component Slicebase 
+    generic(in_data_width : integer; high_index: integer; low_index : integer; zero_delay : boolean);
+    port(din: in std_logic_vector(in_data_width-1 downto 0);
+         dout: out std_logic_vector(high_index-low_index downto 0);
+         req: in boolean;
+         ack: out boolean;
+         clk,reset: in std_logic);
+  end component Slicebase;
+
+
   -----------------------------------------------------------------------------
   -- mux/demux
   -----------------------------------------------------------------------------

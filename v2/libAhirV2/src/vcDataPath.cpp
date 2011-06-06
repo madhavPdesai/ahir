@@ -23,11 +23,6 @@ void vcWire::Print(ostream& ofile)
 
 void vcWire::Print_VHDL_Std_Logic_Declaration(ostream& ofile)
 {
-  // wires MUST be scalars!
-  assert(this->Get_Type()->Is("vcIntType") || 
-	 this->Get_Type()->Is("vcFloatType") ||
-	 this->Get_Type()->Is("vcPointerType"));
-
   ofile << "signal " << this->Get_VHDL_Id() << " : " << this->Get_Type()->Get_VHDL_Type_Name() << ";" << endl;
 }
 
@@ -157,6 +152,9 @@ void vcDataPath::Print(ostream& ofile)
   map<string,vcSelect*>::iterator selects;
   __PRINT_MAP(_select_map,selects,ofile);
 
+  map<string,vcSlice*>::iterator slices;
+  __PRINT_MAP(_slice_map,slices,ofile);
+
   map<string,vcBranch*>::iterator branches;
   __PRINT_MAP(_branch_map,branches,ofile);
 
@@ -220,6 +218,9 @@ vcSplitOperator* vcDataPath::Find_Split_Operator(string id) {return(__FIND(_spli
 
 void vcDataPath::Add_Select(vcSelect* p)   {_ADD(_select_map,p->Get_Id(), p);}
 vcSelect* vcDataPath::Find_Select(string id) {return(__FIND(_select_map,id));}
+
+void vcDataPath::Add_Slice(vcSlice* p)   {_ADD(_slice_map,p->Get_Id(), p);}
+vcSlice* vcDataPath::Find_Slice(string id) {return(__FIND(_slice_map,id));}
 
 void vcDataPath::Add_Branch(vcBranch* p)  {_ADD(_branch_map,p->Get_Id(), p);}
 vcBranch* vcDataPath::Find_Branch(string id) {return(__FIND(_branch_map,id));}
@@ -646,8 +647,9 @@ void vcDataPath::Print_VHDL(ostream& ofile)
   // now instantiate each group. 
   this->Print_VHDL_Phi_Instances(ofile); // done
   this->Print_VHDL_Select_Instances(ofile); // done
+  this->Print_VHDL_Slice_Instances(ofile); 
   this->Print_VHDL_Register_Instances(ofile); // done
-  this->Print_VHDL_Equivalence_Instances(ofile); // todo
+  this->Print_VHDL_Equivalence_Instances(ofile);
   this->Print_VHDL_Branch_Instances(ofile); // done
   this->Print_VHDL_Split_Operator_Instances(ofile); //done
   this->Print_VHDL_Load_Instances(ofile);
@@ -733,6 +735,30 @@ void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
 	    << ", sel => " 
 	    << s->_sel->Get_VHDL_Id() 
 	    << ", z => " << s->_z->Get_VHDL_Id() 
+	    << ", req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol() 
+	    << ", ack => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol() 
+	    << ", clk => clk, reset => reset); -- }" << endl;
+    }
+}
+
+
+void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
+{ 
+  for(map<string, vcSlice*>::iterator iter = _slice_map.begin();
+      iter != _slice_map.end();
+      iter++)
+    {
+      vcSlice* s = (*iter).second;
+      bool flow_through_flag  = s->_dout->Is("vcIntermediateWire");
+
+      ofile << s->Get_VHDL_Id() << ": SliceBase generic map(in_data_width => "
+	    << s->_din->Get_Size() << ", high_index => " << s->_high_index 
+	    << ", low_index => " << s->_low_index << ", zero_delay => " 
+	    << (flow_through_flag ? "true" : "false") << ") -- {" << endl;
+      ofile << " port map( din => " 
+	    << s->_din->Get_VHDL_Id() 
+	    << ", dout => " 
+	    << s->_dout->Get_VHDL_Id() 
 	    << ", req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol() 
 	    << ", ack => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol() 
 	    << ", clk => clk, reset => reset); -- }" << endl;

@@ -234,11 +234,3 @@ vcPointerType* Make_Pointer_Type(vcSystem* sys, string scope_id, string space_id
   return(ret_type);
 }
 
-
-void Print_VHDL_Type_Declarations(ostream& ofile)
-{
-  for(int idx = 0; idx < _type_vector.size(); idx++)
-    {
-      _type_vector[idx]->Print_VHDL_Declaration();
-    }
-}  

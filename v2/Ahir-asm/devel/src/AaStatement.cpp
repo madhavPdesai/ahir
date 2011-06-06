@@ -708,13 +708,6 @@ void AaAssignmentStatement::Write_C_Struct(ofstream& ofile)
 void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
 {
 
-  if(!this->_source->Get_Type()->Is_Scalar_Type())
-    {
-      AaRoot::Error("RHS of assignment statement must evaluate to a scalar!",this);
-      return;
-    }
-
-
   ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 

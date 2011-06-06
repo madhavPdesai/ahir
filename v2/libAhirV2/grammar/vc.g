@@ -420,6 +420,7 @@ vc_Operator_Instantiation[vcSystem* sys, vcDataPath* dp] :
         vc_BinaryOperator_Instantiation[dp] |
         vc_UnaryOperator_Instantiation[dp] |
         vc_Select_Instantiation[dp] |
+        vc_Slice_Instantiation[dp] |
         vc_Branch_Instantiation[dp] |
         vc_Register_Instantiation[dp] |
         vc_Equivalence_Instantiation[dp] 
@@ -579,6 +580,34 @@ vc_Select_Instantiation[vcDataPath* dp]
     wid = vc_Identifier {z = dp->Find_Wire(wid); NOT_FOUND__("wire",z,wid,sel_id) }
  RPAREN
  { new_op = new vcSelect(id,sel,x,y,z); dp->Add_Select(new_op);}   
+;
+
+
+//-------------------------------------------------------------------------------------------------------------------------
+// vc_Slice_Instantiation: SLICE_OP vc_Label LPAREN vc_Identifier UINTEGER UINTEGER RPAREN
+//                                             LPAREN vc_Identifier RPAREN
+//-------------------------------------------------------------------------------------------------------------------------
+vc_Slice_Instantiation[vcDataPath* dp] 
+{
+  vcSlice* new_op = NULL;
+  string id;
+  string wid;
+  int h, l;
+  vcWire* sel = NULL;
+  vcWire* din = NULL;
+  vcWire* dout = NULL;
+}
+:
+ slice_id:SLICE_OP id = vc_Label
+ LPAREN 
+        wid = vc_Identifier {din = dp->Find_Wire(wid); NOT_FOUND__("wire",din,wid,slice_id) }
+        hid: UINTEGER { h = atoi(hid->getText().c_str()); }
+        lid: UINTEGER { l = atoi(lid->getText().c_str()); }
+ RPAREN
+ LPAREN
+    wid = vc_Identifier {dout = dp->Find_Wire(wid); NOT_FOUND__("wire",dout,wid,slice_id) }
+ RPAREN
+ { new_op = new vcSlice(id,din,dout,h,l); dp->Add_Slice(new_op); }   
 ;
 
 
@@ -1165,6 +1194,7 @@ BITSEL_OP        : "[]";
 CONCAT_OP        : "&&";
 BRANCH_OP        : "==0?";
 SELECT_OP        : "?";
+SLICE_OP        : "[:]";
 ASSIGN_OP        : ":="; 
 NOT_OP           : "~";
 OR_OP            : "|";

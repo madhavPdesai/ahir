@@ -11,6 +11,7 @@ class vcCall;
 class vcLoad;
 class vcStore;
 class vcSelect;
+class vcSlice;
 class vcBranch;
 class vcInport;
 class vcOutport;
@@ -165,6 +166,7 @@ class vcDataPath: public vcRoot
   map<string, vcPhi*> _phi_map;
   map<string, vcWire*> _wire_map;
   map<string, vcSelect*> _select_map;
+  map<string, vcSlice*> _slice_map;
   map<string, vcBranch*> _branch_map;
   map<string, vcRegister*> _register_map;
   map<string, vcEquivalence*> _equivalence_map;
@@ -218,6 +220,9 @@ class vcDataPath: public vcRoot
   void Add_Select(vcSelect* p);
   vcSelect* Find_Select(string id);
 
+  void Add_Slice(vcSlice* p);
+  vcSlice* Find_Slice(string id);
+
   void Add_Branch(vcBranch* p);
   vcBranch* Find_Branch(string id);
 
@@ -268,6 +273,7 @@ class vcDataPath: public vcRoot
 
   void Print_VHDL_Phi_Instances(ostream& ofile);
   void Print_VHDL_Select_Instances(ostream& ofile);
+  void Print_VHDL_Slice_Instances(ostream& ofile);
   void Print_VHDL_Register_Instances(ostream& ofile);
   void Print_VHDL_Equivalence_Instances(ostream& ofile);
   void Print_VHDL_Branch_Instances(ostream& ofile);

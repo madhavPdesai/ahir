@@ -220,13 +220,11 @@ namespace Aa {
       {
 	if((*iiter).getNameStr() == "")
 	  {
-           if (iiter->getType()->isVoidTy()) {
-                std::cerr << "Info: not naming instruction of void type\n";
-            } else {
-	    	std::string iname = "iNsTr_" + int_to_str(iidx); 
-	    	(*iiter).setName(iname);
-	    }
-	    iidx++;
+           if (!iiter->getType()->isVoidTy()) {
+	     std::string iname = "iNsTr_" + int_to_str(iidx); 
+	     (*iiter).setName(iname);
+	   }
+	   iidx++;
 	  }
       }
   }

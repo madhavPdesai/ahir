@@ -475,18 +475,50 @@ vcSelect::vcSelect(string id, vcWire* sel, vcWire* x, vcWire* y, vcWire* z):vcOp
   _z->Connect_Driver(this);
 }
 
-
 void vcSelect::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__SELECT_OP] << " " << this->Get_Label() << " "
+        << vcLexerKeywords[__LPAREN]
+        << this->_sel->Get_Id() << " "
+        << this->_x->Get_Id() << " "
+        << this->_y->Get_Id() << " "
+        << vcLexerKeywords[__RPAREN]
+        << " "
+        << vcLexerKeywords[__LPAREN]
+        << this->_z->Get_Id()
+        << vcLexerKeywords[__RPAREN]
+        << endl;
+}
+
+
+
+vcSlice::vcSlice(string id, vcWire* din, vcWire* dout, int high_index, int low_index):vcOperator(id)
+{
+  this->_din = din;
+  _din->Connect_Receiver(this);
+
+  this->_dout = dout;
+  _dout->Connect_Driver(this);
+
+  assert(high_index < din->Get_Size() && low_index >= 0 && (high_index >= low_index));
+  assert(dout->Get_Size() == ((high_index - low_index)+1));
+
+  this->_high_index = high_index;
+  this->_low_index = low_index;
+}
+
+
+void vcSlice::Print(ostream& ofile)
+{
+  ofile << vcLexerKeywords[__SLICE_OP] << " " << this->Get_Label() << " "
 	<< vcLexerKeywords[__LPAREN] 
-	<< this->_sel->Get_Id() << " "
-	<< this->_x->Get_Id() << " "
-	<< this->_y->Get_Id() << " "
+	<< this->_din->Get_Id() << " "
+	<< this->_high_index << " "
+	<< this->_low_index << " "
 	<< vcLexerKeywords[__RPAREN] 
 	<< " "
 	<< vcLexerKeywords[__LPAREN] 
-	<< this->_z->Get_Id()
+	<< this->_dout->Get_Id()
 	<< vcLexerKeywords[__RPAREN] 
 	<< endl;
 }

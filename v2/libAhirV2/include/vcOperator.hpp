@@ -522,9 +522,28 @@ protected:
   vcWire* _dout;
 public:
   vcRegister(string id, vcWire* din, vcWire* dout);
+  virtual string Kind() {return("vcRegister");}
   virtual void Print(ostream& ofile);
   friend class vcDataPath;
 };
+
+// dout := din[_high_index downto _low_index]
+class vcSlice: public vcOperator
+{
+
+protected:
+  vcWire* _din;
+  vcWire* _dout;
+  unsigned int _high_index;
+  unsigned int _low_index;
+
+public:
+  vcSlice(string id, vcWire* din, vcWire* dout, int high_index, int low_index);
+  virtual string Kind() {return("vcSlice");}
+  virtual void Print(ostream& ofile);
+  friend class vcDataPath;
+};
+
 
 string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type);
 bool Check_If_Equivalent(vector<vcWire*>& iw1, vector<vcWire*>& iw2);

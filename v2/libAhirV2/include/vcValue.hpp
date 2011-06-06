@@ -41,7 +41,8 @@ protected:
   vcType* Get_Type() { return(this->_type);}
   virtual string Kind() {return("vcValue");}
   virtual void Print(ostream& ofile) {assert(0);}
-  virtual string To_VHDL_String() {assert(0);}
+  virtual string To_VHDL_String_Inner() {assert(0);}
+  string To_VHDL_String();
 };
 
 class vcIntValue: public vcValue
@@ -68,7 +69,7 @@ class vcIntValue: public vcValue
   vcIntValue& operator-=(vcIntValue&);
   vcIntValue& operator/=(vcIntValue&);
 
-  virtual string To_VHDL_String();
+  virtual string To_VHDL_String_Inner();
 };
 
 vcIntValue operator+(vcIntValue&, vcIntValue&);
@@ -109,7 +110,7 @@ public:
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcFloatValue");}
   
-  virtual string To_VHDL_String();
+  virtual string To_VHDL_String_Inner();
   
   friend bool operator==(vcFloatValue&, vcFloatValue&);
 };
@@ -144,7 +145,7 @@ class vcArrayValue: public vcValue
   // equality
   friend bool operator==(vcArrayValue&, vcArrayValue&);
 
-  virtual string To_VHDL_String();
+  virtual string To_VHDL_String_Inner();
 };
 
 // concatenate arrays.
@@ -169,7 +170,7 @@ class vcRecordValue: public vcValue
   // equality
   friend bool operator==(vcRecordValue&, vcRecordValue&);
 
-  virtual string To_VHDL_String();
+  virtual string To_VHDL_String_Inner();
 };
 
 bool operator==(vcRecordValue&, vcRecordValue&);

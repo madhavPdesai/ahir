@@ -111,23 +111,31 @@ void AaExpression::Set_Type(AaType* t)
 {
   if(this->_type == NULL)
     {
-      this->_type = t;
 
-      // all expressions of which this is the target may need
-      // to recompute their types.
-      for(set<AaExpression*>::iterator siter = this->_targets.begin();
-	  siter != this->_targets.end();
-	  siter++)
+      if(this->Scalar_Types_Only() && !t->Is_Scalar_Type())
 	{
-	  AaExpression* ref = *siter;
-	  ref->Update_Type();
+	  AaRoot::Error("expression " + this->To_String() + " type must be a scalar", this);
+	}
+      else
+	{
+	  this->_type = t;
+	  
+	  // all expressions of which this is the target may need
+	  // to recompute their types.
+	  for(set<AaExpression*>::iterator siter = this->_targets.begin();
+	      siter != this->_targets.end();
+	      siter++)
+	    {
+	      AaExpression* ref = *siter;
+	      ref->Update_Type();
+	    }
 	}
     }
    else
      {
        if(t != this->_type)
 	 {
-	   string err_msg = "Error: type of expression ";
+	   string err_msg = "type of expression ";
 	   this->Print(err_msg);
 	   err_msg += " is ambiguous, is it  ";
 	   this->_type->Print(err_msg);
@@ -410,6 +418,8 @@ AaSimpleObjectReference::AaSimpleObjectReference(AaScope* parent_tpr, string obj
 AaSimpleObjectReference::~AaSimpleObjectReference() {};
 void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 {
+  this->_object = obj;
+
   if(obj->Is_Object())
     {
       if(((AaObject*)obj)->Get_Type())
@@ -432,13 +442,20 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
       // (otherwise, it would be 
       ((AaExpression*) obj)->Add_Target(this);
     }
-  this->_object = obj;
+
 }
 
 bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObject* obj)
 {
   this->_addressed_objects.insert(obj);
   this->AaExpression::Set_Addressed_Object_Representative(obj);
+}
+
+void AaSimpleObjectReference::Set_Type(AaType* t)
+{
+  if(this->_object->Is_Storage_Object())
+    ((AaStorageObject*)this->_object)->Add_Access_Width(t->Size());
+  this->AaExpression::Set_Type(t);
 }
 
 void AaSimpleObjectReference::PrintC_Header_Entry(ofstream& ofile)
@@ -594,7 +611,6 @@ void AaSimpleObjectReference::Write_VC_Control_Path( ostream& ofile)
       else if(this->_object->Is("AaPipeObject"))
 	{
 	  ofile << "// " << this->To_String() << endl;
-
 	  ofile << ";;[" << this->Get_VC_Name() << "] { // pipe read" << endl;
 	  ofile << "$T [req] $T [ack] " << endl;
 	  ofile << "}" << endl;
@@ -890,6 +906,36 @@ AaExpression*  AaArrayObjectReference::Get_Array_Index(unsigned int idx)
 {
   assert (idx < this->Get_Number_Of_Indices());
   return(this->_indices[idx]);
+}
+
+
+void AaArrayObjectReference::Set_Type(AaType* t)
+{
+  if(this->_object->Is_Storage_Object())
+    {
+      if(!this->_object->Get_Type()->Is_Pointer_Type())
+	((AaStorageObject*)this->_object)->Add_Access_Width(t->Size());
+    }
+  this->AaExpression::Set_Type(t);
+}
+
+void AaArrayObjectReference::Add_Target_Reference(AaRoot* referrer)
+{
+  this->AaRoot::Add_Target_Reference(referrer);
+  if(referrer->Is("AaInterfaceObject"))
+    {
+      AaType* rtype = ((AaInterfaceObject*)referrer)->Get_Type();
+      this->Set_Type(rtype->Get_Element_Type(0,_indices));
+    }
+}
+void AaArrayObjectReference::Add_Source_Reference(AaRoot* referrer)
+{
+  this->AaRoot::Add_Source_Reference(referrer);
+  if(referrer->Is("AaInterfaceObject"))
+    {
+      AaType* rtype = ((AaInterfaceObject*)referrer)->Get_Type();
+      this->Set_Type(rtype->Get_Element_Type(0,_indices));
+    }
 }
 
 
@@ -1237,9 +1283,6 @@ void AaArrayObjectReference::Write_VC_Control_Path( ostream& ofile)
 
       ofile << "// " << this->To_String() << endl;
 
-      int word_size = this->Get_Word_Size();
-      vector<int> scale_factors;
-      this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
 
       if(this->Get_Object_Type()->Is_Pointer_Type())
@@ -1250,6 +1293,11 @@ void AaArrayObjectReference::Write_VC_Control_Path( ostream& ofile)
 	      this->_pointer_ref->Write_VC_Control_Path(ofile);
 	    }
 
+	  int word_size = this->Get_Word_Size();
+	  vector<int> scale_factors;
+	  this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
+
 	  // the return value is a pointer,
 	  // but this is only an address calculation.
 	  ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
@@ -1259,14 +1307,39 @@ void AaArrayObjectReference::Write_VC_Control_Path( ostream& ofile)
 	  ofile << "$T [final_reg_req] $T [final_reg_ack]" << endl;
 	  ofile << "}" << endl;
 	}
-      else
+      else if(this->_object->Is_Storage_Object())
 	{ 
+
+	  int word_size = this->Get_Word_Size();
+	  vector<int> scale_factors;
+	  this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
 	  // this is just a regular object load
 	  // using the indices, which returns the
 	  // value stored at the computed address.
 	  this->Write_VC_Load_Control_Path(&(_indices),
 					   &scale_factors,
 					   ofile);
+	}
+      else 
+	{
+
+	  ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
+	  if(this->_object->Is_Expression())
+	    {
+	      AaExpression* expr = ((AaExpression*) (this->_object));
+	      expr->Write_VC_Control_Path(ofile);
+	    }
+	  else if(this->_object->Is("AaInterfaceObject"))
+	    {
+	      // do nothing.
+	    }
+	  else if(this->_object->Is("AaPipeObject"))
+	    {
+	      ofile << "$T [pipe_read_req] $T [pipe_read_ack] " << endl;
+	    }
+	  ofile << "$T [slice_req] $T [slice_ack]" << endl;
+	  ofile << "}" << endl;
 	}
     }
 }
@@ -1291,7 +1364,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_As_Target( ostream& ofile)
     }
   else
     {
-      // a target can only be an indexed storage object.
+      AaRoot::Error("indexed target reference can only be to a storage object", this);
       assert(0);
     }
 }
@@ -1311,9 +1384,6 @@ void AaArrayObjectReference::Write_VC_Constant_Wire_Declarations(ostream& ofile)
     }
   else
     {
-      int word_size = this->Get_Word_Size();
-      vector<int> scale_factors;
-      this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
       // base pointer.. will need to be declared?
       // certainly..
@@ -1324,6 +1394,10 @@ void AaArrayObjectReference::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 
       if(this->Get_Object_Type()->Is_Pointer_Type())
 	{
+	  int word_size = this->Get_Word_Size();
+	  vector<int> scale_factors;
+	  this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
 	  if(this->_object->Is_Storage_Object())
 	    {
 	      // the object needs to be loaded..  
@@ -1338,8 +1412,14 @@ void AaArrayObjectReference::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 							    &scale_factors,
 							    ofile);
 	}
-      else
-	this->Write_VC_Load_Store_Constants(this->Get_Index_Vector(),&scale_factors,ofile);
+      else if(this->_object->Is_Storage_Object())
+	{
+	  int word_size = this->Get_Word_Size();
+	  vector<int> scale_factors;
+	  this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
+	  this->Write_VC_Load_Store_Constants(this->Get_Index_Vector(),&scale_factors,ofile);
+	}
     }
 }
 
@@ -1351,39 +1431,65 @@ void AaArrayObjectReference::Write_VC_Wire_Declarations(bool skip_immediate, ost
   ofile << "// " << this->To_String() << endl;
   
   
-  int word_size = this->Get_Word_Size();
-  vector<int> scale_factors;
-  this->Update_Address_Scaling_Factors(scale_factors,word_size);
-
-
-  // base pointer.. will need to be declared?
-  // certainly..
-  if(this->_object->Is_Expression())
-    {
-      ((AaExpression*)this->_object)->Write_VC_Wire_Declarations(false,ofile);
-    }
-
   if(this->Get_Object_Type()->Is_Pointer_Type())
     {
-      if(this->_object->Is_Storage_Object())
+
+      // base pointer.. will need to be declared?
+      // certainly..
+      if(this->_object->Is_Expression())
+	{
+	  ((AaExpression*)this->_object)->Write_VC_Wire_Declarations(false,ofile);
+	}
+      else if(this->_object->Is_Storage_Object())
 	{
 	  // the object needs to be loaded..  
 	  // do the needful..
 	  this->_pointer_ref->Write_VC_Wire_Declarations(false,ofile);
 	}
       
+      int word_size = this->Get_Word_Size();
+      vector<int> scale_factors;
+      this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
       // the return value is a pointer,
       // calculate the address.
       this->Write_VC_Root_Address_Calculation_Wires(this->Get_Index_Vector(),
 						    &scale_factors,
 						    ofile);
     }
-  else
-    this->Write_VC_Load_Store_Wires(this->Get_Index_Vector(),
-				  &scale_factors,
-				  ofile);
+  else if(this->_object->Is_Storage_Object())
+    {
 
-  
+      int word_size = this->Get_Word_Size();
+      vector<int> scale_factors;
+      this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
+      this->Write_VC_Load_Store_Wires(this->Get_Index_Vector(),
+				      &scale_factors,
+				      ofile);
+    }
+  else 
+    {
+      if(this->_object->Is_Expression())
+	{
+	  AaExpression* expr = ((AaExpression*) (this->_object));
+	  expr->Write_VC_Wire_Declarations(false,ofile);
+	}
+      else if(this->_object->Is("AaInterfaceObject"))
+	{
+	  // do nothing.
+	}
+      else if(this->_object->Is("AaPipeObject"))
+	{
+	  string pipe_wire = this->Get_VC_Name() + "_pipe_read_data";
+	  Write_VC_Wire_Declaration(pipe_wire,	  
+				    ((AaObject*)(this->_object))->Get_Type(),
+				    ofile);
+	}
+
+    }
+
+
   // the final load-data.
   if(!skip_immediate)
     Write_VC_Wire_Declaration(this->Get_VC_Driver_Name(),
@@ -1458,11 +1564,6 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 
   ofile << "// " << this->To_String() << endl;
 
-  
-  int word_size = this->Get_Word_Size();
-  vector<int> scale_factors;
-  this->Update_Address_Scaling_Factors(scale_factors,word_size);
-
   if(this->Get_Object_Type()->Is_Pointer_Type())
     {
       if(this->_object->Is_Storage_Object())
@@ -1472,6 +1573,10 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 	  this->_pointer_ref->Write_VC_Datapath_Instances(NULL,ofile);
 	}
       
+      int word_size = this->Get_Word_Size();
+      vector<int> scale_factors;
+      this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
       // the return value is a pointer,
       // calculate the address.
       this->Write_VC_Root_Address_Calculation_Data_Path(this->Get_Index_Vector(),
@@ -1489,11 +1594,65 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 			       ofile);
 			      
     }
+  else if(this->_object->Is_Storage_Object())
+    {
+      int word_size = this->Get_Word_Size();
+      vector<int> scale_factors;
+      this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
+      this->Write_VC_Load_Data_Path(this->Get_Index_Vector(),
+				    &scale_factors,
+				    (target ? target : this),
+				    ofile);
+    }
   else
-    this->Write_VC_Load_Data_Path(this->Get_Index_Vector(),
-				&scale_factors,
-				(target ? target : this),
-				ofile);
+    {
+      string source_wire;
+      AaType* obj_type =  NULL;
+      if(this->_object->Is_Expression())
+	{
+	  AaExpression* expr =(AaExpression*) (this->_object);
+	  expr->Write_VC_Datapath_Instances(NULL,ofile);
+	  obj_type = expr->Get_Type();
+	  source_wire = expr->Get_VC_Driver_Name();
+	}
+      else if(this->_object->Is("AaInterfaceObject"))
+	{
+	  source_wire = ((AaObject*)this->_object)->Get_VC_Name();
+	  obj_type = ((AaObject*)(this->_object))->Get_Type();
+	}
+      else if(this->_object->Is("AaPipeObject"))
+	{
+	  source_wire = this->Get_VC_Name() + "_pipe_read_data";
+	  obj_type = ((AaObject*)(this->_object))->Get_Type();
+	  string pipe_inst = this->Get_VC_Name() + "_pipe_access";
+	  Write_VC_IO_Input_Port((AaPipeObject*)(this->_object), pipe_inst,source_wire,ofile);
+	}
+      else
+	assert(0);
+	    
+      vector<int> scale_factors;
+      this->Update_Address_Scaling_Factors(scale_factors,1);
+      int offset_value = this->AaObjectReference::Evaluate(this->Get_Index_Vector(),&scale_factors);
+      
+      if(offset_value >= 0)
+	{
+	  int high_index = (this->Get_Type()->Size() + offset_value)-1;
+	  int low_index  = offset_value;
+
+	  Write_VC_Slice_Operator(this->Get_VC_Name() + "_slice",
+				  source_wire,
+				  (target != NULL ? target->Get_VC_Receiver_Name() : 
+				   this->Get_VC_Driver_Name()),
+				  high_index,
+				  low_index,
+				  ofile);
+	}
+      else
+	{
+	  AaRoot::Error("in extract element expression, indices must be constants",this);
+	}
+    }
 }
 
 void AaArrayObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
@@ -1503,13 +1662,6 @@ void AaArrayObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
     return;
   
   ofile << "// " << this->To_String() << endl;
-
-
-  int word_size = this->Get_Word_Size();
-  vector<int> scale_factors;
-  this->Update_Address_Scaling_Factors(scale_factors,word_size);
-
-
   if(this->Get_Object_Type()->Is_Pointer_Type())
     {
 
@@ -1522,6 +1674,10 @@ void AaArrayObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
 	}
       
       hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Name());
+
+      int word_size = this->Get_Word_Size();
+      vector<int> scale_factors;
+      this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
       // the return value is a pointer,
       // calculate the address.
@@ -1539,11 +1695,49 @@ void AaArrayObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
 		    acks,
 		    ofile);
     }
+  else if(this->_object->Is_Storage_Object())
+    {
+      int word_size = this->Get_Word_Size();
+      vector<int> scale_factors;
+      this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
+      this->Write_VC_Load_Links(hier_id,
+				this->Get_Index_Vector(),
+				&scale_factors,
+				ofile);
+    }
   else
-    this->Write_VC_Load_Links(hier_id,
-			      this->Get_Index_Vector(),
-			      &scale_factors,
-			      ofile);
+    {
+      vector<string> reqs;
+      vector<string> acks;
+      hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Name());
+
+      if(this->_object->Is_Expression())
+	{
+	  AaExpression* expr =(AaExpression*) (this->_object);
+	  expr->Write_VC_Links(hier_id,ofile);
+	}
+      else if(this->_object->Is("AaInterfaceObject"))
+	{
+	}
+      else if(this->_object->Is("AaPipeObject"))
+	{
+
+	  reqs.push_back(hier_id + "/pipe_read_req");
+	  acks.push_back(hier_id + "/pipe_read_ack");
+	  Write_VC_Link(this->Get_VC_Name() + "_pipe_access",
+			reqs,
+			acks,
+			ofile);
+	}
+
+      reqs.push_back(hier_id + "/slice_req");
+      acks.push_back(hier_id + "/slice_ack");
+      Write_VC_Link(this->Get_VC_Name() + "_slice",
+		    reqs,
+		    acks,
+		    ofile);
+    }
 }
   
 void AaArrayObjectReference::Write_VC_Links_As_Target(string hier_id, ostream& ofile)
@@ -1651,6 +1845,8 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 
       bool from_ref = (obj == this->_reference_to_object->Get_Addressed_Object_Representative());
 
+	
+
       if(AaProgram::_verbose_flag)
 	AaRoot::Info("coalescing: propagating " + (obj ? obj->Get_Name() : "null") + " from expression " + this->To_String()
 		     + this->Get_Source_Info());
@@ -1658,10 +1854,18 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
       // why are we doing this?
       if(obj != NULL && from_ref)
 	{
+	  int acc_width = 0;
+	  AaType* ptr_type = this->_reference_to_object->Get_Type();
+	  assert(ptr_type->Is_Pointer_Type());
+	  acc_width = ((AaPointerType*) ptr_type)->Get_Ref_Type()->Size();
+
+	  obj->Add_Access_Width(acc_width);
+
 	  if(this->Get_Is_Target())
 	    obj->Set_Is_Written_Into(true);
 	  else
 	    obj->Set_Is_Read_From(true);
+
 
 	  if(!obj->Is_Foreign_Storage_Object())
 	    AaProgram::Add_Storage_Dependency(this,obj);

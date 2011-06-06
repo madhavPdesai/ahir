@@ -238,10 +238,7 @@ void  vcSystem::Print_VHDL(ostream& ofile)
   ofile << "library ieee;" << endl
 	<< "use ieee.std_logic_1164.all;" << endl;
   ofile << "package vc_system_package is -- { " << endl;
-  Print_VHDL_Type_Declarations(ofile);
-
   this->Print_VHDL_Constant_Declarations(ofile);
-  
   ofile << "-- } " << endl <<  "end package vc_system_package;" << endl;
   
   // print modules

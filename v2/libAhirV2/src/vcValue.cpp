@@ -210,6 +210,15 @@ vcValue::vcValue(vcType* t):vcRoot()
 }
 
 
+string vcValue::To_VHDL_String()
+{
+  string ret_string = "\"";
+  ret_string += this->To_VHDL_String_Inner();
+  ret_string += '"';
+
+  return(ret_string);
+}
+
 vcIntValue::vcIntValue(vcIntType* t):vcValue((vcType*)t)
 {
   assert(t->Is("vcIntType") || t->Is("vcPointerType") );
@@ -253,9 +262,9 @@ void vcIntValue::Print(ostream& ofile)
   ofile << "_b" << Reverse(this->_value) << " ";
 }
 
-string vcIntValue::To_VHDL_String()
+string vcIntValue::To_VHDL_String_Inner()
 {
-  return('"' + Reverse(this->_value) + '"');
+  return(Reverse(this->_value));
 }
 
 // assignment operator
@@ -385,9 +394,9 @@ void vcFloatValue::Print(ostream& ofile)
   ofile << "_b" << Reverse(this->_value) << " ";
 }
 
-string vcFloatValue::To_VHDL_String()
+string vcFloatValue::To_VHDL_String_Inner()
 {
-  return('"' + Reverse(this->_value) + '"');
+  return(Reverse(this->_value));
 }
 
 
@@ -412,18 +421,13 @@ void vcArrayValue::Print(ostream& ofile)
 }
 
 
-string vcArrayValue::To_VHDL_String()
+string vcArrayValue::To_VHDL_String_Inner()
 {
   string ret_string;
-  ret_string = "(";
-  for(int idx = 0; idx < _value_array.size(); idx++)
+  for(int idx = _value_array.size()-1; idx >= 0; idx--)
     {
-      if(idx > 0)
-	ret_string += ',';
-
-      ret_string += _value_array[idx]->To_VHDL_String();
+      ret_string += _value_array[idx]->To_VHDL_String_Inner();
     }
-  ret_string += ")";
   return(ret_string);
 }
 
@@ -522,17 +526,13 @@ void vcRecordValue::Print(ostream& ofile)
   ofile << ") ";
 }
 
-string vcRecordValue::To_VHDL_String()
+string vcRecordValue::To_VHDL_String_Inner()
 {
-  string ret_string =  "(";
-  for(int idx = 0; idx < _element_values.size(); idx++)
+  string ret_string;
+  for(int idx = _element_values.size()-1; idx >= 0; idx--)
     {
-      if(idx > 0)
-	ret_string += ", ";
-
-      ret_string += _element_values[idx]->To_VHDL_String();
+      ret_string += _element_values[idx]->To_VHDL_String_Inner();
     }
-  ret_string += ")";
   return(ret_string);
 }
 

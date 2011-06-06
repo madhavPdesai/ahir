@@ -119,6 +119,7 @@ public:
 	public: void mCONCAT_OP(bool _createToken);
 	public: void mBRANCH_OP(bool _createToken);
 	public: void mSELECT_OP(bool _createToken);
+	public: void mSLICE_OP(bool _createToken);
 	public: void mASSIGN_OP(bool _createToken);
 	public: void mNOT_OP(bool _createToken);
 	public: void mOR_OP(bool _createToken);

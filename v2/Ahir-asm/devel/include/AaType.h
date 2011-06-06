@@ -53,6 +53,11 @@ class AaType: public AaRoot
     assert(0);
   }
 
+  virtual int Get_Start_Bit_Offset(int start_index, vector<AaExpression*>& indices)
+  {
+    assert(0);
+  }
+
   virtual string CPointerDereference()
   {
     return("*");
@@ -349,7 +354,7 @@ class AaArrayType: public AaType
 
 
   virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
-
+  virtual int Get_Start_Bit_Offset(int start_index, vector<AaExpression*>& indices);
 };
 
 
@@ -388,6 +393,18 @@ class AaRecordType: public AaType
 	  // note the spaces before and after >
 	  ofile << " < ";
 	  _element_types[idx]->Print(ofile);
+	  ofile << " > ";
+	}
+    }
+
+    virtual void Write_VC_Model(ostream& ofile) 
+    { 
+      ofile << "$record ";
+      for(int idx = 0; idx < _element_types.size(); idx++)
+	{
+	  // note the spaces before and after >
+	  ofile << " < ";
+	  _element_types[idx]->Write_VC_Model(ofile);
 	  ofile << " > ";
 	}
     }
@@ -457,6 +474,7 @@ class AaRecordType: public AaType
     }  
     
     virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
+    virtual int Get_Start_Bit_Offset(int start_index, vector<AaExpression*>& indices);
     
     void PrintC_Declaration(ofstream& ofile)
     {

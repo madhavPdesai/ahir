@@ -90,6 +90,9 @@ void AaProgram::Make_Extmem_Object()
 
   AaProgram::_extmem_object = new AaStorageObject(NULL,AaProgram::_extmem_object_name,obj_type,NULL);
   AaProgram::Add_Storage_Dependency_Graph_Vertex(AaProgram::_extmem_object);
+
+  AaProgram::_extmem_object->Add_Access_Width(AaProgram::_foreign_word_size);
+
 }
 
 void AaProgram::Print_ExtMem_Access_Modules(ostream& ofile)
@@ -764,7 +767,16 @@ void AaProgram::Coalesce_Storage()
 		}
 	      
 	      ((AaStorageObject*)u)->Set_Mem_Space_Index(idx);
-	      ((AaStorageObject*)u)->Get_Type()->Fill_LAU_Set(lau_set);
+	      for(set<int>::iterator witer = ((AaStorageObject*)u)->Get_Access_Widths().begin(),
+		    fwiter = ((AaStorageObject*)u)->Get_Access_Widths().end();
+		  witer != fwiter;
+		  witer++)
+		{
+		  lau_set.insert(*witer);
+		}
+
+	      // overly conservative..
+	      // ((AaStorageObject*)u)->Get_Type()->Fill_LAU_Set(lau_set);
 	      
 	      total_size += ((AaStorageObject*)u)->Get_Type()->Size();
 

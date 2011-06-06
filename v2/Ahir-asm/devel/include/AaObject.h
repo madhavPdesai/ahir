@@ -141,8 +141,8 @@ class AaStorageObject: public AaObject
 
   int _mem_space_index;
   
-  // if this is a pointer, a representative
-  // of the set of objects to which it can refere.
+
+  set<int> _access_widths;
 
   bool _is_written_into;
   bool _is_read_from;
@@ -194,7 +194,15 @@ class AaStorageObject: public AaObject
   }
 
 
+  void Add_Access_Width(int w)
+  {
+    _access_widths.insert(w);
+  }
 
+  set<int>& Get_Access_Widths()
+    {
+      return(_access_widths);
+    }
 };
 
 

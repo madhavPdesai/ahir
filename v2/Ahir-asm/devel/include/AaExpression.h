@@ -179,6 +179,9 @@ class AaExpression: public AaRoot
   virtual void Evaluate() {if(!_already_evaluated) _already_evaluated = true;};
   virtual void Assign_Expression_Value(AaValue* expr_value);
 
+  virtual bool Scalar_Types_Only() { return(true);}
+
+
 };
 
 
@@ -443,6 +446,8 @@ class AaObjectReference: public AaExpression
 							 vector<int>* scale_factors,
 							 ostream& ofile);
 
+  virtual bool Scalar_Types_Only() { return(false);}
+
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
@@ -472,6 +477,7 @@ class AaConstantLiteralReference: public AaObjectReference
 
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Evaluate();
+
 };
 
 // simple reference (no array indices)
@@ -500,7 +506,7 @@ class AaSimpleObjectReference: public AaObjectReference
   virtual AaRoot* Get_Root_Object();
   virtual bool Is_Implicit_Object();
 
-
+  virtual void Set_Type(AaType* t);
   virtual void Evaluate();
 
   virtual string Get_VC_Constant_Name();
@@ -610,6 +616,7 @@ class AaArrayObjectReference: public AaObjectReference
   virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string);
   void Print_Indexed_C(AaType* t, int start_id, vector<AaExpression*>* indices, ofstream& ofile);
 
+  virtual void Set_Type(AaType* t);
   virtual void Update_Type();
 
 
@@ -637,6 +644,8 @@ class AaArrayObjectReference: public AaObjectReference
 
   virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
 
+  virtual void Add_Target_Reference(AaRoot* referrer); 
+  virtual void Add_Source_Reference(AaRoot* referrer);
 };
 
 
@@ -770,6 +779,9 @@ class AaAddressOfExpression: public AaObjectReference
 					       map<string,vector<AaExpression*> >& pipe_map,
 					       ostream& ofile);
 
+  virtual bool Scalar_Types_Only() { return(true);}
+
+
 };
 
 
@@ -823,6 +835,8 @@ class AaTypeCastExpression: public AaExpression
 							 map<string,vector<AaExpression*> >& ls_map,
 							 map<string,vector<AaExpression*> >& pipe_map,
 							 ostream& ofile);
+
+
 
 };
 

@@ -195,13 +195,11 @@ void AaArrayObjectReference::Write_VC_Links_Optimized(string hier_id, ostream& o
   ofile << "// " << this->To_String() << endl;
 
 
-  int word_size = this->Get_Word_Size();
-  vector<int> scale_factors;
-  this->Update_Address_Scaling_Factors(scale_factors,word_size);
-
   if(this->Get_Object_Type()->Is_Pointer_Type())
     {
-
+      int word_size = this->Get_Word_Size();
+      vector<int> scale_factors;
+      this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
       if(this->_object->Is_Storage_Object())
 	{
@@ -227,11 +225,67 @@ void AaArrayObjectReference::Write_VC_Links_Optimized(string hier_id, ostream& o
 		    acks,
 		    ofile);
     }
+  else if(this->_object->Is_Storage_Object())
+    {
+      int word_size = this->Get_Word_Size();
+      vector<int> scale_factors;
+      this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
+      this->AaObjectReference::Write_VC_Load_Links_Optimized(hier_id,
+							     this->Get_Index_Vector(),
+							     &scale_factors,
+							     ofile);
+    }
   else
-    this->AaObjectReference::Write_VC_Load_Links_Optimized(hier_id,
-							   this->Get_Index_Vector(),
-							   &scale_factors,
-							   ofile);
+    {
+      vector<string> reqs;
+      vector<string> acks;
+
+      if(this->_object->Is_Expression())
+	{
+	  AaExpression* expr =(AaExpression*) (this->_object);
+	  expr->Write_VC_Links(hier_id,ofile);
+	  hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Complete_Region_Name());
+	  reqs.push_back(hier_id + "/slice_req");
+	  acks.push_back(hier_id + "/slice_ack");
+	  Write_VC_Link(this->Get_VC_Name() + "_slice",
+			reqs,
+			acks,
+			ofile);
+	}
+      else if(this->_object->Is("AaInterfaceObject"))
+	{
+	  hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Complete_Region_Name());
+	  reqs.push_back(hier_id + "/slice_req");
+	  acks.push_back(hier_id + "/slice_ack");
+	  Write_VC_Link(this->Get_VC_Name() + "_slice",
+			reqs,
+			acks,
+			ofile);
+
+	}
+      else if(this->_object->Is("AaPipeObject"))
+	{
+	  hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Complete_Region_Name());
+
+	  reqs.push_back(hier_id + "/pipe_read_req");
+	  acks.push_back(hier_id + "/pipe_read_ack");
+	  Write_VC_Link(this->Get_VC_Name() + "_pipe_access",
+			reqs,
+			acks,
+			ofile);
+
+	  reqs.clear();
+	  acks.clear();
+	  reqs.push_back(hier_id + "/slice_req");
+	  acks.push_back(hier_id + "/slice_ack");
+	  Write_VC_Link(this->Get_VC_Name() + "_slice",
+			reqs,
+			acks,
+			ofile);
+
+	}
+    }
 }
  
 void AaArrayObjectReference::Write_VC_Links_As_Target_Optimized(string hier_id, ostream& ofile)
@@ -259,15 +313,17 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
     {
       ofile << "// " << this->To_String() << endl;
 
-      int word_size = this->Get_Word_Size();
-      vector<int> scale_factors;
-      this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
 
       __T(this->Get_VC_Start_Transition_Name());
       __T(this->Get_VC_Active_Transition_Name());
 
       if(this->Get_Object_Type()->Is_Pointer_Type())
 	{
+
+	  int word_size = this->Get_Word_Size();
+	  vector<int> scale_factors;
+	  this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
 	  // need start, active and complete for each expression.
 	  __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
@@ -316,8 +372,13 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
 	  __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
 
 	}
-      else
+      else if(this->_object->Is_Storage_Object())
 	{ 
+
+	  int word_size = this->Get_Word_Size();
+	  vector<int> scale_factors;
+	  this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
 	  // this is just a regular object load
 	  // using the indices, which returns the
 	  // value stored at the computed address.
@@ -329,11 +390,47 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
 
 	  ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
 	}
+      else
+	{
+	  if(this->_object->Is_Expression())
+	    {
+	      AaExpression* expr = ((AaExpression*) (this->_object));
+	      expr->Write_VC_Control_Path_Optimized(visited_elements,
+						    ls_map,
+						    pipe_map,
+						    ofile);
+	      __J(this->Get_VC_Active_Transition_Name(), expr->Get_VC_Complete_Region_Name());
+	      ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] {" << endl;
+	      ofile << "$T [slice_req] $T [slice_ack]" << endl;
+	      ofile << "}" << endl;
+	    }
+	  else if(this->_object->Is("AaInterfaceObject"))
+	    {
+	      // do nothing.
+	      __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
+	      ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] {" << endl;
+	      ofile << "$T [slice_req] $T [slice_ack]" << endl;
+	      ofile << "}" << endl;
+	    }
+	  else if(this->_object->Is("AaPipeObject"))
+	    {
+	      pipe_map[this->_object->Get_VC_Name()].push_back(this);
+
+	      ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] {" << endl;
+	      ofile << "$T [pipe_read_req] $T [pipe_read_ack] " << endl;
+	      ofile << "$T [slice_req] $T [slice_ack]" << endl;
+	      ofile << "}" << endl;
+	    }
+	  else
+	    assert(0);
+
+	  __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
+	}
       
       visited_elements.insert(this);
     }
-
 }
+
 void AaArrayObjectReference::Write_VC_Control_Path_As_Target_Optimized(set<AaRoot*>& visited_elements,
 								       map<string,vector<AaExpression*> >& ls_map,
 								       map<string, vector<AaExpression*> >& pipe_map,

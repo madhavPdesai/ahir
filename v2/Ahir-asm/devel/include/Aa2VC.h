@@ -96,6 +96,12 @@ void Write_VC_Select_Operator(string inst_name,
 			      AaType* target_type,
 			      ostream& ofile);
 
+void Write_VC_Slice_Operator(string inst_name,
+			     string in_name,
+			     string out_name,
+			     int high_index,
+			     int low_index,
+			     ostream& ofile);
 
 bool Is_Trivial_VC_Type_Conversion(AaType* from, AaType* to);
 

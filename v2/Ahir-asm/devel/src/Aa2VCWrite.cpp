@@ -377,6 +377,18 @@ void Write_VC_Select_Operator(string inst_name,
 }
 
 
+void Write_VC_Slice_Operator(string inst_name,
+			     string in_name,
+			     string out_name,
+			     int high_index,
+			     int low_index,
+			     ostream& ofile)
+{
+  ofile << "[:] [" << inst_name << "] (" << in_name << " " << high_index << " " << low_index
+	<< ") (" << out_name << ")" << endl;
+}
+
+
 void Write_VC_Load_Store_Dependency(AaExpression* src,
 				    AaExpression* tgt,
 				    ostream& ofile)
