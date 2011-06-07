@@ -1,0 +1,4 @@
+The netfpga_module instantiates the AHIR sytem and
+provides interface protocol matching between the
+NetFPGA pipeline interface and the AHIR pipe
+interface.

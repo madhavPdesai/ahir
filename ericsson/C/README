@@ -1,0 +1,12 @@
+The following files provide
+the wrap functionality which can be combined 
+with ahir_glue* functions to complete an AHIR
+system which listens on input data and control
+pipes and sends on output data and control pipes
+in a manner consistent with the NetFPGA pipeline.
+
+ahir_system_wrapper.h
+ahir_system_wrapper.c
+
+ToVHDL.sh just checks that everything compiles ok
+(down to VHDL)
