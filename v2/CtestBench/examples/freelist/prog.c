@@ -16,20 +16,19 @@ struct Link_
 	uint32_t val;
 };
 
-// 4 slots.
-Link free_list[FREE_LIST_SIZE+1];
+Link free_list[FREE_LIST_SIZE];
 Link* head;
 
 void free_queue_manager()
 {
 	int i;
 
-	for(i = 1; i < FREE_LIST_SIZE; i++)
+	for(i = 0; i < FREE_LIST_SIZE; i++)
 	{
 		free_list[i].next = &(free_list[i+1]);
 	}
-	free_list[FREE_LIST_SIZE].next = NULL;
- 	head = &(free_list[1]);
+	free_list[FREE_LIST_SIZE-1].next = NULL;
+ 	head = &(free_list[0]);
 	
 	while(1)
 	{

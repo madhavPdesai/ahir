@@ -622,8 +622,8 @@ namespace {
     {
       std::string cname = to_aa(C.getNameStr());
 
-	std::string op1 = get_name(C.getOperand(0));
-	std::string op2 = get_name(C.getOperand(1));
+      std::string op1 = get_name(C.getOperand(0));
+      std::string op2 = get_name(C.getOperand(1));
 
 	if((op1 == "") | (op2 == ""))
 	{
@@ -646,8 +646,8 @@ namespace {
 	else if(cmp_op == CmpInst::ICMP_SLT)
 	  {
 	    int size = type_width(C.getOperand(0)->getType(), this->Get_Pointer_Width());
-	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") < " 
-		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
+	    std::cout << "( ($bitcast ( $int<" << size << ">) "  <<  op1  << ") < " 
+		      << "  ($bitcast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
 	  }
 	else if(cmp_op == CmpInst::FCMP_OLE || cmp_op == CmpInst::FCMP_ULE || cmp_op == CmpInst::ICMP_ULE)
 	  {
@@ -657,8 +657,8 @@ namespace {
 	  {
 
 	    int size = type_width(C.getOperand(0)->getType(), this->Get_Pointer_Width());
-	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") <= " 
-		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
+	    std::cout << "( ($bitcast ( $int<" << size << ">) "  <<  op1  << ") <= " 
+		      << "  ($bitcast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
 	  }
 	else if(cmp_op == CmpInst::FCMP_OGT || cmp_op == CmpInst::FCMP_UGT || cmp_op == CmpInst::ICMP_UGT)
 	  {
@@ -666,10 +666,9 @@ namespace {
 	  }
 	else if(cmp_op == CmpInst::ICMP_SGT)
 	  {
-
 	    int size = type_width(C.getOperand(0)->getType(), this->Get_Pointer_Width());
-	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") > " 
-		      << " ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
+	    std::cout << "( ($bitcast ( $int<" << size << ">) "  <<  op1  << ") > " 
+		      << " ($bitcast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
 	  }
 	else if(cmp_op == CmpInst::FCMP_OGE || cmp_op == CmpInst::FCMP_UGE || cmp_op == CmpInst::ICMP_UGE)
 	  {
@@ -679,15 +678,15 @@ namespace {
 	  {
 
 	    int size = type_width(C.getOperand(0)->getType(), this->Get_Pointer_Width());
-	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") >= " 
-		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
+	    std::cout << "( ($bitcast ( $int<" << size << ">) "  <<  op1  << ") >= " 
+		      << "  ($bitcast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
 	  }
 	else if(cmp_op == CmpInst::ICMP_NE)
 	  {
 
 	    int size = type_width(C.getOperand(0)->getType(), this->Get_Pointer_Width());
-	    std::cout << "( ($cast ( $int<" << size << ">) "  <<  op1  << ") != " 
-		      << "  ($cast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
+	    std::cout << "( ($bitcast ( $int<" << size << ">) "  <<  op1  << ") != " 
+		      << "  ($bitcast ( $int<" << size << ">) "  <<   op2 << " ) )" << std::endl;
 	  }
 	else if(cmp_op == CmpInst::FCMP_UNE || cmp_op == CmpInst::FCMP_ONE)
 	  {

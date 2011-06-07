@@ -96,6 +96,9 @@ architecture Default of register_bank is
   signal lc_data_out_sig : std_logic_vector((num_loads*data_width)-1 downto 0);
   signal sc_tag_out_sig : std_logic_vector((num_stores*tag_width)-1 downto 0);
   signal lc_tag_out_sig : std_logic_vector((num_loads*tag_width)-1 downto 0);
+
+  constant zero_addr : std_logic_vector(addr_width-1 downto 0) := (others => '0');
+                                                                 
     
 begin
 
@@ -124,9 +127,10 @@ begin
           lc_ack_flag(R) <= '0';
         else
           if(ack_var = '1') then
-            assert index < num_registers report "index into register array exceeds number of registers.." severity error;
+            assert index < num_registers report "index overflow." severity error;
+            assert index >= 0 report "index underflow" severity error;
 
-            if(index < num_registers) then
+            if(index >= 0 and index < num_registers) then
               lc_data_out_sig(((R+1)*data_width)-1 downto R*data_width) <= register_array(index);
             end if;
             
@@ -169,8 +173,6 @@ begin
     sc_ack_clear := (others => '0');
     sr_pending := (others => '0');
 
-
-
     sc_tag_out_var := sc_tag_out_sig;
 
     register_array_var := register_array;
@@ -185,6 +187,7 @@ begin
 
         -- writes: for each reg, lowest index succeeds.
         for W in 0 to num_stores-1 loop
+
           -- if W is a store request to this register
           -- and no j
           if(sr_pending(REG) = '0' and

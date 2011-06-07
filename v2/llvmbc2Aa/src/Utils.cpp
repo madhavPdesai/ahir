@@ -60,97 +60,98 @@ std::string get_string(const APInt &api)
 
 std::string Aa::get_aa_constant_string(llvm::Constant *konst)
 {
-	std::string ret_val = to_aa(konst->getNameStr());
-	if(ret_val != "")
-		return(ret_val);
+  std::string ret_val = to_aa(konst->getNameStr());
+  if(ret_val != "")
+    return(ret_val);
 
-	const llvm::Type *type = konst->getType();
+  const llvm::Type *type = konst->getType();
 
-	if(isa<GlobalVariable>(konst))
+  if(isa<GlobalVariable>(konst))
+    {
+      llvm::GlobalVariable* gv = dyn_cast<GlobalVariable>(konst);
+      ret_val = gv->getName();
+      if(ret_val != "")
 	{
-		llvm::GlobalVariable* gv = dyn_cast<GlobalVariable>(konst);
-		ret_val = gv->getName();
-		if(ret_val != "")
-		{
-			return(ret_val);
-		}
-		if(gv->isConstant())
-		{
-			llvm::Constant* cgv = gv->getInitializer();
-			ret_val = get_aa_constant_string(cgv);
-		}
+	  return(ret_val);
 	}
-	else if(isa<UndefValue>(konst))
+      if(gv->isConstant())
 	{
-		ret_val = "_b0";
+	  llvm::Constant* cgv = gv->getInitializer();
+	  ret_val = get_aa_constant_string(cgv);
 	}
-	else if(isa<ConstantInt>(konst))
-	{
-		const ConstantInt *cint = dyn_cast<ConstantInt>(konst);
-		ret_val =  get_string(cint->getValue());
-	}
-	else if(isa<ConstantFP>(konst))
-	{
-		const ConstantFP *fkonst = dyn_cast<ConstantFP>(konst);
+    }
+  else if(isa<UndefValue>(konst))
+    {
+      ret_val = "_b0";
+    }
+  else if(isa<ConstantInt>(konst))
+    {
+      const ConstantInt *cint = dyn_cast<ConstantInt>(konst);
+      ret_val =  get_string(cint->getValue());
+    }
+  else if(isa<ConstantFP>(konst))
+    {
+      const ConstantFP *fkonst = dyn_cast<ConstantFP>(konst);
 
-		// fix this.  this should be a binary string..
-		char buffer[1024];
-		if(type->isFloatTy())
-		{
-			sprintf(buffer,"%e",fkonst->getValueAPF().convertToFloat());
-		}
-		else if(type->isDoubleTy())
-		{
-			sprintf(buffer,"%e",fkonst->getValueAPF().convertToDouble());
-		}
-		else
-		{
-			std::cerr << "Error: unsupported floating point type (only float and double are allowed)"
-				<< std::endl;
-		}
-		ret_val = "_f" + std::string(buffer);
-	}
-	else if(isa<ConstantArray>(konst) || isa<ConstantStruct>(konst) || isa<ConstantVector>(konst))
+      // fix this.  this should be a binary string..
+      char buffer[1024];
+      if(type->isFloatTy())
 	{
-		if(isa<ConstantArray>(konst))
-		{
-			llvm::ConstantArray* ka = dyn_cast<ConstantArray>(konst);
-			if(ka->isString())
-			{
-				ret_val = ka->getAsString();
-				return(ret_val);
-			}
-		}
-
-		ret_val = "(";
-		for (unsigned int i = 0; i != konst->getNumOperands(); ++i) 
-		{
-			if(i > 0)
-				ret_val += " ";
-
-			llvm::Value *el = konst->getOperand(i);
-			assert(isa<llvm::Constant>(el) && "constants expected here");
-			ret_val += get_aa_constant_string(cast<llvm::Constant>(el));
-
-		}
-		ret_val += ")";
+	  sprintf(buffer,"%e",fkonst->getValueAPF().convertToFloat());
 	}
-	else if(isa<ConstantAggregateZero>(konst))
+      else if(type->isDoubleTy())
 	{
-		ret_val = get_zero_value(konst->getType());
+	  sprintf(buffer,"%e",fkonst->getValueAPF().convertToDouble());
 	}
-	else if(isa<ConstantPointerNull>(konst))
+      else
 	{
-		ret_val = "_b0";
+	  std::cerr << "Error: unsupported floating point type (only float and double are allowed)"
+		    << std::endl;
 	}
-	else
+      ret_val = "_f" + std::string(buffer);
+    }
+  else if(isa<ConstantArray>(konst) || isa<ConstantStruct>(konst) || isa<ConstantVector>(konst))
+    {
+      if(isa<ConstantArray>(konst))
 	{
-		std::cerr << "Error: constant must be one of int/fp/array/struct/vector/aggregate-zero/pointer-null" 
-			<< std::endl;
-		ret_val = "UNSUPPORTED_CONSTANT";
+	  llvm::ConstantArray* ka = dyn_cast<ConstantArray>(konst);
+	  if(ka->isString())
+	    {
+	      ret_val = ka->getAsString();
+	      return(ret_val);
+	    }
 	}
 
-	return ret_val;
+      ret_val = "(";
+      for (unsigned int i = 0; i != konst->getNumOperands(); ++i) 
+	{
+	  if(i > 0)
+	    ret_val += " ";
+
+	  llvm::Value *el = konst->getOperand(i);
+	  assert(isa<llvm::Constant>(el) && "constants expected here");
+	  ret_val += get_aa_constant_string(cast<llvm::Constant>(el));
+
+	}
+      ret_val += ")";
+    }
+  else if(isa<ConstantAggregateZero>(konst))
+    {
+      ret_val = get_zero_value(konst->getType());
+    }
+  else if(isa<ConstantPointerNull>(konst))
+    {
+      // null pointer.. assume max value is 2**64-1
+      ret_val = "_b1111111111111111111111111111111111111111111111111111111111111111";
+    }
+  else
+    {
+      std::cerr << "Error: constant must be one of int/fp/array/struct/vector/aggregate-zero/pointer-null" 
+		<< std::endl;
+      ret_val = "UNSUPPORTED_CONSTANT";
+    }
+
+  return ret_val;
 }
 
 
