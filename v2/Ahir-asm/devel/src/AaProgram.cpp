@@ -48,23 +48,39 @@ AaUGraphBase AaProgram::_storage_dependency_graph;
 
 void AaMemorySpace::Write_VC_Model(ostream& ofile)
 {
-  if(_objects.size() == 0)
-    AaRoot::Error("memory space " + IntToStr(this->_mem_space_index) +
-		  " has no storage objects in it!",NULL);
-
-  ofile << "$memoryspace [memory_space_" << this->_mem_space_index << "] {"
-	<< "$capacity " << this->_total_size << endl
-	<< "$datawidth " << this->_word_size << endl
-	<< "$addrwidth " << this->_address_width << endl;  
-
-  for(set<AaStorageObject*,AaRootCompare>::iterator iter = _objects.begin();
-      iter != _objects.end();
-      iter++)
+  if(this->_is_written_into || this->_is_read_from)
     {
-      (*iter)->Write_VC_Model(ofile);
-    }
+      if(_objects.size() == 0)
+	AaRoot::Error("memory space " + IntToStr(this->_mem_space_index) +
+		      " has no storage objects in it!",NULL);
+      
+      ofile << "$memoryspace [memory_space_" << this->_mem_space_index << "] {"
+	    << "$capacity " << this->_total_size << endl
+	    << "$datawidth " << this->_word_size << endl
+	    << "$addrwidth " << this->_address_width << endl;  
+      
+      for(set<AaStorageObject*,AaRootCompare>::iterator iter = _objects.begin();
+	  iter != _objects.end();
+	  iter++)
+	{
+	  (*iter)->Write_VC_Model(ofile);
+	}
 
-  ofile << "}" << endl;
+      ofile << "}" << endl;
+    }
+  else
+    {
+      string obj_list;
+      for(set<AaStorageObject*,AaRootCompare>::iterator iter = _objects.begin();
+	  iter != _objects.end();
+	  iter++)
+	{
+	  obj_list += " ";
+	  obj_list += (*iter)->Get_Name();
+	}
+
+      AaRoot::Warning("the following objects are not accessed: " + obj_list,NULL);
+    }
 }
 
 string AaMemorySpace::Get_VC_Identifier()

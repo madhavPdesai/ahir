@@ -8201,7 +8201,7 @@ begin --
     simple_obj_ref_317_word_address_0 <= "0";
     simple_obj_ref_379_word_address_0 <= "0";
     simple_obj_ref_398_word_address_0 <= "0";
-    type_cast_170_wire_constant <= "00000000000000000000000000000010";
+    type_cast_170_wire_constant <= "00000000000000000000000000000001";
     type_cast_295_wire_constant <= "11111111111111111111111111111111";
     xxfree_queue_managerxxbodyxxcommand_alloc_base_address <= "0";
     xxfree_queue_managerxxbodyxxi_alloc_base_address <= "0";
@@ -8714,7 +8714,7 @@ begin --
           output_characteristic_width  => 0, 
           output_mantissa_width => 0, 
           owidth => 1,
-          constant_operand => "00000000000000000000000000000010",
+          constant_operand => "00000000000000000000000000000001",
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--

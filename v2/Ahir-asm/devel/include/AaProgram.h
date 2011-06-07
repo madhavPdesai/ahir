@@ -24,6 +24,10 @@ class AaMemorySpace: public AaRoot
       _is_written_into = false;
       _is_read_from = false;
       _is_global = false;
+      _total_size = 0;
+      _word_size = 0;
+      _address_width = 0;
+      _max_access_width = 0;
     }
 
   int _mem_space_index;

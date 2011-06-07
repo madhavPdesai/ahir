@@ -23,7 +23,7 @@ void free_queue_manager()
 {
 	int i;
 
-	for(i = 0; i < FREE_LIST_SIZE; i++)
+	for(i = 0; i < FREE_LIST_SIZE-1; i++)
 	{
 		free_list[i].next = &(free_list[i+1]);
 	}

@@ -174,8 +174,10 @@ AaStorageObject::AaStorageObject(AaScope* parent_tpr,string oname, AaType* otype
 
   _is_written_into = false;
   _is_read_from = false;
-
-
+  _mem_space_index = -1;
+  _base_address = 0;
+  _word_size = 0;
+  _address_width = 0;
 };
 AaStorageObject::~AaStorageObject() {};
 
@@ -219,16 +221,24 @@ string AaStorageObject::Get_VC_Memory_Space_Name()
 
 void AaStorageObject::Write_VC_Load_Store_Constants(ostream& ofile)
 {
-  AaType* addr_type = AaProgram::Make_Uinteger_Type(this->Get_Address_Width());
-  
-  ofile << "// load store constants for object " 
-	<< this->Get_Hierarchical_Name() 
-	<< endl;
-
-  Write_VC_Constant_Declaration(this->Get_VC_Base_Address_Name(),
-				addr_type->Get_VC_Name(),
-				To_VC_String(this->Get_Base_Address(),addr_type->Size()),
-				ofile);
+  if(this->Get_Address_Width() > 0)
+    {
+      AaType* addr_type = AaProgram::Make_Uinteger_Type(this->Get_Address_Width());
+      
+      ofile << "// load store constants for object " 
+	    << this->Get_Hierarchical_Name() 
+	    << endl;
+      
+      Write_VC_Constant_Declaration(this->Get_VC_Base_Address_Name(),
+				    addr_type->Get_VC_Name(),
+				    To_VC_String(this->Get_Base_Address(),
+						 addr_type->Size()),
+				    ofile);
+    }
+  else
+    {
+      AaRoot::Warning("storage object " + this->Get_Name() + " not accessed in program? ",this);
+    }
 }
 
 //---------------------------------------------------------------------
