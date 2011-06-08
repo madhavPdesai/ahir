@@ -749,7 +749,7 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value, int port_width)
 				      excess_bits,
 				      jlink->name);
 			    }
-			  else
+			  else if (excess_bits < 0)
 			    {
 			      fprintf(stderr, "Error: added %d zero-padding high bits in hardware -> software transfer (job %s)\n", 
 				      excess_bits,
@@ -778,7 +778,7 @@ void   Vhpi_Set_Port_Value(char* port_name, char* port_value, int port_width)
 				  excess_bits,
 				  jlink->name);
 			}
-		      else
+		      else if(excess_bits < 0)
 			{
 			  fprintf(stderr, "Error: added %d zero-padding high bits in hardware -> software transfer (job %s)\n", 
 				  excess_bits,

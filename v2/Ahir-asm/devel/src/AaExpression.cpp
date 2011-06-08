@@ -27,6 +27,8 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
   this->_coalesce_flag = false;
   this->_is_target = false;
   this->_does_pipe_access = false;
+
+
 }
 AaExpression::~AaExpression() {};
 
@@ -63,21 +65,27 @@ bool AaExpression::Set_Addressed_Object_Representative(AaStorageObject* obj)
 }
 
 
-void AaExpression::Propagate_Addressed_Object_Representative()
+
+
+
+void AaExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr)
 {
+
   if(!this->Get_Coalesce_Flag())
     {
       this->Set_Coalesce_Flag(true);
 
+      this->Set_Addressed_Object_Representative(obj);
+      if(AaProgram::_verbose_flag)
+	AaRoot::Info("coalescing: propagating " + (obj ? obj->Get_Name() : "null") + " from expression " + this->To_String() +
+		 this->Get_Source_Info());
 
-      AaStorageObject* obj = this->Get_Addressed_Object_Representative();
-      
       // propagate to all that are targets of this expression.
       for(set<AaExpression*>::iterator iter = _targets.begin();
 	  iter != _targets.end();
 	  iter++)
 	{
-	  (*(iter))->Propagate_Addressed_Object_Representative(obj);
+	  (*(iter))->Propagate_Addressed_Object_Representative(obj, this);
 	}
       
       // propagate to all objects that use this 
@@ -87,24 +95,12 @@ void AaExpression::Propagate_Addressed_Object_Representative()
 	  iter++)
 	{
 	  if((*iter)->Is_Object())
-	    ((AaObject*)(*iter))->Propagate_Addressed_Object_Representative(obj);
+	    ((AaObject*)(*iter))->Propagate_Addressed_Object_Representative(obj, this);
 	  
 	}
 
       this->Set_Coalesce_Flag(false);
     }
-}
-
-
-void AaExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
-{
-
-  this->Set_Addressed_Object_Representative(obj);
-  if(AaProgram::_verbose_flag)
-    AaRoot::Info("coalescing: propagating " + (obj ? obj->Get_Name() : "null") + " from expression " + this->To_String() +
-		 this->Get_Source_Info());
-  this->Propagate_Addressed_Object_Representative();
-
 }
 
 void AaExpression::Set_Type(AaType* t)
@@ -177,6 +173,7 @@ AaObjectReference::AaObjectReference(AaScope* parent_tpr, string object_id):AaEx
   this->_object_ref_string = object_id;
   this->_search_ancestor_level = 0; 
   this->_object = NULL;
+  this->_is_dereferenced = false;
 }
 
 AaObjectReference::~AaObjectReference() {};
@@ -232,9 +229,9 @@ int AaObjectReference::Evaluate(vector<AaExpression*>* indices, vector<int>* sca
     return(-1);
 }
 
-void AaObjectReference::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
+void AaObjectReference::Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr)
 {
-  this->AaExpression::Propagate_Addressed_Object_Representative(obj);
+  this->AaExpression::Propagate_Addressed_Object_Representative(obj, from_expr);
 }
 
 
@@ -448,6 +445,13 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObject* obj)
 {
   this->_addressed_objects.insert(obj);
+  if(this->_is_dereferenced)
+    {
+
+      if(this->Get_Addressed_Object_Representative())
+	AaProgram::Add_Storage_Dependency(obj,this->Get_Addressed_Object_Representative());
+
+    }
   this->AaExpression::Set_Addressed_Object_Representative(obj);
 }
 
@@ -1763,7 +1767,7 @@ AaPointerDereferenceExpression::AaPointerDereferenceExpression(AaScope* scope,
   AaObjectReference(scope,obj_ref->Get_Object_Ref_String())
 {
   _reference_to_object = obj_ref;
-
+  this->_rhs_source = NULL;
   obj_ref->Add_Target(this); 
   AaProgram::Add_Storage_Dependency_Graph_Vertex(this);
   AaProgram::_pointer_dereferences.insert(this);
@@ -1837,15 +1841,13 @@ void AaPointerDereferenceExpression::Update_Type()
 // address_rep of _reference_to_object->addr_obj_rep..
 //
 // otherwise, obj is combined with this..
-void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
+void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr)
 {
   if(!this->Get_Coalesce_Flag())
     {
       this->Set_Coalesce_Flag(true);
 
-      bool from_ref = (obj == this->_reference_to_object->Get_Addressed_Object_Representative());
-
-	
+      bool from_ref = (from_expr == (AaRoot*)this->_reference_to_object);
 
       if(AaProgram::_verbose_flag)
 	AaRoot::Info("coalescing: propagating " + (obj ? obj->Get_Name() : "null") + " from expression " + this->To_String()
@@ -1868,8 +1870,10 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 
 
 	  if(!obj->Is_Foreign_Storage_Object())
+	    // this expression accesses obj.
 	    AaProgram::Add_Storage_Dependency(this,obj);
 	}
+
 
       if(obj != NULL && !from_ref && this->Get_Is_Target())
 	{
@@ -1891,30 +1895,45 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
       if(this->Get_Is_Target())
 	{
 	  assert(_reference_to_object->Is("AaSimpleObjectReference"));
-	  set<AaStorageObject*>& ref_reps = ((AaSimpleObjectReference*)_reference_to_object)->Get_Addressed_Objects();
-	  for(set<AaStorageObject*>::iterator riter = ref_reps.begin(), friter = ref_reps.end();
-	      riter != friter;
-	      riter++)
+
+	  AaRoot* root_ref = ((AaSimpleObjectReference*)_reference_to_object)->Get_Object();
+
+	  set<AaStorageObject*>::iterator riter, friter;
+	  if(root_ref->Is_Object())
+	    {
+	      set<AaStorageObject*>& ref_reps  = ((AaObject*)root_ref)->Get_Addressed_Objects();
+	      riter = ref_reps.begin();
+	      friter = ref_reps.end();
+	    }
+	  else if(root_ref->Is("AaSimpleObjectReference"))
+	    {
+	      set<AaStorageObject*>& ref_reps = ((AaSimpleObjectReference*)root_ref)->Get_Addressed_Objects();
+	      riter = ref_reps.begin();
+	      friter = ref_reps.end();
+	    }
+	  else
+	    assert(0);
+	  
+	  
+	  for(;riter != friter; riter++)
 	    {
 	      AaStorageObject* obj1 = *riter;
-	      if(obj1 != NULL)
+	      for(set<AaStorageObject*>::iterator siter = _addressed_objects_from_rhs.begin(),
+		    fsiter = _addressed_objects_from_rhs.end();
+		  siter != fsiter;
+		  siter++)
 		{
-		  for(set<AaStorageObject*>::iterator siter = _addressed_objects_from_rhs.begin(),
-			fsiter = _addressed_objects_from_rhs.end();
-		      siter != fsiter;
-		      siter++)
-		    {
-		      obj1->Propagate_Addressed_Object_Representative(*siter);
-		    }
+		  obj1->Propagate_Addressed_Object_Representative(*siter,this);
 		}
 	    }
 	}
 
       
-      // now the memory space pointed to by obj.. what
-      // is its representative?  These must go forward..all of them.
-      if(obj != NULL)
+
+      if(obj != NULL && from_ref)
 	{
+	  // if obj came here from ref, it is the addressed objects of
+	  // obj that must go ahead to all targets of this expression..
 	  set<AaStorageObject*>& ref_reps = obj->Get_Addressed_Objects();
 	  for(set<AaStorageObject*>::iterator riter = ref_reps.begin(), friter = ref_reps.end();
 	      riter != friter;
@@ -1929,13 +1948,81 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
 		      iter != _targets.end();
 		      iter++)
 		    {
-		      (*(iter))->Propagate_Addressed_Object_Representative(obj2);
+		      (*iter)->Propagate_Addressed_Object_Representative(obj2, this);
 		    }
 		}
 	    }
 	}
+      else if(obj != NULL && !from_ref)
+	{
+	  // if obj did not come here from ref, then obj goes
+	  // ahead..
+	  for(set<AaExpression*>::iterator iter = _targets.begin();
+	      iter != _targets.end();
+	      iter++)
+	    {
+	      (*iter)->Propagate_Addressed_Object_Representative(obj, this);
+	    }
+	}
+
+      // finally continue the DFS directly from the siblings of this deref expression.
+      if(this->Get_Is_Target() && !from_ref)
+	{
+	  set<AaPointerDereferenceExpression*> sibling_set;
+	  this->Get_Siblings(sibling_set, true, false);
+	  
+	  for(set<AaPointerDereferenceExpression*>::iterator siter = sibling_set.begin(), fsiter = sibling_set.end();
+	      siter != fsiter;
+	      siter++)
+	    {
+	      (*siter)->Propagate_Addressed_Object_Representative(obj,this);
+	    }
+	}
 
       this->Set_Coalesce_Flag(false);
+    }
+}
+
+void AaPointerDereferenceExpression::Get_Siblings(set<AaPointerDereferenceExpression*>& sibling_set, bool get_sources, bool get_targets)
+{
+  assert(this->_reference_to_object->Is("AaSimpleObjectReference"));
+  
+  AaRoot* root_ref = ((AaSimpleObjectReference*)_reference_to_object)->Get_Object();
+  
+  set<AaStorageObject*>::iterator riter, friter;
+  if(root_ref->Is_Object())
+    {
+      AaObject* obj = ((AaObject*) root_ref);
+      for(set<AaRoot*>::iterator iter = _source_references.begin();
+	  iter != _source_references.end();
+	  iter++)
+	{
+	  if((*iter)->Is("AaPointerDereferenceExpression"))
+	    {
+	      AaPointerDereferenceExpression* expr = ((AaPointerDereferenceExpression*)(*iter));
+	      if( (expr != this) && (expr->Get_Is_Target() ? get_targets : get_sources))
+		{
+		  sibling_set.insert(expr);
+		}
+	    }
+	}
+    }
+  else if(root_ref->Is("AaSimpleObjectReference"))
+    {
+      AaExpression* sref = ((AaSimpleObjectReference*) root_ref);
+      for(set<AaExpression*>::iterator iter = sref->Get_Targets().begin(), fiter = sref->Get_Targets().end();
+	  iter != fiter;
+	  iter++)
+	{
+	  if((*iter)->Is("AaPointerDereferenceExpression"))
+	    {
+	      AaPointerDereferenceExpression* expr = ((AaPointerDereferenceExpression*)(*iter));
+	      if((expr != this) && (expr->Get_Is_Target() ? get_targets : get_sources))
+		{
+		  sibling_set.insert(expr);
+		}
+	    }
+	}
     }
 }
 
@@ -2197,7 +2284,7 @@ void AaAddressOfExpression::Update_Type()
 }
 
 
-void AaAddressOfExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
+void AaAddressOfExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr)
 {
 
   // @(p) always propagates forward, because
@@ -2208,7 +2295,7 @@ void AaAddressOfExpression::Propagate_Addressed_Object_Representative(AaStorageO
     AaRoot::Info("coalescing: propagating " + (obj ? obj->Get_Name() : "null") + " from expression " + this->To_String()
 		 + this->Get_Source_Info());
 
-  this->AaExpression::Propagate_Addressed_Object_Representative();
+  this->AaExpression::Propagate_Addressed_Object_Representative(this->_storage_object, this);
 
 }
 

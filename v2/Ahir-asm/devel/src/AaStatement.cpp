@@ -316,7 +316,7 @@ void AaStatement::Propagate_Addressed_Object_Representative(AaStorageObject* obj
       iter++)
     {
       if((*iter)->Is_Expression())
-	((AaExpression*)(*iter))->Propagate_Addressed_Object_Representative(obj);
+	((AaExpression*)(*iter))->Propagate_Addressed_Object_Representative(obj,this);
     }
 }
 
@@ -546,13 +546,14 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
   else if(tgt->Is("AaPointerDereferenceExpression"))
     {
       this->Map_Target((AaObjectReference*)tgt);
+      ((AaPointerDereferenceExpression*)tgt)->Set_RHS_Source(src);
     }
   else
     assert(0);
 
   this->_source = src;
-
   this->_source->Add_Target(this->_target);
+
 }
 
 AaAssignmentStatement::~AaAssignmentStatement() {};
@@ -2459,7 +2460,10 @@ void AaPhiStatement::Set_Target(AaObjectReference* tgt)
   if(this->_source_pairs.size() > 0)
     {
       for(int idx = 0; idx < this->_source_pairs.size(); idx++)
-	this->_source_pairs[idx].second->Add_Target(this->_target);
+	{
+	  this->_source_pairs[idx].second->Add_Target(this->_target);
+	}
+
     }
 }
 
@@ -2468,7 +2472,9 @@ void AaPhiStatement::Add_Source_Pair(string label, AaExpression* expr)
   _merged_labels.insert(label);
 
   if(this->_target)
-    expr->Add_Target(this->_target);
+    {
+      expr->Add_Target(this->_target);
+    }
 
   this->_source_pairs.push_back(pair<string,AaExpression*>(label,expr));
 }

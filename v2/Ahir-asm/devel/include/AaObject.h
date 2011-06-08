@@ -13,7 +13,6 @@
 /*****************************************  OBJECT  ****************************/
 // base object
 // Each object has a type, a name, a value and a parent
-class AaStorageObject;
 class AaObject: public AaRoot
 {
 
@@ -25,6 +24,8 @@ class AaObject: public AaRoot
 
   AaStorageObject* _addressed_object_representative;
   set<AaStorageObject*> _addressed_objects;
+
+  bool _is_dereferenced;
 
  public:
 
@@ -73,7 +74,7 @@ class AaObject: public AaRoot
   virtual string Get_VC_Memory_Space_Name() {assert(0);}
 
   virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
-  void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
+  void Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_where);
   void Coalesce_Storage();
 
   AaStorageObject* Get_Addressed_Object_Representative() 
@@ -88,6 +89,8 @@ class AaObject: public AaRoot
       return(this->_addressed_objects);
     }
   
+  bool Get_Is_Dereferenced() {return(_is_dereferenced);}
+  void Set_Is_Dereferenced(bool v) {_is_dereferenced = v;}
 };
 
 // interface object: function arguments
@@ -279,4 +282,5 @@ class AaPipeObject: public AaObject
 
 };
 
+void Print_Storage_Object_Set(set<AaStorageObject*>& ss, ostream& ofile);
 #endif

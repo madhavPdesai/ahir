@@ -43,6 +43,7 @@ class AaExpression: public AaRoot
   AaStorageObject* _addressed_object_representative;
 
 
+
   bool _already_evaluated;
  public:
 
@@ -54,6 +55,8 @@ class AaExpression: public AaRoot
   AaExpression(AaScope* scope_tpr);
   ~AaExpression();
   virtual string Kind() {return("AaExpression");}
+
+
 
   void Set_Does_Pipe_Access(bool v) { _does_pipe_access = v; }
   bool Get_Does_Pipe_Access() { return(_does_pipe_access); }
@@ -71,8 +74,8 @@ class AaExpression: public AaRoot
       return(this->_addressed_object_representative);
     }
 
-  virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
-  virtual void Propagate_Addressed_Object_Representative();
+  virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr);
+
   virtual void Set_Type(AaType* t);
   virtual AaType* Get_Type() {return(this->_type);}
   virtual AaValue* Get_Expression_Value() {return(this->_expression_value);}
@@ -181,6 +184,7 @@ class AaExpression: public AaRoot
 
   virtual bool Scalar_Types_Only() { return(true);}
 
+  set<AaExpression*>& Get_Targets() {return _targets; }
 
 };
 
@@ -220,6 +224,8 @@ class AaObjectReference: public AaExpression
   // to the statement which defined it.
   AaRoot* _object;
 
+  bool _is_dereferenced;
+
  public:
   AaObjectReference(AaScope* scope_tpr, string object_ref_string);
   ~AaObjectReference();
@@ -255,7 +261,7 @@ class AaObjectReference: public AaExpression
   void PrintAddressOfC(ofstream& ofile, string tab_string) {}
   virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string) {}
 
-  virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
+  virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr);
 
 
   // common operations across loads/stores.
@@ -447,7 +453,8 @@ class AaObjectReference: public AaExpression
 							 ostream& ofile);
 
   virtual bool Scalar_Types_Only() { return(false);}
-
+  bool Get_Is_Dereferenced() {return(_is_dereferenced);}
+  void Set_Is_Dereferenced(bool v) {_is_dereferenced = v;}
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
@@ -654,6 +661,11 @@ class AaPointerDereferenceExpression: public AaObjectReference
   AaObjectReference* _reference_to_object;
   set<AaStorageObject*> _addressed_objects_from_rhs;
 
+  // if this expression is a target through an
+  // an assignment statement, then rhs_source
+  // is the expression which leads to this..
+  AaExpression* _rhs_source;
+
  public:
 
   AaPointerDereferenceExpression(AaScope* scope, AaObjectReference* obj_ref);
@@ -668,6 +680,9 @@ class AaPointerDereferenceExpression: public AaObjectReference
     this->_reference_to_object->Map_Source_References(source_objects);
   }
 
+  void Set_RHS_Source(AaExpression* src) { _rhs_source = src; }
+  AaExpression* Get_RHS_Source() { return(_rhs_source); }
+
   virtual bool Is_Load() {return(!this->Get_Is_Target());}
   virtual bool Is_Store(){return(this->Get_Is_Target()); }
   virtual bool Is_Foreign_Store();
@@ -677,7 +692,7 @@ class AaPointerDereferenceExpression: public AaObjectReference
   virtual void PrintC(ofstream& ofile, string tab_string);
 
   virtual void Evaluate() {this->_reference_to_object->Evaluate();}
-  virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
+  virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr);
 
   virtual void Map_Source_References(set<AaRoot*>& source_objects); // important
   virtual void Update_Type();
@@ -720,6 +735,7 @@ class AaPointerDereferenceExpression: public AaObjectReference
 					       map<string,vector<AaExpression*> >& pipe_map,
 					       ostream& ofile);
 
+  void Get_Siblings(set<AaPointerDereferenceExpression*>& sibling_set, bool get_sources, bool get_targets);
 
 };
 
@@ -738,7 +754,7 @@ class AaAddressOfExpression: public AaObjectReference
   virtual bool Is_Load() {return(false);}
   virtual bool Is_Store(){return(false);}
 
-  virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
+  virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr);
 
   virtual void Map_Source_References(set<AaRoot*>& source_objects); // important
   virtual void Update_Type();

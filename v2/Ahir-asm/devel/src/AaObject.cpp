@@ -15,7 +15,6 @@ using namespace std;
 
 
 /*****************************************  OBJECT  ****************************/
-
 //---------------------------------------------------------------------
 // AaObject
 //---------------------------------------------------------------------
@@ -26,6 +25,7 @@ AaObject::AaObject(AaScope* parent_tpr, string oname, AaType* object_type):AaRoo
   this->_value = NULL;
   this->_type = object_type;
   this->_addressed_object_representative = NULL;
+  this->_is_dereferenced = false;
 }
 AaObject::~AaObject() {};
 
@@ -36,6 +36,12 @@ bool AaObject::Set_Addressed_Object_Representative(AaStorageObject* obj)
     {
       if(this->_addressed_objects.find(obj) == this->_addressed_objects.end())
 	new_flag = true;
+
+      if(this->_is_dereferenced)
+	{
+	  if(this->Get_Addressed_Object_Representative())
+	    AaProgram::Add_Storage_Dependency(obj,this->Get_Addressed_Object_Representative());
+	}
 
       this->_addressed_objects.insert(obj);
 
@@ -75,11 +81,11 @@ void AaObject::Coalesce_Storage()
     {
       if((*iter)->Is_Expression())
 	((AaExpression*)(*iter))->
-	  Propagate_Addressed_Object_Representative(this->Get_Addressed_Object_Representative());
+	  Propagate_Addressed_Object_Representative(this->Get_Addressed_Object_Representative(), this);
     }
 }
 
-void AaObject::Propagate_Addressed_Object_Representative(AaStorageObject* obj)
+void AaObject::Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_where)
 {
   if(AaProgram::_verbose_flag)
     AaRoot::Info("coalescing: propagating " + (obj ? obj->Get_Name() : "null") + " from object " + this->Get_Name());
@@ -140,6 +146,10 @@ void AaObject::PrintC(ofstream& ofile, string tab_string)
 void AaObject::Write_VC_Model(ostream& ofile)
 {
   ofile << this->Get_VC_Name() << ":";  this->Get_Type()->Write_VC_Model(ofile);
+  ofile << endl;
+  ofile << "// can point into ";
+  Print_Storage_Object_Set(this->Get_Addressed_Objects(),ofile);
+  ofile << endl;
 }
 
 void AaObject::Set_Value(AaConstantLiteralReference* v)
@@ -189,6 +199,9 @@ void AaStorageObject::Print(ostream& ofile)
   ofile << "// memory space index = " << this->Get_Mem_Space_Index() <<  " "
 	<< " base address = " << this->Get_Base_Address() << " "
 	<< " word size = " << this->Get_Word_Size();
+  ofile << endl << "// can point into ";
+  Print_Storage_Object_Set(this->Get_Addressed_Objects(),ofile);
+  ofile << endl;
 }
 
 void AaStorageObject::Write_VC_Model(ostream& ofile)
@@ -274,6 +287,9 @@ void AaPipeObject::Print(ostream& ofile)
   ofile << this->Tab();
   ofile << "$pipe ";
   this->AaObject::Print(ofile);
+  ofile << endl << "// can point into ";
+  Print_Storage_Object_Set(this->Get_Addressed_Objects(),ofile);
+  ofile << endl;
 }
 
 //
@@ -340,4 +356,14 @@ string AaConstantObject::Get_VC_Name()
 {
   string ret_string = Make_VC_Legal(this->Get_Hierarchical_Name());
   return(ret_string);
+}
+
+void Print_Storage_Object_Set(set<AaStorageObject*>& ss, ostream& ofile)
+{
+  for(set<AaStorageObject*>::iterator iter= ss.begin(), fiter = ss.end();
+      iter != fiter;
+      iter++)
+    {
+      ofile << " " << (*iter)->Get_Hierarchical_Name();
+    }
 }

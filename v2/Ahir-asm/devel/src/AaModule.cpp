@@ -307,7 +307,7 @@ void AaModule::Set_Foreign_Object_Representatives()
 
 	      fobj->Add_Source_Reference(inobj);  // inobj uses fobj as a source
 	      inobj->Add_Target_Reference(fobj);  // fobj uses inobj as a target
-	      inobj->Propagate_Addressed_Object_Representative(fobj);
+	      inobj->Propagate_Addressed_Object_Representative(fobj,NULL);
 	    }
 	  else
 	    {
@@ -326,7 +326,7 @@ void AaModule::Set_Foreign_Object_Representatives()
 
 	      fobj->Add_Source_Reference(inobj);  // inobj uses fobj as a source
 	      inobj->Add_Target_Reference(fobj);  // fobj uses inobj as a target
-	      inobj->Propagate_Addressed_Object_Representative(fobj);
+	      inobj->Propagate_Addressed_Object_Representative(fobj,NULL);
 	    }
 	}
 	    
@@ -354,7 +354,7 @@ void AaModule::Set_Foreign_Object_Representatives()
 	      fobj->Add_Source_Reference(outobj);  // fobj uses outobj as a source
 	      outobj->Add_Target_Reference(fobj);  // outobj uses fobj as a target
 
-	      outobj->Propagate_Addressed_Object_Representative(fobj);
+	      outobj->Propagate_Addressed_Object_Representative(fobj,NULL);
 	    }
 	  else
 	    {
@@ -371,7 +371,7 @@ void AaModule::Set_Foreign_Object_Representatives()
 
 	      fobj->Add_Source_Reference(outobj);  // fobj uses outobj as a source
 	      outobj->Add_Target_Reference(fobj);  // outobj uses fobj as a target
-	      outobj->Propagate_Addressed_Object_Representative(fobj);
+	      outobj->Propagate_Addressed_Object_Representative(fobj,NULL);
 	    }
 	}
     }

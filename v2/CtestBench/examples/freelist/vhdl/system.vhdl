@@ -2243,14 +2243,6 @@ entity free_queue_manager is --
     reset : in std_logic;
     start : in std_logic;
     fin   : out std_logic;
-    memory_space_2_lr_req : out  std_logic_vector(1 downto 0);
-    memory_space_2_lr_ack : in   std_logic_vector(1 downto 0);
-    memory_space_2_lr_addr : out  std_logic_vector(1 downto 0);
-    memory_space_2_lr_tag :  out  std_logic_vector(3 downto 0);
-    memory_space_2_lc_req : out  std_logic_vector(1 downto 0);
-    memory_space_2_lc_ack : in   std_logic_vector(1 downto 0);
-    memory_space_2_lc_data : in   std_logic_vector(63 downto 0);
-    memory_space_2_lc_tag :  in  std_logic_vector(3 downto 0);
     memory_space_1_lr_req : out  std_logic_vector(0 downto 0);
     memory_space_1_lr_ack : in   std_logic_vector(0 downto 0);
     memory_space_1_lr_addr : out  std_logic_vector(2 downto 0);
@@ -2259,14 +2251,14 @@ entity free_queue_manager is --
     memory_space_1_lc_ack : in   std_logic_vector(0 downto 0);
     memory_space_1_lc_data : in   std_logic_vector(31 downto 0);
     memory_space_1_lc_tag :  in  std_logic_vector(1 downto 0);
-    memory_space_2_sr_req : out  std_logic_vector(0 downto 0);
-    memory_space_2_sr_ack : in   std_logic_vector(0 downto 0);
-    memory_space_2_sr_addr : out  std_logic_vector(0 downto 0);
-    memory_space_2_sr_data : out  std_logic_vector(31 downto 0);
-    memory_space_2_sr_tag :  out  std_logic_vector(1 downto 0);
-    memory_space_2_sc_req : out  std_logic_vector(0 downto 0);
-    memory_space_2_sc_ack : in   std_logic_vector(0 downto 0);
-    memory_space_2_sc_tag :  in  std_logic_vector(1 downto 0);
+    memory_space_2_lr_req : out  std_logic_vector(1 downto 0);
+    memory_space_2_lr_ack : in   std_logic_vector(1 downto 0);
+    memory_space_2_lr_addr : out  std_logic_vector(1 downto 0);
+    memory_space_2_lr_tag :  out  std_logic_vector(3 downto 0);
+    memory_space_2_lc_req : out  std_logic_vector(1 downto 0);
+    memory_space_2_lc_ack : in   std_logic_vector(1 downto 0);
+    memory_space_2_lc_data : in   std_logic_vector(63 downto 0);
+    memory_space_2_lc_tag :  in  std_logic_vector(3 downto 0);
     memory_space_1_sr_req : out  std_logic_vector(0 downto 0);
     memory_space_1_sr_ack : in   std_logic_vector(0 downto 0);
     memory_space_1_sr_addr : out  std_logic_vector(2 downto 0);
@@ -2275,6 +2267,14 @@ entity free_queue_manager is --
     memory_space_1_sc_req : out  std_logic_vector(0 downto 0);
     memory_space_1_sc_ack : in   std_logic_vector(0 downto 0);
     memory_space_1_sc_tag :  in  std_logic_vector(1 downto 0);
+    memory_space_2_sr_req : out  std_logic_vector(0 downto 0);
+    memory_space_2_sr_ack : in   std_logic_vector(0 downto 0);
+    memory_space_2_sr_addr : out  std_logic_vector(0 downto 0);
+    memory_space_2_sr_data : out  std_logic_vector(31 downto 0);
+    memory_space_2_sr_tag :  out  std_logic_vector(1 downto 0);
+    memory_space_2_sc_req : out  std_logic_vector(0 downto 0);
+    memory_space_2_sc_ack : in   std_logic_vector(0 downto 0);
+    memory_space_2_sc_tag :  in  std_logic_vector(1 downto 0);
     free_queue_put_pipe_read_req : out  std_logic_vector(0 downto 0);
     free_queue_put_pipe_read_ack : in   std_logic_vector(0 downto 0);
     free_queue_put_pipe_read_data : in   std_logic_vector(31 downto 0);
@@ -2294,96 +2294,98 @@ architecture Default of free_queue_manager is --
   signal always_true_symbol: Boolean;
   -- links between control-path and data-path
   signal ptr_deref_235_store_0_req_0 : boolean;
-  signal simple_obj_ref_254_inst_ack_0 : boolean;
+  signal simple_obj_ref_254_inst_req_0 : boolean;
+  signal ptr_deref_263_load_0_req_1 : boolean;
+  signal simple_obj_ref_282_load_0_ack_1 : boolean;
   signal ptr_deref_315_base_resize_req_0 : boolean;
   signal ptr_deref_315_base_resize_ack_0 : boolean;
   signal simple_obj_ref_289_load_0_ack_1 : boolean;
-  signal simple_obj_ref_306_gather_scatter_ack_0 : boolean;
+  signal simple_obj_ref_282_load_0_req_1 : boolean;
+  signal array_obj_ref_311_final_reg_ack_0 : boolean;
   signal array_obj_ref_311_root_address_inst_req_0 : boolean;
   signal array_obj_ref_311_root_address_inst_ack_0 : boolean;
-  signal simple_obj_ref_282_load_0_req_1 : boolean;
+  signal ptr_deref_258_store_0_req_1 : boolean;
   signal ptr_deref_223_store_0_req_1 : boolean;
-  signal ptr_deref_258_gather_scatter_ack_0 : boolean;
-  signal ptr_deref_285_store_0_ack_1 : boolean;
+  signal if_stmt_274_branch_req_0 : boolean;
   signal ptr_deref_258_store_0_ack_0 : boolean;
-  signal ptr_deref_285_store_0_req_1 : boolean;
-  signal if_stmt_274_branch_ack_0 : boolean;
+  signal ptr_deref_285_store_0_ack_1 : boolean;
   signal ptr_deref_235_store_0_req_1 : boolean;
   signal ptr_deref_258_store_0_req_0 : boolean;
-  signal binary_272_inst_ack_1 : boolean;
-  signal binary_272_inst_req_1 : boolean;
+  signal if_stmt_274_branch_ack_0 : boolean;
   signal ptr_deref_223_store_0_ack_1 : boolean;
-  signal simple_obj_ref_282_load_0_ack_1 : boolean;
-  signal if_stmt_274_branch_ack_1 : boolean;
+  signal ptr_deref_215_load_0_req_0 : boolean;
+  signal simple_obj_ref_282_gather_scatter_ack_0 : boolean;
+  signal simple_obj_ref_282_gather_scatter_req_0 : boolean;
+  signal ptr_deref_258_gather_scatter_ack_0 : boolean;
   signal ptr_deref_258_gather_scatter_req_0 : boolean;
   signal ptr_deref_210_store_0_ack_1 : boolean;
   signal ptr_deref_223_store_0_ack_0 : boolean;
   signal ptr_deref_210_store_0_req_1 : boolean;
   signal ptr_deref_223_store_0_req_0 : boolean;
-  signal binary_272_inst_ack_0 : boolean;
+  signal binary_272_inst_ack_1 : boolean;
+  signal binary_272_inst_req_1 : boolean;
+  signal simple_obj_ref_282_load_0_ack_0 : boolean;
+  signal if_stmt_274_branch_ack_1 : boolean;
   signal ptr_deref_235_gather_scatter_ack_0 : boolean;
-  signal type_cast_267_inst_ack_0 : boolean;
-  signal binary_272_inst_req_0 : boolean;
-  signal ptr_deref_223_gather_scatter_ack_0 : boolean;
+  signal ptr_deref_285_store_0_req_1 : boolean;
+  signal binary_272_inst_ack_0 : boolean;
   signal ptr_deref_215_gather_scatter_ack_0 : boolean;
+  signal ptr_deref_223_gather_scatter_ack_0 : boolean;
   signal ptr_deref_223_gather_scatter_req_0 : boolean;
   signal ptr_deref_215_gather_scatter_req_0 : boolean;
+  signal binary_272_inst_req_0 : boolean;
   signal ptr_deref_215_load_0_ack_1 : boolean;
   signal ptr_deref_210_store_0_ack_0 : boolean;
   signal ptr_deref_210_store_0_req_0 : boolean;
   signal simple_obj_ref_289_load_0_req_1 : boolean;
   signal ptr_deref_215_load_0_req_1 : boolean;
   signal simple_obj_ref_289_gather_scatter_ack_0 : boolean;
-  signal if_stmt_274_branch_req_0 : boolean;
+  signal simple_obj_ref_254_inst_ack_0 : boolean;
   signal ptr_deref_235_store_0_ack_0 : boolean;
   signal ptr_deref_210_gather_scatter_ack_0 : boolean;
-  signal simple_obj_ref_282_gather_scatter_ack_0 : boolean;
-  signal simple_obj_ref_282_load_0_ack_0 : boolean;
-  signal ptr_deref_210_gather_scatter_req_0 : boolean;
   signal simple_obj_ref_282_load_0_req_0 : boolean;
-  signal simple_obj_ref_254_inst_req_0 : boolean;
+  signal ptr_deref_210_gather_scatter_req_0 : boolean;
   signal ptr_deref_210_addr_0_ack_0 : boolean;
   signal ptr_deref_210_addr_0_req_0 : boolean;
   signal ptr_deref_215_load_0_ack_0 : boolean;
-  signal type_cast_267_inst_req_0 : boolean;
   signal ptr_deref_235_gather_scatter_req_0 : boolean;
+  signal type_cast_267_inst_ack_0 : boolean;
   signal ptr_deref_210_root_address_inst_ack_0 : boolean;
   signal ptr_deref_210_root_address_inst_req_0 : boolean;
-  signal type_cast_255_inst_ack_0 : boolean;
   signal binary_220_inst_ack_1 : boolean;
-  signal ptr_deref_215_load_0_req_0 : boolean;
+  signal type_cast_255_inst_ack_0 : boolean;
   signal binary_220_inst_req_1 : boolean;
   signal binary_220_inst_ack_0 : boolean;
-  signal type_cast_255_inst_req_0 : boolean;
-  signal ptr_deref_263_gather_scatter_ack_0 : boolean;
+  signal type_cast_267_inst_req_0 : boolean;
   signal simple_obj_ref_289_load_0_ack_0 : boolean;
   signal ptr_deref_210_base_resize_ack_0 : boolean;
   signal ptr_deref_285_store_0_ack_0 : boolean;
-  signal ptr_deref_285_store_0_req_0 : boolean;
   signal ptr_deref_235_store_0_ack_1 : boolean;
-  signal ptr_deref_285_gather_scatter_ack_0 : boolean;
+  signal ptr_deref_285_store_0_req_0 : boolean;
   signal ptr_deref_210_base_resize_req_0 : boolean;
   signal array_obj_ref_311_final_reg_req_0 : boolean;
-  signal simple_obj_ref_282_gather_scatter_req_0 : boolean;
   signal if_stmt_298_branch_ack_0 : boolean;
   signal binary_296_inst_ack_1 : boolean;
   signal binary_296_inst_req_1 : boolean;
   signal binary_296_inst_req_0 : boolean;
   signal binary_296_inst_ack_0 : boolean;
   signal if_stmt_298_branch_ack_1 : boolean;
-  signal ptr_deref_263_load_0_ack_0 : boolean;
   signal type_cast_293_inst_ack_0 : boolean;
+  signal type_cast_293_inst_req_0 : boolean;
   signal simple_obj_ref_243_store_0_ack_1 : boolean;
-  signal ptr_deref_263_load_0_req_0 : boolean;
+  signal ptr_deref_263_load_0_ack_0 : boolean;
   signal simple_obj_ref_243_store_0_req_1 : boolean;
   signal if_stmt_298_branch_req_0 : boolean;
+  signal ptr_deref_285_gather_scatter_ack_0 : boolean;
+  signal ptr_deref_263_load_0_req_0 : boolean;
   signal ptr_deref_285_gather_scatter_req_0 : boolean;
-  signal ptr_deref_263_gather_scatter_req_0 : boolean;
+  signal ptr_deref_263_gather_scatter_ack_0 : boolean;
   signal simple_obj_ref_243_store_0_ack_0 : boolean;
-  signal type_cast_293_inst_req_0 : boolean;
+  signal type_cast_255_inst_req_0 : boolean;
   signal ptr_deref_315_root_address_inst_req_0 : boolean;
   signal ptr_deref_315_root_address_inst_ack_0 : boolean;
   signal ptr_deref_315_gather_scatter_ack_0 : boolean;
+  signal ptr_deref_315_load_0_req_0 : boolean;
   signal simple_obj_ref_317_store_0_req_0 : boolean;
   signal simple_obj_ref_317_store_0_ack_0 : boolean;
   signal ptr_deref_315_addr_0_req_0 : boolean;
@@ -2391,9 +2393,9 @@ architecture Default of free_queue_manager is --
   signal simple_obj_ref_317_gather_scatter_req_0 : boolean;
   signal simple_obj_ref_317_gather_scatter_ack_0 : boolean;
   signal simple_obj_ref_306_gather_scatter_req_0 : boolean;
-  signal simple_obj_ref_306_load_0_req_1 : boolean;
+  signal simple_obj_ref_306_gather_scatter_ack_0 : boolean;
   signal simple_obj_ref_306_load_0_ack_1 : boolean;
-  signal ptr_deref_315_load_0_req_0 : boolean;
+  signal simple_obj_ref_306_load_0_req_1 : boolean;
   signal ptr_deref_315_load_0_ack_0 : boolean;
   signal simple_obj_ref_317_store_0_req_1 : boolean;
   signal simple_obj_ref_317_store_0_ack_1 : boolean;
@@ -2401,12 +2403,11 @@ architecture Default of free_queue_manager is --
   signal ptr_deref_315_load_0_ack_1 : boolean;
   signal ptr_deref_315_gather_scatter_req_0 : boolean;
   signal simple_obj_ref_289_gather_scatter_req_0 : boolean;
-  signal ptr_deref_263_load_0_ack_1 : boolean;
+  signal ptr_deref_263_gather_scatter_req_0 : boolean;
   signal simple_obj_ref_306_load_0_req_0 : boolean;
   signal simple_obj_ref_306_load_0_ack_0 : boolean;
-  signal array_obj_ref_311_final_reg_ack_0 : boolean;
   signal array_obj_ref_311_base_resize_req_0 : boolean;
-  signal ptr_deref_263_load_0_req_1 : boolean;
+  signal ptr_deref_263_load_0_ack_1 : boolean;
   signal array_obj_ref_311_base_resize_ack_0 : boolean;
   signal simple_obj_ref_289_load_0_req_0 : boolean;
   signal binary_220_inst_req_0 : boolean;
@@ -2457,7 +2458,6 @@ architecture Default of free_queue_manager is --
   signal array_obj_ref_192_root_address_inst_ack_0 : boolean;
   signal addr_of_193_final_reg_req_0 : boolean;
   signal addr_of_193_final_reg_ack_0 : boolean;
-  signal ptr_deref_258_store_0_req_1 : boolean;
   signal ptr_deref_197_load_0_req_0 : boolean;
   signal ptr_deref_197_load_0_ack_0 : boolean;
   signal ptr_deref_197_load_0_req_1 : boolean;
@@ -8935,24 +8935,24 @@ begin --
           reset => reset); -- 
       -- 
     end Block; -- split operator group 7
-    -- shared load operator group (0) : ptr_deref_183_load_0 ptr_deref_163_load_0 
+    -- shared load operator group (0) : ptr_deref_163_load_0 ptr_deref_183_load_0 
     LoadGroup0: Block -- 
       signal data_in: std_logic_vector(1 downto 0);
       signal data_out: std_logic_vector(63 downto 0);
       signal reqR, ackR, reqL, ackL : BooleanArray( 1 downto 0);
       -- 
     begin -- 
-      reqL(1) <= ptr_deref_183_load_0_req_0;
-      reqL(0) <= ptr_deref_163_load_0_req_0;
-      ptr_deref_183_load_0_ack_0 <= ackL(1);
-      ptr_deref_163_load_0_ack_0 <= ackL(0);
-      reqR(1) <= ptr_deref_183_load_0_req_1;
-      reqR(0) <= ptr_deref_163_load_0_req_1;
-      ptr_deref_183_load_0_ack_1 <= ackR(1);
-      ptr_deref_163_load_0_ack_1 <= ackR(0);
-      data_in <= ptr_deref_183_word_address_0 & ptr_deref_163_word_address_0;
-      ptr_deref_183_data_0 <= data_out(63 downto 32);
-      ptr_deref_163_data_0 <= data_out(31 downto 0);
+      reqL(1) <= ptr_deref_163_load_0_req_0;
+      reqL(0) <= ptr_deref_183_load_0_req_0;
+      ptr_deref_163_load_0_ack_0 <= ackL(1);
+      ptr_deref_183_load_0_ack_0 <= ackL(0);
+      reqR(1) <= ptr_deref_163_load_0_req_1;
+      reqR(0) <= ptr_deref_183_load_0_req_1;
+      ptr_deref_163_load_0_ack_1 <= ackR(1);
+      ptr_deref_183_load_0_ack_1 <= ackR(0);
+      data_in <= ptr_deref_163_word_address_0 & ptr_deref_183_word_address_0;
+      ptr_deref_163_data_0 <= data_out(63 downto 32);
+      ptr_deref_183_data_0 <= data_out(31 downto 0);
       LoadReq: LoadReqShared -- 
         generic map (addr_width => 1,  num_reqs => 2,  tag_length => 2,  no_arbitration => true)
         port map ( -- 
@@ -9257,29 +9257,29 @@ begin --
         ); -- 
       -- 
     end Block; -- load group 7
-    -- shared load operator group (8) : simple_obj_ref_306_load_0 simple_obj_ref_282_load_0 simple_obj_ref_379_load_0 
+    -- shared load operator group (8) : simple_obj_ref_379_load_0 simple_obj_ref_282_load_0 simple_obj_ref_306_load_0 
     LoadGroup8: Block -- 
       signal data_in: std_logic_vector(2 downto 0);
       signal data_out: std_logic_vector(95 downto 0);
       signal reqR, ackR, reqL, ackL : BooleanArray( 2 downto 0);
       -- 
     begin -- 
-      reqL(2) <= simple_obj_ref_306_load_0_req_0;
+      reqL(2) <= simple_obj_ref_379_load_0_req_0;
       reqL(1) <= simple_obj_ref_282_load_0_req_0;
-      reqL(0) <= simple_obj_ref_379_load_0_req_0;
-      simple_obj_ref_306_load_0_ack_0 <= ackL(2);
+      reqL(0) <= simple_obj_ref_306_load_0_req_0;
+      simple_obj_ref_379_load_0_ack_0 <= ackL(2);
       simple_obj_ref_282_load_0_ack_0 <= ackL(1);
-      simple_obj_ref_379_load_0_ack_0 <= ackL(0);
-      reqR(2) <= simple_obj_ref_306_load_0_req_1;
+      simple_obj_ref_306_load_0_ack_0 <= ackL(0);
+      reqR(2) <= simple_obj_ref_379_load_0_req_1;
       reqR(1) <= simple_obj_ref_282_load_0_req_1;
-      reqR(0) <= simple_obj_ref_379_load_0_req_1;
-      simple_obj_ref_306_load_0_ack_1 <= ackR(2);
+      reqR(0) <= simple_obj_ref_306_load_0_req_1;
+      simple_obj_ref_379_load_0_ack_1 <= ackR(2);
       simple_obj_ref_282_load_0_ack_1 <= ackR(1);
-      simple_obj_ref_379_load_0_ack_1 <= ackR(0);
-      data_in <= simple_obj_ref_306_word_address_0 & simple_obj_ref_282_word_address_0 & simple_obj_ref_379_word_address_0;
-      simple_obj_ref_306_data_0 <= data_out(95 downto 64);
+      simple_obj_ref_306_load_0_ack_1 <= ackR(0);
+      data_in <= simple_obj_ref_379_word_address_0 & simple_obj_ref_282_word_address_0 & simple_obj_ref_306_word_address_0;
+      simple_obj_ref_379_data_0 <= data_out(95 downto 64);
       simple_obj_ref_282_data_0 <= data_out(63 downto 32);
-      simple_obj_ref_379_data_0 <= data_out(31 downto 0);
+      simple_obj_ref_306_data_0 <= data_out(31 downto 0);
       LoadReq: LoadReqShared -- 
         generic map (addr_width => 1,  num_reqs => 3,  tag_length => 2,  no_arbitration => true)
         port map ( -- 
@@ -9345,23 +9345,23 @@ begin --
         ); -- 
       -- 
     end Block; -- load group 9
-    -- shared store operator group (0) : ptr_deref_156_store_0 ptr_deref_223_store_0 
+    -- shared store operator group (0) : ptr_deref_223_store_0 ptr_deref_156_store_0 
     StoreGroup0: Block -- 
       signal addr_in: std_logic_vector(1 downto 0);
       signal data_in: std_logic_vector(63 downto 0);
       signal reqR, ackR, reqL, ackL : BooleanArray( 1 downto 0);
       -- 
     begin -- 
-      reqL(1) <= ptr_deref_156_store_0_req_0;
-      reqL(0) <= ptr_deref_223_store_0_req_0;
-      ptr_deref_156_store_0_ack_0 <= ackL(1);
-      ptr_deref_223_store_0_ack_0 <= ackL(0);
-      reqR(1) <= ptr_deref_156_store_0_req_1;
-      reqR(0) <= ptr_deref_223_store_0_req_1;
-      ptr_deref_156_store_0_ack_1 <= ackR(1);
-      ptr_deref_223_store_0_ack_1 <= ackR(0);
-      addr_in <= ptr_deref_156_word_address_0 & ptr_deref_223_word_address_0;
-      data_in <= ptr_deref_156_data_0 & ptr_deref_223_data_0;
+      reqL(1) <= ptr_deref_223_store_0_req_0;
+      reqL(0) <= ptr_deref_156_store_0_req_0;
+      ptr_deref_223_store_0_ack_0 <= ackL(1);
+      ptr_deref_156_store_0_ack_0 <= ackL(0);
+      reqR(1) <= ptr_deref_223_store_0_req_1;
+      reqR(0) <= ptr_deref_156_store_0_req_1;
+      ptr_deref_223_store_0_ack_1 <= ackR(1);
+      ptr_deref_156_store_0_ack_1 <= ackR(0);
+      addr_in <= ptr_deref_223_word_address_0 & ptr_deref_156_word_address_0;
+      data_in <= ptr_deref_223_data_0 & ptr_deref_156_data_0;
       StoreReq: StoreReqShared -- 
         generic map ( addr_width => 1,
         data_width => 32,
@@ -9395,27 +9395,27 @@ begin --
         ); -- 
       -- 
     end Block; -- store group 0
-    -- shared store operator group (1) : ptr_deref_391_store_0 ptr_deref_235_store_0 ptr_deref_210_store_0 
+    -- shared store operator group (1) : ptr_deref_210_store_0 ptr_deref_391_store_0 ptr_deref_235_store_0 
     StoreGroup1: Block -- 
       signal addr_in: std_logic_vector(8 downto 0);
       signal data_in: std_logic_vector(95 downto 0);
       signal reqR, ackR, reqL, ackL : BooleanArray( 2 downto 0);
       -- 
     begin -- 
-      reqL(2) <= ptr_deref_391_store_0_req_0;
-      reqL(1) <= ptr_deref_235_store_0_req_0;
-      reqL(0) <= ptr_deref_210_store_0_req_0;
-      ptr_deref_391_store_0_ack_0 <= ackL(2);
-      ptr_deref_235_store_0_ack_0 <= ackL(1);
-      ptr_deref_210_store_0_ack_0 <= ackL(0);
-      reqR(2) <= ptr_deref_391_store_0_req_1;
-      reqR(1) <= ptr_deref_235_store_0_req_1;
-      reqR(0) <= ptr_deref_210_store_0_req_1;
-      ptr_deref_391_store_0_ack_1 <= ackR(2);
-      ptr_deref_235_store_0_ack_1 <= ackR(1);
-      ptr_deref_210_store_0_ack_1 <= ackR(0);
-      addr_in <= ptr_deref_391_word_address_0 & ptr_deref_235_word_address_0 & ptr_deref_210_word_address_0;
-      data_in <= ptr_deref_391_data_0 & ptr_deref_235_data_0 & ptr_deref_210_data_0;
+      reqL(2) <= ptr_deref_210_store_0_req_0;
+      reqL(1) <= ptr_deref_391_store_0_req_0;
+      reqL(0) <= ptr_deref_235_store_0_req_0;
+      ptr_deref_210_store_0_ack_0 <= ackL(2);
+      ptr_deref_391_store_0_ack_0 <= ackL(1);
+      ptr_deref_235_store_0_ack_0 <= ackL(0);
+      reqR(2) <= ptr_deref_210_store_0_req_1;
+      reqR(1) <= ptr_deref_391_store_0_req_1;
+      reqR(0) <= ptr_deref_235_store_0_req_1;
+      ptr_deref_210_store_0_ack_1 <= ackR(2);
+      ptr_deref_391_store_0_ack_1 <= ackR(1);
+      ptr_deref_235_store_0_ack_1 <= ackR(0);
+      addr_in <= ptr_deref_210_word_address_0 & ptr_deref_391_word_address_0 & ptr_deref_235_word_address_0;
+      data_in <= ptr_deref_210_data_0 & ptr_deref_391_data_0 & ptr_deref_235_data_0;
       StoreReq: StoreReqShared -- 
         generic map ( addr_width => 3,
         data_width => 32,
@@ -9587,27 +9587,27 @@ begin --
         ); -- 
       -- 
     end Block; -- store group 4
-    -- shared store operator group (5) : simple_obj_ref_398_store_0 simple_obj_ref_243_store_0 simple_obj_ref_317_store_0 
+    -- shared store operator group (5) : simple_obj_ref_317_store_0 simple_obj_ref_398_store_0 simple_obj_ref_243_store_0 
     StoreGroup5: Block -- 
       signal addr_in: std_logic_vector(2 downto 0);
       signal data_in: std_logic_vector(95 downto 0);
       signal reqR, ackR, reqL, ackL : BooleanArray( 2 downto 0);
       -- 
     begin -- 
-      reqL(2) <= simple_obj_ref_398_store_0_req_0;
-      reqL(1) <= simple_obj_ref_243_store_0_req_0;
-      reqL(0) <= simple_obj_ref_317_store_0_req_0;
-      simple_obj_ref_398_store_0_ack_0 <= ackL(2);
-      simple_obj_ref_243_store_0_ack_0 <= ackL(1);
-      simple_obj_ref_317_store_0_ack_0 <= ackL(0);
-      reqR(2) <= simple_obj_ref_398_store_0_req_1;
-      reqR(1) <= simple_obj_ref_243_store_0_req_1;
-      reqR(0) <= simple_obj_ref_317_store_0_req_1;
-      simple_obj_ref_398_store_0_ack_1 <= ackR(2);
-      simple_obj_ref_243_store_0_ack_1 <= ackR(1);
-      simple_obj_ref_317_store_0_ack_1 <= ackR(0);
-      addr_in <= simple_obj_ref_398_word_address_0 & simple_obj_ref_243_word_address_0 & simple_obj_ref_317_word_address_0;
-      data_in <= simple_obj_ref_398_data_0 & simple_obj_ref_243_data_0 & simple_obj_ref_317_data_0;
+      reqL(2) <= simple_obj_ref_317_store_0_req_0;
+      reqL(1) <= simple_obj_ref_398_store_0_req_0;
+      reqL(0) <= simple_obj_ref_243_store_0_req_0;
+      simple_obj_ref_317_store_0_ack_0 <= ackL(2);
+      simple_obj_ref_398_store_0_ack_0 <= ackL(1);
+      simple_obj_ref_243_store_0_ack_0 <= ackL(0);
+      reqR(2) <= simple_obj_ref_317_store_0_req_1;
+      reqR(1) <= simple_obj_ref_398_store_0_req_1;
+      reqR(0) <= simple_obj_ref_243_store_0_req_1;
+      simple_obj_ref_317_store_0_ack_1 <= ackR(2);
+      simple_obj_ref_398_store_0_ack_1 <= ackR(1);
+      simple_obj_ref_243_store_0_ack_1 <= ackR(0);
+      addr_in <= simple_obj_ref_317_word_address_0 & simple_obj_ref_398_word_address_0 & simple_obj_ref_243_word_address_0;
+      data_in <= simple_obj_ref_317_data_0 & simple_obj_ref_398_data_0 & simple_obj_ref_243_data_0;
       StoreReq: StoreReqShared -- 
         generic map ( addr_width => 1,
         data_width => 32,
@@ -9866,89 +9866,89 @@ architecture Default of input_module is --
   -- always true...
   signal always_true_symbol: Boolean;
   -- links between control-path and data-path
-  signal ptr_deref_441_store_0_req_1 : boolean;
-  signal ptr_deref_477_load_0_req_0 : boolean;
-  signal if_stmt_455_branch_ack_0 : boolean;
-  signal simple_obj_ref_423_inst_ack_0 : boolean;
-  signal ptr_deref_472_store_0_ack_0 : boolean;
-  signal binary_453_inst_req_1 : boolean;
-  signal ptr_deref_472_gather_scatter_ack_0 : boolean;
-  signal ptr_deref_481_load_0_req_0 : boolean;
-  signal ptr_deref_446_gather_scatter_ack_0 : boolean;
-  signal binary_453_inst_ack_1 : boolean;
-  signal array_obj_ref_486_base_resize_req_0 : boolean;
-  signal ptr_deref_489_store_0_req_1 : boolean;
-  signal ptr_deref_489_store_0_ack_0 : boolean;
-  signal ptr_deref_441_store_0_ack_1 : boolean;
-  signal array_obj_ref_486_base_resize_ack_0 : boolean;
-  signal ptr_deref_489_base_resize_req_0 : boolean;
+  signal ptr_deref_494_load_0_ack_0 : boolean;
   signal ptr_deref_489_gather_scatter_req_0 : boolean;
-  signal ptr_deref_441_store_0_ack_0 : boolean;
-  signal ptr_deref_472_store_0_req_1 : boolean;
-  signal type_cast_507_inst_ack_0 : boolean;
-  signal if_stmt_455_branch_req_0 : boolean;
-  signal ptr_deref_489_gather_scatter_ack_0 : boolean;
-  signal ptr_deref_494_load_0_ack_1 : boolean;
-  signal ptr_deref_489_addr_0_ack_0 : boolean;
   signal ptr_deref_494_gather_scatter_ack_0 : boolean;
-  signal ptr_deref_472_store_0_req_0 : boolean;
-  signal ptr_deref_489_root_address_inst_req_0 : boolean;
-  signal simple_obj_ref_423_inst_req_0 : boolean;
-  signal type_cast_450_inst_req_0 : boolean;
-  signal if_stmt_455_branch_ack_1 : boolean;
-  signal ptr_deref_489_base_resize_ack_0 : boolean;
-  signal ptr_deref_481_load_0_req_1 : boolean;
-  signal array_obj_ref_486_root_address_inst_ack_1 : boolean;
-  signal ptr_deref_494_load_0_req_0 : boolean;
-  signal ptr_deref_481_load_0_ack_0 : boolean;
-  signal array_obj_ref_486_root_address_inst_ack_0 : boolean;
-  signal ptr_deref_441_gather_scatter_req_0 : boolean;
-  signal array_obj_ref_486_root_address_inst_req_1 : boolean;
   signal ptr_deref_477_load_0_ack_1 : boolean;
   signal ptr_deref_477_load_0_req_1 : boolean;
-  signal ptr_deref_441_gather_scatter_ack_0 : boolean;
-  signal ptr_deref_446_gather_scatter_req_0 : boolean;
-  signal array_obj_ref_486_root_address_inst_req_0 : boolean;
+  signal ptr_deref_481_gather_scatter_req_0 : boolean;
+  signal ptr_deref_489_store_0_ack_0 : boolean;
+  signal binary_453_inst_ack_1 : boolean;
+  signal ptr_deref_446_load_0_req_1 : boolean;
+  signal binary_453_inst_req_1 : boolean;
   signal type_cast_507_inst_req_0 : boolean;
+  signal if_stmt_455_branch_ack_1 : boolean;
   signal ptr_deref_477_load_0_ack_0 : boolean;
+  signal ptr_deref_446_gather_scatter_ack_0 : boolean;
   signal ptr_deref_494_load_0_req_1 : boolean;
-  signal type_cast_434_inst_ack_0 : boolean;
-  signal ptr_deref_441_store_0_req_0 : boolean;
-  signal ptr_deref_494_gather_scatter_req_0 : boolean;
-  signal binary_453_inst_ack_0 : boolean;
-  signal type_cast_434_inst_req_0 : boolean;
-  signal binary_453_inst_req_0 : boolean;
-  signal type_cast_450_inst_ack_0 : boolean;
-  signal simple_obj_ref_433_inst_ack_0 : boolean;
-  signal simple_obj_ref_433_inst_req_0 : boolean;
-  signal simple_obj_ref_505_inst_req_0 : boolean;
-  signal ptr_deref_494_load_0_ack_0 : boolean;
-  signal ptr_deref_489_addr_0_req_0 : boolean;
-  signal ptr_deref_489_store_0_ack_1 : boolean;
+  signal array_obj_ref_486_base_resize_ack_0 : boolean;
+  signal array_obj_ref_486_root_address_inst_req_0 : boolean;
+  signal simple_obj_ref_423_inst_ack_0 : boolean;
+  signal type_cast_498_inst_req_0 : boolean;
+  signal array_obj_ref_486_base_resize_req_0 : boolean;
+  signal if_stmt_455_branch_req_0 : boolean;
   signal ptr_deref_481_load_0_ack_1 : boolean;
-  signal ptr_deref_446_load_0_req_0 : boolean;
-  signal ptr_deref_446_load_0_ack_0 : boolean;
+  signal simple_obj_ref_433_inst_ack_0 : boolean;
+  signal if_stmt_455_branch_ack_0 : boolean;
+  signal type_cast_450_inst_req_0 : boolean;
+  signal ptr_deref_472_store_0_ack_0 : boolean;
+  signal ptr_deref_472_store_0_req_0 : boolean;
+  signal ptr_deref_477_load_0_req_0 : boolean;
+  signal type_cast_438_inst_ack_0 : boolean;
+  signal array_obj_ref_486_root_address_inst_req_1 : boolean;
+  signal ptr_deref_481_load_0_req_1 : boolean;
+  signal type_cast_438_inst_req_0 : boolean;
+  signal ptr_deref_472_gather_scatter_ack_0 : boolean;
   signal ptr_deref_477_gather_scatter_req_0 : boolean;
+  signal ptr_deref_477_gather_scatter_ack_0 : boolean;
+  signal ptr_deref_446_load_0_req_0 : boolean;
+  signal ptr_deref_441_store_0_ack_0 : boolean;
+  signal simple_obj_ref_505_inst_req_0 : boolean;
+  signal array_obj_ref_486_root_address_inst_ack_0 : boolean;
+  signal array_obj_ref_486_root_address_inst_ack_1 : boolean;
+  signal ptr_deref_489_store_0_ack_1 : boolean;
+  signal ptr_deref_446_load_0_ack_1 : boolean;
+  signal ptr_deref_446_gather_scatter_req_0 : boolean;
+  signal ptr_deref_489_store_0_req_0 : boolean;
+  signal ptr_deref_472_gather_scatter_req_0 : boolean;
+  signal binary_453_inst_ack_0 : boolean;
+  signal simple_obj_ref_423_inst_req_0 : boolean;
+  signal type_cast_434_inst_ack_0 : boolean;
+  signal ptr_deref_481_load_0_ack_0 : boolean;
+  signal binary_453_inst_req_0 : boolean;
+  signal ptr_deref_489_root_address_inst_ack_0 : boolean;
+  signal type_cast_450_inst_ack_0 : boolean;
+  signal ptr_deref_489_root_address_inst_req_0 : boolean;
+  signal type_cast_434_inst_req_0 : boolean;
+  signal ptr_deref_481_gather_scatter_ack_0 : boolean;
   signal array_obj_ref_486_final_reg_req_0 : boolean;
   signal simple_obj_ref_505_inst_ack_0 : boolean;
+  signal ptr_deref_446_load_0_ack_0 : boolean;
   signal array_obj_ref_486_final_reg_ack_0 : boolean;
-  signal ptr_deref_477_gather_scatter_ack_0 : boolean;
+  signal simple_obj_ref_433_inst_req_0 : boolean;
+  signal ptr_deref_489_gather_scatter_ack_0 : boolean;
+  signal ptr_deref_441_store_0_ack_1 : boolean;
   signal simple_obj_ref_468_inst_req_0 : boolean;
-  signal ptr_deref_489_root_address_inst_ack_0 : boolean;
-  signal ptr_deref_472_store_0_ack_1 : boolean;
+  signal ptr_deref_481_load_0_req_0 : boolean;
+  signal ptr_deref_494_load_0_ack_1 : boolean;
   signal simple_obj_ref_468_inst_ack_0 : boolean;
-  signal ptr_deref_481_gather_scatter_req_0 : boolean;
-  signal type_cast_469_inst_req_0 : boolean;
-  signal type_cast_469_inst_ack_0 : boolean;
-  signal ptr_deref_446_load_0_req_1 : boolean;
-  signal ptr_deref_446_load_0_ack_1 : boolean;
-  signal ptr_deref_481_gather_scatter_ack_0 : boolean;
-  signal type_cast_498_inst_req_0 : boolean;
-  signal type_cast_438_inst_req_0 : boolean;
-  signal type_cast_438_inst_ack_0 : boolean;
-  signal ptr_deref_489_store_0_req_0 : boolean;
   signal type_cast_498_inst_ack_0 : boolean;
-  signal ptr_deref_472_gather_scatter_req_0 : boolean;
+  signal type_cast_507_inst_ack_0 : boolean;
+  signal ptr_deref_489_addr_0_req_0 : boolean;
+  signal ptr_deref_441_store_0_req_0 : boolean;
+  signal ptr_deref_472_store_0_req_1 : boolean;
+  signal type_cast_469_inst_req_0 : boolean;
+  signal ptr_deref_472_store_0_ack_1 : boolean;
+  signal ptr_deref_494_gather_scatter_req_0 : boolean;
+  signal type_cast_469_inst_ack_0 : boolean;
+  signal ptr_deref_494_load_0_req_0 : boolean;
+  signal ptr_deref_489_addr_0_ack_0 : boolean;
+  signal ptr_deref_441_gather_scatter_req_0 : boolean;
+  signal ptr_deref_489_base_resize_req_0 : boolean;
+  signal ptr_deref_441_gather_scatter_ack_0 : boolean;
+  signal ptr_deref_489_base_resize_ack_0 : boolean;
+  signal ptr_deref_441_store_0_req_1 : boolean;
+  signal ptr_deref_489_store_0_req_1 : boolean;
   signal memory_space_15_lr_req :  std_logic_vector(1 downto 0);
   signal memory_space_15_lr_ack : std_logic_vector(1 downto 0);
   signal memory_space_15_lr_addr : std_logic_vector(1 downto 0);
@@ -12441,30 +12441,30 @@ architecture Default of mem_load_x_x is --
   -- always true...
   signal always_true_symbol: Boolean;
   -- links between control-path and data-path
-  signal array_obj_ref_13_gather_scatter_ack_0 : boolean;
-  signal array_obj_ref_13_gather_scatter_req_0 : boolean;
-  signal array_obj_ref_13_load_0_req_1 : boolean;
-  signal binary_12_inst_ack_1 : boolean;
-  signal array_obj_ref_13_root_address_inst_req_0 : boolean;
-  signal binary_10_inst_ack_0 : boolean;
-  signal array_obj_ref_13_load_0_req_0 : boolean;
-  signal binary_10_inst_req_0 : boolean;
-  signal array_obj_ref_13_load_0_ack_1 : boolean;
-  signal binary_10_inst_req_1 : boolean;
   signal array_obj_ref_13_load_0_ack_0 : boolean;
-  signal array_obj_ref_13_index_0_resize_req_0 : boolean;
-  signal array_obj_ref_13_index_0_resize_ack_0 : boolean;
-  signal binary_10_inst_ack_1 : boolean;
-  signal array_obj_ref_13_index_0_rename_req_0 : boolean;
-  signal array_obj_ref_13_index_0_rename_ack_0 : boolean;
   signal binary_12_inst_req_0 : boolean;
-  signal binary_12_inst_ack_0 : boolean;
+  signal array_obj_ref_13_gather_scatter_ack_0 : boolean;
+  signal binary_10_inst_ack_1 : boolean;
+  signal array_obj_ref_13_load_0_req_0 : boolean;
+  signal array_obj_ref_13_load_0_req_1 : boolean;
+  signal binary_10_inst_req_1 : boolean;
   signal array_obj_ref_13_offset_inst_req_0 : boolean;
   signal array_obj_ref_13_offset_inst_ack_0 : boolean;
-  signal array_obj_ref_13_root_address_inst_ack_0 : boolean;
-  signal array_obj_ref_13_addr_0_ack_0 : boolean;
+  signal array_obj_ref_13_gather_scatter_req_0 : boolean;
+  signal binary_10_inst_ack_0 : boolean;
+  signal binary_10_inst_req_0 : boolean;
+  signal array_obj_ref_13_index_0_rename_req_0 : boolean;
+  signal array_obj_ref_13_index_0_resize_ack_0 : boolean;
+  signal array_obj_ref_13_load_0_ack_1 : boolean;
+  signal array_obj_ref_13_index_0_rename_ack_0 : boolean;
+  signal binary_12_inst_ack_0 : boolean;
   signal binary_12_inst_req_1 : boolean;
+  signal array_obj_ref_13_root_address_inst_req_0 : boolean;
+  signal binary_12_inst_ack_1 : boolean;
+  signal array_obj_ref_13_root_address_inst_ack_0 : boolean;
   signal array_obj_ref_13_addr_0_req_0 : boolean;
+  signal array_obj_ref_13_addr_0_ack_0 : boolean;
+  signal array_obj_ref_13_index_0_resize_req_0 : boolean;
   -- 
 begin --  
   -- tag register
@@ -13008,30 +13008,30 @@ architecture Default of mem_store_x_x is --
   -- always true...
   signal always_true_symbol: Boolean;
   -- links between control-path and data-path
-  signal binary_21_inst_ack_1 : boolean;
-  signal array_obj_ref_24_root_address_inst_ack_0 : boolean;
-  signal array_obj_ref_24_store_0_req_1 : boolean;
-  signal array_obj_ref_24_addr_0_req_0 : boolean;
-  signal array_obj_ref_24_store_0_ack_1 : boolean;
-  signal array_obj_ref_24_addr_0_ack_0 : boolean;
-  signal array_obj_ref_24_offset_inst_ack_0 : boolean;
-  signal binary_23_inst_req_0 : boolean;
-  signal binary_21_inst_req_1 : boolean;
-  signal array_obj_ref_24_index_0_resize_req_0 : boolean;
-  signal binary_21_inst_ack_0 : boolean;
-  signal array_obj_ref_24_root_address_inst_req_0 : boolean;
-  signal array_obj_ref_24_index_0_rename_req_0 : boolean;
-  signal array_obj_ref_24_store_0_ack_0 : boolean;
-  signal array_obj_ref_24_store_0_req_0 : boolean;
-  signal array_obj_ref_24_index_0_resize_ack_0 : boolean;
-  signal array_obj_ref_24_index_0_rename_ack_0 : boolean;
-  signal binary_23_inst_ack_1 : boolean;
-  signal binary_23_inst_req_1 : boolean;
-  signal array_obj_ref_24_gather_scatter_ack_0 : boolean;
-  signal array_obj_ref_24_offset_inst_req_0 : boolean;
-  signal binary_23_inst_ack_0 : boolean;
-  signal array_obj_ref_24_gather_scatter_req_0 : boolean;
   signal binary_21_inst_req_0 : boolean;
+  signal array_obj_ref_24_store_0_ack_1 : boolean;
+  signal binary_21_inst_req_1 : boolean;
+  signal array_obj_ref_24_store_0_req_1 : boolean;
+  signal binary_23_inst_ack_1 : boolean;
+  signal array_obj_ref_24_index_0_resize_ack_0 : boolean;
+  signal array_obj_ref_24_index_0_rename_req_0 : boolean;
+  signal array_obj_ref_24_root_address_inst_ack_0 : boolean;
+  signal array_obj_ref_24_offset_inst_req_0 : boolean;
+  signal array_obj_ref_24_offset_inst_ack_0 : boolean;
+  signal array_obj_ref_24_store_0_ack_0 : boolean;
+  signal array_obj_ref_24_addr_0_ack_0 : boolean;
+  signal array_obj_ref_24_store_0_req_0 : boolean;
+  signal array_obj_ref_24_index_0_rename_ack_0 : boolean;
+  signal binary_23_inst_ack_0 : boolean;
+  signal array_obj_ref_24_index_0_resize_req_0 : boolean;
+  signal binary_23_inst_req_1 : boolean;
+  signal array_obj_ref_24_addr_0_req_0 : boolean;
+  signal array_obj_ref_24_root_address_inst_req_0 : boolean;
+  signal array_obj_ref_24_gather_scatter_ack_0 : boolean;
+  signal array_obj_ref_24_gather_scatter_req_0 : boolean;
+  signal binary_21_inst_ack_0 : boolean;
+  signal binary_21_inst_ack_1 : boolean;
+  signal binary_23_inst_req_0 : boolean;
   -- 
 begin --  
   -- tag register
@@ -13607,40 +13607,38 @@ architecture Default of output_module is --
   -- always true...
   signal always_true_symbol: Boolean;
   -- links between control-path and data-path
-  signal ptr_deref_535_store_0_ack_0 : boolean;
+  signal ptr_deref_535_store_0_ack_1 : boolean;
   signal type_cast_528_inst_ack_0 : boolean;
-  signal type_cast_528_inst_req_0 : boolean;
   signal ptr_deref_535_gather_scatter_req_0 : boolean;
-  signal ptr_deref_540_gather_scatter_req_0 : boolean;
-  signal type_cast_532_inst_ack_0 : boolean;
-  signal ptr_deref_540_load_0_req_1 : boolean;
-  signal ptr_deref_540_gather_scatter_ack_0 : boolean;
   signal type_cast_532_inst_req_0 : boolean;
+  signal ptr_deref_540_load_0_req_1 : boolean;
   signal ptr_deref_535_gather_scatter_ack_0 : boolean;
   signal ptr_deref_571_gather_scatter_ack_0 : boolean;
+  signal ptr_deref_540_gather_scatter_req_0 : boolean;
+  signal ptr_deref_535_store_0_ack_0 : boolean;
   signal ptr_deref_571_load_0_ack_1 : boolean;
   signal ptr_deref_571_gather_scatter_req_0 : boolean;
-  signal ptr_deref_549_addr_0_req_0 : boolean;
+  signal type_cast_532_inst_ack_0 : boolean;
+  signal ptr_deref_540_load_0_req_0 : boolean;
+  signal ptr_deref_540_load_0_ack_0 : boolean;
   signal ptr_deref_549_load_0_ack_1 : boolean;
   signal simple_obj_ref_556_inst_req_0 : boolean;
   signal simple_obj_ref_556_inst_ack_0 : boolean;
   signal ptr_deref_571_load_0_req_0 : boolean;
-  signal ptr_deref_571_load_0_ack_0 : boolean;
   signal type_cast_575_inst_ack_0 : boolean;
   signal type_cast_575_inst_req_0 : boolean;
-  signal ptr_deref_540_load_0_ack_0 : boolean;
-  signal ptr_deref_540_load_0_req_0 : boolean;
   signal ptr_deref_549_gather_scatter_req_0 : boolean;
+  signal ptr_deref_571_load_0_ack_0 : boolean;
   signal type_cast_558_inst_req_0 : boolean;
   signal type_cast_558_inst_ack_0 : boolean;
   signal ptr_deref_571_load_0_req_1 : boolean;
+  signal ptr_deref_549_addr_0_req_0 : boolean;
   signal ptr_deref_549_addr_0_ack_0 : boolean;
-  signal ptr_deref_540_load_0_ack_1 : boolean;
+  signal array_obj_ref_545_base_resize_ack_0 : boolean;
   signal ptr_deref_535_store_0_req_0 : boolean;
   signal ptr_deref_549_load_0_req_1 : boolean;
-  signal ptr_deref_535_store_0_req_1 : boolean;
-  signal array_obj_ref_545_base_resize_ack_0 : boolean;
   signal array_obj_ref_545_base_resize_req_0 : boolean;
+  signal ptr_deref_540_gather_scatter_ack_0 : boolean;
   signal ptr_deref_549_load_0_req_0 : boolean;
   signal ptr_deref_549_load_0_ack_0 : boolean;
   signal array_obj_ref_545_root_address_inst_ack_1 : boolean;
@@ -13648,17 +13646,19 @@ architecture Default of output_module is --
   signal array_obj_ref_545_root_address_inst_ack_0 : boolean;
   signal array_obj_ref_545_root_address_inst_req_0 : boolean;
   signal ptr_deref_549_gather_scatter_ack_0 : boolean;
+  signal type_cast_528_inst_req_0 : boolean;
   signal simple_obj_ref_565_inst_ack_0 : boolean;
-  signal ptr_deref_535_store_0_ack_1 : boolean;
+  signal ptr_deref_535_store_0_req_1 : boolean;
   signal array_obj_ref_545_final_reg_ack_0 : boolean;
-  signal simple_obj_ref_527_inst_ack_0 : boolean;
   signal simple_obj_ref_565_inst_req_0 : boolean;
-  signal simple_obj_ref_527_inst_req_0 : boolean;
   signal ptr_deref_549_base_resize_req_0 : boolean;
   signal ptr_deref_549_base_resize_ack_0 : boolean;
+  signal simple_obj_ref_527_inst_ack_0 : boolean;
+  signal simple_obj_ref_527_inst_req_0 : boolean;
   signal ptr_deref_549_root_address_inst_req_0 : boolean;
   signal ptr_deref_549_root_address_inst_ack_0 : boolean;
   signal array_obj_ref_545_final_reg_req_0 : boolean;
+  signal ptr_deref_540_load_0_ack_1 : boolean;
   signal simple_obj_ref_582_inst_req_0 : boolean;
   signal simple_obj_ref_582_inst_ack_0 : boolean;
   signal type_cast_584_inst_req_0 : boolean;
@@ -15383,14 +15383,6 @@ architecture Default of test_system is -- system-architecture
       reset : in std_logic;
       start : in std_logic;
       fin   : out std_logic;
-      memory_space_2_lr_req : out  std_logic_vector(1 downto 0);
-      memory_space_2_lr_ack : in   std_logic_vector(1 downto 0);
-      memory_space_2_lr_addr : out  std_logic_vector(1 downto 0);
-      memory_space_2_lr_tag :  out  std_logic_vector(3 downto 0);
-      memory_space_2_lc_req : out  std_logic_vector(1 downto 0);
-      memory_space_2_lc_ack : in   std_logic_vector(1 downto 0);
-      memory_space_2_lc_data : in   std_logic_vector(63 downto 0);
-      memory_space_2_lc_tag :  in  std_logic_vector(3 downto 0);
       memory_space_1_lr_req : out  std_logic_vector(0 downto 0);
       memory_space_1_lr_ack : in   std_logic_vector(0 downto 0);
       memory_space_1_lr_addr : out  std_logic_vector(2 downto 0);
@@ -15399,14 +15391,14 @@ architecture Default of test_system is -- system-architecture
       memory_space_1_lc_ack : in   std_logic_vector(0 downto 0);
       memory_space_1_lc_data : in   std_logic_vector(31 downto 0);
       memory_space_1_lc_tag :  in  std_logic_vector(1 downto 0);
-      memory_space_2_sr_req : out  std_logic_vector(0 downto 0);
-      memory_space_2_sr_ack : in   std_logic_vector(0 downto 0);
-      memory_space_2_sr_addr : out  std_logic_vector(0 downto 0);
-      memory_space_2_sr_data : out  std_logic_vector(31 downto 0);
-      memory_space_2_sr_tag :  out  std_logic_vector(1 downto 0);
-      memory_space_2_sc_req : out  std_logic_vector(0 downto 0);
-      memory_space_2_sc_ack : in   std_logic_vector(0 downto 0);
-      memory_space_2_sc_tag :  in  std_logic_vector(1 downto 0);
+      memory_space_2_lr_req : out  std_logic_vector(1 downto 0);
+      memory_space_2_lr_ack : in   std_logic_vector(1 downto 0);
+      memory_space_2_lr_addr : out  std_logic_vector(1 downto 0);
+      memory_space_2_lr_tag :  out  std_logic_vector(3 downto 0);
+      memory_space_2_lc_req : out  std_logic_vector(1 downto 0);
+      memory_space_2_lc_ack : in   std_logic_vector(1 downto 0);
+      memory_space_2_lc_data : in   std_logic_vector(63 downto 0);
+      memory_space_2_lc_tag :  in  std_logic_vector(3 downto 0);
       memory_space_1_sr_req : out  std_logic_vector(0 downto 0);
       memory_space_1_sr_ack : in   std_logic_vector(0 downto 0);
       memory_space_1_sr_addr : out  std_logic_vector(2 downto 0);
@@ -15415,6 +15407,14 @@ architecture Default of test_system is -- system-architecture
       memory_space_1_sc_req : out  std_logic_vector(0 downto 0);
       memory_space_1_sc_ack : in   std_logic_vector(0 downto 0);
       memory_space_1_sc_tag :  in  std_logic_vector(1 downto 0);
+      memory_space_2_sr_req : out  std_logic_vector(0 downto 0);
+      memory_space_2_sr_ack : in   std_logic_vector(0 downto 0);
+      memory_space_2_sr_addr : out  std_logic_vector(0 downto 0);
+      memory_space_2_sr_data : out  std_logic_vector(31 downto 0);
+      memory_space_2_sr_tag :  out  std_logic_vector(1 downto 0);
+      memory_space_2_sc_req : out  std_logic_vector(0 downto 0);
+      memory_space_2_sc_ack : in   std_logic_vector(0 downto 0);
+      memory_space_2_sc_tag :  in  std_logic_vector(1 downto 0);
       free_queue_put_pipe_read_req : out  std_logic_vector(0 downto 0);
       free_queue_put_pipe_read_ack : in   std_logic_vector(0 downto 0);
       free_queue_put_pipe_read_data : in   std_logic_vector(31 downto 0);
