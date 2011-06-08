@@ -21,6 +21,14 @@ The organization
 	README
 		this file.
 
+	LICENSE
+		all software in this distribution is covered
+		by this license (except for inclusions from other
+		sources such as antlr).
+
+	CONTRIBUTORS
+		contributors to this software.
+
 	Release
 		the release directory
 
