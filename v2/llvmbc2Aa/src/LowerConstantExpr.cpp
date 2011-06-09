@@ -62,16 +62,32 @@ bool Aa::LowerConstantExpr::runOnFunction(Function &F)
   return true;
 }
 
+
 void Aa::LowerConstantExpr::process(Instruction *inst)
 {
-  for (unsigned oi = 0, oe = inst->getNumOperands();
-       oi != oe; oi++) {
-    llvm::Value *opnd = inst->getOperand(oi);
-    
-    if (ConstantExpr *ce = dyn_cast<ConstantExpr>(opnd)) {
-      lower(ce, inst);
+
+  if(isa<llvm::CallInst>(inst))
+    {
+      CallInst* ci = dyn_cast<CallInst>(inst);
+      for(int idx = 0; idx < ci->getNumArgOperands(); idx++) 
+	{
+	  llvm::Value *opnd = ci->getArgOperand(idx);
+	  if (ConstantExpr *ce = dyn_cast<ConstantExpr>(opnd)) {
+	    lower(ce, inst);
+	  }
+	}
     }
-  }
+  else
+    {
+      for (unsigned oi = 0, oe = inst->getNumOperands();
+	   oi != oe; oi++) {
+	llvm::Value *opnd = inst->getOperand(oi);
+	
+	if (ConstantExpr *ce = dyn_cast<ConstantExpr>(opnd)) {
+	  lower(ce, inst);
+	}
+      }
+    }
 }
 
 

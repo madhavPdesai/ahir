@@ -72,18 +72,19 @@ int IPow(int n, int e)
 
   if(n == 0 && e < 0)
     assert(0);
-  else
-    return(0);
 
   int exp = 1; int nexp;
   int ret_val = n;
   while(1)
     {
+
       nexp = 2*exp;
+
       if(nexp > e)
 	break;
 
       ret_val = (ret_val*ret_val);
+
       exp = nexp;
     }
 

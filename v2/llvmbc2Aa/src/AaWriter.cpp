@@ -125,6 +125,23 @@ namespace Aa {
       }
   }
 
+  std::string AaWriter::prepare_operand(llvm::Value* v)
+  {
+    int op_index = 0;
+
+    if(!isa<Function>(v))
+      return(this->get_name(v));
+    else
+      {
+	std::cerr << "Warning: operands which are functions will be ignored" << std::endl;
+	std::string op_name = v->getNameStr() + "_ret_" + int_to_str(op_index);
+	std::cout << op_name << ":= (($bitcast ($pointer<$void>) _b11111111111111111111111111111111)" << std::endl;
+
+	op_index++;
+	return(op_name);
+      }
+  }
+
   std::string AaWriter::get_name(llvm::Value* v)
   {
     std::string ret_string;
@@ -323,7 +340,11 @@ namespace {
     void Write_PHI_Node(llvm::PHINode& pnode) 
     {
       std::string phi_name = to_aa(pnode.getNameStr());
+      std::vector<std::string> source_ops;
       int num_sources = pnode.getNumIncomingValues();
+      for (unsigned i = 0; i < num_sources; i++) 
+	source_ops.push_back(prepare_operand(pnode.getIncomingValue(i)));
+
       std::cout << "$phi " << phi_name << " :=  ";
 
       BasicBlock* parent = pnode.getParent();
@@ -331,10 +352,9 @@ namespace {
 	{
 	  llvm::Value *inval = pnode.getIncomingValue(i);
 	  BasicBlock *inbb = pnode.getIncomingBlock(i);
-	  std::string val_id = this->get_name(inval);
 
 	  std::cout << "( $cast (" << get_aa_type_name(inval->getType(),*_module) 
-		    << ") " << val_id << ") $on " << get_name(inbb) << "_"
+		    << ") " << source_ops[i] << ") $on " << get_name(inbb) << "_"
 		    << get_name(parent) << " ";
 	}
       std::cout << std::endl;
@@ -348,8 +368,8 @@ namespace {
       unsigned opcode = I.getOpcode();
       
       ntype = llvm_opcode_to_string(opcode);
-      std::string op1 = get_name(I.getOperand(0));
-      std::string op2 = get_name(I.getOperand(1));
+      std::string op1 = prepare_operand(I.getOperand(0));
+      std::string op2 = prepare_operand(I.getOperand(1));
 
       // if binary operator is shra then need to cast 
       //       the operands to $int!
@@ -373,10 +393,12 @@ namespace {
 
     void visitReturnInst(ReturnInst &R)
     {
+
 	if(R.getReturnValue())
 	{
-		std::cout << "stored_ret_val__ := " 
-			<< get_name(R.getReturnValue()) << std::endl;
+	  std::string ret_op = prepare_operand(R.getReturnValue());
+	  std::cout << "stored_ret_val__ := " 
+		    << ret_op << std::endl;
 	}
 	std::cout << "$place [return__]" << std::endl;
 	this->Set_Return_Flag(true);
@@ -402,8 +424,29 @@ namespace {
       const llvm::Function* called_function  = C.getCalledFunction();
       if(called_function == NULL)
 	{
-	  std::cerr << "Error: indirect function call instruction " << cname << " not supported" << std::endl;
-	  return;
+	  const llvm::Value* called_function_pointer = C.getCalledValue();
+	  if(isa<Constant>(called_function_pointer))
+	    {
+	      std::cerr << "Info: indirect function call instruction " << cname << " looking for called function.." << std::endl;
+	      const ConstantExpr* ce =  dyn_cast<ConstantExpr>(called_function_pointer);
+	      if(ce != NULL)
+		{
+		  if(ce->isCast())
+		    {
+		      llvm::Value* cast_op = ce->getOperand(0);
+		      if((called_function = dyn_cast<Function>(cast_op)) != NULL)
+			{
+			  std::cerr << "Info: found function " << called_function->getNameStr() <<
+			    " as target of indirect function call instruction " << cname << std::endl;
+			}
+		    }
+		}
+	    }
+	}
+
+      if(called_function == NULL)
+	{
+	  std::cerr << "Error: unsupported indirect function call instruction " << cname << std::endl;  
 	}
       
       const llvm::Type* called_function_return_type = called_function->getReturnType();
@@ -418,12 +461,18 @@ namespace {
 	      has_ret_val = false;
 	    
 	    std::vector<const llvm::Type*>  argument_types;
+	    std::vector<std::string>  argument_names;
 	    for(llvm::Function::const_arg_iterator args = (*called_function).arg_begin(), 
 		  Eargs = (*called_function).arg_end();
 		args != Eargs;
 		++args)
 	      {
 		argument_types.push_back((*args).getType());
+	      }
+
+	    for(int idx = 0; idx < C.getNumArgOperands(); idx++)
+	      {
+		argument_names.push_back(prepare_operand(C.getArgOperand(idx)));
 	      }
 
 	    std::string fname = to_aa(called_function->getNameStr());
@@ -434,13 +483,13 @@ namespace {
 		const llvm::Type* arg_type = (idx < argument_types.size() ? argument_types[idx] : NULL);
 
 		if(arg_type == NULL || (arg_type == C.getArgOperand(idx)->getType()))
-		  std::cout << get_name(C.getArgOperand(idx)) << " ";
+		  std::cout << argument_names[idx] << " ";
 		else
 		  {
 		    std::cout << "($bitcast (" << get_aa_type_name(C.getArgOperand(idx)->getType(),
 								   *_module)
 			      << ") "
-			      << get_name(C.getArgOperand(idx)) << ") ";
+			      << argument_names[idx] << ") ";
 		  }
 	      }
 	    std::cout << ") " ;
@@ -479,7 +528,7 @@ namespace {
 	      }
 	    else 
 	      {
-		std::string wname = get_name(C.getArgOperand(1));
+		std::string wname = prepare_operand(C.getArgOperand(1));
 		if(portname != "")
 		  std::cout << portname << " := " 
 			    << "($bitcast ( " << port_type_name << " ) " 
@@ -506,12 +555,12 @@ namespace {
       int size = type_width(dest, this->Get_Pointer_Width());
 
       llvm::Value *val = C.getOperand(0);
-
+      std::string op_name = prepare_operand(val);
       std::cout << cname << " := " ;
       // cout = (bit-cast uint) ((int) val)
       std::cout << " ($bitcast (" << get_aa_type_name(dest,*_module) << ") ( $cast ("  
 		<< "$int< " << size << " > ) " 
-		<< get_name(val) << ") )"
+		<< op_name << ") )"
 		<< std::endl;	  
 
     }
@@ -525,7 +574,7 @@ namespace {
       int size = type_width(dest, this->Get_Pointer_Width());
 
       llvm::Value *val = C.getOperand(0);
-
+      std::string op_name = prepare_operand(val);
 
       std::cout << cname << " := ";
       // cout = ((destType) ((bitcast int) val)) 
@@ -533,7 +582,7 @@ namespace {
 		<< get_aa_type_name(dest,*_module) << ") "  
 		<<  " ( $bitcast ( $int< " 
 		<< size << " > ) " 
-		<< get_name(val) 
+		<< op_name 
 		<< ") ) "
 		<< std::endl;	  
     }
@@ -547,12 +596,13 @@ namespace {
       int size = type_width(dest, this->Get_Pointer_Width());
 
       llvm::Value *val = C.getOperand(0);
+      std::string op_name = prepare_operand(val);
 
       std::cout << cname << " := ";
       // cout = (bitcast uint) ((int) val) 
       std::cout << "( $bitcast (" << get_aa_type_name(dest,*_module) << " ) " 
 		<< "( $cast ( $int< " << size << " > ) " 
-		<< get_name(val) << ") )" << std::endl; 
+		<< op_name << ") )" << std::endl; 
     }
 
     void visitCastInst(CastInst& C)
@@ -565,9 +615,10 @@ namespace {
       int size = type_width(dest, this->Get_Pointer_Width());
 
       llvm::Value *val = C.getOperand(0);
+      std::string op_name = prepare_operand(val);
 
       std::cout << cname << " := ($cast (" 
-		<< get_aa_type_name(dest,*_module) << ") "  << get_name(val) << ")"
+		<< get_aa_type_name(dest,*_module) << ") "  << op_name << ")"
 		<< std::endl;
     }
 
@@ -589,10 +640,11 @@ namespace {
 	  return;
 	}
       
+      std::string op_name = prepare_operand(L.getPointerOperand());
       if(is_global)
-	std::cout << get_name(L.getPointerOperand()) << std::endl;
+	std::cout << op_name << std::endl;
       else
-	std::cout << "->(" << get_name(L.getPointerOperand()) << ") " << std::endl;
+	std::cout << "->(" << op_name << ") " << std::endl;
       
     }
 
@@ -610,20 +662,22 @@ namespace {
 	  return;
 	}
 
+      std::string ptr_name = prepare_operand(S.getPointerOperand());
+      std::string data_name = prepare_operand(S.getValueOperand());
       if(is_global)
-	std::cout << get_name(S.getPointerOperand()) << " := ";
+	std::cout << ptr_name << " := ";
       else
-	std::cout << "->(" << get_name(S.getPointerOperand()) << ") := ";
+	std::cout << "->(" << ptr_name << ") := ";
       
-      std::cout << get_name(S.getValueOperand()) << std::endl;
+      std::cout << data_name << std::endl;
     }
     
     void visitCmpInst(CmpInst &C)
     {
       std::string cname = to_aa(C.getNameStr());
 
-      std::string op1 = get_name(C.getOperand(0));
-      std::string op2 = get_name(C.getOperand(1));
+      std::string op1 = prepare_operand(C.getOperand(0));
+      std::string op2 = prepare_operand(C.getOperand(1));
 
 	if((op1 == "") | (op2 == ""))
 	{
@@ -709,9 +763,13 @@ namespace {
     void visitSelectInst(SelectInst &S)
     {
       std::string sname = to_aa( S.getNameStr());
-      std::cout << sname << " := ( $mux " << get_name(S.getCondition()) 
-		<< " " << get_name(S.getTrueValue()) 
-		<< " " << get_name(S.getFalseValue()) << ")" << std::endl;
+      std::string sel_name = prepare_operand(S.getCondition());
+      std::string true_name = prepare_operand(S.getTrueValue());
+      std::string false_name = prepare_operand(S.getFalseValue());
+
+      std::cout << sname << " := ( $mux " << sel_name
+		<< " " << true_name
+		<< " " << false_name << ")" << std::endl;
     }
 
     void visitBranchInst(BranchInst &br)
@@ -728,7 +786,9 @@ namespace {
 	  {
 	    BasicBlock* dest0 = br.getSuccessor(0);
 	    BasicBlock* dest1 = br.getSuccessor(1);
-	    std::cout << "$if " << get_name(br.getCondition()) << " $then " ;
+	    std::string cond_name = prepare_operand(br.getCondition());
+
+	    std::cout << "$if " << cond_name << " $then " ;
 	    std::cout << " $place [" << get_name(from_bb) << "_" << get_name(dest0) << "] ";
 	    std::cout << "$else ";
 	    std::cout << "$place [" << get_name(from_bb) << "_" << get_name(dest1) << "] ";
@@ -739,10 +799,10 @@ namespace {
     void visitSwitchInst(llvm::SwitchInst &I) 
     { 
       llvm::Value* test_val = I.getCondition();
-
+      std::string test_op = prepare_operand(test_val);
       BasicBlock* from_bb = I.getParent();
       BasicBlock* to_bb = NULL;
-      std::cout << "$switch " << get_name(test_val) << std::endl;
+      std::cout << "$switch " << test_op << std::endl;
       for(int idx=1; idx < I.getNumCases(); idx++)
 	{
 	  std::cout << "$when " << get_aa_constant_string(I.getCaseValue(idx)) << " $then " << std::endl;

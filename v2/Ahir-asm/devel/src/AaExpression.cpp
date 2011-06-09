@@ -481,7 +481,7 @@ bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObjec
 
 void AaSimpleObjectReference::Set_Type(AaType* t)
 {
-  if(this->_object->Is_Storage_Object() && !this->Used_Only_In_Address_Of_Expression())
+  if(this->_object && this->_object->Is_Storage_Object() && !this->Used_Only_In_Address_Of_Expression())
     ((AaStorageObject*)this->_object)->Add_Access_Width(t->Size());
 
   this->AaExpression::Set_Type(t);
