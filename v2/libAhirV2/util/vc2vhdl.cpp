@@ -47,6 +47,11 @@ void Usage_Vc2VHDL()
   cerr <<  " -f vcfile-name: specifies a VC file to be parsed.  Repetitions of this option can be" << endl
        <<  "                 used to specify more than one file.  Files are parsed in the order specified." << endl
        <<  " alternate form:  --file vcfile-name" << endl;
+  cerr <<  " -e <top-entity-name>:  the top-level system entity name will be top-entity-name.  The default is test_system." << endl;
+  cerr <<  " alternate form:  --top_entity_name vcfile-name" << endl;
+  cerr << endl;
+  cerr <<  " -w :  the system and testbench will be printed into separate VHDL files. By default both are printed to stdout" << endl;
+  cerr <<  " alternate form:  --write_files" << endl;
   cerr << endl;
   cerr << "example: " << endl
        << "    vc2vhdl -O -t foo -f file1.vc -f file2.vc -t bar" << endl;
@@ -60,8 +65,8 @@ int main(int argc, char* argv[])
 {
 
 
+  bool write_files = false;
   string sys_name = "test_system";
-  vcSystem test_system(sys_name);
   
   vector<string> file_list;
   set<string> file_set;
@@ -79,6 +84,8 @@ int main(int argc, char* argv[])
       {"simulator",  required_argument, 0, 's'},
       {"set_as_top",  required_argument, 0, 't'},
       {"set_as_free_running_top",  required_argument, 0, 'T'},
+      {"top_entity_name",  required_argument, 0, 'e'},
+      {"write_files",  no_argument, 0, 'w'},
       {"vcfile",    required_argument, 0, 'f'},
       {0, 0, 0, 0}
     };
@@ -108,7 +115,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:T:f:OCs:a:h",
+		      "t:T:f:OCs:a:he:w",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -132,7 +139,6 @@ int main(int argc, char* argv[])
 	  break;
 	case 'T':
 	  mod_name = string(optarg);	
-
 	  always_running_top_modules.insert(mod_name);
 	  top_modules.insert(mod_name);
 
@@ -142,6 +148,14 @@ int main(int argc, char* argv[])
 	case 'O':
 	  vcSystem::_opt_flag = true;
 	  cerr << "Info: -O option selected: will flatten and reduce control path" << endl;
+	  break;
+	case 'e':
+	  sys_name = string(optarg);
+	  cerr << "Info: -e " << sys_name << " top-level VHDL entity will have name " << sys_name << ".unformatted_vhdl" << endl; 
+	  break;
+	case 'w':
+	  write_files = true;
+	  cerr << "Info: -w " << sys_name << " will write separate system and testbench VHDL files" << endl; 
 	  break;
 	case 'C':
 	  vcSystem::_vhpi_tb_flag = true;
@@ -173,6 +187,7 @@ int main(int argc, char* argv[])
     }
 
 
+  vcSystem test_system(sys_name);
 
   for(int idx = 0; idx < file_list.size(); idx++)
     {
@@ -205,13 +220,40 @@ int main(int argc, char* argv[])
 	}
 
       test_system.Elaborate();
-      cout << "-- VHDL produced by vc2vhdl from virtual circuit (vc) description " << endl;
-      test_system.Print_VHDL(cout);
+      if(!write_files)
+	{
+	  cout << "-- VHDL produced by vc2vhdl from virtual circuit (vc) description " << endl;
+	  test_system.Print_VHDL(cout);
 
-      if(vcSystem::_vhpi_tb_flag)
-	test_system.Print_VHDL_Vhpi_Test_Bench(cout);
+	  if(vcSystem::_vhpi_tb_flag)
+	    test_system.Print_VHDL_Vhpi_Test_Bench(cout);
+	  else
+	    test_system.Print_VHDL_Test_Bench(cout);
+	}
       else
-	test_system.Print_VHDL_Test_Bench(cout);
+	{
+	  ofstream sys_file;
+	  string file_name = sys_name + ".unformatted_vhdl";
+	  sys_file.open(file_name.c_str());
+	  
+	  cerr << "Info: printing top-level system VHDL file " << file_name << endl;
+	  sys_file << "-- VHDL produced by vc2vhdl from virtual circuit (vc) description " << endl;
+	  test_system.Print_VHDL(sys_file);
+	  sys_file.close();
+
+	  ofstream sys_tb_file;
+	  string tb_file_name = sys_name + "_test_bench.unformatted_vhdl";
+	  sys_tb_file.open(tb_file_name.c_str());
+
+	  if(vcSystem::_vhpi_tb_flag)
+	    test_system.Print_VHDL_Vhpi_Test_Bench(sys_tb_file);
+	  else
+	    test_system.Print_VHDL_Test_Bench(sys_tb_file);
+
+	  sys_tb_file.close();
+	}
+
+
     }
 
   return(0);

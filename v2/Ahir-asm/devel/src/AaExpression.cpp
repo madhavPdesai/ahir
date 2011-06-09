@@ -165,6 +165,26 @@ void AaExpression::Assign_Expression_Value(AaValue* expr_value)
   _expression_value = nv;
 }
 
+bool AaExpression::Used_Only_In_Address_Of_Expression()
+{
+  bool ret_val = false;
+  if(this->_targets.size() == 1)
+    {
+      // has a unique target
+      AaExpression* expr =*(this->_targets.begin());
+      if(expr->Get_Is_Target())
+	ret_val = false;
+      else if(expr->Is("AaAddressOfExpression"))
+	ret_val = true;
+      else
+	ret_val = expr->Used_Only_In_Address_Of_Expression();
+    }
+  else
+    ret_val = false;
+
+  return(ret_val);
+}
+
 //---------------------------------------------------------------------
 // AaObjectReference
 //---------------------------------------------------------------------
@@ -455,10 +475,15 @@ bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObjec
   this->AaExpression::Set_Addressed_Object_Representative(obj);
 }
 
+
+
+
+
 void AaSimpleObjectReference::Set_Type(AaType* t)
 {
-  if(this->_object->Is_Storage_Object())
+  if(this->_object->Is_Storage_Object() && !this->Used_Only_In_Address_Of_Expression())
     ((AaStorageObject*)this->_object)->Add_Access_Width(t->Size());
+
   this->AaExpression::Set_Type(t);
 }
 
@@ -1767,7 +1792,6 @@ AaPointerDereferenceExpression::AaPointerDereferenceExpression(AaScope* scope,
   AaObjectReference(scope,obj_ref->Get_Object_Ref_String())
 {
   _reference_to_object = obj_ref;
-  this->_rhs_source = NULL;
   obj_ref->Add_Target(this); 
   AaProgram::Add_Storage_Dependency_Graph_Vertex(this);
   AaProgram::_pointer_dereferences.insert(this);

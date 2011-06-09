@@ -56,6 +56,7 @@ void vcMemorySpace::Print(ostream& ofile)
   ofile << vcLexerKeywords[__CAPACITY] << " " << this->_capacity << " ";
   ofile << vcLexerKeywords[__DATAWIDTH] << " " << this->_word_size << " ";
   ofile << vcLexerKeywords[__ADDRWIDTH] << " " << this->_address_width << " ";
+  ofile << vcLexerKeywords[__MAXACCESSWIDTH] << " " << this->_max_access_width << " ";
 
   ofile << endl;
 
@@ -376,19 +377,26 @@ void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 }
 
 
+// this is a very important function.
+//   the number of banks should be determined byt
+//   the available parallelism in the sytem.  Since
+//   we dont know it for now, we will keep the
+//   number to be the maximum width of the access..
+//
+// top research priority: figure out a good metric
+// to measure the parallelism.
 int vcMemorySpace::Calculate_Number_Of_Banks()
 {
-  // the number of banks must be a power of 2
+
   int max_reqs = MAX(this->Get_Num_Loads(),this->Get_Num_Stores());
 
-  // keep the maximum number of banks to 4.
-  int num_banks = 1;
-  if(max_reqs >= 2)
-    num_banks = 2;
-  else if(max_reqs > 8)
-    num_banks = 4;
+  // the number of banks must be a power of 2
+  int awidth = this->Get_Max_Access_Width()/this->Get_Word_Size();
+  int num_banks = IPow(2,Log(awidth,2));
+  if(num_banks < awidth)
+    num_banks = 2*num_banks;
 
-  if(CeilLog2(num_banks-1) < this->Get_Address_Width())
+  if(Log(num_banks,2) < this->Get_Address_Width())
     {
       return(num_banks);
     }
@@ -397,13 +405,14 @@ int vcMemorySpace::Calculate_Number_Of_Banks()
       return(1);
     }
 }
+
 int vcMemorySpace::Calculate_Base_Bank_Address_Width()
 {
-  // TODO: calculate this better...
-  return(10);
+  int num_banks = this->Calculate_Number_Of_Banks();
+  return(this->Get_Address_Width() - Log(num_banks,2));
 }
+
 int vcMemorySpace::Calculate_Base_Bank_Data_Width()
 {
-  // TODO: calculate this better...
-  return(8);
+  return(this->Get_Word_Size());
 }

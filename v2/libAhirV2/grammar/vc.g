@@ -78,12 +78,13 @@ vc_MemorySpace[vcSystem* sys, vcModule* m] returns[vcMemorySpace* ms]
 ;
 
 //--------------------------------------------------------------------------------------------------------------------------------------
-// vc_MemorySpaceParams:  CAPACITY UINTEGER DATAWIDTH UINTEGER ADDRWIDTH UINTEGER 
+// vc_MemorySpaceParams:  CAPACITY UINTEGER DATAWIDTH UINTEGER ADDRWIDTH UINTEGER MAXACCESSWIDTH UINTEGER
 //--------------------------------------------------------------------------------------------------------------------------------------
 vc_MemorySpaceParams[vcMemorySpace* ms]
 : CAPACITY cap:UINTEGER {ms->Set_Capacity(atoi(cap->getText().c_str()));}
 DATAWIDTH lau:UINTEGER {ms->Set_Word_Size(atoi(lau->getText().c_str()));}
 ADDRWIDTH aw:UINTEGER {ms->Set_Address_Width(atoi(aw->getText().c_str()));}
+MAXACCESSWIDTH maw:UINTEGER {ms->Set_Max_Access_Width(atoi(maw->getText().c_str()));}
 ;
 
 //--------------------------------------------------------------------------------------------------------------------------------------
@@ -1108,6 +1109,7 @@ OBJECT        : "$object";
 CAPACITY      : "$capacity";
 DATAWIDTH     : "$datawidth";
 ADDRWIDTH     : "$addrwidth";
+MAXACCESSWIDTH : "$maxaccesswidth";
 MODULE        : "$module";
 SERIESBLOCK   : ";;";
 PARALLELBLOCK : "||";

@@ -43,6 +43,11 @@ class AaExpression: public AaRoot
   AaStorageObject* _addressed_object_representative;
 
 
+  // if this expression is a target through an
+  // an assignment statement, then rhs_source
+  // is the expression which leads to this..
+  set<AaExpression*> _rhs_sources;
+
 
   bool _already_evaluated;
  public:
@@ -67,6 +72,8 @@ class AaExpression: public AaRoot
   virtual bool Is_Foreign_Store() {return false;}
   virtual bool Is_Foreign_Load() {return false;}
 
+  void Add_RHS_Source(AaExpression* src) { _rhs_sources.insert(src); }
+  bool Is_RHS_Source(AaExpression* src) { return(_rhs_sources.find(src) != _rhs_sources.end()); }
 
   virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
   AaStorageObject* Get_Addressed_Object_Representative() 
@@ -186,6 +193,9 @@ class AaExpression: public AaRoot
 
   set<AaExpression*>& Get_Targets() {return _targets; }
 
+  // return true if the only place this is (eventually) used
+  // is an address-of expression
+  bool Used_Only_In_Address_Of_Expression();
 };
 
 
@@ -553,6 +563,9 @@ class AaSimpleObjectReference: public AaObjectReference
       return(this->_addressed_objects);
     }
 
+
+
+
 };
 
 
@@ -588,7 +601,6 @@ class AaArrayObjectReference: public AaObjectReference
   virtual void Print(ostream& ofile); 
   AaExpression* Get_Array_Index(unsigned int idx);
   virtual void Set_Object(AaRoot* obj); 
-
 
 
   virtual string Kind() {return("AaArrayObjectReference");}
@@ -661,10 +673,7 @@ class AaPointerDereferenceExpression: public AaObjectReference
   AaObjectReference* _reference_to_object;
   set<AaStorageObject*> _addressed_objects_from_rhs;
 
-  // if this expression is a target through an
-  // an assignment statement, then rhs_source
-  // is the expression which leads to this..
-  AaExpression* _rhs_source;
+
 
  public:
 
@@ -679,9 +688,6 @@ class AaPointerDereferenceExpression: public AaObjectReference
   {
     this->_reference_to_object->Map_Source_References(source_objects);
   }
-
-  void Set_RHS_Source(AaExpression* src) { _rhs_source = src; }
-  AaExpression* Get_RHS_Source() { return(_rhs_source); }
 
   virtual bool Is_Load() {return(!this->Get_Is_Target());}
   virtual bool Is_Store(){return(this->Get_Is_Target()); }

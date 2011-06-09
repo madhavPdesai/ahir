@@ -543,14 +543,8 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
 
   if(tgt->Is_Object_Reference())
     this->Map_Target((AaObjectReference*)tgt);
-  else if(tgt->Is("AaPointerDereferenceExpression"))
-    {
-      this->Map_Target((AaObjectReference*)tgt);
-      ((AaPointerDereferenceExpression*)tgt)->Set_RHS_Source(src);
-    }
-  else
-    assert(0);
 
+  tgt->Add_RHS_Source(src);
   this->_source = src;
   this->_source->Add_Target(this->_target);
 
@@ -2462,6 +2456,7 @@ void AaPhiStatement::Set_Target(AaObjectReference* tgt)
       for(int idx = 0; idx < this->_source_pairs.size(); idx++)
 	{
 	  this->_source_pairs[idx].second->Add_Target(this->_target);
+	  this->_target->Add_RHS_Source(this->_source_pairs[idx].second);
 	}
 
     }
@@ -2474,6 +2469,7 @@ void AaPhiStatement::Add_Source_Pair(string label, AaExpression* expr)
   if(this->_target)
     {
       expr->Add_Target(this->_target);
+      this->_target->Add_RHS_Source(expr);
     }
 
   this->_source_pairs.push_back(pair<string,AaExpression*>(label,expr));

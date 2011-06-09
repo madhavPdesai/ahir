@@ -13,6 +13,7 @@ class vcMemorySpace: public vcRoot
   unsigned int _capacity; // in number of bits
   unsigned int _word_size; // in number of bits
   unsigned int _address_width; // in number of bits.
+  unsigned int _max_access_width; // maximum access width
 
   // loads from each memory space
   // for each module, record the indices of the
@@ -54,10 +55,12 @@ class vcMemorySpace: public vcRoot
   void Set_Capacity(unsigned int c) { this->_capacity = c;}
   void Set_Word_Size(unsigned int c) { this->_word_size = c;}
   void Set_Address_Width(unsigned int c) { this->_address_width = c;}
+  void Set_Max_Access_Width(unsigned int w) {this->_max_access_width = w;}
 
   int Get_Capacity() { return this->_capacity;}
   int Get_Word_Size() { return this->_word_size;}
   int Get_Address_Width() {return this->_address_width;}
+  int Get_Max_Access_Width() {return this->_max_access_width;}
 
   virtual string Kind() {return("vcMemorySpace");}
 

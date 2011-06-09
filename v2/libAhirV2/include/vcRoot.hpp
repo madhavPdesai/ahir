@@ -14,6 +14,7 @@ enum vcLexerKeytags
     __CAPACITY      	,
     __DATAWIDTH     	,
     __ADDRWIDTH     	,
+    __MAXACCESSWIDTH     	,
     __MODULE        ,
     __SERIESBLOCK   	,
     __PARALLELBLOCK 	,
@@ -126,6 +127,7 @@ static string vcLexerKeywords[] =
       "$capacity"		,
       "$datawidth"		,
       "$addrwidth"		,
+      "$maxaccesswidth"		,
       "$module"		,
       ";;"		, // series
       "||"		, // parallel
@@ -237,6 +239,8 @@ string To_VHDL(string x);
 string IntToStr(unsigned int x);
 string Int64ToStr(int64_t x);
 int CeilLog2(int n);
+int Log(int n, int base); // log n to base 2, rounded down to int.
+int IPow(int n, int e); 
 
 #define MAX(x,y) (x > y ? x : y)
 #define MIN(x,y) (x < y ? x : y)

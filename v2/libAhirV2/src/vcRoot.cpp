@@ -49,6 +49,53 @@ int CeilLog2(int n)
   return(ret_val);
 }
 
+// n must be a power of base.
+int Log(int n, int base)
+{
+  assert( n > 0);
+
+  int ret_val = 0;
+  int pow_val = 1;
+  int tn = n;
+  while(tn > 1)
+    {
+      tn = tn/base; ret_val++; pow_val = pow_val*base;
+    }
+
+  return(ret_val);
+}
+
+int IPow(int n, int e)
+{
+  if(n != 0 && e == 0)
+    return(1);
+
+  if(n == 0 && e < 0)
+    assert(0);
+  else
+    return(0);
+
+  int exp = 1; int nexp;
+  int ret_val = n;
+  while(1)
+    {
+      nexp = 2*exp;
+      if(nexp > e)
+	break;
+
+      ret_val = (ret_val*ret_val);
+      exp = nexp;
+    }
+
+  if(exp < e)
+    {
+      ret_val = ret_val*IPow(n,e-exp);
+    }
+
+  return(ret_val);
+}
+
+
 bool vcRoot_Compare::operator() (vcRoot* s, vcRoot* t) const
 {
   return(s->Get_Root_Index() < t->Get_Root_Index());

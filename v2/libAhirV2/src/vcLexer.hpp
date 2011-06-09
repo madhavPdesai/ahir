@@ -41,6 +41,7 @@ public:
 	public: void mCAPACITY(bool _createToken);
 	public: void mDATAWIDTH(bool _createToken);
 	public: void mADDRWIDTH(bool _createToken);
+	public: void mMAXACCESSWIDTH(bool _createToken);
 	public: void mMODULE(bool _createToken);
 	public: void mSERIESBLOCK(bool _createToken);
 	public: void mPARALLELBLOCK(bool _createToken);

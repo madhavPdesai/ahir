@@ -58,6 +58,7 @@ void AaMemorySpace::Write_VC_Model(ostream& ofile)
 	    << "$capacity " << this->_total_size << endl
 	    << "$datawidth " << this->_word_size << endl
 	    << "$addrwidth " << this->_address_width << endl;  
+      ofile << "$maxaccesswidth " << this->_max_access_width << endl;  
       
       for(set<AaStorageObject*,AaRootCompare>::iterator iter = _objects.begin();
 	  iter != _objects.end();
