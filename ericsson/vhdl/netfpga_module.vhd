@@ -1,7 +1,16 @@
+-- Implements a module with the NETFPGA packet
+-- interface protocol.
+--
+-- This module instantiates an ahir_system.
+-- which has exactly two input pipes, and
+-- two output pipes.
+--
+-- written by Madhav Desai
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
 
+-- rdy/wr implement a pull protocol.  receiver
+-- asserts rdy and sender asserts wr to write data.
 entity netfpga_module is
   port (
     in_rdy   : out std_logic;
@@ -46,26 +55,33 @@ architecture default_arch of netfpga_module is
   signal out_ctrl_pipe_read_ack : std_logic_vector(0 downto 0);
   signal out_data_pipe_read_data: std_logic_vector(63 downto 0);
   signal out_data_pipe_read_req : std_logic_vector(0 downto 0);
-  signal out_data_pipe_read_ack : std_logic_vector(0 downto 0));  
+  signal out_data_pipe_read_ack : std_logic_vector(0 downto 0);  
 
   type InFSMState is (idle,req,actrl,adata,done);
   signal in_fsm_state : InFSMState;
-  signal enable_in_regs;
+  signal enable_in_regs: std_logic;
 
   type OutFSMState is (req,actrl,adata,done);
   signal out_fsm_state: OutFSMState;
-  signal enable_out_data, enable_out_ctrl;
+  signal enable_out_data, enable_out_ctrl : std_logic;
 
 
 begin  -- default_arch
 
   -----------------------------------------------------------------------------
   -- input protocol matching
+  --
+  -- in_rdy is asserted when it is possible to accept data
+  --
   -- in_wr triggers two pipe writes, one to in_ctrl and one to
-  -- in_data.  in_rdy should be asserted after both have completed.
+  -- in_data.  
+  --
+  -- when both pipe write acks are received, the cycle 
+  -- completes.
   --
   -- not a particularly efficient implementation, but
-  -- breaks paths with registers.
+  -- breaks paths with registers (this can transfer
+  -- one data item every two cycles).
   -----------------------------------------------------------------------------
   process(clk)
     variable next_state: InFSMState;
@@ -81,7 +97,7 @@ begin  -- default_arch
           end if;
         when req =>
           if(in_ctrl_pipe_write_ack(0) = '1')  then
-            if(in_data_pipe_write_ack(1) = '1') then
+            if(in_data_pipe_write_ack(0) = '1') then
               next_state := done;
             else
               next_state := actrl;
@@ -98,7 +114,9 @@ begin  -- default_arch
             next_state := done;
           end if;
         when done =>
-          next_state := idle;
+          if(in_wr = '1') then
+            next_state := req;
+          end if;
         when others => null;
       end case;
     end if;
@@ -107,11 +125,12 @@ begin  -- default_arch
       in_fsm_state <= next_state;
     end if;
   end process;
-  
-  in_rdy <= '1' when in_fsm_state = done else '0';
+
+  -- pull interface
+  in_rdy <= '1' when (in_fsm_state = idle) or (in_fsm_state = done) else '0';
   in_ctrl_pipe_write_req(0) <= '1' when (in_fsm_state = req) or (in_fsm_state = adata) else '0';
   in_data_pipe_write_req(0) <= '1' when (in_fsm_state = req) or (in_fsm_state = actrl) else '0';
-  enable_in_regs <= '1' when (in_fsm_state = req) and (in_wr = '1') else '0';
+  enable_in_regs <= '1' when ((in_fsm_state = idle) or (in_fsm_state = done)) and (in_wr = '1') else '0';
   
   process(clk)
   begin
@@ -164,7 +183,7 @@ begin  -- default_arch
       case out_fsm_state is
         when req =>
           if(out_ctrl_pipe_read_ack(0) = '1')  then
-            if(out_data_pipe_read_ack(1) = '1') then
+            if(out_data_pipe_read_ack(0) = '1') then
               next_state := done;
             else
               next_state := actrl;
@@ -186,6 +205,7 @@ begin  -- default_arch
           end if;
         when others => null;
       end case;
+    end if;
 
 
     if(clk'event and clk = '1') then
@@ -203,8 +223,8 @@ begin  -- default_arch
   process(clk)
   begin
     if(clk'event and clk = '1') then
-      if(enable_out_data <= '1') then
-        out_data <= out_data_pipe_data;
+      if(enable_out_data = '1') then
+        out_data <= out_data_pipe_read_data;
       end if;
     end if;
   end process;
@@ -212,8 +232,8 @@ begin  -- default_arch
   process(clk)
   begin
     if(clk'event and clk = '1') then
-      if(enable_out_ctrl <= '1') then
-        out_ctrl <= out_ctrl_pipe_data;
+      if(enable_out_ctrl = '1') then
+        out_ctrl <= out_ctrl_pipe_read_data;
       end if;
     end if;
   end process;

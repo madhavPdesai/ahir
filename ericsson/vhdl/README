@@ -2,3 +2,35 @@ The netfpga_module instantiates the AHIR sytem and
 provides interface protocol matching between the
 NetFPGA pipeline interface and the AHIR pipe
 interface.
+
+netfpga_module.vhd
+	- the netfpga module which instantiates ahir_system
+
+		netfpga
+			ahir_system
+
+ahir_netfpga_module.vhd
+	- this is to be used only for simulations
+	  to validate the netfpga module.  In the
+	  original simulation setup for AHIR systems,
+	  we generate a testbench which instantiates
+          ahir_system.
+ 		tb 
+                  ahir_system
+
+	  The netfpga_module instantiates ahir_system
+		netfpga_module
+			ahir_system
+
+	  To use the same tb, we would use 
+		tb
+			ahir_netfpga_module
+				netfpga_module
+					ahir_system
+
+	 
+test/
+	a simple testcase.
+
+README
+	this file.
