@@ -18,8 +18,8 @@ Aa2VC -O -I mempool -C prog.o.linked.aa | vcFormat > prog.o.linked.aa.vc
 # arguments, but can only listen/send on pipes).
 #
 # uncomment next line if you are using modelsim
-# vc2vhdl -C -s modelsim -T input_module -T output_module -T foo -T free_queue_manager -f prog.o.linked.aa.vc | vhdlFormat > prog_o_linked_aa_vc.vhdl
+# vc2vhdl -C -s ghdl -e ahir_system -w -T input_module -T output_module -T foo -T free_queue_manager -f prog.o.linked.aa.vc 
 # comment next line if you are using modelsim
- vc2vhdl -C -s ghdl -e ahir_system -w -T input_module -T output_module -T foo -T free_queue_manager -f prog.o.linked.aa.vc | vhdlFormat > prog_o_linked_aa_vc.vhdl
+ vc2vhdl -C -s ghdl -e ahir_system -w -T input_module -T output_module -T foo -T free_queue_manager -f prog.o.linked.aa.vc 
 vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl

@@ -62,17 +62,20 @@ uint8_t  get_uint8_t(char* str, char** ss)
   return((uint8_t)(get_uint64_t(str,ss)));
 }
 
-float    get_float(char* str, char** ss)
+float get_float(char* str, char** ss)
 {
   uint32_t u = get_uint32_t(str,ss);
-  float ret_val = *((float*) (&u));
+  float* ret_val_ptr = (float*)&u;
+  float ret_val = *ret_val_ptr;
   return(ret_val);
 }
 
 double   get_double(char* str, char** ss)
 {
   uint64_t u = get_uint64_t(str,ss);
-  double ret_val = *((double*) (&u));
+  
+  double* ret_val_ptr = ((double*) &u);
+  double ret_val = *ret_val_ptr;
   return(ret_val);
 }
 

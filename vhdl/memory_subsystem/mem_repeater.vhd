@@ -81,7 +81,7 @@ begin  -- SimModel
   end process;
 
   decr_q_size <= (not queue_empty_sig) and  ack_in;
-  req_out     <= (not queue_empty_sig) and (not reset);
+  req_out     <= (not queue_empty_sig);
   
   data_out <= stage1 when bottom_pointer = '1' else stage0;
 

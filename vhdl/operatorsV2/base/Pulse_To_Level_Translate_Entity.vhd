@@ -20,51 +20,70 @@ end entity;
 
 architecture Behave of Pulse_To_Level_Translate_Entity is
 
-  signal state : P2LState;
+
+  signal pulse_state : std_logic;
+  signal level_state : std_logic;
+  signal start_level : boolean;
+  signal finish_pulse : boolean;
 begin  -- Behave
 
-  process(clk,reset,rL,aR,state)
-    variable nstate : P2LState;
+  process(clk)
+    variable nstate : std_logic;
   begin
-    nstate := state;
-    
-    rR <= '0';
-    aL <= false;
-    en <= '0';
+    nstate := pulse_state;
     
     if(reset = '1') then
-      nstate := I;
+      nstate := '0';
     else
-      case state is
-        when I =>
-          if(rL) then
-            rR <= '1';
-            en <= '1';
-            if(aR = '1') then
-              if(suppr_imm_ack) then
-                nstate := W;
-              else
-                aL <= true;
-              end if;
-            else
-              nstate := B;
-            end if;
+      case pulse_state is
+        when '0' =>
+          if(rL and (level_state = '0')) then
+            nstate := '1';
           end if;
-        when B =>
-          rR <= '1';
-          if(aR = '1') then
-            aL <= true;
-            nstate := I;
+        when '1' =>
+          if(level_state = '0') then
+            nstate := '0';
           end if;
-        when W =>
-          aL <= true;
-          nstate := I;
         when others => null;
       end case;
     end if;
 
     if(clk'event and clk = '1') then
-      state <= nstate;
+      pulse_state <= nstate;
     end if;
   end process;
+
+  aL <= true when (pulse_state = '1') and (level_state = '0') else false;
+  start_level <= true when (pulse_state = '0') and (level_state = '0') and rL else false;
+  eN <= '1' when start_level else '0';
+  
+
+  process(clk)
+    variable nstate : std_logic;
+  begin
+    nstate := level_state;
+    
+    if(reset = '1') then
+      nstate := '0';
+    else
+      case level_state is
+        when '0' =>
+          if(start_level) then
+            nstate := '1';
+          end if;
+        when '1' =>
+          if(aR = '1') then
+            nstate := '0';
+          end if;
+        when others => null;
+      end case;
+    end if;
+
+    if(clk'event and clk = '1') then
+      level_state <= nstate;
+    end if;
+  end process;
+  rR <= '1' when level_state = '1' else '0';
+  finish_pulse <= true when (level_state = '1') and (aR = '1') else false;
+  
 end Behave;

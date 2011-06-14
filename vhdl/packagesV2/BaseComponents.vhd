@@ -13,7 +13,8 @@ package BaseComponents is
   
   component place
     generic (
-      marking : boolean); 
+      marking : boolean := false;
+      bypass: boolean := false);
     port (
       preds : in  BooleanArray;
       succs : in  BooleanArray;
@@ -871,8 +872,7 @@ package BaseComponents is
       clk,reset : in std_logic;
       reqR : in std_logic_vector;
       ackR: out std_logic_vector;
-      reqF_in : in std_logic_vector;
-      reqF_out : out std_logic_vector;
+      forward_enable: out std_logic_vector;
       req_s : out std_logic;
       ack_s : in std_logic);
   end component;

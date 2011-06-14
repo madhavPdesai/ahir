@@ -35,4 +35,10 @@ void write_uint16_n(const char *id, uint16_t* buf, int buf_len);
 void read_uint8_n(const char *id, uint8_t* buf, int buf_len);
 void write_uint8_n(const char *id, uint8_t* buf, int buf_len);
 
+void read_float64_n(const char *id, double* buf, int buf_len);
+void write_float64_n(const char *id, double* buf, int buf_len);
+
+void read_float32_n(const char *id, float* buf, int buf_len);
+void write_float32_n(const char *id, float* buf, int buf_len);
+
 #endif

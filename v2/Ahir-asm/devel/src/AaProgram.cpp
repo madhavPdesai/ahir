@@ -1001,6 +1001,7 @@ void AaProgram::Write_VHDL_C_Stubs()
 	      << "#include <stdint.h>" << endl
 	      << "#include <stdio.h>" << endl
 	      << "#include <string.h>" << endl
+	      << "#include <Pipes.h>" << endl
 	      << "#include <SocketLib.h>" << endl;
 
   source_file << "#include <" << header << ">" << endl;

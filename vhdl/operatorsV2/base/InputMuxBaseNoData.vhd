@@ -28,7 +28,7 @@ end InputMuxBaseNoData;
 architecture Behave of InputMuxBaseNoData is
 
   signal reqP,ackP,enP,ssig : std_logic_vector(nreqs-1 downto 0);
-  signal reqF: std_logic_vector(nreqs-1 downto 0);  
+  signal fEN: std_logic_vector(nreqs-1 downto 0);  
 
   constant tag0 : std_logic_vector(twidth-1 downto 0) := (others => '0');
 
@@ -59,9 +59,9 @@ begin  -- Behave
   -- priority encoding or pass through
   -----------------------------------------------------------------------------
   NoArbitration: if no_arbitration generate
-    reqF <= reqP;
-    reqR <= OrReduce(reqF);
-    ackP <= reqF when ackR = '1' else (others => '0');
+    fEN <= reqP;
+    reqR <= OrReduce(fEN);
+    ackP <= fEN when ackR = '1' else (others => '0');
   end generate NoArbitration;
 
   Arbitration: if not no_arbitration generate
@@ -71,8 +71,7 @@ begin  -- Behave
                 reset => reset,
                 reqR => reqP,
                 ackR => ackP,
-                reqF_in => reqF,
-                reqF_out => reqF,
+                forward_enable => fEN,
                 req_s => reqR,
                 ack_s => ackR);
     
@@ -85,7 +84,7 @@ begin  -- Behave
     iwidth => nreqs,
     owidth => twidth)
     port map (
-      din  => reqF,
+      din  => fEN,
       dout => tagR);
 
 end Behave;

@@ -12,7 +12,7 @@ VariantDir('objModelsimFLI','src',duplicate=0)
 VariantDir('objVhpi','src',duplicate=0)
 VariantDir('objSocketLib','src',duplicate=0)
 
-env.SharedLibrary('lib/libModelsimFLI', ['objModelsimFLI/SocketLib.c','objModelsimFLI/Vhpi.c'], CCFLAGS='-g -m32 -DMODELSIM ')
+env.SharedLibrary('lib/libModelsimFLI', ['objModelsimFLI/SocketLib.c','objModelsimFLI/Vhpi.c'], CCFLAGS='-g -m32 -DMODELSIM -DNDEBUG')
 env.SharedLibrary('lib/libVhpi', ['objVhpi/Vhpi.c','objVhpi/SocketLib.c'], CCFLAGS='-g -DNDEBUG')
 env.SharedLibrary('lib/libSocketLib', ['objSocketLib/SocketLib.c','objSocketLib/Pipes.c'], CCFLAGS='-g -DNDEBUG')
 

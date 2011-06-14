@@ -25,7 +25,7 @@ end entity;
 architecture Base of InputPortNoData is
 
   signal reqR, ackR, eN : std_logic_vector(num_reqs-1 downto 0);
-  signal reqF: std_logic_vector(num_reqs-1 downto 0);
+  signal fEN: std_logic_vector(num_reqs-1 downto 0);
 
 begin
 
@@ -58,14 +58,9 @@ begin
              reset         => reset,
              reqR          => reqR,
              ackR          => ackR,
-             reqF_in          => reqF,
-             reqF_out          => reqF,
+             forward_enable => fEN,
              req_s         => oreq,
              ack_s         => oack);
 
-
-  gen : for I in num_reqs-1 downto 0 generate
-    ackR(I) <= reqF(I) and oack;
-  end generate gen;
 
 end Base;

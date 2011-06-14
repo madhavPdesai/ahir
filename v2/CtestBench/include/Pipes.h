@@ -28,9 +28,13 @@ void write_uintptr(const char *id, uint32_t* data);
 void* read_pointer(const char *id);
 void write_pointer(const char *id, void* data);
 
-float read_float(const char *id);
-void write_float(const char *id, float data);
+float read_float32(const char *id);
+void write_float32(const char *id, float data);
+void read_float32_n(const char *id, float* buf, int buf_len);
+void write_float32_n(const char *id, float* buf, int buf_len);
 
-double read_double(const char *id);
-void write_double(const char *id, double data);
 
+double read_float64(const char *id);
+void write_float64(const char *id, double data);
+void read_float64_n(const char *id, double* buf, int buf_len);
+void write_float64_n(const char *id, double* buf, int buf_len);

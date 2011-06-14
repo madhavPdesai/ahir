@@ -31,11 +31,11 @@ end InputMuxBase;
 
 architecture Behave of InputMuxBase is
 
-  signal reqP,ackP,enP : std_logic_vector(nreqs-1 downto 0);
-  signal reqF : std_logic_vector(nreqs-1 downto 0);  
+  signal reqP,ackP,enP,fEN : std_logic_vector(nreqs-1 downto 0);
+
 
   type WordArray is array (natural range <>) of std_logic_vector(owidth-1 downto 0);
-  signal data_reg, dataP : WordArray(nreqs-1 downto 0);
+  signal dataP : WordArray(nreqs-1 downto 0);
 
   constant tag0 : std_logic_vector(twidth-1 downto 0) := (others => '0');
 
@@ -61,32 +61,20 @@ begin  -- Behave
       if(clk'event and clk = '1') then
         if(enP(I) = '1') then
           Extract(dataL,I,regv);
-          data_reg(I) <= regv;
+          dataP(I) <= regv;
         end if;
       end if;
     end process;
-
-    process(enP(I),data_reg(I), dataL)
-      variable regv : std_logic_vector(owidth-1 downto 0);
-    begin
-      if(enP(I) = '0') then
-        dataP(I) <= data_reg(I);
-      else
-        Extract(dataL,I,regv);          
-        dataP(I) <= regv;
-      end if;
-    end process;
-
+    
   end generate P2L;
-
 
   -----------------------------------------------------------------------------
   -- priority encoding or pass through
   -----------------------------------------------------------------------------
   NoArbitration: if no_arbitration generate
-    reqF <= reqP;
-    reqR <= OrReduce(reqF);
-    ackP <= reqF when ackR = '1' else (others => '0');
+    fEN <= reqP;
+    reqR <= OrReduce(fEN);
+    ackP <= fEN when ackR = '1' else (others => '0');
   end generate NoArbitration;
 
   Arbitration: if not no_arbitration generate
@@ -98,8 +86,7 @@ begin  -- Behave
                           reset => reset,
                           reqR => reqP,
                           ackR => ackP,
-                          reqF_in => reqF,
-                          reqF_out => reqF,
+                          forward_enable => fEN,
                           req_s => reqR,
                           ack_s => ackR);
     
@@ -108,11 +95,11 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   -- final multiplexor
   -----------------------------------------------------------------------------
-  process(reqF,dataP)
+  process(fEN,dataP)
   begin
     dataR <= (others => '0');
     for J in 0 to nreqs-1 loop
-      if(reqF(J) = '1') then
+      if(fEN(J) = '1') then
         dataR <= dataP(J);
         exit;
       end if;
@@ -126,9 +113,7 @@ begin  -- Behave
     iwidth => nreqs,
     owidth => twidth)
     port map (
-      din  => reqF,
+      din  => fEN,
       dout => tagR);
 
-
-  
 end Behave;

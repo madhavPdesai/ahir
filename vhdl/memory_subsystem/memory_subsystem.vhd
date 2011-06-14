@@ -116,10 +116,13 @@ begin
 
   process(clock,reset)
   begin
-    if(reset = '1') then
-      raw_time_stamp <= (others => '0');
-    elsif clock'event and clock = '1' then
-      raw_time_stamp <= IncrementSLV(raw_time_stamp);
+
+    if clock'event and clock = '1' then
+      if(reset = '1') then
+        raw_time_stamp <= (others => '0');
+      else
+        raw_time_stamp <= IncrementSLV(raw_time_stamp);
+      end if;
     end if;
   end process;
 

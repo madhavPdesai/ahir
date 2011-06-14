@@ -388,6 +388,38 @@ void write_uint8_n(const char *id, uint8_t* buf, int buf_len)
 
 
 
+void read_float64_n(const char *id, double* buf, int buf_len)
+{
+  int i;
+  for(i = 0; i < buf_len; i++)
+    {
+      buf[i] = read_float64((char*) id);
+    }
+}
+void write_float64_n(const char *id, double* buf, int buf_len)
+{
+  int i;
+  for(i = 0; i < buf_len; i++)
+    {
+      write_float64((char*) id,buf[i]);
+    }
+}
+void read_float32_n(const char *id, float* buf, int buf_len)
+{
+  int i;
+  for(i = 0; i < buf_len; i++)
+    {
+      buf[i] = read_float32((char*) id);
+    }
+}
+void write_float32_n(const char *id, float* buf, int buf_len)
+{
+  int i;
+  for(i = 0; i < buf_len; i++)
+    {
+      write_float32((char*) id,buf[i]);
+    }
+}
 
 
 

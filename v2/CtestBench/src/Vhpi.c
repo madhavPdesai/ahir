@@ -875,7 +875,7 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
 			  fprintf(stderr, "Error: %d higher bits lost in software -> hardware transfer (job %s)\n", excess_bits,
 				  jlink->name);
 			}
-		      else
+		      else if(excess_bits < 0)
 			{
 			  fprintf(stderr, "Error: added %d  zero-padding higher bits in software -> hardware transfer (job %s)\n", 
 				  excess_bits,

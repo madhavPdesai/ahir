@@ -37,3 +37,12 @@ merge_tree.vhd
 	sub-design-unit 
 memory_subsystem_package.vhd
 	component declaration of top-level memory-subsystem
+
+-- new additions.
+dummy_read_only_memory_subsystem.vhd
+	dummy ROM, always returns 0.
+dummy_write_only_memory_subsystem.vhd
+	dummy WOM, write ignored, but acked.
+register_bank.vhd
+	register bank to model "small memories".
+	number of ports = number of registers

@@ -112,12 +112,10 @@ begin  -- Behave
       -- request is pending at I and I is valid and there is
       -- a request from the right which has been acknowledged
       -------------------------------------------------------------------------
-      latch :=  (reqRfinal(I) = '1')  and (reqL = '1') and (ackL_sig = '1') and (reset = '0');
+      latch :=  (reqRfinal(I) = '1')  and (reqL = '1') and (ackL_sig = '1');
       ldataL := dataL;
 
-      if(reset = '1') then
-        dfinal(I) <= (others => '0');
-      elsif latch then
+      if latch then
         dfinal(I) <= ldataL;
       else
         dfinal(I) <= dreg(I);
@@ -129,7 +127,12 @@ begin  -- Behave
         end if;
       end if;
 
-      ackR_sig(I) <= latch;
+      if(reset = '1') then
+        ackR_sig(I) <= false;
+      else
+        ackR_sig(I) <= latch;
+      end if;
+      
     end process;
   end generate PGen;
 

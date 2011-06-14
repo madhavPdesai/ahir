@@ -44,6 +44,7 @@ void write_uint64(const char *id, uint64_t data)
   WRITE__(id,uint64_t,64);
 }
 
+
 // from pipe id, receive buf_len uint64_t's..
 void read_uint64_n(const char *id, uint64_t* buf, int buf_len)
 {
@@ -255,7 +256,7 @@ void write_pointer(const char *id, void* pdata)
   uint32_t data = (uint32_t)pdata;
   WRITE__(id,uint32_t,32);
 }
-float read_float(const char *id)
+float read_float32(const char *id)
 {
   float ret_val;
   char buffer[4096];
@@ -264,13 +265,23 @@ float read_float(const char *id)
   ret_val = (float) get_float(buffer,&ss);
   return(ret_val);
 }
-void write_float(const char *id, float data)
+void write_float32(const char *id, float data)
 {
   char buffer[4096];
   char* ss;
   WRITE__(id,float,32);
 }
-double read_double(const char *id)
+void read_float32_n(const char *id, float* buf, int buf_len)
+{
+  read_uint32_n(id,(uint32_t*) buf,buf_len);
+}
+
+void write_float32_n(const char *id, float* buf, int buf_len)
+{
+  write_uint32_n(id, (uint32_t*) buf, buf_len);
+}
+
+double read_float64(const char *id)
 {
   double ret_val;
   char buffer[4096];
@@ -280,9 +291,18 @@ double read_double(const char *id)
   return(ret_val);
 
 }
-void write_double(const char *id, double data)
+void write_float64(const char *id, double data)
 {
   char buffer[4096];
   char* ss;
   WRITE__(id,double,64);
+}
+void read_float64_n(const char *id, double* buf, int buf_len)
+{
+  read_uint64_n(id,(uint64_t*) buf,buf_len);
+}
+
+void write_float64_n(const char *id, double* buf, int buf_len)
+{
+  write_uint64_n(id, (uint64_t*) buf, buf_len);
 }

@@ -72,11 +72,13 @@ package body FloatOperatorPackage is
   end ApFloatSub_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatMul_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatMul_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is
+    variable float_result  : float(l'left downto l'right);
   begin
     assert (l'length = r'length) and (l'length = result'length)						     
       report "Length Mismatch inApFloatMul_proc" severity error;
-     result := To_ISLV(to_apfloat(to_float(l) * to_float(r)));  
+    float_result := to_float(l) * to_float(r);  
+    result := To_ISLV(float_result);  
   end ApFloatMul_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------

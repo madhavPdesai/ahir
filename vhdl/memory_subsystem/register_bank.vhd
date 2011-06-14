@@ -6,10 +6,13 @@ use ahir.mem_function_pack.all;
 use ahir.merge_functions.all;
 use ahir.mem_component_pack.all;
 
--- memory subsystem guarantees that accesses to the same location
--- will take place in the order of the time-stamp assigned to each
--- access (tie breaks will be random). Time-stamp is set at the
--- point of acceptance of an access request.
+-------------------------------------------------------------------------------
+-- a simplified version of the memory subsystem to be used
+-- when the number of storage locations is small..
+--
+-- this is equivalent to a num_loads read-port, num_stores write_port
+-- register bank.
+-------------------------------------------------------------------------------
 
 entity register_bank is
   generic(num_loads             : natural := 5;
@@ -130,10 +133,7 @@ begin
             assert index < num_registers report "index overflow." severity error;
             assert index >= 0 report "index underflow" severity error;
 
-            if(index >= 0 and index < num_registers) then
-              lc_data_out_sig(((R+1)*data_width)-1 downto R*data_width) <= register_array(index);
-            end if;
-            
+            lc_data_out_sig(((R+1)*data_width)-1 downto R*data_width) <= register_array(index);
             lc_tag_out_sig(((R+1)*tag_width)-1 downto R*tag_width) <=
               lr_tag_in(((R+1)*tag_width)-1 downto R*tag_width);
             lc_ack_flag(R) <= '1';

@@ -48,6 +48,7 @@ package Subprograms is
   function To_ISLV(inp: ApFloat) return IStdLogicVector;
   function To_ISLV(inp : BooleanArray) return IStdLogicVector;
   function To_ISLV(inp : std_logic_vector) return IStdLogicVector;
+  function To_ISLV(inp: Float) return IStdLogicVector;
   
   function To_StdLogicArray2D( inp: ApIntArray) return StdLogicArray2D;
   function To_StdLogicArray2D( inp: ApFloatArray) return StdLogicArray2D;
@@ -456,6 +457,32 @@ package body Subprograms is
     return(ret_var);
   end To_ISLV;
 
+    -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function To_ISLV(inp : std_logic_vector) return IStdLogicVector is
+    alias linp: std_logic_vector(inp'high downto inp'low) is inp;
+    variable ret_var :IStdLogicVector(inp'high downto inp'low);
+  begin
+    for I in linp'range loop
+      ret_var(I) := linp(I);
+    end loop;
+    return(ret_var);
+  end To_ISLV;
+
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function To_ISLV(inp: Float) return IStdLogicVector is
+    variable ret_var :IStdLogicVector(inp'high downto inp'low);
+  begin
+    for I in inp'range loop
+      ret_var(I) := inp(I);
+    end loop;
+    return(ret_var);
+  end To_ISLV;
+  
+
   -----------------------------------------------------------------------------
 
   -----------------------------------------------------------------------------
@@ -495,20 +522,6 @@ package body Subprograms is
     return(ret_var);
   end To_SLV_Shuffle;
   
-  -----------------------------------------------------------------------------
-
-  -----------------------------------------------------------------------------
-  function To_ISLV(inp : std_logic_vector) return IStdLogicVector is
-    alias linp: std_logic_vector(inp'high downto inp'low) is inp;
-    variable ret_var :IStdLogicVector(inp'high downto inp'low);
-  begin
-    for I in linp'range loop
-      ret_var(I) := linp(I);
-    end loop;
-    return(ret_var);
-  end To_ISLV;
-
-
   -----------------------------------------------------------------------------
 
   -----------------------------------------------------------------------------
@@ -858,11 +871,10 @@ package body Subprograms is
 
   -----------------------------------------------------------------------------
   function To_ApFloat( x : float)   return ApFloat is
-    alias lx: float(x'high downto x'low) is x;
     variable rv: ApFloat(x'high downto x'low);
   begin
     for I in x'range loop
-      rv(I) := lx(I);
+      rv(I) := x(I);
     end loop;
     return(rv);
   end function To_ApFloat;

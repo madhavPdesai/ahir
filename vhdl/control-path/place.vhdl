@@ -8,7 +8,9 @@ use ahir.Subprograms.all;
 entity place is
 
   generic (
-    marking : boolean := false);
+    marking : boolean := false;
+    bypass : boolean := false
+    );
   port (
     preds : in  BooleanArray;
     succs : in  BooleanArray;
@@ -36,21 +38,28 @@ begin  -- default_arch
   backward_reset <= OrReduce(succs);
 
   latch_token : process (clk, reset)
+
   begin
-    if reset = '1' then                 -- asynchronous reset (active high)
-      token_latch <= marking;
-    elsif clk'event and clk = '1' then  -- rising clock edge
-      if backward_reset then
+
+    if clk'event and clk = '1' then  -- rising clock edge
+      if reset = '1' then            -- asynchronous reset (active high)
+        token_latch <= marking;
+      elsif backward_reset then
         token_latch <= false;
       else
         token_latch <= token_sig;
       end if;
     end if;
   end process latch_token;
+  
+  token_sig <= true when incoming_token else token_latch;    
 
-  token_sig <= true when incoming_token else
-               token_latch;
+  bypassGen: if bypass generate
+    token <= token_sig;    
+  end generate bypassGen;
 
-  token <= token_sig;
+  noBypassGen: if not bypass generate
+    token <= token_latch;        
+  end generate noBypassGen;
 
 end default_arch;

@@ -25,7 +25,7 @@ end entity;
 architecture Base of OutputPort is
 
   signal reqR, ackR, eN : std_logic_vector(num_reqs-1 downto 0);
-  signal reqF: std_logic_vector(num_reqs-1 downto 0);
+  signal fEN: std_logic_vector(num_reqs-1 downto 0);
 
   type   OPWArray is array(integer range <>) of std_logic_vector(data_width-1 downto 0);
   signal data_array : OPWArray(num_reqs-1 downto 0);
@@ -65,13 +65,12 @@ begin
              reset         => reset,
              reqR          => reqR,
              ackR          => ackR,
-             reqF_in          => reqF,
-             reqF_out          => reqF,
+             forward_enable => fEN,
              req_s         => oreq,
              ack_s         => oack);
 
   -----------------------------------------------------------------------------
-  -- data handlin
+  -- data handling
   -----------------------------------------------------------------------------
   process (data_array)
     variable var_odata : std_logic_vector(data_width-1 downto 0) := (others => '0');
@@ -85,10 +84,10 @@ begin
 
   gen : for I in num_reqs-1 downto 0 generate
 
-    process(data,reqF(I))
+    process(data,fEN(I))
        variable target: std_logic_vector(data_width-1 downto 0);
     begin
-       	if(reqF(I) = '1') then
+       	if(fEN(I) = '1') then
 		Extract(data,I,target);
        	else 
 		target := (others => '0');
