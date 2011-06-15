@@ -46,7 +46,7 @@ begin  -- Behave
         signal state : P2LState;
       begin  -- block P2L          
         p2Linst: Pulse_To_Level_Translate_Entity
-          generic map (suppr_imm_ack => suppress_immediate_ack(I))
+          generic map (suppr_imm_ack => suppress_immediate_ack(I), push_mode => true)
           port map (rL => reqL(I), rR => reqP(I), aL => ackL(I), aR => ackP(I),
                                  en => enP(I), clk => clk, reset => reset);
       end block P2LBlk;

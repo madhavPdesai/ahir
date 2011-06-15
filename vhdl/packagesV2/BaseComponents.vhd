@@ -855,7 +855,8 @@ package BaseComponents is
   -- protocol translation, priority encoding
   -----------------------------------------------------------------------------
   component Pulse_To_Level_Translate_Entity 
-    generic ( suppr_imm_ack : boolean := true);
+    generic ( suppr_imm_ack : boolean := true;
+              push_mode: boolean := true);
     port( rL : in boolean;
           rR : out std_logic;
           aL : out boolean;
@@ -866,8 +867,7 @@ package BaseComponents is
   end component;
 
   component Request_Priority_Encode_Entity
-    generic (
-      num_reqs : integer := 1);
+    generic (num_reqs : integer := 1);
     port (
       clk,reset : in std_logic;
       reqR : in std_logic_vector;

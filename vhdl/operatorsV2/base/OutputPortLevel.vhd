@@ -56,7 +56,7 @@ begin
        ack(I) <= ack_sig(I);
 
        process(data,req_active(I))
-		variable target: std_logic_vector(data_width-1 downto 0);
+         variable target: std_logic_vector(data_width-1 downto 0);
        begin
           if(req_active(I) = '1') then
 		Extract(data,I,target);

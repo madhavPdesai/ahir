@@ -975,7 +975,7 @@ aA_Constant_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Pipe_Object_Declaration: PIPE aA_Object_Declaration_Base
+// aA_Pipe_Object_Declaration: PIPE aA_Object_Declaration_Base 
 //----------------------------------------------------------------------------------------------------------
 aA_Pipe_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         {

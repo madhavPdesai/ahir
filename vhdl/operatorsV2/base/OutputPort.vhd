@@ -42,7 +42,7 @@ begin
       signal state : P2LState;
     begin  -- block P2L
       p2LInst: Pulse_To_Level_Translate_Entity
-        generic map(suppr_imm_ack => true)
+        generic map(suppr_imm_ack => true, push_mode => false)
         port map(rL            => req(I),
                  rR            => reqR(I),
                  aL            => ack(I),
@@ -55,46 +55,19 @@ begin
     
   end generate ProTx;
 
-  -----------------------------------------------------------------------------
-  -- request handling
-  -----------------------------------------------------------------------------
-  priorityEncode: Request_Priority_Encode_Entity
-    generic map (
-      num_reqs => reqR'length)
-    port map(clk           => clk,
-             reset         => reset,
-             reqR          => reqR,
-             ackR          => ackR,
-             forward_enable => fEN,
-             req_s         => oreq,
-             ack_s         => oack);
-
-  -----------------------------------------------------------------------------
-  -- data handling
-  -----------------------------------------------------------------------------
-  process (data_array)
-    variable var_odata : std_logic_vector(data_width-1 downto 0) := (others => '0');
-  begin  -- process
-    var_odata := (others => '0');
-    for I in 0 to num_reqs - 1 loop
-      var_odata := data_array(I) or var_odata;
-    end loop;  -- I
-    odata <= var_odata;
-  end process;
-
-  gen : for I in num_reqs-1 downto 0 generate
-
-    process(data,fEN(I))
-       variable target: std_logic_vector(data_width-1 downto 0);
-    begin
-       	if(fEN(I) = '1') then
-		Extract(data,I,target);
-       	else 
-		target := (others => '0');
-	end if;
-	data_array(I) <= target;	
-    end process;
+  mux : OutputPortLevel generic map (
+    num_reqs       => num_reqs,
+    data_width     => data_width,
+    no_arbitration => no_arbitration)
+    port map (
+      req   => reqR,
+      ack   => ackR,
+      data  => data,
+      oreq  => oreq,
+      oack  => oack,
+      odata => odata,
+      clk   => clk,
+      reset => reset);
     
-  end generate gen;
 
 end Base;

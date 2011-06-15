@@ -47,7 +47,7 @@ begin  -- default_arch
       reset => reset);
 
   queue : QueueBase generic map (
-    queue_depth => depth + 1,
+    queue_depth => depth,
     data_width       => data_width)
     port map (
       push_req   => pipe_req,

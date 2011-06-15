@@ -32,7 +32,7 @@ architecture Base of InputPort is
 
   type   IPWArray is array(integer range <>) of std_logic_vector(data_width-1 downto 0);
   signal data_reg, data_final: IPWArray(num_reqs-1 downto 0);
-
+  signal demux_data : std_logic_vector((num_reqs*data_width)-1 downto 0);
   
 begin
 
@@ -44,7 +44,7 @@ begin
     P2L : block
       signal state : P2LState;
     begin  -- block P2L
-      p2LInst: Pulse_To_Level_Translate_Entity generic map(suppr_imm_ack => true)
+      p2LInst: Pulse_To_Level_Translate_Entity generic map(suppr_imm_ack => true,push_mode => false)
         port map (rL            => req(I),
                   rR            => reqR(I),
                   aL            => ack(I),
@@ -57,18 +57,19 @@ begin
     
   end generate ProTx;
 
-  -----------------------------------------------------------------------------
-  -- request handling
-  -----------------------------------------------------------------------------
-  priorityEncode : Request_Priority_Encode_Entity generic map (
-    num_reqs => reqR'length)
-    port map(clk           => clk,
-             reset         => reset,
-             reqR          => reqR,     -- std_logic req's from data-path
-             ackR          => ackR,     -- std_logic acks's from data-path
-             forward_enable => fEN,     -- identify the active request.
-             req_s         => oreq,     -- req to outside world
-             ack_s         => oack);    -- ack from outside world.
+  demux : InputPortLevel generic map (
+    num_reqs       => num_reqs,
+    data_width     => data_width,
+    no_arbitration => no_arbitration)
+    port map (
+      req => reqR,
+      ack => ackR,
+      data => demux_data,
+      oreq => oreq,
+      odata => odata,
+      oack => oack,
+      clk => clk,
+      reset => reset);
 
   -----------------------------------------------------------------------------
   -- data handling
@@ -85,10 +86,12 @@ begin
   gen : for I in num_reqs-1 downto 0 generate
 
     process(clk)
+      variable target: std_logic_vector(data_width-1 downto 0);
     begin
       if(clk'event and clk = '1') then
         if (ackR(I) = '1') then
-          data_reg(I) <= odata;
+          Extract(demux_data,I,target);
+          data_reg(I) <= target;
         end if;
       end if;
     end process;

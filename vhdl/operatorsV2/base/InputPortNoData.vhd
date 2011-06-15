@@ -37,7 +37,7 @@ begin
       signal state : P2LState;
     begin  -- block P2L
       p2LInst: Pulse_To_Level_Translate_Entity
-        generic map(suppr_imm_ack => true)
+        generic map(suppr_imm_ack => true, push_mode => false)
         port map (rL            => req(I),
                   rR            => reqR(I),
                   aL            => ack(I),
@@ -48,19 +48,15 @@ begin
     end block P2L;
   end generate ProTx;
 
-  -----------------------------------------------------------------------------
-  -- request handling
-  -----------------------------------------------------------------------------
-  priorityEncode: Request_Priority_Encode_Entity
-    generic map (
-      num_reqs => reqR'length)
-    port map(clk           => clk,
-             reset         => reset,
-             reqR          => reqR,
-             ackR          => ackR,
-             forward_enable => fEN,
-             req_s         => oreq,
-             ack_s         => oack);
-
+  demux : InputPortLevelNoData generic map (
+    num_reqs       => num_reqs,
+    no_arbitration => no_arbitration)
+    port map (
+      req => reqR,
+      ack => ackR,
+      oreq => oreq,
+      oack => oack,
+      clk => clk,
+      reset => reset);
 
 end Base;

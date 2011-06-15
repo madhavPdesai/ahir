@@ -51,7 +51,7 @@ begin  -- Behave
   -- pulse to level translate
   -----------------------------------------------------------------------------
   P2L: for I in nreqs-1 downto 0 generate
-    p2Linstance: Pulse_To_Level_Translate_Entity generic map(suppr_imm_ack => suppress_immediate_ack(I))
+    p2Linstance: Pulse_To_Level_Translate_Entity generic map(suppr_imm_ack => suppress_immediate_ack(I), push_mode => true)
       port map(rL => reqL(I), rR => reqP(I), aL => ackL(I), aR => ackP(I),
                en => enP(I), clk => clk, reset => reset);     
 
