@@ -62,7 +62,9 @@ vc_System[vcSystem* sys]
 vc_Pipe[vcSystem* sys]
 {
   string lbl;
-}:  PIPE lbl = vc_Label  wid:UINTEGER {sys->Add_Pipe(lbl,atoi(wid->getText().c_str()));}
+  int depth = 1;
+}:  PIPE lbl = vc_Label  wid:UINTEGER  (DEPTH did:UINTEGER {depth = atoi(did->getText().c_str()); })?
+        {sys->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth);} 
 ;
 
 
@@ -1151,6 +1153,7 @@ FROM          : "$from";
 AT            : "$at";
 CONSTANT      : "$constant";
 INTERMEDIATE  : "$intermediate";
+DEPTH         : "$depth";
 
 
 // Special symbols

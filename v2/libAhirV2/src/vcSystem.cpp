@@ -59,7 +59,10 @@ void vcSystem::Print_Pipes(ostream& ofile)
       piter != this->_pipe_map.end();
       piter++)
     {
-      ofile << vcLexerKeywords[__PIPE] << " [" << (*piter).first << "] " << (*piter).second << endl;
+      int pipe_depth = this->Get_Pipe_Depth((*piter).first);
+
+      ofile << vcLexerKeywords[__PIPE] << " [" << (*piter).first << "] " << (*piter).second << " " <<
+	vcLexerKeywords[__DEPTH] << " " << pipe_depth << endl;
     }
 }
 
@@ -890,7 +893,8 @@ void vcSystem::Print_VHDL_Pipe_Instances(ostream& ofile)
     {
       string pipe_id = To_VHDL((*pipe_iter).first);
       int pipe_width = (*pipe_iter).second;
-      
+      int pipe_depth = this->Get_Pipe_Depth(pipe_id);
+
       int num_reads = this->Get_Num_Pipe_Reads(pipe_id);
       int num_writes = this->Get_Num_Pipe_Writes(pipe_id);
      
@@ -904,7 +908,7 @@ void vcSystem::Print_VHDL_Pipe_Instances(ostream& ofile)
 	    ofile << "num_reads => " << num_reads << "," << endl;
 	    ofile << "num_writes => " << num_writes << "," << endl;
 	    ofile << "data_width => " << pipe_width << "," << endl;
-	    ofile << "depth => 1 --}\n)" << endl;
+	    ofile << "depth => " << pipe_depth << " --}\n)" << endl;
 	    ofile << "port map( -- { " << endl;
 	    ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 
 		  << "read_ack => " << pipe_id << "_pipe_read_ack," << endl 

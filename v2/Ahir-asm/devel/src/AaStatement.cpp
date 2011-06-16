@@ -1426,6 +1426,27 @@ void AaBlockStatement::Add_Object(AaObject* obj)
     }
 }
 
+void AaBlockStatement::Add_Export(string formal, string actual)
+{
+  AaRoot* formal_ref = this->Find_Child(formal);
+  if(formal_ref == NULL)
+    {
+      AaRoot::Error("in export, did not find object " + formal + " in " + this->Get_Label(),this);
+    }
+  else
+    {
+      if(this->Get_Scope() != NULL)
+	{
+	  this->Get_Scope()->Map_Child(actual, formal_ref);
+	  this->_exports[formal] = actual;
+	}
+      else
+	{
+	  AaRoot::Warning("export " + formal + " => " + actual + " ignored for block " + this->Get_Label(), this);
+	}
+    }
+}
+
 void AaBlockStatement::Coalesce_Storage()
 {
   for(int idx = 0; idx < _objects.size(); idx++)
@@ -1450,6 +1471,17 @@ void AaBlockStatement::Print(ostream& ofile)
   this->Print_Objects(ofile);
   this->Print_Statement_Sequence(ofile);
   ofile << this->Tab() << "}" << endl;
+
+  // print exports.
+  if(this->_exports.size() > 0)
+    {
+      ofile << "(" ;
+      for(map<string,string>::iterator iter = _exports.begin(); iter != _exports.end(); iter++)
+	{
+	  ofile << " " << (*iter).first << " => " << (*iter).second << " ";
+	}
+      ofile << ")" << endl ;
+    }
 }
 
 void AaBlockStatement::Map_Source_References()

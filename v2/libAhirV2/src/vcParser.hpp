@@ -213,10 +213,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 122;
+	static const int NUM_TOKENS = 123;
 #else
 	enum {
-		NUM_TOKENS = 122
+		NUM_TOKENS = 123
 	};
 #endif
 	

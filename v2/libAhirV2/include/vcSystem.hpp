@@ -25,6 +25,8 @@ class vcSystem: public vcRoot
   map<string, vcModule*> _modules;
 
   map<string,int> _pipe_map;
+  map<string,int> _pipe_depth_map;
+
   map<string,vcConstantWire*> _constant_map;
 
   map<string, map<vcModule*, vector<int> > > _pipe_read_map; // inports on modules connected to pipe.
@@ -81,11 +83,14 @@ class vcSystem: public vcRoot
 
   bool Has_Pipe(string pipe_id) {return(_pipe_map.find(pipe_id) != _pipe_map.end());}
 
-  void Add_Pipe(string pipe_id, int width) 
+  void Add_Pipe(string pipe_id, int width, int depth) 
   {
     assert(_pipe_map.find(pipe_id) == _pipe_map.end());
     assert(width > 0);
+    assert(depth > 0);
+
     _pipe_map[pipe_id] = width;
+    _pipe_depth_map[pipe_id] = depth;
   }
 
   void Add_Constant_Wire(string obj_name, vcValue* v);
@@ -101,6 +106,11 @@ class vcSystem: public vcRoot
   int Get_Pipe_Width(string pipe_id)
   {
     assert(_pipe_map.find(pipe_id) != _pipe_map.end());return(_pipe_map[pipe_id]);
+  }
+
+  int Get_Pipe_Depth(string pipe_id)
+  {
+    assert(_pipe_depth_map.find(pipe_id) != _pipe_depth_map.end());return(_pipe_depth_map[pipe_id]);
   }
 
   void Print_Pipes(ostream& ofile);

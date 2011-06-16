@@ -250,12 +250,24 @@ aA_Call_Statement[AaScope* scope] returns[AaStatement* new_stmt]
 //-----------------------------------------------------------------------------------------------
 aA_Block_Statement[AaScope* scope] returns [AaBlockStatement* stmt]
     // all block statements are labeled and define a new namespace
-    : stmt = aA_Series_Block_Statement[scope] |
+    : (stmt = aA_Series_Block_Statement[scope] |
         stmt = aA_Parallel_Block_Statement[scope] |
         stmt = aA_Fork_Block_Statement[scope] |
-        stmt = aA_Branch_Block_Statement[scope]
+        stmt = aA_Branch_Block_Statement[scope])
+        (aA_Block_Statement_Exports[stmt])?
     ;
 
+//-----------------------------------------------------------------------------------------------
+// aA_Block_Statement_Exports : LPAREN (SIMPLE_IDENTIFIER IMPLIES SIMPLE_IDENTIFIER)+ RPAREN
+//-----------------------------------------------------------------------------------------------
+aA_Block_Statement_Exports[AaBlockStatement* stmt]
+    : LPAREN 
+        (formal:SIMPLE_IDENTIFIER IMPLIES actual:SIMPLE_IDENTIFIER
+            { 
+                stmt->Add_Export(formal->getText(), actual->getText());
+            }
+        )+ RPAREN
+    ;
 
 //-----------------------------------------------------------------------------------------------
 // aA_Fork_Block_Statement_Sequence : (aA_Atomic_Statement | aA_Join_Fork_Statement)+
@@ -975,21 +987,26 @@ aA_Constant_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Pipe_Object_Declaration: PIPE aA_Object_Declaration_Base 
+// aA_Pipe_Object_Declaration: PIPE aA_Object_Declaration_Base DEPTH UINTEGER
 //----------------------------------------------------------------------------------------------------------
 aA_Pipe_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         {
             string oname;
             AaType* otype = NULL;
             AaConstantLiteralReference* initial_value = NULL;
+            int pipe_depth = 1;
         }
-        : (st:PIPE aA_Object_Declaration_Base[scope,oname,otype,initial_value])
+        : (st:PIPE aA_Object_Declaration_Base[scope,oname,otype,initial_value]) 
+        (DEPTH did:UINTEGER {pipe_depth = atoi(did->getText().c_str());})?
         {
             if(initial_value != NULL)
                 cerr << "Warning: ignoring initial value for pipe " << oname << endl;
             obj = new AaPipeObject(scope,oname,otype);
+            if(pipe_depth > 1)
+                ((AaPipeObject*)obj)->Set_Depth(pipe_depth);
             obj->Set_Line_Number(st->getLine());
         }
+
         ;
 
 //----------------------------------------------------------------------------------------------------------
@@ -1352,7 +1369,7 @@ IS            : "$is";
 ASSIGN        : "$assign";
 CALL          : "$call";
 PHI           : "$phi";
-
+DEPTH         : "$depth";
 
 // Special symbols
 COLON		 : ':' ; // label separator

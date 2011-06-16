@@ -492,7 +492,9 @@ void AaBlockStatement::Write_VC_Links_Optimized(string hier_id, AaStatement* stm
 void AaBlockStatement::Write_VC_Links_Optimized(string hier_id, AaStatementSequence* sseq, ostream& ofile)
 {
   if(sseq->Get_Statement_Count() == 1 && sseq->Get_Statement(0)->Is_Block_Statement())
-    sseq->Get_Statement(0)->Write_VC_Control_Path_Optimized(ofile);
+    {
+      sseq->Get_Statement(0)->Write_VC_Links_Optimized(hier_id,ofile);
+    }
   else
     {
       hier_id = Augment_Hier_Id(hier_id,sseq->Get_VC_Name());

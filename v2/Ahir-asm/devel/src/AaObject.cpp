@@ -280,13 +280,17 @@ bool AaForeignStorageObject::Set_Addressed_Object_Representative(AaStorageObject
 //---------------------------------------------------------------------
 // AaPipeObject
 //---------------------------------------------------------------------
-AaPipeObject::AaPipeObject(AaScope* parent_tpr, string oname, AaType* otype):AaObject(parent_tpr,oname,otype) {};
+AaPipeObject::AaPipeObject(AaScope* parent_tpr, string oname, AaType* otype):AaObject(parent_tpr,oname,otype) 
+{
+  _depth = 1;
+};
 AaPipeObject::~AaPipeObject() {};
 void AaPipeObject::Print(ostream& ofile)
 {
   ofile << this->Tab();
   ofile << "$pipe ";
   this->AaObject::Print(ofile);
+  ofile << " $depth " << this->Get_Depth() << " ";
   ofile << endl << "// can point into ";
   Print_Storage_Object_Set(this->Get_Addressed_Objects(),ofile);
   ofile << endl;
@@ -306,6 +310,7 @@ void AaPipeObject::Write_VC_Model(ostream& ofile)
 
   Write_VC_Pipe_Declaration(this->Get_VC_Name(),
 			    this->_type->Size(),
+			    this->Get_Depth(),
 			    ofile);
 }
 

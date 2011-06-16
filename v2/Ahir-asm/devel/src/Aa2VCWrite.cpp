@@ -323,9 +323,9 @@ void Write_VC_Intermediate_Wire_Declaration(string name, AaType* type, ostream& 
 }
 
 
-void Write_VC_Pipe_Declaration(string name, int width, ostream& ofile)
+void Write_VC_Pipe_Declaration(string name, int width,int depth, ostream& ofile)
 {
-  ofile << "$pipe [" << name << "] " << width << endl;
+  ofile << "$pipe [" << name << "] " << width << " " << "$depth " << depth << endl;
 }
 
 void Write_VC_Memory_Space_Declaration(string space_name, string obj_name, AaType* type, ostream& ofile)

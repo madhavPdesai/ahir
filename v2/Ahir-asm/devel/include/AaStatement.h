@@ -30,7 +30,7 @@ class AaStatement: public AaScope
  public:
   AaStatement(AaScope* scope);
   
-  // add map entries in parent´s lookup map for easy access
+  // add map entries in parent's lookup map for easy access
   virtual void Map_Targets() 
   {
     // derived statements will map their targets
@@ -445,8 +445,10 @@ class AaBlockStatement: public AaStatement
   string _label;
   vector<AaObject*> _objects;
   AaStatementSequence* _statement_sequence;
+  map<string,string> _exports;
 
  public:
+
   virtual string Get_Label() { return(this->_label);}
   virtual bool Is_Block_Statement() {return(true);}
   virtual unsigned int Get_Statement_Count() 
@@ -462,6 +464,7 @@ class AaBlockStatement: public AaStatement
     this->_statement_sequence = statement_sequence;
   }
 
+  void Add_Export(string formal, string actual);
 
   virtual void Coalesce_Storage();
 

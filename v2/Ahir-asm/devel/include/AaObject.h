@@ -245,11 +245,15 @@ class AaPipeObject: public AaObject
   set<AaModule*> _reader_modules;
   set<AaModule*> _writer_modules;
 
+  int _depth;
  public:
 
   
   AaPipeObject(AaScope* scope_tpr,string oname, AaType* otype);
   ~AaPipeObject();
+
+  void Set_Depth(int d) {_depth = d; }
+  int Get_Depth() {return(_depth); }
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaPipeObject");}
