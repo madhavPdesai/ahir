@@ -133,7 +133,7 @@ namespace Aa {
       {
 	std::string ret_string;
 
-	if(isa<Constant>(v))
+	if(isa<Constant>(v) && !isa<GlobalVariable>(v))	  
 	  {
 	    ret_string = "( $bitcast (" + get_aa_type_name(v->getType(),*_module) + " ) " + get_name(v) + " ) ";
 	  }
@@ -673,7 +673,7 @@ namespace {
 	  return;
 	}
 
-      std::string ptr_name = prepare_operand(S.getPointerOperand());
+      std::string ptr_name  = prepare_operand(S.getPointerOperand());
       std::string data_name = prepare_operand(S.getValueOperand());
       if(is_global)
 	std::cout << ptr_name << " := ";
