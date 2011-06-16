@@ -26,83 +26,108 @@ entity OutputDeMuxBaseNoData is
 end OutputDeMuxBaseNoData;
 
 architecture Behave of OutputDeMuxBaseNoData is
-
-  signal ackR_sig : BooleanArray(nreqs-1 downto 0);
-  signal reqRreg, reqRfinal_pre_arb, reqRfinal, valid : std_logic_vector(nreqs-1 downto 0);
-  signal ackL_sig : std_logic;
   
+  signal ackL_sig : std_logic_vector(nreqs-1 downto 0);
 begin  -- Behave
-
-  -----------------------------------------------------------------------------
-  -- reqRfinal
-  -----------------------------------------------------------------------------
-  NoArb: if no_arbitration generate
-     reqRfinal <= reqRfinal_pre_arb;
-  end generate NoArb;
-
-  Arb: if not no_arbitration generate
-     reqRfinal <= PriorityEncode(reqRfinal_pre_arb);
-  end generate Arb;
- 
 
   -----------------------------------------------------------------------------
   -- parallel generate across all requesters
   -----------------------------------------------------------------------------
   PGen: for I in reqR'range generate
-
-    ---------------------------------------------------------------------------
-    -- valid true if this I is mentioned in tag
-    ---------------------------------------------------------------------------
-    valid(I) <= '1' when (I = To_Integer(To_Unsigned(tagL))) else '0';
-
-    ---------------------------------------------------------------------------
-    -- set/clear pulse request from right
-    ---------------------------------------------------------------------------
-    process(clk,reset,reqR,ackR_sig)
-      variable set,clear : boolean;
-    begin
-      set := reqR(I);
-      clear := (reset = '1') or ackR_sig(I);
+    RegFSM: block
+      signal valid: std_logic;
+      signal lhs_clear : std_logic;
+      signal rhs_state, lhs_state : std_logic;
+    begin  -- block Reg
       
-      if(clk'event and clk = '1') then
-        if(clear) then
-          reqRreg(I) <= '0';
-        elsif set then
-          reqRreg(I) <= '1';
+      ---------------------------------------------------------------------------
+      -- valid true if this I is mentioned in tag
+      ---------------------------------------------------------------------------
+      valid <= '1' when (reqL = '1') and (I = To_Integer(To_Unsigned(tagL))) else '0';
+
+      ---------------------------------------------------------------------------
+      -- lhs-state machine.
+      ---------------------------------------------------------------------------
+      process(clk,lhs_state, lhs_clear,reset,valid)
+        variable nstate : std_logic;
+        variable aL_var : std_logic;
+      begin
+        nstate := lhs_state;
+        aL_var := '0';
+        
+        case lhs_state is
+          when '0' =>
+            if(valid = '1') then
+              nstate := '1';
+              aL_var := '1';
+            end if;
+          when '1' =>
+            if(lhs_clear = '1') then
+              nstate := '0';
+            end if;
+          when others => null;
+        end case;
+
+        if(reset = '1') then
+          nstate := '0';
+        end if;        
+
+        ackL_sig(I) <= aL_var;
+        
+        if(clk'event and clk = '1') then
+          lhs_state <= nstate;
         end if;
-      end if;
-    end process;
-
-    reqRfinal_pre_arb(I) <= '1' when (reqR(I) or (reqRreg(I) = '1') ) and (valid(I) = '1') else '0';
-
-    ---------------------------------------------------------------------------
-    -- ackR(I) 
-    ---------------------------------------------------------------------------
-    process(clk,reqRfinal(I),reqL,ackL_sig,reset)
-
-      variable latch : boolean;
-    begin
+      end process;
 
       -------------------------------------------------------------------------
-      -- request is pending at I and I is valid and there is
-      -- a request from the right which has been acknowledged
+      -- rhs state machine
       -------------------------------------------------------------------------
-      latch :=  (reqRfinal(I) = '1')  and (reqL = '1') and (ackL_sig = '1') and (reset = '0');
+     process(clk,rhs_state,reset,reqR(I),lhs_state)
+       variable nstate : std_logic;
+       variable aR_var : boolean;
+       variable lhs_clear_var : std_logic;
+     begin
+        nstate := rhs_state;
+        aR_var := false;
+        lhs_clear_var := '0';
+        
+        case rhs_state is
+          when '0' =>
+            if(reqR(I)) then
+              if(lhs_state = '1') then
+                aR_var := true;
+                lhs_clear_var := '1';
+              else
+                nstate := '1';
+              end if;
+            end if;
+          when '1' =>
+            if(lhs_state = '1') then
+              lhs_clear_var := '1';
+              aR_var := true;
+              nstate := '0';
+            end if;
+          when others => null;
+        end case;
 
-      ackR_sig(I) <= latch;
-    end process;
+        if(reset = '1') then
+          nstate := '0';
+        end if;        
+
+        ackR(I) <= aR_var;
+        lhs_clear <= lhs_clear_var;
+        
+        if(clk'event and clk = '1') then
+          rhs_state <= nstate;
+        end if;
+     end process;
+    end block RegFSM;
+    
   end generate PGen;
 
   -----------------------------------------------------------------------------
-  -- ackR
-  -----------------------------------------------------------------------------
-  ackR <= ackR_sig;
-  
-  -----------------------------------------------------------------------------
   -- ackL
   -----------------------------------------------------------------------------
-  ackL_sig <= reqL and OrReduce(reqRfinal);
-  ackL <= ackL_sig;
-
+  ackL <= OrReduce(ackL_sig);
 
 end Behave;

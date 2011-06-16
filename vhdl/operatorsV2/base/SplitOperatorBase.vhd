@@ -60,6 +60,10 @@ begin  -- Behave
 
   assert((num_inputs = 1) or (num_inputs = 2)) report "either 1 or 2 inputs" severity failure;
 
+  reqR <= reqL;
+  ackL <= ackR;
+  tagR <= tagL;
+  
   comb_block: GenericCombinationalOperator
     generic map (
       operator_id                 => operator_id,
@@ -80,119 +84,8 @@ begin  -- Behave
       use_constant                => use_constant)
     port map (
       data_in => dataL,
-      result  => result);
+      result  => dataR);
 
 
-  -- state machine for single cycle delay case
-  SingleCycle : if not zero_delay generate
-    
-    process(clk, reset, ackR, reqL, state_sig)
-      variable next_state, ackL_var, reqR_var, latch_var : std_logic;
-    begin
-      next_state := state_sig;
-
-      ackL_var  := '0';
-      reqR_var  := '0';
-      latch_var := '0';
-
-      if(reset = '1') then
-        next_state := '0';
-      else
-        case state_sig is
-          when '0' =>
-            if(reqL = '1') then
-              latch_var  := '1';
-              ackL_var   := '1';
-              next_state := '1';
-            end if;
-          when '1' =>
-            reqR_var := '1';
-            if(ackR = '1' and reqL = '1') then
-              latch_var := '1';
-              ackL_var  := '1';
-            elsif (ackR = '1' and reqL = '0') then
-              next_state := '0';
-            end if;
-          when others => null;
-        end case;
-      end if;
-
-      ackL <= ackL_var;
-      reqR <= reqR_var;
-
-      if(clk'event and clk = '1') then
-        state_sig <= next_state;
-        if(latch_var = '1') then
-          dataR <= result;
-          tagR <= tagL;
-        end if;
-      end if;
-      
-    end process;
-  end generate SingleCycle;
-
-  ZeroDelay : if zero_delay generate
-    Bypass : block
-      signal data_reg : std_logic_vector(dataR'high downto dataR'low);
-      signal tag_reg  : std_logic_vector(tagR'length-1 downto 0);
-      signal bypass   : std_logic;
-    begin  -- block Bypass
-      process(clk, reset, ackR, reqL, state_sig)
-        variable next_state, ackL_var, reqR_var, latch_var : std_logic;
-      begin
-        next_state := state_sig;
-
-        ackL_var  := '0';
-        reqR_var  := '0';
-        latch_var := '0';
-
-        if(reset = '1') then
-          next_state := '0';
-        else
-          case state_sig is
-            when '0' =>
-              if(reqL = '1') then
-
-                ackL_var := '1';
-                reqR_var := '1';
-
-                if(ackR = '0') then
-                  latch_var  := '1';
-                  next_state := '1';
-                end if;
-              end if;
-            when '1' =>
-              reqR_var := '1';
-              if(reqL = '1' and ackR = '1') then
-                ackL_var := '1';
-              elsif reqL = '1' and ackR = '0' then
-                latch_var := '1';
-              elsif reqL = '0' and ackR = '1' then
-                next_state := '0';
-              end if;
-            when others => null;
-          end case;
-        end if;
-
-        ackL   <= ackL_var;
-        reqR   <= reqR_var;
-        bypass <= latch_var;
-
-        if(clk'event and clk = '1') then
-          state_sig <= next_state;
-          if(latch_var = '1') then
-            data_reg <= result;
-            tag_reg  <= tagL;
-          end if;
-        end if;
-      end process;
-
-      dataR <= result when bypass = '1'                      else data_reg;
-      tagR  <= tagL   when  bypass = '1' else tag_reg ;
-      
-    end block Bypass;
-    
-  end generate ZeroDelay;
-  
 end Vanilla;
 

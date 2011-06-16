@@ -117,7 +117,11 @@ begin
                                  
     begin
       ack_var := '0';
-      index := To_Integer(lr_addr_in(((R+1)*addr_width)-1 downto R*addr_width));
+      index := 0;
+      
+      if(lr_req_in(R) = '1') then
+        index := To_Integer(lr_addr_in(((R+1)*addr_width)-1 downto R*addr_width));
+      end if;
       
       if(lr_req_in(R) = '1' and lc_ack_flag(R) = '0') then
         ack_var := '1';
@@ -126,16 +130,20 @@ begin
       lr_ack_out(R) <= ack_var;
       
       if(clock'event and clock = '1') then
+        if(ack_var = '1') then
+          assert (index < num_registers) report "index overflow." severity error;
+          assert (index >= 0) report "index underflow" severity error;
+          
+          lc_data_out_sig(((R+1)*data_width)-1 downto R*data_width) <= register_array(index);
+          lc_tag_out_sig(((R+1)*tag_width)-1 downto R*tag_width) <=
+            lr_tag_in(((R+1)*tag_width)-1 downto R*tag_width);
+          
+        end if;
+        
         if(reset = '1') then
           lc_ack_flag(R) <= '0';
         else
           if(ack_var = '1') then
-            assert index < num_registers report "index overflow." severity error;
-            assert index >= 0 report "index underflow" severity error;
-
-            lc_data_out_sig(((R+1)*data_width)-1 downto R*data_width) <= register_array(index);
-            lc_tag_out_sig(((R+1)*tag_width)-1 downto R*tag_width) <=
-              lr_tag_in(((R+1)*tag_width)-1 downto R*tag_width);
             lc_ack_flag(R) <= '1';
           elsif lc_ack_flag(R) = '1' and lc_req_in(R) = '1' then
             lc_ack_flag(R) <= '0';
@@ -180,50 +188,49 @@ begin
     
     if(reset = '1') then
       sc_ack_clear := (others => '1');
-    else
+    end if;
       
-      -- for each register.
-      for REG  in 0 to num_registers-1 loop
-
-        -- writes: for each reg, lowest index succeeds.
-        for W in 0 to num_stores-1 loop
-
-          -- if W is a store request to this register
-          -- and no j
-          if(sr_pending(REG) = '0' and
-             sr_req_in(W) = '1' and
-             sc_ack_flag(W) = '0' and 
-             (sr_addr_in(((W+1)*addr_width)-1 downto W*addr_width) = Natural_To_SLV(REG,addr_width)))
-          then
-            sr_pending(REG) := '1';
-            sc_ack_set(W) := '1';
-            register_array_var(REG) := sr_data_in(((W+1)*data_width)-1 downto W*data_width);
-            sc_tag_out_var(((W+1)*tag_width)-1 downto W*tag_width) :=
-              sr_tag_in(((W+1)*tag_width)-1 downto W*tag_width);
-
-            exit;
-          end if;
-        end loop;  -- W
-      end loop;  -- REG
-    end if;      
-
+    -- for each register.
+    for REG  in 0 to num_registers-1 loop
+      
+      -- writes: for each reg, lowest index succeeds.
+      for W in 0 to num_stores-1 loop
+        
+        -- if W is a store request to this register
+        -- and no j
+        if(sr_pending(REG) = '0' and
+           sr_req_in(W) = '1' and
+           sc_ack_flag(W) = '0' and 
+           (sr_addr_in(((W+1)*addr_width)-1 downto W*addr_width) = Natural_To_SLV(REG,addr_width)))
+        then
+          sr_pending(REG) := '1';
+          sc_ack_set(W) := '1';
+          register_array_var(REG) := sr_data_in(((W+1)*data_width)-1 downto W*data_width);
+          sc_tag_out_var(((W+1)*tag_width)-1 downto W*tag_width) :=
+            sr_tag_in(((W+1)*tag_width)-1 downto W*tag_width);
+          
+          exit;
+        end if;
+      end loop;  -- W
+    end loop;  -- REG
+    
     -- output latches and registers
     if(clock'event and clock = '1') then
       register_array <= register_array_var;
       sc_tag_out_sig <= sc_tag_out_var;
     end if;
-    
+  
     -- lc/sc ack clears.
     if(clock'event and clock = '1') then                
       for W in 0 to num_stores-1 loop
-
-	-- if ack and req are both asserted, clear
-	-- it unless asked to set it.
+        
+        -- if ack and req are both asserted, clear
+        -- it unless asked to set it.
         if(sc_ack_flag(W) = '1' and sc_req_in(W) = '1') then
           sc_ack_clear(W) := '1';
         end if;
-
-	-- set dominant!
+        
+        -- set dominant!
         if(sc_ack_set(W) = '1') then
           sc_ack_flag(W) <= '1';
         elsif (sc_ack_clear(W) = '1') then

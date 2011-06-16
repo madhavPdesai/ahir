@@ -130,7 +130,18 @@ namespace Aa {
     int op_index = 0;
 
     if(!isa<Function>(v))
-      return(this->get_name(v));
+      {
+	std::string ret_string;
+
+	if(isa<Constant>(v))
+	  {
+	    ret_string = "( $bitcast (" + get_aa_type_name(v->getType(),*_module) + " ) " + get_name(v) + " ) ";
+	  }
+	else
+	  ret_string = get_name(v);
+
+	return(ret_string);
+      }
     else
       {
 	std::cerr << "Warning: operands which are functions will be ignored" << std::endl;

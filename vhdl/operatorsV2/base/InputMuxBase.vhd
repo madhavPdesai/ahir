@@ -51,19 +51,15 @@ begin  -- Behave
   -- pulse to level translate
   -----------------------------------------------------------------------------
   P2L: for I in nreqs-1 downto 0 generate
-    p2Linstance: Pulse_To_Level_Translate_Entity generic map(suppr_imm_ack => suppress_immediate_ack(I), push_mode => true)
+    p2Linstance: Pulse_To_Level_Translate_Entity generic map(suppr_imm_ack => suppress_immediate_ack(I), push_mode => false)
       port map(rL => reqL(I), rR => reqP(I), aL => ackL(I), aR => ackP(I),
                en => enP(I), clk => clk, reset => reset);     
 
-    process(clk)
+    process(dataL)
       variable regv : std_logic_vector(owidth-1 downto 0);
     begin
-      if(clk'event and clk = '1') then
-        if(enP(I) = '1') then
-          Extract(dataL,I,regv);
-          dataP(I) <= regv;
-        end if;
-      end if;
+      Extract(dataL,I,regv);
+      dataP(I) <= regv;
     end process;
     
   end generate P2L;
