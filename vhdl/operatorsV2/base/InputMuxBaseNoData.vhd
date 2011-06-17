@@ -27,7 +27,7 @@ end InputMuxBaseNoData;
 
 architecture Behave of InputMuxBaseNoData is
 
-  signal reqP,ackP,enP,ssig : std_logic_vector(nreqs-1 downto 0);
+  signal reqP,ackP,ssig : std_logic_vector(nreqs-1 downto 0);
   signal fEN: std_logic_vector(nreqs-1 downto 0);  
 
   constant tag0 : std_logic_vector(twidth-1 downto 0) := (others => '0');
@@ -46,9 +46,8 @@ begin  -- Behave
         signal state : P2LState;
       begin  -- block P2L          
         p2Linst: Pulse_To_Level_Translate_Entity
-          generic map (suppr_imm_ack => suppress_immediate_ack(I), push_mode => false)
           port map (rL => reqL(I), rR => reqP(I), aL => ackL(I), aR => ackP(I),
-                                 en => enP(I), clk => clk, reset => reset);
+                                 clk => clk, reset => reset);
       end block P2LBlk;
 
   end generate P2L;

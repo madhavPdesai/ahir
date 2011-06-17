@@ -185,6 +185,11 @@ void vcSystem::Warning(string err_msg)
   cerr << "Warning: " << err_msg << endl;
 }
 
+void vcSystem::Info(string err_msg)
+{
+  cerr << "Info: " << err_msg << endl;
+}
+
 
 bool vcSystem::Get_Error_Flag()
 {

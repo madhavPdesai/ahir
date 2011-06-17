@@ -496,6 +496,9 @@ public:
   }
 
   void Update_Compatibility_Map();
+  bool Look_Back_For_Compatibility(vcCompatibilityLabel* from_here, 
+				   vcCompatibilityLabel* check_against,
+				   set<vcCompatibilityLabel*>& visited_set);
   void Mark_As_Compatible(set<vcCompatibilityLabel*>& uset, set<vcCompatibilityLabel*>& vset);
   void Print_Compatibility_Map(ostream& ofile);
 };

@@ -31,8 +31,7 @@ end InputMuxBase;
 
 architecture Behave of InputMuxBase is
 
-  signal reqP,ackP,enP,fEN : std_logic_vector(nreqs-1 downto 0);
-
+  signal reqP,ackP,fEN : std_logic_vector(nreqs-1 downto 0);
 
   type WordArray is array (natural range <>) of std_logic_vector(owidth-1 downto 0);
   signal dataP : WordArray(nreqs-1 downto 0);
@@ -51,9 +50,9 @@ begin  -- Behave
   -- pulse to level translate
   -----------------------------------------------------------------------------
   P2L: for I in nreqs-1 downto 0 generate
-    p2Linstance: Pulse_To_Level_Translate_Entity generic map(suppr_imm_ack => suppress_immediate_ack(I), push_mode => false)
+    p2Linstance: Pulse_To_Level_Translate_Entity
       port map(rL => reqL(I), rR => reqP(I), aL => ackL(I), aR => ackP(I),
-               en => enP(I), clk => clk, reset => reset);     
+               clk => clk, reset => reset);     
 
     process(dataL)
       variable regv : std_logic_vector(owidth-1 downto 0);

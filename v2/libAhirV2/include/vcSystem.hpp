@@ -132,6 +132,7 @@ class vcSystem: public vcRoot
 
   void Elaborate(); // elaborate the system...
 
+  static void Info(string err_msg); // {_error_flag = true;}
   static void Error(string err_msg); // {_error_flag = true;}
   static void Warning(string err_msg); // {_warning_flag = true;}
   static bool Get_Error_Flag(); // { return _error_flag; }

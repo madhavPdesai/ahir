@@ -27,7 +27,7 @@ end entity;
 
 architecture Base of InputPort is
 
-  signal reqR, ackR, eN : std_logic_vector(num_reqs-1 downto 0);
+  signal reqR, ackR : std_logic_vector(num_reqs-1 downto 0);
   signal fEN: std_logic_vector(num_reqs-1 downto 0);
 
   type   IPWArray is array(integer range <>) of std_logic_vector(data_width-1 downto 0);
@@ -44,12 +44,11 @@ begin
     P2L : block
       signal state : P2LState;
     begin  -- block P2L
-      p2LInst: Pulse_To_Level_Translate_Entity generic map(suppr_imm_ack => true,push_mode => false)
+      p2LInst: Pulse_To_Level_Translate_Entity
         port map (rL            => req(I),
                   rR            => reqR(I),
                   aL            => ack(I),
                   aR            => ackR(I),
-                  en            => eN(I),
                   clk           => clk,
                   reset         => reset);
 

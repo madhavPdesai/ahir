@@ -1472,17 +1472,17 @@ void vcControlPath::Mark_As_Compatible(set<vcCompatibilityLabel*>& uset, set<vcC
 
 void vcControlPath::Update_Compatibility_Map()
 {
+  vector<vcCompatibilityLabel*> labels;
   // for each label u
   //    look at the successor set succ(u).
   //        If w,x are two successors of u with unlabeled inarcs
   //        then  w,x are compatible.
   // 
-  //        If w,x are two successors and if their inarcs
-  //        correspond to different forks, then w,x are compatible.
   for(set<vcCompatibilityLabel*>::iterator iter = this->_compatibility_label_set.begin();
       iter != this->_compatibility_label_set.end();
       iter++)
     {
+      labels.push_back(*iter);
 
       map<vcTransition*, set<vcCompatibilityLabel*> > fork_map;
       // for each label u
@@ -1516,6 +1516,72 @@ void vcControlPath::Update_Compatibility_Map()
 	    }
 	}
     }
+
+  // unlabeled arc condition.  For each pair u,v, see if u has an ancestor w
+  // through an unlabeled arc such that path from w->u starts with an
+  // unlabeled edge and w is a nearest common ancestor of u and v.
+  int uindex, vindex;
+  for(uindex = 0; uindex < labels.size(); uindex++)
+    {
+      vcCompatibilityLabel* u = labels[uindex];
+      for(vindex = uindex+1; vindex < labels.size(); vindex++)
+	{
+	  vcCompatibilityLabel* v = labels[vindex];
+	  if(!this->Are_Compatible(u,v))
+	    {
+	      set<vcCompatibilityLabel*> visited_set;
+	      if(Look_Back_For_Compatibility(u,v,visited_set))
+		{
+		  _compatible_label_map[u].insert(v);
+		  if(vcSystem::_verbose_flag)
+		    {
+		      string info_str = u->Get_Id() + ",  " + v->Get_Id() + 
+			" found to be compatible through lookback search";
+		      vcSystem::Info(info_str);
+		    }
+		}
+	      visited_set.clear();
+	    }
+	}
+    }
+}
+
+
+bool vcControlPath::Look_Back_For_Compatibility(vcCompatibilityLabel* from_here, 
+						vcCompatibilityLabel* check_against,
+						set<vcCompatibilityLabel*>& visited_set)
+{
+  bool ret_flag = false;
+  for(set<vcCompatibilityLabel*>::iterator iter = from_here->_unlabeled_in_arcs.begin(), fiter = from_here->_unlabeled_in_arcs.end();
+      iter != fiter;
+      iter++)
+    {
+
+      vcCompatibilityLabel* upred = (*iter);
+      if(visited_set.find(upred) == visited_set.end())
+	{
+	  if(this->_label_descendent_map[upred].find(check_against) == this->_label_descendent_map[upred].end())
+	    {
+	      visited_set.insert(upred);
+	      if(Look_Back_For_Compatibility(upred,check_against,visited_set))
+		return(true);
+	    }
+	  else
+	    return(true);
+	}
+    }
+
+  vcCompatibilityLabel* lpred = from_here->_labeled_in_arc.first;
+  if(lpred != NULL)
+    {
+      if(this->_label_descendent_map[lpred].find(check_against) == this->_label_descendent_map[lpred].end())
+	{
+	  if(Look_Back_For_Compatibility(lpred,check_against,visited_set))
+	    return(true);
+	}
+    }
+
+  return(false);
 }
 
 void vcControlPath::Print_Compatibility_Map(ostream& ofile)
