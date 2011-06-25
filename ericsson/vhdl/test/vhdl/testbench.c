@@ -8,8 +8,7 @@
 // the next two inclusions are
 // to be used in the software version
 //  
-#include <SocketLib.h>
-#include "prog.h"
+#include <vhdlCStubs.h>
 //
 //
 
@@ -26,26 +25,15 @@ void Exit(int sig)
 	exit(0);
 }
 
-void* foo_(void* a)
+void *ctrl_module_(void* fargs)
 {
-	foo();
+   ctrl_module();
 }
-void *in_ctrl_module_(void* fargs)
+void *data_module_(void* fargs)
 {
-   in_ctrl_module();
+   data_module();
 }
-void *in_data_module_(void* fargs)
-{
-   in_data_module();
-}
-void *out_ctrl_module_(void* fargs)
-{
-   out_ctrl_module();
-}
-void *out_data_module_(void* fargs)
-{
-   out_data_module();
-}
+
 void *write_pipe_data_(void* a)
 {
 	PipeArgs* aa = (PipeArgs*) a;
@@ -83,13 +71,14 @@ int main(int argc, char* argv[])
 		pipe_ctrl_in[i] = 10-i;
 	}
 
-	pthread_t foo_t, ic_t, id_t, oc_t, od_t, wc_t, wd_t, rc_t, rd_t;
+ 	fprintf(stdout,"to in_ctrl and in_data, we send:\n");
+        for(i = 0; i < 10; i++) 
+ 	   fprintf(stdout," ctrl %0x data %0llx\n", pipe_ctrl_in[i], pipe_data_in[i]);
 
-	//pthread_create(&foo_t,NULL,&foo_,NULL);
-	//pthread_create(&ic_t,NULL,&in_ctrl_module_,NULL);
-	//pthread_create(&id_t,NULL,&in_data_module_,NULL);
-	//pthread_create(&oc_t,NULL,&out_ctrl_module_,NULL);
-	//pthread_create(&od_t,NULL,&out_data_module_,NULL);
+	pthread_t foo_t, c_t, d_t, wc_t, wd_t, rc_t, rd_t;
+
+	//pthread_create(&c_t,NULL,&ctrl_module_,NULL);
+	//pthread_create(&d_t,NULL,&data_module_,NULL);
 
 	PipeArgs wc = {strdup("in_ctrl"), (void*) pipe_ctrl_in};
 	PipeArgs wd = {strdup("in_data"), (void*) pipe_data_in};
@@ -110,11 +99,8 @@ int main(int argc, char* argv[])
 
  	fprintf(stdout,"from out_ctrl and out_data, we read:\n");
         for(i = 0; i < 10; i++) 
- 	   fprintf(stdout," ctrl %x data %llx\n", pipe_ctrl_out[i], pipe_data_out[i]);
+ 	   fprintf(stdout," ctrl %0x data %0llx\n", pipe_ctrl_out[i], pipe_data_out[i]);
 
-	//pthread_cancel(ic_t);
-	//pthread_cancel(id_t);
-	//pthread_cancel(oc_t);
-	//pthread_cancel(od_t);
-	//pthread_cancel(foo_t);
+	//pthread_cancel(c_t);
+	//pthread_cancel(d_t);
 }

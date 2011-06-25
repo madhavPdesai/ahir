@@ -70,13 +70,9 @@ architecture default_arch of netfpga_module is
   signal out_data_pipe_read_req : std_logic_vector(0 downto 0);
   signal out_data_pipe_read_ack : std_logic_vector(0 downto 0);  
 
-  type InFSMState is (idle,req,actrl,adata,done);
-  signal in_fsm_state : InFSMState;
-  signal enable_in_regs: std_logic;
-
-  type OutFSMState is (req,actrl,adata,done);
-  signal out_fsm_state: OutFSMState;
-  signal enable_out_data, enable_out_ctrl : std_logic;
+  type MatchingFSMState is (idle,actrl,adata);
+  signal in_fsm_state : MatchingFSMState;
+  signal out_fsm_state: MatchingFSMState;
 
   signal in_nearly_full: std_logic;
   signal in_push_req,in_push_ack,in_pop_req,in_pop_ack: std_logic;
@@ -86,8 +82,11 @@ architecture default_arch of netfpga_module is
     signal out_push_req,out_push_ack,out_pop_req,out_pop_ack: std_logic;
     signal out_qdata_in, out_qdata_out : std_logic_vector(71 downto 0);    
 
+  signal out_data_pipe_enable, out_ctrl_pipe_enable: std_logic;
   signal out_data_pipe_reg   : std_logic_vector(63 downto 0);
   signal out_ctrl_pipe_reg   : std_logic_vector(7 downto 0);
+  signal out_data_pipe_final   : std_logic_vector(63 downto 0);
+  signal out_ctrl_pipe_final   : std_logic_vector(7 downto 0);
  
 begin  -- default_arch
     
@@ -105,36 +104,41 @@ begin  -- default_arch
   -----------------------------------------------------------------------------
   -- from inqueue, generate two writes to the two pipes.
   -----------------------------------------------------------------------------
-  process(clk)
-    variable next_state: InFSMState;
+  process(clk,reset, in_fsm_state, in_pop_ack, in_ctrl_pipe_write_ack, in_data_pipe_write_ack)
+    variable next_state: MatchingFSMState;
+    variable dpipe_req_var, cpipe_req_var, in_pop_req_var: std_logic;
   begin
     next_state := in_fsm_state;
+    dpipe_req_var := '0';
+    cpipe_req_var := '0';
+    in_pop_req_var := '0';
+    
     case in_fsm_state is
       when idle =>
         if(in_pop_ack = '1') then
-          next_state := req;
-        end if;
-      when req =>
-        if(in_ctrl_pipe_write_ack(0) = '1')  then
-          if(in_data_pipe_write_ack(0) = '1') then
-            next_state := done;
-          else
-            next_state := actrl;
+       	  dpipe_req_var := '1';
+          cpipe_req_var := '1';
+          if(in_ctrl_pipe_write_ack(0) = '1')  then
+            if(in_data_pipe_write_ack(0) = '0') then
+              next_state := actrl;
+            else
+	      in_pop_req_var := '1';
+            end if;
+          elsif(in_data_pipe_write_ack(0) = '1')  then
+            next_state := adata;
           end if;
-        elsif(in_data_pipe_write_ack(0) = '1')  then
-          next_state := adata;
-        end if;
+	end if;
       when actrl =>
+       	dpipe_req_var := '1';
         if(in_data_pipe_write_ack(0) = '1')  then
-          next_state := done;
+	  in_pop_req_var := '1';
+          next_state := idle;
         end if;
       when adata =>
+        cpipe_req_var := '1';
         if(in_ctrl_pipe_write_ack(0) = '1')  then
-          next_state := done;
-        end if;
-      when done =>
-        if(in_pop_ack = '1') then
-            next_state := req;
+	  in_pop_req_var := '1';
+          next_state := idle;
         end if;
       when others => null;
     end case;
@@ -143,27 +147,17 @@ begin  -- default_arch
       next_state := idle;
     end if;
   
+    in_pop_req <= in_pop_req_var;
+    in_ctrl_pipe_write_req(0) <= cpipe_req_var;
+    in_data_pipe_write_req(0) <= dpipe_req_var;
+
     if(clk'event and clk = '1') then
       in_fsm_state <= next_state;
     end if;
   end process;
   
-
-  -- ack to fifo.
-  in_pop_req <= '1' when (in_fsm_state = idle) or (in_fsm_state = done) else '0';
-  in_ctrl_pipe_write_req(0) <= '1' when (in_fsm_state = req) or (in_fsm_state = adata) else '0';
-  in_data_pipe_write_req(0) <= '1' when (in_fsm_state = req) or (in_fsm_state = actrl) else '0';
-  enable_in_regs <= '1' when (in_pop_req = '1') and (in_pop_ack = '1') else '0';
-  
-  process(clk)
-  begin
-    if(clk'event and clk = '1') then
-      if(enable_in_regs = '1') then
-        in_ctrl_pipe_write_data <= in_qdata_out(71 downto 64);
-        in_data_pipe_write_data <= in_qdata_out(63 downto 0);
-      end if;
-    end if;
-  end process;
+  in_ctrl_pipe_write_data <= in_qdata_out(71 downto 64);
+  in_data_pipe_write_data <= in_qdata_out(63 downto 0);
   
   ahirInstance: ahir_system 
     port map(
@@ -190,75 +184,91 @@ begin  -- default_arch
   --
   -- write data from out pipes into out-queue.
   -----------------------------------------------------------------------------
-  process(clk)
-    variable next_state : OutFSMState;
+  process(clk,reset, out_fsm_state, out_push_ack, out_ctrl_pipe_read_ack, out_data_pipe_read_ack)
+    variable next_state: MatchingFSMState;
+    variable dpipe_req_var, cpipe_req_var, out_push_req_var: std_logic;
+    variable out_data_en_var, out_ctrl_en_var: std_logic;
   begin
     next_state := out_fsm_state;
+    dpipe_req_var := '0';
+    cpipe_req_var := '0';
+    out_push_req_var := '0';
+    out_data_en_var := '0';
+    out_ctrl_en_var := '0';
 
+    
     case out_fsm_state is
-      when req =>
-        if(out_ctrl_pipe_read_ack(0) = '1')  then
-          if(out_data_pipe_read_ack(0) = '1') then
-            next_state := done;
-          else
-            next_state := actrl;
+      when idle =>
+        if(out_push_ack = '1') then
+       	  dpipe_req_var := '1';
+          cpipe_req_var := '1';
+          if(out_ctrl_pipe_read_ack(0) = '1')  then
+	    out_ctrl_en_var := '1';
+            if(out_data_pipe_read_ack(0) = '0') then
+              next_state := actrl;
+            else
+	      out_data_en_var := '1';
+	      out_push_req_var := '1';
+            end if;
+          elsif(out_data_pipe_read_ack(0) = '1')  then
+	    out_data_en_var := '1';
+            next_state := adata;
           end if;
-        elsif(out_data_pipe_read_ack(0) = '1')  then
-          next_state := adata;
-        end if;
+	end if;
       when actrl =>
+       	dpipe_req_var := '1';
         if(out_data_pipe_read_ack(0) = '1')  then
-          next_state := done;
+	  out_data_en_var := '1';
+	  out_push_req_var := '1';
+          next_state := idle;
         end if;
       when adata =>
+        cpipe_req_var := '1';
         if(out_ctrl_pipe_read_ack(0) = '1')  then
-          next_state := done;
-        end if;
-      when done =>
-        if(out_push_ack = '1') then
-          next_state := req;
+	  out_ctrl_en_var := '1';
+	  out_push_req_var := '1';
+          next_state := idle;
         end if;
       when others => null;
     end case;
 
     if(reset = '1') then
-      next_state := req;
+      next_state := idle;
     end if;
+  
+    out_push_req <= out_push_req_var;
 
+    out_data_pipe_enable <= out_data_en_var;
+    out_ctrl_pipe_enable <= out_ctrl_en_var;
+
+    out_ctrl_pipe_read_req(0) <= cpipe_req_var;
+    out_data_pipe_read_req(0) <= dpipe_req_var;
 
     if(clk'event and clk = '1') then
       out_fsm_state <= next_state;
-    end if;      
-  end process;
-
-  out_push_req <= '1' when (out_fsm_state = done) else '0';
-  out_ctrl_pipe_read_req(0) <= '1' when (out_fsm_state = req) or (out_fsm_state = adata) else '0';
-  out_data_pipe_read_req(0) <= '1' when (out_fsm_state = req) or (out_fsm_state = actrl) else '0';
-  enable_out_data <= '1' when (out_data_pipe_read_ack(0) = '1') else '0';
-  enable_out_ctrl <= '1' when (out_ctrl_pipe_read_ack(0) = '1') else '0';  
-
-  process(clk)
-  begin
-    if(clk'event and clk = '1') then
-      if(enable_out_data = '1') then
-        out_data_pipe_reg <= out_data_pipe_read_data;
-      end if;
     end if;
   end process;
-
+  
   process(clk)
   begin
-    if(clk'event and clk = '1') then
-      if(enable_out_ctrl = '1') then
-        out_ctrl_pipe_reg <= out_ctrl_pipe_read_data;
-      end if;
-    end if;
+	if(clk'event and clk = '1') then
+		if(out_data_pipe_enable = '1') then
+			out_data_pipe_reg <= out_data_pipe_read_data;
+		end if;
+		if(out_ctrl_pipe_enable = '1') then
+			out_ctrl_pipe_reg <= out_ctrl_pipe_read_data;
+		end if;
+		
+	end if;
   end process;
+
+  out_ctrl_pipe_final <= out_ctrl_pipe_read_data when out_ctrl_pipe_enable = '1' else out_ctrl_pipe_reg;
+  out_data_pipe_final <= out_data_pipe_read_data when out_data_pipe_enable = '1' else out_data_pipe_reg;
+  out_qdata_in <= out_ctrl_pipe_final & out_data_pipe_final;
 
   -----------------------------------------------------------------------------
   -- the output queue.
   -----------------------------------------------------------------------------
-  out_qdata_in <= out_ctrl_pipe_reg & out_data_pipe_reg;
   OutFifo: ProtocolMatchingFifo generic map(queue_depth => 3, data_width => 72)
         port map(clk => clk, reset => reset,
                  data_in => out_qdata_in, push_req => out_push_req, push_ack => out_push_ack, nearly_full => out_nearly_full,
