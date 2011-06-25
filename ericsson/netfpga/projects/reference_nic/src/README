@@ -1,0 +1,68 @@
+The folder contains several VHDL files, and a single
+verilog file.  Of these, the following are necessary
+for simulation/synthesis.
+	ahir.vhdl
+	ieee_proposed.vhdl
+	ahir_system.vhdl
+	netfpga_module.vhd
+	user_data_path.v
+
+The remaining files are for various possible combinations
+during verification.
+
+	ahir_system.real.vhd
+		this is a real ahir file generated in the
+		example ahir/ericsson/vhdl/test.  The system
+		offers a throughput of 64 bits every 4 cycles.
+
+	ahir_system.simple.vhd
+		this is a handwritten VHDL file which models
+		a trivial AHIR system (input is forwarded immediately
+                to output).
+		This system offers a throughput of 64 bits every 2
+                cycles.
+
+	netfpga_module.real.vhd
+		this is the real netfpga module which instantiates
+		an AHIR system inside.
+	
+	netfpga_module.simple.vhd
+		this is a simple netfpga module which just interfaces
+		with the NetFPGA pipeline and forwards data. It offers
+		a throughput of 64 bits every cycle.
+
+
+I checked three combinations:
+
+   full         copy ahir_system.real.vhd --> ahir_system.vhdl, 
+                copy netfpga_module.real.vhd --> netfpga_module.vhd
+
+   semi         copy ahir_system.simple.vhd --> ahir_system.vhdl, 
+                copy netfpga_module.real.vhd --> netfpga_module.vhd
+
+   trivial      copy netfpga_module.simple.vhd --> netfpga_module.vhd
+		(ahir_system is not used)
+
+
+The reference_nic has four eth ports each running at 1Gbps.  Thus,
+the user-data-path must have a throughput of 4Gbps, that is for
+about 64 bits every 2 cycles (1 cycle = 8 ns).  As a result,
+the "full" system cannot keep up, and drops packets, the "semi"
+and "trivial" can keep up.
+
+If the reference_nic uses only 3 out of 4 ports, we find that the
+"full" system manages to keep up.
+
+
+        Test      test_nic_long  test_nic_1port_long  test_nic_2port_long  test_nic_3port_long
+
+Config
+   full            fail              pass                  pass                  pass
+                  (drops 2-3
+                   pkts out of
+                   50)
+   semi            pass              pass                  pass                  pass
+   trivial         pass              pass                  pass                  pass
+
+
+   
