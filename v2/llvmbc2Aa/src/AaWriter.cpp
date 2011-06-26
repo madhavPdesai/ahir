@@ -41,14 +41,17 @@ namespace Aa {
       {
 
 	llvm::GetElementPtrInst& eI = static_cast<llvm::GetElementPtrInst&>(I);
+
 	bool is_global = isa<GlobalVariable>(eI.getPointerOperand());
+	bool is_constant = isa<Constant>(eI.getPointerOperand());
+
 	std::string root_name = to_aa(get_name(eI.getPointerOperand()));
 
 	// if it takes the reference of a constant string which is a pointer-id      
-	if(is_global)
+	if(is_constant)
 	  {
-	    //	    std::string port_name = to_aa(locate_portname_for_io_call(eI.getPointerOperand()));
-	    if(this->Is_Pipe(root_name))
+	    std::string port_name = to_aa(locate_portname_for_io_call(eI.getPointerOperand()));
+	    if(this->Is_Pipe(port_name))
 	      {
 		std::cerr << "Info: ignoring get-element-ptr to " 
 			  << root_name 
@@ -518,10 +521,22 @@ namespace {
 	    if(is_io_read(ioc))
 	      {
 		if(portname != "")
-		  std::cout << to_aa(C.getNameStr()) <<  " := " 
-			    << "($bitcast (" << ret_type_name << " ) "
-			    <<  portname << " ) " 
-			    << std::endl;
+		  {
+		    if(port_type_name != ret_type_name)
+		      {
+			std::cout << to_aa(C.getNameStr()) <<  " := " 
+				  << "($bitcast (" << ret_type_name << " ) "
+				  <<  portname << " ) " 
+				  << std::endl;
+		      }
+		    else
+		      {
+			std::cout << to_aa(C.getNameStr()) <<  " := " 
+				  <<  portname 
+				  << std::endl;
+			
+		      }
+		  }
 		else
 		  {
 		    std::cerr << "Error: call statement " << to_aa(C.getNameStr())
@@ -540,11 +555,22 @@ namespace {
 	    else 
 	      {
 		std::string wname = prepare_operand(C.getArgOperand(1));
+		std::string wtype_name = get_aa_type_name(C.getArgOperand(1)->getType(), *_module);
 		if(portname != "")
-		  std::cout << portname << " := " 
-			    << "($bitcast ( " << port_type_name << " ) " 
-			    << wname << " )"
-			    << std::endl;
+		  {
+		    
+		    if(port_type_name != wtype_name)
+		      {
+			std::cout << portname << " := " 
+				  << "($bitcast ( " << port_type_name << " ) " 
+				  << wname << " )"
+				  << std::endl;
+		      }
+		    else
+		      {
+			std::cout << portname << " := "  << wname  << std::endl;
+		      }
+		  }
 		else
 		  {
 		    std::cerr << "Warning: call statement " << to_aa(C.getNameStr())
