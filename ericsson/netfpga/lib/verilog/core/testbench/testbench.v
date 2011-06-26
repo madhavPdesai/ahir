@@ -17,6 +17,7 @@ module testbench;
 
    wire [1:0] link_speed = ETH_1000;
 //   wire [1:0] link_speed = ETH_100;
+//   wire [1:0] link_speed = ETH_10;
 
    wire [3:0]  rgmii_0_tx_d;
    wire [3:0]  rgmii_1_tx_d;
