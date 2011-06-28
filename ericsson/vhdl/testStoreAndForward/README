@@ -1,0 +1,22 @@
+
+An illustration of mixing Aa and C code.
+
+  prog.c and PktLib.c together code an application
+  (which can be built using SoftwareCompile.sh and 
+   by running the testbench executable).
+
+
+  Separately, we write PktLib.aa which provides
+  assembly versions of two critical functions in PktLib.c
+  
+
+  Now prog.c  is converted to VHDL using ToVHDL.opt.sh
+
+  prog.c -> clang -> llvm2aa -> opt -> prog.o.opt.aa
+  prog.o.opt.aa + PktLib.aa -> Aa2VC -> vc2vhdl -> ahir_system*.vhdl
+
+  
+  Go to vhdl/ and use testbench.c to verify.
+
+	
+

@@ -242,7 +242,7 @@ package BaseComponents is
   -- register operator
   -----------------------------------------------------------------------------
   component RegisterBase 
-      generic(in_data_width: integer; out_data_width : integer);
+      generic(in_data_width: integer; out_data_width : integer; flow_through: boolean);
       port(din: in std_logic_vector(in_data_width-1 downto 0);
            dout: out std_logic_vector(out_data_width-1 downto 0);
            req: in boolean;

@@ -1,0 +1,49 @@
+$pipe in_ctrl: $uint<8>
+$pipe out_ctrl: $uint<8>
+$pipe in_data: $uint<64>
+$pipe out_data: $uint<64>
+
+$module [store_packet] $in (ctrlptr: $pointer< $uint<8> >  dataptr: $pointer< $uint<64> > ) $out (pktlength: $uint<32>) 
+$is
+{
+	$branchblock[Main] {
+		$merge loopback $entry 
+			$phi rxpktlength := ($bitcast ($uint<32>) _b0) $on $entry nrxpktlength $on loopback 
+		$endmerge
+		$parallelblock[pRead] {
+			cval := in_ctrl
+			dval := in_data
+			cptr := ctrlptr[rxpktlength]
+			dptr := dataptr[rxpktlength]
+			nrxpktlength := (rxpktlength + _b1)
+		} (nrxpktlength => nrxpktlength cval => cval dval => dval cptr => cptr dptr => dptr)
+		->(cptr) := cval
+		->(dptr) := dval
+		pktlength := nrxpktlength
+		$switch cval 
+			$when _b11111111 $then $place [loopback] $when _b0 $then $place [loopback] $default $null
+		$endswitch
+	} 
+}
+
+$module [remove_packet] 
+	$in (ctrlptr: $pointer< $uint<8> >  dataptr: $pointer< $uint<64> > pktlength: $uint<32>) 
+	$out ()
+$is
+{
+	$branchblock[Main] {
+		$merge loopback $entry 
+			$phi sentlength := ($bitcast ($uint<32>) _b0) $on $entry nsentlength $on loopback 
+		$endmerge
+		$parallelblock[pPtr] {
+			cptr := ctrlptr[sentlength]
+			dptr := dataptr[sentlength]
+			nsentlength := (sentlength + _b1)
+		} (nsentlength => nsentlength cptr => cptr dptr => dptr)
+		$parallelblock[pSend] {
+			out_ctrl := ->(cptr)
+			out_data := ->(dptr)
+		}
+		$if (nsentlength < pktlength) $then $place [loopback] $else $null $endif 
+	}
+}

@@ -328,7 +328,7 @@ module host32 (
             // Make sure the host is the owner
             if (dma_ctrl[0]) begin
                $display("%t %m: Error: DMA complete yet owner set to NetFPGA", $time);
-               $finish;
+               //$finish;
             end
 
             $display("%t %m: Info: DMA ingress transfer complete. Size: %d   Source: %d", $time, dma_size, dma_src);

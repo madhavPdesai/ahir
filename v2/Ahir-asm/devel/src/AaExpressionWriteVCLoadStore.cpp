@@ -529,9 +529,9 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Wires(vector<AaExpress
 	}
 
       // the final offset is an equivalence of the last partial sum
-      Write_VC_Wire_Declaration(this->Get_VC_Offset_Name(),
-				addr_type,
-				ofile);
+      Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Offset_Name(),
+					     addr_type,
+					     ofile);
       
     }
 
@@ -548,9 +548,9 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Wires(vector<AaExpress
     {
       // if either offset or base are constants, need
       // to declare the final root address wire.
-      Write_VC_Wire_Declaration(this->Get_VC_Root_Address_Name(),
-				addr_type,
-				ofile);
+      Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Root_Address_Name(),
+					     addr_type,
+					     ofile);
     }
 }
 

@@ -355,20 +355,45 @@ namespace {
     {
       std::string phi_name = to_aa(pnode.getNameStr());
       std::vector<std::string> source_ops;
+      std::vector<BasicBlock*> in_bbs;
+      std::vector<llvm::Value*> in_vals;
+
+      std::set<BasicBlock*> bb_set;
+
+      
+      // no repetitions on source label allowed in 
+      // Aa (because of exclusivity)
       int num_sources = pnode.getNumIncomingValues();
-      for (unsigned i = 0; i < num_sources; i++) 
-	source_ops.push_back(prepare_operand(pnode.getIncomingValue(i)));
-
-      std::cout << "$phi " << phi_name << " :=  ";
-
-      BasicBlock* parent = pnode.getParent();
+      int real_sources = 0;
       for (unsigned i = 0; i < num_sources; i++) 
 	{
-	  llvm::Value *inval = pnode.getIncomingValue(i);
 	  BasicBlock *inbb = pnode.getIncomingBlock(i);
+	  if(bb_set.find(inbb) == bb_set.end())
+	    {
+	      bb_set.insert(inbb);
 
+	      llvm::Value *inval = pnode.getIncomingValue(i);
+	      std::string source_op = prepare_operand(inval);
+
+	      source_ops.push_back(source_op);
+	      in_bbs.push_back(inbb);
+	      in_vals.push_back(inval);
+
+
+	      real_sources++;
+	    }
+	}
+
+      std::cout << "$phi " << phi_name << " :=  ";
+      BasicBlock* parent = pnode.getParent();
+      for (unsigned i = 0; i < real_sources; i++) 
+	{
+
+	  BasicBlock *inbb = in_bbs[i];
+	  llvm::Value *inval = in_vals[i];
+	  std::string source_op = source_ops[i];
 	  std::cout << "( $cast (" << get_aa_type_name(inval->getType(),*_module) 
-		    << ") " << source_ops[i] << ") $on " << get_name(inbb) << "_"
+		    << ") " << source_op << ") $on " << get_name(inbb) << "_"
 		    << get_name(parent) << " ";
 	}
       std::cout << std::endl;

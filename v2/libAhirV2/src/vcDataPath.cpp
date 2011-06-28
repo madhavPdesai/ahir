@@ -773,8 +773,13 @@ void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
     {
       vcRegister* s = (*iter).second;
 
-      ofile << s->Get_VHDL_Id() << ": RegisterBase generic map(in_data_width => " << s->_din->Get_Size()  << "," 
-	    << "out_data_width => " << s->_dout->Get_Size() << ") -- {" << endl;
+      // intermediate wire... make it a flow-through register..
+      bool flow_through_flag  = s->_dout->Is("vcIntermediateWire");
+
+      ofile << s->Get_VHDL_Id() << ": RegisterBase --{" << endl
+	    << "generic map(in_data_width => " << s->_din->Get_Size()  << "," 
+	    << "out_data_width => " << s->_dout->Get_Size() << ", "
+	    << "flow_through => " << (flow_through_flag ? "true" : "false") << " ) " << endl;
       ofile << " port map( din => " << s->_din->Get_VHDL_Id() << "," 
 	    << " dout => " << s->_dout->Get_VHDL_Id() << ","
 	    << " req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol()  << ","

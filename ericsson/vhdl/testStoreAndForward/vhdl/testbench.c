@@ -13,7 +13,7 @@
 //
 
 #define N 10
-#define PKT_LENGTH 3
+#define PKT_LENGTH 8
 
 
 typedef struct PipeArgs_ PipeArgs;

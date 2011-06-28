@@ -6,55 +6,36 @@
 uint64_t packet_data_buffer[2][256];
 uint8_t  packet_control_buffer[2][256];
 
+uint32_t store_packet(uint8_t* cptr, uint64_t* dptr);
+void remove_packet(uint8_t* cptr, uint64_t* dptr, uint32_t pkt_length);
 
 void get_packet()
 {
-  uint8_t word_count = 0;
-  uint8_t pkt_active = 0;
-   
   while(1)
     {
-      uint8_t index = read_uint8("free_index_pipe"); // block till you get a free index.
-      word_count = 0;
+      uint32_t index = read_uint32("free_index_pipe"); // block till you get a free index.
 
-      while(1) // read and store the packet.
-	{
-	  uint8_t ctrl_val = read_uint8("in_ctrl");
-	  uint64_t data_val = read_uint64("in_data");
+      uint8_t* cptr = &(packet_control_buffer[index][0]);
+      uint64_t* dptr = &(packet_data_buffer[index][0]);
 
-	  packet_control_buffer[index][word_count] = ctrl_val;
-	  packet_data_buffer[index][word_count] = data_val;	
-
-	  if(ctrl_val != 0 && ctrl_val != 0xff)
-	    {
-	      write_uint8("send_msg", word_count);	
-	      break;
-	    }
-	  
-	  word_count++;
-    	}
+      uint32_t  word_count = store_packet(cptr,dptr);
+      write_uint32("send_msg", word_count);	
     }
 }
 
+
 void send_packet()
 {
-  uint8_t free_index = 0;
-  write_uint8("free_index_pipe", free_index); // publish the free index.
+  uint32_t free_index = 0;
+  write_uint32("free_index_pipe", free_index); // publish the free index.
   while(1)
     {
-      uint8_t word_count = read_uint8("send_msg"); // wait for a message..
-      write_uint8("free_index_pipe", 1 - free_index); // release the other buffer.
+      uint32_t word_count = read_uint32("send_msg"); // wait for a message..
+      write_uint32("free_index_pipe", 1 - free_index); // release the other buffer.
+      uint8_t* cptr = &(packet_control_buffer[free_index][0]);
+      uint64_t* dptr = &(packet_data_buffer[free_index][0]);
 
-      int wc;
-      for(wc = 0; wc <= word_count; wc++)
-	{
-	  uint8_t ctrl_val = packet_control_buffer[free_index][wc];
-	  uint64_t data_val = packet_data_buffer[free_index][wc];
-
-	  write_uint8("out_ctrl",ctrl_val);
-	  write_uint64("out_data", data_val);
-	}
-
+      remove_packet(cptr,dptr, word_count);
       free_index = 1 - free_index;
     }
 }
