@@ -29,8 +29,13 @@ ahir_netfpga_module.vhd
 					ahir_system
 
 	 
-test/
+testSimpleForwarding/
 	a simple testcase.
+
+testStoreAndForward/
+	a slightly more complicated testcase. illustrates
+	the use of an Aa library in the llvm -> VHDL flow.
+
 
 README
 	this file.
