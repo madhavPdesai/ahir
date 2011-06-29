@@ -116,6 +116,7 @@ vcLoadStore::vcLoadStore(string id, vcMemorySpace* ms, vcWire* addr, vcWire* dat
 	" (memory space " + ms->Get_Id() + ")";
       vcSystem::Error(err_msg);
     }
+  
 }
 
 

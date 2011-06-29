@@ -34,7 +34,10 @@ class vcModule: public vcRoot
   vcControlPath* _control_path;
   vcDataPath*    _data_path;
 
-  // calls to each module
+
+  set<vcModule*> _called_modules;
+  set<vcMemorySpace*> _accessed_memory_spaces;
+
   // for each module, record the indices of the
   // groups which call this module
   map<vcModule*,vector<int> > _call_group_map;
@@ -55,6 +58,26 @@ class vcModule: public vcRoot
     _num_calls++;
     _max_number_of_caller_tags_needed = MAX(_max_number_of_caller_tags_needed, g_size);
   }
+
+  void Deregister_Call_Groups(vcModule* m)
+  {
+    if(_call_group_map.find(m) != _call_group_map.end())
+      {
+	_num_calls =_num_calls - _call_group_map[m].size();
+	_call_group_map.erase(m);
+      }
+  }
+
+  void Add_Called_Module(vcModule* m)
+  {
+    _called_modules.insert(m);
+  }
+
+  void Add_Accessed_Memory_Space(vcMemorySpace* ms)
+  {
+    _accessed_memory_spaces.insert(ms);
+  }
+
   int Get_Num_Calls() {return(this->_num_calls);}
   int Get_Caller_Tag_Length() {return(CeilLog2(this->_max_number_of_caller_tags_needed));}
   int Get_Callee_Tag_Length() {return(CeilLog2(this->_num_calls));}

@@ -188,13 +188,25 @@ void vcDataPath::Print(ostream& ofile)
 void vcDataPath::Add_Phi(vcPhi* p) {_ADD(_phi_map,p->Get_Id(), p);}
 vcPhi* vcDataPath::Find_Phi(string id) {return(__FIND(_phi_map,id));}
 
-void vcDataPath::Add_Load(vcLoad* ld) {_ADD(_load_map,ld->Get_Id(), ld);}
+void vcDataPath::Add_Load(vcLoad* ld) 
+{
+  _ADD(_load_map,ld->Get_Id(), ld);
+  this->Get_Parent()->Add_Accessed_Memory_Space(ld->Get_Memory_Space());
+}
 vcLoad* vcDataPath::Find_Load(string id) {return(__FIND(_load_map,id));}
 
-void vcDataPath::Add_Store(vcStore* st) {_ADD(_store_map,st->Get_Id(), st);}
+void vcDataPath::Add_Store(vcStore* st) 
+{
+  _ADD(_store_map,st->Get_Id(), st);
+  this->Get_Parent()->Add_Accessed_Memory_Space(st->Get_Memory_Space());
+}
 vcStore* vcDataPath::Find_Store(string id)  {return(__FIND(_store_map,id));}
 
-void vcDataPath::Add_Call(vcCall* c)  {_ADD(_call_map,c->Get_Id(), c);}
+void vcDataPath::Add_Call(vcCall* c)  
+{
+  _ADD(_call_map,c->Get_Id(), c);
+  this->Get_Parent()->Add_Called_Module(c->Get_Called_Module());
+}
 vcCall* vcDataPath::Find_Call(string id) {return(__FIND(_call_map,id));}
 
 void vcDataPath::Add_Inport(vcInport* p) 
