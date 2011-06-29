@@ -167,6 +167,10 @@ class vcModule: public vcRoot
 
   bool Get_Caller_Module_Section(vcModule* caller_module, int& hindex, int& lindex);
   string Get_Aggregate_Section(string pid, int hindex, int lindex);
+
+
+  void Mark_Reachable_Modules(set<vcModule*>& reachable_modules);
+  void Delink_From_Modules_And_Memory_Spaces();
 };
 
 #endif // vcModule

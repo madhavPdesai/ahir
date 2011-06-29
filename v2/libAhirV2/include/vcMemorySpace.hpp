@@ -27,17 +27,34 @@ class vcMemorySpace: public vcRoot
   map<vcModule*,vector<int> > _store_group_map;
   int _num_stores;
 
-  int _max_number_of_tags_needed;
-
  public:
 
   vcModule* Get_Scope() {return(this->_scope);}
+
+  int Get_Max_Number_Of_Tags_Needed()
+  {
+    int ret_val = 0;
+    for(map<vcModule*,vector<int> >::iterator liter = _load_group_map.begin();
+	liter != _load_group_map.end();
+	liter++)
+      {
+	ret_val = MAX(ret_val, (*liter).second.size());
+      }
+
+    for(map<vcModule*,vector<int> >::iterator liter = _store_group_map.begin();
+	liter != _store_group_map.end();
+	liter++)
+      {
+	ret_val = MAX(ret_val, (*liter).second.size());
+      }
+
+    return(ret_val);
+  }
 
   void Register_Load_Group(vcModule* m, int g_id, int num_reqs_in_this_group) 
   {
     _load_group_map[m].push_back(g_id); 
     _num_loads++;
-    _max_number_of_tags_needed = MAX(_max_number_of_tags_needed, num_reqs_in_this_group);
   }
   int Get_Num_Loads() {return(this->_num_loads);}
 
@@ -45,10 +62,27 @@ class vcMemorySpace: public vcRoot
   {
     _store_group_map[m].push_back(g_id); 
     _num_stores++;
-    _max_number_of_tags_needed = MAX(_max_number_of_tags_needed, num_reqs_in_this_group);
   }
+
+
+  void Deregister_Loads_And_Stores(vcModule* m)
+  {
+    if(_load_group_map.find(m) != _load_group_map.end())
+      {
+	_num_loads -= _load_group_map[m].size();
+	_load_group_map.erase(m);
+      }
+
+
+    if(_store_group_map.find(m) != _store_group_map.end())
+      {
+	_num_stores -= _store_group_map[m].size();
+	_store_group_map.erase(m);
+      }
+  }
+
   int Get_Num_Stores() {return(this->_num_stores);}
-  int Get_Tag_Length() {return(CeilLog2(this->_max_number_of_tags_needed));}
+  int Get_Tag_Length() {return(CeilLog2(this->Get_Max_Number_Of_Tags_Needed()));}
 
   string Get_Scope_Id();
   string Get_Hierarchical_Id();

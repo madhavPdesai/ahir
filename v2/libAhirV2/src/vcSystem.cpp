@@ -164,8 +164,50 @@ vcModule* vcSystem::Find_Module(string m_name)
   return(ret_module);
 }
 
+
+void vcSystem::Detach_Unreachable_Modules()
+{
+  set<vcModule*> reachable_modules;
+  
+  for(set<vcModule*,vcRoot_Compare>::iterator miter = _top_module_set.begin(), fmiter = _top_module_set.end();
+      miter != fmiter;
+      miter++)
+    {
+      (*miter)->Mark_Reachable_Modules(reachable_modules);
+    }
+
+
+  vector<string> removed_modules;
+  for(map<string,vcModule*>::iterator miter = _modules.begin(), mfiter = _modules.end();
+      miter != mfiter;
+      miter++)
+    {
+      vcModule* m = (*miter).second;
+      string mname = (*miter).first;
+
+      if(reachable_modules.find(m) == reachable_modules.end())
+	{
+	  vcSystem::Warning("module " + mname + " is not reachable from a top-level module, ignored");
+	  _unreachable_modules[mname] = m;
+	  removed_modules.push_back(mname);
+
+	  this->Deregister_Pipe_Accesses(m);
+	  m->Delink_From_Modules_And_Memory_Spaces();
+      	}
+    }
+
+  for(int idx = 0; idx < removed_modules.size(); idx++)
+    {
+      _modules.erase(removed_modules[idx]);
+    }
+
+}
+
 void vcSystem::Elaborate()
 {
+
+  this->Detach_Unreachable_Modules();
+
   this->Check_Control_Structure();
   this->Compute_Compatibility_Labels();
   this->Compute_Maximal_Groups();

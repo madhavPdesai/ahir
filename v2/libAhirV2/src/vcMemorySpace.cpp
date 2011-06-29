@@ -13,7 +13,6 @@ vcMemorySpace::vcMemorySpace(string id, vcModule* m):vcRoot(id)
   this->_capacity = 0;
   this->_num_loads = 0;
   this->_num_stores = 0;
-  this->_max_number_of_tags_needed = 0;
 }
 
 void vcMemorySpace::Add_Storage_Object(vcStorageObject* obj)

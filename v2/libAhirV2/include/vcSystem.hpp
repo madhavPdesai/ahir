@@ -22,7 +22,10 @@ class vcSystem: public vcRoot
   map<string, vcMemorySpace*> _memory_space_map;
   set<vcModule*,vcRoot_Compare> _top_module_set;
   set<vcModule*,vcRoot_Compare> _ever_running_top_module_set;
+
   map<string, vcModule*> _modules;
+  map<string, vcModule*> _unreachable_modules;
+
 
   map<string,int> _pipe_map;
   map<string,int> _pipe_depth_map;
@@ -47,12 +50,14 @@ class vcSystem: public vcRoot
 
   static int _register_bank_threshold;
 
+
+
   void Register_Pipe_Read(string pipe_id, vcModule* m, int idx)
   {
     ((_pipe_read_map[pipe_id])[m]).push_back(idx);
     if(_pipe_read_count.find(pipe_id) == _pipe_read_count.end())
       _pipe_read_count[pipe_id] = 0;
-    
+
     _pipe_read_count[pipe_id]++;
   }
 
@@ -71,6 +76,33 @@ class vcSystem: public vcRoot
       _pipe_write_count[pipe_id] = 0;
     
     _pipe_write_count[pipe_id]++;
+  }
+
+  void Deregister_Pipe_Accesses(vcModule* m)
+  {
+    for(map<string,int>::iterator iter = _pipe_map.begin(), iiter = _pipe_map.end();
+	iter != iiter;
+	iter++)
+      {
+	string pipe_name = (*iter).first;
+	if(_pipe_read_map.find(pipe_name) != _pipe_read_map.end())
+	  {
+	    if(_pipe_read_map[pipe_name].find(m) != _pipe_read_map[pipe_name].end())
+	      {
+		_pipe_read_count[pipe_name] -= _pipe_read_map[pipe_name][m].size();
+		_pipe_read_map[pipe_name].erase(m);
+	      }
+	  }
+
+	if(_pipe_write_map.find(pipe_name) != _pipe_write_map.end())
+	  {
+	    if(_pipe_write_map[pipe_name].find(m) != _pipe_write_map[pipe_name].end())
+	      {
+		_pipe_write_count[pipe_name] -= _pipe_write_map[pipe_name][m].size();
+		_pipe_write_map[pipe_name].erase(m);
+	      }
+	  }
+      }
   }
 
   int Get_Num_Pipe_Writes(string pipe_id)
@@ -130,7 +162,9 @@ class vcSystem: public vcRoot
   vcMemorySpace* Find_Memory_Space(string ms_name);
   vcModule* Find_Module(string m_name);
 
+  void Detach_Unreachable_Modules();
   void Elaborate(); // elaborate the system...
+
 
   static void Info(string err_msg); // {_error_flag = true;}
   static void Error(string err_msg); // {_error_flag = true;}

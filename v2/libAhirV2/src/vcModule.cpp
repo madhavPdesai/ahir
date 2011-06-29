@@ -865,3 +865,38 @@ string vcModule::Get_Aggregate_Section(string pid, int hindex, int lindex)
   ret_string += ")";
   return(ret_string);
 }
+
+
+
+void vcModule::Mark_Reachable_Modules(set<vcModule*>& reachable_modules)
+{
+  if(reachable_modules.find(this) == reachable_modules.end())
+    {
+      reachable_modules.insert(this);
+      for(set<vcModule*>::iterator citer = _called_modules.begin(), fciter = _called_modules.end();
+	  citer != fciter;
+	  citer++)
+	{
+	  (*citer)->Mark_Reachable_Modules(reachable_modules);
+	}
+    }
+}
+
+void vcModule::Delink_From_Modules_And_Memory_Spaces()
+{
+  
+  for(set<vcModule*>::iterator citer = _called_modules.begin(), fciter = _called_modules.end();
+      citer != fciter;
+      citer++)
+    {
+      (*citer)->Deregister_Call_Groups(this);
+    }
+
+  for(set<vcMemorySpace*>::iterator citer = _accessed_memory_spaces.begin(), fciter = _accessed_memory_spaces.end();
+      citer != fciter;
+      citer++)
+    {
+      (*citer)->Deregister_Loads_And_Stores(this);
+    }
+}
+
