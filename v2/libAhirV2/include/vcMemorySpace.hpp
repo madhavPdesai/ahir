@@ -27,6 +27,8 @@ class vcMemorySpace: public vcRoot
   map<vcModule*,vector<int> > _store_group_map;
   int _num_stores;
 
+  map<vcModule*, int> _max_tag_map;
+
  public:
 
   vcModule* Get_Scope() {return(this->_scope);}
@@ -34,26 +36,27 @@ class vcMemorySpace: public vcRoot
   int Get_Max_Number_Of_Tags_Needed()
   {
     int ret_val = 0;
-    for(map<vcModule*,vector<int> >::iterator liter = _load_group_map.begin();
-	liter != _load_group_map.end();
+    for(map<vcModule*,int >::iterator liter = _max_tag_map.begin();
+	liter != _max_tag_map.end();
 	liter++)
       {
-	ret_val = MAX(ret_val, (*liter).second.size());
+	ret_val = MAX(ret_val, (*liter).second);
       }
-
-    for(map<vcModule*,vector<int> >::iterator liter = _store_group_map.begin();
-	liter != _store_group_map.end();
-	liter++)
-      {
-	ret_val = MAX(ret_val, (*liter).second.size());
-      }
-
     return(ret_val);
   }
 
   void Register_Load_Group(vcModule* m, int g_id, int num_reqs_in_this_group) 
   {
     _load_group_map[m].push_back(g_id); 
+
+    if(_max_tag_map.find(m) == _max_tag_map.end())
+      _max_tag_map[m] = num_reqs_in_this_group;
+    else
+      {
+	int u =    _max_tag_map[m];
+	_max_tag_map[m] = MAX(u,num_reqs_in_this_group);
+      }
+
     _num_loads++;
   }
   int Get_Num_Loads() {return(this->_num_loads);}
@@ -61,18 +64,31 @@ class vcMemorySpace: public vcRoot
   void Register_Store_Group(vcModule* m, int g_id, int num_reqs_in_this_group) 
   {
     _store_group_map[m].push_back(g_id); 
+
+    if(_max_tag_map.find(m) == _max_tag_map.end())
+      _max_tag_map[m] = num_reqs_in_this_group;
+    else
+      {
+	int u =    _max_tag_map[m];
+	_max_tag_map[m] = MAX(u,num_reqs_in_this_group);
+      }
+
+
     _num_stores++;
   }
 
 
   void Deregister_Loads_And_Stores(vcModule* m)
   {
+
+    if(_max_tag_map.find(m) != _max_tag_map.end())
+      _max_tag_map.erase(m);
+
     if(_load_group_map.find(m) != _load_group_map.end())
       {
 	_num_loads -= _load_group_map[m].size();
 	_load_group_map.erase(m);
       }
-
 
     if(_store_group_map.find(m) != _store_group_map.end())
       {
