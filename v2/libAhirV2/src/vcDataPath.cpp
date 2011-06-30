@@ -23,7 +23,7 @@ void vcWire::Print(ostream& ofile)
 
 void vcWire::Print_VHDL_Std_Logic_Declaration(ostream& ofile)
 {
-  ofile << "signal " << this->Get_VHDL_Id() << " : " << this->Get_Type()->Get_VHDL_Type_Name() << ";" << endl;
+  ofile << "signal " << this->Get_VHDL_Signal_Id() << " : " << this->Get_Type()->Get_VHDL_Type_Name() << ";" << endl;
 }
 
 int vcWire::Get_Size() {return(this->_type->Size());}
@@ -46,7 +46,7 @@ void vcConstantWire::Print(ostream& ofile)
 
 void vcConstantWire::Print_VHDL_Constant_Declaration(ostream& ofile)
 {
-  ofile << "constant " << this->Get_VHDL_Id() << " : " ;
+  ofile << "constant " << this->Get_VHDL_Signal_Id() << " : " ;
   ofile << this->Get_Type()->Get_VHDL_Type_Name()  << " := ";
   ofile << this->_value->To_VHDL_String() << ";" << endl;
 }
@@ -653,7 +653,7 @@ void vcDataPath::Print_VHDL(ostream& ofile)
       iter++)
     {
       if((*iter).second->Is("vcConstantWire"))
-	ofile << ((*iter).second)->Get_VHDL_Id() << " <= " << ((vcConstantWire*)((*iter).second))->Get_Value()->To_VHDL_String() << ";" << endl;
+	ofile << ((*iter).second)->Get_VHDL_Signal_Id() << " <= " << ((vcConstantWire*)((*iter).second))->Get_Value()->To_VHDL_String() << ";" << endl;
     }
 
   // now instantiate each group. 
@@ -701,7 +701,7 @@ void vcDataPath::Print_VHDL_Phi_Instances(ostream& ofile)
 	{
 	  if(idx > 0)
 	    ofile << " & ";
-	  ofile << p->Get_Inwires()[idx]->Get_VHDL_Id();
+	  ofile << p->Get_Inwires()[idx]->Get_VHDL_Signal_Id();
 	}
       ofile << ";" << endl;
 
@@ -722,7 +722,7 @@ void vcDataPath::Print_VHDL_Phi_Instances(ostream& ofile)
 	    << "req => req, " << endl
 	    << "ack => " << p->Get_Ack(0)->Get_DP_To_CP_Symbol()  << "," << endl
 	    << "idata => idata," << endl
-	    << "odata => " << p->Get_Outwire()->Get_VHDL_Id() << "," << endl
+	    << "odata => " << p->Get_Outwire()->Get_VHDL_Signal_Id() << "," << endl
 	    << "clk => clk," << endl
 	    << "reset => reset ); -- }}" << endl;
       ofile << "-- }\n end Block; -- phi operator " << p->Get_VHDL_Id() << endl;
@@ -741,12 +741,12 @@ void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
       vcSelect* s = (*iter).second;
       ofile << s->Get_VHDL_Id() << ": SelectBase generic map(data_width => " << s->_z->Get_Size() << ") -- {" << endl;
       ofile << " port map( x => " 
-	    << s->_x->Get_VHDL_Id() 
+	    << s->_x->Get_VHDL_Signal_Id() 
 	    << ", y => " 
-	    << s->_y->Get_VHDL_Id() 
+	    << s->_y->Get_VHDL_Signal_Id() 
 	    << ", sel => " 
-	    << s->_sel->Get_VHDL_Id() 
-	    << ", z => " << s->_z->Get_VHDL_Id() 
+	    << s->_sel->Get_VHDL_Signal_Id() 
+	    << ", z => " << s->_z->Get_VHDL_Signal_Id() 
 	    << ", req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol() 
 	    << ", ack => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol() 
 	    << ", clk => clk, reset => reset); -- }" << endl;
@@ -768,9 +768,9 @@ void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
 	    << ", low_index => " << s->_low_index << ", zero_delay => " 
 	    << (flow_through_flag ? "true" : "false") << ") -- {" << endl;
       ofile << " port map( din => " 
-	    << s->_din->Get_VHDL_Id() 
+	    << s->_din->Get_VHDL_Signal_Id() 
 	    << ", dout => " 
-	    << s->_dout->Get_VHDL_Id() 
+	    << s->_dout->Get_VHDL_Signal_Id() 
 	    << ", req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol() 
 	    << ", ack => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol() 
 	    << ", clk => clk, reset => reset); -- }" << endl;
@@ -792,8 +792,8 @@ void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
 	    << "generic map(in_data_width => " << s->_din->Get_Size()  << "," 
 	    << "out_data_width => " << s->_dout->Get_Size() << ", "
 	    << "flow_through => " << (flow_through_flag ? "true" : "false") << " ) " << endl;
-      ofile << " port map( din => " << s->_din->Get_VHDL_Id() << "," 
-	    << " dout => " << s->_dout->Get_VHDL_Id() << ","
+      ofile << " port map( din => " << s->_din->Get_VHDL_Signal_Id() << "," 
+	    << " dout => " << s->_dout->Get_VHDL_Signal_Id() << ","
 	    << " req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol()  << ","
 	    << " ack => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol() << ", clk => clk, reset => reset); -- }" << endl;
     }
@@ -819,13 +819,13 @@ void vcDataPath::Print_VHDL_Equivalence_Instances(ostream& ofile)
 	{
 	  if(idx > 0)
 	    ofile << " & ";
-	  ofile << s->_inwires[idx]->Get_VHDL_Id();
+	  ofile << s->_inwires[idx]->Get_VHDL_Signal_Id();
 	}
       ofile << ";" << endl;
       int top_index = s->_width-1;
       for(int idx = 0; idx < s->_outwires.size(); idx++)
 	{
-	  ofile << s->_outwires[idx]->Get_VHDL_Id() 
+	  ofile << s->_outwires[idx]->Get_VHDL_Signal_Id() 
 		<< " <= aggregated_sig("
 		<< top_index
 		<< " downto "
@@ -858,7 +858,7 @@ void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
 	{
 	  if(idx > 0)
 	    ofile << " & ";
-	  ofile << s->_inwires[idx]->Get_VHDL_Id();
+	  ofile << s->_inwires[idx]->Get_VHDL_Signal_Id();
 	}
       ofile << ";" << endl;
       ofile << "branch_instance: BranchBase -- {" << endl;
@@ -1129,7 +1129,7 @@ void vcDataPath::Print_VHDL_Concatenation(string target, vector<vcWire*> wires, 
     {
       if(u > 0)
 	ofile << " & ";
-      ofile << wires[u]->Get_VHDL_Id();
+      ofile << wires[u]->Get_VHDL_Signal_Id();
     }
   ofile << ";" << endl;
 }
@@ -1141,7 +1141,7 @@ void vcDataPath::Print_VHDL_Disconcatenation(string source, int total_width, vec
   int lindex = total_width-1;
   for(int u = 0; u < wires.size(); u++)
     {
-      ofile << wires[u]->Get_VHDL_Id() << " <= " << source << "(";
+      ofile << wires[u]->Get_VHDL_Signal_Id() << " <= " << source << "(";
       ofile << lindex << " downto " << (lindex - (wires[u]->Get_Size()-1)) << ");" << endl;
       lindex -= wires[u]->Get_Size();
     }

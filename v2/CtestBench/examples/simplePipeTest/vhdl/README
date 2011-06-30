@@ -1,0 +1,4 @@
+run compile_testbench.sh to compile testbench.
+
+Use ghdl.do to produce GHDL executable...
+

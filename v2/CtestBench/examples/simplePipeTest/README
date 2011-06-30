@@ -1,0 +1,10 @@
+an example to illustrate byte ordering
+in pipes.
+
+run SoftwareCompile.sh  to produce a testbench 
+(software version).
+
+run ToVHDL.sh to produce vhdl.
+
+Copy prog_o_a_vc.vhdl to vhdl/system.vhdl
+

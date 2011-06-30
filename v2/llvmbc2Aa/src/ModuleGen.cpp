@@ -258,6 +258,9 @@ namespace {
       blocks_queued.insert(&(F.getEntryBlock()));
       int iidx = 0;
 
+      aa_writer->_num_ret_instructions = 0;
+      aa_writer->_unique_return_value  = NULL;
+
       while (!queue.empty()) 
 	{
 	  BasicBlock *bb = queue.front();
@@ -272,6 +275,18 @@ namespace {
 	    {
 	    }
 
+	  if(isa<llvm::ReturnInst>(T))
+	    {
+	      aa_writer->_num_ret_instructions++;
+	      if(aa_writer->_num_ret_instructions == 1)
+		{
+		  llvm::ReturnInst* R = dyn_cast<llvm::ReturnInst>(T);
+		  aa_writer->_unique_return_value = R->getReturnValue();
+		}
+	      else
+		aa_writer->_unique_return_value = NULL;
+	    }
+
 	  for (unsigned i = 0, e = T->getNumSuccessors(); i != e; ++i) 
 	    {
 	      BasicBlock *S = T->getSuccessor(i);
@@ -284,6 +299,14 @@ namespace {
 	      blocks_queued.insert(S);
 	    }
 	}
+
+
+      if(aa_writer->_unique_return_value != NULL)
+	{
+	  std::string iname = "ret_val__";
+	  aa_writer->_unique_return_value->setName(iname);
+	}
+
 
       std::cout << "$module [" << to_aa(fname) << "] " << std::endl;
       
@@ -311,7 +334,7 @@ namespace {
 
 	std::cout << " $is " << std::endl<< "{" << std::endl;
 
-	if(has_ret_val)
+	if(has_ret_val && (aa_writer->_num_ret_instructions > 1))
 		std::cout << "$storage stored_ret_val__ : " << get_aa_type_name(ret_type, aa_writer->Get_Module()) << std::endl;
 
 	
@@ -327,7 +350,7 @@ namespace {
 	if(aa_writer->Get_Return_Flag())
 	  {
 	    std::cout << "$merge return__ $endmerge" << std::endl;
-	    if(has_ret_val)
+	    if(has_ret_val && (aa_writer->_num_ret_instructions > 1))
 	      std::cout << "ret_val__ := stored_ret_val__ "  << std::endl;
 	  }
 	

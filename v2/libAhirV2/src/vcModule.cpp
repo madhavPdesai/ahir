@@ -515,6 +515,14 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
   ofile << "-- always true..." << endl;
   ofile << "signal " << this->_control_path->Get_Always_True_Symbol() << ": Boolean;" << endl;
 
+  // output port buffer signals.
+  ofile << "-- output port buffer signals" << endl;
+  for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
+    {
+      vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
+      ofile << "signal " << w->Get_VHDL_Signal_Id() << " : " 
+	    <<  " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
+    }
 
   // print link signals between CP and DP
   ofile << "-- links between control-path and data-path" << endl;
@@ -539,6 +547,15 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
     }
 
   ofile << "-- }" << endl << "begin --  {" << endl;
+
+
+  ofile << "-- output port buffering assignments" << endl;
+  for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
+    {
+      vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
+      ofile << w->Get_VHDL_Id() << " <= " << w->Get_VHDL_Signal_Id() << "; "  << endl;
+    }
+  ofile << endl;
 
   ofile << "-- tag register" << endl;
   ofile << "process(clk) " << endl;

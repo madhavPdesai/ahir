@@ -259,10 +259,6 @@ namespace Aa {
 	  }
       }
   }
-
-
-
-
 }
 
 using namespace Aa;
@@ -436,8 +432,12 @@ namespace {
 	if(R.getReturnValue())
 	{
 	  std::string ret_op = prepare_operand(R.getReturnValue());
-	  std::cout << "stored_ret_val__ := " 
-		    << ret_op << std::endl;
+	  if(_num_ret_instructions > 1)
+	    std::cout << "stored_ret_val__ := " 
+		      << ret_op << std::endl;
+	  //else
+	  //std::cout << "ret_val__ := " 
+	  //      << ret_op << std::endl;
 	}
 	std::cout << "$place [return__]" << std::endl;
 	this->Set_Return_Flag(true);

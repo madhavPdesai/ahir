@@ -21,6 +21,10 @@ void  append_string(char* strbuf, char* str)
 // str is a sequence of '0' and '1'.
 uint64_t get_uint64_t(char* str, char** save_str)
 {
+#ifdef DEBUG
+  fprintf(stderr, "Info: in get_uint64_t, received string %s\n",str);
+#endif
+
   char* pstr = strtok_r(str," ", save_str);
   if(pstr == NULL)
   {
@@ -28,14 +32,18 @@ uint64_t get_uint64_t(char* str, char** save_str)
 	return(0);
   }
 
+#ifdef DEBUG
+  fprintf(stderr, "Info: in get_uint64_t, received string %s\n",pstr);
+#endif
+
   uint64_t ret_val  = 0;
   int max_index = strlen(pstr) - 1;
-  int pos = 0;
+  uint64_t pos = 0;
   while(max_index >= 0)
     {
       if(pstr[max_index] == '1') 
 	{
-	  ret_val |= (1 << pos);
+	  ret_val |= (((uint64_t) 1) << pos);
 	}
 
       pos++;

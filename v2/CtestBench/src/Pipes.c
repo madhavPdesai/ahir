@@ -34,6 +34,9 @@ uint64_t read_uint64(const char *id)
   char buffer[4096];
   char* ss;
   READ__(id,uint64_t,64);
+#ifdef DEBUG
+  fprintf(stderr,"Info: in read_uint64, received %s\n", buffer);
+#endif
   ret_val = get_uint64_t(buffer,&ss);
   return(ret_val);
 }

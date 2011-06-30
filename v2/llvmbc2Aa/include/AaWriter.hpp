@@ -21,6 +21,8 @@ namespace Aa {
     llvm::TargetData *TD;
     llvm::AliasAnalysis *AA;
     llvm::Module* _module;
+    int _num_ret_instructions;
+    llvm::Value* _unique_return_value;
 
     std::map<std::string,std::set<std::string> > bb_predecessor_map;
     std::map<llvm::Value*, std::string> value_name_map;

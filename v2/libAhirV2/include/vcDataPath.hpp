@@ -40,6 +40,9 @@ public:
 
   virtual string Kind() {return("vcWire");}
   virtual void Print_VHDL_Std_Logic_Declaration(ostream& ofile);
+
+  virtual string Get_VHDL_Signal_Id() { return(this->Get_VHDL_Id());}
+
   int Get_Size();
 };
 
@@ -83,9 +86,8 @@ class vcOutputWire: public vcWire
 {
 public:
   vcOutputWire(string id, vcType* t);
-  virtual void Connect_Receiver(vcRoot* r) {assert(0);}
-
   virtual string Kind() {return("vcOutputWire");}
+  virtual string Get_VHDL_Signal_Id() { return(this->Get_VHDL_Id() + "_buffer");}
 };
 
 
