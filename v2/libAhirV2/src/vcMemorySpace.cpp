@@ -234,8 +234,6 @@ void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 {
   if(_num_loads == 0)
     {
-
-
       if(_num_stores > 0)
 	{
 	  vcSystem::Warning("memory space " + this->Get_VHDL_Id() + " is not read from... dummy used");
@@ -386,6 +384,9 @@ void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 // to measure the parallelism.
 int vcMemorySpace::Calculate_Number_Of_Banks()
 {
+
+  if(vcSystem::_min_area_flag)
+    return(1);
 
   int max_reqs = MAX(this->Get_Num_Loads(),this->Get_Num_Stores());
 

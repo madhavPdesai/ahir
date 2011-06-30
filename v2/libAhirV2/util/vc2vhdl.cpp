@@ -37,6 +37,10 @@ void Usage_Vc2VHDL()
   cerr << endl;
   cerr <<  " -O: will lead to smaller VHDL files due to some compaction." << endl
        <<  " -C: the generated system testbench connects to foreign language testbench (Ctestbench). " << endl;
+  cerr <<  " -a:  will try to produce a VHDL netlist with the minimum area possible (sort of)" << endl
+       <<  " Notes: " << endl
+       <<  "   1. alternate form: --min_area" << endl
+       <<  "   2. if -a is absent, the goal will be to get the maximum speed (minimize number of cycles needed" << endl;
   cerr <<  " -s ghdl/modelsim: specify the simulator with which one is going to simulate the system." << endl
        <<  "    -s ghdl: will produce a testbench which can be used in GHDL. " << endl
        <<  "    -s modelsim: will produce a testbench which can be used in Modelsim. " << endl
@@ -80,6 +84,7 @@ int main(int argc, char* argv[])
       /* These options set a flag. */
       {"help", no_argument, 0, 'h'},
       {"optimize", no_argument,0, 'O'},
+      {"min_area", no_argument,0, 'a'},
       {"ctestbench",  no_argument, 0, 'C'},
       {"simulator",  required_argument, 0, 's'},
       {"set_as_top",  required_argument, 0, 't'},
@@ -115,7 +120,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:T:f:OCs:a:he:w",
+		      "t:T:f:OCs:he:wa",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -148,6 +153,10 @@ int main(int argc, char* argv[])
 	case 'O':
 	  vcSystem::_opt_flag = true;
 	  cerr << "Info: -O option selected: will flatten and reduce control path" << endl;
+	  break;
+	case 'a':
+	  vcSystem::_min_area_flag = true;
+	  cerr << "Info: -a option selected: will try for minimum overall circuit area" << endl;
 	  break;
 	case 'e':
 	  sys_name = string(optarg);

@@ -329,23 +329,28 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
       if(dpe->Is_Shareable_With(*(dpe_group[idx].begin())))
 	{
 	  bool is_compatible = true;
-	  for(set<vcDatapathElement*>::iterator dpe_iter = dpe_group[idx].begin();
-	      dpe_iter != dpe_group[idx].end();
-	      dpe_iter++)
-	    {
-	      pair<vcCompatibilityLabel*, vcCompatibilityLabel*> I2 = this->Get_Label_Interval(cp,*dpe_iter);
-	      if(I2.first == NULL || I2.second == NULL)
-		return;
 
-	      if(!cp->Are_Compatible(I1.first,I2.first) ||
-		 !cp->Are_Compatible(I1.second,I2.second) ||
-		 !cp->Are_Compatible(I1.first,I2.second) ||
-		 !cp->Are_Compatible(I1.second,I2.first))
+	  if(!vcSystem::_min_area_flag)
+	    {
+	      for(set<vcDatapathElement*>::iterator dpe_iter = dpe_group[idx].begin();
+		  dpe_iter != dpe_group[idx].end();
+		  dpe_iter++)
 		{
-		  is_compatible = false;
-		  break;
+		  pair<vcCompatibilityLabel*, vcCompatibilityLabel*> I2 = this->Get_Label_Interval(cp,*dpe_iter);
+		  if(I2.first == NULL || I2.second == NULL)
+		    return;
+		  
+		  if(!cp->Are_Compatible(I1.first,I2.first) ||
+		     !cp->Are_Compatible(I1.second,I2.second) ||
+		     !cp->Are_Compatible(I1.first,I2.second) ||
+		     !cp->Are_Compatible(I1.second,I2.first))
+		    {
+		      is_compatible = false;
+		      break;
+		    }
 		}
 	    }
+
 	  if(is_compatible)
 	    {
 	      if(vcSystem::_verbose_flag)
@@ -881,6 +886,9 @@ void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
 // A hell of an ugly function.. Can it be improved?
 void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 {
+
+  string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
+
   for(int idx = 0; idx < this->_compatible_split_operator_groups.size(); idx++)
     { // for each operator group.
 
@@ -1044,7 +1052,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		<< " constant_operand => " << const_operand << "," << endl // constant operand?
 		<< " use_constant  => " << (use_constant ? "true" : "false") << "," << endl // use constant?
 		<< " zero_delay => false, " << endl // single cycle delay
-		<< " no_arbitration => true, " << endl // no arbitration within group.
+		<< " no_arbitration => " << no_arb_string << "," << endl
 		<< " num_reqs => " << num_reqs << "--} \n ) -- }" << endl; // number of requesters..
 	  ofile << "port map ( reqL => reqL , ackL => ackL, reqR => reqR, ackR => ackR, dataL => data_in, dataR => data_out, clk => clk, reset => reset);" << endl;
 	}
@@ -1150,6 +1158,8 @@ void vcDataPath::Print_VHDL_Disconcatenation(string source, int total_width, vec
 
 void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 { 
+
+  string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
   // print LoadReqShared instance and LoadCompleteShared instance.
   for(int idx = 0; idx < this->_compatible_load_groups.size(); idx++)
     { // for each operator group.
@@ -1250,7 +1260,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
       ofile << "generic map (addr_width => " << addr_width << ","
 	    << "  num_reqs => " << num_reqs << ","
 	    << "  tag_length => " << tag_length << ","
-	    << "  no_arbitration => true)" << endl;
+	    << "  no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map ( -- { \n reqL => reqL " << ", " <<  endl
 	    << "    ackL => ackL " << ", " <<  endl
 	    << "    dataL => data_in, " << endl
@@ -1268,7 +1278,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
       ofile << "generic map ( data_width => " << data_width << ","
 	    << "  num_reqs => " << num_reqs << ","
 	    << "  tag_length => " << tag_length << ","
-	    << "  no_arbitration => true)" << endl;
+	    << "  no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map ( -- {\n reqR => reqR " << ", " <<  endl
 	    << "    ackR => ackR " << ", " <<  endl
 	    << "    dataR => data_out, " << endl
@@ -1289,6 +1299,8 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 
 void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 { 
+  string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
+
   for(int idx = 0; idx < this->_compatible_store_groups.size(); idx++)
     { // for each operator group.
 
@@ -1378,7 +1390,7 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 	    << "  data_width => " << data_width << "," << endl
 	    << "  num_reqs => " << num_reqs << "," << endl
 	    << "  tag_length => " << tag_length << "," << endl
-	    << "  no_arbitration => true)" << endl;
+	    << "  no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map (--{\n reqL => reqL " << ", " <<  endl
 	    << "    ackL => ackL " << ", " <<  endl
 	    << "    addr => addr_in, " << endl
@@ -1416,6 +1428,8 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 
 void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 {
+
+  string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
 
   for(int idx = 0; idx < this->_compatible_inport_groups.size(); idx++)
     { // for each operator group.
@@ -1493,7 +1507,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
       ofile << "Inport: InputPort -- { " << endl;
       ofile << "generic map ( data_width => " << data_width << ","
 	    << "  num_reqs => " << num_reqs << ","
-	    << "  no_arbitration => true)" << endl;
+	    << "  no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map (-- {\n req => req " << ", " <<  endl
 	    << "    ack => ack " << ", " <<  endl
 	    << "    data => data_out, " << endl
@@ -1511,6 +1525,8 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 
 void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 { 
+  string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
+
   for(int idx = 0; idx < this->_compatible_outport_groups.size(); idx++)
     { // for each operator group.
 
@@ -1586,7 +1602,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       ofile << "outport: OutputPort -- { " << endl;
       ofile << "generic map ( data_width => " << data_width << ","
 	    << "  num_reqs => " << num_reqs << ","
-	    << "  no_arbitration => true)" << endl;
+	    << "  no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map (--{\n req => req " << ", " <<  endl
 	    << "    ack => ack " << ", " <<  endl
 	    << "    data => data_in, " << endl
@@ -1657,6 +1673,9 @@ string vcDataPath::Get_VHDL_IOport_Interface_Port_Section(string pipe_id,
 
 void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 { 
+
+  string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
+
   // print LoadReqShared instance and LoadCompleteShared instance.
   for(int idx = 0; idx < this->_compatible_call_groups.size(); idx++)
     { // for each operator group.
@@ -1767,7 +1786,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
       ofile << " twidth => " << tag_length << ","
 	    << " nreqs => " << num_reqs << ","
-	    << "  no_arbitration => true)" << endl;
+	    << "  no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map ( -- { \n reqL => reqL " << ", " <<  endl
 	    << "    ackL => ackL " << ", " <<  endl;
 
@@ -1801,7 +1820,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
       ofile << " twidth => " << tag_length << ","
 	    << " nreqs => " << num_reqs << ","
-	    << "  no_arbitration => true)" << endl;
+	    << "  no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map ( -- {\n reqR => reqR " << ", " <<  endl
 	    << "    ackR => ackR " << ", " <<  endl;
 
@@ -1830,6 +1849,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
 string vcDataPath::Print_VHDL_Memory_Interface_Port_Map(string comma, ostream& ofile)
 {
+
   // in progress
   set<vcMemorySpace*,vcRoot_Compare> ms_set;
   vcMemorySpace* ms;
