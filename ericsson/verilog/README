@@ -1,0 +1,31 @@
+input_arbiter_2Queues.v
+	- cut down input-arbiter with only two queues
+output_queues_2.v
+	- cut-down output-queues with only two queues
+remove_pkt_2.v
+	- cut-down remove_pkt with only two queues
+user_data_path_with_op_lut_replaced_by_netfpga_module.v
+	- full 8-queue user-datapath, with output-port-lookup
+	  functionality replaced by netfpga_module.
+user_data_path_with_op_lut_replaced_by_netfpga_module_with_1mac.v
+	- cut-down 2-queue (1 MAC, 1 CPU) version of previous
+          example.
+
+
+To get 8-queue version with netfpga-module replacing output-port-lookup
+copy 
+ user_data_path_with_op_lut_replaced_by_netfpga_module.v
+ to 
+ user_data_path.v
+
+
+To get 2-queue version of the same
+copy 
+ user_data_path_with_op_lut_replaced_by_netfpga_module_with_1mac.v
+ to 
+ user_data_path.v
+copy input_arbiter_2Queues.v to input_arbiter.v
+copy output_queues_2.v to output_queues.v
+copy remove_pkt_2.v to remove_pkt.v
+
+
