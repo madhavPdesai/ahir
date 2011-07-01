@@ -233,12 +233,6 @@ module user_data_path
    wire [UDP_REG_SRC_WIDTH-1:0]     udp_reg_src_in;
 
 
-   // from netfpga-module to output-queue
-   wire [CTRL_WIDTH-1:0]            nm_op_lut_in_ctrl;
-   wire [DATA_WIDTH-1:0]            nm_op_lut_in_data;
-   wire                             nm_op_lut_in_wr;
-   wire                             nm_op_lut_in_rdy;
-
    //--------- Connect the data path -----------
 
    input_arbiter
@@ -315,11 +309,11 @@ module user_data_path
     );
 
     // added to test if netfpga-module works in pipeline.
-   netfpga_module netfpga_module
-     (.out_data            (nm_op_lut_in_data),
-     .out_ctrl             (nm_op_lut_in_ctrl),
-     .out_wr               (nm_op_lut_in_wr),
-     .out_rdy              (nm_op_lut_in_rdy),
+   netfpga_module op_lut
+     (.out_data            (oq_in_data),
+     .out_ctrl             (oq_in_ctrl),
+     .out_wr               (oq_in_wr),
+     .out_rdy              (oq_in_rdy),
 
       // --- Interface to the rx input queues
      .in_data              (op_lut_in_data),
@@ -331,44 +325,15 @@ module user_data_path
      .clk                  (clk),
      .reset                (reset));
 
-   output_port_lookup
-     #(.DATA_WIDTH(DATA_WIDTH),
-       .CTRL_WIDTH(CTRL_WIDTH),
-       .UDP_REG_SRC_WIDTH (UDP_REG_SRC_WIDTH),
-       .INPUT_ARBITER_STAGE_NUM(IN_ARB_STAGE_NUM),
-       .STAGE_NUM(OP_LUT_STAGE_NUM),
-       .NUM_OUTPUT_QUEUES(NUM_OUTPUT_QUEUES),
-       .NUM_IQ_BITS(NUM_IQ_BITS))
-   output_port_lookup
-     (.out_data            (oq_in_data),
-     .out_ctrl             (oq_in_ctrl),
-     .out_wr               (oq_in_wr),
-     .out_rdy              (oq_in_rdy),
 
-      // --- Interface to the rx input queues
-     .in_data              (nm_op_lut_in_data),
-     .in_ctrl              (nm_op_lut_in_ctrl),
-     .in_wr                (nm_op_lut_in_wr),
-     .in_rdy               (nm_op_lut_in_rdy),
+      // --- Register interface bypass for netfpga_module
+     assign oq_in_reg_req = op_lut_in_reg_req;
+     assign oq_in_reg_ack = op_lut_in_reg_ack;
+     assign oq_in_reg_rd_wr_L = op_lut_in_reg_rd_wr_L;
+     assign oq_in_reg_addr = op_lut_in_reg_addr;
+     assign oq_in_reg_data =  op_lut_in_reg_data;
+     assign oq_in_reg_src = op_lut_in_reg_src;
 
-      // --- Register interface
-     .reg_req_in           (op_lut_in_reg_req),
-     .reg_ack_in           (op_lut_in_reg_ack),
-     .reg_rd_wr_L_in       (op_lut_in_reg_rd_wr_L),
-     .reg_addr_in          (op_lut_in_reg_addr),
-     .reg_data_in          (op_lut_in_reg_data),
-     .reg_src_in           (op_lut_in_reg_src),
-
-     .reg_req_out          (oq_in_reg_req),
-     .reg_ack_out          (oq_in_reg_ack),
-     .reg_rd_wr_L_out      (oq_in_reg_rd_wr_L),
-     .reg_addr_out         (oq_in_reg_addr),
-     .reg_data_out         (oq_in_reg_data),
-     .reg_src_out          (oq_in_reg_src),
-
-      // --- Misc
-     .clk                  (clk),
-     .reset                (reset));
 
    output_queues
      #(.DATA_WIDTH(DATA_WIDTH),
