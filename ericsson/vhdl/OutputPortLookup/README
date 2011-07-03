@@ -1,0 +1,5 @@
+An implementation of output port lookup for
+the user-datapath in the Netfpga pipeline.
+
+Runs at 64bits/7cycles.
+
