@@ -43,7 +43,6 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   P2L: for I in nreqs-1 downto 0 generate
       P2LBlk: block
-        signal state : P2LState;
       begin  -- block P2L          
         p2Linst: Pulse_To_Level_Translate_Entity
           port map (rL => reqL(I), rR => reqP(I), aL => ackL(I), aR => ackP(I),

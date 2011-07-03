@@ -323,11 +323,15 @@ module host32 (
             PCI_DW_RD({`CPCI_DMA_SIZE_I, 2'b0}, 4'h6, dma_size, success);
             PCI_DW_RD({`CPCI_DMA_CTRL_I, 2'b0}, 4'h6, dma_ctrl, success);
 
-            dma_src = dma_ctrl[11:8];
+            //dma_src = dma_ctrl[11:8];
+            dma_src = dma_ctrl[15:12];
 
             // Make sure the host is the owner
+	    // Note (MPD): this seems to be overly conservative.  Does not
+	    // handle the situation of back-to-back ingress DMA's.  For example,
+            // one ingress DMA has finished, and  another is ongoing..
             if (dma_ctrl[0]) begin
-               $display("%t %m: Error: DMA complete yet owner set to NetFPGA", $time);
+               $display("%t %m: Warning: DMA complete yet owner set to NetFPGA", $time);
                //$finish;
             end
 

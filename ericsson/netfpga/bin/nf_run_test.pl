@@ -640,7 +640,7 @@ else
 
 # default finish time is 1000000ns.
 # the config.txt overrides the finish time.
-   vsim -c -l ${log} +define+VSIM_COMPILE testbench glbl ${dump} -do "run  1000000ns"
+   vsim -c -novopt -l ${log} +define+VSIM_COMPILE testbench glbl ${dump} -do "run  1000000ns"
 fi
 
 

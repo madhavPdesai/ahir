@@ -4,6 +4,7 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.Types.all;
+use ahir.Utilities.all;
 
 library ieee_proposed;
 -- use ieee_proposed.math_utility_pkg.all;
@@ -31,7 +32,8 @@ package Subprograms is
   function To_Signed ( inp : ApInt) return signed;
   function To_Signed ( inp : std_logic_vector) return signed;
   function To_Unsigned ( inp : ApInt) return unsigned;
-  function To_Unsigned ( inp : std_logic_vector) return unsigned;  
+  function To_Unsigned ( inp : std_logic_vector) return unsigned;
+  function To_Unsigned(constant W : in integer; inp : std_logic_vector) return unsigned;
 
 
   function To_SLV ( x: ApInt) return std_logic_vector;
@@ -333,7 +335,20 @@ package body Subprograms is
     return(ret_var);
   end To_Unsigned;
 
-  
+
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function To_Unsigned(constant W : in integer; inp : std_logic_vector) return unsigned is
+    alias linp : std_logic_vector(inp'length downto 1) is inp;
+    variable ret_var : unsigned(Minimum(W,inp'length) downto 1);
+  begin
+    for I in 1 to ret_var'length loop
+      ret_var(I) := linp(I);
+    end loop;  -- I
+    return(ret_var);
+  end To_Unsigned;
+
   -----------------------------------------------------------------------------
 
   -----------------------------------------------------------------------------

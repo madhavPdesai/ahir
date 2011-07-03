@@ -114,19 +114,19 @@ package body OperatorPackage is
   -----------------------------------------------------------------------------
   procedure ApIntSHL_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
   begin
-    result := To_SLV(to_unsigned(l) sll to_integer(to_unsigned(r)));
+    result := To_SLV(to_unsigned(l) sll to_integer(to_unsigned(Ceil_Log2(l'length)+1, r)));
   end ApIntSHL_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
   procedure ApIntLSHR_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
   begin
-     result := To_SLV(to_unsigned(l)  srl to_integer(to_unsigned(r)));
+     result := To_SLV(to_unsigned(l)  srl to_integer(to_unsigned(Ceil_Log2(l'length)+1, r)));
   end ApIntLSHR_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
   procedure ApIntASHR_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
   begin
-     result := To_SLV(shift_right(to_signed(l), to_integer(to_unsigned(r)))); 
+     result := To_SLV(shift_right(to_signed(l), to_integer(to_unsigned(Ceil_Log2(l'length)+1,r)))); 
   end ApIntASHR_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
@@ -243,7 +243,7 @@ package body OperatorPackage is
     if id = "ApConcat" then
       result_var := x & y;
     elsif id = "ApBitsel" then
-      temp_int := To_Integer(To_Unsigned(y));
+      temp_int := To_Integer(To_Unsigned(Ceil_Log2(x'length)+1,y));
       result_var(result_var'low) := x(temp_int);
     elsif id = "ApIntAdd" then					
       ApIntAdd_proc(x,y, result_var);

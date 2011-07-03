@@ -16,5 +16,6 @@ package Types is
   type StdLogicArray2D is array (integer range <>,integer range <>) of std_logic;
   type IStdLogicVector is array (integer range <>) of std_logic; -- note: integer range
 
+
 end package Types;
 

@@ -405,7 +405,7 @@ sub runSim {
 			$ENV{'MODELSIM'} = $modelsimIni;
 		}
 
-		if (system("vsim $config{'opts'} -voptargs=\"+acc\" testbench glbl $config{'extra_files'} -do \"${cmd}\"") != 0) {
+		if (system("vsim -novopt $config{'opts'} -voptargs=\"+acc\" testbench glbl $config{'extra_files'} -do \"${cmd}\"") != 0) {
 			if ($good) {
 				print "--- Test Failed.\n";
 				tcTestFailed($test, 'Error when running simulator', '');

@@ -59,7 +59,11 @@ localparam NUM_PORTS = 4;
 // Set size of memory (in words)
 //
 // Note: 1024 words is approx the size of a page
-localparam MEM_SIZE = 1024;
+//
+// MPD: changes to 4096, since there seems to
+// be some overwriting due to slower than expected
+// hardware performance..
+localparam MEM_SIZE = 4096;
 localparam MEM_MASK = MEM_SIZE - 1;
 
 // Max size of DMA ingress file

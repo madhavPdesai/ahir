@@ -64,6 +64,26 @@ module user_data_path
     input                              in_wr_7,
     output                             in_rdy_7,
 
+/****  not used
+    // --- Interface to SATA
+    input  [DATA_WIDTH-1:0]            in_data_5,
+    input  [CTRL_WIDTH-1:0]            in_ctrl_5,
+    input                              in_wr_5,
+    output                             in_rdy_5,
+
+    // --- Interface to the loopback queue
+    input  [DATA_WIDTH-1:0]            in_data_6,
+    input  [CTRL_WIDTH-1:0]            in_ctrl_6,
+    input                              in_wr_6,
+    output                             in_rdy_6,
+
+    // --- Interface to a user queue
+    input  [DATA_WIDTH-1:0]            in_data_7,
+    input  [CTRL_WIDTH-1:0]            in_ctrl_7,
+    input                              in_wr_7,
+    output                             in_rdy_7,
+*****/
+
     output  [DATA_WIDTH-1:0]           out_data_0,
     output  [CTRL_WIDTH-1:0]           out_ctrl_0,
     output                             out_wr_0,
@@ -88,6 +108,7 @@ module user_data_path
     output  [CTRL_WIDTH-1:0]           out_ctrl_4,
     output                             out_wr_4,
     input                              out_rdy_4,
+
     output  [DATA_WIDTH-1:0]           out_data_5,
     output  [CTRL_WIDTH-1:0]           out_ctrl_5,
     output                             out_wr_5,
@@ -102,6 +123,26 @@ module user_data_path
     output  [CTRL_WIDTH-1:0]           out_ctrl_7,
     output                             out_wr_7,
     input                              out_rdy_7,
+
+/****  not used
+    // --- Interface to SATA
+    output  [DATA_WIDTH-1:0]           out_data_5,
+    output  [CTRL_WIDTH-1:0]           out_ctrl_5,
+    output                             out_wr_5,
+    input                              out_rdy_5,
+
+    // --- Interface to the loopback queue
+    output  [DATA_WIDTH-1:0]           out_data_6,
+    output  [CTRL_WIDTH-1:0]           out_ctrl_6,
+    output                             out_wr_6,
+    input                              out_rdy_6,
+
+    // --- Interface to a user queue
+    output  [DATA_WIDTH-1:0]           out_data_7,
+    output  [CTRL_WIDTH-1:0]           out_ctrl_7,
+    output                             out_wr_7,
+    input                              out_rdy_7,
+*****/
 
      // interface to SRAM
      output [SRAM_ADDR_WIDTH-1:0]       wr_0_addr,
@@ -191,23 +232,10 @@ module user_data_path
    wire [`CPCI_NF2_DATA_WIDTH-1:0]  udp_reg_data_in;
    wire [UDP_REG_SRC_WIDTH-1:0]     udp_reg_src_in;
 
-   // unused
-    assign in_rdy_2 = 1'b0;
-    assign in_rdy_3 = 1'b0;
-    assign in_rdy_4 = 1'b0;
-    assign in_rdy_5 = 1'b0;
-    assign in_rdy_6 = 1'b0;
-    assign in_rdy_7 = 1'b0;
-    assign out_wr_2 = 1'b0;
-    assign out_wr_3 = 1'b0;
-    assign out_wr_4 = 1'b0;
-    assign out_wr_5 = 1'b0;
-    assign out_wr_6 = 1'b0;
-    assign out_wr_7 = 1'b0;
 
    //--------- Connect the data path -----------
 
-   input_arbiter_2Queues
+   input_arbiter
      #(.DATA_WIDTH(DATA_WIDTH),
        .CTRL_WIDTH(CTRL_WIDTH),
        .UDP_REG_SRC_WIDTH (UDP_REG_SRC_WIDTH),
@@ -229,6 +257,36 @@ module user_data_path
     .in_ctrl_1            (in_ctrl_1),
     .in_wr_1              (in_wr_1),
     .in_rdy_1             (in_rdy_1),
+
+    .in_data_2            (in_data_2),
+    .in_ctrl_2            (in_ctrl_2),
+    .in_wr_2              (in_wr_2),
+    .in_rdy_2             (in_rdy_2),
+
+    .in_data_3            (in_data_3),
+    .in_ctrl_3            (in_ctrl_3),
+    .in_wr_3              (in_wr_3),
+    .in_rdy_3             (in_rdy_3),
+
+    .in_data_4            (in_data_4),
+    .in_ctrl_4            (in_ctrl_4),
+    .in_wr_4              (in_wr_4),
+    .in_rdy_4             (in_rdy_4),
+
+    .in_data_5            (in_data_5),
+    .in_ctrl_5            (in_ctrl_5),
+    .in_wr_5              (in_wr_5),
+    .in_rdy_5             (in_rdy_5),
+
+    .in_data_6            (in_data_6),
+    .in_ctrl_6            (in_ctrl_6),
+    .in_wr_6              (in_wr_6),
+    .in_rdy_6             (in_rdy_6),
+
+    .in_data_7            (in_data_7),
+    .in_ctrl_7            (in_ctrl_7),
+    .in_wr_7              (in_wr_7),
+    .in_rdy_7             (in_rdy_7),
 
       // --- Register interface
     .reg_req_in           (in_arb_in_reg_req),
@@ -277,7 +335,7 @@ module user_data_path
      assign oq_in_reg_src = op_lut_in_reg_src;
 
 
-   output_queues_2
+   output_queues
      #(.DATA_WIDTH(DATA_WIDTH),
        .CTRL_WIDTH(CTRL_WIDTH),
        .UDP_REG_SRC_WIDTH (UDP_REG_SRC_WIDTH),
@@ -296,6 +354,36 @@ module user_data_path
     .out_ctrl_1       (out_ctrl_1),
     .out_wr_1         (out_wr_1),
     .out_rdy_1        (out_rdy_1),
+
+    .out_data_2       (out_data_2),
+    .out_ctrl_2       (out_ctrl_2),
+    .out_wr_2         (out_wr_2),
+    .out_rdy_2        (out_rdy_2),
+
+    .out_data_3       (out_data_3),
+    .out_ctrl_3       (out_ctrl_3),
+    .out_wr_3         (out_wr_3),
+    .out_rdy_3        (out_rdy_3),
+
+    .out_data_4       (out_data_4),
+    .out_ctrl_4       (out_ctrl_4),
+    .out_wr_4         (out_wr_4),
+    .out_rdy_4        (out_rdy_4),
+
+    .out_data_5       (out_data_5),
+    .out_ctrl_5       (out_ctrl_5),
+    .out_wr_5         (out_wr_5),
+    .out_rdy_5        (out_rdy_5),
+
+    .out_data_6       (out_data_6),
+    .out_ctrl_6       (out_ctrl_6),
+    .out_wr_6         (out_wr_6),
+    .out_rdy_6        (out_rdy_6),
+
+    .out_data_7       (out_data_7),
+    .out_ctrl_7       (out_ctrl_7),
+    .out_wr_7         (out_wr_7),
+    .out_rdy_7        (out_rdy_7),
 
       // --- Interface to the previous module
     .in_data          (oq_in_data),

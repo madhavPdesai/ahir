@@ -12,6 +12,8 @@
 //                 01/08/05 - dma_rd_mac is now an input as round-robin
 //                 lookup is used
 //                 01/13/05 - split dma_intr into read and write sigs
+//                 07/2/11  - (MPD) added reg [3:0] dma_rd_done_mac to keep 
+//                            mac id of the most recently completed dma read
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -509,12 +511,14 @@ end
 // ==================================================================
 
 reg [3:0] dma_rd_mac_latched;
+reg [3:0] dma_rd_done_mac; // mac id of the most recently completed dma read
 wire [`PCI_DATA_WIDTH - 1 : 0] dma_rd_ctrl;
 
 always @(posedge clk)
 begin
    if (reset) begin
       dma_rd_mac_latched <= 'h0;
+      dma_rd_done_mac <= 'h0;
       dma_rd_owner <= 1'b0;
    end
    else if (reg_we && pci_data_vld && pci_addr[11:2] == `CPCI_DMA_CTRL_I) begin
@@ -523,11 +527,12 @@ begin
    end
    else if (dma_rd_done) begin
       dma_rd_mac_latched  <= dma_rd_mac;
+      dma_rd_done_mac <= dma_rd_mac;
       dma_rd_owner <= 1'b0;
    end
 end
 
-assign dma_rd_ctrl = {20'b0, dma_rd_mac_latched , 7'b0, dma_rd_owner};
+assign dma_rd_ctrl = {16'b0, dma_rd_done_mac, dma_rd_mac_latched , 7'b0, dma_rd_owner};
 
 
 // ==================================================================

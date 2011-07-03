@@ -34,7 +34,6 @@ begin
   -----------------------------------------------------------------------------
   ProTx : for I in 0 to num_reqs-1 generate
     P2L : block
-      signal state : P2LState;
     begin  -- block P2L
       p2LInst: Pulse_To_Level_Translate_Entity
         port map (rL            => req(I),
