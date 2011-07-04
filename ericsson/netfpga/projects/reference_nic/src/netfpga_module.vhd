@@ -116,7 +116,7 @@ begin  -- default_arch
     
     case in_fsm_state is
       when idle =>
-        in_pop_req_var := '1';          -- this is the only state where we req..
+        in_pop_req_var := '1';         -- nominally asserted, see below. 
         
         if(in_pop_ack = '1') then
           -- request if ack from queue.
