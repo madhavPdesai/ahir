@@ -8,6 +8,7 @@ AaStatement::AaStatement(AaScope* p): AaScope(p)
 {
   this->_tab_depth = ((p != NULL) ? p->Get_Depth()+1 : 1);
   _index_in_sequence = -1;
+  
 }
 AaStatement::~AaStatement() {};
 string AaStatement::Tab()
@@ -116,6 +117,11 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
     {
       AaRoot::Error( string("multiple writes to module port ") + obj_ref_root_name + " are not permitted",this);
       err_flag = true;
+    }
+
+  if(child != NULL && child->Is_Interface_Object())
+    {
+      ((AaInterfaceObject*)child)->Set_Unique_Driver_Statement(this);
     }
 
   if(map_flag)
@@ -536,6 +542,9 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
 {
   assert(tgt); assert(src);
 
+  tgt->Set_Associated_Statement(this);
+  src->Set_Associated_Statement(this);
+
   this->Set_Line_Number(lineno);
 
   this->_target = tgt;
@@ -889,11 +898,13 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
 
   for(unsigned int i = 0; i < inargs.size(); i++)
     {
+      inargs[i]->Set_Associated_Statement(this);
       this->_input_args.push_back(inargs[i]);
     }
 
   for(unsigned int i = 0; i < outargs.size(); i++)
     {
+      outargs[i]->Set_Associated_Statement(this);
       this->_output_args.push_back(outargs[i]);
       this->Map_Target(outargs[i]);
       outargs[i]->Set_Is_Target(true);
@@ -2481,6 +2492,7 @@ void AaPhiStatement::Set_Target(AaObjectReference* tgt)
   this->_target = tgt; 
   this->_target->Set_Is_Target(true);
 
+  tgt->Set_Associated_Statement(this);
   this->Map_Target(tgt); 
 
   if(this->_source_pairs.size() > 0)
@@ -2498,6 +2510,7 @@ void AaPhiStatement::Add_Source_Pair(string label, AaExpression* expr)
 {
   _merged_labels.insert(label);
 
+  expr->Set_Associated_Statement(this);
   if(this->_target)
     {
       expr->Add_Target(this->_target);

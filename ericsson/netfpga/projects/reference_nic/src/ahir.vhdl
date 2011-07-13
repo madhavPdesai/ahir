@@ -16,6 +16,7 @@ package Types is
   type StdLogicArray2D is array (integer range <>,integer range <>) of std_logic;
   type IStdLogicVector is array (integer range <>) of std_logic; -- note: integer range
 
+
 end package Types;
 
 library ieee;
@@ -24,6 +25,7 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.Types.all;
+use ahir.Utilities.all;
 
 library ieee_proposed;
 -- use ieee_proposed.math_utility_pkg.all;
@@ -51,7 +53,8 @@ package Subprograms is
   function To_Signed ( inp : ApInt) return signed;
   function To_Signed ( inp : std_logic_vector) return signed;
   function To_Unsigned ( inp : ApInt) return unsigned;
-  function To_Unsigned ( inp : std_logic_vector) return unsigned;  
+  function To_Unsigned ( inp : std_logic_vector) return unsigned;
+  function To_Unsigned(constant W : in integer; inp : std_logic_vector) return unsigned;
 
 
   function To_SLV ( x: ApInt) return std_logic_vector;
@@ -353,7 +356,20 @@ package body Subprograms is
     return(ret_var);
   end To_Unsigned;
 
-  
+
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function To_Unsigned(constant W : in integer; inp : std_logic_vector) return unsigned is
+    alias linp : std_logic_vector(inp'length downto 1) is inp;
+    variable ret_var : unsigned(Minimum(W,inp'length) downto 1);
+  begin
+    for I in 1 to ret_var'length loop
+      ret_var(I) := linp(I);
+    end loop;  -- I
+    return(ret_var);
+  end To_Unsigned;
+
   -----------------------------------------------------------------------------
 
   -----------------------------------------------------------------------------
@@ -1222,7 +1238,6 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.Types.all;
-use ahir.Subprograms.all;
 
 package Utilities is
 
@@ -1238,35 +1253,8 @@ package Utilities is
   function Maximum(x,y: integer)   return integer;
   function Minimum(x,y: integer)   return integer;  
   
-  
-  type P2LState is (I,B,W);  
-
-  procedure Pulse_To_Level_Translate(
-    suppr_imm_ack : in boolean;    
-    signal rL : in boolean;
-    signal rR : out std_logic;
-    signal aL : out boolean;
-    signal aR : in std_logic;
-    signal en : out std_logic;
-    signal state : inout P2LState;
-    signal clk : in std_logic;
-    signal reset : in std_logic);
-
-  procedure RequestPriorityEncode (
-    signal req_fsm_state : inout std_logic;
-    signal clk,reset : in std_logic;
-    signal reqR : in std_logic_vector;
-    signal ackR: out std_logic_vector;
-    signal reqF : inout std_logic_vector;
-    signal req_s : out std_logic;
-    signal ack_s : in std_logic;
-    signal reqFreg : inout std_logic_vector);
-  
-
   function All_Entries_Same ( x : NaturalArray) return boolean;
-
   function Is_At_Most_One_Hot(x: BooleanArray) return Boolean;
-  
   
 end Utilities;
 
@@ -1381,133 +1369,6 @@ package body Utilities is
       end if;
     end function Minimum;
     
-
-  procedure Pulse_To_Level_Translate(
-    suppr_imm_ack : in boolean;
-    signal rL : in boolean;
-    signal rR : out std_logic;
-    signal aL : out boolean;
-    signal aR : in std_logic;
-    signal en : out std_logic;
-    signal state : inout P2LState;    
-    signal clk : in std_logic;
-    signal reset : in std_logic) is
-    variable nstate : P2LState;
-  begin
-    nstate := state;
-    
-    rR <= '0';
-    aL <= false;
-    en <= '0';
-    
-    if(reset = '1') then
-      nstate := I;
-    else
-      case state is
-        when I =>
-          if(rL) then
-            rR <= '1';
-            en <= '1';
-            if(aR = '1') then
-              if(suppr_imm_ack) then
-                nstate := W;
-              else
-                aL <= true;
-              end if;
-            else
-              nstate := B;
-            end if;
-          end if;
-        when B =>
-          rR <= '1';
-          if(aR = '1') then
-            aL <= true;
-            nstate := I;
-          end if;
-        when W =>
-          aL <= true;
-          nstate := I;
-        when others => null;
-      end case;
-    end if;
-
-    if(clk'event and clk = '1') then
-      state <= nstate;
-    end if;
-    
-  end procedure;
-
-  procedure RequestPriorityEncode (
-    signal req_fsm_state : inout std_logic;
-    signal clk,reset : in std_logic;
-    signal reqR : in std_logic_vector;
-    signal ackR: out std_logic_vector;
-    signal reqF : inout std_logic_vector;
-    signal req_s : out std_logic;
-    signal ack_s : in std_logic;
-    signal reqFreg : inout std_logic_vector)
-  is
-    variable next_state : std_logic;
-    variable reqFregvar, ack_var, reqFvar, reqFrawvar : std_logic_vector(reqR'length-1 downto 0);
-    variable req_s_var : std_logic;
-    variable there_is_a_request : std_logic;
-    
-  begin
-    
-    next_state := req_fsm_state;
-    
-    reqFrawvar := PriorityEncode(reqR);
-    there_is_a_request := OrReduce(reqR);
-
-    reqFregvar := reqFreg;
-    req_s_var := '0';
-
-    reqFvar := (others => '0');
-    ack_var := (others => '0');
-    
-    if(reset = '1') then
-      next_state := '0';
-      reqFregvar := (others => '0');
-    else
-      case req_fsm_state is
-        when '0' =>
-          if(there_is_a_request = '1') then
-            reqFregvar := reqFrawvar;
-            reqFvar := reqFrawvar;
-            req_s_var := '1';
-
-	    if(ack_s = '1') then
-		ack_var := reqF;	
-	    else
-            	next_state := '1';
-	    end if;  
-	  else
-	    reqFregvar := (others => '0');
-	    reqFvar := (others => '0');
-          end if;
-        when '1' =>
-          reqFvar := reqFreg;                           
-          req_s_var := '1';
-          if(ack_s = '1') then
-            ack_var := reqF;
-            reqFregvar := (others => '0');
-            next_state := '0';
-          end if;
-        when others =>
-          null;
-      end case;
-    end if;
-
-    ackR <= ack_var;
-    req_s <= req_s_var;
-    reqF  <= reqFvar;
-    
-    if(clk'event and clk = '1') then
-      req_fsm_state <= next_state;
-      reqFreg <= reqFregvar;
-    end if;
-
-  end procedure;
 
   function All_Entries_Same ( x : NaturalArray) return boolean is
     variable ret_var : boolean;
@@ -2820,19 +2681,19 @@ package body OperatorPackage is
   -----------------------------------------------------------------------------
   procedure ApIntSHL_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
   begin
-    result := To_SLV(to_unsigned(l) sll to_integer(to_unsigned(r)));
+    result := To_SLV(to_unsigned(l) sll to_integer(to_unsigned(Ceil_Log2(l'length)+1, r)));
   end ApIntSHL_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
   procedure ApIntLSHR_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
   begin
-     result := To_SLV(to_unsigned(l)  srl to_integer(to_unsigned(r)));
+     result := To_SLV(to_unsigned(l)  srl to_integer(to_unsigned(Ceil_Log2(l'length)+1, r)));
   end ApIntLSHR_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
   procedure ApIntASHR_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
   begin
-     result := To_SLV(shift_right(to_signed(l), to_integer(to_unsigned(r)))); 
+     result := To_SLV(shift_right(to_signed(l), to_integer(to_unsigned(Ceil_Log2(l'length)+1,r)))); 
   end ApIntASHR_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
@@ -2949,7 +2810,7 @@ package body OperatorPackage is
     if id = "ApConcat" then
       result_var := x & y;
     elsif id = "ApBitsel" then
-      temp_int := To_Integer(To_Unsigned(y));
+      temp_int := To_Integer(To_Unsigned(Ceil_Log2(x'length)+1,y));
       result_var(result_var'low) := x(temp_int);
     elsif id = "ApIntAdd" then					
       ApIntAdd_proc(x,y, result_var);
@@ -7986,7 +7847,6 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   P2L: for I in nreqs-1 downto 0 generate
       P2LBlk: block
-        signal state : P2LState;
       begin  -- block P2L          
         p2Linst: Pulse_To_Level_Translate_Entity
           port map (rL => reqL(I), rR => reqP(I), aL => ackL(I), aR => ackP(I),
@@ -8294,7 +8154,6 @@ begin
   -----------------------------------------------------------------------------
   ProTx : for I in 0 to num_reqs-1 generate
     P2L : block
-      signal state : P2LState;
     begin  -- block P2L
       p2LInst: Pulse_To_Level_Translate_Entity
         port map (rL            => req(I),
@@ -8362,7 +8221,6 @@ begin
   ProTx : for I in 0 to num_reqs-1 generate
 
     P2L : block
-      signal state : P2LState;
     begin  -- block P2L
       p2LInst: Pulse_To_Level_Translate_Entity
         port map (rL            => req(I),
@@ -8995,7 +8853,6 @@ begin
   ProTx : for I in 0 to num_reqs-1 generate
 
     P2L : block
-      signal state : P2LState;
     begin  -- block P2L
       p2LInst: Pulse_To_Level_Translate_Entity
         port map (rL            => req(I),
@@ -9064,7 +8921,6 @@ begin
   ProTx : for I in 0 to num_reqs-1 generate
 
     P2L : block
-      signal state : P2LState;
     begin  -- block P2L
       p2LInst: Pulse_To_Level_Translate_Entity
         port map(rL            => req(I),

@@ -12,18 +12,23 @@
 
 \section{Introduction}
 
-{\bf Aa} is a low-level {\em algorithm-assembly}
-programming language for the description
-of algorithms.   An \Aa program 
-can be modeled by a petri net
+{\bf Aa} is a programming language for the 
+description of algorithms.   The control-flow
+in an \Aa program corresponds to a petri net
 of a specific class (the type-2 petri-net as
 introduced in \cite{ref:SameerPhD}).  
+The data-flow is constructed using static
+single-assignment variables (which can be assigned to only once),
+storage objects, messaging pipes and constants.
+Pointers to storage objects can be created
+and manipulated (pointer arithmetic, dereferencing
+etc.) in the usual way.  
+
 A program in \Aa can also be viewed as a 
 description of a system which reacts with 
-its environment through input and output ports and 
-through message queues.  Thus, an \Aa program
-can either be executed on a computer, or
-be mapped to a logic circuit.
+its environment through input and output ports.
+Thus, an \Aa program can either be executed on a 
+computer, or be mapped to a logic circuit.
 
 In the rest of this document, we outline the
 structure and the syntax of the \Aa language,
@@ -38,40 +43,10 @@ the behaviour of the equivalent system.
 A program in \Aa consists of a sequence of
 declarations and module definitions.  
 \begin{verbatim}
-program := ( module-definition | program-object-declaration )*
+program := ( module-definition | program-variable-declaration )*
 \end{verbatim}
-Program object declarations
-can belong to one of three classes:
-\begin{itemize}
-\item {\bf Storage} objects declared in the program
-are variables that can be written into from multiple
-points in the program.  When declared at the program
-scope, storage objects are visible throughout
-the program.
-\item {\bf Pipe} objects declared at the program scope
-are globally visible first-in-first-out buffers that can 
-be read from anywhere in the program and can be
-written into from anywhere in th program.  A pipe
-is a single-place buffer.  A write to a pipe succeeds
-only if the single place buffer is empty.  A read
-from the pipe succeeds only if the single place
-buffer is not empty (the read empties the buffer).
-Thus, pipes can be used for synchronization in 
-an \Aa program.
-\begin{itemize}
-\item A pipe that is only written into in the program, but
-is not read from, is assumed to have a destination outside
-the program.  Such a pipe is an output port of the
-program.
-\item A pipe that is only read from in a program but not
-written into, is assumed to have a source outside the program.
-Such a pipe is an input port of the program.
-\end{itemize}
-\item {\bf Constant} objects declared at
-the program scope are globally visible and have
-initial values which can never be altered in the program.
-Thus, an assignment to a constant is an error.
-\end{itemize} 
+Program variable declarations
+can belong to one of three classes as described in Section \ref{sec:Objects}.
 
 A module in \Aa is the basic unit of compilation, and
 has the following structure
@@ -140,8 +115,53 @@ The visibility
 rules and access mechanisms between scopes will be described
 in Section \ref{sec:Scopes}.
 
+\section{Program Variables}
 
-\section{Statements}
+Variables in  the program can belong to the following classes:
+\begin{itemize}
+\item {\bf Storage} variables declared in the program
+can be written into from multiple
+points in the program.  When declared at the program
+scope, storage variables are visible throughout
+the program.  Storage variables can be thought of 
+as memory locations which can be accessed from different
+points in the program.
+\item {\bf Pipe} variables declared at the program scope
+are globally visible first-in-first-out (FIFO) buffers that can 
+be read from anywhere in the program and can be
+written into from anywhere in th program.  A pipe
+is a FIFO buffer with a specified number of
+slots.  A write to a pipe succeeds
+only if there is an empty slot in the FIFO (a successful
+write uses up an empty slots.  A read
+from the pipe succeeds only if there is at
+least one occupied slot in the FIFO (a successful read
+creates an empty slot in the FIFO). 
+Thus, pipes provide a mechanism for synchronization and
+for message passing in an \Aa program.
+\begin{itemize}
+\item A pipe that is only written into in the program, but
+is not read from, is assumed to have a destination outside
+the program.  Such a pipe is an output port of the
+program.
+\item A pipe that is only read from in a program but not
+written into, is assumed to have a source outside the program.
+Such a pipe is an input port of the program.
+\end{itemize}
+\item {\bf Constant} variables declared at
+the program scope are globally visible and have
+initial values which can never be altered in the program.
+Thus, an assignment to a constant is an error.
+\item {\bf Implicit} or {\bf Static Single Assignment}
+variables are created by statements in the \Aa program
+(as described below in Section \ref{sec:Statements}).
+These are analogous to registers that can be written
+into only from one point,  but can be
+read from several points in the program.
+\end{itemize} 
+
+
+\section{Statements} \label{sec:Statements}
  
 Statements in the module-body are can be of two kinds:
 \begin{itemize}
@@ -179,7 +199,7 @@ When control flow reaches an assignment statement, it
 evaluates the expression, updates the value of the target
 and passes the control flow forward (we will see what this
 means in the sequel).
-Some examples of simple statements are 
+Some examples of assignment statements are 
 \begin{verbatim}
 a  :=  (~b)
 b  :=   (c + (d + e))
@@ -211,6 +231,7 @@ Here $p,q,r,s,t$ can be expressions.
 
 More details of the syntax are provided in 
 Section \ref{sec:Syntax}.
+
 \item The {\bf null} statement does nothing, and just passes the
 token onwards.  This is how it looks like
 \begin{verbatim}
@@ -221,7 +242,7 @@ $null
 \subsection{Complete Block Statements}
 
 Block statements can be used to describe complex
-control flows, and consist of a sequence of statements.
+control flow,  and consist of a sequence of statements.
 Block statements are of
 the following types:
 \begin{itemize}
@@ -232,7 +253,7 @@ series-block-statement :=
              { 
                 declarations
                 sequence-of-atomic-statements
-             }
+             } [(variable-exports)]
 \end{verbatim}
 The behaviour is similar to the module, in that the control
 token flows serially down the sequence of statements.
@@ -244,11 +265,19 @@ $seriesblock [s1]
    b := a
    b := ( $mux (a > c)  (b+c) (b-c))
    q := ( b * 2)
-}
+} ( q => q )
 \end{verbatim}
 In this example, the variable $b$ was declared as
 a storage variable in scope s1, and hence was legally
 able to be the target of multiple assignment statements.
+The optional export specification
+\begin{verbatim}
+( q => q )
+\end{verbatim}
+after the curly brace \} specifies that the variable
+$q$ defined inside the block $s1$ is visible outside
+the block as $q$ (so that other scopes can use this
+variable, see Section \ref{sec:Scopes} below).
 \item {\bf Parallel} block statements are of the form
 \begin{verbatim}
 parallel-block-statement :=
@@ -256,7 +285,7 @@ parallel-block-statement :=
              { 
                 declarations
                 sequence-of-atomic-statements
-             }
+             } [(variable-exports)]
 \end{verbatim}
 When a token enters the parallel block statement, it
 is replicated into as many tokens as there are statements in
@@ -278,8 +307,8 @@ will finish when both have finished.  The
 order in which the two statements are executed
 is {\bf not} specified.
 \item {\bf Fork} block statements are generalizations of the
-parallel block region in the sense that they
-allow the programmer to express complex fork-join interactions.
+parallel block region, and they allow the programmer to express 
+complex fork-join interactions.
 They have the following structure:
 \begin{verbatim}
 fork-block-statement :=
@@ -287,7 +316,7 @@ fork-block-statement :=
              {
                 declarations
                 sequence-of-statements
-             }
+             } [(variable-exports)]
 \end{verbatim}
 The control flow is similar to the parallel block region,
 in the sense that all statements in the sequence are started
@@ -342,7 +371,9 @@ as follows
 \begin{verbatim}
 branch-block-statement :=
              branch-block-specifier block-name
-             { branch-block-statement-sequence }
+             { 
+		 branch-block-statement-sequence 
+	     } [(variable-exports)]
 \end{verbatim}
 The sequence of statements appearing in a branch block
 consist of
@@ -397,8 +428,8 @@ rerouted by a place statement), then the control
 token is passed on to the statement immediately
 following the if statement.
 \item The place statement: The {\bf place} statement
-identifies a place into which it places
-a token after it has executed.  For example,
+identifies a place which will contain 
+a token after the place statemet has executed.  For example,
 \begin{verbatim}
 $place [fastpath]
 \end{verbatim}%$
@@ -421,7 +452,7 @@ refer to token labels defined by {\bf place}  statements within the branch block
 Whenever a token is present in any of the places in
 the label-list for a merge,
 the merge statement starts and executes a series of special assignments
-which multiplex values into new variables based on which arc the
+which multiplex values into targets based on which arc the
 token arrived from.  The merge statement then releases its token to
 the next statement. 
 \begin{itemize}
@@ -430,10 +461,14 @@ The merge assignments inside a merge block are all of a specific
 form, called the phi-statement.  A phi-statement has the following
 form
 \begin{verbatim}
+phi-spec target-expr := expr1 on-spec place-spec-1  [expr2 on-spec place-spec-2 ... ]
+\end{verbatim}
+For example:
+\begin{verbatim}
 $phi a := b $on $entry c $on loopback 
 \end{verbatim}
 This says that the target $a$ is to take the value of $b$ if
-the merge statement was started from its entry place (ie from a
+the merge statement was started from its entry place (from a
 token passed from its predecessor) and is to take the value of $c$
 if the merge statement was started from the place ``loopback''.
 Note that if the merge statement is to be triggered by a
@@ -451,7 +486,7 @@ $branchblock [b1]
                          // this merge is triggered by
                          // a token entering it from
                          // its predecessor or by  
-                         // a token in the place "loop"
+                         // a token in the place "loopback"
 
 
        $phi q := 0 on $entry r on loop 
@@ -462,7 +497,7 @@ $branchblock [b1]
   $if (r < 10) $then 
        $place [loopback] // put token in place "loopback"
   $endif
-}
+} (r => r)
 \end{verbatim}%$
 This is to be interpreted as follows: the merge executes
 whenever a token is present in its entry place  or in 
@@ -472,7 +507,9 @@ either 0 (if a token was present in the entry place)
 or r (if a token was present in the ``loop'' place).
 By the construction rules in an \Aa program, it is
 impossible for there to be a token present in more
-than one input place to a merge.
+than one input place to a merge.  The final export
+makes $r$ directly visible as $r$  in the parent scope of the
+branch-block.
 \end{itemize}
 
 Thus, an \Aa program is constructed as a collection of modules,
@@ -500,6 +537,10 @@ whether the variable is defined in that scope, and if not found there,
 by checking in the scope that contains the scope X, and so on.
 \item A scope can read from variables that are defined in descendant
 scopes.  
+\item A scope can export a variable defined within its scope to
+its parent scope.   The name  of the exported variable must not
+clash with the name of any other variable visible in the
+parent scope.
 \item A scope can read from variables that are defined in ancestor scopes.
 \item A scope can only write to one of the following:
 \begin{itemize}
@@ -545,7 +586,8 @@ Thus, a generic variable reference has the form
 \end{verbatim} 
 and the scoping rules forbid a scope from accessing variables
 which are not defined in either an ancestor or a descendant
-of the scope.
+of the scope (the export mechanism should be used if this
+is needed).
 
 \section{Types} \label{sec:Types}
 
@@ -572,9 +614,10 @@ Values corresponding to this type are to be
 viewed as integers maintained in the
 two-s complement form  by 
 a binary sequence of the specified width.
+
 \item Pointers:  A pointer is an unsigned
 integer with a default pointer width
-(set to 32 for now), which specified the
+(set to 32 for now), which specifies the
 type of object to which it points.
 For example
 \begin{verbatim}
@@ -618,11 +661,11 @@ $array [d1][d2]...[dn] $of <element-type-spec>
 The values $ d1,d2, \ldots dn$ must
 be positive integers, and element-type-spec
 must refer to a type.
-For exampe, 
+For example, 
 \begin{verbatim}
 $array [10][10] of $array [10] $of $uint<32>
 \end{verbatim}
-is an two-dimensional array type whose
+is a two-dimensional array type whose
 elements are one dimensional arrays of 32-bit
 unsigned integers.
 \item
@@ -851,7 +894,7 @@ This is similar to the following in {\bf C}
 float a;
 int b = *((int*) &a);
 \end{verbatim}
-except that in \Aa, the destination type need not
+The destination type need not
 be the same size as the source type (higher
 order bits are truncated or padded with 0
 as necessary).
@@ -938,13 +981,13 @@ For example
 \end{verbatim}
 
 
-\section{Memory Spaces}
+\section{Storage variables and Memory Spaces}
 
 An \Aa program can contain declarations to storage objects.  These
-storage objects need to be grouped into memory spaces using
-the following rule: two storage objects are put in the same
-memory space if there is a value in the program which
-is infected by (determined by) the values of pointers to the two objects.
+storage objects are grouped into memory spaces using
+the following rule: two storage objects must be in the same
+memory space if there is a de-referenced pointer in the
+program which can point to either of these two storage objects.
 
 To understand this concept, consider the following
 example
@@ -957,7 +1000,7 @@ $is
    $storage u: $uint<32>
    $storage v: $uint<32>
    $storage w: $uint<32>
-
+   $storage ptr: $pointer< $uint<32> >
    w := a
    ptr := @(u)
    ->(ptr) := w
@@ -966,13 +1009,15 @@ $is
    b := u
 }
 \end{verbatim}
-Now consider the object {\bf ptr}, which can hold a value which
+Now consider the storage variable {\bf ptr}, which can hold a value which
 is a pointer to either {\bf u} or a pointer to {\bf v}.  Thus,
 {\bf u} and {\bf v} must belong to the same memory space.
 However, {\bf w} can sit in a memory space by itself.  The
 store accesses implied by the $->(ptr)$ will point to the
 memory space which contains {\bf u} and {\bf v}.
 
+
+\subsection{Pointers from ``outside´´? }
 
 What should we do in the following case?
 \begin{verbatim}
@@ -995,9 +1040,12 @@ and as a pointer, it must point to
 an {\bf external} object.  Since ptr can 
 point to this external object and also to {\bf u},
 the external object and {\bf u} must be kept in
-the same memory space.  In this case, the external
+the same memory space.  In this case, there
+are two possible solutions: either the external
 object needs
-to be made internal, and moved {\bf inside} the system.  
+to be made internal, and moved {\bf inside} the system,
+or, the object {\bf u} must be moved outside the system
+and be made part of the outside world.
 This is done by the {\bf AaLinkExtMem} utility
 which is described in a separate document.
 
@@ -1018,7 +1066,6 @@ The \Aa compiler then considers that the module GetValue
 is defined ``elsewhere'' and does not try to link to it
 directly.  This linking is done outside by other tools which
 use the results of the \Aa compilation process.
-
 
 \section{Examples}
 

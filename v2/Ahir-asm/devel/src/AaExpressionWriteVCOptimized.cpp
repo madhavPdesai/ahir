@@ -14,6 +14,52 @@ using namespace std;
 #include <Aa2VC.h>
 
 
+void AaExpression::Write_VC_WAR_Dependencies(set<AaRoot*>& visited_elements,
+					     AaExpression* source_expr,
+					     ostream& ofile)
+{
+  if(!this->Is_Implicit_Variable_Reference())
+    return;
+
+  AaRoot* root = this->Get_Root_Object();
+  if(root == NULL || !root->Is_Interface_Object() || root->Is_Statement())
+    {
+      root = this;
+    }
+
+
+  for(set<AaRoot*>::iterator iter = root->Get_Source_References().begin(), 
+	fiter = root->Get_Source_References().end();
+      iter != fiter;
+      iter++)
+    {
+      if((*iter)->Is_Expression() && (visited_elements.find(*iter) != visited_elements.end()))
+	{
+	  AaExpression* expr = (AaExpression*)(*iter);
+	  if(!expr->Is_Constant())
+	    {
+	      ofile << "// WAR dependency: " << expr->To_String() << " before " << source_expr->To_String() << endl;
+
+	      // Note: this is not quite correct.
+	      //      the source expression cannot complete until expr has completed..
+	      //      however, what if expr is a source expression..?  In this case, 
+	      //      the assignment statement which uses expr as a source must
+	      //      complete...
+	      if(expr->Get_Associated_Statement())
+		{
+		  __J(source_expr->Get_VC_Active_Transition_Name(), 
+		      expr->Get_Associated_Statement()->Get_VC_Completed_Transition_Name());
+		}
+	      else
+		{
+		  __J(source_expr->Get_VC_Active_Transition_Name(), expr->Get_VC_Complete_Region_Name());
+		}
+	    }
+	}
+    }
+}
+
+
 // AaObjectReference
 bool AaObjectReference::Is_Load()
 {
@@ -99,7 +145,17 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visi
       ofile << "// " << this->To_String() << endl;
 
       // if this is a statement...
-      if(this->Is_Implicit_Variable_Reference())
+      if(this->_object->Is_Interface_Object())
+	{
+	  ofile << "// reference to interface object" << endl;
+	  __T(this->Get_VC_Complete_Region_Name());
+	  AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
+	  if(visited_elements.find(root) != visited_elements.end())
+	    {
+	      __J(this->Get_VC_Complete_Region_Name(), root->Get_VC_Completed_Transition_Name());
+	    }	  
+	}
+      else if(this->Is_Implicit_Variable_Reference())
 	{
 	  ofile << "// implicit reference" << endl;
 	  __T(this->Get_VC_Complete_Region_Name());
@@ -350,6 +406,15 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
 		    }
 		}
 	    }
+	  else if(this->_object->Is_Interface_Object())
+	    {
+	      AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
+	      if(visited_elements.find(root) != visited_elements.end())
+		{
+		  __J(base_addr_calc, ((AaStatement*)root)->Get_VC_Completed_Transition_Name());
+		}	  
+	    }
+
 
 
 
@@ -406,7 +471,13 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
 	    }
 	  else if(this->_object->Is("AaInterfaceObject"))
 	    {
-	      // do nothing.
+
+	      AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
+	      if(visited_elements.find(root) != visited_elements.end())
+		{
+		  __J(this->Get_VC_Active_Transition_Name(), ((AaStatement*)root)->Get_VC_Completed_Transition_Name());
+		}	  
+
 	      __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
 	      ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] {" << endl;
 	      ofile << "$T [slice_req] $T [slice_ack]" << endl;

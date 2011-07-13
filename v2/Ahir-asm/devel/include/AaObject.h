@@ -94,18 +94,33 @@ class AaObject: public AaRoot
 };
 
 // interface object: function arguments
+class AaStatement;
 class AaInterfaceObject: public AaObject
 {
   // arguments can be input or output
   string _mode; // "in" or "out"
 
+  AaStatement* _unique_driver_statement;
  public:
   string Get_Mode() {return(this->_mode);}
 
   AaInterfaceObject(AaScope* scope_tpr, string oname, AaType* otype, string mode);
   ~AaInterfaceObject();
   virtual string Kind() {return("AaInterfaceObject");}
+  virtual bool Is_Interface_Object() {return(true);}
   // uses AaObject::Print method
+
+  void Set_Unique_Driver_Statement(AaStatement* stmt)
+  {
+    if(_unique_driver_statement == NULL)
+      _unique_driver_statement = stmt;
+
+  }
+  AaStatement* Get_Unique_Driver_Statement()
+  {
+    return(_unique_driver_statement);
+  }
+  
 };
 
 class AaConstantObject: public AaObject

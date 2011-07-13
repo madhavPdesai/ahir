@@ -96,8 +96,8 @@ The resulting circuits are upto two orders of
 magnitude more energy-efficient than
 a processor \cite{ref:dsd2010}.  The AhirV2
 toolset incorporates several optimizations which
-make the resulting circuits more 
-competitive. 
+make the resulting circuits smaller and 
+faster than before.
 
 \section{The tools}
 
@@ -192,7 +192,8 @@ storage objects declared inside the \Aa program.
 Takes a collection of \vC descriptions and converts them to
 an AHIR system described in VHDL.
 \begin{verbatim}
-vc2vhdl [-O] [-C] -t/-T foo [-t/-T bar -t/-T bar2 ...]\
+vc2vhdl [-O] [-C] [-a] [-e <entity-name] [-w]\
+         -t/-T foo [-t/-T bar -t/-T bar2 ...]\
          -f file1.vc -f file2.vc ...  > system.vhdl
 \end{verbatim}
 
@@ -229,6 +230,19 @@ instantiates the system and starts all top-level modules
 off (you will need to fill in your own test bench here).
 The C testbench is usually easier to write (it probably
 already exists in the form of the original program).
+\item {\bf -a} : try to minimize the area of the resulting
+VHDL by sharing operators to the maximum extent possible
+(allowing potential contention for resources).  This will
+result in a slower (usually by 2X) system, but will
+also reduce the area (usually by 0.5X).  If not specified,
+two operations will be mapped to the same
+operator  only if it can be proved that they cannot be active simultaneously.
+\item {\bf -e top-entity-name} : The generated top-level VHDL entity
+corresponding to the AHIR system is named top-entity-name.  The default
+is test\_system.
+\item {\bf -w} :  If specified, the VHDL system and test-bench are
+generated as separate unformatted VHDL files.  You will need to
+format these using the vhdlFormat command.
 \item {\bf -s ghdl/modelsim} :  If {\bf ghdl} is specified
 with the -s option, then the generated testbench (if -C is specified)
 uses the VHPI interface to link with foreign code.  Otherwise,
@@ -244,7 +258,7 @@ are small and are converted to register banks).
 
 \subsection{Miscellaneous: {\bf vcFormat} and {\bf vhdlFormat}}
 
-The outputs produces by {\bf Aa2VC} and {\bf vc2vhdl} are
+The outputs produced by {\bf Aa2VC} and {\bf vc2vhdl} are
 not well formatted.  One can format \Aa and \vC files
 using  {\bf vcFormat} as follows
 \begin{verbatim}
@@ -431,7 +445,7 @@ entity test_system is  -- system
 end entity;
 \end{verbatim}
 There are ports corresponding to the arguments of the top-level module,
-and the add\_start/add\_fin is a handshake pair.  One sets of the inputs,
+and the add\_start/add\_fin is a handshake pair.  One sets up the inputs,
 starts the system and waits until the fin is asserted.  After the fin
 is asserted, one has the return value of {\bf add} at the appropriate port.
 
@@ -471,7 +485,12 @@ Both options are supported in the AhirV2 flow through
 
 \subsection{Keeping the external memory outside the system}
 
-For this example, if you want to keep the external memory
+In this scenario, all memory accesses which are resolved
+to be to a storage object which is not declared in the
+\Aa program are redirected outside the system by using
+pipes.
+
+If you want to keep the external memory
 outside, you will have to go through the following sequence
 \begin{verbatim}
 # first use clang (or llvm-gcc) to generate llvm-byte-code
@@ -512,7 +531,7 @@ vc2vhdl -O -t foo -t extmem_store_32 -t extmem_load_32\
 
 \end{verbatim}
 
-If you look at the generate top-level VHDL entity, its ports
+If you look at the generated top-level VHDL entity, its ports
 will be
 \begin{verbatim}
 entity test_system is  -- system
@@ -546,8 +565,16 @@ read/write requests made from the inside.
 
 \subsection{Keeping the external memory inside the system}
 
-For this example, if you want to keep the external memory
-inside, you will have to go through the following sequence
+In this scenario, we will assume that all accesses to 
+storage variables not defined in the \Aa program are 
+to be directed to a storage variable which is to be
+a viewed as a shared memory pool that is visible to the
+\Aa program as well as to the outside world.  The visibility
+to the outside world is provided by access functions
+that the outside world can use to read/write from this
+shared memory pool.
+
+You will have to go through the following sequence:
 \begin{verbatim}
 # use clang (or llvm-gcc) to generate llvm-byte-code
 clang -std=gnu89 -emit-llvm -c foo.c
@@ -592,6 +619,8 @@ vc2vhdl -O -t foo -t mem_load__ -t mem_store__ \
        | vhdlFormat > foo_o_aa_memlinked_external_inside_vc.vhdl
 \end{verbatim}
 
+In this example, we are saying that the shared memory pool
+variable is named mempool, and it is an array of 1024 {\bf bytes}.
 The generated top-level VHDL entity has the following
 ports:
 \begin{verbatim}
@@ -623,13 +652,14 @@ end entity;
 
 The system provides a memory load and memory store
 port to the external world (through the mem\_load.. and mem\_store..)
-ports.
+ports.  The shared memory variable is kept in a memory
+space and is guaranteed to have a base address of $0$.  Thus,
+mempool[I] will be present at address $I$.
 
 \section{Handling complex programs}
 
-This example is trivial.  Real, non-trivial programs can be
-mapped in this manner.  Currently, there are only
-two restrictions
+Currently, there are only two restrictions in mapping
+a C program to VHDL using the AhirV2 flow:
 \begin{itemize}
 \item No recursion, no cycles in the call-graph of the original
 program.
@@ -643,10 +673,67 @@ to the \Aa and \vC descriptions.  Thus, it is easy to
 map parallel programs or programs consisting of multiple
 concurrent processes to hardware.
 
-\section{To be continued}
+\subsection{Pipelines}
 
-This document is a work-in-progress.  More details and
-related documentation will be added shortly.
+A pipeline is a powerful mechanism by which an application
+can be parallelized.
+
+Consider the following pipeline which has two stages
+{\bf foo} and {\bf bar}:  
+\begin{verbatim}
+Environment --> foo --> bar --> Environment
+\end{verbatim}
+The stage {\bf foo} takes a 32-bit
+integer from the external world, complements it and passes it on to stage
+bar.  The stage {\bf bar} takes the 32-bit number from {\bf foo}, complements
+it and sends it to the external world (in effect, nothing useful
+is done, this is only an illustration).
+
+If we are writing this pipe-line as a program, we could implement
+two independent processes (or threads) and use named pipes to
+perform the communication between these processes/threads (and the
+``outside´´ world).  For example:
+\begin{verbatim}
+#include <iolib.h>
+void foo()
+{
+   while(1)
+   {
+     uint32_t data = read_uint32("inpipe");
+     write_uint32("midpipe", ~data);
+   }
+}
+
+void bar()
+{
+   while(1)
+   {
+     uint32_t data = read_uint32("midpipe");
+     write_uint32("outpipe", ~data);
+   }
+}
+\end{verbatim}
+The two functions can be compiled into separate processes
+or threads in a multi-threaded program (using pthreads, for
+example), and one gets a software pipeline, in which
+the inter-process communication is done using the
+read/write function calls, which use named pipes.
+
+One can also map this pipeline to a VHDL system, using the
+following flow.  One uses the standard flow that has already
+been described:
+\begin{verbatim}
+clang -std=gnu89 -I../../../iolib/ -emit-llvm -c prog.c
+llvm2aa prog.o | vcFormat >  prog.o.aa
+Aa2VC -O -I mempool -C prog.o.aa | vcFormat > prog.o.aa.vc
+vc2vhdl -C -s ghdl -T foo -T bar -f prog.o.aa.vc\
+           | vhdlFormat > system.vhdl
+\end{verbatim}
+Note that in this case, we use the -T option in vc2vhdl to
+specify that foo and bar are free-running top-level modules.
+The resulting AHIR system in system.vhdl implements the pipeline:
+the system has interfaces corresponding to the pipes inpipe and
+outpipe through which data is exchanged.
 
 \begin{thebibliography}{99}
 \bibitem{ref:dsd2010}

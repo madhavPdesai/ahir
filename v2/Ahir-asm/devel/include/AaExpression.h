@@ -12,6 +12,7 @@
 
 //**************************************** EXPRESSION ****************************************
 class AaStorageObject;
+class AaStatement;
 class AaExpression: public AaRoot
 {
   // the containing scope of this expression
@@ -48,8 +49,13 @@ class AaExpression: public AaRoot
   // is the expression which leads to this..
   set<AaExpression*> _rhs_sources;
 
+  // statement with which it is associated,
+  // either as a source or as a target.
+  AaStatement* _associated_statement;
 
   bool _already_evaluated;
+
+  
  public:
 
   AaValue* _expression_value;
@@ -61,6 +67,14 @@ class AaExpression: public AaRoot
   ~AaExpression();
   virtual string Kind() {return("AaExpression");}
 
+  void Set_Associated_Statement(AaStatement* stmt)
+  {
+    _associated_statement = stmt;
+  }
+  AaStatement* Get_Associated_Statement()
+  {
+    return(_associated_statement);
+  }
 
 
   void Set_Does_Pipe_Access(bool v) { _does_pipe_access = v; }
@@ -107,6 +121,9 @@ class AaExpression: public AaRoot
     this->Write_VC_Control_Path(ofile);
   }
 
+  void Write_VC_WAR_Dependencies(set<AaRoot*>& visited_elements,
+				 AaExpression* source_expr,
+				 ostream& ofile);
   virtual bool Is_Load() {return(false);}
   virtual bool Is_Store() {return(false);}
   virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile) {}

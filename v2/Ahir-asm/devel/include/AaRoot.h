@@ -35,6 +35,8 @@ class AaRoot
   set<AaRoot*> _source_references; // objects that use this as a source.
 
  public:
+  set<AaRoot*>& Get_Target_References() {return(_target_references);}
+  set<AaRoot*>& Get_Source_References() {return(_source_references);}
 
   static void Increment_Root_Counter();// { _root_counter += 1; }
   static int64_t Get_Root_Counter(); // { return _root_counter; }
@@ -81,6 +83,7 @@ class AaRoot
   virtual bool Is_Pipe_Object() {return(false); }
   virtual bool Is_Foreign_Storage_Object() {return(false); }
   virtual bool Is_Constant() {return(false);}
+  virtual bool Is_Interface_Object() {return(false);}
 
   virtual bool Is_Expression() {return(false); }
   virtual bool Is_Statement() {return(false); }

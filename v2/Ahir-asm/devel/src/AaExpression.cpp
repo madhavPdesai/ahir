@@ -27,8 +27,7 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
   this->_coalesce_flag = false;
   this->_is_target = false;
   this->_does_pipe_access = false;
-
-
+  this->_associated_statement = NULL;
 }
 AaExpression::~AaExpression() {};
 

@@ -36,20 +36,15 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 void AaAssignmentStatement::Write_VC_WAR_Dependencies(set<AaRoot*>& visited_elements,
 						      ostream& ofile)
 {
-  for(set<AaRoot*>::iterator iter = _source_references.begin(), fiter = _source_references.end();
-      iter != fiter;
-      iter++)
+
+  if(!this->Is_Constant())
     {
-      if((*iter)->Is_Expression() && (visited_elements.find(*iter) != visited_elements.end()))
-	{
-	  AaExpression* expr = (AaExpression*)(*iter);
-	  if(!expr->Is_Constant())
-	    {
-	      ofile << "// WAR dependency: " << this->To_String() << " before " << expr->To_String() << endl;
-	      __J(this->Get_VC_Active_Transition_Name(), expr->Get_VC_Complete_Region_Name());
-	    }
-	}
+      AaExpression* tgt = this->_target;
+      
+      if(tgt->Is_Implicit_Variable_Reference())
+	tgt->Write_VC_WAR_Dependencies(visited_elements,this->_source,ofile);
     }
+
 }
 
 
@@ -69,9 +64,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
       __T(this->Get_VC_Active_Transition_Name());
       __T(this->Get_VC_Completed_Transition_Name());
 
-      // before doing anything else get the WAR dependencies
-      // out of the way.
-      this->Write_VC_WAR_Dependencies(visited_elements,ofile);
+
 
       // write the source side expressions and their 
       // dependencies..
@@ -84,10 +77,15 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
 	  __J(this->Get_VC_Active_Transition_Name(), _source->Get_VC_Complete_Region_Name());
 	}
       
+
+
       
       this->_target->Write_VC_Control_Path_As_Target_Optimized(visited_elements,
 							       ls_map,pipe_map,
 							       ofile);
+
+
+
 
       if(!this->_target->Is_Implicit_Variable_Reference())
 	{
@@ -98,6 +96,10 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
 	{
 	  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Active_Transition_Name());
 	}
+
+
+      // WAR dependencies
+      this->Write_VC_WAR_Dependencies(visited_elements,ofile);
 
       bool source_is_implicit = _source->Is_Implicit_Variable_Reference();
       bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
@@ -110,14 +112,18 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
 	  __F(this->Get_VC_Active_Transition_Name(), this->Get_VC_Name() + "_register");
 	  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Name() + "_register");
 
-	  if(_target->Get_Root_Object() == ((AaRoot*) this))
-	    visited_elements.insert(this);
 	}
-      else if(target_is_implicit)
+      
+      if(target_is_implicit)
 	{
-	  if(_target->Get_Root_Object() == ((AaRoot*) this))
+
+	  AaRoot* root_obj = _target->Get_Root_Object();
+	  if(root_obj == ((AaRoot*) this))
+	     visited_elements.insert(this);
+	  else if ((root_obj != NULL) && root_obj->Is_Interface_Object())
 	    {
 	      visited_elements.insert(this);
+	      visited_elements.insert(root_obj);
 	    }
 	}
     }
@@ -221,10 +227,14 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elem
 	  non_triv_flag = true;
 	}
       
-      AaRoot* root = expr->Get_Root_Object();
-      if(root == this)
+
+      AaRoot* root_obj = expr->Get_Root_Object();
+      if(root_obj == ((AaRoot*) this))
+	visited_elements.insert(this);
+      else if ((root_obj != NULL) && (root_obj->Is("AaInterfaceObject")))
 	{
 	  visited_elements.insert(this);
+	  visited_elements.insert(root_obj);
 	}
     }
 

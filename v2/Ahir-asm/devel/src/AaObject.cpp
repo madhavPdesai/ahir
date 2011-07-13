@@ -170,6 +170,7 @@ AaInterfaceObject::AaInterfaceObject(AaScope* parent_tpr,
 				     string mode):AaObject(parent_tpr,oname,otype) 
 {
   this->_mode = mode;
+  this->_unique_driver_statement = NULL;
 }
 AaInterfaceObject::~AaInterfaceObject() {};
 
