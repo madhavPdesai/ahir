@@ -16,7 +16,7 @@ using namespace std;
 
 // common operations across loads/stores.
 void AaObjectReference::Write_VC_Load_Control_Path(vector<AaExpression*>* address_expressions,
-						   vector<int>* scale_factors,
+						   vector<int>* scale_factors, vector<int>* shift_factors,
 						   ostream& ofile)
 {
 
@@ -26,18 +26,18 @@ void AaObjectReference::Write_VC_Load_Control_Path(vector<AaExpression*>* addres
   // 1. compute agross = base + (offset*scale-factor)
   // 2. in parallel, compute aI = agross + I
   //       optimization: if number is 2**N then append.
-  this->Write_VC_Address_Calculation_Control_Path(address_expressions,scale_factors, ofile);
+  this->Write_VC_Address_Calculation_Control_Path(address_expressions,scale_factors, shift_factors, ofile);
 
   // load operations
   //    in parallel, load..
-  this->Write_VC_Load_Store_Control_Path(address_expressions, scale_factors, "read", ofile);
+  this->Write_VC_Load_Store_Control_Path(address_expressions, scale_factors, shift_factors, "read", ofile);
 
   ofile << "}" << endl;
 
 }
 
 void AaObjectReference::Write_VC_Store_Control_Path(vector<AaExpression*>* address_expressions,
-						    vector<int>* scale_factors,
+						    vector<int>* scale_factors, vector<int>* shift_factors,
 						    ostream& ofile)
 {
 
@@ -46,16 +46,16 @@ void AaObjectReference::Write_VC_Store_Control_Path(vector<AaExpression*>* addre
   // 1. compute agross = base + (offset*scale-factor)
   // 2. in parallel, compute aI = agross + I
   //       optimization: if number is 2**N then append.
-  this->Write_VC_Address_Calculation_Control_Path(address_expressions, scale_factors, ofile);
+  this->Write_VC_Address_Calculation_Control_Path(address_expressions, scale_factors, shift_factors, ofile);
 
   //    in parallel, store
-  this->Write_VC_Load_Store_Control_Path(address_expressions, scale_factors, "write", ofile);
+  this->Write_VC_Load_Store_Control_Path(address_expressions, scale_factors, shift_factors, "write", ofile);
 
   ofile << "}" << endl;
 }
 
 void AaObjectReference::Write_VC_Load_Store_Constants(vector<AaExpression*>* address_expressions,
-						      vector<int>* scale_factors,
+						      vector<int>* scale_factors, vector<int>* shift_factors,
 						      ostream& ofile)
 {
 
@@ -74,6 +74,7 @@ void AaObjectReference::Write_VC_Load_Store_Constants(vector<AaExpression*>* add
 
   this->Write_VC_Address_Calculation_Constants(address_expressions,
 					       scale_factors,
+					       shift_factors,
 					       ofile);
   
 
@@ -82,14 +83,15 @@ void AaObjectReference::Write_VC_Load_Store_Constants(vector<AaExpression*>* add
 
 
 void AaObjectReference::Write_VC_Load_Store_Wires(vector<AaExpression*>* address_expressions,
-						  vector<int>* scale_factors,
+						  vector<int>* scale_factors, vector<int>* shift_factors,
 						  ostream& ofile)
 {
 
 
 
   int offset_value = this->Evaluate(address_expressions,
-				    scale_factors);
+				    scale_factors,
+				    shift_factors);
   int base_address = this->Get_Base_Address();
   AaUintType* addr_type = AaProgram::Make_Uinteger_Type(this->Get_Address_Width());
 
@@ -100,6 +102,7 @@ void AaObjectReference::Write_VC_Load_Store_Wires(vector<AaExpression*>* address
       // this yields the offset+base
       this->Write_VC_Root_Address_Calculation_Wires(address_expressions,
 						    scale_factors,
+						    shift_factors,
 						    ofile);
       
       
@@ -128,26 +131,28 @@ void AaObjectReference::Write_VC_Load_Store_Wires(vector<AaExpression*>* address
 }
 
 void AaObjectReference::Write_VC_Load_Data_Path(vector<AaExpression*>* address_expressions,
-						vector<int>* scale_factors,
+						vector<int>* scale_factors, vector<int>* shift_factors,
 						AaExpression* load_target_expression,
 						ostream& ofile)
 {
-  this->Write_VC_Address_Calculation_Data_Path(address_expressions,scale_factors,ofile);
+  this->Write_VC_Address_Calculation_Data_Path(address_expressions,scale_factors,shift_factors,ofile);
   this->Write_VC_Load_Store_Data_Path(address_expressions, 
 				      scale_factors,
+				      shift_factors,
 				      load_target_expression, 
 				      "read", 
 				      ofile);
 }
 
 void AaObjectReference::Write_VC_Store_Data_Path(vector<AaExpression*>* address_expressions,
-						 vector<int>* scale_factors,
+						 vector<int>* scale_factors, vector<int>* shift_factors,
 						 AaExpression* store_source_expression,
 						 ostream& ofile)
 {
-  this->Write_VC_Address_Calculation_Data_Path(address_expressions, scale_factors, ofile);
+  this->Write_VC_Address_Calculation_Data_Path(address_expressions, scale_factors, shift_factors,ofile);
   this->Write_VC_Load_Store_Data_Path(address_expressions,
 				      scale_factors,
+				      shift_factors,
 				      store_source_expression,
 				      "write", ofile);
 }
@@ -155,35 +160,35 @@ void AaObjectReference::Write_VC_Store_Data_Path(vector<AaExpression*>* address_
 
 void AaObjectReference::Write_VC_Load_Links(string hier_id,
 					    vector<AaExpression*>* address_expressions,
-					    vector<int>* scale_factors,
+					    vector<int>* scale_factors, vector<int>* shift_factors,
 					    ostream& ofile)
 {
 
   string n_hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Name());
 
-  this->Write_VC_Address_Calculation_Links(n_hier_id, address_expressions, scale_factors, ofile);
+  this->Write_VC_Address_Calculation_Links(n_hier_id, address_expressions, scale_factors, shift_factors, ofile);
   string rd_id = "read";
-  this->Write_VC_Load_Store_Links(n_hier_id, rd_id, address_expressions, scale_factors, ofile);
+  this->Write_VC_Load_Store_Links(n_hier_id, rd_id, address_expressions, scale_factors,shift_factors, ofile);
 }
 
 void AaObjectReference::Write_VC_Store_Links(string hier_id,
 					     vector<AaExpression*>* address_expressions,
-					     vector<int>* scale_factors,
+					     vector<int>* scale_factors, vector<int>* shift_factors,
 					     ostream& ofile)
 {
 
 
   string n_hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Name());
   
-  this->Write_VC_Address_Calculation_Links(n_hier_id, address_expressions, scale_factors, ofile);
+  this->Write_VC_Address_Calculation_Links(n_hier_id, address_expressions, scale_factors, shift_factors, ofile);
   string wr_id = "write";
-  this->Write_VC_Load_Store_Links(n_hier_id, wr_id, address_expressions, scale_factors, ofile);
+  this->Write_VC_Load_Store_Links(n_hier_id, wr_id, address_expressions, scale_factors, shift_factors,  ofile);
 }
 			       
 
 
 void AaObjectReference::Write_VC_Load_Store_Control_Path(vector<AaExpression*>* address_expressions,
-							 vector<int>* scale_factors,
+							 vector<int>* scale_factors, vector<int>* shift_factors,
 							 string read_or_write,
 							 ostream& ofile)
 {
@@ -218,7 +223,7 @@ void AaObjectReference::Write_VC_Load_Store_Control_Path(vector<AaExpression*>* 
 }
 
 void AaObjectReference::Write_VC_Load_Store_Data_Path(vector<AaExpression*>* address_expressions,
-						      vector<int>* scale_factors,
+						      vector<int>* scale_factors, vector<int>* shift_factors,
 						      AaExpression* data_expression,
 						      string read_or_write,  
 						      ostream& ofile)
@@ -285,7 +290,7 @@ void AaObjectReference::Write_VC_Load_Store_Data_Path(vector<AaExpression*>* add
 void AaObjectReference::Write_VC_Load_Store_Links(string hier_id,
 						  string read_or_write,
 						  vector<AaExpression*>* address_expressions,
-						  vector<int>* scale_factors,
+						  vector<int>* scale_factors, vector<int>* shift_factors,
 						  ostream& ofile)
 {
   vector<string> reqs;
@@ -334,16 +339,18 @@ void AaObjectReference::Write_VC_Load_Store_Links(string hier_id,
 
 
 void AaObjectReference::Write_VC_Address_Calculation_Constants(vector<AaExpression*>* address_expressions,
-							       vector<int>* scale_factors,
+							       vector<int>* scale_factors, vector<int>* shift_factors,
 							       ostream& ofile)
 {
   int offset_value = this->Evaluate(address_expressions,
-				    scale_factors);
+				    scale_factors,
+				    shift_factors);
   int base_address = this->Get_Base_Address();
 
   if(offset_value < 0 || base_address < 0)
     this->Write_VC_Root_Address_Calculation_Constants(address_expressions,
 						      scale_factors,
+						      shift_factors,
 						      ofile);
 
   int nwords = (address_expressions ? scale_factors->back() : 
@@ -380,13 +387,13 @@ void AaObjectReference::Write_VC_Address_Calculation_Constants(vector<AaExpressi
 
   
 void AaObjectReference::Write_VC_Root_Address_Calculation_Constants(vector<AaExpression*>* address_expressions,
-								    vector<int>* scale_factors,
+								    vector<int>* scale_factors, vector<int>* shift_factors,
 								    ostream& ofile)
 {
   int address_offset = 0;
   bool const_flag = false;
 
-  int offset_value = this->Evaluate(address_expressions, scale_factors);
+  int offset_value = this->Evaluate(address_expressions, scale_factors, shift_factors);
   int base_address = this->Get_Base_Address();
 
   AaType* addr_type = AaProgram::Make_Uinteger_Type(this->Get_Address_Width());      
@@ -397,8 +404,13 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Constants(vector<AaExp
 	{
 	  if((*address_expressions)[idx]->Is_Constant())
 	    {
-	      address_offset += (*address_expressions)[idx]->Get_Expression_Value()->To_Integer() *
-		(*scale_factors)[idx];
+
+	      if((*shift_factors)[idx] < 0)
+		address_offset += (*address_expressions)[idx]->Get_Expression_Value()->To_Integer() *
+		  (*scale_factors)[idx];
+	      else
+		address_offset += (*shift_factors)[idx];
+
 	      const_flag = true;
 	    }
 	  else
@@ -473,12 +485,12 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Constants(vector<AaExp
 
 
 void AaObjectReference::Write_VC_Root_Address_Calculation_Wires(vector<AaExpression*>* address_expressions,
-								vector<int>* scale_factors,
+								vector<int>* scale_factors, vector<int>* shift_factors,
 								ostream& ofile)
 {
   int offset_val = 0;
   if(address_expressions)
-    offset_val = this->Evaluate(address_expressions,scale_factors);
+    offset_val = this->Evaluate(address_expressions,scale_factors, shift_factors);
   AaUintType* addr_type = AaProgram::Make_Uinteger_Type(this->Get_Address_Width());
   bool const_flag = false;
   
@@ -556,12 +568,12 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Wires(vector<AaExpress
 
 
 void AaObjectReference::Write_VC_Address_Calculation_Control_Path(vector<AaExpression*>* indices, 
-								  vector<int>* scale_factors,
+								  vector<int>* scale_factors, vector<int>* shift_factors,
 								  ostream& ofile)
 {
   int offset_val = 0;
   if(indices)
-    offset_val = this->Evaluate(indices,scale_factors);
+    offset_val = this->Evaluate(indices,scale_factors, shift_factors);
   int base_addr = this->Get_Base_Address();
  
   if(offset_val < 0 || base_addr < 0)
@@ -569,7 +581,7 @@ void AaObjectReference::Write_VC_Address_Calculation_Control_Path(vector<AaExpre
       ofile << ";;[" << this->Get_VC_Name() << "_addr_gen] {" << endl;
 
       
-      this->Write_VC_Root_Address_Calculation_Control_Path(indices,scale_factors,ofile);
+      this->Write_VC_Root_Address_Calculation_Control_Path(indices,scale_factors, shift_factors, ofile);
       
       // individual word addresses (in parallel)
       int nwords = (indices ? scale_factors->back() : (this->Get_Type()->Size() / this->Get_Word_Size()));
@@ -597,12 +609,12 @@ void AaObjectReference::Write_VC_Address_Calculation_Control_Path(vector<AaExpre
 
 
 void AaObjectReference::Write_VC_Address_Calculation_Data_Path(vector<AaExpression*>* indices, 
-							       vector<int>* scale_factors,
+							       vector<int>* scale_factors, vector<int>* shift_factors,
 							       ostream& ofile)
 {
   int offset_val = 0;
   if(indices)
-    offset_val = this->Evaluate(indices,scale_factors);
+    offset_val = this->Evaluate(indices,scale_factors, shift_factors);
   int base_addr = this->Get_Base_Address();
 
   if(offset_val < 0 || base_addr < 0)
@@ -611,6 +623,7 @@ void AaObjectReference::Write_VC_Address_Calculation_Data_Path(vector<AaExpressi
       
       this->Write_VC_Root_Address_Calculation_Data_Path(indices,
 							scale_factors,
+							shift_factors,
 							ofile);
 
       int nwords = (indices ? scale_factors->back() : (this->Get_Type()->Size() / this->Get_Word_Size()));
@@ -654,12 +667,12 @@ void AaObjectReference::Write_VC_Address_Calculation_Data_Path(vector<AaExpressi
 
 void AaObjectReference::Write_VC_Address_Calculation_Links(string hier_id,
 							   vector<AaExpression*>* indices,
-							   vector<int>* scale_factors,
+							   vector<int>* scale_factors, vector<int>* shift_factors,
 							   ostream& ofile)
 {
   int offset_val = 0;
   if(indices)
-    offset_val = this->Evaluate(indices,scale_factors);
+    offset_val = this->Evaluate(indices,scale_factors, shift_factors);
   int base_addr = this->Get_Base_Address();
  
   vector<string> reqs;
@@ -670,7 +683,7 @@ void AaObjectReference::Write_VC_Address_Calculation_Links(string hier_id,
       //  ofile << ";;[" << this->Get_VC_Name() << "_addr_gen] {" << endl;
       hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Name() + "_addr_gen");
 
-      this->Write_VC_Root_Address_Calculation_Links(hier_id,indices,scale_factors,ofile);
+      this->Write_VC_Root_Address_Calculation_Links(hier_id,indices,scale_factors,shift_factors,ofile);
 
       // individual word addresses (in parallel)
       int nwords = (indices ? scale_factors->back() : (this->Get_Type()->Size() / this->Get_Word_Size()));
@@ -712,13 +725,13 @@ void AaObjectReference::Write_VC_Address_Calculation_Links(string hier_id,
 
 
 void AaObjectReference::Write_VC_Root_Address_Calculation_Control_Path(vector<AaExpression*>* index_vector,
-								       vector<int>* scale_factors,
+								       vector<int>* scale_factors, vector<int>* shift_factors,
 								       ostream& ofile)
 { 
 
   int offset_val = 0;
   if(index_vector)
-    offset_val = this->Evaluate(index_vector,scale_factors);
+    offset_val = this->Evaluate(index_vector,scale_factors, shift_factors);
   int base_addr = this->Get_Base_Address();
 
   
@@ -811,12 +824,12 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Control_Path(vector<Aa
 // maybe it would have been better to convert the object reference itself
 // into more expression nodes.. but...
 void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExpression*>* index_vector,
-								    vector<int>* scale_factors,
+								    vector<int>* scale_factors, vector<int>* shift_factors,
 								    ostream& ofile)
 {
   int offset_val = 0;
   if(index_vector)
-    offset_val = this->Evaluate(index_vector,scale_factors);
+    offset_val = this->Evaluate(index_vector,scale_factors, shift_factors);
   int base_addr = this->Get_Base_Address();
 
   AaUintType* addr_type = AaProgram::Make_Uinteger_Type(this->Get_Address_Width());
@@ -968,12 +981,12 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
   
 void AaObjectReference::Write_VC_Root_Address_Calculation_Links(string hier_id,
 								vector<AaExpression*>* indices,
-								vector<int>* scale_factors,
+								vector<int>* scale_factors, vector<int>* shift_factors,
 								ostream& ofile)
 {
   int offset_val = 0;
   if(indices)
-    offset_val = this->Evaluate(indices,scale_factors);
+    offset_val = this->Evaluate(indices,scale_factors, shift_factors);
   int base_addr = this->Get_Base_Address();
 
   

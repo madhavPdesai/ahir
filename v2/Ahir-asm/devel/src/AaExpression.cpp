@@ -225,20 +225,30 @@ void AaObjectReference::Assign_Expression_Value(AaValue* expr_value)
 }
 
 // return -1 if not evaluatable.
-int AaObjectReference::Evaluate(vector<AaExpression*>* indices, vector<int>* scale_factors)
+int AaObjectReference::Evaluate(vector<AaExpression*>* indices, vector<int>* scale_factors, vector<int>* shift_factors)
 {
   bool address_is_const = true;
   int address_offset = 0;
+
+
   if(indices != NULL)
     {
+      
+      assert(scale_factors);
+      assert(shift_factors);
+      assert(scale_factors->size() == shift_factors->size());
+
       for(int idx = 0; idx < indices->size(); idx++)
 	{
 	  if(!(*indices)[idx]->Is_Constant())
 	    address_is_const = false;
 	  else
 	    {
-	      address_offset += (*indices)[idx]->Get_Expression_Value()->To_Integer() *
-		(*scale_factors)[idx];
+	      if((*shift_factors)[idx] < 0)
+		address_offset += (*indices)[idx]->Get_Expression_Value()->To_Integer() *
+		  (*scale_factors)[idx];
+	      else
+		address_offset += (*shift_factors)[idx];
 	    }
 	}
     }
@@ -631,7 +641,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path( ostream& ofile)
       // as well.
       else if(this->_object->Is("AaStorageObject"))
 	{
-	  this->Write_VC_Load_Control_Path(NULL,NULL,ofile);
+	  this->Write_VC_Load_Control_Path(NULL,NULL,NULL,ofile);
 	}
       // else if the object being referred to is
       // a pipe, instantiate a series r-a
@@ -671,7 +681,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target( ostream& ofile)
 
       // followed by several parallel stores..
       // note that you will need a split operation here
-      this->Write_VC_Store_Control_Path(NULL,NULL,ofile);
+      this->Write_VC_Store_Control_Path(NULL,NULL,NULL,ofile);
     }
   // else if the object being referred to is
   // a pipe, instantiate a series r-a
@@ -763,7 +773,7 @@ void AaSimpleObjectReference::Write_VC_Constant_Wire_Declarations(ostream& ofile
   if(!this->Is_Constant() && this->_object->Is("AaStorageObject"))
     {
       ofile << "// " << this->To_String() << endl;
-      this->Write_VC_Load_Store_Constants(NULL,NULL,ofile);
+      this->Write_VC_Load_Store_Constants(NULL,NULL,NULL,ofile);
     }
 
 
@@ -782,7 +792,7 @@ void AaSimpleObjectReference::Write_VC_Wire_Declarations(bool skip_immediate, os
   if(!this->Is_Constant() && this->_object->Is("AaStorageObject"))
     {
       ofile << "// " << this->To_String() << endl;
-      this->Write_VC_Load_Store_Wires(NULL,NULL,ofile);
+      this->Write_VC_Load_Store_Wires(NULL,NULL,NULL,ofile);
     }
 }
 
@@ -803,8 +813,8 @@ void AaSimpleObjectReference::Write_VC_Wire_Declarations_As_Target(ostream& ofil
 
       if(this->_object->Is("AaStorageObject"))
 	{
-	  this->Write_VC_Load_Store_Constants(NULL,NULL,ofile);
-	  this->Write_VC_Load_Store_Wires(NULL,NULL,ofile);
+	  this->Write_VC_Load_Store_Constants(NULL,NULL,NULL,ofile);
+	  this->Write_VC_Load_Store_Wires(NULL,NULL,NULL,ofile);
 	}
     }
 }
@@ -817,6 +827,7 @@ void AaSimpleObjectReference:: Write_VC_Datapath_Instances_As_Target( ostream& o
       if(this->_object->Is("AaStorageObject"))
 	{
 	  this->Write_VC_Store_Data_Path(NULL,
+					 NULL,
 					 NULL,
 					 (source != NULL ? source : this),
 					 ofile);
@@ -844,6 +855,7 @@ void AaSimpleObjectReference:: Write_VC_Datapath_Instances(AaExpression* target,
 	{
 	  this->Write_VC_Load_Data_Path(NULL,
 					NULL,
+					NULL,
 					(target != NULL ? target : this),
 					ofile);
 	}
@@ -869,7 +881,7 @@ void AaSimpleObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
 
       if(this->_object->Is("AaStorageObject"))
 	{
-	  this->Write_VC_Load_Links(hier_id,NULL,NULL,ofile);
+	  this->Write_VC_Load_Links(hier_id,NULL,NULL,NULL,ofile);
 	}
       else if(this->_object->Is("AaPipeObject"))
 	{
@@ -891,7 +903,7 @@ void AaSimpleObjectReference:: Write_VC_Links_As_Target(string hier_id, ostream&
 
       if(this->_object->Is("AaStorageObject"))
 	{
-	  this->Write_VC_Store_Links(hier_id,NULL,NULL,ofile);
+	  this->Write_VC_Store_Links(hier_id,NULL,NULL,NULL,ofile);
 	}
       else if(this->_object->Is("AaPipeObject"))
 	{
@@ -1145,13 +1157,20 @@ void AaArrayObjectReference::Evaluate()
 
 	  // ok...  
 	  int ret_int_val = this->_object->Get_Expression_Value()->To_Integer();
+
 	  vector<int> scale_factors;
-	  
 	  this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
+	  vector<int> shift_factors;
+	  this->Update_Address_Shift_Factors(shift_factors,word_size);
+
 	  for(int idx = 0; idx < _indices.size(); idx++)
 	    {
 	      int indx_val  = _indices[idx]->Get_Expression_Value()->To_Integer();
-	      ret_int_val += (indx_val*scale_factors[idx]);
+	      if(shift_factors[idx] < 0)
+		ret_int_val += (indx_val*scale_factors[idx]);
+	      else
+		ret_int_val += shift_factors[idx];
 	    }
 
 	  expr_value = Make_Aa_Value(this->Get_Scope(),t);
@@ -1163,6 +1182,7 @@ void AaArrayObjectReference::Evaluate()
     }
 }
 
+// broken: works OK for arrays, but not for records!
 void AaArrayObjectReference::Update_Address_Scaling_Factors(vector<int>& scale_factors, int word_size)
 {
 
@@ -1200,6 +1220,47 @@ void AaArrayObjectReference::Update_Address_Scaling_Factors(vector<int>& scale_f
 	}
     }
 }
+
+
+void AaArrayObjectReference::Update_Address_Shift_Factors(vector<int>& shift_factors, int word_size)
+{
+
+  AaType* t = NULL;
+  if(this->_object->Is_Expression())
+    {
+      t = ((AaExpression*)(this->_object))->Get_Type();
+    }
+  else if(this->_object->Is_Object())
+    {
+      t = ((AaObject*)(this->_object))->Get_Type();
+    }
+
+  int start_index = 0;
+  if(t->Is_Pointer_Type())
+    {
+      shift_factors.push_back(-1);
+      start_index = 1;
+      t =  ((AaPointerType*)t)->Get_Ref_Type();
+    }
+
+  for(int idx = start_index; idx < _indices.size(); idx++)
+    {
+      assert(t->Is_Composite_Type());
+
+      if(t->Is_Record_Type())
+	{
+	  int soffset = (((AaRecordType*)t)->Get_Start_Bit_Offset(_indices[idx]))/word_size;
+	  shift_factors.push_back(soffset);
+	  t = ((AaRecordType*)t)->Get_Element_Type(_indices[idx]);
+	}
+      else if(t->Is_Array_Type())
+	{
+	  shift_factors.push_back(-1);
+	  t = t->Get_Element_Type(0);
+	}
+    }
+}
+
 
 void AaArrayObjectReference::PrintC(ofstream& ofile, string tab_string)
 {
@@ -1322,8 +1383,12 @@ void AaArrayObjectReference::Write_VC_Control_Path( ostream& ofile)
 	    }
 
 	  int word_size = this->Get_Word_Size();
+
 	  vector<int> scale_factors;
 	  this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
+	  vector<int> shift_factors;
+	  this->Update_Address_Shift_Factors(shift_factors,word_size);
 
 
 	  // the return value is a pointer,
@@ -1331,6 +1396,7 @@ void AaArrayObjectReference::Write_VC_Control_Path( ostream& ofile)
 	  ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
 	  this->Write_VC_Root_Address_Calculation_Control_Path(&_indices,
 							       &scale_factors,
+							       &shift_factors,
 							       ofile);
 	  ofile << "$T [final_reg_req] $T [final_reg_ack]" << endl;
 	  ofile << "}" << endl;
@@ -1339,14 +1405,21 @@ void AaArrayObjectReference::Write_VC_Control_Path( ostream& ofile)
 	{ 
 
 	  int word_size = this->Get_Word_Size();
+
 	  vector<int> scale_factors;
 	  this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
+	  vector<int> shift_factors;
+	  this->Update_Address_Shift_Factors(shift_factors,word_size);
+
+
 
 	  // this is just a regular object load
 	  // using the indices, which returns the
 	  // value stored at the computed address.
 	  this->Write_VC_Load_Control_Path(&(_indices),
 					   &scale_factors,
+					   &shift_factors,
 					   ofile);
 	}
       else 
@@ -1387,8 +1460,10 @@ void AaArrayObjectReference::Write_VC_Control_Path_As_Target( ostream& ofile)
       int word_size = ((AaStorageObject*)(this->_object))->Get_Word_Size();
       vector<int> scale_factors;
       this->Update_Address_Scaling_Factors(scale_factors,word_size);
+      vector<int> shift_factors;
+      this->Update_Address_Shift_Factors(shift_factors,word_size);
 
-      this->Write_VC_Store_Control_Path(&(_indices),&(scale_factors), ofile);
+      this->Write_VC_Store_Control_Path(&(_indices),&(scale_factors),&shift_factors,  ofile);
     }
   else
     {
@@ -1425,6 +1500,9 @@ void AaArrayObjectReference::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 	  int word_size = this->Get_Word_Size();
 	  vector<int> scale_factors;
 	  this->Update_Address_Scaling_Factors(scale_factors,word_size);
+	  
+	  vector<int> shift_factors;
+	  this->Update_Address_Shift_Factors(shift_factors,word_size);
 
 	  if(this->_object->Is_Storage_Object())
 	    {
@@ -1438,6 +1516,7 @@ void AaArrayObjectReference::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 	  // but with _pointer_ref providing the base).
 	  this->Write_VC_Root_Address_Calculation_Constants(this->Get_Index_Vector(),
 							    &scale_factors,
+							    &shift_factors,
 							    ofile);
 	}
       else if(this->_object->Is_Storage_Object())
@@ -1446,7 +1525,12 @@ void AaArrayObjectReference::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 	  vector<int> scale_factors;
 	  this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
-	  this->Write_VC_Load_Store_Constants(this->Get_Index_Vector(),&scale_factors,ofile);
+	  vector<int> shift_factors;
+	  this->Update_Address_Shift_Factors(shift_factors,word_size);
+
+	  this->Write_VC_Load_Store_Constants(this->Get_Index_Vector(),&scale_factors,
+					      &shift_factors,
+					      ofile);
 	}
     }
 }
@@ -1479,10 +1563,14 @@ void AaArrayObjectReference::Write_VC_Wire_Declarations(bool skip_immediate, ost
       vector<int> scale_factors;
       this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      this->Update_Address_Shift_Factors(shift_factors,word_size);
+
       // the return value is a pointer,
       // calculate the address.
       this->Write_VC_Root_Address_Calculation_Wires(this->Get_Index_Vector(),
 						    &scale_factors,
+						    &shift_factors,
 						    ofile);
     }
   else if(this->_object->Is_Storage_Object())
@@ -1492,8 +1580,12 @@ void AaArrayObjectReference::Write_VC_Wire_Declarations(bool skip_immediate, ost
       vector<int> scale_factors;
       this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      this->Update_Address_Shift_Factors(shift_factors,word_size);
+
       this->Write_VC_Load_Store_Wires(this->Get_Index_Vector(),
 				      &scale_factors,
+				      &shift_factors,
 				      ofile);
     }
   else 
@@ -1557,9 +1649,13 @@ void AaArrayObjectReference::Write_VC_Wire_Declarations_As_Target(ostream& ofile
   int word_size = this->Get_Word_Size();
   vector<int> scale_factors;
   this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
+  vector<int> shift_factors;
+  this->Update_Address_Shift_Factors(shift_factors,word_size);
   
   this->Write_VC_Load_Store_Wires(this->Get_Index_Vector(),
 				  &scale_factors,
+				  &shift_factors,
 				  ofile);
 }
 
@@ -1577,8 +1673,12 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances_As_Target(ostream& ofil
   vector<int> scale_factors;
   this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+  vector<int> shift_factors;
+  this->Update_Address_Shift_Factors(shift_factors,word_size);
+
   this->Write_VC_Store_Data_Path(&_indices,
 				 &scale_factors,
+				 &shift_factors,
 				 (source ? source : this),
 				 ofile);
 }
@@ -1604,11 +1704,15 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
       int word_size = this->Get_Word_Size();
       vector<int> scale_factors;
       this->Update_Address_Scaling_Factors(scale_factors,word_size);
+      
+      vector<int> shift_factors;
+      this->Update_Address_Shift_Factors(shift_factors,word_size);
 
       // the return value is a pointer,
       // calculate the address.
       this->Write_VC_Root_Address_Calculation_Data_Path(this->Get_Index_Vector(),
 							&scale_factors,
+							&shift_factors,
 							ofile);
 
       // final register.
@@ -1628,8 +1732,12 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
       vector<int> scale_factors;
       this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      this->Update_Address_Shift_Factors(shift_factors,word_size);
+
       this->Write_VC_Load_Data_Path(this->Get_Index_Vector(),
 				    &scale_factors,
+				    &shift_factors,
 				    (target ? target : this),
 				    ofile);
     }
@@ -1661,7 +1769,11 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 	    
       vector<int> scale_factors;
       this->Update_Address_Scaling_Factors(scale_factors,1);
-      int offset_value = this->AaObjectReference::Evaluate(this->Get_Index_Vector(),&scale_factors);
+
+      vector<int> shift_factors;
+      this->Update_Address_Shift_Factors(shift_factors,1);
+
+      int offset_value = this->AaObjectReference::Evaluate(this->Get_Index_Vector(),&scale_factors,&shift_factors);
       
       if(offset_value >= 0)
 	{
@@ -1707,11 +1819,15 @@ void AaArrayObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
       vector<int> scale_factors;
       this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      this->Update_Address_Shift_Factors(shift_factors,word_size);
+
       // the return value is a pointer,
       // calculate the address.
       this->Write_VC_Root_Address_Calculation_Links(hier_id,
 						    this->Get_Index_Vector(),
 						    &scale_factors,
+						    &shift_factors,
 						    ofile);
 
       vector<string> reqs;
@@ -1729,9 +1845,13 @@ void AaArrayObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
       vector<int> scale_factors;
       this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      this->Update_Address_Shift_Factors(shift_factors,word_size);
+
       this->Write_VC_Load_Links(hier_id,
 				this->Get_Index_Vector(),
 				&scale_factors,
+				&shift_factors,
 				ofile);
     }
   else
@@ -1777,9 +1897,13 @@ void AaArrayObjectReference::Write_VC_Links_As_Target(string hier_id, ostream& o
   vector<int> scale_factors;
   this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+  vector<int> shift_factors;
+  this->Update_Address_Shift_Factors(shift_factors,word_size);
+
   this->Write_VC_Store_Links(hier_id,
 			     &_indices,
 			     &scale_factors,
+			     &shift_factors,
 			     ofile);
 }
 
@@ -2075,7 +2199,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path( ostream& ofile)
       return;
     }
   this->_reference_to_object->Write_VC_Control_Path(ofile);
-  this->Write_VC_Load_Control_Path(NULL,NULL,ofile);
+  this->Write_VC_Load_Control_Path(NULL,NULL,NULL,ofile);
 }
 
 void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target( ostream& ofile)
@@ -2091,7 +2215,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target( ostream& o
       return;
     }
   this->_reference_to_object->Write_VC_Control_Path(ofile);
-  this->Write_VC_Store_Control_Path(NULL,NULL,ofile);
+  this->Write_VC_Store_Control_Path(NULL,NULL,NULL,ofile);
 }
 
 void AaPointerDereferenceExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
@@ -2105,7 +2229,7 @@ void AaPointerDereferenceExpression::Write_VC_Constant_Wire_Declarations(ostream
     }
 
   this->_reference_to_object->Write_VC_Constant_Wire_Declarations(ofile);
-  this->Write_VC_Load_Store_Constants(NULL,NULL,ofile);
+  this->Write_VC_Load_Store_Constants(NULL,NULL,NULL,ofile);
 }
 
 void AaPointerDereferenceExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
@@ -2131,7 +2255,7 @@ void AaPointerDereferenceExpression::Write_VC_Wire_Declarations(bool skip_immedi
 	}
     }
   this->_reference_to_object->Write_VC_Wire_Declarations(false,ofile);
-  this->Write_VC_Load_Store_Wires(NULL,NULL,ofile);
+  this->Write_VC_Load_Store_Wires(NULL,NULL,NULL,ofile);
 }
 void AaPointerDereferenceExpression::Write_VC_Wire_Declarations_As_Target(ostream& ofile)
 { 
@@ -2149,7 +2273,7 @@ void AaPointerDereferenceExpression::Write_VC_Wire_Declarations_As_Target(ostrea
   Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Driver_Name(),
 					 this->Get_Type(),
 					 ofile);
-  this->Write_VC_Load_Store_Wires(NULL,NULL,ofile);
+  this->Write_VC_Load_Store_Wires(NULL,NULL,NULL,ofile);
 }
 void AaPointerDereferenceExpression::Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source)
 {
@@ -2165,6 +2289,7 @@ void AaPointerDereferenceExpression::Write_VC_Datapath_Instances_As_Target( ostr
   this->_reference_to_object->Write_VC_Datapath_Instances(NULL, ofile);  
   // address will arrive from base.
   this->Write_VC_Store_Data_Path(NULL,
+				 NULL,
 				 NULL,
 				 ((source != NULL) ? source : this),
 				 ofile);
@@ -2183,6 +2308,7 @@ void AaPointerDereferenceExpression::Write_VC_Datapath_Instances(AaExpression* t
   this->_reference_to_object->Write_VC_Datapath_Instances(NULL, ofile);  
   this->Write_VC_Load_Data_Path(NULL,
 				NULL,
+				NULL,
 				((target != NULL) ? target : this),
 				ofile);
 }
@@ -2200,6 +2326,7 @@ void AaPointerDereferenceExpression::Write_VC_Links(string hier_id, ostream& ofi
   this->Write_VC_Load_Links(hier_id,
 			    NULL,
 			    NULL,
+			    NULL,
 			    ofile);
 }
 
@@ -2215,6 +2342,7 @@ void AaPointerDereferenceExpression::Write_VC_Links_As_Target(string hier_id, os
 
   this->_reference_to_object->Write_VC_Links(hier_id,ofile);
   this->Write_VC_Store_Links(hier_id,
+			     NULL,
 			     NULL,
 			     NULL,
 			     ofile);
@@ -2351,8 +2479,12 @@ void AaAddressOfExpression::Evaluate()
 	  vector<int> scale_factors;
 	  obj_ref->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+	  vector<int> shift_factors;
+	  obj_ref->Update_Address_Shift_Factors(shift_factors,word_size);
+
 	  int offset_value = obj_ref->AaObjectReference::Evaluate(obj_ref->Get_Index_Vector(),
-								  &scale_factors);
+								  &scale_factors,
+								  &shift_factors);
 	  if(offset_value >= 0)
 	    {
 	      addr = this->_storage_object->Get_Base_Address() + offset_value;
@@ -2391,11 +2523,15 @@ void AaAddressOfExpression::Write_VC_Control_Path( ostream& ofile)
       vector<int> scale_factors;
       obj_ref->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      obj_ref->Update_Address_Shift_Factors(shift_factors,word_size);
+
 
       ofile << ";;[" << this->Get_VC_Name() << "] {" << endl;
 
       obj_ref->Write_VC_Root_Address_Calculation_Control_Path(obj_ref->Get_Index_Vector(),
 							      &scale_factors,
+							      &shift_factors,
 							      ofile);
 
       ofile << "$T [final_reg_req] $T [final_reg_ack]" << endl;
@@ -2433,8 +2569,12 @@ void AaAddressOfExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
       vector<int> scale_factors;
       obj_ref->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      obj_ref->Update_Address_Shift_Factors(shift_factors,word_size);
+
       obj_ref->Write_VC_Root_Address_Calculation_Constants(obj_ref->Get_Index_Vector(),
 							   &scale_factors,
+							   &shift_factors,
 							   ofile);
     }
 }
@@ -2460,10 +2600,14 @@ void AaAddressOfExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostr
       vector<int> scale_factors;
       obj_ref->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      obj_ref->Update_Address_Shift_Factors(shift_factors,word_size);
+
       // this calculates a final root address..
       // it will be named obj_ref->Get_VC_Root_Address_Name();
       obj_ref->Write_VC_Root_Address_Calculation_Wires(obj_ref->Get_Index_Vector(),
 						       &scale_factors,
+						       &shift_factors,
 						       ofile);
     }
 }
@@ -2492,8 +2636,12 @@ void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, os
       vector<int> scale_factors;
       obj_ref->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      obj_ref->Update_Address_Shift_Factors(shift_factors,word_size);
+
       obj_ref->Write_VC_Root_Address_Calculation_Data_Path(obj_ref->Get_Index_Vector(),
 							  &scale_factors,
+							   &shift_factors,
 							  ofile);
       
       AaType* addr_type  = AaProgram::Make_Uinteger_Type(_storage_object->Get_Address_Width());
@@ -2523,12 +2671,16 @@ void AaAddressOfExpression::Write_VC_Links(string hier_id, ostream& ofile)
       vector<int> scale_factors;
       obj_ref->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      obj_ref->Update_Address_Shift_Factors(shift_factors,word_size);
+
 
 
       hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Name());
       obj_ref->Write_VC_Root_Address_Calculation_Links(hier_id,
 						       obj_ref->Get_Index_Vector(),
 						       &scale_factors,
+						       &shift_factors,
 						       ofile);
 						       
       vector<string> reqs;

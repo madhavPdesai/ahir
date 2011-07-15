@@ -201,6 +201,52 @@ AaType* AaRecordType::Get_Element_Type(int start_idx, vector<AaExpression*>& ind
     }
 }
 
+AaType* AaRecordType::Get_Element_Type(AaExpression* expr)
+{
+  AaType* ret_type = NULL;
+  AaValue* v = NULL;
+  if(expr->Is("AaConstantLiteralReference"))
+    {
+      int type_width = CeilLog2(this->Get_Number_Of_Elements()-1);
+      v = Make_Aa_Value(this->Get_Scope(),
+			AaProgram::Make_Uinteger_Type(type_width),
+			((AaConstantLiteralReference*)expr)->Get_Literals());
+
+      int idx = v->To_Integer();
+
+      assert(idx >= 0 && idx < this->Get_Number_Of_Elements());
+      ret_type = this->Get_Element_Type(idx);
+    }
+  else
+    {
+      AaRoot::Error("Record index must be a literal constant",expr);
+    }
+  return(ret_type);
+}
+
+int AaRecordType::Get_Start_Bit_Offset(AaExpression* expr)
+{
+  AaValue* v = NULL;
+  int ret_offset = 0;
+  if(expr->Is("AaConstantLiteralReference"))
+    {
+      int type_width = CeilLog2(this->Get_Number_Of_Elements()-1);
+      v = Make_Aa_Value(this->Get_Scope(),
+			AaProgram::Make_Uinteger_Type(type_width),
+			((AaConstantLiteralReference*)expr)->Get_Literals());
+
+      int idx = v->To_Integer();
+      assert(idx >= 0 && idx < this->Get_Number_Of_Elements());
+
+      for(int i=0; i < idx; i++)
+	ret_offset += this->Get_Element_Type(i)->Size();
+    }
+  else
+    {
+      AaRoot::Error("Record index must be a literal constant",expr);
+    }
+  return(ret_offset);
+}
 
 int AaRecordType::Get_Start_Bit_Offset(int start_idx, vector<AaExpression*>& indices)
 {
@@ -227,7 +273,7 @@ int AaRecordType::Get_Start_Bit_Offset(int start_idx, vector<AaExpression*>& ind
   else
     {
       AaRoot::Error("Record index must be a literal constant",expr);
-      return(NULL);
+      return(0);
     }
   return(ret_offset);
 }

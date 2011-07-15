@@ -90,7 +90,10 @@ void wait_for_ack(char* id)
   sprintf(buffer,"%s.ack",id);
 
   FILE *F = open_for_reading(buffer);
-  fread(&txt, sizeof(char), 1, F);
+
+  int n = 0;
+  while((n=fread(&txt, sizeof(char), 1, F)) == 0);
+
   fclose(F);
 
   assert(txt == 0);
@@ -105,7 +108,12 @@ double read_float64(char *id)
 	return f;
 
   FILE *F = open_for_reading(id);
-  fread(&f, sizeof(double), 1, F);
+
+  while(fread(&f, sizeof(double), 1, F) == 0)
+  {
+	usleep(1000);
+  }
+
   fclose(F);
   send_ack(id);
   return f;
@@ -119,7 +127,11 @@ float read_float32(char *id)
 	return f;
 
   FILE *F = open_for_reading(id);
-  fread(&f, sizeof(float), 1, F);
+  while(fread(&f, sizeof(float), 1, F) == 0)
+  {
+	usleep(1000);
+  }
+	
   fclose(F);
   send_ack(id);
   return f;
@@ -133,7 +145,11 @@ uint64_t read_uint64(char *id)
 	return i;
 
   FILE *F = open_for_reading(id);
-  fread(&i, sizeof(uint64_t), 1, F);
+  while(fread(&i, sizeof(uint64_t), 1, F) == 0)
+  {
+	usleep(1000);
+  }
+	
   fclose(F);
   send_ack(id);
   return i;
@@ -145,7 +161,11 @@ uint32_t read_uint32(char *id)
   if(Add_Pipe(id,32))
 	return i;
   FILE *F = open_for_reading(id);
-  fread(&i, sizeof(uint32_t), 1, F);
+  while(fread(&i, sizeof(uint32_t), 1, F) == 0)
+  {
+	usleep(1000);
+  }
+	
   fclose(F);
   send_ack(id);
   return i;
@@ -163,7 +183,10 @@ void* read_pointer(char *id)
 	return i;
 
   FILE *F = open_for_reading(id);
-  fread(&i, sizeof(void*), 1, F);
+  while(fread(&i, sizeof(void*), 1, F) == 0) 
+  {
+	usleep(1000);
+  }
   fclose(F);
   send_ack(id);
   return i;
@@ -175,7 +198,11 @@ uint16_t read_uint16(char *id)
   if(Add_Pipe(id,16))
 	return i;
   FILE *F = open_for_reading(id);
-  fread(&i, sizeof(uint16_t), 1, F);
+  while(fread(&i, sizeof(uint16_t), 1, F) == 0)
+  {
+	usleep(1000);
+  }
+	
   fclose(F);
   send_ack(id);
   return i;
@@ -187,7 +214,10 @@ uint8_t read_uint8(char *id)
   if(Add_Pipe(id,8))
 	return i;
   FILE *F = open_for_reading(id);
-  fread(&i, sizeof(uint8_t), 1, F);
+  while(fread(&i, sizeof(uint8_t), 1, F) == 0)
+  {
+	usleep(1000);
+  }
   fclose(F);
   send_ack(id);
   return i;

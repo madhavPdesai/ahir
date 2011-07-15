@@ -91,9 +91,9 @@ class AaExpression: public AaRoot
 
   virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
   AaStorageObject* Get_Addressed_Object_Representative() 
-    {
-      return(this->_addressed_object_representative);
-    }
+  {
+    return(this->_addressed_object_representative);
+  }
 
   virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr);
 
@@ -136,9 +136,9 @@ class AaExpression: public AaRoot
   {
   }
   virtual void Write_VC_Control_Path_As_Target_Optimized(set<AaRoot*>& visited_elements,
-					       map<string,vector<AaExpression*> >& ls_map,
-					       map<string,vector<AaExpression*> >& pipe_map,
-					       ostream& ofile)
+							 map<string,vector<AaExpression*> >& ls_map,
+							 map<string,vector<AaExpression*> >& pipe_map,
+							 ostream& ofile)
   {
   }
 
@@ -263,7 +263,7 @@ class AaObjectReference: public AaExpression
   virtual void Set_Object(AaRoot* obj) {this->_object = obj;}
   virtual AaRoot* Get_Object() { return(this->_object);}
   AaType* Get_Object_Type();
-  virtual int Evaluate(vector<AaExpression*>* indices, vector<int>* scale_factors);
+  virtual int Evaluate(vector<AaExpression*>* indices, vector<int>* scale_factors, vector<int>* shift_factors);
   virtual void Add_Hier_Id(string hier_id) {this->_hier_ids.push_back(hier_id);}
   virtual void Set_Object_Root_Name(string orn) {this->_object_root_name = orn; }
   virtual string Get_Object_Root_Name() {return(this->_object_root_name);}
@@ -294,101 +294,122 @@ class AaObjectReference: public AaExpression
   // common operations across loads/stores.
   void Write_VC_Load_Control_Path(vector<AaExpression*>* address_expressions,
 				  vector<int>* scale_factors,
+				  vector<int>* shift_factors,
 				  ostream& ofile);
   
   void Write_VC_Store_Control_Path( vector<AaExpression*>* address_expressions,
-				   vector<int>* scale_factors,
-				   ostream& ofile);
+				    vector<int>* scale_factors,
+				    vector<int>* shift_factors,
+				    ostream& ofile);
 
   void Write_VC_Load_Store_Constants(vector<AaExpression*>* address_expressions,
 				     vector<int>* scale_factors,
+				     vector<int>* shift_factors,
 				     ostream& ofile);
 
   void Write_VC_Load_Store_Wires(vector<AaExpression*>* address_expressions,
 				 vector<int>* scale_factors,
+				 vector<int>* shift_factors,
 				 ostream& ofile);
 
 
   void Write_VC_Load_Data_Path(vector<AaExpression*>* address_expressions,
 			       vector<int>* scale_factors,
+			       vector<int>* shift_factors,
 			       AaExpression* target,
 			       ostream& ofile);
 
   void Write_VC_Store_Data_Path(vector<AaExpression*>* address_expressions,
 				vector<int>* scale_factors,
+				vector<int>* shift_factors,
 				AaExpression* source,
 				ostream& ofile);
 
   void Write_VC_Load_Links(string hier_id,
 			   vector<AaExpression*>* address_expressions,
 			   vector<int>* scale_factors,
+			   vector<int>* shift_factors,
 			   ostream& ofile);
 
   void Write_VC_Store_Links(string hier_id,
 			    vector<AaExpression*>* address_expressions,
 			    vector<int>* scale_factors,
+			    vector<int>* shift_factors,
 			    ostream& ofile);
 
 
   void Write_VC_Load_Store_Control_Path(vector<AaExpression*>* address_expressions,
 					vector<int>* scale_factors,
+					vector<int>* shift_factors,
 					string read_or_write,
 					ostream& ofile);
 
 
   void Write_VC_Load_Store_Data_Path(vector<AaExpression*>* address_expressions,
 				     vector<int>* scale_factors,
+				     vector<int>* shift_factors,
 				     AaExpression* data_expression,
 				     string read_or_write,  
 				     ostream& ofile);
 
   void Write_VC_Load_Store_Links( string hier_id,
-				 string read_or_write,
-				 vector<AaExpression*>* address_expressions,
-				 vector<int>* scale_factors,
-				 ostream& ofile);
+				  string read_or_write,
+				  vector<AaExpression*>* address_expressions,
+				  vector<int>* scale_factors,
+				  vector<int>* shift_factors,
+				  ostream& ofile);
 
 
 
   void Write_VC_Address_Calculation_Constants(vector<AaExpression*>* address_expressions,
 					      vector<int>* scale_factors,
+					      vector<int>* shift_factors,
 					      ostream& ofile);
   void Write_VC_Address_Calculation_Wires(vector<AaExpression*>* address_expressions,
 					  vector<int>* scale_factors,
+					  vector<int>* shift_factors,
 					  ostream& ofile);
   void Write_VC_Address_Calculation_Control_Path(vector<AaExpression*>* address_expressions,
 						 vector<int>* scale_factors,
+						 vector<int>* shift_factors,
 						 ostream& ofile);
   void Write_VC_Address_Calculation_Data_Path(vector<AaExpression*>* address_expressions,
 					      vector<int>* scale_factors,
+					      vector<int>* shift_factors,
 					      ostream& ofile);
 
 
   void Write_VC_Root_Address_Calculation_Constants(vector<AaExpression*>* indices,
 						   vector<int>* scale_factors,
+						   vector<int>* shift_factors,
 						   ostream& ofile);
   void Write_VC_Root_Address_Calculation_Wires(vector<AaExpression*>* indices,
-							vector<int>* scale_factors,
-							ostream& ofile);
+					       vector<int>* scale_factors,
+					       vector<int>* shift_factors,
+					       ostream& ofile);
 
   void Write_VC_Address_Calculation_Links(string hier_id,
 					  vector<AaExpression*>* address_expressions,
 					  vector<int>* scale_factors,
+					  vector<int>* shift_factors,
 					  ostream& ofile);
 
 
   void Write_VC_Root_Address_Calculation_Control_Path(vector<AaExpression*>* indices,
 						      vector<int>* scale_factors,
+						      vector<int>* shift_factors,
 						      ostream& ofile);
   void Write_VC_Root_Address_Calculation_Links(string hier_id,
 					       vector<AaExpression*>* indices,
 					       vector<int>* scale_factors,
+					       vector<int>* shift_factors,
 					       ostream& ofile);
 
 
 
   void Write_VC_Root_Address_Calculation_Data_Path(vector<AaExpression*>* indices,
 						   vector<int>* scale_factors,
+						   vector<int>* shift_factors,
 						   ostream& ofile);
 
 
@@ -419,34 +440,39 @@ class AaObjectReference: public AaExpression
   // control-path optimizations.
   void Write_VC_Load_Control_Path_Optimized(set<AaRoot*>& visited_elements,
 					    map<string, vector<AaExpression*> >& ls_map,
-					       map<string,vector<AaExpression*> >& pipe_map,
+					    map<string,vector<AaExpression*> >& pipe_map,
 					    vector<AaExpression*>* address_expressions,
 					    vector<int>* scale_factors,
+					    vector<int>* shift_factors,
 					    ostream& ofile);
   
   void Write_VC_Store_Control_Path_Optimized(set<AaRoot*>& visited_elements,
 					     map<string, vector<AaExpression*> >& ls_map, 
-					       map<string,vector<AaExpression*> >& pipe_map,
+					     map<string,vector<AaExpression*> >& pipe_map,
 					     vector<AaExpression*>* address_expressions,
 					     vector<int>* scale_factors,
+					    vector<int>* shift_factors,
 					     ostream& ofile);
 
   void Write_VC_Load_Store_Control_Path_Optimized(set<AaRoot*>& visited_elements,
 						  map<string, vector<AaExpression*> >& ls_map, 
-					       map<string,vector<AaExpression*> >& pipe_map,
+						  map<string,vector<AaExpression*> >& pipe_map,
 						  vector<AaExpression*>* address_expressions,
 						  vector<int>* scale_factors,
+					    vector<int>* shift_factors,
 						  string read_or_write,
 						  ostream& ofile);
   
   void Write_VC_Load_Links_Optimized(string hier_id,
 				     vector<AaExpression*>* address_expressions,
 				     vector<int>* scale_factors,
+					    vector<int>* shift_factors,
 				     ostream& ofile);
   
   void Write_VC_Store_Links_Optimized(string hier_id,
 				      vector<AaExpression*>* address_expressions,
 				      vector<int>* scale_factors,
+					    vector<int>* shift_factors,
 				      ostream& ofile);
 
 
@@ -454,29 +480,34 @@ class AaObjectReference: public AaExpression
 					    string read_or_write,
 					    vector<AaExpression*>* address_expressions,
 					    vector<int>* scale_factors,
+					    vector<int>* shift_factors,
 					    ostream& ofile);
 
   void Write_VC_Address_Calculation_Control_Path_Optimized(set<AaRoot*>& visited_elements,
-						 map<string,vector<AaExpression*> >& ls_map,
-					       map<string,vector<AaExpression*> >& pipe_map,
-						 vector<AaExpression*>* address_expressions,
-						 vector<int>* scale_factors,
-						 ostream& ofile);
+							   map<string,vector<AaExpression*> >& ls_map,
+							   map<string,vector<AaExpression*> >& pipe_map,
+							   vector<AaExpression*>* address_expressions,
+							   vector<int>* scale_factors,
+					    vector<int>* shift_factors,
+							   ostream& ofile);
   void Write_VC_Address_Calculation_Links_Optimized(string hier_id,
 						    vector<AaExpression*>* address_expressions,
 						    vector<int>* scale_factors,
+					    vector<int>* shift_factors,
 						    ostream& ofile);
 
 
   void Write_VC_Root_Address_Calculation_Control_Path_Optimized(set<AaRoot*>& visited_elements,
-						      map<string,vector<AaExpression*> >& ls_map,
-					       map<string,vector<AaExpression*> >& pipe_map,
-						      vector<AaExpression*>* indices,
-						      vector<int>* scale_factors,
-						      ostream& ofile);
+								map<string,vector<AaExpression*> >& ls_map,
+								map<string,vector<AaExpression*> >& pipe_map,
+								vector<AaExpression*>* indices,
+								vector<int>* scale_factors,
+					    vector<int>* shift_factors,
+								ostream& ofile);
   void Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 							 vector<AaExpression*>* indices,
 							 vector<int>* scale_factors,
+					    vector<int>* shift_factors,
 							 ostream& ofile);
 
   virtual bool Scalar_Types_Only() { return(false);}
@@ -570,9 +601,9 @@ class AaSimpleObjectReference: public AaObjectReference
 					       map<string,vector<AaExpression*> >& pipe_map,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_As_Target_Optimized(set<AaRoot*>& visited_elements,
-					       map<string,vector<AaExpression*> >& ls_map,
-					       map<string,vector<AaExpression*> >& pipe_map,
-					       ostream& ofile);
+							 map<string,vector<AaExpression*> >& ls_map,
+							 map<string,vector<AaExpression*> >& pipe_map,
+							 ostream& ofile);
 
 
   set<AaStorageObject*>& Get_Addressed_Objects()
@@ -627,6 +658,7 @@ class AaArrayObjectReference: public AaObjectReference
   virtual void PrintC(ofstream& ofile, string tab_string);
 
   void Update_Address_Scaling_Factors(vector<int>& scale_factors,int word_size);
+  void Update_Address_Shift_Factors(vector<int>& shift_factors,int word_size);
 
   virtual void Write_VC_Control_Path( ostream& ofile);
   void Write_VC_Address_Gen_Control_Path(ostream& ofile);
@@ -674,9 +706,9 @@ class AaArrayObjectReference: public AaObjectReference
 					       map<string,vector<AaExpression*> >& pipe_map,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_As_Target_Optimized(set<AaRoot*>& visited_elements,
-					       map<string,vector<AaExpression*> >& ls_map,
-					       map<string,vector<AaExpression*> >& pipe_map,
-					       ostream& ofile);
+							 map<string,vector<AaExpression*> >& ls_map,
+							 map<string,vector<AaExpression*> >& pipe_map,
+							 ostream& ofile);
 
   virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
 
@@ -754,9 +786,9 @@ class AaPointerDereferenceExpression: public AaObjectReference
 					       map<string,vector<AaExpression*> >& pipe_map,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_As_Target_Optimized(set<AaRoot*>& visited_elements,
-					       map<string,vector<AaExpression*> >& ls_map,
-					       map<string,vector<AaExpression*> >& pipe_map,
-					       ostream& ofile);
+							 map<string,vector<AaExpression*> >& ls_map,
+							 map<string,vector<AaExpression*> >& pipe_map,
+							 ostream& ofile);
 
   void Get_Siblings(set<AaPointerDereferenceExpression*>& sibling_set, bool get_sources, bool get_targets);
 
@@ -814,9 +846,9 @@ class AaAddressOfExpression: public AaObjectReference
 					       map<string,vector<AaExpression*> >& pipe_map,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_As_Target_Optimized(set<AaRoot*>& visited_elements,
-					       map<string,vector<AaExpression*> >& ls_map,
-					       map<string,vector<AaExpression*> >& pipe_map,
-					       ostream& ofile);
+							 map<string,vector<AaExpression*> >& ls_map,
+							 map<string,vector<AaExpression*> >& pipe_map,
+							 ostream& ofile);
 
   virtual bool Scalar_Types_Only() { return(true);}
 
@@ -852,7 +884,7 @@ class AaTypeCastExpression: public AaExpression
   virtual void Write_VC_Control_Path( ostream& ofile);
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
-      _rest->Get_Leaf_Expression_Set(leaf_expression_set);
+    _rest->Get_Leaf_Expression_Set(leaf_expression_set);
   }
 
   virtual void Evaluate();
@@ -912,7 +944,7 @@ class AaUnaryExpression: public AaExpression
   virtual void Write_VC_Control_Path( ostream& ofile);
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
-      _rest->Get_Leaf_Expression_Set(leaf_expression_set);
+    _rest->Get_Leaf_Expression_Set(leaf_expression_set);
   }
 
 
@@ -929,12 +961,12 @@ class AaUnaryExpression: public AaExpression
 
   virtual void Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elements,
 					       map<string,vector<AaExpression*> >& ls_map,
-							 map<string,vector<AaExpression*> >& pipe_map,
+					       map<string,vector<AaExpression*> >& pipe_map,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_As_Target_Optimized(set<AaRoot*>& visited_elements,
-					       map<string,vector<AaExpression*> >& ls_map,
+							 map<string,vector<AaExpression*> >& ls_map,
 							 map<string,vector<AaExpression*> >& pipe_map,
-					       ostream& ofile);
+							 ostream& ofile);
 
 
 };
@@ -1009,8 +1041,8 @@ class AaBinaryExpression: public AaExpression
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
-      _first->Get_Leaf_Expression_Set(leaf_expression_set);
-      _second->Get_Leaf_Expression_Set(leaf_expression_set);
+    _first->Get_Leaf_Expression_Set(leaf_expression_set);
+    _second->Get_Leaf_Expression_Set(leaf_expression_set);
   }
 
   bool Is_Trivial();
@@ -1027,12 +1059,12 @@ class AaBinaryExpression: public AaExpression
 
   virtual void Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elements,
 					       map<string,vector<AaExpression*> >& ls_map,
-							 map<string,vector<AaExpression*> >& pipe_map,
+					       map<string,vector<AaExpression*> >& pipe_map,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_As_Target_Optimized(set<AaRoot*>& visited_elements,
-					       map<string,vector<AaExpression*> >& ls_map,
+							 map<string,vector<AaExpression*> >& ls_map,
 							 map<string,vector<AaExpression*> >& pipe_map,
-					       ostream& ofile);
+							 ostream& ofile);
 
 
 
@@ -1081,9 +1113,9 @@ class AaTernaryExpression: public AaExpression
 
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
-      _test->Get_Leaf_Expression_Set(leaf_expression_set);
-      _if_true->Get_Leaf_Expression_Set(leaf_expression_set);
-      _if_false->Get_Leaf_Expression_Set(leaf_expression_set);
+    _test->Get_Leaf_Expression_Set(leaf_expression_set);
+    _if_true->Get_Leaf_Expression_Set(leaf_expression_set);
+    _if_false->Get_Leaf_Expression_Set(leaf_expression_set);
   }
 
   virtual void Evaluate();
@@ -1095,7 +1127,7 @@ class AaTernaryExpression: public AaExpression
 
   virtual void Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elements,
 					       map<string,vector<AaExpression*> >& ls_map,
-							 map<string,vector<AaExpression*> >& pipe_map,
+					       map<string,vector<AaExpression*> >& pipe_map,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_As_Target_Optimized(set<AaRoot*>& visited_elements,
 							 map<string,vector<AaExpression*> >& ls_map,

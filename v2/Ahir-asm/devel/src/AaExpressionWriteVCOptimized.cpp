@@ -100,7 +100,7 @@ void AaSimpleObjectReference::Write_VC_Links_Optimized(string hier_id, ostream& 
 
       if(this->_object->Is("AaStorageObject"))
 	{
-	  this->AaObjectReference::Write_VC_Load_Links_Optimized(hier_id,NULL,NULL,ofile);
+	  this->AaObjectReference::Write_VC_Load_Links_Optimized(hier_id,NULL,NULL,NULL,ofile);
 	}
       else if(this->_object->Is("AaPipeObject"))
 	{
@@ -123,7 +123,7 @@ void AaSimpleObjectReference::Write_VC_Links_As_Target_Optimized(string hier_id,
 
       if(this->_object->Is("AaStorageObject"))
 	{
-	  this->AaObjectReference::Write_VC_Store_Links_Optimized(hier_id,NULL,NULL,ofile);
+	  this->AaObjectReference::Write_VC_Store_Links_Optimized(hier_id,NULL,NULL,NULL,ofile);
 	}
       else if(this->_object->Is("AaPipeObject"))
 	{
@@ -172,7 +172,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visi
 	  // complete region name is in Write_VC_Load_Control...
 	  __T(this->Get_VC_Start_Transition_Name());
 	  __T(this->Get_VC_Active_Transition_Name());
-	  this->Write_VC_Load_Control_Path_Optimized(visited_elements,ls_map,pipe_map,NULL,NULL,ofile);
+	  this->Write_VC_Load_Control_Path_Optimized(visited_elements,ls_map,pipe_map,NULL,NULL,NULL,ofile);
 	  ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
 	}
       // else if the object being referred to is
@@ -220,7 +220,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(set<AaRo
       // followed by several parallel stores..
       // note that you will need a split operation here
       ofile << "// " << this->To_String() << endl;
-      this->Write_VC_Store_Control_Path_Optimized(visited_elements,ls_map,pipe_map,NULL,NULL,ofile);
+      this->Write_VC_Store_Control_Path_Optimized(visited_elements,ls_map,pipe_map,NULL,NULL,NULL,ofile);
       ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
     }
   // else if the object being referred to is
@@ -257,6 +257,9 @@ void AaArrayObjectReference::Write_VC_Links_Optimized(string hier_id, ostream& o
       vector<int> scale_factors;
       this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      this->Update_Address_Shift_Factors(shift_factors,word_size);
+
       if(this->_object->Is_Storage_Object())
 	{
 	  // the object needs to be loaded..  
@@ -268,7 +271,8 @@ void AaArrayObjectReference::Write_VC_Links_Optimized(string hier_id, ostream& o
       // calculate the address.
       this->Write_VC_Root_Address_Calculation_Links_Optimized(hier_id,
 							      this->Get_Index_Vector(),
-							      &scale_factors,
+							      &scale_factors, 
+							      &shift_factors,
 							      ofile);
 
       hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Complete_Region_Name());
@@ -287,9 +291,12 @@ void AaArrayObjectReference::Write_VC_Links_Optimized(string hier_id, ostream& o
       vector<int> scale_factors;
       this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      this->Update_Address_Shift_Factors(shift_factors,word_size);
+
       this->AaObjectReference::Write_VC_Load_Links_Optimized(hier_id,
 							     this->Get_Index_Vector(),
-							     &scale_factors,
+							     &scale_factors, &shift_factors,
 							     ofile);
     }
   else
@@ -353,9 +360,12 @@ void AaArrayObjectReference::Write_VC_Links_As_Target_Optimized(string hier_id, 
   vector<int> scale_factors;
   this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      this->Update_Address_Shift_Factors(shift_factors,word_size);
+
   this->AaObjectReference::Write_VC_Store_Links_Optimized(hier_id,
 							  &_indices,
-							  &scale_factors,
+							  &scale_factors, &shift_factors,
 							  ofile);
 
 }
@@ -380,6 +390,9 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
 	  int word_size = this->Get_Word_Size();
 	  vector<int> scale_factors;
 	  this->Update_Address_Scaling_Factors(scale_factors,word_size);
+
+      vector<int> shift_factors;
+      this->Update_Address_Shift_Factors(shift_factors,word_size);
 
 	  // need start, active and complete for each expression.
 	  __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
@@ -423,7 +436,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
 									 ls_map,
 									 pipe_map,
 									 &_indices,
-									 &scale_factors,
+									 &scale_factors, &shift_factors,
 									 ofile);
 
 
@@ -444,13 +457,16 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
 	  vector<int> scale_factors;
 	  this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      this->Update_Address_Shift_Factors(shift_factors,word_size);
+
 	  // this is just a regular object load
 	  // using the indices, which returns the
 	  // value stored at the computed address.
 	  this->Write_VC_Load_Control_Path_Optimized(visited_elements,
 						     ls_map,pipe_map,
 						     &(_indices),
-						     &scale_factors,
+						     &scale_factors, &shift_factors,
 						     ofile);
 
 	  ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
@@ -518,10 +534,14 @@ void AaArrayObjectReference::Write_VC_Control_Path_As_Target_Optimized(set<AaRoo
       vector<int> scale_factors;
       this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      this->Update_Address_Shift_Factors(shift_factors,word_size);
+
       this->Write_VC_Store_Control_Path_Optimized(visited_elements,
 						  ls_map,pipe_map,
 						  &(_indices),
 						  &(scale_factors), 
+						  &shift_factors,
 						  ofile);
       ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
     }
@@ -547,6 +567,7 @@ void AaPointerDereferenceExpression::Write_VC_Links_Optimized(string hier_id, os
   this->AaObjectReference::Write_VC_Load_Links_Optimized(hier_id,
 							 NULL,
 							 NULL,
+							 NULL,
 							 ofile);
 }
 
@@ -562,6 +583,7 @@ void AaPointerDereferenceExpression::Write_VC_Links_As_Target_Optimized(string h
 
   this->_reference_to_object->Write_VC_Links_Optimized(hier_id,ofile);
   this->AaObjectReference::Write_VC_Store_Links_Optimized(hier_id,
+							  NULL,
 							  NULL,
 							  NULL,
 							  ofile);
@@ -593,7 +615,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(set<AaRoot*
 							      ofile);
   this->Write_VC_Load_Control_Path_Optimized(visited_elements,
 					     ls_map,pipe_map,
-					     NULL,NULL,ofile);
+					     NULL,NULL,NULL,ofile);
 
   if(!this->_reference_to_object->Is_Constant())
     {
@@ -631,7 +653,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(s
 							      ofile);
   this->Write_VC_Store_Control_Path_Optimized(visited_elements,
 					      ls_map,pipe_map,
-					      NULL,NULL,ofile);
+					      NULL,NULL,NULL,ofile);
   if(!this->_reference_to_object->Is_Constant())
     {
       __J(base_addr_calc,this->_reference_to_object->Get_VC_Complete_Region_Name());
@@ -658,10 +680,13 @@ void AaAddressOfExpression::Write_VC_Links_Optimized(string hier_id, ostream& of
       vector<int> scale_factors;
       obj_ref->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      obj_ref->Update_Address_Shift_Factors(shift_factors,word_size);
+
 
       obj_ref->Write_VC_Root_Address_Calculation_Links_Optimized(hier_id,
 								 obj_ref->Get_Index_Vector(),
-								 &scale_factors,
+								 &scale_factors, &shift_factors,
 								 ofile);
 				
       hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Complete_Region_Name());		       
@@ -703,10 +728,13 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
       vector<int> scale_factors;
       obj_ref->Update_Address_Scaling_Factors(scale_factors,word_size);
 
+      vector<int> shift_factors;
+      obj_ref->Update_Address_Shift_Factors(shift_factors,word_size);
+
       obj_ref->Write_VC_Root_Address_Calculation_Control_Path_Optimized(visited_elements,
 									ls_map,pipe_map,
 									obj_ref->Get_Index_Vector(),
-									&scale_factors,
+									&scale_factors, &shift_factors,
 									ofile);
 
       ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] {" << endl;
@@ -1024,6 +1052,7 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(set<AaRoot*>& visit
 							     map<string, vector<AaExpression*> >& pipe_map,
 							     vector<AaExpression*>* address_expressions,
 							     vector<int>* scale_factors,
+							     vector<int>* shift_factors,
 							     ostream& ofile)
 {
   // address calculation
@@ -1031,13 +1060,17 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(set<AaRoot*>& visit
   // 2. in parallel, compute aI = agross + I
   //       optimization: if number is 2**N then append.
   this->Write_VC_Address_Calculation_Control_Path_Optimized(visited_elements,ls_map,pipe_map,
-							    address_expressions,scale_factors, ofile);
+							    address_expressions,scale_factors,
+							    shift_factors, ofile);
 
   // load operations
   //    in parallel, load..
   this->Write_VC_Load_Store_Control_Path_Optimized(visited_elements,
 						   ls_map,pipe_map,
-						   address_expressions, scale_factors, "read", ofile);
+						   address_expressions, 
+						   scale_factors,
+						   shift_factors,
+						   "read", ofile);
 
   __J(this->Get_VC_Start_Transition_Name(),this->Get_VC_Name() + "_word_address_calculated");
 
@@ -1047,6 +1080,7 @@ void AaObjectReference::Write_VC_Store_Control_Path_Optimized(set<AaRoot*>& visi
 							      map<string, vector<AaExpression*> >& pipe_map,
 							      vector<AaExpression*>* address_expressions,
 							      vector<int>* scale_factors,
+							      vector<int>* shift_factors,
 							      ostream& ofile)
 {
   // address calculation
@@ -1056,13 +1090,16 @@ void AaObjectReference::Write_VC_Store_Control_Path_Optimized(set<AaRoot*>& visi
   this->Write_VC_Address_Calculation_Control_Path_Optimized(visited_elements,
 							    ls_map,pipe_map,
 							    address_expressions, 
-							    scale_factors, ofile);
+							    scale_factors,
+							    shift_factors, 
+							    ofile);
 
   //    in parallel, store
   this->Write_VC_Load_Store_Control_Path_Optimized(visited_elements,
 						   ls_map,pipe_map,
 						   address_expressions, 
-						   scale_factors, 
+						   scale_factors,
+						   shift_factors,
 						   "write", 
 						   ofile);
 
@@ -1074,6 +1111,7 @@ void AaObjectReference::Write_VC_Load_Store_Control_Path_Optimized(set<AaRoot*>&
 								   map<string, vector<AaExpression*> >& pipe_map,
 								   vector<AaExpression*>* address_expressions,
 								   vector<int>* scale_factors,
+								   vector<int>* shift_factors,
 								   string read_or_write,
 								   ostream& ofile)
 {
@@ -1130,21 +1168,23 @@ void AaObjectReference::Write_VC_Load_Store_Control_Path_Optimized(set<AaRoot*>&
 void AaObjectReference::Write_VC_Load_Links_Optimized(string hier_id,
 						      vector<AaExpression*>* address_expressions,
 						      vector<int>* scale_factors,
+						      vector<int>* shift_factors,
 						      ostream& ofile)
 {
-  this->Write_VC_Address_Calculation_Links_Optimized(hier_id, address_expressions, scale_factors, ofile);
+  this->Write_VC_Address_Calculation_Links_Optimized(hier_id, address_expressions, scale_factors, shift_factors, ofile);
   string rd_id = "read";
-  this->Write_VC_Load_Store_Links_Optimized(hier_id, rd_id, address_expressions, scale_factors, ofile);
+  this->Write_VC_Load_Store_Links_Optimized(hier_id, rd_id, address_expressions, scale_factors, shift_factors, ofile);
 }
   
 void AaObjectReference::Write_VC_Store_Links_Optimized(string hier_id,
 						       vector<AaExpression*>* address_expressions,
 						       vector<int>* scale_factors,
+						      vector<int>* shift_factors,
 						       ostream& ofile)
 {
-  this->Write_VC_Address_Calculation_Links_Optimized(hier_id, address_expressions, scale_factors, ofile);
+  this->Write_VC_Address_Calculation_Links_Optimized(hier_id, address_expressions, scale_factors, shift_factors, ofile);
   string rd_id = "write";
-  this->Write_VC_Load_Store_Links_Optimized(hier_id, rd_id, address_expressions, scale_factors, ofile);
+  this->Write_VC_Load_Store_Links_Optimized(hier_id, rd_id, address_expressions, scale_factors, shift_factors, ofile);
 }
 
 
@@ -1152,6 +1192,7 @@ void AaObjectReference::Write_VC_Load_Store_Links_Optimized( string hier_id,
 							     string read_or_write,
 							     vector<AaExpression*>* address_expressions,
 							     vector<int>* scale_factors,
+						      vector<int>* shift_factors,
 							     ostream& ofile)
 {
   vector<string> reqs;
@@ -1213,12 +1254,13 @@ Write_VC_Address_Calculation_Control_Path_Optimized(set<AaRoot*>& visited_elemen
 						    map<string,vector<AaExpression*> >& ls_map,
 						    map<string, vector<AaExpression*> >& pipe_map,
 						    vector<AaExpression*>* indices,
-						    vector<int>* scale_factors,
+						    vector<int>* scale_factors,		
+						    vector<int>* shift_factors,
 						    ostream& ofile)
 {
   int offset_val = 0;
   if(indices)
-    offset_val = this->Evaluate(indices,scale_factors);
+    offset_val = this->Evaluate(indices,scale_factors, shift_factors);
   int base_addr = this->Get_Base_Address();
 
   string root_addr_calculated = this->Get_VC_Name() + "_root_address_calculated"; 
@@ -1239,6 +1281,7 @@ Write_VC_Address_Calculation_Control_Path_Optimized(set<AaRoot*>& visited_elemen
 								     ls_map,pipe_map,
 								     indices,
 								     scale_factors,
+								     shift_factors,
 								     ofile);
       
       
@@ -1279,12 +1322,13 @@ Write_VC_Address_Calculation_Control_Path_Optimized(set<AaRoot*>& visited_elemen
 void AaObjectReference::Write_VC_Address_Calculation_Links_Optimized(string hier_id,
 								     vector<AaExpression*>* indices,
 								     vector<int>* scale_factors,
+						      vector<int>* shift_factors,
 								     ostream& ofile)
 {
  
   int offset_val = 0;
   if(indices)
-    offset_val = this->Evaluate(indices,scale_factors);
+    offset_val = this->Evaluate(indices,scale_factors, shift_factors);
   int base_addr = this->Get_Base_Address();
  
   vector<string> reqs;
@@ -1292,7 +1336,7 @@ void AaObjectReference::Write_VC_Address_Calculation_Links_Optimized(string hier
 
   if(offset_val < 0 || base_addr < 0)
     {
-      this->Write_VC_Root_Address_Calculation_Links_Optimized(hier_id,indices,scale_factors,ofile);
+      this->Write_VC_Root_Address_Calculation_Links_Optimized(hier_id,indices,scale_factors,shift_factors, ofile);
 
       string word_region = this->Get_VC_Name() + "_word_addrgen"; 
       hier_id = Augment_Hier_Id(hier_id,word_region);
@@ -1343,6 +1387,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(set<AaRoot*>& visited_e
 							 map<string, vector<AaExpression*> >& pipe_map,
 							 vector<AaExpression*>* index_vector,
 							 vector<int>* scale_factors,
+						      vector<int>* shift_factors,
 							 ostream& ofile)
 {
 
@@ -1351,7 +1396,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(set<AaRoot*>& visited_e
   
   int offset_val = 0;
   if(index_vector)
-    offset_val = this->Evaluate(index_vector,scale_factors);
+    offset_val = this->Evaluate(index_vector,scale_factors, shift_factors);
   int base_addr = this->Get_Base_Address();
 
   // if both are constants.. give up.
@@ -1518,11 +1563,12 @@ void AaObjectReference::
 Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 						  vector<AaExpression*>* indices,
 						  vector<int>* scale_factors,
+						      vector<int>* shift_factors,
 						  ostream& ofile)
 {
   int offset_val = 0;
   if(indices)
-    offset_val = this->Evaluate(indices,scale_factors);
+    offset_val = this->Evaluate(indices,scale_factors, shift_factors);
   int base_addr = this->Get_Base_Address();
 
   

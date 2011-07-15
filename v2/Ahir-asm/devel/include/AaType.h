@@ -453,6 +453,8 @@ class AaRecordType: public AaType
     }
     
     virtual AaType* Get_Element_Type(int idx) {return(this->_element_types[idx]);}
+    AaType* Get_Element_Type(AaExpression* expr);
+
     int Get_Number_Of_Elements() {return(this->_element_types.size());}
     
     virtual void Fill_LAU_Set(set<int>& s) 
@@ -475,6 +477,7 @@ class AaRecordType: public AaType
     
     virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
     virtual int Get_Start_Bit_Offset(int start_index, vector<AaExpression*>& indices);
+    int Get_Start_Bit_Offset(AaExpression* expr);
     
     void PrintC_Declaration(ofstream& ofile)
     {
