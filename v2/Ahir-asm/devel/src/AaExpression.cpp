@@ -956,6 +956,7 @@ void AaArrayObjectReference::Set_Type(AaType* t)
       if(!this->_object->Get_Type()->Is_Pointer_Type() && !this->Used_Only_In_Address_Of_Expression())
 	((AaStorageObject*)this->_object)->Add_Access_Width(t->Size());
     }
+
   this->AaExpression::Set_Type(t);
 }
 
@@ -1035,8 +1036,15 @@ bool AaArrayObjectReference::Set_Addressed_Object_Representative(AaStorageObject
       // space... so all storage objects pointed to by pointer calculation
       // operation must be in the same memory space!
       if(ref != NULL && ref != obj)
-	AaProgram::Add_Storage_Dependency(ref,obj);
+	{
+	  AaProgram::Add_Storage_Dependency(ref,obj);
+	}
 
+      // since we will be doing address calculation,
+      // the width of the word to which this address points
+      // must be recorded!
+      assert(this->_type->Is_Pointer_Type());
+      obj->Add_Access_Width(((AaPointerType*)(this->_type))->Get_Ref_Type()->Size());
     }
   this->AaExpression::Set_Addressed_Object_Representative(obj);
 }
@@ -1182,7 +1190,7 @@ void AaArrayObjectReference::Evaluate()
     }
 }
 
-// broken: works OK for arrays, but not for records!
+
 void AaArrayObjectReference::Update_Address_Scaling_Factors(vector<int>& scale_factors, int word_size)
 {
 
@@ -1208,13 +1216,21 @@ void AaArrayObjectReference::Update_Address_Scaling_Factors(vector<int>& scale_f
 	  if(idx == 0)
 	    residual_size = ref_type->Size()/word_size;
 	  else
-	    residual_size = ref_type->Get_Element_Type(1,index_prefix)->Size()/word_size;
+	    {
+	      residual_size = ref_type->Get_Element_Type(1,index_prefix)->Size()/word_size;
+	      if(residual_size == 0)
+		{
+		  AaRoot::Error("address calculation must be for full words only!", this);
+		}
+	    }
 
 	  scale_factors.push_back(residual_size);
 	}
       else if(t->Is_Composite_Type())
 	{
 	  residual_size = t->Get_Element_Type(0,index_prefix)->Size()/word_size;
+	  if(residual_size == 0)
+	    AaRoot::Error("address calculation must be for full words only!", this);
 
 	  scale_factors.push_back(residual_size);
 	}

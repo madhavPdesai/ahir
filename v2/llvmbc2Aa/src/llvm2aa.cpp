@@ -84,7 +84,7 @@ int main(int argc, char **argv)
     const std::string &ModuleName = M.getModuleIdentifier();
 
     PassManager Passes;
-    Passes.add(new TargetData("e-p:16:16"));
+    Passes.add(new TargetData("e-p:32:132-n1:2:4:8:16:32:64"));
 
     std::string OrigFileName = ModuleName + ".txt";
     std::ofstream OrigFile(OrigFileName.c_str());
