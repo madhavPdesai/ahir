@@ -953,7 +953,7 @@ void AaArrayObjectReference::Set_Type(AaType* t)
 {
   if(this->_object->Is_Storage_Object())
     {
-      if(!this->_object->Get_Type()->Is_Pointer_Type())
+      if(!this->_object->Get_Type()->Is_Pointer_Type() && !this->Used_Only_In_Address_Of_Expression())
 	((AaStorageObject*)this->_object)->Add_Access_Width(t->Size());
     }
   this->AaExpression::Set_Type(t);
