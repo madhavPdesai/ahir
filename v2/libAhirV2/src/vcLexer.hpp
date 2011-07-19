@@ -43,10 +43,12 @@ public:
 	public: void mADDRWIDTH(bool _createToken);
 	public: void mMAXACCESSWIDTH(bool _createToken);
 	public: void mMODULE(bool _createToken);
+	public: void mFOREIGN(bool _createToken);
 	public: void mSERIESBLOCK(bool _createToken);
 	public: void mPARALLELBLOCK(bool _createToken);
 	public: void mFORKBLOCK(bool _createToken);
 	public: void mBRANCHBLOCK(bool _createToken);
+	public: void mPIPELINEBLOCK(bool _createToken);
 	public: void mOF(bool _createToken);
 	public: void mFORK(bool _createToken);
 	public: void mJOIN(bool _createToken);

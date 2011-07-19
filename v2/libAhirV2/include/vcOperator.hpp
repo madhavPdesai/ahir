@@ -128,15 +128,16 @@ class vcIOport: public vcOperator
 {
 protected:
   vcWire* _data;
-  string _pipe_id;
+  vcPipe* _pipe;
 public:
-  vcIOport(string id, string pipe_id, vcWire* w);
-  string Get_Pipe_Id() {return(this->_pipe_id);}
+  vcIOport(string id, vcPipe* pipe, vcWire* w);
+  string Get_Pipe_Id();
+  vcPipe* Get_Pipe() {return(_pipe);}
   vcWire* Get_Data() {return(this->_data);}
   virtual string Kind() {return("vcIOport");}
   virtual bool Is_Shareable_With(vcDatapathElement* other) 
   {
-    return((this->Kind() == other->Kind()) && (this->_pipe_id == ((vcIOport*)other)->Get_Pipe_Id()));
+    return((this->Kind() == other->Kind()) && (this->Get_Pipe() == ((vcIOport*)other)->Get_Pipe()));
   }
 
   friend class vcDataPath;
@@ -147,7 +148,7 @@ class vcOutport: public vcIOport
 {
 
 public:
-  vcOutport(string id, string pipe_id, vcWire* w);
+  vcOutport(string id, vcPipe* pipe, vcWire* w);
   
   virtual void Print(ostream& ofile);
 
@@ -164,7 +165,7 @@ public:
 class vcInport: public vcIOport
 {
 public:
-  vcInport(string id, string pipe_id, vcWire* w);
+  vcInport(string id, vcPipe* pipe, vcWire* w);
   
   virtual void Print(ostream& ofile);
 

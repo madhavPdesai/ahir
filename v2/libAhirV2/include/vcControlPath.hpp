@@ -20,7 +20,9 @@ public:
 
   void Add_Successor(vcCPElement* cpe);
   void Add_Predecessor(vcCPElement* cpe);
-
+  virtual bool Is_Pipeline() { return (false); }
+  virtual bool Is_Block() { return (false); }
+  virtual bool Is_Control_Path() { return (false); }
 
 
   virtual int Get_Number_Of_Predecessors() { return(this->_predecessors.size());}
@@ -68,6 +70,9 @@ public:
 
   virtual string Get_Exit_Symbol() {return(this->Get_VHDL_Id() + "_symbol");}
   virtual string Get_Start_Symbol(){return(this->Get_VHDL_Id() + "_start");}
+
+  virtual string Get_Enable_Place_Symbol() {return(this->Get_VHDL_Id() + "_enable");}
+  virtual string Get_Trigger_Place_Symbol(){return(this->Get_VHDL_Id() + "_trigger");}
 
   virtual string Get_Always_True_Symbol() {return("always_true_symbol");}
 
@@ -235,6 +240,10 @@ public:
   virtual void Print(ostream& ofile) {assert(0);}
   void Print_Elements(ostream& ofile);
 
+  virtual bool Is_Block() { return (true); }
+
+  int Get_Number_Of_Elements() {return(this->_elements.size());}
+
   virtual string Kind() {return("vcCPBlock");}
 
   virtual bool Check_Structure(); // check that the block is well-formed.
@@ -254,9 +263,10 @@ public:
   virtual void Print_Structure(ostream& ofile);
 
   virtual void Print_VHDL(ostream& ofile);
-
+  virtual void Print_VHDL_Start_Interlock(ostream& ofile);
   virtual void Print_VHDL_Start_Symbol_Assignment(ostream& ofile);
   virtual void Print_VHDL_Exit_Symbol_Assignment(ostream& ofile);
+  virtual void Print_VHDL_Signal_Declarations(ostream& ofile);
 
   void Print_Missing_Elements(set<vcCPElement*>& visited_set); // print to cerr
   virtual void Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp);
@@ -270,6 +280,11 @@ public:
   {
     return(this->_entry);
   }
+
+  virtual string Get_Predecessor_Exit_Symbol();
+  virtual string Get_Successor_Start_Symbol();
+
+  
 };
 
 class vcCPSeriesBlock: public vcCPBlock
@@ -290,7 +305,6 @@ public:
 
   virtual void Print_Structure(ostream& ofile);
 
-
 };
 
 class vcCPParallelBlock: public vcCPBlock
@@ -303,12 +317,24 @@ public:
   virtual void Print(ostream& ofile);
 
 
-  virtual string Kind() {return("vcCPSeriesBlock");}
+  virtual string Kind() {return("vcCPParallelBlock");}
 
   virtual void Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* m);
   virtual void Update_Predecessor_Successor_Links();
 
   virtual void Print_Structure(ostream& ofile);
+};
+
+class vcCPPipelineBlock: public vcCPParallelBlock
+{
+public:
+  vcCPPipelineBlock(vcCPBlock* parent, string id);
+  virtual void Print(ostream& ofile);
+  virtual string Kind() {return("vcCPPipelineBlock");}
+  virtual void Update_Predecessor_Successor_Links();
+  virtual void Print_VHDL_Signal_Declarations(ostream& ofile);
+
+  virtual bool Is_Pipeline() { return (true); }
 };
 
 class vcCPBranchBlock: public vcCPSeriesBlock
@@ -425,7 +451,7 @@ public:
   friend class vcControlPath;
 };
 
-class vcControlPath: public vcCPSeriesBlock
+class vcControlPath: public vcCPPipelineBlock
 {
 
   set<vcCompatibilityLabel*> _compatibility_label_set;
@@ -454,6 +480,7 @@ public:
   vcCPElementGroup* Delete_Group(vcCPElement* g);
   vcCPElementGroup* Get_Group(vcCPElement* cpe);
 
+  virtual bool Is_Control_Path() { return (true); }
 
   void Construct_Reduced_Group_Graph();
   void Reduce_CPElement_Group_Graph();
@@ -471,7 +498,7 @@ public:
   void Delete_Compatibility_Label(vcCompatibilityLabel* nl);
 
   virtual bool Check_Structure();
-  virtual void Print_Structure(ostream& ofile) {this->vcCPSeriesBlock::Print_Structure(ofile);}
+  virtual void Print_Structure(ostream& ofile) {this->vcCPPipelineBlock::Print_Structure(ofile);}
   void Print_Compatibility_Labels(ostream& ofile);
 
   bool Are_Compatible(vcCompatibilityLabel* u, vcCompatibilityLabel* v);
@@ -480,6 +507,7 @@ public:
 
   virtual void Print_VHDL_Start_Symbol_Assignment(ostream& ofile);
   virtual void Print_VHDL_Exit_Symbol_Assignment(ostream& ofile);
+
   virtual void Print_VHDL_Optimized(ostream& ofile);
 
   vcCompatibilityLabel* Find_Or_Map_Join_Label(string sid, vcCompatibilityLabel* t)
@@ -501,6 +529,20 @@ public:
 				   set<vcCompatibilityLabel*>& visited_set);
   void Mark_As_Compatible(set<vcCompatibilityLabel*>& uset, set<vcCompatibilityLabel*>& vset);
   void Print_Compatibility_Map(ostream& ofile);
+
+  virtual string Get_Predecessor_Exit_Symbol()
+  {
+    assert(0);
+  }
+  virtual string Get_Successor_Start_Symbol()
+  {
+    assert(0);
+  }
+
+  virtual string Get_Exit_Symbol() 
+  {
+    return("fin_ack_symbol");
+  }
 };
 
 

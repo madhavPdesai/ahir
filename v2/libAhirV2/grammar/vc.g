@@ -43,6 +43,7 @@ vc_System[vcSystem* sys]
 { 
 	vcModule* nf = NULL;
 	vcMemorySpace* ms = NULL;
+   
 }
 :
 (
@@ -50,7 +51,7 @@ vc_System[vcSystem* sys]
  |
  (ms = vc_MemorySpace[sys,NULL] {sys->Add_Memory_Space(ms);})
  |
- (vc_Pipe[sys])
+ (vc_Pipe[sys,NULL])
  |
  (vc_Wire_Declaration[sys,NULL])
  )*
@@ -59,12 +60,17 @@ vc_System[vcSystem* sys]
 //-----------------------------------------------------------------------------------------------
 // vc_System :  PIPE vc_Label UINTEGER
 //-----------------------------------------------------------------------------------------------
-vc_Pipe[vcSystem* sys]
+vc_Pipe[vcSystem* sys, vcModule* m]
 {
   string lbl;
   int depth = 1;
 }:  PIPE lbl = vc_Label  wid:UINTEGER  (DEPTH did:UINTEGER {depth = atoi(did->getText().c_str()); })?
-        {sys->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth);} 
+        {
+            if (sys) 
+                sys->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth);
+            else if(m)
+                m->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth);
+        } 
 ;
 
 
@@ -107,18 +113,22 @@ vc_MemoryLocation[vcSystem* sys, vcMemorySpace* ms]
 ;
 
 //--------------------------------------------------------------------------------------------------------------------------------------
-// vc_Module :  MODULE vc_Label  LBRACE vc_Inargs vc_Outargs vc_MemorySpace* vc_Controlpath vc_Datapath? vc_Link* vc_AttributeSpec* RBRACE
+// vc_Module :  MODULE vc_Label  LBRACE vc_Inargs vc_Outargs vc_MemorySpace* vc_Pipe* vc_Controlpath vc_Datapath? vc_Link* vc_AttributeSpec* RBRACE
 //--------------------------------------------------------------------------------------------------------------------------------------
 vc_Module[vcSystem* sys] returns[vcModule* m]
 {
 	string lbl;
 	m = NULL;
-        vcMemorySpace* ms;
+    bool foreign_flag = false;
+    vcMemorySpace* ms;
 }
-: MODULE lbl = vc_Label { m = new vcModule(sys,lbl); sys->Add_Module(m);} 
+: (FOREIGN {foreign_flag = true;})? MODULE lbl = vc_Label { m = new vcModule(sys,lbl); sys->Add_Module(m); if(foreign_flag) m->Set_Foreign_Flag(true);} 
   LBRACE (vc_Inargs[sys,m])? (vc_Outargs[sys,m])? 
   (ms = vc_MemorySpace[sys,m] {m->Add_Memory_Space(ms);})* 
-   vc_Controlpath[sys,m] (vc_Datapath[sys,m])? (vc_Link[m])*
+        (vc_Pipe[NULL,m])*
+        (vc_Controlpath[sys,m] { assert(!foreign_flag);})? 
+        (vc_Datapath[sys,m] {assert(!foreign_flag);})? 
+        (vc_Link[m] {assert(!foreign_flag);})*
   (vc_AttributeSpec[m])* 
   RBRACE
 ;
@@ -265,12 +275,13 @@ vc_CPTransition[vcCPElement* p] returns[vcCPElement* cpe]
   ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPRegion: (vc_CPSeriesBlock | vc_CPParallelBlock | vc_CPBranchBlock | vc_CPForkBlock )
+// vc_CPRegion: (vc_CPSeriesBlock | vc_CPParallelBlock | vc_CPPipelineBlock | vc_CPBranchBlock | vc_CPForkBlock )
 //-----------------------------------------------------------------------------------------------
 vc_CPRegion[vcCPBlock* cp]
 :
 vc_CPSeriesBlock[cp] |
 vc_CPParallelBlock[cp] |
+vc_CPPipelineBlock[cp] |
 vc_CPBranchBlock[cp] |
 vc_CPForkBlock[cp] 
 ;
@@ -301,6 +312,21 @@ vc_CPParallelBlock[vcCPBlock* cp]
         vcCPElement* t;
 }
 : PARALLELBLOCK lbl = vc_Label { sb = new vcCPParallelBlock(cp,lbl);} LBRACE 
+ ( vc_CPRegion[sb] | t = vc_CPTransition[sb] {sb->Add_CPElement(t);} )* RBRACE
+{ cp->Add_CPElement(sb); }
+;
+
+//-----------------------------------------------------------------------------------------------
+// vc_CPPipelineBlock: PIPELINEBLOCK vcLabel LBRACE (vc_CPRegion)+ RBRACE
+//-----------------------------------------------------------------------------------------------
+vc_CPPipelineBlock[vcCPBlock* cp] 
+{
+	string lbl;
+	vcCPPipelineBlock* sb;
+	vcCPElement* cpe;
+        vcCPElement* t;
+}
+: PIPELINEBLOCK lbl = vc_Label { sb = new vcCPPipelineBlock(cp,lbl);} LBRACE 
  ( vc_CPRegion[sb] | t = vc_CPTransition[sb] {sb->Add_CPElement(t);} )* RBRACE
 { cp->Add_CPElement(sb); }
 ;
@@ -709,6 +735,7 @@ vc_IOPort_Instantiation[vcDataPath* dp]
 {
  string id, in_id, out_id, pipe_id;
  vcWire* w;
+ vcPipe* p = NULL;
  bool in_flag = false;
 }
 : ipid: IOPORT (( IN {in_flag = true;})  | OUT)  id = vc_Label LPAREN in_id = vc_Identifier RPAREN 
@@ -719,28 +746,31 @@ vc_IOPort_Instantiation[vcDataPath* dp]
             w = dp->Find_Wire(out_id);
             NOT_FOUND__("wire",w,out_id,lpid)
             pipe_id = in_id;
+            p = dp->Get_Parent()->Find_Pipe(pipe_id);
+            NOT_FOUND__("pipe",p,pipe_id,lpid);
           }
           else
           {
             w = dp->Find_Wire(in_id);
-            NOT_FOUND__("wire",w,in_id,ipid);
+            NOT_FOUND__("wire",w,in_id,lpid);
             pipe_id = out_id;
+            p = dp->Get_Parent()->Find_Pipe(pipe_id);
+            NOT_FOUND__("pipe",p,pipe_id,lpid);
           }
 
 
   
-
-          if(w->Get_Type()->Size() != dp->Get_Parent()->Get_Parent()->Get_Pipe_Width(pipe_id))
+          if(w->Get_Type()->Size() != p->Get_Width())
              vcSystem::Error("Pipe " + pipe_id + " width does not match wire width on IOport " + id);
 
           if(in_flag)
           {
-             vcInport* np = new vcInport(id,pipe_id,w);
+             vcInport* np = new vcInport(id,p,w);
              dp->Add_Inport(np);
           }
           else
           {
-             vcOutport* np = new vcOutport(id,pipe_id,w);
+             vcOutport* np = new vcOutport(id,p,w);
              dp->Add_Outport(np);
           }
       }
@@ -1113,10 +1143,12 @@ DATAWIDTH     : "$datawidth";
 ADDRWIDTH     : "$addrwidth";
 MAXACCESSWIDTH : "$maxaccesswidth";
 MODULE        : "$module";
+FOREIGN       : "$foreign";
 SERIESBLOCK   : ";;";
 PARALLELBLOCK : "||";
 FORKBLOCK     : "::";
 BRANCHBLOCK   : "<>";
+PIPELINEBLOCK : "=|=";
 OF            : "$of";
 FORK          : "&->";
 JOIN          : "<-&";

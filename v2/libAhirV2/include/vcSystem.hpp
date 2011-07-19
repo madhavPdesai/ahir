@@ -16,7 +16,7 @@ class vcDatapathElementTemplate;
 class vcModule;
 class vcConstantWire;
 class vcValue;
-
+class vcPipe;
 class vcSystem: public vcRoot
 {
   map<string, vcMemorySpace*> _memory_space_map;
@@ -25,18 +25,10 @@ class vcSystem: public vcRoot
 
   map<string, vcModule*> _modules;
   map<string, vcModule*> _unreachable_modules;
-
-
-  map<string,int> _pipe_map;
-  map<string,int> _pipe_depth_map;
-
   map<string,vcConstantWire*> _constant_map;
 
-  map<string, map<vcModule*, vector<int> > > _pipe_read_map; // inports on modules connected to pipe.
-  map<string, int> _pipe_read_count;
-
-  map<string, map<vcModule*, vector<int> > > _pipe_write_map; // inports on modules connected to pipe.
-  map<string, int> _pipe_write_count;
+  // pipe-related stuff.
+  map<string,vcPipe*> _pipe_map;
 
   static bool _error_flag;
  public:
@@ -52,80 +44,28 @@ class vcSystem: public vcRoot
 
   static int _register_bank_threshold;
 
-
-
-  void Register_Pipe_Read(string pipe_id, vcModule* m, int idx)
+  void Register_Pipe_Read(string pipe_id, vcModule* m, int idx);
+  int Get_Num_Pipe_Reads(string pipe_id);
+  void Register_Pipe_Write(string pipe_id, vcModule* m, int idx);
+  void Deregister_Pipe_Accesses(vcModule* m);
+  int Get_Num_Pipe_Writes(string pipe_id);
+  bool Has_Pipe(string pipe_id) 
   {
-    ((_pipe_read_map[pipe_id])[m]).push_back(idx);
-    if(_pipe_read_count.find(pipe_id) == _pipe_read_count.end())
-      _pipe_read_count[pipe_id] = 0;
-
-    _pipe_read_count[pipe_id]++;
+    return(_pipe_map.find(pipe_id) != _pipe_map.end());
   }
-
-  int Get_Num_Pipe_Reads(string pipe_id)
+  vcPipe* Find_Pipe(string pipe_id)
   {
-    if(_pipe_read_count.find(pipe_id) != _pipe_read_count.end())
-      return(_pipe_read_count[pipe_id]);
-    else
-      return(0);
-  }
-
-  void Register_Pipe_Write(string pipe_id, vcModule* m, int idx)
-  {
-    ((_pipe_write_map[pipe_id])[m]).push_back(idx);
-    if(_pipe_write_count.find(pipe_id) == _pipe_write_count.end())
-      _pipe_write_count[pipe_id] = 0;
-    
-    _pipe_write_count[pipe_id]++;
-  }
-
-  void Deregister_Pipe_Accesses(vcModule* m)
-  {
-    for(map<string,int>::iterator iter = _pipe_map.begin(), iiter = _pipe_map.end();
-	iter != iiter;
-	iter++)
+    if(_pipe_map.find(pipe_id) !=  _pipe_map.end())
       {
-	string pipe_name = (*iter).first;
-	if(_pipe_read_map.find(pipe_name) != _pipe_read_map.end())
-	  {
-	    if(_pipe_read_map[pipe_name].find(m) != _pipe_read_map[pipe_name].end())
-	      {
-		_pipe_read_count[pipe_name] -= _pipe_read_map[pipe_name][m].size();
-		_pipe_read_map[pipe_name].erase(m);
-	      }
-	  }
-
-	if(_pipe_write_map.find(pipe_name) != _pipe_write_map.end())
-	  {
-	    if(_pipe_write_map[pipe_name].find(m) != _pipe_write_map[pipe_name].end())
-	      {
-		_pipe_write_count[pipe_name] -= _pipe_write_map[pipe_name][m].size();
-		_pipe_write_map[pipe_name].erase(m);
-	      }
-	  }
+	return(_pipe_map[pipe_id]);
       }
-  }
-
-  int Get_Num_Pipe_Writes(string pipe_id)
-  {
-    if(_pipe_write_count.find(pipe_id) != _pipe_write_count.end())
-      return(_pipe_write_count[pipe_id]);
     else
-      return(0);
+      return NULL;
   }
-
-  bool Has_Pipe(string pipe_id) {return(_pipe_map.find(pipe_id) != _pipe_map.end());}
-
-  void Add_Pipe(string pipe_id, int width, int depth) 
-  {
-    assert(_pipe_map.find(pipe_id) == _pipe_map.end());
-    assert(width > 0);
-    assert(depth > 0);
-
-    _pipe_map[pipe_id] = width;
-    _pipe_depth_map[pipe_id] = depth;
-  }
+  void Add_Pipe(string pipe_id, int width, int depth);
+  int Get_Pipe_Width(string pipe_id);
+  int Get_Pipe_Depth(string pipe_id);
+  void Print_Pipes(ostream& ofile);
 
   void Add_Constant_Wire(string obj_name, vcValue* v);
   vcConstantWire* Find_Constant_Wire(string obj_name)
@@ -137,17 +77,8 @@ class vcSystem: public vcRoot
       return(NULL);
   }
 
-  int Get_Pipe_Width(string pipe_id)
-  {
-    assert(_pipe_map.find(pipe_id) != _pipe_map.end());return(_pipe_map[pipe_id]);
-  }
 
-  int Get_Pipe_Depth(string pipe_id)
-  {
-    assert(_pipe_depth_map.find(pipe_id) != _pipe_depth_map.end());return(_pipe_depth_map[pipe_id]);
-  }
 
-  void Print_Pipes(ostream& ofile);
 
   void Add_Module(vcModule* module);
 

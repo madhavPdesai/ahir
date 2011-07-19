@@ -19,6 +19,10 @@ AaModule::AaModule(string fname): AaSeriesBlockStatement(NULL,fname)
 {
   _foreign_flag = false;
   _inline_flag = false;
+
+  _writes_to_shared_pipe = false;
+  _reads_from_shared_pipe = false;
+
   _number_of_times_called = 0;
 }
 
@@ -279,9 +283,16 @@ void AaModule::Propagate_Constants()
 }
 
 
+bool AaModule::Has_No_Side_Effects()
+{
+  if(this->Get_Foreign_Flag())
+    return(true);
+  else
+    return(false);
+}
+
 void AaModule::Set_Foreign_Object_Representatives()
 {
-	
   bool is_root = (this->Get_Number_Of_Times_Called() ==  0);
 	
   if(is_root)
@@ -391,6 +402,8 @@ void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)
 {
 
   //  this->Propagate_Constants();
+  if(this->_foreign_flag)
+    ofile << "$foreign ";
 
   ofile << "$module [" << this->Get_Label() << "] {" << endl;
   if(_input_args.size() > 0)
@@ -419,10 +432,15 @@ void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)
     }
   ofile << endl;
 
-  this->Write_VC_Memory_Spaces(ofile);  
-  this->Write_VC_Control_Path(opt_flag, ofile);
-  this->Write_VC_Data_Path(ofile);
-  this->Write_VC_Links(opt_flag, ofile);
+  if(!this->_foreign_flag)
+    {
+      this->Write_VC_Pipe_Declarations(ofile);
+      this->Write_VC_Memory_Spaces(ofile);  
+      
+      this->Write_VC_Control_Path(opt_flag, ofile);
+      this->Write_VC_Data_Path(ofile);
+      this->Write_VC_Links(opt_flag, ofile);
+    }
 
   ofile << "}" << endl;
 }

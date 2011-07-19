@@ -9,6 +9,162 @@
 #include <vcModule.hpp>
 #include <vcSystem.hpp>
 
+
+void vcPipe::Print_VHDL_Pipe_Port_Signals(ostream& ofile)
+{
+  string pipe_id = To_VHDL(this->Get_Id());
+  int pipe_width = this->Get_Width();
+      
+  int num_reads = this->Get_Pipe_Read_Count();
+  int num_writes = this->Get_Pipe_Write_Count();
+     
+  if(num_reads > 0 && num_writes ==  0)
+    {
+      ofile << "-- write to pipe " << pipe_id << endl;
+      ofile << "signal " 
+	    << pipe_id 
+	    << "_pipe_write_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+      ofile << "signal " << pipe_id << "_pipe_write_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
+      ofile << "signal " << pipe_id << "_pipe_write_ack : std_logic_vector(0 downto 0);" << endl;
+    }
+
+  if(num_writes > 0 && num_reads == 0)
+    {
+      ofile << "-- read from pipe " << pipe_id << endl;
+      ofile << "signal "
+	    << pipe_id << "_pipe_read_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+      ofile << "signal " << pipe_id << "_pipe_read_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
+      ofile << "signal " << pipe_id << "_pipe_read_ack : std_logic_vector(0 downto 0);" << endl;
+    }
+}
+
+
+void vcPipe::Print_VHDL_Pipe_Signals(ostream& ofile)
+{
+  string pipe_id = this->Get_Id();
+  int pipe_width = this->Get_Width();
+      
+  int num_reads = this->Get_Pipe_Read_Count();
+  int num_writes = this->Get_Pipe_Write_Count();
+     
+  if(num_writes >  0)
+    {
+      ofile << "-- aggregate signals for write to pipe " << pipe_id << endl;
+      ofile << "signal " << pipe_id << "_pipe_write_data: std_logic_vector(" << (num_writes*pipe_width)-1 << " downto 0);" << endl;
+      ofile << "signal " << pipe_id << "_pipe_write_req: std_logic_vector(" << num_writes-1 << " downto 0);" << endl;
+      ofile << "signal " << pipe_id << "_pipe_write_ack: std_logic_vector(" << num_writes-1 << " downto 0);" << endl;
+    }
+
+  if(num_reads > 0)
+    {
+      ofile << "-- aggregate signals for read from pipe " << pipe_id << endl;
+      ofile << "signal " << pipe_id << "_pipe_read_data: std_logic_vector(" << (num_reads*pipe_width)-1 << " downto 0);" << endl;
+      ofile << "signal " << pipe_id << "_pipe_read_req: std_logic_vector(" << num_reads-1 << " downto 0);" << endl;
+      ofile << "signal " << pipe_id << "_pipe_read_ack: std_logic_vector(" << num_reads-1 << " downto 0);" << endl;
+    }
+}
+
+void vcPipe::Print_VHDL_Instance(ostream& ofile)
+{
+  string pipe_id = To_VHDL(this->Get_Id());
+  int pipe_width = this->Get_Width();
+  int pipe_depth = this->Get_Depth();
+
+  int num_reads = this->Get_Pipe_Read_Count();
+  int num_writes = this->Get_Pipe_Write_Count();
+     
+  if(num_reads > 0 || num_writes > 0)
+    {
+      num_reads = MAX(num_reads,1);
+      num_writes = MAX(num_writes,1);
+
+      ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
+      ofile << "generic map( -- { " << endl;
+      ofile << "num_reads => " << num_reads << "," << endl;
+      ofile << "num_writes => " << num_writes << "," << endl;
+      ofile << "data_width => " << pipe_width << "," << endl;
+      ofile << "depth => " << pipe_depth << " --}\n)" << endl;
+      ofile << "port map( -- { " << endl;
+      ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 
+	    << "read_ack => " << pipe_id << "_pipe_read_ack," << endl 
+	    << "read_data => "<< pipe_id << "_pipe_read_data," << endl 
+	    << "write_req => " << pipe_id << "_pipe_write_req," << endl 
+	    << "write_ack => " << pipe_id << "_pipe_write_ack," << endl 
+	    << "write_data => "<< pipe_id << "_pipe_write_data," << endl 
+	    << "clk => clk,"
+	    << "reset => reset -- }\n ); -- }" << endl;
+    }
+  else
+    {
+      vcSystem::Warning("pipe " + pipe_id + " not used in the system, ignored");
+    }
+}
+
+bool vcPipe::Get_Pipe_Module_Section(vcModule* caller_module, 
+				     string read_or_write, 
+				     int& hindex, 
+				     int& lindex)
+{
+  
+  bool ret_val = false;
+  hindex = 
+    ((read_or_write == "read") ? this->Get_Pipe_Read_Count()-1 :
+     this->Get_Pipe_Write_Count() -1);
+
+  
+  map<vcModule*, vector<int> >::iterator iter, fiter;
+ 
+  if(read_or_write == "read")
+    {
+      iter = this->_pipe_read_map.begin();
+      fiter = this->_pipe_read_map.end();
+    }
+  else
+    {
+      iter = this->_pipe_write_map.begin();
+      fiter = this->_pipe_write_map.end();
+    }
+
+  for(; iter != fiter; iter++ )
+    {
+      if(caller_module == (*iter).first)
+	{
+	  lindex = (hindex + 1) - (*iter).second.size();
+	  ret_val = true;
+	  break;
+	}
+      else
+	{
+	  hindex -= (*iter).second.size();
+	}
+    }
+  return(ret_val);
+}
+
+string vcPipe::Get_Pipe_Aggregate_Section(string pid, 
+					  int hindex, 
+					  int lindex) 
+{
+    
+  int data_width;
+  string ret_string = this->Get_VHDL_Pipe_Interface_Port_Name(pid);
+    
+  // find data_width.
+  if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))
+    data_width = 1;
+  else if(pid.find("data") != string::npos)
+    data_width = this->Get_Width();
+  else
+    assert(0); // fatal
+    
+  ret_string += "(";
+  ret_string += IntToStr(((hindex+1)*data_width)-1);
+  ret_string += " downto ";
+  ret_string += IntToStr(lindex*data_width);
+  ret_string += ")";
+  return(ret_string);
+}
+
 vcWire::vcWire(string id, vcType* t) :vcRoot(id)
 {
   this->_type = t;
@@ -212,15 +368,12 @@ vcCall* vcDataPath::Find_Call(string id) {return(__FIND(_call_map,id));}
 void vcDataPath::Add_Inport(vcInport* p) 
 {
   _ADD(_inport_map,p->Get_Id(), p);
-  assert(p->Get_Data()->Get_Size() == this->Get_Parent()->Get_Parent()->Get_Pipe_Width(p->Get_Pipe_Id()));
 }
 vcInport* vcDataPath::Find_Inport(string id) {return(__FIND(_inport_map,id));}
 
 void vcDataPath::Add_Outport(vcOutport* p) 
 {
   _ADD(_outport_map,p->Get_Id(), p);
-  assert(p->Get_Data()->Get_Size() == this->Get_Parent()->Get_Parent()->Get_Pipe_Width(p->Get_Pipe_Id()));
-
 }
 vcOutport* vcDataPath::Find_Outport(string id) {return(__FIND(_outport_map,id));}
 
@@ -299,16 +452,16 @@ void vcDataPath::Compute_Maximal_Groups(vcControlPath* cp)
 
   for(int idx = 0; idx < this->_compatible_inport_groups.size(); idx++)
     {
-      string pipe_id = ((vcInport*) (*(_compatible_inport_groups[idx].begin())))->Get_Pipe_Id();
-      _inport_group_map[pipe_id].push_back(idx);
-      this->_parent->Get_Parent()->Register_Pipe_Read(pipe_id,this->_parent,idx);
+      vcPipe* p = ((vcInport*) (*(_compatible_inport_groups[idx].begin())))->Get_Pipe();
+      _inport_group_map[p].push_back(idx);
+      p->Register_Pipe_Read(this->_parent,idx);
     }
 
   for(int idx = 0; idx < this->_compatible_outport_groups.size(); idx++)
     {
-      string pipe_id = ((vcOutport*) (*(_compatible_outport_groups[idx].begin())))->Get_Pipe_Id();
-      _outport_group_map[pipe_id].push_back(idx);
-      this->_parent->Get_Parent()->Register_Pipe_Write(pipe_id, this->_parent,idx);
+      vcPipe* p = ((vcOutport*) (*(_compatible_outport_groups[idx].begin())))->Get_Pipe();
+      _outport_group_map[p].push_back(idx);
+      p->Register_Pipe_Write(this->_parent,idx);
     }
 
 }
@@ -523,61 +676,71 @@ string vcDataPath::Print_VHDL_Memory_Interface_Ports(string semi_colon, ostream&
 
 string vcDataPath::Print_VHDL_IO_Interface_Ports(string semi_colon, ostream& ofile)
 {
-  map<string, vector<int> > pipe_to_inport_group_map;
+  map<vcPipe*, vector<int> > pipe_to_inport_group_map;
   string pipe_id;
   int word_size;
 
   for(int idx = 0; idx < _compatible_inport_groups.size(); idx++)
     {
-      pipe_id = ((vcInport*) (*(_compatible_inport_groups[idx].begin())))->Get_Pipe_Id();
-      pipe_to_inport_group_map[pipe_id].push_back(idx);
+      vcPipe* p = ((vcInport*) 
+		   (*(_compatible_inport_groups[idx].begin())))->Get_Pipe();
+      pipe_to_inport_group_map[p].push_back(idx);
     }
 
-  for(map<string,vector<int> >::iterator ms_iter = pipe_to_inport_group_map.begin();
+  for(map<vcPipe*,vector<int> >::iterator ms_iter = pipe_to_inport_group_map.begin();
       ms_iter != pipe_to_inport_group_map.end();
       ms_iter++)
     {
-      pipe_id = (*ms_iter).first;
-      word_size = this->_parent->Get_Parent()->Get_Pipe_Width(pipe_id);
+      vcPipe* p = (*ms_iter).first;
+      if(p->Get_Parent() == NULL)
+	{
+	  word_size = p->Get_Width();
+	  string pipe_id = p->Get_Id();
+	  
+	  int num_reqs = (*ms_iter).second.size();
+	  ofile << semi_colon << endl;
 
-      int num_reqs = (*ms_iter).second.size();
-      ofile << semi_colon << endl;
-
-      ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"read_req")
-	    << " : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-      ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"read_ack")
-	    << " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-      ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"read_data")
-	    << " : in   std_logic_vector(" << (num_reqs * word_size)-1 << " downto 0)";
-
-      semi_colon = ";";
+	  
+	  ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"read_req")
+		<< " : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
+	  ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"read_ack")
+		<< " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
+	  ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"read_data")
+		<< " : in   std_logic_vector(" << (num_reqs * word_size)-1 << " downto 0)";
+	  
+	  semi_colon = ";";
+	}
     }
 
 
-  map<string, vector<int> > pipe_to_outport_group_map;
+  map<vcPipe*, vector<int> > pipe_to_outport_group_map;
   for(int idx = 0; idx < _compatible_outport_groups.size(); idx++)
     {
-      pipe_id = ((vcOutport*) (*(_compatible_outport_groups[idx].begin())))->Get_Pipe_Id();
-      pipe_to_outport_group_map[pipe_id].push_back(idx);
+      vcPipe* p = ((vcOutport*) (*(_compatible_outport_groups[idx].begin())))->Get_Pipe();
+      pipe_to_outport_group_map[p].push_back(idx);
     }
 
-  for(map<string,vector<int> >::iterator ms_iter = pipe_to_outport_group_map.begin();
+  for(map<vcPipe*,vector<int> >::iterator ms_iter = pipe_to_outport_group_map.begin();
       ms_iter != pipe_to_outport_group_map.end();
       ms_iter++)
     {
-      pipe_id = (*ms_iter).first;
-      word_size = this->_parent->Get_Parent()->Get_Pipe_Width(pipe_id);
+      vcPipe* p = (*ms_iter).first;
+      if(p->Get_Parent() == NULL)
+	{
+	  string pipe_id = p->Get_Id();
+	  word_size = p->Get_Width();
 
-      ofile << semi_colon << endl;
+	  ofile << semi_colon << endl;
 
-      int num_reqs = (*ms_iter).second.size();
-      ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"write_req")
-	    << " : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-      ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"write_ack")
-	    << " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
-      ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"write_data")
-	    << " : out  std_logic_vector(" << (num_reqs * word_size)-1 << " downto 0)";
-      semi_colon = ";";
+	  int num_reqs = (*ms_iter).second.size();
+	  ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"write_req")
+		<< " : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
+	  ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"write_ack")
+		<< " : in   std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
+	  ofile << this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,"write_data")
+		<< " : out  std_logic_vector(" << (num_reqs * word_size)-1 << " downto 0)";
+	  semi_colon = ";";
+	}
     }
   return(semi_colon);
 }
@@ -649,6 +812,8 @@ void vcDataPath::Print_VHDL(ostream& ofile)
       (*iter).second->Print_VHDL_Std_Logic_Declaration(ofile);
     }
 
+  this->Get_Parent()->Print_VHDL_Pipe_Signals(ofile);
+
     
   ofile << "-- }" << endl << "begin -- { " << endl;
 
@@ -671,9 +836,11 @@ void vcDataPath::Print_VHDL(ostream& ofile)
   this->Print_VHDL_Split_Operator_Instances(ofile); //done
   this->Print_VHDL_Load_Instances(ofile);
   this->Print_VHDL_Store_Instances(ofile);
+  this->Get_Parent()->Print_VHDL_Pipe_Instances(ofile);
   this->Print_VHDL_Inport_Instances(ofile);
   this->Print_VHDL_Outport_Instances(ofile);
   this->Print_VHDL_Call_Instances(ofile);
+
 
   ofile << "-- }" << endl << "end Block; -- data_path" << endl;
 }
@@ -1444,7 +1611,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
       // to keep track of the ids of the operators in this group.
       vector<string> elements;
 
-      string pipe_id;
+      vcPipe* p = NULL;
       int data_width = -1;
 
       // ok. collect all the information..
@@ -1456,10 +1623,10 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 	  assert((*iter)->Is("vcInport"));
 	  vcInport* so = (vcInport*) (*iter);
 
-	  if(pipe_id == "")
-	    pipe_id = ((vcInport*) so)->Get_Pipe_Id();
+	  if(p == NULL)
+	    p = ((vcInport*) so)->Get_Pipe();
 	  else
-	    assert(pipe_id == ((vcInport*) so)->Get_Pipe_Id());
+	    assert(p == ((vcInport*) so)->Get_Pipe());
 
 	  if(data_width < 0)
 	    data_width = so->Get_Data()->Get_Size();
@@ -1471,7 +1638,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 	  req.push_back(so->Get_Req(0));
 	  ack.push_back(so->Get_Ack(0));
 	}
-      assert(pipe_id != "");
+      assert(p != NULL);
       assert(data_width > 0);
 
       // total out-width..
@@ -1512,11 +1679,11 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 	    << "    ack => ack " << ", " <<  endl
 	    << "    data => data_out, " << endl
 	    << "    oreq => " 
-	    << this->Get_VHDL_IOport_Interface_Port_Section(pipe_id, "in" , "read_req", idx)  << "," << endl
+	    << this->Get_VHDL_IOport_Interface_Port_Section(p, "in" , "read_req", idx)  << "," << endl
 	    << "    oack => " 
-	    << this->Get_VHDL_IOport_Interface_Port_Section(pipe_id,"in",  "read_ack", idx)  << "," << endl
+	    << this->Get_VHDL_IOport_Interface_Port_Section(p,"in",  "read_ack", idx)  << "," << endl
 	    << "    odata => " 
-	    << this->Get_VHDL_IOport_Interface_Port_Section(pipe_id,"in", "read_data", idx)  << "," << endl
+	    << this->Get_VHDL_IOport_Interface_Port_Section(p,"in", "read_data", idx)  << "," << endl
 	    << "  clk => clk, reset => reset -- }\n ); -- }" << endl;
       ofile << "-- }\n end Block; -- inport group " << idx << endl; // thats it..
     }
@@ -1540,7 +1707,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       // to keep track of the ids of the operators in this group.
       vector<string> elements;
 
-      string pipe_id;
+      vcPipe* p = NULL;
       int data_width = -1;
 
       // ok. collect all the information..
@@ -1552,10 +1719,10 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 	  assert((*iter)->Is("vcOutport"));
 	  vcOutport* so = (vcOutport*) (*iter);
 
-	  if(pipe_id == "")
-	    pipe_id = ((vcOutport*) so)->Get_Pipe_Id();
+	  if(p == NULL)
+	    p = ((vcOutport*) so)->Get_Pipe();
 	  else
-	    assert(pipe_id == ((vcOutport*) so)->Get_Pipe_Id());
+	    assert(p == ((vcOutport*) so)->Get_Pipe());
 
 	  if(data_width < 0)
 	    data_width = so->Get_Data()->Get_Size();
@@ -1567,7 +1734,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 	  req.push_back(so->Get_Req(0));
 	  ack.push_back(so->Get_Ack(0));
 	}
-      assert(pipe_id != "");
+      assert(p != NULL);
       assert(data_width > 0);
 
       int in_width = 0;
@@ -1607,11 +1774,11 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 	    << "    ack => ack " << ", " <<  endl
 	    << "    data => data_in, " << endl
 	    << "    oreq => " 
-	    << this->Get_VHDL_IOport_Interface_Port_Section(pipe_id, "out" , "write_req", idx)  << "," << endl
+	    << this->Get_VHDL_IOport_Interface_Port_Section(p,"out" , "write_req", idx)  << "," << endl
 	    << "    oack => " 
-	    << this->Get_VHDL_IOport_Interface_Port_Section(pipe_id,"out",  "write_ack", idx)  << "," << endl
+	    << this->Get_VHDL_IOport_Interface_Port_Section(p,"out",  "write_ack", idx)  << "," << endl
 	    << "    odata => " 
-	    << this->Get_VHDL_IOport_Interface_Port_Section(pipe_id,"out", "write_data", idx)  << "," << endl
+	    << this->Get_VHDL_IOport_Interface_Port_Section(p,"out", "write_data", idx)  << "," << endl
 	    << "  clk => clk, reset => reset -- }\n);-- }" << endl;
       ofile << "-- }\n end Block; -- outport group " << idx << endl; // thats it..
     }
@@ -1623,26 +1790,27 @@ string vcDataPath::Get_VHDL_IOport_Interface_Port_Name(string pipe_id, string pi
   return(this->Get_Parent()->Get_Parent()->Get_VHDL_Pipe_Interface_Port_Name(pipe_id,pid));
 }
 
-string vcDataPath::Get_VHDL_IOport_Interface_Port_Section(string pipe_id, 
+string vcDataPath::Get_VHDL_IOport_Interface_Port_Section(vcPipe* p, 
 							  string in_or_out,
 							  string pid,
 							  int idx)
 {
 
-  string port_name = this->Get_VHDL_IOport_Interface_Port_Name(pipe_id,pid);
+  string pipe_id = p->Get_Id();
+  string port_name = p->Get_VHDL_Pipe_Interface_Port_Name(pid);
 
   vcModule* m = this->Get_Parent();
   vcSystem* sys = m->Get_Parent();
 
-  map<string,vector<int> >::iterator iter;
+  map<vcPipe*,vector<int> >::iterator iter;
   if(in_or_out == "in")
     {
-      iter = _inport_group_map.find(pipe_id);
+      iter = _inport_group_map.find(p);
       assert(iter != _inport_group_map.end());
     }
   else
     {
-      iter = _outport_group_map.find(pipe_id);
+      iter = _outport_group_map.find(p);
       assert(iter != _outport_group_map.end());
     }
 
@@ -1657,8 +1825,8 @@ string vcDataPath::Get_VHDL_IOport_Interface_Port_Section(string pipe_id,
 	assert(0);
     }
 
-  assert(sys->Has_Pipe(pipe_id));
-  int pipe_width = sys->Get_Pipe_Width(pipe_id);
+
+  int pipe_width = p->Get_Width();
 
   if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))
     return(port_name +  "(" + IntToStr(down_index) + ")");
@@ -1943,90 +2111,90 @@ string vcDataPath::Print_VHDL_Memory_Interface_Port_Map(string comma, ostream& o
 
 string vcDataPath::Print_VHDL_IO_Interface_Port_Map(string comma, ostream& ofile)
 {
-  set<string> pipe_id_set;
+  set<vcPipe*> pipe_set;
   string pipe_id;
   vcModule* parent_module = this->Get_Parent();
 
   for(int idx = 0; idx < _compatible_inport_groups.size(); idx++)
     {
-      pipe_id = ((vcInport*) (*(_compatible_inport_groups[idx].begin())))->Get_Pipe_Id();
-      pipe_id_set.insert(pipe_id);
+      vcPipe* p = ((vcInport*) (*(_compatible_inport_groups[idx].begin())))->Get_Pipe();
+      pipe_set.insert(p);
     }
 
-  for(set<string>::iterator iter = pipe_id_set.begin();
-      iter != pipe_id_set.end();
+  for(set<vcPipe*>::iterator iter = pipe_set.begin();
+      iter != pipe_set.end();
       iter++)
     {
-      pipe_id = (*iter);
+      vcPipe* p = (*iter);
 
-      int hindex, lindex;
-      if(parent_module->Get_Parent()->Get_Pipe_Module_Section(pipe_id, parent_module,"read", hindex,lindex))
+      if(p->Get_Parent() == NULL)
 	{
-	  ofile << comma << endl;
-	  ofile << parent_module->Get_Parent()->Get_VHDL_Pipe_Interface_Port_Name(pipe_id,
-										  "read_req") 
-		<< " => " 
-		<< parent_module->Get_Parent()->Get_Pipe_Aggregate_Section(pipe_id,
-									   "read_req", 
-									   hindex, 
-									   lindex) 
-		<< "," << endl;
-	  ofile << parent_module->Get_Parent()->Get_VHDL_Pipe_Interface_Port_Name(pipe_id,"read_ack") 
-		<< " => " 
-		<< parent_module->Get_Parent()->Get_Pipe_Aggregate_Section(pipe_id,
-									   "read_ack", 
-									   hindex, 
-									   lindex) 
-		<< "," << endl;
-	  ofile << parent_module->Get_Parent()->Get_VHDL_Pipe_Interface_Port_Name(pipe_id,"read_data") 
-		<< " => " 
-		<< parent_module->Get_Parent()->Get_Pipe_Aggregate_Section(pipe_id,
-									   "read_data", 
-									   hindex, 
-									   lindex);
-	  comma = ",";
+	  
+	  int hindex, lindex;
+	  if(p->Get_Pipe_Module_Section(parent_module,"read", hindex,lindex))
+	    {
+	      ofile << comma << endl;
+	      ofile << p->Get_VHDL_Pipe_Interface_Port_Name("read_req") 
+		    << " => " 
+		    << p->Get_Pipe_Aggregate_Section("read_req", 
+						     hindex, 
+						     lindex) 
+		    << "," << endl;
+	      ofile << p->Get_VHDL_Pipe_Interface_Port_Name("read_ack") 
+		    << " => " 
+		    << p->Get_Pipe_Aggregate_Section( "read_ack", 
+						      hindex, 
+						      lindex) 
+		    << "," << endl;
+	      ofile << p->Get_VHDL_Pipe_Interface_Port_Name("read_data") 
+		    << " => " 
+		    << p->Get_Pipe_Aggregate_Section("read_data", 
+						     hindex, 
+						     lindex);
+	      comma = ",";
+	    }
 	}
     }
 
-  pipe_id_set.clear();
+  pipe_set.clear();
   for(int idx = 0; idx < _compatible_outport_groups.size(); idx++)
     {
-      pipe_id = ((vcOutport*) (*(_compatible_outport_groups[idx].begin())))->Get_Pipe_Id();
-      pipe_id_set.insert(pipe_id);
+      vcPipe* p = ((vcOutport*) (*(_compatible_outport_groups[idx].begin())))->Get_Pipe();
+      pipe_set.insert(p);
     }
 
-  for(set<string>::iterator iter = pipe_id_set.begin();
-      iter != pipe_id_set.end();
+  for(set<vcPipe*>::iterator iter = pipe_set.begin();
+      iter != pipe_set.end();
       iter++)
     {
-      pipe_id = (*iter);
+      vcPipe* p = *iter;
 
-      int hindex, lindex;
-      if(parent_module->Get_Parent()->Get_Pipe_Module_Section(pipe_id, parent_module,"write",hindex,lindex))
+      if(p->Get_Parent() == NULL)
 	{
-	  ofile << comma << endl;
-	  ofile << parent_module->Get_Parent()->Get_VHDL_Pipe_Interface_Port_Name(pipe_id,"write_req") 
-		<< " => " 
-		<< parent_module->Get_Parent()->Get_Pipe_Aggregate_Section(pipe_id,
-									   "write_req", 
-									   hindex, 
-									   lindex) 
-		<< "," << endl;
-	  ofile << parent_module->Get_Parent()->Get_VHDL_Pipe_Interface_Port_Name(pipe_id,"write_ack") 
-		<< " => " 
-		<< parent_module->Get_Parent()->Get_Pipe_Aggregate_Section(pipe_id,
-									   "write_ack", 
-									   hindex, 
-									   lindex) 
-		<< "," << endl;
-	  ofile << parent_module->Get_Parent()->Get_VHDL_Pipe_Interface_Port_Name(pipe_id,"write_data") 
-		<< " => " 
-		<< parent_module->Get_Parent()->Get_Pipe_Aggregate_Section(pipe_id,
-									   "write_data", 
-									   hindex, 
-									   lindex);
-
-	  comma = ",";
+	  int hindex, lindex;
+	  if(p->Get_Pipe_Module_Section(parent_module,"write",hindex,lindex))
+	    {
+	      ofile << comma << endl;
+	      ofile << p->Get_VHDL_Pipe_Interface_Port_Name("write_req") 
+		    << " => " 
+		    << p->Get_Pipe_Aggregate_Section( "write_req", 
+						      hindex, 
+						      lindex) 
+		    << "," << endl;
+	      ofile << p->Get_VHDL_Pipe_Interface_Port_Name("write_ack") 
+		    << " => " 
+		    << p->Get_Pipe_Aggregate_Section("write_ack", 
+						     hindex, 
+						     lindex) 
+		    << "," << endl;
+	      ofile << p->Get_VHDL_Pipe_Interface_Port_Name("write_data") 
+		    << " => " 
+		    << p->Get_Pipe_Aggregate_Section("write_data", 
+						     hindex, 
+						     lindex);
+	      
+	      comma = ",";
+	    }
 	}
     }
 

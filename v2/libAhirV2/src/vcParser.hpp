@@ -60,7 +60,7 @@ public:
 		vcSystem* sys, vcModule* m
 	);
 	public: void vc_Pipe(
-		vcSystem* sys
+		vcSystem* sys, vcModule* m
 	);
 	public: void vc_Wire_Declaration(
 		vcSystem* sys,vcDataPath* dp
@@ -113,6 +113,9 @@ public:
 		vcCPBlock* cp
 	);
 	public: void vc_CPParallelBlock(
+		vcCPBlock* cp
+	);
+	public: void vc_CPPipelineBlock(
 		vcCPBlock* cp
 	);
 	public: void vc_CPBranchBlock(
@@ -213,10 +216,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 123;
+	static const int NUM_TOKENS = 125;
 #else
 	enum {
-		NUM_TOKENS = 123
+		NUM_TOKENS = 125
 	};
 #endif
 	
@@ -268,8 +271,6 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_22;
 	static const unsigned long _tokenSet_23_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_23;
-	static const unsigned long _tokenSet_24_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_24;
 };
 
 #endif /*INC_vcParser_hpp_*/

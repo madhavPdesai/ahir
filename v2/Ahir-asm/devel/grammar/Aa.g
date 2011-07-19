@@ -40,6 +40,7 @@
     parallelblock
     forkblock 
     branchblock
+    pipelineblock
 
 
  Each module describes a namespace.  A labeled 
@@ -253,7 +254,8 @@ aA_Block_Statement[AaScope* scope] returns [AaBlockStatement* stmt]
     : (stmt = aA_Series_Block_Statement[scope] |
         stmt = aA_Parallel_Block_Statement[scope] |
         stmt = aA_Fork_Block_Statement[scope] |
-        stmt = aA_Branch_Block_Statement[scope])
+        stmt = aA_Branch_Block_Statement[scope] |
+        stmt = aA_Pipeline_Block_Statement[scope])
         (aA_Block_Statement_Exports[stmt])?
     ;
 
@@ -407,6 +409,31 @@ aA_Parallel_Block_Statement[AaScope* scope] returns [AaParallelBlockStatement* n
         ( lbl = aA_Label )?
         {
             new_pbs = new AaParallelBlockStatement(scope,lbl);
+            new_pbs->Set_Line_Number(pb->getLine());
+        }
+        LBRACE
+        (obj = aA_Object_Declaration[new_pbs] { new_pbs->Add_Object(obj); })*
+        sseq = aA_Atomic_Statement_Sequence[new_pbs] {new_pbs->Set_Statement_Sequence(sseq);}
+        RBRACE
+    ;
+
+
+//-----------------------------------------------------------------------------------------------
+// aA_Pipeline_Block_Statement: PIPELINEBLOCK LABEL LBRACE aA_Object_Declaration* aA_Atomic_Statement_Sequence RBRACE
+//-----------------------------------------------------------------------------------------------
+// a pipeline... the end of a statement triggers the next, 
+// a special kind of parallel block
+aA_Pipeline_Block_Statement[AaScope* scope] returns [AaPipelineBlockStatement* new_pbs]
+{
+    string lbl = "";
+    AaStatementSequence* sseq = NULL;
+    AaObject* obj = NULL;
+    unsigned int line_number;
+} :
+        pb: PIPELINEBLOCK
+        ( lbl = aA_Label )?
+        {
+            new_pbs = new AaPipelineBlockStatement(scope,lbl);
             new_pbs->Set_Line_Number(pb->getLine());
         }
         LBRACE
@@ -1345,6 +1372,7 @@ SERIESBLOCK   : "$seriesblock";
 PARALLELBLOCK : "$parallelblock";
 FORKBLOCK     : "$forkblock";
 BRANCHBLOCK   : "$branchblock";
+PIPELINEBLOCK : "$pipelineblock";
 PLACE         : "$place";
 SWITCH        : "$switch";
 ENDSWITCH     : "$endswitch";

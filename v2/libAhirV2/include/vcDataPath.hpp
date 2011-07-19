@@ -19,6 +19,103 @@ class vcOperator;
 class vcSplitOperator;
 class vcRegister;
 class vcDatapathElement;
+class vcModule;
+class vcPipe: public vcRoot
+{
+
+  vcModule* _parent;
+  int _width;
+  int _depth;
+  
+  // inports on modules connected to pipe.  
+  map<vcModule*, vector<int> > _pipe_read_map;
+  int _pipe_read_count;
+
+  // inports on modules connected to pipe.  
+  map<vcModule*, vector<int> > _pipe_write_map;
+  int _pipe_write_count;
+public:
+  
+  vcPipe(vcModule* parent, string id, int w, int d):vcRoot(id)
+  {
+    _parent = parent;
+    _width = w;
+    _depth = d;
+    _pipe_read_count = 0;
+    _pipe_write_count = 0;
+  }
+
+  vcModule* Get_Parent() {return(_parent);}
+  int Get_Width() { return(this->_width);}
+  int Get_Depth() { return(this->_depth);}
+  map<vcModule*,vector<int> >& Get_Pipe_Read_Map()
+  {
+    return(_pipe_read_map);
+
+  }
+  int Get_Pipe_Read_Count() { return(this->_pipe_read_count); }
+
+  map<vcModule*,vector<int> >& Get_Pipe_Write_Map()
+  {
+    return(_pipe_write_map);
+
+  }
+  int Get_Pipe_Write_Count() { return(this->_pipe_write_count); }
+
+  virtual string Kind() {return("vcPipe");}
+  virtual void Print(ostream& ofile)
+  {
+    
+    ofile << vcLexerKeywords[__PIPE] 
+	  << " [" << this->Get_Id() << "] " 
+	  << this->Get_Width() << " " <<
+      vcLexerKeywords[__DEPTH] << " " << this->Get_Depth() << endl;
+  }
+
+
+  void Register_Pipe_Read(vcModule* m, int idx)
+  {
+    _pipe_read_map[m].push_back(idx);
+    _pipe_read_count++;
+  }
+
+  void Register_Pipe_Write(vcModule* m, int idx)
+  {
+    _pipe_write_map[m].push_back(idx);
+    _pipe_write_count++;
+  }
+
+  void Deregister_Pipe_Accesses(vcModule* m)
+  {
+    if(_pipe_read_map.find(m)!= _pipe_read_map.end())
+      {
+	_pipe_read_count -= _pipe_read_map[m].size();
+	_pipe_read_map.erase(m);
+      }
+
+    if(_pipe_write_map.find(m)!= _pipe_write_map.end())
+      {
+	_pipe_write_count -= _pipe_write_map[m].size();
+	_pipe_write_map.erase(m);
+      }
+  }
+
+  string Get_VHDL_Pipe_Interface_Port_Name(string pid)
+  {
+    return(this->Get_Id() + "_pipe_" + pid);
+  }
+  void Print_VHDL_Pipe_Port_Signals(ostream& ofile);
+  void Print_VHDL_Pipe_Signals(ostream& ofile);
+  void Print_VHDL_Instance(ostream& ofile);
+  bool Get_Pipe_Module_Section(vcModule* caller_module, 
+			       string read_or_write, 
+			       int& hindex, 
+			       int& lindex);
+  string Get_Pipe_Aggregate_Section(string pid, 
+				    int hindex, 
+				    int lindex);
+};
+
 class vcWire: public vcRoot
 {
 protected:
@@ -195,8 +292,8 @@ class vcDataPath: public vcRoot
   map<vcDatapathElement*, pair<vcCompatibilityLabel*, vcCompatibilityLabel*> > _dpe_label_interval_map;
 
   // pipe-name to vector of groups which use pipe name.
-  map<string, vector<int> > _inport_group_map;
-  map<string, vector<int> > _outport_group_map;
+  map<vcPipe*, vector<int> > _inport_group_map;
+  map<vcPipe*, vector<int> > _outport_group_map;
 
  public:
   vcDataPath(vcModule* m, string id);
@@ -293,7 +390,7 @@ class vcDataPath: public vcRoot
   void Print_VHDL_Disconcatenate_Ack(string ack_id, vector<vcTransition*>& acks,  ostream& ofile);
 
   string Get_VHDL_IOport_Interface_Port_Name(string pipe_id, string pid);
-  string Get_VHDL_IOport_Interface_Port_Section(string pipe_id,
+  string Get_VHDL_IOport_Interface_Port_Section(vcPipe* p,
 						string in_or_out,
 						string pid,
 						int idx);

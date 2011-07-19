@@ -16,6 +16,7 @@ vcModule::vcModule(vcSystem* sys, string module_name):vcRoot(module_name)
   this->_data_path = NULL;
   this->_num_calls = 0;
   this->_max_number_of_caller_tags_needed = 0;
+  this->_foreign_flag = false;
 }
 
 void vcModule::Set_Data_Path(vcDataPath* dp)
@@ -28,6 +29,9 @@ void vcModule::Set_Data_Path(vcDataPath* dp)
 
 void vcModule::Print(ostream& ofile)
 {
+  if(this->_foreign_flag)
+    ofile << vcLexerKeywords[__FOREIGN] << " ";
+
   ofile << vcLexerKeywords[__MODULE] << " " <<  this->Get_Label() << " {" << endl;
   if(this->_input_arguments.size() > 0)
     {
@@ -233,35 +237,45 @@ int vcModule::Get_Out_Arg_Width()
 
 void vcModule::Check_Control_Structure()
 {
-  this->_control_path->Check_Structure();
+  if(this->_control_path)
+    this->_control_path->Check_Structure();
 }
 void vcModule::Compute_Maximal_Groups()
 {
-  this->_data_path->Compute_Maximal_Groups(this->_control_path);
+  if(this->_data_path)
+    this->_data_path->Compute_Maximal_Groups(this->_control_path);
 }
 void vcModule::Compute_Compatibility_Labels()
 {
-  this->_control_path->Compute_Compatibility_Labels();
+  if(this->_control_path)
+    this->_control_path->Compute_Compatibility_Labels();
 }
 void vcModule::Print_Control_Structure(ostream& ofile)
 {
-  this->_control_path->Print_Structure(ofile);
-  this->_control_path->Print_Groups(ofile);
-  this->_control_path->Print_Compatibility_Labels(ofile);
-  this->_control_path->Print_Compatibility_Map(ofile);
-  this->Print_Compatible_Operator_Groups(ofile);
+  if(this->_control_path)
+    {
+      this->_control_path->Print_Structure(ofile);
+      this->_control_path->Print_Groups(ofile);
+      this->_control_path->Print_Compatibility_Labels(ofile);
+      this->_control_path->Print_Compatibility_Map(ofile);
+      this->Print_Compatible_Operator_Groups(ofile);
+    }
 }
 
 void vcModule::Print_Compatible_Operator_Groups(ostream& ofile)
 {
-  this->_data_path->Print_Compatible_Operator_Groups(ofile);
+  if(this->_data_path)
+    this->_data_path->Print_Compatible_Operator_Groups(ofile);
 }
 
 void vcModule::Print_VHDL(ostream& ofile)
 {
-  vcSystem::Print_VHDL_Inclusions(ofile);
-  this->Print_VHDL_Entity(ofile);
-  this->Print_VHDL_Architecture(ofile);
+  if(!this->_foreign_flag)
+    {
+      vcSystem::Print_VHDL_Inclusions(ofile);
+      this->Print_VHDL_Entity(ofile);
+      this->Print_VHDL_Architecture(ofile);
+    }
 }
 
 void vcModule::Print_VHDL_Caller_Aggregate_Signals(ostream& ofile)
@@ -319,8 +333,10 @@ void vcModule::Print_VHDL_Argument_Signals(ostream& ofile)
 
   ofile <<  "signal " << prefix << "tag_in    : std_logic_vector(" << this->Get_Callee_Tag_Length()-1 << " downto 0);"  << endl;
   ofile <<  "signal " << prefix << "tag_out   : std_logic_vector(" << this->Get_Callee_Tag_Length()-1 << " downto 0);"  << endl;
-  ofile <<  "signal " << prefix << "start : std_logic;"  << endl;
-  ofile <<  "signal " << prefix << "fin   : std_logic;" << endl;
+  ofile <<  "signal " << prefix << "start_req : std_logic;"  << endl;
+  ofile <<  "signal " << prefix << "start_ack : std_logic;"  << endl;
+  ofile <<  "signal " << prefix << "fin_req   : std_logic;" << endl;
+  ofile <<  "signal " << prefix << "fin_ack : std_logic;"  << endl;
 }
 
 void  vcModule::Print_VHDL_System_Argument_Signals(ostream& ofile)
@@ -350,8 +366,11 @@ void  vcModule::Print_VHDL_System_Argument_Signals(ostream& ofile)
 	<< this->Get_Callee_Tag_Length()-1 << " downto 0);" << endl;
   ofile << "signal " << prefix << "tag_out: std_logic_vector(" 
 	<< this->Get_Callee_Tag_Length()-1 << " downto 0);" << endl;
-  ofile << "signal " << prefix <<  "start : std_logic := '0';"  << endl;
-  ofile << "signal " << prefix <<  "fin   : std_logic := '0';" << endl;
+  ofile << "signal " << prefix <<  "start_req : std_logic := '0';"  << endl;
+  ofile << "signal " << prefix <<  "start_ack : std_logic := '0';"  << endl;
+  ofile << "signal " << prefix <<  "fin_req   : std_logic := '0';" << endl;
+  ofile << "signal " << prefix <<  "fin_ack   : std_logic := '0';" << endl;
+
 }
 
 string vcModule::Print_VHDL_System_Argument_Ports(string semi_colon,ostream& ofile)
@@ -387,8 +406,10 @@ string vcModule::Print_VHDL_System_Argument_Ports(string semi_colon,ostream& ofi
   // tag ports..
   ofile << prefix << "tag_in: in std_logic_vector(" << this->Get_Callee_Tag_Length()-1 << " downto 0);" << endl;
   ofile << prefix << "tag_out: out std_logic_vector(" << this->Get_Callee_Tag_Length()-1 << " downto 0);" << endl;
-  ofile << prefix <<  "start : in std_logic;"  << endl;
-  ofile << prefix <<  "fin   : out std_logic";
+  ofile << prefix <<  "start_req : in std_logic;"  << endl;
+  ofile << prefix <<  "start_ack : out std_logic;"  << endl;
+  ofile << prefix <<  "fin_req   : in std_logic;" << endl;
+  ofile << prefix <<  "fin_ack   : out std_logic";
   semi_colon = ";";
   return(semi_colon);
 }
@@ -418,10 +439,10 @@ string vcModule::Print_VHDL_System_Instance_Port_Map(string comma,ostream& ofile
   // tag ports..
   ofile << prefix <<  "tag_in => " << prefix << "tag_in," << endl;
   ofile << prefix <<  "tag_out => " << prefix << "tag_out," << endl;
-  ofile << prefix <<  "start => " 
-	<< prefix <<  "start," 	<< endl;
-  ofile << prefix <<  "fin  => "
-	<< prefix <<  "fin ";
+  ofile << prefix <<  "start_req => " 	<< prefix <<  "start_req," 	<< endl;
+  ofile << prefix <<  "start_ack => " 	<< prefix <<  "start_ack," 	<< endl;
+  ofile << prefix <<  "fin_req  => " << prefix <<  "fin_req, " << endl;
+  ofile << prefix <<  "fin_ack  => " << prefix <<  "fin_ack ";
   comma = ",";
   return(comma);
 }
@@ -456,14 +477,17 @@ string vcModule::Print_VHDL_Argument_Ports(string semi_colon, ostream& ofile)
   ofile << semi_colon << endl;
   ofile <<  "clk : in std_logic;" << endl ;
   ofile <<  "reset : in std_logic;"  << endl;
-  ofile <<  "start : in std_logic;"  << endl;
-  ofile <<  "fin   : out std_logic";
+  ofile <<  "start_req : in std_logic;"  << endl;
+  ofile <<  "start_ack : out std_logic;"  << endl;
+  ofile <<  "fin_req : in std_logic;"  << endl;
+  ofile <<  "fin_ack   : out std_logic";
   semi_colon = ";";
   return(semi_colon);
 }
 
 void vcModule::Print_VHDL_Ports(ostream& ofile)
 {
+
   string semi_colon;
   ofile << "port ( -- {" << endl;
 
@@ -471,13 +495,16 @@ void vcModule::Print_VHDL_Ports(ostream& ofile)
   semi_colon = this->Print_VHDL_Argument_Ports(semi_colon, ofile);
 
   // print external load/store ports.
-  semi_colon = this->_data_path->Print_VHDL_Memory_Interface_Ports(semi_colon, ofile);
+  if(this->_data_path != NULL)
+    {
+      semi_colon = this->_data_path->Print_VHDL_Memory_Interface_Ports(semi_colon, ofile);
 
-  // print external IO ports.
-  semi_colon = this->_data_path->Print_VHDL_IO_Interface_Ports(semi_colon, ofile);
+      // print external IO ports.
+      semi_colon = this->_data_path->Print_VHDL_IO_Interface_Ports(semi_colon, ofile);
 
-  // print call interface ports
-  semi_colon = this->_data_path->Print_VHDL_Call_Interface_Ports(semi_colon, ofile);
+      // print call interface ports
+      semi_colon = this->_data_path->Print_VHDL_Call_Interface_Ports(semi_colon, ofile);
+    }
 
   // input and output tag
   semi_colon = this->Print_VHDL_Tag_Interface_Ports(semi_colon,ofile);
@@ -490,8 +517,8 @@ string vcModule::Print_VHDL_Tag_Interface_Ports(string semi_colon,ostream& ofile
 {
   ofile << semi_colon << endl;
   semi_colon = ";";
-  ofile << "tag_in: in std_logic_vector(" << this->Get_Callee_Tag_Length()-1 << " downto 0);" << endl;
-  ofile << "tag_out: out std_logic_vector(" << this->Get_Callee_Tag_Length()-1 << " downto 0)";
+  ofile << "tag_in: in std_logic_vector(tag_length-1 downto 0);" << endl;
+  ofile << "tag_out: out std_logic_vector(tag_length-1 downto 0) ";
   return(semi_colon);
 }
 
@@ -499,6 +526,7 @@ string vcModule::Print_VHDL_Tag_Interface_Ports(string semi_colon,ostream& ofile
 void vcModule::Print_VHDL_Component(ostream& ofile)
 {
   ofile << "component " << this->Get_VHDL_Id() << " is -- {" << endl;
+  ofile << " generic (tag_length : integer); " << endl;
   this->Print_VHDL_Ports(ofile);
   ofile << "-- }" << endl << "end component;" << endl;
 }
@@ -507,18 +535,31 @@ void vcModule::Print_VHDL_Component(ostream& ofile)
 void vcModule::Print_VHDL_Entity(ostream& ofile)
 {
   ofile << "entity " << this->Get_VHDL_Id() << " is -- {" << endl;
+  ofile << " generic (tag_length : integer); " << endl;
   this->Print_VHDL_Ports(ofile);
   ofile << "-- }" << endl << "end entity " << this->Get_VHDL_Id() << ";" << endl;
 }
 
 void vcModule::Print_VHDL_Architecture(ostream& ofile)
 {
+
+  if(this->_foreign_flag)
+    return;
+
   ofile << "architecture Default of " << this->Get_VHDL_Id() << " is -- {" << endl;
 
 
   // always true signal
   ofile << "-- always true..." << endl;
+
   ofile << "signal " << this->_control_path->Get_Always_True_Symbol() << ": Boolean;" << endl;
+  ofile << "signal start_req_symbol: Boolean;" << endl;
+  ofile << "signal start_ack_symbol: Boolean;" << endl;
+  ofile << "signal fin_req_symbol: Boolean;" << endl;
+  ofile << "signal fin_ack_symbol: Boolean;" << endl;
+  ofile << "signal tag_push, tag_pop: std_logic; " << endl;
+  ofile << "signal start_ack_sig, fin_ack_sig: std_logic; " << endl;
+
 
   // output port buffer signals.
   ofile << "-- output port buffer signals" << endl;
@@ -528,6 +569,10 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
       ofile << "signal " << w->Get_VHDL_Signal_Id() << " : " 
 	    <<  " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
     }
+
+  // control-path start symbol
+  if(this->_control_path)
+    ofile << "signal " << this->_control_path->Get_Start_Symbol() << ": Boolean;" << endl;
 
   // print link signals between CP and DP
   ofile << "-- links between control-path and data-path" << endl;
@@ -562,31 +607,48 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
     }
   ofile << endl;
 
-  ofile << "-- tag register" << endl;
-  ofile << "process(clk) " << endl;
-  ofile << "begin -- {" << endl;
-  ofile << "if clk'event and clk = '1' then -- {" << endl;
-  ofile << " if start='1' then -- { " << endl;
-  ofile << "    tag_out <= tag_in; -- }" << endl;
-  ofile << " end if; -- }" << endl;
-  ofile << "end if; -- }" << endl;
-  ofile << "end process;" << endl << endl;
+  ofile << "-- level-to-pulse translation.." << endl;
+  ofile << " l2pStart: level_to_pulse -- {" << endl
+	<< " port map(clk => clk, reset =>reset, lreq => start_req, lack => start_ack_sig, preq => start_req_symbol, pack => start_ack_symbol); -- }" << endl;
+  ofile << "start_ack <= start_ack_sig; " << endl << endl;
 
+  ofile << " l2pFin: level_to_pulse -- {" << endl
+	<< " port map(clk => clk, reset =>reset, lreq => fin_req, lack => fin_ack_sig, preq => fin_req_symbol, pack => fin_ack_symbol); -- }" << endl;
+  ofile << "fin_ack <= fin_ack_sig; " << endl << endl;
 
-  ofile << "-- the control path" << endl;
+  // tag passing... tag is registered at each stage in the
+  // pipe-line.
 
-  // the always true signal, tied to true..
-  ofile << ((vcCPElement*)(this->_control_path))->Get_Always_True_Symbol() << " <= true; " << endl;
+  ofile << "tag_push <= '1' when start_req_symbol else '0'; " << endl;
+  ofile << "tag_pop  <= fin_req and fin_ack_sig ; " << endl;
 
-  if(vcSystem::_opt_flag)
-    this->_control_path->Print_VHDL_Optimized(ofile);
-  else
-    this->_control_path->Print_VHDL(ofile);
-
-  ofile << endl << endl;
+  if(this->_control_path)
+    {
+      ofile << "tagQueue: QueueBase generic map(data_width => " << this->Get_Callee_Tag_Length()
+	    << ", queue_depth => "
+	    << this->_control_path->Get_Number_Of_Elements() << " + 1) -- {" << endl
+	    << " port map(pop_req => tag_pop, pop_ack => open, "  << endl
+	    << " push_req => tag_push, push_ack => open, " << endl
+	    << " data_out => tag_out, data_in => tag_in, " << endl
+	    << " clk => clk, reset => reset); -- }" << endl;
+      
+      ofile << "-- the control path" << endl;
+      
+      // the always true signal, tied to true..
+      ofile << ((vcCPElement*)(this->_control_path))->Get_Always_True_Symbol() << " <= true; " << endl;
+      
+      if(vcSystem::_opt_flag)
+	this->_control_path->Print_VHDL_Optimized(ofile);
+      else
+	this->_control_path->Print_VHDL(ofile);
+      
+      ofile << endl << endl;
+    }
 
   ofile << "-- the data path" << endl;
-  this->_data_path->Print_VHDL(ofile);
+  if(this->_data_path)
+    this->_data_path->Print_VHDL(ofile);
+
   ofile << endl;
 
 
@@ -708,21 +770,21 @@ void vcModule::Print_VHDL_Call_Arbiter_Instantiation(ostream& ofile)
       in_args = true;
       if(this->Get_Out_Arg_Width() > 0)
 	{
-	  call_arbiter_id = "CallArbiterUnitary";
+	  call_arbiter_id = "SplitCallArbiter";
 	  out_args = true;
 	}
       else
-	call_arbiter_id = "CallArbiterUnitaryNoOutargs";
+	call_arbiter_id = "SplitCallArbiterNoOutargs";
     }
   else
     {
       if(this->Get_Out_Arg_Width() > 0)
 	{
-	  call_arbiter_id = "CallArbiterUnitaryNoInargs";
+	  call_arbiter_id = "SplitCallArbiterNoInargs";
 	  out_args = true;
 	}
       else
-	call_arbiter_id = "CallArbiterUnitaryNoInargsNoOutargs";
+	call_arbiter_id = "SplitCallArbiterNoInargsNoOutargs";
     }
   ofile << prefix << "arbiter: " << call_arbiter_id << " -- {" << endl;
   ofile << "generic map( --{\n num_reqs => " << this->_num_calls << "," << endl;
@@ -743,18 +805,20 @@ void vcModule::Print_VHDL_Call_Arbiter_Instantiation(ostream& ofile)
 
   ofile << " call_tag  => " << prefix << "call_tag," << endl
 	<< " return_tag  => " << prefix << "return_tag," << endl
-	<< " call_in_tag => " << prefix << "tag_in," << endl
-	<< " call_out_tag => "<< prefix << "tag_out," << endl;
+	<< " call_mtag => " << prefix << "tag_in," << endl
+	<< " return_mtag => "<< prefix << "tag_out," << endl;
 
   if(out_args)
     ofile << " return_data =>" << prefix << "return_data," << endl;
 
-  ofile << " call_start => " << prefix << "start," << endl
-	<< " call_fin => " << prefix << "fin," << endl;
+  ofile << " call_mreq => " << prefix << "start_req," << endl;
+  ofile << " call_mack => " << prefix << "start_ack," << endl;
+  ofile << " return_mreq => " << prefix << "fin_req," << endl
+	<< " return_mack => " << prefix << "fin_ack," << endl;
   if(in_args)
-    ofile << " call_in_args => " << prefix << "in_args," << endl;
+    ofile << " call_mdata => " << prefix << "in_args," << endl;
   if(out_args)
-    ofile << " call_out_args => " << prefix << "out_args," << endl;
+    ofile << " return_mdata => " << prefix << "out_args," << endl;
   ofile << " clk => clk, " << endl
 	<< " reset => reset --}\n); --}" << endl;
 }
@@ -768,11 +832,12 @@ void vcModule::Print_VHDL_Instance(ostream& ofile)
       std::cerr << "Warning:  tying the init signal for module " << this->Get_Label() 
 		<< " to 0" << endl;
       string prefix  = this->Get_VHDL_Id() + "_";
-      ofile << prefix << "start <= '0';" << endl;
+      ofile << prefix << "start_req <= '0';" << endl;
     }
 
   string instance_id = this->Get_VHDL_Id() + "_instance";
   ofile << instance_id << ":" << this->Get_VHDL_Id() << "-- {" << endl;
+  ofile << " generic map(tag_length => "  << this->Get_Callee_Tag_Length() << ")" << endl;
   ofile << "port map(-- {\n ";
 
   this->Print_VHDL_Instance_Port_Map(ofile);
@@ -787,8 +852,11 @@ void vcModule::Print_VHDL_Auto_Run_Instance(ostream& ofile)
   string instance_id = this->Get_VHDL_Id() + "_auto_run";
   ofile << instance_id << ": auto_run generic map(use_delay => true)  ";
   ofile << "port map(";
-  ofile << "clk => clk, reset => reset, start => "
-	<< prefix << "start, fin => " << prefix << "fin);" << endl;
+  ofile << "clk => clk, reset => reset, start_req => "
+	<< prefix << "start_req, "  
+	<< "start_ack => " << prefix << "start_ack, "
+	<< " fin_req => " << prefix << "fin_req, " 
+	<< " fin_ack => " << prefix << "fin_ack);" << endl;
 }
 
 void vcModule::Print_VHDL_Instance_Port_Map(ostream& ofile)
@@ -796,9 +864,14 @@ void vcModule::Print_VHDL_Instance_Port_Map(ostream& ofile)
 
   string comma;
   comma = this->Print_VHDL_Argument_Port_Map(comma, ofile);
-  comma = this->_data_path->Print_VHDL_Memory_Interface_Port_Map(comma, ofile);
-  comma = this->_data_path->Print_VHDL_IO_Interface_Port_Map(comma, ofile);
-  comma = this->_data_path->Print_VHDL_Call_Interface_Port_Map(comma, ofile);
+
+  if(this->_data_path)
+    {
+      comma = this->_data_path->Print_VHDL_Memory_Interface_Port_Map(comma, ofile);
+      comma = this->_data_path->Print_VHDL_IO_Interface_Port_Map(comma, ofile);
+      comma = this->_data_path->Print_VHDL_Call_Interface_Port_Map(comma, ofile);
+    }
+
   comma = this->Print_VHDL_Tag_Interface_Port_Map(comma, ofile);
 }
 
@@ -822,8 +895,11 @@ string vcModule::Print_VHDL_Argument_Port_Map(string  comma, ostream& ofile)
       comma = ",";
     }
 
-  ofile << comma << endl << "start => " << prefix << "start," << endl; 
-  ofile << "fin => " << prefix << "fin," << endl; 
+  ofile << comma << endl 
+	<< "start_req => " << prefix << "start_req," << endl
+	<< "start_ack => " << prefix << "start_ack," << endl
+	<< "fin_req => " << prefix << "fin_req," << endl;
+  ofile << "fin_ack => " << prefix << "fin_ack," << endl; 
   ofile << "clk => clk,\n reset => reset";
   comma = ",";
   return(comma);
@@ -922,3 +998,90 @@ void vcModule::Delink_From_Modules_And_Memory_Spaces()
     }
 }
 
+
+void vcModule::Print_Pipes(ostream& ofile)
+{
+  for(map<string,vcPipe*>::iterator piter = this->_pipe_map.begin();
+      piter != this->_pipe_map.end();
+      piter++)
+    {
+
+      (*piter).second->Print(ofile);
+
+    }
+}
+
+void vcModule::Register_Pipe_Read(string pipe_id, int idx)
+{
+  vcPipe* p = this->Find_Pipe(pipe_id);
+  if(p != NULL)
+    {
+      p->Register_Pipe_Read(this,idx);
+    }
+  else
+    this->Get_Parent()->Register_Pipe_Read(pipe_id, this, idx);    
+}
+
+
+void vcModule::Register_Pipe_Write(string pipe_id,int idx)
+{
+  vcPipe* p = this->Find_Pipe(pipe_id);
+
+  if(p != NULL)
+    {
+      p->Register_Pipe_Write(this,idx);
+    }
+  else
+    this->Get_Parent()->Register_Pipe_Write(pipe_id, this, idx);
+}
+
+vcPipe* vcModule::Find_Pipe(string pipe_id)
+{
+  vcPipe* ret_pipe = this->Find_Pipe_Here(pipe_id);
+  if(ret_pipe == NULL)
+    ret_pipe =  this->Get_Parent()->Find_Pipe(pipe_id);
+  return(ret_pipe);
+}
+
+void vcModule::Add_Pipe(string pipe_id, int width, int depth) 
+{
+  assert(_pipe_map.find(pipe_id) == _pipe_map.end());
+  assert(width > 0);
+  assert(depth > 0);
+
+  _pipe_map[pipe_id] = new vcPipe(this, pipe_id, width, depth);
+}
+
+void vcModule::Print_VHDL_Pipe_Signals(ostream& ofile)
+{
+  for(map<string,vcPipe*>::iterator piter = this->_pipe_map.begin();
+      piter != this->_pipe_map.end();
+      piter++)
+    {
+      if(((*piter).second->Get_Pipe_Read_Count() > 0) && 
+	 ((*piter).second->Get_Pipe_Write_Count() > 0))
+	(*piter).second->Print_VHDL_Pipe_Signals(ofile);
+    }
+}
+
+void vcModule::Print_VHDL_Pipe_Instances(ostream& ofile)
+{
+  for(map<string,vcPipe*>::iterator piter = this->_pipe_map.begin();
+      piter != this->_pipe_map.end();
+      piter++)
+    {
+      vcPipe* p = (*piter).second;
+      if(p->Get_Pipe_Read_Count() > 0 && p->Get_Pipe_Write_Count() == 0)
+	{
+	  vcSystem::Error("in module " + this->Get_Id() + ", pipe "
+			+ (*piter).second->Get_Id() + " is read from, but not written into..");
+	}
+      else if(p->Get_Pipe_Read_Count() == 0 && p->Get_Pipe_Write_Count() > 0)
+	{
+	  vcSystem::Error("in module " + this->Get_Id() + ", pipe "
+			  + (*piter).second->Get_Id() + " is written into, but not read from..");
+	}
+      else if(p->Get_Pipe_Read_Count() > 0 && p->Get_Pipe_Write_Count() > 0)
+	(*piter).second->Print_VHDL_Instance(ofile);
+    }
+}

@@ -55,15 +55,77 @@ void vcSystem::Print(ostream& ofile)
 
 void vcSystem::Print_Pipes(ostream& ofile)
 {
-  for(map<string,int>::iterator piter = this->_pipe_map.begin();
+  for(map<string,vcPipe*>::iterator piter = this->_pipe_map.begin();
       piter != this->_pipe_map.end();
       piter++)
     {
-      int pipe_depth = this->Get_Pipe_Depth((*piter).first);
 
-      ofile << vcLexerKeywords[__PIPE] << " [" << (*piter).first << "] " << (*piter).second << " " <<
-	vcLexerKeywords[__DEPTH] << " " << pipe_depth << endl;
+      (*piter).second->Print(ofile);
+
     }
+}
+
+void vcSystem::Register_Pipe_Read(string pipe_id, vcModule* m, int idx)
+{
+  vcPipe* p = this->Find_Pipe(pipe_id);
+  if(p != NULL)
+    p->Register_Pipe_Read(m,idx);
+}
+
+int vcSystem::Get_Num_Pipe_Reads(string pipe_id)
+{
+  vcPipe* p = this->Find_Pipe(pipe_id);
+  if(p != NULL)
+    return(p->Get_Pipe_Read_Count());
+  else
+    return(0);
+
+}
+
+void vcSystem::Register_Pipe_Write(string pipe_id, vcModule* m, int idx)
+{
+  vcPipe* p = this->Find_Pipe(pipe_id);
+  if(p != NULL)
+    p->Register_Pipe_Write(m,idx);
+}
+
+int vcSystem::Get_Num_Pipe_Writes(string pipe_id)
+{
+  vcPipe* p = this->Find_Pipe(pipe_id);
+  if(p != NULL)
+    return p->Get_Pipe_Write_Count();
+  else 
+    return(0);
+}
+void vcSystem::Deregister_Pipe_Accesses(vcModule* m)
+{
+  for(map<string,vcPipe*>::iterator iter = _pipe_map.begin(), iiter = _pipe_map.end();
+      iter != iiter;
+      iter++)
+    {
+      vcPipe* p = (*iter).second;
+      p->Deregister_Pipe_Accesses(m);
+    }
+}
+
+
+int vcSystem::Get_Pipe_Width(string pipe_id)
+{
+  assert(_pipe_map.find(pipe_id) != _pipe_map.end());
+  return(_pipe_map[pipe_id]->Get_Width());
+}
+int vcSystem::Get_Pipe_Depth(string pipe_id)
+{
+  assert(_pipe_map.find(pipe_id) != _pipe_map.end());
+  return(_pipe_map[pipe_id]->Get_Depth());
+}
+void vcSystem::Add_Pipe(string pipe_id, int width, int depth) 
+{
+  assert(_pipe_map.find(pipe_id) == _pipe_map.end());
+  assert(width > 0);
+  assert(depth > 0);
+
+  _pipe_map[pipe_id] = new vcPipe(NULL, pipe_id, width, depth);
 }
 
 void vcSystem::Add_Module(vcModule* module)
@@ -350,18 +412,27 @@ void vcSystem::Print_VHDL_Test_Bench(ostream& ofile)
 	continue;
 
       string prefix = (*iter)->Get_VHDL_Id() + "_";
-      string start = prefix + "start";
-      string fin = prefix + "fin";
+      string start = prefix + "start_req";
+      string start_ack = prefix + "start_ack";
+      string fin_req = prefix + "fin_req";
+      string fin = prefix + "fin_ack";
+
 
       ofile << "process" << endl;
       ofile << "begin --{" << endl;
       ofile << "wait until clk = '1';" << endl;
       ofile << start << " <= '1';" << endl;
+      ofile << "while true loop --{" << endl;
       ofile << "wait until clk = '1';" << endl;
+      ofile << "if " << start_ack << " = '1' then exit; end if;--}" << endl;
+      ofile << "end loop; " << endl;
       ofile << start << " <= '0';" << endl;
-      ofile << "while " << fin << " /= '1' loop -- {" << endl;
+      ofile << fin_req << " <= '1';" << endl;
+      ofile << "while true loop -- {" << endl;
       ofile << "wait until clk = '1';" << endl;
-      ofile << "-- } " << endl << "end loop;" << endl;
+      ofile << "if " << fin << " = '1' then exit; end if; --  }" << endl;
+      ofile << "end loop; " << endl;
+      ofile << fin_req << " <= '0';" << endl;
       ofile << "wait;" << endl;
       ofile << "--}" << endl << "end process;" << endl << endl;
     }
@@ -415,8 +486,10 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 	continue;
 
       string prefix = m->Get_VHDL_Id() + "_";
-      string start = prefix + "start";
-      string fin = prefix + "fin";
+      string start = prefix + "start_req";
+      string start_ack = prefix + "start_ack";
+      string fin_req = prefix + "fin_req";
+      string fin = prefix + "fin_ack";
 
       ofile << "process" << endl;
       ofile << "variable val_string, obj_ref: VhpiString;" << endl;
@@ -445,8 +518,19 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 	  ofile << arg_name << " <= Unpack_String(val_string," << w->Get_Size() << ");" << endl;
 	}
 
+      ofile << "if " << start << " = '1' then -- {" << endl;
+      ofile << "while true loop --{" << endl;
       ofile << "wait until clk = '1';" << endl;
-
+      ofile << "if " << start_ack << " = '1' then exit; end if;--}" << endl;
+      ofile << "end loop; " << endl;
+      ofile << start << " <= '0';" << endl;
+      ofile << fin_req << " <= '1';" << endl;
+      ofile << "while true loop -- {" << endl;
+      ofile << "wait until clk = '1';" << endl;
+      ofile << "if " << fin << " = '1' then exit; end if; --  }" << endl;
+      ofile << "end loop; " << endl;
+      ofile << fin_req << " <= '0';" << endl;
+      ofile << "-- }" << endl << "end if; " << endl;
       // first the ack.
       ofile << "obj_ref := Pack_String_To_Vhpi_String("
 	    << '"' << m->Get_Id() << " ack" << '"' << ");" << endl;
@@ -474,15 +558,16 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 
 
   // connect all top-level ports to Vhpi..
-  for(map<string, int>::iterator pipe_iter = _pipe_map.begin();
+  for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
       pipe_iter != _pipe_map.end();
       pipe_iter++)
     {
-      string pipe_id = (*pipe_iter).first;
-      int pipe_width = (*pipe_iter).second;
+      vcPipe* p = (*pipe_iter).second;
+      string pipe_id = p->Get_Id();
+      int pipe_width = p->Get_Width();
       
-      int num_reads = this->Get_Num_Pipe_Reads(pipe_id);
-      int num_writes = this->Get_Num_Pipe_Writes(pipe_id);
+      int num_reads = p->Get_Pipe_Read_Count();
+      int num_writes = p->Get_Pipe_Write_Count();
       
       // skip internal pipes.
       if(num_reads > 0 && num_writes > 0)
@@ -582,15 +667,16 @@ string vcSystem::Print_VHDL_Instance_Port_Map(string comma, ostream& ofile)
 
 string vcSystem::Print_VHDL_System_Instance_Pipe_Port_Map(string comma, ostream& ofile)
 {
-  for(map<string, int>::iterator pipe_iter = _pipe_map.begin();
+  for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
       pipe_iter != _pipe_map.end();
       pipe_iter++)
     {
+      vcPipe* p = (*pipe_iter).second;
       string pipe_id = (*pipe_iter).first;
-      int pipe_width = (*pipe_iter).second;
+      int pipe_width = p->Get_Width();
       
-      int num_reads = this->Get_Num_Pipe_Reads(pipe_id);
-      int num_writes = this->Get_Num_Pipe_Writes(pipe_id);
+      int num_reads = p->Get_Pipe_Read_Count();
+      int num_writes = p->Get_Pipe_Write_Count();
      
       if(num_reads > 0 && num_writes ==  0)
 	{
@@ -684,49 +770,29 @@ void vcSystem::Print_VHDL_Entity(ostream& ofile)
 
 void vcSystem::Print_VHDL_Pipe_Port_Signals(ostream& ofile)
 {
-  for(map<string, int>::iterator pipe_iter = _pipe_map.begin();
+  for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
       pipe_iter != _pipe_map.end();
       pipe_iter++)
     {
-      string pipe_id = To_VHDL((*pipe_iter).first);
-      int pipe_width = (*pipe_iter).second;
-      
-      int num_reads = this->Get_Num_Pipe_Reads(pipe_id);
-      int num_writes = this->Get_Num_Pipe_Writes(pipe_id);
-     
-      if(num_reads > 0 && num_writes ==  0)
-	{
-	  ofile << "-- write to pipe " << pipe_id << endl;
-	  ofile << "signal " 
-		<< pipe_id 
-		<< "_pipe_write_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-	  ofile << "signal " << pipe_id << "_pipe_write_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
-	  ofile << "signal " << pipe_id << "_pipe_write_ack : std_logic_vector(0 downto 0);" << endl;
-	}
+      vcPipe* p =(*pipe_iter).second;
+      p->Print_VHDL_Pipe_Port_Signals(ofile);
 
-
-      if(num_writes > 0 && num_reads == 0)
-	{
-	  ofile << "-- read from pipe " << pipe_id << endl;
-	  ofile << "signal "
-		<< pipe_id << "_pipe_read_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-	  ofile << "signal " << pipe_id << "_pipe_read_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
-	  ofile << "signal " << pipe_id << "_pipe_read_ack : std_logic_vector(0 downto 0);" << endl;
-	}
     }
 }
 
 string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 {
-  for(map<string, int>::iterator pipe_iter = _pipe_map.begin();
+  for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
       pipe_iter != _pipe_map.end();
       pipe_iter++)
     {
-      string pipe_id = To_VHDL((*pipe_iter).first);
-      int pipe_width = (*pipe_iter).second;
+
+      vcPipe* p =(*pipe_iter).second;
+      string pipe_id = To_VHDL(p->Get_Id());
+      int pipe_width = p->Get_Width();
       
-      int num_reads = this->Get_Num_Pipe_Reads(pipe_id);
-      int num_writes = this->Get_Num_Pipe_Writes(pipe_id);
+      int num_reads = p->Get_Pipe_Read_Count();
+      int num_writes = p->Get_Pipe_Write_Count();
      
       if(num_reads > 0 && num_writes ==  0)
 	{
@@ -756,31 +822,13 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 
 void vcSystem::Print_VHDL_Pipe_Signals(ostream& ofile)
 {
-  for(map<string, int>::iterator pipe_iter = _pipe_map.begin();
+  for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
       pipe_iter != _pipe_map.end();
       pipe_iter++)
     {
-      string pipe_id = To_VHDL((*pipe_iter).first);
-      int pipe_width = (*pipe_iter).second;
-      
-      int num_reads = this->Get_Num_Pipe_Reads(pipe_id);
-      int num_writes = this->Get_Num_Pipe_Writes(pipe_id);
-     
-      if(num_writes >  0)
-	{
-	  ofile << "-- aggregate signals for write to pipe " << pipe_id << endl;
-	  ofile << "signal " << pipe_id << "_pipe_write_data: std_logic_vector(" << (num_writes*pipe_width)-1 << " downto 0);" << endl;
-	  ofile << "signal " << pipe_id << "_pipe_write_req: std_logic_vector(" << num_writes-1 << " downto 0);" << endl;
-	  ofile << "signal " << pipe_id << "_pipe_write_ack: std_logic_vector(" << num_writes-1 << " downto 0);" << endl;
-	}
+      vcPipe* p = (*pipe_iter).second;
+      p->Print_VHDL_Pipe_Signals(ofile);
 
-      if(num_reads > 0)
-	{
-	  ofile << "-- aggregate signals for read from pipe " << pipe_id << endl;
-	  ofile << "signal " << pipe_id << "_pipe_read_data: std_logic_vector(" << (num_reads*pipe_width)-1 << " downto 0);" << endl;
-	  ofile << "signal " << pipe_id << "_pipe_read_req: std_logic_vector(" << num_reads-1 << " downto 0);" << endl;
-	  ofile << "signal " << pipe_id << "_pipe_read_ack: std_logic_vector(" << num_reads-1 << " downto 0);" << endl;
-	}
     }
 }
 
@@ -791,31 +839,21 @@ bool vcSystem::Get_Pipe_Module_Section(string pipe_id,
 				       int& lindex)
 {
   bool ret_val = false;
-  hindex = ((read_or_write == "read") ? this->Get_Num_Pipe_Reads(pipe_id)-1 : this->Get_Num_Pipe_Writes(pipe_id) -1);
-  map<vcModule*,vector<int> >& module_map = ((read_or_write == "read") ? _pipe_read_map[pipe_id] :
-					     _pipe_write_map[pipe_id]);
-  for(map<vcModule*, vector<int> >::iterator iter = module_map.begin();
-      iter != module_map.end();
-      iter++
-      )
-    {
-      if(caller_module == (*iter).first)
-	{
-	  lindex = (hindex + 1) - (*iter).second.size();
-	  ret_val = true;
-	  break;
-	}
-      else
-	{
-	  hindex -= (*iter).second.size();
-	}
-    }
-  return(ret_val);
+
+  vcPipe* p = this->Find_Pipe(pipe_id);
+  assert(p != NULL);
+
+  return(p->Get_Pipe_Module_Section(caller_module,read_or_write,hindex,lindex));
+
 }
 
 string vcSystem::Get_VHDL_Pipe_Interface_Port_Name(string pipe_id, string pid)
 {
-  return(pipe_id + "_pipe_" + pid);
+  vcPipe* p = this->Find_Pipe(pipe_id);
+  assert(p != NULL);
+
+  return(p->Get_VHDL_Pipe_Interface_Port_Name(pid));
+
 }
 
 string vcSystem::Get_Pipe_Aggregate_Section(string pipe_id,
@@ -823,23 +861,11 @@ string vcSystem::Get_Pipe_Aggregate_Section(string pipe_id,
 					    int hindex, 
 					    int lindex) 
 {
-  int data_width;
-  string ret_string = this->Get_VHDL_Pipe_Interface_Port_Name(pipe_id,pid);
+  vcPipe* p = this->Find_Pipe(pipe_id);
+  assert(p != NULL);
 
-  // find data_width.
-  if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))
-    data_width = 1;
-  else if(pid.find("data") != string::npos)
-    data_width = this->Get_Pipe_Width(pipe_id);
-  else
-    assert(0); // fatal
+  p->Get_Pipe_Aggregate_Section(pid,hindex,lindex);
 
-  ret_string += "(";
-  ret_string += IntToStr(((hindex+1)*data_width)-1);
-  ret_string += " downto ";
-  ret_string += IntToStr(lindex*data_width);
-  ret_string += ")";
-  return(ret_string);
 }
 
 
@@ -934,42 +960,13 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
 
 void vcSystem::Print_VHDL_Pipe_Instances(ostream& ofile)
 {
-  for(map<string, int>::iterator pipe_iter = _pipe_map.begin();
+  for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
       pipe_iter != _pipe_map.end();
       pipe_iter++)
     {
-      string pipe_id = To_VHDL((*pipe_iter).first);
-      int pipe_width = (*pipe_iter).second;
-      int pipe_depth = this->Get_Pipe_Depth(pipe_id);
+      vcPipe* p = (*pipe_iter).second;
+      p->Print_VHDL_Instance(ofile);
 
-      int num_reads = this->Get_Num_Pipe_Reads(pipe_id);
-      int num_writes = this->Get_Num_Pipe_Writes(pipe_id);
-     
-      if(num_reads > 0 || num_writes > 0)
-      {
-        num_reads = MAX(num_reads,1);
-        num_writes = MAX(num_writes,1);
-
-        ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
-        ofile << "generic map( -- { " << endl;
-	    ofile << "num_reads => " << num_reads << "," << endl;
-	    ofile << "num_writes => " << num_writes << "," << endl;
-	    ofile << "data_width => " << pipe_width << "," << endl;
-	    ofile << "depth => " << pipe_depth << " --}\n)" << endl;
-	    ofile << "port map( -- { " << endl;
-	    ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 
-		  << "read_ack => " << pipe_id << "_pipe_read_ack," << endl 
-		  << "read_data => "<< pipe_id << "_pipe_read_data," << endl 
-		  << "write_req => " << pipe_id << "_pipe_write_req," << endl 
-		  << "write_ack => " << pipe_id << "_pipe_write_ack," << endl 
-		  << "write_data => "<< pipe_id << "_pipe_write_data," << endl 
-		  << "clk => clk,"
-		  << "reset => reset -- }\n ); -- }" << endl;
-       }
-       else
- 	{
-		vcSystem::Warning("pipe " + pipe_id + " not used in the system, ignored");
-	}
     }
 	
 }

@@ -24,12 +24,16 @@ class AaModule: public AaSeriesBlockStatement
   bool _foreign_flag;
   bool _inline_flag;
 
+  bool _writes_to_shared_pipe;
+  bool _reads_from_shared_pipe;
+
   // memory spaces and pipes accessed by
   // this module.
   vector<AaMemorySpace*> _memory_spaces;
 
   set<AaPipeObject*> _write_pipes;
   set<AaPipeObject*> _read_pipes;
+  set<AaMemorySpace*> _shared_memory_spaces;
 
   int _number_of_times_called;
 
@@ -45,6 +49,8 @@ class AaModule: public AaSeriesBlockStatement
   {
     return(_number_of_times_called);
   }
+
+  bool Has_No_Side_Effects();
 
   void Set_Foreign_Flag(bool ff) { this->_foreign_flag = ff; }
   bool Get_Foreign_Flag() {return(this->_foreign_flag);}
@@ -102,13 +108,28 @@ class AaModule: public AaSeriesBlockStatement
     _memory_spaces.push_back(ms);
   }
 
+  void Add_Shared_Memory_Space(AaMemorySpace* ms)
+  {
+    _shared_memory_spaces.insert(ms);
+  }
+
   void Add_Write_Pipe(AaPipeObject* obj)
   {
+    if((obj->Get_Scope() == NULL) || 
+       (obj->Get_Scope()->Get_Root_Scope() != (AaScope*)this))
+      {
+	_writes_to_shared_pipe = true;
+      }
     _write_pipes.insert(obj);
   }
 
   void Add_Read_Pipe(AaPipeObject* obj)
   {
+    if((obj->Get_Scope() == NULL) || 
+       (obj->Get_Scope()->Get_Root_Scope() != (AaScope*)this))
+      {
+	_reads_from_shared_pipe = true;
+      }
     _read_pipes.insert(obj);
   }
 

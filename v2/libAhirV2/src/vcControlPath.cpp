@@ -521,17 +521,78 @@ vcCPElement* vcCPBlock::Find_CPElement(string cname)
 }
 
 
+string vcCPBlock::Get_Predecessor_Exit_Symbol()
+{
+  vcCPElement* pred = this->Get_Predecessors()[0];
+  if(this->Get_Parent() && (pred == this->Get_Parent()->Get_Entry_Element()))
+    {
+      return(this->Get_Parent()->Get_Entry_Element()->Get_Exit_Symbol());
+    }
+  else
+    return(pred->Get_Exit_Symbol());
+}
+
+string vcCPBlock::Get_Successor_Start_Symbol()
+{
+  vcCPElement* succ = this->Get_Successors()[0];
+  if(this->Get_Parent() && (succ == this->Get_Parent()->Get_Exit_Element()))
+    {
+      if(this->Get_Parent()->Is_Control_Path())
+	{
+	  return("fin_ack_symbol");
+	}
+      else
+	return(this->Get_Parent()->Get_Exit_Element()->Get_Exit_Symbol());
+    }
+  else
+    return(succ->Get_Start_Symbol());
+}
+
+void vcCPBlock::Print_VHDL_Start_Interlock(ostream& ofile)
+{
+  //
+  // this->Get_Start_Symbol is a join of this->Trigger_Place
+  // and this->Enable_Place.
+  //
+  ofile << this->Get_Start_Symbol() 
+	<< "_interlock : pipeline_interlock -- { " << endl
+	<< " port map (trigger => " << this->Get_Predecessor_Exit_Symbol() << "," << endl
+	<< "enable => " << this->Get_Successor_Start_Symbol() << ", " << endl
+	<< "symbol_out => " << this->Get_Start_Symbol() << ", " << endl
+	<< " clk => clk, reset => reset); -- }" << endl;
+}
 
 void vcCPBlock::Print_VHDL_Start_Symbol_Assignment(ostream& ofile)
 {
   assert(this->Get_Predecessors().size() == 1);
-  ofile << this->Get_Start_Symbol() << " <= " << this->Get_Predecessors()[0]->Get_Exit_Symbol() << "; -- control passed to block" << endl;
-}
 
+  if(this->Get_Parent() && this->Get_Parent()->Is_Pipeline())
+    {
+      this->Print_VHDL_Start_Interlock(ofile);
+    }
+  else
+    {
+      ofile << this->Get_Start_Symbol() << " <= " 
+	    << this->Get_Predecessors()[0]->Get_Exit_Symbol() 
+	    << "; -- control passed to block" << endl;
+    }
+}
 
 void vcCPBlock::Print_VHDL_Exit_Symbol_Assignment(ostream& ofile)
 {
   ofile << this->Get_Exit_Symbol() << " <= " << this->_exit->Get_Exit_Symbol() << "; -- control passed from block " << endl;
+}
+
+void vcCPBlock::Print_VHDL_Signal_Declarations(ostream& ofile)
+{
+  ofile << "signal " << this->_entry->Get_Exit_Symbol() << ": Boolean;" << endl;
+  ofile << "signal " << this->_exit->Get_Exit_Symbol() << ": Boolean;" << endl;
+  for(int idx = 0; idx < this->_elements.size(); idx++)
+    {
+      if(_elements[idx]->Is_Block())
+	ofile << "signal " << _elements[idx]->Get_Start_Symbol() << " : Boolean;" << endl;
+      ofile << "signal " << _elements[idx]->Get_Exit_Symbol() << " : Boolean;" << endl;
+    }
 }
 
 void vcCPBlock::Print_VHDL(ostream& ofile)
@@ -542,13 +603,8 @@ void vcCPBlock::Print_VHDL(ostream& ofile)
 
   // declare all exit flags.
   ofile << this->Get_VHDL_Id() << ": Block -- " << id << " {" << endl;
-  ofile << "signal " << this->Get_Start_Symbol() << ": Boolean;" << endl;
-  ofile << "signal " << this->_entry->Get_Exit_Symbol() << ": Boolean;" << endl;
-  ofile << "signal " << this->_exit->Get_Exit_Symbol() << ": Boolean;" << endl;
-  for(int idx = 0; idx < this->_elements.size(); idx++)
-    {
-      ofile << "signal " << _elements[idx]->Get_Exit_Symbol() << " : Boolean;" << endl;
-    }
+  this->Print_VHDL_Signal_Declarations(ofile);
+
   ofile << "-- }" << endl << "begin -- {" << endl;
   this->Print_VHDL_Start_Symbol_Assignment(ofile);
 
@@ -799,7 +855,6 @@ void vcCPParallelBlock::Print_Structure(ostream& ofile)
   ofile << "}" << endl;
 
   this->vcCPBlock::Print_Structure(ofile);
-
 }
 
 
@@ -850,6 +905,53 @@ void vcCPParallelBlock::Update_Predecessor_Successor_Links()
     }
   this->vcCPBlock::Update_Predecessor_Successor_Links();
 }
+
+vcCPPipelineBlock::vcCPPipelineBlock(vcCPBlock* parent, string id):
+  vcCPParallelBlock(parent,id)
+{
+}
+
+void vcCPPipelineBlock::Print(ostream& ofile)
+{
+  ofile << vcLexerKeywords[__PIPELINEBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
+  this->Print_Elements(ofile);
+  ofile << "\n// end  pipeline-block " << this->Get_Id() << endl << "}" << endl;
+}
+
+void vcCPPipelineBlock::Update_Predecessor_Successor_Links()
+{
+  if(this->_elements.size() > 0)
+    {
+      this->_entry->Add_Successor(this->_elements.front());
+      this->_elements.front()->Add_Predecessor(this->_entry);
+      for(int idx = 0; idx < this->_elements.size(); idx++)
+	{
+	  if(idx > 0)
+	    {
+	      this->_elements[idx]->Add_Predecessor(this->_elements[idx-1]);
+	    }
+	  if(idx+1 < this->_elements.size())
+	    {
+	      this->_elements[idx]->Add_Successor(this->_elements[idx+1]);
+	    }
+	}
+      this->_elements.back()->Add_Successor(this->_exit);
+      this->_exit->Add_Predecessor(this->_elements.back());
+    }
+  else
+    {
+      this->_entry->Add_Successor(this->_exit);
+      this->_exit->Add_Predecessor(this->_entry);
+    }
+
+  this->vcCPBlock::Update_Predecessor_Successor_Links();
+}
+
+void vcCPPipelineBlock::Print_VHDL_Signal_Declarations(ostream& ofile)
+{
+  this->vcCPBlock::Print_VHDL_Signal_Declarations(ofile);
+}
+
 
 vcCPBranchBlock::vcCPBranchBlock(vcCPBlock* p, string id):vcCPSeriesBlock(p, id)
 {
@@ -1406,7 +1508,7 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
 }
 
 
-vcControlPath::vcControlPath(string id):vcCPSeriesBlock(NULL, id)
+vcControlPath::vcControlPath(string id):vcCPPipelineBlock(NULL, id)
 {
 }
 
@@ -1621,7 +1723,7 @@ void vcControlPath::Print_Compatibility_Map(ostream& ofile)
 void vcControlPath::Compute_Compatibility_Labels()
 {
   vcCompatibilityLabel* nl = this->Make_Compatibility_Label(this->Get_Id());
-  this->vcCPSeriesBlock::Compute_Compatibility_Labels(nl,this);
+  this->vcCPPipelineBlock::Compute_Compatibility_Labels(nl,this);
 
 
   // set up connectivity
@@ -1751,8 +1853,8 @@ vcCompatibilityLabel* vcControlPath::Make_Compatibility_Label(string id)
 
  bool vcControlPath::Check_Structure()
  {
-   this->vcCPSeriesBlock::Update_Predecessor_Successor_Links();
-   this->vcCPSeriesBlock::Check_Structure();
+   this->vcCPPipelineBlock::Update_Predecessor_Successor_Links();
+   this->vcCPPipelineBlock::Check_Structure();
    this->Construct_Reduced_Group_Graph();
  }
 
@@ -1792,10 +1894,43 @@ bool vcCompatibilityLabel_Compare::operator() (vcCompatibilityLabel* u, vcCompat
 
 void vcControlPath::Print_VHDL_Start_Symbol_Assignment(ostream& ofile)
 {
-  ofile << this->Get_Start_Symbol() << " <=  true when start = '1' else false; -- control passed to control-path." << endl;
+
+  ofile << this->Get_Start_Symbol() << " <= start_req_symbol; " << endl;
+  if(this->_elements.size() > 1)
+    {
+      ofile << "start_ack_symbol <= " << this->_elements[0]->Get_Exit_Symbol() 
+	    << ";" << endl ;
+    }
+  else
+    {
+      ofile << "start_ack_symbol <= " << this->_exit->Get_Exit_Symbol()
+	    << ";" << endl;
+    }
 }
 
 void vcControlPath::Print_VHDL_Exit_Symbol_Assignment(ostream& ofile)
 {
-  ofile << "fin  <=  '1' when " << this->_exit->Get_Exit_Symbol() << " else '0'; -- fin symbol when control-path exits" << endl;
+  // Join fin_req and this->_exit->Get_Exit_Symbol() to produce fin.
+  ofile << this->Get_Exit_Symbol() 
+	<< "_join : Block -- non-trivial join transition " 
+	<< this->Get_Exit_Symbol() << " {" <<  endl;
+  
+  ofile << "signal " <<  this->Get_Exit_Symbol() 
+	<< "_predecessors: BooleanArray(1 downto 0);"  << endl;
+  
+  ofile << "-- }" << endl << "begin -- {" << endl;
+  
+  
+  ofile <<  this->Get_Exit_Symbol() 
+	<< "_predecessors <= " 
+	<< this->_exit->Get_Exit_Symbol() 
+	<< " & fin_req_symbol;"  << endl;
+  
+  ofile << this->Get_Exit_Symbol() << "_join_instance: join -- {" << endl
+	<< "port map( -- {" << endl
+	<< " clk => clk, reset => reset, " << endl
+	<< "preds => " << this->Get_Exit_Symbol() <<  "_predecessors," << endl
+	<< "symbol_out => " << this->Get_Exit_Symbol() << "); -- }}" << endl;
+  
+  ofile << "end block; --}" << endl;
 }

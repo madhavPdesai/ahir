@@ -1179,8 +1179,23 @@ void AaCallStatement::Write_C_Function_Body(ofstream& ofile)
 // return true if one of the sources or targets is a pipe.
 bool AaCallStatement::Can_Block()
 {
-  // all calls will be considered as able to block
-  return(this->Get_Called_Module() != NULL);
+  for(set<AaRoot*>::iterator siter = this->_target_objects.begin();
+      siter != this->_target_objects.end();
+      siter++)
+    {
+      if((*siter)->Is("AaPipeObject"))
+	return(true);
+    }
+
+  for(set<AaRoot*>::iterator siter = this->_source_objects.begin();
+      siter != this->_source_objects.end();
+      siter++)
+    {
+      if((*siter)->Is("AaPipeObject"))
+	return(true);
+    }
+
+  return(false);
 }
 
 void AaCallStatement::PrintC(ofstream& ofile, string tab_string)
@@ -1786,6 +1801,20 @@ void AaParallelBlockStatement::Write_Exit_Check_Condition(ofstream& ofile)
   else
     ofile << "1";
 }
+
+
+//---------------------------------------------------------------------
+// AaPipelineBlockStatement: public AaBlockStatement
+//---------------------------------------------------------------------
+AaPipelineBlockStatement::AaPipelineBlockStatement(AaScope* scope,string label):AaParallelBlockStatement(scope,label) {}
+AaPipelineBlockStatement::~AaPipelineBlockStatement() {}
+void AaPipelineBlockStatement::Print(ostream& ofile)
+{
+  ofile << this->Tab();
+  ofile << "$pipelineblock";
+  this->AaBlockStatement::Print(ofile);
+}
+
 
 
 //---------------------------------------------------------------------

@@ -306,7 +306,8 @@ void AaBlockStatement::Identify_Maximal_Sequences(AaStatementSequence* sseq,
 
 	  if(stmt->Is_Block_Statement() 
 	     || stmt->Is_Control_Flow_Statement()
-	     || stmt->Is("AaCallStatement")
+	     || (stmt->Is("AaCallStatement") && 
+		 !((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()))->Has_No_Side_Effects())
 	     || stmt->Can_Block())
 	    {
 	      if(linear_segment.size() == 0)
@@ -590,6 +591,31 @@ void AaParallelBlockStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 
 
 void AaParallelBlockStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
+{
+  hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Name());
+  AaStatementSequence* sseq = this->_statement_sequence;
+  for(int idx = 0; idx < sseq->Get_Statement_Count(); idx++)
+    {
+      AaStatement* stmt = sseq->Get_Statement(idx);
+      this->AaBlockStatement::Write_VC_Links_Optimized(hier_id, stmt, ofile);
+    }
+}
+
+// pipeline block statement
+void AaPipelineBlockStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
+{
+  ofile << "=|= ["  << this->Get_VC_Name()  << "] {" << endl;
+  AaStatementSequence* sseq = this->_statement_sequence;
+  for(int idx = 0; idx < sseq->Get_Statement_Count(); idx++)
+    {
+      AaStatement* stmt = sseq->Get_Statement(idx);
+      this->AaBlockStatement::Write_VC_Control_Path_Optimized(stmt, ofile);
+    }
+  ofile << "}" << endl;
+}
+
+
+void AaPipelineBlockStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
   hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Name());
   AaStatementSequence* sseq = this->_statement_sequence;

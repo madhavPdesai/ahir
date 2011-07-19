@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <Pipes.h>
 #include <SocketLib.h>
 uint32_t bar(uint32_t a);
 uint32_t foo(uint32_t a);

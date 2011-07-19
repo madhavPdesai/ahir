@@ -14,6 +14,7 @@ class vcDatapathElement;
 class vcWire;
 class vcPhi;
 class vcSystem;
+class vcPipe;
 class vcModule: public vcRoot
 {
   
@@ -34,7 +35,6 @@ class vcModule: public vcRoot
   vcControlPath* _control_path;
   vcDataPath*    _data_path;
 
-
   set<vcModule*> _called_modules;
   set<vcMemorySpace*> _accessed_memory_spaces;
 
@@ -44,13 +44,17 @@ class vcModule: public vcRoot
   int _num_calls;
   int _max_number_of_caller_tags_needed;
 
+  map<string,vcPipe*> _pipe_map;
   bool _inline;
+  bool _foreign_flag; 
+
  public:
   vcModule(vcSystem* sys, string module_name);
   vcSystem* Get_Parent() {return(this->_parent);}
 
   virtual void Print(ostream& ofile);
 
+  void Set_Foreign_Flag(bool v) {_foreign_flag = v; }
 
   void Register_Call_Group(vcModule* m, int g_id, int g_size) 
   {
@@ -116,6 +120,28 @@ class vcModule: public vcRoot
 
   vcControlPath* Get_Control_Path() { return(this->_control_path);}
   vcDataPath* Get_Data_Path() { return(this->_data_path);}
+
+  // Pipes.
+  void Register_Pipe_Read(string pipe_id, int idx);
+  void Register_Pipe_Write(string pipe_id, int idx);
+  bool Has_Pipe(string pipe_id) 
+  {
+    return(_pipe_map.find(pipe_id) != _pipe_map.end());
+  }
+  vcPipe* Find_Pipe_Here(string pipe_id)
+  {
+    if(_pipe_map.find(pipe_id) !=  _pipe_map.end())
+      {
+	return(_pipe_map[pipe_id]);
+      }
+    else
+      return(NULL);
+  }
+  vcPipe* Find_Pipe(string pipe_id);
+  void Add_Pipe(string pipe_id, int width, int depth);
+  void Print_Pipes(ostream& ofile);
+  void Print_VHDL_Pipe_Signals(ostream& ofile);
+  void Print_VHDL_Pipe_Instances(ostream& ofile);
 
   // builder methods
   void Add_Link(vcDatapathElement* dpe, vector<vcTransition*>& reqs, vector<vcTransition*>& acks);

@@ -237,25 +237,30 @@ void vcCall::Print(ostream& ofile)
   ofile << vcLexerKeywords[__RPAREN] << " ";
 }
 
-vcIOport::vcIOport(string id, string pipe_id, vcWire* w): vcOperator(id)
+vcIOport::vcIOport(string id, vcPipe* pipe, vcWire* w): vcOperator(id)
 {
-  _pipe_id = pipe_id;
+  _pipe = pipe;
   _data = w;
 }
 
+string vcIOport::Get_Pipe_Id()
+{
+  return(this->_pipe->Get_Id());
+}
 
-vcInport::vcInport(string id, string pipe_id, vcWire* w):vcIOport(id,pipe_id,w) 
+vcInport::vcInport(string id, vcPipe* pipe, vcWire* w):vcIOport(id,pipe,w) 
 {
   w->Connect_Driver(this);
 }
+
 void vcInport::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__IOPORT] << " " <<  vcLexerKeywords[__IN] << " " << this->Get_Label() << "  " 
-	<< vcLexerKeywords[__LPAREN] << this->_pipe_id << vcLexerKeywords[__RPAREN] << " "
+	<< vcLexerKeywords[__LPAREN] << this->Get_Pipe_Id() << vcLexerKeywords[__RPAREN] << " "
 	<< vcLexerKeywords[__LPAREN] << this->_data->Get_Id() << vcLexerKeywords[__RPAREN] << endl;
 }
 
-vcOutport::vcOutport(string id, string pipe_id, vcWire* w):vcIOport(id,pipe_id,w) 
+vcOutport::vcOutport(string id, vcPipe* pipe, vcWire* w):vcIOport(id,pipe,w) 
 {
   w->Connect_Receiver(this);
 }
@@ -263,7 +268,7 @@ void vcOutport::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__IOPORT] << " " <<  vcLexerKeywords[__OUT] << " " << this->Get_Label() << "  " 
 	<< vcLexerKeywords[__LPAREN] << this->_data->Get_Id() << vcLexerKeywords[__RPAREN] << " " 
-	<< vcLexerKeywords[__LPAREN] << this->_pipe_id << vcLexerKeywords[__RPAREN] << endl;
+	<< vcLexerKeywords[__LPAREN] << this->Get_Pipe_Id() << vcLexerKeywords[__RPAREN] << endl;
 }
 
 vcUnarySplitOperator::vcUnarySplitOperator(string id, string op_id, vcWire* x, vcWire* z):vcSplitOperator(id)

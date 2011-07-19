@@ -816,6 +816,9 @@ void AaSimpleObjectReference::Write_VC_Wire_Declarations_As_Target(ostream& ofil
 	  this->Write_VC_Load_Store_Constants(NULL,NULL,NULL,ofile);
 	  this->Write_VC_Load_Store_Wires(NULL,NULL,NULL,ofile);
 	}
+
+      // if this is a pipe?  This is covered in the statement
+      // method (three cases: assignment, phi, call)
     }
 }
 
@@ -834,7 +837,10 @@ void AaSimpleObjectReference:: Write_VC_Datapath_Instances_As_Target( ostream& o
 	}
       else if(this->_object->Is("AaPipeObject"))
 	{
-	  string src_name =  source->Get_VC_Driver_Name();
+	  string src_name =  
+	    (source != NULL ? 
+	     source->Get_VC_Driver_Name() : this->Get_VC_Driver_Name());
+
 	  // io write.
 	  Write_VC_IO_Output_Port((AaPipeObject*) this->_object,
 				  this->Get_VC_Datapath_Instance_Name(),

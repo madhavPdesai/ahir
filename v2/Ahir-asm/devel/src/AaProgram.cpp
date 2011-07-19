@@ -920,6 +920,15 @@ void AaProgram::Coalesce_Storage()
 	{
 	  (*(ms->_modules.begin()))->Add_Memory_Space(ms);
 	}
+      else
+	{
+	  for(set<AaModule*>::iterator mmiter = ms->_modules.begin();
+	      mmiter != ms->_modules.end();
+	      mmiter++)
+	    {
+	      (*mmiter)->Add_Shared_Memory_Space(ms);
+	    }
+	}
     }
 }
 
@@ -1094,13 +1103,6 @@ void AaProgram::Write_VC_Pipe_Declarations(ostream& ofile)
 	{
 	  ((AaPipeObject*)((*iter).second))->Write_VC_Model(ofile);
 	}
-    }
-
-  for(map<string,AaModule*,StringCompare>::iterator iter = AaProgram::_modules.begin();
-      iter != AaProgram::_modules.end();
-      iter++)
-    {
-      ((*iter).second)->Write_VC_Pipe_Declarations(ofile);
     }
 }
 
