@@ -35,7 +35,7 @@ void Usage_Vc2VHDL()
        <<  "   1. alternate form: --free_running_top mod-name" << endl
        <<  "   2. option can be repeated to specify multiple top-level modules." << endl;
   cerr << endl;
-  cerr <<  " -O: (deprecated) no effect." << endl
+  cerr <<  " -O: try to compress the size of the VHDL file (no effect on synthesis).." << endl
        <<  " -C: the generated system testbench connects to foreign language testbench (Ctestbench). " << endl;
   cerr <<  " -a:  will try to produce a VHDL netlist with the minimum area possible (sort of)" << endl
        <<  " Notes: " << endl
@@ -151,7 +151,8 @@ int main(int argc, char* argv[])
 	  cerr << "   NOTE: " << mod_name << " cannot have any input/output arguments." << endl;
 	  break;
 	case 'O':
-	  cerr << "Info: -O option selected, but ignored" << endl;
+	  cerr << "Info: -O option selected, will try to compress control-path.." << endl;
+	  vcSystem::_opt_flag = true;
 	  break;
 	case 'a':
 	  vcSystem::_min_area_flag = true;

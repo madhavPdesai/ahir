@@ -113,24 +113,32 @@ vc_MemoryLocation[vcSystem* sys, vcMemorySpace* ms]
 ;
 
 //--------------------------------------------------------------------------------------------------------------------------------------
-// vc_Module :  MODULE vc_Label  LBRACE vc_Inargs vc_Outargs vc_MemorySpace* vc_Pipe* vc_Controlpath vc_Datapath? vc_Link* vc_AttributeSpec* RBRACE
+// vc_Module : (FOREIGN | PIPELINE)?  MODULE vc_Label  LBRACE vc_Inargs vc_Outargs vc_MemorySpace* vc_Pipe* vc_Controlpath vc_Datapath? vc_Link* vc_AttributeSpec* RBRACE
 //--------------------------------------------------------------------------------------------------------------------------------------
 vc_Module[vcSystem* sys] returns[vcModule* m]
 {
 	string lbl;
 	m = NULL;
     bool foreign_flag = false;
+    bool pipeline_flag = false;
     vcMemorySpace* ms;
 }
-: (FOREIGN {foreign_flag = true;})? MODULE lbl = vc_Label { m = new vcModule(sys,lbl); sys->Add_Module(m); if(foreign_flag) m->Set_Foreign_Flag(true);} 
-  LBRACE (vc_Inargs[sys,m])? (vc_Outargs[sys,m])? 
-  (ms = vc_MemorySpace[sys,m] {m->Add_Memory_Space(ms);})* 
+    : ((FOREIGN {foreign_flag = true;}) | (PIPELINE {pipeline_flag = true;}))?
+        MODULE lbl = vc_Label 
+        { 
+            m = new vcModule(sys,lbl); 
+            sys->Add_Module(m); 
+            if(foreign_flag) m->Set_Foreign_Flag(true);
+            if(pipeline_flag) m->Set_Pipeline_Flag(true);
+        } 
+        LBRACE (vc_Inargs[sys,m])? (vc_Outargs[sys,m])? 
+        (ms = vc_MemorySpace[sys,m] {m->Add_Memory_Space(ms);})* 
         (vc_Pipe[NULL,m])*
-        (vc_Controlpath[sys,m] { assert(!foreign_flag);})? 
+        (vc_Controlpath[sys,m,pipeline_flag] { assert(!foreign_flag);})? 
         (vc_Datapath[sys,m] {assert(!foreign_flag);})? 
         (vc_Link[m] {assert(!foreign_flag);})*
-  (vc_AttributeSpec[m])* 
-  RBRACE
+        (vc_AttributeSpec[m])* 
+    RBRACE
 ;
 
 
@@ -225,9 +233,13 @@ vc_Hierarchical_CP_Ref[vector<string>& ref_vec]
 //-----------------------------------------------------------------------------------------------
 // vc_Controlpath: CONTROLPATH LBRACE (vc_CPRegion)+  vc_AttributeSpec* RBRACE
 //-----------------------------------------------------------------------------------------------
-vc_Controlpath[vcSystem* sys, vcModule* m]
+vc_Controlpath[vcSystem* sys, vcModule* m, bool pipeline_flag]
 {
-	vcControlPath* cp = new vcControlPath(m->Get_Id() + "_CP");
+	vcControlPath* cp;
+    if(!pipeline_flag) 
+        cp = new vcControlPath(m->Get_Id() + "_CP");
+    else
+        cp = new vcControlPathPipelined(m->Get_Id() + "_CP");
 }
 : CONTROLPATH  LBRACE (vc_CPRegion[cp])* (vc_AttributeSpec[cp])* RBRACE {m->Set_Control_Path(cp);}
 ;
@@ -275,13 +287,12 @@ vc_CPTransition[vcCPElement* p] returns[vcCPElement* cpe]
   ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPRegion: (vc_CPSeriesBlock | vc_CPParallelBlock | vc_CPPipelineBlock | vc_CPBranchBlock | vc_CPForkBlock )
+// vc_CPRegion: (vc_CPSeriesBlock | vc_CPParallelBlock | vc_CPBranchBlock | vc_CPForkBlock )
 //-----------------------------------------------------------------------------------------------
 vc_CPRegion[vcCPBlock* cp]
 :
 vc_CPSeriesBlock[cp] |
 vc_CPParallelBlock[cp] |
-vc_CPPipelineBlock[cp] |
 vc_CPBranchBlock[cp] |
 vc_CPForkBlock[cp] 
 ;
@@ -316,20 +327,6 @@ vc_CPParallelBlock[vcCPBlock* cp]
 { cp->Add_CPElement(sb); }
 ;
 
-//-----------------------------------------------------------------------------------------------
-// vc_CPPipelineBlock: PIPELINEBLOCK vcLabel LBRACE (vc_CPRegion)+ RBRACE
-//-----------------------------------------------------------------------------------------------
-vc_CPPipelineBlock[vcCPBlock* cp] 
-{
-	string lbl;
-	vcCPPipelineBlock* sb;
-	vcCPElement* cpe;
-        vcCPElement* t;
-}
-: PIPELINEBLOCK lbl = vc_Label { sb = new vcCPPipelineBlock(cp,lbl);} LBRACE 
- ( vc_CPRegion[sb] | t = vc_CPTransition[sb] {sb->Add_CPElement(t);} )* RBRACE
-{ cp->Add_CPElement(sb); }
-;
 
 //-----------------------------------------------------------------------------------------------
 // vc_CPBranchBlock: BRANCHBLOCK vc_Label LBRACE (vc_CPRegion | vc_CPBranch | vc_CPMerge | vc_CPPlace)+ RBRACE
@@ -1144,11 +1141,11 @@ ADDRWIDTH     : "$addrwidth";
 MAXACCESSWIDTH : "$maxaccesswidth";
 MODULE        : "$module";
 FOREIGN       : "$foreign";
+PIPELINE      : "$pipeline";
 SERIESBLOCK   : ";;";
 PARALLELBLOCK : "||";
 FORKBLOCK     : "::";
 BRANCHBLOCK   : "<>";
-PIPELINEBLOCK : "=|=";
 OF            : "$of";
 FORK          : "&->";
 JOIN          : "<-&";

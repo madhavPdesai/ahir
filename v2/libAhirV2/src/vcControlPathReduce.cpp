@@ -516,10 +516,15 @@ void vcControlPath::Print_VHDL_Optimized(ostream& ofile)
 
   ofile << "cp_elements(" 
 	<< _cpelement_to_group_map[this->_entry]->Get_Group_Index()
-	<< ") <= true when start = '1' else false;" << endl;
-  ofile << "fin <= '1' when cp_elements(" 
+	<< ") <= start_req_symbol;" << endl;
+  ofile << "start_ack_symbol <= cp_elements(" 
 	<< _cpelement_to_group_map[this->_exit]->Get_Group_Index()
-	<< ") else '0';" << endl;
+	<< ");" << endl;
+
+  ofile << "finAckJoin: join2 port map(pred0 => fin_req_symbol, pred1 => cp_elements("
+	<< _cpelement_to_group_map[this->_exit]->Get_Group_Index()
+	<< "), symbol_out => fin_ack_symbol, clk => clk, reset => reset);"
+	<< endl;
 
   for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
 	fiter = _cpelement_groups.end();

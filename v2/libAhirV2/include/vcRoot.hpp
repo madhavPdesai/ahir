@@ -17,11 +17,11 @@ enum vcLexerKeytags
     __MAXACCESSWIDTH     	,
     __MODULE        ,
     __FOREIGN        ,
+    __PIPELINE        ,
     __SERIESBLOCK   	,
     __PARALLELBLOCK 	,
     __FORKBLOCK     	,
     __BRANCHBLOCK   	,
-    __PIPELINEBLOCK ,
     __OF            	,
     __FORK          	,
     __JOIN          	,
@@ -133,11 +133,11 @@ static string vcLexerKeywords[] =
       "$maxaccesswidth"		,
       "$module"		,
       "$foreign"		,
+      "$pipeline"		,
       ";;"		, // series
       "||"		, // parallel
       "::"		, // fork-join
       "<>"		, // branch-merge
-      "=|="             , // pipeline
       "$of"		,
       "&->"		,
       "<-&"		,

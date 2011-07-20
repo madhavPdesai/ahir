@@ -906,52 +906,6 @@ void vcCPParallelBlock::Update_Predecessor_Successor_Links()
   this->vcCPBlock::Update_Predecessor_Successor_Links();
 }
 
-vcCPPipelineBlock::vcCPPipelineBlock(vcCPBlock* parent, string id):
-  vcCPParallelBlock(parent,id)
-{
-}
-
-void vcCPPipelineBlock::Print(ostream& ofile)
-{
-  ofile << vcLexerKeywords[__PIPELINEBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
-  this->Print_Elements(ofile);
-  ofile << "\n// end  pipeline-block " << this->Get_Id() << endl << "}" << endl;
-}
-
-void vcCPPipelineBlock::Update_Predecessor_Successor_Links()
-{
-  if(this->_elements.size() > 0)
-    {
-      this->_entry->Add_Successor(this->_elements.front());
-      this->_elements.front()->Add_Predecessor(this->_entry);
-      for(int idx = 0; idx < this->_elements.size(); idx++)
-	{
-	  if(idx > 0)
-	    {
-	      this->_elements[idx]->Add_Predecessor(this->_elements[idx-1]);
-	    }
-	  if(idx+1 < this->_elements.size())
-	    {
-	      this->_elements[idx]->Add_Successor(this->_elements[idx+1]);
-	    }
-	}
-      this->_elements.back()->Add_Successor(this->_exit);
-      this->_exit->Add_Predecessor(this->_elements.back());
-    }
-  else
-    {
-      this->_entry->Add_Successor(this->_exit);
-      this->_exit->Add_Predecessor(this->_entry);
-    }
-
-  this->vcCPBlock::Update_Predecessor_Successor_Links();
-}
-
-void vcCPPipelineBlock::Print_VHDL_Signal_Declarations(ostream& ofile)
-{
-  this->vcCPBlock::Print_VHDL_Signal_Declarations(ofile);
-}
-
 
 vcCPBranchBlock::vcCPBranchBlock(vcCPBlock* p, string id):vcCPSeriesBlock(p, id)
 {
@@ -1508,7 +1462,7 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
 }
 
 
-vcControlPath::vcControlPath(string id):vcCPPipelineBlock(NULL, id)
+vcControlPath::vcControlPath(string id):vcCPSeriesBlock(NULL, id)
 {
 }
 
@@ -1723,8 +1677,14 @@ void vcControlPath::Print_Compatibility_Map(ostream& ofile)
 void vcControlPath::Compute_Compatibility_Labels()
 {
   vcCompatibilityLabel* nl = this->Make_Compatibility_Label(this->Get_Id());
-  this->vcCPPipelineBlock::Compute_Compatibility_Labels(nl,this);
+  this->vcCPSeriesBlock::Compute_Compatibility_Labels(nl,this);
 
+  this->Connect_Compatibility_Labels();
+  this->Update_Compatibility_Map();
+}
+
+void vcControlPath::Connect_Compatibility_Labels()
+{
 
   // set up connectivity
   for(set<vcCompatibilityLabel*>::iterator iter = this->_compatibility_label_set.begin();
@@ -1798,8 +1758,6 @@ void vcControlPath::Compute_Compatibility_Labels()
 	}
     }
 
-
-  this->Update_Compatibility_Map();
 }
 
 bool vcControlPath::Are_Compatible(vcCompatibilityLabel* u, vcCompatibilityLabel* v)
@@ -1853,8 +1811,8 @@ vcCompatibilityLabel* vcControlPath::Make_Compatibility_Label(string id)
 
  bool vcControlPath::Check_Structure()
  {
-   this->vcCPPipelineBlock::Update_Predecessor_Successor_Links();
-   this->vcCPPipelineBlock::Check_Structure();
+   this->vcCPSeriesBlock::Update_Predecessor_Successor_Links();
+   this->vcCPSeriesBlock::Check_Structure();
    this->Construct_Reduced_Group_Graph();
  }
 
@@ -1896,7 +1854,7 @@ void vcControlPath::Print_VHDL_Start_Symbol_Assignment(ostream& ofile)
 {
 
   ofile << this->Get_Start_Symbol() << " <= start_req_symbol; " << endl;
-  if(this->_elements.size() > 1)
+  if(this->Is_Pipeline() && (this->_elements.size() > 1))
     {
       ofile << "start_ack_symbol <= " << this->_elements[0]->Get_Exit_Symbol() 
 	    << ";" << endl ;
@@ -1934,3 +1892,43 @@ void vcControlPath::Print_VHDL_Exit_Symbol_Assignment(ostream& ofile)
   
   ofile << "end block; --}" << endl;
 }
+
+
+void vcControlPathPipelined::Compute_Compatibility_Labels()
+{
+  vcCompatibilityLabel* in_label = this->Make_Compatibility_Label(this->Get_Id());
+
+  this->Set_Compatibility_Label(in_label);
+  this->_entry->Set_Compatibility_Label(in_label);
+
+  if(this->_elements.size() > 1)
+    {
+      for(int idx = 0; idx < this->_elements.size(); idx++)
+	{
+	  string hid = this->Get_Hierarchical_Id();
+	  if(hid == "")
+	    hid = this->Get_Id();
+
+	  string id = this->Get_Id() + "/" +  hid + "[" + IntToStr(idx) + "]";
+	  vcCompatibilityLabel* nl = this->Make_Compatibility_Label(id);
+
+	  pair<vcTransition*,int> p(this->_entry,idx);
+	  nl->Add_In_Arc(in_label,p);
+	  this->_elements[idx]->Compute_Compatibility_Labels(nl,this);
+	}
+    }
+  else if(this->_elements.size() == 1)
+    this->_elements[0]->Compute_Compatibility_Labels(in_label,this);
+
+  this->_exit->Set_Compatibility_Label(in_label);
+
+  this->Connect_Compatibility_Labels();
+  this->Update_Compatibility_Map();
+}
+
+
+ bool vcControlPathPipelined::Check_Structure()
+ {
+   this->vcCPSeriesBlock::Update_Predecessor_Successor_Links();
+   this->vcCPSeriesBlock::Check_Structure();
+ }

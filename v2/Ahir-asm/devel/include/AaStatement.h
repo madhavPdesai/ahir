@@ -451,6 +451,8 @@ class AaBlockStatement: public AaStatement
 
   virtual string Get_Label() { return(this->_label);}
   virtual bool Is_Block_Statement() {return(true);}
+  virtual bool Is_Pipelined() {return(false);}
+
   virtual unsigned int Get_Statement_Count() 
   {
     return((this->_statement_sequence ? this->_statement_sequence->Get_Statement_Count() : 0)); 
@@ -648,42 +650,6 @@ class AaParallelBlockStatement: public AaBlockStatement
   virtual string Get_VC_Name() {return("parallel_block_stmt_" + Int64ToStr(this->Get_Index()));}
 };
 
-class AaPipelineBlockStatement: public AaParallelBlockStatement
-{
-
- public:
-  AaPipelineBlockStatement(AaScope* scope, string label);
-  ~AaPipelineBlockStatement();
-  virtual void Print(ostream& ofile);
-  virtual string Kind() {return("AaPipelineBlockStatement");}
-
-  // inherits the C function stuff from block statement.
-  virtual void Write_Entry_Transfer_Code(ofstream& ofile)
-  {
-    assert(0);
-  }
-  virtual void Write_Statement_Invocations(ofstream& ofile)
-  {
-    assert(0);
-  }
-  virtual void Write_Exit_Check_Condition(ofstream& ofile)
-  {
-    assert(0);
-  }
-
-  virtual void Write_VC_Control_Path(ostream& ofile)
-  {
-    ofile << "=|= [" << this->Get_VC_Name() << "] // pipeline block " 
-	  << this->Get_Source_Info() << endl << "{";
-    this->_statement_sequence->Write_VC_Control_Path(ofile);
-    ofile << "} // end parallel block " << this->Get_VC_Name() << endl;
-  }
-
-  virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
-  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
-
-  virtual string Get_VC_Name() {return("pipeline_block_stmt_" + Int64ToStr(this->Get_Index()));}
-};
 
 class AaForkBlockStatement: public AaParallelBlockStatement
 {

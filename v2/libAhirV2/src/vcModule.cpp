@@ -17,6 +17,7 @@ vcModule::vcModule(vcSystem* sys, string module_name):vcRoot(module_name)
   this->_num_calls = 0;
   this->_max_number_of_caller_tags_needed = 0;
   this->_foreign_flag = false;
+  this->_pipeline_flag = false;
 }
 
 void vcModule::Set_Data_Path(vcDataPath* dp)
@@ -31,6 +32,8 @@ void vcModule::Print(ostream& ofile)
 {
   if(this->_foreign_flag)
     ofile << vcLexerKeywords[__FOREIGN] << " ";
+  if(this->_pipeline_flag)
+    ofile << vcLexerKeywords[__PIPELINE] << " ";
 
   ofile << vcLexerKeywords[__MODULE] << " " <<  this->Get_Label() << " {" << endl;
   if(this->_input_arguments.size() > 0)
@@ -637,7 +640,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
       // the always true signal, tied to true..
       ofile << ((vcCPElement*)(this->_control_path))->Get_Always_True_Symbol() << " <= true; " << endl;
       
-      if(vcSystem::_opt_flag)
+      if(vcSystem::_opt_flag && !this->_pipeline_flag)
 	this->_control_path->Print_VHDL_Optimized(ofile);
       else
 	this->_control_path->Print_VHDL(ofile);

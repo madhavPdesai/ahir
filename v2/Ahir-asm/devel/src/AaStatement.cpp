@@ -1802,21 +1802,6 @@ void AaParallelBlockStatement::Write_Exit_Check_Condition(ofstream& ofile)
     ofile << "1";
 }
 
-
-//---------------------------------------------------------------------
-// AaPipelineBlockStatement: public AaBlockStatement
-//---------------------------------------------------------------------
-AaPipelineBlockStatement::AaPipelineBlockStatement(AaScope* scope,string label):AaParallelBlockStatement(scope,label) {}
-AaPipelineBlockStatement::~AaPipelineBlockStatement() {}
-void AaPipelineBlockStatement::Print(ostream& ofile)
-{
-  ofile << this->Tab();
-  ofile << "$pipelineblock";
-  this->AaBlockStatement::Print(ofile);
-}
-
-
-
 //---------------------------------------------------------------------
 // AaForkBlockStatement: public AaBlockStatement
 //---------------------------------------------------------------------

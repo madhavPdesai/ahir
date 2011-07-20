@@ -108,7 +108,7 @@ aA_Program
 
 
 //-----------------------------------------------------------------------------------------------
-// aA_Module: (FOREIGN)? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
+// aA_Module: (FOREIGN | PIPELINE) ? MODULE aA_Label aA_In_Args aA_Out_Args ((aA_Object_Declarations)+)? LBRACE aA_Atomic_Statement_Sequence RBRACE
 //-----------------------------------------------------------------------------------------------
 aA_Module returns [AaModule* new_module]
 {
@@ -118,26 +118,31 @@ aA_Module returns [AaModule* new_module]
     AaObject* obj = NULL;
     bool foreign_flag = false;
     bool inline_flag = false;
+    bool pipeline_flag = false;
 }
-    : (FOREIGN {foreign_flag = true;})? (INLINE {inline_flag = true;})? mt: MODULE 
+    : ( (FOREIGN {foreign_flag = true;}) | (PIPELINE {pipeline_flag = true; }))? 
+        (INLINE {inline_flag = true;})? mt: MODULE 
         lbl = aA_Label 
         {
             new_module = new AaModule(lbl);
+
             new_module->Set_Foreign_Flag(foreign_flag);
             new_module->Set_Inline_Flag(inline_flag);
+            new_module->Set_Pipeline_Flag(pipeline_flag);
+
             new_module->Set_Line_Number(mt->getLine());
         }
         aA_In_Args[new_module] aA_Out_Args[new_module] (IS
-        LBRACE
+            LBRACE
             // first the declarations in this scope
             (obj = aA_Object_Declaration[new_module] 
-            { 
-                if(!foreign_flag) 
-                    new_module->Add_Object(obj);
-                else
-                    AaRoot::Error("foreign module cannot have object declarations",new_module);
-            })*
-
+                { 
+                    if(!foreign_flag) 
+                        new_module->Add_Object(obj);
+                    else
+                        AaRoot::Error("foreign module cannot have object declarations",new_module);
+                })*
+            
             // every statement in the sequence specifies a set of
             // targets (possibly empty) which should be maintained
             // by the containing scope as implicit variable 
@@ -149,7 +154,7 @@ aA_Module returns [AaModule* new_module]
                 else
                     AaRoot::Error("foreign module cannot have body",new_module);
             }
-        RBRACE)?
+            RBRACE)?
     ;
 
 
@@ -254,8 +259,7 @@ aA_Block_Statement[AaScope* scope] returns [AaBlockStatement* stmt]
     : (stmt = aA_Series_Block_Statement[scope] |
         stmt = aA_Parallel_Block_Statement[scope] |
         stmt = aA_Fork_Block_Statement[scope] |
-        stmt = aA_Branch_Block_Statement[scope] |
-        stmt = aA_Pipeline_Block_Statement[scope])
+        stmt = aA_Branch_Block_Statement[scope])
         (aA_Block_Statement_Exports[stmt])?
     ;
 
@@ -409,31 +413,6 @@ aA_Parallel_Block_Statement[AaScope* scope] returns [AaParallelBlockStatement* n
         ( lbl = aA_Label )?
         {
             new_pbs = new AaParallelBlockStatement(scope,lbl);
-            new_pbs->Set_Line_Number(pb->getLine());
-        }
-        LBRACE
-        (obj = aA_Object_Declaration[new_pbs] { new_pbs->Add_Object(obj); })*
-        sseq = aA_Atomic_Statement_Sequence[new_pbs] {new_pbs->Set_Statement_Sequence(sseq);}
-        RBRACE
-    ;
-
-
-//-----------------------------------------------------------------------------------------------
-// aA_Pipeline_Block_Statement: PIPELINEBLOCK LABEL LBRACE aA_Object_Declaration* aA_Atomic_Statement_Sequence RBRACE
-//-----------------------------------------------------------------------------------------------
-// a pipeline... the end of a statement triggers the next, 
-// a special kind of parallel block
-aA_Pipeline_Block_Statement[AaScope* scope] returns [AaPipelineBlockStatement* new_pbs]
-{
-    string lbl = "";
-    AaStatementSequence* sseq = NULL;
-    AaObject* obj = NULL;
-    unsigned int line_number;
-} :
-        pb: PIPELINEBLOCK
-        ( lbl = aA_Label )?
-        {
-            new_pbs = new AaPipelineBlockStatement(scope,lbl);
             new_pbs->Set_Line_Number(pb->getLine());
         }
         LBRACE
@@ -1362,6 +1341,7 @@ options {
 // language keywords (all start with $)
 FOREIGN       : "$foreign";
 INLINE        : "$inline";
+PIPELINE      : "$pipeline";
 MODULE        : "$module";
 DECLARE       : "$declare";
 DEFAULT       : "$default";
@@ -1372,7 +1352,6 @@ SERIESBLOCK   : "$seriesblock";
 PARALLELBLOCK : "$parallelblock";
 FORKBLOCK     : "$forkblock";
 BRANCHBLOCK   : "$branchblock";
-PIPELINEBLOCK : "$pipelineblock";
 PLACE         : "$place";
 SWITCH        : "$switch";
 ENDSWITCH     : "$endswitch";

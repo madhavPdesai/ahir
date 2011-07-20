@@ -23,6 +23,7 @@ class AaModule: public AaSeriesBlockStatement
 
   bool _foreign_flag;
   bool _inline_flag;
+  bool _pipeline_flag;
 
   bool _writes_to_shared_pipe;
   bool _reads_from_shared_pipe;
@@ -55,6 +56,10 @@ class AaModule: public AaSeriesBlockStatement
   void Set_Foreign_Flag(bool ff) { this->_foreign_flag = ff; }
   bool Get_Foreign_Flag() {return(this->_foreign_flag);}
 
+  void Set_Pipeline_Flag(bool ff) { this->_pipeline_flag = ff; }
+  bool Get_Pipeline_Flag() {return(this->_pipeline_flag);}
+  virtual bool Is_Pipelined() {return(_pipeline_flag);}
+
   void Set_Inline_Flag(bool ff) { this->_inline_flag = ff; }
   bool Get_Inline_Flag() {return(this->_inline_flag);}
 
@@ -65,7 +70,6 @@ class AaModule: public AaSeriesBlockStatement
   {
     return(this->_input_args[index]);
   }
-
 
   unsigned int Get_Number_Of_Output_Arguments() {return(this->_output_args.size());}
   AaInterfaceObject* Get_Output_Argument(unsigned int index)

@@ -82,7 +82,7 @@ public:
 		vcSystem* sys, vcModule* parent
 	);
 	public: void vc_Controlpath(
-		vcSystem* sys, vcModule* m
+		vcSystem* sys, vcModule* m, bool pipeline_flag
 	);
 	public: void vc_Datapath(
 		vcSystem* sys,vcModule* m
@@ -113,9 +113,6 @@ public:
 		vcCPBlock* cp
 	);
 	public: void vc_CPParallelBlock(
-		vcCPBlock* cp
-	);
-	public: void vc_CPPipelineBlock(
 		vcCPBlock* cp
 	);
 	public: void vc_CPBranchBlock(

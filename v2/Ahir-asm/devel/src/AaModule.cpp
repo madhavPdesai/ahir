@@ -19,6 +19,7 @@ AaModule::AaModule(string fname): AaSeriesBlockStatement(NULL,fname)
 {
   _foreign_flag = false;
   _inline_flag = false;
+  _pipeline_flag = false;
 
   _writes_to_shared_pipe = false;
   _reads_from_shared_pipe = false;
@@ -405,6 +406,9 @@ void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)
   if(this->_foreign_flag)
     ofile << "$foreign ";
 
+  if(this->Get_Pipeline_Flag())
+    ofile << "$pipeline ";
+
   ofile << "$module [" << this->Get_Label() << "] {" << endl;
   if(_input_args.size() > 0)
     {
@@ -458,6 +462,7 @@ void AaModule::Write_VC_Links(bool opt_flag, ostream& ofile)
 
 void AaModule::Write_VC_Control_Path(bool opt_flag, ostream& ofile)
 {
+
   ofile << "$CP { // begin control-path " << endl;
   // for each statement, print a CP region.
   if(!opt_flag)

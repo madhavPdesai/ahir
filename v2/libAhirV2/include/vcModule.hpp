@@ -47,6 +47,7 @@ class vcModule: public vcRoot
   map<string,vcPipe*> _pipe_map;
   bool _inline;
   bool _foreign_flag; 
+  bool _pipeline_flag; 
 
  public:
   vcModule(vcSystem* sys, string module_name);
@@ -55,6 +56,7 @@ class vcModule: public vcRoot
   virtual void Print(ostream& ofile);
 
   void Set_Foreign_Flag(bool v) {_foreign_flag = v; }
+  void Set_Pipeline_Flag(bool v) {_pipeline_flag = v; }
 
   void Register_Call_Group(vcModule* m, int g_id, int g_size) 
   {

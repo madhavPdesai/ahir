@@ -325,17 +325,6 @@ public:
   virtual void Print_Structure(ostream& ofile);
 };
 
-class vcCPPipelineBlock: public vcCPParallelBlock
-{
-public:
-  vcCPPipelineBlock(vcCPBlock* parent, string id);
-  virtual void Print(ostream& ofile);
-  virtual string Kind() {return("vcCPPipelineBlock");}
-  virtual void Update_Predecessor_Successor_Links();
-  virtual void Print_VHDL_Signal_Declarations(ostream& ofile);
-
-  virtual bool Is_Pipeline() { return (true); }
-};
 
 class vcCPBranchBlock: public vcCPSeriesBlock
 {
@@ -451,9 +440,9 @@ public:
   friend class vcControlPath;
 };
 
-class vcControlPath: public vcCPPipelineBlock
+class vcControlPath: public vcCPSeriesBlock
 {
-
+protected:
   set<vcCompatibilityLabel*> _compatibility_label_set;
   vector<vcCPElement*> _bfs_ordered_labels;
 
@@ -469,9 +458,9 @@ class vcControlPath: public vcCPPipelineBlock
 public:
   static int64_t _free_index;
 
+  vcControlPath(string id);
   virtual string Kind() {return("vcControlPath");}
 
-  vcControlPath(string id);
   vcTransition* Find_Transition(vector<string>& hier_ref);
   vcPlace* Find_Place(vector<string>& hier_ref);
   virtual void Print(ostream& ofile);
@@ -492,13 +481,14 @@ public:
 
 
   virtual void Get_Hierarchical_Ref(vector<string>& ref_vec) {return;}
-  void Compute_Compatibility_Labels();
+  virtual void Compute_Compatibility_Labels();
+  void Connect_Compatibility_Labels();
 
   vcCompatibilityLabel* Make_Compatibility_Label(string id);
   void Delete_Compatibility_Label(vcCompatibilityLabel* nl);
 
   virtual bool Check_Structure();
-  virtual void Print_Structure(ostream& ofile) {this->vcCPPipelineBlock::Print_Structure(ofile);}
+  virtual void Print_Structure(ostream& ofile) {this->vcCPSeriesBlock::Print_Structure(ofile);}
   void Print_Compatibility_Labels(ostream& ofile);
 
   bool Are_Compatible(vcCompatibilityLabel* u, vcCompatibilityLabel* v);
@@ -545,6 +535,23 @@ public:
   }
 };
 
+
+class vcControlPathPipelined: public vcControlPath
+{
+public:
+  vcControlPathPipelined(string id):vcControlPath(id)
+  {
+  }
+  virtual string Kind() {return("vcControlPathPipelined");}
+  virtual bool Is_Pipeline() { return (true); }
+  virtual void Compute_Compatibility_Labels();
+  
+  virtual bool Check_Structure();
+  virtual void Print_VHDL_Optimized(ostream& ofile)
+  {
+    assert(0);
+  }
+};
 
 struct vcCompatibilityLabel_Compare:public binary_function
   <vcCompatibilityLabel*, vcCompatibilityLabel*, bool >

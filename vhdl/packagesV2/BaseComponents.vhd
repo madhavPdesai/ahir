@@ -68,6 +68,13 @@ package BaseComponents is
 	reset: in std_logic);
   end component;
 
+  component join2 
+    port ( pred0, pred1      : in   Boolean;
+           symbol_out : out  boolean;
+           clk: in std_logic;
+           reset: in std_logic);
+  end component;
+
   component join_with_input is
      port ( preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
@@ -79,10 +86,12 @@ package BaseComponents is
   component auto_run 
   	generic (
     		use_delay : boolean);
-  	port (clk   : in  std_logic;
-        	reset : in  std_logic;
-        	start: out std_logic;
-        	fin: in std_logic);
+          port (clk   : in  std_logic;
+    	reset : in  std_logic;
+	start_req: out std_logic;
+        start_ack: in std_logic;
+        fin_req: out std_logic;
+        fin_ack: in std_logic);
   end component;
 
   -----------------------------------------------------------------------------
