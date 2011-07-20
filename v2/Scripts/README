@@ -1,0 +1,13 @@
+ ghdl.do
+   a script to build a ghdl executable.
+   assumes that *.vhdl in the working directory
+   is to be compiled into library work 
+   in addition to the ahir and ieee_proposed libraries.
+
+
+ xilinx_synth.scr
+     xilinx xst script file.
+ xiling_synth.prj
+     xilinx project file.  assumes that the working
+     directory contains a file ahir_system.vhdl which
+     must be compiled into library work.

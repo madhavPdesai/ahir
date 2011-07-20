@@ -1,5 +1,11 @@
 These files are downloaded from -- http://www.vhdl.org/fphdl/
 
 These files are to be compiled in library ieee_proposed.
-They have been tested and are working fine with Xilinx ISE 11.3 and Modelsim SE 6.5b
+They have been tested and are working fine with Xilinx ISE 11.3 
+and Modelsim SE 6.5b
+
+However, we will use the versions in trimmed/ which have
+been edited to get rid of useless functions.  The trimmed/
+files seem to work better with simulation and synthesis tools.
+
 
