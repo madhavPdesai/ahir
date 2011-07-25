@@ -16,9 +16,11 @@ end join_with_input;
 architecture default_arch of join_with_input is
   signal symbol_out_sig : BooleanArray(0 downto 0);
   signal place_sigs: BooleanArray(preds'range);
+  constant H: integer := preds'high;
+  constant L: integer := preds'low;
 begin  -- default_arch
   
-  placegen: for I in preds'range generate
+  placegen: for I in H downto L generate
     placeBlock: block
 	signal place_pred: BooleanArray(0 downto 0);
     begin

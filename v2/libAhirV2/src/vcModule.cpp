@@ -28,6 +28,21 @@ void vcModule::Set_Data_Path(vcDataPath* dp)
 }
 
 
+int vcModule::Get_Pipeline_Depth()
+{
+  if(_pipeline_flag)
+    {
+      if(this->_control_path)
+	{
+	  return(this->_control_path->Get_Number_Of_Elements());
+	}
+      else
+	return(1);
+    }
+  else 
+    return(1);
+}
+
 void vcModule::Print(ostream& ofile)
 {
   if(this->_foreign_flag)
@@ -334,7 +349,7 @@ void vcModule::Print_VHDL_Argument_Signals(ostream& ofile)
   if(this->Get_Out_Arg_Width() > 0)
     ofile <<  "signal " << prefix << "out_args   : std_logic_vector(" << this->Get_Out_Arg_Width()-1 << " downto 0);"  << endl;
 
-  ofile <<  "signal " << prefix << "tag_in    : std_logic_vector(" << this->Get_Callee_Tag_Length()-1 << " downto 0);"  << endl;
+  ofile <<  "signal " << prefix << "tag_in    : std_logic_vector(" << this->Get_Callee_Tag_Length()-1 << " downto 0) := (others => '0');"  << endl;
   ofile <<  "signal " << prefix << "tag_out   : std_logic_vector(" << this->Get_Callee_Tag_Length()-1 << " downto 0);"  << endl;
   ofile <<  "signal " << prefix << "start_req : std_logic;"  << endl;
   ofile <<  "signal " << prefix << "start_ack : std_logic;"  << endl;

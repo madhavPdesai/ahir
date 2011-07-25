@@ -1853,14 +1853,29 @@ bool vcCompatibilityLabel_Compare::operator() (vcCompatibilityLabel* u, vcCompat
 void vcControlPath::Print_VHDL_Start_Symbol_Assignment(ostream& ofile)
 {
 
-  ofile << this->Get_Start_Symbol() << " <= start_req_symbol; " << endl;
-  if(this->Is_Pipeline() && (this->_elements.size() > 1))
+
+  if(this->Is_Pipeline())
     {
-      ofile << "start_ack_symbol <= " << this->_elements[0]->Get_Exit_Symbol() 
-	    << ";" << endl ;
+      // interlock will be inside the element.
+      ofile << this->Get_Start_Symbol() << " <= start_req_symbol; " << endl;
+      if (this->_elements.size() > 1)
+	ofile << "start_ack_symbol <= " << this->_elements[1]->Get_Start_Symbol() 
+	      << ";" << endl ;
+      else
+	ofile << "start_ack_symbol <= " << this->_exit->Get_Exit_Symbol()
+	      << ";" << endl;
+	
     }
   else
     {
+      // interlock will have to be explicit.
+      ofile << this->Get_Start_Symbol() 
+	<< "_interlock : pipeline_interlock -- { " << endl
+	<< " port map (trigger => start_req_symbol," << endl
+	<< "enable =>  fin_ack_symbol, " << endl
+	<< "symbol_out => " << this->Get_Start_Symbol() << ", " << endl
+	<< " clk => clk, reset => reset); -- }" << endl;
+
       ofile << "start_ack_symbol <= " << this->_exit->Get_Exit_Symbol()
 	    << ";" << endl;
     }

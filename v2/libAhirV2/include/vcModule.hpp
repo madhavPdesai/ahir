@@ -58,6 +58,7 @@ class vcModule: public vcRoot
   void Set_Foreign_Flag(bool v) {_foreign_flag = v; }
   void Set_Pipeline_Flag(bool v) {_pipeline_flag = v; }
 
+  int Get_Pipeline_Depth();
   void Register_Call_Group(vcModule* m, int g_id, int g_size) 
   {
     _call_group_map[m].push_back(g_id); 
@@ -86,7 +87,14 @@ class vcModule: public vcRoot
 
   int Get_Num_Calls() {return(this->_num_calls);}
   int Get_Caller_Tag_Length() {return(CeilLog2(this->_max_number_of_caller_tags_needed));}
-  int Get_Callee_Tag_Length() {return(CeilLog2(this->_num_calls));}
+
+  int Get_Callee_Tag_Length() 
+  {
+    if(this->_num_calls > 0)
+      return(CeilLog2(this->_num_calls));
+    else
+      return(CeilLog2(this->Get_Pipeline_Depth()));
+  }
 
   int Get_In_Arg_Width();
   int Get_Out_Arg_Width();

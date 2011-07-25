@@ -1,4 +1,13 @@
-\documentclass{article}
+%%\begin{figure}
+%%\begin{centering}
+%%\centerline{\psfig{figure=OurApproach.eps,width=3.0in,height=3.0in}}
+%%\caption{Our Approach to Fault Simulation using a Hardware Emulator}
+%% \label{fig:OurApproach}
+%%\end{centering}
+%%\end{figure}
+
+\documentclass[12pt]{article}
+\usepackage{epsfig}
 
 \title{AhirV2: from algorithms to hardware \\ An overview }
 \author{Madhav Desai \\ Department of Electrical Engineering \\ Indian Institute of Technology \\
@@ -10,60 +19,58 @@
 \begin{document}
 \maketitle
 
-\section{Introduction}
-
-We describe the essential features
-of the second version of the AhirV2 toolset
-developed at IIT-Bombay.
-
 \section{What is AhirV2?}
 
-Perhaps the simplest way to understand AhirV2 is
-through an example.
-
-Suppose we start with a simple program.
-\begin{verbatim}
-int add(int a, int b)
-{
-        int c = (a+b);
-        return(c);
-}
-\end{verbatim}
-This program describes an algorithm.  We normally
-compile this program and convert it to a machine-level
-program which is executed on a processor.
-
-What if we wished to convert this program to
-a circuit?  
-Such a circuit would have inputs 
-$a,b$ and an output $c$ (together with some
-interface hand-shake signals).  When activated,
-the circuit should read its inputs and compute 
-a response which is the same as would be expected
-if the program were executed on a computer.
-
-AhirV2 consists of a set of tools which takes
-a C/C++ program and converts this collection to
-a hardware circuit (described in VHDL).   This
-conversion is done in two steps:
+AhirV2 is a set of tools 
 \begin{itemize}
-\item The high-level program is compiled
-to an interemediate assembly form.  AhirV2
+\item which can convert a C/C++ progam to  an equivalent hardware
+implementation (described in VHDL).
+\item which provide an algorithmic approach to the design of 
+hardware.
+\end{itemize}
+
+The flow of transformations is illustrated in Figure \ref{fig:AhirFlow}.
+\begin{figure}
+\begin{centering}
+\centerline{\psfig{figure=AHIRv2Flow.eps,width=3.0in,height=3.0in}}
+\caption{AhirV2 flow}
+ \label{fig:AhirFlow}
+\end{centering}
+\end{figure}
+
+\begin{itemize}
+\item Given a high-level C/C++ program, we rely on
+an LLVM (www.llvm.org) compatible compiler such as clang (www.clang.org)
+or dragon-egg (dragonegg.llvm.org) to produce LLVM byte code.
+Currently, the AhirV2 flow uses LLVM byte code as a starting point.
+\item The LLVM byte-code program is compiled
+to an intermediate assembly form.  AhirV2
 introduces an intermediate assembly language
-\Aa  which can serve as a target for sequential
+\Aa  which serves as a target for sequential
 programming languages (such as C/C++) as
 well as for parallel programming languages.
+An \Aa program consists of modules (analogous
+to sub-programs in C/C++) which can call each 
+other, and can communicate through storage objects
+as well as through pipes (first-in-first-out buffers).
 \item From the \Aa description, a virtual
 circuit (described in a virtual circuit
 description language \vC) is generated.
 The chief optimization carried out at this
-step is that decomposing the system memory
-into disjoint segments based on usage
+step is the decomposition of the system memory
+into disjoint spaces based on usage
 analysis (this considerably improves the
 available memory bandwidth and reduces
-system cost).
+system cost).  A \vC description also
+consists of modules: however, the modules
+are presented in a factored form (control X data X storage).
 \item From the \vC description, a
 VHDL description of the system is generated.
+The system consists of modules, memory spaces
+and FIFO buffers.  The modules are further
+broken down into a control-path (a live and safe
+Petri net), and a data-path (a graph of operators
+and wires).
 The chief optimization carried out at this
 stage is resource sharing.  The \vC description
 is analyzed to identify operations which
@@ -76,202 +83,37 @@ of VHDL design units which has been developed
 as part of the AhirV2  effort.  This library
 consists of control-flow elements, data-path
 elements and memory elements.
-\item 
-For the C/C++ to \Aa translation, the
-AhirV2 toolset uses the front-end C/C++ compiler
-infrastructure developed by the LLVM project (www.llvm.org), which
-compiles the C/C++ program to LLVM byte-code
-(which is a processor independent representation
-of the compiled program).  The AhirV2 toolset
-has a utility which translates the LLVM byte-code
-to an \Aa description.
 \end{itemize}
-In Section \ref{sec:Example}, 
-we illustrate the use of these tools on the
-simple example shown above.
 
-The earlier version of the AHIR flow has been
-used to convert non-trivial programs to hardware.
-The resulting circuits are upto two orders of
+Thus, to generate hardware using the AhirV2 flow,
+it is possible to start at C/C++, at the \Aa level
+at the \vC level or at the VHDL level (or a combination
+of all these levels).  Starting at a higher level is
+easier for the programmer, but using lower level representations
+will probably lead to more efficient hardware.
+Typically, if we start from C/C++, circuits
+produced by the AhirV2 flow are upto two orders of
 magnitude more energy-efficient than
-a processor \cite{ref:dsd2010}.  The AhirV2
-toolset incorporates several optimizations which
-make the resulting circuits smaller and 
-faster than before.
+a processor \cite{ref:dsd2010}.  
 
-\section{The tools}
-
-We assume that you have access to either {\bf llvm-gcc}
-or {\bf clang} as the front-end compiler which generates
-LLVM byte-code from C/C++.  The current AhirV2 toolset
-is consistent with llvm 2.8 and clang 2.8.
-
-The other tools in the chain are described below.
-
-\subsection{{\bf llvm2aa}}
-
-This tool takes LLVM byte code and converts it into an
-\Aa file.
-\begin{verbatim}
-llvm2aa [-modules=<listfile>] [-storageinit] bytecode.o > bytecode.aa
-\end{verbatim}
-The generated \Aa code is sent to {\bf stdout} and all informational
-messages are sent to {\bf stderr}.  On success, the tool returns 0.
-
-The options:
+Currently, there are only two restrictions in mapping
+a C/C++ program to VHDL using the AhirV2 flow:
 \begin{itemize}
-\item {\bf -modules=listfile} : Specify the list of functions in the bytecode
-which should be converted to \Aa.   The names of these functions should be
-listed in the text-file listfile. If absent, all functions
-are converted.
-\item {\bf -storageinit} :  Storage objects in the llvm bytecode
-are explicitly initialized in the generated \Aa code.   An initializer
-routine {\bf global\_storage\_initializer\_} is instantiated in
-the \Aa code for this purpose.
+\item No recursion, no cycles in the call-graph of the original
+program.
+\item No function pointers.
 \end{itemize}
 
-\subsection{{\bf AaLinkExtMem}}
+\section{Use Scenario 1:  a transformational system}
 
-This tool takes a list of \Aa files, elaborates the program,
-does memory space decomposition.  The externally visible memory space is
-linked in one of two ways: either it is assumed to be external
-and all accesses to it are routed out of the \Aa program,
-or it is assumed to be internal and assumed to consist of
-a memory object (an array of bytes).  External pointer dereferences
-are handled as if they are directed at this memory object.
-\begin{verbatim}
-AaLinkExtMem [-I n] [-E obj-name] bytecode.o > bytecode.aa
-\end{verbatim}
-The generated \Aa code is sent to {\bf stdout} and all informational
-messages are sent to {\bf stderr}.  On success, the tool returns 0.
+Many programs are transformational in nature.  There
+is some input data $X$, and the program can be modeled as
+a function $f$ which acts on $X$ to produce output data $Y$.
 
-The options:
-\begin{itemize}
-\item {\bf -I n}: specifies that external references to memory
-are to be mapped as if they are to an internal object whose size
-is $n$ bytes.
-\item {\bf -E obj-name} : specifies that the object to which
-external references are mapped is to be named obj-name.
-\end{itemize}
-It is recommended that you use the {\bf -I} and {\bf -E} options.  
-
-If the {\bf -I} option is not used, then all external memory
-references are routed out of the \Aa program through pipes.
-In this case, if the \Aa compiler determines that there is some pointer 
-in the program which can point
-to both internal and external memory, then this will be
-declared as an error!  
-
-\subsection{{\bf Aa2VC}}
-
-This tool takes a list of \Aa programs and converts them
-to a \vC description. 
-\begin{verbatim}
-Aa2VC [-O] [-C] [-I obj-name] file1.aa file2.aa ...  > result.vc
-\end{verbatim}
-The generated \vC code is sent to {\bf stdout} and all informational
-messages are sent to {\bf stderr}.  On success the tool returns 0.
-
-The options:
-\begin{itemize}
-\item {\bf -O} : if used, sequential statement blocks are parallelized
-by doing dependency analysis.
-\item {\bf -C} : if used, a C stub is created for every module that
-is not called from within the system.  These stubs can be used to
-interface to a VHDL simuator (or even drive hardware) to verify
-the VHDL code generated by downstream tools.
-\item {\bf -I obj-name} : if specified, all external memory references
-are considered as being directed at the storage object named obj-name.
-If not specified, then the tool will throw an error if it finds
-a pointer dereference that cannot be resolved as pointing only to
-storage objects declared inside the \Aa program.
-\end{itemize}
-
-\subsection{\bf vc2vhdl}
-
-Takes a collection of \vC descriptions and converts them to
-an AHIR system described in VHDL.
-\begin{verbatim}
-vc2vhdl [-O] [-C] [-a] [-e <entity-name] [-w]\
-         -t/-T foo [-t/-T bar -t/-T bar2 ...]\
-         -f file1.vc -f file2.vc ...  > system.vhdl
-\end{verbatim}
-
-The options:
-\begin{itemize}
-\item {\bf -t} : to specify the modules which are to be 
-accessible from the ports of the generated VHDL system.
-Such modules have to be top-level (that is, they cannot
-be called from within the program).
-Multiple top-level modules can be specified in this way.
-The control and argument ports for these modules are
-visible at the interface of the generated AHIR system.
-\item {\bf -T} : to specify top-level modules which are to be 
-free-running inside the AHIR system.
-Multiple top-level modules can be specified in this way.
-Such modules do not have any arguments and do not return
-any values.  Their only mechanism of communication with
-the world outside the AHIR system is through pipes.
-The control ports for these modules are
-{\bf not visible} at the interface of the generated AHIR system.
-In the AHIR system, these modules are started on reset
-and are run forever (restarted after they finish, forever).
-\item {\bf -f} : specifies the \vC files to be analyzed. 
-Multiple \vC files may be specified.  An object must be
-defined before it is used, so the \vC files must be 
-specified in the correct order.
-\item {\bf -O} : optimize the generated VHDL by compacting
-the control-path.  This does not change the resulting
-hardware, but makes the generated VHDL file smaller.
-\item {\bf -C} : the VHDL code has a system test bench which
-interfaces to foreign code using a VHPI/Modelsim-FLI interface.
-If this is not specified, the  generated test bench simply
-instantiates the system and starts all top-level modules
-off (you will need to fill in your own test bench here).
-The C testbench is usually easier to write (it probably
-already exists in the form of the original program).
-\item {\bf -a} : try to minimize the area of the resulting
-VHDL by sharing operators to the maximum extent possible
-(allowing potential contention for resources).  This will
-result in a slower (usually by 2X) system, but will
-also reduce the area (usually by 0.5X).  If not specified,
-two operations will be mapped to the same
-operator  only if it can be proved that they cannot be active simultaneously.
-\item {\bf -e top-entity-name} : The generated top-level VHDL entity
-corresponding to the AHIR system is named top-entity-name.  The default
-is test\_system.
-\item {\bf -w} :  If specified, the VHDL system and test-bench are
-generated as separate unformatted VHDL files.  You will need to
-format these using the vhdlFormat command.
-\item {\bf -s ghdl/modelsim} :  If {\bf ghdl} is specified
-with the -s option, then the generated testbench (if -C is specified)
-uses the VHPI interface to link with foreign code.  Otherwise,
-the generated testbench (if -C is specified) uses the Modelsim FLI
-interface to link with foreign code.
-\end{itemize}
-
-The tool performs concurrency analysis to determine operations which
-can be mapped to the same physical operator without the need for
-arbitration.  It also instantiates separate memory subsystems for
-the disjoint memory spaces (in practice many of the memory spaces
-are small and are converted to register banks).
-
-\subsection{Miscellaneous: {\bf vcFormat} and {\bf vhdlFormat}}
-
-The outputs produced by {\bf Aa2VC} and {\bf vc2vhdl} are
-not well formatted.  One can format \Aa and \vC files
-using  {\bf vcFormat} as follows
-\begin{verbatim}
-vcFormat < unformatted-vc/aa-file  > formatted-vc/aa-file
-\end{verbatim}
-and similarly use {\bf vhdlFormat} to format generated
-VHDL files.
+\subsection{A trivial example} \label{sec:Example}
 
 
-\section{An example} \label{sec:Example}
-
-Let us revisit the simple example considered in
-the first section:
+Consider the following trivial example:
 \begin{verbatim}
 int add(int a, int b)
 {
@@ -414,7 +256,8 @@ $module [add]
    // links between CP and DP
 }
 \end{verbatim}
-The important points to note are that the stored objects a,b,c and
+
+Note that the stored objects a,b,c and
 ret\_val\_\_ are mapped to different memory spaces.  Thus, the
 chief difference between a \vC description and a processor is 
 that the \vC program partitions storage into small units which
@@ -437,20 +280,204 @@ entity test_system is  -- system
     add_ret_val_x_x : out  std_logic_vector(31 downto 0);
     add_tag_in: in std_logic_vector(0 downto 0);
     add_tag_out: out std_logic_vector(0 downto 0);
-    add_start : in std_logic;
-    add_fin   : out std_logic;
+    add_start_req : in std_logic;
+    add_start_ack : out std_logic;
+    add_fin_req   : in std_logic;
+    add_fin_ack   : out std_logic;
     clk : in std_logic;
     reset : in std_logic); --
   --
 end entity;
 \end{verbatim}
-There are ports corresponding to the arguments of the top-level module,
-and the add\_start/add\_fin is a handshake pair.  One sets up the inputs,
-starts the system and waits until the fin is asserted.  After the fin
-is asserted, one has the return value of {\bf add} at the appropriate port.
 
-\section{External and internal memory spaces}
+The AHIR system is a purely synchronous implementation
+which uses only the rising edge of the {\bf clk} input.
+The {\bf reset} is synchronous, and is active high. 
 
+The VHDL implementation of a module in the AHIR system
+corresponds to that of a pipeline stage (see Figure \ref{fig:ModulePipeline}).
+\begin{figure}
+\begin{centering}
+\centerline{\psfig{figure=ModulePipeline.eps,width=3.0in,height=3.0in}}
+\caption{System and Module Interfaces}
+ \label{fig:ModulePipeline}
+\end{centering}
+\end{figure}
+The ports 
+\begin{verbatim}
+add_a add_b
+\end{verbatim}
+correspond to the input arguments of the top-level 
+function {\bf add}.  The port 
+\begin{verbatim}
+ret_val_x_x
+\end{verbatim}
+corresponds to the value returned by {\bf add}.
+The pair of ports
+\begin{verbatim}
+add_start_req  add_start_ack
+\end{verbatim}
+implement a {\bf start} protocol; The environment
+asserts {add\_start\_req} when it wants to start
+{\bf add}, and the AHIR system asserts {\bf add\_start\_ack}
+whenever it is ready to start.  The environment is required
+to hold the input arguments steady until it observes
+the acknowledge from the AHIR system.
+The pair of ports
+\begin{verbatim}
+add_fin_req  add_fin_ack
+\end{verbatim}
+implement a {\bf finish} protocol; The environment
+asserts {add\_fin\_req} when it is in a position to accept
+the returned value from a previously started 
+{\bf add}, and the AHIR system asserts {\bf add\_fin\_ack}
+whenever it has a return-value avaiable.  The returned value
+is valid only when the acknowledge from the AHIR system is
+asserted. 
+The ports
+\begin{verbatim}
+    add_tag_in  add_tag_out
+\end{verbatim}
+provide a mechanism by which a tag can be presented
+by the environment to the AHIR system to identify
+a particular invocation of the {\bf add} function.  The
+width of the tag is chosen (by the AhirV2 tool-chain,
+specifically, the vc2vhdl tool) to be large enough
+that each active call to {\bf add} can be identified
+uniquely.
+
+
+\section{Use Scenario 2: pipelines}
+
+A pipeline is a collection of parallel processes which
+work together to accomplish a certain function (or to finish
+a job).   Pipelines are commonly used in software and
+in hardware systems.
+
+The concept of pipes or sockets provide a natural mechanism
+for communication between parallel processes in a software
+pipeline.  In \Aa (and \vC), pipes are first-in-first-out
+buffers which provide a corresponding communication construct
+in the generated hardware.
+
+\subsection{An example of a trivial pipeline}
+
+
+Consider the following pipeline which has two stages
+{\bf foo} and {\bf bar}:  
+\begin{verbatim}
+Environment --> foo --> bar --> Environment
+\end{verbatim}
+The stage {\bf foo} takes a 32-bit
+integer from the external world, complements it and passes it on to stage
+bar.  The stage {\bf bar} takes the 32-bit number from {\bf foo}, complements
+it and sends it to the external world (in effect, nothing useful
+is done, this is only an illustration).
+
+If we are writing this pipe-line as a program, we could implement
+two independent processes (or threads) and use named pipes to
+perform the communication between these processes/threads (and the
+``outside´´ world).  For example:
+\begin{verbatim}
+#include <iolib.h>
+void foo()
+{
+   while(1)
+   {
+     uint32_t data = read_uint32("inpipe");
+     write_uint32("midpipe", ~data);
+   }
+}
+
+void bar()
+{
+   while(1)
+   {
+     uint32_t data = read_uint32("midpipe");
+     write_uint32("outpipe", ~data);
+   }
+}
+\end{verbatim}
+In this example, the read/write functions are assumed
+to use named pipes for inter-process communication.
+
+The two functions can be compiled into separate processes
+or can be used in threads in a multi-threaded program (using pthreads, for
+example), and one gets a software pipeline, in which
+the inter-process communication is done using the
+read/write function calls, which use named pipes.
+
+One can also map this pipeline to a VHDL system, using the
+following flow.  One uses the standard flow that has already
+been described:
+\begin{verbatim}
+clang -std=gnu89 -I../../../iolib/ -emit-llvm -c prog.c
+llvm2aa prog.o | vcFormat >  prog.o.aa
+Aa2VC -O -I mempool -C prog.o.aa | vcFormat > prog.o.aa.vc
+vc2vhdl -C -s ghdl -T foo -T bar -f prog.o.aa.vc\
+           | vhdlFormat > system.vhdl
+\end{verbatim}
+Note that in this case, we use the -T option in vc2vhdl to
+specify that foo and bar are free-running top-level modules.
+\begin{figure}
+\begin{centering}
+\centerline{\psfig{figure=FooBarPipeline.eps,width=3.0in,height=3.0in}}
+\caption{Hardware implementation of Foo-Bar pipeline}
+ \label{fig:FooBarPipeline}
+\end{centering}
+\end{figure}
+The resulting AHIR system in system.vhdl implements the pipeline
+(the block diagram of the system is shown in Figure \ref{fig:FooBarPipeline})
+with the following interface:
+\begin{verbatim}
+entity test_system is  -- system 
+  port (-- 
+    clk : in std_logic;
+    reset : in std_logic;
+    inpipe_pipe_write_data: in std_logic_vector(31 downto 0);
+    inpipe_pipe_write_req : in std_logic_vector(0 downto 0);
+    inpipe_pipe_write_ack : out std_logic_vector(0 downto 0);
+    outpipe_pipe_read_data: out std_logic_vector(31 downto 0);
+    outpipe_pipe_read_req : in std_logic_vector(0 downto 0);
+    outpipe_pipe_read_ack : out std_logic_vector(0 downto 0)); -- 
+  -- 
+end entity;
+\end{verbatim}
+The system has interfaces corresponding to the pipes inpipe and
+outpipe through which data is exchanged.
+
+In practice, one can have any number of pipes and 
+interacting processes in a pipeline implementation.
+
+
+\section{Storage variables and memory spaces}
+
+
+In an \Aa program, variables can be of three kinds:
+storage variables, pipe variables, or single-static-assignment
+variables.  Storage variables are implemented in memory,
+pipe variables as FIFO buffers, and single-static-assignment
+variables as registers.  
+
+While transforming an \Aa description down to a \vC description,
+the storage variables in the \Aa program need to be grouped
+into memory spaces.  Two storage variables are put in the 
+same memory space only if we
+determine that a pointer de-reference in the \Aa
+program can point into either of the two storage variables
+(this is determined by a conservative static analysis).
+
+A memory space in a \vC description is characterized by
+a word-length (the greatest common divisor of the widths
+of accesses to this memory space), an address-width (wide enough
+to allow access to all words in the memory space), and
+a capacity (the number of words in the memory space).  Typically,
+a program will have many small memory spaces corresponding to
+scratch storage and some large memory spaces which correspond
+to arrays etc.
+
+
+There is one small issue, however.
 Consider the following C program:
 \begin{verbatim}
 int main(int* b)
@@ -536,14 +563,13 @@ will be
 \begin{verbatim}
 entity test_system is  -- system
   port (--
-    foo_b : in  std_logic_vector(31 downto 0);
-    foo_ret_val_x_x : out  std_logic_vector(31 downto 0);
-    foo_tag_in: in std_logic_vector(0 downto 0);
-    foo_tag_out: out std_logic_vector(0 downto 0);
-    foo_start : in std_logic;
-    foo_fin   : out std_logic;
     clk : in std_logic;
     reset : in std_logic;
+
+    --   some-lines-omitted --
+    --   foo-related ports --
+    --   some-lines-omitted --
+
     extmem_read_address_32_pipe_read_data: out std_logic_vector(31 downto 0);
     extmem_read_address_32_pipe_read_req : in std_logic_vector(0 downto 0);
     extmem_read_address_32_pipe_read_ack : out std_logic_vector(0 downto 0);
@@ -636,104 +662,200 @@ entity test_system is  -- system
     mem_load_x_x_data : out  std_logic_vector(7 downto 0);
     mem_load_x_x_tag_in: in std_logic_vector(0 downto 0);
     mem_load_x_x_tag_out: out std_logic_vector(0 downto 0);
-    mem_load_x_x_start : in std_logic;
-    mem_load_x_x_fin   : out std_logic;
+    mem_load_x_x_start_req : in std_logic;
+    mem_load_x_x_start_ack : out std_logic;
+    mem_load_x_x_fin_req   : in std_logic;
+    mem_load_x_x_fin_ack   : out std_logic;
     mem_store_x_x_address : in  std_logic_vector(31 downto 0);
     mem_store_x_x_data : in  std_logic_vector(7 downto 0);
     mem_store_x_x_tag_in: in std_logic_vector(0 downto 0);
     mem_store_x_x_tag_out: out std_logic_vector(0 downto 0);
-    mem_store_x_x_start : in std_logic;
-    mem_store_x_x_fin   : out std_logic;
+    mem_store_x_x_start_req : in std_logic;
+    mem_store_x_x_start_ack : out std_logic;
+    mem_store_x_x_fin_req   : in std_logic;
+    mem_store_x_x_fin_ack   : out std_logic;
     clk : in std_logic;
     reset : in std_logic); --
   --
 end entity;
 \end{verbatim}
 
-The system provides a memory load and memory store
-port to the external world (through the mem\_load.. and mem\_store..)
-ports.  The shared memory variable is kept in a memory
-space and is guaranteed to have a base address of $0$.  Thus,
-mempool[I] will be present at address $I$.
+The system provides  memory load and memory store
+function interfaces to the external world 
+(through  mem\_load.. and mem\_store..).
+The shared memory variable is guaranteed to have a base address of $0$.  Thus,
+byte mempool[I] will be present at address $I$.
 
-\section{Handling complex programs}
+\section{The tools}
 
-Currently, there are only two restrictions in mapping
-a C program to VHDL using the AhirV2 flow:
+We assume that you have access to either {\bf llvm-gcc}
+or {\bf clang} as the front-end compiler which generates
+LLVM byte-code from C/C++.  The current AhirV2 toolset
+is consistent with llvm 2.8 and clang 2.8.
+
+The other tools in the chain are described below.
+
+\subsection{{\bf llvm2aa}}
+
+This tool takes LLVM byte code and converts it into an
+\Aa file.
+\begin{verbatim}
+llvm2aa [-modules=<listfile>] [-storageinit] bytecode.o > bytecode.aa
+\end{verbatim}
+The generated \Aa code is sent to {\bf stdout} and all informational
+messages are sent to {\bf stderr}.  On success, the tool returns 0.
+
+The options:
 \begin{itemize}
-\item No recursion, no cycles in the call-graph of the original
-program.
-\item No function pointers.
+\item {\bf -modules=listfile} : Specify the list of functions in the bytecode
+which should be converted to \Aa.   The names of these functions should be
+listed in the text-file listfile. If absent, all functions
+are converted.
+\item {\bf -storageinit} :  Storage objects in the llvm bytecode
+are explicitly initialized in the generated \Aa code.   An initializer
+routine {\bf global\_storage\_initializer\_} is instantiated in
+the \Aa code for this purpose.
 \end{itemize}
 
-The AhirV2 flow produces a modular system, and by default,
-produces one VHDL entity for every function in the original
-program.  Further, the concept of message pipes is native
-to the \Aa and \vC descriptions.  Thus, it is easy to
-map parallel programs or programs consisting of multiple
-concurrent processes to hardware.
+\subsection{{\bf AaLinkExtMem}}
 
-\subsection{Pipelines}
-
-A pipeline is a powerful mechanism by which an application
-can be parallelized.
-
-Consider the following pipeline which has two stages
-{\bf foo} and {\bf bar}:  
+This tool takes a list of \Aa files, elaborates the program,
+does memory space decomposition.  The externally visible memory space is
+linked in one of two ways: either it is assumed to be external
+and all accesses to it are routed out of the \Aa program,
+or it is assumed to be internal and assumed to consist of
+a memory object (an array of bytes).  External pointer dereferences
+are handled as if they are directed at this memory object.
 \begin{verbatim}
-Environment --> foo --> bar --> Environment
+AaLinkExtMem [-I n] [-E obj-name] bytecode.o > bytecode.aa
 \end{verbatim}
-The stage {\bf foo} takes a 32-bit
-integer from the external world, complements it and passes it on to stage
-bar.  The stage {\bf bar} takes the 32-bit number from {\bf foo}, complements
-it and sends it to the external world (in effect, nothing useful
-is done, this is only an illustration).
+The generated \Aa code is sent to {\bf stdout} and all informational
+messages are sent to {\bf stderr}.  On success, the tool returns 0.
 
-If we are writing this pipe-line as a program, we could implement
-two independent processes (or threads) and use named pipes to
-perform the communication between these processes/threads (and the
-``outside´´ world).  For example:
+The options:
+\begin{itemize}
+\item {\bf -I n}: specifies that external references to memory
+are to be mapped as if they are to an internal object whose size
+is $n$ bytes.
+\item {\bf -E obj-name} : specifies that the object to which
+external references are mapped is to be named obj-name.
+\end{itemize}
+We recommend that you use the {\bf -I} and {\bf -E} options to
+locate externally visible memory into a specified object in the
+\Aa program.   
+
+If the {\bf -I} option is not used, then all external memory
+references are routed out of the \Aa program through pipes.
+In this case, if the \Aa compiler determines that there is some pointer 
+in the program which can point
+to both internal and external memory, then this will be
+declared as an error!  
+
+\subsection{{\bf Aa2VC}}
+
+This tool takes a list of \Aa programs and converts them
+to a \vC description. 
 \begin{verbatim}
-#include <iolib.h>
-void foo()
-{
-   while(1)
-   {
-     uint32_t data = read_uint32("inpipe");
-     write_uint32("midpipe", ~data);
-   }
-}
-
-void bar()
-{
-   while(1)
-   {
-     uint32_t data = read_uint32("midpipe");
-     write_uint32("outpipe", ~data);
-   }
-}
+Aa2VC [-O] [-C] [-I obj-name] file1.aa file2.aa ...  > result.vc
 \end{verbatim}
-The two functions can be compiled into separate processes
-or threads in a multi-threaded program (using pthreads, for
-example), and one gets a software pipeline, in which
-the inter-process communication is done using the
-read/write function calls, which use named pipes.
+The generated \vC code is sent to {\bf stdout} and all informational
+messages are sent to {\bf stderr}.  On success the tool returns 0.
 
-One can also map this pipeline to a VHDL system, using the
-following flow.  One uses the standard flow that has already
-been described:
+The options:
+\begin{itemize}
+\item {\bf -O} : if used, sequential statement blocks are parallelized
+by doing dependency analysis.
+\item {\bf -C} : if used, a C stub is created for every module that
+is not called from within the system.  These stubs can be used to
+interface to a VHDL simulator (or even drive hardware) to verify
+the VHDL code generated by downstream tools.
+\item {\bf -I obj-name} : if specified, all external memory references
+are considered as being directed at the storage object named obj-name.
+If not specified, then the tool will throw an error if it finds
+a pointer dereference that cannot be resolved as pointing only to
+storage objects declared inside the \Aa program.
+\end{itemize}
+
+\subsection{\bf vc2vhdl}
+
+Takes a collection of \vC descriptions and converts them to
+an AHIR system described in VHDL.
 \begin{verbatim}
-clang -std=gnu89 -I../../../iolib/ -emit-llvm -c prog.c
-llvm2aa prog.o | vcFormat >  prog.o.aa
-Aa2VC -O -I mempool -C prog.o.aa | vcFormat > prog.o.aa.vc
-vc2vhdl -C -s ghdl -T foo -T bar -f prog.o.aa.vc\
-           | vhdlFormat > system.vhdl
+vc2vhdl [-O] [-C] [-a] [-e <entity-name] [-w]\
+         -t/-T foo [-t/-T bar -t/-T bar2 ...]\
+         -f file1.vc -f file2.vc ...  > system.vhdl
 \end{verbatim}
-Note that in this case, we use the -T option in vc2vhdl to
-specify that foo and bar are free-running top-level modules.
-The resulting AHIR system in system.vhdl implements the pipeline:
-the system has interfaces corresponding to the pipes inpipe and
-outpipe through which data is exchanged.
+
+The options:
+\begin{itemize}
+\item {\bf -t} : to specify the modules which are to be 
+accessible from the ports of the generated VHDL system.
+Such modules have to be top-level (that is, they cannot
+be called from within the program).
+Multiple top-level modules can be specified in this way.
+The control and argument ports for these modules are
+visible at the interface of the generated AHIR system.
+\item {\bf -T} : to specify top-level modules which are to be 
+free-running inside the AHIR system.
+Multiple top-level modules can be specified in this way.
+Such modules do not have any arguments and do not return
+any values.  Their only mechanism of communication with
+the world outside the AHIR system is through pipes.
+The control ports for these modules are
+{\bf not visible} at the interface of the generated AHIR system.
+In the AHIR system, these modules are started on reset
+and are run forever (restarted after they finish, forever).
+\item {\bf -f} : specifies the \vC files to be analyzed. 
+Multiple \vC files may be specified.  An object must be
+defined before it is used, so the \vC files must be 
+specified in the correct order.
+\item {\bf -O} : optimize the generated VHDL by compacting
+the control-path.  This does not change the resulting
+hardware, but makes the generated VHDL file smaller.
+\item {\bf -C} : the VHDL code has a system test bench which
+interfaces to foreign code using a VHPI/Modelsim-FLI interface.
+If this is not specified, the  generated test bench simply
+instantiates the system and starts all top-level modules
+off (you will need to fill in your own test bench here).
+The C testbench is usually easier to write (it probably
+already exists in the form of the original program).
+\item {\bf -a} : try to minimize the area of the resulting
+VHDL by sharing operators to the maximum extent possible
+(allowing potential contention for resources).  This will
+result in a slower (usually by 2X) system, but will
+also reduce the area (usually by 0.5X).  If not specified,
+two operations will be mapped to the same
+operator  only if it can be proved that they cannot be active simultaneously.
+\item {\bf -e top-entity-name} : The generated top-level VHDL entity
+corresponding to the AHIR system is named top-entity-name.  The default
+is test\_system.
+\item {\bf -w} :  If specified, the VHDL system and test-bench are
+generated as separate unformatted VHDL files.  You will need to
+format these using the vhdlFormat command.
+\item {\bf -s ghdl/modelsim} :  If {\bf ghdl} is specified
+with the -s option, then the generated testbench (if -C is specified)
+uses the VHPI interface to link with foreign code.  Otherwise,
+the generated testbench (if -C is specified) uses the Modelsim FLI
+interface to link with foreign code.
+\end{itemize}
+
+The tool performs concurrency analysis to determine operations which
+can be mapped to the same physical operator without the need for
+arbitration.  It also instantiates separate memory subsystems for
+the disjoint memory spaces (in practice many of the memory spaces
+are small and are converted to register banks).
+
+\subsection{Miscellaneous: {\bf vcFormat} and {\bf vhdlFormat}}
+
+The outputs produced by {\bf Aa2VC} and {\bf vc2vhdl} are
+not well formatted.  One can format \Aa and \vC files
+using  {\bf vcFormat} as follows
+\begin{verbatim}
+vcFormat < unformatted-vc/aa-file  > formatted-vc/aa-file
+\end{verbatim}
+and similarly use {\bf vhdlFormat} to format generated
+VHDL files.
+
 
 \begin{thebibliography}{99}
 \bibitem{ref:dsd2010}
