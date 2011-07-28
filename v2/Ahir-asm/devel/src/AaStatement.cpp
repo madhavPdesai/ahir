@@ -3124,6 +3124,8 @@ void AaSwitchStatement::Write_VC_Links(bool optimize_flag,
   ofile << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
+  AaScope* pscope = this->Get_Scope();
+  assert(pscope->Is("AaBranchBlockStatement"));
 
   vector<string> reqs, acks;
   // links in the expression tree.
@@ -3161,7 +3163,13 @@ void AaSwitchStatement::Write_VC_Links(bool optimize_flag,
       if(!optimize_flag)
 	this->_choice_pairs[idx].second->Write_VC_Links(hier_id, ofile);
       else
-	this->_choice_pairs[idx].second->Write_VC_Links_Optimized(hier_id, ofile);
+	{
+	  ((AaBranchBlockStatement*)pscope)->
+	    Write_VC_Links_Optimized(hier_id,
+				     this->_choice_pairs[idx].second,
+				     ofile);	  
+
+	}
 
     }
 
@@ -3182,7 +3190,12 @@ void AaSwitchStatement::Write_VC_Links(bool optimize_flag,
       if(!optimize_flag)
 	this->_default_sequence->Write_VC_Links(hier_id,ofile);
       else
-	this->_default_sequence->Write_VC_Links_Optimized(hier_id,ofile);
+	{
+	  ((AaBranchBlockStatement*)pscope)->
+	    Write_VC_Links_Optimized(hier_id,
+				     this->_default_sequence,
+				     ofile);	  
+	}
 
     }
 }
@@ -3558,13 +3571,19 @@ void AaIfStatement::Write_VC_Links(bool optimize_flag, string hier_id,ostream& o
 
   Write_VC_Link(this->Get_VC_Name()+"_branch",reqs,acks,ofile);
 
+  AaScope* pscope = this->Get_Scope();
+  assert(pscope->Is("AaBranchBlockStatement"));
+
   if(this->_if_sequence)
     {
       if(!optimize_flag)
 	this->_if_sequence->Write_VC_Links(hier_id,ofile);
       else
-	this->_if_sequence->Write_VC_Links_Optimized(hier_id,ofile);
-	
+	{
+	  ((AaBranchBlockStatement*)pscope)->Write_VC_Links_Optimized(hier_id,
+								      _if_sequence,
+								      ofile);
+	}
     }
 
   if(this->_else_sequence)
@@ -3572,7 +3591,11 @@ void AaIfStatement::Write_VC_Links(bool optimize_flag, string hier_id,ostream& o
       if(!optimize_flag)
 	this->_else_sequence->Write_VC_Links(hier_id,ofile);
       else
-	this->_else_sequence->Write_VC_Links_Optimized(hier_id,ofile);
+	{
+	  ((AaBranchBlockStatement*)pscope)->Write_VC_Links_Optimized(hier_id,
+								      _else_sequence,
+								      ofile);
+	}
     }
 }
 

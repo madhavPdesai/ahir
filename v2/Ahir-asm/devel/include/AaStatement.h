@@ -706,6 +706,10 @@ class AaBranchBlockStatement: public AaSeriesBlockStatement
 				       string sink_link,
 				       ostream& ofile);
   virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
+  void Write_VC_Links_Optimized(string hier_id,
+				AaStatementSequence* sseq_in,
+				ostream& ofile);
+
 
   virtual string Get_VC_Name() {return("branch_block_stmt_" + Int64ToStr(this->Get_Index()));}
 };

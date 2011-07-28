@@ -863,12 +863,19 @@ void AaBranchBlockStatement::Write_VC_Control_Path_Optimized(string source_link,
 
 void AaBranchBlockStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
-  if(_statement_sequence->Get_Statement_Count() > 0)
+  hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Name());
+  this->Write_VC_Links_Optimized(hier_id, _statement_sequence, ofile);
+}
+
+void AaBranchBlockStatement::Write_VC_Links_Optimized(string hier_id,
+						      AaStatementSequence* sseq_in,
+						      ostream& ofile)
+{
+  if(sseq_in->Get_Statement_Count() > 0)
     {
-      hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Name());
 
       vector<AaStatementSequence* > linear_segment_vector;
-      this->Identify_Maximal_Sequences(_statement_sequence,linear_segment_vector);
+      this->Identify_Maximal_Sequences(sseq_in,linear_segment_vector);
 
       for(int idx = 0, fidx = linear_segment_vector.size();  idx < fidx; idx++)
 	{
