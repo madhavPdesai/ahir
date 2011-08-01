@@ -875,36 +875,43 @@ void AaProgram::Coalesce_Storage()
 	}
 
       if(lau_set.size() == 0)
-      {
-	AaRoot::Warning("memory space " + new_ms->Get_VC_Identifier() + " has no objects", NULL);
-	continue;
-      }	    
-
-      // find the gcd
-      int word_size = GCD(lau_set);
-      int max_access_width = *(lau_set.rbegin());
-      int base_address = 0; 
-      int addr_width = CeilLog2(total_size/word_size); // address all-one will not be used..
-
-      new_ms->_total_size = (total_size/word_size);
-      new_ms->_word_size = word_size;
-      new_ms->_address_width = addr_width;
-      new_ms->_max_access_width = max_access_width;
-
+	{
+	  AaRoot::Warning("memory space " + new_ms->Get_VC_Identifier() + " is not accessed ", NULL);
+	  
+	  new_ms->_total_size = (total_size);
+	  new_ms->_word_size = 1;
+	  new_ms->_address_width = CeilLog2(total_size); // address all-one will not be used..
+	  new_ms->_max_access_width = 1;
+	}	    
+      else
+	{
+	  // find the gcd
+	  int word_size = GCD(lau_set);
+	  int max_access_width = *(lau_set.rbegin());
+	  int addr_width = CeilLog2(total_size/word_size); // address all-one will not be used..
+	  
+	  new_ms->_total_size = (total_size/word_size);
+	  new_ms->_word_size = word_size;
+	  new_ms->_address_width = addr_width;
+	  new_ms->_max_access_width = max_access_width;
+	}
+      
       // assign the base addresses and the word-size to the
       // objects..
+      int base_address = 0; 
       for(set<AaStorageObject*,AaRootCompare>::iterator iter = 
 	    new_ms->_objects.begin();
 	  iter !=  new_ms->_objects.end();
 	  iter++)
 	{
 	  AaStorageObject* u = (*iter);
-
+	  
 	  ((AaStorageObject*)u)->Set_Base_Address(base_address);
-	  ((AaStorageObject*)u)->Set_Word_Size(word_size);
-	  ((AaStorageObject*)u)->Set_Address_Width(addr_width);
-
-	  base_address += (((AaStorageObject*)u)->Get_Type()->Size())/word_size;
+	  ((AaStorageObject*)u)->Set_Word_Size(new_ms->_word_size);
+	  ((AaStorageObject*)u)->Set_Address_Width(new_ms->_address_width);
+	  
+	  base_address += (((AaStorageObject*)u)->Get_Type()->Size())/
+	    new_ms->_word_size;
 	}
     }
 

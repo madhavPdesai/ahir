@@ -2322,8 +2322,12 @@ void AaMergeStatement::Write_VC_Control_Path(ostream& ofile)
 		{
 		  ofile << ";;[" << (*siter)->Get_VC_Name() << "] {" << endl;
 		    
+		  ofile << "||[" << (*siter)->Get_VC_Name() << "_sources] {" << endl;
 		  // the sources to the phi must be computed.
 		  (*siter)->Write_VC_Source_Control_Paths(ofile);
+
+	
+		  ofile << "}" << endl;
 
 		  // issue a req to the phi.
 		  ofile << "$T [" << (*siter)->Get_VC_Name() << "_req] " << endl;
@@ -2451,7 +2455,10 @@ void AaMergeStatement::Write_VC_Links(string hier_id, ostream& ofile)
 						   phi_stmt->Get_VC_Name());
 
 	      // finish all the sources for the phi's...
-	      phi_stmt->_source_pairs[pidx].second->Write_VC_Links(req_hier_id,ofile);
+	      string src_hier_id = Augment_Hier_Id(req_hier_id,
+						   phi_stmt->Get_VC_Name() + "_sources");
+
+	      phi_stmt->_source_pairs[pidx].second->Write_VC_Links(src_hier_id,ofile);
 
 	      reqs.push_back(req_hier_id + "/" + phi_stmt->Get_VC_Name() + "_req");
 	    }
@@ -3442,11 +3449,6 @@ void AaIfStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofile)
 
   ofile << _test_expression->Get_VC_Name() << "_place |-> (" << test_place_successors << ")" << endl;  
 
-  AaStatement* last_if = NULL;
-  AaStatement* first_if = NULL;
-  AaStatement* last_else = NULL;
-  AaStatement* first_else = NULL;
-
 
   // now the if-sequence of statments
   if(_if_sequence != NULL)
@@ -3464,6 +3466,11 @@ void AaIfStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofile)
 									   ofile);
 	
     }
+  else
+    {
+      ofile << exit_place << " <-| (" << if_link << ")" << endl;
+    }
+
   if(_else_sequence != NULL)
     {
       if(!optimize_flag)
@@ -3476,6 +3483,10 @@ void AaIfStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofile)
 									   _else_sequence,
 									   exit_place,
 									   ofile);
+    }
+  else
+    {
+      ofile << exit_place << " <-| (" << else_link << ")" << endl;
     }
 
 }
