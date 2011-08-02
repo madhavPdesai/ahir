@@ -828,6 +828,19 @@ package BaseComponents is
       clk, reset : in  std_logic);
   end component;
 
+  component InputPortNoData
+    generic (num_reqs: integer;
+             no_arbitration: boolean);
+    port (
+      -- pulse interface with the data-path
+      req        : in  BooleanArray(num_reqs-1 downto 0);
+      ack        : out BooleanArray(num_reqs-1 downto 0);
+      -- ready/ready interface with outside world
+      oreq       : out std_logic;
+      oack       : in  std_logic;
+      clk, reset : in  std_logic);
+  end component;
+
 
   component InputPortLevel
     generic (num_reqs: integer; 
@@ -874,6 +887,18 @@ package BaseComponents is
       clk, reset : in  std_logic);
   end component;
 
+
+  component OutputPortNoData
+    generic(num_reqs: integer;
+            no_arbitration: boolean);
+    port (
+      req        : in  BooleanArray(num_reqs-1 downto 0);
+      ack        : out BooleanArray(num_reqs-1 downto 0);
+      oreq       : out std_logic;
+      oack       : in  std_logic;
+      clk, reset : in  std_logic);
+  end component;
+  
   component OutputPortLevel
     generic(num_reqs: integer;
             data_width: integer;

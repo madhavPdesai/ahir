@@ -38,11 +38,12 @@ end StoreCompleteShared;
 architecture Behave of StoreCompleteShared is
 begin  -- Behave
 
+
   odemux: OutputDemuxBaseNoData
     generic map (
-	twidth =>  tag_length,
-	nreqs  => num_reqs,
-	no_arbitration => true)
+      twidth =>  tag_length,
+      nreqs  => num_reqs,
+      no_arbitration => true)
     port map (
       reqL   => mack,                   -- cross-over (mack from mem-subsystem)
       ackL   => mreq,                   -- cross-over 

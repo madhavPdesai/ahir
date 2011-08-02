@@ -37,11 +37,11 @@ begin  -- Behave
 
   odemux: OutputDeMuxBase
     generic map (
-  	iwidth => data_width,
-  	owidth =>  data_width*num_reqs,
-	twidth =>  tag_length,
-	nreqs  => num_reqs,
-	no_arbitration => no_arbitration)
+      iwidth => data_width,
+      owidth =>  data_width*num_reqs,
+      twidth =>  tag_length,
+      nreqs  => num_reqs,
+      no_arbitration => no_arbitration)
     port map (
       reqL   => mack,                   -- cross-over (mack from mem-subsystem)
       ackL   => mreq,                   -- cross-over 
@@ -52,6 +52,7 @@ begin  -- Behave
       dataR => dataR,
       clk   => clk,
       reset => reset);
+  
   
 end Vanilla;
 

@@ -25,6 +25,182 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.Types.all;
+
+package Utilities is
+
+  function Convert_To_String(val : integer) return STRING; -- convert val to string.
+  function Convert_SLV_To_String(val : std_logic_vector) return STRING; -- convert val to string.
+  
+  function Ceil (constant x, y : integer)   return integer;
+
+  function Ceil_Log2( constant x : integer)  return integer;
+
+  function Max (constant x : NaturalArray)    return natural;
+
+  function Maximum(x,y: integer)   return integer;
+  function Minimum(x,y: integer)   return integer;  
+  
+  function All_Entries_Same ( x : NaturalArray) return boolean;
+  function Is_At_Most_One_Hot(x: BooleanArray) return Boolean;
+  
+end Utilities;
+
+
+package body Utilities is
+
+    -- Thanks to: D. Calvet calvet@hep.saclay.cea.fr
+    -- modified to support negative values
+  function Convert_To_String(val : integer) return STRING is
+	variable result : STRING(11 downto 1) := (others => '0'); -- smallest natural, longest string
+	variable pos    : NATURAL := 1;
+	variable tmp : integer;
+	variable digit  : NATURAL;
+	variable is_negative : boolean;
+  begin
+	tmp := val;
+	if val < 0 then
+	  tmp := -val;
+	end if;
+	is_negative := val < 0;
+	
+	loop
+		digit := abs(tmp MOD 10);
+	    	tmp := tmp / 10;
+	    	result(pos) := character'val(character'pos('0') + digit);
+	    	pos := pos + 1;
+	    	exit when tmp = 0;
+	end loop;
+	
+	if is_negative then
+	  result(pos) := '-';
+	  pos := pos + 1;
+	end if;
+	
+	return result((pos-1) downto 1);
+  end Convert_To_String;
+  
+  function Convert_SLV_To_String(val : std_logic_vector) return STRING is
+	alias lval: std_logic_vector(1 to val'length) is val;
+        variable ret_var: string( 1 to lval'length);
+   begin
+        for I in lval'range loop
+                if(lval(I) = '1') then
+			ret_var(I) := '1';
+		elsif (lval(I) = '0') then
+			ret_var(I) := '0';
+		else
+			ret_var(I) := 'X';
+		end if;
+        end loop;
+        return(ret_var);
+   end Convert_SLV_To_String;
+    
+
+  
+  function Ceil (
+    constant x, y : integer)
+    return integer is
+    variable ret_var : integer;
+  begin
+    ret_var := x/y;
+    if(ret_var*y < y) then
+      ret_var := ret_var + 1;
+    end if;
+    return(ret_var);
+  end Ceil;
+
+  function Ceil_Log2
+    ( constant x : integer)
+    return integer is
+    variable ret_var : integer;
+  begin
+    ret_var := 0;
+    if(x > 1) then
+      while((2**ret_var) < x) loop
+        ret_var := ret_var + 1;
+      end loop;
+    end if;
+    return(ret_var);
+  end Ceil_Log2;
+
+  function Max
+    (constant x : NaturalArray)
+    return natural is
+    variable t, max_var : natural;
+  begin
+    max_var := 0;
+    for I in x'low(1) to x'high(1) loop
+      t := x(I);
+      if( t > max_var) then
+        max_var := t;
+      end if;
+    end loop;  -- I
+    return(max_var);
+  end function;
+
+  function Maximum(x,y: integer)   return integer is
+    begin
+      if(x > y) then
+        return x;
+      else
+        return y;
+      end if;
+    end function Maximum;
+    
+  function Minimum(x,y: integer)   return integer is
+    begin
+      if(x > y) then
+        return y;
+      else
+        return x;
+      end if;
+    end function Minimum;
+    
+
+  function All_Entries_Same ( x : NaturalArray) return boolean is
+    variable ret_var : boolean;
+    variable t : natural;
+    alias lx : NaturalArray(x'length - 1 downto 0) is x;
+  begin
+    ret_var := true;
+    if(lx'length > 1) then
+      t := lx(lx'high);
+      for I in lx'high-1 downto lx'low loop
+        if(t /= lx(I)) then
+          ret_var := false;
+          exit;
+        end if;
+      end loop;  -- I
+    end if;
+    return(ret_var);
+  end All_Entries_Same;
+
+  function Is_At_Most_One_Hot(x: BooleanArray) return Boolean is
+    variable ret_var : boolean;
+    alias lx : BooleanArray(1 to x'length) is x;
+    variable count : integer;
+  begin
+    count := 0;
+    for I  in lx'range loop
+      if(lx(I)) then
+        count := count + 1;
+      end if;
+    end loop;  -- I
+    if(count > 1) then
+      ret_var := false;
+    else
+      ret_var := true;
+    end if;
+    return(ret_var);
+  end Is_At_Most_One_Hot;
+  
+end Utilities;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
 use ahir.Utilities.all;
 
 library ieee_proposed;
@@ -1239,182 +1415,6 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Types.all;
 
-package Utilities is
-
-  function Convert_To_String(val : integer) return STRING; -- convert val to string.
-  function Convert_SLV_To_String(val : std_logic_vector) return STRING; -- convert val to string.
-  
-  function Ceil (constant x, y : integer)   return integer;
-
-  function Ceil_Log2( constant x : integer)  return integer;
-
-  function Max (constant x : NaturalArray)    return natural;
-
-  function Maximum(x,y: integer)   return integer;
-  function Minimum(x,y: integer)   return integer;  
-  
-  function All_Entries_Same ( x : NaturalArray) return boolean;
-  function Is_At_Most_One_Hot(x: BooleanArray) return Boolean;
-  
-end Utilities;
-
-
-package body Utilities is
-
-    -- Thanks to: D. Calvet calvet@hep.saclay.cea.fr
-    -- modified to support negative values
-  function Convert_To_String(val : integer) return STRING is
-	variable result : STRING(11 downto 1) := (others => '0'); -- smallest natural, longest string
-	variable pos    : NATURAL := 1;
-	variable tmp : integer;
-	variable digit  : NATURAL;
-	variable is_negative : boolean;
-  begin
-	tmp := val;
-	if val < 0 then
-	  tmp := -val;
-	end if;
-	is_negative := val < 0;
-	
-	loop
-		digit := abs(tmp MOD 10);
-	    	tmp := tmp / 10;
-	    	result(pos) := character'val(character'pos('0') + digit);
-	    	pos := pos + 1;
-	    	exit when tmp = 0;
-	end loop;
-	
-	if is_negative then
-	  result(pos) := '-';
-	  pos := pos + 1;
-	end if;
-	
-	return result((pos-1) downto 1);
-  end Convert_To_String;
-  
-  function Convert_SLV_To_String(val : std_logic_vector) return STRING is
-	alias lval: std_logic_vector(1 to val'length) is val;
-        variable ret_var: string( 1 to lval'length);
-   begin
-        for I in lval'range loop
-                if(lval(I) = '1') then
-			ret_var(I) := '1';
-		elsif (lval(I) = '0') then
-			ret_var(I) := '0';
-		else
-			ret_var(I) := 'X';
-		end if;
-        end loop;
-        return(ret_var);
-   end Convert_SLV_To_String;
-    
-
-  
-  function Ceil (
-    constant x, y : integer)
-    return integer is
-    variable ret_var : integer;
-  begin
-    ret_var := x/y;
-    if(ret_var*y < y) then
-      ret_var := ret_var + 1;
-    end if;
-    return(ret_var);
-  end Ceil;
-
-  function Ceil_Log2
-    ( constant x : integer)
-    return integer is
-    variable ret_var : integer;
-  begin
-    ret_var := 0;
-    if(x > 1) then
-      while((2**ret_var) < x) loop
-        ret_var := ret_var + 1;
-      end loop;
-    end if;
-    return(ret_var);
-  end Ceil_Log2;
-
-  function Max
-    (constant x : NaturalArray)
-    return natural is
-    variable t, max_var : natural;
-  begin
-    max_var := 0;
-    for I in x'low(1) to x'high(1) loop
-      t := x(I);
-      if( t > max_var) then
-        max_var := t;
-      end if;
-    end loop;  -- I
-    return(max_var);
-  end function;
-
-  function Maximum(x,y: integer)   return integer is
-    begin
-      if(x > y) then
-        return x;
-      else
-        return y;
-      end if;
-    end function Maximum;
-    
-  function Minimum(x,y: integer)   return integer is
-    begin
-      if(x > y) then
-        return y;
-      else
-        return x;
-      end if;
-    end function Minimum;
-    
-
-  function All_Entries_Same ( x : NaturalArray) return boolean is
-    variable ret_var : boolean;
-    variable t : natural;
-    alias lx : NaturalArray(x'length - 1 downto 0) is x;
-  begin
-    ret_var := true;
-    if(lx'length > 1) then
-      t := lx(lx'high);
-      for I in lx'high-1 downto lx'low loop
-        if(t /= lx(I)) then
-          ret_var := false;
-          exit;
-        end if;
-      end loop;  -- I
-    end if;
-    return(ret_var);
-  end All_Entries_Same;
-
-  function Is_At_Most_One_Hot(x: BooleanArray) return Boolean is
-    variable ret_var : boolean;
-    alias lx : BooleanArray(1 to x'length) is x;
-    variable count : integer;
-  begin
-    count := 0;
-    for I  in lx'range loop
-      if(lx(I)) then
-        count := count + 1;
-      end if;
-    end loop;  -- I
-    if(count > 1) then
-      ret_var := false;
-    else
-      ret_var := true;
-    end if;
-    return(ret_var);
-  end Is_At_Most_One_Hot;
-  
-end Utilities;
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-library ahir;
-use ahir.Types.all;
-
 package BaseComponents is
 
   -----------------------------------------------------------------------------
@@ -1440,6 +1440,20 @@ package BaseComponents is
       symbol_out : out boolean); 
   end component;
 
+  component out_transition
+      port (preds      : in   BooleanArray;
+              symbol_out : out  boolean);
+  end component;
+
+  component level_to_pulse 
+    port (clk   : in  std_logic;
+          reset : in  std_logic;
+          lreq: in std_logic;
+          lack: out std_logic;
+          preq: out boolean;
+          pack: in boolean);
+  end component;
+  
   component control_delay_element 
     generic (delay_value: integer := 0);
     port (
@@ -1449,11 +1463,26 @@ package BaseComponents is
       reset : in  std_logic);
   end component;
 
+  component pipeline_interlock 
+    port (trigger: in boolean;
+          enable : in boolean;
+          symbol_out : out  boolean;
+          clk: in std_logic;
+          reset: in std_logic);
+  end component;
+
   component join is
      port ( preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
 	reset: in std_logic);
+  end component;
+
+  component join2 
+    port ( pred0, pred1      : in   Boolean;
+           symbol_out : out  boolean;
+           clk: in std_logic;
+           reset: in std_logic);
   end component;
 
   component join_with_input is
@@ -1467,10 +1496,12 @@ package BaseComponents is
   component auto_run 
   	generic (
     		use_delay : boolean);
-  	port (clk   : in  std_logic;
-        	reset : in  std_logic;
-        	start: out std_logic;
-        	fin: in std_logic);
+          port (clk   : in  std_logic;
+    	reset : in  std_logic;
+	start_req: out std_logic;
+        start_ack: in std_logic;
+        fin_req: out std_logic;
+        fin_ack: in std_logic);
   end component;
 
   -----------------------------------------------------------------------------
@@ -2069,6 +2100,126 @@ package BaseComponents is
   end component CallMediator;
 
   -----------------------------------------------------------------------------
+  -- split call arbiters..
+  --   Modules will now have a split request-complete handshake
+  --   (just like operators)
+  -----------------------------------------------------------------------------
+  component SplitCallArbiter
+    generic(num_reqs: integer;
+	  call_data_width: integer;
+	  return_data_width: integer;
+	  caller_tag_length: integer;
+          callee_tag_length: integer);
+    port ( -- ready/ready handshake on all ports
+      -- ports for the caller
+      call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+      call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+      call_data   : in  std_logic_vector((num_reqs*call_data_width)-1 downto 0);
+      call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+      -- call port connected to the called module
+      call_mreq   : out std_logic;
+      call_mack   : in  std_logic;
+      call_mdata  : out std_logic_vector(call_data_width-1 downto 0);
+      call_mtag   : out std_logic_vector(callee_tag_length-1 downto 0);
+      -- similarly for return, initiated by the caller
+      return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+      return_acks : out std_logic_vector(num_reqs-1 downto 0);
+      return_data : out std_logic_vector((num_reqs*return_data_width)-1 downto 0);
+      return_tag  : out std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+      -- return from function
+      return_mreq : out std_logic;
+      return_mack : in std_logic;
+      return_mdata : in  std_logic_vector(return_data_width-1 downto 0);
+      return_mtag : in  std_logic_vector(callee_tag_length-1 downto 0);
+      clk: in std_logic;
+      reset: in std_logic);
+  end component SplitCallArbiter;
+
+  component SplitCallArbiterNoInargs
+  generic(num_reqs: integer;
+	  return_data_width: integer;
+	  caller_tag_length: integer;
+          callee_tag_length: integer);
+  port ( -- ready/ready handshake on all ports
+    -- ports for the caller
+    call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+    call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+    call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- call port connected to the called module
+    call_mreq   : out std_logic;
+    call_mack   : in  std_logic;
+    call_mtag   : out std_logic_vector(callee_tag_length-1 downto 0);
+    -- similarly for return, initiated by the caller
+    return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+    return_acks : out std_logic_vector(num_reqs-1 downto 0);
+    return_data : out std_logic_vector((num_reqs*return_data_width)-1 downto 0);
+    return_tag  : out std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- return from function
+    return_mreq : out std_logic;
+    return_mack : in std_logic;
+    return_mdata : in  std_logic_vector(return_data_width-1 downto 0);
+    return_mtag : in  std_logic_vector(callee_tag_length-1 downto 0);
+    clk: in std_logic;
+    reset: in std_logic);
+  end component SplitCallArbiterNoInargs;
+
+  component SplitCallArbiterNoOutargs
+    generic(num_reqs: integer;
+	  call_data_width: integer;
+	  caller_tag_length: integer;
+          callee_tag_length: integer);
+  port ( -- ready/ready handshake on all ports
+    -- ports for the caller
+    call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+    call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+    call_data   : in  std_logic_vector((num_reqs*call_data_width)-1 downto 0);
+    call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- call port connected to the called module
+    call_mreq   : out std_logic;
+    call_mack   : in  std_logic;
+    call_mdata  : out std_logic_vector(call_data_width-1 downto 0);
+    call_mtag   : out std_logic_vector(callee_tag_length-1 downto 0);
+    -- similarly for return, initiated by the caller
+    return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+    return_acks : out std_logic_vector(num_reqs-1 downto 0);
+    return_tag  : out std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- return from function
+    return_mreq : out std_logic;
+    return_mack : in std_logic;
+    return_mtag : in  std_logic_vector(callee_tag_length-1 downto 0);
+    clk: in std_logic;
+    reset: in std_logic);
+  end component SplitCallArbiterNoOutargs;
+
+
+
+  component SplitCallArbiterNoInargsNoOutargs
+    generic(num_reqs: integer;
+            caller_tag_length: integer;
+            callee_tag_length: integer);
+  port ( -- ready/ready handshake on all ports
+    -- ports for the caller
+    call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+    call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+    call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- call port connected to the called module
+    call_mreq   : out std_logic;
+    call_mack   : in  std_logic;
+    call_mtag   : out std_logic_vector(callee_tag_length-1 downto 0);
+    -- similarly for return, initiated by the caller
+    return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+    return_acks : out std_logic_vector(num_reqs-1 downto 0);
+    return_tag  : out std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- return from function
+    return_mreq : out std_logic;
+    return_mack : in std_logic;
+    return_mtag : in  std_logic_vector(callee_tag_length-1 downto 0);
+    clk: in std_logic;
+    reset: in std_logic);
+  end component SplitCallArbiterNoInargsNoOutargs;
+
+
+  -----------------------------------------------------------------------------
   -- IO ports
   -----------------------------------------------------------------------------
   component InputPort
@@ -2084,6 +2235,19 @@ package BaseComponents is
       oreq       : out std_logic;
       oack       : in  std_logic;
       odata      : in  std_logic_vector(data_width-1 downto 0);
+      clk, reset : in  std_logic);
+  end component;
+
+  component InputPortNoData
+    generic (num_reqs: integer;
+             no_arbitration: boolean);
+    port (
+      -- pulse interface with the data-path
+      req        : in  BooleanArray(num_reqs-1 downto 0);
+      ack        : out BooleanArray(num_reqs-1 downto 0);
+      -- ready/ready interface with outside world
+      oreq       : out std_logic;
+      oack       : in  std_logic;
       clk, reset : in  std_logic);
   end component;
 
@@ -2133,6 +2297,18 @@ package BaseComponents is
       clk, reset : in  std_logic);
   end component;
 
+
+  component OutputPortNoData
+    generic(num_reqs: integer;
+            no_arbitration: boolean);
+    port (
+      req        : in  BooleanArray(num_reqs-1 downto 0);
+      ack        : out BooleanArray(num_reqs-1 downto 0);
+      oreq       : out std_logic;
+      oack       : in  std_logic;
+      clk, reset : in  std_logic);
+  end component;
+  
   component OutputPortLevel
     generic(num_reqs: integer;
             data_width: integer;
@@ -6113,35 +6289,18 @@ entity auto_run is
     use_delay : boolean := true);
   port (clk   : in  std_logic;
     	reset : in  std_logic;
-	start: out std_logic;
-	fin: in std_logic);
+	start_req: out std_logic;
+        start_ack: in std_logic;
+        fin_req: out std_logic;
+        fin_ack: in std_logic);
 end auto_run;
 
 architecture default_arch of auto_run is
-  type AutoRunState is (idle, busy);
-  signal state: AutoRunState; 
+
 begin  
 
-   process(clk)
-     variable nstate: AutoRunState;
-   begin
-     nstate := state;
-     if(reset = '1') then
-        nstate := idle;
-     else
-	if(state = idle) then
-	   nstate := busy;
-	elsif(fin = '1') then
-	   nstate := idle;
-	end if;
-     end if;
-
-     if(clk'event and clk='1') then
-	state <= nstate;
-     end if;
-   end process;
-
-   start <= '1' when state = idle else '0';
+  start_req <= '1';
+  fin_req <= '1';
 
 end default_arch;
 library ieee;
@@ -6221,6 +6380,32 @@ use ahir.Types.all;
 use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
+entity join2 is
+  port ( pred0, pred1      : in   Boolean;
+    	symbol_out : out  boolean;
+	clk: in std_logic;
+	reset: in std_logic);
+end join2;
+
+architecture default_arch of join2 is
+  signal preds: BooleanArray(1 downto 0);
+begin  -- default_arch
+
+  preds <= pred0 & pred1;
+  baseJoin : join
+    port map (preds => preds,
+              symbol_out => symbol_out,
+              clk => clk,
+              reset => reset);
+
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
+library ahir;
+use ahir.Types.all;
+use ahir.subprograms.all;
+use ahir.BaseComponents.all;
+
 entity join is
   port ( preds      : in   BooleanArray;
     	symbol_out : out  boolean;
@@ -6269,9 +6454,11 @@ end join_with_input;
 architecture default_arch of join_with_input is
   signal symbol_out_sig : BooleanArray(0 downto 0);
   signal place_sigs: BooleanArray(preds'range);
+  constant H: integer := preds'high;
+  constant L: integer := preds'low;
 begin  -- default_arch
   
-  placegen: for I in preds'range generate
+  placegen: for I in H downto L generate
     placeBlock: block
 	signal place_pred: BooleanArray(0 downto 0);
     begin
@@ -6284,6 +6471,119 @@ begin  -- default_arch
   
   symbol_out_sig(0) <= symbol_in and AndReduce(place_sigs);
   symbol_out <= symbol_out_sig(0);
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
+
+-- on reset, trigger an AHIR module, and keep
+-- retriggering it..
+entity level_to_pulse is
+  port (clk   : in  std_logic;
+    	reset : in  std_logic;
+        lreq: in std_logic;
+        lack: out std_logic;
+        preq: out boolean;
+        pack: in boolean);
+end level_to_pulse;
+
+architecture default_arch of level_to_pulse is
+  type L2PState is (idle,waiting);
+  signal l2p_state : L2PState;
+begin
+
+  process(clk,reset,lreq, pack, l2p_state)
+    variable nstate : L2PState;
+    variable lack_v : std_logic;
+    variable preq_v : boolean;
+  begin
+    lack_v := '0';
+    preq_v := false;
+    nstate := l2p_state;
+    if(l2p_state = idle) then
+      if(lreq ='1') then
+        preq_v := true;
+        if(pack) then
+          lack_v := '1';
+        else
+          nstate := waiting;
+        end if;
+      end if;
+    else
+      if(pack) then
+        lack_v := '1';
+        nstate := idle;
+      end if;
+    end if;
+
+    lack <= lack_v;
+    preq <= preq_v;
+    
+    if(reset = '1') then
+      nstate := idle;
+    end if;
+
+    if(clk'event and clk = '1') then
+      l2p_state <= nstate;
+    end if;
+    
+  end process;
+  
+end default_arch;
+library ahir;
+use ahir.Types.all;
+use ahir.subprograms.all;
+
+entity out_transition is
+  
+  port (preds      : in   BooleanArray;
+        symbol_out : out  boolean);
+
+end out_transition;
+
+architecture default_arch of out_transition is
+begin  -- default_arch
+
+  -- The transition is enabled only when all preds are true.
+  symbol_out <= AndReduce(preds);
+
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
+library ahir;
+use ahir.Types.all;
+use ahir.subprograms.all;
+use ahir.BaseComponents.all;
+
+entity pipeline_interlock is
+  port (trigger: in boolean;
+        enable : in boolean;
+    	symbol_out : out  boolean;
+	clk: in std_logic;
+	reset: in std_logic);
+end pipeline_interlock;
+
+architecture default_arch of pipeline_interlock is
+  signal symbol_out_sig : BooleanArray(0 downto 0);
+  signal enable_place_pred : BooleanArray(0 downto 0);
+  signal enable_place : Boolean;
+  signal trigger_place_pred : BooleanArray(0 downto 0);
+  signal trigger_place : Boolean;
+  
+
+begin  -- default_arch
+  
+
+  trigger_place_pred(0) <= trigger;
+  pTrig: place generic map(marking => false, bypass => true)
+    port map(trigger_place_pred, symbol_out_sig,trigger_place,clk,reset);
+
+  enable_place_pred(0) <= enable;
+  pEnable: place generic map(marking => true, bypass => true)
+    port map(enable_place_pred, symbol_out_sig,enable_place,clk,reset);
+  
+  symbol_out_sig(0) <= enable_place and trigger_place;
+  symbol_out <= symbol_out_sig(0);
+
 end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -8317,11 +8617,11 @@ begin  -- Behave
 
   odemux: OutputDeMuxBase
     generic map (
-  	iwidth => data_width,
-  	owidth =>  data_width*num_reqs,
-	twidth =>  tag_length,
-	nreqs  => num_reqs,
-	no_arbitration => no_arbitration)
+      iwidth => data_width,
+      owidth =>  data_width*num_reqs,
+      twidth =>  tag_length,
+      nreqs  => num_reqs,
+      no_arbitration => no_arbitration)
     port map (
       reqL   => mack,                   -- cross-over (mack from mem-subsystem)
       ackL   => mreq,                   -- cross-over 
@@ -8332,6 +8632,7 @@ begin  -- Behave
       dataR => dataR,
       clk   => clk,
       reset => reset);
+  
   
 end Vanilla;
 
@@ -8953,6 +9254,74 @@ end Base;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+entity PhiBaseTB is
+end entity;
+
+
+architecture Behave of PhiBaseTB is
+
+	signal a, b, c, d, e, odata : std_logic_vector(4 downto 0);
+	signal f : std_logic_vector(24 downto 0);
+	signal clk, reset: std_logic := '0';
+	signal req: BooleanArray(4 downto 0);
+	signal ack: Boolean;
+
+begin  -- Behave
+
+	a <= (0 => '1', others => '0');
+	b <= (1 => '1', others => '0');
+	c <= (2 => '1', others => '0');
+	d <= (3 => '1', others => '0');
+	e <= (4 => '1', others => '0');
+
+	f <= e & d & c & b & a;
+        
+
+	clk <= not clk after 5 ns;
+
+	process
+	begin
+		req <= (others => false);
+		reset <= '1';
+		wait until clk = '1';
+		
+		reset <= '0';
+		for I in 0 to 4 loop
+		        req <= (others => false);
+			req(I) <= true;
+			while true loop
+				wait until clk = '1';
+                                req(I) <= false;
+				if ack then
+					exit;
+				end if;
+			end loop;
+			assert (odata(I) = '1') report "result mismatch" severity error;
+		end loop;
+
+		wait;
+	end process;
+
+        phi : PhiBase
+          generic map (
+            num_reqs   => 5,
+            data_width => 5)
+          port map ( req => req,
+                     ack => ack,
+                     idata => f,
+                     odata => odata,
+                     clk => clk,
+                     reset => reset);
+end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library ahir;
 use ahir.Types.all;
@@ -9074,6 +9443,234 @@ begin  -- default_arch
   
 
 end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.Components.all;
+use ahir.BaseComponents.all;
+
+entity PortTB is
+  generic
+     ( g_num_req: integer := 2;
+       verbose_mode: boolean := false;
+       tb_id : string := "anonymous"
+     );
+end PortTB;
+
+architecture Behave of PortTB is
+
+    constant data_width : integer := 8;
+    constant num_req : integer := g_num_req;
+    
+    signal reqR, ackR, reqL, ackL : BooleanArray(num_req-1 downto 0);
+    signal din, dout : std_logic_vector((num_req*data_width)-1 downto 0);
+
+    type   Data2D is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
+    signal din_raw, dout_raw: Data2D(num_req-1 downto 0);
+
+    function Build_Data(tmp_addr: in Data2D) return std_logic_vector is
+	variable tmp: std_logic_vector((num_req*data_width)-1 downto 0);
+    begin
+        for I in 0 to num_req-1 loop
+            Insert(tmp,I,tmp_addr(I));
+        end loop;
+	return(tmp);
+    end function Build_Data;
+
+    signal clock, reset : std_logic := '0';
+
+    signal done_flag, success_flag: BooleanArray(num_req-1 downto 0);
+begin
+
+     clock <= not clock after 5 ns;
+
+     process(done_flag)
+     begin
+        if(AndReduce(done_flag))then
+           if(AndReduce(success_flag)) then
+              assert false report "All Tests Have Passed in TB " & tb_id  severity note;
+	   else
+              assert false report "Some Tests Have Failed in TB " & tb_id severity error;
+	   end if;
+        end if;
+     end process;
+    
+     process
+     begin
+	 reset <= '1';
+         wait until clock = '1';
+         reset <= '0' after 1 ns;
+ 	 wait;
+     end process;
+
+     din <= Build_Data(din_raw);
+
+     GenBlockSend: for R in 0 to num_req-1 generate
+
+       process 
+         variable dv: natural;
+	 variable counter: natural;
+         variable td : std_logic_vector(data_width-1 downto 0);
+       begin 
+         reqL(R) <= false;
+         counter := 1;
+
+         ----------------------------------------------------------------------
+         -- first the request
+         ----------------------------------------------------------------------
+  	 dv := R + 2**(data_width-1);
+         
+         wait until reset = '0';
+         
+         while (dv < (2**data_width)-2) loop
+           
+           din_raw(R) <= (To_SLV(To_Unsigned(dv,data_width)));
+
+           reqL(R) <= true;
+	   assert not verbose_mode report "Send request " & Convert_To_String(R) & "," &
+		Convert_To_String(counter) & " started in TB " & tb_id severity note;
+           while true loop
+             wait until clock = '1';
+             reqL(R)  <= false;
+             if(ackL(R)) then
+		assert not verbose_mode report "Send Request " & Convert_To_String(R) & "," &
+			Convert_To_String(counter) & " completed in TB " & tb_id severity note;
+               exit;
+             end if;
+           end loop;
+
+	   dv := dv + num_req;
+	   counter := counter  + 1;
+         end loop;
+	wait;
+       end process;
+     end generate GenBlockSend;
+
+     GenBlockReceive: for R in 0 to num_req-1 generate
+
+       process(dout)
+         variable dout_var : std_logic_vector(data_width-1 downto 0);
+       begin
+         Extract(dout,R,dout_var);
+         dout_raw(R) <= dout_var;
+       end process;
+
+
+       process 
+         variable dv: natural;
+	 variable counter: natural;
+	 variable err_flag : boolean;
+         variable dout_var : std_logic_vector(data_width-1 downto 0);
+       begin 
+         reqR(R) <= false;	
+         counter := 1;
+ 	 err_flag := false;
+
+  	 dv := R + 2**(data_width-1);
+
+         wait until reset = '0';
+
+         while (dv < (2**data_width)-2) loop
+           
+           -- operation complete?
+           reqR(R) <= true;
+	   assert not verbose_mode report "Receive request " & Convert_To_String(R) & "," &
+		Convert_To_String(counter) & " started in TB " & tb_id severity note;
+           while true loop
+             wait until clock = '1';
+             reqR(R) <= false;
+             if(ackR(R)) then
+		assert not verbose_mode report "Receive Request " & Convert_To_String(R) & "," &
+			Convert_To_String(counter) & " completed in TB " & tb_id  severity note;
+
+                Extract(dout,R,dout_var);
+                if(To_SLV(To_Unsigned(dv,data_width)) /= dout_var) then
+                  err_flag := true;
+                  assert false report "Mismatch observed at " & Convert_To_String(R) & "," &
+			Convert_To_String(counter) & " in TB " & tb_id  severity note;                  
+		end if;
+               exit;
+             end if;
+             
+           end loop;
+
+	   dv := dv + num_req;
+	   counter := counter  + 1;
+         end loop;
+
+	assert err_flag report "Send/Receive Tests Finished Successfully (" & Convert_To_String(R) & ") in TB "
+			& tb_id
+			severity note;
+	assert (not err_flag) report "Send/Receive Tests Failed (" & Convert_To_String(R) & ") in TB "
+			& tb_id
+			severity error;
+
+        done_flag(R) <= true;
+        success_flag(R) <= not err_flag;
+	wait;
+       end process;
+     end generate GenBlockReceive;
+
+     --------------------------------------------------------------------------
+     -- component instantiations: output port linked to input port
+     --------------------------------------------------------------------------
+     InstanceBlock: block
+	signal ip_to_op_ack, op_to_ip_req: std_logic;
+	signal op_to_ip_data: std_logic_vector(data_width-1 downto 0);
+     begin
+     	op: OutputPort generic map(num_reqs => num_req, data_width => data_width , no_arbitration => false)
+		port map(req => reqL,
+		 	ack => ackL,
+		 	data => din,
+		 	oreq => op_to_ip_req,
+		 	oack => ip_to_op_ack,
+                 	odata => op_to_ip_data,
+		 	clk => clock,
+		 	reset => reset);
+        
+     	ip: InputPort generic map (num_reqs => num_req, data_width => data_width , no_arbitration => false)
+ 		port map (req => reqR,
+                  	ack => ackR,
+                  	data => dout,
+		  	oreq => ip_to_op_ack,
+                  	oack => op_to_ip_req,
+		  	odata => op_to_ip_data,
+		  	clk => clock,
+		  	reset => reset);
+      end block;
+end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.Components.all;
+
+
+entity PortTBWrap is
+end PortTBWrap;
+
+architecture Wrap of PortTBWrap is
+	component PortTB is
+  		generic
+     				( g_num_req: integer := 2;
+       				verbose_mode: boolean := false;
+       				tb_id : string := "anonymous"
+     				);
+	end component PortTB;
+begin
+   tb0: PortTB generic map(g_num_req => 1, verbose_mode => false, tb_id => "num_req = 1");
+   tb1: PortTB generic map(g_num_req => 2, verbose_mode => false, tb_id => "num_req = 2");
+   tb2: PortTB generic map(g_num_req => 5, verbose_mode => false, tb_id => "num_req = 5");
+end Wrap;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -9439,6 +10036,627 @@ end arch;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+entity SplitCallArbiterNoInArgsNoOutArgs is
+  generic(num_reqs: integer;
+	  caller_tag_length: integer;
+          callee_tag_length: integer);
+  port ( -- ready/ready handshake on all ports
+    -- ports for the caller
+    call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+    call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+    call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- call port connected to the called module
+    call_mreq   : out std_logic;
+    call_mack   : in  std_logic;
+    call_mtag   : out std_logic_vector(callee_tag_length-1 downto 0);
+    -- similarly for return, initiated by the caller
+    return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+    return_acks : out std_logic_vector(num_reqs-1 downto 0);
+    return_tag  : out std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- return from function
+    return_mreq : out std_logic;
+    return_mack : in std_logic;
+    return_mtag : in  std_logic_vector(callee_tag_length-1 downto 0);
+    clk: in std_logic;
+    reset: in std_logic);
+end SplitCallArbiterNoInArgsNoOutArgs;
+
+
+architecture Struct of SplitCallArbiterNoInArgsNoOutArgs is
+   signal pe_call_reqs: std_logic_vector(num_reqs-1 downto 0);
+   signal return_acks_sig: std_logic_vector(num_reqs-1 downto 0);
+
+   type TagwordArray is array (natural range <>) of std_logic_vector(caller_tag_length-1 downto 0);
+   signal return_tag_sig : TagwordArray(num_reqs-1 downto 0);
+begin
+
+  -----------------------------------------------------------------------------
+  -- priority encode incoming
+  -----------------------------------------------------------------------------
+   pe_call_reqs <= PriorityEncode(call_reqs);
+
+   ----------------------------------------------------------------------------
+   -- combinational process to handle call_reqs  --> call_mreq muxing
+   ----------------------------------------------------------------------------
+   process(pe_call_reqs, call_mack)
+     variable there_is_a_call : std_logic;
+   begin
+     there_is_a_call := OrReduce(pe_call_reqs);
+     call_acks <= (others => '0');
+     if(there_is_a_call = '1') then
+       for I in num_reqs-1 downto 0 loop
+         if(pe_call_reqs(I) = '1') then
+           call_acks(I) <= call_mack;
+           exit;
+         end if;
+       end loop;  -- I
+     end if;
+     call_mreq <= there_is_a_call;
+   end process;
+
+   tagGen : BinaryEncoder generic map (iwidth => num_reqs,
+                                       owidth => callee_tag_length)
+     port map (din => pe_call_reqs, dout => call_mtag);
+
+   -- on a successful call, register the tag from the caller
+   -- side..
+   tagRegGen: for T in 0 to num_reqs-1 generate
+     process(clk)
+     begin
+       if(clk'event and clk = '1') then
+         if(pe_call_reqs(T) = '1') then
+           return_tag_sig(T)
+             <= call_tag(((T+1)*caller_tag_length)-1 downto T*caller_tag_length);
+         end if;
+       end if;
+     end process;     
+   end generate tagRegGen;
+
+
+   ----------------------------------------------------------------------------
+   -- reverse path
+   ----------------------------------------------------------------------------
+   process(return_tag_sig)
+     variable lreturn_tag : std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+   begin
+     for J in return_tag_sig'high(1) downto return_tag_sig'low(1) loop
+       Insert(lreturn_tag,J,return_tag_sig(J));
+     end loop;  -- J
+     return_tag <= lreturn_tag;
+   end process;
+
+   -- always ready to accept return data..
+   return_mreq <= '1';
+
+   -- the acks in both directions
+   return_acks <= return_acks_sig;
+   
+   -- incoming data written into appropriate register.
+   RetGen: for I in return_reqs'high downto return_reqs'low generate
+
+     fsm: block
+       signal ack_reg,  valid_flag : std_logic;
+     begin  -- block fsm
+
+       -- valid = '1' implies this index is incoming
+       valid_flag <= '1' when return_mack = '1' and (I = To_Integer(To_Unsigned(return_mtag))) else '0';
+
+       --------------------------------------------------------------------------
+       -- ack ff
+       --------------------------------------------------------------------------
+       -- set if valid_flag is asserted, else clear if return_reqs is asserted
+       -- and register is already set.
+       process(clk)
+       begin
+         if clk'event and clk= '1' then
+           if(reset = '1') then
+             ack_reg <= '0';
+           elsif valid_flag = '1' then
+             ack_reg <= '1';
+           elsif return_reqs(I) = '1' and ack_reg = '1' then
+             ack_reg <= '0';
+           end if;
+
+         end if;
+       end process;
+
+       -- pass info out of the generate
+       return_acks_sig(I) <= ack_reg;
+       
+     end block fsm;
+
+     
+   end generate RetGen;
+end Struct;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+entity SplitCallArbiterNoInargs is
+  generic(num_reqs: integer;
+	  return_data_width: integer;
+	  caller_tag_length: integer;
+          callee_tag_length: integer);
+  port ( -- ready/ready handshake on all ports
+    -- ports for the caller
+    call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+    call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+    call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- call port connected to the called module
+    call_mreq   : out std_logic;
+    call_mack   : in  std_logic;
+    call_mtag   : out std_logic_vector(callee_tag_length-1 downto 0);
+    -- similarly for return, initiated by the caller
+    return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+    return_acks : out std_logic_vector(num_reqs-1 downto 0);
+    return_data : out std_logic_vector((num_reqs*return_data_width)-1 downto 0);
+    return_tag  : out std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- return from function
+    return_mreq : out std_logic;
+    return_mack : in std_logic;
+    return_mdata : in  std_logic_vector(return_data_width-1 downto 0);
+    return_mtag : in  std_logic_vector(callee_tag_length-1 downto 0);
+    clk: in std_logic;
+    reset: in std_logic);
+end SplitCallArbiterNoInargs;
+
+
+architecture Struct of SplitCallArbiterNoInargs is
+   signal pe_call_reqs: std_logic_vector(num_reqs-1 downto 0);
+   signal return_acks_sig: std_logic_vector(num_reqs-1 downto 0);
+
+   type TwordArray is array (natural range <>) of std_logic_vector(return_mdata'length-1 downto 0);
+   signal return_data_sig : TwordArray(num_reqs-1 downto 0);
+
+   type TagwordArray is array (natural range <>) of std_logic_vector(caller_tag_length-1 downto 0);
+   signal return_tag_sig : TagwordArray(num_reqs-1 downto 0);
+begin
+
+  -----------------------------------------------------------------------------
+  -- priority encode incoming
+  -----------------------------------------------------------------------------
+   pe_call_reqs <= PriorityEncode(call_reqs);
+
+   ----------------------------------------------------------------------------
+   -- combinational process to handle call_reqs  --> call_mreq muxing
+   ----------------------------------------------------------------------------
+   process(pe_call_reqs, call_mack)
+     variable there_is_a_call : std_logic;
+   begin
+     there_is_a_call := OrReduce(pe_call_reqs);
+     call_acks <= (others => '0');
+     if(there_is_a_call = '1') then
+       for I in num_reqs-1 downto 0 loop
+         if(pe_call_reqs(I) = '1') then
+           call_acks(I) <= call_mack;
+           exit;
+         end if;
+       end loop;  -- I
+     end if;
+     call_mreq <= there_is_a_call;
+   end process;
+
+   tagGen : BinaryEncoder generic map (iwidth => num_reqs,
+                                       owidth => callee_tag_length)
+     port map (din => pe_call_reqs, dout => call_mtag);
+
+   -- on a successful call, register the tag from the caller
+   -- side..
+   tagRegGen: for T in 0 to num_reqs-1 generate
+     process(clk)
+     begin
+       if(clk'event and clk = '1') then
+         if(pe_call_reqs(T) = '1') then
+           return_tag_sig(T)
+             <= call_tag(((T+1)*caller_tag_length)-1 downto T*caller_tag_length);
+         end if;
+       end if;
+     end process;     
+   end generate tagRegGen;
+
+
+   ----------------------------------------------------------------------------
+   -- reverse path
+   ----------------------------------------------------------------------------
+   -- pack registers into return data array
+   process(return_data_sig)
+     variable lreturn_data : std_logic_vector((num_reqs*return_data_width)-1 downto 0);
+   begin
+     for J in return_data_sig'high(1) downto return_data_sig'low(1) loop
+       Insert(lreturn_data,J,return_data_sig(J));
+     end loop;  -- J
+     return_data <= lreturn_data;
+   end process;
+
+   process(return_tag_sig)
+     variable lreturn_tag : std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+   begin
+     for J in return_tag_sig'high(1) downto return_tag_sig'low(1) loop
+       Insert(lreturn_tag,J,return_tag_sig(J));
+     end loop;  -- J
+     return_tag <= lreturn_tag;
+   end process;
+
+   -- always ready to accept return data.
+   return_mreq <= '1';
+
+   -- the acks in both directions
+   return_acks <= return_acks_sig;
+   
+   -- incoming data written into appropriate register.
+   RetGen: for I in return_reqs'high downto return_reqs'low generate
+
+     fsm: block
+       signal ack_reg, valid_flag : std_logic;
+       signal data_reg : std_logic_vector(return_mdata'length-1 downto 0);
+     begin  -- block fsm
+
+       -- valid = '1' implies this index is incoming
+       valid_flag <= '1' when return_mack = '1' and (I = To_Integer(To_Unsigned(return_mtag))) else '0';
+
+       --------------------------------------------------------------------------
+       -- ack ff
+       --------------------------------------------------------------------------
+       -- set if valid_flag is asserted, else clear if return_reqs is asserted
+       -- and register is already set.
+       process(clk)
+       begin
+         if clk'event and clk= '1' then
+           if(reset = '1') then
+             ack_reg <= '0';
+           elsif valid_flag = '1' then
+             ack_reg <= '1';
+           elsif return_reqs(I) = '1' and ack_reg = '1' then
+             ack_reg <= '0';
+           end if;
+
+           -- register data when you send mack
+           if(valid_flag = '1') then
+             data_reg <= return_mdata;
+           end if;
+         end if;
+       end process;
+
+       -- pass info out of the generate
+       return_acks_sig(I) <= ack_reg;
+       return_data_sig(I) <= data_reg;
+       
+     end block fsm;
+
+     
+   end generate RetGen;
+end Struct;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+entity SplitCallArbiterNoOutArgs is
+  generic(num_reqs: integer;
+	  call_data_width: integer;
+	  caller_tag_length: integer;
+          callee_tag_length: integer);
+  port ( -- ready/ready handshake on all ports
+    -- ports for the caller
+    call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+    call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+    call_data   : in  std_logic_vector((num_reqs*call_data_width)-1 downto 0);
+    call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- call port connected to the called module
+    call_mreq   : out std_logic;
+    call_mack   : in  std_logic;
+    call_mdata  : out std_logic_vector(call_data_width-1 downto 0);
+    call_mtag   : out std_logic_vector(callee_tag_length-1 downto 0);
+    -- similarly for return, initiated by the caller
+    return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+    return_acks : out std_logic_vector(num_reqs-1 downto 0);
+    return_tag  : out std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- return from function
+    return_mreq : out std_logic;
+    return_mack : in std_logic;
+    return_mtag : in  std_logic_vector(callee_tag_length-1 downto 0);
+    clk: in std_logic;
+    reset: in std_logic);
+end SplitCallArbiterNoOutArgs;
+
+
+architecture Struct of SplitCallArbiterNoOutArgs is
+   signal pe_call_reqs: std_logic_vector(num_reqs-1 downto 0);
+   signal return_acks_sig: std_logic_vector(num_reqs-1 downto 0);
+
+
+   type TagwordArray is array (natural range <>) of std_logic_vector(caller_tag_length-1 downto 0);
+   signal return_tag_sig : TagwordArray(num_reqs-1 downto 0);
+begin
+
+  -----------------------------------------------------------------------------
+  -- priority encode incoming
+  -----------------------------------------------------------------------------
+   pe_call_reqs <= PriorityEncode(call_reqs);
+
+   ----------------------------------------------------------------------------
+   -- combinational process to handle call_reqs  --> call_mreq muxing
+   ----------------------------------------------------------------------------
+   process(pe_call_reqs, call_data, call_mack)
+     variable there_is_a_call : std_logic;
+     variable out_data : std_logic_vector(call_data_width-1 downto 0);
+   begin
+     there_is_a_call := OrReduce(pe_call_reqs);
+     out_data := (others => '0');
+     call_acks <= (others => '0');
+     if(there_is_a_call = '1') then
+       for I in num_reqs-1 downto 0 loop
+         if(pe_call_reqs(I) = '1') then
+           Extract(call_data,I,out_data);
+           call_acks(I) <= call_mack;
+           exit;
+         end if;
+       end loop;  -- I
+     end if;
+     call_mreq <= there_is_a_call;
+     call_mdata <= out_data;
+   end process;
+
+   tagGen : BinaryEncoder generic map (iwidth => num_reqs,
+                                       owidth => callee_tag_length)
+     port map (din => pe_call_reqs, dout => call_mtag);
+
+   -- on a successful call, register the tag from the caller
+   -- side..
+   tagRegGen: for T in 0 to num_reqs-1 generate
+     process(clk)
+     begin
+       if(clk'event and clk = '1') then
+         if(pe_call_reqs(T) = '1') then
+           return_tag_sig(T)
+             <= call_tag(((T+1)*caller_tag_length)-1 downto T*caller_tag_length);
+         end if;
+       end if;
+     end process;     
+   end generate tagRegGen;
+
+
+   ----------------------------------------------------------------------------
+   -- reverse path
+   ----------------------------------------------------------------------------
+   process(return_tag_sig)
+     variable lreturn_tag : std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+   begin
+     for J in return_tag_sig'high(1) downto return_tag_sig'low(1) loop
+       Insert(lreturn_tag,J,return_tag_sig(J));
+     end loop;  -- J
+     return_tag <= lreturn_tag;
+   end process;
+
+   -- always ready to accept return data..
+   -- (assumption... that call and return requests from the 
+   --  the left will alternate).
+   return_mreq <='1';
+
+   -- the acks in both directions
+   return_acks <= return_acks_sig;
+   
+   -- incoming data written into appropriate register.
+   RetGen: for I in return_reqs'high downto return_reqs'low generate
+
+     fsm: block
+       signal ack_reg, valid_flag : std_logic;
+     begin  -- block fsm
+
+       -- valid = '1' implies this index is incoming
+       valid_flag <= '1' when return_mack = '1' and (I = To_Integer(To_Unsigned(return_mtag))) else '0';
+       --------------------------------------------------------------------------
+       -- ack ff
+       --------------------------------------------------------------------------
+       -- set if valid_flag is asserted, else clear if return_reqs is asserted
+       -- and register is already set.
+       process(clk)
+       begin
+         if clk'event and clk= '1' then
+           if(reset = '1') then
+             ack_reg <= '0';
+           elsif valid_flag = '1' then
+             ack_reg <= '1';
+           elsif return_reqs(I) = '1' and ack_reg = '1' then
+             ack_reg <= '0';
+           end if;
+         end if;
+       end process;
+
+       -- pass info out of the generate
+       return_acks_sig(I) <= ack_reg;
+       
+     end block fsm;
+
+     
+   end generate RetGen;
+end Struct;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+entity SplitCallArbiter is
+  generic(num_reqs: integer;
+	  call_data_width: integer;
+	  return_data_width: integer;
+	  caller_tag_length: integer;
+          callee_tag_length: integer);
+  port ( -- ready/ready handshake on all ports
+    -- ports for the caller
+    call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+    call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+    call_data   : in  std_logic_vector((num_reqs*call_data_width)-1 downto 0);
+    call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- call port connected to the called module
+    call_mreq   : out std_logic;
+    call_mack   : in  std_logic;
+    call_mdata  : out std_logic_vector(call_data_width-1 downto 0);
+    call_mtag   : out std_logic_vector(callee_tag_length-1 downto 0);
+    -- similarly for return, initiated by the caller
+    return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+    return_acks : out std_logic_vector(num_reqs-1 downto 0);
+    return_data : out std_logic_vector((num_reqs*return_data_width)-1 downto 0);
+    return_tag  : out std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- return from function
+    return_mreq : out std_logic;
+    return_mack : in std_logic;
+    return_mdata : in  std_logic_vector(return_data_width-1 downto 0);
+    return_mtag : in  std_logic_vector(callee_tag_length-1 downto 0);
+    clk: in std_logic;
+    reset: in std_logic);
+end SplitCallArbiter;
+
+
+architecture Struct of SplitCallArbiter is
+   signal pe_call_reqs: std_logic_vector(num_reqs-1 downto 0);
+   signal return_acks_sig: std_logic_vector(num_reqs-1 downto 0);
+
+   type TwordArray is array (natural range <>) of std_logic_vector(return_mdata'length-1 downto 0);
+   signal return_data_sig : TwordArray(num_reqs-1 downto 0);
+
+   type TagwordArray is array (natural range <>) of std_logic_vector(caller_tag_length-1 downto 0);
+   signal return_tag_sig : TagwordArray(num_reqs-1 downto 0);
+begin
+
+  -----------------------------------------------------------------------------
+  -- priority encode incoming
+  -----------------------------------------------------------------------------
+   pe_call_reqs <= PriorityEncode(call_reqs);
+
+   ----------------------------------------------------------------------------
+   -- combinational process to handle call_reqs  --> call_mreq muxing
+   ----------------------------------------------------------------------------
+   process(pe_call_reqs, call_data, call_mack)
+     variable there_is_a_call : std_logic;
+     variable out_data : std_logic_vector(call_data_width-1 downto 0);
+   begin
+     there_is_a_call := OrReduce(pe_call_reqs);
+     out_data := (others => '0');
+     call_acks <= (others => '0');
+     if(there_is_a_call = '1') then
+       for I in num_reqs-1 downto 0 loop
+         if(pe_call_reqs(I) = '1') then
+           Extract(call_data,I,out_data);
+           call_acks(I) <= call_mack;
+           exit;
+         end if;
+       end loop;  -- I
+     end if;
+     call_mreq <= there_is_a_call;
+     call_mdata <= out_data;
+   end process;
+
+   tagGen : BinaryEncoder generic map (iwidth => num_reqs,
+                                       owidth => callee_tag_length)
+     port map (din => pe_call_reqs, dout => call_mtag);
+
+   -- on a successful call, register the tag from the caller
+   -- side..
+   tagRegGen: for T in 0 to num_reqs-1 generate
+     process(clk)
+     begin
+       if(clk'event and clk = '1') then
+         if(pe_call_reqs(T) = '1') then
+           return_tag_sig(T)
+             <= call_tag(((T+1)*caller_tag_length)-1 downto T*caller_tag_length);
+         end if;
+       end if;
+     end process;     
+   end generate tagRegGen;
+
+
+   ----------------------------------------------------------------------------
+   -- reverse path
+   ----------------------------------------------------------------------------
+   -- pack registers into return data array
+   process(return_data_sig)
+     variable lreturn_data : std_logic_vector((num_reqs*return_data_width)-1 downto 0);
+   begin
+     for J in return_data_sig'high(1) downto return_data_sig'low(1) loop
+       Insert(lreturn_data,J,return_data_sig(J));
+     end loop;  -- J
+     return_data <= lreturn_data;
+   end process;
+
+   process(return_tag_sig)
+     variable lreturn_data : std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+   begin
+     for J in return_tag_sig'high(1) downto return_tag_sig'low(1) loop
+       Insert(lreturn_data,J,return_tag_sig(J));
+     end loop;  -- J
+     return_tag <= lreturn_data;
+   end process;
+
+   -- always ready to accept return data!
+   return_mreq <= '1';
+
+   -- return to caller.
+   return_acks <= return_acks_sig;
+   
+   -- incoming data written into appropriate register.
+   RetGen: for I in return_reqs'high downto return_reqs'low generate
+
+     fsm: block
+       signal ack_reg, valid_flag : std_logic;
+       signal data_reg : std_logic_vector(return_mdata'length-1 downto 0);
+     begin  -- block fsm
+
+       -- valid = '1' implies this index is incoming
+       valid_flag <= '1' when return_mack = '1' and (I = To_Integer(To_Unsigned(return_mtag))) else '0';
+       --------------------------------------------------------------------------
+       -- ack ff
+       --------------------------------------------------------------------------
+       -- set if mack_sig is asserted, else clear if return_reqs is asserted
+       -- and register is already set.
+       process(clk)
+       begin
+         if clk'event and clk= '1' then
+           if(reset = '1') then
+             ack_reg <= '0';
+           elsif valid_flag = '1' then
+             ack_reg <= '1';
+           elsif return_reqs(I) = '1' and ack_reg = '1' then
+             ack_reg <= '0';
+           end if;
+
+           -- register data when you send mack
+           if(valid_flag = '1') then
+             data_reg <= return_mdata;
+           end if;
+         end if;
+       end process;
+
+       -- pass info out of the generate
+       return_acks_sig(I) <= ack_reg;
+       return_data_sig(I) <= data_reg;
+     end block fsm;
+     
+   end generate RetGen;
+
+end Struct;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library ahir;
 use ahir.Types.all;
@@ -9527,6 +10745,251 @@ begin  -- Behave
 
 end Vanilla;
 
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.OperatorPackage.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+entity SplitOperatorSharedTB is
+  generic
+     ( g_num_req: integer := 2;
+       operator_id: string := "ApIntAdd";
+       zero_delay : boolean := false;
+       verbose_mode: boolean := false;
+       input_data_width: integer := 8;
+       output_data_width: integer := 8;
+       num_ips : integer := 2;
+       tb_id : string := "anonymous"
+     );
+end SplitOperatorSharedTB;
+
+architecture Behave of SplitOperatorSharedTB is
+
+    constant num_req : integer := g_num_req;
+    
+    signal reqR, ackR, reqL, ackL : BooleanArray(num_req-1 downto 0);
+    signal din_2 : StdLogicArray2D((2*num_req)-1 downto 0, input_data_width-1 downto 0);
+    signal din_2_slv : std_logic_vector((input_data_width*2*num_req)-1 downto 0);
+    
+    signal din_1, din_2_c : StdLogicArray2D(num_req-1 downto 0, input_data_width-1 downto 0);
+    signal din_1_slv, din_2_c_slv : std_logic_vector((input_data_width*2*num_req)-1 downto 0);
+    signal dout_2, dout_1, dout_1_C: StdLogicArray2D(num_req-1 downto 0, output_data_width-1 downto 0);
+    signal dout_2_slv, dout_1_slv, dout_1_C_slv  : std_logic_vector((num_req*output_data_width)-1 downto 0);
+
+    signal op_idata : std_logic_vector((num_req*input_data_width*num_ips)-1 downto 0);
+    signal op_odata : std_logic_vector((num_req*output_data_width)-1 downto 0);
+
+    constant const_operand: std_logic_vector(input_data_width-1 downto 0) := (others => '1');
+
+    type   Data2D is array(natural range <>) of std_logic_vector(input_data_width-1 downto 0);
+    signal d2_1, d2_2, d1, d2_C: Data2D(num_req-1 downto 0);
+
+    function Build_Data(tmp_addr: in Data2D) return StdLogicArray2D is
+	variable tmp: StdLogicArray2D(num_req-1 downto 0, input_data_width-1 downto 0);
+    begin
+        for I in 0 to num_req-1 loop
+            Insert(tmp,I,tmp_addr(I));
+        end loop;
+	return(tmp);
+    end function Build_Data;
+
+    signal clock, reset : std_logic := '0';
+
+    signal done_flag, success_flag: BooleanArray(num_req-1 downto 0);
+begin
+
+     clock <= not clock after 5 ns;
+
+     process(done_flag)
+     begin
+        if(AndReduce(done_flag))then
+           if(AndReduce(success_flag)) then
+              assert false report "All Tests Have Passed in TB " & tb_id  severity note;
+	   else
+              assert false report "Some Tests Have Failed in TB " & tb_id severity error;
+	   end if;
+        end if;
+     end process;
+    
+     process
+     begin
+	 reset <= '1';
+         wait until clock = '1';
+         reset <= '0' after 1 ns;
+ 	 wait;
+     end process;
+
+     din_2 <= Stack(Build_Data(d2_1), Build_Data(d2_2));
+
+     GenBlock_2: for R in 0 to num_req-1 generate
+
+       process 
+         variable dv: natural;
+	 variable counter: natural;
+	 variable err_flag : boolean;
+         variable td : std_logic_vector(output_data_width-1 downto 0);
+         variable td_islv : IStdLogicVector(output_data_width-1 downto 0);
+       begin 
+         reqR(R) <= false;	
+         reqL(R) <= false;
+
+         counter := 1;
+
+ 	 err_flag := false;
+
+         ----------------------------------------------------------------------
+         -- first the request
+         ----------------------------------------------------------------------
+  	 dv := R + 2**(input_data_width-1);
+         
+         wait until reset = '0';
+         
+         while (dv < (2**input_data_width)-2) loop
+           
+           d2_1(R) <= (To_SLV(To_Unsigned(dv,input_data_width)));
+           d2_2(R) <= (To_SLV(To_Unsigned(dv+1,input_data_width)));
+
+           reqL(R) <= true;
+	   assert not verbose_mode report "Operator Request " & Convert_To_String(R) & "," &
+		Convert_To_String(counter) & " started in TB " & tb_id severity note;
+           while true loop
+             wait until clock = '1';
+             reqL(R)  <= false;
+             if(ackL(R)) then
+		assert not verbose_mode report "Operator Request " & Convert_To_String(R) & "," &
+			Convert_To_String(counter) & " completed in TB " & tb_id severity note;
+               exit;
+             end if;
+           end loop;
+
+           -- operation complete?
+           reqR(R) <= true;
+           while true loop
+             wait until clock = '1';
+             reqR(R) <= false;
+             if(ackR(R)) then
+		assert not verbose_mode report "Operation Complete " & Convert_To_String(R) & "," &
+			Convert_To_String(counter) & " completed in TB " & tb_id  severity note;
+	
+                TwoInputOperation(operator_id,
+                                     To_SLV(To_Unsigned(dv,input_data_width)),
+                                     To_SLV(To_Unsigned(dv+1,input_data_width)),td);
+
+
+                if(td /= (Extract(dout_2,R))) then
+                  err_flag := true;
+                  assert false report "Mismatch observed at " & Convert_To_String(R) & "," &
+			Convert_To_String(counter) & " in TB " & tb_id  severity note;                  
+		end if;
+               exit;
+             end if;
+             
+           end loop;
+
+	   dv := dv + num_req;
+	   counter := counter  + 1;
+         end loop;
+
+	assert err_flag report "Two Operator Tests Finished Successfully (" & Convert_To_String(R) & ") in TB "
+			& tb_id
+			severity note;
+	assert (not err_flag) report "Two Operator Tests Failed (" & Convert_To_String(R) & ") in TB "
+			& tb_id
+			severity error;
+
+        done_flag(R) <= true;
+        success_flag(R) <= not err_flag;
+
+	wait;
+       end process;
+     end generate GenBlock_2;
+
+     --------------------------------------------------------------------------
+     -- component instantiations
+     --------------------------------------------------------------------------
+     -- insert stuff which converts 2D array to SLV and back..
+     din_2_slv <= To_SLV_Shuffle(din_2);
+     dout_2 <= To_StdLogicArray2D(dout_2_slv, output_data_width);
+     
+     op2: SplitOperatorShared
+       -- generic map needs to be redone..
+       generic map (
+         operator_id  => operator_id,
+        input1_is_int => true,
+        input1_characteristic_width => 0,
+        input1_mantissa_width    => 0,
+        iwidth_1      => input_data_width,
+        input2_is_int => true,
+        input2_characteristic_width => 0,
+        input2_mantissa_width      => 0,
+        iwidth_2      => input_data_width,
+        num_inputs     => 2,
+        output_is_int => true,
+        output_characteristic_width => output_data_width,
+        output_mantissa_width    => 0,
+         owidth     => output_data_width,
+        constant_operand => const_operand,
+        use_constant  => false,
+        zero_delay   => false, 
+        num_reqs => num_req,
+        no_arbitration => false
+        )
+       port map (
+         reqL => reqL,
+	 ackL => ackL,
+	 reqR => reqR,
+ 	 ackR => ackR,
+	 dataL => din_2_slv,
+	 dataR => dout_2_slv, 
+	 clk => clock,
+	 reset => reset);
+end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+entity SplitOperatorSharedTBWrap is
+end SplitOperatorSharedTBWrap;
+
+architecture Behave of SplitOperatorSharedTBWrap is
+begin
+   tb0: SplitOperatorSharedTB generic map(g_num_req => 1,
+                                          operator_id => "ApIntAdd",
+                                          zero_delay => true,
+                                          verbose_mode => false,
+                                          input_data_width => 8,
+                                          output_data_width => 8,
+                                          num_ips => 2,
+                                          tb_id => "ApIntAdd num_req=1 ");  
+   tb1: SplitOperatorSharedTB generic map(g_num_req => 2,
+                                          operator_id => "ApIntAdd",
+                                          zero_delay => false,
+                                          verbose_mode => false,
+                                          input_data_width => 8,
+                                          output_data_width => 8,
+                                          num_ips => 2,
+                                          tb_id => "ApIntAdd num_req=2 ");
+   tb2: SplitOperatorSharedTB generic map(g_num_req => 5,
+                                          operator_id => "ApIntAdd",
+                                          zero_delay => true,
+                                          verbose_mode => false,
+                                          input_data_width => 8,
+                                          output_data_width => 8,
+                                          num_ips => 2,
+                                          tb_id => "ApIntAdd num_req=5 ");
+end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -9720,11 +11183,12 @@ end StoreCompleteShared;
 architecture Behave of StoreCompleteShared is
 begin  -- Behave
 
+
   odemux: OutputDemuxBaseNoData
     generic map (
-	twidth =>  tag_length,
-	nreqs  => num_reqs,
-	no_arbitration => true)
+      twidth =>  tag_length,
+      nreqs  => num_reqs,
+      no_arbitration => true)
     port map (
       reqL   => mack,                   -- cross-over (mack from mem-subsystem)
       ackL   => mreq,                   -- cross-over 

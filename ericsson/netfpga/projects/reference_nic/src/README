@@ -7,33 +7,26 @@ for simulation/synthesis.
 	ahir_system.vhdl
 	netfpga_module.vhd
 
-	user_data_path.v
-		This is the user data path which is part of the
-		netfpga distribution.
+The following files are the reference netfpga user_data_path.v
+files, but with modifications as indicated
 
-		The structure:
-			4x 1G macs  -> mux -> output-port-lookup -> demux -> 4x 1G macs
-                        + 4x CPU                                             + 4x CPU queues.
-                             queues		
+	user_data_path_ahir_in_mac_mux_v
+		ahir netfpga_module inserted between mac
+		and input arbiter.  This puts a demand of
+		1 Gbps on the ahir system.  The ahir system
+		just does simple forwarding.
 
-                It has been modified by inserting a netfpga_module 
-		(which instantiates the ahir-system) into the data-path
-
-		I have tried two possible insertion points.
-		1. in between the mux -> output-port-lookup
-			(this puts a lot of pressure on the throughput
-			 through the ahir-system, and I keep getting
-			 DMA errors which seem to be timing related).
-			This is in file user_data_path_v.back
-
-		2. in between a 1G mac and the mux
-			(this gives us more time, also insulates the
-			 netfpga_module from the DMA timing, leading
-			to more predictable behaviour).
-			This is in file user_data_path.v
+	user_data_path_ahir_in_op_lut_v
+		ahir netfpga_module inserted in place of
+		output-port-lookup.  This puts a demand of
+		4 Gbps on the ahir system.  The ahir system
+		must do the same thing that output-port-lookup
+		does.
 			
 The remaining files are for various possible combinations
 during verification.
+
+     The following are to be used with user_data_path_ahir_in_mac_mux_v
 
 	ahir_system.SimpleForwarding.vhd
 		this is a real ahir file generated in the
@@ -62,46 +55,36 @@ during verification.
 		a throughput of 64 bits every cycle.
 
 
-case 1: netfpga_module between mux and output port lookup
-tried three combinations
-
-   full         copy ahir_system.SimpleForwarding.vhd --> ahir_system.vhdl, 
-                copy netfpga_module.real.vhd --> netfpga_module.vhd
-
-   semi         copy ahir_system.simple.vhd --> ahir_system.vhdl, 
-                copy netfpga_module.real.vhd --> netfpga_module.vhd
-
-   trivial      copy netfpga_module.simple.vhd --> netfpga_module.vhd
-		(ahir_system is not used)
+     The following file is to be used with user_data_path_ahir_in_op_lut_v
+	
+	ahir_system.output_port_lookup.vhd
+		this is an implementation of output-port-lookup obtained
+		in ericsson/vhdl/OutputPortLookup.  It implements simple
+		output port lookup.
 
 
-The reference_nic has four eth ports each running at 1Gbps.  Thus,
-the user-data-path must have a throughput of 4Gbps, that is for
-about 64 bits every 2 cycles (1 cycle = 8 ns).  As a result,
-the "full" system cannot keep up, and drops packets, the "semi"
-and "trivial" can keep up.
+Test Configurations:
 
-If the reference_nic uses only 3 out of 4 ports, we find that the
-"full" system manages to keep up.
+	Configuration 1:  ahir system between mac and input arbiter.
+	
+		 Copy user_data_path_ahir_in_max_mux_v to user_data_path.v
+		 Copy one of the five files which do simple forwarding to
+		  ahir_system.vhdl
 
-
-        Test      test_nic_long  test_nic_1port_long  test_nic_2port_long  test_nic_3port_long
-
-Config
-   full            fail              pass                  pass                  pass
-                  (drops 2-3
-                   pkts out of
-                   50)
-   semi            pass              pass                  pass                  pass
-   trivial         pass              pass                  pass                  pass
+		  Run nf_test.pl
+		 
+          Observation: all tests pass, sometimes in the long test, packets
+	  are dropped.
 
 
-   
-Case 2: netfpga_module between mac and mux.
+        Configuration 2: ahir system in place of output-port-lookup
+		 Copy user_data_path_ahir_in_op_lut_v to user_data_path.v
+		 Copy ahir_system.output_port_lookup.vhd to ahir_system.vhdl
 
-	In this case, all the ahir_system's pass the tests (because the
-	throughput demanded is smaller, and the DMA timing is not affected).
+		 Run nf_test.pl
+
+	 Observation: short passes, long drops a few packets.
+
+	
 
 
-I suggest that we try an initial click->vhdl system in the mac -> mux
-path to validate the flow.
