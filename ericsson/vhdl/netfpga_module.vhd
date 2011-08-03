@@ -95,7 +95,7 @@ begin  -- default_arch
   in_push_req <= in_wr;
   in_rdy <= '1' when in_nearly_full = '0' else '0';
 
-  InFifo: ProtocolMatchingFifo generic map(queue_depth => 3, data_width => 72)
+  InFifo: ProtocolMatchingFifo generic map(queue_depth => 1024, data_width => 72)
     port map(clk => clk, reset => reset,
              data_in => in_qdata_in, push_req => in_push_req, push_ack => in_push_ack, nearly_full => in_nearly_full,
              data_out => in_qdata_out, pop_req => in_pop_req, pop_ack => in_pop_ack);
@@ -116,7 +116,7 @@ begin  -- default_arch
     
     case in_fsm_state is
       when idle =>
-        in_pop_req_var := '1';          -- this is the only state where we req..
+        in_pop_req_var := '1';         -- nominally asserted, see below. 
         
         if(in_pop_ack = '1') then
           -- request if ack from queue.
