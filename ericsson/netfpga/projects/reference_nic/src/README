@@ -1,11 +1,12 @@
 
-The folder contains several VHDL files, and a single
-verilog file.  Of these, the following are necessary
+The folder contains several VHDL files, and some
+verilog files.  Of these, the following are necessary
 for simulation/synthesis.
 	ahir.vhdl
 	ieee_proposed.vhdl
 	ahir_system.vhdl
 	netfpga_module.vhd
+        user_data_path.v
 
 The following files are the reference netfpga user_data_path.v
 files, but with modifications as indicated
@@ -53,6 +54,7 @@ during verification.
 		this is a simple netfpga module which just interfaces
 		with the NetFPGA pipeline and forwards data. It offers
 		a throughput of 64 bits every cycle.
+		(do not use this any more).
 
 
      The following file is to be used with user_data_path_ahir_in_op_lut_v
@@ -70,6 +72,7 @@ Test Configurations:
 		 Copy user_data_path_ahir_in_max_mux_v to user_data_path.v
 		 Copy one of the five files which do simple forwarding to
 		  ahir_system.vhdl
+                 Copy netfpga_module.real.vhd to netfpga_module.vhd
 
 		  Run nf_test.pl
 		 
@@ -80,6 +83,7 @@ Test Configurations:
         Configuration 2: ahir system in place of output-port-lookup
 		 Copy user_data_path_ahir_in_op_lut_v to user_data_path.v
 		 Copy ahir_system.output_port_lookup.vhd to ahir_system.vhdl
+                 Copy netfpga_module.real.vhd to netfpga_module.vhd
 
 		 Run nf_test.pl
 
