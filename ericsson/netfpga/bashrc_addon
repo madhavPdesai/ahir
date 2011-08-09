@@ -4,7 +4,7 @@ if [ "$NF_ROOT" == "" ]; then
 fi
 
 if [ "$NF_DESIGN_DIR" == "" ]; then
-  export NF_DESIGN_DIR=${NF_ROOT}/projects/reference_nic
+  export NF_DESIGN_DIR=${NF_ROOT}/projects/click_router
 fi
 
 if [ "$NF_WORK_DIR" == "" ]; then

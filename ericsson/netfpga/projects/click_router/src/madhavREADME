@@ -1,0 +1,10 @@
+This is the latest netfpga_module.
+	netfpga_module.latest.vhd
+(cp netfpga_module.latest.vhd netfpga_module.vhd)
+
+
+This is the user-data-path with the output port lookup
+replaced by netfpga_module
+	user_data_path_ahir_in_op_lut_v
+(cp user_data_path_ahir_in_op_lut_v user_data_path.v)
+
