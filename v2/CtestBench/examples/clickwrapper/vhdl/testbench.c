@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "prog.h"
+#include "vhdlCStubs.h"
 
 void signal_handler(int sig)
 {
@@ -248,20 +248,20 @@ main(int argc, char* argv[])
     read_args.len = 98;
     read_args.ret_val = &read_ret;
 
-    pthread_create(&wrapper_input_t, NULL, &wrapper_input_,
-                   (void *)&wrapper_input_args);
-    pthread_create(&wrapper_output_t, NULL, &wrapper_output_,
-                   (void *)&wrapper_output_args);
+    // pthread_create(&wrapper_input_t, NULL, &wrapper_input_,
+                   // (void *)&wrapper_input_args);
+    // pthread_create(&wrapper_output_t, NULL, &wrapper_output_,
+                   // (void *)&wrapper_output_args);
     pthread_create(&write_t, NULL, &write_pipe_, (void *)&write_args);
     pthread_create(&read_t, NULL, &read_pipe_, (void *)&read_args);
-    pthread_create(&fqm_t, NULL, &free_queue_manager_, (void *)NULL);
+    // pthread_create(&fqm_t, NULL, &free_queue_manager_, (void *)NULL);
 
     pthread_join(write_t, NULL);
     pthread_join(read_t, NULL);
 
     sleep(3);
 
-    pthread_cancel(wrapper_input_t);
-    pthread_cancel(wrapper_output_t);
-    pthread_cancel(fqm_t);
+    // pthread_cancel(wrapper_input_t);
+    // pthread_cancel(wrapper_output_t);
+    // pthread_cancel(fqm_t);
 }

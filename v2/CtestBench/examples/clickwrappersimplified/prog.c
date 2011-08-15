@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <iolib.h>
 
-#define BRAM_SIZE 2048
+#define BRAM_SIZE 256
 
 #define FREE_QUEUE_SIZE 4
 #define RAM_SIZE (FREE_QUEUE_SIZE * BRAM_SIZE)
@@ -83,8 +83,7 @@ void wrapper_input()
         uint8_t *buf = (uint8_t *)ahir_packet_get();
         int word = 0;
 
-        // Pointer to packet data. See click/packet.hh.
-        uint8_t *pkt_data = (buf + 180);
+        uint8_t *pkt_data = (buf + 8);
 
         while (1) {
             // Read data and ctrl from NetFPGA.
@@ -117,14 +116,7 @@ void wrapper_input()
                     pkt_data[word * 8 + 7] = p[0];
                     word++;
                     break;
-                case 0x01: // Last word, 8 bytes
-                case 0x02: // Last word, 7 bytes
-                case 0x04: // Last word, 6 bytes
-                case 0x08: // Last word, 5 bytes
-                case 0x10: // Last word, 4 bytes
-                case 0x20: // Last word, 3 bytes
-                case 0x40: // Last word, 2 bytes
-                case 0x80: // Last word, 1 byte
+                default:   // Something else like "other module header"
                     pkt_data[word * 8 + 0] = p[7];
                     pkt_data[word * 8 + 1] = p[6];
                     pkt_data[word * 8 + 2] = p[5];
@@ -136,7 +128,6 @@ void wrapper_input()
                     word++;
                     goto done;
                     break;
-                default:   // Something else like "other module header"
                     break;
             }
         }
@@ -158,27 +149,6 @@ void wrapper_output()
         // Pointer to the beginning of memory block.
         uint8_t *buf = pkt;
 
-        // Get lengths and ports. These were mapped from Click by ToFPGA.
-        uint16_t *dst_port = ((uint16_t *)buf);
-
-        uint16_t wlen_h = *((uint16_t *)buf + 1);
-        uint16_t wlen_l = *((uint16_t *)buf + 1);
-        uint16_t wlen = ((wlen_l << 8) | (wlen_h >> 8));
-
-        uint16_t src_port_h = *((uint16_t *)buf + 2);
-        uint16_t src_port_l = *((uint16_t *)buf + 2);
-        uint16_t src_port = ((src_port_l << 8) | (src_port_h >> 8));
-
-        uint16_t blen_h = *((uint16_t *)buf + 3);
-        uint16_t blen_l = *((uint16_t *)buf + 3);
-        uint16_t blen = ((blen_l << 8) | (blen_h >> 8));
-
-	//printf("wlen=%d, blen=%d\n",wlen, blen);
-
-        // XXX Manually set dst port. Should be done in ToFPGA.
-        uint16_t decoded_src = (1 << src_port);
-        *dst_port = ((src_port & 0x1) ?
-                        (decoded_src >> 1) : (decoded_src << 1));
 
         // Write out the IOQ.
         uint8_t outctrl = 0xFF;
@@ -195,11 +165,11 @@ void wrapper_output()
 
         write_uint8("out_ctrl", outctrl);
         write_uint64("out_data", outdata);
-	//printf("IOQ=%llx\n",outdata);
+	
+        //printf("wrapper-output-pktdata=%llx\n", outdata);
 
-        // Write out full 64-bit words of data.
         outctrl = 0;
-        for (i = 0; i < wlen - 1; ++i) {
+        for (i = 1; i < 31; ++i) {
             p[0] = pkt[i * 8 + 7];
             p[1] = pkt[i * 8 + 6];
             p[2] = pkt[i * 8 + 5];
@@ -211,14 +181,10 @@ void wrapper_output()
             write_uint8("out_ctrl", outctrl);
             write_uint64("out_data", outdata);
 
-	    //printf("(%d) pktdata=%llx\n",i, outdata);
+            //printf("wrapper-output-pktdata=%llx\n", outdata);
         }
 
-        // Write out the last (partial) word.
-        // Control bus has one bit set to mark the last byte.
-        // E.g. 2 bytes in the last word, outctrl = 01000000.
-        outctrl = ((uint8_t)0x80) >> ((blen & 7) - 1);
-	//printf("blen=%x, outctrl=%x\n",blen, outctrl);
+        outctrl = 1;
         p[0] = pkt[i * 8 + 7];
         p[1] = pkt[i * 8 + 6];
         p[2] = pkt[i * 8 + 5];
@@ -230,6 +196,8 @@ void wrapper_output()
 
         write_uint8("out_ctrl", outctrl);
         write_uint64("out_data", outdata);
+        
+        //printf("wrapper-output-pktdata=%llx\n", outdata);
 
         // Free memory.
         ahir_packet_free((uint32_t*)pkt);
