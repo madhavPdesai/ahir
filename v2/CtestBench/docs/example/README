@@ -1,0 +1,21 @@
+run make to build
+	- sw testbench (testbench_sw)
+	- hw testbench (testbench_hw)
+	- vhdl simulation executable (ahir_system_test_bench)
+
+to build SW version only
+	make SW
+
+to build HW version only
+	make HW
+
+to clean up (sort of)
+	make clean
+
+to check the SW version
+	./testbench_sw
+
+to check the HW version, start
+	./testbench_hw
+	./ahir_system_test_bench 
+in two separate shells

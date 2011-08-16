@@ -2,7 +2,7 @@
 # generate llvm-byte-code
 clang -std=gnu89 -I../../../iolib/ -emit-llvm -c prog.c
 # disassemble byte-code for human readibility.
-opt --instnamer prog.o > prog.opt.o
+opt --instnamer -O3 prog.o > prog.opt.o
 # llvm-bytecode to Aa
 llvm-dis prog.opt.o
 llvm2aa prog.opt.o | vcFormat >  prog.o.aa
@@ -18,6 +18,6 @@ Aa2VC -O -I mempool -C prog.o.linked.aa | vcFormat > prog.o.linked.aa.vc
 # will be free-running in the system (such modules cannot have input/output
 # arguments, but can only listen/send on pipes).
 #
- vc2vhdl -C -s modelsim -e ahir_system -w -T wrapper_input -T wrapper_output -T free_queue_manager -f prog.o.linked.aa.vc 
+ vc2vhdl -O -C -s modelsim -e ahir_system -w -T wrapper_input -T wrapper_output -T free_queue_manager -f prog.o.linked.aa.vc 
 vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
