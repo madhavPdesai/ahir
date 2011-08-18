@@ -9,9 +9,9 @@ SW: prog.c prog.h testbench.c
 
 HW: prog.c prog.h testbench.c
 	clang -std=gnu89 -I../../../iolib/ -emit-llvm -c prog.c
-	llvm-dis prog.o
+	#llvm-dis prog.o
 	opt -O3	 prog.o > prog.opt.o
-	llvm-dis prog.opt.o
+	#llvm-dis prog.opt.o
 	llvm2aa prog.opt.o | vcFormat >  prog.opt.o.aa
 	Aa2VC -O -C prog.opt.o.aa | vcFormat > prog.opt.o.aa.vc
 	vc2vhdl -C -e ahir_system -w -s ghdl -T accumulate -t set_sum -t get_sum -f prog.opt.o.aa.vc 

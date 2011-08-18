@@ -1,6 +1,0 @@
-ahir
-	subdirectories contain VHDL source
-	code to build the AHIR library
-
-ieee_proposed
-	floating-point libary from www.fpvhdl.org
