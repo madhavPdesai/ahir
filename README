@@ -14,9 +14,6 @@ The organization
 		the source/ area.
 
 
-	make_release.sh
-		a shell script which generates a release
-		(binaries, docs).
 
 	README
 		this file.
@@ -52,3 +49,14 @@ The organization
 	ericsson
 		some documents related to interaction with
 		ericsson on AHIR v2 validation.
+
+	ReleaseMakefile
+		a Makefile which generates a release
+		(binaries, docs).
+		To make a release
+			make -f ReleaseMakefile Release 
+
+		To clean up
+			make -f ReleaseMakefile Clean
+
+	

@@ -1,0 +1,60 @@
+AA=./v2/Ahir-asm/devel
+VC=./v2/libAhirV2
+LLVM2AA=./v2/llvmbc2Aa/
+RELEASE=./release
+IOLIB=./v2/iolib/
+CTESTBENCH=./v2/CtestBench/
+VHDL=./vhdl/
+
+all: Release Clean
+
+Release:
+	#license
+	cp ./LICENSE  $(RELEASE)
+	cp ./CONTRIBUTORS $(RELEASE)
+	#  copy the tools
+	cp $(AA)/bin/Aa2C $(RELEASE)/bin/
+	cp $(AA)/bin/Aa2VC $(RELEASE)/bin/
+	cp $(AA)/bin/AaLinkExtMem $(RELEASE)/bin/
+	cp $(AA)/bin/AaAnalyze $(RELEASE)/bin/AaAnalyze
+	cp $(VC)/bin/vc2vhdl $(RELEASE)/bin/
+	cp $(VC)/bin/vcCPCheck $(RELEASE)/bin/vcAnalyze
+	cp $(VC)/bin/vcFormat $(RELEASE)/bin/
+	cp $(VC)/bin/vcParse $(RELEASE)/bin/
+	cp $(VC)/bin/vhdlFormat $(RELEASE)/bin/
+	cp $(LLVM2AA)/bin/llvm2aa $(RELEASE)/bin/
+	# copy the IOLIB
+	cp $(IOLIB)/*.h $(RELEASE)/iolib/include/
+	cp $(IOLIB)/libio.a $(RELEASE)/iolib/lib/
+	# copy the testbench
+	cp $(CTESTBENCH)/include/*.h $(RELEASE)/CtestBench/include/
+	cp $(CTESTBENCH)/lib/* $(RELEASE)/CtestBench/lib/
+	cp $(CTESTBENCH)/vhdl/* $(RELEASE)/CtestBench/vhdl/
+	# copy the VHDL files
+	cp $(VHDL)/release/*.vhdl $(RELEASE)/vhdl/
+	# copy the documents..
+	cp ./Documents/AhirV2/AhirV2.pdf $(RELEASE)/docs/pdf/
+	cp $(AA)/docs/*.pdf $(RELEASE)/docs/pdf/
+	cp $(AA)/docs/*.html $(RELEASE)/docs/html/
+	cp $(LLVM2AA)/docs/llvm2aa.pdf $(RELEASE)/docs/pdf/
+	cp $(CTESTBENCH)/docs/*.pdf $(RELEASE)/docs/pdf/
+
+Clean:
+	#license
+	rm -f $(RELEASE)/LICENSE 
+	rm -f $(RELEASE)/CONTRIBUTORS 
+	rm -f $(RELEASE)/bin/*
+	# rm the IOLIB
+	rm -f $(RELEASE)/iolib/include/*.h
+	rm -f $(RELEASE)/iolib/lib/*.a
+	# rm the testbench
+	rm -f $(RELEASE)/CtestBench/include/*.h
+	rm -f $(RELEASE)/CtestBench/lib/*
+	rm -f $(RELEASE)/CtestBench/vhdl/*
+	# rm the VHDL files
+	rm -f $(RELEASE)/vhdl/*
+	# rm the doc files
+	rm -f $(RELEASE)/docs/pdf/*
+	rm -f $(RELEASE)/docs/html/*
+
+PHONY: Release Clean
