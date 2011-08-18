@@ -11,8 +11,7 @@ The organization
 	examples
 		examples from the AHIR V1 flow.
 		The V2 flow examples are scattered in
-		the source/ area.
-
+		the v2/ area.
 
 
 	README
@@ -35,9 +34,7 @@ The organization
 		to build, use scons.
 
 	v1
-		all AhirV1 stuff is here.  Should
-		make a directory called v1 and move
-		this into that.
+		all AhirV1 stuff is here.  
 
 	vhdl
 		all VHDL code...  this should be
