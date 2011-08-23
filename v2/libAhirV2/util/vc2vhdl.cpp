@@ -163,7 +163,7 @@ int main(int argc, char* argv[])
 	  vcSystem::_min_area_flag = true;
 	  cerr << "Info: -a option selected: will try for minimum overall circuit area" << endl;
 	  break;
-	case 'a':
+	case 'q':
 	  vcSystem::_min_clock_period_flag = true;
 	  cerr << "Info: -q option selected: will try for minimum clock cycle time (by inserting repeaters)" << endl;
 	  break;
