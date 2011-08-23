@@ -83,7 +83,7 @@ begin  -- Behave
           pop_req  => ackR);
 
     end block OqBlock;
-  end generate register_outputs;
+  end generate OutputRepeater;
 
   NoOutputRepeater: if not registered_output generate
     
@@ -117,7 +117,7 @@ begin  -- Behave
   NoArbitration: if no_arbitration generate
     fEN <= reqP;
     reqR_sig <= OrReduce(fEN);
-    ackP <= fEN when ackR = '1' else (others => '0');
+    ackP <= fEN when ackR_sig = '1' else (others => '0');
   end generate NoArbitration;
 
   Arbitration: if not no_arbitration generate
@@ -140,7 +140,7 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   process(fEN,dataP)
   begin
-    dataR <= (others => '0');
+    dataR_sig <= (others => '0');
     for J in 0 to nreqs-1 loop
       if(fEN(J) = '1') then
         dataR_sig <= dataP(J);

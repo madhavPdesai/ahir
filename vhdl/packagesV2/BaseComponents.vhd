@@ -935,7 +935,7 @@ package BaseComponents is
 	addr_width: integer;
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
-	no_arbitration: Boolean,
+	no_arbitration: Boolean;
         min_clock_period: Boolean
         );
     port (
@@ -960,6 +960,7 @@ package BaseComponents is
 	data_width : integer;
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
+        min_clock_period : boolean;
 	no_arbitration: Boolean
         );
     port (

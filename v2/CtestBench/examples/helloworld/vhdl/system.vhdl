@@ -3,6 +3,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 package vc_system_package is -- 
   constant mempool_base_address : std_logic_vector(0 downto 0) := "0";
+  constant xx_xstr1_base_address : std_logic_vector(6 downto 0) := "0000000";
+  constant xx_xstr2_base_address : std_logic_vector(6 downto 0) := "0000000";
+  constant xx_xstr_base_address : std_logic_vector(5 downto 0) := "000000";
   -- 
 end package vc_system_package;
 library ieee;
@@ -18,6 +21,7 @@ use ahir.utilities.all;
 library work;
 use work.vc_system_package.all;
 entity bar is -- 
+  generic (tag_length : integer); 
   port ( -- 
     a : in  std_logic_vector(31 downto 0);
     ret_val_x_x : out  std_logic_vector(31 downto 0);
@@ -33,8 +37,8 @@ entity bar is --
     outpipe_pipe_write_req : out  std_logic_vector(0 downto 0);
     outpipe_pipe_write_ack : in   std_logic_vector(0 downto 0);
     outpipe_pipe_write_data : out  std_logic_vector(31 downto 0);
-    tag_in: in std_logic_vector(0 downto 0);
-    tag_out: out std_logic_vector(0 downto 0)-- 
+    tag_in: in std_logic_vector(tag_length-1 downto 0);
+    tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
   );
   -- 
 end entity bar;
@@ -51,24 +55,22 @@ architecture Default of bar is --
   signal ret_val_x_x_buffer :  std_logic_vector(31 downto 0);
   signal bar_CP_0_start: Boolean;
   -- links between control-path and data-path
-  signal ptr_deref_51_gather_scatter_ack_0 : boolean;
   signal simple_obj_ref_55_inst_req_0 : boolean;
   signal simple_obj_ref_55_inst_ack_0 : boolean;
-  signal ptr_deref_58_gather_scatter_req_0 : boolean;
-  signal ptr_deref_58_gather_scatter_ack_0 : boolean;
+  signal ptr_deref_58_store_0_req_0 : boolean;
+  signal ptr_deref_58_store_0_ack_0 : boolean;
   signal ptr_deref_51_gather_scatter_req_0 : boolean;
+  signal ptr_deref_51_gather_scatter_ack_0 : boolean;
   signal ptr_deref_51_store_0_req_0 : boolean;
   signal ptr_deref_51_store_0_ack_0 : boolean;
   signal ptr_deref_51_store_0_req_1 : boolean;
   signal ptr_deref_51_store_0_ack_1 : boolean;
-  signal ptr_deref_58_store_0_req_0 : boolean;
-  signal ptr_deref_58_store_0_ack_0 : boolean;
+  signal ptr_deref_58_gather_scatter_req_0 : boolean;
+  signal ptr_deref_58_gather_scatter_ack_0 : boolean;
+  signal ptr_deref_79_load_0_req_0 : boolean;
+  signal ptr_deref_79_load_0_ack_0 : boolean;
   signal ptr_deref_58_store_0_req_1 : boolean;
   signal ptr_deref_58_store_0_ack_1 : boolean;
-  signal ptr_deref_79_load_0_req_1 : boolean;
-  signal ptr_deref_79_load_0_ack_1 : boolean;
-  signal ptr_deref_79_gather_scatter_req_0 : boolean;
-  signal ptr_deref_79_gather_scatter_ack_0 : boolean;
   signal ptr_deref_63_load_0_req_0 : boolean;
   signal ptr_deref_63_load_0_ack_0 : boolean;
   signal ptr_deref_63_load_0_req_1 : boolean;
@@ -87,8 +89,10 @@ architecture Default of bar is --
   signal binary_72_inst_ack_1 : boolean;
   signal simple_obj_ref_74_inst_req_0 : boolean;
   signal simple_obj_ref_74_inst_ack_0 : boolean;
-  signal ptr_deref_79_load_0_req_0 : boolean;
-  signal ptr_deref_79_load_0_ack_0 : boolean;
+  signal ptr_deref_79_load_0_req_1 : boolean;
+  signal ptr_deref_79_load_0_ack_1 : boolean;
+  signal ptr_deref_79_gather_scatter_req_0 : boolean;
+  signal ptr_deref_79_gather_scatter_ack_0 : boolean;
   signal memory_space_4_lr_req :  std_logic_vector(0 downto 0);
   signal memory_space_4_lr_ack : std_logic_vector(0 downto 0);
   signal memory_space_4_lr_addr : std_logic_vector(0 downto 0);
@@ -148,7 +152,11 @@ begin --
     signal branch_block_stmt_39_3_symbol : Boolean;
     -- 
   begin -- 
-    bar_CP_0_start <= start_req_symbol; 
+    bar_CP_0_start_interlock : pipeline_interlock -- 
+      port map (trigger => start_req_symbol,
+      enable =>  fin_ack_symbol, 
+      symbol_out => bar_CP_0_start, 
+      clk => clk, reset => reset); -- 
     start_ack_symbol <= Xexit_2_symbol;
     Xentry_1_symbol  <= bar_CP_0_start; -- transition $entry
     branch_block_stmt_39_3: Block -- branch_block_stmt_39 
@@ -185,11 +193,7 @@ begin --
       signal merge_stmt_82_PhiAck_226_symbol : Boolean;
       -- 
     begin -- 
-      branch_block_stmt_39_3_start_interlock : pipeline_interlock -- 
-        port map (trigger => Xentry_1_symbol,
-        enable => fin_ack_symbol, 
-        symbol_out => branch_block_stmt_39_3_start, 
-        clk => clk, reset => reset); -- 
+      branch_block_stmt_39_3_start <= Xentry_1_symbol; -- control passed to block
       Xentry_4_symbol  <= branch_block_stmt_39_3_start; -- transition branch_block_stmt_39/$entry
       branch_block_stmt_39_x_xentry_x_xx_x6_symbol  <=  Xentry_4_symbol; -- place branch_block_stmt_39/branch_block_stmt_39__entry__ (optimized away) 
       branch_block_stmt_39_x_xexit_x_xx_x7_symbol  <=  merge_stmt_82_x_xexit_x_xx_x19_symbol; -- place branch_block_stmt_39/branch_block_stmt_39__exit__ (optimized away) 
@@ -1155,7 +1159,8 @@ begin --
       ptr_deref_63_data_0 <= data_out(63 downto 32);
       ptr_deref_79_data_0 <= data_out(31 downto 0);
       LoadReq: LoadReqShared -- 
-        generic map (addr_width => 1,  num_reqs => 2,  tag_length => 2,  no_arbitration => true)
+        generic map (addr_width => 1,  num_reqs => 2,  tag_length => 2, min_clock_period => true,
+        no_arbitration => true)
         port map ( -- 
           reqL => reqL , 
           ackL => ackL , 
@@ -1194,7 +1199,8 @@ begin --
       data_in <= ptr_deref_67_word_address_0;
       ptr_deref_67_data_0 <= data_out(31 downto 0);
       LoadReq: LoadReqShared -- 
-        generic map (addr_width => 1,  num_reqs => 1,  tag_length => 1,  no_arbitration => true)
+        generic map (addr_width => 1,  num_reqs => 1,  tag_length => 1, min_clock_period => true,
+        no_arbitration => true)
         port map ( -- 
           reqL => reqL , 
           ackL => ackL , 
@@ -1237,6 +1243,7 @@ begin --
         data_width => 32,
         num_reqs => 1,
         tag_length => 2,
+        min_clock_period => true,
         no_arbitration => true)
         port map (--
           reqL => reqL , 
@@ -1283,6 +1290,7 @@ begin --
         data_width => 32,
         num_reqs => 1,
         tag_length => 1,
+        min_clock_period => true,
         no_arbitration => true)
         port map (--
           reqL => reqL , 
@@ -1426,6 +1434,7 @@ use ahir.utilities.all;
 library work;
 use work.vc_system_package.all;
 entity foo is -- 
+  generic (tag_length : integer); 
   port ( -- 
     a : in  std_logic_vector(31 downto 0);
     ret_val_x_x : out  std_logic_vector(31 downto 0);
@@ -1441,8 +1450,8 @@ entity foo is --
     midpipe_pipe_write_req : out  std_logic_vector(0 downto 0);
     midpipe_pipe_write_ack : in   std_logic_vector(0 downto 0);
     midpipe_pipe_write_data : out  std_logic_vector(31 downto 0);
-    tag_in: in std_logic_vector(0 downto 0);
-    tag_out: out std_logic_vector(0 downto 0)-- 
+    tag_in: in std_logic_vector(tag_length-1 downto 0);
+    tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
   );
   -- 
 end entity foo;
@@ -1556,7 +1565,11 @@ begin --
     signal branch_block_stmt_88_233_symbol : Boolean;
     -- 
   begin -- 
-    foo_CP_230_start <= start_req_symbol; 
+    foo_CP_230_start_interlock : pipeline_interlock -- 
+      port map (trigger => start_req_symbol,
+      enable =>  fin_ack_symbol, 
+      symbol_out => foo_CP_230_start, 
+      clk => clk, reset => reset); -- 
     start_ack_symbol <= Xexit_232_symbol;
     Xentry_231_symbol  <= foo_CP_230_start; -- transition $entry
     branch_block_stmt_88_233: Block -- branch_block_stmt_88 
@@ -1593,11 +1606,7 @@ begin --
       signal merge_stmt_131_PhiAck_456_symbol : Boolean;
       -- 
     begin -- 
-      branch_block_stmt_88_233_start_interlock : pipeline_interlock -- 
-        port map (trigger => Xentry_231_symbol,
-        enable => fin_ack_symbol, 
-        symbol_out => branch_block_stmt_88_233_start, 
-        clk => clk, reset => reset); -- 
+      branch_block_stmt_88_233_start <= Xentry_231_symbol; -- control passed to block
       Xentry_234_symbol  <= branch_block_stmt_88_233_start; -- transition branch_block_stmt_88/$entry
       branch_block_stmt_88_x_xentry_x_xx_x236_symbol  <=  Xentry_234_symbol; -- place branch_block_stmt_88/branch_block_stmt_88__entry__ (optimized away) 
       branch_block_stmt_88_x_xexit_x_xx_x237_symbol  <=  merge_stmt_131_x_xexit_x_xx_x249_symbol; -- place branch_block_stmt_88/branch_block_stmt_88__exit__ (optimized away) 
@@ -2563,7 +2572,8 @@ begin --
       ptr_deref_112_data_0 <= data_out(63 downto 32);
       ptr_deref_128_data_0 <= data_out(31 downto 0);
       LoadReq: LoadReqShared -- 
-        generic map (addr_width => 1,  num_reqs => 2,  tag_length => 2,  no_arbitration => true)
+        generic map (addr_width => 1,  num_reqs => 2,  tag_length => 2, min_clock_period => true,
+        no_arbitration => true)
         port map ( -- 
           reqL => reqL , 
           ackL => ackL , 
@@ -2602,7 +2612,8 @@ begin --
       data_in <= ptr_deref_116_word_address_0;
       ptr_deref_116_data_0 <= data_out(31 downto 0);
       LoadReq: LoadReqShared -- 
-        generic map (addr_width => 1,  num_reqs => 1,  tag_length => 1,  no_arbitration => true)
+        generic map (addr_width => 1,  num_reqs => 1,  tag_length => 1, min_clock_period => true,
+        no_arbitration => true)
         port map ( -- 
           reqL => reqL , 
           ackL => ackL , 
@@ -2645,6 +2656,7 @@ begin --
         data_width => 32,
         num_reqs => 1,
         tag_length => 2,
+        min_clock_period => true,
         no_arbitration => true)
         port map (--
           reqL => reqL , 
@@ -2691,6 +2703,7 @@ begin --
         data_width => 32,
         num_reqs => 1,
         tag_length => 1,
+        min_clock_period => true,
         no_arbitration => true)
         port map (--
           reqL => reqL , 
@@ -2865,6 +2878,7 @@ architecture Default of test_system is -- system-architecture
   -- interface signals to connect to memory space memory_space_0
   -- declarations related to module bar
   component bar is -- 
+    generic (tag_length : integer); 
     port ( -- 
       a : in  std_logic_vector(31 downto 0);
       ret_val_x_x : out  std_logic_vector(31 downto 0);
@@ -2880,13 +2894,14 @@ architecture Default of test_system is -- system-architecture
       outpipe_pipe_write_req : out  std_logic_vector(0 downto 0);
       outpipe_pipe_write_ack : in   std_logic_vector(0 downto 0);
       outpipe_pipe_write_data : out  std_logic_vector(31 downto 0);
-      tag_in: in std_logic_vector(0 downto 0);
-      tag_out: out std_logic_vector(0 downto 0)-- 
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
     );
     -- 
   end component;
   -- declarations related to module foo
   component foo is -- 
+    generic (tag_length : integer); 
     port ( -- 
       a : in  std_logic_vector(31 downto 0);
       ret_val_x_x : out  std_logic_vector(31 downto 0);
@@ -2902,8 +2917,8 @@ architecture Default of test_system is -- system-architecture
       midpipe_pipe_write_req : out  std_logic_vector(0 downto 0);
       midpipe_pipe_write_ack : in   std_logic_vector(0 downto 0);
       midpipe_pipe_write_data : out  std_logic_vector(31 downto 0);
-      tag_in: in std_logic_vector(0 downto 0);
-      tag_out: out std_logic_vector(0 downto 0)-- 
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
     );
     -- 
   end component;
@@ -2927,6 +2942,7 @@ architecture Default of test_system is -- system-architecture
 begin -- 
   -- module bar
   bar_instance:bar-- 
+    generic map(tag_length => 1)
     port map(-- 
       a => bar_a,
       ret_val_x_x => bar_ret_val_x_x,
@@ -2947,6 +2963,7 @@ begin --
     ); -- 
   -- module foo
   foo_instance:foo-- 
+    generic map(tag_length => 1)
     port map(-- 
       a => foo_a,
       ret_val_x_x => foo_ret_val_x_x,
