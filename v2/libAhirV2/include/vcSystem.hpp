@@ -35,6 +35,7 @@ class vcSystem: public vcRoot
   static bool _verbose_flag;
   static bool _opt_flag;
   static bool _min_area_flag;
+  static bool _min_clock_period_flag;
 
   static bool _vhpi_tb_flag;
   static string _simulator_prefix;

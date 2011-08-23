@@ -15,7 +15,8 @@ entity StoreReqShared is
 	data_width : integer;
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
-	no_arbitration: Boolean
+	no_arbitration: Boolean;
+        min_clock_period: Boolean := false        
     );
   port (
     -- req/ack follow pulse protocol
@@ -70,6 +71,7 @@ begin  -- Behave
 	   owidth => addr_width+data_width, 
 	   twidth => tag_length,
 	   nreqs => num_reqs,
+           registered_output => min_clock_period,
 	   no_arbitration => no_arbitration)
     port map(
       reqL       => reqL,

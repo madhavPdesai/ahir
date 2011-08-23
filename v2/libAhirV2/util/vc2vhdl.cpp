@@ -41,6 +41,10 @@ void Usage_Vc2VHDL()
        <<  " Notes: " << endl
        <<  "   1. alternate form: --min_area" << endl
        <<  "   2. if -a is absent, the goal will be to get the maximum speed (minimize number of cycles needed" << endl;
+  cerr <<  " -q:  will try to produce a VHDL netlist with the minimum clock period (sort of)" << endl
+       <<  " Notes: " << endl
+       <<  "   1. alternate form: --min_clock_period" << endl
+       <<  "   2. if -q is absent, the goal will be to get the minimize cycle count..." << endl;
   cerr <<  " -s ghdl/modelsim: specify the simulator with which one is going to simulate the system." << endl
        <<  "    -s ghdl: will produce a testbench which can be used in GHDL. " << endl
        <<  "    -s modelsim: will produce a testbench which can be used in Modelsim. " << endl
@@ -85,6 +89,7 @@ int main(int argc, char* argv[])
       {"help", no_argument, 0, 'h'},
       {"optimize", no_argument,0, 'O'},
       {"min_area", no_argument,0, 'a'},
+      {"min_clock_period", no_argument,0, 'q'},
       {"ctestbench",  no_argument, 0, 'C'},
       {"simulator",  required_argument, 0, 's'},
       {"set_as_top",  required_argument, 0, 't'},
@@ -120,7 +125,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:T:f:OCs:he:wa",
+		      "t:T:f:OCs:he:waq",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -157,6 +162,10 @@ int main(int argc, char* argv[])
 	case 'a':
 	  vcSystem::_min_area_flag = true;
 	  cerr << "Info: -a option selected: will try for minimum overall circuit area" << endl;
+	  break;
+	case 'a':
+	  vcSystem::_min_clock_period_flag = true;
+	  cerr << "Info: -q option selected: will try for minimum clock cycle time (by inserting repeaters)" << endl;
 	  break;
 	case 'e':
 	  sys_name = string(optarg);
