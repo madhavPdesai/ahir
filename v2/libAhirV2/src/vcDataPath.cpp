@@ -1220,6 +1220,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		<< " use_constant  => " << (use_constant ? "true" : "false") << "," << endl // use constant?
 		<< " zero_delay => false, " << endl // single cycle delay
 		<< " no_arbitration => " << no_arb_string << "," << endl
+		<< " min_clock_period => " << (vcSystem::_min_clock_period_flag ? "true" : "false") << "," << endl
 		<< " num_reqs => " << num_reqs << "--} \n ) -- }" << endl; // number of requesters..
 	  ofile << "port map ( reqL => reqL , ackL => ackL, reqR => reqR, ackR => ackR, dataL => data_in, dataR => data_out, clk => clk, reset => reset);" << endl;
 	}
@@ -1427,6 +1428,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
       ofile << "generic map (addr_width => " << addr_width << ","
 	    << "  num_reqs => " << num_reqs << ","
 	    << "  tag_length => " << tag_length << ","
+	    << " min_clock_period => " << (vcSystem::_min_clock_period_flag ? "true" : "false") << "," << endl
 	    << "  no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map ( -- { \n reqL => reqL " << ", " <<  endl
 	    << "    ackL => ackL " << ", " <<  endl
@@ -1557,6 +1559,7 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 	    << "  data_width => " << data_width << "," << endl
 	    << "  num_reqs => " << num_reqs << "," << endl
 	    << "  tag_length => " << tag_length << "," << endl
+	    << "  min_clock_period => " << (vcSystem::_min_clock_period_flag ? "true" : "false") << "," << endl
 	    << "  no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map (--{\n reqL => reqL " << ", " <<  endl
 	    << "    ackL => ackL " << ", " <<  endl

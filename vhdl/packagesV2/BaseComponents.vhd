@@ -238,6 +238,7 @@ package BaseComponents is
         use_constant  : boolean := false;
         zero_delay    : boolean := false;
         no_arbitration: boolean := false;
+        min_clock_period: boolean := false;
         num_reqs : integer  -- how many requesters?
         );
 
@@ -375,7 +376,8 @@ package BaseComponents is
               owidth: integer;
               twidth: integer;
               nreqs: integer;
-              no_arbitration: Boolean);
+              no_arbitration: Boolean;
+              registered_output: Boolean);
     port (
       -- req/ack follow pulse protocol
       reqL                 : in  BooleanArray(nreqs-1 downto 0);
@@ -933,7 +935,8 @@ package BaseComponents is
 	addr_width: integer;
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
-	no_arbitration: Boolean
+	no_arbitration: Boolean,
+        min_clock_period: Boolean
         );
     port (
       -- req/ack follow pulse protocol

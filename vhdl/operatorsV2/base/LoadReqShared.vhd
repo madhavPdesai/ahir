@@ -9,12 +9,13 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity LoadReqShared is
-    generic
+  generic
     (
 	addr_width: integer := 8;
       	num_reqs : integer := 1; -- how many requesters?
 	tag_length: integer := 1;
-	no_arbitration: Boolean := true
+	no_arbitration: Boolean := true;
+        min_clock_period: Boolean := false
     );
   port (
     -- req/ack follow pulse protocol
@@ -50,11 +51,12 @@ begin  -- Behave
 
   
   imux: InputMuxBase
-  	generic map(iwidth => iwidth,
-	   owidth => owidth, 
-	   twidth => tag_length,
-	   nreqs => num_reqs,
-	   no_arbitration => no_arbitration)
+    generic map(iwidth => iwidth,
+                owidth => owidth, 
+                twidth => tag_length,
+                nreqs => num_reqs,
+                no_arbitration => no_arbitration,
+                registered_output => min_clock_period)
     port map(
       reqL       => reqL,
       ackL       => ackL,

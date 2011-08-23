@@ -29,6 +29,7 @@ entity SplitOperatorShared is
       use_constant  : boolean := true;
       zero_delay    : boolean := false;
       no_arbitration: boolean := true;
+      min_clock_period: boolean := false;
       num_reqs : integer := 3 -- how many requesters?
     );
   port (
@@ -81,11 +82,12 @@ begin  -- Behave
   end generate DebugGen;
   
   imux: InputMuxBase
-  	generic map(iwidth => iwidth*num_reqs,
-	   owidth => iwidth, 
-	   twidth => tag_length,
-	   nreqs => num_reqs,
-	   no_arbitration => no_arbitration)
+    generic map(iwidth => iwidth*num_reqs,
+                owidth => iwidth, 
+                twidth => tag_length,
+                nreqs => num_reqs,
+                no_arbitration => no_arbitration,
+                registered_output => min_clock_period)
     port map(
       reqL       => reqL,
       ackL       => ackL,
