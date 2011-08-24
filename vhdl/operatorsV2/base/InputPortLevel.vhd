@@ -59,7 +59,7 @@ begin  -- default_arch
     
     ack(I) <= ack_sig(I);
     
-    data_final(I) <= odata when ack_sig(I) = '1' else (others => '0');
+    data_final(I) <= odata;
     
   end generate gen;
 

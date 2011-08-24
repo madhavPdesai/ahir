@@ -1,0 +1,147 @@
+$storage cache_flags:$array [16] $of $uint<8>
+$storage cache_data:$array [16] $of $uint<512>
+$storage main_memory:$array [4096] $of $uint<512>
+$storage cache_tag:$array [16] $of $uint<32>
+$module [init_cache] 
+$in ()
+$out ()
+$is 
+{
+  $branchblock [body] 
+  {
+    $merge $entry loopback 
+	$phi I := ($bitcast ($uint<5>) _b0) $on $entry I_next $on loopback
+    $endmerge
+    
+    cache_flags[I] := _b0
+    I_next := (I + 1)
+    $if(I_next == 16) $then $place [loopback] $else $place [return__] $endif
+    $merge return__ $endmerge
+  }
+}
+$module [write_back] 
+$in (block_index : $uint<32> cache_block_address : $uint<32> )
+$out ()
+$is 
+{
+	main_memory[cache_block_address] := cache_data[block_index]
+}
+
+$module [read_line] 
+$in (block_index : $uint<32> block_address : $uint<32> )
+$out ()
+$is 
+{
+	cache_data[block_index] := main_memory[block_address]
+        cache_tag[block_index] := block_address
+}
+
+$module [read_mem] 
+$in (addr : $uint<32> )
+$out (ret_val__ : $uint<32>)
+$is 
+{
+  $branchblock [body] 
+  {
+    $storage active_line: $uint<512>
+
+    block_index := (addr >> 28 )
+    block_address := (addr & ( $bitcast ($uint<32> ) _b11111111111111111111111111110000 ) )
+    block_offset  := (addr & ( $bitcast ($uint<32> ) _b00000000000000000000000000001111 ) )
+    cached_block_address := cache_tag[block_index]
+
+    // speculate
+    active_line := cache_data[block_index]
+
+    // load flags
+    flag  := cache_flags[block_index]
+    valid := ((flag & _b1) != _b0)
+    dirty := ((flag & _b10) != _b0)
+    match := (cached_block_address == block_address)
+    hit_flag := (valid & match)
+    
+    // get the pointer..
+    line_ptr := @(active_line)
+    word_ptr_base := ($bitcast ($pointer<$uint<32> >) line_ptr)
+    word_ptr := word_ptr_base[block_offset]
+    ret_val_hit := ->(word_ptr)
+
+    $if hit_flag $then
+	$place [hit]
+    $else 
+	$if(valid & dirty) $then
+		$parallelblock[wb] {
+			$call write_back(block_index cached_block_address) ()	
+			cache_flags[block_index] := _b0  // clear flags..
+		}
+	$endif
+	
+	$call read_line(block_index block_address) ()
+	cache_flags[block_index] :=  _b1
+  
+	// correct..
+        active_line := cache_data[block_index]
+        ret_val_miss := ->(word_ptr)
+
+	$place [miss]
+    $endif
+
+    $merge hit miss
+	$phi ret_val__ := ret_val_hit $on hit ret_val_miss $on miss 
+    $endmerge
+  }
+}
+
+$module [write_mem] 
+$in (addr : $uint<32> data : $uint<32> )
+$out ()
+$is 
+{
+  $branchblock [body] 
+  {
+    $storage active_line: $uint<512>
+
+    block_index := (addr >> 28 )
+    block_address := (addr & ( $bitcast ($uint<32> ) _b11111111111111111111111111110000 ) )
+    block_offset  := (addr & ( $bitcast ($uint<32> ) _b00000000000000000000000000001111 ) )
+
+    cached_block_address := cache_tag[block_index]
+    match := (cached_block_address == block_address)
+
+    // load 
+    flag := cache_flags[block_index]
+    valid := ((flag & _b1) != _b0)
+    dirty := ((flag & _b10) != _b0)
+    hit_flag := (valid & match)
+
+    // get the pointer..
+    line_ptr := @(active_line)
+    word_ptr_base := ($bitcast ($pointer <$uint<32> >) line_ptr)
+    word_ptr := word_ptr_base[block_offset]
+
+    // speculate.
+    active_line := cache_data[block_index]
+    ->(word_ptr) := data
+    
+    $if hit_flag $then
+	$null
+    $else 
+	$if(valid & dirty) $then
+		$parallelblock[wb] {
+			$call write_back(block_index cached_block_address) ()	
+			cache_flags[block_index] := _b0  // clear flags..
+		}
+	$endif
+	
+	$call read_line(block_index block_address) ()
+	cache_flags[block_index] :=  _b11
+
+	// correct..
+	active_line := cache_data[block_index]
+    	->(word_ptr) := data
+    $endif
+
+    // update the cache.
+    cache_data[block_index] := active_line
+  }
+}

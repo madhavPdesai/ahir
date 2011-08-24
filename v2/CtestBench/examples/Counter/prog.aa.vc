@@ -1,0 +1,527 @@
+// Virtual circuit produced from Aa description by Aa2VC 
+// $pipe  in_data : $uint<8>  $depth 2 
+// can point into 
+// in scope  top-level
+$pipe [in_data] 8 $depth 2
+// $pipe  out_data : $uint<8>  $depth 2 
+// can point into 
+// in scope  top-level
+$pipe [out_data] 8 $depth 2
+$module [counter] 
+{
+  // pipe-declarations for block %counter
+  //  file prog.aa, line 4
+  // pipe-declarations for block %counter%fsm
+  //  file prog.aa, line 7
+  // pipe-declarations for block %counter%fsm%
+  //  file prog.aa, line 11
+  // pipe-declarations for block %counter%fsm%pb
+  //  file prog.aa, line 16
+  $CP 
+  {
+    // begin control-path 
+    <>[branch_block_stmt_4] // Branch Block  file prog.aa, line 7
+    {
+      $P [branch_block_stmt_4__entry__]
+      branch_block_stmt_4__entry__ <-| ($entry)
+      $P [branch_block_stmt_4__exit__]
+      branch_block_stmt_4__exit__ |-> ($exit)
+      $P [merge_stmt_10__entry__] 
+      $P [merge_stmt_10__exit__] 
+      $P [parallel_block_stmt_20__entry__] 
+      $P [parallel_block_stmt_20__exit__] 
+      $P [loopback]
+      ||[parallel_block_stmt_20] 
+      {
+        ::[assign_stmt_33] 
+        {
+          // 			ns0 := (( ~ (in_symbol [] 0 ) ) & (s0 ^ (in_symbol [] 0 )))
+          //  file prog.aa, line 18
+          $T[assign_stmt_33_active_] 
+          $T[assign_stmt_33_completed_] 
+          // (( ~ (in_symbol [] 0 ) ) & (s0 ^ (in_symbol [] 0 )))
+          $T[binary_32_active_] 
+          $T[binary_32_trigger_] 
+          binary_32_active_ <-& (binary_32_trigger_)
+          // ( ~ (in_symbol [] 0 ) )
+          $T[unary_26_active_] 
+          $T[unary_26_trigger_] 
+          unary_26_active_ <-& (unary_26_trigger_)
+          // (in_symbol [] 0 )
+          $T[binary_24_active_] 
+          $T[binary_24_trigger_] 
+          binary_24_active_ <-& (binary_24_trigger_)
+          // in_symbol
+          // implicit reference
+          $T[simple_obj_ref_22_complete] 
+          binary_24_active_ <-& (simple_obj_ref_22_complete)
+          ;;[binary_24_complete] 
+          {
+            // binary expression 
+            $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_24_active_ &-> (binary_24_complete)
+          unary_26_active_ <-& (binary_24_complete)
+          ;;[unary_26_complete] 
+          {
+            // unary expression 
+            $T [rr] $T [ra] $T [cr] $T [ca] //(split) unary operation
+          }
+          unary_26_active_ &-> (unary_26_complete)
+          // (s0 ^ (in_symbol [] 0 ))
+          $T[binary_31_active_] 
+          $T[binary_31_trigger_] 
+          binary_31_active_ <-& (binary_31_trigger_)
+          // s0
+          // implicit reference
+          $T[simple_obj_ref_27_complete] 
+          // (in_symbol [] 0 )
+          $T[binary_30_active_] 
+          $T[binary_30_trigger_] 
+          binary_30_active_ <-& (binary_30_trigger_)
+          // in_symbol
+          // implicit reference
+          $T[simple_obj_ref_28_complete] 
+          binary_30_active_ <-& (simple_obj_ref_28_complete)
+          ;;[binary_30_complete] 
+          {
+            // binary expression 
+            $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_30_active_ &-> (binary_30_complete)
+          binary_31_active_ <-& (simple_obj_ref_27_complete)
+          binary_31_active_ <-& (binary_30_complete)
+          ;;[binary_31_complete] 
+          {
+            // binary expression 
+            $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_31_active_ &-> (binary_31_complete)
+          binary_32_active_ <-& (unary_26_complete)
+          binary_32_active_ <-& (binary_31_complete)
+          ;;[binary_32_complete] 
+          {
+            // binary expression 
+            $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_32_active_ &-> (binary_32_complete)
+          assign_stmt_33_active_ <-& (binary_32_complete)
+          // ns0
+          // implicit reference
+          assign_stmt_33_completed_ <-& (assign_stmt_33_active_)
+          // load-store dependencies..
+        }
+        ::[assign_stmt_47] 
+        {
+          // 			ns1 := (( ~ (in_symbol [] 0 ) ) & (s1 ^ (s0 & (in_symbol [] 0 ))))
+          //  file prog.aa, line 19
+          $T[assign_stmt_47_active_] 
+          $T[assign_stmt_47_completed_] 
+          // (( ~ (in_symbol [] 0 ) ) & (s1 ^ (s0 & (in_symbol [] 0 ))))
+          $T[binary_46_active_] 
+          $T[binary_46_trigger_] 
+          binary_46_active_ <-& (binary_46_trigger_)
+          // ( ~ (in_symbol [] 0 ) )
+          $T[unary_38_active_] 
+          $T[unary_38_trigger_] 
+          unary_38_active_ <-& (unary_38_trigger_)
+          // (in_symbol [] 0 )
+          $T[binary_37_active_] 
+          $T[binary_37_trigger_] 
+          binary_37_active_ <-& (binary_37_trigger_)
+          // in_symbol
+          // implicit reference
+          $T[simple_obj_ref_35_complete] 
+          binary_37_active_ <-& (simple_obj_ref_35_complete)
+          ;;[binary_37_complete] 
+          {
+            // binary expression 
+            $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_37_active_ &-> (binary_37_complete)
+          unary_38_active_ <-& (binary_37_complete)
+          ;;[unary_38_complete] 
+          {
+            // unary expression 
+            $T [rr] $T [ra] $T [cr] $T [ca] //(split) unary operation
+          }
+          unary_38_active_ &-> (unary_38_complete)
+          // (s1 ^ (s0 & (in_symbol [] 0 )))
+          $T[binary_45_active_] 
+          $T[binary_45_trigger_] 
+          binary_45_active_ <-& (binary_45_trigger_)
+          // s1
+          // implicit reference
+          $T[simple_obj_ref_39_complete] 
+          // (s0 & (in_symbol [] 0 ))
+          $T[binary_44_active_] 
+          $T[binary_44_trigger_] 
+          binary_44_active_ <-& (binary_44_trigger_)
+          // s0
+          // implicit reference
+          $T[simple_obj_ref_40_complete] 
+          // (in_symbol [] 0 )
+          $T[binary_43_active_] 
+          $T[binary_43_trigger_] 
+          binary_43_active_ <-& (binary_43_trigger_)
+          // in_symbol
+          // implicit reference
+          $T[simple_obj_ref_41_complete] 
+          binary_43_active_ <-& (simple_obj_ref_41_complete)
+          ;;[binary_43_complete] 
+          {
+            // binary expression 
+            $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_43_active_ &-> (binary_43_complete)
+          binary_44_active_ <-& (simple_obj_ref_40_complete)
+          binary_44_active_ <-& (binary_43_complete)
+          ;;[binary_44_complete] 
+          {
+            // binary expression 
+            $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_44_active_ &-> (binary_44_complete)
+          binary_45_active_ <-& (simple_obj_ref_39_complete)
+          binary_45_active_ <-& (binary_44_complete)
+          ;;[binary_45_complete] 
+          {
+            // binary expression 
+            $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_45_active_ &-> (binary_45_complete)
+          binary_46_active_ <-& (unary_38_complete)
+          binary_46_active_ <-& (binary_45_complete)
+          ;;[binary_46_complete] 
+          {
+            // binary expression 
+            $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_46_active_ &-> (binary_46_complete)
+          assign_stmt_47_active_ <-& (binary_46_complete)
+          // ns1
+          // implicit reference
+          assign_stmt_47_completed_ <-& (assign_stmt_47_active_)
+          // load-store dependencies..
+        }
+        ::[assign_stmt_54] 
+        {
+          // 			out_data := (z7 && (s1 & s0))
+          //  file prog.aa, line 20
+          $T[assign_stmt_54_active_] 
+          $T[assign_stmt_54_completed_] 
+          // (z7 && (s1 & s0))
+          $T[binary_53_active_] 
+          $T[binary_53_trigger_] 
+          binary_53_active_ <-& (binary_53_trigger_)
+          // (s1 & s0)
+          $T[binary_52_active_] 
+          $T[binary_52_trigger_] 
+          binary_52_active_ <-& (binary_52_trigger_)
+          // s1
+          // implicit reference
+          $T[simple_obj_ref_50_complete] 
+          // s0
+          // implicit reference
+          $T[simple_obj_ref_51_complete] 
+          binary_52_active_ <-& (simple_obj_ref_50_complete)
+          binary_52_active_ <-& (simple_obj_ref_51_complete)
+          ;;[binary_52_complete] 
+          {
+            // binary expression 
+            $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_52_active_ &-> (binary_52_complete)
+          binary_53_active_ <-& (binary_52_complete)
+          ;;[binary_53_complete] 
+          {
+            // binary expression 
+            $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_53_active_ &-> (binary_53_complete)
+          assign_stmt_54_active_ <-& (binary_53_complete)
+          // out_data
+          $T[simple_obj_ref_48_trigger_] 
+          ;;[simple_obj_ref_48_complete] 
+          {
+            // pipe write out_data
+            $T [pipe_wreq] $T [pipe_wack] 
+          }
+          simple_obj_ref_48_trigger_ &-> (simple_obj_ref_48_complete)
+          simple_obj_ref_48_trigger_ <-& (assign_stmt_54_active_)
+          assign_stmt_54_completed_ <-& (simple_obj_ref_48_complete)
+          // load-store dependencies..
+          // pipe read/write dependencies for pipe out_data
+        }
+        ::[assign_stmt_57] 
+        {
+          // 			in_symbol := in_data
+          //  file prog.aa, line 21
+          $T[assign_stmt_57_active_] 
+          $T[assign_stmt_57_completed_] 
+          // in_data
+          $T[simple_obj_ref_56_trigger_] 
+          ;;[simple_obj_ref_56_complete] 
+          {
+            // pipe read
+            $T [req] $T [ack] 
+          }
+          simple_obj_ref_56_trigger_ &-> (simple_obj_ref_56_complete)
+          assign_stmt_57_active_ <-& (simple_obj_ref_56_complete)
+          // in_symbol
+          // implicit reference
+          assign_stmt_57_completed_ <-& (assign_stmt_57_active_)
+          // load-store dependencies..
+          // pipe read/write dependencies for pipe in_data
+        }
+      }
+      parallel_block_stmt_20__entry__ |-> (parallel_block_stmt_20)
+      parallel_block_stmt_20__exit__ <-| (parallel_block_stmt_20)
+      // control-path for merge  
+      //  file prog.aa, line 11
+      ;;[merge_stmt_10_dead_link] 
+      {
+        $T [dead_transition] $dead 
+      }
+      merge_stmt_10__entry__ |-> (merge_stmt_10_dead_link)
+      merge_stmt_10__exit__ <-| (merge_stmt_10_dead_link)
+      //---------------------   merge statement  file prog.aa, line 11  --------------------------
+      ||[merge_stmt_10__entry___PhiReq] 
+      {
+        ;;[phi_stmt_11] 
+        {
+          ||[phi_stmt_11_sources] 
+          {
+            // sources for 			$phi s0 := 			  0  $on $entry			  ns0 $on loopback // type of target is $uint<1>
+          }
+          $T [phi_stmt_11_req] 
+        }
+        ;;[phi_stmt_15] 
+        {
+          ||[phi_stmt_15_sources] 
+          {
+            // sources for 			$phi s1 := 			  0  $on $entry			  ns0 $on loopback // type of target is $uint<1>
+          }
+          $T [phi_stmt_15_req] 
+        }
+      }
+      merge_stmt_10__entry__ |-> (merge_stmt_10__entry___PhiReq)
+      ||[loopback_PhiReq] 
+      {
+        ;;[phi_stmt_11] 
+        {
+          ||[phi_stmt_11_sources] 
+          {
+            // sources for 			$phi s0 := 			  0  $on $entry			  ns0 $on loopback // type of target is $uint<1>
+          }
+          $T [phi_stmt_11_req] 
+        }
+        ;;[phi_stmt_15] 
+        {
+          ||[phi_stmt_15_sources] 
+          {
+            // sources for 			$phi s1 := 			  0  $on $entry			  ns0 $on loopback // type of target is $uint<1>
+          }
+          $T [phi_stmt_15_req] 
+        }
+      }
+      loopback |-> (loopback_PhiReq)
+      $P [merge_stmt_10_PhiReqMerge] 
+      merge_stmt_10_PhiReqMerge <-| ( merge_stmt_10__entry___PhiReq  loopback_PhiReq )
+      ||[merge_stmt_10_PhiAck] 
+      {
+        $T [phi_stmt_11_ack] 
+        $T [phi_stmt_15_ack] 
+      }
+      merge_stmt_10_PhiReqMerge |-> (merge_stmt_10_PhiAck)
+      merge_stmt_10__exit__  <-| (merge_stmt_10_PhiAck)
+      //---------------------  end of merge statement  file prog.aa, line 11  --------------------------
+      merge_stmt_10__entry__ <-| (branch_block_stmt_4__entry__)
+      parallel_block_stmt_20__entry__ <-| (merge_stmt_10__exit__)
+      loopback <-| (parallel_block_stmt_20__exit__)
+    }
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %counter%fsm%
+    //  file prog.aa, line 11
+    // constant-object-declarations for block %counter%fsm%pb
+    //  file prog.aa, line 16
+    // constant-object-declarations for block %counter%fsm
+    //  file prog.aa, line 7
+    $constant $W[xxcounterxxfsmxxz7] : $int<7> := _b0000000// 0
+    // constant-object-declarations for block %counter
+    //  file prog.aa, line 4
+    // constant-declarations for block %counter%fsm
+    //  file prog.aa, line 7
+    $constant $W[xxcounterxxfsmxxz7] : $int<7> := _b0000000// 0
+    // constant-declarations for block %counter%fsm%
+    //  file prog.aa, line 11
+    // constant-declarations for phi:  			$phi s0 := 			  0  $on $entry			  ns0 $on loopback // type of target is $uint<1>
+    //  file prog.aa, line 12
+    // 0 
+    $constant $W[expr_13_wire_constant] : $int<1> := _b0// 0
+    // constant-declarations for phi:  			$phi s1 := 			  0  $on $entry			  ns0 $on loopback // type of target is $uint<1>
+    //  file prog.aa, line 13
+    // 0 
+    $constant $W[expr_17_wire_constant] : $int<1> := _b0// 0
+    // constant-declarations for block %counter%fsm%pb
+    //  file prog.aa, line 16
+    // 0 
+    $constant $W[expr_23_wire_constant] : $int<8> := _b00000000// 0
+    // 0 
+    $constant $W[expr_29_wire_constant] : $int<8> := _b00000000// 0
+    // 0 
+    $constant $W[expr_36_wire_constant] : $int<8> := _b00000000// 0
+    // 0 
+    $constant $W[expr_42_wire_constant] : $int<8> := _b00000000// 0
+    // z7
+    $constant $W[simple_obj_ref_49_wire_constant] : $int<7> := _b0000000// 0
+    // block %counter%fsm
+    //  file prog.aa, line 7
+    // merge-statement  
+    //  file prog.aa, line 11
+    // 			$phi s0 := 			  0  $on $entry			  ns0 $on loopback // type of target is $uint<1>
+    //  file prog.aa, line 12
+    // s0
+    $W[s0_11] : $int<1>
+    // 			$phi s1 := 			  0  $on $entry			  ns0 $on loopback // type of target is $uint<1>
+    //  file prog.aa, line 13
+    // s1
+    $W[s1_15] : $int<1>
+    // block %counter%fsm%pb
+    //  file prog.aa, line 16
+    // 			ns0 := (( ~ (in_symbol [] 0 ) ) & (s0 ^ (in_symbol [] 0 )))
+    //  file prog.aa, line 18
+    // (in_symbol [] 0 )
+    $intermediate $W[binary_24_wire] : $int<1>
+    // ( ~ (in_symbol [] 0 ) )
+    $intermediate $W[unary_26_wire] : $int<1>
+    // (in_symbol [] 0 )
+    $intermediate $W[binary_30_wire] : $int<1>
+    // (s0 ^ (in_symbol [] 0 ))
+    $intermediate $W[binary_31_wire] : $int<1>
+    // ns0
+    $W[ns0_33] : $int<1>
+    // 			ns1 := (( ~ (in_symbol [] 0 ) ) & (s1 ^ (s0 & (in_symbol [] 0 ))))
+    //  file prog.aa, line 19
+    // (in_symbol [] 0 )
+    $intermediate $W[binary_37_wire] : $int<1>
+    // ( ~ (in_symbol [] 0 ) )
+    $intermediate $W[unary_38_wire] : $int<1>
+    // (in_symbol [] 0 )
+    $intermediate $W[binary_43_wire] : $int<1>
+    // (s0 & (in_symbol [] 0 ))
+    $intermediate $W[binary_44_wire] : $int<1>
+    // (s1 ^ (s0 & (in_symbol [] 0 )))
+    $intermediate $W[binary_45_wire] : $int<1>
+    // ns1
+    $W[ns1_47] : $int<1>
+    // 			out_data := (z7 && (s1 & s0))
+    //  file prog.aa, line 20
+    // (s1 & s0)
+    $intermediate $W[binary_52_wire] : $int<1>
+    // (z7 && (s1 & s0))
+    $intermediate $W[binary_53_wire] : $int<8>
+    // out_data
+    // 			in_symbol := in_data
+    //  file prog.aa, line 21
+    // in_symbol
+    $W[in_symbol_57] : $int<8>
+    // datapath-instances for block %counter%fsm
+    //  file prog.aa, line 7
+    // data-path instances for merge  
+    //  file prog.aa, line 11
+    // 			$phi s0 := 			  0  $on $entry			  ns0 $on loopback // type of target is $uint<1>
+    //  file prog.aa, line 12
+    $phi [phi_stmt_11] (expr_13_wire_constant ns0_33) ( s0_11 )
+    // 			$phi s1 := 			  0  $on $entry			  ns0 $on loopback // type of target is $uint<1>
+    //  file prog.aa, line 13
+    $phi [phi_stmt_15] (expr_17_wire_constant ns0_33) ( s1_15 )
+    // datapath-instances for block %counter%fsm%pb
+    //  file prog.aa, line 16
+    // 			ns0 := (( ~ (in_symbol [] 0 ) ) & (s0 ^ (in_symbol [] 0 )))
+    //  file prog.aa, line 18
+    // (in_symbol [] 0 )
+    [][binary_24_inst] (in_symbol_57 expr_23_wire_constant) (binary_24_wire)
+    // ( ~ (in_symbol [] 0 ) )
+    ~ [unary_26_inst] (binary_24_wire) (unary_26_wire)
+    // (in_symbol [] 0 )
+    [][binary_30_inst] (in_symbol_57 expr_29_wire_constant) (binary_30_wire)
+    // (s0 ^ (in_symbol [] 0 ))
+    ^[binary_31_inst] (s0_11 binary_30_wire) (binary_31_wire)
+    // (( ~ (in_symbol [] 0 ) ) & (s0 ^ (in_symbol [] 0 )))
+    &[binary_32_inst] (unary_26_wire binary_31_wire) (ns0_33)
+    // 			ns1 := (( ~ (in_symbol [] 0 ) ) & (s1 ^ (s0 & (in_symbol [] 0 ))))
+    //  file prog.aa, line 19
+    // (in_symbol [] 0 )
+    [][binary_37_inst] (in_symbol_57 expr_36_wire_constant) (binary_37_wire)
+    // ( ~ (in_symbol [] 0 ) )
+    ~ [unary_38_inst] (binary_37_wire) (unary_38_wire)
+    // (in_symbol [] 0 )
+    [][binary_43_inst] (in_symbol_57 expr_42_wire_constant) (binary_43_wire)
+    // (s0 & (in_symbol [] 0 ))
+    &[binary_44_inst] (s0_11 binary_43_wire) (binary_44_wire)
+    // (s1 ^ (s0 & (in_symbol [] 0 )))
+    ^[binary_45_inst] (s1_15 binary_44_wire) (binary_45_wire)
+    // (( ~ (in_symbol [] 0 ) ) & (s1 ^ (s0 & (in_symbol [] 0 ))))
+    &[binary_46_inst] (unary_38_wire binary_45_wire) (ns1_47)
+    // 			out_data := (z7 && (s1 & s0))
+    //  file prog.aa, line 20
+    // (s1 & s0)
+    &[binary_52_inst] (s1_15 s0_11) (binary_52_wire)
+    // (z7 && (s1 & s0))
+    &&[binary_53_inst] (simple_obj_ref_49_wire_constant binary_52_wire) (binary_53_wire)
+    // out_data
+    $ioport $out [simple_obj_ref_48_inst]  (binary_53_wire) (out_data)
+    // 			in_symbol := in_data
+    //  file prog.aa, line 21
+    // in_data
+    $ioport $in [simple_obj_ref_56_inst] (in_data) (in_symbol_57)
+  }
+  // end data-path
+  // CP-DP links for merge  
+  //  file prog.aa, line 11
+  phi_stmt_11 <=> (branch_block_stmt_4/merge_stmt_10__entry___PhiReq/phi_stmt_11/phi_stmt_11_req branch_block_stmt_4/loopback_PhiReq/phi_stmt_11/phi_stmt_11_req) (branch_block_stmt_4/merge_stmt_10_PhiAck/phi_stmt_11_ack)
+  phi_stmt_15 <=> (branch_block_stmt_4/merge_stmt_10__entry___PhiReq/phi_stmt_15/phi_stmt_15_req branch_block_stmt_4/loopback_PhiReq/phi_stmt_15/phi_stmt_15_req) (branch_block_stmt_4/merge_stmt_10_PhiAck/phi_stmt_15_ack)
+  // 			ns0 := (( ~ (in_symbol [] 0 ) ) & (s0 ^ (in_symbol [] 0 )))
+  //  file prog.aa, line 18
+  // (in_symbol [] 0 )
+  binary_24_inst <=> (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_24_complete/rr branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_24_complete/cr) (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_24_complete/ra branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_24_complete/ca)
+  // ( ~ (in_symbol [] 0 ) )
+  unary_26_inst <=> (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/unary_26_complete/rr branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/unary_26_complete/cr) (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/unary_26_complete/ra branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/unary_26_complete/ca)
+  // (in_symbol [] 0 )
+  binary_30_inst <=> (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_30_complete/rr branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_30_complete/cr) (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_30_complete/ra branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_30_complete/ca)
+  // (s0 ^ (in_symbol [] 0 ))
+  binary_31_inst <=> (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_31_complete/rr branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_31_complete/cr) (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_31_complete/ra branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_31_complete/ca)
+  // (( ~ (in_symbol [] 0 ) ) & (s0 ^ (in_symbol [] 0 )))
+  binary_32_inst <=> (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_32_complete/rr branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_32_complete/cr) (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_32_complete/ra branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_33/binary_32_complete/ca)
+  // 			ns1 := (( ~ (in_symbol [] 0 ) ) & (s1 ^ (s0 & (in_symbol [] 0 ))))
+  //  file prog.aa, line 19
+  // (in_symbol [] 0 )
+  binary_37_inst <=> (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_37_complete/rr branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_37_complete/cr) (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_37_complete/ra branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_37_complete/ca)
+  // ( ~ (in_symbol [] 0 ) )
+  unary_38_inst <=> (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/unary_38_complete/rr branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/unary_38_complete/cr) (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/unary_38_complete/ra branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/unary_38_complete/ca)
+  // (in_symbol [] 0 )
+  binary_43_inst <=> (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_43_complete/rr branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_43_complete/cr) (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_43_complete/ra branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_43_complete/ca)
+  // (s0 & (in_symbol [] 0 ))
+  binary_44_inst <=> (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_44_complete/rr branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_44_complete/cr) (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_44_complete/ra branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_44_complete/ca)
+  // (s1 ^ (s0 & (in_symbol [] 0 )))
+  binary_45_inst <=> (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_45_complete/rr branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_45_complete/cr) (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_45_complete/ra branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_45_complete/ca)
+  // (( ~ (in_symbol [] 0 ) ) & (s1 ^ (s0 & (in_symbol [] 0 ))))
+  binary_46_inst <=> (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_46_complete/rr branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_46_complete/cr) (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_46_complete/ra branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_47/binary_46_complete/ca)
+  // 			out_data := (z7 && (s1 & s0))
+  //  file prog.aa, line 20
+  // (s1 & s0)
+  binary_52_inst <=> (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_54/binary_52_complete/rr branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_54/binary_52_complete/cr) (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_54/binary_52_complete/ra branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_54/binary_52_complete/ca)
+  // (z7 && (s1 & s0))
+  binary_53_inst <=> (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_54/binary_53_complete/rr branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_54/binary_53_complete/cr) (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_54/binary_53_complete/ra branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_54/binary_53_complete/ca)
+  // out_data
+  simple_obj_ref_48_inst <=> (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_54/simple_obj_ref_48_complete/pipe_wreq) (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_54/simple_obj_ref_48_complete/pipe_wack)
+  // 			in_symbol := in_data
+  //  file prog.aa, line 21
+  // in_data
+  simple_obj_ref_56_inst <=> (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_57/simple_obj_ref_56_complete/req) (branch_block_stmt_4/parallel_block_stmt_20/assign_stmt_57/simple_obj_ref_56_complete/ack)
+}
