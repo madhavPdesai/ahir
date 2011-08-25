@@ -6,7 +6,7 @@ IOLIB=./v2/iolib/
 CTESTBENCH=./v2/CtestBench/
 VHDL=./vhdl/
 
-all: Release Clean
+all: Release 
 
 Release:
 	#license
