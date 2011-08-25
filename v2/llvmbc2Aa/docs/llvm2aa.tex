@@ -35,7 +35,7 @@ are converted.
 are explicitly initialized in the generated \Aa code.   An initializer
 routine {\bf global\_storage\_initializer\_} is instantiated in
 the \Aa code for this purpose.
-\item {\bf llvmpasses} : {\bf llvm2aa} uses the LLVM compiler
+\item {\bf llvm2aa} uses the LLVM compiler
 infrastructure to perform LLVM byte-code optimizations.  A large list
 of these optimizations is available through the llvm2aa command-line.
 For more details, see LLVM documentation at http://www.llvm.org.
@@ -62,12 +62,10 @@ passed through and would need to be supplied as an
 transformation.
 \item The LLVM integer, floating-point, array, structure,
 vector and void types are the only ones currently supported.
-\item The LLVM switch instruction is currently not supported,
-but support is planned in the near future.
 \item The LLVM indirect-branch, invoke, unwind and unreachable
 instructions will not be supported.
 \item The LLVM division and remainder instructions are currently
-not supported.  Support for these is planned.
+not supported. 
 \item LLVM vector instructions are currently not supported.
 \item LLVM aggregate instructions (extractvalue, insertvalue)
 are currently not supported, but will be supported in the
