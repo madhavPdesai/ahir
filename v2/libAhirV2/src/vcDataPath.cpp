@@ -1946,18 +1946,24 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
       string imux_name = ((called_module->Get_In_Arg_Width() > 0) ?
 			  "InputMuxBase" : "InputMuxBaseNoData");
 
+
       ofile << "CallReq: " << imux_name << " -- {" << endl;
       ofile << "generic map ( ";
 
       if(called_module->Get_In_Arg_Width() > 0)
 	{
-	  ofile << " iwidth => " << in_width << ","
-		<< " owidth => " << in_width/num_reqs << ",";
+	  ofile << " iwidth => " << in_width << "," << endl
+		<< " owidth => " << in_width/num_reqs << "," << endl;
 	}
 
-      ofile << " twidth => " << tag_length << ","
-	    << " nreqs => " << num_reqs << ","
-	    << "  no_arbitration => " << no_arb_string << ")" << endl;
+      ofile << " twidth => " << tag_length << "," << endl
+	    << " nreqs => " << num_reqs << "," << endl;
+
+      if(called_module->Get_In_Arg_Width() > 0)
+	ofile << " registered_output => " 
+		<< (vcSystem::_min_clock_period_flag ? "true" : "false") << "," << endl;
+
+      ofile << "  no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map ( -- { \n reqL => reqL " << ", " <<  endl
 	    << "    ackL => ackL " << ", " <<  endl;
 
@@ -1975,8 +1981,10 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
       
       ofile << "    tagR => "  
-	    << called_module->Get_VHDL_Call_Interface_Port_Section(m , "call", "call_tag",idx) << "," << endl
-	    << "  clk => clk, reset => reset -- }\n); -- }" << endl;
+	    << called_module->Get_VHDL_Call_Interface_Port_Section(m , "call", "call_tag",idx) 
+	    << "," << endl;
+
+      ofile << "  clk => clk, reset => reset -- }\n); -- }" << endl;
 
 
       string omux_name = ((called_module->Get_Out_Arg_Width() > 0) ?
