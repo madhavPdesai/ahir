@@ -27,7 +27,7 @@ using namespace llvm;
 
 namespace Aa {
   FunctionPass* createLowerConstantExprPass();
-  ModulePass* createModuleGenPass(const std::string &mlist_file, bool create_initializers);
+  ModulePass* createModuleGenPass(const std::string &mlist_file, bool create_initializers, const std::string &pipe_depth_file);
 }
 
 #include <signal.h>
@@ -47,6 +47,10 @@ InputFilename(cl::Positional, cl::desc("<input bytecode>"));
 
 static cl::opt<std::string>
 ModuleListFile("modules", cl::desc("A file containing a list of modules to be translated")
+               , cl::value_desc("filename"));
+
+static cl::opt<std::string>
+PipeDepthFile("pipedepths", cl::desc("A file containing pipe-name pipe-depth pairs")
                , cl::value_desc("filename"));
 
 static cl::opt<bool>
@@ -115,7 +119,7 @@ int main(int argc, char **argv)
     Passes.add(createPrintModulePass(&RawOut));
 
     // the Aa generation pass.
-    Pass *P = Aa::createModuleGenPass(ModuleListFile,WriteStorageInitializers);
+    Pass *P = Aa::createModuleGenPass(ModuleListFile,WriteStorageInitializers,PipeDepthFile);
     if(P != NULL)
       Passes.add(P);
     else

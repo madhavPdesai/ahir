@@ -62,6 +62,8 @@ namespace Aa {
   int number_of_bits_needed_to_represent(int m);
 
   int type_width(const llvm::Type* t, int ptr_width);
+
+  bool parse_pipe_depth_spec(std::string line, std::string& pipe_name, int& pipe_depth);
 }
 
 #endif

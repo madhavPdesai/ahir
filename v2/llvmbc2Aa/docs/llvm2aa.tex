@@ -27,14 +27,19 @@ messages are sent to {\bf stderr}.  On success, the tool returns 0.
 
 The options:
 \begin{itemize}
-\item {\bf -modules=listfile} : Specify the list of functions in the bytecode
+\item {\bf --modules=listfile} : Specify the list of functions in the bytecode
 which should be converted to \Aa.   The names of these functions should be
 listed in the text-file listfile. If this option is not specified, all functions
 are converted.
-\item {\bf -storageinit} :  Storage objects in the llvm bytecode
+\item {\bf --storageinit} :  Storage objects in the llvm bytecode
 are explicitly initialized in the generated \Aa code.   An initializer
 routine {\bf global\_storage\_initializer\_} is instantiated in
 the \Aa code for this purpose.
+\item {\bf -pipedepths=depthfile} : Specify the maximum depths of
+pipes in the generated Aa program. The file ``depthfile'' is a list
+of pairs (one pair per line).  The first element of the pair specifies
+a pipe name, and the second, its maximum depth.   The default depth
+of any pipe is $1$.
 \item {\bf llvm2aa} uses the LLVM compiler
 infrastructure to perform LLVM byte-code optimizations.  A large list
 of these optimizations is available through the llvm2aa command-line.

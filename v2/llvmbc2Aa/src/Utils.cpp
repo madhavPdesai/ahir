@@ -976,3 +976,31 @@ int Aa::type_width(const llvm::Type* ptr, int ptr_width)
   std::cerr << "Error: unsupported type (type width unknown, return -1)" << std::endl;
   return(-1);
 }
+
+bool Aa::parse_pipe_depth_spec(std::string line, std::string& pipe_name, int& pipe_depth)
+{
+  bool ret_val = false;
+  char* line_str = (char*) line.c_str();
+
+  char* name_str = strtok(line_str," ");
+  if(name_str != NULL)
+    {
+      pipe_name = std::string(name_str);
+      char* wid_str = strtok(NULL," \n");
+      if(wid_str != NULL)
+	{
+	  int wid = atoi(wid_str);
+	  if(wid > 0)
+	    {
+	      pipe_depth = wid;
+	      ret_val = true;
+	    }
+	}
+    }
+  
+  return(ret_val);
+}
+
+
+
+

@@ -31,6 +31,7 @@ namespace {
 
     static char ID;
     std::set<std::string> module_names;
+    std::map<std::string, int> _pipe_depths;
     bool _consider_all_functions;
     bool _create_initializers;
     int _pointer_width;
@@ -42,7 +43,7 @@ namespace {
       _create_initializers = true;
     }
 
-    ModuleGenPass(const std::string& mlist_file, bool create_initializers) : ModulePass(ID) 
+    ModuleGenPass(const std::string& mlist_file, bool create_initializers, const std::string& pipe_depth_file) : ModulePass(ID) 
     {
       _pointer_width = 32;
       _consider_all_functions = true;
@@ -62,8 +63,30 @@ namespace {
 	    mlist.close();
 	  }
 	}
+
       if(_consider_all_functions)
 	std::cerr << "Warning: no modules specified.. will translate all functions" << std::endl;
+
+      if(pipe_depth_file != "")
+	{
+	  std::ifstream plist(pipe_depth_file.c_str());
+	  if (plist.is_open()) {
+	    
+	    while (plist.good()) {
+	      std::string line;
+	      std::string pipe_name;
+	      int pipe_depth = 1;
+
+	      std::getline(plist, line);
+	      if(parse_pipe_depth_spec(line,pipe_name, pipe_depth))
+		{
+		  std::cerr << "Info: pipe " << pipe_name << " max-depth set to " << pipe_depth << std::endl;	      
+		  _pipe_depths[pipe_name] = pipe_depth;
+		}
+	    }
+	    plist.close();
+	  }
+	}
     };
     
 
@@ -163,7 +186,7 @@ namespace {
 	  }
       }
 	// declare the pipes.
-      aa_writer->Print_Pipe_Declarations(std::cout);
+      aa_writer->Print_Pipe_Declarations(std::cout,_pipe_depths);
 
       std::vector<std::string> objects_to_be_initialized;
       for (llvm::Module::global_iterator gi = M.global_begin(), ge = M.global_end();
@@ -370,9 +393,9 @@ namespace {
 
 namespace Aa {
 
-  ModulePass* createModuleGenPass(const std::string& module_list, bool create_initializers) 
+  ModulePass* createModuleGenPass(const std::string& module_list, bool create_initializers, const std::string& pipe_depth_file) 
   { 
-    return new ModuleGenPass(module_list, create_initializers); 
+    return new ModuleGenPass(module_list, create_initializers,pipe_depth_file); 
   }
 }
 

@@ -231,13 +231,19 @@ namespace Aa {
       }
   }
 
-  void AaWriter::Print_Pipe_Declarations(std::ostream& ofile)
+  void AaWriter::Print_Pipe_Declarations(std::ostream& ofile, std::map<std::string,int>& pipe_depths)
   {
     for(std::map<std::string,std::string>::iterator i = this->pipe_map.begin(), e = this->pipe_map.end();
 	i != e;
 	i++)
       {
-	ofile << "$pipe " << (*i).first << " : " << (*i).second << std::endl;
+	int pipe_depth = 1;
+	std::map<std::string,int>::iterator miter = pipe_depths.find((*i).first);
+	if(miter != pipe_depths.end())
+	  {
+	    pipe_depth = (*miter).second;
+	  }
+	ofile << "$pipe " << (*i).first << " : " << (*i).second << " $depth " << pipe_depth << std::endl;
       }
   }
 

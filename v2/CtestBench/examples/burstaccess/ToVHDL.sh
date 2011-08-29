@@ -4,7 +4,7 @@ clang -std=gnu89 -I../../../iolib/ -emit-llvm -c prog.c
 # disassemble byte-code for human readibility.
 llvm-dis prog.o
 # llvm-bytecode to Aa
-llvm2aa prog.o | vcFormat >  prog.o.aa
+llvm2aa --pipedepths=pipe_depths.txt prog.o | vcFormat >  prog.o.aa
 # map external memory references from system to
 # internal object mempool (of size 1 byte).
 AaLinkExtMem -I 1 -E mempool prog.o.aa | vcFormat > prog.o.linked.aa
