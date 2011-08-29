@@ -3487,6 +3487,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000001111111111111111110",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -3528,6 +3529,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -3569,6 +3571,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -3610,6 +3613,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -3651,6 +3655,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -3692,6 +3697,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -3733,6 +3739,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010101",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -3774,6 +3781,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010100",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -3815,6 +3823,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -3856,6 +3865,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000001111111111111111111110",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -3897,6 +3907,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -3938,6 +3949,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -3979,6 +3991,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -4020,6 +4033,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010110",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -4061,6 +4075,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010101",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -4102,6 +4117,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010100",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -4143,6 +4159,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000111",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -4184,6 +4201,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -4225,6 +4243,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000011111111111111111111110",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -4266,6 +4285,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -4307,6 +4327,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -4348,6 +4369,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -4389,6 +4411,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -4430,6 +4453,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -4480,6 +4504,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           no_arbitration => true,
@@ -4515,6 +4540,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 1,
           constant_operand => "00000000000000000000000000010110",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -4556,6 +4582,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 8,
           constant_operand => "00000001",
+          constant_width => 8,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -4597,6 +4624,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 1,
           constant_operand => "01100100",
+          constant_width => 8,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -4638,6 +4666,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000101",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -4679,6 +4708,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000011111",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -4729,6 +4759,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           no_arbitration => true,
@@ -4764,6 +4795,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -4805,6 +4837,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -4846,6 +4879,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -4887,6 +4921,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -4928,6 +4963,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010010",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -4969,6 +5005,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5010,6 +5047,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010000",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5051,6 +5089,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000001101",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5092,6 +5131,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5133,6 +5173,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000001111111111111111110",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5174,6 +5215,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -5215,6 +5257,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -5256,6 +5299,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -5297,6 +5341,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5338,6 +5383,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -5379,6 +5425,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010101",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5420,6 +5467,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010100",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5461,6 +5509,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5502,6 +5551,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000001111111111111111111110",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5543,6 +5593,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -5584,6 +5635,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5625,6 +5677,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -5666,6 +5719,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010110",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5707,6 +5761,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010101",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5748,6 +5803,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010100",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5789,6 +5845,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000111",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5830,6 +5887,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5871,6 +5929,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000011111111111111111111110",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -5912,6 +5971,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -5953,6 +6013,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -5994,6 +6055,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -6035,6 +6097,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -6076,6 +6139,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -6117,6 +6181,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 1,
           constant_operand => "00000000000000000000000001000000",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -6158,6 +6223,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -6199,6 +6265,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -6240,6 +6307,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -6281,6 +6349,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -6322,6 +6391,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010010",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -6363,6 +6433,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -6404,6 +6475,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010000",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -6445,6 +6517,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000001101",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -6486,6 +6559,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -6881,7 +6955,9 @@ begin --
       call_stmt_1170_call_ack_1 <= ackR(0);
       iNsTr_90_1170 <= data_out(31 downto 0);
       CallReq: InputMuxBaseNoData -- 
-        generic map (  twidth => 1, nreqs => 1,  no_arbitration => true)
+        generic map (  twidth => 1,
+        nreqs => 1,
+        no_arbitration => true)
         port map ( -- 
           reqL => reqL , 
           ackL => ackL , 
@@ -9047,6 +9123,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9088,6 +9165,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9129,6 +9207,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9170,6 +9249,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9211,6 +9291,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9252,6 +9333,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9293,6 +9375,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9334,6 +9417,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9375,6 +9459,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9416,6 +9501,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9457,6 +9543,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9498,6 +9585,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9539,6 +9627,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010010",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -9580,6 +9669,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -9621,6 +9711,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010000",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -9662,6 +9753,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000001101",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -9703,6 +9795,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9744,6 +9837,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9785,6 +9879,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9826,6 +9921,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -9867,6 +9963,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -9908,6 +10005,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000001111111111111111110",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -9949,6 +10047,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -9990,6 +10089,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010101",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -10031,6 +10131,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010100",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -10072,6 +10173,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -10113,6 +10215,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -10154,6 +10257,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -10195,6 +10299,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000001111111111111111111110",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -10236,6 +10341,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -10277,6 +10383,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010110",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -10318,6 +10425,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010101",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -10359,6 +10467,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010100",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -10400,6 +10509,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000001000",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -10441,6 +10551,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000111",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -10482,6 +10593,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -10523,6 +10635,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -10564,6 +10677,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -10605,6 +10719,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -10646,6 +10761,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -10687,6 +10803,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000011111111111111111111110",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -10728,6 +10845,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -10769,6 +10887,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -10810,6 +10929,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "11111111111111111111111111111111",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -10851,6 +10971,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -10892,6 +11013,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000001010",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -10933,6 +11055,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -10974,6 +11097,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -11015,6 +11139,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "11111111111111111111111111111111",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -11056,6 +11181,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -11097,6 +11223,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -11138,6 +11265,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -11179,6 +11307,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "11111111111111111111111111111111",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -11220,6 +11349,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -11261,6 +11391,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -11302,6 +11433,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010010",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -11343,6 +11475,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010101",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -11384,6 +11517,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000001010",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -11425,6 +11559,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000010110",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -11466,6 +11601,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -11507,6 +11643,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -11548,6 +11685,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -11589,6 +11727,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -11630,6 +11769,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -11671,6 +11811,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -11712,6 +11853,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -11753,6 +11895,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -11794,6 +11937,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -11835,6 +11979,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "11111111111111111111111111111111",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -11876,6 +12021,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "11111111111111111111111111111111",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -11917,6 +12063,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -11958,6 +12105,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "11111111111111111111111111111111",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -13079,6 +13227,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000011111",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -13120,6 +13269,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -13161,6 +13311,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "0",
+          constant_width => 1,
           use_constant  => false,
           zero_delay => false, 
           flow_through => false--
@@ -13202,6 +13353,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 32,
           constant_operand => "00000000000000000000000000000001",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -13243,6 +13395,7 @@ begin --
           output_mantissa_width => 0, 
           owidth => 1,
           constant_operand => "00000000000000000000000000100000",
+          constant_width => 32,
           use_constant  => true,
           zero_delay => false, 
           flow_through => false--
@@ -13698,7 +13851,9 @@ begin --
       reqR(0) <= call_stmt_1233_call_req_1;
       call_stmt_1233_call_ack_1 <= ackR(0);
       CallReq: InputMuxBaseNoData -- 
-        generic map (  twidth => 1, nreqs => 1,  no_arbitration => true)
+        generic map (  twidth => 1,
+        nreqs => 1,
+        no_arbitration => true)
         port map ( -- 
           reqL => reqL , 
           ackL => ackL , 
@@ -13733,7 +13888,9 @@ begin --
       call_stmt_1270_call_ack_1 <= ackR(0);
       iNsTr_19_1270 <= data_out(31 downto 0);
       CallReq: InputMuxBaseNoData -- 
-        generic map (  twidth => 1, nreqs => 1,  no_arbitration => true)
+        generic map (  twidth => 1,
+        nreqs => 1,
+        no_arbitration => true)
         port map ( -- 
           reqL => reqL , 
           ackL => ackL , 
