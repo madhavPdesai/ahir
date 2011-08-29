@@ -63,11 +63,13 @@ Unsigned::Unsigned(int n, string init_value)
     }
   else if(format == "binary")
     {
+#ifdef DEBUG
       if(init_value.size()-2 > _width)
 	{
 	  cerr << "Warning: binary initialization string is longer than integer width" << endl;
 	  cerr << "          the initial value will be truncated to the least-significant bits. " << endl;
 	}
+#endif
 
       int bit_count = 0;
       for(int idx = init_value.size()-1; idx >= 2; idx--)
