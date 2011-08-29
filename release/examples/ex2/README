@@ -1,0 +1,7 @@
+a simple processor.
+
+processor.c describes the processor.
+testbench.c checks it out.
+	- sw version: initial progam is hardwired.
+	- hw version: initial program can be loaded into
+	 	the processor.
