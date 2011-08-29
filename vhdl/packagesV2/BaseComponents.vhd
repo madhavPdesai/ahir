@@ -128,6 +128,7 @@ package BaseComponents is
       output_mantissa_width       : integer := 0;
       owidth        : integer;          -- width of output.
       constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
+      constant_width: integer;
       use_constant  : boolean := false
       );
   port (
@@ -154,6 +155,7 @@ package BaseComponents is
         output_mantissa_width       : integer := 0;
         owidth        : integer;          -- width of output.
         constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
+        constant_width: integer;
         use_constant  : boolean := false;  -- if true, the second operand is
                                            -- assumed to be the generic
         zero_delay    : boolean := false;  -- if true, operator result is
@@ -191,6 +193,7 @@ package BaseComponents is
         output_mantissa_width       : integer := 0;
         owidth        : integer;          -- width of output.
         constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
+        constant_width: integer;
         twidth        : integer;          -- tag width
         use_constant  : boolean := false;  -- if true, the second operand is
                                            -- provided by the generic.
@@ -235,6 +238,7 @@ package BaseComponents is
         output_mantissa_width       : integer := 0;
         owidth        : integer;          -- width of output.
         constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
+        constant_width: integer;
         use_constant  : boolean := false;
         zero_delay    : boolean := false;
         no_arbitration: boolean := false;

@@ -27,6 +27,7 @@ entity UnsharedOperatorBase is
       output_mantissa_width       : integer := 0;
       owidth        : integer;          -- width of output.
       constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
+      constant_width : integer;
       use_constant  : boolean := false;
       zero_delay    : boolean := false;
       flow_through  : boolean := false
@@ -74,6 +75,7 @@ begin  -- Behave
       output_mantissa_width       => output_mantissa_width,
       owidth                      => owidth,
       constant_operand            => constant_operand,
+      constant_width              => constant_width,
       use_constant                => use_constant)
     port map (
       data_in => dataL,

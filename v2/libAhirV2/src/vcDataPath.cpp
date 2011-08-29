@@ -1112,11 +1112,13 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       // is the second input a constant?
       bool use_constant = false;
       string const_operand;
+      int const_width = 1;
       if(num_ips == 2 && inwires[1]->Is("vcConstantWire"))
 	{
 	  num_ips = 1; // has only one input, we will be using one constant operand.
 	  use_constant = true;
 	  const_operand = ((vcConstantWire*)inwires[1])->Get_Value()->To_VHDL_String();
+	  const_width = ((vcConstantWire*)inwires[1])->Get_Size();
 	}
       else
 	{
@@ -1217,6 +1219,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		<< (output_type->Is("vcFloatType") ? ((vcFloatType*)output_type)->Get_Mantissa_Width() : 0) << ", " << endl // mantissa op
 		<< " owidth => " << output_type->Size() << "," << endl  // output width
 		<< " constant_operand => " << const_operand << "," << endl // constant operand?
+		<< " constant_width => " << const_width << "," << endl // constant width
 		<< " use_constant  => " << (use_constant ? "true" : "false") << "," << endl // use constant?
 		<< " zero_delay => false, " << endl // single cycle delay
 		<< " no_arbitration => " << no_arb_string << "," << endl
@@ -1256,6 +1259,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		<< (output_type->Is("vcFloatType") ? ((vcFloatType*)output_type)->Get_Mantissa_Width() : 0) << ", " << endl // mantissa op
 		<< " owidth => " << output_type->Size() << "," << endl  // output width
 		<< " constant_operand => " << const_operand << "," << endl // constant operand?
+		<< " constant_width => " << const_width << "," << endl // constant width
 		<< " use_constant  => " << (use_constant ? "true" : "false") << "," << endl // use constant?
 		<< " zero_delay => false, " << endl // single cycle delay
 		<< " flow_through => " << (flow_through_flag ? "true" : "false")

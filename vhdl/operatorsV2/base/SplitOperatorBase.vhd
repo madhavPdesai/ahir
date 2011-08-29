@@ -27,6 +27,7 @@ entity SplitOperatorBase is
       output_mantissa_width       : integer := 0;
       owidth        : integer := 4;          -- width of output.
       constant_operand : std_logic_vector := "0001"; -- constant operand.. (it is always the second operand)
+      constant_width: integer := 4;
       twidth        : integer := 1;          -- tag width
       use_constant  : boolean := true;
       zero_delay    : boolean := false
@@ -81,6 +82,7 @@ begin  -- Behave
       output_mantissa_width       => output_mantissa_width,
       owidth                      => owidth,
       constant_operand            => constant_operand,
+      constant_width		  => constant_width,
       use_constant                => use_constant)
     port map (
       data_in => dataL,

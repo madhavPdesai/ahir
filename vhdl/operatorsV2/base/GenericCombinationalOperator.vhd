@@ -26,6 +26,7 @@ entity GenericCombinationalOperator is
       output_mantissa_width       : integer := 0;
       owidth        : integer := 4;          -- width of output.
       constant_operand : std_logic_vector := "0001"; -- constant operand.. (it is always the second operand)
+      constant_width: integer := 4;
       use_constant  : boolean := true
       );
   port (
@@ -141,7 +142,7 @@ begin  -- Behave
 
     SingleOperandWithConstantIntInt: if input1_is_int and output_is_int generate
       SigBlock: block
-        signal op2_sig : std_logic_vector(constant_operand'length-1 downto 0);
+        signal op2_sig : std_logic_vector(constant_width-1 downto 0);
       begin  -- block SigBlock
         -- TODO: changes here.
         op2_sig <= constant_operand;

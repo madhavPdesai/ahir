@@ -26,6 +26,7 @@ entity SplitOperatorShared is
       output_mantissa_width       : integer := 0;
       owidth        : integer := 4;          -- width of output.
       constant_operand : std_logic_vector := "0001"; -- constant operand.. (it is always the second operand)
+      constant_width: integer := 4;
       use_constant  : boolean := true;
       zero_delay    : boolean := false;
       no_arbitration: boolean := true;
@@ -116,6 +117,7 @@ begin  -- Behave
       output_mantissa_width  => output_mantissa_width,
       owidth    => owidth,
       constant_operand => constant_operand,
+      constant_width => constant_width,
       twidth     => tag_length,
       use_constant => use_constant,
       zero_delay  => zero_delay
