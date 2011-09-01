@@ -57,7 +57,7 @@ namespace Aa {
 			  << root_name 
 			  << " since it points to a constant string which is a pipe-id" 
 			  << std::endl;
-		return;
+		// return;
 	      }
 	  }
 

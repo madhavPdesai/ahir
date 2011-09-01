@@ -1,0 +1,12 @@
+an example to illustrate
+	- the use of a dispatch function.
+	- the use of global variable initializers
+	  through the auto-generated Aa function
+	  global_storage_initializer_().
+
+prog.c contains the system, testbench.c 
+the driver.  Note the function io_module
+in prog.c calls the global_storage_initializer_
+which is only declared in prog.c.  The body
+of global_storage_initializer_() is generated
+by llvm2aa.

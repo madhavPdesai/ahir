@@ -512,7 +512,7 @@ class AaObjectReference: public AaExpression
 
   virtual bool Scalar_Types_Only() { return(false);}
   bool Get_Is_Dereferenced() {return(_is_dereferenced);}
-  void Set_Is_Dereferenced(bool v) {_is_dereferenced = v;}
+  void Set_Is_Dereferenced(bool v);
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)

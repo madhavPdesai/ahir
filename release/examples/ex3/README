@@ -1,0 +1,6 @@
+prog.aa describes a single-cycle pipeline 
+described in Aa.
+
+A two-cycle pipeline is easy to write, but
+a single cycle pipeline needs to use a ping-pong
+strategy (including the use of valid bits)

@@ -1,0 +1,119 @@
+// An example of a single-cycle pipeline
+// coded in Aa.
+//
+// This is a bit complicated because 
+// writes to and reads from pipes take
+// 1 cycle, and so do reads and writes
+// to memory spaces (minimum of 1 cycle).
+// Thus, a statement such as 
+//    a := b
+// where a,b are pipes, will take 2 
+// cycles to complete.
+//
+// The solution is to use a ping-pong
+// scheme.
+// 
+$pipe in_data : $uint<32>  $depth 2
+$pipe out_data : $uint<32>  $depth 2
+$pipe stage0_data : $uint<32>  $depth 2
+$pipe stage1_data : $uint<32>  $depth 2
+$pipe stage2_data : $uint<32>  $depth 2
+
+// the first few outputs from the pipe will
+// be junk..  
+$pipe out_valid    : $uint<8>  $depth 9
+
+$module [io_module]
+$in () $out () $is
+{
+   // 8 invalid slots
+   out_valid := 0
+   out_valid := 0
+   out_valid := 0
+   out_valid := 0
+   out_valid := 0
+   out_valid := 0
+   out_valid := 0
+   out_valid := 0
+
+   $parallelblock[Pipeline] {
+	$branchblock[stage0] {
+
+                $merge $entry loopback $endmerge
+
+		// Ping
+                $parallelblock[b1] {
+			stage0_data := b2_na0  // send computed data.
+			b1_a0 := in_data   // get new data 
+			b1_na1 := (b2_a1 + 1) // compute on last data.
+                } (b1_a0 => b1_a0 b1_na1 => b1_na1) 
+
+		// Pong
+                $parallelblock[b2] {
+			stage0_data := b1_na1
+			b2_a1 := in_data  
+			b2_na0 := (b1_a0 + 1)
+                } (b2_a1 => b2_a1 b2_na0 => b2_na0) 
+                
+		$place [loopback]
+	}
+	$branchblock[stage1] {
+
+
+		$merge $entry loopback $endmerge
+
+                $parallelblock[b1] {
+			stage1_data := b2_na0  // send computed data.
+			b1_a0 := stage0_data   // get new data 
+			b1_na1 := (b2_a1 + 1) // compute on last data.
+                } (b1_a0 => b1_a0 b1_na1 => b1_na1)
+
+                $parallelblock[b2] {
+			stage1_data := b1_na1
+			b2_a1 := stage0_data  
+			b2_na0 := (b1_a0 + 1)
+                } (b2_a1 => b2_a1 b2_na0 => b2_na0)
+                
+		$place [loopback]
+	}
+	$branchblock[stage2] {
+
+		$merge $entry loopback $endmerge
+
+                $parallelblock[b1] {
+			stage2_data := b2_na0  // send computed data.
+			b1_a0 := stage1_data   // get new data 
+			b1_na1 := (b2_a1 + 1) // compute on last data.
+                } (b1_a0 => b1_a0 b1_na1 => b1_na1)
+
+                $parallelblock[b2] {
+			stage2_data := b1_na1
+			b2_a1 := stage1_data  
+			b2_na0 := (b1_a0 + 1)
+                } (b2_a1 => b2_a1 b2_na0 => b2_na0)
+                
+		$place [loopback]
+	}
+	$branchblock[stage3] {
+
+
+		$merge $entry loopback $endmerge
+
+                $parallelblock[b1] {
+			out_data := b2_na0  // send computed data.
+			b1_a0 := stage2_data   // get new data 
+			b1_na1 := (b2_a1 + 1) // compute on last data.
+			out_valid := 1
+                } (b1_a0 => b1_a0 b1_na1 => b1_na1)
+
+                $parallelblock[b2] {
+			out_data := b1_na1
+			b2_a1 := stage2_data  
+			b2_na0 := (b1_a0 + 1)
+			out_valid := 1
+                } (b2_a1 => b2_a1 b2_na0 => b2_na0)
+                
+		$place [loopback]
+	}
+   }
+}

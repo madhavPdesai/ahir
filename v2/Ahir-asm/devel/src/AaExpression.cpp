@@ -341,6 +341,15 @@ void AaObjectReference::Add_Source_Reference(AaRoot* referrer)
     }
 }
 
+void AaObjectReference::Set_Is_Dereferenced(bool v) 
+{
+  _is_dereferenced = v;
+  if(this->_object->Is_Object())
+    {
+      ((AaObject*) (this->_object))->Set_Is_Dereferenced(v);
+    }
+}
+
 void AaObjectReference::PrintC(ofstream& ofile, string tab_string)
 {
   assert(this->Get_Object());
@@ -474,13 +483,15 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObject* obj)
 {
   this->_addressed_objects.insert(obj);
-  if(this->_is_dereferenced)
-    {
 
-      if(this->Get_Addressed_Object_Representative())
-	AaProgram::Add_Storage_Dependency(obj,this->Get_Addressed_Object_Representative());
+  // TBD: overly conservative.
+  //  if(this->_is_dereferenced)
+  //{
 
-    }
+  if(this->Get_Addressed_Object_Representative())
+    AaProgram::Add_Storage_Dependency(obj,this->Get_Addressed_Object_Representative());
+
+  //    }
   this->AaExpression::Set_Addressed_Object_Representative(obj);
 }
 
@@ -1975,6 +1986,20 @@ void AaPointerDereferenceExpression::Map_Source_References(set<AaRoot*>& source_
       else
 	{
 	  this->Set_Type(((AaPointerType*)this->_reference_to_object->Get_Type())->Get_Ref_Type());
+	}
+
+      AaRoot* obj = this->_reference_to_object->Get_Object();
+      if(obj != NULL)
+	{
+	  if(obj->Is_Object())
+	    {
+	      ((AaObject*) obj)->Set_Is_Dereferenced(true);
+	    }
+	  else if(obj->Is_Expression())
+	    {
+	      if(((AaExpression*)obj)->Is_Object_Reference())
+		((AaObjectReference*) obj)->Set_Is_Dereferenced(true);	      
+	    }
 	}
     }
 }

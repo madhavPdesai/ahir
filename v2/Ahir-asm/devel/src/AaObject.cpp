@@ -37,11 +37,14 @@ bool AaObject::Set_Addressed_Object_Representative(AaStorageObject* obj)
       if(this->_addressed_objects.find(obj) == this->_addressed_objects.end())
 	new_flag = true;
 
-      if(this->_is_dereferenced)
-	{
-	  if(this->Get_Addressed_Object_Representative())
-	    AaProgram::Add_Storage_Dependency(obj,this->Get_Addressed_Object_Representative());
-	}
+      // TBD: this is overly conservative...
+      //      need to sharpen the addressed object propagation
+      //      to remove this conservativeness.
+      //      if(this->_is_dereferenced)
+      //{
+      if(this->Get_Addressed_Object_Representative())
+	AaProgram::Add_Storage_Dependency(obj,this->Get_Addressed_Object_Representative());
+      //}
 
       this->_addressed_objects.insert(obj);
 
