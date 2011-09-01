@@ -1,4 +1,3 @@
-# build software version of testbench (to check the "desired behaviour")
 IOLIB_INCLUDE=../../../iolib
 IOLIB_LIB=../../../iolib
 SOCKETLIB_INCLUDE=../../include

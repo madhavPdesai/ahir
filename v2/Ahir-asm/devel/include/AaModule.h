@@ -38,6 +38,8 @@ class AaModule: public AaSeriesBlockStatement
 
   int _number_of_times_called;
 
+  map<string,string> _attribute_map;
+
  public:
   AaModule(string fname); // Modules have NULL parent (parent is the program)
   ~AaModule();
@@ -64,6 +66,12 @@ class AaModule: public AaSeriesBlockStatement
   bool Get_Inline_Flag() {return(this->_inline_flag);}
 
   void Add_Argument(AaInterfaceObject* obj);
+
+  void Add_Attribute(string name, string val)
+  {
+    _attribute_map[name] = val;
+  }
+  void Print_Attributes(ostream& ofile);
 
   unsigned int Get_Number_Of_Input_Arguments() {return(this->_input_args.size());}
   AaInterfaceObject* Get_Input_Argument(unsigned int index)

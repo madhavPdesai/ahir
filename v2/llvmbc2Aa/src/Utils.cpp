@@ -179,7 +179,7 @@ std::string Aa::get_aa_type_name(IOCode ioc)
 			break;
 
 		case WRITE_UINT32:
-			ret_val = "$uint<32>";
+			ret_val = "$uint<32";
 			break;
 
 		case READ_UINTPTR:
@@ -712,25 +712,28 @@ void Aa::write_storage_object(std::string& obj_name, llvm::GlobalVariable &G, ll
 	std::cout << "$storage " << to_aa(obj_name) << ":" << type_name << std::endl;
 	if (G.hasInitializer()) 
 	{
-		llvm::Constant *init = G.getInitializer();
-		if(!isa<UndefValue>(init))
+	  llvm::Constant *init = G.getInitializer();
+	  if(!isa<UndefValue>(init))
+	    {
+	      if(create_initializer)
 		{
-			if(create_initializer)
-			{
-				init_obj_vector.push_back(obj_name + "_initializer_");
-
-				std::cerr << "Info: Initial value specified for " << obj_name << ": will create initializer module" << std::endl;
-				std::cout << "$module [" << obj_name << "_initializer_] $in () $out () $is {" << std::endl;
-				write_storage_initializer_statements(obj_name,init);
-				std::cout << "}" << std::endl;
-			}
-			else
-			{
-				std::cerr << "Warning: Initial value specified for " << obj_name << " will be ignored" << std::endl;		
-			}
+		  std::string initializer_name = "default_initializer_" + obj_name;
+		  init_obj_vector.push_back(initializer_name);
+		  
+		  std::cerr << "Info: Initial value specified for " << obj_name << ": will create initializer module" << std::endl;
+		  std::cout << "$module [" << initializer_name << "] $in () $out () $is {" << std::endl;
+		  write_storage_initializer_statements(obj_name,init);
+		  std::cout << "$attribute nooptimize " << std::endl;
+		  std::cout << "}" << std::endl;
 		}
+	      else
+		{
+		  std::cerr << "Warning: Initial value specified for " << obj_name << " will be ignored" << std::endl;		
+		}
+	    }
 	}
 }
+
 void Aa::write_storage_initializer_statements(std::string& prefix, llvm::Constant* konst)
 {
 	const llvm::Type *konst_type = konst->getType();

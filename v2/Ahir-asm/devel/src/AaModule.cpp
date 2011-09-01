@@ -76,7 +76,18 @@ void AaModule::Print(ostream& ofile)
   // print statement sequence
   this->Print_Statement_Sequence(ofile);
 
+  this->Print_Attributes(ofile);
   ofile << "}" << endl;
+}
+
+void AaModule::Print_Attributes(ostream& ofile)
+{
+  for(map<string,string>::iterator iter = _attribute_map.begin(), fiter =_attribute_map.end();
+      iter != fiter;
+      iter++)
+    {
+      ofile << "$attribute " << (*iter).first << " " << (*iter).second << endl;
+    }
 }
 
 AaRoot* AaModule::Find_Child(string tag)
@@ -396,7 +407,11 @@ void AaModule::Write_VC_Model(ostream& ofile)
 
 void AaModule::Write_VC_Model_Optimized(ostream& ofile)
 {
-  this->Write_VC_Model(true,ofile);
+  string no_opt_string = "nooptimize";
+  if(this->_attribute_map.find("nooptimize") == this->_attribute_map.end())
+    this->Write_VC_Model(true,ofile);
+  else
+    this->Write_VC_Model(false,ofile);    
 }
 
 void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)

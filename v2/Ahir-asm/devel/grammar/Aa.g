@@ -154,9 +154,26 @@ aA_Module returns [AaModule* new_module]
                 else
                     AaRoot::Error("foreign module cannot have body",new_module);
             }
+
+            (aA_Module_Attribute[new_module])*
             RBRACE)?
     ;
 
+//-----------------------------------------------------------------------------------------------
+// aA_Module_Attributes : ATTRIBUTE SIMPLE_IDENTIFIER SIMPLE_IDENTIFIER
+//-----------------------------------------------------------------------------------------------
+aA_Module_Attribute[AaModule* m]
+{
+    string name, val;
+}
+    :
+        ATTRIBUTE nameid:SIMPLE_IDENTIFIER (valid:SIMPLE_IDENTIFIER {val = valid->getText();})?
+        { 
+            name = nameid->getText();
+            m->Add_Attribute(name,val);
+        }
+                
+    ;
 
 //-----------------------------------------------------------------------------------------------
 // aA_Label : LBRACKET SIMPLE_IDENTIFIER RBRACKET
@@ -1377,6 +1394,7 @@ ASSIGN        : "$assign";
 CALL          : "$call";
 PHI           : "$phi";
 DEPTH         : "$depth";
+ATTRIBUTE     : "$attribute";
 
 // Special symbols
 COLON		 : ':' ; // label separator
