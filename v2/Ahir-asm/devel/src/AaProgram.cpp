@@ -287,7 +287,23 @@ void AaProgram::Add_ExtMem_Access_Type(AaType* t)
 
 void AaProgram::Add_Object(AaObject* obj) 
 { 
-  assert(AaProgram::Find_Object(obj->Get_Name()) == NULL); 
+  AaObject* prev_obj = AaProgram::Find_Object(obj->Get_Name());
+  if(prev_obj != NULL)
+    {
+      if(prev_obj->Kind() == obj->Kind())
+	{
+	  if(prev_obj->Get_Type() == obj->Get_Type())
+	    AaRoot::Warning("redeclaration of " + obj->Get_Name() + " ignored",obj);
+	  else
+	    AaRoot::Error("redeclaration of " + obj->Get_Name() + " with conflicting type",obj);
+	}
+      else
+	{
+	  AaRoot::Error("dissimilar declarations of " + obj->Get_Name(),obj);
+	}
+      return;
+    }
+
   if(obj->Is("AaStorageObject"))
     {
       if(obj->Get_Name() == AaProgram::_extmem_object_name)
