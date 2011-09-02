@@ -48,18 +48,18 @@ namespace Aa {
 	std::string root_name = to_aa(get_name(eI.getPointerOperand()));
 
 	// if it takes the reference of a constant string which is a pointer-id      
-	if(is_constant)
-	  {
-	    std::string port_name = to_aa(locate_portname_for_io_call(eI.getPointerOperand()));
-	    if(this->Is_Pipe(port_name))
-	      {
-		std::cerr << "Info: ignoring get-element-ptr to " 
-			  << root_name 
-			  << " since it points to a constant string which is a pipe-id" 
-			  << std::endl;
-		// return;
-	      }
-	  }
+	// 	if(is_constant)
+	// 	  {
+	// 	    std::string port_name = to_aa(locate_portname_for_io_call(eI.getPointerOperand()));
+	// 	    if(this->Is_Pipe(port_name))
+	// 	      {
+	// 		std::cerr << "Info: ignoring get-element-ptr to " 
+	// 			  << root_name 
+	// 			  << " since it points to a constant string which is a pipe-id" 
+	// 			  << std::endl;
+	// 		return;
+	// 	      }
+	// 	  }
 
 
 	// get element-ptr is of this form
@@ -100,7 +100,7 @@ namespace Aa {
 	    for(int idx = 2; idx < eI.getNumOperands(); idx++)
 	      {
 		std::cout << "[";
-		std::cout << get_name(eI.getOperand(idx));
+		std::cout << prepare_operand(eI.getOperand(idx));
 		std::cout << "]";
 	      }
 	  }
@@ -109,7 +109,7 @@ namespace Aa {
 	    for(int idx = 1; idx < eI.getNumOperands(); idx++)
 	      {
 		std::cout << "[";
-		std::cout << get_name(eI.getOperand(idx));
+		std::cout << prepare_operand(eI.getOperand(idx));
 		std::cout << "]";
 	      }
 	  }
@@ -137,7 +137,8 @@ namespace Aa {
 
 	if(isa<Constant>(v) && !isa<GlobalVariable>(v))	  
 	  {
-	    ret_string = "( $bitcast (" + get_aa_type_name(v->getType(),*_module) + " ) " + get_name(v) + " ) ";
+	    ret_string = "( $bitcast (" + get_aa_type_name(v->getType(),*_module) + " ) " + 
+	      get_aa_constant_string(dyn_cast<Constant>(v)) + " ) ";
 	  }
 	else
 	  ret_string = get_name(v);
@@ -158,25 +159,18 @@ namespace Aa {
   std::string AaWriter::get_name(llvm::Value* v)
   {
     std::string ret_string;
-    if(isa<llvm::Constant>(*v))
-      {
-	ret_string = (get_aa_constant_string(dyn_cast<Constant>(v)));
-      }
+    if(v->getNameStr() != "")
+      ret_string = to_aa(v->getNameStr());
     else
       {
-	if(v->getNameStr() != "")
-	  ret_string = to_aa(v->getNameStr());
+	if(value_name_map.find(v) != value_name_map.end())
+	  ret_string = (value_name_map[v]);
 	else
 	  {
-	    if(value_name_map.find(v) != value_name_map.end())
-	      ret_string = (value_name_map[v]);
-	    else
-	      {
-		std::string new_val = "oBjEct_" + int_to_str(value_name_map.size());
-		value_name_map[v] = new_val;
-		ret_string = to_aa(new_val);
-		v->setName(ret_string);
-	      }
+	    std::string new_val = "oBjEct_" + int_to_str(value_name_map.size());
+	    value_name_map[v] = new_val;
+	    ret_string = to_aa(new_val);
+	    v->setName(ret_string);
 	  }
       }
     return(ret_string);

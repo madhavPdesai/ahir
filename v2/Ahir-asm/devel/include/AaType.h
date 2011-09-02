@@ -428,6 +428,7 @@ class AaRecordType: public AaType
     }
 
     
+    int Get_Index_Value(AaExpression* expr);
     
     virtual string Get_VC_Name() 
     {

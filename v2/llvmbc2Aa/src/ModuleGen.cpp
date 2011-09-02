@@ -197,10 +197,10 @@ namespace {
 	    if(!(*gi).getType()->isFunctionTy())
 	    {
 	      std::string obj_name = to_aa(aa_writer->get_name(&(*gi)));
-	      if(!aa_writer->Is_Pipe(obj_name))
-		{
-		  write_storage_object(obj_name, *gi,M, objects_to_be_initialized, _create_initializers);
-		}
+	      //if(!aa_writer->Is_Pipe(obj_name))
+	      //{
+	      write_storage_object(obj_name, *gi,M, objects_to_be_initialized, _create_initializers);
+	      //}
 	    }
 	  }
       }
