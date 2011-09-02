@@ -179,7 +179,7 @@ std::string Aa::get_aa_type_name(IOCode ioc)
 			break;
 
 		case WRITE_UINT32:
-			ret_val = "$uint<32";
+			ret_val = "$uint<32>";
 			break;
 
 		case READ_UINTPTR:
