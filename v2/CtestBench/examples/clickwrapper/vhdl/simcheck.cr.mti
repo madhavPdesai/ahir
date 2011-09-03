@@ -1,14 +1,28 @@
-/home/madhav/ahirgit/AHIR/v2/CtestBench/vhdl/Modelsim_FLI_Foreign.vhdl {2 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/v2/CtestBench/vhdl/Modelsim_FLI_Foreign.vhdl
+/home/madhav/ahirgit/AHIR/v2/CtestBench/vhdl/Modelsim_FLI_Foreign.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/v2/CtestBench/vhdl/Modelsim_FLI_Foreign.vhdl
 Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Loading package standard
 -- Loading package std_logic_1164
 -- Loading package utility_package
 -- Compiling package modelsim_fli_foreign
-** Warning: (vcom-98) "/cad/modelsim//libs/MS/OS/ixl/libadmslib.so" is not present; ADMS design-units may not be handled properly
 -- Compiling package body modelsim_fli_foreign
 -- Loading package modelsim_fli_foreign
 
-} {} {}} /home/madhav/ahirgit/AHIR/v2/CtestBench/examples/clickwrapper/vhdl/ahir_system_test_bench.vhdl {2 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/v2/CtestBench/examples/clickwrapper/vhdl/ahir_system_test_bench.vhdl
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/release/ieee_proposed.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/release/ieee_proposed.vhdl
+Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
+-- Loading package standard
+-- Compiling package math_utility_pkg
+** Warning: (vcom-98) "/cad/modelsim//libs/MS/OS/ixl/libadmslib.so" is not present; ADMS design-units may not be handled properly
+-- Compiling package fixed_float_types
+-- Loading package textio
+-- Loading package std_logic_1164
+-- Loading package numeric_std
+-- Loading package math_utility_pkg
+-- Compiling package fixed_pkg
+-- Compiling package float_pkg
+-- Compiling package body float_pkg
+-- Loading package float_pkg
+
+} {} {}} /home/madhav/ahirgit/AHIR/v2/CtestBench/examples/clickwrapper/vhdl/ahir_system_test_bench.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/v2/CtestBench/examples/clickwrapper/vhdl/ahir_system_test_bench.vhdl
 Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Loading package standard
 -- Loading package std_logic_1164
@@ -28,25 +42,9 @@ Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Loading package utility_package
 -- Loading package modelsim_fli_foreign
 -- Compiling entity ahir_system_test_bench
-** Warning: (vcom-98) "/cad/modelsim//libs/MS/OS/ixl/libadmslib.so" is not present; ADMS design-units may not be handled properly
 -- Compiling architecture vhpilink of ahir_system_test_bench
 
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/release/ieee_proposed.vhdl {2 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/release/ieee_proposed.vhdl
-Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
--- Loading package standard
--- Compiling package math_utility_pkg
-** Warning: (vcom-98) "/cad/modelsim//libs/MS/OS/ixl/libadmslib.so" is not present; ADMS design-units may not be handled properly
--- Compiling package fixed_float_types
--- Loading package textio
--- Loading package std_logic_1164
--- Loading package numeric_std
--- Loading package math_utility_pkg
--- Compiling package fixed_pkg
--- Compiling package float_pkg
--- Compiling package body float_pkg
--- Loading package float_pkg
-
-} {} {}} /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl {2 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl
+} {} {}} /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl
 Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Loading package standard
 -- Loading package std_logic_1164
@@ -122,12 +120,12 @@ Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Compiling architecture default_arch of auto_run
 -- Compiling entity control_delay_element
 -- Compiling architecture default_arch of control_delay_element
-** Warning: [5] /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(6316): Nonresolved signal 'ack' may have multiple sources.
+** Warning: [5] /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(6324): Nonresolved signal 'ack' may have multiple sources.
   Drivers:
-    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(6330):Conditional signal assignment line__6330
-    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(6336):Process line__6336
+    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(6338):Conditional signal assignment line__6338
+    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(6344):Process line__6344
        Driven at:
-          /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(6366)
+          /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(6374)
 -- Loading package basecomponents
 -- Compiling entity join2
 -- Compiling architecture default_arch of join2
@@ -143,10 +141,10 @@ Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Compiling architecture default_arch of pipeline_interlock
 -- Compiling entity place
 -- Compiling architecture default_arch of place
-** Warning: [5] /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(6604): Nonresolved signal 'token' may have multiple sources.
+** Warning: [5] /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(6612): Nonresolved signal 'token' may have multiple sources.
   Drivers:
-    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(6645):Conditional signal assignment line__6645
-    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(6649):Conditional signal assignment line__6649
+    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(6653):Conditional signal assignment line__6653
+    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(6657):Conditional signal assignment line__6657
 -- Compiling entity transition
 -- Compiling architecture default_arch of transition
 -- Compiling entity binaryencoder
@@ -222,24 +220,24 @@ Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Compiling architecture behave of queuebase
 -- Compiling entity registerbase
 -- Compiling architecture arch of registerbase
-** Warning: [5] /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(9855): Nonresolved signal 'ack' may have multiple sources.
+** Warning: [5] /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(9914): Nonresolved signal 'ack' may have multiple sources.
   Drivers:
-    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(9865):Process line__9865
+    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(9924):Process line__9924
        Driven at:
-          /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(9869)
-    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(9882):Conditional signal assignment line__9882
+          /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(9928)
+    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(9941):Conditional signal assignment line__9941
 -- Compiling entity request_priority_encode_entity
 -- Compiling architecture behave of request_priority_encode_entity
 -- Compiling entity selectbase
 -- Compiling architecture arch of selectbase
 -- Compiling entity slicebase
 -- Compiling architecture arch of slicebase
-** Warning: [5] /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(9994): Nonresolved signal 'ack' may have multiple sources.
+** Warning: [5] /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(10053): Nonresolved signal 'ack' may have multiple sources.
   Drivers:
-    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(10007):Conditional signal assignment line__10007
-    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(10012):Process line__10012
+    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(10066):Conditional signal assignment line__10066
+    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(10071):Process line__10071
        Driven at:
-          /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(10017)
+          /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(10076)
 -- Compiling entity splitcallarbiternoinargsnooutargs
 -- Compiling architecture struct of splitcallarbiternoinargsnooutargs
 -- Compiling entity splitcallarbiternoinargs
@@ -262,15 +260,15 @@ Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Compiling architecture vanilla of storereqshared
 -- Compiling entity unsharedoperatorbase
 -- Compiling architecture vanilla of unsharedoperatorbase
-** Warning: [5] /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(11324): Nonresolved signal 'ackl' may have multiple sources.
+** Warning: [5] /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(11393): Nonresolved signal 'ackl' may have multiple sources.
   Drivers:
-    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(11370):Conditional signal assignment line__11370
-    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(11376):Conditional signal assignment line__11376
-    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(11393):Process line__11393
+    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(11440):Conditional signal assignment line__11440
+    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(11446):Conditional signal assignment line__11446
+    /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(11463):Process line__11463
        Driven at:
-          /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(11397)
+          /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(11467)
 
-} {} {}} /home/madhav/ahirgit/AHIR/v2/CtestBench/vhdl/Utility_Package.vhdl {2 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/v2/CtestBench/vhdl/Utility_Package.vhdl
+} {} {}} /home/madhav/ahirgit/AHIR/v2/CtestBench/vhdl/Utility_Package.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/v2/CtestBench/vhdl/Utility_Package.vhdl
 Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Loading package standard
 -- Loading package std_logic_1164
@@ -279,7 +277,7 @@ Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Compiling package body utility_package
 -- Loading package utility_package
 
-} {} {}} /home/madhav/ahirgit/AHIR/v2/CtestBench/examples/clickwrapper/vhdl/ahir_system.vhdl {2 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/v2/CtestBench/examples/clickwrapper/vhdl/ahir_system.vhdl
+} {} {}} /home/madhav/ahirgit/AHIR/v2/CtestBench/examples/clickwrapper/vhdl/ahir_system.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/v2/CtestBench/examples/clickwrapper/vhdl/ahir_system.vhdl
 Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Loading package standard
 -- Loading package std_logic_1164

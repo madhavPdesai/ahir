@@ -29,7 +29,9 @@ The options:
 \begin{itemize}
 \item {\bf --modules=listfile} : Specify the list of functions in the bytecode
 which should be converted to \Aa.   The names of these functions should be
-listed in the text-file listfile. If this option is not specified, all functions
+listed in the text-file listfile.  One function name must be present
+on each line (the {\bf exact} function name should be provided on the line, without leading
+or trailing spaces).  If this option is not specified, all functions
 are converted.
 \item {\bf --storageinit} :  Storage objects in the llvm bytecode
 are explicitly initialized in the generated \Aa code.   An initializer

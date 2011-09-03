@@ -57,8 +57,12 @@ namespace {
 	    while (mlist.good()) {
 	      std::string line;
 	      std::getline(mlist, line);
-	      module_names.insert(line);
-	      _consider_all_functions = false;
+              if(line[0] != '#')
+	      {
+	      	std::cerr << "Info: module to be translated: " << line << std::endl;
+	      	module_names.insert(line);
+	      	_consider_all_functions = false;
+	      }
 	    }
 	    mlist.close();
 	  }

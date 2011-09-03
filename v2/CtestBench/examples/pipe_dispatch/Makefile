@@ -15,18 +15,20 @@ HW: c2llvmbc llvmbc2aa aa2vc vc2vhdl vhdlsim
 c2llvmbc: prog.c testbench.c
 	clang -std=gnu89 -I$(IOLIB_INCLUDE) -emit-llvm -c prog.c
 	llvm-dis prog.o
+	opt -O3 --instnamer prog.o > prog.bc
+	llvm-dis prog.bc
 
 # llvm byte-code to Aa..
-llvmbc2aa:  prog.o
-	llvm2aa --storageinit prog.o | vcFormat >  prog.o.aa
+llvmbc2aa:  prog.bc
+	llvm2aa --storageinit --modules=modules.txt prog.bc | vcFormat >  prog.aa
 
 # Aa to vC
-aa2vc: prog.o.aa
-	Aa2VC -O -C prog.o.aa | vcFormat > prog.o.aa.vc
+aa2vc: prog.aa
+	Aa2VC -O -C prog.aa | vcFormat > prog.vc
 
 # vC to VHDL
-vc2vhdl: prog.o.aa.vc
-	vc2vhdl -C -e ahir_system -w -s $(SIMULATOR) -T io_module -f prog.o.aa.vc 
+vc2vhdl: prog.vc
+	vc2vhdl -C -e ahir_system -w -s $(SIMULATOR) -T io_module -f prog.vc 
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 
@@ -47,6 +49,6 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 	ghdl -m --work=work -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
 
 clean:
-	rm -f *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* dest*_pipe* foo_in*  testbench_hw ahir_system_test_bench vhpi.log
+	rm -f *.o *.aa *.vc  *.bc *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* dest*_pipe* foo_in*  testbench_hw ahir_system_test_bench vhpi.log
 
 PHONY: all clean	

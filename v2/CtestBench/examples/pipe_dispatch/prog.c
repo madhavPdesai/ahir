@@ -6,11 +6,23 @@
 char dest1[16] = "dest1_pipe";
 char dest2[16] = "dest2_pipe";
 
+int my_strcmp(char* s1, char* s2)
+{
+	int i = 0;
+	while((s1[i] != 0) && (s2[i] != 0))
+	{	
+		if(s1[i] != s2[i])
+			return(1);
+		i++;
+	}
+	return(0);
+}
+
 void pipe_dispatch_uint64(char* pipe_id, uint64_t data_val)
 {
-	if(pipe_id[4] == '1')
+	if(my_strcmp(pipe_id,"dest1_pipe") == 0)
 		write_uint64("dest1_pipe",data_val);
-	else if (pipe_id[4] == '2')
+	else if(my_strcmp(pipe_id,"dest2_pipe") == 0)
 		write_uint64("dest2_pipe",data_val);
 }
 
