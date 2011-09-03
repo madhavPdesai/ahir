@@ -31,8 +31,9 @@ The options:
 which should be converted to \Aa.   The names of these functions should be
 listed in the text-file listfile.  One function name must be present
 on each line (the {\bf exact} function name should be provided on the line, without leading
-or trailing spaces).  If this option is not specified, all functions
-are converted.
+or trailing spaces).  Lines which start with the character '\#' are
+ignored as comments.  If this option is not specified, all functions
+are converted.  
 \item {\bf --storageinit} :  Storage objects in the llvm bytecode
 are explicitly initialized in the generated \Aa code.   An initializer
 routine {\bf global\_storage\_initializer\_} is instantiated in
