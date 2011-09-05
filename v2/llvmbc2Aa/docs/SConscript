@@ -1,0 +1,7 @@
+import os
+env = Environment(ENV = {'PATH' : os.environ['PATH']})
+# use a path to get to the antlr jar "later"
+# also: how does one force the action if the source has changed?
+pdfltx = Builder(action = 'pdflatex -output-directory ./llvmbc2Aa/docs $SOURCE')
+env.Prepend(BUILDERS = {'pdfBuild' : pdfltx})
+env.pdfBuild(['llvm2aa.pdf' ], 'llvm2aa.tex')
