@@ -331,10 +331,14 @@ AaObject* AaProgram::Find_Object(string obj_name)
 
 void AaProgram::Add_Module(AaModule* obj) 
 { 
-  assert(AaProgram::Find_Module(obj->Get_Label()) == NULL); 
-  AaProgram::_modules[obj->Get_Label()] = obj;
-
-
+  if(AaProgram::Find_Module(obj->Get_Label()) == NULL)
+    {
+      AaProgram::_modules[obj->Get_Label()] = obj;
+    }
+  else
+    {
+      AaRoot::Warning("Duplicate module " + obj->Get_Label() + " ignored", obj);
+    }
 }
 
 AaModule* AaProgram::Find_Module(string obj_name)

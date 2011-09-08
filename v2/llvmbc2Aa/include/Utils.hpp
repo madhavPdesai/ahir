@@ -39,6 +39,7 @@ namespace Aa {
 
   bool is_io_read(IOCode ioc);
   bool is_io_write(IOCode ioc);
+  bool is_a_supported_constant(llvm::Constant* konst);
 
   std::string locate_portname_from_gep_instruction(llvm::GetElementPtrInst* gep_instr);
   std::string locate_portname_from_gep(llvm::Constant* konst,

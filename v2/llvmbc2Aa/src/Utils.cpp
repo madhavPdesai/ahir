@@ -691,6 +691,44 @@ void Aa::write_type_declaration(llvm::Type *T, llvm::Module& tst)
 	std::cout << std::endl;
 }
 
+bool Aa::is_a_supported_constant(llvm::Constant* konst)
+{
+  if(isa<ConstantInt>(konst) || isa<ConstantFP>(konst))
+    {
+      return(true);
+    }
+  if(isa<ConstantPointerNull>(konst))
+    {
+      return(true);
+    }
+  else if(isa<ConstantArray>(konst) || isa<ConstantVector>(konst) 
+	  || isa<ConstantStruct>(konst))
+    {
+      int dim = konst->getNumOperands();
+      for (unsigned int i = 0; i != konst->getNumOperands(); ++i) 
+	{
+	  llvm::Value *el = konst->getOperand(i);
+	  if(isa<llvm::Constant>(el))
+	    {
+	      llvm::Constant* el_c = dyn_cast<llvm::Constant>(el);
+	      if(!is_a_supported_constant(el_c))
+		{
+		  return(false);
+		}
+	    }
+	  else
+	    return(false);
+	}
+    }
+  else if(isa<ConstantAggregateZero>(konst))
+    {
+      return(true);
+    }
+  else
+    {
+      return(false);
+    }
+}
 
 void Aa::write_storage_object(std::string& obj_name, llvm::GlobalVariable &G, llvm::Module& tst,
 		std::vector<std::string>& init_obj_vector,
@@ -717,14 +755,22 @@ void Aa::write_storage_object(std::string& obj_name, llvm::GlobalVariable &G, ll
 	    {
 	      if(create_initializer)
 		{
-		  std::string initializer_name = "default_initializer_" + obj_name;
-		  init_obj_vector.push_back(initializer_name);
-		  
-		  std::cerr << "Info: Initial value specified for " << obj_name << ": will create initializer module" << std::endl;
-		  std::cout << "$module [" << initializer_name << "] $in () $out () $is {" << std::endl;
-		  write_storage_initializer_statements(obj_name,init);
-		  std::cout << "$attribute nooptimize " << std::endl;
-		  std::cout << "}" << std::endl;
+		  if(is_a_supported_constant(init))
+		    {
+		      std::string initializer_name = "default_initializer_" + obj_name;
+		      init_obj_vector.push_back(initializer_name);
+		      
+		      std::cerr << "Info: Initial value specified for " << obj_name << ": will create initializer module" << std::endl;
+		      std::cout << "$module [" << initializer_name << "] $in () $out () $is {" << std::endl;
+		      write_storage_initializer_statements(obj_name,init);
+		      std::cout << "$attribute nooptimize " << std::endl;
+		      std::cout << "}" << std::endl;
+		    }
+		  else
+		    {
+		      std::cerr << "Warning: Unsupprted initial value specified for " << obj_name << ": will ignore it! " << std::endl;
+
+		    }
 		}
 	      else
 		{
@@ -775,7 +821,7 @@ void Aa::write_storage_initializer_statements(std::string& prefix, llvm::Constan
 	{
 		std::cerr << "Error: constant must be one of int/fp/array/struct/vector/aggregate-zero/pointer-null" 
 			<< std::endl;
-		std::cout << prefix << " := UNSUPPORTED_CONSTANT";
+		std::cout << prefix << " := UNSUPPORTED_CONSTANT" << std::endl;
 	}
 }
 
