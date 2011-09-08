@@ -730,6 +730,33 @@ bool Aa::is_a_supported_constant(llvm::Constant* konst)
     }
 }
 
+bool Aa::is_used_in_module(llvm::GlobalVariable &G, std::set<std::string>& module_names)
+{
+  for(llvm::Value::use_iterator ui = G.use_begin(), uf = G.use_end();
+      ui != uf;
+      ui++)
+    {
+      if(isa<Instruction>(*ui))
+	{
+	  llvm::Instruction* I = dyn_cast<llvm::Instruction>(*ui);
+	  llvm::BasicBlock* pb = I->getParent();
+	  if(pb != NULL)
+	    {
+	      llvm::Function* f = pb->getParent();
+	      if(f != NULL)
+		{
+		  std::string fname = f->getNameStr();
+		  if(module_names.count(fname) > 0)
+		    {
+		      return(true);
+		    }
+		}
+	    }
+	}
+    }
+  return (false);
+}
+
 void Aa::write_storage_object(std::string& obj_name, llvm::GlobalVariable &G, llvm::Module& tst,
 		std::vector<std::string>& init_obj_vector,
 		bool create_initializer)
