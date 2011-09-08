@@ -22,5 +22,7 @@ Aa2VC -O -I mempool -C prog.opt.o.linked.aa | vcFormat > prog.opt.o.linked.aa.vc
 # uncomment next line if you are using modelsim
 # vc2vhdl -C -s modelsim -T input_module -T output_module -T foo -T free_queue_manager -f prog.opt.o.linked.aa.vc | vhdlFormat > prog_opt_o_linked_aa_vc.vhdl
 # comment next line if you are using modelsim
- vc2vhdl -C -s ghdl -T input_module -T output_module -T foo -T free_queue_manager -f prog.opt.o.linked.aa.vc | vhdlFormat > prog_opt_o_linked_aa_vc.vhdl
+ vc2vhdl -C -s ghdl -T input_module -T output_module -T foo -T free_queue_manager -e ahir_system -w -f prog.opt.o.linked.aa.vc 
+vhdlFormat < ahir_system.unformatted_vhdl  > ahir_system.vhdl
+vhdlFormat < ahir_system_test_bench.unformatted_vhdl  > ahir_system_test_bench.vhdl
 
