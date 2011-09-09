@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sstream>
 #include <deque>
+#include <string>
 #include "Utils.hpp"
 #include <stdio.h>
 #include <limits.h>
