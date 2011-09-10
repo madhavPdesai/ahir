@@ -1538,6 +1538,7 @@ package BaseComponents is
       output_mantissa_width       : integer := 0;
       owidth        : integer;          -- width of output.
       constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
+      constant_width: integer;
       use_constant  : boolean := false
       );
   port (
@@ -1564,6 +1565,7 @@ package BaseComponents is
         output_mantissa_width       : integer := 0;
         owidth        : integer;          -- width of output.
         constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
+        constant_width: integer;
         use_constant  : boolean := false;  -- if true, the second operand is
                                            -- assumed to be the generic
         zero_delay    : boolean := false;  -- if true, operator result is
@@ -1601,6 +1603,7 @@ package BaseComponents is
         output_mantissa_width       : integer := 0;
         owidth        : integer;          -- width of output.
         constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
+        constant_width: integer;
         twidth        : integer;          -- tag width
         use_constant  : boolean := false;  -- if true, the second operand is
                                            -- provided by the generic.
@@ -1645,9 +1648,11 @@ package BaseComponents is
         output_mantissa_width       : integer := 0;
         owidth        : integer;          -- width of output.
         constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
+        constant_width: integer;
         use_constant  : boolean := false;
         zero_delay    : boolean := false;
         no_arbitration: boolean := false;
+        min_clock_period: boolean := false;
         num_reqs : integer  -- how many requesters?
         );
 
@@ -1785,7 +1790,8 @@ package BaseComponents is
               owidth: integer;
               twidth: integer;
               nreqs: integer;
-              no_arbitration: Boolean);
+              no_arbitration: Boolean;
+              registered_output: Boolean);
     port (
       -- req/ack follow pulse protocol
       reqL                 : in  BooleanArray(nreqs-1 downto 0);
@@ -2343,7 +2349,8 @@ package BaseComponents is
 	addr_width: integer;
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
-	no_arbitration: Boolean
+	no_arbitration: Boolean;
+        min_clock_period: Boolean
         );
     port (
       -- req/ack follow pulse protocol
@@ -2367,6 +2374,7 @@ package BaseComponents is
 	data_width : integer;
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
+        min_clock_period : boolean;
 	no_arbitration: Boolean
         );
     port (
@@ -7939,6 +7947,7 @@ entity GenericCombinationalOperator is
       output_mantissa_width       : integer := 0;
       owidth        : integer := 4;          -- width of output.
       constant_operand : std_logic_vector := "0001"; -- constant operand.. (it is always the second operand)
+      constant_width: integer := 4;
       use_constant  : boolean := true
       );
   port (
@@ -8054,7 +8063,7 @@ begin  -- Behave
 
     SingleOperandWithConstantIntInt: if input1_is_int and output_is_int generate
       SigBlock: block
-        signal op2_sig : std_logic_vector(constant_operand'length-1 downto 0);
+        signal op2_sig : std_logic_vector(constant_width-1 downto 0);
       begin  -- block SigBlock
         -- TODO: changes here.
         op2_sig <= constant_operand;
@@ -8205,7 +8214,8 @@ entity InputMuxBase is
 	   owidth: integer := 10;
 	   twidth: integer := 3;
 	   nreqs: integer := 1;
-	   no_arbitration: Boolean := true);
+	   no_arbitration: Boolean := true;
+	   registered_output: Boolean := false);
   port (
     -- req/ack follow pulse protocol
     reqL                 : in  BooleanArray(nreqs-1 downto 0);
@@ -8233,11 +8243,58 @@ architecture Behave of InputMuxBase is
   -- one-cycle delay between req and ack => in order to break long
   -- combinational (false) paths.
   constant suppress_immediate_ack : BooleanArray(reqL'length-1 downto 0) := (others => true);
+
+  -- intermediate signals.
+  signal reqR_sig                : std_logic;
+  signal ackR_sig                : std_logic;
+  signal dataR_sig               : std_logic_vector(owidth-1 downto 0);
+  signal tagR_sig                : std_logic_vector(twidth-1 downto 0);
+
 begin  -- Behave
 
 
   assert(iwidth = owidth*nreqs) report "mismatched i/o widths in InputMuxBase" severity error;
 
+  -----------------------------------------------------------------------------
+  -- output queue if registered_output is set.
+  -----------------------------------------------------------------------------
+  OutputRepeater: if registered_output generate
+
+    -- purpose: output queue
+    OqBlock: block
+      signal oq_data_in : std_logic_vector((twidth + owidth)-1 downto 0);
+      signal oq_data_out : std_logic_vector((twidth + owidth)-1 downto 0);
+    begin  -- block OqBlock
+
+      oq_data_in <= dataR_sig & tagR_sig;
+      dataR <= oq_data_out((twidth+owidth)-1 downto twidth);
+      tagR <= oq_data_out(twidth-1 downto 0);
+      
+      oqueue : QueueBase generic map (
+        queue_depth => 2,
+        data_width  => twidth + owidth)
+        port map (
+          clk      => clk,
+          reset    => reset,
+          data_in  => oq_data_in,
+          push_req => reqR_sig,
+          push_ack => ackR_sig,
+          data_out => oq_data_out,
+          pop_ack  => reqR,
+          pop_req  => ackR);
+
+    end block OqBlock;
+  end generate OutputRepeater;
+
+  NoOutputRepeater: if not registered_output generate
+    
+    dataR <= dataR_sig;
+    reqR <= reqR_sig;
+    ackR_sig <= ackR;
+    tagR <= tagR_sig;
+    
+  end generate NoOutputRepeater;
+  
   -----------------------------------------------------------------------------
   -- pulse to level translate
   -----------------------------------------------------------------------------
@@ -8260,8 +8317,8 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   NoArbitration: if no_arbitration generate
     fEN <= reqP;
-    reqR <= OrReduce(fEN);
-    ackP <= fEN when ackR = '1' else (others => '0');
+    reqR_sig <= OrReduce(fEN);
+    ackP <= fEN when ackR_sig = '1' else (others => '0');
   end generate NoArbitration;
 
   Arbitration: if not no_arbitration generate
@@ -8274,8 +8331,8 @@ begin  -- Behave
                           reqR => reqP,
                           ackR => ackP,
                           forward_enable => fEN,
-                          req_s => reqR,
-                          ack_s => ackR);
+                          req_s => reqR_sig,
+                          ack_s => ackR_sig);
     
   end generate Arbitration;
 
@@ -8284,10 +8341,10 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   process(fEN,dataP)
   begin
-    dataR <= (others => '0');
+    dataR_sig <= (others => '0');
     for J in 0 to nreqs-1 loop
       if(fEN(J) = '1') then
-        dataR <= dataP(J);
+        dataR_sig <= dataP(J);
         exit;
       end if;
     end loop;
@@ -8301,7 +8358,7 @@ begin  -- Behave
     owidth => twidth)
     port map (
       din  => fEN,
-      dout => tagR);
+      dout => tagR_sig);
 
 end Behave;
 library ieee;
@@ -8413,7 +8470,7 @@ begin  -- default_arch
     
     ack(I) <= ack_sig(I);
     
-    data_final(I) <= odata when ack_sig(I) = '1' else (others => '0');
+    data_final(I) <= odata;
     
   end generate gen;
 
@@ -8647,12 +8704,13 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity LoadReqShared is
-    generic
+  generic
     (
 	addr_width: integer := 8;
       	num_reqs : integer := 1; -- how many requesters?
 	tag_length: integer := 1;
-	no_arbitration: Boolean := true
+	no_arbitration: Boolean := true;
+        min_clock_period: Boolean := false
     );
   port (
     -- req/ack follow pulse protocol
@@ -8688,11 +8746,12 @@ begin  -- Behave
 
   
   imux: InputMuxBase
-  	generic map(iwidth => iwidth,
-	   owidth => owidth, 
-	   twidth => tag_length,
-	   nreqs => num_reqs,
-	   no_arbitration => no_arbitration)
+    generic map(iwidth => iwidth,
+                owidth => owidth, 
+                twidth => tag_length,
+                nreqs => num_reqs,
+                no_arbitration => no_arbitration,
+                registered_output => min_clock_period)
     port map(
       reqL       => reqL,
       ackL       => ackL,
@@ -10683,6 +10742,7 @@ entity SplitOperatorBase is
       output_mantissa_width       : integer := 0;
       owidth        : integer := 4;          -- width of output.
       constant_operand : std_logic_vector := "0001"; -- constant operand.. (it is always the second operand)
+      constant_width: integer := 4;
       twidth        : integer := 1;          -- tag width
       use_constant  : boolean := true;
       zero_delay    : boolean := false
@@ -10737,6 +10797,7 @@ begin  -- Behave
       output_mantissa_width       => output_mantissa_width,
       owidth                      => owidth,
       constant_operand            => constant_operand,
+      constant_width		  => constant_width,
       use_constant                => use_constant)
     port map (
       data_in => dataL,
@@ -10934,7 +10995,8 @@ begin
         output_characteristic_width => output_data_width,
         output_mantissa_width    => 0,
          owidth     => output_data_width,
-        constant_operand => const_operand,
+	constant_operand => const_operand,
+        constant_width => const_operand'length,
         use_constant  => false,
         zero_delay   => false, 
         num_reqs => num_req,
@@ -11018,9 +11080,11 @@ entity SplitOperatorShared is
       output_mantissa_width       : integer := 0;
       owidth        : integer := 4;          -- width of output.
       constant_operand : std_logic_vector := "0001"; -- constant operand.. (it is always the second operand)
+      constant_width: integer := 4;
       use_constant  : boolean := true;
       zero_delay    : boolean := false;
       no_arbitration: boolean := true;
+      min_clock_period: boolean := false;
       num_reqs : integer := 3 -- how many requesters?
     );
   port (
@@ -11073,11 +11137,12 @@ begin  -- Behave
   end generate DebugGen;
   
   imux: InputMuxBase
-  	generic map(iwidth => iwidth*num_reqs,
-	   owidth => iwidth, 
-	   twidth => tag_length,
-	   nreqs => num_reqs,
-	   no_arbitration => no_arbitration)
+    generic map(iwidth => iwidth*num_reqs,
+                owidth => iwidth, 
+                twidth => tag_length,
+                nreqs => num_reqs,
+                no_arbitration => no_arbitration,
+                registered_output => min_clock_period)
     port map(
       reqL       => reqL,
       ackL       => ackL,
@@ -11106,6 +11171,7 @@ begin  -- Behave
       output_mantissa_width  => output_mantissa_width,
       owidth    => owidth,
       constant_operand => constant_operand,
+      constant_width => constant_width,
       twidth     => tag_length,
       use_constant => use_constant,
       zero_delay  => zero_delay
@@ -11216,7 +11282,8 @@ entity StoreReqShared is
 	data_width : integer;
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
-	no_arbitration: Boolean
+	no_arbitration: Boolean;
+        min_clock_period: Boolean := false        
     );
   port (
     -- req/ack follow pulse protocol
@@ -11271,6 +11338,7 @@ begin  -- Behave
 	   owidth => addr_width+data_width, 
 	   twidth => tag_length,
 	   nreqs => num_reqs,
+           registered_output => min_clock_period,
 	   no_arbitration => no_arbitration)
     port map(
       reqL       => reqL,
@@ -11314,6 +11382,7 @@ entity UnsharedOperatorBase is
       output_mantissa_width       : integer := 0;
       owidth        : integer;          -- width of output.
       constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
+      constant_width : integer;
       use_constant  : boolean := false;
       zero_delay    : boolean := false;
       flow_through  : boolean := false
@@ -11361,6 +11430,7 @@ begin  -- Behave
       output_mantissa_width       => output_mantissa_width,
       owidth                      => owidth,
       constant_operand            => constant_operand,
+      constant_width              => constant_width,
       use_constant                => use_constant)
     port map (
       data_in => dataL,

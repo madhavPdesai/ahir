@@ -37,10 +37,14 @@ void ahir_packet_free(uint32_t* ptr)
 
 uint8_t free_queue_ram[RAM_SIZE];
 uint8_t free_queue[FREE_QUEUE_SIZE];
+uint8_t foo[10];
 
+void global_storage_initializer_();
 void free_queue_manager()
 {
     int i;
+
+    global_storage_initializer_();
 
     for (i = 0; i < FREE_QUEUE_SIZE; ++i) {
         free_queue[i] = 1;
@@ -79,6 +83,8 @@ void free_queue_manager()
 
 void wrapper_input()
 {
+
+    foo[0] = 1;
     while (1) {
         uint8_t *buf = (uint8_t *)ahir_packet_get();
         int word = 0;

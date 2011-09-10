@@ -27,8 +27,32 @@ Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Loading package basecomponents
 -- Loading package operatorpackage
 -- Loading package vc_system_package
+-- Compiling entity default_initializer_free_queue
+-- Compiling architecture default of default_initializer_free_queue
+-- Compiling entity default_initializer_free_queue_ram
+-- Compiling architecture default of default_initializer_free_queue_ram
+-- Compiling entity default_initializer_xx_xstr
+-- Compiling architecture default of default_initializer_xx_xstr
+-- Compiling entity default_initializer_xx_xstr1
+-- Compiling architecture default of default_initializer_xx_xstr1
+-- Compiling entity default_initializer_xx_xstr2
+-- Compiling architecture default of default_initializer_xx_xstr2
+-- Compiling entity default_initializer_xx_xstr3
+-- Compiling architecture default of default_initializer_xx_xstr3
+-- Compiling entity default_initializer_xx_xstr4
+-- Compiling architecture default of default_initializer_xx_xstr4
+-- Compiling entity default_initializer_xx_xstr5
+-- Compiling architecture default of default_initializer_xx_xstr5
+-- Compiling entity default_initializer_xx_xstr6
+-- Compiling architecture default of default_initializer_xx_xstr6
+-- Compiling entity default_initializer_xx_xstr7
+-- Compiling architecture default of default_initializer_xx_xstr7
+-- Compiling entity default_initializer_xx_xstr8
+-- Compiling architecture default of default_initializer_xx_xstr8
 -- Compiling entity free_queue_manager
 -- Compiling architecture default of free_queue_manager
+-- Compiling entity global_storage_initializer_x
+-- Compiling architecture default of global_storage_initializer_x
 -- Compiling entity wrapper_input
 -- Compiling architecture default of wrapper_input
 -- Compiling entity wrapper_output
@@ -50,6 +74,15 @@ Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Compiling package float_pkg
 -- Compiling package body float_pkg
 -- Loading package float_pkg
+
+} {} {}} /home/madhav/ahirgit/AHIR/v2/CtestBench/vhdl/Utility_Package.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/v2/CtestBench/vhdl/Utility_Package.vhdl
+Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Compiling package utility_package
+** Warning: (vcom-98) "/cad/modelsim//libs/MS/OS/ixl/libadmslib.so" is not present; ADMS design-units may not be handled properly
+-- Compiling package body utility_package
+-- Loading package utility_package
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl
 Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
@@ -274,15 +307,6 @@ Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
     /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(11463):Process line__11463
        Driven at:
           /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(11467)
-
-} {} {}} /home/madhav/ahirgit/AHIR/v2/CtestBench/vhdl/Utility_Package.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/v2/CtestBench/vhdl/Utility_Package.vhdl
-Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
--- Loading package standard
--- Loading package std_logic_1164
--- Compiling package utility_package
-** Warning: (vcom-98) "/cad/modelsim//libs/MS/OS/ixl/libadmslib.so" is not present; ADMS design-units may not be handled properly
--- Compiling package body utility_package
--- Loading package utility_package
 
 } {} {}} /home/madhav/ahirgit/AHIR/v2/CtestBench/examples/clickwrappersimplified/vhdl/ahir_system_test_bench.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/v2/CtestBench/examples/clickwrappersimplified/vhdl/ahir_system_test_bench.vhdl
 Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
