@@ -96,6 +96,7 @@ void *read_pipe_(void *args)
     int i = 0, j = 0, len = 0;
     uint8_t *buf = (uint8_t *)(((FnArgs *)args)->buf);
     int word_count = 0; 
+    uint16_t byte_count;
     while (1) {
         // Read data and ctrl from wrapper_output.
         uint8_t  inctrl = read_uint8("out_ctrl");
@@ -104,7 +105,6 @@ void *read_pipe_(void *args)
         printf("Read a data word(%d):%x     %llx. \n", word_count, inctrl, indata);
 	word_count++;
 
-        uint16_t byte_count;
 
 	uint8_t *p = (uint8_t*) &indata;
 
@@ -137,7 +137,7 @@ void *read_pipe_(void *args)
 
 done:
 
-    for (i = 0; i < 32*8; i++) {
+    for (i = 0; i < byte_count; i++) {
         if (i % 8 == 0)
             printf("\n");
         printf("%02x ", buf[i]);

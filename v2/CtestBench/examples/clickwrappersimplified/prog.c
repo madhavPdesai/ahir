@@ -12,6 +12,39 @@
 #define FREE_QUEUE_OK  3
 #define FREE_QUEUE_FAIL  4
 
+#define SRC_MASK 0xffff0000
+#define DEST_MASK (((uint64_t) 0xffff) << 48)
+
+void output_port_lookup()
+{
+      uint8_t ctrl;
+      uint64_t data;
+
+#ifdef GSI
+      uint8_t start_flag = read_uint8("start_output_port_lookup");
+#endif
+
+      while(1)
+      {
+	ctrl = read_uint8("op_lut_ctrl");
+	data = read_uint64("op_lut_data");
+
+#ifdef OPLU
+	if(ctrl == 0xff)
+	{
+		uint16_t src_id = ((data & SRC_MASK) >> 16);
+		uint16_t decoded_src = (1 << src_id);
+		uint64_t dest_id = ((src_id & 0x1) ? (decoded_src >> 1) : (decoded_src << 1));
+
+		data = (data & ~DEST_MASK) | (dest_id << 48);
+	}
+#endif 
+
+	write_uint8("out_ctrl",ctrl);
+	write_uint64("out_data",data);
+      }
+}
+
 uint32_t* ahir_packet_get()
 {
     uint32_t* buf;
@@ -39,12 +72,19 @@ uint8_t free_queue_ram[RAM_SIZE];
 uint8_t free_queue[FREE_QUEUE_SIZE];
 uint8_t foo[10];
 
+#ifdef GSI
 void global_storage_initializer_();
+#endif
 void free_queue_manager()
 {
     int i;
 
+#ifdef GSI
     global_storage_initializer_();
+    write_uint8("start_wrapper_input",1);
+    write_uint8("start_wrapper_output",1);
+    write_uint8("start_output_port_lookup",1);
+#endif
 
     for (i = 0; i < FREE_QUEUE_SIZE; ++i) {
         free_queue[i] = 1;
@@ -85,11 +125,15 @@ void wrapper_input()
 {
 
     foo[0] = 1;
+#ifdef GSI
+    uint8_t start_flag = read_uint8("start_wrapper_input");
+#endif
+    uint8_t lastctrl = 1;
     while (1) {
         uint8_t *buf = (uint8_t *)ahir_packet_get();
         int word = 0;
 
-        uint8_t *pkt_data = (buf + 8);
+        uint8_t *pkt_data = (buf + 0);
 
         while (1) {
             // Read data and ctrl from NetFPGA.
@@ -110,6 +154,7 @@ void wrapper_input()
                     buf[5] = p[2];
                     buf[6] = p[1];
                     buf[7] = p[0];
+		    word++;
                     break;
                 case 0x00: // Data
                     pkt_data[word * 8 + 0] = p[7];
@@ -123,6 +168,7 @@ void wrapper_input()
                     word++;
                     break;
                 default:   // Something else like "other module header"
+                    lastctrl = inctrl;
                     pkt_data[word * 8 + 0] = p[7];
                     pkt_data[word * 8 + 1] = p[6];
                     pkt_data[word * 8 + 2] = p[5];
@@ -134,23 +180,29 @@ void wrapper_input()
                     word++;
                     goto done;
                     break;
-                    break;
             }
         }
 
 done:
         // Write out packet to FromFPGA element.
         write_uint32("midpipe", (uint32_t)buf);
+        write_uint8("last_ctrl", lastctrl);
+        write_uint32("pkt_length", word);
     }
 }
 
 void wrapper_output()
 {
+#ifdef GSI
+    uint8_t start_flag = read_uint8("start_wrapper_output");
+#endif
     while (1) {
         uint16_t i;
 
         // Get a pointer to the packet data from the ToFPGA element.
         uint8_t *pkt = (uint8_t *)read_uint32("midpipe");
+        uint32_t pklen = read_uint32("pkt_length");
+        uint8_t lastctrl = read_uint8("last_ctrl");
 
         // Pointer to the beginning of memory block.
         uint8_t *buf = pkt;
@@ -169,13 +221,13 @@ void wrapper_output()
         p[6] = buf[0]; // Swap byte order for dst_port
         p[7] = buf[1];
 
-        write_uint8("out_ctrl", outctrl);
-        write_uint64("out_data", outdata);
+        write_uint8("op_lut_ctrl", outctrl);
+        write_uint64("op_lut_data", outdata);
 	
         //printf("wrapper-output-pktdata=%llx\n", outdata);
 
         outctrl = 0;
-        for (i = 1; i < 31; ++i) {
+        for (i = 1; i < pklen-1; ++i) {
             p[0] = pkt[i * 8 + 7];
             p[1] = pkt[i * 8 + 6];
             p[2] = pkt[i * 8 + 5];
@@ -184,13 +236,13 @@ void wrapper_output()
             p[5] = pkt[i * 8 + 2];
             p[6] = pkt[i * 8 + 1];
             p[7] = pkt[i * 8 + 0];
-            write_uint8("out_ctrl", outctrl);
-            write_uint64("out_data", outdata);
+            write_uint8("op_lut_ctrl", outctrl);
+            write_uint64("op_lut_data", outdata);
 
             //printf("wrapper-output-pktdata=%llx\n", outdata);
         }
 
-        outctrl = 1;
+        outctrl = lastctrl;
         p[0] = pkt[i * 8 + 7];
         p[1] = pkt[i * 8 + 6];
         p[2] = pkt[i * 8 + 5];
@@ -200,8 +252,8 @@ void wrapper_output()
         p[6] = pkt[i * 8 + 1];
         p[7] = pkt[i * 8 + 0];
 
-        write_uint8("out_ctrl", outctrl);
-        write_uint64("out_data", outdata);
+        write_uint8("op_lut_ctrl", outctrl);
+        write_uint64("op_lut_data", outdata);
         
         //printf("wrapper-output-pktdata=%llx\n", outdata);
 
