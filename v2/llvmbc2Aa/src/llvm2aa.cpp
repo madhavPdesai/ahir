@@ -27,7 +27,8 @@ using namespace llvm;
 
 namespace Aa {
   FunctionPass* createLowerConstantExprPass();
-  ModulePass* createModuleGenPass(const std::string &mlist_file, bool create_initializers, const std::string &pipe_depth_file);
+  ModulePass* createModuleGenPass(const std::string &mlist_file, bool create_initializers, const std::string &pipe_depth_file,
+				  const std::string& hw_target);
 }
 
 #include <signal.h>
@@ -55,6 +56,10 @@ PipeDepthFile("pipedepths", cl::desc("A file containing pipe-name pipe-depth pai
 
 static cl::opt<bool>
   WriteStorageInitializers("storageinit", cl::desc("set to true if you want storage initializers to be generated"));
+
+static cl::opt<std::string>
+HardwareTargetDescription("hw_target", cl::desc("the hardware target: choose one of xilinx/asic, default is xilinx")
+               , cl::value_desc("hardware_target"));
 
 int main(int argc, char **argv)
 {
@@ -119,7 +124,7 @@ int main(int argc, char **argv)
     Passes.add(createPrintModulePass(&RawOut));
 
     // the Aa generation pass.
-    Pass *P = Aa::createModuleGenPass(ModuleListFile,WriteStorageInitializers,PipeDepthFile);
+    Pass *P = Aa::createModuleGenPass(ModuleListFile,WriteStorageInitializers,PipeDepthFile,HardwareTargetDescription);
     if(P != NULL)
       Passes.add(P);
     else

@@ -720,6 +720,7 @@ bool Aa::is_a_supported_constant(llvm::Constant* konst)
 	  else
 	    return(false);
 	}
+      return(true);
     }
   else if(isa<ConstantAggregateZero>(konst))
     {
@@ -759,8 +760,9 @@ bool Aa::is_used_in_module(llvm::GlobalVariable &G, std::set<std::string>& modul
 }
 
 void Aa::write_storage_object(std::string& obj_name, llvm::GlobalVariable &G, llvm::Module& tst,
-		std::vector<std::string>& init_obj_vector,
-		bool create_initializer)
+			      std::vector<std::string>& init_obj_vector,
+			      bool create_initializer,
+			      bool skip_zero_initializers)
 {
 	const llvm::Type *ptr = G.getType();
 	const llvm::PointerType* pptr = dyn_cast<PointerType>(G.getType());
@@ -783,16 +785,20 @@ void Aa::write_storage_object(std::string& obj_name, llvm::GlobalVariable &G, ll
 	    {
 	      if(create_initializer)
 		{
+
 		  if(is_a_supported_constant(init))
 		    {
-		      std::string initializer_name = "default_initializer_" + obj_name;
-		      init_obj_vector.push_back(initializer_name);
-		      
-		      std::cerr << "Info: Initial value specified for " << obj_name << ": will create initializer module" << std::endl;
-		      std::cout << "$module [" << initializer_name << "] $in () $out () $is {" << std::endl;
-		      write_storage_initializer_statements(obj_name,init);
-		      std::cout << "$attribute nooptimize " << std::endl;
-		      std::cout << "}" << std::endl;
+		      if(!(isa<ConstantAggregateZero>(init) && skip_zero_initializers))
+			{
+			  std::string initializer_name = "default_initializer_" + obj_name;
+			  init_obj_vector.push_back(initializer_name);
+			  
+			  std::cerr << "Info: Initial value specified for " << obj_name << ": will create initializer module" << std::endl;
+			  std::cout << "$module [" << initializer_name << "] $in () $out () $is {" << std::endl;
+			  write_storage_initializer_statements(obj_name,init,skip_zero_initializers);
+			  std::cout << "$attribute nooptimize " << std::endl;
+			  std::cout << "}" << std::endl;
+			}
 		    }
 		  else
 		    {
@@ -808,7 +814,7 @@ void Aa::write_storage_object(std::string& obj_name, llvm::GlobalVariable &G, ll
 	}
 }
 
-void Aa::write_storage_initializer_statements(std::string& prefix, llvm::Constant* konst)
+void Aa::write_storage_initializer_statements(std::string& prefix, llvm::Constant* konst, bool skip_zero_initializers)
 {
 	const llvm::Type *konst_type = konst->getType();
 
@@ -838,12 +844,13 @@ void Aa::write_storage_initializer_statements(std::string& prefix, llvm::Constan
 			std::string forward_prefix = prefix + "[" +  int_to_str(i) + "]";
 			llvm::Value *el = konst->getOperand(i);
 			assert(isa<llvm::Constant>(el) && "constants expected here");
-			write_storage_initializer_statements(forward_prefix,cast<llvm::Constant>(el));
+			write_storage_initializer_statements(forward_prefix,cast<llvm::Constant>(el), skip_zero_initializers);
 		}
 	}
 	else if(isa<ConstantAggregateZero>(konst))
 	{
-		write_zero_initializer_recursive(prefix,konst->getType(),0);      
+	  if(!skip_zero_initializers)
+	    write_zero_initializer_recursive(prefix,konst->getType(),0);      
 	}
 	else
 	{

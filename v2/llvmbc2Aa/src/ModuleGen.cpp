@@ -34,6 +34,7 @@ namespace {
     std::map<std::string, int> _pipe_depths;
     bool _consider_all_functions;
     bool _create_initializers;
+    bool _skip_zero_initializers;
     int _pointer_width;
 
     ModuleGenPass() : ModulePass(ID) 
@@ -41,13 +42,24 @@ namespace {
       _pointer_width = 32;
       _consider_all_functions = true;
       _create_initializers = true;
+      _skip_zero_initializers = true;
     }
 
-    ModuleGenPass(const std::string& mlist_file, bool create_initializers, const std::string& pipe_depth_file) : ModulePass(ID) 
+    ModuleGenPass(const std::string& mlist_file, 
+		  bool create_initializers, 
+		  const std::string& pipe_depth_file,
+		  const std::string& hw_target
+		  ) : ModulePass(ID) 
     {
       _pointer_width = 32;
       _consider_all_functions = true;
       _create_initializers = create_initializers;
+      _skip_zero_initializers = true;
+
+      if(hw_target != "")
+	{
+	  _skip_zero_initializers = (hw_target == "xilinx");
+	}
 
       if(mlist_file != "")
 	{
@@ -211,7 +223,8 @@ namespace {
 					   *gi,
 					   M, 
 					   objects_to_be_initialized, 
-					   _create_initializers);
+					   _create_initializers,
+					   _skip_zero_initializers);
 		      //}
 		    }
 		}
@@ -407,9 +420,10 @@ namespace {
 
 namespace Aa {
 
-  ModulePass* createModuleGenPass(const std::string& module_list, bool create_initializers, const std::string& pipe_depth_file) 
+  ModulePass* createModuleGenPass(const std::string& module_list, bool create_initializers, const std::string& pipe_depth_file,
+				  const std::string& hw_target) 
   { 
-    return new ModuleGenPass(module_list, create_initializers,pipe_depth_file); 
+    return new ModuleGenPass(module_list, create_initializers,pipe_depth_file, hw_target); 
   }
 }
 

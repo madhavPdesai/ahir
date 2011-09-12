@@ -16,7 +16,7 @@ end entity base_bank;
 
 architecture XilinxBramInfer of base_bank is
   type MemArray is array (natural range <>) of std_logic_vector(g_data_width-1 downto 0);
-  signal mem_array : MemArray((2**g_addr_width)-1 downto 0);
+  signal mem_array : MemArray((2**g_addr_width)-1 downto 0) := (others => (others => '0'));
   signal addr_reg : std_logic_vector(g_addr_width-1 downto 0);
   signal rd_enable_reg : std_logic;
 begin  -- XilinxBramInfer

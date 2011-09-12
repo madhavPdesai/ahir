@@ -5,7 +5,7 @@ clang -DOPLU -DGSI -std=gnu89 -I../../../iolib/ -emit-llvm -c prog.c
 opt --instnamer -O3 prog.o > prog.opt.o
 # llvm-bytecode to Aa
 llvm-dis prog.opt.o
-llvm2aa --modules=modules.txt --storageinit=true prog.opt.o | vcFormat >  prog.o.aa
+llvm2aa --modules=modules.txt --storageinit=true --hw_target=asic prog.opt.o | vcFormat >  prog.o.aa
 # map external memory references from system to
 # internal object mempool (of size 1 byte).
 AaLinkExtMem -I 1 -E mempool prog.o.aa | vcFormat > prog.o.linked.aa

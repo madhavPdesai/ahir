@@ -88,7 +88,7 @@ architecture Default of register_bank is
   type DataArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
   type AddrArray is array (natural range <>) of std_logic_vector(addr_width-1 downto 0);
 
-  signal register_array : DataArray(num_registers-1 downto 0);
+  signal register_array : DataArray(num_registers-1 downto 0) := (others => (others => '0'));
 
   signal lr_ack_flag: std_logic_vector(num_loads-1 downto 0);
   signal sr_ack_flag : std_logic_vector(num_stores-1 downto 0);
