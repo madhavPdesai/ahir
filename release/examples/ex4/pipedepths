@@ -1,0 +1,7 @@
+free_queue_get_pipe  2
+free_queue_put_pipe  2
+free_queue_request_pipe  2
+in_data_pipe   3
+job_queue_pipe  4
+out_data_pipe  3
+result_queue_pipe  4

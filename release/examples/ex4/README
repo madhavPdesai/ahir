@@ -1,0 +1,4 @@
+A matrix multiply pipeline, with four
+processors. Each processor takes care
+of an inner product.
+
