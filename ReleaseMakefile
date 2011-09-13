@@ -43,18 +43,21 @@ Clean:
 	#license
 	rm -f $(RELEASE)/LICENSE 
 	rm -f $(RELEASE)/CONTRIBUTORS 
-	rm -f $(RELEASE)/bin/*
+	rm -f $(RELEASE)/bin/Aa*
+	rm -f $(RELEASE)/bin/vc*
+	rm -f $(RELEASE)/bin/vhdlFormat
+	rm -f $(RELEASE)/bin/llvm2aa
 	# rm the IOLIB
 	rm -f $(RELEASE)/iolib/include/*.h
 	rm -f $(RELEASE)/iolib/lib/*.a
 	# rm the testbench
 	rm -f $(RELEASE)/CtestBench/include/*.h
-	rm -f $(RELEASE)/CtestBench/lib/*
-	rm -f $(RELEASE)/CtestBench/vhdl/*
+	rm -f $(RELEASE)/CtestBench/lib/*.so
+	rm -f $(RELEASE)/CtestBench/vhdl/*.vhd*
 	# rm the VHDL files
-	rm -f $(RELEASE)/vhdl/*
+	rm -f $(RELEASE)/vhdl/*.vhd*
 	# rm the doc files
-	rm -f $(RELEASE)/docs/pdf/*
-	rm -f $(RELEASE)/docs/html/*
+	rm -f $(RELEASE)/docs/pdf/*.pdf
+	rm -f $(RELEASE)/docs/html/*.htm*
 
 PHONY: Release Clean
