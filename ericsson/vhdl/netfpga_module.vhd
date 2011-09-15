@@ -205,7 +205,7 @@ begin  -- default_arch
   	begin
 		if(clk'event and clk = '1') then 
 			if(in_pop_ack = '1') then 
-				assert false report "NFM_IN (hex):  " & convert_slv_to_hex_string(in_qdata_out(71 downto 64))  & "  " & convert_slv_to_hex_string(in_qdata_out(63 downto 0)) severity note;
+				assert false report "NFM_IN:  " & convert_slv_to_hex_string(in_qdata_out(71 downto 64))  & "  " & convert_slv_to_hex_string(in_qdata_out(63 downto 0)) severity note;
 			end if;
 		end if;
   	end process;
