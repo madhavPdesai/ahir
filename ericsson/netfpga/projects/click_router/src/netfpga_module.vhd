@@ -32,7 +32,7 @@ architecture default_arch of netfpga_module is
 
   -- make this true if you wish to log the packets
   -- into the simulation transcript. 
-  constant log_packets: boolean := false;
+  constant log_packets: boolean := true;
 
   component ProtocolMatchingFifo is
     generic(queue_depth: integer := 3; data_width: integer := 72);

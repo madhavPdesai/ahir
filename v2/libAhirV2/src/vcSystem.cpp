@@ -14,6 +14,7 @@ bool vcSystem::_opt_flag = false;
 bool vcSystem::_vhpi_tb_flag = false;
 bool vcSystem::_min_area_flag = false;
 bool vcSystem::_min_clock_period_flag = false;
+bool vcSystem::_enable_logging = false;
 
 // set on error.
 bool vcSystem::_error_flag = false;

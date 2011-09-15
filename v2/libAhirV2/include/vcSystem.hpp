@@ -39,6 +39,7 @@ class vcSystem: public vcRoot
 
   static bool _vhpi_tb_flag;
   static string _simulator_prefix;
+  static bool _enable_logging;
 
   vcSystem(string id);
   virtual void Print(ostream& ofile);
