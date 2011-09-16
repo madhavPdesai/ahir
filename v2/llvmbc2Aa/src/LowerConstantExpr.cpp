@@ -113,8 +113,13 @@ void Aa::LowerConstantExpr::lower(ConstantExpr *ce, Instruction *inst)
 				   , ce->getOperand(0)
 				   , ce->getOperand(1)
 				   , "", inst);
-  } else
-    assert(false && "unhandled ConstantExpr");
+  } 
+  else
+    {
+      std::cerr << "Warning: unhandled constant expression! ";
+      ce->dump();
+      std::cerr << std::endl;
+    }
 
   if (cinst) {
     inst->replaceUsesOfWith(ce, cinst);

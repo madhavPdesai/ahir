@@ -10,7 +10,7 @@ llvm2aa --modules=modules.txt --hw_target=asic prog.opt.o | vcFormat >  prog.o.a
 # internal object mempool (of size 1 byte).
 AaLinkExtMem -I 1 -E mempool prog.o.aa | vcFormat > prog.o.linked.aa
 # take linked Aa and convert to virtual circuit.
-Aa2VC -O -I mempool -C prog.o.linked.aa | vcFormat > prog.o.linked.aa.vc
+Aa2VC -I mempool -C prog.o.linked.aa | vcFormat > prog.o.linked.aa.vc
 #
 # take virtual circuit and convert to VHDL
 # NOTE: the -T option tells vc2vhdl that io_module is to be an ever-running

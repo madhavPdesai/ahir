@@ -701,7 +701,7 @@ namespace {
 	  return;
 	}
       
-      std::string op_name = prepare_operand(L.getPointerOperand());
+      std::string op_name = get_name(L.getPointerOperand());
       if(is_global)
 	std::cout << op_name << std::endl;
       else
@@ -723,7 +723,7 @@ namespace {
 	  return;
 	}
 
-      std::string ptr_name  = prepare_operand(S.getPointerOperand());
+      std::string ptr_name  = get_name(S.getPointerOperand());
       std::string data_name = prepare_operand(S.getValueOperand());
       if(is_global)
 	std::cout << ptr_name << " := ";
