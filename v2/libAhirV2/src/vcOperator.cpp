@@ -371,6 +371,10 @@ bool vcBinarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
   if(Is_Trivial_Op(this->_op_id))
     return(false);
 
+  // lets try not sharing integer adders at all..
+  if(this->Is_Int_Add_Op())
+    return(false);
+
   bool ret_val = ((this->Kind() == other->Kind()) 
 		  && 
 		  (this->_op_id == ((vcBinarySplitOperator*)other)->Get_Op_Id()));
@@ -392,6 +396,9 @@ bool vcBinarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
     return(false);
 
   if(_y->Is("vcConstantWire") && Is_Shift_Op(this->_op_id))
+    return(false);
+  
+  if((_y->Is("vcConstantWire") || _x->Is("vcConstantWire")) && this->Is_Int_Add_Op())
     return(false);
 
   if(_y->Is("vcConstantWire") && (((vcBinarySplitOperator*)other)->Get_Y()->Is("vcConstantWire")))
@@ -595,6 +602,20 @@ bool Is_Shift_Op(string vc_op_id)
   else if(vc_op_id == vcLexerKeywords[__SHR_OP]           ) { ret_val = true;} 
   else if(vc_op_id == vcLexerKeywords[__SHRA_OP]          ) { ret_val = true;} 
   return(ret_val);
+}
+
+ bool vcBinarySplitOperator::Is_Int_Add_Op()
+{
+  if(this->Get_Input_Type()->Is_Int_Type())
+    {
+      if(this->_op_id == vcLexerKeywords[__PLUS_OP] || 
+	 this->_op_id == vcLexerKeywords[__MINUS_OP])
+	return(true);
+      else
+	return(false);
+    }
+  else
+    return(false);
 }
 
 bool Is_Trivial_Op(string vc_op_id)
