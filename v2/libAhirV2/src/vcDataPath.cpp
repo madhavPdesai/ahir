@@ -1397,6 +1397,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 	  out_width += outwires[u]->Get_Size();
 	}
 
+
       // VHDL code for this shared group
       ofile << "-- shared load operator group (" << idx << ") : " ;
       for(int u = 0; u < elements.size(); u++)
@@ -1413,6 +1414,44 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
       ofile << "signal reqR, ackR, reqL, ackL : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
 
       ofile << "-- }\n begin -- {" << endl;
+
+      // logging!
+      if(vcSystem::_enable_logging)
+	{
+	  
+	  ofile << "-- logging on!" << endl;
+	  ofile << " process(clk)  begin -- {" 
+		<< " if clk'event and clk = '1' then -- {" << endl;
+
+
+	  int lindex = out_width-1;
+	  for(int u = 0; u < inwires.size(); u++)
+	    {
+
+	      vcTransition* aw = ackR[u];
+	      vcWire* iw = inwires[u];
+	      vcWire* ow = outwires[u];
+	      
+	      ofile << " if " << aw->Get_DP_To_CP_Symbol() << " then -- {" << endl;
+	      ofile << " assert false report \" ReadMem " 
+		    <<  ms->Get_VHDL_Id() 
+		    << " address " << iw->Get_VHDL_Id() << " =\" " 
+		    << " & "
+		    << " convert_slv_to_hex_string(" << iw->Get_VHDL_Id() << ")"
+		    << " & "
+		    << " \" data " << ow->Get_VHDL_Id() << " =\" "
+		    << " & "
+		    << " convert_slv_to_hex_string(data_out(" 
+		    << lindex << " downto " << (lindex - (data_width-1)) << ")"
+		    << ")"
+		    << " severity note; --}" << endl;
+	      ofile << " end if;" << endl;
+	      lindex -= data_width;
+	    }
+	  ofile << " --} " << endl << "end if;" << endl;
+	  ofile << "-- } " << endl << " end process;" << endl;
+	}
+
 
       this->Print_VHDL_Concatenate_Req("reqL",reqL,ofile);
       this->Print_VHDL_Disconcatenate_Ack("ackL",ackL,ofile);
@@ -1515,6 +1554,37 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 	  ackR.push_back(so->Get_Ack(1));
 	}
       assert(ms != NULL);
+
+      // logging!
+      if(vcSystem::_enable_logging)
+	{
+	  
+	  ofile << "-- logging on!" << endl;
+	  ofile << " process(clk)  begin -- {" 
+		<< " if clk'event and clk = '1' then -- {" << endl;
+	  for(int u = 0; u < addrwires.size(); u++)
+	    {
+
+	      vcTransition* aw = ackR[u];
+	      vcWire* iw = addrwires[u];
+	      vcWire* ow = datawires[u];
+	      
+	      ofile << " if " << aw->Get_DP_To_CP_Symbol() << " then -- {" << endl;
+	      ofile << " assert false report \" WriteMem  " 
+		    <<  ms->Get_VHDL_Id() 
+		    << " address " << iw->Get_VHDL_Id() << " =\" " 
+		    << " & "
+		    << " convert_slv_to_hex_string(" << iw->Get_VHDL_Id() << ")"
+		    << " & "
+		    << " \" data " << ow->Get_VHDL_Id() << " =\" "
+		    << " & "
+		    << " convert_slv_to_hex_string(" << ow->Get_VHDL_Id() << ")"
+		    << " severity note; --}" << endl;
+	      ofile << " end if;" << endl;
+	    }
+	  ofile << " --} " << endl << "end if;" << endl;
+	  ofile << "-- } " << endl << " end process;" << endl;
+	}
 
       // address, data
       int addr_width = ((vcLoadStore*)(*_compatible_store_groups[idx].begin()))->Get_Address()->Get_Size();
@@ -1655,6 +1725,8 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 	  out_width += outwires[u]->Get_Size();
 	}
 
+      
+
       // VHDL code for this shared group
       ofile << "-- shared inport operator group (" << idx << ") : " ;
       for(int u = 0; u < elements.size(); u++)
@@ -1670,6 +1742,34 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
       ofile << "signal req, ack : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
 
       ofile << "-- }\n begin -- {" << endl;
+
+      // logging!
+      if(vcSystem::_enable_logging)
+	{
+	  ofile << "-- logging on!" << endl;
+	  ofile << " process(clk)  begin -- {" 
+		<< " if clk'event and clk = '1' then -- {" << endl;
+	  int lindex = out_width-1;
+	  for(int u = 0; u < outwires.size(); u++)
+	    {
+
+	      vcTransition* aw = ack[u];
+	      vcWire* ow = outwires[u];
+	      
+	      ofile << " if " << aw->Get_DP_To_CP_Symbol() << " then -- {" << endl;
+	      ofile << " assert false report \" ReadPipe " 
+		    <<  p->Get_VHDL_Id() 
+		    << " to wire " << ow->Get_VHDL_Id() << " value=\" " 
+		    << " & "
+		    << " convert_slv_to_hex_string(data_out(" 
+		    << lindex << " downto " << (lindex - (data_width-1)) << ")) "
+		    << " severity note; --}" << endl;
+	      ofile << " end if;" << endl;
+	      lindex -= data_width;
+	    }
+	  ofile << " --} " << endl << "end if;" << endl;
+	  ofile << "-- } " << endl << " end process;" << endl;
+	}
 
       this->Print_VHDL_Concatenate_Req("req",req,ofile);
       this->Print_VHDL_Disconcatenate_Ack("ack",ack, ofile);
@@ -1749,6 +1849,33 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 	{
 	  in_width += inwires[u]->Get_Size();
 	}
+
+      // logging!
+      if(vcSystem::_enable_logging)
+	{
+	  
+	  ofile << "-- logging on!" << endl;
+	  ofile << " process(clk)  begin -- {" 
+		<< " if clk'event and clk = '1' then -- {" << endl;
+	  for(int u = 0; u < inwires.size(); u++)
+	    {
+
+	      vcTransition* aw = ack[u];
+	      vcWire* iw = inwires[u];
+	      
+	      ofile << " if " << aw->Get_DP_To_CP_Symbol() << " then -- {" << endl;
+	      ofile << " assert false report \" WritePipe " 
+		    <<  p->Get_VHDL_Id() 
+		    << " from wire " << iw->Get_VHDL_Id() << " value=\" " 
+		    << " & "
+		    << " convert_slv_to_hex_string(" << iw->Get_VHDL_Id() << ")"
+		    << " severity note; --}" << endl;
+	      ofile << " end if;" << endl;
+	    }
+	  ofile << " --} " << endl << "end if;" << endl;
+	  ofile << "-- } " << endl << " end process;" << endl;
+	}
+
 
       // VHDL code for this shared group
       ofile << "-- shared outport operator group (" << idx << ") : " ;

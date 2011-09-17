@@ -9,6 +9,9 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+library ahir;
+use ahir.Utilities.all;
+
 -- rdy/wr implement a pull protocol.  receiver
 -- asserts rdy and sender asserts wr to write data.
 entity netfpga_module is
@@ -26,6 +29,10 @@ entity netfpga_module is
 end netfpga_module;
 
 architecture default_arch of netfpga_module is
+
+  -- make this true if you wish to log the packets
+  -- into the simulation transcript. 
+  constant log_packets: boolean := false;
 
   component ProtocolMatchingFifo is
     generic(queue_depth: integer := 3; data_width: integer := 72);
@@ -116,7 +123,7 @@ begin  -- default_arch
     
     case in_fsm_state is
       when idle =>
-        in_pop_req_var := '1';         -- nominally asserted, see below. 
+        in_pop_req_var := '1';          -- this is the only state where we req..
         
         if(in_pop_ack = '1') then
           -- request if ack from queue.
@@ -192,6 +199,17 @@ begin  -- default_arch
   
   in_ctrl_pipe_write_data <= in_qdata_out(71 downto 64);
   in_data_pipe_write_data <= in_qdata_out(63 downto 0);
+
+  LogInPkt: if log_packets generate 
+  	process(clk)
+  	begin
+		if(clk'event and clk = '1') then 
+			if(in_pop_ack = '1') then 
+				assert false report "NFM_IN:  " & convert_slv_to_hex_string(in_qdata_out(71 downto 64))  & "  " & convert_slv_to_hex_string(in_qdata_out(63 downto 0)) severity note;
+			end if;
+		end if;
+  	end process;
+   end generate;
   
   ahirInstance: ahir_system 
     port map(
@@ -313,6 +331,17 @@ begin  -- default_arch
 
   out_data <= out_qdata_out(63 downto 0);
   out_ctrl <= out_qdata_out(71 downto 64);
+
+  LogOutPkt: if log_packets generate 
+  	process(clk)
+  	begin
+		if(clk'event and clk = '1') then 
+			if(out_pop_ack = '1') then 
+				assert false report "NFM_OUT:  " & convert_slv_to_hex_string(out_qdata_out(71 downto 64))  & "  " & convert_slv_to_hex_string(out_qdata_out(63 downto 0)) severity note;
+			end if;
+		end if;
+  	end process;
+   end generate;
 
 end default_arch;
 

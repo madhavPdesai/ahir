@@ -232,16 +232,22 @@ namespace {
 	  }
       }
 
-      if(objects_to_be_initialized.size() > 0)
+      if(_create_initializers)
 	{
 	  std::cerr << "Info: generating storage initialization module which calls all initializers in parallel" << std::endl;
 	  std::cout << "$module [global_storage_initializer_] $in () $out () $is {" << std::endl;
-	  std::cout << "$parallelblock [pb] { " << std::endl;
-	  for(int idx = 0, fidx = objects_to_be_initialized.size(); idx < fidx; idx++)
+	  if(objects_to_be_initialized.size() > 0)
 	    {
-	      std::cout << "$call " << objects_to_be_initialized[idx] << " () () " << std::endl;
+	      std::cout << "$parallelblock [pb] { " << std::endl;
+	      for(int idx = 0, fidx = objects_to_be_initialized.size(); idx < fidx; idx++)
+		{
+		  std::cout << "$call " << objects_to_be_initialized[idx] << " () () " << std::endl;
+		}
+	      std::cout << "}" << std::endl;
 	    }
-	  std::cout << "}" << std::endl;
+	  else
+	    std::cout << "$null" << std::endl;
+
 	  std::cout << "}" << std::endl;
 	}
 

@@ -60,6 +60,9 @@ void Usage_Vc2VHDL()
   cerr << endl;
   cerr <<  " -w :  the system and testbench will be printed into separate VHDL files. By default both are printed to stdout" << endl;
   cerr <<  " alternate form:  --write_files" << endl;
+  cerr <<  " -D :  the generated VHDL will have logging assertions to help debug." << endl;
+  cerr <<  " alternate form:  --debug" << endl;
+  cerr << endl;
   cerr << endl;
   cerr << "example: " << endl
        << "    vc2vhdl  -t foo -f file1.vc -f file2.vc -t bar" << endl;
@@ -87,6 +90,7 @@ int main(int argc, char* argv[])
     {
       /* These options set a flag. */
       {"help", no_argument, 0, 'h'},
+      {"debug", no_argument, 0, 'D'},
       {"optimize", no_argument,0, 'O'},
       {"min_area", no_argument,0, 'a'},
       {"min_clock_period", no_argument,0, 'q'},
@@ -125,7 +129,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:T:f:OCs:he:waq",
+		      "t:T:f:OCs:he:waqD",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -193,6 +197,10 @@ int main(int argc, char* argv[])
 	  break;
         case 'h':
 	  Usage_Vc2VHDL();
+	  break;
+        case 'D':
+	  cerr << "Info: -D option selected: VHDL will have debug assertions.." << endl;
+	  vcSystem::_enable_logging = true;
 	  break;
 	case '?':		  // incorrect option
 	  opt_string = opt;

@@ -329,6 +329,7 @@ public:
   vcWire* Get_Z() {return(_z);}
 
 
+  bool Is_Int_Add_Op();
   virtual string Get_Operator_Type() {return(this->Kind() + " (" + this->_op_id + ")");}
 
   friend class vcDataPath;
@@ -552,4 +553,5 @@ bool Is_Trivial_Op(string vc_op_id);
 bool Is_Symmetric_Op(string vc_op_id);
 bool Is_Unary_Op(string vc_op_id);
 bool Is_Shift_Op(string vc_op_id);
+
 #endif

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #endif
 
+void global_storage_initializer_();
 float sqroot (float number)
 {
 	int i;
@@ -11,6 +12,7 @@ float sqroot (float number)
 /*	ulimit = number;
 	llimit = 0.0;
 */
+	global_storage_initializer_();
 
         if(number > 1.0)
 	{

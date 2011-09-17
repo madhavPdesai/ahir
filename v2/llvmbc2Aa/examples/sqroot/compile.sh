@@ -12,7 +12,7 @@ llvm-dis sqroot.o
 # OK, now take the llvm byte code 
 # and generate an Aa description.
 # (the pipe to vcFormat is to prettify the output)
- llvm2aa sqroot.o | vcFormat > sqroot.o.aa
+llvm2aa --storageinit=true sqroot.o | vcFormat > sqroot.o.aa
 #
 # Now take the Aa code and generate a virtual
 # circuit.. 
@@ -23,7 +23,7 @@ Aa2VC -O sqroot.o.aa | vcFormat > sqroot.o.aa.vc
 #
 # finally, generate vhdl from the vc description.
 #
-vc2vhdl -O -t main -f sqroot.o.aa.vc | vhdlFormat > sqroot_o_aa_vc.vhdl
+vc2vhdl -O -t main -e ahir_system -f sqroot.o.aa.vc | vhdlFormat > sqroot_o_aa_vc.vhdl
 #
 # you can then simulate this VHDL description (compile
 # and link with libraries ahir and ieee_proposed in the
