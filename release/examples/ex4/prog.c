@@ -34,15 +34,8 @@ struct Link_
 Link free_list[FREE_LIST_SIZE];
 int32_t head;
 
-uint32_t mul32(uint32_t a, uint32_t b)
-{
-   return(a*b);
-}
-uint32_t add32(uint32_t a, uint32_t b)
-{
-   return(a + b);
-}
-
+uint32_t mul32(uint32_t a, uint32_t b);
+uint32_t add32(uint32_t a, uint32_t b);
 
 #define PROC_ while(1) {\
         uint32_t ret_val = 0;\
@@ -50,11 +43,18 @@ uint32_t add32(uint32_t a, uint32_t b)
 	uint32_t aindex = free_list[fid].job.a;\
 	uint32_t bindex = free_list[fid].job.b;\
         uint32_t dimension = free_list[fid].job.dimension;\
-        int i;\
+        int i,iF;\
         ret_val = 0;\
-	for(i = 0; i < dimension; i++)\
+	for(i = 0, iF = 4*(dimension/4); i < iF; i=i+4)\
 	{\
-		ret_val = (ret_val + (a_matrix[(i+aindex)] * b_matrix[(i+bindex)]));\
+		ret_val = add32(ret_val , mul32(a_matrix[(i+aindex)] , b_matrix[(i+bindex)]));\
+		ret_val = add32(ret_val , mul32(a_matrix[((i+1)+aindex)] , b_matrix[((i+1)+bindex)]));\
+		ret_val = add32(ret_val , mul32(a_matrix[((i+2)+aindex)] , b_matrix[((i+2)+bindex)]));\
+		ret_val = add32(ret_val , mul32(a_matrix[((i+3)+aindex)] , b_matrix[((i+3)+bindex)]));\
+	}\
+	for(i = iF ; i < dimension; i++)\
+	{\
+		ret_val = add32(ret_val , mul32(a_matrix[(i+aindex)] , b_matrix[(i+bindex)]));\
 	}\
 	free_list[fid].job.result = ret_val;\
 	write_uint32("result_queue_pipe",fid);\
