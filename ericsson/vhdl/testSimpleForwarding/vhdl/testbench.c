@@ -38,20 +38,32 @@ void *write_pipe_data_(void* a)
 {
 	PipeArgs* aa = (PipeArgs*) a;
 	write_uint64_n(aa->name,(uint64_t*)(aa->data), 10);
+	write_uint64_n(aa->name,(uint64_t*)(aa->data), 10);
+	write_uint64_n(aa->name,(uint64_t*)(aa->data), 10);
+	write_uint64_n(aa->name,(uint64_t*)(aa->data), 10);
 }
 void *write_pipe_ctrl_(void* a)
 {
 	PipeArgs* aa = (PipeArgs*) a;
+	write_uint8_n(aa->name,(uint8_t*)(aa->data), 10);
+	write_uint8_n(aa->name,(uint8_t*)(aa->data), 10);
+	write_uint8_n(aa->name,(uint8_t*)(aa->data), 10);
 	write_uint8_n(aa->name,(uint8_t*)(aa->data), 10);
 }
 void *read_pipe_data_(void* a)
 {
 	PipeArgs* aa = (PipeArgs*) a;
 	read_uint64_n(aa->name,(uint64_t*)(aa->data), 10);
+	read_uint64_n(aa->name,(uint64_t*)(aa->data), 10);
+	read_uint64_n(aa->name,(uint64_t*)(aa->data), 10);
+	read_uint64_n(aa->name,(uint64_t*)(aa->data), 10);
 }
 void *read_pipe_ctrl_(void* a)
 {
 	PipeArgs* aa = (PipeArgs*) a;
+	read_uint8_n(aa->name,(uint8_t*)(aa->data), 10);
+	read_uint8_n(aa->name,(uint8_t*)(aa->data), 10);
+	read_uint8_n(aa->name,(uint8_t*)(aa->data), 10);
 	read_uint8_n(aa->name,(uint8_t*)(aa->data), 10);
 }
 
@@ -64,12 +76,15 @@ int main(int argc, char* argv[])
 	uint64_t pipe_data_in[10], pipe_data_out[10];
 	uint8_t pipe_ctrl_in[10], pipe_ctrl_out[10];
         int i;
-
+	
         for(i = 0; i < 10; i++)
 	{
 		pipe_data_in[i] = i;
-		pipe_ctrl_in[i] = 10-i;
+		pipe_ctrl_in[i] = 0;
 	}
+
+	pipe_ctrl_in[0] = 0xff;
+	pipe_ctrl_in[9] = 0x1;
 
  	fprintf(stdout,"to in_ctrl and in_data, we send:\n");
         for(i = 0; i < 10; i++) 
