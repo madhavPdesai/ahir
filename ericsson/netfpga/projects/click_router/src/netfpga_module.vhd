@@ -8,9 +8,11 @@
 -- written by Madhav Desai
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library ahir;
 use ahir.Utilities.all;
+use ahir.Subprograms.all;
 
 -- rdy/wr implement a pull protocol.  receiver
 -- asserts rdy and sender asserts wr to write data.
@@ -33,6 +35,17 @@ architecture default_arch of netfpga_module is
   -- make this true if you wish to log the packets
   -- into the simulation transcript. 
   constant log_packets: boolean := true;
+  -- if you want netfpga module to drop packets
+  -- in their entirety, set this true.  If false,
+  -- the earlier pipeline stage will block.
+  constant add_pkt_drop_logic: boolean := true;
+  -- the size of the packet buffer (InFifo) is
+  -- 256*max_number_of_pending_packets.
+  constant max_number_of_pending_packets: integer := 8;
+  -- maximum packet size = 256 x 64bit words = 2048 bytes.
+  constant words_per_pkt: integer := 256;
+
+  signal incoming_pkt_length: unsigned(7 downto 0);
 
   component ProtocolMatchingFifo is
     generic(queue_depth: integer := 3; data_width: integer := 72);
@@ -96,13 +109,110 @@ architecture default_arch of netfpga_module is
   signal out_data_pipe_final   : std_logic_vector(63 downto 0);
   signal out_ctrl_pipe_final   : std_logic_vector(7 downto 0);
   
+  type DropState is (idle, accept, drop);
+
+  signal drop_state : DropState;
+  signal drop_packet: std_logic;
+  signal available_byte_count: integer range 0 to (words_per_pkt*max_number_of_pending_packets);
+
+  signal pkt_start, pkt_end : std_logic;
+  signal increment_byte_count, decrement_byte_count: std_logic;
+  signal pkt_buffer_has_space: std_logic;
 begin  -- default_arch
   
-  in_qdata_in <= in_ctrl & in_data;
-  in_push_req <= in_wr;
-  in_rdy <= '1' when in_nearly_full = '0' else '0';
+  -----------------------------------------------------------------------------
+  -- packet drop logic
+  -----------------------------------------------------------------------------
+  DropPackets: if add_pkt_drop_logic generate
+  	pkt_start <= '1' when in_wr = '1' and (in_ctrl = "11111111") else '0';
+  	pkt_end   <= '1' when in_wr = '1' and (pkt_start = '0') and (in_ctrl /= "00000000") else '0';
+	
+  	process(clk, reset, pkt_start, pkt_end, drop_state, pkt_buffer_has_space)
+		variable next_drop_state : DropState;
+        	variable drop_v : std_logic;
+  	begin
+		next_drop_state := drop_state;
+		drop_v := '0';
+	
+		case drop_state is 
+			when idle =>
+        			if pkt_start = '1' then 
+			 		if (pkt_buffer_has_space = '1') then
+						next_drop_state := accept;
+					else
+						next_drop_state := drop;
+						drop_v := '1';
+					end if;
+				end if;
+			when accept => 
+        			if pkt_end = '1' then 
+					next_drop_state := idle;
+				end if;
+			when drop =>
+				drop_v := '1';
+        			if pkt_end = '1' then 
+					next_drop_state := idle;
+				end if;
+		end case;
+	
+		if(reset = '1') then
+			next_drop_state := idle;
+		end if;
+	
+		drop_packet <= drop_v;
+	
+		if(clk'event and clk = '1') then
+			drop_state <= next_drop_state;
+		end if;
+  	end process;
+  	
+  	incoming_pkt_length <= To_Unsigned(in_data(39 downto 32));
+  	pkt_buffer_has_space <= '1' when incoming_pkt_length <= available_byte_count else '0';
 
-  InFifo: ProtocolMatchingFifo generic map(queue_depth => 1024, data_width => 72)
+  	increment_byte_count <= (in_push_req and in_push_ack);
+  	decrement_byte_count <= in_pop_ack;
+
+  	process(clk)
+  	begin 
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+  				available_byte_count <= words_per_pkt*max_number_of_pending_packets;
+			else
+				if(increment_byte_count = '1' and decrement_byte_count = '0') then
+					available_byte_count <= available_byte_count - 1;
+				elsif (increment_byte_count = '0' and decrement_byte_count = '1') then
+					available_byte_count <= available_byte_count + 1;
+				end if;
+			end if;
+		end if;
+  	end process;
+   end generate;
+
+   NoDropPackets: if not add_pkt_drop_logic generate
+	drop_packet <= '0';
+   end generate;
+         
+
+  -----------------------------------------------------------------------------
+  -- if packet buffer does not have enough space, accept packet, but junk it.
+  -- if not fill, then forward data to InFifo.
+  -----------------------------------------------------------------------------
+  in_qdata_in <= in_ctrl & in_data;
+  in_push_req <= '1' when in_wr = '1' and (drop_packet = '0') else '0';
+  in_rdy <= '1' when (in_nearly_full = '0') else '0';
+
+  LogDropPkt: if log_packets generate 
+  	process(clk)
+  	begin
+		if(clk'event and clk = '1') then 
+			if(in_wr = '1' and drop_packet = '1') then 
+				assert false report "NFM_DROP:  " & convert_slv_to_hex_string(in_ctrl)  & "  " & convert_slv_to_hex_string(in_data) severity note;
+			end if;
+		end if;
+  	end process;
+   end generate;
+
+  InFifo: ProtocolMatchingFifo generic map(queue_depth => words_per_pkt*(max_number_of_pending_packets), data_width => 72)
     port map(clk => clk, reset => reset,
              data_in => in_qdata_in, push_req => in_push_req, push_ack => in_push_ack, nearly_full => in_nearly_full,
              data_out => in_qdata_out, pop_req => in_pop_req, pop_ack => in_pop_ack);
@@ -205,7 +315,7 @@ begin  -- default_arch
   	begin
 		if(clk'event and clk = '1') then 
 			if(in_pop_ack = '1') then 
-				assert false report "NFM_IN (hex):  " & convert_slv_to_hex_string(in_qdata_out(71 downto 64))  & "  " & convert_slv_to_hex_string(in_qdata_out(63 downto 0)) severity note;
+				assert false report "NFM_IN:  " & convert_slv_to_hex_string(in_qdata_out(71 downto 64))  & "  " & convert_slv_to_hex_string(in_qdata_out(63 downto 0)) severity note;
 			end if;
 		end if;
   	end process;

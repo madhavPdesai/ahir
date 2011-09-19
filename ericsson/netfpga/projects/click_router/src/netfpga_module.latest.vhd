@@ -9,6 +9,9 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
+library ahir;
+use ahir.Utilities.all;
+
 -- rdy/wr implement a pull protocol.  receiver
 -- asserts rdy and sender asserts wr to write data.
 entity netfpga_module is
@@ -26,6 +29,12 @@ entity netfpga_module is
 end netfpga_module;
 
 architecture default_arch of netfpga_module is
+
+  -- make this true if you wish to log the packets
+  -- into the simulation transcript. 
+  constant log_packets: boolean := true;
+
+  constant max_number_of_pending_packets: integer := 4;
 
   component ProtocolMatchingFifo is
     generic(queue_depth: integer := 3; data_width: integer := 72);
@@ -89,13 +98,105 @@ architecture default_arch of netfpga_module is
   signal out_data_pipe_final   : std_logic_vector(63 downto 0);
   signal out_ctrl_pipe_final   : std_logic_vector(7 downto 0);
   
+  type DropState is (idle, accept, drop);
+
+  signal drop_state : DropState;
+  signal drop_packet: std_logic;
+  signal stored_packet_count: integer range 0 to max_number_of_pending_packets+1;
+
+  signal pkt_start, pkt_end, increment_packet_count, decrement_packet_count: std_logic;
+  signal pkt_buffer_full: std_logic; 
 begin  -- default_arch
   
-  in_qdata_in <= in_ctrl & in_data;
-  in_push_req <= in_wr;
-  in_rdy <= '1' when in_nearly_full = '0' else '0';
+  -----------------------------------------------------------------------------
+  -- packet drop logic
+  -----------------------------------------------------------------------------
+  pkt_start <= '1' when in_wr = '1' and (in_ctrl = "11111111") else '0';
+  pkt_end   <= '1' when in_wr = '1' and (pkt_start = '0') and (in_ctrl /= "00000000") else '0';
 
-  InFifo: ProtocolMatchingFifo generic map(queue_depth => 3, data_width => 72)
+  process(clk, reset, pkt_start, pkt_end, drop_state, pkt_buffer_full)
+	variable next_drop_state : DropState;
+        variable pkt_count_v : integer range 0 to max_number_of_pending_packets + 1;
+        variable drop_v : std_logic;
+	variable incr_flag: std_logic;
+  begin
+	next_drop_state := drop_state;
+	incr_flag := '0';
+	drop_v := '0';
+
+	case drop_state is 
+		when idle =>
+        		if pkt_start = '1' then 
+			 	if (pkt_buffer_full = '0') then
+					next_drop_state := accept;
+				else
+					next_drop_state := drop;
+					drop_v := '1';
+				end if;
+			end if;
+		when accept => 
+        		if pkt_end = '1' then 
+				next_drop_state := idle;
+				incr_flag := '1';
+			end if;
+		when drop =>
+			drop_v := '1';
+        		if pkt_end = '1' then 
+				next_drop_state := idle;
+			end if;
+	end case;
+
+	if(reset = '1') then
+		next_drop_state := idle;
+	end if;
+
+	increment_packet_count <= incr_flag;
+	drop_packet <= drop_v;
+
+	if(clk'event and clk = '1') then
+		drop_state <= next_drop_state;
+	end if;
+  end process;
+  
+  pkt_buffer_full <= '1' when stored_packet_count >= max_number_of_pending_packets else '0';
+  decrement_packet_count <= '1' when  (in_pop_ack = '1' and (in_qdata_out(71 downto 64) /= "00000000") 
+					and (in_qdata_out(71 downto 64) /= "11111111")) else '0';
+
+  process(clk)
+  begin 
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			stored_packet_count <= 0;
+		else
+			if(increment_packet_count = '1' and decrement_packet_count = '0') then
+				stored_packet_count <= stored_packet_count + 1;
+			elsif (increment_packet_count = '0' and decrement_packet_count = '1') then
+				stored_packet_count <= stored_packet_count - 1;
+			end if;
+		end if;
+	end if;
+  end process;
+
+  -----------------------------------------------------------------------------
+  -- if packet buffer is full, accept packet, but junk it.
+  -- if not fill, then forward data to InFifo.
+  -----------------------------------------------------------------------------
+  in_qdata_in <= in_ctrl & in_data;
+  in_push_req <= '1' when in_wr = '1' and (drop_packet = '0') else '0';
+  in_rdy <= '1' when (pkt_buffer_full = '1' or (in_nearly_full = '0')) else '0';
+
+  LogDropPkt: if log_packets generate 
+  	process(clk)
+  	begin
+		if(clk'event and clk = '1') then 
+			if(in_wr = '1' and drop_packet = '1') then 
+				assert false report "NFM_DROP:  " & convert_slv_to_hex_string(in_ctrl)  & "  " & convert_slv_to_hex_string(in_data) severity note;
+			end if;
+		end if;
+  	end process;
+   end generate;
+
+  InFifo: ProtocolMatchingFifo generic map(queue_depth => 256*(max_number_of_pending_packets), data_width => 72)
     port map(clk => clk, reset => reset,
              data_in => in_qdata_in, push_req => in_push_req, push_ack => in_push_ack, nearly_full => in_nearly_full,
              data_out => in_qdata_out, pop_req => in_pop_req, pop_ack => in_pop_ack);
@@ -192,6 +293,17 @@ begin  -- default_arch
   
   in_ctrl_pipe_write_data <= in_qdata_out(71 downto 64);
   in_data_pipe_write_data <= in_qdata_out(63 downto 0);
+
+  LogInPkt: if log_packets generate 
+  	process(clk)
+  	begin
+		if(clk'event and clk = '1') then 
+			if(in_pop_ack = '1') then 
+				assert false report "NFM_IN:  " & convert_slv_to_hex_string(in_qdata_out(71 downto 64))  & "  " & convert_slv_to_hex_string(in_qdata_out(63 downto 0)) severity note;
+			end if;
+		end if;
+  	end process;
+   end generate;
   
   ahirInstance: ahir_system 
     port map(
@@ -313,6 +425,17 @@ begin  -- default_arch
 
   out_data <= out_qdata_out(63 downto 0);
   out_ctrl <= out_qdata_out(71 downto 64);
+
+  LogOutPkt: if log_packets generate 
+  	process(clk)
+  	begin
+		if(clk'event and clk = '1') then 
+			if(out_pop_ack = '1') then 
+				assert false report "NFM_OUT:  " & convert_slv_to_hex_string(out_qdata_out(71 downto 64))  & "  " & convert_slv_to_hex_string(out_qdata_out(63 downto 0)) severity note;
+			end if;
+		end if;
+  	end process;
+   end generate;
 
 end default_arch;
 

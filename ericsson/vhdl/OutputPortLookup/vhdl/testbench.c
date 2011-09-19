@@ -13,7 +13,7 @@
 //
 
 #define N 10
-#define PKT_LENGTH 3
+#define PKT_LENGTH 16
 
 
 typedef struct PipeArgs_ PipeArgs;
@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 	// N packets, each of PKT_LENGTH words..
         for(i = 0; i < N; i++)
 	{
-	  pipe_data_in[PKT_LENGTH*i] = i;
+	  pipe_data_in[PKT_LENGTH*i] = (((uint64_t) PKT_LENGTH) << ((uint64_t) 32)) | ((uint64_t) i);
 	  pipe_ctrl_in[PKT_LENGTH*i] = 0xff;
 	  for(j = 1; j < PKT_LENGTH-1; j++)
 	    {
@@ -81,8 +81,9 @@ int main(int argc, char* argv[])
 
  	fprintf(stdout,"to in_ctrl and in_data, we send:\n");
         for(i = 0; i < PKT_LENGTH*N; i++) 
- 	   fprintf(stdout," ctrl %0x data %0llx\n", pipe_ctrl_in[i], pipe_data_in[i]);
+ 	  fprintf(stdout," ctrl %0x data %0llx\n", pipe_ctrl_in[i], pipe_data_in[i]);
 
+ 	fprintf(stdout,"creating threads:\n");
 	pthread_t op_lu_t,  wc_t, wd_t, rc_t, rd_t;
 
 	//pthread_create(&op_lu_t,NULL,&output_port_lookup_,NULL);
