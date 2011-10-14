@@ -20,8 +20,8 @@ namespace llvm {
 
 namespace Aa {
 
-  AaWriter::AaWriter(llvm::TargetData *_TD, llvm::AliasAnalysis *_AA)
-    : TD(_TD), AA(_AA)
+  AaWriter::AaWriter(llvm::TargetData *_TD, llvm::AliasAnalysis *_AA, std::set<std::string>& mnames, bool consider_all_functions)
+    : TD(_TD), AA(_AA), _module_names(mnames), _consider_all_functions(consider_all_functions)
   {}
 
   void AaWriter::start_program(std::string id)
@@ -44,8 +44,34 @@ namespace Aa {
 
 	bool is_global = isa<GlobalVariable>(eI.getPointerOperand());
 	bool is_constant = isa<Constant>(eI.getPointerOperand());
-
 	std::string root_name = to_aa(get_name(eI.getPointerOperand()));
+
+	if(is_global)
+	  {
+	    llvm::GlobalVariable* gv = dyn_cast<llvm::GlobalVariable>(eI.getPointerOperand());
+	    if(gv->isConstant())
+	      {
+		if(!is_used_in_module(*gv,_module_names,_consider_all_functions))
+		  {
+		    std::cerr << "Info: ignoring get-element-ptr to " 
+			      << root_name 
+			      << " since it is not (really) used in any function.." 
+			      << std::endl;
+		    return;
+		  }
+	      }
+	  }
+
+	// if this instruction is only used in IO calls, then it should be 
+	// ignored.
+	if(used_only_in_io_calls(eI))
+	  {
+	    std::cerr << "Info: ignoring get-element-ptr to " 
+		      << root_name 
+		      << " since it is used only in IO calls.." 
+		      << std::endl;
+	    return;
+	  }
 
 	// if it takes the reference of a constant string which is a pointer-id      
 	// 	if(is_constant)
@@ -160,14 +186,24 @@ namespace Aa {
   {
     std::string ret_string;
     if(v->getNameStr() != "")
-      ret_string = to_aa(v->getNameStr());
+      {
+	ret_string = to_aa(v->getNameStr());
+	if(isa<GlobalVariable>(v))
+	  {
+	    llvm::GlobalVariable* gv = dyn_cast<llvm::GlobalVariable>(v);
+	    if(is_private_storage_object(gv))
+	      {
+		ret_string = this->_module->getModuleIdentifier() + "_iNtErNal_" + ret_string;
+	      }
+	  }
+      }
     else
       {
 	if(value_name_map.find(v) != value_name_map.end())
 	  ret_string = (value_name_map[v]);
 	else
 	  {
-	    std::string new_val = "oBjEct_" + int_to_str(value_name_map.size());
+	    std::string new_val = this->_module->getModuleIdentifier() + "_oBjEcT_" + int_to_str(value_name_map.size());
 	    value_name_map[v] = new_val;
 	    ret_string = to_aa(new_val);
 	    v->setName(ret_string);
@@ -258,6 +294,251 @@ namespace Aa {
 	  }
       }
   }
+
+  // the next three (write_storage_*) were moved from Utils.cpp to AaWriter.cpp
+  // to make use of AaWriter functions such as get_name..
+  void AaWriter::write_storage_object(llvm::GlobalVariable *G, 
+				      std::vector<std::string>& init_obj_vector,
+				      bool create_initializer,
+				      bool skip_zero_initializers)
+  {
+    
+    // if already printed, return
+    if(printed_global_variables.find(G) != printed_global_variables.end())
+      return;
+
+
+
+    const llvm::Type *ptr = G->getType();
+    std::string obj_name = to_aa(get_name(G));
+
+    const llvm::PointerType* pptr = dyn_cast<PointerType>(G->getType());
+    assert(pptr != NULL);
+    const llvm::Type* el_type = pptr->getElementType();
+    assert(el_type);
+    std::string type_name = get_aa_type_name(el_type,*(_module)); 
+
+    if(obj_name == "")
+      {
+	std::cerr << "Error: could not find name of storage object" << std::endl;
+	obj_name = "UNKNOWN_STORAGE_OBJECT";
+      }
+
+    std::cout << "$storage " << to_aa(obj_name) << ":" << type_name << std::endl;
+    printed_global_variables.insert(G);
+
+    if (G->hasInitializer()) 
+      {
+	llvm::Constant *init = G->getInitializer();
+	if(!isa<UndefValue>(init))
+	  {
+	    if(create_initializer)
+	      {
+		if(is_a_supported_constant(init))
+		  {
+		    if(!(is_zero(init) && skip_zero_initializers))
+		      {
+			std::string initializer_name = "default_initializer_" + obj_name;
+			init_obj_vector.push_back(initializer_name);
+			  
+			std::cerr << "Info: Initial value specified for " << obj_name << ": will create initializer module" << std::endl;
+			std::cout << "$module [" << initializer_name << "] $in () $out () $is {" << std::endl;
+			this->write_storage_initializer_statements(obj_name,init,skip_zero_initializers);
+			std::cout << "$attribute nooptimize " << std::endl;
+			std::cout << "}" << std::endl;
+
+			// some new global variables may be referred to while printing
+			// the initializers.  declare them.
+			while(!global_variables_used_in_initialization.empty())
+			  {
+			    llvm::GlobalVariable* nG = *(global_variables_used_in_initialization.begin());
+			    global_variables_used_in_initialization.erase(nG);
+
+			    if(printed_global_variables.find(nG) == printed_global_variables.end())			    
+			      {
+				this->write_storage_object(nG,
+							   init_obj_vector,
+							   create_initializer,
+							   skip_zero_initializers);
+			      }
+			  }
+		      }
+		  }
+		else
+		  {
+		    std::cerr << "Warning: Unsupprted initial value specified for " << obj_name << ": will ignore it! " << std::endl;
+
+		  }
+	      }
+	    else
+	      {
+		std::cerr << "Warning: Initial value specified for " << obj_name << " will be ignored" << std::endl;		
+	      }
+	  }
+      }
+  }
+
+  void AaWriter::write_storage_initializer_statements(std::string& prefix, llvm::Constant* konst, bool skip_zero_initializers)
+  {
+    const llvm::Type *konst_type = konst->getType();
+
+    if(isa<GlobalVariable>(konst))
+      {
+	llvm::GlobalVariable* gv = dyn_cast<GlobalVariable>(konst);
+	std::cout << prefix << " := @(" << to_aa(this->get_name(gv)) << ")" <<  std::endl;
+	global_variables_used_in_initialization.insert(gv);
+
+	return;
+      }
+
+    if(isa<ConstantExpr>(konst))
+      {
+	llvm::ConstantExpr* ce = dyn_cast<ConstantExpr>(konst);
+	unsigned opcode = ce->getOpcode();
+
+	if(opcode == Instruction::GetElementPtr)
+	  {
+	    bool is_pointer = false;
+
+	    llvm::Value *ptr = ce->getOperand(0);
+	    const llvm::Type* ptr_type = ptr->getType();
+
+	    const llvm::PointerType* pptr_type = dyn_cast<llvm::PointerType>(ptr_type);
+	    const llvm::Type* pointed_type = pptr_type->getElementType();
+
+	    is_pointer = isa<llvm::PointerType>(pointed_type);
+
+
+	    if(is_pointer)
+	      {
+		std::cout << prefix << " := ";
+	      }
+	    else
+	      std::cout << prefix << " := @(";
+
+
+	    std::cout << get_name(ptr);
+
+	    if(isa<GlobalVariable>(ptr))
+	      {
+		llvm::GlobalVariable* gv = dyn_cast<GlobalVariable>(ptr);
+		global_variables_used_in_initialization.insert(gv);
+	      }
+
+	    if(!is_pointer)
+	      {
+		// skip the first, it must be zero.
+		for (unsigned i = 2; i < ce->getNumOperands(); ++i)
+		  std::cout << "[" << prepare_operand((llvm::Value*)ce->getOperand(i)) << "]";
+	      }
+	    else
+	      {
+		for (unsigned i = 1; i < ce->getNumOperands(); ++i)
+		  std::cout << "[" << prepare_operand((llvm::Value*)ce->getOperand(i)) << "]";
+	      }
+
+
+	    if(!is_pointer)
+	      std::cout << ")" << std::endl;
+	  }
+	else
+	  {
+	    std::cerr << "Warning: unsupported constant expression in storage initializer ";
+	    ce->dump();
+	    std::cerr << std::endl;
+	  }
+	return;
+      }
+
+    if(isa<ConstantInt>(konst) || isa<ConstantFP>(konst))
+      {
+	if(skip_zero_initializers && isa<ConstantInt>(konst))
+	  {
+	    if(is_zero(konst))
+	      return;
+	  }
+
+	std::cout << prefix << " := " << get_aa_constant_string(konst) << std::endl;
+      }
+    else if(isa<ConstantPointerNull>(konst))
+      {
+	std::cout << prefix << " := _b0" << std::endl;
+      }
+    else if(isa<ConstantArray>(konst) || isa<ConstantVector>(konst) 
+	    || isa<ConstantStruct>(konst))
+      {
+	int dim = konst->getNumOperands();
+	for (unsigned int i = 0; i != konst->getNumOperands(); ++i) 
+	  {
+	    std::string forward_prefix = prefix + "[" +  int_to_str(i) + "]";
+	    llvm::Value *el = konst->getOperand(i);
+	    assert(isa<llvm::Constant>(el) && "constants expected here");
+	    this->write_storage_initializer_statements(forward_prefix,cast<llvm::Constant>(el), skip_zero_initializers);
+	  }
+      }
+    else if(isa<ConstantAggregateZero>(konst))
+      {
+	if(!skip_zero_initializers)
+	  this->write_zero_initializer_recursive(prefix,konst->getType(),0);      
+      }
+    else
+      {
+	std::cerr << "Error: constant must be one of int/fp/array/struct/vector/aggregate-zero/pointer-null" 
+		  << std::endl;
+	std::cout << prefix << " := UNSUPPORTED_CONSTANT" << std::endl;
+      }
+  }
+
+
+  void AaWriter::write_zero_initializer_recursive(std::string prefix,const llvm::Type* ptr, int depth)
+  {
+
+    if(isa<PointerType>(ptr) || isa<IntegerType>(ptr) )
+      {
+	std::cout << prefix << " := _b0" << std::endl;
+      }
+    else if(ptr->isFloatTy() || ptr->isDoubleTy())
+      {
+	std::cout << prefix << " := _f0.0e+0" << std::endl;
+      }
+    else if(isa<ArrayType>(ptr) || isa<VectorType>(ptr))
+      {
+	const llvm::SequentialType *ptr_seq = dyn_cast<llvm::SequentialType>(ptr);
+	const llvm::Type* el_type = ptr_seq->getElementType();
+
+	int dim = 0;
+	const llvm::ArrayType* ptr_array = dyn_cast<llvm::ArrayType>(ptr);
+	if(ptr_array != NULL)
+	  dim = ptr_array->getNumElements();
+	else
+	  {
+	    const llvm::VectorType* ptr_vec = dyn_cast<llvm::VectorType>(ptr);
+	    dim = ptr_vec->getNumElements();
+	  }
+
+	std::cout << "$branchblock [zeroinit_" << depth << "] {" << std::endl;
+	std::cout << "$merge $entry loopback " << std::endl;
+	std::cout << "$phi I_" << depth << " :=  ($cast ($uint< "
+		  << number_of_bits_needed_to_represent(dim) 
+		  << " >) 0) $on $entry next_I $on loopback" << std::endl;
+	std::cout << "$endmerge " << std::endl;
+	std::cout << "next_I := (I_" << depth << " + 1)" << std::endl;
+	std::string forward_prefix = prefix + "[I_" + int_to_str(depth) + "]";
+	this->write_zero_initializer_recursive(forward_prefix, el_type,depth+1);
+	std::cout << "$if (next_I < " << dim << ") $then $place [loopback] $else $null $endif" << std::endl;
+	std::cout << "}" << std::endl;
+      }
+    else if(isa<StructType>(ptr))
+      {
+	const llvm::StructType *ptr_struct = dyn_cast<llvm::StructType>(ptr);
+	for(int idx = 0; idx < ptr_struct->getNumElements(); idx++)
+	  {
+	    std::string forward_prefix = prefix + "[" + int_to_str(idx) + "]";
+	    const llvm::Type* el_type = ptr_struct->getElementType(idx);
+	    this->write_zero_initializer_recursive(forward_prefix, el_type,depth+1);
+	  }
+      }
+  }
 }
 
 using namespace Aa;
@@ -283,8 +564,8 @@ namespace {
 
     /* ---- Initialisation ---- */
     
-    AaWriterImpl(llvm::TargetData *_TD, llvm::AliasAnalysis *_AA)
-      : AaWriter(_TD, _AA)
+    AaWriterImpl(llvm::TargetData *_TD, llvm::AliasAnalysis *_AA, std::set<std::string>& mnames, bool consider_all_functions)
+      : AaWriter(_TD, _AA, mnames, consider_all_functions)
     {
       this->clear();
     };
@@ -879,7 +1160,7 @@ namespace {
   };
 }
 
-AaWriter* AaWriter_New(llvm::TargetData *TD, llvm::AliasAnalysis *AA)
+AaWriter* AaWriter_New(llvm::TargetData *TD, llvm::AliasAnalysis *AA, std::set<std::string>& mnames, bool consider_all_functions)
 {
-  return new AaWriterImpl(TD, AA);
+  return new AaWriterImpl(TD, AA, mnames, consider_all_functions);
 }

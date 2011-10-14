@@ -172,7 +172,7 @@ namespace {
       TD = &getAnalysis<TargetData>();
       AA = &getAnalysis<AliasAnalysis>();
     
-      aa_writer = AaWriter_New(TD, AA);  
+      aa_writer = AaWriter_New(TD, AA, module_names,_consider_all_functions);  
       aa_writer->Set_Module(&M);
       aa_writer->Set_Pointer_Width(_pointer_width);
 
@@ -215,16 +215,14 @@ namespace {
 	      std::string obj_name = to_aa(aa_writer->get_name(&(*gi)));
 	      if((*gi).getNumUses() > 0)
 		{
-		  if(_consider_all_functions || is_used_in_module(*gi,module_names))
+		  if(is_used_in_module(*gi,module_names,_consider_all_functions))
 		    {
 		      //if(!aa_writer->Is_Pipe(obj_name))
 		      //{
-		      write_storage_object(obj_name, 
-					   *gi,
-					   M, 
-					   objects_to_be_initialized, 
-					   _create_initializers,
-					   _skip_zero_initializers);
+		      aa_writer->write_storage_object(&(*gi),
+						      objects_to_be_initialized, 
+						      _create_initializers,
+						      _skip_zero_initializers);
 		      //}
 		    }
 		}

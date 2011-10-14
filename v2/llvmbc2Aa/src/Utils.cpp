@@ -702,6 +702,14 @@ bool Aa::is_a_supported_constant(llvm::Constant* konst)
     {
       return(true);
     }
+  if(isa<GlobalVariable>(konst))
+    {
+      return(true);
+    }
+  if(isa<ConstantExpr>(konst))
+    {
+      return(true);
+    }
   else if(isa<ConstantArray>(konst) || isa<ConstantVector>(konst) 
 	  || isa<ConstantStruct>(konst))
     {
@@ -732,7 +740,7 @@ bool Aa::is_a_supported_constant(llvm::Constant* konst)
     }
 }
 
-bool Aa::is_used_in_module(llvm::GlobalVariable &G, std::set<std::string>& module_names)
+bool Aa::is_used_in_module(llvm::GlobalVariable &G, std::set<std::string>& module_names, bool consider_all_functions)
 {
   for(llvm::Value::use_iterator ui = G.use_begin(), uf = G.use_end();
       ui != uf;
@@ -748,9 +756,17 @@ bool Aa::is_used_in_module(llvm::GlobalVariable &G, std::set<std::string>& modul
 	      if(f != NULL)
 		{
 		  std::string fname = f->getNameStr();
-		  if(module_names.count(fname) > 0)
+		  if(consider_all_functions || (module_names.count(fname) > 0))
 		    {
-		      return(true);
+		      if(isa<GetElementPtrInst>(I))
+			{
+			  llvm::GetElementPtrInst* eI = dyn_cast<llvm::GetElementPtrInst>(I);
+			  // a call to an io function, return true.
+			  if(!used_only_in_io_calls(*eI))
+			    return(true);
+			}
+		      else
+			return(true);
 		    }
 		}
 	    }
@@ -759,157 +775,25 @@ bool Aa::is_used_in_module(llvm::GlobalVariable &G, std::set<std::string>& modul
   return (false);
 }
 
-void Aa::write_storage_object(std::string& obj_name, llvm::GlobalVariable &G, llvm::Module& tst,
-			      std::vector<std::string>& init_obj_vector,
-			      bool create_initializer,
-			      bool skip_zero_initializers)
+bool Aa::used_only_in_io_calls(llvm::GetElementPtrInst &I)
 {
-	const llvm::Type *ptr = G.getType();
-	const llvm::PointerType* pptr = dyn_cast<PointerType>(G.getType());
-	assert(pptr != NULL);
-	const llvm::Type* el_type = pptr->getElementType();
-	assert(el_type);
-	std::string type_name = get_aa_type_name(el_type,tst); 
-
-	if(obj_name == "")
+  for(llvm::Value::use_iterator ii = I.use_begin(), iif = I.use_end();
+      ii != iif;
+      ii++)
+    {
+      if(isa<CallInst>(*ii))
 	{
-		std::cerr << "Error: could not find name of storage object" << std::endl;
-		obj_name = "UNKNOWN_STORAGE_OBJECT";
+	  llvm::CallInst* C = dyn_cast<llvm::CallInst>(*ii);
+	  IOCode ioc = get_io_code(*C);
+	  if(ioc == NOT_IO)
+	    return(false);
 	}
-
-	std::cout << "$storage " << to_aa(obj_name) << ":" << type_name << std::endl;
-	if (G.hasInitializer()) 
-	{
-	  llvm::Constant *init = G.getInitializer();
-	  if(!isa<UndefValue>(init))
-	    {
-	      if(create_initializer)
-		{
-
-		  if(is_a_supported_constant(init))
-		    {
-		      if(!(isa<ConstantAggregateZero>(init) && skip_zero_initializers))
-			{
-			  std::string initializer_name = "default_initializer_" + obj_name;
-			  init_obj_vector.push_back(initializer_name);
-			  
-			  std::cerr << "Info: Initial value specified for " << obj_name << ": will create initializer module" << std::endl;
-			  std::cout << "$module [" << initializer_name << "] $in () $out () $is {" << std::endl;
-			  write_storage_initializer_statements(obj_name,init,skip_zero_initializers);
-			  std::cout << "$attribute nooptimize " << std::endl;
-			  std::cout << "}" << std::endl;
-			}
-		    }
-		  else
-		    {
-		      std::cerr << "Warning: Unsupprted initial value specified for " << obj_name << ": will ignore it! " << std::endl;
-
-		    }
-		}
-	      else
-		{
-		  std::cerr << "Warning: Initial value specified for " << obj_name << " will be ignored" << std::endl;		
-		}
-	    }
-	}
+      else
+	return(false);
+    }
+  return(true);
 }
 
-void Aa::write_storage_initializer_statements(std::string& prefix, llvm::Constant* konst, bool skip_zero_initializers)
-{
-	const llvm::Type *konst_type = konst->getType();
-
-	if(isa<GlobalVariable>(konst))
-	{
-		llvm::GlobalVariable* gv = dyn_cast<GlobalVariable>(konst);
-		if(gv->isConstant())
-		{
-			konst = gv->getInitializer();
-		}
-	}
-
-	if(isa<ConstantInt>(konst) || isa<ConstantFP>(konst))
-	{
-		std::cout << prefix << " := " << get_aa_constant_string(konst) << std::endl;
-	}
-	else if(isa<ConstantPointerNull>(konst))
-	{
-		std::cout << prefix << " := _b0" << std::endl;
-	}
-	else if(isa<ConstantArray>(konst) || isa<ConstantVector>(konst) 
-			|| isa<ConstantStruct>(konst))
-	{
-		int dim = konst->getNumOperands();
-		for (unsigned int i = 0; i != konst->getNumOperands(); ++i) 
-		{
-			std::string forward_prefix = prefix + "[" +  int_to_str(i) + "]";
-			llvm::Value *el = konst->getOperand(i);
-			assert(isa<llvm::Constant>(el) && "constants expected here");
-			write_storage_initializer_statements(forward_prefix,cast<llvm::Constant>(el), skip_zero_initializers);
-		}
-	}
-	else if(isa<ConstantAggregateZero>(konst))
-	{
-	  if(!skip_zero_initializers)
-	    write_zero_initializer_recursive(prefix,konst->getType(),0);      
-	}
-	else
-	{
-		std::cerr << "Error: constant must be one of int/fp/array/struct/vector/aggregate-zero/pointer-null" 
-			<< std::endl;
-		std::cout << prefix << " := UNSUPPORTED_CONSTANT" << std::endl;
-	}
-}
-
-
-void Aa::write_zero_initializer_recursive(std::string prefix,const llvm::Type* ptr, int depth)
-{
-
-	if(isa<PointerType>(ptr) || isa<IntegerType>(ptr) )
-	{
-		std::cout << prefix << " := _b0" << std::endl;
-	}
-	else if(ptr->isFloatTy() || ptr->isDoubleTy())
-	{
-		std::cout << prefix << " := _f0.0e+0" << std::endl;
-	}
-	else if(isa<ArrayType>(ptr) || isa<VectorType>(ptr))
-	{
-		const llvm::SequentialType *ptr_seq = dyn_cast<llvm::SequentialType>(ptr);
-		const llvm::Type* el_type = ptr_seq->getElementType();
-
-		int dim = 0;
-		const llvm::ArrayType* ptr_array = dyn_cast<llvm::ArrayType>(ptr);
-		if(ptr_array != NULL)
-			dim = ptr_array->getNumElements();
-		else
-		{
-			const llvm::VectorType* ptr_vec = dyn_cast<llvm::VectorType>(ptr);
-			dim = ptr_vec->getNumElements();
-		}
-
-		std::cout << "$branchblock [zeroinit_" << depth << "] {" << std::endl;
-		std::cout << "$merge $entry loopback " << std::endl;
-		std::cout << "$phi I_" << depth << " :=  ($cast ($uint< "
-			<< number_of_bits_needed_to_represent(dim) 
-			<< " >) 0) $on $entry next_I $on loopback" << std::endl;
-		std::cout << "$endmerge " << std::endl;
-		std::cout << "next_I := (I_" << depth << " + 1)" << std::endl;
-		std::string forward_prefix = prefix + "[I_" + int_to_str(depth) + "]";
-		write_zero_initializer_recursive(forward_prefix, el_type,depth+1);
-		std::cout << "$if (next_I < " << dim << ") $then $place [loopback] $else $null $endif" << std::endl;
-		std::cout << "}" << std::endl;
-	}
-	else if(isa<StructType>(ptr))
-	{
-		const llvm::StructType *ptr_struct = dyn_cast<llvm::StructType>(ptr);
-		for(int idx = 0; idx < ptr_struct->getNumElements(); idx++)
-		{
-			std::string forward_prefix = prefix + "[" + int_to_str(idx) + "]";
-			const llvm::Type* el_type = ptr_struct->getElementType(idx);
-			write_zero_initializer_recursive(forward_prefix, el_type,depth+1);
-		}
-	}
-}
 
 std::string Aa::int_to_str(int a)
 {
@@ -1085,6 +969,37 @@ bool Aa::parse_pipe_depth_spec(std::string line, std::string& pipe_name, int& pi
   return(ret_val);
 }
 
+bool Aa::is_private_storage_object(llvm::GlobalVariable* gv)
+{
+  bool ret_val = false;
+  if(llvm::GlobalValue::isLocalLinkage(gv->getLinkage()))
+    ret_val = true;
+  return(ret_val);
+}
 
 
+bool Aa::is_zero(llvm::Constant* konst)
+{
+  if(isa<ConstantInt>(konst))
+    {
+      llvm::ConstantInt* ikonst = dyn_cast<ConstantInt>(konst);
+      if(ikonst->isZero())
+	return(true);
+    }
+  else  if(isa<ConstantAggregateZero>(konst))
+    return(true);
+  else if(isa<ConstantArray>(konst) || isa<ConstantStruct>(konst) || isa<ConstantVector>(konst))
+    {
 
+      for (unsigned int i = 0; i != konst->getNumOperands(); ++i) 
+	{
+	  llvm::Value *el = konst->getOperand(i);
+	  assert(isa<llvm::Constant>(el) && "constants expected here");
+	  if(!is_zero(cast<llvm::Constant>(el)))
+	    return(false);
+	}
+    }
+
+
+  return(false);
+}

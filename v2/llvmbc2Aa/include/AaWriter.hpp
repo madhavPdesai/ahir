@@ -17,16 +17,21 @@ namespace Aa {
 
   struct AaWriter : public llvm::InstVisitor<AaWriter> {
 
-    AaWriter(llvm::TargetData *_TD, llvm::AliasAnalysis *_AA);
+    AaWriter(llvm::TargetData *_TD, llvm::AliasAnalysis *_AA, std::set<std::string>& module_names, bool consider_all_functions);
+
     llvm::TargetData *TD;
     llvm::AliasAnalysis *AA;
     llvm::Module* _module;
     int _num_ret_instructions;
     llvm::Value* _unique_return_value;
+    std::set<std::string>& _module_names;
+    bool _consider_all_functions;
 
     std::map<std::string,std::set<std::string> > bb_predecessor_map;
     std::map<llvm::Value*, std::string> value_name_map;
     std::map<std::string,std::string> pipe_map;
+    std::set<llvm::GlobalVariable*> global_variables_used_in_initialization;
+    std::set<llvm::GlobalVariable*> printed_global_variables;
 
     int _pointer_width;
     void Set_Pointer_Width(int w) { _pointer_width = w; }
@@ -84,9 +89,18 @@ namespace Aa {
     virtual void visitSelectInst(llvm::SelectInst &I) { visitInstruction(I); }
     virtual void visitBranchInst(llvm::BranchInst &I) { visitInstruction(I); }
     virtual void visitSwitchInst(llvm::SwitchInst &I) { visitInstruction(I); }
+
+    void write_storage_object(llvm::GlobalVariable *G,
+			      std::vector<std::string>& init_obj_vector,
+			      bool create_initializers,
+			      bool skip_zero_initializers);
+    void write_zero_initializer_recursive(std::string prefix,const llvm::Type* ptr, int depth);
+    void write_storage_initializer_statements(std::string& prefix, llvm::Constant* konst, bool skip_zero_initializers);
+
   };
 };
 
-Aa::AaWriter* AaWriter_New(llvm::TargetData *TD, llvm::AliasAnalysis *AA);
+Aa::AaWriter* AaWriter_New(llvm::TargetData *TD, llvm::AliasAnalysis *AA, std::set<std::string>& mnames, bool consider_all_functions);
+
 
 #endif

@@ -384,6 +384,8 @@ package Subprograms is
   function MuxOneHot(x: std_logic_vector; sel: BooleanArray) return std_logic_vector;
   
 
+  function Swap_Bytes(x: std_logic_vector) return std_logic_vector;
+
 end package Subprograms;
 
 
@@ -1466,6 +1468,19 @@ package body Subprograms is
 	return(ret_var);
   end MuxOneHot;
       
+  function Swap_Bytes(x: std_logic_vector) return std_logic_vector is
+     alias lx: std_logic_vector(1 to x'length) is x;
+     variable ret_var: std_logic_vector(1 to x'length);
+     variable J: integer;
+     constant num_bytes: integer := (x'length/8);
+  begin
+     assert((x'length/8)*8 = x'length) report "Swap_Bytes argument length must be a multiple of 8" severity error;
+     for I in 0 to num_bytes-1 loop
+	J := (num_bytes-1) - I;
+	ret_var((I*8)+1 to (I+1)*8) := lx((J*8)+1 to (J+1)*8);
+     end loop;  
+     return(ret_var);
+  end Swap_Bytes;
 
 end package body Subprograms;
 library ieee;

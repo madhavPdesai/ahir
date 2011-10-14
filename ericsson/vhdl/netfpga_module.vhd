@@ -44,6 +44,11 @@ architecture default_arch of netfpga_module is
   constant max_number_of_pending_packets: integer := 8;
   -- maximum packet size = 256 x 64bit words = 2048 bytes.
   constant words_per_pkt: integer := 256;
+  -- swap_bytes_flag: if true, then the incoming data is
+  -- byte swapped before being sent to ahir-system, and
+  -- the data coming out from ahir_system is byte-swapped
+  -- before being sent out.
+  constant swap_bytes_flag: boolean := false;
 
   signal incoming_pkt_length: unsigned(7 downto 0);
 
@@ -308,7 +313,14 @@ begin  -- default_arch
   end process;
   
   in_ctrl_pipe_write_data <= in_qdata_out(71 downto 64);
-  in_data_pipe_write_data <= in_qdata_out(63 downto 0);
+ 
+  SwapInBytes: if swap_bytes_flag generate
+  	in_data_pipe_write_data <= Swap_Bytes(in_qdata_out(63 downto 0));
+  end generate;
+
+  NoSwapInBytes: if not swap_bytes_flag generate
+  	in_data_pipe_write_data <= in_qdata_out(63 downto 0);
+  end generate;
 
   LogInPkt: if log_packets generate 
   	process(clk)
@@ -425,8 +437,17 @@ begin  -- default_arch
   end process;
 
   out_ctrl_pipe_final <= out_ctrl_pipe_read_data when out_ctrl_pipe_enable = '1' else out_ctrl_pipe_reg;
-  out_data_pipe_final <= out_data_pipe_read_data when out_data_pipe_enable = '1' else out_data_pipe_reg;
+
+  SwapOutBytes: if swap_bytes_flag generate
+  	out_data_pipe_final <= Swap_Bytes(out_data_pipe_read_data) when out_data_pipe_enable = '1' else Swap_Bytes(out_data_pipe_reg);
+  end generate;
+
+  NoSwapOutBytes: if not swap_bytes_flag generate
+  	out_data_pipe_final <= out_data_pipe_read_data when out_data_pipe_enable = '1' else out_data_pipe_reg;
+  end generate;
+
   out_qdata_in <= out_ctrl_pipe_final & out_data_pipe_final;
+
 
   -----------------------------------------------------------------------------
   -- the output queue.

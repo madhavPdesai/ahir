@@ -38,7 +38,8 @@ for($i=0; $i<12; $i++){
   $temp = sprintf("%02x", $i);
   $DA = $temp . $DA_sub;
   $SA = $temp . $SA_sub;
-  $in_port = ($i%4) + 1;
+  # $in_port = ($i%4) + 1;
+  $in_port = 4;
   $pkt = make_IP_pkt($length, $DA, $SA, 64, '192.168.0.1', '192.168.0.2');
   nf_packet_in($in_port, $length, $delay, $batch,  $pkt);
   cpu_rxfifo_rd_pkt($in_port, $length, 0, $pkt);

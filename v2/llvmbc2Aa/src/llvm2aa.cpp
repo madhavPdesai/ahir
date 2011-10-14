@@ -116,7 +116,15 @@ int main(int argc, char **argv)
 
     // not critical, but useful.
     Passes.add(createDeadCodeEliminationPass());
-    Passes.add(createCFGSimplificationPass());
+
+    // not critical, but useful.. but broken.
+    // this pass is broken in llvm-2.8.  intermediate
+    // basic blocks are optimized away, but their
+    // dependent phi statements are incorrectly 
+    // handled.
+    //Passes.add(createCFGSimplificationPass());
+
+    // not critical, useful.
     Passes.add(createUnifyFunctionExitNodesPass());
 
     // this produces a txt file of the transformed

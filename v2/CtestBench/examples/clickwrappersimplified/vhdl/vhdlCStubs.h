@@ -9,5 +9,6 @@ uint32_t* ahir_packet_get();
 void free_queue_manager();
 uint8_t mem_load__(uint32_t address);
 void mem_store__(uint32_t address,uint8_t data);
+void output_port_lookup();
 void wrapper_input();
 void wrapper_output();
