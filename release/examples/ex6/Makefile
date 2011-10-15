@@ -39,7 +39,7 @@ aa2vc: rngs_divider.aa
 
 # vC to VHDL
 vc2vhdl: rngs_divider.vc
-	vc2vhdl -C -e ahir_system -w -s ghdl -t global_storage_initializer_ -t Random -t Initialize -t SelectStream -t PutSeed -f rngs_divider.vc
+	vc2vhdl -C -e ahir_system -w -s ghdl -t Random -t Initialize -t SelectStream -t PutSeed -f rngs_divider.vc
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 
