@@ -319,6 +319,7 @@ aA_Branch_Block_Statement_Sequence[AaBranchBlockStatement* scope] returns [AaSta
 {
 	AaStatement* new_statement = NULL;
 	vector<AaStatement*> slist;
+    slist.clear();
     nsb = NULL;
 } 
     :

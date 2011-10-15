@@ -30,15 +30,16 @@ c2llvmbc: rngs.c divider.c divider.h rngs.h testbench.c
 
 # llvm byte-code to Aa..
 llvmbc2aa:  rngs.linked.o.opt
-	llvm2aa --storageinit=true rngs.linked.o.opt | vcFormat >  rngs_linked.aa
+	llvm2aa --storageinit=true rngs.linked.o.opt | vcFormat >  rngs_divider.aa
 
 # Aa to vC
-aa2vc: rngs_linked.aa
-	Aa2VC -O -C rngs_linked.aa | vcFormat > rngs_linked.vc
+aa2vc: rngs_divider.aa
+	AaLinkExtMem rngs_divider.aa | vcFormat > rngs_divider_linked.aa
+	Aa2VC -O -C rngs_divider_linked.aa | vcFormat > rngs_divider.vc
 
 # vC to VHDL
-vc2vhdl: rngs_linked.vc
-	vc2vhdl -C -e ahir_system -w -s ghdl -t Random -t Initialize -t SelectStream -t PutSeed -f rngs_linked.vc
+vc2vhdl: rngs_divider.vc
+	vc2vhdl -C -e ahir_system -w -s ghdl -t global_storage_initializer_ -t Random -t Initialize -t SelectStream -t PutSeed -f rngs_divider.vc
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 

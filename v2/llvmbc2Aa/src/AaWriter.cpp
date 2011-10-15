@@ -167,14 +167,14 @@ namespace Aa {
 	      get_aa_constant_string(dyn_cast<Constant>(v)) + " ) ";
 	  }
 	else
-	  ret_string = get_name(v);
+	  ret_string = to_aa(get_name(v));
 
 	return(ret_string);
       }
     else
       {
 	std::cerr << "Warning: operands which are functions will be ignored" << std::endl;
-	std::string op_name = v->getNameStr() + "_ret_" + int_to_str(op_index);
+	std::string op_name = to_aa(v->getNameStr() + "_ret_" + int_to_str(op_index));
 	std::cout << op_name << ":= (($bitcast ($pointer<$void>) _b11111111111111111111111111111111)" << std::endl;
 
 	op_index++;
@@ -985,7 +985,7 @@ namespace {
 	  return;
 	}
       
-      std::string op_name = get_name(L.getPointerOperand());
+      std::string op_name = to_aa(get_name(L.getPointerOperand()));
       if(is_global)
 	std::cout << op_name << std::endl;
       else
@@ -1007,7 +1007,7 @@ namespace {
 	  return;
 	}
 
-      std::string ptr_name  = get_name(S.getPointerOperand());
+      std::string ptr_name  = to_aa(get_name(S.getPointerOperand()));
       std::string data_name = prepare_operand(S.getValueOperand());
       if(is_global)
 	std::cout << ptr_name << " := ";
