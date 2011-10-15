@@ -520,6 +520,7 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 	  ofile << arg_name << " <= Unpack_String(val_string," << w->Get_Size() << ");" << endl;
 	}
 
+      ofile << "wait for 0 ns;" << endl;
       ofile << "if " << start << " = '1' then -- {" << endl;
       ofile << "while true loop --{" << endl;
       ofile << "wait until clk = '1';" << endl;

@@ -22,7 +22,7 @@ void Handle_Segfault(int signal)
 void Usage_AaLinkExtMem()
 {
 
-  cerr << "brief description: reads source Aa program, adds external-memory linkages,\n and writes out modified Aa program,  " << endl;
+  cerr << "brief description: reads source Aa program, adds external-memory linkages,\n writes out modified Aa program, and adds global storage initializer.\n  " << endl;
   cerr << "Usage: AaLinkExtMem [-v] [-I <ext-mem-size>] <filename> (<filename>) ... " << endl;
   cerr << " options " << endl;
   cerr <<  " -v (or --verbose): verbose, generate lots of messages about whats happening." << endl

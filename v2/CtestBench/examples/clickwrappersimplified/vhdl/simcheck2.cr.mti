@@ -4,13 +4,47 @@ Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Loading package std_logic_1164
 -- Loading package utility_package
 -- Compiling package modelsim_fli_foreign
+** Warning: (vcom-98) "/cad/modelsim//libs/MS/OS/ixl/libadmslib.so" is not present; ADMS design-units may not be handled properly
 -- Compiling package body modelsim_fli_foreign
 -- Loading package modelsim_fli_foreign
+
+} {} {}} /home/madhav/ahirgit/AHIR/v2/CtestBench/examples/clickwrappersimplified/vhdl/ahir_system.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/v2/CtestBench/examples/clickwrappersimplified/vhdl/ahir_system.vhdl
+Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Compiling package vc_system_package
+** Warning: (vcom-98) "/cad/modelsim//libs/MS/OS/ixl/libadmslib.so" is not present; ADMS design-units may not be handled properly
+-- Loading package memory_subsystem_package
+-- Loading package types
+-- Loading package numeric_std
+-- Loading package utilities
+-- Loading package textio
+-- Loading package math_utility_pkg
+-- Loading package fixed_pkg
+-- Loading package float_pkg
+-- Loading package subprograms
+-- Loading package components
+-- Loading package basecomponents
+-- Loading package operatorpackage
+-- Loading package vc_system_package
+-- Compiling entity free_queue_manager
+-- Compiling architecture default of free_queue_manager
+-- Compiling entity global_storage_initializer_x
+-- Compiling architecture default of global_storage_initializer_x
+-- Compiling entity output_port_lookup
+-- Compiling architecture default of output_port_lookup
+-- Compiling entity wrapper_input
+-- Compiling architecture default of wrapper_input
+-- Compiling entity wrapper_output
+-- Compiling architecture default of wrapper_output
+-- Compiling entity ahir_system
+-- Compiling architecture default of ahir_system
 
 } {} {}} /home/madhav/ahirgit/AHIR/vhdl/release/ieee_proposed.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/vhdl/release/ieee_proposed.vhdl
 Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Loading package standard
 -- Compiling package math_utility_pkg
+** Warning: (vcom-98) "/cad/modelsim//libs/MS/OS/ixl/libadmslib.so" is not present; ADMS design-units may not be handled properly
 -- Compiling package fixed_float_types
 -- Loading package textio
 -- Loading package std_logic_1164
@@ -26,6 +60,7 @@ Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Loading package standard
 -- Loading package std_logic_1164
 -- Compiling package utility_package
+** Warning: (vcom-98) "/cad/modelsim//libs/MS/OS/ixl/libadmslib.so" is not present; ADMS design-units may not be handled properly
 -- Compiling package body utility_package
 -- Loading package utility_package
 
@@ -34,6 +69,7 @@ Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
 -- Loading package standard
 -- Loading package std_logic_1164
 -- Compiling package types
+** Warning: (vcom-98) "/cad/modelsim//libs/MS/OS/ixl/libadmslib.so" is not present; ADMS design-units may not be handled properly
 -- Loading package numeric_std
 -- Loading package types
 -- Compiling package utilities
@@ -251,5 +287,28 @@ Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
     /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(11538):Process line__11538
        Driven at:
           /home/madhav/ahirgit/AHIR/vhdl/release/ahir.vhdl(11542)
+
+} {} {}} /home/madhav/ahirgit/AHIR/v2/CtestBench/examples/clickwrappersimplified/vhdl/ahir_system_test_bench.vhdl {1 {vcom -work work -2002 -explicit -vopt /home/madhav/ahirgit/AHIR/v2/CtestBench/examples/clickwrappersimplified/vhdl/ahir_system_test_bench.vhdl
+Model Technology ModelSim SE vcom 6.5d Compiler 2009.11 Nov 18 2009
+-- Loading package standard
+-- Loading package std_logic_1164
+-- Loading package memory_subsystem_package
+-- Loading package types
+-- Loading package numeric_std
+-- Loading package utilities
+-- Loading package textio
+-- Loading package math_utility_pkg
+-- Loading package fixed_pkg
+-- Loading package float_pkg
+-- Loading package subprograms
+-- Loading package components
+-- Loading package basecomponents
+-- Loading package operatorpackage
+-- Loading package vc_system_package
+-- Loading package utility_package
+-- Loading package modelsim_fli_foreign
+-- Compiling entity ahir_system_test_bench
+** Warning: (vcom-98) "/cad/modelsim//libs/MS/OS/ixl/libadmslib.so" is not present; ADMS design-units may not be handled properly
+-- Compiling architecture vhpilink of ahir_system_test_bench
 
 } {} {}}

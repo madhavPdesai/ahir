@@ -719,7 +719,8 @@ the \Aa code for this purpose.
 
 \subsection{{\bf AaLinkExtMem}}
 
-This tool takes a list of \Aa files, elaborates the program,
+This linker tool takes a list of \Aa files, elaborates the program,
+creates a global storage initializer, and
 does memory space decomposition.  The externally visible memory space is
 linked in one of two ways: either it is assumed to be external
 and all accesses to it are routed out of the \Aa program,
@@ -750,6 +751,12 @@ In this case, if the \Aa compiler determines that there is some pointer
 in the program which can point
 to both internal and external memory, then this will be
 declared as an error!  
+
+If the programs being linked contain memory initialization
+routines, the linker generates a global storage initialization
+function which is named {\bf global\_storage\_initializer\_}.
+This global initializer calls all the memory initializers in
+the programs being linked.
 
 \subsection{{\bf Aa2VC}}
 

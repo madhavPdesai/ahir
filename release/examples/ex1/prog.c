@@ -4,12 +4,9 @@
 #include <stdio.h>
 
 
-uint32_t sum;
+// note: initialized value..
+uint32_t sum = 23;
 
-void set_sum(uint32_t x)
-{
-    sum = x;
-}
 
 uint32_t get_sum()
 {
