@@ -3,6 +3,7 @@
 #include <AaParser.hpp>
 #include <AaLexer.hpp>
 #include <getopt.h>
+#include <fstream>
 using namespace std;
 using namespace antlr;
 
@@ -137,6 +138,17 @@ int main(int argc, char* argv[])
 	}
     }
 
+  // print a temporary Aa file for the global storage initializer..
+  string gsi_file_name = ".gsi.aa";
+  ofstream gsi_file(gsi_file_name.c_str(),ios::out);
+  AaProgram::Print_Global_Storage_Initializer(gsi_file);
+  gsi_file.close();
+
+  // now parse the temporary file.
+  AaParse(gsi_file_name);
+
+  
+  // elaborate
   AaProgram::Elaborate();
   if(AaRoot::Get_Error_Flag())
     cerr << "Error: there were errors during elaboration, check the log" << endl;
@@ -145,6 +157,8 @@ int main(int argc, char* argv[])
       AaProgram::Print_ExtMem_Access_Modules(cout);
       AaProgram::Print(cout);
     }
+
+
 
   if(AaRoot::Get_Error_Flag())
     {

@@ -1187,5 +1187,35 @@ void AaProgram::Propagate_Constants()
     {
       (*miter).second->Propagate_Constants();
     }
+}
 
+
+void AaProgram::Print_Global_Storage_Initializer(ostream& ofile)
+{
+  vector<AaModule*> init_modules;
+
+  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+      miter != AaProgram::_modules.end();
+      miter++)
+    {
+      AaModule* m = (*miter).second;
+      if(m->Has_Attribute("initializer"))
+	init_modules.push_back(m);
+    }
+
+  ofile << "$module [global_storage_initializer_] $in () $out () $is {" << endl;
+  if(init_modules.size() > 0)
+    {
+      ofile << "$parallelblock [pb] { " << std::endl;      
+      for(unsigned int idx = 0; idx < init_modules.size(); idx++)
+	{
+	  ofile << "$call " << init_modules[idx]->Get_Label() << " () () " << endl;
+	}
+      ofile << "}" << endl;
+    }
+  else
+    {
+      ofile << "$null" << endl;
+    }
+  ofile << "}" << endl;
 }

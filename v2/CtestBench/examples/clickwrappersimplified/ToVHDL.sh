@@ -1,6 +1,6 @@
 # functions in prog.c to be mapped to vhdl
 # generate llvm-byte-code
-clang -DOPLU -std=gnu89 -I../../../iolib/ -emit-llvm -c prog.c
+clang -DOPLU -DGSI -std=gnu89 -I../../../iolib/ -emit-llvm -c prog.c
 # disassemble byte-code for human readibility.
 opt --instnamer -O3 prog.o > prog.opt.o
 # llvm-bytecode to Aa

@@ -71,6 +71,21 @@ class AaModule: public AaSeriesBlockStatement
   {
     _attribute_map[name] = val;
   }
+  
+  bool Has_Attribute(string name)
+  {
+    return(_attribute_map.find(name) != _attribute_map.end());
+  }
+
+  string Get_Attribute_Value(string name)
+  {
+    string ret_string = "";
+    if (this->Has_Attribute(name))
+      return(_attribute_map[name]);
+    else
+      return ret_string;
+  }
+
   void Print_Attributes(ostream& ofile);
 
   unsigned int Get_Number_Of_Input_Arguments() {return(this->_input_args.size());}

@@ -232,8 +232,9 @@ namespace {
 
       if(_create_initializers)
 	{
+	  std::string init_module_name = to_aa(M.getModuleIdentifier() + "_storage_initializer_");
 	  std::cerr << "Info: generating storage initialization module which calls all initializers in parallel" << std::endl;
-	  std::cout << "$module [global_storage_initializer_] $in () $out () $is {" << std::endl;
+	  std::cout << "$module [" << init_module_name << "] $in () $out () $is {" << std::endl;
 	  if(objects_to_be_initialized.size() > 0)
 	    {
 	      std::cout << "$parallelblock [pb] { " << std::endl;
@@ -245,6 +246,8 @@ namespace {
 	    }
 	  else
 	    std::cout << "$null" << std::endl;
+
+	  std::cout << "$attribute initializer" << std::endl;
 
 	  std::cout << "}" << std::endl;
 	}

@@ -198,6 +198,8 @@ class AaProgram
 
   static void Write_VHDL_C_Stubs();
   static void Print_Memory_Space_Info();
+
+  static void Print_Global_Storage_Initializer(ostream& ofile);
 };
 
 

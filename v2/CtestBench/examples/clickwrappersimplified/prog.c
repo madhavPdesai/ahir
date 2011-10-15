@@ -70,7 +70,6 @@ void ahir_packet_free(uint32_t* ptr)
 
 uint8_t free_queue_ram[RAM_SIZE];
 uint8_t free_queue[FREE_QUEUE_SIZE];
-uint8_t foo[10];
 
 #ifdef GSI
 void global_storage_initializer_();
@@ -124,7 +123,6 @@ void free_queue_manager()
 void wrapper_input()
 {
 
-    foo[0] = 1;
 #ifdef GSI
     uint8_t start_flag = read_uint8("start_wrapper_input");
 #endif

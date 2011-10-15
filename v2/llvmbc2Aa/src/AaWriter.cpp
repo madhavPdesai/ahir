@@ -338,7 +338,7 @@ namespace Aa {
 		  {
 		    if(!(is_zero(init) && skip_zero_initializers))
 		      {
-			std::string initializer_name = "default_initializer_" + obj_name;
+			std::string initializer_name = to_aa(obj_name + "_initializer_in_" + this->_module->getModuleIdentifier());
 			init_obj_vector.push_back(initializer_name);
 			  
 			std::cerr << "Info: Initial value specified for " << obj_name << ": will create initializer module" << std::endl;
@@ -462,7 +462,10 @@ namespace Aa {
       }
     else if(isa<ConstantPointerNull>(konst))
       {
-	std::cout << prefix << " := _b0" << std::endl;
+	std::cout << prefix << " := "; 
+	// NULL is mapped to all 1's.
+	std::cout << "_b1111111111111111111111111111111111111111111111111111111111111111";
+	std::cout << std::endl;
       }
     else if(isa<ConstantArray>(konst) || isa<ConstantVector>(konst) 
 	    || isa<ConstantStruct>(konst))
