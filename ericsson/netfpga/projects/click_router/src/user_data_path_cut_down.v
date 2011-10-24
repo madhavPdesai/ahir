@@ -311,36 +311,28 @@ module user_data_path_cut_down
     .in_rdy           (oq_in_rdy),
     .in_wr            (oq_in_wr),
 
-      // --- Register interface
-    .reg_req_in       (oq_in_reg_req),
-    .reg_ack_in       (oq_in_reg_ack),
-    .reg_rd_wr_L_in   (oq_in_reg_rd_wr_L),
-    .reg_addr_in      (oq_in_reg_addr),
-    .reg_data_in      (oq_in_reg_data),
-    .reg_src_in       (oq_in_reg_src),
-
-    .reg_req_out      (udp_reg_req_in),
-    .reg_ack_out      (udp_reg_ack_in),
-    .reg_rd_wr_L_out  (udp_reg_rd_wr_L_in),
-    .reg_addr_out     (udp_reg_addr_in),
-    .reg_data_out     (udp_reg_data_in),
-    .reg_src_out      (udp_reg_src_in),
-
-      // --- SRAM sm interface
-    .wr_0_addr        (wr_0_addr),
-    .wr_0_req         (wr_0_req),
-    .wr_0_ack         (wr_0_ack),
-    .wr_0_data        (wr_0_data),
-    .rd_0_ack         (rd_0_ack),
-    .rd_0_data        (rd_0_data),
-    .rd_0_vld         (rd_0_vld),
-    .rd_0_addr        (rd_0_addr),
-    .rd_0_req         (rd_0_req),
-
 
       // --- Misc
     .clk              (clk),
     .reset            (reset));
+
+      // --- Register interface.. bypasses output_queues
+    assign udp_reg_req_in = oq_in_reg_req;
+    assign udp_reg_ack_in = oq_in_reg_ack;
+    assign udp_reg_rd_wr_L_in = oq_in_reg_rd_wr_L;
+    assign udp_reg_addr_in = oq_in_reg_addr;
+    assign udp_reg_data_in = oq_in_reg_data;
+    assign udp_reg_src_in = oq_in_reg_src;
+
+
+      // --- SRAM sm interface .. not used.
+    assign wr_0_addr = 0; 
+    assign wr_0_req = 1'b0;
+    assign wr_0_data  = 0;
+    assign rd_0_addr = 0;
+    assign rd_0_req = 1'b0;
+
+
 
 
    //--------------------------------------------------
