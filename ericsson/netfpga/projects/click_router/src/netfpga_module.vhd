@@ -713,12 +713,10 @@ begin  -- SimModel
     if(clk'event and clk = '1') then
       
       if(reset = '1') then
-        pop_ack  <=  '0';        
         queue_size <= 0;
         top_pointer <= 0;
         bottom_pointer <= 0;
       else
-
         queue_size <= qsize;
         top_pointer <= next_top_ptr;
         bottom_pointer <= next_bottom_ptr;

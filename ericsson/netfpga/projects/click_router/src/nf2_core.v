@@ -960,35 +960,6 @@ module nf2_core_cut_down #(
       .reset         (reset)
    );
 
-   generate
-      //genvar i;
-      for (i = 0; i < 16; i = i + 1) begin: unused_reg_core_256kb_0
-         if (!(i >= `MAC_GRP_0_BLOCK_ADDR &&
-               i <  `MAC_GRP_0_BLOCK_ADDR + NUM_QUEUES/2) &&
-             !(i >= `CPU_QUEUE_0_BLOCK_ADDR &&
-               i <  `CPU_QUEUE_0_BLOCK_ADDR + NUM_QUEUES/2) &&
-             i != `DEV_ID_BLOCK_ADDR &&
-             i != `DMA_BLOCK_ADDR &&
-             i != `MDIO_BLOCK_ADDR)
-            unused_reg #(
-               .REG_ADDR_WIDTH(`BLOCK_SIZE_64k_REG_ADDR_WIDTH)
-            ) unused_reg_core_256kb_0_x (
-               // Register interface signals
-               .reg_req             (core_256kb_0_reg_req[`WORD(i,1)]),
-               .reg_ack             (core_256kb_0_reg_ack[`WORD(i,1)]),
-               .reg_rd_wr_L         (core_256kb_0_reg_rd_wr_L[`WORD(i,1)]),
-               .reg_addr            (core_256kb_0_reg_addr[`WORD(i, `BLOCK_SIZE_64k_REG_ADDR_WIDTH)]),
-
-               .reg_rd_data         (core_256kb_0_reg_rd_data[`WORD(i, `CPCI_NF2_DATA_WIDTH)]),
-               .reg_wr_data         (core_256kb_0_reg_wr_data[`WORD(i, `CPCI_NF2_DATA_WIDTH)]),
-
-               //
-               .clk           (core_clk_int),
-               .reset         (reset)
-            );
-      end
-   endgenerate
-
    //--------------------------------------------------
    //
    // --- Logic Analyzer signals
