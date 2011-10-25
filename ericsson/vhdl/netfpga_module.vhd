@@ -129,8 +129,8 @@ begin  -- default_arch
   -- packet drop logic
   -----------------------------------------------------------------------------
   DropPackets: if add_pkt_drop_logic generate
-  	pkt_start <= '1' when in_wr = '1' and (in_ctrl = "11111111") else '0';
-  	pkt_end   <= '1' when in_wr = '1' and (pkt_start = '0') and (in_ctrl /= "00000000") else '0';
+  	pkt_start <= '1' when (in_wr = '1') and (in_ctrl = "11111111") else '0';
+  	pkt_end   <= '1' when (in_wr = '1') and (pkt_start = '0') and (in_ctrl /= "00000000") else '0';
 	
   	process(clk, reset, pkt_start, pkt_end, drop_state, pkt_buffer_has_space)
 		variable next_drop_state : DropState;
@@ -172,7 +172,7 @@ begin  -- default_arch
   	
   	pkt_buffer_has_space <= '1' when available_word_count >= words_per_pkt else '0';
 
-	increment_word_count <=  in_push_req;
+	increment_word_count <=  in_push_req and in_push_ack;
   	decrement_word_count <=  in_pop_ack;
   	process(clk)
   	begin 
@@ -200,7 +200,7 @@ begin  -- default_arch
   -- if not fill, then forward data to InFifo.
   -----------------------------------------------------------------------------
   in_qdata_in <= in_ctrl & in_data;
-  in_push_req <= '1' when in_wr = '1' and (drop_packet = '0') else '0';
+  in_push_req <= '1' when ((in_wr = '1') and (drop_packet = '0')) else '0';
   in_rdy <= '1' when (in_nearly_full = '0') else '0';
 
   LogDropPkt: if log_packets generate 
@@ -515,7 +515,7 @@ begin  -- SimModel
 
   
   -- single process
-  process(clk,reset,push_req,pop_req,queue_size, top_pointer, bottom_pointer)
+  process(clk,reset,queue_size,push_req,pop_req,top_pointer, bottom_pointer)
     variable qsize : integer range 0 to queue_depth;
     variable push_ack_v, pop_ack_v, nearly_full_v: std_logic;
     variable push,pop : boolean;
@@ -580,7 +580,7 @@ begin  -- SimModel
       
       if(reset = '1') then
         pop_ack  <=  '0';        
-        queue_size <= 0;
+	queue_size <= 0;
         top_pointer <= 0;
         bottom_pointer <= 0;
       else
@@ -646,11 +646,10 @@ architecture behave of SimpleSmallFifo is
 
 begin  -- SimModel
 
-  assert(queue_depth > 2) report "Matching FIFO depth must be greater than 2" severity failure;
 
   
   -- single process
-  process(clk,reset,push_req,pop_req,queue_size, top_pointer, bottom_pointer)
+  process(clk,reset,queue_size,push_req,pop_req,queue_size, top_pointer, bottom_pointer)
     variable qsize : integer range 0 to queue_depth;
     variable push_ack_v, pop_ack_v, nearly_full_v: std_logic;
     variable push,pop : boolean;
