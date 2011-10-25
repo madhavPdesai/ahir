@@ -5,27 +5,27 @@
 
 
 // note: initialized value..
-uint32_t sum = 23;
+uint32_t sum1 = 23;
+uint32_t sum2 = 39;
 
+uint32_t* tgt[2] = {&sum1, &sum2};
 
-uint32_t get_sum()
-{
-    return(sum);
-}
 
 void accumulate()
 {
+    int i = 0;
     while(1)
     {
 	int nxt = read_uint32("in_data");
 #ifdef SW
 	printf("read %u\n", nxt);
 #endif
-	sum = (sum + nxt);
-	write_uint32("out_data",sum);
+	*(tgt[i])= ((*tgt[i]) + nxt);
+	write_uint32("out_data",*(tgt[i]));
 #ifdef SW
-	printf("wrote %u\n", sum);
+	printf("wrote %u\n", *(tgt[i]));
 #endif
+	i = 1 - i;
     }
 }
 

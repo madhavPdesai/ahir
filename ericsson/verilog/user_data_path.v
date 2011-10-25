@@ -276,13 +276,7 @@ module user_data_path_cut_down
 
 
       output_queues_cut_down
-     #(.DATA_WIDTH(DATA_WIDTH),
-       .CTRL_WIDTH(CTRL_WIDTH),
-       .UDP_REG_SRC_WIDTH (UDP_REG_SRC_WIDTH),
-       .OP_LUT_STAGE_NUM(OP_LUT_STAGE_NUM),
-       .NUM_OUTPUT_QUEUES(NUM_OUTPUT_QUEUES),
-       .STAGE_NUM(OQ_STAGE_NUM),
-       .SRAM_ADDR_WIDTH(SRAM_ADDR_WIDTH))
+     #(.PORT_ID_LSB_INDEX(`IOQ_DST_PORT_POS), .PORT_ID_WIDTH(8))
    output_queues
      (// --- data path interface
     .out_data_0       (out_data_0),

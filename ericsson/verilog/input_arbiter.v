@@ -201,17 +201,17 @@
    assign in_data[1]         = in_data_2;
    assign in_ctrl[1]         = in_ctrl_2;
    assign in_wr[1]           = in_wr_2;
-   assign in_rdy_1           = !nearly_full[1];
+   assign in_rdy_2           = !nearly_full[1];
 
    assign in_data[2]         = in_data_4;
    assign in_ctrl[2]         = in_ctrl_4;
    assign in_wr[2]           = in_wr_4;
-   assign in_rdy_2           = !nearly_full[2];
+   assign in_rdy_4           = !nearly_full[2];
 
    assign in_data[3]         = in_data_6;
    assign in_ctrl[3]         = in_ctrl_6;
    assign in_wr[3]           = in_wr_6;
-   assign in_rdy_3           = !nearly_full[3];
+   assign in_rdy_6           = !nearly_full[3];
 
    /* disable regs for this module */
    assign cur_queue_plus1    = (cur_queue == NUM_QUEUES-1) ? 0 : cur_queue + 1;

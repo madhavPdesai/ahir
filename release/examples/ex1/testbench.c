@@ -73,7 +73,6 @@ int main(int argc, char* argv[])
 	for(i=0; i < 10; i++)
  	  fprintf(stdout," %u ", data_out[i]);
 	fprintf(stdout,"\n");
- 	fprintf(stdout,"final sum is %u\n", get_sum());
 
 #ifdef SW
 	pthread_cancel(acc_t);

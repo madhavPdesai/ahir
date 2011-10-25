@@ -335,7 +335,7 @@ module nf2_core_cut_down #(
          nf2_mac_grp #(
             .DATA_WIDTH(DATA_WIDTH),
             .ENABLE_HEADER(1),
-            .PORT_NUMBER(2 * i),
+            .PORT_NUMBER(i),
             .STAGE_NUMBER(`IO_QUEUE_STAGE_NUM)
          )
          nf2_mac_grp

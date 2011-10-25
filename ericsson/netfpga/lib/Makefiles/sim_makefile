@@ -299,6 +299,7 @@ ifneq (${UNET_XPS_DIR},)
     bash -c "cd vsim_beh; vcom $(VCOM_OPTS) ../src/ahir.vhdl"
     bash -c "cd vsim_beh; vcom $(VCOM_OPTS) ../src/ahir_system.vhdl"
     bash -c "cd vsim_beh; vcom $(VCOM_OPTS) ../src/netfpga_module.vhd"
+    bash -c "cd vsim_beh; vcom $(VCOM_OPTS) ../src/output_queues_cut_down.vhdl"
 	bash -c "cd vsim_beh; vlog $(VLOG_OPTS) +libext+.v  +define+VSIM_COMPILE +define+SIMULATION $(SIM_OPT) $(INC_CMD) \
 	$(SRC_SEARCH_CMD) -y $(UNET_XPS_GEN_SIM_DIR) $(COMMON_DIR) $(DEFINES_SRCS) $(CPCI_INC_SRCS) $(SRCS)"
 else
@@ -328,6 +329,7 @@ endif
 	cd vsim_beh && vcom $(VCOM_OPTS) $(CLICK_ROUTER_VHDL)/ahir.vhdl
 	cd vsim_beh && vcom $(VCOM_OPTS) $(CLICK_ROUTER_VHDL)/ahir_system.vhdl
 	cd vsim_beh && vcom $(VCOM_OPTS) $(CLICK_ROUTER_VHDL)/netfpga_module.vhd
+	cd vsim_beh && vcom $(VCOM_OPTS) $(CLICK_ROUTER_VHDL)/output_queues_cut_down.vhdl
 
 endif
 

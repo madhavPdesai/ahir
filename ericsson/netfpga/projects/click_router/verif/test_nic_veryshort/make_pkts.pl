@@ -40,8 +40,8 @@ $SA = $temp . $SA_sub;
 $in_port = ($i%4) + 1;
 $pkt = make_IP_pkt($length, $DA, $SA, 64, '192.168.0.1', '192.168.0.2');
 nf_packet_in($in_port, $length, $delay, $batch,  $pkt);
-cpu_rxfifo_rd_pkt($in_port, $length, 0, $pkt);
-PCI_create_and_send_pkt($in_port, $length);
+#cpu_rxfifo_rd_pkt($in_port, $length, 0, $pkt);
+#PCI_create_and_send_pkt($in_port, $length);
 
 # check counter values
 $delay='@120us';

@@ -108,6 +108,7 @@ $(TOP).prj: $(ALL_SRCS)
 	@echo "vhdl ahir ../src/ahir.vhdl" >> $(TOP).prj
 	@echo "vhdl work ../src/netfpga_module.vhd" >> $(TOP).prj
 	@echo "vhdl work ../src/ahir_system.vhdl" >> $(TOP).prj
+	@echo "vhdl work ../src/output_queues_cut_down.vhdl" >> $(TOP).prj
 
 # Copy the bitstream to the bitfiles directory
 $(NF_ROOT)/bitfiles/$(PROJECT).bit: $(TOP)_par.bit

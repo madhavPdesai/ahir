@@ -118,10 +118,10 @@ architecture default_arch of netfpga_module is
 
   signal drop_state : DropState;
   signal drop_packet: std_logic;
-  signal available_byte_count: integer range 0 to (words_per_pkt*max_number_of_pending_packets);
+  signal available_word_count: integer range 0 to (max_number_of_pending_packets*words_per_pkt);
 
   signal pkt_start, pkt_end : std_logic;
-  signal increment_byte_count, decrement_byte_count: std_logic;
+  signal increment_word_count, decrement_word_count: std_logic;
   signal pkt_buffer_has_space: std_logic;
 begin  -- default_arch
   
@@ -129,16 +129,15 @@ begin  -- default_arch
   -- packet drop logic
   -----------------------------------------------------------------------------
   DropPackets: if add_pkt_drop_logic generate
-  	pkt_start <= '1' when in_wr = '1' and (in_ctrl = "11111111") else '0';
-  	pkt_end   <= '1' when in_wr = '1' and (pkt_start = '0') and (in_ctrl /= "00000000") else '0';
+  	pkt_start <= '1' when (in_wr = '1') and (in_ctrl = "11111111") else '0';
+  	pkt_end   <= '1' when (in_wr = '1') and (pkt_start = '0') and (in_ctrl /= "00000000") else '0';
 	
   	process(clk, reset, pkt_start, pkt_end, drop_state, pkt_buffer_has_space)
 		variable next_drop_state : DropState;
-        	variable drop_v : std_logic;
+        	variable drop_v, increment_pkt_v : std_logic;
   	begin
 		next_drop_state := drop_state;
 		drop_v := '0';
-	
 		case drop_state is 
 			when idle =>
         			if pkt_start = '1' then 
@@ -171,25 +170,23 @@ begin  -- default_arch
 		end if;
   	end process;
   	
-  	incoming_pkt_length <= To_Unsigned(in_data(39 downto 32));
-  	pkt_buffer_has_space <= '1' when incoming_pkt_length <= available_byte_count else '0';
+  	pkt_buffer_has_space <= '1' when available_word_count >= words_per_pkt else '0';
 
-  	increment_byte_count <= (in_push_req and in_push_ack);
-  	decrement_byte_count <= in_pop_ack;
-
+	increment_word_count <=  in_push_req and in_push_ack;
+  	decrement_word_count <=  in_pop_ack;
   	process(clk)
   	begin 
-		if(clk'event and clk = '1') then
-			if(reset = '1') then
-  				available_byte_count <= words_per_pkt*max_number_of_pending_packets;
-			else
-				if(increment_byte_count = '1' and decrement_byte_count = '0') then
-					available_byte_count <= available_byte_count - 1;
-				elsif (increment_byte_count = '0' and decrement_byte_count = '1') then
-					available_byte_count <= available_byte_count + 1;
-				end if;
-			end if;
-		end if;
+          if(clk'event and clk = '1') then
+            if(reset = '1') then
+              available_word_count <= (max_number_of_pending_packets*words_per_pkt);
+            else
+              if(increment_word_count = '1' and decrement_word_count = '0') then
+                available_word_count <= available_word_count - 1;
+              elsif (increment_word_count = '0' and decrement_word_count = '1') then
+                available_word_count <= available_word_count + 1;
+              end if;
+            end if;
+          end if;
   	end process;
    end generate;
 
@@ -203,16 +200,16 @@ begin  -- default_arch
   -- if not fill, then forward data to InFifo.
   -----------------------------------------------------------------------------
   in_qdata_in <= in_ctrl & in_data;
-  in_push_req <= '1' when in_wr = '1' and (drop_packet = '0') else '0';
+  in_push_req <= '1' when ((in_wr = '1') and (drop_packet = '0')) else '0';
   in_rdy <= '1' when (in_nearly_full = '0') else '0';
 
   LogDropPkt: if log_packets generate 
   	process(clk)
   	begin
 		if(clk'event and clk = '1') then 
-			if(in_wr = '1' and drop_packet = '1') then 
-				assert false report "NFM_DROP:  " & convert_slv_to_hex_string(in_ctrl)  & "  " & convert_slv_to_hex_string(in_data) severity note;
-			end if;
+                  if(in_wr = '1' and drop_packet = '1') then 
+                    assert false report "NFM_DROP:  " & convert_slv_to_hex_string(in_ctrl)  & "  " & convert_slv_to_hex_string(in_data) severity note;
+                  end if;
 		end if;
   	end process;
    end generate;
@@ -518,7 +515,7 @@ begin  -- SimModel
 
   
   -- single process
-  process(clk,reset,push_req,pop_req,queue_size, top_pointer, bottom_pointer)
+  process(clk,reset,queue_size,push_req,pop_req,top_pointer, bottom_pointer)
     variable qsize : integer range 0 to queue_depth;
     variable push_ack_v, pop_ack_v, nearly_full_v: std_logic;
     variable push,pop : boolean;
@@ -583,7 +580,7 @@ begin  -- SimModel
       
       if(reset = '1') then
         pop_ack  <=  '0';        
-        queue_size <= 0;
+	queue_size <= 0;
         top_pointer <= 0;
         bottom_pointer <= 0;
       else
@@ -607,3 +604,138 @@ begin  -- SimModel
   end process;
 
 end behave;
+
+
+
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+
+-- this one does not have the delay  on the pop-side.
+entity SimpleSmallFifo is
+  generic(queue_depth: integer := 2; data_width: integer := 72);
+  port(clk: in std_logic;
+       reset: in std_logic;
+       data_in: in std_logic_vector(data_width-1 downto 0);
+       push_req: in std_logic;
+       push_ack : out std_logic;
+       nearly_full: out std_logic;
+       data_out: out std_logic_vector(data_width-1 downto 0);
+       pop_ack : out std_logic;
+       pop_req: in std_logic);
+end entity SimpleSmallFifo;
+
+architecture behave of SimpleSmallFifo is
+
+  type QueueArray is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
+
+  signal queue_array : QueueArray(queue_depth-1 downto 0);
+  signal top_pointer, bottom_pointer : integer range 0 to queue_depth-1;
+  signal queue_size : integer range 0 to queue_depth;
+
+  function Incr(x: integer; M: integer) return integer is
+  begin
+    if(x < M) then
+      return(x + 1);
+    else
+      return(0);
+    end if;
+  end Incr;
+
+begin  -- SimModel
+
+
+  
+  -- single process
+  process(clk,reset,queue_size,push_req,pop_req,queue_size, top_pointer, bottom_pointer)
+    variable qsize : integer range 0 to queue_depth;
+    variable push_ack_v, pop_ack_v, nearly_full_v: std_logic;
+    variable push,pop : boolean;
+    variable next_top_ptr,next_bottom_ptr : integer range 0 to queue_depth-1;
+  begin
+    qsize := queue_size;
+    push  := false;
+    pop   := false;
+    next_top_ptr := top_pointer;
+    next_bottom_ptr := bottom_pointer;
+    
+    if(queue_size < queue_depth) then
+      push_ack_v := '1';
+    else
+      push_ack_v := '0';
+    end if;
+
+    if(queue_size < queue_depth-1) then
+      nearly_full_v := '0';
+    else
+      nearly_full_v := '1';
+    end if;
+
+    if(queue_size > 0) then
+      pop_ack_v := '1';
+    else
+      pop_ack_v := '0';
+    end if;
+
+
+    
+    if(push_ack_v = '1' and push_req = '1') then
+      push := true;
+    end if;
+
+    if(pop_ack_v = '1' and pop_req = '1') then
+      pop := true;
+    end if;
+
+
+    if(push) then
+      next_top_ptr := Incr(next_top_ptr,queue_depth-1);
+    end if;
+
+    if(pop) then
+      next_bottom_ptr := Incr(next_bottom_ptr,queue_depth-1);
+    end if;
+
+
+    if(pop and (not push)) then
+      qsize := qsize - 1;
+    elsif(push and (not pop)) then
+      qsize := qsize + 1;
+    end if;
+    
+
+    push_ack <= push_ack_v;
+    pop_ack  <=  pop_ack_v;        
+    nearly_full <= nearly_full_v;
+    
+    if(clk'event and clk = '1') then
+      
+      if(reset = '1') then
+        pop_ack  <=  '0';        
+        queue_size <= 0;
+        top_pointer <= 0;
+        bottom_pointer <= 0;
+      else
+
+        queue_size <= qsize;
+        top_pointer <= next_top_ptr;
+        bottom_pointer <= next_bottom_ptr;
+      end if;
+
+      if(push) then
+        queue_array(top_pointer) <= data_in;
+      end if;
+      
+      
+    end if;
+    
+  end process;
+
+  -- bottom pointer gives the data
+  data_out <= queue_array(bottom_pointer);
+
+end behave;
+
+

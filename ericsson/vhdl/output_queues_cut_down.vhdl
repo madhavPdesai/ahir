@@ -9,7 +9,7 @@ use ahir.utilities.all;
 use ahir.basecomponents.all;
 
 entity output_queues_cut_down is
-  generic ( Port_Id_LSB_Index : integer; Port_Id_Width: integer);
+  generic ( PORT_ID_LSB_INDEX : integer; PORT_ID_WIDTH: integer);
   port(
     out_data_0 : out std_logic_vector(63 downto 0);
     out_ctrl_0 : out std_logic_vector( 7 downto 0);
@@ -55,7 +55,7 @@ architecture Behave of output_queues_cut_down is
   
   signal queue_rdy, push_req, push_ack, nearly_full, pop_ack, pop_req, out_wr, out_rdy : std_logic_vector(3 downto 0);
 
-  signal port_id : std_logic_vector(Port_Id_Width-1 downto 0);
+  signal port_id : std_logic_vector(PORT_ID_WIDTH-1 downto 0);
   signal sel_port : std_logic_vector(3 downto 0);
 
   signal port_is_active : std_logic_vector(3 downto 0);
@@ -127,13 +127,14 @@ begin  -- Behave
   -- demultiplexing
   -----------------------------------------------------------------------------
 
-  port_id <= infifo_data_out(Port_Id_Width+Port_Id_LSB_Index-1 downto Port_Id_LSB_Index);
+  port_id <= infifo_data_out(PORT_ID_WIDTH+PORT_ID_LSB_INDEX-1 downto PORT_ID_LSB_INDEX);
 
   -- port 0 is the default.
-  sel_port(0) <= port_id(0) or not(sel_port(1) or sel_port(2) or sel_port(3));
-  sel_port(1) <= '1' when port_id = "00000100" else '0';
-  sel_port(2) <= '1' when port_id = "00010000" else '0';
-  sel_port(3) <= '1' when port_id = "01000000" else '0';
+  sel_port(0) <= '1' when (port_id = "00000001") or (sel_port(1) = '0' and
+				sel_port(2) = '0' and sel_port(3) = '0') else '0';
+  sel_port(1) <= '1' when (port_id = "00000010") else '0';
+  sel_port(2) <= '1' when (port_id = "00000100") else '0';
+  sel_port(3) <= '1' when (port_id = "00001000") else '0';
 
   out_wr_0 <= out_wr(0);
   out_wr_2 <= out_wr(1);
@@ -174,9 +175,9 @@ begin  -- Behave
         if(reset = '1') then
           port_is_active_reg(Q) <= '0';
         else
-          if port_is_active(Q) then
+          if((port_is_active_reg(Q) = '0') and (port_is_active(Q)='1')) then
             port_is_active_reg(Q) <= '1';
-          elsif in_ctrl /= "00000000" then
+          elsif ((infifo_pop_ack = '1') and (infifo_data_out(71 downto 64) /= "00000000")) then
             port_is_active_reg(Q) <= '0';
           end if;
         end if;
