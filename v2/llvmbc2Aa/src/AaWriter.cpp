@@ -450,6 +450,11 @@ namespace Aa {
 	return;
       }
 
+    if(isa<UndefValue>(konst))
+    {
+	return;
+    }
+
     if(isa<ConstantInt>(konst) || isa<ConstantFP>(konst))
       {
 	if(skip_zero_initializers && isa<ConstantInt>(konst))

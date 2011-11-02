@@ -734,6 +734,10 @@ bool Aa::is_a_supported_constant(llvm::Constant* konst)
     {
       return(true);
     }
+  else if(isa<UndefValue>(konst))
+    {
+	return(true);
+    }
   else
     {
       return(false);
