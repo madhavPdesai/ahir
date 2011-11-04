@@ -20,6 +20,7 @@ class AaExpression: public AaRoot
   bool _coalesce_flag;
   bool _is_target;
   bool _does_pipe_access;
+  bool _is_malformed;
 
  protected:
   // type of the expression
@@ -33,6 +34,7 @@ class AaExpression: public AaRoot
   // identification..
   void Set_Coalesce_Flag(bool v) { _coalesce_flag = v;}
   bool Get_Coalesce_Flag() {return(_coalesce_flag);}
+
 
   // the expression, when evaluated at run
   // time, can produce a value.  In the following
@@ -75,6 +77,9 @@ class AaExpression: public AaRoot
   {
     return(_associated_statement);
   }
+  // malformed if something wrong.. e.g. unknown memory space in pointer deref.
+  void Set_Is_Malformed(bool v) { _is_malformed = v;}
+  bool Get_Is_Malformed() {return(_is_malformed);}
 
 
   void Set_Does_Pipe_Access(bool v) { _does_pipe_access = v; }
@@ -746,7 +751,7 @@ class AaPointerDereferenceExpression: public AaObjectReference
   virtual void Print(ostream& ofile);
   virtual void PrintC(ofstream& ofile, string tab_string);
 
-  virtual void Evaluate() {this->_reference_to_object->Evaluate();}
+  virtual void Evaluate();
   virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr);
 
   virtual void Map_Source_References(set<AaRoot*>& source_objects); // important

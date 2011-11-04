@@ -3,6 +3,9 @@ use ieee.std_logic_1164.all;
 
 -- on reset, trigger an AHIR module, and keep
 -- retriggering it..
+-- TODO: add a single cycle delay in lreq -> preq
+-- path and also in the pack -> lack path in order
+-- to control the clock period...
 entity level_to_pulse is
   port (clk   : in  std_logic;
     	reset : in  std_logic;

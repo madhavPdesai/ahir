@@ -65,7 +65,6 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
       __T(this->Get_VC_Completed_Transition_Name());
 
 
-
       // write the source side expressions and their 
       // dependencies..
       if(!this->_source->Is_Constant())
@@ -137,6 +136,7 @@ void AaAssignmentStatement::Write_VC_Links_Optimized(string hier_id, ostream& of
     {
         ofile << "// " << this->To_String() << endl;
 	ofile << "// " << this->Get_Source_Info() << endl;
+
 	this->_source->Write_VC_Links_Optimized(hier_id,
 						ofile);
 	this->_target->Write_VC_Links_As_Target_Optimized(hier_id,

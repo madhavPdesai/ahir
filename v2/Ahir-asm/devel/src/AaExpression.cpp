@@ -28,6 +28,7 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
   this->_is_target = false;
   this->_does_pipe_access = false;
   this->_associated_statement = NULL;
+  this->_is_malformed = false;
 }
 AaExpression::~AaExpression() {};
 
@@ -2026,6 +2027,15 @@ void AaPointerDereferenceExpression::Update_Type()
     }
 }
 
+void AaPointerDereferenceExpression::Evaluate()
+{
+  	if((this->Get_Addressed_Object_Representative() == NULL)
+     		|| this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
+	{
+		AaValue* v = Make_Aa_Value(this->Get_Scope(),this->Get_Type());
+	  	this->_expression_value = v;
+	}
+}
 
 // two ways you can get here if this is a target: you
 // can get from _reference_to_object or you can get here

@@ -855,7 +855,8 @@ void AaProgram::Coalesce_Storage()
 		    AaProgram::Add_ExtMem_Access_Width(acc_width);
 		  else
 		    {
-			AaRoot::Error("pointer dereference expression is no associated with any memory space",pu);
+			AaRoot::Error("pointer dereference expression is not associated with any memory space",pu);
+			pu->Set_Is_Malformed(true);
 		    }
 		}
 
