@@ -2032,6 +2032,7 @@ void AaPointerDereferenceExpression::Evaluate()
   	if((this->Get_Addressed_Object_Representative() == NULL)
      		|| this->Get_Addressed_Object_Representative()->Is_Foreign_Storage_Object())
 	{
+      		AaRoot::Error("pointer dereference to foreign object.. will assume it is not defined", this);
 		AaValue* v = Make_Aa_Value(this->Get_Scope(),this->Get_Type());
 	  	this->_expression_value = v;
 	}
