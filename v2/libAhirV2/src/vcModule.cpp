@@ -625,12 +625,19 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
     }
   ofile << endl;
 
+  string forward_delay = (vcSystem::_min_clock_period_flag ? "1" : "0");
+  string backward_delay = (vcSystem::_min_clock_period_flag ? "1" : "0");
+
   ofile << "-- level-to-pulse translation.." << endl;
   ofile << " l2pStart: level_to_pulse -- {" << endl
+	<< " generic map (forward_delay => " << forward_delay << ","
+	<< " backward_delay => " << backward_delay << ") " << endl
 	<< " port map(clk => clk, reset =>reset, lreq => start_req, lack => start_ack_sig, preq => start_req_symbol, pack => start_ack_symbol); -- }" << endl;
   ofile << "start_ack <= start_ack_sig; " << endl << endl;
 
   ofile << " l2pFin: level_to_pulse -- {" << endl
+	<< " generic map (forward_delay => " << forward_delay << ","
+	<< " backward_delay => " << backward_delay << ") " << endl
 	<< " port map(clk => clk, reset =>reset, lreq => fin_req, lack => fin_ack_sig, preq => fin_req_symbol, pack => fin_ack_symbol); -- }" << endl;
   ofile << "fin_ack <= fin_ack_sig; " << endl << endl;
 

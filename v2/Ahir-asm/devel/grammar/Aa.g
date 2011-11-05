@@ -860,7 +860,7 @@ aA_Unary_Expression[AaScope* scope] returns [AaExpression* expr]
             (
                 (CAST | (BITCAST {bit_cast = true;}))
 
-                LPAREN (to_type = aA_Type_Reference[scope]) RPAREN
+                LPAREN ((to_type = aA_Type_Reference[scope])  | (to_type = aA_Named_Type_Reference[scope]) )  RPAREN
                 (rest = aA_Expression[scope] )
                 {   
                     expr = new AaTypeCastExpression(scope,to_type,rest);

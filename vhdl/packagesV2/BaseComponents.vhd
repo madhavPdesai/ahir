@@ -36,6 +36,7 @@ package BaseComponents is
   end component;
 
   component level_to_pulse 
+    generic (forward_delay: integer; backward_delay: integer);
     port (clk   : in  std_logic;
           reset : in  std_logic;
           lreq: in std_logic;

@@ -1,0 +1,21 @@
+//  a simple example to understand how effectively slicing
+//  can be achieved..
+
+// this does it all in one cycle..
+$module [byteswap32]
+$in (a: $uint<32>) $out (ret: $uint<32>) $is
+{
+	ret := ( (($bitcast($uint<8>) a) && ($bitcast($uint<8>) (a >> 8))) &&
+		 (($bitcast($uint<8>) (a >> 16)) && ($bitcast($uint<8>) (a >> 24))) )
+}
+
+$record [MyRec] <$uint<8> > <$uint<8> > <$uint<8> > < $uint<8> >
+
+
+// takes two cycles, but shows the use of the record...
+$module [byteswap32_alt]
+$in (a: $uint<32>) $out (ret: $uint<32>) $is
+{
+	tmp := ($bitcast ( MyRec ) a)
+	ret := ((tmp[0] && tmp[1]) && (tmp[2] && tmp[3]))
+}

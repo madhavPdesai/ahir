@@ -74,6 +74,7 @@ begin --
       obj_ref := Pack_String_To_VHPI_String("main_inner req");
       Vhpi_Get_Port_Value(obj_ref,val_string,1);
       main_inner_start_req <= To_Std_Logic(val_string);
+      wait for 0 ns;
       if main_inner_start_req = '1' then -- 
         while true loop --
           wait until clk = '1';
