@@ -26,6 +26,14 @@ append_int(buffer,0); ADD_SPACE__(buffer);
 send_packet_and_wait_for_response(buffer,strlen(buffer)+1,"localhost",9999);
 return;
 }
+void global_storage_initializer_()
+{
+char buffer[1024];  char* ss;  sprintf(buffer, "call global_storage_initializer_ ");
+append_int(buffer,0); ADD_SPACE__(buffer);
+append_int(buffer,0); ADD_SPACE__(buffer);
+send_packet_and_wait_for_response(buffer,strlen(buffer)+1,"localhost",9999);
+return;
+}
 uint8_t mem_load__(uint32_t address)
 {
 char buffer[1024];  char* ss;  sprintf(buffer, "call mem_load__ ");

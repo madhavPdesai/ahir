@@ -94,8 +94,6 @@ shiftregister_ (shiftregister_State * __top)
 		    {
 		      __top->p1.reader._call_line_20_called_fn_struct =
 			(Print_State *) calloc (1, sizeof (Print_State));
-		      __top->p1.reader._call_line_20_called_fn_struct->
-			Print_entry = 1;
 // reset entry flag and set in progress flag
 		      __top->p1.reader._call_line_20_entry = 0;
 		      __top->p1.reader._call_line_20_in_progress = 1;
@@ -103,19 +101,25 @@ shiftregister_ (shiftregister_State * __top)
 		}		// entry into this call statement
 	      if (__top->p1.reader._call_line_20_in_progress)
 		{
-		  if (__top->p1.reader._call_line_20_called_fn_struct->
-		      Print_entry)
-		    {		// entry flag set?
+		  if (!__top->p1.reader._call_line_20_called_fn_struct->
+		      Print_entry
+		      && !__top->p1.reader._call_line_20_called_fn_struct->
+		      Print_in_progress)
+		    {		// entry and in_progress flags not set?
 		      if (1 && __top->outpipe_valid__)
 			{	// check if pipes can be read from
 			  __top->p1.reader._call_line_20_called_fn_struct->a.
 			    __val = (__top->outpipe).__val;
 			  __top->outpipe_valid__ = 0;
+			  __top->p1.reader._call_line_20_called_fn_struct->
+			    Print_entry = 1;
 			}	// arguments copied to call structure
 		    }		// called function had entry flag set
-		  if (!__top->p1.reader._call_line_20_called_fn_struct->
-		      Print_exit)
-		    {		// called function had not finished
+		  if (__top->p1.reader._call_line_20_called_fn_struct->
+		      Print_entry
+		      || __top->p1.reader._call_line_20_called_fn_struct->
+		      Print_in_progress)
+		    {		// called function still in progress
 // call the function
 		      Print (__top->p1.reader._call_line_20_called_fn_struct->a);	//   file ShiftRegister.aa, line 20
 		      __top->p1.reader._call_line_20_called_fn_struct->
@@ -396,8 +400,6 @@ shiftregister_ (shiftregister_State * __top)
 		    {
 		      __top->p1.writer._call_line_40_called_fn_struct =
 			(Read_State *) calloc (1, sizeof (Read_State));
-		      __top->p1.writer._call_line_40_called_fn_struct->
-			Read_entry = 1;
 // reset entry flag and set in progress flag
 		      __top->p1.writer._call_line_40_entry = 0;
 		      __top->p1.writer._call_line_40_in_progress = 1;
@@ -405,16 +407,22 @@ shiftregister_ (shiftregister_State * __top)
 		}		// entry into this call statement
 	      if (__top->p1.writer._call_line_40_in_progress)
 		{
-		  if (__top->p1.writer._call_line_40_called_fn_struct->
-		      Read_entry)
-		    {		// entry flag set?
+		  if (!__top->p1.writer._call_line_40_called_fn_struct->
+		      Read_entry
+		      && !__top->p1.writer._call_line_40_called_fn_struct->
+		      Read_in_progress)
+		    {		// entry and in_progress flags not set?
 		      if (1)
 			{	// check if pipes can be read from
+			  __top->p1.writer._call_line_40_called_fn_struct->
+			    Read_entry = 1;
 			}	// arguments copied to call structure
 		    }		// called function had entry flag set
-		  if (!__top->p1.writer._call_line_40_called_fn_struct->
-		      Read_exit)
-		    {		// called function had not finished
+		  if (__top->p1.writer._call_line_40_called_fn_struct->
+		      Read_entry
+		      || __top->p1.writer._call_line_40_called_fn_struct->
+		      Read_in_progress)
+		    {		// called function still in progress
 // call the function
 		      Read (&(__top->p1.writer._call_line_40_called_fn_struct->result));	//   file ShiftRegister.aa, line 40
 		      __top->p1.writer._call_line_40_called_fn_struct->
@@ -501,7 +509,6 @@ shiftregister_ (shiftregister_State * __top)
 	    {
 	      __top->_call_line_44_called_fn_struct =
 		(Print_State *) calloc (1, sizeof (Print_State));
-	      __top->_call_line_44_called_fn_struct->Print_entry = 1;
 // reset entry flag and set in progress flag
 	      __top->_call_line_44_entry = 0;
 	      __top->_call_line_44_in_progress = 1;
@@ -509,16 +516,19 @@ shiftregister_ (shiftregister_State * __top)
 	}			// entry into this call statement
       if (__top->_call_line_44_in_progress)
 	{
-	  if (__top->_call_line_44_called_fn_struct->Print_entry)
-	    {			// entry flag set?
+	  if (!__top->_call_line_44_called_fn_struct->Print_entry
+	      && !__top->_call_line_44_called_fn_struct->Print_in_progress)
+	    {			// entry and in_progress flags not set?
 	      if (1)
 		{		// check if pipes can be read from
 		  __top->_call_line_44_called_fn_struct->a.__val =
 		    (__top->b).__val;
+		  __top->_call_line_44_called_fn_struct->Print_entry = 1;
 		}		// arguments copied to call structure
 	    }			// called function had entry flag set
-	  if (!__top->_call_line_44_called_fn_struct->Print_exit)
-	    {			// called function had not finished
+	  if (__top->_call_line_44_called_fn_struct->Print_entry
+	      || __top->_call_line_44_called_fn_struct->Print_in_progress)
+	    {			// called function still in progress
 // call the function
 	      Print (__top->_call_line_44_called_fn_struct->a);	//   file ShiftRegister.aa, line 44
 	      __top->_call_line_44_called_fn_struct->Print_entry = 0;

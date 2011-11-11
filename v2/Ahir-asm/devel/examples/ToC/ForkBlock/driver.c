@@ -10,6 +10,6 @@ int main(int argc, char* argv[])
 	d.__val = 8;
 	sum_mod(a,b,c,d,&e);
 
-	printf("%d\n",e.__val);
+	printf("expected 22, saw %d\n",e.__val);
 	return(1);
 }

@@ -216,8 +216,8 @@ void wrapper_output()
         p[3] = buf[4];
         p[4] = buf[3];
         p[5] = buf[2];
-        p[6] = buf[0]; // Swap byte order for dst_port
-        p[7] = buf[1];
+        p[6] = buf[1];
+        p[7] = buf[0];
 
         write_uint8("op_lut_ctrl", outctrl);
         write_uint64("op_lut_data", outdata);

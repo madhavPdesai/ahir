@@ -28,6 +28,7 @@ class AaModule: public AaSeriesBlockStatement
   bool _writes_to_shared_pipe;
   bool _reads_from_shared_pipe;
 
+
   // memory spaces and pipes accessed by
   // this module.
   vector<AaMemorySpace*> _memory_spaces;

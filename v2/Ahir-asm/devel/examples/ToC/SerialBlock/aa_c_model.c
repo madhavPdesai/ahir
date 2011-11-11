@@ -15,66 +15,39 @@ sum_mod (uint_10 a, uint_10 b, uint_10 * c)
   return AASUCCESS;
 }
 
-
-#define sum_mod_Entry__   if (__top->sum_mod_entry)\
-    {\
-      __top->sum_mod_entry = 0;\
-      __top->sum_mod_in_progress = 1;\
-      __top->sum_mod_entry = 0;\
-      __top->sum_mod_in_progress = 1;\
-      __top->_assign_line_9_entry = 1;\
-    }\
-  if (__top->sum_mod_in_progress)\
-    {
-
-
-#define SerialBlock_line_9_Entry__      if (__top->_assign_line_9_entry)\
-	{\
-	  if (1)\
-	    {
-
-#define SerialBlock_line_9_Exit__	      __top->_assign_line_9_entry = 0;\
-	      __top->_assign_line_9_exit = 1;\
-	    }\
-	}\
-      if (__top->_assign_line_9_exit)\
-	{\
-	  __top->_assign_line_9_exit = 0;\
-	  __top->_assign_line_10_entry = 1;\
-	}
-
-
-
-#define sum_mod_Exit__      if (__top->_assign_line_18_exit)\
-	{\
-	  __top->_assign_line_9_exit = 0;\
-	  __top->_assign_line_10_exit = 0;\
-	  __top->_assign_line_11_exit = 0;\
-	  __top->_assign_line_12_exit = 0;\
-	  __top->_assign_line_13_exit = 0;\
-	  __top->_assign_line_14_exit = 0;\
-	  __top->_assign_line_15_exit = 0;\
-	  __top->_assign_line_16_exit = 0;\
-	  __top->_assign_line_17_exit = 0;\
-	  __top->_assign_line_18_exit = 0;\
-	  __top->sum_mod_in_progress = 0;\
-	  __top->sum_mod_exit = 1;\
-	}\
-  }
-
-
 sum_mod_State *
 sum_mod_ (sum_mod_State * __top)
 {
-
-  sum_mod_Entry__ // check entry flag and pass token to succeeding statements.
-
-  SerialBlock_line_9_Entry__
-    
-    (__top->x).__val = __PLUS ((__top->a).__val, (__top->b).__val);	//  file SerialBlock.aa, line 9
-  
-  SerialBlock_line_9_Exit__
-
+  if (__top->sum_mod_entry)
+    {
+      __top->sum_mod_entry = 0;
+      __top->sum_mod_in_progress = 1;
+      __top->sum_mod_entry = 0;
+      __top->sum_mod_in_progress = 1;
+      __top->_assign_line_9_entry = 1;
+    }
+  if (__top->sum_mod_in_progress)
+    {
+// -------------------------------------------------------------------------------------------
+// Begin Statement _assign_line_9
+// -------------------------------------------------------------------------------------------
+      if (__top->_assign_line_9_entry)
+	{
+	  if (1)
+	    {
+	      (__top->x).__val = __PLUS ((__top->a).__val, (__top->b).__val);	//  file SerialBlock.aa, line 9
+	      __top->_assign_line_9_entry = 0;
+	      __top->_assign_line_9_exit = 1;
+	    }
+	}
+// -------------------------------------------------------------------------------------------
+// End Statement _assign_line_9
+// -------------------------------------------------------------------------------------------
+      if (__top->_assign_line_9_exit)
+	{
+	  __top->_assign_line_9_exit = 0;
+	  __top->_assign_line_10_entry = 1;
+	}
 // -------------------------------------------------------------------------------------------
 // Begin Statement _assign_line_10
 // -------------------------------------------------------------------------------------------
@@ -250,8 +223,21 @@ sum_mod_ (sum_mod_State * __top)
 // -------------------------------------------------------------------------------------------
 // End Statement _assign_line_18
 // -------------------------------------------------------------------------------------------
-
-      sum_mod_Exit__
-
+      if (__top->_assign_line_18_exit)
+	{
+	  __top->_assign_line_9_exit = 0;
+	  __top->_assign_line_10_exit = 0;
+	  __top->_assign_line_11_exit = 0;
+	  __top->_assign_line_12_exit = 0;
+	  __top->_assign_line_13_exit = 0;
+	  __top->_assign_line_14_exit = 0;
+	  __top->_assign_line_15_exit = 0;
+	  __top->_assign_line_16_exit = 0;
+	  __top->_assign_line_17_exit = 0;
+	  __top->_assign_line_18_exit = 0;
+	  __top->sum_mod_in_progress = 0;
+	  __top->sum_mod_exit = 1;
+	}
+    }
   return __top;
 }

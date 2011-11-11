@@ -10,7 +10,7 @@ llvm2aa --modules=modules.txt --hw_target=asic prog.opt.o | vcFormat >  prog.o.a
 # internal object mempool (of size 1 byte).
 AaLinkExtMem -I 1 -E mempool prog.o.aa | vcFormat > prog.o.linked.aa
 # take linked Aa and convert to virtual circuit.
-Aa2VC -I mempool -C prog.o.linked.aa | vcFormat > prog.o.linked.aa.vc
+Aa2VC -O -I mempool -C prog.o.linked.aa | vcFormat > prog.o.linked.aa.vc
 #
 # take virtual circuit and convert to VHDL
 # NOTE: the -T option tells vc2vhdl that io_module is to be an ever-running
@@ -18,6 +18,6 @@ Aa2VC -I mempool -C prog.o.linked.aa | vcFormat > prog.o.linked.aa.vc
 # will be free-running in the system (such modules cannot have input/output
 # arguments, but can only listen/send on pipes).
 #
- vc2vhdl -O -a -C -s modelsim -e ahir_system -w -T wrapper_input -T wrapper_output -T free_queue_manager -T output_port_lookup -f prog.o.linked.aa.vc 
+ vc2vhdl -D -O -a -C -s modelsim -e ahir_system -w -T wrapper_input -T wrapper_output -T free_queue_manager -T output_port_lookup -f prog.o.linked.aa.vc 
 vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl

@@ -49,7 +49,7 @@ sum_mod_ (sum_mod_State * __top)
 	    {
 	      if (1)
 		{
-		  (__top->p.q).__val = __PLUS ((__top->a).__val, (__top->b).__val);	// file ParallelBlock.aa, line 8
+		  (__top->p.q).__val = __PLUS ((__top->a).__val, (__top->b).__val);	//  file ParallelBlock.aa, line 8
 		  __top->p._assign_line_8_entry = 0;
 		  __top->p._assign_line_8_exit = 1;
 		}
@@ -64,7 +64,7 @@ sum_mod_ (sum_mod_State * __top)
 	    {
 	      if (1)
 		{
-		  (__top->p.r).__val = __PLUS ((__top->c).__val, (__top->d).__val);	// file ParallelBlock.aa, line 9
+		  (__top->p.r).__val = __PLUS ((__top->c).__val, (__top->d).__val);	//  file ParallelBlock.aa, line 9
 		  __top->p._assign_line_9_entry = 0;
 		  __top->p._assign_line_9_exit = 1;
 		}
@@ -96,7 +96,7 @@ sum_mod_ (sum_mod_State * __top)
 	{
 	  if (1)
 	    {
-	      (__top->result).__val = __PLUS ((__top->p.q).__val, (__top->p.r).__val);	// file ParallelBlock.aa, line 11
+	      (__top->result).__val = __PLUS ((__top->p.q).__val, (__top->p.r).__val);	//  file ParallelBlock.aa, line 11
 	      __top->_assign_line_11_entry = 0;
 	      __top->_assign_line_11_exit = 1;
 	    }

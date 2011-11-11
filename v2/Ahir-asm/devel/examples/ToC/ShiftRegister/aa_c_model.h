@@ -43,8 +43,8 @@ typedef struct shiftregister_State__
       unsigned int _call_line_20_in_progress:1;
       unsigned int _call_line_20_exit:1;
       Print_State *_call_line_20_called_fn_struct;
-      unsigned int loopback:1;
       unsigned int _place_line_21_entry:1;
+      unsigned int loopback:1;
     } reader;
     struct _b1__
     {
@@ -58,8 +58,8 @@ typedef struct shiftregister_State__
       unsigned int _assign_line_26_entry:1;
       unsigned int _assign_line_26_in_progress:1;
       unsigned int _assign_line_26_exit:1;
-      unsigned int loopback:1;
       unsigned int _place_line_27_entry:1;
+      unsigned int loopback:1;
     } b1;
     struct _b2__
     {
@@ -73,8 +73,8 @@ typedef struct shiftregister_State__
       unsigned int _assign_line_32_entry:1;
       unsigned int _assign_line_32_in_progress:1;
       unsigned int _assign_line_32_exit:1;
-      unsigned int loopback:1;
       unsigned int _place_line_33_entry:1;
+      unsigned int loopback:1;
     } b2;
     struct _writer__
     {
@@ -89,8 +89,8 @@ typedef struct shiftregister_State__
       unsigned int _call_line_40_in_progress:1;
       unsigned int _call_line_40_exit:1;
       Read_State *_call_line_40_called_fn_struct;
-      unsigned int loopback:1;
       unsigned int _place_line_41_entry:1;
+      unsigned int loopback:1;
     } writer;
   } p1;
   unsigned int _call_line_44_entry:1;

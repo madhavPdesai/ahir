@@ -2,16 +2,16 @@
 // pipes are used extensively, and foreign
 // modules are used to read and print.
 $module [shiftregister]
-	$in(a $uint<10>)
-	$out(b $uint<10>)
+	$in(a: $uint<10>)
+	$out(b: $uint<10>)
 $is
 {
-	$pipe inpipe $uint<10>
-	$pipe outpipe $uint<10>
+	$pipe inpipe: $uint<10>
+	$pipe outpipe: $uint<10>
 
 	$parallelblock[p1]
 	{
-		$pipe midpipe $uint<10>
+		$pipe midpipe: $uint<10>
 
 		$branchblock[reader] {
 			$merge $entry loopback $endmerge
@@ -45,10 +45,10 @@ $is
 }
 
 $foreign $module [Print] 
-	$in (a $uint<10>)
+	$in (a: $uint<10>)
 	$out ()
 
 $foreign $module [Read] 
 	$in ()
-	$out (result $uint<10>)
+	$out (result: $uint<10>)
 
