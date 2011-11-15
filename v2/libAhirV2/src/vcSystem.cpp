@@ -19,9 +19,9 @@ bool vcSystem::_enable_logging = false;
 // set on error.
 bool vcSystem::_error_flag = false;
 
-// if there are at most 16 addressable locations in a memory space, make
-// it a register bank (instead of a memory subsystem)
-int vcSystem::_register_bank_threshold = 16;
+// always make it a memory subsystem... until we fix
+// the ordering problem in register bank
+int vcSystem::_register_bank_threshold = 0;
 
 // standard simulator will be Modelsim_FLI
 string vcSystem::_simulator_prefix = "Modelsim_FLI_";
