@@ -68,11 +68,12 @@ begin  -- Behave
   
   imux: InputMuxBase
   	generic map(iwidth => (addr_width+data_width)*num_reqs ,
-	   owidth => addr_width+data_width, 
-	   twidth => tag_length,
-	   nreqs => num_reqs,
-           registered_output => min_clock_period,
-	   no_arbitration => no_arbitration)
+                    owidth => addr_width+data_width, 
+                    twidth => tag_length,
+                    nreqs => num_reqs,
+                    registered_output => min_clock_period,
+                    rigid_repeater => true,
+                    no_arbitration => no_arbitration)
     port map(
       reqL       => reqL,
       ackL       => ackL,

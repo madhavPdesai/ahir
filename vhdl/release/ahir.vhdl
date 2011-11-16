@@ -1583,6 +1583,19 @@ package BaseComponents is
   -----------------------------------------------------------------------------
   -- miscellaneous
   -----------------------------------------------------------------------------
+
+  component RigidRepeater
+    generic(data_width: integer := 32);
+    port(clk: in std_logic;
+         reset: in std_logic;
+         data_in: in std_logic_vector(data_width-1 downto 0);
+         req_in: in std_logic;
+         ack_out: out std_logic;
+         data_out: out std_logic_vector(data_width-1 downto 0);
+         req_out : out std_logic;
+         ack_in: in std_logic);
+  end component RigidRepeater;
+  
   component BypassRegister 
   generic(data_width: integer; enable_bypass: boolean); 
   port (
@@ -1867,6 +1880,7 @@ package BaseComponents is
               twidth: integer;
               nreqs: integer;
               no_arbitration: Boolean;
+              rigid_repeater: Boolean;
               registered_output: Boolean);
     port (
       -- req/ack follow pulse protocol
@@ -8307,6 +8321,7 @@ entity InputMuxBase is
 	   twidth: integer := 3;
 	   nreqs: integer := 1;
 	   no_arbitration: Boolean := true;
+           rigid_repeater: Boolean := false;
 	   registered_output: Boolean := false);
   port (
     -- req/ack follow pulse protocol
@@ -8361,7 +8376,9 @@ begin  -- Behave
       oq_data_in <= dataR_sig & tagR_sig;
       dataR <= oq_data_out((twidth+owidth)-1 downto twidth);
       tagR <= oq_data_out(twidth-1 downto 0);
-      
+
+      ElasticRptr: if not rigid_repeater generate
+        
       oqueue : QueueBase generic map (
         queue_depth => 2,
         data_width  => twidth + owidth)
@@ -8374,7 +8391,25 @@ begin  -- Behave
           data_out => oq_data_out,
           pop_ack  => reqR,
           pop_req  => ackR);
+      
+      end generate ElasticRptr;
 
+      RigidRptr: if rigid_repeater generate
+        
+        oqueue : RigidRepeater generic map (
+          data_width  => twidth + owidth)
+        port map (
+          clk      => clk,
+          reset    => reset,
+          data_in  => oq_data_in,
+          req_in => reqR_sig,
+          ack_out => ackR_sig,
+          data_out => oq_data_out,
+          req_out  => reqR,
+          ack_in  => ackR);
+      
+      end generate RigidRptr;
+      
     end block OqBlock;
   end generate OutputRepeater;
 
@@ -8843,6 +8878,7 @@ begin  -- Behave
                 twidth => tag_length,
                 nreqs => num_reqs,
                 no_arbitration => no_arbitration,
+                rigid_repeater => true,
                 registered_output => min_clock_period)
     port map(
       reqL       => reqL,
@@ -10090,6 +10126,80 @@ begin  -- Behave
 end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+
+-- forwards req_in to req_out (with one cycle delay)
+-- and waits until ack_in appears before forwarding ack_out (one cycle delay).
+entity RigidRepeater is
+    generic(data_width: integer := 32);
+    port(clk: in std_logic;
+         reset: in std_logic;
+         data_in: in std_logic_vector(data_width-1 downto 0);
+         req_in: in std_logic;
+         ack_out: out std_logic;
+         data_out: out std_logic_vector(data_width-1 downto 0);
+         req_out : out std_logic;
+         ack_in: in std_logic);
+end entity RigidRepeater;
+
+architecture behave of RigidRepeater is
+
+	type RR_State is (idle, busy, done);
+	signal state_sig: RR_State;
+
+begin  -- SimModel
+  process(clk,state_sig,req_in,ack_in)
+    variable nstate: RR_State;
+    variable latch_v : boolean;
+    variable req_out_v, ack_out_v : std_logic;
+  begin
+    nstate := state_sig;
+    latch_v := false;
+    req_out_v := '0';
+    ack_out_v := '0';
+    
+    case state_sig is
+      when idle =>
+        -- req_in?
+        if(req_in = '1') then
+          nstate := busy;
+          -- latch the data
+          latch_v := true;
+        end if;
+      when busy =>
+        -- pass to req_out
+        req_out_v := '1';
+        if(ack_in = '1') then
+          -- ack_in?
+          nstate := done;
+        end if;
+      when done =>
+        -- spend one cycle here.. ack_out
+        ack_out_v := '1';
+        nstate := idle;
+    end case;
+
+    req_out <= req_out_v;
+    ack_out <= ack_out_v;
+
+    if(clk'event and clk = '1') then
+      if(reset = '1') then
+        state_sig <= idle;
+      else
+        state_sig <= nstate;
+      end if;
+      
+      if(latch_v) then
+        data_out <= data_in;
+      end if;
+    end if;
+    
+  end process;
+
+end behave;
+library ieee;
+use ieee.std_logic_1164.all;
 library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;
@@ -11234,6 +11344,7 @@ begin  -- Behave
                 twidth => tag_length,
                 nreqs => num_reqs,
                 no_arbitration => no_arbitration,
+                rigid_repeater => false,
                 registered_output => min_clock_period)
     port map(
       reqL       => reqL,
@@ -11427,11 +11538,12 @@ begin  -- Behave
   
   imux: InputMuxBase
   	generic map(iwidth => (addr_width+data_width)*num_reqs ,
-	   owidth => addr_width+data_width, 
-	   twidth => tag_length,
-	   nreqs => num_reqs,
-           registered_output => min_clock_period,
-	   no_arbitration => no_arbitration)
+                    owidth => addr_width+data_width, 
+                    twidth => tag_length,
+                    nreqs => num_reqs,
+                    registered_output => min_clock_period,
+                    rigid_repeater => true,
+                    no_arbitration => no_arbitration)
     port map(
       reqL       => reqL,
       ackL       => ackL,

@@ -433,102 +433,31 @@ module nf2_core_cut_down #(
 
    generate
    if(DATA_WIDTH==64) begin: sram64
-      (* keep_hierarchy = "false" *) sram_arbiter
-        #(.SRAM_DATA_WIDTH(DATA_WIDTH+CTRL_WIDTH))
-      sram_arbiter
-        (// --- Requesters   (read and/or write)
-         .wr_0_req           (wr_0_req),
-         .wr_0_addr          (wr_0_addr),
-         .wr_0_data          (wr_0_data),
-         .wr_0_ack           (wr_0_ack),
-
-         .rd_0_req           (rd_0_req),
-         .rd_0_addr          (rd_0_addr),
-         .rd_0_data          (rd_0_data),
-         .rd_0_ack           (rd_0_ack),
-         .rd_0_vld           (rd_0_vld),
-
-         // --- sram access
-         .sram_addr          (sram_addr),
-         .sram_wr_data       (sram_wr_data),
-         .sram_rd_data       (sram_rd_data),
-         .sram_we            (sram_we),
-         .sram_bw            (sram_bw),
-         .sram_tri_en        (sram_tri_en),
-
-         // --- register interface
-         .sram_reg_req       (sram_reg_req),
-         .sram_reg_rd_wr_L   (sram_reg_rd_wr_L),
-         .sram_reg_addr      (sram_reg_addr),
-         .sram_reg_wr_data   (sram_reg_wr_data),
-         .sram_reg_rd_data   (sram_reg_rd_data),
-         .sram_reg_ack       (sram_reg_ack),
-
-         // --- Misc
-         .reset              (reset),
-         .clk                (core_clk_int)
-         );
-
-      assign sram1_wr_data = sram_wr_data[`SRAM_DATA_WIDTH - 1:0];
-      assign sram2_wr_data = sram_wr_data[2 * `SRAM_DATA_WIDTH - 1:`SRAM_DATA_WIDTH];
-      assign sram_rd_data = {sram2_rd_data, sram1_rd_data};
-      assign sram1_we     = sram_we;
-      assign sram2_we     = sram_we;
-      assign sram1_bw     = sram_bw[3:0];
-      assign sram2_bw     = sram_bw[7:4];
-      assign sram1_addr   = sram_addr;
-      assign sram2_addr   = sram_addr;
-      assign sram1_tri_en  = sram_tri_en;
-      assign sram2_tri_en  = sram_tri_en;
+      assign sram1_wr_data = 0;
+      assign sram2_wr_data = 0;
+      assign sram_rd_data =  0;
+      assign sram1_we     = ~ 1'b0;
+      assign sram2_we     = ~ 1'b0;
+      assign sram1_bw     = 0;
+      assign sram2_bw     = 0;
+      assign sram1_addr   = 0;
+      assign sram2_addr   = 0;
+      assign sram1_tri_en  = 1'b0;
+      assign sram2_tri_en  = 1'b0;
 
    end // block: sram64
    else if(DATA_WIDTH==32) begin:sram32
-      (* keep_hierarchy = "false" *) sram_arbiter
-        #(.SRAM_DATA_WIDTH(DATA_WIDTH+CTRL_WIDTH))
-      sram_arbiter
-        (// --- Requesters   (read and/or write)
-         .wr_0_req           (wr_0_req),
-         .wr_0_addr          (wr_0_addr),
-         .wr_0_data          (wr_0_data),
-         .wr_0_ack           (wr_0_ack),
 
-         .rd_0_req           (rd_0_req),
-         .rd_0_addr          (rd_0_addr),
-         .rd_0_data          (rd_0_data),
-         .rd_0_ack           (rd_0_ack),
-         .rd_0_vld           (rd_0_vld),
-
-          // --- sram_access
-         .sram_addr          (sram_addr),
-         .sram_wr_data       (sram_wr_data),
-         .sram_rd_data       (sram_rd_data),
-         .sram_we            (sram_we),
-         .sram_bw            (sram_bw),
-         .sram_tri_en        (sram_tri_en),
-
-         // --- register interface
-         .sram_reg_req       (sram_reg_req),
-         .sram_reg_rd_wr_L   (sram_reg_rd_wr_L),
-         .sram_reg_addr      (sram_reg_addr),
-         .sram_reg_wr_data   (sram_reg_wr_data),
-         .sram_reg_rd_data   (sram_reg_rd_data),
-         .sram_reg_ack       (sram_reg_ack),
-
-          // --- Misc
-         .reset              (reset),
-         .clk                (core_clk_int)
-         );
-
-      assign sram1_wr_data = sram_wr_data;
+      assign sram1_wr_data = 0;
       assign sram2_wr_data = 36'b0;
-      assign sram_rd_data = sram1_rd_data;
-      assign sram1_we     = sram_we;
+      assign sram_rd_data = 0;
+      assign sram1_we     = ~ 1'b0;
       assign sram2_we     = ~ 1'b0; // Active low
-      assign sram1_bw     = sram_bw;
+      assign sram1_bw     = 0;
       assign sram2_bw     = ~ 1'b0; // Active low
-      assign sram1_addr   = sram_addr;
+      assign sram1_addr   = 0;
       assign sram2_addr   = 'h0;
-      assign sram1_tri_en  = sram_tri_en;
+      assign sram1_tri_en  = 1'b0;
       assign sram2_tri_en  = 1'b0;
 
    end // block: sram32
@@ -538,47 +467,6 @@ module nf2_core_cut_down #(
    assign    sram2_zz = 1'b0;
 
 
-   //--------------------------------------------------
-   //
-   // --- DDR test
-   //
-   //--------------------------------------------------
-/*   ddr2_test ddr2_test(
-               .done             (dram_done),
-               .success          (dram_success),
-               .cmd              (ddr2_cmd),
-               .cmd_ack          (ddr2_cmd_ack),
-               .addr             (ddr2_addr),
-               .bank_addr        (ddr2_bank_addr),
-               .burst_done       (ddr2_burst_done),
-               .rd_data          (ddr2_rd_data),
-               .rd_data_valid    (ddr2_rd_data_valid),
-               .wr_data          (ddr2_wr_data),
-               .wr_data_mask     (ddr2_wr_data_mask),
-               .config1          (ddr2_config1),
-               .config2          (ddr2_config2),
-               .init_val         (ddr2_init_val),
-               .ar_done          (ddr2_ar_done),
-               .auto_ref_req     (ddr2_auto_ref_req),
-               .reset            (ddr2_reset),
-               .clk              (clk_ddr_200),
-               .clk90            (clk90_ddr_200),
-               .ctrl_reg_req     (1'b0),
-               .ctrl_reg_rd_wr_L (1'b1),
-               .ctrl_reg_addr    (10'h0),
-               .ctrl_reg_wr_data (0),
-               .ctrl_reg_rd_data (),
-               .ctrl_reg_ack     (),
-               .dram_reg_req     (dram_req),
-               .dram_reg_rd_wr_L (dram_rd_wr_L),
-               .dram_reg_addr    (dram_addr),
-               .dram_reg_wr_data (dram_wr_data),
-               .dram_reg_rd_data (dram_rd_data),
-               .dram_reg_ack     (dram_ack),
-               .clk_core_125     (core_clk_int),
-               .reset_core       (reset)
-            );
-*/
    //-------------------------------------------------
    // User data path
    //-------------------------------------------------
@@ -649,26 +537,6 @@ module nf2_core_cut_down #(
         .out_ctrl_6 (out_ctrl[3]),
         .out_wr_6 (out_wr[3]),
         .out_rdy_6 (out_rdy[3]),
-
-        /****  not used
-         // --- Interface to SATA
-         .out_data_5 (out_data[5]),
-         .out_ctrl_5 (out_ctrl[5]),
-         .out_wr_5 (out_wr[5]),
-         .out_rdy_5 (out_rdy[5]),
-
-         // --- Interface to the loopback queue
-         .out_data_6 (out_data[6]),
-         .out_ctrl_6 (out_ctrl[6]),
-         .out_wr_6 (out_wr[6]),
-         .out_rdy_6 (out_rdy[6]),
-
-         // --- Interface to a user queue
-         .out_data_7 (out_data[7]),
-         .out_ctrl_7 (out_ctrl[7]),
-         .out_wr_7 (out_wr[7]),
-         .out_rdy_7 (out_rdy[7]),
-         *****/
 
         // interface to SRAM
         .wr_0_addr (wr_0_addr),
