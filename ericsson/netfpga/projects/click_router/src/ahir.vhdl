@@ -1583,6 +1583,19 @@ package BaseComponents is
   -----------------------------------------------------------------------------
   -- miscellaneous
   -----------------------------------------------------------------------------
+
+  component RigidRepeater
+    generic(data_width: integer := 32);
+    port(clk: in std_logic;
+         reset: in std_logic;
+         data_in: in std_logic_vector(data_width-1 downto 0);
+         req_in: in std_logic;
+         ack_out: out std_logic;
+         data_out: out std_logic_vector(data_width-1 downto 0);
+         req_out : out std_logic;
+         ack_in: in std_logic);
+  end component RigidRepeater;
+  
   component BypassRegister 
   generic(data_width: integer; enable_bypass: boolean); 
   port (
@@ -2426,6 +2439,7 @@ package BaseComponents is
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
 	no_arbitration: Boolean;
+	time_stamp_width: integer;
         min_clock_period: Boolean
         );
     port (
@@ -2436,7 +2450,7 @@ package BaseComponents is
       dataL                    : in std_logic_vector((addr_width*num_reqs)-1 downto 0);
       -- address to memory
       maddr                   : out std_logic_vector(addr_width-1 downto 0);
-      mtag                    : out std_logic_vector(tag_length-1 downto 0);
+      mtag                    : out std_logic_vector(tag_length+time_stamp_width-1 downto 0);
       mreq                    : out std_logic;
       mack                    : in std_logic;
       -- clock, reset (active high)
@@ -2448,6 +2462,7 @@ package BaseComponents is
       (
 	addr_width: integer;
 	data_width : integer;
+	time_stamp_width: integer;
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
         min_clock_period : boolean;
@@ -2463,7 +2478,7 @@ package BaseComponents is
       -- address to memory
       maddr                   : out std_logic_vector(addr_width-1 downto 0);
       mdata                   : out std_logic_vector(data_width-1 downto 0);
-      mtag                    : out std_logic_vector(tag_length-1 downto 0);
+      mtag                    : out std_logic_vector(tag_length+time_stamp_width-1 downto 0);
       mreq                    : out std_logic;
       mack                    : in std_logic;
       -- clock, reset (active high)
@@ -3384,6 +3399,115 @@ component memory_subsystem_core
     reset       : in  std_logic);
 end component;
 
+component CombinationalMux is
+  generic (
+    g_data_width       : integer := 32;
+    g_number_of_inputs: integer := 2);
+  port(
+    in_data: in std_logic_vector((g_data_width*g_number_of_inputs)-1 downto 0);
+    out_data: out std_logic_vector(g_data_width-1 downto 0);
+    in_req: in std_logic_vector(g_number_of_inputs-1 downto 0);
+    in_ack: out std_logic_vector(g_number_of_inputs-1 downto 0);
+    out_req: out std_logic;
+    out_ack: in std_logic);
+end component CombinationalMux;
+
+component PipelinedMux is
+  generic (
+    g_number_of_inputs: natural;          
+    g_data_width: natural;          -- total width of data
+                                        -- (= actual-data & tag & port_id)
+    g_mux_degree :natural;         -- max-indegree of each pipeline-stage
+    g_port_id_width: natural
+    );       
+
+  port (
+    merge_data_in : in std_logic_vector((g_data_width*g_number_of_inputs)-1 downto 0);
+    merge_req_in  : in std_logic_vector(g_number_of_inputs-1 downto 0);
+    merge_ack_out : out std_logic_vector(g_number_of_inputs-1 downto 0);
+    merge_data_out: out std_logic_vector(g_data_width-1 downto 0);
+    merge_req_out : out std_logic;
+    merge_ack_in  : in std_logic;
+    clock: in std_logic;
+    reset: in std_logic);
+  
+end component PipelinedMux;
+
+component PipelinedMuxStage is 
+  generic (g_data_width: integer := 10;
+           g_number_of_inputs: integer := 8;
+           g_number_of_outputs: integer := 1;
+           g_tag_width : integer := 3  -- width of tag
+           );            
+
+  port(data_left: in  std_logic_vector((g_data_width*g_number_of_inputs)-1 downto 0);
+       req_in : in std_logic_vector(g_number_of_inputs-1 downto 0);
+       ack_out : out std_logic_vector(g_number_of_inputs-1 downto 0);
+       data_right: out std_logic_vector((g_data_width*g_number_of_outputs)-1 downto 0);
+       req_out : out std_logic_vector(g_number_of_outputs-1 downto 0);
+       ack_in : in std_logic_vector(g_number_of_outputs-1 downto 0);
+       clock: in std_logic;
+       reset: in std_logic);
+
+end component PipelinedMuxStage;
+
+component PipelinedDemux is
+  generic ( g_data_width: natural := 10;
+            g_destination_id_width : natural := 3;
+            g_number_of_outputs: natural := 8);
+  port(data_in: in std_logic_vector(g_data_width-1 downto 0);  -- data & destination-id 
+       sel_in : in std_logic_vector(g_destination_id_width-1 downto 0);
+       req_in: in std_logic;
+       ack_out : out std_logic;
+       data_out: out std_logic_vector((g_number_of_outputs*g_data_width)-1 downto 0 );
+       req_out: out std_logic_vector(g_number_of_outputs-1 downto 0);
+       ack_in : in std_logic_vector(g_number_of_outputs-1 downto 0);
+       clk: in std_logic;
+       reset: in std_logic);
+end component;
+
+component Mem_Test_Block 
+    generic(data_width, addr_width,tag_width, block_id,iteration_count : natural := 0);
+    port(lr_addr: out std_logic_vector(addr_width-1 downto 0);
+         lr_tag : out std_logic_vector(tag_width-1 downto 0);
+         lr_req : out std_logic;
+         lr_ack : in std_logic;
+         lc_req : out std_logic;
+         lc_ack : in std_logic;
+         lc_data : in std_logic_vector(data_width-1 downto 0);
+         lc_tag : in  std_logic_vector(tag_width-1 downto 0);
+         sr_addr: out std_logic_vector(addr_width-1 downto 0);
+         sr_data : out std_logic_vector(data_width-1 downto 0);
+         sr_tag : out std_logic_vector(tag_width-1 downto 0);
+         sr_req : out std_logic;
+         sr_ack : in std_logic;
+         sc_req : out std_logic;
+         sc_ack : in std_logic;
+         sc_tag : in  std_logic_vector(tag_width-1 downto 0);
+         clock, reset  : in std_logic);
+end component;
+
+component Unordered_Mem_Test_Block 
+    generic(data_width, addr_width,tag_width, block_id,iteration_count : natural := 0);
+    port(lr_addr: out std_logic_vector(addr_width-1 downto 0);
+         lr_tag : out std_logic_vector(tag_width-1 downto 0);
+         lr_req : out std_logic;
+         lr_ack : in std_logic;
+         lc_req : out std_logic;
+         lc_ack : in std_logic;
+         lc_data : in std_logic_vector(data_width-1 downto 0);
+         lc_tag : in  std_logic_vector(tag_width-1 downto 0);
+         sr_addr: out std_logic_vector(addr_width-1 downto 0);
+         sr_data : out std_logic_vector(data_width-1 downto 0);
+         sr_tag : out std_logic_vector(tag_width-1 downto 0);
+         sr_req : out std_logic;
+         sr_ack : in std_logic;
+         sc_req : out std_logic;
+         sc_ack : in std_logic;
+         sc_tag : in  std_logic_vector(tag_width-1 downto 0);
+         clock, reset  : in std_logic);
+end component;
+
 end package mem_component_pack;
 
 library ieee;
@@ -3768,6 +3892,150 @@ package memory_subsystem_package is
     reset : in std_logic               -- active high.
     );
     end component dummy_write_only_memory_subsystem;
+
+component ordered_memory_subsystem is
+  generic(num_loads             : natural := 5;
+          num_stores            : natural := 10;
+          addr_width            : natural := 9;
+          data_width            : natural := 5;
+          tag_width             : natural := 7;
+          time_stamp_width      : natural := 0;
+          number_of_banks       : natural := 1;
+          mux_degree            : natural := 10;
+          demux_degree          : natural := 10;
+	  base_bank_addr_width  : natural := 8;
+	  base_bank_data_width  : natural := 8);
+  port(
+    ------------------------------------------------------------------------------
+    -- load request ports
+    ------------------------------------------------------------------------------
+    lr_addr_in : in std_logic_vector((num_loads*addr_width)-1 downto 0);
+
+    -- req/ack pair:
+    -- when both are asserted, time-stamp is set on load request.
+    lr_req_in  : in  std_logic_vector(num_loads-1 downto 0);
+    lr_ack_out : out std_logic_vector(num_loads-1 downto 0);
+
+    -- tag + timestamp: tag will be returned on completion..
+    lr_tag_in : in std_logic_vector((num_loads*(tag_width+time_stamp_width))-1 downto 0);
+
+    ---------------------------------------------------------------------------
+    -- load complete ports
+    ---------------------------------------------------------------------------
+    lc_data_out : out std_logic_vector((num_loads*data_width)-1 downto 0);
+
+    -- req/ack pair:
+    -- when both are asserted, user should latch data_out.
+    lc_req_in  : in  std_logic_vector(num_loads-1 downto 0);
+    lc_ack_out : out std_logic_vector(num_loads-1 downto 0);
+
+    -- tag of completed request.
+    lc_tag_out : out std_logic_vector((num_loads*tag_width)-1 downto 0);
+
+    ------------------------------------------------------------------------------
+    -- store request ports
+    ------------------------------------------------------------------------------
+    sr_addr_in : in std_logic_vector((num_stores*addr_width)-1 downto 0);
+    sr_data_in : in std_logic_vector((num_stores*data_width)-1 downto 0);
+
+    -- req/ack pair:
+    -- when both are asserted, time-stamp is set on store request.
+    sr_req_in  : in  std_logic_vector(num_stores-1 downto 0);
+    sr_ack_out : out std_logic_vector(num_stores-1 downto 0);
+
+    -- tag for request, will be returned on completion.
+    sr_tag_in : in std_logic_vector((num_stores*(tag_width+time_stamp_width))-1 downto 0);
+
+    ---------------------------------------------------------------------------
+    -- store complete ports
+    ---------------------------------------------------------------------------
+    -- req/ack pair:
+    -- when both are asserted, user assumes that store is done.
+    sc_req_in  : in  std_logic_vector(num_stores-1 downto 0);
+    sc_ack_out : out std_logic_vector(num_stores-1 downto 0);
+
+    -- tag of completed request.
+    sc_tag_out : out std_logic_vector((num_stores*tag_width)-1 downto 0);
+
+    ------------------------------------------------------------------------------
+    -- clock, reset
+    ------------------------------------------------------------------------------
+    clock : in std_logic;  -- only rising edge is used to trigger activity.
+    reset : in std_logic               -- active high.
+    );
+end component ordered_memory_subsystem;
+
+component UnorderedMemorySubsystem is
+  generic(num_loads             : natural := 5;
+          num_stores            : natural := 10;
+          addr_width            : natural := 9;
+          data_width            : natural := 5;
+          tag_width             : natural := 7;
+          -- number_of_banks       : natural := 1; (will always be 1 in this memory)
+          mux_degree            : natural := 10;
+          demux_degree          : natural := 10;
+	  base_bank_addr_width  : natural := 8;
+	  base_bank_data_width  : natural := 8);
+  port(
+    ------------------------------------------------------------------------------
+    -- load request ports
+    ------------------------------------------------------------------------------
+    lr_addr_in : in std_logic_vector((num_loads*addr_width)-1 downto 0);
+
+    -- req/ack pair:
+    -- when both are asserted, time-stamp is set on load request.
+    lr_req_in  : in  std_logic_vector(num_loads-1 downto 0);
+    lr_ack_out : out std_logic_vector(num_loads-1 downto 0);
+
+    -- tag for request, will be returned on completion.
+    lr_tag_in : in std_logic_vector((num_loads*tag_width)-1 downto 0);
+
+    ---------------------------------------------------------------------------
+    -- load complete ports
+    ---------------------------------------------------------------------------
+    lc_data_out : out std_logic_vector((num_loads*data_width)-1 downto 0);
+
+    -- req/ack pair:
+    -- when both are asserted, user should latch data_out.
+    lc_req_in  : in  std_logic_vector(num_loads-1 downto 0);
+    lc_ack_out : out std_logic_vector(num_loads-1 downto 0);
+
+    -- tag of completed request.
+    lc_tag_out : out std_logic_vector((num_loads*tag_width)-1 downto 0);
+
+    ------------------------------------------------------------------------------
+    -- store request ports
+    ------------------------------------------------------------------------------
+    sr_addr_in : in std_logic_vector((num_stores*addr_width)-1 downto 0);
+    sr_data_in : in std_logic_vector((num_stores*data_width)-1 downto 0);
+
+    -- req/ack pair:
+    -- when both are asserted, time-stamp is set on store request.
+    sr_req_in  : in  std_logic_vector(num_stores-1 downto 0);
+    sr_ack_out : out std_logic_vector(num_stores-1 downto 0);
+
+    -- tag for request, will be returned on completion.
+    sr_tag_in : in std_logic_vector((num_stores*tag_width)-1 downto 0);
+
+    ---------------------------------------------------------------------------
+    -- store complete ports
+    ---------------------------------------------------------------------------
+    -- req/ack pair:
+    -- when both are asserted, user assumes that store is done.
+    sc_req_in  : in  std_logic_vector(num_stores-1 downto 0);
+    sc_ack_out : out std_logic_vector(num_stores-1 downto 0);
+
+    -- tag of completed request.
+    sc_tag_out : out std_logic_vector((num_stores*tag_width)-1 downto 0);
+
+    ------------------------------------------------------------------------------
+    -- clock, reset
+    ------------------------------------------------------------------------------
+    clock : in std_logic;  -- only rising edge is used to trigger activity.
+    reset : in std_logic               -- active high.
+    );
+end component UnorderedMemorySubsystem;
+
 
 end memory_subsystem_package;
 library ieee;
@@ -4162,6 +4430,601 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.mem_function_pack.all;
 use ahir.merge_functions.all;
+use ahir.mem_component_pack.all;
+
+
+-- a dummy ROM  which is never initialized.
+-- any load to it returns 0.
+entity dummy_read_only_memory_subsystem is
+  generic(num_loads             : natural := 5;
+          addr_width            : natural := 9;
+          data_width            : natural := 5;
+          tag_width             : natural := 7);
+  port(
+    ------------------------------------------------------------------------------
+    -- load request ports
+    ------------------------------------------------------------------------------
+    lr_addr_in : in std_logic_vector((num_loads*addr_width)-1 downto 0);
+
+    -- req/ack pair:
+    -- when both are asserted, time-stamp is set on load request.
+    lr_req_in  : in  std_logic_vector(num_loads-1 downto 0);
+    lr_ack_out : out std_logic_vector(num_loads-1 downto 0);
+
+    -- tag for request, will be returned on completion.
+    lr_tag_in : in std_logic_vector((num_loads*tag_width)-1 downto 0);
+
+    ---------------------------------------------------------------------------
+    -- load complete ports
+    ---------------------------------------------------------------------------
+    lc_data_out : out std_logic_vector((num_loads*data_width)-1 downto 0);
+
+    -- req/ack pair:
+    -- when both are asserted, user should latch data_out.
+    lc_req_in  : in  std_logic_vector(num_loads-1 downto 0);
+    lc_ack_out : out std_logic_vector(num_loads-1 downto 0);
+
+    -- tag of completed request.
+    lc_tag_out : out std_logic_vector((num_loads*tag_width)-1 downto 0);
+
+    ------------------------------------------------------------------------------
+    -- clock, reset
+    ------------------------------------------------------------------------------
+    clock : in std_logic;  -- only rising edge is used to trigger activity.
+    reset : in std_logic               -- active high.
+    );
+end entity dummy_read_only_memory_subsystem;
+
+
+architecture Default of dummy_read_only_memory_subsystem is
+begin
+
+     lc_data_out <= (others => '0');
+     lc_ack_out <= (others => '1');
+
+     -- ack after one tick..
+     process(clock)
+     begin
+	if(clock'event and clock = '1') then
+		if(reset = '1') then
+			lr_ack_out <= (others => '0');
+		else
+			for I in 0 to num_loads-1 loop
+				if(lr_req_in(I) = '1') then
+					lc_tag_out(((I+1)*tag_width)-1 downto I*tag_width) 
+						<= 
+						lr_tag_in(((I+1)*tag_width)-1 downto I*tag_width);
+					lr_ack_out(I) <= '1';
+				else
+					lr_ack_out(I) <= '0';
+				end if;
+			end loop;
+		end if;
+	end if;
+     end process;
+
+end Default;
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.mem_function_pack.all;
+use ahir.merge_functions.all;
+use ahir.mem_component_pack.all;
+
+-- a dummy write-only memory (perfectly useless,
+-- but plug-in for corner cases).
+entity dummy_write_only_memory_subsystem is
+  generic( num_stores            : natural := 10;
+          addr_width            : natural := 9;
+          data_width            : natural := 5;
+          tag_width             : natural := 7);
+  port(
+    ------------------------------------------------------------------------------
+    -- store request ports
+    ------------------------------------------------------------------------------
+    sr_addr_in : in std_logic_vector((num_stores*addr_width)-1 downto 0);
+    sr_data_in : in std_logic_vector((num_stores*data_width)-1 downto 0);
+
+    -- req/ack pair:
+    -- when both are asserted, time-stamp is set on store request.
+    sr_req_in  : in  std_logic_vector(num_stores-1 downto 0);
+    sr_ack_out : out std_logic_vector(num_stores-1 downto 0);
+
+    -- tag for request, will be returned on completion.
+    sr_tag_in : in std_logic_vector((num_stores*tag_width)-1 downto 0);
+
+    ---------------------------------------------------------------------------
+    -- store complete ports
+    ---------------------------------------------------------------------------
+    -- req/ack pair:
+    -- when both are asserted, user assumes that store is done.
+    sc_req_in  : in  std_logic_vector(num_stores-1 downto 0);
+    sc_ack_out : out std_logic_vector(num_stores-1 downto 0);
+
+    -- tag of completed request.
+    sc_tag_out : out std_logic_vector((num_stores*tag_width)-1 downto 0);
+
+    ------------------------------------------------------------------------------
+    -- clock, reset
+    ------------------------------------------------------------------------------
+    clock : in std_logic;  -- only rising edge is used to trigger activity.
+    reset : in std_logic               -- active high.
+    );
+end entity dummy_write_only_memory_subsystem;
+
+
+-- architecture: synchronous R/W.
+--               on destination conflict, writer with lowest index wins.
+architecture Default of dummy_write_only_memory_subsystem is
+begin
+
+     -- you are always done..
+     sc_ack_out <= (others => '1');
+
+     -- ack after one tick..
+     process(clock)
+     begin
+	if(clock'event and clock = '1') then
+		if(reset = '1') then
+			sr_ack_out <= (others => '0');
+		else
+			for I in 0 to num_stores-1 loop
+				if(sr_req_in(I) = '1') then
+					sc_tag_out(((I+1)*tag_width)-1 downto I*tag_width) 
+						<= 
+						sr_tag_in(((I+1)*tag_width)-1 downto I*tag_width);
+					sr_ack_out(I) <= '1';
+				else
+					sr_ack_out(I) <= '0';
+				end if;
+			end loop;
+		end if;
+	end if;
+     end process;
+
+end Default;
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.memory_subsystem_package.all;
+use ahir.mem_function_pack.all;
+use ahir.mem_component_pack.all;
+
+entity memory_bank_base is
+   generic ( g_addr_width: natural; 
+	g_data_width : natural;
+        g_base_bank_addr_width: natural;
+        g_base_bank_data_width: natural);
+   port (data_in : in std_logic_vector(g_data_width-1 downto 0);
+         data_out: out std_logic_vector(g_data_width-1 downto 0);
+         addr_in: in std_logic_vector(g_addr_width-1 downto 0);
+         enable: in std_logic;
+         write_bar : in std_logic;
+         clk: in std_logic;
+         reset : in std_logic);
+end entity memory_bank_base;
+
+
+architecture structural of memory_bank_base is
+  constant bank_array_width : natural := Ceiling(g_data_width,g_base_bank_data_width);
+  constant bank_array_height : natural := 2**(Maximum(0,g_addr_width-g_base_bank_addr_width));
+
+  type BankArrayDataArray is array (0 to bank_array_height-1, 0 to bank_array_width -1) of std_logic_vector(g_base_bank_data_width-1 downto 0);
+  signal data_in_array, data_out_array : BankArrayDataArray;
+  
+
+  type BankArrayControlArray is array (0 to bank_array_height-1, 0 to bank_array_width -1) of std_logic;
+  signal enable_array,enable_array_reg: BankArrayControlArray;
+  
+  signal padded_data_in,padded_data_out : std_logic_vector(bank_array_width*g_base_bank_data_width -1 downto 0);
+  signal base_addr_in : std_logic_vector(g_base_bank_addr_width -1 downto 0);
+  
+  signal write_bar_reg: std_logic;
+begin  -- structural
+
+   -- register write_bar_reg because memory read will finish after one clock.
+    process(clk,reset)
+    begin
+        if(clk'event and clk = '1') then
+		if(reset = '1') then
+			write_bar_reg <= '0';
+		else
+			write_bar_reg <= write_bar;
+		end if;
+	end if;
+    end process;
+
+process(addr_in)
+        constant l_index: natural := Minimum(g_addr_width-1, g_base_bank_addr_width-1);
+    begin
+        base_addr_in <= (others => '0');
+        base_addr_in(l_index downto 0) <= addr_in(l_index downto 0);
+    end process;
+    
+process(data_in)
+    begin
+        padded_data_in <= (others => '0');
+        padded_data_in(g_data_width-1 downto 0) <= data_in;
+    end process;
+    
+  data_out <= padded_data_out(g_data_width-1 downto 0);
+
+  -- pack/unpack
+  ColGen: for COL in 0 to bank_array_width-1 generate
+    
+    RowGen: for ROW in 0 to bank_array_height-1 generate
+      process(addr_in, enable)
+      begin
+        enable_array(ROW,COL) <= '0';
+        if(bank_array_height > 1) then
+          if(enable = '1') then
+            if(ROW = To_Integer(addr_in(g_addr_width - 1 downto g_base_bank_addr_width))) then
+              enable_array(ROW,COL) <= '1';
+            end if;
+          end if;
+        else
+          enable_array(ROW,COL) <= enable;
+        end if;
+      end process;
+
+      process(clk,reset)
+      begin
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			enable_array_reg(ROW,COL) <= '0';
+		else
+			enable_array_reg(ROW,COL) <= enable_array(ROW,COL);
+		end if;
+	end if;
+      end process;
+
+      process(padded_data_in)
+      begin
+        data_in_array(ROW,COL) <= padded_data_in((COL+1)*g_base_bank_data_width - 1 downto COL*g_base_bank_data_width);
+      end process;
+
+      baseMem : base_bank generic map (
+        g_addr_width => g_base_bank_addr_width,
+        g_data_width => g_base_bank_data_width)
+        port map (
+          datain => data_in_array(ROW, COL),
+          addrin => base_addr_in,
+          enable => enable_array(ROW,COL),
+          writebar => write_bar,
+          dataout => data_out_array(ROW,COL),
+          clk => clk,
+          reset => reset);
+      
+    end generate RowGen;
+    
+    process(data_out_array,enable_array, write_bar)
+    begin
+      padded_data_out((COL+1)*g_base_bank_data_width -1 downto (COL*g_base_bank_data_width)) <= (others => '0');
+      for ROW in 0 to bank_array_height-1 loop
+	-- use delayed version of enable and write_bar to pass read data
+        if(enable_array_reg(ROW,COL) = '1' and write_bar_reg = '1') then
+          padded_data_out((COL+1)*g_base_bank_data_width -1 downto (COL*g_base_bank_data_width)) <= data_out_array(ROW,COL);
+        end if;
+      end loop;  -- ROW
+    end process;
+    
+  end generate ColGen;
+
+end structural;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.mem_function_pack.all;
+use ahir.mem_component_pack.all;
+
+entity memory_bank is
+   generic (
+     g_addr_width: natural;
+     g_data_width: natural;
+     g_write_tag_width : natural;
+     g_read_tag_width : natural;
+     g_time_stamp_width: natural;
+     g_base_bank_addr_width: natural;
+     g_base_bank_data_width: natural
+	);
+   port (
+     clk : in std_logic;
+     reset: in std_logic;
+     write_data     : in  std_logic_vector(g_data_width-1 downto 0);
+     write_addr     : in std_logic_vector(g_addr_width-1 downto 0);
+     write_tag      : in std_logic_vector(g_write_tag_width-1 downto 0);
+     write_tag_out  : out std_logic_vector(g_write_tag_width-1 downto 0);
+     write_enable   : in std_logic;
+     write_ack   : out std_logic;
+     write_result_accept : in std_logic;
+     write_result_ready : out std_logic;
+     read_data     : out std_logic_vector(g_data_width-1 downto 0);
+     read_addr     : in std_logic_vector(g_addr_width-1 downto 0);
+     read_tag      : in std_logic_vector(g_read_tag_width-1 downto 0);
+     read_tag_out  : out std_logic_vector(g_read_tag_width-1 downto 0);
+     read_enable   : in std_logic;
+     read_ack      : out std_logic;
+     read_result_accept: in std_logic;
+     read_result_ready: out std_logic
+     );
+end entity memory_bank;
+
+
+architecture SimModel of memory_bank is
+
+  signal write_done, read_done, write_has_priority: std_logic;
+  signal write_address_sig, read_address_sig : natural range 0 to (2**g_addr_width)-1;
+  signal state_sig: std_logic;
+  signal enable_base,enable_sig, write_enable_base, read_enable_base: std_logic;
+
+  signal addr_base : std_logic_vector(g_addr_width-1 downto 0);
+  signal block_write_ack, block_read_ack: std_logic;
+  
+  
+begin  -- behave
+
+  Tstampgen: if g_time_stamp_width > 0 generate 
+  
+  tstamp_block: Block
+  	signal read_time_stamp, write_time_stamp: std_logic_vector(g_time_stamp_width-1 downto 0);
+  begin 
+  	read_time_stamp <= read_tag(g_time_stamp_width-1 downto 0);
+  	write_time_stamp <= write_tag(g_time_stamp_width-1 downto 0);
+
+  	process(read_time_stamp,write_time_stamp, read_enable, write_enable)
+  	begin
+      	if(write_enable = '1' and read_enable = '1') then
+		if(IsGreaterThan(read_time_stamp,write_time_stamp)) then
+        		write_has_priority <=   '1';
+		else
+			write_has_priority <= '0';
+		end if;
+      	elsif(write_enable = '1') then
+		write_has_priority <= '1';
+      	elsif(read_enable = '1') then
+		write_has_priority <= '0';
+      	else
+		write_has_priority <= '1';
+      	end if;
+  	end process;
+   end block;
+   end generate Tstampgen;
+
+   NoTstampGen: if g_time_stamp_width <= 0 generate
+        write_has_priority <= not read_enable;
+   end generate NoTstampGen;
+
+
+  -- basically, the enable/ack pair and the ready/accept pair
+  -- have to be coordinated: in one complete cycle, the
+  -- following sequence must be followed
+  --  enable -> ready -> accept -> ack.
+  process(reset,write_enable,write_has_priority,read_enable,clk, write_tag, read_tag)
+  begin
+    if clk'event and clk = '1' then
+
+      -- one cycle delay through memory bank
+      write_tag_out <= write_tag;
+      read_tag_out  <= read_tag;
+      
+      if(reset = '1') then
+        write_done <= '0';
+        read_done <= '0';
+      else
+        if(write_enable = '1' and (write_has_priority = '1' or read_enable = '0')) then
+          write_done <= '1';
+        else
+          write_done <= '0';
+        end if; 
+        if(read_enable = '1' and (write_has_priority = '0' or write_enable = '0')) then
+          read_done <= '1';
+        else
+          read_done <= '0';
+        end if;
+      end if;
+    end if;
+  end process;
+
+  -- ack when done 
+  block_write_ack <= '1' when (write_done = '1' and write_result_accept = '0') else '0';
+  write_ack <= '1' when (write_enable = '1' and (read_enable = '0' or write_has_priority = '1') and  block_write_ack = '0') else '0';
+  write_result_ready <= write_done;
+  
+  -- ack to read only when result is also enabled
+  block_read_ack <= '1' when (read_done = '1' and read_result_accept = '0') else '0';
+  read_ack <= '1' when (read_enable = '1' and (write_enable = '0' or write_has_priority = '0') and  block_read_ack = '0') else '0';
+  read_result_ready <= read_done;  
+
+
+  process(write_enable, write_has_priority, block_write_ack)
+  begin  -- process
+      if(write_enable = '1' and write_has_priority = '1' and block_write_ack = '0') then
+	write_enable_base <= '1';
+      else
+	write_enable_base <= '0';
+      end if;
+  end process;
+
+  
+  process(read_enable,  write_has_priority, block_read_ack)
+  begin
+    if(read_enable = '1' and write_has_priority = '0' and block_read_ack = '0') then
+	read_enable_base <= '1';
+    else
+	read_enable_base <= '0';
+    end if;
+  end process;
+
+  addr_base <= write_addr when write_enable_base = '1' else read_addr when read_enable_base = '1' else (others => '0');
+  enable_sig <= write_enable_base or read_enable_base;
+  
+  memBase: memory_bank_base generic map(g_addr_width => g_addr_width,
+                                        g_data_width => g_data_width,
+					g_base_bank_addr_width => g_base_bank_addr_width,
+					g_base_bank_data_width => g_base_bank_data_width)
+    port map(data_in => write_data,
+             addr_in => addr_base,
+             data_out => read_data,
+             enable => enable_sig,
+             write_bar => read_enable_base,
+             clk => clk,
+             reset => reset);
+  
+end SimModel;
+
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+-- effectively a two entry queue.
+-- used to break combinational paths
+-- at the cost of a single cycle delay from input
+-- to output.
+entity mem_repeater is
+    generic(g_data_width: integer := 32);
+    port(clk: in std_logic;
+       reset: in std_logic;
+       data_in: in std_logic_vector(g_data_width-1 downto 0);
+       req_in: in std_logic;
+       ack_out : out std_logic;
+       data_out: out std_logic_vector(g_data_width-1 downto 0);
+       req_out : out std_logic;
+       ack_in: in std_logic);
+end entity mem_repeater;
+
+architecture behave of mem_repeater is
+
+  signal stage0, stage1: std_logic_vector(g_data_width-1 downto 0);
+  signal top_pointer, bottom_pointer : std_logic;
+  
+  signal queue_size : unsigned(1 downto 0);
+
+  signal queue_full_sig, queue_empty_sig: std_logic;
+  signal incr_q_size, decr_q_size : std_logic;
+  
+begin  -- SimModel
+
+  queue_full_sig <= '1' when queue_size = 2 else '0';
+  queue_empty_sig <= '1' when queue_size = 0 else '0';
+
+  -- size manipulation
+  process(clk)
+  begin
+    if(clk'event and clk = '1') then
+      if(reset = '1') then
+        queue_size <= (others => '0');
+        top_pointer <= '0';
+        bottom_pointer <= '0';
+      else
+
+        if(incr_q_size = '1' and (decr_q_size = '0')) then
+          queue_size <= queue_size + 1;
+        elsif((incr_q_size = '0') and decr_q_size = '1') then
+          queue_size <= queue_size - 1;
+        end if;
+
+        -- increment mod 2
+        if(incr_q_size = '1') then
+          top_pointer <= not top_pointer;
+        end if;
+
+        -- increment mod 2
+        if(decr_q_size = '1') then
+          bottom_pointer <= not bottom_pointer;
+        end if;
+      end if;
+    end if;
+  end process;
+
+  ack_out <= not queue_full_sig;
+  incr_q_size <= req_in and (not queue_full_sig);
+  
+  -- write
+  process(clk)
+  begin
+    if(clk'event and clk = '1') then
+      if incr_q_size = '1' then
+        if(top_pointer = '1') then
+          stage1 <= data_in;
+        else
+          stage0 <= data_in;
+        end if;
+      end if;
+    end if;
+  end process;
+
+  decr_q_size <= (not queue_empty_sig) and  ack_in;
+  req_out     <= (not queue_empty_sig);
+  
+  data_out <= stage1 when bottom_pointer = '1' else stage0;
+
+end behave;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.mem_component_pack.all;
+
+entity mem_shift_repeater is
+    generic(g_data_width: integer := 32; g_number_of_stages: natural := 16);
+    port(clk: in std_logic;
+       reset: in std_logic;
+       data_in: in std_logic_vector(g_data_width-1 downto 0);
+       req_in: in std_logic;
+       ack_out : out std_logic;
+       data_out: out std_logic_vector(g_data_width-1 downto 0);
+       req_out : out std_logic;
+       ack_in: in std_logic);
+end entity mem_shift_repeater;
+
+architecture behave of mem_shift_repeater is
+
+  type DataArray is array (natural range <>) of std_logic_vector(g_data_width-1 downto 0);
+  signal idata : DataArray(0 to g_number_of_stages);
+  signal ireq,iack : std_logic_vector(0 to g_number_of_stages);
+
+begin  -- SimModel
+
+  idata(0) <= data_in;
+  ireq(0)  <= req_in;
+  ack_out <= iack(0);
+
+  data_out <= idata(g_number_of_stages);
+  req_out <= ireq(g_number_of_stages);
+  iack(g_number_of_stages) <= ack_in;
+
+  ifGen: if g_number_of_stages > 0 generate
+
+    RepGen: for I in 0 to g_number_of_stages-1 generate
+      rptr : mem_repeater generic map (
+        g_data_width => g_data_width)
+        port map (
+          clk      => clk,
+          reset    => reset,
+          data_in  => idata(I),
+          req_in   => ireq(I),
+          ack_out  => iack(I),
+          data_out => idata(I+1),
+          req_out  => ireq(I+1),
+          ack_in   => iack(I+1));
+    end generate RepGen;
+  end generate ifGen; 
+
+end behave;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.mem_function_pack.all;
+use ahir.merge_functions.all;
 
 entity combinational_merge is
   generic (
@@ -4330,168 +5193,6 @@ use ahir.mem_function_pack.all;
 use ahir.merge_functions.all;
 use ahir.mem_component_pack.all;
 
-
--- a dummy ROM  which is never initialized.
--- any load to it returns 0.
-entity dummy_read_only_memory_subsystem is
-  generic(num_loads             : natural := 5;
-          addr_width            : natural := 9;
-          data_width            : natural := 5;
-          tag_width             : natural := 7);
-  port(
-    ------------------------------------------------------------------------------
-    -- load request ports
-    ------------------------------------------------------------------------------
-    lr_addr_in : in std_logic_vector((num_loads*addr_width)-1 downto 0);
-
-    -- req/ack pair:
-    -- when both are asserted, time-stamp is set on load request.
-    lr_req_in  : in  std_logic_vector(num_loads-1 downto 0);
-    lr_ack_out : out std_logic_vector(num_loads-1 downto 0);
-
-    -- tag for request, will be returned on completion.
-    lr_tag_in : in std_logic_vector((num_loads*tag_width)-1 downto 0);
-
-    ---------------------------------------------------------------------------
-    -- load complete ports
-    ---------------------------------------------------------------------------
-    lc_data_out : out std_logic_vector((num_loads*data_width)-1 downto 0);
-
-    -- req/ack pair:
-    -- when both are asserted, user should latch data_out.
-    lc_req_in  : in  std_logic_vector(num_loads-1 downto 0);
-    lc_ack_out : out std_logic_vector(num_loads-1 downto 0);
-
-    -- tag of completed request.
-    lc_tag_out : out std_logic_vector((num_loads*tag_width)-1 downto 0);
-
-    ------------------------------------------------------------------------------
-    -- clock, reset
-    ------------------------------------------------------------------------------
-    clock : in std_logic;  -- only rising edge is used to trigger activity.
-    reset : in std_logic               -- active high.
-    );
-end entity dummy_read_only_memory_subsystem;
-
-
-architecture Default of dummy_read_only_memory_subsystem is
-begin
-
-     lc_data_out <= (others => '0');
-     lc_ack_out <= (others => '1');
-
-     -- ack after one tick..
-     process(clock)
-     begin
-	if(clock'event and clock = '1') then
-		if(reset = '1') then
-			lr_ack_out <= (others => '0');
-		else
-			for I in 0 to num_loads-1 loop
-				if(lr_req_in(I) = '1') then
-					lc_tag_out(((I+1)*tag_width)-1 downto I*tag_width) 
-						<= 
-						lr_tag_in(((I+1)*tag_width)-1 downto I*tag_width);
-					lr_ack_out(I) <= '1';
-				else
-					lr_ack_out(I) <= '0';
-				end if;
-			end loop;
-		end if;
-	end if;
-     end process;
-
-end Default;
-
-library ieee;
-use ieee.std_logic_1164.all;
-
-library ahir;
-use ahir.mem_function_pack.all;
-use ahir.merge_functions.all;
-use ahir.mem_component_pack.all;
-
--- a dummy write-only memory (perfectly useless,
--- but plug-in for corner cases).
-entity dummy_write_only_memory_subsystem is
-  generic( num_stores            : natural := 10;
-          addr_width            : natural := 9;
-          data_width            : natural := 5;
-          tag_width             : natural := 7);
-  port(
-    ------------------------------------------------------------------------------
-    -- store request ports
-    ------------------------------------------------------------------------------
-    sr_addr_in : in std_logic_vector((num_stores*addr_width)-1 downto 0);
-    sr_data_in : in std_logic_vector((num_stores*data_width)-1 downto 0);
-
-    -- req/ack pair:
-    -- when both are asserted, time-stamp is set on store request.
-    sr_req_in  : in  std_logic_vector(num_stores-1 downto 0);
-    sr_ack_out : out std_logic_vector(num_stores-1 downto 0);
-
-    -- tag for request, will be returned on completion.
-    sr_tag_in : in std_logic_vector((num_stores*tag_width)-1 downto 0);
-
-    ---------------------------------------------------------------------------
-    -- store complete ports
-    ---------------------------------------------------------------------------
-    -- req/ack pair:
-    -- when both are asserted, user assumes that store is done.
-    sc_req_in  : in  std_logic_vector(num_stores-1 downto 0);
-    sc_ack_out : out std_logic_vector(num_stores-1 downto 0);
-
-    -- tag of completed request.
-    sc_tag_out : out std_logic_vector((num_stores*tag_width)-1 downto 0);
-
-    ------------------------------------------------------------------------------
-    -- clock, reset
-    ------------------------------------------------------------------------------
-    clock : in std_logic;  -- only rising edge is used to trigger activity.
-    reset : in std_logic               -- active high.
-    );
-end entity dummy_write_only_memory_subsystem;
-
-
--- architecture: synchronous R/W.
---               on destination conflict, writer with lowest index wins.
-architecture Default of dummy_write_only_memory_subsystem is
-begin
-
-     -- you are always done..
-     sc_ack_out <= (others => '1');
-
-     -- ack after one tick..
-     process(clock)
-     begin
-	if(clock'event and clock = '1') then
-		if(reset = '1') then
-			sr_ack_out <= (others => '0');
-		else
-			for I in 0 to num_stores-1 loop
-				if(sr_req_in(I) = '1') then
-					sc_tag_out(((I+1)*tag_width)-1 downto I*tag_width) 
-						<= 
-						sr_tag_in(((I+1)*tag_width)-1 downto I*tag_width);
-					sr_ack_out(I) <= '1';
-				else
-					sr_ack_out(I) <= '0';
-				end if;
-			end loop;
-		end if;
-	end if;
-     end process;
-
-end Default;
-
-library ieee;
-use ieee.std_logic_1164.all;
-
-library ahir;
-use ahir.mem_function_pack.all;
-use ahir.merge_functions.all;
-use ahir.mem_component_pack.all;
-
 entity mem_demux is
   generic ( g_data_width: natural := 10;
             g_id_width : natural := 3;
@@ -4556,287 +5257,6 @@ begin  -- behave
   end generate gen;
 
 end behave;
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-library ahir;
-use ahir.memory_subsystem_package.all;
-use ahir.mem_function_pack.all;
-use ahir.mem_component_pack.all;
-
-entity memory_bank_base is
-   generic ( g_addr_width: natural; 
-	g_data_width : natural;
-        g_base_bank_addr_width: natural;
-        g_base_bank_data_width: natural);
-   port (data_in : in std_logic_vector(g_data_width-1 downto 0);
-         data_out: out std_logic_vector(g_data_width-1 downto 0);
-         addr_in: in std_logic_vector(g_addr_width-1 downto 0);
-         enable: in std_logic;
-         write_bar : in std_logic;
-         clk: in std_logic;
-         reset : in std_logic);
-end entity memory_bank_base;
-
-
-architecture structural of memory_bank_base is
-  constant bank_array_width : natural := Ceiling(g_data_width,g_base_bank_data_width);
-  constant bank_array_height : natural := 2**(Maximum(0,g_addr_width-g_base_bank_addr_width));
-
-  type BankArrayDataArray is array (0 to bank_array_height-1, 0 to bank_array_width -1) of std_logic_vector(g_base_bank_data_width-1 downto 0);
-  signal data_in_array, data_out_array : BankArrayDataArray;
-  
-
-  type BankArrayControlArray is array (0 to bank_array_height-1, 0 to bank_array_width -1) of std_logic;
-  signal enable_array,enable_array_reg: BankArrayControlArray;
-  
-  signal padded_data_in,padded_data_out : std_logic_vector(bank_array_width*g_base_bank_data_width -1 downto 0);
-  signal base_addr_in : std_logic_vector(g_base_bank_addr_width -1 downto 0);
-  
-  signal write_bar_reg: std_logic;
-begin  -- structural
-
-   -- register write_bar_reg because memory read will finish after one clock.
-    process(clk,reset)
-    begin
-        if(clk'event and clk = '1') then
-		if(reset = '1') then
-			write_bar_reg <= '0';
-		else
-			write_bar_reg <= write_bar;
-		end if;
-	end if;
-    end process;
-
-process(addr_in)
-        constant l_index: natural := Minimum(g_addr_width-1, g_base_bank_addr_width-1);
-    begin
-        base_addr_in <= (others => '0');
-        base_addr_in(l_index downto 0) <= addr_in(l_index downto 0);
-    end process;
-    
-process(data_in)
-    begin
-        padded_data_in <= (others => '0');
-        padded_data_in(g_data_width-1 downto 0) <= data_in;
-    end process;
-    
-  data_out <= padded_data_out(g_data_width-1 downto 0);
-
-  -- pack/unpack
-  ColGen: for COL in 0 to bank_array_width-1 generate
-    
-    RowGen: for ROW in 0 to bank_array_height-1 generate
-      process(addr_in, enable)
-      begin
-        enable_array(ROW,COL) <= '0';
-        if(bank_array_height > 1) then
-          if(enable = '1') then
-            if(ROW = To_Integer(addr_in(g_addr_width - 1 downto g_base_bank_addr_width))) then
-              enable_array(ROW,COL) <= '1';
-            end if;
-          end if;
-        else
-          enable_array(ROW,COL) <= enable;
-        end if;
-      end process;
-
-      process(clk,reset)
-      begin
-	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			enable_array_reg(ROW,COL) <= '0';
-		else
-			enable_array_reg(ROW,COL) <= enable_array(ROW,COL);
-		end if;
-	end if;
-      end process;
-
-      process(padded_data_in)
-      begin
-        data_in_array(ROW,COL) <= padded_data_in((COL+1)*g_base_bank_data_width - 1 downto COL*g_base_bank_data_width);
-      end process;
-
-      baseMem : base_bank generic map (
-        g_addr_width => g_base_bank_addr_width,
-        g_data_width => g_base_bank_data_width)
-        port map (
-          datain => data_in_array(ROW, COL),
-          addrin => base_addr_in,
-          enable => enable_array(ROW,COL),
-          writebar => write_bar,
-          dataout => data_out_array(ROW,COL),
-          clk => clk,
-          reset => reset);
-      
-    end generate RowGen;
-    
-    process(data_out_array,enable_array, write_bar)
-    begin
-      padded_data_out((COL+1)*g_base_bank_data_width -1 downto (COL*g_base_bank_data_width)) <= (others => '0');
-      for ROW in 0 to bank_array_height-1 loop
-	-- use delayed version of enable and write_bar to pass read data
-        if(enable_array_reg(ROW,COL) = '1' and write_bar_reg = '1') then
-          padded_data_out((COL+1)*g_base_bank_data_width -1 downto (COL*g_base_bank_data_width)) <= data_out_array(ROW,COL);
-        end if;
-      end loop;  -- ROW
-    end process;
-    
-  end generate ColGen;
-
-end structural;
-library ieee;
-use ieee.std_logic_1164.all;
-
-library ahir;
-use ahir.mem_function_pack.all;
-use ahir.mem_component_pack.all;
-
-entity memory_bank is
-   generic (
-     g_addr_width: natural;
-     g_data_width: natural;
-     g_write_tag_width : natural;
-     g_read_tag_width : natural;
-     g_time_stamp_width: natural;
-	g_base_bank_addr_width: natural;
-	g_base_bank_data_width: natural
-	);
-   port (
-     clk : in std_logic;
-     reset: in std_logic;
-     write_data     : in  std_logic_vector(g_data_width-1 downto 0);
-     write_addr     : in std_logic_vector(g_addr_width-1 downto 0);
-     write_tag      : in std_logic_vector(g_write_tag_width-1 downto 0);
-     write_tag_out  : out std_logic_vector(g_write_tag_width-1 downto 0);
-     write_enable   : in std_logic;
-     write_ack   : out std_logic;
-     write_result_accept : in std_logic;
-     write_result_ready : out std_logic;
-     read_data     : out std_logic_vector(g_data_width-1 downto 0);
-     read_addr     : in std_logic_vector(g_addr_width-1 downto 0);
-     read_tag      : in std_logic_vector(g_read_tag_width-1 downto 0);
-     read_tag_out  : out std_logic_vector(g_read_tag_width-1 downto 0);
-     read_enable   : in std_logic;
-     read_ack      : out std_logic;
-     read_result_accept: in std_logic;
-     read_result_ready: out std_logic
-     );
-end entity memory_bank;
-
-
-architecture SimModel of memory_bank is
-
-  signal write_done, read_done, write_has_priority: std_logic;
-  signal write_address_sig, read_address_sig : natural range 0 to (2**g_addr_width)-1;
-  signal read_time_stamp, write_time_stamp: std_logic_vector(g_time_stamp_width-1 downto 0);
-  signal state_sig: std_logic;
-  signal enable_base,enable_sig, write_enable_base, read_enable_base: std_logic;
-
-  signal addr_base : std_logic_vector(g_addr_width-1 downto 0);
-  signal block_write_ack, block_read_ack: std_logic;
-  
-  
-begin  -- behave
-  read_time_stamp <= read_tag(g_time_stamp_width-1 downto 0);
-  write_time_stamp <= write_tag(g_time_stamp_width-1 downto 0);
-
-  process(read_time_stamp,write_time_stamp, read_enable, write_enable)
-  begin
-      if(write_enable = '1' and read_enable = '1') then
-	if(IsGreaterThan(read_time_stamp,write_time_stamp)) then
-        	write_has_priority <=   '1';
-	else
-		write_has_priority <= '0';
-	end if;
-      elsif(write_enable = '1') then
-	write_has_priority <= '1';
-      elsif(read_enable = '1') then
-	write_has_priority <= '0';
-      else
-	write_has_priority <= '1';
-      end if;
-  end process;
-
-
-  -- basically, the enable/ack pair and the ready/accept pair
-  -- have to be coordinated: in one complete cycle, the
-  -- following sequence must be followed
-  --  enable -> ready -> accept -> ack.
-  process(reset,write_enable,write_has_priority,read_enable,clk, write_tag, read_tag)
-  begin
-    if clk'event and clk = '1' then
-
-      -- one cycle delay through memory bank
-      write_tag_out <= write_tag;
-      read_tag_out  <= read_tag;
-      
-      if(reset = '1') then
-        write_done <= '0';
-        read_done <= '0';
-      else
-        if(write_enable = '1' and ( write_has_priority = '1' or read_enable = '0')) then
-          write_done <= '1';
-        else
-          write_done <= '0';
-        end if; 
-        if(read_enable = '1' and ( write_has_priority = '0' or write_enable = '0')) then
-          read_done <= '1';
-        else
-          read_done <= '0';
-        end if;
-      end if;
-    end if;
-  end process;
-
-  -- ack when done 
-  block_write_ack <= '1' when (write_done = '1' and write_result_accept = '0') else '0';
-  write_ack <= '1' when (write_enable = '1' and write_has_priority = '1' and  block_write_ack = '0') else '0';
-  write_result_ready <= write_done;
-  
-  -- ack to read only when result is also enabled
-  block_read_ack <= '1' when (read_done = '1' and read_result_accept = '0') else '0';
-  read_ack <= '1' when (read_enable = '1' and write_has_priority = '0' and  block_read_ack = '0') else '0';
-  read_result_ready <= read_done;  
-
-
-  process(write_enable, write_has_priority, block_write_ack)
-  begin  -- process
-      if(write_enable = '1' and write_has_priority = '1' and block_write_ack = '0') then
-	write_enable_base <= '1';
-      else
-	write_enable_base <= '0';
-      end if;
-  end process;
-
-  
-  process(read_enable,  write_has_priority, block_read_ack)
-  begin
-    if(read_enable = '1' and write_has_priority = '0' and block_read_ack = '0') then
-	read_enable_base <= '1';
-    else
-	read_enable_base <= '0';
-    end if;
-  end process;
-
-  addr_base <= write_addr when write_enable_base = '1' else read_addr when read_enable_base = '1' else (others => '0');
-  enable_sig <= write_enable_base or read_enable_base;
-  
-  memBase: memory_bank_base generic map(g_addr_width => g_addr_width,
-                                        g_data_width => g_data_width,
-					g_base_bank_addr_width => g_base_bank_addr_width,
-					g_base_bank_data_width => g_base_bank_data_width)
-    port map(data_in => write_data,
-             addr_in => addr_base,
-             data_out => read_data,
-             enable => enable_sig,
-             write_bar => read_enable_base,
-             clk => clk,
-             reset => reset);
-  
-end SimModel;
-
 library ieee;
 use ieee.std_logic_1164.all;
 
@@ -5660,146 +6080,119 @@ begin
       reset       => reset);    
 end bufwrap;
 
-
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
--- effectively a two entry queue.
--- used to break combinational paths
--- at the cost of a single cycle delay from input
--- to output.
-entity mem_repeater is
-    generic(g_data_width: integer := 32);
-    port(clk: in std_logic;
-       reset: in std_logic;
-       data_in: in std_logic_vector(g_data_width-1 downto 0);
-       req_in: in std_logic;
-       ack_out : out std_logic;
-       data_out: out std_logic_vector(g_data_width-1 downto 0);
-       req_out : out std_logic;
-       ack_in: in std_logic);
-end entity mem_repeater;
-
-architecture behave of mem_repeater is
-
-  signal stage0, stage1: std_logic_vector(g_data_width-1 downto 0);
-  signal top_pointer, bottom_pointer : std_logic;
-  
-  signal queue_size : unsigned(1 downto 0);
-
-  signal queue_full_sig, queue_empty_sig: std_logic;
-  signal incr_q_size, decr_q_size : std_logic;
-  
-begin  -- SimModel
-
-  queue_full_sig <= '1' when queue_size = 2 else '0';
-  queue_empty_sig <= '1' when queue_size = 0 else '0';
-
-  -- size manipulation
-  process(clk)
-  begin
-    if(clk'event and clk = '1') then
-      if(reset = '1') then
-        queue_size <= (others => '0');
-        top_pointer <= '0';
-        bottom_pointer <= '0';
-      else
-
-        if(incr_q_size = '1' and (decr_q_size = '0')) then
-          queue_size <= queue_size + 1;
-        elsif((incr_q_size = '0') and decr_q_size = '1') then
-          queue_size <= queue_size - 1;
-        end if;
-
-        -- increment mod 2
-        if(incr_q_size = '1') then
-          top_pointer <= not top_pointer;
-        end if;
-
-        -- increment mod 2
-        if(decr_q_size = '1') then
-          bottom_pointer <= not bottom_pointer;
-        end if;
-      end if;
-    end if;
-  end process;
-
-  ack_out <= incr_q_size;
-  incr_q_size <= req_in and (not queue_full_sig);
-  
-  -- write
-  process(clk)
-  begin
-    if(clk'event and clk = '1') then
-      if incr_q_size = '1' then
-        if(top_pointer = '1') then
-          stage1 <= data_in;
-        else
-          stage0 <= data_in;
-        end if;
-      end if;
-    end if;
-  end process;
-
-  decr_q_size <= (not queue_empty_sig) and  ack_in;
-  req_out     <= (not queue_empty_sig);
-  
-  data_out <= stage1 when bottom_pointer = '1' else stage0;
-
-end behave;
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
 
 library ahir;
+use ahir.mem_function_pack.all;
+use ahir.merge_functions.all;
 use ahir.mem_component_pack.all;
 
-entity mem_shift_repeater is
-    generic(g_data_width: integer := 32; g_number_of_stages: natural := 16);
-    port(clk: in std_logic;
-       reset: in std_logic;
-       data_in: in std_logic_vector(g_data_width-1 downto 0);
-       req_in: in std_logic;
-       ack_out : out std_logic;
-       data_out: out std_logic_vector(g_data_width-1 downto 0);
-       req_out : out std_logic;
-       ack_in: in std_logic);
-end entity mem_shift_repeater;
+entity Mem_Test_Block is
+  generic(data_width, addr_width,tag_width, block_id, iteration_count : natural := 0);
+  port(lr_addr: out std_logic_vector(addr_width-1 downto 0);
+       lr_tag : out std_logic_vector(tag_width-1 downto 0);
+       lr_req : out std_logic;
+       lr_ack : in std_logic;
+       lc_req : out std_logic;
+       lc_ack : in std_logic;
+       lc_data : in std_logic_vector(data_width-1 downto 0);
+       lc_tag : in  std_logic_vector(tag_width-1 downto 0);
+       sr_addr: out std_logic_vector(addr_width-1 downto 0);
+       sr_data : out std_logic_vector(data_width-1 downto 0);
+       sr_tag : out std_logic_vector(tag_width-1 downto 0);
+       sr_req : out std_logic;
+       sr_ack : in std_logic;
+       sc_req : out std_logic;
+       sc_ack : in std_logic;
+       sc_tag : in  std_logic_vector(tag_width-1 downto 0);
+       clock, reset  : in std_logic);
+end entity;
 
-architecture behave of mem_shift_repeater is
 
-  type DataArray is array (natural range <>) of std_logic_vector(g_data_width-1 downto 0);
-  signal idata : DataArray(0 to g_number_of_stages);
-  signal ireq,iack : std_logic_vector(0 to g_number_of_stages);
+architecture behave of Mem_Test_Block is
+  -- purpose: catch U/X
+  function Is01 (
+    constant x : std_logic_vector)
+    return boolean is
+    alias lx : std_logic_vector(1 to x'length) is x;
+    variable ret_var : boolean;
+  begin  -- Is01
+    ret_var := true;
+    for I  in 1 to x'length loop
+      if(lx(I) /= '0' and lx(I) /= '1') then
+        ret_var := false;
+        exit;
+      end if;
+    end loop;  -- I 
+    return(ret_var);
+  end Is01;
 
-begin  -- SimModel
+  signal Lsig : natural;
+begin  -- behave
 
-  idata(0) <= data_in;
-  ireq(0)  <= req_in;
-  ack_out <= iack(0);
+  -- request process
+  process
+    constant tag : std_logic_vector(tag_width-1 downto 0) := Natural_To_SLV(block_id,tag_width);
+  begin
+    sr_req <= '0';
+    lr_req <= '0';
+    sr_addr <= (others => '0');
+    lr_addr <= (others => '0');
+    sr_data <= (others => '0');
+    sr_tag <= (others => '0');
+    lr_tag <= (others => '0');
 
-  data_out <= idata(g_number_of_stages);
-  req_out <= ireq(g_number_of_stages);
-  iack(g_number_of_stages) <= ack_in;
+    wait on reset until reset = '0';
+    for I in 0 to iteration_count - 1 loop
+      wait on clock until clock = '1';
+      wait for 1 ns;
+      sr_addr <= Natural_To_SLV(I,addr_width-tag_width) & tag;
+      sr_data <= Natural_To_SLV(I+block_id,data_width);
+      sr_tag <= tag;
+      sr_req <= '1';
+      while(sr_ack /= '1') loop
+        wait on clock until clock = '1';
+      end loop;
+      sr_req <= '0';
+      lr_addr <= Natural_To_SLV(I,addr_width-tag_width) & tag;
+      lr_tag <= Natural_To_SLV(I,tag_width);
+      lr_tag  <= tag;
+      lr_req <= '1';
+      while(lr_ack /= '1') loop
+        wait on clock until clock = '1';
+      end loop;
+      wait for 1 ns;
+      lr_req <= '0';
+    end loop;  -- I
+    assert false report "Test Over in Block " & Convert_To_String(block_id) severity note;
+    wait;
+  end process;
 
-  ifGen: if g_number_of_stages > 0 generate
+  -- complete process
+  process
+    variable L : natural := block_id;
+    variable dval : std_logic_vector(1 to data_width);
+  begin
+    Lsig <= L;
+    lc_req <= '1';
+    wait on reset until reset = '0';
+    while true loop
+      wait on clock until clock = '1';
+      if(lc_ack = '1') then
+        dval := Natural_To_SLV(L,data_width);
+        assert (lc_data = dval) report "LOAD ERROR: expected= " & Convert_To_String(dval) & " actual= "
+          & Convert_To_String(lc_data)  severity error;
+      
+        assert Is01(lc_data) report "LOAD ERROR: U/X seen in output " severity error;
+        L := L + 1;
+        Lsig <= L;
+      end if;
+    end loop;
+  end process;
 
-    RepGen: for I in 0 to g_number_of_stages-1 generate
-      rptr : mem_repeater generic map (
-        g_data_width => g_data_width)
-        port map (
-          clk      => clk,
-          reset    => reset,
-          data_in  => idata(I),
-          req_in   => ireq(I),
-          ack_out  => iack(I),
-          data_out => idata(I+1),
-          req_out  => ireq(I+1),
-          ack_in   => iack(I+1));
-    end generate RepGen;
-  end generate ifGen; 
-
+  sc_req <= '1';
+  
 end behave;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -6119,6 +6512,566 @@ use ahir.mem_function_pack.all;
 use ahir.merge_functions.all;
 use ahir.mem_component_pack.all;
 
+-- memory subsystem guarantees that accesses to the same location
+-- will take place in the order of the time-stamp assigned to each
+-- access (tie breaks will be random). Time-stamp is set at the
+-- point of acceptance of an access request.
+
+entity ordered_memory_subsystem is
+  generic(num_loads             : natural := 5;
+          num_stores            : natural := 10;
+          addr_width            : natural := 9;
+          data_width            : natural := 5;
+          tag_width             : natural := 7;
+          time_stamp_width      : natural := 0;
+          number_of_banks       : natural := 1;
+          mux_degree            : natural := 10;
+          demux_degree          : natural := 10;
+	  base_bank_addr_width  : natural := 8;
+	  base_bank_data_width  : natural := 8);
+  port(
+    ------------------------------------------------------------------------------
+    -- load request ports
+    ------------------------------------------------------------------------------
+    lr_addr_in : in std_logic_vector((num_loads*addr_width)-1 downto 0);
+
+    -- req/ack pair:
+    -- when both are asserted, time-stamp is set on load request.
+    lr_req_in  : in  std_logic_vector(num_loads-1 downto 0);
+    lr_ack_out : out std_logic_vector(num_loads-1 downto 0);
+
+    -- tag + timestamp: tag will be returned on completion..
+    lr_tag_in: in std_logic_vector((num_loads*(tag_width+time_stamp_width))-1 downto 0);
+
+    ---------------------------------------------------------------------------
+    -- load complete ports
+    ---------------------------------------------------------------------------
+    lc_data_out : out std_logic_vector((num_loads*data_width)-1 downto 0);
+
+    -- req/ack pair:
+    -- when both are asserted, user should latch data_out.
+    lc_req_in  : in  std_logic_vector(num_loads-1 downto 0);
+    lc_ack_out : out std_logic_vector(num_loads-1 downto 0);
+
+    -- tag of completed request.
+    lc_tag_out : out std_logic_vector((num_loads*tag_width)-1 downto 0);
+
+    ------------------------------------------------------------------------------
+    -- store request ports
+    ------------------------------------------------------------------------------
+    sr_addr_in : in std_logic_vector((num_stores*addr_width)-1 downto 0);
+    sr_data_in : in std_logic_vector((num_stores*data_width)-1 downto 0);
+
+    -- req/ack pair:
+    -- when both are asserted, time-stamp is set on store request.
+    sr_req_in  : in  std_logic_vector(num_stores-1 downto 0);
+    sr_ack_out : out std_logic_vector(num_stores-1 downto 0);
+
+    -- tag for request, will be returned on completion.
+    sr_tag_in : in std_logic_vector((num_stores*(tag_width+time_stamp_width))-1 downto 0);
+
+    ---------------------------------------------------------------------------
+    -- store complete ports
+    ---------------------------------------------------------------------------
+    -- req/ack pair:
+    -- when both are asserted, user assumes that store is done.
+    sc_req_in  : in  std_logic_vector(num_stores-1 downto 0);
+    sc_ack_out : out std_logic_vector(num_stores-1 downto 0);
+
+    -- tag of completed request.
+    sc_tag_out : out std_logic_vector((num_stores*tag_width)-1 downto 0);
+
+    ------------------------------------------------------------------------------
+    -- clock, reset
+    ------------------------------------------------------------------------------
+    clock : in std_logic;  -- only rising edge is used to trigger activity.
+    reset : in std_logic               -- active high.
+    );
+end entity ordered_memory_subsystem;
+
+
+architecture bufwrap of ordered_memory_subsystem is
+
+  
+  signal lr_addr_in_core :std_logic_vector((num_loads*addr_width)-1 downto 0);
+  signal lr_req_in_core  :std_logic_vector(num_loads-1 downto 0);
+  signal lr_ack_out_core :std_logic_vector(num_loads-1 downto 0);
+  signal lr_tag_in_core :std_logic_vector((num_loads*tag_width)-1 downto 0);
+  signal lr_time_stamp_in_core :std_logic_vector((num_loads*time_stamp_width)-1 downto 0);  
+
+  signal sr_addr_in_core :std_logic_vector((num_stores*addr_width)-1 downto 0);
+  signal sr_data_in_core :std_logic_vector((num_stores*data_width)-1 downto 0);
+  signal sr_req_in_core  : std_logic_vector(num_stores-1 downto 0);
+  signal sr_ack_out_core : std_logic_vector(num_stores-1 downto 0);
+  signal sr_tag_in_core :std_logic_vector((num_stores*tag_width)-1 downto 0);
+  signal sr_time_stamp_in_core :std_logic_vector((num_stores*time_stamp_width)-1 downto 0);
+  
+
+  type LoadRepeaterData is array (natural range <> ) of std_logic_vector(time_stamp_width+addr_width+tag_width - 1 downto 0);
+  type StoreRepeaterData is array (natural range <> ) of std_logic_vector(time_stamp_width+data_width+addr_width+tag_width - 1 downto 0);
+  signal load_repeater_data_in, load_repeater_data_out: LoadRepeaterData(0 to num_loads-1);
+  signal store_repeater_data_in, store_repeater_data_out: StoreRepeaterData(0 to num_stores-1);
+
+  signal raw_time_stamp: std_logic_vector(time_stamp_width-1 downto 0);
+
+begin
+
+  -- instantiate repeaters for each load and store input
+  LoadRepGen: for LOAD in 0 to num_loads-1 generate
+
+
+    load_repeater_data_in(LOAD) <= lr_addr_in((LOAD+1)*addr_width-1 downto LOAD*addr_width) &
+                                   lr_tag_in((LOAD+1)*(tag_width+time_stamp_width) - 1 downto 
+					LOAD*(tag_width+time_stamp_width));
+
+    lr_time_stamp_in_core((LOAD+1)*time_stamp_width -1 downto LOAD*time_stamp_width) <=
+      load_repeater_data_out(LOAD)(time_stamp_width-1 downto 0);
+    
+    lr_addr_in_core((LOAD+1)*addr_width -1 downto LOAD*addr_width) <=
+      load_repeater_data_out(LOAD)(addr_width+tag_width+time_stamp_width-1 downto tag_width+time_stamp_width);
+    lr_tag_in_core((LOAD+1)*tag_width-1 downto LOAD*tag_width) <= load_repeater_data_out(LOAD)(tag_width+time_stamp_width-1 downto time_stamp_width);
+    
+    Rptr : mem_shift_repeater generic map (
+      g_data_width => time_stamp_width+ addr_width + tag_width,
+	g_number_of_stages => 1)
+      port map (
+        clk      => clock,
+        reset    => reset,
+        data_in  => load_repeater_data_in(LOAD),
+        req_in   => lr_req_in(LOAD),
+        ack_out  => lr_ack_out(LOAD),
+        data_out => load_repeater_data_out(LOAD),
+        req_out  => lr_req_in_core(LOAD),
+        ack_in   => lr_ack_out_core(LOAD));
+    
+  end generate LoadRepGen;
+
+
+  StoreRepGen: for STORE in 0 to num_stores-1 generate
+    store_repeater_data_in(STORE) <= sr_data_in((STORE+1)*data_width-1 downto STORE*data_width) &
+                                     sr_addr_in((STORE+1)*addr_width-1 downto STORE*addr_width) &
+                                     sr_tag_in((STORE+1)*(tag_width+time_stamp_width) - 1 downto 
+						STORE*(tag_width+time_stamp_width));
+
+    sr_time_stamp_in_core((STORE+1)*time_stamp_width -1 downto STORE*time_stamp_width) <=
+      store_repeater_data_out(STORE)(time_stamp_width-1 downto 0);
+    sr_data_in_core((STORE+1)*data_width -1 downto STORE*data_width) <=
+          store_repeater_data_out(STORE)(data_width+addr_width+tag_width+time_stamp_width-1 downto addr_width+tag_width+time_stamp_width);
+    sr_addr_in_core((STORE+1)*addr_width -1 downto STORE*addr_width) <=
+      store_repeater_data_out(STORE)(addr_width+tag_width+time_stamp_width-1 downto tag_width+time_stamp_width);
+    sr_tag_in_core((STORE+1)*tag_width-1 downto STORE*tag_width) <= store_repeater_data_out(STORE)(tag_width+time_stamp_width-1 downto time_stamp_width);
+    
+    Rptr : mem_shift_repeater generic map (
+      g_data_width => time_stamp_width+data_width + addr_width + tag_width,
+      g_number_of_stages => 1)
+      port map (
+        clk      => clock,
+        reset    => reset,
+        data_in  => store_repeater_data_in(STORE),
+        req_in   => sr_req_in(STORE),
+        ack_out  => sr_ack_out(STORE),
+        data_out => store_repeater_data_out(STORE),
+        req_out  => sr_req_in_core(STORE),
+        ack_in   => sr_ack_out_core(STORE));
+    
+  end generate StoreRepGen;
+
+  core: memory_subsystem_core
+    generic map (
+      num_loads            => num_loads,
+      num_stores           => num_stores,
+      addr_width           => addr_width,
+      data_width           => data_width,
+      tag_width            => tag_width,
+      time_stamp_width     => time_stamp_width,
+      number_of_banks      => number_of_banks,
+      mux_degree           => mux_degree,
+      demux_degree         => demux_degree,
+      base_bank_addr_width => base_bank_addr_width,
+      base_bank_data_width => base_bank_data_width)
+    port map (
+      lr_addr_in  => lr_addr_in_core,
+      lr_req_in   => lr_req_in_core,
+      lr_ack_out  => lr_ack_out_core,
+      lr_tag_in   => lr_tag_in_core,
+      lr_time_stamp_in => lr_time_stamp_in_core,
+      lc_data_out => lc_data_out,
+      lc_req_in   => lc_req_in,
+      lc_ack_out  => lc_ack_out,
+      lc_tag_out  => lc_tag_out,
+      sr_addr_in  => sr_addr_in_core,
+      sr_data_in  => sr_data_in_core,
+      sr_req_in   => sr_req_in_core,
+      sr_ack_out  => sr_ack_out_core,
+      sr_tag_in   => sr_tag_in_core,
+      sr_time_stamp_in => sr_time_stamp_in_core,      
+      sc_ack_out  => sc_ack_out,
+      sc_req_in   => sc_req_in,
+      sc_tag_out  => sc_tag_out,
+      clock       => clock,
+      reset       => reset);    
+end bufwrap;
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.types.all;
+use ahir.utilities.all;
+use ahir.subprograms.all;
+
+entity CombinationalMux is
+  generic (
+    g_data_width       : integer := 32;
+    g_number_of_inputs: integer := 2);
+  port(
+    in_data: in std_logic_vector((g_data_width*g_number_of_inputs)-1 downto 0);
+    out_data: out std_logic_vector(g_data_width-1 downto 0);
+    in_req: in std_logic_vector(g_number_of_inputs-1 downto 0);
+    in_ack: out std_logic_vector(g_number_of_inputs-1 downto 0);
+    out_req: out std_logic;
+    out_ack: in std_logic);
+end CombinationalMux;
+
+architecture combinational_merge of CombinationalMux is
+
+  signal sel_vector : std_logic_vector(g_number_of_inputs-1 downto 0);
+  
+begin  -- combinational_merge
+
+  sel_vector <= PriorityEncode(in_req);
+  out_req <= OrReduce(in_req);
+  in_ack <= sel_vector when out_ack = '1' else (others => '0');
+
+
+
+  process(sel_vector,in_data)
+  begin
+    out_data <= (others => '0');
+    for I in 0 to g_number_of_inputs-1 loop
+	if(sel_vector(I) = '1') then
+	 	out_data <= in_data((g_data_width*(I+1))-1 downto (g_data_width*I));
+		exit;
+	end if;
+    end loop;
+  end process;
+	   
+  
+  AckGen: for I in 0 to g_number_of_inputs-1 generate
+    in_ack(I) <= '1' when (sel_vector(I) = '1'  and out_ack = '1' and in_req(I) = '1') else '0';
+  end generate AckGen;
+  
+end combinational_merge;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+use ahir.Utilities.all;
+use ahir.Subprograms.all;
+use ahir.mem_function_pack.all;
+use ahir.merge_functions.all;
+use ahir.mem_component_pack.all;
+use ahir.Utilities.all;
+
+entity PipelinedDemux is
+  generic ( g_data_width: natural := 10;
+            g_destination_id_width : natural := 3;
+            g_number_of_outputs: natural := 8);
+  port(data_in: in std_logic_vector(g_data_width-1 downto 0);  -- data & destination-id 
+       sel_in : in std_logic_vector(g_destination_id_width-1 downto 0);
+       req_in: in std_logic;
+       ack_out : out std_logic;
+       data_out: out std_logic_vector((g_number_of_outputs*g_data_width)-1 downto 0 );
+       req_out: out std_logic_vector(g_number_of_outputs-1 downto 0);
+       ack_in : in std_logic_vector(g_number_of_outputs-1 downto 0);
+       clk: in std_logic;
+       reset: in std_logic);
+end entity;
+
+architecture behave of PipelinedDemux is
+  type SigArrayType is array (natural range <>) of std_logic_vector(g_data_width-1 downto 0);
+
+  signal data_out_sig,repeater_out_sig : SigArrayType(g_number_of_outputs-1 downto 0);
+  signal req_out_sig, ack_in_sig : std_logic_vector(g_number_of_outputs-1 downto 0);
+  signal conditioned_ack_in_sig: std_logic_vector(g_number_of_outputs-1 downto 0);
+
+begin  -- behave
+
+  
+  conditioned_ack_in_sig <= ack_in_sig and req_out_sig;
+  ack_out <= OrReduce(conditioned_ack_in_sig);
+    
+  gen: for I in 0 to g_number_of_outputs-1 generate
+
+    data_out_sig(I) <= data_in;
+    
+    process(data_in, sel_in, req_in)
+      variable port_index : natural;
+    begin
+      port_index := To_Integer(sel_in);
+      req_out_sig(I) <= '0';
+      if(req_in = '1' and port_index = I) then
+        req_out_sig(I) <= req_in;
+      end if;
+    end process;
+      
+    Repeater : QueueBase generic map(queue_depth => 2, data_width => g_data_width)
+    port map (
+      clk      => clk,
+      reset    => reset,
+      data_in  => data_out_sig(I),
+      push_req  => req_out_sig(I),
+      push_ack  => ack_in_sig(I),
+      data_out => repeater_out_sig(I),
+      pop_ack  => req_out(I),
+      pop_Req   => ack_in(I));
+
+    data_out((I+1)*g_data_width -1 downto I*g_data_width) <= repeater_out_sig(I);
+  end generate gen;
+
+end behave;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.mem_function_pack.all;
+use ahir.merge_functions.all;
+use ahir.mem_component_pack.all;
+use ahir.BaseComponents.all;
+
+entity PipelinedMuxStage is 
+  generic (g_data_width: integer := 10;
+           g_number_of_inputs: integer := 8;
+           g_number_of_outputs: integer := 1;
+           g_tag_width : integer := 3  -- width of tag
+           );            
+
+  port(data_left: in  std_logic_vector((g_data_width*g_number_of_inputs)-1 downto 0);
+       req_in : in std_logic_vector(g_number_of_inputs-1 downto 0);
+       ack_out : out std_logic_vector(g_number_of_inputs-1 downto 0);
+       data_right: out std_logic_vector((g_data_width*g_number_of_outputs)-1 downto 0);
+       req_out : out std_logic_vector(g_number_of_outputs-1 downto 0);
+       ack_in : in std_logic_vector(g_number_of_outputs-1 downto 0);
+       clock: in std_logic;
+       reset: in std_logic);
+
+end PipelinedMuxStage;
+
+architecture behave of PipelinedMuxStage is
+
+  constant c_num_inputs_per_tree : integer := Ceiling(g_number_of_inputs,g_number_of_outputs);
+  constant c_residual_num_inputs_per_tree : integer := (g_number_of_inputs - ((g_number_of_outputs-1)*c_num_inputs_per_tree));
+  
+  signal in_data : std_logic_vector((g_data_width*g_number_of_inputs)-1 downto 0);
+  signal in_req,in_ack : std_logic_vector(g_number_of_inputs-1 downto 0);
+  signal out_req,out_ack : std_logic_vector(g_number_of_outputs-1 downto 0);
+  signal out_data : std_logic_vector((g_number_of_outputs*g_data_width)-1 downto 0);
+  
+  signal repeater_in, repeater_out : std_logic_vector((g_number_of_outputs*g_data_width)-1 downto 0);
+  signal repeater_in_req,repeater_in_ack,repeater_out_req,repeater_out_ack : std_logic_vector(g_number_of_outputs-1 downto 0);
+
+  
+begin  -- behave
+
+  assert g_number_of_inputs > 0 and g_number_of_outputs > 0 report "at least one i/p and o/p needed in merge-box with repeater" severity error;
+  
+  -- unpack input-side signals.
+  genIn: for I in 0 to g_number_of_inputs-1 generate
+    in_data((g_data_width*(I+1))-1 downto (g_data_width*I)) <=
+      data_left((g_data_width*(I+1) -1) downto (g_data_width*I));
+    in_req(I) <= req_in(I);
+    ack_out(I) <= in_ack(I);
+  end generate genIn;
+
+  -- unpack output side signals.
+  genOut: for I in 0 to g_number_of_outputs-1 generate
+    repeater_in((g_data_width)*(I+1)-1 downto ((g_data_width)*I))
+      <= out_data((g_data_width*(I+1))-1 downto (g_data_width*I));
+    repeater_in_req(I) <= out_req(I);
+    out_ack(I) <= repeater_in_ack(I);
+    
+    data_right((g_data_width*(I+1))-1 downto (g_data_width*I)) <=
+          repeater_out((g_data_width)*(I+1)-1 downto ((g_data_width)*I));
+    req_out(I) <= repeater_out_req(I);
+    repeater_out_ack(I) <= ack_in(I);
+  end generate genOut;
+
+  -- now instantiate the comb.merge block followed by the
+  -- repeater.
+  ifgen: if g_number_of_outputs > 1 generate
+    
+    genLogic: for J in 0 to g_number_of_outputs-2 generate
+
+      cmerge: CombinationalMux
+        generic map(g_data_width        => g_data_width,
+                    g_number_of_inputs  => c_num_inputs_per_tree)
+        port map(in_data    => in_data    (((J+1)*c_num_inputs_per_tree*g_data_width)-1
+                                           downto
+                                           (J*c_num_inputs_per_tree*g_data_width)),
+                 out_data   => out_data   ((J+1)*(g_data_width)-1 downto (J*g_data_width)),
+                 in_req     => in_req     (((J+1)*c_num_inputs_per_tree)-1 downto (J*c_num_inputs_per_tree)),
+                 in_ack     => in_ack     (((J+1)*c_num_inputs_per_tree)-1 downto (J*c_num_inputs_per_tree)),
+                 out_req    => out_req    (J),
+                 out_ack    => out_ack    (J));
+
+      Rptr: QueueBase generic map(queue_depth => 2, data_width => g_data_width)
+        port map(clk      => clock,
+                 reset    => reset,
+                 data_in  => repeater_in      ((J+1)*(g_data_width) -1 downto (J*(g_data_width))),
+                 push_req   => repeater_in_req  (J),
+                 push_ack  => repeater_in_ack  (J),
+                 data_out => repeater_out     ((J+1)*(g_data_width) -1 downto (J*(g_data_width))),
+                 pop_ack  => repeater_out_req (J),
+                 pop_req   => repeater_out_ack (J));
+      
+    end generate genLogic;
+  end generate ifgen;
+
+
+  -- residual block
+  cmerge: CombinationalMux
+    generic map(g_data_width        => g_data_width,
+                g_number_of_inputs  => c_residual_num_inputs_per_tree)
+    port map(in_data    => in_data    ((g_number_of_inputs*g_data_width-1) downto
+                                       ((g_number_of_inputs*g_data_width) -
+                                        (c_residual_num_inputs_per_tree*g_data_width))),
+             out_data   => out_data   ((g_number_of_outputs)*(g_data_width)-1 downto
+                                       ((g_number_of_outputs-1)*g_data_width)),
+             in_req     => in_req     (g_number_of_inputs-1 downto
+                                       (g_number_of_inputs - c_residual_num_inputs_per_tree)),
+             in_ack     => in_ack     (g_number_of_inputs-1 downto
+                                       (g_number_of_inputs - c_residual_num_inputs_per_tree)),
+             out_req    => out_req    (g_number_of_outputs-1),
+             out_ack    => out_ack    (g_number_of_outputs-1));
+
+  -- residual repeater
+  Rptr: QueueBase generic map(queue_depth => 2, data_width => g_data_width)
+    port map(clk      => clock,
+             reset    => reset,
+             data_in  => repeater_in      ((g_number_of_outputs)*(g_data_width) -1 downto ((g_number_of_outputs-1)*(g_data_width))),
+             push_req   => repeater_in_req  (g_number_of_outputs-1),
+             push_ack  => repeater_in_ack  (g_number_of_outputs-1),
+             data_out => repeater_out     ((g_number_of_outputs)*(g_data_width) -1 downto ((g_number_of_outputs-1)*(g_data_width))),
+             pop_ack  => repeater_out_req (g_number_of_outputs-1),
+             pop_req   => repeater_out_ack (g_number_of_outputs-1));
+
+end behave;
+library ieee;
+use ieee.std_logic_1164.all;
+
+
+library ahir;
+use ahir.mem_function_pack.all;
+use ahir.merge_functions.all;
+use ahir.mem_component_pack.all;
+
+entity PipelinedMux is
+  generic (
+    g_number_of_inputs: natural;          
+    g_data_width: natural;          -- total width of data
+                                        -- (= actual-data & tag & port_id)
+    g_mux_degree :natural;         -- max-indegree of each pipeline-stage
+    g_port_id_width: natural
+    );       
+
+  port (
+    merge_data_in : in std_logic_vector((g_data_width*g_number_of_inputs)-1 downto 0);
+    merge_req_in  : in std_logic_vector(g_number_of_inputs-1 downto 0);
+    merge_ack_out : out std_logic_vector(g_number_of_inputs-1 downto 0);
+    merge_data_out: out std_logic_vector(g_data_width-1 downto 0);
+    merge_req_out : out std_logic;
+    merge_ack_in  : in std_logic;
+    clock: in std_logic;
+    reset: in std_logic);
+  
+end PipelinedMux;
+
+
+architecture pipelined of PipelinedMux is
+  constant c_number_of_stages : integer := Maximum(1,Ceil_Log(g_number_of_inputs, g_mux_degree));
+  constant c_total_intermediate_width : natural := Total_Intermediate_Width(g_number_of_inputs,g_mux_degree);
+
+  -- intermediate signals used to cross levels.
+  signal intermediate_vector : std_logic_vector(0 to ((g_data_width)*c_total_intermediate_width)-1);  
+  signal intermediate_req_vector : std_logic_vector(0 to (c_total_intermediate_width)-1);
+  signal intermediate_ack_vector : std_logic_vector(0 to (c_total_intermediate_width)-1);
+
+begin  -- behave
+
+  assert Stage_Width(c_number_of_stages,g_mux_degree, g_number_of_inputs) = 1 report "last stage should have one input!" severity error;
+  
+  intermediate_vector(
+    Left_Index(0,g_mux_degree,g_number_of_inputs)*g_data_width to
+    ((Right_Index(0,g_mux_degree,g_number_of_inputs)+1)*g_data_width)-1)
+    <= merge_data_in;
+
+  intermediate_req_vector(
+    Left_Index(0,g_mux_degree,g_number_of_inputs) to
+    Right_Index(0,g_mux_degree,g_number_of_inputs))
+    <= merge_req_in;
+
+  merge_ack_out <=
+    intermediate_ack_vector(
+      Left_Index(0,g_mux_degree,g_number_of_inputs) to
+      Right_Index(0,g_mux_degree,g_number_of_inputs));
+
+  PipelineGen:  for LEVEL  in 0 to c_number_of_stages-1  generate
+
+    -- Each stage has multiple inputs and multiple outputs..
+    mBoxPipeStage : PipelinedMuxStage generic map (
+      g_data_width => g_data_width,
+      g_number_of_inputs => Stage_Width(LEVEL,g_mux_degree,g_number_of_inputs),
+      g_number_of_outputs => Stage_Width(LEVEL+1,g_mux_degree,g_number_of_inputs))
+      port map ( data_left =>
+                 intermediate_vector(
+                   Left_Index(LEVEL,g_mux_degree,g_number_of_inputs)*g_data_width to
+                   ((Right_Index(LEVEL,g_mux_degree,g_number_of_inputs)+1)*g_data_width)-1),
+                 req_in =>
+                 intermediate_req_vector(
+                   Left_Index(LEVEL,g_mux_degree,g_number_of_inputs) to
+                   Right_Index(LEVEL,g_mux_degree,g_number_of_inputs)),
+                 ack_out =>
+                   intermediate_ack_vector(
+                     Left_Index(LEVEL,g_mux_degree,g_number_of_inputs) to
+                     Right_Index(LEVEL,g_mux_degree,g_number_of_inputs)),
+                 data_right =>
+                 intermediate_vector(
+                   Left_Index(LEVEL+1,g_mux_degree,g_number_of_inputs)*g_data_width to
+                   ((Right_Index(LEVEL+1,g_mux_degree,g_number_of_inputs)+1)*g_data_width)-1),
+                 req_out =>
+                 intermediate_req_vector(
+                   Left_Index(LEVEL+1,g_mux_degree,g_number_of_inputs) to
+                   Right_Index(LEVEL+1,g_mux_degree,g_number_of_inputs)),
+                 ack_in =>
+                   intermediate_ack_vector(
+                     Left_Index(LEVEL+1,g_mux_degree,g_number_of_inputs) to
+                     Right_Index(LEVEL+1,g_mux_degree,g_number_of_inputs)),
+                 clock => clock,
+                 reset => reset);
+                   
+  end generate;  -- PipelineGen
+
+  -- to the right (pad the required number of shifts)
+  merge_data_out <= intermediate_vector(
+        Left_Index(c_number_of_stages,g_mux_degree,g_number_of_inputs)*g_data_width to
+        ((Right_Index(c_number_of_stages,g_mux_degree,g_number_of_inputs)+1)*g_data_width)-1);
+  merge_req_out <= 
+	intermediate_req_vector(Left_Index(c_number_of_stages,g_mux_degree, g_number_of_inputs));
+  intermediate_ack_vector(Left_Index(c_number_of_stages,g_mux_degree, g_number_of_inputs)) 
+	<= merge_ack_in;
+
+
+end pipelined;
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.mem_function_pack.all;
+use ahir.merge_functions.all;
+use ahir.mem_component_pack.all;
+
 -------------------------------------------------------------------------------
 -- a simplified version of the memory subsystem to be used
 -- when the number of storage locations is small..
@@ -6363,6 +7316,444 @@ begin
   
 end Default;
 
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.mem_function_pack.all;
+use ahir.merge_functions.all;
+use ahir.mem_component_pack.all;
+
+-- memory subsystem guarantees that accesses to the same location
+-- will take place in the order of the time-stamp assigned to each
+-- access (tie breaks will be random). Time-stamp is set at the
+-- point of acceptance of an access request.
+
+entity UnorderedMemorySubsystem is
+  generic(num_loads             : natural := 5;
+          num_stores            : natural := 10;
+          addr_width            : natural := 9;
+          data_width            : natural := 5;
+          tag_width             : natural := 7;
+          -- number_of_banks       : natural := 1; (will always be 1 in this memory)
+          mux_degree            : natural := 10;
+          demux_degree          : natural := 10;
+	  base_bank_addr_width  : natural := 8;
+	  base_bank_data_width  : natural := 8);
+  port(
+    ------------------------------------------------------------------------------
+    -- load request ports
+    ------------------------------------------------------------------------------
+    lr_addr_in : in std_logic_vector((num_loads*addr_width)-1 downto 0);
+
+    -- req/ack pair:
+    -- when both are asserted, time-stamp is set on load request.
+    lr_req_in  : in  std_logic_vector(num_loads-1 downto 0);
+    lr_ack_out : out std_logic_vector(num_loads-1 downto 0);
+
+    -- tag for request, will be returned on completion.
+    lr_tag_in : in std_logic_vector((num_loads*tag_width)-1 downto 0);
+
+    ---------------------------------------------------------------------------
+    -- load complete ports
+    ---------------------------------------------------------------------------
+    lc_data_out : out std_logic_vector((num_loads*data_width)-1 downto 0);
+
+    -- req/ack pair:
+    -- when both are asserted, user should latch data_out.
+    lc_req_in  : in  std_logic_vector(num_loads-1 downto 0);
+    lc_ack_out : out std_logic_vector(num_loads-1 downto 0);
+
+    -- tag of completed request.
+    lc_tag_out : out std_logic_vector((num_loads*tag_width)-1 downto 0);
+
+    ------------------------------------------------------------------------------
+    -- store request ports
+    ------------------------------------------------------------------------------
+    sr_addr_in : in std_logic_vector((num_stores*addr_width)-1 downto 0);
+    sr_data_in : in std_logic_vector((num_stores*data_width)-1 downto 0);
+
+    -- req/ack pair:
+    -- when both are asserted, time-stamp is set on store request.
+    sr_req_in  : in  std_logic_vector(num_stores-1 downto 0);
+    sr_ack_out : out std_logic_vector(num_stores-1 downto 0);
+
+    -- tag for request, will be returned on completion.
+    sr_tag_in : in std_logic_vector((num_stores*tag_width)-1 downto 0);
+
+    ---------------------------------------------------------------------------
+    -- store complete ports
+    ---------------------------------------------------------------------------
+    -- req/ack pair:
+    -- when both are asserted, user assumes that store is done.
+    sc_req_in  : in  std_logic_vector(num_stores-1 downto 0);
+    sc_ack_out : out std_logic_vector(num_stores-1 downto 0);
+
+    -- tag of completed request.
+    sc_tag_out : out std_logic_vector((num_stores*tag_width)-1 downto 0);
+
+    ------------------------------------------------------------------------------
+    -- clock, reset
+    ------------------------------------------------------------------------------
+    clock : in std_logic;  -- only rising edge is used to trigger activity.
+    reset : in std_logic               -- active high.
+    );
+end entity UnorderedMemorySubsystem;
+
+
+architecture struct of UnorderedMemorySubsystem is
+
+  
+  constant c_load_port_id_width : natural := Maximum(1,Ceil_Log2(num_loads));
+  constant c_store_port_id_width : natural := Maximum(1,Ceil_Log2(num_stores));
+
+  type LoadPortIdArray is array (natural range <>) of std_logic_vector(c_load_port_id_width-1 downto 0);
+  type StorePortIdArray is array (natural range <>) of std_logic_vector(c_store_port_id_width-1 downto 0);
+  
+  function StorePortIdGen (
+    constant x : natural;
+    constant width : natural
+    )
+    return StorePortIdArray
+  is
+    variable ret_var : StorePortIdArray(0 to x-1);
+    variable curr_value : std_logic_vector(width-1 downto 0);
+  begin
+    curr_value := (others => '0');
+    ret_var := (others => (others => '0'));
+    for I  in 0 to x-1 loop
+      ret_var(I) := curr_value;
+      curr_value := IncrementSLV(curr_value);
+    end loop;  -- I
+    return(ret_var);
+  end function StorePortIdGen;
+
+  function LoadPortIdGen (
+    constant x : natural;
+    constant width : natural
+    )
+    return LoadPortIdArray
+  is
+    variable ret_var : LoadPortIdArray(0 to x-1);
+    variable curr_value : std_logic_vector(width-1 downto 0);
+  begin
+    curr_value := (others => '0');
+    ret_var := (others => (others => '0'));
+    for I  in 0 to x-1 loop
+      ret_var(I) := curr_value;
+      curr_value := IncrementSLV(curr_value);
+    end loop;  -- I
+    return(ret_var);
+  end function LoadPortIdGen;
+
+  constant c_load_port_id_array : LoadPortIdArray := LoadPortIdGen(num_loads, c_load_port_id_width);
+  constant c_store_port_id_array : StorePortIdArray := StorePortIdGen(num_stores, c_store_port_id_width);
+
+  constant rd_mux_data_width: integer :=  (addr_width + tag_width + c_load_port_id_width );
+  constant wr_mux_data_width: integer :=  (addr_width + data_width + tag_width + c_store_port_id_width);
+
+  signal rd_mux_data_in : std_logic_vector((num_loads*rd_mux_data_width)-1 downto 0);
+  signal rd_mux_data_out : std_logic_vector(rd_mux_data_width-1 downto 0);
+  signal rd_mux_out_req : std_logic;
+  signal rd_mux_out_ack : std_logic;
+
+  signal wr_mux_data_in : std_logic_vector((num_stores*wr_mux_data_width)-1 downto 0);
+  signal wr_mux_data_out : std_logic_vector(wr_mux_data_width-1 downto 0);
+  signal wr_mux_out_req : std_logic;
+  signal wr_mux_out_ack : std_logic;
+
+  signal rd_demux_sel_in  : std_logic_vector(c_load_port_id_width-1 downto 0);
+  signal rd_demux_data_in : std_logic_vector(data_width+tag_width-1 downto 0);
+  signal rd_demux_data_out : std_logic_vector((num_loads*(data_width+tag_width))-1 downto 0);
+  signal rd_demux_in_req, rd_demux_in_ack : std_logic;
+  signal rd_demux_out_req, rd_demux_out_ack : std_logic_vector(num_loads-1 downto 0);
+
+  signal wr_demux_sel_in : std_logic_vector(c_store_port_id_width-1 downto 0);
+  signal wr_demux_data_in : std_logic_vector(tag_width-1 downto 0);
+  signal wr_demux_data_out : std_logic_vector((num_stores*tag_width)-1 downto 0);
+  signal wr_demux_in_req, wr_demux_in_ack : std_logic;
+  signal wr_demux_out_req, wr_demux_out_ack : std_logic_vector(num_stores-1 downto 0);
+
+  signal mem_bank_write_data     : std_logic_vector(data_width-1 downto 0);
+  signal mem_bank_write_addr     : std_logic_vector(addr_width-1 downto 0);
+  signal mem_bank_write_tag, mem_bank_write_tag_out : 
+	std_logic_vector(tag_width+c_store_port_id_width-1 downto 0);
+  signal mem_bank_write_enable   : std_logic;
+  signal mem_bank_write_ack   : std_logic;
+  signal mem_bank_write_result_accept : std_logic;
+  signal mem_bank_write_result_ready : std_logic;
+  signal mem_bank_read_data     : std_logic_vector(data_width-1 downto 0);
+  signal mem_bank_read_addr     : std_logic_vector(addr_width-1 downto 0);
+  signal mem_bank_read_tag,mem_bank_read_tag_out  : std_logic_vector((c_load_port_id_width+tag_width)-1 downto 0);
+  signal mem_bank_read_enable   : std_logic;
+  signal mem_bank_read_ack      : std_logic;
+  signal mem_bank_read_result_accept: std_logic;
+  signal mem_bank_read_result_ready: std_logic;
+
+begin
+
+   -- read mux data aggregation
+   process(lr_addr_in)
+   begin
+	for I in 0 to num_loads-1 loop
+		rd_mux_data_in((rd_mux_data_width*(I+1))-1 downto rd_mux_data_width*I)
+			<= lr_addr_in((addr_width*(I+1))-1 downto addr_width*I) &
+				lr_tag_in((tag_width*(I+1))-1 downto tag_width*I) &
+				   c_load_port_id_array(I); 
+	end loop;
+   end process;
+
+  
+   -- read mux data aggregation
+   process(sr_addr_in,sr_data_in)
+   begin
+	for I in 0 to num_stores-1 loop
+		wr_mux_data_in((wr_mux_data_width*(I+1))-1 downto wr_mux_data_width*I)
+			<= sr_addr_in((addr_width*(I+1))-1 downto addr_width*I) & 
+			     sr_data_in((data_width*(I+1))-1 downto data_width*I) & 
+				sr_tag_in((tag_width*(I+1))-1 downto tag_width*I) &
+				 c_store_port_id_array(I); 
+	end loop;
+   end process;
+ 
+   -- Readmux instantiation.
+   rmux: PipelinedMux generic map(g_number_of_inputs => num_loads,
+				g_data_width => rd_mux_data_width,
+			        g_mux_degree => mux_degree,
+				g_port_id_width => c_load_port_id_width)
+		port map(merge_data_in => rd_mux_data_in,
+			  merge_req_in => lr_req_in,
+			  merge_ack_out => lr_ack_out,
+			  merge_data_out => rd_mux_data_out,
+			  merge_req_out => rd_mux_out_req,
+			  merge_ack_in => rd_mux_out_ack,
+		          clock => clock,
+			  reset => reset);	
+
+    -- connect rmux to memory bank
+    mem_bank_read_addr <= rd_mux_data_out(rd_mux_data_width-1 downto (rd_mux_data_width-addr_width));
+    mem_bank_read_tag <= rd_mux_data_out((rd_mux_data_width-addr_width)-1 downto 0); -- tag & port-id
+    mem_bank_read_enable <= rd_mux_out_req;
+    rd_mux_out_ack <= mem_bank_read_ack;
+    
+				
+   -- Writemux instantiation.
+   wmux: PipelinedMux generic map(g_number_of_inputs => num_stores,
+				g_data_width => wr_mux_data_width,
+			        g_mux_degree => mux_degree,
+				g_port_id_width => c_store_port_id_width)
+		port map(merge_data_in => wr_mux_data_in,
+			  merge_req_in => sr_req_in,
+			  merge_ack_out => sr_ack_out,
+			  merge_data_out => wr_mux_data_out,
+			  merge_req_out => wr_mux_out_req,
+			  merge_ack_in => wr_mux_out_ack,
+		          clock => clock,
+			  reset => reset);	
+
+    -- connect to memory bank.
+    mem_bank_write_addr <= wr_mux_data_out(wr_mux_data_width-1 downto (wr_mux_data_width-addr_width));
+    mem_bank_write_data <= wr_mux_data_out((wr_mux_data_width-addr_width)-1 downto 
+	((wr_mux_data_width-addr_width)-data_width));
+    mem_bank_write_tag <= wr_mux_data_out((wr_mux_data_width-(data_width+addr_width))-1 downto 0);
+    mem_bank_write_enable <= wr_mux_out_req;
+    wr_mux_out_ack <= mem_bank_write_ack;
+
+
+    -- the memory bank..
+    mbank: memory_bank generic map(g_addr_width => addr_width,
+				   g_data_width => data_width,
+				   g_write_tag_width => (tag_width + c_store_port_id_width),
+				   g_read_tag_width => (tag_width + c_load_port_id_width),
+				   g_time_stamp_width => 0,  -- no time-stamp.
+				   g_base_bank_addr_width => base_bank_addr_width,
+			           g_base_bank_data_width => base_bank_data_width)
+		port map(clk => clock,
+			 reset => reset,
+			 write_data => mem_bank_write_data,
+			 write_addr => mem_bank_write_addr,
+			 write_tag => mem_bank_write_tag,
+			 write_tag_out => mem_bank_write_tag_out,
+			 write_enable => mem_bank_write_enable,
+			 write_ack => mem_bank_write_ack,
+			 write_result_ready => mem_bank_write_result_ready,
+			 write_result_accept => mem_bank_write_result_accept,
+			 read_data => mem_bank_read_data,
+			 read_addr => mem_bank_read_addr,
+			 read_tag => mem_bank_read_tag,
+			 read_tag_out => mem_bank_read_tag_out,
+			 read_enable => mem_bank_read_enable,
+			 read_ack => mem_bank_read_ack,
+			 read_result_ready => mem_bank_read_result_ready,
+			 read_result_accept => mem_bank_read_result_accept);
+			
+
+    -- memory bank to read-demux
+    rd_demux_sel_in  <= mem_bank_read_tag_out(c_load_port_id_width-1 downto 0);
+    rd_demux_data_in <= mem_bank_read_data & mem_bank_read_tag_out((tag_width+c_load_port_id_width)-1 downto c_load_port_id_width);
+    rd_demux_in_req <= mem_bank_read_result_ready;
+    mem_bank_read_result_accept <= rd_demux_in_ack;
+ 
+    rd_demux: PipelinedDemux generic map (g_data_width => data_width+tag_width,
+				       g_destination_id_width => c_load_port_id_width,
+				       g_number_of_outputs => num_loads)
+		port map(data_in => rd_demux_data_in,
+			 sel_in => rd_demux_sel_in,
+			 req_in => rd_demux_in_req,
+			 ack_out => rd_demux_in_ack,
+			 data_out => rd_demux_data_out,
+			 req_out => rd_demux_out_req,
+			 ack_in => rd_demux_out_ack,
+			 clk => clock,
+			 reset => reset);
+
+    process(rd_demux_data_out)
+    begin
+       for I in 0 to num_loads-1 loop
+	 lc_data_out(((I+1)*data_width)-1 downto I*data_width) 
+		<= rd_demux_data_out(((I+1)*(data_width+tag_width))-1 downto (I*(data_width+tag_width))+tag_width);
+	 lc_tag_out(((I+1)*tag_width)-1 downto I*tag_width) 
+		<= rd_demux_data_out((I*(data_width+tag_width))+tag_width-1 downto (I*(data_width+tag_width)));
+       end loop;
+    end process;
+
+    rd_demux_out_ack <= lc_req_in;
+    lc_ack_out <= rd_demux_out_req;
+					 
+    -- memory bank to write-demux
+    wr_demux_sel_in <= mem_bank_write_tag_out(c_store_port_id_width-1 downto 0);
+    wr_demux_data_in <= mem_bank_write_tag_out(tag_width+c_store_port_id_width-1 downto c_store_port_id_width);
+    wr_demux_in_req <= mem_bank_write_result_ready;
+    mem_bank_write_result_accept <= wr_demux_in_ack;
+    
+    wr_demux: PipelinedDemux generic map (g_data_width => tag_width,
+				       g_destination_id_width => c_store_port_id_width,
+				       g_number_of_outputs => num_stores)
+		port map(data_in => wr_demux_data_in,
+			 sel_in => wr_demux_sel_in,
+			 req_in => wr_demux_in_req,
+			 ack_out => wr_demux_in_ack,
+			 data_out => wr_demux_data_out,
+			 req_out => wr_demux_out_req,
+			 ack_in => wr_demux_out_ack,
+			 clk => clock,
+			 reset => reset);
+
+    sc_tag_out <= wr_demux_data_out;
+    wr_demux_out_ack <= sc_req_in;
+    sc_ack_out <= wr_demux_out_req;
+
+end struct;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.mem_function_pack.all;
+use ahir.merge_functions.all;
+use ahir.mem_component_pack.all;
+
+entity Unordered_Mem_Test_Block is
+  generic(data_width, addr_width,tag_width, block_id, iteration_count : natural := 0);
+  port(lr_addr: out std_logic_vector(addr_width-1 downto 0);
+       lr_tag : out std_logic_vector(tag_width-1 downto 0);
+       lr_req : out std_logic;
+       lr_ack : in std_logic;
+       lc_req : out std_logic;
+       lc_ack : in std_logic;
+       lc_data : in std_logic_vector(data_width-1 downto 0);
+       lc_tag : in  std_logic_vector(tag_width-1 downto 0);
+       sr_addr: out std_logic_vector(addr_width-1 downto 0);
+       sr_data : out std_logic_vector(data_width-1 downto 0);
+       sr_tag : out std_logic_vector(tag_width-1 downto 0);
+       sr_req : out std_logic;
+       sr_ack : in std_logic;
+       sc_req : out std_logic;
+       sc_ack : in std_logic;
+       sc_tag : in  std_logic_vector(tag_width-1 downto 0);
+       clock, reset  : in std_logic);
+end entity;
+
+
+architecture behave of Unordered_Mem_Test_Block is
+  -- purpose: catch U/X
+  function Is01 (
+    constant x : std_logic_vector)
+    return boolean is
+    alias lx : std_logic_vector(1 to x'length) is x;
+    variable ret_var : boolean;
+  begin  -- Is01
+    ret_var := true;
+    for I  in 1 to x'length loop
+      if(lx(I) /= '0' and lx(I) /= '1') then
+        ret_var := false;
+        exit;
+      end if;
+    end loop;  -- I 
+    return(ret_var);
+  end Is01;
+
+  signal Lsig : natural;
+begin  -- behave
+
+  -- request process
+  process
+    constant tag : std_logic_vector(tag_width-1 downto 0) := Natural_To_SLV(block_id,tag_width);
+    variable dval : std_logic_vector(data_width-1 downto 0);
+  begin
+    sr_req <= '0';
+    lr_req <= '0';
+    sc_req <= '1';
+    lc_req <= '1';
+    lr_req <= '0';
+    sr_addr <= (others => '0');
+    lr_addr <= (others => '0');
+    sr_data <= (others => '0');
+    sr_tag <= (others => '0');
+    lr_tag <= (others => '0');
+
+    wait on reset until reset = '0';
+    for I in 0 to iteration_count - 1 loop
+      wait on clock until clock = '1';
+      wait for 1 ns;
+      sr_addr <= Natural_To_SLV(I,addr_width-tag_width) & tag;
+      sr_data <= Natural_To_SLV(I+block_id,data_width);
+      sr_tag <= tag;
+      sr_req <= '1';
+      while(sr_ack /= '1') loop
+        wait on clock until clock = '1';
+      end loop;
+      sr_req <= '0';
+      while(sc_ack /= '1') loop
+        wait on clock until clock = '1';
+      end loop;
+    end loop;  -- I
+    assert false report "Writes Over in Block " & Convert_To_String(block_id) severity note;
+    for I in 0 to iteration_count - 1 loop
+      wait on clock until clock = '1';
+      lr_addr <= Natural_To_SLV(I,addr_width-tag_width) & tag;
+      lr_tag <= Natural_To_SLV(I,tag_width);
+      lr_tag  <= tag;
+      lr_req <= '1';
+      while(lr_ack /= '1') loop
+        wait on clock until clock = '1';
+      end loop;
+      wait for 1 ns;
+      lr_req <= '0';
+       
+      while(lc_ack /= '1') loop
+        wait on clock until clock = '1';
+      end loop;
+      dval := Natural_To_SLV(I+block_id,data_width);
+      assert (lc_data = dval) report "LOAD ERROR: expected= " & Convert_To_String(dval) & " actual= "
+          & Convert_To_String(lc_data)  severity error;
+      
+      assert Is01(lc_data) report "LOAD ERROR: U/X seen in output " severity error;
+    end loop;
+    assert false report "Reads Over in Block " & Convert_To_String(block_id) severity note;
+  end process;
+
+  
+end behave;
 library ieee;
 use ieee.std_logic_1164.all;
 
@@ -8361,7 +9752,8 @@ begin  -- Behave
       oq_data_in <= dataR_sig & tagR_sig;
       dataR <= oq_data_out((twidth+owidth)-1 downto twidth);
       tagR <= oq_data_out(twidth-1 downto 0);
-      
+
+        
       oqueue : QueueBase generic map (
         queue_depth => 2,
         data_width  => twidth + owidth)
@@ -8374,7 +9766,7 @@ begin  -- Behave
           data_out => oq_data_out,
           pop_ack  => reqR,
           pop_req  => ackR);
-
+      
     end block OqBlock;
   end generate OutputRepeater;
 
@@ -8802,7 +10194,8 @@ entity LoadReqShared is
       	num_reqs : integer := 1; -- how many requesters?
 	tag_length: integer := 1;
 	no_arbitration: Boolean := true;
-        min_clock_period: Boolean := false
+        min_clock_period: Boolean := false;
+	time_stamp_width: integer := 0
     );
   port (
     -- req/ack follow pulse protocol
@@ -8811,8 +10204,9 @@ entity LoadReqShared is
     -- concatenated address corresponding to access
     dataL                    : in std_logic_vector((addr_width*num_reqs)-1 downto 0);
     -- address to memory
-    maddr                   : out std_logic_vector(addr_width-1 downto 0);
-    mtag                    : out std_logic_vector(tag_length-1 downto 0);
+    maddr                   : out std_logic_vector((addr_width)-1 downto 0);
+    mtag                    : out std_logic_vector(tag_length+time_stamp_width-1 downto 0);
+
     mreq                    : out std_logic;
     mack                    : in std_logic;
     -- clock, reset (active high)
@@ -8825,10 +10219,41 @@ architecture Vanilla of LoadReqShared is
   constant owidth: integer := addr_width;
 
   constant debug_flag : boolean := false;
+
+  signal imux_tag_out: std_logic_vector(tag_length-1 downto 0);
   
 begin  -- Behave
   assert(tag_length >= Ceil_Log2(num_reqs)) report "insufficient tag width" severity error;
 
+  TstampGen: if time_stamp_width > 0 generate
+
+    Tstamp: block
+	signal time_stamp: std_logic_vector(time_stamp_width-1 downto 0);
+    begin 
+    	mtag <= imux_tag_out & time_stamp; 
+
+
+	-- ripple counter.
+	process(clk)
+	begin
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				time_stamp <= (others => '0');
+			else
+				for I in 1 to time_stamp_width-1 loop
+					time_stamp(I) <= time_stamp(I) xor AndReduce(time_stamp(I-1 downto 0));
+				end loop;
+				time_stamp(0) <= not time_stamp(0);
+			end if;
+		end if;
+	end process;
+    end block;
+    
+  end generate TstampGen;
+
+  NoTstampGen: if time_stamp_width < 1 generate
+	mtag <= imux_tag_out;
+  end generate NoTstampGen;
 
   -- xilinx xst does not like this assertion...
   DbgAssert: if debug_flag generate
@@ -8843,7 +10268,7 @@ begin  -- Behave
                 twidth => tag_length,
                 nreqs => num_reqs,
                 no_arbitration => no_arbitration,
-                registered_output => min_clock_period)
+                registered_output => false)
     port map(
       reqL       => reqL,
       ackL       => ackL,
@@ -8851,7 +10276,7 @@ begin  -- Behave
       reqR       => mreq,
       ackR       => mack,
       dataR      => maddr,
-      tagR       => mtag,
+      tagR       => imux_tag_out,
       clk        => clk,
       reset      => reset);
   
@@ -10088,6 +11513,80 @@ begin  -- Behave
 
   
 end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+
+-- forwards req_in to req_out (with one cycle delay)
+-- and waits until ack_in appears before forwarding ack_out (one cycle delay).
+entity RigidRepeater is
+    generic(data_width: integer := 32);
+    port(clk: in std_logic;
+         reset: in std_logic;
+         data_in: in std_logic_vector(data_width-1 downto 0);
+         req_in: in std_logic;
+         ack_out: out std_logic;
+         data_out: out std_logic_vector(data_width-1 downto 0);
+         req_out : out std_logic;
+         ack_in: in std_logic);
+end entity RigidRepeater;
+
+architecture behave of RigidRepeater is
+
+	type RR_State is (idle, busy, done);
+	signal state_sig: RR_State;
+
+begin  -- SimModel
+  process(clk,state_sig,req_in,ack_in)
+    variable nstate: RR_State;
+    variable latch_v : boolean;
+    variable req_out_v, ack_out_v : std_logic;
+  begin
+    nstate := state_sig;
+    latch_v := false;
+    req_out_v := '0';
+    ack_out_v := '0';
+    
+    case state_sig is
+      when idle =>
+        -- req_in?
+        if(req_in = '1') then
+          nstate := busy;
+          -- latch the data
+          latch_v := true;
+        end if;
+      when busy =>
+        -- pass to req_out
+        req_out_v := '1';
+        if(ack_in = '1') then
+          -- ack_in?
+          nstate := done;
+        end if;
+      when done =>
+        -- spend one cycle here.. ack_out
+        ack_out_v := '1';
+        nstate := idle;
+    end case;
+
+    req_out <= req_out_v;
+    ack_out <= ack_out_v;
+
+    if(clk'event and clk = '1') then
+      if(reset = '1') then
+        state_sig <= idle;
+      else
+        state_sig <= nstate;
+      end if;
+      
+      if(latch_v) then
+        data_out <= data_in;
+      end if;
+    end if;
+    
+  end process;
+
+end behave;
 library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
@@ -11372,6 +12871,7 @@ entity StoreReqShared is
     (
 	addr_width: integer;
 	data_width : integer;
+	time_stamp_width : integer;
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
 	no_arbitration: Boolean;
@@ -11387,7 +12887,7 @@ entity StoreReqShared is
     -- address to memory
     maddr                   : out std_logic_vector(addr_width-1 downto 0);
     mdata                   : out std_logic_vector(data_width-1 downto 0);
-    mtag                    : out std_logic_vector(tag_length-1 downto 0);
+    mtag                    : out std_logic_vector(tag_length+time_stamp_width-1 downto 0);
     mreq                    : out std_logic;
     mack                    : in std_logic;
     -- clock, reset (active high)
@@ -11404,7 +12904,37 @@ architecture Vanilla of StoreReqShared is
 
   constant debug_flag : boolean := false;
   
+  signal imux_tag_out: std_logic_vector(tag_length-1 downto 0);
 begin  -- Behave
+
+  TstampGen: if time_stamp_width > 0 generate
+
+    Tstamp: block
+	signal time_stamp: std_logic_vector(time_stamp_width-1 downto 0);
+    begin 
+  	mtag <= imux_tag_out & time_stamp;
+
+	-- ripple counter.
+	process(clk)
+	begin
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				time_stamp <= (others => '0');
+			else
+				for I in 1 to time_stamp_width-1 loop
+					time_stamp(I) <= time_stamp(I) xor AndReduce(time_stamp(I-1 downto 0));
+				end loop;
+				time_stamp(0) <= not time_stamp(0);
+			end if;
+		end if;
+	end process;
+    end block;
+    
+  end generate TstampGen;
+
+  NoTstampGen: if time_stamp_width < 1 generate
+	mtag <= imux_tag_out;
+  end generate NoTstampGen;
 
   process(addr,data)
   begin
@@ -11427,11 +12957,11 @@ begin  -- Behave
   
   imux: InputMuxBase
   	generic map(iwidth => (addr_width+data_width)*num_reqs ,
-	   owidth => addr_width+data_width, 
-	   twidth => tag_length,
-	   nreqs => num_reqs,
-           registered_output => min_clock_period,
-	   no_arbitration => no_arbitration)
+                    owidth => addr_width+data_width, 
+                    twidth => tag_length,
+                    nreqs => num_reqs,
+                    registered_output => false,
+                    no_arbitration => no_arbitration)
     port map(
       reqL       => reqL,
       ackL       => ackL,
@@ -11439,7 +12969,7 @@ begin  -- Behave
       ackR       => mack,
       dataL      => idata,
       dataR      => odata,
-      tagR       => mtag,
+      tagR       => imux_tag_out,
       clk        => clk,
       reset      => reset);
   

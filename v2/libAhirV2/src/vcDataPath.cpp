@@ -582,7 +582,7 @@ string vcDataPath::Print_VHDL_Memory_Interface_Ports(string semi_colon, ostream&
   map<vcMemorySpace*, vector<int> > ms_to_load_group_map;
   vcMemorySpace* ms = NULL;
 
-
+  
   // Each load group to a memory space contributes one request 
   // and one complete bundle.
   for(int idx = 0; idx < _compatible_load_groups.size(); idx++)
@@ -604,6 +604,7 @@ string vcDataPath::Print_VHDL_Memory_Interface_Ports(string semi_colon, ostream&
 
       int num_reqs = (*ms_iter).second.size();
       int tag_width = ms->Get_Tag_Length();
+      int time_stamp_width = ms->Calculate_Time_Stamp_Width();
 
       // load ports to this memory space from this module
       ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_req") 
@@ -613,7 +614,7 @@ string vcDataPath::Print_VHDL_Memory_Interface_Ports(string semi_colon, ostream&
       ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_addr") 
 	    << " : out  std_logic_vector(" << (num_reqs*ms->Get_Address_Width())-1 << " downto 0);" << endl;
       ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lr_tag") 
-	    << " :  out  std_logic_vector(" << (num_reqs* tag_width)-1  << " downto 0);" << endl;
+	    << " :  out  std_logic_vector(" << (num_reqs*(time_stamp_width+tag_width))-1  << " downto 0);" << endl;
 
       ofile << ms->Get_VHDL_Memory_Interface_Port_Name("lc_req") 
 	    << " : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
@@ -651,6 +652,7 @@ string vcDataPath::Print_VHDL_Memory_Interface_Ports(string semi_colon, ostream&
 
       int num_reqs = (*ms_iter).second.size();
       int tag_width = ms->Get_Tag_Length();
+      int time_stamp_width = ms->Calculate_Time_Stamp_Width();
 
       ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_req") 
 	    << " : out  std_logic_vector(" << num_reqs-1  << " downto 0);" << endl;
@@ -661,7 +663,7 @@ string vcDataPath::Print_VHDL_Memory_Interface_Ports(string semi_colon, ostream&
       ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_data") 
 	    << " : out  std_logic_vector(" << (num_reqs*ms->Get_Word_Size())-1 << " downto 0);" << endl;
       ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sr_tag") 
-	    << " :  out  std_logic_vector(" << (num_reqs* tag_width)-1  << " downto 0);" << endl;
+	    << " :  out  std_logic_vector(" << (num_reqs*(tag_width+time_stamp_width))-1  << " downto 0);" << endl;
 
       ofile << ms->Get_VHDL_Memory_Interface_Port_Name("sc_req") 
 	    << " : out  std_logic_vector(" << num_reqs-1 << " downto 0);" << endl;
@@ -1468,9 +1470,10 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 
       // now the operator instances 
       ofile << "LoadReq: LoadReqShared -- {" << endl;
-      ofile << "generic map (addr_width => " << addr_width << ","
-	    << "  num_reqs => " << num_reqs << ","
-	    << "  tag_length => " << tag_length << ","
+      ofile << "generic map (addr_width => " << addr_width << "," << endl
+	    << "  num_reqs => " << num_reqs << "," << endl
+	    << "  tag_length => " << tag_length << "," << endl
+	    << "  time_stamp_width => " << ms->Calculate_Time_Stamp_Width() << "," << endl
 	    << " min_clock_period => " << (vcSystem::_min_clock_period_flag ? "true" : "false") << "," << endl
 	    << "  no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map ( -- { \n reqL => reqL " << ", " <<  endl
@@ -1633,6 +1636,7 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 	    << "  data_width => " << data_width << "," << endl
 	    << "  num_reqs => " << num_reqs << "," << endl
 	    << "  tag_length => " << tag_length << "," << endl
+	    << "  time_stamp_width => " << ms->Calculate_Time_Stamp_Width() << "," << endl
 	    << "  min_clock_period => " << (vcSystem::_min_clock_period_flag ? "true" : "false") << "," << endl
 	    << "  no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map (--{\n reqL => reqL " << ", " <<  endl
@@ -2090,11 +2094,13 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
       ofile << " twidth => " << tag_length << "," << endl
 	    << " nreqs => " << num_reqs << "," << endl;
 
-      if(called_module->Get_In_Arg_Width() > 0)
-	ofile << " registered_output => " 
-		<< (vcSystem::_min_clock_period_flag ? "true" : "false") << "," << endl;
 
-      ofile << "  no_arbitration => " << no_arb_string << ")" << endl;
+      if(called_module->Get_In_Arg_Width() > 0)
+        ofile << " registered_output => "
+	      << (vcSystem::_min_clock_period_flag ? "true" : "false") << "," << endl;
+
+ 
+      ofile   << "  no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map ( -- { \n reqL => reqL " << ", " <<  endl
 	    << "    ackL => ackL " << ", " <<  endl;
 

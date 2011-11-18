@@ -72,6 +72,9 @@ public:
 	public: void vc_MemoryLocation(
 		vcSystem* sys, vcMemorySpace* ms
 	);
+	public: void vc_AttributeSpec(
+		vcRoot* m
+	);
 	public: vcType*  vc_Type(
 		vcSystem* sys
 	);
@@ -89,9 +92,6 @@ public:
 	);
 	public: void vc_Link(
 		vcModule* m
-	);
-	public: void vc_AttributeSpec(
-		vcRoot* m
 	);
 	public: void vc_Hierarchical_CP_Ref(
 		vector<string>& ref_vec

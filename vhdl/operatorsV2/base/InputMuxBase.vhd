@@ -14,7 +14,6 @@ entity InputMuxBase is
 	   twidth: integer := 3;
 	   nreqs: integer := 1;
 	   no_arbitration: Boolean := true;
-           rigid_repeater: Boolean := false;
 	   registered_output: Boolean := false);
   port (
     -- req/ack follow pulse protocol
@@ -70,7 +69,6 @@ begin  -- Behave
       dataR <= oq_data_out((twidth+owidth)-1 downto twidth);
       tagR <= oq_data_out(twidth-1 downto 0);
 
-      ElasticRptr: if not rigid_repeater generate
         
       oqueue : QueueBase generic map (
         queue_depth => 2,
@@ -84,24 +82,6 @@ begin  -- Behave
           data_out => oq_data_out,
           pop_ack  => reqR,
           pop_req  => ackR);
-      
-      end generate ElasticRptr;
-
-      RigidRptr: if rigid_repeater generate
-        
-        oqueue : RigidRepeater generic map (
-          data_width  => twidth + owidth)
-        port map (
-          clk      => clk,
-          reset    => reset,
-          data_in  => oq_data_in,
-          req_in => reqR_sig,
-          ack_out => ackR_sig,
-          data_out => oq_data_out,
-          req_out  => reqR,
-          ack_in  => ackR);
-      
-      end generate RigidRptr;
       
     end block OqBlock;
   end generate OutputRepeater;

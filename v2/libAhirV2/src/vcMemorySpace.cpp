@@ -13,6 +13,16 @@ vcMemorySpace::vcMemorySpace(string id, vcModule* m):vcRoot(id)
   this->_capacity = 0;
   this->_num_loads = 0;
   this->_num_stores = 0;
+  this->_ordered_flag = true;
+}
+
+void vcMemorySpace::Add_Attribute(string tag, string value)
+{
+  if(tag == "unordered")
+    {
+      _ordered_flag = false;
+    }
+  this->vcRoot::Add_Attribute(tag,value);
 }
 
 void vcMemorySpace::Add_Storage_Object(vcStorageObject* obj)
@@ -74,6 +84,7 @@ void vcMemorySpace::Print_VHDL_Interface_Signal_Declarations(ostream& ofile)
   int num_store_reqs = this->_num_stores;
 
   int tag_length = this->Get_Tag_Length();
+  int time_stamp_width = this->Calculate_Time_Stamp_Width();
   int addr_width = this->_address_width;
   int data_width = this->_word_size;
 
@@ -86,7 +97,7 @@ void vcMemorySpace::Print_VHDL_Interface_Signal_Declarations(ostream& ofile)
       ofile << "signal " << this->Get_VHDL_Memory_Interface_Port_Name("lr_addr") 
 	    << " : std_logic_vector(" << (num_load_reqs*addr_width)-1 << " downto 0);" << endl;
       ofile << "signal " << this->Get_VHDL_Memory_Interface_Port_Name("lr_tag") 
-	    << " : std_logic_vector(" << (num_load_reqs* tag_length)-1  << " downto 0);" << endl;
+	    << " : std_logic_vector(" << (num_load_reqs* (tag_length+time_stamp_width))-1  << " downto 0);" << endl;
       
       ofile << "signal " << this->Get_VHDL_Memory_Interface_Port_Name("lc_req") 
 	    << " : std_logic_vector(" << num_load_reqs-1 << " downto 0);" << endl;
@@ -109,7 +120,7 @@ void vcMemorySpace::Print_VHDL_Interface_Signal_Declarations(ostream& ofile)
       ofile << "signal " << this->Get_VHDL_Memory_Interface_Port_Name("sr_data") 
 	    << " : std_logic_vector(" << (num_store_reqs*data_width)-1 << " downto 0);" << endl;
       ofile << "signal " << this->Get_VHDL_Memory_Interface_Port_Name("sr_tag") 
-	    << " : std_logic_vector(" << (num_store_reqs* tag_length)-1  << " downto 0);" << endl;
+	    << " : std_logic_vector(" << (num_store_reqs*(tag_length+time_stamp_width))-1  << " downto 0);" << endl;
       
       ofile << "signal " << this->Get_VHDL_Memory_Interface_Port_Name("sc_req") 
 	    << " : std_logic_vector(" << num_store_reqs-1 << " downto 0);" << endl;
@@ -173,7 +184,11 @@ string vcMemorySpace::Get_VHDL_Memory_Interface_Port_Section(vcModule* m,
     return(this->Get_VHDL_Id() + "_" + pid + "(" 
 	   + IntToStr(((down_index+1)*this->Get_Address_Width())-1) + " downto "
 	   + IntToStr(down_index*this->Get_Address_Width()) + ")");
-  else if(pid.find("tag") != string::npos)
+  else if((pid.find("sr_tag") != string::npos) || (pid.find("lr_tag") != string::npos))
+    return(this->Get_VHDL_Id() + "_" + pid + "(" 
+	   + IntToStr(((down_index+1)*(this->Get_Tag_Length()+this->Calculate_Time_Stamp_Width()))-1) + " downto "
+	   + IntToStr(down_index*(this->Get_Tag_Length()+this->Calculate_Time_Stamp_Width())) + ")");
+  else if((pid.find("sc_tag") != string::npos) || (pid.find("lc_tag") != string::npos))
     return(this->Get_VHDL_Id() + "_" + pid + "(" 
 	   + IntToStr(((down_index+1)*this->Get_Tag_Length())-1) + " downto "
 	   + IntToStr(down_index*this->Get_Tag_Length()) + ")");
@@ -216,7 +231,9 @@ string vcMemorySpace::Get_Aggregate_Section(string pid, int hindex, int lindex)
     data_width = this->Get_Address_Width();
   else if(pid.find("data") != string::npos)
     data_width = this->Get_Word_Size();
-  else if(pid.find("tag") != string::npos)
+  else if((pid.find("sr_tag") != string::npos) || (pid.find("lr_tag") != string::npos))
+    data_width = this->Get_Tag_Length()+this->Calculate_Time_Stamp_Width();
+  else if((pid.find("sc_tag") != string::npos) || (pid.find("lc_tag") != string::npos))
     data_width = this->Get_Tag_Length();
   else
     assert(0); // fatal
@@ -333,17 +350,22 @@ void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 	}
       else
 	{
-	  ofile << "MemorySpace_" << this->Get_VHDL_Id() << ": memory_subsystem -- {" << endl;
+	  string mem_entity = (_ordered_flag ? "ordered_memory_subsystem" : "UnorderedMemorySubsystem");
+	  ofile << "MemorySpace_" << this->Get_VHDL_Id() << ": " << mem_entity << " -- {" << endl;
 	  ofile << "generic map(-- {" << endl;
 	  ofile << "num_loads => " << this->Get_Num_Loads() << "," << endl
 		<< "num_stores => " << this->Get_Num_Stores() << "," << endl
 		<< "addr_width => " << this->Get_Address_Width() << "," << endl
 		<< "data_width => " << this->Get_Word_Size() << "," << endl
-		<< "tag_width => " << this->Get_Tag_Length() << "," << endl
+		<< "tag_width => " << this->Get_Tag_Length() << "," << endl;
+	  if(_ordered_flag)
+	    {
 	    // the following parameters are hard-wired.. but 
 	    // it may be a good idea to expose them!
-		<< "number_of_banks => " << this->Calculate_Number_Of_Banks() << "," << endl
-		<< "mux_degree => 2," << endl
+	      ofile << "time_stamp_width => " << this->Calculate_Time_Stamp_Width() << "," << endl;
+	      ofile << "number_of_banks => " << this->Calculate_Number_Of_Banks() << "," << endl;
+	    }
+	  ofile << "mux_degree => 2," << endl
 		<< "demux_degree => 2," << endl
 		<< "base_bank_addr_width => " << this->Calculate_Base_Bank_Address_Width() << "," << endl
 		<< "base_bank_data_width => " << this->Calculate_Base_Bank_Data_Width() << endl 
@@ -415,4 +437,14 @@ int vcMemorySpace::Calculate_Base_Bank_Address_Width()
 int vcMemorySpace::Calculate_Base_Bank_Data_Width()
 {
   return(this->Get_Word_Size());
+}
+
+
+int vcMemorySpace::Calculate_Time_Stamp_Width()
+{
+
+  if(_ordered_flag && (_num_loads > 0) && (_num_stores > 0))
+    return(Log(_num_stores + _num_loads,2) + 2);
+  else
+    return(0);
 }

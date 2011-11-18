@@ -29,9 +29,16 @@ class vcMemorySpace: public vcRoot
 
   map<vcModule*, int> _max_tag_map;
 
+  // if set, this will be an ordered memory subsystem..
+  // by default all memory subsystems are ordered.
+  bool _ordered_flag;
+
  public:
 
   vcModule* Get_Scope() {return(this->_scope);}
+
+  void Set_Ordered_Flag(bool v) { _ordered_flag = true;}
+  bool Get_Ordered_Flag() {return(_ordered_flag);}
 
   int Get_Max_Number_Of_Tags_Needed()
   {
@@ -137,5 +144,9 @@ class vcMemorySpace: public vcRoot
   int Calculate_Number_Of_Banks();
   int Calculate_Base_Bank_Address_Width();
   int Calculate_Base_Bank_Data_Width();
+
+  int Calculate_Time_Stamp_Width();
+
+  virtual void Add_Attribute(string tag, string value);
 };
 #endif // vcMemorySpace

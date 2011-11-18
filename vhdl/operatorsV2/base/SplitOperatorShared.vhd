@@ -88,7 +88,6 @@ begin  -- Behave
                 twidth => tag_length,
                 nreqs => num_reqs,
                 no_arbitration => no_arbitration,
-                rigid_repeater => false,
                 registered_output => min_clock_period)
     port map(
       reqL       => reqL,

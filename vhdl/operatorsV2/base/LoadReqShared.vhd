@@ -15,7 +15,8 @@ entity LoadReqShared is
       	num_reqs : integer := 1; -- how many requesters?
 	tag_length: integer := 1;
 	no_arbitration: Boolean := true;
-        min_clock_period: Boolean := false
+        min_clock_period: Boolean := false;
+	time_stamp_width: integer := 0
     );
   port (
     -- req/ack follow pulse protocol
@@ -24,8 +25,9 @@ entity LoadReqShared is
     -- concatenated address corresponding to access
     dataL                    : in std_logic_vector((addr_width*num_reqs)-1 downto 0);
     -- address to memory
-    maddr                   : out std_logic_vector(addr_width-1 downto 0);
-    mtag                    : out std_logic_vector(tag_length-1 downto 0);
+    maddr                   : out std_logic_vector((addr_width)-1 downto 0);
+    mtag                    : out std_logic_vector(tag_length+time_stamp_width-1 downto 0);
+
     mreq                    : out std_logic;
     mack                    : in std_logic;
     -- clock, reset (active high)
@@ -38,10 +40,41 @@ architecture Vanilla of LoadReqShared is
   constant owidth: integer := addr_width;
 
   constant debug_flag : boolean := false;
+
+  signal imux_tag_out: std_logic_vector(tag_length-1 downto 0);
   
 begin  -- Behave
   assert(tag_length >= Ceil_Log2(num_reqs)) report "insufficient tag width" severity error;
 
+  TstampGen: if time_stamp_width > 0 generate
+
+    Tstamp: block
+	signal time_stamp: std_logic_vector(time_stamp_width-1 downto 0);
+    begin 
+    	mtag <= imux_tag_out & time_stamp; 
+
+
+	-- ripple counter.
+	process(clk)
+	begin
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				time_stamp <= (others => '0');
+			else
+				for I in 1 to time_stamp_width-1 loop
+					time_stamp(I) <= time_stamp(I) xor AndReduce(time_stamp(I-1 downto 0));
+				end loop;
+				time_stamp(0) <= not time_stamp(0);
+			end if;
+		end if;
+	end process;
+    end block;
+    
+  end generate TstampGen;
+
+  NoTstampGen: if time_stamp_width < 1 generate
+	mtag <= imux_tag_out;
+  end generate NoTstampGen;
 
   -- xilinx xst does not like this assertion...
   DbgAssert: if debug_flag generate
@@ -56,8 +89,7 @@ begin  -- Behave
                 twidth => tag_length,
                 nreqs => num_reqs,
                 no_arbitration => no_arbitration,
-                rigid_repeater => true,
-                registered_output => min_clock_period)
+                registered_output => false)
     port map(
       reqL       => reqL,
       ackL       => ackL,
@@ -65,7 +97,7 @@ begin  -- Behave
       reqR       => mreq,
       ackR       => mack,
       dataR      => maddr,
-      tagR       => mtag,
+      tagR       => imux_tag_out,
       clk        => clk,
       reset      => reset);
   

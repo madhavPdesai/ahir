@@ -82,7 +82,9 @@ vc_MemorySpace[vcSystem* sys, vcModule* m] returns[vcMemorySpace* ms]
 	string lbl;
 	ms = NULL;
 }
-: MEMORYSPACE lbl = vc_Label { ms = new vcMemorySpace(lbl,m);} LBRACE vc_MemorySpaceParams[ms] (vc_MemoryLocation[sys,ms])* RBRACE
+: MEMORYSPACE lbl = vc_Label { ms = new vcMemorySpace(lbl,m);} LBRACE vc_MemorySpaceParams[ms] (vc_MemoryLocation[sys,ms])* 
+        (vc_AttributeSpec[ms])*
+        RBRACE
 ;
 
 //--------------------------------------------------------------------------------------------------------------------------------------

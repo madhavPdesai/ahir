@@ -395,7 +395,6 @@ package BaseComponents is
               twidth: integer;
               nreqs: integer;
               no_arbitration: Boolean;
-              rigid_repeater: Boolean;
               registered_output: Boolean);
     port (
       -- req/ack follow pulse protocol
@@ -955,6 +954,7 @@ package BaseComponents is
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
 	no_arbitration: Boolean;
+	time_stamp_width: integer;
         min_clock_period: Boolean
         );
     port (
@@ -965,7 +965,7 @@ package BaseComponents is
       dataL                    : in std_logic_vector((addr_width*num_reqs)-1 downto 0);
       -- address to memory
       maddr                   : out std_logic_vector(addr_width-1 downto 0);
-      mtag                    : out std_logic_vector(tag_length-1 downto 0);
+      mtag                    : out std_logic_vector(tag_length+time_stamp_width-1 downto 0);
       mreq                    : out std_logic;
       mack                    : in std_logic;
       -- clock, reset (active high)
@@ -977,6 +977,7 @@ package BaseComponents is
       (
 	addr_width: integer;
 	data_width : integer;
+	time_stamp_width: integer;
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
         min_clock_period : boolean;
@@ -992,7 +993,7 @@ package BaseComponents is
       -- address to memory
       maddr                   : out std_logic_vector(addr_width-1 downto 0);
       mdata                   : out std_logic_vector(data_width-1 downto 0);
-      mtag                    : out std_logic_vector(tag_length-1 downto 0);
+      mtag                    : out std_logic_vector(tag_length+time_stamp_width-1 downto 0);
       mreq                    : out std_logic;
       mack                    : in std_logic;
       -- clock, reset (active high)

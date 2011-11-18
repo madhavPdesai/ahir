@@ -264,7 +264,7 @@ protected:
   vcRoot();
   vcRoot(string id);
 
-  void Add_Attribute(string tag, string value);
+  virtual void Add_Attribute(string tag, string value);
   string Get_Id();
   virtual string Get_VHDL_Id() {return(To_VHDL(this->Get_Id()));}
 
