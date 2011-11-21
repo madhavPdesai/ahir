@@ -1,6 +1,6 @@
 $storage cache_flags:$array [16] $of $uint<8>
-$storage cache_data:$array [16] $of $uint<512>
-$storage main_memory:$array [4096] $of $uint<512>
+$storage cache_data:$array [32] $of $uint<512>
+$storage main_memory:$array [16] $of $uint<512>
 $storage cache_tag:$array [16] $of $uint<32>
 $module [init_cache] 
 $in ()

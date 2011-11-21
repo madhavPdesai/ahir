@@ -128,8 +128,10 @@ architecture struct of UnorderedMemorySubsystem is
     return(ret_var);
   end function LoadPortIdGen;
 
-  constant c_load_port_id_array : LoadPortIdArray := LoadPortIdGen(num_loads, c_load_port_id_width);
-  constant c_store_port_id_array : StorePortIdArray := StorePortIdGen(num_stores, c_store_port_id_width);
+  constant c_load_port_id_array : LoadPortIdArray(0 to num_loads-1) := LoadPortIdGen(num_loads, c_load_port_id_width);
+  signal s_load_port_id_array: LoadPortIdArray(0 to num_loads-1);
+  constant c_store_port_id_array : StorePortIdArray(0 to num_stores-1) := StorePortIdGen(num_stores, c_store_port_id_width);
+  signal s_store_port_id_array: StorePortIdArray(0 to num_stores-1) ;
 
   constant rd_mux_data_width: integer :=  (addr_width + tag_width + c_load_port_id_width );
   constant wr_mux_data_width: integer :=  (addr_width + data_width + tag_width + c_store_port_id_width);
@@ -174,8 +176,11 @@ architecture struct of UnorderedMemorySubsystem is
 
 begin
 
+   s_load_port_id_array <= c_load_port_id_array;
+   s_store_port_id_array <= c_store_port_id_array;
+
    -- read mux data aggregation
-   process(lr_addr_in)
+   process(lr_addr_in, lr_tag_in)
    begin
 	for I in 0 to num_loads-1 loop
 		rd_mux_data_in((rd_mux_data_width*(I+1))-1 downto rd_mux_data_width*I)
@@ -187,7 +192,7 @@ begin
 
   
    -- read mux data aggregation
-   process(sr_addr_in,sr_data_in)
+   process(sr_addr_in,sr_data_in, sr_tag_in)
    begin
 	for I in 0 to num_stores-1 loop
 		wr_mux_data_in((wr_mux_data_width*(I+1))-1 downto wr_mux_data_width*I)

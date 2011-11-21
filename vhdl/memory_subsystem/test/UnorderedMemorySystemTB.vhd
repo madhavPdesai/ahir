@@ -7,6 +7,9 @@ use ahir.merge_functions.all;
 use ahir.mem_component_pack.all;
 use ahir.memory_subsystem_package.all;
 
+library work;
+use work.mem_test_component_pack.all;
+
 entity UnorderedMemorySystemTB is
 end entity;
 

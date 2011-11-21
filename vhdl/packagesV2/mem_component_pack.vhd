@@ -315,47 +315,5 @@ component PipelinedDemux is
        reset: in std_logic);
 end component;
 
-component Mem_Test_Block 
-    generic(data_width, addr_width,tag_width, block_id,iteration_count : natural := 0);
-    port(lr_addr: out std_logic_vector(addr_width-1 downto 0);
-         lr_tag : out std_logic_vector(tag_width-1 downto 0);
-         lr_req : out std_logic;
-         lr_ack : in std_logic;
-         lc_req : out std_logic;
-         lc_ack : in std_logic;
-         lc_data : in std_logic_vector(data_width-1 downto 0);
-         lc_tag : in  std_logic_vector(tag_width-1 downto 0);
-         sr_addr: out std_logic_vector(addr_width-1 downto 0);
-         sr_data : out std_logic_vector(data_width-1 downto 0);
-         sr_tag : out std_logic_vector(tag_width-1 downto 0);
-         sr_req : out std_logic;
-         sr_ack : in std_logic;
-         sc_req : out std_logic;
-         sc_ack : in std_logic;
-         sc_tag : in  std_logic_vector(tag_width-1 downto 0);
-         clock, reset  : in std_logic);
-end component;
-
-component Unordered_Mem_Test_Block 
-    generic(data_width, addr_width,tag_width, block_id,iteration_count : natural := 0);
-    port(lr_addr: out std_logic_vector(addr_width-1 downto 0);
-         lr_tag : out std_logic_vector(tag_width-1 downto 0);
-         lr_req : out std_logic;
-         lr_ack : in std_logic;
-         lc_req : out std_logic;
-         lc_ack : in std_logic;
-         lc_data : in std_logic_vector(data_width-1 downto 0);
-         lc_tag : in  std_logic_vector(tag_width-1 downto 0);
-         sr_addr: out std_logic_vector(addr_width-1 downto 0);
-         sr_data : out std_logic_vector(data_width-1 downto 0);
-         sr_tag : out std_logic_vector(tag_width-1 downto 0);
-         sr_req : out std_logic;
-         sr_ack : in std_logic;
-         sc_req : out std_logic;
-         sc_ack : in std_logic;
-         sc_tag : in  std_logic_vector(tag_width-1 downto 0);
-         clock, reset  : in std_logic);
-end component;
-
 end package mem_component_pack;
 

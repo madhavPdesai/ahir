@@ -40,6 +40,7 @@ architecture Vanilla of LoadReqShared is
   constant owidth: integer := addr_width;
 
   constant debug_flag : boolean := false;
+  constant registered_output : boolean := min_clock_period and (time_stamp_width = 0);
 
   signal imux_tag_out: std_logic_vector(tag_length-1 downto 0);
   
@@ -89,7 +90,7 @@ begin  -- Behave
                 twidth => tag_length,
                 nreqs => num_reqs,
                 no_arbitration => no_arbitration,
-                registered_output => false)
+                registered_output => registered_output)
     port map(
       reqL       => reqL,
       ackL       => ackL,

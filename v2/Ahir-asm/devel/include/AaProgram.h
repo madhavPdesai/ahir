@@ -39,16 +39,24 @@ class AaMemorySpace: public AaRoot
   bool _is_written_into;
   bool _is_read_from;
   bool _is_global;
-
+  bool _is_ordered;
 
   set<AaStorageObject*,AaRootCompare> _objects;
   set<AaModule*> _modules;
 
-  void Write_VC_Model(ostream& ofile);
+  void Write_VC_Model(ostream& ofile) {this->Write_VC_Model(false,ofile);}
+  void Write_VC_Model_Optimized(ostream& ofile) {this->Write_VC_Model(true,ofile);}
+
+  void Write_VC_Model(bool opt_flag, ostream& ofile);
+
+
   string Get_VC_Identifier();
 
   void Set_Is_Global(bool v) {_is_global = v;}
   bool Get_Is_Global() {return(_is_global);}
+
+  void Set_Is_Ordered(bool v) {_is_ordered = v;}
+  bool Get_Is_Ordered() {return(_is_ordered);}
 
 };
 
@@ -187,6 +195,7 @@ class AaProgram
   static void Write_VC_Pipe_Declarations(ostream& ofile);
   static void Write_VC_Constant_Declarations(ostream& ofile);
   static void Write_VC_Memory_Spaces(ostream& ofile);
+  static void Write_VC_Memory_Spaces_Optimized(ostream& ofile);
   static void Write_VC_Modules(ostream& ofile);
   static void Write_VC_Modules_Optimized(ostream& ofile);
 

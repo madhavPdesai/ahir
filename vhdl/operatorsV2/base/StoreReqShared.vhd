@@ -45,6 +45,8 @@ architecture Vanilla of StoreReqShared is
   signal odata: std_logic_vector((addr_width+data_width)-1 downto 0);
 
   constant debug_flag : boolean := false;
+  constant registered_output: boolean := min_clock_period and (time_stamp_width = 0);
+
   
   signal imux_tag_out: std_logic_vector(tag_length-1 downto 0);
 begin  -- Behave
@@ -102,7 +104,7 @@ begin  -- Behave
                     owidth => addr_width+data_width, 
                     twidth => tag_length,
                     nreqs => num_reqs,
-                    registered_output => false,
+                    registered_output => registered_output,
                     no_arbitration => no_arbitration)
     port map(
       reqL       => reqL,

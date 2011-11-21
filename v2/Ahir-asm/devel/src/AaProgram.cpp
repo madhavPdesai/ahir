@@ -46,7 +46,7 @@ AaUGraphBase AaProgram::_type_dependency_graph;
 AaUGraphBase AaProgram::_storage_dependency_graph;
 
 
-void AaMemorySpace::Write_VC_Model(ostream& ofile)
+void AaMemorySpace::Write_VC_Model(bool opt_flag, ostream& ofile)
 {
   if(this->_is_written_into || this->_is_read_from)
     {
@@ -65,6 +65,11 @@ void AaMemorySpace::Write_VC_Model(ostream& ofile)
 	  iter++)
 	{
 	  (*iter)->Write_VC_Model(ofile);
+	}
+
+      if(!opt_flag)
+	{
+	  ofile << "$attribute unordered => \"true\"" << endl;
 	}
 
       ofile << "}" << endl;
@@ -1080,7 +1085,7 @@ void AaProgram::Write_VC_Model_Optimized(int default_space_pointer_width,
   AaProgram::Write_VC_Pipe_Declarations(ofile);
   AaProgram::Write_VC_Constant_Declarations(ofile);
 
-  AaProgram::Write_VC_Memory_Spaces(ofile);
+  AaProgram::Write_VC_Memory_Spaces_Optimized(ofile);
   AaProgram::Write_VC_Modules_Optimized(ofile);
   AaRoot::Info("Done writing optimized VC model.. ");
 }
@@ -1144,6 +1149,18 @@ void AaProgram::Write_VC_Memory_Spaces(ostream& ofile)
 
       if((*iter).second->Get_Is_Global() || ((*iter).second->_modules.size() != 1))
 	(*iter).second->Write_VC_Model(ofile);
+    }
+}
+
+void AaProgram::Write_VC_Memory_Spaces_Optimized(ostream& ofile)
+{
+  for(map<int,AaMemorySpace*>::iterator iter = AaProgram::_memory_space_map.begin();
+      iter != AaProgram::_memory_space_map.end();
+      iter++)
+    {
+
+      if((*iter).second->Get_Is_Global() || ((*iter).second->_modules.size() != 1))
+	(*iter).second->Write_VC_Model_Optimized(ofile);
     }
 }
 

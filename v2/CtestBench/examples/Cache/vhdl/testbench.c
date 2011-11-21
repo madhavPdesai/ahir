@@ -24,12 +24,12 @@ int main(int argc, char* argv[])
 
 	init_cache();
 
-	for(i = 0; i < 16; i++)
+	for(i = 0; i < 4; i++)
 	{
 		write_mem(i,i);
 	}
 
-	for(i = 0; i < 16; i++)
+	for(i = 0; i < 4; i++)
 	{
 		j = read_mem(i);
 		if(j != i)

@@ -1,12 +1,12 @@
 // Virtual circuit produced from Aa description by Aa2VC 
 // load store constants for object cache_data
-$constant $W[cache_data_base_address] : $int<5> := _b00000
+$constant $W[cache_data_base_address] : $int<6> := _b000000
 // load store constants for object cache_flags
 $constant $W[cache_flags_base_address] : $int<5> := _b00000
 // load store constants for object cache_tag
 $constant $W[cache_tag_base_address] : $int<5> := _b00000
 // load store constants for object main_memory
-$constant $W[main_memory_base_address] : $int<13> := _b0000000000000
+$constant $W[main_memory_base_address] : $int<5> := _b00000
 $memoryspace [memory_space_0] 
 {
   $capacity 16
@@ -20,25 +20,25 @@ $memoryspace [memory_space_0]
 }
 $memoryspace [memory_space_1] 
 {
+  $capacity 32
+  $datawidth 512
+  $addrwidth 6
+  $maxaccesswidth 512
+  // $storage  cache_data : $array[32] $of $uint<512> // memory space index = 1  base address = 0  word size = 512
+  // can point into  foreign( $void )
+  // in scope  top-level
+  $object [cache_data] : $array[32] $of $int<512>
+}
+$memoryspace [memory_space_2] 
+{
   $capacity 16
   $datawidth 512
   $addrwidth 5
   $maxaccesswidth 512
-  // $storage  cache_data : $array[16] $of $uint<512> // memory space index = 1  base address = 0  word size = 512
+  // $storage  main_memory : $array[16] $of $uint<512> // memory space index = 2  base address = 0  word size = 512
   // can point into  foreign( $void )
   // in scope  top-level
-  $object [cache_data] : $array[16] $of $int<512>
-}
-$memoryspace [memory_space_2] 
-{
-  $capacity 4096
-  $datawidth 512
-  $addrwidth 13
-  $maxaccesswidth 512
-  // $storage  main_memory : $array[4096] $of $uint<512> // memory space index = 2  base address = 0  word size = 512
-  // can point into  foreign( $void )
-  // in scope  top-level
-  $object [main_memory] : $array[4096] $of $int<512>
+  $object [main_memory] : $array[16] $of $int<512>
 }
 $memoryspace [memory_space_3] 
 {
@@ -649,13 +649,13 @@ $module [read_line]
     // constant-object-declarations for block %read_line
     //  file Cache.aa, line 30
     // main_memory[block_address]
-    $constant $W[array_obj_ref_57_resized_base_address] : $int<13> := _b0000000000000// 0
-    $constant $W[array_obj_ref_57_offset_scale_factor_0] : $int<13> := _b0000000000001// 1
-    $constant $W[array_obj_ref_57_word_offset_0] : $int<13> := _b0000000000000// 0
+    $constant $W[array_obj_ref_57_resized_base_address] : $int<5> := _b00000// 0
+    $constant $W[array_obj_ref_57_offset_scale_factor_0] : $int<5> := _b00001// 1
+    $constant $W[array_obj_ref_57_word_offset_0] : $int<5> := _b00000// 0
     // cache_data[block_index]
-    $constant $W[array_obj_ref_55_resized_base_address] : $int<5> := _b00000// 0
-    $constant $W[array_obj_ref_55_offset_scale_factor_0] : $int<5> := _b00001// 1
-    $constant $W[array_obj_ref_55_word_offset_0] : $int<5> := _b00000// 0
+    $constant $W[array_obj_ref_55_resized_base_address] : $int<6> := _b000000// 0
+    $constant $W[array_obj_ref_55_offset_scale_factor_0] : $int<6> := _b000001// 1
+    $constant $W[array_obj_ref_55_word_offset_0] : $int<6> := _b000000// 0
     // cache_tag[block_index]
     $constant $W[array_obj_ref_60_resized_base_address] : $int<5> := _b00000// 0
     $constant $W[array_obj_ref_60_offset_scale_factor_0] : $int<5> := _b00001// 1
@@ -663,18 +663,18 @@ $module [read_line]
     // 	cache_data[block_index] := main_memory[block_address]
     //  file Cache.aa, line 35
     // main_memory[block_address]
-    $intermediate $W[simple_obj_ref_56_resized] : $int<13>
-    $intermediate $W[simple_obj_ref_56_scaled] : $int<13>
-    $intermediate $W[array_obj_ref_57_final_offset] : $int<13>
-    $intermediate $W[array_obj_ref_57_root_address] : $int<13>
+    $intermediate $W[simple_obj_ref_56_resized] : $int<5>
+    $intermediate $W[simple_obj_ref_56_scaled] : $int<5>
+    $intermediate $W[array_obj_ref_57_final_offset] : $int<5>
+    $intermediate $W[array_obj_ref_57_root_address] : $int<5>
     $W[array_obj_ref_57_word_address_0] : $pointer<memory_space_2>
     $W[array_obj_ref_57_data_0] : $int<512>
     $W[array_obj_ref_57_wire] : $int<512>
     // cache_data[block_index]
-    $intermediate $W[simple_obj_ref_54_resized] : $int<5>
-    $intermediate $W[simple_obj_ref_54_scaled] : $int<5>
-    $intermediate $W[array_obj_ref_55_final_offset] : $int<5>
-    $intermediate $W[array_obj_ref_55_root_address] : $int<5>
+    $intermediate $W[simple_obj_ref_54_resized] : $int<6>
+    $intermediate $W[simple_obj_ref_54_scaled] : $int<6>
+    $intermediate $W[array_obj_ref_55_final_offset] : $int<6>
+    $intermediate $W[array_obj_ref_55_root_address] : $int<6>
     $W[array_obj_ref_55_word_address_0] : $pointer<memory_space_1>
     $W[array_obj_ref_55_data_0] : $int<512>
     // 	cache_tag[block_index] := block_address
@@ -911,28 +911,28 @@ $module [write_back]
     // constant-object-declarations for block %write_back
     //  file Cache.aa, line 22
     // cache_data[block_index]
-    $constant $W[array_obj_ref_48_resized_base_address] : $int<5> := _b00000// 0
-    $constant $W[array_obj_ref_48_offset_scale_factor_0] : $int<5> := _b00001// 1
-    $constant $W[array_obj_ref_48_word_offset_0] : $int<5> := _b00000// 0
+    $constant $W[array_obj_ref_48_resized_base_address] : $int<6> := _b000000// 0
+    $constant $W[array_obj_ref_48_offset_scale_factor_0] : $int<6> := _b000001// 1
+    $constant $W[array_obj_ref_48_word_offset_0] : $int<6> := _b000000// 0
     // main_memory[cache_block_address]
-    $constant $W[array_obj_ref_46_resized_base_address] : $int<13> := _b0000000000000// 0
-    $constant $W[array_obj_ref_46_offset_scale_factor_0] : $int<13> := _b0000000000001// 1
-    $constant $W[array_obj_ref_46_word_offset_0] : $int<13> := _b0000000000000// 0
+    $constant $W[array_obj_ref_46_resized_base_address] : $int<5> := _b00000// 0
+    $constant $W[array_obj_ref_46_offset_scale_factor_0] : $int<5> := _b00001// 1
+    $constant $W[array_obj_ref_46_word_offset_0] : $int<5> := _b00000// 0
     // 	main_memory[cache_block_address] := cache_data[block_index]
     //  file Cache.aa, line 27
     // cache_data[block_index]
-    $intermediate $W[simple_obj_ref_47_resized] : $int<5>
-    $intermediate $W[simple_obj_ref_47_scaled] : $int<5>
-    $intermediate $W[array_obj_ref_48_final_offset] : $int<5>
-    $intermediate $W[array_obj_ref_48_root_address] : $int<5>
+    $intermediate $W[simple_obj_ref_47_resized] : $int<6>
+    $intermediate $W[simple_obj_ref_47_scaled] : $int<6>
+    $intermediate $W[array_obj_ref_48_final_offset] : $int<6>
+    $intermediate $W[array_obj_ref_48_root_address] : $int<6>
     $W[array_obj_ref_48_word_address_0] : $pointer<memory_space_1>
     $W[array_obj_ref_48_data_0] : $int<512>
     $W[array_obj_ref_48_wire] : $int<512>
     // main_memory[cache_block_address]
-    $intermediate $W[simple_obj_ref_45_resized] : $int<13>
-    $intermediate $W[simple_obj_ref_45_scaled] : $int<13>
-    $intermediate $W[array_obj_ref_46_final_offset] : $int<13>
-    $intermediate $W[array_obj_ref_46_root_address] : $int<13>
+    $intermediate $W[simple_obj_ref_45_resized] : $int<5>
+    $intermediate $W[simple_obj_ref_45_scaled] : $int<5>
+    $intermediate $W[array_obj_ref_46_final_offset] : $int<5>
+    $intermediate $W[array_obj_ref_46_root_address] : $int<5>
     $W[array_obj_ref_46_word_address_0] : $pointer<memory_space_2>
     $W[array_obj_ref_46_data_0] : $int<512>
     // 	main_memory[cache_block_address] := cache_data[block_index]
@@ -2385,9 +2385,9 @@ $module [read_mem]
     $constant $W[array_obj_ref_88_offset_scale_factor_0] : $int<5> := _b00001// 1
     $constant $W[array_obj_ref_88_word_offset_0] : $int<5> := _b00000// 0
     // cache_data[block_index]
-    $constant $W[array_obj_ref_92_resized_base_address] : $int<5> := _b00000// 0
-    $constant $W[array_obj_ref_92_offset_scale_factor_0] : $int<5> := _b00001// 1
-    $constant $W[array_obj_ref_92_word_offset_0] : $int<5> := _b00000// 0
+    $constant $W[array_obj_ref_92_resized_base_address] : $int<6> := _b000000// 0
+    $constant $W[array_obj_ref_92_offset_scale_factor_0] : $int<6> := _b000001// 1
+    $constant $W[array_obj_ref_92_word_offset_0] : $int<6> := _b000000// 0
     // active_line
     $constant $W[simple_obj_ref_90_word_address_0] : $pointer<read_mem/memory_space_4> := _b00000
     $constant $W[simple_obj_ref_90_word_address_1] : $pointer<read_mem/memory_space_4> := _b00001
@@ -2451,9 +2451,9 @@ $module [read_mem]
     $constant $W[array_obj_ref_161_offset_scale_factor_0] : $int<5> := _b00001// 1
     $constant $W[array_obj_ref_161_word_offset_0] : $int<5> := _b00000// 0
     // cache_data[block_index]
-    $constant $W[array_obj_ref_166_resized_base_address] : $int<5> := _b00000// 0
-    $constant $W[array_obj_ref_166_offset_scale_factor_0] : $int<5> := _b00001// 1
-    $constant $W[array_obj_ref_166_word_offset_0] : $int<5> := _b00000// 0
+    $constant $W[array_obj_ref_166_resized_base_address] : $int<6> := _b000000// 0
+    $constant $W[array_obj_ref_166_offset_scale_factor_0] : $int<6> := _b000001// 1
+    $constant $W[array_obj_ref_166_word_offset_0] : $int<6> := _b000000// 0
     // active_line
     $constant $W[simple_obj_ref_164_word_address_0] : $pointer<read_mem/memory_space_4> := _b00000
     $constant $W[simple_obj_ref_164_word_address_1] : $pointer<read_mem/memory_space_4> := _b00001
@@ -2505,10 +2505,10 @@ $module [read_mem]
     // 		active_line := cache_data[block_index]
     //  file Cache.aa, line 54
     // cache_data[block_index]
-    $intermediate $W[simple_obj_ref_91_resized] : $int<5>
-    $intermediate $W[simple_obj_ref_91_scaled] : $int<5>
-    $intermediate $W[array_obj_ref_92_final_offset] : $int<5>
-    $intermediate $W[array_obj_ref_92_root_address] : $int<5>
+    $intermediate $W[simple_obj_ref_91_resized] : $int<6>
+    $intermediate $W[simple_obj_ref_91_scaled] : $int<6>
+    $intermediate $W[array_obj_ref_92_final_offset] : $int<6>
+    $intermediate $W[array_obj_ref_92_root_address] : $int<6>
     $W[array_obj_ref_92_word_address_0] : $pointer<memory_space_1>
     $W[array_obj_ref_92_data_0] : $int<512>
     $W[array_obj_ref_92_wire] : $int<512>
@@ -2627,10 +2627,10 @@ $module [read_mem]
     // 			active_line := cache_data[block_index]
     //  file Cache.aa, line 83
     // cache_data[block_index]
-    $intermediate $W[simple_obj_ref_165_resized] : $int<5>
-    $intermediate $W[simple_obj_ref_165_scaled] : $int<5>
-    $intermediate $W[array_obj_ref_166_final_offset] : $int<5>
-    $intermediate $W[array_obj_ref_166_root_address] : $int<5>
+    $intermediate $W[simple_obj_ref_165_resized] : $int<6>
+    $intermediate $W[simple_obj_ref_165_scaled] : $int<6>
+    $intermediate $W[array_obj_ref_166_final_offset] : $int<6>
+    $intermediate $W[array_obj_ref_166_root_address] : $int<6>
     $W[array_obj_ref_166_word_address_0] : $pointer<memory_space_1>
     $W[array_obj_ref_166_data_0] : $int<512>
     $W[array_obj_ref_166_wire] : $int<512>
@@ -4648,9 +4648,9 @@ $module [write_mem]
     $constant $W[array_obj_ref_246_resized_base_address] : $int<5> := _b00000// 0
     $constant $W[array_obj_ref_246_offset_scale_factor_0] : $int<5> := _b00001// 1
     // cache_data[block_index]
-    $constant $W[array_obj_ref_250_resized_base_address] : $int<5> := _b00000// 0
-    $constant $W[array_obj_ref_250_offset_scale_factor_0] : $int<5> := _b00001// 1
-    $constant $W[array_obj_ref_250_word_offset_0] : $int<5> := _b00000// 0
+    $constant $W[array_obj_ref_250_resized_base_address] : $int<6> := _b000000// 0
+    $constant $W[array_obj_ref_250_offset_scale_factor_0] : $int<6> := _b000001// 1
+    $constant $W[array_obj_ref_250_word_offset_0] : $int<6> := _b000000// 0
     // active_line
     $constant $W[simple_obj_ref_248_word_address_0] : $pointer<write_mem/memory_space_5> := _b00000
     $constant $W[simple_obj_ref_248_word_address_1] : $pointer<write_mem/memory_space_5> := _b00001
@@ -4693,9 +4693,9 @@ $module [write_mem]
     $constant $W[array_obj_ref_278_offset_scale_factor_0] : $int<5> := _b00001// 1
     $constant $W[array_obj_ref_278_word_offset_0] : $int<5> := _b00000// 0
     // cache_data[block_index]
-    $constant $W[array_obj_ref_283_resized_base_address] : $int<5> := _b00000// 0
-    $constant $W[array_obj_ref_283_offset_scale_factor_0] : $int<5> := _b00001// 1
-    $constant $W[array_obj_ref_283_word_offset_0] : $int<5> := _b00000// 0
+    $constant $W[array_obj_ref_283_resized_base_address] : $int<6> := _b000000// 0
+    $constant $W[array_obj_ref_283_offset_scale_factor_0] : $int<6> := _b000001// 1
+    $constant $W[array_obj_ref_283_word_offset_0] : $int<6> := _b000000// 0
     // active_line
     $constant $W[simple_obj_ref_281_word_address_0] : $pointer<write_mem/memory_space_5> := _b00000
     $constant $W[simple_obj_ref_281_word_address_1] : $pointer<write_mem/memory_space_5> := _b00001
@@ -4733,9 +4733,9 @@ $module [write_mem]
     $constant $W[simple_obj_ref_292_word_address_14] : $pointer<write_mem/memory_space_5> := _b01110
     $constant $W[simple_obj_ref_292_word_address_15] : $pointer<write_mem/memory_space_5> := _b01111
     // cache_data[block_index]
-    $constant $W[array_obj_ref_291_resized_base_address] : $int<5> := _b00000// 0
-    $constant $W[array_obj_ref_291_offset_scale_factor_0] : $int<5> := _b00001// 1
-    $constant $W[array_obj_ref_291_word_offset_0] : $int<5> := _b00000// 0
+    $constant $W[array_obj_ref_291_resized_base_address] : $int<6> := _b000000// 0
+    $constant $W[array_obj_ref_291_offset_scale_factor_0] : $int<6> := _b000001// 1
+    $constant $W[array_obj_ref_291_word_offset_0] : $int<6> := _b000000// 0
     // block %write_mem%body
     //  file Cache.aa, line 100
     // 		block_index := (addr >> 28 )
@@ -4804,10 +4804,10 @@ $module [write_mem]
     // 		active_line := cache_data[block_index]
     //  file Cache.aa, line 123
     // cache_data[block_index]
-    $intermediate $W[simple_obj_ref_249_resized] : $int<5>
-    $intermediate $W[simple_obj_ref_249_scaled] : $int<5>
-    $intermediate $W[array_obj_ref_250_final_offset] : $int<5>
-    $intermediate $W[array_obj_ref_250_root_address] : $int<5>
+    $intermediate $W[simple_obj_ref_249_resized] : $int<6>
+    $intermediate $W[simple_obj_ref_249_scaled] : $int<6>
+    $intermediate $W[array_obj_ref_250_final_offset] : $int<6>
+    $intermediate $W[array_obj_ref_250_root_address] : $int<6>
     $W[array_obj_ref_250_word_address_0] : $pointer<memory_space_1>
     $W[array_obj_ref_250_data_0] : $int<512>
     $W[array_obj_ref_250_wire] : $int<512>
@@ -4885,10 +4885,10 @@ $module [write_mem]
     // 			active_line := cache_data[block_index]
     //  file Cache.aa, line 140
     // cache_data[block_index]
-    $intermediate $W[simple_obj_ref_282_resized] : $int<5>
-    $intermediate $W[simple_obj_ref_282_scaled] : $int<5>
-    $intermediate $W[array_obj_ref_283_final_offset] : $int<5>
-    $intermediate $W[array_obj_ref_283_root_address] : $int<5>
+    $intermediate $W[simple_obj_ref_282_resized] : $int<6>
+    $intermediate $W[simple_obj_ref_282_scaled] : $int<6>
+    $intermediate $W[array_obj_ref_283_final_offset] : $int<6>
+    $intermediate $W[array_obj_ref_283_root_address] : $int<6>
     $W[array_obj_ref_283_word_address_0] : $pointer<memory_space_1>
     $W[array_obj_ref_283_data_0] : $int<512>
     $W[array_obj_ref_283_wire] : $int<512>
@@ -4955,10 +4955,10 @@ $module [write_mem]
     $W[simple_obj_ref_292_data_14] : $int<32>
     $W[simple_obj_ref_292_data_15] : $int<32>
     // cache_data[block_index]
-    $intermediate $W[simple_obj_ref_290_resized] : $int<5>
-    $intermediate $W[simple_obj_ref_290_scaled] : $int<5>
-    $intermediate $W[array_obj_ref_291_final_offset] : $int<5>
-    $intermediate $W[array_obj_ref_291_root_address] : $int<5>
+    $intermediate $W[simple_obj_ref_290_resized] : $int<6>
+    $intermediate $W[simple_obj_ref_290_scaled] : $int<6>
+    $intermediate $W[array_obj_ref_291_final_offset] : $int<6>
+    $intermediate $W[array_obj_ref_291_root_address] : $int<6>
     $W[array_obj_ref_291_word_address_0] : $pointer<memory_space_1>
     $W[array_obj_ref_291_data_0] : $int<512>
     // datapath-instances for block %write_mem%body

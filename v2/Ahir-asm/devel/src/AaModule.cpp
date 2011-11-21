@@ -454,7 +454,7 @@ void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)
   if(!this->_foreign_flag)
     {
       this->Write_VC_Pipe_Declarations(ofile);
-      this->Write_VC_Memory_Spaces(ofile);  
+      this->Write_VC_Memory_Spaces(opt_flag, ofile);  
       
       this->Write_VC_Control_Path(opt_flag, ofile);
       this->Write_VC_Data_Path(ofile);
@@ -510,10 +510,10 @@ void AaModule::Write_VC_Data_Path(ostream& ofile)
 }
 
 
-void AaModule::Write_VC_Memory_Spaces(ostream& ofile)
+void AaModule::Write_VC_Memory_Spaces(bool opt_flag, ostream& ofile)
 {
   for(int idx = 0; idx < _memory_spaces.size(); idx++)
-    _memory_spaces[idx]->Write_VC_Model(ofile);
+    _memory_spaces[idx]->Write_VC_Model(opt_flag, ofile);
 }
 
 
