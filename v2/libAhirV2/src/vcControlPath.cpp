@@ -361,9 +361,14 @@ void vcTransition::Print_VHDL(ostream& ofile)
 		<< pred->Get_Exit_Symbol() << ";" << endl;
 	}
 
+      // always true.. because there is some issue in the phi...
+      // string bypass_str = (vcSystem::_min_clock_period_flag ? "true" : "true");
+      string bypass_str = "true";
+      
       if(this->Get_Is_Input())
 	{
 	  ofile << this->Get_VHDL_Id() << "_join: join_with_input -- {" << endl
+		<< "generic map ( bypass => " << bypass_str << ")" << endl
 		<< "port map( -- {"
 		<< "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl
 		<< "symbol_in => " << this->Get_DP_To_CP_Symbol() << "," << endl
@@ -374,6 +379,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
       else
 	{
 	  ofile << this->Get_VHDL_Id() << "_join: join -- {" << endl
+		<< "generic map ( bypass => " << bypass_str << ")" << endl
 		<< "port map( -- {"
 		<< "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl
 		<< "symbol_out => " << this->Get_Exit_Symbol() << "," << endl
@@ -1899,7 +1905,10 @@ void vcControlPath::Print_VHDL_Exit_Symbol_Assignment(ostream& ofile)
 	<< this->_exit->Get_Exit_Symbol() 
 	<< " & fin_req_symbol;"  << endl;
   
+  //string bypass_str = (vcSystem::_min_clock_period_flag ? "false" : "true");
+  string bypass_str = "true";
   ofile << this->Get_Exit_Symbol() << "_join_instance: join -- {" << endl
+	<< "generic map ( bypass => " << bypass_str << ")" << endl
 	<< "port map( -- {" << endl
 	<< " clk => clk, reset => reset, " << endl
 	<< "preds => " << this->Get_Exit_Symbol() <<  "_predecessors," << endl

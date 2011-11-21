@@ -1548,6 +1548,8 @@ package BaseComponents is
   end component;
 
   component join is
+    generic (
+      bypass: boolean := false);
      port ( preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -1555,6 +1557,8 @@ package BaseComponents is
   end component;
 
   component join2 
+    generic (
+      bypass: boolean := false);
     port ( pred0, pred1      : in   Boolean;
            symbol_out : out  boolean;
            clk: in std_logic;
@@ -1562,6 +1566,8 @@ package BaseComponents is
   end component;
 
   component join_with_input is
+    generic (
+      bypass: boolean := false);
      port ( preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
@@ -7595,6 +7601,7 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity join2 is
+  generic(bypass: boolean := true);
   port ( pred0, pred1      : in   Boolean;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -7621,6 +7628,7 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity join is
+  generic (bypass : boolean  := true);
   port ( preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -7640,7 +7648,7 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(marking => false, bypass => true)
+	pI: place generic map(marking => false, bypass => bypass)
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;
@@ -7658,6 +7666,7 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity join_with_input is
+  generic (bypass: boolean := true);
   port ( preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
@@ -7677,7 +7686,7 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(marking => false, bypass => true)
+	pI: place generic map(marking => false, bypass => bypass)
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;

@@ -63,6 +63,8 @@ package BaseComponents is
   end component;
 
   component join is
+    generic (
+      bypass: boolean := false);
      port ( preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -70,6 +72,8 @@ package BaseComponents is
   end component;
 
   component join2 
+    generic (
+      bypass: boolean := false);
     port ( pred0, pred1      : in   Boolean;
            symbol_out : out  boolean;
            clk: in std_logic;
@@ -77,6 +81,8 @@ package BaseComponents is
   end component;
 
   component join_with_input is
+    generic (
+      bypass: boolean := false);
      port ( preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;

@@ -293,9 +293,12 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 	    }
 	  ofile << ");" << endl;
 
+          //string bypass_str = (vcSystem::_min_clock_period_flag ? "false" : "true");
+          string bypass_str = "true";
 	  if(this->_input_transition != NULL)
 	    {
 	      ofile << "jI: join_with_input -- {" << endl
+		    << "generic map ( bypass => " << bypass_str << ")" << endl
 		    << "port map( -- {"
 		    << "preds => predecessors," << endl
 		    << "symbol_in => " << this->_input_transition->Get_DP_To_CP_Symbol() << "," << endl
@@ -306,222 +309,227 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 	  else
 	    {
 	      ofile << "jNoI: join -- {" << endl
-		    << "port map( -- {"
-		    << "preds => predecessors," << endl
-		    << "symbol_out => cp_elements(" << this->Get_Group_Index() << ")," << endl
-		    << "clk => clk," << endl
-		    << "reset => reset); -- }}" << endl;
-	    }
-	  
-	  ofile << "-- }" << endl << "end Block;" << endl;
-	}
-      else if(_predecessors.size() == 1)
-	{
-	  if(this->_has_input_transition)
-	    {
-	      ofile << "cp_elements(" << this->Get_Group_Index() << ") <= ";
-	      ofile <<  _input_transition->Get_DP_To_CP_Symbol() << ";" << endl;
-	    }
-	  else
-	    {
-	      ofile << "cp_elements(" << this->Get_Group_Index() << ") <= ";	      
-	      ofile << "cp_elements(" << (*(_predecessors.begin()))->Get_Group_Index() << ");" << endl;
-	    }
-	}
-    }
-
-  
-  
-  for(int idx = 0, fidx = _output_transitions.size(); idx < fidx; idx++)
-    {
-      ofile << _output_transitions[idx]->Get_CP_To_DP_Symbol() << " <= cp_elements("
-	    << this->Get_Group_Index()
-	    << ");" << endl;
-    }
-}
-
-void vcControlPath::Construct_Reduced_Group_Graph()
-{
-  this->vcCPBlock::Construct_CPElement_Group_Graph_Vertices(this);
-  this->vcCPBlock::Connect_CPElement_Group_Graph(this);
-  this->Reduce_CPElement_Group_Graph();
-}
-
-void vcControlPath::Reduce_CPElement_Group_Graph()
-{
-  cerr << "Info: reducing Control-path " << endl;
-  map<vcCPElementGroup*,vcCPElementGroup*> reduce_map;
-  for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
-	fiter = _cpelement_groups.end();
-      iter != fiter;
-      iter++)
-    {
-      vcCPElementGroup* g = (*iter);
-      if(g->_predecessors.size() == 1)
-	{
-	  for(set<vcCPElementGroup*>::iterator niter = g->_predecessors.begin(),
-		fniter = g->_predecessors.end();
-	      niter != fniter;
-	      niter++)
-	    {
-	      vcCPElementGroup* pg = (*niter);
-	      if(pg->_successors.size() == 1)
+			    << "generic map ( bypass => " << bypass_str << ")" << endl
+			    << "port map( -- {"
+			    << "preds => predecessors," << endl
+			    << "symbol_out => cp_elements(" << this->Get_Group_Index() << ")," << endl
+			    << "clk => clk," << endl
+			    << "reset => reset); -- }}" << endl;
+		    }
+		  
+		  ofile << "-- }" << endl << "end Block;" << endl;
+		}
+	      else if(_predecessors.size() == 1)
 		{
-		  if(pg->Can_Absorb(g))
+		  if(this->_has_input_transition)
 		    {
-		      if(reduce_map.find(pg) == reduce_map.end())
-			reduce_map[g] = pg;
-		      else
-			reduce_map[g] = reduce_map[pg];
+		      ofile << "cp_elements(" << this->Get_Group_Index() << ") <= ";
+		      ofile <<  _input_transition->Get_DP_To_CP_Symbol() << ";" << endl;
+		    }
+		  else
+		    {
+		      ofile << "cp_elements(" << this->Get_Group_Index() << ") <= ";	      
+		      ofile << "cp_elements(" << (*(_predecessors.begin()))->Get_Group_Index() << ");" << endl;
 		    }
 		}
 	    }
-	}
-    }
 
-  // transitive closure..
-  for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
-	fiter = _cpelement_groups.end();
-      iter != fiter;
-      iter++)
-    {
-      vcCPElementGroup* g = *iter;
-      if(reduce_map.find(g) != reduce_map.end())
-	{
-	  vcCPElementGroup* pg = reduce_map[g];
-	  while(reduce_map.find(pg) != reduce_map.end())
-	    pg = reduce_map[pg];
 	  
-	  reduce_map[g] = pg;
+	  
+	  for(int idx = 0, fidx = _output_transitions.size(); idx < fidx; idx++)
+	    {
+	      ofile << _output_transitions[idx]->Get_CP_To_DP_Symbol() << " <= cp_elements("
+		    << this->Get_Group_Index()
+		    << ");" << endl;
+	    }
 	}
-    }  
 
-  // now merge..
-  for(map<vcCPElementGroup*,vcCPElementGroup*>::iterator miter = reduce_map.begin(),
-	fmiter = reduce_map.end();
-      miter != fmiter;
-      miter++)
-    {
-      this->Merge_Groups((*miter).first, (*miter).second);
-    }
+	void vcControlPath::Construct_Reduced_Group_Graph()
+	{
+	  this->vcCPBlock::Construct_CPElement_Group_Graph_Vertices(this);
+	  this->vcCPBlock::Connect_CPElement_Group_Graph(this);
+	  this->Reduce_CPElement_Group_Graph();
+	}
 
-  
-  // index the groups.
-  int idx = 0;
-  for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
-	fiter = _cpelement_groups.end();
-      iter != fiter;
-      iter++)
-    {
-      (*iter)->Set_Group_Index(idx);
-      idx++;
-    }
-}
+	void vcControlPath::Reduce_CPElement_Group_Graph()
+	{
+	  cerr << "Info: reducing Control-path " << endl;
+	  map<vcCPElementGroup*,vcCPElementGroup*> reduce_map;
+	  for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+		fiter = _cpelement_groups.end();
+	      iter != fiter;
+	      iter++)
+	    {
+	      vcCPElementGroup* g = (*iter);
+	      if(g->_predecessors.size() == 1)
+		{
+		  for(set<vcCPElementGroup*>::iterator niter = g->_predecessors.begin(),
+			fniter = g->_predecessors.end();
+		      niter != fniter;
+		      niter++)
+		    {
+		      vcCPElementGroup* pg = (*niter);
+		      if(pg->_successors.size() == 1)
+			{
+			  if(pg->Can_Absorb(g))
+			    {
+			      if(reduce_map.find(pg) == reduce_map.end())
+				reduce_map[g] = pg;
+			      else
+				reduce_map[g] = reduce_map[pg];
+			    }
+			}
+		    }
+		}
+	    }
 
+	  // transitive closure..
+	  for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+		fiter = _cpelement_groups.end();
+	      iter != fiter;
+	      iter++)
+	    {
+	      vcCPElementGroup* g = *iter;
+	      if(reduce_map.find(g) != reduce_map.end())
+		{
+		  vcCPElementGroup* pg = reduce_map[g];
+		  while(reduce_map.find(pg) != reduce_map.end())
+		    pg = reduce_map[pg];
+		  
+		  reduce_map[g] = pg;
+		}
+	    }  
 
-void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole)
-{
+	  // now merge..
+	  for(map<vcCPElementGroup*,vcCPElementGroup*>::iterator miter = reduce_map.begin(),
+		fmiter = reduce_map.end();
+	      miter != fmiter;
+	      miter++)
+	    {
+	      this->Merge_Groups((*miter).first, (*miter).second);
+	    }
 
-  
-  assert(part->_predecessors.size() == 1);
-
-  // get part out of the succ. list. of whole
-  whole->_successors.erase(part);
-
-  // move part' successors to whole..
-  for(set<vcCPElementGroup*>::iterator iter = part->_successors.begin(),
-	fiter = part->_successors.end();
-      iter != fiter;
-      iter++)
-    {
-      // remove part as a predecessor of iter..
-      (*iter)->_predecessors.erase(part);
-
-      // connect whole to iter..
-      if(this->_cpelement_groups.find(*iter) != this->_cpelement_groups.end())
-	this->Connect_Groups(whole,(*iter));
-    }
-
-
-  // move part' elements to whole..
-  for(set<vcCPElement*>::iterator el_iter = part->_elements.begin();
-      el_iter != part->_elements.end();
-      el_iter++)
-    {
-      this->_cpelement_to_group_map.erase(*el_iter);
-      this->Add_To_Group(*el_iter,whole);
-    }
-
-  // remove part from the groups..
-  this->_cpelement_groups.erase(part);
-
-}
-
-vcCPElementGroup* vcControlPath::Make_New_Group()
-{
-  vcCPElementGroup* ng = new vcCPElementGroup();
-  this->_cpelement_groups.insert(ng);
-  return(ng);
-}
-
-vcCPElementGroup* vcControlPath::Get_Group(vcCPElement* cpe)
-{
-  vcCPElementGroup* rg = NULL;
-  if(_cpelement_to_group_map.find(cpe) != _cpelement_to_group_map.end())
-    {
-      rg = _cpelement_to_group_map[cpe];
-    }
-  return(rg);
-}
-
-
-void vcControlPath::Add_To_Group(vcCPElement* cpe, vcCPElementGroup* group)
-{
-  group->Add_Element(cpe);
-  // cannot be a member of two groups!
-  assert(_cpelement_to_group_map.find(cpe) == _cpelement_to_group_map.end());
-  _cpelement_to_group_map[cpe] = group;
-}
-
-void vcControlPath::Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to)
-{
-  from->Add_Successor(to);
-  to->Add_Predecessor(from);
-}
-
-void vcControlPath::Print_Groups(ostream& ofile)
-{
-  for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
-	fiter = _cpelement_groups.end();
-      iter != fiter;
-      iter++)
-    {
-      (*iter)->Print(ofile);
-    }
-}
+	  
+	  // index the groups.
+	  int idx = 0;
+	  for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+		fiter = _cpelement_groups.end();
+	      iter != fiter;
+	      iter++)
+	    {
+	      (*iter)->Set_Group_Index(idx);
+	      idx++;
+	    }
+	}
 
 
-void vcControlPath::Print_VHDL_Optimized(ostream& ofile)
-{
-  
-  string id = "control-path";
+	void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole)
+	{
 
-  ofile << this->Get_VHDL_Id() << ": Block -- " << id << " {" << endl;
-  ofile << "signal cp_elements: BooleanArray("	
-	<< _cpelement_groups.size()-1 
-	<< " downto 0);" << endl;
-  ofile << "-- }" << endl << "begin -- {" << endl;
+	  
+	  assert(part->_predecessors.size() == 1);
 
-  _cpelement_to_group_map[this->_entry]->_is_cp_entry = true;
+	  // get part out of the succ. list. of whole
+	  whole->_successors.erase(part);
 
-  ofile << "cp_elements(" 
-	<< _cpelement_to_group_map[this->_entry]->Get_Group_Index()
-	<< ") <= start_req_symbol;" << endl;
-  ofile << "start_ack_symbol <= cp_elements(" 
-	<< _cpelement_to_group_map[this->_exit]->Get_Group_Index()
-	<< ");" << endl;
+	  // move part' successors to whole..
+	  for(set<vcCPElementGroup*>::iterator iter = part->_successors.begin(),
+		fiter = part->_successors.end();
+	      iter != fiter;
+	      iter++)
+	    {
+	      // remove part as a predecessor of iter..
+	      (*iter)->_predecessors.erase(part);
 
-  ofile << "finAckJoin: join2 port map(pred0 => fin_req_symbol, pred1 => cp_elements("
+	      // connect whole to iter..
+	      if(this->_cpelement_groups.find(*iter) != this->_cpelement_groups.end())
+		this->Connect_Groups(whole,(*iter));
+	    }
+
+
+	  // move part' elements to whole..
+	  for(set<vcCPElement*>::iterator el_iter = part->_elements.begin();
+	      el_iter != part->_elements.end();
+	      el_iter++)
+	    {
+	      this->_cpelement_to_group_map.erase(*el_iter);
+	      this->Add_To_Group(*el_iter,whole);
+	    }
+
+	  // remove part from the groups..
+	  this->_cpelement_groups.erase(part);
+
+	}
+
+	vcCPElementGroup* vcControlPath::Make_New_Group()
+	{
+	  vcCPElementGroup* ng = new vcCPElementGroup();
+	  this->_cpelement_groups.insert(ng);
+	  return(ng);
+	}
+
+	vcCPElementGroup* vcControlPath::Get_Group(vcCPElement* cpe)
+	{
+	  vcCPElementGroup* rg = NULL;
+	  if(_cpelement_to_group_map.find(cpe) != _cpelement_to_group_map.end())
+	    {
+	      rg = _cpelement_to_group_map[cpe];
+	    }
+	  return(rg);
+	}
+
+
+	void vcControlPath::Add_To_Group(vcCPElement* cpe, vcCPElementGroup* group)
+	{
+	  group->Add_Element(cpe);
+	  // cannot be a member of two groups!
+	  assert(_cpelement_to_group_map.find(cpe) == _cpelement_to_group_map.end());
+	  _cpelement_to_group_map[cpe] = group;
+	}
+
+	void vcControlPath::Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to)
+	{
+	  from->Add_Successor(to);
+	  to->Add_Predecessor(from);
+	}
+
+	void vcControlPath::Print_Groups(ostream& ofile)
+	{
+	  for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+		fiter = _cpelement_groups.end();
+	      iter != fiter;
+	      iter++)
+	    {
+	      (*iter)->Print(ofile);
+	    }
+	}
+
+
+	void vcControlPath::Print_VHDL_Optimized(ostream& ofile)
+	{
+	  
+	  string id = "control-path";
+
+	  ofile << this->Get_VHDL_Id() << ": Block -- " << id << " {" << endl;
+	  ofile << "signal cp_elements: BooleanArray("	
+		<< _cpelement_groups.size()-1 
+		<< " downto 0);" << endl;
+	  ofile << "-- }" << endl << "begin -- {" << endl;
+
+	  _cpelement_to_group_map[this->_entry]->_is_cp_entry = true;
+
+	  ofile << "cp_elements(" 
+		<< _cpelement_to_group_map[this->_entry]->Get_Group_Index()
+		<< ") <= start_req_symbol;" << endl;
+	  ofile << "start_ack_symbol <= cp_elements(" 
+		<< _cpelement_to_group_map[this->_exit]->Get_Group_Index()
+		<< ");" << endl;
+
+	  //string bypass_str = (vcSystem::_min_clock_period_flag ? "false" : "true");
+          string bypass_str = "true";
+  ofile << "finAckJoin: join2 " << endl
+	<< "generic map ( bypass => " << bypass_str << ")" << endl
+	<< " port map(pred0 => fin_req_symbol, pred1 => cp_elements("
 	<< _cpelement_to_group_map[this->_exit]->Get_Group_Index()
 	<< "), symbol_out => fin_ack_symbol, clk => clk, reset => reset);"
 	<< endl;

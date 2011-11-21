@@ -6,6 +6,7 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity join2 is
+  generic(bypass: boolean := true);
   port ( pred0, pred1      : in   Boolean;
     	symbol_out : out  boolean;
 	clk: in std_logic;
