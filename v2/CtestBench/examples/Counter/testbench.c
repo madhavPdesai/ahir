@@ -16,12 +16,12 @@ void *counter_(void* fargs)
 
 void *write_pipe_(void* a)
 {
-	write_uint8_n("in_data",(uint8_t*)a, 100);
+	write_uint8_n("in_data",(uint8_t*)a, 4);
 }
 
 void *read_pipe_(void* a)
 {
-	read_uint8_n("out_data", (uint8_t*)a, 100);
+	read_uint8_n("out_data", (uint8_t*)a, 4);
 }
 
 
@@ -30,11 +30,11 @@ int main(int argc, char* argv[])
 	signal(SIGINT,  Exit);
   	signal(SIGTERM, Exit);
 
-	uint8_t pipe_in[100], pipe_out[100];
+	uint8_t pipe_in[4], pipe_out[4];
         int i;
 
 	pipe_in[0] = 0;
-        for(i = 1; i < 100; i++)
+        for(i = 1; i < 4; i++)
 		pipe_in[i] = 1;
 
 	// in parallel, start foo and bar.
@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
 
 
  	fprintf(stdout,"from out_data, we read ");
-        for(i = 0; i < 100; i++) 
+        for(i = 0; i < 4; i++) 
  	   fprintf(stdout," %d\n ",  pipe_out[i]);
 	fprintf(stdout,"\n");
 

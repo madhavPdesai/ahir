@@ -39,6 +39,12 @@ architecture Struct of SplitCallArbiterNoInArgsNoOutArgs is
 
    type TagwordArray is array (natural range <>) of std_logic_vector(caller_tag_length-1 downto 0);
    signal return_tag_sig : TagwordArray(num_reqs-1 downto 0);
+
+   type CallStateType is (idle, busy);
+   signal call_state: CallStateType;
+
+   signal latch_call_data : std_logic;
+   signal call_mtag_prereg  : std_logic_vector(callee_tag_length-1 downto 0);
 begin
 
   -----------------------------------------------------------------------------
@@ -47,27 +53,67 @@ begin
    pe_call_reqs <= PriorityEncode(call_reqs);
 
    ----------------------------------------------------------------------------
-   -- combinational process to handle call_reqs  --> call_mreq muxing
+   -- process to handle call_reqs  --> call_mreq muxing
    ----------------------------------------------------------------------------
-   process(pe_call_reqs, call_mack)
-     variable there_is_a_call : std_logic;
+   process(clk,pe_call_reqs,call_state)
+        variable nstate: CallStateType;
+        variable there_is_a_call : std_logic;
    begin
-     there_is_a_call := OrReduce(pe_call_reqs);
-     call_acks <= (others => '0');
-     if(there_is_a_call = '1') then
-       for I in num_reqs-1 downto 0 loop
-         if(pe_call_reqs(I) = '1') then
-           call_acks(I) <= call_mack;
-           exit;
-         end if;
-       end loop;  -- I
-     end if;
-     call_mreq <= there_is_a_call;
+	nstate := call_state;
+        there_is_a_call := OrReduce(pe_call_reqs);
+	latch_call_data <= '0';
+	call_mreq <= '0';
+
+	if(call_state = idle) then
+		if(there_is_a_call = '1') then
+			latch_call_data <=  '1';
+			nstate := busy;
+		end if;
+	elsif (call_state = busy) then
+		call_mreq <= '1';
+		if(call_mack = '1') then
+			nstate := idle;
+		end if;
+	end if;
+	
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			call_state <= idle;
+		else
+			call_state <= nstate;
+		end if;
+	end if;
    end process;
 
+
+   -- combinational process.. generate call_acks, and also
+   -- mux to input of call data register.
+   process(pe_call_reqs,latch_call_data)
+   begin
+	call_acks <= (others => '0');
+       	for I in num_reqs-1 downto 0 loop
+       		if(pe_call_reqs(I) = '1') then
+			if(latch_call_data = '1') then
+				call_acks(I) <= '1';
+			end if;
+       		end if;
+	end loop;
+   end process;
+
+   -- call data register.
+   process(clk)
+   begin
+     if(clk'event and clk = '1') then
+     	if(latch_call_data = '1') then
+		call_mtag <= call_mtag_prereg;
+        end if;  -- I
+     end if;
+   end process;
+ 
+   -- tag generation.
    tagGen : BinaryEncoder generic map (iwidth => num_reqs,
                                        owidth => callee_tag_length)
-     port map (din => pe_call_reqs, dout => call_mtag);
+     port map (din => pe_call_reqs, dout => call_mtag_prereg);
 
    -- on a successful call, register the tag from the caller
    -- side..
@@ -75,14 +121,13 @@ begin
      process(clk)
      begin
        if(clk'event and clk = '1') then
-         if(pe_call_reqs(T) = '1') then
+         if(pe_call_reqs(T) = '1' and latch_call_data = '1') then
            return_tag_sig(T)
              <= call_tag(((T+1)*caller_tag_length)-1 downto T*caller_tag_length);
          end if;
        end if;
      end process;     
    end generate tagRegGen;
-
 
    ----------------------------------------------------------------------------
    -- reverse path

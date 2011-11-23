@@ -6,19 +6,19 @@ $in () $out () $is
 {
 	$branchblock[fsm]{
 
-		$constant z7 : $uint<7> := 0
+		$constant z6 : $uint<6> := 0
 		
 		$merge $entry loopback 
 			$phi s0 := 0 $on $entry ns0 $on loopback
-			$phi s1 := 0 $on $entry ns0 $on loopback
+			$phi s1 := 0 $on $entry ns1 $on loopback
 		$endmerge
 
+                in_symbol := in_data
 		$parallelblock[pb]
 		{
-			ns0 := ((~ (in_symbol[] 0)) & (s0 ^ (in_symbol [] 0)))
-                	ns1 := ((~ (in_symbol [] 0)) & (s1 ^ (s0 & (in_symbol [] 0))))
-                	out_data := (z7 && (s1 & s0))
-			in_symbol := in_data	
+			ns0 := ((in_symbol[] 0) ^ s0)
+                	ns1 := (((in_symbol[] 0) & s0) ^ s1)
+                	out_data := (z6 && (s1 && s0))
 		}  (ns0 => ns0 ns1 => ns1)
 		
 		$place [loopback]

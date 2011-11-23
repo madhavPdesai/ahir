@@ -361,9 +361,8 @@ void vcTransition::Print_VHDL(ostream& ofile)
 		<< pred->Get_Exit_Symbol() << ";" << endl;
 	}
 
-      // always true.. because there is some issue in the phi...
-      // string bypass_str = (vcSystem::_min_clock_period_flag ? "true" : "true");
-      string bypass_str = "true";
+      string bypass_str = (vcSystem::_min_clock_period_flag ? "true" : "true");
+      //string bypass_str = "true";
       
       if(this->Get_Is_Input())
 	{
@@ -1905,8 +1904,8 @@ void vcControlPath::Print_VHDL_Exit_Symbol_Assignment(ostream& ofile)
 	<< this->_exit->Get_Exit_Symbol() 
 	<< " & fin_req_symbol;"  << endl;
   
-  //string bypass_str = (vcSystem::_min_clock_period_flag ? "false" : "true");
-  string bypass_str = "true";
+  string bypass_str = (vcSystem::_min_clock_period_flag ? "false" : "true");
+  //string bypass_str = "true";
   ofile << this->Get_Exit_Symbol() << "_join_instance: join -- {" << endl
 	<< "generic map ( bypass => " << bypass_str << ")" << endl
 	<< "port map( -- {" << endl
