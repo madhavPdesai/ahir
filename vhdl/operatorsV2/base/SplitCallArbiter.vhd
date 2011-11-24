@@ -105,6 +105,7 @@ begin
 	variable out_data : std_logic_vector(call_data_width-1 downto 0);
    begin
 	call_acks <= (others => '0');
+	out_data := (others => '0');
        	for I in num_reqs-1 downto 0 loop
        		if(pe_call_reqs(I) = '1') then
        			Extract(call_data,I,out_data);

@@ -52,6 +52,7 @@ begin  -- Behave
       begin
         op1 := data_in(iwidth-1 downto iwidth_2);
         op2 := data_in(iwidth_2-1 downto 0);
+        result_var := (others => '0');
         TwoInputOperation(operator_id, op1, op2,result_var);
         result <= result_var;
       end process;
@@ -66,6 +67,7 @@ begin  -- Behave
       begin
         op1 := To_ISLV(data_in(iwidth-1 downto iwidth_2));
         op2 := To_ISLV(data_in(iwidth_2-1 downto 0));
+        result_var := (others => '0');
         TwoInputFloatOperation(operator_id, op1,op2,result_var);
         result <= To_SLV(result_var);
       end process;
@@ -80,6 +82,7 @@ begin  -- Behave
       begin
         op1 := To_ISLV(data_in(iwidth-1 downto iwidth_2));
         op2 := To_ISLV(data_in(iwidth_2-1 downto 0));
+        result_var := (others => '0');
         TwoInputFloatOperation(operator_id, op1,op2,result_var);
         result <= To_SLV(result_var);
       end process;
@@ -101,6 +104,7 @@ begin  -- Behave
       process(data_in)
         variable   result_var    : std_logic_vector(owidth-1 downto 0);
       begin
+        result_var := (others => '0');
         SingleInputOperation(operator_id, data_in, result_var);
         result <= result_var;
       end process;
@@ -112,6 +116,7 @@ begin  -- Behave
         variable result_var: IStdLogicVector(output_characteristic_width downto (- output_mantissa_width));
       begin
         op1 := To_ISLV(data_in);
+        result_var := (others => '0');
         SingleInputFloatOperation(operator_id, op1, result_var);
         result <= To_SLV(result_var);
       end process;
@@ -123,6 +128,7 @@ begin  -- Behave
         variable result_var: IStdLogicVector(owidth-1 downto 0);
       begin
         op1 := To_ISLV(data_in);
+        result_var := (others => '0');
         SingleInputFloatOperation(operator_id, op1, result_var);
         result <= To_SLV(result_var);
       end process;
@@ -132,6 +138,7 @@ begin  -- Behave
       process(data_in)
         variable result_var: IStdLogicVector(output_characteristic_width downto (- output_mantissa_width));
       begin
+        result_var := (others => '0');
         SingleInputFloatOperation(operator_id, To_ISLV(data_in), result_var);
         result <= To_SLV(result_var);
       end process;
@@ -150,6 +157,7 @@ begin  -- Behave
         process(data_in,op2_sig)
           variable   result_var    : std_logic_vector(owidth-1 downto 0);
         begin
+          result_var := (others => '0');
           TwoInputOperation(operator_id,
                             data_in,
                             op2_sig,
@@ -166,6 +174,7 @@ begin  -- Behave
           := To_ISLV(constant_operand);
         variable   result_var: IStdLogicVector(owidth-1 downto 0);
       begin
+        result_var := (others => '0');
         op1 := To_ISLV(data_in);	
         TwoInputFloatOperation(operator_id, op1, op2, result_var);
         result <= To_SLV(result_var);
@@ -180,6 +189,7 @@ begin  -- Behave
         variable result_var: IStdLogicVector(output_characteristic_width downto (- output_mantissa_width));
       begin
         op1 := To_ISLV(data_in);
+        result_var := (others => '0');
         TwoInputFloatOperation(operator_id, op1, op2, result_var);
         result <= To_SLV(result_var);
       end process;
