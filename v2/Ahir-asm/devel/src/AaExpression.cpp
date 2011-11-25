@@ -1062,7 +1062,8 @@ bool AaArrayObjectReference::Set_Addressed_Object_Representative(AaStorageObject
       // the width of the word to which this address points
       // must be recorded!
       assert(this->_type->Is_Pointer_Type());
-      obj->Add_Access_Width(((AaPointerType*)(this->_type))->Get_Ref_Type()->Size());
+      if(obj != NULL)
+      	obj->Add_Access_Width(((AaPointerType*)(this->_type))->Get_Ref_Type()->Size());
     }
   this->AaExpression::Set_Addressed_Object_Representative(obj);
 }

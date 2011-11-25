@@ -1,0 +1,14 @@
+README
+wrapper_lib.aa
+	contains utility functions which
+	are used by the wrapper.
+wrapper_lib.hh
+	C header file declaring the functions
+	in wrapper_lib.aa (for use in compiling
+	C programs)
+wrapper_revised.c
+	revised wrapper based on original wrapper.
+	This uses a simpler free-queue management
+	scheme, and wrapper_input, wrapper_output
+	use Aa functions from wrapper_lib.aa to
+	receive packet, send packet etc.
