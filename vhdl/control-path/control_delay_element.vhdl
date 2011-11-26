@@ -46,7 +46,7 @@ begin  -- default_arch
               next_state_sig := '1';
             end if;
           when others =>
-            if(delay_count = delay_value) then
+            if(delay_count = delay_value-1) then
               ack_var := true;
               next_state_sig := '0';
             else
