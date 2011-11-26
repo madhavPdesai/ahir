@@ -29,7 +29,7 @@ void free_queue_init()
 {
 
     // charge free_queue_pipe..  its depth must be = FREE_QUEUE_SIZE
-    for (i = 0; i < FREE_QUEUE_SIZE; ++i) {
+    for (int i = 0; i < FREE_QUEUE_SIZE; ++i) {
 	write_uint32("free_queue_pipe", ((uint32_t) (&(free_queue_ram[i].block[0]))));
     }
 
@@ -37,19 +37,19 @@ void free_queue_init()
 
 void wrapper_input()
 {
-    uint8_t *buf;
+    uint32_t buf;
     int word;
 
     global_storage_initializer_();
     free_queue_init();
 
     while (1) {
-        buf = ahir_packet_get();
+        buf =  ahir_packet_get();
 
 	receive_packet(buf); // in wrapper_lib.aa
 
         // Write out packet to FromFPGA element.
-        write_uintptr("fromfpga_in0", (uint32_t *)buf);
+        write_uintptr("fromfpga_in0", (uint32_t*) buf);
     }
 }
 
@@ -58,7 +58,7 @@ void wrapper_output()
 
     while (1) {
         uint16_t i;
-        uint8_t *pkt;
+        uint32_t pkt;
 
         // Get a pointer to the packet data from the ToFPGA element.
         uint32_t port_number = read_uint32("tofpga_port_number");
@@ -66,33 +66,21 @@ void wrapper_output()
         switch (port_number) {
 #ifdef PORT0
             case 1:
-#ifdef MODELSIM_TESTBENCH
-                write_uint32("printf_debug_pipe", 0xbeef01);
-#endif
                 pkt = (uint32_t)read_uintptr("tofpga0_out0");
                 break;
 #endif
 #ifdef PORT1
             case 2:
-#ifdef MODELSIM_TESTBENCH
-                write_uint32("printf_debug_pipe", 0xbeef02);
-#endif
                 pkt = (uint32_t)read_uintptr("tofpga1_out0");
                 break;
 #endif
 #ifdef PORT2
             case 3:
-#ifdef MODELSIM_TESTBENCH
-                write_uint32("printf_debug_pipe", 0xbeef03);
-#endif
                 pkt = (uint32_t)read_uintptr("tofpga2_out0");
                 break;
 #endif
 #ifdef PORT3
             case 4:
-#ifdef MODELSIM_TESTBENCH
-                write_uint32("printf_debug_pipe", 0xbeef04);
-#endif
                 pkt = (uint32_t)read_uintptr("tofpga3_out0");
                 break;
 #endif

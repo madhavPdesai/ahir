@@ -1,0 +1,5 @@
+$module [global_storage_initializer_] $in () $out () $is {
+$parallelblock [pb] { 
+$call round_robin_bc_storage_initializer_ () () 
+}
+}
