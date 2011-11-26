@@ -7565,28 +7565,29 @@ begin  -- default_arch
       ack_var := false;
       next_delay_var := 0;
       
-      if(reset = '1') then
-        next_state_sig := '0';
-      else
         case state_sig is
           when '0' =>
             if req  then
               next_state_sig := '1';
             end if;
           when others =>
-            if(delay_count = delay_value-1) then
+            if(delay_count = delay_value) then
               ack_var := true;
               next_state_sig := '0';
             else
               next_delay_var := delay_count + 1;
             end if;
         end case;
-      end if;
 
       ack <= ack_var;
       if(clk'event and clk = '1') then
-        state_sig <= next_state_sig;
-        delay_count <= next_delay_var;
+	if(reset = '1') then
+		state_sig <=  '0';
+		delay_count <= 0;
+	else 
+        	state_sig <= next_state_sig;
+        	delay_count <= next_delay_var;
+	end if;
       end if;
     end process;
 
