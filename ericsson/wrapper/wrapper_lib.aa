@@ -176,11 +176,9 @@ $is
 $module [swap_bytes64]
 $in (a: $uint<64>) $out (ret: $uint<64>) $is
 {
-        u :=  ((($bitcast($uint<8>) a) && ($bitcast($uint<8>) (a >> _b1000))) &&
-                 (($bitcast($uint<8>) (a >> _b10000)) && ($bitcast($uint<8>) (a >> _b11000))))
-        v := ((($bitcast($uint<8>) (a >> _b100000)) && ($bitcast($uint<8>) (a >> _b101000))) &&
-                 (($bitcast($uint<8>) (a >> _b110000)) && ($bitcast($uint<8>) (a >> _b111000))))
-
-	ret := (u && v)
+        ret :=  (((($bitcast($uint<8>) a) && ($bitcast($uint<8>) (a >> _b1000))) &&
+                 (($bitcast($uint<8>) (a >> _b10000)) && ($bitcast($uint<8>) (a >> _b11000)))) &&
+                 ((($bitcast($uint<8>) (a >> _b100000)) && ($bitcast($uint<8>) (a >> _b101000))) &&
+                 (($bitcast($uint<8>) (a >> _b110000)) && ($bitcast($uint<8>) (a >> _b111000)))))
 }
 
