@@ -361,7 +361,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
 		<< pred->Get_Exit_Symbol() << ";" << endl;
 	}
 
-      string bypass_str = (vcSystem::_min_clock_period_flag ? "true" : "true");
+      string bypass_str = (vcSystem::_min_clock_period_flag ? "false" : "true");
       //string bypass_str = "true";
       
       if(this->Get_Is_Input())
