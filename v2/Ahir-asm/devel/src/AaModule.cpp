@@ -532,6 +532,7 @@ void AaModule::Write_VHDL_C_Stub_Prefix(ostream& ofile)
  else
    {
      multiple_outputs = true;
+     ret_type = "void";
    }
  
  string comma;
