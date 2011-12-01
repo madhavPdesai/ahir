@@ -68,7 +68,7 @@ wrapper_revised_aa: wrapper_revised_bc
 ahir_system.vhdl: round_robin_aa wrapper_revised_aa ../wrapper_lib.aa
 	$(AALINKEXTMEM) -I 1 -E mempool round_robin_aa wrapper_revised_aa ../wrapper_lib.aa  \
             | $(VCFORMAT) > ahir_system_aa
-	$(AA2VC) -O ahir_system_aa \
+	$(AA2VC) -I mempool -O ahir_system_aa \
             | $(VCFORMAT) > ahir_system_vc
 	$(VC2VHDL) -a $(TOPMODULES) \
             -q -e ahir_system -f ahir_system_vc | $(VHDLFORMAT) > ahir_system.vhdl 

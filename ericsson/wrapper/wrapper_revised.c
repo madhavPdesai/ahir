@@ -46,7 +46,12 @@ void wrapper_input()
     while (1) {
         buf =  ahir_packet_get();
 
+#if WORD_SWAPPING
 	receive_packet(buf); // in wrapper_lib.aa
+#else
+	receive_packet_noswap(buf); // in wrapper_lib.aa
+#endif
+
 
         // Write out packet to FromFPGA element.
         write_uintptr("fromfpga_in0", (uint32_t*) buf);
@@ -86,7 +91,11 @@ void wrapper_output()
 #endif
         }
 
+#if WORD_SWAPPING
 	send_packet(pkt); // in wrapper_lib.aa
+#else
+	send_packet_noswap(pkt); // in wrapper_lib.aa
+#endif
 
         // Free memory.
 	ahir_packet_free((uint32_t) pkt); // in wrapper_lib.aa
