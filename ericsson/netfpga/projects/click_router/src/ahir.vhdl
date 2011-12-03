@@ -11032,7 +11032,7 @@ end entity;
 architecture Behave of Pulse_To_Level_Translate_Entity is
   type PullModeState is (Idle,Ack,Waiting);
   signal pull_mode_state : PullModeState;
-  constant moore_flag : boolean := false;
+  constant moore_flag : boolean := true;
 begin  -- Behave
 
   process(clk)
