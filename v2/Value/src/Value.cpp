@@ -37,6 +37,8 @@ Unsigned::Unsigned(int n, string init_value)
     {
       if((init_value[0] == '_') && (init_value[1] == 'b'))
 	format = "binary";
+      else if((init_value[0] == '_') && (init_value[1] == 'h'))
+	format = "hexadecimal";
       else
 	format = "decimal";
     }
@@ -61,6 +63,11 @@ Unsigned::Unsigned(int n, string init_value)
 	  _bit_field[0] = this->AtoI(init_value.c_str());
 	}
     }
+  else if (format == "hexadecimal")
+    {
+	string binary_init_string = Hex_To_Binary(init_value);
+	this->Initialize_From_Binary_String(binary_init_string);
+    }
   else if(format == "binary")
     {
 #ifdef DEBUG
@@ -71,20 +78,9 @@ Unsigned::Unsigned(int n, string init_value)
 	}
 #endif
 
-      int bit_count = 0;
-      for(int idx = init_value.size()-1; idx >= 2; idx--)
-	{
-	  bit_count++;
-	  int actual_index = (init_value.size()-1) - idx;
-	  if(init_value[idx] == '1')
-	    this->Set_Bit(actual_index,true);
-	  else
-	    this->Set_Bit(actual_index,false);
-	  
-	  if(bit_count == _width)
-	    break;
-	}
+      this->Initialize_From_Binary_String(init_value);
     }
+
 }
 
 Unsigned::Unsigned(const Unsigned& v):Value()
@@ -99,6 +95,23 @@ Unsigned::Unsigned(const Unsigned& v):Value()
 UWord Unsigned::AtoI(string ival)
 {
   return((UWord)(atoi(ival.c_str())));
+}
+
+void Unsigned::Initialize_From_Binary_String(string& init_value)
+{
+     int bit_count = 0;
+     for(int idx = init_value.size()-1; idx >= 2; idx--)
+	{
+	     bit_count++;
+	     int actual_index = (init_value.size()-1) - idx;
+	     if(init_value[idx] == '1')
+	       this->Set_Bit(actual_index,true);
+	     else
+	       this->Set_Bit(actual_index,false);
+	     
+	     if(bit_count == _width)
+	       break;
+        }
 }
 
 bool Unsigned::To_Boolean()
@@ -858,4 +871,67 @@ bool Float::Less_Equal(Float& t)
 bool Float::Equal(Float& t)
 {
   return(!(this->Less_Than(t) || this->Greater(t)));
+}
+
+string _base_value_::Hex_To_Binary(string& hex_string)
+{
+	string binary_string  = "_b";
+	for(int idx = 2; idx < hex_string.size(); idx++)
+	{
+		switch(hex_string[idx])
+		{
+			case '0':
+				binary_string += "0000";
+				break;
+			case '1':
+				binary_string += "0001";
+				break;
+			case '2':
+				binary_string += "0010";
+				break;
+			case '3':
+				binary_string += "0011";
+				break;
+			case '4':
+				binary_string += "0100";
+				break;
+			case '5':
+				binary_string += "0101";
+				break;
+			case '6':
+				binary_string += "0110";
+				break;
+			case '7':
+				binary_string += "0111";
+				break;
+			case '8':
+				binary_string += "1000";
+				break;
+			case '9':
+				binary_string += "1001";
+				break;
+			case 'a'|'A':
+				binary_string += "1010";
+				break;
+			case 'b'|'B':
+				binary_string += "1011";
+				break;
+			case 'c'|'C':
+				binary_string += "1100";
+				break;
+			case 'd'|'D':
+				binary_string += "1101";
+				break;
+			case 'e'|'E':
+				binary_string += "1110";
+				break;
+			case 'f'|'F':
+				binary_string += "1111";
+				break;
+			default:
+	  			cerr << "Error: unknown character in hex string:  " << hex_string << endl;
+				binary_string += "0000";
+				break;
+		}
+	}
 }

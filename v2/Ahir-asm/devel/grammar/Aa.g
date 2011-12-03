@@ -1322,6 +1322,12 @@ aA_Integer_Literal_Reference[string& full_name, vector<string>& literals, unsign
                        line_number = bidv->getLine();
                        literals.push_back(bidv->getText()); 
                        full_name += bidv->getText() + " ";
+                 }) | 
+   (hidv:HEXADECIMAL
+                 { 
+                       line_number = hidv->getLine();
+                       literals.push_back(hidv->getText()); 
+                       full_name += hidv->getText() + " ";
                  }))
 ;
                
@@ -1467,6 +1473,7 @@ VOID            : "$void";
 UINTEGER          : DIGIT (DIGIT)*;
 FLOATCONST : "_f" ('-')? DIGIT '.' (DIGIT)+ 'e' ('+' | '-') (DIGIT)+;
 BINARY : "_b"  ('0' | '1')+ ;
+HEXADECIMAL: "_h" (DIGIT | ('a' | 'b' | 'c' | 'd' | 'e' | 'f'))+ ;
 
 
 // White spaces (only "\n" is newline)

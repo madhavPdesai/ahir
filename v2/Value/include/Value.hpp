@@ -99,7 +99,7 @@ namespace _base_value_
     // bit other into this.
     virtual bool Bit_Cast(Value& other) {assert(0);}
     virtual UWord AtoI(string ival);
-    
+    virtual void Initialize_From_Binary_String(string& init_value);
 
     virtual string To_String();
     virtual string To_C_String();
@@ -291,6 +291,8 @@ namespace _base_value_
  
   };
 
+
+  string Hex_To_Binary(string& init_value);
 
 } // namespace _base_value_
 #endif // Value
