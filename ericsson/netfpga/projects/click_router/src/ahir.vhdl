@@ -11032,7 +11032,7 @@ end entity;
 architecture Behave of Pulse_To_Level_Translate_Entity is
   type PullModeState is (Idle,Ack,Waiting);
   signal pull_mode_state : PullModeState;
-  constant moore_flag : boolean := true;
+  constant moore_flag : boolean := false;
 begin  -- Behave
 
   process(clk)
@@ -11040,14 +11040,10 @@ begin  -- Behave
   begin
     nstate := pull_mode_state;
 
-    if(reset = '1') then
-      nstate := Idle;
-    else
-      
       case pull_mode_state is
         when Idle =>
           if(rL) then
-            if((not moore_flag) and aR = '1') then
+            if((not moore_flag) and (aR = '1')) then
               nstate := Ack;
             else
               nstate := Waiting;
@@ -11062,10 +11058,13 @@ begin  -- Behave
         when others => null;
       end case;
 
-    end if;
 
     if(clk'event and clk = '1') then
-      pull_mode_state <= nstate;
+	if reset = '1' then
+		pull_mode_state <= Idle;
+	else
+      		pull_mode_state <= nstate;
+	end if;
     end if;
   end process;
 
