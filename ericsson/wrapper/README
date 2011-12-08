@@ -1,7 +1,12 @@
 README
 wrapper_lib.aa
 	contains utility functions which
-	are used by the wrapper.
+	are used by the wrapper.  The send/receive
+	functions swap bytes.
+wrapper_lib_noswap.aa
+	contains utility functions which
+	are used by the wrapper. The send/receive
+	packet functions do not swap bytes.
 wrapper_lib.hh
 	C header file declaring the functions
 	in wrapper_lib.aa (for use in compiling
