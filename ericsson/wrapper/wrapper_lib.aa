@@ -15,7 +15,7 @@ $is
 // write free buffer slot to free_queue_pipe
 $module [ahir_packet_free] $in (pkt : $uint<32>) $out () $is
 {
-    free_queue_pipe := (pkt & _b11111111111111111111111100000000)
+    free_queue_pipe := (pkt & _b11111111111111111111100000000000)
 }
 
 
