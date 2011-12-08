@@ -126,7 +126,7 @@ $is
 	buf8_ptr := ($bitcast ($pointer <$uint<8> >) buf)
 	buf64_ptr := ($bitcast ($pointer <$uint<64> >) buf)
 
-	pkt8_ptr := buf8_ptr[180]
+	pkt8_ptr := buf8_ptr[200]
 	pkt64_ptr :=  ($bitcast ($pointer <$uint<64> >) pkt8_ptr)
 
 	$merge $entry BadPacket $endmerge
