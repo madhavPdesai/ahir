@@ -26,7 +26,6 @@ void round_robin()
 		write_uint32("tofpga_port_number", 3);	
 		write_uintptr("tofpga3_out0", pkt);
 
-
 		ahir_packet_free((uint32_t) pkt);
 	}
 

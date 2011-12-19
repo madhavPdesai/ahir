@@ -319,7 +319,33 @@ vcTransition::vcTransition(vcCPElement* parent, string id):vcCPElement(parent, i
   _is_output = false;
   _is_dead = false;
   _is_entry_transition = false;
+  _is_linked_to_non_local_dpe = false;
 }
+
+
+void vcTransition::Add_DP_Link(vcDatapathElement* dpe,vcTransitionType ltype)
+{
+  if(dpe == NULL)
+    return;
+
+  if(_is_dead)
+    assert(0);
+  
+  if(ltype == _IN_TRANSITION)
+    _is_input = true;
+  else if(ltype == _OUT_TRANSITION)
+    _is_output = true;
+  else
+    assert(0);
+  
+  if(!dpe->Is_Local_To_Datapath())
+    {
+      _is_linked_to_non_local_dpe = true;
+    }
+
+  this->_dp_link.push_back(pair<vcDatapathElement*,vcTransitionType>(dpe,ltype));
+}
+
 
 
 
@@ -396,7 +422,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
 	}
       else
 	{
-	  ofile <<  this->Get_Exit_Symbol() << " <= " << this->Get_DP_To_CP_Symbol() << "; -- transition " << this->Get_Hierarchical_Id() << endl;
+	  this->Print_DP_To_CP_VHDL_Link(ofile);
 	}
     }
   else
@@ -420,7 +446,9 @@ void vcTransition::Print_VHDL(ostream& ofile)
     }
 
   if(this->Get_Is_Output())
-    ofile << this->Get_CP_To_DP_Symbol() << " <= " << this->Get_Exit_Symbol() << "; -- link to DP" << endl;
+    {
+      this->Print_CP_To_DP_VHDL_Link(ofile);
+    }
   
   if(this->Get_Number_Of_Predecessors() > 1) // block was used...
     ofile << "-- }" << endl << "end Block; -- non-trivial join transition " << this->Get_Hierarchical_Id() << endl;
@@ -459,6 +487,38 @@ string vcTransition::Get_DP_To_CP_Symbol()
     }
   return(To_VHDL(ret_string));
 }
+
+void vcTransition::Print_DP_To_CP_VHDL_Link(ostream& ofile)
+{
+
+  string delay_str = "0";
+  ofile << this->Get_Exit_Symbol() << "_link_from_dp: control_delay_element -- { "  << endl
+	<< "generic map (delay_value => " << delay_str << ")" << endl
+	<< "port map(clk => clk, reset => reset, req => " << this->Get_DP_To_CP_Symbol()
+	<< ", ack => " << this->Get_Exit_Symbol() << "); -- } " << endl;
+}
+
+void vcTransition::Print_CP_To_DP_VHDL_Link(ostream& ofile)
+{
+
+  //string delay_str = (vcSystem::_min_clock_period_flag ? "1" : "0");
+  // if this is a transition which connects to a "remote" operator
+  // (for example, a call/load/store/io-port, then, if the min_clock_period_flag is
+  // set, insert a cycle delay in the request.
+  string delay_str;
+  // if(vcSystem::_min_clock_period_flag)
+  //delay_str = "1";
+  //else
+  //delay_str = "0";
+
+  delay_str = "0";
+
+  ofile << this->Get_Exit_Symbol() << "_link_to_dp: control_delay_element -- { "  << endl
+	<< "generic map (delay_value => " << delay_str << ")" << endl
+	<< "port map(clk => clk, reset => reset, ack => " << this->Get_CP_To_DP_Symbol()
+	<< ", req => " << this->Get_Exit_Symbol() << "); -- } " << endl;
+}
+
 vcPlace::vcPlace(vcCPElement* parent, string id, unsigned int init_marking):vcCPElement(parent, id)
 {
   this->_initial_marking = init_marking;
@@ -559,8 +619,12 @@ void vcCPBlock::Print_VHDL_Start_Interlock(ostream& ofile)
   // this->Get_Start_Symbol is a join of this->Trigger_Place
   // and this->Enable_Place.
   //
+  string bypass_str = (vcSystem::_min_clock_period_flag ? "false" : "true");
+
   ofile << this->Get_Start_Symbol() 
 	<< "_interlock : pipeline_interlock -- { " << endl
+        << "generic map(trigger_bypass => " 
+	<< bypass_str << ", enable_bypass => " << bypass_str << ")" << endl
 	<< " port map (trigger => " << this->Get_Predecessor_Exit_Symbol() << "," << endl
 	<< "enable => " << this->Get_Successor_Start_Symbol() << ", " << endl
 	<< "symbol_out => " << this->Get_Start_Symbol() << ", " << endl
@@ -1873,9 +1937,13 @@ void vcControlPath::Print_VHDL_Start_Symbol_Assignment(ostream& ofile)
     }
   else
     {
+      string bypass_str = (vcSystem::_min_clock_period_flag ? "false" : "true");
+
       // interlock will have to be explicit.
       ofile << this->Get_Start_Symbol() 
 	<< "_interlock : pipeline_interlock -- { " << endl
+        << "generic map(trigger_bypass => "  
+	<< bypass_str << ", enable_bypass => " << bypass_str << ")" << endl
 	<< " port map (trigger => start_req_symbol," << endl
 	<< "enable =>  fin_ack_symbol, " << endl
 	<< "symbol_out => " << this->Get_Start_Symbol() << ", " << endl

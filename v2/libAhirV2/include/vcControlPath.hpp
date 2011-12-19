@@ -163,22 +163,11 @@ class vcTransition: public vcCPElement
   bool _is_dead;
   bool _is_entry_transition;
 
+  bool _is_linked_to_non_local_dpe;
+
 public:
   vcTransition(vcCPElement* parent, string id);
-  void Add_DP_Link(vcDatapathElement* dpe,vcTransitionType ltype)
-  {
-    if(_is_dead)
-	assert(0);
-
-    if(ltype == _IN_TRANSITION)
-      _is_input = true;
-    else if(ltype == _OUT_TRANSITION)
-      _is_output = true;
-    else
-	assert(0);
-
-    this->_dp_link.push_back(pair<vcDatapathElement*,vcTransitionType>(dpe,ltype));
-  }
+  void Add_DP_Link(vcDatapathElement* dpe,vcTransitionType ltype);
 
   virtual bool Is_Transition() {return(true);}
   bool Get_Is_Input() { return(_is_input);}
@@ -189,6 +178,8 @@ public:
 
   void Set_Is_Entry_Transition(bool v) {this->_is_entry_transition = v;}
   bool Get_Is_Entry_Transition() {return(this->_is_entry_transition);}
+
+  bool Get_Is_Linked_To_Non_Local_Dpe() {return(this->_is_linked_to_non_local_dpe);}
 
   virtual void Print(ostream& ofile);
   virtual void Print_VHDL(ostream& ofile);
@@ -203,6 +194,9 @@ public:
   string Get_CP_To_DP_Symbol();
 
   virtual void Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp);
+
+  void Print_DP_To_CP_VHDL_Link(ostream& ofile);
+  void Print_CP_To_DP_VHDL_Link(ostream& ofile);
 
 };
 
@@ -436,6 +430,9 @@ public:
 
   void Print(ostream& ofile);
   void Print_VHDL(ostream& ofile);
+
+  void Print_DP_To_CP_VHDL_Link(ostream& ofile);
+  void Print_CP_To_DP_VHDL_Link(int idx, ostream& ofile);
 
   friend class vcControlPath;
 };

@@ -23,6 +23,54 @@ package Utilities is
   
   function All_Entries_Same ( x : NaturalArray) return boolean;
   function Is_At_Most_One_Hot(x: BooleanArray) return Boolean;
+
+  procedure LogPipeWrite (
+    signal clk : in std_logic;
+    signal req : in boolean;
+    signal ack : in  boolean;
+    pipe_name: in string;
+    write_data : in std_logic_vector;
+    writer_name : in string);
+
+  procedure LogPipeRead (
+    signal clk : in std_logic;
+    signal req : in boolean;
+    signal ack : in  boolean;
+    pipe_name: in string;    
+    read_data : in std_logic_vector;
+    reader_name : in string);
+
+  procedure LogMemWrite (
+    signal clk : in std_logic;
+    signal sr_req : in  boolean;
+    signal sr_ack : in  boolean;
+    signal sc_req : in  boolean;
+    signal sc_ack : in  boolean;
+    mem_space_name : in string;
+    write_data : in std_logic_vector;
+    write_address : in std_logic_vector;    
+    write_data_name : in string;
+    write_address_name: in string);
+
+  procedure LogMemRead (
+    signal clk : in std_logic;
+    signal lr_req : in  boolean;
+    signal lr_ack : in  boolean;
+    signal lc_req : in  boolean;
+    signal lc_ack : in  boolean;
+    operator_name: in string;
+    mem_space_name : in string;    
+    read_data : in std_logic_vector;
+    read_address : in std_logic_vector;    
+    read_data_name : in string;
+    read_address_name: in string);
+
+  procedure LogCPEvent (
+    signal clk    : in std_logic;
+    signal cp_sig : in boolean;
+    cp_sig_name   : in string);
+  
+
   
 end Utilities;
 
@@ -232,5 +280,111 @@ package body Utilities is
     end if;
     return(ret_var);
   end Is_At_Most_One_Hot;
+
+
+  procedure LogPipeWrite (
+    signal clk : in std_logic;
+    signal req : in boolean;
+    signal ack : in  boolean;
+    pipe_name : in string;
+    write_data : in std_logic_vector;
+    writer_name : in string) is
+  begin
+    if(clk'event and clk = '1') then
+      if(req) then
+        assert false report "(started) PipeWrite " & pipe_name & " <= " & writer_name & " = " & Convert_SLV_To_Hex_String(write_data) severity note;
+      end if;      
+      if(ack) then
+        assert false report "(completed) PipeWrite " & pipe_name & " <= " & writer_name & " = " & Convert_SLV_To_Hex_String(write_data) severity note;
+      end if;
+    end if;
+  end procedure;
+
+  procedure LogPipeRead (
+    signal clk : in std_logic;
+    signal req : in boolean;
+    signal ack : in  boolean;
+    pipe_name : in string;
+    read_data : in std_logic_vector;
+    reader_name : in string) is
+  begin
+    if(clk'event and clk = '1') then
+      if(req) then
+        assert false report "(started) PipeRead " & pipe_name & " => " & reader_name & " = " & Convert_SLV_To_Hex_String(read_data)
+          severity note;
+      end if;
+      if(ack) then
+        assert false report "(completed) PipeRead " & pipe_name & " => " & reader_name & " = " & Convert_SLV_To_Hex_String(read_data)
+          severity note;
+      end if;      
+    end if;    
+  end procedure;
+
+  procedure LogMemWrite (
+    signal clk : in std_logic;
+    signal sr_req : in  boolean;
+    signal sr_ack : in  boolean;
+    signal sc_req : in  boolean;
+    signal sc_ack : in  boolean;
+    mem_space_name : in string;
+    write_data : in std_logic_vector;
+    write_address : in std_logic_vector;    
+    write_data_name : in string;
+    write_address_name: in string) is
+    variable log_count : integer := 0;
+  begin
+    if(clk'event and clk = '1') then
+      if(sr_ack) then
+        assert false report Convert_To_String(log_count) & ": started MemWrite " & mem_space_name &
+          "[" & write_address_name & " = " & Convert_SLV_To_Hex_String(write_address) & "] <= " &
+          write_data_name & " = " & Convert_SLV_To_Hex_String(write_data) severity note;
+      end if;
+
+      if(sc_ack) then
+        assert false report Convert_To_String(log_count) & ": completed MemWrite " severity note;
+        log_count := log_count+1;
+      end if;
+    end if;        
+  end procedure;
+
+  procedure LogMemRead (
+    signal clk : in std_logic;
+    signal lr_req : in  boolean;
+    signal lr_ack : in  boolean;
+    signal lc_req : in  boolean;
+    signal lc_ack : in  boolean;
+    operator_name: in string;
+    mem_space_name: in string;
+    read_data : in std_logic_vector;
+    read_address : in std_logic_vector;    
+    read_data_name : in string;
+    read_address_name: in string) is
+  begin
+    if(clk'event and clk = '1') then
+      if(lr_ack) then
+        assert false report operator_name & ": started MemRead " & mem_space_name severity note;
+      end if;
+
+      if(lc_ack) then
+        assert false report operator_name & ": completed MemRead " & mem_space_name 
+          & "[" & read_address_name & " = " & Convert_SLV_To_Hex_String(read_address) & "] => " &
+          read_data_name & " = " & Convert_SLV_To_Hex_String(read_data) severity note;
+      end if;
+    end if;        
+    
+  end procedure;
+
+  procedure LogCPEvent (
+    signal clk    : in std_logic;
+    signal cp_sig : in boolean;
+    cp_sig_name   : in string) is
+  begin
+    if(clk'event and clk = '1') then
+      if(cp_sig) then
+        assert false report "CP element " & cp_sig_name & " triggered" severity note;
+      end if;
+    end if;
+  end procedure;
+  
   
 end Utilities;

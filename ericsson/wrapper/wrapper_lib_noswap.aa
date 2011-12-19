@@ -94,7 +94,7 @@ $is
 		        word_ptr := pkt64[I]
 			curr_word := ->(word_ptr)
 
-			$parallelblock[Hdr] {
+			$parallelblock[Body] {
 				out_ctrl := _b00000000
 				out_data := curr_word
 				NI := (I+1)
@@ -151,7 +151,7 @@ $is
 		$phi I := ($bitcast ($uint<8>) _b0) $on $entry NI $on PktLoop
 	$endmerge
 
-	$parallelblock[HeaderRead] {
+	$parallelblock[BodyRead] {
 		pkt_in_data := in_data
 		pkt_in_ctrl := in_ctrl
 		NI := (I+1)

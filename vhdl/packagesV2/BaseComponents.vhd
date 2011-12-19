@@ -55,6 +55,7 @@ package BaseComponents is
   end component;
 
   component pipeline_interlock 
+    generic (trigger_bypass: boolean; enable_bypass: boolean);
     port (trigger: in boolean;
           enable : in boolean;
           symbol_out : out  boolean;

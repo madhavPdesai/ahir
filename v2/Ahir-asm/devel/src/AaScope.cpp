@@ -35,6 +35,10 @@ void AaScope::Map_Child(string lbl, AaRoot* tn)
 	{
 	  this->_child_map[lbl] = tn;
 	}
+      else
+	{
+	  AaRoot::Error("scope has multiple children with same label " + lbl, this);
+	}
     }
 }
 

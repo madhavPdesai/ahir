@@ -245,6 +245,15 @@ protected:
   virtual void Append_Inwires(vector<vcWire*>& inwires) {assert(0);}
   virtual void Append_Outwires(vector<vcWire*>& owires) {assert(0);}
 
+  // if this operator refers to something inside the
+  // datapath, then it is local to the datapath.
+  // but if it is a load/store/call/io operator,
+  // then it is not.
+  virtual bool Is_Local_To_Datapath()
+  {
+    return(true);
+  }
+
   friend class vcDataPath;
 
 };

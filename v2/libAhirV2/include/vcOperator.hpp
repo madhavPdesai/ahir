@@ -34,6 +34,10 @@ public:
   virtual string Kind() {return("vcOperator");}  
 
   virtual bool Is_Shareable_With(vcDatapathElement* other) {return(false);}
+  virtual bool Is_Local_To_Datapath()
+  {
+    return(true);
+  }
 
   friend class vcDataPath;
 };
@@ -120,6 +124,11 @@ public:
       outwires.push_back(_out_wires[idx]);
   }
 
+  virtual bool Is_Local_To_Datapath()
+  {
+    return(false);
+  }
+
   friend class vcDataPath;
 };
 
@@ -138,6 +147,11 @@ public:
   virtual bool Is_Shareable_With(vcDatapathElement* other) 
   {
     return((this->Kind() == other->Kind()) && (this->Get_Pipe() == ((vcIOport*)other)->Get_Pipe()));
+  }
+
+  virtual bool Is_Local_To_Datapath()
+  {
+    return(false);
   }
 
   friend class vcDataPath;
@@ -200,6 +214,11 @@ public:
 
   vcWire* Get_Address() {return(this->_address);}
   vcWire* Get_Data() {return(this->_data);}
+
+  virtual bool Is_Local_To_Datapath()
+  {
+    return(false);
+  }
 
   friend class vcDataPath;
 };

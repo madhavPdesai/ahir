@@ -90,7 +90,7 @@ $is
 			curr_word := ->(word_ptr)
 			$call swap_bytes64 (curr_word) (curr_word_swapped)
 
-			$parallelblock[Hdr] {
+			$parallelblock[Body] {
 				out_ctrl := _b00000000
 				out_data := curr_word_swapped
 				NI := (I+1)
@@ -148,7 +148,7 @@ $is
 		$phi I := ($bitcast ($uint<8>) _b0) $on $entry NI $on PktLoop
 	$endmerge
 
-	$parallelblock[HeaderRead] {
+	$parallelblock[BodyRead] {
 		pkt_in_data := in_data
 		pkt_in_ctrl := in_ctrl
 		NI := (I+1)

@@ -6,6 +6,8 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity pipeline_interlock is
+  generic (trigger_bypass: boolean := true;
+	   enable_bypass : boolean := true);
   port (trigger: in boolean;
         enable : in boolean;
     	symbol_out : out  boolean;
@@ -25,11 +27,11 @@ begin  -- default_arch
   
 
   trigger_place_pred(0) <= trigger;
-  pTrig: place generic map(marking => false, bypass => true)
+  pTrig: place generic map(marking => false, bypass => trigger_bypass)
     port map(trigger_place_pred, symbol_out_sig,trigger_place,clk,reset);
 
   enable_place_pred(0) <= enable;
-  pEnable: place generic map(marking => true, bypass => true)
+  pEnable: place generic map(marking => true, bypass => enable_bypass)
     port map(enable_place_pred, symbol_out_sig,enable_place,clk,reset);
   
   symbol_out_sig(0) <= enable_place and trigger_place;
