@@ -96,8 +96,9 @@ architecture default_arch of netfpga_module is
   signal out_data_pipe_read_ack : std_logic_vector(0 downto 0);  
 
   type InMatchingFSMState is (idle,actrl,adata,waiting);
-  type OutMatchingFSMState is (idle,actrl,adata);
   signal in_fsm_state : InMatchingFSMState;
+
+  type OutMatchingFSMState is (idle,actrl,adata);
   signal out_fsm_state: OutMatchingFSMState;
 
   signal in_nearly_full: std_logic;

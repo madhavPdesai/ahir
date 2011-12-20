@@ -6,6 +6,7 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Utilities.all;
 use ahir.Subprograms.all;
+use ahir.BaseComponents.all;
 
 entity SynchFifo is
   generic(queue_depth: integer := 3; data_width: integer := 72);
@@ -28,6 +29,9 @@ architecture behave of SynchFifo is
   signal top_pointer, bottom_pointer : integer range 0 to queue_depth-1;
   signal queue_size : integer range 0 to queue_depth;
 
+  signal pop_ack_int, pop_req_int: std_logic;
+  signal data_out_int : std_logic_vector(data_width-1 downto 0);
+
   function Incr(x: integer; M: integer) return integer is
   begin
     if(x < M) then
@@ -37,13 +41,15 @@ architecture behave of SynchFifo is
     end if;
   end Incr;
 
+
+  signal pull_reg_state: std_logic;
 begin  -- SimModel
 
-  assert(queue_depth > 2) report "Matching FIFO depth must be greater than 2" severity failure;
+  assert(queue_depth > 2) report "Synch FIFO depth must be greater than 2" severity failure;
 
   
   -- single process
-  process(clk,reset,queue_size,push_req,pop_req,top_pointer, bottom_pointer)
+  process(clk,reset,queue_size,push_req,pop_req_int,top_pointer, bottom_pointer)
     variable qsize : integer range 0 to queue_depth;
     variable push_ack_v, pop_ack_v, nearly_full_v: std_logic;
     variable push,pop : boolean;
@@ -79,7 +85,7 @@ begin  -- SimModel
       push := true;
     end if;
 
-    if(pop_ack_v = '1' and pop_req = '1') then
+    if(pop_ack_v = '1' and pop_req_int = '1') then
       pop := true;
     end if;
 
@@ -107,12 +113,12 @@ begin  -- SimModel
     if(clk'event and clk = '1') then
       
       if(reset = '1') then
-        pop_ack  <=  '0';        
+        pop_ack_int  <=  '0';        
 	queue_size <= 0;
         top_pointer <= 0;
         bottom_pointer <= 0;
       else
-        pop_ack  <=  pop_ack_v and pop_req;        
+        pop_ack_int  <=  pop_ack_v and pop_req_int;        
         queue_size <= qsize;
         top_pointer <= next_top_ptr;
         bottom_pointer <= next_bottom_ptr;
@@ -124,13 +130,23 @@ begin  -- SimModel
       
       -- bottom pointer gives the data
       if(pop) then
-        data_out <= queue_array(bottom_pointer);
+        data_out_int <= queue_array(bottom_pointer);
       end if;
       
     end if;
     
   end process;
 
+
+  opReg: SynchToAsynchReadInterface 
+		generic map(data_width => data_width)
+		port map(clk => clk, reset => reset,
+			 synch_req => pop_ack_int,
+			 synch_ack => pop_req_int,
+			 asynch_req => pop_ack,
+			 asynch_ack => pop_req,
+			 synch_data => data_out_int,
+			 asynch_data => data_out);
 end behave;
 
 
