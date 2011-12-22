@@ -238,7 +238,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 28 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -1529,7 +1529,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 15 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -2244,7 +2244,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 3, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 3, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -3395,7 +3395,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -14851,7 +14851,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -25984,7 +25984,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -29806,7 +29806,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -33843,7 +33843,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -37880,7 +37880,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -41917,7 +41917,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -45655,7 +45655,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 2, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 2, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -45852,7 +45852,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -46168,7 +46168,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -48704,7 +48704,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -49012,7 +49012,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -50217,7 +50217,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -50642,7 +50642,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -55157,7 +55157,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -60144,7 +60144,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -60918,7 +60918,7 @@ begin --
   fin_ack <= fin_ack_sig; 
   tag_push <= '1' when start_req_symbol else '0'; 
   tag_pop  <= fin_req and fin_ack_sig ; 
-  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 1 + 1) -- 
+  tagQueue: QueueBase generic map(data_width => 1, queue_depth => 2 ) -- 
     port map(pop_req => tag_pop, pop_ack => open, 
     push_req => tag_push, push_ack => open, 
     data_out => tag_out, data_in => tag_in, 
@@ -65339,10 +65339,10 @@ begin --
       data_width => 8,
       tag_width => 5,
       time_stamp_width => 6,
-      number_of_banks => 1,
+      number_of_banks => 4,
       mux_degree => 2,
       demux_degree => 2,
-      base_bank_addr_width => 16,
+      base_bank_addr_width => 14,
       base_bank_data_width => 8
       ) -- 
     port map(-- 

@@ -1947,7 +1947,7 @@ package BaseComponents is
   end component RegisterBase;
 
   -----------------------------------------------------------------------------
-  -- queue
+  -- queue, fifo
   -----------------------------------------------------------------------------
   
   component QueueBase 
@@ -1961,6 +1961,35 @@ package BaseComponents is
          pop_ack : out std_logic;
          pop_req: in std_logic);
   end component QueueBase;
+
+  component SynchFifo 
+    generic(queue_depth: integer := 3; data_width: integer := 72);
+    port(clk: in std_logic;
+         reset: in std_logic;
+         data_in: in std_logic_vector(data_width-1 downto 0);
+         push_req: in std_logic;
+         push_ack : out std_logic;
+         nearly_full: out std_logic;
+         data_out: out std_logic_vector(data_width-1 downto 0);
+         pop_ack : out std_logic;
+         pop_req: in std_logic);
+  end component SynchFifo;
+  
+  component SynchToAsynchReadInterface 
+    generic (
+      data_width : integer);
+    port (
+      clk : in std_logic;
+      reset  : in std_logic;
+      synch_req : in std_logic;
+      synch_ack : out std_logic;
+      asynch_req : out std_logic;
+      asynch_ack: in std_logic;
+      synch_data: in std_logic_vector(data_width-1 downto 0);
+      asynch_data : out std_logic_vector(data_width-1 downto 0));
+    
+  end component SynchToAsynchReadInterface;
+
 
   -----------------------------------------------------------------------------
   -- pipe
@@ -10907,18 +10936,40 @@ begin  -- default_arch
       clk   => clk,
       reset => reset);
 
-  queue : QueueBase generic map (
-    queue_depth => depth,
-    data_width       => data_width)
-    port map (
-      push_req   => pipe_req,
-      push_ack => pipe_ack,
-      data_in  => pipe_data,
-      pop_req  => pipe_req_repeated,
-      pop_ack  => pipe_ack_repeated,
-      data_out => pipe_data_repeated,
-      clk      => clk,
-      reset    => reset);
+  Shallow: if depth < 3 generate
+
+    queue : QueueBase generic map (
+      queue_depth => depth,
+      data_width       => data_width)
+      port map (
+        push_req   => pipe_req,
+        push_ack => pipe_ack,
+        data_in  => pipe_data,
+        pop_req  => pipe_req_repeated,
+        pop_ack  => pipe_ack_repeated,
+        data_out => pipe_data_repeated,
+        clk      => clk,
+        reset    => reset);
+    
+  end generate Shallow;
+
+  Deep: if depth > 2 generate
+    
+    queue : SynchFifo generic map (
+      queue_depth => depth,
+      data_width       => data_width)
+      port map (
+        push_req   => pipe_req,
+        push_ack => pipe_ack,
+        data_in  => pipe_data,
+        pop_req  => pipe_req_repeated,
+        pop_ack  => pipe_ack_repeated,
+        data_out => pipe_data_repeated,
+        nearly_full => open,
+        clk      => clk,
+        reset    => reset);
+    
+  end generate Deep;
 
   rmux : InputPortLevel generic map (
     num_reqs       => num_reads,
@@ -13125,6 +13176,248 @@ begin  -- Behave
   
 end Vanilla;
 
+-- written by Madhav Desai
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Utilities.all;
+use ahir.Subprograms.all;
+use ahir.BaseComponents.all;
+
+entity SynchFifo is
+  generic(queue_depth: integer := 3; data_width: integer := 72);
+  port(clk: in std_logic;
+       reset: in std_logic;
+       data_in: in std_logic_vector(data_width-1 downto 0);
+       push_req: in std_logic;
+       push_ack : out std_logic;
+       nearly_full: out std_logic;
+       data_out: out std_logic_vector(data_width-1 downto 0);
+       pop_ack : out std_logic;
+       pop_req: in std_logic);
+end entity SynchFifo;
+
+architecture behave of SynchFifo is
+
+  type QueueArray is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
+
+  signal queue_array : QueueArray(queue_depth-1 downto 0);
+  signal top_pointer, bottom_pointer : integer range 0 to queue_depth-1;
+  signal queue_size : integer range 0 to queue_depth;
+
+  signal pop_ack_int, pop_req_int: std_logic;
+  signal data_out_int : std_logic_vector(data_width-1 downto 0);
+
+  function Incr(x: integer; M: integer) return integer is
+  begin
+    if(x < M) then
+      return(x + 1);
+    else
+      return(0);
+    end if;
+  end Incr;
+
+
+  signal pull_reg_state: std_logic;
+begin  -- SimModel
+
+  assert(queue_depth > 2) report "Synch FIFO depth must be greater than 2" severity failure;
+
+  
+  -- single process
+  process(clk,reset,queue_size,push_req,pop_req_int,top_pointer, bottom_pointer)
+    variable qsize : integer range 0 to queue_depth;
+    variable push_ack_v, pop_ack_v, nearly_full_v: std_logic;
+    variable push,pop : boolean;
+    variable next_top_ptr,next_bottom_ptr : integer range 0 to queue_depth-1;
+  begin
+    qsize := queue_size;
+    push  := false;
+    pop   := false;
+    next_top_ptr := top_pointer;
+    next_bottom_ptr := bottom_pointer;
+    
+    if(queue_size < queue_depth) then
+      push_ack_v := '1';
+    else
+      push_ack_v := '0';
+    end if;
+
+    if(queue_size < queue_depth-1) then
+      nearly_full_v := '0';
+    else
+      nearly_full_v := '1';
+    end if;
+
+    if(queue_size > 0) then
+      pop_ack_v := '1';
+    else
+      pop_ack_v := '0';
+    end if;
+
+
+    
+    if(push_ack_v = '1' and push_req = '1') then
+      push := true;
+    end if;
+
+    if(pop_ack_v = '1' and pop_req_int = '1') then
+      pop := true;
+    end if;
+
+
+    if(push) then
+      next_top_ptr := Incr(next_top_ptr,queue_depth-1);
+    end if;
+
+    if(pop) then
+      next_bottom_ptr := Incr(next_bottom_ptr,queue_depth-1);
+    end if;
+
+
+    if(pop and (not push)) then
+      qsize := qsize - 1;
+    elsif(push and (not pop)) then
+      qsize := qsize + 1;
+    end if;
+    
+
+    push_ack <= push_ack_v;
+
+    nearly_full <= nearly_full_v;
+    
+    if(clk'event and clk = '1') then
+      
+      if(reset = '1') then
+        pop_ack_int  <=  '0';        
+	queue_size <= 0;
+        top_pointer <= 0;
+        bottom_pointer <= 0;
+      else
+        pop_ack_int  <=  pop_ack_v and pop_req_int;        
+        queue_size <= qsize;
+        top_pointer <= next_top_ptr;
+        bottom_pointer <= next_bottom_ptr;
+      end if;
+
+      if(push) then
+        queue_array(top_pointer) <= data_in;
+      end if;
+      
+      -- bottom pointer gives the data
+      if(pop) then
+        data_out_int <= queue_array(bottom_pointer);
+      end if;
+      
+    end if;
+    
+  end process;
+
+
+  opReg: SynchToAsynchReadInterface 
+		generic map(data_width => data_width)
+		port map(clk => clk, reset => reset,
+			 synch_req => pop_ack_int,
+			 synch_ack => pop_req_int,
+			 asynch_req => pop_ack,
+			 asynch_ack => pop_req,
+			 synch_data => data_out_int,
+			 asynch_data => data_out);
+end behave;
+
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Utilities.all;
+use ahir.Subprograms.all;
+use ahir.BaseComponents.all;
+
+
+entity SynchToAsynchReadInterface is
+  generic (
+    data_width : integer);
+  port (
+    clk : in std_logic;
+    reset  : in std_logic;
+    synch_req : in std_logic;
+    synch_ack : out std_logic;
+    asynch_req : out std_logic;
+    asynch_ack: in std_logic;
+    synch_data: in std_logic_vector(data_width-1 downto 0);
+    asynch_data : out std_logic_vector(data_width-1 downto 0));
+end SynchToAsynchReadInterface;
+
+
+architecture Behave of SynchToAsynchReadInterface is
+
+  type InMatchingFSMState is (idle,waiting);
+  signal in_fsm_state : InMatchingFSMState;
+  
+begin
+
+  process(clk,reset, in_fsm_state, synch_req, asynch_ack)
+    variable next_state: InMatchingFSMState;
+    variable synch_ack_var, asynch_req_var: std_logic;
+    
+  begin
+    next_state := in_fsm_state;
+
+    synch_ack_var := '0';
+    asynch_req_var := '0';
+    
+    case in_fsm_state is
+      when idle =>
+        synch_ack_var := '1';          -- this is the only state where we req..
+        
+        if(synch_req = '1') then
+          asynch_req_var := '1';
+
+          -- synch-ack is withdrawn immediately
+          -- unless asynch acks.
+          synch_ack_var := '0';          
+          if(asynch_ack = '1')  then
+            -- if asynch-ack, continue ack to synch
+            synch_ack_var := '1';
+          else
+            -- neither acked
+            next_state := waiting;
+          end if;
+	end if;
+      when waiting =>
+        -- keep requesting to the asynch-pipe
+        asynch_req_var := '1';
+        if(asynch_ack = '1')  then
+          -- asynch ack, continue synch-ack.
+            synch_ack_var := '1';
+            next_state := idle;
+        else
+          -- neither acked
+          next_state := waiting;
+        end if;
+      when others => null;
+    end case;
+
+    if(reset = '1') then
+      next_state := idle;
+    end if;
+    
+    synch_ack <= synch_ack_var;
+    asynch_req <= asynch_req_var;
+
+    if(clk'event and clk = '1') then
+      in_fsm_state <= next_state;
+    end if;
+  end process;
+
+  -- data is simply forwarded..
+  asynch_data <= synch_data;
+  
+end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

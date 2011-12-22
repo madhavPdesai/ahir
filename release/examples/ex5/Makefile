@@ -34,7 +34,7 @@ aa2vc: prog.opt.o.aa
 
 # vC to VHDL
 vc2vhdl: prog.opt.o.aa.vc
-	vc2vhdl -C -e ahir_system -w -s ghdl -t main_inner -f prog.opt.o.aa.vc 
+	vc2vhdl -O -C -e ahir_system -w -s ghdl -t main_inner -f prog.opt.o.aa.vc 
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 

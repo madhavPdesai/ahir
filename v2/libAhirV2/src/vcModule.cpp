@@ -647,11 +647,12 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
   ofile << "tag_push <= '1' when start_req_symbol else '0'; " << endl;
   ofile << "tag_pop  <= fin_req and fin_ack_sig ; " << endl;
 
+
   if(this->_control_path)
     {
+      int tag_queue_depth = (this->_pipeline_flag ? this->_control_path->Get_Number_Of_Elements() + 1 : 2);
       ofile << "tagQueue: QueueBase generic map(data_width => " << this->Get_Callee_Tag_Length()
-	    << ", queue_depth => "
-	    << this->_control_path->Get_Number_Of_Elements() << " + 1) -- {" << endl
+	    << ", queue_depth => " << tag_queue_depth << " ) -- {" << endl
 	    << " port map(pop_req => tag_pop, pop_ack => open, "  << endl
 	    << " push_req => tag_push, push_ack => open, " << endl
 	    << " data_out => tag_out, data_in => tag_in, " << endl
