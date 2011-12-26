@@ -14,6 +14,7 @@ vcMemorySpace::vcMemorySpace(string id, vcModule* m):vcRoot(id)
   this->_num_loads = 0;
   this->_num_stores = 0;
   this->_ordered_flag = true;
+  this->_number_of_banks = 1;
 }
 
 void vcMemorySpace::Add_Attribute(string tag, string value)
@@ -21,6 +22,19 @@ void vcMemorySpace::Add_Attribute(string tag, string value)
   if(tag == "unordered")
     {
       _ordered_flag = false;
+    }
+  else if(tag == "number_of_banks")
+    {
+	if(value != "")
+	{
+		unsigned int nb = atoi(value.c_str());
+		if(nb > 1)
+		{
+		   vcSystem::Info("in memory space " + this->Get_Id() + ", used attribute number of banks = " 
+					+ IntToStr(nb));
+		   this->_number_of_banks = nb;
+		}
+	}
     }
   this->vcRoot::Add_Attribute(tag,value);
 }
@@ -397,35 +411,16 @@ void vcMemorySpace::Print_VHDL_Instance(ostream& ofile)
 
 
 // this is a very important function.
-//   the number of banks should be determined byt
+//   the number of banks should be determined by
 //   the available parallelism in the sytem.  Since
 //   we dont know it for now, we will keep the
-//   number to be the maximum width of the access..
+//   number to be 1 (conservative, but ok).
 //
 // top research priority: figure out a good metric
 // to measure the parallelism.
 int vcMemorySpace::Calculate_Number_Of_Banks()
 {
-
-  if(vcSystem::_min_area_flag)
-    return(1);
-
-  int max_reqs = MAX(this->Get_Num_Loads(),this->Get_Num_Stores());
-
-  // the number of banks must be a power of 2
-  int awidth = this->Get_Max_Access_Width()/this->Get_Word_Size();
-  int num_banks = IPow(2,Log(awidth,2));
-  if(num_banks < awidth)
-    num_banks = 2*num_banks;
-
-  if(Log(num_banks,2) < this->Get_Address_Width())
-    {
-      return(num_banks);
-    }
-  else
-    {
-      return(1);
-    }
+  return(this->_number_of_banks);
 }
 
 int vcMemorySpace::Calculate_Base_Bank_Address_Width()

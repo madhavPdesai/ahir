@@ -19,8 +19,9 @@ AaModule::AaModule(string fname): AaSeriesBlockStatement(NULL,fname)
 {
   _foreign_flag = false;
   _inline_flag = false;
+  _macro_flag = false;
   _pipeline_flag = false;
-
+  
   _writes_to_shared_pipe = false;
   _reads_from_shared_pipe = false;
 
@@ -48,8 +49,43 @@ void AaModule::Add_Argument(AaInterfaceObject* obj)
     }
 }
 
+
+void AaModule::Set_Macro_Flag(bool ff) 
+{ 
+  if(this->_inline_flag && ff)
+    {
+      AaRoot::Error("module " + this->Get_Label() + " is already marked inline, it cannot be a macro", this);
+    }
+  else
+    this->_macro_flag = ff; 
+}
+
+void AaModule::Set_Inline_Flag(bool ff) 
+{ 
+  if(this->_macro_flag && ff)
+    {
+      AaRoot::Error("module " + this->Get_Label() + " is already marked as a macro, it cannot be inline", this);
+    }
+  else
+    this->_inline_flag = ff; 
+}
+
+AaExpression* AaModule::Lookup_Print_Remap(AaInterfaceObject* obj)
+{
+  map<AaInterfaceObject*, AaExpression* >::iterator iter = _print_remap.find(obj);
+  if(iter != _print_remap.end())
+    return ((*iter).second);
+  else
+    return(NULL);
+}
+
 void AaModule::Print(ostream& ofile)
 {
+  if(this->Get_Inline_Flag())
+    ofile << "$inline ";
+  if(this->Get_Macro_Flag())
+    ofile << "$macro ";
+
   ofile << "$module [" << this->Get_Label() << "]" << endl;
   ofile << "\t $in (";
   for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
@@ -69,15 +105,20 @@ void AaModule::Print(ostream& ofile)
   ofile << endl;
   ofile << "$is" << endl;
   ofile << "{" << endl;
-
-  // print objects
-  this->Print_Objects(ofile);
-
-  // print statement sequence
-  this->Print_Statement_Sequence(ofile);
-
-  this->Print_Attributes(ofile);
+  this->Print_Body(ofile);
   ofile << "}" << endl;
+}
+
+void AaModule::Print_Body(ostream& ofile)
+{
+
+  	// print objects
+  	this->Print_Objects(ofile);
+
+  	// print statement sequence
+  	this->Print_Statement_Sequence(ofile);
+
+  	this->Print_Attributes(ofile);
 }
 
 void AaModule::Print_Attributes(ostream& ofile)

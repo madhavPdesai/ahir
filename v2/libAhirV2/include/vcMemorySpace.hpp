@@ -14,6 +14,7 @@ class vcMemorySpace: public vcRoot
   unsigned int _word_size; // in number of bits
   unsigned int _address_width; // in number of bits.
   unsigned int _max_access_width; // maximum access width
+  unsigned int _number_of_banks;  // number of banks.. default = 1
 
   // loads from each memory space
   // for each module, record the indices of the

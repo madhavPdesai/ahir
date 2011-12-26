@@ -31,6 +31,10 @@ string AaStatement::Tab()
 //                   declare implicit variable
 //               else
 //                   redeclaration error!
+//
+// Added: multiple writes to the same port are permitted
+//        if the module to which the port belongs is 
+//        a MACRO..
 void AaStatement::Map_Target(AaObjectReference* obj_ref) 
 {
 
@@ -90,6 +94,7 @@ void AaStatement::Map_Target(AaObjectReference* obj_ref)
 
   bool err_multiple_refs_to_ports =((child != NULL) &&  
 				    child->Is("AaInterfaceObject") && 
+				    !((AaModule*)((AaInterfaceObject*)child)->Get_Scope())->Get_Macro_Flag() &&
 				    (child->Get_Number_Of_Target_References() > 0));
   
   
@@ -925,7 +930,158 @@ AaObjectReference* AaCallStatement::Get_Output_Arg(unsigned int index)
   
 void AaCallStatement::Print(ostream& ofile)
 {
+  AaModule* cm = (AaModule*) _called_module;
+ 
+  if((cm->Get_Inline_Flag() || cm->Get_Macro_Flag()) && AaProgram::_print_inlined_functions_in_caller)
+  {
 
+    if(cm->Get_Inline_Flag())
+      cm->Set_Print_Prefix(this->Get_Function_Name() + "_" + Int64ToStr(this->Get_Index()) + "_");
+    else
+      {
+	if(cm->Get_Number_Of_Input_Arguments() > 0) 
+	  {
+	    
+	    for(int arg_index = 0; arg_index < cm->Get_Number_Of_Input_Arguments(); arg_index++)
+	      {	
+		cm->Set_Print_Remap(cm->Get_Input_Argument(arg_index), this->_input_args[arg_index]);
+	      }
+	  }	
+	
+	if(cm->Get_Number_Of_Output_Arguments() > 0)
+	  {
+	    for(int arg_index = 0; arg_index < cm->Get_Number_Of_Output_Arguments(); arg_index++)
+	      {	
+		cm->Set_Print_Remap(cm->Get_Output_Argument(arg_index), this->_output_args[arg_index]);
+	      }
+	    
+	  }
+      }
+  
+
+    vector<AaSimpleObjectReference*> exports;
+    ofile << "$seriesblock[" << this->Get_Function_Name() << "_" <<  this->Get_Index()
+	  << "] { " << endl;
+
+    if(cm->Get_Inline_Flag())
+      {
+	if(cm->Get_Number_Of_Input_Arguments() > 0)
+	  {
+	    ofile << "$parallelblock[InArgs] { " << endl;
+	    for(int arg_index = 0; arg_index < cm->Get_Number_Of_Input_Arguments(); arg_index++)
+	      {
+		ofile << cm->Get_Input_Argument(arg_index)->Get_Name();
+		ofile << " := ";
+		this->_input_args[arg_index]->Print(ofile);
+		ofile << endl;
+	      }
+	    ofile << "} (" ;
+	    for(int arg_index = 0; arg_index < cm->Get_Number_Of_Input_Arguments(); arg_index++)
+	      {
+		ofile << " ";
+		ofile << cm->Get_Input_Argument(arg_index)->Get_Name();
+		ofile << " => ";
+		ofile << cm->Get_Input_Argument(arg_index)->Get_Name();
+	      }
+	    ofile << " )" << endl;
+	  }
+
+      }
+	
+    if(cm->Get_Inline_Flag())
+      ofile << "$seriesblock[body] {" << endl;
+
+    cm->Print_Body(ofile);
+
+    if(cm->Get_Inline_Flag())
+      ofile << "} ";
+    
+    if(cm->Get_Inline_Flag())
+      {
+	if(cm->Get_Number_Of_Output_Arguments() > 0)
+	  {
+	    ofile << "( " ;
+	    for(int arg_index = 0; arg_index < cm->Get_Number_Of_Output_Arguments(); arg_index++)
+	      {
+		ofile << " ";
+		ofile << cm->Get_Output_Argument(arg_index)->Get_Name();
+		ofile << " => ";
+		ofile << cm->Get_Output_Argument(arg_index)->Get_Name();
+	      }
+	    ofile << " )";
+	  }
+	ofile << endl;
+      }
+    
+    if(cm->Get_Number_Of_Output_Arguments() > 0)
+      {
+
+	if(cm->Get_Inline_Flag())
+	  {
+	    ofile << "$parallelblock[OutArgs] { " << endl;
+	  }
+
+	for(int arg_index = 0; arg_index < cm->Get_Number_Of_Output_Arguments(); arg_index++)
+	  {
+
+	    if(cm->Get_Inline_Flag())
+	      {
+		this->_output_args[arg_index]->Print(ofile);
+		ofile << " := " <<  cm->Get_Output_Argument(arg_index)->Get_Name() << endl;
+		ofile << endl;
+	      }
+	    
+	    if(this->_output_args[arg_index]->Is_Implicit_Variable_Reference())
+	      {
+		assert(this->_output_args[arg_index]->Is("AaSimpleObjectReference"));
+		exports.push_back(((AaSimpleObjectReference*) this->_output_args[arg_index]));
+	      }
+	  }
+
+	if(cm->Get_Inline_Flag())
+	  ofile << "}" ;
+	
+	if(cm->Get_Inline_Flag())
+	  {
+	    if(exports.size() > 0)
+	      {
+		ofile << "(" ;
+		for(int eindex = 0; eindex < exports.size() ; eindex++)
+		  {
+		    ofile << " ";
+		    exports[eindex]->Print(ofile);		
+		    ofile << " => ";
+		    exports[eindex]->Print(ofile);
+		  }
+		ofile << " )" << endl;
+	      }
+	  }
+      }
+  
+
+    ofile << "}" ;
+    if(exports.size() > 0)
+      {
+	ofile << "(" ;
+	for(int eindex = 0; eindex < exports.size() ; eindex++)
+	  {
+	    ofile << " ";
+	    exports[eindex]->Print(ofile);		
+	    ofile << " => ";
+	    exports[eindex]->Print(ofile);
+	  }
+	ofile << " )" << endl;
+      }
+    
+    if(cm->Get_Inline_Flag())
+      cm->Clear_Print_Prefix();
+    else if(cm->Get_Macro_Flag())
+      cm->Clear_Print_Remap();
+    return;
+  }
+
+
+  // not inlined or macro
   ofile << this->Tab();
   ofile << "$call ";
 

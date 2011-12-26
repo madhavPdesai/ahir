@@ -40,6 +40,7 @@ int main(int argc, char* argv[])
     }
 
 
+   AaProgram::_tool_name = "Aa2C";
   string fname;
   string mod_name;
   string opt_string;

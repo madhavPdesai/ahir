@@ -106,6 +106,7 @@ class AaInterfaceObject: public AaObject
 
   AaInterfaceObject(AaScope* scope_tpr, string oname, AaType* otype, string mode);
   ~AaInterfaceObject();
+  virtual string Get_Name();
   virtual string Kind() {return("AaInterfaceObject");}
   virtual bool Is_Interface_Object() {return(true);}
   // uses AaObject::Print method

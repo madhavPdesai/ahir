@@ -28,6 +28,7 @@ class AaMemorySpace: public AaRoot
       _word_size = 0;
       _address_width = 0;
       _max_access_width = 0;
+      _max_read_write_width = 0;
     }
 
   int _mem_space_index;
@@ -35,6 +36,7 @@ class AaMemorySpace: public AaRoot
   int _word_size;
   int _address_width;
   int _max_access_width;
+  int _max_read_write_width;
 
   bool _is_written_into;
   bool _is_read_from;
@@ -107,6 +109,9 @@ class AaProgram
   static string _current_file_name;
   static bool _verbose_flag;
 
+  static string _tool_name;
+
+
   static bool _keep_extmem_inside;
   static int _extmem_size;
 
@@ -114,6 +119,9 @@ class AaProgram
 
   static AaVoidType* _void_type;
   static string _extmem_object_name;
+
+
+  static bool _print_inlined_functions_in_caller;
 
   AaProgram();
   ~AaProgram();

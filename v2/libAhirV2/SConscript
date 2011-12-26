@@ -14,7 +14,7 @@ env.antlr(['obj/vcLexer.cpp','obj/vcParser.cpp'], 'grammar/vc.g')
 
 env.Library('lib/libVC', Glob('obj/*.cpp'), CCFLAGS='-g ')
 env.Program('bin/vcParse', 'util/vcParseMain.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr-4.0.3' ], LIBPATH=Split('../../antlr2/ ./lib/'))
-env.Program('bin/vcCPCheck', 'util/vcCPCheck.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr-4.0.3' ], LIBPATH=Split('../../antlr2/ ./lib/'))
+env.Program('bin/vcAnalyze', 'util/vcAnalyze.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr-4.0.3' ], LIBPATH=Split('../../antlr2/ ./lib/'))
 env.Program('bin/vcFormat', 'util/vcFormat.cpp',CCFLAGS='-g ', LINKFLAGS='-g ')
 env.Program('bin/vhdlFormat', 'util/vhdlFormat.cpp',CCFLAGS='-g ', LINKFLAGS='-g ')
 env.Program('bin/vc2vhdl', 'util/vc2vhdl.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr-4.0.3' ], LIBPATH=Split('../../antlr2/ ./lib/'))

@@ -23,7 +23,7 @@ struct option long_options[] = {
 
 void Handle_Segfault(int signal)
 {
-  AaRoot::Error("in AaAnalyze: segmentation fault! giving up!!", NULL);
+  AaRoot::Error("in AaOpt: segmentation fault! giving up!!", NULL);
   exit(-1);
 }
 
@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 
   if(argc < 2)
     {
-      cerr << "Usage: AaAnalyze [-I <extmem-obj-name>] <filename> (<filename>) ... " << endl;
+      cerr << "Usage: AaOpt [-I <extmem-obj-name>] <filename> (<filename>) ... " << endl;
       exit(1);
     }
 
@@ -43,6 +43,13 @@ int main(int argc, char* argv[])
   string mod_name;
   string opt_string;
   bool opt_flag = false;
+
+
+  // inline in outfile
+  AaProgram::_print_inlined_functions_in_caller = true;
+
+  AaProgram::_tool_name = "AaOpt";
+
 
   while ((opt = 
 	  getopt_long(argc, 
@@ -56,6 +63,7 @@ int main(int argc, char* argv[])
 	  AaProgram::_keep_extmem_inside  = true;
 	  AaProgram::_extmem_object_name = optarg;
 	  break;
+  
 	default:
 	  cerr << "Error: unknown option " << opt << endl;
 	}

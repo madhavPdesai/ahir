@@ -177,6 +177,32 @@ AaInterfaceObject::AaInterfaceObject(AaScope* parent_tpr,
 }
 AaInterfaceObject::~AaInterfaceObject() {};
 
+string AaInterfaceObject::Get_Name() 
+{
+	assert(this->Get_Scope() && this->Get_Scope()->Is("AaModule"));
+
+	AaModule* m = (AaModule*)(this->Get_Scope());
+	if(m->Get_Inline_Flag())
+	  return(m->Get_Print_Prefix() + this->AaObject::Get_Name());
+	else if(m->Get_Macro_Flag())
+	  {
+
+	    AaExpression* expr = m->Lookup_Print_Remap(this);
+	    if(expr != NULL)
+	      {
+		string pstr;
+		expr->Print(pstr);
+		return(pstr);
+	      }
+	    else
+	      {
+		return(this->AaObject::Get_Name());
+	      }
+	  }
+	else
+	  return(this->AaObject::Get_Name());
+}
+
 
 //---------------------------------------------------------------------
 // AaStorageObject

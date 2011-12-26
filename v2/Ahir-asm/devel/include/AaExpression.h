@@ -561,6 +561,7 @@ class AaSimpleObjectReference: public AaObjectReference
   ~AaSimpleObjectReference();
   virtual string Kind() {return("AaSimpleObjectReference");}
   virtual void Set_Object(AaRoot* obj);
+  virtual void Print(ostream& ofile);
   virtual void PrintC(ofstream& ofile, string tab_string);
   virtual void PrintC_Header_Entry(ofstream& ofile);
 

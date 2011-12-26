@@ -496,16 +496,22 @@ bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObjec
   this->AaExpression::Set_Addressed_Object_Representative(obj);
 }
 
-
-
-
-
 void AaSimpleObjectReference::Set_Type(AaType* t)
 {
   if(this->_object && this->_object->Is_Storage_Object() && !this->Used_Only_In_Address_Of_Expression())
     ((AaStorageObject*)this->_object)->Add_Access_Width(t->Size());
 
   this->AaExpression::Set_Type(t);
+}
+
+void AaSimpleObjectReference::Print(ostream& ofile)
+{
+  assert(this->_object != NULL);
+
+  if(this->_object->Is("AaInterfaceObject"))
+  	ofile << this->_object->Get_Name();
+  else
+	ofile << this->Get_Object_Ref_String();
 }
 
 void AaSimpleObjectReference::PrintC_Header_Entry(ofstream& ofile)
@@ -950,7 +956,12 @@ AaArrayObjectReference::~AaArrayObjectReference()
 }
 void AaArrayObjectReference::Print(ostream& ofile)
 {
-  ofile << this->Get_Object_Ref_String();
+  assert(this->_object != NULL);
+
+  if(this->_object->Is("AaInterfaceObject"))
+  	ofile << this->_object->Get_Name();
+  else 
+	ofile << this->Get_Object_Ref_String();
 
   for(unsigned int i = 0; i < this->Get_Number_Of_Indices(); i++)
     {

@@ -1050,6 +1050,145 @@ This is done by the {\bf AaLinkExtMem} utility
 which is described in a separate document.
 
 
+\section{Inline and Macro Modules}
+
+By default, each distinct module in an \Aa program
+is eventually implemented as a separate VHDL entity
+by downstream AhirV2 tools (though downstream
+tools are free to instantiate multiple
+copies of this entity).  
+
+However, in order to give the \Aa programmer
+more flexibility,  a module in \Aa may be marked
+to be inlined or substituted into the program
+at the point of the call.  The AhirV2 utility
+{\bf AaOpt} is responsible for this substitution.
+
+
+\subsection{Inlined Modules}
+
+An inlined module is substituted into the
+point of a call to it in a three-step manner.
+The input arguments are sampled at the point
+of the call, the body of
+the module is invoked and the output arguments
+are transferred.  The semantics of an inlined
+function call are defined by this three step
+procedure.  The input arguments are sampled
+at the point of the call, and the output
+arguments are updated at the termination of
+the call.
+
+For example, the following
+program 
+\begin{verbatim}
+$inline $module [add] $in (a: $uint<32> b: $uint<32>)
+    $out (c: $uint<32>) $is
+{
+    c := (a+b)
+}  
+
+$module [add_check] $in (p: $uint<32> q: $uint<32>) 
+    $out (r : $uint<32>) $is
+{
+    $call add (p q) (r)
+}
+\end{verbatim}
+is translated to
+\begin{verbatim}
+$module [add_check]
+$in ( p : $uint<32>   q : $uint<32>  )
+$out ( r : $uint<32>  )
+$is
+{
+  $seriesblock[add_18] 
+  {
+    $parallelblock[InArgs] 
+    {
+      add_18_a := p
+      add_18_b := q
+    }
+    ( add_18_a => add_18_a add_18_b => add_18_b )
+    $seriesblock[body] 
+    {
+      add_18_c := (add_18_a + add_18_b)
+    }
+    (  add_18_c => add_18_c )
+    $parallelblock[OutArgs] 
+    {
+      r := add_18_c
+    }
+    ( r => r )
+  }
+  ( r => r )
+}
+\end{verbatim}
+The three step substitution of add into add\_check
+is clearly seen.
+
+
+\subsection{Macro Modules}
+
+A module defined as a macro (described below)
+is directly substituted at the point of a call
+to it.  That is, all references to input and
+output arguments
+are replaced by references to the corresponding
+expression passed to the called function.  
+The semantics are equivalent to a MACRO instantiation
+in programming languages such as C/C++.
+
+For example:
+\begin{verbatim}
+$macro $module [shift] $in (a: $uint<32>) 
+    $out (c: $uint<32>) $is
+{
+    c := a 
+}  
+
+$pipe inpipe: $uint<32>
+$pipe midpipe: $uint<32>
+$pipe outpipe: $uint<32>
+
+$module [shift_check] $in () 
+    $out () $is
+{
+    $call shift (inpipe) (midpipe)
+    $call shift (midpipe) (outpipe)
+}
+
+\end{verbatim}
+is equivalent to 
+\begin{verbatim}
+$pipe  inpipe : $uint<32>  $depth 1 
+$pipe  midpipe : $uint<32>  $depth 1 
+$pipe  outpipe : $uint<32>  $depth 1 
+$module [shift_check]
+$in ()
+$out ()
+$is
+{
+  $seriesblock[shift_14] 
+  {
+    midpipe := inpipe
+  }
+  $seriesblock[shift_17] 
+  {
+    outpipe := midpipe
+  }
+}
+\end{verbatim}
+The two calls to shift are replaced by
+series blocks with input/output arguments
+replaced by the expressions passed to them
+at the point of the call.
+
+Since it is possible to pass a pipe as an 
+argument to a call, a macro-module is permitted
+to violate the rule that there should
+be at most one write to an interface object
+within a module.
+
 \section{Foreign Modules}
 
 

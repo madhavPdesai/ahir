@@ -105,6 +105,8 @@ int main(int argc, char* argv[])
     };
 
 
+  vcSystem::_tool_name = "vc2vhdl";
+
   extern int optind;
   extern char *optarg;
   int opt;

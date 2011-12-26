@@ -20,11 +20,13 @@ int AaProgram::_foreign_address_width = 32;
 int AaProgram::_pointer_width = 32;
 bool AaProgram::_keep_extmem_inside = false;
 bool AaProgram::_verbose_flag = false;
+bool AaProgram::_print_inlined_functions_in_caller = false;
 AaStorageObject* AaProgram::_extmem_object = NULL;
 string AaProgram::_extmem_object_name;
 int AaProgram::_extmem_size;
 
 string AaProgram::_current_file_name;
+string AaProgram::_tool_name;
 AaVoidType* AaProgram::_void_type = NULL;
 std::map<string,AaType*,StringCompare>   AaProgram::_type_map;
 std::map<string,AaObject*,StringCompare> AaProgram::_objects;
@@ -244,7 +246,16 @@ void AaProgram::Print(ostream& ofile)
   for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
       miter != AaProgram::_modules.end();
       miter++)
-    (*miter).second->Print(ofile);
+  {  
+	AaModule* m = (*miter).second;
+	if(!(AaProgram::_print_inlined_functions_in_caller) || 
+		(!m->Get_Inline_Flag() && !m->Get_Macro_Flag()))
+    		m->Print(ofile);
+	else
+	{
+		AaRoot::Info("not printing inlined/macro module " + m->Get_Label());
+	}
+  }
 
   for(std::map<int,set<AaRoot*> >::iterator iter = AaProgram::_storage_eq_class_map.begin();
       iter != AaProgram::_storage_eq_class_map.end();

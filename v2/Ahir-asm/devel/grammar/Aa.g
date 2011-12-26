@@ -119,15 +119,17 @@ aA_Module returns [AaModule* new_module]
     bool foreign_flag = false;
     bool inline_flag = false;
     bool pipeline_flag = false;
+    bool macro_flag = false;
 }
-    : ( (FOREIGN {foreign_flag = true;}) | (PIPELINE {pipeline_flag = true; }))? 
-        (INLINE {inline_flag = true;})? mt: MODULE 
+    : ((FOREIGN {foreign_flag = true;}) | (PIPELINE {pipeline_flag = true; }) | 
+            (INLINE {inline_flag = true;}) | (MACRO {macro_flag = true;}) )? mt: MODULE 
         lbl = aA_Label 
         {
             new_module = new AaModule(lbl);
 
             new_module->Set_Foreign_Flag(foreign_flag);
             new_module->Set_Inline_Flag(inline_flag);
+            new_module->Set_Macro_Flag(macro_flag);
             new_module->Set_Pipeline_Flag(pipeline_flag);
 
             new_module->Set_Line_Number(mt->getLine());
@@ -1365,6 +1367,7 @@ options {
 // language keywords (all start with $)
 FOREIGN       : "$foreign";
 INLINE        : "$inline";
+MACRO         : "$macro";
 PIPELINE      : "$pipeline";
 MODULE        : "$module";
 DECLARE       : "$declare";

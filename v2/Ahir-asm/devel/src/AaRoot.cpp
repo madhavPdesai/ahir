@@ -39,7 +39,7 @@ void AaRoot::Increment_Root_Counter() { AaRoot::_root_counter += 1; }
 int64_t AaRoot::Get_Root_Counter() { return AaRoot::_root_counter; }
 void AaRoot::Error(string msg,AaRoot* r) 
 { 
-  cerr << "Error: " << msg;
+  cerr << AaProgram::_tool_name << " Error: " << msg;
   if(r != NULL)
     {
       cerr << ": file " << r->Get_File_Name() << ", line " << r->Get_Line_Number();

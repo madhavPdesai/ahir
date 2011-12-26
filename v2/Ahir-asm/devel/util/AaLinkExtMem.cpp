@@ -79,6 +79,12 @@ int main(int argc, char* argv[])
   string opt_string;
   bool opt_flag = false;
 
+  // inline in outfile
+  AaProgram::_print_inlined_functions_in_caller = true;
+
+  AaProgram::_tool_name = "AaLinkExtMem";
+
+
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 

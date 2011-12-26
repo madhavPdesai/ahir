@@ -23,6 +23,7 @@ class AaModule: public AaSeriesBlockStatement
 
   bool _foreign_flag;
   bool _inline_flag;
+  bool _macro_flag;
   bool _pipeline_flag;
 
   bool _writes_to_shared_pipe;
@@ -41,9 +42,17 @@ class AaModule: public AaSeriesBlockStatement
 
   map<string,string> _attribute_map;
 
+  string _print_prefix;
+
+  map<AaInterfaceObject*, AaExpression*> _print_remap;
+
  public:
   AaModule(string fname); // Modules have NULL parent (parent is the program)
   ~AaModule();
+
+  void Set_Print_Prefix(string str) { _print_prefix = str;}
+  string Get_Print_Prefix() {return(_print_prefix);}
+  void Clear_Print_Prefix() {_print_prefix = "";}
 
   void Increment_Number_Of_Times_Called()
   {
@@ -63,10 +72,18 @@ class AaModule: public AaSeriesBlockStatement
   bool Get_Pipeline_Flag() {return(this->_pipeline_flag);}
   virtual bool Is_Pipelined() {return(_pipeline_flag);}
 
-  void Set_Inline_Flag(bool ff) { this->_inline_flag = ff; }
+  void Set_Inline_Flag(bool ff);
+
   bool Get_Inline_Flag() {return(this->_inline_flag);}
 
+  void Set_Macro_Flag(bool ff);
+  bool Get_Macro_Flag() {return(this->_macro_flag);}
+
   void Add_Argument(AaInterfaceObject* obj);
+
+  void Set_Print_Remap(AaInterfaceObject* obj, AaExpression* expr) { _print_remap[obj] = expr;}
+  void Clear_Print_Remap() {_print_remap.clear();}
+  AaExpression* Lookup_Print_Remap(AaInterfaceObject* obj);
 
   void Add_Attribute(string name, string val)
   {
@@ -107,6 +124,7 @@ class AaModule: public AaSeriesBlockStatement
   }
 
   void Print(ostream& ofile);
+  void Print_Body(ostream& ofile);
   virtual string Kind() {return("AaModule");}
 
   virtual AaRoot* Find_Child(string tag);

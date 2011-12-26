@@ -26,6 +26,9 @@ int vcSystem::_register_bank_threshold = 0;
 // standard simulator will be Modelsim_FLI
 string vcSystem::_simulator_prefix = "Modelsim_FLI_";
 
+string vcSystem::_tool_name;
+
+
 
 vcSystem::vcSystem(string id):vcRoot(id)
 {
@@ -282,7 +285,7 @@ void vcSystem::Elaborate()
 
 void vcSystem::Error(string err_msg)
 {
-  cerr << "Error: " << err_msg << endl;
+  cerr << vcSystem::_tool_name << " Error: " << err_msg << endl;
   vcSystem::_error_flag = true;
 }
 

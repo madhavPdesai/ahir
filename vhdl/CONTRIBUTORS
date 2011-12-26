@@ -1,0 +1,6 @@
+Unless explicitly mentioned, all VHDL code in the
+ahir/ directory has been written by 
+	Madhav P. Desai <madhav@ee.iitb.ac.in>
+           (all of operatorsV2, memory_subsystem)
+	Sameer D. Sahasrabuddhe <sameer@sbuddhe.net>
+	   (parts of control-path, packagesV2).
