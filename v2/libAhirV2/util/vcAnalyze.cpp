@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
   string sys_name = "test_system";
   vcSystem test_system(sys_name);
 
-  for(int idx = 1; idx < file_list.size(); idx++)
+  for(int idx = 0; idx < file_list.size(); idx++)
     {
 
       string filename = file_list[idx];

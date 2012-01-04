@@ -3552,6 +3552,24 @@ component combinational_merge
     out_ack: in std_logic);
 end component combinational_merge;
 
+component combinational_merge_with_repeater
+  generic (
+    g_data_width       : natural;
+    g_number_of_inputs: natural;
+    g_time_stamp_width : natural);
+  port(
+    clk : in std_logic;
+    reset : in std_logic;
+    in_data: in std_logic_vector((g_data_width*g_number_of_inputs)-1 downto 0);
+    in_tstamp: in std_logic_vector((g_number_of_inputs*g_time_stamp_width)-1 downto 0);
+    out_data: out std_logic_vector(g_data_width-1 downto 0);
+    out_tstamp: out std_logic_vector(g_time_stamp_width-1 downto 0);
+    in_req: in std_logic_vector(g_number_of_inputs-1 downto 0);
+    in_ack: out std_logic_vector(g_number_of_inputs-1 downto 0);
+    out_req: out std_logic;
+    out_ack: in std_logic);
+end component combinational_merge_with_repeater;
+
 
 component memory_subsystem_core
   generic (
@@ -5229,6 +5247,64 @@ use ahir.mem_function_pack.all;
 use ahir.merge_functions.all;
 use ahir.mem_component_pack.all;
 
+entity combinational_merge_with_repeater is
+  generic (
+    g_data_width       : natural;
+    g_number_of_inputs: natural;
+    g_time_stamp_width : natural);
+  port(
+    clk : in std_logic;
+    reset : in std_logic;
+    in_data: in std_logic_vector((g_data_width*g_number_of_inputs)-1 downto 0);
+    in_tstamp: in std_logic_vector((g_number_of_inputs*g_time_stamp_width)-1 downto 0);
+    out_data: out std_logic_vector(g_data_width-1 downto 0);
+    out_tstamp: out std_logic_vector(g_time_stamp_width-1 downto 0);
+    in_req: in std_logic_vector(g_number_of_inputs-1 downto 0);
+    in_ack: out std_logic_vector(g_number_of_inputs-1 downto 0);
+    out_req: out std_logic;
+    out_ack: in std_logic);
+end combinational_merge_with_repeater;
+
+architecture Struct of combinational_merge_with_repeater is
+
+  signal sel_vector : std_logic_vector(g_number_of_inputs-1 downto 0);
+
+  signal rep_data_in : std_logic_vector(g_data_width-1 downto 0);
+  signal rep_req_in, rep_ack_out: std_logic;
+  
+begin  
+
+   cmerge: combinational_merge 
+		generic map (g_data_width => g_data_width,
+			 g_number_of_inputs => g_number_of_inputs,
+			 g_time_stamp_width => g_time_stamp_width)
+		port map(in_data => in_data,
+			 in_tstamp => in_tstamp,
+			 out_data => rep_data_in,
+			 out_tstamp => open,
+			 in_req => in_req,
+			 in_ack => in_ack,
+			 out_req => rep_req_in,
+			 out_ack => rep_ack_out);
+
+    rptr:  mem_repeater generic map (g_data_width => g_data_width)
+		port map(clk => clk, reset => reset,
+			 data_in => rep_data_in,
+			 req_in => rep_req_in,
+			 ack_out => rep_ack_out,
+			 data_out => out_data,
+			 req_out => out_req,
+			 ack_in => out_ack);	
+  
+end Struct;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.mem_function_pack.all;
+use ahir.merge_functions.all;
+use ahir.mem_component_pack.all;
+
 entity demerge_tree is
   generic (
     g_demux_degree: natural := 10;
@@ -5737,11 +5813,12 @@ begin
     ---------------------------------------------------------------------------
     -- merge for load-complete
     ---------------------------------------------------------------------------
-    mergeComplete : combinational_merge generic map (
+    mergeComplete : combinational_merge_with_repeater generic map (
       g_data_width       => data_width + tag_width,
       g_number_of_inputs => number_of_banks,
       g_time_stamp_width => time_stamp_width)
-      port map (in_data => load_data_from_banks(I),
+      port map (clk => clock, reset => reset,
+		in_data => load_data_from_banks(I),
                 in_tstamp => load_tstamp_from_banks(I),
                 out_data => load_port_data(I),
                 out_tstamp => open,
@@ -5818,11 +5895,13 @@ begin
     ---------------------------------------------------------------------------
     -- merge for store-complete
     ---------------------------------------------------------------------------
-    mergeComplete : combinational_merge generic map (
+    mergeComplete : combinational_merge_with_repeater generic map (
       g_data_width       => tag_width,
       g_number_of_inputs => number_of_banks,
       g_time_stamp_width => time_stamp_width)
-      port map (in_data => store_tag_from_banks(I),
+      port map (clk => clock,
+		reset => reset,
+		in_data => store_tag_from_banks(I),
                 in_tstamp => store_tstamp_from_banks(I),
                 out_data => sc_tag_out((I+1)*tag_width-1 downto I*tag_width),
                 out_tstamp => store_complete_time_stamp(I),
@@ -10180,6 +10259,43 @@ begin  -- SimModel
   end process;
 
 end behave;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+-- like PhiBase, but multiple writers can
+-- be simultaneously active.  Use simple priority
+-- to decide the winner.
+entity ScalarRegister is
+
+  generic (
+    num_reqs   : integer;
+    data_width : integer);
+  port (
+    req                 : in  BooleanArray(num_reqs-1 downto 0);
+    ack                 : out Boolean;
+    idata               : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
+    odata               : out std_logic_vector(data_width-1 downto 0);
+    clk, reset          : in std_logic);
+
+end ScalarRegister;
+
+
+architecture Behave of ScalarRegister is
+  signal req_PE: BooleanArray(num_reqs-1 downto 0);
+begin  -- Behave
+
+  req_PE <= PriorityEncode(req);
+  pInst: PhiBase generic map(num_reqs => num_reqs, data_width => data_width)
+		port map(req => req_PE, ack => ack, idata => idata, odata => odata,
+				clk => clk, reset => reset);
+end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
 library ahir;

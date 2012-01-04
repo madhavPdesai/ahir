@@ -165,6 +165,7 @@ class AaStorageObject: public AaObject
 
   bool _is_written_into;
   bool _is_read_from;
+  bool _register_flag;
 
  public:
 
@@ -193,6 +194,9 @@ class AaStorageObject: public AaObject
   virtual bool Get_Is_Read_From() { return(_is_read_from); }
 
   virtual bool Is_Storage_Object() {return(true);}
+
+  bool Get_Register_Flag() {return(_register_flag);}
+  void Set_Register_Flag(bool v) { _register_flag = v;}
 
 
 

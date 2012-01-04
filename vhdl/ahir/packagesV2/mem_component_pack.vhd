@@ -211,6 +211,24 @@ component combinational_merge
     out_ack: in std_logic);
 end component combinational_merge;
 
+component combinational_merge_with_repeater
+  generic (
+    g_data_width       : natural;
+    g_number_of_inputs: natural;
+    g_time_stamp_width : natural);
+  port(
+    clk : in std_logic;
+    reset : in std_logic;
+    in_data: in std_logic_vector((g_data_width*g_number_of_inputs)-1 downto 0);
+    in_tstamp: in std_logic_vector((g_number_of_inputs*g_time_stamp_width)-1 downto 0);
+    out_data: out std_logic_vector(g_data_width-1 downto 0);
+    out_tstamp: out std_logic_vector(g_time_stamp_width-1 downto 0);
+    in_req: in std_logic_vector(g_number_of_inputs-1 downto 0);
+    in_ack: out std_logic_vector(g_number_of_inputs-1 downto 0);
+    out_req: out std_logic;
+    out_ack: in std_logic);
+end component combinational_merge_with_repeater;
+
 
 component memory_subsystem_core
   generic (

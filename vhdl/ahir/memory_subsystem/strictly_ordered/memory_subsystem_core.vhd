@@ -330,11 +330,12 @@ begin
     ---------------------------------------------------------------------------
     -- merge for load-complete
     ---------------------------------------------------------------------------
-    mergeComplete : combinational_merge generic map (
+    mergeComplete : combinational_merge_with_repeater generic map (
       g_data_width       => data_width + tag_width,
       g_number_of_inputs => number_of_banks,
       g_time_stamp_width => time_stamp_width)
-      port map (in_data => load_data_from_banks(I),
+      port map (clk => clock, reset => reset,
+		in_data => load_data_from_banks(I),
                 in_tstamp => load_tstamp_from_banks(I),
                 out_data => load_port_data(I),
                 out_tstamp => open,
@@ -411,11 +412,13 @@ begin
     ---------------------------------------------------------------------------
     -- merge for store-complete
     ---------------------------------------------------------------------------
-    mergeComplete : combinational_merge generic map (
+    mergeComplete : combinational_merge_with_repeater generic map (
       g_data_width       => tag_width,
       g_number_of_inputs => number_of_banks,
       g_time_stamp_width => time_stamp_width)
-      port map (in_data => store_tag_from_banks(I),
+      port map (clk => clock,
+		reset => reset,
+		in_data => store_tag_from_banks(I),
                 in_tstamp => store_tstamp_from_banks(I),
                 out_data => sc_tag_out((I+1)*tag_width-1 downto I*tag_width),
                 out_tstamp => store_complete_time_stamp(I),

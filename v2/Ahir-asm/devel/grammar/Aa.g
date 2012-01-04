@@ -47,9 +47,12 @@
  statement introduces a new namespace which
  is hierarchically identified.
 
- TODO: why not permit declarations of $storage,$pipe and $constant
-       in each statement block (instead of only in the modules and
-       the program)?
+
+ objects can be 
+	- implicit SSA registers
+	- declared storage
+		- declared storage register..
+	- declared pipes.
  */
 
 
@@ -959,19 +962,23 @@ aA_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         ;
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Storage_Object_Declaration:  STORAGE SIMPLE_IDENTIFIER COLON aA_Type_Reference (ASSIGNEQUAL aA_Constant_Literal_Reference)?
+// aA_Storage_Object_Declaration:  REGISTER? STORAGE SIMPLE_IDENTIFIER COLON aA_Type_Reference (ASSIGNEQUAL aA_Constant_Literal_Reference)?
 //----------------------------------------------------------------------------------------------------------
 aA_Storage_Object_Declaration[AaScope* scope] returns [AaObject* obj]
         {
             string oname;
             AaType* otype = NULL;
             AaConstantLiteralReference* initial_value = NULL;
+	    bool register_flag = false;
         }
-        : (st:STORAGE aA_Object_Declaration_Base[scope,oname,otype,initial_value])
+        : (REGISTER {register_flag = true;})? (st:STORAGE aA_Object_Declaration_Base[scope,oname,otype,initial_value])
         {
             obj = new AaStorageObject(scope,oname,otype,NULL);
 
             obj->Set_Line_Number(st->getLine());
+	    if(register_flag)
+	    	((AaStorageObject*)obj)->Set_Register_Flag(true);
+
             if(initial_value != NULL)
             {
               AaRoot::Warning("initial value not allowed on storage objects, will be ignored.",obj);
@@ -1373,6 +1380,7 @@ MODULE        : "$module";
 DECLARE       : "$declare";
 DEFAULT       : "$default";
 STORAGE       : "$storage";
+REGISTER      : "$register";
 PIPE          : "$pipe";
 CONSTANT      : "$constant";
 SERIESBLOCK   : "$seriesblock";

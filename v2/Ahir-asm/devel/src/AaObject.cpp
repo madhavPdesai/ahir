@@ -218,6 +218,7 @@ AaStorageObject::AaStorageObject(AaScope* parent_tpr,string oname, AaType* otype
   _base_address = 0;
   _word_size = 0;
   _address_width = 0;
+  _register_flag = 0;
 };
 AaStorageObject::~AaStorageObject() {};
 

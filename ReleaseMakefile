@@ -16,7 +16,7 @@ Release:
 	cp $(AA)/bin/Aa2C $(RELEASE)/bin/
 	cp $(AA)/bin/Aa2VC $(RELEASE)/bin/
 	cp $(AA)/bin/AaLinkExtMem $(RELEASE)/bin/
-	cp $(AA)/bin/AaAnalyze $(RELEASE)/bin/AaAnalyze
+	cp $(AA)/bin/AaOpt $(RELEASE)/bin/AaOpt
 	cp $(VC)/bin/vc2vhdl $(RELEASE)/bin/
 	cp $(VC)/bin/vcCPCheck $(RELEASE)/bin/vcAnalyze
 	cp $(VC)/bin/vcFormat $(RELEASE)/bin/

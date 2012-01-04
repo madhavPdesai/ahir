@@ -20,6 +20,8 @@ public:
 
   void Add_Successor(vcCPElement* cpe);
   void Add_Predecessor(vcCPElement* cpe);
+  void Remove_Successor(vcCPElement* cpe);
+  void Remove_Predecessor(vcCPElement* cpe);
   virtual bool Is_Pipeline() { return (false); }
   virtual bool Is_Block() { return (false); }
   virtual bool Is_Control_Path() { return (false); }
@@ -92,6 +94,24 @@ public:
     return(this);
   }
 
+  // (u,v) is a forward edge ...
+  virtual void DFS_Forward_Edge_Action(bool reverse_flag, 
+					deque<vcCPElement*>& dfs_queue, 
+					set<vcCPElement*>& on_queue_set,
+					vcCPElement* u, vcCPElement* v)
+  {
+	// do nothing..
+  }
+
+  // (u,v) is a backward edge
+  virtual void DFS_Backward_Edge_Action(bool reverse_flag,
+					deque<vcCPElement*>& dfs_queue, 
+					set<vcCPElement*>& on_queue_set,
+					vcCPElement* u, vcCPElement* v)
+  {
+	// do nothing..
+  }
+  
 };
 
 
@@ -346,6 +366,8 @@ class vcCPForkBlock: public vcCPParallelBlock
   set<vcCPElement*> _forked_elements;
   set<vcCPElement*> _joined_elements;
 
+  vector<pair<vcCPElement*, vcCPElement*> > _redundant_pairs;
+
 public:
   virtual string Kind() {return("vcCPForkBlock");}
   vcCPForkBlock(vcCPBlock* parent, string id);
@@ -360,7 +382,16 @@ public:
   virtual void Update_Predecessor_Successor_Links();
   void Precedence_Order(bool reverse_flag, vcCPElement* start_element, vector<vcCPElement*>& precedence_order);
   void Add_Join_Point(vcTransition* jp, vcCPElement* jre);
+  void Remove_Join_Point(vcTransition* jp, vcCPElement* jre);
   void Add_Fork_Point(vcTransition* fp, vcCPElement* fre);
+  void Remove_Fork_Point(vcTransition* fp, vcCPElement* fre);
+
+  void Eliminate_Redundant_Dependencies();
+  virtual void DFS_Forward_Edge_Action(bool reverse_flag,
+					deque<vcCPElement*>& dfs_queue, 
+					set<vcCPElement*>& on_queue_set,
+					vcCPElement* u, vcCPElement* v);
+
 };
 
 

@@ -2472,14 +2472,28 @@ void AaAddressOfExpression::Map_Source_References(set<AaRoot*>& source_objects)
 {
   this->_reference_to_object->Map_Source_References(source_objects);
 
-  if((this->_reference_to_object->Get_Object() == NULL )
-     || (!this->_reference_to_object->Get_Object()->Is("AaStorageObject")))
+  AaRoot* tobj = this->_reference_to_object->Get_Object();
+
+   if(tobj != NULL)
     {
-      AaRoot::Error("address-of expression must refer to a storage object",this);
+      if(!tobj->Is("AaStorageObject"))
+  	{
+      		AaRoot::Error("address-of expression must refer to a storage object",this);
+		return;
+	}
+      else
+      	{
+		if(((AaStorageObject*)tobj)->Get_Register_Flag())
+		{
+      			AaRoot::Error("address-of expression cannot refer to a register object",this);
+			return;
+		}
+	}
     }
+  
 
   // this expression definitely points to a storage object...
-  AaStorageObject* obj = (AaStorageObject*) (_reference_to_object->Get_Object());
+  AaStorageObject* obj = (AaStorageObject*) tobj; 
   this->_storage_object = obj;
 
   if(this->_reference_to_object->Get_Type())

@@ -263,7 +263,25 @@ void vcCPElement::Add_Successor(vcCPElement* cpe)
 	  break;
 	}
     }
-  this->_successors.push_back(cpe);
+
+  if(add_flag)
+  	this->_successors.push_back(cpe);
+}
+
+void vcCPElement::Remove_Successor(vcCPElement* cpe) 
+{
+  bool rem_flag = false;
+  for(vector<vcCPElement*>::iterator iter = _successors.begin(), fiter = _successors.end();
+	iter != fiter; iter++)
+    {
+      if(cpe == *iter)
+	{
+	  rem_flag = true;
+  	  this->_successors.erase(iter);
+	  break;
+	}
+    }
+	
 }
 
 void vcCPElement::Add_Predecessor(vcCPElement* cpe) 
@@ -279,6 +297,21 @@ void vcCPElement::Add_Predecessor(vcCPElement* cpe)
     }
   if(add_flag);
     this->_predecessors.push_back(cpe);
+}
+
+void vcCPElement::Remove_Predecessor(vcCPElement* cpe) 
+{
+  bool rem_flag = false;
+  for(vector<vcCPElement*>::iterator iter = _predecessors.begin(), fiter = _predecessors.end();
+	iter != fiter; iter++)
+    {
+      if(cpe == *iter)
+	{
+	  rem_flag = true;
+  	  this->_predecessors.erase(iter);
+	  break;
+	}
+    }
 }
 
 void vcCPElement::Get_Hierarchical_Ref(vector<string>& ref_vec)
@@ -778,10 +811,12 @@ void vcCPBlock::DFS_Order(bool reverse_flag, vcCPElement* start_element, bool& c
 	  if(on_queue_set.find(w) != on_queue_set.end())
 	    {
 	      cycle_flag = true;
+	      this->DFS_Backward_Edge_Action(reverse_flag, dfs_queue, on_queue_set, top, w);
 	    }
 	  else if(visited_set.find(w) == visited_set.end())
 	    {
 	      num_visited++;
+	      this->DFS_Forward_Edge_Action(reverse_flag, dfs_queue, on_queue_set, top, w);
 
 	      dfs_ordered_elements.push_back(w);
 	      visited_set.insert(w);
@@ -1159,6 +1194,18 @@ void vcCPForkBlock::Add_Fork_Point(vcTransition* fp, vcCPElement* fre)
     }
 }
 
+void vcCPForkBlock::Remove_Fork_Point(vcTransition* fp, vcCPElement* fre)
+{
+	if(_fork_map.find(fp) != _fork_map.end())
+	{
+		if(_fork_map[fp].find(fre) != _fork_map[fp].end())
+		{
+			fp->Remove_Successor(fre);	
+			fre->Remove_Predecessor(fp);
+			_fork_map[fp].erase(fre);
+		}
+	}
+}
 
 void vcCPForkBlock::Add_Fork_Point(string& fork_name, vector<string>& fork_cpe_vec)
 {
@@ -1205,6 +1252,19 @@ void vcCPForkBlock::Add_Join_Point(vcTransition* jp, vcCPElement* jre)
       else
 	jre->Add_Successor(jp);
     }
+}
+
+void vcCPForkBlock::Remove_Join_Point(vcTransition* jp, vcCPElement* jre)
+{
+	if(_join_map.find(jp) != _join_map.end())
+	{
+		if(_join_map[jp].find(jre) != _join_map[jp].end())
+		{
+			jp->Remove_Predecessor(jre);	
+			jre->Remove_Successor(jp);
+			_join_map[jp].erase(jre);
+		}
+	}
 }
 
 void vcCPForkBlock::Add_Join_Point(string& join_name, vector<string>& join_cpe_vec)
@@ -1269,6 +1329,53 @@ void vcCPForkBlock::Print(ostream& ofile)
   ofile << "\n// end fork-block " << this->Get_Id() << endl << "}" << endl;
 }
 
+void vcCPForkBlock::DFS_Forward_Edge_Action(bool reverse_flag,
+				deque<vcCPElement*>& dfs_queue,
+				set<vcCPElement*>& on_queue_set,
+				vcCPElement* u, vcCPElement* v)
+{
+	if(reverse_flag == false)
+	{
+		// for each predecessor w of v, if w is on the queue
+		// then mark (w,v) as an arc to be removed. 
+        	vector<vcCPElement*>& adj =  v->Get_Predecessors();
+      		for(int idx = 0; idx < adj.size(); idx++)
+		{
+	  		vcCPElement* w = adj[idx];
+	  		if((w != u) && (on_queue_set.find(w) != on_queue_set.end()))
+			{
+				this->_redundant_pairs.push_back(pair<vcCPElement*,vcCPElement*>(w,v));	
+			}
+		}
+	}
+}
+
+
+void vcCPForkBlock::Eliminate_Redundant_Dependencies()
+{
+	for(int idx = 0; idx < _redundant_pairs.size(); idx++)
+	{
+		vcCPElement* u = _redundant_pairs[idx].first;
+		vcCPElement* v = _redundant_pairs[idx].second;
+
+		if(u->Is_Transition())
+		{
+			this->Remove_Fork_Point((vcTransition*)u,v);
+			vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
+					+ v->Get_Label());
+		}
+
+		if(v->Is_Transition())
+ 		{
+			this->Remove_Join_Point((vcTransition*)v,u);
+			vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
+					+ u->Get_Label());
+		}
+	}
+	
+}
+
+
 bool vcCPForkBlock::Check_Structure()
 {
   bool ret_flag = this->vcCPBlock::Check_Structure();
@@ -1323,6 +1430,10 @@ bool vcCPForkBlock::Check_Structure()
 	    }
 	}
     }
+
+
+  if(ret_flag)
+     this->Eliminate_Redundant_Dependencies();
 
   return(ret_flag);
 }
