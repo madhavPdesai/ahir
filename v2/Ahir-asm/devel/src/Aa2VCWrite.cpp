@@ -393,12 +393,30 @@ void Write_VC_Load_Store_Dependency(AaExpression* src,
 				    AaExpression* tgt,
 				    ostream& ofile)
 {
-  ofile << "// " << src->To_String() << (src->Is_Load() ? "(load)" : "(store)" )
-	<<  " -> " 
-	<< tgt->To_String()  << (tgt->Is_Load() ? "(load)" : "(store)" ) << endl;
-  
-  ofile << tgt->Get_VC_Start_Transition_Name() << " <-& (" 
-	<< src->Get_VC_Active_Transition_Name() << ")" << endl;
+  int ms_index = src->Get_VC_Memory_Space_Index();
+
+  if(ms_index >= 0)
+  { 
+  	ofile << "// " << src->To_String() << (src->Is_Load() ? "(load)" : "(store)" )
+		<<  " -> " 
+		<< tgt->To_String()  << (tgt->Is_Load() ? "(load)" : "(store)" ) << endl;
+	assert(ms_index == tgt->Get_VC_Memory_Space_Index());
+
+	AaMemorySpace* ms = AaProgram::Get_Memory_Space(ms_index);
+	
+	assert(ms != NULL);
+
+	if(ms->Get_Is_Ordered())
+	{
+  		ofile << tgt->Get_VC_Start_Transition_Name() << " <-& (" 
+			<< src->Get_VC_Active_Transition_Name() << ")" << endl;
+	}
+	else
+	{
+  		ofile << tgt->Get_VC_Start_Transition_Name() << " <-& (" 
+			<< src->Get_VC_Completed_Transition_Name() << ")" << endl;
+	}
+   }
 }
 
 

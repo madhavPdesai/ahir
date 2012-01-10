@@ -19,15 +19,12 @@ vcMemorySpace::vcMemorySpace(string id, vcModule* m):vcRoot(id)
 
 void vcMemorySpace::Add_Attribute(string tag, string value)
 {
-  if(tag == "unordered")
-    {
-      _ordered_flag = false;
-    }
-  else if(tag == "number_of_banks")
+  if(tag == "number_of_banks")
     {
 	if(value != "")
 	{
-		unsigned int nb = atoi(value.c_str());
+		string unquoted_value = value.substr(1,value.size()-2);
+		unsigned int nb = atoi(unquoted_value.c_str());
 		if(nb > 1)
 		{
 		   vcSystem::Info("in memory space " + this->Get_Id() + ", used attribute number of banks = " 
@@ -75,7 +72,13 @@ string vcMemorySpace::Get_Hierarchical_Id()
 
 void vcMemorySpace::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__MEMORYSPACE] << "[" << this->Get_Id() << "] {" << endl;
+  ofile << vcLexerKeywords[__MEMORYSPACE];
+
+  if(!this->Get_Ordered_Flag())
+	ofile << " " << vcLexerKeywords[__UNORDERED] << " ";
+
+  ofile  << " [" << this->Get_Id() << "] {" << endl;
+  
   ofile << vcLexerKeywords[__CAPACITY] << " " << this->_capacity << " ";
   ofile << vcLexerKeywords[__DATAWIDTH] << " " << this->_word_size << " ";
   ofile << vcLexerKeywords[__ADDRWIDTH] << " " << this->_address_width << " ";

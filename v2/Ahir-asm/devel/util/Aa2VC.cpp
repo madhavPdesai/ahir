@@ -35,6 +35,7 @@ void Usage_Aa2VC()
        <<  "              point to an external memory object whose name is mem-pool-name.  This external" << endl
        <<  "              memory object must be declared in the source Aa program." << endl;
   cerr <<  " -O (or --optimize): try to parallelize sequences of statements by using dependency analysis" << endl;
+  cerr <<  " -U (or --unordered): memory subsystems will be unordered (ordered is default) " << endl;
   cerr <<  " -C (or --c_stubs): generate C stubs for all modules. These can be used later in mixed C-VHDL simulation." << endl;
 
   cerr << endl;
@@ -68,6 +69,7 @@ int main(int argc, char* argv[])
       /* These options set a flag. */
       {"help", no_argument, 0, 'h'},
       {"optimize", no_argument,0, 'O'},
+      {"unordered", no_argument,0, 'U'},
       {"c_stubs",  no_argument, 0, 'C'},
       {"internal_ext_mem_pool",  required_argument, 0, 'I'},
       {0, 0, 0, 0}
@@ -84,14 +86,19 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "OCI:h",
+		      "OUCI:h",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
 	{
 	case 'O':
 	  opt_flag = true;
+	  AaProgram::_optimize_flag = true;
 	  std::cerr << "Info: -O option selected, will parallelize straight-line sequences" << endl;
+	  break;
+	case 'U':
+	  AaProgram::_unordered_memory_flag = true;
+	  std::cerr << "Info: -U option selected, memory subsystem will be unordered." << endl;
 	  break;
 	case 'C':
 	  write_vhdl_c_stubs = true;

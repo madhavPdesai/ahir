@@ -10,6 +10,7 @@ enum vcLexerKeytags
     __DPE           ,
     __LIBRARY       ,
     __MEMORYSPACE   	,
+    __UNORDERED   	,
     __OBJECT        ,
     __CAPACITY      	,
     __DATAWIDTH     	,
@@ -126,6 +127,7 @@ static string vcLexerKeywords[] =
       "$dpe"		,
       "$lib"		,
       "$memoryspace"		,
+      "$unordered"		,
       "$object"		,
       "$capacity"		,
       "$datawidth"		,
@@ -265,6 +267,10 @@ protected:
   vcRoot(string id);
 
   virtual void Add_Attribute(string tag, string value);
+
+  bool Has_Attribute(string tag);
+  string Find_Attribute_Value(string tag);
+
   string Get_Id();
   virtual string Get_VHDL_Id() {return(To_VHDL(this->Get_Id()));}
 

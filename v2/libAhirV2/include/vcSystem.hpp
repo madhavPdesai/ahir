@@ -42,6 +42,8 @@ class vcSystem: public vcRoot
   static string _tool_name;
   static bool _enable_logging;
 
+  static string _top_entity_name;
+
   vcSystem(string id);
   virtual void Print(ostream& ofile);
 
@@ -143,6 +145,11 @@ class vcSystem: public vcRoot
 
   void  Print_VHDL_Constant_Declarations(ostream& ofile);
   void Parse(string filename);
+
+  static string Get_Sys_Package_Name()
+  {
+     return(To_VHDL(vcSystem::_top_entity_name) + "_global_package");
+  }
 };
 
 

@@ -65,6 +65,9 @@ public:
 	public: void vc_Wire_Declaration(
 		vcSystem* sys,vcDataPath* dp
 	);
+	public: void vc_SysAttributeSpec(
+		vcSystem* sys
+	);
 	public: string  vc_Label();
 	public: void vc_MemorySpaceParams(
 		vcMemorySpace* ms
@@ -213,10 +216,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 125;
+	static const int NUM_TOKENS = 126;
 #else
 	enum {
-		NUM_TOKENS = 125
+		NUM_TOKENS = 126
 	};
 #endif
 	

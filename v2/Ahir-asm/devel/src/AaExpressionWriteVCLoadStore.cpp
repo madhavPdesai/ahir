@@ -1149,6 +1149,21 @@ string AaObjectReference::Get_VC_Memory_Space_Name()
     }
 }
 
+int AaObjectReference::Get_VC_Memory_Space_Index()
+{
+
+  if(this->_object->Is_Storage_Object())
+    {
+      AaStorageObject* so = ((AaStorageObject*)(this->_object));
+      return(so->Get_Mem_Space_Index());
+    }
+  else if(this->_object->Is_Expression())
+    {
+      AaStorageObject* so = ((AaExpression*)(this->_object))->Get_Addressed_Object_Representative();
+      return(so->Get_Mem_Space_Index());
+    }
+}
+
 // if the object reference is to an indexed expression..
 int AaObjectReference::Get_Base_Address()
 {
@@ -1365,6 +1380,20 @@ string AaPointerDereferenceExpression::Get_VC_Memory_Space_Name()
   return("ErrorNoMemorySpace");
 }
 
+int AaPointerDereferenceExpression::Get_VC_Memory_Space_Index()
+{
+  AaStorageObject* obj = this->Get_Addressed_Object_Representative();
+  if(obj != NULL)
+    {
+      return (obj->Get_Mem_Space_Index());
+    }
+  else
+    {
+      AaRoot::Error("could not associate memory space with pointer ", this);
+    }
+  return(-1);
+}
+
 int AaPointerDereferenceExpression::Get_Access_Width()
 {
   assert(0);
@@ -1419,6 +1448,12 @@ string AaAddressOfExpression::Get_VC_Memory_Space_Name()
 {
   return(this->_storage_object->Get_VC_Memory_Space_Name());
 }
+
+int AaAddressOfExpression::Get_VC_Memory_Space_Index()
+{
+  return(this->_storage_object->Get_Mem_Space_Index());
+}
+
 int AaAddressOfExpression::Get_Base_Address()
 {
   return this->_storage_object->Get_Base_Address();

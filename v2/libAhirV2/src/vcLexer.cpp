@@ -454,6 +454,10 @@ ANTLR_USE_NAMESPACE(antlr)RefToken vcLexer::nextToken()
 					mHIERARCHICAL_IDENTIFIER(true);
 					theRetToken=_returnToken;
 				}
+				else if ((LA(1) == 0x24 /* '$' */ ) && (LA(2) == 0x75 /* 'u' */ )) {
+					mUNORDERED(true);
+					theRetToken=_returnToken;
+				}
 				else if ((LA(1) == 0x7c /* '|' */ ) && (LA(2) == 0x7c /* '|' */ )) {
 					mPARALLELBLOCK(true);
 					theRetToken=_returnToken;
@@ -718,6 +722,26 @@ void vcLexer::mMEMORYSPACE(bool _createToken) {
 	
 	try {      // for error handling
 		match("$memoryspace");
+	}
+	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
+		reportError(ex);
+		recover(ex,_tokenSet_2);
+	}
+	if ( _createToken && _token==ANTLR_USE_NAMESPACE(antlr)nullToken && _ttype!=ANTLR_USE_NAMESPACE(antlr)Token::SKIP ) {
+	   _token = makeToken(_ttype);
+	   _token->setText(text.substr(_begin, text.length()-_begin));
+	}
+	_returnToken = _token;
+	_saveIndex=0;
+}
+
+void vcLexer::mUNORDERED(bool _createToken) {
+	int _ttype; ANTLR_USE_NAMESPACE(antlr)RefToken _token; ANTLR_USE_NAMESPACE(std)string::size_type _begin = text.length();
+	_ttype = UNORDERED;
+	ANTLR_USE_NAMESPACE(std)string::size_type _saveIndex;
+	
+	try {      // for error handling
+		match("$unordered");
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
@@ -2884,11 +2908,11 @@ void vcLexer::mUINTEGER(bool _createToken) {
 				mDIGIT(false);
 			}
 			else {
-				goto _loop329;
+				goto _loop337;
 			}
 			
 		}
-		_loop329:;
+		_loop337:;
 		} // ( ... )*
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
@@ -2954,9 +2978,9 @@ void vcLexer::mWHITESPACE(bool _createToken) {
 		case 0xa /* '\n' */ :
 		{
 			match('\n' /* charlit */ );
-#line 1276 "vc.g"
+#line 1328 "vc.g"
 			newline();
-#line 2960 "vcLexer.cpp"
+#line 2984 "vcLexer.cpp"
 			break;
 		}
 		default:
@@ -2965,11 +2989,11 @@ void vcLexer::mWHITESPACE(bool _createToken) {
 		}
 		}
 		}
-#line 1277 "vc.g"
+#line 1329 "vc.g"
 		
 			_ttype = ANTLR_USE_NAMESPACE(antlr)Token::SKIP; 
 		
-#line 2973 "vcLexer.cpp"
+#line 2997 "vcLexer.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
@@ -2997,22 +3021,22 @@ void vcLexer::mSINGLELINECOMMENT(bool _createToken) {
 				matchNot('\n' /* charlit */ );
 			}
 			else {
-				goto _loop335;
+				goto _loop343;
 			}
 			
 		}
-		_loop335:;
+		_loop343:;
 		} // ( ... )*
 		match('\n' /* charlit */ );
-#line 1285 "vc.g"
+#line 1337 "vc.g"
 		newline();
-#line 3010 "vcLexer.cpp"
+#line 3034 "vcLexer.cpp"
 		}
-#line 1287 "vc.g"
+#line 1339 "vc.g"
 		
 			_ttype = ANTLR_USE_NAMESPACE(antlr)Token::SKIP; 
 		
-#line 3016 "vcLexer.cpp"
+#line 3040 "vcLexer.cpp"
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
 		reportError(ex);
@@ -3035,7 +3059,7 @@ void vcLexer::mBINARYSTRING(bool _createToken) {
 		match('_' /* charlit */ );
 		match('b' /* charlit */ );
 		{ // ( ... )+
-		int _cnt338=0;
+		int _cnt346=0;
 		for (;;) {
 			switch ( LA(1)) {
 			case 0x30 /* '0' */ :
@@ -3050,12 +3074,12 @@ void vcLexer::mBINARYSTRING(bool _createToken) {
 			}
 			default:
 			{
-				if ( _cnt338>=1 ) { goto _loop338; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
+				if ( _cnt346>=1 ) { goto _loop346; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
 			}
 			}
-			_cnt338++;
+			_cnt346++;
 		}
-		_loop338:;
+		_loop346:;
 		}  // ( ... )+
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
@@ -3079,7 +3103,7 @@ void vcLexer::mHEXSTRING(bool _createToken) {
 		match('_' /* charlit */ );
 		match('h' /* charlit */ );
 		{ // ( ... )+
-		int _cnt341=0;
+		int _cnt349=0;
 		for (;;) {
 			switch ( LA(1)) {
 			case 0x30 /* '0' */ :
@@ -3128,12 +3152,12 @@ void vcLexer::mHEXSTRING(bool _createToken) {
 			}
 			default:
 			{
-				if ( _cnt341>=1 ) { goto _loop341; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
+				if ( _cnt349>=1 ) { goto _loop349; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
 			}
 			}
-			_cnt341++;
+			_cnt349++;
 		}
-		_loop341:;
+		_loop349:;
 		}  // ( ... )+
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
@@ -3250,11 +3274,11 @@ void vcLexer::mQUOTED_STRING(bool _createToken) {
 			}
 			default:
 			{
-				goto _loop344;
+				goto _loop352;
 			}
 			}
 		}
-		_loop344:;
+		_loop352:;
 		} // ( ... )*
 		match('\"' /* charlit */ );
 	}
@@ -3532,11 +3556,11 @@ void vcLexer::mSIMPLE_IDENTIFIER(bool _createToken) {
 			}
 			default:
 			{
-				goto _loop349;
+				goto _loop357;
 			}
 			}
 		}
-		_loop349:;
+		_loop357:;
 		} // ( ... )*
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
@@ -3573,7 +3597,7 @@ const unsigned long vcLexer::_tokenSet_4_data_[] = { 4294966264UL, 4294967295UL,
 // 0x14 0x15 0x16 0x17 0x18 0x19 0x1a 0x1b 0x1c 0x1d 0x1e 0x1f   ! \" # 
 // $ % & \' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; < = > ? @ A B C D E 
 // F G H I J K L M N O P Q R S T U V W X Y Z [ 0x5c ] ^ _ ` a b c d e f 
-// g h i j k l m n o p q r s t u v w x y z { | 
+// g h i j k l m n o p q r s t u v w x y z { | } 
 const ANTLR_USE_NAMESPACE(antlr)BitSet vcLexer::_tokenSet_4(_tokenSet_4_data_,16);
 const unsigned long vcLexer::_tokenSet_5_data_[] = { 0UL, 67108864UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL, 0UL };
 // : 

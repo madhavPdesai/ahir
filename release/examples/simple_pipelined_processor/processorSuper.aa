@@ -1,0 +1,229 @@
+// Aa code produced by llvm2aa (version 1.0)
+$pipe halt_pipe : $uint<16> $depth 1
+$pipe imm_pipe : $uint<16> $depth 1
+$pipe ir_pipe : $uint<16> $depth 1
+$pipe next_pc : $uint<16> $depth 1
+$pipe offs_pipe : $uint<16> $depth 1
+$pipe op_pipe : $uint<16> $depth 1
+$pipe out_port : $uint<16> $depth 1
+$pipe pc_to_decode : $uint<16> $depth 1
+$pipe pc_to_execute : $uint<16> $depth 1
+$pipe r1_pipe : $uint<16> $depth 1
+$pipe r2_pipe : $uint<16> $depth 1
+$pipe r3_pipe : $uint<16> $depth 1
+$storage mem:$array [64] $of $uint<16>
+$storage reg:$array [16] $of $uint<16>
+$storage xx_xstr:$array [8] $of $uint<8>
+$storage xx_xstr1:$array [8] $of $uint<8>
+$storage xx_xstr2:$array [13] $of $uint<8>
+$storage xx_xstr3:$array [8] $of $uint<8>
+$storage xx_xstr4:$array [8] $of $uint<8>
+$storage xx_xstr5:$array [8] $of $uint<8>
+$storage xx_xstr6:$array [8] $of $uint<8>
+$storage xx_xstr7:$array [9] $of $uint<8>
+$storage xx_xstr8:$array [10] $of $uint<8>
+$storage xx_xstr9:$array [14] $of $uint<8>
+$storage xx_xstr10:$array [10] $of $uint<8>
+$storage xx_xstr11:$array [9] $of $uint<8>
+$module [write_to_mem] 
+$in (mem_addr : $uint<16> mem_data : $uint<16> )
+$out ()
+$is 
+{
+    mem[mem_addr] := mem_data
+}
+$module [read_from_mem] 
+$in (mem_addr : $uint<16> )
+$out (ret_val__ : $uint<16>)
+$is 
+{
+  ret_val__ := mem[mem_addr]
+}
+
+$module [fetch] 
+$in ()
+$out ()
+$is 
+{
+  $branchblock [body] 
+  {
+    $merge $entry bb_1_bb_1
+    $endmerge
+    pc := next_pc
+    instr := mem[pc]
+    $parallelblock[wp] {
+	ir_pipe := instr
+    	pc_to_decode := pc
+        op := (instr >> 12)
+        npc := (pc + 1)
+    } (op => op npc => npc)
+    $if ((op != 0) & ((op < 8) | (op > 10))) $then
+	next_pc := npc 
+    $endif
+    $place [bb_1_bb_1]
+  }
+}
+
+$module [decode] 
+$in ()
+$out ()
+$is 
+{
+  $branchblock [body] 
+  {
+    //begin: basic-block bb_1
+    $merge $entry bb_3_bb_1
+    $endmerge
+    instr := ir_pipe
+    $parallelblock[wp] {
+        pc_to_execute := pc_to_decode
+    	op_pipe := (instr >> 12)
+    	r1_pipe := ((instr >> 8) & 15)
+    	r2_pipe := ((instr >> 4) & 15)
+    	r3_pipe := (instr & 15)
+        $seriesblock[ib] {
+    		imm_v := (instr & 255)
+                $parallelblock[imp]{
+    			imm_pipe := imm_v
+    			offs_pipe := ($mux (imm_v > 127)  (128 - imm_v) imm_v)
+		}
+	}
+    }
+    $place [bb_3_bb_1]
+  }
+}
+
+$module [execute] 
+$in ()
+$out ()
+$is 
+{
+  $branchblock [body] 
+  {
+    $merge $entry loopback $endmerge
+    $parallelblock[rp]{
+	op := op_pipe
+	r1 := r1_pipe
+	r2 := r2_pipe
+	r3 := r3_pipe
+	imm := imm_pipe
+	offs := offs_pipe
+	pc := pc_to_execute
+    	reg[0] := 0
+    } (op => op r1 => r1 r2 => r2 r3 => r3 imm => imm offs => offs pc => pc)
+    $switch op
+    $when 0 $then 
+    $place [bb_0_bb_1]
+    $when 1 $then 
+    $place [bb_0_bb_2]
+    $when 2 $then 
+    $place [bb_0_bb_3]
+    $when 3 $then 
+    $place [bb_0_bb_4]
+    $when 4 $then 
+    $place [bb_0_bb_5]
+    $when 5 $then 
+    $place [bb_0_bb_6]
+    $when 6 $then 
+    $place [bb_0_bb_7]
+    $when 7 $then 
+    $place [bb_0_bb_8]
+    $when 8 $then 
+    $place [bb_0_bb_9]
+    $when 9 $then 
+    $place [bb_0_bb_10]
+    $when 10 $then 
+    $place [bb_0_bb_11]
+    $when 14 $then 
+    $place [bb_0_bb_13]
+    $default 
+    $place [bb_0_bb_14]
+    $endswitch
+    //begin: basic-block bb_1
+    $merge bb_0_bb_1
+    $endmerge
+    halt_pipe := 1
+    $place [bb_1_UnifiedReturnBlock]
+    //begin: basic-block bb_2
+    $merge bb_0_bb_2
+    $endmerge
+    reg[r1] := (reg[r2] + reg[r3])
+    $place [bb_2_UnifiedReturnBlock]
+    //begin: basic-block bb_3
+    $merge bb_0_bb_3
+    $endmerge
+    reg[r1] := (reg[r2] - reg[r3])
+    $place [bb_3_UnifiedReturnBlock]
+    //begin: basic-block bb_4
+    $merge bb_0_bb_4
+    $endmerge
+    reg[r1] := mem[ (reg[r2] + reg[r3]) ]
+    $place [bb_4_UnifiedReturnBlock]
+    //begin: basic-block bb_5
+    $merge bb_0_bb_5
+    $endmerge
+    mem[(reg[r2] + reg[r3])] := reg[r1]
+    $place [bb_5_UnifiedReturnBlock]
+    //begin: basic-block bb_6
+    $merge bb_0_bb_6
+    $endmerge
+    reg[r1] := ((reg[r1] & _b1111111100000000) | imm)
+    $place [bb_6_UnifiedReturnBlock]
+    //begin: basic-block bb_7
+    $merge bb_0_bb_7
+    $endmerge
+    reg[r1] := ((reg[r1] & _b0000000011111111) | (imm << 8))
+    $place [bb_7_UnifiedReturnBlock]
+    //begin: basic-block bb_8
+    $merge bb_0_bb_8
+    $endmerge
+    reg[r1] := reg[r2]
+    $place [bb_8_UnifiedReturnBlock]
+    //begin: basic-block bb_9
+    $merge bb_0_bb_9
+    $endmerge
+    next_pc := mem[ (pc + 1) ]
+    $place [bb_9_UnifiedReturnBlock]
+    //begin: basic-block bb_10
+    $merge bb_0_bb_10
+    $endmerge
+    next_pc := ((pc  + offs) + reg[r1])
+    $place [bb_10_UnifiedReturnBlock]
+    //begin: basic-block bb_11
+    $merge bb_0_bb_11
+    $endmerge
+    $if (reg[r1] == 0) $then
+    	next_pc := (pc + offs) 
+    $else
+	next_pc := (pc + 1)
+    $endif
+    $place [bb_12_UnifiedReturnBlock]
+    //begin: basic-block bb_13
+    $merge bb_0_bb_13
+    $endmerge
+    out_port := reg[r1]
+    $place [bb_13_UnifiedReturnBlock]
+    //begin: basic-block bb_14
+    $merge bb_0_bb_14 
+    $endmerge
+    $place [bb_14_UnifiedReturnBlock]
+    //begin: basic-block UnifiedReturnBlock
+    $merge bb_1_UnifiedReturnBlock bb_10_UnifiedReturnBlock bb_12_UnifiedReturnBlock bb_13_UnifiedReturnBlock bb_14_UnifiedReturnBlock bb_2_UnifiedReturnBlock bb_3_UnifiedReturnBlock bb_4_UnifiedReturnBlock bb_5_UnifiedReturnBlock bb_6_UnifiedReturnBlock bb_7_UnifiedReturnBlock bb_8_UnifiedReturnBlock bb_9_UnifiedReturnBlock
+    $endmerge
+    $place [loopback]
+  }
+}
+$module [run] 
+$in ()
+$out ()
+$is 
+{
+  $branchblock [body] 
+  {
+    reg[15] := 0
+    next_pc := ( $bitcast ($uint<16> ) _b0000000000000000 ) 
+    iNsTr_36 := halt_pipe
+    $place [return__]
+    $merge return__ $endmerge
+  }
+}

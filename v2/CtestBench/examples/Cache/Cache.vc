@@ -87,6 +87,7 @@ $module [init_cache]
         // cache_flags[I]
         $T[array_obj_ref_22_trigger_] 
         $T[array_obj_ref_22_active_] 
+        $T[array_obj_ref_22_completed_] 
         $T[array_obj_ref_22_root_address_calculated] 
         $T[array_obj_ref_22_word_address_calculated] 
         $T[array_obj_ref_22_root_address_calculated] 
@@ -96,8 +97,8 @@ $module [init_cache]
         $T[array_obj_ref_22_index_resized_0] 
         // I
         // implicit reference
-        $T[simple_obj_ref_21_complete] 
-        array_obj_ref_22_index_computed_0 <-& (simple_obj_ref_21_complete)
+        $T[simple_obj_ref_21_completed_] 
+        array_obj_ref_22_index_computed_0 <-& (simple_obj_ref_21_completed_)
         ;;[array_obj_ref_22_index_resize_0] 
         {
           $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -152,9 +153,10 @@ $module [init_cache]
         array_obj_ref_22_trigger_ &-> (array_obj_ref_22_request)
         array_obj_ref_22_active_ <-& (array_obj_ref_22_request)
         array_obj_ref_22_active_ &-> (array_obj_ref_22_complete)
+        array_obj_ref_22_completed_ <-& (array_obj_ref_22_complete)
         array_obj_ref_22_trigger_ <-& (array_obj_ref_22_word_address_calculated)
         array_obj_ref_22_trigger_ <-& (assign_stmt_24_active_)
-        assign_stmt_24_completed_ <-& (array_obj_ref_22_complete)
+        assign_stmt_24_completed_ <-& (array_obj_ref_22_completed_)
         // 		I_next := (I + 1 )
         //  file Cache.aa, line 17
         $T[assign_stmt_29_active_] 
@@ -162,18 +164,20 @@ $module [init_cache]
         // (I + 1 )
         $T[binary_28_active_] 
         $T[binary_28_trigger_] 
+        $T[binary_28_completed_] 
         binary_28_active_ <-& (binary_28_trigger_)
         // I
         // implicit reference
-        $T[simple_obj_ref_26_complete] 
-        binary_28_active_ <-& (simple_obj_ref_26_complete)
+        $T[simple_obj_ref_26_completed_] 
+        binary_28_active_ <-& (simple_obj_ref_26_completed_)
         ;;[binary_28_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_28_active_ &-> (binary_28_complete)
-        assign_stmt_29_active_ <-& (binary_28_complete)
+        binary_28_completed_ <-& (binary_28_complete)
+        assign_stmt_29_active_ <-& (binary_28_completed_)
         // I_next
         // implicit reference
         assign_stmt_29_completed_ <-& (assign_stmt_29_active_)
@@ -422,6 +426,7 @@ $module [read_line]
       // main_memory[block_address]
       $T[array_obj_ref_57_trigger_] 
       $T[array_obj_ref_57_active_] 
+      $T[array_obj_ref_57_completed_] 
       $T[array_obj_ref_57_root_address_calculated] 
       $T[array_obj_ref_57_word_address_calculated] 
       $T[array_obj_ref_57_root_address_calculated] 
@@ -431,8 +436,8 @@ $module [read_line]
       $T[array_obj_ref_57_index_resized_0] 
       // block_address
       // reference to interface object
-      $T[simple_obj_ref_56_complete] 
-      array_obj_ref_57_index_computed_0 <-& (simple_obj_ref_56_complete)
+      $T[simple_obj_ref_56_completed_] 
+      array_obj_ref_57_index_computed_0 <-& (simple_obj_ref_56_completed_)
       ;;[array_obj_ref_57_index_resize_0] 
       {
         $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -487,11 +492,13 @@ $module [read_line]
       array_obj_ref_57_trigger_ &-> (array_obj_ref_57_request)
       array_obj_ref_57_active_ <-& (array_obj_ref_57_request)
       array_obj_ref_57_active_ &-> (array_obj_ref_57_complete)
+      array_obj_ref_57_completed_ <-& (array_obj_ref_57_complete)
       array_obj_ref_57_trigger_ <-& (array_obj_ref_57_word_address_calculated)
-      assign_stmt_58_active_ <-& (array_obj_ref_57_complete)
+      assign_stmt_58_active_ <-& (array_obj_ref_57_completed_)
       // cache_data[block_index]
       $T[array_obj_ref_55_trigger_] 
       $T[array_obj_ref_55_active_] 
+      $T[array_obj_ref_55_completed_] 
       $T[array_obj_ref_55_root_address_calculated] 
       $T[array_obj_ref_55_word_address_calculated] 
       $T[array_obj_ref_55_root_address_calculated] 
@@ -501,8 +508,8 @@ $module [read_line]
       $T[array_obj_ref_55_index_resized_0] 
       // block_index
       // reference to interface object
-      $T[simple_obj_ref_54_complete] 
-      array_obj_ref_55_index_computed_0 <-& (simple_obj_ref_54_complete)
+      $T[simple_obj_ref_54_completed_] 
+      array_obj_ref_55_index_computed_0 <-& (simple_obj_ref_54_completed_)
       ;;[array_obj_ref_55_index_resize_0] 
       {
         $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -557,20 +564,22 @@ $module [read_line]
       array_obj_ref_55_trigger_ &-> (array_obj_ref_55_request)
       array_obj_ref_55_active_ <-& (array_obj_ref_55_request)
       array_obj_ref_55_active_ &-> (array_obj_ref_55_complete)
+      array_obj_ref_55_completed_ <-& (array_obj_ref_55_complete)
       array_obj_ref_55_trigger_ <-& (array_obj_ref_55_word_address_calculated)
       array_obj_ref_55_trigger_ <-& (assign_stmt_58_active_)
-      assign_stmt_58_completed_ <-& (array_obj_ref_55_complete)
+      assign_stmt_58_completed_ <-& (array_obj_ref_55_completed_)
       // 	cache_tag[block_index] := block_address
       //  file Cache.aa, line 36
       $T[assign_stmt_62_active_] 
       $T[assign_stmt_62_completed_] 
       // block_address
       // reference to interface object
-      $T[simple_obj_ref_61_complete] 
-      assign_stmt_62_active_ <-& (simple_obj_ref_61_complete)
+      $T[simple_obj_ref_61_completed_] 
+      assign_stmt_62_active_ <-& (simple_obj_ref_61_completed_)
       // cache_tag[block_index]
       $T[array_obj_ref_60_trigger_] 
       $T[array_obj_ref_60_active_] 
+      $T[array_obj_ref_60_completed_] 
       $T[array_obj_ref_60_root_address_calculated] 
       $T[array_obj_ref_60_word_address_calculated] 
       $T[array_obj_ref_60_root_address_calculated] 
@@ -580,8 +589,8 @@ $module [read_line]
       $T[array_obj_ref_60_index_resized_0] 
       // block_index
       // reference to interface object
-      $T[simple_obj_ref_59_complete] 
-      array_obj_ref_60_index_computed_0 <-& (simple_obj_ref_59_complete)
+      $T[simple_obj_ref_59_completed_] 
+      array_obj_ref_60_index_computed_0 <-& (simple_obj_ref_59_completed_)
       ;;[array_obj_ref_60_index_resize_0] 
       {
         $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -636,9 +645,10 @@ $module [read_line]
       array_obj_ref_60_trigger_ &-> (array_obj_ref_60_request)
       array_obj_ref_60_active_ <-& (array_obj_ref_60_request)
       array_obj_ref_60_active_ &-> (array_obj_ref_60_complete)
+      array_obj_ref_60_completed_ <-& (array_obj_ref_60_complete)
       array_obj_ref_60_trigger_ <-& (array_obj_ref_60_word_address_calculated)
       array_obj_ref_60_trigger_ <-& (assign_stmt_62_active_)
-      assign_stmt_62_completed_ <-& (array_obj_ref_60_complete)
+      assign_stmt_62_completed_ <-& (array_obj_ref_60_completed_)
       // load-store dependencies..
     }
   }
@@ -763,6 +773,7 @@ $module [write_back]
       // cache_data[block_index]
       $T[array_obj_ref_48_trigger_] 
       $T[array_obj_ref_48_active_] 
+      $T[array_obj_ref_48_completed_] 
       $T[array_obj_ref_48_root_address_calculated] 
       $T[array_obj_ref_48_word_address_calculated] 
       $T[array_obj_ref_48_root_address_calculated] 
@@ -772,8 +783,8 @@ $module [write_back]
       $T[array_obj_ref_48_index_resized_0] 
       // block_index
       // reference to interface object
-      $T[simple_obj_ref_47_complete] 
-      array_obj_ref_48_index_computed_0 <-& (simple_obj_ref_47_complete)
+      $T[simple_obj_ref_47_completed_] 
+      array_obj_ref_48_index_computed_0 <-& (simple_obj_ref_47_completed_)
       ;;[array_obj_ref_48_index_resize_0] 
       {
         $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -828,11 +839,13 @@ $module [write_back]
       array_obj_ref_48_trigger_ &-> (array_obj_ref_48_request)
       array_obj_ref_48_active_ <-& (array_obj_ref_48_request)
       array_obj_ref_48_active_ &-> (array_obj_ref_48_complete)
+      array_obj_ref_48_completed_ <-& (array_obj_ref_48_complete)
       array_obj_ref_48_trigger_ <-& (array_obj_ref_48_word_address_calculated)
-      assign_stmt_49_active_ <-& (array_obj_ref_48_complete)
+      assign_stmt_49_active_ <-& (array_obj_ref_48_completed_)
       // main_memory[cache_block_address]
       $T[array_obj_ref_46_trigger_] 
       $T[array_obj_ref_46_active_] 
+      $T[array_obj_ref_46_completed_] 
       $T[array_obj_ref_46_root_address_calculated] 
       $T[array_obj_ref_46_word_address_calculated] 
       $T[array_obj_ref_46_root_address_calculated] 
@@ -842,8 +855,8 @@ $module [write_back]
       $T[array_obj_ref_46_index_resized_0] 
       // cache_block_address
       // reference to interface object
-      $T[simple_obj_ref_45_complete] 
-      array_obj_ref_46_index_computed_0 <-& (simple_obj_ref_45_complete)
+      $T[simple_obj_ref_45_completed_] 
+      array_obj_ref_46_index_computed_0 <-& (simple_obj_ref_45_completed_)
       ;;[array_obj_ref_46_index_resize_0] 
       {
         $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -898,9 +911,10 @@ $module [write_back]
       array_obj_ref_46_trigger_ &-> (array_obj_ref_46_request)
       array_obj_ref_46_active_ <-& (array_obj_ref_46_request)
       array_obj_ref_46_active_ &-> (array_obj_ref_46_complete)
+      array_obj_ref_46_completed_ <-& (array_obj_ref_46_complete)
       array_obj_ref_46_trigger_ <-& (array_obj_ref_46_word_address_calculated)
       array_obj_ref_46_trigger_ <-& (assign_stmt_49_active_)
-      assign_stmt_49_completed_ <-& (array_obj_ref_46_complete)
+      assign_stmt_49_completed_ <-& (array_obj_ref_46_completed_)
       // load-store dependencies..
     }
   }
@@ -1020,18 +1034,20 @@ $module [read_mem]
         // (addr >> 28 )
         $T[binary_72_active_] 
         $T[binary_72_trigger_] 
+        $T[binary_72_completed_] 
         binary_72_active_ <-& (binary_72_trigger_)
         // addr
         // reference to interface object
-        $T[simple_obj_ref_70_complete] 
-        binary_72_active_ <-& (simple_obj_ref_70_complete)
+        $T[simple_obj_ref_70_completed_] 
+        binary_72_active_ <-& (simple_obj_ref_70_completed_)
         ;;[binary_72_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_72_active_ &-> (binary_72_complete)
-        assign_stmt_73_active_ <-& (binary_72_complete)
+        binary_72_completed_ <-& (binary_72_complete)
+        assign_stmt_73_active_ <-& (binary_72_completed_)
         // block_index
         // implicit reference
         assign_stmt_73_completed_ <-& (assign_stmt_73_active_)
@@ -1042,18 +1058,20 @@ $module [read_mem]
         // (addr & ($bitcast ($uint<32>) _b11111111111111111111111111110000  ))
         $T[binary_78_active_] 
         $T[binary_78_trigger_] 
+        $T[binary_78_completed_] 
         binary_78_active_ <-& (binary_78_trigger_)
         // addr
         // reference to interface object
-        $T[simple_obj_ref_75_complete] 
-        binary_78_active_ <-& (simple_obj_ref_75_complete)
+        $T[simple_obj_ref_75_completed_] 
+        binary_78_active_ <-& (simple_obj_ref_75_completed_)
         ;;[binary_78_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_78_active_ &-> (binary_78_complete)
-        assign_stmt_79_active_ <-& (binary_78_complete)
+        binary_78_completed_ <-& (binary_78_complete)
+        assign_stmt_79_active_ <-& (binary_78_completed_)
         // block_address
         // implicit reference
         assign_stmt_79_completed_ <-& (assign_stmt_79_active_)
@@ -1064,18 +1082,20 @@ $module [read_mem]
         // (addr & ($bitcast ($uint<32>) _b00000000000000000000000000001111  ))
         $T[binary_84_active_] 
         $T[binary_84_trigger_] 
+        $T[binary_84_completed_] 
         binary_84_active_ <-& (binary_84_trigger_)
         // addr
         // reference to interface object
-        $T[simple_obj_ref_81_complete] 
-        binary_84_active_ <-& (simple_obj_ref_81_complete)
+        $T[simple_obj_ref_81_completed_] 
+        binary_84_active_ <-& (simple_obj_ref_81_completed_)
         ;;[binary_84_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_84_active_ &-> (binary_84_complete)
-        assign_stmt_85_active_ <-& (binary_84_complete)
+        binary_84_completed_ <-& (binary_84_complete)
+        assign_stmt_85_active_ <-& (binary_84_completed_)
         // block_offset
         // implicit reference
         assign_stmt_85_completed_ <-& (assign_stmt_85_active_)
@@ -1086,6 +1106,7 @@ $module [read_mem]
         // cache_tag[block_index]
         $T[array_obj_ref_88_trigger_] 
         $T[array_obj_ref_88_active_] 
+        $T[array_obj_ref_88_completed_] 
         $T[array_obj_ref_88_root_address_calculated] 
         $T[array_obj_ref_88_word_address_calculated] 
         $T[array_obj_ref_88_root_address_calculated] 
@@ -1095,9 +1116,9 @@ $module [read_mem]
         $T[array_obj_ref_88_index_resized_0] 
         // block_index
         // implicit reference
-        $T[simple_obj_ref_87_complete] 
-        simple_obj_ref_87_complete <-& (assign_stmt_73_completed_)
-        array_obj_ref_88_index_computed_0 <-& (simple_obj_ref_87_complete)
+        $T[simple_obj_ref_87_completed_] 
+        simple_obj_ref_87_completed_ <-& (assign_stmt_73_completed_)
+        array_obj_ref_88_index_computed_0 <-& (simple_obj_ref_87_completed_)
         ;;[array_obj_ref_88_index_resize_0] 
         {
           $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -1152,8 +1173,9 @@ $module [read_mem]
         array_obj_ref_88_trigger_ &-> (array_obj_ref_88_request)
         array_obj_ref_88_active_ <-& (array_obj_ref_88_request)
         array_obj_ref_88_active_ &-> (array_obj_ref_88_complete)
+        array_obj_ref_88_completed_ <-& (array_obj_ref_88_complete)
         array_obj_ref_88_trigger_ <-& (array_obj_ref_88_word_address_calculated)
-        assign_stmt_89_active_ <-& (array_obj_ref_88_complete)
+        assign_stmt_89_active_ <-& (array_obj_ref_88_completed_)
         // cached_block_address
         // implicit reference
         assign_stmt_89_completed_ <-& (assign_stmt_89_active_)
@@ -1164,6 +1186,7 @@ $module [read_mem]
         // cache_data[block_index]
         $T[array_obj_ref_92_trigger_] 
         $T[array_obj_ref_92_active_] 
+        $T[array_obj_ref_92_completed_] 
         $T[array_obj_ref_92_root_address_calculated] 
         $T[array_obj_ref_92_word_address_calculated] 
         $T[array_obj_ref_92_root_address_calculated] 
@@ -1173,9 +1196,9 @@ $module [read_mem]
         $T[array_obj_ref_92_index_resized_0] 
         // block_index
         // implicit reference
-        $T[simple_obj_ref_91_complete] 
-        simple_obj_ref_91_complete <-& (assign_stmt_73_completed_)
-        array_obj_ref_92_index_computed_0 <-& (simple_obj_ref_91_complete)
+        $T[simple_obj_ref_91_completed_] 
+        simple_obj_ref_91_completed_ <-& (assign_stmt_73_completed_)
+        array_obj_ref_92_index_computed_0 <-& (simple_obj_ref_91_completed_)
         ;;[array_obj_ref_92_index_resize_0] 
         {
           $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -1230,10 +1253,12 @@ $module [read_mem]
         array_obj_ref_92_trigger_ &-> (array_obj_ref_92_request)
         array_obj_ref_92_active_ <-& (array_obj_ref_92_request)
         array_obj_ref_92_active_ &-> (array_obj_ref_92_complete)
+        array_obj_ref_92_completed_ <-& (array_obj_ref_92_complete)
         array_obj_ref_92_trigger_ <-& (array_obj_ref_92_word_address_calculated)
-        assign_stmt_93_active_ <-& (array_obj_ref_92_complete)
+        assign_stmt_93_active_ <-& (array_obj_ref_92_completed_)
         $T[simple_obj_ref_90_trigger_] 
         $T[simple_obj_ref_90_active_] 
+        $T[simple_obj_ref_90_completed_] 
         // active_line
         $T[simple_obj_ref_90_root_address_calculated] 
         $T[simple_obj_ref_90_word_address_calculated] 
@@ -1382,9 +1407,10 @@ $module [read_mem]
         simple_obj_ref_90_trigger_ &-> (simple_obj_ref_90_request)
         simple_obj_ref_90_active_ <-& (simple_obj_ref_90_request)
         simple_obj_ref_90_active_ &-> (simple_obj_ref_90_complete)
+        simple_obj_ref_90_completed_ <-& (simple_obj_ref_90_complete)
         simple_obj_ref_90_trigger_ <-& (simple_obj_ref_90_word_address_calculated)
         simple_obj_ref_90_trigger_ <-& (assign_stmt_93_active_)
-        assign_stmt_93_completed_ <-& (simple_obj_ref_90_complete)
+        assign_stmt_93_completed_ <-& (simple_obj_ref_90_completed_)
         // 		flag := cache_flags[block_index]
         //  file Cache.aa, line 57
         $T[assign_stmt_97_active_] 
@@ -1392,6 +1418,7 @@ $module [read_mem]
         // cache_flags[block_index]
         $T[array_obj_ref_96_trigger_] 
         $T[array_obj_ref_96_active_] 
+        $T[array_obj_ref_96_completed_] 
         $T[array_obj_ref_96_root_address_calculated] 
         $T[array_obj_ref_96_word_address_calculated] 
         $T[array_obj_ref_96_root_address_calculated] 
@@ -1401,9 +1428,9 @@ $module [read_mem]
         $T[array_obj_ref_96_index_resized_0] 
         // block_index
         // implicit reference
-        $T[simple_obj_ref_95_complete] 
-        simple_obj_ref_95_complete <-& (assign_stmt_73_completed_)
-        array_obj_ref_96_index_computed_0 <-& (simple_obj_ref_95_complete)
+        $T[simple_obj_ref_95_completed_] 
+        simple_obj_ref_95_completed_ <-& (assign_stmt_73_completed_)
+        array_obj_ref_96_index_computed_0 <-& (simple_obj_ref_95_completed_)
         ;;[array_obj_ref_96_index_resize_0] 
         {
           $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -1458,8 +1485,9 @@ $module [read_mem]
         array_obj_ref_96_trigger_ &-> (array_obj_ref_96_request)
         array_obj_ref_96_active_ <-& (array_obj_ref_96_request)
         array_obj_ref_96_active_ &-> (array_obj_ref_96_complete)
+        array_obj_ref_96_completed_ <-& (array_obj_ref_96_complete)
         array_obj_ref_96_trigger_ <-& (array_obj_ref_96_word_address_calculated)
-        assign_stmt_97_active_ <-& (array_obj_ref_96_complete)
+        assign_stmt_97_active_ <-& (array_obj_ref_96_completed_)
         // flag
         // implicit reference
         assign_stmt_97_completed_ <-& (assign_stmt_97_active_)
@@ -1470,30 +1498,34 @@ $module [read_mem]
         // ((flag & _b1 ) != _b0 )
         $T[binary_103_active_] 
         $T[binary_103_trigger_] 
+        $T[binary_103_completed_] 
         binary_103_active_ <-& (binary_103_trigger_)
         // (flag & _b1 )
         $T[binary_101_active_] 
         $T[binary_101_trigger_] 
+        $T[binary_101_completed_] 
         binary_101_active_ <-& (binary_101_trigger_)
         // flag
         // implicit reference
-        $T[simple_obj_ref_99_complete] 
-        simple_obj_ref_99_complete <-& (assign_stmt_97_completed_)
-        binary_101_active_ <-& (simple_obj_ref_99_complete)
+        $T[simple_obj_ref_99_completed_] 
+        simple_obj_ref_99_completed_ <-& (assign_stmt_97_completed_)
+        binary_101_active_ <-& (simple_obj_ref_99_completed_)
         ;;[binary_101_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_101_active_ &-> (binary_101_complete)
-        binary_103_active_ <-& (binary_101_complete)
+        binary_101_completed_ <-& (binary_101_complete)
+        binary_103_active_ <-& (binary_101_completed_)
         ;;[binary_103_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_103_active_ &-> (binary_103_complete)
-        assign_stmt_104_active_ <-& (binary_103_complete)
+        binary_103_completed_ <-& (binary_103_complete)
+        assign_stmt_104_active_ <-& (binary_103_completed_)
         // valid
         // implicit reference
         assign_stmt_104_completed_ <-& (assign_stmt_104_active_)
@@ -1504,30 +1536,34 @@ $module [read_mem]
         // ((flag & _b10 ) != _b0 )
         $T[binary_110_active_] 
         $T[binary_110_trigger_] 
+        $T[binary_110_completed_] 
         binary_110_active_ <-& (binary_110_trigger_)
         // (flag & _b10 )
         $T[binary_108_active_] 
         $T[binary_108_trigger_] 
+        $T[binary_108_completed_] 
         binary_108_active_ <-& (binary_108_trigger_)
         // flag
         // implicit reference
-        $T[simple_obj_ref_106_complete] 
-        simple_obj_ref_106_complete <-& (assign_stmt_97_completed_)
-        binary_108_active_ <-& (simple_obj_ref_106_complete)
+        $T[simple_obj_ref_106_completed_] 
+        simple_obj_ref_106_completed_ <-& (assign_stmt_97_completed_)
+        binary_108_active_ <-& (simple_obj_ref_106_completed_)
         ;;[binary_108_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_108_active_ &-> (binary_108_complete)
-        binary_110_active_ <-& (binary_108_complete)
+        binary_108_completed_ <-& (binary_108_complete)
+        binary_110_active_ <-& (binary_108_completed_)
         ;;[binary_110_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_110_active_ &-> (binary_110_complete)
-        assign_stmt_111_active_ <-& (binary_110_complete)
+        binary_110_completed_ <-& (binary_110_complete)
+        assign_stmt_111_active_ <-& (binary_110_completed_)
         // dirty
         // implicit reference
         assign_stmt_111_completed_ <-& (assign_stmt_111_active_)
@@ -1538,24 +1574,26 @@ $module [read_mem]
         // (cached_block_address == block_address)
         $T[binary_115_active_] 
         $T[binary_115_trigger_] 
+        $T[binary_115_completed_] 
         binary_115_active_ <-& (binary_115_trigger_)
         // cached_block_address
         // implicit reference
-        $T[simple_obj_ref_113_complete] 
-        simple_obj_ref_113_complete <-& (assign_stmt_89_completed_)
+        $T[simple_obj_ref_113_completed_] 
+        simple_obj_ref_113_completed_ <-& (assign_stmt_89_completed_)
         // block_address
         // implicit reference
-        $T[simple_obj_ref_114_complete] 
-        simple_obj_ref_114_complete <-& (assign_stmt_79_completed_)
-        binary_115_active_ <-& (simple_obj_ref_113_complete)
-        binary_115_active_ <-& (simple_obj_ref_114_complete)
+        $T[simple_obj_ref_114_completed_] 
+        simple_obj_ref_114_completed_ <-& (assign_stmt_79_completed_)
+        binary_115_active_ <-& (simple_obj_ref_113_completed_)
+        binary_115_active_ <-& (simple_obj_ref_114_completed_)
         ;;[binary_115_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_115_active_ &-> (binary_115_complete)
-        assign_stmt_116_active_ <-& (binary_115_complete)
+        binary_115_completed_ <-& (binary_115_complete)
+        assign_stmt_116_active_ <-& (binary_115_completed_)
         // match
         // implicit reference
         assign_stmt_116_completed_ <-& (assign_stmt_116_active_)
@@ -1566,24 +1604,26 @@ $module [read_mem]
         // (valid & match)
         $T[binary_120_active_] 
         $T[binary_120_trigger_] 
+        $T[binary_120_completed_] 
         binary_120_active_ <-& (binary_120_trigger_)
         // valid
         // implicit reference
-        $T[simple_obj_ref_118_complete] 
-        simple_obj_ref_118_complete <-& (assign_stmt_104_completed_)
+        $T[simple_obj_ref_118_completed_] 
+        simple_obj_ref_118_completed_ <-& (assign_stmt_104_completed_)
         // match
         // implicit reference
-        $T[simple_obj_ref_119_complete] 
-        simple_obj_ref_119_complete <-& (assign_stmt_116_completed_)
-        binary_120_active_ <-& (simple_obj_ref_118_complete)
-        binary_120_active_ <-& (simple_obj_ref_119_complete)
+        $T[simple_obj_ref_119_completed_] 
+        simple_obj_ref_119_completed_ <-& (assign_stmt_116_completed_)
+        binary_120_active_ <-& (simple_obj_ref_118_completed_)
+        binary_120_active_ <-& (simple_obj_ref_119_completed_)
         ;;[binary_120_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_120_active_ &-> (binary_120_complete)
-        assign_stmt_121_active_ <-& (binary_120_complete)
+        binary_120_completed_ <-& (binary_120_complete)
+        assign_stmt_121_active_ <-& (binary_120_completed_)
         // hit_flag
         // implicit reference
         assign_stmt_121_completed_ <-& (assign_stmt_121_active_)
@@ -1594,6 +1634,7 @@ $module [read_mem]
         // word_ptr_base[block_offset]
         $T[array_obj_ref_133_trigger_] 
         $T[array_obj_ref_133_active_] 
+        $T[array_obj_ref_133_completed_] 
         array_obj_ref_133_active_ <-& (array_obj_ref_133_trigger_)
         $T[array_obj_ref_133_base_address_calculated] 
         $T[array_obj_ref_133_root_address_calculated] 
@@ -1603,9 +1644,9 @@ $module [read_mem]
         $T[array_obj_ref_133_index_resized_0] 
         // block_offset
         // implicit reference
-        $T[simple_obj_ref_132_complete] 
-        simple_obj_ref_132_complete <-& (assign_stmt_85_completed_)
-        array_obj_ref_133_index_computed_0 <-& (simple_obj_ref_132_complete)
+        $T[simple_obj_ref_132_completed_] 
+        simple_obj_ref_132_completed_ <-& (assign_stmt_85_completed_)
+        array_obj_ref_133_index_computed_0 <-& (simple_obj_ref_132_completed_)
         ;;[array_obj_ref_133_index_resize_0] 
         {
           $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -1636,7 +1677,8 @@ $module [read_mem]
         }
         array_obj_ref_133_active_ <-& (array_obj_ref_133_root_address_calculated)
         array_obj_ref_133_active_ &-> (array_obj_ref_133_complete)
-        assign_stmt_134_active_ <-& (array_obj_ref_133_complete)
+        array_obj_ref_133_completed_ <-& (array_obj_ref_133_complete)
+        assign_stmt_134_active_ <-& (array_obj_ref_133_completed_)
         // word_ptr
         // implicit reference
         assign_stmt_134_completed_ <-& (assign_stmt_134_active_)
@@ -1647,11 +1689,12 @@ $module [read_mem]
         // ->(word_ptr)
         $T[ptr_deref_137_trigger_] 
         $T[ptr_deref_137_active_] 
+        $T[ptr_deref_137_completed_] 
         $T[ptr_deref_137_base_address_calculated] 
         // word_ptr
         // implicit reference
-        $T[simple_obj_ref_136_complete] 
-        simple_obj_ref_136_complete <-& (assign_stmt_134_completed_)
+        $T[simple_obj_ref_136_completed_] 
+        simple_obj_ref_136_completed_ <-& (assign_stmt_134_completed_)
         $T[ptr_deref_137_root_address_calculated] 
         $T[ptr_deref_137_word_address_calculated] 
         $T[ptr_deref_137_root_address_calculated] 
@@ -1698,10 +1741,11 @@ $module [read_mem]
         ptr_deref_137_trigger_ &-> (ptr_deref_137_request)
         ptr_deref_137_active_ <-& (ptr_deref_137_request)
         ptr_deref_137_active_ &-> (ptr_deref_137_complete)
+        ptr_deref_137_completed_ <-& (ptr_deref_137_complete)
         ptr_deref_137_trigger_ <-& (ptr_deref_137_word_address_calculated)
-        ptr_deref_137_base_address_calculated <-& (simple_obj_ref_136_complete)
+        ptr_deref_137_base_address_calculated <-& (simple_obj_ref_136_completed_)
         ptr_deref_137_trigger_ <-& (ptr_deref_137_base_address_calculated)
-        assign_stmt_138_active_ <-& (ptr_deref_137_complete)
+        assign_stmt_138_active_ <-& (ptr_deref_137_completed_)
         // ret_val_hit
         // implicit reference
         assign_stmt_138_completed_ <-& (assign_stmt_138_active_)
@@ -1789,13 +1833,13 @@ $module [read_mem]
           //  file Cache.aa, line 74
           // block_index
           // implicit reference
-          $T[simple_obj_ref_148_complete] 
+          $T[simple_obj_ref_148_completed_] 
           // cached_block_address
           // implicit reference
-          $T[simple_obj_ref_149_complete] 
+          $T[simple_obj_ref_149_completed_] 
           $T[call_stmt_150_active_] 
-          call_stmt_150_active_ <-& (simple_obj_ref_148_complete)
-          call_stmt_150_active_ <-& (simple_obj_ref_149_complete)
+          call_stmt_150_active_ <-& (simple_obj_ref_148_completed_)
+          call_stmt_150_active_ <-& (simple_obj_ref_149_completed_)
           $T[call_stmt_150_in_progress] 
           ;;[call_stmt_150_start] 
           {
@@ -1823,6 +1867,7 @@ $module [read_mem]
           // cache_flags[block_index]
           $T[array_obj_ref_152_trigger_] 
           $T[array_obj_ref_152_active_] 
+          $T[array_obj_ref_152_completed_] 
           $T[array_obj_ref_152_root_address_calculated] 
           $T[array_obj_ref_152_word_address_calculated] 
           $T[array_obj_ref_152_root_address_calculated] 
@@ -1832,8 +1877,8 @@ $module [read_mem]
           $T[array_obj_ref_152_index_resized_0] 
           // block_index
           // implicit reference
-          $T[simple_obj_ref_151_complete] 
-          array_obj_ref_152_index_computed_0 <-& (simple_obj_ref_151_complete)
+          $T[simple_obj_ref_151_completed_] 
+          array_obj_ref_152_index_computed_0 <-& (simple_obj_ref_151_completed_)
           ;;[array_obj_ref_152_index_resize_0] 
           {
             $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -1888,9 +1933,10 @@ $module [read_mem]
           array_obj_ref_152_trigger_ &-> (array_obj_ref_152_request)
           array_obj_ref_152_active_ <-& (array_obj_ref_152_request)
           array_obj_ref_152_active_ &-> (array_obj_ref_152_complete)
+          array_obj_ref_152_completed_ <-& (array_obj_ref_152_complete)
           array_obj_ref_152_trigger_ <-& (array_obj_ref_152_word_address_calculated)
           array_obj_ref_152_trigger_ <-& (assign_stmt_154_active_)
-          assign_stmt_154_completed_ <-& (array_obj_ref_152_complete)
+          assign_stmt_154_completed_ <-& (array_obj_ref_152_completed_)
           // load-store dependencies..
         }
       }
@@ -1905,13 +1951,13 @@ $module [read_mem]
         //  file Cache.aa, line 79
         // block_index
         // implicit reference
-        $T[simple_obj_ref_157_complete] 
+        $T[simple_obj_ref_157_completed_] 
         // block_address
         // implicit reference
-        $T[simple_obj_ref_158_complete] 
+        $T[simple_obj_ref_158_completed_] 
         $T[call_stmt_159_active_] 
-        call_stmt_159_active_ <-& (simple_obj_ref_157_complete)
-        call_stmt_159_active_ <-& (simple_obj_ref_158_complete)
+        call_stmt_159_active_ <-& (simple_obj_ref_157_completed_)
+        call_stmt_159_active_ <-& (simple_obj_ref_158_completed_)
         $T[call_stmt_159_in_progress] 
         ;;[call_stmt_159_start] 
         {
@@ -1941,6 +1987,7 @@ $module [read_mem]
         // cache_flags[block_index]
         $T[array_obj_ref_161_trigger_] 
         $T[array_obj_ref_161_active_] 
+        $T[array_obj_ref_161_completed_] 
         $T[array_obj_ref_161_root_address_calculated] 
         $T[array_obj_ref_161_word_address_calculated] 
         $T[array_obj_ref_161_root_address_calculated] 
@@ -1950,8 +1997,8 @@ $module [read_mem]
         $T[array_obj_ref_161_index_resized_0] 
         // block_index
         // implicit reference
-        $T[simple_obj_ref_160_complete] 
-        array_obj_ref_161_index_computed_0 <-& (simple_obj_ref_160_complete)
+        $T[simple_obj_ref_160_completed_] 
+        array_obj_ref_161_index_computed_0 <-& (simple_obj_ref_160_completed_)
         ;;[array_obj_ref_161_index_resize_0] 
         {
           $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -2006,9 +2053,10 @@ $module [read_mem]
         array_obj_ref_161_trigger_ &-> (array_obj_ref_161_request)
         array_obj_ref_161_active_ <-& (array_obj_ref_161_request)
         array_obj_ref_161_active_ &-> (array_obj_ref_161_complete)
+        array_obj_ref_161_completed_ <-& (array_obj_ref_161_complete)
         array_obj_ref_161_trigger_ <-& (array_obj_ref_161_word_address_calculated)
         array_obj_ref_161_trigger_ <-& (assign_stmt_163_active_)
-        assign_stmt_163_completed_ <-& (array_obj_ref_161_complete)
+        assign_stmt_163_completed_ <-& (array_obj_ref_161_completed_)
         // 			active_line := cache_data[block_index]
         //  file Cache.aa, line 83
         $T[assign_stmt_167_active_] 
@@ -2016,6 +2064,7 @@ $module [read_mem]
         // cache_data[block_index]
         $T[array_obj_ref_166_trigger_] 
         $T[array_obj_ref_166_active_] 
+        $T[array_obj_ref_166_completed_] 
         $T[array_obj_ref_166_root_address_calculated] 
         $T[array_obj_ref_166_word_address_calculated] 
         $T[array_obj_ref_166_root_address_calculated] 
@@ -2025,8 +2074,8 @@ $module [read_mem]
         $T[array_obj_ref_166_index_resized_0] 
         // block_index
         // implicit reference
-        $T[simple_obj_ref_165_complete] 
-        array_obj_ref_166_index_computed_0 <-& (simple_obj_ref_165_complete)
+        $T[simple_obj_ref_165_completed_] 
+        array_obj_ref_166_index_computed_0 <-& (simple_obj_ref_165_completed_)
         ;;[array_obj_ref_166_index_resize_0] 
         {
           $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -2081,10 +2130,12 @@ $module [read_mem]
         array_obj_ref_166_trigger_ &-> (array_obj_ref_166_request)
         array_obj_ref_166_active_ <-& (array_obj_ref_166_request)
         array_obj_ref_166_active_ &-> (array_obj_ref_166_complete)
+        array_obj_ref_166_completed_ <-& (array_obj_ref_166_complete)
         array_obj_ref_166_trigger_ <-& (array_obj_ref_166_word_address_calculated)
-        assign_stmt_167_active_ <-& (array_obj_ref_166_complete)
+        assign_stmt_167_active_ <-& (array_obj_ref_166_completed_)
         $T[simple_obj_ref_164_trigger_] 
         $T[simple_obj_ref_164_active_] 
+        $T[simple_obj_ref_164_completed_] 
         // active_line
         $T[simple_obj_ref_164_root_address_calculated] 
         $T[simple_obj_ref_164_word_address_calculated] 
@@ -2233,9 +2284,10 @@ $module [read_mem]
         simple_obj_ref_164_trigger_ &-> (simple_obj_ref_164_request)
         simple_obj_ref_164_active_ <-& (simple_obj_ref_164_request)
         simple_obj_ref_164_active_ &-> (simple_obj_ref_164_complete)
+        simple_obj_ref_164_completed_ <-& (simple_obj_ref_164_complete)
         simple_obj_ref_164_trigger_ <-& (simple_obj_ref_164_word_address_calculated)
         simple_obj_ref_164_trigger_ <-& (assign_stmt_167_active_)
-        assign_stmt_167_completed_ <-& (simple_obj_ref_164_complete)
+        assign_stmt_167_completed_ <-& (simple_obj_ref_164_completed_)
         // 			ret_val_miss := ->(word_ptr)
         //  file Cache.aa, line 84
         $T[assign_stmt_171_active_] 
@@ -2243,10 +2295,11 @@ $module [read_mem]
         // ->(word_ptr)
         $T[ptr_deref_170_trigger_] 
         $T[ptr_deref_170_active_] 
+        $T[ptr_deref_170_completed_] 
         $T[ptr_deref_170_base_address_calculated] 
         // word_ptr
         // implicit reference
-        $T[simple_obj_ref_169_complete] 
+        $T[simple_obj_ref_169_completed_] 
         $T[ptr_deref_170_root_address_calculated] 
         $T[ptr_deref_170_word_address_calculated] 
         $T[ptr_deref_170_root_address_calculated] 
@@ -2293,10 +2346,11 @@ $module [read_mem]
         ptr_deref_170_trigger_ &-> (ptr_deref_170_request)
         ptr_deref_170_active_ <-& (ptr_deref_170_request)
         ptr_deref_170_active_ &-> (ptr_deref_170_complete)
+        ptr_deref_170_completed_ <-& (ptr_deref_170_complete)
         ptr_deref_170_trigger_ <-& (ptr_deref_170_word_address_calculated)
-        ptr_deref_170_base_address_calculated <-& (simple_obj_ref_169_complete)
+        ptr_deref_170_base_address_calculated <-& (simple_obj_ref_169_completed_)
         ptr_deref_170_trigger_ <-& (ptr_deref_170_base_address_calculated)
-        assign_stmt_171_active_ <-& (ptr_deref_170_complete)
+        assign_stmt_171_active_ <-& (ptr_deref_170_completed_)
         // ret_val_miss
         // implicit reference
         assign_stmt_171_completed_ <-& (assign_stmt_171_active_)
@@ -3069,18 +3123,20 @@ $module [write_mem]
         // (addr >> 28 )
         $T[binary_190_active_] 
         $T[binary_190_trigger_] 
+        $T[binary_190_completed_] 
         binary_190_active_ <-& (binary_190_trigger_)
         // addr
         // reference to interface object
-        $T[simple_obj_ref_188_complete] 
-        binary_190_active_ <-& (simple_obj_ref_188_complete)
+        $T[simple_obj_ref_188_completed_] 
+        binary_190_active_ <-& (simple_obj_ref_188_completed_)
         ;;[binary_190_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_190_active_ &-> (binary_190_complete)
-        assign_stmt_191_active_ <-& (binary_190_complete)
+        binary_190_completed_ <-& (binary_190_complete)
+        assign_stmt_191_active_ <-& (binary_190_completed_)
         // block_index
         // implicit reference
         assign_stmt_191_completed_ <-& (assign_stmt_191_active_)
@@ -3091,18 +3147,20 @@ $module [write_mem]
         // (addr & ($bitcast ($uint<32>) _b11111111111111111111111111110000  ))
         $T[binary_196_active_] 
         $T[binary_196_trigger_] 
+        $T[binary_196_completed_] 
         binary_196_active_ <-& (binary_196_trigger_)
         // addr
         // reference to interface object
-        $T[simple_obj_ref_193_complete] 
-        binary_196_active_ <-& (simple_obj_ref_193_complete)
+        $T[simple_obj_ref_193_completed_] 
+        binary_196_active_ <-& (simple_obj_ref_193_completed_)
         ;;[binary_196_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_196_active_ &-> (binary_196_complete)
-        assign_stmt_197_active_ <-& (binary_196_complete)
+        binary_196_completed_ <-& (binary_196_complete)
+        assign_stmt_197_active_ <-& (binary_196_completed_)
         // block_address
         // implicit reference
         assign_stmt_197_completed_ <-& (assign_stmt_197_active_)
@@ -3113,18 +3171,20 @@ $module [write_mem]
         // (addr & ($bitcast ($uint<32>) _b00000000000000000000000000001111  ))
         $T[binary_202_active_] 
         $T[binary_202_trigger_] 
+        $T[binary_202_completed_] 
         binary_202_active_ <-& (binary_202_trigger_)
         // addr
         // reference to interface object
-        $T[simple_obj_ref_199_complete] 
-        binary_202_active_ <-& (simple_obj_ref_199_complete)
+        $T[simple_obj_ref_199_completed_] 
+        binary_202_active_ <-& (simple_obj_ref_199_completed_)
         ;;[binary_202_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_202_active_ &-> (binary_202_complete)
-        assign_stmt_203_active_ <-& (binary_202_complete)
+        binary_202_completed_ <-& (binary_202_complete)
+        assign_stmt_203_active_ <-& (binary_202_completed_)
         // block_offset
         // implicit reference
         assign_stmt_203_completed_ <-& (assign_stmt_203_active_)
@@ -3135,6 +3195,7 @@ $module [write_mem]
         // cache_tag[block_index]
         $T[array_obj_ref_206_trigger_] 
         $T[array_obj_ref_206_active_] 
+        $T[array_obj_ref_206_completed_] 
         $T[array_obj_ref_206_root_address_calculated] 
         $T[array_obj_ref_206_word_address_calculated] 
         $T[array_obj_ref_206_root_address_calculated] 
@@ -3144,9 +3205,9 @@ $module [write_mem]
         $T[array_obj_ref_206_index_resized_0] 
         // block_index
         // implicit reference
-        $T[simple_obj_ref_205_complete] 
-        simple_obj_ref_205_complete <-& (assign_stmt_191_completed_)
-        array_obj_ref_206_index_computed_0 <-& (simple_obj_ref_205_complete)
+        $T[simple_obj_ref_205_completed_] 
+        simple_obj_ref_205_completed_ <-& (assign_stmt_191_completed_)
+        array_obj_ref_206_index_computed_0 <-& (simple_obj_ref_205_completed_)
         ;;[array_obj_ref_206_index_resize_0] 
         {
           $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -3201,8 +3262,9 @@ $module [write_mem]
         array_obj_ref_206_trigger_ &-> (array_obj_ref_206_request)
         array_obj_ref_206_active_ <-& (array_obj_ref_206_request)
         array_obj_ref_206_active_ &-> (array_obj_ref_206_complete)
+        array_obj_ref_206_completed_ <-& (array_obj_ref_206_complete)
         array_obj_ref_206_trigger_ <-& (array_obj_ref_206_word_address_calculated)
-        assign_stmt_207_active_ <-& (array_obj_ref_206_complete)
+        assign_stmt_207_active_ <-& (array_obj_ref_206_completed_)
         // cached_block_address
         // implicit reference
         assign_stmt_207_completed_ <-& (assign_stmt_207_active_)
@@ -3213,24 +3275,26 @@ $module [write_mem]
         // (cached_block_address == block_address)
         $T[binary_211_active_] 
         $T[binary_211_trigger_] 
+        $T[binary_211_completed_] 
         binary_211_active_ <-& (binary_211_trigger_)
         // cached_block_address
         // implicit reference
-        $T[simple_obj_ref_209_complete] 
-        simple_obj_ref_209_complete <-& (assign_stmt_207_completed_)
+        $T[simple_obj_ref_209_completed_] 
+        simple_obj_ref_209_completed_ <-& (assign_stmt_207_completed_)
         // block_address
         // implicit reference
-        $T[simple_obj_ref_210_complete] 
-        simple_obj_ref_210_complete <-& (assign_stmt_197_completed_)
-        binary_211_active_ <-& (simple_obj_ref_209_complete)
-        binary_211_active_ <-& (simple_obj_ref_210_complete)
+        $T[simple_obj_ref_210_completed_] 
+        simple_obj_ref_210_completed_ <-& (assign_stmt_197_completed_)
+        binary_211_active_ <-& (simple_obj_ref_209_completed_)
+        binary_211_active_ <-& (simple_obj_ref_210_completed_)
         ;;[binary_211_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_211_active_ &-> (binary_211_complete)
-        assign_stmt_212_active_ <-& (binary_211_complete)
+        binary_211_completed_ <-& (binary_211_complete)
+        assign_stmt_212_active_ <-& (binary_211_completed_)
         // match
         // implicit reference
         assign_stmt_212_completed_ <-& (assign_stmt_212_active_)
@@ -3241,6 +3305,7 @@ $module [write_mem]
         // cache_flags[block_index]
         $T[array_obj_ref_215_trigger_] 
         $T[array_obj_ref_215_active_] 
+        $T[array_obj_ref_215_completed_] 
         $T[array_obj_ref_215_root_address_calculated] 
         $T[array_obj_ref_215_word_address_calculated] 
         $T[array_obj_ref_215_root_address_calculated] 
@@ -3250,9 +3315,9 @@ $module [write_mem]
         $T[array_obj_ref_215_index_resized_0] 
         // block_index
         // implicit reference
-        $T[simple_obj_ref_214_complete] 
-        simple_obj_ref_214_complete <-& (assign_stmt_191_completed_)
-        array_obj_ref_215_index_computed_0 <-& (simple_obj_ref_214_complete)
+        $T[simple_obj_ref_214_completed_] 
+        simple_obj_ref_214_completed_ <-& (assign_stmt_191_completed_)
+        array_obj_ref_215_index_computed_0 <-& (simple_obj_ref_214_completed_)
         ;;[array_obj_ref_215_index_resize_0] 
         {
           $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -3307,8 +3372,9 @@ $module [write_mem]
         array_obj_ref_215_trigger_ &-> (array_obj_ref_215_request)
         array_obj_ref_215_active_ <-& (array_obj_ref_215_request)
         array_obj_ref_215_active_ &-> (array_obj_ref_215_complete)
+        array_obj_ref_215_completed_ <-& (array_obj_ref_215_complete)
         array_obj_ref_215_trigger_ <-& (array_obj_ref_215_word_address_calculated)
-        assign_stmt_216_active_ <-& (array_obj_ref_215_complete)
+        assign_stmt_216_active_ <-& (array_obj_ref_215_completed_)
         // flag
         // implicit reference
         assign_stmt_216_completed_ <-& (assign_stmt_216_active_)
@@ -3319,30 +3385,34 @@ $module [write_mem]
         // ((flag & _b1 ) != _b0 )
         $T[binary_222_active_] 
         $T[binary_222_trigger_] 
+        $T[binary_222_completed_] 
         binary_222_active_ <-& (binary_222_trigger_)
         // (flag & _b1 )
         $T[binary_220_active_] 
         $T[binary_220_trigger_] 
+        $T[binary_220_completed_] 
         binary_220_active_ <-& (binary_220_trigger_)
         // flag
         // implicit reference
-        $T[simple_obj_ref_218_complete] 
-        simple_obj_ref_218_complete <-& (assign_stmt_216_completed_)
-        binary_220_active_ <-& (simple_obj_ref_218_complete)
+        $T[simple_obj_ref_218_completed_] 
+        simple_obj_ref_218_completed_ <-& (assign_stmt_216_completed_)
+        binary_220_active_ <-& (simple_obj_ref_218_completed_)
         ;;[binary_220_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_220_active_ &-> (binary_220_complete)
-        binary_222_active_ <-& (binary_220_complete)
+        binary_220_completed_ <-& (binary_220_complete)
+        binary_222_active_ <-& (binary_220_completed_)
         ;;[binary_222_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_222_active_ &-> (binary_222_complete)
-        assign_stmt_223_active_ <-& (binary_222_complete)
+        binary_222_completed_ <-& (binary_222_complete)
+        assign_stmt_223_active_ <-& (binary_222_completed_)
         // valid
         // implicit reference
         assign_stmt_223_completed_ <-& (assign_stmt_223_active_)
@@ -3353,30 +3423,34 @@ $module [write_mem]
         // ((flag & _b10 ) != _b0 )
         $T[binary_229_active_] 
         $T[binary_229_trigger_] 
+        $T[binary_229_completed_] 
         binary_229_active_ <-& (binary_229_trigger_)
         // (flag & _b10 )
         $T[binary_227_active_] 
         $T[binary_227_trigger_] 
+        $T[binary_227_completed_] 
         binary_227_active_ <-& (binary_227_trigger_)
         // flag
         // implicit reference
-        $T[simple_obj_ref_225_complete] 
-        simple_obj_ref_225_complete <-& (assign_stmt_216_completed_)
-        binary_227_active_ <-& (simple_obj_ref_225_complete)
+        $T[simple_obj_ref_225_completed_] 
+        simple_obj_ref_225_completed_ <-& (assign_stmt_216_completed_)
+        binary_227_active_ <-& (simple_obj_ref_225_completed_)
         ;;[binary_227_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_227_active_ &-> (binary_227_complete)
-        binary_229_active_ <-& (binary_227_complete)
+        binary_227_completed_ <-& (binary_227_complete)
+        binary_229_active_ <-& (binary_227_completed_)
         ;;[binary_229_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_229_active_ &-> (binary_229_complete)
-        assign_stmt_230_active_ <-& (binary_229_complete)
+        binary_229_completed_ <-& (binary_229_complete)
+        assign_stmt_230_active_ <-& (binary_229_completed_)
         // dirty
         // implicit reference
         assign_stmt_230_completed_ <-& (assign_stmt_230_active_)
@@ -3387,24 +3461,26 @@ $module [write_mem]
         // (valid & match)
         $T[binary_234_active_] 
         $T[binary_234_trigger_] 
+        $T[binary_234_completed_] 
         binary_234_active_ <-& (binary_234_trigger_)
         // valid
         // implicit reference
-        $T[simple_obj_ref_232_complete] 
-        simple_obj_ref_232_complete <-& (assign_stmt_223_completed_)
+        $T[simple_obj_ref_232_completed_] 
+        simple_obj_ref_232_completed_ <-& (assign_stmt_223_completed_)
         // match
         // implicit reference
-        $T[simple_obj_ref_233_complete] 
-        simple_obj_ref_233_complete <-& (assign_stmt_212_completed_)
-        binary_234_active_ <-& (simple_obj_ref_232_complete)
-        binary_234_active_ <-& (simple_obj_ref_233_complete)
+        $T[simple_obj_ref_233_completed_] 
+        simple_obj_ref_233_completed_ <-& (assign_stmt_212_completed_)
+        binary_234_active_ <-& (simple_obj_ref_232_completed_)
+        binary_234_active_ <-& (simple_obj_ref_233_completed_)
         ;;[binary_234_complete] 
         {
           // binary expression 
           $T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation 
         }
         binary_234_active_ &-> (binary_234_complete)
-        assign_stmt_235_active_ <-& (binary_234_complete)
+        binary_234_completed_ <-& (binary_234_complete)
+        assign_stmt_235_active_ <-& (binary_234_completed_)
         // hit_flag
         // implicit reference
         assign_stmt_235_completed_ <-& (assign_stmt_235_active_)
@@ -3415,6 +3491,7 @@ $module [write_mem]
         // word_ptr_base[block_offset]
         $T[array_obj_ref_246_trigger_] 
         $T[array_obj_ref_246_active_] 
+        $T[array_obj_ref_246_completed_] 
         array_obj_ref_246_active_ <-& (array_obj_ref_246_trigger_)
         $T[array_obj_ref_246_base_address_calculated] 
         $T[array_obj_ref_246_root_address_calculated] 
@@ -3424,9 +3501,9 @@ $module [write_mem]
         $T[array_obj_ref_246_index_resized_0] 
         // block_offset
         // implicit reference
-        $T[simple_obj_ref_245_complete] 
-        simple_obj_ref_245_complete <-& (assign_stmt_203_completed_)
-        array_obj_ref_246_index_computed_0 <-& (simple_obj_ref_245_complete)
+        $T[simple_obj_ref_245_completed_] 
+        simple_obj_ref_245_completed_ <-& (assign_stmt_203_completed_)
+        array_obj_ref_246_index_computed_0 <-& (simple_obj_ref_245_completed_)
         ;;[array_obj_ref_246_index_resize_0] 
         {
           $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -3457,7 +3534,8 @@ $module [write_mem]
         }
         array_obj_ref_246_active_ <-& (array_obj_ref_246_root_address_calculated)
         array_obj_ref_246_active_ &-> (array_obj_ref_246_complete)
-        assign_stmt_247_active_ <-& (array_obj_ref_246_complete)
+        array_obj_ref_246_completed_ <-& (array_obj_ref_246_complete)
+        assign_stmt_247_active_ <-& (array_obj_ref_246_completed_)
         // word_ptr
         // implicit reference
         assign_stmt_247_completed_ <-& (assign_stmt_247_active_)
@@ -3468,6 +3546,7 @@ $module [write_mem]
         // cache_data[block_index]
         $T[array_obj_ref_250_trigger_] 
         $T[array_obj_ref_250_active_] 
+        $T[array_obj_ref_250_completed_] 
         $T[array_obj_ref_250_root_address_calculated] 
         $T[array_obj_ref_250_word_address_calculated] 
         $T[array_obj_ref_250_root_address_calculated] 
@@ -3477,9 +3556,9 @@ $module [write_mem]
         $T[array_obj_ref_250_index_resized_0] 
         // block_index
         // implicit reference
-        $T[simple_obj_ref_249_complete] 
-        simple_obj_ref_249_complete <-& (assign_stmt_191_completed_)
-        array_obj_ref_250_index_computed_0 <-& (simple_obj_ref_249_complete)
+        $T[simple_obj_ref_249_completed_] 
+        simple_obj_ref_249_completed_ <-& (assign_stmt_191_completed_)
+        array_obj_ref_250_index_computed_0 <-& (simple_obj_ref_249_completed_)
         ;;[array_obj_ref_250_index_resize_0] 
         {
           $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -3534,10 +3613,12 @@ $module [write_mem]
         array_obj_ref_250_trigger_ &-> (array_obj_ref_250_request)
         array_obj_ref_250_active_ <-& (array_obj_ref_250_request)
         array_obj_ref_250_active_ &-> (array_obj_ref_250_complete)
+        array_obj_ref_250_completed_ <-& (array_obj_ref_250_complete)
         array_obj_ref_250_trigger_ <-& (array_obj_ref_250_word_address_calculated)
-        assign_stmt_251_active_ <-& (array_obj_ref_250_complete)
+        assign_stmt_251_active_ <-& (array_obj_ref_250_completed_)
         $T[simple_obj_ref_248_trigger_] 
         $T[simple_obj_ref_248_active_] 
+        $T[simple_obj_ref_248_completed_] 
         // active_line
         $T[simple_obj_ref_248_root_address_calculated] 
         $T[simple_obj_ref_248_word_address_calculated] 
@@ -3686,25 +3767,27 @@ $module [write_mem]
         simple_obj_ref_248_trigger_ &-> (simple_obj_ref_248_request)
         simple_obj_ref_248_active_ <-& (simple_obj_ref_248_request)
         simple_obj_ref_248_active_ &-> (simple_obj_ref_248_complete)
+        simple_obj_ref_248_completed_ <-& (simple_obj_ref_248_complete)
         simple_obj_ref_248_trigger_ <-& (simple_obj_ref_248_word_address_calculated)
         simple_obj_ref_248_trigger_ <-& (assign_stmt_251_active_)
-        assign_stmt_251_completed_ <-& (simple_obj_ref_248_complete)
+        assign_stmt_251_completed_ <-& (simple_obj_ref_248_completed_)
         // 		->(word_ptr) := data
         //  file Cache.aa, line 124
         $T[assign_stmt_255_active_] 
         $T[assign_stmt_255_completed_] 
         // data
         // reference to interface object
-        $T[simple_obj_ref_254_complete] 
-        assign_stmt_255_active_ <-& (simple_obj_ref_254_complete)
+        $T[simple_obj_ref_254_completed_] 
+        assign_stmt_255_active_ <-& (simple_obj_ref_254_completed_)
         // ->(word_ptr)
         $T[ptr_deref_253_trigger_] 
         $T[ptr_deref_253_active_] 
+        $T[ptr_deref_253_completed_] 
         $T[ptr_deref_253_base_address_calculated] 
         // word_ptr
         // implicit reference
-        $T[simple_obj_ref_252_complete] 
-        simple_obj_ref_252_complete <-& (assign_stmt_247_completed_)
+        $T[simple_obj_ref_252_completed_] 
+        simple_obj_ref_252_completed_ <-& (assign_stmt_247_completed_)
         $T[ptr_deref_253_root_address_calculated] 
         $T[ptr_deref_253_word_address_calculated] 
         $T[ptr_deref_253_root_address_calculated] 
@@ -3751,11 +3834,12 @@ $module [write_mem]
         ptr_deref_253_trigger_ &-> (ptr_deref_253_request)
         ptr_deref_253_active_ <-& (ptr_deref_253_request)
         ptr_deref_253_active_ &-> (ptr_deref_253_complete)
+        ptr_deref_253_completed_ <-& (ptr_deref_253_complete)
         ptr_deref_253_trigger_ <-& (ptr_deref_253_word_address_calculated)
-        ptr_deref_253_base_address_calculated <-& (simple_obj_ref_252_complete)
+        ptr_deref_253_base_address_calculated <-& (simple_obj_ref_252_completed_)
         ptr_deref_253_trigger_ <-& (ptr_deref_253_base_address_calculated)
         ptr_deref_253_trigger_ <-& (assign_stmt_255_active_)
-        assign_stmt_255_completed_ <-& (ptr_deref_253_complete)
+        assign_stmt_255_completed_ <-& (ptr_deref_253_completed_)
         // load-store dependencies..
         // active_line(store) -> ->(word_ptr)(store)
         ptr_deref_253_trigger_ <-& (simple_obj_ref_248_active_)
@@ -3840,13 +3924,13 @@ $module [write_mem]
           //  file Cache.aa, line 131
           // block_index
           // implicit reference
-          $T[simple_obj_ref_265_complete] 
+          $T[simple_obj_ref_265_completed_] 
           // cached_block_address
           // implicit reference
-          $T[simple_obj_ref_266_complete] 
+          $T[simple_obj_ref_266_completed_] 
           $T[call_stmt_267_active_] 
-          call_stmt_267_active_ <-& (simple_obj_ref_265_complete)
-          call_stmt_267_active_ <-& (simple_obj_ref_266_complete)
+          call_stmt_267_active_ <-& (simple_obj_ref_265_completed_)
+          call_stmt_267_active_ <-& (simple_obj_ref_266_completed_)
           $T[call_stmt_267_in_progress] 
           ;;[call_stmt_267_start] 
           {
@@ -3874,6 +3958,7 @@ $module [write_mem]
           // cache_flags[block_index]
           $T[array_obj_ref_269_trigger_] 
           $T[array_obj_ref_269_active_] 
+          $T[array_obj_ref_269_completed_] 
           $T[array_obj_ref_269_root_address_calculated] 
           $T[array_obj_ref_269_word_address_calculated] 
           $T[array_obj_ref_269_root_address_calculated] 
@@ -3883,8 +3968,8 @@ $module [write_mem]
           $T[array_obj_ref_269_index_resized_0] 
           // block_index
           // implicit reference
-          $T[simple_obj_ref_268_complete] 
-          array_obj_ref_269_index_computed_0 <-& (simple_obj_ref_268_complete)
+          $T[simple_obj_ref_268_completed_] 
+          array_obj_ref_269_index_computed_0 <-& (simple_obj_ref_268_completed_)
           ;;[array_obj_ref_269_index_resize_0] 
           {
             $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -3939,9 +4024,10 @@ $module [write_mem]
           array_obj_ref_269_trigger_ &-> (array_obj_ref_269_request)
           array_obj_ref_269_active_ <-& (array_obj_ref_269_request)
           array_obj_ref_269_active_ &-> (array_obj_ref_269_complete)
+          array_obj_ref_269_completed_ <-& (array_obj_ref_269_complete)
           array_obj_ref_269_trigger_ <-& (array_obj_ref_269_word_address_calculated)
           array_obj_ref_269_trigger_ <-& (assign_stmt_271_active_)
-          assign_stmt_271_completed_ <-& (array_obj_ref_269_complete)
+          assign_stmt_271_completed_ <-& (array_obj_ref_269_completed_)
           // load-store dependencies..
         }
       }
@@ -3956,13 +4042,13 @@ $module [write_mem]
         //  file Cache.aa, line 136
         // block_index
         // implicit reference
-        $T[simple_obj_ref_274_complete] 
+        $T[simple_obj_ref_274_completed_] 
         // block_address
         // implicit reference
-        $T[simple_obj_ref_275_complete] 
+        $T[simple_obj_ref_275_completed_] 
         $T[call_stmt_276_active_] 
-        call_stmt_276_active_ <-& (simple_obj_ref_274_complete)
-        call_stmt_276_active_ <-& (simple_obj_ref_275_complete)
+        call_stmt_276_active_ <-& (simple_obj_ref_274_completed_)
+        call_stmt_276_active_ <-& (simple_obj_ref_275_completed_)
         $T[call_stmt_276_in_progress] 
         ;;[call_stmt_276_start] 
         {
@@ -3992,6 +4078,7 @@ $module [write_mem]
         // cache_flags[block_index]
         $T[array_obj_ref_278_trigger_] 
         $T[array_obj_ref_278_active_] 
+        $T[array_obj_ref_278_completed_] 
         $T[array_obj_ref_278_root_address_calculated] 
         $T[array_obj_ref_278_word_address_calculated] 
         $T[array_obj_ref_278_root_address_calculated] 
@@ -4001,8 +4088,8 @@ $module [write_mem]
         $T[array_obj_ref_278_index_resized_0] 
         // block_index
         // implicit reference
-        $T[simple_obj_ref_277_complete] 
-        array_obj_ref_278_index_computed_0 <-& (simple_obj_ref_277_complete)
+        $T[simple_obj_ref_277_completed_] 
+        array_obj_ref_278_index_computed_0 <-& (simple_obj_ref_277_completed_)
         ;;[array_obj_ref_278_index_resize_0] 
         {
           $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -4057,9 +4144,10 @@ $module [write_mem]
         array_obj_ref_278_trigger_ &-> (array_obj_ref_278_request)
         array_obj_ref_278_active_ <-& (array_obj_ref_278_request)
         array_obj_ref_278_active_ &-> (array_obj_ref_278_complete)
+        array_obj_ref_278_completed_ <-& (array_obj_ref_278_complete)
         array_obj_ref_278_trigger_ <-& (array_obj_ref_278_word_address_calculated)
         array_obj_ref_278_trigger_ <-& (assign_stmt_280_active_)
-        assign_stmt_280_completed_ <-& (array_obj_ref_278_complete)
+        assign_stmt_280_completed_ <-& (array_obj_ref_278_completed_)
         // 			active_line := cache_data[block_index]
         //  file Cache.aa, line 140
         $T[assign_stmt_284_active_] 
@@ -4067,6 +4155,7 @@ $module [write_mem]
         // cache_data[block_index]
         $T[array_obj_ref_283_trigger_] 
         $T[array_obj_ref_283_active_] 
+        $T[array_obj_ref_283_completed_] 
         $T[array_obj_ref_283_root_address_calculated] 
         $T[array_obj_ref_283_word_address_calculated] 
         $T[array_obj_ref_283_root_address_calculated] 
@@ -4076,8 +4165,8 @@ $module [write_mem]
         $T[array_obj_ref_283_index_resized_0] 
         // block_index
         // implicit reference
-        $T[simple_obj_ref_282_complete] 
-        array_obj_ref_283_index_computed_0 <-& (simple_obj_ref_282_complete)
+        $T[simple_obj_ref_282_completed_] 
+        array_obj_ref_283_index_computed_0 <-& (simple_obj_ref_282_completed_)
         ;;[array_obj_ref_283_index_resize_0] 
         {
           $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -4132,10 +4221,12 @@ $module [write_mem]
         array_obj_ref_283_trigger_ &-> (array_obj_ref_283_request)
         array_obj_ref_283_active_ <-& (array_obj_ref_283_request)
         array_obj_ref_283_active_ &-> (array_obj_ref_283_complete)
+        array_obj_ref_283_completed_ <-& (array_obj_ref_283_complete)
         array_obj_ref_283_trigger_ <-& (array_obj_ref_283_word_address_calculated)
-        assign_stmt_284_active_ <-& (array_obj_ref_283_complete)
+        assign_stmt_284_active_ <-& (array_obj_ref_283_completed_)
         $T[simple_obj_ref_281_trigger_] 
         $T[simple_obj_ref_281_active_] 
+        $T[simple_obj_ref_281_completed_] 
         // active_line
         $T[simple_obj_ref_281_root_address_calculated] 
         $T[simple_obj_ref_281_word_address_calculated] 
@@ -4284,24 +4375,26 @@ $module [write_mem]
         simple_obj_ref_281_trigger_ &-> (simple_obj_ref_281_request)
         simple_obj_ref_281_active_ <-& (simple_obj_ref_281_request)
         simple_obj_ref_281_active_ &-> (simple_obj_ref_281_complete)
+        simple_obj_ref_281_completed_ <-& (simple_obj_ref_281_complete)
         simple_obj_ref_281_trigger_ <-& (simple_obj_ref_281_word_address_calculated)
         simple_obj_ref_281_trigger_ <-& (assign_stmt_284_active_)
-        assign_stmt_284_completed_ <-& (simple_obj_ref_281_complete)
+        assign_stmt_284_completed_ <-& (simple_obj_ref_281_completed_)
         // 			->(word_ptr) := data
         //  file Cache.aa, line 141
         $T[assign_stmt_288_active_] 
         $T[assign_stmt_288_completed_] 
         // data
         // reference to interface object
-        $T[simple_obj_ref_287_complete] 
-        assign_stmt_288_active_ <-& (simple_obj_ref_287_complete)
+        $T[simple_obj_ref_287_completed_] 
+        assign_stmt_288_active_ <-& (simple_obj_ref_287_completed_)
         // ->(word_ptr)
         $T[ptr_deref_286_trigger_] 
         $T[ptr_deref_286_active_] 
+        $T[ptr_deref_286_completed_] 
         $T[ptr_deref_286_base_address_calculated] 
         // word_ptr
         // implicit reference
-        $T[simple_obj_ref_285_complete] 
+        $T[simple_obj_ref_285_completed_] 
         $T[ptr_deref_286_root_address_calculated] 
         $T[ptr_deref_286_word_address_calculated] 
         $T[ptr_deref_286_root_address_calculated] 
@@ -4348,11 +4441,12 @@ $module [write_mem]
         ptr_deref_286_trigger_ &-> (ptr_deref_286_request)
         ptr_deref_286_active_ <-& (ptr_deref_286_request)
         ptr_deref_286_active_ &-> (ptr_deref_286_complete)
+        ptr_deref_286_completed_ <-& (ptr_deref_286_complete)
         ptr_deref_286_trigger_ <-& (ptr_deref_286_word_address_calculated)
-        ptr_deref_286_base_address_calculated <-& (simple_obj_ref_285_complete)
+        ptr_deref_286_base_address_calculated <-& (simple_obj_ref_285_completed_)
         ptr_deref_286_trigger_ <-& (ptr_deref_286_base_address_calculated)
         ptr_deref_286_trigger_ <-& (assign_stmt_288_active_)
-        assign_stmt_288_completed_ <-& (ptr_deref_286_complete)
+        assign_stmt_288_completed_ <-& (ptr_deref_286_completed_)
         // load-store dependencies..
         // active_line(store) -> ->(word_ptr)(store)
         ptr_deref_286_trigger_ <-& (simple_obj_ref_281_active_)
@@ -4372,6 +4466,7 @@ $module [write_mem]
         // active_line
         $T[simple_obj_ref_292_trigger_] 
         $T[simple_obj_ref_292_active_] 
+        $T[simple_obj_ref_292_completed_] 
         $T[simple_obj_ref_292_root_address_calculated] 
         $T[simple_obj_ref_292_word_address_calculated] 
         simple_obj_ref_292_word_address_calculated <-& (simple_obj_ref_292_root_address_calculated)
@@ -4519,11 +4614,13 @@ $module [write_mem]
         simple_obj_ref_292_trigger_ &-> (simple_obj_ref_292_request)
         simple_obj_ref_292_active_ <-& (simple_obj_ref_292_request)
         simple_obj_ref_292_active_ &-> (simple_obj_ref_292_complete)
+        simple_obj_ref_292_completed_ <-& (simple_obj_ref_292_complete)
         simple_obj_ref_292_trigger_ <-& (simple_obj_ref_292_word_address_calculated)
-        assign_stmt_293_active_ <-& (simple_obj_ref_292_complete)
+        assign_stmt_293_active_ <-& (simple_obj_ref_292_completed_)
         // cache_data[block_index]
         $T[array_obj_ref_291_trigger_] 
         $T[array_obj_ref_291_active_] 
+        $T[array_obj_ref_291_completed_] 
         $T[array_obj_ref_291_root_address_calculated] 
         $T[array_obj_ref_291_word_address_calculated] 
         $T[array_obj_ref_291_root_address_calculated] 
@@ -4533,8 +4630,8 @@ $module [write_mem]
         $T[array_obj_ref_291_index_resized_0] 
         // block_index
         // implicit reference
-        $T[simple_obj_ref_290_complete] 
-        array_obj_ref_291_index_computed_0 <-& (simple_obj_ref_290_complete)
+        $T[simple_obj_ref_290_completed_] 
+        array_obj_ref_291_index_computed_0 <-& (simple_obj_ref_290_completed_)
         ;;[array_obj_ref_291_index_resize_0] 
         {
           $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
@@ -4589,9 +4686,10 @@ $module [write_mem]
         array_obj_ref_291_trigger_ &-> (array_obj_ref_291_request)
         array_obj_ref_291_active_ <-& (array_obj_ref_291_request)
         array_obj_ref_291_active_ &-> (array_obj_ref_291_complete)
+        array_obj_ref_291_completed_ <-& (array_obj_ref_291_complete)
         array_obj_ref_291_trigger_ <-& (array_obj_ref_291_word_address_calculated)
         array_obj_ref_291_trigger_ <-& (assign_stmt_293_active_)
-        assign_stmt_293_completed_ <-& (array_obj_ref_291_complete)
+        assign_stmt_293_completed_ <-& (array_obj_ref_291_completed_)
         // load-store dependencies..
       }
       assign_stmt_293__entry__ |-> (assign_stmt_293)

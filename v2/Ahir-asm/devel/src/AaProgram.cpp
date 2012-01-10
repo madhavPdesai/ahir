@@ -41,7 +41,8 @@ std::set<int> AaProgram::_extmem_access_widths;
 std::set<AaType*> AaProgram::_extmem_access_types;
 std::set<AaPointerDereferenceExpression*> AaProgram::_pointer_dereferences;
 
-
+bool AaProgram::_optimize_flag = false;
+bool AaProgram::_unordered_memory_flag = false;
 
 AaGraphBase AaProgram::_call_graph;
 AaUGraphBase AaProgram::_type_dependency_graph;
@@ -56,7 +57,13 @@ void AaMemorySpace::Write_VC_Model(bool opt_flag, ostream& ofile)
 	AaRoot::Error("memory space " + IntToStr(this->_mem_space_index) +
 		      " has no storage objects in it!",NULL);
       
-      ofile << "$memoryspace [memory_space_" << this->_mem_space_index << "] {"
+      ofile << "$memoryspace ";
+      if(!this->Get_Is_Ordered())
+	{
+	  ofile << "$unordered " << endl;
+	}
+
+      ofile << "[memory_space_" << this->_mem_space_index << "] {"
 	    << "$capacity " << this->_total_size << endl
 	    << "$datawidth " << this->_word_size << endl
 	    << "$addrwidth " << this->_address_width << endl;  
@@ -69,10 +76,6 @@ void AaMemorySpace::Write_VC_Model(bool opt_flag, ostream& ofile)
 	  (*iter)->Write_VC_Model(ofile);
 	}
 
-      if(!opt_flag)
-	{
-	  ofile << "$attribute unordered => \"true\"" << endl;
-	}
 
       ofile << "}" << endl;
     }
@@ -796,6 +799,8 @@ void AaProgram::Coalesce_Storage()
       int total_size = 0;
 
       AaMemorySpace* new_ms = new AaMemorySpace(idx);
+      new_ms->Set_Is_Ordered(!AaProgram::_unordered_memory_flag);
+
       AaProgram::_memory_space_map[idx] = new_ms;
       bool soltero = (AaProgram::_storage_eq_class_map[idx].size() == 1);
 

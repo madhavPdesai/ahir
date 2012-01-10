@@ -169,6 +169,7 @@ class AaExpression: public AaRoot
     return(this->Get_VC_Name() + "_complete");
   }
 
+
   virtual string Get_VC_Constant_Name()
   {
     return(this->Get_VC_Wire_Name() + "_constant");
@@ -214,6 +215,8 @@ class AaExpression: public AaRoot
   virtual bool Scalar_Types_Only() { return(true);}
 
   set<AaExpression*>& Get_Targets() {return _targets; }
+
+  virtual int Get_VC_Memory_Space_Index() {return (-1);}  // default.. no memory space
 
   // return true if the only place this is (eventually) used
   // is an address-of expression
@@ -419,6 +422,8 @@ class AaObjectReference: public AaExpression
 
 
   virtual string Get_VC_Memory_Space_Name();
+  virtual int Get_VC_Memory_Space_Index();
+
   virtual int Get_Base_Address();
   virtual int Get_Address_Width();
   virtual int Get_Word_Size();
@@ -770,7 +775,10 @@ class AaPointerDereferenceExpression: public AaObjectReference
   virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
 
   virtual string Get_VC_Name() {return("ptr_deref_" + Int64ToStr(this->Get_Index()));}
+
   virtual string Get_VC_Memory_Space_Name();
+  virtual int Get_VC_Memory_Space_Index();
+
   virtual int Get_Base_Address();
   virtual int Get_Word_Size();
   virtual int Get_Address_Width();
@@ -836,6 +844,8 @@ class AaAddressOfExpression: public AaObjectReference
   virtual void Evaluate();
 
   virtual string Get_VC_Memory_Space_Name();
+  virtual int Get_VC_Memory_Space_Index();
+
   virtual int Get_Base_Address();
   virtual int Get_Word_Size();
   virtual int Get_Address_Width();

@@ -27,6 +27,7 @@ int vcSystem::_register_bank_threshold = 0;
 string vcSystem::_simulator_prefix = "Modelsim_FLI_";
 
 string vcSystem::_tool_name;
+string vcSystem::_top_entity_name = "ahir_system";
 
 
 
@@ -351,12 +352,13 @@ void  vcSystem::Print_VHDL(ostream& ofile)
 
   cerr << "Info: printing VHDL model" << endl;
 
+  string sys_package = this->Get_Sys_Package_Name();
   // print types.
   ofile << "library ieee;" << endl
 	<< "use ieee.std_logic_1164.all;" << endl;
-  ofile << "package vc_system_package is -- { " << endl;
+  ofile << "package " << sys_package << " is -- { " << endl;
   this->Print_VHDL_Constant_Declarations(ofile);
-  ofile << "-- } " << endl <<  "end package vc_system_package;" << endl;
+  ofile << "-- } " << endl <<  "end package " << sys_package << ";" << endl;
   
   // print modules
   for(map<string,vcModule*>::iterator moditer = _modules.begin();
@@ -979,6 +981,7 @@ void vcSystem::Print_VHDL_Pipe_Instances(ostream& ofile)
 
 void  vcSystem::Print_VHDL_Inclusions(ostream& ofile)
 {
+  string sys_package = vcSystem::Get_Sys_Package_Name();
   ofile << "library ieee;\n\
 use ieee.std_logic_1164.all;\n			\
 library ahir;\n					\
@@ -990,6 +993,6 @@ use ahir.basecomponents.all;\n			\
 use ahir.operatorpackage.all;\n  \
 use ahir.utilities.all;\n";
   ofile << "library work;" << endl;
-  ofile << "use work.vc_system_package.all;" << endl;
+  ofile << "use work." << sys_package << ".all;" << endl;
 }
 

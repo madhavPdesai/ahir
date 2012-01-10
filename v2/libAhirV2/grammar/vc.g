@@ -54,11 +54,13 @@ vc_System[vcSystem* sys]
  (vc_Pipe[sys,NULL])
  |
  (vc_Wire_Declaration[sys,NULL])
+ |
+ (vc_SysAttributeSpec[sys])
  )*
 	;
 
 //-----------------------------------------------------------------------------------------------
-// vc_System :  PIPE vc_Label UINTEGER
+// vc_Pipe :  PIPE vc_Label UINTEGER
 //-----------------------------------------------------------------------------------------------
 vc_Pipe[vcSystem* sys, vcModule* m]
 {
@@ -80,9 +82,15 @@ vc_Pipe[vcSystem* sys, vcModule* m]
 vc_MemorySpace[vcSystem* sys, vcModule* m] returns[vcMemorySpace* ms]
 {
 	string lbl;
+	bool unordered_flag = false;
 	ms = NULL;
 }
-: MEMORYSPACE lbl = vc_Label { ms = new vcMemorySpace(lbl,m);} LBRACE vc_MemorySpaceParams[ms] (vc_MemoryLocation[sys,ms])* 
+: MEMORYSPACE (UNORDERED {unordered_flag = true;})? 
+	lbl = vc_Label 
+	{ 
+		ms = new vcMemorySpace(lbl,m);
+		ms->Set_Ordered_Flag(!unordered_flag);
+	} LBRACE vc_MemorySpaceParams[ms] (vc_MemoryLocation[sys,ms])* 
         (vc_AttributeSpec[ms])*
         RBRACE
 ;
@@ -1102,6 +1110,49 @@ vc_RecordType[vcSystem* sys] returns [vcType* t]
 ;
 
 //----------------------------------------------------------------------------------------------------------
+// vc_SysAttributeSpec: ATTRIBUTE (MEMORYSPACE | MODULE) SIMPLE_IDENTIFIER (SIMPLE_IDENTIFIER IMPLIES QUOTED_STRING) 
+//----------------------------------------------------------------------------------------------------------
+vc_SysAttributeSpec[vcSystem* sys]
+{
+	string key;
+	string value;
+	bool mem_space = false;
+        bool module = false;
+	vcRoot* child = NULL;
+	string m_id;
+	string ms_id;
+        string child_id;
+}
+:
+	aid:ATTRIBUTE (
+			( MEMORYSPACE {mem_space = true;}
+				(m_id = vc_Identifier DIV_OP)? ms_id = vc_Identifier 
+				{ 
+					child_id = m_id + "/" + ms_id; 
+					child = sys->Find_Memory_Space(m_id,ms_id);
+				} ) | 
+		   	(MODULE {module = true;} 
+				m_id = vc_Identifier 
+				{
+					child_id = m_id;
+					child = sys->Find_Module(m_id);
+				} )
+                  )
+		kid: SIMPLE_IDENTIFIER {key = kid->getText();} 
+		IMPLIES vid:QUOTED_STRING { value = vid->getText();} 
+		{  
+			if(child != NULL) 
+				child->Add_Attribute(key,value);
+			else
+			{
+				vcSystem::Warning("could not find " + child_id + " to add attribute,"
+							+ IntToStr(aid->getLine()));
+						
+			}
+		}
+;
+
+//----------------------------------------------------------------------------------------------------------
 // vc_AttributeSpec: ATTRIBUTE (SIMPLE_IDENTIFIER IMPLIES QUOTED_STRING) 
 //----------------------------------------------------------------------------------------------------------
 vc_AttributeSpec[vcRoot* m]
@@ -1136,6 +1187,7 @@ ATTRIBUTE     : "$attribute";
 DPE           : "$dpe";
 LIBRARY       : "$lib";
 MEMORYSPACE   : "$memoryspace";
+UNORDERED     : "$unordered";
 OBJECT        : "$object";
 CAPACITY      : "$capacity";
 DATAWIDTH     : "$datawidth";

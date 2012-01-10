@@ -37,6 +37,7 @@ public:
 	public: void mDPE(bool _createToken);
 	public: void mLIBRARY(bool _createToken);
 	public: void mMEMORYSPACE(bool _createToken);
+	public: void mUNORDERED(bool _createToken);
 	public: void mOBJECT(bool _createToken);
 	public: void mCAPACITY(bool _createToken);
 	public: void mDATAWIDTH(bool _createToken);

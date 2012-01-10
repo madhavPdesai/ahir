@@ -1,0 +1,17 @@
+a pipelined (but simple!) processor.
+	processor.c describes the processor.
+	processorSuper.aa describes the same processor, but
+		written in Aa.
+
+	attr.vc is a "feedback" file which sets the
+	number of banks on one of the memory subsystems..
+
+testbench.c checks it out.
+	- sw version: initial progam is hardwired.
+	- hw version: initial program can be loaded into
+	 	the processor.
+
+Makefile
+	contains builds for bothe the pipelined processor
+	and pipelined processorSuper.  The same testbench
+	is used to test both.

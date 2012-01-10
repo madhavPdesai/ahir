@@ -29,6 +29,7 @@ class AaMemorySpace: public AaRoot
       _address_width = 0;
       _max_access_width = 0;
       _max_read_write_width = 0;
+      _is_ordered = true;
     }
 
   int _mem_space_index;
@@ -122,6 +123,8 @@ class AaProgram
 
 
   static bool _print_inlined_functions_in_caller;
+  static bool _optimize_flag;
+  static bool _unordered_memory_flag;
 
   AaProgram();
   ~AaProgram();

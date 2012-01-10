@@ -4,23 +4,23 @@ you will need to have installed
 	ghdl
 
 
-ex1/  contains a simple example (with a README).
+hello/  contains a simple example (with a README).
       try it first.
 
 
-ex2/ is an example of a simple processor.
+simple_processor/ is an example of a simple processor.
 
 
-ex3/ is a "fast" pipeline written in Aa
+aa_pipeline/ is a "fast" pipeline written in Aa
 
 
-ex4/ is a matrix multiplication system..  It
+matrix_multiply/ is a matrix multiplication system..  It
      uses four "processors" which compute dot products.
 
-ex5/ is the a5 stream cipher..
+a5/ is the a5 stream cipher..
 
 
-ex6/ is a random-number-generator..
+rng/ is a random-number-generator..
 
 more will be added!
 

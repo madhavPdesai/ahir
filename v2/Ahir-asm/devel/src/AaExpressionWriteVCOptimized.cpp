@@ -52,7 +52,7 @@ void AaExpression::Write_VC_WAR_Dependencies(set<AaRoot*>& visited_elements,
 		}
 	      else
 		{
-		  __J(source_expr->Get_VC_Active_Transition_Name(), expr->Get_VC_Complete_Region_Name());
+		  __J(source_expr->Get_VC_Active_Transition_Name(), expr->Get_VC_Completed_Transition_Name());
 		}
 	    }
 	}
@@ -148,22 +148,22 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visi
       if(this->_object->Is_Interface_Object())
 	{
 	  ofile << "// reference to interface object" << endl;
-	  __T(this->Get_VC_Complete_Region_Name());
+	  __T(this->Get_VC_Completed_Transition_Name());
 	  AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
 	  if(visited_elements.find(root) != visited_elements.end())
 	    {
-	      __J(this->Get_VC_Complete_Region_Name(), root->Get_VC_Completed_Transition_Name());
+	      __J(this->Get_VC_Completed_Transition_Name(), root->Get_VC_Completed_Transition_Name());
 	    }	  
 	}
       else if(this->Is_Implicit_Variable_Reference())
 	{
 	  ofile << "// implicit reference" << endl;
-	  __T(this->Get_VC_Complete_Region_Name());
+	  __T(this->Get_VC_Completed_Transition_Name());
 
 	  AaRoot* root = this->Get_Root_Object();
 	  if(visited_elements.find(root) != visited_elements.end())
 	    {
-	      __J(this->Get_VC_Complete_Region_Name(), root->Get_VC_Completed_Transition_Name());
+	      __J(this->Get_VC_Completed_Transition_Name(), root->Get_VC_Completed_Transition_Name());
 	    }
 	}
       else if(this->_object->Is("AaStorageObject"))
@@ -172,6 +172,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visi
 	  // complete region name is in Write_VC_Load_Control...
 	  __T(this->Get_VC_Start_Transition_Name());
 	  __T(this->Get_VC_Active_Transition_Name());
+	  __T(this->Get_VC_Completed_Transition_Name());
 	  this->Write_VC_Load_Control_Path_Optimized(visited_elements,ls_map,pipe_map,NULL,NULL,NULL,ofile);
 	  ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
 	}
@@ -182,12 +183,14 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visi
 	{
 	  // needed to hook up pipe dependencies.
 	  __T(this->Get_VC_Start_Transition_Name());
+	  __T(this->Get_VC_Completed_Transition_Name());
 
 	  ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] { // pipe read" << endl;
 	  ofile << "$T [req] $T [ack] " << endl;
 	  ofile << "}" << endl;
 
 	  // complete the chain.
+	  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Complete_Region_Name());
 	  __F(this->Get_VC_Start_Transition_Name(),this->Get_VC_Complete_Region_Name());
 
 	  // record the pipe!
@@ -212,6 +215,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(set<AaRo
     {
       __T(this->Get_VC_Start_Transition_Name());
       __T(this->Get_VC_Active_Transition_Name());  
+      __T(this->Get_VC_Completed_Transition_Name());  
 
       // address calculation..
       // several parallel stores will be peformed..
@@ -230,11 +234,13 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(set<AaRo
     {
       ofile << "// " << this->To_String() << endl;
       __T(this->Get_VC_Start_Transition_Name());
+      __T(this->Get_VC_Completed_Transition_Name());  
       ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] { // pipe write ";
       this->Print(ofile);
       ofile << endl;
       ofile << "$T [pipe_wreq] $T [pipe_wack] " << endl;
       ofile << "}" << endl;
+      __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Complete_Region_Name());
       __F(this->Get_VC_Start_Transition_Name(),this->Get_VC_Complete_Region_Name());
       pipe_map[this->_object->Get_VC_Name()].push_back(this);
     }
@@ -383,6 +389,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
 
       __T(this->Get_VC_Start_Transition_Name());
       __T(this->Get_VC_Active_Transition_Name());
+      __T(this->Get_VC_Completed_Transition_Name());
 
       if(this->Get_Object_Type()->Is_Pointer_Type())
 	{
@@ -405,7 +412,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
 	      // please load the object.
 	      this->_pointer_ref->Write_VC_Control_Path_Optimized(visited_elements,ls_map,pipe_map,ofile);
 	      if(!this->_pointer_ref->Is_Constant())
-		__J(base_addr_calc, this->_pointer_ref->Get_VC_Complete_Region_Name());
+		__J(base_addr_calc, this->_pointer_ref->Get_VC_Completed_Transition_Name());
 	      
 	    }
 	  else if(this->_object->Is_Expression())
@@ -448,6 +455,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
 
 	  __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Name()+ "_root_address_calculated");
 	  __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
+	  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Complete_Region_Name());
 
 	}
       else if(this->_object->Is_Storage_Object())
@@ -480,7 +488,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
 						    ls_map,
 						    pipe_map,
 						    ofile);
-	      __J(this->Get_VC_Active_Transition_Name(), expr->Get_VC_Complete_Region_Name());
+	      __J(this->Get_VC_Active_Transition_Name(), expr->Get_VC_Completed_Transition_Name());
 	      ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] {" << endl;
 	      ofile << "$T [slice_req] $T [slice_ack]" << endl;
 	      ofile << "}" << endl;
@@ -512,6 +520,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(set<AaRoot*>& visit
 	    assert(0);
 
 	  __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
+	  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Complete_Region_Name());
 	}
       
       visited_elements.insert(this);
@@ -529,6 +538,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_As_Target_Optimized(set<AaRoo
       ofile << "// " << this->To_String() << endl;
       __T(this->Get_VC_Start_Transition_Name());
       __T(this->Get_VC_Active_Transition_Name());
+      __T(this->Get_VC_Completed_Transition_Name());
 
       int word_size = ((AaStorageObject*)(this->_object))->Get_Word_Size();
       vector<int> scale_factors;
@@ -605,6 +615,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(set<AaRoot*
 
   __T(this->Get_VC_Start_Transition_Name());
   __T(this->Get_VC_Active_Transition_Name());
+  __T(this->Get_VC_Completed_Transition_Name());
   
   string base_addr_calc = (this->Get_VC_Name() + "_base_address_calculated");
   __T(base_addr_calc);
@@ -619,7 +630,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(set<AaRoot*
 
   if(!this->_reference_to_object->Is_Constant())
     {
-      __J(base_addr_calc,this->_reference_to_object->Get_VC_Complete_Region_Name());
+      __J(base_addr_calc,this->_reference_to_object->Get_VC_Completed_Transition_Name());
       __J(this->Get_VC_Start_Transition_Name(),base_addr_calc);
     }
 
@@ -643,6 +654,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(s
 
   __T(this->Get_VC_Start_Transition_Name());
   __T(this->Get_VC_Active_Transition_Name());
+  __T(this->Get_VC_Completed_Transition_Name());
 
   string base_addr_calc = (this->Get_VC_Name() + "_base_address_calculated");
   __T(base_addr_calc);
@@ -656,7 +668,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(s
 					      NULL,NULL,NULL,ofile);
   if(!this->_reference_to_object->Is_Constant())
     {
-      __J(base_addr_calc,this->_reference_to_object->Get_VC_Complete_Region_Name());
+      __J(base_addr_calc,this->_reference_to_object->Get_VC_Completed_Transition_Name());
       __J(this->Get_VC_Start_Transition_Name(),base_addr_calc);
     }
 
@@ -716,6 +728,7 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
     {
       __T(this->Get_VC_Active_Transition_Name());
       __T(this->Get_VC_Start_Transition_Name());
+      __T(this->Get_VC_Completed_Transition_Name());
 
       __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Start_Transition_Name());
 
@@ -744,10 +757,11 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
 
       __J(this->Get_VC_Active_Transition_Name(), obj_ref->Get_VC_Name() + "_root_address_calculated");
       __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
+      __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Complete_Region_Name());
     }
   else
     {
-      __T(this->Get_VC_Complete_Region_Name());
+      __T(this->Get_VC_Completed_Transition_Name());
     }
 }
 
@@ -810,6 +824,7 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited
       ofile << "// " << this->To_String() << endl;
       __T(this->Get_VC_Active_Transition_Name());
       __T(this->Get_VC_Start_Transition_Name());
+      __T(this->Get_VC_Completed_Transition_Name());
       __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Start_Transition_Name());      
 
       this->_rest->Write_VC_Control_Path_Optimized(visited_elements,
@@ -817,7 +832,7 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited
 						   ofile);
 
 
-      __J(this->Get_VC_Active_Transition_Name(),this->_rest->Get_VC_Complete_Region_Name());
+      __J(this->Get_VC_Active_Transition_Name(),this->_rest->Get_VC_Completed_Transition_Name());
 
       // either it will be a register or a split conversion
       // operator..
@@ -829,6 +844,7 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited
       ofile << "}" << endl;
 
       __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
+      __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Complete_Region_Name());
     }
 
 }
@@ -880,6 +896,7 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_el
       ofile << "// " << this->To_String() << endl;
       __T(this->Get_VC_Active_Transition_Name());
       __T(this->Get_VC_Start_Transition_Name());
+      __T(this->Get_VC_Completed_Transition_Name());
       __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Start_Transition_Name());      
 
       this->_rest->Write_VC_Control_Path_Optimized(visited_elements,
@@ -888,12 +905,13 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_el
 
 
       if(!this->_rest->Is_Constant())
-	__J(this->Get_VC_Active_Transition_Name(),this->_rest->Get_VC_Complete_Region_Name());
+	__J(this->Get_VC_Active_Transition_Name(),this->_rest->Get_VC_Completed_Transition_Name());
 
       ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] { // unary expression " << endl;      
       ofile << "$T [rr] $T [ra] $T [cr] $T [ca] //(split) unary operation" << endl;
       ofile << "}" << endl;
       __F(this->Get_VC_Active_Transition_Name(), this->Get_VC_Complete_Region_Name());
+      __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Complete_Region_Name());
     }
 }
 void AaUnaryExpression::Write_VC_Control_Path_As_Target_Optimized(set<AaRoot*>& visited_elements,
@@ -943,6 +961,7 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_e
       ofile << "// " << this->To_String() << endl;
       __T(this->Get_VC_Active_Transition_Name());
       __T(this->Get_VC_Start_Transition_Name());
+      __T(this->Get_VC_Completed_Transition_Name());
       __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Start_Transition_Name());      
 
 
@@ -951,15 +970,16 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_e
 
 
       if(!this->_first->Is_Constant())
-	__J(this->Get_VC_Active_Transition_Name(),this->_first->Get_VC_Complete_Region_Name());
+	__J(this->Get_VC_Active_Transition_Name(),this->_first->Get_VC_Completed_Transition_Name());
 
       if(!this->_second->Is_Constant())
-	__J(this->Get_VC_Active_Transition_Name(),this->_second->Get_VC_Complete_Region_Name());
+	__J(this->Get_VC_Active_Transition_Name(),this->_second->Get_VC_Completed_Transition_Name());
 
       ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] { // binary expression " << endl;
       ofile << "$T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation " << endl;
       ofile << "}" << endl;
       __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
+      __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Complete_Region_Name());
     }
 }
 void AaBinaryExpression::Write_VC_Control_Path_As_Target_Optimized(set<AaRoot*>& visited_elements,
@@ -1012,6 +1032,8 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_
   ofile << "// " << this->To_String() << endl;
   __T(this->Get_VC_Start_Transition_Name());
   __T(this->Get_VC_Active_Transition_Name());
+  __T(this->Get_VC_Completed_Transition_Name());
+
   __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Start_Transition_Name());      
 
 
@@ -1023,16 +1045,17 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_
 
 
   if(!this->_test->Is_Constant())
-    __J(this->Get_VC_Active_Transition_Name(),this->_test->Get_VC_Complete_Region_Name());
+    __J(this->Get_VC_Active_Transition_Name(),this->_test->Get_VC_Completed_Transition_Name());
   if(this->_if_true && !this->_if_true->Is_Constant())
-    __J(this->Get_VC_Active_Transition_Name(),this->_if_true->Get_VC_Complete_Region_Name());
+    __J(this->Get_VC_Active_Transition_Name(),this->_if_true->Get_VC_Completed_Transition_Name());
   if(this->_if_false && !this->_if_false->Is_Constant())
-    __J(this->Get_VC_Active_Transition_Name(),this->_if_false->Get_VC_Complete_Region_Name());
+    __J(this->Get_VC_Active_Transition_Name(),this->_if_false->Get_VC_Completed_Transition_Name());
   
   ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] { // ternary expression: " << endl;
   ofile << "$T [req] $T [ack] // select req/ack" << endl;
   ofile << "}" << endl;
   __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
+  __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Complete_Region_Name());
 }
 
 void AaTernaryExpression::Write_VC_Control_Path_As_Target_Optimized(set<AaRoot*>& visited_elements,
@@ -1118,6 +1141,7 @@ void AaObjectReference::Write_VC_Load_Store_Control_Path_Optimized(set<AaRoot*>&
 
   string start_trans = this->Get_VC_Start_Transition_Name();
   string active_trans = this->Get_VC_Active_Transition_Name();
+  string complete_trans = this->Get_VC_Completed_Transition_Name();
 
   ofile << ";;[" << this->Get_VC_Request_Region_Name() << "] {" << endl;
   if(read_or_write == "write")
@@ -1161,6 +1185,7 @@ void AaObjectReference::Write_VC_Load_Store_Control_Path_Optimized(set<AaRoot*>&
   __F(start_trans,this->Get_VC_Request_Region_Name());
   __J(active_trans,this->Get_VC_Request_Region_Name());
   __F(active_trans,this->Get_VC_Complete_Region_Name());
+  __J(complete_trans,this->Get_VC_Complete_Region_Name());
 }
 
   
@@ -1436,7 +1461,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(set<AaRoot*>& visited_e
 								    ls_map,pipe_map,
 								    ofile);
 
-	      __J(index_computed,(*index_vector)[idx]->Get_VC_Complete_Region_Name());
+	      __J(index_computed,(*index_vector)[idx]->Get_VC_Completed_Transition_Name());
 
 	      ofile << ";;[" << this->Get_VC_Name() << "_index_resize_" << idx << "] {" << endl;
 	      if((*index_vector)[idx]->Get_Type()->Is_Uinteger_Type())

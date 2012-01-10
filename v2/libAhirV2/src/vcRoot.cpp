@@ -121,8 +121,22 @@ vcRoot::vcRoot(string id)
 
 void vcRoot::Add_Attribute(string tag, string value)
 {
-  this->_attribute_map[tag] = value;
+	this->_attribute_map[tag] = value;
 }
+  
+bool vcRoot::Has_Attribute(string tag)
+{
+  return(this->_attribute_map.find(tag) != this->_attribute_map.end());
+}
+
+string vcRoot::Find_Attribute_Value(string tag)
+{
+	if(this->Has_Attribute(tag))
+	{
+		return(this->_attribute_map[tag]);
+	}
+}
+
 string vcRoot::Get_Id() 
 {
   return(this->_id);

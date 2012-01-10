@@ -73,7 +73,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
 							 ls_map,pipe_map,
 							 ofile);
 	  
-	  __J(this->Get_VC_Active_Transition_Name(), _source->Get_VC_Complete_Region_Name());
+	  __J(this->Get_VC_Active_Transition_Name(), _source->Get_VC_Completed_Transition_Name());
 	}
       
 
@@ -89,7 +89,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
       if(!this->_target->Is_Implicit_Variable_Reference())
 	{
 	  __J(_target->Get_VC_Start_Transition_Name(),this->Get_VC_Active_Transition_Name());
-	  __J(this->Get_VC_Completed_Transition_Name(), _target->Get_VC_Complete_Region_Name());
+	  __J(this->Get_VC_Completed_Transition_Name(), _target->Get_VC_Completed_Transition_Name());
 	}
       else
 	{
@@ -184,7 +184,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elem
       AaExpression* expr = _input_args[idx];
       if(!expr->Is_Constant())
 	{
-	  __J(call_trigger, expr->Get_VC_Complete_Region_Name());
+	  __J(call_trigger, expr->Get_VC_Completed_Transition_Name());
 	}
     }
 
@@ -223,7 +223,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elem
 	{
 
 	  __J(expr->Get_VC_Start_Transition_Name(),call_completed);
-	  __J(completed, expr->Get_VC_Complete_Region_Name());
+	  __J(completed, expr->Get_VC_Completed_Transition_Name());
 	  non_triv_flag = true;
 	}
       

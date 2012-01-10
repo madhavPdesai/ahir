@@ -175,6 +175,7 @@ int main(int argc, char* argv[])
 	  break;
 	case 'e':
 	  sys_name = string(optarg);
+          vcSystem::_top_entity_name = sys_name;
 	  cerr << "Info: -e " << sys_name << " top-level VHDL entity will have name " << sys_name << ".unformatted_vhdl" << endl; 
 	  break;
 	case 'w':
