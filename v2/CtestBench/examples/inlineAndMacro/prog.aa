@@ -1,0 +1,93 @@
+// Single-cycle pipe, using inlines and macros.
+// (with inline, it is not quite single-cycle!).
+// 
+$pipe in_data : $uint<32>  $depth 2
+$pipe out_data : $uint<32>  $depth 2
+$pipe stage0_data : $uint<32>  $depth 2
+$pipe stage1_data : $uint<32>  $depth 2
+$pipe stage2_data : $uint<32>  $depth 2
+
+// the first few outputs from the pipe will
+// be junk..  
+$pipe out_valid: $uint<8>  $depth 9
+
+$inline $module [add_inline] $in (a: $uint<32> b: $uint<32>) $out (c: $uint<32>) $is
+{
+	c := (a + b)
+}
+
+$macro $module [add_macro] $in (a: $uint<32> b: $uint<32>) $out (c: $uint<32>) $is
+{
+	c := (a + b)
+}
+
+$macro $module [pipe_stage] $in (ipipe: $uint<32>) $out (opipe: $uint<32>) $is
+{
+  $branchblock[Main] {
+
+      $merge $entry loopback $endmerge
+
+      // Ping
+      $parallelblock[b1] {
+	opipe := b2_na0  // send computed data.
+	b1_a0 := ipipe   // get new data 
+	$call add_macro (b2_a1 1) (b1_na1)
+      } (b1_a0 => b1_a0 b1_na1 => b1_na1) 
+
+      // Pong
+      $parallelblock[b2] {
+	opipe := b1_na1
+	b2_a1 := ipipe  
+	$call add_inline (b1_a0 1) (b2_na0)
+      } (b2_a1 => b2_a1 b2_na0 => b2_na0) 
+                
+      $place [loopback]
+   }
+}
+
+$macro $module [last_pipe_stage] $in (ipipe: $uint<32>) $out (opipe: $uint<32> ovalid: $uint<8>) $is
+{
+  $branchblock[Main] {
+
+      $merge $entry loopback $endmerge
+
+      // Ping
+      $parallelblock[b1] {
+	opipe := b2_na0  // send computed data.
+	b1_a0 := ipipe   // get new data 
+	b1_na1 := (b2_a1 + 1) // compute on last data.
+	ovalid := 1
+      } (b1_a0 => b1_a0 b1_na1 => b1_na1) 
+
+      // Pong
+      $parallelblock[b2] {
+	opipe := b1_na1
+	b2_a1 := ipipe  
+	b2_na0 := (b1_a0 + 1)
+	ovalid := 1
+      } (b2_a1 => b2_a1 b2_na0 => b2_na0) 
+                
+      $place [loopback]
+   }
+}
+$module [io_module]
+$in () $out () $is
+{
+   
+   // 8 invalid slots
+   out_valid := 0
+   out_valid := 0
+   out_valid := 0
+   out_valid := 0
+   out_valid := 0
+   out_valid := 0
+   out_valid := 0
+   out_valid := 0
+
+   $parallelblock[Pipeline] {
+	$call pipe_stage (in_data) (stage0_data)
+	$call pipe_stage (stage0_data) (stage1_data)
+	$call pipe_stage (stage1_data) (stage2_data)
+	$call last_pipe_stage (stage2_data) (out_data out_valid)
+   }
+}

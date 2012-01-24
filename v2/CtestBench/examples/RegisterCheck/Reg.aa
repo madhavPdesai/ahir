@@ -1,0 +1,25 @@
+$register $storage main_memory:$array [256] $of $uint<32>
+$register $storage counter: $uint<32>
+
+$module [init] $in () $out () $is
+{
+   counter := 0
+}
+
+$module [read_mem] 
+$in (addr : $uint<8> )
+$out (ret_val__ : $uint<32>)
+$is 
+{
+   counter := (counter + 1)
+   ret_val__ := main_memory[addr]
+}
+
+$module [write_mem] 
+$in (addr : $uint<8> data : $uint<32> )
+$out ()
+$is 
+{
+   counter := (counter + 1)
+   main_memory[addr] := data
+}
