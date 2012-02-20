@@ -1,0 +1,7 @@
+import os
+env = Environment(ENV = {'PATH' : os.environ['PATH']})
+env.Append(CPPPATH = './:../include')
+env.Program('simpleCheck', 'simple_check.c', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['SocketLib','pthread' ], LIBPATH=Split('../lib'))
+env.Program('secondCheck', 'test_program.c', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['SocketLib','pthread' ], LIBPATH=Split('../lib'))
+
+

@@ -1,0 +1,472 @@
+
+\documentclass{article}
+
+\title{vC Language Reference Manual}
+\author{Madhav Desai \\ Department of Electrical Engineering \\ Indian Institute of Technology \\
+	Mumbai 400076 India}
+
+\newcommand{\Aa}{{\bf Aa}~}
+\newcommand{\vC}{{\bf vC}~}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+{\bf vC} is a language used for the description
+of a virtual circuit which is decomposed into
+control, data and storage aspects.
+
+A \vC system consists of modules and memory spaces.
+Each module may itself contain memory spaces.  Further,
+each module has a {\em control-path} and a {\em data-path}.
+The control-path is a Petri-net constructed using
+a set of rules (as describe in \cite{ref:SameerPhD}).1
+The data-path is essentially a directed graph of {\em operator } nodes
+communicating with each other and the outside world using {\em wires}.
+
+A memory-space stores data and provides access to this
+data through load/store operators.
+The \vC system also  contains {\em pipes} which
+are first-in-first out queues. These pipes can
+be accessed from a data-path using input/output
+operators.
+
+In the rest of this document, we outline the
+structure and the syntax of the \vC language,
+and also describe the semantics of a \vC
+program, especially the execution model and
+the behaviour of the equivalent system.
+
+
+\section{Program structure}
+
+
+A program (equivalently, a system) in \vC consists of a sequence of
+declarations and module definitions.  
+\begin{verbatim}
+program := ( module-definition | 
+              memory-space-definition | 
+                pipe-declaration | 
+                  attribute-specification )*
+\end{verbatim}
+
+A module in \vC is the basic unit of compilation, and
+has the following structure
+\begin{verbatim}
+$module [module-name] 
+{
+   input-arguments (can be empty)
+   output-arguments (can be empty)
+   memory-space-definitions (optional)
+   pipe-declarations (optional)
+   control-path (required)
+   data-path (required)
+   control-data-links (optional)
+   attribute-specifications (optional)
+}
+\end{verbatim}
+
+Thus, a module has a name, has input and output arguments,
+pipes, memory spaces, a control-path and a data path.
+Pipes declared in the module are visible only in the
+module body.   
+
+\section{Variables} \label{sec:Objects}
+
+Variables in  a \vC system can belong to the following classes:
+\begin{itemize}
+\item {\bf Argument} variable declared at the module-level.
+\item {\bf Wire} variables declared in the data-path.
+\item {\bf Pipe} variables declared at the program level or at the module level.
+\end{itemize}
+
+Each variable has a type.  In \vC a fairly rich array of
+types is supported, as described in Section \ref{sec:Types}.
+
+{\bf Wire} variables are declared in the data-path, and
+serve as connectors between operators.  A wire can have
+at most one operator node which drives it, but can
+be read by any number of operators.
+
+{\bf Pipe} variables declared at the program scope
+are globally visible first-in-first-out (FIFO) buffers that can 
+be accessed from any module in the program.  A pipe
+is a FIFO buffer with a specified number of
+slots.  A write to a pipe succeeds
+only if there is an empty slot in the FIFO (a successful
+write uses up an empty slots.  A read
+from the pipe succeeds only if there is at
+least one occupied slot in the FIFO (a successful read
+creates an empty slot in the FIFO). 
+
+
+\section{The control-path} \label{sec:Controlpath}
+ 
+
+The control-path is a Petri-net which consists of
+places and transitions.  In \vC this Petri-net
+is described hierarchically in terms of 
+control-path elements. 
+\begin{itemize}
+\item A single transition is a control-path element. It
+fires when all of its predecessors have (released) a token.
+After it fires, a token is released to each of
+its successors.
+\begin{verbatim}
+$T [fire]
+\end{verbatim}
+This defines a transition with name $fire$. 
+\item A single place is a control-path element.  When
+any of its predecessors releases a token, the place
+takes it and forwards it to one of its successors.
+\begin{verbatim}
+$P [loopback]
+\end{verbatim}
+\item A {\em series region} is a sequence of control
+path elements.  The predecessor of each element is
+the previous element and the successor is the next
+element in the sequence.  
+The predecessor of
+the first element is an implicit entry transition
+of the series region, and the successor of the last
+element is an implicit exit transition of
+the series region.
+\begin{verbatim}
+;;[chain] {
+       $T [req]
+       $T [ack]
+}
+\end{verbatim}
+\item A {\em parallel region} is a sequence of control
+path elements.  The implicit entry transition
+is the predecessor of all the elements, while the
+implicit exit transition is the successor of
+all the elements.
+\begin{verbatim}
+||[pardo] {
+       ;;[job_1] { ... }
+       ;;[job_2] { ... }
+}
+\end{verbatim}
+\item A {\em branch region} is a sequence of control
+path elements with additional statements which describe
+the connections between this sequence (branches, merges).
+\begin{verbatim}
+<>[branch_example] {
+       $P [Enter]
+       Enter <-| ($entry)
+       Enter |-> (job_1)
+       ;;[job_1] { ... }
+       ;;[job_2] { ... }
+       $P [Chk]
+       $P [End]
+       Chk <-| (job_1)
+       Chk |-> (job_1 job_2)
+       End <-| (job_2)
+       End |-> ($exit)
+}
+\end{verbatim}
+In this example, the keywords \$entry and \$exit correspond
+to implicit entry and exit transitions associated with the branch block.
+The $<-|$ specifies that a token leaving the right will enter
+the left (place) and $|->$ signifies that a token entering the left
+(place) will enter one of the elements in the list on the right.
+\item A {\em fork region} is a sequence of control path
+elements with additional statements which describe 
+forking and joining.
+\begin{verbatim}
+::[fork_example] {
+       $entry &-> (job_1 job_2)
+       ;;[job_1] { ... }
+       ;;[job_2] { ... }
+       ;;[job_3] { ... }
+       $T [f12]
+       f12 <-& (job_1 job_2)
+       f12 &-> (job_3)
+       $exit <-& (job_3)
+}
+\end{verbatim}
+In this example, the keywords \$entry and \$exit correspond
+to implicit transitions associated with the branch block.
+The <-\& specifies that after a token leaves from every
+element in the right list, a token will enter
+the left (transition) and \&-> signifies that a token leaving the left
+(transition) will be replicated so that a
+token enters each of the elements in the list on the right.
+\end{itemize}
+
+The control-path itself is a series region. It syntax is
+illustrated below:
+\begin{verbatim}
+$CP {
+   ... sequence of control-path elements --
+}
+\end{verbatim}
+
+\section{Types} \label{sec:Types}
+
+Types in \vC can be either scalar types or composite types.  They
+are always attached to objects such as pipes, wires and input/output
+arguments (types are not declared separately!).
+
+Scalar types can be one of 
+\begin{itemize}
+\item Integers:  An integer type
+has a width parameter and is specified as 
+\begin{verbatim}
+$int<width>
+\end{verbatim}
+The width parameter can be any positive number.
+Values corresponding to this type are to be
+viewed as a binary sequence of the specified width.
+\item Pointers:  A pointer is an unsigned
+integer with an unspecified width which
+is associated with a memory space.
+The width of the pointer is determined by the
+implementation at the point of conversion from
+\vC to VHDL.  For example:
+\begin{verbatim}
+$pointer< memory_space_1 > 
+\end{verbatim}
+\item Floats: A float is parametrized by
+two integers, the width of the exponent,
+and the width of the mantissa.  
+The specification is
+\begin{verbatim}
+$float<exponent,mantissa>
+\end{verbatim} %$
+where the exponent and mantissa must be positive
+integers.  The float is represented by 
+a word with $exponent+mantissa+1$ bits
+(with the additional bit needed for the sign).
+The standard IEEE 754 float and double
+precision representations correspond
+to
+\begin{verbatim}
+$float<8,23> 
+\end{verbatim}
+and
+\begin{verbatim}
+$float<11,52> 
+\end{verbatim}
+respectively.  Currently, these are the
+only float types that are supported.
+\end{itemize}
+
+Composite types in \vC can be either
+array types or record types.
+\begin{itemize}
+\item 
+Array types in \vC have the form
+\begin{verbatim}
+$array [d1] $of <element-type-spec>
+\end{verbatim} %$
+The value of $d1$ must
+be a positive integers, and element-type-spec
+must refer to a type.
+For example, 
+\begin{verbatim}
+$array [10] of $array [10] $of $int<32>
+\end{verbatim}
+is an array type whose
+elements are one dimensional arrays of 32-bit
+unsigned integers.
+\item
+Record types in \vC have the form
+\begin{verbatim}
+$record <type-1> <type-2> ... <type-n>
+\end{verbatim}
+An element of such a record type is
+an aggregate whose first element is of type
+type-1, second element is of type type-2 and so on.
+For example:
+\begin{verbatim}
+$record <$uint<32> > <$array [10] $of $uint<32> > 
+\end{verbatim}
+\end{itemize}
+
+
+\section{The Data-path} \label{sec:Datapath}
+
+The Data-path is a directed graph of operator nodes
+interconnected with wires.
+A wire is declared as
+\begin{verbatim}
+$W [wname] : <wire-type>
+\end{verbatim}
+For example:
+\begin{verbatim}
+$W [reg_out] : $int<33>
+\end{verbatim}
+
+One can also have constant wires which are declared
+as
+\begin{verbatim}
+$constant $W [wname] : <wire-type> := <wire-value>
+\end{verbatim}
+where wire-value is a constant literal.  A constant wire can only have 
+scalar type.
+
+Operator nodes can be differentiated based on two criteria.
+Based on the number of inputs, they can be classified
+as unary, binary, variable argument and mutliple-output
+operators.  Based on their protocol of interaction with
+the control path, they can be classified as those
+with a split-protocol (separate start-complete request/ack
+handshakes) or a unitary protocol (single request/ack handshake).
+
+
+Operator nodes are instantiated by the syntax
+\begin{verbatim}
+<op-code> [operator-name] ( <input-wires> )  ( <output-wires>)
+\end{verbatim}
+For example, an add operator node instantiation is 
+\begin{verbatim}
++ [wadd] (a b)  (c)
+\end{verbatim}
+The add operation takes two inputs and produces a single output.
+
+
+Other binary operators with two inputs and a single
+output are (all binary operators have a split protocol): 
+\begin{verbatim}
+op-code operation             
+-       subtract             
+*       multiply            
+/       divide             
+<<      shift-left        
+>>      shift-right-logical 
+$S>>    shift-right-arithmetic
+==      equal              
+$S>$S   signed greater-than
+$S>=$S  signed greater-than-or-equal
+$S<$S   signed less-than
+$S<=$S  signed less-than-or-equal
+>       unsigned greater-than
+>=      unsigned greater-than-or-equal
+<       unsigned less-than
+<=      unsigned less-than-or-equal
+!=      not-equal
+|       logical-bitwise-or
+&       logical-bitwise-and
+^       logical-bitwise-xor
+~|      logical-bitwise-nor
+~&      logical-bitwise-nand
+~^      logical-bitwise-xnor
+\end{verbatim}
+
+Operators with a single input and a single
+output are (all have a split-protocol):
+\begin{verbatim}
+~       logical-not
+:=      assign-operation
+$S:=$U  signed-to-unsigned-conversion
+$U:=$S  unsigned-to-signed-conversion
+$S:=$S  signed-to-signed-conversion
+$S:=$F  signed-to-floating-point-conversion
+$F:=$S  floating-point-to-signed-conversion
+$U:=$F  unsigned-to-floating-point-conversion
+$F:=$U  floating-point-to-unsigned-conversion
+$F:=$F  float-to-float-conversion
+\end{verbatim}
+
+There are some special operators which
+need some explanation.
+\begin{itemize}
+\item The {\em bit-select} operator has two inputs and
+one output.  The syntax is
+\begin{verbatim}
+[] [selbit] (a i) (b)
+\end{verbatim}
+Wire b will get the value of the $i^{th}$ most significant bit
+of a.  This operator has a split protocol. 
+\item  The {\em PHI} operator has a variable number of inputs
+and one output.  The syntax is
+\begin{verbatim}
+$phi [oname] (u1 u2 u3 .. un) (y)
+\end{verbatim}
+This operator has a unitary protocol, but there are as many
+req/ack pairs as there are inputs.  The output y
+is assigned to an input for which a request has been made.
+\item The {\em concatenate} operator has two inputs and a single
+output.  The output bit sequence is a conctatenation of the input
+bit sequences.
+\begin{verbatim}
+&& [cname] (a b) (c)
+\end{verbatim}
+This operator also has a split protocol.
+\item The {\em slice} operator has three inputs, the first
+of which is a wire, and the next two must be constants.
+It has a single output:
+\begin{verbatim}
+[:] [cname] (a 5 3) (c)
+\end{verbatim}
+Then c = a[5 downto 3].
+\end{itemize} 
+
+Finally, there are some special operators, all
+of which have split protocols.
+\begin{itemize}
+\item The {\em load} and {\em store} operators are used to access
+a memory space.
+\begin{verbatim}
+$load [fetch1] $from memory_space_1 (addr_wire) (data_wire)
+$store [write1] $to memory_space_1 (addr_wire data_wire) ()
+\end{verbatim}
+\item The {\em input} and {\em output} operators are used
+to read from and write to pipes (these have a unitary protocol).
+\begin{verbatim}
+$ioport $in  [R1] (pipe_to_be_read) (wire_to_be_written_into)
+$ioport $out [W1] (wire_to_be_read) (pipe_to_be_written_into)
+\end{verbatim}
+\item The {\em call} operator is used to send arguments to
+another module and wait until results are returned (it has
+a split protocol).
+\begin{verbatim}
+$call [call_id] $module foo (in1 in2 .. inN) (out1 out2 .. outM)
+\end{verbatim}
+The number of input and output arguments must match those
+on module foo.
+\end{itemize}
+
+\section{Control-data links} 
+
+The control path and the data path work in
+a coordinated fashion.  Transitions in the control
+path are associated with request and acknowledge
+signals on operators in the data path.  % TODO.
+
+\section{Memory Spaces}
+
+Each memory space provides a certain amount of 
+storage with a well defined access width.  % TODO.
+
+\section{Syntax} \label{sec:Syntax}
+
+The syntax for \vC follows the following
+principles
+\begin{itemize}
+\item Most keywords begin with the \$ sign.
+\item The region between \{ and \} defines a new scope.
+\item Elements are space separated (no semicolons at all).
+\end{itemize}
+
+The parser is implemented using 
+an LL(k) parser (written as rules to be parsed by antlr2 \cite{ref:antlr2}).
+The grammar for the parser is (using the EBNF notation) given in 
+the html file {\bf vcParser.html} which is part of this distribution. 
+The set of tokens recognized by the lexical analyzer (or lexer).
+is available in the html file {\bf vcLexer.html}.
+
+\begin{thebibliography}{99}
+\bibitem{ref:SameerPhD}
+Sameer D. Sahasrabuddhe,
+``A competitive pathway from high-level programs to hardware,''
+Ph.D. thesis, IIT Bombay, 2009.
+
+\bibitem{ref:antlr2}
+http://www.antlr2.org.
+\end{thebibliography}
+
+\end{document}

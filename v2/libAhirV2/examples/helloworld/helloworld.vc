@@ -1,3 +1,4 @@
+$constant $W[tmp]: $int<1> := _b0
 $module[foo] 
 { 
 	$in a:$int<32> b:$int<32> p:$int<32> q:$int<32> $out c:$int<32> 

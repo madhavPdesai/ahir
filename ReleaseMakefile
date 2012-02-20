@@ -18,7 +18,7 @@ Release:
 	cp $(AA)/bin/AaLinkExtMem $(RELEASE)/bin/
 	cp $(AA)/bin/AaOpt $(RELEASE)/bin/AaOpt
 	cp $(VC)/bin/vc2vhdl $(RELEASE)/bin/
-	cp $(VC)/bin/vcCPCheck $(RELEASE)/bin/vcAnalyze
+	cp $(VC)/bin/vcAnalyze $(RELEASE)/bin/vcAnalyze
 	cp $(VC)/bin/vcFormat $(RELEASE)/bin/
 	cp $(VC)/bin/vcParse $(RELEASE)/bin/
 	cp $(VC)/bin/vhdlFormat $(RELEASE)/bin/
@@ -33,7 +33,7 @@ Release:
 	# copy the VHDL files
 	cp $(VHDL)/release/*.vhdl $(RELEASE)/vhdl/
 	# copy the documents..
-	cp ./Documents/AhirV2/AhirV2.pdf $(RELEASE)/docs/pdf/
+	#cp ./Documents/AhirV2/AhirV2.pdf $(RELEASE)/docs/pdf/
 	cp $(AA)/docs/*.pdf $(RELEASE)/docs/pdf/
 	cp $(AA)/docs/*.html $(RELEASE)/docs/html/
 	cp $(LLVM2AA)/docs/llvm2aa.pdf $(RELEASE)/docs/pdf/

@@ -56,7 +56,8 @@ Unsigned::Unsigned(int n, string init_value)
       if(n > 32)
 	{
 	  cerr << "Error: decimal format can be used for integers which are up to 32 bits wide" << endl;
-	  cerr << "          the initial value will be ignored " << endl;
+	  cerr << "          the initial value " << init_value << " will be truncated to 32 bits.. " << endl;
+	  _bit_field[0] = this->AtoI(init_value.c_str());
 	}
       else
 	{
@@ -934,4 +935,5 @@ string _base_value_::Hex_To_Binary(string& hex_string)
 				break;
 		}
 	}
+	return(binary_string);
 }

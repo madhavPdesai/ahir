@@ -945,15 +945,15 @@ class AaPhiStatement: public AaStatement
 class AaSwitchStatement: public AaStatement
 {
   AaExpression* _select_expression;
-  vector<pair<AaConstantLiteralReference*, AaStatementSequence*> > _choice_pairs;
+  vector<pair<AaExpression*, AaStatementSequence*> > _choice_pairs;
   AaStatementSequence* _default_sequence;
 
  public:
 
   void Set_Select_Expression(AaExpression* expr) {this->_select_expression = expr;}
-  void Add_Choice(AaConstantLiteralReference* cond, AaStatementSequence* sseq)
+  void Add_Choice(AaExpression* cond, AaStatementSequence* sseq)
   {
-    this->_choice_pairs.push_back(pair<AaConstantLiteralReference*,AaStatementSequence*>(cond,sseq));
+    this->_choice_pairs.push_back(pair<AaExpression*,AaStatementSequence*>(cond,sseq));
   }
 
   void Set_Default_Sequence(AaStatementSequence* sseq)
@@ -967,16 +967,7 @@ class AaSwitchStatement: public AaStatement
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaSwitchStatement");}
-  virtual void Map_Source_References()
-  {
-    if(this->_select_expression)
-      this->_select_expression->Map_Source_References(this->_source_objects);
-
-    for(unsigned int i=0; i < this->_choice_pairs.size(); i++)
-      this->_choice_pairs[i].second->Map_Source_References();
-    if(this->_default_sequence)
-      this->_default_sequence->Map_Source_References();
-  }
+  virtual void Map_Source_References();
 
 
   virtual string Get_C_Name()

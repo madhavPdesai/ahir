@@ -675,13 +675,13 @@ aA_Switch_Statement[AaBranchBlockStatement* scope] returns [AaSwitchStatement* n
     AaStatementSequence* sseq = NULL;
     AaStatementSequence* defseq = NULL;
     AaExpression* select_expression = NULL;
-    AaConstantLiteralReference* choice_value = NULL;
+    AaExpression* choice_value = NULL;
 }
     : sl:SWITCH 
         select_expression=aA_Expression[scope] 
         (
             WHEN 
-            choice_value = aA_Constant_Literal_Reference[scope]
+            ((choice_value = aA_Constant_Literal_Reference[scope]) | (choice_value = aA_Object_Reference[scope]))
             THEN 
             sseq = aA_Branch_Block_Statement_Sequence[scope]
             {

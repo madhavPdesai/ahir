@@ -25,7 +25,7 @@
 
 // unlikely to have more than 16 active
 // threads talking to the TB?
-#define DEFAULT_MAX_CONNECTIONS 256
+#define DEFAULT_MAX_CONNECTIONS 65535
 
 void  ADD_SPACE__(char* buf);
 

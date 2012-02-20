@@ -25,13 +25,13 @@ void do_foo_req()
 
   // now get req.
   sprintf(port_buffer,"foo req");
-  Vhpi_Get_Port_Value(port_buffer,val_buffer);
+  Vhpi_Get_Port_Value(port_buffer,val_buffer,1);
   foo_req = get_uint8_t(val_buffer,&save_ptr);
   if(foo_req)
     {
       fprintf(stderr,"Info: (%d) foo req observed as asserted\n", cycle_count);
       sprintf(port_buffer,"foo 0");
-      Vhpi_Get_Port_Value(port_buffer,val_buffer);
+      Vhpi_Get_Port_Value(port_buffer,val_buffer,1);
       foo_data = get_uint32_t(val_buffer,&save_ptr);
       fprintf(stderr,"Info: (%d) foo argument value is %d..\n", cycle_count, foo_data);
     }
@@ -49,7 +49,7 @@ void do_foo_ack()
       // set ack to 1
       sprintf(port_buffer,"foo ack");
       sprintf(val_buffer,"1");
-      Vhpi_Set_Port_Value(port_buffer,val_buffer);
+      Vhpi_Set_Port_Value(port_buffer,val_buffer,1);
       foo_is_called = 0;
 
       fprintf(stderr,"Info: (%d) foo ack asserted..\n", cycle_count);
@@ -59,7 +59,7 @@ void do_foo_ack()
       // set ack to 0
       sprintf(port_buffer,"foo ack");
       sprintf(val_buffer,"0");
-      Vhpi_Set_Port_Value(port_buffer,val_buffer);
+      Vhpi_Set_Port_Value(port_buffer,val_buffer,1);
 
       fprintf(stderr,"Info: (%d) foo ack de-asserted..\n", cycle_count);
     }
@@ -68,7 +68,7 @@ void do_foo_ack()
   val_buffer[0] = 0;
   sprintf(port_buffer,"foo 0");
   append_uint32_t(val_buffer,foo_data);
-  Vhpi_Set_Port_Value(port_buffer,val_buffer);
+  Vhpi_Set_Port_Value(port_buffer,val_buffer,32);
 
   fprintf(stderr,"Info: (%d) foo return value set to %d..\n", cycle_count, foo_data);
 }
@@ -81,7 +81,7 @@ void do_out_pipe_req()
 
   // now get req.
   sprintf(port_buffer,"outpipe req");
-  Vhpi_Get_Port_Value(port_buffer,val_buffer);
+  Vhpi_Get_Port_Value(port_buffer,val_buffer,1);
   outpipe_req = get_uint8_t(val_buffer,&save_ptr);
 
   if(outpipe_req > 0)
@@ -101,7 +101,7 @@ void do_out_pipe_ack()
       // set ack to 1
       sprintf(port_buffer,"outpipe ack");
       sprintf(val_buffer,"1");
-      Vhpi_Set_Port_Value(port_buffer,val_buffer);
+      Vhpi_Set_Port_Value(port_buffer,val_buffer,1);
       pipe_has_data = 0;
       fprintf(stderr,"Info: (%d) outpipe ack asserted..\n", cycle_count);
     }
@@ -110,7 +110,7 @@ void do_out_pipe_ack()
       // set ack to 0
       sprintf(port_buffer,"outpipe ack");
       sprintf(val_buffer,"0");
-      Vhpi_Set_Port_Value(port_buffer,val_buffer);
+      Vhpi_Set_Port_Value(port_buffer,val_buffer,1);
       fprintf(stderr,"Info: (%d) outpipe ack de-asserted..\n", cycle_count);
     }
 
@@ -118,7 +118,7 @@ void do_out_pipe_ack()
   val_buffer[0] = 0;
   sprintf(port_buffer,"outpipe 0");
   append_uint32_t(val_buffer,pipe_data);
-  Vhpi_Set_Port_Value(port_buffer,val_buffer);
+  Vhpi_Set_Port_Value(port_buffer,val_buffer,32);
   fprintf(stderr,"Info: (%d) outpipe data set to %d..\n", cycle_count, pipe_data);
 }
 
@@ -132,7 +132,7 @@ void do_in_pipe_req()
   uint8_t val_buffer[1024];
 
   sprintf(port_buffer,"inpipe req");
-  Vhpi_Get_Port_Value(port_buffer,val_buffer);
+  Vhpi_Get_Port_Value(port_buffer,val_buffer,1);
   inpipe_req = get_uint8_t(val_buffer,&save_ptr);
 
   if(inpipe_req)
@@ -141,7 +141,7 @@ void do_in_pipe_req()
     }
 
   sprintf(port_buffer,"inpipe 0");
-  Vhpi_Get_Port_Value(port_buffer,val_buffer);
+  Vhpi_Get_Port_Value(port_buffer,val_buffer,32);
   pipe_data_in = get_uint32_t(val_buffer,&save_ptr);
   fprintf(stderr,"Info: (%d) read inpipe data %d..\n", cycle_count, pipe_data);
 }
@@ -162,7 +162,7 @@ void do_in_pipe_ack()
       ack_flag = 1;
 
       sprintf(val_buffer,"1");
-      Vhpi_Set_Port_Value(port_buffer,val_buffer);
+      Vhpi_Set_Port_Value(port_buffer,val_buffer,1);
       fprintf(stderr,"Info: (%d) inpipe ack asserted..\n", cycle_count);
 
       pipe_has_data = 1;
@@ -173,7 +173,7 @@ void do_in_pipe_ack()
       // set ack to 1
       sprintf(port_buffer,"inpipe ack");
       sprintf(val_buffer,"0");
-      Vhpi_Set_Port_Value(port_buffer,val_buffer);
+      Vhpi_Set_Port_Value(port_buffer,val_buffer,1);
       fprintf(stderr,"Info: (%d) inpipe ack de-asserted..\n", cycle_count);
     }
 }

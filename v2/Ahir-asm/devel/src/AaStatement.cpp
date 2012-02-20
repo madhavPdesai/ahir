@@ -2880,6 +2880,31 @@ void AaSwitchStatement::Coalesce_Storage()
   if(this->_default_sequence)
     this->_default_sequence->Coalesce_Storage();
 }
+  
+void AaSwitchStatement::Map_Source_References()
+{
+    if(this->_select_expression)
+      this->_select_expression->Map_Source_References(this->_source_objects);
+
+    for(unsigned int i=0; i < this->_choice_pairs.size(); i++)
+    {
+      this->_choice_pairs[i].first->Map_Source_References(this->_source_objects);
+      if(this->_choice_pairs[i].first->Is("AaSimpleObjectReference"))
+	{
+		AaRoot* obj = ((AaSimpleObjectReference*)(this->_choice_pairs[i].first))->Get_Object();
+		if(!obj->Is_Constant())
+			AaRoot::Error("Choice in switch statement must be a constant", this);
+	}
+      else if(!this->_choice_pairs[i].first->Is("AaConstantLiteralReference"))
+	{
+	        AaRoot::Error("Choice in switch statement must be a scalar constant", this);
+	}
+
+      this->_choice_pairs[i].second->Map_Source_References();
+    }
+    if(this->_default_sequence)
+      this->_default_sequence->Map_Source_References();
+}
 
 void AaSwitchStatement::Print(ostream& ofile)
 {
@@ -3220,7 +3245,7 @@ void AaSwitchStatement::Write_VC_Wire_Declarations(ostream& ofile)
   this->_select_expression->Write_VC_Wire_Declarations(false,ofile);
   for(int idx = 0; idx < _choice_pairs.size(); idx++)
     {
-      AaConstantLiteralReference* expr = this->_choice_pairs[idx].first;
+      AaExpression* expr = this->_choice_pairs[idx].first;
       Write_VC_Wire_Declaration(expr->Get_VC_Constant_Name() + "_cmp", "$int<1>",ofile);
       this->_choice_pairs[idx].second->Write_VC_Wire_Declarations(ofile);
     }
@@ -3238,7 +3263,7 @@ void AaSwitchStatement::Write_VC_Datapath_Instances(ostream& ofile)
   this->_select_expression->Write_VC_Datapath_Instances(NULL,ofile);
   for(int idx = 0; idx < _choice_pairs.size(); idx++)
     {
-      AaConstantLiteralReference* expr = this->_choice_pairs[idx].first;
+      AaExpression* expr = this->_choice_pairs[idx].first;
       vector<pair<string,AaType*> > br_input;
 
       // one comparison operator per switch choice.
@@ -3374,11 +3399,16 @@ void AaSwitchStatement::Propagate_Constants()
       this->_select_expression->Evaluate();
       for(int idx = 0; idx < _choice_pairs.size(); idx++)
 	{
-	  if(!this->_choice_pairs[idx].first->Get_Type())
-	    {
-	      this->_choice_pairs[idx].first->Set_Type(this->_select_expression->Get_Type());
-	    }
-	  this->_choice_pairs[idx].first->Evaluate();
+	  if(this->_choice_pairs[idx].first->Is("AaSimpleObjectReference"))
+	  	this->_choice_pairs[idx].first->Evaluate();
+	  else
+	  {
+	  	if(!this->_choice_pairs[idx].first->Get_Type())
+	    	{
+	      		this->_choice_pairs[idx].first->Set_Type(this->_select_expression->Get_Type());
+	    	}
+	  	this->_choice_pairs[idx].first->Evaluate();
+	  }
 	  this->_choice_pairs[idx].second->Propagate_Constants();
 	}
 

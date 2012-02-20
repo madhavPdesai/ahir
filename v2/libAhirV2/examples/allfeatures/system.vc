@@ -4,7 +4,7 @@ $pipe [midpipe] 8
 
 $memoryspace [global] 
 {
-    $capacity 16 $datawidth 8 $addrwidth 4
+    $capacity 16 $datawidth 8 $addrwidth 4 $maxaccesswidth 8
     $object [pool] : $array [16] $of $int<8>
 }
 

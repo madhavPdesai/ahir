@@ -961,7 +961,7 @@ vc_Wire_Declaration[vcSystem* sys,vcDataPath* dp]
                 dp->Add_Wire(obj_name, t);
            }
            else
-              sys->Error("Warning: wire declaration at system scope ignored: line number " + 
+              sys->Warning("Warning: wire declaration at system scope ignored: line number " + 
                             IntToStr(wid->getLine()));
         }
         else

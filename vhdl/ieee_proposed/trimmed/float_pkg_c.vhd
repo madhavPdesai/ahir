@@ -217,12 +217,12 @@ package float_pkg is
   function ">"  (l, r : UNRESOLVED_float) return BOOLEAN;
   function "<"  (l, r : UNRESOLVED_float) return BOOLEAN;
 
-  function \?=\  (l, r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?/=\ (l, r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?>\  (l, r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?>=\ (l, r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?<\  (l, r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?<=\ (l, r : UNRESOLVED_float) return STD_ULOGIC;
+  function QEq  (l, r : UNRESOLVED_float) return STD_ULOGIC;
+  function QNotEq (l, r : UNRESOLVED_float) return STD_ULOGIC;
+  function QGt  (l, r : UNRESOLVED_float) return STD_ULOGIC;
+  function QGtEq (l, r : UNRESOLVED_float) return STD_ULOGIC;
+  function QLt  (l, r : UNRESOLVED_float) return STD_ULOGIC;
+  function QLtEq (l, r : UNRESOLVED_float) return STD_ULOGIC;
 
   function std_match (l, r     : UNRESOLVED_float) return BOOLEAN;
   function find_rightmost (arg : UNRESOLVED_float; y : STD_ULOGIC)
@@ -509,30 +509,30 @@ package float_pkg is
   function "<="  (l : INTEGER; r : UNRESOLVED_float) return BOOLEAN;
   function ">"   (l : INTEGER; r : UNRESOLVED_float) return BOOLEAN;
   function "<"   (l : INTEGER; r : UNRESOLVED_float) return BOOLEAN;
-  function \?=\  (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC;
-  function \?/=\ (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC;
-  function \?>\  (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC;
-  function \?>=\ (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC;
-  function \?<\  (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC;
-  function \?<=\ (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC;
-  function \?=\  (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?/=\ (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?>\  (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?>=\ (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?<\  (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?<=\ (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?=\  (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC;
-  function \?/=\ (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC;
-  function \?>\  (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC;
-  function \?>=\ (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC;
-  function \?<\  (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC;
-  function \?<=\ (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC;
-  function \?=\  (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?/=\ (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?>\  (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?>=\ (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?<\  (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC;
-  function \?<=\ (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC;
+  function QEq  (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC;
+  function QNotEq (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC;
+  function QGt  (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC;
+  function QGtEq (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC;
+  function QLt  (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC;
+  function QLtEq (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC;
+  function QEq  (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC;
+  function QNotEq (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC;
+  function QGt  (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC;
+  function QGtEq (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC;
+  function QLt  (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC;
+  function QLtEq (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC;
+  function QEq  (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC;
+  function QNotEq (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC;
+  function QGt  (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC;
+  function QGtEq (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC;
+  function QLt  (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC;
+  function QLtEq (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC;
+  function QEq  (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC;
+  function QNotEq (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC;
+  function QGt  (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC;
+  function QGtEq (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC;
+  function QLt  (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC;
+  function QLtEq (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC;
   -- minimum and maximum overloads
   function maximum (l : UNRESOLVED_float; r : REAL) return UNRESOLVED_float;
   function minimum (l : UNRESOLVED_float; r : REAL) return UNRESOLVED_float;
@@ -900,7 +900,7 @@ package body float_pkg is
   -- ?= functions, Similar to "std_match", but returns "std_ulogic".
   -------------------------------------------------------------------
   -- %%% FUNCTION "?=" ( l, r : std_ulogic ) RETURN std_ulogic IS
-  function \?=\ (l, r : STD_ULOGIC) return STD_ULOGIC is
+  function QEq (l, r : STD_ULOGIC) return STD_ULOGIC is
     variable lx, rx : STD_ULOGIC;
   begin
 --    return match_logic_table (l, r);
@@ -913,15 +913,15 @@ package body float_pkg is
     else
       return '0';
     end if;
-  end function \?=\;
-  function \?/=\ (l, r : STD_ULOGIC) return STD_ULOGIC is
+  end function QEq;
+  function QNotEq (l, r : STD_ULOGIC) return STD_ULOGIC is
   begin
 --    return no_match_logic_table (l, r);
-    return not \?=\ (l, r);
-  end function \?/=\;
+    return not QEq (l, r);
+  end function QNotEq;
 
 --  -- %%% FUNCTION "?=" ( l, r : std_logic_vector ) RETURN std_ulogic IS
---  function \?=\ (l, r : STD_LOGIC_VECTOR) return STD_ULOGIC is
+--  function QEq (l, r : STD_LOGIC_VECTOR) return STD_ULOGIC is
 --    alias lv                 : STD_LOGIC_VECTOR(1 to l'length) is l;
 --    alias rv                 : STD_LOGIC_VECTOR(1 to r'length) is r;
 --    variable result, result1 : STD_ULOGIC;  -- result
@@ -950,11 +950,11 @@ package body float_pkg is
 --      end loop;
 --      return result;
 --    end if;
---  end function \?=\;
+--  end function QEq;
 --  -- %%% END FUNCTION "?=";
 --  -------------------------------------------------------------------
 --  -- %%% FUNCTION "?=" ( l, r : std_ulogic_vector ) RETURN std_ulogic IS
-  function \?=\ (l, r : STD_ULOGIC_VECTOR) return STD_ULOGIC is
+  function QEq (l, r : STD_ULOGIC_VECTOR) return STD_ULOGIC is
     alias lv                 : STD_ULOGIC_VECTOR(1 to l'length) is l;
     alias rv                 : STD_ULOGIC_VECTOR(1 to r'length) is r;
     variable result, result1 : STD_ULOGIC;
@@ -971,7 +971,7 @@ package body float_pkg is
     else
       result := '1';
       for i in lv'low to lv'high loop
-        result1 := \?=\ (lv(i), rv(i));
+        result1 := QEq (lv(i), rv(i));
         if result1 = 'U' then
           return 'U';
         elsif result1 = 'X' or result = 'X' then
@@ -982,7 +982,7 @@ package body float_pkg is
       end loop;
       return result;
     end if;
-  end function \?=\;
+  end function QEq;
 
   function Is_X (s : UNSIGNED) return BOOLEAN is
   begin
@@ -2063,7 +2063,7 @@ package body float_pkg is
     return not is_less_than and not is_unordered;
   end function ge;
 
-  function \?=\ (L, R : UNRESOLVED_float) return STD_ULOGIC is
+  function QEq (L, R : UNRESOLVED_float) return STD_ULOGIC is
     constant fraction_width         : NATURAL := -mine(l'low, r'low);  -- length of FP output fraction
     constant exponent_width         : NATURAL := maximum(l'high, r'high);  -- length of FP output exponent
     variable lfptype, rfptype       : valid_fpstate;
@@ -2090,7 +2090,7 @@ package body float_pkg is
                          fraction_width => fraction_width,
                          denormalize_in => float_denormalize,
                          denormalize    => float_denormalize);
-      is_equal := \?=\ (to_sulv(lresize), to_sulv(rresize));
+      is_equal := QEq (to_sulv(lresize), to_sulv(rresize));
     end if;
     if (float_check_error) then
       if (lfptype = nan or lfptype = quiet_nan or
@@ -2103,9 +2103,9 @@ package body float_pkg is
       is_unordered := '0';
     end if;
     return is_equal and not is_unordered;
-  end function \?=\;
+  end function QEq;
 
-  function \?/=\ (L, R : UNRESOLVED_float) return STD_ULOGIC is
+  function QNotEq (L, R : UNRESOLVED_float) return STD_ULOGIC is
     constant fraction_width         : NATURAL := -mine(l'low, r'low);  -- length of FP output fraction
     constant exponent_width         : NATURAL := maximum(l'high, r'high);  -- length of FP output exponent
     variable lfptype, rfptype       : valid_fpstate;
@@ -2132,7 +2132,7 @@ package body float_pkg is
                          fraction_width => fraction_width,
                          denormalize_in => float_denormalize,
                          denormalize    => float_denormalize);
-      is_equal := \?=\ (to_sulv(lresize), to_sulv(rresize));
+      is_equal := QEq (to_sulv(lresize), to_sulv(rresize));
     end if;
     if (float_check_error) then
       if (lfptype = nan or lfptype = quiet_nan or
@@ -2145,9 +2145,9 @@ package body float_pkg is
       is_unordered := '0';
     end if;
     return not (is_equal and not is_unordered);
-  end function \?/=\;
+  end function QNotEq;
 
-  function \?>\ (L, R : UNRESOLVED_float) return STD_ULOGIC is
+  function QGt (L, R : UNRESOLVED_float) return STD_ULOGIC is
     constant fraction_width : NATURAL := -mine(l'low, r'low);
     variable founddash      : BOOLEAN := false;
   begin
@@ -2177,9 +2177,9 @@ package body float_pkg is
         return '0';
       end if;
     end if;
-  end function \?>\;
+  end function QGt;
 
-  function \?>=\ (L, R : UNRESOLVED_float) return STD_ULOGIC is
+  function QGtEq (L, R : UNRESOLVED_float) return STD_ULOGIC is
     constant fraction_width : NATURAL := -mine(l'low, r'low);
     variable founddash      : BOOLEAN := false;
   begin
@@ -2209,9 +2209,9 @@ package body float_pkg is
         return '0';
       end if;
     end if;
-  end function \?>=\;
+  end function QGtEq;
 
-  function \?<\ (L, R : UNRESOLVED_float) return STD_ULOGIC is
+  function QLt (L, R : UNRESOLVED_float) return STD_ULOGIC is
     constant fraction_width : NATURAL := -mine(l'low, r'low);
     variable founddash      : BOOLEAN := false;
   begin
@@ -2241,9 +2241,9 @@ package body float_pkg is
         return '0';
       end if;
     end if;
-  end function \?<\;
+  end function QLt;
 
-  function \?<=\ (L, R : UNRESOLVED_float) return STD_ULOGIC is
+  function QLtEq (L, R : UNRESOLVED_float) return STD_ULOGIC is
     constant fraction_width : NATURAL := -mine(l'low, r'low);
     variable founddash      : BOOLEAN := false;
   begin
@@ -2273,7 +2273,7 @@ package body float_pkg is
         return '0';
       end if;
     end if;
-  end function \?<=\;
+  end function QLtEq;
 
   function std_match (L, R : UNRESOLVED_float) return BOOLEAN is
   begin
@@ -2289,7 +2289,7 @@ package body float_pkg is
 
   function find_rightmost (arg : UNRESOLVED_float; y : STD_ULOGIC) return INTEGER is
   begin
-    for_loop : for i in arg'reverse_range loop
+    for_loop : for i in arg'high downto arg'low loop
       if arg(i) = y then
         return i;
       end if;
@@ -3573,176 +3573,176 @@ package body float_pkg is
   end function "<";
 
   -- ?= overloads
-  function \?=\ (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC is
+  function QEq (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC is
     variable r_float : UNRESOLVED_float (l'range);
   begin
     r_float := to_float (r, l'high, -l'low);
-    return \?=\ (l, r_float);
-  end function \?=\;
+    return QEq (l, r_float);
+  end function QEq;
 
-  function \?/=\ (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC is
+  function QNotEq (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC is
     variable r_float : UNRESOLVED_float (l'range);
   begin
     r_float := to_float (r, l'high, -l'low);
-    return \?/=\ (l, r_float);
-  end function \?/=\;
+    return QNotEq (l, r_float);
+  end function QNotEq;
 
-  function \?>\ (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC is
+  function QGt (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC is
     variable r_float : UNRESOLVED_float (l'range);
   begin
     r_float := to_float (r, l'high, -l'low);
-    return \?>\ (l, r_float);
-  end function \?>\;
+    return QGt (l, r_float);
+  end function QGt;
 
-  function \?>=\ (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC is
+  function QGtEq (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC is
     variable r_float : UNRESOLVED_float (l'range);
   begin
     r_float := to_float (r, l'high, -l'low);
-    return \?>=\ (l, r_float);
-  end function \?>=\;
+    return QGtEq (l, r_float);
+  end function QGtEq;
 
-  function \?<\ (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC is
+  function QLt (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC is
     variable r_float : UNRESOLVED_float (l'range);
   begin
     r_float := to_float (r, l'high, -l'low);
-    return \?<\ (l, r_float);
-  end function \?<\;
+    return QLt (l, r_float);
+  end function QLt;
 
-  function \?<=\ (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC is
+  function QLtEq (l : UNRESOLVED_float; r : REAL) return STD_ULOGIC is
     variable r_float : UNRESOLVED_float (l'range);
   begin
     r_float := to_float (r, l'high, -l'low);
-    return \?<=\ (l, r_float);
-  end function \?<=\;
+    return QLtEq (l, r_float);
+  end function QLtEq;
 
   -- real and float
-  function \?=\ (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC is
+  function QEq (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC is
     variable l_float : UNRESOLVED_float (r'range);
   begin
     l_float := to_float (l, r'high, -r'low);
-    return \?=\ (l_float, r);
-  end function \?=\;
+    return QEq (l_float, r);
+  end function QEq;
 
-  function \?/=\ (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC is
+  function QNotEq (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC is
     variable l_float : UNRESOLVED_float (r'range);
   begin
     l_float := to_float (l, r'high, -r'low);
-    return \?/=\ (l_float, r);
-  end function \?/=\;
+    return QNotEq (l_float, r);
+  end function QNotEq;
 
-  function \?>\ (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC is
+  function QGt (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC is
     variable l_float : UNRESOLVED_float (r'range);
   begin
     l_float := to_float (l, r'high, -r'low);
-    return \?>\ (l_float, r);
-  end function \?>\;
+    return QGt (l_float, r);
+  end function QGt;
 
-  function \?>=\ (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC is
+  function QGtEq (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC is
     variable l_float : UNRESOLVED_float (r'range);
   begin
     l_float := to_float (l, r'high, -r'low);
-    return \?>=\ (l_float, r);
-  end function \?>=\;
+    return QGtEq (l_float, r);
+  end function QGtEq;
 
-  function \?<\ (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC is
+  function QLt (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC is
     variable l_float : UNRESOLVED_float (r'range);
   begin
     l_float := to_float (l, r'high, -r'low);
-    return \?<\ (l_float, r);
-  end function \?<\;
+    return QLt (l_float, r);
+  end function QLt;
 
-  function \?<=\ (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC is
+  function QLtEq (l : REAL; r : UNRESOLVED_float) return STD_ULOGIC is
     variable l_float : UNRESOLVED_float (r'range);
   begin
     l_float := to_float (l, r'high, -r'low);
-    return \?<=\ (l_float, r);
-  end function \?<=\;
+    return QLtEq (l_float, r);
+  end function QLtEq;
 
   -- ?= overloads
-  function \?=\ (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC is
+  function QEq (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC is
     variable r_float : UNRESOLVED_float (l'range);
   begin
     r_float := to_float (r, l'high, -l'low);
-    return \?=\ (l, r_float);
-  end function \?=\;
+    return QEq (l, r_float);
+  end function QEq;
 
-  function \?/=\ (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC is
+  function QNotEq (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC is
     variable r_float : UNRESOLVED_float (l'range);
   begin
     r_float := to_float (r, l'high, -l'low);
-    return \?/=\ (l, r_float);
-  end function \?/=\;
+    return QNotEq (l, r_float);
+  end function QNotEq;
 
-  function \?>\ (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC is
+  function QGt (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC is
     variable r_float : UNRESOLVED_float (l'range);
   begin
     r_float := to_float (r, l'high, -l'low);
-    return \?>\ (l, r_float);
-  end function \?>\;
+    return QGt (l, r_float);
+  end function QGt;
 
-  function \?>=\ (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC is
+  function QGtEq (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC is
     variable r_float : UNRESOLVED_float (l'range);
   begin
     r_float := to_float (r, l'high, -l'low);
-    return \?>=\ (l, r_float);
-  end function \?>=\;
+    return QGtEq (l, r_float);
+  end function QGtEq;
 
-  function \?<\ (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC is
+  function QLt (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC is
     variable r_float : UNRESOLVED_float (l'range);
   begin
     r_float := to_float (r, l'high, -l'low);
-    return \?<\ (l, r_float);
-  end function \?<\;
+    return QLt (l, r_float);
+  end function QLt;
 
-  function \?<=\ (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC is
+  function QLtEq (l : UNRESOLVED_float; r : INTEGER) return STD_ULOGIC is
     variable r_float : UNRESOLVED_float (l'range);
   begin
     r_float := to_float (r, l'high, -l'low);
-    return \?<=\ (l, r_float);
-  end function \?<=\;
+    return QLtEq (l, r_float);
+  end function QLtEq;
 
   -- integer and float
-  function \?=\ (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC is
+  function QEq (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC is
     variable l_float : UNRESOLVED_float (r'range);
   begin
     l_float := to_float (l, r'high, -r'low);
-    return \?=\ (l_float, r);
-  end function \?=\;
+    return QEq (l_float, r);
+  end function QEq;
 
-  function \?/=\ (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC is
+  function QNotEq (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC is
     variable l_float : UNRESOLVED_float (r'range);
   begin
     l_float := to_float (l, r'high, -r'low);
-    return \?/=\ (l_float, r);
-  end function \?/=\;
+    return QNotEq (l_float, r);
+  end function QNotEq;
 
-  function \?>\ (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC is
+  function QGt (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC is
     variable l_float : UNRESOLVED_float (r'range);
   begin
     l_float := to_float (l, r'high, -r'low);
-    return \?>\ (l_float, r);
-  end function \?>\;
+    return QGt (l_float, r);
+  end function QGt;
 
-  function \?>=\ (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC is
+  function QGtEq (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC is
     variable l_float : UNRESOLVED_float (r'range);
   begin
     l_float := to_float (l, r'high, -r'low);
-    return \?>=\ (l_float, r);
-  end function \?>=\;
+    return QGtEq (l_float, r);
+  end function QGtEq;
 
-  function \?<\ (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC is
+  function QLt (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC is
     variable l_float : UNRESOLVED_float (r'range);
   begin
     l_float := to_float (l, r'high, -r'low);
-    return \?<\ (l_float, r);
-  end function \?<\;
+    return QLt (l_float, r);
+  end function QLt;
 
-  function \?<=\ (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC is
+  function QLtEq (l : INTEGER; r : UNRESOLVED_float) return STD_ULOGIC is
     variable l_float : UNRESOLVED_float (r'range);
   begin
     l_float := to_float (l, r'high, -r'low);
-    return \?<=\ (l_float, r);
-  end function \?<=\;
+    return QLtEq (l_float, r);
+  end function QLtEq;
 
   -- minimum and maximum overloads
   function minimum (l : UNRESOLVED_float; r : REAL)

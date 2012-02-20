@@ -532,7 +532,7 @@ void vcParser::vc_Wire_Declaration(
 		dp->Add_Wire(obj_name, t);
 		}
 		else
-		sys->Error("Warning: wire declaration at system scope ignored: line number " + 
+		sys->Warning("Warning: wire declaration at system scope ignored: line number " + 
 		IntToStr(wid->getLine()));
 		}
 		else

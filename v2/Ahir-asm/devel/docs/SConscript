@@ -3,8 +3,8 @@ env = Environment(ENV = {'PATH' : os.environ['PATH']})
 # use a path to get to the antlr jar "later"
 # also: how does one force the action if the source has changed?
 pdfltx = Builder(action = 'pdflatex -output-directory ./Ahir-asm/devel/docs/ $SOURCE')
-txhtml = Builder(action = 'hyperlatex $SOURCE')
+#txhtml = Builder(action = 'hyperlatex $SOURCE')
 env.Prepend(BUILDERS = {'pdfBuild' : pdfltx})
-env.Prepend(BUILDERS = {'htmlBuild' : txhtml})
+#env.Prepend(BUILDERS = {'htmlBuild' : txhtml})
 env.pdfBuild(['AaLRM.pdf' ], 'AaLRM.tex')
-env.htmlBuild(['AaLRM.html' ] + Glob('AaLRM_*.html'), 'AaLRM.tex')
+#env.htmlBuild(['AaLRM.html' ] + Glob('AaLRM_*.html'), 'AaLRM.tex')
