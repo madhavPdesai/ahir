@@ -587,6 +587,7 @@ void pipeHandler()
   finished_jobs.head = NULL; finished_jobs.tail = NULL;
 
   start_listening(server_socket_id);
+  close(server_socket_id);
 }
 
 void killPipeHandler()
