@@ -12,7 +12,7 @@ entity PipeBase is
   generic (num_reads: integer;
            num_writes: integer;
            data_width: integer;
-	   lifo_mode: boolean := false;
+           lifo_mode: boolean := false;
            depth: integer := 1);
   port (
     read_req       : in  std_logic_vector(num_reads-1 downto 0);
@@ -47,12 +47,11 @@ begin  -- default_arch
       clk   => clk,
       reset => reset);
 
-  Shallow: if depth < 3 generate
+  Shallow: if (depth < 3) and (not lifo_mode) generate
 
     queue : QueueBase generic map (
       queue_depth => depth,
-      data_width       => data_width,
-      lifo_mode => lifo_mode)
+      data_width       => data_width)
       port map (
         push_req   => pipe_req,
         push_ack => pipe_ack,
@@ -65,12 +64,11 @@ begin  -- default_arch
     
   end generate Shallow;
 
-  Deep: if depth > 2 generate
+  DeepFifo: if (depth > 2) and (not lifo_mode) generate
     
     queue : SynchFifo generic map (
       queue_depth => depth,
-      data_width       => data_width,
-      lifo_mode => lifo_mode)
+      data_width       => data_width)
       port map (
         push_req   => pipe_req,
         push_ack => pipe_ack,
@@ -82,7 +80,24 @@ begin  -- default_arch
         clk      => clk,
         reset    => reset);
     
-  end generate Deep;
+  end generate DeepFifo;
+
+  Lifo: if lifo_mode generate
+    stack : SynchLifo generic map (
+      queue_depth => depth,
+      data_width       => data_width)
+      port map (
+        push_req   => pipe_req,
+        push_ack => pipe_ack,
+        data_in  => pipe_data,
+        pop_req  => pipe_req_repeated,
+        pop_ack  => pipe_ack_repeated,
+        data_out => pipe_data_repeated,
+        nearly_full => open,
+        clk      => clk,
+        reset    => reset);
+  end generate Lifo;
+  
 
   rmux : InputPortLevel generic map (
     num_reqs       => num_reads,
