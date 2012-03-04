@@ -11,9 +11,11 @@ struct PipeRec_
   int pipe_depth;
   int pipe_width;
 
-  int top_pointer;
-  int bottom_pointer;
+  int read_pointer;
+  int write_pointer;
   int number_of_entries;
+
+  int lifo_mode;
 
   PipeRec* next;
   union
@@ -23,6 +25,7 @@ struct PipeRec_
     uint32_t* ptr32;
     uint64_t* ptr64;
   } buffer;
+
 };
 
 typedef struct _PipeJob PipeJob;
@@ -104,11 +107,37 @@ void killPipeHandler();
       lnk->prev = lnk->next = NULL;\
     }
 
-#define INCR(x,p) { ((x == (p->pipe_depth-1)) ? 0 : x+1); }
-#define POP(p,x,n) {*x = p->buffer.ptr##n[p->top_pointer]; INCR(p->top_pointer,p);  p->number_of_entries -= 1;}
-#define PUSH(p,x,n) {p->buffer.ptr##n[p->bottom_pointer] = x; INCR(p->bottom_pointer,p); p->number_of_entries += 1; }
 #define __EMPTY(p) (p->number_of_entries == 0)
 #define __FULL(p) (p->number_of_entries ==  p->pipe_depth)
+#define INCR(x,p) x = ((x == (p->pipe_depth-1)) ? 0 : x+1)
+#define POP(p,x,n) {\
+			if(p->number_of_entries > 0) {\
+				*x = p->buffer.ptr##n[p->read_pointer];\
+				if(!p->lifo_mode)\
+				 	INCR(p->read_pointer,p);\
+				else\
+				{\
+					p->write_pointer -= 1;\
+					if(p->write_pointer > 0)\
+						p->read_pointer = p->write_pointer - 1;\
+					else\
+						p->read_pointer =  0;\
+				}\
+				p->number_of_entries -= 1;\
+		    	}\
+                   }
+
+#define PUSH(p,x,n) {\
+		if(p->number_of_entries < p->pipe_width) {\
+			p->number_of_entries += 1;\
+			p->buffer.ptr##n[p->write_pointer] = x;\
+			INCR(p->write_pointer,p); \
+			if(p->lifo_mode)\
+			{\
+				p->read_pointer = p->write_pointer - 1;\
+			}\
+		 } }
+
 
 uint8_t pop8(PipeRec* p);
 uint16_t pop16(PipeRec* p);

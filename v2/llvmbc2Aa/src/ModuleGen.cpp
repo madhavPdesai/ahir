@@ -32,6 +32,7 @@ namespace {
     static char ID;
     std::set<std::string> module_names;
     std::map<std::string, int> _pipe_depths;
+    std::set<std::string> _lifo_pipe_set;
     bool _consider_all_functions;
     bool _create_initializers;
     bool _skip_zero_initializers;
@@ -92,12 +93,15 @@ namespace {
 	      std::string line;
 	      std::string pipe_name;
 	      int pipe_depth = 1;
+              bool lifo_flag = false;
 
 	      std::getline(plist, line);
-	      if(parse_pipe_depth_spec(line,pipe_name, pipe_depth))
+	      if(parse_pipe_depth_spec(line,pipe_name, pipe_depth, lifo_flag))
 		{
 		  std::cerr << "Info: pipe " << pipe_name << " max-depth set to " << pipe_depth << std::endl;	      
 		  _pipe_depths[pipe_name] = pipe_depth;
+                  if(lifo_flag)
+			_lifo_pipe_set.insert(pipe_name);
 		}
 	    }
 	    plist.close();
@@ -202,7 +206,7 @@ namespace {
 	  }
       }
 	// declare the pipes.
-      aa_writer->Print_Pipe_Declarations(std::cout,_pipe_depths);
+      aa_writer->Print_Pipe_Declarations(std::cout,_pipe_depths,_lifo_pipe_set);
 
       std::vector<std::string> objects_to_be_initialized;
       for (llvm::Module::global_iterator gi = M.global_begin(), ge = M.global_end();

@@ -102,40 +102,48 @@ int start_server()
   return(server_socket_id);
 }
 
-PipeRec* add_pipe(char* pipe_name, int pipe_depth, int pipe_width)
+PipeRec* find_pipe(char* pipe_name)
 {
   PipeRec* p;
-  PipeRec* tail = NULL;
   for(p = pipes; p != NULL; p = p->next)
-    {
-      tail = p;
+  {
       if(strcmp(p->pipe_name,pipe_name)== 0)
-	{
-	  if(p->pipe_width == pipe_width)
-	    return(p);
-	  else
-	    {
-	      fprintf(stderr,"Error: pipeHandler: pipe %s has conflicting widths (%d or %d?)\n", pipe_name, p->pipe_width, pipe_width);
-	      return(NULL);
-	    }
-	}
-    }
+	return(p);
+  }
+  return(NULL);
+}
 
-  fprintf(log_file,"Info: added pipe %s depth %d width %d\n", pipe_name,pipe_depth,pipe_width);
-  fflush(log_file);
+PipeRec* add_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo_mode)
+{
+  PipeRec* p;
+  p = find_pipe(pipe_name);
+  if(p != NULL)
+  {
+	if(p->pipe_width != pipe_width)
+        {
+	      fprintf(stderr,"Error: pipeHandler: redefinition of pipe %s with conflicting widths (%d or %d?)\n", pipe_name, p->pipe_width, pipe_width);
+		return(NULL);
+        }
+	if(p->lifo_mode != lifo_mode)
+	{
+	      fprintf(stderr,"Error: pipeHandler: redefinition of pipe %s with conflicting modes (FIFO or LIFO?)\n", pipe_name);
+		return(NULL);
+	}
+
+	return(p);
+  }
 
   PipeRec* new_p = (PipeRec*) calloc(1,sizeof(PipeRec));
   new_p->pipe_name = strdup(pipe_name);
   new_p->pipe_width = pipe_width;
   new_p->pipe_depth = pipe_depth;
   new_p->buffer.ptr8 = (uint8_t*) malloc(((pipe_depth*pipe_width)/8)*sizeof(uint8_t));
-  if(tail == NULL)
-    {
-      pipes = new_p;
-    }
-  else
-    tail->next = new_p;
+  new_p->lifo_mode = lifo_mode;
+  new_p->next = pipes;
+  pipes = new_p;
 
+  fprintf(log_file,"Info: added pipe %s depth %d width %d lifo_mode %d\n", pipe_name,pipe_depth,pipe_width, lifo_mode);
+  fflush(log_file);
   return(new_p);
 }
 
@@ -143,7 +151,13 @@ PipeRec* add_pipe(char* pipe_name, int pipe_depth, int pipe_width)
 void add_job(char* pipe_name, int read_write_bar, int width, int number_of_words_requested, void* burst_payload, 
 		char* single_binary_payload, int socket_id, int burst_access)
 {
-  PipeRec* p = add_pipe(pipe_name,1,width);
+  PipeRec* p = find_pipe(pipe_name);
+  if(p == NULL)
+  {
+	fprintf(stderr,"Error: pipeHandler:add_job: job used unregistered pipe %s\n", pipe_name);
+	return;
+  }
+
   PipeJob* new_job = (PipeJob*) calloc(1, sizeof(PipeJob));
   new_job->pipe_name = strdup(pipe_name);
   new_job->pipe_record = p;
@@ -444,7 +458,7 @@ void parse_and_add_job(char* receive_buffer, int client_sock, char* payload, int
   char* pipe_name = strtok_r(NULL," ",&save_ptr);
 
   // what type of request is it?
-  if(strcmp(type_of_request,"registerpipe") == 0)
+  if(strcmp(type_of_request,"registerpipe.fifo") == 0)
     {
       char* depth_string = strtok_r(NULL," ",&save_ptr);
       assert(depth_string != NULL);
@@ -454,7 +468,21 @@ void parse_and_add_job(char* receive_buffer, int client_sock, char* payload, int
       assert(width_string != NULL);
       int width = atoi(width_string);
 
-      PipeRec* p = add_pipe(pipe_name,depth,width);
+      PipeRec* p = add_pipe(pipe_name,depth,width,0);
+      uint8_t status = (p != NULL);
+      ack_and_close_connection(client_sock,status);
+    }
+  else if(strcmp(type_of_request,"registerpipe.lifo") == 0)
+    {
+      char* depth_string = strtok_r(NULL," ",&save_ptr);
+      assert(depth_string != NULL);
+      int depth = atoi(depth_string);
+
+      char* width_string = strtok_r(NULL," ",&save_ptr);
+      assert(width_string != NULL);
+      int width = atoi(width_string);
+
+      PipeRec* p = add_pipe(pipe_name,depth,width,1);
       uint8_t status = (p != NULL);
       ack_and_close_connection(client_sock,status);
     }

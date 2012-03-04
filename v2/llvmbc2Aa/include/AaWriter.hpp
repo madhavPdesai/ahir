@@ -51,7 +51,8 @@ namespace Aa {
 
     void Collect_Pipes(llvm::Function& F);
     void Add_Pipe(std::string pname, std::string aa_type_name);
-    void Print_Pipe_Declarations(std::ostream& ofile, std::map<std::string, int>& pipe_depths);
+    void Print_Pipe_Declarations(std::ostream& ofile, std::map<std::string, int>& pipe_depths,
+					std::set<std::string>& lifo_pipe_set);
     bool Is_Pipe(std::string port_name);
 
     void start_program(std::string id);

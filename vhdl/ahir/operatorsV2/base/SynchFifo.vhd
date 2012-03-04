@@ -26,7 +26,7 @@ architecture behave of SynchFifo is
   type QueueArray is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
 
   signal queue_array : QueueArray(queue_depth-1 downto 0);
-  signal top_pointer, bottom_pointer : integer range 0 to queue_depth-1;
+  signal read_pointer, write_pointer : integer range 0 to queue_depth-1;
   signal queue_size : integer range 0 to queue_depth;
 
   signal pop_ack_int, pop_req_int: std_logic;
@@ -49,17 +49,17 @@ begin  -- SimModel
 
   
   -- single process
-  process(clk,reset,queue_size,push_req,pop_req_int,top_pointer, bottom_pointer)
+  process(clk,reset,queue_size,push_req,pop_req_int,read_pointer, write_pointer)
     variable qsize : integer range 0 to queue_depth;
     variable push_ack_v, pop_ack_v, nearly_full_v: std_logic;
     variable push,pop : boolean;
-    variable next_top_ptr,next_bottom_ptr : integer range 0 to queue_depth-1;
+    variable next_read_ptr,next_write_ptr : integer range 0 to queue_depth-1;
   begin
     qsize := queue_size;
     push  := false;
     pop   := false;
-    next_top_ptr := top_pointer;
-    next_bottom_ptr := bottom_pointer;
+    next_read_ptr := read_pointer;
+    next_write_ptr := write_pointer;
     
     if(queue_size < queue_depth) then
       push_ack_v := '1';
@@ -89,16 +89,33 @@ begin  -- SimModel
       pop := true;
     end if;
 
-
     if(push) then
-      next_top_ptr := Incr(next_top_ptr,queue_depth-1);
+        if(lifo_mode) then
+           if(not pop) then
+              if(queue_size > 0) then 
+              	next_read_ptr := Incr(next_read_ptr,queue_depth-1);
+              else
+              	next_read_ptr := 0;
+	      end if;
+              next_write_ptr := Incr(next_write_ptr,queue_depth-1);
+           end if;
+	else
+           next_write_ptr := Incr(next_write_ptr,queue_depth-1);
+        end if;
     end if;
 
     if(pop) then
-	if lifo_mode then
-		next_top_ptr := next_top_ptr - 1;
+	if(lifo_mode) then
+             if (not push) then
+		next_write_ptr := queue_size - 1;
+                if(queue_size > 1)  then
+                   next_read_ptr  := queue_size - 2;
+                else
+                   next_read_ptr := 0;
+                end if;
+             end if;
 	else
-      		next_bottom_ptr := Incr(next_bottom_ptr,queue_depth-1);
+        	next_read_ptr := Incr(next_read_ptr,queue_depth-1);
 	end if;
     end if;
 
@@ -119,27 +136,21 @@ begin  -- SimModel
       if(reset = '1') then
         pop_ack_int  <=  '0';        
 	queue_size <= 0;
-        top_pointer <= 0;
-        bottom_pointer <= 0;
+        read_pointer <= 0;
+        write_pointer <= 0;
       else
         pop_ack_int  <=  pop_ack_v and pop_req_int;        
         queue_size <= qsize;
-        top_pointer <= next_top_ptr;
-        bottom_pointer <= next_bottom_ptr;
+        read_pointer <= next_read_ptr;
+        write_pointer <= next_write_ptr;
       end if;
 
       if(push) then
-        queue_array(top_pointer) <= data_in;
+        queue_array(write_pointer) <= data_in;
       end if;
       
       if(pop) then
-	if lifo_mode then
-      		-- top pointer gives the data in LIFO mode
-        	data_out_int <= queue_array(top_pointer);
-	else
-      		-- bottom pointer gives the data in FIFO mode
-        	data_out_int <= queue_array(bottom_pointer);
-	end if;
+        data_out_int <= queue_array(read_pointer);
       end if;
       
     end if;

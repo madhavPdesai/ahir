@@ -1,3 +1,21 @@
+you will need to have installed
+	llvm-2.8
+	clang-2.8
+	ghdl
+
+The directory contains
+	prog.c
+	prog.h
+	testbench.c
+	Makefile
+prog.c contains a program which reads from
+a pipe, accumulates a sum and writes the sum to 
+a pipe.   testbench.c contains a main-program
+which exercises prog.c.  testbench.c can also
+be used to drive a VHDL simulator.
+
+The Makefile is self-explanatory.
+
 run make to build
 	- sw testbench (testbench_sw)
 	- hw testbench (testbench_hw)

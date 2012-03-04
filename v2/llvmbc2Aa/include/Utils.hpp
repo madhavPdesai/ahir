@@ -65,7 +65,7 @@ namespace Aa {
 
   int type_width(const llvm::Type* t, int ptr_width);
 
-  bool parse_pipe_depth_spec(std::string line, std::string& pipe_name, int& pipe_depth);
+  bool parse_pipe_depth_spec(std::string line, std::string& pipe_name, int& pipe_depth, bool& lifo_flag);
   bool is_private_storage_object(llvm::GlobalVariable* gv);
   bool is_zero(llvm::Constant* konst);
 

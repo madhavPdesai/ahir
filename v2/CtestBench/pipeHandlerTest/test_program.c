@@ -9,45 +9,42 @@ void* pipeHandler__()
 	pipeHandler();
 }
 
-void* Sender()
+void Sender()
 {
 	uint32_t word;
 	for(word = 0; word < 10; word++)
 	{
-		write_uint32("test_pipe",word);
+		write_uint32("test_fifo",word);
 		fprintf(stdout,"Sent: %d\n", word);
-		write_float32("test_pipe",(float)word);
+		write_float32("test_lifo",(float)word);
 		fprintf(stdout,"Sent: %f\n", (float) word);
 	}
 }
 
-void* Receiver()
+void Receiver()
 {
 	uint32_t word;
 	float fword;
-	while(1)
+        uint32_t idx;
+	for(idx = 0; idx < 10; idx++)
 	{
-		word = read_uint32("test_pipe");
-		fprintf(stdout,"Received: %d\n", word);
-		fword = read_float32("test_pipe");
+		fword = read_float32("test_lifo");
 		fprintf(stdout,"Received: %f\n", fword);
+		word = read_uint32("test_fifo");
+		fprintf(stdout,"Received: %d\n", word);
 	}
 }
 
 int main(int argc, char* argv[])
 {
-	pthread_t phandler_t, sender_t, receiver_t;
+	pthread_t phandler_t;
 	pthread_create(&phandler_t,NULL,&pipeHandler__,NULL);
 
-	register_pipe("test_pipe",32,32);
+	register_pipe("test_fifo",32,32, 0);// last arg = 1 => FIFO
+	register_pipe("test_lifo",32,32, 1);// last arg = 1 => LIFO
 
-	pthread_create(&sender_t,NULL,&Sender,NULL);
-	pthread_create(&receiver_t,NULL,&Receiver,NULL);
-
-	pthread_join(sender_t,NULL);
-	usleep(1000);
-	pthread_cancel(receiver_t);
+	Sender();
+	Receiver();
 	
 	killPipeHandler();
-	pthread_join(phandler_t,NULL);
 }

@@ -10,16 +10,16 @@ all: SW HW
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.
 SW: prog.c prog.h testbench.c 
-	gcc -c -DSW -I$(IOLIB_INCLUDE) prog.c
-	gcc -c -DSW -I$(IOLIB_INCLUDE) testbench.c
-	gcc -o testbench_sw prog.o testbench.o -L$(IOLIB_LIB) -lio -lpthread
+	gcc -c -DSW -I$(SOCKETLIB_INCLUDE) prog.c
+	gcc -c -DSW -I$(SOCKETLIB_INCLUDE) testbench.c
+	gcc -o testbench_sw prog.o testbench.o -L$(SOCKETLIB_LIB) -lSocketLib -lpthread
 
 # five steps from C to vhdl simulator.
 HW: c2llvmbc llvmbc2aa aa2vc vc2vhdl vhdlsim
 
 # C to llvm byte-code.. use clang.
 c2llvmbc: prog.c prog.h testbench.c
-	clang -std=gnu89 -I$(IOLIB_INCLUDE) -emit-llvm -c prog.c
+	clang -std=gnu89 -I$(SOCKETLIB_INCLUDE) -emit-llvm -c prog.c
 	llvm-dis prog.o
 
 # llvm byte-code to Aa..

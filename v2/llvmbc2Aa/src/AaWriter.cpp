@@ -261,7 +261,8 @@ namespace Aa {
       }
   }
 
-  void AaWriter::Print_Pipe_Declarations(std::ostream& ofile, std::map<std::string,int>& pipe_depths)
+  void AaWriter::Print_Pipe_Declarations(std::ostream& ofile, std::map<std::string,int>& pipe_depths,
+						std::set<std::string>& lifo_pipe_set)
   {
     for(std::map<std::string,std::string>::iterator i = this->pipe_map.begin(), e = this->pipe_map.end();
 	i != e;
@@ -273,6 +274,8 @@ namespace Aa {
 	  {
 	    pipe_depth = (*miter).second;
 	  }
+	if(lifo_pipe_set.find((*i).first) != lifo_pipe_set.end())
+		ofile << "$lifo ";
 	ofile << "$pipe " << (*i).first << " : " << (*i).second << " $depth " << pipe_depth << std::endl;
       }
   }

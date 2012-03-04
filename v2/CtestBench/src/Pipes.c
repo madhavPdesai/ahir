@@ -33,12 +33,16 @@
 			 send_packet_and_wait_for_response(buffer,send_len,"localhost",9999);
 
 
-uint8_t register_pipe(const char* id, int pipe_depth, int pipe_width)
+uint8_t register_pipe(const char* id, int pipe_depth, int pipe_width, int lifo_mode)
 {
   uint8_t ret_val;
   char buffer[MAX_BUF_SIZE];
   char* ss;
-  sprintf(buffer,"registerpipe %s %d %d", id, pipe_depth,pipe_width);
+  if(lifo_mode)
+  	sprintf(buffer,"registerpipe.lifo %s %d %d", id, pipe_depth,pipe_width);
+  else
+  	sprintf(buffer,"registerpipe.fifo %s %d %d", id, pipe_depth,pipe_width);
+
   send_packet_and_wait_for_response(buffer,strlen(buffer),"localhost",9999);
 #ifdef DEBUG
   fprintf(stderr,"Info: in register_pipe, received %s\n", buffer);

@@ -949,10 +949,11 @@ int Aa::type_width(const llvm::Type* ptr, int ptr_width)
   return(-1);
 }
 
-bool Aa::parse_pipe_depth_spec(std::string line, std::string& pipe_name, int& pipe_depth)
+bool Aa::parse_pipe_depth_spec(std::string line, std::string& pipe_name, int& pipe_depth, bool& lifo_flag)
 {
   bool ret_val = false;
   char* line_str = (char*) line.c_str();
+  lifo_flag = false;
 
   char* name_str = strtok(line_str," ");
   if(name_str != NULL)
@@ -967,6 +968,13 @@ bool Aa::parse_pipe_depth_spec(std::string line, std::string& pipe_name, int& pi
 	      pipe_depth = wid;
 	      ret_val = true;
 	    }
+	}
+
+       char* lifo_str = strtok(NULL," \n");
+	if(lifo_str != NULL)
+	{
+		if(strcmp(lifo_str,"lifo") == 0) 
+			lifo_flag = true;
 	}
     }
   

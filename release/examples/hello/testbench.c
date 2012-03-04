@@ -2,9 +2,11 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #ifdef SW
-#include <iolib.h>
+#include <Pipes.h>
+#include <pipeHandler.h>
 #include "prog.h"
 #else
 #include "vhdlCStubs.h"
@@ -31,6 +33,10 @@ void *read_pipe_(void* a)
    read_uint32_n("out_data",(uint32_t*)a, 10);
 }
 
+void* pipeHandler__(void* a)
+{
+	pipeHandler();
+}
 
 
 int main(int argc, char* argv[])
@@ -40,6 +46,25 @@ int main(int argc, char* argv[])
 
 	uint32_t data_in[10], data_out[10];
         int i;
+
+#ifdef SW
+
+	// in the "software" case, we start a pipe-handler
+	// to manage the pipes..  Earlier, we were using named
+	// pipes, which were very flaky and difficult to debug.
+	// the pipeHandler generates a log file (pipeHandler.log)
+	// which is very useful for figuring out what happened.
+	// one can also use gdb to trace activity.
+	pthread_t phandler_t;
+	pthread_create(&phandler_t,NULL,&pipeHandler__,NULL);
+
+	usleep(100);
+	
+	// register two FIFOs..
+	register_pipe("in_data",10,32,0);
+	register_pipe("out_data",10,32,0);
+
+#endif
 	
 #ifndef SW
 	// to set the initial value of sum.
@@ -49,6 +74,8 @@ int main(int argc, char* argv[])
 	// the Aa linker AaLinkExtMem)
 	global_storage_initializer_();
 #endif
+
+
 
         for(i = 0; i < 10; i++)
 	{
@@ -76,5 +103,6 @@ int main(int argc, char* argv[])
 
 #ifdef SW
 	pthread_cancel(acc_t);
+	killPipeHandler();
 #endif
 }

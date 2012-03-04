@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
 	pthread_t phandler_t;
 	pthread_create(&phandler_t,NULL,&pipeHandler__,NULL);
 
-	register_pipe("test_pipe",32,32);
+	register_pipe("test_pipe",32,32,0);
 	usleep(1000);
 
 	write_uint32("test_pipe",0);
@@ -26,5 +26,5 @@ int main(int argc, char* argv[])
 	v = read_uint32("test_pipe");
 	fprintf(stderr,"TEST: received %d\n", v);
 
-	pthread_cancel(phandler_t);
+        killPipeHandler();
 }
