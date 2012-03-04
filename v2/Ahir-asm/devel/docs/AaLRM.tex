@@ -126,18 +126,29 @@ scope, storage variables are visible throughout
 the program.  Storage variables can be thought of 
 as memory locations which can be accessed from different
 points in the program.
+A storage variable declaration has the form
+\begin{verbatim}
+$storage <var-name>: <var-type> 
+\end{verbatim}
+For example
+\begin{verbatim}
+$storage mempool: $array [1024] $of $uint<32>
+\end{verbatim}
 \item {\bf Pipe} variables declared at the program scope
-are globally visible first-in-first-out (FIFO) buffers that can 
+are globally visible buffers (which
+can be defined to be either first-in-first-out (FIFO) or
+last-in-first-out (LIFO)) that can 
 be read from anywhere in the program and can be
 written into from anywhere in th program.  A pipe
-is a FIFO buffer with a specified number of
+is a FIFO (or FIFO) buffer with a specified number of
 slots.  A write to a pipe succeeds
 only if there is an empty slot in the FIFO (a successful
 write uses up an empty slots.  A read
 from the pipe succeeds only if there is at
-least one occupied slot in the FIFO (a successful read
-creates an empty slot in the FIFO). 
-Thus, pipes provide a mechanism for synchronization and
+least one occupied slot in the pipe (a successful read
+creates an empty slot in the pipe). 
+Thus, pipes can be used to model queues as
+well as stacks, and also provide a mechanism for synchronization and
 for message passing in an \Aa program.
 \begin{itemize}
 \item A pipe that is only written into in the program, but
@@ -148,16 +159,35 @@ program.
 written into, is assumed to have a source outside the program.
 Such a pipe is an input port of the program.
 \end{itemize}
+A pipe declaration has the form
+\begin{verbatim}
+($lifo)? $pipe <pipe-name>: <pipe-type>  ($depth <integer>)?
+\end{verbatim}
+For example
+\begin{verbatim}
+$pipe myfifo: $uint<32> $depth 16 // 16-slot queue
+$lifo $pipe mystack: $uint<32> $depth 4 // 4-slot stack
+\end{verbatim}
 \item {\bf Constant} variables declared at
 the program scope are globally visible and have
 initial values which can never be altered in the program.
 Thus, an assignment to a constant is an error.
+A constant declaration has the form
+\begin{verbatim}
+$constant <constant-name>: <constant-type> := <initial-value>
+\end{verbatim}
+For example
+\begin{verbatim}
+$constant wordlength: $uint<32> := 16
+\end{verbatim}
 \item {\bf Implicit} or {\bf Static Single Assignment}
 variables are created by statements in the \Aa program
 (as described below in Section \ref{sec:Statements}).
 These are analogous to registers that can be written
 into only from one point,  but can be
 read from several points in the program.
+Implicit variables are not declared, but are defined
+by the statements which write to them.
 \end{itemize} 
 
 

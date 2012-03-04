@@ -314,11 +314,14 @@ bool AaForeignStorageObject::Set_Addressed_Object_Representative(AaStorageObject
 AaPipeObject::AaPipeObject(AaScope* parent_tpr, string oname, AaType* otype):AaObject(parent_tpr,oname,otype) 
 {
   _depth = 1;
+  _lifo_mode = false;
 };
 AaPipeObject::~AaPipeObject() {};
 void AaPipeObject::Print(ostream& ofile)
 {
   ofile << this->Tab();
+  if(_lifo_mode)
+	ofile << "$lifo ";
   ofile << "$pipe ";
   this->AaObject::Print(ofile);
   ofile << " $depth " << this->Get_Depth() << " ";
@@ -342,6 +345,7 @@ void AaPipeObject::Write_VC_Model(ostream& ofile)
   Write_VC_Pipe_Declaration(this->Get_VC_Name(),
 			    this->_type->Size(),
 			    this->Get_Depth(),
+			    this->Get_Lifo_Mode(),
 			    ofile);
 }
 

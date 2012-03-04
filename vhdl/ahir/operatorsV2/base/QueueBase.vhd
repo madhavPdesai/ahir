@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 
 entity QueueBase is
-    generic(queue_depth: integer := 2; data_width: integer := 32);
+    generic(queue_depth: integer := 2; data_width: integer := 32; lifo_mode: boolean := false);
     port(clk: in std_logic;
          reset: in std_logic;
          data_in: in std_logic_vector(data_width-1 downto 0);
@@ -39,8 +39,16 @@ begin  -- SimModel
   push_ack <= '1' when (queue_size < queue_depth) else '0';
   pop_ack  <= '1' when (queue_size > 0) else '0';
 
-  -- bottom pointer gives the data
-  data_out <= queue_array(bottom_pointer);
+  -- bottom pointer gives the data in FIFO mode..
+  FIFOgen: if not lifo_mode generate
+  	data_out <= queue_array(bottom_pointer);
+  end generate FIFOgen;
+  
+
+  -- top pointer gives the data in LIFO mode..
+  LIFOgen: if lifo_mode generate
+  	data_out <= queue_array(top_pointer);
+  end generate LIFOgen;
   
   -- single process
   process(clk)
@@ -73,7 +81,11 @@ begin  -- SimModel
       end if;
 
       if(pop) then
-        next_bottom_ptr := Incr(next_bottom_ptr,queue_depth-1);
+	if(lifo_mode) then
+		next_top_ptr := next_top_ptr - 1;
+	else
+        	next_bottom_ptr := Incr(next_bottom_ptr,queue_depth-1);
+	end if;
       end if;
 
 

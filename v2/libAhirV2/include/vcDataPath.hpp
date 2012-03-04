@@ -34,20 +34,24 @@ class vcPipe: public vcRoot
   // inports on modules connected to pipe.  
   map<vcModule*, vector<int> > _pipe_write_map;
   int _pipe_write_count;
+  bool _lifo_mode;
 public:
   
-  vcPipe(vcModule* parent, string id, int w, int d):vcRoot(id)
+  vcPipe(vcModule* parent, string id, int w, int d, bool lifo_mode):vcRoot(id)
   {
     _parent = parent;
     _width = w;
     _depth = d;
     _pipe_read_count = 0;
     _pipe_write_count = 0;
+    _lifo_mode = lifo_mode;
   }
 
   vcModule* Get_Parent() {return(_parent);}
   int Get_Width() { return(this->_width);}
   int Get_Depth() { return(this->_depth);}
+  bool Get_Lifo_Mode() {return(_lifo_mode);}
+
   map<vcModule*,vector<int> >& Get_Pipe_Read_Map()
   {
     return(_pipe_read_map);
@@ -65,7 +69,9 @@ public:
   virtual string Kind() {return("vcPipe");}
   virtual void Print(ostream& ofile)
   {
-    
+    if(_lifo_mode)
+    	ofile << vcLexerKeywords[__LIFO]  << " ";
+
     ofile << vcLexerKeywords[__PIPE] 
 	  << " [" << this->Get_Id() << "] " 
 	  << this->Get_Width() << " " <<

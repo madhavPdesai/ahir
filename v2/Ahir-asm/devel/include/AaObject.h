@@ -266,6 +266,7 @@ class AaPipeObject: public AaObject
   set<AaModule*> _writer_modules;
 
   int _depth;
+  bool _lifo_mode;
  public:
 
   
@@ -274,6 +275,9 @@ class AaPipeObject: public AaObject
 
   void Set_Depth(int d) {_depth = d; }
   int Get_Depth() {return(_depth); }
+
+  void Set_Lifo_Mode(bool v) { _lifo_mode = v; }
+  bool Get_Lifo_Mode() {return(_lifo_mode);}
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaPipeObject");}

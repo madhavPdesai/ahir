@@ -323,8 +323,11 @@ void Write_VC_Intermediate_Wire_Declaration(string name, AaType* type, ostream& 
 }
 
 
-void Write_VC_Pipe_Declaration(string name, int width,int depth, ostream& ofile)
+void Write_VC_Pipe_Declaration(string name, int width,int depth, bool lifo_mode, ostream& ofile)
 {
+  if(lifo_mode)
+	ofile << "$lifo ";
+  
   ofile << "$pipe [" << name << "] " << width << " " << "$depth " << depth << endl;
 }
 

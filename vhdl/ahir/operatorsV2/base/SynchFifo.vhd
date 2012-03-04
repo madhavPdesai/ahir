@@ -9,7 +9,7 @@ use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 
 entity SynchFifo is
-  generic(queue_depth: integer := 3; data_width: integer := 72);
+  generic(queue_depth: integer := 3; data_width: integer := 72; lifo_mode: boolean := false);
   port(clk: in std_logic;
        reset: in std_logic;
        data_in: in std_logic_vector(data_width-1 downto 0);
@@ -95,7 +95,11 @@ begin  -- SimModel
     end if;
 
     if(pop) then
-      next_bottom_ptr := Incr(next_bottom_ptr,queue_depth-1);
+	if lifo_mode then
+		next_top_ptr := next_top_ptr - 1;
+	else
+      		next_bottom_ptr := Incr(next_bottom_ptr,queue_depth-1);
+	end if;
     end if;
 
 
@@ -128,9 +132,14 @@ begin  -- SimModel
         queue_array(top_pointer) <= data_in;
       end if;
       
-      -- bottom pointer gives the data
       if(pop) then
-        data_out_int <= queue_array(bottom_pointer);
+	if lifo_mode then
+      		-- top pointer gives the data in LIFO mode
+        	data_out_int <= queue_array(top_pointer);
+	else
+      		-- bottom pointer gives the data in FIFO mode
+        	data_out_int <= queue_array(bottom_pointer);
+	end if;
       end if;
       
     end if;

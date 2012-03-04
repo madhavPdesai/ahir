@@ -321,6 +321,8 @@ package float_pkg is
   function QLtEq (l, r : UNRESOLVED_float) return STD_ULOGIC;
 
   function std_match (l, r     : UNRESOLVED_float) return BOOLEAN;
+  function find_rightmost (arg : UNRESOLVED_float; y : STD_ULOGIC)
+    return INTEGER;
   function find_leftmost (arg : UNRESOLVED_float; y : STD_ULOGIC)
     return INTEGER;
   function maximum (l, r : UNRESOLVED_float) return UNRESOLVED_float;
@@ -2381,6 +2383,15 @@ package body float_pkg is
     end if;
   end function std_match;
 
+  function find_rightmost (arg : UNRESOLVED_float; y : STD_ULOGIC) return INTEGER is
+  begin
+    for_loop : for i in arg'high downto arg'low loop
+      if arg(i) = y then
+        return i;
+      end if;
+    end loop;
+    return arg'high+1;                  -- return out of bounds 'high
+  end function find_rightmost;
 
   function find_leftmost (arg : UNRESOLVED_float; y : STD_ULOGIC) return INTEGER is
   begin

@@ -2812,7 +2812,7 @@ void AaTypeCastExpression::PrintC(ofstream& ofile, string tab_string)
 {
   if(this->_bit_cast)
     {
-      AaRoot::Error("bit-cast not supported in Aa2VC", this);
+      AaRoot::Error("bit-cast not supported in Aa2C", this);
     }
 
   ofile << tab_string << "(" << "(" << this->_to_type->CBaseName() << ") ";

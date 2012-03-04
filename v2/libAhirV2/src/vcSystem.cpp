@@ -125,13 +125,13 @@ int vcSystem::Get_Pipe_Depth(string pipe_id)
   assert(_pipe_map.find(pipe_id) != _pipe_map.end());
   return(_pipe_map[pipe_id]->Get_Depth());
 }
-void vcSystem::Add_Pipe(string pipe_id, int width, int depth) 
+void vcSystem::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode) 
 {
   assert(_pipe_map.find(pipe_id) == _pipe_map.end());
   assert(width > 0);
   assert(depth > 0);
 
-  _pipe_map[pipe_id] = new vcPipe(NULL, pipe_id, width, depth);
+  _pipe_map[pipe_id] = new vcPipe(NULL, pipe_id, width, depth, lifo_mode);
 }
 
 void vcSystem::Add_Module(vcModule* module)

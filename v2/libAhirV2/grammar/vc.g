@@ -60,18 +60,19 @@ vc_System[vcSystem* sys]
 	;
 
 //-----------------------------------------------------------------------------------------------
-// vc_Pipe :  PIPE vc_Label UINTEGER
+// vc_Pipe :  LIFO? PIPE vc_Label UINTEGER
 //-----------------------------------------------------------------------------------------------
 vc_Pipe[vcSystem* sys, vcModule* m]
 {
   string lbl;
   int depth = 1;
-}:  PIPE lbl = vc_Label  wid:UINTEGER  (DEPTH did:UINTEGER {depth = atoi(did->getText().c_str()); })?
+  bool lifo_mode = false;
+}:  (LIFO {lifo_mode = true;})? PIPE lbl = vc_Label  wid:UINTEGER  (DEPTH did:UINTEGER {depth = atoi(did->getText().c_str()); })?
         {
             if (sys) 
-                sys->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth);
+                sys->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode);
             else if(m)
-                m->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth);
+                m->Add_Pipe(lbl,atoi(wid->getText().c_str()),depth, lifo_mode);
         } 
 ;
 
@@ -1232,6 +1233,7 @@ CALL          : "$call";
 INLINE        : "$inline";
 IOPORT        : "$ioport";
 PIPE          : "$pipe";
+LIFO          : "$lifo";
 FROM          : "$from";
 AT            : "$at";
 CONSTANT      : "$constant";

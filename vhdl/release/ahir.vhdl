@@ -1951,7 +1951,7 @@ package BaseComponents is
   -----------------------------------------------------------------------------
   
   component QueueBase 
-    generic(queue_depth: integer := 2; data_width: integer := 32);
+    generic(queue_depth: integer := 2; data_width: integer := 32; lifo_mode: boolean := false);
     port(clk: in std_logic;
          reset: in std_logic;
          data_in: in std_logic_vector(data_width-1 downto 0);
@@ -1963,7 +1963,7 @@ package BaseComponents is
   end component QueueBase;
 
   component SynchFifo 
-    generic(queue_depth: integer := 3; data_width: integer := 72);
+    generic(queue_depth: integer := 3; data_width: integer := 72; lifo_mode : boolean := false);
     port(clk: in std_logic;
          reset: in std_logic;
          data_in: in std_logic_vector(data_width-1 downto 0);
@@ -1999,6 +1999,7 @@ package BaseComponents is
     generic (num_reads: integer;
              num_writes: integer;
              data_width: integer;
+             lifo_mode : boolean := false;
              depth: integer := 1);
     port (
       read_req       : in  std_logic_vector(num_reads-1 downto 0);
@@ -9795,6 +9796,7 @@ entity PipeBase is
   generic (num_reads: integer;
            num_writes: integer;
            data_width: integer;
+	   lifo_mode: boolean := false;
            depth: integer := 1);
   port (
     read_req       : in  std_logic_vector(num_reads-1 downto 0);
@@ -9833,7 +9835,8 @@ begin  -- default_arch
 
     queue : QueueBase generic map (
       queue_depth => depth,
-      data_width       => data_width)
+      data_width       => data_width,
+      lifo_mode => lifo_mode)
       port map (
         push_req   => pipe_req,
         push_ack => pipe_ack,
@@ -9850,7 +9853,8 @@ begin  -- default_arch
     
     queue : SynchFifo generic map (
       queue_depth => depth,
-      data_width       => data_width)
+      data_width       => data_width,
+      lifo_mode => lifo_mode)
       port map (
         push_req   => pipe_req,
         push_ack => pipe_ack,
@@ -9952,7 +9956,7 @@ use ieee.numeric_std.all;
 
 
 entity QueueBase is
-    generic(queue_depth: integer := 2; data_width: integer := 32);
+    generic(queue_depth: integer := 2; data_width: integer := 32; lifo_mode: boolean := false);
     port(clk: in std_logic;
          reset: in std_logic;
          data_in: in std_logic_vector(data_width-1 downto 0);
@@ -9987,8 +9991,16 @@ begin  -- SimModel
   push_ack <= '1' when (queue_size < queue_depth) else '0';
   pop_ack  <= '1' when (queue_size > 0) else '0';
 
-  -- bottom pointer gives the data
-  data_out <= queue_array(bottom_pointer);
+  -- bottom pointer gives the data in FIFO mode..
+  FIFOgen: if not lifo_mode generate
+  	data_out <= queue_array(bottom_pointer);
+  end generate FIFOgen;
+  
+
+  -- top pointer gives the data in LIFO mode..
+  LIFOgen: if lifo_mode generate
+  	data_out <= queue_array(top_pointer);
+  end generate LIFOgen;
   
   -- single process
   process(clk)
@@ -10021,7 +10033,11 @@ begin  -- SimModel
       end if;
 
       if(pop) then
-        next_bottom_ptr := Incr(next_bottom_ptr,queue_depth-1);
+	if(lifo_mode) then
+		next_top_ptr := next_top_ptr - 1;
+	else
+        	next_bottom_ptr := Incr(next_bottom_ptr,queue_depth-1);
+	end if;
       end if;
 
 
@@ -11643,7 +11659,7 @@ use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 
 entity SynchFifo is
-  generic(queue_depth: integer := 3; data_width: integer := 72);
+  generic(queue_depth: integer := 3; data_width: integer := 72; lifo_mode: boolean := false);
   port(clk: in std_logic;
        reset: in std_logic;
        data_in: in std_logic_vector(data_width-1 downto 0);
@@ -11729,7 +11745,11 @@ begin  -- SimModel
     end if;
 
     if(pop) then
-      next_bottom_ptr := Incr(next_bottom_ptr,queue_depth-1);
+	if lifo_mode then
+		next_top_ptr := next_top_ptr - 1;
+	else
+      		next_bottom_ptr := Incr(next_bottom_ptr,queue_depth-1);
+	end if;
     end if;
 
 
@@ -11762,9 +11782,14 @@ begin  -- SimModel
         queue_array(top_pointer) <= data_in;
       end if;
       
-      -- bottom pointer gives the data
       if(pop) then
-        data_out_int <= queue_array(bottom_pointer);
+	if lifo_mode then
+      		-- top pointer gives the data in LIFO mode
+        	data_out_int <= queue_array(top_pointer);
+	else
+      		-- bottom pointer gives the data in FIFO mode
+        	data_out_int <= queue_array(bottom_pointer);
+	end if;
       end if;
       
     end if;

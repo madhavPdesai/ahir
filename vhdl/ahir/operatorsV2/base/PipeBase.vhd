@@ -12,6 +12,7 @@ entity PipeBase is
   generic (num_reads: integer;
            num_writes: integer;
            data_width: integer;
+	   lifo_mode: boolean := false;
            depth: integer := 1);
   port (
     read_req       : in  std_logic_vector(num_reads-1 downto 0);
@@ -50,7 +51,8 @@ begin  -- default_arch
 
     queue : QueueBase generic map (
       queue_depth => depth,
-      data_width       => data_width)
+      data_width       => data_width,
+      lifo_mode => lifo_mode)
       port map (
         push_req   => pipe_req,
         push_ack => pipe_ack,
@@ -67,7 +69,8 @@ begin  -- default_arch
     
     queue : SynchFifo generic map (
       queue_depth => depth,
-      data_width       => data_width)
+      data_width       => data_width,
+      lifo_mode => lifo_mode)
       port map (
         push_req   => pipe_req,
         push_ack => pipe_ack,

@@ -1069,13 +1069,13 @@ vcPipe* vcModule::Find_Pipe(string pipe_id)
   return(ret_pipe);
 }
 
-void vcModule::Add_Pipe(string pipe_id, int width, int depth) 
+void vcModule::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode) 
 {
   assert(_pipe_map.find(pipe_id) == _pipe_map.end());
   assert(width > 0);
   assert(depth > 0);
 
-  _pipe_map[pipe_id] = new vcPipe(this, pipe_id, width, depth);
+  _pipe_map[pipe_id] = new vcPipe(this, pipe_id, width, depth, lifo_mode);
 }
 
 void vcModule::Print_VHDL_Pipe_Signals(ostream& ofile)

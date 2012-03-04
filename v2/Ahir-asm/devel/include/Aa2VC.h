@@ -76,7 +76,7 @@ void Write_VC_Intermediate_Wire_Declaration(string wire_name,
 					    AaType* t,
 					    ostream& ofile);
 
-void Write_VC_Pipe_Declaration(string name, int width,int depth, ostream& ofile);
+void Write_VC_Pipe_Declaration(string name, int width,int depth, bool lifo_mode, ostream& ofile);
 void Write_VC_Memory_Space_Declaration(string space_name, string obj_name, AaType* type,ostream& ofile);
 void Write_VC_Load_Operator(string ms_name, string inst_name, string data_name, string addr_name,
 			    ostream& ofile);

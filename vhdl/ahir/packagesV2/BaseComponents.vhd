@@ -312,7 +312,7 @@ package BaseComponents is
   -----------------------------------------------------------------------------
   
   component QueueBase 
-    generic(queue_depth: integer := 2; data_width: integer := 32);
+    generic(queue_depth: integer := 2; data_width: integer := 32; lifo_mode: boolean := false);
     port(clk: in std_logic;
          reset: in std_logic;
          data_in: in std_logic_vector(data_width-1 downto 0);
@@ -324,7 +324,7 @@ package BaseComponents is
   end component QueueBase;
 
   component SynchFifo 
-    generic(queue_depth: integer := 3; data_width: integer := 72);
+    generic(queue_depth: integer := 3; data_width: integer := 72; lifo_mode : boolean := false);
     port(clk: in std_logic;
          reset: in std_logic;
          data_in: in std_logic_vector(data_width-1 downto 0);
@@ -360,6 +360,7 @@ package BaseComponents is
     generic (num_reads: integer;
              num_writes: integer;
              data_width: integer;
+             lifo_mode : boolean := false;
              depth: integer := 1);
     port (
       read_req       : in  std_logic_vector(num_reads-1 downto 0);

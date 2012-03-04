@@ -1028,8 +1028,10 @@ aA_Pipe_Object_Declaration[AaScope* scope] returns [AaObject* obj]
             AaType* otype = NULL;
             AaConstantLiteralReference* initial_value = NULL;
             int pipe_depth = 1;
+	    bool lifo_flag = false;
         }
-        : (st:PIPE aA_Object_Declaration_Base[scope,oname,otype,initial_value]) 
+        : (LIFO { lifo_flag = true; })? 
+		(st:PIPE aA_Object_Declaration_Base[scope,oname,otype,initial_value]) 
         (DEPTH did:UINTEGER {pipe_depth = atoi(did->getText().c_str());})?
         {
             if(initial_value != NULL)
@@ -1038,6 +1040,7 @@ aA_Pipe_Object_Declaration[AaScope* scope] returns [AaObject* obj]
             if(pipe_depth > 1)
                 ((AaPipeObject*)obj)->Set_Depth(pipe_depth);
             obj->Set_Line_Number(st->getLine());
+	    ((AaPipeObject*)obj)->Set_Lifo_Mode(lifo_flag);
         }
 
         ;
@@ -1382,6 +1385,7 @@ DEFAULT       : "$default";
 STORAGE       : "$storage";
 REGISTER      : "$register";
 PIPE          : "$pipe";
+LIFO          : "$lifo";
 CONSTANT      : "$constant";
 SERIESBLOCK   : "$seriesblock";
 PARALLELBLOCK : "$parallelblock";
