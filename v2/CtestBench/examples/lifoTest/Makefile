@@ -54,4 +54,4 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 clean:
 	rm -f *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* out_data* testbench_sw testbench_hw ahir_system_test_bench vhpi.log *.aa *.vc
 
-PHONY: all clean	
+PHONY: all clean c2llvmbc llvmbc2aa aa2vc vc2vhdl vhdlsim

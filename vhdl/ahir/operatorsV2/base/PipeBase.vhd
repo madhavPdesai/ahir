@@ -1,22 +1,22 @@
-library ieee;
-use ieee.std_logic_1164.all;
+	library ieee;
+	use ieee.std_logic_1164.all;
 
-library ahir;
-use ahir.Types.all;
-use ahir.Subprograms.all;
-use ahir.Utilities.all;
-use ahir.BaseComponents.all;
+	library ahir;
+	use ahir.Types.all;
+	use ahir.Subprograms.all;
+	use ahir.Utilities.all;
+	use ahir.BaseComponents.all;
 
-entity PipeBase is
-  
-  generic (num_reads: integer;
-           num_writes: integer;
-           data_width: integer;
-           lifo_mode: boolean := false;
-           depth: integer := 1);
-  port (
-    read_req       : in  std_logic_vector(num_reads-1 downto 0);
-    read_ack       : out std_logic_vector(num_reads-1 downto 0);
+	entity PipeBase is
+	  
+	  generic (num_reads: integer;
+		   num_writes: integer;
+		   data_width: integer;
+		   lifo_mode: boolean := false;
+		   depth: integer := 1);
+	  port (
+	    read_req       : in  std_logic_vector(num_reads-1 downto 0);
+	    read_ack       : out std_logic_vector(num_reads-1 downto 0);
     read_data      : out std_logic_vector((num_reads*data_width)-1 downto 0);
     write_req       : in  std_logic_vector(num_writes-1 downto 0);
     write_ack       : out std_logic_vector(num_writes-1 downto 0);

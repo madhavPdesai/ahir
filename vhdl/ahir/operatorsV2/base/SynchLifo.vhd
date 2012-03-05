@@ -29,8 +29,7 @@ architecture behave of SynchLifo is
   signal tos_pointer, write_pointer : integer range 0 to queue_depth-1;
   signal queue_size : integer range 0 to queue_depth;
 
-  signal pop_ack_int, pop_req_int: std_logic;
-  signal data_out_int, bypass_reg, mem_out_reg : std_logic_vector(data_width-1 downto 0);
+  signal bypass_reg, mem_out_reg : std_logic_vector(data_width-1 downto 0);
 
   function Incr(x: integer; M: integer) return integer is
   begin
@@ -41,15 +40,16 @@ architecture behave of SynchLifo is
     end if;
   end Incr;
 
-  signal empty_sig, full_sig : std_logic;
+  signal nearly_empty_sig, empty_sig, full_sig : std_logic;
   signal select_bypass : std_logic;
+  signal pop_req_int: std_logic;
 begin  -- SimModel
 
   full_sig  <= '1' when (queue_size = queue_depth) else '0';
   empty_sig <= '1' when (queue_size = 0) else '0';
+  nearly_empty_sig <= '1' when (queue_size = 1) else '0';
   nearly_full <= '1' when (queue_size = (queue_depth-1)) else '0';
 
-  push_ack <= not empty_sig;
 
   -- single process
   process(clk,reset,
@@ -57,7 +57,7 @@ begin  -- SimModel
           full_sig,
           queue_size,
           push_req,
-          pop_req_int,
+          pop_req,
           tos_pointer,
           write_pointer)
     variable qsize : integer range 0 to queue_depth;
@@ -67,14 +67,14 @@ begin  -- SimModel
     qsize := queue_size;
     push  := false;
     pop   := false;
-    next_read_ptr := read_pointer;
+    next_tos_ptr := tos_pointer;
     next_write_ptr := write_pointer;
     
-    if(full_sig = '0' and push_req = '1') then
+    if((queue_size < queue_depth) and push_req = '1') then
       push := true;
     end if;
 
-    if(empty_sig = '0' and pop_req_int = '1') then
+    if((queue_size > 0) and pop_req_int = '1') then
       pop := true;
     end if;
 
@@ -83,33 +83,43 @@ begin  -- SimModel
     if push and (not pop) then
       -- increment write pointer and tos-pointer.
       next_write_ptr := Incr(write_pointer,queue_depth-1);
-      if(queue_size > 0)
+      if(queue_size > 0) then
         next_tos_ptr := Incr(tos_pointer,queue_depth-1);
       else
         next_tos_ptr := 0;
       end if;
       qsize := queue_size + 1;      
     elsif pop and (not push) then
-      next_write_ptr := write_pointer-1;
-      if(queue_size > 1) then
+      if(write_pointer > 0) then
+      	next_write_ptr := write_pointer-1;
+      else
+	-- if write-ptr is 0, it must have wrapped around
+        -- in the increment function.
+	next_write_ptr := queue_depth - 1;
+      end if;
+
+      if(tos_pointer > 0) then
         next_tos_ptr := tos_pointer - 1;
       else
         next_tos_ptr := 0;
       end if;
       qsize := queue_size - 1;            
     end if;
-
     
     if(clk'event and clk = '1') then
       
       if(reset = '1') then
-        pop_ack_int  <=  '0';        
 	queue_size <= 0;
         tos_pointer <= 0;
         write_pointer <= 0;
         select_bypass <= '0';
+        pop_ack <= '0';
       else
-        pop_ack_int  <=  (not empty_sig) and pop_req_int;        
+	if(pop) then
+		pop_ack <= '1';
+	else
+		pop_ack <= '0';
+	end if;
         queue_size <= qsize;
         tos_pointer <= next_tos_ptr;
         write_pointer <= next_write_ptr;
@@ -124,22 +134,16 @@ begin  -- SimModel
         bypass_reg <= data_in;
       elsif pop then
         select_bypass <= '0';        
-        mem_out_reg <= queue_array(read_pointer);        
+        mem_out_reg <= queue_array(tos_pointer);        
       end if;
     end if;  
   end process;
 
-  data_out_int <= bypass_reg when select_bypass = '1' else mem_out_reg;
+  push_ack <= not full_sig;
+  pop_req_int <= pop_req when (queue_size > 0) else '0';
+
+  data_out <= bypass_reg when select_bypass = '1' else mem_out_reg;
   
-  opReg: SynchToAsynchReadInterface 
-		generic map(data_width => data_width)
-		port map(clk => clk, reset => reset,
-			 synch_req => pop_ack_int,
-			 synch_ack => pop_req_int,
-			 asynch_req => pop_ack,
-			 asynch_ack => pop_req,
-			 synch_data => data_out_int,
-			 asynch_data => data_out);
 end behave;
 
 
