@@ -1,2 +1,4 @@
 in_data 10
-out_data 10 lifo
+out_data 10 
+eval_stack 10 lifo
+in_op 10

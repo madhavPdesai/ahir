@@ -11927,13 +11927,7 @@ begin  -- SimModel
         tos_pointer <= 0;
         write_pointer <= 0;
         select_bypass <= '0';
-        pop_ack <= '0';
       else
-	if(pop) then
-		pop_ack <= '1';
-	else
-		pop_ack <= '0';
-	end if;
         queue_size <= qsize;
         tos_pointer <= next_tos_ptr;
         write_pointer <= next_write_ptr;
@@ -11948,14 +11942,16 @@ begin  -- SimModel
         bypass_reg <= data_in;
       elsif pop then
         select_bypass <= '0';        
-        mem_out_reg <= queue_array(tos_pointer);        
+	if(tos_pointer > 0) then
+        	mem_out_reg <= queue_array(tos_pointer-1);        
+	end if;
       end if;
     end if;  
   end process;
 
   push_ack <= not full_sig;
-  pop_req_int <= pop_req when (queue_size > 0) else '0';
-
+  pop_ack  <= not empty_sig;
+  pop_req_int <= pop_req;
   data_out <= bypass_reg when select_bypass = '1' else mem_out_reg;
   
 end behave;
