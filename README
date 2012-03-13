@@ -45,7 +45,8 @@ The organization
 
 	ericsson
 		some documents related to interaction with
-		ericsson on AHIR v2 validation.
+		ericsson on AHIR v2 validation (mainly to
+                do with the netfpga platform)
 
 	ReleaseMakefile
 		a Makefile which generates a release
