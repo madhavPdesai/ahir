@@ -349,8 +349,8 @@ void vcModule::Print_VHDL_Argument_Signals(ostream& ofile)
   if(this->Get_Out_Arg_Width() > 0)
     ofile <<  "signal " << prefix << "out_args   : std_logic_vector(" << this->Get_Out_Arg_Width()-1 << " downto 0);"  << endl;
 
-  ofile <<  "signal " << prefix << "tag_in    : std_logic_vector(" << this->Get_Callee_Tag_Length()-1 << " downto 0) := (others => '0');"  << endl;
-  ofile <<  "signal " << prefix << "tag_out   : std_logic_vector(" << this->Get_Callee_Tag_Length()-1 << " downto 0);"  << endl;
+  ofile <<  "signal " << prefix << "tag_in    : std_logic_vector(" << this->Get_Caller_Tag_Length()+ this->Get_Callee_Tag_Length()-1 << " downto 0) := (others => '0');"  << endl;
+  ofile <<  "signal " << prefix << "tag_out   : std_logic_vector(" << this->Get_Caller_Tag_Length() + this->Get_Callee_Tag_Length()-1 << " downto 0);"  << endl;
   ofile <<  "signal " << prefix << "start_req : std_logic;"  << endl;
   ofile <<  "signal " << prefix << "start_ack : std_logic;"  << endl;
   ofile <<  "signal " << prefix << "fin_req   : std_logic;" << endl;
@@ -381,9 +381,9 @@ void  vcModule::Print_VHDL_System_Argument_Signals(ostream& ofile)
     }
 
   ofile << "signal " <<  prefix << "tag_in: std_logic_vector(" 
-	<< this->Get_Callee_Tag_Length()-1 << " downto 0);" << endl;
+	<< this->Get_Callee_Tag_Length()+this->Get_Caller_Tag_Length()-1 << " downto 0);" << endl;
   ofile << "signal " << prefix << "tag_out: std_logic_vector(" 
-	<< this->Get_Callee_Tag_Length()-1 << " downto 0);" << endl;
+	<< this->Get_Callee_Tag_Length()+this->Get_Caller_Tag_Length()-1 << " downto 0);" << endl;
   ofile << "signal " << prefix <<  "start_req : std_logic := '0';"  << endl;
   ofile << "signal " << prefix <<  "start_ack : std_logic := '0';"  << endl;
   ofile << "signal " << prefix <<  "fin_req   : std_logic := '0';" << endl;
@@ -422,8 +422,8 @@ string vcModule::Print_VHDL_System_Argument_Ports(string semi_colon,ostream& ofi
   ofile << semi_colon << endl;
 
   // tag ports..
-  ofile << prefix << "tag_in: in std_logic_vector(" << this->Get_Callee_Tag_Length()-1 << " downto 0);" << endl;
-  ofile << prefix << "tag_out: out std_logic_vector(" << this->Get_Callee_Tag_Length()-1 << " downto 0);" << endl;
+  ofile << prefix << "tag_in: in std_logic_vector(" << this->Get_Callee_Tag_Length()+this->Get_Caller_Tag_Length()-1 << " downto 0);" << endl;
+  ofile << prefix << "tag_out: out std_logic_vector(" << this->Get_Callee_Tag_Length()+this->Get_Caller_Tag_Length()-1 << " downto 0);" << endl;
   ofile << prefix <<  "start_req : in std_logic;"  << endl;
   ofile << prefix <<  "start_ack : out std_logic;"  << endl;
   ofile << prefix <<  "fin_req   : in std_logic;" << endl;
@@ -651,7 +651,7 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
   if(this->_control_path)
     {
       int tag_queue_depth = (this->_pipeline_flag ? this->_control_path->Get_Number_Of_Elements() + 1 : 2);
-      ofile << "tagQueue: QueueBase generic map(data_width => " << this->Get_Callee_Tag_Length()
+      ofile << "tagQueue: QueueBase generic map(data_width => " << this->Get_Callee_Tag_Length()+this->Get_Caller_Tag_Length()
 	    << ", queue_depth => " << tag_queue_depth << " ) -- {" << endl
 	    << " port map(pop_req => tag_pop, pop_ack => open, "  << endl
 	    << " push_req => tag_push, push_ack => open, " << endl
@@ -863,7 +863,7 @@ void vcModule::Print_VHDL_Instance(ostream& ofile)
 
   string instance_id = this->Get_VHDL_Id() + "_instance";
   ofile << instance_id << ":" << this->Get_VHDL_Id() << "-- {" << endl;
-  ofile << " generic map(tag_length => "  << this->Get_Callee_Tag_Length() << ")" << endl;
+  ofile << " generic map(tag_length => "  << this->Get_Callee_Tag_Length()+this->Get_Caller_Tag_Length() << ")" << endl;
   ofile << "port map(-- {\n ";
 
   this->Print_VHDL_Instance_Port_Map(ofile);

@@ -20,7 +20,7 @@ entity SplitCallArbiterNoInargs is
     -- call port connected to the called module
     call_mreq   : out std_logic;
     call_mack   : in  std_logic;
-    call_mtag   : out std_logic_vector(callee_tag_length-1 downto 0);
+    call_mtag   : out std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
     -- similarly for return, initiated by the caller
     return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
     return_acks : out std_logic_vector(num_reqs-1 downto 0);
@@ -30,7 +30,7 @@ entity SplitCallArbiterNoInargs is
     return_mreq : out std_logic;
     return_mack : in std_logic;
     return_mdata : in  std_logic_vector(return_data_width-1 downto 0);
-    return_mtag : in  std_logic_vector(callee_tag_length-1 downto 0);
+    return_mtag : in  std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
     clk: in std_logic;
     reset: in std_logic);
 end SplitCallArbiterNoInargs;
@@ -50,13 +50,22 @@ architecture Struct of SplitCallArbiterNoInargs is
    signal call_state: CallStateType;
 
    signal latch_call_data : std_logic;
-   signal call_mtag_prereg  : std_logic_vector(callee_tag_length-1 downto 0);
+   signal callee_mtag_prereg, callee_mtag_reg  : std_logic_vector(callee_tag_length-1 downto 0);
+   signal caller_mtag_reg :  std_logic_vector(caller_tag_length-1 downto 0);
+
+   signal fair_call_reqs, fair_call_acks: std_logic_vector(num_reqs-1 downto 0);
 begin
+  -----------------------------------------------------------------------------
+  -- "fairify" the call-reqs.
+  -----------------------------------------------------------------------------
+  fairify: NobodyLeftBehind generic map (num_reqs => num_reqs)
+		port map (clk => clk, reset => reset, reqIn => call_reqs, ackOut => call_acks,
+					reqOut => fair_call_reqs, ackIn => fair_call_acks);
 
   -----------------------------------------------------------------------------
   -- priority encode incoming
   -----------------------------------------------------------------------------
-   pe_call_reqs <= PriorityEncode(call_reqs);
+   pe_call_reqs <= PriorityEncode(fair_call_reqs);
 
    ----------------------------------------------------------------------------
    -- process to handle call_reqs  --> call_mreq muxing
@@ -92,15 +101,15 @@ begin
    end process;
 
 
-   -- combinational process.. generate call_acks, and also
+   -- combinational process.. generate fair_call_acks, and also
    -- mux to input of call data register.
    process(pe_call_reqs,latch_call_data)
    begin
-	call_acks <= (others => '0');
+	fair_call_acks <= (others => '0');
        	for I in num_reqs-1 downto 0 loop
        		if(pe_call_reqs(I) = '1') then
 			if(latch_call_data = '1') then
-				call_acks(I) <= '1';
+				fair_call_acks(I) <= '1';
 			end if;
        		end if;
 	end loop;
@@ -111,7 +120,7 @@ begin
    begin
      if(clk'event and clk = '1') then
      	if(latch_call_data = '1') then
-		call_mtag <= call_mtag_prereg;
+		callee_mtag_reg <= callee_mtag_prereg;
         end if;  -- I
      end if;
    end process;
@@ -119,7 +128,7 @@ begin
    -- tag generation.
    tagGen : BinaryEncoder generic map (iwidth => num_reqs,
                                        owidth => callee_tag_length)
-     port map (din => pe_call_reqs, dout => call_mtag_prereg);
+     port map (din => pe_call_reqs, dout => callee_mtag_prereg);
 
    -- on a successful call, register the tag from the caller
    -- side..
@@ -128,12 +137,15 @@ begin
      begin
        if(clk'event and clk = '1') then
          if(pe_call_reqs(T) = '1' and latch_call_data = '1') then
-           return_tag_sig(T)
+           caller_mtag_reg
              <= call_tag(((T+1)*caller_tag_length)-1 downto T*caller_tag_length);
          end if;
        end if;
      end process;     
    end generate tagRegGen;
+
+   -- call-mtag is concatenation of callee and caller tags.
+   call_mtag <= callee_mtag_reg & caller_mtag_reg;
 
 
    ----------------------------------------------------------------------------
@@ -170,10 +182,11 @@ begin
      fsm: block
        signal ack_reg, valid_flag : std_logic;
        signal data_reg : std_logic_vector(return_mdata'length-1 downto 0);
+       signal tag_reg : std_logic_vector(caller_tag_length-1 downto 0);
      begin  -- block fsm
 
        -- valid = '1' implies this index is incoming
-       valid_flag <= '1' when return_mack = '1' and (I = To_Integer(To_Unsigned(return_mtag))) else '0';
+       valid_flag <= '1' when return_mack = '1' and (I = To_Integer(To_Unsigned(return_mtag(callee_tag_length+caller_tag_length-1 downto caller_tag_length)))) else '0';
 
        --------------------------------------------------------------------------
        -- ack ff
@@ -194,6 +207,7 @@ begin
            -- register data when you send mack
            if(valid_flag = '1') then
              data_reg <= return_mdata;
+             tag_reg <= return_mtag(caller_tag_length-1 downto 0);
            end if;
          end if;
        end process;
@@ -201,6 +215,7 @@ begin
        -- pass info out of the generate
        return_acks_sig(I) <= ack_reg;
        return_data_sig(I) <= data_reg;
+       return_tag_sig(I)  <= tag_reg;
        
      end block fsm;
 
