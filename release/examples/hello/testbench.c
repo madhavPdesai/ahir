@@ -33,11 +33,6 @@ void *read_pipe_(void* a)
    read_uint32_n("out_data",(uint32_t*)a, 10);
 }
 
-void* pipeHandler__(void* a)
-{
-	pipeHandler();
-}
-
 
 int main(int argc, char* argv[])
 {
@@ -55,8 +50,7 @@ int main(int argc, char* argv[])
 	// the pipeHandler generates a log file (pipeHandler.log)
 	// which is very useful for figuring out what happened.
 	// one can also use gdb to trace activity.
-	pthread_t phandler_t;
-	pthread_create(&phandler_t,NULL,&pipeHandler__,NULL);
+	init_pipe_handler();
 
 	usleep(100);
 	
@@ -103,6 +97,6 @@ int main(int argc, char* argv[])
 
 #ifdef SW
 	pthread_cancel(acc_t);
-	killPipeHandler();
+	close_pipe_handler();
 #endif
 }
