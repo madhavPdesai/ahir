@@ -1,0 +1,36 @@
+pipeHandler provides the implementation
+of pipes for "Software".  That is, a user
+can write applications that use pipes
+(functions write_uint32(char* , uint32_t),
+read_uint32(char*) etc.), link them with
+the pipeHandler .so, and run an application.
+The final link must include a link to the
+pthreads library, because pipeHandler uses
+a mutex.
+
+When an application is to be built with
+this pipeHandler, it must use the following
+functions, defined in include/pipeHandler.h
+	void init_pipe_handler();
+		must be called to initialize the
+		pipeHandler.
+
+	void close_pipe_handler();
+		must be called to close the pipeHandler.
+
+	uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo_mode);
+		register a pipe with the pipeHandler. If lifo_mode=0, then
+		the pipe is a FIFO, else it is a LIFO.
+
+	uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requested, void* burst_payload);
+		read number_of_words_requested from pipe pipe_name.  The word-width is width, 
+		and the read words are put into burst_payload.  The function returns the number
+		of words read back.
+
+	uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested, void* burst_payload);
+		write number_of_words_requested from pipe pipe_name.  The word-width is width, 
+		and the written words are taken from burst_payload.  The function returns the number
+		of words successfully written (note that the pipe has a depth-limit).
+
+In pipeHandlerTest, there are a couple of illustrative
+examples.

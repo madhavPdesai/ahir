@@ -1,0 +1,13 @@
+import os
+
+#modelsimpath = ['/cad/modelsim/modeltech/gcc-4.0.2-rhe21/bin']
+env = Environment(ENV = {'PATH' : os.environ['PATH']})
+
+env.Append(CPPPATH = './src/:./include')
+
+env.SharedLibrary('lib/libPipeHandler', ['src/pipeHandler.c','src/Pipes.c'], CCFLAGS='-g -DNDEBUG')
+
+
+
+
+

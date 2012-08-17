@@ -15,7 +15,7 @@
 
 //
 //
-#define N 12
+#define N 5
 uint32_t a_matrix[N][N], b_matrix[N][N], expected_c_matrix[N][N], c_matrix[N][N];
 
 void Exit(int sig)

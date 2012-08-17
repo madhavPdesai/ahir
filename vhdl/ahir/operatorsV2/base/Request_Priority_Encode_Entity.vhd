@@ -83,3 +83,51 @@ begin  -- Behave
 
   
 end Behave;
+
+architecture Fair of Request_Priority_Encode_Entity is
+  signal reqR_register, reqR_priority_encoded : std_logic_vector(num_reqs-1 downto 0);
+  signal reqR_reg_is_non_zero: std_logic;
+begin  -- Behave
+
+   reqR_reg_is_non_zero <= OrReduce(reqR_register);
+   req_s <= reqR_reg_is_non_zero;
+   forward_enable <= reqR_priority_encoded;
+
+   -- logic: in each cycle, reqR_register is updated
+   --    1. if reqR_register is 0, then it is updated by reqR.
+   --    2. if reqR_register is not-zero, then a forward request
+   --         is enabled by a priority encode.  When this request
+   --         is acked, the correspond reqR_register bit is set to 0.
+   --
+
+   process(clk)
+	variable next_reqR_register : std_logic_vector(num_reqs-1 downto 0);
+   begin
+	next_reqR_register := reqR_register;
+
+        if(reqR_reg_is_non_zero = '0') then
+	    next_reqR_register := reqR;
+        elsif(ack_s = '1') then
+		next_reqR_register := reqR_register xor reqR_priority_encoded;
+        end if;
+
+        if(clk'event and clk = '1') then
+		if(reset = '1') then
+  			reqR_priority_encoded <= (others => '0');
+			reqR_register <= (others => '0');
+		else
+			reqR_register <= next_reqR_register;
+			reqR_priority_encoded <= PriorityEncode(next_reqR_register);
+		end if;
+	end if;
+	
+   end process;
+
+  process(ack_s,reqR_priority_encoded)
+  begin
+    for I in reqR'range loop
+      ackR(I) <= reqR_priority_encoded(I) and ack_s;
+    end loop;  -- I
+  end process;
+
+end Fair;

@@ -760,6 +760,22 @@ package BaseComponents is
   end component CallMediator;
 
   -----------------------------------------------------------------------------
+  --   NobodyLeftBehind..
+  --   this is a small utility which ensures that there is no starvation
+  --   in the system.. needs to be used as a filter between reqs and priority
+  --   encoding.  currently used in split-call arbiters.
+  -----------------------------------------------------------------------------
+  component  NobodyLeftBehind 
+     generic ( num_reqs : integer := 1);
+     port (
+       clk,reset : in std_logic;
+       reqIn : in std_logic_vector(num_reqs-1 downto 0);
+       ackOut: out std_logic_vector(num_reqs-1 downto 0);
+       reqOut : out std_logic_vector(num_reqs-1 downto 0);
+       ackIn : in std_logic_vector(num_reqs-1 downto 0));
+  end component;
+
+  -----------------------------------------------------------------------------
   -- split call arbiters..
   --   Modules will now have a split request-complete handshake
   --   (just like operators)
@@ -780,7 +796,7 @@ package BaseComponents is
       call_mreq   : out std_logic;
       call_mack   : in  std_logic;
       call_mdata  : out std_logic_vector(call_data_width-1 downto 0);
-      call_mtag   : out std_logic_vector(callee_tag_length-1 downto 0);
+      call_mtag   : out std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
       -- similarly for return, initiated by the caller
       return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
       return_acks : out std_logic_vector(num_reqs-1 downto 0);
@@ -790,7 +806,7 @@ package BaseComponents is
       return_mreq : out std_logic;
       return_mack : in std_logic;
       return_mdata : in  std_logic_vector(return_data_width-1 downto 0);
-      return_mtag : in  std_logic_vector(callee_tag_length-1 downto 0);
+      return_mtag : in  std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
       clk: in std_logic;
       reset: in std_logic);
   end component SplitCallArbiter;
@@ -808,7 +824,7 @@ package BaseComponents is
     -- call port connected to the called module
     call_mreq   : out std_logic;
     call_mack   : in  std_logic;
-    call_mtag   : out std_logic_vector(callee_tag_length-1 downto 0);
+    call_mtag   : out std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
     -- similarly for return, initiated by the caller
     return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
     return_acks : out std_logic_vector(num_reqs-1 downto 0);
@@ -818,7 +834,7 @@ package BaseComponents is
     return_mreq : out std_logic;
     return_mack : in std_logic;
     return_mdata : in  std_logic_vector(return_data_width-1 downto 0);
-    return_mtag : in  std_logic_vector(callee_tag_length-1 downto 0);
+    return_mtag : in  std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
     clk: in std_logic;
     reset: in std_logic);
   end component SplitCallArbiterNoInargs;
@@ -838,7 +854,7 @@ package BaseComponents is
     call_mreq   : out std_logic;
     call_mack   : in  std_logic;
     call_mdata  : out std_logic_vector(call_data_width-1 downto 0);
-    call_mtag   : out std_logic_vector(callee_tag_length-1 downto 0);
+    call_mtag   : out std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
     -- similarly for return, initiated by the caller
     return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
     return_acks : out std_logic_vector(num_reqs-1 downto 0);
@@ -846,7 +862,7 @@ package BaseComponents is
     -- return from function
     return_mreq : out std_logic;
     return_mack : in std_logic;
-    return_mtag : in  std_logic_vector(callee_tag_length-1 downto 0);
+    return_mtag : in  std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
     clk: in std_logic;
     reset: in std_logic);
   end component SplitCallArbiterNoOutargs;
@@ -865,7 +881,7 @@ package BaseComponents is
     -- call port connected to the called module
     call_mreq   : out std_logic;
     call_mack   : in  std_logic;
-    call_mtag   : out std_logic_vector(callee_tag_length-1 downto 0);
+    call_mtag   : out std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
     -- similarly for return, initiated by the caller
     return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
     return_acks : out std_logic_vector(num_reqs-1 downto 0);
@@ -873,7 +889,7 @@ package BaseComponents is
     -- return from function
     return_mreq : out std_logic;
     return_mack : in std_logic;
-    return_mtag : in  std_logic_vector(callee_tag_length-1 downto 0);
+    return_mtag : in  std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
     clk: in std_logic;
     reset: in std_logic);
   end component SplitCallArbiterNoInargsNoOutargs;

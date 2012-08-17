@@ -1,8 +1,8 @@
 # build software version of testbench (to check the "desired behaviour")
-IOLIB_INCLUDE=../../iolib/include
-IOLIB_LIB=../../iolib/lib
 SOCKETLIB_INCLUDE=../../CtestBench/include
 SOCKETLIB_LIB=../../CtestBench/lib
+PIPEHANDLER_INCLUDE=../../pipeHandler/include
+PIPEHANDLER_LIB=../../pipeHandler/lib
 VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
 all: SW HW 
@@ -10,9 +10,9 @@ all: SW HW
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.
 SW: prog.c prog.h testbench.c 
-	gcc -c -DSW -I$(SOCKETLIB_INCLUDE) prog.c
-	gcc -c -DSW -I$(SOCKETLIB_INCLUDE) testbench.c
-	gcc -o testbench_sw prog.o testbench.o -L$(SOCKETLIB_LIB) -lSocketLib -lpthread
+	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) prog.c
+	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) testbench.c
+	gcc -o testbench_sw prog.o testbench.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
 
 # five steps from C to vhdl simulator.
 HW: c2llvmbc llvmbc2aa aa2vc vc2vhdl vhdlsim
