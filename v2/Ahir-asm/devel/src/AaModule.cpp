@@ -336,6 +336,21 @@ void AaModule::Propagate_Constants()
 }
 
 
+void AaModule::Mark_Reachable_Modules(set<AaModule*>& reachable_modules)
+{
+  if(reachable_modules.find(this) == reachable_modules.end())
+    {
+      AaRoot::Info("module " + this->Get_Label() + " is reachable from a specified root module.");
+      reachable_modules.insert(this);
+      for(set<AaModule*>::iterator citer = _called_modules.begin(), fciter = _called_modules.end();
+	  citer != fciter;
+	  citer++)
+	{
+	  (*citer)->Mark_Reachable_Modules(reachable_modules);
+	}
+    }
+}
+
 bool AaModule::Has_No_Side_Effects()
 {
   if(this->Get_Foreign_Flag())

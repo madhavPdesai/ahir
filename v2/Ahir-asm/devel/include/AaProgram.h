@@ -102,6 +102,13 @@ class AaProgram
   static AaUGraphBase _storage_dependency_graph;
 
   
+   // marked root (top-level) modules.
+  static set<string> _root_module_names;
+
+  // modules reachable from root-modules.
+  // (if no root-modules are specified, then all
+  // modules become reachable).
+  static set<AaModule*> _reachable_modules;
 
  public:
   static int _pointer_width;
@@ -220,6 +227,11 @@ class AaProgram
   static void Print_Memory_Space_Info();
 
   static void Print_Global_Storage_Initializer(ostream& ofile);
+
+  static void Mark_As_Root_Module(string& mod_name);
+  static void Mark_Reachable_Modules(set<AaModule*>& reachable_modules);
+
+
 };
 
 

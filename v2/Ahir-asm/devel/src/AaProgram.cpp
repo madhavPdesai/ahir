@@ -40,6 +40,8 @@ std::map<AaObject*,set<AaStorageObject*> > AaProgram::_recoalesce_map;
 std::set<int> AaProgram::_extmem_access_widths;
 std::set<AaType*> AaProgram::_extmem_access_types;
 std::set<AaPointerDereferenceExpression*> AaProgram::_pointer_dereferences;
+std::set<string> AaProgram::_root_module_names;
+std::set<AaModule*> AaProgram::_reachable_modules;
 
 bool AaProgram::_optimize_flag = false;
 bool AaProgram::_unordered_memory_flag = false;
@@ -372,6 +374,10 @@ AaModule* AaProgram::Find_Module(string obj_name)
 void AaProgram::Add_Call_Pair(AaModule* caller, AaModule* callee)
 {
   AaProgram::_call_graph.Add_Edge((AaRoot*)caller,(AaRoot*)callee);
+  if(caller != NULL)
+  	caller->Add_Called_Module(callee);
+  if(callee != NULL)
+  	callee->Add_Calling_Module(caller);
 }
 
 
@@ -714,7 +720,8 @@ void AaProgram::Coalesce_Storage()
       miter++)
     {
       AaModule* m =(*miter).second;
-      m->Set_Foreign_Object_Representatives();
+      if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end()) 
+      	m->Set_Foreign_Object_Representatives();
     }
 
 
@@ -733,7 +740,10 @@ void AaProgram::Coalesce_Storage()
       miter != AaProgram::_modules.end();
       miter++)
     {
-      (*miter).second->Coalesce_Storage();
+    
+      AaModule* m =(*miter).second;
+      if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end()) 
+      	(*miter).second->Coalesce_Storage();
     }
   
   // recoalesce..
@@ -990,6 +1000,8 @@ void AaProgram::Elaborate()
   AaProgram::Map_Source_References();
   AaRoot::Info("checking for cycles in the call-graph ... ");
   AaProgram::Check_For_Cycles_In_Call_Graph();
+  AaRoot::Info("marking modules reachable from root-modules ... ");
+  AaProgram::Mark_Reachable_Modules(AaProgram::_reachable_modules);
   AaRoot::Info("propagating types in the program ... ");
   AaProgram::Propagate_Types();
   AaRoot::Info("coalescing storage into distinct memory spaces ... ");
@@ -1038,8 +1050,12 @@ void AaProgram::Write_C_Model()
       miter != AaProgram::_modules.end();
       miter++)
     {
-      (*miter).second->Write_Header(header_file);
-      (*miter).second->Write_Source(source_file);
+	AaModule* m = (*miter).second;
+	if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+	{
+      		(*miter).second->Write_Header(header_file);
+      		(*miter).second->Write_Source(source_file);
+	}
     }
 }
 
@@ -1068,8 +1084,12 @@ void AaProgram::Write_VHDL_C_Stubs()
       miter != AaProgram::_modules.end();
       miter++)
     {
-      (*miter).second->Write_VHDL_C_Stub_Header(header_file);
-      (*miter).second->Write_VHDL_C_Stub_Source(source_file);
+	AaModule* m = (*miter).second;
+	if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+	{
+      		(*miter).second->Write_VHDL_C_Stub_Header(header_file);
+      		(*miter).second->Write_VHDL_C_Stub_Source(source_file);
+	}
     }
 
   header_file.close();
@@ -1185,7 +1205,11 @@ void AaProgram::Write_VC_Modules(ostream& ofile)
 {
   for(int idx =0; idx < AaProgram::_ordered_module_vector.size(); idx++)
     {
-      AaProgram::_ordered_module_vector[idx]->Write_VC_Model(ofile);
+	AaModule* m = AaProgram::_ordered_module_vector[idx];
+	if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+	{
+      		AaProgram::_ordered_module_vector[idx]->Write_VC_Model(ofile);
+	}
     }
 }
 
@@ -1195,7 +1219,11 @@ void AaProgram::Write_VC_Modules_Optimized(ostream& ofile)
 {
   for(int idx =0; idx < AaProgram::_ordered_module_vector.size(); idx++)
     {
-      AaProgram::_ordered_module_vector[idx]->Write_VC_Model_Optimized(ofile);
+	AaModule* m = AaProgram::_ordered_module_vector[idx];
+	if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+	{
+      		AaProgram::_ordered_module_vector[idx]->Write_VC_Model_Optimized(ofile);
+	}
     }
 }
 
@@ -1219,7 +1247,9 @@ void AaProgram::Propagate_Constants()
       miter != AaProgram::_modules.end();
       miter++)
     {
-      (*miter).second->Propagate_Constants();
+      AaModule* m = (*miter).second;
+      if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+      	(*miter).second->Propagate_Constants();
     }
 }
 
@@ -1233,8 +1263,11 @@ void AaProgram::Print_Global_Storage_Initializer(ostream& ofile)
       miter++)
     {
       AaModule* m = (*miter).second;
-      if(m->Has_Attribute("initializer"))
-	init_modules.push_back(m);
+      if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+	{
+      		if(m->Has_Attribute("initializer"))
+		init_modules.push_back(m);
+	}
     }
 
   ofile << "$module [global_storage_initializer_] $in () $out () $is {" << endl;
@@ -1253,3 +1286,25 @@ void AaProgram::Print_Global_Storage_Initializer(ostream& ofile)
     }
   ofile << "}" << endl;
 }
+
+
+void AaProgram::Mark_As_Root_Module(string& mod_name)
+{
+	AaProgram::_root_module_names.insert(mod_name);
+}
+
+
+void AaProgram::Mark_Reachable_Modules(set<AaModule*>& reachable_modules)
+{
+	
+  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
+      miter != AaProgram::_modules.end();
+      miter++)
+   {
+       	if((AaProgram::_root_module_names.size() == 0) ||  (AaProgram::_root_module_names.find((*miter).first) != AaProgram::_root_module_names.end()))
+       	{
+		(*miter).second->Mark_Reachable_Modules(reachable_modules);
+	}
+   }
+}
+
