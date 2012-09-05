@@ -572,5 +572,6 @@ bool Is_Trivial_Op(string vc_op_id);
 bool Is_Symmetric_Op(string vc_op_id);
 bool Is_Unary_Op(string vc_op_id);
 bool Is_Shift_Op(string vc_op_id);
+bool Is_Pipelined_Float_Op(string vc_op_id, vcType* in_type, vcType* out_type, int& exponent_width, int& fraction_width);
 
 #endif

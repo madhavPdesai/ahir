@@ -748,6 +748,35 @@ string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type)
   return(q_ret_string);
 }
 
+bool Is_Pipelined_Float_Op(string vc_op_id, vcType* in_type, vcType* out_type, int& exponent_width, int& fraction_width)
+{
+  bool ret_val = false;
+  if(in_type->Kind() == "vcFloatType" && out_type->Kind() == "vcFloatType")
+    {
+      int e1 = ((vcFloatType*)in_type)->Get_Characteristic_Width();
+      int f1 = ((vcFloatType*)in_type)->Get_Mantissa_Width();
+
+      int e2 = ((vcFloatType*)out_type)->Get_Characteristic_Width();
+      int f2 = ((vcFloatType*)out_type)->Get_Mantissa_Width();
+
+      if((e1 == e2) && (f1 == f2))
+	{
+	  exponent_width = e1;
+	  fraction_width = f1;
+
+	  if( ((e1 == 8) && (f1 == 23)) || ((e1 == 11) and (f1 == 52)))
+	    {
+	      if(vc_op_id == vcLexerKeywords[__PLUS_OP]               ) { ret_val = true;}
+	      else if(vc_op_id == vcLexerKeywords[__MINUS_OP]         ) { ret_val = true;}
+	      else if(vc_op_id == vcLexerKeywords[__MUL_OP]           ) { ret_val = true;}
+	      else
+		ret_val = false;
+	    }
+	}
+    }
+  return(ret_val);
+}
+
 
 bool Check_If_Equivalent(vector<vcWire*>& iw1, vector<vcWire*>& iw2)
 {

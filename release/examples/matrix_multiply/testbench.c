@@ -7,7 +7,8 @@
 // to be used in the software version
 //  
 #ifdef SW
-#include <iolib.h>
+#include <pipeHandler.h>
+#include <Pipes.h>
 #include "prog.h"
 #else
 #include "vhdlCStubs.h"
@@ -15,8 +16,8 @@
 
 //
 //
-#define N 5
-uint32_t a_matrix[N][N], b_matrix[N][N], expected_c_matrix[N][N], c_matrix[N][N];
+#define N 8
+float a_matrix[N][N], b_matrix[N][N], expected_c_matrix[N][N], c_matrix[N][N];
 
 void Exit(int sig)
 {
@@ -64,9 +65,9 @@ void *output_module_(void* fargs)
 
 void *write_pipe_(void* fargs)
 {
-	write_uint32("in_data_pipe",N);
-	write_uint32_n("in_data_pipe",(uint32_t*)a_matrix, N*N);
-	write_uint32_n("in_data_pipe",(uint32_t*)b_matrix, N*N);
+	write_uint32("in_dimension_pipe",N);
+	write_float32_n("in_data_pipe",(float*)a_matrix, N*N);
+	write_float32_n("in_data_pipe",(float*)b_matrix, N*N);
 }
 
 
@@ -75,9 +76,9 @@ void *read_pipe_(void* fargs)
 	uint32_t i;
         for(i = 0; i < N*N; i++) 
 	{
-		uint32_t row_id  = read_uint32("out_data_pipe");
-		uint32_t col_id  = read_uint32("out_data_pipe");
-		c_matrix[row_id][col_id]= read_uint32("out_data_pipe");
+		uint32_t row_id  = read_uint32("row_id_pipe");
+		uint32_t col_id  = read_uint32("col_id_pipe");
+		c_matrix[row_id][col_id]= read_float32("out_data_pipe");
 	}
 }
 
@@ -96,8 +97,8 @@ int main(int argc, char* argv[])
 	{
         	for(j = 0; j < N; j++)
 		{
-			a_matrix[i][j] = 1;
-			b_matrix[i][j] = 1;
+			a_matrix[i][j] = 1.0;
+			b_matrix[i][j] = 1.0;
 		}
 	}
 
@@ -111,6 +112,9 @@ int main(int argc, char* argv[])
 		}
 	}
 	
+#ifdef SW
+	init_pipe_handler();
+#endif
 
         pthread_t write_t, read_t;
 	pthread_create(&write_t,NULL,&write_pipe_,NULL);
@@ -125,6 +129,7 @@ int main(int argc, char* argv[])
 	pthread_create(&proc1_t,NULL,&proc1_,NULL);
 	pthread_create(&proc2_t,NULL,&proc2_,NULL);
 	pthread_create(&proc3_t,NULL,&proc3_,NULL);
+
 #endif
 
 
@@ -137,9 +142,9 @@ int main(int argc, char* argv[])
         	for(j = 0; j < N; j++)
 		{
                 	if(expected_c_matrix[i][j] == c_matrix[i][j])
-				fprintf(stdout,"result[%d][%d] = %d\n", i, j, c_matrix[i][j]);
+				fprintf(stdout,"result[%d][%d] = %f\n", i, j, c_matrix[i][j]);
 			else
-				fprintf(stdout,"Error: result[%d][%d] = %d, expected = %d\n", 
+				fprintf(stdout,"Error: result[%d][%d] = %f, expected = %f\n", 
 					i, j, c_matrix[i][j], expected_c_matrix[i][j]);
 			
 		}
@@ -154,5 +159,8 @@ int main(int argc, char* argv[])
 	pthread_cancel(proc1_t);
 	pthread_cancel(proc2_t);
 	pthread_cancel(proc3_t);
+#endif
+#ifdef SW
+	close_pipe_handler();
 #endif
 }

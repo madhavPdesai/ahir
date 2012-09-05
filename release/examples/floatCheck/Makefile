@@ -1,39 +1,39 @@
 # build software version of testbench (to check the "desired behaviour")
-IOLIB_INCLUDE=../../pipeHandler/include
-IOLIB_LIB=../../pipeHandler/lib
 SOCKETLIB_INCLUDE=../../CtestBench/include
 SOCKETLIB_LIB=../../CtestBench/lib
+PIPEHANDLER_INCLUDE=../../pipeHandler/include
+PIPEHANDLER_LIB=../../pipeHandler/lib
 VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
 all: SW HW 
 
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.
-SW: prog.c  testbench.c 
-	gcc -g -c -DSW -DRUN -I$(IOLIB_INCLUDE) prog.c
-	gcc -g  -c -DSW -DRUN -I$(IOLIB_INCLUDE) testbench.c
-	gcc -g -o testbench_sw prog.o testbench.o -L$(IOLIB_LIB) -lPipeHandler -lpthread
+SW: prog.c prog.h testbench.c 
+	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) prog.c
+	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) testbench.c
+	gcc -o testbench_sw prog.o testbench.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
 
 # five steps from C to vhdl simulator.
 HW: c2llvmbc llvmbc2aa aa2vc vc2vhdl vhdlsim
 
 # C to llvm byte-code.. use clang.
-c2llvmbc: prog.c testbench.c 
-	clang -std=gnu89 -I$(IOLIB_INCLUDE) -emit-llvm -c prog.c
-	opt -O3	--instnamer prog.o > prog.opt.o
-	llvm-dis prog.opt.o
+c2llvmbc: prog.c prog.h testbench.c
+	clang -O3 -std=gnu89 -I$(SOCKETLIB_INCLUDE) -emit-llvm -c prog.c
+	llvm-dis prog.o
 
 # llvm byte-code to Aa..
-llvmbc2aa:  prog.opt.o 
-	llvm2aa --pipedepths=pipedepths prog.opt.o | vcFormat >  prog.opt.o.aa
+llvmbc2aa:  prog.o
+	llvm2aa --storageinit=true prog.o | vcFormat >  prog.aa
 
 # Aa to vC
-aa2vc: prog.opt.o.aa 
-	Aa2VC -O -C prog.opt.o.aa | vcFormat > prog.opt.o.aa.vc
+aa2vc: prog.aa
+	AaLinkExtMem prog.aa | vcFormat > prog.linked.aa
+	Aa2VC -O -C prog.linked.aa | vcFormat > prog.vc
 
 # vC to VHDL
-vc2vhdl: prog.opt.o.aa.vc
-	vc2vhdl -a -C -e ahir_system -w -s ghdl -T input_module -T free_queue_manager -T output_module -T proc0 -T proc1 -T proc2 -T proc3 -f prog.opt.o.aa.vc 
+vc2vhdl: prog.vc
+	vc2vhdl -a -C -e ahir_system -w -s ghdl -t fpmul -t fpadd -t dotProduct -f prog.vc 
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 
@@ -54,6 +54,6 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 	ghdl -m --work=work -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
 
 clean:
-	rm -f *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* out_port* testbench_sw testbench_hw ahir_system_test_bench vhpi.log
+	rm -f *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* out_data* testbench_sw testbench_hw ahir_system_test_bench vhpi.log *.aa *.vc
 
 PHONY: all clean	
