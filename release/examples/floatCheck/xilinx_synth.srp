@@ -67,118 +67,213 @@ Optimization Effort                : 2
 *                          HDL Compilation                              *
 =========================================================================
 Compiling vhdl file "/home/madhav/ahirgit/ahir/vhdl/release/ieee_proposed.vhdl" in Library ieee_proposed.
-Architecture float_pkg of Entity float_pkg is up to date.
+Package <math_utility_pkg> compiled.
+Package <fixed_float_types> compiled.
+Package <fixed_pkg> compiled.
+Package <float_pkg> compiled.
+Package body <float_pkg> compiled.
 Compiling vhdl file "/home/madhav/ahirgit/ahir/vhdl/release/ahir.vhdl" in Library ahir.
-Architecture utilities of Entity utilities is up to date.
-Architecture subprograms of Entity subprograms is up to date.
-Architecture floatoperatorpackage of Entity floatoperatorpackage is up to date.
-Architecture operatorpackage of Entity operatorpackage is up to date.
-Architecture mem_function_pack of Entity mem_function_pack is up to date.
-Architecture merge_functions of Entity merge_functions is up to date.
-Architecture xilinxbraminfer of Entity base_bank is up to date.
-Architecture default of Entity dummy_read_only_memory_subsystem is up to date.
-Architecture default of Entity dummy_write_only_memory_subsystem is up to date.
-Architecture structural of Entity memory_bank_base is up to date.
-Architecture simmodel of Entity memory_bank is up to date.
-Architecture behave of Entity mem_repeater is up to date.
-Architecture behave of Entity mem_shift_repeater is up to date.
-Architecture combinational_merge of Entity combinational_merge is up to date.
-Architecture struct of Entity combinational_merge_with_repeater is up to date.
-Architecture simple of Entity demerge_tree is up to date.
-Architecture wrapper of Entity demerge_tree_wrap is up to date.
-Architecture behave of Entity mem_demux is up to date.
-Architecture pipelined of Entity memory_subsystem_core is up to date.
-Architecture bufwrap of Entity memory_subsystem is up to date.
-Architecture behave of Entity merge_box_with_repeater is up to date.
-Architecture pipelined of Entity merge_tree is up to date.
-Architecture bufwrap of Entity ordered_memory_subsystem is up to date.
-Architecture combinational_merge of Entity combinationalmux is up to date.
-Architecture behave of Entity pipelineddemux is up to date.
-Architecture behave of Entity pipelinedmuxstage is up to date.
-Architecture pipelined of Entity pipelinedmux is up to date.
-Architecture default of Entity register_bank is up to date.
-Architecture struct of Entity unorderedmemorysubsystem is up to date.
-Architecture default_arch of Entity auto_run is up to date.
-Architecture default_arch of Entity control_delay_element is up to date.
-Architecture default_arch of Entity join2 is up to date.
-Architecture default_arch of Entity join is up to date.
-Architecture default_arch of Entity join_with_input is up to date.
-Architecture default_arch of Entity level_to_pulse is up to date.
-Architecture default_arch of Entity out_transition is up to date.
-Architecture default_arch of Entity pipeline_interlock is up to date.
-Architecture default_arch of Entity place is up to date.
-Architecture default_arch of Entity transition is up to date.
-Architecture lowlevel of Entity binaryencoder is up to date.
-Architecture behave of Entity branchbase is up to date.
-Architecture behave of Entity bypassregister is up to date.
-Architecture vanilla of Entity genericcombinationaloperator is up to date.
-Architecture behave of Entity inputmuxbasenodata is up to date.
-Architecture behave of Entity inputmuxbase is up to date.
-Architecture default_arch of Entity inputportlevelnodata is up to date.
-Architecture default_arch of Entity inputportlevel is up to date.
-Architecture base of Entity inputportnodata is up to date.
-Architecture base of Entity inputport is up to date.
-Architecture vanilla of Entity loadcompleteshared is up to date.
-Architecture vanilla of Entity loadreqshared is up to date.
-Architecture fair of Entity nobodyleftbehind is up to date.
-Architecture behave of Entity outputdemuxbasenodata is up to date.
-Architecture behave of Entity outputdemuxbase is up to date.
-Architecture base of Entity outputportlevelnodata is up to date.
-Architecture base of Entity outputportlevel is up to date.
-Architecture base of Entity outputportnodata is up to date.
-Architecture base of Entity outputport is up to date.
-Architecture behave of Entity phibase is up to date.
-Architecture default_arch of Entity pipebase is up to date.
-Architecture behave of Entity pulse_to_level_translate_entity is up to date.
-Architecture behave of Entity queuebase is up to date.
-Architecture arch of Entity registerbase is up to date.
-Architecture behave of Entity request_priority_encode_entity is up to date.
-Architecture fair of Entity request_priority_encode_entity is up to date.
-Architecture behave of Entity rigidrepeater is up to date.
-Architecture behave of Entity scalarregister is up to date.
-Architecture arch of Entity selectbase is up to date.
-Architecture arch of Entity slicebase is up to date.
-Architecture struct of Entity splitcallarbiternoinargsnooutargs is up to date.
-Architecture struct of Entity splitcallarbiternoinargs is up to date.
-Architecture struct of Entity splitcallarbiternooutargs is up to date.
-Architecture struct of Entity splitcallarbiter is up to date.
-Architecture vanilla of Entity splitoperatorbase is up to date.
-Architecture vanilla of Entity splitoperatorshared is up to date.
-Architecture behave of Entity storecompleteshared is up to date.
-Architecture vanilla of Entity storereqshared is up to date.
-Architecture behave of Entity synchfifo is up to date.
-Architecture behave of Entity synchlifo is up to date.
-Architecture behave of Entity synchtoasynchreadinterface is up to date.
-Architecture vanilla of Entity unsharedoperatorbase is up to date.
-Architecture rtl of Entity doubleprecisionmultiplier is up to date.
-Architecture rtl of Entity genericfloatingpointaddersubtractor is up to date.
-Architecture rtl of Entity genericfloatingpointmultiplier is up to date.
-Architecture vanilla of Entity pipelinedfpoperator is up to date.
-Architecture rtl of Entity singleprecisionmultiplier is up to date.
-Architecture pipelined of Entity unsignedmultiplier is up to date.
+Package <Types> compiled.
+Package <Utilities> compiled.
+Package body <Utilities> compiled.
+Package <Subprograms> compiled.
+Package body <Subprograms> compiled.
+Package <BaseComponents> compiled.
+Package <Components> compiled.
+Package <FloatOperatorPackage> compiled.
+Package body <FloatOperatorPackage> compiled.
+Package <OperatorPackage> compiled.
+Package body <OperatorPackage> compiled.
+Package <mem_component_pack> compiled.
+Package <mem_function_pack> compiled.
+Package body <mem_function_pack> compiled.
+Package <memory_subsystem_package> compiled.
+Package <merge_functions> compiled.
+Package body <merge_functions> compiled.
+Entity <base_bank> compiled.
+Entity <base_bank> (Architecture <XilinxBramInfer>) compiled.
+Entity <dummy_read_only_memory_subsystem> compiled.
+Entity <dummy_read_only_memory_subsystem> (Architecture <Default>) compiled.
+Entity <dummy_write_only_memory_subsystem> compiled.
+Entity <dummy_write_only_memory_subsystem> (Architecture <Default>) compiled.
+Entity <memory_bank_base> compiled.
+Entity <memory_bank_base> (Architecture <structural>) compiled.
+Entity <memory_bank> compiled.
+Entity <memory_bank> (Architecture <SimModel>) compiled.
+Entity <mem_repeater> compiled.
+Entity <mem_repeater> (Architecture <behave>) compiled.
+Entity <mem_shift_repeater> compiled.
+Entity <mem_shift_repeater> (Architecture <behave>) compiled.
+Entity <combinational_merge> compiled.
+Entity <combinational_merge> (Architecture <combinational_merge>) compiled.
+Entity <combinational_merge_with_repeater> compiled.
+Entity <combinational_merge_with_repeater> (Architecture <Struct>) compiled.
+Entity <demerge_tree> compiled.
+Entity <demerge_tree> (Architecture <Simple>) compiled.
+Entity <demerge_tree_wrap> compiled.
+Entity <demerge_tree_wrap> (Architecture <wrapper>) compiled.
+Entity <mem_demux> compiled.
+Entity <mem_demux> (Architecture <behave>) compiled.
+Entity <memory_subsystem_core> compiled.
+Entity <memory_subsystem_core> (Architecture <pipelined>) compiled.
+Entity <memory_subsystem> compiled.
+Entity <memory_subsystem> (Architecture <bufwrap>) compiled.
+Entity <merge_box_with_repeater> compiled.
+Entity <merge_box_with_repeater> (Architecture <behave>) compiled.
+Entity <merge_tree> compiled.
+Entity <merge_tree> (Architecture <pipelined>) compiled.
+Entity <ordered_memory_subsystem> compiled.
+Entity <ordered_memory_subsystem> (Architecture <bufwrap>) compiled.
+Entity <CombinationalMux> compiled.
+Entity <CombinationalMux> (Architecture <combinational_merge>) compiled.
+Entity <PipelinedDemux> compiled.
+Entity <PipelinedDemux> (Architecture <behave>) compiled.
+Entity <PipelinedMuxStage> compiled.
+Entity <PipelinedMuxStage> (Architecture <behave>) compiled.
+Entity <PipelinedMux> compiled.
+Entity <PipelinedMux> (Architecture <pipelined>) compiled.
+Entity <register_bank> compiled.
+Entity <register_bank> (Architecture <Default>) compiled.
+Entity <UnorderedMemorySubsystem> compiled.
+Entity <UnorderedMemorySubsystem> (Architecture <struct>) compiled.
+Entity <auto_run> compiled.
+Entity <auto_run> (Architecture <default_arch>) compiled.
+Entity <control_delay_element> compiled.
+Entity <control_delay_element> (Architecture <default_arch>) compiled.
+Entity <join2> compiled.
+Entity <join2> (Architecture <default_arch>) compiled.
+Entity <join> compiled.
+Entity <join> (Architecture <default_arch>) compiled.
+Entity <join_with_input> compiled.
+Entity <join_with_input> (Architecture <default_arch>) compiled.
+Entity <level_to_pulse> compiled.
+Entity <level_to_pulse> (Architecture <default_arch>) compiled.
+Entity <out_transition> compiled.
+Entity <out_transition> (Architecture <default_arch>) compiled.
+Entity <pipeline_interlock> compiled.
+Entity <pipeline_interlock> (Architecture <default_arch>) compiled.
+Entity <place> compiled.
+Entity <place> (Architecture <default_arch>) compiled.
+Entity <transition> compiled.
+Entity <transition> (Architecture <default_arch>) compiled.
+Entity <BinaryEncoder> compiled.
+Entity <BinaryEncoder> (Architecture <LowLevel>) compiled.
+Entity <BranchBase> compiled.
+Entity <BranchBase> (Architecture <Behave>) compiled.
+Entity <BypassRegister> compiled.
+Entity <BypassRegister> (Architecture <behave>) compiled.
+Entity <GenericCombinationalOperator> compiled.
+Entity <GenericCombinationalOperator> (Architecture <Vanilla>) compiled.
+Entity <InputMuxBaseNoData> compiled.
+Entity <InputMuxBaseNoData> (Architecture <Behave>) compiled.
+Entity <InputMuxBase> compiled.
+Entity <InputMuxBase> (Architecture <Behave>) compiled.
+Entity <InputPortLevelNoData> compiled.
+Entity <InputPortLevelNoData> (Architecture <default_arch>) compiled.
+Entity <InputPortLevel> compiled.
+Entity <InputPortLevel> (Architecture <default_arch>) compiled.
+Entity <InputPortNoData> compiled.
+Entity <InputPortNoData> (Architecture <Base>) compiled.
+Entity <InputPort> compiled.
+Entity <InputPort> (Architecture <Base>) compiled.
+Entity <LoadCompleteShared> compiled.
+Entity <LoadCompleteShared> (Architecture <Vanilla>) compiled.
+Entity <LoadReqShared> compiled.
+Entity <LoadReqShared> (Architecture <Vanilla>) compiled.
+Entity <NobodyLeftBehind> compiled.
+Entity <NobodyLeftBehind> (Architecture <Fair>) compiled.
+Entity <OutputDeMuxBaseNoData> compiled.
+Entity <OutputDeMuxBaseNoData> (Architecture <Behave>) compiled.
+Entity <OutputDeMuxBase> compiled.
+Entity <OutputDeMuxBase> (Architecture <Behave>) compiled.
+Entity <OutputPortLevelNoData> compiled.
+Entity <OutputPortLevelNoData> (Architecture <Base>) compiled.
+Entity <OutputPortLevel> compiled.
+Entity <OutputPortLevel> (Architecture <Base>) compiled.
+Entity <OutputPortNoData> compiled.
+Entity <OutputPortNoData> (Architecture <Base>) compiled.
+Entity <OutputPort> compiled.
+Entity <OutputPort> (Architecture <Base>) compiled.
+Entity <PhiBase> compiled.
+Entity <PhiBase> (Architecture <Behave>) compiled.
+Entity <PipeBase> compiled.
+Entity <PipeBase> (Architecture <default_arch>) compiled.
+Entity <Pulse_To_Level_Translate_Entity> compiled.
+Entity <Pulse_To_Level_Translate_Entity> (Architecture <Behave>) compiled.
+Entity <QueueBase> compiled.
+Entity <QueueBase> (Architecture <behave>) compiled.
+Entity <RegisterBase> compiled.
+Entity <RegisterBase> (Architecture <arch>) compiled.
+Entity <Request_Priority_Encode_Entity> compiled.
+Entity <Request_Priority_Encode_Entity> (Architecture <Behave>) compiled.
+Entity <Request_Priority_Encode_Entity> (Architecture <Fair>) compiled.
+Entity <RigidRepeater> compiled.
+Entity <RigidRepeater> (Architecture <behave>) compiled.
+Entity <ScalarRegister> compiled.
+Entity <ScalarRegister> (Architecture <Behave>) compiled.
+Entity <SelectBase> compiled.
+Entity <SelectBase> (Architecture <arch>) compiled.
+Entity <Slicebase> compiled.
+Entity <Slicebase> (Architecture <arch>) compiled.
+Entity <SplitCallArbiterNoInArgsNoOutArgs> compiled.
+Entity <SplitCallArbiterNoInArgsNoOutArgs> (Architecture <Struct>) compiled.
+Entity <SplitCallArbiterNoInargs> compiled.
+Entity <SplitCallArbiterNoInargs> (Architecture <Struct>) compiled.
+Entity <SplitCallArbiterNoOutArgs> compiled.
+Entity <SplitCallArbiterNoOutArgs> (Architecture <Struct>) compiled.
+Entity <SplitCallArbiter> compiled.
+Entity <SplitCallArbiter> (Architecture <Struct>) compiled.
+Entity <SplitOperatorBase> compiled.
+Entity <SplitOperatorBase> (Architecture <Vanilla>) compiled.
+Entity <SplitOperatorShared> compiled.
+Entity <SplitOperatorShared> (Architecture <Vanilla>) compiled.
+Entity <StoreCompleteShared> compiled.
+Entity <StoreCompleteShared> (Architecture <Behave>) compiled.
+Entity <StoreReqShared> compiled.
+Entity <StoreReqShared> (Architecture <Vanilla>) compiled.
+Entity <SynchFifo> compiled.
+Entity <SynchFifo> (Architecture <behave>) compiled.
+Entity <SynchLifo> compiled.
+Entity <SynchLifo> (Architecture <behave>) compiled.
+Entity <SynchToAsynchReadInterface> compiled.
+Entity <SynchToAsynchReadInterface> (Architecture <Behave>) compiled.
+Entity <UnsharedOperatorBase> compiled.
+Entity <UnsharedOperatorBase> (Architecture <Vanilla>) compiled.
+Entity <DoublePrecisionMultiplier> compiled.
+Entity <DoublePrecisionMultiplier> (Architecture <rtl>) compiled.
+Entity <GenericFloatingPointAdderSubtractor> compiled.
+Entity <GenericFloatingPointAdderSubtractor> (Architecture <rtl>) compiled.
+Entity <GenericFloatingPointMultiplier> compiled.
+Entity <GenericFloatingPointMultiplier> (Architecture <rtl>) compiled.
+Entity <PipelinedFPOperator> compiled.
+Entity <PipelinedFPOperator> (Architecture <Vanilla>) compiled.
+Entity <SinglePrecisionMultiplier> compiled.
+Entity <SinglePrecisionMultiplier> (Architecture <rtl>) compiled.
+Entity <UnsignedMultiplier> compiled.
+Entity <UnsignedMultiplier> (Architecture <Pipelined>) compiled.
 Compiling vhdl file "/home/madhav/ahirgit/ahir/release/examples/floatCheck/ahir_system.vhdl" in Library work.
 Package <ahir_system_global_package> compiled.
 Entity <dotProduct> compiled.
 Entity <dotProduct> (Architecture <Default>) compiled.
 Entity <fpadd> compiled.
-Entity <fpadd> (Architecture <default>) compiled.
+Entity <fpadd> (Architecture <Default>) compiled.
 Entity <fpmul> compiled.
-Entity <fpmul> (Architecture <default>) compiled.
+Entity <fpmul> (Architecture <Default>) compiled.
 Entity <ahir_system> compiled.
-Entity <ahir_system> (Architecture <default>) compiled.
+Entity <ahir_system> (Architecture <Default>) compiled.
 
 =========================================================================
 *                     Design Hierarchy Analysis                         *
 =========================================================================
-Analyzing hierarchy for entity <ahir_system> in library <work> (architecture <default>).
+Analyzing hierarchy for entity <ahir_system> in library <work> (architecture <Default>).
 
 Analyzing hierarchy for entity <dotProduct> in library <work> (architecture <Default>) with generics.
 	tag_length = 2
 
-Analyzing hierarchy for entity <fpadd> in library <work> (architecture <default>) with generics.
+Analyzing hierarchy for entity <fpadd> in library <work> (architecture <Default>) with generics.
 	tag_length = 2
 
-Analyzing hierarchy for entity <fpmul> in library <work> (architecture <default>) with generics.
+Analyzing hierarchy for entity <fpmul> in library <work> (architecture <Default>) with generics.
 	tag_length = 2
 
 Analyzing hierarchy for entity <level_to_pulse> in library <ahir> (architecture <default_arch>) with generics.
@@ -202,7 +297,7 @@ Analyzing hierarchy for entity <control_delay_element> in library <ahir> (archit
 Analyzing hierarchy for entity <join> in library <ahir> (architecture <default_arch>) with generics.
 	bypass = true
 
-Analyzing hierarchy for entity <PipelinedFPOperator> in library <ahir> (architecture <vanilla>) with generics.
+Analyzing hierarchy for entity <PipelinedFPOperator> in library <ahir> (architecture <Vanilla>) with generics.
 	exponent_width = 8
 	fraction_width = 23
 	no_arbitration = false
@@ -210,7 +305,7 @@ Analyzing hierarchy for entity <PipelinedFPOperator> in library <ahir> (architec
 	operator_id = "ApFloatMul"
 WARNING:Xst:795 - "/home/madhav/ahirgit/ahir/vhdl/release/ahir.vhdl" line 14380: Size of operands are different : result is <false>.
 
-Analyzing hierarchy for entity <PipelinedFPOperator> in library <ahir> (architecture <vanilla>) with generics.
+Analyzing hierarchy for entity <PipelinedFPOperator> in library <ahir> (architecture <Vanilla>) with generics.
 	exponent_width = 8
 	fraction_width = 23
 	no_arbitration = false
@@ -218,7 +313,7 @@ Analyzing hierarchy for entity <PipelinedFPOperator> in library <ahir> (architec
 	operator_id = "ApFloatAdd"
 WARNING:Xst:795 - "/home/madhav/ahirgit/ahir/vhdl/release/ahir.vhdl" line 14380: Size of operands are different : result is <false>.
 
-Analyzing hierarchy for entity <PipelinedFPOperator> in library <ahir> (architecture <vanilla>) with generics.
+Analyzing hierarchy for entity <PipelinedFPOperator> in library <ahir> (architecture <Vanilla>) with generics.
 	exponent_width = 8
 	fraction_width = 23
 	no_arbitration = false
@@ -226,7 +321,7 @@ Analyzing hierarchy for entity <PipelinedFPOperator> in library <ahir> (architec
 	operator_id = "ApFloatAdd"
 WARNING:Xst:795 - "/home/madhav/ahirgit/ahir/vhdl/release/ahir.vhdl" line 14380: Size of operands are different : result is <false>.
 
-Analyzing hierarchy for entity <PipelinedFPOperator> in library <ahir> (architecture <vanilla>) with generics.
+Analyzing hierarchy for entity <PipelinedFPOperator> in library <ahir> (architecture <Vanilla>) with generics.
 	exponent_width = 8
 	fraction_width = 23
 	no_arbitration = false
@@ -242,7 +337,7 @@ Analyzing hierarchy for entity <place> in library <ahir> (architecture <default_
 	bypass = true
 	marking = true
 
-Analyzing hierarchy for entity <InputMuxBase> in library <ahir> (architecture <behave>) with generics.
+Analyzing hierarchy for entity <InputMuxBase> in library <ahir> (architecture <Behave>) with generics.
 	iwidth = 256
 	no_arbitration = false
 	nreqs = 4
@@ -260,14 +355,14 @@ Analyzing hierarchy for entity <GenericFloatingPointMultiplier> in library <ahir
 	tag_width = 2
 	use_as_subtractor = false
 
-Analyzing hierarchy for entity <OutputDeMuxBase> in library <ahir> (architecture <behave>) with generics.
+Analyzing hierarchy for entity <OutputDeMuxBase> in library <ahir> (architecture <Behave>) with generics.
 	iwidth = 32
 	no_arbitration = false
 	nreqs = 4
 	owidth = 128
 	twidth = 2
 
-Analyzing hierarchy for entity <InputMuxBase> in library <ahir> (architecture <behave>) with generics.
+Analyzing hierarchy for entity <InputMuxBase> in library <ahir> (architecture <Behave>) with generics.
 	iwidth = 192
 	no_arbitration = false
 	nreqs = 3
@@ -285,14 +380,14 @@ Analyzing hierarchy for entity <GenericFloatingPointAdderSubtractor> in library 
 	tag_width = 2
 	use_as_subtractor = false
 
-Analyzing hierarchy for entity <OutputDeMuxBase> in library <ahir> (architecture <behave>) with generics.
+Analyzing hierarchy for entity <OutputDeMuxBase> in library <ahir> (architecture <Behave>) with generics.
 	iwidth = 32
 	no_arbitration = false
 	nreqs = 3
 	owidth = 96
 	twidth = 2
 
-Analyzing hierarchy for entity <InputMuxBase> in library <ahir> (architecture <behave>) with generics.
+Analyzing hierarchy for entity <InputMuxBase> in library <ahir> (architecture <Behave>) with generics.
 	iwidth = 64
 	no_arbitration = false
 	nreqs = 1
@@ -310,7 +405,7 @@ Analyzing hierarchy for entity <GenericFloatingPointAdderSubtractor> in library 
 	tag_width = 1
 	use_as_subtractor = false
 
-Analyzing hierarchy for entity <OutputDeMuxBase> in library <ahir> (architecture <behave>) with generics.
+Analyzing hierarchy for entity <OutputDeMuxBase> in library <ahir> (architecture <Behave>) with generics.
 	iwidth = 32
 	no_arbitration = false
 	nreqs = 1
@@ -331,25 +426,25 @@ Analyzing hierarchy for entity <QueueBase> in library <ahir> (architecture <beha
 	data_width = 66
 	queue_depth = 2
 
-Analyzing hierarchy for entity <Pulse_To_Level_Translate_Entity> in library <ahir> (architecture <behave>).
+Analyzing hierarchy for entity <Pulse_To_Level_Translate_Entity> in library <ahir> (architecture <Behave>).
 
-Analyzing hierarchy for entity <Request_Priority_Encode_Entity> in library <ahir> (architecture <fair>) with generics.
+Analyzing hierarchy for entity <Request_Priority_Encode_Entity> in library <ahir> (architecture <Fair>) with generics.
 	num_reqs = 4
 	pull_mode = false
 
-Analyzing hierarchy for entity <BinaryEncoder> in library <ahir> (architecture <lowlevel>) with generics.
+Analyzing hierarchy for entity <BinaryEncoder> in library <ahir> (architecture <LowLevel>) with generics.
 	iwidth = 4
 	owidth = 2
 
-Analyzing hierarchy for entity <UnsignedMultiplier> in library <ahir> (architecture <pipelined>) with generics.
+Analyzing hierarchy for entity <UnsignedMultiplier> in library <ahir> (architecture <Pipelined>) with generics.
 	operand_width = 24
 	tag_width = 46
 
-Analyzing hierarchy for entity <Request_Priority_Encode_Entity> in library <ahir> (architecture <fair>) with generics.
+Analyzing hierarchy for entity <Request_Priority_Encode_Entity> in library <ahir> (architecture <Fair>) with generics.
 	num_reqs = 3
 	pull_mode = false
 
-Analyzing hierarchy for entity <BinaryEncoder> in library <ahir> (architecture <lowlevel>) with generics.
+Analyzing hierarchy for entity <BinaryEncoder> in library <ahir> (architecture <LowLevel>) with generics.
 	iwidth = 3
 	owidth = 2
 
@@ -357,15 +452,15 @@ Analyzing hierarchy for entity <QueueBase> in library <ahir> (architecture <beha
 	data_width = 65
 	queue_depth = 2
 
-Analyzing hierarchy for entity <Request_Priority_Encode_Entity> in library <ahir> (architecture <fair>) with generics.
+Analyzing hierarchy for entity <Request_Priority_Encode_Entity> in library <ahir> (architecture <Fair>) with generics.
 	num_reqs = 1
 	pull_mode = false
 
-Analyzing hierarchy for entity <BinaryEncoder> in library <ahir> (architecture <lowlevel>) with generics.
+Analyzing hierarchy for entity <BinaryEncoder> in library <ahir> (architecture <LowLevel>) with generics.
 	iwidth = 1
 	owidth = 1
 
-Analyzing hierarchy for entity <UnsignedMultiplier> in library <ahir> (architecture <pipelined>) with generics.
+Analyzing hierarchy for entity <UnsignedMultiplier> in library <ahir> (architecture <Pipelined>) with generics.
 	operand_width = 24
 	tag_width = 45
 
@@ -374,7 +469,7 @@ INFO:Xst:2555 - '-hierarchy_separator' switch is being deprecated in a future re
 =========================================================================
 *                            HDL Analysis                               *
 =========================================================================
-Analyzing Entity <ahir_system> in library <work> (Architecture <default>).
+Analyzing Entity <ahir_system> in library <work> (Architecture <Default>).
 Entity <ahir_system> analyzed. Unit <ahir_system> generated.
 
 Analyzing generic Entity <dotProduct> in library <work> (Architecture <Default>).
@@ -422,7 +517,7 @@ Analyzing generic Entity <join.2> in library <ahir> (Architecture <default_arch>
 	bypass = true
 Entity <join.2> analyzed. Unit <join.2> generated.
 
-Analyzing generic Entity <PipelinedFPOperator.1> in library <ahir> (Architecture <vanilla>).
+Analyzing generic Entity <PipelinedFPOperator.1> in library <ahir> (Architecture <Vanilla>).
 	exponent_width = 8
 	fraction_width = 23
 	no_arbitration = false
@@ -431,7 +526,7 @@ Analyzing generic Entity <PipelinedFPOperator.1> in library <ahir> (Architecture
 WARNING:Xst:795 - "/home/madhav/ahirgit/ahir/vhdl/release/ahir.vhdl" line 14380: Size of operands are different : result is <false>.
 Entity <PipelinedFPOperator.1> analyzed. Unit <PipelinedFPOperator.1> generated.
 
-Analyzing generic Entity <InputMuxBase.1> in library <ahir> (Architecture <behave>).
+Analyzing generic Entity <InputMuxBase.1> in library <ahir> (Architecture <Behave>).
 	iwidth = 256
 	no_arbitration = false
 	nreqs = 4
@@ -447,19 +542,19 @@ WARNING:Xst:819 - "/home/madhav/ahirgit/ahir/vhdl/release/ahir.vhdl" line 10606:
    queue_size, read_pointer, write_pointer, reset, push_req, pop_req.
 Entity <QueueBase.2> analyzed. Unit <QueueBase.2> generated.
 
-Analyzing Entity <Pulse_To_Level_Translate_Entity> in library <ahir> (Architecture <behave>).
+Analyzing Entity <Pulse_To_Level_Translate_Entity> in library <ahir> (Architecture <Behave>).
 WARNING:Xst:819 - "/home/madhav/ahirgit/ahir/vhdl/release/ahir.vhdl" line 10525: The following signals are missing in the process sensitivity list:
    pull_mode_state, rL, aR.
 Entity <Pulse_To_Level_Translate_Entity> analyzed. Unit <Pulse_To_Level_Translate_Entity> generated.
 
-Analyzing generic Entity <Request_Priority_Encode_Entity.1> in library <ahir> (Architecture <fair>).
+Analyzing generic Entity <Request_Priority_Encode_Entity.1> in library <ahir> (Architecture <Fair>).
 	num_reqs = 4
 	pull_mode = false
 WARNING:Xst:819 - "/home/madhav/ahirgit/ahir/vhdl/release/ahir.vhdl" line 10817: The following signals are missing in the process sensitivity list:
    reqR_register, reqR_reg_is_non_zero, reqR, ack_s, reqR_priority_encoded.
 Entity <Request_Priority_Encode_Entity.1> analyzed. Unit <Request_Priority_Encode_Entity.1> generated.
 
-Analyzing generic Entity <BinaryEncoder.1> in library <ahir> (Architecture <lowlevel>).
+Analyzing generic Entity <BinaryEncoder.1> in library <ahir> (Architecture <LowLevel>).
 	iwidth = 4
 	owidth = 2
 Entity <BinaryEncoder.1> analyzed. Unit <BinaryEncoder.1> generated.
@@ -481,12 +576,12 @@ WARNING:Xst:819 - "/home/madhav/ahirgit/ahir/vhdl/release/ahir.vhdl" line 14278:
    tag2_extended, rfract_2, stage_full, pipeline_stall, reset.
 Entity <GenericFloatingPointMultiplier.1> analyzed. Unit <GenericFloatingPointMultiplier.1> generated.
 
-Analyzing generic Entity <UnsignedMultiplier.1> in library <ahir> (Architecture <pipelined>).
+Analyzing generic Entity <UnsignedMultiplier.1> in library <ahir> (Architecture <Pipelined>).
 	operand_width = 24
 	tag_width = 46
 Entity <UnsignedMultiplier.1> analyzed. Unit <UnsignedMultiplier.1> generated.
 
-Analyzing generic Entity <OutputDeMuxBase.1> in library <ahir> (Architecture <behave>).
+Analyzing generic Entity <OutputDeMuxBase.1> in library <ahir> (Architecture <Behave>).
 	iwidth = 32
 	no_arbitration = false
 	nreqs = 4
@@ -494,7 +589,7 @@ Analyzing generic Entity <OutputDeMuxBase.1> in library <ahir> (Architecture <be
 	twidth = 2
 Entity <OutputDeMuxBase.1> analyzed. Unit <OutputDeMuxBase.1> generated.
 
-Analyzing generic Entity <PipelinedFPOperator.2> in library <ahir> (Architecture <vanilla>).
+Analyzing generic Entity <PipelinedFPOperator.2> in library <ahir> (Architecture <Vanilla>).
 	exponent_width = 8
 	fraction_width = 23
 	no_arbitration = false
@@ -503,7 +598,7 @@ Analyzing generic Entity <PipelinedFPOperator.2> in library <ahir> (Architecture
 WARNING:Xst:795 - "/home/madhav/ahirgit/ahir/vhdl/release/ahir.vhdl" line 14380: Size of operands are different : result is <false>.
 Entity <PipelinedFPOperator.2> analyzed. Unit <PipelinedFPOperator.2> generated.
 
-Analyzing generic Entity <InputMuxBase.2> in library <ahir> (Architecture <behave>).
+Analyzing generic Entity <InputMuxBase.2> in library <ahir> (Architecture <Behave>).
 	iwidth = 192
 	no_arbitration = false
 	nreqs = 3
@@ -512,14 +607,14 @@ Analyzing generic Entity <InputMuxBase.2> in library <ahir> (Architecture <behav
 	twidth = 2
 Entity <InputMuxBase.2> analyzed. Unit <InputMuxBase.2> generated.
 
-Analyzing generic Entity <Request_Priority_Encode_Entity.2> in library <ahir> (Architecture <fair>).
+Analyzing generic Entity <Request_Priority_Encode_Entity.2> in library <ahir> (Architecture <Fair>).
 	num_reqs = 3
 	pull_mode = false
 WARNING:Xst:819 - "/home/madhav/ahirgit/ahir/vhdl/release/ahir.vhdl" line 10817: The following signals are missing in the process sensitivity list:
    reqR_register, reqR_reg_is_non_zero, reqR, ack_s, reqR_priority_encoded.
 Entity <Request_Priority_Encode_Entity.2> analyzed. Unit <Request_Priority_Encode_Entity.2> generated.
 
-Analyzing generic Entity <BinaryEncoder.2> in library <ahir> (Architecture <lowlevel>).
+Analyzing generic Entity <BinaryEncoder.2> in library <ahir> (Architecture <LowLevel>).
 	iwidth = 3
 	owidth = 2
 Entity <BinaryEncoder.2> analyzed. Unit <BinaryEncoder.2> generated.
@@ -539,14 +634,3 @@ WARNING:Xst:790 - "/home/madhav/ahirgit/ahir/vhdl/release/ahir.vhdl" line 13799:
 WARNING:Xst:790 - "/home/madhav/ahirgit/ahir/vhdl/release/ieee_proposed.vhdl" line 1407: Index value(s) does not match array range, simulation mismatch.
 WARNING:Xst:790 - "/home/madhav/ahirgit/ahir/vhdl/release/ahir.vhdl" line 13824: Index value(s) does not match array range, simulation mismatch.
 WARNING:Xst:790 - "/home/madhav/ahirgit/ahir/vhdl/release/ieee_proposed.vhdl" line 1407: Index value(s) does not match array range, simulation mismatch.
-
-User Interruption
---> 
-
-
-Total memory usage is 134496 kilobytes
-
-Number of errors   :    0 (   0 filtered)
-Number of warnings :   23 (   0 filtered)
-Number of infos    :    1 (   0 filtered)
-

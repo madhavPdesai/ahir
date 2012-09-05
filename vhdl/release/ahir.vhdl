@@ -13596,14 +13596,14 @@ use ahir.Subprograms.all;
 
 
 entity GenericFloatingPointAdderSubtractor is
-  generic (tag_width : integer;
-           exponent_width: integer;
-           fraction_width : integer;
+  generic (tag_width : integer := 8;
+           exponent_width: integer := 8;
+           fraction_width : integer := 23;
            round_style : round_type := float_round_style;  -- rounding option
            addguard       : NATURAL := float_guard_bits;  -- number of guard bits
            check_error : BOOLEAN    := float_check_error;  -- check for errors
            denormalize : BOOLEAN    := float_denormalize;  -- Use IEEE extended FP           
-	   use_as_subtractor: BOOLEAN
+	   use_as_subtractor: BOOLEAN := false
            );
   port(
     INA, INB: in std_logic_vector((exponent_width+fraction_width) downto 0);
@@ -13721,6 +13721,8 @@ begin
   begin
 
     exceptional_result := '0';
+    sticky := '0';
+    leftright := false;
     ---------------------------------------------------------------------------
     -- will need to set appropriate flags here!
     ---------------------------------------------------------------------------
@@ -14057,14 +14059,14 @@ use ahir.BaseComponents.all;
 
 
 entity GenericFloatingPointMultiplier is
-  generic (tag_width : integer;
-           exponent_width: integer;
-           fraction_width : integer;
+  generic (tag_width : integer := 8;
+           exponent_width: integer := 8;
+           fraction_width : integer := 23;
            round_style : round_type := float_round_style;  -- rounding option
            addguard       : NATURAL := float_guard_bits;  -- number of guard bits
            check_error : BOOLEAN    := float_check_error;  -- check for errors
            denormalize : BOOLEAN    := float_denormalize;  -- Use IEEE extended FP           
-	   use_as_subtractor: BOOLEAN
+	   use_as_subtractor: BOOLEAN  := false -- TODO: get rid of this!
            );
   port(
     INA, INB: in std_logic_vector((exponent_width+fraction_width) downto 0);
@@ -14145,6 +14147,17 @@ begin
     variable sticky           : STD_ULOGIC;   -- Holds precision for rounding
   begin
     exceptional_result := '0';    
+    fp_sign := '0';
+    rexpon := (others => '0');
+    exponl := (others => '0');
+    exponr := (others => '0');
+    shifty := 0;
+    fractl := (others => '0');
+    fractr := (others => '0');
+    lfptype := isx;
+    rfptype := isx;
+    fpresult := (others => '0');
+     
     if (fraction_width = 0 or l'length < 7 or r'length < 7) then
       lfptype := isx;
       exceptional_result := '1';

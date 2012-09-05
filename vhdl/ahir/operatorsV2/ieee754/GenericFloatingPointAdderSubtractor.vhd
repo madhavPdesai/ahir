@@ -19,14 +19,14 @@ use ahir.Subprograms.all;
 
 
 entity GenericFloatingPointAdderSubtractor is
-  generic (tag_width : integer;
-           exponent_width: integer;
-           fraction_width : integer;
+  generic (tag_width : integer := 8;
+           exponent_width: integer := 8;
+           fraction_width : integer := 23;
            round_style : round_type := float_round_style;  -- rounding option
            addguard       : NATURAL := float_guard_bits;  -- number of guard bits
            check_error : BOOLEAN    := float_check_error;  -- check for errors
            denormalize : BOOLEAN    := float_denormalize;  -- Use IEEE extended FP           
-	   use_as_subtractor: BOOLEAN
+	   use_as_subtractor: BOOLEAN := false
            );
   port(
     INA, INB: in std_logic_vector((exponent_width+fraction_width) downto 0);
@@ -144,6 +144,8 @@ begin
   begin
 
     exceptional_result := '0';
+    sticky := '0';
+    leftright := false;
     ---------------------------------------------------------------------------
     -- will need to set appropriate flags here!
     ---------------------------------------------------------------------------
