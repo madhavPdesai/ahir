@@ -21,8 +21,8 @@ use ahir.BaseComponents.all;
 
 entity GenericFloatingPointMultiplier is
   generic (tag_width : integer := 8;
-           exponent_width: integer := 8;
-           fraction_width : integer := 23;
+           exponent_width: integer := 11;
+           fraction_width : integer := 52;
            round_style : round_type := float_round_style;  -- rounding option
            addguard       : NATURAL := float_guard_bits;  -- number of guard bits
            check_error : BOOLEAN    := float_check_error;  -- check for errors
@@ -43,12 +43,17 @@ architecture rtl of GenericFloatingPointMultiplier is
 
   constant operand_width : integer := exponent_width+fraction_width+1;
 
-  signal  l, r                 : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input  
+  signal lp, rp             : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input  
   signal pipeline_stall : std_logic;
-  signal stage_full : std_logic_vector(1 to 3);
+  signal stage_full : std_logic_vector(0 to 3);
 
 
   constant multguard        : NATURAL := addguard;           -- guard bits
+
+
+  -- stage 0 outputs.
+  signal tag0: std_logic_vector(tag_width-1 downto 0);
+  signal  l, r             : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input  
 
   -- stage 1 outputs
   signal lfptype_1, rfptype_1 : valid_fpstate;
@@ -83,11 +88,29 @@ begin
   tag_out <= tag3;
 
   -- construct l,r.
-  l <= to_float(INA, exponent_width, fraction_width);
-  r <= to_float(INB, exponent_width, fraction_width);
+  lp <= to_float(INA, exponent_width, fraction_width);
+  rp <= to_float(INB, exponent_width, fraction_width);
 
   -- return slv.
   OUTMUL <= to_slv(fpresult_3);
+
+  -----------------------------------------------------------------------------
+  -- Stage 0: register inputs.
+  -----------------------------------------------------------------------------
+  process(clk)
+    variable active_v : std_logic;
+  begin
+    active_v := env_rdy and not (pipeline_stall or reset);
+    if(clk'event and clk = '1') then
+      stage_full(0) <= active_v;
+      if(active_v = '1') then
+        tag0 <= tag_in;
+        l <= lp;
+        r <= rp;
+      end if;
+    end if;
+  end process;
+
   
   -----------------------------------------------------------------------------
   -- Stage 1: detect NaN, deNorm, align exponents.
@@ -192,11 +215,11 @@ begin
       rexpon := resize (exponl, rexpon'length) + exponr - shifty + 1;
     end if;
 
-    active_v := env_rdy and not (pipeline_stall or reset);
+    active_v := stage_full(0) and not (pipeline_stall or reset);
     if(clk'event and clk = '1') then
       stage_full(1) <= active_v;
       if(active_v = '1') then
-        tag1 <= tag_in;
+        tag1 <= tag0;
         
         fpresult_1 <= fpresult;
         fractl_1 <= fractl;

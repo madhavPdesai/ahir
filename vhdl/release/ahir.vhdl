@@ -3323,8 +3323,10 @@ package body FloatOperatorPackage is
   procedure ApFloatMul_proc (l : in float; r : in float; result : out std_logic_vector) is
     variable float_result  : float(l'left downto l'right);
   begin
-    assert (l'length = r'length) and (l'length = result'length)						     
-      report "Length Mismatch inApFloatMul_proc" severity error;
+    assert (l'length = r'length)
+      report "input operand length mismatch in ApFloatMul_proc" severity error;
+    assert (l'length = result'length)						     
+      report "input and output operand length mismatch in ApFloatMul_proc" severity error;
     float_result := l*r;  
     result := To_SLV(float_result);  
   end ApFloatMul_proc; 				
@@ -3450,9 +3452,10 @@ package body FloatOperatorPackage is
                                    constant exponent_width : in integer;
                                    constant fraction_width : in integer;
                                    result : out std_logic_vector) is	
-    variable result_var : std_logic_vector(exponent_width+fraction_width-1 downto 0);	
+    variable result_var : std_logic_vector(exponent_width+fraction_width downto 0);	
     variable temp_int: integer;
   begin
+    result_var:= (others => '0');
     if id = "ApFloatAdd" then					
       ApFloatAdd_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
     elsif id = "ApFloatSub" then					
@@ -3500,8 +3503,9 @@ package body FloatOperatorPackage is
                                       constant exponent_width : in integer;
                                       constant fraction_width : in integer;                                      
                                       result : out std_logic_vector) is	
-    variable result_var : std_logic_vector(exponent_width+fraction_width-1 downto 0);	
+    variable result_var : std_logic_vector(exponent_width+fraction_width downto 0);	
   begin
+    result_var:= (others => '0');
     if id = "ApFloatToApIntSigned" then					
       ApFloatToApIntSigned_proc(To_Float(x,exponent_width,fraction_width), result_var);
     elsif id = "ApFloatToApIntUnsigned" then					
@@ -8960,7 +8964,7 @@ begin  -- Behave
         variable   result_var: std_logic_vector(owidth-1 downto 0);                
       begin
         result_var := (others => '0');
-        SingleInputFloatOperation(operator_id, data_in, input1_characteristic_width, input1_mantissa_width, result_var);
+        SingleInputFloatOperation(operator_id, data_in, output_characteristic_width, output_mantissa_width, result_var);
         result <= result_var;
       end process;
     end generate SingleOperandNoConstantIntFloat;
@@ -8989,28 +8993,34 @@ begin  -- Behave
     end generate SingleOperandWithConstantIntInt;
 
     SingleOperandWithConstantFloatInt: if (not input1_is_int) and output_is_int generate
-      
-      process(data_in)
-        variable op1: std_logic_vector(iwidth_1-1 downto 0);
-        constant op2 : std_logic_vector(constant_width-1 downto 0) := constant_operand;
+
+      SigBlock: block
+      	signal op2_sig: std_logic_vector(constant_width-1 downto 0);
+      begin
+      op2_sig <= constant_operand;
+      process(data_in, op2_sig)
         variable   result_var: std_logic_vector(owidth-1 downto 0);                        
       begin
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, data_in, op2,input1_characteristic_width, input1_mantissa_width, result_var);
+        TwoInputFloatOperation(operator_id, data_in, op2_sig,input1_characteristic_width, input1_mantissa_width, result_var);
         result <= result_var;
       end process;
+      end block SigBlock;
     end generate SingleOperandWithConstantFloatInt;
 
     SingleOperandWithConstantFloatFloat: if (not input1_is_int) and (not output_is_int) generate
-      process(data_in)
-        variable op1: std_logic_vector(iwidth_1-1 downto 0);
-        constant op2 : std_logic_vector(constant_width-1 downto 0) := constant_operand;
+      SigBlock: block
+      	signal op2_sig: std_logic_vector(constant_width-1 downto 0);
+      begin
+      op2_sig <= constant_operand;
+      process(data_in, op2_sig)
         variable   result_var: std_logic_vector(owidth-1 downto 0);                        
       begin
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, data_in, op2, input1_characteristic_width, input1_mantissa_width, result_var);
+        TwoInputFloatOperation(operator_id, data_in, op2_sig, input1_characteristic_width, input1_mantissa_width, result_var);
         result <= result_var;
       end process;
+    end block SigBlock;
     end generate SingleOperandWithConstantFloatFloat;
   end generate SingleOperandWithConstant;
   
@@ -13616,13 +13626,13 @@ entity GenericFloatingPointAdderSubtractor is
 end entity;
 
 architecture rtl of GenericFloatingPointAdderSubtractor is
-  signal  l, r                 : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
+  signal  l, r, lp, rp                 : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
 
 
   
   signal pipeline_stall : std_logic;
-  signal stage_full : std_logic_vector(1 to 3);
-  signal tag1, tag2, tag3 : std_logic_vector(tag_width-1 downto 0);
+  signal stage_full : std_logic_vector(0 to 3);
+  signal tag0, tag1, tag2, tag3 : std_logic_vector(tag_width-1 downto 0);
 
   signal lfptype_1, rfptype_1 : valid_fpstate;
   signal fpresult_1         : UNRESOLVED_float (exponent_width downto -fraction_width);
@@ -13680,11 +13690,11 @@ begin
   addo_rdy <= stage_full(3);
   tag_out <= tag3;
 
-  -- construct l,r.
-  l <= to_float(INA, exponent_width, fraction_width);
+  -- construct l,r (user registers)
+  lp <= to_float(INA, exponent_width, fraction_width);
  
   AsAdder: if (not use_as_subtractor) generate
-  	r <= to_float(INB, exponent_width, fraction_width);
+  	rp <= to_float(INB, exponent_width, fraction_width);
   end generate AsAdder;
 
   AsSubtractor: if (use_as_subtractor) generate
@@ -13692,12 +13702,29 @@ begin
            variable btmp: UNRESOLVED_float(exponent_width downto -fraction_width);
         begin
 	   btmp := to_float(INB, exponent_width, fraction_width);
-  	   r <= - btmp;
+  	   rp <= - btmp;
 	end process;
   end generate AsSubtractor;
 
   -- return slv.
   OUTADD <= to_slv(fpresult_3);
+
+  -----------------------------------------------------------------------------
+  -- Stage 0: register inputs.
+  -----------------------------------------------------------------------------
+  process(clk)
+    variable active_v : std_logic;
+  begin
+    active_v := env_rdy and not (pipeline_stall or reset);
+    if(clk'event and clk = '1') then
+      stage_full(0) <= active_v;
+      if(active_v = '1') then
+        tag0 <= tag_in;
+        l <= lp;
+        r <= rp;
+      end if;
+    end if;
+  end process;
   
   -----------------------------------------------------------------------------
   -- Stage 1: detect NaN, deNorm, align exponents.
@@ -13828,11 +13855,11 @@ begin
       end if;
     end if;
     
-    active_v := env_rdy and not (pipeline_stall or reset);
+    active_v := stage_full(0) and not (pipeline_stall or reset);
     if(clk'event and clk = '1') then
       stage_full(1) <= active_v;
       if(active_v = '1') then
-        tag1 <= tag_in;
+        tag1 <= tag0;
 
         lfptype_1 <= lfptype;
         rfptype_1 <= rfptype;
@@ -14060,8 +14087,8 @@ use ahir.BaseComponents.all;
 
 entity GenericFloatingPointMultiplier is
   generic (tag_width : integer := 8;
-           exponent_width: integer := 8;
-           fraction_width : integer := 23;
+           exponent_width: integer := 11;
+           fraction_width : integer := 52;
            round_style : round_type := float_round_style;  -- rounding option
            addguard       : NATURAL := float_guard_bits;  -- number of guard bits
            check_error : BOOLEAN    := float_check_error;  -- check for errors
@@ -14082,12 +14109,17 @@ architecture rtl of GenericFloatingPointMultiplier is
 
   constant operand_width : integer := exponent_width+fraction_width+1;
 
-  signal  l, r                 : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input  
+  signal lp, rp             : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input  
   signal pipeline_stall : std_logic;
-  signal stage_full : std_logic_vector(1 to 3);
+  signal stage_full : std_logic_vector(0 to 3);
 
 
   constant multguard        : NATURAL := addguard;           -- guard bits
+
+
+  -- stage 0 outputs.
+  signal tag0: std_logic_vector(tag_width-1 downto 0);
+  signal  l, r             : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input  
 
   -- stage 1 outputs
   signal lfptype_1, rfptype_1 : valid_fpstate;
@@ -14122,11 +14154,29 @@ begin
   tag_out <= tag3;
 
   -- construct l,r.
-  l <= to_float(INA, exponent_width, fraction_width);
-  r <= to_float(INB, exponent_width, fraction_width);
+  lp <= to_float(INA, exponent_width, fraction_width);
+  rp <= to_float(INB, exponent_width, fraction_width);
 
   -- return slv.
   OUTMUL <= to_slv(fpresult_3);
+
+  -----------------------------------------------------------------------------
+  -- Stage 0: register inputs.
+  -----------------------------------------------------------------------------
+  process(clk)
+    variable active_v : std_logic;
+  begin
+    active_v := env_rdy and not (pipeline_stall or reset);
+    if(clk'event and clk = '1') then
+      stage_full(0) <= active_v;
+      if(active_v = '1') then
+        tag0 <= tag_in;
+        l <= lp;
+        r <= rp;
+      end if;
+    end if;
+  end process;
+
   
   -----------------------------------------------------------------------------
   -- Stage 1: detect NaN, deNorm, align exponents.
@@ -14231,11 +14281,11 @@ begin
       rexpon := resize (exponl, rexpon'length) + exponr - shifty + 1;
     end if;
 
-    active_v := env_rdy and not (pipeline_stall or reset);
+    active_v := stage_full(0) and not (pipeline_stall or reset);
     if(clk'event and clk = '1') then
       stage_full(1) <= active_v;
       if(active_v = '1') then
-        tag1 <= tag_in;
+        tag1 <= tag0;
         
         fpresult_1 <= fpresult;
         fractl_1 <= fractl;

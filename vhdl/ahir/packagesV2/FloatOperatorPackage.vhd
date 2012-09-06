@@ -349,8 +349,10 @@ package body FloatOperatorPackage is
   procedure ApFloatMul_proc (l : in float; r : in float; result : out std_logic_vector) is
     variable float_result  : float(l'left downto l'right);
   begin
-    assert (l'length = r'length) and (l'length = result'length)						     
-      report "Length Mismatch inApFloatMul_proc" severity error;
+    assert (l'length = r'length)
+      report "input operand length mismatch in ApFloatMul_proc" severity error;
+    assert (l'length = result'length)						     
+      report "input and output operand length mismatch in ApFloatMul_proc" severity error;
     float_result := l*r;  
     result := To_SLV(float_result);  
   end ApFloatMul_proc; 				
@@ -476,9 +478,10 @@ package body FloatOperatorPackage is
                                    constant exponent_width : in integer;
                                    constant fraction_width : in integer;
                                    result : out std_logic_vector) is	
-    variable result_var : std_logic_vector(exponent_width+fraction_width-1 downto 0);	
+    variable result_var : std_logic_vector(exponent_width+fraction_width downto 0);	
     variable temp_int: integer;
   begin
+    result_var:= (others => '0');
     if id = "ApFloatAdd" then					
       ApFloatAdd_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
     elsif id = "ApFloatSub" then					
@@ -526,8 +529,9 @@ package body FloatOperatorPackage is
                                       constant exponent_width : in integer;
                                       constant fraction_width : in integer;                                      
                                       result : out std_logic_vector) is	
-    variable result_var : std_logic_vector(exponent_width+fraction_width-1 downto 0);	
+    variable result_var : std_logic_vector(exponent_width+fraction_width downto 0);	
   begin
+    result_var:= (others => '0');
     if id = "ApFloatToApIntSigned" then					
       ApFloatToApIntSigned_proc(To_Float(x,exponent_width,fraction_width), result_var);
     elsif id = "ApFloatToApIntUnsigned" then					
