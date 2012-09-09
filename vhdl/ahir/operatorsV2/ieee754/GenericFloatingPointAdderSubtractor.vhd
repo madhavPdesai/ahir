@@ -39,13 +39,13 @@ entity GenericFloatingPointAdderSubtractor is
 end entity;
 
 architecture rtl of GenericFloatingPointAdderSubtractor is
-  signal  l, r                 : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
+  signal  l, r, lp, rp                 : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
 
 
   
   signal pipeline_stall : std_logic;
-  signal stage_full : std_logic_vector(1 to 3);
-  signal tag1, tag2, tag3 : std_logic_vector(tag_width-1 downto 0);
+  signal stage_full : std_logic_vector(0 to 3);
+  signal tag0, tag1, tag2, tag3 : std_logic_vector(tag_width-1 downto 0);
 
   signal lfptype_1, rfptype_1 : valid_fpstate;
   signal fpresult_1         : UNRESOLVED_float (exponent_width downto -fraction_width);
@@ -103,11 +103,11 @@ begin
   addo_rdy <= stage_full(3);
   tag_out <= tag3;
 
-  -- construct l,r.
-  l <= to_float(INA, exponent_width, fraction_width);
+  -- construct l,r (user registers)
+  lp <= to_float(INA, exponent_width, fraction_width);
  
   AsAdder: if (not use_as_subtractor) generate
-  	r <= to_float(INB, exponent_width, fraction_width);
+  	rp <= to_float(INB, exponent_width, fraction_width);
   end generate AsAdder;
 
   AsSubtractor: if (use_as_subtractor) generate
@@ -115,12 +115,29 @@ begin
            variable btmp: UNRESOLVED_float(exponent_width downto -fraction_width);
         begin
 	   btmp := to_float(INB, exponent_width, fraction_width);
-  	   r <= - btmp;
+  	   rp <= - btmp;
 	end process;
   end generate AsSubtractor;
 
   -- return slv.
   OUTADD <= to_slv(fpresult_3);
+
+  -----------------------------------------------------------------------------
+  -- Stage 0: register inputs.
+  -----------------------------------------------------------------------------
+  process(clk)
+    variable active_v : std_logic;
+  begin
+    active_v := env_rdy and not (pipeline_stall or reset);
+    if(clk'event and clk = '1') then
+      stage_full(0) <= active_v;
+      if(active_v = '1') then
+        tag0 <= tag_in;
+        l <= lp;
+        r <= rp;
+      end if;
+    end if;
+  end process;
   
   -----------------------------------------------------------------------------
   -- Stage 1: detect NaN, deNorm, align exponents.
@@ -251,11 +268,11 @@ begin
       end if;
     end if;
     
-    active_v := env_rdy and not (pipeline_stall or reset);
+    active_v := stage_full(0) and not (pipeline_stall or reset);
     if(clk'event and clk = '1') then
       stage_full(1) <= active_v;
       if(active_v = '1') then
-        tag1 <= tag_in;
+        tag1 <= tag0;
 
         lfptype_1 <= lfptype;
         rfptype_1 <= rfptype;

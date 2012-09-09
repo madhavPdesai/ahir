@@ -26,3 +26,18 @@ float dotProduct(float x0, float y0, float x1, float y1, float x2, float y2, flo
 	float result = ((p0 + p1) + (p2 + p3));
 	return(result);
 }
+
+uint8_t fpcmplt(float x, float y)
+{
+	return(x < y);
+}
+
+uint8_t fpcmpgt(float x, float y)
+{
+	return(x > y);
+}
+
+uint8_t fpcmpeq(float x, float y)
+{
+	return(x == y);
+}

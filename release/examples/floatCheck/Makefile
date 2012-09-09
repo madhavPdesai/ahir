@@ -5,6 +5,7 @@ PIPEHANDLER_INCLUDE=../../pipeHandler/include
 PIPEHANDLER_LIB=../../pipeHandler/lib
 VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
+TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq
 all: SW HW 
 
 # compile with SW defined.
@@ -33,7 +34,7 @@ aa2vc: prog.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -a -C -e ahir_system -w -s ghdl -t fpmul -t fpadd -t dotProduct -f prog.vc 
+	vc2vhdl -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc 
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 
