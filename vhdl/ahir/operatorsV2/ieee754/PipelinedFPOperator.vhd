@@ -50,7 +50,7 @@ architecture Vanilla of PipelinedFPOperator is
   signal odata: std_logic_vector(owidth-1 downto 0);
 
   signal NaN, overflow, underflow : std_logic;
-  constant use_as_subtractor : boolean := (operator_id = "sub");
+  constant use_as_subtractor : boolean := (operator_id = "ApFloatSub");
 
 
   -----------------------------------------------------------------------------

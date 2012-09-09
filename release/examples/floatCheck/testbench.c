@@ -56,6 +56,15 @@ int main(int argc, char* argv[])
 							*((uint32_t*) &hZ),
 							*((uint32_t*) &sZ));
 
+        hZ = fpsub(X,Y);
+        sZ = (X - Y);
+  	fprintf(stdout," %f - %f = %f, expected %f\n ", X,Y,hZ,sZ);
+  	fprintf(stdout," %x - %x = %x, expected %x\n ", *((uint32_t*) &X),
+							*((uint32_t*) &Y),
+							*((uint32_t*) &hZ),
+							*((uint32_t*) &sZ));
+
+
 
 	hZ = dotProduct(X,Y,X,Y,X,Y,X,Y);
         sZ = (X*Y) + (X*Y) + (X*Y) + (X*Y);

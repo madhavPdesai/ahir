@@ -5,7 +5,7 @@ PIPEHANDLER_INCLUDE=../../pipeHandler/include
 PIPEHANDLER_LIB=../../pipeHandler/lib
 VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
-TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq
+TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
 all: SW HW 
 
 # compile with SW defined.

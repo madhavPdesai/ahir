@@ -2878,8 +2878,7 @@ package BaseComponents is
              round_style : round_type := float_round_style;  -- rounding option
              addguard       : NATURAL := float_guard_bits;  -- number of guard bits
              check_error : BOOLEAN    := float_check_error;  -- check for errors
-             denormalize : BOOLEAN    := float_denormalize;  -- Use IEEE extended FP           
-             use_as_subtractor: BOOLEAN
+             denormalize : BOOLEAN    := float_denormalize  -- Use IEEE extended FP           
              );
     port(
       INA, INB: in std_logic_vector((exponent_width+fraction_width) downto 0);
@@ -13878,8 +13877,7 @@ entity GenericFloatingPointMultiplier is
            round_style : round_type := float_round_style;  -- rounding option
            addguard       : NATURAL := float_guard_bits;  -- number of guard bits
            check_error : BOOLEAN    := float_check_error;  -- check for errors
-           denormalize : BOOLEAN    := float_denormalize;  -- Use IEEE extended FP           
-	   use_as_subtractor: BOOLEAN  := false -- TODO: get rid of this!
+           denormalize : BOOLEAN    := float_denormalize  -- Use IEEE extended FP           
            );
   port(
     INA, INB: in std_logic_vector((exponent_width+fraction_width) downto 0);
@@ -14226,7 +14224,7 @@ architecture Vanilla of PipelinedFPOperator is
   signal odata: std_logic_vector(owidth-1 downto 0);
 
   signal NaN, overflow, underflow : std_logic;
-  constant use_as_subtractor : boolean := (operator_id = "sub");
+  constant use_as_subtractor : boolean := (operator_id = "ApFloatSub");
 
 
   -----------------------------------------------------------------------------
@@ -14272,8 +14270,7 @@ begin  -- Behave
                    round_style => round_nearest,
                    addguard => 3,
                    check_error => true,
-                   denormalize => true,
-                   use_as_subtractor => use_as_subtractor)
+                   denormalize => true)
       port map (
         env_rdy => ireq,
         muli_rdy => iack,
