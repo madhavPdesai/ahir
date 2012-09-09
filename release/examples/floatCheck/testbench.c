@@ -63,5 +63,25 @@ int main(int argc, char* argv[])
   	fprintf(stdout," dotProduct = %x, expected %x\n ", *((uint32_t*) &hZ),
 							*((uint32_t*) &sZ));
 
+
+	uint8_t cmpresult;
+	cmpresult = fpcmplt(2.0, 3.0);
+  	fprintf(stdout," (2.0 < 3.0) = %d, expected %d\n ", cmpresult,1);
+
+	cmpresult = fpcmplt(3.0, 2.0);
+  	fprintf(stdout," (3.0 < 2.0) = %d, expected %d\n ", cmpresult,0);
+
+	cmpresult = fpcmpgt(2.0, 3.0);
+  	fprintf(stdout," (2.0 > 3.0) = %d, expected %d\n ", cmpresult,0);
+
+	cmpresult = fpcmpgt(3.0, 2.0);
+  	fprintf(stdout," (3.0 > 2.0) = %d, expected %d\n ", cmpresult,1);
+
+	cmpresult = fpcmpeq(2.0, 2.0);
+  	fprintf(stdout," (2.0 == 2.0) = %d, expected %d\n ", cmpresult,1);
+
+	cmpresult = fpcmpeq(3.0, 2.0);
+  	fprintf(stdout," (3.0 == 2.0) = %d, expected %d\n ", cmpresult,0);
+
 }
    

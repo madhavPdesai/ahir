@@ -5,6 +5,7 @@ RELEASE=./release
 IOLIB=./v2/iolib/
 PIPEHANDLER=./v2/pipeHandler/
 CTESTBENCH=./v2/CtestBench/
+PTHREADUTILS=./v2/pthreadUtils
 VHDL=./vhdl/
 
 all: Release 
@@ -31,6 +32,8 @@ Release:
 	cp $(PIPEHANDLER)/include/*.h $(RELEASE)/pipeHandler/include/
 	cp $(PIPEHANDLER)/lib/* $(RELEASE)/pipeHandler/lib/
 	cp $(PIPEHANDLER)/pipeHandlerTest/* $(RELEASE)/pipeHandler/examples/
+	# copy the pthreadUtils.
+	cp $(PTHREADUTILS)/include/*.h $(RELEASE)/pthreadUtils/include/
 	# copy the testbench
 	cp $(CTESTBENCH)/include/*.h $(RELEASE)/CtestBench/include/
 	cp $(CTESTBENCH)/lib/* $(RELEASE)/CtestBench/lib/
@@ -56,10 +59,12 @@ Clean:
 	# rm the IOLIB
 	rm -f $(RELEASE)/iolib/include/*.h
 	rm -f $(RELEASE)/iolib/lib/*.a
-	# copy the pipeHandler
+	# rm the pipeHandler
 	rm -f $(RELEASE)/pipeHandler/include/*
 	rm -f $(RELEASE)/pipeHandler/lib/*
 	rm -f $(RELEASE)/pipeHandler/examples/*
+	# rm the pthreadUtils.
+	rm -f $(RELEASE)/pthreadUtils/include/
 	# rm the testbench
 	rm -f $(RELEASE)/CtestBench/include/*.h
 	rm -f $(RELEASE)/CtestBench/lib/*.so

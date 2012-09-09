@@ -76,13 +76,13 @@ begin  -- Behave
         op1 := data_in(iwidth-1 downto iwidth_2);
         op2 := data_in(iwidth_2-1 downto 0);
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, op1,op2,input1_characteristic_width, input1_mantissa_width, result_var);
+        TwoInputFloatArithOperation(operator_id, op1,op2,input1_characteristic_width, input1_mantissa_width, result_var);
         result <= result_var;
       end process;
     end generate TwoOpFloatFloatFloat;
 
     -- float x float -> int
-    TwoOpFloatFloatInt: if (not input1_is_int) and (not input2_is_int) and output_is_int generate
+    TwoOpFloatFloatInt: if ((not input1_is_int) and (not input2_is_int) and output_is_int) generate
       assert(iwidth_1 = iwidth_2) report "floatXfloat -> int operation: inputs must be of the same width." severity error;
       assert(input1_characteristic_width = input2_characteristic_width) report "floatXfloat -> int operation: input exponent sizes must be the same."
         severity error;
@@ -93,7 +93,11 @@ begin  -- Behave
         variable   result_var: std_logic_vector(owidth-1 downto 0);        
       begin
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, op1,op2, input1_characteristic_width, input1_mantissa_width, result_var);
+
+	op1 := data_in(iwidth-1 downto iwidth_2);
+	op2 := data_in(iwidth_2-1 downto 0);
+
+        TwoInputFloatCompareOperation(operator_id, op1,op2, input1_characteristic_width, input1_mantissa_width, result_var);
         result <= result_var;
       end process;
     end generate TwoOpFloatFloatInt;
@@ -209,7 +213,7 @@ begin  -- Behave
         variable   result_var: std_logic_vector(owidth-1 downto 0);                        
       begin
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, data_in, op2_sig,input1_characteristic_width, input1_mantissa_width, result_var);
+       	TwoInputFloatCompareOperation(operator_id, data_in, op2_sig,input1_characteristic_width, input1_mantissa_width, result_var);
         result <= result_var;
       end process;
       end block SigBlock;
@@ -224,7 +228,7 @@ begin  -- Behave
         variable   result_var: std_logic_vector(owidth-1 downto 0);                        
       begin
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, data_in, op2_sig, input1_characteristic_width, input1_mantissa_width, result_var);
+       	TwoInputFloatArithOperation(operator_id, data_in, op2_sig, input1_characteristic_width, input1_mantissa_width, result_var);
         result <= result_var;
       end process;
     end block SigBlock;

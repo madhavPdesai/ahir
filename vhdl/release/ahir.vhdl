@@ -2989,40 +2989,7 @@ use ieee_proposed.float_pkg.all;
 package FloatOperatorPackage is
 
   -----------------------------------------------------------------------------
-  -- these are obsolete
-  -----------------------------------------------------------------------------
-  procedure ApFloatResize_proc(l: in apfloat; result : out IStdLogicVector);
-  procedure ApFloatAdd_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatSub_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatMul_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatOeq_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatOne_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatOgt_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatOge_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatOlt_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatOle_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatOrd_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatUno_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatUeq_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatUne_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatUgt_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatUge_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatUlt_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatUle_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatToApIntSigned_proc(l: in apfloat; result : out IStdLogicVector);
-  procedure ApFloatToApIntUnsigned_proc(l: in apfloat; result : out IStdLogicVector);
-  procedure ApIntToApFloatSigned_proc(l: in apint; result : out IStdLogicVector);
-  procedure ApIntToApFloatUnsigned_proc(l: in apint; result : out IStdLogicVector);
-
-  -- TODO
-  -- procedures ApFloatToApIntSigned_Proc, ApFloatToApIntUnsigned_Proc,
-  --            ApIntSignedToApFloat_Proc, ApIntUnsignedToApFloat_Proc
-
-  procedure TwoInputFloatOperation(constant id    : in string; x, y : in IStdLogicVector; result : out IStdLogicVector);
-  procedure SingleInputFloatOperation(constant id : in string; x : in IStdLogicVector; result : out IStdLogicVector);
-
-  -----------------------------------------------------------------------------
-  -- these are better.
+  -- use the float type directly
   -----------------------------------------------------------------------------
   procedure ApFloatResize_proc(l: in float;
                                constant exponent_width : in integer;
@@ -3059,11 +3026,16 @@ package FloatOperatorPackage is
   -- TODO
   -- procedures ApFloatToApIntSigned_Proc, ApFloatToApIntUnsigned_Proc,
   --            ApIntSignedToApFloat_Proc, ApIntUnsignedToApFloat_Proc
-  procedure TwoInputFloatOperation(constant id    : in string;
-                                   x, y : in std_logic_vector;
-                                   constant exponent_width : in integer;
-                                   constant fraction_width : in integer;
-                                   result : out std_logic_vector);
+  procedure TwoInputFloatArithOperation(constant id    : in string;
+		  			x, y : in std_logic_vector;
+		  			constant exponent_width : in integer;
+		  			constant fraction_width : in integer;
+					result : out std_logic_vector);
+  procedure TwoInputFloatCompareOperation(constant id    : in string;
+                                   	x, y : in std_logic_vector;
+                                   	constant exponent_width : in integer;
+                                   	constant fraction_width : in integer;
+                                   	result : out std_logic_vector);
   procedure SingleInputFloatOperation(constant id : in string;
                                       x : in std_logic_vector;
                                       constant exponent_width : in integer;
@@ -3074,224 +3046,6 @@ package FloatOperatorPackage is
 end package FloatOperatorPackage;
 
 package body FloatOperatorPackage is
-
-  -----------------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatResize_proc (l : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result := To_ISLV(to_apfloat(RESIZE(to_float(l), result'high, -result'low)));
-  end ApFloatResize_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatAdd_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-    assert (l'length = r'length) and (l'length = result'length)						     
-      report "Length Mismatch inApFloatAdd_proc" severity error;
-     result := To_ISLV(to_apfloat(to_float(l) + to_float(r)));  
-  end ApFloatAdd_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatSub_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-    assert (l'length = r'length) and (l'length = result'length)						     
-      report "Length Mismatch inApFloatSub_proc" severity error;
-     result := To_ISLV(to_apfloat(to_float(l) - to_float(r)));  
-  end ApFloatSub_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatMul_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is
-    variable float_result  : float(l'left downto l'right);
-  begin
-    assert (l'length = r'length) and (l'length = result'length)						     
-      report "Length Mismatch inApFloatMul_proc" severity error;
-    float_result := to_float(l) * to_float(r);  
-    result := To_ISLV(float_result);  
-  end ApFloatMul_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatOeq_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result := To_ISLV(to_apint(to_float(l) = to_float(r)));  
-  end ApFloatOeq_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatOne_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result := To_ISLV(to_apint(to_float(l) /= to_float(r)));  
-  end ApFloatOne_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatOgt_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result := To_ISLV(to_apint(to_float(l) > to_float(r)));  
-  end ApFloatOgt_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatOge_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result := To_ISLV(to_apint(to_float(l) >= to_float(r)));  
-  end ApFloatOge_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatOlt_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result := To_ISLV(to_apint(to_float(l) < to_float(r)));  
-  end ApFloatOlt_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatOle_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result := To_ISLV(to_apint(to_float(l) <= to_float(r))); 
-  end ApFloatOle_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatOrd_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result := To_ISLV(to_apint(not(Unordered (x => to_float(l),y => to_float(r))))); 
-  end ApFloatOrd_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatUno_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result := To_ISLV(to_apint( Unordered (x => to_float(l),y => to_float(r)))); 
-  end ApFloatUno_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatUeq_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result := To_ISLV(to_apint(eq(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r)))); 
-  end ApFloatUeq_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatUne_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result :=  To_ISLV(to_apint(ne(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r))));
-  end ApFloatUne_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatUgt_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result :=  To_ISLV(to_apint(gt(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r))));
-  end ApFloatUgt_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatUge_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result :=  To_ISLV(to_apint(ge(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r))));  
-  end ApFloatUge_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatUlt_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result :=  To_ISLV(to_apint(lt(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r)))); 
-  end ApFloatUlt_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatUle_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result :=  To_ISLV(to_apint(le(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r))));  
-  end ApFloatUle_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatToApIntSigned_proc (l : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result := To_ISLV(to_apint(to_signed(to_float(l),result'length)));
-  end ApFloatToApIntSigned_proc; 				
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApFloatToApIntUnsigned_proc (l : in apfloat; result : out IStdLogicVector) is					
-  begin
-     result := To_ISLV(to_apint(to_unsigned(to_float(l),result'length)));
-  end ApFloatToApIntUnsigned_proc; 				
-
- ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApIntToApFloatSigned_proc (l : in apint; result : out IStdLogicVector) is
-  begin
-   result := To_ISLV(to_apfloat(to_float(to_signed(l),result'high,-result'low,round_zero)));
-  end ApIntToApFloatSigned_proc;
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------
-  procedure ApIntToApFloatUnsigned_proc (l : in apint; result : out IStdLogicVector) is
-  begin
-   result := To_ISLV(to_apfloat(to_float(to_unsigned(l),result'high,-result'low,round_zero)));
-  end ApIntToApFloatUnsigned_proc;
-  ---------------------------------------------------------------------
-  -----------------------------------------------------------------------------	
-  procedure TwoInputFloatOperation(constant id : in string; x, y : in IStdLogicVector; result : out IStdLogicVector) is	
-    variable result_var : IStdLogicVector(result'high downto result'low);	
-    variable temp_int: integer;
-  begin
-    if id = "ApFloatAdd" then					
-      ApFloatAdd_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatSub" then					
-      ApFloatSub_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatMul" then					
-      ApFloatMul_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatOeq" then					
-      ApFloatOeq_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatOne" then					
-      ApFloatOne_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatOgt" then					
-      ApFloatOgt_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatOge" then					
-      ApFloatOge_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatOlt" then					
-      ApFloatOlt_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatOle" then					
-      ApFloatOle_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatOrd" then					
-      ApFloatOrd_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatUno" then					
-      ApFloatUno_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatUeq" then					
-      ApFloatUeq_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatUne" then					
-      ApFloatUne_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatUgt" then					
-      ApFloatUgt_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatUge" then					
-      ApFloatUge_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatUlt" then					
-      ApFloatUlt_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatUle" then					
-      ApFloatUle_proc(To_apfloat(x), To_apfloat(y), result_var);
-    else	
-      assert false report "Unsupported float operator-id " & id severity failure;	
-    end if;	
-    result := result_var;	
-  end TwoInputFloatOperation;			
-  -----------------------------------------------------------------------------
-	
-  -----------------------------------------------------------------------------	
-  procedure SingleInputFloatOperation(constant id : in string;
-                                      x : in IStdLogicVector;
-                                      result : out IStdLogicVector) is	
-    variable result_var : IStdLogicVector(result'high downto result'low);	
-  begin
-    if id = "ApFloatResize" then					
-      ApFloatResize_proc(To_apfloat(x), result_var);
-    elsif id = "ApFloatToApIntSigned" then					
-      ApFloatToApIntSigned_proc(To_apfloat(x), result_var);
-    elsif id = "ApFloatToApIntUnsigned" then					
-      ApFloatToApIntUnsigned_proc(To_apfloat(x), result_var);
-    elsif id = "ApIntToApFloatSigned" then					
-      ApIntToApFloatSigned_proc(To_apint(x), result_var);
-    elsif id = "ApIntToApFloatUnsigned" then					
-      ApIntToApFloatUnsigned_proc(To_apint(x), result_var);
-    else	
-      assert false report "Unsupported operator-id " & id severity failure;	
-    end if;	
-    result := result_var;	
-  end SingleInputFloatOperation;	
-
-  -----------------------------------------------------------------------------
-  -- end obsolete versions
-  -----------------------------------------------------------------------------
-
-  -----------------------------------------------------------------------------
-  -- cleaner versions..
-  -----------------------------------------------------------------------------
 
   -----------------------------------------------------------------------------
   -----------------------------------------------------------------------------
@@ -3393,26 +3147,34 @@ package body FloatOperatorPackage is
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
   procedure ApFloatUgt_proc (l : in float; r : in float; result : out std_logic_vector) is					
+	variable cr: boolean;
   begin
-     result :=  To_SLV(gt(l => l, r => r, check_error => false) or Unordered (x => l,y => r));
+     cr :=  gt(l => l, r => r, check_error => false) or Unordered (x => l,y => r);
+     result :=  To_SLV(cr);
   end ApFloatUgt_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
   procedure ApFloatUge_proc (l : in float; r : in float; result : out std_logic_vector) is					
+	variable cr: boolean;
   begin
-     result :=  To_SLV(ge(l => l, r => r, check_error => false) or Unordered (x => l,y => r));  
+     cr :=  ge(l => l, r => r, check_error => false) or Unordered (x => l,y => r);  
+     result(result'low) :=  to_std_logic(cr);
   end ApFloatUge_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
   procedure ApFloatUlt_proc (l : in float; r : in float; result : out std_logic_vector) is					
+	variable cr: boolean;
   begin
-     result :=  To_SLV(lt(l => l, r => r, check_error => false) or Unordered (x => l,y => r)); 
+     cr :=  lt(l => l, r => r, check_error => false) or Unordered (x => l,y => r); 
+     result(result'low) := to_std_logic(cr);
   end ApFloatUlt_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
   procedure ApFloatUle_proc (l : in float; r : in float; result : out std_logic_vector) is					
+	variable cr: boolean;
   begin
-     result :=  To_SLV(le(l => l, r => r, check_error => false) or Unordered (x => l,y => r));  
+     cr :=  le(l => l, r => r, check_error => false) or Unordered (x => l,y => r);  
+     result(result'low) := to_std_logic(cr);
   end ApFloatUle_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
@@ -3447,7 +3209,7 @@ package body FloatOperatorPackage is
   end ApIntToApFloatUnsigned_proc;
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------	
-  procedure TwoInputFloatOperation(constant id : in string;
+  procedure TwoInputFloatArithOperation(constant id : in string;
                                    x, y : in std_logic_vector;
                                    constant exponent_width : in integer;
                                    constant fraction_width : in integer;
@@ -3462,7 +3224,27 @@ package body FloatOperatorPackage is
       ApFloatSub_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
     elsif id = "ApFloatMul" then					
       ApFloatMul_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
-    elsif id = "ApFloatOeq" then					
+    else	
+      assert false report "Unsupported arithmetic float operator-id " & id severity failure;	
+    end if;	
+    result := result_var;	
+  end TwoInputFloatArithOperation;			
+
+  ---------------------------------------------------------------------
+  -----------------------------------------------------------------------------	
+  procedure TwoInputFloatCompareOperation(constant id : in string;
+                                   x, y : in std_logic_vector;
+                                   constant exponent_width : in integer;
+                                   constant fraction_width : in integer;
+                                   result : out std_logic_vector) is	
+    variable result_var : std_logic_vector(0 downto 0);
+    variable temp_int: integer;
+  begin
+
+    assert(result'length = 1) report "comparison result must be a 1-bit integer" severity error;
+
+    result_var:= (others => '0');
+    if id = "ApFloatOeq" then					
       ApFloatOeq_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
     elsif id = "ApFloatOne" then					
       ApFloatOne_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
@@ -3491,12 +3273,12 @@ package body FloatOperatorPackage is
     elsif id = "ApFloatUle" then					
       ApFloatUle_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
     else	
-      assert false report "Unsupported float operator-id " & id severity failure;	
+      assert false report "Unsupported float comparison operator-id " & id severity failure;	
     end if;	
-    result := result_var;	
-  end TwoInputFloatOperation;			
+    result(result'low) := result_var(0);	
+  end TwoInputFloatCompareOperation;			
+
   -----------------------------------------------------------------------------
-	
   -----------------------------------------------------------------------------	
   procedure SingleInputFloatOperation(constant id : in string;
                                       x : in std_logic_vector;
@@ -8869,13 +8651,13 @@ begin  -- Behave
         op1 := data_in(iwidth-1 downto iwidth_2);
         op2 := data_in(iwidth_2-1 downto 0);
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, op1,op2,input1_characteristic_width, input1_mantissa_width, result_var);
+        TwoInputFloatArithOperation(operator_id, op1,op2,input1_characteristic_width, input1_mantissa_width, result_var);
         result <= result_var;
       end process;
     end generate TwoOpFloatFloatFloat;
 
     -- float x float -> int
-    TwoOpFloatFloatInt: if (not input1_is_int) and (not input2_is_int) and output_is_int generate
+    TwoOpFloatFloatInt: if ((not input1_is_int) and (not input2_is_int) and output_is_int) generate
       assert(iwidth_1 = iwidth_2) report "floatXfloat -> int operation: inputs must be of the same width." severity error;
       assert(input1_characteristic_width = input2_characteristic_width) report "floatXfloat -> int operation: input exponent sizes must be the same."
         severity error;
@@ -8886,7 +8668,11 @@ begin  -- Behave
         variable   result_var: std_logic_vector(owidth-1 downto 0);        
       begin
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, op1,op2, input1_characteristic_width, input1_mantissa_width, result_var);
+
+	op1 := data_in(iwidth-1 downto iwidth_2);
+	op2 := data_in(iwidth_2-1 downto 0);
+
+        TwoInputFloatCompareOperation(operator_id, op1,op2, input1_characteristic_width, input1_mantissa_width, result_var);
         result <= result_var;
       end process;
     end generate TwoOpFloatFloatInt;
@@ -9002,7 +8788,7 @@ begin  -- Behave
         variable   result_var: std_logic_vector(owidth-1 downto 0);                        
       begin
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, data_in, op2_sig,input1_characteristic_width, input1_mantissa_width, result_var);
+       	TwoInputFloatCompareOperation(operator_id, data_in, op2_sig,input1_characteristic_width, input1_mantissa_width, result_var);
         result <= result_var;
       end process;
       end block SigBlock;
@@ -9017,7 +8803,7 @@ begin  -- Behave
         variable   result_var: std_logic_vector(owidth-1 downto 0);                        
       begin
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, data_in, op2_sig, input1_characteristic_width, input1_mantissa_width, result_var);
+       	TwoInputFloatArithOperation(operator_id, data_in, op2_sig, input1_characteristic_width, input1_mantissa_width, result_var);
         result <= result_var;
       end process;
     end block SigBlock;
