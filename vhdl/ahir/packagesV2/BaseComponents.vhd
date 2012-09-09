@@ -1186,8 +1186,7 @@ package BaseComponents is
              round_style : round_type := float_round_style;  -- rounding option
              addguard       : NATURAL := float_guard_bits;  -- number of guard bits
              check_error : BOOLEAN    := float_check_error;  -- check for errors
-             denormalize : BOOLEAN    := float_denormalize;  -- Use IEEE extended FP           
-             use_as_subtractor: BOOLEAN
+             denormalize : BOOLEAN    := float_denormalize  -- Use IEEE extended FP           
              );
     port(
       INA, INB: in std_logic_vector((exponent_width+fraction_width) downto 0);

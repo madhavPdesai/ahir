@@ -96,8 +96,7 @@ begin  -- Behave
                    round_style => round_nearest,
                    addguard => 3,
                    check_error => true,
-                   denormalize => true,
-                   use_as_subtractor => use_as_subtractor)
+                   denormalize => true)
       port map (
         env_rdy => ireq,
         muli_rdy => iack,
