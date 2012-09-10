@@ -30,7 +30,9 @@ class vcSystem: public vcRoot
   // pipe-related stuff.
   map<string,vcPipe*> _pipe_map;
 
+  set<string> _function_library_modules;
   static bool _error_flag;
+
  public:
   static bool _verbose_flag;
   static bool _opt_flag;
@@ -41,6 +43,8 @@ class vcSystem: public vcRoot
   static string _simulator_prefix;
   static string _tool_name;
   static bool _enable_logging;
+
+  static bool _uses_function_library;
 
   static string _top_entity_name;
 
@@ -150,6 +154,9 @@ class vcSystem: public vcRoot
   {
      return(To_VHDL(vcSystem::_top_entity_name) + "_global_package");
   }
+
+  void Add_Function_Library(string& file_name);
+  bool Is_Function_Library_Module(string& mod_name);
 };
 
 

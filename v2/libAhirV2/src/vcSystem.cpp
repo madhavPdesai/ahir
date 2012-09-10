@@ -16,6 +16,9 @@ bool vcSystem::_min_area_flag = false;
 bool vcSystem::_min_clock_period_flag = false;
 bool vcSystem::_enable_logging = false;
 
+// uses library?
+bool vcSystem::_uses_function_library = false;
+
 // set on error.
 bool vcSystem::_error_flag = false;
 
@@ -366,8 +369,18 @@ void  vcSystem::Print_VHDL(ostream& ofile)
       moditer++)
     {
 
-      cerr << "Info: printing VHDL model for module " << (*moditer).first << endl;
-      (*moditer).second->Print_VHDL(ofile);
+      string mod_name = (*moditer).first;
+      bool is_fn_mod = this->Is_Function_Library_Module(mod_name);
+
+      if(!is_fn_mod)
+	{
+      		cerr << "Info: printing VHDL model for module " << (*moditer).first << endl;
+      		(*moditer).second->Print_VHDL(ofile);
+	}
+       else
+	{
+      		cerr << "Info: skipped printing VHDL model for function library module " << (*moditer).first << endl;
+	}
     }
 
   this->Print_VHDL_Inclusions(ofile);
@@ -897,10 +910,14 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
     {
  
       vcModule* m = (*moditer).second;
+      string mod_name = (*moditer).first;
+      bool is_function_library_module = this->Is_Function_Library_Module(mod_name);
 
       ofile << "-- declarations related to module " << m->Get_VHDL_Id() << endl;
+
       // module component declarations
-      m->Print_VHDL_Component(ofile);
+      if(!is_function_library_module)
+      	m->Print_VHDL_Component(ofile);
 
       if(!this->Is_A_Top_Module(m) || this->Is_An_Ever_Running_Top_Module(m))
 	{
@@ -992,7 +1009,51 @@ use ahir.components.all;\n			\
 use ahir.basecomponents.all;\n			\
 use ahir.operatorpackage.all;\n  \
 use ahir.utilities.all;\n";
+
+  if(vcSystem::_uses_function_library)
+  {
+	ofile << "use ahir.functionLibraryComponents.all;" << endl;
+  }
   ofile << "library work;" << endl;
   ofile << "use work." << sys_package << ".all;" << endl;
 }
 
+
+//
+// read library file, which contains a list
+// of function library modules, one per line.
+// These modules are not instantiated as entities 
+// in the resulting VHDL file of the ahir-system.
+//
+void vcSystem::Add_Function_Library(string& file_name)
+{
+      if(file_name != "")
+	{
+	  std::ifstream ifile(file_name.c_str());
+	  if (ifile.is_open()) {
+	    
+	    while (ifile.good()) {
+	      std::string line;
+	      std::getline(ifile, line);
+              if(line[0] != '#')
+	      {
+	      	std::cerr << "Info: vcSystem::Add_Function_Library: added function library module: " << line << std::endl;
+	      	_function_library_modules.insert(line);
+		vcSystem::_uses_function_library = true;
+	      }
+	    }
+	    ifile.close();
+	  }
+	}
+}
+
+
+// return true if mod_name is a function library
+// module, false otherwise.
+bool vcSystem::Is_Function_Library_Module(string& mod_name)
+{
+	if(_function_library_modules.find(mod_name) != _function_library_modules.end())
+		return(true);
+	else
+		return(false);
+}

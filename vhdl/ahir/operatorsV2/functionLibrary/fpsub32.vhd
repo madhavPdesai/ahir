@@ -29,21 +29,21 @@ end entity fpsub32;
 architecture Struct of fpsub32 is
 begin
 
-   mul: GenericFloatingAdderSubtractor
+   mul: GenericFloatingPointAdderSubtractor
 		generic map(tag_width => tag_length,
 				exponent_width => 8,
-				mantissa_width => 23,
+				fraction_width => 23,
                    		round_style => round_nearest,
                    		addguard => 3,
                    		check_error => true,
                    		denormalize => true,
 				use_as_subtractor => true)
 		port map(INA => L, INB => R,
-				OUTADD => result_val_x_x,
+				OUTADD => ret_val_x_x,
 				clk => clk, reset => reset,
 				tag_in => tag_in , tag_out => tag_out,
 				env_rdy => start_req, accept_rdy => fin_req,
-				muli_rdy => start_ack, mulo_rdy => fin_ack);
+				addi_rdy => start_ack, addo_rdy => fin_ack);
 			
 end Struct;
 

@@ -9,12 +9,12 @@ use ieee_proposed.float_pkg.all;
 use ieee_proposed.math_utility_pkg.all;
 
 
-entity fpadd32 is -- 
+entity fpsub64 is -- 
     generic (tag_length : integer);
     port ( -- 
-      L : in  std_logic_vector(31 downto 0);
-      R : in  std_logic_vector(31 downto 0);
-      ret_val_x_x : out  std_logic_vector(31 downto 0);
+      L : in  std_logic_vector(63 downto 0);
+      R : in  std_logic_vector(63 downto 0);
+      ret_val_x_x : out  std_logic_vector(63 downto 0);
       clk : in std_logic;
       reset : in std_logic;
       start_req : in std_logic;
@@ -24,20 +24,20 @@ entity fpadd32 is --
       tag_in: in std_logic_vector(tag_length-1 downto 0);
       tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
     );
-end entity fpadd32;
+end entity fpsub64;
 
-architecture Struct of fpadd32 is
+architecture Struct of fpsub64 is
 begin
 
-   adder: GenericFloatingPointAdderSubtractor
+   mul: GenericFloatingPointAdderSubtractor
 		generic map(tag_width => tag_length,
-				exponent_width => 8,
-				fraction_width => 23,
+				exponent_width => 11,
+				fraction_width => 52,
                    		round_style => round_nearest,
                    		addguard => 3,
                    		check_error => true,
                    		denormalize => true,
-				use_as_subtractor => false)
+				use_as_subtractor => true)
 		port map(INA => L, INB => R,
 				OUTADD => ret_val_x_x,
 				clk => clk, reset => reset,

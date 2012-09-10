@@ -32,13 +32,13 @@ begin
    mul: GenericFloatingPointMultiplier
 		generic map(tag_width => tag_length,
 				exponent_width => 8,
-				mantissa_width => 23,
+				fraction_width => 23,
                    		round_style => round_nearest,
                    		addguard => 3,
                    		check_error => true,
                    		denormalize => true)
 		port map(INA => L, INB => R,
-				OUTMUL => result_val_x_x,
+				OUTMUL => ret_val_x_x,
 				clk => clk, reset => reset,
 				tag_in => tag_in , tag_out => tag_out,
 				env_rdy => start_req, accept_rdy => fin_req,

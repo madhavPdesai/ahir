@@ -1,0 +1,106 @@
+
+$constant ADDOP: $uint<8> := 0
+$constant SUBOP: $uint<8> := 1
+$constant MULOP: $uint<8> := 2
+
+$module [fpmul32] 
+$in (L : $float<8,23> R : $float<8,23> )
+$out (ret_val_x_x : $float<8,23>)
+$is 
+{
+    ret_val_x_x := (L * R)
+}
+
+$module [fpadd32] 
+$in (L : $float<8,23> R : $float<8,23> )
+$out (ret_val_x_x : $float<8,23>)
+$is 
+{
+    ret_val_x_x := (L + R)
+}
+
+$module [fpsub32] 
+$in (L : $float<8,23> R : $float<8,23> )
+$out (ret_val_x_x : $float<8,23>)
+$is 
+{
+    ret_val_x_x := (L - R)
+}
+
+$module [fpu32] 
+$in (L : $float<8,23> R : $float<8,23> OP_ID : $uint<8> )
+$out (ret_val_x_x : $float<8,23>)
+$is 
+{
+	$branchblock[Sw] {
+		$switch OP_ID 
+			$when ADDOP $then
+    				oadd := (L + R)
+				$place [a]
+			$when SUBOP $then
+    				osub := (L - R)
+				$place [s]
+			$when MULOP $then
+    				omul := (L * R)
+				$place[m]
+			$default 
+				$place[nop]
+		$endswitch
+	
+		$merge a s m nop
+			$phi ret_val_x_x := oadd $on a osub $on s omul $on m  _f0.0e+0 $on nop
+		$endmerge
+	}
+}
+
+// double precision..
+
+$module [fpmul64] 
+$in (L : $float<11,52> R : $float<11,52> )
+$out (ret_val_x_x : $float<11,52>)
+$is 
+{
+    ret_val_x_x := (L * R)
+}
+
+$module [fpadd64] 
+$in (L : $float<11,52> R : $float<11,52> )
+$out (ret_val_x_x : $float<11,52>)
+$is 
+{
+    ret_val_x_x := (L + R)
+}
+
+$module [fpsub64] 
+$in (L : $float<11,52> R : $float<11,52> )
+$out (ret_val_x_x : $float<11,52>)
+$is 
+{
+    ret_val_x_x := (L - R)
+}
+
+$module [fpu64] 
+$in (L : $float<11,52> R : $float<11,52> OP_ID : $uint<11> )
+$out (ret_val_x_x : $float<11,52>)
+$is 
+{
+	$branchblock[Sw] {
+		$switch OP_ID 
+			$when ADDOP $then
+    				oadd := (L + R)
+				$place [a]
+			$when SUBOP $then
+    				osub := (L - R)
+				$place [s]
+			$when MULOP $then
+    				omul := (L * R)
+				$place[m]
+			$default 
+				$place[nop]
+		$endswitch
+	
+		$merge a s m nop
+			$phi ret_val_x_x := oadd $on a osub $on s omul $on m  _f0.0e+0 $on nop
+		$endmerge
+	}
+}

@@ -55,6 +55,8 @@ void Usage_Vc2VHDL()
   cerr <<  " -f vcfile-name: specifies a VC file to be parsed.  Repetitions of this option can be" << endl
        <<  "                 used to specify more than one file.  Files are parsed in the order specified." << endl
        <<  " alternate form:  --file vcfile-name" << endl;
+  cerr <<  " -L <file-name> :  the contents of file <file-name> wll be interpreted as pre-designed VHDL library elements." << endl;
+  cerr <<  " alternate form:  --library.  Multiple files can be specified in this fashion." << endl;
   cerr <<  " -e <top-entity-name>:  the top-level system entity name will be top-entity-name.  The default is test_system." << endl;
   cerr <<  " alternate form:  --top_entity_name vcfile-name" << endl;
   cerr << endl;
@@ -85,6 +87,9 @@ int main(int argc, char* argv[])
   set<string> top_modules;
   set<string> always_running_top_modules;
 
+  set<string> function_libraries;
+  string lib_location;
+
   // command-line parsing
   struct option long_options[] =
     {
@@ -101,6 +106,7 @@ int main(int argc, char* argv[])
       {"top_entity_name",  required_argument, 0, 'e'},
       {"write_files",  no_argument, 0, 'w'},
       {"vcfile",    required_argument, 0, 'f'},
+      {"library",   required_argument, 0, 'L'},
       {0, 0, 0, 0}
     };
 
@@ -131,7 +137,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:T:f:OCs:he:waqD",
+		      "t:T:f:OCs:he:waqDL:",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -182,10 +188,12 @@ int main(int argc, char* argv[])
 	  write_files = true;
 	  cerr << "Info: -w " << sys_name << " will write separate system and testbench VHDL files" << endl; 
 	  break;
+
 	case 'C':
 	  vcSystem::_vhpi_tb_flag = true;
 	  cerr << "Info: -C option selected: will generate testbench which connects to foreign link" << endl;
 	  break;
+
 	case 's':
 	  sim_id = string(optarg);
 	  if(sim_id == "ghdl")
@@ -205,6 +213,12 @@ int main(int argc, char* argv[])
 	  cerr << "Info: -D option selected: VHDL will have debug assertions.." << endl;
 	  vcSystem::_enable_logging = true;
 	  break;
+	case 'L':
+	  lib_location = string(optarg);	
+	  function_libraries.insert(lib_location);
+	  cerr << "Info: will add library  " << lib_location  << endl;
+	  break;
+
 	case '?':		  // incorrect option
 	  opt_string = opt;
 	  cerr << (string("Error: ") + " illegal option " + opt_string);
@@ -246,6 +260,14 @@ int main(int argc, char* argv[])
 	  iter++)
 	{
 	  test_system.Set_As_Ever_Running_Top_Module(*iter);
+	}
+
+      for(set<string>::iterator iter = function_libraries.begin();
+	  iter != function_libraries.end();
+	  iter++)
+	{
+	  string tmp = *iter;
+	  test_system.Add_Function_Library(tmp);
 	}
 
       test_system.Elaborate();

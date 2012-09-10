@@ -1,8 +1,6 @@
-1. implement 64 bit versions.
-2. get rid of fpsub?
-3. update BaseComponents.
+3. create functionLibraryComponents.
 4. in vc2vhdl, map functions fpmul32 etc. to 
-   these library functions.
+   these library functions (add --lib switch).
 5. map fp - operation to + operation by
    putting negation in the VHDL (just flip
    the top bit).  this allows us to get rid
