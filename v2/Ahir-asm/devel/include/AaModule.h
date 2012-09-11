@@ -46,6 +46,12 @@ class AaModule: public AaSeriesBlockStatement
 
   map<AaInterfaceObject*, AaExpression*> _print_remap;
 
+  // modules called by this module..
+  set<AaModule*> _called_modules;
+  // modules from which this is called.
+  set<AaModule*> _calling_modules;
+
+
  public:
   AaModule(string fname); // Modules have NULL parent (parent is the program)
   ~AaModule();
@@ -53,6 +59,18 @@ class AaModule: public AaSeriesBlockStatement
   void Set_Print_Prefix(string str) { _print_prefix = str;}
   string Get_Print_Prefix() {return(_print_prefix);}
   void Clear_Print_Prefix() {_print_prefix = "";}
+
+  void Add_Called_Module(AaModule* m)
+  {
+	_called_modules.insert(m);
+  }
+
+  void Add_Calling_Module(AaModule* m)
+  {
+	_calling_modules.insert(m);
+  }
+
+  void Mark_Reachable_Modules(set<AaModule*>& mset);
 
   void Increment_Number_Of_Times_Called()
   {

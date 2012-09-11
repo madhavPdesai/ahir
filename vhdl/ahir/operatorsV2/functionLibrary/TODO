@@ -1,0 +1,8 @@
+3. create functionLibraryComponents.
+4. in vc2vhdl, map functions fpmul32 etc. to 
+   these library functions (add --lib switch).
+5. map fp - operation to + operation by
+   putting negation in the VHDL (just flip
+   the top bit).  this allows us to get rid
+   of fpsub as a separate unit.
+

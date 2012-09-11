@@ -1,0 +1,41 @@
+you will need to have installed
+	llvm-2.8
+	clang-2.8
+	ghdl
+
+The directory contains
+	prog.c
+	prog.h
+	testbench.c
+	Makefile
+prog.c contains a program which multiplies
+and adds a pair of numbers.  A rudimentary
+test.
+NOTE: the multiplier currently being used
+uses round-to-zero, while the adder uses
+round-to-neareset.  The LSB errors in the multiplier
+can be an issue.
+
+The Makefile is self-explanatory.
+
+run make to build
+	- sw testbench (testbench_sw)
+	- hw testbench (testbench_hw)
+	- vhdl simulation executable (ahir_system_test_bench)
+
+to build SW version only
+	make SW
+
+to build HW version only
+	make HW
+
+to clean up (sort of)
+	make clean
+
+to check the SW version
+	./testbench_sw
+
+to check the HW version, start
+	./testbench_hw
+	./ahir_system_test_bench 
+in two separate shells

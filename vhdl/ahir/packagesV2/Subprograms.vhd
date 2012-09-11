@@ -27,6 +27,12 @@ package Subprograms is
   function To_ApInt ( inp : std_logic_vector) return ApInt;
   function To_ApInt ( inp : IStdLogicVector) return ApInt;
 
+  -- already present in float_pkg in ieee_proposed
+  --function To_Float ( x                       : std_logic_vector;
+  --                    constant exponent_width : integer;
+  --                    constant fraction_width : integer)
+  --  return Unresolved_Float;
+  
   function To_Float ( inp : ApFloat) return float;
 
   function To_Signed ( inp : ApInt) return signed;
@@ -40,8 +46,10 @@ package Subprograms is
   function To_SLV ( x: IStdLogicVector) return std_logic_vector;
   function To_SLV ( x: ApFloat) return std_logic_vector;
   function To_SLV( x : BooleanArray) return std_logic_vector;
+  function To_SLV( x : Boolean) return std_logic_vector;  
   function To_SLV( x : Signed) return std_logic_vector;
   function To_SLV( x : Unsigned) return std_logic_vector;
+  function Float_To_SLV( x : float) return std_logic_vector;  
   
   function To_SLV (x : StdLogicArray2D) return std_logic_vector; 
   function To_SLV_Shuffle(x : StdLogicArray2D) return std_logic_vector;
@@ -272,6 +280,22 @@ package body Subprograms is
   -----------------------------------------------------------------------------
 
   -----------------------------------------------------------------------------
+  --function To_Float ( x                       : std_logic_vector;
+  --                    constant exponent_width : integer;
+  --                    constant fraction_width : integer)
+  --  return Unresolved_Float is
+  --  alias lx : std_logic_vector(0 to x'length-1) is x;
+  --  variable ret_var : Unresolved_Float(exponent_width downto -fraction_width);
+  --begin
+  --  for I in 0 to x'length loop
+  --    ret_var(exponent_width-I) := lx(I);
+  --  end loop;
+  --  return(ret_var);
+  --end To_Float;
+  
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
   function To_Float ( inp : ApFloat) return float is
     -- note : Apfloat is always of the form (exp downto -mantessa)
     alias linp : ApFloat(inp'high downto inp'low) is inp;
@@ -411,6 +435,21 @@ package body Subprograms is
   -----------------------------------------------------------------------------
 
   -----------------------------------------------------------------------------
+  function To_SLV ( x: Boolean) return std_logic_vector is
+    variable rv: std_logic_vector(0 downto 0);
+  begin
+    if(x) then
+      rv(0) := '1';
+    else
+      rv(0) := '0';
+    end if;
+    return(rv);
+  end function To_SLV;
+
+  
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
   function To_SLV ( x: Signed) return std_logic_vector is
     alias lx: Signed(1 to x'length) is x;
     variable rv: std_logic_vector(1 to x'length);
@@ -434,6 +473,20 @@ package body Subprograms is
     return(rv);
   end function To_SLV;
 
+
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function Float_To_SLV (x: float) return std_logic_vector is
+    alias lx: float(1 to x'length) is x;
+    variable rv: std_logic_vector(1 to x'length);
+  begin
+    for I in 1 to x'length loop
+      rv(I) := lx(I);
+    end loop;
+    return(rv);
+  end function Float_To_SLV;
+  
 
   -----------------------------------------------------------------------------
 

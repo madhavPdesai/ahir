@@ -220,7 +220,7 @@ package float_pkg is
 
   -- This deferred constant will tell you if the package body is synthesizable
   -- or implemented as real numbers.
-  constant fphdlsynth_or_real : BOOLEAN;  -- deferred constant
+  constant fphdlsynth_or_real : BOOLEAN := true;  -- deferred constant
 
   -- Returns the class which X falls into
   function Classfp (
@@ -230,7 +230,7 @@ package float_pkg is
 
   -- Arithmetic functions, these operators do not require parameters.
   function "abs" (arg : UNRESOLVED_float) return UNRESOLVED_float;
-  function "-" (arg   : UNRESOLVED_float) return UNRESOLVED_float;
+  function "-"   (arg : UNRESOLVED_float) return UNRESOLVED_float;
 
   -- These allows the base math functions to use the default values
   -- of their parameters.  Thus they do full IEEE floating point.
@@ -325,6 +325,11 @@ package float_pkg is
     return INTEGER;
   function find_leftmost (arg : UNRESOLVED_float; y : STD_ULOGIC)
     return INTEGER;
+
+  -- made public to pipeline.. Madhav.
+  function find_leftmost (ARG : UNSIGNED; Y : STD_ULOGIC)
+    return INTEGER;
+  
   function maximum (l, r : UNRESOLVED_float) return UNRESOLVED_float;
   function minimum (l, r : UNRESOLVED_float) return UNRESOLVED_float;
 
@@ -537,6 +542,15 @@ package float_pkg is
     expon       : out SIGNED;  -- NOTE:  Add 1 to get the real exponent!
     sign        : out STD_ULOGIC);
 
+  -- internal version.. made visible to enable its use
+  -- in pipelined FP adder (Madhav Desai).
+  procedure break_number (              -- internal version
+    arg         : in  UNRESOLVED_float;
+    fptyp       : in  valid_fpstate;
+    denormalize : in  BOOLEAN := true;
+    fract       : out UNSIGNED;
+    expon       : out SIGNED);
+  
   -- Normalize takes a fraction and and exponent and converts them into
   -- a floating point number.  Does the shifting and the rounding.
   -- Exponent is assumed to be biased by -1
@@ -682,6 +696,10 @@ package float_pkg is
   function xor_reduce  (l : UNRESOLVED_float) return STD_ULOGIC;
   function xnor_reduce (l : UNRESOLVED_float) return STD_ULOGIC;
 
+  -- made visible to pipeline the Add-function into an entity.. (Madhav Desai)
+  function or_reduce (arg : UNSIGNED) return STD_ULOGIC;
+  function smallfract (arg   : UNSIGNED;shift : NATURAL)  return STD_ULOGIC;
+
   -- Note: "sla", "sra", "sll", "slr", "rol" and "ror" not implemented.
 
   -----------------------------------------------------------------------------
@@ -800,7 +818,8 @@ package body float_pkg is
 
   -- This deferred constant will tell you if the package body is synthesizable
   -- or implemented as real numbers, set to "true" if synthesizable.
-  constant fphdlsynth_or_real : BOOLEAN := true;  -- deferred constant
+  -- XST 9.2i does not support deferred constants..
+  --  constant fphdlsynth_or_real : BOOLEAN := true;  -- deferred constant
 
   -- types of boundary conditions
   type boundary_type is (normal, infinity, zero, denormal);

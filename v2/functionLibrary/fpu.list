@@ -1,0 +1,8 @@
+fpu32
+fpadd32
+fpsub32
+fpmul32
+fpu64
+fpadd64
+fpsub64
+fpmul64

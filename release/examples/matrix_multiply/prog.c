@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <stdint.h>
-#include <iolib.h>
+#include <Pipes.h>
 #include <stdio.h>
 
 typedef struct _Job
@@ -10,12 +10,12 @@ typedef struct _Job
 	uint32_t col_id;
 	uint32_t a;
         uint32_t b;
-	uint32_t result;
+	float result;
 } Job;
 
 
-uint32_t a_matrix[1024];
-uint32_t b_matrix[1024];
+float a_matrix[1024];
+float b_matrix[1024];
 
 
 #define FREE_LIST_PUT 1
@@ -34,8 +34,15 @@ struct Link_
 Link free_list[FREE_LIST_SIZE];
 int32_t head;
 
-uint32_t mul32(uint32_t a, uint32_t b);
-uint32_t add32(uint32_t a, uint32_t b);
+float mul32(float a, float b)
+{
+   return(a*b);
+}
+
+float add32(float a, float b)
+{
+   return(a+b);
+}
 
 #define PROC_ while(1) {\
         uint32_t ret_val = 0;\
@@ -127,7 +134,7 @@ void input_module()
 {
 	while(1)
 	{
-		uint32_t dimension = read_uint32("in_data_pipe");
+		uint32_t dimension = read_uint32("in_dimension_pipe");
 #ifdef RUN
 		fprintf(stderr,"input_module: got dimension %d\n",dimension);
 #endif
@@ -135,12 +142,12 @@ void input_module()
 		
 		uint32_t i;
 		for(i=0; i < matrix_size; i++)
-			a_matrix[i] = read_uint32("in_data_pipe");
+			a_matrix[i] = read_float32("in_data_pipe");
 #ifdef RUN
 		fprintf(stderr,"input_module: got a\n");
 #endif
 		for(i=0; i < matrix_size; i++)
-			b_matrix[i] = read_uint32("in_data_pipe");
+			b_matrix[i] = read_float32("in_data_pipe");
 #ifdef RUN
 		fprintf(stderr,"input_module: got b\n");
 #endif
@@ -193,11 +200,11 @@ void output_module()
 		int32_t fid = (int32_t) read_uint32("result_queue_pipe");
 
 #ifdef RUN
-		fprintf(stderr,"output_module: got result %d\n", free_list[fid].job.result);
+		fprintf(stderr,"output_module: got result %f\n", free_list[fid].job.result);
 #endif
-		write_uint32("out_data_pipe", free_list[fid].job.row_id);
-		write_uint32("out_data_pipe", free_list[fid].job.col_id);
-		write_uint32("out_data_pipe", free_list[fid].job.result);
+		write_uint32("row_id_pipe", free_list[fid].job.row_id);
+		write_uint32("col_id_pipe", free_list[fid].job.col_id);
+		write_float32("out_data_pipe", free_list[fid].job.result);
 #ifdef RUN
 		fprintf(stderr,"output_module: sent result\n");
 #endif

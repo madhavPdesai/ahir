@@ -37,6 +37,7 @@ void Usage_Aa2VC()
   cerr <<  " -O (or --optimize): try to parallelize sequences of statements by using dependency analysis" << endl;
   cerr <<  " -U (or --unordered): memory subsystems will be unordered (ordered is default) " << endl;
   cerr <<  " -C (or --c_stubs): generate C stubs for all modules. These can be used later in mixed C-VHDL simulation." << endl;
+  cerr <<  " -r (or --root_module) <mod-name>:  mod-name will be marked as a root-module." << endl;
 
   cerr << endl;
   cerr << "example: " << endl
@@ -72,6 +73,7 @@ int main(int argc, char* argv[])
       {"unordered", no_argument,0, 'U'},
       {"c_stubs",  no_argument, 0, 'C'},
       {"internal_ext_mem_pool",  required_argument, 0, 'I'},
+      {"root_module",  required_argument, 0, 'r'},
       {0, 0, 0, 0}
     };
 
@@ -86,7 +88,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "OUCI:h",
+		      "OUCI:hr:",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -107,6 +109,11 @@ int main(int argc, char* argv[])
 	case 'I':
 	  AaProgram::_keep_extmem_inside  = true;
 	  AaProgram::_extmem_object_name = optarg;
+	  break;
+	case 'r':
+          mod_name = optarg;
+	  AaProgram::Mark_As_Root_Module(mod_name);
+	  std::cerr << "Info: module " << mod_name << " will be marked as a root module." << endl;
 	  break;
 	case 'h':
 	  Usage_Aa2VC();

@@ -336,12 +336,37 @@ void AaModule::Propagate_Constants()
 }
 
 
+void AaModule::Mark_Reachable_Modules(set<AaModule*>& reachable_modules)
+{
+  if(reachable_modules.find(this) == reachable_modules.end())
+    {
+      AaRoot::Info("module " + this->Get_Label() + " is reachable from a specified root module.");
+      reachable_modules.insert(this);
+      for(set<AaModule*>::iterator citer = _called_modules.begin(), fciter = _called_modules.end();
+	  citer != fciter;
+	  citer++)
+	{
+	  (*citer)->Mark_Reachable_Modules(reachable_modules);
+	}
+    }
+}
+
+
 bool AaModule::Has_No_Side_Effects()
 {
   if(this->Get_Foreign_Flag())
     return(true);
-  else
-    return(false);
+
+  if(_reads_from_shared_pipe)
+	return(false);
+ 
+  if(_writes_to_shared_pipe)
+	return(false);
+
+  if(_shared_memory_spaces.size() > 0)
+	return(false);
+
+  return(true);
 }
 
 void AaModule::Set_Foreign_Object_Representatives()

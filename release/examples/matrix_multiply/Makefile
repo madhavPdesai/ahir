@@ -1,6 +1,6 @@
 # build software version of testbench (to check the "desired behaviour")
-IOLIB_INCLUDE=../../iolib/include
-IOLIB_LIB=../../iolib/lib
+IOLIB_INCLUDE=../../pipeHandler/include
+IOLIB_LIB=../../pipeHandler/lib
 SOCKETLIB_INCLUDE=../../CtestBench/include
 SOCKETLIB_LIB=../../CtestBench/lib
 VHDL_LIB=../../vhdl
@@ -10,35 +10,30 @@ all: SW HW
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.
 SW: prog.c  testbench.c 
-	gcc -c -DSW -DRUN -I$(IOLIB_INCLUDE) prog.c
-	gcc -c -DSW -DRUN -I$(IOLIB_INCLUDE) testbench.c
-	gcc -c -DSW -DRUN -I$(IOLIB_INCLUDE) alu.c
-	gcc -o testbench_sw prog.o alu.o testbench.o -L$(IOLIB_LIB) -lio -lpthread
+	gcc -g -c -DSW -DRUN -I$(IOLIB_INCLUDE) prog.c
+	gcc -g  -c -DSW -DRUN -I$(IOLIB_INCLUDE) testbench.c
+	gcc -g -o testbench_sw prog.o testbench.o -L$(IOLIB_LIB) -lPipeHandler -lpthread
 
 # five steps from C to vhdl simulator.
 HW: c2llvmbc llvmbc2aa aa2vc vc2vhdl vhdlsim
 
 # C to llvm byte-code.. use clang.
-c2llvmbc: prog.c testbench.c alu.c
+c2llvmbc: prog.c testbench.c 
 	clang -std=gnu89 -I$(IOLIB_INCLUDE) -emit-llvm -c prog.c
 	opt -O3	--instnamer prog.o > prog.opt.o
 	llvm-dis prog.opt.o
-	clang -std=gnu89 -I$(IOLIB_INCLUDE) -emit-llvm -c alu.c
-	opt -O3	--instnamer alu.o > alu.opt.o
-	llvm-dis alu.opt.o
 
 # llvm byte-code to Aa..
-llvmbc2aa:  prog.opt.o alu.opt.o 
+llvmbc2aa:  prog.opt.o 
 	llvm2aa --pipedepths=pipedepths prog.opt.o | vcFormat >  prog.opt.o.aa
-	llvm2aa --pipedepths=pipedepths alu.opt.o | vcFormat >  alu.opt.o.aa
 
 # Aa to vC
-aa2vc: prog.opt.o.aa alu.opt.o.aa
-	Aa2VC -O -C prog.opt.o.aa alu.opt.o.aa | vcFormat > prog.opt.o.aa.vc
+aa2vc: prog.opt.o.aa 
+	Aa2VC -O -C prog.opt.o.aa | vcFormat > prog.opt.o.aa.vc
 
 # vC to VHDL
 vc2vhdl: prog.opt.o.aa.vc
-	vc2vhdl -C -e ahir_system -w -s ghdl -T input_module -T free_queue_manager -T output_module -T proc0 -T proc1 -T proc2 -T proc3 -f prog.opt.o.aa.vc 
+	vc2vhdl -a -C -e ahir_system -w -s ghdl -T input_module -T free_queue_manager -T output_module -T proc0 -T proc1 -T proc2 -T proc3 -f prog.opt.o.aa.vc 
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 

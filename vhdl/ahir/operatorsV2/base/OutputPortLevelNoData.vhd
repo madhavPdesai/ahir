@@ -20,22 +20,29 @@ entity OutputPortLevelNoData is
 end entity;
 
 architecture Base of OutputPortLevelNoData is
-  signal req_active, ack_sig  : std_logic_vector(num_reqs-1 downto 0);
+  signal req_active, ack_sig , fair_reqs, fair_acks : std_logic_vector(num_reqs-1 downto 0);
 begin
+  
+  fairify: NobodyLeftBehind generic map(num_reqs => num_reqs)
+		port map(clk => clk, reset => reset,
+				reqIn => req,
+				ackOut => ack,
+				reqOut => fair_reqs,
+				ackIn => fair_acks);
   
   oreq <= OrReduce(req_active);
 
   NoArb: if no_arbitration generate
-     req_active <= req;
+     req_active <= fair_reqs;
   end generate NoArb;
 
   Arb: if not no_arbitration generate
-     req_active <= PriorityEncode(req);
+     req_active <= PriorityEncode(fair_reqs);
   end generate Arb;
 
   gen: for I in num_reqs-1 downto 0 generate
        ack_sig(I) <= req_active(I) and oack; 
-       ack(I) <= ack_sig(I);
+       fair_acks(I) <= ack_sig(I);
   end generate gen;
 
 end Base;

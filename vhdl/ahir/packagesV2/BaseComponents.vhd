@@ -5,6 +5,11 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Types.all;
 
+library ieee_proposed;
+use ieee_proposed.math_utility_pkg.all;                  
+use ieee_proposed.float_pkg.all;
+
+
 package BaseComponents is
 
   -----------------------------------------------------------------------------
@@ -1150,4 +1155,117 @@ package BaseComponents is
          dout: out std_logic_vector(owidth-1 downto 0));
   end component;
 
+
+  -----------------------------------------------------------------------------
+  -- floating point operators (pipelined)
+  -----------------------------------------------------------------------------
+  component GenericFloatingPointAdderSubtractor
+    generic (tag_width : integer;
+             exponent_width: integer;
+             fraction_width : integer;
+             round_style : round_type := float_round_style;  -- rounding option
+             addguard       : NATURAL := float_guard_bits;  -- number of guard bits
+             check_error : BOOLEAN    := float_check_error;  -- check for errors
+             denormalize : BOOLEAN    := float_denormalize;  -- Use IEEE extended FP           
+             use_as_subtractor: BOOLEAN
+      );
+    port(
+      INA, INB: in std_logic_vector((exponent_width+fraction_width) downto 0);
+      OUTADD: out std_logic_vector((exponent_width+fraction_width) downto 0);
+      clk,reset: in std_logic;
+      tag_in: in std_logic_vector(tag_width-1 downto 0);
+      tag_out: out std_logic_vector(tag_width-1 downto 0);
+      env_rdy, accept_rdy: in std_logic;
+      addi_rdy, addo_rdy: out std_logic);
+  end component;
+
+  component GenericFloatingPointMultiplier
+    generic (tag_width : integer;
+             exponent_width: integer;
+             fraction_width : integer;
+             round_style : round_type := float_round_style;  -- rounding option
+             addguard       : NATURAL := float_guard_bits;  -- number of guard bits
+             check_error : BOOLEAN    := float_check_error;  -- check for errors
+             denormalize : BOOLEAN    := float_denormalize  -- Use IEEE extended FP           
+             );
+    port(
+      INA, INB: in std_logic_vector((exponent_width+fraction_width) downto 0);
+      OUTMUL: out std_logic_vector((exponent_width+fraction_width) downto 0);
+      clk,reset: in std_logic;
+      tag_in: in std_logic_vector(tag_width-1 downto 0);
+      tag_out: out std_logic_vector(tag_width-1 downto 0);
+      env_rdy, accept_rdy: in std_logic;
+      muli_rdy, mulo_rdy: out std_logic);
+  end component;
+  
+  component SinglePrecisionMultiplier 
+    generic (tag_width : integer);
+    port(
+      INA, INB: in std_logic_vector(31 downto 0);
+      OUTM: out std_logic_vector(31 downto 0);
+      clk,reset: in std_logic;
+      tag_in: in std_logic_vector(tag_width-1 downto 0);
+      tag_out: out std_logic_vector(tag_width-1 downto 0);
+      NaN, oflow, uflow: out std_logic := '0';
+      env_rdy, accept_rdy: in std_logic;
+      muli_rdy, mulo_rdy: out std_logic);
+  end component;
+
+  component DoublePrecisionMultiplier 
+    generic (tag_width : integer);
+    port(
+      INA, INB: in std_logic_vector(63 downto 0);   
+      OUTM: out std_logic_vector(63 downto 0);
+      clk,reset: in std_logic;
+      tag_in: in std_logic_vector(tag_width-1 downto 0);
+      tag_out: out std_logic_vector(tag_width-1 downto 0);
+      NaN, oflow, uflow: out std_logic := '0';
+      env_rdy, accept_rdy: in std_logic;
+      muli_rdy, mulo_rdy: out std_logic);
+  end component;
+
+  component PipelinedFPOperator 
+    generic (
+      operator_id : string;
+      exponent_width : integer := 8;
+      fraction_width : integer := 23;
+      no_arbitration: boolean := true;
+      num_reqs : integer := 3 -- how many requesters?
+      );
+    port (
+      -- req/ack follow level protocol
+      reqL                     : in BooleanArray(num_reqs-1 downto 0);
+      ackR                     : out BooleanArray(num_reqs-1 downto 0);
+      ackL                     : out BooleanArray(num_reqs-1 downto 0);
+      reqR                     : in  BooleanArray(num_reqs-1 downto 0);
+      -- input data consists of concatenated pairs of ips
+      dataL                    : in std_logic_vector((2*(exponent_width+fraction_width+1)*num_reqs)-1 downto 0);
+      -- output data consists of concatenated pairs of ops.
+      dataR                    : out std_logic_vector(((exponent_width+fraction_width+1)*num_reqs)-1 downto 0);
+    -- with dataR
+    clk, reset              : in std_logic);
+  end component;
+
+
+  -----------------------------------------------------------------------------
+  -- pipelined integer components..
+  -----------------------------------------------------------------------------
+  component UnsignedMultiplier 
+    
+    generic (
+      tag_width     : integer;
+      operand_width : integer);
+
+    port (
+      L, R       : in  unsigned(operand_width-1 downto 0);
+      RESULT     : out unsigned((2*operand_width)-1 downto 0);
+      clk, reset : in  std_logic;
+      in_rdy     : in  std_logic;
+      out_rdy    : out std_logic;
+      stall      : in std_logic;
+      tag_in     : in std_logic_vector(tag_width-1 downto 0);
+      tag_out    : out std_logic_vector(tag_width-1 downto 0));
+  end component;
+
+  
 end BaseComponents;

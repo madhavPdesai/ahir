@@ -438,6 +438,12 @@ package Subprograms is
   function To_ApInt ( inp : std_logic_vector) return ApInt;
   function To_ApInt ( inp : IStdLogicVector) return ApInt;
 
+  -- already present in float_pkg in ieee_proposed
+  --function To_Float ( x                       : std_logic_vector;
+  --                    constant exponent_width : integer;
+  --                    constant fraction_width : integer)
+  --  return Unresolved_Float;
+  
   function To_Float ( inp : ApFloat) return float;
 
   function To_Signed ( inp : ApInt) return signed;
@@ -451,8 +457,10 @@ package Subprograms is
   function To_SLV ( x: IStdLogicVector) return std_logic_vector;
   function To_SLV ( x: ApFloat) return std_logic_vector;
   function To_SLV( x : BooleanArray) return std_logic_vector;
+  function To_SLV( x : Boolean) return std_logic_vector;  
   function To_SLV( x : Signed) return std_logic_vector;
   function To_SLV( x : Unsigned) return std_logic_vector;
+  function Float_To_SLV( x : float) return std_logic_vector;  
   
   function To_SLV (x : StdLogicArray2D) return std_logic_vector; 
   function To_SLV_Shuffle(x : StdLogicArray2D) return std_logic_vector;
@@ -683,6 +691,22 @@ package body Subprograms is
   -----------------------------------------------------------------------------
 
   -----------------------------------------------------------------------------
+  --function To_Float ( x                       : std_logic_vector;
+  --                    constant exponent_width : integer;
+  --                    constant fraction_width : integer)
+  --  return Unresolved_Float is
+  --  alias lx : std_logic_vector(0 to x'length-1) is x;
+  --  variable ret_var : Unresolved_Float(exponent_width downto -fraction_width);
+  --begin
+  --  for I in 0 to x'length loop
+  --    ret_var(exponent_width-I) := lx(I);
+  --  end loop;
+  --  return(ret_var);
+  --end To_Float;
+  
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
   function To_Float ( inp : ApFloat) return float is
     -- note : Apfloat is always of the form (exp downto -mantessa)
     alias linp : ApFloat(inp'high downto inp'low) is inp;
@@ -822,6 +846,21 @@ package body Subprograms is
   -----------------------------------------------------------------------------
 
   -----------------------------------------------------------------------------
+  function To_SLV ( x: Boolean) return std_logic_vector is
+    variable rv: std_logic_vector(0 downto 0);
+  begin
+    if(x) then
+      rv(0) := '1';
+    else
+      rv(0) := '0';
+    end if;
+    return(rv);
+  end function To_SLV;
+
+  
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
   function To_SLV ( x: Signed) return std_logic_vector is
     alias lx: Signed(1 to x'length) is x;
     variable rv: std_logic_vector(1 to x'length);
@@ -845,6 +884,20 @@ package body Subprograms is
     return(rv);
   end function To_SLV;
 
+
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function Float_To_SLV (x: float) return std_logic_vector is
+    alias lx: float(1 to x'length) is x;
+    variable rv: std_logic_vector(1 to x'length);
+  begin
+    for I in 1 to x'length loop
+      rv(I) := lx(I);
+    end loop;
+    return(rv);
+  end function Float_To_SLV;
+  
 
   -----------------------------------------------------------------------------
 
@@ -1643,6 +1696,11 @@ use ieee.numeric_std.all;
 
 library ahir;
 use ahir.Types.all;
+
+library ieee_proposed;
+use ieee_proposed.math_utility_pkg.all;                  
+use ieee_proposed.float_pkg.all;
+
 
 package BaseComponents is
 
@@ -2789,6 +2847,119 @@ package BaseComponents is
          dout: out std_logic_vector(owidth-1 downto 0));
   end component;
 
+
+  -----------------------------------------------------------------------------
+  -- floating point operators (pipelined)
+  -----------------------------------------------------------------------------
+  component GenericFloatingPointAdderSubtractor
+    generic (tag_width : integer;
+             exponent_width: integer;
+             fraction_width : integer;
+             round_style : round_type := float_round_style;  -- rounding option
+             addguard       : NATURAL := float_guard_bits;  -- number of guard bits
+             check_error : BOOLEAN    := float_check_error;  -- check for errors
+             denormalize : BOOLEAN    := float_denormalize;  -- Use IEEE extended FP           
+             use_as_subtractor: BOOLEAN
+      );
+    port(
+      INA, INB: in std_logic_vector((exponent_width+fraction_width) downto 0);
+      OUTADD: out std_logic_vector((exponent_width+fraction_width) downto 0);
+      clk,reset: in std_logic;
+      tag_in: in std_logic_vector(tag_width-1 downto 0);
+      tag_out: out std_logic_vector(tag_width-1 downto 0);
+      env_rdy, accept_rdy: in std_logic;
+      addi_rdy, addo_rdy: out std_logic);
+  end component;
+
+  component GenericFloatingPointMultiplier
+    generic (tag_width : integer;
+             exponent_width: integer;
+             fraction_width : integer;
+             round_style : round_type := float_round_style;  -- rounding option
+             addguard       : NATURAL := float_guard_bits;  -- number of guard bits
+             check_error : BOOLEAN    := float_check_error;  -- check for errors
+             denormalize : BOOLEAN    := float_denormalize  -- Use IEEE extended FP           
+             );
+    port(
+      INA, INB: in std_logic_vector((exponent_width+fraction_width) downto 0);
+      OUTMUL: out std_logic_vector((exponent_width+fraction_width) downto 0);
+      clk,reset: in std_logic;
+      tag_in: in std_logic_vector(tag_width-1 downto 0);
+      tag_out: out std_logic_vector(tag_width-1 downto 0);
+      env_rdy, accept_rdy: in std_logic;
+      muli_rdy, mulo_rdy: out std_logic);
+  end component;
+  
+  component SinglePrecisionMultiplier 
+    generic (tag_width : integer);
+    port(
+      INA, INB: in std_logic_vector(31 downto 0);
+      OUTM: out std_logic_vector(31 downto 0);
+      clk,reset: in std_logic;
+      tag_in: in std_logic_vector(tag_width-1 downto 0);
+      tag_out: out std_logic_vector(tag_width-1 downto 0);
+      NaN, oflow, uflow: out std_logic := '0';
+      env_rdy, accept_rdy: in std_logic;
+      muli_rdy, mulo_rdy: out std_logic);
+  end component;
+
+  component DoublePrecisionMultiplier 
+    generic (tag_width : integer);
+    port(
+      INA, INB: in std_logic_vector(63 downto 0);   
+      OUTM: out std_logic_vector(63 downto 0);
+      clk,reset: in std_logic;
+      tag_in: in std_logic_vector(tag_width-1 downto 0);
+      tag_out: out std_logic_vector(tag_width-1 downto 0);
+      NaN, oflow, uflow: out std_logic := '0';
+      env_rdy, accept_rdy: in std_logic;
+      muli_rdy, mulo_rdy: out std_logic);
+  end component;
+
+  component PipelinedFPOperator 
+    generic (
+      operator_id : string;
+      exponent_width : integer := 8;
+      fraction_width : integer := 23;
+      no_arbitration: boolean := true;
+      num_reqs : integer := 3 -- how many requesters?
+      );
+    port (
+      -- req/ack follow level protocol
+      reqL                     : in BooleanArray(num_reqs-1 downto 0);
+      ackR                     : out BooleanArray(num_reqs-1 downto 0);
+      ackL                     : out BooleanArray(num_reqs-1 downto 0);
+      reqR                     : in  BooleanArray(num_reqs-1 downto 0);
+      -- input data consists of concatenated pairs of ips
+      dataL                    : in std_logic_vector((2*(exponent_width+fraction_width+1)*num_reqs)-1 downto 0);
+      -- output data consists of concatenated pairs of ops.
+      dataR                    : out std_logic_vector(((exponent_width+fraction_width+1)*num_reqs)-1 downto 0);
+    -- with dataR
+    clk, reset              : in std_logic);
+  end component;
+
+
+  -----------------------------------------------------------------------------
+  -- pipelined integer components..
+  -----------------------------------------------------------------------------
+  component UnsignedMultiplier 
+    
+    generic (
+      tag_width     : integer;
+      operand_width : integer);
+
+    port (
+      L, R       : in  unsigned(operand_width-1 downto 0);
+      RESULT     : out unsigned((2*operand_width)-1 downto 0);
+      clk, reset : in  std_logic;
+      in_rdy     : in  std_logic;
+      out_rdy    : out std_logic;
+      stall      : in std_logic;
+      tag_in     : in std_logic_vector(tag_width-1 downto 0);
+      tag_out    : out std_logic_vector(tag_width-1 downto 0));
+  end component;
+
+  
 end BaseComponents;
 -- all component declarations necessary for the
 -- vhdl generator
@@ -2815,36 +2986,61 @@ use ieee_proposed.fixed_pkg.all;
 use ieee_proposed.float_pkg.all;	
 
 package FloatOperatorPackage is
-  
-  procedure ApFloatResize_proc(l: in apfloat; result : out IStdLogicVector);
-  procedure ApFloatAdd_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatSub_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatMul_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatOeq_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatOne_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatOgt_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatOge_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatOlt_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatOle_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatOrd_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatUno_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatUeq_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatUne_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatUgt_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatUge_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatUlt_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatUle_proc(l: in apfloat; r : in apfloat; result : out IStdLogicVector);
-  procedure ApFloatToApIntSigned_proc(l: in apfloat; result : out IStdLogicVector);
-  procedure ApFloatToApIntUnsigned_proc(l: in apfloat; result : out IStdLogicVector);
-  procedure ApIntToApFloatSigned_proc(l: in apint; result : out IStdLogicVector);
-  procedure ApIntToApFloatUnsigned_proc(l: in apint; result : out IStdLogicVector);
+
+  -----------------------------------------------------------------------------
+  -- use the float type directly
+  -----------------------------------------------------------------------------
+  procedure ApFloatResize_proc(l: in float;
+                               constant exponent_width : in integer;
+                               constant fraction_width : in integer;                               
+                               result : out std_logic_vector);
+  procedure ApFloatAdd_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatSub_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatMul_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatOeq_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatOne_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatOgt_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatOge_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatOlt_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatOle_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatOrd_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatUno_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatUeq_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatUne_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatUgt_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatUge_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatUlt_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatUle_proc(l: in float; r : in float; result : out std_logic_vector);
+  procedure ApFloatToApIntSigned_proc(l: in float; result : out std_logic_vector);
+  procedure ApFloatToApIntUnsigned_proc(l: in float; result : out std_logic_vector);
+  procedure ApIntToApFloatSigned_proc(l: in std_logic_vector;
+                                      constant exponent_width : in integer;
+                                      constant fraction_width : in integer;
+                                      result : out std_logic_vector);
+  procedure ApIntToApFloatUnsigned_proc(l: in std_logic_vector;
+                                      constant exponent_width : in integer;
+                                      constant fraction_width : in integer;                                        
+                                      result : out std_logic_vector);
 
   -- TODO
   -- procedures ApFloatToApIntSigned_Proc, ApFloatToApIntUnsigned_Proc,
   --            ApIntSignedToApFloat_Proc, ApIntUnsignedToApFloat_Proc
-
-  procedure TwoInputFloatOperation(constant id    : in string; x, y : in IStdLogicVector; result : out IStdLogicVector);
-  procedure SingleInputFloatOperation(constant id : in string; x : in IStdLogicVector; result : out IStdLogicVector);
+  procedure TwoInputFloatArithOperation(constant id    : in string;
+		  			x, y : in std_logic_vector;
+		  			constant exponent_width : in integer;
+		  			constant fraction_width : in integer;
+					result : out std_logic_vector);
+  procedure TwoInputFloatCompareOperation(constant id    : in string;
+                                   	x, y : in std_logic_vector;
+                                   	constant exponent_width : in integer;
+                                   	constant fraction_width : in integer;
+                                   	result : out std_logic_vector);
+  procedure SingleInputFloatOperation(constant id : in string;
+                                      x : in std_logic_vector;
+                                      constant exponent_width : in integer;
+                                      constant fraction_width : in integer;                                      
+                                      result : out std_logic_vector);
+  
 
 end package FloatOperatorPackage;
 
@@ -2852,212 +3048,260 @@ package body FloatOperatorPackage is
 
   -----------------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatResize_proc (l : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatResize_proc (l : in float;
+                                constant exponent_width : in integer;
+                                constant fraction_width : in integer;
+                                result : out std_logic_vector) is					
   begin
-     result := To_ISLV(to_apfloat(RESIZE(to_float(l), result'high, -result'low)));
+     result := To_SLV(RESIZE(l,exponent_width, fraction_width ));
   end ApFloatResize_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatAdd_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatAdd_proc (l : in float; r : in float; result : out std_logic_vector) is					
   begin
     assert (l'length = r'length) and (l'length = result'length)						     
       report "Length Mismatch inApFloatAdd_proc" severity error;
-     result := To_ISLV(to_apfloat(to_float(l) + to_float(r)));  
+     result := To_SLV(l+r);  
   end ApFloatAdd_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatSub_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatSub_proc (l : in float; r : in float; result : out std_logic_vector) is					
   begin
     assert (l'length = r'length) and (l'length = result'length)						     
       report "Length Mismatch inApFloatSub_proc" severity error;
-     result := To_ISLV(to_apfloat(to_float(l) - to_float(r)));  
+     result := To_SLV(l-r);  
   end ApFloatSub_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatMul_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is
+  procedure ApFloatMul_proc (l : in float; r : in float; result : out std_logic_vector) is
     variable float_result  : float(l'left downto l'right);
   begin
-    assert (l'length = r'length) and (l'length = result'length)						     
-      report "Length Mismatch inApFloatMul_proc" severity error;
-    float_result := to_float(l) * to_float(r);  
-    result := To_ISLV(float_result);  
+    assert (l'length = r'length)
+      report "input operand length mismatch in ApFloatMul_proc" severity error;
+    assert (l'length = result'length)						     
+      report "input and output operand length mismatch in ApFloatMul_proc" severity error;
+    float_result := l*r;  
+    result := To_SLV(float_result);  
   end ApFloatMul_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatOeq_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatOeq_proc (l : in float; r : in float; result : out std_logic_vector) is					
   begin
-     result := To_ISLV(to_apint(to_float(l) = to_float(r)));  
+     result := To_SLV(l=r);  
   end ApFloatOeq_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatOne_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatOne_proc (l : in float; r : in float; result : out std_logic_vector) is					
   begin
-     result := To_ISLV(to_apint(to_float(l) /= to_float(r)));  
+     result := To_SLV(l /= r);  
   end ApFloatOne_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatOgt_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatOgt_proc (l : in float; r : in float; result : out std_logic_vector) is					
   begin
-     result := To_ISLV(to_apint(to_float(l) > to_float(r)));  
+     result := To_SLV(l > r);  
   end ApFloatOgt_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatOge_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatOge_proc (l : in float; r : in float; result : out std_logic_vector) is					
   begin
-     result := To_ISLV(to_apint(to_float(l) >= to_float(r)));  
+     result := To_SLV(l >= r);  
   end ApFloatOge_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatOlt_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatOlt_proc (l : in float; r : in float; result : out std_logic_vector) is					
   begin
-     result := To_ISLV(to_apint(to_float(l) < to_float(r)));  
+     result := To_SLV(l < r);  
   end ApFloatOlt_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatOle_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatOle_proc (l : in float; r : in float; result : out std_logic_vector) is					
   begin
-     result := To_ISLV(to_apint(to_float(l) <= to_float(r))); 
+     result := To_SLV(l <= r); 
   end ApFloatOle_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatOrd_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatOrd_proc (l : in float; r : in float; result : out std_logic_vector) is					
   begin
-     result := To_ISLV(to_apint(not(Unordered (x => to_float(l),y => to_float(r))))); 
+     result := To_SLV(not(Unordered (x => l,y => r))); 
   end ApFloatOrd_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatUno_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatUno_proc (l : in float; r : in float; result : out std_logic_vector) is					
   begin
-     result := To_ISLV(to_apint( Unordered (x => to_float(l),y => to_float(r)))); 
+     result := To_SLV(Unordered (x => l,y => r)); 
   end ApFloatUno_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatUeq_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatUeq_proc (l : in float; r : in float; result : out std_logic_vector) is					
   begin
-     result := To_ISLV(to_apint(eq(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r)))); 
+     result := To_SLV(eq(l => l, r => r, check_error => false) or Unordered (x => l,y => r)); 
   end ApFloatUeq_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatUne_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatUne_proc (l : in float; r : in float; result : out std_logic_vector) is					
   begin
-     result :=  To_ISLV(to_apint(ne(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r))));
+     result :=  To_SLV(ne(l => l, r => r, check_error => false) or Unordered (x => l,y => r));
   end ApFloatUne_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatUgt_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatUgt_proc (l : in float; r : in float; result : out std_logic_vector) is					
+	variable cr: boolean;
   begin
-     result :=  To_ISLV(to_apint(gt(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r))));
+     cr :=  gt(l => l, r => r, check_error => false) or Unordered (x => l,y => r);
+     result :=  To_SLV(cr);
   end ApFloatUgt_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatUge_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatUge_proc (l : in float; r : in float; result : out std_logic_vector) is					
+	variable cr: boolean;
   begin
-     result :=  To_ISLV(to_apint(ge(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r))));  
+     cr :=  ge(l => l, r => r, check_error => false) or Unordered (x => l,y => r);  
+     result(result'low) :=  to_std_logic(cr);
   end ApFloatUge_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatUlt_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatUlt_proc (l : in float; r : in float; result : out std_logic_vector) is					
+	variable cr: boolean;
   begin
-     result :=  To_ISLV(to_apint(lt(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r)))); 
+     cr :=  lt(l => l, r => r, check_error => false) or Unordered (x => l,y => r); 
+     result(result'low) := to_std_logic(cr);
   end ApFloatUlt_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatUle_proc (l : in apfloat; r : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatUle_proc (l : in float; r : in float; result : out std_logic_vector) is					
+	variable cr: boolean;
   begin
-     result :=  To_ISLV(to_apint(le(l => to_float(l), r => to_float(r), check_error => false) or Unordered (x => to_float(l),y => to_float(r))));  
+     cr :=  le(l => l, r => r, check_error => false) or Unordered (x => l,y => r);  
+     result(result'low) := to_std_logic(cr);
   end ApFloatUle_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatToApIntSigned_proc (l : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatToApIntSigned_proc (l : in float; result : out std_logic_vector) is					
   begin
-     result := To_ISLV(to_apint(to_signed(to_float(l),result'length)));
+     result := To_SLV(to_signed(l,result'length));
   end ApFloatToApIntSigned_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApFloatToApIntUnsigned_proc (l : in apfloat; result : out IStdLogicVector) is					
+  procedure ApFloatToApIntUnsigned_proc (l : in float; result : out std_logic_vector) is					
   begin
-     result := To_ISLV(to_apint(to_unsigned(to_float(l),result'length)));
+     result := To_SLV(to_unsigned(l,result'length));
   end ApFloatToApIntUnsigned_proc; 				
 
  ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApIntToApFloatSigned_proc (l : in apint; result : out IStdLogicVector) is
+  procedure ApIntToApFloatSigned_proc (l : in std_logic_vector;
+                                       constant exponent_width : in integer;
+                                       constant fraction_width : in integer;
+                                       result : out std_logic_vector) is
   begin
-   result := To_ISLV(to_apfloat(to_float(to_signed(l),result'high,-result'low,round_zero)));
+   result := To_SLV(to_float(to_signed(l),exponent_width,fraction_width,round_zero));
   end ApIntToApFloatSigned_proc;
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
-  procedure ApIntToApFloatUnsigned_proc (l : in apint; result : out IStdLogicVector) is
+  procedure ApIntToApFloatUnsigned_proc (l : in std_logic_vector;
+                                         constant exponent_width : in integer;
+                                         constant fraction_width : in integer;                                         
+                                         result : out std_logic_vector) is
   begin
-   result := To_ISLV(to_apfloat(to_float(to_unsigned(l),result'high,-result'low,round_zero)));
+   result := To_SLV(to_float(to_unsigned(l),exponent_width, fraction_width,round_zero));
   end ApIntToApFloatUnsigned_proc;
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------	
-  procedure TwoInputFloatOperation(constant id : in string; x, y : in IStdLogicVector; result : out IStdLogicVector) is	
-    variable result_var : IStdLogicVector(result'high downto result'low);	
+  procedure TwoInputFloatArithOperation(constant id : in string;
+                                   x, y : in std_logic_vector;
+                                   constant exponent_width : in integer;
+                                   constant fraction_width : in integer;
+                                   result : out std_logic_vector) is	
+    variable result_var : std_logic_vector(exponent_width+fraction_width downto 0);	
     variable temp_int: integer;
   begin
+    result_var:= (others => '0');
     if id = "ApFloatAdd" then					
-      ApFloatAdd_proc(To_apfloat(x), To_apfloat(y), result_var);
+      ApFloatAdd_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
     elsif id = "ApFloatSub" then					
-      ApFloatSub_proc(To_apfloat(x), To_apfloat(y), result_var);
+      ApFloatSub_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
     elsif id = "ApFloatMul" then					
-      ApFloatMul_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatOeq" then					
-      ApFloatOeq_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatOne" then					
-      ApFloatOne_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatOgt" then					
-      ApFloatOgt_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatOge" then					
-      ApFloatOge_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatOlt" then					
-      ApFloatOlt_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatOle" then					
-      ApFloatOle_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatOrd" then					
-      ApFloatOrd_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatUno" then					
-      ApFloatUno_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatUeq" then					
-      ApFloatUeq_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatUne" then					
-      ApFloatUne_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatUgt" then					
-      ApFloatUgt_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatUge" then					
-      ApFloatUge_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatUlt" then					
-      ApFloatUlt_proc(To_apfloat(x), To_apfloat(y), result_var);
-    elsif id = "ApFloatUle" then					
-      ApFloatUle_proc(To_apfloat(x), To_apfloat(y), result_var);
+      ApFloatMul_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
     else	
-      assert false report "Unsupported float operator-id " & id severity failure;	
+      assert false report "Unsupported arithmetic float operator-id " & id severity failure;	
     end if;	
     result := result_var;	
-  end TwoInputFloatOperation;			
-  -----------------------------------------------------------------------------
-	
+  end TwoInputFloatArithOperation;			
+
+  ---------------------------------------------------------------------
   -----------------------------------------------------------------------------	
-  procedure SingleInputFloatOperation(constant id : in string; x : in IStdLogicVector; result : out IStdLogicVector) is	
-    variable result_var : IStdLogicVector(result'high downto result'low);	
+  procedure TwoInputFloatCompareOperation(constant id : in string;
+                                   x, y : in std_logic_vector;
+                                   constant exponent_width : in integer;
+                                   constant fraction_width : in integer;
+                                   result : out std_logic_vector) is	
+    variable result_var : std_logic_vector(0 downto 0);
+    variable temp_int: integer;
   begin
-    if id = "ApFloatResize" then					
-      ApFloatResize_proc(To_apfloat(x), result_var);
-    elsif id = "ApFloatToApIntSigned" then					
-      ApFloatToApIntSigned_proc(To_apfloat(x), result_var);
+
+    assert(result'length = 1) report "comparison result must be a 1-bit integer" severity error;
+
+    result_var:= (others => '0');
+    if id = "ApFloatOeq" then					
+      ApFloatOeq_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
+    elsif id = "ApFloatOne" then					
+      ApFloatOne_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
+    elsif id = "ApFloatOgt" then					
+      ApFloatOgt_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
+    elsif id = "ApFloatOge" then					
+      ApFloatOge_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
+    elsif id = "ApFloatOlt" then					
+      ApFloatOlt_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
+    elsif id = "ApFloatOle" then					
+      ApFloatOle_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
+    elsif id = "ApFloatOrd" then					
+      ApFloatOrd_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
+    elsif id = "ApFloatUno" then					
+      ApFloatUno_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
+    elsif id = "ApFloatUeq" then					
+      ApFloatUeq_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
+    elsif id = "ApFloatUne" then					
+      ApFloatUne_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
+    elsif id = "ApFloatUgt" then					
+      ApFloatUgt_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
+    elsif id = "ApFloatUge" then					
+      ApFloatUge_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
+    elsif id = "ApFloatUlt" then					
+      ApFloatUlt_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
+    elsif id = "ApFloatUle" then					
+      ApFloatUle_proc(To_Float(x,exponent_width,fraction_width), To_Float(y,exponent_width,fraction_width), result_var);
+    else	
+      assert false report "Unsupported float comparison operator-id " & id severity failure;	
+    end if;	
+    result(result'low) := result_var(0);	
+  end TwoInputFloatCompareOperation;			
+
+  -----------------------------------------------------------------------------
+  -----------------------------------------------------------------------------	
+  procedure SingleInputFloatOperation(constant id : in string;
+                                      x : in std_logic_vector;
+                                      constant exponent_width : in integer;
+                                      constant fraction_width : in integer;                                      
+                                      result : out std_logic_vector) is	
+    variable result_var : std_logic_vector(exponent_width+fraction_width downto 0);	
+  begin
+    result_var:= (others => '0');
+    if id = "ApFloatToApIntSigned" then					
+      ApFloatToApIntSigned_proc(To_Float(x,exponent_width,fraction_width), result_var);
     elsif id = "ApFloatToApIntUnsigned" then					
-      ApFloatToApIntUnsigned_proc(To_apfloat(x), result_var);
+      ApFloatToApIntUnsigned_proc(To_Float(x,exponent_width,fraction_width), result_var);
     elsif id = "ApIntToApFloatSigned" then					
-      ApIntToApFloatSigned_proc(To_apint(x), result_var);
+      ApIntToApFloatSigned_proc(x, exponent_width, fraction_width, result_var);
     elsif id = "ApIntToApFloatUnsigned" then					
-      ApIntToApFloatUnsigned_proc(To_apint(x), result_var);
+      ApIntToApFloatUnsigned_proc(x, exponent_width, fraction_width, result_var);
     else	
       assert false report "Unsupported operator-id " & id severity failure;	
     end if;	
     result := result_var;	
   end SingleInputFloatOperation;	
 	
+  
 	
 end package body FloatOperatorPackage;	
 library ieee;	
@@ -4567,6 +4811,163 @@ package body merge_functions is
         sel_vector := sv;
   end Select_Best_Index;
 end merge_functions;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+
+library ieee_proposed;
+use ieee_proposed.math_utility_pkg.all;                  
+use ieee_proposed.float_pkg.all;
+
+
+package functionLibraryComponents is
+
+component fpadd32 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(31 downto 0);
+      R : in  std_logic_vector(31 downto 0);
+      ret_val_x_x : out  std_logic_vector(31 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end component fpadd32;
+
+component fpmul32 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(31 downto 0);
+      R : in  std_logic_vector(31 downto 0);
+      ret_val_x_x : out  std_logic_vector(31 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end component fpmul32;
+
+component fpsub32 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(31 downto 0);
+      R : in  std_logic_vector(31 downto 0);
+      ret_val_x_x : out  std_logic_vector(31 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end component fpsub32;
+
+component fpu32 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(31 downto 0);
+      R : in  std_logic_vector(31 downto 0);
+      OP_ID : in std_logic_vector(7 downto 0);
+      ret_val_x_x : out  std_logic_vector(31 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end component fpu32;
+
+
+component fpadd64 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(63 downto 0);
+      R : in  std_logic_vector(63 downto 0);
+      ret_val_x_x : out  std_logic_vector(63 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end component fpadd64;
+
+
+component fpsub64 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(63 downto 0);
+      R : in  std_logic_vector(63 downto 0);
+      ret_val_x_x : out  std_logic_vector(63 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end component fpsub64;
+
+component fpmul64 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(63 downto 0);
+      R : in  std_logic_vector(63 downto 0);
+      ret_val_x_x : out  std_logic_vector(63 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end component fpmul64;
+
+
+component fpu64 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(63 downto 0);
+      R : in  std_logic_vector(63 downto 0);
+      OP_ID : in std_logic_vector(7 downto 0);
+      ret_val_x_x : out  std_logic_vector(63 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end component fpu64;
+
+end package;
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -8338,6 +8739,10 @@ use ahir.Subprograms.all;
 use ahir.OperatorPackage.all;
 use ahir.FloatOperatorPackage.all;
 
+
+library ieee_proposed;
+use ieee_proposed.float_pkg.all;
+
 entity GenericCombinationalOperator is
   generic
     (
@@ -8390,31 +8795,41 @@ begin  -- Behave
 
     -- float x float -> float
     TwoOpFloatFloatFloat: if (not input1_is_int) and (not input2_is_int) and (not output_is_int) generate
+      assert(iwidth_1 = iwidth_2) report "floatXfloat -> float operation: inputs must be of the same width." severity error;
+      assert(input1_characteristic_width = input2_characteristic_width) report "floatXfloat -> float operation: input exponent sizes must be the same."
+        severity error;
+      
       process(data_in)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        variable op2: IStdLogicVector(input2_characteristic_width downto (- input2_mantissa_width));
-        variable   result_var: IStdLogicVector(output_characteristic_width downto (-output_mantissa_width));
+        variable op1: std_logic_vector(iwidth_1-1 downto 0);
+        variable op2: std_logic_vector(iwidth_2-1 downto 0);
+        variable   result_var: std_logic_vector(owidth-1 downto 0);
       begin
-        op1 := To_ISLV(data_in(iwidth-1 downto iwidth_2));
-        op2 := To_ISLV(data_in(iwidth_2-1 downto 0));
+        op1 := data_in(iwidth-1 downto iwidth_2);
+        op2 := data_in(iwidth_2-1 downto 0);
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, op1,op2,result_var);
-        result <= To_SLV(result_var);
+        TwoInputFloatArithOperation(operator_id, op1,op2,input1_characteristic_width, input1_mantissa_width, result_var);
+        result <= result_var;
       end process;
     end generate TwoOpFloatFloatFloat;
 
     -- float x float -> int
-    TwoOpFloatFloatInt: if (not input1_is_int) and (not input2_is_int) and output_is_int generate
+    TwoOpFloatFloatInt: if ((not input1_is_int) and (not input2_is_int) and output_is_int) generate
+      assert(iwidth_1 = iwidth_2) report "floatXfloat -> int operation: inputs must be of the same width." severity error;
+      assert(input1_characteristic_width = input2_characteristic_width) report "floatXfloat -> int operation: input exponent sizes must be the same."
+        severity error;
+      
       process(data_in)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        variable op2: IStdLogicVector(input2_characteristic_width downto (- input2_mantissa_width));
-        variable   result_var: IStdLogicVector(owidth-1 downto 0);
+        variable op1: std_logic_vector(iwidth_1-1 downto 0);
+        variable op2: std_logic_vector(iwidth_2-1 downto 0);
+        variable   result_var: std_logic_vector(owidth-1 downto 0);        
       begin
-        op1 := To_ISLV(data_in(iwidth-1 downto iwidth_2));
-        op2 := To_ISLV(data_in(iwidth_2-1 downto 0));
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, op1,op2,result_var);
-        result <= To_SLV(result_var);
+
+	op1 := data_in(iwidth-1 downto iwidth_2);
+	op2 := data_in(iwidth_2-1 downto 0);
+
+        TwoInputFloatCompareOperation(operator_id, op1,op2, input1_characteristic_width, input1_mantissa_width, result_var);
+        result <= result_var;
       end process;
     end generate TwoOpFloatFloatInt;
 
@@ -8441,36 +8856,58 @@ begin  -- Behave
     end generate SingleOperandNoConstantIntInt;
     
     SingleOperandNoConstantFloatFloat: if (not input1_is_int) and (not output_is_int) generate
-      process(data_in)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        variable result_var: IStdLogicVector(output_characteristic_width downto (- output_mantissa_width));
-      begin
-        op1 := To_ISLV(data_in);
-        result_var := (others => '0');
-        SingleInputFloatOperation(operator_id, op1, result_var);
-        result <= To_SLV(result_var);
-      end process;
+
+      -- the resize operation is to be treated specially, since
+      -- there are two different conversions..
+      ResizeFloat: if (operator_id = "ApFloatResize") generate
+        process(data_in)
+          variable op1: std_logic_vector(iwidth_1-1 downto 0);
+          variable   result_var: std_logic_vector(owidth-1 downto 0);                
+        begin
+          op1 := data_in;
+          result_var := (others => '0');
+          ApFloatResize_proc(To_Float(op1, input1_characteristic_width, input1_mantissa_width),
+                             output_characteristic_width,
+                             output_mantissa_width,
+                             result_var);
+          result <= result_var;
+        end process;        
+      end generate ResizeFloat;
+
+      NotResizeFloat: if (operator_id /= "ApFloatResize") generate
+        
+        process(data_in)
+          variable op1: std_logic_vector(iwidth_1-1 downto 0);
+          variable   result_var: std_logic_vector(owidth-1 downto 0);                
+        begin
+          op1 := data_in;
+          result_var := (others => '0');
+          SingleInputFloatOperation(operator_id, op1, input1_characteristic_width, input1_mantissa_width, result_var);
+          result <= result_var;
+        end process;
+      end generate NotResizeFloat;
+      
     end generate SingleOperandNoConstantFloatFloat;
 
     SingleOperandNoConstantFloatInt: if (not input1_is_int) and output_is_int generate
       process(data_in)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        variable result_var: IStdLogicVector(owidth-1 downto 0);
+        variable op1: std_logic_vector(iwidth_1-1 downto 0);
+        variable   result_var: std_logic_vector(owidth-1 downto 0);                
       begin
-        op1 := To_ISLV(data_in);
+        op1 := data_in;
         result_var := (others => '0');
-        SingleInputFloatOperation(operator_id, op1, result_var);
-        result <= To_SLV(result_var);
+        SingleInputFloatOperation(operator_id, op1, input1_characteristic_width, input1_mantissa_width, result_var);
+        result <= result_var;
       end process;
     end generate SingleOperandNoConstantFloatInt;
 
     SingleOperandNoConstantIntFloat: if (input1_is_int) and (not output_is_int) generate
       process(data_in)
-        variable result_var: IStdLogicVector(output_characteristic_width downto (- output_mantissa_width));
+        variable   result_var: std_logic_vector(owidth-1 downto 0);                
       begin
         result_var := (others => '0');
-        SingleInputFloatOperation(operator_id, To_ISLV(data_in), result_var);
-        result <= To_SLV(result_var);
+        SingleInputFloatOperation(operator_id, data_in, output_characteristic_width, output_mantissa_width, result_var);
+        result <= result_var;
       end process;
     end generate SingleOperandNoConstantIntFloat;
   end generate SingleOperandNoConstant;
@@ -8498,31 +8935,34 @@ begin  -- Behave
     end generate SingleOperandWithConstantIntInt;
 
     SingleOperandWithConstantFloatInt: if (not input1_is_int) and output_is_int generate
-      process(data_in)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        constant op2: IStdLogicVector(input2_characteristic_width downto (- input2_mantissa_width)) 
-          := To_ISLV(constant_operand);
-        variable   result_var: IStdLogicVector(owidth-1 downto 0);
+
+      SigBlock: block
+      	signal op2_sig: std_logic_vector(constant_width-1 downto 0);
+      begin
+      op2_sig <= constant_operand;
+      process(data_in, op2_sig)
+        variable   result_var: std_logic_vector(owidth-1 downto 0);                        
       begin
         result_var := (others => '0');
-        op1 := To_ISLV(data_in);	
-        TwoInputFloatOperation(operator_id, op1, op2, result_var);
-        result <= To_SLV(result_var);
+       	TwoInputFloatCompareOperation(operator_id, data_in, op2_sig,input1_characteristic_width, input1_mantissa_width, result_var);
+        result <= result_var;
       end process;
+      end block SigBlock;
     end generate SingleOperandWithConstantFloatInt;
 
     SingleOperandWithConstantFloatFloat: if (not input1_is_int) and (not output_is_int) generate
-      process(data_in)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        constant op2: IStdLogicVector(input2_characteristic_width downto (- input2_mantissa_width)) 
-          := To_ISLV(constant_operand);
-        variable result_var: IStdLogicVector(output_characteristic_width downto (- output_mantissa_width));
+      SigBlock: block
+      	signal op2_sig: std_logic_vector(constant_width-1 downto 0);
       begin
-        op1 := To_ISLV(data_in);
+      op2_sig <= constant_operand;
+      process(data_in, op2_sig)
+        variable   result_var: std_logic_vector(owidth-1 downto 0);                        
+      begin
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, op1, op2, result_var);
-        result <= To_SLV(result_var);
+       	TwoInputFloatArithOperation(operator_id, data_in, op2_sig, input1_characteristic_width, input1_mantissa_width, result_var);
+        result <= result_var;
       end process;
+    end block SigBlock;
     end generate SingleOperandWithConstantFloatFloat;
   end generate SingleOperandWithConstant;
   
@@ -9620,22 +10060,29 @@ entity OutputPortLevelNoData is
 end entity;
 
 architecture Base of OutputPortLevelNoData is
-  signal req_active, ack_sig  : std_logic_vector(num_reqs-1 downto 0);
+  signal req_active, ack_sig , fair_reqs, fair_acks : std_logic_vector(num_reqs-1 downto 0);
 begin
+  
+  fairify: NobodyLeftBehind generic map(num_reqs => num_reqs)
+		port map(clk => clk, reset => reset,
+				reqIn => req,
+				ackOut => ack,
+				reqOut => fair_reqs,
+				ackIn => fair_acks);
   
   oreq <= OrReduce(req_active);
 
   NoArb: if no_arbitration generate
-     req_active <= req;
+     req_active <= fair_reqs;
   end generate NoArb;
 
   Arb: if not no_arbitration generate
-     req_active <= PriorityEncode(req);
+     req_active <= PriorityEncode(fair_reqs);
   end generate Arb;
 
   gen: for I in num_reqs-1 downto 0 generate
        ack_sig(I) <= req_active(I) and oack; 
-       ack(I) <= ack_sig(I);
+       fair_acks(I) <= ack_sig(I);
   end generate gen;
 
 end Base;
@@ -9667,18 +10114,25 @@ architecture Base of OutputPortLevel is
   
   type OPWArray is array(integer range <>) of std_logic_vector(odata'range);
   signal data_array : OPWArray(num_reqs-1 downto 0);
-  signal req_active, ack_sig  : std_logic_vector(num_reqs-1 downto 0);
+  signal req_active, ack_sig , fair_reqs, fair_acks : std_logic_vector(num_reqs-1 downto 0);
   
 begin
+
+  fairify: NobodyLeftBehind generic map(num_reqs => num_reqs)
+		port map(clk => clk, reset => reset,
+				reqIn => req,
+				ackOut => ack,
+				reqOut => fair_reqs,
+				ackIn => fair_acks);
   
   oreq <= OrReduce(req_active);
 
   NoArb: if no_arbitration generate
-     req_active <= req;
+     req_active <= fair_reqs;
   end generate NoArb;
 
   Arb: if not no_arbitration generate
-     req_active <= PriorityEncode(req);
+     req_active <= PriorityEncode(fair_reqs);
   end generate Arb;
 
   process (data_array)
@@ -9694,7 +10148,7 @@ begin
   gen: for I in num_reqs-1 downto 0 generate
 
        ack_sig(I) <= req_active(I) and oack; 
-       ack(I) <= ack_sig(I);
+       fair_acks(I) <= ack_sig(I);
 
        process(data,req_active(I))
          variable target: std_logic_vector(data_width-1 downto 0);
@@ -11288,7 +11742,7 @@ begin
    ----------------------------------------------------------------------------
    -- process to handle call_reqs  --> call_mreq muxing
    ----------------------------------------------------------------------------
-   process(clk,pe_call_reqs,call_state)
+   process(clk,pe_call_reqs,call_state,reset)
         variable nstate: CallStateType;
         variable there_is_a_call : std_logic;
         variable latch_pe_call_reqs: std_logic;
@@ -11308,7 +11762,12 @@ begin
 	elsif (call_state = busy) then
 		call_mreq <= '1';
 		if(call_mack = '1') then
-			nstate := idle;
+			if(there_is_a_call = '1') then
+				latch_call_data <=  '1';
+        			latch_pe_call_reqs := '1';
+                        else
+				nstate := idle;
+			end if;
 		end if;
 	end if;
 	
@@ -12400,4 +12859,2873 @@ begin  -- Behave
   end generate NonZeroDelay;
   
 end Vanilla;
+
+-------------------------------------------------------------------------------
+-- Authors: Abhishek R. Kamath & Prashant Singhal
+-- An IEEE-754 compliant Double-Precision pipelined multiplier
+-------------------------------------------------------------------------------
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+
+entity DoublePrecisionMultiplier is
+  generic (tag_width : integer);
+  port(
+    INA, INB: in std_logic_vector(63 downto 0);   
+    OUTM: out std_logic_vector(63 downto 0);
+    clk,reset: in std_logic;
+    tag_in: in std_logic_vector(tag_width-1 downto 0);
+    tag_out: out std_logic_vector(tag_width-1 downto 0);
+    NaN, oflow, uflow: out std_logic := '0';
+    env_rdy, accept_rdy: in std_logic;
+    muli_rdy, mulo_rdy: out std_logic);
+end entity;
+
+architecture rtl of DoublePrecisionMultiplier is
+
+  type parpro is array (0 to 52) of std_logic_vector(52 downto 0);
+
+  signal rdy1,rdy2,rdy3,rdy4,rdy5,rdy6,rdy7,rdy8,rdy9,rdy10,rdy11,rdy12: std_logic := '0';
+  signal flag3,flag4,flag5,flag6,flag7,flag8,flag9,flag10,flag11: std_logic_vector(1 downto 0);
+  signal fman11: std_logic_vector(51 downto 0);
+  signal tag1,tag2,tag3,tag4,tag5,tag6,tag7,tag8,tag9,tag10,tag11: std_logic_vector(tag_width-1 downto 0);
+  signal pipeline_stall: std_logic := '0';
+
+  signal aman_1,aman_2,bman_1,bman_2: std_logic_vector(52 downto 0);
+  signal anan1,bnan1,azero1,bzero1,ainf1,binf1,osgn1: std_logic := '0'; 
+  signal aexp_s1,bexp_s1: std_logic_vector(10 downto 0);
+
+  signal nocalc2,nocalc3,nocalc4,nocalc5,nocalc6,nocalc7,nocalc8,nocalc9,nocalc10,nocalc11: std_logic;-- := '0';
+  signal output_s2,output_s23,output_s24,output_s25,output_s26,output_s27,output_s28,output_s29,output_s210,output_s211: std_logic_vector(2 downto 0);
+  signal int_exp: std_logic_vector(11 downto 0);
+
+  signal fexp3,fexp4,fexp5,fexp6,fexp7,fexp8,fexp9,fexp10,fexp11: std_logic_vector(10 downto 0);-- := X"00";
+
+  signal pp: parpro;
+  signal tr_400,tr_401,tr_402,tr_403,tr_404,tr_405,tr_406,tr_407,tr_408,tr_409,tr_410,tr_411,tr_412: std_logic_vector(105 downto 0);
+  signal tr_413,tr_414,tr_415,tr_416,tr_417,tr_418,tr_419,tr_420,tr_421,tr_422,tr_423,tr_424,tr_425,tr_426: std_logic_vector(105 downto 0);
+
+  signal tr501,tr502,tr503,tr504,tr505,tr506,tr507,tr508,tr509,tr510,tr511,tr512,tr513,tr514: std_logic_vector(105 downto 0);
+  signal tr61,tr62,tr63,tr64,tr65,tr66,tr67: std_logic_vector(105 downto 0);
+  signal tr71,tr72,tr73,tr74,tr71_int1,tr72_int1,tr71_int2: std_logic_vector(105 downto 0);
+
+
+  signal tr401,tr402,tr403,tr404,tr405,tr406,tr407,tr408,tr409,tr410,tr411,tr412: std_logic_vector(105 downto 0);-- := X"000000000000";
+  signal tr413,tr414,tr415,tr416,tr417,tr418,tr419,tr420,tr421,tr422,tr423,tr424: std_logic_vector(105 downto 0);-- := X"000000000000";
+  signal tr425,tr426,tr427,tr428,tr429,tr430,tr431,tr432,tr433,tr434,tr435,tr436: std_logic_vector(105 downto 0);-- := X"000000000000";
+  signal tr437,tr438,tr439,tr440,tr441,tr442,tr443,tr444,tr445,tr446,tr447,tr448: std_logic_vector(105 downto 0);-- := X"000000000000";
+  signal tr449,tr450,tr451,tr452,tr453: std_logic_vector(105 downto 0);-- := X"000000000000";
+
+begin
+
+  stage_1: process(clk,reset)
+
+    variable asgn,bsgn,osgn: std_logic := '0';
+    variable aexp,bexp: std_logic_vector(10 downto 0);-- := "000" & X"00";
+    variable aman,bman: std_logic_vector(52 downto 0);-- := "000000000000000000000000";
+    variable anan,bnan,azero,bzero,ainf,binf: std_logic;-- := '0';
+
+  begin
+    if reset = '1' then
+      rdy1 <= '0';
+    else
+      if clk'event and clk='1'then
+        if env_rdy = '1' and pipeline_stall = '0' then
+          --asgn1 <= INA(63);
+          --bsgn1 <= INB(63);
+          --aexp1 <= INA(62 downto 52);
+          --bexp1 <= INB(62 downto 52);
+          --aman1 <= '1' & INA(51 downto 0);
+          --bman1 <= '1' & INB(51 downto 0);
+          --rdy1 <= '1';
+          
+
+          --asgn := INA(63);
+          --bsgn := INB(63);
+          --osgn := INA(63) xor INB(63);
+
+          
+          aexp := INA(62 downto 52);
+          bexp := INB(62 downto 52);
+          aman := '1' & INA(51 downto 0);
+          bman := '1' & INB(51 downto 0);
+          
+          
+          
+          if(aexp="111" & X"FF") then
+            if(unsigned(aman)=0) then
+              ainf := '1';
+              anan := '0';
+              azero := '0';
+            else
+              anan := '1';
+              azero := '0';
+              ainf := '0';
+            end if;
+          elsif(aexp="000"&X"00") then
+            if unsigned(aman)=0 then
+              azero := '1';
+              ainf := '0';
+              anan := '0';
+            end if;
+          else
+            ainf := '0';
+            anan := '0';
+            azero := '0';
+          end if;
+          
+          if(bexp="111"& X"FF") then
+            if(unsigned(bman)=0) then
+              binf := '1';
+              bnan := '0';
+              bzero := '0';
+            else
+              bnan := '1';
+              bzero := '0';
+              binf := '0';
+            end if;
+          elsif(bexp="000" & X"00") then
+            if unsigned(bman)=0 then
+              bzero := '1';
+              binf := '0';
+              bnan := '0';
+            end if;
+          else
+            binf := '0';
+            bnan := '0';
+            bzero := '0';
+          end if;
+
+          osgn1 <= INA(63) xor INB(63);
+          
+          ainf1 <= ainf;
+          binf1 <= binf;
+          anan1 <= anan;
+          bnan1 <= bnan;
+          azero1 <= azero;
+          bzero1 <= bzero;
+          
+          aexp_s1 <= aexp;
+          bexp_s1 <= bexp;
+          aman_1 <= aman;
+          bman_1 <= bman;
+
+
+          rdy1 <= '1';
+          tag1 <= tag_in;
+          
+        elsif pipeline_stall = '1' then
+        elsif env_rdy = '0' then
+          rdy1 <= '0';
+        end if;
+      end if;
+    end if;
+  end process stage_1;
+
+
+
+
+
+  stage_2: process(clk,reset)
+  begin
+    if reset = '1' then
+      rdy2 <= '0';
+    else
+      if clk'event and clk='1'then
+        if rdy1 = '1' and pipeline_stall = '0' then
+          if (anan1 = '1' or bnan1 = '1') then
+            output_s2 <= osgn1 & "10";
+            nocalc2 <= '1';
+          elsif (azero1 = '1' and binf1 = '1') or (ainf1 = '1' and bzero1 = '1') then
+            output_s2 <= osgn1 & "10";
+            nocalc2 <= '1';
+          elsif azero1 = '1' or bzero1 = '1' then
+            output_s2 <= osgn1 & "00";
+            nocalc2 <= '1';
+          elsif ainf1 = '1' or binf1 = '1' then
+            output_s2 <= osgn1 & "11";
+            nocalc2 <= '1';
+          else
+            int_exp <= std_logic_vector(unsigned('0' & aexp_s1) + unsigned('0' & bexp_s1));
+            output_s2 <= osgn1 & "01";
+            nocalc2 <= '0';
+          end if;
+          --aexp_s3 <= aexp_s2;
+          --bexp_s3 <= bexp_s2;
+          aman_2 <= aman_1;
+          bman_2 <= bman_1;
+          rdy2 <= '1';
+          tag2 <= tag1;
+          
+          
+        elsif pipeline_stall = '1' then
+        elsif rdy1 = '0' then
+          rdy2 <= '0';
+        end if;
+      end if;
+    end if;
+  end process stage_2;
+
+
+
+
+  stage_3: process(clk,reset)
+
+    variable exp3: unsigned(11 downto 0);
+
+  begin
+    if reset = '1' then
+      rdy3 <= '0';
+    else
+      if clk'event and clk='1'then
+        if rdy2 = '1' and pipeline_stall = '0' then
+          if nocalc2 = '1' then
+            nocalc3 <= '1';
+            output_s23 <= output_s2;
+            flag3 <= "00";
+          elsif nocalc2 = '0' then
+            exp3 := unsigned(int_exp);
+            if(exp3 > 3069) then
+              output_s23 <= output_s2(2) & "11";
+              nocalc3 <= '1';
+              flag3 <= "10";
+            elsif(exp3 < 1023) then
+              output_s23 <= output_s2(2) & "00";
+              nocalc3 <= '1';
+              flag3 <= "01";
+            else
+              exp3 := exp3 - 1023;
+              output_s23 <= output_s2(2) & "01";
+              nocalc3 <= '0';
+              flag3 <= "00";
+            end if;	
+          end if;
+          --aman_3 <= aman_2;
+          --bman_3 <= bman_2;
+          fexp3 <= std_logic_vector(exp3(10 downto 0));
+          rdy3 <= '1';
+          tag3 <= tag2;
+
+          for i in 0 to 52 loop
+            for j in 0 to 52 loop
+              pp(i)(j) <= aman_2(j) and bman_2(i);
+            end loop;
+          end loop;
+
+        elsif pipeline_stall = '1' then
+        elsif rdy2 = '0' then
+          rdy3 <= '0';
+        end if;
+      end if;
+    end if;
+  end process stage_3;
+
+
+
+
+
+  stage_4: process(clk,reset)
+  begin
+    if reset = '1' then
+      rdy4 <= '0';
+    else
+      if clk'event and clk='1'then
+        if rdy3 = '1' and pipeline_stall = '0' then
+          if nocalc3 = '1' then
+            nocalc4 <= '1';
+          elsif nocalc3 = '0' then
+            
+            tr401 <= X"0000000000000" & '0' & pp(0);
+            tr402 <= X"0000000000000" & pp(1) & '0';
+            tr403 <= X"000000000000" & "000" & pp(2) & "00";
+            tr404 <= X"000000000000" & "00" & pp(3) & "000";	
+
+            tr405 <= X"000000000000" & '0' & pp(4) & X"0";
+            tr406 <= X"000000000000" & pp(5) & X"0" & '0';
+            tr407 <= X"00000000000" & "000" & pp(6) & X"0" & "00";
+            tr408 <= X"00000000000" & "00" & pp(7) & X"0" & "000";
+
+            tr409 <= X"00000000000" & '0' & pp(8) & X"00";
+            tr410 <= X"00000000000" & pp(9) & X"00" & '0';
+            tr411 <= X"0000000000" & "000" & pp(10) & X"00" & "00";
+            tr412 <= X"0000000000" & "00" & pp(11) & X"00" & "000";
+
+            tr413 <= X"0000000000" & '0' & pp(12) & X"000";
+            tr414 <= X"0000000000" & pp(13) & X"000" & '0';
+            tr415 <= X"000000000" & "000" & pp(14) & X"000" & "00";
+            tr416 <= X"000000000" & "00" & pp(15) & X"000" & "000";
+
+            tr417 <= X"000000000" & '0' & pp(16) & X"0000";
+            tr418 <= X"000000000" & pp(17) & X"0000" & '0';
+            tr419 <= X"00000000" & "000" & pp(18) & X"0000" & "00";
+            tr420 <= X"00000000" & "00" & pp(19) & X"0000" & "000";
+
+            tr421 <= X"00000000" & '0' & pp(20) & X"00000";
+            tr422 <= X"00000000" & pp(21) & X"00000" & '0';
+            tr423 <= X"0000000" & "000" & pp(22) & X"00000" & "00";
+            tr424 <= X"0000000" & "00" & pp(23) & X"00000" & "000";
+
+            tr425 <= X"0000000" & '0' & pp(24) & X"000000";
+            tr426 <= X"0000000" & pp(25) & X"000000" & '0';
+            tr427 <= X"000000" & "000" & pp(26) & X"000000" & "00";
+            tr428 <= X"000000" & "00" & pp(27) & X"000000" & "000";
+
+            tr429 <= X"000000" & '0' & pp(28) & X"0000000";
+            tr430 <= X"000000" & pp(29) & X"0000000" & '0';
+            tr431 <= X"00000" & "000" & pp(30) & X"0000000" & "00";
+            tr432 <= X"00000" & "00" & pp(31) & X"0000000" & "000";
+
+            tr433 <= X"00000" & '0' & pp(32) & X"00000000";
+            tr434 <= X"00000" & pp(33) & X"00000000" & '0';
+            tr435 <= X"0000" & "000" & pp(34) & X"00000000" & "00";
+            tr436 <= X"0000" & "00" & pp(35) & X"00000000" & "000";
+
+            tr437 <= X"0000" & '0' & pp(36) & X"000000000";
+            tr438 <= X"0000" & pp(37) & X"000000000" & '0';
+            tr439 <= X"000" & "000" & pp(38) & X"000000000" & "00";
+            tr440 <= X"000" & "00" & pp(39) & X"000000000" & "000";
+
+            tr441 <= X"000" & '0' & pp(40) & X"0000000000";
+            tr442 <= X"000" & pp(41) & X"0000000000" & '0';
+            tr443 <= X"00" & "000" & pp(42) & X"0000000000" & "00";
+            tr444 <= X"00" & "00" & pp(43) & X"0000000000" & "000";
+
+            tr445 <= X"00" & '0' & pp(44) & X"00000000000";
+            tr446 <= X"00" & pp(45) & X"00000000000" & '0';
+            tr447 <= X"0" & "000" & pp(46) & X"00000000000" & "00";
+            tr448 <= X"0" & "00" & pp(47) & X"00000000000" & "000";
+
+            tr449 <= X"0" & '0' & pp(48) & X"000000000000";
+            tr450 <= X"0" & pp(49) & X"000000000000" & '0';
+            tr451 <= "000" & pp(50) & X"000000000000" & "00";
+            tr452 <= "00" & pp(51) & X"000000000000" & "000";
+
+            tr453 <= '0' & pp(52) & X"0000000000000";
+
+            nocalc4 <= '0';
+            
+          end if;
+
+          
+          output_s24 <= output_s23;
+          fexp4 <= fexp3;
+          flag4 <= flag3;
+          rdy4 <= '1';
+          tag4 <= tag3;
+          
+        elsif pipeline_stall = '1' then
+        elsif rdy3 = '0' then
+          rdy4 <= '0';
+        end if;
+      end if;
+    end if;
+  end process stage_4;
+
+
+  stage_5: process(clk,reset)
+  begin
+    if reset = '1' then
+      rdy5 <= '0';
+    else
+      if clk'event and clk='1'then
+        if rdy4 = '1' and pipeline_stall = '0' then
+          if nocalc4 = '1' then
+            nocalc5 <= '1';
+          elsif nocalc4 = '0' then
+            
+            tr_400 <= std_logic_vector(unsigned(tr401) + unsigned(tr402));
+            tr_401 <= std_logic_vector(unsigned(tr403) + unsigned(tr404));
+            tr_402 <= std_logic_vector(unsigned(tr405) + unsigned(tr406));
+            tr_403 <= std_logic_vector(unsigned(tr407) + unsigned(tr408));
+            tr_404 <= std_logic_vector(unsigned(tr409) + unsigned(tr410));
+            tr_405 <= std_logic_vector(unsigned(tr411) + unsigned(tr412));
+            tr_406 <= std_logic_vector(unsigned(tr413) + unsigned(tr414));
+            tr_407 <= std_logic_vector(unsigned(tr415) + unsigned(tr416));
+            tr_408 <= std_logic_vector(unsigned(tr417) + unsigned(tr418));
+            tr_409 <= std_logic_vector(unsigned(tr419) + unsigned(tr420));
+            tr_410 <= std_logic_vector(unsigned(tr421) + unsigned(tr422));
+            tr_411 <= std_logic_vector(unsigned(tr423) + unsigned(tr424));
+
+            tr_412 <= std_logic_vector(unsigned(tr425) + unsigned(tr426));
+            tr_413 <= std_logic_vector(unsigned(tr427) + unsigned(tr428));
+            tr_414 <= std_logic_vector(unsigned(tr429) + unsigned(tr430));
+            tr_415 <= std_logic_vector(unsigned(tr431) + unsigned(tr432));
+            tr_416 <= std_logic_vector(unsigned(tr433) + unsigned(tr434));
+            tr_417 <= std_logic_vector(unsigned(tr435) + unsigned(tr436));
+            tr_418 <= std_logic_vector(unsigned(tr437) + unsigned(tr438));
+            tr_419 <= std_logic_vector(unsigned(tr439) + unsigned(tr440));
+            tr_420 <= std_logic_vector(unsigned(tr441) + unsigned(tr442));
+            tr_421 <= std_logic_vector(unsigned(tr443) + unsigned(tr444));
+            tr_422 <= std_logic_vector(unsigned(tr445) + unsigned(tr446));
+            tr_423 <= std_logic_vector(unsigned(tr447) + unsigned(tr448));
+
+            tr_424 <= std_logic_vector(unsigned(tr449) + unsigned(tr450));
+            tr_425 <= std_logic_vector(unsigned(tr451) + unsigned(tr452));
+            tr_426 <= tr453;
+
+            nocalc5 <= '0';
+            
+          end if;
+
+          
+          output_s25 <= output_s24;
+          fexp5 <= fexp4;
+          flag5 <= flag4;
+          rdy5 <= '1';
+          tag5 <= tag4;
+          
+        elsif pipeline_stall = '1' then
+        elsif rdy4 = '0' then
+          rdy5 <= '0';
+        end if;
+      end if;
+    end if;
+  end process stage_5;
+
+
+
+  stage_6: process(clk,reset)
+  begin
+    if reset = '1' then
+      rdy6 <= '0';
+    else
+      if clk'event and clk='1'then
+        if rdy5 = '1' and pipeline_stall = '0' then
+          if nocalc5 = '1' then
+            nocalc6 <= '1';
+          else
+            tr501 <= std_logic_vector(unsigned(tr_400) + unsigned(tr_401));
+            tr502 <= std_logic_vector(unsigned(tr_402) + unsigned(tr_403));
+            tr503 <= std_logic_vector(unsigned(tr_404) + unsigned(tr_405));
+            tr504 <= std_logic_vector(unsigned(tr_406) + unsigned(tr_407));
+            tr505 <= std_logic_vector(unsigned(tr_408) + unsigned(tr_409));
+            tr506 <= std_logic_vector(unsigned(tr_410) + unsigned(tr_411));
+
+            tr507 <= std_logic_vector(unsigned(tr_412) + unsigned(tr_413));
+            tr508 <= std_logic_vector(unsigned(tr_414) + unsigned(tr_415));
+            tr509 <= std_logic_vector(unsigned(tr_416) + unsigned(tr_417));
+            tr510 <= std_logic_vector(unsigned(tr_418) + unsigned(tr_419));
+            tr511 <= std_logic_vector(unsigned(tr_420) + unsigned(tr_421));
+            tr512 <= std_logic_vector(unsigned(tr_422) + unsigned(tr_423));
+
+            tr513 <= std_logic_vector(unsigned(tr_424) + unsigned(tr_425));
+            tr514 <= tr_426;
+            
+            nocalc6 <= '0';
+          end if;
+
+          output_s26 <= output_s25;
+          fexp6 <= fexp5;
+          flag6 <= flag5;
+          rdy6 <= '1';
+          tag6 <= tag5;
+          
+        elsif pipeline_stall = '1' then
+        elsif rdy5 = '0' then
+          rdy6 <= '0';
+        end if;
+      end if;
+    end if;
+  end process stage_6;
+
+
+
+  stage_7: process(clk,reset)
+  begin
+    if reset = '1' then
+      rdy7 <= '0';
+    else
+      if clk'event and clk='1'then
+        if rdy6 = '1' and pipeline_stall = '0' then
+          if nocalc6 = '1' then
+            nocalc7 <= '1';
+          else
+            tr61 <= std_logic_vector(unsigned(tr501) + unsigned(tr502));
+            tr62 <= std_logic_vector(unsigned(tr503) + unsigned(tr504));
+            tr63 <= std_logic_vector(unsigned(tr505) + unsigned(tr506));
+
+            tr64 <= std_logic_vector(unsigned(tr507) + unsigned(tr508));
+            tr65 <= std_logic_vector(unsigned(tr509) + unsigned(tr510));
+            tr66 <= std_logic_vector(unsigned(tr511) + unsigned(tr512));
+
+            tr67 <= std_logic_vector(unsigned(tr513) + unsigned(tr514));
+            
+            
+            nocalc7 <= '0';
+          end if;
+
+          output_s27 <= output_s26;
+          fexp7 <= fexp6;
+          flag7 <= flag6;
+          rdy7 <= '1';
+          tag7 <= tag6;
+          
+        elsif pipeline_stall = '1' then
+        elsif rdy6 = '0' then
+          rdy7 <= '0';
+        end if;
+      end if;
+    end if;
+  end process stage_7;
+
+  stage_8: process(clk,reset)
+  begin
+    if reset = '1' then
+      rdy8 <= '0';
+    else
+      if clk'event and clk='1'then
+        if rdy7 = '1' and pipeline_stall = '0' then
+          if nocalc7 = '1' then
+            nocalc8 <= '1';
+          else
+            tr71 <= std_logic_vector(unsigned(tr61) + unsigned(tr62));
+            tr72 <= std_logic_vector(unsigned(tr63) + unsigned(tr64));
+            tr73 <= std_logic_vector(unsigned(tr65) + unsigned(tr66));
+            tr74 <= tr67;
+            
+            nocalc8 <= '0';
+          end if;
+          
+          output_s28 <= output_s27;
+          fexp8 <= fexp7;
+          flag8 <= flag7;
+          rdy8 <= '1';
+          tag8 <= tag7;
+          
+        elsif pipeline_stall = '1' then
+        elsif rdy7 = '0' then
+          rdy8 <= '0';
+        end if;
+      end if;
+    end if;
+  end process stage_8;
+
+  stage_9: process(clk,reset)
+  begin
+    if reset = '1' then
+      rdy9 <= '0';
+    else
+      if clk'event and clk='1'then
+        if rdy8 = '1' and pipeline_stall = '0' then
+          if nocalc8 = '1' then
+            nocalc9 <= '1';
+          else
+            tr71_int1 <= std_logic_vector(unsigned(tr71) + unsigned(tr72));
+            tr72_int1 <= std_logic_vector(unsigned(tr73) + unsigned(tr74));
+            nocalc9 <= '0';
+          end if;
+          
+          output_s29 <= output_s28;
+          fexp9 <= fexp8;
+          flag9 <= flag8;
+          rdy9 <= '1';
+          tag9 <= tag8;
+          
+        elsif pipeline_stall = '1' then
+        elsif rdy8 = '0' then
+          rdy9 <= '0';
+        end if;
+      end if;
+    end if;
+  end process stage_9;
+
+
+  stage_10: process(clk,reset)
+  begin
+    if reset = '1' then
+      rdy10 <= '0';
+    else
+      if clk'event and clk='1'then
+        if rdy9 = '1' and pipeline_stall = '0' then
+          if nocalc9 = '1' then
+            nocalc10 <= '1';
+          else
+            tr71_int2 <= std_logic_vector(unsigned(tr71_int1) + unsigned(tr72_int1));
+            nocalc10 <= '0';
+          end if;
+          
+          output_s210 <= output_s29;
+          fexp10 <= fexp9;
+          flag10 <= flag9;
+          rdy10 <= '1';
+          tag10 <= tag9;
+          
+        elsif pipeline_stall = '1' then
+        elsif rdy9 = '0' then
+          rdy10 <= '0';
+        end if;
+      end if;
+    end if;
+  end process stage_10;
+
+
+
+  stage_11: process(clk,reset)
+    variable man8: std_logic_vector(53 downto 0);
+    variable exp8: unsigned(10 downto 0);
+  begin
+    if reset = '1' then
+      rdy11 <= '0';
+    else
+      if clk'event and clk='1'then
+        if rdy10 = '1' and pipeline_stall = '0' then
+          if nocalc10 = '1' then
+            nocalc11 <= '1';
+            output_s211 <= output_s210;
+            flag11 <= flag10;
+          elsif nocalc10 = '0' then
+            man8 := tr71_int2(105 downto 52);
+            exp8 := unsigned(fexp10);
+            if man8(53) = '1' then
+              if	exp8 = 2046 then
+                output_s211 <= output_s210(2) & "11";
+                nocalc11 <= '1';
+                flag11 <= "10";
+              else
+                exp8 := exp8 + 1;
+                nocalc11 <= '0';
+                fman11 <= man8(52 downto 1);
+                output_s211 <= output_s210;
+                flag11 <= flag10;
+              end if;
+            elsif exp8 = 0 then
+              output_s211 <= output_s210(2) & "00";
+              nocalc11 <= '1';
+              flag11 <= "01";
+            else
+              fman11 <= man8(51 downto 0);
+              output_s211 <= output_s210;
+              nocalc11 <= '0';
+              flag11 <= flag10;
+            end if;
+          end if;		
+          rdy11 <= '1';
+          tag11 <= tag10;
+          fexp11 <= std_logic_vector(exp8);
+        elsif pipeline_stall = '1' then
+        elsif rdy10 = '0' then
+          rdy11 <= '0';
+        end if;
+      end if;
+    end if;
+  end process stage_11;
+
+
+  stage_12: process(clk,reset)
+    variable temp: std_logic_vector(2 downto 0);
+  begin
+    if reset = '1' then
+      rdy12 <= '0';
+    else
+      if clk'event and clk='1'then
+        if rdy11 = '1' and pipeline_stall = '0' then
+          rdy12 <= '1';
+          temp := output_s211;
+          if nocalc11 = '1' then
+            case(temp(1 downto 0)) is
+              when("00") => OUTM <= temp(2) & "000" & X"000000000000000"; NaN <= '0'; oflow <= '0'; uflow <= flag10(0);
+            when("10") => OUTM <= temp(2) & "111" & X"FF" & "1000" & X"000000000000"; NaN <= '1'; oflow <= '0'; uflow <= '0';
+            when("11") => OUTM <= temp(2) & "111" & X"FF" & X"0000000000000"; NaN <= '0'; oflow <= flag10(1); uflow <= '0';
+            when others => null; 
+          end case;
+          else
+            OUTM <= temp(2) & fexp11 & fman11; NaN <= '0'; oflow <='0'; uflow <= '0';
+          end if;
+          tag_out <= tag11;
+        else
+          rdy12 <= '0';
+        end if;
+      end if;
+    end if;
+  end process stage_12;
+
+  pipeline_stall <= (rdy12 and (not accept_rdy));
+  muli_rdy <= not (rdy12 and (not accept_rdy));  
+  mulo_rdy <= rdy12;
+
+
+end rtl;
+-------------------------------------------------------------------------------
+-- An IEEE-754 compliant arbitrary-precision pipelined adder/subtractor
+-- which is basically, a 3-stage pipelined version of the add function
+-- described in the ieee_proposed VHDL library float_pkg_c.vhd
+-- originally written by David Bishop (dbishop@vhdl.org)
+-- modified by Madhav Desai.
+-------------------------------------------------------------------------------
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ieee_proposed;
+use ieee_proposed.float_pkg.all;
+use ieee_proposed.math_utility_pkg.all;
+
+library ahir;
+use ahir.Subprograms.all;
+
+
+entity GenericFloatingPointAdderSubtractor is
+  generic (tag_width : integer := 8;
+           exponent_width: integer := 8;
+           fraction_width : integer := 23;
+           round_style : round_type := float_round_style;  -- rounding option
+           addguard       : NATURAL := float_guard_bits;  -- number of guard bits
+           check_error : BOOLEAN    := float_check_error;  -- check for errors
+           denormalize : BOOLEAN    := float_denormalize;  -- Use IEEE extended FP           
+	   use_as_subtractor: BOOLEAN := false
+           );
+  port(
+    INA, INB: in std_logic_vector((exponent_width+fraction_width) downto 0);
+    OUTADD: out std_logic_vector((exponent_width+fraction_width) downto 0);
+    clk,reset: in std_logic;
+    tag_in: in std_logic_vector(tag_width-1 downto 0);
+    tag_out: out std_logic_vector(tag_width-1 downto 0);
+    env_rdy, accept_rdy: in std_logic;
+    addi_rdy, addo_rdy: out std_logic);
+end entity;
+
+architecture rtl of GenericFloatingPointAdderSubtractor is
+  signal  l, r, lp, rp                 : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
+
+
+  
+  signal pipeline_stall : std_logic;
+  signal stage_full : std_logic_vector(0 to 3);
+  signal tag0, tag1, tag2, tag3 : std_logic_vector(tag_width-1 downto 0);
+
+  signal lfptype_1, rfptype_1 : valid_fpstate;
+  signal fpresult_1         : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal fractl_1, fractr_1   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
+  signal fractc_1, fracts_1   : UNSIGNED (fraction_width+1+addguard downto 0);  -- constant and shifted signals
+  signal urfract_1, ulfract_1 : UNSIGNED (fraction_width downto 0);
+  signal ufract_1           : UNSIGNED (fraction_width+1+addguard downto 0);
+  signal exponl_1, exponr_1   : SIGNED (exponent_width-1 downto 0);  -- exponents
+  signal rexpon_1           : SIGNED (exponent_width downto 0);  -- result exponent
+  signal shiftx_1           : SIGNED (exponent_width downto 0);  -- shift fractions
+  signal sign_1             : STD_ULOGIC;   -- sign of the output
+  signal leftright_1        : BOOLEAN;      -- left or right used
+  signal lresize_1, rresize_1 : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal sticky_1             : STD_ULOGIC;   -- Holds precision for rounding
+  signal exceptional_result_1 : std_logic; 
+  signal  l_1, r_1                 : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
+  
+  signal lfptype_2, rfptype_2 : valid_fpstate;
+  signal fpresult_2         : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal fractl_2, fractr_2   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
+  signal fractc_2, fracts_2   : UNSIGNED (fraction_width+1+addguard downto 0);  -- constant and shifted signals
+  signal urfract_2, ulfract_2 : UNSIGNED (fraction_width downto 0);
+  signal ufract_2           : UNSIGNED (fraction_width+1+addguard downto 0);
+  signal exponl_2, exponr_2   : SIGNED (exponent_width-1 downto 0);  -- exponents
+  signal rexpon_2           : SIGNED (exponent_width downto 0);  -- result exponent
+  signal shiftx_2           : SIGNED (exponent_width downto 0);  -- shift fractions
+  signal sign_2             : STD_ULOGIC;   -- sign of the output
+  signal leftright_2        : BOOLEAN;      -- left or right used
+  signal lresize_2, rresize_2 : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal sticky_2           : STD_ULOGIC;   -- Holds precision for rounding
+  signal exceptional_result_2 : std_logic; 
+
+  signal lfptype_3, rfptype_3 : valid_fpstate;
+  signal fpresult_3         : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal fractl_3, fractr_3   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
+  signal fractc_3, fracts_3   : UNSIGNED (fraction_width+1+addguard downto 0);  -- constant and shifted signals
+  signal urfract_3, ulfract_3 : UNSIGNED (fraction_width downto 0);
+  signal ufract_3           : UNSIGNED (fraction_width+1+addguard downto 0);
+  signal exponl_3, exponr_3   : SIGNED (exponent_width-1 downto 0);  -- exponents
+  signal rexpon_3           : SIGNED (exponent_width downto 0);  -- result exponent
+  signal shiftx_3           : SIGNED (exponent_width downto 0);  -- shift fractions
+  signal sign_3             : STD_ULOGIC;   -- sign of the output
+  signal leftright_3        : BOOLEAN;      -- left or right used
+  signal lresize_3, rresize_3 : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal sticky_3           : STD_ULOGIC;   -- Holds precision for rounding
+  signal result_X_3         : std_logic; 
+  signal result_Nan_3       : std_logic; 
+  signal exceptional_result_3 : std_logic; 
+  
+  
+begin
+
+  pipeline_stall <= stage_full(3) and (not accept_rdy);
+  addi_rdy <= not pipeline_stall;
+  addo_rdy <= stage_full(3);
+  tag_out <= tag3;
+
+  -- construct l,r (user registers)
+  lp <= to_float(INA, exponent_width, fraction_width);
+ 
+  AsAdder: if (not use_as_subtractor) generate
+  	rp <= to_float(INB, exponent_width, fraction_width);
+  end generate AsAdder;
+
+  AsSubtractor: if (use_as_subtractor) generate
+        process(INB)
+           variable btmp: UNRESOLVED_float(exponent_width downto -fraction_width);
+        begin
+	   btmp := to_float(INB, exponent_width, fraction_width);
+  	   rp <= - btmp;
+	end process;
+  end generate AsSubtractor;
+
+  -- return slv.
+  OUTADD <= to_slv(fpresult_3);
+
+  -----------------------------------------------------------------------------
+  -- Stage 0: register inputs.
+  -----------------------------------------------------------------------------
+  process(clk)
+    variable active_v : std_logic;
+  begin
+    active_v := env_rdy and not (pipeline_stall or reset);
+    if(clk'event and clk = '1') then
+      stage_full(0) <= active_v;
+      if(active_v = '1') then
+        tag0 <= tag_in;
+        l <= lp;
+        r <= rp;
+      end if;
+    end if;
+  end process;
+  
+  -----------------------------------------------------------------------------
+  -- Stage 1: detect NaN, deNorm, align exponents.
+  -----------------------------------------------------------------------------
+  process(clk)
+    variable active_v : std_logic;
+    variable lfptype, rfptype : valid_fpstate;
+    variable fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
+    variable fractl, fractr   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
+    variable fractc, fracts   : UNSIGNED (fraction_width+1+addguard downto 0);  -- constant and shifted variables
+    variable urfract, ulfract : UNSIGNED (fraction_width downto 0);
+    variable ufract           : UNSIGNED (fraction_width+1+addguard downto 0);
+    variable exponl, exponr   : SIGNED (exponent_width-1 downto 0);  -- exponents
+    variable rexpon           : SIGNED (exponent_width downto 0);  -- result exponent
+    variable shiftx           : SIGNED (exponent_width downto 0);  -- shift fractions
+    variable sign             : STD_ULOGIC;   -- sign of the output
+    variable leftright        : BOOLEAN;      -- left or right used
+    variable lresize, rresize : UNRESOLVED_float (exponent_width downto -fraction_width);
+    variable sticky           : STD_ULOGIC;   -- Holds precision for rounding
+    variable exceptional_result: std_ulogic;
+  begin
+
+    exceptional_result := '0';
+    sticky := '0';
+    leftright := false;
+    fracts := (others => '0');
+    fractc := (others => '0');
+    rexpon := (others => '0');
+    fpresult := (others => '0');
+ 
+
+    ---------------------------------------------------------------------------
+    -- will need to set appropriate flags here!
+    ---------------------------------------------------------------------------
+    if (fraction_width = 0 or l'length < 7 or r'length < 7) then
+      lfptype := isx;
+    else
+      lfptype := classfp (l, check_error);
+      rfptype := classfp (r, check_error);
+    end if;
+    if (lfptype = isx or rfptype = isx) then
+      fpresult := (others => 'X');
+      exceptional_result := '1';
+    elsif (lfptype = nan or lfptype = quiet_nan or
+           rfptype = nan or rfptype = quiet_nan)
+      -- Return quiet NAN, IEEE754-1985-7.1,1
+      or (lfptype = pos_inf and rfptype = neg_inf)
+      or (lfptype = neg_inf and rfptype = pos_inf) then
+      -- Return quiet NAN, IEEE754-1985-7.1,2
+      exceptional_result := '1';
+      fpresult := qnanfp (fraction_width => fraction_width,
+                          exponent_width => exponent_width);
+    elsif (lfptype = pos_inf or rfptype = pos_inf) then   -- x + inf = inf
+      exceptional_result := '1';
+      fpresult := pos_inffp (fraction_width => fraction_width,
+                             exponent_width => exponent_width);
+    elsif (lfptype = neg_inf or rfptype = neg_inf) then   -- x - inf = -inf
+      exceptional_result := '1';
+      fpresult := neg_inffp (fraction_width => fraction_width,
+                             exponent_width => exponent_width);
+    elsif (lfptype = neg_zero and rfptype = neg_zero) then   -- -0 + -0 = -0
+      exceptional_result := '1';
+      fpresult := neg_zerofp (fraction_width => fraction_width,
+                             exponent_width => exponent_width);
+    else
+      lresize := resize (arg            => to_x01(l),
+                         exponent_width => exponent_width,
+                         fraction_width => fraction_width,
+                         denormalize_in => denormalize,
+                         denormalize    => denormalize);
+      lfptype := classfp (lresize, false);    -- errors already checked
+      rresize := resize (arg            => to_x01(r),
+                         exponent_width => exponent_width,
+                         fraction_width => fraction_width,
+                         denormalize_in => denormalize,
+                         denormalize    => denormalize);
+      rfptype := classfp (rresize, false);    -- errors already checked
+      break_number (
+        arg         => lresize,
+        fptyp       => lfptype,
+        denormalize => denormalize,
+        fract       => ulfract,
+        expon       => exponl);
+      fractl := (others => '0');
+      fractl (fraction_width+addguard downto addguard) := ulfract;
+      break_number (
+        arg         => rresize,
+        fptyp       => rfptype,
+        denormalize => denormalize,
+        fract       => urfract,
+        expon       => exponr);
+      fractr := (others => '0');
+      fractr (fraction_width+addguard downto addguard) := urfract;
+      shiftx := (exponl(exponent_width-1) & exponl) - exponr;
+      if shiftx < -fractl'high then
+        rexpon    := exponr(exponent_width-1) & exponr;
+        fractc    := fractr;
+        fracts    := (others => '0');   -- add zero
+        leftright := false;
+        sticky    := or_reduce (fractl);
+      elsif shiftx < 0 then
+        shiftx    := - shiftx;
+        fracts    := shift_right (fractl, to_integer(shiftx));
+        fractc    := fractr;
+        rexpon    := exponr(exponent_width-1) & exponr;
+        leftright := false;
+        sticky    := or_reduce (fractl (to_integer(shiftx) downto 0));
+        sticky    := smallfract (fractl, to_integer(shiftx));
+      elsif shiftx = 0 then
+        rexpon := exponl(exponent_width-1) & exponl;
+        sticky := '0';
+        if fractr > fractl then
+          fractc    := fractr;
+          fracts    := fractl;
+          leftright := false;
+        else
+          fractc    := fractl;
+          fracts    := fractr;
+          leftright := true;
+        end if;
+      elsif shiftx > fractr'high then
+        rexpon    := exponl(exponent_width-1) & exponl;
+        fracts    := (others => '0');   -- add zero
+        fractc    := fractl;
+        leftright := true;
+        sticky    := or_reduce (fractr);
+      elsif shiftx > 0 then
+        fracts    := shift_right (fractr, to_integer(shiftx));
+        fractc    := fractl;
+        rexpon    := exponl(exponent_width-1) & exponl;
+        leftright := true;
+        sticky    := or_reduce (fractr (to_integer(shiftx) downto 0));
+        sticky    := smallfract (fractr, to_integer(shiftx));
+      end if;
+    end if;
+    
+    active_v := stage_full(0) and not (pipeline_stall or reset);
+    if(clk'event and clk = '1') then
+      stage_full(1) <= active_v;
+      if(active_v = '1') then
+        tag1 <= tag0;
+
+        lfptype_1 <= lfptype;
+        rfptype_1 <= rfptype;
+        fpresult_1 <= fpresult;
+        fractl_1 <= fractl;
+        fractr_1 <= fractr;
+        fractc_1 <= fractc;
+        fracts_1 <= fracts;
+        urfract_1  <= urfract;
+        ulfract_1 <= ulfract;
+        ufract_1 <= ufract;
+        exponl_1 <= exponl;
+        exponr_1 <= exponr;
+        rexpon_1 <= rexpon;
+        shiftx_1 <= shiftx;
+        sign_1 <= sign;
+        leftright_1 <= leftright;
+        lresize_1 <= lresize;
+        rresize_1 <= rresize;
+        sticky_1 <= sticky;
+        exceptional_result_1 <= exceptional_result;
+
+        l_1 <= l;
+        r_1 <= r;
+        
+      end if;        
+    end if;
+  end process;
+
+  -----------------------------------------------------------------------------
+  -- Stage 2: add mantissa stage
+  -----------------------------------------------------------------------------
+  process(clk)
+    variable active_v : std_logic;
+    variable lfptype, rfptype : valid_fpstate;
+    variable fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
+    variable fractl, fractr   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
+    variable fractc, fracts   : UNSIGNED (fraction_width+1+addguard downto 0);  -- constant and shifted variables
+    variable urfract, ulfract : UNSIGNED (fraction_width downto 0);
+    variable ufract           : UNSIGNED (fraction_width+1+addguard downto 0);
+    variable exponl, exponr   : SIGNED (exponent_width-1 downto 0);  -- exponents
+    variable rexpon           : SIGNED (exponent_width downto 0);  -- result exponent
+    variable shiftx           : SIGNED (exponent_width downto 0);  -- shift fractions
+    variable sign             : STD_ULOGIC;   -- sign of the output
+    variable leftright        : BOOLEAN;      -- left or right used
+    variable lresize, rresize : UNRESOLVED_float (exponent_width downto -fraction_width);
+    variable sticky           : STD_ULOGIC;   -- Holds precision for rounding
+    variable exceptional_result           : STD_ULOGIC;   -- set if exceptional.. Nan/-Zero/Inf
+    
+  begin
+    lfptype := lfptype_1;
+    rfptype := rfptype_1;
+    fpresult := fpresult_1;
+    fractl := fractl_1;
+    fractr := fractr_1;
+    fractc := fractc_1;
+    fracts := fracts_1;
+    urfract := urfract_1;
+    ulfract := ulfract_1;
+    ufract := ufract_1;
+    exponl := exponl_1;
+    exponr := exponr_1;
+    rexpon := rexpon_1;
+    shiftx := shiftx_1;
+    sign := sign_1;
+    leftright := leftright_1;
+    lresize := lresize_1;
+    rresize := rresize_1;
+    sticky := sticky_1;
+    exceptional_result := exceptional_result_1;
+    
+      -- add
+    fracts (0) := fracts (0) or sticky;     -- Or the sticky bit into the LSB
+    if l_1(l'high) = r_1(r'high) then
+      ufract := fractc + fracts;
+      sign   := l_1(l'high);
+    else                              -- signs are different
+      ufract := fractc - fracts;      -- always positive result
+      if leftright then               -- Figure out which sign to use
+        sign := l_1(l'high);
+      else
+        sign := r_1(r'high);
+      end if;
+    end if;
+    if or_reduce (ufract) = '0' then
+      sign := '0';                    -- IEEE 854, 6.3, paragraph 2.
+    end if;
+
+    active_v := stage_full(1) and not (pipeline_stall or reset);
+    if(clk'event and clk = '1') then
+      stage_full(2) <= active_v;
+      if(active_v = '1') then
+        tag2 <= tag1;
+
+        lfptype_2 <= lfptype;
+        rfptype_2 <= rfptype;
+        fpresult_2 <= fpresult;
+        fractl_2 <= fractl;
+        fractr_2 <= fractr;
+        fractc_2 <= fractc;
+        fracts_2 <= fracts;
+        urfract_2  <= urfract;
+        ulfract_2 <= ulfract;
+        ufract_2 <= ufract;
+        exponl_2 <= exponl;
+        exponr_2 <= exponr;
+        rexpon_2 <= rexpon;
+        shiftx_2 <= shiftx;
+        sign_2 <= sign;
+        leftright_2 <= leftright;
+        lresize_2 <= lresize;
+        rresize_2 <= rresize;
+        sticky_2 <= sticky;
+        exceptional_result_2 <= exceptional_result;
+      end if;      
+    end if;
+  end process;
+
+
+  -----------------------------------------------------------------------------
+  -- Stage 3: normalize.
+  -----------------------------------------------------------------------------
+  process(clk)
+    variable active_v : std_logic;
+    variable lfptype, rfptype : valid_fpstate;
+    variable fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
+    variable fractl, fractr   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
+    variable fractc, fracts   : UNSIGNED (fraction_width+1+addguard downto 0);  -- constant and shifted variables
+    variable urfract, ulfract : UNSIGNED (fraction_width downto 0);
+    variable ufract           : UNSIGNED (fraction_width+1+addguard downto 0);
+    variable exponl, exponr   : SIGNED (exponent_width-1 downto 0);  -- exponents
+    variable rexpon           : SIGNED (exponent_width downto 0);  -- result exponent
+    variable shiftx           : SIGNED (exponent_width downto 0);  -- shift fractions
+    variable sign             : STD_ULOGIC;   -- sign of the output
+    variable leftright        : BOOLEAN;      -- left or right used
+    variable lresize, rresize : UNRESOLVED_float (exponent_width downto -fraction_width);
+    variable sticky           : STD_ULOGIC;   -- Holds precision for rounding
+    variable exceptional_result           : STD_ULOGIC;   -- set if exceptional.. Nan/-Zero/Inf
+  begin
+    lfptype := lfptype_1;
+    rfptype := rfptype_2;
+    fpresult := fpresult_2;
+    fractl := fractl_2;
+    fractr := fractr_2;
+    fractc := fractc_2;
+    fracts := fracts_2;
+    urfract := urfract_2;
+    ulfract := ulfract_2;
+    ufract := ufract_2;
+    exponl := exponl_2;
+    exponr := exponr_2;
+    rexpon := rexpon_2;
+    shiftx := shiftx_2;
+    sign := sign_2;
+    leftright := leftright_2;
+    lresize := lresize_2;
+    rresize := rresize_2;
+    sticky := sticky_2;
+    exceptional_result := exceptional_result_2;
+
+    -- normalize!
+    if(exceptional_result = '0') then 
+    	fpresult := normalize (fract          => ufract,
+                           	expon          => rexpon,
+                           	sign           => sign,
+                           	sticky         => sticky,
+                           	fraction_width => fraction_width,
+                           	exponent_width => exponent_width,
+                           	round_style    => round_style,
+                           	denormalize    => denormalize,
+                           	nguard         => addguard);
+    end if;
+    
+    active_v := stage_full(2) and not (pipeline_stall or reset);
+    if(clk'event and clk = '1') then
+      stage_full(3) <= active_v;
+      if(active_v = '1') then
+        tag3 <= tag2;
+
+        lfptype_3 <= lfptype;
+        rfptype_3 <= rfptype;
+        fpresult_3 <= fpresult;
+        fractl_3 <= fractl;
+        fractr_3 <= fractr;
+        fractc_3 <= fractc;
+        fracts_3 <= fracts;
+        urfract_3  <= urfract;
+        ulfract_3 <= ulfract;
+        ufract_3 <= ufract;
+        exponl_3 <= exponl;
+        exponr_3 <= exponr;
+        rexpon_3 <= rexpon;
+        shiftx_3 <= shiftx;
+        sign_3 <= sign;
+        leftright_3 <= leftright;
+        lresize_3 <= lresize;
+        rresize_3 <= rresize;
+        sticky_3 <= sticky;
+        exceptional_result_3 <= exceptional_result;
+      end if;
+    end if;
+  end process;
+  
+end rtl;
+-------------------------------------------------------------------------------
+-- An IEEE-754 compliant arbitrary-precision pipelined multiplier
+-- which is basically, a pipelined version of the multiply function
+-- described in the ieee_proposed VHDL library float_pkg_c.vhd
+-- originally written by David Bishop (dbishop@vhdl.org)
+-- modified by Madhav Desai.
+-------------------------------------------------------------------------------
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ieee_proposed;
+use ieee_proposed.float_pkg.all;
+use ieee_proposed.math_utility_pkg.all;
+
+library ahir;
+use ahir.Subprograms.all;
+use ahir.BaseComponents.all;
+
+
+entity GenericFloatingPointMultiplier is
+  generic (tag_width : integer := 8;
+           exponent_width: integer := 11;
+           fraction_width : integer := 52;
+           round_style : round_type := float_round_style;  -- rounding option
+           addguard       : NATURAL := float_guard_bits;  -- number of guard bits
+           check_error : BOOLEAN    := float_check_error;  -- check for errors
+           denormalize : BOOLEAN    := float_denormalize  -- Use IEEE extended FP           
+           );
+  port(
+    INA, INB: in std_logic_vector((exponent_width+fraction_width) downto 0);
+    OUTMUL: out std_logic_vector((exponent_width+fraction_width) downto 0);
+    clk,reset: in std_logic;
+    tag_in: in std_logic_vector(tag_width-1 downto 0);
+    tag_out: out std_logic_vector(tag_width-1 downto 0);
+    env_rdy, accept_rdy: in std_logic;
+    muli_rdy, mulo_rdy: out std_logic);
+end entity;
+
+architecture rtl of GenericFloatingPointMultiplier is
+
+  constant operand_width : integer := exponent_width+fraction_width+1;
+
+  signal lp, rp             : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input  
+  signal pipeline_stall : std_logic;
+  signal stage_full : std_logic_vector(0 to 3);
+
+
+  constant multguard        : NATURAL := addguard;           -- guard bits
+
+
+  -- stage 0 outputs.
+  signal tag0: std_logic_vector(tag_width-1 downto 0);
+  signal  l, r             : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input  
+
+  -- stage 1 outputs
+  signal lfptype_1, rfptype_1 : valid_fpstate;
+  signal fpresult_1         : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal fractl_1, fractr_1   : UNSIGNED (fraction_width downto 0);  -- fractions
+  signal rfract_1           : UNSIGNED ((2*(fraction_width))+1 downto 0);  -- result fraction
+  signal sfract_1           : UNSIGNED (fraction_width+1+multguard downto 0);  -- result fraction
+  signal shifty_1           : INTEGER;      -- denormal shift
+  signal exponl_1, exponr_1   : SIGNED (exponent_width-1 downto 0);  -- exponents
+  signal rexpon_1           : SIGNED (exponent_width+1 downto 0);  -- result exponent
+  signal fp_sign_1          : STD_ULOGIC;   -- sign of result
+  signal lresize_1, rresize_1 : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal sticky_1           : STD_ULOGIC;   -- Holds precision for rounding
+  signal exceptional_result_1  : std_logic;
+  
+  signal tag1: std_logic_vector(tag_width-1 downto 0);
+  signal tag1_extended : std_logic_vector(tag_width+operand_width+(exponent_width+2)+1+1-1 downto 0);  
+
+  -- stage 2 outputs (note stage 2 itelf is a pipelined array multiplier)
+  signal rfract_2           : UNSIGNED ((2*(fraction_width))+1 downto 0);  -- result fraction  
+  signal tag2_extended : std_logic_vector(tag_width+operand_width+(exponent_width+2)+1+1-1 downto 0);
+
+  -- stage 3 outputs.
+  signal tag3: std_logic_vector(tag_width-1 downto 0);  
+  signal fpresult_3         : UNRESOLVED_float (exponent_width downto -fraction_width);
+  
+begin
+
+  pipeline_stall <= stage_full(3) and (not accept_rdy);
+  muli_rdy <= not pipeline_stall;
+  mulo_rdy <= stage_full(3);
+  tag_out <= tag3;
+
+  -- construct l,r.
+  lp <= to_float(INA, exponent_width, fraction_width);
+  rp <= to_float(INB, exponent_width, fraction_width);
+
+  -- return slv.
+  OUTMUL <= to_slv(fpresult_3);
+
+  -----------------------------------------------------------------------------
+  -- Stage 0: register inputs.
+  -----------------------------------------------------------------------------
+  process(clk)
+    variable active_v : std_logic;
+  begin
+    active_v := env_rdy and not (pipeline_stall or reset);
+    if(clk'event and clk = '1') then
+      stage_full(0) <= active_v;
+      if(active_v = '1') then
+        tag0 <= tag_in;
+        l <= lp;
+        r <= rp;
+      end if;
+    end if;
+  end process;
+
+  
+  -----------------------------------------------------------------------------
+  -- Stage 1: detect NaN, deNorm, align exponents.
+  -----------------------------------------------------------------------------
+  process(clk)
+    variable active_v : std_logic;
+    variable exceptional_result: std_ulogic;
+    variable lfptype, rfptype : valid_fpstate;
+    variable fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
+    variable fractl, fractr   : UNSIGNED (fraction_width downto 0);  -- fractions
+    variable rfract           : UNSIGNED ((2*(fraction_width))+1 downto 0);  -- result fraction
+    variable sfract           : UNSIGNED (fraction_width+1+multguard downto 0);  -- result fraction
+    variable shifty           : INTEGER;      -- denormal shift
+    variable exponl, exponr   : SIGNED (exponent_width-1 downto 0);  -- exponents
+    variable rexpon           : SIGNED (exponent_width+1 downto 0);  -- result exponent
+    variable fp_sign          : STD_ULOGIC;   -- sign of result
+    variable lresize, rresize : UNRESOLVED_float (exponent_width downto -fraction_width);
+    variable sticky           : STD_ULOGIC;   -- Holds precision for rounding
+  begin
+    exceptional_result := '0';    
+    fp_sign := '0';
+    rexpon := (others => '0');
+    exponl := (others => '0');
+    exponr := (others => '0');
+    shifty := 0;
+    fractl := (others => '0');
+    fractr := (others => '0');
+    lfptype := isx;
+    rfptype := isx;
+    fpresult := (others => '0');
+     
+    if (fraction_width = 0 or l'length < 7 or r'length < 7) then
+      lfptype := isx;
+      exceptional_result := '1';
+    else
+      lfptype := classfp (l, check_error);
+      rfptype := classfp (r, check_error);
+    end if;
+    if (lfptype = isx or rfptype = isx) then
+      fpresult := (others => 'X');
+      exceptional_result := '1';      
+    elsif ((lfptype = nan or lfptype = quiet_nan or
+            rfptype = nan or rfptype = quiet_nan)) then
+      -- Return quiet NAN, IEEE754-1985-7.1,1
+      exceptional_result := '1';      
+      fpresult := qnanfp (fraction_width => fraction_width,
+                          exponent_width => exponent_width);
+    elsif (((lfptype = pos_inf or lfptype = neg_inf) and
+            (rfptype = pos_zero or rfptype = neg_zero)) or
+           ((rfptype = pos_inf or rfptype = neg_inf) and
+            (lfptype = pos_zero or lfptype = neg_zero))) then    -- 0 * inf
+      -- Return quiet NAN, IEEE754-1985-7.1,3
+      exceptional_result := '1';      
+      fpresult := qnanfp (fraction_width => fraction_width,
+                          exponent_width => exponent_width);
+    elsif (lfptype = pos_inf or rfptype = pos_inf
+           or lfptype = neg_inf or rfptype = neg_inf) then  -- x * inf = inf
+      exceptional_result := '1';      
+      fpresult := pos_inffp (fraction_width => fraction_width,
+                             exponent_width => exponent_width);
+      -- figure out the sign
+      fp_sign := l(l'high) xor r(r'high);     -- figure out the sign
+      fpresult (exponent_width) := fp_sign;
+    else
+      fp_sign := l(l'high) xor r(r'high);     -- figure out the sign
+      lresize := resize (arg            => to_x01(l),
+                         exponent_width => exponent_width,
+                         fraction_width => fraction_width,
+                         denormalize_in => denormalize,
+                         denormalize    => denormalize);
+      lfptype := classfp (lresize, false);    -- errors already checked
+      rresize := resize (arg            => to_x01(r),
+                         exponent_width => exponent_width,
+                         fraction_width => fraction_width,
+                         denormalize_in => denormalize,
+                         denormalize    => denormalize);
+      rfptype := classfp (rresize, false);    -- errors already checked
+      break_number (
+        arg         => lresize,
+        fptyp       => lfptype,
+        denormalize => denormalize,
+        fract       => fractl,
+        expon       => exponl);
+      break_number (
+        arg         => rresize,
+        fptyp       => rfptype,
+        denormalize => denormalize,
+        fract       => fractr,
+        expon       => exponr);
+      if (rfptype = pos_denormal or rfptype = neg_denormal) then
+        shifty := fraction_width - find_leftmost(fractr, '1');
+        fractr := shift_left (fractr, shifty);
+      elsif (lfptype = pos_denormal or lfptype = neg_denormal) then
+        shifty := fraction_width - find_leftmost(fractl, '1');
+        fractl := shift_left (fractl, shifty);
+      else
+        shifty := 0;
+        -- Note that a denormal number * a denormal number is always zero.
+      end if;
+      -- multiply
+      -- add the exponents
+      rexpon := resize (exponl, rexpon'length) + exponr - shifty + 1;
+    end if;
+
+    active_v := stage_full(0) and not (pipeline_stall or reset);
+    if(clk'event and clk = '1') then
+      stage_full(1) <= active_v;
+      if(active_v = '1') then
+        tag1 <= tag0;
+        
+        fpresult_1 <= fpresult;
+        fractl_1 <= fractl;
+        fractr_1 <= fractr;
+        rexpon_1 <= rexpon;
+        fp_sign_1 <= fp_sign;
+        exceptional_result_1 <= exceptional_result;
+      end if;      
+    end if;
+  end process;
+
+  -----------------------------------------------------------------------------
+  -- Stage 2: instantiate array multiplier
+  -----------------------------------------------------------------------------
+  process(tag1, fpresult_1, rexpon_1, fp_sign_1, exceptional_result_1)
+    variable tex : std_logic_vector(tag_width+operand_width+(exponent_width+2)+1 downto 0);
+    variable fp_slv : std_logic_vector(operand_width-1 downto 0);
+    variable pad_bits : std_logic_vector(1 downto 0);
+  begin
+
+    fp_slv(operand_width-1) := fpresult_1(exponent_width);
+    fp_slv(operand_width-2 downto fraction_width) := to_slv(fpresult_1(exponent_width-1 downto 0));
+    fp_slv(fraction_width-1 downto 0) := to_slv(fpresult_1(-1 downto -fraction_width));
+
+    pad_bits(1) := fp_sign_1;
+    pad_bits(0) := exceptional_result_1;
+    
+    tex := tag1 & fp_slv & to_slv(rexpon_1) & pad_bits;
+    
+    tag1_extended <= tex;
+  end process;
+  
+  amul : UnsignedMultiplier
+    generic map (tag_width => tag_width+operand_width+(exponent_width+2)+2,
+                 operand_width => fraction_width+1)
+    port map (
+      L       => fractl_1,
+      R       => fractR_1,
+      RESULT  => rfract_2,
+      clk     => clk,
+      reset   => reset,
+      in_rdy  => stage_full(1),
+      out_rdy => stage_full(2),
+      stall   => pipeline_stall,
+      tag_in  => tag1_extended,
+      tag_out => tag2_extended);
+    
+
+
+  -----------------------------------------------------------------------------
+  -- Stage 3: normalize.
+  -----------------------------------------------------------------------------
+  process(clk)
+    variable active_v : std_logic;
+    variable exceptional_result: std_ulogic;
+    variable fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
+    variable rfract           : UNSIGNED ((2*(fraction_width))+1 downto 0);  -- result fraction
+    variable sfract           : UNSIGNED (fraction_width+1+multguard downto 0);  -- result fraction
+    variable rexpon           : SIGNED (exponent_width+1 downto 0);  -- result exponent
+    variable fp_sign          : STD_ULOGIC;   -- sign of result
+    variable sticky           : STD_ULOGIC;   -- Holds precision for rounding
+    variable raw_tag : std_logic_vector(tag_width-1 downto 0);
+    
+  begin
+
+    raw_tag := tag2_extended((tag_width+operand_width+exponent_width+3) downto (operand_width+exponent_width+4));
+    fpresult := to_float(tag2_extended(operand_width+exponent_width+3 downto exponent_width+4), exponent_width, fraction_width);
+    rexpon := to_signed(tag2_extended(exponent_width+3 downto 2));
+    fp_sign := tag2_extended(1);
+    exceptional_result := tag2_extended(0);
+    
+    rfract := rfract_2;
+    sfract := rfract (rfract'high downto
+                      rfract'high - (fraction_width+1+multguard));
+    sticky := or_reduce (rfract (rfract'high-(fraction_width+1+multguard)
+                                 downto 0));
+    -- normalize
+    fpresult := normalize (fract          => sfract,
+                           expon          => rexpon,
+                           sign           => fp_sign,
+                           sticky         => sticky,
+                           fraction_width => fraction_width,
+                           exponent_width => exponent_width,
+                           round_style    => round_style,
+                           denormalize    => denormalize,
+                           nguard         => multguard);
+    
+    active_v := stage_full(2) and not (pipeline_stall or reset);
+    if(clk'event and clk = '1') then
+      stage_full(3) <= active_v;
+      if(active_v = '1') then
+        tag3 <= raw_tag;
+
+        if(exceptional_result = '0') then
+          fpresult_3 <= fpresult;
+        end if;
+        
+      end if;      
+    end if;
+  end process;
+  
+end rtl;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+library ieee_proposed;
+use ieee_proposed.math_utility_pkg.all;
+
+entity PipelinedFPOperator is
+  generic (
+      operator_id : string;
+      exponent_width : integer := 8;
+      fraction_width : integer := 23;
+      no_arbitration: boolean := true;
+      num_reqs : integer := 3 -- how many requesters?
+    );
+  port (
+    -- req/ack follow level protocol
+    reqL                     : in BooleanArray(num_reqs-1 downto 0);
+    ackR                     : out BooleanArray(num_reqs-1 downto 0);
+    ackL                     : out BooleanArray(num_reqs-1 downto 0);
+    reqR                     : in  BooleanArray(num_reqs-1 downto 0);
+    -- input data consists of concatenated pairs of ips
+    dataL                    : in std_logic_vector((2*(exponent_width+fraction_width+1)*num_reqs)-1 downto 0);
+    -- output data consists of concatenated pairs of ops.
+    dataR                    : out std_logic_vector(((exponent_width+fraction_width+1)*num_reqs)-1 downto 0);
+    -- with dataR
+    clk, reset              : in std_logic);
+end PipelinedFPOperator;
+
+architecture Vanilla of PipelinedFPOperator is
+
+  constant num_operands : integer := 2;
+  constant operand_width : integer := exponent_width+fraction_width+1;
+  constant iwidth : integer := 2*operand_width;
+  constant owidth : integer := operand_width;
+  
+  constant tag_length: integer := Maximum(1,Ceil_Log2(reqL'length));
+  signal itag,otag : std_logic_vector(tag_length-1 downto 0);
+  signal ireq,iack, oreq, oack: std_logic;
+
+  constant debug_flag : boolean := false;
+
+  signal idata: std_logic_vector(iwidth-1 downto 0);
+  signal odata: std_logic_vector(owidth-1 downto 0);
+
+  signal NaN, overflow, underflow : std_logic;
+  constant use_as_subtractor : boolean := (operator_id = "ApFloatSub");
+
+
+  -----------------------------------------------------------------------------
+  -- for the moment..
+  constant use_generic_multiplier : boolean := true;
+  -----------------------------------------------------------------------------
+  
+begin  -- Behave
+  assert ackL'length = reqL'length report "mismatched req/ack vectors" severity error;
+  assert ((operand_width = 32) or (operand_width = 64)) report "32/64 bit operand-support only!" severity error;
+  assert ((operator_id = "ApFloatMul") or (operator_id = "ApFloatAdd") or (operator_id = "ApFloatSub"))
+    report "operator_id must be either add or mul or sub" severity error;  
+
+  DebugGen: if debug_flag generate 
+    assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
+    report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
+  end generate DebugGen;
+  
+  imux: InputMuxBase
+    generic map(iwidth => iwidth*num_reqs,
+                owidth => iwidth, 
+                twidth => tag_length,
+                nreqs => num_reqs,
+                no_arbitration => no_arbitration,
+                registered_output => true)
+    port map(
+      reqL       => reqL,
+      ackL       => ackL,
+      reqR       => ireq,
+      ackR       => iack,
+      dataL      => dataL,
+      dataR      => idata,
+      tagR       => itag,
+      clk        => clk,
+      reset      => reset);
+
+  IEEE754xMul:  if operator_id = "ApFloatMul" generate
+    useGeneric: if use_generic_multiplier generate
+    op: GenericFloatingPointMultiplier
+      generic map( tag_width     => tag_length,
+                   exponent_width => exponent_width,
+                   fraction_width => fraction_width,
+                   round_style => round_nearest,
+                   addguard => 3,
+                   check_error => true,
+                   denormalize => true)
+      port map (
+        env_rdy => ireq,
+        muli_rdy => iack,
+        accept_rdy => oack,
+        mulo_rdy => oreq,
+        INA => idata((2*operand_width)-1 downto operand_width),
+        INB => idata(operand_width-1 downto 0),
+        OUTMUL => odata,
+        tag_in => itag,
+        tag_out => otag,
+        clk => clk,
+        reset => reset);
+    end generate useGeneric;
+    
+    SinglePrecision: if operand_width = 32 and (not use_generic_multiplier) generate 
+    	op: SinglePrecisionMultiplier
+          generic map( tag_width     => tag_length)
+          port map (
+            env_rdy => ireq,
+            muli_rdy => iack,
+            accept_rdy => oack,
+            mulo_rdy => oreq,
+            INA => idata(63 downto 32),
+            INB => idata(31 downto 0),
+            OUTM => odata,
+            tag_in => itag,
+            tag_out => otag,
+            NaN => NaN,
+            oflow => overflow,
+            uflow => underflow,
+            clk => clk,
+            reset => reset);
+	end generate SinglePrecision;
+
+
+    DoublePrecision: if operand_width = 64 and (not use_generic_multiplier) generate 
+    	op: DoublePrecisionMultiplier
+          generic map ( tag_width     => tag_length)
+          port map (
+            env_rdy => ireq,
+            muli_rdy => iack,
+            accept_rdy => oack,
+            mulo_rdy => oreq,
+            INA => idata(127 downto 64),
+            INB => idata(63 downto 0),
+            OUTM => odata,
+            tag_in => itag,
+            tag_out => otag,
+            NaN => NaN,
+            oflow => overflow,
+            uflow => underflow,
+            clk => clk,
+            reset => reset);
+    end generate DoublePrecision;
+  end generate IEEE754xMul;
+
+  IEEE754xAdd:  if ((operator_id = "ApFloatAdd") or (operator_id = "ApFloatSub")) generate
+    op: GenericFloatingPointAdderSubtractor
+      generic map( tag_width     => tag_length,
+                   exponent_width => exponent_width,
+                   fraction_width => fraction_width,
+                   round_style => round_nearest,
+                   addguard => 3,
+                   check_error => true,
+                   denormalize => true,
+                   use_as_subtractor => use_as_subtractor)
+      port map (
+        env_rdy => ireq,
+        addi_rdy => iack,
+        accept_rdy => oack,
+        addo_rdy => oreq,
+        INA => idata((2*operand_width)-1 downto operand_width),
+        INB => idata(operand_width-1 downto 0),
+        OUTADD => odata,
+        tag_in => itag,
+        tag_out => otag,
+        clk => clk,
+        reset => reset);
+  end generate IEEE754xAdd;
+
+
+  odemux: OutputDeMuxBase
+    generic map (
+  	iwidth => owidth,
+  	owidth =>  owidth*num_reqs,
+	twidth =>  tag_length,
+	nreqs  => num_reqs,
+	no_arbitration => no_arbitration)
+    port map (
+      reqL   => oreq,
+      ackL   => oack,
+      dataL => odata,
+      tagL  => otag,
+      reqR  => reqR,
+      ackR  => ackR,
+      dataR => dataR,
+      clk   => clk,
+      reset => reset);
+  
+end Vanilla;
+
+-------------------------------------------------------------------------------
+-- Authors: Abhishek R. Kamath & Prashant Singhal
+-- An IEEE-754 compliant Single-Precision pipelined multiplier
+--
+--   rounding-scheme implemented is round-to-zero.
+--   overflow/underflow exceptions are detected.
+--
+--   TODO: implement round-to-nearest since this
+--         is preferred to reduce errors.
+-- 
+-------------------------------------------------------------------------------
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+
+entity SinglePrecisionMultiplier is
+  generic (tag_width : integer);
+  port(
+    INA, INB: in std_logic_vector(31 downto 0);
+    OUTM: out std_logic_vector(31 downto 0);
+    clk,reset: in std_logic;
+    tag_in: in std_logic_vector(tag_width-1 downto 0);
+    tag_out: out std_logic_vector(tag_width-1 downto 0);
+    NaN, oflow, uflow: out std_logic := '0';
+    env_rdy, accept_rdy: in std_logic;
+    muli_rdy, mulo_rdy: out std_logic);
+end entity;
+
+architecture rtl of SinglePrecisionMultiplier is
+
+  type parpro is array (0 to 23) of std_logic_vector(23 downto 0);
+
+
+  signal rdy1,rdy2,rdy3,rdy4,rdy5,rdy6,rdy7,rdy8,rdy9,rdy10, rdy11: std_logic := '0';
+  signal flag3,flag4,flag5,flag6,flag7,flag8,flag9,flag10: std_logic_vector(1 downto 0);
+  signal fman10: std_logic_vector(22 downto 0);
+  signal tag1,tag2,tag3,tag4,tag5,tag6,tag7,tag8,tag9,tag10: std_logic_vector(tag_width-1 downto 0);
+  signal pipeline_stall: std_logic := '0';
+
+  signal aman_1,aman_2,bman_1,bman_2: std_logic_vector(23 downto 0);
+  signal anan1,bnan1,azero1,bzero1,ainf1,binf1,osgn1: std_logic := '0'; 
+  signal aexp_s1,bexp_s1: std_logic_vector(7 downto 0);
+
+  signal nocalc2,nocalc3,nocalc4,nocalc5,nocalc6,nocalc7,nocalc8,nocalc9,nocalc10: std_logic;-- := '0';
+  signal output_s2,output_s23,output_s24,output_s25,output_s26,output_s27,output_s28,output_s29,output_s210: std_logic_vector(2 downto 0);
+  signal int_exp: std_logic_vector(8 downto 0);
+
+  signal fexp3,fexp4,fexp5,fexp6,fexp7,fexp8,fexp9,fexp10: std_logic_vector(7 downto 0);-- := X"00";
+
+  signal pp: parpro;
+  signal tr_400,tr_401,tr_402,tr_403,tr_404,tr_405,tr_406,tr_407,tr_408,tr_409,tr_410,tr_411: std_logic_vector(47 downto 0);
+
+  signal tr51,tr52,tr53,tr54,tr55,tr56,tr61,tr62,tr63,tr7,tr_temp,tr9: std_logic_vector(47 downto 0);
+
+  signal tr401,tr402,tr403,tr404,tr405,tr406,tr407,tr408,tr409,tr410,tr411,tr412: std_logic_vector(47 downto 0);-- := X"000000000000";
+  signal tr413,tr414,tr415,tr416,tr417,tr418,tr419,tr420,tr421,tr422,tr423,tr424: std_logic_vector(47 downto 0);-- := X"000000000000";
+
+begin
+
+  stage_1: process(clk,reset)
+
+    variable asgn,bsgn,osgn: std_logic := '0';
+    variable aexp,bexp: std_logic_vector(7 downto 0);-- := X"00";
+    variable aman,bman: std_logic_vector(23 downto 0);-- := "000000000000000000000000";
+    variable anan,bnan,azero,bzero,ainf,binf: std_logic;-- := '0';
+
+  begin
+    if reset = '1' then
+      rdy1 <= '0';
+    else
+      if clk'event and clk='1'then
+	if env_rdy = '1' and pipeline_stall = '0' then
+
+          aexp := INA(30 downto 23);
+          bexp := INB(30 downto 23);
+          aman := '1' & INA(22 downto 0);
+          bman := '1' & INB(22 downto 0);
+
+          if(aexp=X"FF") then
+            if(unsigned(aman)=0) then
+              ainf := '1';
+              anan := '0';
+              azero := '0';
+            else
+              anan := '1';
+              azero := '0';
+              ainf := '0';
+            end if;
+          elsif(aexp=X"00") then
+            if unsigned(aman)=0 then
+              azero := '1';
+              ainf := '0';
+              anan := '0';
+            end if;
+          else
+            ainf := '0';
+            anan := '0';
+            azero := '0';
+          end if;
+
+          if(bexp=X"FF") then
+            if(unsigned(bman)=0) then
+              binf := '1';
+              bnan := '0';
+              bzero := '0';
+            else
+              bnan := '1';
+              bzero := '0';
+              binf := '0';
+            end if;
+          elsif(bexp=X"00") then
+            if unsigned(bman)=0 then
+              bzero := '1';
+              binf := '0';
+              bnan := '0';
+            end if;
+          else
+            binf := '0';
+            bnan := '0';
+            bzero := '0';
+          end if;
+
+          osgn1 <= INA(31) xor INB(31);
+
+          ainf1 <= ainf;
+          binf1 <= binf;
+          anan1 <= anan;
+          bnan1 <= bnan;
+          azero1 <= azero;
+          bzero1 <= bzero;
+
+          aexp_s1 <= aexp;
+          bexp_s1 <= bexp;
+          aman_1 <= aman;
+          bman_1 <= bman;
+
+
+          rdy1 <= '1';
+          tag1 <= tag_in;
+
+        elsif pipeline_stall = '1' then
+        elsif env_rdy = '0' then
+          rdy1 <= '0';
+        end if;
+      end if;
+    end if;
+  end process stage_1;
+
+
+
+
+
+  stage_2: process(clk,reset)
+  begin
+    if reset = '1' then
+      rdy2 <= '0';
+    else
+      if clk'event and clk='1'then
+	if rdy1 = '1' and pipeline_stall = '0' then
+          if (anan1 = '1' or bnan1 = '1') then
+            output_s2 <= osgn1 & "10";
+            nocalc2 <= '1';
+          elsif (azero1 = '1' and binf1 = '1') or (ainf1 = '1' and bzero1 = '1') then
+            output_s2 <= osgn1 & "10";
+            nocalc2 <= '1';
+          elsif azero1 = '1' or bzero1 = '1' then
+            output_s2 <= osgn1 & "00";
+            nocalc2 <= '1';
+          elsif ainf1 = '1' or binf1 = '1' then
+            output_s2 <= osgn1 & "11";
+            nocalc2 <= '1';
+          else
+            int_exp <= std_logic_vector(unsigned('0' & aexp_s1) + unsigned('0' & bexp_s1));
+            output_s2 <= osgn1 & "01";
+            nocalc2 <= '0';
+          end if;
+          aman_2 <= aman_1;
+          bman_2 <= bman_1;
+          rdy2 <= '1';
+          tag2 <= tag1;
+
+
+	elsif pipeline_stall = '1' then
+	elsif rdy1 = '0' then
+          rdy2 <= '0';
+	end if;
+      end if;
+    end if;
+  end process stage_2;
+
+
+
+
+  stage_3: process(clk,reset)
+
+    variable exp3: unsigned(8 downto 0);
+
+  begin
+    if reset = '1' then
+      rdy3 <= '0';
+    else
+      if clk'event and clk='1'then
+	if rdy2 = '1' and pipeline_stall = '0' then
+          if nocalc2 = '1' then
+            nocalc3 <= '1';
+            output_s23 <= output_s2;
+            flag3 <= "00";
+          elsif nocalc2 = '0' then
+            exp3 := unsigned(int_exp);
+            if(exp3 > 381) then
+              output_s23 <= output_s2(2) & "11";
+              nocalc3 <= '1';
+              flag3 <= "10";
+            elsif(exp3 < 127) then
+              output_s23 <= output_s2(2) & "00";
+              nocalc3 <= '1';
+              flag3 <= "01";
+            else
+              exp3 := exp3 - 127;
+              output_s23 <= output_s2(2) & "01";
+              nocalc3 <= '0';
+              flag3 <= "00";
+            end if;	
+          end if;
+          fexp3 <= std_logic_vector(exp3(7 downto 0));
+          rdy3 <= '1';
+          tag3 <= tag2;
+
+          for i in 0 to 23 loop
+            for j in 0 to 23 loop
+              pp(i)(j) <= aman_2(j) and bman_2(i);
+            end loop;
+          end loop;
+
+	elsif pipeline_stall = '1' then
+	elsif rdy2 = '0' then
+          rdy3 <= '0';
+	end if;
+      end if;
+    end if;
+  end process stage_3;
+
+
+
+
+
+  stage_4: process(clk,reset)
+  begin
+    if reset = '1' then
+      rdy4 <= '0';
+    else
+      if clk'event and clk='1'then
+	if rdy3 = '1' and pipeline_stall = '0' then
+          if nocalc3 = '1' then
+            nocalc4 <= '1';
+          elsif nocalc3 = '0' then
+
+            tr401 <= X"000000" & pp(0);
+            tr402 <= X"00000" & "000" & pp(1) & '0';
+            tr403 <= X"00000" & "00" & pp(2) & "00";
+            tr404 <= X"00000" & '0' & pp(3) & "000";	
+
+            tr405 <= X"00000" & pp(4) & X"0";
+            tr406 <= X"0000" & "000" & pp(5) & X"0" & '0';
+            tr407 <= X"0000" & "00" & pp(6) & X"0" & "00";
+            tr408 <= X"0000" & '0' & pp(7) & X"0" & "000";
+
+            tr409 <= X"0000" & pp(8) & X"00";
+            tr410 <= X"000" & "000" & pp(9) & X"00" & '0';
+            tr411 <= X"000" & "00" & pp(10) & X"00" & "00";
+            tr412 <= X"000" & '0' & pp(11) & X"00" & "000";
+
+            tr413 <= X"000" & pp(12) & X"000";
+            tr414 <= X"00" & "000" & pp(13) & X"000" & '0';
+            tr415 <= X"00" & "00" & pp(14) & X"000" & "00";
+            tr416 <= X"00" & '0' & pp(15) & X"000" & "000";
+
+            tr417 <= X"00" & pp(16) & X"0000";
+            tr418 <= X"0" & "000" & pp(17) & X"0000" & '0';
+            tr419 <= X"0" & "00" & pp(18) & X"0000" & "00";
+            tr420 <= X"0" & '0' & pp(19) & X"0000" & "000";
+
+            tr421 <= X"0" & pp(20) & X"00000";
+            tr422 <= "000" & pp(21) & X"00000" & '0';
+            tr423 <= "00" & pp(22) & X"00000" & "00";
+            tr424 <= '0' & pp(23) & X"00000" & "000";
+
+            nocalc4 <= '0';
+
+          end if;
+
+
+          output_s24 <= output_s23;
+          fexp4 <= fexp3;
+          flag4 <= flag3;
+          rdy4 <= '1';
+          tag4 <= tag3;
+
+	elsif pipeline_stall = '1' then
+	elsif rdy3 = '0' then
+          rdy4 <= '0';
+	end if;
+      end if;
+    end if;
+  end process stage_4;
+
+
+  stage_5: process(clk,reset)
+  begin
+    if reset = '1' then
+      rdy5 <= '0';
+    else
+      if clk'event and clk='1'then
+	if rdy4 = '1' and pipeline_stall = '0' then
+          if nocalc4 = '1' then
+            nocalc5 <= '1';
+          elsif nocalc4 = '0' then
+
+            tr_400 <= std_logic_vector(unsigned(tr401) + unsigned(tr402));
+            tr_401 <= std_logic_vector(unsigned(tr403) + unsigned(tr404));
+            tr_402 <= std_logic_vector(unsigned(tr405) + unsigned(tr406));
+            tr_403 <= std_logic_vector(unsigned(tr407) + unsigned(tr408));
+            tr_404 <= std_logic_vector(unsigned(tr409) + unsigned(tr410));
+            tr_405 <= std_logic_vector(unsigned(tr411) + unsigned(tr412));
+            tr_406 <= std_logic_vector(unsigned(tr413) + unsigned(tr414));
+            tr_407 <= std_logic_vector(unsigned(tr415) + unsigned(tr416));
+            tr_408 <= std_logic_vector(unsigned(tr417) + unsigned(tr418));
+            tr_409 <= std_logic_vector(unsigned(tr419) + unsigned(tr420));
+            tr_410 <= std_logic_vector(unsigned(tr421) + unsigned(tr422));
+            tr_411 <= std_logic_vector(unsigned(tr423) + unsigned(tr424));
+
+            nocalc5 <= '0';
+
+          end if;
+
+
+          output_s25 <= output_s24;
+          fexp5 <= fexp4;
+          flag5 <= flag4;
+          rdy5 <= '1';
+          tag5 <= tag4;
+
+	elsif pipeline_stall = '1' then
+	elsif rdy4 = '0' then
+          rdy5 <= '0';
+	end if;
+      end if;
+    end if;
+  end process stage_5;
+
+
+
+  stage_6: process(clk,reset)
+  begin
+    if reset = '1' then
+      rdy6 <= '0';
+    else
+      if clk'event and clk='1'then
+	if rdy5 = '1' and pipeline_stall = '0' then
+          if nocalc5 = '1' then
+            nocalc6 <= '1';
+          else
+            tr51 <= std_logic_vector(unsigned(tr_400) + unsigned(tr_401));
+            tr52 <= std_logic_vector(unsigned(tr_402) + unsigned(tr_403));
+            tr53 <= std_logic_vector(unsigned(tr_404) + unsigned(tr_405));
+            tr54 <= std_logic_vector(unsigned(tr_406) + unsigned(tr_407));
+            tr55 <= std_logic_vector(unsigned(tr_408) + unsigned(tr_409));
+            tr56 <= std_logic_vector(unsigned(tr_410) + unsigned(tr_411));
+            nocalc6 <= '0';
+          end if;
+
+          output_s26 <= output_s25;
+          fexp6 <= fexp5;
+          flag6 <= flag5;
+          rdy6 <= '1';
+          tag6 <= tag5;
+
+	elsif pipeline_stall = '1' then
+	elsif rdy5 = '0' then
+          rdy6 <= '0';
+	end if;
+      end if;
+    end if;
+  end process stage_6;
+
+
+
+  stage_7: process(clk,reset)
+  begin
+    if reset = '1' then
+      rdy7 <= '0';
+    else
+      if clk'event and clk='1'then
+	if rdy6 = '1' and pipeline_stall = '0' then
+          if nocalc6 = '1' then
+            nocalc7 <= '1';
+          else
+            tr61 <= std_logic_vector(unsigned(tr51) + unsigned(tr52));
+            tr62 <= std_logic_vector(unsigned(tr53) + unsigned(tr54));
+            tr63 <= std_logic_vector(unsigned(tr55) + unsigned(tr56));
+            nocalc7 <= '0';
+          end if;
+
+          output_s27 <= output_s26;
+          fexp7 <= fexp6;
+          flag7 <= flag6;
+          rdy7 <= '1';
+          tag7 <= tag6;
+
+	elsif pipeline_stall = '1' then
+	elsif rdy6 = '0' then
+          rdy7 <= '0';
+	end if;
+      end if;
+    end if;
+  end process stage_7;
+
+  stage_8: process(clk,reset)
+  begin
+    if reset = '1' then
+      rdy8 <= '0';
+    else
+      if clk'event and clk='1'then
+	if rdy7 = '1' and pipeline_stall = '0' then
+          if nocalc7 = '1' then
+            nocalc8 <= '1';
+          else
+            tr7 <= std_logic_vector(unsigned(tr61) + unsigned(tr62));
+            nocalc8 <= '0';
+          end if;
+
+          output_s28<= output_s27;
+          fexp8 <= fexp7;
+          flag8 <= flag7;
+          rdy8 <= '1';
+          tag8 <= tag7;
+          tr_temp <= tr63;
+
+	elsif pipeline_stall = '1' then
+	elsif rdy7 = '0' then
+          rdy8 <= '0';
+	end if;
+      end if;
+    end if;
+  end process stage_8;
+
+  stage_9: process(clk,reset)
+  begin
+    if reset = '1' then
+      rdy9 <= '0';
+    else
+      if clk'event and clk='1'then
+	if rdy8 = '1' and pipeline_stall = '0' then
+          if nocalc8 = '1' then
+            nocalc9 <= '1';
+          else
+            tr9 <= std_logic_vector(unsigned(tr7) + unsigned(tr_temp));
+            nocalc9 <= '0';
+          end if;
+
+          output_s29 <= output_s28;
+          fexp9 <= fexp8;
+          flag9 <= flag8;
+          rdy9 <= '1';
+          tag9 <= tag8;
+
+	elsif pipeline_stall = '1' then
+	elsif rdy8 = '0' then
+          rdy9 <= '0';
+	end if;
+      end if;
+    end if;
+  end process stage_9;
+
+
+  stage_10: process(clk,reset)
+    variable man8: std_logic_vector(24 downto 0);
+    variable exp8: unsigned(7 downto 0);
+  begin
+    if reset = '1' then
+      rdy10 <= '0';
+    else
+      if clk'event and clk='1'then
+	if rdy9 = '1' and pipeline_stall = '0' then
+          if nocalc9 = '1' then
+            nocalc10 <= '1';
+            output_s210 <= output_s29;
+            flag10 <= flag9;
+          elsif nocalc9 = '0' then
+            man8 := tr9(47 downto 23);
+            exp8 := unsigned(fexp9);
+            if man8(24) = '1' then
+              if	exp8 = 254 then
+                output_s210 <= output_s29(2) & "11";
+                nocalc10 <= '1';
+                flag10 <= "10";
+              else
+                exp8 := exp8 + 1;
+                nocalc10 <= '0';
+                fman10 <= man8(23 downto 1);
+                output_s210 <= output_s29;
+                flag10 <= flag9;
+              end if;
+            elsif exp8 = 0 then
+              output_s210 <= output_s29(2) & "00";
+              nocalc10 <= '1';
+              flag10 <= "01";
+            else
+              fman10 <= man8(22 downto 0);
+              output_s210 <= output_s29;
+              nocalc10 <= '0';
+              flag10 <= flag9;
+            end if;
+          end if;		
+          rdy10 <= '1';
+          tag10 <= tag9;
+          fexp10 <= std_logic_vector(exp8);
+        elsif pipeline_stall = '1' then
+        elsif rdy9 = '0' then
+          rdy10 <= '0';
+        end if;
+      end if;
+    end if;
+  end process stage_10;
+
+
+  stage_11: process(clk,reset)
+    variable temp: std_logic_vector(2 downto 0);
+  begin
+    if reset = '1' then
+      rdy11 <= '0';
+    else
+      if clk'event and clk='1'then
+	if rdy10 = '1' and pipeline_stall = '0' then
+          rdy11 <= '1';
+          temp := output_s210;
+          if nocalc10 = '1' then
+            case(temp(1 downto 0)) is
+              when("00") => OUTM <= temp(2) & "000" & X"0000000"; NaN <= '0'; oflow <= '0'; uflow <= flag10(0);
+            when("10") => OUTM <= temp(2) & X"FF" & "10000000000000000000000"; NaN <= '1'; oflow <= '0'; uflow <= '0';
+            when("11") => OUTM <= temp(2) & X"FF" & "000" & X"00000"; NaN <= '0'; oflow <= flag10(1); uflow <= '0';
+            when others => null; 
+          end case;
+          else
+            OUTM <= temp(2) & fexp10 & fman10; NaN <= '0'; oflow <='0'; uflow <= '0';
+          end if;
+          tag_out <= tag10;
+        else
+          rdy11 <= '0';
+        end if;
+      end if;
+    end if;
+  end process stage_11;
+
+  pipeline_stall <= (rdy11 and (not accept_rdy));
+  muli_rdy <= not (rdy11 and (not accept_rdy));
+  mulo_rdy <= rdy11;
+
+end rtl;
+-------------------------------------------------------------------------------
+-- a basic unsigned multiplier.
+--
+-- for the moment, this just does a multiply and adds delay stages at
+-- the end; presumably, the synthesis tool will retime things
+-- appropriately..
+--
+-- TODO: pipeline this explicitly!
+-------------------------------------------------------------------------------
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity UnsignedMultiplier is
+  
+  generic (
+    tag_width     : integer;
+    operand_width : integer);
+
+  port (
+    L, R       : in  unsigned(operand_width-1 downto 0);
+    RESULT     : out unsigned((2*operand_width)-1 downto 0);
+    clk, reset : in  std_logic;
+    in_rdy     : in  std_logic;
+    out_rdy    : out std_logic;
+    stall      : in std_logic;
+    tag_in     : in std_logic_vector(tag_width-1 downto 0);
+    tag_out    : out std_logic_vector(tag_width-1 downto 0));
+end entity;
+
+
+architecture Pipelined of UnsignedMultiplier is
+
+  constant pipe_depth : integer := operand_width/16;
+
+  type RWORD is array (natural range <>) of unsigned((2*operand_width)-1 downto 0);
+  type TWORD is array (natural range <>) of std_logic_vector(tag_width-1 downto 0);  
+
+
+  signal intermediate_results : RWORD(0 to pipe_depth);
+  signal intermediate_tags : TWORD(0 to pipe_depth);  
+  signal stage_active : std_logic_vector(0 to pipe_depth);
+  
+begin  -- Pipelined
+
+  -- for now, just multiply..
+  intermediate_results(0) <= L*R;
+
+
+  -- I/O
+  intermediate_tags(0) <= tag_in;
+  stage_active(0) <= in_rdy;
+  out_rdy <= stage_active(pipe_depth);
+  tag_out <= intermediate_tags(pipe_depth);
+  RESULT <= intermediate_results(pipe_depth);
+  
+  -- for now, just add stages after the multiply
+  -- the synthesis tool should retime.  Later
+  -- we'll get around to doing the array multiplier
+  -- right.
+  Pipeline: for STAGE in 1 to pipe_depth generate
+
+    process(clk)
+    begin
+      if(clk'event and clk = '1') then
+        if(reset = '1') then
+          stage_active(STAGE) <= '0';
+        elsif(stall = '0') then
+          stage_active(STAGE) <= stage_active(STAGE-1);
+        end if;
+
+        if(stall = '0') then
+          intermediate_results(STAGE) <= intermediate_results(STAGE-1);
+          intermediate_tags(STAGE) <= intermediate_tags(STAGE-1);
+        end if;
+        
+      end if;
+    end process;
+    
+  end generate Pipeline;
+end Pipelined;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+library ieee_proposed;
+use ieee_proposed.float_pkg.all;
+use ieee_proposed.math_utility_pkg.all;
+
+
+entity fpadd32 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(31 downto 0);
+      R : in  std_logic_vector(31 downto 0);
+      ret_val_x_x : out  std_logic_vector(31 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end entity fpadd32;
+
+architecture Struct of fpadd32 is
+begin
+
+   adder: GenericFloatingPointAdderSubtractor
+		generic map(tag_width => tag_length,
+				exponent_width => 8,
+				fraction_width => 23,
+                   		round_style => round_nearest,
+                   		addguard => 3,
+                   		check_error => true,
+                   		denormalize => true,
+				use_as_subtractor => false)
+		port map(INA => L, INB => R,
+				OUTADD => ret_val_x_x,
+				clk => clk, reset => reset,
+				tag_in => tag_in , tag_out => tag_out,
+				env_rdy => start_req, accept_rdy => fin_req,
+				addi_rdy => start_ack, addo_rdy => fin_ack);
+			
+end Struct;
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+library ieee_proposed;
+use ieee_proposed.float_pkg.all;
+use ieee_proposed.math_utility_pkg.all;
+
+
+entity fpadd64 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(63 downto 0);
+      R : in  std_logic_vector(63 downto 0);
+      ret_val_x_x : out  std_logic_vector(63 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end entity fpadd64;
+
+architecture Struct of fpadd64 is
+begin
+
+   adder: GenericFloatingPointAdderSubtractor
+		generic map(tag_width => tag_length,
+				exponent_width => 11,
+				fraction_width => 52,
+                   		round_style => round_nearest,
+                   		addguard => 3,
+                   		check_error => true,
+                   		denormalize => true,
+				use_as_subtractor => false)
+		port map(INA => L, INB => R,
+				OUTADD => ret_val_x_x,
+				clk => clk, reset => reset,
+				tag_in => tag_in , tag_out => tag_out,
+				env_rdy => start_req, accept_rdy => fin_req,
+				addi_rdy => start_ack, addo_rdy => fin_ack);
+			
+end Struct;
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+library ieee_proposed;
+use ieee_proposed.math_utility_pkg.all;
+use ieee_proposed.float_pkg.all;
+
+
+entity fpmul32 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(31 downto 0);
+      R : in  std_logic_vector(31 downto 0);
+      ret_val_x_x : out  std_logic_vector(31 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end entity fpmul32;
+
+architecture Struct of fpmul32 is
+begin
+
+   mul: GenericFloatingPointMultiplier
+		generic map(tag_width => tag_length,
+				exponent_width => 8,
+				fraction_width => 23,
+                   		round_style => round_nearest,
+                   		addguard => 3,
+                   		check_error => true,
+                   		denormalize => true)
+		port map(INA => L, INB => R,
+				OUTMUL => ret_val_x_x,
+				clk => clk, reset => reset,
+				tag_in => tag_in , tag_out => tag_out,
+				env_rdy => start_req, accept_rdy => fin_req,
+				muli_rdy => start_ack, mulo_rdy => fin_ack);
+			
+end Struct;
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+library ieee_proposed;
+use ieee_proposed.math_utility_pkg.all;
+use ieee_proposed.float_pkg.all;
+
+
+entity fpmul64 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(63 downto 0);
+      R : in  std_logic_vector(63 downto 0);
+      ret_val_x_x : out  std_logic_vector(63 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end entity fpmul64;
+
+architecture Struct of fpmul64 is
+begin
+
+   mul: GenericFloatingPointMultiplier
+		generic map(tag_width => tag_length,
+				exponent_width => 11,
+				fraction_width => 52,
+                   		round_style => round_nearest,
+                   		addguard => 3,
+                   		check_error => true,
+                   		denormalize => true)
+		port map(INA => L, INB => R,
+				OUTMUL => ret_val_x_x,
+				clk => clk, reset => reset,
+				tag_in => tag_in , tag_out => tag_out,
+				env_rdy => start_req, accept_rdy => fin_req,
+				muli_rdy => start_ack, mulo_rdy => fin_ack);
+			
+end Struct;
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+library ieee_proposed;
+use ieee_proposed.float_pkg.all;
+use ieee_proposed.math_utility_pkg.all;
+
+
+entity fpsub32 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(31 downto 0);
+      R : in  std_logic_vector(31 downto 0);
+      ret_val_x_x : out  std_logic_vector(31 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end entity fpsub32;
+
+architecture Struct of fpsub32 is
+begin
+
+   mul: GenericFloatingPointAdderSubtractor
+		generic map(tag_width => tag_length,
+				exponent_width => 8,
+				fraction_width => 23,
+                   		round_style => round_nearest,
+                   		addguard => 3,
+                   		check_error => true,
+                   		denormalize => true,
+				use_as_subtractor => true)
+		port map(INA => L, INB => R,
+				OUTADD => ret_val_x_x,
+				clk => clk, reset => reset,
+				tag_in => tag_in , tag_out => tag_out,
+				env_rdy => start_req, accept_rdy => fin_req,
+				addi_rdy => start_ack, addo_rdy => fin_ack);
+			
+end Struct;
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+library ieee_proposed;
+use ieee_proposed.float_pkg.all;
+use ieee_proposed.math_utility_pkg.all;
+
+
+entity fpsub64 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(63 downto 0);
+      R : in  std_logic_vector(63 downto 0);
+      ret_val_x_x : out  std_logic_vector(63 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end entity fpsub64;
+
+architecture Struct of fpsub64 is
+begin
+
+   mul: GenericFloatingPointAdderSubtractor
+		generic map(tag_width => tag_length,
+				exponent_width => 11,
+				fraction_width => 52,
+                   		round_style => round_nearest,
+                   		addguard => 3,
+                   		check_error => true,
+                   		denormalize => true,
+				use_as_subtractor => true)
+		port map(INA => L, INB => R,
+				OUTADD => ret_val_x_x,
+				clk => clk, reset => reset,
+				tag_in => tag_in , tag_out => tag_out,
+				env_rdy => start_req, accept_rdy => fin_req,
+				addi_rdy => start_ack, addo_rdy => fin_ack);
+			
+end Struct;
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+library ieee_proposed;
+use ieee_proposed.float_pkg.all;
+use ieee_proposed.math_utility_pkg.all;
+
+
+entity fpu32 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(31 downto 0);
+      R : in  std_logic_vector(31 downto 0);
+      OP_ID : in std_logic_vector(7 downto 0);
+      ret_val_x_x : out  std_logic_vector(31 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end entity fpu32;
+
+architecture Struct of fpu32 is
+      signal OUTADD, OUTMUL, addsub_L, addsub_R : std_logic_vector(31 downto 0);
+      signal req_to_omux, ack_from_omux: std_logic_vector(1 downto 0);
+
+      signal data_to_omux: std_logic_vector((2*(32+tag_length))-1 downto 0);
+      signal data_from_omux: std_logic_vector((32+tag_length)-1 downto 0);
+      signal reqi_omux: std_logic_vector(1 downto 0);
+      signal acki_omux: std_logic_vector(1 downto 0);
+       
+      signal mul_tag_out, addsub_tag_out: std_logic_vector(tag_length-1 downto 0);
+
+      signal muli_req, addsubi_req: std_logic;
+      signal muli_ack, addsubi_ack: std_logic;
+      signal mulo_req, addsubo_req: std_logic;
+      signal mulo_ack, addsubo_ack: std_logic;
+
+
+      
+begin
+
+   muli_req <= start_req when (OP_ID = "00000010") else '0';
+   addsubi_req <= start_req when ((OP_ID="00000001") or (OP_ID = "00000000")) else '0';
+   start_ack <= muli_ack when (OP_ID = "00000010") else addsubi_ack when 
+			((OP_ID="00000001") or (OP_ID = "00000000")) else '0';
+
+   addsub_L <= L;
+   process(R, OP_ID)
+	variable X: std_logic_vector(31 downto 0);
+   begin
+	X := R;
+	if(OP_ID = "00000001") then
+		X(31) := not R(31);
+	end if;
+	addsub_R <= X;
+   end process;
+
+   addsub: GenericFloatingPointAdderSubtractor
+		generic map(tag_width => tag_length,
+				exponent_width => 8,
+				fraction_width => 23,
+                   		round_style => round_nearest,
+                   		addguard => 3,
+                   		check_error => true,
+                   		denormalize => true,
+				use_as_subtractor => false)
+		port map(INA => addsub_L, INB => addsub_R,
+				OUTADD => OUTADD,
+				clk => clk, reset => reset,
+				tag_in => tag_in , tag_out => addsub_tag_out,
+				env_rdy => addsubi_req, accept_rdy => addsubo_req,
+				addi_rdy => addsubi_ack, addo_rdy => addsubo_ack);
+
+   mul: GenericFloatingPointMultiplier
+		generic map(tag_width => tag_length,
+				exponent_width => 8,
+				fraction_width => 23,
+                   		round_style => round_nearest,
+                   		addguard => 3,
+                   		check_error => true,
+                   		denormalize => true)
+		port map(INA => L, INB => R,
+				OUTMUL => OUTMUL,
+				clk => clk, reset => reset,
+				tag_in => tag_in , tag_out => mul_tag_out,
+				env_rdy => muli_req, accept_rdy => mulo_req,
+				muli_rdy => muli_ack, mulo_rdy => mulo_ack);
+
+   data_to_omux <= OUTADD & addsub_tag_out & OUTMUL & mul_tag_out;
+   reqi_omux(1) <= addsubo_ack;
+   reqi_omux(0) <= mulo_ack;
+   addsubo_req <= acki_omux(1);
+   mulo_req <= acki_omux(0);
+
+
+   omux:  OutputPortLevel generic map(num_reqs => 2,
+					data_width => data_to_omux'length,
+					no_arbitration => false)
+			port map(req => reqi_omux,
+				ack => acki_omux,
+				data => data_to_omux,
+				oreq => fin_ack,
+				oack => fin_req,
+				odata => data_from_omux,
+				clk => clk,
+				reset => reset);
+
+   ret_val_x_x <= data_from_omux(31+tag_length downto tag_length);
+   tag_out <= data_from_omux(tag_length-1 downto 0);
+			
+end Struct;
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+library ieee_proposed;
+use ieee_proposed.float_pkg.all;
+use ieee_proposed.math_utility_pkg.all;
+
+
+entity fpu64 is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      L : in  std_logic_vector(63 downto 0);
+      R : in  std_logic_vector(63 downto 0);
+      OP_ID : in std_logic_vector(7 downto 0);
+      ret_val_x_x : out  std_logic_vector(63 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end entity fpu64;
+
+architecture Struct of fpu64 is
+      signal OUTADD, OUTMUL, addsub_L, addsub_R : std_logic_vector(63 downto 0);
+      signal req_to_omux, ack_from_omux: std_logic_vector(1 downto 0);
+
+      signal data_to_omux: std_logic_vector((2*(64+tag_length))-1 downto 0);
+      signal data_from_omux: std_logic_vector((64+tag_length)-1 downto 0);
+      signal reqi_omux: std_logic_vector(1 downto 0);
+      signal acki_omux: std_logic_vector(1 downto 0);
+       
+      signal mul_tag_out, addsub_tag_out: std_logic_vector(tag_length-1 downto 0);
+
+      signal muli_req, addsubi_req: std_logic;
+      signal muli_ack, addsubi_ack: std_logic;
+      signal mulo_req, addsubo_req: std_logic;
+      signal mulo_ack, addsubo_ack: std_logic;
+
+
+      
+begin
+
+   muli_req <= start_req when (OP_ID = "00000010") else '0';
+   addsubi_req <= start_req when ((OP_ID="00000001") or (OP_ID = "00000000")) else '0';
+   start_ack <= muli_ack when (OP_ID = "00000010") else addsubi_ack when 
+			((OP_ID="00000001") or (OP_ID = "00000000")) else '0';
+
+   addsub_L <= L;
+   process(R, OP_ID)
+	variable X: std_logic_vector(63 downto 0);
+   begin
+	X := R;
+	if(OP_ID = "00000001") then
+		X(63) := not R(63);
+	end if;
+	addsub_R <= X;
+   end process;
+
+   addsub: GenericFloatingPointAdderSubtractor
+		generic map(tag_width => tag_length,
+				exponent_width => 11,
+				fraction_width => 52,
+                   		round_style => round_nearest,
+                   		addguard => 3,
+                   		check_error => true,
+                   		denormalize => true,
+				use_as_subtractor => false)
+		port map(INA => addsub_L, INB => addsub_R,
+				OUTADD => OUTADD,
+				clk => clk, reset => reset,
+				tag_in => tag_in , tag_out => addsub_tag_out,
+				env_rdy => addsubi_req, accept_rdy => addsubo_req,
+				addi_rdy => addsubi_ack, addo_rdy => addsubo_ack);
+
+   mul: GenericFloatingPointMultiplier
+		generic map(tag_width => tag_length,
+				exponent_width => 11,
+				fraction_width => 52,
+                   		round_style => round_nearest,
+                   		addguard => 3,
+                   		check_error => true,
+                   		denormalize => true)
+		port map(INA => L, INB => R,
+				OUTMUL => OUTMUL,
+				clk => clk, reset => reset,
+				tag_in => tag_in , tag_out => mul_tag_out,
+				env_rdy => muli_req, accept_rdy => mulo_req,
+				muli_rdy => muli_ack, mulo_rdy => mulo_ack);
+
+   data_to_omux <= OUTADD & addsub_tag_out & OUTMUL & mul_tag_out;
+   reqi_omux(1) <= addsubo_ack;
+   reqi_omux(0) <= mulo_ack;
+   addsubo_req <= acki_omux(1);
+   mulo_req <= acki_omux(0);
+
+
+   omux:  OutputPortLevel generic map(num_reqs => 2,
+					data_width => data_to_omux'length,
+					no_arbitration => false)
+			port map(req => reqi_omux,
+				ack => acki_omux,
+				data => data_to_omux,
+				oreq => fin_ack,
+				oack => fin_req,
+				odata => data_from_omux,
+				clk => clk,
+				reset => reset);
+
+   ret_val_x_x <= data_from_omux(63+tag_length downto tag_length);
+   tag_out <= data_from_omux(tag_length-1 downto 0);
+			
+end Struct;
 

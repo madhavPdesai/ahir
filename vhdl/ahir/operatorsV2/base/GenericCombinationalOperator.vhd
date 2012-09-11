@@ -8,6 +8,10 @@ use ahir.Subprograms.all;
 use ahir.OperatorPackage.all;
 use ahir.FloatOperatorPackage.all;
 
+
+library ieee_proposed;
+use ieee_proposed.float_pkg.all;
+
 entity GenericCombinationalOperator is
   generic
     (
@@ -60,31 +64,41 @@ begin  -- Behave
 
     -- float x float -> float
     TwoOpFloatFloatFloat: if (not input1_is_int) and (not input2_is_int) and (not output_is_int) generate
+      assert(iwidth_1 = iwidth_2) report "floatXfloat -> float operation: inputs must be of the same width." severity error;
+      assert(input1_characteristic_width = input2_characteristic_width) report "floatXfloat -> float operation: input exponent sizes must be the same."
+        severity error;
+      
       process(data_in)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        variable op2: IStdLogicVector(input2_characteristic_width downto (- input2_mantissa_width));
-        variable   result_var: IStdLogicVector(output_characteristic_width downto (-output_mantissa_width));
+        variable op1: std_logic_vector(iwidth_1-1 downto 0);
+        variable op2: std_logic_vector(iwidth_2-1 downto 0);
+        variable   result_var: std_logic_vector(owidth-1 downto 0);
       begin
-        op1 := To_ISLV(data_in(iwidth-1 downto iwidth_2));
-        op2 := To_ISLV(data_in(iwidth_2-1 downto 0));
+        op1 := data_in(iwidth-1 downto iwidth_2);
+        op2 := data_in(iwidth_2-1 downto 0);
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, op1,op2,result_var);
-        result <= To_SLV(result_var);
+        TwoInputFloatArithOperation(operator_id, op1,op2,input1_characteristic_width, input1_mantissa_width, result_var);
+        result <= result_var;
       end process;
     end generate TwoOpFloatFloatFloat;
 
     -- float x float -> int
-    TwoOpFloatFloatInt: if (not input1_is_int) and (not input2_is_int) and output_is_int generate
+    TwoOpFloatFloatInt: if ((not input1_is_int) and (not input2_is_int) and output_is_int) generate
+      assert(iwidth_1 = iwidth_2) report "floatXfloat -> int operation: inputs must be of the same width." severity error;
+      assert(input1_characteristic_width = input2_characteristic_width) report "floatXfloat -> int operation: input exponent sizes must be the same."
+        severity error;
+      
       process(data_in)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        variable op2: IStdLogicVector(input2_characteristic_width downto (- input2_mantissa_width));
-        variable   result_var: IStdLogicVector(owidth-1 downto 0);
+        variable op1: std_logic_vector(iwidth_1-1 downto 0);
+        variable op2: std_logic_vector(iwidth_2-1 downto 0);
+        variable   result_var: std_logic_vector(owidth-1 downto 0);        
       begin
-        op1 := To_ISLV(data_in(iwidth-1 downto iwidth_2));
-        op2 := To_ISLV(data_in(iwidth_2-1 downto 0));
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, op1,op2,result_var);
-        result <= To_SLV(result_var);
+
+	op1 := data_in(iwidth-1 downto iwidth_2);
+	op2 := data_in(iwidth_2-1 downto 0);
+
+        TwoInputFloatCompareOperation(operator_id, op1,op2, input1_characteristic_width, input1_mantissa_width, result_var);
+        result <= result_var;
       end process;
     end generate TwoOpFloatFloatInt;
 
@@ -111,36 +125,58 @@ begin  -- Behave
     end generate SingleOperandNoConstantIntInt;
     
     SingleOperandNoConstantFloatFloat: if (not input1_is_int) and (not output_is_int) generate
-      process(data_in)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        variable result_var: IStdLogicVector(output_characteristic_width downto (- output_mantissa_width));
-      begin
-        op1 := To_ISLV(data_in);
-        result_var := (others => '0');
-        SingleInputFloatOperation(operator_id, op1, result_var);
-        result <= To_SLV(result_var);
-      end process;
+
+      -- the resize operation is to be treated specially, since
+      -- there are two different conversions..
+      ResizeFloat: if (operator_id = "ApFloatResize") generate
+        process(data_in)
+          variable op1: std_logic_vector(iwidth_1-1 downto 0);
+          variable   result_var: std_logic_vector(owidth-1 downto 0);                
+        begin
+          op1 := data_in;
+          result_var := (others => '0');
+          ApFloatResize_proc(To_Float(op1, input1_characteristic_width, input1_mantissa_width),
+                             output_characteristic_width,
+                             output_mantissa_width,
+                             result_var);
+          result <= result_var;
+        end process;        
+      end generate ResizeFloat;
+
+      NotResizeFloat: if (operator_id /= "ApFloatResize") generate
+        
+        process(data_in)
+          variable op1: std_logic_vector(iwidth_1-1 downto 0);
+          variable   result_var: std_logic_vector(owidth-1 downto 0);                
+        begin
+          op1 := data_in;
+          result_var := (others => '0');
+          SingleInputFloatOperation(operator_id, op1, input1_characteristic_width, input1_mantissa_width, result_var);
+          result <= result_var;
+        end process;
+      end generate NotResizeFloat;
+      
     end generate SingleOperandNoConstantFloatFloat;
 
     SingleOperandNoConstantFloatInt: if (not input1_is_int) and output_is_int generate
       process(data_in)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        variable result_var: IStdLogicVector(owidth-1 downto 0);
+        variable op1: std_logic_vector(iwidth_1-1 downto 0);
+        variable   result_var: std_logic_vector(owidth-1 downto 0);                
       begin
-        op1 := To_ISLV(data_in);
+        op1 := data_in;
         result_var := (others => '0');
-        SingleInputFloatOperation(operator_id, op1, result_var);
-        result <= To_SLV(result_var);
+        SingleInputFloatOperation(operator_id, op1, input1_characteristic_width, input1_mantissa_width, result_var);
+        result <= result_var;
       end process;
     end generate SingleOperandNoConstantFloatInt;
 
     SingleOperandNoConstantIntFloat: if (input1_is_int) and (not output_is_int) generate
       process(data_in)
-        variable result_var: IStdLogicVector(output_characteristic_width downto (- output_mantissa_width));
+        variable   result_var: std_logic_vector(owidth-1 downto 0);                
       begin
         result_var := (others => '0');
-        SingleInputFloatOperation(operator_id, To_ISLV(data_in), result_var);
-        result <= To_SLV(result_var);
+        SingleInputFloatOperation(operator_id, data_in, output_characteristic_width, output_mantissa_width, result_var);
+        result <= result_var;
       end process;
     end generate SingleOperandNoConstantIntFloat;
   end generate SingleOperandNoConstant;
@@ -168,31 +204,34 @@ begin  -- Behave
     end generate SingleOperandWithConstantIntInt;
 
     SingleOperandWithConstantFloatInt: if (not input1_is_int) and output_is_int generate
-      process(data_in)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        constant op2: IStdLogicVector(input2_characteristic_width downto (- input2_mantissa_width)) 
-          := To_ISLV(constant_operand);
-        variable   result_var: IStdLogicVector(owidth-1 downto 0);
+
+      SigBlock: block
+      	signal op2_sig: std_logic_vector(constant_width-1 downto 0);
+      begin
+      op2_sig <= constant_operand;
+      process(data_in, op2_sig)
+        variable   result_var: std_logic_vector(owidth-1 downto 0);                        
       begin
         result_var := (others => '0');
-        op1 := To_ISLV(data_in);	
-        TwoInputFloatOperation(operator_id, op1, op2, result_var);
-        result <= To_SLV(result_var);
+       	TwoInputFloatCompareOperation(operator_id, data_in, op2_sig,input1_characteristic_width, input1_mantissa_width, result_var);
+        result <= result_var;
       end process;
+      end block SigBlock;
     end generate SingleOperandWithConstantFloatInt;
 
     SingleOperandWithConstantFloatFloat: if (not input1_is_int) and (not output_is_int) generate
-      process(data_in)
-        variable op1: IStdLogicVector(input1_characteristic_width downto (- input1_mantissa_width));
-        constant op2: IStdLogicVector(input2_characteristic_width downto (- input2_mantissa_width)) 
-          := To_ISLV(constant_operand);
-        variable result_var: IStdLogicVector(output_characteristic_width downto (- output_mantissa_width));
+      SigBlock: block
+      	signal op2_sig: std_logic_vector(constant_width-1 downto 0);
       begin
-        op1 := To_ISLV(data_in);
+      op2_sig <= constant_operand;
+      process(data_in, op2_sig)
+        variable   result_var: std_logic_vector(owidth-1 downto 0);                        
+      begin
         result_var := (others => '0');
-        TwoInputFloatOperation(operator_id, op1, op2, result_var);
-        result <= To_SLV(result_var);
+       	TwoInputFloatArithOperation(operator_id, data_in, op2_sig, input1_characteristic_width, input1_mantissa_width, result_var);
+        result <= result_var;
       end process;
+    end block SigBlock;
     end generate SingleOperandWithConstantFloatFloat;
   end generate SingleOperandWithConstant;
   
