@@ -7,6 +7,7 @@ PIPEHANDLER=./v2/pipeHandler/
 CTESTBENCH=./v2/CtestBench/
 PTHREADUTILS=./v2/pthreadUtils
 VHDL=./vhdl/
+FUNCTIONLIB=./v2/functionLibrary
 
 all: Release 
 
@@ -41,6 +42,9 @@ Release:
 	cp $(CTESTBENCH)/vhdl/* $(RELEASE)/vhdl/
 	# copy the VHDL files
 	cp $(VHDL)/release/*.vhdl $(RELEASE)/vhdl/
+	# copy the function library
+	rm -rf $(RELEASE)/functionLibrary
+	cp -r $(FUNCTIONLIB) $(RELEASE)/
 	# copy the documents..
 	#cp ./Documents/AhirV2/AhirV2.pdf $(RELEASE)/docs/pdf/
 	cp $(AA)/docs/*.pdf $(RELEASE)/docs/pdf/
@@ -71,6 +75,8 @@ Clean:
 	rm -f $(RELEASE)/CtestBench/vhdl/*.vhd*
 	# rm the VHDL files
 	rm -f $(RELEASE)/vhdl/*.vhd*
+	# rm the function library
+	rm -rf $(RELEASE)/functionLibrary
 	# rm the doc files
 	rm -f $(RELEASE)/docs/pdf/*.pdf
 	rm -f $(RELEASE)/docs/html/*.htm*

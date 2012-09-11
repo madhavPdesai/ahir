@@ -1,5 +1,5 @@
 # set this variable to point to this directory..
-export AHIR_RELEASE=/home/madhav/ahirgit/ahir/release
+export AHIR_RELEASE=/home/madhav/ahirGit/ahir/release
 # path
 export PATH=$AHIR_RELEASE/bin:$PATH
 # ld-library-paths

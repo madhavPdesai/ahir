@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <Pipes.h>
 #include <stdio.h>
+#include <fpu.h>
 
 typedef struct _Job
 {
@@ -34,16 +35,6 @@ struct Link_
 Link free_list[FREE_LIST_SIZE];
 int32_t head;
 
-float mul32(float a, float b)
-{
-   return(a*b);
-}
-
-float add32(float a, float b)
-{
-   return(a+b);
-}
-
 #define PROC_ while(1) {\
         uint32_t ret_val = 0;\
         int32_t fid = (int32_t) read_uint32("job_queue_pipe");\
@@ -52,16 +43,19 @@ float add32(float a, float b)
         uint32_t dimension = free_list[fid].job.dimension;\
         int i,iF;\
         ret_val = 0;\
+	float p0,p1,p2,p3,a0,a1,a2,a3,b0,b1,b2,b3;\
 	for(i = 0, iF = 4*(dimension/4); i < iF; i=i+4)\
 	{\
-		ret_val = add32(ret_val , mul32(a_matrix[(i+aindex)] , b_matrix[(i+bindex)]));\
-		ret_val = add32(ret_val , mul32(a_matrix[((i+1)+aindex)] , b_matrix[((i+1)+bindex)]));\
-		ret_val = add32(ret_val , mul32(a_matrix[((i+2)+aindex)] , b_matrix[((i+2)+bindex)]));\
-		ret_val = add32(ret_val , mul32(a_matrix[((i+3)+aindex)] , b_matrix[((i+3)+bindex)]));\
+		a0 = a_matrix[(i+aindex)]; b0 = b_matrix[(i+bindex)];\
+		a1 = a_matrix[(i+1+aindex)]; b1 = b_matrix[(i+1+bindex)];\
+		a2 = a_matrix[(i+2+aindex)]; b2 = b_matrix[(i+2+bindex)];\
+		a3 = a_matrix[(i+3+aindex)]; b3 = b_matrix[(i+3+bindex)];\
+		p0 = fpmul32(a0,b0); p1=fpmul32(a1,b1); p2=fpmul32(a2,b2); p3=fpmul32(a3,b3);\
+		ret_val = fpadd32(ret_val, fpadd32(fpadd32(p0,p1), fpadd32(p2,p3)));\
 	}\
 	for(i = iF ; i < dimension; i++)\
 	{\
-		ret_val = add32(ret_val , mul32(a_matrix[(i+aindex)] , b_matrix[(i+bindex)]));\
+		ret_val = fpadd32(ret_val , fpmul32(a_matrix[(i+aindex)] , b_matrix[(i+bindex)]));\
 	}\
 	free_list[fid].job.result = ret_val;\
 	write_uint32("result_queue_pipe",fid);\
