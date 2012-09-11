@@ -351,12 +351,22 @@ void AaModule::Mark_Reachable_Modules(set<AaModule*>& reachable_modules)
     }
 }
 
+
 bool AaModule::Has_No_Side_Effects()
 {
   if(this->Get_Foreign_Flag())
     return(true);
-  else
-    return(false);
+
+  if(_reads_from_shared_pipe)
+	return(false);
+ 
+  if(_writes_to_shared_pipe)
+	return(false);
+
+  if(_shared_memory_spaces.size() > 0)
+	return(false);
+
+  return(true);
 }
 
 void AaModule::Set_Foreign_Object_Representatives()

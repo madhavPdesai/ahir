@@ -163,6 +163,12 @@ begin
     exceptional_result := '0';
     sticky := '0';
     leftright := false;
+    fracts := (others => '0');
+    fractc := (others => '0');
+    rexpon := (others => '0');
+    fpresult := (others => '0');
+ 
+
     ---------------------------------------------------------------------------
     -- will need to set appropriate flags here!
     ---------------------------------------------------------------------------

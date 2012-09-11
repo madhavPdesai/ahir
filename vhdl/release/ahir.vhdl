@@ -11742,7 +11742,7 @@ begin
    ----------------------------------------------------------------------------
    -- process to handle call_reqs  --> call_mreq muxing
    ----------------------------------------------------------------------------
-   process(clk,pe_call_reqs,call_state)
+   process(clk,pe_call_reqs,call_state,reset)
         variable nstate: CallStateType;
         variable there_is_a_call : std_logic;
         variable latch_pe_call_reqs: std_logic;
@@ -11762,7 +11762,12 @@ begin
 	elsif (call_state = busy) then
 		call_mreq <= '1';
 		if(call_mack = '1') then
-			nstate := idle;
+			if(there_is_a_call = '1') then
+				latch_call_data <=  '1';
+        			latch_pe_call_reqs := '1';
+                        else
+				nstate := idle;
+			end if;
 		end if;
 	end if;
 	
@@ -13706,6 +13711,12 @@ begin
     exceptional_result := '0';
     sticky := '0';
     leftright := false;
+    fracts := (others => '0');
+    fractc := (others => '0');
+    rexpon := (others => '0');
+    fpresult := (others => '0');
+ 
+
     ---------------------------------------------------------------------------
     -- will need to set appropriate flags here!
     ---------------------------------------------------------------------------

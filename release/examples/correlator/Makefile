@@ -25,7 +25,7 @@ HW: c2llvmbc llvmbc2aa aa2vc vc2vhdl vhdlsim
 
 # C to llvm byte-code.. use clang.
 c2llvmbc: prog.c prog.h
-	clang -O3 -std=gnu89 -I$(SOCKETLIB_INCLUDE) -emit-llvm -c prog.c
+	clang -O3 -std=gnu89 -I$(SOCKETLIB_INCLUDE) -I$(FUNCTIONLIB)/include -emit-llvm -c prog.c
 	llvm-dis prog.o
 
 # llvm byte-code to Aa..

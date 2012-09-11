@@ -1,4 +1,5 @@
-#define ORDER 4
+// ORDER must be a multiple of 4.
+#define ORDER 8
 
 void master();
 void correlator_0();

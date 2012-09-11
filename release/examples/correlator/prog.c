@@ -10,13 +10,29 @@ float global_best_result_value;
 uint32_t global_best_result_offset;
 uint32_t global_job_counter;
 
-#define CORRELATOR(ret_val,offset)  { int I1, I2; \
+#define CORRELATOR(ret_val,offset)  { int  I1_0, I2_0, I1_1, I2_1, I1_2, I2_2, I1_3, I2_3; \
 	ret_val = 0.0;\
-	for (I1 = 0; I1 < ORDER; I1++) \
+        float A0,A1,A2,A3,B0,B1,B2,B3, P0,P1,P2,P3, S0,S1;\
+	for (I1_0 = 0; I1_0 < ORDER; I1_0 = I1_0 + 4)\
 	{\
-		I2 = I1 + offset;\
-		if(I2 > ORDER) { I2 = I2 - ORDER;} \
-		ret_val = fpadd32(ret_val,fpmul32(A[I1],B[I2]));\
+		I1_1 = (I1_0 + 1); I1_2 = (I1_0 +2); I1_3= (I1_0 + 3);\
+		I2_0 = I1_0 + offset;\
+		I2_1 = I1_1 + offset;\
+		I2_2 = I1_2 + offset;\
+		I2_3 = I1_3 + offset;\
+		if(I2_0 > ORDER) I2_0 = I2_0 - ORDER;\
+		if(I2_1 > ORDER) I2_1 = I2_1 - ORDER;\
+		if(I2_2 > ORDER) I2_2 = I2_2 - ORDER;\
+		if(I2_3 > ORDER) I2_3 = I2_3 - ORDER;\
+		A0 = A[I1_0]; A1 = A[I1_1]; A2 = A[I1_2]; A3 = A[I1_3];\
+		B0 = B[I2_0]; B1 = B[I2_1]; B2 = B[I2_2]; B3 = B[I2_3];\
+		P0 = fpmul32(A0,B0);\
+		P1 = fpmul32(A1,B1);\
+		P2 = fpmul32(A2,B2);\
+		P3 = fpmul32(A3,B3);\
+		S0 = fpadd32(P0,P1);\
+		S1 = fpadd32(P2,P3);\
+		ret_val = fpadd32(ret_val, fpadd32(S0,S1));\
 	}}
 
 
