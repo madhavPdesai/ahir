@@ -64,7 +64,7 @@ Clean:
 	rm -f $(RELEASE)/pipeHandler/lib/*
 	rm -f $(RELEASE)/pipeHandler/examples/*
 	# rm the pthreadUtils.
-	rm -f $(RELEASE)/pthreadUtils/include/
+	rm -f $(RELEASE)/pthreadUtils/include/*
 	# rm the testbench
 	rm -f $(RELEASE)/CtestBench/include/*.h
 	rm -f $(RELEASE)/CtestBench/lib/*.so
