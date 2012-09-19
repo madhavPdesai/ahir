@@ -114,7 +114,7 @@ begin  -- Behave
 	    -- there are waiting requests (other than the one that
 	    -- was just acknowledge), then in principle, we could
 	    -- fast track (reqR xor reqR_priority_encoded) into
-            -- reqR_register... but this doesnt seem to work..
+            -- reqR_register...
 	     if(OrReduce(next_reqR_register) = '0') then
             	 next_reqR_register := (reqR xor reqR_priority_encoded);
 	     end if;
