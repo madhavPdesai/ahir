@@ -16,6 +16,7 @@ uint32_t global_job_counter;
 	for (I1_0 = 0; I1_0 < ORDER; I1_0 = I1_0 + 4)\
 	{\
 		I1_1 = (I1_0 + 1); I1_2 = (I1_0 +2); I1_3= (I1_0 + 3);\
+		A0 = A[I1_0]; A1 = A[I1_1]; A2 = A[I1_2]; A3 = A[I1_3];\
 		I2_0 = I1_0 + offset;\
 		I2_1 = I1_1 + offset;\
 		I2_2 = I1_2 + offset;\
@@ -24,7 +25,6 @@ uint32_t global_job_counter;
 		if(I2_1 > ORDER) I2_1 = I2_1 - ORDER;\
 		if(I2_2 > ORDER) I2_2 = I2_2 - ORDER;\
 		if(I2_3 > ORDER) I2_3 = I2_3 - ORDER;\
-		A0 = A[I1_0]; A1 = A[I1_1]; A2 = A[I1_2]; A3 = A[I1_3];\
 		B0 = B[I2_0]; B1 = B[I2_1]; B2 = B[I2_2]; B3 = B[I2_3];\
 		P0 = fpmul32(A0,B0);\
 		P1 = fpmul32(A1,B1);\
@@ -53,10 +53,18 @@ void master()
 		uint32_t idx;
 
 		// trigger all the correlators..
+#if USE0
 		write_uint8("start_0",1);
+#endif
+#if USE1
 		write_uint8("start_1",1);
+#endif
+#if USE2
 		write_uint8("start_2",1);
+#endif
+#if USE3
 		write_uint8("start_3",1);
+#endif
 
 		// get the data and send it to all the correlators..
 		for(idx = 0; idx < ORDER; idx++)
@@ -64,14 +72,22 @@ void master()
 			float a  = read_float32("data_in");	
 			float b  = read_float32("data_in");	
 
+#if USE0
 			write_float32("data_to_0", a);
 			write_float32("data_to_0", b);
+#endif 
+#if USE1
 			write_float32("data_to_1", a);
 			write_float32("data_to_1", b);
+#endif 
+#if USE2
 			write_float32("data_to_2", a);
 			write_float32("data_to_2", b);
+#endif
+#if USE3
 			write_float32("data_to_3", a);
 			write_float32("data_to_3", b);
+#endif
 		}
 
 #ifdef SW

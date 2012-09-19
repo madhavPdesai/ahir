@@ -9,7 +9,9 @@ VHDL_VHPI_LIB=../../CtestBench/vhdl
 FUNCTIONLIB=../../../v2/functionLibrary/
 all: SW HW 
 
+
 TOPMODULES=-T master -T correlater_0 -T correlater_1 -T correlater_2 -T correlater_3  -T result_counter
+#TOPMODULES=-T master -T correlater_0 -T result_counter
 
 
 # compile with SW defined.

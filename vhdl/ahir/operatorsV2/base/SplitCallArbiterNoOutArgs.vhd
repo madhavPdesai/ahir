@@ -105,7 +105,7 @@ begin
 
    -- combinational process.. generate call_acks, and also
    -- mux to input of call data register.
-   process(pe_call_reqs,latch_call_data)
+   process(pe_call_reqs,latch_call_data, call_data)
 	variable out_data : std_logic_vector(call_data_width-1 downto 0);
    begin
 	fair_call_acks <= (others => '0');

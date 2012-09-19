@@ -10788,7 +10788,16 @@ begin  -- Behave
         if(reqR_reg_is_non_zero = '0') then
 	    next_reqR_register := reqR;
         elsif(ack_s = '1') then
-		next_reqR_register := reqR_register xor reqR_priority_encoded;
+	    next_reqR_register := reqR_register xor reqR_priority_encoded;
+
+	    -- if next_reqR_register turns out to be 0, and if
+	    -- there are waiting requests (other than the one that
+	    -- was just acknowledge), then in principle, we could
+	    -- fast track (reqR xor reqR_priority_encoded) into
+            -- reqR_register... but this doesnt seem to work..
+	     if(OrReduce(next_reqR_register) = '0') then
+            	 next_reqR_register := (reqR xor reqR_priority_encoded);
+	     end if;
         end if;
 
         if(clk'event and clk = '1') then
@@ -11554,7 +11563,7 @@ begin
 
    -- combinational process.. generate call_acks, and also
    -- mux to input of call data register.
-   process(pe_call_reqs,latch_call_data)
+   process(pe_call_reqs,latch_call_data, call_data)
 	variable out_data : std_logic_vector(call_data_width-1 downto 0);
    begin
 	fair_call_acks <= (others => '0');
@@ -11788,7 +11797,7 @@ begin
 
    -- combinational process.. generate fair_call_acks, and also
    -- mux to input of call data register.
-   process(pe_call_reqs,latch_call_data)
+   process(pe_call_reqs,latch_call_data,call_data)
 	variable out_data : std_logic_vector(call_data_width-1 downto 0);
    begin
 	fair_call_acks <= (others => '0');

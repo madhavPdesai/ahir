@@ -41,17 +41,34 @@ int main(int argc, char* argv[])
 	init_pipe_handler();
 
 	PTHREAD_DECL(master);
+#if USE0
 	PTHREAD_DECL(correlater_0);
+#endif
+#if USE1
 	PTHREAD_DECL(correlater_1);
+#endif
+#if USE2
 	PTHREAD_DECL(correlater_2);
+#endif
+#if USE3
 	PTHREAD_DECL(correlater_3);
+#endif
+
 	PTHREAD_DECL(result_counter);
 
 	PTHREAD_CREATE(master);
+#if USE0
 	PTHREAD_CREATE(correlater_0);
+#endif
+#if USE1
 	PTHREAD_CREATE(correlater_1);
+#endif
+#if USE2
 	PTHREAD_CREATE(correlater_2);
+#endif
+#if USE3
 	PTHREAD_CREATE(correlater_3);
+#endif
 	PTHREAD_CREATE(result_counter);
 #endif
 	uint32_t idx;	
@@ -72,10 +89,18 @@ int main(int argc, char* argv[])
 
 #ifdef SW
 	PTHREAD_CANCEL(master);
+#if USE0
 	PTHREAD_CANCEL(correlater_0);
+#endif
+#if USE1
 	PTHREAD_CANCEL(correlater_1);
+#endif
+#if USE2
 	PTHREAD_CANCEL(correlater_2);
+#endif
+#if USE3
 	PTHREAD_CANCEL(correlater_3);
+#endif
 	PTHREAD_CANCEL(result_counter);
 	close_pipe_handler();
 #endif
