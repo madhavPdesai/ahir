@@ -5,14 +5,16 @@ PIPEHANDLER_INCLUDE=../../pipeHandler/include
 PIPEHANDLER_LIB=../../pipeHandler/lib
 VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
+DEFS= -DADD -DMUL -DDOT -DCMP
 TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
+#TOPMODULES= -t fpadd
 all: SW HW 
 
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.
 SW: prog.c prog.h testbench.c 
-	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) prog.c
-	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) testbench.c
+	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) $(DEFS) prog.c
+	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) $(DEFS)  testbench.c
 	gcc -o testbench_sw prog.o testbench.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
 
 # five steps from C to vhdl simulator.
@@ -20,7 +22,7 @@ HW: c2llvmbc llvmbc2aa aa2vc vc2vhdl vhdlsim
 
 # C to llvm byte-code.. use clang.
 c2llvmbc: prog.c prog.h testbench.c
-	clang -O3 -std=gnu89 -I$(SOCKETLIB_INCLUDE) -emit-llvm -c prog.c
+	clang -O3 -std=gnu89 $(DEFS)  -I$(SOCKETLIB_INCLUDE) -emit-llvm -c prog.c
 	llvm-dis prog.o
 
 # llvm byte-code to Aa..
@@ -34,7 +36,7 @@ aa2vc: prog.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc 
+	vc2vhdl -a -q -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc 
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 
@@ -42,7 +44,7 @@ vc2vhdl: prog.vc
 # note the use of SOCKETLIB in building the testbench.
 vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h vhdlCStubs.c
 	gcc -c vhdlCStubs.c -I./ -I$(SOCKETLIB_INCLUDE)
-	gcc -c testbench.c -I./ -I$(SOCKETLIB_INCLUDE)
+	gcc -c $(DEFS) testbench.c -I./ -I$(SOCKETLIB_INCLUDE)
 	gcc -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLib -lpthread
 	ghdl --clean
 	ghdl --remove

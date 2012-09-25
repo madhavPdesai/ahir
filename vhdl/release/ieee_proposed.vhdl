@@ -330,6 +330,28 @@ package float_pkg is
   function find_leftmost (ARG : UNSIGNED; Y : STD_ULOGIC)
     return INTEGER;
   
+  -- made public to pipeline.. Madhav
+  function gen_expon_base (
+    constant exponent_width : NATURAL)
+    return SIGNED;
+
+  -- made public to pipeline.. Madhav
+  procedure fp_round (
+    fract_in  : in  UNSIGNED;            -- input fraction
+    expon_in  : in  SIGNED;              -- input exponent
+    fract_out : out UNSIGNED;            -- output fraction
+    expon_out : out SIGNED); -- output exponent
+  
+
+  -- made public to pipeline.. Madhav
+  function check_round (
+    fract_in             : STD_ULOGIC;  -- input fraction
+    sign                 : STD_ULOGIC;  -- sign bit
+    remainder            : UNSIGNED;    -- remainder to round from
+    sticky               : STD_ULOGIC := '0';      -- Sticky bit
+    constant round_style : round_type)  -- rounding type
+    return BOOLEAN;
+
   function maximum (l, r : UNRESOLVED_float) return UNRESOLVED_float;
   function minimum (l, r : UNRESOLVED_float) return UNRESOLVED_float;
 

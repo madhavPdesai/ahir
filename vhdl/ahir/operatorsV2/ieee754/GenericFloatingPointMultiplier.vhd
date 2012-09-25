@@ -44,7 +44,7 @@ architecture rtl of GenericFloatingPointMultiplier is
 
   signal lp, rp             : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input  
   signal pipeline_stall : std_logic;
-  signal stage_full : std_logic_vector(0 to 3);
+  signal stage_full : std_logic_vector(0 to 4);
 
 
   constant multguard        : NATURAL := addguard;           -- guard bits
@@ -75,23 +75,27 @@ architecture rtl of GenericFloatingPointMultiplier is
   signal rfract_2           : UNSIGNED ((2*(fraction_width))+1 downto 0);  -- result fraction  
   signal tag2_extended : std_logic_vector(tag_width+operand_width+(exponent_width+2)+1+1-1 downto 0);
 
-  -- stage 3 outputs.
-  signal tag3: std_logic_vector(tag_width-1 downto 0);  
+  -- normalizer
+  signal normalizer_tag_in, normalizer_tag_out: std_logic_vector(tag_width+fpresult_1'length downto 0);
   signal fpresult_3         : UNRESOLVED_float (exponent_width downto -fraction_width);
+
+  -- stage 4 outputs.
+  signal tag4: std_logic_vector(tag_width-1 downto 0);  
+  signal fpresult_4         : UNRESOLVED_float (exponent_width downto -fraction_width);
   
 begin
 
-  pipeline_stall <= stage_full(3) and (not accept_rdy);
+  pipeline_stall <= stage_full(4) and (not accept_rdy);
   muli_rdy <= not pipeline_stall;
-  mulo_rdy <= stage_full(3);
-  tag_out <= tag3;
+  mulo_rdy <= stage_full(4);
+  tag_out <= tag4;
 
   -- construct l,r.
   lp <= to_float(INA, exponent_width, fraction_width);
   rp <= to_float(INB, exponent_width, fraction_width);
 
   -- return slv.
-  OUTMUL <= to_slv(fpresult_3);
+  OUTMUL <= to_slv(fpresult_4);
 
   -----------------------------------------------------------------------------
   -- Stage 0: register inputs.
@@ -253,7 +257,8 @@ begin
   
   amul : UnsignedMultiplier
     generic map (tag_width => tag_width+operand_width+(exponent_width+2)+2,
-                 operand_width => fraction_width+1)
+                 operand_width => fraction_width+1,
+		 chunk_width => 8)
     port map (
       L       => fractl_1,
       R       => fractR_1,
@@ -269,51 +274,82 @@ begin
 
 
   -----------------------------------------------------------------------------
-  -- Stage 3: normalize.
+  -- Stage 3: normalize... 
+  -----------------------------------------------------------------------------
+  Normalizer: block
+    signal rfract           : UNSIGNED ((2*(fraction_width))+1 downto 0);  -- result fraction
+    signal sfract           : UNSIGNED (fraction_width+1+multguard downto 0);  -- result fraction
+    signal rexpon           : SIGNED (exponent_width+1 downto 0);  -- result exponent
+    signal fp_sign          : STD_ULOGIC;   -- sign of result
+    signal sticky           : STD_ULOGIC;   -- Holds precision for rounding
+    signal raw_tag          : std_logic_vector(tag_width-1 downto 0);
+    signal fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
+    signal exceptional_result: std_logic;
+  begin
+    raw_tag <= tag2_extended((tag_width+operand_width+exponent_width+3) downto (operand_width+exponent_width+4));
+    fpresult <= to_float(tag2_extended(operand_width+exponent_width+3 downto exponent_width+4), exponent_width, fraction_width);
+    rexpon <= to_signed(tag2_extended(exponent_width+3 downto 2));
+    fp_sign <= tag2_extended(1);
+    exceptional_result <= tag2_extended(0);
+    
+    rfract <= rfract_2;
+    sfract <= rfract (rfract'high downto
+                      rfract'high - (fraction_width+1+multguard));
+    sticky <= or_reduce (rfract (rfract'high-(fraction_width+1+multguard)
+                                 downto 0));
+
+    normalizer_tag_in(normalizer_tag_in'high downto 1) <= 
+		raw_tag & std_logic_vector(fpresult);
+    normalizer_tag_in(0) <= exceptional_result;
+   	
+    normalizer: GenericFloatingPointNormalizer
+		generic map (tag_width => normalizer_tag_in'length,
+				exponent_width => exponent_width,
+				fraction_width => fraction_width,
+				round_style => float_round_style,
+				nguard => multguard,
+				denormalize => denormalize)
+		port map(fract => sfract,
+			 expon => rexpon,
+			 sign => fp_sign,
+			 sticky => sticky,
+			 in_rdy  => stage_full(2),
+			 out_rdy => stage_full(3),
+			 stall => pipeline_stall,
+			 clk => clk,
+			 reset => reset,
+			 tag_in => normalizer_tag_in,
+			 tag_out => normalizer_tag_out,
+			 normalized_result => fpresult_3);
+  end block;
+
+  -----------------------------------------------------------------------------
+  -- Stage 4: final multiplexor... 
   -----------------------------------------------------------------------------
   process(clk)
     variable active_v : std_logic;
     variable exceptional_result: std_ulogic;
-    variable fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
-    variable rfract           : UNSIGNED ((2*(fraction_width))+1 downto 0);  -- result fraction
-    variable sfract           : UNSIGNED (fraction_width+1+multguard downto 0);  -- result fraction
-    variable rexpon           : SIGNED (exponent_width+1 downto 0);  -- result exponent
-    variable fp_sign          : STD_ULOGIC;   -- sign of result
-    variable sticky           : STD_ULOGIC;   -- Holds precision for rounding
-    variable raw_tag : std_logic_vector(tag_width-1 downto 0);
+    variable fpresult, fpresult_normalized   : UNRESOLVED_float (exponent_width downto -fraction_width);
+    variable raw_tag          : std_logic_vector(tag_width-1 downto 0);
     
   begin
 
-    raw_tag := tag2_extended((tag_width+operand_width+exponent_width+3) downto (operand_width+exponent_width+4));
-    fpresult := to_float(tag2_extended(operand_width+exponent_width+3 downto exponent_width+4), exponent_width, fraction_width);
-    rexpon := to_signed(tag2_extended(exponent_width+3 downto 2));
-    fp_sign := tag2_extended(1);
-    exceptional_result := tag2_extended(0);
+    raw_tag := normalizer_tag_out(tag_width+operand_width downto operand_width+1);
+    fpresult := to_float(normalizer_tag_out(operand_width downto 1), exponent_width, fraction_width);
+    exceptional_result := normalizer_tag_out(0);
     
-    rfract := rfract_2;
-    sfract := rfract (rfract'high downto
-                      rfract'high - (fraction_width+1+multguard));
-    sticky := or_reduce (rfract (rfract'high-(fraction_width+1+multguard)
-                                 downto 0));
-    -- normalize
-    fpresult := normalize (fract          => sfract,
-                           expon          => rexpon,
-                           sign           => fp_sign,
-                           sticky         => sticky,
-                           fraction_width => fraction_width,
-                           exponent_width => exponent_width,
-                           round_style    => round_style,
-                           denormalize    => denormalize,
-                           nguard         => multguard);
-    
-    active_v := stage_full(2) and not (pipeline_stall or reset);
-    if(clk'event and clk = '1') then
-      stage_full(3) <= active_v;
-      if(active_v = '1') then
-        tag3 <= raw_tag;
+   fpresult_normalized := fpresult_3;
 
-        if(exceptional_result = '0') then
-          fpresult_3 <= fpresult;
+    active_v := stage_full(3) and not (pipeline_stall or reset);
+    if(clk'event and clk = '1') then
+      stage_full(4) <= active_v;
+      if(active_v = '1') then
+        tag4 <= raw_tag;
+
+        if(exceptional_result = '1') then
+          fpresult_4 <= fpresult;
+	else
+          fpresult_4 <= fpresult_normalized;
         end if;
         
       end if;      

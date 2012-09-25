@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 {
 	signal(SIGINT,  Exit);
   	signal(SIGTERM, Exit);
-	float X,Y;
+	float X,Y, hZ, sZ;
 
 
 #ifdef INTERACTIVE
@@ -35,19 +35,23 @@ int main(int argc, char* argv[])
 #endif
 
 
-        float hZ = fpmul(X,Y);
-        float sZ = (X*Y);
+#ifdef MUL
+        hZ = fpmul(X,Y);
+        sZ = (X*Y);
   	fprintf(stdout," %f * %f = %f, expected %f\n ", X,Y,hZ,sZ);
   	fprintf(stdout," %x * %x = %x, expected %x\n ", *((uint32_t*) &X),
 							*((uint32_t*) &Y),
 							*((uint32_t*) &hZ),
 							*((uint32_t*) &sZ));
+#endif
 							
 
 #ifdef INTERACTIVE
  	fprintf(stdout,"Supply two numbers to add:\n ");
 	scanf("%f %f", &X, &Y);
 #endif
+
+#ifdef ADD
         hZ = fpadd(X,Y);
         sZ = (X + Y);
   	fprintf(stdout," %f + %f = %f, expected %f\n ", X,Y,hZ,sZ);
@@ -55,6 +59,9 @@ int main(int argc, char* argv[])
 							*((uint32_t*) &Y),
 							*((uint32_t*) &hZ),
 							*((uint32_t*) &sZ));
+#endif
+
+#ifdef SUB
 
         hZ = fpsub(X,Y);
         sZ = (X - Y);
@@ -64,7 +71,10 @@ int main(int argc, char* argv[])
 							*((uint32_t*) &hZ),
 							*((uint32_t*) &sZ));
 
+#endif
 
+
+#ifdef DOT
 
 	hZ = dotProduct(X,Y,X,Y,X,Y,X,Y);
         sZ = (X*Y) + (X*Y) + (X*Y) + (X*Y);
@@ -72,6 +82,9 @@ int main(int argc, char* argv[])
   	fprintf(stdout," dotProduct = %x, expected %x\n ", *((uint32_t*) &hZ),
 							*((uint32_t*) &sZ));
 
+#endif
+
+#ifdef CMP
 
 	uint8_t cmpresult;
 	cmpresult = fpcmplt(2.0, 3.0);
@@ -92,5 +105,6 @@ int main(int argc, char* argv[])
 	cmpresult = fpcmpeq(3.0, 2.0);
   	fprintf(stdout," (3.0 == 2.0) = %d, expected %d\n ", cmpresult,0);
 
+#endif
 }
    

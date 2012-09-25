@@ -1246,6 +1246,30 @@ package BaseComponents is
     clk, reset              : in std_logic);
   end component;
 
+  component GenericFloatingPointNormalizer is
+    generic (tag_width : integer := 8;
+             exponent_width: integer := 11;
+             fraction_width : integer := 52;
+             round_style : round_type := float_round_style;  -- rounding option
+             nguard       : NATURAL := float_guard_bits;  -- number of guard bits
+             denormalize : BOOLEAN    := float_denormalize  -- Use IEEE extended FP           
+             );
+    port(
+      fract  :in  unsigned(fraction_width+nguard+1 downto 0);
+      expon  :in  signed(exponent_width+1 downto 0);
+      sign   :in  std_ulogic;
+      sticky :in  std_ulogic;
+      tag_in :in  std_logic_vector(tag_width-1 downto 0);
+      tag_out:out std_logic_vector(tag_width-1 downto 0);
+      in_rdy :in  std_ulogic;
+      out_rdy:out std_ulogic;
+      stall  :in  std_ulogic;
+      clk    :in  std_ulogic;
+      reset  :in  std_ulogic;
+      normalized_result :out UNRESOLVED_float (exponent_width downto -fraction_width)  -- result
+     );
+  end component;
+
 
   -----------------------------------------------------------------------------
   -- pipelined integer components..
@@ -1254,7 +1278,8 @@ package BaseComponents is
     
     generic (
       tag_width     : integer;
-      operand_width : integer);
+      operand_width : integer;
+      chunk_width   : integer := 8);
 
     port (
       L, R       : in  unsigned(operand_width-1 downto 0);
@@ -1266,6 +1291,47 @@ package BaseComponents is
       tag_in     : in std_logic_vector(tag_width-1 downto 0);
       tag_out    : out std_logic_vector(tag_width-1 downto 0));
   end component;
+
+  component UnsignedShifter 
+  
+  generic (
+    shift_right_flag   : boolean;
+    tag_width     : integer;
+    operand_width : integer;
+    shift_amount_width: integer);
+
+  port (
+    L       : in  unsigned(operand_width-1 downto 0);
+    R       : in  unsigned(shift_amount_width-1 downto 0);
+    RESULT     : out unsigned(operand_width-1 downto 0);
+    clk, reset : in  std_logic;
+    in_rdy     : in  std_logic;
+    out_rdy    : out std_logic;
+    stall      : in std_logic;
+    tag_in     : in std_logic_vector(tag_width-1 downto 0);
+    tag_out    : out std_logic_vector(tag_width-1 downto 0));
+   end component;
+
+  component UnsignedAdderSubtractor 
+  
+  generic (
+    tag_width          : integer;
+    operand_width      : integer
+	);
+
+  port (
+    L            : in  unsigned(operand_width-1 downto 0);
+    R            : in  unsigned(operand_width-1 downto 0);
+    RESULT       : out unsigned(operand_width-1 downto 0);
+    subtract_op  : in std_logic;
+    clk, reset   : in  std_logic;
+    in_rdy       : in  std_logic;
+    out_rdy      : out std_logic;
+    stall        : in std_logic;
+    tag_in       : in std_logic_vector(tag_width-1 downto 0);
+    tag_out      : out std_logic_vector(tag_width-1 downto 0));
+  end component;
+
 
   
 end BaseComponents;

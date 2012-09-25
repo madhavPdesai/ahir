@@ -71,6 +71,7 @@ package Utilities is
     cp_sig_name   : in string);
   
 
+  function Reverse(x: unsigned) return unsigned;
   
 end Utilities;
 
@@ -387,4 +388,14 @@ package body Utilities is
   end procedure;
   
   
+  function Reverse(x: unsigned) return unsigned is
+	alias lx: unsigned(1 to x'length) is x;
+	variable ret_var : unsigned(x'length downto 1);
+  begin
+	for  I in 1 to x'length loop
+		ret_var(I) := lx(I);
+	end loop;
+	return(ret_var);
+  end function Reverse;
+
 end Utilities;

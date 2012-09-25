@@ -92,6 +92,7 @@ package Utilities is
     cp_sig_name   : in string);
   
 
+  function Reverse(x: unsigned) return unsigned;
   
 end Utilities;
 
@@ -408,6 +409,16 @@ package body Utilities is
   end procedure;
   
   
+  function Reverse(x: unsigned) return unsigned is
+	alias lx: unsigned(1 to x'length) is x;
+	variable ret_var : unsigned(x'length downto 1);
+  begin
+	for  I in 1 to x'length loop
+		ret_var(I) := lx(I);
+	end loop;
+	return(ret_var);
+  end function Reverse;
+
 end Utilities;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -2938,6 +2949,30 @@ package BaseComponents is
     clk, reset              : in std_logic);
   end component;
 
+  component GenericFloatingPointNormalizer is
+    generic (tag_width : integer := 8;
+             exponent_width: integer := 11;
+             fraction_width : integer := 52;
+             round_style : round_type := float_round_style;  -- rounding option
+             nguard       : NATURAL := float_guard_bits;  -- number of guard bits
+             denormalize : BOOLEAN    := float_denormalize  -- Use IEEE extended FP           
+             );
+    port(
+      fract  :in  unsigned(fraction_width+nguard+1 downto 0);
+      expon  :in  signed(exponent_width+1 downto 0);
+      sign   :in  std_ulogic;
+      sticky :in  std_ulogic;
+      tag_in :in  std_logic_vector(tag_width-1 downto 0);
+      tag_out:out std_logic_vector(tag_width-1 downto 0);
+      in_rdy :in  std_ulogic;
+      out_rdy:out std_ulogic;
+      stall  :in  std_ulogic;
+      clk    :in  std_ulogic;
+      reset  :in  std_ulogic;
+      normalized_result :out UNRESOLVED_float (exponent_width downto -fraction_width)  -- result
+     );
+  end component;
+
 
   -----------------------------------------------------------------------------
   -- pipelined integer components..
@@ -2946,7 +2981,8 @@ package BaseComponents is
     
     generic (
       tag_width     : integer;
-      operand_width : integer);
+      operand_width : integer;
+      chunk_width   : integer := 8);
 
     port (
       L, R       : in  unsigned(operand_width-1 downto 0);
@@ -2958,6 +2994,47 @@ package BaseComponents is
       tag_in     : in std_logic_vector(tag_width-1 downto 0);
       tag_out    : out std_logic_vector(tag_width-1 downto 0));
   end component;
+
+  component UnsignedShifter 
+  
+  generic (
+    shift_right_flag   : boolean;
+    tag_width     : integer;
+    operand_width : integer;
+    shift_amount_width: integer);
+
+  port (
+    L       : in  unsigned(operand_width-1 downto 0);
+    R       : in  unsigned(shift_amount_width-1 downto 0);
+    RESULT     : out unsigned(operand_width-1 downto 0);
+    clk, reset : in  std_logic;
+    in_rdy     : in  std_logic;
+    out_rdy    : out std_logic;
+    stall      : in std_logic;
+    tag_in     : in std_logic_vector(tag_width-1 downto 0);
+    tag_out    : out std_logic_vector(tag_width-1 downto 0));
+   end component;
+
+  component UnsignedAdderSubtractor 
+  
+  generic (
+    tag_width          : integer;
+    operand_width      : integer
+	);
+
+  port (
+    L            : in  unsigned(operand_width-1 downto 0);
+    R            : in  unsigned(operand_width-1 downto 0);
+    RESULT       : out unsigned(operand_width-1 downto 0);
+    subtract_op  : in std_logic;
+    clk, reset   : in  std_logic;
+    in_rdy       : in  std_logic;
+    out_rdy      : out std_logic;
+    stall        : in std_logic;
+    tag_in       : in std_logic_vector(tag_width-1 downto 0);
+    tag_out      : out std_logic_vector(tag_width-1 downto 0));
+  end component;
+
 
   
 end BaseComponents;
@@ -10794,7 +10871,7 @@ begin  -- Behave
 	    -- there are waiting requests (other than the one that
 	    -- was just acknowledge), then in principle, we could
 	    -- fast track (reqR xor reqR_priority_encoded) into
-            -- reqR_register... but this doesnt seem to work..
+            -- reqR_register...
 	     if(OrReduce(next_reqR_register) = '0') then
             	 next_reqR_register := (reqR xor reqR_priority_encoded);
 	     end if;
@@ -13573,6 +13650,7 @@ use ieee_proposed.math_utility_pkg.all;
 
 library ahir;
 use ahir.Subprograms.all;
+use ahir.BaseComponents.all;
 
 
 entity GenericFloatingPointAdderSubtractor is
@@ -13601,64 +13679,53 @@ architecture rtl of GenericFloatingPointAdderSubtractor is
 
   
   signal pipeline_stall : std_logic;
-  signal stage_full : std_logic_vector(0 to 3);
-  signal tag0, tag1, tag2, tag3 : std_logic_vector(tag_width-1 downto 0);
+  signal stage_full : std_logic_vector(0 to 6);
+  signal tag0, tag1, tag2, tag3, tag4, tag5, tag6: std_logic_vector(tag_width-1 downto 0);
 
-  signal lfptype_1, rfptype_1 : valid_fpstate;
   signal fpresult_1         : UNRESOLVED_float (exponent_width downto -fraction_width);
-  signal fractl_1, fractr_1   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
   signal fractc_1, fracts_1   : UNSIGNED (fraction_width+1+addguard downto 0);  -- constant and shifted signals
-  signal urfract_1, ulfract_1 : UNSIGNED (fraction_width downto 0);
-  signal ufract_1           : UNSIGNED (fraction_width+1+addguard downto 0);
-  signal exponl_1, exponr_1   : SIGNED (exponent_width-1 downto 0);  -- exponents
   signal rexpon_1           : SIGNED (exponent_width downto 0);  -- result exponent
-  signal shiftx_1           : SIGNED (exponent_width downto 0);  -- shift fractions
   signal sign_1             : STD_ULOGIC;   -- sign of the output
   signal leftright_1        : BOOLEAN;      -- left or right used
-  signal lresize_1, rresize_1 : UNRESOLVED_float (exponent_width downto -fraction_width);
   signal sticky_1             : STD_ULOGIC;   -- Holds precision for rounding
-  signal exceptional_result_1 : std_logic; 
-  signal  l_1, r_1                 : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
-  
-  signal lfptype_2, rfptype_2 : valid_fpstate;
-  signal fpresult_2         : UNRESOLVED_float (exponent_width downto -fraction_width);
-  signal fractl_2, fractr_2   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
-  signal fractc_2, fracts_2   : UNSIGNED (fraction_width+1+addguard downto 0);  -- constant and shifted signals
-  signal urfract_2, ulfract_2 : UNSIGNED (fraction_width downto 0);
-  signal ufract_2           : UNSIGNED (fraction_width+1+addguard downto 0);
-  signal exponl_2, exponr_2   : SIGNED (exponent_width-1 downto 0);  -- exponents
-  signal rexpon_2           : SIGNED (exponent_width downto 0);  -- result exponent
-  signal shiftx_2           : SIGNED (exponent_width downto 0);  -- shift fractions
-  signal sign_2             : STD_ULOGIC;   -- sign of the output
-  signal leftright_2        : BOOLEAN;      -- left or right used
-  signal lresize_2, rresize_2 : UNRESOLVED_float (exponent_width downto -fraction_width);
-  signal sticky_2           : STD_ULOGIC;   -- Holds precision for rounding
-  signal exceptional_result_2 : std_logic; 
+  signal exceptional_result_1 : std_ulogic; 
+  signal  sign_l_1, sign_r_1  : std_ulogic;
+  signal use_shifter_1  : std_ulogic;
 
-  signal lfptype_3, rfptype_3 : valid_fpstate;
-  signal fpresult_3         : UNRESOLVED_float (exponent_width downto -fraction_width);
-  signal fractl_3, fractr_3   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
-  signal fractc_3, fracts_3   : UNSIGNED (fraction_width+1+addguard downto 0);  -- constant and shifted signals
-  signal urfract_3, ulfract_3 : UNSIGNED (fraction_width downto 0);
-  signal ufract_3           : UNSIGNED (fraction_width+1+addguard downto 0);
-  signal exponl_3, exponr_3   : SIGNED (exponent_width-1 downto 0);  -- exponents
-  signal rexpon_3           : SIGNED (exponent_width downto 0);  -- result exponent
-  signal shiftx_3           : SIGNED (exponent_width downto 0);  -- shift fractions
-  signal sign_3             : STD_ULOGIC;   -- sign of the output
-  signal leftright_3        : BOOLEAN;      -- left or right used
-  signal lresize_3, rresize_3 : UNRESOLVED_float (exponent_width downto -fraction_width);
-  signal sticky_3           : STD_ULOGIC;   -- Holds precision for rounding
-  signal result_X_3         : std_logic; 
-  signal result_Nan_3       : std_logic; 
-  signal exceptional_result_3 : std_logic; 
+  signal shifter_in_1, shifter_out   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
+  signal shift_amount_1 : SIGNED (exponent_width downto 0);  -- shift fractions
   
+
+  signal shifter_tag_in, shifter_tag_out: 
+		std_logic_vector(tag_width + fpresult_1'length + fractc_1'length + fracts_1'length
+				+ rexpon_1'length + 7 - 1 downto 0);
+  signal shifter_full: std_logic;
+
+  signal fpresult_3         : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal addL_3             : UNSIGNED (fraction_width+1+addguard downto 0);
+  signal addR_3             : UNSIGNED (fraction_width+1+addguard downto 0);
+  signal subtract_3         : std_logic;
+  signal rexpon_3           : SIGNED (exponent_width downto 0);  -- result exponent
+  signal sign_3             : STD_ULOGIC;   -- sign of the output
+  signal sticky_3           : STD_ULOGIC;   -- Holds precision for rounding
+  signal exceptional_result_3 : std_ulogic; 
+
+  signal ufract_4           : UNSIGNED (fraction_width+1+addguard downto 0);
+  signal fpresult_4         : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal adder_tag_in, adder_tag_out :
+		std_logic_vector(tag_width + fpresult_3'length + rexpon_3'length + 3 - 1 downto 0);
+
+  signal normalizer_tag_in, normalizer_tag_out: std_logic_vector(tag_width + fpresult_1'length downto 0);
+  signal fpresult_5         : UNRESOLVED_float (exponent_width downto -fraction_width);
+
+  signal fpresult_6         : UNRESOLVED_float (exponent_width downto -fraction_width);
   
 begin
 
-  pipeline_stall <= stage_full(3) and (not accept_rdy);
+  pipeline_stall <= stage_full(6) and (not accept_rdy);
   addi_rdy <= not pipeline_stall;
-  addo_rdy <= stage_full(3);
-  tag_out <= tag3;
+  addo_rdy <= stage_full(6);
+  tag_out <= tag6;
 
   -- construct l,r (user registers)
   lp <= to_float(INA, exponent_width, fraction_width);
@@ -13677,7 +13744,7 @@ begin
   end generate AsSubtractor;
 
   -- return slv.
-  OUTADD <= to_slv(fpresult_3);
+  OUTADD <= to_slv(fpresult_6);
 
   -----------------------------------------------------------------------------
   -- Stage 0: register inputs.
@@ -13715,6 +13782,12 @@ begin
     variable lresize, rresize : UNRESOLVED_float (exponent_width downto -fraction_width);
     variable sticky           : STD_ULOGIC;   -- Holds precision for rounding
     variable exceptional_result: std_ulogic;
+
+    -- to get stuff to the shifter.
+    variable use_shifter  : std_ulogic;
+    variable shifter_in   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
+    variable shift_amount : SIGNED (exponent_width downto 0);  -- shift fractions
+
   begin
 
     exceptional_result := '0';
@@ -13724,6 +13797,10 @@ begin
     fractc := (others => '0');
     rexpon := (others => '0');
     fpresult := (others => '0');
+
+    use_shifter := '0';
+    shifter_in := (others => '0');
+    shift_amount := (others => '0');
  
 
     ---------------------------------------------------------------------------
@@ -13797,7 +13874,12 @@ begin
         sticky    := or_reduce (fractl);
       elsif shiftx < 0 then
         shiftx    := - shiftx;
-        fracts    := shift_right (fractl, to_integer(shiftx));
+
+        shift_amount := shiftx;
+        use_shifter := '1';
+        shifter_in := fractl;
+
+        -- fracts    := shift_right (fractl, to_integer(shiftx));
         fractc    := fractr;
         rexpon    := exponr(exponent_width-1) & exponr;
         leftright := false;
@@ -13822,7 +13904,12 @@ begin
         leftright := true;
         sticky    := or_reduce (fractr);
       elsif shiftx > 0 then
-        fracts    := shift_right (fractr, to_integer(shiftx));
+
+        shift_amount := shiftx;
+        use_shifter := '1';
+        shifter_in := fractl;
+
+        -- fracts    := shift_right (fractr, to_integer(shiftx));
         fractc    := fractl;
         rexpon    := exponl(exponent_width-1) & exponl;
         leftright := true;
@@ -13837,36 +13924,67 @@ begin
       if(active_v = '1') then
         tag1 <= tag0;
 
-        lfptype_1 <= lfptype;
-        rfptype_1 <= rfptype;
         fpresult_1 <= fpresult;
-        fractl_1 <= fractl;
-        fractr_1 <= fractr;
         fractc_1 <= fractc;
         fracts_1 <= fracts;
-        urfract_1  <= urfract;
-        ulfract_1 <= ulfract;
-        ufract_1 <= ufract;
-        exponl_1 <= exponl;
-        exponr_1 <= exponr;
         rexpon_1 <= rexpon;
-        shiftx_1 <= shiftx;
         sign_1 <= sign;
         leftright_1 <= leftright;
-        lresize_1 <= lresize;
-        rresize_1 <= rresize;
         sticky_1 <= sticky;
         exceptional_result_1 <= exceptional_result;
+	use_shifter_1 <= use_shifter;
+        sign_l_1 <= l(l'high);
+        sign_r_1 <= r(r'high);
 
-        l_1 <= l;
-        r_1 <= r;
+
+	shift_amount_1 <= shift_amount;
+	shifter_in_1 <= shifter_in;
+
         
       end if;        
     end if;
   end process;
 
   -----------------------------------------------------------------------------
-  -- Stage 2: add mantissa stage
+  -- stage 2: shifter.
+  -----------------------------------------------------------------------------
+  process(tag1, fpresult_1, fractc_1, fracts_1,rexpon_1, sign_1, leftright_1,
+		exceptional_result_1, use_shifter_1, sign_l_1, sign_r_1)
+  begin
+        -- concatenate the tag as well!
+  	shifter_tag_in(shifter_tag_in'high downto 7) <= 
+		tag1 & 
+		std_logic_vector(fpresult_1) & std_logic_vector(fractc_1) &
+			std_logic_vector(fracts_1) & std_logic_vector(rexpon_1);
+	shifter_tag_in(6) <= sign_1;
+	if(leftright_1) then
+		shifter_tag_in(5) <= '1';
+	else
+		shifter_tag_in(5) <= '0';
+	end if;
+	shifter_tag_in(4) <= sticky_1;
+	shifter_tag_in(3) <= exceptional_result_1;
+	shifter_tag_in(2) <= sign_l_1;
+	shifter_tag_in(1) <= sign_r_1;
+	shifter_tag_in(0) <= use_shifter_1;
+ end process;
+
+  shifter: UnsignedShifter generic map(shift_right_flag => true,
+					tag_width => shifter_tag_in'length,
+					operand_width => shifter_in_1'length,
+					shift_amount_width => shift_amount_1'length)
+		port map( L => shifter_in_1, R => unsigned(shift_amount_1),
+				RESULT => shifter_out,
+				clk => clk, reset => reset,
+				in_rdy => stage_full(1),
+				out_rdy => stage_full(2),
+				stall => pipeline_stall,
+				tag_in => shifter_tag_in,
+				tag_out => shifter_tag_out);
+
+
+  -----------------------------------------------------------------------------
+  -- Stage 3: add mantissa stage
   -----------------------------------------------------------------------------
   process(clk)
     variable active_v : std_logic;
@@ -13875,166 +13993,199 @@ begin
     variable fractl, fractr   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
     variable fractc, fracts   : UNSIGNED (fraction_width+1+addguard downto 0);  -- constant and shifted variables
     variable urfract, ulfract : UNSIGNED (fraction_width downto 0);
-    variable ufract           : UNSIGNED (fraction_width+1+addguard downto 0);
-    variable exponl, exponr   : SIGNED (exponent_width-1 downto 0);  -- exponents
     variable rexpon           : SIGNED (exponent_width downto 0);  -- result exponent
     variable shiftx           : SIGNED (exponent_width downto 0);  -- shift fractions
-    variable sign             : STD_ULOGIC;   -- sign of the output
+    variable sign,sign_l,sign_r          : STD_ULOGIC;   -- sign of the output
     variable leftright        : BOOLEAN;      -- left or right used
-    variable lresize, rresize : UNRESOLVED_float (exponent_width downto -fraction_width);
     variable sticky           : STD_ULOGIC;   -- Holds precision for rounding
     variable exceptional_result           : STD_ULOGIC;   -- set if exceptional.. Nan/-Zero/Inf
+    variable tagv: std_logic_vector(tag_width-1 downto 0);
+    variable use_shifter: std_logic;
+
+    variable addL, addR : UNSIGNED (fraction_width+1+addguard downto 0); 
+    variable subtract_v : std_logic;
     
   begin
-    lfptype := lfptype_1;
-    rfptype := rfptype_1;
-    fpresult := fpresult_1;
-    fractl := fractl_1;
-    fractr := fractr_1;
-    fractc := fractc_1;
-    fracts := fracts_1;
-    urfract := urfract_1;
-    ulfract := ulfract_1;
-    ufract := ufract_1;
-    exponl := exponl_1;
-    exponr := exponr_1;
-    rexpon := rexpon_1;
-    shiftx := shiftx_1;
-    sign := sign_1;
-    leftright := leftright_1;
-    lresize := lresize_1;
-    rresize := rresize_1;
-    sticky := sticky_1;
-    exceptional_result := exceptional_result_1;
-    
+
+    subtract_v := '0';
+    addL := (others => '0');
+    addR := (others => '0');
+
+    tagv := shifter_tag_out(shifter_tag_out'high downto (shifter_tag_out'high - (tag_width-1)));
+    fpresult := to_float(shifter_tag_out(shifter_tag_out'high - tag_width downto 
+					(shifter_tag_out'high-(tag_width + fpresult'length - 1))),
+					exponent_width, fraction_width);
+
+    fractc := unsigned(shifter_tag_out((shifter_tag_out'high- (tag_width + fpresult'length)) downto 
+					(shifter_tag_out'high-
+						(tag_width + fpresult'length+fractc'length - 1))));
+    fracts :=  unsigned(shifter_tag_out((shifter_tag_out'high-
+					(tag_width + fpresult'length+fractc'length)) downto 
+					(shifter_tag_out'high-
+						(tag_width + fpresult'length+(2*fractc'length) - 1))));
+    rexpon :=   signed(shifter_tag_out((shifter_tag_out'high-
+					(tag_width + fpresult'length+(2*fractc'length))) downto 
+					(shifter_tag_out'high-
+					(tag_width + fpresult'length+(2*fractc'length)+rexpon'length-1))));
+
+    sign := shifter_tag_out(6);
+    if(shifter_tag_out(5)= '1') then
+	leftright := true;
+    else
+	leftright := false;
+    end if;
+    sticky := shifter_tag_in(4);
+    exceptional_result := shifter_tag_out(3);
+    sign_l := shifter_tag_out(2);
+    sign_r := shifter_tag_out(1);
+    use_shifter := shifter_tag_out(0);
+
+    if(use_shifter = '1') then
+       fracts := shifter_out;
+    end if;
+
       -- add
     fracts (0) := fracts (0) or sticky;     -- Or the sticky bit into the LSB
-    if l_1(l'high) = r_1(r'high) then
-      ufract := fractc + fracts;
-      sign   := l_1(l'high);
+
+    -- inputs to the adder
+    addL := fractc;
+    addR := fracts;
+    if sign_l = sign_r then
+      -- ufract := fractc + fracts;
+      sign   := sign_l;
     else                              -- signs are different
-      ufract := fractc - fracts;      -- always positive result
+      subtract_v := '1';
+      -- ufract := fractc - fracts;      -- always positive result
       if leftright then               -- Figure out which sign to use
-        sign := l_1(l'high);
+        sign := sign_l;
       else
-        sign := r_1(r'high);
+        sign := sign_r;
       end if;
     end if;
-    if or_reduce (ufract) = '0' then
-      sign := '0';                    -- IEEE 854, 6.3, paragraph 2.
-    end if;
+   
 
-    active_v := stage_full(1) and not (pipeline_stall or reset);
-    if(clk'event and clk = '1') then
-      stage_full(2) <= active_v;
-      if(active_v = '1') then
-        tag2 <= tag1;
-
-        lfptype_2 <= lfptype;
-        rfptype_2 <= rfptype;
-        fpresult_2 <= fpresult;
-        fractl_2 <= fractl;
-        fractr_2 <= fractr;
-        fractc_2 <= fractc;
-        fracts_2 <= fracts;
-        urfract_2  <= urfract;
-        ulfract_2 <= ulfract;
-        ufract_2 <= ufract;
-        exponl_2 <= exponl;
-        exponr_2 <= exponr;
-        rexpon_2 <= rexpon;
-        shiftx_2 <= shiftx;
-        sign_2 <= sign;
-        leftright_2 <= leftright;
-        lresize_2 <= lresize;
-        rresize_2 <= rresize;
-        sticky_2 <= sticky;
-        exceptional_result_2 <= exceptional_result;
-      end if;      
-    end if;
-  end process;
-
-
-  -----------------------------------------------------------------------------
-  -- Stage 3: normalize.
-  -----------------------------------------------------------------------------
-  process(clk)
-    variable active_v : std_logic;
-    variable lfptype, rfptype : valid_fpstate;
-    variable fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
-    variable fractl, fractr   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
-    variable fractc, fracts   : UNSIGNED (fraction_width+1+addguard downto 0);  -- constant and shifted variables
-    variable urfract, ulfract : UNSIGNED (fraction_width downto 0);
-    variable ufract           : UNSIGNED (fraction_width+1+addguard downto 0);
-    variable exponl, exponr   : SIGNED (exponent_width-1 downto 0);  -- exponents
-    variable rexpon           : SIGNED (exponent_width downto 0);  -- result exponent
-    variable shiftx           : SIGNED (exponent_width downto 0);  -- shift fractions
-    variable sign             : STD_ULOGIC;   -- sign of the output
-    variable leftright        : BOOLEAN;      -- left or right used
-    variable lresize, rresize : UNRESOLVED_float (exponent_width downto -fraction_width);
-    variable sticky           : STD_ULOGIC;   -- Holds precision for rounding
-    variable exceptional_result           : STD_ULOGIC;   -- set if exceptional.. Nan/-Zero/Inf
-  begin
-    lfptype := lfptype_1;
-    rfptype := rfptype_2;
-    fpresult := fpresult_2;
-    fractl := fractl_2;
-    fractr := fractr_2;
-    fractc := fractc_2;
-    fracts := fracts_2;
-    urfract := urfract_2;
-    ulfract := ulfract_2;
-    ufract := ufract_2;
-    exponl := exponl_2;
-    exponr := exponr_2;
-    rexpon := rexpon_2;
-    shiftx := shiftx_2;
-    sign := sign_2;
-    leftright := leftright_2;
-    lresize := lresize_2;
-    rresize := rresize_2;
-    sticky := sticky_2;
-    exceptional_result := exceptional_result_2;
-
-    -- normalize!
-    if(exceptional_result = '0') then 
-    	fpresult := normalize (fract          => ufract,
-                           	expon          => rexpon,
-                           	sign           => sign,
-                           	sticky         => sticky,
-                           	fraction_width => fraction_width,
-                           	exponent_width => exponent_width,
-                           	round_style    => round_style,
-                           	denormalize    => denormalize,
-                           	nguard         => addguard);
-    end if;
-    
     active_v := stage_full(2) and not (pipeline_stall or reset);
     if(clk'event and clk = '1') then
       stage_full(3) <= active_v;
       if(active_v = '1') then
-        tag3 <= tag2;
-
-        lfptype_3 <= lfptype;
-        rfptype_3 <= rfptype;
+        tag3 <= tagv;
         fpresult_3 <= fpresult;
-        fractl_3 <= fractl;
-        fractr_3 <= fractr;
-        fractc_3 <= fractc;
-        fracts_3 <= fracts;
-        urfract_3  <= urfract;
-        ulfract_3 <= ulfract;
-        ufract_3 <= ufract;
-        exponl_3 <= exponl;
-        exponr_3 <= exponr;
         rexpon_3 <= rexpon;
-        shiftx_3 <= shiftx;
         sign_3 <= sign;
-        leftright_3 <= leftright;
-        lresize_3 <= lresize;
-        rresize_3 <= rresize;
         sticky_3 <= sticky;
         exceptional_result_3 <= exceptional_result;
+        addL_3 <= addL;
+	addR_3 <= addR;
+	subtract_3 <= subtract_v;
+      end if;      
+    end if;
+  end process;
+
+  -----------------------------------------------------------------------------
+  -- Stage 4: adder.
+  -----------------------------------------------------------------------------
+  process(tag3, fpresult_3, rexpon_3, sign_3, sticky_3, exceptional_result_3)
+  begin
+	adder_tag_in(adder_tag_in'high downto 3)
+		<= tag3 & std_logic_vector(fpresult_3) & std_logic_vector(rexpon_3);
+	adder_tag_in(2) <= sign_3;
+	adder_tag_in(1) <= sticky_3;
+	adder_tag_in(0) <= exceptional_result_3;
+  end process;
+
+  adder: UnsignedAdderSubtractor
+		generic map(tag_width => adder_tag_in'length,
+				operand_width => addL_3'length)
+		port map( L => addL_3, R => addR_3, RESULT => ufract_4,
+				subtract_op => subtract_3,
+				clk => clk, reset => reset,
+				in_rdy => stage_full(3),
+				out_rdy => stage_full(4),
+				stall => pipeline_stall,
+				tag_in => adder_tag_in,
+				tag_out => adder_tag_out);
+				
+
+  -----------------------------------------------------------------------------
+  -- Stage 5: normalize.
+  -----------------------------------------------------------------------------
+  normalizer: block
+    signal tagv: std_logic_vector(tag_width-1 downto 0);
+    signal fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
+    signal rexpon           : SIGNED (exponent_width downto 0);  -- result exponent
+    signal rexpon_padded    : SIGNED (exponent_width+1 downto 0);  -- result exponent
+    signal sign             : STD_ULOGIC;   -- sign of the output
+    signal sticky           : STD_ULOGIC;   -- Holds precision for rounding
+    signal exceptional_result           : STD_ULOGIC;   -- set if exceptional.. Nan/-Zero/Inf
+    signal ufract           : UNSIGNED (fraction_width+1+addguard downto 0);
+  begin
+    tagv <= adder_tag_out(adder_tag_out'high downto (adder_tag_out'high - (tagv'length-1)));
+    fpresult <= to_float(adder_tag_out((adder_tag_out'high - tagv'length) downto 
+				(adder_tag_out'high - (tagv'length+fpresult'length-1))),
+			exponent_width, fraction_width);
+    rexpon <= signed(adder_tag_out((adder_tag_out'high - (tagv'length+fpresult'length)) downto 
+				(adder_tag_out'high - (tagv'length+fpresult'length+rexpon'length-1))));
+    rexpon_padded <= resize(rexpon,exponent_width+2);
+    ufract <= ufract_4;
+
+    -- zero fraction => sign = '0'
+    sign <= '0' when or_reduce(ufract) = '0' else adder_tag_out(2);
+
+    sticky <= adder_tag_out(1);
+    exceptional_result <= adder_tag_out(0);
+
+    
+    normalizer_tag_in(normalizer_tag_in'high downto 1) <= tagv & std_logic_vector(fpresult);
+    normalizer_tag_in(0) <= exceptional_result;
+
+    normalizer: GenericFloatingPointNormalizer
+		generic map (tag_width => normalizer_tag_in'length,
+				exponent_width => exponent_width,
+				fraction_width => fraction_width,
+				round_style => float_round_style,
+				nguard => addguard,
+				denormalize => denormalize)
+		port map(fract => ufract,
+			 expon => rexpon_padded,
+			 sign => sign,
+			 sticky => sticky,
+			 in_rdy  => stage_full(4),
+			 out_rdy => stage_full(5),
+			 stall => pipeline_stall,
+			 clk => clk,
+			 reset => reset,
+			 tag_in => normalizer_tag_in,
+			 tag_out => normalizer_tag_out,
+			 normalized_result => fpresult_5);
+  end block;
+
+  -----------------------------------------------------------------------------
+  -- Stage 6: multiplexor.
+  -----------------------------------------------------------------------------
+  process(clk)
+    variable active_v : std_logic;
+    variable fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
+    variable fpresult_normalized         : UNRESOLVED_float (exponent_width downto -fraction_width);
+    variable exceptional_result           : STD_ULOGIC;   -- set if exceptional.. Nan/-Zero/Inf
+    variable tagv: std_logic_vector(tag_width-1 downto 0);
+  begin
+
+    tagv := normalizer_tag_out(normalizer_tag_out'high downto (normalizer_tag_out'high - (tagv'length-1)));
+    fpresult := to_float(normalizer_tag_out((normalizer_tag_out'high - tagv'length) downto 
+				(normalizer_tag_out'high - (tagv'length+fpresult'length-1))),
+			exponent_width, fraction_width);
+    exceptional_result := normalizer_tag_out(0);
+
+    active_v := stage_full(5) and not (pipeline_stall or reset);
+    if(clk'event and clk = '1') then
+      stage_full(6) <= active_v;
+      if(active_v = '1') then
+        tag6 <= tagv;
+    	if(exceptional_result = '1') then 
+        	fpresult_6 <= fpresult;
+	else
+        	fpresult_6 <= fpresult_5;
+	end if;
       end if;
     end if;
   end process;
@@ -14086,7 +14237,7 @@ architecture rtl of GenericFloatingPointMultiplier is
 
   signal lp, rp             : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input  
   signal pipeline_stall : std_logic;
-  signal stage_full : std_logic_vector(0 to 3);
+  signal stage_full : std_logic_vector(0 to 4);
 
 
   constant multguard        : NATURAL := addguard;           -- guard bits
@@ -14117,23 +14268,27 @@ architecture rtl of GenericFloatingPointMultiplier is
   signal rfract_2           : UNSIGNED ((2*(fraction_width))+1 downto 0);  -- result fraction  
   signal tag2_extended : std_logic_vector(tag_width+operand_width+(exponent_width+2)+1+1-1 downto 0);
 
-  -- stage 3 outputs.
-  signal tag3: std_logic_vector(tag_width-1 downto 0);  
+  -- normalizer
+  signal normalizer_tag_in, normalizer_tag_out: std_logic_vector(tag_width+fpresult_1'length downto 0);
   signal fpresult_3         : UNRESOLVED_float (exponent_width downto -fraction_width);
+
+  -- stage 4 outputs.
+  signal tag4: std_logic_vector(tag_width-1 downto 0);  
+  signal fpresult_4         : UNRESOLVED_float (exponent_width downto -fraction_width);
   
 begin
 
-  pipeline_stall <= stage_full(3) and (not accept_rdy);
+  pipeline_stall <= stage_full(4) and (not accept_rdy);
   muli_rdy <= not pipeline_stall;
-  mulo_rdy <= stage_full(3);
-  tag_out <= tag3;
+  mulo_rdy <= stage_full(4);
+  tag_out <= tag4;
 
   -- construct l,r.
   lp <= to_float(INA, exponent_width, fraction_width);
   rp <= to_float(INB, exponent_width, fraction_width);
 
   -- return slv.
-  OUTMUL <= to_slv(fpresult_3);
+  OUTMUL <= to_slv(fpresult_4);
 
   -----------------------------------------------------------------------------
   -- Stage 0: register inputs.
@@ -14295,7 +14450,8 @@ begin
   
   amul : UnsignedMultiplier
     generic map (tag_width => tag_width+operand_width+(exponent_width+2)+2,
-                 operand_width => fraction_width+1)
+                 operand_width => fraction_width+1,
+		 chunk_width => 8)
     port map (
       L       => fractl_1,
       R       => fractR_1,
@@ -14311,57 +14467,458 @@ begin
 
 
   -----------------------------------------------------------------------------
-  -- Stage 3: normalize.
+  -- Stage 3: normalize... 
+  -----------------------------------------------------------------------------
+  Normalizer: block
+    signal rfract           : UNSIGNED ((2*(fraction_width))+1 downto 0);  -- result fraction
+    signal sfract           : UNSIGNED (fraction_width+1+multguard downto 0);  -- result fraction
+    signal rexpon           : SIGNED (exponent_width+1 downto 0);  -- result exponent
+    signal fp_sign          : STD_ULOGIC;   -- sign of result
+    signal sticky           : STD_ULOGIC;   -- Holds precision for rounding
+    signal raw_tag          : std_logic_vector(tag_width-1 downto 0);
+    signal fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
+    signal exceptional_result: std_logic;
+  begin
+    raw_tag <= tag2_extended((tag_width+operand_width+exponent_width+3) downto (operand_width+exponent_width+4));
+    fpresult <= to_float(tag2_extended(operand_width+exponent_width+3 downto exponent_width+4), exponent_width, fraction_width);
+    rexpon <= to_signed(tag2_extended(exponent_width+3 downto 2));
+    fp_sign <= tag2_extended(1);
+    exceptional_result <= tag2_extended(0);
+    
+    rfract <= rfract_2;
+    sfract <= rfract (rfract'high downto
+                      rfract'high - (fraction_width+1+multguard));
+    sticky <= or_reduce (rfract (rfract'high-(fraction_width+1+multguard)
+                                 downto 0));
+
+    normalizer_tag_in(normalizer_tag_in'high downto 1) <= 
+		raw_tag & std_logic_vector(fpresult);
+    normalizer_tag_in(0) <= exceptional_result;
+   	
+    normalizer: GenericFloatingPointNormalizer
+		generic map (tag_width => normalizer_tag_in'length,
+				exponent_width => exponent_width,
+				fraction_width => fraction_width,
+				round_style => float_round_style,
+				nguard => multguard,
+				denormalize => denormalize)
+		port map(fract => sfract,
+			 expon => rexpon,
+			 sign => fp_sign,
+			 sticky => sticky,
+			 in_rdy  => stage_full(2),
+			 out_rdy => stage_full(3),
+			 stall => pipeline_stall,
+			 clk => clk,
+			 reset => reset,
+			 tag_in => normalizer_tag_in,
+			 tag_out => normalizer_tag_out,
+			 normalized_result => fpresult_3);
+  end block;
+
+  -----------------------------------------------------------------------------
+  -- Stage 4: final multiplexor... 
   -----------------------------------------------------------------------------
   process(clk)
     variable active_v : std_logic;
     variable exceptional_result: std_ulogic;
-    variable fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
-    variable rfract           : UNSIGNED ((2*(fraction_width))+1 downto 0);  -- result fraction
-    variable sfract           : UNSIGNED (fraction_width+1+multguard downto 0);  -- result fraction
-    variable rexpon           : SIGNED (exponent_width+1 downto 0);  -- result exponent
-    variable fp_sign          : STD_ULOGIC;   -- sign of result
-    variable sticky           : STD_ULOGIC;   -- Holds precision for rounding
-    variable raw_tag : std_logic_vector(tag_width-1 downto 0);
+    variable fpresult, fpresult_normalized   : UNRESOLVED_float (exponent_width downto -fraction_width);
+    variable raw_tag          : std_logic_vector(tag_width-1 downto 0);
     
   begin
 
-    raw_tag := tag2_extended((tag_width+operand_width+exponent_width+3) downto (operand_width+exponent_width+4));
-    fpresult := to_float(tag2_extended(operand_width+exponent_width+3 downto exponent_width+4), exponent_width, fraction_width);
-    rexpon := to_signed(tag2_extended(exponent_width+3 downto 2));
-    fp_sign := tag2_extended(1);
-    exceptional_result := tag2_extended(0);
+    raw_tag := normalizer_tag_out(tag_width+operand_width downto operand_width+1);
+    fpresult := to_float(normalizer_tag_out(operand_width downto 1), exponent_width, fraction_width);
+    exceptional_result := normalizer_tag_out(0);
     
-    rfract := rfract_2;
-    sfract := rfract (rfract'high downto
-                      rfract'high - (fraction_width+1+multguard));
-    sticky := or_reduce (rfract (rfract'high-(fraction_width+1+multguard)
-                                 downto 0));
-    -- normalize
-    fpresult := normalize (fract          => sfract,
-                           expon          => rexpon,
-                           sign           => fp_sign,
-                           sticky         => sticky,
-                           fraction_width => fraction_width,
-                           exponent_width => exponent_width,
-                           round_style    => round_style,
-                           denormalize    => denormalize,
-                           nguard         => multguard);
-    
-    active_v := stage_full(2) and not (pipeline_stall or reset);
-    if(clk'event and clk = '1') then
-      stage_full(3) <= active_v;
-      if(active_v = '1') then
-        tag3 <= raw_tag;
+   fpresult_normalized := fpresult_3;
 
-        if(exceptional_result = '0') then
-          fpresult_3 <= fpresult;
+    active_v := stage_full(3) and not (pipeline_stall or reset);
+    if(clk'event and clk = '1') then
+      stage_full(4) <= active_v;
+      if(active_v = '1') then
+        tag4 <= raw_tag;
+
+        if(exceptional_result = '1') then
+          fpresult_4 <= fpresult;
+	else
+          fpresult_4 <= fpresult_normalized;
         end if;
         
       end if;      
     end if;
   end process;
   
+end rtl;
+-------------------------------------------------------------------------------
+-- An IEEE-754 compliant arbitrary-precision normalizer
+-- originally written by David Bishop (dbishop@vhdl.org)
+-- modified by Madhav Desai.
+-------------------------------------------------------------------------------
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ieee_proposed;
+use ieee_proposed.float_pkg.all;
+use ieee_proposed.math_utility_pkg.all;
+
+library ahir;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+
+entity GenericFloatingPointNormalizer is
+  generic (tag_width : integer := 8;
+           exponent_width: integer := 11;
+           fraction_width : integer := 52;
+           round_style : round_type := float_round_style;  -- rounding option
+           nguard       : NATURAL := float_guard_bits;  -- number of guard bits
+           denormalize : BOOLEAN    := float_denormalize  -- Use IEEE extended FP           
+           );
+  port(
+    fract  :in  unsigned(fraction_width+nguard+1 downto 0);
+    expon  :in  signed(exponent_width+1 downto 0);
+    sign   :in  std_ulogic;
+    sticky :in  std_ulogic;
+    tag_in :in  std_logic_vector(tag_width-1 downto 0);
+    tag_out:out std_logic_vector(tag_width-1 downto 0);
+    in_rdy :in  std_ulogic;
+    out_rdy:out std_ulogic;
+    stall  :in  std_ulogic;
+    clk    :in  std_ulogic;
+    reset  :in  std_ulogic;
+    normalized_result :out UNRESOLVED_float (exponent_width downto -fraction_width)  -- result
+   );
+end entity;
+
+
+architecture rtl of GenericFloatingPointNormalizer is
+    constant num_stages: integer := 6;
+    constant operand_width: integer := fract'length;
+
+    signal stage_full: std_logic_vector(0 to num_stages);
+
+    type TagArray is array (natural range <>) of std_logic_vector(tag_width-1 downto 0);
+    signal stage_tags: TagArray(0 to num_stages);
+
+    signal fract_1,fract_2,fract_3  :  unsigned(fraction_width+nguard+1 downto 0);
+    signal round_1, zerores_1, infres_1 : BOOLEAN;
+    signal round_2, zerores_2, infres_2 : BOOLEAN;
+
+    signal shiftr_1,shiftr_2,shiftr_3     : INTEGER range -operand_width to operand_width;      -- shift amount
+
+    signal exp_1,exp_2,exp_3        : SIGNED (exponent_width+1 downto 0);  -- exponent
+
+    signal sticky_1,sticky_2, sticky_3    : STD_ULOGIC;   -- versions of sticky
+    signal sign_1,sign_2, sign_3    : STD_ULOGIC;   -- versions of sign
+
+    signal result_1,result_2,result_3, result_6: 
+		UNRESOLVED_float (exponent_width downto -fraction_width);  -- result
+    signal exceptional_result_flag_3: std_ulogic;
+
+    signal shift_in, shift_out : unsigned(fraction_width+nguard+1 downto 0);
+    signal shift_tag_in, shift_tag_out : 
+		std_logic_vector(tag_width+expon'length+normalized_result'length+4-1 downto 0);
+    signal shift_amount: unsigned(Ceil_Log2(fract'length)-1 downto 0);
+
+begin
+
+  stage_full(0) <= in_rdy;
+  out_rdy <= stage_full(num_stages);
+
+  stage_tags(0) <= tag_in;
+  tag_out <= stage_tags(num_stages);
+
+  normalized_result <= result_6;
+
+  -- stage 1: find leftmost 1.
+  process(clk)
+    variable sfract     : UNSIGNED (fract'high downto 0);  -- shifted fraction
+    variable rfract     : UNSIGNED (fraction_width-1 downto 0);   -- fraction
+    variable exp        : SIGNED (exponent_width+1 downto 0);  -- exponent
+    variable rexp       : SIGNED (exponent_width+1 downto 0);  -- result exponent
+    variable rexpon     : UNSIGNED (exponent_width-1 downto 0);   -- exponent
+    variable result     : UNRESOLVED_float (exponent_width downto -fraction_width);  -- result
+    variable shiftr     : INTEGER;      -- shift amount
+    variable stickyx    : STD_ULOGIC;   -- version of sticky
+    constant expon_base : SIGNED (exponent_width-1 downto 0) :=
+      gen_expon_base(exponent_width);   -- exponent offset
+    variable round, zerores, infres : BOOLEAN;
+  begin  -- function normalize
+    zerores := false;
+    infres  := false;
+    round   := false;
+    shiftr  := find_leftmost (to_01(fract), '1')     -- Find the first "1"
+               - fraction_width - nguard;  -- subtract the length we want
+    exp := resize (expon, exp'length) + shiftr;
+    if(clk'event and clk = '1') then
+	if(stall = '0') then
+		zerores_1 <= zerores;
+		infres_1  <= infres;
+		round_1   <= round;
+		shiftr_1  <= shiftr;
+		exp_1 <= exp;
+		fract_1 <= fract;
+		sticky_1 <= sticky;
+		sign_1 <= sign;
+	end if;
+	if(reset = '1') then
+		stage_full(1) <= '0';
+	elsif (stall = '0') then
+		stage_full(1) <= stage_full(0);
+		stage_tags(1) <= stage_tags(0);
+	end if;
+    end if;
+  end process;
+
+  
+  -- stage 2: a bit light!
+  process(clk)
+    variable sfract     : UNSIGNED (fract'high downto 0);  -- shifted fraction
+    variable rfract     : UNSIGNED (fraction_width-1 downto 0);   -- fraction
+    variable exp        : SIGNED (exponent_width+1 downto 0);  -- exponent
+    variable rexp       : SIGNED (exponent_width+1 downto 0);  -- result exponent
+    variable rexpon     : UNSIGNED (exponent_width-1 downto 0);   -- exponent
+    variable result     : UNRESOLVED_float (exponent_width downto -fraction_width);  -- result
+    variable shiftr     : INTEGER;      -- shift amount
+    variable stickyx    : STD_ULOGIC;   -- version of sticky
+    constant expon_base : SIGNED (exponent_width-1 downto 0) :=
+      gen_expon_base(exponent_width);   -- exponent offset
+    variable round, zerores, infres : BOOLEAN;
+  begin  -- function normalize
+    zerores := zerores_1;
+    infres  := infres_1;
+    round   := round_1;
+    shiftr  := shiftr_1;
+    exp     := exp_1;
+
+    if (or_reduce (fract) = '0') then   -- Zero
+      zerores := true;
+    elsif ((exp <= -resize(expon_base, exp'length)-1) and denormalize)
+      or ((exp < -resize(expon_base, exp'length)-1) and not denormalize) then
+      if (exp >= -resize(expon_base, exp'length)-fraction_width-1)
+        and denormalize then
+        exp    := -resize(expon_base, exp'length)-1;
+        shiftr := -to_integer (expon + expon_base);  -- new shift
+      else                              -- return zero
+        zerores := true;
+      end if;
+    elsif (exp > expon_base-1) then     -- infinity
+      infres := true;
+    end if;
+    if(clk'event and clk = '1') then
+	if(stall = '0') then
+		zerores_2 <= zerores;
+		infres_2 <= infres;
+		round_2 <= round;
+		shiftr_2 <= shiftr;
+		exp_2 <= exp;
+		fract_2 <= fract_1;
+                sticky_2 <= sticky_1;
+		sign_2 <= sign_1;
+	end if;
+	if(reset = '1') then
+		stage_full(2) <= '0';
+	elsif (stall = '0') then
+		stage_full(2) <= stage_full(1);
+		stage_tags(2) <= stage_tags(1);
+	end if;
+    end if;
+  end process;
+
+  -- stage 3: exceptional cases
+  process(clk)
+    variable sfract     : UNSIGNED (fract'high downto 0);  -- shifted fraction
+    variable rfract     : UNSIGNED (fraction_width-1 downto 0);   -- fraction
+    variable exp        : SIGNED (exponent_width+1 downto 0);  -- exponent
+    variable rexp       : SIGNED (exponent_width+1 downto 0);  -- result exponent
+    variable rexpon     : UNSIGNED (exponent_width-1 downto 0);   -- exponent
+    variable result     : UNRESOLVED_float (exponent_width downto -fraction_width);  -- result
+    variable shiftr     : INTEGER;      -- shift amount
+    variable stickyx    : STD_ULOGIC;   -- version of sticky
+    constant expon_base : SIGNED (exponent_width-1 downto 0) :=
+      gen_expon_base(exponent_width);   -- exponent offset
+    variable round, zerores, infres : BOOLEAN;
+    variable exceptional_result_flag: std_ulogic;
+  begin  -- function normalize
+    zerores := zerores_2;
+    infres  := infres_2;
+    round   := round_2;
+    shiftr  := shiftr_2;
+    exp     := exp_2;
+    exceptional_result_flag := '0';
+    result := (others => '0');
+
+    if zerores then
+      exceptional_result_flag := '1';
+      result := zerofp (fraction_width => fraction_width,
+                        exponent_width => exponent_width);
+    elsif infres then
+      exceptional_result_flag := '1';
+      result := pos_inffp (fraction_width => fraction_width,
+                           exponent_width => exponent_width);
+    end if;
+  
+    if(clk'event and clk = '1') then
+	if(stall ='0') then
+		fract_3 <= fract_2;	
+		sticky_3 <= sticky_2;
+		shiftr_3 <= shiftr;
+		exp_3 <= exp;
+		exceptional_result_flag_3 <= exceptional_result_flag;
+		result_3 <= result;
+		sign_3 <= sign_2;
+	end if;
+	if(reset = '1') then
+		stage_full(3) <= '0';
+	elsif (stall = '0') then
+		stage_full(3) <= stage_full(2);
+		stage_tags(3) <= stage_tags(2);
+	end if;
+    end if;
+  end process;
+
+  
+  -- stage 4:  prepare data for shifter.
+  process(clk)
+        variable reverse_flag, stickyx: std_ulogic;
+        variable shiftu: unsigned(Ceil_Log2(fract'length)-1 downto 0);
+        variable tmp: natural;
+  begin 
+    
+    reverse_flag := '0';
+    --- break 3 -----
+    if(clk'event and clk = '1') then
+	if(stall = '0') then
+		if(shiftr_3 <= 0) then
+			reverse_flag := '1';
+                        tmp := - shiftr_3;
+			shift_in <= reverse(fract);
+	 		shiftu := to_unsigned(tmp,shiftu'length);
+			stickyx := sticky_3;
+		else
+			shift_in <= fract;
+			tmp := shiftr_3;
+	 		shiftu := to_unsigned(tmp, shiftu'length);
+			stickyx := sticky_3 or smallfract(fract_3, shiftr_3-1);
+		end if;
+   
+		shift_amount <= shiftu;
+
+		shift_tag_in(shift_tag_in'high downto 4) <= std_logic_vector(stage_tags(3)) & 
+			std_logic_vector(exp_3) & std_logic_vector(result_3);
+		shift_tag_in(3) <=  sign_3;
+		shift_tag_in(2) <=  exceptional_result_flag_3;
+		shift_tag_in(1) <=  reverse_flag;
+		shift_tag_in(0) <=  stickyx;
+	end if;
+	if(reset = '1') then
+		stage_full(4) <= '0';
+	elsif (stall = '0') then
+		stage_full(4) <= stage_full(3);
+		stage_tags(4) <= stage_tags(3);
+	end if;
+    end if;
+  end process;
+  
+  -- stage 5: shifter:  sfract := fract srl shiftr;   
+  us: UnsignedShifter generic map(shift_right_flag => true,
+					tag_width => shift_tag_in'length,
+					operand_width => shift_in'length,
+					shift_amount_width => shift_amount'length)
+		port map(L => shift_in, R => shift_amount, RESULT => shift_out,
+				clk => clk, reset => reset,
+				in_rdy => stage_full(4),
+				out_rdy => stage_full(5),
+				stall => stall,
+				tag_in => shift_tag_in,
+				tag_out => shift_tag_out);
+
+
+  -- stage 6: round.
+  process(clk)
+    variable sfract     : UNSIGNED (fract'high downto 0);  -- shifted fraction
+    variable rfract     : UNSIGNED (fraction_width-1 downto 0);   -- fraction
+    variable exp        : SIGNED (exponent_width+1 downto 0);  -- exponent
+    variable rexp       : SIGNED (exponent_width+1 downto 0);  -- result exponent
+    variable rexpon     : UNSIGNED (exponent_width-1 downto 0);   -- exponent
+    variable result_exceptional   : UNRESOLVED_float (exponent_width downto -fraction_width);  -- result
+    variable result     : UNRESOLVED_float (exponent_width downto -fraction_width);  -- result
+    variable shiftr     : INTEGER;      -- shift amount
+    variable stickyx    : STD_ULOGIC;   -- version of sticky
+    constant expon_base : SIGNED (exponent_width-1 downto 0) :=
+      gen_expon_base(exponent_width);   -- exponent offset
+    variable round, zerores, infres : BOOLEAN;
+    variable exceptional_result_flag, reverse_flag: std_ulogic;
+    variable shiftu : unsigned(Ceil_Log2(fract'length)-1 downto 0);
+    variable signx: std_ulogic;
+  begin  -- function normalize
+    exp   := signed(shift_tag_out((shift_tag_out'high - tag_width) downto 
+		(shift_tag_out'high - (tag_width+exp'length-1))));	
+    result_exceptional := to_float(shift_tag_out((shift_tag_out'high - 
+					(tag_width + exp'length)) downto 
+				(shift_tag_out'high - (tag_width+exp'length+result'length-1))),
+				exponent_width, fraction_width);	
+    signx := shift_tag_out(3);
+    exceptional_result_flag := shift_tag_out(2);
+    reverse_flag := shift_tag_out(1);
+    stickyx := shift_tag_out(0);
+    result := (others => '0');
+    rfract := (others => '0');
+
+    if reverse_flag = '0' then
+        sfract := shift_out;
+    else
+    	sfract := reverse(shift_out);
+    end if;
+
+    if nguard > 0 then
+      round := check_round (
+        fract_in    => sfract (nguard),
+        sign        => signx,
+        remainder   => sfract(nguard-1 downto 0),
+        sticky      => stickyx,
+        round_style => round_style);
+    end if;
+    if round then
+      fp_round(fract_in  => sfract (fraction_width-1+nguard downto nguard),
+               expon_in  => exp(rexp'range),
+               fract_out => rfract,
+               expon_out => rexp);
+    else
+      rfract := sfract (fraction_width-1+nguard downto nguard);
+      rexp   := exp(rexp'range);
+    end if;
+      --- break 5 ----
+      -- result
+    rexpon := UNSIGNED (rexp(exponent_width-1 downto 0));
+    rexpon (exponent_width-1)          := not rexpon(exponent_width-1);
+    result (rexpon'range)              := UNRESOLVED_float(rexpon);
+    result (-1 downto -fraction_width) := UNRESOLVED_float(rfract);
+
+    result (exponent_width) := signx;    -- sign BIT
+
+    if(clk'event and clk = '1') then
+	if(stall = '0') then
+		if(exceptional_result_flag = '0') then
+			result_6 <= result;
+		else
+			result_6 <= result_exceptional;
+		end if;
+	end if;
+	if(reset = '1') then
+		stage_full(6) <= '0';
+	elsif (stall = '0') then
+		stage_full(6) <= stage_full(5);
+		stage_tags(6) <= shift_tag_out(shift_tag_out'high downto 
+					(shift_tag_out'high - (tag_width-1)));
+	end if;
+    end if;
+  end process;
+
 end rtl;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -15125,6 +15682,115 @@ begin
 
 end rtl;
 -------------------------------------------------------------------------------
+-- a basic unsigned shifter.
+--
+-- for the moment, this just does a shift and adds delay stages at
+-- the end; presumably, the synthesis tool will retime things
+-- appropriately..
+--
+-- TODO: pipeline this explicitly!
+-------------------------------------------------------------------------------
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Utilities.all;
+
+
+entity UnsignedAdderSubtractor is
+  
+  generic (
+    tag_width          : integer;
+    operand_width      : integer
+	);
+
+  port (
+    L            : in  unsigned(operand_width-1 downto 0);
+    R            : in  unsigned(operand_width-1 downto 0);
+    RESULT       : out unsigned(operand_width-1 downto 0);
+    subtract_op  : in std_logic;
+    clk, reset   : in  std_logic;
+    in_rdy       : in  std_logic;
+    out_rdy      : out std_logic;
+    stall        : in std_logic;
+    tag_in       : in std_logic_vector(tag_width-1 downto 0);
+    tag_out      : out std_logic_vector(tag_width-1 downto 0));
+end entity;
+
+
+architecture Pipelined of UnsignedAdderSubtractor is
+
+  constant pipe_depth : integer := (operand_width/16);
+
+  type RWORD is array (natural range <>) of unsigned(operand_width-1 downto 0);
+  type TWORD is array (natural range <>) of std_logic_vector(tag_width-1 downto 0);  
+
+
+  signal intermediate_results : RWORD(0 to pipe_depth);
+  signal intermediate_tags : TWORD(0 to pipe_depth);  
+  signal stage_active : std_logic_vector(0 to pipe_depth);
+  
+begin  -- Pipelined
+
+  -- for now, just add/sub..
+  process(L,R, subtract_op)
+	variable fL, fR, fResult: unsigned(operand_width-1 downto 0);
+	variable zero_result: boolean;
+  begin
+	zero_result := false;
+	fL := L;
+        fR := R;
+	fResult := (others => '0');
+
+	if(subtract_op = '1') then
+		if( L < R) then
+			zero_result := true;
+		else
+			fR := (not R) + 1;
+		end if;
+	end if;
+	if(not zero_result) then
+		fResult := fL + fR;
+	end if;
+	intermediate_results(0) <= fResult;
+  end process;
+
+
+  -- I/O
+  intermediate_tags(0) <= tag_in;
+  stage_active(0) <= in_rdy;
+  out_rdy <= stage_active(pipe_depth);
+  tag_out <= intermediate_tags(pipe_depth);
+  RESULT <= intermediate_results(pipe_depth);
+  
+  -- for now, just add stages after the adder.
+  -- the synthesis tool should retime.  Later
+  -- we'll get around to doing the addition
+  -- right.
+  Pipeline: for STAGE in 1 to pipe_depth generate
+
+    process(clk)
+    begin
+      if(clk'event and clk = '1') then
+        if(reset = '1') then
+          stage_active(STAGE) <= '0';
+        elsif(stall = '0') then
+          stage_active(STAGE) <= stage_active(STAGE-1);
+        end if;
+
+        if(stall = '0') then
+          intermediate_results(STAGE) <= intermediate_results(STAGE-1);
+          intermediate_tags(STAGE) <= intermediate_tags(STAGE-1);
+        end if;
+        
+      end if;
+    end process;
+    
+  end generate Pipeline;
+end Pipelined;
+-------------------------------------------------------------------------------
 -- a basic unsigned multiplier.
 --
 -- for the moment, this just does a multiply and adds delay stages at
@@ -15138,11 +15804,156 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+entity DelayCell is
+   generic (operand_width: integer; delay: natural);
+   port (Din: in unsigned(operand_width-1 downto 0);
+	 Dout: out unsigned(operand_width-1 downto 0);
+	 clk: in std_logic;
+	 stall: in std_logic);
+end entity DelayCell;
+
+architecture Behave of DelayCell is
+	type DArray is array (natural range <>) of unsigned(operand_width-1 downto 0);
+	signal data_array: DArray(0 to delay);
+begin
+
+	data_array(0) <= Din;
+	NonZeroDelay: if delay > 0 generate
+	   SRgen: for I in 1 to delay generate
+		process(clk)
+		begin
+			if(clk'event and clk = '1') then
+				if(stall = '0') then
+					data_array(I) <= data_array(I-1);
+				end if;
+			end if;
+			
+		end process;
+	    end generate SRgen;
+	end generate NonZeroDelay;
+	
+	Dout <= data_array(delay);
+end Behave;
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity SumCell is
+ 	generic (operand_width: integer; ignore_diag: boolean; ignore_right: boolean);
+	port (SU,SDiagIn: in unsigned(operand_width-1 downto 0);
+              SR: in unsigned(1 downto 0);
+	      SDiagOut: out unsigned(operand_width-1 downto 0);
+	      SL: out unsigned(1 downto 0);
+	      stall: in std_logic;
+	      clk: in std_logic);
+end entity SumCell;
+
+architecture Behave of SumCell is
+begin
+
+	process(clk)
+		variable x, y, z, sum: unsigned(operand_width+1 downto 0);
+		variable t: unsigned(1 downto 0);
+	begin
+
+		if(clk'event and clk = '1') then
+			if(stall = '0') then
+				x := "00" & SU;
+				y := (1 => SR(1), 0 => SR(0), others => '0');
+				z := "00" & SDiagIn;
+		
+				if(not (ignore_diag  or ignore_right)) then
+					sum := x + y + z;
+				elsif (ignore_diag and ignore_right) then
+					sum := x;
+				elsif (ignore_diag and (not ignore_right)) then
+					sum := (x + y);
+				else
+					sum := (x + z);
+				end if;
+	
+				t := sum(operand_width+1 downto operand_width);
+
+				SDiagOut <= sum(operand_width-1 downto 0);
+				SL <= t;
+			end if;
+		end if;
+	end process;
+end Behave;
+
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity MultiplierCell is
+  generic (operand_width: integer);
+  port (MT, MR, ST, DiagIn: in unsigned(operand_width-1 downto 0);
+        ML, MD, SD, DiagOut: out unsigned(operand_width-1 downto 0);
+        stall: in std_logic;
+	clk: in std_logic);
+end entity MultiplierCell;
+
+architecture Simple of MultiplierCell is
+	constant zero_const : unsigned(operand_width-2 downto 0) := (others => '0');
+begin
+
+	-- sent through without any delay.
+	ML <= MR;
+
+	process(clk)
+		variable tmp,wext: unsigned((2*operand_width)-1 downto 0);
+		variable u, v, w: unsigned(operand_width downto 0);
+	begin
+		if(clk'event and clk = '1') then
+			if(stall = '0') then
+				tmp := MT*MR;
+		
+				-- pad one bit to incoming summands.
+				u :=  "0" & DiagIn;
+                                v :=  "0" & ST;
+		
+				-- this is a operand_width+1 size addition
+				w := (u + v);
+
+				-- pad to 2*operand_width
+				wext := zero_const & w;
+		
+				-- a full 2*operand_width addition.
+				tmp := tmp + wext;
+
+				-- send down the vertical operand
+				-- with a cycle delay.
+				MD <= MT;
+
+				-- top half of result goes down to 
+				-- next row (to be summed)
+				SD <= tmp((2*operand_width)-1 downto operand_width);
+
+				-- bottom half of the result goes out
+				-- on the diagonal..
+				DiagOut <= tmp(operand_width-1 downto 0);
+			end if;
+		end if;
+	end process;
+end Simple;
+
+
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Utilities.all;
+
 entity UnsignedMultiplier is
   
   generic (
     tag_width     : integer;
-    operand_width : integer);
+    operand_width : integer;
+    chunk_width   : integer := 8);
 
   port (
     L, R       : in  unsigned(operand_width-1 downto 0);
@@ -15154,7 +15965,6 @@ entity UnsignedMultiplier is
     tag_in     : in std_logic_vector(tag_width-1 downto 0);
     tag_out    : out std_logic_vector(tag_width-1 downto 0));
 end entity;
-
 
 architecture Pipelined of UnsignedMultiplier is
 
@@ -15184,6 +15994,366 @@ begin  -- Pipelined
   -- for now, just add stages after the multiply
   -- the synthesis tool should retime.  Later
   -- we'll get around to doing the array multiplier
+  -- right.
+  Pipeline: for STAGE in 1 to pipe_depth generate
+
+    process(clk)
+    begin
+      if(clk'event and clk = '1') then
+        if(reset = '1') then
+          stage_active(STAGE) <= '0';
+        elsif(stall = '0') then
+          stage_active(STAGE) <= stage_active(STAGE-1);
+        end if;
+
+        if(stall = '0') then
+          intermediate_results(STAGE) <= intermediate_results(STAGE-1);
+          intermediate_tags(STAGE) <= intermediate_tags(STAGE-1);
+        end if;
+        
+      end if;
+    end process;
+    
+  end generate Pipeline;
+end Pipelined;
+
+
+ 
+architecture ArrayMul of UnsignedMultiplier is
+
+	constant NumChunks : integer := Ceil(operand_width, chunk_width);
+
+	constant padded_operand_width: integer  := NumChunks*chunk_width;
+	signal Lpadded, Rpadded: unsigned(padded_operand_width-1 downto 0);
+	signal RESULTpadded: unsigned((2*padded_operand_width)-1 downto 0);
+
+	type TwoDTagArray is array (natural range <>) of std_logic_vector(tag_width-1 downto 0);
+	signal tag_array: TwoDTagArray(0 to 2*NumChunks);
+
+	type TwoDChunkArray is array (natural range <>, natural range <>) of unsigned(chunk_width-1 downto 0);
+	signal MT, ML, ST, DiagIn, SD, MR, MD, DiagOut: TwoDChunkArray(0 to NumChunks-1, 0 to NumChunks-1);
+
+
+
+	signal rdy_array: std_logic_vector(0 to 2*NumChunks);
+
+        -- the multiplier cells are arranged in a NumChunk X NumChunk array.
+        -- Cell (I,J) receives R(I) (MT),  L(J) (MR) and a partial sum from above (ST).
+	-- Cell (I,J) receives an incoming diagonal sum from Cell (I-1,J+1) and
+        -- passes on its sum to the diagonal block Cell (I+1,J-1).
+	--
+	component DelayCell 
+   		generic (operand_width: integer; delay: natural);
+   		port (Din: in unsigned(operand_width-1 downto 0);
+	 		Dout: out unsigned(operand_width-1 downto 0);
+	 		clk: in std_logic;
+	 		stall: in std_logic);
+	end component DelayCell;
+
+	component MultiplierCell is
+  		generic (operand_width: integer);
+  		port (MT, MR, ST, DiagIn: in unsigned(operand_width-1 downto 0);
+        		ML, MD, SD, DiagOut: out unsigned(operand_width-1 downto 0);
+        		stall: in std_logic;
+			clk: in std_logic);
+	end component MultiplierCell;
+
+	component SumCell is
+ 		generic (operand_width: integer; ignore_diag: boolean; ignore_right: boolean);
+		port (SU,SDiagIn: in unsigned(operand_width-1 downto 0);
+              		SR: in unsigned(1 downto 0);
+	      		SDiagOut: out unsigned(operand_width-1 downto 0);
+	      		SL: out unsigned(1 downto 0);
+	      		stall: in std_logic;
+	      		clk: in std_logic);
+	end component SumCell;
+
+	type OneDChunkArray is array (natural range <>) of unsigned(chunk_width-1 downto 0);
+	signal SU,SDiagIn,SDiagOut: OneDChunkArray(0 to NumChunks-1);
+
+	type OneD2BitArray is array (natural range <>) of unsigned(1 downto 0);
+        signal SR,SL: OneD2BitArray(0 to NumChunks-1);
+
+	signal result_array : OneDChunkArray(0 to (2*NumChunks)-1);
+begin
+
+	process(L)
+		variable lpad : unsigned(padded_operand_width-1 downto 0);
+	begin
+		lpad := (others => '0');
+		lpad(operand_width-1 downto 0) := L;
+		Lpadded <= lpad;
+	end process;
+
+	process(R)
+		variable rpad : unsigned(padded_operand_width-1 downto 0);
+	begin
+		rpad := (others => '0');
+		rpad(operand_width-1 downto 0) := R;
+		Rpadded <= rpad;
+	end process;
+
+	RESULT <= RESULTpadded((2*operand_width)-1 downto 0);
+
+	tag_array(0) <= tag_in;
+	rdy_array(0) <= in_rdy;
+	
+	Tags: for ROW in 1 to (2*NumChunks) generate
+		process(clk)
+		begin
+			if(clk'event and clk = '1') then
+				if(reset = '1') then
+					rdy_array(ROW) <= '0';
+					tag_array(ROW) <= (others => '0');
+				elsif(stall = '0') then
+					tag_array(ROW) <= tag_array(ROW-1);
+					rdy_array(ROW) <= rdy_array(ROW-1);
+				end if;
+			end if;
+		end process;
+	end generate Tags;
+	tag_out <= tag_array(2*NumChunks);
+	out_rdy <= rdy_array(2*NumChunks);
+
+	Rows: for ROW in 0 to NumChunks-1 generate
+		Cols: for COL in 0 to NumChunks-1 generate
+
+			-- incoming  L values get into MT(0,-).
+			ROWBC: if ROW = 0 generate
+                                MT(ROW,COL) <= Lpadded(((COL+1)*chunk_width)-1 downto (COL*chunk_width));
+
+				-- incoming signals to top row are 0.
+				DiagIn(ROW,COL) <= (others => '0');
+				ST(ROW,COL) <= (others => '0');
+
+			end generate ROWBC;
+
+		        COLBC: if COL=NumChunks-1 and ROW>0 generate
+				-- left border column has incoming diagonals 0
+				DiagIn(ROW,COL) <= (others => '0');
+			end generate COLBC;
+
+			-- from the right, R values enter with each row 
+			-- getting an appropriate delay.
+			COLBC2: if COL = 0 generate
+				delInst: DelayCell generic map(operand_width => chunk_width,
+								delay => ROW)
+					port map(Din => Rpadded(((ROW+1)*chunk_width)-1 downto (ROW*chunk_width)),
+						 Dout => MR(ROW,COL),
+						 clk => clk,
+						 stall => stall);
+			end generate COLBC2;
+
+			-- passing from right to left.
+			Cols1: if COL > 0 generate
+				MR(ROW,COL) <= ML(ROW,COL-1);
+			end generate Cols1;
+
+			ConnectArray: if ROW>0 generate
+
+				-- from top to bottom
+				MT(ROW,COL) <= MD(ROW-1,COL);
+				ST(ROW,COL) <= SD(ROW-1,COL);
+				
+				-- diagonally.
+				Cols2: if COL < NumChunks-1 generate
+					DiagIn(ROW,COL) <= DiagOut(ROW-1,COL+1);
+				end generate Cols2;
+			end generate ConnectArray;
+
+			mulCell: MultiplierCell generic map(operand_width => chunk_width)
+				port map(MT => MT(ROW,COL),
+					 ML => ML(ROW,COL),
+					 ST => ST(ROW,COL),
+					 DiagIn => DiagIn(ROW,COL),
+					 SD => SD(ROW,COL),
+					 MR => MR(ROW,COL),
+					 MD => MD(ROW,COL),
+					 stall => stall,
+					 DiagOut => DiagOut(ROW,COL),
+					 clk => clk);
+		end generate Cols;
+	end generate Rows;
+
+
+	--  instantiate an array of sum cells to take
+	--  care of the SD correction.
+	sumArray: for Cols in 0 to NumChunks-1 generate
+	
+		scell: SumCell generic map (operand_width => chunk_width,
+						ignore_diag => (Cols = NumChunks-1),
+						ignore_right => (Cols = 0))
+			port map(SU => SU(Cols),
+				 SDiagIn => SDiagIn(Cols),
+				 SR => SR(Cols),
+				 SDiagOut => SDiagOut(Cols),
+				 SL => SL(Cols),
+				 stall => stall,
+				 clk => clk);
+
+		BR: if(Cols = 0) generate
+			-- 0s from the right at the right boundary
+			SR(Cols) <= (others => '0');
+		end generate BR;
+				
+		BL: if(Cols = NumChunks-1) generate
+			-- 0s from the diagonal at the left boundary.
+			SDiagIn(Cols) <= (others => '0');
+		end generate BL;
+
+		--   inputs to the cells are delayed to match the sum
+		--   propagation.
+
+		--  sum coming down..
+		dSU: DelayCell generic map(operand_width => chunk_width, delay => Cols)
+			port map(Din => SD(NumChunks-1,Cols),
+				 Dout => SU(Cols),
+				 clk => clk,
+				 stall => stall);
+		
+		Cntr1: if(Cols > 0) generate
+			SR(Cols) <= SL(Cols-1);
+		end generate Cntr1;
+		
+		Cntr2: if (Cols < NumChunks-1) generate
+			-- diagonal coming in..  the leftmost cell has no incoming diagonal.
+			dSDiagIn: DelayCell generic map(operand_width => chunk_width, delay => Cols)
+				port map(Din => DiagOut(NumChunks-1,Cols+1),
+				 Dout => SDiagIn(Cols),
+				 clk => clk,
+				 stall => stall);
+		end generate Cntr2;
+		
+	end generate sumArray;
+
+
+	--       instantiate delay elements to match delays
+        --       inserted due to sum-cell array.
+
+
+	-- the right column and N-1 delays inserted.
+	RightColumn:  for Rows in 0 to NumChunks-1 generate
+		dRc: DelayCell generic map(operand_width => chunk_width, delay => NumChunks-1)
+			port map(Din => DiagOut(Rows,0),
+				 Dout => result_array(Rows),
+				 stall => stall,
+				 clk => clk);
+	end generate RightColumn;
+
+	-- the bottom row as N-C delays inserted as C goes from 0 to N-2
+	BottomRow: for Cols in 0 to NumChunks-2 generate
+		dBr: DelayCell generic map(operand_width => chunk_width, delay => NumChunks-(Cols+1))
+			port map(Din => SDiagOut(Cols),
+				 Dout => result_array(Cols+NumChunks),
+				 stall => stall,
+				 clk => clk);
+		
+	end generate BottomRow;
+
+	-- leftmost element has no delays inserted.
+	result_array((2*NumChunks)-1) <= SDiagOut(NumChunks-1);
+
+
+	-- result: pack the diagonals into the result vector.
+	process(result_array)
+	begin
+		for I in 0 to (2*NumChunks)-1 loop
+			RESULTpadded(((I+1)*chunk_width)-1 downto (I*chunk_width))
+				<= result_array(I);
+		end loop;
+	end process;
+
+end ArrayMul;
+-------------------------------------------------------------------------------
+-- a basic unsigned shifter.
+--
+-- for the moment, this just does a shift and adds delay stages at
+-- the end; presumably, the synthesis tool will retime things
+-- appropriately..
+--
+-- TODO: pipeline this explicitly!
+-------------------------------------------------------------------------------
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Utilities.all;
+
+
+entity UnsignedShifter is
+  
+  generic (
+    shift_right_flag   : boolean;
+    tag_width          : integer;
+    operand_width      : integer;
+    shift_amount_width : integer);
+
+  port (
+    L       : in  unsigned(operand_width-1 downto 0);
+    R       : in  unsigned(shift_amount_width-1 downto 0);
+    RESULT     : out unsigned(operand_width-1 downto 0);
+    clk, reset : in  std_logic;
+    in_rdy     : in  std_logic;
+    out_rdy    : out std_logic;
+    stall      : in std_logic;
+    tag_in     : in std_logic_vector(tag_width-1 downto 0);
+    tag_out    : out std_logic_vector(tag_width-1 downto 0));
+end entity;
+
+
+architecture Pipelined of UnsignedShifter is
+
+  constant pipe_depth : integer := Ceil(shift_amount_width,4);
+  constant num_sig_bits: integer := Minimum(shift_amount_width, Ceil_Log2(operand_width));
+
+  type RWORD is array (natural range <>) of unsigned(operand_width-1 downto 0);
+  type TWORD is array (natural range <>) of std_logic_vector(tag_width-1 downto 0);  
+
+
+  signal intermediate_results : RWORD(0 to pipe_depth);
+  signal intermediate_tags : TWORD(0 to pipe_depth);  
+  signal stage_active : std_logic_vector(0 to pipe_depth);
+  
+begin  -- Pipelined
+
+  TrivOp: if operand_width = 1 generate
+	intermediate_results(0) <= (others => '0') when R(0) = '1' else L;
+  end generate TrivOp;
+  
+
+  NonTrivOp: if operand_width > 1 generate
+  	-- for now, just shift..
+  	process(L,R)
+		variable shifted_L: unsigned(operand_width-1 downto 0);
+  	begin
+		shifted_L := L;
+		for I in 0 to num_sig_bits-1 loop  -- works only if operand_width > 1.
+			if(R(I) = '1') then
+				if(shift_right_flag) then
+					shifted_L :=  shift_right(shifted_L, 2**I);
+				else
+					shifted_L :=  shift_left(shifted_L, 2**I);
+				end if;
+			end if;
+		end loop;
+  		intermediate_results(0) <= shifted_L;
+  	end process;
+
+  end generate NonTrivOp;
+
+
+  -- I/O
+  intermediate_tags(0) <= tag_in;
+  stage_active(0) <= in_rdy;
+  out_rdy <= stage_active(pipe_depth);
+  tag_out <= intermediate_tags(pipe_depth);
+  RESULT <= intermediate_results(pipe_depth);
+  
+  -- for now, just add stages after the shift
+  -- the synthesis tool should retime.  Later
+  -- we'll get around to doing the array shifter
   -- right.
   Pipeline: for STAGE in 1 to pipe_depth generate
 
