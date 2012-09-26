@@ -154,6 +154,11 @@ begin
     variable shifter_in   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
     variable shift_amount : SIGNED (exponent_width downto 0);  -- shift fractions
 
+    variable shift_too_low : boolean;
+    variable shift_lt_zero : boolean;
+    variable shift_eq_zero : boolean;
+    variable shift_too_high : boolean;
+    variable shift_gt_zero : boolean;
   begin
 
     exceptional_result := '0';
@@ -202,43 +207,54 @@ begin
       exceptional_result := '1';
       fpresult := neg_zerofp (fraction_width => fraction_width,
                              exponent_width => exponent_width);
-    else
-      lresize := resize (arg            => to_x01(l),
+    end if;
+
+    -- go ahead and compute all this stuff.  exceptional_result
+    -- will override later if necessary.
+    lresize := resize (arg            => to_x01(l),
                          exponent_width => exponent_width,
                          fraction_width => fraction_width,
                          denormalize_in => denormalize,
                          denormalize    => denormalize);
-      lfptype := classfp (lresize, false);    -- errors already checked
-      rresize := resize (arg            => to_x01(r),
+    lfptype := classfp (lresize, false);    -- errors already checked
+    rresize := resize (arg            => to_x01(r),
                          exponent_width => exponent_width,
                          fraction_width => fraction_width,
                          denormalize_in => denormalize,
                          denormalize    => denormalize);
-      rfptype := classfp (rresize, false);    -- errors already checked
-      break_number (
+    rfptype := classfp (rresize, false);    -- errors already checked
+    break_number (
         arg         => lresize,
         fptyp       => lfptype,
         denormalize => denormalize,
         fract       => ulfract,
         expon       => exponl);
-      fractl := (others => '0');
-      fractl (fraction_width+addguard downto addguard) := ulfract;
-      break_number (
-        arg         => rresize,
-        fptyp       => rfptype,
-        denormalize => denormalize,
-        fract       => urfract,
-        expon       => exponr);
-      fractr := (others => '0');
-      fractr (fraction_width+addguard downto addguard) := urfract;
-      shiftx := (exponl(exponent_width-1) & exponl) - exponr;
-      if shiftx < -fractl'high then
+    fractl := (others => '0');
+    fractl (fraction_width+addguard downto addguard) := ulfract;
+    break_number (
+      arg         => rresize,
+      fptyp       => rfptype,
+      denormalize => denormalize,
+      fract       => urfract,
+      expon       => exponr);
+    fractr := (others => '0');
+    fractr (fraction_width+addguard downto addguard) := urfract;
+
+    shiftx := (exponl(exponent_width-1) & exponl) - exponr;
+
+    shift_too_low := (shiftx < -fractl'high);
+    shift_lt_zero := (shiftx < 0);
+    shift_eq_zero := (shiftx = 0);
+    shift_too_high := (shiftx > fractl'high);
+    shift_gt_zero := (shiftx > 0);
+     
+    if shift_too_low then
         rexpon    := exponr(exponent_width-1) & exponr;
         fractc    := fractr;
         fracts    := (others => '0');   -- add zero
         leftright := false;
         sticky    := or_reduce (fractl);
-      elsif shiftx < 0 then
+    elsif shift_lt_zero then
         shiftx    := - shiftx;
 
         shift_amount := shiftx;
@@ -251,7 +267,7 @@ begin
         leftright := false;
         sticky    := or_reduce (fractl (to_integer(shiftx) downto 0));
         sticky    := smallfract (fractl, to_integer(shiftx));
-      elsif shiftx = 0 then
+    elsif shift_eq_zero then
         rexpon := exponl(exponent_width-1) & exponl;
         sticky := '0';
         if fractr > fractl then
@@ -263,13 +279,13 @@ begin
           fracts    := fractr;
           leftright := true;
         end if;
-      elsif shiftx > fractr'high then
+    elsif shift_too_high then
         rexpon    := exponl(exponent_width-1) & exponl;
         fracts    := (others => '0');   -- add zero
         fractc    := fractl;
         leftright := true;
         sticky    := or_reduce (fractr);
-      elsif shiftx > 0 then
+    elsif shift_gt_zero then
 
         shift_amount := shiftx;
         use_shifter := '1';
@@ -281,7 +297,6 @@ begin
         leftright := true;
         sticky    := or_reduce (fractr (to_integer(shiftx) downto 0));
         sticky    := smallfract (fractr, to_integer(shiftx));
-      end if;
     end if;
     
     active_v := stage_full(0) and not (pipeline_stall or reset);
@@ -461,7 +476,8 @@ begin
 
   adder: UnsignedAdderSubtractor
 		generic map(tag_width => adder_tag_in'length,
-				operand_width => addL_3'length)
+				operand_width => addL_3'length,
+				chunk_width => 8)
 		port map( L => addL_3, R => addR_3, RESULT => ufract_4,
 				subtract_op => subtract_3,
 				clk => clk, reset => reset,

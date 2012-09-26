@@ -191,7 +191,7 @@ package body Utilities is
     variable ret_var : integer;
   begin
     ret_var := x/y;
-    if(ret_var*y < y) then
+    if((ret_var*y) < x) then
       ret_var := ret_var + 1;
     end if;
     return(ret_var);

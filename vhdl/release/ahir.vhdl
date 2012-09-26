@@ -212,7 +212,7 @@ package body Utilities is
     variable ret_var : integer;
   begin
     ret_var := x/y;
-    if(ret_var*y < y) then
+    if((ret_var*y) < x) then
       ret_var := ret_var + 1;
     end if;
     return(ret_var);
@@ -3019,7 +3019,8 @@ package BaseComponents is
   
   generic (
     tag_width          : integer;
-    operand_width      : integer
+    operand_width      : integer;
+    chunk_width        : integer
 	);
 
   port (
@@ -13788,6 +13789,11 @@ begin
     variable shifter_in   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
     variable shift_amount : SIGNED (exponent_width downto 0);  -- shift fractions
 
+    variable shift_too_low : boolean;
+    variable shift_lt_zero : boolean;
+    variable shift_eq_zero : boolean;
+    variable shift_too_high : boolean;
+    variable shift_gt_zero : boolean;
   begin
 
     exceptional_result := '0';
@@ -13836,43 +13842,54 @@ begin
       exceptional_result := '1';
       fpresult := neg_zerofp (fraction_width => fraction_width,
                              exponent_width => exponent_width);
-    else
-      lresize := resize (arg            => to_x01(l),
+    end if;
+
+    -- go ahead and compute all this stuff.  exceptional_result
+    -- will override later if necessary.
+    lresize := resize (arg            => to_x01(l),
                          exponent_width => exponent_width,
                          fraction_width => fraction_width,
                          denormalize_in => denormalize,
                          denormalize    => denormalize);
-      lfptype := classfp (lresize, false);    -- errors already checked
-      rresize := resize (arg            => to_x01(r),
+    lfptype := classfp (lresize, false);    -- errors already checked
+    rresize := resize (arg            => to_x01(r),
                          exponent_width => exponent_width,
                          fraction_width => fraction_width,
                          denormalize_in => denormalize,
                          denormalize    => denormalize);
-      rfptype := classfp (rresize, false);    -- errors already checked
-      break_number (
+    rfptype := classfp (rresize, false);    -- errors already checked
+    break_number (
         arg         => lresize,
         fptyp       => lfptype,
         denormalize => denormalize,
         fract       => ulfract,
         expon       => exponl);
-      fractl := (others => '0');
-      fractl (fraction_width+addguard downto addguard) := ulfract;
-      break_number (
-        arg         => rresize,
-        fptyp       => rfptype,
-        denormalize => denormalize,
-        fract       => urfract,
-        expon       => exponr);
-      fractr := (others => '0');
-      fractr (fraction_width+addguard downto addguard) := urfract;
-      shiftx := (exponl(exponent_width-1) & exponl) - exponr;
-      if shiftx < -fractl'high then
+    fractl := (others => '0');
+    fractl (fraction_width+addguard downto addguard) := ulfract;
+    break_number (
+      arg         => rresize,
+      fptyp       => rfptype,
+      denormalize => denormalize,
+      fract       => urfract,
+      expon       => exponr);
+    fractr := (others => '0');
+    fractr (fraction_width+addguard downto addguard) := urfract;
+
+    shiftx := (exponl(exponent_width-1) & exponl) - exponr;
+
+    shift_too_low := (shiftx < -fractl'high);
+    shift_lt_zero := (shiftx < 0);
+    shift_eq_zero := (shiftx = 0);
+    shift_too_high := (shiftx > fractl'high);
+    shift_gt_zero := (shiftx > 0);
+     
+    if shift_too_low then
         rexpon    := exponr(exponent_width-1) & exponr;
         fractc    := fractr;
         fracts    := (others => '0');   -- add zero
         leftright := false;
         sticky    := or_reduce (fractl);
-      elsif shiftx < 0 then
+    elsif shift_lt_zero then
         shiftx    := - shiftx;
 
         shift_amount := shiftx;
@@ -13885,7 +13902,7 @@ begin
         leftright := false;
         sticky    := or_reduce (fractl (to_integer(shiftx) downto 0));
         sticky    := smallfract (fractl, to_integer(shiftx));
-      elsif shiftx = 0 then
+    elsif shift_eq_zero then
         rexpon := exponl(exponent_width-1) & exponl;
         sticky := '0';
         if fractr > fractl then
@@ -13897,13 +13914,13 @@ begin
           fracts    := fractr;
           leftright := true;
         end if;
-      elsif shiftx > fractr'high then
+    elsif shift_too_high then
         rexpon    := exponl(exponent_width-1) & exponl;
         fracts    := (others => '0');   -- add zero
         fractc    := fractl;
         leftright := true;
         sticky    := or_reduce (fractr);
-      elsif shiftx > 0 then
+    elsif shift_gt_zero then
 
         shift_amount := shiftx;
         use_shifter := '1';
@@ -13915,7 +13932,6 @@ begin
         leftright := true;
         sticky    := or_reduce (fractr (to_integer(shiftx) downto 0));
         sticky    := smallfract (fractr, to_integer(shiftx));
-      end if;
     end if;
     
     active_v := stage_full(0) and not (pipeline_stall or reset);
@@ -14095,7 +14111,8 @@ begin
 
   adder: UnsignedAdderSubtractor
 		generic map(tag_width => adder_tag_in'length,
-				operand_width => addL_3'length)
+				operand_width => addL_3'length,
+				chunk_width => 8)
 		port map( L => addL_3, R => addR_3, RESULT => ufract_4,
 				subtract_op => subtract_3,
 				clk => clk, reset => reset,
@@ -15688,7 +15705,6 @@ end rtl;
 -- the end; presumably, the synthesis tool will retime things
 -- appropriately..
 --
--- TODO: pipeline this explicitly!
 -------------------------------------------------------------------------------
 
 library ieee;
@@ -15698,12 +15714,65 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Utilities.all;
 
+entity AddSubCell  is
+	generic ( operand_width: integer);
+	port (A,B: in unsigned(operand_width-1 downto 0);
+		Sum: out unsigned(operand_width-1 downto 0);
+		subtract_op: in std_logic;
+		BP,BG: out std_logic;
+		stall: in std_logic;
+		clk, reset: in std_logic);
+end entity AddSubCell;
 
+architecture Behave of AddSubCell is
+begin
+	process(clk)
+		variable sumv: unsigned(operand_width-1 downto 0);
+		variable prop, gen: std_logic;
+	begin
+		prop := '1';
+		gen  := '0';
+
+		if(subtract_op = '0') then
+			sumv := A+B;
+		else
+			sumv := A-B;
+		end if;
+
+		for I in 0 to operand_width-1 loop
+		 	
+		   if(subtract_op = '0') then 
+			prop := (prop and (A(I) or B(I)));
+			gen  := (A(I) and B(I)) or (gen and (A(I) or B(I)));
+		   else
+			prop := (prop and (A(I) xnor B(I)));
+			gen  := ((not A(I)) and B(I)) or (gen and (A(I) xnor B(I)));
+		   end if;
+		end loop;
+
+
+		if(clk'event and clk = '1') then
+		   if(stall = '0') then
+			Sum <= sumv;
+			BP <= prop;
+			BG <= gen;
+		   end if;
+		end if;
+	end process;
+end Behave;
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Utilities.all;
 entity UnsignedAdderSubtractor is
   
   generic (
     tag_width          : integer;
-    operand_width      : integer
+    operand_width      : integer;
+    chunk_width        : integer
 	);
 
   port (
@@ -15721,74 +15790,168 @@ end entity;
 
 
 architecture Pipelined of UnsignedAdderSubtractor is
+ 
+  constant num_chunks: integer := Ceil(operand_width, chunk_width);
+  constant padded_operand_width: integer := num_chunks  * chunk_width;
+  signal Lpadded, Rpadded, Resultpadded : unsigned(padded_operand_width-1 downto 0);
 
-  constant pipe_depth : integer := (operand_width/16);
-
-  type RWORD is array (natural range <>) of unsigned(operand_width-1 downto 0);
-  type TWORD is array (natural range <>) of std_logic_vector(tag_width-1 downto 0);  
-
-
-  signal intermediate_results : RWORD(0 to pipe_depth);
-  signal intermediate_tags : TWORD(0 to pipe_depth);  
+  constant pipe_depth : integer := 3;
   signal stage_active : std_logic_vector(0 to pipe_depth);
+
+
+  type CWORD is array (natural range <>) of unsigned(chunk_width-1 downto 0);
+  type TWORD is array (natural range <>) of std_logic_vector(tag_width-1 downto 0);  
+  signal stage_tags: TWORD(0 to pipe_depth);
+
+
+  signal addsubcell_Sum, addsubcell_Sum_Delayed, 
+			addsubcell_A, addsubcell_B, final_sums: CWord(0 to num_chunks-1);
+  signal addsubcell_BP, addsubcell_BG, addsubcell_Cout, addsubcell_Cin: std_logic_vector(0 to num_chunks-1);
+
+  signal block_carries: std_logic_vector(1 to num_chunks);
+  signal subtract_op_1, subtract_op_2: std_logic;
+
+
+  component AddSubCell  is
+	generic ( operand_width: integer);
+	port (A,B: in unsigned(operand_width-1 downto 0);
+		Sum: out unsigned(operand_width-1 downto 0);
+		subtract_op: in std_logic;
+		BP,BG: out std_logic;
+		stall: in std_logic;
+		clk, reset: in std_logic);
+  end component AddSubCell;
   
 begin  -- Pipelined
 
-  -- for now, just add/sub..
-  process(L,R, subtract_op)
-	variable fL, fR, fResult: unsigned(operand_width-1 downto 0);
-	variable zero_result: boolean;
-  begin
-	zero_result := false;
-	fL := L;
-        fR := R;
-	fResult := (others => '0');
+  addsubcell_Cin <= (others => '0');
+  stage_active(0) <= in_rdy;
+  out_rdy <= stage_active(pipe_depth);
+  stage_tags(0) <= tag_in;
+  tag_out <= stage_tags(3);
 
-	if(subtract_op = '1') then
-		if( L < R) then
-			zero_result := true;
+  RESULT <= Resultpadded(operand_width-1 downto 0);
+
+  process(L,R)
+	variable ltmp, rtmp: unsigned(padded_operand_width-1 downto 0);
+  begin
+	ltmp := (others => '0'); ltmp(operand_width-1 downto 0) := L;
+	rtmp := (others => '0'); rtmp(operand_width-1 downto 0) := R;
+	Lpadded <= ltmp;
+	Rpadded <= rtmp;
+  end process;
+
+  Stage1:  for I in  0 to num_chunks-1 generate
+
+	addsubCell_A(I) <= Lpadded(((I+1)*chunk_width)-1 downto (I*chunk_width));
+	addsubCell_B(I) <= Rpadded(((I+1)*chunk_width)-1 downto (I*chunk_width));
+
+	asCell: AddSubCell generic map(operand_width => chunk_width)
+		port  map( A => addsubcell_A(I),
+			   B => addsubcell_B(I),	
+			   Sum => addsubcell_Sum(I),
+			   subtract_op => subtract_op,
+			   BP => addsubcell_BP(I),
+			   BG => addsubcell_BG(I),
+			   stall => stall,
+			   clk => clk,
+			   reset => reset);
+
+	process(clk)
+	begin
+		if(clk'event and clk = '1') then
+			if(stall = '0') then
+				stage_tags(1) <= stage_tags(0);
+				subtract_op_1 <= subtract_op;
+			end if;
+			if(reset = '1') then
+				stage_active(1) <= '0';
+			else
+				stage_active(1) <= stage_active(0);
+			end if;
+		end if;
+        end process;
+			
+  end generate Stage1;
+
+  -- stage two: calculate the block carries.
+  process(clk)	
+	variable cin: std_logic_vector(0 to num_chunks);
+  begin
+	cin := (others => '0');
+	for I in 1 to num_chunks loop
+		cin(I) := (cin(I-1) and addsubcell_BP(I-1))  or addsubcell_BG(I-1);
+	end loop;
+
+	if(clk'event and clk = '1') then
+		if(stall = '0') then
+			block_carries <= cin(1 to num_chunks);
+			stage_tags(2) <= stage_tags(1);
+			addsubcell_Sum_Delayed <= addsubcell_Sum;
+			subtract_op_2 <= subtract_op_1;
+		end if;	
+		if(reset = '1') then
+			stage_active(2) <= '0';
 		else
-			fR := (not R) + 1;
+			stage_active(2) <= stage_active(1);
 		end if;
 	end if;
-	if(not zero_result) then
-		fResult := fL + fR;
-	end if;
-	intermediate_results(0) <= fResult;
   end process;
 
 
-  -- I/O
-  intermediate_tags(0) <= tag_in;
-  stage_active(0) <= in_rdy;
-  out_rdy <= stage_active(pipe_depth);
-  tag_out <= intermediate_tags(pipe_depth);
-  RESULT <= intermediate_results(pipe_depth);
-  
-  -- for now, just add stages after the adder.
-  -- the synthesis tool should retime.  Later
-  -- we'll get around to doing the addition
-  -- right.
-  Pipeline: for STAGE in 1 to pipe_depth generate
+  -- stage three: final sums
+  process(clk)
+	variable correction, tmp: unsigned(chunk_width-1 downto 0);
+	variable is_negative: boolean;
+  begin
+	correction := (others => '0');
+	if(clk'event and clk = '1') then
+		if(stall = '0') then
+			final_sums(0) <= addsubcell_Sum_Delayed(0);
+			for I in 1 to num_chunks-1 loop
+				if(block_carries(I) = '1') then
+					if(subtract_op_2 = '1') then
+						correction := (others => '1');
+					else
+						correction := (0 => '1', others => '0');
+					end if;
+				else	
+					correction := (others => '0');
+				end if;
+				tmp := addsubcell_Sum_Delayed(I) + correction;
 
-    process(clk)
-    begin
-      if(clk'event and clk = '1') then
-        if(reset = '1') then
-          stage_active(STAGE) <= '0';
-        elsif(stall = '0') then
-          stage_active(STAGE) <= stage_active(STAGE-1);
-        end if;
 
-        if(stall = '0') then
-          intermediate_results(STAGE) <= intermediate_results(STAGE-1);
-          intermediate_tags(STAGE) <= intermediate_tags(STAGE-1);
-        end if;
-        
-      end if;
-    end process;
-    
-  end generate Pipeline;
+				-- if correction is negative, then check that the
+				-- result is not negative! 
+				if(subtract_op_2 = '1') then
+					is_negative :=  (addsubcell_Sum_Delayed(I) < tmp);
+					if(is_negative) then
+						tmp  := (others => '0');
+					end if;
+				end if;
+				final_sums(I) <= tmp;
+			end loop;
+			stage_tags(3) <= stage_tags(2);
+			if(reset = '1') then
+				stage_active(3) <= '0';
+			else
+				stage_active(3) <= stage_active(2);
+			end if;
+		end if;
+	end if;
+  end process;
+
+
+  -- collect final-sums into RESULT
+  process(final_sums)
+  begin
+	for I in 0 to num_chunks-1 loop
+		ResultPadded(((I+1)*chunk_width)-1 downto (I*chunk_width)) <= final_sums(I);
+	end loop;
+  end process;
+
+
+
 end Pipelined;
 -------------------------------------------------------------------------------
 -- a basic unsigned multiplier.
@@ -16305,76 +16468,91 @@ end entity;
 
 architecture Pipelined of UnsignedShifter is
 
-  constant pipe_depth : integer := Ceil(shift_amount_width,4);
-  constant num_sig_bits: integer := Minimum(shift_amount_width, Ceil_Log2(operand_width));
+  constant phases_per_stage: integer := 4;
+  constant num_sig_bits: integer := Maximum(1,Minimum(shift_amount_width, Ceil_Log2(operand_width)));
+  constant pipe_depth : integer := Ceil(num_sig_bits,phases_per_stage);
 
   type RWORD is array (natural range <>) of unsigned(operand_width-1 downto 0);
   type TWORD is array (natural range <>) of std_logic_vector(tag_width-1 downto 0);  
+  type SWORD is array (natural range <>) of unsigned(num_sig_bits-1 downto 0);  
 
 
   signal intermediate_results : RWORD(0 to pipe_depth);
   signal intermediate_tags : TWORD(0 to pipe_depth);  
+  signal intermediate_shift_amount : SWORD(0 to pipe_depth);  
   signal stage_active : std_logic_vector(0 to pipe_depth);
+
   
+  constant debug_flag: boolean := true;
 begin  -- Pipelined
 
+  Debug: if debug_flag  generate
+	
+	DebugBlock: block
+		signal pipe_depth_sig, num_sig_bits_sig, tmp_sig, tmp_sig_2: integer;
+	begin
+		pipe_depth_sig <= pipe_depth;
+		num_sig_bits_sig <= num_sig_bits;
+		tmp_sig <= Ceil(num_sig_bits,phases_per_stage);
+		tmp_sig_2 <= (num_sig_bits/phases_per_stage);
+	end block;
+
+  end generate debug;
+
+   
   TrivOp: if operand_width = 1 generate
 	intermediate_results(0) <= (others => '0') when R(0) = '1' else L;
   end generate TrivOp;
   
 
   NonTrivOp: if operand_width > 1 generate
+
+
   	-- for now, just shift..
-  	process(L,R)
-		variable shifted_L: unsigned(operand_width-1 downto 0);
-  	begin
-		shifted_L := L;
-		for I in 0 to num_sig_bits-1 loop  -- works only if operand_width > 1.
-			if(R(I) = '1') then
-				if(shift_right_flag) then
-					shifted_L :=  shift_right(shifted_L, 2**I);
-				else
-					shifted_L :=  shift_left(shifted_L, 2**I);
+
+        genStages: for STAGE in 1 to pipe_depth generate
+  		process(clk)
+			variable shifted_L: unsigned(operand_width-1 downto 0);
+			variable shift_amount: unsigned(num_sig_bits-1 downto 0);
+  		begin
+			shifted_L := intermediate_results(STAGE-1);
+			shift_amount := intermediate_shift_amount(STAGE-1);
+
+			for I in ((STAGE-1)*phases_per_stage) to 
+					Minimum(num_sig_bits-1,(STAGE*phases_per_stage)-1) loop  
+				if(shift_amount(I) = '1') then
+					if(shift_right_flag) then
+						shifted_L :=  shift_right(shifted_L, 2**I);
+					else
+						shifted_L :=  shift_left(shifted_L, 2**I);
+					end if;
+				end if;
+			end loop;
+
+			if(clk'event and clk='1') then
+				if(stall = '0') then
+  					intermediate_results(STAGE) <= shifted_L;
+  					intermediate_tags(STAGE) <= intermediate_tags(STAGE-1);
+					stage_active(STAGE) <= stage_active(STAGE-1);
+					intermediate_shift_amount(STAGE) <= 
+							intermediate_shift_amount(STAGE-1);
 				end if;
 			end if;
-		end loop;
-  		intermediate_results(0) <= shifted_L;
-  	end process;
+  		end process;
+	end generate genStages;
 
   end generate NonTrivOp;
 
 
   -- I/O
+  intermediate_results(0) <=  L;
   intermediate_tags(0) <= tag_in;
+  intermediate_shift_amount(0) <= R(num_sig_bits-1 downto 0);
   stage_active(0) <= in_rdy;
   out_rdy <= stage_active(pipe_depth);
   tag_out <= intermediate_tags(pipe_depth);
   RESULT <= intermediate_results(pipe_depth);
   
-  -- for now, just add stages after the shift
-  -- the synthesis tool should retime.  Later
-  -- we'll get around to doing the array shifter
-  -- right.
-  Pipeline: for STAGE in 1 to pipe_depth generate
-
-    process(clk)
-    begin
-      if(clk'event and clk = '1') then
-        if(reset = '1') then
-          stage_active(STAGE) <= '0';
-        elsif(stall = '0') then
-          stage_active(STAGE) <= stage_active(STAGE-1);
-        end if;
-
-        if(stall = '0') then
-          intermediate_results(STAGE) <= intermediate_results(STAGE-1);
-          intermediate_tags(STAGE) <= intermediate_tags(STAGE-1);
-        end if;
-        
-      end if;
-    end process;
-    
-  end generate Pipeline;
 end Pipelined;
 library ieee;
 use ieee.std_logic_1164.all;

@@ -1316,7 +1316,8 @@ package BaseComponents is
   
   generic (
     tag_width          : integer;
-    operand_width      : integer
+    operand_width      : integer;
+    chunk_width        : integer
 	);
 
   port (
