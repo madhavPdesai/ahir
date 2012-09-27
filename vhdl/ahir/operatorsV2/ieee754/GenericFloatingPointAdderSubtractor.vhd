@@ -431,7 +431,7 @@ begin
   begin
         -- concatenate the tag as well!
   	shifter_tag_in(shifter_tag_in'high downto 7) <= 
-		tag1 & 
+		tag2 & 
 		std_logic_vector(fpresult_2) & std_logic_vector(fractc_2) &
 			std_logic_vector(fracts_2) & std_logic_vector(rexpon_2);
 	shifter_tag_in(6) <= '0'; -- unused.

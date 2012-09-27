@@ -14066,7 +14066,7 @@ begin
   begin
         -- concatenate the tag as well!
   	shifter_tag_in(shifter_tag_in'high downto 7) <= 
-		tag1 & 
+		tag2 & 
 		std_logic_vector(fpresult_2) & std_logic_vector(fractc_2) &
 			std_logic_vector(fracts_2) & std_logic_vector(rexpon_2);
 	shifter_tag_in(6) <= '0'; -- unused.
@@ -14511,6 +14511,9 @@ begin
         denormalize => denormalize,
         fract       => fractr,
         expon       => exponr);
+
+      -- TODO: this shifter slows things down. perhaps its better to break
+      --       and add a new stage at this point.
       if (rfptype = pos_denormal or rfptype = neg_denormal) then
         shifty := fraction_width - find_leftmost(fractr, '1');
         fractr := shift_left (fractr, shifty);
@@ -14718,12 +14721,13 @@ architecture rtl of GenericFloatingPointNormalizer is
 
     type TagArray is array (natural range <>) of std_logic_vector(tag_width-1 downto 0);
     signal stage_tags: TagArray(0 to num_stages);
+    signal expon_1  :signed(exponent_width+1 downto 0);
 
     signal fract_1,fract_2,fract_3  :  unsigned(fraction_width+nguard+1 downto 0);
     signal round_1, zerores_1, infres_1 : BOOLEAN;
     signal round_2, zerores_2, infres_2 : BOOLEAN;
 
-    signal shiftr_1,shiftr_2,shiftr_3     : INTEGER range -operand_width to operand_width;      -- shift amount
+    signal shiftr_1,shiftr_2,shiftr_3     : INTEGER range -(2**(expon'length+1)) to (2**(expon'length+1));      -- shift amount
 
     signal exp_1,exp_2,exp_3        : SIGNED (exponent_width+1 downto 0);  -- exponent
 
@@ -14757,7 +14761,7 @@ begin
     variable rexp       : SIGNED (exponent_width+1 downto 0);  -- result exponent
     variable rexpon     : UNSIGNED (exponent_width-1 downto 0);   -- exponent
     variable result     : UNRESOLVED_float (exponent_width downto -fraction_width);  -- result
-    variable shiftr     : INTEGER;      -- shift amount
+    variable shiftr     : INTEGER range -(2**(expon'length+1)) to (2**(expon'length+1));      -- shift amount
     variable stickyx    : STD_ULOGIC;   -- version of sticky
     constant expon_base : SIGNED (exponent_width-1 downto 0) :=
       gen_expon_base(exponent_width);   -- exponent offset
@@ -14798,7 +14802,7 @@ begin
     variable rexp       : SIGNED (exponent_width+1 downto 0);  -- result exponent
     variable rexpon     : UNSIGNED (exponent_width-1 downto 0);   -- exponent
     variable result     : UNRESOLVED_float (exponent_width downto -fraction_width);  -- result
-    variable shiftr     : INTEGER;      -- shift amount
+    variable shiftr     : INTEGER range -(2**(expon'length+1)) to (2**(expon'length+1));      -- shift amount
     variable stickyx    : STD_ULOGIC;   -- version of sticky
     constant expon_base : SIGNED (exponent_width-1 downto 0) :=
       gen_expon_base(exponent_width);   -- exponent offset
@@ -14852,7 +14856,7 @@ begin
     variable rexp       : SIGNED (exponent_width+1 downto 0);  -- result exponent
     variable rexpon     : UNSIGNED (exponent_width-1 downto 0);   -- exponent
     variable result     : UNRESOLVED_float (exponent_width downto -fraction_width);  -- result
-    variable shiftr     : INTEGER;      -- shift amount
+    variable shiftr     : INTEGER range -(2**(expon'length+1)) to (2**(expon'length+1));      -- shift amount
     variable stickyx    : STD_ULOGIC;   -- version of sticky
     constant expon_base : SIGNED (exponent_width-1 downto 0) :=
       gen_expon_base(exponent_width);   -- exponent offset
@@ -14962,7 +14966,7 @@ begin
     variable rexpon     : UNSIGNED (exponent_width-1 downto 0);   -- exponent
     variable result_exceptional   : UNRESOLVED_float (exponent_width downto -fraction_width);  -- result
     variable result     : UNRESOLVED_float (exponent_width downto -fraction_width);  -- result
-    variable shiftr     : INTEGER;      -- shift amount
+    variable shiftr     : INTEGER range -(2**(expon'length+1)) to (2**(expon'length+1));      -- shift amount
     variable stickyx    : STD_ULOGIC;   -- version of sticky
     constant expon_base : SIGNED (exponent_width-1 downto 0) :=
       gen_expon_base(exponent_width);   -- exponent offset

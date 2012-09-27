@@ -203,6 +203,9 @@ begin
         denormalize => denormalize,
         fract       => fractr,
         expon       => exponr);
+
+      -- TODO: this shifter slows things down. perhaps its better to break
+      --       and add a new stage at this point.
       if (rfptype = pos_denormal or rfptype = neg_denormal) then
         shifty := fraction_width - find_leftmost(fractr, '1');
         fractr := shift_left (fractr, shifty);

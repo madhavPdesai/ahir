@@ -30,7 +30,7 @@ Ignore Synthesis Constraint File   : yes
 ---- Target Parameters
 Output File Name                   : "xilinx_synth"
 Output Format                      : NGC
-Target Device                      : xc2vp30
+Target Device                      : xc3s5000
 
 ---- Source Options
 Top Module Name                    : ahir_system
@@ -2869,7 +2869,7 @@ WARNING:Xst:2404 -  FFs/Latches <shifter_in_2<27:27>> (without init value) have 
 WARNING:Xst:2404 -  FFs/Latches <fractc_2<27:27>> (without init value) have a constant value of 0 in block <GenericFloatingPointAdderSubtractor_3>.
 WARNING:Xst:2404 -  FFs/Latches <fracts_2<27:27>> (without init value) have a constant value of 0 in block <GenericFloatingPointAdderSubtractor_3>.
 WARNING:Xst:2404 -  FFs/Latches <shifter_in_2<27:27>> (without init value) have a constant value of 0 in block <GenericFloatingPointAdderSubtractor_3>.
-Loading device for application Rf_Device from file '2vp30.nph' in environment /CAD/Xilinx_9.2i.
+Loading device for application Rf_Device from file '3s5000.nph' in environment /CAD/Xilinx_9.2i.
 INFO:Xst:2653 - HDL ADVISOR - Unit <QueueBase_1> : Asynchronous or synchronous initialization of the register <write_pointer_0> prevents it from being combined with the RAM <Mram_queue_array> for implementation as read-only block RAM.
     -----------------------------------------------------------------------
     | ram_type           | Distributed                         |          |
@@ -7225,83 +7225,83 @@ WARNING:Xst:2677 - Node <dotProduct_instance_data_path.SplitOperatorGroup0.Piped
 
 Mapping all equations...
 Building and optimizing final netlist ...
-INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_19> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_2> 
-INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_22> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_5> 
 INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_0> in Unit <ahir_system> is equivalent to the following 7 FFs/Latches : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_1> <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_2> <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_3> <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_4> <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_5> <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_6>
    <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_7> 
-INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_27> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_36> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_19> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_2> 
-INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_21> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_4> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_shift_lt_zero_1_0> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_shiftx_1_8> 
-INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_30> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_39> 
-INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_28> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_37> 
-INFO:Xst:2260 - The FF/Latch <fpmul_instance_fpmul_CP_302.branch_block_stmt_125_305.assign_stmt_130_314.binary_129_active_x_x319_block.binary_129_active_x_x319_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <fpmul_instance_fpmul_CP_302.branch_block_stmt_125_305.assign_stmt_130_314.binary_129_active_x_x319_block.binary_129_active_x_x319_join_placegen[1].placeBlock.pI_token_latch_0> <fpmul_instance_fpmul_CP_302.branch_block_stmt_125_305.assign_stmt_130_314.binary_129_active_x_x319_block.binary_129_active_x_x319_join_placegen[2].placeBlock.pI_token_latch_0> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_20> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_3> 
-INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_rexpon_2_8> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_rexpon_2_7> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponl_1_2> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractl_1_19> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_35> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_26> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_18> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_1> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_7> in Unit <ahir_system> is equivalent to the following 7 FFs/Latches : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_6> <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_5> <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_4> <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_3> <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_2> <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_1> <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_0> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponr_1_3> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractr_1_20> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_7> in Unit <ahir_system> is equivalent to the following 7 FFs/Latches : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_6> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_5> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_4> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_3> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_2> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_1>
-   <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_0> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponr_1_5> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractr_1_22> 
-INFO:Xst:2260 - The FF/Latch <fpcmpgt_instance_fpcmpgt_CP_206.branch_block_stmt_89_209.assign_stmt_94_to_assign_stmt_98_218.binary_93_active_x_x223_block.binary_93_active_x_x223_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <fpcmpgt_instance_fpcmpgt_CP_206.branch_block_stmt_89_209.assign_stmt_94_to_assign_stmt_98_218.binary_93_active_x_x223_block.binary_93_active_x_x223_join_placegen[1].placeBlock.pI_token_latch_0> <fpcmpgt_instance_fpcmpgt_CP_206.branch_block_stmt_89_209.assign_stmt_94_to_assign_stmt_98_218.binary_93_active_x_x223_block.binary_93_active_x_x223_join_placegen[2].placeBlock.pI_token_latch_0> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_37> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_28> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_22> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_5> 
-INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_0> in Unit <ahir_system> is equivalent to the following 7 FFs/Latches : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_1> <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_2> <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_3> <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_4> <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_5> <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_6> <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_7> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_fpsub_CP_339.branch_block_stmt_139_342.assign_stmt_144_351.binary_143_active_x_x356_block.binary_143_active_x_x356_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <fpsub_instance_fpsub_CP_339.branch_block_stmt_139_342.assign_stmt_144_351.binary_143_active_x_x356_block.binary_143_active_x_x356_join_placegen[1].placeBlock.pI_token_latch_0> <fpsub_instance_fpsub_CP_339.branch_block_stmt_139_342.assign_stmt_144_351.binary_143_active_x_x356_block.binary_143_active_x_x356_join_placegen[2].placeBlock.pI_token_latch_0> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_39> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_30> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_shift_lt_zero_1_0> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_shiftx_1_8> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponl_1_5> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractl_1_22> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_23> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_6> 
-INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_20> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_3> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_rexpon_2_8> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_rexpon_2_7> 
 INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_21> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_4> 
-INFO:Xst:2260 - The FF/Latch <fpcmplt_instance_fpcmplt_CP_254.branch_block_stmt_107_257.assign_stmt_112_to_assign_stmt_116_266.binary_111_active_x_x271_block.binary_111_active_x_x271_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <fpcmplt_instance_fpcmplt_CP_254.branch_block_stmt_107_257.assign_stmt_112_to_assign_stmt_116_266.binary_111_active_x_x271_block.binary_111_active_x_x271_join_placegen[1].placeBlock.pI_token_latch_0> <fpcmplt_instance_fpcmplt_CP_254.branch_block_stmt_107_257.assign_stmt_112_to_assign_stmt_116_266.binary_111_active_x_x271_block.binary_111_active_x_x271_join_placegen[2].placeBlock.pI_token_latch_0> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_20> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_3> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_21> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_4> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponr_1_6> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractr_1_23> 
 INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_32> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_41> 
 INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_41> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_32> 
-INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_22> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_5> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_18> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_1> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_25_active_x_x45_block.binary_25_active_x_x45_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_25_active_x_x45_block.binary_25_active_x_x45_join_placegen[1].placeBlock.pI_token_latch_0> <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_25_active_x_x45_block.binary_25_active_x_x45_join_placegen[2].placeBlock.pI_token_latch_0> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_23> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_6> 
-INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_26> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_35> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_20_active_x_x31_block.binary_20_active_x_x31_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_20_active_x_x31_block.binary_20_active_x_x31_join_placegen[1].placeBlock.pI_token_latch_0> <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_20_active_x_x31_block.binary_20_active_x_x31_join_placegen[2].placeBlock.pI_token_latch_0> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_21> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_4> 
-INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_29> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_38> 
-INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_23> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_6> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_rexpon_2_7> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_rexpon_2_8> 
-INFO:Xst:2260 - The FF/Latch <fpcmpeq_instance_fpcmpeq_CP_158.branch_block_stmt_70_161.assign_stmt_76_to_assign_stmt_80_170.binary_74_active_x_x175_block.binary_74_active_x_x175_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <fpcmpeq_instance_fpcmpeq_CP_158.branch_block_stmt_70_161.assign_stmt_76_to_assign_stmt_80_170.binary_74_active_x_x175_block.binary_74_active_x_x175_join_placegen[1].placeBlock.pI_token_latch_0> <fpcmpeq_instance_fpcmpeq_CP_158.branch_block_stmt_70_161.assign_stmt_76_to_assign_stmt_80_170.binary_74_active_x_x175_block.binary_74_active_x_x175_join_placegen[2].placeBlock.pI_token_latch_0> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponr_1_6> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractr_1_23> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponl_1_3> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractl_1_20> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_exceptional_result_1> in Unit <ahir_system> is equivalent to the following 8 FFs/Latches : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_0> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_1> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_2> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_3> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_4> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_5> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_6> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_7> 
 INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_18> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_1> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_rexpon_2_7> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_rexpon_2_8> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_23> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_6> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_35> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_26> 
 INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponr_1_4> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractr_1_21> 
-INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_18> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_1> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_rexpon_2_8> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_rexpon_2_7> 
-INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_20> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_3> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_38> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_29> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponr_1_1> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractr_1_18> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_15_active_x_x17_block.binary_15_active_x_x17_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_15_active_x_x17_block.binary_15_active_x_x17_join_placegen[1].placeBlock.pI_token_latch_0> <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_15_active_x_x17_block.binary_15_active_x_x17_join_placegen[2].placeBlock.pI_token_latch_0> 
-INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_23> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_6> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_22> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_5> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_40> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_31> 
-INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_31> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_40> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_42> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_33> 
-INFO:Xst:2260 - The FF/Latch <fpadd_instance_fpadd_CP_121.branch_block_stmt_55_124.assign_stmt_60_133.binary_59_active_x_x138_block.binary_59_active_x_x138_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <fpadd_instance_fpadd_CP_121.branch_block_stmt_55_124.assign_stmt_60_133.binary_59_active_x_x138_block.binary_59_active_x_x138_join_placegen[1].placeBlock.pI_token_latch_0> <fpadd_instance_fpadd_CP_121.branch_block_stmt_55_124.assign_stmt_60_133.binary_59_active_x_x138_block.binary_59_active_x_x138_join_placegen[2].placeBlock.pI_token_latch_0> 
+INFO:Xst:2260 - The FF/Latch <fpcmplt_instance_fpcmplt_CP_254.branch_block_stmt_107_257.assign_stmt_112_to_assign_stmt_116_266.binary_111_active_x_x271_block.binary_111_active_x_x271_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <fpcmplt_instance_fpcmplt_CP_254.branch_block_stmt_107_257.assign_stmt_112_to_assign_stmt_116_266.binary_111_active_x_x271_block.binary_111_active_x_x271_join_placegen[1].placeBlock.pI_token_latch_0> <fpcmplt_instance_fpcmplt_CP_254.branch_block_stmt_107_257.assign_stmt_112_to_assign_stmt_116_266.binary_111_active_x_x271_block.binary_111_active_x_x271_join_placegen[2].placeBlock.pI_token_latch_0> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_20> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_3> 
 INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponl_1_6> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractl_1_23> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_36> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_27> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_18> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_1> 
+INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_22> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_5> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponr_1_1> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractr_1_18> 
 INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponl_1_1> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractl_1_18> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_19> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_2> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_0> in Unit <ahir_system> is equivalent to the following 7 FFs/Latches : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_1> <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_2> <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_3> <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_4> <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_5> <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_6> <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_7> 
-INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_shift_lt_zero_1_0> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_shiftx_1_8> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_37> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_28> 
 INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponl_1_4> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractl_1_21> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponr_1_2> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractr_1_19> 
-INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_33> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_42> 
-INFO:Xst:2260 - The FF/Latch <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_30_active_x_x59_block.binary_30_active_x_x59_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_30_active_x_x59_block.binary_30_active_x_x59_join_placegen[1].placeBlock.pI_token_latch_0> <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_30_active_x_x59_block.binary_30_active_x_x59_join_placegen[2].placeBlock.pI_token_latch_0> 
-INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_21> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_4> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_39> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_30> 
+INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_26> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_35> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_shift_lt_zero_1_0> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_shiftx_1_8> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_25_active_x_x45_block.binary_25_active_x_x45_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_25_active_x_x45_block.binary_25_active_x_x45_join_placegen[1].placeBlock.pI_token_latch_0> <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_25_active_x_x45_block.binary_25_active_x_x45_join_placegen[2].placeBlock.pI_token_latch_0> 
 INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_7> in Unit <ahir_system> is equivalent to the following 8 FFs/Latches : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_6> <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_5> <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_4> <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_3> <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_2> <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_1> <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_0> <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_exceptional_result_1> 
+INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_shift_lt_zero_1_0> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_shiftx_1_8> 
+INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_23> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_6> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_20_active_x_x31_block.binary_20_active_x_x31_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_20_active_x_x31_block.binary_20_active_x_x31_join_placegen[1].placeBlock.pI_token_latch_0> <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_20_active_x_x31_block.binary_20_active_x_x31_join_placegen[2].placeBlock.pI_token_latch_0> 
+INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_29> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_38> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_7> in Unit <ahir_system> is equivalent to the following 7 FFs/Latches : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_6> <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_5> <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_4> <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_3> <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_2> <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_1> <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_0> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_15_active_x_x17_block.binary_15_active_x_x17_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_15_active_x_x17_block.binary_15_active_x_x17_join_placegen[1].placeBlock.pI_token_latch_0> <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_15_active_x_x17_block.binary_15_active_x_x17_join_placegen[2].placeBlock.pI_token_latch_0> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponr_1_2> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractr_1_19> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_22> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_5> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_20> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_3> 
+INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_31> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_40> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_22> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_5> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_21> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_4> 
+INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_20> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_3> 
+INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_33> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_42> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_fpsub_CP_339.branch_block_stmt_139_342.assign_stmt_144_351.binary_143_active_x_x356_block.binary_143_active_x_x356_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <fpsub_instance_fpsub_CP_339.branch_block_stmt_139_342.assign_stmt_144_351.binary_143_active_x_x356_block.binary_143_active_x_x356_join_placegen[1].placeBlock.pI_token_latch_0> <fpsub_instance_fpsub_CP_339.branch_block_stmt_139_342.assign_stmt_144_351.binary_143_active_x_x356_block.binary_143_active_x_x356_join_placegen[2].placeBlock.pI_token_latch_0> 
 INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_19> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_2> 
+INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_20> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_3> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_36> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_27> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_38> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_29> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_7> in Unit <ahir_system> is equivalent to the following 7 FFs/Latches : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_6> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_5> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_4> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_3> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_2> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_1>
+   <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Normalizer.normalizer_result_3_0> 
+INFO:Xst:2260 - The FF/Latch <fpadd_instance_fpadd_CP_121.branch_block_stmt_55_124.assign_stmt_60_133.binary_59_active_x_x138_block.binary_59_active_x_x138_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <fpadd_instance_fpadd_CP_121.branch_block_stmt_55_124.assign_stmt_60_133.binary_59_active_x_x138_block.binary_59_active_x_x138_join_placegen[1].placeBlock.pI_token_latch_0> <fpadd_instance_fpadd_CP_121.branch_block_stmt_55_124.assign_stmt_60_133.binary_59_active_x_x138_block.binary_59_active_x_x138_join_placegen[2].placeBlock.pI_token_latch_0> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_23> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_6> 
+INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_21> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_4> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_shift_lt_zero_1_0> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_shiftx_1_8> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_18> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_1> 
+INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_19> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_2> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponl_1_2> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractl_1_19> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractl_1_19> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponl_1_2> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_40> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_31> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_42> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_33> 
+INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_27> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_36> 
+INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_28> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_37> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponl_1_5> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractl_1_22> 
+INFO:Xst:2260 - The FF/Latch <fpcmpeq_instance_fpcmpeq_CP_158.branch_block_stmt_70_161.assign_stmt_76_to_assign_stmt_80_170.binary_74_active_x_x175_block.binary_74_active_x_x175_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <fpcmpeq_instance_fpcmpeq_CP_158.branch_block_stmt_70_161.assign_stmt_76_to_assign_stmt_80_170.binary_74_active_x_x175_block.binary_74_active_x_x175_join_placegen[1].placeBlock.pI_token_latch_0> <fpcmpeq_instance_fpcmpeq_CP_158.branch_block_stmt_70_161.assign_stmt_76_to_assign_stmt_80_170.binary_74_active_x_x175_block.binary_74_active_x_x175_join_placegen[2].placeBlock.pI_token_latch_0> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_19> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_2> 
+INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_23> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_6> 
+INFO:Xst:2260 - The FF/Latch <fpcmpgt_instance_fpcmpgt_CP_206.branch_block_stmt_89_209.assign_stmt_94_to_assign_stmt_98_218.binary_93_active_x_x223_block.binary_93_active_x_x223_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <fpcmpgt_instance_fpcmpgt_CP_206.branch_block_stmt_89_209.assign_stmt_94_to_assign_stmt_98_218.binary_93_active_x_x223_block.binary_93_active_x_x223_join_placegen[1].placeBlock.pI_token_latch_0> <fpcmpgt_instance_fpcmpgt_CP_206.branch_block_stmt_89_209.assign_stmt_94_to_assign_stmt_98_218.binary_93_active_x_x223_block.binary_93_active_x_x223_join_placegen[2].placeBlock.pI_token_latch_0> 
+INFO:Xst:2260 - The FF/Latch <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_0> in Unit <ahir_system> is equivalent to the following 7 FFs/Latches : <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_1> <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_2> <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_3> <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_4> <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_5> <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_6> <fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_7> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponr_1_5> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractr_1_22> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponr_1_3> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractr_1_20> 
+INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_18> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_1> 
+INFO:Xst:2260 - The FF/Latch <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_30> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_amul_tag_array_1_39> 
+INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_rexpon_2_8> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_rexpon_2_7> 
+INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_fractr_1_22> in Unit <ahir_system> is equivalent to the following FF/Latch : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_exponr_1_5> 
+INFO:Xst:2260 - The FF/Latch <fpmul_instance_fpmul_CP_302.branch_block_stmt_125_305.assign_stmt_130_314.binary_129_active_x_x319_block.binary_129_active_x_x319_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <fpmul_instance_fpmul_CP_302.branch_block_stmt_125_305.assign_stmt_130_314.binary_129_active_x_x319_block.binary_129_active_x_x319_join_placegen[1].placeBlock.pI_token_latch_0> <fpmul_instance_fpmul_CP_302.branch_block_stmt_125_305.assign_stmt_130_314.binary_129_active_x_x319_block.binary_129_active_x_x319_join_placegen[2].placeBlock.pI_token_latch_0> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_exceptional_result_1> in Unit <ahir_system> is equivalent to the following 8 FFs/Latches : <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_0> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_1> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_2> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_3> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_4> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_5> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_6> <dotProduct_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_fpresult_1_7> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_30_active_x_x59_block.binary_30_active_x_x59_join_placegen[0].placeBlock.pI_token_latch_0> in Unit <ahir_system> is equivalent to the following 2 FFs/Latches : <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_30_active_x_x59_block.binary_30_active_x_x59_join_placegen[1].placeBlock.pI_token_latch_0> <dotProduct_instance_dotProduct_CP_0.branch_block_stmt_11_3.assign_stmt_16_to_assign_stmt_46_12.binary_30_active_x_x59_block.binary_30_active_x_x59_join_placegen[2].placeBlock.pI_token_latch_0> 
+INFO:Xst:2260 - The FF/Latch <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_exponl_1_3> in Unit <ahir_system> is equivalent to the following FF/Latch : <dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_fractl_1_20> 
+INFO:Xst:2260 - The FF/Latch <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_0> in Unit <ahir_system> is equivalent to the following 7 FFs/Latches : <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_1> <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_2> <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_3> <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_4> <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_5> <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_6> <fpadd_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_result_3_7> 
 
 Final Macro Processing ...
 
@@ -7488,23 +7488,23 @@ Design Statistics
 # IOs                              : 850
 
 Cell Usage :
-# BELS                             : 10568
-#      BUF                         : 397
+# BELS                             : 10625
+#      BUF                         : 405
 #      GND                         : 1
-#      INV                         : 103
+#      INV                         : 107
 #      LUT1                        : 143
-#      LUT2                        : 1373
-#      LUT2_D                      : 71
-#      LUT2_L                      : 32
-#      LUT3                        : 2258
-#      LUT3_D                      : 158
-#      LUT3_L                      : 98
-#      LUT4                        : 3119
-#      LUT4_D                      : 217
-#      LUT4_L                      : 343
+#      LUT2                        : 1379
+#      LUT2_D                      : 63
+#      LUT2_L                      : 46
+#      LUT3                        : 2257
+#      LUT3_D                      : 198
+#      LUT3_L                      : 117
+#      LUT4                        : 3098
+#      LUT4_D                      : 195
+#      LUT4_L                      : 376
 #      MULT_AND                    : 10
 #      MUXCY                       : 991
-#      MUXF5                       : 592
+#      MUXF5                       : 577
 #      MUXF6                       : 12
 #      VCC                         : 1
 #      XORCY                       : 649
@@ -7530,18 +7530,18 @@ Cell Usage :
 Device utilization summary:
 ---------------------------
 
-Selected Device : 2vp30fg676-7 
+Selected Device : 3s5000fg900-5 
 
- Number of Slices:                    5179  out of  13696    37%  
- Number of Slice Flip Flops:          5514  out of  27392    20%  
- Number of 4 input LUTs:              8557  out of  27392    31%  
-    Number used as logic:             7915
+ Number of Slices:                    5265  out of  33280    15%  
+ Number of Slice Flip Flops:          5514  out of  66560     8%  
+ Number of 4 input LUTs:              8621  out of  66560    12%  
+    Number used as logic:             7979
     Number used as Shift registers:    140
     Number used as RAMs:               502
  Number of IOs:                        850
- Number of bonded IOBs:                688  out of    416   165% (*) 
- Number of MULT18X18s:                  18  out of    136    13%  
- Number of GCLKs:                        1  out of     16     6%  
+ Number of bonded IOBs:                688  out of    633   108% (*) 
+ Number of MULT18X18s:                  18  out of    104    17%  
+ Number of GCLKs:                        1  out of      8    12%  
 
 WARNING:Xst:1336 -  (*) More than 100% of Device resources are used
 
@@ -7575,12 +7575,12 @@ No asynchronous control signals found in this design
 
 Timing Summary:
 ---------------
-Speed Grade: -7
+Speed Grade: -5
 
-   Minimum period: 7.935ns (Maximum Frequency: 126.028MHz)
-   Minimum input arrival time before clock: 5.546ns
-   Maximum output required time after clock: 4.189ns
-   Maximum combinational path delay: 4.588ns
+   Minimum period: 13.413ns (Maximum Frequency: 74.552MHz)
+   Minimum input arrival time before clock: 9.015ns
+   Maximum output required time after clock: 7.910ns
+   Maximum combinational path delay: 7.874ns
 
 Timing Detail:
 --------------
@@ -7588,10 +7588,10 @@ All values displayed in nanoseconds (ns)
 
 =========================================================================
 Timing constraint: Default period analysis for Clock 'clk'
-  Clock period: 7.935ns (frequency: 126.028MHz)
-  Total number of paths / destination ports: 367115 / 12240
+  Clock period: 13.413ns (frequency: 74.552MHz)
+  Total number of paths / destination ports: 384851 / 12240
 -------------------------------------------------------------------------
-Delay:               7.935ns (Levels of Logic = 11)
+Delay:               13.413ns (Levels of Logic = 10)
   Source:            fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_r_-14 (FF)
   Destination:       fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_rexpon_1_8 (FF)
   Source Clock:      clk rising
@@ -7601,91 +7601,91 @@ Delay:               7.935ns (Levels of Logic = 11)
                                 Gate     Net
     Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
     ----------------------------------------  ------------
-     FDE:C->Q             12   0.370   0.657  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_r_-14 (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_r_-14)
-     LUT4:I0->O            1   0.275   0.430  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Madd_fractr_not0000<3>191 (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Madd_fractr_not0000<3>1_map5)
-     LUT2:I1->O           11   0.275   0.559  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Madd_fractr_not0000<3>110 (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_N151)
-     LUT4:I3->O            1   0.275   0.350  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_shifty_or0000_1 (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_shifty_or00001)
-     LUT4_D:I2->LO         1   0.275   0.118  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Mmux_shifty_mux0003111 (N28780)
-     LUT3:I2->O            3   0.275   0.415  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_shifty_mux0003<9>_SW0 (N22869)
-     LUT4:I2->O            4   0.275   0.511  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_shifty_mux0003<9> (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_shifty_mux0003<9>)
-     LUT2:I1->O            1   0.275   0.000  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Msub_rexpon_1_addsub0001_lut<6> (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_N22)
-     MUXCY:S->O            1   0.334   0.000  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Msub_rexpon_1_addsub0001_cy<6> (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Msub_rexpon_1_addsub0001_cy<6>)
-     XORCY:CI->O           4   0.708   0.451  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Msub_rexpon_1_addsub0001_xor<7> (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Madd_rexpon_1_addsub000214)
-     LUT4:I3->O            1   0.275   0.349  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_rexpon_1_mux0000<1>_SW1 (N25759)
-     LUT4:I2->O            1   0.275   0.000  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_rexpon_1_mux0000<1> (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_rexpon_1_mux0000<1>)
-     FDE:D                     0.208          fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_rexpon_1_8
+     FDE:C->Q             13   0.626   1.290  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_r_-14 (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_r_-14)
+     LUT4:I0->O            2   0.479   0.915  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Madd_fractr_not0000<3>191 (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Madd_fractr_not0000<3>1_map5)
+     LUT2:I1->O           15   0.479   1.033  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Madd_fractr_not0000<3>110 (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_N151)
+     LUT4_D:I3->O          3   0.479   0.941  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_shifty_or0000_1 (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_shifty_or00001)
+     LUT4:I1->O            1   0.479   0.851  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Mmux_shifty_mux000311 (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_shifty_mux0003<0>)
+     LUT2:I1->O            1   0.479   0.000  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Msub_rexpon_1_addsub0001_lut<0> (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_N16)
+     MUXCY:S->O            1   0.435   0.000  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Msub_rexpon_1_addsub0001_cy<0> (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Msub_rexpon_1_addsub0001_cy<0>)
+     XORCY:CI->O           4   0.786   0.949  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Msub_rexpon_1_addsub0001_xor<1> (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_Madd_rexpon_1_addsub00022)
+     LUT4_D:I1->O          6   0.479   0.876  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_rexpon_1_mux0000<5>_SW0 (N25769)
+     LUT4:I3->O            1   0.479   0.704  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_rexpon_1_mux0000<0>_SW0 (N26077)
+     LUT4:I3->O            1   0.479   0.000  fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_rexpon_1_mux0000<1> (fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_rexpon_1_mux0000<1>)
+     FDE:D                     0.176          fpmul_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xMul.useGeneric.op_rexpon_1_8
     ----------------------------------------
-    Total                      7.935ns (4.095ns logic, 3.840ns route)
-                                       (51.6% logic, 48.4% route)
+    Total                     13.413ns (5.855ns logic, 7.558ns route)
+                                       (43.7% logic, 56.3% route)
 
 =========================================================================
 Timing constraint: Default OFFSET IN BEFORE for Clock 'clk'
-  Total number of paths / destination ports: 3233 / 2491
+  Total number of paths / destination ports: 3236 / 2491
 -------------------------------------------------------------------------
-Offset:              5.546ns (Levels of Logic = 5)
+Offset:              9.015ns (Levels of Logic = 5)
   Source:            reset (PAD)
-  Destination:       dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_l_-14 (FF)
+  Destination:       fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_r_-1 (FF)
   Destination Clock: clk rising
 
-  Data Path: reset to dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_l_-14
+  Data Path: reset to fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_r_-1
                                 Gate     Net
     Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
     ----------------------------------------  ------------
-     IBUF:I->O            16   0.878   0.630  reset_IBUF (reset_IBUF)
-     BUF:I->O             16   0.275   0.630  reset_IBUF_47 (reset_IBUF_47)
-     BUF:I->O             16   0.275   0.728  reset_IBUF_30 (reset_IBUF_30)
-     LUT3:I1->O           14   0.275   0.688  dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_addR_4_and000011 (dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_addR_4_and0000_norst)
-     LUT3:I0->O           16   0.275   0.630  dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_l_and00001 (dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_l_and0000)
-     FDE:CE                    0.263          dotProduct_instance_data_path.SplitOperatorGroup1.PipedFpOp_IEEE754xAdd.op_l_-14
+     IBUF:I->O            16   0.715   1.051  reset_IBUF (reset_IBUF)
+     BUF:I->O             17   0.479   1.143  reset_IBUF_46 (reset_IBUF_46)
+     BUF:I->O             16   0.479   1.346  reset_IBUF_3 (reset_IBUF_3)
+     LUT4:I0->O           11   0.479   1.267  fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_normalizer.normalizer_stage_tags_1_or0000_inv1 (fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_addR_4_and0000_norst)
+     LUT3:I0->O           16   0.479   1.051  fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_l_and00001 (fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_l_and0000)
+     FDE:CE                    0.524          fpsub_instance_data_path.SplitOperatorGroup0.PipedFpOp_IEEE754xAdd.op_l_-14
     ----------------------------------------
-    Total                      5.546ns (2.241ns logic, 3.305ns route)
-                                       (40.4% logic, 59.6% route)
+    Total                      9.015ns (3.155ns logic, 5.860ns route)
+                                       (35.0% logic, 65.0% route)
 
 =========================================================================
 Timing constraint: Default OFFSET OUT AFTER for Clock 'clk'
   Total number of paths / destination ports: 187 / 159
 -------------------------------------------------------------------------
-Offset:              4.189ns (Levels of Logic = 1)
-  Source:            dotProduct_instance_inst_Mram_mem1 (RAM)
-  Destination:       dotProduct_tag_out<1> (PAD)
+Offset:              7.910ns (Levels of Logic = 2)
+  Source:            dotProduct_instance_l2pFin_bDelay_state_sig (FF)
+  Destination:       dotProduct_fin_ack (PAD)
   Source Clock:      clk rising
 
-  Data Path: dotProduct_instance_inst_Mram_mem1 to dotProduct_tag_out<1>
+  Data Path: dotProduct_instance_l2pFin_bDelay_state_sig to dotProduct_fin_ack
                                 Gate     Net
     Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
     ----------------------------------------  ------------
-     RAM16X1D:WCLK->DPO    1   1.266   0.332  dotProduct_instance_inst_Mram_mem1 (dotProduct_tag_out_1_OBUF)
-     OBUF:I->O                 2.592          dotProduct_tag_out_1_OBUF (dotProduct_tag_out<1>)
+     FDRE:C->Q             8   0.626   1.216  dotProduct_instance_l2pFin_bDelay_state_sig (dotProduct_instance_l2pFin_bDelay_state_sig)
+     LUT3:I0->O            1   0.479   0.681  dotProduct_instance_l2pFin_lack1 (dotProduct_fin_ack_OBUF)
+     OBUF:I->O                 4.909          dotProduct_fin_ack_OBUF (dotProduct_fin_ack)
     ----------------------------------------
-    Total                      4.189ns (3.858ns logic, 0.332ns route)
-                                       (92.1% logic, 7.9% route)
+    Total                      7.910ns (6.014ns logic, 1.896ns route)
+                                       (76.0% logic, 24.0% route)
 
 =========================================================================
 Timing constraint: Default path analysis
   Total number of paths / destination ports: 14 / 14
 -------------------------------------------------------------------------
-Delay:               4.588ns (Levels of Logic = 3)
-  Source:            fpadd_fin_req (PAD)
-  Destination:       fpadd_fin_ack (PAD)
+Delay:               7.874ns (Levels of Logic = 3)
+  Source:            dotProduct_fin_req (PAD)
+  Destination:       dotProduct_fin_ack (PAD)
 
-  Data Path: fpadd_fin_req to fpadd_fin_ack
+  Data Path: dotProduct_fin_req to dotProduct_fin_ack
                                 Gate     Net
     Cell:in->out      fanout   Delay   Delay  Logical Name (Net Name)
     ----------------------------------------  ------------
-     IBUF:I->O             4   0.878   0.511  fpadd_fin_req_IBUF (fpadd_fin_req_IBUF)
-     LUT3:I1->O            1   0.275   0.332  fpadd_instance_l2pFin_lack1 (fpadd_fin_ack_OBUF)
-     OBUF:I->O                 2.592          fpadd_fin_ack_OBUF (fpadd_fin_ack)
+     IBUF:I->O             8   0.715   1.091  dotProduct_fin_req_IBUF (dotProduct_fin_req_IBUF)
+     LUT3:I1->O            1   0.479   0.681  dotProduct_instance_l2pFin_lack1 (dotProduct_fin_ack_OBUF)
+     OBUF:I->O                 4.909          dotProduct_fin_ack_OBUF (dotProduct_fin_ack)
     ----------------------------------------
-    Total                      4.588ns (3.745ns logic, 0.843ns route)
-                                       (81.6% logic, 18.4% route)
+    Total                      7.874ns (6.103ns logic, 1.771ns route)
+                                       (77.5% logic, 22.5% route)
 
 =========================================================================
-CPU : 103.17 / 103.18 s | Elapsed : 104.00 / 104.00 s
+CPU : 102.07 / 102.09 s | Elapsed : 103.00 / 103.00 s
  
 --> 
 
 
-Total memory usage is 369996 kilobytes
+Total memory usage is 366680 kilobytes
 
 Number of errors   :    0 (   0 filtered)
 Number of warnings : 4479 (   0 filtered)
