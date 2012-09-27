@@ -5,11 +5,11 @@ PIPEHANDLER_INCLUDE=../../pipeHandler/include
 PIPEHANDLER_LIB=../../pipeHandler/lib
 VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
-#DEFS= -DADD -DMUL -DDOT -DCMP
-DEFS= -DADD
+DEFS= -DADD -DMUL -DDOT -DCMP
+#DEFS= -DADD
 
-#TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
-TOPMODULES= -t fpadd
+TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
+#TOPMODULES= -t fpadd
 all: SW HW 
 
 # compile with SW defined.
@@ -59,6 +59,6 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 	ghdl -m --work=work -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
 
 clean:
-	rm -f *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* out_data* testbench_sw testbench_hw ahir_system_test_bench vhpi.log *.aa *.vc
+	rm -rf *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* out_data* testbench_sw testbench_hw ahir_system_test_bench vhpi.log *.aa *.vc *.lso xst
 
 PHONY: all clean	

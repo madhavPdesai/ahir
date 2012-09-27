@@ -13675,58 +13675,67 @@ entity GenericFloatingPointAdderSubtractor is
 end entity;
 
 architecture rtl of GenericFloatingPointAdderSubtractor is
-  signal  l, r, lp, rp                 : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
-
-
+  signal  l, r, l_1, r_1, lp, rp   : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
   
   signal pipeline_stall : std_logic;
-  signal stage_full : std_logic_vector(0 to 6);
-  signal tag0, tag1, tag2, tag3, tag4, tag5, tag6: std_logic_vector(tag_width-1 downto 0);
+  signal stage_full : std_logic_vector(0 to 7);
+  signal tag0, tag1, tag2, tag3, tag4, tag5, tag6, tag7: std_logic_vector(tag_width-1 downto 0);
 
   signal fpresult_1         : UNRESOLVED_float (exponent_width downto -fraction_width);
-  signal fractc_1, fracts_1   : UNSIGNED (fraction_width+1+addguard downto 0);  -- constant and shifted signals
-  signal rexpon_1           : SIGNED (exponent_width downto 0);  -- result exponent
+  signal fractl_1, fractr_1   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
+  signal exponr_1, exponl_1 : SIGNED (exponent_width-1 downto 0);  -- result exponent
   signal sign_1             : STD_ULOGIC;   -- sign of the output
-  signal leftright_1        : BOOLEAN;      -- left or right used
-  signal sticky_1             : STD_ULOGIC;   -- Holds precision for rounding
   signal exceptional_result_1 : std_ulogic; 
-  signal  sign_l_1, sign_r_1  : std_ulogic;
-  signal use_shifter_1  : std_ulogic;
+  signal shift_too_low_1, shift_too_high_1, shift_eq_zero_1, shift_lt_zero_1, shift_gt_zero_1: boolean;
+  signal shiftx_1           : SIGNED (exponent_width downto 0);  -- shift fractions
 
-  signal shifter_in_1, shifter_out   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
-  signal shift_amount_1 : SIGNED (exponent_width downto 0);  -- shift fractions
+  signal use_shifter_2  : std_ulogic;
+  signal shifter_in_2, shifter_out   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
+  signal shift_amount_2 : SIGNED (exponent_width downto 0);  -- shift fractions
   
+  signal fpresult_2         : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal rexpon_2           : SIGNED (exponent_width downto 0);  -- result exponent
+  signal fractc_2, fracts_2 : UNSIGNED (fraction_width+1+addguard downto 0);  -- constant and shifted variables
+  signal leftright_2 : boolean;
+  signal sticky_2_vector: std_logic_vector(0 to 4);
+  signal sticky_2: std_logic;
+  signal exceptional_result_2 : std_ulogic; 
+  signal sign_l_2, sign_r_2: std_ulogic;
+
+
+
 
   signal shifter_tag_in, shifter_tag_out: 
-		std_logic_vector(tag_width + fpresult_1'length + fractc_1'length + fracts_1'length
-				+ rexpon_1'length + 7 - 1 downto 0);
+		std_logic_vector(tag_width + fpresult_2'length + fractc_2'length + fracts_2'length
+				+ rexpon_2'length + 7 - 1 downto 0);
   signal shifter_full: std_logic;
 
-  signal fpresult_3         : UNRESOLVED_float (exponent_width downto -fraction_width);
-  signal addL_3             : UNSIGNED (fraction_width+1+addguard downto 0);
-  signal addR_3             : UNSIGNED (fraction_width+1+addguard downto 0);
-  signal subtract_3         : std_logic;
-  signal rexpon_3           : SIGNED (exponent_width downto 0);  -- result exponent
-  signal sign_3             : STD_ULOGIC;   -- sign of the output
-  signal sticky_3           : STD_ULOGIC;   -- Holds precision for rounding
-  signal exceptional_result_3 : std_ulogic; 
-
-  signal ufract_4           : UNSIGNED (fraction_width+1+addguard downto 0);
   signal fpresult_4         : UNRESOLVED_float (exponent_width downto -fraction_width);
-  signal adder_tag_in, adder_tag_out :
-		std_logic_vector(tag_width + fpresult_3'length + rexpon_3'length + 3 - 1 downto 0);
+  signal addL_4             : UNSIGNED (fraction_width+1+addguard downto 0);
+  signal addR_4             : UNSIGNED (fraction_width+1+addguard downto 0);
+  signal subtract_4         : std_logic;
+  signal rexpon_4           : SIGNED (exponent_width downto 0);  -- result exponent
+  signal sign_4             : STD_ULOGIC;   -- sign of the output
+  signal sticky_4           : STD_ULOGIC;   -- Holds precision for rounding
+  signal exceptional_result_4 : std_ulogic; 
 
-  signal normalizer_tag_in, normalizer_tag_out: std_logic_vector(tag_width + fpresult_1'length downto 0);
+  signal ufract_5           : UNSIGNED (fraction_width+1+addguard downto 0);
   signal fpresult_5         : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal adder_tag_in, adder_tag_out :
+		std_logic_vector(tag_width + fpresult_4'length + rexpon_4'length + 3 - 1 downto 0);
+
+  signal normalizer_tag_in, normalizer_tag_out: std_logic_vector(tag_width + fpresult_4'length downto 0);
 
   signal fpresult_6         : UNRESOLVED_float (exponent_width downto -fraction_width);
+
+  signal fpresult_7         : UNRESOLVED_float (exponent_width downto -fraction_width);
   
 begin
 
-  pipeline_stall <= stage_full(6) and (not accept_rdy);
+  pipeline_stall <= stage_full(7) and (not accept_rdy);
   addi_rdy <= not pipeline_stall;
-  addo_rdy <= stage_full(6);
-  tag_out <= tag6;
+  addo_rdy <= stage_full(7);
+  tag_out <= tag7;
 
   -- construct l,r (user registers)
   lp <= to_float(INA, exponent_width, fraction_width);
@@ -13781,33 +13790,38 @@ begin
     variable sign             : STD_ULOGIC;   -- sign of the output
     variable leftright        : BOOLEAN;      -- left or right used
     variable lresize, rresize : UNRESOLVED_float (exponent_width downto -fraction_width);
-    variable sticky           : STD_ULOGIC;   -- Holds precision for rounding
     variable exceptional_result: std_ulogic;
-
-    -- to get stuff to the shifter.
-    variable use_shifter  : std_ulogic;
-    variable shifter_in   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
-    variable shift_amount : SIGNED (exponent_width downto 0);  -- shift fractions
 
     variable shift_too_low : boolean;
     variable shift_lt_zero : boolean;
     variable shift_eq_zero : boolean;
     variable shift_too_high : boolean;
     variable shift_gt_zero : boolean;
+
+    variable sticky           : std_logic_vector(0 to 4);   -- Holds precision for rounding
   begin
 
     exceptional_result := '0';
-    sticky := '0';
+    sticky := (others => '0');
     leftright := false;
     fracts := (others => '0');
     fractc := (others => '0');
     rexpon := (others => '0');
     fpresult := (others => '0');
+   
+    fractr := (others => '0');
+    fractl := (others => '0');
 
-    use_shifter := '0';
-    shifter_in := (others => '0');
-    shift_amount := (others => '0');
- 
+    shift_too_low := false;
+    shift_lt_zero := false;
+    shift_eq_zero := false;
+    shift_too_high := false;
+    shift_gt_zero := false;
+  
+    exponl := (others => '0');
+    exponr := (others => '0');
+
+    shiftx := (others => '0');
 
     ---------------------------------------------------------------------------
     -- will need to set appropriate flags here!
@@ -13842,53 +13856,136 @@ begin
       exceptional_result := '1';
       fpresult := neg_zerofp (fraction_width => fraction_width,
                              exponent_width => exponent_width);
+    else 
+      lresize := resize (arg            => to_x01(l),
+                           exponent_width => exponent_width,
+                           fraction_width => fraction_width,
+                           denormalize_in => denormalize,
+                           denormalize    => denormalize);
+      lfptype := classfp (lresize, false);    -- errors already checked
+      rresize := resize (arg            => to_x01(r),
+                           exponent_width => exponent_width,
+                           fraction_width => fraction_width,
+                           denormalize_in => denormalize,
+                           denormalize    => denormalize);
+      rfptype := classfp (rresize, false);    -- errors already checked
+      break_number (
+          arg         => lresize,
+          fptyp       => lfptype,
+          denormalize => denormalize,
+          fract       => ulfract,
+          expon       => exponl);
+      fractl := (others => '0');
+      fractl (fraction_width+addguard downto addguard) := ulfract;
+      break_number (
+        arg         => rresize,
+        fptyp       => rfptype,
+        denormalize => denormalize,
+        fract       => urfract,
+        expon       => exponr);
+      fractr := (others => '0');
+      fractr (fraction_width+addguard downto addguard) := urfract;
+  
+      shiftx := (exponl(exponent_width-1) & exponl) - exponr;
+  
+      shift_too_low := (shiftx < -fractl'high);
+      shift_lt_zero := (shiftx < 0);
+      shift_eq_zero := (shiftx = 0);
+      shift_too_high := (shiftx > fractl'high);
+      shift_gt_zero := (shiftx > 0);
     end if;
 
-    -- go ahead and compute all this stuff.  exceptional_result
-    -- will override later if necessary.
-    lresize := resize (arg            => to_x01(l),
-                         exponent_width => exponent_width,
-                         fraction_width => fraction_width,
-                         denormalize_in => denormalize,
-                         denormalize    => denormalize);
-    lfptype := classfp (lresize, false);    -- errors already checked
-    rresize := resize (arg            => to_x01(r),
-                         exponent_width => exponent_width,
-                         fraction_width => fraction_width,
-                         denormalize_in => denormalize,
-                         denormalize    => denormalize);
-    rfptype := classfp (rresize, false);    -- errors already checked
-    break_number (
-        arg         => lresize,
-        fptyp       => lfptype,
-        denormalize => denormalize,
-        fract       => ulfract,
-        expon       => exponl);
-    fractl := (others => '0');
-    fractl (fraction_width+addguard downto addguard) := ulfract;
-    break_number (
-      arg         => rresize,
-      fptyp       => rfptype,
-      denormalize => denormalize,
-      fract       => urfract,
-      expon       => exponr);
-    fractr := (others => '0');
-    fractr (fraction_width+addguard downto addguard) := urfract;
+    active_v := stage_full(0) and not (pipeline_stall or reset);
+    if(clk'event and clk = '1') then
+      stage_full(1) <= active_v;
+      if(active_v = '1') then
+        tag1 <= tag0;
+        fpresult_1 <= fpresult;
+        fractr_1 <= fractr;
+        fractl_1 <= fractl;
+        exponr_1 <= exponr;
+ 	exponl_1 <= exponl;
+        exceptional_result_1 <= exceptional_result;
+        l_1 <= l;
+        r_1 <= r;
 
-    shiftx := (exponl(exponent_width-1) & exponl) - exponr;
+	shift_too_low_1 <= shift_too_low;
+	shift_lt_zero_1 <= shift_lt_zero;
+	shift_eq_zero_1 <= shift_eq_zero;
+	shift_too_high_1 <= shift_too_high;
+	shift_gt_zero_1 <= shift_gt_zero;
 
-    shift_too_low := (shiftx < -fractl'high);
-    shift_lt_zero := (shiftx < 0);
-    shift_eq_zero := (shiftx = 0);
-    shift_too_high := (shiftx > fractl'high);
-    shift_gt_zero := (shiftx > 0);
+        shiftx_1 <= shiftx;
+      end if;        
+    end if;
+  end process;
+
+  -----------------------------------------------------------------------------
+  -- Stage 2: detect NaN, deNorm, align exponents.
+  -----------------------------------------------------------------------------
+  process(clk)
+    variable active_v : std_logic;
+    variable lfptype, rfptype : valid_fpstate;
+    variable fpresult         : UNRESOLVED_float (exponent_width downto -fraction_width);
+    variable fractl, fractr   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
+    variable fractc, fracts   : UNSIGNED (fraction_width+1+addguard downto 0);  -- constant and shifted variables
+    variable urfract, ulfract : UNSIGNED (fraction_width downto 0);
+    variable ufract           : UNSIGNED (fraction_width+1+addguard downto 0);
+    variable exponl, exponr   : SIGNED (exponent_width-1 downto 0);  -- exponents
+    variable rexpon           : SIGNED (exponent_width downto 0);  -- result exponent
+    variable shiftx           : SIGNED (exponent_width downto 0);  -- shift fractions
+    variable leftright        : BOOLEAN;      -- left or right used
+    variable lresize, rresize : UNRESOLVED_float (exponent_width downto -fraction_width);
+    variable exceptional_result: std_ulogic;
+
+    -- to get stuff to the shifter.
+    variable use_shifter  : std_ulogic;
+    variable shifter_in   : UNSIGNED (fraction_width+1+addguard downto 0);  -- fractions
+    variable shift_amount : SIGNED (exponent_width downto 0);  -- shift fractions
+
+    variable shift_too_low : boolean;
+    variable shift_lt_zero : boolean;
+    variable shift_eq_zero : boolean;
+    variable shift_too_high : boolean;
+    variable shift_gt_zero : boolean;
+
+    variable sticky           : std_logic_vector(0 to 4);   -- Holds precision for rounding
+  begin
+    fpresult := fpresult_1;
+
+    fractr   := fractr_1;
+    fractl   := fractl_1;
+
+    rexpon   := (others => '0');
+
+
+    exceptional_result := exceptional_result_1;
+
+    shift_too_low := shift_too_low_1;
+    shift_lt_zero := shift_lt_zero_1;
+    shift_eq_zero := shift_eq_zero_1;
+    shift_too_high := shift_too_high_1;
+    shift_gt_zero := shift_gt_zero_1;
      
+    shiftx := shiftx_1;
+
+    exponr   := exponr_1;
+    exponl   := exponl_1;
+    fractc := (others => '0');
+    fracts := (others => '0');
+    leftright := false;
+    sticky := (others => '0');
+    use_shifter := '0';
+
+    shifter_in := (others  => '0');
+    shift_amount :=  (others => '0');
+
     if shift_too_low then
         rexpon    := exponr(exponent_width-1) & exponr;
         fractc    := fractr;
         fracts    := (others => '0');   -- add zero
         leftright := false;
-        sticky    := or_reduce (fractl);
+        sticky(0)    := or_reduce (fractl);
     elsif shift_lt_zero then
         shiftx    := - shiftx;
 
@@ -13900,11 +13997,10 @@ begin
         fractc    := fractr;
         rexpon    := exponr(exponent_width-1) & exponr;
         leftright := false;
-        sticky    := or_reduce (fractl (to_integer(shiftx) downto 0));
-        sticky    := smallfract (fractl, to_integer(shiftx));
+        sticky(1)    := smallfract (fractl, to_integer(shiftx));
     elsif shift_eq_zero then
         rexpon := exponl(exponent_width-1) & exponl;
-        sticky := '0';
+        sticky(2) := '0';
         if fractr > fractl then
           fractc    := fractr;
           fracts    := fractl;
@@ -13919,7 +14015,7 @@ begin
         fracts    := (others => '0');   -- add zero
         fractc    := fractl;
         leftright := true;
-        sticky    := or_reduce (fractr);
+        sticky(3)    := or_reduce (fractr);
     elsif shift_gt_zero then
 
         shift_amount := shiftx;
@@ -13930,77 +14026,78 @@ begin
         fractc    := fractl;
         rexpon    := exponl(exponent_width-1) & exponl;
         leftright := true;
-        sticky    := or_reduce (fractr (to_integer(shiftx) downto 0));
-        sticky    := smallfract (fractr, to_integer(shiftx));
+        sticky(4) := smallfract (fractr, to_integer(shiftx));
     end if;
     
-    active_v := stage_full(0) and not (pipeline_stall or reset);
+    active_v := stage_full(1) and not (pipeline_stall or reset);
+
     if(clk'event and clk = '1') then
-      stage_full(1) <= active_v;
+      stage_full(2) <= active_v;
       if(active_v = '1') then
-        tag1 <= tag0;
+        tag2 <= tag1;
 
-        fpresult_1 <= fpresult;
-        fractc_1 <= fractc;
-        fracts_1 <= fracts;
-        rexpon_1 <= rexpon;
-        sign_1 <= sign;
-        leftright_1 <= leftright;
-        sticky_1 <= sticky;
-        exceptional_result_1 <= exceptional_result;
-	use_shifter_1 <= use_shifter;
-        sign_l_1 <= l(l'high);
-        sign_r_1 <= r(r'high);
+        fpresult_2 <= fpresult;
+        fractc_2 <= fractc;
+        fracts_2 <= fracts;
+        rexpon_2 <= rexpon;
+        leftright_2 <= leftright;
+        sticky_2_vector <= sticky;
+        exceptional_result_2 <= exceptional_result;
+	use_shifter_2 <= use_shifter;
+        sign_l_2 <= l_1(l'high);
+        sign_r_2 <= r_1(r'high);
 
 
-	shift_amount_1 <= shift_amount;
-	shifter_in_1 <= shifter_in;
+	shift_amount_2 <= shift_amount;
+	shifter_in_2 <= shifter_in;
 
         
       end if;        
     end if;
   end process;
 
+  sticky_2 <= OrReduce(sticky_2_vector);
+
   -----------------------------------------------------------------------------
-  -- stage 2: shifter.
+  -- stage 3: shifter.
   -----------------------------------------------------------------------------
-  process(tag1, fpresult_1, fractc_1, fracts_1,rexpon_1, sign_1, leftright_1,
-		exceptional_result_1, use_shifter_1, sign_l_1, sign_r_1)
+  process(tag2, fpresult_2, fractc_2, fracts_2,rexpon_2, leftright_2,
+		exceptional_result_2, use_shifter_2, sign_l_2, sign_r_2)
   begin
         -- concatenate the tag as well!
   	shifter_tag_in(shifter_tag_in'high downto 7) <= 
 		tag1 & 
-		std_logic_vector(fpresult_1) & std_logic_vector(fractc_1) &
-			std_logic_vector(fracts_1) & std_logic_vector(rexpon_1);
-	shifter_tag_in(6) <= sign_1;
-	if(leftright_1) then
+		std_logic_vector(fpresult_2) & std_logic_vector(fractc_2) &
+			std_logic_vector(fracts_2) & std_logic_vector(rexpon_2);
+	shifter_tag_in(6) <= '0'; -- unused.
+	if(leftright_2) then
 		shifter_tag_in(5) <= '1';
 	else
 		shifter_tag_in(5) <= '0';
 	end if;
-	shifter_tag_in(4) <= sticky_1;
-	shifter_tag_in(3) <= exceptional_result_1;
-	shifter_tag_in(2) <= sign_l_1;
-	shifter_tag_in(1) <= sign_r_1;
-	shifter_tag_in(0) <= use_shifter_1;
+	shifter_tag_in(4) <= sticky_2;
+	shifter_tag_in(3) <= exceptional_result_2;
+	shifter_tag_in(2) <= sign_l_2;
+	shifter_tag_in(1) <= sign_r_2;
+	shifter_tag_in(0) <= use_shifter_2;
  end process;
 
   shifter: UnsignedShifter generic map(shift_right_flag => true,
 					tag_width => shifter_tag_in'length,
-					operand_width => shifter_in_1'length,
-					shift_amount_width => shift_amount_1'length)
-		port map( L => shifter_in_1, R => unsigned(shift_amount_1),
+					operand_width => shifter_in_2'length,
+					shift_amount_width => shift_amount_2'length)
+		port map( L => shifter_in_2, R => unsigned(shift_amount_2),
 				RESULT => shifter_out,
 				clk => clk, reset => reset,
-				in_rdy => stage_full(1),
-				out_rdy => stage_full(2),
+				in_rdy => stage_full(2),
+				out_rdy => stage_full(3),
 				stall => pipeline_stall,
 				tag_in => shifter_tag_in,
 				tag_out => shifter_tag_out);
 
 
   -----------------------------------------------------------------------------
-  -- Stage 3: add mantissa stage
+  -- Stage 4: prepare date for mantissa adder
   -----------------------------------------------------------------------------
   process(clk)
     variable active_v : std_logic;
@@ -14044,7 +14141,8 @@ begin
 					(shifter_tag_out'high-
 					(tag_width + fpresult'length+(2*fractc'length)+rexpon'length-1))));
 
-    sign := shifter_tag_out(6);
+    sign := '0';
+
     if(shifter_tag_out(5)= '1') then
 	leftright := true;
     else
@@ -14080,51 +14178,51 @@ begin
     end if;
    
 
-    active_v := stage_full(2) and not (pipeline_stall or reset);
+    active_v := stage_full(3) and not (pipeline_stall or reset);
     if(clk'event and clk = '1') then
-      stage_full(3) <= active_v;
+      stage_full(4) <= active_v;
       if(active_v = '1') then
-        tag3 <= tagv;
-        fpresult_3 <= fpresult;
-        rexpon_3 <= rexpon;
-        sign_3 <= sign;
-        sticky_3 <= sticky;
-        exceptional_result_3 <= exceptional_result;
-        addL_3 <= addL;
-	addR_3 <= addR;
-	subtract_3 <= subtract_v;
+        tag4 <= tagv;
+        fpresult_4 <= fpresult;
+        rexpon_4 <= rexpon;
+        sign_4 <= sign;
+        sticky_4 <= sticky;
+        exceptional_result_4 <= exceptional_result;
+        addL_4 <= addL;
+	addR_4 <= addR;
+	subtract_4 <= subtract_v;
       end if;      
     end if;
   end process;
 
   -----------------------------------------------------------------------------
-  -- Stage 4: adder.
+  -- Stage 5: mantissa adder.
   -----------------------------------------------------------------------------
-  process(tag3, fpresult_3, rexpon_3, sign_3, sticky_3, exceptional_result_3)
+  process(tag4, fpresult_4, rexpon_4, sign_4, sticky_4, exceptional_result_4)
   begin
 	adder_tag_in(adder_tag_in'high downto 3)
-		<= tag3 & std_logic_vector(fpresult_3) & std_logic_vector(rexpon_3);
-	adder_tag_in(2) <= sign_3;
-	adder_tag_in(1) <= sticky_3;
-	adder_tag_in(0) <= exceptional_result_3;
+		<= tag4 & std_logic_vector(fpresult_4) & std_logic_vector(rexpon_4);
+	adder_tag_in(2) <= sign_4;
+	adder_tag_in(1) <= sticky_4;
+	adder_tag_in(0) <= exceptional_result_4;
   end process;
 
   adder: UnsignedAdderSubtractor
 		generic map(tag_width => adder_tag_in'length,
-				operand_width => addL_3'length,
+				operand_width => addL_4'length,
 				chunk_width => 8)
-		port map( L => addL_3, R => addR_3, RESULT => ufract_4,
-				subtract_op => subtract_3,
+		port map( L => addL_4, R => addR_4, RESULT => ufract_5,
+				subtract_op => subtract_4,
 				clk => clk, reset => reset,
-				in_rdy => stage_full(3),
-				out_rdy => stage_full(4),
+				in_rdy => stage_full(4),
+				out_rdy => stage_full(5),
 				stall => pipeline_stall,
 				tag_in => adder_tag_in,
 				tag_out => adder_tag_out);
 				
 
   -----------------------------------------------------------------------------
-  -- Stage 5: normalize.
+  -- Stage 6: normalize.
   -----------------------------------------------------------------------------
   normalizer: block
     signal tagv: std_logic_vector(tag_width-1 downto 0);
@@ -14143,7 +14241,7 @@ begin
     rexpon <= signed(adder_tag_out((adder_tag_out'high - (tagv'length+fpresult'length)) downto 
 				(adder_tag_out'high - (tagv'length+fpresult'length+rexpon'length-1))));
     rexpon_padded <= resize(rexpon,exponent_width+2);
-    ufract <= ufract_4;
+    ufract <= ufract_5;
 
     -- zero fraction => sign = '0'
     sign <= '0' when or_reduce(ufract) = '0' else adder_tag_out(2);
@@ -14166,18 +14264,18 @@ begin
 			 expon => rexpon_padded,
 			 sign => sign,
 			 sticky => sticky,
-			 in_rdy  => stage_full(4),
-			 out_rdy => stage_full(5),
+			 in_rdy  => stage_full(5),
+			 out_rdy => stage_full(6),
 			 stall => pipeline_stall,
 			 clk => clk,
 			 reset => reset,
 			 tag_in => normalizer_tag_in,
 			 tag_out => normalizer_tag_out,
-			 normalized_result => fpresult_5);
+			 normalized_result => fpresult_6);
   end block;
 
   -----------------------------------------------------------------------------
-  -- Stage 6: multiplexor.
+  -- Stage 7: multiplexor.
   -----------------------------------------------------------------------------
   process(clk)
     variable active_v : std_logic;
@@ -14193,15 +14291,15 @@ begin
 			exponent_width, fraction_width);
     exceptional_result := normalizer_tag_out(0);
 
-    active_v := stage_full(5) and not (pipeline_stall or reset);
+    active_v := stage_full(6) and not (pipeline_stall or reset);
     if(clk'event and clk = '1') then
-      stage_full(6) <= active_v;
+      stage_full(7) <= active_v;
       if(active_v = '1') then
-        tag6 <= tagv;
+        tag7 <= tagv;
     	if(exceptional_result = '1') then 
-        	fpresult_6 <= fpresult;
+        	fpresult_7 <= fpresult;
 	else
-        	fpresult_6 <= fpresult_5;
+        	fpresult_7 <= fpresult_6;
 	end if;
       end if;
     end if;
