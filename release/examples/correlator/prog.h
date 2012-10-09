@@ -1,5 +1,5 @@
 // ORDER must be a multiple of 4.
-#define Log2ORDER 1 
+#define Log2ORDER 2 
 #define ORDER 4
 
 // set flags to use correlater instances..

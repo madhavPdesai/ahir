@@ -22,89 +22,141 @@ void Exit(int sig)
 int main(int argc, char* argv[])
 {
 	signal(SIGINT,  Exit);
-  	signal(SIGTERM, Exit);
+	signal(SIGTERM, Exit);
+
+	srand48(1023);
+
 	float X,Y, hZ, sZ;
+	int counter;
+
+	if(argc > 1) 
+		counter = atoi(argv[1]);
+	else
+		counter = 10;
 
 
-#ifdef INTERACTIVE
- 	fprintf(stdout,"Supply two numbers to multiply:\n ");
-	scanf("%f %f", &X, &Y);
-#else
-	X = 24.8;
-	Y = 19.65;
-#endif
+	while(counter > 0) {
+		counter--;
+
+		X = drand48();
+		Y = drand48();
 
 
 #ifdef MUL
-        hZ = fpmul(X,Y);
-        sZ = (X*Y);
-  	fprintf(stdout," %f * %f = %f, expected %f\n ", X,Y,hZ,sZ);
-  	fprintf(stdout," %x * %x = %x, expected %x\n ", *((uint32_t*) &X),
-							*((uint32_t*) &Y),
-							*((uint32_t*) &hZ),
-							*((uint32_t*) &sZ));
-#endif
-							
+		hZ = fpmul(X,Y);
+		sZ = (X*Y);
+		if(hZ != sZ)
+		{
 
-#ifdef INTERACTIVE
- 	fprintf(stdout,"Supply two numbers to add:\n ");
-	scanf("%f %f", &X, &Y);
+			fprintf(stdout,"Error: %f * %f = %f, expected %f.\n", X,Y,hZ,sZ);
+			fprintf(stdout,"Error:  %x * %x = %x, expected %x.\n", *((uint32_t*) &X),
+					*((uint32_t*) &Y),
+					*((uint32_t*) &hZ),
+					*((uint32_t*) &sZ));
+		}
+		else
+		{
+			fprintf(stdout,"Info: %f * %f = %f.\n", X,Y,hZ);
+			fprintf(stdout,"Info:  %x * %x = %x.\n", *((uint32_t*) &X),
+					*((uint32_t*) &Y),
+					*((uint32_t*) &hZ));
+		}
 #endif
+
+
 
 #ifdef ADD
-        hZ = fpadd(X,Y);
-        sZ = (X + Y);
-  	fprintf(stdout," %f + %f = %f, expected %f\n ", X,Y,hZ,sZ);
-  	fprintf(stdout," %x + %x = %x, expected %x\n ", *((uint32_t*) &X),
-							*((uint32_t*) &Y),
-							*((uint32_t*) &hZ),
-							*((uint32_t*) &sZ));
+		hZ = fpadd(X,Y);
+		sZ = (X + Y);
+		if(hZ != sZ)
+		{
+			fprintf(stdout,"Error: %f + %f = %f, expected %f.\n", X,Y,hZ,sZ);
+			fprintf(stdout,"Error: %x + %x = %x, expected %x.\n", *((uint32_t*) &X),
+					*((uint32_t*) &Y),
+					*((uint32_t*) &hZ),
+					*((uint32_t*) &sZ));
+		}
+		else
+		{
+			fprintf(stdout,"Info: %f + %f = %f.\n", X,Y,hZ);
+			fprintf(stdout,"Info:  %x + %x = %x.\n", *((uint32_t*) &X),
+					*((uint32_t*) &Y),
+					*((uint32_t*) &hZ));
+		}
 #endif
 
 #ifdef SUB
 
-        hZ = fpsub(X,Y);
-        sZ = (X - Y);
-  	fprintf(stdout," %f - %f = %f, expected %f\n ", X,Y,hZ,sZ);
-  	fprintf(stdout," %x - %x = %x, expected %x\n ", *((uint32_t*) &X),
-							*((uint32_t*) &Y),
-							*((uint32_t*) &hZ),
-							*((uint32_t*) &sZ));
+		hZ = fpsub(X,Y);
+		sZ = (X - Y);
+		if(hZ != sZ)
+		{
+			fprintf(stdout," %f - %f = %f, expected %f.\n", X,Y,hZ,sZ);
+			fprintf(stdout," %x - %x = %x, expected %x.\n", *((uint32_t*) &X),
+					*((uint32_t*) &Y),
+					*((uint32_t*) &hZ),
+					*((uint32_t*) &sZ));
+		}
+		else
+		{
+			fprintf(stdout,"Info: %f - %f = %f.\n", X,Y,hZ);
+			fprintf(stdout,"Info:  %x - %x = %x.\n", *((uint32_t*) &X),
+					*((uint32_t*) &Y),
+					*((uint32_t*) &hZ));
+		}
 
 #endif
 
 
 #ifdef DOT
 
-	hZ = dotProduct(X,Y,X,Y,X,Y,X,Y);
-        sZ = (X*Y) + (X*Y) + (X*Y) + (X*Y);
-  	fprintf(stdout," dotProduct = %f, expected %f\n ", hZ,sZ);
-  	fprintf(stdout," dotProduct = %x, expected %x\n ", *((uint32_t*) &hZ),
-							*((uint32_t*) &sZ));
+
+		hZ = dotProduct(X,Y,X,Y,X,Y,X,Y);
+		sZ = (X*Y) + (X*Y) + (X*Y) + (X*Y);
+		if(hZ != sZ)
+		{
+			fprintf(stdout," dotProduct = %f, expected %f\n ", hZ,sZ);
+			fprintf(stdout," dotProduct = %x, expected %x\n ", *((uint32_t*) &hZ),
+					*((uint32_t*) &sZ));
+		}
+		else
+		{
+			fprintf(stdout,"Info: dot-product ok.\n");	
+		}
 
 #endif
 
 #ifdef CMP
 
-	uint8_t cmpresult;
-	cmpresult = fpcmplt(2.0, 3.0);
-  	fprintf(stdout," (2.0 < 3.0) = %d, expected %d\n ", cmpresult,1);
+		uint8_t cmpresult;
+		cmpresult = fpcmplt(X,Y);
+		if(cmpresult != (X < Y))
+			fprintf(stdout,"Error: (%f < %f) = %d, expected %d.\n", X,Y, cmpresult,(X<Y));
+		else
+			fprintf(stdout,"Info: (%f < %f) = %d.\n", X,Y, cmpresult);
 
-	cmpresult = fpcmplt(3.0, 2.0);
-  	fprintf(stdout," (3.0 < 2.0) = %d, expected %d\n ", cmpresult,0);
 
-	cmpresult = fpcmpgt(2.0, 3.0);
-  	fprintf(stdout," (2.0 > 3.0) = %d, expected %d\n ", cmpresult,0);
+		cmpresult = fpcmpgt(X,Y);
+		if(cmpresult != (X > Y))
+			fprintf(stdout,"Error: (%f > %f) = %d, expected %d.\n", X,Y, cmpresult,(X>Y));
+		else
+			fprintf(stdout,"Info: (%f > %f) = %d.\n", X,Y, cmpresult);
 
-	cmpresult = fpcmpgt(3.0, 2.0);
-  	fprintf(stdout," (3.0 > 2.0) = %d, expected %d\n ", cmpresult,1);
 
-	cmpresult = fpcmpeq(2.0, 2.0);
-  	fprintf(stdout," (2.0 == 2.0) = %d, expected %d\n ", cmpresult,1);
+		cmpresult = fpcmpeq(X,Y);
+		if(cmpresult != (X == Y))
+			fprintf(stdout,"Error: (%f == %f) = %d, expected %d.\n",X,Y, cmpresult,(X==Y));
+		else
+			fprintf(stdout,"Info: (%f == %f) = %d.\n", X,Y, cmpresult);
 
-	cmpresult = fpcmpeq(3.0, 2.0);
-  	fprintf(stdout," (3.0 == 2.0) = %d, expected %d\n ", cmpresult,0);
+		cmpresult = fpcmpeq(X,X);
+		if(cmpresult != 1)
+			fprintf(stdout,"Error: (%f == %f) = %d, expected %d.\n",X,X, cmpresult,(X==X));
+		else
+			fprintf(stdout,"Info: (%f == %f) = %d.\n", X,X, cmpresult);
 
 #endif
+
+	}
 }
-   
+

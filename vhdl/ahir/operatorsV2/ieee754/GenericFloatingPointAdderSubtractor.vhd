@@ -385,7 +385,7 @@ begin
 
         shift_amount := shiftx;
         use_shifter := '1';
-        shifter_in := fractl;
+        shifter_in := fractr;
 
         -- fracts    := shift_right (fractr, to_integer(shiftx));
         fractc    := fractl;
@@ -427,7 +427,7 @@ begin
   -- stage 3: shifter.
   -----------------------------------------------------------------------------
   process(tag2, fpresult_2, fractc_2, fracts_2,rexpon_2, leftright_2,
-		exceptional_result_2, use_shifter_2, sign_l_2, sign_r_2)
+		exceptional_result_2, use_shifter_2, sign_l_2, sign_r_2, sticky_2)
   begin
         -- concatenate the tag as well!
   	shifter_tag_in(shifter_tag_in'high downto 7) <= 
@@ -513,7 +513,7 @@ begin
     else
 	leftright := false;
     end if;
-    sticky := shifter_tag_in(4);
+    sticky := shifter_tag_out(4);
     exceptional_result := shifter_tag_out(3);
     sign_l := shifter_tag_out(2);
     sign_r := shifter_tag_out(1);
