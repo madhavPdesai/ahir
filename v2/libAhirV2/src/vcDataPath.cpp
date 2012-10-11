@@ -1209,8 +1209,9 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		<< " exponent_width => " << exp_width << "," << endl
 		<< " fraction_width => " << frac_width << ", " << endl
 		<< " no_arbitration => " << no_arb_string << ","  << endl
-		<< " num_reqs => " << num_reqs << "\n ) -- } " << endl;
-	  ofile << "port map ( reqL => reqL , ackL => ackL, reqR => reqR, ackR => ackR, dataL => data_in, dataR => data_out, clk => clk, reset => reset);" << endl;
+		<< " num_reqs => " << num_reqs << " -- } \n )" << endl;
+	  ofile << "port map ( reqL => reqL , ackL => ackL, reqR => reqR, ackR => ackR, dataL => data_in, dataR => data_out, clk => clk, reset => reset); -- }" << endl;
+	  ofile << "-- } \n end Block; -- split operator group " << idx << endl; // thats it..
 	}
       else
 	{
@@ -1252,8 +1253,8 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		    << " zero_delay => false, " << endl // single cycle delay
 		    << " no_arbitration => " << no_arb_string << "," << endl
 		    << " min_clock_period => " << (vcSystem::_min_clock_period_flag ? "true" : "false") << "," << endl
-		    << " num_reqs => " << num_reqs << "--} \n ) -- }" << endl; // number of requesters..
-	      ofile << "port map ( reqL => reqL , ackL => ackL, reqR => reqR, ackR => ackR, dataL => data_in, dataR => data_out, clk => clk, reset => reset);" << endl;
+		    << " num_reqs => " << num_reqs << "--} \n )" << endl; // number of requesters..
+	      ofile << "port map ( reqL => reqL , ackL => ackL, reqR => reqR, ackR => ackR, dataL => data_in, dataR => data_out, clk => clk, reset => reset); -- }" << endl;
 	    }
 	  else
 	    {
@@ -1302,9 +1303,9 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		    << "clk => clk," << endl
 		    << "reset => reset); -- }}" << endl;
 	    }
+	  ofile << "-- } \n end Block; -- split operator group " << idx << endl; // thats it..
 	}
 
-      ofile << "-- } \n end Block; -- split operator group " << idx << endl; // thats it..
     }
 }
 

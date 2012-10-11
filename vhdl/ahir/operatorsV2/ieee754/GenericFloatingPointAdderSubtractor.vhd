@@ -119,7 +119,7 @@ begin
   end generate AsSubtractor;
 
   -- return slv.
-  OUTADD <= to_slv(fpresult_6);
+  OUTADD <= to_slv(fpresult_7);
 
   -----------------------------------------------------------------------------
   -- Stage 0: register inputs.

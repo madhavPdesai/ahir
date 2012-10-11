@@ -21,6 +21,7 @@ void Exit(int sig)
 
 int main(int argc, char* argv[])
 {
+
 	signal(SIGINT,  Exit);
 	signal(SIGTERM, Exit);
 
@@ -28,6 +29,7 @@ int main(int argc, char* argv[])
 
 	float X,Y, hZ, sZ;
 	int counter;
+	int err_flag = 0;
 
 	if(argc > 1) 
 		counter = atoi(argv[1]);
@@ -53,6 +55,7 @@ int main(int argc, char* argv[])
 					*((uint32_t*) &Y),
 					*((uint32_t*) &hZ),
 					*((uint32_t*) &sZ));
+			err_flag = 1;
 		}
 		else
 		{
@@ -75,6 +78,7 @@ int main(int argc, char* argv[])
 					*((uint32_t*) &Y),
 					*((uint32_t*) &hZ),
 					*((uint32_t*) &sZ));
+			err_flag = 1;
 		}
 		else
 		{
@@ -96,6 +100,7 @@ int main(int argc, char* argv[])
 					*((uint32_t*) &Y),
 					*((uint32_t*) &hZ),
 					*((uint32_t*) &sZ));
+			err_flag = 1;
 		}
 		else
 		{
@@ -118,6 +123,7 @@ int main(int argc, char* argv[])
 			fprintf(stdout," dotProduct = %f, expected %f\n ", hZ,sZ);
 			fprintf(stdout," dotProduct = %x, expected %x\n ", *((uint32_t*) &hZ),
 					*((uint32_t*) &sZ));
+			err_flag = 1;
 		}
 		else
 		{
@@ -131,32 +137,50 @@ int main(int argc, char* argv[])
 		uint8_t cmpresult;
 		cmpresult = fpcmplt(X,Y);
 		if(cmpresult != (X < Y))
+		{
 			fprintf(stdout,"Error: (%f < %f) = %d, expected %d.\n", X,Y, cmpresult,(X<Y));
+			err_flag = 1;
+		}
 		else
 			fprintf(stdout,"Info: (%f < %f) = %d.\n", X,Y, cmpresult);
 
 
 		cmpresult = fpcmpgt(X,Y);
 		if(cmpresult != (X > Y))
+		{
 			fprintf(stdout,"Error: (%f > %f) = %d, expected %d.\n", X,Y, cmpresult,(X>Y));
+			err_flag = 1;
+		}
 		else
 			fprintf(stdout,"Info: (%f > %f) = %d.\n", X,Y, cmpresult);
 
 
 		cmpresult = fpcmpeq(X,Y);
 		if(cmpresult != (X == Y))
+		{
 			fprintf(stdout,"Error: (%f == %f) = %d, expected %d.\n",X,Y, cmpresult,(X==Y));
+			err_flag = 1;
+		}
 		else
 			fprintf(stdout,"Info: (%f == %f) = %d.\n", X,Y, cmpresult);
 
 		cmpresult = fpcmpeq(X,X);
 		if(cmpresult != 1)
+		{
 			fprintf(stdout,"Error: (%f == %f) = %d, expected %d.\n",X,X, cmpresult,(X==X));
+			err_flag = 1;
+		}
 		else
 			fprintf(stdout,"Info: (%f == %f) = %d.\n", X,X, cmpresult);
 
 #endif
 
 	}
+
+	if(err_flag)
+		fprintf(stdout,"TESTS FAILED: there were errors.\n");
+	else
+		fprintf(stdout,"TESTS SUCCEEDED.\n");
+
 }
 
