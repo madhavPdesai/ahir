@@ -84,7 +84,9 @@ begin
 end trivial;
 
 
--- this is the pipelined version.
+-- this is the pipelined version. works, and when synthesized
+-- by xst 10.1 is ok.  synthesis produces incorrect circuit with
+-- xst 9.2i.
 architecture rtl of GenericFloatingPointAdderSubtractor is
   signal  l, r, l_1, r_1, lp, rp   : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
   

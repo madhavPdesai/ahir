@@ -38,6 +38,8 @@ entity GenericFloatingPointMultiplier is
     muli_rdy, mulo_rdy: out std_logic);
 end entity;
 
+-- works, also when synthesized by xst 10.1.  xst 9.2is seems
+-- to produce incorrect circuits.
 architecture rtl of GenericFloatingPointMultiplier is
 
   constant operand_width : integer := exponent_width+fraction_width+1;

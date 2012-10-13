@@ -3,7 +3,7 @@ run
 -ofn xilinx_synth
 -ifmt mixed
 -ofmt NGC
--p xc3s5000
+-p x2vp30
 -top ahir_system
 -safe_implementation yes
 -optimize_primitives no
