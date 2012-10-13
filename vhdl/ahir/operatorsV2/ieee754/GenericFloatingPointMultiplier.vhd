@@ -179,18 +179,26 @@ begin
       fpresult (exponent_width) := fp_sign;
     else
       fp_sign := l(l'high) xor r(r'high);     -- figure out the sign
-      lresize := resize (arg            => to_x01(l),
-                         exponent_width => exponent_width,
-                         fraction_width => fraction_width,
-                         denormalize_in => denormalize,
-                         denormalize    => denormalize);
+     
+      -- mpd: this resize seems unnecessary..
+      --lresize := resize (arg            => to_x01(l),
+                         --exponent_width => exponent_width,
+                         --fraction_width => fraction_width,
+                         --denormalize_in => denormalize,
+                         --denormalize    => denormalize);
+      lresize := to_X01(l);
+
       lfptype := classfp (lresize, false);    -- errors already checked
-      rresize := resize (arg            => to_x01(r),
-                         exponent_width => exponent_width,
-                         fraction_width => fraction_width,
-                         denormalize_in => denormalize,
-                         denormalize    => denormalize);
+      
+      -- mpd: this resize is not necessary?
+      -- rresize := resize (arg            => to_x01(r),
+                         -- exponent_width => exponent_width,
+                         -- fraction_width => fraction_width,
+                         -- denormalize_in => denormalize,
+                         -- denormalize    => denormalize);
+      rresize := to_X01(r);
       rfptype := classfp (rresize, false);    -- errors already checked
+
       break_number (
         arg         => lresize,
         fptyp       => lfptype,

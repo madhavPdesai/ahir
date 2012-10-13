@@ -5,13 +5,16 @@ PIPEHANDLER_INCLUDE=../../pipeHandler/include
 PIPEHANDLER_LIB=../../pipeHandler/lib
 VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
-DEFS= -DADD -DMUL -DDOT -DCMP
+#DEFS= -DADD -DMUL -DDOT -DCMP
 #DEFS= -DADD
 #DEFS= -DADD -DMUL
+DEFS= -DCMP
 
-TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
+
+#TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
 #TOPMODULES= -t fpadd
 #TOPMODULES= -t fpadd -t fpmul
+TOPMODULES= -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
 all: SW HW 
 
 # compile with SW defined.
@@ -60,7 +63,24 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 	ghdl -i --work=work ahir_system_test_bench.vhdl
 	ghdl -m --work=work -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
 
+# build testbench and ghdl executable
+# note the use of SOCKETLIB in building the testbench.
+UNISIM=/home/madhav/ahirgit/ahir/vhdl/unisims/
+postsynthvhdlsim: ahir_system_synth.vhd ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h vhdlCStubs.c
+	gcc -c vhdlCStubs.c -I./ -I$(SOCKETLIB_INCLUDE)
+	gcc -c $(DEFS) testbench.c -I./ -I$(SOCKETLIB_INCLUDE)
+	gcc -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLib -lpthread
+	ghdl --clean
+	ghdl --remove
+	ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl
+	ghdl -i --work=ieee_proposed  $(VHDL_LIB)/ieee_proposed.vhdl
+	ghdl -i --work=work $(VHDL_VHPI_LIB)/Utility_Package.vhdl
+	ghdl -i --work=work $(VHDL_VHPI_LIB)/Vhpi_Package.vhdl
+	ghdl -i --work=work --ieee=synopsys -fexplicit -P$(UNISIM) ahir_system_synth.vhd
+	ghdl -i --work=work ahir_system_test_bench.vhdl
+	ghdl -m --work=work --ieee=synopsys -fexplicit -P$(UNISIM) -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
+
 clean:
 	rm -rf *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* out_data* testbench_sw testbench_hw ahir_system_test_bench vhpi.log *.aa *.vc *.lso xst
 
-PHONY: all clean	
+PHONY: all clean postsynthvhdlsim

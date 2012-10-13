@@ -545,6 +545,7 @@ package Subprograms is
 
   function OrReduce(x: BooleanArray) return boolean;
   function OrReduce(x: std_logic_vector) return std_logic;
+  function OrReduce(x: unsigned) return std_logic;
 
   function AndReduce(x: BooleanArray) return boolean;
   function AndReduce(x: std_logic_vector) return std_logic;
@@ -1594,8 +1595,28 @@ package body Subprograms is
 
   -----------------------------------------------------------------------------
   function OrReduce(x: std_logic_vector) return std_logic is
+	alias lx: std_logic_vector(1 to x'length) is x;
+	variable ret_var: std_logic;
   begin
-    return(To_Std_Logic(OrReduce(To_BooleanArray(x))));
+        ret_var := '0';	
+	for I in 1 to x'length loop
+		ret_var := ret_var or lx(I);
+	end loop;
+	return(ret_var);
+  end OrReduce;
+
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function OrReduce(x: unsigned) return std_logic is
+	alias lx: unsigned(1 to x'length) is x;
+	variable ret_var: std_logic;
+  begin
+        ret_var := '0';	
+	for I in 1 to x'length loop
+		ret_var := ret_var or lx(I);
+	end loop;
+	return(ret_var);
   end OrReduce;
 
   -----------------------------------------------------------------------------
@@ -13674,6 +13695,52 @@ entity GenericFloatingPointAdderSubtractor is
     addi_rdy, addo_rdy: out std_logic);
 end entity;
 
+
+architecture trivial of GenericFloatingPointAdderSubtractor is
+	
+	signal stage_full, stall: std_logic;
+  	signal lp, rp   : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
+begin
+  -- construct l,r (user registers)
+  lp <= to_float(INA, exponent_width, fraction_width);
+ 
+  AsAdder: if (not use_as_subtractor) generate
+  	rp <= to_float(INB, exponent_width, fraction_width);
+  end generate AsAdder;
+
+  AsSubtractor: if (use_as_subtractor) generate
+        process(INB)
+           variable btmp: UNRESOLVED_float(exponent_width downto -fraction_width);
+        begin
+	   btmp := to_float(INB, exponent_width, fraction_width);
+  	   rp <= - btmp;
+	end process;
+  end generate AsSubtractor;
+
+  stall <= stage_full and (not accept_rdy);
+  addi_rdy <= not stall;
+  addo_rdy <= stage_full;
+
+  process(clk)
+  begin
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			stage_full <= '0';
+		elsif stall = '0' then
+			stage_full <= env_rdy;
+		end if;
+
+		if(stall = '0') then
+			OUTADD <= to_slv(lp + rp);
+		end if;
+	end if;
+  end process;
+
+
+end trivial;
+
+
+-- this is the pipelined version.
 architecture rtl of GenericFloatingPointAdderSubtractor is
   signal  l, r, l_1, r_1, lp, rp   : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
   
@@ -13730,6 +13797,32 @@ architecture rtl of GenericFloatingPointAdderSubtractor is
 
   signal fpresult_7         : UNRESOLVED_float (exponent_width downto -fraction_width);
   
+  type FracMaskArray is array (natural range <> ) of unsigned(fractl_1'length-1 downto 0);
+  function BuildFracMasks(width: natural) return FracMaskArray is
+	variable ret_var: FracMaskArray(width-1 downto 0);
+  begin
+	for I in 0 to width-1 loop
+		ret_var(I) := (others => '0');
+		for J in 0 to I loop
+			ret_var(I)(J) := '1';
+		end loop;
+	end loop;
+	return(ret_var);
+  end function BuildFracMasks;
+
+  constant frac_masks: FracMaskArray(fractl_1'high downto fractl_1'low) := BuildFracMasks(fractl_1'length);
+  function SelectFracMask(constant masks: FracMaskArray; shiftx: integer) 
+	return unsigned is
+	variable ret_mask: unsigned(fractl_1'high downto fractl_1'low);
+  begin
+	ret_mask := (others => '1');
+	if(shiftx <= fractl_1'high) then
+		ret_mask := masks(shiftx);
+	elsif (shiftx < 0) then
+		ret_mask := (others => '0');
+	end if;
+	return(ret_mask);
+  end function SelectFracMask;
 begin
 
   pipeline_stall <= stage_full(7) and (not accept_rdy);
@@ -13997,7 +14090,8 @@ begin
         fractc    := fractr;
         rexpon    := exponr(exponent_width-1) & exponr;
         leftright := false;
-        sticky(1)    := smallfract (fractl, to_integer(shiftx));
+        --sticky(1)    := smallfract (fractl, to_integer(shiftx));
+        sticky(1)    := OrReduce(fractl and SelectFracMask(frac_masks,to_integer(shiftx)));
     elsif shift_eq_zero then
         rexpon := exponl(exponent_width-1) & exponl;
         sticky(2) := '0';
@@ -14026,7 +14120,8 @@ begin
         fractc    := fractl;
         rexpon    := exponl(exponent_width-1) & exponl;
         leftright := true;
-        sticky(4) := smallfract (fractr, to_integer(shiftx));
+        -- sticky(4) := smallfract (fractr, to_integer(shiftx));
+        sticky(1)    := OrReduce(fractr and SelectFracMask(frac_masks,to_integer(shiftx)));
     end if;
     
     active_v := stage_full(1) and not (pipeline_stall or reset);
@@ -14306,6 +14401,8 @@ begin
   end process;
   
 end rtl;
+
+
 -------------------------------------------------------------------------------
 -- An IEEE-754 compliant arbitrary-precision pipelined multiplier
 -- which is basically, a pipelined version of the multiply function
@@ -14487,18 +14584,26 @@ begin
       fpresult (exponent_width) := fp_sign;
     else
       fp_sign := l(l'high) xor r(r'high);     -- figure out the sign
-      lresize := resize (arg            => to_x01(l),
-                         exponent_width => exponent_width,
-                         fraction_width => fraction_width,
-                         denormalize_in => denormalize,
-                         denormalize    => denormalize);
+     
+      -- mpd: this resize seems unnecessary..
+      --lresize := resize (arg            => to_x01(l),
+                         --exponent_width => exponent_width,
+                         --fraction_width => fraction_width,
+                         --denormalize_in => denormalize,
+                         --denormalize    => denormalize);
+      lresize := to_X01(l);
+
       lfptype := classfp (lresize, false);    -- errors already checked
-      rresize := resize (arg            => to_x01(r),
-                         exponent_width => exponent_width,
-                         fraction_width => fraction_width,
-                         denormalize_in => denormalize,
-                         denormalize    => denormalize);
+      
+      -- mpd: this resize is not necessary?
+      -- rresize := resize (arg            => to_x01(r),
+                         -- exponent_width => exponent_width,
+                         -- fraction_width => fraction_width,
+                         -- denormalize_in => denormalize,
+                         -- denormalize    => denormalize);
+      rresize := to_X01(r);
       rfptype := classfp (rresize, false);    -- errors already checked
+
       break_number (
         arg         => lresize,
         fptyp       => lfptype,
@@ -16002,7 +16107,7 @@ begin  -- Pipelined
 			end if;
 			if(reset = '1') then
 				stage_active(1) <= '0';
-			else
+			elsif stall = '0' then
 				stage_active(1) <= stage_active(0);
 			end if;
 		end if;
@@ -16028,7 +16133,7 @@ begin  -- Pipelined
 		end if;	
 		if(reset = '1') then
 			stage_active(2) <= '0';
-		else
+		elsif stall = '0' then
 			stage_active(2) <= stage_active(1);
 		end if;
 	end if;
@@ -16070,7 +16175,7 @@ begin  -- Pipelined
 			stage_tags(3) <= stage_tags(2);
 			if(reset = '1') then
 				stage_active(3) <= '0';
-			else
+			elsif stall = '0' then
 				stage_active(3) <= stage_active(2);
 			end if;
 		end if;
@@ -16665,10 +16770,16 @@ begin  -- Pipelined
 			end loop;
 
 			if(clk'event and clk='1') then
+
+                                if(reset = '1') then
+					stage_active(STAGE) <=  '0';
+				elsif stall = '0' then
+					stage_active(STAGE) <= stage_active(STAGE-1);
+				end if;
+
 				if(stall = '0') then
   					intermediate_results(STAGE) <= shifted_L;
   					intermediate_tags(STAGE) <= intermediate_tags(STAGE-1);
-					stage_active(STAGE) <= stage_active(STAGE-1);
 					intermediate_shift_amount(STAGE) <= 
 							intermediate_shift_amount(STAGE-1);
 				end if;

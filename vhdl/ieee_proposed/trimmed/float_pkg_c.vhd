@@ -2339,13 +2339,16 @@ package body float_pkg is
   end function find_rightmost;
 
   function find_leftmost (arg : UNRESOLVED_float; y : STD_ULOGIC) return INTEGER is
+ 	variable ret_var: integer;
   begin
+    ret_var := arg'low-1;                   -- default return out of bounds 'low
     for_loop : for i in arg'range loop
       if arg(i) = y then
-        return i;
+	ret_var := i;
+        exit;
       end if;
     end loop;
-    return arg'low-1;                   -- return out of bounds 'low
+    return ret_var;                  
   end function find_leftmost;
 
   -- These override the defaults for the compare operators.

@@ -162,7 +162,7 @@ begin  -- Pipelined
 			end if;
 			if(reset = '1') then
 				stage_active(1) <= '0';
-			else
+			elsif stall = '0' then
 				stage_active(1) <= stage_active(0);
 			end if;
 		end if;
@@ -188,7 +188,7 @@ begin  -- Pipelined
 		end if;	
 		if(reset = '1') then
 			stage_active(2) <= '0';
-		else
+		elsif stall = '0' then
 			stage_active(2) <= stage_active(1);
 		end if;
 	end if;
@@ -230,7 +230,7 @@ begin  -- Pipelined
 			stage_tags(3) <= stage_tags(2);
 			if(reset = '1') then
 				stage_active(3) <= '0';
-			else
+			elsif stall = '0' then
 				stage_active(3) <= stage_active(2);
 			end if;
 		end if;

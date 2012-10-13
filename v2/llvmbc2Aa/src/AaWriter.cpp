@@ -970,7 +970,12 @@ namespace {
       llvm::Value *val = C.getOperand(0);
       std::string op_name = prepare_operand(val);
 
-      std::cout << cname << " := ($cast (" 
+      if(isa<BitCastInst>(C))
+      	std::cout << cname << " := ($bitcast (" 
+		<< get_aa_type_name(dest,*_module) << ") "  << op_name << ")"
+		<< std::endl;
+      else
+      	std::cout << cname << " := ($cast (" 
 		<< get_aa_type_name(dest,*_module) << ") "  << op_name << ")"
 		<< std::endl;
     }

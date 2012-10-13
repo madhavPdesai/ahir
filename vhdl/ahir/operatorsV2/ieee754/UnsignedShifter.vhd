@@ -100,10 +100,16 @@ begin  -- Pipelined
 			end loop;
 
 			if(clk'event and clk='1') then
+
+                                if(reset = '1') then
+					stage_active(STAGE) <=  '0';
+				elsif stall = '0' then
+					stage_active(STAGE) <= stage_active(STAGE-1);
+				end if;
+
 				if(stall = '0') then
   					intermediate_results(STAGE) <= shifted_L;
   					intermediate_tags(STAGE) <= intermediate_tags(STAGE-1);
-					stage_active(STAGE) <= stage_active(STAGE-1);
 					intermediate_shift_amount(STAGE) <= 
 							intermediate_shift_amount(STAGE-1);
 				end if;

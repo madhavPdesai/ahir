@@ -123,6 +123,7 @@ package Subprograms is
 
   function OrReduce(x: BooleanArray) return boolean;
   function OrReduce(x: std_logic_vector) return std_logic;
+  function OrReduce(x: unsigned) return std_logic;
 
   function AndReduce(x: BooleanArray) return boolean;
   function AndReduce(x: std_logic_vector) return std_logic;
@@ -1172,8 +1173,28 @@ package body Subprograms is
 
   -----------------------------------------------------------------------------
   function OrReduce(x: std_logic_vector) return std_logic is
+	alias lx: std_logic_vector(1 to x'length) is x;
+	variable ret_var: std_logic;
   begin
-    return(To_Std_Logic(OrReduce(To_BooleanArray(x))));
+        ret_var := '0';	
+	for I in 1 to x'length loop
+		ret_var := ret_var or lx(I);
+	end loop;
+	return(ret_var);
+  end OrReduce;
+
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function OrReduce(x: unsigned) return std_logic is
+	alias lx: unsigned(1 to x'length) is x;
+	variable ret_var: std_logic;
+  begin
+        ret_var := '0';	
+	for I in 1 to x'length loop
+		ret_var := ret_var or lx(I);
+	end loop;
+	return(ret_var);
   end OrReduce;
 
   -----------------------------------------------------------------------------
