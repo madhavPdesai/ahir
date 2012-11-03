@@ -120,6 +120,7 @@ class vcSystem: public vcRoot
 
   // VHDL related stuff... 
   virtual void Print_VHDL(ostream& ofile);
+  void Print_VHDL_Global_Package(ostream& ofile);
   void Print_VHDL_Test_Bench(ostream& ofile);
   void Print_VHDL_Vhpi_Test_Bench(ostream& ofile);
   void Print_VHDL_Component(ostream& ofile);

@@ -350,19 +350,22 @@ void vcSystem::Print_Control_Structure(ostream& ofile)
     }
 }
 
-void  vcSystem::Print_VHDL(ostream& ofile)
+void vcSystem::Print_VHDL_Global_Package(ostream& ofile)
 {
-
-  cerr << "Info: printing VHDL model" << endl;
-
+  cerr << "Info: printing VHDL global package" << endl;
   string sys_package = this->Get_Sys_Package_Name();
-  // print types.
   ofile << "library ieee;" << endl
 	<< "use ieee.std_logic_1164.all;" << endl;
   ofile << "package " << sys_package << " is -- { " << endl;
   this->Print_VHDL_Constant_Declarations(ofile);
   ofile << "-- } " << endl <<  "end package " << sys_package << ";" << endl;
-  
+}
+
+void  vcSystem::Print_VHDL(ostream& ofile)
+{
+
+  cerr << "Info: printing VHDL model" << endl;
+
   // print modules
   for(map<string,vcModule*>::iterator moditer = _modules.begin();
       moditer != _modules.end();

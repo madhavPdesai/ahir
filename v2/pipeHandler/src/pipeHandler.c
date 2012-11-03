@@ -168,7 +168,7 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 
   ___LOCK___
   int available = __AVAILABLE(p);
-  if(available > number_of_words_requested)
+  if(available >= number_of_words_requested)
   {
 	ret_val = number_of_words_requested;
   }

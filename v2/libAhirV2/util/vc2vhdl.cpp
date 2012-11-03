@@ -283,8 +283,15 @@ int main(int argc, char* argv[])
 	}
       else
 	{
+	  ofstream sys_package_file;
+	  string file_name = sys_name + "_global_package.unformatted_vhdl";
+	  sys_package_file.open(file_name.c_str());
+	  sys_package_file << "-- VHDL global package produced by vc2vhdl from virtual circuit (vc) description " << endl;
+	  test_system.Print_VHDL_Global_Package(sys_package_file);
+	  sys_package_file.close();
+
 	  ofstream sys_file;
-	  string file_name = sys_name + ".unformatted_vhdl";
+	  file_name = sys_name + ".unformatted_vhdl";
 	  sys_file.open(file_name.c_str());
 	  
 	  cerr << "Info: printing top-level system VHDL file " << file_name << endl;
