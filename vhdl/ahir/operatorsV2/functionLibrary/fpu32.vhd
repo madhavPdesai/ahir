@@ -102,7 +102,7 @@ begin
 
 
    omux:  OutputPortLevel generic map(num_reqs => 2,
-					data_width => data_to_omux'length,
+					data_width => data_from_omux'length,
 					no_arbitration => false)
 			port map(req => reqi_omux,
 				ack => acki_omux,
