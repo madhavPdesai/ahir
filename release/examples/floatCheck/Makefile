@@ -5,31 +5,33 @@ PIPEHANDLER_INCLUDE=../../pipeHandler/include
 PIPEHANDLER_LIB=../../pipeHandler/lib
 VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
+FUNCTIONLIB=../../../v2/functionLibrary/
 #DEFS= -DADD -DMUL -DDOT -DCMP
 #DEFS= -DADD
-DEFS= -DADD -DMUL
+DEFS= -DADD -DMUL -DSUB
 #DEFS= -DCMP
 
 
-#TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
-#TOPMODULES= -t fpadd
-TOPMODULES= -t fpadd -t fpmul
-#TOPMODULES= -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
+#TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub -t fpincr
+#TOPMODULES= -t fpadd -t fpincr
+TOPMODULES= -t fpadd -t fpmul -t fpincr -t fpsub
+#TOPMODULES= -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub -t fpincr
 all: SW HW 
 
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.
 SW: prog.c prog.h testbench.c 
-	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) $(DEFS) prog.c
-	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) $(DEFS)  testbench.c
-	gcc -o testbench_sw prog.o testbench.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
+	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include $(DEFS) prog.c
+	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include  $(DEFS)  testbench.c
+	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include  $(DEFS)  $(FUNCTIONLIB)/src/fpu.c
+	gcc -o testbench_sw prog.o fpu.o testbench.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
 
 # five steps from C to vhdl simulator.
 HW: c2llvmbc llvmbc2aa aa2vc vc2vhdl vhdlsim
 
 # C to llvm byte-code.. use clang.
 c2llvmbc: prog.c prog.h testbench.c
-	clang -O3 -std=gnu89 $(DEFS)  -I$(SOCKETLIB_INCLUDE) -emit-llvm -c prog.c
+	clang -O3 -std=gnu89 $(DEFS) -I$(FUNCTIONLIB)/include -I$(SOCKETLIB_INCLUDE) -emit-llvm -c prog.c
 	llvm-dis prog.o
 
 # llvm byte-code to Aa..
@@ -38,12 +40,13 @@ llvmbc2aa:  prog.o
 
 # Aa to vC
 aa2vc: prog.aa
-	AaLinkExtMem prog.aa | vcFormat > prog.linked.aa
+	AaLinkExtMem prog.aa $(FUNCTIONLIB)/Aa/fpu.aa | vcFormat > prog.linked.aa
 	Aa2VC -O -C prog.linked.aa | vcFormat > prog.vc
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -a -q -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc 
+	vc2vhdl -a -q -C -e ahir_system -w -s ghdl $(TOPMODULES) -L $(FUNCTIONLIB)/fpu.list -f prog.vc 
+	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 
@@ -59,6 +62,7 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 	ghdl -i --work=ieee_proposed  $(VHDL_LIB)/ieee_proposed.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Utility_Package.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Vhpi_Package.vhdl
+	ghdl -i --work=work ahir_system_global_package.vhdl
 	ghdl -i --work=work ahir_system.vhdl
 	ghdl -i --work=work ahir_system_test_bench.vhdl
 	ghdl -m --work=work -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
@@ -76,6 +80,7 @@ postsynthvhdlsim: ahir_system_synth.vhd ahir_system_test_bench.vhdl testbench.c 
 	ghdl -i --work=ieee_proposed  $(VHDL_LIB)/ieee_proposed.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Utility_Package.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Vhpi_Package.vhdl
+	ghdl -i --work=work --ieee=synopsys -fexplicit -P$(UNISIM) ahir_system_global_package.vhdl
 	ghdl -i --work=work --ieee=synopsys -fexplicit -P$(UNISIM) ahir_system_synth.vhd
 	ghdl -i --work=work ahir_system_test_bench.vhdl
 	ghdl -m --work=work --ieee=synopsys -fexplicit -P$(UNISIM) -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 

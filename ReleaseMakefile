@@ -8,6 +8,7 @@ CTESTBENCH=./v2/CtestBench/
 PTHREADUTILS=./v2/pthreadUtils
 VHDL=./vhdl/
 FUNCTIONLIB=./v2/functionLibrary
+SCRIPTS=./v2/Scripts
 
 all: Release 
 
@@ -51,6 +52,8 @@ Release:
 	cp $(AA)/docs/*.html $(RELEASE)/docs/html/
 	cp $(LLVM2AA)/docs/llvm2aa.pdf $(RELEASE)/docs/pdf/
 	cp $(CTESTBENCH)/docs/*.pdf $(RELEASE)/docs/pdf/
+	# scripts
+	cp $(SCRIPTS)/ghdlSanitize.sh $(RELEASE)/bin/
 
 Clean:
 	#license
@@ -80,5 +83,7 @@ Clean:
 	# rm the doc files
 	rm -f $(RELEASE)/docs/pdf/*.pdf
 	rm -f $(RELEASE)/docs/html/*.htm*
+	# scripts
+	rm -f $(RELEASE)/bin/ghdlSanitize.sh
 
 PHONY: Release Clean

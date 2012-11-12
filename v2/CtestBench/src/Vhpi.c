@@ -541,10 +541,12 @@ void  Vhpi_Send()
 	      
 	      REMOVE(active_jobs,top);
 	      
+#ifdef LOGON
 	      fprintf(log_file,"cycle %d finished job %s(%d)\n",
 		      vhpi_cycle_count,
 		      top->name,
 		      (int) top->index);
+#endif
 	      
 	      APPEND(finished_jobs,top);
 	      top = next;
@@ -618,6 +620,7 @@ void  Vhpi_Send()
 
 	  next = top->next;
 
+  	  close(top->socket_id);
 	  REMOVE(finished_jobs,top);
 	  Delete_JobLink(top);
 	  
@@ -833,10 +836,12 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
 	      REMOVE(new_jobs,jlink);
 	      APPEND(active_jobs,jlink);
 
+#ifdef LOGON
 	      fprintf(log_file,"cycle %d started job %s(%d)\n",
 		      vhpi_cycle_count,
 		      jlink->name,
 		      (int) jlink->index);
+#endif
 
 	      break;
 	    }

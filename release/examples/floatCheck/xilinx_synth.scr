@@ -1,15 +1,15 @@
 run
 -ifn xilinx_synth.prj
--ofn xilinx_synth
+-ofn ahir_system_synth
 -ifmt mixed
 -ofmt NGC
--p x2vp30
+-p xc3s5000-fg1156-4
 -top ahir_system
 -safe_implementation yes
 -optimize_primitives no
 -iuc yes
 -equivalent_register_removal no
--keep_hierarchy no
+-keep_hierarchy yes
 -write_timing_constraints yes
 -hierarchy_separator _
 -bus_delimiter <>

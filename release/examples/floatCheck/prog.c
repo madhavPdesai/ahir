@@ -2,8 +2,13 @@
 #include <stdint.h>
 #include <Pipes.h>
 #include <stdio.h>
+#include <fpu.h>
 
 
+float fpincr(float x)
+{
+	return(x + 1.0);
+}
 
 float fpmul(float x, float y)
 {
@@ -17,7 +22,7 @@ float fpadd(float x, float y)
 
 float fpsub(float x, float y)
 {
-	return(x-y);
+	return(fpu32(x,y,SUB));
 }
 
 float dotProduct(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3)
@@ -46,3 +51,5 @@ uint8_t fpcmpeq(float x, float y)
 {
 	return(x == y);
 }
+
+

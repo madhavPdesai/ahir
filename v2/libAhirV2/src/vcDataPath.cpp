@@ -1085,6 +1085,9 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 					 input_type,
 					 output_type);
       
+      // is it a pipelined op..
+      int exp_width, frac_width;
+      bool is_pipelined_float_op = Is_Pipelined_Float_Op(vc_op_id, input_type, output_type, exp_width, frac_width);
 
       // the number of inputs and outputs on each operator in the current group.
       int num_ips = ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())))->Get_Number_Of_Input_Wires();
@@ -1116,7 +1119,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       bool use_constant = false;
       string const_operand;
       int const_width = 1;
-      if(num_ips == 2 && inwires[1]->Is("vcConstantWire"))
+      if((!is_pipelined_float_op) && (num_ips == 2 && inwires[1]->Is("vcConstantWire")))
 	{
 	  num_ips = 1; // has only one input, we will be using one constant operand.
 	  use_constant = true;
@@ -1194,10 +1197,8 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       // moving all the complexity to the VHDL library.
       // This is probably the right solution, because it decouples
       // vc2vhdl from the VHDL library.
-      int exp_width, frac_width;
-      if(!use_constant && Is_Pipelined_Float_Op(vc_op_id, input_type_1, output_type, exp_width, frac_width))
+      if(is_pipelined_float_op)
 	{
-	  // ok, a shared operator
 	  this->Print_VHDL_Concatenate_Req("reqL",reqL,ofile);
 	  this->Print_VHDL_Disconcatenate_Ack("ackL",ackL,ofile);
 	  this->Print_VHDL_Concatenate_Req("reqR",reqR,ofile);

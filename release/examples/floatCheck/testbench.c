@@ -87,6 +87,19 @@ int main(int argc, char* argv[])
 					*((uint32_t*) &Y),
 					*((uint32_t*) &hZ));
 		}
+
+		hZ = fpincr(X);
+		sZ = (X + 1.0);
+		if(hZ != sZ)
+		{
+			fprintf(stdout,"Error: %f + 1.0 = %f, expected %f.\n", X,hZ,sZ);
+			err_flag = 1;
+		}
+		else
+		{
+			fprintf(stdout,"Info: %f + 1.0 = %f.\n", X,hZ);
+		}
+
 #endif
 
 #ifdef SUB

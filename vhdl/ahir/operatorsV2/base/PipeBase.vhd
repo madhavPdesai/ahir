@@ -33,19 +33,28 @@ architecture default_arch of PipeBase is
   
 begin  -- default_arch
 
-  wmux : OutputPortLevel generic map (
-    num_reqs       => num_writes,
-    data_width     => data_width,
-    no_arbitration => false)
-    port map (
-      req   => write_req,
-      ack   => write_ack,
-      data  => write_data,
-      oreq  => pipe_req,                -- no cross-over, drives req
-      oack  => pipe_ack,                -- no cross-over, receives ack
-      odata => pipe_data,
-      clk   => clk,
-      reset => reset);
+
+  manyWriters: if (num_writes > 1) generate
+    wmux : OutputPortLevel generic map (
+      num_reqs       => num_writes,
+      data_width     => data_width,
+      no_arbitration => false)
+      port map (
+        req   => write_req,
+        ack   => write_ack,
+        data  => write_data,
+        oreq  => pipe_req,                -- no cross-over, drives req
+        oack  => pipe_ack,                -- no cross-over, receives ack
+        odata => pipe_data,
+        clk   => clk,
+        reset => reset);
+  end generate manyWriters;
+
+  singleWriter: if (num_writes = 1) generate
+     pipe_req <= write_req(0);
+     write_ack(0) <= pipe_ack;
+     pipe_data <= write_data;
+  end generate singleWriter;
 
   Shallow: if (depth < 3) and (not lifo_mode) generate
 
@@ -99,19 +108,27 @@ begin  -- default_arch
   end generate Lifo;
   
 
-  rmux : InputPortLevel generic map (
-    num_reqs       => num_reads,
-    data_width     => data_width,
-    no_arbitration => false)
-    port map (
-      req => read_req,
-      ack => read_ack,
-      data => read_data,
-      oreq => pipe_req_repeated,       
-      oack => pipe_ack_repeated,       
-      odata => pipe_data_repeated,
-      clk => clk,
-      reset => reset);
+  manyReaders: if (num_reads > 1) generate
+    rmux : InputPortLevel generic map (
+      num_reqs       => num_reads,
+      data_width     => data_width,
+      no_arbitration => false)
+      port map (
+        req => read_req,
+        ack => read_ack,
+        data => read_data,
+        oreq => pipe_req_repeated,       
+        oack => pipe_ack_repeated,       
+        odata => pipe_data_repeated,
+        clk => clk,
+        reset => reset);
+  end generate manyReaders;
+
+  singleReader: if (num_reads = 1) generate
+    read_ack(0) <= pipe_ack_repeated;
+    pipe_req_repeated <= read_req(0);
+    read_data <= pipe_data_repeated;
+  end generate singleReader;
   
 
 end default_arch;

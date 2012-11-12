@@ -1,3 +1,4 @@
 vhdl ieee_proposed /home/madhav/ahirgit/ahir/release/vhdl/ieee_proposed.vhdl
 vhdl ahir /home/madhav/ahirgit/ahir/release/vhdl/ahir.vhdl
+vhdl work ./ahir_system_global_package.vhdl
 vhdl work ./ahir_system.vhdl

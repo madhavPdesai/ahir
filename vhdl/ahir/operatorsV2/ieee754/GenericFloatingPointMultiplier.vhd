@@ -83,7 +83,7 @@ architecture rtl of GenericFloatingPointMultiplier is
 
   -- stage 4 outputs.
   signal tag4: std_logic_vector(tag_width-1 downto 0);  
-  signal fpresult_4         : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal fpresult_4         : std_logic_vector((exponent_width+fraction_width) downto 0);
   
 begin
 
@@ -97,7 +97,7 @@ begin
   rp <= to_float(INB, exponent_width, fraction_width);
 
   -- return slv.
-  OUTMUL <= to_slv(fpresult_4);
+  OUTMUL <= fpresult_4;
 
   -----------------------------------------------------------------------------
   -- Stage 0: register inputs.
@@ -360,9 +360,9 @@ begin
         tag4 <= raw_tag;
 
         if(exceptional_result = '1') then
-          fpresult_4 <= fpresult;
+          fpresult_4 <= to_slv(fpresult);
 	else
-          fpresult_4 <= fpresult_normalized;
+          fpresult_4 <= to_slv(fpresult_normalized);
         end if;
         
       end if;      

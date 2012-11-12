@@ -435,6 +435,11 @@ void send_responses()
 	  __REMOVE(finished_jobs,job);
 	  delete_job(job);
 	}
+      else
+	{
+		fprintf(stderr,"Warngin:  pipe-job cannot write to socket %d.\n", job->socket_id);
+	}
+
       job = next_job;
     }
 }

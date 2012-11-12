@@ -40,48 +40,48 @@ entity GenericFloatingPointAdderSubtractor is
 end entity;
 
 
-architecture trivial of GenericFloatingPointAdderSubtractor is
-	
-	signal stage_full, stall: std_logic;
-  	signal lp, rp   : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
-begin
-  -- construct l,r (user registers)
-  lp <= to_float(INA, exponent_width, fraction_width);
- 
-  AsAdder: if (not use_as_subtractor) generate
-  	rp <= to_float(INB, exponent_width, fraction_width);
-  end generate AsAdder;
-
-  AsSubtractor: if (use_as_subtractor) generate
-        process(INB)
-           variable btmp: UNRESOLVED_float(exponent_width downto -fraction_width);
-        begin
-	   btmp := to_float(INB, exponent_width, fraction_width);
-  	   rp <= - btmp;
-	end process;
-  end generate AsSubtractor;
-
-  stall <= stage_full and (not accept_rdy);
-  addi_rdy <= not stall;
-  addo_rdy <= stage_full;
-
-  process(clk)
-  begin
-	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			stage_full <= '0';
-		elsif stall = '0' then
-			stage_full <= env_rdy;
-		end if;
-
-		if(stall = '0') then
-			OUTADD <= to_slv(lp + rp);
-		end if;
-	end if;
-  end process;
-
-
-end trivial;
+-- architecture trivial of GenericFloatingPointAdderSubtractor is
+	-- 
+	-- signal stage_full, stall: std_logic;
+  	-- signal lp, rp   : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
+-- begin
+  -- -- construct l,r (user registers)
+  -- lp <= to_float(INA, exponent_width, fraction_width);
+ -- 
+  -- AsAdder: if (not use_as_subtractor) generate
+  	-- rp <= to_float(INB, exponent_width, fraction_width);
+  -- end generate AsAdder;
+-- 
+  -- AsSubtractor: if (use_as_subtractor) generate
+        -- process(INB)
+           -- variable btmp: UNRESOLVED_float(exponent_width downto -fraction_width);
+        -- begin
+	   -- btmp := to_float(INB, exponent_width, fraction_width);
+  	   -- rp <= - btmp;
+	-- end process;
+  -- end generate AsSubtractor;
+-- 
+  -- stall <= stage_full and (not accept_rdy);
+  -- addi_rdy <= not stall;
+  -- addo_rdy <= stage_full;
+-- 
+  -- process(clk)
+  -- begin
+	-- if(clk'event and clk = '1') then
+		-- if(reset = '1') then
+			-- stage_full <= '0';
+		-- elsif stall = '0' then
+			-- stage_full <= env_rdy;
+		-- end if;
+-- 
+		-- if(stall = '0') then
+			-- OUTADD <= to_slv(lp + rp);
+		-- end if;
+	-- end if;
+  -- end process;
+-- 
+-- 
+-- end trivial;
 
 
 -- this is the pipelined version. works, and when synthesized
@@ -141,7 +141,7 @@ architecture rtl of GenericFloatingPointAdderSubtractor is
 
   signal fpresult_6         : UNRESOLVED_float (exponent_width downto -fraction_width);
 
-  signal fpresult_7         : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal fpresult_7         : std_logic_vector((exponent_width+fraction_width) downto 0);
   
   type FracMaskArray is array (natural range <> ) of unsigned(fractl_1'length-1 downto 0);
   function BuildFracMasks(width: natural) return FracMaskArray is
@@ -193,7 +193,7 @@ begin
   end generate AsSubtractor;
 
   -- return slv.
-  OUTADD <= to_slv(fpresult_7);
+  OUTADD <= fpresult_7;
 
   -----------------------------------------------------------------------------
   -- Stage 0: register inputs.
@@ -738,9 +738,9 @@ begin
       if(active_v = '1') then
         tag7 <= tagv;
     	if(exceptional_result = '1') then 
-        	fpresult_7 <= fpresult;
+        	fpresult_7 <= to_slv(fpresult);
 	else
-        	fpresult_7 <= fpresult_6;
+        	fpresult_7 <= to_slv(fpresult_6);
 	end if;
       end if;
     end if;

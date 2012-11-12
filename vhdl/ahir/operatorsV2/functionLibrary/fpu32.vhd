@@ -56,9 +56,11 @@ begin
    process(R, OP_ID)
 	variable X: std_logic_vector(31 downto 0);
    begin
-	X := R;
+	X(30 downto 0) := R(30 downto 0);
 	if(OP_ID = "00000001") then
 		X(31) := not R(31);
+	else
+		X(31) := R(31);
 	end if;
 	addsub_R <= X;
    end process;

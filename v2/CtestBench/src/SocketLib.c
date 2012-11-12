@@ -342,9 +342,7 @@ int connect_to_client(int server_fd)
 
       if (newsockfd >= 0)
 	{
-#ifdef DEBUG
 	  fprintf(stderr,"Info: new client connection %d \n",newsockfd);
-#endif
 	}
       else
 	{

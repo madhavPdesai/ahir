@@ -10477,19 +10477,28 @@ architecture default_arch of PipeBase is
   
 begin  -- default_arch
 
-  wmux : OutputPortLevel generic map (
-    num_reqs       => num_writes,
-    data_width     => data_width,
-    no_arbitration => false)
-    port map (
-      req   => write_req,
-      ack   => write_ack,
-      data  => write_data,
-      oreq  => pipe_req,                -- no cross-over, drives req
-      oack  => pipe_ack,                -- no cross-over, receives ack
-      odata => pipe_data,
-      clk   => clk,
-      reset => reset);
+
+  manyWriters: if (num_writes > 1) generate
+    wmux : OutputPortLevel generic map (
+      num_reqs       => num_writes,
+      data_width     => data_width,
+      no_arbitration => false)
+      port map (
+        req   => write_req,
+        ack   => write_ack,
+        data  => write_data,
+        oreq  => pipe_req,                -- no cross-over, drives req
+        oack  => pipe_ack,                -- no cross-over, receives ack
+        odata => pipe_data,
+        clk   => clk,
+        reset => reset);
+  end generate manyWriters;
+
+  singleWriter: if (num_writes = 1) generate
+     pipe_req <= write_req(0);
+     write_ack(0) <= pipe_ack;
+     pipe_data <= write_data;
+  end generate singleWriter;
 
   Shallow: if (depth < 3) and (not lifo_mode) generate
 
@@ -10543,19 +10552,27 @@ begin  -- default_arch
   end generate Lifo;
   
 
-  rmux : InputPortLevel generic map (
-    num_reqs       => num_reads,
-    data_width     => data_width,
-    no_arbitration => false)
-    port map (
-      req => read_req,
-      ack => read_ack,
-      data => read_data,
-      oreq => pipe_req_repeated,       
-      oack => pipe_ack_repeated,       
-      odata => pipe_data_repeated,
-      clk => clk,
-      reset => reset);
+  manyReaders: if (num_reads > 1) generate
+    rmux : InputPortLevel generic map (
+      num_reqs       => num_reads,
+      data_width     => data_width,
+      no_arbitration => false)
+      port map (
+        req => read_req,
+        ack => read_ack,
+        data => read_data,
+        oreq => pipe_req_repeated,       
+        oack => pipe_ack_repeated,       
+        odata => pipe_data_repeated,
+        clk => clk,
+        reset => reset);
+  end generate manyReaders;
+
+  singleReader: if (num_reads = 1) generate
+    read_ack(0) <= pipe_ack_repeated;
+    pipe_req_repeated <= read_req(0);
+    read_data <= pipe_data_repeated;
+  end generate singleReader;
   
 
 end default_arch;
@@ -13696,51 +13713,53 @@ entity GenericFloatingPointAdderSubtractor is
 end entity;
 
 
-architecture trivial of GenericFloatingPointAdderSubtractor is
-	
-	signal stage_full, stall: std_logic;
-  	signal lp, rp   : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
-begin
-  -- construct l,r (user registers)
-  lp <= to_float(INA, exponent_width, fraction_width);
- 
-  AsAdder: if (not use_as_subtractor) generate
-  	rp <= to_float(INB, exponent_width, fraction_width);
-  end generate AsAdder;
+-- architecture trivial of GenericFloatingPointAdderSubtractor is
+	-- 
+	-- signal stage_full, stall: std_logic;
+  	-- signal lp, rp   : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
+-- begin
+  -- -- construct l,r (user registers)
+  -- lp <= to_float(INA, exponent_width, fraction_width);
+ -- 
+  -- AsAdder: if (not use_as_subtractor) generate
+  	-- rp <= to_float(INB, exponent_width, fraction_width);
+  -- end generate AsAdder;
+-- 
+  -- AsSubtractor: if (use_as_subtractor) generate
+        -- process(INB)
+           -- variable btmp: UNRESOLVED_float(exponent_width downto -fraction_width);
+        -- begin
+	   -- btmp := to_float(INB, exponent_width, fraction_width);
+  	   -- rp <= - btmp;
+	-- end process;
+  -- end generate AsSubtractor;
+-- 
+  -- stall <= stage_full and (not accept_rdy);
+  -- addi_rdy <= not stall;
+  -- addo_rdy <= stage_full;
+-- 
+  -- process(clk)
+  -- begin
+	-- if(clk'event and clk = '1') then
+		-- if(reset = '1') then
+			-- stage_full <= '0';
+		-- elsif stall = '0' then
+			-- stage_full <= env_rdy;
+		-- end if;
+-- 
+		-- if(stall = '0') then
+			-- OUTADD <= to_slv(lp + rp);
+		-- end if;
+	-- end if;
+  -- end process;
+-- 
+-- 
+-- end trivial;
 
-  AsSubtractor: if (use_as_subtractor) generate
-        process(INB)
-           variable btmp: UNRESOLVED_float(exponent_width downto -fraction_width);
-        begin
-	   btmp := to_float(INB, exponent_width, fraction_width);
-  	   rp <= - btmp;
-	end process;
-  end generate AsSubtractor;
 
-  stall <= stage_full and (not accept_rdy);
-  addi_rdy <= not stall;
-  addo_rdy <= stage_full;
-
-  process(clk)
-  begin
-	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			stage_full <= '0';
-		elsif stall = '0' then
-			stage_full <= env_rdy;
-		end if;
-
-		if(stall = '0') then
-			OUTADD <= to_slv(lp + rp);
-		end if;
-	end if;
-  end process;
-
-
-end trivial;
-
-
--- this is the pipelined version.
+-- this is the pipelined version. works, and when synthesized
+-- by xst 10.1 is ok.  synthesis produces incorrect circuit with
+-- xst 9.2i.
 architecture rtl of GenericFloatingPointAdderSubtractor is
   signal  l, r, l_1, r_1, lp, rp   : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
   
@@ -13795,7 +13814,7 @@ architecture rtl of GenericFloatingPointAdderSubtractor is
 
   signal fpresult_6         : UNRESOLVED_float (exponent_width downto -fraction_width);
 
-  signal fpresult_7         : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal fpresult_7         : std_logic_vector((exponent_width+fraction_width) downto 0);
   
   type FracMaskArray is array (natural range <> ) of unsigned(fractl_1'length-1 downto 0);
   function BuildFracMasks(width: natural) return FracMaskArray is
@@ -13847,7 +13866,7 @@ begin
   end generate AsSubtractor;
 
   -- return slv.
-  OUTADD <= to_slv(fpresult_7);
+  OUTADD <= fpresult_7;
 
   -----------------------------------------------------------------------------
   -- Stage 0: register inputs.
@@ -14392,9 +14411,9 @@ begin
       if(active_v = '1') then
         tag7 <= tagv;
     	if(exceptional_result = '1') then 
-        	fpresult_7 <= fpresult;
+        	fpresult_7 <= to_slv(fpresult);
 	else
-        	fpresult_7 <= fpresult_6;
+        	fpresult_7 <= to_slv(fpresult_6);
 	end if;
       end if;
     end if;
@@ -14443,6 +14462,8 @@ entity GenericFloatingPointMultiplier is
     muli_rdy, mulo_rdy: out std_logic);
 end entity;
 
+-- works, also when synthesized by xst 10.1.  xst 9.2is seems
+-- to produce incorrect circuits.
 architecture rtl of GenericFloatingPointMultiplier is
 
   constant operand_width : integer := exponent_width+fraction_width+1;
@@ -14486,7 +14507,7 @@ architecture rtl of GenericFloatingPointMultiplier is
 
   -- stage 4 outputs.
   signal tag4: std_logic_vector(tag_width-1 downto 0);  
-  signal fpresult_4         : UNRESOLVED_float (exponent_width downto -fraction_width);
+  signal fpresult_4         : std_logic_vector((exponent_width+fraction_width) downto 0);
   
 begin
 
@@ -14500,7 +14521,7 @@ begin
   rp <= to_float(INB, exponent_width, fraction_width);
 
   -- return slv.
-  OUTMUL <= to_slv(fpresult_4);
+  OUTMUL <= fpresult_4;
 
   -----------------------------------------------------------------------------
   -- Stage 0: register inputs.
@@ -14763,9 +14784,9 @@ begin
         tag4 <= raw_tag;
 
         if(exceptional_result = '1') then
-          fpresult_4 <= fpresult;
+          fpresult_4 <= to_slv(fpresult);
 	else
-          fpresult_4 <= fpresult_normalized;
+          fpresult_4 <= to_slv(fpresult_normalized);
         end if;
         
       end if;      
@@ -17150,9 +17171,11 @@ begin
    process(R, OP_ID)
 	variable X: std_logic_vector(31 downto 0);
    begin
-	X := R;
+	X(30 downto 0) := R(30 downto 0);
 	if(OP_ID = "00000001") then
 		X(31) := not R(31);
+	else
+		X(31) := R(31);
 	end if;
 	addsub_R <= X;
    end process;
@@ -17196,7 +17219,7 @@ begin
 
 
    omux:  OutputPortLevel generic map(num_reqs => 2,
-					data_width => data_to_omux'length,
+					data_width => data_from_omux'length,
 					no_arbitration => false)
 			port map(req => reqi_omux,
 				ack => acki_omux,
@@ -17316,7 +17339,7 @@ begin
 
 
    omux:  OutputPortLevel generic map(num_reqs => 2,
-					data_width => data_to_omux'length,
+					data_width => data_from_omux'length,
 					no_arbitration => false)
 			port map(req => reqi_omux,
 				ack => acki_omux,
