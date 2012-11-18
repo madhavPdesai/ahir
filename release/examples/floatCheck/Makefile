@@ -7,14 +7,17 @@ VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
 #DEFS= -DADD -DMUL -DDOT -DCMP
 #DEFS= -DADD
-DEFS= -DADD -DMUL
+DEFS= -DADD -DMUL -DSUB
 #DEFS= -DCMP
+#DEFS=-DBUG
 
 
 #TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
 #TOPMODULES= -t fpadd
-TOPMODULES= -t fpadd -t fpmul
+TOPMODULES= -t fpadd -t fpmul -t fpsub
+#TOPMODULES= -t fpsub
 #TOPMODULES= -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
+
 all: SW HW 
 
 # compile with SW defined.
@@ -44,6 +47,7 @@ aa2vc: prog.aa
 # vC to VHDL
 vc2vhdl: prog.vc
 	vc2vhdl -a -q -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc 
+	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 
@@ -59,6 +63,7 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 	ghdl -i --work=ieee_proposed  $(VHDL_LIB)/ieee_proposed.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Utility_Package.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Vhpi_Package.vhdl
+	ghdl -i --work=work ahir_system_global_package.vhdl
 	ghdl -i --work=work ahir_system.vhdl
 	ghdl -i --work=work ahir_system_test_bench.vhdl
 	ghdl -m --work=work -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
@@ -76,6 +81,7 @@ postsynthvhdlsim: ahir_system_synth.vhd ahir_system_test_bench.vhdl testbench.c 
 	ghdl -i --work=ieee_proposed  $(VHDL_LIB)/ieee_proposed.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Utility_Package.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Vhpi_Package.vhdl
+	ghdl -i --work=work ahir_system_global_package.vhdl
 	ghdl -i --work=work --ieee=synopsys -fexplicit -P$(UNISIM) ahir_system_synth.vhd
 	ghdl -i --work=work ahir_system_test_bench.vhdl
 	ghdl -m --work=work --ieee=synopsys -fexplicit -P$(UNISIM) -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 

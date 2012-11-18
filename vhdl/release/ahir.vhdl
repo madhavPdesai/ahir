@@ -90,6 +90,13 @@ package Utilities is
     signal clk    : in std_logic;
     signal cp_sig : in boolean;
     cp_sig_name   : in string);
+
+  procedure LogOperation(
+	signal clk: in std_logic;
+	signal din, dout: in std_logic_vector;
+        signal sr,sa,cr,ca: in boolean;
+	operator_name: in string;
+	operator_type: in string);
   
 
   function Reverse(x: unsigned) return unsigned;
@@ -394,6 +401,25 @@ package body Utilities is
       end if;
     end if;        
     
+  end procedure;
+
+  procedure LogOperation(
+	signal clk: in std_logic;
+	signal din,dout: in std_logic_vector;
+        signal sr,sa,cr,ca: in boolean;
+	operator_name: in string;
+	operator_type: in string) is
+  begin
+    if(clk'event and clk = '1') then
+      if(sr) then
+        assert false report operator_name & ": started operation  " & operator_type severity note;
+      end if;
+
+      if(ca) then
+        assert false report operator_name & ": completed operation " & operator_type 
+          & " input-data " & Convert_SLV_To_Hex_String(din) & ", output-data = " & Convert_SLV_To_Hex_String(dout)  severity note;
+      end if;
+    end if;        
   end procedure;
 
   procedure LogCPEvent (
@@ -13740,7 +13766,9 @@ begin
 end trivial;
 
 
--- this is the pipelined version.
+-- this is the pipelined version. works, and when synthesized
+-- by xst 10.1 is ok.  synthesis produces incorrect circuit with
+-- xst 9.2i.
 architecture rtl of GenericFloatingPointAdderSubtractor is
   signal  l, r, l_1, r_1, lp, rp   : UNRESOLVED_float(exponent_width downto -fraction_width);  -- floating point input
   
@@ -14443,6 +14471,8 @@ entity GenericFloatingPointMultiplier is
     muli_rdy, mulo_rdy: out std_logic);
 end entity;
 
+-- works, also when synthesized by xst 10.1.  xst 9.2is seems
+-- to produce incorrect circuits.
 architecture rtl of GenericFloatingPointMultiplier is
 
   constant operand_width : integer := exponent_width+fraction_width+1;
@@ -15944,7 +15974,11 @@ begin
 
 end rtl;
 -------------------------------------------------------------------------------
--- a basic unsigned adder.
+-- a basic unsigned adder..  if addition is specified, just
+-- adds using a simple carry lookahead scheme.  if subtraction
+-- is specified, takes the twos complement of the second operand
+-- and adds the two numbers.  No overflow/negative checks
+-- are performed.
 --
 -------------------------------------------------------------------------------
 
@@ -15959,7 +15993,6 @@ entity AddSubCell  is
 	generic ( operand_width: integer);
 	port (A,B: in unsigned(operand_width-1 downto 0);
 		Sum: out unsigned(operand_width-1 downto 0);
-		subtract_op: in std_logic;
 		BP,BG: out std_logic;
 		stall: in std_logic;
 		clk, reset: in std_logic);
@@ -15974,21 +16007,11 @@ begin
 		prop := '1';
 		gen  := '0';
 
-		if(subtract_op = '0') then
-			sumv := A+B;
-		else
-			sumv := A-B;
-		end if;
+		sumv := A+B;
 
 		for I in 0 to operand_width-1 loop
-		 	
-		   if(subtract_op = '0') then 
 			prop := (prop and (A(I) or B(I)));
 			gen  := (A(I) and B(I)) or (gen and (A(I) or B(I)));
-		   else
-			prop := (prop and (A(I) xnor B(I)));
-			gen  := ((not A(I)) and B(I)) or (gen and (A(I) xnor B(I)));
-		   end if;
 		end loop;
 
 
@@ -16047,9 +16070,10 @@ architecture Pipelined of UnsignedAdderSubtractor is
 
   signal addsubcell_Sum, addsubcell_Sum_Delayed, 
 			addsubcell_A, addsubcell_B, final_sums: CWord(0 to num_chunks-1);
-  signal addsubcell_BP, addsubcell_BG, addsubcell_Cout, addsubcell_Cin: std_logic_vector(0 to num_chunks-1);
+  signal addsubcell_BP, addsubcell_BG : std_logic_vector(0 to num_chunks-1);
+  signal addsubcell_Cin: std_logic_vector(0 to num_chunks);
 
-  signal block_carries: std_logic_vector(1 to num_chunks);
+  signal block_carries: std_logic_vector(0 to num_chunks);
   signal subtract_op_1, subtract_op_2: std_logic;
 
 
@@ -16057,7 +16081,6 @@ architecture Pipelined of UnsignedAdderSubtractor is
 	generic ( operand_width: integer);
 	port (A,B: in unsigned(operand_width-1 downto 0);
 		Sum: out unsigned(operand_width-1 downto 0);
-		subtract_op: in std_logic;
 		BP,BG: out std_logic;
 		stall: in std_logic;
 		clk, reset: in std_logic);
@@ -16065,7 +16088,9 @@ architecture Pipelined of UnsignedAdderSubtractor is
   
 begin  -- Pipelined
 
-  addsubcell_Cin <= (others => '0');
+  -- note: if subtract_op = '1', then complement R (see below) and add 1.
+  addsubcell_Cin <= (0 => '1', others => '0') when subtract_op = '1' else (others => '0');
+
   stage_active(0) <= in_rdy;
   out_rdy <= stage_active(pipe_depth);
   stage_tags(0) <= tag_in;
@@ -16073,13 +16098,20 @@ begin  -- Pipelined
 
   RESULT <= Resultpadded(operand_width-1 downto 0);
 
-  process(L,R)
+
+  -- pad. also if subtract_op = '1' then complement R and add 1 (addsubcell_Cin).
+  process(L,R,subtract_op)
 	variable ltmp, rtmp: unsigned(padded_operand_width-1 downto 0);
   begin
 	ltmp := (others => '0'); ltmp(operand_width-1 downto 0) := L;
 	rtmp := (others => '0'); rtmp(operand_width-1 downto 0) := R;
 	Lpadded <= ltmp;
-	Rpadded <= rtmp;
+
+	if(subtract_op = '0') then
+		Rpadded <= rtmp;
+	else
+		Rpadded <= not rtmp;
+	end if;
   end process;
 
   Stage1:  for I in  0 to num_chunks-1 generate
@@ -16091,7 +16123,6 @@ begin  -- Pipelined
 		port  map( A => addsubcell_A(I),
 			   B => addsubcell_B(I),	
 			   Sum => addsubcell_Sum(I),
-			   subtract_op => subtract_op,
 			   BP => addsubcell_BP(I),
 			   BG => addsubcell_BG(I),
 			   stall => stall,
@@ -16119,14 +16150,14 @@ begin  -- Pipelined
   process(clk)	
 	variable cin: std_logic_vector(0 to num_chunks);
   begin
-	cin := (others => '0');
+	cin := addsubcell_Cin;
 	for I in 1 to num_chunks loop
 		cin(I) := (cin(I-1) and addsubcell_BP(I-1))  or addsubcell_BG(I-1);
 	end loop;
 
 	if(clk'event and clk = '1') then
 		if(stall = '0') then
-			block_carries <= cin(1 to num_chunks);
+			block_carries <= cin;
 			stage_tags(2) <= stage_tags(1);
 			addsubcell_Sum_Delayed <= addsubcell_Sum;
 			subtract_op_2 <= subtract_op_1;
@@ -16145,33 +16176,17 @@ begin  -- Pipelined
 	variable correction, tmp: unsigned(chunk_width-1 downto 0);
 	variable is_negative: boolean;
   begin
-	correction := (others => '0');
 	if(clk'event and clk = '1') then
 		if(stall = '0') then
 			final_sums(0) <= addsubcell_Sum_Delayed(0);
-			for I in 1 to num_chunks-1 loop
+			for I in 0 to num_chunks-1 loop
+				correction := (others => '0');
 				if(block_carries(I) = '1') then
-					if(subtract_op_2 = '1') then
-						correction := (others => '1');
-					else
-						correction := (0 => '1', others => '0');
-					end if;
-				else	
-					correction := (others => '0');
+					correction(0) := '1';
 				end if;
-				tmp := addsubcell_Sum_Delayed(I) + correction;
-
-
-				-- if correction is negative, then check that the
-				-- result is not negative! 
-				if(subtract_op_2 = '1') then
-					is_negative :=  (addsubcell_Sum_Delayed(I) < tmp);
-					if(is_negative) then
-						tmp  := (others => '0');
-					end if;
-				end if;
-				final_sums(I) <= tmp;
+				final_sums(I) <= addsubcell_Sum_Delayed(I) + correction;
 			end loop;
+
 			stage_tags(3) <= stage_tags(2);
 			if(reset = '1') then
 				stage_active(3) <= '0';
@@ -17196,7 +17211,7 @@ begin
 
 
    omux:  OutputPortLevel generic map(num_reqs => 2,
-					data_width => data_to_omux'length,
+					data_width => data_from_omux'length,
 					no_arbitration => false)
 			port map(req => reqi_omux,
 				ack => acki_omux,
@@ -17316,7 +17331,7 @@ begin
 
 
    omux:  OutputPortLevel generic map(num_reqs => 2,
-					data_width => data_to_omux'length,
+					data_width => data_from_omux'length,
 					no_arbitration => false)
 			port map(req => reqi_omux,
 				ack => acki_omux,

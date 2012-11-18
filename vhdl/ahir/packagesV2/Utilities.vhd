@@ -69,6 +69,13 @@ package Utilities is
     signal clk    : in std_logic;
     signal cp_sig : in boolean;
     cp_sig_name   : in string);
+
+  procedure LogOperation(
+	signal clk: in std_logic;
+	signal din, dout: in std_logic_vector;
+        signal sr,sa,cr,ca: in boolean;
+	operator_name: in string;
+	operator_type: in string);
   
 
   function Reverse(x: unsigned) return unsigned;
@@ -373,6 +380,25 @@ package body Utilities is
       end if;
     end if;        
     
+  end procedure;
+
+  procedure LogOperation(
+	signal clk: in std_logic;
+	signal din,dout: in std_logic_vector;
+        signal sr,sa,cr,ca: in boolean;
+	operator_name: in string;
+	operator_type: in string) is
+  begin
+    if(clk'event and clk = '1') then
+      if(sr) then
+        assert false report operator_name & ": started operation  " & operator_type severity note;
+      end if;
+
+      if(ca) then
+        assert false report operator_name & ": completed operation " & operator_type 
+          & " input-data " & Convert_SLV_To_Hex_String(din) & ", output-data = " & Convert_SLV_To_Hex_String(dout)  severity note;
+      end if;
+    end if;        
   end procedure;
 
   procedure LogCPEvent (

@@ -18,21 +18,48 @@ void Exit(int sig)
 	exit(0);
 }
 
+float bug(float a, float b)
+{
+	return(fpsub(a,b));
+}
 
+// usage: testbench [rng-seed] [num-tests]
+// both rng-seed and num-tests should be positive integers.
 int main(int argc, char* argv[])
 {
 
 	signal(SIGINT,  Exit);
 	signal(SIGTERM, Exit);
 
-	srand48(1023);
+#ifdef BUG
+	uint32_t ubuga = 0x3e2ae850;
+        uint32_t ubugb = 0x40854861;
+
+	float buga = *((float*) &ubuga);
+	float bugb = *((float*) &ubugb);
+
+	float bugc = bug(buga,bugb);
+	float ebugc = buga - bugb;
+
+	fprintf(stdout,"Info: bug result = %f (%x), expected %f (%x).\n",
+			bugc, *((uint32_t*)&bugc), ebugc, *((uint32_t*)&ebugc));
+	
+	return(0);
+#endif
+	
+	int rng_seed = 1023;
+	if(argc > 1)
+		rng_seed = atoi(argv[1]);
+	
+	srand48(rng_seed);
 
 	float X,Y, hZ, sZ;
 	int counter;
 	int err_flag = 0;
+	float scale_factor = 1.0;
 
-	if(argc > 1) 
-		counter = atoi(argv[1]);
+	if(argc > 2) 
+		counter = atoi(argv[2]);
 	else
 		counter = 10;
 
@@ -40,8 +67,9 @@ int main(int argc, char* argv[])
 	while(counter > 0) {
 		counter--;
 
-		X = drand48();
-		Y = drand48();
+		X = drand48() / scale_factor;
+		Y = drand48() * scale_factor;
+		scale_factor = 1.1 * scale_factor;
 
 
 #ifdef MUL

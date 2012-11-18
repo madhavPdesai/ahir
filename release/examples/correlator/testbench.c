@@ -81,6 +81,8 @@ int main(int argc, char* argv[])
 		best_corr += ((float) idx)*((float) idx);
 	}
 
+	fprintf(stderr,"Info:testbench: wrote the two arrays to the hardware.\n");
+
 
         float corr = read_float32("best_correlation");
 	uint32_t offs = read_uint32("best_offset");
