@@ -41,8 +41,12 @@ aa2vc: prog.aa $(FUNCTIONLIB)/Aa/fpu.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
+<<<<<<< HEAD
 	vc2vhdl -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
+=======
+	vc2vhdl -q -a -D -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
+>>>>>>> cfb61b528b155b9f94eb812378c33103b27a06c0
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 

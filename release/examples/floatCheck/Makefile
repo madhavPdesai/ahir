@@ -10,12 +10,22 @@ FUNCTIONLIB=../../../v2/functionLibrary/
 #DEFS= -DADD
 DEFS= -DADD -DMUL -DSUB
 #DEFS= -DCMP
+#DEFS=-DBUG
 
 
+<<<<<<< HEAD
 #TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub -t fpincr
 #TOPMODULES= -t fpadd -t fpincr
 TOPMODULES= -t fpadd -t fpmul -t fpincr -t fpsub
 #TOPMODULES= -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub -t fpincr
+=======
+#TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
+#TOPMODULES= -t fpadd
+TOPMODULES= -t fpadd -t fpmul -t fpsub
+#TOPMODULES= -t fpsub
+#TOPMODULES= -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
+
+>>>>>>> cfb61b528b155b9f94eb812378c33103b27a06c0
 all: SW HW 
 
 # compile with SW defined.
@@ -45,7 +55,11 @@ aa2vc: prog.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
+<<<<<<< HEAD
 	vc2vhdl -a -q -C -e ahir_system -w -s ghdl $(TOPMODULES) -L $(FUNCTIONLIB)/fpu.list -f prog.vc 
+=======
+	vc2vhdl -a -q -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc 
+>>>>>>> cfb61b528b155b9f94eb812378c33103b27a06c0
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
@@ -80,7 +94,11 @@ postsynthvhdlsim: ahir_system_synth.vhd ahir_system_test_bench.vhdl testbench.c 
 	ghdl -i --work=ieee_proposed  $(VHDL_LIB)/ieee_proposed.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Utility_Package.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Vhpi_Package.vhdl
+<<<<<<< HEAD
 	ghdl -i --work=work --ieee=synopsys -fexplicit -P$(UNISIM) ahir_system_global_package.vhdl
+=======
+	ghdl -i --work=work ahir_system_global_package.vhdl
+>>>>>>> cfb61b528b155b9f94eb812378c33103b27a06c0
 	ghdl -i --work=work --ieee=synopsys -fexplicit -P$(UNISIM) ahir_system_synth.vhd
 	ghdl -i --work=work ahir_system_test_bench.vhdl
 	ghdl -m --work=work --ieee=synopsys -fexplicit -P$(UNISIM) -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
