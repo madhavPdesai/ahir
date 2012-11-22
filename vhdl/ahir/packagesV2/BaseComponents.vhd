@@ -1334,5 +1334,15 @@ package BaseComponents is
   end component;
 
 
+
+  component GuardInterface is
+	generic (nreqs: integer);
+	port (reqL: in BooleanArray(nreqs-1 downto 0);
+	      ackL: out BooleanArray(nreqs-1 downto 0); 
+	      reqR: out BooleanArray(nreqs-1 downto 0);
+	      ackR: in BooleanArray(nreqs-1 downto 0); 
+	      guards: in std_logic_vector(nreqs-1 downto 0));
+  end component;
+
   
 end BaseComponents;
