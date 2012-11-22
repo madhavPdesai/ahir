@@ -27,6 +27,9 @@ class AaStatement: public AaScope
 
   int _index_in_sequence;
 
+  string _guard_reference_string;
+  AaRoot* _guard_object;
+
  public:
   AaStatement(AaScope* scope);
   
@@ -36,6 +39,24 @@ class AaStatement: public AaScope
     // derived statements will map their targets
     // in their containing scopes.
     assert(0); 
+  }
+
+  virtual void Set_Guard_Reference_String(string& gs)
+  {
+	_guard_reference_string = gs;
+  }
+  virtual string Get_Guard_Reference_String()
+  {
+	return(_guard_reference_string);
+  }
+
+  virtual void Set_Guard_Object(AaRoot* obj)
+  {
+	_guard_object = obj;
+  }
+  virtual AaRoot* Get_Guard_Object()
+  {
+	return(_guard_object);
   }
 
   virtual void Map_Target(AaObjectReference* obj_ref);

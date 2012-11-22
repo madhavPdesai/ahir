@@ -375,6 +375,10 @@ bool vcBinarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
   if(this->Is_Int_Add_Op())
     return(false);
 
+  // Compare ops are also too simple to share..
+  if(Is_Compare_Op(this->_op_id))
+    return(false);
+
   bool ret_val = ((this->Kind() == other->Kind()) 
 		  && 
 		  (this->_op_id == ((vcBinarySplitOperator*)other)->Get_Op_Id()));
@@ -618,11 +622,29 @@ bool Is_Shift_Op(string vc_op_id)
     return(false);
 }
 
+bool Is_Compare_Op(string vc_op_id)
+{
+  bool ret_val = false;
+  if(vc_op_id == vcLexerKeywords[__SGT_OP]        ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__SGE_OP]        ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__EQ_OP]        ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__SLT_OP]        ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__SLE_OP]        ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__UGT_OP]        ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__UGE_OP]        ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__ULT_OP]        ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__ULE_OP]        ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__NEQ_OP]        ) { ret_val = true; }
+
+  return(ret_val);
+}
+
 bool Is_Trivial_Op(string vc_op_id)
 {
   bool ret_val = false;
   if(vc_op_id == vcLexerKeywords[__BITSEL_OP]             ) { ret_val = true;      } 
   else if(vc_op_id == vcLexerKeywords[__CONCAT_OP]        ) { ret_val = true; } 
+  else if(vc_op_id == vcLexerKeywords[__SLICE_OP]        ) { ret_val = true; } 
   else if(vc_op_id == vcLexerKeywords[__OR_OP]            ) { ret_val = true; }
   else if(vc_op_id == vcLexerKeywords[__AND_OP]           ) { ret_val = true; }
   else if(vc_op_id == vcLexerKeywords[__XOR_OP]           ) { ret_val = true; }
@@ -630,6 +652,7 @@ bool Is_Trivial_Op(string vc_op_id)
   else if(vc_op_id == vcLexerKeywords[__NAND_OP]          ) { ret_val = true; }
   else if(vc_op_id == vcLexerKeywords[__XNOR_OP]          ) { ret_val = true; }
   else if(vc_op_id == vcLexerKeywords[__ASSIGN_OP]        ) { ret_val = true; }
+  else if(vc_op_id == vcLexerKeywords[__NOT_OP]        ) { ret_val = true; }
   else if(vc_op_id == vcLexerKeywords[__UtoS_ASSIGN_OP]   ) { ret_val = true; }
   else if(vc_op_id == vcLexerKeywords[__StoU_ASSIGN_OP]   ) { ret_val = true; }
   else if(vc_op_id == vcLexerKeywords[__StoS_ASSIGN_OP]   ) { ret_val = true; }

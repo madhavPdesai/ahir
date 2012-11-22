@@ -4,13 +4,13 @@ float fpu32(float L, float R, uint8_t op_id)
 {
 	switch(op_id)
 	{
-		case MUL: 
+		case MUL__: 
 			return (L*R); 
 			break;
-		case ADD: 
+		case ADD__: 
 			return (L+R); 
 			break;
-		case SUB: 
+		case SUB__: 
 			return (L-R); 
 			break;
 		default : 
@@ -28,13 +28,13 @@ double fpu64(double L, double R, uint8_t op_id)
 {
 	switch(op_id)
 	{
-		case MUL: 
+		case MUL__: 
 			return (L*R); 
 			break;
-		case ADD: 
+		case ADD__: 
 			return (L+R); 
 			break;
-		case SUB: 
+		case SUB__: 
 			return (L-R); 
 			break;
 		default : 

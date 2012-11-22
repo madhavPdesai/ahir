@@ -8,6 +8,7 @@ AaStatement::AaStatement(AaScope* p): AaScope(p)
 {
   this->_tab_depth = ((p != NULL) ? p->Get_Depth()+1 : 1);
   _index_in_sequence = -1;
+  _guard_object = NULL;
   
 }
 AaStatement::~AaStatement() {};

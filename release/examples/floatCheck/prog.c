@@ -22,7 +22,7 @@ float fpadd(float x, float y)
 
 float fpsub(float x, float y)
 {
-	return(fpu32(x,y,SUB));
+	return(x-y);
 }
 
 float dotProduct(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3)

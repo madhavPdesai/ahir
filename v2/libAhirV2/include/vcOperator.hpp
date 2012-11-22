@@ -569,6 +569,7 @@ public:
 string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type);
 bool Check_If_Equivalent(vector<vcWire*>& iw1, vector<vcWire*>& iw2);
 bool Is_Trivial_Op(string vc_op_id);
+bool Is_Compare_Op(string vc_op_id);
 bool Is_Symmetric_Op(string vc_op_id);
 bool Is_Unary_Op(string vc_op_id);
 bool Is_Shift_Op(string vc_op_id);

@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 
-#define ADD  0
-#define SUB  1
-#define MUL  2
+#define ADD__  0
+#define SUB__  1
+#define MUL__  2
 
 float fpu32(float, float, uint8_t);
 float fpmul32(float, float);

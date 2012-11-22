@@ -215,10 +215,22 @@ aA_Out_Args[AaModule* parent]
 // aA_Atomic_Statement : aA_Assignment_Statement | aA_Call_Statement | aA_Null_Statement | aA_Block_Statement
 //-----------------------------------------------------------------------------------------------
 aA_Atomic_Statement[AaScope* scope] returns [AaStatement* stmt]
-    : stmt = aA_Assignment_Statement[scope] |
-        stmt = aA_Call_Statement[scope] |
-        stmt = aA_Null_Statement[scope] |
-        stmt = aA_Block_Statement[scope]
+{
+    bool guard_flag = false; 
+    bool not_flag   = false;
+}
+    : (GUARD LPAREN (NOT {not_flag = true;})? gid:SIMPLE_IDENTIFIER RPAREN {guard_flag = true;} ) ? 
+	(stmt = aA_Assignment_Statement[scope] |
+        	stmt = aA_Call_Statement[scope] |
+        	stmt = aA_Null_Statement[scope] |
+        	stmt = aA_Block_Statement[scope])
+	{
+		if(guard_flag)
+		{
+			string gs = gid->getText();
+			stmt->Set_Guard_Reference_String(gs);
+		}
+	}
     ;
 
 //-----------------------------------------------------------------------------------------------
@@ -1417,6 +1429,7 @@ CALL          : "$call";
 PHI           : "$phi";
 DEPTH         : "$depth";
 ATTRIBUTE     : "$attribute";
+GUARD         : "$guard";
 
 // Special symbols
 COLON		 : ':' ; // label separator
