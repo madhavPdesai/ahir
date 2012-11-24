@@ -244,6 +244,7 @@ void AaObjectReference::Write_VC_Load_Store_Data_Path(vector<AaExpression*>* add
 				 this->Get_VC_Name() + "_load_" + IntToStr(idx),
 				 this->Get_VC_Name() + "_data_" + IntToStr(idx),
 				 this->Get_VC_Word_Address_Name(idx),
+				  this->Get_VC_Guard_String(),
 				 ofile);
 				 
 	}
@@ -254,6 +255,7 @@ void AaObjectReference::Write_VC_Load_Store_Data_Path(vector<AaExpression*>* add
 				 this->Get_VC_Name() + "_store_" + IntToStr(idx),
 				 this->Get_VC_Name() + "_data_" + IntToStr(idx),
 				  this->Get_VC_Word_Address_Name(idx),
+				  this->Get_VC_Guard_String(),
 				 ofile);
 	}
     }
@@ -283,6 +285,7 @@ void AaObjectReference::Write_VC_Load_Store_Data_Path(vector<AaExpression*>* add
   Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_gather_scatter",
 				inwires,
 				outwires,
+				  this->Get_VC_Guard_String(),
 				ofile);
 }
 
@@ -643,6 +646,7 @@ void AaObjectReference::Write_VC_Address_Calculation_Data_Path(vector<AaExpressi
 				       addr_type,
 				       this->Get_VC_Word_Address_Name(idx),
 				       addr_type,
+				  this->Get_VC_Guard_String(),
 				       ofile
 				       );
 	    }
@@ -657,6 +661,7 @@ void AaObjectReference::Write_VC_Address_Calculation_Data_Path(vector<AaExpressi
 	  Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_addr_0",
 					inwires,
 					outwires,
+				  this->Get_VC_Guard_String(),
 					ofile);
 
 	}
@@ -858,6 +863,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 					  iexpr->Get_Type(),
 					  iexpr->Get_VC_Name() + "_resized",
 					  addr_type,
+				  this->Get_VC_Guard_String(),
 					  ofile);
 		  
 		  // scale index.
@@ -870,6 +876,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 					     addr_type,
 					     iexpr->Get_VC_Name() + "_scaled",
 					     addr_type,
+				  		this->Get_VC_Guard_String(),
 					     ofile);
 		  else
 		    {
@@ -880,6 +887,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 		      Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_index_" + IntToStr(idx) + "_rename",
 						    inputs,
 						    outputs,
+				  			this->Get_VC_Guard_String(),
 						    ofile);
 		    }
 		}
@@ -917,6 +925,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 				       addr_type,
 				       this->Get_VC_Name() + "_index_partial_sum_" + IntToStr(idx),
 				       addr_type,
+				  	this->Get_VC_Guard_String(),
 				       ofile);
 	      last_sum =  this->Get_VC_Name() + "_index_partial_sum_" + IntToStr(idx);
 	    }
@@ -927,6 +936,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 				  addr_type,
 				  this->Get_VC_Offset_Name(),
 				  addr_type,
+				  this->Get_VC_Guard_String(),
 				  ofile);
 	}
       
@@ -942,6 +952,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 				      base_addr_type,
 				      this->Get_VC_Resized_Base_Address_Name(),
 				      addr_type,
+				  	this->Get_VC_Guard_String(),
 				      ofile);
 	    }
 	  else
@@ -949,6 +960,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 	      Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_base_resize",				  
 					    this->Get_VC_Base_Address_Name(),					    
 					    this->Get_VC_Resized_Base_Address_Name(),
+				  		this->Get_VC_Guard_String(),
 					    ofile);
 	    }
 	}
@@ -964,6 +976,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 				   addr_type,
 				   this->Get_VC_Root_Address_Name(),
 				   addr_type,
+				   this->Get_VC_Guard_String(),
 				   ofile);
 	}
       else
@@ -973,6 +986,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 	  Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_root_address_inst",
 					op_name,
 					this->Get_VC_Root_Address_Name(),
+				   this->Get_VC_Guard_String(),
 					ofile);
 					
 	}

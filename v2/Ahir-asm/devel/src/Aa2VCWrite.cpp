@@ -4,11 +4,12 @@
 void Write_VC_Equivalence_Operator(string inst_name,
 				   string input,
 				   string output,
+				   string guard_string,
 				   ostream& ofile)
 {
   vector<string> i; i.push_back(input);
   vector<string> o; o.push_back(output);
-  Write_VC_Equivalence_Operator(inst_name,i,o,ofile);
+  Write_VC_Equivalence_Operator(inst_name,i,o,guard_string,ofile);
 }
 
 void Write_VC_Constant_Declaration(string wire_name, AaType* t, string initial_value,
@@ -61,6 +62,7 @@ void Write_VC_Wire_Declaration(string wire_name, string type_name, ostream& ofil
 void Write_VC_Equivalence_Operator(string inst_name,
 				   vector<string>& inwires,
 				   vector<string>& outwires,
+			           string guard_string,
 				   ostream& ofile)
 {
   ofile << "&/ [" << inst_name << "] ";
@@ -80,7 +82,7 @@ void Write_VC_Equivalence_Operator(string inst_name,
 	ofile << " ";
       ofile << outwires[idx];
     }
-  ofile << ") " << endl;
+  ofile << ") " << guard_string << endl;
 
 }
 
@@ -102,6 +104,7 @@ void Write_VC_Unary_Operator(AaOperation op,
 			     AaType* src_type,
 			     string target_name,
 			     AaType* target_type,
+			     string guard_string,
 			     ostream& ofile)
 {
   string op_name;
@@ -139,18 +142,19 @@ void Write_VC_Unary_Operator(AaOperation op,
 
   ofile << op_name << " [" << inst_name << "] "
 	<< "(" << src_name << ") "
-	<< "(" << target_name << ")" << endl;
+	<< "(" << target_name << ")  " << guard_string <<  endl;
 }
 
 
 void Write_VC_Register( string inst_name, 
 			string src_name, 
 			string target_name,
+                        string guard_string,
 			ostream& ofile)
 {
   ofile << ":= [" << inst_name << "] " 
 	<< "(" << src_name << ") "
-	<< "(" << target_name << ")" << endl;
+	<< "(" << target_name << ") " << guard_string << endl;
 }
 
 void Write_VC_Binary_Operator(AaOperation op, 
@@ -161,6 +165,7 @@ void Write_VC_Binary_Operator(AaOperation op,
 			      AaType* src2_type, 
 			      string target_name,
 			      AaType* target_type,
+			      string guard_string,
 			      ostream& ofile)
 {
   string op_name;
@@ -225,13 +230,14 @@ void Write_VC_Binary_Operator(AaOperation op,
 
   ofile << op_name << "[" << inst_name << "]" << " "
 	<< "(" << src1 << " " << src2 << ") "
-	<< "(" << target_name << ")" << endl;
+	<< "(" << target_name << ") " << guard_string <<  endl;
 }
 
 void Write_VC_Call_Operator(string inst_name, 
 			    string module_name, 
 			    vector<pair<string,AaType*> >& inargs,
 			    vector<pair<string,AaType*> >& outargs,
+			     string guard_string,
 			    ostream& ofile)
 {
   ofile << "$call [" << inst_name << "] $module " << module_name 
@@ -249,7 +255,7 @@ void Write_VC_Call_Operator(string inst_name,
 	ofile <<  " ";
       ofile << outargs[idx].first;
     }
-  ofile << ")" << endl;
+  ofile << ") " << guard_string <<  endl;
 }
 
 void Write_VC_Phi_Operator(string inst_name,
@@ -337,30 +343,34 @@ void Write_VC_Memory_Space_Declaration(string space_name, string obj_name, AaTyp
 }
 
 void Write_VC_Load_Operator(string ms_name, string inst_name, string data_name, string addr_name,
+			   string guard_string,
 			    ostream& ofile)
 {
   ofile << "$load [" << inst_name << "] $from " << ms_name 
-	<< " (" << addr_name  << ") (" << data_name << ")" << endl;
+	<< " (" << addr_name  << ") (" << data_name << ") " << guard_string <<  endl;
 }
 void Write_VC_Store_Operator(string ms_name, string inst_name, string data_name, string addr_name,
+			   string guard_string,
 			     ostream& ofile)
 {
   ofile << "$store [" << inst_name << "] $to " << ms_name 
-	<< " (" << addr_name  << " " << data_name << ")" << endl;
+	<< " (" << addr_name  << " " << data_name << ") " << guard_string <<  endl;
 }
 void Write_VC_IO_Input_Port(AaPipeObject* obj, string inst_name, string data_name,
+			    string guard_string,
 			    ostream& ofile)
 {
   ofile << "$ioport $in [" << inst_name  << "] (" << obj->Get_VC_Name() << ") ("
-	<< data_name << ")" << endl;
+	<< data_name << ") " << guard_string <<  endl;
 }
 void Write_VC_IO_Output_Port(AaPipeObject* obj, string inst_name, string data_name,
+			    string guard_string,
 			     ostream& ofile)
 {
   ofile << "$ioport $out [" << inst_name  << "] "
 	<< " (" << data_name << ") " 
-	<< "(" << obj->Get_VC_Name() << ")"
-	<< endl;
+	<< "(" << obj->Get_VC_Name() << ") "
+	<< guard_string << endl;
 }
 
 void Write_VC_Select_Operator(string inst_name,
@@ -372,11 +382,12 @@ void Write_VC_Select_Operator(string inst_name,
 			      AaType* if_false_type,
 			      string target_name,
 			      AaType* target_type,
+			    string guard_string,
 			      ostream& ofile)
 {
   ofile << "? [" << inst_name << "] " 
 	<< "(" << test_name << " " << if_true_name << " " << if_false_name << ") "
-	<< "(" << target_name << ")" << endl;
+	<< "(" << target_name << ") " << guard_string <<  endl;
 }
 
 
@@ -385,10 +396,11 @@ void Write_VC_Slice_Operator(string inst_name,
 			     string out_name,
 			     int high_index,
 			     int low_index,
+			    string guard_string,
 			     ostream& ofile)
 {
   ofile << "[:] [" << inst_name << "] (" << in_name << " " << high_index << " " << low_index
-	<< ") (" << out_name << ")" << endl;
+	<< ") (" << out_name << ") " << guard_string << endl;
 }
 
 

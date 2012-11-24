@@ -1,8 +1,11 @@
-implicit types should be managed by static function attached to AaProgram
-so that they are not needlessly duplicated.
-
 all destructors need to be written!
 
 (much later-on, we may add type declarations which are not implicit)
+
+
+Need to take care of the dependency of the guard
+expression on prior expressions (when mapping
+expressions to vc).
+
 
 

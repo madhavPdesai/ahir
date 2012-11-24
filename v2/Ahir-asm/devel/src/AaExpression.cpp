@@ -65,7 +65,16 @@ bool AaExpression::Set_Addressed_Object_Representative(AaStorageObject* obj)
 }
 
 
-
+string AaExpression::Get_VC_Guard_String()
+{
+	string ret_string;
+	AaStatement* stmt = this->Get_Associated_Statement();
+	if(stmt != NULL)
+	{
+	    ret_string = stmt->Get_VC_Guard_String();
+	}
+	return(ret_string);
+}
 
 
 void AaExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr)
@@ -185,91 +194,106 @@ bool AaExpression::Used_Only_In_Address_Of_Expression()
   return(ret_val);
 }
 
+AaExpression* AaExpression::Get_Guard_Expression()
+{
+	if(_associated_statement != NULL)
+		return(_associated_statement->Get_Guard_Expression());
+	else
+		return(NULL);
+}
+bool AaExpression::Get_Guard_Complement()
+{
+	if(_associated_statement != NULL)
+		return(_associated_statement->Get_Guard_Complement());
+	else
+		return(false);
+}
+
 //---------------------------------------------------------------------
 // AaObjectReference
 //---------------------------------------------------------------------
 AaObjectReference::AaObjectReference(AaScope* parent_tpr, string object_id):AaExpression(parent_tpr)
 {
-  this->_object_ref_string = object_id;
-  this->_search_ancestor_level = 0; 
-  this->_object = NULL;
-  this->_is_dereferenced = false;
+	this->_object_ref_string = object_id;
+	this->_search_ancestor_level = 0; 
+	this->_object = NULL;
+	this->_is_dereferenced = false;
 }
 
 AaObjectReference::~AaObjectReference() {};
 void AaObjectReference::Print(ostream& ofile)
 {
-  ofile << this->Get_Object_Ref_String();
+	ofile << this->Get_Object_Ref_String();
 }
 
 AaType* AaObjectReference::Get_Object_Type()
 {
-  AaType* ret_type = NULL;
-  if(this->_object)
-    {
-      if(this->_object->Is_Object())
-	ret_type = ((AaObject*)(this->_object))->Get_Type();
-      else if(this->_object->Is_Expression())
-	ret_type = ((AaExpression*)(this->_object))->Get_Type();
-    }
-  return(ret_type);
+	AaType* ret_type = NULL;
+	if(this->_object)
+	{
+		if(this->_object->Is_Object())
+			ret_type = ((AaObject*)(this->_object))->Get_Type();
+		else if(this->_object->Is_Expression())
+			ret_type = ((AaExpression*)(this->_object))->Get_Type();
+	}
+	return(ret_type);
 }
 
 
 // cannot assign a value to a storage object!
 void AaObjectReference::Assign_Expression_Value(AaValue* expr_value)
 {
-  if(this->_object && !this->_object->Is_Storage_Object())
-    {
-      this->AaExpression::Assign_Expression_Value(expr_value);
-    }
+	if(this->_object && !this->_object->Is_Storage_Object())
+	{
+		this->AaExpression::Assign_Expression_Value(expr_value);
+	}
 }
 
 // return -1 if not evaluatable.
 int AaObjectReference::Evaluate(vector<AaExpression*>* indices, vector<int>* scale_factors, vector<int>* shift_factors)
 {
-  bool address_is_const = true;
-  int address_offset = 0;
+	bool address_is_const = true;
+	int address_offset = 0;
 
 
-  if(indices != NULL)
-    {
-      
-      assert(scale_factors);
-      assert(shift_factors);
-      assert(scale_factors->size() == shift_factors->size());
-
-      for(int idx = 0; idx < indices->size(); idx++)
+	if(indices != NULL)
 	{
-	  if(!(*indices)[idx]->Is_Constant())
-	    address_is_const = false;
-	  else
-	    {
-	      if((*shift_factors)[idx] < 0)
-		address_offset += (*indices)[idx]->Get_Expression_Value()->To_Integer() *
-		  (*scale_factors)[idx];
-	      else
-		address_offset += (*shift_factors)[idx];
-	    }
+
+		assert(scale_factors);
+		assert(shift_factors);
+		assert(scale_factors->size() == shift_factors->size());
+
+		for(int idx = 0; idx < indices->size(); idx++)
+		{
+			if(!(*indices)[idx]->Is_Constant())
+				address_is_const = false;
+			else
+			{
+				if((*shift_factors)[idx] < 0)
+					address_offset += (*indices)[idx]->Get_Expression_Value()->To_Integer() *
+						(*scale_factors)[idx];
+				else
+					address_offset += (*shift_factors)[idx];
+			}
+		}
 	}
-    }
-  if(address_is_const)
-    return(address_offset);
-  else
-    return(-1);
+	if(address_is_const)
+		return(address_offset);
+	else
+		return(-1);
 }
 
 void AaObjectReference::Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr)
 {
-  this->AaExpression::Propagate_Addressed_Object_Representative(obj, from_expr);
+	this->AaExpression::Propagate_Addressed_Object_Representative(obj, from_expr);
 }
 
 
 void AaObjectReference::Map_Source_References(set<AaRoot*>& source_objects)
 {
-  AaScope* search_scope = NULL;
-  if(this->Get_Search_Ancestor_Level() > 0)
-    {
+	AaScope* search_scope = NULL;
+	if(this->Get_Search_Ancestor_Level() > 0)
+	{
       search_scope = this->Get_Scope()->Get_Ancestor_Scope(this->Get_Search_Ancestor_Level());
     }
   else if(this->_hier_ids.size() > 0)
@@ -863,6 +887,7 @@ void AaSimpleObjectReference:: Write_VC_Datapath_Instances_As_Target( ostream& o
 	  Write_VC_IO_Output_Port((AaPipeObject*) this->_object,
 				  this->Get_VC_Datapath_Instance_Name(),
 				  src_name,
+				  this->Get_VC_Guard_String(),
 				  ofile);
 	}
     }
@@ -889,6 +914,7 @@ void AaSimpleObjectReference:: Write_VC_Datapath_Instances(AaExpression* target,
 	  Write_VC_IO_Input_Port((AaPipeObject*) this->_object,
 				 this->Get_VC_Datapath_Instance_Name(),
 				 (target != NULL ? target->Get_VC_Driver_Name() : this->Get_VC_Receiver_Name()),
+				  this->Get_VC_Guard_String(),
 				 ofile);
 	}
     }
@@ -1769,6 +1795,7 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 			       (target != NULL ? target->Get_VC_Receiver_Name() : 
 				this->Get_VC_Driver_Name()),
 			       this->Get_Type(),
+				this->Get_VC_Guard_String(),
 			       ofile);
 			      
     }
@@ -1808,7 +1835,9 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 	  source_wire = this->Get_VC_Name() + "_pipe_read_data";
 	  obj_type = ((AaObject*)(this->_object))->Get_Type();
 	  string pipe_inst = this->Get_VC_Name() + "_pipe_access";
-	  Write_VC_IO_Input_Port((AaPipeObject*)(this->_object), pipe_inst,source_wire,ofile);
+	  Write_VC_IO_Input_Port((AaPipeObject*)(this->_object), pipe_inst,source_wire,
+				  this->Get_VC_Guard_String(),
+					ofile);
 	}
       else
 	assert(0);
@@ -1832,6 +1861,7 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 				   this->Get_VC_Driver_Name()),
 				  high_index,
 				  low_index,
+				  this->Get_VC_Guard_String(),
 				  ofile);
 	}
       else
@@ -2738,6 +2768,7 @@ void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, os
 			       this->Get_VC_Driver_Name()),
 			      ((target != NULL) ? target->Get_Type() :
 			       this->Get_Type()),
+			       this->Get_VC_Guard_String(),
 			      ofile);
     }
 }
@@ -2910,6 +2941,7 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 	  Write_VC_Register(this->Get_VC_Datapath_Instance_Name(),
 			    this->_rest->Get_VC_Driver_Name(),
 			    (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name()),
+			    this->Get_VC_Guard_String(),
 			    ofile);
 			    
 	}
@@ -2921,6 +2953,7 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 				  this->_rest->Get_Type(),
 				  (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name()),
 				  this->Get_Type(),
+				  this->Get_VC_Guard_String(),
 				  ofile);
 	}
     }
@@ -3066,6 +3099,7 @@ void AaUnaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
 			      (target != NULL ? target->Get_VC_Receiver_Name() : 
 			       this->Get_VC_Receiver_Name()),
 			      (target != NULL ? target->Get_Type() : this->Get_Type()),
+			      this->Get_VC_Guard_String(),
 			      ofile);
     }
 
@@ -3272,6 +3306,7 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 			       (target != NULL ? target->Get_VC_Receiver_Name() : 
 				this->Get_VC_Receiver_Name()),
 			       (target != NULL ? target->Get_Type() : this->Get_Type()),
+				  this->Get_VC_Guard_String(),
 			       ofile);
     }
 			  
@@ -3476,6 +3511,7 @@ void AaTernaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostr
 			       this->_if_false->Get_Type(),
 			       (target != NULL ? target->Get_VC_Driver_Name() : this->Get_VC_Driver_Name()),
 			       (target != NULL ? target->Get_Type() : this->Get_Type()),
+				  this->Get_VC_Guard_String(),
 			       ofile);
 			       
     }

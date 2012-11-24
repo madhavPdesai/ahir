@@ -25,12 +25,12 @@ architecture Behave of GuardInterface is
 begin
 	process(reqL,ackR,guards)
 	begin
-		for I in 0 to num_reqs-1 loop
+		for I in 0 to nreqs-1 loop
 			if(guards(I) = '1') then
 				reqR(I) <= reqL(I);
 				ackL(I) <= ackR(I);
 			else
-				reqR(I) <= '0';
+				reqR(I) <= false;
 				ackL(I) <= reqL(I);
 			end if;
 		end loop;

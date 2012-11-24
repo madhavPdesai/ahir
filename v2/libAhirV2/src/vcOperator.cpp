@@ -58,7 +58,12 @@ void vcEquivalence::Print(ostream& ofile)
 	ofile << " ";
       ofile << _outwires[idx]->Get_Id();
     }
-  ofile << vcLexerKeywords[__RPAREN] << endl;
+  ofile << vcLexerKeywords[__RPAREN] << " ";
+
+  this->Print_Guard(ofile);
+  ofile << endl;
+
+  
 }
 
 
@@ -135,7 +140,9 @@ void vcLoad::Print(ostream& ofile)
 	<< vcLexerKeywords[__RPAREN] << " "
 	<< vcLexerKeywords[__LPAREN] << " "
 	<< this->_data->Get_Id() <<  " "
-	<< vcLexerKeywords[__RPAREN] << endl;
+	<< vcLexerKeywords[__RPAREN] << " ";
+  this->Print_Guard(ofile);
+  ofile << endl;
 
 }
 vcStore::vcStore(string id, vcMemorySpace* ms, vcWire* addr, vcWire* data):vcLoadStore(id,ms,addr,data) 
@@ -151,7 +158,9 @@ void vcStore::Print(ostream& ofile)
 	<< vcLexerKeywords[__LPAREN] << " "
 	<< this->_address->Get_Id() << " "
 	<< this->_data->Get_Id() << " "
-	<< vcLexerKeywords[__RPAREN] << endl;
+	<< vcLexerKeywords[__RPAREN] << " ";
+  this->Print_Guard(ofile);
+  ofile << endl;
 }
 
 vcPhi::vcPhi(string id, vector<vcWire*>& inwires, vcWire* outwire):vcDatapathElement(id)
@@ -235,6 +244,8 @@ void vcCall::Print(ostream& ofile)
   for(int idx = 0; idx < _out_wires.size(); idx++)
     ofile << _out_wires[idx]->Get_Id() << " ";
   ofile << vcLexerKeywords[__RPAREN] << " ";
+  this->Print_Guard(ofile);
+  ofile << endl;
 }
 
 vcIOport::vcIOport(string id, vcPipe* pipe, vcWire* w): vcOperator(id)
@@ -257,7 +268,9 @@ void vcInport::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__IOPORT] << " " <<  vcLexerKeywords[__IN] << " " << this->Get_Label() << "  " 
 	<< vcLexerKeywords[__LPAREN] << this->Get_Pipe_Id() << vcLexerKeywords[__RPAREN] << " "
-	<< vcLexerKeywords[__LPAREN] << this->_data->Get_Id() << vcLexerKeywords[__RPAREN] << endl;
+	<< vcLexerKeywords[__LPAREN] << this->_data->Get_Id() << vcLexerKeywords[__RPAREN] << " ";
+  this->Print_Guard(ofile);
+  ofile << endl;
 }
 
 vcOutport::vcOutport(string id, vcPipe* pipe, vcWire* w):vcIOport(id,pipe,w) 
@@ -268,7 +281,9 @@ void vcOutport::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__IOPORT] << " " <<  vcLexerKeywords[__OUT] << " " << this->Get_Label() << "  " 
 	<< vcLexerKeywords[__LPAREN] << this->_data->Get_Id() << vcLexerKeywords[__RPAREN] << " " 
-	<< vcLexerKeywords[__LPAREN] << this->Get_Pipe_Id() << vcLexerKeywords[__RPAREN] << endl;
+	<< vcLexerKeywords[__LPAREN] << this->Get_Pipe_Id() << vcLexerKeywords[__RPAREN] << " ";
+  this->Print_Guard(ofile);
+  ofile << endl;
 }
 
 vcUnarySplitOperator::vcUnarySplitOperator(string id, string op_id, vcWire* x, vcWire* z):vcSplitOperator(id)
@@ -302,7 +317,9 @@ void vcUnarySplitOperator::Print(ostream& ofile)
 	<< vcLexerKeywords[__LPAREN] 
 	<< this->_z->Get_Id()
 	<< vcLexerKeywords[__RPAREN] 
-	<< endl;
+	<<  " ";
+  this->Print_Guard(ofile);
+  ofile << endl;
 }
 
 
@@ -330,7 +347,9 @@ void vcUnaryOperator::Print(ostream& ofile)
 	<< vcLexerKeywords[__LPAREN] 
 	<< this->_z->Get_Id()
 	<< vcLexerKeywords[__RPAREN] 
-	<< endl;
+	<<  " ";
+  this->Print_Guard(ofile);
+  ofile << endl;
 }
 
 
@@ -444,7 +463,9 @@ void vcBinarySplitOperator::Print(ostream& ofile)
 	<< vcLexerKeywords[__LPAREN] 
 	<< this->_z->Get_Id()
 	<< vcLexerKeywords[__RPAREN] 
-	<< endl;
+	<<  " ";
+  this->Print_Guard(ofile);
+  ofile << endl;
 }
 
 vcBinaryOperator::vcBinaryOperator(string id, string op_id, vcWire* x, vcWire* y, vcWire* z):vcOperator(id)
@@ -474,7 +495,9 @@ void vcBinaryOperator::Print(ostream& ofile)
 	<< vcLexerKeywords[__LPAREN] 
 	<< this->_z->Get_Id()
 	<< vcLexerKeywords[__RPAREN] 
-	<< endl;
+	<< " ";
+  this->Print_Guard(ofile);
+  ofile << endl;
 }
 
 vcSelect::vcSelect(string id, vcWire* sel, vcWire* x, vcWire* y, vcWire* z):vcOperator(id)
@@ -504,7 +527,9 @@ void vcSelect::Print(ostream& ofile)
         << vcLexerKeywords[__LPAREN]
         << this->_z->Get_Id()
         << vcLexerKeywords[__RPAREN]
-        << endl;
+        <<  " ";
+  this->Print_Guard(ofile);
+  ofile << endl;
 }
 
 
@@ -537,7 +562,9 @@ void vcSlice::Print(ostream& ofile)
 	<< vcLexerKeywords[__LPAREN] 
 	<< this->_dout->Get_Id()
 	<< vcLexerKeywords[__RPAREN] 
-	<< endl;
+	<< " ";
+  this->Print_Guard(ofile);
+  ofile << endl;
 }
 
 vcRegister::vcRegister(string id, vcWire* din, vcWire* dout):vcOperator(id)
@@ -561,7 +588,9 @@ void vcRegister::Print(ostream& ofile)
 	<< vcLexerKeywords[__LPAREN] 
 	<< this->_dout->Get_Id()
 	<< vcLexerKeywords[__RPAREN] 
-	<< endl;
+	<< " ";
+  this->Print_Guard(ofile);
+  ofile << endl;
 }
 
 vcBranch::vcBranch(string id, vector<vcWire*>& wires): vcDatapathElement(id) 

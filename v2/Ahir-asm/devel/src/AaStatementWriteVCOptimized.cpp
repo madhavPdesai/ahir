@@ -64,6 +64,12 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
       __T(this->Get_VC_Active_Transition_Name());
       __T(this->Get_VC_Completed_Transition_Name());
 
+	// take care of the guard
+      if(this->_guard_expression)
+      {
+		this->_guard_expression->Write_VC_Control_Path_Optimized(visited_elements,ls_map,pipe_map,ofile);
+		__J(this->Get_VC_Active_Transition_Name(),this->_guard_expression->Get_VC_Completed_Transition_Name());
+      }
 
       // write the source side expressions and their 
       // dependencies..
@@ -79,6 +85,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
 
 
       
+
       this->_target->Write_VC_Control_Path_As_Target_Optimized(visited_elements,
 							       ls_map,pipe_map,
 							       ofile);
@@ -168,6 +175,13 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elem
 {
   ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
+
+  // take care of the guard
+  if(this->_guard_expression)
+  {
+	this->_guard_expression->Write_VC_Control_Path_Optimized(visited_elements,ls_map,pipe_map,ofile);
+	__J(this->Get_VC_Active_Transition_Name(),this->_guard_expression->Get_VC_Completed_Transition_Name());
+  }
 
   // first the input arguments... zipping through.
   for(int idx = 0; idx < _input_args.size(); idx++)

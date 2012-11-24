@@ -909,11 +909,35 @@ void vcDataPath::Print_VHDL_Phi_Instances(ostream& ofile)
 
 void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
 { 
+  int idx = 0;
   for(map<string, vcSelect*>::iterator iter = _select_map.begin();
       iter != _select_map.end();
       iter++)
     {
+      
+      ofile << "select_block_" << idx << " : block -- { " << endl;
+      ofile << "signal req, ack: boolean; --}" << endl;
+      ofile << "begin -- { " << endl;
+ 
       vcSelect* s = (*iter).second;
+
+      if(s->Get_Guard_Wire() != NULL)
+      {
+      	ofile << "req <= " << s->Get_Req(0)->Get_CP_To_DP_Symbol() 
+		<< " when " << s->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (s->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else false;" << endl; 
+	ofile << s->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack " 
+		<< " when " << s->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (s->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else " 
+ 		<< s->Get_Req(0)->Get_CP_To_DP_Symbol()  << ";" 
+		<< endl; 
+      }
+      else
+      {
+      	ofile << "req <= " << s->Get_Req(0)->Get_CP_To_DP_Symbol() << ";" << endl;
+	ofile << s->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack; "  << endl;
+      }
+
       ofile << s->Get_VHDL_Id() << ": SelectBase generic map(data_width => " << s->_z->Get_Size() << ") -- {" << endl;
       ofile << " port map( x => " 
 	    << s->_x->Get_VHDL_Signal_Id() 
@@ -922,21 +946,49 @@ void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
 	    << ", sel => " 
 	    << s->_sel->Get_VHDL_Signal_Id() 
 	    << ", z => " << s->_z->Get_VHDL_Signal_Id() 
-	    << ", req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol() 
-	    << ", ack => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol() 
+	    << ", req => req"
+	    << ", ack => ack"
 	    << ", clk => clk, reset => reset); -- }" << endl;
+
+      ofile << "-- }" << endl << "end block;" << endl;
+      idx++;
     }
 }
 
 
 void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
 { 
+  int idx = 0;
+
   for(map<string, vcSlice*>::iterator iter = _slice_map.begin();
       iter != _slice_map.end();
       iter++)
     {
       vcSlice* s = (*iter).second;
       bool flow_through_flag  = s->_dout->Is("vcIntermediateWire");
+
+      ofile << "slice_block_" << idx << " : block -- { " << endl;
+      ofile << "signal req, ack: boolean; --}" << endl;
+      ofile << "begin -- { " << endl;
+ 
+
+      if(s->Get_Guard_Wire() != NULL)
+      {
+      	ofile << "req <= " << s->Get_Req(0)->Get_CP_To_DP_Symbol() 
+		<< " when " << s->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (s->Get_Guard_Complement() ? "'0'"  : "'1'") << " else false;" << endl; 
+	ofile << s->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack " 
+		<< " when " << s->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (s->Get_Guard_Complement() ? "'0'"  : "'1'") << " else " 
+ 		<< s->Get_Req(0)->Get_CP_To_DP_Symbol()  << ";" 
+		<< endl; 
+      }
+      else
+      {
+      	ofile << "req <= " << s->Get_Req(0)->Get_CP_To_DP_Symbol() << ";" << endl;
+	ofile << s->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack; "  << endl;
+      }
+
 
       ofile << s->Get_VHDL_Id() << ": SliceBase generic map(in_data_width => "
 	    << s->_din->Get_Size() << ", high_index => " << s->_high_index 
@@ -946,14 +998,19 @@ void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
 	    << s->_din->Get_VHDL_Signal_Id() 
 	    << ", dout => " 
 	    << s->_dout->Get_VHDL_Signal_Id() 
-	    << ", req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol() 
-	    << ", ack => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol() 
+	    << ", req => req " 
+	    << ", ack => ack "
 	    << ", clk => clk, reset => reset); -- }" << endl;
+
+      ofile << "-- }" << endl << "end block;" << endl;
+      idx++;
     }
 }
 
 void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
 { 
+
+  int idx = 0;
   for(map<string, vcRegister*>::iterator iter = _register_map.begin();
       iter != _register_map.end();
       iter++)
@@ -963,19 +1020,44 @@ void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
       // intermediate wire... make it a flow-through register..
       bool flow_through_flag  = s->_dout->Is("vcIntermediateWire");
 
+      ofile << "register_block_" << idx << " : block -- { " << endl;
+      ofile << "signal req, ack: boolean; --}" << endl;
+      ofile << "begin -- { " << endl;
+ 
+
+      if(s->Get_Guard_Wire() != NULL)
+      {
+      	ofile << "req <= " << s->Get_Req(0)->Get_CP_To_DP_Symbol() 
+		<< " when " << s->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (s->Get_Guard_Complement() ? "'0'"  : "'1'") << " else false;" << endl; 
+	ofile << s->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack " 
+		<< " when " << s->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (s->Get_Guard_Complement() ? "'0'"  : "'1'") << " else " 
+ 		<< s->Get_Req(0)->Get_CP_To_DP_Symbol()  << ";" 
+		<< endl; 
+      }
+      else
+      {
+      	ofile << "req <= " << s->Get_Req(0)->Get_CP_To_DP_Symbol() << ";" << endl;
+	ofile << s->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack; "  << endl;
+      }
+
       ofile << s->Get_VHDL_Id() << ": RegisterBase --{" << endl
 	    << "generic map(in_data_width => " << s->_din->Get_Size()  << "," 
 	    << "out_data_width => " << s->_dout->Get_Size() << ", "
 	    << "flow_through => " << (flow_through_flag ? "true" : "false") << " ) " << endl;
       ofile << " port map( din => " << s->_din->Get_VHDL_Signal_Id() << "," 
 	    << " dout => " << s->_dout->Get_VHDL_Signal_Id() << ","
-	    << " req => " << s->Get_Req(0)->Get_CP_To_DP_Symbol()  << ","
-	    << " ack => " << s->Get_Ack(0)->Get_DP_To_CP_Symbol() << ", clk => clk, reset => reset); -- }" << endl;
+	    << " req => req " 
+	    << " ack => ack " << ", clk => clk, reset => reset); -- }" << endl;
+      ofile << "-- }" << endl << "end block;" << endl;
+      idx++;
     }
 }
 
 void vcDataPath::Print_VHDL_Equivalence_Instances(ostream& ofile)
 { 
+
   for(map<string, vcEquivalence*>::iterator iter = _equivalence_map.begin();
       iter != _equivalence_map.end();
       iter++)
@@ -1073,6 +1155,8 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       vector<vcTransition*> reqR;
       vector<vcTransition*> ackR;
       vector<vcWire*> outwires;
+      vector<vcWire*> guard_wires;
+      vector<bool> guard_complements;
 
       // to get the operation id, we need the vc operator as well as the input and output 
       // types. (e.g. + (float float) (float) or + (int int) (int) ?
@@ -1112,6 +1196,8 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	  ackL.push_back(so->Get_Ack(0));
 	  reqR.push_back(so->Get_Req(1));
 	  ackR.push_back(so->Get_Ack(1));
+
+	  so->Append_Guard(guard_wires,guard_complements);
 	}
 
 
@@ -1169,6 +1255,8 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       ofile << "signal data_out: std_logic_vector(" << out_width-1 << " downto 0);" << endl;
       // in and out acks.
       ofile << "signal reqR, ackR, reqL, ackL : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal reqR_unguarded, ackR_unguarded, reqL_unguarded, ackL_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal guard_vector : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
 
       ofile << "-- }\n begin -- {" << endl;
 
@@ -1178,6 +1266,8 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       // disconcatenate data_out
       this->Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
 
+      	// prepare guard vector.
+      this->Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
 
       // input types 
       vcType* input_type_1 = inwires[0]->Get_Type();
@@ -1199,10 +1289,13 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       // vc2vhdl from the VHDL library.
       if(is_pipelined_float_op)
 	{
-	  this->Print_VHDL_Concatenate_Req("reqL",reqL,ofile);
-	  this->Print_VHDL_Disconcatenate_Ack("ackL",ackL,ofile);
-	  this->Print_VHDL_Concatenate_Req("reqR",reqR,ofile);
-	  this->Print_VHDL_Disconcatenate_Ack("ackR",ackR,ofile);
+	  this->Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
+	  this->Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
+	  this->Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
+	  this->Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
+
+      	  this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL", "ackL", ofile);
+      	  this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", ofile);
 
 	  ofile << "PipedFpOp: PipelinedFPOperator -- {" << endl;
 	  ofile << " generic map( -- { " << endl 
@@ -1224,6 +1317,9 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	      this->Print_VHDL_Concatenate_Req("reqR",reqR,ofile);
 	      this->Print_VHDL_Disconcatenate_Ack("ackR",ackR,ofile);
 	  
+      	      this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL", "ackL", ofile);
+      	      this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", ofile);
+
 	      ofile << "SplitOperator: SplitOperatorShared -- {" << endl;
 	      ofile << "generic map ( -- { " ;
 	  
@@ -1264,6 +1360,35 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		(Is_Trivial_Op(vc_op_id)  ||
 		 (use_constant && Is_Shift_Op(vc_op_id)));
 
+      		if(guard_wires[0] != NULL)
+      		{
+      			ofile << "reqL(0) <= " << reqL[0]->Get_CP_To_DP_Symbol() 
+				<< " when " << guard_wires[0]->Get_VHDL_Id() 
+				<< "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else false;" << endl; 
+			ofile << ackL[0]->Get_DP_To_CP_Symbol() << " <= ackL(0) " 
+				<< " when " << guard_wires[0]->Get_VHDL_Id()
+				<< "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else " 
+ 				<< reqL[0]->Get_CP_To_DP_Symbol()  << ";" 
+				<< endl; 
+
+      			ofile << "reqR(0) <= " << reqR[0]->Get_CP_To_DP_Symbol() 
+				<< " when " << guard_wires[0]->Get_VHDL_Id() 
+				<< "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else false;" << endl; 
+			ofile << ackR[0]->Get_DP_To_CP_Symbol() << " <= ackR(0) " 
+				<< " when " << guard_wires[0]->Get_VHDL_Id()
+				<< "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else " 
+ 				<< reqR[0]->Get_CP_To_DP_Symbol()  << ";" 
+				<< endl; 
+		}
+		else
+		{
+			ofile << "reqL(0) <= " << reqL[0]->Get_CP_To_DP_Symbol() << ";" << endl;
+			ofile << "reqR(0) <= " << reqR[0]->Get_CP_To_DP_Symbol() << ";" << endl;
+			ofile << ackL[0]->Get_DP_To_CP_Symbol() << " <= ackL(0); "  << endl;
+			ofile << ackR[0]->Get_DP_To_CP_Symbol() << " <= ackR(0); "  << endl;
+		}
+
+
 	      ofile << "UnsharedOperator: UnsharedOperatorBase -- {" << endl;
 	      ofile << "generic map ( -- { " ;
 	  
@@ -1295,10 +1420,10 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		    << " flow_through => " << (flow_through_flag ? "true" : "false")
 		    << "--} \n ) " << endl; // number of requesters..
 	      ofile << "port map ( -- { " << endl
-		    << "reqL => " << reqL[0]->Get_CP_To_DP_Symbol() << "," << endl
-		    << "ackL => " << ackL[0]->Get_DP_To_CP_Symbol() << "," << endl
-		    << "reqR => " << reqR[0]->Get_CP_To_DP_Symbol() << "," << endl
-		    << "ackR => " << ackR[0]->Get_DP_To_CP_Symbol() << "," << endl
+		    << "reqL => reqL(0)," << endl
+		    << "ackL => ackL(0)," << endl
+		    << "reqR => reqR(0)," << endl
+		    << "ackR => ackR(0)," << endl
 		    << "dataL => data_in, " << endl
 		    << "dataR => data_out," << endl
 		    << "clk => clk," << endl
@@ -1359,6 +1484,35 @@ void vcDataPath::Print_VHDL_Disconcatenation(string source, int total_width, vec
     }
 }
 
+void vcDataPath::Print_VHDL_Guard_Concatenation(int num_reqs, string guard_vector, vector<vcWire*>& guard_wires, vector<bool>& guard_complements, ostream& ofile)
+{
+	int idx;
+	for(idx = num_reqs-1; idx >= 0; idx--)
+	{
+		int lidx = (num_reqs - 1) - idx;
+		if(guard_wires[idx] != NULL)
+		{
+			if(guard_complements[idx])
+				ofile << guard_vector << "(" << lidx << ")  <=  not " << guard_wires[idx]->Get_VHDL_Signal_Id() << "(0);" << endl;
+			else
+				ofile << guard_vector << "(" << lidx << ")  <= " << guard_wires[idx]->Get_VHDL_Signal_Id() << "(0);" << endl;
+		}
+		else
+				ofile << guard_vector << "(" << lidx << ")  <=  '1';" << endl;
+
+	}
+}
+
+void vcDataPath::Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, string req_unguarded, string ack_unguarded, string req, string ack, ostream& ofile)
+{
+
+	ofile << inst_id << ": GuardInterface generic map(nreqs => " << num_reqs << ") -- { " << endl
+		<< "port map(reqL => " << req_unguarded << "," << endl
+		<< "ackL => " << ack_unguarded << "," << endl
+		<< "reqR => " << req << "," << endl
+		<< "ackR => " << ack << "," << endl
+		<< "guards => " << guards << "); -- }" << endl;
+}
 
 void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 { 
@@ -1373,6 +1527,8 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 
       // to collect inwires, outwires and reqs/acks.
       vector<vcWire*> inwires;
+      vector<vcWire*> guard_wires;
+      vector<bool> guard_complements;
       vector<vcTransition*> reqL;
       vector<vcTransition*> ackL;
       vector<vcTransition*> reqR;
@@ -1405,7 +1561,10 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 	  ackL.push_back(so->Get_Ack(0));
 	  reqR.push_back(so->Get_Req(1));
 	  ackR.push_back(so->Get_Ack(1));
+
+	  so->Append_Guard(guard_wires,guard_complements);
 	}
+
       assert(ms != NULL);
 
       // address, data
@@ -1444,6 +1603,8 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
       ofile << "signal data_out: std_logic_vector(" << out_width-1 << " downto 0);" << endl;
       // in and out acks.
       ofile << "signal reqR, ackR, reqL, ackL : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal reqR_unguarded, ackR_unguarded, reqL_unguarded, ackL_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal guard_vector : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
 
       ofile << "-- }\n begin -- {" << endl;
 
@@ -1478,10 +1639,15 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 	}
 
 
-      this->Print_VHDL_Concatenate_Req("reqL",reqL,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackL",ackL,ofile);
-      this->Print_VHDL_Concatenate_Req("reqR",reqR,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackR",ackR,ofile);
+      this->Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
+      this->Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
+
+      // prepare guard vector.
+      this->Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
+      this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL", "ackL", ofile);
+      this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", ofile);
 	
       // concatenate data_in
       this->Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
@@ -1551,6 +1717,8 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
       vector<vcTransition*> ackL;
       vector<vcTransition*> reqR;
       vector<vcTransition*> ackR;
+      vector<vcWire*> guard_wires;
+      vector<bool> guard_complements;
 
       // to keep track of the ids of the operators in this group.
       vector<string> elements;
@@ -1578,6 +1746,8 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 	  ackL.push_back(so->Get_Ack(0));
 	  reqR.push_back(so->Get_Req(1));
 	  ackR.push_back(so->Get_Ack(1));
+
+	  so->Append_Guard(guard_wires,guard_complements);
 	}
       assert(ms != NULL);
 
@@ -1639,13 +1809,20 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
       ofile << "signal data_in: std_logic_vector(" << total_data_width-1 << " downto 0);" << endl;
       // in and out acks.
       ofile << "signal reqR, ackR, reqL, ackL : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal reqR_unguarded, ackR_unguarded, reqL_unguarded, ackL_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal guard_vector : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
 
       ofile << "-- }\n begin -- {" << endl;
 
-      this->Print_VHDL_Concatenate_Req("reqL",reqL,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackL",ackL,ofile);
-      this->Print_VHDL_Concatenate_Req("reqR",reqR,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackR",ackR,ofile);
+      this->Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
+      this->Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
+
+      // prepare guard vector..
+      this->Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
+      this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL", "ackL", ofile);
+      this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", ofile);
 
       // concatenate addr_in and data_in
       this->Print_VHDL_Concatenation(string("addr_in"), addrwires,ofile);
@@ -1711,6 +1888,8 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
       vector<vcTransition*> req;
       vector<vcTransition*> ack;
       vector<vcWire*> outwires;
+      vector<vcWire*> guards;
+      vector<bool> guard_complements;
 
       // to keep track of the ids of the operators in this group.
       vector<string> elements;
@@ -1741,6 +1920,8 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 	  so->Append_Outwires(outwires);
 	  req.push_back(so->Get_Req(0));
 	  ack.push_back(so->Get_Ack(0));
+
+ 	  so->Append_Guard(guards, guard_complements);
 	}
       assert(p != NULL);
       assert(data_width > 0);
@@ -1767,6 +1948,8 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
       ofile << "signal data_out: std_logic_vector(" << out_width-1 << " downto 0);" << endl;
       // in and out acks.
       ofile << "signal req, ack : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal req_unguarded, ack_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal guards : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
 
       ofile << "-- }\n begin -- {" << endl;
 
@@ -1800,6 +1983,12 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 
       this->Print_VHDL_Concatenate_Req("req",req,ofile);
       this->Print_VHDL_Disconcatenate_Ack("ack",ack, ofile);
+
+      // guard related stuff.
+      this->Print_VHDL_Concatenate_Req("req_unguarded",req,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("ack_unguarded",ack,ofile);
+      this->Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guards, guard_complements, ofile);
+      this->Print_VHDL_Guard_Instance("gI", num_reqs,"guard_vector", "req_unguarded", "ack_unguarded", "req", "ack", ofile);
 
       // disconcatenate data_out
       this->Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
@@ -1837,6 +2026,8 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       vector<vcTransition*> req;
       vector<vcTransition*> ack;
       vector<vcWire*> inwires;
+      vector<vcWire*> guards;
+      vector<bool> guard_complements;
 
       // to keep track of the ids of the operators in this group.
       vector<string> elements;
@@ -1867,6 +2058,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 	  so->Append_Inwires(inwires);
 	  req.push_back(so->Get_Req(0));
 	  ack.push_back(so->Get_Ack(0));
+ 	  so->Append_Guard(guards, guard_complements);
 	}
       assert(p != NULL);
       assert(data_width > 0);
@@ -1917,11 +2109,19 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       ofile << "signal data_in: std_logic_vector(" << in_width-1 << " downto 0);" << endl;
       // in and out acks.
       ofile << "signal req, ack : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal req_unguarded, ack_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal guards : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
 
       ofile << "-- }\n begin -- {" << endl;
 
       this->Print_VHDL_Concatenate_Req("req",req,ofile);
       this->Print_VHDL_Disconcatenate_Ack("ack",ack, ofile);
+
+      // guard related stuff.
+      this->Print_VHDL_Concatenate_Req("req_unguarded",req,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("ack_unguarded",ack,ofile);
+      this->Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guards, guard_complements, ofile);
+      this->Print_VHDL_Guard_Instance("gI", num_reqs,"guard_vector", "req_unguarded", "ack_unguarded", "req", "ack", ofile);
 
       // concatenate data_in
       this->Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
@@ -2019,6 +2219,8 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
       vector<vcTransition*> reqR;
       vector<vcTransition*> ackR;
       vector<vcWire*> outwires;
+      vector<vcWire*> guard_wires;
+      vector<bool> guard_complements;
 
       // to keep track of the ids of the operators in this group.
       vector<string> elements;
@@ -2046,6 +2248,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 	  ackL.push_back(so->Get_Ack(0));
 	  reqR.push_back(so->Get_Req(1));
 	  ackR.push_back(so->Get_Ack(1));
+	  so->Append_Guard(guard_wires,guard_complements);
 	}
       assert(called_module != NULL);
 
@@ -2083,14 +2286,21 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 	ofile << "signal data_out: std_logic_vector(" << out_width-1 << " downto 0);" << endl;
       // in and out acks.
       ofile << "signal reqR, ackR, reqL, ackL : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal reqR_unguarded, ackR_unguarded, reqL_unguarded, ackL_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal guard_vector : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
 
       ofile << "-- }\n begin -- {" << endl;
 
-      this->Print_VHDL_Concatenate_Req("reqL",reqL,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackL",ackL,ofile);
-      this->Print_VHDL_Concatenate_Req("reqR",reqR,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackR",ackR,ofile);
+      this->Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
+      this->Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
 	
+      // prepare guard vector.
+      this->Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
+      this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL", "ackL", ofile);
+      this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", ofile);
+
       // concatenate data_in
       if(called_module->Get_In_Arg_Width() > 0)
 	this->Print_VHDL_Concatenation(string("data_in"), inwires,ofile);

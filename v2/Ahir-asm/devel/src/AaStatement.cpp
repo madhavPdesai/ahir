@@ -8,7 +8,8 @@ AaStatement::AaStatement(AaScope* p): AaScope(p)
 {
   this->_tab_depth = ((p != NULL) ? p->Get_Depth()+1 : 1);
   _index_in_sequence = -1;
-  _guard_object = NULL;
+  _guard_expression = NULL;
+  _guard_complement = false;
   
 }
 AaStatement::~AaStatement() {};
@@ -334,6 +335,20 @@ void AaStatement::Propagate_Addressed_Object_Representative(AaStorageObject* obj
 
 
 
+string AaStatement::Get_VC_Guard_String()
+{
+	string ret_string;
+	AaExpression* ge = this->Get_Guard_Expression();
+	bool not_flag = this->Get_Guard_Complement();
+	if(ge)
+	{
+		if(not_flag)
+			ret_string = "$guard ( ~ " + ge->Get_VC_Driver_Name() + " ) " ;
+		else
+			ret_string = "$guard ( " + ge->Get_VC_Driver_Name() + " ) " ;
+	}
+	return(ret_string);
+}
 //---------------------------------------------------------------------
 // AaStatementSequence
 //---------------------------------------------------------------------
@@ -607,6 +622,17 @@ void AaAssignmentStatement::Print(ostream& ofile)
   int awidth = AaProgram::_foreign_address_width;
   bool flag = AaProgram::_keep_extmem_inside;
 
+  string guard_string;
+  if(this->_guard_expression != NULL)
+  {
+	guard_string = "$guard (";
+	if(this->_guard_complement)
+		guard_string += " $not ";
+	guard_string += this->_guard_expression->To_String();
+	guard_string += ") ";
+  }
+
+
   if(!flag && this->Get_Target()->Is_Foreign_Store() && this->Get_Source()->Is_Foreign_Load())
     {
       AaPointerDereferenceExpression *ptgt = (AaPointerDereferenceExpression*)(this->Get_Target());
@@ -614,11 +640,11 @@ void AaAssignmentStatement::Print(ostream& ofile)
 
       // first load and then store.
       ofile << "$seriesblock [as_" << this->Get_Index() << "_ext_mem_access] {";
-      ofile << "$call extmem_load_for_type_" << this->Get_Target()->Get_Type()->Get_Index()
+      ofile << guard_string << "$call extmem_load_for_type_" << this->Get_Target()->Get_Type()->Get_Index()
 	    << " ( ($bitcast ( $uint<" << awidth << " > ) "
 	    <<  psrc->Get_Reference_To_Object()->To_String() << ")) ("
 	    << " (as_" << this->Get_Index() << "_ld_result)" << endl;
-      ofile << "$call extmem_store_for_type_" << this->Get_Source()->Get_Type()->Get_Index()
+      ofile << guard_string << "$call extmem_store_for_type_" << this->Get_Source()->Get_Type()->Get_Index()
 	    << " ( ($bitcast ($uint<" << awidth << "> )"
 	    << ptgt->Get_Reference_To_Object()->To_String() << ") "
 	    << "( as_" << this->Get_Index() << "_ld_result)) ()" << endl;
@@ -628,7 +654,7 @@ void AaAssignmentStatement::Print(ostream& ofile)
     {
       AaPointerDereferenceExpression *psrc = (AaPointerDereferenceExpression*)(this->Get_Source());
 
-      ofile << "$call extmem_load_for_type_" << this->Get_Target()->Get_Type()->Get_Index() 
+      ofile << guard_string << "$call extmem_load_for_type_" << this->Get_Target()->Get_Type()->Get_Index() 
 	    << " ( ($bitcast ($uint<" <<  awidth << "> )"
 	    << "  " << psrc->Get_Reference_To_Object()->To_String() << ")) ("
 	    << this->Get_Target()->To_String() << ")" << endl;
@@ -636,7 +662,7 @@ void AaAssignmentStatement::Print(ostream& ofile)
   else if(!flag && this->Get_Target()->Is_Foreign_Store())
     {
       AaPointerDereferenceExpression *ptgt = (AaPointerDereferenceExpression*)(this->Get_Target());
-      ofile << "$call extmem_store_for_type_" << this->Get_Source()->Get_Type()->Get_Index()
+      ofile << guard_string << "$call extmem_store_for_type_" << this->Get_Source()->Get_Type()->Get_Index()
 	    << " ( ($bitcast ($uint<" << awidth << "> )"
 	    << ptgt->Get_Reference_To_Object()->To_String() << ") "
 	    << " " << this->Get_Source()->To_String() << ")  ()" << endl;
@@ -644,6 +670,7 @@ void AaAssignmentStatement::Print(ostream& ofile)
   else
     {
       ofile << this->Tab();
+      ofile << guard_string;
       this->Get_Target()->Print(ofile);
       ofile << " := ";
       this->Get_Source()->Print(ofile);
@@ -669,6 +696,16 @@ void AaAssignmentStatement::Map_Source_References()
   AaProgram::Add_Type_Dependency(this->_target,this->_source);
 
   this->_source->Map_Source_References(this->_source_objects);
+
+  if(this->_guard_expression)
+  {
+	this->_guard_expression->Map_Source_References(this->_source_objects);
+	if(!this->_guard_expression->Is_Implicit_Variable_Reference())
+	{
+		AaRoot::Error("guard variable must be implicit (SSA)", this);
+	}
+  }
+
 }
 
 
@@ -725,7 +762,7 @@ void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
   ofile << ";;[" << this->Get_VC_Name() << "] // " << this->Get_Source_Info() << endl << " {" << endl;
   if(!this->Is_Constant())
     {
-      
+
       this->_source->Write_VC_Control_Path(ofile);
       assert(this->_target->Is_Object_Reference()); //\todo later ->(a)!
       this->_target->Write_VC_Control_Path_As_Target(ofile);
@@ -813,6 +850,7 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				      this->_source->Get_Type(),
 				      this->_target->Get_VC_Receiver_Name(),
 				      this->_target->Get_Type(),
+			 		this->Get_VC_Guard_String(),
 				      ofile);
 	    }
 	  else
@@ -932,6 +970,16 @@ AaObjectReference* AaCallStatement::Get_Output_Arg(unsigned int index)
 void AaCallStatement::Print(ostream& ofile)
 {
   AaModule* cm = (AaModule*) _called_module;
+  string guard_string;
+  if(this->_guard_expression != NULL)
+  {
+	guard_string = "$guard (";
+	if(this->_guard_complement)
+		guard_string += " $not ";
+
+	guard_string += this->_guard_expression->To_String();
+	guard_string += ") ";
+  }
  
   if((cm->Get_Inline_Flag() || cm->Get_Macro_Flag()) && AaProgram::_print_inlined_functions_in_caller)
   {
@@ -961,6 +1009,17 @@ void AaCallStatement::Print(ostream& ofile)
   
 
     vector<AaSimpleObjectReference*> exports;
+
+    if(this->_guard_expression)
+    {
+	ofile << this->Tab();
+	ofile << "$if (";
+	if(this->_guard_complement)
+		guard_string += " $not ";
+	this->_guard_expression->Print(ofile);
+	ofile << ") $then " << endl;
+    }
+
     ofile << "$seriesblock[" << this->Get_Function_Name() << "_" <<  this->Get_Index()
 	  << "] { " << endl;
 
@@ -1078,12 +1137,20 @@ void AaCallStatement::Print(ostream& ofile)
       cm->Clear_Print_Prefix();
     else if(cm->Get_Macro_Flag())
       cm->Clear_Print_Remap();
+
+    if(this->_guard_expression)
+    {
+	ofile << endl;
+	ofile << "$endif " << endl;
+    }
+
     return;
   }
 
 
   // not inlined or macro
   ofile << this->Tab();
+  ofile << guard_string;
   ofile << "$call ";
 
 
@@ -1168,6 +1235,15 @@ void AaCallStatement::Map_Source_References()
 	    Set_Addressed_Object_Representative(called_module->Get_Output_Argument(i)->Get_Addressed_Object_Representative());
 	}
     }
+
+  if(this->_guard_expression)
+  {
+	this->_guard_expression->Map_Source_References(this->_source_objects);
+	if(!this->_guard_expression->Is_Implicit_Variable_Reference())
+	{
+		AaRoot::Error("guard variable must be implicit (SSA)", this);
+	}
+  }
 }
 
 
@@ -1457,6 +1533,11 @@ void AaCallStatement::Write_VC_Control_Path(ostream& ofile)
   ofile << "// " << this->Get_Source_Info() << endl;
 
   ofile << ";;[" << this->Get_VC_Name() << "] { // call statement " << this->Get_Source_Info() << endl;
+
+  // nothing should happen.
+  if(this->Get_Guard_Expression() != NULL)
+	this->Get_Guard_Expression()->Write_VC_Control_Path(ofile);
+
   ofile << "||[in_args] { // input arguments" << endl;
   for(int idx = 0; idx < _input_args.size(); idx++)
     _input_args[idx]->Write_VC_Control_Path(ofile);
@@ -1536,6 +1617,7 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			 _function_name,
 			 inargs,
 			 outargs,
+			 this->Get_VC_Guard_String(),
 			 ofile);
 
 }
@@ -2194,6 +2276,7 @@ void AaJoinForkStatement::Print(ostream& ofile)
 
 void AaJoinForkStatement::Map_Source_References()
 {
+
   for(unsigned int i=0; i < this->_join_labels.size(); i++)
     {
       AaRoot* child = 
@@ -2700,6 +2783,7 @@ void AaPhiStatement::Add_Source_Pair(string label, AaExpression* expr)
 
 void AaPhiStatement::Map_Source_References()
 {
+
   this->_target->Map_Source_References(this->_target_objects);
   for(unsigned int i=0; i < this->_source_pairs.size(); i++)
     {
@@ -2884,6 +2968,7 @@ void AaSwitchStatement::Coalesce_Storage()
   
 void AaSwitchStatement::Map_Source_References()
 {
+  
     if(this->_select_expression)
       this->_select_expression->Map_Source_References(this->_source_objects);
 
@@ -3276,6 +3361,7 @@ void AaSwitchStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			       expr->Get_Type(),
 			       expr->Get_VC_Constant_Name() + "_cmp",
 			       expr->Get_Type(),
+			       this->Get_VC_Guard_String(),
 			       ofile);
 
       br_input.push_back(pair<string,AaType*>(expr->Get_VC_Constant_Name() + "_cmp",

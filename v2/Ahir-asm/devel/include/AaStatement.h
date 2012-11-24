@@ -27,8 +27,8 @@ class AaStatement: public AaScope
 
   int _index_in_sequence;
 
-  string _guard_reference_string;
-  AaRoot* _guard_object;
+  AaSimpleObjectReference* _guard_expression;
+  bool _guard_complement;
 
  public:
   AaStatement(AaScope* scope);
@@ -41,23 +41,25 @@ class AaStatement: public AaScope
     assert(0); 
   }
 
-  virtual void Set_Guard_Reference_String(string& gs)
+  virtual void Set_Guard_Expression(AaSimpleObjectReference* oref)
   {
-	_guard_reference_string = gs;
+	_guard_expression = oref;
   }
-  virtual string Get_Guard_Reference_String()
+  virtual AaExpression* Get_Guard_Expression()
   {
-	return(_guard_reference_string);
+	return(_guard_expression);
   }
 
-  virtual void Set_Guard_Object(AaRoot* obj)
+  virtual void Set_Guard_Complement(bool v)
   {
-	_guard_object = obj;
+	_guard_complement = v;
   }
-  virtual AaRoot* Get_Guard_Object()
+  virtual bool Get_Guard_Complement()
   {
-	return(_guard_object);
+	return(_guard_complement);
   }
+
+  virtual string Get_VC_Guard_String();
 
   virtual void Map_Target(AaObjectReference* obj_ref);
   virtual string Tab();

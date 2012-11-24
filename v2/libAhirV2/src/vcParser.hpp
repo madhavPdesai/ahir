@@ -136,46 +136,49 @@ public:
 	public: void vc_CPJoin(
 		vcCPForkBlock* fb
 	);
-	public: void vc_Operator_Instantiation(
+	public: void vc_Guarded_Operator_Instantiation(
 		vcSystem* sys, vcDataPath* dp
-	);
-	public: void vc_Phi_Instantiation(
-		vcDataPath* dp
-	);
-	public: void vc_Call_Instantiation(
-		vcSystem* sys, vcDataPath* dp
-	);
-	public: void vc_IOPort_Instantiation(
-		vcDataPath* dp
-	);
-	public: void vc_LoadStore_Instantiation(
-		vcSystem* sys, vcDataPath* dp
-	);
-	public: void vc_BinaryOperator_Instantiation(
-		vcDataPath* dp
-	);
-	public: void vc_UnaryOperator_Instantiation(
-		vcDataPath* dp
-	);
-	public: void vc_Select_Instantiation(
-		vcDataPath* dp
-	);
-	public: void vc_Slice_Instantiation(
-		vcDataPath* dp
 	);
 	public: void vc_Branch_Instantiation(
 		vcDataPath* dp
 	);
-	public: void vc_Register_Instantiation(
+	public: void vc_Phi_Instantiation(
 		vcDataPath* dp
 	);
-	public: void vc_Equivalence_Instantiation(
+	public: vcDatapathElement*  vc_Operator_Instantiation(
 		vcDataPath* dp
 	);
-	public: void vc_Load_Instantiation(
+	public: vcDatapathElement*  vc_Call_Instantiation(
 		vcSystem* sys, vcDataPath* dp
 	);
-	public: void vc_Store_Instantiation(
+	public: vcDatapathElement*  vc_IOPort_Instantiation(
+		vcDataPath* dp
+	);
+	public: vcDatapathElement*  vc_LoadStore_Instantiation(
+		vcSystem* sys, vcDataPath* dp
+	);
+	public: vcDatapathElement*  vc_BinaryOperator_Instantiation(
+		vcDataPath* dp
+	);
+	public: vcDatapathElement*  vc_UnaryOperator_Instantiation(
+		vcDataPath* dp
+	);
+	public: vcDatapathElement*  vc_Select_Instantiation(
+		vcDataPath* dp
+	);
+	public: vcDatapathElement*  vc_Slice_Instantiation(
+		vcDataPath* dp
+	);
+	public: vcDatapathElement*  vc_Register_Instantiation(
+		vcDataPath* dp
+	);
+	public: vcDatapathElement*  vc_Equivalence_Instantiation(
+		vcDataPath* dp
+	);
+	public: vcDatapathElement*  vc_Load_Instantiation(
+		vcSystem* sys, vcDataPath* dp
+	);
+	public: vcDatapathElement*  vc_Store_Instantiation(
 		vcSystem* sys, vcDataPath* dp
 	);
 	public: void vc_Interface_Object_Declaration(
@@ -216,10 +219,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 127;
+	static const int NUM_TOKENS = 128;
 #else
 	enum {
-		NUM_TOKENS = 127
+		NUM_TOKENS = 128
 	};
 #endif
 	
@@ -271,6 +274,8 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_22;
 	static const unsigned long _tokenSet_23_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_23;
+	static const unsigned long _tokenSet_24_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_24;
 };
 
 #endif /*INC_vcParser_hpp_*/

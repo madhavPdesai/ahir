@@ -88,6 +88,7 @@ public:
 	public: void mCONSTANT(bool _createToken);
 	public: void mINTERMEDIATE(bool _createToken);
 	public: void mDEPTH(bool _createToken);
+	public: void mGUARD(bool _createToken);
 	public: void mCOLON(bool _createToken);
 	public: void mCOMMA(bool _createToken);
 	public: void mIMPLIES(bool _createToken);

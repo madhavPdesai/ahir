@@ -69,7 +69,7 @@ class AaExpression: public AaRoot
   ~AaExpression();
   virtual string Kind() {return("AaExpression");}
 
-  void Set_Associated_Statement(AaStatement* stmt)
+  virtual void Set_Associated_Statement(AaStatement* stmt)
   {
     _associated_statement = stmt;
   }
@@ -203,6 +203,8 @@ class AaExpression: public AaRoot
     assert(0);
   }
 
+  virtual string Get_VC_Guard_String();
+
   virtual bool Is_Constant() {return(this->_expression_value != NULL);}
 
   virtual bool Is_Implicit_Variable_Reference() {return(false);}
@@ -221,6 +223,10 @@ class AaExpression: public AaRoot
   // return true if the only place this is (eventually) used
   // is an address-of expression
   bool Used_Only_In_Address_Of_Expression();
+
+  virtual AaExpression* Get_Guard_Expression();
+  virtual bool Get_Guard_Complement();
+  virtual void Write_VC_Guard_Dependency(set<AaRoot*>& visited_elements, ostream& ofile);
 };
 
 
@@ -297,6 +303,12 @@ class AaObjectReference: public AaExpression
   virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string) {}
 
   virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr);
+
+  virtual void Set_Associated_Statement(AaStatement* stmt)
+  {
+    _associated_statement = stmt;
+  }
+
 
 
   // common operations across loads/stores.
@@ -553,6 +565,10 @@ class AaConstantLiteralReference: public AaObjectReference
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Evaluate();
 
+  virtual void Set_Associated_Statement(AaStatement* stmt)
+  {
+    _associated_statement = stmt;
+  }
 };
 
 // simple reference (no array indices)
@@ -624,6 +640,10 @@ class AaSimpleObjectReference: public AaObjectReference
 
 
 
+  virtual void Set_Associated_Statement(AaStatement* stmt)
+  {
+    _associated_statement = stmt;
+  }
 
 };
 
@@ -678,6 +698,14 @@ class AaArrayObjectReference: public AaObjectReference
   {
     for(int idx = 0; idx < _indices.size(); idx++)
       _indices[idx]->Get_Leaf_Expression_Set(leaf_expression_set);
+  }
+
+  virtual void Set_Associated_Statement(AaStatement* stmt)
+  {
+    _associated_statement = stmt;
+    for(int idx = 0; idx < _indices.size(); idx++)
+      _indices[idx]->Set_Associated_Statement(stmt);
+
   }
 
   virtual void Write_VC_Control_Path_As_Target( ostream& ofile);
@@ -744,6 +772,11 @@ class AaPointerDereferenceExpression: public AaObjectReference
     return(_reference_to_object);
   }
 
+  virtual void Set_Associated_Statement(AaStatement* stmt)
+  {
+    _associated_statement = stmt;
+    _reference_to_object->Set_Associated_Statement(stmt);
+  }
   virtual void Map_Source_References_As_Target(set<AaRoot*>& source_objects)
   {
     this->_reference_to_object->Map_Source_References(source_objects);
@@ -820,6 +853,11 @@ class AaAddressOfExpression: public AaObjectReference
   virtual void Print(ostream& ofile);
   virtual void PrintC(ofstream& ofile, string tab_string);
 
+  virtual void Set_Associated_Statement(AaStatement* stmt)
+  {
+    _associated_statement = stmt;
+    _reference_to_object->Set_Associated_Statement(stmt);
+  }
   virtual bool Is_Load() {return(false);}
   virtual bool Is_Store(){return(false);}
 
@@ -887,6 +925,11 @@ class AaTypeCastExpression: public AaExpression
   ~AaTypeCastExpression();
 
   void Set_Bit_Cast(bool v) { _bit_cast = v;}
+  virtual void Set_Associated_Statement(AaStatement* stmt)
+  {
+    _associated_statement = stmt;
+    _rest->Set_Associated_Statement(stmt);
+  }
 
   void Print(ostream& ofile);
   virtual string Kind() {return("AaTypeCastExpression");}
@@ -957,6 +1000,11 @@ class AaUnaryExpression: public AaExpression
     ofile << ") ";
   }
 
+  virtual void Set_Associated_Statement(AaStatement* stmt)
+  {
+    _associated_statement = stmt;
+    _rest->Set_Associated_Statement(stmt);
+  }
   virtual void Write_VC_Control_Path( ostream& ofile);
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
@@ -1009,6 +1057,12 @@ class AaBinaryExpression: public AaExpression
   {
     if(this->_first) this->_first->Map_Source_References(source_objects);
     if(this->_second) this->_second->Map_Source_References(source_objects);
+  }
+  virtual void Set_Associated_Statement(AaStatement* stmt)
+  {
+    _associated_statement = stmt;
+    _first->Set_Associated_Statement(stmt);
+    _second->Set_Associated_Statement(stmt);
   }
   virtual void PrintC(ofstream& ofile, string tab_string)
   {
@@ -1109,6 +1163,13 @@ class AaTernaryExpression: public AaExpression
     if(this->_if_false) this->_if_false->Map_Source_References(source_objects);
   }
 
+  virtual void Set_Associated_Statement(AaStatement* stmt)
+  {
+    _associated_statement = stmt;
+    _test->Set_Associated_Statement(stmt);
+    _if_true->Set_Associated_Statement(stmt);
+    _if_false->Set_Associated_Statement(stmt);
+  }
   virtual void PrintC(ofstream& ofile, string tab_string)
   {
     ofile << tab_string ;

@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 
   if(argc < 2)
     {
-      cerr << "Usage: AaOpt [-I <extmem-obj-name>] [-d <module-name>]* <filename> (<filename>) ... " << endl;
+      cerr << "Usage: AaOpt [-I <extmem-obj-name>] [-r <module-name>]* <filename> (<filename>) ... " << endl;
       exit(1);
     }
 

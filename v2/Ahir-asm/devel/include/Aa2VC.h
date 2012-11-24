@@ -11,6 +11,7 @@
 void Write_VC_Equivalence_Operator(string inst_name,
 				   string input,
 				   string output,
+				   string guard_string,
 				   ostream& ofile);
 
 void Write_VC_Constant_Declaration(string name, string type, string val,  ostream& ofile);
@@ -25,6 +26,7 @@ void Write_VC_Wire_Declaration(string wire_name, string type_name,
 void Write_VC_Equivalence_Operator(string inst_name,
 				   vector<string>& inwires,
 				   vector<string>& outwires,
+				   string guard_string,
 				   ostream& ofile);
 
 void Write_VC_Unary_Operator(AaOperation op, 
@@ -33,10 +35,12 @@ void Write_VC_Unary_Operator(AaOperation op,
 			     AaType* src_type,
 			     string target_name,
 			     AaType* target_type,
+			     string guard_string,
 			     ostream& ofile);
 void Write_VC_Register( string inst_name, 
 			string src_name, 
 			string target_name,
+			string guard_string,
 			ostream& ofile);
 void Write_VC_Binary_Operator(AaOperation op, 
 			      string inst_name, 
@@ -46,11 +50,13 @@ void Write_VC_Binary_Operator(AaOperation op,
 			      AaType* src2_type, 
 			      string target_name,
 			      AaType* target_type,
+			     string guard_string,
 			      ostream& ofile);
 void Write_VC_Call_Operator(string inst_name, 
 			    string module_name, 
 			    vector<pair<string,AaType*> >& inargs,
 			    vector<pair<string,AaType*> >& outargs,
+			     string guard_string,
 			    ostream& ofile);
 
 void Write_VC_Phi_Operator(string inst_name,
@@ -79,11 +85,17 @@ void Write_VC_Intermediate_Wire_Declaration(string wire_name,
 void Write_VC_Pipe_Declaration(string name, int width,int depth, bool lifo_mode, ostream& ofile);
 void Write_VC_Memory_Space_Declaration(string space_name, string obj_name, AaType* type,ostream& ofile);
 void Write_VC_Load_Operator(string ms_name, string inst_name, string data_name, string addr_name,
+			     string guard_string,
 			    ostream& ofile);
 void Write_VC_Store_Operator(string ms_name, string inst_name, string data_name, string addr_name,
+			     string guard_string,
 			     ostream& ofile);
-void Write_VC_IO_Input_Port(AaPipeObject* obj, string inst_name, string data_name,ostream& ofile);
-void Write_VC_IO_Output_Port(AaPipeObject* obj, string inst_name, string data_name,ostream& ofile);
+void Write_VC_IO_Input_Port(AaPipeObject* obj, string inst_name, string data_name,
+			     string guard_string,
+				ostream& ofile);
+void Write_VC_IO_Output_Port(AaPipeObject* obj, string inst_name, string data_name,
+			     string guard_string,
+				ostream& ofile);
 
 void Write_VC_Select_Operator(string inst_name,
 			      string test_name,
@@ -94,6 +106,7 @@ void Write_VC_Select_Operator(string inst_name,
 			      AaType* if_false_type,
 			      string target_name,
 			      AaType* target_type,
+			     string guard_string,
 			      ostream& ofile);
 
 void Write_VC_Slice_Operator(string inst_name,
@@ -101,6 +114,7 @@ void Write_VC_Slice_Operator(string inst_name,
 			     string out_name,
 			     int high_index,
 			     int low_index,
+			     string guard_string,
 			     ostream& ofile);
 
 bool Is_Trivial_VC_Type_Conversion(AaType* from, AaType* to);

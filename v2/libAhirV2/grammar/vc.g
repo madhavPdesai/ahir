@@ -25,8 +25,8 @@ options {
 class vcParser extends Parser;
 
 options {
-	// go with LL(2) grammar
-	k=2;
+	// go with LL(3) grammar
+	k=3;
 	defaultErrorHandler=true;
 } 
 {
@@ -432,7 +432,7 @@ vc_CPFork[vcCPForkBlock* fb]
 
 //-----------------------------------------------------------------------------------------------
 // vc_Datapath: DATAPATH LBRACE 
-// (vc_Wire_Declaration | vc_Operator_Instantiation | vc_Phi_Instantiation | vc_Call_Instantiation |
+// (vc_Wire_Declaration | vc_Operator_Instantiation | vc_Branch_Instantiation |  vc_Phi_Instantiation | vc_Call_Instantiation |
 //                vc_LoadStore_Instantiation | vc_IOPort_Instantiation | vc_AttributeSpec[dp] )*  RBRACE
 //-----------------------------------------------------------------------------------------------
 vc_Datapath[vcSystem* sys,vcModule* m]
@@ -440,34 +440,56 @@ vc_Datapath[vcSystem* sys,vcModule* m]
 	vcDataPath* dp = new vcDataPath(m,m->Get_Id() + "_DP");
 }
     : DATAPATH LBRACE ( vc_Wire_Declaration[sys,dp] | 
-            vc_Operator_Instantiation[sys,dp] |
+            vc_Guarded_Operator_Instantiation[sys,dp] |
+            vc_Branch_Instantiation[dp] |
             vc_Phi_Instantiation[dp] |
-            vc_Call_Instantiation[sys,dp] | 
-            vc_IOPort_Instantiation[dp] |
-            vc_LoadStore_Instantiation[sys,dp] |
             vc_AttributeSpec[dp])* RBRACE
  { m->Set_Data_Path(dp);}
 ;
 
-
 //-----------------------------------------------------------------------------------------------------------------------------
-// vc_Operator_Instantiation: vc_BinaryOperator_Instantiation | vc_UnaryOperator_Instantiation | vc_Select_Instantiation | vc_Branch_Instantiation | vc_Register_Instantiation
+// vc_Guarded_Operator_Instantiation: vc_BinaryOperator_Instantiation | vc_UnaryOperator_Instantiation | vc_Select_Instantiation | vc_Branch_Instantiation | vc_Register_Instantiation
 //----------------------------------------------------------------------------------------------------------------------------
-vc_Operator_Instantiation[vcSystem* sys, vcDataPath* dp] : 
-        vc_BinaryOperator_Instantiation[dp] |
-        vc_UnaryOperator_Instantiation[dp] |
-        vc_Select_Instantiation[dp] |
-        vc_Slice_Instantiation[dp] |
-        vc_Branch_Instantiation[dp] |
-        vc_Register_Instantiation[dp] |
-        vc_Equivalence_Instantiation[dp] 
+vc_Guarded_Operator_Instantiation[vcSystem* sys, vcDataPath* dp]
+{
+  	vcWire* guard_wire = NULL;
+  	bool guard_complement = false;
+	string gwid;
+	vcDatapathElement* dpe = NULL;
+}:
+  (dpe=vc_Operator_Instantiation[dp] |
+            dpe=vc_Call_Instantiation[sys,dp] | 
+            dpe=vc_IOPort_Instantiation[dp] |
+            dpe=vc_LoadStore_Instantiation[sys,dp] )
+  (gid:GUARD LPAREN ( NOT_OP {guard_complement = true;} )? gwid = vc_Identifier { guard_wire = dp->Find_Wire(gwid); NOT_FOUND__("wire",guard_wire, gwid,gid) } RPAREN 
+  )?
+	{
+		if((dpe != NULL) && (guard_wire != NULL))
+		{
+			dpe->Set_Guard_Wire(guard_wire);
+			dpe->Set_Guard_Complement(guard_complement);
+		}
+	}
+;
+	
+//-----------------------------------------------------------------------------------------------------------------------------
+// vc_Operator_Instantiation: vc_BinaryOperator_Instantiation | vc_UnaryOperator_Instantiation | vc_Select_Instantiation | vc_Slice_Instantiation | vc_Register_Instantiation
+//----------------------------------------------------------------------------------------------------------------------------
+vc_Operator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
+:
+        (dpe=vc_BinaryOperator_Instantiation[dp] |
+        dpe=vc_UnaryOperator_Instantiation[dp] |
+        dpe=vc_Select_Instantiation[dp] |
+        dpe=vc_Slice_Instantiation[dp] |
+        dpe=vc_Register_Instantiation[dp] |
+        dpe=vc_Equivalence_Instantiation[dp] )
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
 // vc_BinaryOperator_Instantiation: vc_BinaryOp vc_Label LPAREN vc_Identifier vc_Identifier RPAREN
 //                                             LPAREN vc_Identifier RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
-vc_BinaryOperator_Instantiation[vcDataPath* dp] 
+vc_BinaryOperator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
 {
   vcBinarySplitOperator* new_op = NULL;
   string id;
@@ -524,7 +546,8 @@ vc_BinaryOperator_Instantiation[vcDataPath* dp]
        NOT_FOUND__("wire", z,wid,lpid2)
      }
  RPAREN
- { new_op = new vcBinarySplitOperator(id,op_id,x,y,z); dp->Add_Split_Operator(new_op);}   
+ { new_op = new vcBinarySplitOperator(id,op_id,x,y,z); dp->Add_Split_Operator(new_op); 
+	dpe = (vcDatapathElement*)new_op; }
 ;
 
 
@@ -532,7 +555,7 @@ vc_BinaryOperator_Instantiation[vcDataPath* dp]
 // vc_UnaryOperator_Instantiation: vc_UnaryOp vc_Label LPAREN vc_Identifier RPAREN
 //                                             LPAREN vc_Identifier RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
-vc_UnaryOperator_Instantiation[vcDataPath* dp] 
+vc_UnaryOperator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
 {
   vcUnarySplitOperator* new_op = NULL;
   string id;
@@ -567,13 +590,16 @@ vc_UnaryOperator_Instantiation[vcDataPath* dp]
        NOT_FOUND__("wire", z,wid,lpid2)
     }
  RPAREN
-    { new_op = new vcUnarySplitOperator(id,op_id,x,z); dp->Add_Split_Operator(new_op);}
+    { 
+	new_op = new vcUnarySplitOperator(id,op_id,x,z); dp->Add_Split_Operator(new_op);
+	dpe = (vcDatapathElement*) new_op;
+    }
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
 // vc_Branch_Instantiation: BRANCH_OP vc_Label LPAREN (vc_Identifier)+ RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
-vc_Branch_Instantiation[vcDataPath* dp] 
+vc_Branch_Instantiation[vcDataPath* dp]
 {
   vcBranch* new_op = NULL;
   string id;
@@ -587,14 +613,14 @@ vc_Branch_Instantiation[vcDataPath* dp]
     (wid = vc_Identifier {x = dp->Find_Wire(wid); NOT_FOUND__("wire",x,wid,br_id)
                           wires.push_back(x);})+
  RPAREN
- { new_op = new vcBranch(id,wires); dp->Add_Branch(new_op);}   
+ { new_op = new vcBranch(id,wires); dp->Add_Branch(new_op);}
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
 // vc_Select_Instantiation: SELECT_OP vc_Label LPAREN vc_Identifier vc_Identifier vc_Identifier RPAREN
 //                                             LPAREN vc_Identifier RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
-vc_Select_Instantiation[vcDataPath* dp] 
+vc_Select_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
 {
   vcSelect* new_op = NULL;
   string id;
@@ -616,7 +642,10 @@ vc_Select_Instantiation[vcDataPath* dp]
  LPAREN
     wid = vc_Identifier {z = dp->Find_Wire(wid); NOT_FOUND__("wire",z,wid,sel_id) }
  RPAREN
- { new_op = new vcSelect(id,sel,x,y,z); dp->Add_Select(new_op);}   
+ { 
+	new_op = new vcSelect(id,sel,x,y,z); dp->Add_Select(new_op);   
+	dpe = (vcDatapathElement*) new_op;
+ }
 ;
 
 
@@ -624,7 +653,7 @@ vc_Select_Instantiation[vcDataPath* dp]
 // vc_Slice_Instantiation: SLICE_OP vc_Label LPAREN vc_Identifier UINTEGER UINTEGER RPAREN
 //                                             LPAREN vc_Identifier RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
-vc_Slice_Instantiation[vcDataPath* dp] 
+vc_Slice_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
 {
   vcSlice* new_op = NULL;
   string id;
@@ -644,7 +673,10 @@ vc_Slice_Instantiation[vcDataPath* dp]
  LPAREN
     wid = vc_Identifier {dout = dp->Find_Wire(wid); NOT_FOUND__("wire",dout,wid,slice_id) }
  RPAREN
- { new_op = new vcSlice(id,din,dout,h,l); dp->Add_Slice(new_op); }   
+ { 
+	new_op = new vcSlice(id,din,dout,h,l); dp->Add_Slice(new_op);    
+	dpe = (vcDatapathElement*) new_op;
+ }
 ;
 
 
@@ -652,7 +684,7 @@ vc_Slice_Instantiation[vcDataPath* dp]
 // vc_Register_Instantiation: ASSIGN_OP vc_Label LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN
 
 //-------------------------------------------------------------------------------------------------------------------------
-vc_Register_Instantiation[vcDataPath* dp]
+vc_Register_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
 {
   vcRegister* new_reg = NULL;
   vcWire* x;
@@ -668,6 +700,7 @@ vc_Register_Instantiation[vcDataPath* dp]
                           RPAREN
    {  
       new_reg = new vcRegister(id, x, y); dp->Add_Register(new_reg);
+	dpe = (vcDatapathElement*) new_reg;
    }
 ;
  
@@ -676,7 +709,7 @@ vc_Register_Instantiation[vcDataPath* dp]
 // vc_Equivalence_Instantiation: EQUIVALENCE_OP vc_Label LPAREN vc_Identifier+ RPAREN LPAREN vc_Identifier+ RPAREN
 
 //-------------------------------------------------------------------------------------------------------------------------
-vc_Equivalence_Instantiation[vcDataPath* dp]
+vc_Equivalence_Instantiation[vcDataPath* dp] returns [vcDatapathElement* dpe]
 {
     string id;
     vcEquivalence* nm = NULL;
@@ -705,6 +738,7 @@ vc_Equivalence_Instantiation[vcDataPath* dp]
         {
             nm = new vcEquivalence(id,inwires,outwires);
             dp->Add_Equivalence(nm);
+	    dpe = (vcDatapathElement*) nm;
         }
     ;
 
@@ -714,7 +748,7 @@ vc_Equivalence_Instantiation[vcDataPath* dp]
 // vc_Call_Instantiation: CALL (INLINE)? vc_Label MODULE vc_Identifier 
 //              LPAREN vc_Identifier* RPAREN LPAREN vc_Identifier* RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
-vc_Call_Instantiation[vcSystem* sys, vcDataPath* dp]
+vc_Call_Instantiation[vcSystem* sys, vcDataPath* dp] returns[vcDatapathElement* dpe]
 {
   bool inline_flag;
   vcCall* nc = NULL;
@@ -733,13 +767,16 @@ vc_Call_Instantiation[vcSystem* sys, vcDataPath* dp]
        lpid2: LPAREN (mid = vc_Identifier {vcWire* w = dp->Find_Wire(mid); 
                                     NOT_FOUND__("wire",w,mid,lpid2)
                                     outwires.push_back(w);})* RPAREN
-       { nc = new vcCall(id, m, inwires, outwires, inline_flag); dp->Add_Call(nc);} 
+       	{ 
+	 nc = new vcCall(id, m, inwires, outwires, inline_flag); dp->Add_Call(nc); 
+	 dpe = (vcDatapathElement*) nc;
+	}
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
 // vc_IOPort_Instantiation[dp]: IOPORT  (IN | OUT) vc_LABEL LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
-vc_IOPort_Instantiation[vcDataPath* dp]
+vc_IOPort_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
 {
  string id, in_id, out_id, pipe_id;
  vcWire* w;
@@ -775,20 +812,23 @@ vc_IOPort_Instantiation[vcDataPath* dp]
           {
              vcInport* np = new vcInport(id,p,w);
              dp->Add_Inport(np);
+	     dpe=(vcDatapathElement*) np;
           }
           else
           {
              vcOutport* np = new vcOutport(id,p,w);
              dp->Add_Outport(np);
+	     dpe=(vcDatapathElement*) np;
           }
+	
       }
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
 // vc_LoadStore_Instantiation: vc_LoadInstantiation | vc_StoreInstantiation
 //-------------------------------------------------------------------------------------------------------------------------
-vc_LoadStore_Instantiation[vcSystem* sys, vcDataPath* dp]:
-   vc_Load_Instantiation[sys,dp] | vc_Store_Instantiation[sys,dp]
+vc_LoadStore_Instantiation[vcSystem* sys, vcDataPath* dp] returns[vcDatapathElement* dpe]:
+   dpe=vc_Load_Instantiation[sys,dp] | dpe=vc_Store_Instantiation[sys,dp]
 ;
 
 
@@ -796,7 +836,7 @@ vc_LoadStore_Instantiation[vcSystem* sys, vcDataPath* dp]:
 //-------------------------------------------------------------------------------------------------------------------------
 // vc_Load_Instantiation: LOAD vc_Label FROM (vc_Identifier DIV_OP)? vc_Identifier LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
-vc_Load_Instantiation[vcSystem* sys, vcDataPath* dp]
+vc_Load_Instantiation[vcSystem* sys, vcDataPath* dp] returns[vcDatapathElement* dpe]
 {
    string id, wid;
    string ms_id;
@@ -805,8 +845,9 @@ vc_Load_Instantiation[vcSystem* sys, vcDataPath* dp]
    vcWire* data;
    vcMemorySpace* ms;
    bool is_load = false;
+
 }
-:  ldid: LOAD id = vc_Label FROM (m_id = vc_Identifier DIV_OP)? ms_id = vc_Identifier 
+: ldid: LOAD id = vc_Label FROM (m_id = vc_Identifier DIV_OP)? ms_id = vc_Identifier 
      {
        ms = sys->Find_Memory_Space(m_id,ms_id); 
        NOT_FOUND__("memory-space", ms, (m_id+"/"+ms_id),ldid)
@@ -820,6 +861,7 @@ vc_Load_Instantiation[vcSystem* sys, vcDataPath* dp]
    {
          vcLoad* nl = new vcLoad(id, ms, addr, data);
          dp->Add_Load(nl);
+	 dpe = (vcDatapathElement*) nl;
    }
 ;
 
@@ -827,7 +869,7 @@ vc_Load_Instantiation[vcSystem* sys, vcDataPath* dp]
 //-------------------------------------------------------------------------------------------------------------------------
 // vc_Store_Instantiation: STORE vc_Label TO (vc_Identifier DIV_OP)? vc_Identifier LPAREN vc_Identifier vc_Identifier RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
-vc_Store_Instantiation[vcSystem* sys, vcDataPath* dp]
+vc_Store_Instantiation[vcSystem* sys, vcDataPath* dp] returns[vcDatapathElement* dpe]
 {
    string id, wid;
    string ms_id;
@@ -837,7 +879,7 @@ vc_Store_Instantiation[vcSystem* sys, vcDataPath* dp]
    vcMemorySpace* ms;
    bool is_load = false;
 }
-:  st_id: STORE id = vc_Label TO (m_id = vc_Identifier DIV_OP)? ms_id = vc_Identifier 
+: st_id: STORE id = vc_Label TO (m_id = vc_Identifier DIV_OP)? ms_id = vc_Identifier 
      {
        ms = sys->Find_Memory_Space(m_id,ms_id); 
        NOT_FOUND__("memory-space", ms, (m_id+"/"+ms_id),st_id)
@@ -851,6 +893,7 @@ vc_Store_Instantiation[vcSystem* sys, vcDataPath* dp]
    {
          vcStore* ns = new vcStore(id, ms, addr, data);
          dp->Add_Store(ns);
+	 dpe=(vcDatapathElement*)  ns;
    }
 ;
 
@@ -865,7 +908,8 @@ vc_Phi_Instantiation[vcDataPath* dp]
   vcWire* outwire;
   vcPhi* phi;
   vector<vcWire*> inwires;
-}: p_id:PHI lbl = vc_Label LPAREN ( id = vc_Identifier { tw = dp->Find_Wire(id); 
+}
+: p_id:PHI lbl = vc_Label LPAREN ( id = vc_Identifier { tw = dp->Find_Wire(id); 
          NOT_FOUND__("wire",tw,id,p_id);
          inwires.push_back(tw);})+ RPAREN
    LPAREN
@@ -1239,6 +1283,7 @@ AT            : "$at";
 CONSTANT      : "$constant";
 INTERMEDIATE  : "$intermediate";
 DEPTH         : "$depth";
+GUARD         : "$guard";
 
 
 // Special symbols

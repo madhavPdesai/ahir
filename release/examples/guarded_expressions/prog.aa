@@ -1,0 +1,30 @@
+$module [test_prog] $in(a: $uint<32> b:$uint<32> sel:$uint<8>) $out (result: $uint<32>)
+$is
+{
+	$storage result_var: $uint<32>
+	result_var := 9    
+	c0 := (sel == 0)
+	$guard (c0)  result_var := (result_var + (a+b)) 
+	$guard (c0)  t0 := result_var
+	$guard (~c0) result_var := (a*b) 
+	$guard (~c0) t1 := result_var
+	result := ($mux c0  t0  t1) 
+}
+
+$module [test_prog_alt] $in(a: $uint<32> b:$uint<32> sel:$uint<8>) $out (result: $uint<32>)
+$is
+{
+	$storage result_var: $uint<32>
+	result_var := 9    
+	$branchblock[tmp] {
+		c0 := (sel == 0)
+		$if c0 $then
+	  		result_var := (result_var + (a+b)) 
+	  		t0 := result_var
+        	$else
+	  		result_var := (a*b) 
+	  		t1 := result_var
+        	$endif
+	} (t0 => t0 t1 => t1 c0 => c0)
+	result := ($mux c0  t0  t1) 
+}

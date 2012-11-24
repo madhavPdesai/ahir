@@ -21,7 +21,6 @@ class vcOperator: public vcDatapathElement
 
 protected:
   bool _flow_through; // if true, operator is combinational..
-
 public:
 
   vcOperator(string id): vcDatapathElement(id) { _flow_through = false; }
@@ -38,6 +37,7 @@ public:
   {
     return(true);
   }
+
 
   friend class vcDataPath;
 };

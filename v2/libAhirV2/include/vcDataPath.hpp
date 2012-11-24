@@ -204,8 +204,10 @@ protected:
   vector<vcTransition*> _reqs;
   vector<vcTransition*> _acks;
 
+  vcWire* _guard_wire;
+  bool    _guard_complement;
  public:
-  vcDatapathElement(string id):vcRoot(id) {}
+  vcDatapathElement(string id):vcRoot(id) {_guard_wire = NULL; _guard_complement = false;}
 
   virtual void Add_Reqs(vector<vcTransition*>& reqs) {assert(0);}
   virtual void Add_Acks(vector<vcTransition*>& acks) {assert(0);}
@@ -251,6 +253,7 @@ protected:
   virtual void Append_Inwires(vector<vcWire*>& inwires) {assert(0);}
   virtual void Append_Outwires(vector<vcWire*>& owires) {assert(0);}
 
+
   // if this operator refers to something inside the
   // datapath, then it is local to the datapath.
   // but if it is a load/store/call/io operator,
@@ -258,6 +261,30 @@ protected:
   virtual bool Is_Local_To_Datapath()
   {
     return(true);
+  }
+
+  virtual void Set_Guard_Wire(vcWire* gw) { _guard_wire = gw;}
+  virtual vcWire* Get_Guard_Wire() { return(_guard_wire);}
+
+  virtual bool Set_Guard_Complement(bool gw) { _guard_complement = gw;}
+  virtual bool Get_Guard_Complement() { return(_guard_complement);}
+
+  virtual void Append_Guard(vector<vcWire*>& guards, vector<bool>& guard_complements)
+  {
+	guards.push_back(this->Get_Guard_Wire());
+	guard_complements.push_back(this->Get_Guard_Complement());
+  }
+
+  virtual void Print_Guard(ostream& ofile) 
+  {
+	if(this->Get_Guard_Wire() != NULL)
+	{
+		ofile << vcLexerKeywords[__GUARD] << " "
+			<< vcLexerKeywords[__LPAREN] 
+			<< (this->Get_Guard_Complement() ? vcLexerKeywords[__NOT_OP] : " ")
+			<< this->Get_Guard_Wire()->Get_Id() 
+			<< vcLexerKeywords[__RPAREN];
+	}
   }
 
   friend class vcDataPath;
@@ -404,10 +431,14 @@ class vcDataPath: public vcRoot
   void Print_VHDL_Concatenate_Req(string req_id, vector<vcTransition*>& reqs,  ostream& ofile);
   void Print_VHDL_Disconcatenate_Ack(string ack_id, vector<vcTransition*>& acks,  ostream& ofile);
 
+  void Print_VHDL_Guard_Concatenation(int num_reqs, string guard_vector, vector<vcWire*>& guard_wires, vector<bool>& guard_complements,ostream& ofile);
+  void Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, string req_unguarded, string ack_unguarded, string req, string ack, ostream& ofile);
+
   string Get_VHDL_IOport_Interface_Port_Name(string pipe_id, string pid);
   string Get_VHDL_IOport_Interface_Port_Section(vcPipe* p,
 						string in_or_out,
 						string pid,
 						int idx);
+
 };
 #endif // vcDataPath
