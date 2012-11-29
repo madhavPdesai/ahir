@@ -880,13 +880,21 @@ void vcDataPath::Print_VHDL_Phi_Instances(ostream& ofile)
 	}
       ofile << ";" << endl;
 
-      ofile << "req <= ";
-      for(int idx = 0; idx < p->Get_Number_Of_Reqs(); idx++)
+      if(p->Get_Number_Of_Reqs() == 1)
+      {
+        ofile << "req(0) <= ";
+	ofile << p->Get_Req(0)->Get_CP_To_DP_Symbol();
+      }
+      else
+      {
+        ofile << "req <= ";
+      	for(int idx = 0; idx < p->Get_Number_Of_Reqs(); idx++)
 	{
 	  if(idx > 0)
 	    ofile << " & ";
 	  ofile << p->Get_Req(idx)->Get_CP_To_DP_Symbol();
 	}
+      }
       ofile << ";" << endl;
       
       ofile << "phi: PhiBase -- {" << endl
@@ -1048,8 +1056,8 @@ void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
 	    << "flow_through => " << (flow_through_flag ? "true" : "false") << " ) " << endl;
       ofile << " port map( din => " << s->_din->Get_VHDL_Signal_Id() << "," 
 	    << " dout => " << s->_dout->Get_VHDL_Signal_Id() << ","
-	    << " req => req " 
-	    << " ack => ack " << ", clk => clk, reset => reset); -- }" << endl;
+	    << " req => req, " 
+	    << " ack => ack, " << " clk => clk, reset => reset); -- }" << endl;
       ofile << "-- }" << endl << "end block;" << endl;
       idx++;
     }
@@ -1312,10 +1320,10 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	  if(num_reqs > 1)
 	    {
 	      // ok, a shared operator
-	      this->Print_VHDL_Concatenate_Req("reqL",reqL,ofile);
-	      this->Print_VHDL_Disconcatenate_Ack("ackL",ackL,ofile);
-	      this->Print_VHDL_Concatenate_Req("reqR",reqR,ofile);
-	      this->Print_VHDL_Disconcatenate_Ack("ackR",ackR,ofile);
+	      this->Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
+	      this->Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
+	      this->Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
+	      this->Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
 	  
       	      this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL", "ackL", ofile);
       	      this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", ofile);
@@ -1949,7 +1957,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
       // in and out acks.
       ofile << "signal req, ack : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
       ofile << "signal req_unguarded, ack_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
-      ofile << "signal guards : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal guard_vector : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
 
       ofile << "-- }\n begin -- {" << endl;
 
@@ -1980,9 +1988,6 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 	  ofile << " --} " << endl << "end if;" << endl;
 	  ofile << "-- } " << endl << " end process;" << endl;
 	}
-
-      this->Print_VHDL_Concatenate_Req("req",req,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ack",ack, ofile);
 
       // guard related stuff.
       this->Print_VHDL_Concatenate_Req("req_unguarded",req,ofile);
@@ -2110,12 +2115,9 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       // in and out acks.
       ofile << "signal req, ack : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
       ofile << "signal req_unguarded, ack_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
-      ofile << "signal guards : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal guard_vector : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
 
       ofile << "-- }\n begin -- {" << endl;
-
-      this->Print_VHDL_Concatenate_Req("req",req,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ack",ack, ofile);
 
       // guard related stuff.
       this->Print_VHDL_Concatenate_Req("req_unguarded",req,ofile);

@@ -24,13 +24,13 @@ uint32_t global_job_counter;
 		I2_2 = (I1_2 + offset) & MASK;\
 		I2_3 = (I1_3 + offset) & MASK;\
 		B0 = B[I2_0]; B1 = B[I2_1]; B2 = B[I2_2]; B3 = B[I2_3];\
-		P0 = fpu32(A0,B0,MUL);\
-		P1 = fpu32(A1,B1,MUL);\
-		P2 = fpu32(A2,B2,MUL);\
-		P3 = fpu32(A3,B3,MUL);\
-		S0 = fpu32(P0,P1,ADD);\
-		S1 = fpu32(P2,P3,ADD);\
-		ret_val = fpu32(ret_val, fpu32(S0,S1,ADD), ADD);\
+		P0 = fpu32(A0,B0,MUL__);\
+		P1 = fpu32(A1,B1,MUL__);\
+		P2 = fpu32(A2,B2,MUL__);\
+		P3 = fpu32(A3,B3,MUL__);\
+		S0 = fpu32(P0,P1,ADD__);\
+		S1 = fpu32(P2,P3,ADD__);\
+		ret_val = fpu32(ret_val, fpu32(S0,S1,ADD__), ADD__);\
 	}}
 
 

@@ -539,6 +539,17 @@ AaStatement* AaStatementSequence::Get_Previous_Statement(AaStatement* stmt)
   return(ret_stmt);
 }
 
+void AaStatementSequence::Get_Target_Places(set<AaPlaceStatement*>& target_places)
+{
+  for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+  {
+    AaStatement* stmt = this->_statement_sequence[i];
+    stmt->Get_Target_Places(target_places);
+    if(this->_statement_sequence[i]->Is("AaPlaceStatement"))
+	break;
+  }
+}
+
 //---------------------------------------------------------------------
 // AaNullStatement: public AaStatement
 //---------------------------------------------------------------------
@@ -2252,6 +2263,121 @@ void AaBranchBlockStatement::Write_VC_Control_Path(string source_link,
     }
 }
 
+void AaBranchBlockStatement::Identify_Inner_Loops(AaStatementSequence* sseq,
+						  vector<AaStatementSequence*>& linear_segment_vector)
+{
+  
+  
+  // take the statement sequence and identify inner loops within the sequence.
+  // The loops are identified using the following pattern:
+  //
+  // 1. The inner loop must start with a merge, which must have exactly two incoming places
+  //    the $entry place and a loopback place.
+  // 2. The last statement in the loop must be either 
+  // 	  - an unconditional branch that places a token in the loopback place.
+  // 	  - an if statement one of whose branches places a token in the loopback
+  // 	    place.
+  // 	  - a switch statement, at least one of whose branches places a token in the
+  // 	    loopback place.. (NOTE this is currently not implemented).
+  // 3. The statements between the first and the last statement must be either 
+  //    assignments or calls (can be guarded). (NOTE: this can and should be relaxed..) 
+  // 
+  int start_idx = 0;
+  while(start_idx < sseq->Get_Statement_Count())
+    {
+      AaStatement* stmt = NULL;
+      int end_idx = start_idx;
+      
+      vector<AaStatement*> linear_segment;
+      while(end_idx < sseq->Get_Statement_Count())
+	{
+	  stmt  = sseq->Get_Statement(end_idx);
+
+	  if(!stmt->Is("AaMergeStatement"))
+	    {
+	      end_idx++;
+	      continue;
+	    }
+
+	  // OK, we have found a merge statement. Now, look forward
+	  // through the sequence to see if you eventually get to a
+	  // branch which loops back to the merge place.
+	  linear_segment.push_back(stmt);
+	  AaMergeStatement* leading_merge_stmt = (AaMergeStatement*) stmt;
+	  AaStatement* trailing_stmt = NULL;
+	  AaStatement* next_stmt;
+	  int trailing_idx = end_idx + 1;
+	  while(trailing_idx  < sseq->Get_Statement_Count())
+	  {
+		next_stmt = sseq->Get_Statement(trailing_idx);
+		if(next_stmt->Is("AaPlaceStatement"))
+		{
+			if(leading_merge_stmt->Has_Merge_Label(((AaPlaceStatement*)next_stmt)->Get_Label()))
+			{
+				trailing_stmt = next_stmt;
+				linear_segment.push_back(next_stmt);
+			}
+			break;
+				
+		}
+		else if(next_stmt->Is("AaIfStatement"))
+		{
+			AaIfStatement* if_stmt = (AaIfStatement*) stmt;
+			int tidx;
+			for(tidx = 0; tidx < 2; tidx++)
+			{
+				AaStatement* xstmt = ((tidx == 0) ? if_stmt->Get_If_Sequence_Statement(0): if_stmt->Get_Else_Sequence_Statement(0));
+				if(xstmt != NULL)
+				{
+					if(xstmt->Is("AaPlaceStatement"))
+					{
+						if(leading_merge_stmt->Has_Merge_Label(((AaPlaceStatement*)next_stmt)->Get_Label()))
+						{
+							trailing_stmt = next_stmt;
+							linear_segment.push_back(next_stmt);
+							break;
+						}
+				
+					}
+				}
+			}
+
+			break;
+		}
+		// for the moment, give up if you hit a switch.
+		else if(next_stmt->Is("AaSwitchStatement"))
+		{
+			break;	
+		}
+		// in principle, we can continue through blocks, pipe-reads
+		// call statements with side-effects etc., but for the moment
+		// we abort the loop search if we hit any of these.
+	  	else if(next_stmt->Is_Block_Statement()  || 
+	     		next_stmt->Is_Control_Flow_Statement() || 
+	     		(next_stmt->Is("AaCallStatement") && 
+		 		!((AaModule*)(((AaCallStatement*)next_stmt)->Get_Called_Module()))->Has_No_Side_Effects())
+	     		|| next_stmt->Can_Block())
+		{
+			break;
+		}
+
+		trailing_idx++;
+	  }
+
+	  if(trailing_stmt != NULL)
+	  {
+		  AaStatementSequence* new_seq = new AaStatementSequence(this,linear_segment);
+		  linear_segment_vector.push_back(new_seq);
+		  linear_segment.clear();
+	  }
+
+	  end_idx = trailing_idx;
+	}
+      
+      	start_idx = end_idx;
+    }
+}
+
 //---------------------------------------------------------------------
 //  AaJoinForkStatement: public AaBlockStatement
 //---------------------------------------------------------------------
@@ -2815,7 +2941,10 @@ void AaPhiStatement::PrintC(ofstream& ofile,string tab_string)
       string check_string;
 
       if(mlabel == "$entry")
+      {
+	assert(this->_parent_merge != NULL);
 	check_string = this->_parent_merge->Get_Merge_From_Entry_Ref();
+      }
       else
 	check_string = this->Get_Struct_Dereference() + mlabel;
 
@@ -3504,6 +3633,15 @@ void AaSwitchStatement::Propagate_Constants()
     }
 }
 
+void AaSwitchStatement::Get_Target_Places(set<AaPlaceStatement*>& target_places)
+{
+	int idx;
+	for(idx = 0; idx < _choice_pairs.size(); idx++)
+	{
+		_choice_pairs[idx].second->Get_Target_Places(target_places);
+	}
+}
+
 //---------------------------------------------------------------------
 // AaIfStatement: public AaStatement
 //---------------------------------------------------------------------
@@ -3897,6 +4035,13 @@ void AaIfStatement::Propagate_Constants()
     this->_else_sequence->Propagate_Constants();
 }
 
+void AaIfStatement::Get_Target_Places(set<AaPlaceStatement*>& target_places)
+{
+	if(this->_if_sequence)
+		this->_if_sequence->Get_Target_Places(target_places);
+	if(this->_else_sequence)
+		this->_if_sequence->Get_Target_Places(target_places);
+}
 
 //---------------------------------------------------------------------
 // AaPlaceStatement: public AaStatement
@@ -3935,4 +4080,185 @@ void AaPlaceStatement::Write_C_Function_Body(ofstream& ofile)
   ofile << "// -------------------------------------------------------------------------------------------" << endl;
 }
 
+
+//---------------------------------------------------------------------
+// AaDoWhileStatement: public AaStatement
+//---------------------------------------------------------------------
+AaDoWhileStatement::AaDoWhileStatement(AaBranchBlockStatement* scope):AaStatement(scope) 
+{
+  this->_test_expression = NULL;
+  this->_phi_sequence = NULL;
+  this->_loop_body_sequence = NULL;
+}
+AaDoWhileStatement::~AaDoWhileStatement() {}
+
+void AaDoWhileStatement::Coalesce_Storage()
+{
+  if(this->_phi_sequence)
+    this->_phi_sequence->Coalesce_Storage();
+
+  if(this->_loop_body_sequence)
+    this->_loop_body_sequence->Coalesce_Storage();
+}
+
+
+void AaDoWhileStatement::Print(ostream& ofile)
+{
+  assert(this->_test_expression);
+  assert(this->_loop_body_sequence);
+
+  ofile << this->Tab();
+  ofile << "$do " << endl;
+  if(this->_phi_sequence)
+  	this->_phi_sequence->Print(ofile);
+  this->_loop_body_sequence->Print(ofile);
+  ofile << " $while " ;
+  this->_test_expression->Print(ofile);
+  ofile << endl;
+}
+
+
+void AaDoWhileStatement::Write_C_Struct(ofstream& ofile)
+{
+	AaRoot::Error("AaDoWhileStatement:Write_C_Struct not implemented.\n",this);
+	assert(0);
+}
+
+void AaDoWhileStatement::Write_C_Function_Body(ofstream& ofile)
+{
+	AaRoot::Error("AaDoWhileStatement:Write_C_Function_Body not implemented.\n",this);
+	assert(0);
+}
+
+
+
+void AaDoWhileStatement::Write_VC_Control_Path(ostream& ofile)
+{
+  this->Write_VC_Control_Path(false,ofile);
+}
+
+void AaDoWhileStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
+{
+  this->Write_VC_Control_Path(false,ofile);
+}
+
+void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofile)
+{
+
+  ofile << "// do-while-statement  ";
+  ofile << endl;
+  ofile << "// " << this->Get_Source_Info() << endl;
+
+   // TODO.
+
+}
+
+void AaDoWhileStatement::Write_VC_Constant_Declarations(ostream& ofile)
+{
+  if(this->_phi_sequence)
+    this->_phi_sequence->Write_VC_Constant_Declarations(ofile);
+  if(this->_loop_body_sequence)
+    this->_loop_body_sequence->Write_VC_Constant_Declarations(ofile);
+}
+
+void AaDoWhileStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
+{
+
+  ofile << "// do-while statement  ";
+  ofile << endl;
+  ofile << "// " << this->Get_Source_Info() << endl;
+
+
+  // one wire for the test expression result.
+  this->_test_expression->Write_VC_Constant_Wire_Declarations(ofile);
+
+ if(this->_phi_sequence)
+    this->_phi_sequence->Write_VC_Constant_Wire_Declarations(ofile);
+
+  if(this->_loop_body_sequence)
+    this->_loop_body_sequence->Write_VC_Constant_Wire_Declarations(ofile);
+}
+void AaDoWhileStatement::Write_VC_Wire_Declarations(ostream& ofile)
+{
+  ofile << "// do-while statement  ";
+  ofile << endl;
+  ofile << "// " << this->Get_Source_Info() << endl;
+
+  // one wire for the test expression result.
+  this->_test_expression->Write_VC_Wire_Declarations(false,ofile);
+
+  // wires from the if-sequence
+  if(this->_phi_sequence)
+    this->_phi_sequence->Write_VC_Wire_Declarations(ofile);
+
+  // wires from the else-sequence
+  if(this->_loop_body_sequence)
+    this->_loop_body_sequence->Write_VC_Wire_Declarations(ofile);
+
+}
+void AaDoWhileStatement::Write_VC_Datapath_Instances(ostream& ofile)
+{
+  
+  ofile << "// datapath-instances for do-while  ";
+  ofile << endl;
+  ofile << "// " << this->Get_Source_Info() << endl;
+
+  // test expression needs to be computed.
+  this->_test_expression->Write_VC_Datapath_Instances(NULL, ofile);
+
+  // followed by a branch.
+  vector<pair<string,AaType*> > branch_inputs;
+  branch_inputs.push_back(pair<string,AaType*>(this->_test_expression->Get_VC_Driver_Name(),
+					       this->_test_expression->Get_Type()));
+			  
+  Write_VC_Branch_Instance(this->Get_VC_Name()+"_branch",
+			   branch_inputs,
+			   ofile);
+
+  if(this->_phi_sequence)
+    this->_phi_sequence->Write_VC_Datapath_Instances(ofile);
+
+  if(this->_loop_body_sequence)
+    this->_loop_body_sequence->Write_VC_Datapath_Instances(ofile);
+}
+
+void AaDoWhileStatement::Write_VC_Links(string hier_id,ostream& ofile)
+{
+  this->Write_VC_Links(false,hier_id,ofile);
+}
+
+void AaDoWhileStatement::Write_VC_Links_Optimized(string hier_id,ostream& ofile)
+{
+  this->Write_VC_Links(true,hier_id,ofile);
+}
+
+void AaDoWhileStatement::Write_VC_Links(bool optimize_flag, string hier_id,ostream& ofile)
+{
+
+  ofile << "// CP-DP links for do-while  ";
+  ofile << endl;
+  ofile << "// " << this->Get_Source_Info() << endl;
+
+
+   // TODO
+}
+
+void AaDoWhileStatement::Propagate_Constants()
+{
+  if(this->_test_expression->Get_Type() == NULL)
+    {
+      AaRoot::Warning("Could not determine type of test expression in do-while statement.. will assume that it is $uint<1> ", this);
+      this->_test_expression->Set_Type(AaProgram::Make_Uinteger_Type(1));
+    }
+  this->_test_expression->Evaluate();
+  if(this->_phi_sequence)
+    this->_phi_sequence->Propagate_Constants();
+  if(this->_loop_body_sequence)
+    this->_loop_body_sequence->Propagate_Constants();
+}
+
+void AaDoWhileStatement::Get_Target_Places(set<AaPlaceStatement*>& target_places)
+{
+	// do nothing.
+}
 

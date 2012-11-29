@@ -299,7 +299,7 @@ aA_Block_Statement[AaScope* scope] returns [AaBlockStatement* stmt]
     : (stmt = aA_Series_Block_Statement[scope] |
         stmt = aA_Parallel_Block_Statement[scope] |
         stmt = aA_Fork_Block_Statement[scope] |
-        stmt = aA_Branch_Block_Statement[scope])
+        stmt = aA_Branch_Block_Statement[scope]) 
         (aA_Block_Statement_Exports[stmt])?
     ;
 
@@ -336,7 +336,7 @@ aA_Fork_Block_Statement_Sequence[AaForkBlockStatement* scope] returns [AaStateme
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Branch_Block_Statement_Sequence : (aA_Merge_Statement | aA_Switch_Statement | aA_If_Statement | aA_Atomic_Statement )+
+// aA_Branch_Block_Statement_Sequence : (aA_Merge_Statement | aA_Switch_Statement | aA_If_Statement | aA_Atomic_Statement | aA_Do_While_Statement)+
 //-----------------------------------------------------------------------------------------------
 aA_Branch_Block_Statement_Sequence[AaBranchBlockStatement* scope] returns [AaStatementSequence* nsb]
 {
@@ -363,6 +363,10 @@ aA_Branch_Block_Statement_Sequence[AaBranchBlockStatement* scope] returns [AaSta
             |
                 (
                     new_statement = aA_Place_Statement[scope]
+                )
+            |
+                (
+                    new_statement = aA_Do_While_Statement[scope]
                 )
             )
                      
@@ -558,9 +562,9 @@ aA_Join_Fork_Statement[AaForkBlockStatement* scope] returns [AaJoinForkStatement
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Phi_Statement: PHI SIMPLE_IDENTIFIER  :=  ( aA_Object_Reference  ON  (SIMPLE_IDENTIFIER | ENTRY))+
+// aA_Phi_Statement: PHI SIMPLE_IDENTIFIER  :=  ( aA_Object_Reference  ON  (SIMPLE_IDENTIFIER | ENTRY | BACKEDGE))+
 //-----------------------------------------------------------------------------------------------
-aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_set, AaMergeStatement* pm] returns [AaPhiStatement* new_ps]
+aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_set, AaMergeStatement* pm, bool do_while_flag] returns [AaPhiStatement* new_ps]
 {
     new_ps = new AaPhiStatement(scope,pm);
     string label;
@@ -581,7 +585,8 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
             ON
             ( 
                 (sid: SIMPLE_IDENTIFIER {label = sid->getText(); }) |
-                (eid: ENTRY {label = eid->getText(); })
+                (eid: ENTRY {label = eid->getText(); }) |
+                (bid: BACKEDGE {label = bid->getText(); }) 
             )
             {
                 bool errflag = false;
@@ -666,7 +671,7 @@ aA_Merge_Statement[AaBranchBlockStatement* scope] returns [AaMergeStatement* new
             } ) | 
             (eid:ENTRY {lbl = eid->getText(); lbl_set.insert(lbl); new_mgs->Add_Merge_Label(lbl);}))+
         (
-            ( ns = aA_Phi_Statement[scope,lbl_set,new_mgs] {  slist.push_back(ns); } )+
+            ( ns = aA_Phi_Statement[scope,lbl_set,new_mgs,false] {  slist.push_back(ns); } )+
         {
             AaStatementSequence* sseq = new AaStatementSequence(scope,slist);
             sseq->Increment_Tab_Depth();
@@ -758,8 +763,41 @@ aA_If_Statement[AaBranchBlockStatement* scope] returns [AaIfStatement* new_is]
      ENDIF
     ;   
 
-
-
+//----------------------------------------------------------------------------------------------------------
+//  aA_Do_While_Statement:  DO (aA_Phi_Statement)* aA_Atomic_Statement_Sequence WHILE aA_Expression
+//----------------------------------------------------------------------------------------------------------
+aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement* new_dws]
+{
+    AaExpression* test_expression = NULL;
+    AaStatementSequence* sseq = NULL;
+    vector<AaStatement*> phiseq;
+    AaPhiStatement* phis = NULL;
+    new_dws = new AaDoWhileStatement(scope);
+    set<string,StringCompare> lbl_set;
+    lbl_set.insert("$entry");
+    lbl_set.insert("$backedge");
+}: 
+     il:DO MERGE
+	( phis = aA_Phi_Statement[scope,lbl_set,NULL,true] 
+		{ 
+			phiseq.push_back(phis);
+		} )* ENDMERGE
+        sseq = aA_Atomic_Statement_Sequence[scope] 
+        {
+            new_dws->Set_Loop_Body_Sequence(sseq);
+            sseq->Increment_Tab_Depth();
+        }
+	WHILE test_expression = aA_Expression[scope] 
+	{
+		new_dws->Set_Test_Expression(test_expression);
+		if(phiseq.size() > 0)
+		{
+			AaStatementSequence* pseq = new AaStatementSequence(scope,phiseq);
+			new_dws->Set_Phi_Sequence(pseq);
+		}
+	}
+     ENDIF
+    ;   
 
 
 //----------------------------------------------------------------------------------------------------------
@@ -1425,6 +1463,7 @@ ENDMERGE      : "$endmerge";
 ENDJOIN       : "$endjoin";
 WHEN          : "$when";
 ENTRY         : "$entry";
+BACKEDGE      : "$backedge";
 EXIT          : "$exit";
 FIN           : "$fin";
 IN            : "$in";
@@ -1436,6 +1475,8 @@ PHI           : "$phi";
 DEPTH         : "$depth";
 ATTRIBUTE     : "$attribute";
 GUARD         : "$guard";
+DO            : "$do";
+WHILE         : "$while";
 
 // Special symbols
 COLON		 : ':' ; // label separator

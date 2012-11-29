@@ -10,6 +10,7 @@
 #include <AaExpression.h>
 #include <AaObject.h>
 
+class AaPlaceStatement;
 
 // *******************************************  STATEMENT etc. ************************************
 // base class for statements
@@ -164,6 +165,8 @@ class AaStatement: public AaScope
   virtual string Get_VC_Exit_Transition_Name() { return(this->Get_VC_Name() + "__exit__");}
 
   void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
+
+  virtual void Get_Target_Places(set<AaPlaceStatement*>& target_places) {} // do nothing.
 };
 
 // statement sequence (is used in block statements which lead to programs)
@@ -213,6 +216,8 @@ class AaStatementSequence: public AaScope
     for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
       this->_statement_sequence[i]->Write_C_Function_Body(ofile);
   }
+
+  virtual void Get_Target_Places(set<AaPlaceStatement*>& target_places);
 
   virtual void  Write_Parallel_Entry_Transfer_Code(ofstream& ofile);
   virtual void  Write_Series_Entry_Transfer_Code(ofstream& ofile);
@@ -613,6 +618,8 @@ class AaBlockStatement: public AaStatement
 					ostream& ofile);
 
   virtual void Propagate_Constants();
+
+  void Add_Buffers_For_Pipelining(AaStatementSequence* sseq);
 };
 
 class AaSeriesBlockStatement: public AaBlockStatement
@@ -735,6 +742,9 @@ class AaBranchBlockStatement: public AaSeriesBlockStatement
 
 
   virtual string Get_VC_Name() {return("branch_block_stmt_" + Int64ToStr(this->Get_Index()));}
+
+  void Identify_Inner_Loops(AaStatementSequence* sseq, 
+				  vector<AaStatementSequence*>& linear_segment_vector);
 };
 
 
@@ -838,6 +848,11 @@ class AaPlaceStatement: public AaStatement
 
   virtual string Get_VC_Entry_Place_Name() { return(this->Get_VC_Name()); }
   virtual string Get_VC_Exit_Place_Name() { return(this->Get_VC_Name()); }
+
+  virtual void Get_Target_Places(set<AaPlaceStatement*>& target_places)
+  {
+	target_places.insert(this);
+  }
 };
 
 
@@ -1027,6 +1042,8 @@ class AaSwitchStatement: public AaStatement
 
   virtual string Get_VC_Name() {return("switch_stmt_" + Int64ToStr(this->Get_Index()));}
   virtual string Get_VC_Exit_Place_Name() {return(this->Get_VC_Name() + "__exit__");}
+
+  virtual void Get_Target_Places(set<AaPlaceStatement*>& target_places);
 };
 
 
@@ -1040,6 +1057,20 @@ class AaIfStatement: public AaStatement
   void Set_Test_Expression(AaExpression* te) { this->_test_expression = te; }
   void Set_If_Sequence(AaStatementSequence* is) { this->_if_sequence = is; }
   void Set_Else_Sequence(AaStatementSequence* es) { this->_else_sequence = es; }
+  AaStatement* Get_If_Sequence_Statement(int idx)
+  {
+	if(_if_sequence)
+		return(_if_sequence->Get_Statement(idx));
+	else
+		return(NULL);
+  } 
+  AaStatement* Get_Else_Sequence_Statement(int idx)
+  {
+	if(_else_sequence)
+		return(_else_sequence->Get_Statement(idx));
+	else
+		return(NULL);
+  } 
 
   AaIfStatement(AaBranchBlockStatement* scope);
   ~AaIfStatement();
@@ -1049,7 +1080,8 @@ class AaIfStatement: public AaStatement
   {
     if(this->_test_expression)
       this->_test_expression->Map_Source_References(this->_source_objects);
-    this->_if_sequence->Map_Source_References();
+    if(this->_if_sequence)
+    	this->_if_sequence->Map_Source_References();
     if(this->_else_sequence)
       this->_else_sequence->Map_Source_References();
   }
@@ -1090,6 +1122,103 @@ class AaIfStatement: public AaStatement
 
   virtual string Get_VC_Name() {return("if_stmt_" + Int64ToStr(this->Get_Index()));}
   virtual string Get_VC_Exit_Place_Name() {return(this->Get_VC_Name() + "__exit__");}
+
+  virtual void Get_Target_Places(set<AaPlaceStatement*>& target_places);
+};
+
+
+class AaDoWhileStatement: public AaStatement
+{
+  AaExpression* _test_expression;
+  AaStatementSequence* _phi_sequence;
+  AaStatementSequence* _loop_body_sequence;
+ public:
+
+  void Set_Test_Expression(AaExpression* te) { this->_test_expression = te; }
+  void Set_Phi_Sequence(AaStatementSequence* ps) { this->_phi_sequence = ps; }
+  void Set_Loop_Body_Sequence(AaStatementSequence* lbs) { this->_loop_body_sequence = lbs; }
+
+  int Get_Number_Of_Phi_Statements()
+  {
+	if(_phi_sequence)
+		return(_phi_sequence->Get_Statement_Count());
+	else
+		return(0);
+  }
+  int Get_Number_Of_Loop_Body_Statements()
+  {
+	if(_loop_body_sequence)
+		return(_loop_body_sequence->Get_Statement_Count());
+	else
+		return(0);
+  }
+  AaStatement* Get_Phi_Statement(int idx)
+  {
+	if(_phi_sequence)
+		return(_phi_sequence->Get_Statement(idx));
+	else
+		return(NULL);
+  } 
+  AaStatement* Get_Loop_Body_Statement(int idx)
+  {
+	if(_loop_body_sequence)
+		return(_loop_body_sequence->Get_Statement(idx));
+	else
+		return(NULL);
+  } 
+
+  AaDoWhileStatement(AaBranchBlockStatement* scope);
+  ~AaDoWhileStatement();
+  virtual void Print(ostream& ofile);
+  virtual string Kind() {return("AaDoWhileStatement");}
+  virtual void Map_Source_References()
+  {
+    if(this->_test_expression)
+      this->_test_expression->Map_Source_References(this->_source_objects);
+    if(this->_phi_sequence)
+    	this->_phi_sequence->Map_Source_References();
+    if(this->_loop_body_sequence)
+      this->_loop_body_sequence->Map_Source_References();
+  }
+
+  virtual void Coalesce_Storage();
+
+
+  virtual string Get_C_Name()
+  {
+    return("_do_while_line_" +   IntToStr(this->Get_Line_Number()));
+  }
+
+  virtual bool Is_Control_Flow_Statement() {return(true);}
+
+  virtual void Write_VC_Constant_Declarations(ostream& ofile);
+  virtual void Write_C_Struct(ofstream& ofile);
+  virtual void Write_C_Function_Body(ofstream& ofile);
+
+  virtual string Get_Struct_Dereference()
+  {
+    return(this->Get_Scope()->Get_Struct_Dereference());
+  }
+
+  virtual void Write_VC_Control_Path(ostream& ofile);
+  virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
+  void Write_VC_Control_Path(bool optimize_flag, ostream& ofile);
+
+  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
+  virtual void Write_VC_Wire_Declarations(ostream& ofile);
+  virtual void Write_VC_Datapath_Instances(ostream& ofile);
+
+  virtual void Write_VC_Links(string hier_id,ostream& ofile);
+  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
+  void Write_VC_Links(bool opt_flag, string hier_id,ostream& ofile);
+
+
+  virtual void Propagate_Constants(); 
+
+  virtual string Get_VC_Name() {return("do_while_stmt_" + Int64ToStr(this->Get_Index()));}
+  virtual string Get_VC_Exit_Place_Name() {return(this->Get_VC_Name() + "__exit__");}
+
+  virtual void Get_Target_Places(set<AaPlaceStatement*>& target_places); // do nothing.
 };
 
 
