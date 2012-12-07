@@ -23,9 +23,11 @@ enum vcLexerKeytags
     __PARALLELBLOCK 	,
     __FORKBLOCK     	,
     __BRANCHBLOCK   	,
+    __LOOPBLOCK,
     __OF            	,
     __FORK          	,
     __JOIN          	,
+    __MARKEDJOIN          	,
     __BRANCH          	,
     __MERGE         	,
     __ENTRY         	,
@@ -81,6 +83,7 @@ enum vcLexerKeytags
     __INTERMEDIATE,
     __DEPTH,
     __GUARD,
+    __BIND,
     __PLUS_OP          , 
     __MINUS_OP         , 
     __MUL_OP           , 
@@ -142,9 +145,11 @@ static string vcLexerKeywords[] =
       "||"		, // parallel
       "::"		, // fork-join
       "<>"		, // branch-merge
+      "<o>"		, // simple-loop
       "$of"		,
       "&->"		,
       "<-&"		,
+      "o<-&"		,
       "|->"		,
       "<-|"		,
       "$entry"		,
@@ -200,6 +205,7 @@ static string vcLexerKeywords[] =
       "$intermediate",
       "$depth",
       "$guard",
+      "$bind",
       "+",
       "-",
       "*",

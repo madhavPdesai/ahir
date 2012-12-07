@@ -1,0 +1,15 @@
+$module [test_prog] $in(a: $uint<32>) $out (result: $uint<32>)
+$is
+{
+	$storage result_var: $uint<32>
+	$branchblock[loop] {
+		$do
+			$merge $entry $loopback
+				$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
+			$endmerge
+	
+			result := (result + a)
+			NI := (I+1)
+		$while (NI < 10) 
+	}
+}

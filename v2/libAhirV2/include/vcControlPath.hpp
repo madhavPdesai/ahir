@@ -342,6 +342,9 @@ public:
 
 class vcCPBranchBlock: public vcCPSeriesBlock
 {
+
+protected:
+
   map<vcPlace*, vector<vcCPElement*>, vcRoot_Compare >   _branch_map;
   map<vcPlace*, vector<vcCPElement*>, vcRoot_Compare > _merge_map;
 
@@ -358,8 +361,30 @@ public:
   virtual void Update_Predecessor_Successor_Links();
 };
 
+class vcCPSimpleLoopBlock: public vcCPBranchBlock
+{
+
+  map<vcPlace*, vcTransition*> _bindings;
+  vcCPElement* _loop_exit;
+  vcCPElement* _loop_taken;
+  vcCPElement* _loop_body;
+  vcCPElement* _loop_back;
+public:
+  vcCPSimpleLoopBlock(vcCPBlock* parent, string id);
+  virtual string Kind() {return("vcCPSimpleLoopBlock");}
+
+  virtual void Print(ostream& ofile);
+  virtual bool Check_Structure(); // check that the block is well-formed.
+  virtual void Update_Predecessor_Successor_Links();
+  void Bind(string place_name, string region_name, string transition_name);
+  void Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back);
+};
+
+
 class vcCPForkBlock: public vcCPParallelBlock
 {
+
+protected:
   map<vcTransition*, set<vcCPElement*>, vcRoot_Compare > _fork_map;
   map<vcTransition*, set<vcCPElement*>, vcRoot_Compare > _join_map;
 
@@ -386,11 +411,30 @@ public:
   void Add_Fork_Point(vcTransition* fp, vcCPElement* fre);
   void Remove_Fork_Point(vcTransition* fp, vcCPElement* fre);
 
-  void Eliminate_Redundant_Dependencies();
+  virtual void Eliminate_Redundant_Dependencies();
   virtual void DFS_Forward_Edge_Action(bool reverse_flag,
 					deque<vcCPElement*>& dfs_queue, 
 					set<vcCPElement*>& on_queue_set,
 					vcCPElement* u, vcCPElement* v);
+};
+
+class vcCPPipelinedForkBlock: public vcCPForkBlock
+{
+  map<vcTransition*, set<vcCPElement*>, vcRoot_Compare > _marked_join_map;
+  set<vcTransition*> _exports;
+
+public:
+
+  virtual string Kind() {return("vcCPPipelinedForkBlock");}
+  vcCPPipelinedForkBlock(vcCPBlock* parent, string id);
+
+
+  virtual void Print(ostream& ofile);
+  void Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec);
+  void Add_Marked_Join_Point(vcTransition* jp, vcCPElement* jre);
+
+  void Eliminate_Redundant_Dependencies();
+  void Add_Export(string internal_id);
 
 };
 

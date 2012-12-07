@@ -404,7 +404,8 @@ void Write_VC_Slice_Operator(string inst_name,
 }
 
 
-void Write_VC_Load_Store_Dependency(AaExpression* src,
+void Write_VC_Load_Store_Dependency(bool pipeline_flag,
+				    AaExpression* src,
 				    AaExpression* tgt,
 				    ostream& ofile)
 {
@@ -435,10 +436,13 @@ void Write_VC_Load_Store_Dependency(AaExpression* src,
 }
 
 
-void Write_VC_Pipe_Dependency(AaExpression* src,
+void Write_VC_Pipe_Dependency(bool pipeline_flag, 
+			      AaExpression* src,
 			      AaExpression* tgt,
 			      ostream& ofile)
 {
   string tgt_start = (tgt->Get_VC_Start_Transition_Name());
   ofile << tgt_start << " <-& (" <<  src->Get_VC_Complete_Region_Name() << ")" << endl;
 }
+
+void Write_VC_RAW_Release_Deps(AaRoot* succ, set<AaRoot*>& preds) {assert(0);}

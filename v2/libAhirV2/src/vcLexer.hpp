@@ -50,9 +50,11 @@ public:
 	public: void mPARALLELBLOCK(bool _createToken);
 	public: void mFORKBLOCK(bool _createToken);
 	public: void mBRANCHBLOCK(bool _createToken);
+	public: void mLOOPBLOCK(bool _createToken);
 	public: void mOF(bool _createToken);
 	public: void mFORK(bool _createToken);
 	public: void mJOIN(bool _createToken);
+	public: void mMARKEDJOIN(bool _createToken);
 	public: void mBRANCH(bool _createToken);
 	public: void mMERGE(bool _createToken);
 	public: void mENTRY(bool _createToken);
@@ -89,6 +91,8 @@ public:
 	public: void mINTERMEDIATE(bool _createToken);
 	public: void mDEPTH(bool _createToken);
 	public: void mGUARD(bool _createToken);
+	public: void mBIND(bool _createToken);
+	public: void mTERMINATE(bool _createToken);
 	public: void mCOLON(bool _createToken);
 	public: void mCOMMA(bool _createToken);
 	public: void mIMPLIES(bool _createToken);
@@ -171,6 +175,8 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_4;
 	static const unsigned long _tokenSet_5_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_5;
+	static const unsigned long _tokenSet_6_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_6;
 };
 
 #endif /*INC_vcLexer_hpp_*/

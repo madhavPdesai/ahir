@@ -1,0 +1,26 @@
+$module [test_prog]
+$in ( a : $uint<32>  )
+$out ( result : $uint<32>  )
+$is
+{
+  $storage  result_var : $uint<32> // memory space index = 0  base address = 0  word size = 1
+  // can point into 
+  $branchblock [loop]
+  {
+    $do 
+    $phi I := 		  ($bitcast ($uint<32>) 0  ) $on $entry		  NI $on $loopback // type of target is $uint<32>
+    result := (result + a)
+    // target-type =   $uint<32>
+    // target-memory-space = foreign( $void )
+    // source-type = $uint<32>
+    // source-memory-space = foreign( $void )
+    NI := (I + 1 )
+    // target-type =   $uint<32>
+    // target-memory-space =  none
+    // source-type = $uint<32>
+    // source-memory-space =  none
+    $while (NI < 10 )
+  }
+}
+// Memory space 0: %test_prog:result_var 
+// Memory space 1: 

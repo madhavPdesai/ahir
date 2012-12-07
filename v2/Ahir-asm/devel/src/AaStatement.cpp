@@ -508,6 +508,11 @@ void AaStatementSequence::Write_VC_Links(string hier_id, ostream& ofile)
   for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
     this->_statement_sequence[i]->Write_VC_Links(hier_id, ofile);
 }
+  
+void AaStatementSequence::Write_VC_Control_Path_As_Fork_Block(bool pipe_flag, string region_id, ostream& ofile)
+{
+
+}
 
 AaStatement* AaStatementSequence::Get_Next_Statement(AaStatement* stmt)
 {
@@ -2849,6 +2854,7 @@ AaPhiStatement::AaPhiStatement(AaBranchBlockStatement* scope, AaMergeStatement* 
 {
   this->_target = NULL;
   this->_parent_merge = pm;
+  this->_in_do_while = false;
 }
 AaPhiStatement::~AaPhiStatement() 
 {
@@ -2916,7 +2922,11 @@ void AaPhiStatement::Map_Source_References()
       AaProgram::Add_Type_Dependency(this->_target, this->_source_pairs[i].second);
 
       this->_source_pairs[i].second->Map_Source_References(this->_source_objects);
-      if(this->_source_pairs[i].first != "$entry")
+      bool special_place = (this->_source_pairs[i].first == "$entry");
+      if(this->Get_In_Do_While())
+	special_place = special_place || (this->_source_pairs[i].first == "$loopback");
+
+      if(!special_place)
 	{
 	  AaRoot* child = this->Get_Scope()->Find_Child(this->_source_pairs[i].first);
 	  if(child == NULL)
@@ -4139,7 +4149,7 @@ void AaDoWhileStatement::Write_VC_Control_Path(ostream& ofile)
 
 void AaDoWhileStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 {
-  this->Write_VC_Control_Path(false,ofile);
+  this->Write_VC_Control_Path(true,ofile);
 }
 
 void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofile)
@@ -4150,7 +4160,27 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
   ofile << "// " << this->Get_Source_Info() << endl;
 
    // TODO.
+  string vc_block_id = "loop_" + Int64ToStr(this->Get_Index());
+  string vc_loop_body_id = _loop_body_sequence->Get_VC_Name();
+  ofile << "$loopblock [" << this->Get_VC_Name() << "] {" << endl;
+  ofile << "$P [loop_back]" << endl;
+  ofile << "$P [condition_done]" << endl;
+  ofile << "$seriesblock [loop_exit] { $T ack } " << endl;
+  ofile << "$seriesblock [loop_taken] { $T ack } " << endl;
 
+  AaScope* pscope = this->Get_Scope();
+  assert(pscope->Is("AaBranchBlockStatement"));
+  AaBlockStatement* pstmt = (AaBlockStatement*) pscope;
+
+  
+  
+  pstmt->Write_VC_Control_Path_Optimized(true, this->_test_expression,_loop_body_sequence,ofile); 
+
+  ofile << "$bind condition_done " << vc_loop_body_id << " : " << " loop_condition_calculated" << endl;
+  ofile << "condition_done |-> (loop_exit loop_taken)" << endl;
+  ofile << vc_loop_body_id << " <-| ($entry loopback)" << endl;
+  ofile << "$terminate (loop_exit loop_taken " << vc_loop_body_id << ") (loop_back)" << endl;
+  ofile << "}" << endl;
 }
 
 void AaDoWhileStatement::Write_VC_Constant_Declarations(ostream& ofile)

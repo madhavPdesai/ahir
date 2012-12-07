@@ -6,6 +6,7 @@
 #define __T(x) ofile << "$T[" << x << "] " << endl; 
 #define __Place(x) ofile << "$P[" << x << "] " << endl; 
 #define __J(x,y) ofile << x << " <-& (" << y << ")" << endl;
+#define __MJ(x,y) ofile << x << " o<-& (" << y << ")" << endl;
 #define __F(x,y) ofile << x << " &-> (" << y << ")" << endl;
 
 void Write_VC_Equivalence_Operator(string inst_name,
@@ -119,11 +120,16 @@ void Write_VC_Slice_Operator(string inst_name,
 
 bool Is_Trivial_VC_Type_Conversion(AaType* from, AaType* to);
 
-void Write_VC_Load_Store_Dependency(AaExpression* src,
+void Write_VC_Load_Store_Dependency(bool pipeline_flag,
+				    AaExpression* src,
 				    AaExpression* tgt,
 				    ostream& ofile);
 
-void Write_VC_Pipe_Dependency(AaExpression* src,
+void Write_VC_Pipe_Dependency(bool pipeline_flag,
+			      AaExpression* src,
 			      AaExpression* tgt,
 			      ostream& ofile);
+
+void Write_VC_RAW_Release_Deps(AaRoot* succ, set<AaRoot*>& preds);
+
 #endif

@@ -116,7 +116,6 @@ void AaExpression::Set_Type(AaType* t)
 {
   if(this->_type == NULL)
     {
-
       if(this->Scalar_Types_Only() && !t->Is_Scalar_Type())
 	{
 	  AaRoot::Error("expression " + this->To_String() + " type must be a scalar", this);

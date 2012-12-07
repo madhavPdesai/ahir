@@ -1168,6 +1168,108 @@ void vcCPBranchBlock::Update_Predecessor_Successor_Links()
 }
 
 
+vcCPSimpleLoopBlock::vcCPSimpleLoopBlock(vcCPBlock* parent, string id): vcCPBranchBlock(parent,id)
+{
+}
+
+void vcCPSimpleLoopBlock::Print(ostream& ofile)
+{
+  ofile << vcLexerKeywords[__LOOPBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
+  this->Print_Elements(ofile);
+
+  // print bindings.
+  for(map<vcPlace*,vcTransition*>::iterator biter = _bindings.begin();
+	biter != _bindings.end();
+	biter++)
+  {
+	vcPlace* pl = (*biter).first;
+        vcTransition* tr = (*biter).second;
+
+	ofile << vcLexerKeywords[__BIND] << " " << pl->Get_Id() << " " 
+		<< tr->Get_Parent()->Get_Id() << vcLexerKeywords[__COLON] 
+		<< tr->Get_Id() << endl;	
+  }
+
+  // now print the merge and branch points.
+  for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = _merge_map.begin();
+      iter != _merge_map.end();
+      iter++)
+    {
+      ofile << (*iter).first->Get_Id() << " " << vcLexerKeywords[__MERGE] << " (";
+      for(int idx = 0; idx < (*iter).second.size(); idx++)
+	{
+	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
+	}
+      ofile << ")" << endl;
+    }
+   
+  for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = _branch_map.begin();
+      iter != _branch_map.end();
+      iter++)
+    {
+      ofile << (*iter).first->Get_Id() << " " << 
+	vcLexerKeywords[__BRANCH] << " (";
+      for(int idx = 0; idx < (*iter).second.size(); idx++)
+	{
+	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
+	}
+      ofile << ")" << endl;
+    }
+
+  ofile << "\n// end loop-block " << this->Get_Id() << endl << "}" << endl;
+}
+
+void vcCPSimpleLoopBlock::Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back)
+{
+
+	_loop_exit = this->Find_CPElement(loop_exit);
+	assert(_loop_exit != NULL);	
+	assert(_loop_exit->Is("vcCPSeriesBlock"));
+
+	_loop_taken = this->Find_CPElement(loop_taken);
+	assert(_loop_taken != NULL);	
+	assert(_loop_taken->Is("vcCPSeriesBlock"));
+
+	_loop_body = this->Find_CPElement(loop_body);
+	assert(_loop_body != NULL);	
+	assert(_loop_body->Is("vcCPPipelinedForkBlock"));
+
+	_loop_back = this->Find_CPElement(loop_back);
+	assert(_loop_back != NULL);	
+	assert(_loop_back->Is("vcPlace"));
+
+}
+
+
+bool vcCPSimpleLoopBlock::Check_Structure()
+{
+	assert(0);
+
+	// TODO: check that there is one merge, one
+	// branch, and one pipelined fork block.
+	// the pipelined fork block should export one
+	// transistion, which should be linked to
+	// one of the places in the simple-loop.
+	// (the loopback place).
+	// etc.
+}
+
+void vcCPSimpleLoopBlock::Update_Predecessor_Successor_Links()
+{
+	// TODO
+	assert(0);
+}
+
+void vcCPSimpleLoopBlock::Bind(string place_name, string region_name, string transition_name)
+{
+	// TODO
+  	// find local place place_name
+  	// find region region_name
+  	// locate transition transition_name inside region region_name
+  	// and bind local place to transition.
+  	assert(0);
+}
+
 vcCPForkBlock::vcCPForkBlock(vcCPBlock* p, string id):vcCPParallelBlock(p, id)
 {
 }
@@ -1639,6 +1741,140 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
 
 
   this->vcCPBlock::Update_Predecessor_Successor_Links();
+}
+
+
+vcCPPipelinedForkBlock::vcCPPipelinedForkBlock(vcCPBlock* parent, string id):vcCPForkBlock(parent,id)
+{
+}
+
+void vcCPPipelinedForkBlock::Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec)
+{
+  vcCPElement* jp = this->Find_CPElement(join_name);
+  if(jp == NULL)
+    vcSystem::Error("did not find fork point " + join_name);
+  else if(!jp->Is("vcTransition"))
+    vcSystem::Error("fork point " + join_name + " is not a transition");
+  else
+    {
+      for(int idx = 0; idx < join_cpe_vec.size(); idx++)
+	{
+	  vcCPElement* jre = this->Find_CPElement(join_cpe_vec[idx]);
+	  if(jre == NULL)
+	    {
+	      vcSystem::Error("did not find joined region " + join_cpe_vec[idx]);
+	      return;
+	    }
+	  else
+	    this->Add_Marked_Join_Point((vcTransition*)jp,jre);
+	}
+    }
+}
+
+void vcCPPipelinedForkBlock::Add_Marked_Join_Point(vcTransition* jp, vcCPElement* jre)
+{
+  assert(jre->Is_Transition());
+
+  if((this->_marked_join_map.find(jp) == this->_marked_join_map.end())
+     ||
+     (this->_marked_join_map[jp].find(jre) == this->_marked_join_map[jp].end()))
+    {
+      this->_marked_join_map[((vcTransition*)jp)].insert(jre);
+    }
+}
+
+void vcCPPipelinedForkBlock::Print(ostream& ofile)
+{
+  ofile << vcLexerKeywords[__PIPELINE]  << " [" << this->Get_Id() << "] {" << endl;
+  this->Print_Elements(ofile);
+
+
+  for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _fork_map.begin();
+      iter != _fork_map.end();
+      iter++)
+    {
+      ofile << (*iter).first->Get_Id() << " " << 
+	vcLexerKeywords[__FORK] << " (" ;
+      for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
+	  siter != sfiter;
+	  siter++)
+	{
+	  ofile << " " << (*siter)->Get_Id() << " ";
+	}
+      ofile << ")" << endl;
+    }
+
+
+  for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _join_map.begin();
+      iter != _join_map.end();
+      iter++)
+    {
+      ofile <<  (*iter).first->Get_Id() << " " << 
+	vcLexerKeywords[__JOIN] << " (" ;
+      for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
+	  siter != sfiter;
+	  siter++)
+	{
+	  ofile << " " << (*siter)->Get_Id() << " ";
+	}
+      ofile << ")" << endl;
+    }
+
+  for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _marked_join_map.begin();
+      iter != _marked_join_map.end();
+      iter++)
+    {
+      ofile <<  (*iter).first->Get_Id() << " " << 
+	vcLexerKeywords[__MARKEDJOIN] << " (" ;
+      for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
+	  siter != sfiter;
+	  siter++)
+	{
+	  ofile << " " << (*siter)->Get_Id() << " ";
+	}
+      ofile << ")" << endl;
+    }
+  ofile << "\n// end pipeline-block " << this->Get_Id() << endl << "}";
+
+  if(_exports.size() == 0)
+	ofile << endl;
+  else
+  {
+	ofile << vcLexerKeywords[__LPAREN] << " ";
+	for(set<vcTransition*>::iterator eiter = _exports.begin();
+		eiter != _exports.end();
+		eiter++)
+	{
+		ofile << (*eiter)->Get_Id() << " ";
+	}
+	ofile << vcLexerKeywords[__RPAREN] << endl;
+  }
+}
+
+void vcCPPipelinedForkBlock::Add_Export(string internal_id)
+{
+	
+  vcCPElement* jp = this->Find_CPElement(internal_id);
+  if(jp == NULL)
+  {
+	vcSystem::Error("did not find export transition " + jp->Get_Id());
+	return;
+  }
+  
+  if(!jp->Is_Transition());
+  {
+	vcSystem::Error("export control-element must be a transition: " + jp->Get_Id());
+	return;
+  }
+
+
+  _exports.insert((vcTransition*)jp);
+}
+
+void vcCPPipelinedForkBlock::Eliminate_Redundant_Dependencies()
+{
+	// do nothing.. until we understand it a bit better...
+	return;
 }
 
 

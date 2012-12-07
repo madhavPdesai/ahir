@@ -124,7 +124,7 @@ vc_MemoryLocation[vcSystem* sys, vcMemorySpace* ms]
 ;
 
 //--------------------------------------------------------------------------------------------------------------------------------------
-// vc_Module : (FOREIGN | PIPELINE)?  MODULE vc_Label  LBRACE vc_Inargs vc_Outargs vc_MemorySpace* vc_Pipe* vc_Controlpath vc_Datapath? vc_Link* vc_AttributeSpec* RBRACE
+// vc_Module : (FOREIGN) ?  MODULE vc_Label  LBRACE vc_Inargs vc_Outargs vc_MemorySpace* vc_Pipe* vc_Controlpath vc_Datapath? vc_Link* vc_AttributeSpec* RBRACE
 //--------------------------------------------------------------------------------------------------------------------------------------
 vc_Module[vcSystem* sys] returns[vcModule* m]
 {
@@ -134,13 +134,12 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
     bool pipeline_flag = false;
     vcMemorySpace* ms;
 }
-    : ((FOREIGN {foreign_flag = true;}) | (PIPELINE {pipeline_flag = true;}))?
+    : (FOREIGN {foreign_flag = true;})?
         MODULE lbl = vc_Label 
         { 
             m = new vcModule(sys,lbl); 
             sys->Add_Module(m); 
             if(foreign_flag) m->Set_Foreign_Flag(true);
-            if(pipeline_flag) m->Set_Pipeline_Flag(true);
         } 
         LBRACE (vc_Inargs[sys,m])? (vc_Outargs[sys,m])? 
         (ms = vc_MemorySpace[sys,m] {m->Add_Memory_Space(ms);})* 
@@ -357,6 +356,59 @@ vc_CPBranchBlock[vcCPBlock* cp]
 ;
 
 //-----------------------------------------------------------------------------------------------
+// vc_CPSimpleLoopBlock: LOOPBLOCK vc_Label LBRACE vc_CPMerge vc_CPPipelinedForkBlock (vc_CPPlace)+ RBRACE
+//-----------------------------------------------------------------------------------------------
+vc_CPSimpleLoopBlock[vcCPBlock* cp] 
+{
+	string lbl;
+	vcCPSimpleLoopBlock* sb;
+	vcCPElement* cpe;
+}
+: LOOPBLOCK lbl = vc_Label { sb = new vcCPSimpleLoopBlock(cp,lbl);} LBRACE 
+ (cpe = vc_CPPlace[sb] {sb->Add_CPElement(cpe);}) 
+ (cpe = vc_CPPlace[sb] {sb->Add_CPElement(cpe);}) 
+ vc_CPPipelinedForkBlock[sb]
+ vc_CPSeriesBlock[sb]
+ vc_CPSeriesBlock[sb]
+ vc_CPBind[sb]
+ vc_CPBranch[sb]
+ vc_CPMerge[sb] 
+ vc_CPLoopTerminate[sb]
+ RBRACE
+{ cp->Add_CPElement(sb); }
+;
+
+//-----------------------------------------------------------------------------------------------
+// vc_CPLoopTerminate: TERMINATE LPAREN vc_Identifier vc_Identifier vc_Identifier RPAREN LPAREN vc_Identifier vc_Identifier RPAREN
+//-----------------------------------------------------------------------------------------------
+vc_CPLoopTerminate[vcCPSimpleLoopBlock* slb] 
+{
+ 	string loop_exit, loop_taken, loop_body, loop_back;
+}
+:  TERMINATE LPAREN 
+	loop_exit = vc_Identifier 
+	loop_taken = vc_Identifier 
+	loop_body = vc_Identifier RPAREN 
+   LPAREN 
+	loop_back = vc_Identifier 
+   RPAREN
+   { slb->Set_Loop_Termination_Information(loop_exit, loop_taken, loop_body, loop_back); }
+;
+
+//-----------------------------------------------------------------------------------------------
+// vc_CPBind: BIND vc_Identifier vc_Identifier COLON vc_Identifier;
+//-----------------------------------------------------------------------------------------------
+vc_CPBind[vcCPSimpleLoopBlock* cp]
+{
+	string pl_lbl, rgn_label, rgn_internal_lbl;
+}
+: BIND pl_lbl = vc_Identifier  rgn_label = vc_Identifier COLON rgn_internal_lbl = vc_Identifier
+  {
+	cp->Bind(pl_lbl,rgn_label,rgn_internal_lbl);
+  }
+;
+
+//-----------------------------------------------------------------------------------------------
 // vc_CPMerge: MERGE vc_Identifier LPAREN ENTRY? (vc_Identifier)* RPAREN
 //-----------------------------------------------------------------------------------------------
 vc_CPMerge[vcCPBranchBlock* bb]
@@ -385,7 +437,7 @@ lbl = vc_Identifier  BRANCH LPAREN (e:EXIT {branch_ids.push_back(e->getText());}
 ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPForkBlock: FORKBLOCK vc_Label LBRACE (vc_CPFork | vc_CPRegion | vc_CPJoin | vc_CPTransition )+ RBRACE
+// vc_CPForkBlock: FORKBLOCK vc_Label LBRACE (vc_CPFork | vc_CPRegion | vc_CPJoin | vc_CPTransition )+ RBRACE (LPAREN (vc_Identifier  IMPLIES vc_Identifier)+ RPAREN)?
 //-----------------------------------------------------------------------------------------------
 vc_CPForkBlock[vcCPBlock* cp] 
 {
@@ -398,11 +450,34 @@ vc_CPForkBlock[vcCPBlock* cp]
  ( vc_CPFork[fb] ) |
  ( vc_CPJoin[fb] ) | 
  ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} )  )* RBRACE
-{ cp->Add_CPElement(fb); }
+{ cp->Add_CPElement(fb);}
 ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPJoin: (vc_Identifier | EXIT) JOIN LPAREN  ENTRY? (vc_Idenitfier)+  RPAREN
+// vc_CPPipelinedForkBlock: PIPELINE vc_Label LBRACE (vc_CPFork | vc_CPRegion | vc_CPJoin | vc_CPMarkedJoin | vc_CPTransition )+ 
+//                                            RBRACE (LPAREN vc_Identifier+ RPAREN)?
+//-----------------------------------------------------------------------------------------------
+vc_CPPipelinedForkBlock[vcCPBlock* cp] 
+{
+	string lbl;
+	vcCPPipelinedForkBlock* fb;
+	vcCPElement* cpe;
+        string internal_id, external_id;
+        bool pipeline_flag = false;
+}
+: PIPELINE lbl = vc_Label { fb = new vcCPPipelinedForkBlock(cp,lbl);} LBRACE 
+ ((vc_CPRegion[fb]) | 
+ ( vc_CPFork[fb] ) |
+ ( vc_CPJoin[fb] ) | 
+ ( vc_CPMarkedJoin[fb] ) | 
+ ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} )  )* RBRACE
+{ cp->Add_CPElement(fb);}
+( LPAREN ( internal_id = vc_Identifier { fb->Add_Export(internal_id);})+ RPAREN ) ?
+;
+
+
+//-----------------------------------------------------------------------------------------------
+// vc_CPJoin: (vc_Identifier | EXIT) JOIN LPAREN  ENTRY? (vc_Identifier)+  RPAREN
 //-----------------------------------------------------------------------------------------------
 vc_CPJoin[vcCPForkBlock* fb]
 {
@@ -411,6 +486,20 @@ vc_CPJoin[vcCPForkBlock* fb]
 }
 :
 ((lbl = vc_Identifier) | (je:EXIT {lbl = je->getText();})) JOIN  LPAREN (e:ENTRY {join_ids.push_back(e->getText());})?
+(b =  vc_Identifier {join_ids.push_back(b);})* RPAREN
+ {fb->Add_Join_Point(lbl,join_ids);}
+;
+
+//-----------------------------------------------------------------------------------------------
+// vc_CPMarkedJoin: (vc_Identifier | EXIT) MARKEDJOIN LPAREN  ENTRY? (vc_Identifier)+  RPAREN
+//-----------------------------------------------------------------------------------------------
+vc_CPMarkedJoin[vcCPForkBlock* fb]
+{
+	string lbl,b;
+	vector<string> join_ids;
+}
+:
+((lbl = vc_Identifier) | (je:EXIT {lbl = je->getText();})) MARKEDJOIN  LPAREN (e:ENTRY {join_ids.push_back(e->getText());})?
 (b =  vc_Identifier {join_ids.push_back(b);})* RPAREN
  {fb->Add_Join_Point(lbl,join_ids);}
 ;
@@ -1245,9 +1334,11 @@ SERIESBLOCK   : ";;";
 PARALLELBLOCK : "||";
 FORKBLOCK     : "::";
 BRANCHBLOCK   : "<>";
+LOOPBLOCK     : "<o>";
 OF            : "$of";
 FORK          : "&->";
 JOIN          : "<-&";
+MARKEDJOIN    : "o<-&";
 BRANCH        : "|->";
 MERGE         : "<-|";
 ENTRY         : "$entry";
@@ -1284,6 +1375,8 @@ CONSTANT      : "$constant";
 INTERMEDIATE  : "$intermediate";
 DEPTH         : "$depth";
 GUARD         : "$guard";
+BIND          : "$bind";
+TERMINATE     : "$terminate";
 
 
 // Special symbols

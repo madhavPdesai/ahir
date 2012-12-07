@@ -141,7 +141,8 @@ class AaStatement: public AaScope
   virtual void Write_VC_Control_Path(ostream& ofile) { assert(0);}
   virtual void Write_VC_Control_Path(string sink_link, ostream& ofile) { assert(0);}
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile) {assert(0);}
-  virtual void Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elements,
+  virtual void Write_VC_Control_Path_Optimized(bool pipeline_flag,
+					       set<AaRoot*>& visited_elements,
 					       map<string,vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
 					       ostream& ofile) {assert(0);}
@@ -167,6 +168,19 @@ class AaStatement: public AaScope
   void Propagate_Addressed_Object_Representative(AaStorageObject* obj);
 
   virtual void Get_Target_Places(set<AaPlaceStatement*>& target_places) {} // do nothing.
+
+  virtual string Get_VC_Successor_Triggering_Transition_Name()
+  {
+    assert(0);
+  }
+
+  virtual string Get_VC_Predecessor_Releasing_Transition_Name()
+  {
+    assert(0);
+  }
+
+  void Write_VC_RAW_Release_Dependencies(AaExpression* expr, set<AaRoot*>& visited_elements);
+
 };
 
 // statement sequence (is used in block statements which lead to programs)
@@ -294,6 +308,8 @@ class AaStatementSequence: public AaScope
       return(this->Get_VC_Name() + "__exit__");
   }
 
+  void Write_VC_Control_Path_As_Fork_Block(bool pipe_flag, string region_id, ostream& ofile);
+
 };
 
 // null statement
@@ -355,7 +371,7 @@ class AaAssignmentStatement: public AaStatement
 
 
   virtual void Write_C_Struct(ofstream& ofile);
-  void Write_VC_WAR_Dependencies(set<AaRoot*>& visited_elements,
+  void Write_VC_WAR_Dependencies(bool pipeline_flag, set<AaRoot*>& visited_elements,
 				 ostream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile);
@@ -363,7 +379,8 @@ class AaAssignmentStatement: public AaStatement
 
 
   // this is the big one!
-  virtual void Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elements,
+  virtual void Write_VC_Control_Path_Optimized(bool pipeline_flag,
+					       set<AaRoot*>& visited_elements,
 					       map<string, vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
 					       ostream& ofile);
@@ -379,6 +396,16 @@ class AaAssignmentStatement: public AaStatement
 
   virtual void Propagate_Constants(); 
   virtual string Get_VC_Name() {return("assign_stmt_" + Int64ToStr(this->Get_Index()));}
+
+  virtual string Get_VC_Successor_Triggering_Transition_Name()
+  {
+    return(this->Get_VC_Active_Transition_Name());
+  }
+
+  virtual string Get_VC_Predecessor_Releasing_Transition_Name()
+  {
+    return(this->Get_VC_Completed_Transition_Name());
+  }
 
 
 };
@@ -451,7 +478,8 @@ class AaCallStatement: public AaStatement
   {
     assert(0);
   }
-  virtual void Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elements,
+  virtual void Write_VC_Control_Path_Optimized(bool pipeline_flag,
+					       set<AaRoot*>& visited_elements,
 					       map<string, vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
 					       ostream& ofile);
@@ -463,6 +491,16 @@ class AaCallStatement: public AaStatement
 
   virtual void Propagate_Constants();
   virtual string Get_VC_Name() {return("call_stmt_" + Int64ToStr(this->Get_Index()));}
+
+  virtual string Get_VC_Successor_Triggering_Region_Name()
+  {
+    return(this->Get_VC_Name() + "_start");
+  }
+
+  virtual string Get_VC_Predecessor_Releasing_Region_Name()
+  {
+    return(this->Get_VC_Name() + "_complete");
+  }
 
 };
 
@@ -605,16 +643,18 @@ class AaBlockStatement: public AaStatement
   }
 
 
-  virtual void Write_VC_Control_Path_Optimized(AaStatementSequence* sseq,
+  virtual void Write_VC_Control_Path_Optimized(bool pipeline_flag, 
+					       AaExpression* test_expression,
+					       AaStatementSequence* sseq,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(AaStatement* stmt,
 					       ostream& ofile);
 
 
   
-  void Write_VC_Load_Store_Dependencies(map<string,vector<AaExpression*> >& load_store_dep_map,
+  void Write_VC_Load_Store_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> >& load_store_dep_map,
 					ostream& ofile);
-  void Write_VC_Pipe_Dependencies(map<string,vector<AaExpression*> >& pipe_map,
+  void Write_VC_Pipe_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> >& pipe_map,
 					ostream& ofile);
 
   virtual void Propagate_Constants();
@@ -939,6 +979,7 @@ class AaPhiStatement: public AaStatement
   AaObjectReference* _target;
   vector<pair<string,AaExpression*> > _source_pairs;
   set<string> _merged_labels;
+  bool _in_do_while;
 
  public:
   AaPhiStatement(AaBranchBlockStatement* scope, AaMergeStatement* pm);
@@ -976,6 +1017,9 @@ class AaPhiStatement: public AaStatement
   virtual bool Is_Constant();
 
   virtual string Get_VC_Name() {return("phi_stmt_" + Int64ToStr(this->Get_Index()));}
+
+  void Set_In_Do_While(bool v) { _in_do_while = v;}
+  bool Get_In_Do_While() {return(_in_do_while);}
   friend class AaMergeStatement;
 };
 

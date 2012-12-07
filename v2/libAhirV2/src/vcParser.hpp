@@ -130,10 +130,25 @@ public:
 	public: void vc_CPMerge(
 		vcCPBranchBlock* bb
 	);
+	public: void vc_CPSimpleLoopBlock(
+		vcCPBlock* cp
+	);
+	public: void vc_CPPipelinedForkBlock(
+		vcCPBlock* cp
+	);
+	public: void vc_CPBind(
+		vcCPSimpleLoopBlock* cp
+	);
+	public: void vc_CPLoopTerminate(
+		vcCPSimpleLoopBlock* slb
+	);
 	public: void vc_CPFork(
 		vcCPForkBlock* fb
 	);
 	public: void vc_CPJoin(
+		vcCPForkBlock* fb
+	);
+	public: void vc_CPMarkedJoin(
 		vcCPForkBlock* fb
 	);
 	public: void vc_Guarded_Operator_Instantiation(
@@ -219,10 +234,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 128;
+	static const int NUM_TOKENS = 132;
 #else
 	enum {
-		NUM_TOKENS = 128
+		NUM_TOKENS = 132
 	};
 #endif
 	
@@ -276,6 +291,16 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_23;
 	static const unsigned long _tokenSet_24_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_24;
+	static const unsigned long _tokenSet_25_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_25;
+	static const unsigned long _tokenSet_26_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_26;
+	static const unsigned long _tokenSet_27_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_27;
+	static const unsigned long _tokenSet_28_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_28;
+	static const unsigned long _tokenSet_29_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_29;
 };
 
 #endif /*INC_vcParser_hpp_*/

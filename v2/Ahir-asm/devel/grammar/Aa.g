@@ -562,7 +562,7 @@ aA_Join_Fork_Statement[AaForkBlockStatement* scope] returns [AaJoinForkStatement
     ;
 
 //-----------------------------------------------------------------------------------------------
-// aA_Phi_Statement: PHI SIMPLE_IDENTIFIER  :=  ( aA_Object_Reference  ON  (SIMPLE_IDENTIFIER | ENTRY | BACKEDGE))+
+// aA_Phi_Statement: PHI SIMPLE_IDENTIFIER  :=  ( aA_Object_Reference  ON  (SIMPLE_IDENTIFIER | ENTRY | LOOPBACK))+
 //-----------------------------------------------------------------------------------------------
 aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_set, AaMergeStatement* pm, bool do_while_flag] returns [AaPhiStatement* new_ps]
 {
@@ -586,7 +586,7 @@ aA_Phi_Statement[AaBranchBlockStatement* scope, set<string,StringCompare>& lbl_s
             ( 
                 (sid: SIMPLE_IDENTIFIER {label = sid->getText(); }) |
                 (eid: ENTRY {label = eid->getText(); }) |
-                (bid: BACKEDGE {label = bid->getText(); }) 
+                (bid: LOOPBACK {label = bid->getText(); }) 
             )
             {
                 bool errflag = false;
@@ -775,12 +775,13 @@ aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement
     new_dws = new AaDoWhileStatement(scope);
     set<string,StringCompare> lbl_set;
     lbl_set.insert("$entry");
-    lbl_set.insert("$backedge");
+    lbl_set.insert("$loopback");
 }: 
-     il:DO MERGE
+     il:DO MERGE ENTRY LOOPBACK
 	( phis = aA_Phi_Statement[scope,lbl_set,NULL,true] 
 		{ 
 			phiseq.push_back(phis);
+			phis->Set_In_Do_While(true);
 		} )* ENDMERGE
         sseq = aA_Atomic_Statement_Sequence[scope] 
         {
@@ -796,7 +797,6 @@ aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement
 			new_dws->Set_Phi_Sequence(pseq);
 		}
 	}
-     ENDIF
     ;   
 
 
@@ -1463,7 +1463,7 @@ ENDMERGE      : "$endmerge";
 ENDJOIN       : "$endjoin";
 WHEN          : "$when";
 ENTRY         : "$entry";
-BACKEDGE      : "$backedge";
+LOOPBACK      : "$loopback";
 EXIT          : "$exit";
 FIN           : "$fin";
 IN            : "$in";

@@ -67,6 +67,17 @@ class AaRoot
     return(this->Get_VC_Name() + "_completed_");
   }
 
+  virtual string Get_VC_Successor_Triggering_Transition_Name()
+  {
+    return(this->Get_VC_Completed_Transition_Name());
+  }
+
+  virtual string Get_VC_Predecessor_Releasing_Transition_Name()
+  {
+    return(this->Get_VC_Active_Transition_Name());
+  }
+
+
   virtual AaType* Get_Type() {assert(0);}
   virtual AaValue* Get_Expression_Value() {assert(0);}
 

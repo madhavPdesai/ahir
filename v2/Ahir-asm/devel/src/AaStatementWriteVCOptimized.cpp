@@ -1,6 +1,15 @@
 #include <AaProgram.h>
 #include <Aa2VC.h>
 
+// for the pipelined case.
+void AaStatement::Write_VC_RAW_Release_Dependencies(AaExpression* expr, set<AaRoot*>& visited_elements)
+{
+  set<AaRoot*> non_triv_preds;
+  expr->Identify_Non_Trivial_Predecessors(non_triv_preds, visited_elements);
+  Write_VC_RAW_Release_Deps(((AaRoot*)this),non_triv_preds);
+}
+
+
 // a lot of code repetition, but can it be avoided?
 
 void AaStatementSequence::Write_VC_Control_Path_Optimized(ostream& ofile)
@@ -33,7 +42,8 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
   assert(0);
 }
 
-void AaAssignmentStatement::Write_VC_WAR_Dependencies(set<AaRoot*>& visited_elements,
+void AaAssignmentStatement::Write_VC_WAR_Dependencies(bool pipeline_flag,
+						      set<AaRoot*>& visited_elements,
 						      ostream& ofile)
 {
 
@@ -42,13 +52,15 @@ void AaAssignmentStatement::Write_VC_WAR_Dependencies(set<AaRoot*>& visited_elem
       AaExpression* tgt = this->_target;
       
       if(tgt->Is_Implicit_Variable_Reference())
-	tgt->Write_VC_WAR_Dependencies(visited_elements,this->_source,ofile);
+	tgt->Write_VC_WAR_Dependencies(pipeline_flag,
+				       visited_elements,this->_source,ofile);
     }
 
 }
 
 
-void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elements,
+void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
+							    set<AaRoot*>& visited_elements,
 							    map<string, vector<AaExpression*> >& ls_map,
 							    map<string, vector<AaExpression*> >& pipe_map,
 							    ostream& ofile)
@@ -64,18 +76,28 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
       __T(this->Get_VC_Active_Transition_Name());
       __T(this->Get_VC_Completed_Transition_Name());
 
-	// take care of the guard
+      // take care of the guard
       if(this->_guard_expression)
-      {
-		this->_guard_expression->Write_VC_Control_Path_Optimized(visited_elements,ls_map,pipe_map,ofile);
-		__J(this->Get_VC_Active_Transition_Name(),this->_guard_expression->Get_VC_Completed_Transition_Name());
-      }
+	{
+	  // guard expression calculation
+	  this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
+
+	  // dependency between guard-expression calculation and this statement.
+	  __J(this->Get_VC_Active_Transition_Name(),this->_guard_expression->Get_VC_Completed_Transition_Name());
+
+	  // release predecessor.
+	  if(pipeline_flag)
+	    {
+	      this->Write_VC_RAW_Release_Dependencies(this->_guard_expression,visited_elements);
+	    }
+	}
 
       // write the source side expressions and their 
       // dependencies..
       if(!this->_source->Is_Constant())
 	{
-	  this->_source->Write_VC_Control_Path_Optimized(visited_elements,
+	  this->_source->Write_VC_Control_Path_Optimized(pipeline_flag,
+							 visited_elements,
 							 ls_map,pipe_map,
 							 ofile);
 	  
@@ -86,7 +108,8 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
 
       
 
-      this->_target->Write_VC_Control_Path_As_Target_Optimized(visited_elements,
+      this->_target->Write_VC_Control_Path_As_Target_Optimized(pipeline_flag,
+							       visited_elements,
 							       ls_map,pipe_map,
 							       ofile);
 
@@ -105,7 +128,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
 
 
       // WAR dependencies
-      this->Write_VC_WAR_Dependencies(visited_elements,ofile);
+      this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
 
       bool source_is_implicit = _source->Is_Implicit_Variable_Reference();
       bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
@@ -125,12 +148,17 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visite
 
 	  AaRoot* root_obj = _target->Get_Root_Object();
 	  if(root_obj == ((AaRoot*) this))
-	     visited_elements.insert(this);
+	    visited_elements.insert(this);
 	  else if ((root_obj != NULL) && root_obj->Is_Interface_Object())
 	    {
 	      visited_elements.insert(this);
 	      visited_elements.insert(root_obj);
 	    }
+	}
+
+      if(pipeline_flag)
+	{
+	  this->_target->Write_VC_RAW_Release_Dependencies(this->_source,visited_elements);
 	}
     }
 }  
@@ -141,34 +169,35 @@ void AaAssignmentStatement::Write_VC_Links_Optimized(string hier_id, ostream& of
 {
   if(!this->Is_Constant())
     {
-        ofile << "// " << this->To_String() << endl;
-	ofile << "// " << this->Get_Source_Info() << endl;
+      ofile << "// " << this->To_String() << endl;
+      ofile << "// " << this->Get_Source_Info() << endl;
 
-	this->_source->Write_VC_Links_Optimized(hier_id,
-						ofile);
-	this->_target->Write_VC_Links_As_Target_Optimized(hier_id,
-							  ofile);
-	bool source_is_implicit = _source->Is_Implicit_Variable_Reference();
-	bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
+      this->_source->Write_VC_Links_Optimized(hier_id,
+					      ofile);
+      this->_target->Write_VC_Links_As_Target_Optimized(hier_id,
+							ofile);
+      bool source_is_implicit = _source->Is_Implicit_Variable_Reference();
+      bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
 	
-	if(source_is_implicit && target_is_implicit)
-	  {
-	    hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Name() + "_register");
-	    vector<string> reqs;
-	    vector<string> acks;
-	    reqs.push_back(hier_id + "/req");
-	    acks.push_back(hier_id + "/ack");
-	    Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
-			  reqs, acks, ofile);
-	    reqs.clear();
-	    acks.clear();
-	  }
+      if(source_is_implicit && target_is_implicit)
+	{
+	  hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Name() + "_register");
+	  vector<string> reqs;
+	  vector<string> acks;
+	  reqs.push_back(hier_id + "/req");
+	  acks.push_back(hier_id + "/ack");
+	  Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
+			reqs, acks, ofile);
+	  reqs.clear();
+	  acks.clear();
+	}
     }
 }
 
 
 // AaCallStatement
-void AaCallStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elements,
+void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
+						      set<AaRoot*>& visited_elements,
 						      map<string, vector<AaExpression*> >& ls_map,
 						      map<string, vector<AaExpression*> >& pipe_map,
 						      ostream& ofile)
@@ -178,19 +207,25 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elem
 
   // take care of the guard
   if(this->_guard_expression)
-  {
-	this->_guard_expression->Write_VC_Control_Path_Optimized(visited_elements,ls_map,pipe_map,ofile);
-	__J(this->Get_VC_Active_Transition_Name(),this->_guard_expression->Get_VC_Completed_Transition_Name());
-  }
+    {
+      this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
+      __J(this->Get_VC_Active_Transition_Name(),this->_guard_expression->Get_VC_Completed_Transition_Name());
+    }
 
   // first the input arguments... zipping through.
   for(int idx = 0; idx < _input_args.size(); idx++)
-    _input_args[idx]->Write_VC_Control_Path_Optimized(visited_elements,ls_map,pipe_map,ofile);
+    _input_args[idx]->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
 
   // trigger the call after the input arguments
   // have been computed..
   string call_trigger = this->Get_VC_Active_Transition_Name();
   __T(call_trigger);
+  string in_progress = this->Get_VC_Name() + "_in_progress";
+  __T(in_progress);
+  string call_completed = this->Get_VC_Name() + "_call_complete";
+  __T(call_completed);
+  string completed = this->Get_VC_Completed_Transition_Name();
+  __T(completed);
 
   for(int idx = 0; idx < _input_args.size(); idx++)
     {
@@ -200,10 +235,15 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elem
 	{
 	  __J(call_trigger, expr->Get_VC_Completed_Transition_Name());
 	}
+
+      if(pipeline_flag)
+	{
+	  this->Write_VC_RAW_Release_Dependencies(expr,visited_elements);
+	}
+
     }
 
-  string in_progress = this->Get_VC_Name() + "_in_progress";
-  __T(in_progress);
+
 
   // the call-trigger will start the call..
   ofile << ";;[" << this->Get_VC_Name() << "_start] { " 
@@ -218,13 +258,10 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elem
 	<< "} " << endl;
   __F(in_progress,this->Get_VC_Name() + "_complete");
 
-  string call_completed = this->Get_VC_Name() + "_call_complete";
-  __T(call_completed);
+
   __J(call_completed, this->Get_VC_Name() + "_complete");
 
-  // completed
-  string completed = this->Get_VC_Completed_Transition_Name();
-  __T(completed);
+
 
   // the output arguments.
   bool non_triv_flag = false;
@@ -232,7 +269,8 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(set<AaRoot*>& visited_elem
     {
       AaExpression* expr = _output_args[idx];
 
-      expr->Write_VC_Control_Path_As_Target_Optimized(visited_elements,ls_map,pipe_map,ofile);
+      expr->Write_VC_Control_Path_As_Target_Optimized(pipeline_flag,
+						      visited_elements,ls_map,pipe_map,ofile);
       if(!expr->Is_Implicit_Variable_Reference())
 	{
 
@@ -322,7 +360,7 @@ void AaBlockStatement::Identify_Maximal_Sequences(AaStatementSequence* sseq,
 	     stmt->Is_Block_Statement()  || 
 	     stmt->Is_Control_Flow_Statement() || 
 	     (stmt->Is("AaCallStatement") && 
-		 !((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()))->Has_No_Side_Effects())
+	      !((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()))->Has_No_Side_Effects())
 	     || stmt->Can_Block())
 	    {
 	      if(linear_segment.size() == 0)
@@ -369,14 +407,16 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(AaStatement* stmt, ostrea
   vector<AaStatement*> tv;
   tv.push_back(stmt);
   AaStatementSequence* ss = new AaStatementSequence(this,tv);
-  this->AaBlockStatement::Write_VC_Control_Path_Optimized(ss,ofile);
+  this->AaBlockStatement::Write_VC_Control_Path_Optimized(false,NULL,ss,ofile);
   delete ss;
 }
 
 
 // sseq consists of linear sequence of simple statements..
 // no control-flow, no block statements.
-void AaBlockStatement::Write_VC_Control_Path_Optimized(AaStatementSequence* sseq,
+void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
+						       AaExpression* condition_expr,
+						       AaStatementSequence* sseq,
 						       ostream& ofile)
 {
 
@@ -385,7 +425,13 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(AaStatementSequence* sseq
     sseq->Get_Statement(0)->Write_VC_Control_Path_Optimized(ofile);
   else
     {
-      ofile << "::[" << sseq->Get_VC_Name() << "] {" << endl;
+      string block_type;
+      if(pipeline_flag)
+	block_type = "$pipeline";
+      else
+	block_type = "::";
+
+      ofile << block_type <<  "[" << sseq->Get_VC_Name() << "] {" << endl;
 
       set<AaRoot*> visited_elements;
       map<string, vector<AaExpression*> > load_store_ordering_map;
@@ -393,16 +439,17 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(AaStatementSequence* sseq
 
       for(int idx = 0, fidx = sseq->Get_Statement_Count(); idx < fidx; idx++)
 	{
-	  sseq->Get_Statement(idx)->Write_VC_Control_Path_Optimized(visited_elements,
+	  sseq->Get_Statement(idx)->Write_VC_Control_Path_Optimized(pipeline_flag, 
+								    visited_elements,
 								    load_store_ordering_map,
 								    pipe_map,
 								    ofile);
 	}
 
-      this->Write_VC_Load_Store_Dependencies(load_store_ordering_map,ofile);
-      this->Write_VC_Pipe_Dependencies(pipe_map,ofile);
+      this->Write_VC_Load_Store_Dependencies(pipeline_flag,load_store_ordering_map,ofile);
+      this->Write_VC_Pipe_Dependencies(pipeline_flag,pipe_map,ofile);
 
-      ofile << "}" << endl;
+      ofile << "} // IN PROGRESS" << endl;
     }
 
 
@@ -413,7 +460,7 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(AaStatementSequence* sseq
 
 // load store dependencies.
 void AaBlockStatement::
-Write_VC_Load_Store_Dependencies(map<string,vector<AaExpression*> >& load_store_dep_map,
+Write_VC_Load_Store_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> >& load_store_dep_map,
 				 ostream& ofile)
 {
 
@@ -443,7 +490,7 @@ Write_VC_Load_Store_Dependencies(map<string,vector<AaExpression*> >& load_store_
 		  // expr start.
 		  for(int lsi = 0, flsi = active_loads.size(); lsi < flsi; lsi++)
 		    {
-		      Write_VC_Load_Store_Dependency(active_loads[lsi],expr,ofile);
+		      Write_VC_Load_Store_Dependency(pipeline_flag, active_loads[lsi],expr,ofile);
 		    }
 
 		  // active load dependencies are taken care of
@@ -453,7 +500,7 @@ Write_VC_Load_Store_Dependencies(map<string,vector<AaExpression*> >& load_store_
 	      else
 		{
 		  if(last_store != NULL)
-		      Write_VC_Load_Store_Dependency(last_store,expr,ofile);
+		    Write_VC_Load_Store_Dependency(pipeline_flag, last_store,expr,ofile);
 
 		  last_store = expr;
 		}
@@ -461,7 +508,7 @@ Write_VC_Load_Store_Dependencies(map<string,vector<AaExpression*> >& load_store_
 	  else if(last_store != NULL && expr->Is_Load())
 	    {
 	      // dependency between last store and expr.
-	      Write_VC_Load_Store_Dependency(last_store,expr,ofile);
+	      Write_VC_Load_Store_Dependency(pipeline_flag, last_store,expr,ofile);
 	      
 	      // keep track of active loads.
 	      active_loads.push_back(expr);
@@ -476,8 +523,8 @@ Write_VC_Load_Store_Dependencies(map<string,vector<AaExpression*> >& load_store_
 
 // pipe accesses will be strictly in order!
 void AaBlockStatement::
-Write_VC_Pipe_Dependencies(map<string,vector<AaExpression*> >& pipe_map,
-				 ostream& ofile)
+Write_VC_Pipe_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> >& pipe_map,
+			   ostream& ofile)
 {
 
 
@@ -493,7 +540,7 @@ Write_VC_Pipe_Dependencies(map<string,vector<AaExpression*> >& pipe_map,
 	{
 	  AaExpression* expr = (*iter).second[idx];
 	  if(last_expr != NULL)
-	    Write_VC_Pipe_Dependency(last_expr,expr,ofile);
+	    Write_VC_Pipe_Dependency(pipeline_flag, last_expr,expr,ofile);
 	  last_expr = expr;
 	}
     }
@@ -555,7 +602,9 @@ void AaSeriesBlockStatement::Write_VC_Control_Path_Optimized_Base(ostream& ofile
 	  if(curr_seq->Get_Statement(0)->Is_Block_Statement())
 	    curr_seq->Get_Statement(0)->Write_VC_Control_Path_Optimized(ofile);
 	  else
-	    this->AaBlockStatement::Write_VC_Control_Path_Optimized(curr_seq,
+	    this->AaBlockStatement::Write_VC_Control_Path_Optimized(false,
+								    NULL,
+								    curr_seq,
 								    ofile);
 	}
       this->Destroy_Maximal_Sequences(linear_segment_vector);
@@ -788,7 +837,7 @@ void AaBranchBlockStatement::Write_VC_Control_Path_Optimized(string source_link,
 		  if(stmt->Is_Block_Statement() || stmt->Is_Control_Flow_Statement())
 		    stmt->Write_VC_Control_Path_Optimized(ofile);
 		  else 
-		    this->AaBlockStatement::Write_VC_Control_Path_Optimized(sseq,ofile);
+		    this->AaBlockStatement::Write_VC_Control_Path_Optimized(false, NULL, sseq,ofile);
 		  
 		  
 		  // control regulated by __entry__ and __exit__ places..
