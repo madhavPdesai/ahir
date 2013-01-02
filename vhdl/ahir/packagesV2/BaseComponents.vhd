@@ -129,6 +129,11 @@ package BaseComponents is
     exit_place : out Boolean;
     clk, reset: in std_logic);
   end component;
+
+  component transition_merge 
+      port (preds      : in   BooleanArray;
+          symbol_out : out  boolean);
+  end component;
   
   -----------------------------------------------------------------------------
   -- miscellaneous
