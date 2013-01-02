@@ -1,0 +1,47 @@
+// Virtual circuit produced from Aa description by Aa2VC 
+// $pipe  inpipe : $uint<32>  $depth 1 
+// can point into 
+// in scope  top-level
+$pipe [inpipe] 32 $depth 1
+// $pipe  outpipe : $uint<32>  $depth 1 
+// can point into 
+// in scope  top-level
+$pipe [outpipe] 32 $depth 1
+$module [asum] 
+{
+  $out c:$int<32>
+  // can point into  foreign( $void )
+  // pipe-declarations for block %asum
+  //  file prog.opt.aa, line 5
+  // pipe-declarations for block %asum%init
+  //  file prog.opt.aa, line 12
+  // pipe-declarations for block %asum%run
+  //  file prog.opt.aa, line 30
+  $memoryspace [memory_space_0] 
+  {
+    $capacity 10
+    $datawidth 32
+    $addrwidth 4
+    $maxaccesswidth 32
+    // 	$storage  a : $array[10] $of $uint<32> // memory space index = 0  base address = 0  word size = 32
+    // can point into 
+    // in scope  %asum
+    $object [xxasumxxa] : $array[10] $of $int<32>
+  }
+  $CP 
+  {
+    // begin control-path 
+    <>[branch_block_stmt_7] // Branch Block  file prog.opt.aa, line 12
+    {
+      $P [branch_block_stmt_7__entry__]
+      branch_block_stmt_7__entry__ <-| ($entry)
+      $P [branch_block_stmt_7__exit__]
+      branch_block_stmt_7__exit__ |-> ($exit)
+      $P [do_while_stmt_8__entry__] 
+      $P [do_while_stmt_8__exit__] 
+      // do-while-statement  
+      //  file prog.opt.aa, line 0
+      <o> [do_while_stmt_8] 
+      {
+        $P [loop_back]
+        $P [condition_done]

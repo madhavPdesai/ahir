@@ -318,7 +318,7 @@ vc_CPSeriesBlock[vcCPBlock* cp]
 }
 : SERIESBLOCK lbl = vc_Label { sb = new vcCPSeriesBlock(cp,lbl);} LBRACE 
 (( cpe =  vc_CPElement[sb] { sb->Add_CPElement(cpe); }) | 
- ( vc_CPRegion[sb] ))* RBRACE
+ ( vc_CPRegion[sb] ) | (vc_AttributeSpec[sb] ) )* RBRACE
 { cp->Add_CPElement(sb); }
 ;
 
@@ -333,7 +333,8 @@ vc_CPParallelBlock[vcCPBlock* cp]
         vcCPElement* t;
 }
 : PARALLELBLOCK lbl = vc_Label { sb = new vcCPParallelBlock(cp,lbl);} LBRACE 
- ( vc_CPRegion[sb] | t = vc_CPTransition[sb] {sb->Add_CPElement(t);} )* RBRACE
+ ( vc_CPRegion[sb] | t = vc_CPTransition[sb] {sb->Add_CPElement(t);} |
+            (vc_AttributeSpec[sb]) )* RBRACE
 { cp->Add_CPElement(sb); }
 ;
 
@@ -351,12 +352,14 @@ vc_CPBranchBlock[vcCPBlock* cp]
 (( vc_CPRegion[sb] ) | 
  ( vc_CPBranch[sb] ) |
  ( vc_CPMerge[sb] ) |
- (cpe = vc_CPPlace[sb] {sb->Add_CPElement(cpe);}) )+ RBRACE
+ ( vc_CPSimpleLoopBlock[sb] ) |
+ (cpe = vc_CPPlace[sb] {sb->Add_CPElement(cpe);}) |
+            (vc_AttributeSpec[sb]) )+ RBRACE
 { cp->Add_CPElement(sb); }
 ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPSimpleLoopBlock: LOOPBLOCK vc_Label LBRACE vc_CPMerge vc_CPPipelinedForkBlock (vc_CPPlace)+ RBRACE
+// vc_CPSimpleLoopBlock: LOOPBLOCK vc_Label LBRACE ... RBRACE (see below)
 //-----------------------------------------------------------------------------------------------
 vc_CPSimpleLoopBlock[vcCPBlock* cp] 
 {
@@ -365,17 +368,19 @@ vc_CPSimpleLoopBlock[vcCPBlock* cp]
 	vcCPElement* cpe;
 }
 : LOOPBLOCK lbl = vc_Label { sb = new vcCPSimpleLoopBlock(cp,lbl);} LBRACE 
- (cpe = vc_CPPlace[sb] {sb->Add_CPElement(cpe);}) 
- (cpe = vc_CPPlace[sb] {sb->Add_CPElement(cpe);}) 
- vc_CPPipelinedForkBlock[sb]
- vc_CPSeriesBlock[sb]
- vc_CPSeriesBlock[sb]
- vc_CPBind[sb]
- vc_CPBranch[sb]
- vc_CPMerge[sb] 
- vc_CPLoopTerminate[sb]
- RBRACE
-{ cp->Add_CPElement(sb); }
+ (cpe = vc_CPPlace[sb] {sb->Add_CPElement(cpe);})*
+        vc_CPPipelinedForkBlock[sb]
+        vc_CPSeriesBlock[sb]
+        vc_CPSeriesBlock[sb]
+        vc_CPMerge[sb]
+        vc_CPBranch[sb]
+        // all special elements from here on..
+        (vc_CPBind[sb])*
+        (vc_CPPhiSequencer[sb])*
+        (vc_CPPlaceJoin[sb])*
+        vc_CPLoopTerminate[sb]  
+  RBRACE
+        { cp->Add_CPElement(sb); }
 ;
 
 //-----------------------------------------------------------------------------------------------
@@ -395,16 +400,88 @@ vc_CPLoopTerminate[vcCPSimpleLoopBlock* slb]
    { slb->Set_Loop_Termination_Information(loop_exit, loop_taken, loop_body, loop_back); }
 ;
 
+
+//-----------------------------------------------------------------------------------------------
+// vc_CPPhiSequencer: PHISEQUENCER LPAREN vc_Identifier+ COLON vcIdentifier+ COLON vcIdentifier RPAREN 
+//                               LPAREN vc_Identifier+ : vc_Identifier RPAREN
+//-----------------------------------------------------------------------------------------------
+vc_CPPhiSequencer[vcCPSimpleLoopBlock* slb] 
+{
+    vector<string> selects;
+    vector<string> reenables;
+    vector<string> reqs;
+    string ack;
+    string done;
+    string tmp_string;
+}
+:  PHISEQUENCER LPAREN 
+        ( tmp_string = vc_Identifier {selects.push_back(tmp_string);})+
+        COLON
+        ( tmp_string = vc_Identifier {reenables.push_back(tmp_string);})+
+        COLON
+        ack = vc_Identifier
+        RPAREN
+        LPAREN
+        ( tmp_string = vc_Identifier {reqs.push_back(tmp_string);})+
+        COLON
+        done = vc_Identifier
+        RPAREN
+   { slb->Add_Phi_Sequencer(selects, reenables, ack, reqs, done); }
+;
+
+
+//-----------------------------------------------------------------------------------------------
+// vc_CPPlaceJoin: PLACEJOIN vc_Label LPAREN vc_Identifier+ RPAREN 
+//                               LPAREN vc_Identifier RPAREN
+//-----------------------------------------------------------------------------------------------
+vc_CPPlaceJoin[vcCPSimpleLoopBlock* slb] 
+{
+    string pj_id;
+    vector<string> in_places;
+    string out_place;
+    string tmp_string;
+}
+:  PLACEJOIN pj_id = vc_Label LPAREN 
+        ( tmp_string = vc_Identifier {in_places.push_back(tmp_string);})+
+        RPAREN
+        LPAREN
+        out_place = vc_Identifier
+        RPAREN
+   { slb->Add_Place_Join(pj_id, in_places, out_place); }
+;
+
+
+//-----------------------------------------------------------------------------------------------
+// vc_CPTransitionMerge: TRANSITIONMERGE vc_Label LPAREN vc_Identifier+ RPAREN 
+//                               LPAREN vc_Identifier RPAREN
+//-----------------------------------------------------------------------------------------------
+vc_CPTransitionMerge[vcCPPipelinedForkBlock* slb] 
+{
+    string tm_id;
+    vector<string> in_transitions;
+    string out_transition;
+    string tmp_string;
+}
+:  TRANSITIONMERGE tm_id = vc_Label LPAREN 
+        ( tmp_string = vc_Identifier {in_transitions.push_back(tmp_string);})+
+        RPAREN
+        LPAREN
+        out_transition = vc_Identifier
+        RPAREN
+   { slb->Add_Transition_Merge(tm_id, in_transitions, out_transition); }
+;
+
 //-----------------------------------------------------------------------------------------------
 // vc_CPBind: BIND vc_Identifier vc_Identifier COLON vc_Identifier;
 //-----------------------------------------------------------------------------------------------
 vc_CPBind[vcCPSimpleLoopBlock* cp]
 {
 	string pl_lbl, rgn_label, rgn_internal_lbl;
+    bool input_binding;
 }
-: BIND pl_lbl = vc_Identifier  rgn_label = vc_Identifier COLON rgn_internal_lbl = vc_Identifier
+: BIND pl_lbl = vc_Identifier ( ( IMPLIES { input_binding = true; } ) | (ULE_OP {input_binding = false;}) )  rgn_label = vc_Identifier COLON rgn_internal_lbl = vc_Identifier
   {
-	cp->Bind(pl_lbl,rgn_label,rgn_internal_lbl);
+	cp->Bind(pl_lbl,rgn_label,rgn_internal_lbl,input_binding);
   }
 ;
 
@@ -449,7 +526,8 @@ vc_CPForkBlock[vcCPBlock* cp]
  ((vc_CPRegion[fb]) | 
  ( vc_CPFork[fb] ) |
  ( vc_CPJoin[fb] ) | 
- ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} )  )* RBRACE
+ ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
+        (vc_AttributeSpec[fb])  )* RBRACE
 { cp->Add_CPElement(fb);}
 ;
 
@@ -470,9 +548,11 @@ vc_CPPipelinedForkBlock[vcCPBlock* cp]
  ( vc_CPFork[fb] ) |
  ( vc_CPJoin[fb] ) | 
  ( vc_CPMarkedJoin[fb] ) | 
- ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} )  )* RBRACE
+ ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
+            (vc_AttributeSpec[fb]) )* RBRACE
 { cp->Add_CPElement(fb);}
-( LPAREN ( internal_id = vc_Identifier { fb->Add_Export(internal_id);})+ RPAREN ) ?
+( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Input(internal_id);})+ RPAREN ) 
+( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Output(internal_id);})+ RPAREN ) 
 ;
 
 
@@ -1377,6 +1457,9 @@ DEPTH         : "$depth";
 GUARD         : "$guard";
 BIND          : "$bind";
 TERMINATE     : "$terminate";
+PHISEQUENCER  : "$phisequencer";
+PLACEJOIN     : "$placejoin";
+TRANSITIONMERGE     : "$transitionmerge";
 
 
 // Special symbols

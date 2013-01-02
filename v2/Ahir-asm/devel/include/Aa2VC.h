@@ -8,6 +8,9 @@
 #define __J(x,y) ofile << x << " <-& (" << y << ")" << endl;
 #define __MJ(x,y) ofile << x << " o<-& (" << y << ")" << endl;
 #define __F(x,y) ofile << x << " &-> (" << y << ")" << endl;
+#define __SelfRelease {\
+  __MJ(this->Get_VC_Start_Transition_Name(),this->Get_VC_Active_Transition_Name());\
+  __MJ(this->Get_VC_Active_Transition_Name(),this->Get_VC_Completed_Transition_Name());}
 
 void Write_VC_Equivalence_Operator(string inst_name,
 				   string input,

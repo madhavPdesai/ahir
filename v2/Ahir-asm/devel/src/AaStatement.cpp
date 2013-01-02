@@ -942,6 +942,34 @@ void AaAssignmentStatement::Propagate_Constants()
     }
 }
 
+string AaAssignmentStatement::Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
+{
+  bool source_is_implicit = _source->Is_Implicit_Variable_Reference();
+  bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
+  // if target is not implicit variable reference, then the final register
+  // will be in the source, return the reenable update transition for the
+  // target.
+  if(!target_is_implicit)
+    {
+      return(_target->Get_VC_Reenable_Update_Transition_Name(visited_elements));
+    }
+  // if target is implicit, but source is not implicit, then
+  // return the reenable update transition for the source.
+  else if (!source_is_implicit)
+    {
+      return(_source->Get_VC_Reenable_Update_Transition_Name(visited_elements));
+    }
+  else
+  // if both are implicit, return the start transition of this
+  // statement, since this starts the registering process..
+    return(this->Get_VC_Start_Transition_Name());
+}
+
+string AaAssignmentStatement::Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
+{
+  return(_source->Get_VC_Reenable_Sample_Transition_Name(visited_elements));
+}
+
 //---------------------------------------------------------------------
 // AaCallStatement
 //---------------------------------------------------------------------
@@ -2542,7 +2570,8 @@ void AaMergeStatement::Map_Source_References()
 {
   for(unsigned int i=0; i < this->_merge_label_vector.size(); i++)
     {
-      if(this->_merge_label_vector[i] != "$entry")
+      if((this->_merge_label_vector[i] != "$entry") &&
+	 (this->_merge_label_vector[i] != "$loopback"))
 	{
 	  AaRoot* child = 
 	    ((AaScope*)this->Get_Scope())->Find_Child_Here(this->_merge_label_vector[i]);
@@ -2569,6 +2598,20 @@ void AaMergeStatement::Map_Source_References()
 
   // also the phi statements!
   this->AaBlockStatement::Map_Source_References();
+}
+
+
+void AaMergeStatement::Set_In_Do_While(bool v)
+{ 
+  _in_do_while = v; 
+  if(_statement_sequence != NULL)
+    {
+      for(unsigned int idx = 0; idx < this->Get_Statement_Count(); idx++)
+	{
+	  AaPhiStatement* pstmt = (AaPhiStatement*) this->Get_Statement(idx);
+	  pstmt->Set_In_Do_While(v);
+	}
+    }
 }
 
 
@@ -4097,15 +4140,15 @@ void AaPlaceStatement::Write_C_Function_Body(ofstream& ofile)
 AaDoWhileStatement::AaDoWhileStatement(AaBranchBlockStatement* scope):AaStatement(scope) 
 {
   this->_test_expression = NULL;
-  this->_phi_sequence = NULL;
+  this->_merge_statement = NULL;
   this->_loop_body_sequence = NULL;
 }
 AaDoWhileStatement::~AaDoWhileStatement() {}
 
 void AaDoWhileStatement::Coalesce_Storage()
 {
-  if(this->_phi_sequence)
-    this->_phi_sequence->Coalesce_Storage();
+  if(this->_merge_statement)
+    this->_merge_statement->Coalesce_Storage();
 
   if(this->_loop_body_sequence)
     this->_loop_body_sequence->Coalesce_Storage();
@@ -4119,8 +4162,7 @@ void AaDoWhileStatement::Print(ostream& ofile)
 
   ofile << this->Tab();
   ofile << "$do " << endl;
-  if(this->_phi_sequence)
-  	this->_phi_sequence->Print(ofile);
+  this->_merge_statement->Print(ofile);
   this->_loop_body_sequence->Print(ofile);
   ofile << " $while " ;
   this->_test_expression->Print(ofile);
@@ -4140,11 +4182,11 @@ void AaDoWhileStatement::Write_C_Function_Body(ofstream& ofile)
 	assert(0);
 }
 
-
-
 void AaDoWhileStatement::Write_VC_Control_Path(ostream& ofile)
 {
-  this->Write_VC_Control_Path(false,ofile);
+  // for the moment, DoWhile is always written in optimized
+  // fashion.
+  this->Write_VC_Control_Path(true,ofile);
 }
 
 void AaDoWhileStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
@@ -4155,38 +4197,82 @@ void AaDoWhileStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofile)
 {
 
+  // in the optimized case, there are two regions in
+  // the CP for the dowhile.  An outer loop region
+  // and an inner fork region for the loop-body.
+  //
+  // the control path for the test expression is
+  // included in the loop body.
+  //
+  // What about the merge statement in the DoWhile?
+  // 
   ofile << "// do-while-statement  ";
   ofile << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
-   // TODO.
+  // the outer region name
   string vc_block_id = "loop_" + Int64ToStr(this->Get_Index());
-  string vc_loop_body_id = _loop_body_sequence->Get_VC_Name();
-  ofile << "$loopblock [" << this->Get_VC_Name() << "] {" << endl;
-  ofile << "$P [loop_back]" << endl;
-  ofile << "$P [condition_done]" << endl;
-  ofile << "$seriesblock [loop_exit] { $T ack } " << endl;
-  ofile << "$seriesblock [loop_taken] { $T ack } " << endl;
 
+  // the inner region name
+  string vc_loop_body_id = _loop_body_sequence->Get_VC_Name();
+
+  // start the outer region
+  ofile << "<o> [" << this->Get_VC_Name() << "] {" << endl;
+
+  // the syntax is very strict about the ordering of
+  // declarations:
+  //    First the loop_back place.
+  ofile << "$P [loop_back]" << endl;
+
+  //    then the condition_done place (which is bound to 
+  //    the condition evaluation transition in the loop body).
+  ofile << "$P [condition_done]" << endl;
+
+  // all the places that are associated with the
+  // PHI sequencers.
+  this->Write_VC_Phi_Places(ofile);
+
+  //    next: the loop_body, which is a pipeline.
+  // to write its control-path, we must pass in the
+  // test-expression as well as the list of PHI statements
+  // which act as sources for the expressions within
+  // the loop body.
   AaScope* pscope = this->Get_Scope();
   assert(pscope->Is("AaBranchBlockStatement"));
+
+  // get the list of Phi-stmts.
+  vector<AaStatement*> phi_stmts;
+  for(unsigned int idx = 0; idx < this->_merge_statement->Get_Statement_Count(); idx++)
+    {
+      phi_stmts.push_back(this->_merge_statement->Get_Statement(idx));
+    }
+
   AaBlockStatement* pstmt = (AaBlockStatement*) pscope;
+  pstmt->Write_VC_Control_Path_Optimized(true, 
+					 this->_test_expression,
+					 _loop_body_sequence,
+					 &phi_stmts,
+					 ofile); 
 
-  
-  
-  pstmt->Write_VC_Control_Path_Optimized(true, this->_test_expression,_loop_body_sequence,ofile); 
+  //    following the loop body, the branch options (exit/taken)
+  ofile << ";; [loop_exit] { $T [ack] } " << endl;
+  ofile << ";; [loop_taken] { $T [ack] } " << endl;
 
-  ofile << "$bind condition_done " << vc_loop_body_id << " : " << " loop_condition_calculated" << endl;
+  //    the binding of the condition_done to the test expression completion.
+  ofile << "$bind condition_done " << vc_loop_body_id << " : " << this->_test_expression->Get_VC_Completed_Transition_Name() << endl;
+
+  //    links.
   ofile << "condition_done |-> (loop_exit loop_taken)" << endl;
   ofile << vc_loop_body_id << " <-| ($entry loopback)" << endl;
+
+  //    the terminator!
   ofile << "$terminate (loop_exit loop_taken " << vc_loop_body_id << ") (loop_back)" << endl;
   ofile << "}" << endl;
 }
 
 void AaDoWhileStatement::Write_VC_Constant_Declarations(ostream& ofile)
 {
-  if(this->_phi_sequence)
-    this->_phi_sequence->Write_VC_Constant_Declarations(ofile);
+  this->_merge_statement->Write_VC_Constant_Declarations(ofile);
   if(this->_loop_body_sequence)
     this->_loop_body_sequence->Write_VC_Constant_Declarations(ofile);
 }
@@ -4202,8 +4288,8 @@ void AaDoWhileStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
   // one wire for the test expression result.
   this->_test_expression->Write_VC_Constant_Wire_Declarations(ofile);
 
- if(this->_phi_sequence)
-    this->_phi_sequence->Write_VC_Constant_Wire_Declarations(ofile);
+ if(this->_merge_statement)
+    this->_merge_statement->Write_VC_Constant_Wire_Declarations(ofile);
 
   if(this->_loop_body_sequence)
     this->_loop_body_sequence->Write_VC_Constant_Wire_Declarations(ofile);
@@ -4218,8 +4304,8 @@ void AaDoWhileStatement::Write_VC_Wire_Declarations(ostream& ofile)
   this->_test_expression->Write_VC_Wire_Declarations(false,ofile);
 
   // wires from the if-sequence
-  if(this->_phi_sequence)
-    this->_phi_sequence->Write_VC_Wire_Declarations(ofile);
+  if(this->_merge_statement)
+    this->_merge_statement->Write_VC_Wire_Declarations(ofile);
 
   // wires from the else-sequence
   if(this->_loop_body_sequence)
@@ -4245,8 +4331,8 @@ void AaDoWhileStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			   branch_inputs,
 			   ofile);
 
-  if(this->_phi_sequence)
-    this->_phi_sequence->Write_VC_Datapath_Instances(ofile);
+  if(this->_merge_statement)
+    this->_merge_statement->Write_VC_Datapath_Instances(ofile);
 
   if(this->_loop_body_sequence)
     this->_loop_body_sequence->Write_VC_Datapath_Instances(ofile);
@@ -4254,7 +4340,7 @@ void AaDoWhileStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
 void AaDoWhileStatement::Write_VC_Links(string hier_id,ostream& ofile)
 {
-  this->Write_VC_Links(false,hier_id,ofile);
+  this->Write_VC_Links(true,hier_id,ofile);
 }
 
 void AaDoWhileStatement::Write_VC_Links_Optimized(string hier_id,ostream& ofile)
@@ -4264,13 +4350,30 @@ void AaDoWhileStatement::Write_VC_Links_Optimized(string hier_id,ostream& ofile)
 
 void AaDoWhileStatement::Write_VC_Links(bool optimize_flag, string hier_id,ostream& ofile)
 {
-
-  ofile << "// CP-DP links for do-while  ";
+  ofile << "// CP-DP links for do-while  " << this->Get_VC_Name();
   ofile << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
+  string this_hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Name());
 
-   // TODO
+  // in the loop body
+  string loop_body_seq_hier_id = Augment_Hier_Id(this_hier_id, _loop_body_sequence->Get_VC_Name());
+  _loop_body_sequence->Write_VC_Links_Optimized(loop_body_seq_hier_id, ofile);
+
+  // test expression sits inside the loop-body.
+  _test_expression->Write_VC_Links_Optimized(loop_body_seq_hier_id,ofile);
+
+  // branch instance..
+  vector<string> reqs;
+  vector<string> acks;
+  // req to branch is produced by completion of test expression..
+  // which is inside the loop-body
+  reqs.push_back(loop_body_seq_hier_id + "/" + _test_expression->Get_VC_Completed_Transition_Name());
+  // acks from branch in loop-exit and loop-taken which are in here.
+  acks.push_back(this_hier_id + "/loop_exit/ack");
+  acks.push_back(this_hier_id + "/loop_taken/ack");
+  string br_inst_name = this->Get_VC_Name() + "_branch";
+  Write_VC_Link(br_inst_name, reqs,acks,ofile);
 }
 
 void AaDoWhileStatement::Propagate_Constants()
@@ -4281,8 +4384,8 @@ void AaDoWhileStatement::Propagate_Constants()
       this->_test_expression->Set_Type(AaProgram::Make_Uinteger_Type(1));
     }
   this->_test_expression->Evaluate();
-  if(this->_phi_sequence)
-    this->_phi_sequence->Propagate_Constants();
+  if(this->_merge_statement)
+    this->_merge_statement->Propagate_Constants();
   if(this->_loop_body_sequence)
     this->_loop_body_sequence->Propagate_Constants();
 }
@@ -4292,3 +4395,25 @@ void AaDoWhileStatement::Get_Target_Places(set<AaPlaceStatement*>& target_places
 	// do nothing.
 }
 
+
+// write out all the places associated with PHI statements
+// in the merge.
+void AaDoWhileStatement::Write_VC_Phi_Places(ostream& ofile)
+{
+  // for each phi statement in the merge, write out 
+  // req places, a req-merge place, an ack place and a done place.
+  assert(0);
+}
+
+// write the Phi-sequencers.
+void AaDoWhileStatement::Write_VC_Phi_Sequencers(ostream& ofile)
+{
+  assert(0);
+}
+
+
+// write the Place-joins.
+void AaDoWhileStatement::Write_VC_Phi_Place_Joins(ostream& ofile)
+{
+  assert(0);
+}

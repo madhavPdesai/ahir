@@ -41,7 +41,8 @@ begin  -- Behave
       owidth =>  data_width*num_reqs,
       twidth =>  tag_length,
       nreqs  => num_reqs,
-      no_arbitration => no_arbitration)
+      no_arbitration => no_arbitration,
+      pipeline_flag => true)
     port map (
       reqL   => mack,                   -- cross-over (mack from mem-subsystem)
       ackL   => mreq,                   -- cross-over 

@@ -139,8 +139,17 @@ public:
 	public: void vc_CPBind(
 		vcCPSimpleLoopBlock* cp
 	);
+	public: void vc_CPPhiSequencer(
+		vcCPSimpleLoopBlock* slb
+	);
+	public: void vc_CPPlaceJoin(
+		vcCPSimpleLoopBlock* slb
+	);
 	public: void vc_CPLoopTerminate(
 		vcCPSimpleLoopBlock* slb
+	);
+	public: void vc_CPTransitionMerge(
+		vcCPPipelinedForkBlock* slb
 	);
 	public: void vc_CPFork(
 		vcCPForkBlock* fb
@@ -234,10 +243,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 132;
+	static const int NUM_TOKENS = 135;
 #else
 	enum {
-		NUM_TOKENS = 132
+		NUM_TOKENS = 135
 	};
 #endif
 	
@@ -301,6 +310,10 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_28;
 	static const unsigned long _tokenSet_29_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_29;
+	static const unsigned long _tokenSet_30_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_30;
+	static const unsigned long _tokenSet_31_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_31;
 };
 
 #endif /*INC_vcParser_hpp_*/

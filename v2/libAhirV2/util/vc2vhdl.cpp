@@ -64,6 +64,8 @@ void Usage_Vc2VHDL()
   cerr <<  " alternate form:  --write_files" << endl;
   cerr <<  " -D :  the generated VHDL will have logging assertions to help debug." << endl;
   cerr <<  " alternate form:  --debug" << endl;
+  cerr <<  " -v :  lots of information will be printed to stderr during analysis." << endl;
+  cerr <<  " alternate form:  --verbose" << endl;
   cerr << endl;
   cerr << endl;
   cerr << "example: " << endl
@@ -107,6 +109,7 @@ int main(int argc, char* argv[])
       {"write_files",  no_argument, 0, 'w'},
       {"vcfile",    required_argument, 0, 'f'},
       {"library",   required_argument, 0, 'L'},
+      {"verbose",  no_argument, 0, 'v'},
       {0, 0, 0, 0}
     };
 
@@ -137,7 +140,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:T:f:OCs:he:waqDL:",
+		      "t:T:f:OCs:he:waqDL:v",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -157,14 +160,14 @@ int main(int argc, char* argv[])
 	case 't':
 	  mod_name = string(optarg);	
 	  top_modules.insert(mod_name);
-	  cerr << "Info: module " << mod_name << " set as one of the top modules " << endl;
+	  cerr << "Info: module " << mod_name << " set as one of the top modules. " << endl;
 	  break;
 	case 'T':
 	  mod_name = string(optarg);	
 	  always_running_top_modules.insert(mod_name);
 	  top_modules.insert(mod_name);
 
-	  cerr << "Info: module " << mod_name << " set as one of the ever-running top modules " << endl;
+	  cerr << "Info: module " << mod_name << " set as one of the ever-running top modules. " << endl;
 	  cerr << "   NOTE: " << mod_name << " cannot have any input/output arguments." << endl;
 	  break;
 	case 'O':
@@ -173,11 +176,11 @@ int main(int argc, char* argv[])
 	  break;
 	case 'a':
 	  vcSystem::_min_area_flag = true;
-	  cerr << "Info: -a option selected: will try for minimum overall circuit area" << endl;
+	  cerr << "Info: -a option selected: will try for minimum overall circuit area." << endl;
 	  break;
 	case 'q':
 	  vcSystem::_min_clock_period_flag = true;
-	  cerr << "Info: -q option selected: will try for minimum clock cycle time (by inserting repeaters)" << endl;
+	  cerr << "Info: -q option selected: will try for minimum clock cycle time (by inserting repeaters)." << endl;
 	  break;
 	case 'e':
 	  sys_name = string(optarg);
@@ -186,24 +189,27 @@ int main(int argc, char* argv[])
 	  break;
 	case 'w':
 	  write_files = true;
-	  cerr << "Info: -w " << sys_name << " will write separate system and testbench VHDL files" << endl; 
+	  cerr << "Info: -w " << sys_name << " will write separate system and testbench VHDL files." << endl; 
 	  break;
 
 	case 'C':
 	  vcSystem::_vhpi_tb_flag = true;
-	  cerr << "Info: -C option selected: will generate testbench which connects to foreign link" << endl;
+	  cerr << "Info: -C option selected: will generate testbench which connects to foreign link." << endl;
 	  break;
-
+	case 'v':
+	  vcSystem::_verbose_flag = true;
+	  cerr << "Info: -v option selected: lots of info will be printed to stderr." << endl;
+	  break;
 	case 's':
 	  sim_id = string(optarg);
 	  if(sim_id == "ghdl")
 	  {
-	     cerr << "Info: -s ghdl option selected: will generate testbench with VHPI link" << endl;
+	     cerr << "Info: -s ghdl option selected: will generate testbench with VHPI link." << endl;
 	     vcSystem::_simulator_prefix = "Vhpi_";
 	  }
 	  else 
           {
-	     cerr << "Info: -s modelsim option selected: will generate testbench with VHPI link" << endl;
+	     cerr << "Info: -s modelsim option selected: will generate testbench with VHPI link." << endl;
           }
 	  break;
         case 'h':
@@ -216,12 +222,12 @@ int main(int argc, char* argv[])
 	case 'L':
 	  lib_location = string(optarg);	
 	  function_libraries.insert(lib_location);
-	  cerr << "Info: will add library  " << lib_location  << endl;
+	  cerr << "Info: will add library  " << lib_location  << "." <<endl;
 	  break;
 
 	case '?':		  // incorrect option
 	  opt_string = opt;
-	  cerr << (string("Error: ") + " illegal option " + opt_string);
+	  cerr << (string("Error: ") + " illegal option " + opt_string + ".");
 	  Usage_Vc2VHDL();
 	  break;
 	default:

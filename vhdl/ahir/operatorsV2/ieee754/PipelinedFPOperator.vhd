@@ -184,7 +184,8 @@ begin  -- Behave
   	owidth =>  owidth*num_reqs,
 	twidth =>  tag_length,
 	nreqs  => num_reqs,
-	no_arbitration => no_arbitration)
+	no_arbitration => no_arbitration,
+        pipeline_flag => true)
     port map (
       reqL   => oreq,
       ackL   => oack,

@@ -404,6 +404,26 @@ bool vcBinarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
   if(!ret_val)
     return(ret_val);
 
+  // a hack for FP pipelined operators, this is to get around 
+  // the fact that constant operands are not treated separately.
+  vcType* input_type =   this->Get_Input_Type();
+  vcType* output_type =  this->Get_Output_Type();
+  string vc_op_id = this->Get_Op_Id();
+  int exp_width, frac_width;  // wasted.
+  bool is_pipelined_float_op = Is_Pipelined_Float_Op(vc_op_id, input_type, output_type, exp_width, frac_width);
+  if(is_pipelined_float_op)
+    {
+
+      // other and this are of the same kind..
+      vcBinarySplitOperator* so = (vcBinarySplitOperator*) other;
+
+      if((input_type == so->Get_Input_Type()) && (output_type == so->Get_Output_Type()))
+	return(true);
+      else
+	return(false);
+    }
+
+  // check for compatibility of wires.. constants have to match by value.
   vector<vcWire*> iw1, iw2;
   this->Append_Inwires(iw1);
   other->Append_Inwires(iw2);

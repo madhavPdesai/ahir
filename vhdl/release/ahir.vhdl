@@ -1768,8 +1768,8 @@ package BaseComponents is
   
   component place
     generic (
-      marking : boolean := false;
-      bypass: boolean := false);
+      capacity : integer := 1;
+      marking : integer := 0);
     port (
       preds : in  BooleanArray;
       succs : in  BooleanArray;
@@ -1810,7 +1810,6 @@ package BaseComponents is
   end component;
 
   component pipeline_interlock 
-    generic (trigger_bypass: boolean; enable_bypass: boolean);
     port (trigger: in boolean;
           enable : in boolean;
           symbol_out : out  boolean;
@@ -1819,17 +1818,13 @@ package BaseComponents is
   end component;
 
   component join is
-    generic (
-      bypass: boolean := false);
-     port ( preds      : in   BooleanArray;
+     port (preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
 	reset: in std_logic);
   end component;
 
   component join2 
-    generic (
-      bypass: boolean := false);
     port ( pred0, pred1      : in   Boolean;
            symbol_out : out  boolean;
            clk: in std_logic;
@@ -1837,9 +1832,7 @@ package BaseComponents is
   end component;
 
   component join_with_input is
-    generic (
-      bypass: boolean := false);
-     port ( preds      : in   BooleanArray;
+     port (preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -1847,9 +1840,8 @@ package BaseComponents is
   end component;
 
   component auto_run 
-  	generic (
-    		use_delay : boolean);
-          port (clk   : in  std_logic;
+    generic (use_delay : boolean);
+    port (clk   : in  std_logic;
     	reset : in  std_logic;
 	start_req: out std_logic;
         start_ack: in std_logic;
@@ -1857,6 +1849,37 @@ package BaseComponents is
         fin_ack: in std_logic);
   end component;
 
+  component loop_terminator 
+      generic (max_iterations_in_flight : integer := 4);
+      port(loop_body_exit: in boolean;
+       loop_continue: in boolean;
+       loop_terminate: in boolean;
+       loop_back: out boolean;
+       loop_exit: out boolean;
+       clk: in std_logic;
+       reset: in std_logic);
+  end component;
+  
+
+  component marked_join is
+     port (preds      : in   BooleanArray;
+           marked_preds      : in   BooleanArray;
+           symbol_out : out  boolean;
+           clk: in std_logic;
+           reset: in std_logic);
+  end component;
+
+  component phi_sequencer 
+    generic (nreqs : integer; nreenables : integer);
+    port (
+      in_places : in BooleanArray(0 to nreqs-1);
+    req_places : out BooleanArray(0 to nreqs-1);
+    ack_place  : in Boolean;
+    reenable_place: in BooleanArray(0 to nreenables-1);  
+    exit_place : out Boolean;
+    clk, reset: in std_logic);
+  end component;
+  
   -----------------------------------------------------------------------------
   -- miscellaneous
   -----------------------------------------------------------------------------
@@ -1932,12 +1955,8 @@ package BaseComponents is
         owidth        : integer;          -- width of output.
         constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
         constant_width: integer;
-        use_constant  : boolean := false;  -- if true, the second operand is
-                                           -- assumed to be the generic
-        zero_delay    : boolean := false;  -- if true, operator result is
-                                           -- registered, but with a bypass, so
-                                           -- that the result is available immediately.
-        flow_through  : boolean := false  -- if true, operator is combinational
+        use_constant  : boolean := false  -- if true, the second operand is
+                                          -- assumed to be the generic
         );
     port (
       -- req -> ack follow pulse protocol
@@ -1971,11 +1990,8 @@ package BaseComponents is
         constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
         constant_width: integer;
         twidth        : integer;          -- tag width
-        use_constant  : boolean := false;  -- if true, the second operand is
+        use_constant  : boolean := false  -- if true, the second operand is
                                            -- provided by the generic.
-        zero_delay    : boolean := false  -- if true, the result is registered,
-                                          -- but with a bypass, so that it is
-                                          -- available immediately.
         );
     port (
       -- req/ack follow level protocol
@@ -2016,7 +2032,6 @@ package BaseComponents is
         constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
         constant_width: integer;
         use_constant  : boolean := false;
-        zero_delay    : boolean := false;
         no_arbitration: boolean := false;
         min_clock_period: boolean := false;
         num_reqs : integer  -- how many requesters?
@@ -2041,7 +2056,6 @@ package BaseComponents is
     generic
       ( g_num_req: integer := 2;
         operator_id: string := "ApIntSle";
-        zero_delay : boolean := false;
         verbose_mode: boolean := false;
         input_data_width: integer := 8;
         output_data_width: integer := 1;
@@ -2054,7 +2068,7 @@ package BaseComponents is
   -- register operator
   -----------------------------------------------------------------------------
   component RegisterBase 
-      generic(in_data_width: integer; out_data_width : integer; flow_through: boolean);
+      generic(in_data_width: integer; out_data_width : integer);
       port(din: in std_logic_vector(in_data_width-1 downto 0);
            dout: out std_logic_vector(out_data_width-1 downto 0);
            req: in boolean;
@@ -2181,7 +2195,7 @@ package BaseComponents is
 
 
   component Slicebase 
-    generic(in_data_width : integer; high_index: integer; low_index : integer; zero_delay : boolean);
+    generic(in_data_width : integer; high_index: integer; low_index : integer);
     port(din: in std_logic_vector(in_data_width-1 downto 0);
          dout: out std_logic_vector(high_index-low_index downto 0);
          req: in boolean;
@@ -2237,7 +2251,8 @@ package BaseComponents is
             owidth: integer;
             twidth: integer;
             nreqs: integer;
-            no_arbitration: Boolean);
+            no_arbitration: Boolean;
+            pipeline_flag : Boolean);
     port (
       -- req/ack follow level protocol
       reqL                 : in  std_logic;
@@ -8431,7 +8446,6 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity join2 is
-  generic(bypass: boolean := true);
   port ( pred0, pred1      : in   Boolean;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -8458,7 +8472,6 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity join is
-  generic (bypass : boolean  := true);
   port ( preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -8478,7 +8491,7 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(marking => false, bypass => bypass)
+	pI: place generic map(capacity => 1, marking => 0)
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;
@@ -8496,7 +8509,6 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity join_with_input is
-  generic (bypass: boolean := true);
   port ( preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
@@ -8516,12 +8528,12 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(marking => false, bypass => bypass)
+	pI: place generic map(capacity => 1, marking => 0)
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;
-  -- The transition is enabled only when all preds are true.
   
+  -- The transition is enabled only when all preds are true.
   symbol_out_sig(0) <= symbol_in and AndReduce(place_sigs);
   symbol_out <= symbol_out_sig(0);
 end default_arch;
@@ -8598,6 +8610,214 @@ begin
 
   
 end default_arch;
+-- loop-terminator element for use in pipelined loops.
+-- written by Madhav P. Desai, December 2012.
+library ieee;
+use ieee.std_logic_1164.all;
+library ahir;
+use ahir.Types.all;
+use ahir.subprograms.all;
+use ahir.BaseComponents.all;
+
+
+entity loop_terminator is
+  
+  generic (max_iterations_in_flight : integer := 4);
+  port(loop_body_exit: in boolean;
+       loop_continue: in boolean;
+       loop_terminate: in boolean;
+       loop_back: out boolean;
+       loop_exit: out boolean;
+       clk: in std_logic;
+       reset: in std_logic);
+
+end loop_terminator;
+
+--
+-- Let M = max iterations in flight.
+--
+-- initialize the counter (at reset) to M-1.
+--
+-- Anytime you see loop-body-exit, increment the
+-- counter
+--
+-- if lc has arrived, and if the counter is > 0,
+-- then emit loop-back, and decrement the counter.
+--
+-- if lt has arrived, wait until the counter reaches M
+-- and then emit loop-exit, resetting the counter to M-1.
+--
+architecture Behave of loop_terminator is
+
+  type FSMState is (idle, pending_continue, pending_exit);
+
+  signal fsm_state : FSMState;
+  signal available_iterations : integer range 0 to max_iterations_in_flight;
+
+  signal lc_place_preds, lc_place_succs : BooleanArray(0 downto 0);
+  signal clear_lc_place, lc_place_token : boolean;
+
+  signal lt_place_preds, lt_place_succs : BooleanArray(0 downto 0);
+  signal clear_lt_place, lt_place_token: boolean;
+
+  signal lbe_place_preds, lbe_place_succs : BooleanArray(0 downto 0);
+  signal clear_lbe_place, lbe_place_token: boolean;  
+  
+begin  -- Behave
+
+  -- places to remember loop-continue, loop-terminate, loop-body-exit
+  lc_place : place generic map (
+    capacity => 1,
+    marking  => 0)
+    port map (
+      preds => lc_place_preds,
+      succs => lc_place_succs,
+      token => lc_place_token,
+      clk   => clk,
+      reset => reset);
+  lc_place_preds(0) <= loop_continue;
+  lc_place_succs(0) <= clear_lc_place;
+
+  lt_place : place generic map (
+    capacity => 1,
+    marking  => 0)
+    port map (
+      preds => lt_place_preds,
+      succs => lt_place_succs,
+      token => lt_place_token,
+      clk   => clk,
+      reset => reset);
+  lt_place_preds(0) <= loop_terminate;
+  lt_place_succs(0) <= clear_lt_place;
+
+
+  lbe_place : place generic map (
+    capacity => 1,
+    marking  => 0)
+    port map (
+      preds => lbe_place_preds,
+      succs => lbe_place_succs,
+      token => lbe_place_token,
+      clk   => clk,
+      reset => reset);
+  lbe_place_preds(0) <= loop_body_exit;
+  lbe_place_succs(0) <= clear_lbe_place;
+  
+  -- state machine:
+  --   inputs
+  --   lc_place_token, lt_place_token, lbe_place_token, available_iterations.
+  --   outputs
+  --   clear_lc_place, clear_lt_place, clear_lbe_place, loop_back,
+  --   loop_exit, available_iterations.
+  --   
+  process(clk, reset)
+    variable next_available_iterations : integer range 0 to max_iterations_in_flight;
+    variable incr,decr,rst : boolean;
+  begin
+    if(clk'event and clk = '1') then
+      -- all outputs are deasserted by default.
+      loop_back <= false;
+      loop_exit <= false;
+      clear_lc_place <= false;
+      clear_lt_place <= false;
+      clear_lbe_place <= false;
+
+      -- incr, decr, rst are used to manage count.
+      incr := false;
+      decr := false;
+      if(reset = '1') then
+        rst := true;
+      else
+        rst := false;
+      end if;
+
+      -- lbe always increments counter.
+      if(lbe_place_token) then
+        incr := true;
+        clear_lbe_place <= true;
+      end if;
+
+      -- loop-continue? emit loop-back if count > 0..
+      -- and decrement count, clear lc place.      
+      if(lc_place_token and (available_iterations > 0)) then
+        decr := true;
+        loop_back <= true;
+        clear_lc_place <= true;
+      end if;
+
+      -- loop-terminate? check if count = M, and emit loop_exit, reset counter.
+      if(lt_place_token and (available_iterations = max_iterations_in_flight)) then
+        rst := true;
+        loop_exit <= true;
+        clear_lt_place <= true;          
+      end if;
+
+      -- manage count.
+      if(rst) then
+        available_iterations <= max_iterations_in_flight - 1;
+      elsif (incr and (not decr)) then
+        available_iterations <= available_iterations + 1;
+      elsif (decr and (not incr)) then
+        available_iterations <= available_iterations - 1;
+      end if;
+      
+    end if;
+  end process;
+  
+end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+library ahir;
+use ahir.Types.all;
+use ahir.subprograms.all;
+use ahir.BaseComponents.all;
+
+entity marked_join is
+  port ( preds      : in   BooleanArray;
+         marked_preds : in BooleanArray;
+    	symbol_out : out  boolean;
+	clk: in std_logic;
+	reset: in std_logic);
+end marked_join;
+
+architecture default_arch of marked_join is
+  signal symbol_out_sig : BooleanArray(0 downto 0);
+  signal place_sigs: BooleanArray(preds'range);
+  signal mplace_sigs: BooleanArray(marked_preds'range);  
+  constant H: integer := preds'high;
+  constant L: integer := preds'low;
+
+  constant MH: integer := marked_preds'high;
+  constant ML: integer := marked_preds'low;  
+
+begin  -- default_arch
+  
+  placegen: for I in H downto L generate
+    placeBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+    begin
+	place_pred(0) <= preds(I);
+	pI: place generic map(capacity => 1, marking => 0)
+		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+    end block;
+  end generate placegen;
+
+  -- the marked places
+  mplacegen: for I in MH downto ML generate
+    mplaceBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+    begin
+	place_pred(0) <= marked_preds(I);
+	mpI: place generic map(capacity => 1, marking => 1)
+		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
+    end block;
+  end generate mplacegen;
+  
+  -- The transition is enabled only when all preds are true.
+  symbol_out_sig(0) <= AndReduce(place_sigs) and AndReduce(mplace_sigs);
+  symbol_out <= symbol_out_sig(0);
+
+end default_arch;
 library ahir;
 use ahir.Types.all;
 use ahir.subprograms.all;
@@ -8616,6 +8836,94 @@ begin  -- default_arch
   symbol_out <= AndReduce(preds);
 
 end default_arch;
+-- phi-sequencer..
+-- written by Madhav P. Desai, December 2012.
+library ieee;
+use ieee.std_logic_1164.all;
+library ahir;
+use ahir.Types.all;
+use ahir.subprograms.all;
+use ahir.BaseComponents.all;
+
+
+entity phi_sequencer  is
+  generic (nreqs : integer; nreenables : integer);
+  port (
+  selects : in BooleanArray(0 to nreqs-1); -- one out of nreqs..
+  reqs : out BooleanArray(0 to nreqs-1); -- one out of nreqs
+  ack  : in Boolean; 
+  reenables: in BooleanArray(0 to nreenables-1);   -- all need to arrive to reenable
+  done : out Boolean;
+  clk, reset: in std_logic);
+end phi_sequencer;
+
+
+-- on reset, wait for a transition on any of the in_places.
+-- the corresponding req is asserted..  A reenable place
+-- is also present to allow the reenabling of the sequence.
+architecture Behave of phi_sequencer is
+  signal select_token, select_clear : BooleanArray(0 to nreqs-1);
+  signal reenable_token, reenable_clear : BooleanArray(0 to nreenables-1);
+
+  signal enabled, ack_token, ack_clear, req_fired: Boolean;
+begin  -- Behave
+
+  -- instantiate unmarked places for the in_places.
+  InPlaces: for I in 0 to nreqs-1 generate
+    placeBlock: block
+	signal place_pred, place_succ: BooleanArray(0 downto 0);
+    begin
+	place_pred(0) <= selects(I);
+	place_succ(0) <= select_clear(I);
+	pI: place generic map(capacity => 1, marking => 0)
+		port map(place_pred,place_succ,select_token(I),clk,reset);
+    end block;
+  end generate InPlaces;
+
+  -- place for reenable: places are unmarked.. initial state
+  -- should be consistently generated by the instantiator.
+  ReenablePlaces: for J in 0 to nreenables-1 generate
+    rnb_block: block
+      signal place_pred, place_succ: BooleanArray(0 downto 0);    
+    begin
+      place_pred(0) <= reenables(J);
+      place_succ(0) <= reenable_clear(J);
+      pRnb: place generic map(capacity => 1, marking => 1)
+        port map(place_pred,place_succ,reenable_token(J),clk,reset);    
+    end block;
+  end generate ReenablePlaces;  
+    
+ 
+  -- sequencer is enabled by this sig.
+  enabled <= AndReduce(reenable_token) and ack_token;
+
+  -- a marker to indicate that a req has been fired.
+  req_fired <= OrReduce(select_token) and enabled;
+
+  -- outgoing reqs, etc.
+  reqs <= select_token when enabled else (others => false);
+  select_clear <= select_token when enabled else (others => false);
+  reenable_clear <= (others => true) when (enabled and req_fired)
+                          else (others => false);
+
+  -- ack should be received to reenable the sequencer.
+  -- this place is initially marked (it is internal
+  -- to the sequencer).
+  ack_clear <= req_fired;
+  ack_block: block
+      signal place_pred: BooleanArray(0 downto 0);    
+      signal place_succ: BooleanArray(0 downto 0);    
+  begin
+      place_pred(0) <= ack;
+      place_succ(0) <= ack_clear;
+      pack: place generic map(capacity => 1, marking => 1)
+        port map(place_pred,place_succ,ack_token,clk,reset);    
+  end block;
+  
+  -- outgoing exit.. is the incoming ack..
+  done <= ack;
+
+end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
 library ahir;
@@ -8624,8 +8932,6 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity pipeline_interlock is
-  generic (trigger_bypass: boolean := true;
-	   enable_bypass : boolean := true);
   port (trigger: in boolean;
         enable : in boolean;
     	symbol_out : out  boolean;
@@ -8645,11 +8951,11 @@ begin  -- default_arch
   
 
   trigger_place_pred(0) <= trigger;
-  pTrig: place generic map(marking => false, bypass => trigger_bypass)
+  pTrig: place generic map(capacity => 1, marking => 0)
     port map(trigger_place_pred, symbol_out_sig,trigger_place,clk,reset);
 
   enable_place_pred(0) <= enable;
-  pEnable: place generic map(marking => true, bypass => enable_bypass)
+  pEnable: place generic map(capacity => 1, marking => 1)
     port map(enable_place_pred, symbol_out_sig,enable_place,clk,reset);
   
   symbol_out_sig(0) <= enable_place and trigger_place;
@@ -8666,8 +8972,8 @@ use ahir.Subprograms.all;
 entity place is
 
   generic (
-    marking : boolean := false;
-    bypass : boolean := false
+    capacity: integer := 1;
+    marking : integer := 0
     );
   port (
     preds : in  BooleanArray;
@@ -8683,15 +8989,18 @@ architecture default_arch of place is
   signal incoming_token : boolean;      -- true if a pred fires
   signal backward_reset : boolean;      -- true if a succ fires
   signal token_sig      : boolean;  -- asynchronously computed value of the token
-  signal token_latch    : boolean;
+  signal token_latch    : integer range 0 to capacity;
   
 begin  -- default_arch
 
-  -- Atmost one of the preds can send a pulse.
+  assert capacity > 0 report "place must have capacity > 1" severity error;
+  assert marking <= capacity report "initial marking must be less than place capacity" severity error;
+
+  -- At most one of the preds can send a pulse.
   -- We detect it with an OR over all inputs
   incoming_token <= OrReduce(preds);
 
-  -- Atmost one of the succs can send a pulse.
+  -- At most one of the succs can send a pulse.
   -- We detect it with an OR over all inputs
   backward_reset <= OrReduce(succs);
 
@@ -8702,23 +9011,17 @@ begin  -- default_arch
     if clk'event and clk = '1' then  -- rising clock edge
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
-      elsif backward_reset then
-        token_latch <= false;
-      else
-        token_latch <= token_sig;
+      elsif (backward_reset and (not incoming_token)) then
+        assert token_latch > 0 report "number of tokens cannot become negative!" severity error;
+        token_latch <= token_latch - 1;
+      elsif (incoming_token and (not backward_reset)) then
+        assert token_latch < capacity report "number of tokens cannot exceed capacity" severity error;
+        token_latch <= token_latch + 1;
       end if;
     end if;
   end process latch_token;
-  
-  token_sig <= true when incoming_token else token_latch;    
 
-  bypassGen: if bypass generate
-    token <= token_sig;    
-  end generate bypassGen;
-
-  noBypassGen: if not bypass generate
-    token <= token_latch;        
-  end generate noBypassGen;
+  token <= true when (token_latch > 0) else false;
 
 end default_arch;
 library ahir;
@@ -8726,12 +9029,10 @@ use ahir.Types.all;
 use ahir.subprograms.all;
 
 entity transition is
-  
   port (
     preds      : in   BooleanArray;
     symbol_in  : in   boolean;
     symbol_out : out  boolean);
-
 end transition;
 
 architecture default_arch of transition is
@@ -9711,7 +10012,8 @@ begin  -- Behave
       owidth =>  data_width*num_reqs,
       twidth =>  tag_length,
       nreqs  => num_reqs,
-      no_arbitration => no_arbitration)
+      no_arbitration => no_arbitration,
+      pipeline_flag => true)
     port map (
       reqL   => mack,                   -- cross-over (mack from mem-subsystem)
       ackL   => mreq,                   -- cross-over 
@@ -9768,7 +10070,10 @@ architecture Vanilla of LoadReqShared is
   constant owidth: integer := addr_width;
 
   constant debug_flag : boolean := false;
-  constant registered_output : boolean := min_clock_period and (time_stamp_width = 0);
+-- constant registered_output : boolean := min_clock_period and (time_stamp_width = 0);
+
+  -- must register..  ack implies that address has been sampled.
+  constant registered_output : boolean := true; 
 
   signal imux_tag_out: std_logic_vector(tag_length-1 downto 0);
   
@@ -10063,7 +10368,8 @@ entity OutputDeMuxBase is
 	  owidth: integer := 12;
 	  twidth: integer := 2;
 	  nreqs: integer := 3;
-	  no_arbitration: Boolean := true);
+	  no_arbitration: Boolean;
+          pipeline_flag: Boolean);
   port (
     -- req/ack follow level protocol
     reqL                 : in  std_logic;
@@ -10084,25 +10390,16 @@ end OutputDeMuxBase;
 architecture Behave of OutputDeMuxBase is
 
   type WordArray is array (natural range <>) of std_logic_vector(iwidth-1 downto 0);
-  signal dfinal: WordArray(nreqs-1 downto 0);
+  signal dfinal, dfinal_reg: WordArray(nreqs-1 downto 0);
 
   signal ackL_sig : std_logic_vector(nreqs-1 downto 0);
+  signal ackR_sig : BooleanArray(nreqs-1 downto 0);
+  
 begin  -- Behave
 
   assert(owidth = iwidth*nreqs) report "word-length mismatch in output demux" severity failure;
 
-  -----------------------------------------------------------------------------
-  -- dataR
-  -----------------------------------------------------------------------------
-  process(dfinal)
-    variable dataRv : std_logic_vector(dataR'high downto dataR'low);
-  begin
-    for I in dfinal'range loop
-      Insert(dataRv,I,dfinal(I));
-    end loop;
-    dataR <= dataRv;
-  end process;
-
+  
   -----------------------------------------------------------------------------
   -- parallel generate across all requesters
   -----------------------------------------------------------------------------
@@ -10193,7 +10490,7 @@ begin  -- Behave
           nstate := '0';
         end if;        
 
-        ackR(I) <= aR_var;
+        ackR_sig(I) <= aR_var;
         lhs_clear <= lhs_clear_var;
         
         if(clk'event and clk = '1') then
@@ -10209,6 +10506,60 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   ackL <= OrReduce(ackL_sig);
 
+  -----------------------------------------------------------------------------
+  -- non-pipelined case, ackR_sig goes straight to ackR, dfinal goes to dataR
+  -----------------------------------------------------------------------------
+  Nonpipelined: if (not pipeline_flag) generate
+
+    ackR <= ackR_sig;
+
+    process(dfinal)
+      variable dataRv : std_logic_vector(dataR'high downto dataR'low);
+    begin
+      for I in dfinal'range loop
+        Insert(dataRv,I,dfinal(I));
+      end loop;
+      dataR <= dataRv;
+    end process;
+    
+  end generate Nonpipelined;  
+
+  -----------------------------------------------------------------------------
+  -- pipelined case, ackR_sig delayed to ackR, dfinal delayed to dataR
+  -----------------------------------------------------------------------------
+  Pipelined: if pipeline_flag generate
+
+    process(clk,reset)
+    begin
+      if(clk'event and clk = '1') then
+        if(reset = '1') then
+          ackR <= (others => false);
+        else
+          ackR <= ackR_sig;
+        end if;
+      end if;
+    end process;
+
+    Freggen: for I in 0 to nreqs-1 generate
+      process(clk)
+      begin
+        if(clk'event and clk = '1') then
+          if(ackR_sig(I)) then
+            dfinal_reg(I) <= dfinal(I);
+          end if;
+        end if;
+      end process;
+    end generate Freggen;
+
+    process(dfinal_reg)
+      variable dataRv : std_logic_vector(dataR'high downto dataR'low);
+    begin
+      for I in dfinal_reg'range loop
+        Insert(dataRv,I,dfinal_reg(I));
+      end loop;
+      dataR <= dataRv;
+    end process;
+  end generate Pipelined;
 
 end Behave;
 library ieee;
@@ -10716,57 +11067,57 @@ begin  -- Behave
   aL <= true when (pull_mode_state = Ack) else false;
       
 end Behave;
-	library ieee;
-	use ieee.std_logic_1164.all;
-	use ieee.numeric_std.all;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 
-	entity QueueBase is
-	    generic(queue_depth: integer := 2; data_width: integer := 32);
-	    port(clk: in std_logic;
-		 reset: in std_logic;
-		 data_in: in std_logic_vector(data_width-1 downto 0);
-		 push_req: in std_logic;
-		 push_ack: out std_logic;
-		 data_out: out std_logic_vector(data_width-1 downto 0);
-		 pop_ack : out std_logic;
-		 pop_req: in std_logic);
-	end entity QueueBase;
+entity QueueBase is
+  generic(queue_depth: integer := 2; data_width: integer := 32);
+  port(clk: in std_logic;
+       reset: in std_logic;
+       data_in: in std_logic_vector(data_width-1 downto 0);
+       push_req: in std_logic;
+       push_ack: out std_logic;
+       data_out: out std_logic_vector(data_width-1 downto 0);
+       pop_ack : out std_logic;
+       pop_req: in std_logic);
+end entity QueueBase;
 
-	architecture behave of QueueBase is
+architecture behave of QueueBase is
 
-	  type QueueArray is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
+  type QueueArray is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
 
-	  signal queue_array : QueueArray(queue_depth-1 downto 0);
-	  signal read_pointer, write_pointer : integer range 0 to queue_depth-1;
-	  signal queue_size : integer range 0 to queue_depth;
+  signal queue_array : QueueArray(queue_depth-1 downto 0);
+  signal read_pointer, write_pointer : integer range 0 to queue_depth-1;
+  signal queue_size : integer range 0 to queue_depth;
 
-	  function Incr(x: integer; M: integer) return integer is
-	  begin
-	    if(x < M) then
-	      return(x + 1);
-	    else
-	      return(0);
-	    end if;
-	  end Incr;
+  function Incr(x: integer; M: integer) return integer is
+  begin
+    if(x < M) then
+      return(x + 1);
+    else
+      return(0);
+    end if;
+  end Incr;
 
-	begin  -- SimModel
+begin  -- SimModel
 
-	  push_ack <= '1' when (queue_size < queue_depth) else '0';
-	  pop_ack  <= '1' when (queue_size > 0) else '0';
+  push_ack <= '1' when (queue_size < queue_depth) else '0';
+  pop_ack  <= '1' when (queue_size > 0) else '0';
 
-	  -- bottom pointer gives the data in FIFO mode..
-	  data_out <= queue_array(read_pointer);
-	  
-	  -- single process
-	  process(clk)
-	    variable qsize : integer range 0 to queue_depth;
-	    variable push,pop : boolean;
-	    variable next_read_ptr,next_write_ptr : integer range 0 to queue_depth-1;
-	  begin
-	    qsize := queue_size;
-	    push  := false;
-	    pop   := false;
+  -- bottom pointer gives the data in FIFO mode..
+  data_out <= queue_array(read_pointer);
+  
+  -- single process
+  process(clk)
+    variable qsize : integer range 0 to queue_depth;
+    variable push,pop : boolean;
+    variable next_read_ptr,next_write_ptr : integer range 0 to queue_depth-1;
+  begin
+    qsize := queue_size;
+    push  := false;
+    pop   := false;
     next_read_ptr := read_pointer;
     next_write_ptr := write_pointer;
     
@@ -10785,11 +11136,11 @@ end Behave;
 
 
       if(push) then
-           next_write_ptr := Incr(next_write_ptr,queue_depth-1);
+        next_write_ptr := Incr(next_write_ptr,queue_depth-1);
       end if;
 
       if(pop) then
-       	  next_read_ptr := Incr(next_read_ptr,queue_depth-1);
+        next_read_ptr := Incr(next_read_ptr,queue_depth-1);
       end if;
 
 
@@ -10822,10 +11173,9 @@ use ahir.Types.all;
 use ahir.Utilities.all;
 use ahir.Subprograms.all;
 
--- a simple register! if flow-through is set, then
--- it is just a combinational circuit.
+-- a simple register
 entity RegisterBase is
-  generic(in_data_width: integer; out_data_width: integer; flow_through: boolean := false);
+  generic(in_data_width: integer; out_data_width: integer);
   port(din: in std_logic_vector(in_data_width-1 downto 0);
        dout: out std_logic_vector(out_data_width-1 downto 0);
        req: in boolean;
@@ -10837,9 +11187,7 @@ end RegisterBase;
 architecture arch of RegisterBase is
   constant min_data_width : integer := Minimum(in_data_width,out_data_width);
 begin
-
-  NoFlowThrough: if not flow_through generate
-    process(din,req,reset,clk)
+  process(din,req,reset,clk)
     begin
       if(clk'event and clk = '1') then
         if(reset = '1') then
@@ -10852,20 +11200,7 @@ begin
           ack <= false;
         end if;
       end if;
-    end process;
-  end generate NoFlowThrough;
-
-  FlowThrough: if flow_through generate
-    ack <= req;
-    process(din)
-      variable dout_var : std_logic_vector(out_data_width-1 downto 0);
-    begin
-      dout_var := (others => '0');
-      dout_var(min_data_width-1 downto 0) := din(min_data_width-1 downto 0);
-      dout <= dout_var;
-    end process;
-  end generate FlowThrough;
-  
+  end process;
 end arch;
 
 library ieee;
@@ -12144,8 +12479,7 @@ entity SplitOperatorBase is
       constant_operand : std_logic_vector := "0001"; -- constant operand.. (it is always the second operand)
       constant_width: integer := 4;
       twidth        : integer := 1;          -- tag width
-      use_constant  : boolean := true;
-      zero_delay    : boolean := false
+      use_constant  : boolean := true
       );
   port (
     -- req/ack follow level protocol
@@ -12236,7 +12570,6 @@ entity SplitOperatorShared is
       constant_operand : std_logic_vector := "0001"; -- constant operand.. (it is always the second operand)
       constant_width: integer := 4;
       use_constant  : boolean := true;
-      zero_delay    : boolean := false;
       no_arbitration: boolean := true;
       min_clock_period: boolean := false;
       num_reqs : integer := 3 -- how many requesters?
@@ -12262,14 +12595,6 @@ architecture Vanilla of SplitOperatorShared is
   
   constant ignore_tag  : boolean := no_arbitration or (reqL'length = 1);
 
-  -- NOTE: the following combination is not allowed
-  --       zero_delay = true and ignore_tag = false and reqL'length =1
-  --       because it leads to a zero-delay cycle inside the shared operator 
-  --
-  -- THUS: if an operator is shared by mutually non-exclusive requesters,
-  --       (non-compatible operators), then it CANNOT be zero_delay.
-  --       This is explicitly blocked out by using the following constant
-  constant use_zero_delay : boolean := zero_delay and ((reqL'length = 1) or ignore_tag);
   signal idata : std_logic_vector(iwidth-1 downto 0);
   signal odata: std_logic_vector(owidth-1 downto 0);
 
@@ -12282,8 +12607,6 @@ architecture Vanilla of SplitOperatorShared is
 begin  -- Behave
   assert ackL'length = reqL'length report "mismatched req/ack vectors" severity error;
   
-  assert (not zero_delay) or use_zero_delay
-    report "Zero delay flag ignored for shared operators which are not exclusive " severity warning;
 
   DebugGen: if debug_flag generate 
     assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
@@ -12296,7 +12619,7 @@ begin  -- Behave
                 twidth => tag_length,
                 nreqs => num_reqs,
                 no_arbitration => no_arbitration,
-                registered_output => min_clock_period)
+                registered_output => true)
     port map(
       reqL       => reqL,
       ackL       => ackL,
@@ -12327,8 +12650,7 @@ begin  -- Behave
       constant_operand => constant_operand,
       constant_width => constant_width,
       twidth     => tag_length,
-      use_constant => use_constant,
-      zero_delay  => zero_delay
+      use_constant => use_constant
       )
     port map (
       reqL => ireq,
@@ -12349,7 +12671,8 @@ begin  -- Behave
   	owidth =>  owidth*num_reqs,
 	twidth =>  tag_length,
 	nreqs  => num_reqs,
-	no_arbitration => no_arbitration)
+	no_arbitration => no_arbitration,
+        pipeline_flag => true)
     port map (
       reqL   => oreq,
       ackL   => oack,
@@ -12466,7 +12789,10 @@ architecture Vanilla of StoreReqShared is
   signal odata: std_logic_vector((addr_width+data_width)-1 downto 0);
 
   constant debug_flag : boolean := false;
-  constant registered_output: boolean := min_clock_period and (time_stamp_width = 0);
+--  constant registered_output: boolean := min_clock_period and (time_stamp_width = 0);
+
+  -- must register..  ack implies that address has been sampled.
+  constant registered_output: boolean := true;
 
   
   signal imux_tag_out: std_logic_vector(tag_length-1 downto 0);
@@ -12955,9 +13281,7 @@ entity UnsharedOperatorBase is
       owidth        : integer;          -- width of output.
       constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
       constant_width : integer;
-      use_constant  : boolean := false;
-      zero_delay    : boolean := false;
-      flow_through  : boolean := false
+      use_constant  : boolean := false
       );
   port (
     -- req -> ack follow pulse protocol
@@ -12973,18 +13297,40 @@ end UnsharedOperatorBase;
 
 
 architecture Vanilla of UnsharedOperatorBase is
+  signal dataL_reg      : std_logic_vector(iwidth_1 + iwidth_2 - 1 downto 0);  
   signal   result: std_logic_vector(owidth-1 downto 0);
   signal   state_sig : std_logic;
   constant iwidth : integer := iwidth_1  + iwidth_2;
   signal   enable_data_reg : std_logic;
-  
+
 begin  -- Behave
 
 
   assert((num_inputs = 1) or (num_inputs = 2)) report "either 1 or 2 inputs" severity failure;
 
-  ackR <= reqR;                         -- all action on reqL->ackL
+  -----------------------------------------------------------------------------
+  -- sample the inputs..
+  -----------------------------------------------------------------------------
+  process(clk,reset)
+  begin
+    if(clk'event and clk = '1') then
+      if(reset = '1') then
+        ackL <= false;
+      else
+        ackL <= reqL;
+      end if;
 
+      if(reqL) then
+        dataL_reg <= dataL;
+      end if;
+    end if;
+  end process;
+  
+
+  -----------------------------------------------------------------------------
+  -- combinational block..
+  -----------------------------------------------------------------------------
+  
   comb_block: GenericCombinationalOperator
     generic map (
       operator_id                 => operator_id,
@@ -13004,59 +13350,27 @@ begin  -- Behave
       constant_operand            => constant_operand,
       constant_width              => constant_width,
       use_constant                => use_constant)
-    port map (
-      data_in => dataL,
-      result  => result);
+    port map (data_in => dataL_reg, result  => result);
 
-  FlowThrough: if flow_through generate
-    ackL <= reqL;
-    dataR <= result;
-  end generate FlowThrough;
 
-  ZeroDelay: if ((not flow_through) and zero_delay) generate
-
-    ackL <= reqL;
-    enable_data_reg <= '1' when reqL  else '0';
-
-    dreg : BypassRegister generic map (
-      data_width    => owidth,
-      enable_bypass => true)
-      port map (
-        clk      => clk,
-        reset    => reset,
-        enable   => enable_data_reg,
-        data_in  => result,
-        data_out => dataR);
-    
-  end generate ZeroDelay;
-
-  NonZeroDelay: if ((not flow_through) and (not zero_delay)) generate
-
-    process(clk)
-    begin
-      if(clk'event and clk = '1') then
-        if(reset = '1') then
-          ackL <= false;
-        else
-          ackL <= reqL;
-        end if;
+  -----------------------------------------------------------------------------
+  -- sample the output
+  -----------------------------------------------------------------------------
+  process(clk,reset)
+  begin
+    if(clk'event and clk = '1') then
+      if(reset = '1') then
+        ackR <= false;
+      else
+        ackR <= reqR;
       end if;
-    end process;
 
-    enable_data_reg <= '1' when reqL  else '0';
-
-    dreg : BypassRegister generic map (
-      data_width    => owidth,
-      enable_bypass => false)
-      port map (
-        clk      => clk,
-        reset    => reset,
-        enable   => enable_data_reg,
-        data_in  => result,
-        data_out => dataR);
-  
-  end generate NonZeroDelay;
-  
+      if(reqR) then
+        dataR <= result;
+      end if;
+    end if;
+  end process;
+    
 end Vanilla;
 
 -------------------------------------------------------------------------------
@@ -15463,7 +15777,8 @@ begin  -- Behave
   	owidth =>  owidth*num_reqs,
 	twidth =>  tag_length,
 	nreqs  => num_reqs,
-	no_arbitration => no_arbitration)
+	no_arbitration => no_arbitration,
+        pipeline_flag => true)
     port map (
       reqL   => oreq,
       ackL   => oack,

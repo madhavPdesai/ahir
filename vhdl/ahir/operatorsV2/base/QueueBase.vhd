@@ -1,54 +1,54 @@
-	library ieee;
-	use ieee.std_logic_1164.all;
-	use ieee.numeric_std.all;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 
-	entity QueueBase is
-	    generic(queue_depth: integer := 2; data_width: integer := 32);
-	    port(clk: in std_logic;
-		 reset: in std_logic;
-		 data_in: in std_logic_vector(data_width-1 downto 0);
-		 push_req: in std_logic;
-		 push_ack: out std_logic;
-		 data_out: out std_logic_vector(data_width-1 downto 0);
-		 pop_ack : out std_logic;
-		 pop_req: in std_logic);
-	end entity QueueBase;
+entity QueueBase is
+  generic(queue_depth: integer := 2; data_width: integer := 32);
+  port(clk: in std_logic;
+       reset: in std_logic;
+       data_in: in std_logic_vector(data_width-1 downto 0);
+       push_req: in std_logic;
+       push_ack: out std_logic;
+       data_out: out std_logic_vector(data_width-1 downto 0);
+       pop_ack : out std_logic;
+       pop_req: in std_logic);
+end entity QueueBase;
 
-	architecture behave of QueueBase is
+architecture behave of QueueBase is
 
-	  type QueueArray is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
+  type QueueArray is array(natural range <>) of std_logic_vector(data_width-1 downto 0);
 
-	  signal queue_array : QueueArray(queue_depth-1 downto 0);
-	  signal read_pointer, write_pointer : integer range 0 to queue_depth-1;
-	  signal queue_size : integer range 0 to queue_depth;
+  signal queue_array : QueueArray(queue_depth-1 downto 0);
+  signal read_pointer, write_pointer : integer range 0 to queue_depth-1;
+  signal queue_size : integer range 0 to queue_depth;
 
-	  function Incr(x: integer; M: integer) return integer is
-	  begin
-	    if(x < M) then
-	      return(x + 1);
-	    else
-	      return(0);
-	    end if;
-	  end Incr;
+  function Incr(x: integer; M: integer) return integer is
+  begin
+    if(x < M) then
+      return(x + 1);
+    else
+      return(0);
+    end if;
+  end Incr;
 
-	begin  -- SimModel
+begin  -- SimModel
 
-	  push_ack <= '1' when (queue_size < queue_depth) else '0';
-	  pop_ack  <= '1' when (queue_size > 0) else '0';
+  push_ack <= '1' when (queue_size < queue_depth) else '0';
+  pop_ack  <= '1' when (queue_size > 0) else '0';
 
-	  -- bottom pointer gives the data in FIFO mode..
-	  data_out <= queue_array(read_pointer);
-	  
-	  -- single process
-	  process(clk)
-	    variable qsize : integer range 0 to queue_depth;
-	    variable push,pop : boolean;
-	    variable next_read_ptr,next_write_ptr : integer range 0 to queue_depth-1;
-	  begin
-	    qsize := queue_size;
-	    push  := false;
-	    pop   := false;
+  -- bottom pointer gives the data in FIFO mode..
+  data_out <= queue_array(read_pointer);
+  
+  -- single process
+  process(clk)
+    variable qsize : integer range 0 to queue_depth;
+    variable push,pop : boolean;
+    variable next_read_ptr,next_write_ptr : integer range 0 to queue_depth-1;
+  begin
+    qsize := queue_size;
+    push  := false;
+    pop   := false;
     next_read_ptr := read_pointer;
     next_write_ptr := write_pointer;
     
@@ -67,11 +67,11 @@
 
 
       if(push) then
-           next_write_ptr := Incr(next_write_ptr,queue_depth-1);
+        next_write_ptr := Incr(next_write_ptr,queue_depth-1);
       end if;
 
       if(pop) then
-       	  next_read_ptr := Incr(next_read_ptr,queue_depth-1);
+        next_read_ptr := Incr(next_read_ptr,queue_depth-1);
       end if;
 
 

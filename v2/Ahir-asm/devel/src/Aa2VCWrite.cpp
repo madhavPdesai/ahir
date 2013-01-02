@@ -442,7 +442,13 @@ void Write_VC_Pipe_Dependency(bool pipeline_flag,
 			      ostream& ofile)
 {
   string tgt_start = (tgt->Get_VC_Start_Transition_Name());
-  ofile << tgt_start << " <-& (" <<  src->Get_VC_Complete_Region_Name() << ")" << endl;
+  __J(tgt_start,src->Get_VC_Complete_Region_Name());
+  if(pipeline_flag)
+    {
+      // src can restart only after target completes.
+      string src_start = (src->Get_VC_Start_Transition_Name());
+      __MJ(src_start, tgt->Get_VC_Complete_Region_Name());
+    }
 }
 
 void Write_VC_RAW_Release_Deps(AaRoot* succ, set<AaRoot*>& preds) {assert(0);}

@@ -67,14 +67,12 @@ class AaRoot
     return(this->Get_VC_Name() + "_completed_");
   }
 
-  virtual string Get_VC_Successor_Triggering_Transition_Name()
-  {
-    return(this->Get_VC_Completed_Transition_Name());
+  virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements) {
+    return(this->Get_VC_Active_Transition_Name());    
   }
 
-  virtual string Get_VC_Predecessor_Releasing_Transition_Name()
-  {
-    return(this->Get_VC_Active_Transition_Name());
+  virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements) {
+    return(this->Get_VC_Start_Transition_Name());    
   }
 
 

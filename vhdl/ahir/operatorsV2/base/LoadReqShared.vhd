@@ -40,7 +40,10 @@ architecture Vanilla of LoadReqShared is
   constant owidth: integer := addr_width;
 
   constant debug_flag : boolean := false;
-  constant registered_output : boolean := min_clock_period and (time_stamp_width = 0);
+-- constant registered_output : boolean := min_clock_period and (time_stamp_width = 0);
+
+  -- must register..  ack implies that address has been sampled.
+  constant registered_output : boolean := true; 
 
   signal imux_tag_out: std_logic_vector(tag_length-1 downto 0);
   

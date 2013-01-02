@@ -3,12 +3,10 @@ use ahir.Types.all;
 use ahir.subprograms.all;
 
 entity transition is
-  
   port (
     preds      : in   BooleanArray;
     symbol_in  : in   boolean;
     symbol_out : out  boolean);
-
 end transition;
 
 architecture default_arch of transition is

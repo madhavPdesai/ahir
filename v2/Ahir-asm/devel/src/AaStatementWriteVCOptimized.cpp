@@ -59,6 +59,17 @@ void AaAssignmentStatement::Write_VC_WAR_Dependencies(bool pipeline_flag,
 }
 
 
+// New addition: the pipeline-flag.
+// In this case, in addition to the data-dependency, the following pipeline 
+// release dependencies is added.
+// 
+//    the source expression can be updated as soon
+//    as the target has used the previous result of the source.
+//
+//    the guard expression can be updated as soon
+//    as the statement has completed.
+//
+//
 void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 							    set<AaRoot*>& visited_elements,
 							    map<string, vector<AaExpression*> >& ls_map,
@@ -73,23 +84,32 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       ofile << "// " << this->Get_Source_Info() << endl;
 
 
+      __T(this->Get_VC_Start_Transition_Name());
       __T(this->Get_VC_Active_Transition_Name());
       __T(this->Get_VC_Completed_Transition_Name());
+
+      __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
 
       // take care of the guard
       if(this->_guard_expression)
 	{
 	  // guard expression calculation
 	  this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
-
-	  // dependency between guard-expression calculation and this statement.
-	  __J(this->Get_VC_Active_Transition_Name(),this->_guard_expression->Get_VC_Completed_Transition_Name());
-
-	  // release predecessor.
-	  if(pipeline_flag)
+	  if(!this->_guard_expression->Is_Constant())
 	    {
-	      this->Write_VC_RAW_Release_Dependencies(this->_guard_expression,visited_elements);
+	      // dependency between guard-expression calculation and this statement.
+	      __J(this->Get_VC_Active_Transition_Name(),this->_guard_expression->Get_VC_Completed_Transition_Name());
+
+	      // pipeline_flag?  guard-expression evaluation is reenabled by 
+	      // this statement's completion.
+	      if(pipeline_flag)
+		{
+		  __MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements),
+		       this->Get_VC_Completed_Transition_Name());
+		}
+
 	    }
+
 	}
 
       // write the source side expressions and their 
@@ -102,6 +122,13 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 							 ofile);
 	  
 	  __J(this->Get_VC_Active_Transition_Name(), _source->Get_VC_Completed_Transition_Name());
+
+	  // pipeline flag?  statement should reenable source activation..
+	  if(pipeline_flag)
+	    {
+	      __MJ(_source->Get_VC_Reenable_Update_Transition_Name(visited_elements),
+		   this->Get_VC_Active_Transition_Name());
+	    }
 	}
       
 
@@ -114,16 +141,26 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 							       ofile);
 
 
-
-
       if(!this->_target->Is_Implicit_Variable_Reference())
 	{
 	  __J(_target->Get_VC_Start_Transition_Name(),this->Get_VC_Active_Transition_Name());
 	  __J(this->Get_VC_Completed_Transition_Name(), _target->Get_VC_Completed_Transition_Name());
+
+	  // pipeline_flag?  target should reenable activation of statement.
+	  if(pipeline_flag)
+	    {
+	      __MJ(this->Get_VC_Reenable_Update_Transition_Name(visited_elements), _target->Get_VC_Active_Transition_Name());
+	    }
 	}
       else
 	{
 	  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Active_Transition_Name());
+
+	  // pipeline_flag, trivial target.
+	  if(pipeline_flag)
+	    {
+	      // self-release.. done below.
+	    }
 	}
 
 
@@ -138,8 +175,9 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  ofile << "$T [req] $T [ack] // register." << endl;
 	  ofile << "}" << endl;
 	  
-	  __F(this->Get_VC_Active_Transition_Name(), this->Get_VC_Name() + "_register");
-	  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Name() + "_register");
+	  __F(this->Get_VC_Start_Transition_Name(), this->Get_VC_Name() + "_register");
+	  __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Name() + "_register");
+	  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Active_Transition_Name());
 
 	}
       
@@ -158,7 +196,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
       if(pipeline_flag)
 	{
-	  this->_target->Write_VC_RAW_Release_Dependencies(this->_source,visited_elements);
+	  __SelfRelease
 	}
     }
 }  
@@ -205,27 +243,29 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
+  // trigger the call after the input arguments
+  // have been computed..
+  string call_trigger = this->Get_VC_Start_Transition_Name();
+  __T(call_trigger);
+  string in_progress = this->Get_VC_Active_Transition_Name();
+  __T(in_progress);
+  string call_completed = this->Get_VC_Name() + "_call_complete";
+  __T(call_completed);
+  string completed = this->Get_VC_Completed_Transition_Name();
+  __T(completed);
+
   // take care of the guard
   if(this->_guard_expression)
     {
       this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
       __J(this->Get_VC_Active_Transition_Name(),this->_guard_expression->Get_VC_Completed_Transition_Name());
+
     }
 
   // first the input arguments... zipping through.
   for(int idx = 0; idx < _input_args.size(); idx++)
     _input_args[idx]->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
 
-  // trigger the call after the input arguments
-  // have been computed..
-  string call_trigger = this->Get_VC_Active_Transition_Name();
-  __T(call_trigger);
-  string in_progress = this->Get_VC_Name() + "_in_progress";
-  __T(in_progress);
-  string call_completed = this->Get_VC_Name() + "_call_complete";
-  __T(call_completed);
-  string completed = this->Get_VC_Completed_Transition_Name();
-  __T(completed);
 
   for(int idx = 0; idx < _input_args.size(); idx++)
     {
@@ -238,7 +278,9 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
       if(pipeline_flag)
 	{
-	  this->Write_VC_RAW_Release_Dependencies(expr,visited_elements);
+	  // expression evaluation will be reenabled by activation of the
+	  // call.
+	  __MJ(expr->Get_VC_Active_Transition_Name(), in_progress);
 	}
 
     }
@@ -252,14 +294,26 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   __F(call_trigger,this->Get_VC_Name() + "_start");
   __J(in_progress, this->Get_VC_Name() + "_start");
 
+  // if pipeline-flag, then in-progress will reenable
+  // trigger.
+  if(pipeline_flag)
+    {
+      __MJ(call_trigger, in_progress);
+    }
+
   // the call will eventually complete.
   ofile << ";;[" << this->Get_VC_Name() << "_complete] { " 
 	<< "$T [ccr] $T [cca] "
 	<< "} " << endl;
   __F(in_progress,this->Get_VC_Name() + "_complete");
-
-
   __J(call_completed, this->Get_VC_Name() + "_complete");
+
+  // if pipeline-flag, then call_completed will reenable
+  // in-progress.
+  if(pipeline_flag)
+    {
+      __MJ(in_progress, call_completed);
+    }
 
 
 
@@ -276,6 +330,14 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 	  __J(expr->Get_VC_Start_Transition_Name(),call_completed);
 	  __J(completed, expr->Get_VC_Completed_Transition_Name());
+
+	  // if pipeline-flag, then expression activation must reenable call
+	  // statement completion.
+	  if(pipeline_flag)
+	    {
+	      __MJ(in_progress, expr->Get_VC_Active_Transition_Name());
+	    }
+
 	  non_triv_flag = true;
 	}
       
@@ -293,6 +355,8 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   if(!non_triv_flag)
     {
       __J(completed,call_completed);
+      if(pipeline_flag)
+	__MJ(call_completed,completed);
     }
 }
 
@@ -407,7 +471,7 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(AaStatement* stmt, ostrea
   vector<AaStatement*> tv;
   tv.push_back(stmt);
   AaStatementSequence* ss = new AaStatementSequence(this,tv);
-  this->AaBlockStatement::Write_VC_Control_Path_Optimized(false,NULL,ss,ofile);
+  this->AaBlockStatement::Write_VC_Control_Path_Optimized(false,NULL,ss,NULL,ofile);
   delete ss;
 }
 
@@ -417,10 +481,9 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(AaStatement* stmt, ostrea
 void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						       AaExpression* condition_expr,
 						       AaStatementSequence* sseq,
+						       vector<AaStatement*>* phi_stmts,
 						       ostream& ofile)
 {
-
-
   if(sseq->Get_Statement_Count() == 1 && sseq->Get_Statement(0)->Is_Block_Statement())
     sseq->Get_Statement(0)->Write_VC_Control_Path_Optimized(ofile);
   else
@@ -433,10 +496,31 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
       ofile << block_type <<  "[" << sseq->Get_VC_Name() << "] {" << endl;
 
+      if(pipeline_flag)
+	ofile << "// Pipelined!" << endl;
+
       set<AaRoot*> visited_elements;
       map<string, vector<AaExpression*> > load_store_ordering_map;
       map<string, vector<AaExpression*> >  pipe_map;
 
+      // if pipeline-flag and non-trivial phi_stmts, then
+      // initialize the visited-elements, and also declare
+      // the phi-statement reenable transitions.
+      if(pipeline_flag && (phi_stmts != NULL))
+	{
+	  if(phi_stmts->size() > 0)
+	    {
+	      for(unsigned int idx = 0; idx < phi_stmts->size(); idx++)
+		{
+		  AaStatement* curr_phi = (*phi_stmts)[idx];
+		  visited_elements.insert((AaRoot*) curr_phi);
+		  __T(curr_phi->Get_VC_Reenable_Sample_Transition_Name(visited_elements));
+		}
+	    }
+	}
+
+      // the sequence itself.  this code will directly instantiate
+      // the marked joins for the phi reenables.
       for(int idx = 0, fidx = sseq->Get_Statement_Count(); idx < fidx; idx++)
 	{
 	  sseq->Get_Statement(idx)->Write_VC_Control_Path_Optimized(pipeline_flag, 
@@ -446,10 +530,21 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 								    ofile);
 	}
 
+      // finally the test expression.
+      if(pipeline_flag)
+	{
+	  assert(condition_expr != NULL);
+	  condition_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
+							  visited_elements,
+							  load_store_ordering_map,pipe_map,ofile);
+	}
+
+
+      // dependencies.
       this->Write_VC_Load_Store_Dependencies(pipeline_flag,load_store_ordering_map,ofile);
       this->Write_VC_Pipe_Dependencies(pipeline_flag,pipe_map,ofile);
 
-      ofile << "} // IN PROGRESS" << endl;
+      ofile << "} // " << sseq->Get_VC_Name() <<  endl;
     }
 
 
@@ -605,6 +700,7 @@ void AaSeriesBlockStatement::Write_VC_Control_Path_Optimized_Base(ostream& ofile
 	    this->AaBlockStatement::Write_VC_Control_Path_Optimized(false,
 								    NULL,
 								    curr_seq,
+								    NULL,
 								    ofile);
 	}
       this->Destroy_Maximal_Sequences(linear_segment_vector);
@@ -837,7 +933,7 @@ void AaBranchBlockStatement::Write_VC_Control_Path_Optimized(string source_link,
 		  if(stmt->Is_Block_Statement() || stmt->Is_Control_Flow_Statement())
 		    stmt->Write_VC_Control_Path_Optimized(ofile);
 		  else 
-		    this->AaBlockStatement::Write_VC_Control_Path_Optimized(false, NULL, sseq,ofile);
+		    this->AaBlockStatement::Write_VC_Control_Path_Optimized(false, NULL, sseq, NULL, ofile);
 		  
 		  
 		  // control regulated by __entry__ and __exit__ places..

@@ -28,7 +28,6 @@ entity SplitOperatorShared is
       constant_operand : std_logic_vector := "0001"; -- constant operand.. (it is always the second operand)
       constant_width: integer := 4;
       use_constant  : boolean := true;
-      zero_delay    : boolean := false;
       no_arbitration: boolean := true;
       min_clock_period: boolean := false;
       num_reqs : integer := 3 -- how many requesters?
@@ -54,14 +53,6 @@ architecture Vanilla of SplitOperatorShared is
   
   constant ignore_tag  : boolean := no_arbitration or (reqL'length = 1);
 
-  -- NOTE: the following combination is not allowed
-  --       zero_delay = true and ignore_tag = false and reqL'length =1
-  --       because it leads to a zero-delay cycle inside the shared operator 
-  --
-  -- THUS: if an operator is shared by mutually non-exclusive requesters,
-  --       (non-compatible operators), then it CANNOT be zero_delay.
-  --       This is explicitly blocked out by using the following constant
-  constant use_zero_delay : boolean := zero_delay and ((reqL'length = 1) or ignore_tag);
   signal idata : std_logic_vector(iwidth-1 downto 0);
   signal odata: std_logic_vector(owidth-1 downto 0);
 
@@ -74,8 +65,6 @@ architecture Vanilla of SplitOperatorShared is
 begin  -- Behave
   assert ackL'length = reqL'length report "mismatched req/ack vectors" severity error;
   
-  assert (not zero_delay) or use_zero_delay
-    report "Zero delay flag ignored for shared operators which are not exclusive " severity warning;
 
   DebugGen: if debug_flag generate 
     assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
@@ -88,7 +77,7 @@ begin  -- Behave
                 twidth => tag_length,
                 nreqs => num_reqs,
                 no_arbitration => no_arbitration,
-                registered_output => min_clock_period)
+                registered_output => true)
     port map(
       reqL       => reqL,
       ackL       => ackL,
@@ -119,8 +108,7 @@ begin  -- Behave
       constant_operand => constant_operand,
       constant_width => constant_width,
       twidth     => tag_length,
-      use_constant => use_constant,
-      zero_delay  => zero_delay
+      use_constant => use_constant
       )
     port map (
       reqL => ireq,
@@ -141,7 +129,8 @@ begin  -- Behave
   	owidth =>  owidth*num_reqs,
 	twidth =>  tag_length,
 	nreqs  => num_reqs,
-	no_arbitration => no_arbitration)
+	no_arbitration => no_arbitration,
+        pipeline_flag => true)
     port map (
       reqL   => oreq,
       ackL   => oack,

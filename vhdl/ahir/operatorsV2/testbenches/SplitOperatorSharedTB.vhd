@@ -13,7 +13,6 @@ entity SplitOperatorSharedTB is
   generic
      ( g_num_req: integer := 2;
        operator_id: string := "ApIntAdd";
-       zero_delay : boolean := false;
        verbose_mode: boolean := false;
        input_data_width: integer := 8;
        output_data_width: integer := 8;
@@ -190,7 +189,6 @@ begin
 	constant_operand => const_operand,
         constant_width => const_operand'length,
         use_constant  => false,
-        zero_delay   => false, 
         num_reqs => num_req,
         no_arbitration => false
         )

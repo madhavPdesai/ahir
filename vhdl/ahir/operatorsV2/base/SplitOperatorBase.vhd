@@ -29,8 +29,7 @@ entity SplitOperatorBase is
       constant_operand : std_logic_vector := "0001"; -- constant operand.. (it is always the second operand)
       constant_width: integer := 4;
       twidth        : integer := 1;          -- tag width
-      use_constant  : boolean := true;
-      zero_delay    : boolean := false
+      use_constant  : boolean := true
       );
   port (
     -- req/ack follow level protocol

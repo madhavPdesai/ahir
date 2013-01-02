@@ -93,6 +93,9 @@ public:
 	public: void mGUARD(bool _createToken);
 	public: void mBIND(bool _createToken);
 	public: void mTERMINATE(bool _createToken);
+	public: void mPHISEQUENCER(bool _createToken);
+	public: void mPLACEJOIN(bool _createToken);
+	public: void mTRANSITIONMERGE(bool _createToken);
 	public: void mCOLON(bool _createToken);
 	public: void mCOMMA(bool _createToken);
 	public: void mIMPLIES(bool _createToken);

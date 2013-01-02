@@ -697,6 +697,111 @@ void AaSimpleObjectReference::Write_VC_Control_Path( ostream& ofile)
     }
 }
 
+string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
+{
+  if(this->Is_Constant())
+    return("$entry");
+  else 
+    // either it is an access to a storage object, pipe,
+    // implicit variable or interface object.
+    //
+    // In the pipe/storage case, simply reenable the active
+    // transition 
+    //
+    // In the implicit variable case, reenable the
+    // active transition of the statement defining the
+    // variable, if it exists in visited elements
+    //
+    // In the interface object case, if the unique
+    // driver to the interface object exists in visited elements
+    // use the active of that driver statement.
+    //
+    {
+
+      if(this->_object->Is("AaStorageObject"))
+	return(this->Get_VC_Active_Transition_Name());
+
+      if(this->_object->Is("AaPipeObject"))
+	return(this->Get_VC_Active_Transition_Name());
+
+      if(this->_object->Is_Interface_Object())
+	{
+	  AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
+	  if((root != NULL) && (visited_elements.find(root) != visited_elements.end()))
+	    return(root->Get_VC_Reenable_Update_Transition_Name(visited_elements));
+	  else
+	    return("$entry");
+	}
+
+      if(this->Is_Implicit_Variable_Reference())
+	{
+	  AaRoot* root = this->Get_Root_Object();
+	  if(visited_elements.find(root) != visited_elements.end())
+	    {
+	      return(root->Get_VC_Reenable_Update_Transition_Name(visited_elements));
+	    }
+	  else
+	    return("$entry");
+	}
+
+      // you should never get here.
+      assert(0 && "unknown variety of simple-object-reference");
+    }
+}
+
+string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
+{
+ if(this->Is_Constant())
+    return("$entry");
+  else 
+    // either it is an access to a storage object, pipe,
+    // implicit variable or interface object.
+    //
+    // In the pipe/storage case, simply reenable the active
+    // transition 
+    //
+    // In the implicit variable case, reenable the
+    // active transition of the statement defining the
+    // variable, if it exists in visited elements
+    //
+    // In the interface object case, if the unique
+    // driver to the interface object exists in visited elements
+    // use the active of that driver statement.
+    //
+    {
+
+      if(this->_object->Is("AaStorageObject"))
+	return(this->Get_VC_Start_Transition_Name());
+
+      if(this->_object->Is("AaPipeObject"))
+	return(this->Get_VC_Start_Transition_Name());
+
+      if(this->_object->Is_Interface_Object())
+	{
+	  AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
+	  if((root != NULL) && (visited_elements.find(root) != visited_elements.end()))
+	    return(root->Get_VC_Reenable_Sample_Transition_Name(visited_elements));
+	  else
+	    return("$entry");
+	}
+
+      if(this->Is_Implicit_Variable_Reference())
+	{
+	  AaRoot* root = this->Get_Root_Object();
+	  if(visited_elements.find(root) != visited_elements.end())
+	    {
+	      return(root->Get_VC_Reenable_Sample_Transition_Name(visited_elements));
+	    }
+	  else
+	    return("$entry");
+	}
+
+      // you should never get here.
+      assert(0 && "unknown variety of simple-object-reference");
+    }
+}
+
+AaRoot* Get_Non_Trivial_Predecessor(set<AaRoot*>& visited_elements);
 
 void AaSimpleObjectReference::Write_VC_Control_Path_As_Target( ostream& ofile)
 {

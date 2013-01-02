@@ -28,9 +28,7 @@ entity UnsharedOperatorBase is
       owidth        : integer;          -- width of output.
       constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
       constant_width : integer;
-      use_constant  : boolean := false;
-      zero_delay    : boolean := false;
-      flow_through  : boolean := false
+      use_constant  : boolean := false
       );
   port (
     -- req -> ack follow pulse protocol
@@ -46,18 +44,40 @@ end UnsharedOperatorBase;
 
 
 architecture Vanilla of UnsharedOperatorBase is
+  signal dataL_reg      : std_logic_vector(iwidth_1 + iwidth_2 - 1 downto 0);  
   signal   result: std_logic_vector(owidth-1 downto 0);
   signal   state_sig : std_logic;
   constant iwidth : integer := iwidth_1  + iwidth_2;
   signal   enable_data_reg : std_logic;
-  
+
 begin  -- Behave
 
 
   assert((num_inputs = 1) or (num_inputs = 2)) report "either 1 or 2 inputs" severity failure;
 
-  ackR <= reqR;                         -- all action on reqL->ackL
+  -----------------------------------------------------------------------------
+  -- sample the inputs..
+  -----------------------------------------------------------------------------
+  process(clk,reset)
+  begin
+    if(clk'event and clk = '1') then
+      if(reset = '1') then
+        ackL <= false;
+      else
+        ackL <= reqL;
+      end if;
 
+      if(reqL) then
+        dataL_reg <= dataL;
+      end if;
+    end if;
+  end process;
+  
+
+  -----------------------------------------------------------------------------
+  -- combinational block..
+  -----------------------------------------------------------------------------
+  
   comb_block: GenericCombinationalOperator
     generic map (
       operator_id                 => operator_id,
@@ -77,58 +97,26 @@ begin  -- Behave
       constant_operand            => constant_operand,
       constant_width              => constant_width,
       use_constant                => use_constant)
-    port map (
-      data_in => dataL,
-      result  => result);
+    port map (data_in => dataL_reg, result  => result);
 
-  FlowThrough: if flow_through generate
-    ackL <= reqL;
-    dataR <= result;
-  end generate FlowThrough;
 
-  ZeroDelay: if ((not flow_through) and zero_delay) generate
-
-    ackL <= reqL;
-    enable_data_reg <= '1' when reqL  else '0';
-
-    dreg : BypassRegister generic map (
-      data_width    => owidth,
-      enable_bypass => true)
-      port map (
-        clk      => clk,
-        reset    => reset,
-        enable   => enable_data_reg,
-        data_in  => result,
-        data_out => dataR);
-    
-  end generate ZeroDelay;
-
-  NonZeroDelay: if ((not flow_through) and (not zero_delay)) generate
-
-    process(clk)
-    begin
-      if(clk'event and clk = '1') then
-        if(reset = '1') then
-          ackL <= false;
-        else
-          ackL <= reqL;
-        end if;
+  -----------------------------------------------------------------------------
+  -- sample the output
+  -----------------------------------------------------------------------------
+  process(clk,reset)
+  begin
+    if(clk'event and clk = '1') then
+      if(reset = '1') then
+        ackR <= false;
+      else
+        ackR <= reqR;
       end if;
-    end process;
 
-    enable_data_reg <= '1' when reqL  else '0';
-
-    dreg : BypassRegister generic map (
-      data_width    => owidth,
-      enable_bypass => false)
-      port map (
-        clk      => clk,
-        reset    => reset,
-        enable   => enable_data_reg,
-        data_in  => result,
-        data_out => dataR);
-  
-  end generate NonZeroDelay;
-  
+      if(reqR) then
+        dataR <= result;
+      end if;
+    end if;
+  end process;
+    
 end Vanilla;
 

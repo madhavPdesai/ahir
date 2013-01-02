@@ -1,0 +1,10 @@
+import os
+env = Environment(ENV = {'PATH' : os.environ['PATH']})
+# use a path to get to the antlr jar "later"
+# also: how does one force the action if the source has changed?
+ant = Builder(action = 'java -cp  ../antlr2/antlr.jar antlr.Tool  -o libAhirV2/src/ $SOURCE')
+antdoc = Builder(action = 'java -cp  ../antlr2/antlr.jar antlr.Tool -html -o libAhirV2/docs/ $SOURCE')
+env.Prepend(BUILDERS = {'antlr' : ant})
+env.Prepend(BUILDERS = {'antlrdocs' : antdoc})
+env.antlr(['../src/vcLexer.hpp', '../src/vcParser.hpp', '../src/vcLexer.cpp','../src/vcParser.cpp', 'vcParserTokenTypes.hpp','vcParserTokenTypes.txt' ], 'vc.g')
+env.antlrdocs(['../docs/vcLexer.html', '../docs/vcParser.html'], 'vc.g')

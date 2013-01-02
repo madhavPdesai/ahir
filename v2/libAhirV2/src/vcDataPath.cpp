@@ -973,7 +973,6 @@ void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
       iter++)
     {
       vcSlice* s = (*iter).second;
-      bool flow_through_flag  = s->_dout->Is("vcIntermediateWire");
 
       ofile << "slice_block_" << idx << " : block -- { " << endl;
       ofile << "signal req, ack: boolean; --}" << endl;
@@ -997,11 +996,10 @@ void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
 	ofile << s->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack; "  << endl;
       }
 
-
       ofile << s->Get_VHDL_Id() << ": SliceBase generic map(in_data_width => "
 	    << s->_din->Get_Size() << ", high_index => " << s->_high_index 
-	    << ", low_index => " << s->_low_index << ", zero_delay => " 
-	    << (flow_through_flag ? "true" : "false") << ") -- {" << endl;
+	    << ", low_index => " << s->_low_index 
+	    << ") -- {" << endl;
       ofile << " port map( din => " 
 	    << s->_din->Get_VHDL_Signal_Id() 
 	    << ", dout => " 
@@ -1024,9 +1022,6 @@ void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
       iter++)
     {
       vcRegister* s = (*iter).second;
-
-      // intermediate wire... make it a flow-through register..
-      bool flow_through_flag  = s->_dout->Is("vcIntermediateWire");
 
       ofile << "register_block_" << idx << " : block -- { " << endl;
       ofile << "signal req, ack: boolean; --}" << endl;
@@ -1052,8 +1047,8 @@ void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
 
       ofile << s->Get_VHDL_Id() << ": RegisterBase --{" << endl
 	    << "generic map(in_data_width => " << s->_din->Get_Size()  << "," 
-	    << "out_data_width => " << s->_dout->Get_Size() << ", "
-	    << "flow_through => " << (flow_through_flag ? "true" : "false") << " ) " << endl;
+	    << "out_data_width => " << s->_dout->Get_Size() << ") "
+	    << endl;
       ofile << " port map( din => " << s->_din->Get_VHDL_Signal_Id() << "," 
 	    << " dout => " << s->_dout->Get_VHDL_Signal_Id() << ","
 	    << " req => req, " 
@@ -1170,8 +1165,6 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       // types. (e.g. + (float float) (float) or + (int int) (int) ?
       vcType* input_type =   ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())))->Get_Input_Type();
       vcType* output_type =   ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())))->Get_Output_Type();
-
-      
       string vc_op_id = ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())))->Get_Op_Id();
       string vhdl_op_id = Get_VHDL_Op_Id(vc_op_id,
 					 input_type,
@@ -1355,7 +1348,6 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		    << " constant_operand => " << const_operand << "," << endl // constant operand?
 		    << " constant_width => " << const_width << "," << endl // constant width
 		    << " use_constant  => " << (use_constant ? "true" : "false") << "," << endl // use constant?
-		    << " zero_delay => false, " << endl // single cycle delay
 		    << " no_arbitration => " << no_arb_string << "," << endl
 		    << " min_clock_period => " << (vcSystem::_min_clock_period_flag ? "true" : "false") << "," << endl
 		    << " num_reqs => " << num_reqs << "--} \n )" << endl; // number of requesters..
@@ -1364,10 +1356,6 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	  else
 	    {
 	      // an unshared operator.
-	      bool flow_through_flag  = outwires[0]->Is("vcIntermediateWire") &&
-		(Is_Trivial_Op(vc_op_id)  ||
-		 (use_constant && Is_Shift_Op(vc_op_id)));
-
       		if(guard_wires[0] != NULL)
       		{
       			ofile << "reqL(0) <= " << reqL[0]->Get_CP_To_DP_Symbol() 
@@ -1423,9 +1411,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		    << " owidth => " << output_type->Size() << "," << endl  // output width
 		    << " constant_operand => " << const_operand << "," << endl // constant operand?
 		    << " constant_width => " << const_width << "," << endl // constant width
-		    << " use_constant  => " << (use_constant ? "true" : "false") << "," << endl // use constant?
-		    << " zero_delay => false, " << endl // single cycle delay
-		    << " flow_through => " << (flow_through_flag ? "true" : "false")
+		    << " use_constant  => " << (use_constant ? "true" : "false") << endl // use constant?
 		    << "--} \n ) " << endl; // number of requesters..
 	      ofile << "port map ( -- { " << endl
 		    << "reqL => reqL(0)," << endl
@@ -2371,7 +2357,8 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
       ofile << " twidth => " << tag_length << ","
 	    << " nreqs => " << num_reqs << ","
-	    << "  no_arbitration => " << no_arb_string << ")" << endl;
+	    << " no_arbitration => " << no_arb_string << ","
+	    << " pipeline_flag => true )" << endl;
       ofile << "port map ( -- {\n reqR => reqR " << ", " <<  endl
 	    << "    ackR => ackR " << ", " <<  endl;
 

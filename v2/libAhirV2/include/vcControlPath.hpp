@@ -361,14 +361,126 @@ public:
   virtual void Update_Predecessor_Successor_Links();
 };
 
+class vcPlaceJoin: public vcRoot
+{
+  vector<vcPlace*> _in_places;
+  vcPlace* _out_place;
+
+public:
+  vcPlaceJoin(string id);
+
+  void Add_In_Place(vcPlace* p) 
+  {
+    _in_places.push_back(p);
+  }
+  void Set_Out_Place(vcPlace* p) { _out_place = p; }
+
+  int Get_Number_Of_In_Places() { return(_in_places.size()); }
+  vcPlace* Get_In_Place(int idx) 
+  { 
+    if((idx >= 0) && (idx < _in_places.size()))
+      return(_in_places[idx]);
+    else
+      return(NULL);
+  }
+
+  void Print(ostream& ofile);
+  void Print_VHDL(ostream& ofile);
+};
+
+
+class vcTransitionMerge: public vcRoot
+{
+  vector<vcTransition*> _in_transitions;
+  vcTransition* _out_transition;
+
+public:
+  vcTransitionMerge(string id);
+
+  void Add_In_Transition(vcTransition* p) 
+  {
+    _in_transitions.push_back(p);
+  }
+  void Set_Out_Transition(vcTransition* p) { _out_transition = p; }
+
+  int Get_Number_Of_In_Transitions() { return(_in_transitions.size()); }
+  vcTransition* Get_In_Transition(int idx) 
+  { 
+    if((idx >= 0) && (idx < _in_transitions.size()))
+      return(_in_transitions[idx]);
+    else
+      return(NULL);
+  }
+
+  void Print(ostream& ofile);
+  void Print_VHDL(ostream& ofile);
+};
+
+class vcPhiSequencer: public vcRoot
+{
+  vector<vcPlace*> _select_places;
+  vector<vcPlace*> _reenable_places;
+  vector<vcPlace*> _req_places;
+  vcPlace* _ack_place;
+  vcPlace* _done_place;
+
+public:
+  vcPhiSequencer(string id);
+  void Add_Select(vcPlace* s) { _select_places.push_back(s); }
+  void Add_Reenable(vcPlace* s) { _reenable_places.push_back(s); }
+  void Add_Req(vcPlace* s) { _req_places.push_back(s); }
+  void Set_Ack(vcPlace* p) { _ack_place = p; }
+  void Set_Done(vcPlace* p) { _done_place = p; }
+
+  int Get_Number_Of_Selects() { return(_select_places.size()); }
+  vcPlace* Get_Select(int idx) 
+  { 
+    if((idx >= 0) && (idx < _select_places.size()))
+      return(_select_places[idx]);
+    else
+      return(NULL);
+  }
+
+  int Get_Number_Of_Reenables() { return(_reenable_places.size()); }
+  vcPlace* Get_Reenable(int idx) 
+  { 
+    if((idx >= 0) && (idx < _reenable_places.size()))
+      return(_reenable_places[idx]);
+    else
+      return(NULL);
+  }
+
+  int Get_Number_Of_Reqs() { return(_req_places.size()); }
+  vcPlace* Get_Req(int idx) 
+  { 
+    if((idx >= 0) && (idx < _req_places.size()))
+      return(_req_places[idx]);
+    else
+      return(NULL);
+  }
+  
+  vcPlace* Get_Ack()
+  {return(_ack_place);}
+  vcPlace* Get_Done() 
+  {return(_done_place);}
+
+  void Print(ostream& ofile);
+  void Print_VHDL(ostream& ofile);
+};
+
+
 class vcCPSimpleLoopBlock: public vcCPBranchBlock
 {
-
-  map<vcPlace*, vcTransition*> _bindings;
+  map<vcPlace*, vcTransition*> _input_bindings;
+  map<vcPlace*, vcTransition*> _output_bindings;
   vcCPElement* _loop_exit;
   vcCPElement* _loop_taken;
   vcCPElement* _loop_body;
   vcCPElement* _loop_back;
+
+  vector<vcPhiSequencer*> _phi_sequencers;
+  vector<vcPlaceJoin*> _place_joins;
+
 public:
   vcCPSimpleLoopBlock(vcCPBlock* parent, string id);
   virtual string Kind() {return("vcCPSimpleLoopBlock");}
@@ -376,8 +488,13 @@ public:
   virtual void Print(ostream& ofile);
   virtual bool Check_Structure(); // check that the block is well-formed.
   virtual void Update_Predecessor_Successor_Links();
-  void Bind(string place_name, string region_name, string transition_name);
+  void Bind(string place_name, string region_name, string transition_name, bool input_binding);
   void Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back);
+
+  
+  void Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& req,
+			 vector<string>& reqs, string& done);
+  void Add_Place_Join(string& pj_id, vector<string>& in_places, string& out_place);
 };
 
 
@@ -421,8 +538,10 @@ public:
 class vcCPPipelinedForkBlock: public vcCPForkBlock
 {
   map<vcTransition*, set<vcCPElement*>, vcRoot_Compare > _marked_join_map;
-  set<vcTransition*> _exports;
+  set<vcTransition*> _exported_inputs;
+  set<vcTransition*> _exported_outputs;
 
+  vector<vcTransitionMerge*> _transition_merges;
 public:
 
   virtual string Kind() {return("vcCPPipelinedForkBlock");}
@@ -434,7 +553,12 @@ public:
   void Add_Marked_Join_Point(vcTransition* jp, vcCPElement* jre);
 
   void Eliminate_Redundant_Dependencies();
-  void Add_Export(string internal_id);
+
+  void Add_Exported_Input(string internal_id);
+  void Add_Exported_Output(string internal_id);
+  void Add_Export(string internal_id, bool input_flag);
+
+  void Add_Transition_Merge(string& tm_id, vector<string>& in_transition, string& out_transition);
 
 };
 

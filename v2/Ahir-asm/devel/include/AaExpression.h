@@ -237,6 +237,22 @@ class AaExpression: public AaRoot
     assert(0);
   }
 
+  virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements) {
+
+    if(this->Is_Constant())
+      return("$entry");
+    else
+      return(this->Get_VC_Active_Transition_Name());    
+
+  }
+
+  virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements) {
+    if(this->Is_Constant())
+      return("$entry");
+    else
+      return(this->Get_VC_Start_Transition_Name());    
+  }
+
 
 };
 
@@ -658,7 +674,8 @@ class AaSimpleObjectReference: public AaObjectReference
     _associated_statement = stmt;
   }
 
-  virtual bool  Is_NOP() { assert(0); } // TODO
+  virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements);
+  virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements);
 };
 
 

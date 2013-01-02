@@ -1,0 +1,3 @@
+An example to illustrate call arbitration.
+8 calls are made to a single function (simultaneously).
+The overheads etc are clearly visible.

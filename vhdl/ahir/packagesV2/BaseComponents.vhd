@@ -18,8 +18,8 @@ package BaseComponents is
   
   component place
     generic (
-      marking : boolean := false;
-      bypass: boolean := false);
+      capacity : integer := 1;
+      marking : integer := 0);
     port (
       preds : in  BooleanArray;
       succs : in  BooleanArray;
@@ -60,7 +60,6 @@ package BaseComponents is
   end component;
 
   component pipeline_interlock 
-    generic (trigger_bypass: boolean; enable_bypass: boolean);
     port (trigger: in boolean;
           enable : in boolean;
           symbol_out : out  boolean;
@@ -69,17 +68,13 @@ package BaseComponents is
   end component;
 
   component join is
-    generic (
-      bypass: boolean := false);
-     port ( preds      : in   BooleanArray;
+     port (preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
 	reset: in std_logic);
   end component;
 
   component join2 
-    generic (
-      bypass: boolean := false);
     port ( pred0, pred1      : in   Boolean;
            symbol_out : out  boolean;
            clk: in std_logic;
@@ -87,9 +82,7 @@ package BaseComponents is
   end component;
 
   component join_with_input is
-    generic (
-      bypass: boolean := false);
-     port ( preds      : in   BooleanArray;
+     port (preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -97,9 +90,8 @@ package BaseComponents is
   end component;
 
   component auto_run 
-  	generic (
-    		use_delay : boolean);
-          port (clk   : in  std_logic;
+    generic (use_delay : boolean);
+    port (clk   : in  std_logic;
     	reset : in  std_logic;
 	start_req: out std_logic;
         start_ack: in std_logic;
@@ -107,6 +99,37 @@ package BaseComponents is
         fin_ack: in std_logic);
   end component;
 
+  component loop_terminator 
+      generic (max_iterations_in_flight : integer := 4);
+      port(loop_body_exit: in boolean;
+       loop_continue: in boolean;
+       loop_terminate: in boolean;
+       loop_back: out boolean;
+       loop_exit: out boolean;
+       clk: in std_logic;
+       reset: in std_logic);
+  end component;
+  
+
+  component marked_join is
+     port (preds      : in   BooleanArray;
+           marked_preds      : in   BooleanArray;
+           symbol_out : out  boolean;
+           clk: in std_logic;
+           reset: in std_logic);
+  end component;
+
+  component phi_sequencer 
+    generic (nreqs : integer; nreenables : integer);
+    port (
+      in_places : in BooleanArray(0 to nreqs-1);
+    req_places : out BooleanArray(0 to nreqs-1);
+    ack_place  : in Boolean;
+    reenable_place: in BooleanArray(0 to nreenables-1);  
+    exit_place : out Boolean;
+    clk, reset: in std_logic);
+  end component;
+  
   -----------------------------------------------------------------------------
   -- miscellaneous
   -----------------------------------------------------------------------------
@@ -182,12 +205,8 @@ package BaseComponents is
         owidth        : integer;          -- width of output.
         constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
         constant_width: integer;
-        use_constant  : boolean := false;  -- if true, the second operand is
-                                           -- assumed to be the generic
-        zero_delay    : boolean := false;  -- if true, operator result is
-                                           -- registered, but with a bypass, so
-                                           -- that the result is available immediately.
-        flow_through  : boolean := false  -- if true, operator is combinational
+        use_constant  : boolean := false  -- if true, the second operand is
+                                          -- assumed to be the generic
         );
     port (
       -- req -> ack follow pulse protocol
@@ -221,11 +240,8 @@ package BaseComponents is
         constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
         constant_width: integer;
         twidth        : integer;          -- tag width
-        use_constant  : boolean := false;  -- if true, the second operand is
+        use_constant  : boolean := false  -- if true, the second operand is
                                            -- provided by the generic.
-        zero_delay    : boolean := false  -- if true, the result is registered,
-                                          -- but with a bypass, so that it is
-                                          -- available immediately.
         );
     port (
       -- req/ack follow level protocol
@@ -266,7 +282,6 @@ package BaseComponents is
         constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
         constant_width: integer;
         use_constant  : boolean := false;
-        zero_delay    : boolean := false;
         no_arbitration: boolean := false;
         min_clock_period: boolean := false;
         num_reqs : integer  -- how many requesters?
@@ -291,7 +306,6 @@ package BaseComponents is
     generic
       ( g_num_req: integer := 2;
         operator_id: string := "ApIntSle";
-        zero_delay : boolean := false;
         verbose_mode: boolean := false;
         input_data_width: integer := 8;
         output_data_width: integer := 1;
@@ -304,7 +318,7 @@ package BaseComponents is
   -- register operator
   -----------------------------------------------------------------------------
   component RegisterBase 
-      generic(in_data_width: integer; out_data_width : integer; flow_through: boolean);
+      generic(in_data_width: integer; out_data_width : integer);
       port(din: in std_logic_vector(in_data_width-1 downto 0);
            dout: out std_logic_vector(out_data_width-1 downto 0);
            req: in boolean;
@@ -431,7 +445,7 @@ package BaseComponents is
 
 
   component Slicebase 
-    generic(in_data_width : integer; high_index: integer; low_index : integer; zero_delay : boolean);
+    generic(in_data_width : integer; high_index: integer; low_index : integer);
     port(din: in std_logic_vector(in_data_width-1 downto 0);
          dout: out std_logic_vector(high_index-low_index downto 0);
          req: in boolean;
@@ -487,7 +501,8 @@ package BaseComponents is
             owidth: integer;
             twidth: integer;
             nreqs: integer;
-            no_arbitration: Boolean);
+            no_arbitration: Boolean;
+            pipeline_flag : Boolean);
     port (
       -- req/ack follow level protocol
       reqL                 : in  std_logic;

@@ -169,17 +169,32 @@ class AaStatement: public AaScope
 
   virtual void Get_Target_Places(set<AaPlaceStatement*>& target_places) {} // do nothing.
 
-  virtual string Get_VC_Successor_Triggering_Transition_Name()
-  {
-    assert(0);
-  }
+  void Write_VC_RAW_Release_Dependencies(AaExpression* expr, set<AaRoot*>& visited_elements);
 
+  //
+  //  the transition which reenables the update of predecessors.
+  //  Essentially, when a statement has sources, the sources 
+  //  can be updated immediately after the statement has saved
+  //  the previous values of the sources. 
+  //
   virtual string Get_VC_Predecessor_Releasing_Transition_Name()
   {
+    // these need to be defined for each type of (relevant) statement
+    // (the Assignment, Phi and Call statements).
     assert(0);
   }
 
-  void Write_VC_RAW_Release_Dependencies(AaExpression* expr, set<AaRoot*>& visited_elements);
+  //
+  // The transition which enables the update of the results
+  // of this statement (Note that this may be part of the
+  // source of an assignment statement).
+  //
+  virtual string Get_VC_Re_Enable_Update_Transition_Name()
+  {
+    // these need to be defined for each type of (relevant) statement
+    // (the Assignment, Phi and Call statements).
+    assert(0);
+  }
 
 };
 
@@ -397,16 +412,8 @@ class AaAssignmentStatement: public AaStatement
   virtual void Propagate_Constants(); 
   virtual string Get_VC_Name() {return("assign_stmt_" + Int64ToStr(this->Get_Index()));}
 
-  virtual string Get_VC_Successor_Triggering_Transition_Name()
-  {
-    return(this->Get_VC_Active_Transition_Name());
-  }
-
-  virtual string Get_VC_Predecessor_Releasing_Transition_Name()
-  {
-    return(this->Get_VC_Completed_Transition_Name());
-  }
-
+  virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements);
+  virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements);
 
 };
 
@@ -646,6 +653,7 @@ class AaBlockStatement: public AaStatement
   virtual void Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 					       AaExpression* test_expression,
 					       AaStatementSequence* sseq,
+					       vector<AaStatement*>* phi_stmts,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(AaStatement* stmt,
 					       ostream& ofile);
@@ -902,11 +910,14 @@ class AaMergeStatement: public AaSeriesBlockStatement
   set<string,StringCompare> _merge_label_set;
   vector<AaPlaceStatement*> _wait_on_statements;
 
-  bool _has_entry_place;
-  unsigned char _wait_on_entry;
+
 
 
   string _vc_source_link; // name of VC source link.
+
+  bool _has_entry_place;
+  unsigned char _wait_on_entry;
+  bool _in_do_while;
 
  public:
   void Add_Merge_Label(string lbl) 
@@ -922,6 +933,10 @@ class AaMergeStatement: public AaSeriesBlockStatement
   {
     return(this->_merge_label_set.find(lbl) != this->_merge_label_set.end());
   }
+
+  void Set_In_Do_While(bool v);
+  bool Get_In_Do_While() {return(_in_do_while);}
+
 
   AaMergeStatement(AaBranchBlockStatement* scope);
   ~AaMergeStatement();
@@ -1174,21 +1189,15 @@ class AaIfStatement: public AaStatement
 class AaDoWhileStatement: public AaStatement
 {
   AaExpression* _test_expression;
-  AaStatementSequence* _phi_sequence;
+  AaMergeStatement* _merge_statement;
   AaStatementSequence* _loop_body_sequence;
+
  public:
 
   void Set_Test_Expression(AaExpression* te) { this->_test_expression = te; }
-  void Set_Phi_Sequence(AaStatementSequence* ps) { this->_phi_sequence = ps; }
+  void Set_Merge_Statement(AaMergeStatement* ms) { this->_merge_statement = ms; }
   void Set_Loop_Body_Sequence(AaStatementSequence* lbs) { this->_loop_body_sequence = lbs; }
 
-  int Get_Number_Of_Phi_Statements()
-  {
-	if(_phi_sequence)
-		return(_phi_sequence->Get_Statement_Count());
-	else
-		return(0);
-  }
   int Get_Number_Of_Loop_Body_Statements()
   {
 	if(_loop_body_sequence)
@@ -1196,13 +1205,11 @@ class AaDoWhileStatement: public AaStatement
 	else
 		return(0);
   }
-  AaStatement* Get_Phi_Statement(int idx)
+  AaMergeStatement* Get_Merge_Statement()
   {
-	if(_phi_sequence)
-		return(_phi_sequence->Get_Statement(idx));
-	else
-		return(NULL);
+    return(_merge_statement);
   } 
+
   AaStatement* Get_Loop_Body_Statement(int idx)
   {
 	if(_loop_body_sequence)
@@ -1219,8 +1226,8 @@ class AaDoWhileStatement: public AaStatement
   {
     if(this->_test_expression)
       this->_test_expression->Map_Source_References(this->_source_objects);
-    if(this->_phi_sequence)
-    	this->_phi_sequence->Map_Source_References();
+    if(this->_merge_statement)
+    	this->_merge_statement->Map_Source_References();
     if(this->_loop_body_sequence)
       this->_loop_body_sequence->Map_Source_References();
   }
@@ -1263,6 +1270,16 @@ class AaDoWhileStatement: public AaStatement
   virtual string Get_VC_Exit_Place_Name() {return(this->Get_VC_Name() + "__exit__");}
 
   virtual void Get_Target_Places(set<AaPlaceStatement*>& target_places); // do nothing.
+
+  // write out all the places associated with PHI statements
+  // in the merge.
+  void Write_VC_Phi_Places(ostream& ofile);
+
+  // write the Phi-sequencers.
+  void Write_VC_Phi_Sequencers(ostream& ofile);
+
+  // write the Place-joins.
+  void Write_VC_Phi_Place_Joins(ostream& ofile);
 };
 
 

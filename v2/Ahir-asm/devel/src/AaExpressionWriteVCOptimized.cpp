@@ -30,6 +30,18 @@ void AaExpression::Write_VC_RAW_Release_Dependencies(AaExpression* expr, set<AaR
 // a WAR dependency.  In this case, "this" must happen
 // after expr.  Further, in the pipeline case, the 
 // completion of "this" must release expr.
+// 
+// e.g.
+//  a := (b + c)
+//  b := (d + e)
+//
+// the write to b can happen only after a is updated.
+// in case the pipeline flag is set, the expression
+// that reads from b must be reenabled only after
+// the write to b is finished.
+//
+// Here "this" is "b", "source_expr" is (d+e).
+//
 void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag, 
 					     set<AaRoot*>& visited_elements,
 					     AaExpression* source_expr,
@@ -38,6 +50,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
   if(!this->Is_Implicit_Variable_Reference())
     return;
 
+  // root will be the statement b = (d+e)
   AaRoot* root = this->Get_Root_Object();
   if(root == NULL || !root->Is_Interface_Object() || root->Is_Statement())
     {
@@ -45,39 +58,63 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
     }
 
 
+  // expressions/statements that root uses as sources..
+  // these include expression "b" in (b+c)
   for(set<AaRoot*>::iterator iter = root->Get_Source_References().begin(), 
 	fiter = root->Get_Source_References().end();
       iter != fiter;
       iter++)
+    // search across all expressions that depend on root.
+    // these include "b" in (b+c)
     {
+
+      // found the  "b" in the elements already visited?
       if((*iter)->Is_Expression() && (visited_elements.find(*iter) != visited_elements.end()))
 	{
+	  // "b" in (b+c) is found.
 	  AaExpression* expr = (AaExpression*)(*iter);
+
 	  if(!expr->Is_Constant())
 	    {
+	      //
+	      // the rhs source expression which is to be assigned to "this"
+	      // must be started only after expr has finished sampling its
+	      // inputs..  We are currently using the activation transition
+	      // of the associated statement of expr as the marker.
+	      //
+	      // the target "b = (d+e)" can be triggered only after the
+	      // statement a := (b+c) has used the value of b.
+	      //
 	      ofile << "// WAR dependency: Read: " << expr->To_String() << " before Write: " << this->To_String() << endl;
 	      ofile << "//                 NOTE: the result of operation " << source_expr->To_String() << " determines " << this->To_String() << endl;
 
-	      // Cant figure out this comment!
-	      // 
-	      // Note: this is not quite correct.
-	      //      the source expression cannot complete until expr has completed..
-	      //      however, what if expr is a source expression..?  In this case, 
-	      //      the assignment statement which uses expr as a source must
-	      //      complete...
+	      // The target "b = (d+e)" cannot be updated until the statement a := (b+c)
+	      // has finished.  This is conservative.
 	      if(expr->Get_Associated_Statement())
 		{
-		  __J(source_expr->Get_VC_Active_Transition_Name(), 
+		  //
+		  // (d+e) should not be updated until the expression (b+c) has
+		  // completed evaluation.. we are a bit conservative here.
+		  // we wait until the entire statement in which (b+c) is
+		  // present has completed.
+		  //
+		  // 
+		  __J(source_expr->Get_VC_Start_Transition_Name(), 
 		      expr->Get_Associated_Statement()->Get_VC_Completed_Transition_Name());
 		}
 	      else
 		{
-		  __J(source_expr->Get_VC_Active_Transition_Name(), expr->Get_VC_Completed_Transition_Name());
+		  __J(source_expr->Get_VC_Start_Transition_Name(),  expr->Get_VC_Completed_Transition_Name());
 		}
-		if(pipeline_flag)
+
+	      // The completion of "b = (d+e)" reenables the
+	      // evaluation of "a = (b+c)"
+	      if(pipeline_flag)
 	  	{
-	      		ofile << "// WAR dependency: release  Read: " << expr->To_String() << " with Write: " << this->To_String() << endl;
-		  	__MJ(expr->Get_VC_Start_Transition_Name(), this->Get_VC_Completed_Transition_Name());
+		  ofile << "// WAR dependency: release  Read: " << expr->To_String() << " with Write: " << this->To_String() << endl;
+		  // expr can get a new value only after this has completed.
+		  __MJ(expr->Get_VC_Reenable_Sample_Transition_Name(visited_elements),  
+		       this->Get_VC_Completed_Transition_Name());
 	 	}
 	    }
 	}
@@ -86,29 +123,29 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 
 void AaExpression::Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& visited_elements, ostream& ofile)
 {
-	if(this->Get_Guard_Expression() != NULL)
+  if(this->Get_Guard_Expression() != NULL)
+    {
+      AaExpression* expr = this->Get_Guard_Expression();
+      if(expr->Is("AaSimpleObjectReference"))
 	{
-		AaExpression* expr = this->Get_Guard_Expression();
-		if(expr->Is("AaSimpleObjectReference"))
-		{
-			AaSimpleObjectReference* sexpr = (AaSimpleObjectReference*) expr;
-			AaRoot* root = sexpr->Get_Root_Object();
-			if(visited_elements.find(root) != visited_elements.end())
-			{
-	      			__J(this->Get_VC_Start_Transition_Name(), root->Get_VC_Completed_Transition_Name());
-			}
-		}
-		else
-		{
-			AaRoot::Error("guard expression must be an implicit variable reference.\n",this);
-		}
-
-		// REVIEW THIS.
-		if(pipeline_flag)
-		{
-		  expr->Write_VC_RAW_Release_Dependencies(this,visited_elements);
-		}
+	  AaSimpleObjectReference* sexpr = (AaSimpleObjectReference*) expr;
+	  AaRoot* root = sexpr->Get_Root_Object();
+	  if(visited_elements.find(root) != visited_elements.end())
+	    {
+	      __J(this->Get_VC_Start_Transition_Name(), root->Get_VC_Completed_Transition_Name());
+	    }
 	}
+      else
+	{
+	  AaRoot::Error("guard expression must be an implicit variable reference.\n",this);
+	}
+
+      if(pipeline_flag)
+	{
+	  // when this completes, the guard can be re-evaluated.
+	  __MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), this->Get_VC_Completed_Transition_Name());
+	}
+    }
 }
 
 // AaObjectReference
@@ -210,9 +247,19 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
           this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
 	  AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
-	  if(visited_elements.find(root) != visited_elements.end())
+
+	  // forward dependency from root statement to this expression
+	  if((root != NULL) && (visited_elements.find(root) != visited_elements.end()))
 	    {
 	      __J(this->Get_VC_Start_Transition_Name(), root->Get_VC_Completed_Transition_Name());
+	      
+	      // pipeline case?
+	      if(pipeline_flag)
+		{
+		  // completion of this should enable re-update of root.
+		  __MJ(root->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
+		       this->Get_VC_Completed_Transition_Name());
+		}
 	    }	  
 
 	}
@@ -230,6 +277,16 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 	  if(visited_elements.find(root) != visited_elements.end())
 	    {
 	      __J(this->Get_VC_Start_Transition_Name(), root->Get_VC_Completed_Transition_Name());
+	
+	      // pipeline case?
+	      if(pipeline_flag)
+		{
+		  // completion of this should enable re-update of root.
+		  __MJ(root->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
+		       this->Get_VC_Completed_Transition_Name());
+
+		  __SelfRelease
+		}	      
 	    }
 	}
       else if(this->_object->Is("AaStorageObject"))
@@ -240,10 +297,19 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 	  __T(this->Get_VC_Active_Transition_Name());
 	  __T(this->Get_VC_Completed_Transition_Name());
 
+	  // this takes care of the guard..
           this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
+
+	  // load-control path evaluates the address and the
+	  // load.
 	  this->Write_VC_Load_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,NULL,NULL,NULL,ofile);
 
 	  ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
+
+	  if(pipeline_flag)
+	    {
+	      __SelfRelease
+	    }
 	}
       // else if the object being referred to is
       // a pipe, instantiate a series r-a
@@ -252,34 +318,37 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 	{
 	  // needed to hook up pipe dependencies.
 	  __T(this->Get_VC_Start_Transition_Name());
+	  __T(this->Get_VC_Active_Transition_Name());
 	  __T(this->Get_VC_Completed_Transition_Name());
+
+	  // the guard dependency..
           this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
 	  ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] { // pipe read" << endl;
 	  ofile << "$T [req] $T [ack] " << endl;
 	  ofile << "}" << endl;
 
-	  // complete the chain.
+	  // complete the chain..
+	  __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
+	  __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
 	  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Complete_Region_Name());
-	  __F(this->Get_VC_Start_Transition_Name(),this->Get_VC_Complete_Region_Name());
 
-	  // record the pipe!
+	  // record the pipe!  Introduce pipe related dependencies 
+	  // later. TODO
 	  pipe_map[this->_object->Get_VC_Name()].push_back(this);
+
+	  if(pipeline_flag)
+	    {
+	      __SelfRelease
+	    }
 	}
-
-
-	// pipeline..
-     if(pipeline_flag)
-     {
-       // REVIEW:  this may need to be embedded above..
-       // TODO.
-     }
 
       // at the end!
       visited_elements.insert(this);
     }
 }
-void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
+void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, 
+									set<AaRoot*>& visited_elements,
 									map<string,vector<AaExpression*> >& ls_map,
 									map<string, vector<AaExpression*> >& pipe_map,
 									ostream& ofile)
@@ -305,6 +374,14 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
       ofile << "// " << this->To_String() << endl;
       this->Write_VC_Store_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,NULL,NULL,NULL,ofile);
       ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
+
+      // Note: pipeline release dependencies of this store
+      // will be taken care of at the statement level..
+
+      if(pipeline_flag)
+	{
+	  __SelfRelease
+	}
     }
   // else if the object being referred to is
   // a pipe, instantiate a series r-a
@@ -313,6 +390,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
     {
       ofile << "// " << this->To_String() << endl;
       __T(this->Get_VC_Start_Transition_Name());
+      __T(this->Get_VC_Active_Transition_Name());  
       __T(this->Get_VC_Completed_Transition_Name());  
       this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
@@ -321,16 +399,20 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
       ofile << endl;
       ofile << "$T [pipe_wreq] $T [pipe_wack] " << endl;
       ofile << "}" << endl;
-      __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Complete_Region_Name());
+      __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Complete_Region_Name());
+      __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Active_Transition_Name());
       __F(this->Get_VC_Start_Transition_Name(),this->Get_VC_Complete_Region_Name());
       pipe_map[this->_object->Get_VC_Name()].push_back(this);
   
-      // pipeline..
+      // Note: pipeline release dependencies of this store
+      // will be taken care of at the statement level..
+      //
+      // TODO: pipe sequence dependencies must be handled
+      //       separately.
       if(pipeline_flag)
-      {
-	// REVIEW: this may not be the right place to put this.
-	//TODO
-      }
+	{
+	  __SelfRelease
+	}
     }
 
 }
@@ -455,8 +537,8 @@ void AaArrayObjectReference::Write_VC_Links_As_Target_Optimized(string hier_id, 
   vector<int> scale_factors;
   this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
-      vector<int> shift_factors;
-      this->Update_Address_Shift_Factors(shift_factors,word_size);
+  vector<int> shift_factors;
+  this->Update_Address_Shift_Factors(shift_factors,word_size);
 
   this->AaObjectReference::Write_VC_Store_Links_Optimized(hier_id,
 							  &_indices,
@@ -483,17 +565,15 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
       if(this->Get_Object_Type()->Is_Pointer_Type())
+	// array expression is a pointer-evaluation expression.
 	{
 
 	  int word_size = this->Get_Word_Size();
 	  vector<int> scale_factors;
 	  this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
-      vector<int> shift_factors;
-      this->Update_Address_Shift_Factors(shift_factors,word_size);
-
-	  // need start, active and complete for each expression.
-	  __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
+	  vector<int> shift_factors;
+	  this->Update_Address_Shift_Factors(shift_factors,word_size);
 
 	  string base_addr_calc = this->Get_VC_Name() + "_base_address_calculated";
 	  __T(base_addr_calc);
@@ -544,20 +624,31 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  ofile << "$T [final_reg_req] $T [final_reg_ack]" << endl;
 	  ofile << "}" << endl;
 
+	  // remember, firing of active transition means that
+	  // all input variables to this expression have been 
+	  // sampled.
 	  __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Name()+ "_root_address_calculated");
 	  __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
 	  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Complete_Region_Name());
 
+	  if(pipeline_flag)
+	    {
+	      // completion of this will reenable the calculation of the base address.
+	      __MJ(base_addr_calc, this->Get_VC_Completed_Transition_Name());
+	      __SelfRelease
+	    }
+
 	}
       else if(this->_object->Is_Storage_Object())
+	// array expression is a storage object indexed access expression..
 	{ 
 
 	  int word_size = this->Get_Word_Size();
 	  vector<int> scale_factors;
 	  this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
-      vector<int> shift_factors;
-      this->Update_Address_Shift_Factors(shift_factors,word_size);
+	  vector<int> shift_factors;
+	  this->Update_Address_Shift_Factors(shift_factors,word_size);
 
 	  // this is just a regular object load
 	  // using the indices, which returns the
@@ -569,8 +660,15 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						     ofile);
 
 	  ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
+
+	  if(pipeline_flag)
+	    {
+	      __SelfRelease
+	    }
 	}
       else
+	// neither storage object nor pointer.. must be
+	// a structure access expression..
 	{
 	  if(this->_object->Is_Expression())
 	    {
@@ -579,46 +677,48 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						    ls_map,
 						    pipe_map,
 						    ofile);
+
+	      // expression has been evaluated.. go to active
 	      __J(this->Get_VC_Active_Transition_Name(), expr->Get_VC_Completed_Transition_Name());
+
 	      ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] {" << endl;
 	      ofile << "$T [slice_req] $T [slice_ack]" << endl;
 	      ofile << "}" << endl;
+
+	      __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
+	      __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Complete_Region_Name());
+
+	      if(pipeline_flag)
+		{
+		  // reenable expression when this completes.
+		  __MJ(expr->Get_VC_Reenable_Sample_Transition_Name(visited_elements), this->Get_VC_Completed_Transition_Name());
+		  __SelfRelease
+		}
 	    }
 	  else if(this->_object->Is("AaInterfaceObject"))
 	    {
-
-	      AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
-	      if(visited_elements.find(root) != visited_elements.end())
-		{
-		  __J(this->Get_VC_Active_Transition_Name(), ((AaStatement*)root)->Get_VC_Completed_Transition_Name());
-		}	  
-
-	      __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
-	      ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] {" << endl;
-	      ofile << "$T [slice_req] $T [slice_ack]" << endl;
-	      ofile << "}" << endl;
+	      AaRoot::Error("indexed array expression not supported on interface object." ,this->_object);
+	      // not supported.
+	      assert(0);
 	    }
 	  else if(this->_object->Is("AaPipeObject"))
 	    {
-	      pipe_map[this->_object->Get_VC_Name()].push_back(this);
-
-	      ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] {" << endl;
-	      ofile << "$T [pipe_read_req] $T [pipe_read_ack] " << endl;
-	      ofile << "$T [slice_req] $T [slice_ack]" << endl;
-	      ofile << "}" << endl;
+	      AaRoot::Error("indexed array expression not supported on pipe object." , this->_object);
+	      // not supported.
+	      assert(0);
 	    }
 	  else
 	    assert(0);
 
-	  __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
-	  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Complete_Region_Name());
+
 	}
       
       visited_elements.insert(this);
     }
 }
 
-void AaArrayObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
+void AaArrayObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, 
+								       set<AaRoot*>& visited_elements,
 								       map<string,vector<AaExpression*> >& ls_map,
 								       map<string, vector<AaExpression*> >& pipe_map,
 								       ostream& ofile)
@@ -647,6 +747,13 @@ void AaArrayObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pipe
 						  &shift_factors,
 						  ofile);
       ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
+
+      // do nothing.. the target dependencies will be
+      // taken care of by the associated statement.
+      if(pipeline_flag)
+	{
+	  __SelfRelease
+	}
     }
   else
     {
@@ -718,6 +825,8 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeli
 							      ls_map,
 							      pipe_map,
 							      ofile);
+
+
   this->Write_VC_Load_Control_Path_Optimized(pipeline_flag, visited_elements,
 					     ls_map,pipe_map,
 					     NULL,NULL,NULL,ofile);
@@ -726,6 +835,15 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeli
     {
       __J(base_addr_calc,this->_reference_to_object->Get_VC_Completed_Transition_Name());
       __J(this->Get_VC_Start_Transition_Name(),base_addr_calc);
+
+      if(pipeline_flag)
+	{
+	  // when this expression is active, we may reevaluate
+	  // the base address.
+	  __MJ(this->_reference_to_object->Get_VC_Reenable_Update_Transition_Name(visited_elements),
+	       this->Get_VC_Active_Transition_Name());
+	  __SelfRelease
+	}
     }
 
   ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
@@ -764,6 +882,15 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(b
     {
       __J(base_addr_calc,this->_reference_to_object->Get_VC_Completed_Transition_Name());
       __J(this->Get_VC_Start_Transition_Name(),base_addr_calc);
+
+      if(pipeline_flag)
+	{
+	  // when this expression is active, we may reevaluate
+	  // the base address.
+	  __MJ(this->_reference_to_object->Get_VC_Reenable_Update_Transition_Name(visited_elements),
+	       this->Get_VC_Active_Transition_Name());
+	  __SelfRelease
+	}
     }
 
   ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
@@ -826,8 +953,7 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 
       this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
-      __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Start_Transition_Name());
-
+     
       assert(this->_reference_to_object->Is("AaArrayObjectReference"));
 
       AaArrayObjectReference* obj_ref = 
@@ -840,6 +966,8 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
       vector<int> shift_factors;
       obj_ref->Update_Address_Shift_Factors(shift_factors,word_size);
 
+      // root address calculation will include all dependencies with 
+      // this etc..
       obj_ref->Write_VC_Root_Address_Calculation_Control_Path_Optimized(pipeline_flag, visited_elements,
 									ls_map,pipe_map,
 									obj_ref->Get_Index_Vector(),
@@ -847,17 +975,38 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 									ofile);
 
       ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] {" << endl;
+
       ofile << "$T [final_reg_req] $T [final_reg_ack]" << endl;
       ofile << "}" << endl;
 
+      // this is there just for completeness.
+      __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
 
+      // links to root address calculation..
       __J(this->Get_VC_Active_Transition_Name(), obj_ref->Get_VC_Name() + "_root_address_calculated");
       __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
       __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Complete_Region_Name());
+
+      if(pipeline_flag)
+	{
+	  // just take care of the complete to active reenabling.. root address
+	  // calculation deps will be taken care of in Write_VC_Root_Address...
+	  __SelfRelease
+	}
     }
   else
     {
+      __T(this->Get_VC_Start_Transition_Name());
+      __T(this->Get_VC_Active_Transition_Name());
       __T(this->Get_VC_Completed_Transition_Name());
+      __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
+      __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Active_Transition_Name());
+
+      // standard marked joins
+      if(pipeline_flag)
+	{
+	  __SelfRelease
+	}
     }
 }
 
@@ -923,14 +1072,12 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
       __T(this->Get_VC_Completed_Transition_Name());
 
       this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
-      __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Start_Transition_Name());      
 
       this->_rest->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,
 						   ls_map,pipe_map,
 						   ofile);
 
-
-      __J(this->Get_VC_Active_Transition_Name(),this->_rest->Get_VC_Completed_Transition_Name());
+      __J(this->Get_VC_Start_Transition_Name(),this->_rest->Get_VC_Completed_Transition_Name());
 
       // either it will be a register or a split conversion
       // operator..
@@ -941,8 +1088,15 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
 	ofile << "$T [rr] $T [ra] $T [cr] $T [ca] //  type-conversion.. " << endl;
       ofile << "}" << endl;
 
-      __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
-      __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Complete_Region_Name());
+      __F(this->Get_VC_Start_Transition_Name(),this->Get_VC_Complete_Region_Name());
+      __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
+      __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Active_Transition_Name());
+
+      if(pipeline_flag)
+	{
+	  __MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), this->Get_VC_Active_Transition_Name());
+	  __SelfRelease
+	}
     }
 
 }
@@ -965,13 +1119,18 @@ void AaUnaryExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
       this->_rest->Write_VC_Links_Optimized(hier_id, ofile);
 
       ofile << "// " << this->To_String() << endl;
+      string sample_regn = this->Get_VC_Complete_Region_Name() + "_Sample";
+      string update_regn = this->Get_VC_Complete_Region_Name() + "_Update";
 
-      hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Complete_Region_Name());
+      string sample_hier_id = Augment_Hier_Id(hier_id,sample_regn);
+      string update_hier_id = Augment_Hier_Id(hier_id,update_regn);
+
       vector<string> reqs,acks;
-      reqs.push_back(hier_id + "/rr");
-      reqs.push_back(hier_id + "/cr");
-      acks.push_back(hier_id + "/ra");
-      acks.push_back(hier_id + "/ca");
+
+      reqs.push_back(sample_hier_id + "/rr");
+      reqs.push_back(update_hier_id + "/cr");
+      acks.push_back(sample_hier_id + "/ra");
+      acks.push_back(update_hier_id + "/ca");
 
       Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
     }
@@ -997,7 +1156,6 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
       __T(this->Get_VC_Completed_Transition_Name());
       
       this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
-      __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Start_Transition_Name());      
 
       this->_rest->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,
 						   ls_map,pipe_map,
@@ -1005,13 +1163,29 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
 
 
       if(!this->_rest->Is_Constant())
-	__J(this->Get_VC_Active_Transition_Name(),this->_rest->Get_VC_Completed_Transition_Name());
+	__J(this->Get_VC_Start_Transition_Name(),this->_rest->Get_VC_Completed_Transition_Name());
 
-      ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] { // unary expression " << endl;      
-      ofile << "$T [rr] $T [ra] $T [cr] $T [ca] //(split) unary operation" << endl;
+      string sample_regn = this->Get_VC_Complete_Region_Name() + "_Sample";
+      string update_regn = this->Get_VC_Complete_Region_Name() + "_Update";
+
+      ofile << ";;[" << sample_regn << "] { // unary expression " << endl;      
+      ofile << "$T [rr] $T [ra] // (split) unary operation" << endl;
       ofile << "}" << endl;
-      __F(this->Get_VC_Active_Transition_Name(), this->Get_VC_Complete_Region_Name());
-      __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Complete_Region_Name());
+
+      ofile << ";;[" << update_regn << "] { // unary expression " << endl;      
+      ofile << "$T [cr] $T [ca] //(split) unary operation" << endl;
+      ofile << "}" << endl;
+
+      __F(this->Get_VC_Start_Transition_Name(),sample_regn);
+      __J(this->Get_VC_Active_Transition_Name(),sample_regn);
+      __F(this->Get_VC_Active_Transition_Name(),update_regn);
+      __J(this->Get_VC_Completed_Transition_Name(),update_regn);
+
+      if(pipeline_flag)
+	{
+	  __MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), this->Get_VC_Active_Transition_Name());
+	  __SelfRelease
+	}
     }
 }
 void AaUnaryExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
@@ -1036,12 +1210,20 @@ void AaBinaryExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofile
 
       ofile << "// " << this->To_String() << endl;
 
-      hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Complete_Region_Name());
+
+      string sample_regn = this->Get_VC_Complete_Region_Name() + "_Sample";
+      string update_regn = this->Get_VC_Complete_Region_Name() + "_Update";
+
+      string sample_hier_id = Augment_Hier_Id(hier_id,sample_regn);
+      string update_hier_id = Augment_Hier_Id(hier_id,update_regn);
+
       vector<string> reqs,acks;
-      reqs.push_back(hier_id + "/rr");
-      reqs.push_back(hier_id + "/cr");
-      acks.push_back(hier_id + "/ra");
-      acks.push_back(hier_id + "/ca");
+
+      reqs.push_back(sample_hier_id + "/rr");
+      reqs.push_back(update_hier_id + "/cr");
+      acks.push_back(sample_hier_id + "/ra");
+      acks.push_back(update_hier_id + "/ca");
+
       Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
     }
 }
@@ -1064,24 +1246,45 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
       __T(this->Get_VC_Completed_Transition_Name());
       this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
-      __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Start_Transition_Name());      
-
 
       this->_first->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map, ofile);
       this->_second->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
 
 
       if(!this->_first->Is_Constant())
-	__J(this->Get_VC_Active_Transition_Name(),this->_first->Get_VC_Completed_Transition_Name());
+	__J(this->Get_VC_Start_Transition_Name(),this->_first->Get_VC_Completed_Transition_Name());
 
       if(!this->_second->Is_Constant())
-	__J(this->Get_VC_Active_Transition_Name(),this->_second->Get_VC_Completed_Transition_Name());
+	__J(this->Get_VC_Start_Transition_Name(),this->_second->Get_VC_Completed_Transition_Name());
 
-      ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] { // binary expression " << endl;
-      ofile << "$T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation " << endl;
+      string sample_regn = this->Get_VC_Complete_Region_Name() + "_Sample";
+      string update_regn = this->Get_VC_Complete_Region_Name() + "_Update";
+
+      ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "_Sample] { // binary expression " << endl;
+      ofile << "$T [rr] $T [ra]  // (split) binary operation " << endl;
       ofile << "}" << endl;
-      __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
-      __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Complete_Region_Name());
+
+      ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "_Update] { // binary expression " << endl;
+      ofile << "$T [cr] $T [ca] // (split) binary operation " << endl;
+      ofile << "}" << endl;
+
+      __F(this->Get_VC_Start_Transition_Name(), sample_regn);
+      __J(this->Get_VC_Active_Transition_Name(), sample_regn);
+      __F(this->Get_VC_Active_Transition_Name(), update_regn);
+      __J(this->Get_VC_Completed_Transition_Name(),update_regn);
+
+      if(pipeline_flag)
+	{
+	  if(!this->_first->Is_Constant())
+	    __MJ(this->_first->Get_VC_Reenable_Update_Transition_Name(visited_elements),
+		 this->Get_VC_Active_Transition_Name());
+
+	  if(!this->_second->Is_Constant())
+	    __MJ(this->_second->Get_VC_Reenable_Update_Transition_Name(visited_elements),
+		 this->Get_VC_Active_Transition_Name());
+
+	  __SelfRelease
+	}
     }
 }
 void AaBinaryExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
@@ -1138,9 +1341,6 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
       
   this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
-  __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Start_Transition_Name());      
-
-
   this->_test->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
   if(this->_if_true)
     this->_if_true->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
@@ -1149,17 +1349,30 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 
 
   if(!this->_test->Is_Constant())
-    __J(this->Get_VC_Active_Transition_Name(),this->_test->Get_VC_Completed_Transition_Name());
+    __J(this->Get_VC_Start_Transition_Name(),this->_test->Get_VC_Completed_Transition_Name());
   if(this->_if_true && !this->_if_true->Is_Constant())
-    __J(this->Get_VC_Active_Transition_Name(),this->_if_true->Get_VC_Completed_Transition_Name());
+    __J(this->Get_VC_Start_Transition_Name(),this->_if_true->Get_VC_Completed_Transition_Name());
   if(this->_if_false && !this->_if_false->Is_Constant())
-    __J(this->Get_VC_Active_Transition_Name(),this->_if_false->Get_VC_Completed_Transition_Name());
+    __J(this->Get_VC_Start_Transition_Name(),this->_if_false->Get_VC_Completed_Transition_Name());
   
   ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] { // ternary expression: " << endl;
   ofile << "$T [req] $T [ack] // select req/ack" << endl;
   ofile << "}" << endl;
-  __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
-  __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Complete_Region_Name());
+  __F(this->Get_VC_Start_Transition_Name(),this->Get_VC_Complete_Region_Name());
+  __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
+  __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Active_Transition_Name());
+
+  if(pipeline_flag)
+    {
+      if(!this->_test->Is_Constant())
+	__MJ(this->_test->Get_VC_Reenable_Update_Transition_Name(visited_elements), this->Get_VC_Active_Transition_Name());
+      if(this->_if_true && !this->_if_true->Is_Constant())
+	__MJ(this->_if_true->Get_VC_Reenable_Update_Transition_Name(visited_elements), this->Get_VC_Active_Transition_Name());
+      if(this->_if_false && !this->_if_false->Is_Constant())
+	__MJ(this->_if_false->Get_VC_Reenable_Update_Transition_Name(visited_elements), this->Get_VC_Active_Transition_Name());
+
+      __SelfRelease
+    }
 }
 
 void AaTernaryExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
@@ -1169,7 +1382,6 @@ void AaTernaryExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipelin
 {
   assert(0);
 }
-
 
 
 
@@ -1201,7 +1413,14 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(bool pipeline_flag,
 
   __J(this->Get_VC_Start_Transition_Name(),this->Get_VC_Name() + "_word_address_calculated");
 
+  if(pipeline_flag)
+    {
+      // as soon as this is active, reenable word address update.
+      string root_addr_calculated = this->Get_VC_Name() + "_root_address_calculated"; 
+      __MJ(root_addr_calculated,this->Get_VC_Active_Transition_Name());
+    }
 }
+
 void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 							      map<string, vector<AaExpression*> >& ls_map, 
 							      map<string, vector<AaExpression*> >& pipe_map,
@@ -1231,6 +1450,13 @@ void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag
 						   ofile);
 
   __J(this->Get_VC_Start_Transition_Name(),this->Get_VC_Name() + "_word_address_calculated");
+  if(pipeline_flag)
+    {
+      // as soon as this is active, reenable word address update.
+      string root_addr_calculated = this->Get_VC_Name() + "_root_address_calculated"; 
+      __MJ(root_addr_calculated,this->Get_VC_Active_Transition_Name());
+    }
+
 }
 
 void AaObjectReference::Write_VC_Load_Store_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
@@ -1290,6 +1516,13 @@ void AaObjectReference::Write_VC_Load_Store_Control_Path_Optimized(bool pipeline
   __J(active_trans,this->Get_VC_Request_Region_Name());
   __F(active_trans,this->Get_VC_Complete_Region_Name());
   __J(complete_trans,this->Get_VC_Complete_Region_Name());
+
+  if(pipeline_flag)
+    {
+      string root_addr_calculated = this->Get_VC_Name() + "_root_address_calculated"; 
+      __MJ(root_addr_calculated,active_trans);
+    }
+
 }
 
   
@@ -1308,7 +1541,7 @@ void AaObjectReference::Write_VC_Load_Links_Optimized(string hier_id,
 void AaObjectReference::Write_VC_Store_Links_Optimized(string hier_id,
 						       vector<AaExpression*>* address_expressions,
 						       vector<int>* scale_factors,
-						      vector<int>* shift_factors,
+						       vector<int>* shift_factors,
 						       ostream& ofile)
 {
   this->Write_VC_Address_Calculation_Links_Optimized(hier_id, address_expressions, scale_factors, shift_factors, ofile);
@@ -1321,7 +1554,7 @@ void AaObjectReference::Write_VC_Load_Store_Links_Optimized( string hier_id,
 							     string read_or_write,
 							     vector<AaExpression*>* address_expressions,
 							     vector<int>* scale_factors,
-						      vector<int>* shift_factors,
+							     vector<int>* shift_factors,
 							     ostream& ofile)
 {
   vector<string> reqs;
@@ -1400,8 +1633,6 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
   if(offset_val < 0 || base_addr < 0)
     {
 
-
-
       string word_region = this->Get_VC_Name() + "_word_addrgen"; 
 
       // calculates root address.. triggers a root-address-calculated transition
@@ -1441,6 +1672,12 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 
       __F(root_addr_calculated, word_region);
       __J(word_addr_calculated, word_region);
+
+      if(pipeline_flag)
+	{
+	  // reenable root-addr-calculated only after word-region completes.
+	  __MJ(root_addr_calculated, word_addr_calculated);
+	}
     }
   else
     {
@@ -1451,7 +1688,7 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 void AaObjectReference::Write_VC_Address_Calculation_Links_Optimized(string hier_id,
 								     vector<AaExpression*>* indices,
 								     vector<int>* scale_factors,
-						      vector<int>* shift_factors,
+								     vector<int>* shift_factors,
 								     ostream& ofile)
 {
  
@@ -1516,7 +1753,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 							 map<string, vector<AaExpression*> >& pipe_map,
 							 vector<AaExpression*>* index_vector,
 							 vector<int>* scale_factors,
-						      vector<int>* shift_factors,
+							 vector<int>* shift_factors,
 							 ostream& ofile)
 {
 
@@ -1561,7 +1798,8 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 	      __T(index_resized);
 
 	      num_non_constant++;
-	      (*index_vector)[idx]->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,
+	      (*index_vector)[idx]->Write_VC_Control_Path_Optimized(pipeline_flag, 
+								    visited_elements,
 								    ls_map,pipe_map,
 								    ofile);
 
@@ -1578,6 +1816,11 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 	      __F(index_computed,(this->Get_VC_Name() + "_index_resize_" + IntToStr(idx)));
 	      __J(index_resized,(this->Get_VC_Name() + "_index_resize_" + IntToStr(idx)));
 
+	      if(pipeline_flag)
+		{
+		  __MJ(index_computed, index_resized);
+		}
+
 	      ofile << ";;[" << this->Get_VC_Name() << "_index_scale_" << idx << "] {" << endl;
 	      if((*scale_factors)[idx] > 1)
 		{
@@ -1591,6 +1834,10 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 	      __F(index_resized,(this->Get_VC_Name() + "_index_scale_" + IntToStr(idx)));
 	      __J(indices_scaled,(this->Get_VC_Name() + "_index_scale_" + IntToStr(idx)));
 
+	      if(pipeline_flag)
+		{
+		  __MJ(index_resized, indices_scaled);
+		}
 	    }
 	  else
 	    {
@@ -1618,6 +1865,11 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
       __F(indices_scaled,(this->Get_VC_Name() + "_add_indices"));
       __J(offset_calculated,(this->Get_VC_Name() + "_add_indices"));
+
+      if(pipeline_flag)
+	{
+	  __MJ(indices_scaled, offset_calculated);
+	}
     }
   
   // at this point you have a final-offset-index.
@@ -1637,6 +1889,11 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
       __F(base_address_calculated,(this->Get_VC_Name() + "_base_addr_resize"));  
       __J(base_address_resized,(this->Get_VC_Name() + "_base_addr_resize")); 
+
+      if(pipeline_flag)
+	{
+	  __MJ(base_address_calculated, base_address_resized);
+	}
     }
 
   if(!all_indices_zero && (base_addr != 0))
@@ -1651,16 +1908,24 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
       ofile << "}" << endl;
 	
       __F((this->Get_VC_Name() + "_base_plus_offset_trigger"),
-		(this->Get_VC_Name() + "_base_plus_offset"));
+	  (this->Get_VC_Name() + "_base_plus_offset"));
 
 
       if(base_addr < 0)
 	{
 	  __F(base_address_resized,(this->Get_VC_Name() + "_base_plus_offset_trigger"));
+	  if(pipeline_flag)
+	    {
+	      __MJ(base_address_resized,root_address_calculated);
+	    }
 	}
       if(offset_val < 0)
 	{
 	  __F(offset_calculated,(this->Get_VC_Name() + "_base_plus_offset_trigger"));
+	  if(pipeline_flag)
+	    {
+	      __MJ(offset_calculated, root_address_calculated);
+	    }
 	}
     }
   else 
@@ -1675,15 +1940,24 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
       if(base_addr != 0)
 	{
 	  __F(base_address_resized,(this->Get_VC_Name() + "_base_plus_offset"));
+	  if(pipeline_flag)
+	    {
+	      __MJ(base_address_resized,root_address_calculated);
+	    }
 	}
       else
 	{
 	  __F(offset_calculated,(this->Get_VC_Name() + "_base_plus_offset"));
+	  if(pipeline_flag)
+	    {
+	      __MJ(offset_calculated,root_address_calculated);
+	    }
 	}
     }
 
 
   __J(root_address_calculated,(this->Get_VC_Name() + "_base_plus_offset"));
+
 }
 
 
@@ -1692,7 +1966,7 @@ void AaObjectReference::
 Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 						  vector<AaExpression*>* indices,
 						  vector<int>* scale_factors,
-						      vector<int>* shift_factors,
+						  vector<int>* shift_factors,
 						  ostream& ofile)
 {
   int offset_val = 0;

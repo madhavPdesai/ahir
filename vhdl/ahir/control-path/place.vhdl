@@ -8,8 +8,8 @@ use ahir.Subprograms.all;
 entity place is
 
   generic (
-    marking : boolean := false;
-    bypass : boolean := false
+    capacity: integer := 1;
+    marking : integer := 0
     );
   port (
     preds : in  BooleanArray;
@@ -25,15 +25,18 @@ architecture default_arch of place is
   signal incoming_token : boolean;      -- true if a pred fires
   signal backward_reset : boolean;      -- true if a succ fires
   signal token_sig      : boolean;  -- asynchronously computed value of the token
-  signal token_latch    : boolean;
+  signal token_latch    : integer range 0 to capacity;
   
 begin  -- default_arch
 
-  -- Atmost one of the preds can send a pulse.
+  assert capacity > 0 report "place must have capacity > 1" severity error;
+  assert marking <= capacity report "initial marking must be less than place capacity" severity error;
+
+  -- At most one of the preds can send a pulse.
   -- We detect it with an OR over all inputs
   incoming_token <= OrReduce(preds);
 
-  -- Atmost one of the succs can send a pulse.
+  -- At most one of the succs can send a pulse.
   -- We detect it with an OR over all inputs
   backward_reset <= OrReduce(succs);
 
@@ -44,22 +47,16 @@ begin  -- default_arch
     if clk'event and clk = '1' then  -- rising clock edge
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
-      elsif backward_reset then
-        token_latch <= false;
-      else
-        token_latch <= token_sig;
+      elsif (backward_reset and (not incoming_token)) then
+        assert token_latch > 0 report "number of tokens cannot become negative!" severity error;
+        token_latch <= token_latch - 1;
+      elsif (incoming_token and (not backward_reset)) then
+        assert token_latch < capacity report "number of tokens cannot exceed capacity" severity error;
+        token_latch <= token_latch + 1;
       end if;
     end if;
   end process latch_token;
-  
-  token_sig <= true when incoming_token else token_latch;    
 
-  bypassGen: if bypass generate
-    token <= token_sig;    
-  end generate bypassGen;
-
-  noBypassGen: if not bypass generate
-    token <= token_latch;        
-  end generate noBypassGen;
+  token <= true when (token_latch > 0) else false;
 
 end default_arch;

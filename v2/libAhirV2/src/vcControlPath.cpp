@@ -420,13 +420,9 @@ void vcTransition::Print_VHDL(ostream& ofile)
 		<< pred->Get_Exit_Symbol() << ";" << endl;
 	}
 
-      string bypass_str = (vcSystem::_min_clock_period_flag ? "false" : "true");
-      //string bypass_str = "true";
-      
       if(this->Get_Is_Input())
 	{
 	  ofile << this->Get_VHDL_Id() << "_join: join_with_input -- {" << endl
-		<< "generic map ( bypass => " << bypass_str << ")" << endl
 		<< "port map( -- {"
 		<< "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl
 		<< "symbol_in => " << this->Get_DP_To_CP_Symbol() << "," << endl
@@ -437,7 +433,6 @@ void vcTransition::Print_VHDL(ostream& ofile)
       else
 	{
 	  ofile << this->Get_VHDL_Id() << "_join: join -- {" << endl
-		<< "generic map ( bypass => " << bypass_str << ")" << endl
 		<< "port map( -- {"
 		<< "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl
 		<< "symbol_out => " << this->Get_Exit_Symbol() << "," << endl
@@ -652,12 +647,9 @@ void vcCPBlock::Print_VHDL_Start_Interlock(ostream& ofile)
   // this->Get_Start_Symbol is a join of this->Trigger_Place
   // and this->Enable_Place.
   //
-  string bypass_str = (vcSystem::_min_clock_period_flag ? "false" : "true");
 
   ofile << this->Get_Start_Symbol() 
 	<< "_interlock : pipeline_interlock -- { " << endl
-        << "generic map(trigger_bypass => " 
-	<< bypass_str << ", enable_bypass => " << bypass_str << ")" << endl
 	<< " port map (trigger => " << this->Get_Predecessor_Exit_Symbol() << "," << endl
 	<< "enable => " << this->Get_Successor_Start_Symbol() << ", " << endl
 	<< "symbol_out => " << this->Get_Start_Symbol() << ", " << endl
@@ -1168,6 +1160,49 @@ void vcCPBranchBlock::Update_Predecessor_Successor_Links()
 }
 
 
+vcPhiSequencer::vcPhiSequencer(string id): vcRoot(id)
+{
+}
+
+void vcPhiSequencer::Print(ostream& ofile)
+{
+  // TODO
+}
+
+void vcPhiSequencer::Print_VHDL(ostream& ofile)
+{
+  // TODO
+}
+
+vcPlaceJoin::vcPlaceJoin(string id): vcRoot(id)
+{
+}
+
+void vcPlaceJoin::Print(ostream& ofile)
+{
+  // TODO
+}
+
+void vcPlaceJoin::Print_VHDL(ostream& ofile)
+{
+  // TODO
+}
+
+
+vcTransitionMerge::vcTransitionMerge(string id): vcRoot(id)
+{
+}
+
+void vcTransitionMerge::Print(ostream& ofile)
+{
+  // TODO
+}
+
+void vcTransitionMerge::Print_VHDL(ostream& ofile)
+{
+  // TODO
+}
+
 vcCPSimpleLoopBlock::vcCPSimpleLoopBlock(vcCPBlock* parent, string id): vcCPBranchBlock(parent,id)
 {
 }
@@ -1175,19 +1210,37 @@ vcCPSimpleLoopBlock::vcCPSimpleLoopBlock(vcCPBlock* parent, string id): vcCPBran
 void vcCPSimpleLoopBlock::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__LOOPBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
+
+
   this->Print_Elements(ofile);
 
-  // print bindings.
-  for(map<vcPlace*,vcTransition*>::iterator biter = _bindings.begin();
-	biter != _bindings.end();
+  // print input bindings.
+  for(map<vcPlace*,vcTransition*>::iterator biter = _input_bindings.begin();
+	biter != _input_bindings.end();
 	biter++)
   {
 	vcPlace* pl = (*biter).first;
         vcTransition* tr = (*biter).second;
 
 	ofile << vcLexerKeywords[__BIND] << " " << pl->Get_Id() << " " 
-		<< tr->Get_Parent()->Get_Id() << vcLexerKeywords[__COLON] 
-		<< tr->Get_Id() << endl;	
+	      << vcLexerKeywords[__IMPLIES] << " " 
+	      << tr->Get_Parent()->Get_Id() << vcLexerKeywords[__COLON] 
+	      << tr->Get_Id() << endl;	
+  }
+
+
+  // print output bindings.
+  for(map<vcPlace*,vcTransition*>::iterator biter = _output_bindings.begin();
+	biter != _output_bindings.end();
+	biter++)
+  {
+	vcPlace* pl = (*biter).first;
+        vcTransition* tr = (*biter).second;
+
+	ofile << vcLexerKeywords[__BIND] << " " << pl->Get_Id() << " " 
+	      << vcLexerKeywords[__ULE_OP] << " " 
+	      << tr->Get_Parent()->Get_Id() << vcLexerKeywords[__COLON] 
+	      << tr->Get_Id() << endl;	
   }
 
   // now print the merge and branch points.
@@ -1216,7 +1269,22 @@ void vcCPSimpleLoopBlock::Print(ostream& ofile)
       ofile << ")" << endl;
     }
 
+  // TODO: print Phi-sequencers
+  // TODO: print Place-Joins 
+  // TODO: print terminator.
+
   ofile << "\n// end loop-block " << this->Get_Id() << endl << "}" << endl;
+}
+
+void vcCPSimpleLoopBlock::Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& req,
+		       vector<string>& reqs, string& done)
+{
+  assert(0);
+}
+
+void vcCPSimpleLoopBlock::Add_Place_Join(string& pj_id, vector<string>& in_places, string& out_place)
+{
+  assert(0);
 }
 
 void vcCPSimpleLoopBlock::Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back)
@@ -1260,7 +1328,7 @@ void vcCPSimpleLoopBlock::Update_Predecessor_Successor_Links()
 	assert(0);
 }
 
-void vcCPSimpleLoopBlock::Bind(string place_name, string region_name, string transition_name)
+void vcCPSimpleLoopBlock::Bind(string place_name, string region_name, string transition_name, bool input_binding)
 {
 	// TODO
   	// find local place place_name
@@ -1737,9 +1805,6 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
       this->Add_Fork_Point(this->_entry, this->_exit);
     }
 
-
-
-
   this->vcCPBlock::Update_Predecessor_Successor_Links();
 }
 
@@ -1836,24 +1901,55 @@ void vcCPPipelinedForkBlock::Print(ostream& ofile)
     }
   ofile << "\n// end pipeline-block " << this->Get_Id() << endl << "}";
 
-  if(_exports.size() == 0)
-	ofile << endl;
+  if(_exported_inputs.size() == 0)
+    assert(0);
   else
   {
 	ofile << vcLexerKeywords[__LPAREN] << " ";
-	for(set<vcTransition*>::iterator eiter = _exports.begin();
-		eiter != _exports.end();
+	for(set<vcTransition*>::iterator eiter = _exported_inputs.begin();
+		eiter != _exported_inputs.end();
 		eiter++)
 	{
 		ofile << (*eiter)->Get_Id() << " ";
 	}
 	ofile << vcLexerKeywords[__RPAREN] << endl;
   }
+
+  if(_exported_outputs.size() == 0)
+    assert(0);
+  else
+  {
+	ofile << vcLexerKeywords[__LPAREN] << " ";
+	for(set<vcTransition*>::iterator eiter = _exported_outputs.begin();
+		eiter != _exported_outputs.end();
+		eiter++)
+	{
+		ofile << (*eiter)->Get_Id() << " ";
+	}
+	ofile << vcLexerKeywords[__RPAREN] << endl;
+  }
+
 }
 
-void vcCPPipelinedForkBlock::Add_Export(string internal_id)
+void vcCPPipelinedForkBlock::Add_Transition_Merge(string& tm_id, vector<string>& in_places, string& out_place)
 {
-	
+  assert(0);
+}
+
+void vcCPPipelinedForkBlock::Add_Exported_Input(string internal_id)
+{
+  this->Add_Export(internal_id, true);
+}
+
+
+void vcCPPipelinedForkBlock::Add_Exported_Output(string internal_id)
+{
+  this->Add_Export(internal_id, false);
+}
+
+
+void vcCPPipelinedForkBlock::Add_Export(string internal_id, bool input_flag)
+{
   vcCPElement* jp = this->Find_CPElement(internal_id);
   if(jp == NULL)
   {
@@ -1867,8 +1963,11 @@ void vcCPPipelinedForkBlock::Add_Export(string internal_id)
 	return;
   }
 
+  if(input_flag)
+    _exported_inputs.insert((vcTransition*)jp);
+  else
+    _exported_outputs.insert((vcTransition*)jp);
 
-  _exports.insert((vcTransition*)jp);
 }
 
 void vcCPPipelinedForkBlock::Eliminate_Redundant_Dependencies()
@@ -2284,13 +2383,10 @@ void vcControlPath::Print_VHDL_Start_Symbol_Assignment(ostream& ofile)
     }
   else
     {
-      string bypass_str = (vcSystem::_min_clock_period_flag ? "false" : "true");
 
       // interlock will have to be explicit.
       ofile << this->Get_Start_Symbol() 
 	<< "_interlock : pipeline_interlock -- { " << endl
-        << "generic map(trigger_bypass => "  
-	<< bypass_str << ", enable_bypass => " << bypass_str << ")" << endl
 	<< " port map (trigger => start_req_symbol," << endl
 	<< "enable =>  fin_ack_symbol, " << endl
 	<< "symbol_out => " << this->Get_Start_Symbol() << ", " << endl
@@ -2319,10 +2415,7 @@ void vcControlPath::Print_VHDL_Exit_Symbol_Assignment(ostream& ofile)
 	<< this->_exit->Get_Exit_Symbol() 
 	<< " & fin_req_symbol;"  << endl;
   
-  string bypass_str = (vcSystem::_min_clock_period_flag ? "false" : "true");
-  //string bypass_str = "true";
   ofile << this->Get_Exit_Symbol() << "_join_instance: join -- {" << endl
-	<< "generic map ( bypass => " << bypass_str << ")" << endl
 	<< "port map( -- {" << endl
 	<< " clk => clk, reset => reset, " << endl
 	<< "preds => " << this->Get_Exit_Symbol() <<  "_predecessors," << endl

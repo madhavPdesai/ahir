@@ -669,7 +669,9 @@ aA_Merge_Statement[AaBranchBlockStatement* scope] returns [AaMergeStatement* new
                     cerr << "Warning: ignoring duplicate label in merge " << endl;
 
             } ) | 
-            (eid:ENTRY {lbl = eid->getText(); lbl_set.insert(lbl); new_mgs->Add_Merge_Label(lbl);}))+
+            (eid:ENTRY {lbl = eid->getText(); lbl_set.insert(lbl); new_mgs->Add_Merge_Label(lbl);}) |
+            (lbid:LOOPBACK {lbl = lbid->getText(); lbl_set.insert(lbl); new_mgs->Add_Merge_Label(lbl);}) 
+         )+
         (
             ( ns = aA_Phi_Statement[scope,lbl_set,new_mgs,false] {  slist.push_back(ns); } )+
         {
@@ -773,29 +775,27 @@ aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement
     vector<AaStatement*> phiseq;
     AaPhiStatement* phis = NULL;
     new_dws = new AaDoWhileStatement(scope);
+    AaMergeStatement* ms = NULL;
     set<string,StringCompare> lbl_set;
     lbl_set.insert("$entry");
     lbl_set.insert("$loopback");
 }: 
-     il:DO MERGE ENTRY LOOPBACK
-	( phis = aA_Phi_Statement[scope,lbl_set,NULL,true] 
-		{ 
-			phiseq.push_back(phis);
-			phis->Set_In_Do_While(true);
-		} )* ENDMERGE
+     il:DO 
+        ms = aA_Merge_Statement[scope]
+        { 
+            new_dws->Set_Merge_Statement(ms);
+            ms->Set_In_Do_While(true);
+        }
+
         sseq = aA_Atomic_Statement_Sequence[scope] 
         {
             new_dws->Set_Loop_Body_Sequence(sseq);
             sseq->Increment_Tab_Depth();
         }
+
 	WHILE test_expression = aA_Expression[scope] 
 	{
 		new_dws->Set_Test_Expression(test_expression);
-		if(phiseq.size() > 0)
-		{
-			AaStatementSequence* pseq = new AaStatementSequence(scope,phiseq);
-			new_dws->Set_Phi_Sequence(pseq);
-		}
 	}
     ;   
 
