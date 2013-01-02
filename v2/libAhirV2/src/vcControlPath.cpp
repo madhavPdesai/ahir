@@ -1211,7 +1211,7 @@ void vcCPSimpleLoopBlock::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__LOOPBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
 
-
+  // print all the normal elements.. This includes the loop-body.
   this->Print_Elements(ofile);
 
   // print input bindings.
@@ -1270,20 +1270,20 @@ void vcCPSimpleLoopBlock::Print(ostream& ofile)
     }
 
   // TODO: print Phi-sequencers
-  // TODO: print Place-Joins 
   // TODO: print terminator.
 
   ofile << "\n// end loop-block " << this->Get_Id() << endl << "}" << endl;
 }
 
-void vcCPSimpleLoopBlock::Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& req,
-		       vector<string>& reqs, string& done)
+void vcCPSimpleLoopBlock::Print_VHDL(ostream& ofile)
 {
+  // TO BE IMPLEMENTED.
   assert(0);
 }
 
 void vcCPSimpleLoopBlock::Add_Place_Join(string& pj_id, vector<string>& in_places, string& out_place)
 {
+  // TO BE IMPLEMENTED.
   assert(0);
 }
 
@@ -1300,7 +1300,7 @@ void vcCPSimpleLoopBlock::Set_Loop_Termination_Information(string loop_exit, str
 
 	_loop_body = this->Find_CPElement(loop_body);
 	assert(_loop_body != NULL);	
-	assert(_loop_body->Is("vcCPPipelinedForkBlock"));
+	assert(_loop_body->Is("vcCPPipelinedLoopBody"));
 
 	_loop_back = this->Find_CPElement(loop_back);
 	assert(_loop_back != NULL);	
@@ -1311,20 +1311,18 @@ void vcCPSimpleLoopBlock::Set_Loop_Termination_Information(string loop_exit, str
 
 bool vcCPSimpleLoopBlock::Check_Structure()
 {
-	assert(0);
+  // TO BE IMPLEMENTED
+  assert(0);
 
-	// TODO: check that there is one merge, one
-	// branch, and one pipelined fork block.
-	// the pipelined fork block should export one
-	// transistion, which should be linked to
-	// one of the places in the simple-loop.
-	// (the loopback place).
-	// etc.
+  // TODO: check that there is a pipelined loop body,
+  // which has two input bindings and one output binding.
+  // Check that a loop terminator is present etc..
+
 }
 
 void vcCPSimpleLoopBlock::Update_Predecessor_Successor_Links()
 {
-	// TODO
+	// TODO:  essentially, update the links in the loop body.
 	assert(0);
 }
 
@@ -1809,11 +1807,11 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
 }
 
 
-vcCPPipelinedForkBlock::vcCPPipelinedForkBlock(vcCPBlock* parent, string id):vcCPForkBlock(parent,id)
+vcCPPipelinedLoopBody::vcCPPipelinedLoopBody(vcCPBlock* parent, string id):vcCPForkBlock(parent,id)
 {
 }
 
-void vcCPPipelinedForkBlock::Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec)
+void vcCPPipelinedLoopBody::Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec)
 {
   vcCPElement* jp = this->Find_CPElement(join_name);
   if(jp == NULL)
@@ -1836,7 +1834,7 @@ void vcCPPipelinedForkBlock::Add_Marked_Join_Point(string& join_name, vector<str
     }
 }
 
-void vcCPPipelinedForkBlock::Add_Marked_Join_Point(vcTransition* jp, vcCPElement* jre)
+void vcCPPipelinedLoopBody::Add_Marked_Join_Point(vcTransition* jp, vcCPElement* jre)
 {
   assert(jre->Is_Transition());
 
@@ -1848,9 +1846,10 @@ void vcCPPipelinedForkBlock::Add_Marked_Join_Point(vcTransition* jp, vcCPElement
     }
 }
 
-void vcCPPipelinedForkBlock::Print(ostream& ofile)
+void vcCPPipelinedLoopBody::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__PIPELINE]  << " [" << this->Get_Id() << "] {" << endl;
+
   this->Print_Elements(ofile);
 
 
@@ -1899,7 +1898,17 @@ void vcCPPipelinedForkBlock::Print(ostream& ofile)
 	}
       ofile << ")" << endl;
     }
+
+  // print phi-sequencers.
+  assert(0 && "to be implemented: printing of phi-sequencers..");
+
+  // print transition-merges
+  assert(0 && "to be implemented: printing of transition-merges..");
+
+
   ofile << "\n// end pipeline-block " << this->Get_Id() << endl << "}";
+
+  // print mandatory exports.
 
   if(_exported_inputs.size() == 0)
     assert(0);
@@ -1928,27 +1937,38 @@ void vcCPPipelinedForkBlock::Print(ostream& ofile)
 	}
 	ofile << vcLexerKeywords[__RPAREN] << endl;
   }
-
 }
 
-void vcCPPipelinedForkBlock::Add_Transition_Merge(string& tm_id, vector<string>& in_places, string& out_place)
+void vcCPPipelinedLoopBody::Print_VHDL(ostream& ofile)
+{
+}
+
+void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& req,
+		       vector<string>& reqs, string& done)
 {
   assert(0);
 }
 
-void vcCPPipelinedForkBlock::Add_Exported_Input(string internal_id)
+
+
+void vcCPPipelinedLoopBody::Add_Transition_Merge(string& tm_id, vector<string>& in_places, string& out_place)
+{
+  assert(0);
+}
+
+void vcCPPipelinedLoopBody::Add_Exported_Input(string internal_id)
 {
   this->Add_Export(internal_id, true);
 }
 
 
-void vcCPPipelinedForkBlock::Add_Exported_Output(string internal_id)
+void vcCPPipelinedLoopBody::Add_Exported_Output(string internal_id)
 {
   this->Add_Export(internal_id, false);
 }
 
 
-void vcCPPipelinedForkBlock::Add_Export(string internal_id, bool input_flag)
+void vcCPPipelinedLoopBody::Add_Export(string internal_id, bool input_flag)
 {
   vcCPElement* jp = this->Find_CPElement(internal_id);
   if(jp == NULL)
@@ -1970,7 +1990,22 @@ void vcCPPipelinedForkBlock::Add_Export(string internal_id, bool input_flag)
 
 }
 
-void vcCPPipelinedForkBlock::Eliminate_Redundant_Dependencies()
+bool vcCPPipelinedLoopBody::Check_Structure()
+{
+  // TODO: check that there is no cycle present in 
+  // the fork-join structure.
+  assert(0);
+}
+
+void vcCPPipelinedLoopBody::Update_Predecessor_Successor_Links()
+{
+  // TODO: the predecessor-successor relations are similar to
+  // those in the fork-block case, except for the addition of
+  // the phi-sequencers and transition-merges, which alter
+  // it somewhat.
+}
+
+void vcCPPipelinedLoopBody::Eliminate_Redundant_Dependencies()
 {
 	// do nothing.. until we understand it a bit better...
 	return;

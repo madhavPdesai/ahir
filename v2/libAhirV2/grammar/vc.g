@@ -368,16 +368,13 @@ vc_CPSimpleLoopBlock[vcCPBlock* cp]
 	vcCPElement* cpe;
 }
 : LOOPBLOCK lbl = vc_Label { sb = new vcCPSimpleLoopBlock(cp,lbl);} LBRACE 
- (cpe = vc_CPPlace[sb] {sb->Add_CPElement(cpe);})*
-        vc_CPPipelinedForkBlock[sb]
-        vc_CPSeriesBlock[sb]
-        vc_CPSeriesBlock[sb]
-        vc_CPMerge[sb]
-        vc_CPBranch[sb]
+        (cpe = vc_CPPlace[sb] {sb->Add_CPElement(cpe);})* // first the places
+        vc_CPPipelinedLoopBody[sb] // then the loop body..
+        (vc_CPSeriesBlock[sb])+ // then the series blocks to trigger branches and receive acks.
+        (vc_CPMerge[sb])+  // merge places.
+        (vc_CPBranch[sb])+ // a branch places
         // all special elements from here on..
-        (vc_CPBind[sb])*
-        (vc_CPPhiSequencer[sb])*
-        (vc_CPPlaceJoin[sb])*
+        (vc_CPBind[sb])+
         vc_CPLoopTerminate[sb]  
   RBRACE
         { cp->Add_CPElement(sb); }
@@ -405,7 +402,7 @@ vc_CPLoopTerminate[vcCPSimpleLoopBlock* slb]
 // vc_CPPhiSequencer: PHISEQUENCER LPAREN vc_Identifier+ COLON vcIdentifier+ COLON vcIdentifier RPAREN 
 //                               LPAREN vc_Identifier+ : vc_Identifier RPAREN
 //-----------------------------------------------------------------------------------------------
-vc_CPPhiSequencer[vcCPSimpleLoopBlock* slb] 
+vc_CPPhiSequencer[vcCPPipelinedLoopBody* slb] 
 {
     vector<string> selects;
     vector<string> reenables;
@@ -455,7 +452,7 @@ vc_CPPlaceJoin[vcCPSimpleLoopBlock* slb]
 // vc_CPTransitionMerge: TRANSITIONMERGE vc_Label LPAREN vc_Identifier+ RPAREN 
 //                               LPAREN vc_Identifier RPAREN
 //-----------------------------------------------------------------------------------------------
-vc_CPTransitionMerge[vcCPPipelinedForkBlock* slb] 
+vc_CPTransitionMerge[vcCPPipelinedLoopBody* slb] 
 {
     string tm_id;
     vector<string> in_transitions;
@@ -532,23 +529,25 @@ vc_CPForkBlock[vcCPBlock* cp]
 ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPPipelinedForkBlock: PIPELINE vc_Label LBRACE (vc_CPFork | vc_CPRegion | vc_CPJoin | vc_CPMarkedJoin | vc_CPTransition )+ 
+// vc_CPPipelinedLoopBody: PIPELINE vc_Label LBRACE (vc_CPFork | vc_CPRegion | vc_CPJoin | vc_CPMarkedJoin | vc_CPTransition )+ 
 //                                            RBRACE (LPAREN vc_Identifier+ RPAREN)?
 //-----------------------------------------------------------------------------------------------
-vc_CPPipelinedForkBlock[vcCPBlock* cp] 
+vc_CPPipelinedLoopBody[vcCPBlock* cp] 
 {
 	string lbl;
-	vcCPPipelinedForkBlock* fb;
+	vcCPPipelinedLoopBody* fb;
 	vcCPElement* cpe;
-        string internal_id, external_id;
-        bool pipeline_flag = false;
+    string internal_id, external_id;
+    bool pipeline_flag = false;
 }
-: PIPELINE lbl = vc_Label { fb = new vcCPPipelinedForkBlock(cp,lbl);} LBRACE 
+: PIPELINE lbl = vc_Label { fb = new vcCPPipelinedLoopBody(cp,lbl);} LBRACE 
  ((vc_CPRegion[fb]) | 
- ( vc_CPFork[fb] ) |
- ( vc_CPJoin[fb] ) | 
- ( vc_CPMarkedJoin[fb] ) | 
- ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
+            ( vc_CPFork[fb] ) |
+            ( vc_CPJoin[fb] ) | 
+            ( vc_CPMarkedJoin[fb] ) | 
+            ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
+            ( vc_CPPhiSequencer[fb]) |
+            ( vc_CPTransitionMerge[fb]) |
             (vc_AttributeSpec[fb]) )* RBRACE
 { cp->Add_CPElement(fb);}
 ( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Input(internal_id);})+ RPAREN ) 

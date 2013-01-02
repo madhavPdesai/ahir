@@ -133,23 +133,23 @@ public:
 	public: void vc_CPSimpleLoopBlock(
 		vcCPBlock* cp
 	);
-	public: void vc_CPPipelinedForkBlock(
+	public: void vc_CPPipelinedLoopBody(
 		vcCPBlock* cp
 	);
 	public: void vc_CPBind(
 		vcCPSimpleLoopBlock* cp
 	);
-	public: void vc_CPPhiSequencer(
+	public: void vc_CPLoopTerminate(
 		vcCPSimpleLoopBlock* slb
+	);
+	public: void vc_CPPhiSequencer(
+		vcCPPipelinedLoopBody* slb
 	);
 	public: void vc_CPPlaceJoin(
 		vcCPSimpleLoopBlock* slb
 	);
-	public: void vc_CPLoopTerminate(
-		vcCPSimpleLoopBlock* slb
-	);
 	public: void vc_CPTransitionMerge(
-		vcCPPipelinedForkBlock* slb
+		vcCPPipelinedLoopBody* slb
 	);
 	public: void vc_CPFork(
 		vcCPForkBlock* fb
@@ -310,10 +310,6 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_28;
 	static const unsigned long _tokenSet_29_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_29;
-	static const unsigned long _tokenSet_30_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_30;
-	static const unsigned long _tokenSet_31_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_31;
 };
 
 #endif /*INC_vcParser_hpp_*/

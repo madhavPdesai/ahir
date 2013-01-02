@@ -478,7 +478,6 @@ class vcCPSimpleLoopBlock: public vcCPBranchBlock
   vcCPElement* _loop_body;
   vcCPElement* _loop_back;
 
-  vector<vcPhiSequencer*> _phi_sequencers;
   vector<vcPlaceJoin*> _place_joins;
 
 public:
@@ -486,14 +485,15 @@ public:
   virtual string Kind() {return("vcCPSimpleLoopBlock");}
 
   virtual void Print(ostream& ofile);
+  virtual void Print_VHDL(ostream& ofile);
+
   virtual bool Check_Structure(); // check that the block is well-formed.
   virtual void Update_Predecessor_Successor_Links();
   void Bind(string place_name, string region_name, string transition_name, bool input_binding);
   void Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back);
 
   
-  void Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& req,
-			 vector<string>& reqs, string& done);
+
   void Add_Place_Join(string& pj_id, vector<string>& in_places, string& out_place);
 };
 
@@ -519,9 +519,12 @@ public:
   void Add_Fork_Point(string& fork_name, vector<string>& fork_cpe_vec);
   void Add_Join_Point(string& join_name, vector<string>& join_cpe_vec);
 
-  virtual bool Check_Structure(); // check that the block is well-formed.
+
   virtual void Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* m);
+
+  virtual bool Check_Structure(); // check that the block is well-formed.
   virtual void Update_Predecessor_Successor_Links();
+
   void Precedence_Order(bool reverse_flag, vcCPElement* start_element, vector<vcCPElement*>& precedence_order);
   void Add_Join_Point(vcTransition* jp, vcCPElement* jre);
   void Remove_Join_Point(vcTransition* jp, vcCPElement* jre);
@@ -535,29 +538,36 @@ public:
 					vcCPElement* u, vcCPElement* v);
 };
 
-class vcCPPipelinedForkBlock: public vcCPForkBlock
+class vcCPPipelinedLoopBody: public vcCPForkBlock
 {
   map<vcTransition*, set<vcCPElement*>, vcRoot_Compare > _marked_join_map;
   set<vcTransition*> _exported_inputs;
   set<vcTransition*> _exported_outputs;
 
+  vector<vcPhiSequencer*> _phi_sequencers;
   vector<vcTransitionMerge*> _transition_merges;
+
 public:
 
-  virtual string Kind() {return("vcCPPipelinedForkBlock");}
-  vcCPPipelinedForkBlock(vcCPBlock* parent, string id);
-
+  virtual string Kind() {return("vcCPPipelinedLoopBody");}
+  vcCPPipelinedLoopBody(vcCPBlock* parent, string id);
 
   virtual void Print(ostream& ofile);
+  virtual void Print_VHDL(ostream& ofile);
+
   void Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec);
   void Add_Marked_Join_Point(vcTransition* jp, vcCPElement* jre);
 
+  virtual bool Check_Structure(); // check that the block is well-formed.
+  virtual void Update_Predecessor_Successor_Links();
   void Eliminate_Redundant_Dependencies();
 
   void Add_Exported_Input(string internal_id);
   void Add_Exported_Output(string internal_id);
   void Add_Export(string internal_id, bool input_flag);
 
+  void Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& req,
+			 vector<string>& reqs, string& done);
   void Add_Transition_Merge(string& tm_id, vector<string>& in_transition, string& out_transition);
 
 };
