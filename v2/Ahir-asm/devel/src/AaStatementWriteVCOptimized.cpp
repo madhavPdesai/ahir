@@ -547,8 +547,6 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       ofile << "} // " << sseq->Get_VC_Name() <<  endl;
     }
 
-
-
 }
 
 

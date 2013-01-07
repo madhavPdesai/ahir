@@ -4199,12 +4199,13 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 
   // in the optimized case, there are two regions in
   // the CP for the dowhile.  An outer loop region
-  // and an inner fork region for the loop-body.
+  // and an inner region for the loop-body.
   //
-  // the control path for the test expression is
-  // included in the loop body.
-  //
-  // What about the merge statement in the DoWhile?
+  // The inner region has two input places (bound to 
+  // corresponding transitions) and is a pipelined
+  // fork body.  The PHI statements are included
+  // in the inner body and their sequencing is
+  // handled inside the inner body.
   // 
   ofile << "// do-while-statement  ";
   ofile << endl;
@@ -4219,18 +4220,21 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
   // start the outer region
   ofile << "<o> [" << this->Get_VC_Name() << "] {" << endl;
 
+  // entry and exit places.
+  string entry_place_name = this->Get_VC_Name() + "__entry__";
+  string exit_place_name = this->Get_VC_Name() + "__exit__";
+  __Place(entry_place_name);
+  __Place(exit_place_name);
+
   // the syntax is very strict about the ordering of
   // declarations:
   //    First the loop_back place.
-  ofile << "$P [loop_back]" << endl;
-
+  __Place("loop_back");
+    
   //    then the condition_done place (which is bound to 
   //    the condition evaluation transition in the loop body).
-  ofile << "$P [condition_done]" << endl;
+  __Place("condition_done");
 
-  // all the places that are associated with the
-  // PHI sequencers.
-  this->Write_VC_Phi_Places(ofile);
 
   //    next: the loop_body, which is a pipeline.
   // to write its control-path, we must pass in the
@@ -4247,7 +4251,11 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
       phi_stmts.push_back(this->_merge_statement->Get_Statement(idx));
     }
 
+
   AaBlockStatement* pstmt = (AaBlockStatement*) pscope;
+  // Here's where the inner body gets written.
+  // This is a hack which reuses as much code as possible.
+  // perhaps it can be cleaned up later (which means never :-))
   pstmt->Write_VC_Control_Path_Optimized(true, 
 					 this->_test_expression,
 					 _loop_body_sequence,
@@ -4259,14 +4267,18 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
   ofile << ";; [loop_taken] { $T [ack] } " << endl;
 
   //    the binding of the condition_done to the test expression completion.
-  ofile << "$bind condition_done " << vc_loop_body_id << " : " << this->_test_expression->Get_VC_Completed_Transition_Name() << endl;
+  ofile << "$bind condition_done <= " << vc_loop_body_id << " : " << this->_test_expression->Get_VC_Completed_Transition_Name() << endl;
 
   //    links.
   ofile << "condition_done |-> (loop_exit loop_taken)" << endl;
   ofile << vc_loop_body_id << " <-| ($entry loopback)" << endl;
 
+  // the binding of the loop-entry contol places to the loop body.
+  ofile << "$bind " << entry_place_name << "  => " << vc_loop_body_id << " : first_through_loop_body " << endl; 
+  ofile << "$bind loop_back  => " << vc_loop_body_id << " : back_edge_to_loop_body " << endl; 
+
   //    the terminator!
-  ofile << "$terminate (loop_exit loop_taken " << vc_loop_body_id << ") (loop_back)" << endl;
+  ofile << "$terminate (loop_exit loop_taken " << vc_loop_body_id << ") (loop_back " << exit_place_name << ")" << endl;
   ofile << "}" << endl;
 }
 
