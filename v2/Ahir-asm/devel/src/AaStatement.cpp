@@ -2852,10 +2852,6 @@ void AaMergeStatement::Write_VC_Links(string hier_id, ostream& ofile)
 	  vector<string> reqs;
 	  AaPhiStatement* phi_stmt = (AaPhiStatement*) stmt;
 
-
-
-
-
 	  // phi reqs..
 	  for(int pidx = 0; pidx < phi_stmt->_source_pairs.size(); pidx++)
 	    {
@@ -2929,7 +2925,12 @@ void AaPhiStatement::Set_Target(AaObjectReference* tgt)
   this->_target->Set_Is_Target(true);
 
   tgt->Set_Associated_Statement(this);
-  this->Map_Target(tgt); 
+  this->Map_Target(tgt);
+
+  if(!tgt->Is_Implicit_Variable_Reference())
+    {
+      AaRoot::Error("target of a PHI statement must be an implicit (SSA) variable.", this);
+    }
 
   if(this->_source_pairs.size() > 0)
     {
@@ -3045,11 +3046,6 @@ void AaPhiStatement::Write_VC_Source_Control_Paths(ostream& ofile)
     _source_pairs[idx].second->Write_VC_Control_Path(ofile);
 }
 
-void AaPhiStatement::Write_VC_Source_Links(string hier_id, ostream& ofile)
-{
-  // obsolete, never to be called.
-  assert(0);
-}
 
 
 void AaPhiStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
@@ -3099,6 +3095,9 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			_target->Get_Type(),
 			ofile);
 }
+
+
+
 
 bool AaPhiStatement::Is_Constant()
 {
@@ -4369,7 +4368,9 @@ void AaDoWhileStatement::Write_VC_Links(bool optimize_flag, string hier_id,ostre
   string this_hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Name());
 
   // in the loop body
-  string loop_body_seq_hier_id = Augment_Hier_Id(this_hier_id, _loop_body_sequence->Get_VC_Name());
+  string loop_body_id = this->Get_VC_Name() + "_loop_body";
+  string loop_body_seq_hier_id = Augment_Hier_Id(this_hier_id,loop_body_id);
+  this->_merge_statement->Write_VC_Links_Optimized(loop_body_seq_hier_id, ofile);
   _loop_body_sequence->Write_VC_Links_Optimized(loop_body_seq_hier_id, ofile);
 
   // test expression sits inside the loop-body.
@@ -4386,6 +4387,7 @@ void AaDoWhileStatement::Write_VC_Links(bool optimize_flag, string hier_id,ostre
   acks.push_back(this_hier_id + "/loop_taken/ack");
   string br_inst_name = this->Get_VC_Name() + "_branch";
   Write_VC_Link(br_inst_name, reqs,acks,ofile);
+
 }
 
 void AaDoWhileStatement::Propagate_Constants()
@@ -4408,24 +4410,3 @@ void AaDoWhileStatement::Get_Target_Places(set<AaPlaceStatement*>& target_places
 }
 
 
-// write out all the places associated with PHI statements
-// in the merge.
-void AaDoWhileStatement::Write_VC_Phi_Places(ostream& ofile)
-{
-  // for each phi statement in the merge, write out 
-  // req places, a req-merge place, an ack place and a done place.
-  assert(0);
-}
-
-// write the Phi-sequencers.
-void AaDoWhileStatement::Write_VC_Phi_Sequencers(ostream& ofile)
-{
-  assert(0);
-}
-
-
-// write the Place-joins.
-void AaDoWhileStatement::Write_VC_Phi_Place_Joins(ostream& ofile)
-{
-  assert(0);
-}

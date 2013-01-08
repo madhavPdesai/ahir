@@ -418,51 +418,52 @@ public:
 
 class vcPhiSequencer: public vcRoot
 {
-  vector<vcPlace*> _select_places;
-  vector<vcPlace*> _reenable_places;
-  vector<vcPlace*> _req_places;
-  vcPlace* _ack_place;
-  vcPlace* _done_place;
+  vector<vcTransition*> _selects;
+  vector<vcTransition*> _reenables;
+  vector<vcTransition*> _reqs;
+  vcTransition* _enable;
+  vcTransition* _ack;
+  vcTransition* _done;
 
 public:
   vcPhiSequencer(string id);
-  void Add_Select(vcPlace* s) { _select_places.push_back(s); }
-  void Add_Reenable(vcPlace* s) { _reenable_places.push_back(s); }
-  void Add_Req(vcPlace* s) { _req_places.push_back(s); }
-  void Set_Ack(vcPlace* p) { _ack_place = p; }
-  void Set_Done(vcPlace* p) { _done_place = p; }
+  void Add_Select(vcTransition* s) { _selects.push_back(s); }
+  void Add_Reenable(vcTransition* s) { _reenables.push_back(s); }
+  void Add_Req(vcTransition* s) { _reqs.push_back(s); }
+  void Set_Ack(vcTransition* p) { _ack = p; }
+  void Set_Done(vcTransition* p) { _done = p; }
 
-  int Get_Number_Of_Selects() { return(_select_places.size()); }
-  vcPlace* Get_Select(int idx) 
+  int Get_Number_Of_Selects() { return(_selects.size()); }
+  vcTransition* Get_Select(int idx) 
   { 
-    if((idx >= 0) && (idx < _select_places.size()))
-      return(_select_places[idx]);
+    if((idx >= 0) && (idx < _selects.size()))
+      return(_selects[idx]);
     else
       return(NULL);
   }
 
-  int Get_Number_Of_Reenables() { return(_reenable_places.size()); }
-  vcPlace* Get_Reenable(int idx) 
+  int Get_Number_Of_Reenables() { return(_reenables.size()); }
+  vcTransition* Get_Reenable(int idx) 
   { 
-    if((idx >= 0) && (idx < _reenable_places.size()))
-      return(_reenable_places[idx]);
+    if((idx >= 0) && (idx < _reenables.size()))
+      return(_reenables[idx]);
     else
       return(NULL);
   }
 
-  int Get_Number_Of_Reqs() { return(_req_places.size()); }
-  vcPlace* Get_Req(int idx) 
+  int Get_Number_Of_Reqs() { return(_reqs.size()); }
+  vcTransition* Get_Req(int idx) 
   { 
-    if((idx >= 0) && (idx < _req_places.size()))
-      return(_req_places[idx]);
+    if((idx >= 0) && (idx < _reqs.size()))
+      return(_reqs[idx]);
     else
       return(NULL);
   }
   
-  vcPlace* Get_Ack()
-  {return(_ack_place);}
-  vcPlace* Get_Done() 
-  {return(_done_place);}
+  vcTransition* Get_Ack()
+  {return(_ack);}
+  vcTransition* Get_Done() 
+  {return(_done);}
 
   void Print(ostream& ofile);
   void Print_VHDL(ostream& ofile);
@@ -566,8 +567,7 @@ public:
   void Add_Exported_Output(string internal_id);
   void Add_Export(string internal_id, bool input_flag);
 
-  void Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& req,
-			 vector<string>& reqs, string& done);
+  void Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& ack, string& enable, vector<string>& reqs, string& done);
   void Add_Transition_Merge(string& tm_id, vector<string>& in_transition, string& out_transition);
 
 };

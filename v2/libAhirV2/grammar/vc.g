@@ -407,6 +407,7 @@ vc_CPPhiSequencer[vcCPPipelinedLoopBody* slb]
     vector<string> selects;
     vector<string> reenables;
     vector<string> reqs;
+    string enable;
     string ack;
     string done;
     string tmp_string;
@@ -417,13 +418,15 @@ vc_CPPhiSequencer[vcCPPipelinedLoopBody* slb]
         ( tmp_string = vc_Identifier {reenables.push_back(tmp_string);})+
         COLON
         ack = vc_Identifier
+        COLON
+        enable = vc_Identifier
         RPAREN
         LPAREN
         ( tmp_string = vc_Identifier {reqs.push_back(tmp_string);})+
         COLON
         done = vc_Identifier
         RPAREN
-   { slb->Add_Phi_Sequencer(selects, reenables, ack, reqs, done); }
+   { slb->Add_Phi_Sequencer(selects, reenables, ack, enable, reqs, done); }
 ;
 
 

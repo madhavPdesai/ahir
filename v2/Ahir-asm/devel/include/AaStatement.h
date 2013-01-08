@@ -910,9 +910,6 @@ class AaMergeStatement: public AaSeriesBlockStatement
   set<string,StringCompare> _merge_label_set;
   vector<AaPlaceStatement*> _wait_on_statements;
 
-
-
-
   string _vc_source_link; // name of VC source link.
 
   bool _has_entry_place;
@@ -1025,8 +1022,6 @@ class AaPhiStatement: public AaStatement
   virtual void Write_VC_Datapath_Instances(ostream& ofile);
 
   virtual void Write_VC_Source_Control_Paths(ostream& ofile);
-  virtual void Write_VC_Source_Links(string hier_id, ostream& ofile);
-
 
   virtual void Propagate_Constants();
   virtual bool Is_Constant();
@@ -1035,6 +1030,27 @@ class AaPhiStatement: public AaStatement
 
   void Set_In_Do_While(bool v) { _in_do_while = v;}
   bool Get_In_Do_While() {return(_in_do_while);}
+
+  // this is the big one! added to support loop pipelining.
+  virtual void Write_VC_Control_Path_Optimized(bool pipeline_flag,
+					       set<AaRoot*>& visited_elements,
+					       map<string, vector<AaExpression*> >& ls_map,
+					       map<string,vector<AaExpression*> >& pipe_map,
+					       ostream& ofile);
+
+
+
+  // called only if it appears in a do while loop.
+  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
+
+  virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
+  {
+    return(this->Get_VC_Name() + "_reenable_");
+  }
+  virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
+  {
+    return(this->Get_VC_Name() + "_reenable_");
+  }
   friend class AaMergeStatement;
 };
 
@@ -1270,16 +1286,6 @@ class AaDoWhileStatement: public AaStatement
   virtual string Get_VC_Exit_Place_Name() {return(this->Get_VC_Name() + "__exit__");}
 
   virtual void Get_Target_Places(set<AaPlaceStatement*>& target_places); // do nothing.
-
-  // write out all the places associated with PHI statements
-  // in the merge.
-  void Write_VC_Phi_Places(ostream& ofile);
-
-  // write the Phi-sequencers.
-  void Write_VC_Phi_Sequencers(ostream& ofile);
-
-  // write the Place-joins.
-  void Write_VC_Phi_Place_Joins(ostream& ofile);
 };
 
 

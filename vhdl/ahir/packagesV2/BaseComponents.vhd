@@ -119,6 +119,18 @@ package BaseComponents is
            reset: in std_logic);
   end component;
 
+  component phi_sequencer
+    generic (nreqs : integer; nreenables : integer);
+    port (
+      selects : in BooleanArray(0 to nreqs-1); -- one out of nreqs..
+      reqs : out BooleanArray(0 to nreqs-1); -- one out of nreqs
+      ack  : in Boolean;
+      enable  : in Boolean; 
+      reenables: in BooleanArray(0 to nreenables-1);   -- all need to arrive to reenable
+      done : out Boolean;
+      clk, reset: in std_logic);
+  end component;
+
   component phi_sequencer 
     generic (nreqs : integer; nreenables : integer);
     port (

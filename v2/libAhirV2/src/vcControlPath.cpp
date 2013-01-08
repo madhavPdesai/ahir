@@ -1943,8 +1943,8 @@ void vcCPPipelinedLoopBody::Print_VHDL(ostream& ofile)
 {
 }
 
-void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& req,
-		       vector<string>& reqs, string& done)
+void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& ack,
+					      string& enable, vector<string>& reqs, string& done)
 {
   assert(0);
 }

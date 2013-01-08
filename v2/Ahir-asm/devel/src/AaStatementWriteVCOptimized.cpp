@@ -126,13 +126,9 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  // pipeline flag?  statement should reenable source activation..
 	  if(pipeline_flag)
 	    {
-	      __MJ(_source->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-		   this->Get_VC_Active_Transition_Name());
+	      __MJ(_source->Get_VC_Reenable_Update_Transition_Name(visited_elements), this->Get_VC_Completed_Transition_Name());
 	    }
 	}
-      
-
-
       
 
       this->_target->Write_VC_Control_Path_As_Target_Optimized(pipeline_flag,
@@ -489,15 +485,34 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   else
     {
       string block_type;
+      string block_name;
+
       if(pipeline_flag)
-	block_type = "$pipeline";
+	{
+	  block_type = "$pipeline";
+	  block_name = this->Get_VC_Name() + "_loop_body";
+	}
       else
-	block_type = "::";
+	{
+	  block_type = "::";
+	  block_name = sseq->Get_VC_Name();
+	}
 
-      ofile << block_type <<  "[" << sseq->Get_VC_Name() << "] {" << endl;
+      ofile << block_type <<  "[" << block_name << "] {" << endl;
 
       if(pipeline_flag)
-	ofile << "// Pipelined!" << endl;
+	{
+	  // The loop body will be triggered from one of two points
+	  // merge these to the entry transition.
+	  ofile << "// Pipelined!" << endl;
+
+	  __T("back_edge_to_loop_body");
+	  __T("first_time_through_loop_body");
+	  __T("loop_body_start");
+
+	  ofile << "$transitionmerge [entry_tmerge] (back_edge_through_loop_body first_time_through_loop_body) (body_start)" << endl;
+	  __J("$entry","body_start");
+	}
 
       set<AaRoot*> visited_elements;
       map<string, vector<AaExpression*> > load_store_ordering_map;
@@ -513,8 +528,11 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	      for(unsigned int idx = 0; idx < phi_stmts->size(); idx++)
 		{
 		  AaStatement* curr_phi = (*phi_stmts)[idx];
-		  visited_elements.insert((AaRoot*) curr_phi);
-		  __T(curr_phi->Get_VC_Reenable_Sample_Transition_Name(visited_elements));
+		  curr_phi->Write_VC_Control_Path_Optimized(pipeline_flag,
+							    visited_elements,
+							    load_store_ordering_map,
+							    pipe_map,
+							    ofile);
 		}
 	    }
 	}
@@ -1148,6 +1166,135 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
   this->Write_VC_Control_Path(ofile);
 }
 
+
+// implemented for supporting loop pipelining.  This statement should
+// be called only if the PHI statement appears in a loop body.
+//
+//    The control flow instantiates a phi-sequencer and keys off
+// the place transitions associated with the loop block body
+// in which the statement occurs.
+void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
+						     set<AaRoot*>& visited_elements,
+						     map<string, vector<AaExpression*> >& ls_map,
+						     map<string,vector<AaExpression*> >& pipe_map,
+						     ostream& ofile)
+{
+  bool ok_flag = this->Get_In_Do_While();
+  if(!ok_flag)
+    assert(0);
+  
+  string  phi_sequencer_reqs;
+  string  phi_sequencer_triggers;
+  string  phi_sequencer_done;
+  
+
+  for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
+    {
+      
+      string trig_place = _source_pairs[idx].first;
+      string root_trig_transition = trig_place + "_root_";
+      string trig_transition_name = this->Get_VC_Name() + "_trigger_from_" + trig_place;
+      string req_name = this->Get_VC_Name() + "_req_" + IntToStr(idx);
+      
+      __T(req_name);
+      __T(trig_transition_name);
+      __F(root_trig_transition, trig_transition_name);
+      
+      phi_sequencer_reqs += " " + req_name;
+      phi_sequencer_triggers +=  " " + trig_transition_name;
+    }
+  
+  
+  phi_sequencer_done = this->Get_VC_Name() + "_phi_sequencer_done";
+  
+  string ack_transition_name = this->Get_VC_Name() + "_ack";
+  __T(ack_transition_name);
+  
+  string reenable_transition_name = this->Get_VC_Reenable_Sample_Transition_Name(visited_elements);
+  __T(reenable_transition_name);
+
+  // the active, completed and the active transitions
+  __T(this->Get_VC_Start_Transition_Name());
+  __T(this->Get_VC_Active_Transition_Name());
+  __T(this->Get_VC_Completed_Transition_Name());
+  
+  // instantiate phi sequencer.
+  ofile << "$phisequencer ( ";
+  ofile << phi_sequencer_triggers << " : ";
+  ofile << reenable_transition_name << " : " ;
+  ofile << ack_transition_name << " : " ;
+  ofile << this->Get_VC_Start_Transition_Name() << " ) (";
+  ofile << phi_sequencer_reqs << " : " << phi_sequencer_done << " ) " << endl;
+  
+  // join to active.
+  __J(this->Get_VC_Active_Transition_Name(), phi_sequencer_done);
+  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Active_Transition_Name());
+
+  // take care of the guard
+  if(this->_guard_expression)
+    {
+      // guard expression calculation
+      this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
+      if(!this->_guard_expression->Is_Constant())
+	{
+	  // dependency between guard-expression calculation and this statement.
+	  __J(this->Get_VC_Start_Transition_Name(),this->_guard_expression->Get_VC_Completed_Transition_Name());
+
+	  // pipeline_flag?  guard-expression evaluation is reenabled by 
+	  // this statement's completion.
+	  if(pipeline_flag)
+	    {
+	      __MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements),
+		   this->Get_VC_Completed_Transition_Name());
+	    }
+	}
+    }
+
+
+  for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
+    {
+      AaExpression* source_expr = _source_pairs[idx].second;
+      if(!source_expr->Is_Constant())
+	{
+	  source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
+						       visited_elements,
+						       ls_map,pipe_map,
+						       ofile);
+
+	  __J(this->Get_VC_Start_Transition_Name(), source_expr->Get_VC_Completed_Transition_Name());	      
+
+	  if(pipeline_flag)
+	    {
+	      __MJ(source_expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), this->Get_VC_Completed_Transition_Name());		  
+	    }
+	}
+    }
+
+  visited_elements.insert(this);
+
+}
+
+// called only if it appears in a do-while loop.
+void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
+{
+  bool ok_flag = this->Get_In_Do_While();
+  if(!ok_flag)
+    assert(0);
+
+  vector<string> reqs;
+  vector<string> acks;
+
+  for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
+    {
+      string req_name = hier_id + "/" + this->Get_VC_Name() + "_req_" + IntToStr(idx);
+      reqs.push_back(req_name);
+    }
+  
+  string ack_transition_name = hier_id + "/" + this->Get_VC_Name() + "_ack";
+  acks.push_back(ack_transition_name);
+
+  Write_VC_Link(this->Get_VC_Name(),reqs,acks,ofile);
+}
 
 // AaSwitchStatement
 void AaSwitchStatement::Write_VC_Control_Path_Optimized(ostream& ofile)

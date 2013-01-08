@@ -13,7 +13,8 @@ entity phi_sequencer  is
   port (
   selects : in BooleanArray(0 to nreqs-1); -- one out of nreqs..
   reqs : out BooleanArray(0 to nreqs-1); -- one out of nreqs
-  ack  : in Boolean; 
+  ack  : in Boolean;
+  enable  : in Boolean; 
   reenables: in BooleanArray(0 to nreenables-1);   -- all need to arrive to reenable
   done : out Boolean;
   clk, reset: in std_logic);
@@ -27,8 +28,19 @@ architecture Behave of phi_sequencer is
   signal select_token, select_clear : BooleanArray(0 to nreqs-1);
   signal reenable_token, reenable_clear : BooleanArray(0 to nreenables-1);
 
-  signal enabled, ack_token, ack_clear, req_fired: Boolean;
+  signal enabled, ack_token, ack_clear, req_being_fired, enable_token, enable_clear: Boolean;
 begin  -- Behave
+
+  -- instantiate unmarked place for the enable.
+  enable_block: block
+      signal place_pred: BooleanArray(0 downto 0);    
+      signal place_succ: BooleanArray(0 downto 0);    
+  begin
+      place_pred(0) <= enable;
+      place_succ(0) <= enable_clear;
+      penable: place generic map(capacity => 1, marking => 1)
+        port map(place_pred,place_succ,enable_token,clk,reset);    
+  end block;
 
   -- instantiate unmarked places for the in_places.
   InPlaces: for I in 0 to nreqs-1 generate
@@ -57,21 +69,24 @@ begin  -- Behave
     
  
   -- sequencer is enabled by this sig.
-  enabled <= AndReduce(reenable_token) and ack_token;
+  enabled <= AndReduce(reenable_token) and enable_token and ack_token;
 
-  -- a marker to indicate that a req has been fired.
-  req_fired <= OrReduce(select_token) and enabled;
+  -- a marker to indicate that a req is being fired.
+  req_being_fired <= OrReduce(select_token) and enabled;
 
-  -- outgoing reqs, etc.
+  -- outgoing reqs can fire only when the sequencer is enabled.
   reqs <= select_token when enabled else (others => false);
-  select_clear <= select_token when enabled else (others => false);
-  reenable_clear <= (others => true) when (enabled and req_fired)
-                          else (others => false);
+
+  -- clear the selects and reenables when the req is being fired.
+  select_clear <= select_token when req_being_fired else (others => false);
+  reenable_clear <= (others => true) when req_being_fired else (others => false);
+
+  -- the enable is to be cleared when the req fires.
+  enable_clear <= req_being_fired;
 
   -- ack should be received to reenable the sequencer.
   -- this place is initially marked (it is internal
   -- to the sequencer).
-  ack_clear <= req_fired;
   ack_block: block
       signal place_pred: BooleanArray(0 downto 0);    
       signal place_succ: BooleanArray(0 downto 0);    
@@ -81,7 +96,10 @@ begin  -- Behave
       pack: place generic map(capacity => 1, marking => 1)
         port map(place_pred,place_succ,ack_token,clk,reset);    
   end block;
-  
+
+  -- clear the ack place when req is fired.
+  ack_clear <= req_being_fired;
+
   -- outgoing exit.. is the incoming ack..
   done <= ack;
 
