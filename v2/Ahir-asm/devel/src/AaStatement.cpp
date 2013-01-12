@@ -4366,7 +4366,8 @@ void AaDoWhileStatement::Write_VC_Links(bool optimize_flag, string hier_id,ostre
   ofile << "// " << this->Get_Source_Info() << endl;
 
   string this_hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Name());
-  string loop_body_seq_hier_id = Augment_Hier_Id(this_hier_id, _loop_body_sequence->Get_VC_Name());
+  string loop_body_id = this->Get_VC_Name() + "_loop_body";
+  string loop_body_seq_hier_id = Augment_Hier_Id(this_hier_id,loop_body_id);
 
   // in the PHI statements in the do-while.
   for(int idx, fidx = this->_merge_statement->Get_Statement_Count(); idx < fidx; idx++)
@@ -4374,9 +4375,6 @@ void AaDoWhileStatement::Write_VC_Links(bool optimize_flag, string hier_id,ostre
       AaStatement* cphi = this->_merge_statement->Get_Statement(idx);
       cphi->Write_VC_Links_Optimized(loop_body_seq_hier_id, ofile);
     }
-
-  string loop_body_id = this->Get_VC_Name() + "_loop_body";
-  string loop_body_seq_hier_id = Augment_Hier_Id(this_hier_id,loop_body_id);
 
   // in the PHI statements.
   this->_merge_statement->Write_VC_Links_Optimized(loop_body_seq_hier_id, ofile);
