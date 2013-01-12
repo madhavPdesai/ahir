@@ -43,5 +43,905 @@ $module [asum]
       //  file prog.opt.aa, line 0
       <o> [do_while_stmt_8] 
       {
-        $P [loop_back]
-        $P [condition_done]
+        $P[do_while_stmt_8__entry__] 
+        $P[do_while_stmt_8__exit__] 
+        $P[loop_back] 
+        $P[condition_done] 
+        $P[loop_body_done] 
+        $pipeline[do_while_stmt_8_loop_body] 
+        {
+          // Pipelined!
+          $T[back_edge_to_loop_body] 
+          $T[first_time_through_loop_body] 
+          $T[loop_body_start] 
+          $transitionmerge [entry_tmerge] (back_edge_through_loop_body first_time_through_loop_body) (loop_body_start)
+          $entry <-& (loop_body_start)
+          // PHI statement phi_stmt_10
+          // 			$phi I := 			  ($bitcast ($uint<32>) 0  ) $on $entry			  NI $on $loopback // type of target is $uint<32>
+          $T[phi_stmt_10_req_0] 
+          $T[phi_stmt_10_trigger_from_first_time_through_loop_body] 
+          first_time_through_loop_body &-> (phi_stmt_10_trigger_from_first_time_through_loop_body)
+          $T[phi_stmt_10_req_1] 
+          $T[phi_stmt_10_trigger_from_back_edge_to_loop_body] 
+          back_edge_to_loop_body &-> (phi_stmt_10_trigger_from_back_edge_to_loop_body)
+          $T[phi_stmt_10_ack] 
+          $T[phi_stmt_10_reenable_] 
+          $T[phi_stmt_10_trigger_] 
+          $T[phi_stmt_10_active_] 
+          $T[phi_stmt_10_completed_] 
+          $phisequencer (  phi_stmt_10_trigger_from_first_time_through_loop_body phi_stmt_10_trigger_from_back_edge_to_loop_body : phi_stmt_10_reenable_ : phi_stmt_10_ack : phi_stmt_10_trigger_ ) ( phi_stmt_10_req_0 phi_stmt_10_req_1 : phi_stmt_10_phi_sequencer_done ) 
+          phi_stmt_10_active_ <-& (phi_stmt_10_phi_sequencer_done)
+          phi_stmt_10_completed_ <-& (phi_stmt_10_active_)
+          // NI
+          // implicit reference
+          $T[simple_obj_ref_14_trigger_] 
+          $T[simple_obj_ref_14_completed_] 
+          $T[simple_obj_ref_14_active_] 
+          simple_obj_ref_14_completed_ <-& (simple_obj_ref_14_active_)
+          simple_obj_ref_14_active_ <-& (simple_obj_ref_14_trigger_)
+          phi_stmt_10_trigger_ <-& (simple_obj_ref_14_completed_)
+          $entry o<-& (phi_stmt_10_completed_)
+          // 			a[I] := inpipe
+          //  file prog.opt.aa, line 18
+          $T[assign_stmt_19_trigger_] 
+          $T[assign_stmt_19_active_] 
+          $T[assign_stmt_19_completed_] 
+          assign_stmt_19_active_ <-& (assign_stmt_19_trigger_)
+          // inpipe
+          $T[simple_obj_ref_18_trigger_] 
+          $T[simple_obj_ref_18_active_] 
+          $T[simple_obj_ref_18_completed_] 
+          ;;[simple_obj_ref_18_complete] 
+          {
+            // pipe read
+            $T [req] $T [ack] 
+          }
+          simple_obj_ref_18_active_ <-& (simple_obj_ref_18_trigger_)
+          simple_obj_ref_18_active_ &-> (simple_obj_ref_18_complete)
+          simple_obj_ref_18_completed_ <-& (simple_obj_ref_18_complete)
+          simple_obj_ref_18_trigger_ o<-& (simple_obj_ref_18_active_)
+          simple_obj_ref_18_active_ o<-& (simple_obj_ref_18_completed_)
+          assign_stmt_19_active_ <-& (simple_obj_ref_18_completed_)
+          simple_obj_ref_18_active_ o<-& (assign_stmt_19_completed_)
+          // a[I]
+          $T[array_obj_ref_17_trigger_] 
+          $T[array_obj_ref_17_active_] 
+          $T[array_obj_ref_17_completed_] 
+          $T[array_obj_ref_17_root_address_calculated] 
+          $T[array_obj_ref_17_word_address_calculated] 
+          $T[array_obj_ref_17_root_address_calculated] 
+          $T[array_obj_ref_17_indices_scaled] 
+          $T[array_obj_ref_17_offset_calculated] 
+          $T[array_obj_ref_17_index_computed_0] 
+          $T[array_obj_ref_17_index_resized_0] 
+          // I
+          // implicit reference
+          $T[simple_obj_ref_16_trigger_] 
+          $T[simple_obj_ref_16_completed_] 
+          $T[simple_obj_ref_16_active_] 
+          simple_obj_ref_16_completed_ <-& (simple_obj_ref_16_active_)
+          simple_obj_ref_16_active_ <-& (simple_obj_ref_16_trigger_)
+          simple_obj_ref_16_trigger_ <-& (phi_stmt_10_completed_)
+          phi_stmt_10_reenable_ o<-& (simple_obj_ref_16_completed_)
+          simple_obj_ref_16_trigger_ o<-& (simple_obj_ref_16_active_)
+          simple_obj_ref_16_active_ o<-& (simple_obj_ref_16_completed_)
+          array_obj_ref_17_index_computed_0 <-& (simple_obj_ref_16_completed_)
+          ;;[array_obj_ref_17_index_resize_0] 
+          {
+            $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
+          }
+          array_obj_ref_17_index_computed_0 &-> (array_obj_ref_17_index_resize_0)
+          array_obj_ref_17_index_resized_0 <-& (array_obj_ref_17_index_resize_0)
+          array_obj_ref_17_index_computed_0 o<-& (array_obj_ref_17_index_resized_0)
+          ;;[array_obj_ref_17_index_scale_0] 
+          {
+            $T [scale_rename_req] $T [scale_rename_ack] // rename 
+          }
+          array_obj_ref_17_index_resized_0 &-> (array_obj_ref_17_index_scale_0)
+          array_obj_ref_17_indices_scaled <-& (array_obj_ref_17_index_scale_0)
+          array_obj_ref_17_index_resized_0 o<-& (array_obj_ref_17_indices_scaled)
+          ;;[array_obj_ref_17_add_indices] 
+          {
+            $T [final_index_req] $T [final_index_ack] // rename
+          }
+          array_obj_ref_17_indices_scaled &-> (array_obj_ref_17_add_indices)
+          array_obj_ref_17_offset_calculated <-& (array_obj_ref_17_add_indices)
+          array_obj_ref_17_indices_scaled o<-& (array_obj_ref_17_offset_calculated)
+          ;;[array_obj_ref_17_base_plus_offset] 
+          {
+            $T [sum_rename_req] $T [sum_rename_ack] // one gets through 
+          }
+          array_obj_ref_17_offset_calculated &-> (array_obj_ref_17_base_plus_offset)
+          array_obj_ref_17_offset_calculated o<-& (array_obj_ref_17_root_address_calculated)
+          array_obj_ref_17_root_address_calculated <-& (array_obj_ref_17_base_plus_offset)
+          ;;[array_obj_ref_17_word_addrgen] 
+          {
+            $T [root_rename_req] $T [root_rename_ack]
+          }
+          array_obj_ref_17_root_address_calculated &-> (array_obj_ref_17_word_addrgen)
+          array_obj_ref_17_word_address_calculated <-& (array_obj_ref_17_word_addrgen)
+          array_obj_ref_17_root_address_calculated o<-& (array_obj_ref_17_word_address_calculated)
+          ;;[array_obj_ref_17_request] 
+          {
+            $T [split_req] $T [split_ack]
+            ||[word_access] 
+            {
+              ;;[word_access_0] 
+              {
+                $T [rr] $T [ra] 
+              }
+            }
+          }
+          ;;[array_obj_ref_17_complete] 
+          {
+            ||[word_access] 
+            {
+              ;;[word_access_0] 
+              {
+                $T [cr] $T [ca] 
+              }
+            }
+          }
+          array_obj_ref_17_trigger_ &-> (array_obj_ref_17_request)
+          array_obj_ref_17_active_ <-& (array_obj_ref_17_request)
+          array_obj_ref_17_active_ &-> (array_obj_ref_17_complete)
+          array_obj_ref_17_completed_ <-& (array_obj_ref_17_complete)
+          array_obj_ref_17_root_address_calculated o<-& (array_obj_ref_17_active_)
+          array_obj_ref_17_trigger_ <-& (array_obj_ref_17_word_address_calculated)
+          array_obj_ref_17_root_address_calculated o<-& (array_obj_ref_17_active_)
+          array_obj_ref_17_trigger_ o<-& (array_obj_ref_17_active_)
+          array_obj_ref_17_active_ o<-& (array_obj_ref_17_completed_)
+          array_obj_ref_17_trigger_ <-& (assign_stmt_19_active_)
+          assign_stmt_19_completed_ <-& (array_obj_ref_17_completed_)
+          array_obj_ref_17_active_ o<-& (array_obj_ref_17_active_)
+          assign_stmt_19_trigger_ o<-& (assign_stmt_19_active_)
+          assign_stmt_19_active_ o<-& (assign_stmt_19_completed_)
+          // 			NI := (I + 1 )
+          //  file prog.opt.aa, line 23
+          $T[assign_stmt_24_trigger_] 
+          $T[assign_stmt_24_active_] 
+          $T[assign_stmt_24_completed_] 
+          assign_stmt_24_active_ <-& (assign_stmt_24_trigger_)
+          // (I + 1 )
+          $T[binary_23_active_] 
+          $T[binary_23_trigger_] 
+          $T[binary_23_completed_] 
+          // I
+          // implicit reference
+          $T[simple_obj_ref_21_trigger_] 
+          $T[simple_obj_ref_21_completed_] 
+          $T[simple_obj_ref_21_active_] 
+          simple_obj_ref_21_completed_ <-& (simple_obj_ref_21_active_)
+          simple_obj_ref_21_active_ <-& (simple_obj_ref_21_trigger_)
+          simple_obj_ref_21_trigger_ <-& (phi_stmt_10_completed_)
+          phi_stmt_10_reenable_ o<-& (simple_obj_ref_21_completed_)
+          simple_obj_ref_21_trigger_ o<-& (simple_obj_ref_21_active_)
+          simple_obj_ref_21_active_ o<-& (simple_obj_ref_21_completed_)
+          binary_23_trigger_ <-& (simple_obj_ref_21_completed_)
+          ;;[binary_23_complete_Sample] 
+          {
+            // binary expression 
+            $T [rr] $T [ra]  // (split) binary operation 
+          }
+          ;;[binary_23_complete_Update] 
+          {
+            // binary expression 
+            $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_23_trigger_ &-> (binary_23_complete_Sample)
+          binary_23_active_ <-& (binary_23_complete_Sample)
+          binary_23_active_ &-> (binary_23_complete_Update)
+          binary_23_completed_ <-& (binary_23_complete_Update)
+          phi_stmt_10_reenable_ o<-& (binary_23_active_)
+          binary_23_trigger_ o<-& (binary_23_active_)
+          binary_23_active_ o<-& (binary_23_completed_)
+          assign_stmt_24_active_ <-& (binary_23_completed_)
+          binary_23_active_ o<-& (assign_stmt_24_completed_)
+          // NI
+          // implicit reference
+          assign_stmt_24_completed_ <-& (assign_stmt_24_active_)
+          // WAR dependency: Read: NI before Write: NI
+          //                 NOTE: the result of operation (I + 1 ) determines NI
+          binary_23_trigger_ <-& (phi_stmt_10_completed_)
+          // WAR dependency: release  Read: NI with Write: NI
+          $entry o<-& (simple_obj_ref_20_completed_)
+          assign_stmt_24_trigger_ o<-& (assign_stmt_24_active_)
+          assign_stmt_24_active_ o<-& (assign_stmt_24_completed_)
+          // (NI < 10 )
+          $T[binary_28_active_] 
+          $T[binary_28_trigger_] 
+          $T[binary_28_completed_] 
+          // NI
+          // implicit reference
+          $T[simple_obj_ref_26_trigger_] 
+          $T[simple_obj_ref_26_completed_] 
+          $T[simple_obj_ref_26_active_] 
+          simple_obj_ref_26_completed_ <-& (simple_obj_ref_26_active_)
+          simple_obj_ref_26_active_ <-& (simple_obj_ref_26_trigger_)
+          simple_obj_ref_26_trigger_ <-& (assign_stmt_24_completed_)
+          binary_23_active_ o<-& (simple_obj_ref_26_completed_)
+          simple_obj_ref_26_trigger_ o<-& (simple_obj_ref_26_active_)
+          simple_obj_ref_26_active_ o<-& (simple_obj_ref_26_completed_)
+          binary_28_trigger_ <-& (simple_obj_ref_26_completed_)
+          ;;[binary_28_complete_Sample] 
+          {
+            // binary expression 
+            $T [rr] $T [ra]  // (split) binary operation 
+          }
+          ;;[binary_28_complete_Update] 
+          {
+            // binary expression 
+            $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_28_trigger_ &-> (binary_28_complete_Sample)
+          binary_28_active_ <-& (binary_28_complete_Sample)
+          binary_28_active_ &-> (binary_28_complete_Update)
+          binary_28_completed_ <-& (binary_28_complete_Update)
+          binary_23_active_ o<-& (binary_28_active_)
+          binary_28_trigger_ o<-& (binary_28_active_)
+          binary_28_active_ o<-& (binary_28_completed_)
+          // load-store dependencies..
+          // pipe read/write dependencies for pipe inpipe
+        }
+        // assign_stmt_19_to_assign_stmt_24
+        ;; [loop_exit] 
+        {
+          $T [ack] 
+        }
+        ;; [loop_taken] 
+        {
+          $T [ack] 
+        }
+        $bind condition_done <= do_while_stmt_8_loop_body : binary_28_completed_
+        condition_done |-> (loop_exit loop_taken)
+        do_while_stmt_8__entry__ <-| ($entry loopback)
+        do_while_stmt_8__entry__ |-> ( do_while_stmt_8_loop_body ) 
+        loop_body_done <-| ( do_while_stmt_8_loop_body ) 
+        $bind do_while_stmt_8__entry__  => do_while_stmt_8_loop_body : first_through_loop_body 
+        $bind loop_back  => do_while_stmt_8_loop_body : back_edge_to_loop_body 
+        $terminate (loop_exit loop_taken loop_body_done) (loop_back do_while_stmt_8__exit__)
+      }
+      do_while_stmt_8__entry__ |-> (do_while_stmt_8)
+      do_while_stmt_8__exit__ <-| (do_while_stmt_8)
+      do_while_stmt_8__entry__ <-| (branch_block_stmt_7__entry__)
+      do_while_stmt_8__exit__ |-> (branch_block_stmt_7__exit__)
+    }
+    <>[branch_block_stmt_31] // Branch Block  file prog.opt.aa, line 30
+    {
+      $P [branch_block_stmt_31__entry__]
+      branch_block_stmt_31__entry__ <-| ($entry)
+      $P [branch_block_stmt_31__exit__]
+      branch_block_stmt_31__exit__ |-> ($exit)
+      $P [do_while_stmt_32__entry__] 
+      $P [do_while_stmt_32__exit__] 
+      // do-while-statement  
+      //  file prog.opt.aa, line 0
+      <o> [do_while_stmt_32] 
+      {
+        $P[do_while_stmt_32__entry__] 
+        $P[do_while_stmt_32__exit__] 
+        $P[loop_back] 
+        $P[condition_done] 
+        $P[loop_body_done] 
+        $pipeline[do_while_stmt_32_loop_body] 
+        {
+          // Pipelined!
+          $T[back_edge_to_loop_body] 
+          $T[first_time_through_loop_body] 
+          $T[loop_body_start] 
+          $transitionmerge [entry_tmerge] (back_edge_through_loop_body first_time_through_loop_body) (loop_body_start)
+          $entry <-& (loop_body_start)
+          // PHI statement phi_stmt_34
+          // 			$phi I := 			  ($bitcast ($uint<32>) 0  ) $on $entry			  NI $on $loopback // type of target is $uint<32>
+          $T[phi_stmt_34_req_0] 
+          $T[phi_stmt_34_trigger_from_first_time_through_loop_body] 
+          first_time_through_loop_body &-> (phi_stmt_34_trigger_from_first_time_through_loop_body)
+          $T[phi_stmt_34_req_1] 
+          $T[phi_stmt_34_trigger_from_back_edge_to_loop_body] 
+          back_edge_to_loop_body &-> (phi_stmt_34_trigger_from_back_edge_to_loop_body)
+          $T[phi_stmt_34_ack] 
+          $T[phi_stmt_34_reenable_] 
+          $T[phi_stmt_34_trigger_] 
+          $T[phi_stmt_34_active_] 
+          $T[phi_stmt_34_completed_] 
+          $phisequencer (  phi_stmt_34_trigger_from_first_time_through_loop_body phi_stmt_34_trigger_from_back_edge_to_loop_body : phi_stmt_34_reenable_ : phi_stmt_34_ack : phi_stmt_34_trigger_ ) ( phi_stmt_34_req_0 phi_stmt_34_req_1 : phi_stmt_34_phi_sequencer_done ) 
+          phi_stmt_34_active_ <-& (phi_stmt_34_phi_sequencer_done)
+          phi_stmt_34_completed_ <-& (phi_stmt_34_active_)
+          // NI
+          // implicit reference
+          $T[simple_obj_ref_38_trigger_] 
+          $T[simple_obj_ref_38_completed_] 
+          $T[simple_obj_ref_38_active_] 
+          simple_obj_ref_38_completed_ <-& (simple_obj_ref_38_active_)
+          simple_obj_ref_38_active_ <-& (simple_obj_ref_38_trigger_)
+          phi_stmt_34_trigger_ <-& (simple_obj_ref_38_completed_)
+          $entry o<-& (phi_stmt_34_completed_)
+          // PHI statement phi_stmt_39
+          // 			$phi result := 			  0  $on $entry			  nresult $on $loopback // type of target is $uint<32>
+          $T[phi_stmt_39_req_0] 
+          $T[phi_stmt_39_trigger_from_first_time_through_loop_body] 
+          first_time_through_loop_body &-> (phi_stmt_39_trigger_from_first_time_through_loop_body)
+          $T[phi_stmt_39_req_1] 
+          $T[phi_stmt_39_trigger_from_back_edge_to_loop_body] 
+          back_edge_to_loop_body &-> (phi_stmt_39_trigger_from_back_edge_to_loop_body)
+          $T[phi_stmt_39_ack] 
+          $T[phi_stmt_39_reenable_] 
+          $T[phi_stmt_39_trigger_] 
+          $T[phi_stmt_39_active_] 
+          $T[phi_stmt_39_completed_] 
+          $phisequencer (  phi_stmt_39_trigger_from_first_time_through_loop_body phi_stmt_39_trigger_from_back_edge_to_loop_body : phi_stmt_39_reenable_ : phi_stmt_39_ack : phi_stmt_39_trigger_ ) ( phi_stmt_39_req_0 phi_stmt_39_req_1 : phi_stmt_39_phi_sequencer_done ) 
+          phi_stmt_39_active_ <-& (phi_stmt_39_phi_sequencer_done)
+          phi_stmt_39_completed_ <-& (phi_stmt_39_active_)
+          // nresult
+          // implicit reference
+          $T[simple_obj_ref_42_trigger_] 
+          $T[simple_obj_ref_42_completed_] 
+          $T[simple_obj_ref_42_active_] 
+          simple_obj_ref_42_completed_ <-& (simple_obj_ref_42_active_)
+          simple_obj_ref_42_active_ <-& (simple_obj_ref_42_trigger_)
+          phi_stmt_39_trigger_ <-& (simple_obj_ref_42_completed_)
+          $entry o<-& (phi_stmt_39_completed_)
+          // 			nresult := (result + a[I])
+          //  file prog.opt.aa, line 37
+          $T[assign_stmt_49_trigger_] 
+          $T[assign_stmt_49_active_] 
+          $T[assign_stmt_49_completed_] 
+          assign_stmt_49_active_ <-& (assign_stmt_49_trigger_)
+          // (result + a[I])
+          $T[binary_48_active_] 
+          $T[binary_48_trigger_] 
+          $T[binary_48_completed_] 
+          // result
+          // implicit reference
+          $T[simple_obj_ref_45_trigger_] 
+          $T[simple_obj_ref_45_completed_] 
+          $T[simple_obj_ref_45_active_] 
+          simple_obj_ref_45_completed_ <-& (simple_obj_ref_45_active_)
+          simple_obj_ref_45_active_ <-& (simple_obj_ref_45_trigger_)
+          simple_obj_ref_45_trigger_ <-& (phi_stmt_39_completed_)
+          phi_stmt_39_reenable_ o<-& (simple_obj_ref_45_completed_)
+          simple_obj_ref_45_trigger_ o<-& (simple_obj_ref_45_active_)
+          simple_obj_ref_45_active_ o<-& (simple_obj_ref_45_completed_)
+          // a[I]
+          $T[array_obj_ref_47_trigger_] 
+          $T[array_obj_ref_47_active_] 
+          $T[array_obj_ref_47_completed_] 
+          $T[array_obj_ref_47_root_address_calculated] 
+          $T[array_obj_ref_47_word_address_calculated] 
+          $T[array_obj_ref_47_root_address_calculated] 
+          $T[array_obj_ref_47_indices_scaled] 
+          $T[array_obj_ref_47_offset_calculated] 
+          $T[array_obj_ref_47_index_computed_0] 
+          $T[array_obj_ref_47_index_resized_0] 
+          // I
+          // implicit reference
+          $T[simple_obj_ref_46_trigger_] 
+          $T[simple_obj_ref_46_completed_] 
+          $T[simple_obj_ref_46_active_] 
+          simple_obj_ref_46_completed_ <-& (simple_obj_ref_46_active_)
+          simple_obj_ref_46_active_ <-& (simple_obj_ref_46_trigger_)
+          simple_obj_ref_46_trigger_ <-& (phi_stmt_34_completed_)
+          phi_stmt_34_reenable_ o<-& (simple_obj_ref_46_completed_)
+          simple_obj_ref_46_trigger_ o<-& (simple_obj_ref_46_active_)
+          simple_obj_ref_46_active_ o<-& (simple_obj_ref_46_completed_)
+          array_obj_ref_47_index_computed_0 <-& (simple_obj_ref_46_completed_)
+          ;;[array_obj_ref_47_index_resize_0] 
+          {
+            $T [index_resize_req] $T [index_resize_ack] // resize index to address-width
+          }
+          array_obj_ref_47_index_computed_0 &-> (array_obj_ref_47_index_resize_0)
+          array_obj_ref_47_index_resized_0 <-& (array_obj_ref_47_index_resize_0)
+          array_obj_ref_47_index_computed_0 o<-& (array_obj_ref_47_index_resized_0)
+          ;;[array_obj_ref_47_index_scale_0] 
+          {
+            $T [scale_rename_req] $T [scale_rename_ack] // rename 
+          }
+          array_obj_ref_47_index_resized_0 &-> (array_obj_ref_47_index_scale_0)
+          array_obj_ref_47_indices_scaled <-& (array_obj_ref_47_index_scale_0)
+          array_obj_ref_47_index_resized_0 o<-& (array_obj_ref_47_indices_scaled)
+          ;;[array_obj_ref_47_add_indices] 
+          {
+            $T [final_index_req] $T [final_index_ack] // rename
+          }
+          array_obj_ref_47_indices_scaled &-> (array_obj_ref_47_add_indices)
+          array_obj_ref_47_offset_calculated <-& (array_obj_ref_47_add_indices)
+          array_obj_ref_47_indices_scaled o<-& (array_obj_ref_47_offset_calculated)
+          ;;[array_obj_ref_47_base_plus_offset] 
+          {
+            $T [sum_rename_req] $T [sum_rename_ack] // one gets through 
+          }
+          array_obj_ref_47_offset_calculated &-> (array_obj_ref_47_base_plus_offset)
+          array_obj_ref_47_offset_calculated o<-& (array_obj_ref_47_root_address_calculated)
+          array_obj_ref_47_root_address_calculated <-& (array_obj_ref_47_base_plus_offset)
+          ;;[array_obj_ref_47_word_addrgen] 
+          {
+            $T [root_rename_req] $T [root_rename_ack]
+          }
+          array_obj_ref_47_root_address_calculated &-> (array_obj_ref_47_word_addrgen)
+          array_obj_ref_47_word_address_calculated <-& (array_obj_ref_47_word_addrgen)
+          array_obj_ref_47_root_address_calculated o<-& (array_obj_ref_47_word_address_calculated)
+          ;;[array_obj_ref_47_request] 
+          {
+            ||[word_access] 
+            {
+              ;;[word_access_0] 
+              {
+                $T [rr] $T [ra] 
+              }
+            }
+          }
+          ;;[array_obj_ref_47_complete] 
+          {
+            ||[word_access] 
+            {
+              ;;[word_access_0] 
+              {
+                $T [cr] $T [ca] 
+              }
+            }
+            $T [merge_req] $T [merge_ack]
+          }
+          array_obj_ref_47_trigger_ &-> (array_obj_ref_47_request)
+          array_obj_ref_47_active_ <-& (array_obj_ref_47_request)
+          array_obj_ref_47_active_ &-> (array_obj_ref_47_complete)
+          array_obj_ref_47_completed_ <-& (array_obj_ref_47_complete)
+          array_obj_ref_47_root_address_calculated o<-& (array_obj_ref_47_active_)
+          array_obj_ref_47_trigger_ <-& (array_obj_ref_47_word_address_calculated)
+          array_obj_ref_47_root_address_calculated o<-& (array_obj_ref_47_active_)
+          array_obj_ref_47_trigger_ o<-& (array_obj_ref_47_active_)
+          array_obj_ref_47_active_ o<-& (array_obj_ref_47_completed_)
+          binary_48_trigger_ <-& (simple_obj_ref_45_completed_)
+          binary_48_trigger_ <-& (array_obj_ref_47_completed_)
+          ;;[binary_48_complete_Sample] 
+          {
+            // binary expression 
+            $T [rr] $T [ra]  // (split) binary operation 
+          }
+          ;;[binary_48_complete_Update] 
+          {
+            // binary expression 
+            $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_48_trigger_ &-> (binary_48_complete_Sample)
+          binary_48_active_ <-& (binary_48_complete_Sample)
+          binary_48_active_ &-> (binary_48_complete_Update)
+          binary_48_completed_ <-& (binary_48_complete_Update)
+          phi_stmt_39_reenable_ o<-& (binary_48_active_)
+          array_obj_ref_47_active_ o<-& (binary_48_active_)
+          binary_48_trigger_ o<-& (binary_48_active_)
+          binary_48_active_ o<-& (binary_48_completed_)
+          assign_stmt_49_active_ <-& (binary_48_completed_)
+          binary_48_active_ o<-& (assign_stmt_49_completed_)
+          // nresult
+          // implicit reference
+          assign_stmt_49_completed_ <-& (assign_stmt_49_active_)
+          // WAR dependency: Read: nresult before Write: nresult
+          //                 NOTE: the result of operation (result + a[I]) determines nresult
+          binary_48_trigger_ <-& (phi_stmt_39_completed_)
+          // WAR dependency: release  Read: nresult with Write: nresult
+          $entry o<-& (simple_obj_ref_44_completed_)
+          assign_stmt_49_trigger_ o<-& (assign_stmt_49_active_)
+          assign_stmt_49_active_ o<-& (assign_stmt_49_completed_)
+          // 			outpipe := nresult
+          //  file prog.opt.aa, line 42
+          $T[assign_stmt_52_trigger_] 
+          $T[assign_stmt_52_active_] 
+          $T[assign_stmt_52_completed_] 
+          assign_stmt_52_active_ <-& (assign_stmt_52_trigger_)
+          // nresult
+          // implicit reference
+          $T[simple_obj_ref_51_trigger_] 
+          $T[simple_obj_ref_51_completed_] 
+          $T[simple_obj_ref_51_active_] 
+          simple_obj_ref_51_completed_ <-& (simple_obj_ref_51_active_)
+          simple_obj_ref_51_active_ <-& (simple_obj_ref_51_trigger_)
+          simple_obj_ref_51_trigger_ <-& (assign_stmt_49_completed_)
+          binary_48_active_ o<-& (simple_obj_ref_51_completed_)
+          simple_obj_ref_51_trigger_ o<-& (simple_obj_ref_51_active_)
+          simple_obj_ref_51_active_ o<-& (simple_obj_ref_51_completed_)
+          assign_stmt_52_active_ <-& (simple_obj_ref_51_completed_)
+          binary_48_active_ o<-& (assign_stmt_52_completed_)
+          // outpipe
+          $T[simple_obj_ref_50_trigger_] 
+          $T[simple_obj_ref_50_active_] 
+          $T[simple_obj_ref_50_completed_] 
+          ;;[simple_obj_ref_50_complete] 
+          {
+            // pipe write outpipe
+            $T [pipe_wreq] $T [pipe_wack] 
+          }
+          simple_obj_ref_50_active_ <-& (simple_obj_ref_50_complete)
+          simple_obj_ref_50_completed_ <-& (simple_obj_ref_50_active_)
+          simple_obj_ref_50_trigger_ &-> (simple_obj_ref_50_complete)
+          simple_obj_ref_50_trigger_ o<-& (simple_obj_ref_50_active_)
+          simple_obj_ref_50_active_ o<-& (simple_obj_ref_50_completed_)
+          simple_obj_ref_50_trigger_ <-& (assign_stmt_52_active_)
+          assign_stmt_52_completed_ <-& (simple_obj_ref_50_completed_)
+          simple_obj_ref_50_active_ o<-& (simple_obj_ref_50_active_)
+          assign_stmt_52_trigger_ o<-& (assign_stmt_52_active_)
+          assign_stmt_52_active_ o<-& (assign_stmt_52_completed_)
+          // 			NI := (I + 1 )
+          //  file prog.opt.aa, line 47
+          $T[assign_stmt_57_trigger_] 
+          $T[assign_stmt_57_active_] 
+          $T[assign_stmt_57_completed_] 
+          assign_stmt_57_active_ <-& (assign_stmt_57_trigger_)
+          // (I + 1 )
+          $T[binary_56_active_] 
+          $T[binary_56_trigger_] 
+          $T[binary_56_completed_] 
+          // I
+          // implicit reference
+          $T[simple_obj_ref_54_trigger_] 
+          $T[simple_obj_ref_54_completed_] 
+          $T[simple_obj_ref_54_active_] 
+          simple_obj_ref_54_completed_ <-& (simple_obj_ref_54_active_)
+          simple_obj_ref_54_active_ <-& (simple_obj_ref_54_trigger_)
+          simple_obj_ref_54_trigger_ <-& (phi_stmt_34_completed_)
+          phi_stmt_34_reenable_ o<-& (simple_obj_ref_54_completed_)
+          simple_obj_ref_54_trigger_ o<-& (simple_obj_ref_54_active_)
+          simple_obj_ref_54_active_ o<-& (simple_obj_ref_54_completed_)
+          binary_56_trigger_ <-& (simple_obj_ref_54_completed_)
+          ;;[binary_56_complete_Sample] 
+          {
+            // binary expression 
+            $T [rr] $T [ra]  // (split) binary operation 
+          }
+          ;;[binary_56_complete_Update] 
+          {
+            // binary expression 
+            $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_56_trigger_ &-> (binary_56_complete_Sample)
+          binary_56_active_ <-& (binary_56_complete_Sample)
+          binary_56_active_ &-> (binary_56_complete_Update)
+          binary_56_completed_ <-& (binary_56_complete_Update)
+          phi_stmt_34_reenable_ o<-& (binary_56_active_)
+          binary_56_trigger_ o<-& (binary_56_active_)
+          binary_56_active_ o<-& (binary_56_completed_)
+          assign_stmt_57_active_ <-& (binary_56_completed_)
+          binary_56_active_ o<-& (assign_stmt_57_completed_)
+          // NI
+          // implicit reference
+          assign_stmt_57_completed_ <-& (assign_stmt_57_active_)
+          // WAR dependency: Read: NI before Write: NI
+          //                 NOTE: the result of operation (I + 1 ) determines NI
+          binary_56_trigger_ <-& (phi_stmt_34_completed_)
+          // WAR dependency: release  Read: NI with Write: NI
+          $entry o<-& (simple_obj_ref_53_completed_)
+          assign_stmt_57_trigger_ o<-& (assign_stmt_57_active_)
+          assign_stmt_57_active_ o<-& (assign_stmt_57_completed_)
+          // (NI < 10 )
+          $T[binary_61_active_] 
+          $T[binary_61_trigger_] 
+          $T[binary_61_completed_] 
+          // NI
+          // implicit reference
+          $T[simple_obj_ref_59_trigger_] 
+          $T[simple_obj_ref_59_completed_] 
+          $T[simple_obj_ref_59_active_] 
+          simple_obj_ref_59_completed_ <-& (simple_obj_ref_59_active_)
+          simple_obj_ref_59_active_ <-& (simple_obj_ref_59_trigger_)
+          simple_obj_ref_59_trigger_ <-& (assign_stmt_57_completed_)
+          binary_56_active_ o<-& (simple_obj_ref_59_completed_)
+          simple_obj_ref_59_trigger_ o<-& (simple_obj_ref_59_active_)
+          simple_obj_ref_59_active_ o<-& (simple_obj_ref_59_completed_)
+          binary_61_trigger_ <-& (simple_obj_ref_59_completed_)
+          ;;[binary_61_complete_Sample] 
+          {
+            // binary expression 
+            $T [rr] $T [ra]  // (split) binary operation 
+          }
+          ;;[binary_61_complete_Update] 
+          {
+            // binary expression 
+            $T [cr] $T [ca] // (split) binary operation 
+          }
+          binary_61_trigger_ &-> (binary_61_complete_Sample)
+          binary_61_active_ <-& (binary_61_complete_Sample)
+          binary_61_active_ &-> (binary_61_complete_Update)
+          binary_61_completed_ <-& (binary_61_complete_Update)
+          binary_56_active_ o<-& (binary_61_active_)
+          binary_61_trigger_ o<-& (binary_61_active_)
+          binary_61_active_ o<-& (binary_61_completed_)
+          // load-store dependencies..
+          // pipe read/write dependencies for pipe outpipe
+        }
+        // assign_stmt_49_to_assign_stmt_57
+        ;; [loop_exit] 
+        {
+          $T [ack] 
+        }
+        ;; [loop_taken] 
+        {
+          $T [ack] 
+        }
+        $bind condition_done <= do_while_stmt_32_loop_body : binary_61_completed_
+        condition_done |-> (loop_exit loop_taken)
+        do_while_stmt_32__entry__ <-| ($entry loopback)
+        do_while_stmt_32__entry__ |-> ( do_while_stmt_32_loop_body ) 
+        loop_body_done <-| ( do_while_stmt_32_loop_body ) 
+        $bind do_while_stmt_32__entry__  => do_while_stmt_32_loop_body : first_through_loop_body 
+        $bind loop_back  => do_while_stmt_32_loop_body : back_edge_to_loop_body 
+        $terminate (loop_exit loop_taken loop_body_done) (loop_back do_while_stmt_32__exit__)
+      }
+      do_while_stmt_32__entry__ |-> (do_while_stmt_32)
+      do_while_stmt_32__exit__ <-| (do_while_stmt_32)
+      do_while_stmt_32__entry__ <-| (branch_block_stmt_31__entry__)
+      do_while_stmt_32__exit__ |-> (branch_block_stmt_31__exit__)
+    }
+    ::[assign_stmt_65] 
+    {
+      // 	c := result
+      //  file prog.opt.aa, line 55
+      $T[assign_stmt_65_trigger_] 
+      $T[assign_stmt_65_active_] 
+      $T[assign_stmt_65_completed_] 
+      assign_stmt_65_active_ <-& (assign_stmt_65_trigger_)
+      // result
+      // implicit reference
+      $T[simple_obj_ref_64_trigger_] 
+      $T[simple_obj_ref_64_completed_] 
+      $T[simple_obj_ref_64_active_] 
+      simple_obj_ref_64_completed_ <-& (simple_obj_ref_64_active_)
+      simple_obj_ref_64_active_ <-& (simple_obj_ref_64_trigger_)
+      assign_stmt_65_active_ <-& (simple_obj_ref_64_completed_)
+      // c
+      // implicit reference
+      assign_stmt_65_completed_ <-& (assign_stmt_65_active_)
+      ;;[assign_stmt_65_register] 
+      {
+        $T [req] $T [ack] // register.
+      }
+      assign_stmt_65_trigger_ &-> (assign_stmt_65_register)
+      assign_stmt_65_active_ <-& (assign_stmt_65_register)
+      assign_stmt_65_completed_ <-& (assign_stmt_65_active_)
+      // load-store dependencies..
+    }
+    // assign_stmt_65
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %asum%init%
+    //  file prog.opt.aa, line 15
+    // constant-object-declarations for block %asum%init
+    //  file prog.opt.aa, line 12
+    // constant-object-declarations for block %asum%run%
+    //  file prog.opt.aa, line 33
+    // constant-object-declarations for block %asum%run
+    //  file prog.opt.aa, line 30
+    // constant-object-declarations for block %asum
+    //  file prog.opt.aa, line 5
+    // load store constants for object %asum:a
+    $constant $W[xxasumxxa_base_address] : $int<4> := _b0000
+    // constant-declarations for block %asum%init
+    //  file prog.opt.aa, line 12
+    // do-while statement  
+    //  file prog.opt.aa, line 0
+    // 10 
+    $constant $W[expr_27_wire_constant] : $int<32> := _b00000000000000000000000000001010// 10
+    // constant-declarations for block %asum%init%
+    //  file prog.opt.aa, line 15
+    // constant-declarations for phi:  			$phi I := 			  ($bitcast ($uint<32>) 0  ) $on $entry			  NI $on $loopback // type of target is $uint<32>
+    //  file prog.opt.aa, line 16
+    // ($bitcast ($uint<32>) 0  )
+    $constant $W[type_cast_13_wire_constant] : $int<32> := _b00000000000000000000000000000000// 0
+    // a[I]
+    $constant $W[array_obj_ref_17_resized_base_address] : $int<4> := _b0000// 0
+    $constant $W[array_obj_ref_17_offset_scale_factor_0] : $int<4> := _b0001// 1
+    $constant $W[array_obj_ref_17_word_offset_0] : $int<4> := _b0000// 0
+    // 1 
+    $constant $W[expr_22_wire_constant] : $int<32> := _b00000000000000000000000000000001// 1
+    // constant-declarations for block %asum%run
+    //  file prog.opt.aa, line 30
+    // do-while statement  
+    //  file prog.opt.aa, line 0
+    // 10 
+    $constant $W[expr_60_wire_constant] : $int<32> := _b00000000000000000000000000001010// 10
+    // constant-declarations for block %asum%run%
+    //  file prog.opt.aa, line 33
+    // constant-declarations for phi:  			$phi I := 			  ($bitcast ($uint<32>) 0  ) $on $entry			  NI $on $loopback // type of target is $uint<32>
+    //  file prog.opt.aa, line 34
+    // ($bitcast ($uint<32>) 0  )
+    $constant $W[type_cast_37_wire_constant] : $int<32> := _b00000000000000000000000000000000// 0
+    // constant-declarations for phi:  			$phi result := 			  0  $on $entry			  nresult $on $loopback // type of target is $uint<32>
+    //  file prog.opt.aa, line 35
+    // 0 
+    $constant $W[expr_41_wire_constant] : $int<32> := _b00000000000000000000000000000000// 0
+    // a[I]
+    $constant $W[array_obj_ref_47_resized_base_address] : $int<4> := _b0000// 0
+    $constant $W[array_obj_ref_47_offset_scale_factor_0] : $int<4> := _b0001// 1
+    $constant $W[array_obj_ref_47_word_offset_0] : $int<4> := _b0000// 0
+    // 1 
+    $constant $W[expr_55_wire_constant] : $int<32> := _b00000000000000000000000000000001// 1
+    // block %asum%init
+    //  file prog.opt.aa, line 12
+    // do-while statement  
+    //  file prog.opt.aa, line 0
+    // (NI < 10 )
+    $intermediate $W[binary_28_wire] : $int<1>
+    // merge-statement  
+    //  file prog.opt.aa, line 15
+    // 			$phi I := 			  ($bitcast ($uint<32>) 0  ) $on $entry			  NI $on $loopback // type of target is $uint<32>
+    //  file prog.opt.aa, line 16
+    // I
+    $W[I_10] : $int<32>
+    // 			a[I] := inpipe
+    //  file prog.opt.aa, line 18
+    // inpipe
+    $W[simple_obj_ref_18_wire] : $int<32>
+    // a[I]
+    $intermediate $W[simple_obj_ref_16_resized] : $int<4>
+    $intermediate $W[simple_obj_ref_16_scaled] : $int<4>
+    $intermediate $W[array_obj_ref_17_final_offset] : $int<4>
+    $intermediate $W[array_obj_ref_17_root_address] : $int<4>
+    $W[array_obj_ref_17_word_address_0] : $pointer<asum/memory_space_0>
+    $W[array_obj_ref_17_data_0] : $int<32>
+    // 			NI := (I + 1 )
+    //  file prog.opt.aa, line 23
+    // NI
+    $W[NI_24] : $int<32>
+    // block %asum%run
+    //  file prog.opt.aa, line 30
+    // do-while statement  
+    //  file prog.opt.aa, line 0
+    // (NI < 10 )
+    $intermediate $W[binary_61_wire] : $int<1>
+    // merge-statement  
+    //  file prog.opt.aa, line 33
+    // 			$phi I := 			  ($bitcast ($uint<32>) 0  ) $on $entry			  NI $on $loopback // type of target is $uint<32>
+    //  file prog.opt.aa, line 34
+    // I
+    $W[I_34] : $int<32>
+    // 			$phi result := 			  0  $on $entry			  nresult $on $loopback // type of target is $uint<32>
+    //  file prog.opt.aa, line 35
+    // result
+    $W[result_39] : $int<32>
+    // 			nresult := (result + a[I])
+    //  file prog.opt.aa, line 37
+    // a[I]
+    $intermediate $W[simple_obj_ref_46_resized] : $int<4>
+    $intermediate $W[simple_obj_ref_46_scaled] : $int<4>
+    $intermediate $W[array_obj_ref_47_final_offset] : $int<4>
+    $intermediate $W[array_obj_ref_47_root_address] : $int<4>
+    $W[array_obj_ref_47_word_address_0] : $pointer<asum/memory_space_0>
+    $W[array_obj_ref_47_data_0] : $int<32>
+    $W[array_obj_ref_47_wire] : $int<32>
+    // nresult
+    $W[nresult_49] : $int<32>
+    // 			outpipe := nresult
+    //  file prog.opt.aa, line 42
+    // outpipe
+    // 			NI := (I + 1 )
+    //  file prog.opt.aa, line 47
+    // NI
+    $W[NI_57] : $int<32>
+    // 	c := result
+    //  file prog.opt.aa, line 55
+    // c
+    // datapath-instances for block %asum%init
+    //  file prog.opt.aa, line 12
+    // datapath-instances for do-while  
+    //  file prog.opt.aa, line 0
+    // (NI < 10 )
+    <[binary_28_inst] (NI_24 expr_27_wire_constant) (binary_28_wire) 
+    ==0? [do_while_stmt_8_branch] (binary_28_wire)
+    // data-path instances for merge  
+    //  file prog.opt.aa, line 15
+    // 			$phi I := 			  ($bitcast ($uint<32>) 0  ) $on $entry			  NI $on $loopback // type of target is $uint<32>
+    //  file prog.opt.aa, line 16
+    $phi [phi_stmt_10] (type_cast_13_wire_constant NI_24) ( I_10 )
+    // 			a[I] := inpipe
+    //  file prog.opt.aa, line 18
+    // inpipe
+    $ioport $in [simple_obj_ref_18_inst] (inpipe) (simple_obj_ref_18_wire) 
+    // a[I]
+    := [array_obj_ref_17_index_0_resize] (I_10) (simple_obj_ref_16_resized)  
+    &/ [array_obj_ref_17_index_0_rename] (simple_obj_ref_16_resized) (simple_obj_ref_16_scaled) 
+    := [array_obj_ref_17_offset_inst] (simple_obj_ref_16_scaled) (array_obj_ref_17_final_offset)  
+    &/ [array_obj_ref_17_root_address_inst] (array_obj_ref_17_final_offset) (array_obj_ref_17_root_address) 
+    &/ [array_obj_ref_17_addr_0] (array_obj_ref_17_root_address) (array_obj_ref_17_word_address_0) 
+    $store [array_obj_ref_17_store_0] $to asum/memory_space_0 (array_obj_ref_17_word_address_0 array_obj_ref_17_data_0) 
+    &/ [array_obj_ref_17_gather_scatter] (simple_obj_ref_18_wire) (array_obj_ref_17_data_0) 
+    // 			NI := (I + 1 )
+    //  file prog.opt.aa, line 23
+    // (I + 1 )
+    +[binary_23_inst] (I_10 expr_22_wire_constant) (NI_24) 
+    // datapath-instances for block %asum%run
+    //  file prog.opt.aa, line 30
+    // datapath-instances for do-while  
+    //  file prog.opt.aa, line 0
+    // (NI < 10 )
+    <[binary_61_inst] (NI_57 expr_60_wire_constant) (binary_61_wire) 
+    ==0? [do_while_stmt_32_branch] (binary_61_wire)
+    // data-path instances for merge  
+    //  file prog.opt.aa, line 33
+    // 			$phi I := 			  ($bitcast ($uint<32>) 0  ) $on $entry			  NI $on $loopback // type of target is $uint<32>
+    //  file prog.opt.aa, line 34
+    $phi [phi_stmt_34] (type_cast_37_wire_constant NI_57) ( I_34 )
+    // 			$phi result := 			  0  $on $entry			  nresult $on $loopback // type of target is $uint<32>
+    //  file prog.opt.aa, line 35
+    $phi [phi_stmt_39] (expr_41_wire_constant nresult_49) ( result_39 )
+    // 			nresult := (result + a[I])
+    //  file prog.opt.aa, line 37
+    // a[I]
+    := [array_obj_ref_47_index_0_resize] (I_34) (simple_obj_ref_46_resized)  
+    &/ [array_obj_ref_47_index_0_rename] (simple_obj_ref_46_resized) (simple_obj_ref_46_scaled) 
+    := [array_obj_ref_47_offset_inst] (simple_obj_ref_46_scaled) (array_obj_ref_47_final_offset)  
+    &/ [array_obj_ref_47_root_address_inst] (array_obj_ref_47_final_offset) (array_obj_ref_47_root_address) 
+    &/ [array_obj_ref_47_addr_0] (array_obj_ref_47_root_address) (array_obj_ref_47_word_address_0) 
+    $load [array_obj_ref_47_load_0] $from asum/memory_space_0 (array_obj_ref_47_word_address_0) (array_obj_ref_47_data_0) 
+    &/ [array_obj_ref_47_gather_scatter] (array_obj_ref_47_data_0) (array_obj_ref_47_wire) 
+    // (result + a[I])
+    +[binary_48_inst] (result_39 array_obj_ref_47_wire) (nresult_49) 
+    // 			outpipe := nresult
+    //  file prog.opt.aa, line 42
+    // outpipe
+    $ioport $out [simple_obj_ref_50_inst]  (nresult_49) (outpipe) 
+    // 			NI := (I + 1 )
+    //  file prog.opt.aa, line 47
+    // (I + 1 )
+    +[binary_56_inst] (I_34 expr_55_wire_constant) (NI_57) 
+    // 	c := result
+    //  file prog.opt.aa, line 55
+    := [simple_obj_ref_63_inst] (result_39) (c)  
+  }
+  // end data-path
+  // CP-DP links for do-while  do_while_stmt_8
+  //  file prog.opt.aa, line 0
+  // CP-DP links for merge  
+  //  file prog.opt.aa, line 15
+  phi_stmt_10 <=> (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/merge_stmt_9__entry___PhiReq/phi_stmt_10/phi_stmt_10_req branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/xxloopback_PhiReq/phi_stmt_10/phi_stmt_10_req) (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/merge_stmt_9_PhiAck/phi_stmt_10_ack)
+  // 			a[I] := inpipe
+  //  file prog.opt.aa, line 18
+  // inpipe
+  simple_obj_ref_18_inst <=> (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/simple_obj_ref_18_complete/req) (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/simple_obj_ref_18_complete/ack)
+  array_obj_ref_17_index_0_resize <=> (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_index_resize_0/index_resize_req) (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_index_resize_0/index_resize_ack)
+  array_obj_ref_17_index_0_rename <=> (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_index_scale_0/scale_rename_req) (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_index_scale_0/scale_rename_ack)
+  array_obj_ref_17_offset_inst <=> (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_add_indices/final_index_req) (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_add_indices/final_index_ack)
+  array_obj_ref_17_root_address_inst <=> (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_base_plus_offset/sum_rename_req) (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_base_plus_offset/sum_rename_ack)
+  array_obj_ref_17_addr_0 <=> (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_word_addrgen/root_rename_req) (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_word_addrgen/root_rename_ack)
+  array_obj_ref_17_gather_scatter <=> (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_request/split_req) (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_request/split_ack)
+  array_obj_ref_17_store_0 <=> (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_request/word_access/word_access_0/rr branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_complete/word_access/word_access_0/cr) (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_request/word_access/word_access_0/ra branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/array_obj_ref_17_complete/word_access/word_access_0/ca)
+  // 			NI := (I + 1 )
+  //  file prog.opt.aa, line 23
+  // (I + 1 )
+  binary_23_inst <=> (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/binary_23_complete_Sample/rr branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/binary_23_complete_Update/cr) (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/binary_23_complete_Sample/ra branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/binary_23_complete_Update/ca)
+  // (NI < 10 )
+  binary_28_inst <=> (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/binary_28_complete_Sample/rr branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/binary_28_complete_Update/cr) (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/binary_28_complete_Sample/ra branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/binary_28_complete_Update/ca)
+  do_while_stmt_8_branch <=> (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/binary_28_completed_) (branch_block_stmt_7/do_while_stmt_8/loop_exit/ack branch_block_stmt_7/do_while_stmt_8/loop_taken/ack)
+  // CP-DP links for do-while  do_while_stmt_32
+  //  file prog.opt.aa, line 0
+  // CP-DP links for merge  
+  //  file prog.opt.aa, line 33
+  phi_stmt_34 <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/merge_stmt_33__entry___PhiReq/phi_stmt_34/phi_stmt_34_req branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/xxloopback_PhiReq/phi_stmt_34/phi_stmt_34_req) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/merge_stmt_33_PhiAck/phi_stmt_34_ack)
+  phi_stmt_39 <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/merge_stmt_33__entry___PhiReq/phi_stmt_39/phi_stmt_39_req branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/xxloopback_PhiReq/phi_stmt_39/phi_stmt_39_req) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/merge_stmt_33_PhiAck/phi_stmt_39_ack)
+  // 			nresult := (result + a[I])
+  //  file prog.opt.aa, line 37
+  // a[I]
+  array_obj_ref_47_index_0_resize <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_index_resize_0/index_resize_req) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_index_resize_0/index_resize_ack)
+  array_obj_ref_47_index_0_rename <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_index_scale_0/scale_rename_req) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_index_scale_0/scale_rename_ack)
+  array_obj_ref_47_offset_inst <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_add_indices/final_index_req) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_add_indices/final_index_ack)
+  array_obj_ref_47_root_address_inst <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_base_plus_offset/sum_rename_req) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_base_plus_offset/sum_rename_ack)
+  array_obj_ref_47_addr_0 <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_word_addrgen/root_rename_req) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_word_addrgen/root_rename_ack)
+  array_obj_ref_47_gather_scatter <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_complete/merge_req) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_complete/merge_ack)
+  array_obj_ref_47_load_0 <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_request/word_access/word_access_0/rr branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_complete/word_access/word_access_0/cr) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_request/word_access/word_access_0/ra branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/array_obj_ref_47_complete/word_access/word_access_0/ca)
+  // (result + a[I])
+  binary_48_inst <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/binary_48_complete_Sample/rr branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/binary_48_complete_Update/cr) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/binary_48_complete_Sample/ra branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/binary_48_complete_Update/ca)
+  // 			outpipe := nresult
+  //  file prog.opt.aa, line 42
+  // outpipe
+  simple_obj_ref_50_inst <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/simple_obj_ref_50_complete/pipe_wreq) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/simple_obj_ref_50_complete/pipe_wack)
+  // 			NI := (I + 1 )
+  //  file prog.opt.aa, line 47
+  // (I + 1 )
+  binary_56_inst <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/binary_56_complete_Sample/rr branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/binary_56_complete_Update/cr) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/binary_56_complete_Sample/ra branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/binary_56_complete_Update/ca)
+  // (NI < 10 )
+  binary_61_inst <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/binary_61_complete_Sample/rr branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/binary_61_complete_Update/cr) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/binary_61_complete_Sample/ra branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/binary_61_complete_Update/ca)
+  do_while_stmt_32_branch <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/binary_61_completed_) (branch_block_stmt_31/do_while_stmt_32/loop_exit/ack branch_block_stmt_31/do_while_stmt_32/loop_taken/ack)
+  // 	c := result
+  //  file prog.opt.aa, line 55
+  simple_obj_ref_63_inst <=> (assign_stmt_65/assign_stmt_65_register/req) (assign_stmt_65/assign_stmt_65_register/ack)
+}

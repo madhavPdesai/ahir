@@ -145,9 +145,6 @@ public:
 	public: void vc_CPPhiSequencer(
 		vcCPPipelinedLoopBody* slb
 	);
-	public: void vc_CPPlaceJoin(
-		vcCPSimpleLoopBlock* slb
-	);
 	public: void vc_CPTransitionMerge(
 		vcCPPipelinedLoopBody* slb
 	);
@@ -243,10 +240,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 135;
+	static const int NUM_TOKENS = 134;
 #else
 	enum {
-		NUM_TOKENS = 135
+		NUM_TOKENS = 134
 	};
 #endif
 	

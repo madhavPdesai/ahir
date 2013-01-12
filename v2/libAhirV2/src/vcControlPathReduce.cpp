@@ -555,10 +555,7 @@ void vcControlPath::Print_VHDL_Optimized(ostream& ofile)
 	<< _cpelement_to_group_map[this->_exit]->Get_Group_Index()
 	<< ");" << endl;
 
-  string bypass_str = (vcSystem::_min_clock_period_flag ? "false" : "true");
-  // string bypass_str = "true";
   ofile << "finAckJoin: join2 " << endl
-	<< "generic map ( bypass => " << bypass_str << ")" << endl
 	<< " port map(pred0 => fin_req_symbol, pred1 => cp_elements("
 	<< _cpelement_to_group_map[this->_exit]->Get_Group_Index()
 	<< "), symbol_out => fin_ack_symbol, clk => clk, reset => reset);"

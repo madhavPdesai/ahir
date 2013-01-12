@@ -385,16 +385,17 @@ vc_CPSimpleLoopBlock[vcCPBlock* cp]
 //-----------------------------------------------------------------------------------------------
 vc_CPLoopTerminate[vcCPSimpleLoopBlock* slb] 
 {
- 	string loop_exit, loop_taken, loop_body, loop_back;
+ 	string loop_exit, loop_taken, loop_body, loop_back, exit_place;
 }
 :  TERMINATE LPAREN 
 	loop_exit = vc_Identifier 
 	loop_taken = vc_Identifier 
 	loop_body = vc_Identifier RPAREN 
    LPAREN 
-	loop_back = vc_Identifier 
+	loop_back  = vc_Identifier 
+	exit_place = vc_Identifier 
    RPAREN
-   { slb->Set_Loop_Termination_Information(loop_exit, loop_taken, loop_body, loop_back); }
+   { slb->Set_Loop_Termination_Information(loop_exit, loop_taken, loop_body, loop_back, exit_place); }
 ;
 
 
@@ -430,25 +431,6 @@ vc_CPPhiSequencer[vcCPPipelinedLoopBody* slb]
 ;
 
 
-//-----------------------------------------------------------------------------------------------
-// vc_CPPlaceJoin: PLACEJOIN vc_Label LPAREN vc_Identifier+ RPAREN 
-//                               LPAREN vc_Identifier RPAREN
-//-----------------------------------------------------------------------------------------------
-vc_CPPlaceJoin[vcCPSimpleLoopBlock* slb] 
-{
-    string pj_id;
-    vector<string> in_places;
-    string out_place;
-    string tmp_string;
-}
-:  PLACEJOIN pj_id = vc_Label LPAREN 
-        ( tmp_string = vc_Identifier {in_places.push_back(tmp_string);})+
-        RPAREN
-        LPAREN
-        out_place = vc_Identifier
-        RPAREN
-   { slb->Add_Place_Join(pj_id, in_places, out_place); }
-;
 
 
 //-----------------------------------------------------------------------------------------------
@@ -533,7 +515,7 @@ vc_CPForkBlock[vcCPBlock* cp]
 
 //-----------------------------------------------------------------------------------------------
 // vc_CPPipelinedLoopBody: PIPELINE vc_Label LBRACE (vc_CPFork | vc_CPRegion | vc_CPJoin | vc_CPMarkedJoin | vc_CPTransition )+ 
-//                                            RBRACE (LPAREN vc_Identifier+ RPAREN)?
+//                                            RBRACE (LPAREN vc_Identifier+ RPAREN) (LPAREN vc_Identifier+ RPAREN)
 //-----------------------------------------------------------------------------------------------
 vc_CPPipelinedLoopBody[vcCPBlock* cp] 
 {
@@ -1460,7 +1442,6 @@ GUARD         : "$guard";
 BIND          : "$bind";
 TERMINATE     : "$terminate";
 PHISEQUENCER  : "$phisequencer";
-PLACEJOIN     : "$placejoin";
 TRANSITIONMERGE     : "$transitionmerge";
 
 

@@ -654,6 +654,7 @@ class AaBlockStatement: public AaStatement
 					       AaExpression* test_expression,
 					       AaStatementSequence* sseq,
 					       vector<AaStatement*>* phi_stmts,
+					       string& region_name,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(AaStatement* stmt,
 					       ostream& ofile);

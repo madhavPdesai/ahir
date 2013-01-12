@@ -4214,7 +4214,7 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
   string vc_block_id = "loop_" + Int64ToStr(this->Get_Index());
 
   // the inner region name
-  string vc_loop_body_id = _loop_body_sequence->Get_VC_Name();
+  string vc_loop_body_id = this->Get_VC_Name() + "_loop_body";
 
   // start the outer region
   ofile << "<o> [" << this->Get_VC_Name() << "] {" << endl;
@@ -4234,8 +4234,11 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
   //    the condition evaluation transition in the loop body).
   __Place("condition_done");
 
+  // a place to indicate the the loop-body has finished
+  // an iteration.
+  __Place("loop_body_done");
 
-  //    next: the loop_body, which is a pipeline.
+  // next: the loop_body, which is a pipeline.
   // to write its control-path, we must pass in the
   // test-expression as well as the list of PHI statements
   // which act as sources for the expressions within
@@ -4259,6 +4262,7 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 					 this->_test_expression,
 					 _loop_body_sequence,
 					 &phi_stmts,
+					 vc_loop_body_id,
 					 ofile); 
 
   //    following the loop body, the branch options (exit/taken)
@@ -4270,14 +4274,16 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 
   //    links.
   ofile << "condition_done |-> (loop_exit loop_taken)" << endl;
-  ofile << vc_loop_body_id << " <-| ($entry loopback)" << endl;
+  ofile << entry_place_name << " <-| ($entry loop_back)" << endl;
+  ofile << entry_place_name << " |-> ( " << vc_loop_body_id<< " ) " << endl;
+  ofile << "loop_body_done <-| ( " << vc_loop_body_id << " ) " << endl;
 
   // the binding of the loop-entry contol places to the loop body.
   ofile << "$bind " << entry_place_name << "  => " << vc_loop_body_id << " : first_through_loop_body " << endl; 
   ofile << "$bind loop_back  => " << vc_loop_body_id << " : back_edge_to_loop_body " << endl; 
 
   //    the terminator!
-  ofile << "$terminate (loop_exit loop_taken " << vc_loop_body_id << ") (loop_back " << exit_place_name << ")" << endl;
+  ofile << "$terminate (loop_exit loop_taken loop_body_done) (loop_back " << exit_place_name << ")" << endl;
   ofile << "}" << endl;
 }
 

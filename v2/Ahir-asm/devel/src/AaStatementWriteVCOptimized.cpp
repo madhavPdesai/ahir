@@ -467,7 +467,8 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(AaStatement* stmt, ostrea
   vector<AaStatement*> tv;
   tv.push_back(stmt);
   AaStatementSequence* ss = new AaStatementSequence(this,tv);
-  this->AaBlockStatement::Write_VC_Control_Path_Optimized(false,NULL,ss,NULL,ofile);
+  string region_name = ss->Get_VC_Name();
+  this->AaBlockStatement::Write_VC_Control_Path_Optimized(false,NULL,ss,NULL,region_name,ofile);
   delete ss;
 }
 
@@ -478,6 +479,7 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						       AaExpression* condition_expr,
 						       AaStatementSequence* sseq,
 						       vector<AaStatement*>* phi_stmts,
+						       string& region_name,
 						       ostream& ofile)
 {
   if(sseq->Get_Statement_Count() == 1 && sseq->Get_Statement(0)->Is_Block_Statement())
@@ -490,15 +492,13 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       if(pipeline_flag)
 	{
 	  block_type = "$pipeline";
-	  block_name = this->Get_VC_Name() + "_loop_body";
 	}
       else
 	{
 	  block_type = "::";
-	  block_name = sseq->Get_VC_Name();
 	}
 
-      ofile << block_type <<  "[" << block_name << "] {" << endl;
+      ofile << block_type <<  "[" << region_name << "] {" << endl;
 
       if(pipeline_flag)
 	{
@@ -510,8 +510,8 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  __T("first_time_through_loop_body");
 	  __T("loop_body_start");
 
-	  ofile << "$transitionmerge [entry_tmerge] (back_edge_through_loop_body first_time_through_loop_body) (body_start)" << endl;
-	  __J("$entry","body_start");
+	  ofile << "$transitionmerge [entry_tmerge] (back_edge_through_loop_body first_time_through_loop_body) (loop_body_start)" << endl;
+	  __J("$entry","loop_body_start");
 	}
 
       set<AaRoot*> visited_elements;
@@ -562,7 +562,17 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       this->Write_VC_Load_Store_Dependencies(pipeline_flag,load_store_ordering_map,ofile);
       this->Write_VC_Pipe_Dependencies(pipeline_flag,pipe_map,ofile);
 
-      ofile << "} // " << sseq->Get_VC_Name() <<  endl;
+      ofile << "}";
+
+      if(pipeline_flag)
+	{
+	  __T("back_edge_to_loop_body");
+	  __T("first_time_through_loop_body");
+	  ofile << "(back_edge_to_loop_body first_time_through_loop_body) // exported inputs" << endl;
+	  ofile << "(" << condition_expr->Get_VC_Completed_Transition_Name() << ") // exported outputs" << endl;
+	}
+
+      ofile << " // " << region_name <<  endl;
     }
 
 }
@@ -710,6 +720,8 @@ void AaSeriesBlockStatement::Write_VC_Control_Path_Optimized_Base(ostream& ofile
       for(int idx = 0, fidx = linear_segment_vector.size(); idx < fidx; idx++)
 	{
 	  AaStatementSequence* curr_seq = linear_segment_vector[idx];
+	  string block_name = curr_seq->Get_VC_Name();
+
 	  if(curr_seq->Get_Statement(0)->Is_Block_Statement())
 	    curr_seq->Get_Statement(0)->Write_VC_Control_Path_Optimized(ofile);
 	  else
@@ -717,6 +729,7 @@ void AaSeriesBlockStatement::Write_VC_Control_Path_Optimized_Base(ostream& ofile
 								    NULL,
 								    curr_seq,
 								    NULL,
+								    block_name,
 								    ofile);
 	}
       this->Destroy_Maximal_Sequences(linear_segment_vector);
@@ -949,8 +962,10 @@ void AaBranchBlockStatement::Write_VC_Control_Path_Optimized(string source_link,
 		  if(stmt->Is_Block_Statement() || stmt->Is_Control_Flow_Statement())
 		    stmt->Write_VC_Control_Path_Optimized(ofile);
 		  else 
-		    this->AaBlockStatement::Write_VC_Control_Path_Optimized(false, NULL, sseq, NULL, ofile);
-		  
+		    {
+		      string region_name = sseq->Get_VC_Name();
+		      this->AaBlockStatement::Write_VC_Control_Path_Optimized(false, NULL, sseq, NULL, region_name, ofile);
+		    }
 		  
 		  // control regulated by __entry__ and __exit__ places..
 		  // except for switch and if statements..
@@ -1137,7 +1152,7 @@ void AaJoinForkStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofil
       for(int idx = 0, fidx = _statement_sequence->Get_Statement_Count();
 	  idx < fidx;
 	  idx++)
-	{
+{
 	  AaStatement* stmt = this->_statement_sequence->Get_Statement(idx);
 	  if(stmt->Is_Block_Statement())
 	    stmt->Write_VC_Links_Optimized(hier_id,ofile);
@@ -1182,7 +1197,10 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   bool ok_flag = this->Get_In_Do_While();
   if(!ok_flag)
     assert(0);
-  
+
+  ofile << "// PHI statement " << this->Get_VC_Name() << endl;
+  ofile << "// " << this->To_String() << endl;
+
   string  phi_sequencer_reqs;
   string  phi_sequencer_triggers;
   string  phi_sequencer_done;
@@ -1192,8 +1210,17 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
     {
       
       string trig_place = _source_pairs[idx].first;
-      string root_trig_transition = trig_place + "_root_";
-      string trig_transition_name = this->Get_VC_Name() + "_trigger_from_" + trig_place;
+      string root_trig_transition;
+
+      // this transition should have been declared earlier.
+      if(trig_place == "$entry")
+	root_trig_transition = "first_time_through_loop_body";
+      else if(trig_place == "$loopback")
+	root_trig_transition = "back_edge_to_loop_body";
+      else
+	assert(0);
+	
+      string trig_transition_name = this->Get_VC_Name() + "_trigger_from_" + root_trig_transition;
       string req_name = this->Get_VC_Name() + "_req_" + IntToStr(idx);
       
       __T(req_name);

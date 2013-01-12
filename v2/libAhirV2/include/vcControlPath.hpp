@@ -185,6 +185,12 @@ class vcTransition: public vcCPElement
 
   bool _is_linked_to_non_local_dpe;
 
+  bool _is_bound_as_input_to_cp_function;
+  bool _is_bound_as_output_from_cp_function;
+
+  bool _is_bound_as_input_to_region;
+  bool _is_bound_as_output_from_region;
+
 public:
   vcTransition(vcCPElement* parent, string id);
   void Add_DP_Link(vcDatapathElement* dpe,vcTransitionType ltype);
@@ -200,6 +206,19 @@ public:
   bool Get_Is_Entry_Transition() {return(this->_is_entry_transition);}
 
   bool Get_Is_Linked_To_Non_Local_Dpe() {return(this->_is_linked_to_non_local_dpe);}
+
+
+  void Set_Is_Bound_As_Input_To_CP_Function(bool v) {this->_is_bound_as_input_to_cp_function = v;}
+  bool Get_Is_Bound_As_Input_To_CP_Function() {return(this->_is_bound_as_input_to_cp_function);}
+
+  void Set_Is_Bound_As_Output_From_CP_Function(bool v) {this->_is_bound_as_output_from_cp_function = v;}
+  bool Get_Is_Bound_As_Output_From_CP_Function() {return(this->_is_bound_as_output_from_cp_function);}
+
+  void Set_Is_Bound_As_Input_To_Region(bool v) {this->_is_bound_as_input_to_region = v;}
+  bool Get_Is_Bound_As_Input_To_Region() {return(this->_is_bound_as_input_to_region);}
+
+  void Set_Is_Bound_As_Output_From_Region(bool v) {this->_is_bound_as_output_from_region = v;}
+  bool Get_Is_Bound_As_Output_From_Region() {return(this->_is_bound_as_output_from_region);}
 
   virtual void Print(ostream& ofile);
   virtual void Print_VHDL(ostream& ofile);
@@ -342,9 +361,7 @@ public:
 
 class vcCPBranchBlock: public vcCPSeriesBlock
 {
-
 protected:
-
   map<vcPlace*, vector<vcCPElement*>, vcRoot_Compare >   _branch_map;
   map<vcPlace*, vector<vcCPElement*>, vcRoot_Compare > _merge_map;
 
@@ -361,41 +378,13 @@ public:
   virtual void Update_Predecessor_Successor_Links();
 };
 
-class vcPlaceJoin: public vcRoot
-{
-  vector<vcPlace*> _in_places;
-  vcPlace* _out_place;
-
-public:
-  vcPlaceJoin(string id);
-
-  void Add_In_Place(vcPlace* p) 
-  {
-    _in_places.push_back(p);
-  }
-  void Set_Out_Place(vcPlace* p) { _out_place = p; }
-
-  int Get_Number_Of_In_Places() { return(_in_places.size()); }
-  vcPlace* Get_In_Place(int idx) 
-  { 
-    if((idx >= 0) && (idx < _in_places.size()))
-      return(_in_places[idx]);
-    else
-      return(NULL);
-  }
-
-  void Print(ostream& ofile);
-  void Print_VHDL(ostream& ofile);
-};
-
-
-class vcTransitionMerge: public vcRoot
+class vcTransitionMerge: public vcCPElement
 {
   vector<vcTransition*> _in_transitions;
   vcTransition* _out_transition;
 
 public:
-  vcTransitionMerge(string id);
+  vcTransitionMerge(vcCPElement* prnt, string id);
 
   void Add_In_Transition(vcTransition* p) 
   {
@@ -414,9 +403,10 @@ public:
 
   void Print(ostream& ofile);
   void Print_VHDL(ostream& ofile);
+  virtual void Update_Predecessor_Successor_Links();
 };
 
-class vcPhiSequencer: public vcRoot
+class vcPhiSequencer: public vcCPElement
 {
   vector<vcTransition*> _selects;
   vector<vcTransition*> _reenables;
@@ -426,7 +416,7 @@ class vcPhiSequencer: public vcRoot
   vcTransition* _done;
 
 public:
-  vcPhiSequencer(string id);
+  vcPhiSequencer(vcCPElement* prnt, string id);
   void Add_Select(vcTransition* s) { _selects.push_back(s); }
   void Add_Reenable(vcTransition* s) { _reenables.push_back(s); }
   void Add_Req(vcTransition* s) { _reqs.push_back(s); }
@@ -467,6 +457,8 @@ public:
 
   void Print(ostream& ofile);
   void Print_VHDL(ostream& ofile);
+
+  virtual void Update_Predecessor_Successor_Links();
 };
 
 
@@ -474,12 +466,13 @@ class vcCPSimpleLoopBlock: public vcCPBranchBlock
 {
   map<vcPlace*, vcTransition*> _input_bindings;
   map<vcPlace*, vcTransition*> _output_bindings;
+
+  // loop termination places.
   vcCPElement* _loop_exit;
   vcCPElement* _loop_taken;
   vcCPElement* _loop_body;
   vcCPElement* _loop_back;
-
-  vector<vcPlaceJoin*> _place_joins;
+  vcCPElement* _exit_from_loop;
 
 public:
   vcCPSimpleLoopBlock(vcCPBlock* parent, string id);
@@ -491,11 +484,7 @@ public:
   virtual bool Check_Structure(); // check that the block is well-formed.
   virtual void Update_Predecessor_Successor_Links();
   void Bind(string place_name, string region_name, string transition_name, bool input_binding);
-  void Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back);
-
-  
-
-  void Add_Place_Join(string& pj_id, vector<string>& in_places, string& out_place);
+  void Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back, string exit_from_loop);
 };
 
 
@@ -561,6 +550,9 @@ public:
 
   virtual bool Check_Structure(); // check that the block is well-formed.
   virtual void Update_Predecessor_Successor_Links();
+
+  virtual void Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* m) ;
+
   void Eliminate_Redundant_Dependencies();
 
   void Add_Exported_Input(string internal_id);
@@ -569,7 +561,6 @@ public:
 
   void Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& ack, string& enable, vector<string>& reqs, string& done);
   void Add_Transition_Merge(string& tm_id, vector<string>& in_transition, string& out_transition);
-
 };
 
 
@@ -581,7 +572,8 @@ class vcCPElementGroup: public vcRoot
 
   set<vcCPElementGroup*> _successors;
   set<vcCPElementGroup*> _predecessors;
-
+  set<vcCPElementGroup*> _marked_predecessors;
+  
   bool _has_transition;
   bool _has_place;
   bool _has_input_transition;
@@ -594,6 +586,9 @@ class vcCPElementGroup: public vcRoot
   bool _is_branch;
 
   bool _is_cp_entry;
+
+  bool _is_bound_as_input_to_cp_function;
+  bool _is_bound_as_output_from_cp_function;
 
   vcTransition* _input_transition;
   vector<vcTransition*> _output_transitions;
@@ -613,6 +608,8 @@ public:
     _is_branch = false;
     _input_transition = NULL;
     _is_cp_entry = false;
+    _is_bound_as_input_to_cp_function = false;
+    _is_bound_as_output_from_cp_function = false;
   }
 
   void Set_Group_Index(int64_t idx)
