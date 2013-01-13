@@ -12,6 +12,10 @@ protected:
   vcCPElement* _parent;
   vector<vcCPElement*> _predecessors;
   vector<vcCPElement*> _successors;
+
+  vector<vcCPElement*> _marked_predecessors;
+  vector<vcCPElement*> _marked_successors;
+
   vcCompatibilityLabel* _compatibility_label;
 
 public:
@@ -22,6 +26,12 @@ public:
   void Add_Predecessor(vcCPElement* cpe);
   void Remove_Successor(vcCPElement* cpe);
   void Remove_Predecessor(vcCPElement* cpe);
+
+  void Add_Marked_Successor(vcCPElement* cpe);
+  void Add_Marked_Predecessor(vcCPElement* cpe);
+  void Remove_Marked_Successor(vcCPElement* cpe);
+  void Remove_Marked_Predecessor(vcCPElement* cpe);
+
   virtual bool Is_Pipeline() { return (false); }
   virtual bool Is_Block() { return (false); }
   virtual bool Is_Control_Path() { return (false); }
@@ -317,6 +327,13 @@ public:
   virtual string Get_Predecessor_Exit_Symbol();
   virtual string Get_Successor_Start_Symbol();
 
+  // for a normal block everything is reachable from
+  // entry.  Thus, the number is N + 2 (because exit
+  // and entry are kept separately).
+  virtual int Number_Of_Elements_Reachable_From_Entry()
+  {
+	return(this->Get_Number_Of_Elements() + 2);
+  }
   
 };
 
@@ -561,6 +578,14 @@ public:
 
   void Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& ack, string& enable, vector<string>& reqs, string& done);
   void Add_Transition_Merge(string& tm_id, vector<string>& in_transition, string& out_transition);
+
+  // for a pipelined loop block two of the elements are not reachable from
+  // entry.  Thus, the number is N (because exit
+  // and entry are kept separately, this is N+2-2).
+  virtual int Number_Of_Elements_Reachable_From_Entry()
+  {
+	return(this->Get_Number_Of_Elements());
+  }
 };
 
 
@@ -572,6 +597,7 @@ class vcCPElementGroup: public vcRoot
 
   set<vcCPElementGroup*> _successors;
   set<vcCPElementGroup*> _predecessors;
+  set<vcCPElementGroup*> _marked_successors;
   set<vcCPElementGroup*> _marked_predecessors;
   
   bool _has_transition;
@@ -589,6 +615,9 @@ class vcCPElementGroup: public vcRoot
 
   bool _is_bound_as_input_to_cp_function;
   bool _is_bound_as_output_from_cp_function;
+
+  bool _is_bound_as_input_to_region;
+  bool _is_bound_as_output_from_region;
 
   vcTransition* _input_transition;
   vector<vcTransition*> _output_transitions;
@@ -610,6 +639,8 @@ public:
     _is_cp_entry = false;
     _is_bound_as_input_to_cp_function = false;
     _is_bound_as_output_from_cp_function = false;
+    _is_bound_as_input_to_region = false;
+    _is_bound_as_output_from_region = false;
   }
 
   void Set_Group_Index(int64_t idx)
@@ -627,12 +658,32 @@ public:
     _predecessors.insert(g);
   }
 
+  void Add_Marked_Successor(vcCPElementGroup* g)
+  {
+    _marked_successors.insert(g);
+  }
+
+  void Add_Marked_Predecessor(vcCPElementGroup* g)
+  {
+    _marked_predecessors.insert(g);
+  }
+
   int64_t Get_Group_Index() {return(_group_index);}
   void Add_Element(vcCPElement* cpe);
 
+  void Set_Is_Bound_As_Input_To_CP_Function(bool v) {this->_is_bound_as_input_to_cp_function = v;}
+  bool Get_Is_Bound_As_Input_To_CP_Function() {return(this->_is_bound_as_input_to_cp_function);}
+
+  void Set_Is_Bound_As_Output_From_CP_Function(bool v) {this->_is_bound_as_output_from_cp_function = v;}
+  bool Get_Is_Bound_As_Output_From_CP_Function() {return(this->_is_bound_as_output_from_cp_function);}
+
+  void Set_Is_Bound_As_Input_To_Region(bool v) {this->_is_bound_as_input_to_region = v;}
+  bool Get_Is_Bound_As_Input_To_Region() {return(this->_is_bound_as_input_to_region);}
+
+  void Set_Is_Bound_As_Output_From_Region(bool v) {this->_is_bound_as_output_from_region = v;}
+  bool Get_Is_Bound_As_Output_From_Region() {return(this->_is_bound_as_output_from_region);}
 
   bool Can_Absorb(vcCPElementGroup* g);
-  friend class vcCPElement;
 
   void Print(ostream& ofile);
   void Print_VHDL(ostream& ofile);
@@ -640,6 +691,7 @@ public:
   void Print_DP_To_CP_VHDL_Link(ostream& ofile);
   void Print_CP_To_DP_VHDL_Link(int idx, ostream& ofile);
 
+  friend class vcCPElement;
   friend class vcControlPath;
 };
 
@@ -679,7 +731,7 @@ public:
   void Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole);
 
   void Add_To_Group(vcCPElement* cpe, vcCPElementGroup* group);
-  void Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to);
+  void Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to, bool marked_flag);
   void Print_Groups(ostream& ofile);
 
 

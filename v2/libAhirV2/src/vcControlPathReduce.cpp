@@ -27,7 +27,7 @@ void vcCPElement::Connect_CPElement_Group_Graph(vcControlPath* cp)
       vcCPElementGroup* my_group = cp->Get_Group(this->Get_Entry_Element());
       if(pred_group != NULL && pred_group != my_group)
 	{
-	  cp->Connect_Groups(pred_group,my_group);
+	  cp->Connect_Groups(pred_group,my_group, false);
 	}
     }
   
@@ -35,12 +35,47 @@ void vcCPElement::Connect_CPElement_Group_Graph(vcControlPath* cp)
   // update connections between my group and successor groups
   for(int idx = 0; idx < _successors.size(); idx++)
     {
+	// this will be an issue for the pipelined-loop-body
+	// whose entry is not the successor of those pointing to
+	// it. Sorted out by making the bound transition in
+	// the loop-body as the successor.
       vcCPElement* succ = _successors[idx]->Get_Entry_Element();
+
       vcCPElementGroup* succ_group = cp->Get_Group(succ);
       vcCPElementGroup* my_group = cp->Get_Group(this->Get_Exit_Element());
       if(succ_group != NULL && succ_group != my_group)
 	{
-	  cp->Connect_Groups(my_group,succ_group);
+	  cp->Connect_Groups(my_group,succ_group, false);
+	}
+    }
+
+  // update marked connections between my group and predecessor groups
+  for(int idx = 0; idx < _marked_predecessors.size() ; idx++)
+    {
+      vcCPElement* pred = _marked_predecessors[idx]->Get_Exit_Element();
+      vcCPElementGroup* pred_group = cp->Get_Group(pred);
+      vcCPElementGroup* my_group = cp->Get_Group(this->Get_Entry_Element());
+      if(pred_group != NULL && pred_group != my_group)
+	{
+	  cp->Connect_Groups(pred_group,my_group,true);
+	}
+    }
+  
+  
+  // update marked connections between my group and successor groups
+  for(int idx = 0; idx < _marked_successors.size(); idx++)
+    {
+	// this will be an issue for the pipelined-loop-body
+	// whose entry is not the successor of those pointing to
+	// it. Sorted out by making the bound transition in
+	// the loop-body as the successor.
+      vcCPElement* succ = _marked_successors[idx]->Get_Entry_Element();
+
+      vcCPElementGroup* succ_group = cp->Get_Group(succ);
+      vcCPElementGroup* my_group = cp->Get_Group(this->Get_Exit_Element());
+      if(succ_group != NULL && succ_group != my_group)
+	{
+	  cp->Connect_Groups(my_group,succ_group,true);
 	}
     }
 }
@@ -462,6 +497,8 @@ void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole
   // get part out of the succ. list. of whole
   whole->_successors.erase(part);
 
+  // TODO: move marked connections.
+
   // move part' successors to whole..
   for(set<vcCPElementGroup*>::iterator iter = part->_successors.begin(),
 	fiter = part->_successors.end();
@@ -473,9 +510,11 @@ void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole
 
       // connect whole to iter..
       if(this->_cpelement_groups.find(*iter) != this->_cpelement_groups.end())
-	this->Connect_Groups(whole,(*iter));
+	this->Connect_Groups(whole,(*iter), false);
+
     }
 
+  // TODO: move marked connections.
 
   // move part' elements to whole..
   for(set<vcCPElement*>::iterator el_iter = part->_elements.begin();
@@ -517,10 +556,18 @@ void vcControlPath::Add_To_Group(vcCPElement* cpe, vcCPElementGroup* group)
   _cpelement_to_group_map[cpe] = group;
 }
 
-void vcControlPath::Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to)
+void vcControlPath::Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to, bool marked_flag)
 {
-  from->Add_Successor(to);
-  to->Add_Predecessor(from);
+  if(!marked_flag)
+  {
+  	from->Add_Successor(to);
+  	to->Add_Predecessor(from);
+  }
+  else
+  {
+  	from->Add_Marked_Successor(to);
+  	to->Add_Marked_Predecessor(from);
+  }
 }
 
 void vcControlPath::Print_Groups(ostream& ofile)

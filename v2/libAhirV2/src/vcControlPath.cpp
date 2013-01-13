@@ -314,6 +314,70 @@ void vcCPElement::Remove_Predecessor(vcCPElement* cpe)
     }
 }
 
+void vcCPElement::Add_Marked_Successor(vcCPElement* cpe) 
+{
+  // scan the list and add only if the
+  // successor is not already present.
+  bool add_flag = true;
+  for(int idx = 0, fidx = _marked_successors.size(); idx < fidx; idx++)
+    {
+      if(cpe == this->_marked_successors[idx])
+	{
+	  add_flag = false;
+	  break;
+	}
+    }
+
+  if(add_flag)
+  	this->_marked_successors.push_back(cpe);
+}
+
+void vcCPElement::Remove_Marked_Successor(vcCPElement* cpe) 
+{
+  bool rem_flag = false;
+  for(vector<vcCPElement*>::iterator iter = _marked_successors.begin(), fiter = _marked_successors.end();
+	iter != fiter; iter++)
+    {
+      if(cpe == *iter)
+	{
+	  rem_flag = true;
+  	  this->_marked_successors.erase(iter);
+	  break;
+	}
+    }
+	
+}
+
+void vcCPElement::Add_Marked_Predecessor(vcCPElement* cpe) 
+{ 
+  bool add_flag = true;
+  for(int idx = 0, fidx = _marked_predecessors.size(); idx < fidx; idx++)
+    {
+      if(cpe == this->_marked_predecessors[idx])
+	{
+	  add_flag = false;
+	  break;
+	}
+    }
+  if(add_flag);
+    this->_marked_predecessors.push_back(cpe);
+}
+
+void vcCPElement::Remove_Marked_Predecessor(vcCPElement* cpe) 
+{
+  bool rem_flag = false;
+  for(vector<vcCPElement*>::iterator iter = _marked_predecessors.begin(), fiter = _marked_predecessors.end();
+	iter != fiter; iter++)
+    {
+      if(cpe == *iter)
+	{
+	  rem_flag = true;
+  	  this->_marked_predecessors.erase(iter);
+	  break;
+	}
+    }
+}
+
 void vcCPElement::Get_Hierarchical_Ref(vector<string>& ref_vec)
 {
   if(this->_parent != NULL)
@@ -772,6 +836,11 @@ void vcCPBlock::BFS_Order(bool reverse_flag, vcCPElement* start_element, int& nu
       for(int idx = 0; idx < adj.size(); idx++)
 	{
 	  vcCPElement* w = adj[idx];
+
+          // skip if the adjacency is outside the block.	
+          if(w->Get_Parent() != top->Get_Parent())
+		continue;
+
 	  if((on_queue_set.find(w) == on_queue_set.end()) && (visited_set.find(w) == visited_set.end()))
 	    {// push into queue if not already present in the queue and if not already popped from front..
 	      bfs_queue.push_back(w);
@@ -804,6 +873,11 @@ void vcCPBlock::DFS_Order(bool reverse_flag, vcCPElement* start_element, bool& c
       for(int idx = 0; idx < adj.size(); idx++)
 	{
 	  vcCPElement* w = adj[idx];
+
+          // skip if the adjacency is outside the block.	
+          if(w->Get_Parent() != top->Get_Parent())
+		continue;
+
 	  if(on_queue_set.find(w) != on_queue_set.end())
 	    {
 	      cycle_flag = true;
@@ -1469,8 +1543,8 @@ void vcCPSimpleLoopBlock::Update_Predecessor_Successor_Links()
 	vcPlace* pl = (*biter).first;
         vcTransition* tr = (*biter).second;
 	
-	tr->Get_Parent()->Add_Successor(pl);
-	pl->Add_Predecessor(tr->Get_Parent());
+	tr->Add_Successor(pl);
+	pl->Add_Predecessor(tr);
   }
 
   for(map<vcPlace*,vcTransition*>::iterator biter = _input_bindings.begin();
@@ -1480,8 +1554,8 @@ void vcCPSimpleLoopBlock::Update_Predecessor_Successor_Links()
 	vcPlace* pl = (*biter).first;
         vcTransition* tr = (*biter).second;
 	
-	tr->Get_Parent()->Add_Predecessor(pl);
-	pl->Add_Successor(tr->Get_Parent());
+	tr->Add_Predecessor(pl);
+	pl->Add_Successor(tr);
   }
   
 }
@@ -1743,7 +1817,7 @@ bool vcCPForkBlock::Check_Structure()
 
       set<vcCPElement*> visited_set;
       this->DFS_Order(false, this->_entry, cycle_flag, num_visited, reachable_elements,visited_set);
-      if(num_visited != (this->_elements.size() + 2))
+      if(num_visited != (this->Number_Of_Elements_Reachable_From_Entry()))
 	{
 	  ret_flag = false;
 	  vcSystem::Error("all elements not reachable from entry in fork region " + this->Get_Hierarchical_Id());
@@ -1960,19 +2034,26 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
 
       if(!is_bound_as_input)
 	{
-	  if(_elements[idx]->Get_Predecessors().size() == 0)
-	    unforked_elements.push_back(_elements[idx]);
+	  if(ele->Get_Predecessors().size() == 0)
+	    unforked_elements.push_back(ele);
 	}
 
+      
+      // all elements if not joined to something inside the block, are joined to exit.
       bool is_bound_as_output = false;
       if(ele->Is_Transition() && ((vcTransition*)ele)->Get_Is_Bound_As_Output_From_Region())
 	is_bound_as_output = true;
-      
+
       if(!is_bound_as_output)
-	{
-	  if(_elements[idx]->Get_Successors().size() == 0)
-	    unjoined_elements.push_back(_elements[idx]);	
-	}
+      {
+      	if(ele->Get_Successors().size() == 0)
+		 unjoined_elements.push_back(ele);	
+      }
+      else
+      {
+      	if(ele->Get_Successors().size() == 1)
+		 unjoined_elements.push_back(ele);	
+      }
     }
 
 
@@ -2044,6 +2125,9 @@ void vcCPPipelinedLoopBody::Add_Marked_Join_Point(vcTransition* jp, vcCPElement*
      (this->_marked_join_map[jp].find(jre) == this->_marked_join_map[jp].end()))
     {
       this->_marked_join_map[((vcTransition*)jp)].insert(jre);
+ 
+      jp->Add_Marked_Predecessor(jre);
+      jre->Add_Marked_Successor(jp);
     }
 }
 
@@ -2176,16 +2260,105 @@ void vcCPPipelinedLoopBody::Print_VHDL(ostream& ofile)
 void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& ack,
 					      string& enable, vector<string>& reqs, string& done)
 {
-  // TODO
-  assert(0);
+	string phi_id = "phi_seq_" + IntToStr(_phi_sequencers.size());
+
+	if(selects.size() != reqs.size())
+	{
+		vcSystem::Error("In Phi-sequencer " + phi_id +  ", reqs and selects do not have the same size.");
+		return;
+	}
+
+
+	vcPhiSequencer* new_phi_seq = new vcPhiSequencer(this, phi_id);
+
+	// add selects.
+	for(int idx = 0, fidx = selects.size(); idx < fidx; idx++)
+	{
+		vcCPElement* ste = this->Find_CPElement(selects[idx]);
+		if((ste == NULL) || (!ste->Is_Transition()))
+		{
+			vcSystem::Error("Select " + selects[idx] + " transition not found in " + this->Get_Id());
+			delete new_phi_seq;
+			return;
+		}
+		new_phi_seq->Add_Select((vcTransition*) ste);
+
+		vcCPElement* rte = this->Find_CPElement(reqs[idx]);
+		if((rte == NULL) || (!rte->Is_Transition()))
+		{
+			vcSystem::Error("Req " + reqs[idx] + " transition not found in " + this->Get_Id());
+			delete new_phi_seq;
+			return;
+		}
+		new_phi_seq->Add_Req((vcTransition*) rte);
+		
+	}
+
+	// add reenables.
+	for(int idx = 0, fidx = reenables.size(); idx < fidx; idx++)
+	{
+		vcCPElement* rte = this->Find_CPElement(reenables[idx]);
+		if((rte == NULL) || (!rte->Is_Transition()))
+		{
+			vcSystem::Error("Reenable " + reenables[idx] + " transition not found in " + this->Get_Id());
+			delete new_phi_seq;
+			return;
+		}
+		new_phi_seq->Add_Reenable((vcTransition*) rte);
+	}
+
+	// set ack.
+	vcCPElement* ate = this->Find_CPElement(ack);
+	if((ate == NULL) || (!ate->Is_Transition()))
+	{
+		vcSystem::Error("Ack " + ack + " transition not found in " + this->Get_Id());
+		delete new_phi_seq;
+		return;
+	}
+	new_phi_seq->Set_Ack((vcTransition*) ate);
+
+	// set done.
+	vcCPElement* dte = this->Find_CPElement(done);
+	if((dte == NULL) || (!dte->Is_Transition()))
+	{
+		vcSystem::Error("Done " + done + " transition not found in " + this->Get_Id());
+		delete new_phi_seq;
+		return;
+	}
+	new_phi_seq->Set_Done((vcTransition*) dte);
+
+
+	_phi_sequencers.push_back(new_phi_seq);
 }
 
 
 
-void vcCPPipelinedLoopBody::Add_Transition_Merge(string& tm_id, vector<string>& in_places, string& out_place)
+void vcCPPipelinedLoopBody::Add_Transition_Merge(string& tm_id, vector<string>& in_transitions, string& out_transition)
 {
-  // TODO
-  assert(0);
+	
+	vcTransitionMerge* new_tm = new vcTransitionMerge(this, tm_id);
+	for(int idx = 0, fidx = in_transitions.size(); idx < fidx; idx++)
+	{
+		vcCPElement* rte = this->Find_CPElement(in_transitions[idx]);
+		if((rte == NULL) || (!rte->Is_Transition()))
+		{
+			vcSystem::Error("TMerge In-transition " + in_transitions[idx] + " transition not found in " + this->Get_Id());
+			delete new_tm;
+			return;
+		}
+		new_tm->Add_In_Transition((vcTransition*) rte);
+	}
+		
+	vcCPElement* ote = this->Find_CPElement(out_transition);
+	if((ote == NULL) || (!ote->Is_Transition()))
+	{
+		vcSystem::Error("TMerge Out-transition " + out_transition + " transition not found in " + this->Get_Id());
+		delete new_tm;
+		return;
+	}
+	new_tm->Set_Out_Transition((vcTransition*) ote);
+
+	_transition_merges.push_back(new_tm);
 }
 
 void vcCPPipelinedLoopBody::Add_Exported_Input(string internal_id)
@@ -2224,9 +2397,7 @@ void vcCPPipelinedLoopBody::Add_Export(string internal_id, bool input_flag)
 
 bool vcCPPipelinedLoopBody::Check_Structure()
 {
-  // TODO: check that there is no cycle present in 
-  // the fork-join structure.
-  assert(0);
+  this->vcCPForkBlock::Check_Structure();
 }
 
 void vcCPPipelinedLoopBody::Update_Predecessor_Successor_Links()
