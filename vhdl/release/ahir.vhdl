@@ -1818,6 +1818,7 @@ package BaseComponents is
   end component;
 
   component join is
+     generic(place_capacity : integer := 1);
      port (preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -1832,6 +1833,7 @@ package BaseComponents is
   end component;
 
   component join_with_input is
+     generic(place_capacity : integer := 1);
      port (preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
@@ -1862,11 +1864,34 @@ package BaseComponents is
   
 
   component marked_join is
+     generic(place_capacity : integer := 1);
      port (preds      : in   BooleanArray;
            marked_preds      : in   BooleanArray;
            symbol_out : out  boolean;
            clk: in std_logic;
            reset: in std_logic);
+  end component;
+
+  component marked_join_with_input is
+     generic(place_capacity : integer := 1);
+     port (preds      : in   BooleanArray;
+           marked_preds      : in   BooleanArray;
+           symbol_in : in boolean;
+           symbol_out : out  boolean;
+           clk: in std_logic;
+           reset: in std_logic);
+  end component;
+
+  component phi_sequencer
+    generic (nreqs : integer; nreenables : integer);
+    port (
+      selects : in BooleanArray(0 to nreqs-1); -- one out of nreqs..
+      reqs : out BooleanArray(0 to nreqs-1); -- one out of nreqs
+      ack  : in Boolean;
+      enable  : in Boolean; 
+      reenables: in BooleanArray(0 to nreenables-1);   -- all need to arrive to reenable
+      done : out Boolean;
+      clk, reset: in std_logic);
   end component;
 
   component phi_sequencer 
@@ -1878,6 +1903,11 @@ package BaseComponents is
     reenable_place: in BooleanArray(0 to nreenables-1);  
     exit_place : out Boolean;
     clk, reset: in std_logic);
+  end component;
+
+  component transition_merge 
+      port (preds      : in   BooleanArray;
+          symbol_out : out  boolean);
   end component;
   
   -----------------------------------------------------------------------------
@@ -8472,6 +8502,7 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity join is
+  generic (place_capacity : integer := 1);
   port ( preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -8491,7 +8522,7 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => 1, marking => 0)
+	pI: place generic map(capacity => place_capacity, marking => 0)
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;
@@ -8509,6 +8540,7 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity join_with_input is
+  generic (place_capacity : integer := 1);
   port ( preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
@@ -8528,7 +8560,7 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => 1, marking => 0)
+	pI: place generic map(capacity => place_capacity, marking => 0)
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;
@@ -8773,6 +8805,7 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity marked_join is
+  generic(place_capacity : integer := 1);
   port ( preds      : in   BooleanArray;
          marked_preds : in BooleanArray;
     	symbol_out : out  boolean;
@@ -8797,7 +8830,7 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => 1, marking => 0)
+	pI: place generic map(capacity => place_capacity, marking => 0)
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;
@@ -8815,6 +8848,62 @@ begin  -- default_arch
   
   -- The transition is enabled only when all preds are true.
   symbol_out_sig(0) <= AndReduce(place_sigs) and AndReduce(mplace_sigs);
+  symbol_out <= symbol_out_sig(0);
+
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
+library ahir;
+use ahir.Types.all;
+use ahir.subprograms.all;
+use ahir.BaseComponents.all;
+
+entity marked_join_with_input is
+  generic (place_capacity : integer := 1);
+  port ( preds      : in   BooleanArray;
+         marked_preds : in BooleanArray;
+    	symbol_in : in  boolean;
+    	symbol_out : out  boolean;
+	clk: in std_logic;
+	reset: in std_logic);
+end marked_join_with_input;
+
+architecture default_arch of marked_join_with_input is
+  signal symbol_out_sig : BooleanArray(0 downto 0);
+  signal place_sigs: BooleanArray(preds'range);
+  signal mplace_sigs: BooleanArray(marked_preds'range);  
+  constant H: integer := preds'high;
+  constant L: integer := preds'low;
+
+  constant MH: integer := marked_preds'high;
+  constant ML: integer := marked_preds'low;  
+
+begin  -- default_arch
+  
+  placegen: for I in H downto L generate
+    placeBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+    begin
+	place_pred(0) <= preds(I);
+	pI: place generic map(capacity => place_capacity, marking => 0)
+		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+    end block;
+  end generate placegen;
+
+  -- the marked places
+  mplacegen: for I in MH downto ML generate
+    mplaceBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+    begin
+	place_pred(0) <= marked_preds(I);
+	mpI: place generic map(capacity => 1, marking => 1)
+		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
+    end block;
+  end generate mplacegen;
+  
+  -- The transition is enabled only when all preds are true and transition
+  -- is reenabled.
+  symbol_out_sig(0) <= symbol_in and AndReduce(place_sigs) and AndReduce(mplace_sigs);
   symbol_out <= symbol_out_sig(0);
 
 end default_arch;
@@ -8851,7 +8940,8 @@ entity phi_sequencer  is
   port (
   selects : in BooleanArray(0 to nreqs-1); -- one out of nreqs..
   reqs : out BooleanArray(0 to nreqs-1); -- one out of nreqs
-  ack  : in Boolean; 
+  ack  : in Boolean;
+  enable  : in Boolean; 
   reenables: in BooleanArray(0 to nreenables-1);   -- all need to arrive to reenable
   done : out Boolean;
   clk, reset: in std_logic);
@@ -8865,8 +8955,19 @@ architecture Behave of phi_sequencer is
   signal select_token, select_clear : BooleanArray(0 to nreqs-1);
   signal reenable_token, reenable_clear : BooleanArray(0 to nreenables-1);
 
-  signal enabled, ack_token, ack_clear, req_fired: Boolean;
+  signal enabled, ack_token, ack_clear, req_being_fired, enable_token, enable_clear: Boolean;
 begin  -- Behave
+
+  -- instantiate unmarked place for the enable.
+  enable_block: block
+      signal place_pred: BooleanArray(0 downto 0);    
+      signal place_succ: BooleanArray(0 downto 0);    
+  begin
+      place_pred(0) <= enable;
+      place_succ(0) <= enable_clear;
+      penable: place generic map(capacity => 1, marking => 1)
+        port map(place_pred,place_succ,enable_token,clk,reset);    
+  end block;
 
   -- instantiate unmarked places for the in_places.
   InPlaces: for I in 0 to nreqs-1 generate
@@ -8895,21 +8996,24 @@ begin  -- Behave
     
  
   -- sequencer is enabled by this sig.
-  enabled <= AndReduce(reenable_token) and ack_token;
+  enabled <= AndReduce(reenable_token) and enable_token and ack_token;
 
-  -- a marker to indicate that a req has been fired.
-  req_fired <= OrReduce(select_token) and enabled;
+  -- a marker to indicate that a req is being fired.
+  req_being_fired <= OrReduce(select_token) and enabled;
 
-  -- outgoing reqs, etc.
+  -- outgoing reqs can fire only when the sequencer is enabled.
   reqs <= select_token when enabled else (others => false);
-  select_clear <= select_token when enabled else (others => false);
-  reenable_clear <= (others => true) when (enabled and req_fired)
-                          else (others => false);
+
+  -- clear the selects and reenables when the req is being fired.
+  select_clear <= select_token when req_being_fired else (others => false);
+  reenable_clear <= (others => true) when req_being_fired else (others => false);
+
+  -- the enable is to be cleared when the req fires.
+  enable_clear <= req_being_fired;
 
   -- ack should be received to reenable the sequencer.
   -- this place is initially marked (it is internal
   -- to the sequencer).
-  ack_clear <= req_fired;
   ack_block: block
       signal place_pred: BooleanArray(0 downto 0);    
       signal place_succ: BooleanArray(0 downto 0);    
@@ -8919,7 +9023,10 @@ begin  -- Behave
       pack: place generic map(capacity => 1, marking => 1)
         port map(place_pred,place_succ,ack_token,clk,reset);    
   end block;
-  
+
+  -- clear the ack place when req is fired.
+  ack_clear <= req_being_fired;
+
   -- outgoing exit.. is the incoming ack..
   done <= ack;
 
@@ -9022,6 +9129,25 @@ begin  -- default_arch
   end process latch_token;
 
   token <= true when (token_latch > 0) else false;
+
+end default_arch;
+library ahir;
+use ahir.Types.all;
+use ahir.subprograms.all;
+
+-- a short-hand model to implement a merge
+-- from transitions to transitions.entity
+entity transition_merge is
+  port (
+    preds      : in   BooleanArray;
+    symbol_out : out  boolean);
+end transition_merge;
+
+architecture default_arch of transition_merge is
+begin  -- default_arch
+
+  -- The transition fires when any of its preds is true.
+  symbol_out <= OrReduce(preds);
 
 end default_arch;
 library ahir;

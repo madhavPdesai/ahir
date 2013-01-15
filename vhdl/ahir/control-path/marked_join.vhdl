@@ -6,6 +6,7 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity marked_join is
+  generic(place_capacity : integer := 1);
   port ( preds      : in   BooleanArray;
          marked_preds : in BooleanArray;
     	symbol_out : out  boolean;
@@ -30,7 +31,7 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => 1, marking => 0)
+	pI: place generic map(capacity => place_capacity, marking => 0)
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;

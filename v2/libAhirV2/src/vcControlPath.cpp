@@ -520,6 +520,10 @@ void vcTransition::Print_VHDL(ostream& ofile)
   //  join.
   //
   bool parent_is_pipelined_loop_body = (this->Get_Parent()->Is("vcCPPipelinedLoopBody"));
+  int max_iterations_in_flight = 1;
+  if(parent_is_pipelined_loop_body)
+	max_iterations_in_flight = ((vcCPPipelinedLoopBody*)this->Get_Parent())->Get_Max_Iterations_In_Flight();
+
 
   if(parent_is_pipelined_loop_body || (this->Get_Number_Of_Predecessors() > 1))
     {
@@ -561,6 +565,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
           if(marked_join_flag)
 		comp_id = "marked_join_with_input";
 	  ofile << this->Get_VHDL_Id() << "_join: " << comp_id << "  -- {" << endl
+		<< "generic map(place_capacity => " << max_iterations_in_flight << ")" << endl
 		<< "port map( -- {"
 		<< "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl;
           if(marked_join_flag)
@@ -576,6 +581,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
           if(marked_join_flag)
 		comp_id = "marked_join";
 	  ofile << this->Get_VHDL_Id() << "_join:" << comp_id << " -- {" << endl
+		<< "generic map(place_capacity => " << max_iterations_in_flight << ")" << endl
 		<< "port map( -- {"
 		<< "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl;
           if(marked_join_flag)
@@ -1674,11 +1680,22 @@ void vcCPSimpleLoopBlock::Update_Predecessor_Successor_Links()
 
   // for the terminator.
   _loop_exit->Add_Successor(_loop_back);
+  _loop_back->Add_Predecessor(_loop_back);
+
   _loop_exit->Add_Successor(_exit_from_loop);
+  _exit_from_loop->Add_Predecessor(_loop_exit);
+  
   _loop_taken->Add_Successor(_loop_back);
+  _loop_back->Add_Predecessor(_loop_taken);
+
   _loop_taken->Add_Successor(_exit_from_loop);
+  _exit_from_loop->Add_Predecessor(_loop_taken);
+
   _loop_body->Add_Successor(_loop_back);
+  _loop_back->Add_Predecessor(_loop_taken);
+
   _loop_body->Add_Successor(_exit_from_loop);
+  _exit_from_loop->Add_Predecessor(_loop_body);
 
   // for the bindings.
   for(map<vcPlace*,vcTransition*>::iterator biter = _output_bindings.begin();
@@ -2238,6 +2255,11 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
 
 vcCPPipelinedLoopBody::vcCPPipelinedLoopBody(vcCPBlock* parent, string id):vcCPForkBlock(parent,id)
 {
+	// for now, keep it at four.  This corresponds to the
+	// standard processing pipeline: fetch execute (two stages) write.
+	// This could be stretched if the number of execute stages is
+	// larger etc.. Aa2VC should figure it out.
+	_max_iterations_in_flight = 4;
 }
 
 void vcCPPipelinedLoopBody::Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec)

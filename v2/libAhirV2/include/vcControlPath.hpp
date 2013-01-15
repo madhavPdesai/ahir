@@ -504,6 +504,7 @@ class vcCPSimpleLoopBlock: public vcCPBranchBlock
   vcCPElement* _loop_back;
   vcCPElement* _exit_from_loop;
 
+
 public:
   vcCPSimpleLoopBlock(vcCPBlock* parent, string id);
   virtual string Kind() {return("vcCPSimpleLoopBlock");}
@@ -522,7 +523,10 @@ public:
   virtual void Update_Predecessor_Successor_Links();
   void Bind(string place_name, string region_name, string transition_name, bool input_binding);
   void Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back, string exit_from_loop);
+
+
 };
+
 
 
 class vcCPForkBlock: public vcCPParallelBlock
@@ -574,6 +578,7 @@ class vcCPPipelinedLoopBody: public vcCPForkBlock
   vector<vcPhiSequencer*> _phi_sequencers;
   vector<vcTransitionMerge*> _transition_merges;
 
+  int _max_iterations_in_flight;
 public:
 
   virtual string Kind() {return("vcCPPipelinedLoopBody");}
@@ -609,9 +614,12 @@ public:
   {
 	return(this->Get_Number_Of_Elements());
   }
+  void Set_Max_Iterations_In_Flight(int N) {_max_iterations_in_flight = N;}
+  int Get_Max_Iterations_In_Flight() {return(_max_iterations_in_flight);}
 };
 
 
+class vcCPPipelinedLoopBody;
 class vcControlPath;
 class vcCPElementGroup: public vcRoot
 {
@@ -645,6 +653,10 @@ class vcCPElementGroup: public vcRoot
   vcTransition* _input_transition;
   vector<vcTransition*> _output_transitions;
 
+  // if this field is not null, then all
+  // elements in the group must belong to
+  // the same pipelined loop body.
+  vcCPPipelinedLoopBody* _pipeline_parent;
 public:
   vcCPElementGroup():vcRoot()
   {
@@ -664,6 +676,7 @@ public:
     _is_bound_as_output_from_cp_function = false;
     _is_bound_as_input_to_region = false;
     _is_bound_as_output_from_region = false;
+    _pipeline_parent = NULL;
   }
 
   void Set_Group_Index(int64_t idx)
