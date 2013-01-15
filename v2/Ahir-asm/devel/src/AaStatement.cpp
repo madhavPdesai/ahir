@@ -4269,17 +4269,20 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
   ofile << ";; [loop_exit] { $T [ack] } " << endl;
   ofile << ";; [loop_taken] { $T [ack] } " << endl;
 
+
+  //    merges.
+  ofile << entry_place_name << " <-| ($entry loop_back)" << endl;
+  ofile << "loop_body_done <-| ( " << vc_loop_body_id << " ) " << endl;
+
+  // branches.
+  ofile << "condition_done |-> (loop_exit loop_taken)" << endl;
+  ofile << entry_place_name << " |-> ( " << vc_loop_body_id<< " ) " << endl;
+
   //    the binding of the condition_done to the test expression completion.
   ofile << "$bind condition_done <= " << vc_loop_body_id << " : " << this->_test_expression->Get_VC_Completed_Transition_Name() << endl;
 
-  //    links.
-  ofile << "condition_done |-> (loop_exit loop_taken)" << endl;
-  ofile << entry_place_name << " <-| ($entry loop_back)" << endl;
-  ofile << entry_place_name << " |-> ( " << vc_loop_body_id<< " ) " << endl;
-  ofile << "loop_body_done <-| ( " << vc_loop_body_id << " ) " << endl;
-
   // the binding of the loop-entry contol places to the loop body.
-  ofile << "$bind " << entry_place_name << "  => " << vc_loop_body_id << " : first_through_loop_body " << endl; 
+  ofile << "$bind " << entry_place_name << "  => " << vc_loop_body_id << " : first_time_through_loop_body " << endl; 
   ofile << "$bind loop_back  => " << vc_loop_body_id << " : back_edge_to_loop_body " << endl; 
 
   //    the terminator!
@@ -4376,14 +4379,11 @@ void AaDoWhileStatement::Write_VC_Links(bool optimize_flag, string hier_id,ostre
   string loop_body_seq_hier_id = Augment_Hier_Id(this_hier_id,loop_body_id);
 
   // in the PHI statements in the do-while.
-  for(int idx, fidx = this->_merge_statement->Get_Statement_Count(); idx < fidx; idx++)
+  for(int idx=0, fidx = this->_merge_statement->Get_Statement_Count(); idx < fidx; idx++)
     {
       AaStatement* cphi = this->_merge_statement->Get_Statement(idx);
       cphi->Write_VC_Links_Optimized(loop_body_seq_hier_id, ofile);
     }
-
-  // in the PHI statements.
-  this->_merge_statement->Write_VC_Links_Optimized(loop_body_seq_hier_id, ofile);
 
   // in the loop body
   _loop_body_sequence->Write_VC_Links_Optimized(loop_body_seq_hier_id, ofile);

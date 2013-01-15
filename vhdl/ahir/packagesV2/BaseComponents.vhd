@@ -119,6 +119,15 @@ package BaseComponents is
            reset: in std_logic);
   end component;
 
+  component marked_join_with_input is
+     port (preds      : in   BooleanArray;
+           marked_preds      : in   BooleanArray;
+           symbol_in : in boolean;
+           symbol_out : out  boolean;
+           clk: in std_logic;
+           reset: in std_logic);
+  end component;
+
   component phi_sequencer
     generic (nreqs : integer; nreenables : integer);
     port (

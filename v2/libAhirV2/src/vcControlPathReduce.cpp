@@ -107,11 +107,20 @@ void vcCPBlock::Connect_CPElement_Group_Graph(vcControlPath* cp)
 }
 
 
+// Can this absorb g (g is a successor of this)?
 bool vcCPElementGroup::Can_Absorb(vcCPElementGroup* g)
 {
   bool ret_val = true;
 
-  if(g->_has_input_transition)
+  if(this->_is_bound_as_input_to_cp_function)
+    ret_val = false;
+  else if(this->_is_bound_as_output_from_region)
+    ret_val = false;
+  else if(this->_is_bound_as_output_from_region)
+    ret_val = false;
+  else if(g->_has_input_transition)
+    ret_val = false;
+  else if(g->_marked_predecessors.size() > 0)
     ret_val = false;
   else
     {
@@ -166,10 +175,23 @@ void vcCPElementGroup::Add_Element(vcCPElement* cpe)
       this->_has_output_transition |= ((vcTransition*)cpe)->Get_Is_Output();
       this->_has_dead_transition   |= ((vcTransition*)cpe)->Get_Is_Dead();
 
-      if(cpe->Get_Number_Of_Predecessors() > 1)
+     
+      if((cpe->Get_Number_Of_Predecessors() > 1) || (cpe->Get_Number_Of_Marked_Predecessors() > 0))
 	this->_is_join = true;
-      if(cpe->Get_Number_Of_Successors() > 1)
+      if((cpe->Get_Number_Of_Successors() > 1) || (cpe->Get_Number_Of_Marked_Successors() > 0))
 	this->_is_fork = true;
+
+      vcTransition* tr = (vcTransition*) cpe;
+
+      if(tr->Get_Is_Bound_As_Input_To_CP_Function())
+	this->Set_Is_Bound_As_Input_To_CP_Function(true);
+      if(tr->Get_Is_Bound_As_Output_From_CP_Function())
+	this->Set_Is_Bound_As_Output_From_CP_Function(true);
+      if(tr->Get_Is_Bound_As_Input_To_Region())
+	this->Set_Is_Bound_As_Input_To_Region(true);
+      if(tr->Get_Is_Bound_As_Output_From_Region())
+	this->Set_Is_Bound_As_Output_From_Region(true);
+
     }
   else if(cpe->Is_Place())
     {
@@ -217,6 +239,19 @@ void vcCPElementGroup::Print(ostream& ofile)
     }
   ofile << endl;
 
+  if(_marked_predecessors.size() > 0)
+  {
+     ofile << "marked predecessors ";
+     for(set<vcCPElementGroup*>::iterator iter = _marked_predecessors.begin(), fiter = _marked_predecessors.end();
+         iter != fiter;
+         iter++)
+       {
+   
+         ofile << (*iter)->Get_Group_Index() << " ";
+       }
+     ofile << endl;
+  }
+
   ofile << "successors ";
   for(set<vcCPElementGroup*>::iterator iter = _successors.begin(), fiter = _successors.end();
       iter != fiter;
@@ -232,6 +267,24 @@ void vcCPElementGroup::Print(ostream& ofile)
     }
   ofile << endl;
 
+  if(_marked_successors.size() > 0)
+  {
+    ofile << "marked successors ";
+    for(set<vcCPElementGroup*>::iterator iter = _marked_successors.begin(), fiter = _marked_successors.end();
+        iter != fiter;
+        iter++)
+      {
+        if((*iter)->Get_Group_Index() < 0)
+	  {
+	    cerr << endl;
+	    cerr << "Error: group " << this->Get_Root_Index() << " has dangling marked successor " <<
+	      (*iter)->Get_Root_Index() << endl;
+	  }
+        ofile << (*iter)->Get_Group_Index() << " ";
+      }
+    ofile << endl;
+  }
+
 
   ofile << " members (" << _elements.size() << ") {" << endl;
   for(set<vcCPElement*>::iterator iter = _elements.begin(), fiter = _elements.end();
@@ -243,15 +296,20 @@ void vcCPElementGroup::Print(ostream& ofile)
   ofile << "}" << endl;
 }
 
+// TODO: take care of marked predecessors!
 void vcCPElementGroup::Print_VHDL(ostream& ofile)
 {
 
   // if it has a dead transition, tie it to false.
   if(this->_has_dead_transition)
     {
-      ofile << "cp_elements(" << this->Get_Group_Index() << ") <= false;" << endl;
+      ofile << this->Get_VHDL_Id() << " <= false;" << endl;
       return;
     }
+
+  // if it is bound to an output of a cp function, dont print anything.
+  if(this->_is_bound_as_output_from_cp_function)
+	return;
 
 
   if(!(this->_is_join || this->_is_fork))
@@ -264,7 +322,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 	{
 	  if(_predecessors.size() > 1)
 	    {
-	      ofile << "cp_elements(" << this->Get_Group_Index() << ") <= OrReduce(";	      // write the symbol as an OR of all incoming symbols.
+	      ofile << this->Get_VHDL_Id() << " <= OrReduce(";	      // write the symbol as an OR of all incoming symbols.
 
 	      bool first_one = true;
 	      for(set<vcCPElementGroup*>::iterator iter = this->_predecessors.begin(),
@@ -279,27 +337,32 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 		  else
 		    first_one = false;
 		  
-		  ofile << "cp_elements(" << (*iter)->Get_Group_Index() << ")";
+		  ofile << (*iter)->Get_VHDL_Id(); 
 		}
 	      ofile << ");" << endl;
 	    }
 	  else if(_predecessors.size() == 1)
 	    {
-	      ofile << "cp_elements(" << this->Get_Group_Index() << ") <= ";	      
-	      ofile << "cp_elements(" << (*(_predecessors.begin()))->Get_Group_Index() << ");" << endl;
+	      ofile << this->Get_VHDL_Id() << " <= ";	      
+	      ofile << (*(_predecessors.begin()))->Get_VHDL_Id() << ";" << endl;
 	    }
 	  else if(_predecessors.size() == 0)
 	    {
 	      if(!this->_is_cp_entry)
 		{
 		  vcSystem::Warning("CP element " + Int64ToStr(this->Get_Group_Index()) + " has no predecessors.. tie to false");
-		  ofile << "cp_elements(" << this->Get_Group_Index() << ") <= false; " << endl;	      		  
+		  ofile << this->Get_VHDL_Id() << " <= false; " << endl;	      		  
 		}
 	    }
 	}
     }
   else
     {
+      // TODO: here, if there is a marked predecessor, force a join.
+      // TODO: all elements in the group are either part of a pipeline or not.
+      //       if they are part of a pipelined loop body, then all joins must have internal
+      //       places with a certain capacity... either forced from a global parameter
+      //       or etc. etc.
       // instantiate join element.
       if(_predecessors.size() > 1)
 	{
@@ -322,7 +385,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 	      else
 		first_one = false;
 	      
-	      ofile << "cp_elements(" << (*iter)->Get_Group_Index() << ")";
+	      ofile << (*iter)->Get_VHDL_Id();
 	      
 	    }
 	  ofile << ");" << endl;
@@ -336,7 +399,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 		    << "port map( -- {"
 		    << "preds => predecessors," << endl
 		    << "symbol_in => " << this->_input_transition->Get_DP_To_CP_Symbol() << "," << endl
-		    << "symbol_out => cp_elements(" << this->Get_Group_Index() << ")," << endl
+		    << "symbol_out => " << this->Get_VHDL_Id() << "," << endl
 		    << "clk => clk," << endl
 		    << "reset => reset); -- }}" << endl;
 	    }
@@ -346,7 +409,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 		    << "generic map ( bypass => " << bypass_str << ")" << endl
 		    << "port map( -- {"
 		    << "preds => predecessors," << endl
-		    << "symbol_out => cp_elements(" << this->Get_Group_Index() << ")," << endl
+		    << "symbol_out => " << this->Get_VHDL_Id() << "," << endl
 		    << "clk => clk," << endl
 		    << "reset => reset); -- }}" << endl;
 	    }
@@ -357,13 +420,13 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 	{
 	  if(this->_has_input_transition)
 	    {
-	      ofile << "cp_elements(" << this->Get_Group_Index() << ") <= ";
+	      ofile << this->Get_VHDL_Id() << " <= ";
 	      ofile <<  _input_transition->Get_DP_To_CP_Symbol() << ";" << endl;
 	    }
 	  else
 	    {
-	      ofile << "cp_elements(" << this->Get_Group_Index() << ") <= ";	      
-	      ofile << "cp_elements(" << (*(_predecessors.begin()))->Get_Group_Index() << ");" << endl;
+	      ofile << this->Get_VHDL_Id() << " <= ";	      
+	      ofile << (*(_predecessors.begin()))->Get_VHDL_Id() << ";" << endl;
 	    }
 	}
     }
@@ -378,7 +441,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 
 void vcCPElementGroup::Print_DP_To_CP_VHDL_Link(ostream& ofile)
 {
-  string ack_str =  "cp_elements(" + IntToStr(this->Get_Group_Index()) + ")";
+  string ack_str =  this->Get_VHDL_Id(); 
   string req_str = this->_input_transition->Get_DP_To_CP_Symbol();
 
   string delay_str = "0";
@@ -390,7 +453,7 @@ void vcCPElementGroup::Print_DP_To_CP_VHDL_Link(ostream& ofile)
 
 void vcCPElementGroup::Print_CP_To_DP_VHDL_Link(int idx, ostream& ofile)
 {
-  string req_str =  "cp_elements(" + IntToStr(this->Get_Group_Index()) + ")";
+  string req_str =  this->Get_VHDL_Id(); 
   string ack_str = this->_output_transitions[idx]->Get_CP_To_DP_Symbol();
 
   string delay_str = "0";
@@ -497,7 +560,8 @@ void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole
   // get part out of the succ. list. of whole
   whole->_successors.erase(part);
 
-  // TODO: move marked connections.
+  // the same as above, but from marked successors of whole.
+  whole->_marked_successors.erase(part);
 
   // move part' successors to whole..
   for(set<vcCPElementGroup*>::iterator iter = part->_successors.begin(),
@@ -514,7 +578,35 @@ void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole
 
     }
 
-  // TODO: move marked connections.
+  // move marked successors of part to whole.
+  for(set<vcCPElementGroup*>::iterator iter = part->_marked_successors.begin(),
+	fiter = part->_marked_successors.end();
+      iter != fiter;
+      iter++)
+    {
+      // remove part as a marked predecessor of iter..
+      (*iter)->_marked_predecessors.erase(part);
+
+      // connect whole to iter..
+      if(this->_cpelement_groups.find(*iter) != this->_cpelement_groups.end())
+	this->Connect_Groups(whole,(*iter), true);
+
+    }
+
+  // move marked predecessors of part to whole.
+  for(set<vcCPElementGroup*>::iterator iter = part->_marked_predecessors.begin(),
+	fiter = part->_marked_predecessors.end();
+      iter != fiter;
+      iter++)
+    {
+      // remove part as a marked successor of iter..
+      (*iter)->_marked_successors.erase(part);
+
+      // connect iter to whole..
+      if(this->_cpelement_groups.find(*iter) != this->_cpelement_groups.end())
+	this->Connect_Groups((*iter), whole, true);
+    }
+
 
   // move part' elements to whole..
   for(set<vcCPElement*>::iterator el_iter = part->_elements.begin();
@@ -593,19 +685,21 @@ void vcControlPath::Print_VHDL_Optimized(ostream& ofile)
 	<< " downto 0);" << endl;
   ofile << "-- }" << endl << "begin -- {" << endl;
 
-  _cpelement_to_group_map[this->_entry]->_is_cp_entry = true;
+  vcCPElementGroup* entry_grp = _cpelement_to_group_map[this->_entry];
+  assert(entry_grp);
+  entry_grp->_is_cp_entry = true;
 
-  ofile << "cp_elements(" 
-	<< _cpelement_to_group_map[this->_entry]->Get_Group_Index()
-	<< ") <= start_req_symbol;" << endl;
-  ofile << "start_ack_symbol <= cp_elements(" 
-	<< _cpelement_to_group_map[this->_exit]->Get_Group_Index()
-	<< ");" << endl;
+  ofile << entry_grp->Get_VHDL_Id() 
+	<< " <= start_req_symbol;" << endl;
+
+  vcCPElementGroup* exit_grp = _cpelement_to_group_map[this->_exit];
+  assert(exit_grp);
+
+  ofile << "start_ack_symbol <= " << exit_grp->Get_VHDL_Id() << ";" << endl;
 
   ofile << "finAckJoin: join2 " << endl
-	<< " port map(pred0 => fin_req_symbol, pred1 => cp_elements("
-	<< _cpelement_to_group_map[this->_exit]->Get_Group_Index()
-	<< "), symbol_out => fin_ack_symbol, clk => clk, reset => reset);"
+	<< " port map(pred0 => fin_req_symbol, pred1 =>" << exit_grp->Get_VHDL_Id()
+	<< ", symbol_out => fin_ack_symbol, clk => clk, reset => reset);"
 	<< endl;
 
   for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
@@ -616,5 +710,53 @@ void vcControlPath::Print_VHDL_Optimized(ostream& ofile)
       (*iter)->Print_VHDL(ofile);
     }
 
+
+  for(set<vcCPSimpleLoopBlock*>::iterator slb_iter = _simple_loop_blocks.begin(), fslb_iter = _simple_loop_blocks.end();
+	slb_iter != fslb_iter;
+	slb_iter++)
+  {
+	vcCPSimpleLoopBlock* slb = *slb_iter;
+
+	slb->Print_VHDL_Terminator(this, ofile);
+
+        vcCPPipelinedLoopBody* plb = slb->Get_Loop_Body();
+	plb->Print_VHDL_Phi_Sequencers(this,ofile);
+	plb->Print_VHDL_Transition_Merges(this,ofile);
+
+		
+  }
+
   ofile << "-- }" << endl << "end Block; -- " << id << endl;
 }
+
+void vcCPSimpleLoopBlock::Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp)
+{
+	this->vcCPBlock::Construct_CPElement_Group_Graph_Vertices(cp);
+	cp->Add_Simple_Loop_Block(this);
+}
+
+void vcCPSimpleLoopBlock::Print_VHDL_Terminator(vcControlPath* cp, ostream& ofile)
+{
+	ofile <<  "lterm: loop_terminator -- {" << endl;
+	ofile <<  "generic map (max_iterations_in_flight => 4) " << endl;
+	ofile <<  "port map(loop_body_exit => " << _loop_body->Get_Exit_Symbol(cp) << ","
+		<< "loop_continue => " << _loop_taken->Get_Exit_Symbol(cp) << ","
+		<< "loop_terminate => " << _loop_exit->Get_Exit_Symbol(cp) << ","
+		<< "loop_back => " << _loop_back->Get_Exit_Symbol(cp) << ","
+		<< "loop_exit => " << _exit_from_loop->Get_Exit_Symbol(cp) << ","
+		<< "clk => clk, reset => reset);" << " -- } " << endl;
+}
+  
+void vcCPPipelinedLoopBody::Print_VHDL_Phi_Sequencers(vcControlPath* cp, ostream& ofile)
+{
+	for(int idx = 0, fidx = _phi_sequencers.size(); idx < fidx; idx++)
+		_phi_sequencers[idx]->Print_VHDL(cp,ofile);
+}
+
+void vcCPPipelinedLoopBody::Print_VHDL_Transition_Merges(vcControlPath* cp, ostream& ofile)
+{
+	for(int idx = 0, fidx = _transition_merges.size(); idx < fidx; idx++)
+		_transition_merges[idx]->Print_VHDL(cp,ofile);
+}
+
+

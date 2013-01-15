@@ -40,6 +40,9 @@ public:
   virtual int Get_Number_Of_Predecessors() { return(this->_predecessors.size());}
   int Get_Number_Of_Successors() {return(this->_successors.size());}
 
+  virtual int Get_Number_Of_Marked_Predecessors() { return(this->_marked_predecessors.size());}
+  int Get_Number_Of_Marked_Successors() {return(this->_marked_successors.size());}
+
   vcCPElement* Get_Successor(int idx) {return(this->_successors[idx]);}
 
   virtual string Kind() {return("vcCPElement");}
@@ -74,11 +77,19 @@ public:
   vector<vcCPElement*>& Get_Predecessors() {return(this->_predecessors);}
   vector<vcCPElement*>& Get_Successors() {return(this->_successors);}
 
+  vector<vcCPElement*>& Get_Marked_Predecessors() {return(this->_marked_predecessors);}
+  vector<vcCPElement*>& Get_Marked_Successors() {return(this->_marked_successors);}
+
   virtual void Print_Successors(ostream& ofile);
+  virtual void Print_Marked_Successors(ostream& ofile);
+
   virtual void Print_Structure(ostream& ofile) {}
 
   //  string Get_VHDL_Id() {return("cp_" + IntToStr(this->Get_Index()));}
-  string Get_VHDL_Id() {return(To_VHDL(this->Get_Id()+ "_" + Int64ToStr(this->Get_Index())));}
+  virtual string Get_VHDL_Id() {return(To_VHDL(this->Get_Id()+ "_" + Int64ToStr(this->Get_Index())));}
+
+  // exit symbol lookup from control-path
+  string Get_Exit_Symbol(vcControlPath* cp); 
 
   virtual string Get_Exit_Symbol() {return(this->Get_VHDL_Id() + "_symbol");}
   virtual string Get_Start_Symbol(){return(this->Get_VHDL_Id() + "_start");}
@@ -419,7 +430,7 @@ public:
   }
 
   void Print(ostream& ofile);
-  void Print_VHDL(ostream& ofile);
+  void Print_VHDL(vcControlPath* cp, ostream& ofile);
   virtual void Update_Predecessor_Successor_Links();
 };
 
@@ -439,6 +450,7 @@ public:
   void Add_Req(vcTransition* s) { _reqs.push_back(s); }
   void Set_Ack(vcTransition* p) { _ack = p; }
   void Set_Done(vcTransition* p) { _done = p; }
+  void Set_Enable(vcTransition* p) { _enable = p; }
 
   int Get_Number_Of_Selects() { return(_selects.size()); }
   vcTransition* Get_Select(int idx) 
@@ -473,12 +485,13 @@ public:
   {return(_done);}
 
   void Print(ostream& ofile);
-  void Print_VHDL(ostream& ofile);
+  void Print_VHDL(vcControlPath* cp, ostream& ofile);
 
   virtual void Update_Predecessor_Successor_Links();
 };
 
 
+class vcCPPipelinedLoopBody;
 class vcCPSimpleLoopBlock: public vcCPBranchBlock
 {
   map<vcPlace*, vcTransition*> _input_bindings;
@@ -497,6 +510,13 @@ public:
 
   virtual void Print(ostream& ofile);
   virtual void Print_VHDL(ostream& ofile);
+  
+  void Print_VHDL_Loop_Body_Bindings(vcControlPath* cp, ostream& ofile);
+  void Print_VHDL_Terminator(vcControlPath* cp, ostream& ofile);
+  vcCPPipelinedLoopBody* Get_Loop_Body();
+
+
+  virtual void Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp);
 
   virtual bool Check_Structure(); // check that the block is well-formed.
   virtual void Update_Predecessor_Successor_Links();
@@ -561,6 +581,9 @@ public:
 
   virtual void Print(ostream& ofile);
   virtual void Print_VHDL(ostream& ofile);
+
+  void Print_VHDL_Phi_Sequencers(vcControlPath* cp, ostream& ofile);
+  void Print_VHDL_Transition_Merges(vcControlPath* cp, ostream& ofile);
 
   void Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec);
   void Add_Marked_Join_Point(vcTransition* jp, vcCPElement* jre);
@@ -691,6 +714,12 @@ public:
   void Print_DP_To_CP_VHDL_Link(ostream& ofile);
   void Print_CP_To_DP_VHDL_Link(int idx, ostream& ofile);
 
+  virtual string Get_VHDL_Id() 
+  { 
+      string ret_string = "cp_elements(" + Int64ToStr(this->Get_Group_Index()) + ")"; 
+      return(ret_string);
+  }
+
   friend class vcCPElement;
   friend class vcControlPath;
 };
@@ -710,6 +739,9 @@ protected:
   set<vcCPElementGroup*, vcRoot_Compare> _cpelement_groups;
   map<vcCPElement*, vcCPElementGroup*> _cpelement_to_group_map;
 
+  // simple loop blocks have some special things inside them..
+  set<vcCPSimpleLoopBlock*> _simple_loop_blocks;
+
 public:
   static int64_t _free_index;
 
@@ -719,6 +751,8 @@ public:
   vcTransition* Find_Transition(vector<string>& hier_ref);
   vcPlace* Find_Place(vector<string>& hier_ref);
   virtual void Print(ostream& ofile);
+
+  void Add_Simple_Loop_Block(vcCPSimpleLoopBlock* slb) {_simple_loop_blocks.insert(slb);}
 
   vcCPElementGroup* Make_New_Group();
   vcCPElementGroup* Delete_Group(vcCPElement* g);

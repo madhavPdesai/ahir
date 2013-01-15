@@ -54,7 +54,7 @@ $module [asum]
           $T[back_edge_to_loop_body] 
           $T[first_time_through_loop_body] 
           $T[loop_body_start] 
-          $transitionmerge [entry_tmerge] (back_edge_through_loop_body first_time_through_loop_body) (loop_body_start)
+          $transitionmerge [entry_tmerge] (back_edge_to_loop_body first_time_through_loop_body) (loop_body_start)
           $entry <-& (loop_body_start)
           // PHI statement phi_stmt_10
           // 			$phi I := 			  ($bitcast ($uint<32>) 0  ) $on $entry			  NI $on $loopback // type of target is $uint<32>
@@ -64,12 +64,16 @@ $module [asum]
           $T[phi_stmt_10_req_1] 
           $T[phi_stmt_10_trigger_from_back_edge_to_loop_body] 
           back_edge_to_loop_body &-> (phi_stmt_10_trigger_from_back_edge_to_loop_body)
+          $T[phi_stmt_10_phi_sequencer_reqs_merged] 
+          $T[phi_stmt_10_phi_sequencer_done] 
           $T[phi_stmt_10_ack] 
           $T[phi_stmt_10_reenable_] 
           $T[phi_stmt_10_trigger_] 
           $T[phi_stmt_10_active_] 
           $T[phi_stmt_10_completed_] 
           $phisequencer (  phi_stmt_10_trigger_from_first_time_through_loop_body phi_stmt_10_trigger_from_back_edge_to_loop_body : phi_stmt_10_reenable_ : phi_stmt_10_ack : phi_stmt_10_trigger_ ) ( phi_stmt_10_req_0 phi_stmt_10_req_1 : phi_stmt_10_phi_sequencer_done ) 
+          $transitionmerge [phi_stmt_10_req_merger] ( phi_stmt_10_req_0 phi_stmt_10_req_1) (phi_stmt_10_phi_sequencer_reqs_merged)
+          phi_stmt_10_phi_sequencer_reqs_merged &-> ($exit)
           phi_stmt_10_active_ <-& (phi_stmt_10_phi_sequencer_done)
           phi_stmt_10_completed_ <-& (phi_stmt_10_active_)
           // NI
@@ -240,11 +244,10 @@ $module [asum]
           // NI
           // implicit reference
           assign_stmt_24_completed_ <-& (assign_stmt_24_active_)
-          // WAR dependency: Read: NI before Write: NI
-          //                 NOTE: the result of operation (I + 1 ) determines NI
+          // WAR dependency: Read: NI before Write: 			NI := (I + 1 )
           binary_23_trigger_ <-& (phi_stmt_10_completed_)
-          // WAR dependency: release  Read: NI with Write: NI
-          $entry o<-& (simple_obj_ref_20_completed_)
+          // WAR dependency: release  Read: NI with Write: 			NI := (I + 1 )
+          $entry o<-& (assign_stmt_24_completed_)
           assign_stmt_24_trigger_ o<-& (assign_stmt_24_active_)
           assign_stmt_24_active_ o<-& (assign_stmt_24_completed_)
           // (NI < 10 )
@@ -280,10 +283,13 @@ $module [asum]
           binary_23_active_ o<-& (binary_28_active_)
           binary_28_trigger_ o<-& (binary_28_active_)
           binary_28_active_ o<-& (binary_28_completed_)
+          binary_28_completed_ &-> ($exit)
           // load-store dependencies..
           // pipe read/write dependencies for pipe inpipe
         }
-        // assign_stmt_19_to_assign_stmt_24
+        (back_edge_to_loop_body first_time_through_loop_body) // exported inputs
+        (binary_28_completed_) // exported outputs
+        // do_while_stmt_8_loop_body
         ;; [loop_exit] 
         {
           $T [ack] 
@@ -292,12 +298,12 @@ $module [asum]
         {
           $T [ack] 
         }
-        $bind condition_done <= do_while_stmt_8_loop_body : binary_28_completed_
-        condition_done |-> (loop_exit loop_taken)
-        do_while_stmt_8__entry__ <-| ($entry loopback)
-        do_while_stmt_8__entry__ |-> ( do_while_stmt_8_loop_body ) 
+        do_while_stmt_8__entry__ <-| ($entry loop_back)
         loop_body_done <-| ( do_while_stmt_8_loop_body ) 
-        $bind do_while_stmt_8__entry__  => do_while_stmt_8_loop_body : first_through_loop_body 
+        condition_done |-> (loop_exit loop_taken)
+        do_while_stmt_8__entry__ |-> ( do_while_stmt_8_loop_body ) 
+        $bind condition_done <= do_while_stmt_8_loop_body : binary_28_completed_
+        $bind do_while_stmt_8__entry__  => do_while_stmt_8_loop_body : first_time_through_loop_body 
         $bind loop_back  => do_while_stmt_8_loop_body : back_edge_to_loop_body 
         $terminate (loop_exit loop_taken loop_body_done) (loop_back do_while_stmt_8__exit__)
       }
@@ -329,7 +335,7 @@ $module [asum]
           $T[back_edge_to_loop_body] 
           $T[first_time_through_loop_body] 
           $T[loop_body_start] 
-          $transitionmerge [entry_tmerge] (back_edge_through_loop_body first_time_through_loop_body) (loop_body_start)
+          $transitionmerge [entry_tmerge] (back_edge_to_loop_body first_time_through_loop_body) (loop_body_start)
           $entry <-& (loop_body_start)
           // PHI statement phi_stmt_34
           // 			$phi I := 			  ($bitcast ($uint<32>) 0  ) $on $entry			  NI $on $loopback // type of target is $uint<32>
@@ -339,12 +345,16 @@ $module [asum]
           $T[phi_stmt_34_req_1] 
           $T[phi_stmt_34_trigger_from_back_edge_to_loop_body] 
           back_edge_to_loop_body &-> (phi_stmt_34_trigger_from_back_edge_to_loop_body)
+          $T[phi_stmt_34_phi_sequencer_reqs_merged] 
+          $T[phi_stmt_34_phi_sequencer_done] 
           $T[phi_stmt_34_ack] 
           $T[phi_stmt_34_reenable_] 
           $T[phi_stmt_34_trigger_] 
           $T[phi_stmt_34_active_] 
           $T[phi_stmt_34_completed_] 
           $phisequencer (  phi_stmt_34_trigger_from_first_time_through_loop_body phi_stmt_34_trigger_from_back_edge_to_loop_body : phi_stmt_34_reenable_ : phi_stmt_34_ack : phi_stmt_34_trigger_ ) ( phi_stmt_34_req_0 phi_stmt_34_req_1 : phi_stmt_34_phi_sequencer_done ) 
+          $transitionmerge [phi_stmt_34_req_merger] ( phi_stmt_34_req_0 phi_stmt_34_req_1) (phi_stmt_34_phi_sequencer_reqs_merged)
+          phi_stmt_34_phi_sequencer_reqs_merged &-> ($exit)
           phi_stmt_34_active_ <-& (phi_stmt_34_phi_sequencer_done)
           phi_stmt_34_completed_ <-& (phi_stmt_34_active_)
           // NI
@@ -364,12 +374,16 @@ $module [asum]
           $T[phi_stmt_39_req_1] 
           $T[phi_stmt_39_trigger_from_back_edge_to_loop_body] 
           back_edge_to_loop_body &-> (phi_stmt_39_trigger_from_back_edge_to_loop_body)
+          $T[phi_stmt_39_phi_sequencer_reqs_merged] 
+          $T[phi_stmt_39_phi_sequencer_done] 
           $T[phi_stmt_39_ack] 
           $T[phi_stmt_39_reenable_] 
           $T[phi_stmt_39_trigger_] 
           $T[phi_stmt_39_active_] 
           $T[phi_stmt_39_completed_] 
           $phisequencer (  phi_stmt_39_trigger_from_first_time_through_loop_body phi_stmt_39_trigger_from_back_edge_to_loop_body : phi_stmt_39_reenable_ : phi_stmt_39_ack : phi_stmt_39_trigger_ ) ( phi_stmt_39_req_0 phi_stmt_39_req_1 : phi_stmt_39_phi_sequencer_done ) 
+          $transitionmerge [phi_stmt_39_req_merger] ( phi_stmt_39_req_0 phi_stmt_39_req_1) (phi_stmt_39_phi_sequencer_reqs_merged)
+          phi_stmt_39_phi_sequencer_reqs_merged &-> ($exit)
           phi_stmt_39_active_ <-& (phi_stmt_39_phi_sequencer_done)
           phi_stmt_39_completed_ <-& (phi_stmt_39_active_)
           // nresult
@@ -515,11 +529,10 @@ $module [asum]
           // nresult
           // implicit reference
           assign_stmt_49_completed_ <-& (assign_stmt_49_active_)
-          // WAR dependency: Read: nresult before Write: nresult
-          //                 NOTE: the result of operation (result + a[I]) determines nresult
+          // WAR dependency: Read: nresult before Write: 			nresult := (result + a[I])
           binary_48_trigger_ <-& (phi_stmt_39_completed_)
-          // WAR dependency: release  Read: nresult with Write: nresult
-          $entry o<-& (simple_obj_ref_44_completed_)
+          // WAR dependency: release  Read: nresult with Write: 			nresult := (result + a[I])
+          $entry o<-& (assign_stmt_49_completed_)
           assign_stmt_49_trigger_ o<-& (assign_stmt_49_active_)
           assign_stmt_49_active_ o<-& (assign_stmt_49_completed_)
           // 			outpipe := nresult
@@ -604,11 +617,10 @@ $module [asum]
           // NI
           // implicit reference
           assign_stmt_57_completed_ <-& (assign_stmt_57_active_)
-          // WAR dependency: Read: NI before Write: NI
-          //                 NOTE: the result of operation (I + 1 ) determines NI
+          // WAR dependency: Read: NI before Write: 			NI := (I + 1 )
           binary_56_trigger_ <-& (phi_stmt_34_completed_)
-          // WAR dependency: release  Read: NI with Write: NI
-          $entry o<-& (simple_obj_ref_53_completed_)
+          // WAR dependency: release  Read: NI with Write: 			NI := (I + 1 )
+          $entry o<-& (assign_stmt_57_completed_)
           assign_stmt_57_trigger_ o<-& (assign_stmt_57_active_)
           assign_stmt_57_active_ o<-& (assign_stmt_57_completed_)
           // (NI < 10 )
@@ -644,10 +656,13 @@ $module [asum]
           binary_56_active_ o<-& (binary_61_active_)
           binary_61_trigger_ o<-& (binary_61_active_)
           binary_61_active_ o<-& (binary_61_completed_)
+          binary_61_completed_ &-> ($exit)
           // load-store dependencies..
           // pipe read/write dependencies for pipe outpipe
         }
-        // assign_stmt_49_to_assign_stmt_57
+        (back_edge_to_loop_body first_time_through_loop_body) // exported inputs
+        (binary_61_completed_) // exported outputs
+        // do_while_stmt_32_loop_body
         ;; [loop_exit] 
         {
           $T [ack] 
@@ -656,12 +671,12 @@ $module [asum]
         {
           $T [ack] 
         }
-        $bind condition_done <= do_while_stmt_32_loop_body : binary_61_completed_
-        condition_done |-> (loop_exit loop_taken)
-        do_while_stmt_32__entry__ <-| ($entry loopback)
-        do_while_stmt_32__entry__ |-> ( do_while_stmt_32_loop_body ) 
+        do_while_stmt_32__entry__ <-| ($entry loop_back)
         loop_body_done <-| ( do_while_stmt_32_loop_body ) 
-        $bind do_while_stmt_32__entry__  => do_while_stmt_32_loop_body : first_through_loop_body 
+        condition_done |-> (loop_exit loop_taken)
+        do_while_stmt_32__entry__ |-> ( do_while_stmt_32_loop_body ) 
+        $bind condition_done <= do_while_stmt_32_loop_body : binary_61_completed_
+        $bind do_while_stmt_32__entry__  => do_while_stmt_32_loop_body : first_time_through_loop_body 
         $bind loop_back  => do_while_stmt_32_loop_body : back_edge_to_loop_body 
         $terminate (loop_exit loop_taken loop_body_done) (loop_back do_while_stmt_32__exit__)
       }
@@ -891,9 +906,7 @@ $module [asum]
   // end data-path
   // CP-DP links for do-while  do_while_stmt_8
   //  file prog.opt.aa, line 0
-  // CP-DP links for merge  
-  //  file prog.opt.aa, line 15
-  phi_stmt_10 <=> (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/merge_stmt_9__entry___PhiReq/phi_stmt_10/phi_stmt_10_req branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/xxloopback_PhiReq/phi_stmt_10/phi_stmt_10_req) (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/merge_stmt_9_PhiAck/phi_stmt_10_ack)
+  phi_stmt_10 <=> (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/phi_stmt_10_req_0 branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/phi_stmt_10_req_1) (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/phi_stmt_10_ack)
   // 			a[I] := inpipe
   //  file prog.opt.aa, line 18
   // inpipe
@@ -914,10 +927,8 @@ $module [asum]
   do_while_stmt_8_branch <=> (branch_block_stmt_7/do_while_stmt_8/do_while_stmt_8_loop_body/binary_28_completed_) (branch_block_stmt_7/do_while_stmt_8/loop_exit/ack branch_block_stmt_7/do_while_stmt_8/loop_taken/ack)
   // CP-DP links for do-while  do_while_stmt_32
   //  file prog.opt.aa, line 0
-  // CP-DP links for merge  
-  //  file prog.opt.aa, line 33
-  phi_stmt_34 <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/merge_stmt_33__entry___PhiReq/phi_stmt_34/phi_stmt_34_req branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/xxloopback_PhiReq/phi_stmt_34/phi_stmt_34_req) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/merge_stmt_33_PhiAck/phi_stmt_34_ack)
-  phi_stmt_39 <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/merge_stmt_33__entry___PhiReq/phi_stmt_39/phi_stmt_39_req branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/xxloopback_PhiReq/phi_stmt_39/phi_stmt_39_req) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/merge_stmt_33_PhiAck/phi_stmt_39_ack)
+  phi_stmt_34 <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/phi_stmt_34_req_0 branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/phi_stmt_34_req_1) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/phi_stmt_34_ack)
+  phi_stmt_39 <=> (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/phi_stmt_39_req_0 branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/phi_stmt_39_req_1) (branch_block_stmt_31/do_while_stmt_32/do_while_stmt_32_loop_body/phi_stmt_39_ack)
   // 			nresult := (result + a[I])
   //  file prog.opt.aa, line 37
   // a[I]

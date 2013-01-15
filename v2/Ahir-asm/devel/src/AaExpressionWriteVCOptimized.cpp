@@ -49,8 +49,17 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 {
   if(!this->Is_Implicit_Variable_Reference())
     return;
+		  
+  AaStatement* pstmt = this->Get_Associated_Statement();
+  assert(pstmt != NULL); // this is always a target..  so statement completion should retrigger read.
 
-  // root will be the statement b = (d+e)
+  string write_trigger_transition_name;
+  if(pstmt->Is("AaAssignmentStatement"))
+	write_trigger_transition_name = ((AaAssignmentStatement*) pstmt)->Get_Source()->Get_VC_Start_Transition_Name();
+  else 
+	write_trigger_transition_name = ((AaCallStatement*) pstmt)->Get_VC_Start_Transition_Name();
+
+  // root will be the statement b = (d+e) (or possibly a $call foo () (b))
   AaRoot* root = this->Get_Root_Object();
   if(root == NULL || !root->Is_Interface_Object() || root->Is_Statement())
     {
@@ -58,7 +67,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
     }
 
 
-  // expressions/statements that root uses as sources..
+  // expressions/statements in which root is used as a source..
   // these include expression "b" in (b+c)
   for(set<AaRoot*>::iterator iter = root->Get_Source_References().begin(), 
 	fiter = root->Get_Source_References().end();
@@ -85,36 +94,20 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 	      // the target "b = (d+e)" can be triggered only after the
 	      // statement a := (b+c) has used the value of b.
 	      //
-	      ofile << "// WAR dependency: Read: " << expr->To_String() << " before Write: " << this->To_String() << endl;
-	      ofile << "//                 NOTE: the result of operation " << source_expr->To_String() << " determines " << this->To_String() << endl;
+	      ofile << "// WAR dependency: Read: " << expr->To_String() << " before Write: " << pstmt->To_String() << endl;
 
 	      // The target "b = (d+e)" cannot be updated until the statement a := (b+c)
 	      // has finished.  This is conservative.
-	      if(expr->Get_Associated_Statement())
-		{
-		  //
-		  // (d+e) should not be updated until the expression (b+c) has
-		  // completed evaluation.. we are a bit conservative here.
-		  // we wait until the entire statement in which (b+c) is
-		  // present has completed.
-		  //
-		  // 
-		  __J(source_expr->Get_VC_Start_Transition_Name(), 
-		      expr->Get_Associated_Statement()->Get_VC_Completed_Transition_Name());
-		}
-	      else
-		{
-		  __J(source_expr->Get_VC_Start_Transition_Name(),  expr->Get_VC_Completed_Transition_Name());
-		}
+	      __J(write_trigger_transition_name, expr->Get_Associated_Statement()->Get_VC_Completed_Transition_Name());
 
 	      // The completion of "b = (d+e)" reenables the
 	      // evaluation of "a = (b+c)"
 	      if(pipeline_flag)
 	  	{
-		  ofile << "// WAR dependency: release  Read: " << expr->To_String() << " with Write: " << this->To_String() << endl;
+		  ofile << "// WAR dependency: release  Read: " << expr->To_String() << " with Write: " << pstmt->To_String() << endl;
 		  // expr can get a new value only after this has completed.
 		  __MJ(expr->Get_VC_Reenable_Sample_Transition_Name(visited_elements),  
-		       this->Get_VC_Completed_Transition_Name());
+		       pstmt->Get_VC_Completed_Transition_Name());
 	 	}
 	    }
 	}

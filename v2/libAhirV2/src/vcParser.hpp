@@ -155,7 +155,7 @@ public:
 		vcCPForkBlock* fb
 	);
 	public: void vc_CPMarkedJoin(
-		vcCPForkBlock* fb
+		vcCPPipelinedLoopBody* fb
 	);
 	public: void vc_Guarded_Operator_Instantiation(
 		vcSystem* sys, vcDataPath* dp

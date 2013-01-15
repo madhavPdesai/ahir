@@ -541,7 +541,7 @@ vc_CPPipelinedLoopBody[vcCPBlock* cp]
 
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPJoin: (vc_Identifier | EXIT) JOIN LPAREN  ENTRY? (vc_Identifier)+  RPAREN
+// vc_CPJoin: (vc_Identifier | EXIT | ENTRY) JOIN LPAREN  ENTRY? (vc_Identifier)+  RPAREN
 //-----------------------------------------------------------------------------------------------
 vc_CPJoin[vcCPForkBlock* fb]
 {
@@ -549,7 +549,7 @@ vc_CPJoin[vcCPForkBlock* fb]
 	vector<string> join_ids;
 }
 :
-((lbl = vc_Identifier) | (je:EXIT {lbl = je->getText();})) JOIN  LPAREN (e:ENTRY {join_ids.push_back(e->getText());})?
+((lbl = vc_Identifier) | (je:EXIT {lbl = je->getText();}) | (jen:ENTRY {lbl = jen->getText();})) JOIN  LPAREN (e:ENTRY {join_ids.push_back(e->getText());})?
 (b =  vc_Identifier {join_ids.push_back(b);})* RPAREN
  {fb->Add_Join_Point(lbl,join_ids);}
 ;
@@ -557,15 +557,15 @@ vc_CPJoin[vcCPForkBlock* fb]
 //-----------------------------------------------------------------------------------------------
 // vc_CPMarkedJoin: (vc_Identifier | EXIT) MARKEDJOIN LPAREN  ENTRY? (vc_Identifier)+  RPAREN
 //-----------------------------------------------------------------------------------------------
-vc_CPMarkedJoin[vcCPForkBlock* fb]
+vc_CPMarkedJoin[vcCPPipelinedLoopBody* fb]
 {
 	string lbl,b;
 	vector<string> join_ids;
 }
 :
-((lbl = vc_Identifier) | (je:EXIT {lbl = je->getText();})) MARKEDJOIN  LPAREN (e:ENTRY {join_ids.push_back(e->getText());})?
+((lbl = vc_Identifier) | (je:ENTRY {lbl = je->getText();})) MARKEDJOIN  LPAREN (e:ENTRY {join_ids.push_back(e->getText());})?
 (b =  vc_Identifier {join_ids.push_back(b);})* RPAREN
- {fb->Add_Join_Point(lbl,join_ids);}
+ {fb->Add_Marked_Join_Point(lbl,join_ids);}
 ;
 
 //-----------------------------------------------------------------------------------------------

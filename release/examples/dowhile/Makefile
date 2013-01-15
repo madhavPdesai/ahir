@@ -9,7 +9,7 @@ all: HW
 
 
 # steps from Aa to vhdl simulator.
-HW: aa2vc # vc2vhdl # vhdlsim
+HW: aa2vc vc2vhdl # vhdlsim
 
 # Aa to vC
 aa2vc: prog.aa
