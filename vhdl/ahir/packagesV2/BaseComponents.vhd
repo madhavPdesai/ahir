@@ -144,17 +144,6 @@ package BaseComponents is
       clk, reset: in std_logic);
   end component;
 
-  component phi_sequencer 
-    generic (nreqs : integer; nreenables : integer);
-    port (
-      in_places : in BooleanArray(0 to nreqs-1);
-    req_places : out BooleanArray(0 to nreqs-1);
-    ack_place  : in Boolean;
-    reenable_place: in BooleanArray(0 to nreenables-1);  
-    exit_place : out Boolean;
-    clk, reset: in std_logic);
-  end component;
-
   component transition_merge 
       port (preds      : in   BooleanArray;
           symbol_out : out  boolean);

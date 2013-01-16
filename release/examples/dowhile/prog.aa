@@ -1,6 +1,23 @@
-$pipe inpipe: $uint<32>
-$pipe outpipe: $uint<32>
 $module [asum] $in() $out (c: $uint<32> ) $is
+{
+
+	$branchblock[run] {
+
+		$do
+			$merge $entry $loopback
+			$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
+			$phi R := 0 $on $entry R1 $on $loopback
+			$endmerge
+			R1 := (R + 1)
+			NI := (I+1)
+		$while (NI < 10)
+
+	} (R1 => result)
+
+	c := result
+}
+
+$module [ssum] $in() $out (c: $uint<32> ) $is
 {
 	$storage a: $array [10] $of $uint<32>
 
@@ -9,7 +26,7 @@ $module [asum] $in() $out (c: $uint<32> ) $is
 			$merge $entry $loopback
 			$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
 			$endmerge
-			a[I] := inpipe
+			a[I] := I
 			NI := (I+1)
 		$while (NI < 10)
 	}
@@ -22,7 +39,6 @@ $module [asum] $in() $out (c: $uint<32> ) $is
 			$phi result := 0 $on $entry nresult $on $loopback
 			$endmerge
 			nresult := (result + a[I])
-			outpipe := nresult
 			NI := (I+1)
 		$while (NI < 10)
 		

@@ -1202,6 +1202,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   ofile << "// " << this->To_String() << endl;
 
   string  phi_sequencer_reqs;
+  string  phi_sequencer_raw_reqs;
   string  phi_sequencer_reqs_merged;
   string  phi_sequencer_triggers;
   string  phi_sequencer_done;
@@ -1222,12 +1223,17 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	assert(0);
 	
       string trig_transition_name = this->Get_VC_Name() + "_trigger_from_" + root_trig_transition;
+      string raw_req_name = this->Get_VC_Name() + "_req_" + IntToStr(idx) + "_raw";
       string req_name = this->Get_VC_Name() + "_req_" + IntToStr(idx);
       
+      __T(raw_req_name);
       __T(req_name);
+      __F(raw_req_name, req_name);
+
       __T(trig_transition_name);
       __F(root_trig_transition, trig_transition_name);
       
+      phi_sequencer_raw_reqs += " " + raw_req_name;
       phi_sequencer_reqs += " " + req_name;
       phi_sequencer_triggers +=  " " + trig_transition_name;
     }
@@ -1255,7 +1261,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   ofile << reenable_transition_name << " : " ;
   ofile << ack_transition_name << " : " ;
   ofile << this->Get_VC_Start_Transition_Name() << " ) (";
-  ofile << phi_sequencer_reqs << " : " << phi_sequencer_done << " ) " << endl;
+  ofile << phi_sequencer_raw_reqs << " : " << phi_sequencer_done << " ) " << endl;
 
   // instantiate reqs merger.
   ofile << "$transitionmerge [" << this->Get_VC_Name() << "_req_merger] (" 

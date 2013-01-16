@@ -1,8 +1,35 @@
-$pipe  inpipe : $uint<32>  $depth 1 
-// can point into 
-$pipe  outpipe : $uint<32>  $depth 1 
-// can point into 
 $module [asum]
+$in ()
+$out ( c : $uint<32>  )
+$is
+{
+  $branchblock [run]
+  {
+    $do 
+    $merge $entry $loopback 
+    $phi I := 			  ($bitcast ($uint<32>) 0  ) $on $entry			  NI $on $loopback // type of target is $uint<32>
+    $phi R := 			  0  $on $entry			  R1 $on $loopback // type of target is $uint<32>
+    $endmerge
+    R1 := (R + 1 )
+    // target-type =   $uint<32>
+    // target-memory-space =  none
+    // source-type = $uint<32>
+    // source-memory-space =  none
+    NI := (I + 1 )
+    // target-type =   $uint<32>
+    // target-memory-space =  none
+    // source-type = $uint<32>
+    // source-memory-space =  none
+    $while (NI < 10 )
+  }
+  ( R1 => result )
+  c := result
+  // target-type =   $uint<32>
+  // target-memory-space =  none
+  // source-type = $uint<32>
+  // source-memory-space =  none
+}
+$module [ssum]
 $in ()
 $out ( c : $uint<32>  )
 $is
@@ -15,7 +42,7 @@ $is
     $merge $entry $loopback 
     $phi I := 			  ($bitcast ($uint<32>) 0  ) $on $entry			  NI $on $loopback // type of target is $uint<32>
     $endmerge
-    a[I] := inpipe
+    a[I] := I
     // target-type =   $uint<32>
     // target-memory-space =  none
     // source-type = $uint<32>
@@ -39,11 +66,6 @@ $is
     // target-memory-space =  none
     // source-type = $uint<32>
     // source-memory-space =  none
-    outpipe := nresult
-    // target-type =   $uint<32>
-    // target-memory-space =  none
-    // source-type = $uint<32>
-    // source-memory-space =  none
     NI := (I + 1 )
     // target-type =   $uint<32>
     // target-memory-space =  none
@@ -58,4 +80,4 @@ $is
   // source-type = $uint<32>
   // source-memory-space =  none
 }
-// Memory space 0: %asum:a 
+// Memory space 0: %ssum:a 

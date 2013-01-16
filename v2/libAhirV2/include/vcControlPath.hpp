@@ -18,6 +18,16 @@ protected:
 
   vcCompatibilityLabel* _compatibility_label;
 
+  // for bindings.
+  vcCPElement* _associated_cp_function;
+  vcCPElement* _associated_cp_region;
+
+  bool _is_bound_as_input_to_cp_function;
+  bool _is_bound_as_output_from_cp_function;
+
+  bool _is_bound_as_input_to_region;
+  bool _is_bound_as_output_from_region;
+
 public:
 
   vcCPElement(vcCPElement* parent, string id);
@@ -36,6 +46,9 @@ public:
   virtual bool Is_Block() { return (false); }
   virtual bool Is_Control_Path() { return (false); }
 
+
+  void Get_Explicit_Predecessors(vector<vcCPElement*>& epreds);
+  void Get_Explicit_Successors(vector<vcCPElement*>& epreds);
 
   virtual int Get_Number_Of_Predecessors() { return(this->_predecessors.size());}
   int Get_Number_Of_Successors() {return(this->_successors.size());}
@@ -132,6 +145,24 @@ public:
   {
 	// do nothing..
   }
+
+  void Set_Is_Bound_As_Input_To_CP_Function(bool v) {this->_is_bound_as_input_to_cp_function = v;}
+  bool Get_Is_Bound_As_Input_To_CP_Function() {return(this->_is_bound_as_input_to_cp_function);}
+
+  void Set_Is_Bound_As_Output_From_CP_Function(bool v) {this->_is_bound_as_output_from_cp_function = v;}
+  bool Get_Is_Bound_As_Output_From_CP_Function() {return(this->_is_bound_as_output_from_cp_function);}
+
+  void Set_Is_Bound_As_Input_To_Region(bool v) {this->_is_bound_as_input_to_region = v;}
+  bool Get_Is_Bound_As_Input_To_Region() {return(this->_is_bound_as_input_to_region);}
+
+  void Set_Is_Bound_As_Output_From_Region(bool v) {this->_is_bound_as_output_from_region = v;}
+  bool Get_Is_Bound_As_Output_From_Region() {return(this->_is_bound_as_output_from_region);}
+
+  void Set_Associated_CP_Function(vcCPElement* c);
+  vcCPElement* Get_Associated_CP_Function() {return(_associated_cp_function);}
+
+  void Set_Associated_CP_Region(vcCPElement* c) {_associated_cp_region = c;}
+  vcCPElement* Get_Associated_CP_Region() {return(_associated_cp_region);}
   
 };
 
@@ -203,14 +234,8 @@ class vcTransition: public vcCPElement
   bool _is_output;
   bool _is_dead;
   bool _is_entry_transition;
-
   bool _is_linked_to_non_local_dpe;
 
-  bool _is_bound_as_input_to_cp_function;
-  bool _is_bound_as_output_from_cp_function;
-
-  bool _is_bound_as_input_to_region;
-  bool _is_bound_as_output_from_region;
 
 public:
   vcTransition(vcCPElement* parent, string id);
@@ -228,18 +253,6 @@ public:
 
   bool Get_Is_Linked_To_Non_Local_Dpe() {return(this->_is_linked_to_non_local_dpe);}
 
-
-  void Set_Is_Bound_As_Input_To_CP_Function(bool v) {this->_is_bound_as_input_to_cp_function = v;}
-  bool Get_Is_Bound_As_Input_To_CP_Function() {return(this->_is_bound_as_input_to_cp_function);}
-
-  void Set_Is_Bound_As_Output_From_CP_Function(bool v) {this->_is_bound_as_output_from_cp_function = v;}
-  bool Get_Is_Bound_As_Output_From_CP_Function() {return(this->_is_bound_as_output_from_cp_function);}
-
-  void Set_Is_Bound_As_Input_To_Region(bool v) {this->_is_bound_as_input_to_region = v;}
-  bool Get_Is_Bound_As_Input_To_Region() {return(this->_is_bound_as_input_to_region);}
-
-  void Set_Is_Bound_As_Output_From_Region(bool v) {this->_is_bound_as_output_from_region = v;}
-  bool Get_Is_Bound_As_Output_From_Region() {return(this->_is_bound_as_output_from_region);}
 
   virtual void Print(ostream& ofile);
   virtual void Print_VHDL(ostream& ofile);
@@ -263,6 +276,10 @@ public:
 class vcPlace: public vcCPElement
 {
   unsigned int _initial_marking;
+
+  bool _is_bound_as_input_to_region;
+  bool _is_bound_as_output_from_region;
+
 public:
   vcPlace(vcCPElement* parent, string id, unsigned int init_marking);
   virtual void Print(ostream& ofile);
@@ -271,6 +288,10 @@ public:
 
   virtual void Print_VHDL(ostream& ofile);
   virtual void Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp);
+
+  void Set_Is_Bound_As_Input_To_Region(bool v) { _is_bound_as_input_to_region = v;}
+  void Set_Is_Bound_As_Output_From_Region(bool v) { _is_bound_as_output_from_region = v;}
+
 
   friend class ControlPath;
 
@@ -491,19 +512,35 @@ public:
 };
 
 
-class vcCPPipelinedLoopBody;
-class vcCPSimpleLoopBlock: public vcCPBranchBlock
+class vcLoopTerminator: public vcCPElement
 {
-  map<vcPlace*, vcTransition*> _input_bindings;
-  map<vcPlace*, vcTransition*> _output_bindings;
-
-  // loop termination places.
   vcCPElement* _loop_exit;
   vcCPElement* _loop_taken;
   vcCPElement* _loop_body;
   vcCPElement* _loop_back;
   vcCPElement* _exit_from_loop;
 
+ public:
+
+   vcLoopTerminator(vcCPElement* prnt, string id):vcCPElement(prnt,id) 
+   {
+	_loop_exit = NULL;
+	_loop_taken = NULL;
+	_loop_body = NULL;
+	_loop_back = NULL;
+	_exit_from_loop = NULL;
+   }
+
+   friend class vcCPSimpleLoopBlock;
+};
+
+class vcCPPipelinedLoopBody;
+class vcCPSimpleLoopBlock: public vcCPBranchBlock
+{
+  map<vcPlace*, vcTransition*> _input_bindings;
+  map<vcPlace*, vcTransition*> _output_bindings;
+
+  vcLoopTerminator* _terminator;
 
 public:
   vcCPSimpleLoopBlock(vcCPBlock* parent, string id);
@@ -516,7 +553,6 @@ public:
   void Print_VHDL_Terminator(vcControlPath* cp, ostream& ofile);
   vcCPPipelinedLoopBody* Get_Loop_Body();
 
-
   virtual void Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp);
 
   virtual bool Check_Structure(); // check that the block is well-formed.
@@ -525,6 +561,11 @@ public:
   void Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back, string exit_from_loop);
 
 
+  // all except condition-done, loop-back and loop-taken
+  virtual int Number_Of_Elements_Reachable_From_Entry()
+  {
+	return(this->Get_Number_Of_Elements() + 2 - 3);
+  }
 };
 
 
@@ -607,12 +648,12 @@ public:
   void Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& ack, string& enable, vector<string>& reqs, string& done);
   void Add_Transition_Merge(string& tm_id, vector<string>& in_transition, string& out_transition);
 
-  // for a pipelined loop block two of the elements are not reachable from
-  // entry.  Thus, the number is N (because exit
-  // and entry are kept separately, this is N+2-2).
+  // for a pipelined loop block some of the elements are not reachable from
+  // entry.  In particular, there are 3 predecessors of entry
+  // and for each phi statement, there are two places which are not reachable. 
   virtual int Number_Of_Elements_Reachable_From_Entry()
   {
-	return(this->Get_Number_Of_Elements());
+	return(this->Get_Number_Of_Elements()+2 - (3 + (2*_phi_sequencers.size())));
   }
   void Set_Max_Iterations_In_Flight(int N) {_max_iterations_in_flight = N;}
   int Get_Max_Iterations_In_Flight() {return(_max_iterations_in_flight);}
@@ -657,6 +698,10 @@ class vcCPElementGroup: public vcRoot
   // elements in the group must belong to
   // the same pipelined loop body.
   vcCPPipelinedLoopBody* _pipeline_parent;
+
+  vcCPElement* _associated_cp_function;
+  vcCPElement* _associated_cp_region;
+
 public:
   vcCPElementGroup():vcRoot()
   {
@@ -677,6 +722,8 @@ public:
     _is_bound_as_input_to_region = false;
     _is_bound_as_output_from_region = false;
     _pipeline_parent = NULL;
+    _associated_cp_function = NULL;
+    _associated_cp_region = NULL;
   }
 
   void Set_Group_Index(int64_t idx)
@@ -732,6 +779,12 @@ public:
       string ret_string = "cp_elements(" + Int64ToStr(this->Get_Group_Index()) + ")"; 
       return(ret_string);
   }
+
+  void Set_Associated_CP_Function(vcCPElement* c) {_associated_cp_function = c;}
+  vcCPElement* Get_Associated_CP_Function() {return(_associated_cp_function);}
+
+  void Set_Associated_CP_Region(vcCPElement* c) {_associated_cp_region = c;}
+  vcCPElement* Get_Associated_CP_Region() {return(_associated_cp_region);}
 
   friend class vcCPElement;
   friend class vcControlPath;

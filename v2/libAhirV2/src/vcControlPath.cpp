@@ -248,6 +248,63 @@ vcCPElement::vcCPElement(vcCPElement* parent, string id):vcRoot(id)
 
   this->_compatibility_label = NULL;
   this->_parent = parent;
+
+  _associated_cp_function = NULL;
+  _associated_cp_region   = NULL;
+
+  _is_bound_as_input_to_cp_function = false;
+  _is_bound_as_output_from_cp_function = false;
+  _is_bound_as_input_to_region = false;
+  _is_bound_as_output_from_region = false;
+}
+
+void vcCPElement::Set_Associated_CP_Function(vcCPElement* c)
+{
+	if(_associated_cp_function == NULL) 
+	   _associated_cp_function = c; 
+	else 
+        {
+	   vcSystem::Error("CP Element " + this->Get_Id() + " is associated with two CP functions..");
+	}
+}
+
+void vcCPElement::Get_Explicit_Predecessors(vector<vcCPElement*>& epreds)
+{
+	epreds.clear();
+	vcCPElement* my_assoc = this->Get_Associated_CP_Function();
+	for(int idx = 0, fidx = _predecessors.size(); idx < fidx; idx++)
+	{
+		vcCPElement* other_assoc = _predecessors[idx]->Get_Associated_CP_Function();
+
+		// implicit if both associated are not null and associated functions match.
+		bool implicit_flag = false;
+		if((my_assoc != NULL) && (other_assoc != NULL) && (my_assoc == other_assoc))
+			implicit_flag =	true;
+
+		if(!implicit_flag)
+			epreds.push_back(_predecessors[idx]);
+	}
+	return;
+}
+
+void vcCPElement::Get_Explicit_Successors(vector<vcCPElement*>& esuccs)
+{
+	esuccs.clear();
+	vcCPElement* my_assoc = this->Get_Associated_CP_Function();
+	for(int idx = 0, fidx = _successors.size(); idx < fidx; idx++)
+	{
+		vcCPElement* other_assoc = _successors[idx]->Get_Associated_CP_Function();
+
+		// implicit if both associated are not null and associated functions match.
+		bool implicit_flag = false;
+		if((my_assoc != NULL) && (other_assoc != NULL) && (my_assoc == other_assoc))
+			implicit_flag = true;
+
+		if(!implicit_flag)
+			esuccs.push_back(_predecessors[idx]);
+
+	}
+	return;
 }
 
 string vcCPElement::Get_Exit_Symbol(vcControlPath* cp)
@@ -457,10 +514,6 @@ vcTransition::vcTransition(vcCPElement* parent, string id):vcCPElement(parent, i
   _is_dead = false;
   _is_entry_transition = false;
   _is_linked_to_non_local_dpe = false;
-  _is_bound_as_input_to_cp_function = false;
-  _is_bound_as_output_from_cp_function = false;
-  _is_bound_as_input_to_region = false;
-  _is_bound_as_output_from_region = false;
 }
 
 void vcTransition::Add_DP_Link(vcDatapathElement* dpe,vcTransitionType ltype)
@@ -512,6 +565,27 @@ void vcTransition::Print_VHDL(ostream& ofile)
       return;
   }
 
+
+  
+  // explicit predecessors.. (other than "implicit" ones).
+  vector<vcCPElement*> explicit_preds;
+  this->Get_Explicit_Predecessors(explicit_preds);
+
+  // if the transition is mapped as an output of a CP function,
+  // then there should be no explicit preds.
+  if(this->Get_Is_Bound_As_Output_From_CP_Function())
+  {
+	assert(explicit_preds.size() == 0);
+  }
+
+  // if the transition is bound as an input to its region,
+  // then dont print anything.
+  if(this->Get_Is_Bound_As_Input_To_Region())
+  {
+      ofile << "-- transition " << this->Get_Exit_Symbol() << " is mapped as an input to its region." << endl;
+      return;
+  }
+
   // every transition has at least one predecessor (entry of control-path has no
   // explicit predecessor, but does have an implicit one.
   //  
@@ -525,7 +599,9 @@ void vcTransition::Print_VHDL(ostream& ofile)
 	max_iterations_in_flight = ((vcCPPipelinedLoopBody*)this->Get_Parent())->Get_Max_Iterations_In_Flight();
 
 
-  if(parent_is_pipelined_loop_body || (this->Get_Number_Of_Predecessors() > 1))
+  if(parent_is_pipelined_loop_body ? (explicit_preds.size() > 0) : (explicit_preds.size() > 1)) 
+	// if pipelined, then even if there is one predecessor, it is a join.
+	// otherwise, we need two to make a join.
     {
       bool marked_join_flag = false;
       block_was_used = true;
@@ -533,7 +609,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
       ofile << this->Get_VHDL_Id() << "_block : Block -- non-trivial join transition " << this->Get_Hierarchical_Id() << " {" <<  endl;
 
       ofile << "signal " <<  this->Get_VHDL_Id() << "_predecessors: BooleanArray(" 
-	    << this->Get_Number_Of_Predecessors()-1 << " downto 0);" << endl;
+	    << explicit_preds.size()-1 << " downto 0);" << endl;
       if(this->Get_Number_Of_Marked_Predecessors() > 0)
       {
 	marked_join_flag = true;
@@ -542,11 +618,11 @@ void vcTransition::Print_VHDL(ostream& ofile)
       }
       ofile << "-- }" << endl << "begin -- {" << endl;
 
-      for(int idx = 0; idx < this->Get_Number_Of_Predecessors(); idx++)
+      for(int idx = 0; idx < explicit_preds.size(); idx++)
 	{
-	  vcCPElement* pred = this->Get_Predecessors()[idx];
-	  ofile << this->Get_VHDL_Id() << "_predecessors(" << idx << ") <= "
-		<< pred->Get_Exit_Symbol() << ";" << endl;
+	  	vcCPElement* pred = explicit_preds[idx];
+	  	ofile << this->Get_VHDL_Id() << "_predecessors(" << idx << ") <= "
+			<< pred->Get_Exit_Symbol() << ";" << endl;
 	}
 
       if(marked_join_flag)
@@ -591,7 +667,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
 		<< "reset => reset); -- }}" << endl;
 	}
     }
-  else if(this->Get_Number_Of_Predecessors() == 1)
+  else if(explicit_preds.size() == 1)
     {
       // if only one predecessor, then direct connection from predecessors(0).
       if(!this->_is_input)
@@ -605,6 +681,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
 	}
     }
   else
+	// no explicit preds.. but may have implicit preds..
     {
       if(this->Get_Is_Entry_Transition())
 	{
@@ -612,14 +689,21 @@ void vcTransition::Print_VHDL(ostream& ofile)
 	}
       else 
 	{
+	  int pred_count = this->Get_Number_Of_Predecessors();
 	  if(!this->Get_Is_Input())
 	    {
-	      vcSystem::Warning("transition " + this->Get_Hierarchical_Id() + " has no predecessor: tied to false");
-	      ofile << this->Get_Exit_Symbol() << " <= false;" << endl;	  
+	      if(pred_count == 0)
+              {
+	      	vcSystem::Warning("transition " + this->Get_Hierarchical_Id() + " has no predecessor: tied to false");
+	      	ofile << this->Get_Exit_Symbol() << " <= false;" << endl;	  
+	      }
 	    }
 	  else
 	    {
-	      vcSystem::Error("input transition " + this->Get_Hierarchical_Id() + " has no predecessor!");
+	      if(pred_count == 0)
+	      	vcSystem::Error("input transition " + this->Get_Hierarchical_Id() + " has no predecessor!");
+	      else
+	  	this->Print_DP_To_CP_VHDL_Link(ofile);
 	    }
 	}
     }
@@ -701,6 +785,8 @@ void vcTransition::Print_CP_To_DP_VHDL_Link(ostream& ofile)
 vcPlace::vcPlace(vcCPElement* parent, string id, unsigned int init_marking):vcCPElement(parent, id)
 {
   this->_initial_marking = init_marking;
+  this->_is_bound_as_input_to_region = false;
+  this->_is_bound_as_output_from_region = false;
 }
 
 void vcPlace::Print(ostream& ofile)
@@ -710,6 +796,19 @@ void vcPlace::Print(ostream& ofile)
 
 void vcPlace::Print_VHDL(ostream& ofile)
 {
+
+  if(this->_is_bound_as_output_from_region)
+  {
+  	ofile << "-- place " << this->Get_Exit_Symbol() <<  " is bound as output from region, link printed in region to which it is bound. " << endl;
+	return;
+  }
+
+  if(this->_is_bound_as_output_from_cp_function)
+  {
+  	ofile << "-- place " << this->Get_Exit_Symbol() <<  " is bound as output from cp function, link printed as part of function instance. " << endl;
+	return;
+  }
+
   // 
   // the place is simply optimized away to a direct connection..
   //
@@ -1266,7 +1365,7 @@ bool vcCPBranchBlock::Check_Structure()
 
       set<vcCPElement*> visited_set;
       this->BFS_Order(false,this->_entry, num_visited, reachable_elements,visited_set);
-      if(num_visited != (this->_elements.size() + 2))
+      if(num_visited != this->Number_Of_Elements_Reachable_From_Entry())
 	{
 	  vcSystem::Warning("some elements are not reachable from the entry point of branch region " + this->Get_Hierarchical_Id());
 	  this->Print_Missing_Elements(visited_set);
@@ -1379,7 +1478,7 @@ void vcPhiSequencer::Print_VHDL(vcControlPath* cp, ostream& ofile)
     {
       string sig_id = _selects[idx]->Get_Exit_Symbol(cp);
       ofile << "selects(" << idx << ")  <= " << sig_id << ";" << endl;
-      ofile << _reqs[idx]->Get_Exit_Symbol(cp) << " <= _reqs(" << idx << ");" << endl;
+      ofile << _reqs[idx]->Get_Exit_Symbol(cp) << " <= reqs(" << idx << ");" << endl;
     }
 
   for(int idx = 0, fidx = _reenables.size(); idx < fidx; idx++)
@@ -1389,9 +1488,10 @@ void vcPhiSequencer::Print_VHDL(vcControlPath* cp, ostream& ofile)
     }
 
   ofile << this->Get_VHDL_Id() << " : phi_sequencer -- { " << endl;;
-  ofile << "generic map (nreqs => " << _reqs.size() << "; nreenables => "  << _reenables.size() << ") " << endl;
-  ofile << "port map (selects => selects, reqs => reqs, reenables => reenables, ack => " << _ack->Get_VHDL_Id() 
-	<< ", done " << _done->Get_VHDL_Id() << ", clk => clk, reset => reset);" << endl;
+  ofile << "generic map (nreqs => " << _reqs.size() << ", nreenables => "  << _reenables.size() << ") " << endl;
+  ofile << "port map (selects => selects, reqs => reqs, reenables => reenables, ack => " << _ack->Get_Exit_Symbol(cp) 
+	<< ", enable => " << _enable->Get_Exit_Symbol(cp)
+	<< ", done => " << _done->Get_Exit_Symbol(cp) << ", clk => clk, reset => reset);" << endl;
   ofile << " -- } } " << endl;
   ofile << "end block;" << endl;
 
@@ -1431,7 +1531,7 @@ void vcPhiSequencer::Update_Predecessor_Successor_Links()
      }
   }
 
-  //  enable -> reqs, reqs -> ack.
+  //  enable -> reqs,
   for(int jdx = 0, fjdx = _reqs.size(); jdx < fjdx; jdx++)
   {
      vcTransition* r = _reqs[jdx];
@@ -1439,8 +1539,12 @@ void vcPhiSequencer::Update_Predecessor_Successor_Links()
      _enable->Add_Successor(r);
      r->Add_Predecessor(_enable);
 
-     r->Add_Successor(_ack);
-     _ack->Add_Predecessor(r);
+     //
+     // these are redundant... but strictly speaking
+     // they should be present.. TBD
+     //
+     // r->Add_Successor(_ack);
+     // _ack->Add_Predecessor(r);
 
   }
   
@@ -1482,8 +1586,7 @@ void vcTransitionMerge::Print_VHDL(vcControlPath* cp, ostream& ofile)
 
   ofile << this->Get_VHDL_Id() << " : transition_merge -- { " << endl;;
   ofile << "port map (preds => preds, symbol_out => " << _out_transition->Get_Exit_Symbol(cp) << ");" << endl;
-  ofile << " -- } } " << endl;
-
+  ofile << " -- } } } " << endl;
   ofile << "end block;" << endl;
 }
 
@@ -1579,8 +1682,8 @@ void vcCPSimpleLoopBlock::Print(ostream& ofile)
 
   // terminator.
   ofile << vcLexerKeywords[__TERMINATE] << " " << vcLexerKeywords[__LPAREN] << " (";
-  ofile << _loop_exit->Get_Id() << " " << _loop_taken->Get_Id() << " " << _loop_body->Get_Id() << ") (";
-  ofile << _exit_from_loop->Get_Id() << ")" << endl;
+  ofile << _terminator->_loop_exit->Get_Id() << " " << _terminator->_loop_taken->Get_Id() << " " << _terminator->_loop_body->Get_Id() << ") (";
+  ofile << _terminator->_exit_from_loop->Get_Id() << ")" << endl;
 
   ofile << "\n// end loop-block " << this->Get_Id() << endl << "}" << endl;
 }
@@ -1645,25 +1748,39 @@ void vcCPSimpleLoopBlock::Print_VHDL_Loop_Body_Bindings(vcControlPath* cp, ostre
 
 void vcCPSimpleLoopBlock::Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back, string exit_from_loop)
 {
-  _loop_exit = this->Find_CPElement(loop_exit);
-  assert(_loop_exit != NULL);	
-  assert(_loop_exit->Is("vcCPSeriesBlock"));
+  string tid = this->Get_Id() + "_terminator";
+  _terminator = new vcLoopTerminator(this,tid);
 
-  _loop_taken = this->Find_CPElement(loop_taken);
-  assert(_loop_taken != NULL);	
-  assert(_loop_taken->Is("vcCPSeriesBlock"));
+  _terminator->_loop_exit = this->Find_CPElement(loop_exit);
+  assert(_terminator->_loop_exit != NULL);	
+  assert(_terminator->_loop_exit->Is("vcCPSeriesBlock"));
+  _terminator->_loop_exit->Set_Is_Bound_As_Input_To_CP_Function(true);
+  _terminator->_loop_exit->Set_Associated_CP_Function(_terminator);
 
-  _loop_body = this->Find_CPElement(loop_body);
-  assert(_loop_body != NULL);	
-  assert(_loop_body->Is("vcPlace"));
+  _terminator->_loop_taken = this->Find_CPElement(loop_taken);
+  assert(_terminator->_loop_taken != NULL);	
+  assert(_terminator->_loop_taken->Is("vcCPSeriesBlock"));
+  _terminator->_loop_taken->Set_Is_Bound_As_Input_To_CP_Function(true);
+  _terminator->_loop_taken->Set_Associated_CP_Function(_terminator);
 
-  _loop_back = this->Find_CPElement(loop_back);
-  assert(_loop_back != NULL);	
-  assert(_loop_back->Is("vcPlace"));
+  _terminator->_loop_body = this->Find_CPElement(loop_body);
+  assert(_terminator->_loop_body != NULL);	
+  assert(_terminator->_loop_body->Is("vcPlace"));
+  _terminator->_loop_body->Set_Is_Bound_As_Input_To_CP_Function(true);
+  _terminator->_loop_body->Set_Associated_CP_Function(_terminator);
 
-  _exit_from_loop = this->Find_CPElement(exit_from_loop);
-  assert(_exit_from_loop != NULL);	
-  assert(_exit_from_loop->Is("vcPlace"));
+  _terminator->_loop_back = this->Find_CPElement(loop_back);
+  assert(_terminator->_loop_back != NULL);	
+  assert(_terminator->_loop_back->Is("vcPlace"));
+  _terminator->_loop_back->Set_Is_Bound_As_Output_From_CP_Function(true);
+  _terminator->_loop_back->Set_Associated_CP_Function(_terminator);
+ 
+  _terminator->_exit_from_loop = this->Find_CPElement(exit_from_loop);
+  assert(_terminator->_exit_from_loop != NULL);	
+  assert(_terminator->_exit_from_loop->Is("vcPlace"));
+  _terminator->_exit_from_loop->Set_Is_Bound_As_Output_From_CP_Function(true);
+  _terminator->_exit_from_loop->Set_Associated_CP_Function(_terminator);
+
 }
 
 
@@ -1679,23 +1796,23 @@ void vcCPSimpleLoopBlock::Update_Predecessor_Successor_Links()
   this->vcCPBranchBlock::Update_Predecessor_Successor_Links();
 
   // for the terminator.
-  _loop_exit->Add_Successor(_loop_back);
-  _loop_back->Add_Predecessor(_loop_back);
+  _terminator->_loop_exit->Add_Successor(_terminator->_loop_back);
+  _terminator->_loop_back->Add_Predecessor(_terminator->_loop_exit);
 
-  _loop_exit->Add_Successor(_exit_from_loop);
-  _exit_from_loop->Add_Predecessor(_loop_exit);
+  _terminator->_loop_exit->Add_Successor(_terminator->_exit_from_loop);
+  _terminator->_exit_from_loop->Add_Predecessor(_terminator->_loop_exit);
   
-  _loop_taken->Add_Successor(_loop_back);
-  _loop_back->Add_Predecessor(_loop_taken);
+  _terminator->_loop_taken->Add_Successor(_terminator->_loop_back);
+  _terminator->_loop_back->Add_Predecessor(_terminator->_loop_taken);
 
-  _loop_taken->Add_Successor(_exit_from_loop);
-  _exit_from_loop->Add_Predecessor(_loop_taken);
+  _terminator->_loop_taken->Add_Successor(_terminator->_exit_from_loop);
+  _terminator->_exit_from_loop->Add_Predecessor(_terminator->_loop_taken);
 
-  _loop_body->Add_Successor(_loop_back);
-  _loop_back->Add_Predecessor(_loop_taken);
+  _terminator->_loop_body->Add_Successor(_terminator->_loop_back);
+  _terminator->_loop_back->Add_Predecessor(_terminator->_loop_body);
 
-  _loop_body->Add_Successor(_exit_from_loop);
-  _exit_from_loop->Add_Predecessor(_loop_body);
+  _terminator->_loop_body->Add_Successor(_terminator->_exit_from_loop);
+  _terminator->_exit_from_loop->Add_Predecessor(_terminator->_loop_body);
 
   // for the bindings.
   for(map<vcPlace*,vcTransition*>::iterator biter = _output_bindings.begin();
@@ -1750,11 +1867,13 @@ void vcCPSimpleLoopBlock::Bind(string place_name, string region_name, string tra
     {
       _input_bindings[((vcPlace*)pl)] = ((vcTransition*)tr);
       ((vcTransition*)tr)->Set_Is_Bound_As_Input_To_Region(true);
+      ((vcPlace*)pl)->Set_Is_Bound_As_Input_To_Region(true);
     }
   else
     {
       _output_bindings[((vcPlace*)pl)] = ((vcTransition*)tr);
       ((vcTransition*)tr)->Set_Is_Bound_As_Output_From_Region(true);
+      ((vcPlace*)pl)->Set_Is_Bound_As_Output_From_Region(true);
     }
 
   
@@ -1982,6 +2101,7 @@ bool vcCPForkBlock::Check_Structure()
       if(num_visited != (this->Number_Of_Elements_Reachable_From_Entry()))
 	{
 	  ret_flag = false;
+          
 	  vcSystem::Error("all elements not reachable from entry in fork region " + this->Get_Hierarchical_Id());
 	  this->Print_Missing_Elements(visited_set);
 	}
@@ -2460,7 +2580,6 @@ void vcCPPipelinedLoopBody::Print_VHDL(ostream& ofile)
 
 
   ofile << "-- }" << endl << "end Block; -- " << id << endl;
-  assert(0);
 }
 
 void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& ack,
@@ -2489,6 +2608,7 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<st
 		}
 		new_phi_seq->Add_Select((vcTransition*) ste);
 	        ((vcTransition*) ste)->Set_Is_Bound_As_Input_To_CP_Function(true);
+                ste->Set_Associated_CP_Function(new_phi_seq);
 
 		vcCPElement* rte = this->Find_CPElement(reqs[idx]);
 		if((rte == NULL) || (!rte->Is_Transition()))
@@ -2499,6 +2619,7 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<st
 		}
 		new_phi_seq->Add_Req((vcTransition*) rte);
 		((vcTransition*) rte)->Set_Is_Bound_As_Output_From_CP_Function(true);
+                rte->Set_Associated_CP_Function(new_phi_seq);
 		
 	}
 
@@ -2514,6 +2635,7 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<st
 		}
 		new_phi_seq->Add_Reenable((vcTransition*) rte);
 	        ((vcTransition*) rte)->Set_Is_Bound_As_Input_To_CP_Function(true);
+                rte->Set_Associated_CP_Function(new_phi_seq);
 	}
 
 	// set ack.
@@ -2526,6 +2648,7 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<st
 	}
 	new_phi_seq->Set_Ack((vcTransition*) ate);
 	((vcTransition*) ate)->Set_Is_Bound_As_Input_To_CP_Function(true);
+        ate->Set_Associated_CP_Function(new_phi_seq);
 
 	// set done.
 	vcCPElement* dte = this->Find_CPElement(done);
@@ -2537,6 +2660,7 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<st
 	}
 	new_phi_seq->Set_Done((vcTransition*) dte);
 	((vcTransition*) dte)->Set_Is_Bound_As_Output_From_CP_Function(true);
+        dte->Set_Associated_CP_Function(new_phi_seq);
 
 	// set enable.
 	vcCPElement* ete = this->Find_CPElement(enable);
@@ -2548,11 +2672,11 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<st
 	}
 	new_phi_seq->Set_Enable((vcTransition*) ete);
 	((vcTransition*) ete)->Set_Is_Bound_As_Input_To_CP_Function(true);
+        ete->Set_Associated_CP_Function(new_phi_seq);
 
 
 	_phi_sequencers.push_back(new_phi_seq);
 }
-
 
 
 void vcCPPipelinedLoopBody::Add_Transition_Merge(string& tm_id, vector<string>& in_transitions, string& out_transition)
@@ -2570,6 +2694,7 @@ void vcCPPipelinedLoopBody::Add_Transition_Merge(string& tm_id, vector<string>& 
 		}
 		new_tm->Add_In_Transition((vcTransition*) rte);
 		((vcTransition*) rte)->Set_Is_Bound_As_Input_To_CP_Function(true);
+                rte->Set_Associated_CP_Function(new_tm);
 	}
 		
 	vcCPElement* ote = this->Find_CPElement(out_transition);
@@ -2581,6 +2706,7 @@ void vcCPPipelinedLoopBody::Add_Transition_Merge(string& tm_id, vector<string>& 
 	}
 	new_tm->Set_Out_Transition((vcTransition*) ote);
 	((vcTransition*) ote)->Set_Is_Bound_As_Output_From_CP_Function(true);
+        ote->Set_Associated_CP_Function(new_tm);
 
 	_transition_merges.push_back(new_tm);
 }
