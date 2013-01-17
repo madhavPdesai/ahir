@@ -36,7 +36,7 @@ void vcCPElement::Connect_CPElement_Group_Graph(vcControlPath* cp)
     }
   
   vector<vcCPElement*> explicit_succs;
-  this->Get_Explicit_Predecessors(explicit_succs);
+  this->Get_Explicit_Successors(explicit_succs);
   
   // update connections between my group and successor groups
   for(int idx = 0; idx < explicit_succs.size(); idx++)
@@ -179,6 +179,15 @@ void vcCPElementGroup::Add_Element(vcCPElement* cpe)
 
   bool is_pipelined = ((cpe->Get_Parent() != NULL)  && cpe->Get_Parent()->Is("vcCPPipelinedLoopBody"));
 	
+  if(cpe->Get_Is_Bound_As_Input_To_CP_Function())
+   this->Set_Is_Bound_As_Input_To_CP_Function(true);
+  if(cpe->Get_Is_Bound_As_Output_From_CP_Function())
+   this->Set_Is_Bound_As_Output_From_CP_Function(true);
+  if(cpe->Get_Is_Bound_As_Input_To_Region())
+   this->Set_Is_Bound_As_Input_To_Region(true);
+  if(cpe->Get_Is_Bound_As_Output_From_Region())
+   this->Set_Is_Bound_As_Output_From_Region(true);
+
   if(cpe->Is_Transition())
     {
       this->_has_transition = true;
@@ -202,14 +211,6 @@ void vcCPElementGroup::Add_Element(vcCPElement* cpe)
 
       vcTransition* tr = (vcTransition*) cpe;
 
-      if(tr->Get_Is_Bound_As_Input_To_CP_Function())
-	this->Set_Is_Bound_As_Input_To_CP_Function(true);
-      if(tr->Get_Is_Bound_As_Output_From_CP_Function())
-	this->Set_Is_Bound_As_Output_From_CP_Function(true);
-      if(tr->Get_Is_Bound_As_Input_To_Region())
-	this->Set_Is_Bound_As_Input_To_Region(true);
-      if(tr->Get_Is_Bound_As_Output_From_Region())
-	this->Set_Is_Bound_As_Output_From_Region(true);
 
     }
   else if(cpe->Is_Place())
@@ -238,7 +239,7 @@ void vcCPElementGroup::Add_Element(vcCPElement* cpe)
 	this->_associated_cp_function = assoc_ele;
   else
   {
-	if(assoc_ele != this->_associated_cp_function)
+	if(assoc_ele != NULL && (assoc_ele != this->_associated_cp_function))
 		vcSystem::Error("Group has conflicting associated cp function.");
   }
 }
@@ -333,7 +334,7 @@ void vcCPElementGroup::Print(ostream& ofile)
   ofile << "-- }" << endl;
 }
 
-// TODO: take care of marked predecessors!
+// take care of marked predecessors!
 void vcCPElementGroup::Print_VHDL(ostream& ofile)
 {
 
@@ -413,7 +414,11 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
       // places with a certain capacity... either forced from a global parameter
       // or etc. etc.
       // instantiate join element.
-      if((_predecessors.size() > 1) || is_pipelined)
+      bool is_true_join = (is_pipelined ? 
+			((_predecessors.size() > 1) || 
+				((_predecessors.size() > 0) && (_marked_predecessors.size() > 0))) :
+			(_predecessors.size() > 1));
+      if(is_true_join)
 	{
 	  bool marked_flag = (_marked_predecessors.size() > 0);
 	  ofile << "cpelement_group_" << this->Get_Group_Index() << " : Block -- { " << endl;
@@ -424,55 +429,39 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 			<< " downto 0);" << endl;
 	  ofile << "-- }" << endl << "begin -- {" << endl;
 	  
-	  ofile << "predecessors <= (" ;
-	  bool first_one = true;
-	  for(set<vcCPElementGroup*>::iterator iter = this->_predecessors.begin(),
+          int idx = 0;
+	  for(set<vcCPElementGroup*>::iterator iter = _predecessors.begin(),
 		fiter = _predecessors.end();
 	      iter != fiter;
 	      iter++)
 	    {
-	      if(!first_one)
-		{
-		  ofile << " & ";
-		}
-	      else
-		first_one = false;
-	      
-	      ofile << (*iter)->Get_VHDL_Id();
-	      
+	      ofile << "predecessors(" << idx << ") <= " ; 
+	      ofile << (*iter)->Get_VHDL_Id() << ";" << endl;
+	      idx++;
 	    }
-	  ofile << ");" << endl;
 
 	  if(marked_flag)
 	  {
-	  	ofile << "marked_predecessors <= (" ;
-	  	bool first_one = true;
+		idx = 0;
 	  	for(set<vcCPElementGroup*>::iterator iter = this->_marked_predecessors.begin(),
 			fiter = _marked_predecessors.end();
 	      		iter != fiter;
 	      		iter++)
 	    	{
-	      		if(!first_one)
-			{
-		  		ofile << " & ";
-			}
-	      		else
-				first_one = false;
-	      
-	      		ofile << (*iter)->Get_VHDL_Id();
-	      
+	      		ofile << "marked_predecessors(" << idx << ") <= " ; idx++;
+	      		ofile << (*iter)->Get_VHDL_Id() << ";" << endl;
 	    	}
-	  	ofile << ");" << endl;
 
           }
 	  if(this->_input_transition != NULL)
 	    {
-	      if(marked_flag)
+	      if(!marked_flag)
 	      	ofile << "jI: join_with_input -- {" << endl;
 	      else
 	      	ofile << "jI: marked_join_with_input -- {" << endl;
 
-	      ofile << "generic map (place_capacity => " << max_iterations_in_flight << ")" << endl;
+	      ofile << "generic map(place_capacity => " << max_iterations_in_flight << "," << endl
+		<< "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl;
 	      ofile << "port map( -- {"
 		    << "preds => predecessors," << endl;
 	      if(marked_flag)
@@ -485,11 +474,12 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 	    }
 	  else
 	    {
-	      if(marked_flag)
+	      if(!marked_flag)
 	      	ofile << "jNoI: join -- {" << endl;
 	      else
 	      	ofile << "jNoI: marked_join -- {" << endl;
-	      ofile << "generic map ( place_capacity => " << max_iterations_in_flight << ")" << endl
+	      ofile << "generic map(place_capacity => " << max_iterations_in_flight << "," << endl
+		    << "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl
 		    << "port map( -- {"
 		    << "preds => predecessors," << endl;
 	      if(marked_flag)

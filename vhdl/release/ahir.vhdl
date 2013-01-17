@@ -1769,7 +1769,9 @@ package BaseComponents is
   component place
     generic (
       capacity : integer := 1;
-      marking : integer := 0);
+      marking : integer := 0;
+      name : string := "anon");
+
     port (
       preds : in  BooleanArray;
       succs : in  BooleanArray;
@@ -1818,7 +1820,8 @@ package BaseComponents is
   end component;
 
   component join is
-     generic(place_capacity : integer := 1);
+     generic(place_capacity : integer := 1;
+      		name : string := "anon");
      port (preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -1833,7 +1836,8 @@ package BaseComponents is
   end component;
 
   component join_with_input is
-     generic(place_capacity : integer := 1);
+     generic(place_capacity : integer := 1;
+      		name : string := "anon");
      port (preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
@@ -1864,7 +1868,8 @@ package BaseComponents is
   
 
   component marked_join is
-     generic(place_capacity : integer := 1);
+     generic(place_capacity : integer := 1;
+      		name : string := "anon");
      port (preds      : in   BooleanArray;
            marked_preds      : in   BooleanArray;
            symbol_out : out  boolean;
@@ -1873,7 +1878,8 @@ package BaseComponents is
   end component;
 
   component marked_join_with_input is
-     generic(place_capacity : integer := 1);
+     generic(place_capacity : integer := 1;
+      		name : string := "anon");
      port (preds      : in   BooleanArray;
            marked_preds      : in   BooleanArray;
            symbol_in : in boolean;
@@ -1883,13 +1889,12 @@ package BaseComponents is
   end component;
 
   component phi_sequencer
-    generic (nreqs : integer; nreenables : integer);
+    generic (place_capacity: integer; nreqs : integer; nenables : integer; name : string := "anonPhiSequencer");
     port (
       selects : in BooleanArray(0 to nreqs-1); -- one out of nreqs..
       reqs : out BooleanArray(0 to nreqs-1); -- one out of nreqs
       ack  : in Boolean;
-      enable  : in Boolean; 
-      reenables: in BooleanArray(0 to nreenables-1);   -- all need to arrive to reenable
+      enables: in BooleanArray(0 to nenables-1);   -- all need to arrive to reenable
       done : out Boolean;
       clk, reset: in std_logic);
   end component;
@@ -8489,9 +8494,10 @@ library ahir;
 use ahir.Types.all;
 use ahir.subprograms.all;
 use ahir.BaseComponents.all;
+use ahir.utilities.all;
 
 entity join is
-  generic (place_capacity : integer := 1);
+  generic (place_capacity : integer := 1; name : string := "anon");
   port ( preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -8511,7 +8517,10 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => place_capacity, marking => 0)
+	pI: place 
+		generic map(capacity => place_capacity, 
+				marking => 0,
+				name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;
@@ -8527,9 +8536,10 @@ library ahir;
 use ahir.Types.all;
 use ahir.subprograms.all;
 use ahir.BaseComponents.all;
+use ahir.utilities.all;
 
 entity join_with_input is
-  generic (place_capacity : integer := 1);
+  generic (place_capacity : integer := 1; name : string := "anon");
   port ( preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
@@ -8549,7 +8559,8 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => place_capacity, marking => 0)
+	pI: place generic map(capacity => place_capacity, marking => 0,
+				name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;
@@ -8689,7 +8700,8 @@ begin  -- Behave
   -- places to remember loop-continue, loop-terminate, loop-body-exit
   lc_place : place generic map (
     capacity => 1,
-    marking  => 0)
+    marking  => 0,
+    name => "loop_terminator:lc_place")
     port map (
       preds => lc_place_preds,
       succs => lc_place_succs,
@@ -8701,7 +8713,8 @@ begin  -- Behave
 
   lt_place : place generic map (
     capacity => 1,
-    marking  => 0)
+    marking  => 0,
+    name => "loop_terminator:lt_place")
     port map (
       preds => lt_place_preds,
       succs => lt_place_succs,
@@ -8714,7 +8727,8 @@ begin  -- Behave
 
   lbe_place : place generic map (
     capacity => 1,
-    marking  => 0)
+    marking  => 0,
+    name => "loop_terminator:lbe_place")
     port map (
       preds => lbe_place_preds,
       succs => lbe_place_succs,
@@ -8731,47 +8745,49 @@ begin  -- Behave
   --   clear_lc_place, clear_lt_place, clear_lbe_place, loop_back,
   --   loop_exit, available_iterations.
   --   
-  process(clk, reset)
+  process(clk, reset,lc_place_token,lt_place_token,lbe_place_token,available_iterations)
     variable next_available_iterations : integer range 0 to max_iterations_in_flight;
     variable incr,decr,rst : boolean;
   begin
+    -- all outputs are deasserted by default.
+    loop_back <= false;
+    loop_exit <= false;
+    clear_lc_place <= false;
+    clear_lt_place <= false;
+    clear_lbe_place <= false;
+    
+    -- incr, decr, rst are used to manage count.
+    incr := false;
+    decr := false;
+    if(reset = '1') then
+      rst := true;
+    else
+      rst := false;
+    end if;
+
+    -- lbe always increments counter.
+    if(lbe_place_token) then
+      incr := true;
+      clear_lbe_place <= true;
+    end if;
+
+    -- loop-continue? emit loop-back if count > 0..
+    -- and decrement count, clear lc place.      
+    if(lc_place_token and (available_iterations > 0)) then
+      decr := true;
+      loop_back <= true;
+      clear_lc_place <= true;
+    end if;
+
+    -- loop-terminate? check if count = M, and emit loop_exit, reset counter.
+    if(lt_place_token and (available_iterations = max_iterations_in_flight)) then
+      rst := true;
+      loop_exit <= true;
+      clear_lt_place <= true;          
+    end if;
+
+
     if(clk'event and clk = '1') then
-      -- all outputs are deasserted by default.
-      loop_back <= false;
-      loop_exit <= false;
-      clear_lc_place <= false;
-      clear_lt_place <= false;
-      clear_lbe_place <= false;
-
-      -- incr, decr, rst are used to manage count.
-      incr := false;
-      decr := false;
-      if(reset = '1') then
-        rst := true;
-      else
-        rst := false;
-      end if;
-
-      -- lbe always increments counter.
-      if(lbe_place_token) then
-        incr := true;
-        clear_lbe_place <= true;
-      end if;
-
-      -- loop-continue? emit loop-back if count > 0..
-      -- and decrement count, clear lc place.      
-      if(lc_place_token and (available_iterations > 0)) then
-        decr := true;
-        loop_back <= true;
-        clear_lc_place <= true;
-      end if;
-
-      -- loop-terminate? check if count = M, and emit loop_exit, reset counter.
-      if(lt_place_token and (available_iterations = max_iterations_in_flight)) then
-        rst := true;
-        loop_exit <= true;
-        clear_lt_place <= true;          
-      end if;
 
       -- manage count.
       if(rst) then
@@ -8792,9 +8808,10 @@ library ahir;
 use ahir.Types.all;
 use ahir.subprograms.all;
 use ahir.BaseComponents.all;
+use ahir.utilities.all;
 
 entity marked_join is
-  generic(place_capacity : integer := 1);
+  generic(place_capacity : integer := 1; name : string := "anon");
   port ( preds      : in   BooleanArray;
          marked_preds : in BooleanArray;
     	symbol_out : out  boolean;
@@ -8819,7 +8836,9 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => place_capacity, marking => 0)
+	pI: place generic map(capacity => place_capacity, 
+				marking => 0,
+				name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;
@@ -8830,7 +8849,8 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= marked_preds(I);
-	mpI: place generic map(capacity => 1, marking => 1)
+	mpI: place generic map(capacity => place_capacity, marking => 1,
+				name => name & ":marked:" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
     end block;
   end generate mplacegen;
@@ -8846,9 +8866,10 @@ library ahir;
 use ahir.Types.all;
 use ahir.subprograms.all;
 use ahir.BaseComponents.all;
+use ahir.utilities.all;
 
 entity marked_join_with_input is
-  generic (place_capacity : integer := 1);
+  generic (place_capacity : integer := 1; name : string := "anon");
   port ( preds      : in   BooleanArray;
          marked_preds : in BooleanArray;
     	symbol_in : in  boolean;
@@ -8874,7 +8895,8 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => place_capacity, marking => 0)
+	pI: place generic map(capacity => place_capacity, marking => 0,
+				name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;
@@ -8885,7 +8907,8 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= marked_preds(I);
-	mpI: place generic map(capacity => 1, marking => 1)
+	mpI: place generic map(capacity => place_capacity, marking => 1,
+				name => name & ":marked:" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
     end block;
   end generate mplacegen;
@@ -8922,41 +8945,32 @@ library ahir;
 use ahir.Types.all;
 use ahir.subprograms.all;
 use ahir.BaseComponents.all;
+use ahir.Utilities.all;
 
 
 entity phi_sequencer  is
-  generic (nreqs : integer; nreenables : integer);
+  generic (place_capacity : integer; nreqs : integer; nenables : integer; name : string := "anonPhiSequencer");
   port (
   selects : in BooleanArray(0 to nreqs-1); -- one out of nreqs..
-  reqs : out BooleanArray(0 to nreqs-1); -- one out of nreqs
+  reqs : out BooleanArray(0 to nreqs-1); -- one out of nreqs.
   ack  : in Boolean;
-  enable  : in Boolean; 
-  reenables: in BooleanArray(0 to nreenables-1);   -- all need to arrive to reenable
+  enables  : in BooleanArray(0 to nenables-1);  -- all must have a token.
   done : out Boolean;
   clk, reset: in std_logic);
 end phi_sequencer;
 
 
+--
 -- on reset, wait for a transition on any of the in_places.
--- the corresponding req is asserted..  A reenable place
--- is also present to allow the reenabling of the sequence.
+-- the corresponding req is asserted..  A token in the
+-- enable places is needed to allow firing of the reqs.
+--
 architecture Behave of phi_sequencer is
   signal select_token, select_clear : BooleanArray(0 to nreqs-1);
-  signal reenable_token, reenable_clear : BooleanArray(0 to nreenables-1);
+  signal enable_token, enable_clear : BooleanArray(0 to nenables-1);
 
-  signal enabled, ack_token, ack_clear, req_being_fired, enable_token, enable_clear: Boolean;
+  signal enabled, ack_token, ack_clear, req_being_fired: Boolean;
 begin  -- Behave
-
-  -- instantiate unmarked place for the enable.
-  enable_block: block
-      signal place_pred: BooleanArray(0 downto 0);    
-      signal place_succ: BooleanArray(0 downto 0);    
-  begin
-      place_pred(0) <= enable;
-      place_succ(0) <= enable_clear;
-      penable: place generic map(capacity => 1, marking => 1)
-        port map(place_pred,place_succ,enable_token,clk,reset);    
-  end block;
 
   -- instantiate unmarked places for the in_places.
   InPlaces: for I in 0 to nreqs-1 generate
@@ -8965,27 +8979,29 @@ begin  -- Behave
     begin
 	place_pred(0) <= selects(I);
 	place_succ(0) <= select_clear(I);
-	pI: place generic map(capacity => 1, marking => 0)
+	pI: place generic map(capacity => place_capacity, marking => 0, name => name & ":select:" &
+			Convert_To_String(I))
 		port map(place_pred,place_succ,select_token(I),clk,reset);
     end block;
   end generate InPlaces;
 
-  -- place for reenable: places are unmarked.. initial state
+  -- place for enables: places are unmarked.. initial state
   -- should be consistently generated by the instantiator.
-  ReenablePlaces: for J in 0 to nreenables-1 generate
+  EnablePlaces: for J in 0 to nenables-1 generate
     rnb_block: block
       signal place_pred, place_succ: BooleanArray(0 downto 0);    
     begin
-      place_pred(0) <= reenables(J);
-      place_succ(0) <= reenable_clear(J);
-      pRnb: place generic map(capacity => 1, marking => 1)
-        port map(place_pred,place_succ,reenable_token(J),clk,reset);    
+      place_pred(0) <= enables(J);
+      place_succ(0) <= enable_clear(J);
+      pRnb: place generic map(capacity => place_capacity, marking => 0, name => name & ":enable:"
+			& Convert_To_String(J))
+        port map(place_pred,place_succ,enable_token(J),clk,reset);    
     end block;
-  end generate ReenablePlaces;  
+  end generate EnablePlaces;  
     
  
   -- sequencer is enabled by this sig.
-  enabled <= AndReduce(reenable_token) and enable_token and ack_token;
+  enabled <= AndReduce(enable_token) and ack_token;
 
   -- a marker to indicate that a req is being fired.
   req_being_fired <= OrReduce(select_token) and enabled;
@@ -8995,10 +9011,7 @@ begin  -- Behave
 
   -- clear the selects and reenables when the req is being fired.
   select_clear <= select_token when req_being_fired else (others => false);
-  reenable_clear <= (others => true) when req_being_fired else (others => false);
-
-  -- the enable is to be cleared when the req fires.
-  enable_clear <= req_being_fired;
+  enable_clear <= (others => true) when req_being_fired else (others => false);
 
   -- ack should be received to reenable the sequencer.
   -- this place is initially marked (it is internal
@@ -9009,7 +9022,7 @@ begin  -- Behave
   begin
       place_pred(0) <= ack;
       place_succ(0) <= ack_clear;
-      pack: place generic map(capacity => 1, marking => 1)
+      pack: place generic map(capacity => place_capacity, marking => 1, name => name & ":ack")
         port map(place_pred,place_succ,ack_token,clk,reset);    
   end block;
 
@@ -9064,12 +9077,14 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;
+use ahir.Utilities.all;
 
 entity place is
 
   generic (
     capacity: integer := 1;
-    marking : integer := 0
+    marking : integer := 0;
+    name   : string := "anon"
     );
   port (
     preds : in  BooleanArray;
@@ -9089,8 +9104,8 @@ architecture default_arch of place is
   
 begin  -- default_arch
 
-  assert capacity > 0 report "place must have capacity > 1" severity error;
-  assert marking <= capacity report "initial marking must be less than place capacity" severity error;
+  assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;
+  assert marking <= capacity report "in place " & name & ": initial marking must be less than place capacity." severity error;
 
   -- At most one of the preds can send a pulse.
   -- We detect it with an OR over all inputs
@@ -9108,11 +9123,17 @@ begin  -- default_arch
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
       elsif (backward_reset and (not incoming_token)) then
-        assert token_latch > 0 report "number of tokens cannot become negative!" severity error;
+        assert token_latch > 0 report "in place " & name &  ": number of tokens cannot become negative!" severity error;
         token_latch <= token_latch - 1;
+        assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+		severity note;
       elsif (incoming_token and (not backward_reset)) then
-        assert token_latch < capacity report "number of tokens cannot exceed capacity" severity error;
+        assert token_latch < capacity report "in place " & name & " number of tokens "
+			& Convert_To_String(token_latch+1) & " cannot exceed capacity " 
+			& Convert_To_String(capacity) severity error;
         token_latch <= token_latch + 1;
+        assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+		severity note;
       end if;
     end if;
   end process latch_token;

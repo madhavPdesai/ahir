@@ -1247,20 +1247,20 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   string ack_transition_name = this->Get_VC_Name() + "_ack";
   __T(ack_transition_name);
   
-  string reenable_transition_name = this->Get_VC_Reenable_Sample_Transition_Name(visited_elements);
-  __T(reenable_transition_name);
+  string enable_transition_name = this->Get_VC_Reenable_Sample_Transition_Name(visited_elements);
+  __T(enable_transition_name);
 
   // the active, completed and the active transitions
   __T(this->Get_VC_Start_Transition_Name());
   __T(this->Get_VC_Active_Transition_Name());
   __T(this->Get_VC_Completed_Transition_Name());
   
+  __F(this->Get_VC_Start_Transition_Name(), enable_transition_name);
   // instantiate phi sequencer.
   ofile << "$phisequencer ( ";
   ofile << phi_sequencer_triggers << " : ";
-  ofile << reenable_transition_name << " : " ;
-  ofile << ack_transition_name << " : " ;
-  ofile << this->Get_VC_Start_Transition_Name() << " ) (";
+  ofile << enable_transition_name << " : " ;
+  ofile << ack_transition_name << " ) ( " ;
   ofile << phi_sequencer_raw_reqs << " : " << phi_sequencer_done << " ) " << endl;
 
   // instantiate reqs merger.

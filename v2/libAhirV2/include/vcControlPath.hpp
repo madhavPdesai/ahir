@@ -367,6 +367,11 @@ public:
 	return(this->Get_Number_Of_Elements() + 2);
   }
   
+  virtual int Number_Of_Elements_That_Can_Reach_Exit()
+  {
+	return(this->Get_Number_Of_Elements() + 2);
+  }
+
 };
 
 class vcCPSeriesBlock: public vcCPBlock
@@ -457,21 +462,24 @@ public:
 
 class vcPhiSequencer: public vcCPElement
 {
+  int _place_capacity;
+
   vector<vcTransition*> _selects;
-  vector<vcTransition*> _reenables;
+  vector<vcTransition*> _enables;
   vector<vcTransition*> _reqs;
-  vcTransition* _enable;
   vcTransition* _ack;
   vcTransition* _done;
 
 public:
   vcPhiSequencer(vcCPElement* prnt, string id);
   void Add_Select(vcTransition* s) { _selects.push_back(s); }
-  void Add_Reenable(vcTransition* s) { _reenables.push_back(s); }
+  void Add_Enable(vcTransition* s) { _enables.push_back(s); }
   void Add_Req(vcTransition* s) { _reqs.push_back(s); }
   void Set_Ack(vcTransition* p) { _ack = p; }
   void Set_Done(vcTransition* p) { _done = p; }
-  void Set_Enable(vcTransition* p) { _enable = p; }
+ 
+  void Set_Place_Capacity(int n) {_place_capacity = n;}
+  int Get_Place_Capacity() {return(_place_capacity);}
 
   int Get_Number_Of_Selects() { return(_selects.size()); }
   vcTransition* Get_Select(int idx) 
@@ -482,11 +490,11 @@ public:
       return(NULL);
   }
 
-  int Get_Number_Of_Reenables() { return(_reenables.size()); }
-  vcTransition* Get_Reenable(int idx) 
+  int Get_Number_Of_Enables() { return(_enables.size()); }
+  vcTransition* Get_Enable(int idx) 
   { 
-    if((idx >= 0) && (idx < _reenables.size()))
-      return(_reenables[idx]);
+    if((idx >= 0) && (idx < _enables.size()))
+      return(_enables[idx]);
     else
       return(NULL);
   }
@@ -561,8 +569,28 @@ public:
   void Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back, string exit_from_loop);
 
 
-  // all except condition-done, loop-back and loop-taken
+  //
+  // all except the following:
+  // do_while_stmt_4__exit__
+  // loop_back
+  // condition_done
+  // loop_body_done
+  // do_while_stmt_4_loop_body
+  // loop_exit
+  // loop_taken
+  // $entry
+  //
   virtual int Number_Of_Elements_Reachable_From_Entry()
+  {
+	return(this->Get_Number_Of_Elements() + 2 - 8);
+  }
+
+  //
+  // all except the following
+  // do_while_stmt_4__entry__
+  // loop_back
+  //
+  virtual int Number_Of_Elements_That_Can_Reach_Exit()
   {
 	return(this->Get_Number_Of_Elements() + 2 - 3);
   }
@@ -645,7 +673,7 @@ public:
   void Add_Exported_Output(string internal_id);
   void Add_Export(string internal_id, bool input_flag);
 
-  void Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& ack, string& enable, vector<string>& reqs, string& done);
+  void Add_Phi_Sequencer(vector<string>& selects, vector<string>& enables, string& ack, vector<string>& reqs, string& done);
   void Add_Transition_Merge(string& tm_id, vector<string>& in_transition, string& out_transition);
 
   // for a pipelined loop block some of the elements are not reachable from
@@ -653,7 +681,7 @@ public:
   // and for each phi statement, there are two places which are not reachable. 
   virtual int Number_Of_Elements_Reachable_From_Entry()
   {
-	return(this->Get_Number_Of_Elements()+2 - (3 + (2*_phi_sequencers.size())));
+	return(this->Get_Number_Of_Elements()+2 - (3 + (4*_phi_sequencers.size())));
   }
   void Set_Max_Iterations_In_Flight(int N) {_max_iterations_in_flight = N;}
   int Get_Max_Iterations_In_Flight() {return(_max_iterations_in_flight);}

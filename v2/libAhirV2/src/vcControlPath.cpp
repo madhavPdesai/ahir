@@ -301,7 +301,7 @@ void vcCPElement::Get_Explicit_Successors(vector<vcCPElement*>& esuccs)
 			implicit_flag = true;
 
 		if(!implicit_flag)
-			esuccs.push_back(_predecessors[idx]);
+			esuccs.push_back(_successors[idx]);
 
 	}
 	return;
@@ -599,9 +599,18 @@ void vcTransition::Print_VHDL(ostream& ofile)
 	max_iterations_in_flight = ((vcCPPipelinedLoopBody*)this->Get_Parent())->Get_Max_Iterations_In_Flight();
 
 
-  if(parent_is_pipelined_loop_body ? (explicit_preds.size() > 0) : (explicit_preds.size() > 1)) 
-	// if pipelined, then even if there is one predecessor, it is a join.
-	// otherwise, we need two to make a join.
+  // It is a true join if
+  //   it has more than one explicit predecessor.
+  //   OR
+  //   the parent is pipelined and it either has more
+  //   than one explicit predecessor or it has at least
+  //   one explicit predecessor and at least one marked
+  //   predecessor.
+  bool is_true_join = (parent_is_pipelined_loop_body ? 
+			((explicit_preds.size() > 1) || 
+				((explicit_preds.size() > 0) && (_marked_predecessors.size() > 0))) :
+			(explicit_preds.size() > 1));
+  if(is_true_join)
     {
       bool marked_join_flag = false;
       block_was_used = true;
@@ -641,7 +650,8 @@ void vcTransition::Print_VHDL(ostream& ofile)
           if(marked_join_flag)
 		comp_id = "marked_join_with_input";
 	  ofile << this->Get_VHDL_Id() << "_join: " << comp_id << "  -- {" << endl
-		<< "generic map(place_capacity => " << max_iterations_in_flight << ")" << endl
+		<< "generic map(place_capacity => " << max_iterations_in_flight << "," << endl
+		<< "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl
 		<< "port map( -- {"
 		<< "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl;
           if(marked_join_flag)
@@ -657,7 +667,8 @@ void vcTransition::Print_VHDL(ostream& ofile)
           if(marked_join_flag)
 		comp_id = "marked_join";
 	  ofile << this->Get_VHDL_Id() << "_join:" << comp_id << " -- {" << endl
-		<< "generic map(place_capacity => " << max_iterations_in_flight << ")" << endl
+		<< "generic map(place_capacity => " << max_iterations_in_flight << "," << endl
+		<< "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl
 		<< "port map( -- {"
 		<< "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl;
           if(marked_join_flag)
@@ -668,6 +679,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
 	}
     }
   else if(explicit_preds.size() == 1)
+    // at least one real predecessor..
     {
       // if only one predecessor, then direct connection from predecessors(0).
       if(!this->_is_input)
@@ -1096,6 +1108,11 @@ void vcCPBlock::Print_Missing_Elements(set<vcCPElement*>& visited_set)
       if(visited_set.find(_elements[idx]) == visited_set.end())
 	cerr << "\t" << _elements[idx]->Get_Id() << endl;
     }
+  if(visited_set.find(_entry) == visited_set.end())
+    cerr << "\t" << _entry->Get_Id() << endl;
+  if(visited_set.find(_exit) == visited_set.end())
+    cerr << "\t" << _exit->Get_Id() << endl;
+  
 }
 
 void vcCPBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* cp) {assert(0);}
@@ -1376,7 +1393,7 @@ bool vcCPBranchBlock::Check_Structure()
       cycle_flag = false;
       visited_set.clear();
       this->BFS_Order(true, this->_exit, num_visited, reachable_elements,visited_set);
-      if(num_visited != (this->_elements.size() + 2))
+      if(num_visited != this->Number_Of_Elements_That_Can_Reach_Exit())
 	{
 	  vcSystem::Warning("region exit not reachable from some elements in branch region " + this->Get_Hierarchical_Id());
 	  this->Print_Missing_Elements(visited_set);
@@ -1422,7 +1439,7 @@ void vcCPBranchBlock::Update_Predecessor_Successor_Links()
 
 vcPhiSequencer::vcPhiSequencer(vcCPElement* prnt, string id): vcCPElement(prnt,id)
 {
-	_enable = NULL;
+	_place_capacity = 1;
 	_done   = NULL;
 	_ack    = NULL;
 }
@@ -1437,20 +1454,16 @@ void vcPhiSequencer::Print(ostream& ofile)
     }
 
   ofile << vcLexerKeywords[__COLON] << " : ";
-  // reenables.
-  for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
+  // enables.
+  for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
     {
-      ofile << _selects[idx]->Get_Label() << " ";
+      ofile << _enables[idx]->Get_Label() << " ";
     }
 
   ofile << vcLexerKeywords[__COLON] << " : ";
   // ack
   ofile << _ack->Get_Label() << " ";
 
-
-  ofile << vcLexerKeywords[__COLON] << " : ";
-  // enable
-  ofile << _enable->Get_Label() << " ";
 
   ofile << vcLexerKeywords[__RPAREN] << " ";
 
@@ -1472,7 +1485,7 @@ void vcPhiSequencer::Print_VHDL(vcControlPath* cp, ostream& ofile)
 {
   ofile << this->Get_VHDL_Id() << "_block : block -- { " << endl;
   ofile << "signal reqs, selects : BooleanArray(0 to " << _reqs.size()-1 << ");" << endl;
-  ofile << "signal reenables : BooleanArray(0 to " << _reenables.size()-1 << "); -- }" << endl;
+  ofile << "signal enables : BooleanArray(0 to " << _enables.size()-1 << "); -- }" << endl;
   ofile << "begin -- { " << endl;
   for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
     {
@@ -1481,16 +1494,15 @@ void vcPhiSequencer::Print_VHDL(vcControlPath* cp, ostream& ofile)
       ofile << _reqs[idx]->Get_Exit_Symbol(cp) << " <= reqs(" << idx << ");" << endl;
     }
 
-  for(int idx = 0, fidx = _reenables.size(); idx < fidx; idx++)
+  for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
     {
-      string sig_id = _reenables[idx]->Get_Exit_Symbol(cp);
-      ofile << "reenables(" << idx << ")  <= " << sig_id << ";" << endl;
+      string sig_id = _enables[idx]->Get_Exit_Symbol(cp);
+      ofile << "enables(" << idx << ")  <= " << sig_id << ";" << endl;
     }
 
   ofile << this->Get_VHDL_Id() << " : phi_sequencer -- { " << endl;;
-  ofile << "generic map (nreqs => " << _reqs.size() << ", nreenables => "  << _reenables.size() << ") " << endl;
-  ofile << "port map (selects => selects, reqs => reqs, reenables => reenables, ack => " << _ack->Get_Exit_Symbol(cp) 
-	<< ", enable => " << _enable->Get_Exit_Symbol(cp)
+  ofile << "generic map (place_capacity => " << _place_capacity << ", nreqs => " << _reqs.size() << ", nenables => "  << _enables.size() << ") " << endl;
+  ofile << "port map (selects => selects, reqs => reqs, enables => enables, ack => " << _ack->Get_Exit_Symbol(cp) 
 	<< ", done => " << _done->Get_Exit_Symbol(cp) << ", clk => clk, reset => reset);" << endl;
   ofile << " -- } } " << endl;
   ofile << "end block;" << endl;
@@ -1505,7 +1517,7 @@ void vcPhiSequencer::Update_Predecessor_Successor_Links()
   for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
   {
      vcTransition* s = _selects[idx];
-     s->Add_Successor(_done);
+     s->Add_Successor(_ack);
      _done->Add_Predecessor(s);
 
      for(int jdx = 0, fjdx = _reqs.size(); jdx < fjdx; jdx++)
@@ -1516,12 +1528,12 @@ void vcPhiSequencer::Update_Predecessor_Successor_Links()
      }
   }
 
-  // reenables -> reqs,
-  for(int idx = 0, fidx = _reenables.size(); idx < fidx; idx++)
+  // enables -> reqs,
+  for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
   {
-     vcTransition* s = _reenables[idx];
-     s->Add_Successor(_done);
-     _done->Add_Predecessor(s);
+     vcTransition* s = _enables[idx];
+     s->Add_Successor(_ack);
+     _ack->Add_Predecessor(s);
 
      for(int jdx = 0, fjdx = _reqs.size(); jdx < fjdx; jdx++)
      {
@@ -1531,27 +1543,11 @@ void vcPhiSequencer::Update_Predecessor_Successor_Links()
      }
   }
 
-  //  enable -> reqs,
-  for(int jdx = 0, fjdx = _reqs.size(); jdx < fjdx; jdx++)
-  {
-     vcTransition* r = _reqs[jdx];
+  // reqs -> acks links are omitted.
 
-     _enable->Add_Successor(r);
-     r->Add_Predecessor(_enable);
-
-     //
-     // these are redundant... but strictly speaking
-     // they should be present.. TBD
-     //
-     // r->Add_Successor(_ack);
-     // _ack->Add_Predecessor(r);
-
-  }
-  
   // ack -> done
   _ack->Add_Successor(_done);
   _done->Add_Predecessor(_ack);
-
 }
 
 
@@ -2303,6 +2299,8 @@ void vcCPForkBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label,
 
 void vcCPForkBlock::Update_Predecessor_Successor_Links()
 {
+  this->vcCPBlock::Update_Predecessor_Successor_Links();
+
   // those that were not covered by explicit fork/join declarations
   vector<vcCPElement*> unforked_elements;
   vector<vcCPElement*> unjoined_elements;
@@ -2369,7 +2367,6 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
       this->Add_Fork_Point(this->_entry, this->_exit);
     }
 
-  this->vcCPBlock::Update_Predecessor_Successor_Links();
 }
 
 
@@ -2582,8 +2579,8 @@ void vcCPPipelinedLoopBody::Print_VHDL(ostream& ofile)
   ofile << "-- }" << endl << "end Block; -- " << id << endl;
 }
 
-void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<string>& reenables, string& ack,
-					      string& enable, vector<string>& reqs, string& done)
+void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<string>& enables, string& ack,
+					       vector<string>& reqs, string& done)
 {
 	string phi_id = "phi_seq_" + IntToStr(_phi_sequencers.size());
 
@@ -2595,6 +2592,7 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<st
 
 
 	vcPhiSequencer* new_phi_seq = new vcPhiSequencer(this, phi_id);
+        new_phi_seq->Set_Place_Capacity(this->Get_Max_Iterations_In_Flight());
 
 	// add selects.
 	for(int idx = 0, fidx = selects.size(); idx < fidx; idx++)
@@ -2623,17 +2621,17 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<st
 		
 	}
 
-	// add reenables.
-	for(int idx = 0, fidx = reenables.size(); idx < fidx; idx++)
+	// add enables.
+	for(int idx = 0, fidx = enables.size(); idx < fidx; idx++)
 	{
-		vcCPElement* rte = this->Find_CPElement(reenables[idx]);
+		vcCPElement* rte = this->Find_CPElement(enables[idx]);
 		if((rte == NULL) || (!rte->Is_Transition()))
 		{
-			vcSystem::Error("Reenable " + reenables[idx] + " transition not found in " + this->Get_Id());
+			vcSystem::Error("Enable " + enables[idx] + " transition not found in " + this->Get_Id());
 			delete new_phi_seq;
 			return;
 		}
-		new_phi_seq->Add_Reenable((vcTransition*) rte);
+		new_phi_seq->Add_Enable((vcTransition*) rte);
 	        ((vcTransition*) rte)->Set_Is_Bound_As_Input_To_CP_Function(true);
                 rte->Set_Associated_CP_Function(new_phi_seq);
 	}
@@ -2661,19 +2659,6 @@ void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<st
 	new_phi_seq->Set_Done((vcTransition*) dte);
 	((vcTransition*) dte)->Set_Is_Bound_As_Output_From_CP_Function(true);
         dte->Set_Associated_CP_Function(new_phi_seq);
-
-	// set enable.
-	vcCPElement* ete = this->Find_CPElement(enable);
-	if((ete == NULL) || (!ete->Is_Transition()))
-	{
-		vcSystem::Error("Enable " + enable + " transition not found in " + this->Get_Id());
-		delete new_phi_seq;
-		return;
-	}
-	new_phi_seq->Set_Enable((vcTransition*) ete);
-	((vcTransition*) ete)->Set_Is_Bound_As_Input_To_CP_Function(true);
-        ete->Set_Associated_CP_Function(new_phi_seq);
-
 
 	_phi_sequencers.push_back(new_phi_seq);
 }

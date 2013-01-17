@@ -4,9 +4,10 @@ library ahir;
 use ahir.Types.all;
 use ahir.subprograms.all;
 use ahir.BaseComponents.all;
+use ahir.utilities.all;
 
 entity join is
-  generic (place_capacity : integer := 1);
+  generic (place_capacity : integer := 1; name : string := "anon");
   port ( preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -26,7 +27,10 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => place_capacity, marking => 0)
+	pI: place 
+		generic map(capacity => place_capacity, 
+				marking => 0,
+				name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;

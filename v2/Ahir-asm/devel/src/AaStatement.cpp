@@ -4271,12 +4271,12 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 
 
   //    merges.
-  ofile << entry_place_name << " <-| ($entry loop_back)" << endl;
+  ofile << entry_place_name << " <-| ($entry)" << endl;
   ofile << "loop_body_done <-| ( " << vc_loop_body_id << " ) " << endl;
 
   // branches.
   ofile << "condition_done |-> (loop_exit loop_taken)" << endl;
-  ofile << entry_place_name << " |-> ( " << vc_loop_body_id<< " ) " << endl;
+  // ofile << entry_place_name << " |-> ( " << vc_loop_body_id<< " ) " << endl;
   ofile << exit_place_name << " |-> ($exit)" << endl;
 
   //    the binding of the condition_done to the test expression completion.

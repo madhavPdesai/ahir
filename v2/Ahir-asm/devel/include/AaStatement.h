@@ -1046,11 +1046,11 @@ class AaPhiStatement: public AaStatement
 
   virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
   {
-    return(this->Get_VC_Name() + "_reenable_");
+    return(this->Get_VC_Name() + "_enable_");
   }
   virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
   {
-    return(this->Get_VC_Name() + "_reenable_");
+    return(this->Get_VC_Name() + "_enable_");
   }
   friend class AaMergeStatement;
 };

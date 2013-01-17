@@ -8,9 +8,24 @@ $is
     $do 
     $merge $entry $loopback 
     $phi I := 			  ($bitcast ($uint<32>) 0  ) $on $entry			  NI $on $loopback // type of target is $uint<32>
-    $phi R := 			  0  $on $entry			  R1 $on $loopback // type of target is $uint<32>
+    $phi R := 			  0  $on $entry			  R4 $on $loopback // type of target is $uint<32>
     $endmerge
     R1 := (R + 1 )
+    // target-type =   $uint<32>
+    // target-memory-space =  none
+    // source-type = $uint<32>
+    // source-memory-space =  none
+    R2 := (R1 + 1 )
+    // target-type =   $uint<32>
+    // target-memory-space =  none
+    // source-type = $uint<32>
+    // source-memory-space =  none
+    R3 := (R2 + 1 )
+    // target-type =   $uint<32>
+    // target-memory-space =  none
+    // source-type = $uint<32>
+    // source-memory-space =  none
+    R4 := (R3 + 1 )
     // target-type =   $uint<32>
     // target-memory-space =  none
     // source-type = $uint<32>
@@ -22,7 +37,7 @@ $is
     // source-memory-space =  none
     $while (NI < 10 )
   }
-  ( R1 => result )
+  ( R4 => result )
   c := result
   // target-type =   $uint<32>
   // target-memory-space =  none

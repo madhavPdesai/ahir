@@ -19,7 +19,9 @@ package BaseComponents is
   component place
     generic (
       capacity : integer := 1;
-      marking : integer := 0);
+      marking : integer := 0;
+      name : string := "anon");
+
     port (
       preds : in  BooleanArray;
       succs : in  BooleanArray;
@@ -68,7 +70,8 @@ package BaseComponents is
   end component;
 
   component join is
-     generic(place_capacity : integer := 1);
+     generic(place_capacity : integer := 1;
+      		name : string := "anon");
      port (preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -83,7 +86,8 @@ package BaseComponents is
   end component;
 
   component join_with_input is
-     generic(place_capacity : integer := 1);
+     generic(place_capacity : integer := 1;
+      		name : string := "anon");
      port (preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
@@ -114,7 +118,8 @@ package BaseComponents is
   
 
   component marked_join is
-     generic(place_capacity : integer := 1);
+     generic(place_capacity : integer := 1;
+      		name : string := "anon");
      port (preds      : in   BooleanArray;
            marked_preds      : in   BooleanArray;
            symbol_out : out  boolean;
@@ -123,7 +128,8 @@ package BaseComponents is
   end component;
 
   component marked_join_with_input is
-     generic(place_capacity : integer := 1);
+     generic(place_capacity : integer := 1;
+      		name : string := "anon");
      port (preds      : in   BooleanArray;
            marked_preds      : in   BooleanArray;
            symbol_in : in boolean;
@@ -133,13 +139,12 @@ package BaseComponents is
   end component;
 
   component phi_sequencer
-    generic (nreqs : integer; nreenables : integer);
+    generic (place_capacity: integer; nreqs : integer; nenables : integer; name : string := "anonPhiSequencer");
     port (
       selects : in BooleanArray(0 to nreqs-1); -- one out of nreqs..
       reqs : out BooleanArray(0 to nreqs-1); -- one out of nreqs
       ack  : in Boolean;
-      enable  : in Boolean; 
-      reenables: in BooleanArray(0 to nreenables-1);   -- all need to arrive to reenable
+      enables: in BooleanArray(0 to nenables-1);   -- all need to arrive to reenable
       done : out Boolean;
       clk, reset: in std_logic);
   end component;

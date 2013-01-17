@@ -56,7 +56,8 @@ begin  -- Behave
   -- places to remember loop-continue, loop-terminate, loop-body-exit
   lc_place : place generic map (
     capacity => 1,
-    marking  => 0)
+    marking  => 0,
+    name => "loop_terminator:lc_place")
     port map (
       preds => lc_place_preds,
       succs => lc_place_succs,
@@ -68,7 +69,8 @@ begin  -- Behave
 
   lt_place : place generic map (
     capacity => 1,
-    marking  => 0)
+    marking  => 0,
+    name => "loop_terminator:lt_place")
     port map (
       preds => lt_place_preds,
       succs => lt_place_succs,
@@ -81,7 +83,8 @@ begin  -- Behave
 
   lbe_place : place generic map (
     capacity => 1,
-    marking  => 0)
+    marking  => 0,
+    name => "loop_terminator:lbe_place")
     port map (
       preds => lbe_place_preds,
       succs => lbe_place_succs,
@@ -98,47 +101,49 @@ begin  -- Behave
   --   clear_lc_place, clear_lt_place, clear_lbe_place, loop_back,
   --   loop_exit, available_iterations.
   --   
-  process(clk, reset)
+  process(clk, reset,lc_place_token,lt_place_token,lbe_place_token,available_iterations)
     variable next_available_iterations : integer range 0 to max_iterations_in_flight;
     variable incr,decr,rst : boolean;
   begin
+    -- all outputs are deasserted by default.
+    loop_back <= false;
+    loop_exit <= false;
+    clear_lc_place <= false;
+    clear_lt_place <= false;
+    clear_lbe_place <= false;
+    
+    -- incr, decr, rst are used to manage count.
+    incr := false;
+    decr := false;
+    if(reset = '1') then
+      rst := true;
+    else
+      rst := false;
+    end if;
+
+    -- lbe always increments counter.
+    if(lbe_place_token) then
+      incr := true;
+      clear_lbe_place <= true;
+    end if;
+
+    -- loop-continue? emit loop-back if count > 0..
+    -- and decrement count, clear lc place.      
+    if(lc_place_token and (available_iterations > 0)) then
+      decr := true;
+      loop_back <= true;
+      clear_lc_place <= true;
+    end if;
+
+    -- loop-terminate? check if count = M, and emit loop_exit, reset counter.
+    if(lt_place_token and (available_iterations = max_iterations_in_flight)) then
+      rst := true;
+      loop_exit <= true;
+      clear_lt_place <= true;          
+    end if;
+
+
     if(clk'event and clk = '1') then
-      -- all outputs are deasserted by default.
-      loop_back <= false;
-      loop_exit <= false;
-      clear_lc_place <= false;
-      clear_lt_place <= false;
-      clear_lbe_place <= false;
-
-      -- incr, decr, rst are used to manage count.
-      incr := false;
-      decr := false;
-      if(reset = '1') then
-        rst := true;
-      else
-        rst := false;
-      end if;
-
-      -- lbe always increments counter.
-      if(lbe_place_token) then
-        incr := true;
-        clear_lbe_place <= true;
-      end if;
-
-      -- loop-continue? emit loop-back if count > 0..
-      -- and decrement count, clear lc place.      
-      if(lc_place_token and (available_iterations > 0)) then
-        decr := true;
-        loop_back <= true;
-        clear_lc_place <= true;
-      end if;
-
-      -- loop-terminate? check if count = M, and emit loop_exit, reset counter.
-      if(lt_place_token and (available_iterations = max_iterations_in_flight)) then
-        rst := true;
-        loop_exit <= true;
-        clear_lt_place <= true;          
-      end if;
 
       -- manage count.
       if(rst) then

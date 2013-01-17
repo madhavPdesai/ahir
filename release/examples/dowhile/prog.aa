@@ -6,13 +6,16 @@ $module [asum] $in() $out (c: $uint<32> ) $is
 		$do
 			$merge $entry $loopback
 			$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
-			$phi R := 0 $on $entry R1 $on $loopback
+			$phi R := 0 $on $entry R4 $on $loopback
 			$endmerge
 			R1 := (R + 1)
+			R2 := (R1 + 1)
+			R3 := (R2 + 1)
+			R4 := (R3 + 1)
 			NI := (I+1)
 		$while (NI < 10)
 
-	} (R1 => result)
+	} (R4 => result)
 
 	c := result
 }

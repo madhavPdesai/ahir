@@ -4,12 +4,14 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;
+use ahir.Utilities.all;
 
 entity place is
 
   generic (
     capacity: integer := 1;
-    marking : integer := 0
+    marking : integer := 0;
+    name   : string := "anon"
     );
   port (
     preds : in  BooleanArray;
@@ -29,8 +31,8 @@ architecture default_arch of place is
   
 begin  -- default_arch
 
-  assert capacity > 0 report "place must have capacity > 1" severity error;
-  assert marking <= capacity report "initial marking must be less than place capacity" severity error;
+  assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;
+  assert marking <= capacity report "in place " & name & ": initial marking must be less than place capacity." severity error;
 
   -- At most one of the preds can send a pulse.
   -- We detect it with an OR over all inputs
@@ -48,11 +50,17 @@ begin  -- default_arch
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
       elsif (backward_reset and (not incoming_token)) then
-        assert token_latch > 0 report "number of tokens cannot become negative!" severity error;
+        assert token_latch > 0 report "in place " & name &  ": number of tokens cannot become negative!" severity error;
         token_latch <= token_latch - 1;
+        assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+		severity note;
       elsif (incoming_token and (not backward_reset)) then
-        assert token_latch < capacity report "number of tokens cannot exceed capacity" severity error;
+        assert token_latch < capacity report "in place " & name & " number of tokens "
+			& Convert_To_String(token_latch+1) & " cannot exceed capacity " 
+			& Convert_To_String(capacity) severity error;
         token_latch <= token_latch + 1;
+        assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+		severity note;
       end if;
     end if;
   end process latch_token;

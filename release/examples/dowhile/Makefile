@@ -9,7 +9,7 @@ all: HW
 
 
 # steps from Aa to vhdl simulator.
-HW: aa2vc vc2vhdl vhdlsim
+HW: aa2vc vc2vhdl  vhdlsim
 
 # Aa to vC
 aa2vc: prog.aa
@@ -18,7 +18,7 @@ aa2vc: prog.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl  -a -C -e ahir_system -w -s ghdl -t asum -f prog.vc
+	vc2vhdl -O -a -C -e ahir_system -w -s ghdl -t asum -f prog.vc
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl

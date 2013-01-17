@@ -697,10 +697,17 @@ void AaSimpleObjectReference::Write_VC_Control_Path( ostream& ofile)
     }
 }
 
+
+// return the name of the transition which triggers the update of
+// this expression's value.
 string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
 {
   if(this->Is_Constant())
-    return("$entry");
+  {
+    // in this case, there is no such transition which fits the bill.
+    // return null
+    return("$null");
+  }
   else 
     // either it is an access to a storage object, pipe,
     // implicit variable or interface object.
@@ -730,7 +737,7 @@ string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoo
 	  if((root != NULL) && (visited_elements.find(root) != visited_elements.end()))
 	    return(root->Get_VC_Reenable_Update_Transition_Name(visited_elements));
 	  else
-	    return("$entry");
+	    return("$null");
 	}
 
       if(this->Is_Implicit_Variable_Reference())
@@ -741,7 +748,11 @@ string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoo
 	      return(root->Get_VC_Reenable_Update_Transition_Name(visited_elements));
 	    }
 	  else
-	    return("$entry");
+            {
+		// the expression/statement which sets the value of this implicit variable
+		// is not found in the visited elements.  Return the start transition.
+		return(this->Get_VC_Start_Transition_Name());
+            }
 	}
 
       // you should never get here.
@@ -749,10 +760,15 @@ string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoo
     }
 }
 
+// return the name of the transition which triggers the sampling of
+// this expression's inputs.
 string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
 {
  if(this->Is_Constant())
-    return("$entry");
+  {
+    // if it is a constant, there is no such transition.
+    return("$null");
+  }
   else 
     // either it is an access to a storage object, pipe,
     // implicit variable or interface object.
@@ -782,7 +798,7 @@ string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoo
 	  if((root != NULL) && (visited_elements.find(root) != visited_elements.end()))
 	    return(root->Get_VC_Reenable_Sample_Transition_Name(visited_elements));
 	  else
-	    return("$entry");
+	    return("$null");
 	}
 
       if(this->Is_Implicit_Variable_Reference())
@@ -793,7 +809,11 @@ string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoo
 	      return(root->Get_VC_Reenable_Sample_Transition_Name(visited_elements));
 	    }
 	  else
-	    return("$entry");
+	    {
+		// the expression/statement which sets the value of this implicit variable
+		// is not found in the visited elements.  Return the start transition.
+		return(this->Get_VC_Start_Transition_Name());
+	    }
 	}
 
       // you should never get here.

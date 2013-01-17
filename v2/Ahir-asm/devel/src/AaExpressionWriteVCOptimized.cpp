@@ -53,6 +53,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
   AaStatement* pstmt = this->Get_Associated_Statement();
   assert(pstmt != NULL); // this is always a target..  so statement completion should retrigger read.
 
+  // the transition that triggers the write.
   string write_trigger_transition_name;
   if(pstmt->Is("AaAssignmentStatement"))
 	write_trigger_transition_name = ((AaAssignmentStatement*) pstmt)->Get_Source()->Get_VC_Start_Transition_Name();
