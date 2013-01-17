@@ -20,5 +20,8 @@ int main(int argc, char* argv[])
 	uint32_t result = asum();	
 	fprintf(stdout,"result = %d.\n", result);
 
+	result = asum();	
+	fprintf(stdout,"result = %d.\n", result);
+
 	return(0);
 }

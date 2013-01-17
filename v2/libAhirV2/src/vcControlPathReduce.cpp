@@ -127,16 +127,14 @@ bool vcCPElementGroup::Can_Absorb(vcCPElementGroup* g)
 	ret_val = false;
   else if(this->_is_bound_as_input_to_cp_function)
     ret_val = false;
-  else if(this->_is_bound_as_output_from_region)
-    ret_val = false;
-  else if(g->_is_bound_as_output_from_region)
-    ret_val = false;
-  else if(this->_is_bound_as_output_from_region)
+  //else if(this->_is_bound_as_output_from_region)
+    //ret_val = false;
+  else if(g->_is_bound_as_output_from_cp_function)
     ret_val = false;
   else if(g->_has_input_transition)
     ret_val = false;
-  else if(g->_marked_predecessors.size() > 0)
-    ret_val = false;
+  //else if(g->_marked_predecessors.size() > 0)
+    //ret_val = false;
   else if(this->_pipeline_parent != g->_pipeline_parent)
     ret_val = false;
   else
@@ -665,8 +663,10 @@ void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole
 
       // connect whole to iter..
       if(this->_cpelement_groups.find(*iter) != this->_cpelement_groups.end())
-	this->Connect_Groups(whole,(*iter), true);
-
+      {
+	if(whole != (*iter)) // avoid self loops since they are redundant.
+		this->Connect_Groups(whole,(*iter), true);
+      }
     }
 
   // move marked predecessors of part to whole.
@@ -680,7 +680,10 @@ void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole
 
       // connect iter to whole..
       if(this->_cpelement_groups.find(*iter) != this->_cpelement_groups.end())
-	this->Connect_Groups((*iter), whole, true);
+      {
+	if(whole != (*iter)) // avoid self loops since they are redundant.
+		this->Connect_Groups((*iter), whole, true);
+      }
     }
 
 

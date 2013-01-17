@@ -279,7 +279,9 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 		  __MJ(root->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
 		       this->Get_VC_Completed_Transition_Name());
 
-		  __SelfRelease
+		  // this is totally superfluous, since the S -> A -> C
+		  // chain is trivial.
+		  //__SelfRelease
 		}	      
 	    }
 	}
@@ -302,6 +304,8 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 
 	  if(pipeline_flag)
 	    {
+	      // may make some sense to have this until we 
+	      // understand it better.
 	      __SelfRelease
 	    }
 	}
@@ -333,7 +337,9 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 
 	  if(pipeline_flag)
 	    {
-	      __SelfRelease
+	      // a reenable is needed only from complete to active.
+	      // __SelfRelease
+	      __MJ(this->Get_VC_Active_Transition_Name(), this->Get_VC_Completed_Transition_Name());
 	    }
 	}
 
@@ -405,7 +411,9 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
       //       separately.
       if(pipeline_flag)
 	{
-	  __SelfRelease
+	  // only a reenable back from active to start is needed.
+	  //__SelfRelease
+	  __MJ(this->Get_VC_Start_Transition_Name(), this->Get_VC_Active_Transition_Name());
 	}
     }
 
@@ -1365,7 +1373,9 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
       if(this->_if_false && !this->_if_false->Is_Constant())
 	__MJ(this->_if_false->Get_VC_Reenable_Update_Transition_Name(visited_elements), this->Get_VC_Active_Transition_Name());
 
-      __SelfRelease
+      // a reenable is needed only from active to start.
+      // __SelfRelease
+      __MJ(this->Get_VC_Start_Transition_Name(), this->Get_VC_Active_Transition_Name());
     }
 }
 
