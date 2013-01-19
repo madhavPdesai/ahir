@@ -551,7 +551,8 @@ class AaObjectReference: public AaExpression
 								map<string,vector<AaExpression*> >& pipe_map,
 								vector<AaExpression*>* indices,
 								vector<int>* scale_factors,
-					    vector<int>* shift_factors,
+					    			vector<int>* shift_factors,
+								set<string>& reenable_points,
 								ostream& ofile);
   void Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 							 vector<AaExpression*>* indices,

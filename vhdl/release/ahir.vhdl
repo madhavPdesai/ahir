@@ -1780,6 +1780,20 @@ package BaseComponents is
       reset : in  std_logic); 
   end component;
 
+  component place_with_bypass
+    generic (
+      capacity : integer := 1;
+      marking : integer := 0;
+      name : string := "anon");
+
+    port (
+      preds : in  BooleanArray;
+      succs : in  BooleanArray;
+      token : out boolean;
+      clk   : in  std_logic;
+      reset : in  std_logic); 
+  end component;
+
   component transition
     port (
       preds      : in BooleanArray;
@@ -8509,6 +8523,7 @@ architecture default_arch of join is
   signal place_sigs: BooleanArray(preds'range);
   constant H: integer := preds'high;
   constant L: integer := preds'low;
+  constant BYP: boolean := (preds'length = 1);
 
 begin  -- default_arch
   
@@ -8517,11 +8532,23 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place 
+
+      bypassgen: if (BYP) generate
+	pI: place_with_bypass
 		generic map(capacity => place_capacity, 
 				marking => 0,
 				name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+      end generate bypassgen;
+
+      nobypassgen: if (not BYP) generate
+	pI: place
+		generic map(capacity => place_capacity, 
+				marking => 0,
+				name => name & ":" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+      end generate nobypassgen;
+
     end block;
   end generate placegen;
   -- The transition is enabled only when all preds are true.
@@ -8828,6 +8855,7 @@ architecture default_arch of marked_join is
 
   constant MH: integer := marked_preds'high;
   constant ML: integer := marked_preds'low;  
+  constant BYP: boolean := (preds'length = 1);
 
 begin  -- default_arch
   
@@ -8836,10 +8864,21 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => place_capacity, 
+      bypassgen: if (BYP) generate
+	pI: place_with_bypass
+		generic map(capacity => place_capacity, 
 				marking => 0,
 				name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+      end generate bypassgen;
+
+      nobypassgen: if (not BYP) generate
+	pI: place
+		generic map(capacity => place_capacity, 
+				marking => 0,
+				name => name & ":" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+      end generate nobypassgen;
     end block;
   end generate placegen;
 
@@ -9139,6 +9178,92 @@ begin  -- default_arch
   end process latch_token;
 
   token <= true when (token_latch > 0) else false;
+
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+
+entity place_with_bypass is
+
+  generic (
+    capacity: integer := 1;
+    marking : integer := 0;
+    name   : string := "anonPlaceWithBypass"
+    );
+  port (
+    preds : in  BooleanArray;
+    succs : in  BooleanArray;
+    token : out boolean;
+    clk   : in  std_logic;
+    reset : in  std_logic);
+
+end place_with_bypass;
+
+architecture default_arch of place_with_bypass is
+
+  signal incoming_token : boolean;      -- true if a pred fires
+  signal backward_reset : boolean;      -- true if a succ fires
+  signal token_latch    : integer range 0 to capacity;
+  signal non_zero       : boolean;
+  
+begin  -- default_arch
+
+  assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;
+  assert marking <= capacity report "in place " & name & ": initial marking must be less than place capacity." severity error;
+
+  -- At most one of the preds can send a pulse.
+  -- We detect it with an OR over all inputs
+  incoming_token <= OrReduce(preds);
+
+  -- At most one of the succs can send a pulse.
+  -- We detect it with an OR over all inputs
+  backward_reset <= OrReduce(succs);
+
+
+  non_zero <= (token_latch > 0);
+
+  latch_token : process (clk, reset,incoming_token, backward_reset, token_latch, non_zero)
+	variable incr, decr: boolean;
+  begin
+    
+
+ 
+
+    incr := incoming_token and (not backward_reset);
+    decr := backward_reset and (not incoming_token);
+    
+
+    if clk'event and clk = '1' then  -- rising clock edge
+      if reset = '1' then            -- asynchronous reset (active high)
+        token_latch <= marking;
+      elsif decr then
+        token_latch <= token_latch - 1;
+        assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+		severity note;
+      elsif incr then
+        token_latch <= token_latch + 1;
+        assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+		severity note;
+      end if;
+
+      if((token_latch = (capacity - 1)) and incoming_token and (not backward_reset)) then
+        assert false report "in place-with-bypass: " & name & " number of tokens "
+			& Convert_To_String(token_latch+1) & " cannot exceed capacity " 
+			& Convert_To_String(capacity) severity error;
+      end if;
+      if((not non_zero) and backward_reset and (not incoming_token)) then
+        assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
+      end if;
+
+    end if;
+  end process latch_token;
+
+  token <= incoming_token or non_zero;
 
 end default_arch;
 library ahir;

@@ -121,7 +121,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 							 ls_map,pipe_map,
 							 ofile);
 	  
-	  __J(this->Get_VC_Active_Transition_Name(), _source->Get_VC_Completed_Transition_Name());
+	  __J(this->Get_VC_Start_Transition_Name(), _source->Get_VC_Completed_Transition_Name());
 
 	  // pipeline flag?  statement should reenable source activation..
 	  if(pipeline_flag)
@@ -270,13 +270,13 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       if(!expr->Is_Constant())
 	{
 	  __J(call_trigger, expr->Get_VC_Completed_Transition_Name());
-	}
 
-      if(pipeline_flag)
-	{
-	  // expression evaluation will be reenabled by activation of the
-	  // call.
-	  __MJ(expr->Get_VC_Active_Transition_Name(), in_progress);
+      	  if(pipeline_flag)
+	  {
+	    // expression evaluation will be reenabled by activation of the
+	    // call.
+	    __MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), in_progress);
+	  }
 	}
 
     }
@@ -556,7 +556,7 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  condition_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
 							  visited_elements,
 							  load_store_ordering_map,pipe_map,ofile);
-	  __F(condition_expr->Get_VC_Completed_Transition_Name(), "$exit");
+	  __F(condition_expr->Get_VC_Completed_Transition_Name(), "$null");
 	}
 
 
@@ -1266,7 +1266,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   // instantiate reqs merger.
   ofile << "$transitionmerge [" << this->Get_VC_Name() << "_req_merger] (" 
 	<< phi_sequencer_reqs << ") (" << phi_sequencer_reqs_merged << ")" << endl;
-  __F(phi_sequencer_reqs_merged,"$exit");
+  __F(phi_sequencer_reqs_merged,"$null");
 
   // join to active.
   __J(this->Get_VC_Active_Transition_Name(), phi_sequencer_done);

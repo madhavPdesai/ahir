@@ -24,6 +24,7 @@ architecture default_arch of marked_join is
 
   constant MH: integer := marked_preds'high;
   constant ML: integer := marked_preds'low;  
+  constant BYP: boolean := (preds'length = 1);
 
 begin  -- default_arch
   
@@ -32,10 +33,21 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => place_capacity, 
+      bypassgen: if (BYP) generate
+	pI: place_with_bypass
+		generic map(capacity => place_capacity, 
 				marking => 0,
 				name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+      end generate bypassgen;
+
+      nobypassgen: if (not BYP) generate
+	pI: place
+		generic map(capacity => place_capacity, 
+				marking => 0,
+				name => name & ":" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+      end generate nobypassgen;
     end block;
   end generate placegen;
 

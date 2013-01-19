@@ -30,6 +30,20 @@ package BaseComponents is
       reset : in  std_logic); 
   end component;
 
+  component place_with_bypass
+    generic (
+      capacity : integer := 1;
+      marking : integer := 0;
+      name : string := "anon");
+
+    port (
+      preds : in  BooleanArray;
+      succs : in  BooleanArray;
+      token : out boolean;
+      clk   : in  std_logic;
+      reset : in  std_logic); 
+  end component;
+
   component transition
     port (
       preds      : in BooleanArray;

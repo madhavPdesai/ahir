@@ -275,9 +275,10 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 	      // pipeline case?
 	      if(pipeline_flag)
 		{
-		  // completion of this should enable re-update of root.
-		  __MJ(root->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
-		       this->Get_VC_Completed_Transition_Name());
+		  // since there is no sampling happening in this case, 
+		  // there is no need for a reenable.
+		  //__MJ(root->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
+		       //this->Get_VC_Completed_Transition_Name());
 
 		  // this is totally superfluous, since the S -> A -> C
 		  // chain is trivial.
@@ -560,6 +561,8 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 
 
+      string base_addr_calc_reenable;
+
       __T(this->Get_VC_Start_Transition_Name());
       __T(this->Get_VC_Active_Transition_Name());
       __T(this->Get_VC_Completed_Transition_Name());
@@ -585,7 +588,11 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	      // please load the object.
 	      this->_pointer_ref->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
 	      if(!this->_pointer_ref->Is_Constant())
+              {
 		__J(base_addr_calc, this->_pointer_ref->Get_VC_Completed_Transition_Name());
+		if(pipeline_flag)
+			base_addr_calc_reenable = this->_pointer_ref->Get_VC_Reenable_Update_Transition_Name(visited_elements);
+              }
 	      
 	    }
 	  else if(this->_object->Is_Expression())
@@ -596,6 +603,8 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		  if(visited_elements.find(root) != visited_elements.end())
 		    {
 		      __J(base_addr_calc, ((AaStatement*)root)->Get_VC_Completed_Transition_Name());
+		      if(pipeline_flag)
+			base_addr_calc_reenable = ((AaStatement*)root)->Get_VC_Reenable_Update_Transition_Name(visited_elements);
 		    }
 		}
 	    }
@@ -605,6 +614,8 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	      if(visited_elements.find(root) != visited_elements.end())
 		{
 		  __J(base_addr_calc, ((AaStatement*)root)->Get_VC_Completed_Transition_Name());
+		  if(pipeline_flag)
+			base_addr_calc_reenable = ((AaStatement*)root)->Get_VC_Reenable_Update_Transition_Name(visited_elements);
 		}	  
 	    }
 
@@ -612,11 +623,13 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 
 	  // this will link to complete region.
+	  set<string> active_reenable_points;
 	  this->Write_VC_Root_Address_Calculation_Control_Path_Optimized(pipeline_flag, visited_elements,
 									 ls_map,
 									 pipe_map,
 									 &_indices,
 									 &scale_factors, &shift_factors,
+									 active_reenable_points,
 									 ofile);
 
 
@@ -635,8 +648,13 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 	  if(pipeline_flag)
 	    {
-	      // completion of this will reenable the calculation of the base address.
-	      __MJ(base_addr_calc, this->Get_VC_Completed_Transition_Name());
+	        // completion of this will reenable the calculation of the base address.
+	        __MJ(base_addr_calc_reenable, this->Get_VC_Completed_Transition_Name());
+	       string ctrans = this->Get_VC_Completed_Transition_Name();
+	       Write_VC_Reenable_Joins(active_reenable_points,ctrans,ofile);
+	       active_reenable_points.clear();
+	       active_reenable_points.insert(this->Get_VC_Completed_Transition_Name());
+
 	      __SelfRelease
 	    }
 
@@ -675,7 +693,8 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  if(this->_object->Is_Expression())
 	    {
 	      AaExpression* expr = ((AaExpression*) (this->_object));
-	      expr->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,
+	      expr->Write_VC_Control_Path_Optimized(pipeline_flag, 
+						    visited_elements,
 						    ls_map,
 						    pipe_map,
 						    ofile);
@@ -711,8 +730,6 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	    }
 	  else
 	    assert(0);
-
-
 	}
       
       visited_elements.insert(this);
@@ -742,7 +759,8 @@ void AaArrayObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pipe
       vector<int> shift_factors;
       this->Update_Address_Shift_Factors(shift_factors,word_size);
 
-      this->Write_VC_Store_Control_Path_Optimized(pipeline_flag, visited_elements,
+      this->Write_VC_Store_Control_Path_Optimized(pipeline_flag, 
+						  visited_elements,
 						  ls_map,pipe_map,
 						  &(_indices),
 						  &(scale_factors), 
@@ -970,10 +988,12 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 
       // root address calculation will include all dependencies with 
       // this etc..
+      set<string> active_reenable_points;
       obj_ref->Write_VC_Root_Address_Calculation_Control_Path_Optimized(pipeline_flag, visited_elements,
 									ls_map,pipe_map,
 									obj_ref->Get_Index_Vector(),
 									&scale_factors, &shift_factors,
+									active_reenable_points,
 									ofile);
 
       ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] {" << endl;
@@ -991,6 +1011,10 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 
       if(pipeline_flag)
 	{
+	  string ctrans = this->Get_VC_Completed_Transition_Name();
+	  Write_VC_Reenable_Joins(active_reenable_points, ctrans,ofile);
+	  active_reenable_points.clear();
+
 	  // just take care of the complete to active reenabling.. root address
 	  // calculation deps will be taken care of in Write_VC_Root_Address...
 	  __SelfRelease
@@ -1402,9 +1426,14 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(bool pipeline_flag,
   // 1. compute agross = base + (offset*scale-factor)
   // 2. in parallel, compute aI = agross + I
   //       optimization: if number is 2**N then append.
-  this->Write_VC_Address_Calculation_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,
-							    address_expressions,scale_factors,
-							    shift_factors, ofile);
+  this->Write_VC_Address_Calculation_Control_Path_Optimized(pipeline_flag, 
+							    visited_elements,
+							    ls_map,
+							    pipe_map,
+							    address_expressions,
+							    scale_factors,
+							    shift_factors, 
+							    ofile);
 
   // load operations
   //    in parallel, load..
@@ -1415,14 +1444,9 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(bool pipeline_flag,
 						   shift_factors,
 						   "read", ofile);
 
+  // there is a long chain of transitions until word_address_calculated.
   __J(this->Get_VC_Start_Transition_Name(),this->Get_VC_Name() + "_word_address_calculated");
 
-  if(pipeline_flag)
-    {
-      // as soon as this is active, reenable word address update.
-      string root_addr_calculated = this->Get_VC_Name() + "_root_address_calculated"; 
-      __MJ(root_addr_calculated,this->Get_VC_Active_Transition_Name());
-    }
 }
 
 void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
@@ -1454,13 +1478,6 @@ void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag
 						   ofile);
 
   __J(this->Get_VC_Start_Transition_Name(),this->Get_VC_Name() + "_word_address_calculated");
-  if(pipeline_flag)
-    {
-      // as soon as this is active, reenable word address update.
-      string root_addr_calculated = this->Get_VC_Name() + "_root_address_calculated"; 
-      __MJ(root_addr_calculated,this->Get_VC_Active_Transition_Name());
-    }
-
 }
 
 void AaObjectReference::Write_VC_Load_Store_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
@@ -1523,6 +1540,11 @@ void AaObjectReference::Write_VC_Load_Store_Control_Path_Optimized(bool pipeline
 
   if(pipeline_flag)
     {
+      // as soon as this is active, reenable the last stage of
+      // word-address calculation.  This is more complicated than
+      // it appears, because of the extensive use of zero-delay
+      // stages in the address calculation logic. One must 
+      // revisit this.
       string root_addr_calculated = this->Get_VC_Name() + "_root_address_calculated"; 
       __MJ(root_addr_calculated,active_trans);
     }
@@ -1641,11 +1663,13 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 
       // calculates root address.. triggers a root-address-calculated transition
       // when it is done..
+      set<string> active_reenable_points;
       this->Write_VC_Root_Address_Calculation_Control_Path_Optimized(pipeline_flag, visited_elements,
 								     ls_map,pipe_map,
 								     indices,
 								     scale_factors,
 								     shift_factors,
+								     active_reenable_points,
 								     ofile);
       
       
@@ -1669,7 +1693,7 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 	{
 	  // single word, no operation.. but rename it.
 	  ofile << ";;[" << word_region << "] {" << endl;
-	  ofile << "$T [root_rename_req] $T [root_rename_ack]" << endl;
+	  ofile << "$T [root_register_req] $T [root_register_ack]" << endl;
 	  ofile << "}" << endl;
 	}
 
@@ -1679,12 +1703,13 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 
       if(pipeline_flag)
 	{
-	  // reenable root-addr-calculated only after word-region completes.
-	  __MJ(root_addr_calculated, word_addr_calculated);
+		Write_VC_Reenable_Joins(active_reenable_points, word_addr_calculated,ofile);
+		active_reenable_points.clear();
 	}
     }
   else
     {
+	// address is a constant... no need to reenable..
       __J(word_addr_calculated, root_addr_calculated);
     }
 }
@@ -1733,9 +1758,9 @@ void AaObjectReference::Write_VC_Address_Calculation_Links_Optimized(string hier
       else
 	{
 	  // single word, no operation.. but rename it.
-	  // ofile << "$T [rename_req] $T [rename_ack]" << endl;
-	  reqs.push_back(hier_id + "/root_rename_req");
-	  acks.push_back(hier_id + "/root_rename_ack");
+	  // ofile << "$T [root_register_req] $T [root_register_ack]" << endl;
+	  reqs.push_back(hier_id + "/root_register_req");
+	  acks.push_back(hier_id + "/root_register_ack");
 	  Write_VC_Link(this->Get_VC_Name() + "_addr_0",
 			reqs,
 			acks,
@@ -1751,6 +1776,9 @@ void AaObjectReference::Write_VC_Address_Calculation_Links_Optimized(string hier
 // all operations are triggered immediately when the containing
 // fork-block is entered.  dependencies as indicated..
 // always produces a transition root_address_calculated.
+//
+// need to be careful in the reenables.  
+//
 void AaObjectReference::
 Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 							 map<string,vector<AaExpression*> >& ls_map,
@@ -1758,11 +1786,14 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 							 vector<AaExpression*>* index_vector,
 							 vector<int>* scale_factors,
 							 vector<int>* shift_factors,
+							 set<string>& active_reenable_points,
 							 ostream& ofile)
 {
 
+
   string root_address_calculated = this->Get_VC_Name() + "_root_address_calculated";
-  __T(root_address_calculated);
+  // already declared by the time we get here.
+  // __T(root_address_calculated);
   
   int offset_val = 0;
   if(index_vector)
@@ -1776,6 +1807,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
   bool all_indices_zero = (offset_val == 0);
   int num_non_constant = 0;
   bool const_index_flag = false;
+  bool reg_flag = false;
 
 
   string indices_scaled = this->Get_VC_Name() + "_indices_scaled";
@@ -1807,14 +1839,24 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 								    ls_map,pipe_map,
 								    ofile);
 
+ 	     string index_reenable = ((*index_vector)[idx]->Get_VC_Reenable_Update_Transition_Name(visited_elements));
+	     active_reenable_points.insert(index_reenable);
+
 	      __J(index_computed,(*index_vector)[idx]->Get_VC_Completed_Transition_Name());
 
 	      ofile << ";;[" << this->Get_VC_Name() << "_index_resize_" << idx << "] {" << endl;
+
+	      reg_flag = false;
 	      if((*index_vector)[idx]->Get_Type()->Is_Uinteger_Type())
+              {
+		reg_flag = true;
 		ofile << "$T [index_resize_req] $T [index_resize_ack] // resize index to address-width" << endl;
+              }
 	      else
+              {
 		ofile << "$T [index_resize_rr] $T [index_resize_ra] $T [index_resize_cr] $T [index_resize_ca]  // resize index to address-width" << endl;
 
+	      }
 	      ofile << "}" << endl;
 	      
 	      __F(index_computed,(this->Get_VC_Name() + "_index_resize_" + IntToStr(idx)));
@@ -1822,13 +1864,20 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 	      if(pipeline_flag)
 		{
-		  __MJ(index_computed, index_resized);
+			if(reg_flag)
+			{
+				__MJ(index_reenable, index_resized);
+				active_reenable_points.erase(index_reenable);
+				active_reenable_points.insert(index_resized);
+			}
 		}
 
+	      reg_flag = false;
 	      ofile << ";;[" << this->Get_VC_Name() << "_index_scale_" << idx << "] {" << endl;
 	      if((*scale_factors)[idx] > 1)
 		{
 		  ofile << "$T [scale_rr] $T [scale_ra] $T [scale_cr] $T [scale_ca] // scale index." << endl;
+		  reg_flag = true;
 		}
 	      else
 		ofile << "$T [scale_rename_req] $T [scale_rename_ack] // rename " << endl;
@@ -1840,7 +1889,12 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 	      if(pipeline_flag)
 		{
-		  __MJ(index_resized, indices_scaled);
+			if(reg_flag)
+			{
+				__MJ(index_resized, indices_scaled);
+				active_reenable_points.erase(index_resized);
+				active_reenable_points.insert(indices_scaled);
+			}
 		}
 	    }
 	  else
@@ -1850,12 +1904,14 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 	}
       
       // then add them up.
+      reg_flag = false;
       ofile << ";;[" << this->Get_VC_Name() << "_add_indices] {" << endl;
       int num_index_adds = (num_non_constant + (const_index_flag ? 1 : 0)) - 1;
       if(index_vector->size() > 1)
 	{
 	  for(int idx = 1; idx <= num_index_adds; idx++)
 	    {
+	      reg_flag = true;
 	      string prefix = "partial_sum_" + IntToStr(idx);
 	      ofile << "$T [" << prefix << "_rr] $T [" << prefix << "_ra] $T [" 
 		    << prefix << "_cr] $T [" << prefix << "_ca] // add index." << endl;
@@ -1872,7 +1928,12 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
       if(pipeline_flag)
 	{
-	  __MJ(indices_scaled, offset_calculated);
+		if(reg_flag)
+		{
+			Write_VC_Reenable_Joins(active_reenable_points, offset_calculated,ofile);
+			active_reenable_points.clear();
+			active_reenable_points.insert(offset_calculated);
+		}
 	}
     }
   
@@ -1896,12 +1957,14 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
       if(pipeline_flag)
 	{
-	  __MJ(base_address_calculated, base_address_resized);
+		// nothing.
 	}
     }
 
+   reg_flag = false;
   if(!all_indices_zero && (base_addr != 0))
     {
+      reg_flag = true;
       // index was not zero and base was not zero..
       // we need to add two numbers, at most one of which
       // can be a constant..
@@ -1911,8 +1974,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 	    << endl;
       ofile << "}" << endl;
 	
-      __F((this->Get_VC_Name() + "_base_plus_offset_trigger"),
-	  (this->Get_VC_Name() + "_base_plus_offset"));
+      __F((this->Get_VC_Name() + "_base_plus_offset_trigger"), (this->Get_VC_Name() + "_base_plus_offset"));
 
 
       if(base_addr < 0)
@@ -1920,7 +1982,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 	  __F(base_address_resized,(this->Get_VC_Name() + "_base_plus_offset_trigger"));
 	  if(pipeline_flag)
 	    {
-	      __MJ(base_address_resized,root_address_calculated);
+		// nothing..
 	    }
 	}
       if(offset_val < 0)
@@ -1928,7 +1990,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 	  __F(offset_calculated,(this->Get_VC_Name() + "_base_plus_offset_trigger"));
 	  if(pipeline_flag)
 	    {
-	      __MJ(offset_calculated, root_address_calculated);
+		// nothing.
 	    }
 	}
     }
@@ -1946,7 +2008,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 	  __F(base_address_resized,(this->Get_VC_Name() + "_base_plus_offset"));
 	  if(pipeline_flag)
 	    {
-	      __MJ(base_address_resized,root_address_calculated);
+		// nothing.
 	    }
 	}
       else
@@ -1954,13 +2016,22 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 	  __F(offset_calculated,(this->Get_VC_Name() + "_base_plus_offset"));
 	  if(pipeline_flag)
 	    {
-	      __MJ(offset_calculated,root_address_calculated);
+		// nothing.
 	    }
 	}
     }
 
 
   __J(root_address_calculated,(this->Get_VC_Name() + "_base_plus_offset"));
+  if(pipeline_flag)
+  {
+	if(reg_flag)
+	{
+		Write_VC_Reenable_Joins(active_reenable_points, root_address_calculated,ofile);
+		active_reenable_points.clear();
+		active_reenable_points.insert(root_address_calculated);
+	}
+  }
 
 }
 

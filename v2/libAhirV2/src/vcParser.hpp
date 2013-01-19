@@ -240,10 +240,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 134;
+	static const int NUM_TOKENS = 135;
 #else
 	enum {
-		NUM_TOKENS = 134
+		NUM_TOKENS = 135
 	};
 #endif
 	
@@ -307,6 +307,8 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_28;
 	static const unsigned long _tokenSet_29_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_29;
+	static const unsigned long _tokenSet_30_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_30;
 };
 
 #endif /*INC_vcParser_hpp_*/

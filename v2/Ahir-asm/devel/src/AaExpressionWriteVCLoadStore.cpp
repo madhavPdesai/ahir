@@ -653,15 +653,11 @@ void AaObjectReference::Write_VC_Address_Calculation_Data_Path(vector<AaExpressi
 	}
       else
 	{
-	  // write equivalence to obtain word_0 address.
-	  // an equivalence
-	  // scaled_offset -> final_root.
-	  vector<string> inwires; inwires.push_back(this->Get_VC_Root_Address_Name());
-	  vector<string> outwires; outwires.push_back(this->Get_VC_Word_Address_Name(0));
-	  Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_addr_0",
-					inwires,
-					outwires,
-				  this->Get_VC_Guard_String(),
+	  // write register to obtain word_0 address.
+	  Write_VC_Register(this->Get_VC_Name() + "_addr_0",
+					this->Get_VC_Root_Address_Name(),
+					this->Get_VC_Word_Address_Name(0),
+				        this->Get_VC_Guard_String(),
 					ofile);
 
 	}

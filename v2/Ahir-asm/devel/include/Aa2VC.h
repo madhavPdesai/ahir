@@ -133,6 +133,8 @@ void Write_VC_Pipe_Dependency(bool pipeline_flag,
 			      AaExpression* tgt,
 			      ostream& ofile);
 
+void Write_VC_Reenable_Joins(set<string>& active_reenable_points, string& rel_tran, ostream& ofile);
+
 void Write_VC_RAW_Release_Deps(AaRoot* succ, set<AaRoot*>& preds);
 
 #endif

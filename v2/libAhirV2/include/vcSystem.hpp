@@ -47,6 +47,8 @@ class vcSystem: public vcRoot
   static bool _uses_function_library;
 
   static string _top_entity_name;
+  static int _max_iterations_in_flight;
+
 
   vcSystem(string id);
   virtual void Print(ostream& ofile);

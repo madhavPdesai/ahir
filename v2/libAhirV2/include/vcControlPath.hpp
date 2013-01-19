@@ -27,6 +27,8 @@ protected:
 
   bool _is_bound_as_input_to_region;
   bool _is_bound_as_output_from_region;
+ 
+  bool _has_null_successor;
 
 public:
 
@@ -55,6 +57,16 @@ public:
 
   virtual int Get_Number_Of_Marked_Predecessors() { return(this->_marked_predecessors.size());}
   int Get_Number_Of_Marked_Successors() {return(this->_marked_successors.size());}
+
+  bool Has_Predecessor(vcCPElement* cpe)
+  {
+	for(int idx = 0, fidx = _predecessors.size(); idx < fidx; idx++)
+	{
+		if(_predecessors[idx] == cpe)
+			return(true);
+	}
+	return(false);
+  }
 
   vcCPElement* Get_Successor(int idx) {return(this->_successors[idx]);}
 
@@ -164,6 +176,9 @@ public:
   void Set_Associated_CP_Region(vcCPElement* c) {_associated_cp_region = c;}
   vcCPElement* Get_Associated_CP_Region() {return(_associated_cp_region);}
   
+  void Set_Has_Null_Successor(bool v) {_has_null_successor = v;}
+  bool Get_Has_Null_Successor() {return(_has_null_successor);}
+
 };
 
 
@@ -781,6 +796,8 @@ public:
 
   int64_t Get_Group_Index() {return(_group_index);}
   void Add_Element(vcCPElement* cpe);
+
+  bool Has_Element(vcCPElement* cpe) {return(_elements.find(cpe) != _elements.end());}
 
   void Set_Is_Bound_As_Input_To_CP_Function(bool v) {this->_is_bound_as_input_to_cp_function = v;}
   bool Get_Is_Bound_As_Input_To_CP_Function() {return(this->_is_bound_as_input_to_cp_function);}

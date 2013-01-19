@@ -539,7 +539,7 @@ vc_CPPipelinedLoopBody[vcCPBlock* cp]
 
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPJoin: (vc_Identifier | EXIT | ENTRY) JOIN LPAREN  ENTRY? (vc_Identifier)+  RPAREN
+// vc_CPJoin: (vc_Identifier | EXIT | ENTRY | NULL) JOIN LPAREN  ENTRY? (vc_Identifier)+  RPAREN
 //-----------------------------------------------------------------------------------------------
 vc_CPJoin[vcCPForkBlock* fb]
 {
@@ -547,13 +547,17 @@ vc_CPJoin[vcCPForkBlock* fb]
 	vector<string> join_ids;
 }
 :
-((lbl = vc_Identifier) | (je:EXIT {lbl = je->getText();}) | (jen:ENTRY {lbl = jen->getText();})) JOIN  LPAREN (e:ENTRY {join_ids.push_back(e->getText());})?
+((lbl = vc_Identifier) | 
+	(je:EXIT {lbl = je->getText();}) | 
+	(jen:ENTRY {lbl = jen->getText();}) |
+	(jnull:N_ULL {lbl = jnull->getText();})
+   ) JOIN  LPAREN (e:ENTRY {join_ids.push_back(e->getText());})?
 (b =  vc_Identifier {join_ids.push_back(b);})* RPAREN
  {fb->Add_Join_Point(lbl,join_ids);}
 ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPMarkedJoin: (vc_Identifier | EXIT) MARKEDJOIN LPAREN  ENTRY? (vc_Identifier)+  RPAREN
+// vc_CPMarkedJoin: (vc_Identifier | EXIT | NULL) MARKEDJOIN LPAREN  ENTRY? (vc_Identifier)+  RPAREN
 //-----------------------------------------------------------------------------------------------
 vc_CPMarkedJoin[vcCPPipelinedLoopBody* fb]
 {
@@ -561,13 +565,16 @@ vc_CPMarkedJoin[vcCPPipelinedLoopBody* fb]
 	vector<string> join_ids;
 }
 :
-((lbl = vc_Identifier) | (je:ENTRY {lbl = je->getText();})) MARKEDJOIN  LPAREN (e:ENTRY {join_ids.push_back(e->getText());})?
+((lbl = vc_Identifier) | 
+	(je:ENTRY {lbl = je->getText();}) |
+	(jnull:N_ULL {lbl = jnull->getText();})
+	) MARKEDJOIN  LPAREN (e:ENTRY {join_ids.push_back(e->getText());})?
 (b =  vc_Identifier {join_ids.push_back(b);})* RPAREN
  {fb->Add_Marked_Join_Point(lbl,join_ids);}
 ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPFork: (vc_Identifier | ENTRY) FORK  LPAREN  EXIT? (vc_Identifier)+  RPAREN
+// vc_CPFork: (vc_Identifier | ENTRY ) FORK  LPAREN NULL? EXIT? (vc_Identifier)+  RPAREN
 //-----------------------------------------------------------------------------------------------
 vc_CPFork[vcCPForkBlock* fb]
 {
@@ -576,7 +583,9 @@ vc_CPFork[vcCPForkBlock* fb]
 }
 :
 
-((lbl = vc_Identifier) | (fe:ENTRY {lbl = fe->getText();})) FORK  LPAREN (e:EXIT {fork_ids.push_back(e->getText());})?
+((lbl = vc_Identifier) | (fe:ENTRY {lbl = fe->getText();})) FORK  LPAREN 
+	(e:EXIT {fork_ids.push_back(e->getText());})?
+	(n:N_ULL {fork_ids.push_back(n->getText());})?
 (b = vc_Identifier {fork_ids.push_back(b);})* RPAREN
  {fb->Add_Fork_Point(lbl,fork_ids);}
 ;
@@ -1405,6 +1414,7 @@ BRANCH        : "|->";
 MERGE         : "<-|";
 ENTRY         : "$entry";
 EXIT          : "$exit";
+N_ULL         : "$null";
 IN            : "$in";
 OUT           : "$out";
 REQS          : "$reqs";

@@ -426,11 +426,19 @@ void Write_VC_Load_Store_Dependency(bool pipeline_flag,
 	{
   		ofile << tgt->Get_VC_Start_Transition_Name() << " <-& (" 
 			<< src->Get_VC_Active_Transition_Name() << ")" << endl;
+		if(pipeline_flag)
+		{
+			__MJ(src->Get_VC_Start_Transition_Name(), tgt->Get_VC_Active_Transition_Name());
+		}
 	}
 	else
 	{
   		ofile << tgt->Get_VC_Start_Transition_Name() << " <-& (" 
 			<< src->Get_VC_Completed_Transition_Name() << ")" << endl;
+		if(pipeline_flag)
+		{
+			__MJ(src->Get_VC_Start_Transition_Name(), tgt->Get_VC_Completed_Transition_Name());
+		}
 	}
    }
 }
@@ -449,6 +457,17 @@ void Write_VC_Pipe_Dependency(bool pipeline_flag,
       string src_start = (src->Get_VC_Start_Transition_Name());
       __MJ(src_start, tgt->Get_VC_Complete_Region_Name());
     }
+}
+
+void Write_VC_Reenable_Joins(set<string>& active_reenable_points, string& rel_tran, ostream& ofile)
+{
+	for(set<string>::iterator siter = active_reenable_points.begin(),
+		fiter = active_reenable_points.end();
+		siter != fiter;
+		siter++)
+	{
+		__MJ((*siter), rel_tran);
+	}
 }
 
 void Write_VC_RAW_Release_Deps(AaRoot* succ, set<AaRoot*>& preds) {assert(0);}

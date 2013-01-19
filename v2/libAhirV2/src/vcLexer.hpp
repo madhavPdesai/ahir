@@ -59,6 +59,7 @@ public:
 	public: void mMERGE(bool _createToken);
 	public: void mENTRY(bool _createToken);
 	public: void mEXIT(bool _createToken);
+	public: void mN_ULL(bool _createToken);
 	public: void mIN(bool _createToken);
 	public: void mOUT(bool _createToken);
 	public: void mREQS(bool _createToken);

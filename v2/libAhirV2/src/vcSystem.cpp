@@ -33,6 +33,11 @@ string vcSystem::_tool_name;
 string vcSystem::_top_entity_name = "ahir_system";
 
 
+// for loop-pipelining.
+// max iterations in flight.  make it 65535 (16 bit number).
+// this should be enough for most applications.
+int vcSystem::_max_iterations_in_flight = 65535;
+
 
 vcSystem::vcSystem(string id):vcRoot(id)
 {

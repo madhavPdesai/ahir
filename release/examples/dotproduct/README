@@ -1,0 +1,30 @@
+This example illustrates the benefits of 
+loop unrolling and loop pipelining.
+The example consists of a dot product
+of two 16 entry vectors.  The loop
+involves an accumulation.
+
+
+Four variants are tried
+ - tight loop, no loop-pipelining.
+ - unrolled loop, no loop-pipelining
+ - tight loop, with loop-pipelining.
+ - unrolled loop, with loop-pipelining
+
+The observations
+
+
+                      tight-loop     unrolled-loop
+
+no loop-pipelining      11usec         4.8usec
+with loop-pipelining     5.9usec       2.3usec
+
+
+1. A combination of unrolling and loop-pipelining
+   gives a net performance gain of more than 4X.
+2. For the unrolled case, loop-pipelining itself
+   adds a benefit of a little more than 2X.
+
+
+Conclusion: the design goal of the loop-pipelining
+optimization seems to have been achieved.

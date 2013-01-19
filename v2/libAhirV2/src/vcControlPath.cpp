@@ -256,6 +256,8 @@ vcCPElement::vcCPElement(vcCPElement* parent, string id):vcRoot(id)
   _is_bound_as_output_from_cp_function = false;
   _is_bound_as_input_to_region = false;
   _is_bound_as_output_from_region = false;
+
+  _has_null_successor = false;
 }
 
 void vcCPElement::Set_Associated_CP_Function(vcCPElement* c)
@@ -595,8 +597,8 @@ void vcTransition::Print_VHDL(ostream& ofile)
   //
   bool parent_is_pipelined_loop_body = (this->Get_Parent()->Is("vcCPPipelinedLoopBody"));
   int max_iterations_in_flight = 1;
-  if(parent_is_pipelined_loop_body)
-	max_iterations_in_flight = ((vcCPPipelinedLoopBody*)this->Get_Parent())->Get_Max_Iterations_In_Flight();
+  if(parent_is_pipelined_loop_body && this->Has_Predecessor(this->Get_Parent()->Get_Entry_Element()))
+	max_iterations_in_flight = vcSystem::_max_iterations_in_flight;
 
 
   // It is a true join if
@@ -1929,14 +1931,19 @@ void vcCPForkBlock::Add_Fork_Point(string& fork_name, vector<string>& fork_cpe_v
     {
       for(int idx = 0; idx < fork_cpe_vec.size(); idx++)
 	{
-	  vcCPElement* fre = this->Find_CPElement(fork_cpe_vec[idx]);
-	  if(fre == NULL)
-	    {
-	      vcSystem::Error("did not find forked region " + fork_cpe_vec[idx]);
-	      return;
-	    }
-	  else 
-	    this->Add_Fork_Point((vcTransition*)fp, fre);
+	  if(fork_cpe_vec[idx] == "$null")
+		fp->Set_Has_Null_Successor(true);
+	  else
+	  {
+	  	vcCPElement* fre = this->Find_CPElement(fork_cpe_vec[idx]);
+	  	if(fre == NULL)
+	    	{
+	      	vcSystem::Error("did not find forked region " + fork_cpe_vec[idx]);
+	      	return;
+	    	}
+	  	else 
+	    		this->Add_Fork_Point((vcTransition*)fp, fre);
+	  }
 	}
     }
 }
@@ -1976,6 +1983,10 @@ void vcCPForkBlock::Remove_Join_Point(vcTransition* jp, vcCPElement* jre)
 
 void vcCPForkBlock::Add_Join_Point(string& join_name, vector<string>& join_cpe_vec)
 {
+  bool null_join = false;
+  if(join_name == "$null")
+ 	null_join = true;
+	
   vcCPElement* jp = this->Find_CPElement(join_name);
   if(jp == NULL)
     vcSystem::Error("did not find fork point " + join_name);
@@ -1992,7 +2003,12 @@ void vcCPForkBlock::Add_Join_Point(string& join_name, vector<string>& join_cpe_v
 	      return;
 	    }
 	  else
-	    this->Add_Join_Point((vcTransition*)jp,jre);
+            {
+	      if(null_join)
+ 		jre->Set_Has_Null_Successor(true);
+	      else
+	        this->Add_Join_Point((vcTransition*)jp,jre);
+	    }
 	}
     }
 }
@@ -2110,6 +2126,17 @@ bool vcCPForkBlock::Check_Structure()
 
       reachable_elements.clear();
       num_visited = 0;
+
+      // include elements with null successors as reachable.
+      for(int idx = 0,fidx = _elements.size(); idx < fidx; idx++)
+      {
+	if(_elements[idx]->Get_Has_Null_Successor())
+	{
+		reachable_elements.push_back(_elements[idx]);
+		num_visited++;
+	}
+      }
+
       cycle_flag = false;
       visited_set.clear();
       this->BFS_Order(true, this->_exit, num_visited, reachable_elements,visited_set);
@@ -2310,6 +2337,7 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
       
       bool has_implicit_predecessor = false;
       if(ele->Is_Transition() && (((vcTransition*)ele)->Get_Is_Bound_As_Input_To_Region() || 
+				   ((vcTransition*)ele)->Get_Is_Input() || 
 				   ((vcTransition*)ele)->Get_Is_Bound_As_Output_From_CP_Function()) )
 	has_implicit_predecessor = true;
 
@@ -2325,17 +2353,14 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
       if(ele->Is_Transition() && ((vcTransition*)ele)->Get_Is_Bound_As_Input_To_CP_Function() )
 	has_implicit_successor = true;
 
-      bool is_output_from_region = false;
-      if(ele->Is_Transition() && ((vcTransition*)ele)->Get_Is_Bound_As_Output_From_Region())
-	is_output_from_region = true;
+      if(ele->Get_Has_Null_Successor())
+	has_implicit_successor = true;
 
       if(!has_implicit_successor)
       {
       	if(ele->Get_Successors().size() == 0)
 		 unjoined_elements.push_back(ele);	
       }
-      else if(is_output_from_region)
-		unjoined_elements.push_back(ele);	
     }
 
 
@@ -2381,6 +2406,12 @@ vcCPPipelinedLoopBody::vcCPPipelinedLoopBody(vcCPBlock* parent, string id):vcCPF
 
 void vcCPPipelinedLoopBody::Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec)
 {
+  bool null_join = false;
+
+  // null marked joins are ignored.
+  if(join_name == "$null")
+	return;
+
   vcCPElement* jp = this->Find_CPElement(join_name);
   if(jp == NULL)
     vcSystem::Error("did not find fork point " + join_name);
@@ -2742,6 +2773,18 @@ void vcCPPipelinedLoopBody::Update_Predecessor_Successor_Links()
   // the phi-sequencers and transition-merges, which alter
   // it somewhat.
   this->vcCPForkBlock::Update_Predecessor_Successor_Links();
+
+  // for each successor of entry, put a marked join back to
+  // entry.
+  //for(int idx = 0, fidx = this->_entry->Get_Number_Of_Successors(); idx < fidx; idx++)
+  //{
+	//vcCPElement* cpe = this->_entry->Get_Successor(idx);
+	//if(cpe->Is_Transition())
+	//{
+		//this->_entry->Add_Marked_Predecessor(cpe);
+		//cpe->Add_Marked_Successor(this->_entry);
+	//}
+  //} 
 
   // the phi-sequencers..
   for(int idx = 0, fidx = _phi_sequencers.size(); idx < fidx; idx++)
