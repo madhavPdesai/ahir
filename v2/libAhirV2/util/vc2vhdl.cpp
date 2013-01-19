@@ -66,6 +66,8 @@ void Usage_Vc2VHDL()
   cerr <<  " alternate form:  --debug" << endl;
   cerr <<  " -v :  lots of information will be printed to stderr during analysis." << endl;
   cerr <<  " alternate form:  --verbose" << endl;
+  cerr <<  " -I :  loop-pipelining limit on iterations in flight (a positive integer..)" << endl;
+  cerr <<  " alternate form:  --loop_pipeline_iteration_limit" << endl;
   cerr << endl;
   cerr << endl;
   cerr << "example: " << endl
@@ -106,6 +108,7 @@ int main(int argc, char* argv[])
       {"set_as_top",  required_argument, 0, 't'},
       {"set_as_free_running_top",  required_argument, 0, 'T'},
       {"top_entity_name",  required_argument, 0, 'e'},
+      {"loop_pipeline_iteration_limit",  required_argument, 0, 'I'},
       {"write_files",  no_argument, 0, 'w'},
       {"vcfile",    required_argument, 0, 'f'},
       {"library",   required_argument, 0, 'L'},
@@ -135,12 +138,13 @@ int main(int argc, char* argv[])
   string mod_name;
   string opt_string;
   string sim_id;
+  int it_limit;
 
   vcSystem::_opt_flag = false;
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:T:f:OCs:he:waqDL:v",
+		      "t:T:f:OCs:he:waqDL:vI:",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -199,6 +203,21 @@ int main(int argc, char* argv[])
 	case 'v':
 	  vcSystem::_verbose_flag = true;
 	  cerr << "Info: -v option selected: lots of info will be printed to stderr." << endl;
+	  break;
+	case 'I':
+          it_limit = atoi(optarg);
+	  if(it_limit < 0)
+	  {
+		cerr << "Error: loop-pipelining iteration limit must be > 0 (it is specified as " 
+			<< it_limit 
+			<< ")." << endl;
+	  }
+	  else
+	  {
+	  	cerr << "Info: -I option selected: iteration limit will be set to " 
+			<< it_limit << "." << endl;
+	  	vcSystem::_max_iterations_in_flight = it_limit;
+	  }
 	  break;
 	case 's':
 	  sim_id = string(optarg);

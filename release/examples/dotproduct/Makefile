@@ -19,7 +19,7 @@ aa2vc: prog.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl  -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc
+	vc2vhdl  -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -I 2
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
