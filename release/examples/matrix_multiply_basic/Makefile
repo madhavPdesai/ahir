@@ -22,7 +22,7 @@ SW: prog.c prog.h testbench.c
 	gcc -g -o testbench_sw prog.o testbench.o fpu.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
 
 # five steps from C to vhdl simulator.
-HW: c2llvmbc llvmbc2aa aa2vc vc2vhdl vhdlsim
+HW: c2llvmbc llvmbc2aa # aa2vc vc2vhdl vhdlsim
 
 # C to llvm byte-code.. use clang.
 c2llvmbc: prog.c prog.h

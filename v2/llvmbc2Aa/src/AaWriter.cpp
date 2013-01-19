@@ -591,10 +591,42 @@ namespace {
       clear();
     }
 
+    // if the terminator contains a branch back to this
+    // block itself, then it is a do-while loop.
+    bool Is_Do_While_Loop(llvm::BasicBlock& BB)
+    {
+	bool ret_val = false;
+	TerminatorInst* T = BB.getTerminator();
+
+	if(isa<llvm::ReturnInst>(T))
+		return(false);
+
+	if(T->getNumSuccessors() == 0)
+		return(false);
+
+
+	for (unsigned i = 0, e = T->getNumSuccessors(); i != e; ++i) 
+	{
+		BasicBlock* S = T->getSuccessor(i);
+		if(S->getTerminator() == T)
+		{
+			ret_val = true;
+			break;
+		}
+	}
+
+	return(ret_val);
+	
+    }
+
+
     void visitBasicBlock(BasicBlock &BB)
     {
       std::string bb_name = to_aa(BB.getNameStr());
       std::cout << "//begin: basic-block " << bb_name << std::endl;
+
+      if(this->Is_Do_While_Loop(BB))
+	std::cout << "//   this is a do-while loop." << std::endl;
 
       // the alloca objects.
       for(llvm::BasicBlock::iterator iiter = BB.begin(),fiter = BB.end(); 

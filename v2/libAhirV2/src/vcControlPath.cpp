@@ -2114,7 +2114,20 @@ bool vcCPForkBlock::Check_Structure()
 	{
 	  ret_flag = false;
           
-	  vcSystem::Error("all elements not reachable from entry in fork region " + this->Get_Hierarchical_Id());
+          //
+	  // TODO: this needs to be cleaned up a bit.  We should really write
+	  //       a Check_Structure method for the Pipelined-Loop-Body instead
+	  //       of this hack.
+	  //       
+	  //       For pipelined-loop bodies, all elements should be reachable
+	  //       from the multiple entry points to the body.  So multiple DFS
+	  //       searches need to be performed.
+	  //
+	  if(!this->Relaxed_Entry_Reachability_Checking())
+	  	vcSystem::Error("all elements not reachable from entry in fork region " + this->Get_Hierarchical_Id());
+	  else
+	  	vcSystem::Warning("all elements not reachable from entry in region " + this->Get_Hierarchical_Id());
+		
 	  this->Print_Missing_Elements(visited_set);
 	}
 
@@ -2127,23 +2140,26 @@ bool vcCPForkBlock::Check_Structure()
       reachable_elements.clear();
       num_visited = 0;
 
-      // include elements with null successors as reachable.
-      for(int idx = 0,fidx = _elements.size(); idx < fidx; idx++)
-      {
-	if(_elements[idx]->Get_Has_Null_Successor())
-	{
-		reachable_elements.push_back(_elements[idx]);
-		num_visited++;
-	}
-      }
-
       cycle_flag = false;
       visited_set.clear();
       this->BFS_Order(true, this->_exit, num_visited, reachable_elements,visited_set);
       if(num_visited != (this->_elements.size() + 2))
 	{
 	  ret_flag = false;
-	  vcSystem::Error("exit not reachable from every element in fork region " + this->Get_Hierarchical_Id());
+	
+          //
+	  // TODO: this needs to be cleaned up a bit.  We should really write
+	  //       a Check_Structure method for the Pipelined-Loop-Body instead
+	  //       of this hack.
+	  //
+	  //       For pipelined-loop bodies, all elements should be able to reach
+	  //       the multiple exit points from the body.  So multiple (reverse) DFS
+	  //       searches need to be performed.
+	  //       
+	  if(!this->Relaxed_Entry_Reachability_Checking())
+	  	vcSystem::Error("exit not reachable from every element in fork region " + this->Get_Hierarchical_Id());
+	  else
+	  	vcSystem::Warning("exit not reachable from every element in fork region " + this->Get_Hierarchical_Id());
 	  this->Print_Missing_Elements(visited_set);
 	}
 

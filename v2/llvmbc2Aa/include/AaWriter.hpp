@@ -98,6 +98,7 @@ namespace Aa {
     void write_zero_initializer_recursive(std::string prefix,const llvm::Type* ptr, int depth);
     void write_storage_initializer_statements(std::string& prefix, llvm::Constant* konst, bool skip_zero_initializers);
 
+    bool Is_Do_While_Loop(llvm::BasicBlock& BB);
   };
 };
 

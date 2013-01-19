@@ -4280,7 +4280,7 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
   ofile << exit_place_name << " |-> ($exit)" << endl;
 
   //    the binding of the condition_done to the test expression completion.
-  ofile << "$bind condition_done <= " << vc_loop_body_id << " : " << this->_test_expression->Get_VC_Completed_Transition_Name() << endl;
+  ofile << "$bind condition_done <= " << vc_loop_body_id << " : condition_evaluated"; 
 
   // the binding of the loop-entry contol places to the loop body.
   ofile << "$bind " << entry_place_name << "  => " << vc_loop_body_id << " : first_time_through_loop_body " << endl; 

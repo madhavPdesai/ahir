@@ -387,6 +387,9 @@ public:
 	return(this->Get_Number_Of_Elements() + 2);
   }
 
+  virtual bool Relaxed_Entry_Reachability_Checking() {return(false);}
+  virtual bool Relaxed_Exit_Reachability_Checking() {return(false);}
+
 };
 
 class vcCPSeriesBlock: public vcCPBlock
@@ -700,6 +703,8 @@ public:
   }
   void Set_Max_Iterations_In_Flight(int N) {_max_iterations_in_flight = N;}
   int Get_Max_Iterations_In_Flight() {return(_max_iterations_in_flight);}
+  virtual bool Relaxed_Entry_Reachability_Checking() {return(true);}
+  virtual bool Relaxed_Exit_Reachability_Checking() {return(true);}
 };
 
 

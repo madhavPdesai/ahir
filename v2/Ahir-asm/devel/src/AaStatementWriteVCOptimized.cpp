@@ -552,11 +552,22 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       // finally the test expression.
       if(pipeline_flag)
 	{
+	  __T("condition_evaluated");
 	  assert(condition_expr != NULL);
 	  condition_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
 							  visited_elements,
 							  load_store_ordering_map,pipe_map,ofile);
-	  __F(condition_expr->Get_VC_Completed_Transition_Name(), "$null");
+
+	  if(condition_expr->Is_Constant())
+	  {
+	  	__F("loop_body_start", "condition_evaluated");
+          }
+	  else
+	  {
+	  	__F(condition_expr->Get_VC_Completed_Transition_Name(), "condition_evaluated");
+	  }
+
+	  __F("condition_evaluated", "$null");
 	}
 
 
