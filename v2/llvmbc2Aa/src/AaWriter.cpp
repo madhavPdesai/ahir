@@ -22,7 +22,9 @@ namespace Aa {
 
   AaWriter::AaWriter(llvm::TargetData *_TD, llvm::AliasAnalysis *_AA, std::set<std::string>& mnames, bool consider_all_functions)
     : TD(_TD), AA(_AA), _module_names(mnames), _consider_all_functions(consider_all_functions)
-  {}
+  {
+	_do_while_flag = false;
+  }
 
   void AaWriter::start_program(std::string id)
   {
@@ -591,41 +593,14 @@ namespace {
       clear();
     }
 
-    // if the terminator contains a branch back to this
-    // block itself, then it is a do-while loop.
-    bool Is_Do_While_Loop(llvm::BasicBlock& BB)
-    {
-	bool ret_val = false;
-	TerminatorInst* T = BB.getTerminator();
-
-	if(isa<llvm::ReturnInst>(T))
-		return(false);
-
-	if(T->getNumSuccessors() == 0)
-		return(false);
-
-
-	for (unsigned i = 0, e = T->getNumSuccessors(); i != e; ++i) 
-	{
-		BasicBlock* S = T->getSuccessor(i);
-		if(S->getTerminator() == T)
-		{
-			ret_val = true;
-			break;
-		}
-	}
-
-	return(ret_val);
-	
-    }
-
 
     void visitBasicBlock(BasicBlock &BB)
     {
       std::string bb_name = to_aa(BB.getNameStr());
       std::cout << "//begin: basic-block " << bb_name << std::endl;
 
-      if(this->Is_Do_While_Loop(BB))
+      bool is_do_while = this->Get_Do_While_Flag();
+      if(is_do_while)
 	std::cout << "//   this is a do-while loop." << std::endl;
 
       // the alloca objects.
@@ -644,6 +619,30 @@ namespace {
 
 	    }
 	}
+
+	// for a typical basic block, the structure of the printed Aa file is
+	// as follows
+	//
+	// $merge bb_1_bb_1 bb_2_bb_1 bb_3_bb_1 etc.
+	//    $phi I := 0 $on bb_2_bb1_ 1 $on bb_3_bb_1 NI $on bb_1_bb_1
+	// $endmerge
+	// < statements which use I and produce NI>
+	// $if <condn> $then $place bb_1_bb_1 $else $place bb_1_bb_N
+	//
+	// If the basic block is marked as a do-while loop, then
+	// the structure is a bit different.
+	//
+	// $merge bb_2_bb_1 bb_3_bb_1  etc. (all entrys from outside bb_1)
+	//   $phi I__ := 0 $on bb_2_bb_1  1 $on bb_3_bb_1
+	// $endmerge
+	// $do
+	//    $merge $entry $loopback
+	//      $phi I := I__ $on $entry NI $on $loopback
+	//    $endmerge
+	//    <statements which use I and produce NI>
+	// $while <cond>
+	// $place bb_1_bb_N
+	//
       if(this->bb_predecessor_map[bb_name].size() > 0)
 	{
 	  std::cout << "$merge";
@@ -651,8 +650,12 @@ namespace {
 	      siter != this->bb_predecessor_map[bb_name].end();
 	      siter++)
 	    {
-	      std::cout << " " << to_aa(*siter) << "_" << to_aa(bb_name);
+	      std::string other_name = to_aa(*siter);
+
+	      if((other_name != bb_name) || !is_do_while)
+	      	std::cout << " " << to_aa(*siter) << "_" << to_aa(bb_name);
 	    }
+
 	  std::cout << std::endl;
 
 	  // phi statements..
@@ -661,13 +664,33 @@ namespace {
 	    {
 	      if(isa<PHINode>(*iiter))
 		{
-		  Write_PHI_Node(static_cast<PHINode&>((*iiter)));
+		  if(is_do_while)
+		  {
+			Write_PHI_Node_At_Do_While_Entry(static_cast<PHINode&>((*iiter)));
+		  }
+		  else
+		  {
+		  	Write_PHI_Node(static_cast<PHINode&>((*iiter)));
+		  }
 		}
 	    }
 	  std::cout << "$endmerge" << std::endl;
-
 	}
-      
+
+      if(is_do_while)
+      {
+	std::cout << "$do  " << std::endl;
+	std::cout << "$merge $entry $loopback" << std::endl;
+	for(llvm::BasicBlock::iterator iiter = BB.begin(),fiter = BB.end(); 
+	      iiter != fiter;  ++iiter)
+	    {
+	      if(isa<PHINode>(*iiter))
+		{
+			Write_PHI_Node_In_Do_While_Body(static_cast<PHINode&>((*iiter)));
+		}
+	    }
+      	std::cout << "$endmerge" << std::endl;
+      }
     }
 
     void Write_PHI_Node(llvm::PHINode& pnode) 
@@ -716,6 +739,99 @@ namespace {
 		    << get_name(parent) << " ";
 	}
       std::cout << std::endl;
+    }
+
+    void Write_PHI_Node_At_Do_While_Entry(llvm::PHINode& pnode)
+    {
+      std::string phi_name = to_aa(pnode.getNameStr()) + "_at_entry";
+
+      std::vector<std::string> source_ops;
+      std::vector<BasicBlock*> in_bbs;
+      std::vector<llvm::Value*> in_vals;
+
+      std::set<BasicBlock*> bb_set;
+
+      
+      // no repetitions on source label allowed in 
+      // Aa (because of exclusivity)
+      int num_sources = pnode.getNumIncomingValues();
+      int real_sources = 0;
+      BasicBlock* parent = pnode.getParent();
+      for (unsigned i = 0; i < num_sources; i++) 
+	{
+	  BasicBlock *inbb = pnode.getIncomingBlock(i);
+	  if(bb_set.find(inbb) == bb_set.end())
+	    {
+	      if(inbb != parent)
+	      {
+	      	bb_set.insert(inbb);
+
+	      	llvm::Value *inval = pnode.getIncomingValue(i);
+	      	std::string source_op = prepare_operand(inval);
+	
+	      	source_ops.push_back(source_op);
+	      	in_bbs.push_back(inbb);
+	      	in_vals.push_back(inval);
+	      	real_sources++;
+	       }
+	    }
+	}
+
+      std::cout << "$phi " << phi_name << " :=  ";
+      for (unsigned i = 0; i < real_sources; i++) 
+	{
+
+	  BasicBlock *inbb = in_bbs[i];
+	  llvm::Value *inval = in_vals[i];
+	  std::string source_op = source_ops[i];
+	  std::cout << "( $cast (" << get_aa_type_name(inval->getType(),*_module) 
+		    << ") " << source_op << ") $on " << get_name(inbb) << "_"
+		    << get_name(parent) << " ";
+	}
+
+      std::cout << std::endl;
+    }
+
+    void Write_PHI_Node_In_Do_While_Body(llvm::PHINode& pnode)
+    {
+      std::string phi_name = to_aa(pnode.getNameStr());
+
+      std::vector<std::string> source_ops;
+      std::vector<BasicBlock*> in_bbs;
+      std::vector<llvm::Value*> in_vals;
+
+      std::set<BasicBlock*> bb_set;
+
+      
+      // no repetitions on source label allowed in 
+      // Aa (because of exclusivity)
+      int num_sources = pnode.getNumIncomingValues();
+      bool has_parent = false;
+      std::string source_op;
+      BasicBlock* parent = pnode.getParent();
+      for (unsigned i = 0; i < num_sources; i++) 
+	{
+	  BasicBlock *inbb = pnode.getIncomingBlock(i);
+	  if(inbb == parent)
+	  {
+	      	llvm::Value *inval = pnode.getIncomingValue(i);
+	      	source_op = prepare_operand(inval);
+	  	source_op =  "( $cast (" + get_aa_type_name(inval->getType(),*_module) + ") " + source_op + ")";
+		has_parent = true;
+		break;
+	  }
+	}
+
+      if(!has_parent)
+      {
+	  std::cerr << "Error: do-while loop PHI " << phi_name << " does not depend on entry to loop." << std::endl;  
+	  std::cout << phi_name << " := " << phi_name << "_at_entry" << std::endl;
+      }
+      else
+      {
+      	std::cout << "$phi " << phi_name << " :=  " << source_op << " $on $loopback " << phi_name << "_at_entry" << " $on $entry" 
+		<< std::endl;
+      }
     }
 
     void visitBinaryOperator(BinaryOperator &I)
@@ -1164,13 +1280,17 @@ namespace {
 
     void visitBranchInst(BranchInst &br)
     {
+      bool is_do_while = this->Get_Do_While_Flag();
       std::string brname = to_aa(br.getNameStr());
       BasicBlock* from_bb = br.getParent();
 	if(br.isUnconditional())
 	  {
-
 	    BasicBlock* to_bb = br.getSuccessor(0);
-	    std::cout << "$place [" << get_name(from_bb) << "_" << get_name(to_bb) << "]" << std::endl;
+
+	    if(!is_do_while)
+	    	std::cout << "$place [" << get_name(from_bb) << "_" << get_name(to_bb) << "]" << std::endl;
+	    else
+		std::cout << "$while 1" << std::endl;
 	  }
 	else
 	  {
@@ -1178,11 +1298,31 @@ namespace {
 	    BasicBlock* dest1 = br.getSuccessor(1);
 	    std::string cond_name = prepare_operand(br.getCondition());
 
-	    std::cout << "$if " << cond_name << " $then " ;
-	    std::cout << " $place [" << get_name(from_bb) << "_" << get_name(dest0) << "] ";
-	    std::cout << "$else ";
-	    std::cout << "$place [" << get_name(from_bb) << "_" << get_name(dest1) << "] ";
-	    std::cout << "$endif " << std::endl;
+	    if(!is_do_while)
+	    {
+	    	std::cout << "$if " << cond_name << " $then " ;
+	    	std::cout << " $place [" << get_name(from_bb) << "_" << get_name(dest0) << "] ";
+	    	std::cout << "$else ";
+	    	std::cout << "$place [" << get_name(from_bb) << "_" << get_name(dest1) << "] ";
+	    	std::cout << "$endif " << std::endl;
+	    }
+	    else
+	    {
+		if(dest0 == from_bb)
+		{
+			std::cout << "$while " << cond_name << " " << std::endl;
+	    		std::cout << "$place [" << get_name(from_bb) << "_" << get_name(dest1) << "] ";
+		}
+		else if(dest1 == from_bb)
+		{
+			std::cout << "$while (~" << cond_name << ") " << std::endl;
+	    		std::cout << " $place [" << get_name(from_bb) << "_" << get_name(dest0) << "] ";
+		}
+		else
+		{
+			std::cerr << "Error: Do-while terminator for " << get_name(from_bb) << " has garbled terminator?" << std::endl;
+		}
+	    }
 	  }
     }
 
@@ -1192,6 +1332,9 @@ namespace {
       std::string test_op = prepare_operand(test_val);
       BasicBlock* from_bb = I.getParent();
       BasicBlock* to_bb = NULL;
+
+      bool is_do_while = this->Get_Do_While_Flag();
+
       std::cout << "$switch " << test_op << std::endl;
       for(int idx=1; idx < I.getNumCases(); idx++)
 	{

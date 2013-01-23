@@ -19,6 +19,39 @@ $module [init] $in() $out () $is
 	}
 }
 
+$module [dotp_experimental] $in() $out (c: $float<8,23> ) $is
+{
+	$storage sum: $float<8,23>
+
+	sum := _f0.0e+1
+        sumptr := @(sum)
+
+
+	$branchblock[run] {
+		$do
+			$merge $entry $loopback
+			$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
+			$endmerge
+			NI := (I+4)
+                        I1 := (I+1)
+                        I2 := (I+2)
+                        I3 := (I+3)
+			pptr := @(a[I]) ppptr := @(a[I1]) pppptr := @(a[I2]) ppppptr := @(a[I3]) 
+			qqtr := @(b[I]) qqqtr := @(b[I1]) qqqqtr := @(b[I2]) qqqqqtr := @(b[I3]) 
+			p  := ->(pptr)  pp := ->(ppptr) ppp := ->(pppptr) pppp := ->(ppppptr)
+			q  := ->(qqtr)  qq := ->(qqqtr) qqq := ->(qqqqtr) qqqq := ->(qqqqqtr)
+			r  := (p*q) rr := (pp*qq) rrr := (ppp*qqq) rrrr := (pppp*qqqq)
+			rsum := ((r + rr) + (rrr+rrrr))
+			u  := ->(sumptr)
+			v  := (u + rsum)
+			->(sumptr) := v
+		$while (NI < 16)
+
+	} 
+
+	c := sum
+}
+
 $module [dotp_pipelined_unrolled] $in() $out (c: $float<8,23> ) $is
 {
 	$storage sum: $float<8,23>

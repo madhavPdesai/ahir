@@ -60,13 +60,13 @@ begin  -- default_arch
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
       elsif decr then
-        token_latch <= token_latch - 1;
         assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
 		severity note;
+        token_latch <= token_latch - 1;
       elsif incr then
-        token_latch <= token_latch + 1;
         assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
 		severity note;
+        token_latch <= token_latch + 1;
       end if;
 
       if((token_latch = (capacity - 1)) and incoming_token and (not backward_reset)) then

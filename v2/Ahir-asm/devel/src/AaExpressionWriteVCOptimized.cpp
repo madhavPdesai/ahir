@@ -253,6 +253,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 		  // completion of this should enable re-update of root.
 		  __MJ(root->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
 		       this->Get_VC_Completed_Transition_Name());
+		  __SelfRelease
 		}
 	    }	  
 
@@ -281,8 +282,9 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 		       //this->Get_VC_Completed_Transition_Name());
 
 		  // this is totally superfluous, since the S -> A -> C
-		  // chain is trivial.
-		  //__SelfRelease
+		  // chain is trivial. 
+		  // NOT true: the markings are an issue.
+		  __SelfRelease
 		}	      
 	    }
 	}
@@ -305,8 +307,6 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 
 	  if(pipeline_flag)
 	    {
-	      // may make some sense to have this until we 
-	      // understand it better.
 	      __SelfRelease
 	    }
 	}
@@ -338,9 +338,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 
 	  if(pipeline_flag)
 	    {
-	      // a reenable is needed only from complete to active.
-	      // __SelfRelease
-	      __MJ(this->Get_VC_Active_Transition_Name(), this->Get_VC_Completed_Transition_Name());
+	       __SelfRelease
 	    }
 	}
 
@@ -412,9 +410,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
       //       separately.
       if(pipeline_flag)
 	{
-	  // only a reenable back from active to start is needed.
-	  //__SelfRelease
-	  __MJ(this->Get_VC_Start_Transition_Name(), this->Get_VC_Active_Transition_Name());
+	  __SelfRelease
 	}
     }
 
@@ -550,6 +546,7 @@ void AaArrayObjectReference::Write_VC_Links_As_Target_Optimized(string hier_id, 
 
 }
 
+// TODO: there are some holes here.
 void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 							     map<string,vector<AaExpression*> >& ls_map,
 							     map<string, vector<AaExpression*> >& pipe_map,
@@ -653,7 +650,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	       string ctrans = this->Get_VC_Completed_Transition_Name();
 	       Write_VC_Reenable_Joins(active_reenable_points,ctrans,ofile);
 	       active_reenable_points.clear();
-	       active_reenable_points.insert(this->Get_VC_Completed_Transition_Name());
+	       active_reenable_points.insert(this->Get_VC_Active_Transition_Name());
 
 	      __SelfRelease
 	    }
@@ -1397,9 +1394,7 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
       if(this->_if_false && !this->_if_false->Is_Constant())
 	__MJ(this->_if_false->Get_VC_Reenable_Update_Transition_Name(visited_elements), this->Get_VC_Active_Transition_Name());
 
-      // a reenable is needed only from active to start.
-      // __SelfRelease
-      __MJ(this->Get_VC_Start_Transition_Name(), this->Get_VC_Active_Transition_Name());
+      __SelfRelease
     }
 }
 
@@ -1651,8 +1646,7 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
     offset_val = this->Evaluate(indices,scale_factors, shift_factors);
   int base_addr = this->Get_Base_Address();
 
-  string root_addr_calculated = this->Get_VC_Name() + "_root_address_calculated"; 
-  __T(root_addr_calculated);
+  string root_addr_calculated = this->Get_VC_Name() + "_root_address_calculated";
   string word_addr_calculated = this->Get_VC_Name() + "_word_address_calculated"; 
   __T(word_addr_calculated);
 
@@ -1691,7 +1685,7 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 	}
       else
 	{
-	  // single word, no operation.. but rename it.
+	  // single word, no operation.. but register it.
 	  ofile << ";;[" << word_region << "] {" << endl;
 	  ofile << "$T [root_register_req] $T [root_register_ack]" << endl;
 	  ofile << "}" << endl;
@@ -1709,6 +1703,9 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
     }
   else
     {
+      // declare root address calculated..
+      __T(root_addr_calculated);
+
 	// address is a constant... no need to reenable..
       __J(word_addr_calculated, root_addr_calculated);
     }
@@ -1779,6 +1776,10 @@ void AaObjectReference::Write_VC_Address_Calculation_Links_Optimized(string hier
 //
 // need to be careful in the reenables.  
 //
+// TODO:  the reenabling is broken..  the complete transition
+// of the successor should reenable the sample transition of
+// the predecessor register!
+//
 void AaObjectReference::
 Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 							 map<string,vector<AaExpression*> >& ls_map,
@@ -1792,8 +1793,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 
   string root_address_calculated = this->Get_VC_Name() + "_root_address_calculated";
-  // already declared by the time we get here.
-  // __T(root_address_calculated);
+  __T(root_address_calculated);
   
   int offset_val = 0;
   if(index_vector)
@@ -1866,9 +1866,13 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		{
 			if(reg_flag)
 			{
+				// successor complete: index_resized..
+				// predecessor sample: index_reenable.
 				__MJ(index_reenable, index_resized);
 				active_reenable_points.erase(index_reenable);
-				active_reenable_points.insert(index_resized);
+
+				// active reenable:  index_computed.
+				active_reenable_points.insert(index_computed);
 			}
 		}
 
@@ -1891,9 +1895,11 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		{
 			if(reg_flag)
 			{
-				__MJ(index_resized, indices_scaled);
-				active_reenable_points.erase(index_resized);
-				active_reenable_points.insert(indices_scaled);
+				// successor complete: indices_scaled
+				// predecessor sample: index_resized.
+				__MJ(index_computed, indices_scaled);
+				active_reenable_points.erase(index_computed);
+				active_reenable_points.insert(index_resized);
 			}
 		}
 	    }
@@ -1932,7 +1938,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		{
 			Write_VC_Reenable_Joins(active_reenable_points, offset_calculated,ofile);
 			active_reenable_points.clear();
-			active_reenable_points.insert(offset_calculated);
+			active_reenable_points.insert(indices_scaled);
 		}
 	}
     }
@@ -1957,7 +1963,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
       if(pipeline_flag)
 	{
-		// nothing.
+		// nothing.  the reenabling is taken care of at a higher level.
 	}
     }
 
@@ -2027,9 +2033,12 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
   {
 	if(reg_flag)
 	{
-		Write_VC_Reenable_Joins(active_reenable_points, root_address_calculated,ofile);
-		active_reenable_points.clear();
-		active_reenable_points.insert(root_address_calculated);
+		// NOTE:  completed of successor must reenable update of predecessor.
+		//        Thus, we just pass the reenable points to the caller who
+		//        can then do whatever is needed.
+		//Write_VC_Reenable_Joins(active_reenable_points, root_address_calculated,ofile);
+		//active_reenable_points.clear();
+		//active_reenable_points.insert(root_address_calculated);
 	}
   }
 

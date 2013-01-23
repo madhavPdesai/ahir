@@ -28,7 +28,7 @@ using namespace llvm;
 namespace Aa {
   FunctionPass* createLowerConstantExprPass();
   ModulePass* createModuleGenPass(const std::string &mlist_file, bool create_initializers, const std::string &pipe_depth_file,
-				  const std::string& hw_target);
+				  const std::string& hw_target, bool extract_do_while);
 }
 
 #include <signal.h>
@@ -60,6 +60,10 @@ static cl::opt<bool>
 static cl::opt<std::string>
 HardwareTargetDescription("hw_target", cl::desc("the hardware target: choose one of xilinx/asic, default is xilinx")
                , cl::value_desc("hardware_target"));
+
+static cl::opt<bool>
+ExtractDoWhile("extract_do_while", cl::desc("detect do-while loops and print in generated Aa file.")
+               , cl::value_desc("extract_do_while: set to true if you want do-while loops to be extracted."));
 
 int main(int argc, char **argv)
 {
@@ -132,7 +136,7 @@ int main(int argc, char **argv)
     Passes.add(createPrintModulePass(&RawOut));
 
     // the Aa generation pass.
-    Pass *P = Aa::createModuleGenPass(ModuleListFile,WriteStorageInitializers,PipeDepthFile,HardwareTargetDescription);
+    Pass *P = Aa::createModuleGenPass(ModuleListFile,WriteStorageInitializers,PipeDepthFile,HardwareTargetDescription,ExtractDoWhile);
     if(P != NULL)
       Passes.add(P);
     else
@@ -151,6 +155,10 @@ int main(int argc, char **argv)
 	std::cerr << "Info: -storageinit=false: storage initializers will not be generated" << std::endl;
       }
 
+    if(ExtractDoWhile)
+      {
+	std::cerr << "Info: -extract_do_while=true: storage initializers will be generated" << std::endl;
+      }
     
     Passes.run(M);
     return 0;

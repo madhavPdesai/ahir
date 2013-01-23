@@ -69,6 +69,7 @@ namespace Aa {
   bool is_private_storage_object(llvm::GlobalVariable* gv);
   bool is_zero(llvm::Constant* konst);
 
+  bool is_do_while_loop(llvm::BasicBlock& BB);
 }
 
 #endif

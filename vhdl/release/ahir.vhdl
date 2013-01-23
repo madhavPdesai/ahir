@@ -9163,16 +9163,16 @@ begin  -- default_arch
         token_latch <= marking;
       elsif (backward_reset and (not incoming_token)) then
         assert token_latch > 0 report "in place " & name &  ": number of tokens cannot become negative!" severity error;
-        token_latch <= token_latch - 1;
         assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
 		severity note;
+        token_latch <= token_latch - 1;
       elsif (incoming_token and (not backward_reset)) then
         assert token_latch < capacity report "in place " & name & " number of tokens "
 			& Convert_To_String(token_latch+1) & " cannot exceed capacity " 
 			& Convert_To_String(capacity) severity error;
-        token_latch <= token_latch + 1;
         assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
 		severity note;
+        token_latch <= token_latch + 1;
       end if;
     end if;
   end process latch_token;
@@ -9242,13 +9242,13 @@ begin  -- default_arch
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
       elsif decr then
-        token_latch <= token_latch - 1;
         assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
 		severity note;
+        token_latch <= token_latch - 1;
       elsif incr then
-        token_latch <= token_latch + 1;
         assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
 		severity note;
+        token_latch <= token_latch + 1;
       end if;
 
       if((token_latch = (capacity - 1)) and incoming_token and (not backward_reset)) then

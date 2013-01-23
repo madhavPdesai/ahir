@@ -36,6 +36,7 @@ namespace {
     bool _consider_all_functions;
     bool _create_initializers;
     bool _skip_zero_initializers;
+    bool _extract_do_while;
     int _pointer_width;
 
     ModuleGenPass() : ModulePass(ID) 
@@ -44,18 +45,21 @@ namespace {
       _consider_all_functions = true;
       _create_initializers = true;
       _skip_zero_initializers = true;
+      _extract_do_while = true;
     }
 
     ModuleGenPass(const std::string& mlist_file, 
 		  bool create_initializers, 
 		  const std::string& pipe_depth_file,
-		  const std::string& hw_target
+		  const std::string& hw_target,
+		  bool extract_do_while
 		  ) : ModulePass(ID) 
     {
       _pointer_width = 32;
       _consider_all_functions = true;
       _create_initializers = create_initializers;
       _skip_zero_initializers = true;
+      _extract_do_while = extract_do_while;
 
       if(hw_target != "")
 	{
@@ -405,7 +409,12 @@ namespace {
 	// have been named ..
 	for(llvm::Function::iterator iter = F.begin(); iter != F.end(); ++iter)
 	  {
+	    bool v = false;
+	    if(_extract_do_while)
+	    	v = is_do_while_loop(*iter);
+	    aa_writer->Set_Do_While_Flag(v);
 	    aa_writer->visit(*iter);
+	    aa_writer->Set_Do_While_Flag(false);
 	  }
 	
 	if(aa_writer->Get_Return_Flag())
@@ -432,9 +441,9 @@ namespace {
 namespace Aa {
 
   ModulePass* createModuleGenPass(const std::string& module_list, bool create_initializers, const std::string& pipe_depth_file,
-				  const std::string& hw_target) 
+				  const std::string& hw_target, bool extract_do_while) 
   { 
-    return new ModuleGenPass(module_list, create_initializers,pipe_depth_file, hw_target); 
+    return new ModuleGenPass(module_list, create_initializers,pipe_depth_file, hw_target, extract_do_while); 
   }
 }
 

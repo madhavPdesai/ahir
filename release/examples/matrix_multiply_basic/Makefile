@@ -8,6 +8,7 @@ VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
 FUNCTIONLIB=../../../v2/functionLibrary/
 all: SW HW 
+LLVM2AAOPTS=-extract_do_while=true --storageinit=true
 
 
 TOPMODULES=-T mmultiply
@@ -22,7 +23,7 @@ SW: prog.c prog.h testbench.c
 	gcc -g -o testbench_sw prog.o testbench.o fpu.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
 
 # five steps from C to vhdl simulator.
-HW: c2llvmbc llvmbc2aa # aa2vc vc2vhdl vhdlsim
+HW: c2llvmbc llvmbc2aa  aa2vc  vc2vhdl  vhdlsim
 
 # C to llvm byte-code.. use clang.
 c2llvmbc: prog.c prog.h
@@ -32,7 +33,7 @@ c2llvmbc: prog.c prog.h
 
 # llvm byte-code to Aa..
 llvmbc2aa:  prog.opt.o 
-	llvm2aa --storageinit=true prog.opt.o | vcFormat >  prog.aa
+	llvm2aa $(LLVM2AAOPTS)  prog.opt.o | vcFormat >  prog.aa
 
 # Aa to vC
 aa2vc: prog.aa $(FUNCTIONLIB)/Aa/fpu.aa

@@ -118,7 +118,6 @@ bool vcCPElementGroup::Can_Absorb(vcCPElementGroup* g)
 {
   bool ret_val = true;
   
-  
 
   if((this->_associated_cp_function != NULL) && (g->_associated_cp_function != NULL) && 
 		(this->_associated_cp_function != g->_associated_cp_function))
@@ -133,8 +132,8 @@ bool vcCPElementGroup::Can_Absorb(vcCPElementGroup* g)
     ret_val = false;
   else if(g->_has_input_transition)
     ret_val = false;
-  //else if(g->_marked_predecessors.size() > 0)
-    //ret_val = false;
+  else if(g->_marked_predecessors.size() > 0)
+    ret_val = false;
   else if(this->_pipeline_parent != g->_pipeline_parent)
     ret_val = false;
   else
@@ -355,9 +354,20 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
   }
 
   bool is_pipelined = (this->_pipeline_parent != NULL);
+
   int max_iterations_in_flight = 1;
-  if(is_pipelined && this->Has_Element(this->_pipeline_parent->Get_Entry_Element()) )
-	max_iterations_in_flight = this->_pipeline_parent->Get_Max_Iterations_In_Flight();
+  if(is_pipelined)
+  {
+      for(set<vcCPElementGroup*>::iterator iter = this->_predecessors.begin(),
+	    fiter = _predecessors.end();
+	  iter != fiter;
+	  iter++)
+	{
+		vcCPElementGroup *pred = *iter;
+		if(pred->Has_Element(this->_pipeline_parent->Get_Entry_Element()) )
+			max_iterations_in_flight = vcSystem::_max_iterations_in_flight;
+	}
+  }
 
   if(!(this->_is_join || this->_is_fork))
     {
@@ -502,6 +512,16 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 	      ofile << this->Get_VHDL_Id() << " <= ";	      
 	      ofile << (*(_predecessors.begin()))->Get_VHDL_Id() << ";" << endl;
 	    }
+	}
+      else if(this->_has_input_transition)
+	// some will be dangling.
+	{
+	      ofile << this->Get_VHDL_Id() << " <= ";
+	      ofile <<  _input_transition->Get_DP_To_CP_Symbol() << ";" << endl;
+	}
+      else
+	{
+		vcSystem::Error("CP-element group " + this->Get_VHDL_Id() + " has no true predecessors.\n");
 	}
     }
 

@@ -1015,3 +1015,36 @@ bool Aa::is_zero(llvm::Constant* konst)
 
   return(false);
 }
+
+
+// if the terminator contains a branch back to this
+// block itself, then it is a do-while loop.
+bool Aa::is_do_while_loop(llvm::BasicBlock& BB)
+{
+	llvm::TerminatorInst* T = BB.getTerminator();
+
+	if(isa<llvm::ReturnInst>(T))
+		return(false);
+
+	// currently, terminator as a switch is
+	// not supported.
+	if(isa<llvm::SwitchInst>(T))
+		return(false);
+
+	if(T->getNumSuccessors() == 0)
+		return(false);
+
+
+	bool ret_val = false;
+	for (unsigned i = 0, e = T->getNumSuccessors(); i != e; ++i) 
+	{
+		llvm::BasicBlock* S = T->getSuccessor(i);
+		if(S == T->getParent())
+		{
+			ret_val = true;
+			break;
+		}
+	}
+	return(ret_val);
+}
+

@@ -26,6 +26,8 @@ namespace Aa {
     llvm::Value* _unique_return_value;
     std::set<std::string>& _module_names;
     bool _consider_all_functions;
+    bool _do_while_transform_flag;
+    bool _do_while_flag;
 
     std::map<std::string,std::set<std::string> > bb_predecessor_map;
     std::map<llvm::Value*, std::string> value_name_map;
@@ -42,6 +44,9 @@ namespace Aa {
     llvm::Module& Get_Module() {return(*_module);}
     void Set_Return_Flag(bool v) {_return_flag = v;}
     bool Get_Return_Flag() {return(_return_flag);}
+
+    void Set_Do_While_Flag(bool v) {_do_while_flag = v;}
+    bool Get_Do_While_Flag() {return(_do_while_flag);}
 
     void clear() { 
       Set_Return_Flag(false); 
@@ -73,6 +78,9 @@ namespace Aa {
     virtual void finalise_function() = 0;
 
     virtual void Write_PHI_Node(llvm::PHINode& pnode) {};
+    virtual void Write_PHI_Node_At_Do_While_Entry(llvm::PHINode& pnode) {};
+    virtual void Write_PHI_Node_In_Do_While_Body(llvm::PHINode& pnode) {};
+
     virtual void visitBasicBlock(llvm::BasicBlock &BB) {};
     virtual void visitInstruction(llvm::Instruction &I);
     virtual void visitBinaryOperator(llvm::BinaryOperator &I) { visitInstruction(I); }
@@ -98,7 +106,6 @@ namespace Aa {
     void write_zero_initializer_recursive(std::string prefix,const llvm::Type* ptr, int depth);
     void write_storage_initializer_statements(std::string& prefix, llvm::Constant* konst, bool skip_zero_initializers);
 
-    bool Is_Do_While_Loop(llvm::BasicBlock& BB);
   };
 };
 

@@ -1347,6 +1347,12 @@ void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
   acks.push_back(ack_transition_name);
 
   Write_VC_Link(this->Get_VC_Name(),reqs,acks,ofile);
+
+  for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
+    {
+      AaExpression* source_expr = _source_pairs[idx].second;
+      source_expr->Write_VC_Links_Optimized(hier_id, ofile);
+    }
 }
 
 // AaSwitchStatement
