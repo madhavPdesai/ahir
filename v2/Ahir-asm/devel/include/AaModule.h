@@ -56,6 +56,7 @@ class AaModule: public AaSeriesBlockStatement
   AaModule(string fname); // Modules have NULL parent (parent is the program)
   ~AaModule();
 
+
   void Set_Print_Prefix(string str) { _print_prefix = str;}
   string Get_Print_Prefix() {return(_print_prefix);}
   void Clear_Print_Prefix() {_print_prefix = "";}

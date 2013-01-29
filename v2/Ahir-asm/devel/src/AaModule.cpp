@@ -26,6 +26,7 @@ AaModule::AaModule(string fname): AaSeriesBlockStatement(NULL,fname)
   _reads_from_shared_pipe = false;
 
   _number_of_times_called = 0;
+  this->Set_Delay(2);
 }
 
 void AaModule::Add_Argument(AaInterfaceObject* obj)

@@ -597,7 +597,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
   //
   bool parent_is_pipelined_loop_body = (this->Get_Parent()->Is("vcCPPipelinedLoopBody"));
   int max_iterations_in_flight = 1;
-  if(parent_is_pipelined_loop_body && this->Has_Predecessor(this->Get_Parent()->Get_Entry_Element()))
+  if(parent_is_pipelined_loop_body) 
 	max_iterations_in_flight = vcSystem::_max_iterations_in_flight;
 
 

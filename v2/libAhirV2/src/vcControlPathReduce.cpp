@@ -358,15 +358,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
   int max_iterations_in_flight = 1;
   if(is_pipelined)
   {
-      for(set<vcCPElementGroup*>::iterator iter = this->_predecessors.begin(),
-	    fiter = _predecessors.end();
-	  iter != fiter;
-	  iter++)
-	{
-		vcCPElementGroup *pred = *iter;
-		if(pred->Has_Element(this->_pipeline_parent->Get_Entry_Element()) )
-			max_iterations_in_flight = vcSystem::_max_iterations_in_flight;
-	}
+     max_iterations_in_flight = vcSystem::_max_iterations_in_flight;
   }
 
   if(!(this->_is_join || this->_is_fork))

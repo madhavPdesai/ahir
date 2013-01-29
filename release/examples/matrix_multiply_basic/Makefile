@@ -9,6 +9,7 @@ VHDL_VHPI_LIB=../../CtestBench/vhdl
 FUNCTIONLIB=../../../v2/functionLibrary/
 all: SW HW 
 LLVM2AAOPTS=-extract_do_while=true --storageinit=true
+#LLVM2AAOPTS=--storageinit=true
 
 
 TOPMODULES=-T mmultiply
@@ -42,7 +43,7 @@ aa2vc: prog.aa $(FUNCTIONLIB)/Aa/fpu.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -v -q -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
+	vc2vhdl -I 16 -v -q -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl

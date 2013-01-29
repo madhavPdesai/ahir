@@ -25,6 +25,7 @@ AaRoot::AaRoot()
   this->_index = AaRoot::Get_Root_Counter();
   this->Increment_Root_Counter();
   this->_file_name = AaProgram::_current_file_name;
+  this->_delay = 0;
 }
 AaRoot::~AaRoot() {};
 string AaRoot::Kind()
@@ -110,6 +111,20 @@ string Make_VC_Legal(string x)
 bool AaRootCompare::operator() (AaRoot* s1, AaRoot* s2) const
 {
   if(s1->Get_Index() < s2->Get_Index())
+    return(true);
+  else
+    return(false);
+}
+
+bool AaRootPairCompare::operator() (AaRootPair* s1, AaRootPair* s2) const
+{
+  if(s1->_distance_from_root > s2->_distance_from_root)
+    return(true);
+  else if(s2->_element == NULL)
+    return(true); 
+  else if(s1->_element == NULL)
+    return(false);
+  else if(s1->_element->Get_Root_Counter() > s2->_element->Get_Root_Counter())
     return(true);
   else
     return(false);

@@ -28,6 +28,7 @@ class AaRoot
 
   int64_t _index;
 
+  int _delay; // delay through expression/statement/module etc..
  protected:
 
   // vector of references to this object from "anywhere"
@@ -35,6 +36,9 @@ class AaRoot
   set<AaRoot*> _source_references; // objects that use this as a source.
 
  public:
+  void Set_Delay(int d) {_delay = d;}
+  int Get_Delay() {return(_delay);}
+
   set<AaRoot*>& Get_Target_References() {return(_target_references);}
   set<AaRoot*>& Get_Source_References() {return(_source_references);}
 
@@ -142,14 +146,33 @@ class AaRoot
     return(this->Get_Source_Info());
   };
 
-
+  virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
+  {
+	// do nothing.
+  }
 
 };
+
+
 
 struct AaRootCompare:public binary_function
   <AaRoot*, AaRoot*, bool >
 {
   bool operator() (AaRoot*, AaRoot*) const;
+};
+
+class AaRootPair
+{
+    public:
+	AaRoot* _element;
+	int     _distance_from_root;
+	AaRootPair(AaRoot* ele, int d) { _element = ele; _distance_from_root = d;}
+};
+
+struct AaRootPairCompare:public binary_function
+  <AaRootPair*, AaRootPair*, bool >
+{
+  bool operator() (AaRootPair*, AaRootPair*) const;
 };
 
 string Make_VC_Legal(string x);

@@ -196,6 +196,7 @@ class AaStatement: public AaScope
     assert(0);
   }
 
+
 };
 
 // statement sequence (is used in block statements which lead to programs)
@@ -214,6 +215,14 @@ class AaStatementSequence: public AaScope
       return (this->_statement_sequence[indx]);
     else
       return(NULL);
+  }
+
+  void Renumber_Statements()
+  {
+	for(int idx =0, fidx = _statement_sequence.size(); idx < fidx; idx++)
+	{
+		_statement_sequence[idx]->Set_Index_In_Sequence(idx);
+	}
   }
 
   virtual void Print(ostream& ofile);
@@ -325,6 +334,10 @@ class AaStatementSequence: public AaScope
 
   void Write_VC_Control_Path_As_Fork_Block(bool pipe_flag, string region_id, ostream& ofile);
 
+  void Insert_Statements_After(AaStatement* pred, vector<AaStatement*>& nstmt);
+  void Insert_Statements_Before(AaStatement* succ, vector<AaStatement*>& nstmt);
+  void Delete_Statement(AaStatement* stmt);
+
 };
 
 // null statement
@@ -415,6 +428,7 @@ class AaAssignmentStatement: public AaStatement
   virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements);
   virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements);
 
+  virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
 };
 
 
@@ -509,6 +523,7 @@ class AaCallStatement: public AaStatement
     return(this->Get_VC_Name() + "_complete");
   }
 
+  virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
 };
 
 
@@ -997,7 +1012,10 @@ class AaPhiStatement: public AaStatement
  public:
   AaPhiStatement(AaBranchBlockStatement* scope, AaMergeStatement* pm);
   ~AaPhiStatement();
+
   void Set_Target(AaObjectReference* tgt);
+  AaObjectReference* Get_Target() {return(_target);}
+
   void Add_Source_Pair(string label, AaExpression* expr);
   bool Is_Merged(string label)
   {
@@ -1287,6 +1305,17 @@ class AaDoWhileStatement: public AaStatement
   virtual string Get_VC_Exit_Place_Name() {return(this->Get_VC_Name() + "__exit__");}
 
   virtual void Get_Target_Places(set<AaPlaceStatement*>& target_places); // do nothing.
+
+  // first in-memory transformation.  Add delayed versions
+  // of implicit variables in order to help pipelining.
+  void Equalize_Paths_For_Pipelining();
+
+  void Add_Delayed_Versions(AaRoot* curr, 
+				map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map,
+				map<AaRoot*, int>& longest_paths_from_root_map);
+
+   void Find_Longest_Paths( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+				map<AaRoot*, int>& longest_paths_from_root_map);
 };
 
 

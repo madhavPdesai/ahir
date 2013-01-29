@@ -9,7 +9,7 @@ TOPMODULES=-t init -t dotp_experimental
 #TOPMODULES=-t init -t dotp_pipelined_unrolled -t dotp_nonpipelined_unrolled -t dotp_pipelined -t dotp_nonpipelined
 DEFS=-DEXPERIMENTAL
 #DEFS=-DPIPELINEDUNROLLED -DPIPELINED -DNONPIPELINEDUNROLLED -DNONPIPELINED
-VC2VHDLOPTS=-a -O -C -w -s ghdl -I 64
+VC2VHDLOPTS=-a -O -C -w -s ghdl -I 8
 all: HW 
 
 
