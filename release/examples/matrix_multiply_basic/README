@@ -1,2 +1,8 @@
 The obvious matrix multiplication algorithm.
 This is a test case for loop pipelining!
+
+The observation:  
+
+   The inner loop (for 4x4 matrix mult.) runs
+6X faster with loop-pipelining when compared
+to the non-pipelined case.  A definite win.

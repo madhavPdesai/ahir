@@ -8,8 +8,8 @@ VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
 FUNCTIONLIB=../../../v2/functionLibrary/
 all: SW HW 
-LLVM2AAOPTS=-extract_do_while=true --storageinit=true
-#LLVM2AAOPTS=--storageinit=true
+#LLVM2AAOPTS=-extract_do_while=true --storageinit=true
+LLVM2AAOPTS=--storageinit=true
 
 
 TOPMODULES=-T mmultiply
