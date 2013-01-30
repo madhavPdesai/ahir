@@ -196,6 +196,8 @@ class AaStatement: public AaScope
     assert(0);
   }
 
+  virtual string Get_Name() {return(this->Get_VC_Name());}
+
 
 };
 
@@ -392,6 +394,9 @@ class AaAssignmentStatement: public AaStatement
   {
     return("_assign_line_" +   IntToStr(this->Get_Line_Number()));
   }
+ 
+  string Get_Target_Name() {return(this->_target->Get_Name());}
+
 
   // return true if one of the sources or targets is a pipe.
   virtual bool Can_Block();
@@ -538,6 +543,7 @@ class AaBlockStatement: public AaStatement
  public:
 
   virtual string Get_Label() { return(this->_label);}
+  virtual string Get_Name() {return(this->Get_Label());}
   virtual bool Is_Block_Statement() {return(true);}
   virtual bool Is_Pipelined() {return(false);}
 
@@ -1070,6 +1076,7 @@ class AaPhiStatement: public AaStatement
   {
     return(this->Get_VC_Name() + "_enable_");
   }
+  virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
   friend class AaMergeStatement;
 };
 

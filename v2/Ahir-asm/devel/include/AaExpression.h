@@ -13,6 +13,7 @@
 //**************************************** EXPRESSION ****************************************
 class AaStorageObject;
 class AaStatement;
+class AaAssignmentStatement;
 class AaExpression: public AaRoot
 {
   // the containing scope of this expression
@@ -57,6 +58,8 @@ class AaExpression: public AaRoot
 
   bool _already_evaluated;
 
+
+  void Replace_Field_Expression(AaExpression** eptr, AaExpression* used_expr, AaAssignmentStatement* replacement);
   
  public:
 
@@ -254,8 +257,10 @@ class AaExpression: public AaRoot
       return(this->Get_VC_Start_Transition_Name());    
   }
 
-  virtual void Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement) {assert(0);}
+  virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement) {assert(0);}
   void Replace_Uses_By(AaExpression* used_expr, AaExpression* replacement);
+
+  virtual string Get_Name() {return(this->Get_VC_Name());}
 
 };
 
@@ -300,7 +305,7 @@ class AaObjectReference: public AaExpression
  public:
 
   AaObjectReference(AaScope* scope_tpr, string object_ref_string);
-  AaObjectReference(AaScope* scope_tpr, AaRoot* root_obj);
+  AaObjectReference(AaScope* scope_tpr, AaAssignmentStatement* root_obj);
 
   ~AaObjectReference();
   virtual void Print(ostream& ofile);
@@ -613,7 +618,7 @@ class AaSimpleObjectReference: public AaObjectReference
 
  public:
   AaSimpleObjectReference(AaScope* scope_tpr, string object_ref_string);
-  AaSimpleObjectReference(AaScope* scope_tpr, AaRoot* root_object);
+  AaSimpleObjectReference(AaScope* scope_tpr, AaAssignmentStatement* root_object);
 
   ~AaSimpleObjectReference();
   virtual string Kind() {return("AaSimpleObjectReference");}
@@ -689,7 +694,7 @@ class AaSimpleObjectReference: public AaObjectReference
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
 
   virtual string Get_Name();
-  virtual void Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement);
+  virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 };
 
 
@@ -807,7 +812,7 @@ class AaArrayObjectReference: public AaObjectReference
   virtual void Add_Source_Reference(AaRoot* referrer);
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
-  virtual void Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement);
+  virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 };
 
 
@@ -897,7 +902,7 @@ class AaPointerDereferenceExpression: public AaObjectReference
   void Get_Siblings(set<AaPointerDereferenceExpression*>& sibling_set, bool get_sources, bool get_targets);
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
-  virtual void Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement);
+  virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 };
 
 
@@ -969,7 +974,7 @@ class AaAddressOfExpression: public AaObjectReference
 
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
-  virtual void Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement);
+  virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 };
 
 
@@ -1033,7 +1038,7 @@ class AaTypeCastExpression: public AaExpression
 
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
-  virtual void Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement);
+  virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 
 };
 
@@ -1103,7 +1108,7 @@ class AaUnaryExpression: public AaExpression
 
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
-  virtual void Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement);
+  virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 };
 
 // 
@@ -1211,7 +1216,7 @@ class AaBinaryExpression: public AaExpression
 
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
-  virtual void Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement);
+  virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 
 };
 
@@ -1291,7 +1296,7 @@ class AaTernaryExpression: public AaExpression
 
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
-  virtual void Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement);
+  virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 };
 
 

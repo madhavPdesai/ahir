@@ -76,6 +76,23 @@ string AaExpression::Get_VC_Guard_String()
 	return(ret_string);
 }
 
+void AaExpression::Replace_Field_Expression(AaExpression** eptr, AaExpression* used_expr, AaAssignmentStatement* replacement)
+{
+	AaExpression* fexpr = *eptr;
+
+	if(fexpr != NULL)
+	{
+		if((fexpr == used_expr) || (fexpr->Is_Implicit_Variable_Reference() &&  
+					(fexpr->Get_Root_Object() == used_expr->Get_Root_Object())) )
+		{
+			assert(replacement->Is_Statement());
+			AaExpression* new_expr = new AaSimpleObjectReference(this->Get_Scope(),replacement);
+			*eptr  = new_expr;
+			this->AaExpression::Replace_Uses_By(fexpr, new_expr);
+		}
+		
+	}
+}
 
 void AaExpression::Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr)
 {
@@ -214,6 +231,7 @@ bool AaExpression::Get_Guard_Complement()
 AaObjectReference::AaObjectReference(AaScope* parent_tpr, string object_id):AaExpression(parent_tpr)
 {
 	this->_object_ref_string = object_id;
+	this->_object_root_name = object_id;
 	this->_search_ancestor_level = 0; 
 	this->_object = NULL;
 	this->_is_dereferenced = false;
@@ -221,9 +239,10 @@ AaObjectReference::AaObjectReference(AaScope* parent_tpr, string object_id):AaEx
 
 AaObjectReference::~AaObjectReference() {};
 
-AaObjectReference::AaObjectReference(AaScope* parent_tpr, AaRoot* root_obj):AaExpression(parent_tpr)
+AaObjectReference::AaObjectReference(AaScope* parent_tpr, AaAssignmentStatement* root_obj):AaExpression(parent_tpr)
 {
-	this->_object_ref_string = root_obj->Get_Name();
+	this->_object_ref_string = root_obj->Get_Target_Name();
+	this->_object_root_name =  this->_object_ref_string;
 	this->_search_ancestor_level = 0; 
 	this->_object = root_obj;
 	this->_is_dereferenced = false;
@@ -535,9 +554,10 @@ void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 
 }
 
-AaSimpleObjectReference::AaSimpleObjectReference(AaScope* parent_tpr, AaRoot* root_obj):AaObjectReference(parent_tpr, root_obj) 
+AaSimpleObjectReference::AaSimpleObjectReference(AaScope* parent_tpr, AaAssignmentStatement* root_obj):AaObjectReference(parent_tpr, root_obj) 
 {
 	this->Set_Object(root_obj);
+	this->Set_Type(root_obj->Get_Target()->Get_Type());
 }
 
 bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObject* obj)
@@ -1147,17 +1167,20 @@ void AaSimpleObjectReference::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaR
 			AaRoot* root = this->Get_Root_Object();
 			if(visited_elements.find(root) != visited_elements.end())
 			{
-				adjacency_map[root].push_back(pair<AaRoot*,int>(this,0));
+				__InsMap(adjacency_map,root,this,0);
+				visited_elements.insert(this);
 			}		
 			else
 			{
-				adjacency_map[NULL].push_back(pair<AaRoot*,int>(this,0));
+				root = NULL;
+				__InsMap(adjacency_map,root,this,0);
 				visited_elements.insert(this);
 			}
 		}
 		else
 		{
-			adjacency_map[NULL].push_back(pair<AaRoot*,int>(this,0));
+			AaRoot* tmp = NULL;
+			__InsMap(adjacency_map,tmp,this,0);
 			visited_elements.insert(this);
 		}
 	}
@@ -1166,17 +1189,24 @@ void AaSimpleObjectReference::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaR
 		if(this->Is_Implicit_Variable_Reference())
 		{
 			AaRoot* root = this->Get_Root_Object();
+			__InsMap(adjacency_map,this,root,0);
 			visited_elements.insert(root);
+			visited_elements.insert(this);
 		}
 		else
 			visited_elements.insert(this);
 	}
 }
 
-void AaSimpleObjectReference::Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement)
+void AaSimpleObjectReference::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
 {
-	// TODO
+	if(this->_object == used_expr->Get_Root_Object())
+	{
+		AaRoot* obj   = this->_object;
+		this->_object = replacement;
+	}
 }
+
 //---------------------------------------------------------------------
 // AaArrayObjectReference
 //---------------------------------------------------------------------
@@ -2201,20 +2231,35 @@ void AaArrayObjectReference::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRo
 	for(int idx = 0, fidx = _indices.size(); idx < fidx; idx++)
 	{
 		_indices[idx]->Update_Adjacency_Map(adjacency_map,visited_elements);
-		adjacency_map[_indices[idx] ].push_back(pair<AaRoot*,int>(this, this->Get_Delay()));
+		__InsMap(adjacency_map,_indices[idx],this,this->Get_Delay());
 	}
 
 	if(_pointer_ref)
 	{
 		_pointer_ref->Update_Adjacency_Map(adjacency_map,visited_elements);
-		adjacency_map[_pointer_ref].push_back(pair<AaRoot*,int>(this, this->Get_Delay()));
+		__InsMap(adjacency_map,_pointer_ref,this,this->Get_Delay());
 	}
 }
 
 
-void AaArrayObjectReference::Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement)
+void AaArrayObjectReference::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
 {
-	// TODO
+	for(int idx = 0, fidx = _indices.size(); idx < fidx; idx++)
+	{
+		AaExpression* ind_exp = _indices[idx];
+		bool is_implicit = ind_exp->Is_Implicit_Variable_Reference();
+		if((ind_exp == used_expr) || (is_implicit &&  (ind_exp->Get_Root_Object() == used_expr->Get_Root_Object())) )
+		{
+			AaExpression* new_indx = new AaSimpleObjectReference(this->Get_Scope(),replacement);
+			_indices[idx] = new_indx;
+			this->AaExpression::Replace_Uses_By(ind_exp, new_indx);
+		}
+	}	
+
+	if(_pointer_ref != NULL)
+	{
+	   this->Replace_Field_Expression((AaExpression**) &_pointer_ref, used_expr, replacement);
+	}
 }
 
 //---------------------------------------------------------------------
@@ -2513,7 +2558,7 @@ void AaPointerDereferenceExpression::Get_Siblings(set<AaPointerDereferenceExpres
 void AaPointerDereferenceExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 {
 	_reference_to_object->Update_Adjacency_Map(adjacency_map, visited_elements);
-	adjacency_map[_reference_to_object].push_back(pair<AaRoot*,int>(this,this->Get_Delay()));
+	__InsMap(adjacency_map,_reference_to_object,this,this->Get_Delay());
 }
 
 bool AaPointerDereferenceExpression::Is_Foreign_Store()
@@ -2691,10 +2736,11 @@ void AaPointerDereferenceExpression::Write_VC_Links_As_Target(string hier_id, os
 			     ofile);
 }
 
-void AaPointerDereferenceExpression::Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement)
+void AaPointerDereferenceExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
 {
-	// TODO
+   this->Replace_Field_Expression((AaExpression**) &_reference_to_object, used_expr, replacement);
 }
+
 
 //---------------------------------------------------------------------
 // AaAddressOfExpression
@@ -3065,13 +3111,16 @@ void AaAddressOfExpression::Write_VC_Links_As_Target(string hier_id, ostream& of
 void AaAddressOfExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 {
 	_reference_to_object->Update_Adjacency_Map(adjacency_map, visited_elements);
-	adjacency_map[_reference_to_object].push_back(pair<AaRoot*,int>(this,this->Get_Delay()));
+	__InsMap(adjacency_map,_reference_to_object,this,this->Get_Delay());
 }
 
-void AaAddressOfExpression::Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement)
+void AaAddressOfExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
 {
-	// TODO
+	// this should never happen, because replacement is always by an implicit
+	// variable
+	assert(0);
 }
+
 //---------------------------------------------------------------------
 // type cast expression (is unary)
 //---------------------------------------------------------------------
@@ -3252,12 +3301,12 @@ void AaTypeCastExpression::Write_VC_Links(string hier_id, ostream& ofile)
 void AaTypeCastExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 {
 	_rest->Update_Adjacency_Map(adjacency_map, visited_elements);
-	adjacency_map[_rest].push_back(pair<AaRoot*,int>(this,this->Get_Delay()));
+	__InsMap(adjacency_map,_rest,this,this->Get_Delay());
 }
 
-void AaTypeCastExpression::Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement)
+void AaTypeCastExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
 {
-	// TODO
+   this->Replace_Field_Expression(&_rest, used_expr, replacement);
 }
 //---------------------------------------------------------------------
 // AaUnaryExpression
@@ -3397,13 +3446,14 @@ void AaUnaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
 void AaUnaryExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 {
 	_rest->Update_Adjacency_Map(adjacency_map, visited_elements);
-	adjacency_map[_rest].push_back(pair<AaRoot*,int>(this,this->Get_Delay()));
+	__InsMap(adjacency_map,_rest,this,this->Get_Delay());
 }
 
-void AaUnaryExpression::Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement)
+void AaUnaryExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
 {
-	// TODO
+   this->Replace_Field_Expression(&_rest, used_expr, replacement);
 }
+
 //---------------------------------------------------------------------
 // AaBinaryExpression
 //---------------------------------------------------------------------
@@ -3443,10 +3493,7 @@ AaBinaryExpression::AaBinaryExpression(AaScope* parent_tpr,AaOperation op, AaExp
 
   this->Update_Type();
 
-  if(this->Is_Trivial())
-  	this->Set_Delay(1);
-  else
-  	this->Set_Delay(2);
+  this->Set_Delay(1);
 }
 
 AaBinaryExpression::~AaBinaryExpression() {};
@@ -3644,13 +3691,14 @@ void AaBinaryExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*,
 {
 	_first->Update_Adjacency_Map(adjacency_map, visited_elements);
 	_second->Update_Adjacency_Map(adjacency_map, visited_elements);
-	adjacency_map[_first].push_back(pair<AaRoot*,int>(this,this->Get_Delay()));
-	adjacency_map[_second].push_back(pair<AaRoot*,int>(this,this->Get_Delay()));
+	__InsMap(adjacency_map,_first,this,this->Get_Delay());
+	__InsMap(adjacency_map,_second,this,this->Get_Delay());
 }
 
-void AaBinaryExpression::Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement)
+void AaBinaryExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
 {
-	// TODO
+	this->Replace_Field_Expression(&_first, used_expr, replacement);
+	this->Replace_Field_Expression(&_second, used_expr, replacement);
 }
 //---------------------------------------------------------------------
 // AaTernaryExpression
@@ -3848,12 +3896,14 @@ void AaTernaryExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*
 	_test->Update_Adjacency_Map(adjacency_map, visited_elements);
 	_if_true->Update_Adjacency_Map(adjacency_map, visited_elements);
 	_if_false->Update_Adjacency_Map(adjacency_map, visited_elements);
-	adjacency_map[_test].push_back(pair<AaRoot*,int>(this,this->Get_Delay()));
-	adjacency_map[_if_true].push_back(pair<AaRoot*,int>(this,this->Get_Delay()));
-	adjacency_map[_if_false].push_back(pair<AaRoot*,int>(this,this->Get_Delay()));
+	__InsMap(adjacency_map,_test,this,this->Get_Delay());
+	__InsMap(adjacency_map,_if_true,this,this->Get_Delay());
+	__InsMap(adjacency_map,_if_false,this,this->Get_Delay());
 }
 
-void AaTernaryExpression::Replace_Uses_By(AaExpression* used_expr, AaRoot* replacement)
+void AaTernaryExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
 {
-	// TODO
+	this->Replace_Field_Expression(&_test, used_expr, replacement);
+	this->Replace_Field_Expression(&_if_true, used_expr, replacement);
+	this->Replace_Field_Expression(&_if_false, used_expr, replacement);
 }

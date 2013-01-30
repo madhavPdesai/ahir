@@ -1,2 +1,2 @@
-#define ORDER 8
+#define ORDER 4
 void mmultiply();

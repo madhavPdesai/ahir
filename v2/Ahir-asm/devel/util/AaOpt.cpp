@@ -29,13 +29,17 @@ void Handle_Segfault(int signal)
 
 int main(int argc, char* argv[])
 {
-  AaProgram::_verbose_flag = true;
+  AaProgram::_verbose_flag = false;
 
   signal(SIGSEGV, Handle_Segfault);
 
   if(argc < 2)
     {
       cerr << "Usage: AaOpt [-I <extmem-obj-name>] [-r <module-name>]* <filename> (<filename>) ... " << endl;
+      cerr << "    -I <extmem-obj-name> : specify the name of the memory object target for external references." << endl
+	   << "    -r <module-name>     : specify roots of the module hierarchy." << endl
+	   << "    -B                   : select option to balance do-while loop pipelines." << endl
+           << "     <filename> (<filename>) ... " << endl;
       exit(1);
     }
 
@@ -54,7 +58,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "I:r:",
+		      "I:r:B",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -67,6 +71,9 @@ int main(int argc, char* argv[])
 	  mod_name = string(optarg);
 	  AaProgram::Mark_As_Root_Module(mod_name); 
 	  cerr << "Info:AaOpt: module " << mod_name << " set as a root module." << endl;
+	  break;
+        case 'B':
+	  AaProgram::_balance_loop_pipeline_bodies = true;
 	  break;
 	default:
 	  cerr << "Error: unknown option " << opt << endl;

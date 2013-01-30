@@ -1,6 +1,7 @@
 #include <AaProgram.h>
 #include <Aa2VC.h>
 
+
 //---------------------------------------------------------------------
 // AaStatement
 //---------------------------------------------------------------------
@@ -4204,6 +4205,11 @@ void AaDoWhileStatement::Print(ostream& ofile)
   assert(this->_test_expression);
   assert(this->_loop_body_sequence);
 
+  if(AaProgram::_balance_loop_pipeline_bodies)
+  {
+	this->Equalize_Paths_For_Pipelining();
+  }
+
   ofile << this->Tab();
   ofile << "$do " << endl;
   this->_merge_statement->Print(ofile);
@@ -4504,7 +4510,7 @@ void AaDoWhileStatement::Equalize_Paths_For_Pipelining()
   	for(int idx=0, fidx = this->_merge_statement->Get_Statement_Count(); idx < fidx; idx++)
 	{
       		AaStatement* cphi = (this->_merge_statement->Get_Statement(idx));
-		visited_elements.insert(cphi);
+		cphi->Update_Adjacency_Map(adjacency_map, visited_elements);
 	}
 	
 	// now update the adjacencies.
@@ -4516,6 +4522,23 @@ void AaDoWhileStatement::Equalize_Paths_For_Pipelining()
 
 
 	// OK. At this point, you have all the adjacencies.  Now, 
+	AaRoot::Info("Adjacency map in do-while loop body " + this->Get_VC_Name());
+	for(map<AaRoot*,vector<pair<AaRoot*,int> > >::iterator miter = adjacency_map.begin(),
+			fmiter = adjacency_map.end(); miter != fmiter; miter++)
+	{
+		AaRoot* tmp  = (*miter).first;
+		if(tmp != NULL)
+			cerr << (*miter).first->To_String() << " (" << (*miter).first->Get_VC_Name() << "): " << endl;
+		else
+			cerr <<  "NULL : " << endl;
+
+		for(int idx = 0, fidx = (*miter).second.size(); idx < fidx; idx++)
+		{
+			cerr << "\t(" << (*miter).second[idx].first->Get_VC_Name() << "," << (*miter).second[idx].second << ")" 
+			     << endl;
+		}
+	}
+
 	// find the longest paths from the NULL node to all other
 	// vertices.
 	map<AaRoot*, int> longest_paths_from_root_map;
@@ -4538,68 +4561,115 @@ void AaDoWhileStatement::Equalize_Paths_For_Pipelining()
 	}
 }
 
-// Dijkstra's algorithm for shortest paths used here 
-// in order to figure out the longest paths..  note
-// that the graph is acyclic.
-void AaDoWhileStatement::Find_Longest_Paths( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+// find the longest paths.  First do a topological sort
+// and then a straight update.
+void AaDoWhileStatement::Find_Longest_Paths(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
 				map<AaRoot*, int>& longest_paths_from_root_map)
 {	
-	set<AaRoot*> active_elements;
-	set<AaRootPair*, AaRootPairCompare> active_set;
-	map<AaRoot*, AaRootPair*> pair_map;
 
-	AaRootPair* np = new AaRootPair(NULL,0);
-	active_set.insert(np);
-	active_elements.insert(NULL);
+	// reverse lookup map.
+	map<AaRoot*, vector<pair<AaRoot*,int> > > predecessor_map;
+	AaGraphBase g;
 
-	while(!active_set.empty())
+
+	// first build a Boost graph.
+	string nname = "null";
+	g.Add_Vertex(NULL);
+
+	for(map<AaRoot*,int>::iterator miter = longest_paths_from_root_map.begin(),
+		fmiter = longest_paths_from_root_map.end();
+		miter != fmiter;
+		miter++)
 	{
-		AaRootPair* fp = *(active_set.begin());
-		
-		string ele_name = (fp->_element == NULL ? "NULL" : fp->_element->Get_Name());
-		AaRoot::Info("AaDoWhileStatement::longest-path to element " + ele_name + " is "  
-			     	+ IntToStr(fp->_distance_from_root));
+		AaRoot* it = (*miter).first;
+		g.Add_Vertex(it);
+	}
 
-		for(int idx = 0, fidx = adjacency_map[fp->_element].size(); idx < fidx; idx++)
+	for(map<AaRoot*,vector< pair<AaRoot*,int> > >::iterator iter = adjacency_map.begin(), fiter = adjacency_map.end();
+		iter != fiter;
+		iter++)
+	{
+		AaRoot* u = (*iter).first;
+		for(int idx = 0, fidx = (*iter).second.size(); idx < fidx; idx++)
 		{
-			AaRoot* nbr = (adjacency_map[fp->_element][idx]).first;
-			int length = (adjacency_map[fp->_element][idx]).second;
+			AaRoot* v = (*iter).second[idx].first;
+			int length = (*iter).second[idx].second;
+			g.Add_Edge(u,v);
 
-			int distance = fp->_distance_from_root + length;
-			if(distance > longest_paths_from_root_map[nbr])
-				longest_paths_from_root_map[nbr] = distance;
+			predecessor_map[v].push_back(pair<AaRoot*,int>(u,length));
+		}
+	}
 
-			if(active_elements.find(nbr) == active_elements.end())
+	// topological sort.
+	vector<AaRoot*> precedence_order;
+	g.Topological_Sort(precedence_order);
+
+	for(int idx = precedence_order.size()-1, fidx = 0; idx >= fidx; idx--)
+	{
+		
+				
+		AaRoot* v = precedence_order[idx];
+		int lp = 0;
+
+		if(v != NULL)
+		{
+			int curr_dist = longest_paths_from_root_map[v];
+			int new_dist =0;
+			for(int jdx = 0, fjdx = predecessor_map[v].size(); jdx < fjdx; jdx++)
 			{
-				// add to active.
-				active_elements.insert(nbr);
-				AaRootPair* nrp = new AaRootPair(nbr,distance);
-				active_set.insert(nrp);
-				pair_map[nbr] = nrp;
+				AaRoot* u = predecessor_map[v][jdx].first;
+
+				int dist_to_u = 0;
+				if(u != NULL)
+				{
+					dist_to_u = longest_paths_from_root_map[u];
+				}
+				int length = predecessor_map[v][jdx].second;
+				int nn = length + dist_to_u;
+				if(nn > new_dist)
+				{	
+					new_dist = nn;
+				}
+			}
+
+			if(new_dist > curr_dist)
+			{
+				lp = new_dist;
+				longest_paths_from_root_map[v] = new_dist;
 			}
 			else
-			{
-				// remove from active and reinsert.
-				AaRootPair* tmp = new AaRootPair(nbr,pair_map[nbr]->_distance_from_root);
-				AaRootPair* old = *(active_set.find(tmp));
-				active_set.erase(old);
-				delete old;
-
-				pair_map[nbr]->_distance_from_root = distance;
-				active_set.insert(tmp);
-			}
+				lp  = curr_dist;
+			AaRoot::Info("longest path to " + v->Get_VC_Name() + " is " + IntToStr(lp));
 		}
-		active_set.erase(fp);
-		active_elements.erase(fp->_element);
-		delete fp;
+		else
+			AaRoot::Info("longest path to NULL is 0");
 	}
 }
 
 void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr, 
-				map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
-				map<AaRoot*, int>& longest_paths_from_root_map)
+		map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+		map<AaRoot*, int>& longest_paths_from_root_map)
 {
-	assert(curr->Is_Expression());
+	AaExpression* curr_expr = NULL;
+	if(curr->Is_Expression())
+	{
+		curr_expr = (AaExpression*) curr;
+	}
+	else if(curr->Is_Statement())
+	{
+		if(curr->Is("AaAssignmentStatement"))
+		{
+			curr_expr = ((AaAssignmentStatement*)curr)->Get_Target();
+		}
+		else if(curr->Is("AaPhiStatement"))
+		{
+			curr_expr = ((AaPhiStatement*)curr)->Get_Target();
+		}
+		else
+		{
+			assert(0);
+		}
+	}
 
 	map<AaRoot*,int> slack_map;
 	// TODO
@@ -4612,7 +4682,6 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 	for(int idx = 0, fidx = adjacency_map[curr].size(); idx < fidx; idx++)
 	{
 		AaRoot* nbr = adjacency_map[curr][idx].first;
-		assert(nbr->Is_Expression());
 
 		int dist =  adjacency_map[curr][idx].second;
 		int slack = longest_paths_from_root_map[nbr] - (dist + longest_paths_from_root_map[curr]);
@@ -4632,9 +4701,8 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 	if(max_slack == 0)
 		return;
 
-	AaExpression* curr_expr = (AaExpression*) curr;
 	AaStatement* stmt = curr_expr->Get_Associated_Statement();
-	AaStatement* root_stmt = NULL;
+	AaAssignmentStatement* root_stmt = NULL;
 	assert(stmt != NULL);
 
 
@@ -4651,11 +4719,17 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 		// statements after the stmt in which it occurs.
 		string root_name = curr_expr->Get_Name();
 		string current_source_name = root_name;
-		for(int idx =1; idx <= max_slack; idx++)
+		string delayed_name;
+		for(int idx =1; idx < max_slack; idx++)
 		{
-			string delayed_name =  root_name + "_delayed_" + IntToStr(idx);
-			AaExpression* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
-			AaExpression* new_src    = new AaSimpleObjectReference(this->Get_Scope(), current_source_name);
+			delayed_name =  root_name + "_" + Int64ToStr(curr_expr->Get_Index()) + "_delayed_" + 
+						IntToStr(idx);
+
+			AaSimpleObjectReference* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
+			new_target->Set_Type(curr_expr->Get_Type());
+
+			AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), current_source_name);
+			new_src->Set_Type(curr_expr->Get_Type());
 			
 			AaAssignmentStatement* new_stmt = new AaAssignmentStatement(this->Get_Scope(),
 											new_target,
@@ -4673,20 +4747,26 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 		// if expression is not a target, then the delayed
 		// statements should be introduced before the statement
 		// in which the expression occurs.
-		string root_name = curr_expr->Get_Name();
+		string root_name = curr_expr->Get_Name() + "_" + Int64ToStr(curr_expr->Get_Index());
+
 		AaExpression* new_target = new AaSimpleObjectReference(this->Get_Scope(), root_name);
+		new_target->Set_Type(curr_expr->Get_Type());
+
 		root_stmt = new AaAssignmentStatement(this->Get_Scope(),
 							new_target,
 							curr_expr,
 							0);
-
+		delayed_versions.push_back(root_stmt);
 
 		string current_source_name = root_name;
-		for(int idx =1; idx <= max_slack; idx++)
+		for(int idx =1; idx < max_slack; idx++)
 		{
 			string delayed_name =  root_name + "_delayed_" + IntToStr(idx);
-			AaExpression* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
-			AaExpression* new_src    = new AaSimpleObjectReference(this->Get_Scope(), current_source_name);
+			AaSimpleObjectReference* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
+			new_target->Set_Type(curr_expr->Get_Type());
+			
+			AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), current_source_name);
+			new_src->Set_Type(curr_expr->Get_Type());
 			
 			AaAssignmentStatement* new_stmt = new AaAssignmentStatement(this->Get_Scope(),
 											new_target,
@@ -4703,10 +4783,9 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 	for(map<AaRoot*,int>::iterator iter = slack_map.begin(), fiter = slack_map.end(); iter != fiter; iter++)
 	{
 		AaRoot* nbr = (*iter).first;
-		assert(nbr->Is_Expression());
-
 		int slack   = (*iter).second;
-		AaExpression* nbr_expr = (AaExpression*) nbr;
+	
+		
 	
                 assert(slack <= max_slack);
 
@@ -4716,13 +4795,28 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 		//
  		if(slack > 0)
 		{
-			nbr_expr->Replace_Uses_By(curr_expr, delayed_versions[slack]);
+			assert(nbr->Is_Expression());
+			AaExpression* nbr_expr = (AaExpression*) nbr;
+
+			AaAssignmentStatement* rs = (AaAssignmentStatement*) delayed_versions[slack-1];
+			nbr_expr->Replace_Uses_By(curr_expr, rs);
 		}
 		else if(!curr_expr->Get_Is_Target())
 		{
+			assert(nbr->Is_Expression());
+			AaExpression* nbr_expr = (AaExpression*) nbr;
+
 			nbr_expr->Replace_Uses_By(curr_expr, root_stmt);
 		}
 	}
+}
+
+void AaPhiStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
+{
+       	AaExpression* tgt_expression = this->Get_Target();
+	__InsMap(adjacency_map,NULL,tgt_expression,0);
+	__InsMap(adjacency_map,tgt_expression,this,0);
+	visited_elements.insert(this);
 }
 
 void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
@@ -4733,7 +4827,13 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
        	AaExpression* tgt_expression = this->Get_Target();
 	tgt_expression->Update_Adjacency_Map(adjacency_map,visited_elements);
 
-	adjacency_map[tgt_expression].push_back(pair<AaRoot*, int>(src_expression,0));
+	int delay = 0;
+	if(src_expression->Is_Implicit_Variable_Reference())
+		delay = 1;
+	// TODO: delay should be set to 1 in case src refers
+	// to an interface object.
+
+	__InsMap(adjacency_map,src_expression,tgt_expression,delay);
 }
 
 void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
@@ -4751,8 +4851,8 @@ void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, in
 		for(int jdx = 0, fjdx = _input_args.size(); jdx < fjdx; jdx++)
 		{
 			AaExpression* src = _input_args[jdx];
-			adjacency_map[src].push_back(pair<AaRoot*,int>(tgt,
-					((AaModule*)(this->_called_module))->Get_Delay()));
+			int delay = this->_called_module->Get_Delay();
+			__InsMap(adjacency_map,src,tgt,delay);
 		}
 	}
 }

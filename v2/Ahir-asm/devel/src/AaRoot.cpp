@@ -120,12 +120,22 @@ bool AaRootPairCompare::operator() (AaRootPair* s1, AaRootPair* s2) const
 {
   if(s1->_distance_from_root > s2->_distance_from_root)
     return(true);
-  else if(s2->_element == NULL)
+  else if((s1->_element != NULL) && (s2->_element == NULL))
     return(true); 
-  else if(s1->_element == NULL)
+  else if((s2->_element == NULL) && (s2->_element != NULL))
     return(false);
-  else if(s1->_element->Get_Root_Counter() > s2->_element->Get_Root_Counter())
+  else if((s1->_element == NULL) && (s2->_element == NULL))
+    return(false);
+  else if(s1->_element->Get_Root_Counter() < s2->_element->Get_Root_Counter())
     return(true);
   else
     return(false);
+}
+
+void __InsMap(map<AaRoot*,vector< pair<AaRoot*, int> > >& amap, AaRoot* src, AaRoot* dest, int Dist)
+{
+	amap[src].push_back(pair<AaRoot*,int>(dest,Dist));
+	cerr << "Info:aa: added adjacency " << ((src != NULL) ? src->Get_Name() : "NULL") << " -> " << dest->Get_Name() << "(" << Dist << ")" << endl;
+	cerr << "Info:aa:vc: added adjacency " << ((src != NULL) ? src->Get_VC_Name() : "NULL") << " -> " << dest->Get_VC_Name() << "(" << Dist << ")" << endl;
+
 }

@@ -45,6 +45,7 @@ std::set<AaModule*> AaProgram::_reachable_modules;
 
 bool AaProgram::_optimize_flag = false;
 bool AaProgram::_unordered_memory_flag = false;
+bool AaProgram::_balance_loop_pipeline_bodies = false;
 
 AaGraphBase AaProgram::_call_graph;
 AaUGraphBase AaProgram::_type_dependency_graph;

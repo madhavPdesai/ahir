@@ -87,7 +87,9 @@ class AaRoot
   virtual void Print(ostream& ofile); // override this in derived classes
   virtual void Print(ofstream& ofile);
   virtual void Print(string& ostring);
+
   virtual string Get_Name() {assert(0);}
+
   virtual AaRoot* Find_Child() {return(NULL);}
   virtual bool Is_Scope() {return(false); }
 
@@ -151,9 +153,11 @@ class AaRoot
 	// do nothing.
   }
 
+  
 };
 
 
+void __InsMap(map<AaRoot*,vector< pair<AaRoot*, int> > >& amap, AaRoot* src, AaRoot* dest, int Distance);
 
 struct AaRootCompare:public binary_function
   <AaRoot*, AaRoot*, bool >
@@ -174,6 +178,6 @@ struct AaRootPairCompare:public binary_function
 {
   bool operator() (AaRootPair*, AaRootPair*) const;
 };
-
+ 
 string Make_VC_Legal(string x);
 #endif

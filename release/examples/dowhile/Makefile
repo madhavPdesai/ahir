@@ -13,7 +13,7 @@ HW: aa2vc vc2vhdl  vhdlsim
 
 # Aa to vC
 aa2vc: prog.aa
-	AaOpt prog.aa | vcFormat > prog.opt.aa
+	AaOpt -B prog.aa | vcFormat > prog.opt.aa
 	Aa2VC -O -C prog.opt.aa | vcFormat > prog.vc
 
 # vC to VHDL

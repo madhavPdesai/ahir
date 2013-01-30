@@ -80,6 +80,7 @@ class AaProgram
   static std::set<int> _extmem_access_widths;
 
 
+
   // external memory object.
   static AaStorageObject* _extmem_object;
 
@@ -117,6 +118,7 @@ class AaProgram
   static string _current_file_name;
   static bool _verbose_flag;
 
+  static bool _balance_loop_pipeline_bodies;
   static string _tool_name;
 
 
