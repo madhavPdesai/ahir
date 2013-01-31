@@ -469,6 +469,7 @@ class AaCallStatement: public AaStatement
 
   //  virtual void Map_Targets();
 
+  AaSimpleObjectReference* Get_Implicit_Target(string tgt_name);
 
   // structure.
   virtual void Write_C_Struct(ofstream& ofile);

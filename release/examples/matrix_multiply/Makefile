@@ -6,6 +6,7 @@ SOCKETLIB_LIB=../../CtestBench/lib
 VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
 FUNCTIONLIB=../../functionLibrary
+LLVMOPTS=--pipedepths=pipedepths -extract_do_while=true
 all: SW HW 
 
 # compile with SW defined.
@@ -27,15 +28,16 @@ c2llvmbc: prog.c testbench.c
 
 # llvm byte-code to Aa..
 llvmbc2aa:  prog.opt.o 
-	llvm2aa --pipedepths=pipedepths prog.opt.o | vcFormat >  prog.opt.o.aa
+	llvm2aa  $(LLVMOPTS) prog.opt.o | vcFormat >  prog.opt.o.aa
 
 # Aa to vC
 aa2vc: prog.opt.o.aa 
-	Aa2VC -O -C prog.opt.o.aa $(FUNCTIONLIB)/Aa/fpu.aa  | vcFormat > prog.opt.o.aa.vc
+	AaOpt -B prog.opt.o.aa  $(FUNCTIONLIB)/Aa/fpu.aa | vcFormat > prog.aa
+	Aa2VC -O -C prog.aa | vcFormat > prog.vc
 
 # vC to VHDL
-vc2vhdl: prog.opt.o.aa.vc
-	vc2vhdl -a -C -e ahir_system -w -s ghdl -L $(FUNCTIONLIB)/fpu.list -T input_module -T free_queue_manager -T output_module -T proc0 -T proc1 -T proc2 -T proc3 -f prog.opt.o.aa.vc 
+vc2vhdl: prog.vc
+	vc2vhdl -a -C -e ahir_system -w -s ghdl -L $(FUNCTIONLIB)/fpu.list -T input_module -T free_queue_manager -T output_module -T proc0 -T proc1 -T proc2 -T proc3 -f prog.vc 
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 

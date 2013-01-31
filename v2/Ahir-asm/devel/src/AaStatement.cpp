@@ -4657,18 +4657,7 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 	}
 	else if(curr->Is_Statement())
 	{
-		if(curr->Is("AaAssignmentStatement"))
-		{
-			curr_expr = ((AaAssignmentStatement*)curr)->Get_Target();
-		}
-		else if(curr->Is("AaPhiStatement"))
-		{
-			curr_expr = ((AaPhiStatement*)curr)->Get_Target();
-		}
-		else
-		{
-			assert(0);
-		}
+		return;
 	}
 
 	map<AaRoot*,int> slack_map;
@@ -4682,6 +4671,11 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 	for(int idx = 0, fidx = adjacency_map[curr].size(); idx < fidx; idx++)
 	{
 		AaRoot* nbr = adjacency_map[curr][idx].first;
+
+		// check for slack only on neighbours which are
+		// expressions.
+		if(nbr->Is_Statement())
+			continue;
 
 		int dist =  adjacency_map[curr][idx].second;
 		int slack = longest_paths_from_root_map[nbr] - (dist + longest_paths_from_root_map[curr]);
@@ -4814,8 +4808,8 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 void AaPhiStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 {
        	AaExpression* tgt_expression = this->Get_Target();
-	__InsMap(adjacency_map,NULL,tgt_expression,0);
-	__InsMap(adjacency_map,tgt_expression,this,0);
+	__InsMap(adjacency_map,NULL,this,0);
+	__InsMap(adjacency_map,this,tgt_expression,1);
 	visited_elements.insert(this);
 }
 
@@ -4823,17 +4817,19 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 {
 	AaExpression* src_expression = this->_source;
 	src_expression->Update_Adjacency_Map(adjacency_map, visited_elements);
+	__InsMap(adjacency_map,src_expression,this,0);
+
+	visited_elements.insert(this);
 
        	AaExpression* tgt_expression = this->Get_Target();
 	tgt_expression->Update_Adjacency_Map(adjacency_map,visited_elements);
 
 	int delay = 0;
+	// check if delay not accounted for.
 	if(src_expression->Is_Implicit_Variable_Reference())
 		delay = 1;
-	// TODO: delay should be set to 1 in case src refers
-	// to an interface object.
-
-	__InsMap(adjacency_map,src_expression,tgt_expression,delay);
+	// arc from root to tgt_expression.
+	__InsMap(adjacency_map,this,tgt_expression,delay);
 }
 
 void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
@@ -4842,17 +4838,34 @@ void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, in
 	{
 		AaExpression* src = _input_args[idx];
 		src->Update_Adjacency_Map(adjacency_map, visited_elements);
+		__InsMap(adjacency_map,src,this,0);
 	}
 
-	for(int idx = 0, fidx = _input_args.size(); idx < fidx; idx++)
+	for(int idx = 0, fidx = _output_args.size(); idx < fidx; idx++)
 	{
 		AaExpression* tgt = _output_args[idx];
 		tgt->Update_Adjacency_Map(adjacency_map, visited_elements);
-		for(int jdx = 0, fjdx = _input_args.size(); jdx < fjdx; jdx++)
-		{
-			AaExpression* src = _input_args[jdx];
-			int delay = this->_called_module->Get_Delay();
-			__InsMap(adjacency_map,src,tgt,delay);
-		}
+		int delay = this->_called_module->Get_Delay();
+		__InsMap(adjacency_map,this,tgt,delay);
 	}
+}
+
+
+AaSimpleObjectReference* AaCallStatement::Get_Implicit_Target(string tgt_name)
+{
+	AaSimpleObjectReference* ret = NULL;
+        for(int idx = 0, fidx = _output_args.size(); idx < fidx; idx++)
+	{
+		AaObjectReference* oarg = _output_args[idx];
+		if(oarg->Is_Implicit_Variable_Reference())
+		{
+			string oarg_name = oarg->Get_Object_Root_Name();
+			if(oarg_name == tgt_name)
+			{
+				ret = (AaSimpleObjectReference*) oarg;
+				break;
+			}
+		}
+	}	
+	return(ret);
 }

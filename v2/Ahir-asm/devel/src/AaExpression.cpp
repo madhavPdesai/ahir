@@ -1167,7 +1167,25 @@ void AaSimpleObjectReference::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaR
 			AaRoot* root = this->Get_Root_Object();
 			if(visited_elements.find(root) != visited_elements.end())
 			{
-				__InsMap(adjacency_map,root,this,0);
+
+				AaExpression* root_target = NULL;
+				if(root->Is("AaAssignmentStatement"))
+				{
+					root_target = ((AaAssignmentStatement*)root)->Get_Target();		
+				}
+				else if(root->Is("AaPhiStatement"))
+				{
+					root_target = ((AaPhiStatement*)root)->Get_Target();		
+				}
+				else if(root->Is("AaCallStatement"))
+				{
+					root_target = ((AaCallStatement*)root)->Get_Implicit_Target(this->Get_Object_Root_Name());
+				}
+				else
+					assert(0);
+					
+				assert(root_target != NULL);
+				__InsMap(adjacency_map,root_target,this,0);
 				visited_elements.insert(this);
 			}		
 			else
@@ -1186,15 +1204,7 @@ void AaSimpleObjectReference::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaR
 	}
 	else 
 	{
-		if(this->Is_Implicit_Variable_Reference())
-		{
-			AaRoot* root = this->Get_Root_Object();
-			__InsMap(adjacency_map,this,root,0);
-			visited_elements.insert(root);
-			visited_elements.insert(this);
-		}
-		else
-			visited_elements.insert(this);
+		visited_elements.insert(this);
 	}
 }
 
