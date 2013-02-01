@@ -1530,6 +1530,7 @@ INT            : "$int"     ;
 FLOAT          : "$float"   ;
 POINTER        : "$pointer" ;
 NuLL           : "$null";
+BARRIER        : "$barrier";
 ARRAY          : "$array";
 RECORD         : "$record";
 

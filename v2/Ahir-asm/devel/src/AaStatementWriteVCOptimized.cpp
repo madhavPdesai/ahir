@@ -74,6 +74,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 							    set<AaRoot*>& visited_elements,
 							    map<string, vector<AaExpression*> >& ls_map,
 							    map<string, vector<AaExpression*> >& pipe_map,
+							    AaRoot* barrier,
 							    ostream& ofile)
 {
 
@@ -84,17 +85,13 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       ofile << "// " << this->Get_Source_Info() << endl;
 
 
-      __T(this->Get_VC_Start_Transition_Name());
-      __T(this->Get_VC_Active_Transition_Name());
-      __T(this->Get_VC_Completed_Transition_Name());
-
-      __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
+      __DeclTrans
 
       // take care of the guard
       if(this->_guard_expression)
 	{
 	  // guard expression calculation
-	  this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
+	  this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
 	  if(!this->_guard_expression->Is_Constant())
 	    {
 	      // dependency between guard-expression calculation and this statement.
@@ -118,7 +115,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	{
 	  this->_source->Write_VC_Control_Path_Optimized(pipeline_flag,
 							 visited_elements,
-							 ls_map,pipe_map,
+							 ls_map,pipe_map, barrier,
 							 ofile);
 	  
 	  __J(this->Get_VC_Start_Transition_Name(), _source->Get_VC_Completed_Transition_Name());
@@ -133,7 +130,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
       this->_target->Write_VC_Control_Path_As_Target_Optimized(pipeline_flag,
 							       visited_elements,
-							       ls_map,pipe_map,
+							       ls_map,pipe_map,barrier,
 							       ofile);
 
 
@@ -234,6 +231,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						      set<AaRoot*>& visited_elements,
 						      map<string, vector<AaExpression*> >& ls_map,
 						      map<string, vector<AaExpression*> >& pipe_map,
+						      AaRoot* barrier,
 						      ostream& ofile)
 {
   ofile << "// " << this->To_String() << endl;
@@ -253,14 +251,14 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   // take care of the guard
   if(this->_guard_expression)
     {
-      this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
+      this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
       __J(this->Get_VC_Active_Transition_Name(),this->_guard_expression->Get_VC_Completed_Transition_Name());
 
     }
 
   // first the input arguments... zipping through.
   for(int idx = 0; idx < _input_args.size(); idx++)
-    _input_args[idx]->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
+    _input_args[idx]->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
 
 
   for(int idx = 0; idx < _input_args.size(); idx++)
@@ -320,7 +318,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       AaExpression* expr = _output_args[idx];
 
       expr->Write_VC_Control_Path_As_Target_Optimized(pipeline_flag,
-						      visited_elements,ls_map,pipe_map,ofile);
+						      visited_elements,ls_map,pipe_map,barrier,ofile);
       if(!expr->Is_Implicit_Variable_Reference())
 	{
 
@@ -533,6 +531,7 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 							    visited_elements,
 							    load_store_ordering_map,
 							    pipe_map,
+							    NULL,
 							    ofile);
 		}
 	    }
@@ -540,13 +539,36 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
       // the sequence itself.  this code will directly instantiate
       // the marked joins for the phi reenables.
+      AaRoot* barrier = NULL;
       for(int idx = 0, fidx = sseq->Get_Statement_Count(); idx < fidx; idx++)
 	{
+	  AaStatement* stmt = sseq->Get_Statement(idx);
 	  sseq->Get_Statement(idx)->Write_VC_Control_Path_Optimized(pipeline_flag, 
 								    visited_elements,
 								    load_store_ordering_map,
 								    pipe_map,
+								    barrier,
 								    ofile);
+	  if((stmt->Is("AaCallStatement") && 
+	      !((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()))->Has_No_Side_Effects())
+	     || stmt->Can_Block())
+	  {
+		barrier = stmt;
+
+		// put dependencies from all prior statements 
+		// to the barrier
+		for(int K = idx-1; K >= 0; K--)
+		{
+			AaStatement* prev_stmt = sseq->Get_Statement(K);
+			__J(stmt->Get_VC_Start_Transition_Name(), prev_stmt->Get_VC_Completed_Transition_Name());
+	  		if((prev_stmt->Is("AaCallStatement") && 
+	      			!((AaModule*)(((AaCallStatement*)prev_stmt)->Get_Called_Module()))->Has_No_Side_Effects())
+	     			|| prev_stmt->Can_Block())
+			{
+				break;
+			}
+		}
+	  }
 	}
 
       // finally the test expression.
@@ -556,7 +578,7 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  assert(condition_expr != NULL);
 	  condition_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
 							  visited_elements,
-							  load_store_ordering_map,pipe_map,ofile);
+							  load_store_ordering_map,pipe_map,barrier,ofile);
 
 	  if(condition_expr->Is_Constant())
 	  {
@@ -580,7 +602,7 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       if(pipeline_flag)
 	{
 	  ofile << "(back_edge_to_loop_body first_time_through_loop_body) // exported inputs" << endl;
-	  ofile << "(" << condition_expr->Get_VC_Completed_Transition_Name() << ") // exported outputs" << endl;
+	  ofile << "( condition_evaluated ) // exported outputs" << endl;
 	}
 
       ofile << " // " << region_name <<  endl;
@@ -1203,6 +1225,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						     set<AaRoot*>& visited_elements,
 						     map<string, vector<AaExpression*> >& ls_map,
 						     map<string,vector<AaExpression*> >& pipe_map,
+						     AaRoot* barrier,
 						     ostream& ofile)
 {
   bool ok_flag = this->Get_In_Do_While();
@@ -1287,7 +1310,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   if(this->_guard_expression)
     {
       // guard expression calculation
-      this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
+      this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
       if(!this->_guard_expression->Is_Constant())
 	{
 	  // dependency between guard-expression calculation and this statement.
@@ -1311,7 +1334,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	{
 	  source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
 						       visited_elements,
-						       ls_map,pipe_map,
+						       ls_map,pipe_map,barrier,
 						       ofile);
 
 	  __J(this->Get_VC_Start_Transition_Name(), source_expr->Get_VC_Completed_Transition_Name());	      

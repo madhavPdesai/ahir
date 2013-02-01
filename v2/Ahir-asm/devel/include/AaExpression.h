@@ -142,6 +142,7 @@ class AaExpression: public AaRoot
 					       set<AaRoot*>& visited_elements,
 					       map<string,vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
+						AaRoot* barrier,
 					       ostream& ofile)
   {
   }
@@ -149,6 +150,7 @@ class AaExpression: public AaRoot
 							 set<AaRoot*>& visited_elements,
 							 map<string,vector<AaExpression*> >& ls_map,
 							 map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 							 ostream& ofile)
   {
   }
@@ -504,6 +506,7 @@ class AaObjectReference: public AaExpression
 					    vector<AaExpression*>* address_expressions,
 					    vector<int>* scale_factors,
 					    vector<int>* shift_factors,
+						AaRoot* barrier,
 					    ostream& ofile);
   
   void Write_VC_Store_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
@@ -512,6 +515,7 @@ class AaObjectReference: public AaExpression
 					     vector<AaExpression*>* address_expressions,
 					     vector<int>* scale_factors,
 					    vector<int>* shift_factors,
+						AaRoot* barrier,
 					     ostream& ofile);
 
   void Write_VC_Load_Store_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
@@ -521,6 +525,7 @@ class AaObjectReference: public AaExpression
 						  vector<int>* scale_factors,
 					    vector<int>* shift_factors,
 						  string read_or_write,
+						AaRoot* barrier,
 						  ostream& ofile);
   
   void Write_VC_Load_Links_Optimized(string hier_id,
@@ -549,6 +554,7 @@ class AaObjectReference: public AaExpression
 							   vector<AaExpression*>* address_expressions,
 							   vector<int>* scale_factors,
 					    vector<int>* shift_factors,
+						AaRoot* barrier,
 							   ostream& ofile);
   void Write_VC_Address_Calculation_Links_Optimized(string hier_id,
 						    vector<AaExpression*>* address_expressions,
@@ -564,6 +570,7 @@ class AaObjectReference: public AaExpression
 								vector<int>* scale_factors,
 					    			vector<int>* shift_factors,
 								set<string>& reenable_points,
+								AaRoot* barrier,
 								ostream& ofile);
   void Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 							 vector<AaExpression*>* indices,
@@ -668,11 +675,13 @@ class AaSimpleObjectReference: public AaObjectReference
 							 set<AaRoot*>& visited_elements,
 					       map<string,vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
+						AaRoot* barrier,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag,
 							 set<AaRoot*>& visited_elements,
 							 map<string,vector<AaExpression*> >& ls_map,
 							 map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 							 ostream& ofile);
 
 
@@ -799,11 +808,13 @@ class AaArrayObjectReference: public AaObjectReference
 							 set<AaRoot*>& visited_elements,
 					       map<string,vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag,
 							 set<AaRoot*>& visited_elements,
 							 map<string,vector<AaExpression*> >& ls_map,
 							 map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 							 ostream& ofile);
 
   virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
@@ -892,11 +903,13 @@ class AaPointerDereferenceExpression: public AaObjectReference
 							 set<AaRoot*>& visited_elements,
 					       map<string,vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag,
 							 set<AaRoot*>& visited_elements,
 							 map<string,vector<AaExpression*> >& ls_map,
 							 map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 							 ostream& ofile);
 
   void Get_Siblings(set<AaPointerDereferenceExpression*>& sibling_set, bool get_sources, bool get_targets);
@@ -963,11 +976,13 @@ class AaAddressOfExpression: public AaObjectReference
 							 set<AaRoot*>& visited_elements,
 					       map<string,vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag,
 							 set<AaRoot*>& visited_elements,
 							 map<string,vector<AaExpression*> >& ls_map,
 							 map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 							 ostream& ofile);
 
   virtual bool Scalar_Types_Only() { return(true);}
@@ -1029,11 +1044,13 @@ class AaTypeCastExpression: public AaExpression
 							 set<AaRoot*>& visited_elements,
 					       map<string,vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag,
 							 set<AaRoot*>& visited_elements,
 							 map<string,vector<AaExpression*> >& ls_map,
 							 map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 							 ostream& ofile);
 
 
@@ -1099,11 +1116,13 @@ class AaUnaryExpression: public AaExpression
 							 set<AaRoot*>& visited_elements,
 					       map<string,vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag,
 							 set<AaRoot*>& visited_elements,
 							 map<string,vector<AaExpression*> >& ls_map,
 							 map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 							 ostream& ofile);
 
 
@@ -1207,11 +1226,13 @@ class AaBinaryExpression: public AaExpression
 							 set<AaRoot*>& visited_elements,
 					       map<string,vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag,
 							 set<AaRoot*>& visited_elements,
 							 map<string,vector<AaExpression*> >& ls_map,
 							 map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 							 ostream& ofile);
 
 
@@ -1286,11 +1307,13 @@ class AaTernaryExpression: public AaExpression
 							 set<AaRoot*>& visited_elements,
 					       map<string,vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 					       ostream& ofile);
   virtual void Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag,
 							 set<AaRoot*>& visited_elements,
 							 map<string,vector<AaExpression*> >& ls_map,
 							 map<string,vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 							 ostream& ofile);
 
 

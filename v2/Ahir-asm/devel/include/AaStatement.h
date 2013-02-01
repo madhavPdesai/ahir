@@ -145,6 +145,7 @@ class AaStatement: public AaScope
 					       set<AaRoot*>& visited_elements,
 					       map<string,vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
+						AaRoot* barrier,
 					       ostream& ofile) {assert(0);}
   virtual void Write_VC_Control_Path_Optimized(string sink_link, ostream& ofile) { assert(0);}
 
@@ -416,6 +417,7 @@ class AaAssignmentStatement: public AaStatement
 					       set<AaRoot*>& visited_elements,
 					       map<string, vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
+						AaRoot* barrier,
 					       ostream& ofile);
 
 
@@ -509,6 +511,7 @@ class AaCallStatement: public AaStatement
 					       set<AaRoot*>& visited_elements,
 					       map<string, vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
+					       AaRoot* barrier,
 					       ostream& ofile);
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Wire_Declarations(ostream& ofile);
@@ -1062,6 +1065,7 @@ class AaPhiStatement: public AaStatement
 					       set<AaRoot*>& visited_elements,
 					       map<string, vector<AaExpression*> >& ls_map,
 					       map<string,vector<AaExpression*> >& pipe_map,
+						AaRoot* barrier,
 					       ostream& ofile);
 
 

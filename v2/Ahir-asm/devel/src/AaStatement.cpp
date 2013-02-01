@@ -4448,7 +4448,7 @@ void AaDoWhileStatement::Write_VC_Links(bool optimize_flag, string hier_id,ostre
   vector<string> acks;
   // req to branch is produced by completion of test expression..
   // which is inside the loop-body
-  reqs.push_back(loop_body_seq_hier_id + "/" + _test_expression->Get_VC_Completed_Transition_Name());
+  reqs.push_back(loop_body_seq_hier_id + "/condition_evaluated");
   // acks from branch in loop-exit and loop-taken which are in here.
   acks.push_back(this_hier_id + "/loop_exit/ack");
   acks.push_back(this_hier_id + "/loop_taken/ack");

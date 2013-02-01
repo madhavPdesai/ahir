@@ -11,6 +11,12 @@
 #define __SelfRelease {\
   __MJ(this->Get_VC_Start_Transition_Name(),this->Get_VC_Active_Transition_Name());\
   __MJ(this->Get_VC_Active_Transition_Name(),this->Get_VC_Completed_Transition_Name());}
+#define __DeclTrans  {\
+      __T(this->Get_VC_Start_Transition_Name());\
+      __T(this->Get_VC_Active_Transition_Name());  \
+      __T(this->Get_VC_Completed_Transition_Name());  \
+      __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Start_Transition_Name());\
+      __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Active_Transition_Name());}
 
 void Write_VC_Equivalence_Operator(string inst_name,
 				   string input,

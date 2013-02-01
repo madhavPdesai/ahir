@@ -221,22 +221,23 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 							      set<AaRoot*>& visited_elements,
 							      map<string,vector<AaExpression*> >& ls_map,
 							      map<string, vector<AaExpression*> >& pipe_map,
+								AaRoot* barrier,
 							      ostream& ofile)
 {
   if(!this->Is_Constant())
     {
       ofile << "// " << this->To_String() << endl;
 
+      __DeclTrans
+
 
       // if this is a statement...
       if(this->_object->Is_Interface_Object())
 	{
 	  ofile << "// reference to interface object" << endl;
-	  __T(this->Get_VC_Start_Transition_Name());
-	  __T(this->Get_VC_Completed_Transition_Name());
-	  __T(this->Get_VC_Active_Transition_Name());
-	  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Active_Transition_Name());
-	  __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
+
+	  if(barrier != NULL)
+	  	__J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
 
           this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
@@ -261,11 +262,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
       else if(this->Is_Implicit_Variable_Reference())
 	{
 	  ofile << "// implicit reference" << endl;
-	  __T(this->Get_VC_Start_Transition_Name());
-	  __T(this->Get_VC_Completed_Transition_Name());
-	  __T(this->Get_VC_Active_Transition_Name());
-	  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Active_Transition_Name());
-	  __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
+
           this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
 	  AaRoot* root = this->Get_Root_Object();
@@ -287,21 +284,25 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 		  __SelfRelease
 		}	      
 	    }
+	   else
+	   {
+	  	if(barrier != NULL)
+	  		__J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
+           }
 	}
       else if(this->_object->Is("AaStorageObject"))
+	  // complete region name is in Write_VC_Load_Control...
 	{
 
-	  // complete region name is in Write_VC_Load_Control...
-	  __T(this->Get_VC_Start_Transition_Name());
-	  __T(this->Get_VC_Active_Transition_Name());
-	  __T(this->Get_VC_Completed_Transition_Name());
+	  if(barrier != NULL)
+	 	__J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
 
 	  // this takes care of the guard..
           this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
 	  // load-control path evaluates the address and the
 	  // load.
-	  this->Write_VC_Load_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,NULL,NULL,NULL,ofile);
+	  this->Write_VC_Load_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,NULL,NULL,NULL,barrier,ofile);
 
 	  ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
 
@@ -314,11 +315,10 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
       // a pipe, instantiate a series r-a
       // chain for the inport operation
       else if(this->_object->Is("AaPipeObject"))
-	{
 	  // needed to hook up pipe dependencies.
-	  __T(this->Get_VC_Start_Transition_Name());
-	  __T(this->Get_VC_Active_Transition_Name());
-	  __T(this->Get_VC_Completed_Transition_Name());
+	{
+	  if(barrier != NULL)
+	 	__J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
 
 	  // the guard dependency..
           this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
@@ -328,7 +328,6 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 	  ofile << "}" << endl;
 
 	  // complete the chain..
-	  __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
 	  __F(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
 	  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Complete_Region_Name());
 
@@ -350,6 +349,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 									set<AaRoot*>& visited_elements,
 									map<string,vector<AaExpression*> >& ls_map,
 									map<string, vector<AaExpression*> >& pipe_map,
+									AaRoot* barrier,
 									ostream& ofile)
 {
 
@@ -359,9 +359,11 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
     }
   else if(this->_object->Is("AaStorageObject"))
     {
-      __T(this->Get_VC_Start_Transition_Name());
-      __T(this->Get_VC_Active_Transition_Name());  
-      __T(this->Get_VC_Completed_Transition_Name());  
+	__DeclTrans
+
+       if(barrier != NULL)
+	  	__J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
+
       this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
       // address calculation..
@@ -371,7 +373,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
       // followed by several parallel stores..
       // note that you will need a split operation here
       ofile << "// " << this->To_String() << endl;
-      this->Write_VC_Store_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,NULL,NULL,NULL,ofile);
+      this->Write_VC_Store_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,NULL,NULL,NULL,barrier,ofile);
       ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
 
       // Note: pipeline release dependencies of this store
@@ -388,9 +390,10 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
   else if(this->_object->Is("AaPipeObject"))
     {
       ofile << "// " << this->To_String() << endl;
-      __T(this->Get_VC_Start_Transition_Name());
-      __T(this->Get_VC_Active_Transition_Name());  
-      __T(this->Get_VC_Completed_Transition_Name());  
+      __DeclTrans
+      if(barrier != NULL)
+	  	__J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
+
       this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
       ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] { // pipe write ";
@@ -399,7 +402,6 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
       ofile << "$T [pipe_wreq] $T [pipe_wack] " << endl;
       ofile << "}" << endl;
       __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Complete_Region_Name());
-      __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Active_Transition_Name());
       __F(this->Get_VC_Start_Transition_Name(),this->Get_VC_Complete_Region_Name());
       pipe_map[this->_object->Get_VC_Name()].push_back(this);
   
@@ -550,6 +552,7 @@ void AaArrayObjectReference::Write_VC_Links_As_Target_Optimized(string hier_id, 
 void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 							     map<string,vector<AaExpression*> >& ls_map,
 							     map<string, vector<AaExpression*> >& pipe_map,
+								AaRoot* barrier,
 							     ostream& ofile)
 {
   if(!this->Is_Constant())
@@ -559,10 +562,10 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 
       string base_addr_calc_reenable;
-
-      __T(this->Get_VC_Start_Transition_Name());
-      __T(this->Get_VC_Active_Transition_Name());
-      __T(this->Get_VC_Completed_Transition_Name());
+	
+      __DeclTrans
+      if(barrier != NULL)
+	  	__J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
 
       this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
@@ -583,7 +586,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  if(this->_object->Is_Storage_Object())
 	    {
 	      // please load the object.
-	      this->_pointer_ref->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
+	      this->_pointer_ref->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier, ofile);
 	      if(!this->_pointer_ref->Is_Constant())
               {
 		__J(base_addr_calc, this->_pointer_ref->Get_VC_Completed_Transition_Name());
@@ -627,6 +630,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 									 &_indices,
 									 &scale_factors, &shift_factors,
 									 active_reenable_points,
+									barrier,
 									 ofile);
 
 
@@ -674,6 +678,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						     ls_map,pipe_map,
 						     &(_indices),
 						     &scale_factors, &shift_factors,
+						     barrier,
 						     ofile);
 
 	  ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
@@ -694,6 +699,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						    visited_elements,
 						    ls_map,
 						    pipe_map,
+						    barrier,
 						    ofile);
 
 	      // expression has been evaluated.. go to active
@@ -737,15 +743,16 @@ void AaArrayObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pipe
 								       set<AaRoot*>& visited_elements,
 								       map<string,vector<AaExpression*> >& ls_map,
 								       map<string, vector<AaExpression*> >& pipe_map,
+									AaRoot* barrier,
 								       ostream& ofile)
 {
 
   if(this->_object->Is("AaStorageObject"))
     {
       ofile << "// " << this->To_String() << endl;
-      __T(this->Get_VC_Start_Transition_Name());
-      __T(this->Get_VC_Active_Transition_Name());
-      __T(this->Get_VC_Completed_Transition_Name());
+	__DeclTrans
+      if(barrier != NULL)
+	  	__J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
 
       this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
@@ -762,6 +769,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pipe
 						  &(_indices),
 						  &(scale_factors), 
 						  &shift_factors,
+						  barrier,
 						  ofile);
       ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
 
@@ -819,6 +827,7 @@ void AaPointerDereferenceExpression::Write_VC_Links_As_Target_Optimized(string h
 void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 								     map<string,vector<AaExpression*> >& ls_map,
 								     map<string, vector<AaExpression*> >& pipe_map,
+									AaRoot* barrier,
 								     ostream& ofile)
 {
   ofile << "// " << this->To_String() << endl;
@@ -830,9 +839,9 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeli
       return;
     }
 
-  __T(this->Get_VC_Start_Transition_Name());
-  __T(this->Get_VC_Active_Transition_Name());
-  __T(this->Get_VC_Completed_Transition_Name());
+  __DeclTrans
+  if(barrier != NULL)
+  	__J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
   
   this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
   string base_addr_calc = (this->Get_VC_Name() + "_base_address_calculated");
@@ -841,12 +850,13 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeli
   this->_reference_to_object->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,
 							      ls_map,
 							      pipe_map,
+							      barrier,
 							      ofile);
 
 
   this->Write_VC_Load_Control_Path_Optimized(pipeline_flag, visited_elements,
-					     ls_map,pipe_map,
-					     NULL,NULL,NULL,ofile);
+					     ls_map,pipe_map, 
+					     NULL,NULL,NULL,barrier,ofile);
 
   if(!this->_reference_to_object->Is_Constant())
     {
@@ -869,6 +879,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeli
 void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 									       map<string,vector<AaExpression*> >& ls_map,
 									       map<string, vector<AaExpression*> >& pipe_map,
+										AaRoot* barrier,
 									       ostream& ofile)
 {
   ofile << "// " << this->To_String() << endl;
@@ -881,9 +892,9 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(b
     }
 
 
-  __T(this->Get_VC_Start_Transition_Name());
-  __T(this->Get_VC_Active_Transition_Name());
-  __T(this->Get_VC_Completed_Transition_Name());
+  __DeclTrans
+  if(barrier != NULL)
+  	__J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
 
   string base_addr_calc = (this->Get_VC_Name() + "_base_address_calculated");
   __T(base_addr_calc);
@@ -891,10 +902,12 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(b
   this->_reference_to_object->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,
 							      ls_map,
 							      pipe_map,
+								barrier,
 							      ofile);
   this->Write_VC_Store_Control_Path_Optimized(pipeline_flag, visited_elements,
 					      ls_map,pipe_map,
-					      NULL,NULL,NULL,ofile);
+					      NULL,NULL,NULL,barrier,ofile);
+
   if(!this->_reference_to_object->Is_Constant())
     {
       __J(base_addr_calc,this->_reference_to_object->Get_VC_Completed_Transition_Name());
@@ -958,15 +971,16 @@ void AaAddressOfExpression::Write_VC_Links_As_Target_Optimized(string hier_id, o
 void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 							    map<string,vector<AaExpression*> >& ls_map,
 							    map<string, vector<AaExpression*> >& pipe_map,
+								AaRoot* barrier,
 							    ostream& ofile)
 {
   ofile << "// " << this->To_String() << endl;
 
   if(!this->Is_Constant())
     {
-      __T(this->Get_VC_Active_Transition_Name());
-      __T(this->Get_VC_Start_Transition_Name());
-      __T(this->Get_VC_Completed_Transition_Name());
+	__DeclTrans
+  	if(barrier != NULL)
+  		__J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
 
       this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
@@ -991,15 +1005,13 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 									obj_ref->Get_Index_Vector(),
 									&scale_factors, &shift_factors,
 									active_reenable_points,
+									barrier,
 									ofile);
 
       ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] {" << endl;
 
       ofile << "$T [final_reg_req] $T [final_reg_ack]" << endl;
       ofile << "}" << endl;
-
-      // this is there just for completeness.
-      __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
 
       // links to root address calculation..
       __J(this->Get_VC_Active_Transition_Name(), obj_ref->Get_VC_Name() + "_root_address_calculated");
@@ -1019,13 +1031,11 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
     }
   else
     {
-      __T(this->Get_VC_Start_Transition_Name());
-      __T(this->Get_VC_Active_Transition_Name());
-      __T(this->Get_VC_Completed_Transition_Name());
-      __J(this->Get_VC_Active_Transition_Name(), this->Get_VC_Start_Transition_Name());
-      __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Active_Transition_Name());
+       __DeclTrans
+       if(barrier != NULL)
+  		__J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
 
-      // standard marked joins
+      // standard marked joins.. these are not really needed.
       if(pipeline_flag)
 	{
 	  __SelfRelease
@@ -1036,6 +1046,7 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 void AaAddressOfExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 								      map<string,vector<AaExpression*> >& ls_map,
 								      map<string, vector<AaExpression*> >& pipe_map,
+									AaRoot* barrier,
 								      ostream& ofile)
 {
   assert(0);
@@ -1084,20 +1095,21 @@ void AaTypeCastExpression::Write_VC_Links_As_Target_Optimized(string hier_id, os
 void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 							   map<string,vector<AaExpression*> >& ls_map,
 							   map<string, vector<AaExpression*> >& pipe_map,
+							   AaRoot* barrier,
 							   ostream& ofile)
 {
   if(!this->Is_Constant())
     {
       
       ofile << "// " << this->To_String() << endl;
-      __T(this->Get_VC_Active_Transition_Name());
-      __T(this->Get_VC_Start_Transition_Name());
-      __T(this->Get_VC_Completed_Transition_Name());
+	__DeclTrans
+  	if(barrier != NULL)
+  		__J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
 
       this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
       this->_rest->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,
-						   ls_map,pipe_map,
+						   ls_map,pipe_map,barrier,
 						   ofile);
 
       __J(this->Get_VC_Start_Transition_Name(),this->_rest->Get_VC_Completed_Transition_Name());
@@ -1113,7 +1125,6 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
 
       __F(this->Get_VC_Start_Transition_Name(),this->Get_VC_Complete_Region_Name());
       __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
-      __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Active_Transition_Name());
 
       if(pipeline_flag)
 	{
@@ -1126,6 +1137,7 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
 void AaTypeCastExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 								     map<string,vector<AaExpression*> >& ls_map,
 								     map<string, vector<AaExpression*> >& pipe_map,
+									AaRoot* barrier,
 								     ostream& ofile)
 {
   assert(0);
@@ -1166,6 +1178,7 @@ void AaUnaryExpression::Write_VC_Links_As_Target_Optimized(string hier_id, ostre
 void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 							map<string,vector<AaExpression*> >& ls_map,
 							map<string, vector<AaExpression*> >& pipe_map,
+							AaRoot* barrier,
 							ostream& ofile)
 {
   
@@ -1174,14 +1187,15 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
     {
 
       ofile << "// " << this->To_String() << endl;
-      __T(this->Get_VC_Active_Transition_Name());
-      __T(this->Get_VC_Start_Transition_Name());
-      __T(this->Get_VC_Completed_Transition_Name());
-      
+      __DeclTrans
+      if(barrier != NULL)
+   	__J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
+
       this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
       this->_rest->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,
 						   ls_map,pipe_map,
+							barrier,
 						   ofile);
 
 
@@ -1214,6 +1228,7 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
 void AaUnaryExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 								  map<string,vector<AaExpression*> >& ls_map,
 								  map<string, vector<AaExpression*> >& pipe_map,
+								  AaRoot* barrier,
 								  ostream& ofile)
 {
   assert(0);
@@ -1258,20 +1273,21 @@ void AaBinaryExpression::Write_VC_Links_As_Target_Optimized(string hier_id, ostr
 void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 							 map<string,vector<AaExpression*> >& ls_map,
 							 map<string, vector<AaExpression*> >& pipe_map,
+						         AaRoot* barrier,
 							 ostream& ofile)
 {
   if(!this->Is_Constant())
     {
 
       ofile << "// " << this->To_String() << endl;
-      __T(this->Get_VC_Active_Transition_Name());
-      __T(this->Get_VC_Start_Transition_Name());
-      __T(this->Get_VC_Completed_Transition_Name());
+      __DeclTrans
+      if(barrier != NULL)
+   	__J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
+
       this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
-
-      this->_first->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map, ofile);
-      this->_second->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
+      this->_first->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier, ofile);
+      this->_second->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier, ofile);
 
 
       if(!this->_first->Is_Constant())
@@ -1313,6 +1329,7 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 void AaBinaryExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 								   map<string,vector<AaExpression*> >& ls_map,
 								   map<string, vector<AaExpression*> >& pipe_map,
+									AaRoot* barrier,
 								   ostream& ofile)
 {
   assert(0);
@@ -1352,23 +1369,24 @@ void AaTernaryExpression::Write_VC_Links_As_Target_Optimized(string hier_id, ost
 void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 							  map<string,vector<AaExpression*> >& ls_map,
 							  map<string, vector<AaExpression*> >& pipe_map,
+							  AaRoot* barrier,
 							  ostream& ofile)
 {
   if(this->Is_Constant())
     return;
 
   ofile << "// " << this->To_String() << endl;
-  __T(this->Get_VC_Start_Transition_Name());
-  __T(this->Get_VC_Active_Transition_Name());
-  __T(this->Get_VC_Completed_Transition_Name());
+  __DeclTrans
+  if(barrier != NULL)
+    __J(this->Get_VC_Start_Transition_Name(), barrier->Get_VC_Completed_Transition_Name());
       
   this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
-  this->_test->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
+  this->_test->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
   if(this->_if_true)
-    this->_if_true->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
+    this->_if_true->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
   if(this->_if_false)
-    this->_if_false->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,ofile);
+    this->_if_false->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
 
 
   if(!this->_test->Is_Constant())
@@ -1383,7 +1401,6 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
   ofile << "}" << endl;
   __F(this->Get_VC_Start_Transition_Name(),this->Get_VC_Complete_Region_Name());
   __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Complete_Region_Name());
-  __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Active_Transition_Name());
 
   if(pipeline_flag)
     {
@@ -1401,6 +1418,7 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 void AaTernaryExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 								    map<string,vector<AaExpression*> >& ls_map,
 								    map<string, vector<AaExpression*> >& pipe_map,
+									AaRoot* barrier,
 								    ostream& ofile)
 {
   assert(0);
@@ -1415,6 +1433,7 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(bool pipeline_flag,
 							     vector<AaExpression*>* address_expressions,
 							     vector<int>* scale_factors,
 							     vector<int>* shift_factors,
+								AaRoot* barrier,
 							     ostream& ofile)
 {
   // address calculation
@@ -1428,6 +1447,7 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(bool pipeline_flag,
 							    address_expressions,
 							    scale_factors,
 							    shift_factors, 
+							    barrier,
 							    ofile);
 
   // load operations
@@ -1437,7 +1457,9 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(bool pipeline_flag,
 						   address_expressions, 
 						   scale_factors,
 						   shift_factors,
-						   "read", ofile);
+						   "read",
+						   barrier,
+						   ofile);
 
   // there is a long chain of transitions until word_address_calculated.
   __J(this->Get_VC_Start_Transition_Name(),this->Get_VC_Name() + "_word_address_calculated");
@@ -1450,6 +1472,7 @@ void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag
 							      vector<AaExpression*>* address_expressions,
 							      vector<int>* scale_factors,
 							      vector<int>* shift_factors,
+								AaRoot* barrier,
 							      ostream& ofile)
 {
   // address calculation
@@ -1461,6 +1484,7 @@ void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag
 							    address_expressions, 
 							    scale_factors,
 							    shift_factors, 
+								barrier,
 							    ofile);
 
   //    in parallel, store
@@ -1470,6 +1494,7 @@ void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag
 						   scale_factors,
 						   shift_factors,
 						   "write", 
+						   barrier,
 						   ofile);
 
   __J(this->Get_VC_Start_Transition_Name(),this->Get_VC_Name() + "_word_address_calculated");
@@ -1482,6 +1507,7 @@ void AaObjectReference::Write_VC_Load_Store_Control_Path_Optimized(bool pipeline
 								   vector<int>* scale_factors,
 								   vector<int>* shift_factors,
 								   string read_or_write,
+									AaRoot* barrier,
 								   ostream& ofile)
 {
 
@@ -1639,6 +1665,7 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 						    vector<AaExpression*>* indices,
 						    vector<int>* scale_factors,		
 						    vector<int>* shift_factors,
+							AaRoot* barrier,
 						    ostream& ofile)
 {
   int offset_val = 0;
@@ -1664,6 +1691,7 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 								     scale_factors,
 								     shift_factors,
 								     active_reenable_points,
+									barrier,
 								     ofile);
       
       
@@ -1788,6 +1816,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 							 vector<int>* scale_factors,
 							 vector<int>* shift_factors,
 							 set<string>& active_reenable_points,
+							 AaRoot* barrier,
 							 ostream& ofile)
 {
 
@@ -1836,7 +1865,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 	      num_non_constant++;
 	      (*index_vector)[idx]->Write_VC_Control_Path_Optimized(pipeline_flag, 
 								    visited_elements,
-								    ls_map,pipe_map,
+								    ls_map,pipe_map,barrier,
 								    ofile);
 
  	     string index_reenable = ((*index_vector)[idx]->Get_VC_Reenable_Update_Transition_Name(visited_elements));

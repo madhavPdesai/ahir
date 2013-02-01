@@ -3520,6 +3520,9 @@ void AaBinaryExpression::Print(ostream& ofile)
 
 void AaBinaryExpression::Update_Type()
 {
+  AaType* t1 = this->Get_First()->Get_Type();
+  AaType* t2 = this->Get_Second()->Get_Type();
+
   if(Is_Concat_Operation(this->_operation) && (this->Get_Type() == NULL))
     {
       // check the types of both sources.
@@ -3527,8 +3530,6 @@ void AaBinaryExpression::Update_Type()
       // the type of this expression must
       // be a uinteger whose width is the
       // sume of those of the sources.
-      AaType* t1 = this->Get_First()->Get_Type();
-      AaType* t2 = this->Get_Second()->Get_Type();
 
       if(t1 != NULL && t2 != NULL)
 	{
@@ -3552,6 +3553,10 @@ void AaBinaryExpression::Update_Type()
 	  this->_second->Set_Type(this->_first->Get_Type());
 	}
     }
+  else if((t1 != NULL) && (t2 != NULL) && t1->Is("AaFloatType") && t2->Is("AaFloatType"))
+	// float operations will have higher delay!
+	this->Set_Delay(4);
+  
 }
 
 bool AaBinaryExpression::Is_Trivial()

@@ -16,7 +16,7 @@
 
 //
 //
-#define N 8
+#define N 3
 float a_matrix[N][N], b_matrix[N][N], expected_c_matrix[N][N], c_matrix[N][N];
 
 void Exit(int sig)

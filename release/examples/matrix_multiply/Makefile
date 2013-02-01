@@ -7,6 +7,7 @@ VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
 FUNCTIONLIB=../../functionLibrary
 LLVMOPTS=--pipedepths=pipedepths -extract_do_while=true
+#LLVMOPTS=--pipedepths=pipedepths 
 all: SW HW 
 
 # compile with SW defined.
@@ -32,12 +33,13 @@ llvmbc2aa:  prog.opt.o
 
 # Aa to vC
 aa2vc: prog.opt.o.aa 
-	AaOpt -B prog.opt.o.aa  $(FUNCTIONLIB)/Aa/fpu.aa | vcFormat > prog.aa
+	AaOpt prog.opt.o.aa  $(FUNCTIONLIB)/Aa/fpu.aa | vcFormat > prog.aa
 	Aa2VC -O -C prog.aa | vcFormat > prog.vc
 
 # vC to VHDL
 vc2vhdl: prog.vc
 	vc2vhdl -a -C -e ahir_system -w -s ghdl -L $(FUNCTIONLIB)/fpu.list -T input_module -T free_queue_manager -T output_module -T proc0 -T proc1 -T proc2 -T proc3 -f prog.vc 
+	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 
@@ -53,6 +55,7 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 	ghdl -i --work=ieee_proposed  $(VHDL_LIB)/ieee_proposed.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Utility_Package.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Vhpi_Package.vhdl
+	ghdl -i --work=work ahir_system_global_package.vhdl
 	ghdl -i --work=work ahir_system.vhdl
 	ghdl -i --work=work ahir_system_test_bench.vhdl
 	ghdl -m --work=work -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
