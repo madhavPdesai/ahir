@@ -1,5 +1,18 @@
 #include <vcRoot.hpp>
 
+string StripBracketingQuotes(string x)
+{
+   string ret_string;
+   for(int idx = 0; idx < x.size(); idx++)
+   {
+	if(x[idx] == '"')
+		continue;
+	else
+	   ret_string  += x[idx];
+   }
+   return(ret_string);
+}
+
 string To_VHDL(string x)
 {
   string ret_string;

@@ -264,6 +264,7 @@ static string vcLexerKeywords[] =
 string To_VHDL(string x);
 string IntToStr(unsigned int x);
 string Int64ToStr(int64_t x);
+string StripBracketingQuotes(string x);
 int CeilLog2(int n);
 int Log(int n, int base); // log n to base 2, rounded down to int.
 int IPow(int n, int e); 

@@ -1142,6 +1142,7 @@ void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
 void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 {
 
+  string group_name;
   string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
 
   for(int idx = 0; idx < this->_compatible_split_operator_groups.size(); idx++)
@@ -1169,6 +1170,9 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       string vhdl_op_id = Get_VHDL_Op_Id(vc_op_id,
 					 input_type,
 					 output_type);
+
+      string s__id = StripBracketingQuotes(vhdl_op_id);
+      group_name = s__id + "_group_" + IntToStr(idx) ;
       
       // is it a pipelined op..
       int exp_width, frac_width;
@@ -1250,7 +1254,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 
 
       // make a block
-      ofile << "SplitOperatorGroup" << idx << ": Block -- {" << endl;
+      ofile <<  group_name << ": Block -- {" << endl;
       // in and out data.
       ofile << "signal data_in: std_logic_vector(" << in_width-1 << " downto 0);" << endl;
       ofile << "signal data_out: std_logic_vector(" << out_width-1 << " downto 0);" << endl;
@@ -1985,7 +1989,8 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
       this->Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
 
       // now the operator instances 
-      ofile << "Inport: InputPort -- { " << endl;
+      string group_name = p->Get_VHDL_Id() + "_read_" + IntToStr(idx);
+      ofile << group_name << ": InputPort -- { " << endl;
       ofile << "generic map ( data_width => " << data_width << ","
 	    << "  num_reqs => " << num_reqs << ","
 	    << "  no_arbitration => " << no_arb_string << ")" << endl;
@@ -2115,7 +2120,8 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       this->Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
 
       // now the operator instances 
-      ofile << "outport: OutputPort -- { " << endl;
+      string group_name = p->Get_VHDL_Id() + "_write_" + IntToStr(idx);
+      ofile << group_name << ": OutputPort -- { " << endl;
       ofile << "generic map ( data_width => " << data_width << ","
 	    << "  num_reqs => " << num_reqs << ","
 	    << "  no_arbitration => " << no_arb_string << ")" << endl;
@@ -2266,7 +2272,8 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
 
       // make a block
-      ofile << "CallGroup" << idx << ": Block -- {" << endl;
+      string group_name = called_module->Get_VHDL_Id() + "_call_group_" + IntToStr(idx);
+      ofile << group_name << ": Block -- {" << endl;
       // in and out data.
       if(called_module->Get_In_Arg_Width() > 0)
 	ofile << "signal data_in: std_logic_vector(" << in_width-1 << " downto 0);" << endl;

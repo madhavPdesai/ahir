@@ -29,10 +29,15 @@ void get_input()
 	for(i=0; i < ORDER; i++)
 	{
 		for (j = 0; j < ORDER; j++)
+		{
 			a_matrix[i][j] = read_float32("in_data_pipe");
+#ifdef ALT
+			c_matrix[i][j] = 0.0;
+#endif
+		}
 	}
 #ifdef SW
-	fprintf(stderr,"input_module: got a\n");
+	fprintf(stderr,"input_module: got a.\n");
 #endif
 	for(i=0; i < ORDER; i++)
 	{
@@ -44,13 +49,13 @@ void get_input()
 #endif
 }
 
+#ifndef ALT
 void mmultiply()
 {
 	uint32_t i,j,k;
 	while(1)
 	{
 		get_input();
-
 		for(i=0; i < ORDER; i++)
 		{
 			for (j = 0; j < ORDER; j++)
@@ -69,4 +74,38 @@ void mmultiply()
 		send_output();
 	}
 }
+
+#else
+void mmultiply()
+{
+#ifdef SW
+	fprintf(stderr,"ALT mode selected.\n");
+#endif
+	uint32_t i,j,k;
+	while(1)
+	{
+		get_input();
+		char terminate_flag = 0;
+		i = 0;
+		j = 0;
+		k = 0;
+		while(!terminate_flag)
+		{
+			c_matrix[i][j] +=  a_matrix[i][k] * b_matrix[k][j];
+
+			//incrementing the index.
+			k++;
+			j = ((k == ORDER) ?  j+1 : j);
+			i = ((j == ORDER) ?  i+1 : i);
+			
+			terminate_flag = (i == ORDER);
+			k = ((k == ORDER) ? 0 : k);
+			j = ((j == ORDER) ? 0 : j);
+			i = ((i == ORDER) ? 0 : i);
+		}
+
+		send_output();
+	}
+}
+#endif
 

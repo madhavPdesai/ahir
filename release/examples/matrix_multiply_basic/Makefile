@@ -12,15 +12,18 @@ LLVM2AAOPTS=-extract_do_while=true --storageinit=true
 #LLVM2AAOPTS=--storageinit=true
 
 
+PROGDEFS=
+#PROGDEFS=-DALT
+
 TOPMODULES=-T mmultiply
 
 
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.
 SW: prog.c prog.h testbench.c 
-	gcc -g -c -DSW -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include prog.c
+	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include prog.c
 	gcc -g -c -DSW -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include $(FUNCTIONLIB)/src/fpu.c
-	gcc -g -c -DSW -I$(PIPEHANDLER_INCLUDE) -I$(PTHREADUTILS_INCLUDE)  testbench.c
+	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(PTHREADUTILS_INCLUDE)  testbench.c
 	gcc -g -o testbench_sw prog.o testbench.o fpu.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
 
 # five steps from C to vhdl simulator.
@@ -28,7 +31,7 @@ HW: c2llvmbc llvmbc2aa  aa2vc  vc2vhdl  vhdlsim
 
 # C to llvm byte-code.. use clang.
 c2llvmbc: prog.c prog.h
-	clang -O3 -std=gnu89 -I$(SOCKETLIB_INCLUDE) -I$(FUNCTIONLIB)/include -emit-llvm -c prog.c
+	clang -O3 -std=gnu89 $(PROGDEFS)  -I$(SOCKETLIB_INCLUDE) -I$(FUNCTIONLIB)/include -emit-llvm -c prog.c
 	opt --indvars --loopsimplify prog.o -o prog.opt.o
 	llvm-dis prog.opt.o
 

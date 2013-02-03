@@ -30,7 +30,6 @@ void *mmultiply__(void* fargs)
 {
     mmultiply();
 }
-
 #endif
 
 void write_matrices()
@@ -128,8 +127,6 @@ int main(int argc, char* argv[])
 
 #ifdef SW
 	pthread_cancel(mmultiply_t);
-#endif
-#ifdef SW
 	close_pipe_handler();
 #endif
 }
