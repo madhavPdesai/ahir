@@ -1,7 +1,7 @@
 -------------------------------------------------------------------------------
 -- An IEEE-754 compliant arbitrary-precision pipelined multiplier
 -- which is basically, a pipelined version of the multiply function
--- described in the ieee_proposed VHDL library float_pkg_c.vhd
+-- described in the ahir_ieee_proposed VHDL library float_pkg_c.vhd
 -- originally written by David Bishop (dbishop@vhdl.org)
 -- modified by Madhav Desai.
 -------------------------------------------------------------------------------
@@ -10,9 +10,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library ieee_proposed;
-use ieee_proposed.float_pkg.all;
-use ieee_proposed.math_utility_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.float_pkg.all;
+use ahir_ieee_proposed.math_utility_pkg.all;
 
 library ahir;
 use ahir.Subprograms.all;

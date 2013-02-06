@@ -10,9 +10,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library ieee_proposed;
-use ieee_proposed.float_pkg.all;
-use ieee_proposed.math_utility_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.float_pkg.all;
+use ahir_ieee_proposed.math_utility_pkg.all;
 
 library ahir;
 use ahir.Subprograms.all;
@@ -157,12 +157,14 @@ architecture rtl of GenericFloatingPointAdderSubtractor is
   end function BuildFracMasks;
 
   constant frac_masks: FracMaskArray(fractl_1'high downto fractl_1'low) := BuildFracMasks(fractl_1'length);
+  constant SH: integer := frac_masks'high;
+  constant SL: integer := frac_masks'low;
   function SelectFracMask(constant masks: FracMaskArray; shiftx: integer) 
 	return unsigned is
-	variable ret_mask: unsigned(fractl_1'high downto fractl_1'low);
+	variable ret_mask: unsigned(SH downto SL);
   begin
 	ret_mask := (others => '1');
-	if(shiftx <= fractl_1'high) then
+	if(shiftx <= SH) then
 		ret_mask := masks(shiftx);
 	elsif (shiftx < 0) then
 		ret_mask := (others => '0');

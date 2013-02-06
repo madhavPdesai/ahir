@@ -560,8 +560,8 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       ofile << "// " << this->To_String() << endl;
 
 
-
-      string base_addr_calc_reenable;
+      bool be_flag = false;
+      string base_addr_calc_reenable = "$UNDEFINED";
 	
       __DeclTrans
       if(barrier != NULL)
@@ -591,7 +591,10 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
               {
 		__J(base_addr_calc, this->_pointer_ref->Get_VC_Completed_Transition_Name());
 		if(pipeline_flag)
+		{
 			base_addr_calc_reenable = this->_pointer_ref->Get_VC_Reenable_Update_Transition_Name(visited_elements);
+			be_flag = true;
+		}
               }
 	      
 	    }
@@ -604,7 +607,10 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		    {
 		      __J(base_addr_calc, ((AaStatement*)root)->Get_VC_Completed_Transition_Name());
 		      if(pipeline_flag)
-			base_addr_calc_reenable = ((AaStatement*)root)->Get_VC_Reenable_Update_Transition_Name(visited_elements);
+		      {
+			      be_flag = true;
+			      base_addr_calc_reenable = ((AaStatement*)root)->Get_VC_Reenable_Update_Transition_Name(visited_elements);
+		      }
 		    }
 		}
 	    }
@@ -615,11 +621,29 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		{
 		  __J(base_addr_calc, ((AaStatement*)root)->Get_VC_Completed_Transition_Name());
 		  if(pipeline_flag)
-			base_addr_calc_reenable = ((AaStatement*)root)->Get_VC_Reenable_Update_Transition_Name(visited_elements);
+		  {
+			  base_addr_calc_reenable = ((AaStatement*)root)->Get_VC_Reenable_Update_Transition_Name(visited_elements);
+			  be_flag = true;
+		  }
 		}	  
 	    }
-
-
+	  else if(this->_object->Is_Statement())
+	    {
+	      AaRoot* root = this->_object;
+	      if(visited_elements.find(root) != visited_elements.end())
+		{
+		  __J(base_addr_calc, ((AaStatement*)root)->Get_VC_Completed_Transition_Name());
+		  if(pipeline_flag)
+		  {
+			  base_addr_calc_reenable = ((AaStatement*)root)->Get_VC_Reenable_Update_Transition_Name(visited_elements);
+			  be_flag = true;
+		  }
+		}	  
+	    }
+	  else
+	    {
+		assert(0);
+	    }
 
 
 	  // this will link to complete region.
@@ -650,7 +674,9 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  if(pipeline_flag)
 	    {
 	        // completion of this will reenable the calculation of the base address.
-	        __MJ(base_addr_calc_reenable, this->Get_VC_Completed_Transition_Name());
+	        if(be_flag)
+	        	__MJ(base_addr_calc_reenable, this->Get_VC_Completed_Transition_Name());
+
 	       string ctrans = this->Get_VC_Completed_Transition_Name();
 	       Write_VC_Reenable_Joins(active_reenable_points,ctrans,ofile);
 	       active_reenable_points.clear();

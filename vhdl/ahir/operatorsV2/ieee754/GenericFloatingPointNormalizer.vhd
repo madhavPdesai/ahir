@@ -8,9 +8,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library ieee_proposed;
-use ieee_proposed.float_pkg.all;
-use ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 library ahir;
 use ahir.Subprograms.all;

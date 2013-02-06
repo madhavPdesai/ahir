@@ -8,8 +8,8 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
-library ieee_proposed;
-use ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 entity PipelinedFPOperator is
   generic (

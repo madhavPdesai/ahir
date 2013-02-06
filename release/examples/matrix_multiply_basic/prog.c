@@ -76,6 +76,8 @@ void mmultiply()
 }
 
 #else
+// tried a variant to put everything in one loop.
+// This performs quite poorly..
 void mmultiply()
 {
 #ifdef SW

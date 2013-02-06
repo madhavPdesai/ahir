@@ -6,10 +6,10 @@ library ahir;
 use ahir.Types.all;
 use ahir.Utilities.all;
 
-library ieee_proposed;
--- use ieee_proposed.math_utility_pkg.all;
-use ieee_proposed.fixed_pkg.all;
-use ieee_proposed.float_pkg.all;
+library aHiR_ieee_proposed;
+-- use aHiR_ieee_proposed.math_utility_pkg.all;
+use aHiR_ieee_proposed.fixed_pkg.all;
+use aHiR_ieee_proposed.float_pkg.all;
 
 package Subprograms is
 
@@ -27,7 +27,7 @@ package Subprograms is
   function To_ApInt ( inp : std_logic_vector) return ApInt;
   function To_ApInt ( inp : IStdLogicVector) return ApInt;
 
-  -- already present in float_pkg in ieee_proposed
+  -- already present in float_pkg in aHiR_ieee_proposed
   --function To_Float ( x                       : std_logic_vector;
   --                    constant exponent_width : integer;
   --                    constant fraction_width : integer)

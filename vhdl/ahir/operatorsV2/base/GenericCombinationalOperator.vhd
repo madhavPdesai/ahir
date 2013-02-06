@@ -9,8 +9,8 @@ use ahir.OperatorPackage.all;
 use ahir.FloatOperatorPackage.all;
 
 
-library ieee_proposed;
-use ieee_proposed.float_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.float_pkg.all;
 
 entity GenericCombinationalOperator is
   generic

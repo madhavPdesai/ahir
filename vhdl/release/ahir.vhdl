@@ -16,6 +16,8 @@ package Types is
   type StdLogicArray2D is array (integer range <>,integer range <>) of std_logic;
   type IStdLogicVector is array (integer range <>) of std_logic; -- note: integer range
 
+  constant global_debug_flag: boolean := false;
+
 
 end package Types;
 
@@ -454,10 +456,10 @@ library ahir;
 use ahir.Types.all;
 use ahir.Utilities.all;
 
-library ieee_proposed;
--- use ieee_proposed.math_utility_pkg.all;
-use ieee_proposed.fixed_pkg.all;
-use ieee_proposed.float_pkg.all;
+library aHiR_ieee_proposed;
+-- use aHiR_ieee_proposed.math_utility_pkg.all;
+use aHiR_ieee_proposed.fixed_pkg.all;
+use aHiR_ieee_proposed.float_pkg.all;
 
 package Subprograms is
 
@@ -475,7 +477,7 @@ package Subprograms is
   function To_ApInt ( inp : std_logic_vector) return ApInt;
   function To_ApInt ( inp : IStdLogicVector) return ApInt;
 
-  -- already present in float_pkg in ieee_proposed
+  -- already present in float_pkg in aHiR_ieee_proposed
   --function To_Float ( x                       : std_logic_vector;
   --                    constant exponent_width : integer;
   --                    constant fraction_width : integer)
@@ -1755,9 +1757,9 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Types.all;
 
-library ieee_proposed;
-use ieee_proposed.math_utility_pkg.all;                  
-use ieee_proposed.float_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;                  
+use aHiR_ieee_proposed.float_pkg.all;
 
 
 package BaseComponents is
@@ -2290,7 +2292,7 @@ package BaseComponents is
             twidth: integer;
             nreqs: integer;
             no_arbitration: Boolean;
-            pipeline_flag : Boolean);
+            pipeline_flag : Boolean := true);
     port (
       -- req/ack follow level protocol
       reqL                 : in  std_logic;
@@ -3168,10 +3170,10 @@ use ahir.Types.all;
 use ahir.Subprograms.all;	
 use ahir.Utilities.all;
 	
-library ieee_proposed;	
-use ieee_proposed.math_utility_pkg.all;	
-use ieee_proposed.fixed_pkg.all;	
-use ieee_proposed.float_pkg.all;	
+library aHiR_ieee_proposed;	
+use aHiR_ieee_proposed.math_utility_pkg.all;	
+use aHiR_ieee_proposed.fixed_pkg.all;	
+use aHiR_ieee_proposed.float_pkg.all;	
 
 package FloatOperatorPackage is
 
@@ -5006,9 +5008,9 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Types.all;
 
-library ieee_proposed;
-use ieee_proposed.math_utility_pkg.all;                  
-use ieee_proposed.float_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;                  
+use aHiR_ieee_proposed.float_pkg.all;
 
 
 package functionLibraryComponents is
@@ -8523,7 +8525,8 @@ architecture default_arch of join is
   signal place_sigs: BooleanArray(preds'range);
   constant H: integer := preds'high;
   constant L: integer := preds'low;
-  constant BYP: boolean := (preds'length = 1);
+  -- constant BYP: boolean := (preds'length = 1);
+  constant BYP: boolean := false;
 
 begin  -- default_arch
   
@@ -8536,16 +8539,16 @@ begin  -- default_arch
       bypassgen: if (BYP) generate
 	pI: place_with_bypass
 		generic map(capacity => place_capacity, 
-				marking => 0,
-				name => name & ":" & Convert_To_String(I) )
+				marking => 0)
+				-- name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate bypassgen;
 
       nobypassgen: if (not BYP) generate
 	pI: place
 		generic map(capacity => place_capacity, 
-				marking => 0,
-				name => name & ":" & Convert_To_String(I) )
+				marking => 0)
+				-- name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate nobypassgen;
 
@@ -8586,8 +8589,8 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => place_capacity, marking => 0,
-				name => name & ":" & Convert_To_String(I) )
+	pI: place generic map(capacity => place_capacity, marking => 0)
+				-- name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;
@@ -8855,7 +8858,8 @@ architecture default_arch of marked_join is
 
   constant MH: integer := marked_preds'high;
   constant ML: integer := marked_preds'low;  
-  constant BYP: boolean := (preds'length = 1);
+  -- constant BYP: boolean := (preds'length = 1);
+  constant BYP: boolean := false;
 
 begin  -- default_arch
   
@@ -8867,16 +8871,16 @@ begin  -- default_arch
       bypassgen: if (BYP) generate
 	pI: place_with_bypass
 		generic map(capacity => place_capacity, 
-				marking => 0,
-				name => name & ":" & Convert_To_String(I) )
+				marking => 0)
+				-- name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate bypassgen;
 
       nobypassgen: if (not BYP) generate
 	pI: place
 		generic map(capacity => place_capacity, 
-				marking => 0,
-				name => name & ":" & Convert_To_String(I) )
+				marking => 0)
+				-- name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate nobypassgen;
     end block;
@@ -8888,8 +8892,8 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= marked_preds(I);
-	mpI: place generic map(capacity => place_capacity, marking => 1,
-				name => name & ":marked:" & Convert_To_String(I) )
+	mpI: place generic map(capacity => place_capacity, marking => 1)
+				-- name => name & ":marked:" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
     end block;
   end generate mplacegen;
@@ -8934,8 +8938,8 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => place_capacity, marking => 0,
-				name => name & ":" & Convert_To_String(I) )
+	pI: place generic map(capacity => place_capacity, marking => 0)
+				-- name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;
@@ -8946,8 +8950,8 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= marked_preds(I);
-	mpI: place generic map(capacity => place_capacity, marking => 1,
-				name => name & ":marked:" & Convert_To_String(I) )
+	mpI: place generic map(capacity => place_capacity, marking => 1)
+				-- name => name & ":marked:" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
     end block;
   end generate mplacegen;
@@ -9018,8 +9022,8 @@ begin  -- Behave
     begin
 	place_pred(0) <= selects(I);
 	place_succ(0) <= select_clear(I);
-	pI: place generic map(capacity => place_capacity, marking => 0, name => name & ":select:" &
-			Convert_To_String(I))
+	pI: place generic map(capacity => place_capacity, marking => 0)
+		 -- name => name & ":select:" & Convert_To_String(I))
 		port map(place_pred,place_succ,select_token(I),clk,reset);
     end block;
   end generate InPlaces;
@@ -9032,8 +9036,8 @@ begin  -- Behave
     begin
       place_pred(0) <= enables(J);
       place_succ(0) <= enable_clear(J);
-      pRnb: place generic map(capacity => place_capacity, marking => 0, name => name & ":enable:"
-			& Convert_To_String(J))
+      pRnb: place generic map(capacity => place_capacity, marking => 0)
+		--  name => name & ":enable:" & Convert_To_String(J))
         port map(place_pred,place_succ,enable_token(J),clk,reset);    
     end block;
   end generate EnablePlaces;  
@@ -9061,7 +9065,8 @@ begin  -- Behave
   begin
       place_pred(0) <= ack;
       place_succ(0) <= ack_clear;
-      pack: place generic map(capacity => place_capacity, marking => 1, name => name & ":ack")
+      pack: place generic map(capacity => place_capacity, marking => 1) 
+	--  name => name & ":ack")
         port map(place_pred,place_succ,ack_token,clk,reset);    
   end block;
 
@@ -9162,16 +9167,16 @@ begin  -- default_arch
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
       elsif (backward_reset and (not incoming_token)) then
-        assert token_latch > 0 report "in place " & name &  ": number of tokens cannot become negative!" severity error;
-        assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
-		severity note;
+        -- assert token_latch > 0 report "in place " & name &  ": number of tokens cannot become negative!" severity error;
+        -- assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+	--	severity note;
         token_latch <= token_latch - 1;
       elsif (incoming_token and (not backward_reset)) then
-        assert token_latch < capacity report "in place " & name & " number of tokens "
-			& Convert_To_String(token_latch+1) & " cannot exceed capacity " 
-			& Convert_To_String(capacity) severity error;
-        assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
-		severity note;
+        -- assert token_latch < capacity report "in place " & name & " number of tokens "
+			-- & Convert_To_String(token_latch+1) & " cannot exceed capacity " 
+			-- & Convert_To_String(capacity) severity error;
+        -- assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+		-- severity note;
         token_latch <= token_latch + 1;
       end if;
     end if;
@@ -9242,23 +9247,23 @@ begin  -- default_arch
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
       elsif decr then
-        assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
-		severity note;
+        -- assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+		-- severity note;
         token_latch <= token_latch - 1;
       elsif incr then
-        assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
-		severity note;
+        -- assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+		-- severity note;
         token_latch <= token_latch + 1;
       end if;
 
-      if((token_latch = (capacity - 1)) and incoming_token and (not backward_reset)) then
-        assert false report "in place-with-bypass: " & name & " number of tokens "
-			& Convert_To_String(token_latch+1) & " cannot exceed capacity " 
-			& Convert_To_String(capacity) severity error;
-      end if;
-      if((not non_zero) and backward_reset and (not incoming_token)) then
-        assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
-      end if;
+      -- if((token_latch = (capacity - 1)) and incoming_token and (not backward_reset)) then
+        -- assert false report "in place-with-bypass: " & name & " number of tokens "
+			-- & Convert_To_String(token_latch+1) & " cannot exceed capacity " 
+			-- & Convert_To_String(capacity) severity error;
+      -- end if;
+      -- if((not non_zero) and backward_reset and (not incoming_token)) then
+        -- assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
+      -- end if;
 
     end if;
   end process latch_token;
@@ -9437,8 +9442,8 @@ use ahir.OperatorPackage.all;
 use ahir.FloatOperatorPackage.all;
 
 
-library ieee_proposed;
-use ieee_proposed.float_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.float_pkg.all;
 
 entity GenericCombinationalOperator is
   generic
@@ -10630,7 +10635,7 @@ entity OutputDeMuxBase is
 	  twidth: integer := 2;
 	  nreqs: integer := 3;
 	  no_arbitration: Boolean;
-          pipeline_flag: Boolean);
+          pipeline_flag: Boolean := true);
   port (
     -- req/ack follow level protocol
     reqL                 : in  std_logic;
@@ -14332,9 +14337,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library ieee_proposed;
-use ieee_proposed.float_pkg.all;
-use ieee_proposed.math_utility_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.float_pkg.all;
+use ahir_ieee_proposed.math_utility_pkg.all;
 
 library ahir;
 use ahir.Subprograms.all;
@@ -14479,12 +14484,14 @@ architecture rtl of GenericFloatingPointAdderSubtractor is
   end function BuildFracMasks;
 
   constant frac_masks: FracMaskArray(fractl_1'high downto fractl_1'low) := BuildFracMasks(fractl_1'length);
+  constant SH: integer := frac_masks'high;
+  constant SL: integer := frac_masks'low;
   function SelectFracMask(constant masks: FracMaskArray; shiftx: integer) 
 	return unsigned is
-	variable ret_mask: unsigned(fractl_1'high downto fractl_1'low);
+	variable ret_mask: unsigned(SH downto SL);
   begin
 	ret_mask := (others => '1');
-	if(shiftx <= fractl_1'high) then
+	if(shiftx <= SH) then
 		ret_mask := masks(shiftx);
 	elsif (shiftx < 0) then
 		ret_mask := (others => '0');
@@ -15074,7 +15081,7 @@ end rtl;
 -------------------------------------------------------------------------------
 -- An IEEE-754 compliant arbitrary-precision pipelined multiplier
 -- which is basically, a pipelined version of the multiply function
--- described in the ieee_proposed VHDL library float_pkg_c.vhd
+-- described in the ahir_ieee_proposed VHDL library float_pkg_c.vhd
 -- originally written by David Bishop (dbishop@vhdl.org)
 -- modified by Madhav Desai.
 -------------------------------------------------------------------------------
@@ -15083,9 +15090,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library ieee_proposed;
-use ieee_proposed.float_pkg.all;
-use ieee_proposed.math_utility_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.float_pkg.all;
+use ahir_ieee_proposed.math_utility_pkg.all;
 
 library ahir;
 use ahir.Subprograms.all;
@@ -15453,9 +15460,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library ieee_proposed;
-use ieee_proposed.float_pkg.all;
-use ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 library ahir;
 use ahir.Subprograms.all;
@@ -15862,8 +15869,8 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
-library ieee_proposed;
-use ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 entity PipelinedFPOperator is
   generic (
@@ -16769,23 +16776,22 @@ begin  -- Pipelined
 			   stall => stall,
 			   clk => clk,
 			   reset => reset);
-
-	process(clk)
-	begin
-		if(clk'event and clk = '1') then
-			if(stall = '0') then
-				stage_tags(1) <= stage_tags(0);
-				subtract_op_1 <= subtract_op;
-			end if;
-			if(reset = '1') then
-				stage_active(1) <= '0';
-			elsif stall = '0' then
-				stage_active(1) <= stage_active(0);
-			end if;
-		end if;
-        end process;
-			
   end generate Stage1;
+
+  process(clk)
+  begin
+	if(clk'event and clk = '1') then
+		if(stall = '0') then
+			stage_tags(1) <= stage_tags(0);
+			subtract_op_1 <= subtract_op;
+		end if;
+		if(reset = '1') then
+			stage_active(1) <= '0';
+		elsif stall = '0' then
+			stage_active(1) <= stage_active(0);
+		end if;
+	end if;
+  end process;
 
   -- stage two: calculate the block carries.
   process(clk)	
@@ -17462,9 +17468,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library ieee_proposed;
-use ieee_proposed.float_pkg.all;
-use ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpadd32 is -- 
@@ -17511,9 +17517,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library ieee_proposed;
-use ieee_proposed.float_pkg.all;
-use ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpadd64 is -- 
@@ -17560,9 +17566,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library ieee_proposed;
-use ieee_proposed.math_utility_pkg.all;
-use ieee_proposed.float_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;
+use aHiR_ieee_proposed.float_pkg.all;
 
 
 entity fpmul32 is -- 
@@ -17608,9 +17614,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library ieee_proposed;
-use ieee_proposed.math_utility_pkg.all;
-use ieee_proposed.float_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;
+use aHiR_ieee_proposed.float_pkg.all;
 
 
 entity fpmul64 is -- 
@@ -17656,9 +17662,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library ieee_proposed;
-use ieee_proposed.float_pkg.all;
-use ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpsub32 is -- 
@@ -17705,9 +17711,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library ieee_proposed;
-use ieee_proposed.float_pkg.all;
-use ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpsub64 is -- 
@@ -17754,9 +17760,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library ieee_proposed;
-use ieee_proposed.float_pkg.all;
-use ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpu32 is -- 
@@ -17876,9 +17882,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library ieee_proposed;
-use ieee_proposed.float_pkg.all;
-use ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpu64 is -- 

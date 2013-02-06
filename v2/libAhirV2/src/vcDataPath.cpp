@@ -2364,8 +2364,8 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
       ofile << " twidth => " << tag_length << ","
 	    << " nreqs => " << num_reqs << ","
-	    << " no_arbitration => " << no_arb_string << ","
-	    << " pipeline_flag => true )" << endl;
+	    << " no_arbitration => " << no_arb_string << ")"
+	    <<  endl;
       ofile << "port map ( -- {\n reqR => reqR " << ", " <<  endl
 	    << "    ackR => ackR " << ", " <<  endl;
 

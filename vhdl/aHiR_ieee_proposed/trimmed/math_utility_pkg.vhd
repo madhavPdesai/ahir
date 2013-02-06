@@ -2,7 +2,7 @@
 -- "math_utility_pkg" package contains types used in the fixed and floating
 -- point packages..
 -- Please see the documentation for the floating point package.
--- This package should be compiled into "ieee_proposed" and used as follows:
+-- This package should be compiled into "aHiR_ieee_proposed" and used as follows:
 --
 --  This verison is designed to work with the VHDL-93 compilers.  Please
 --  note the "%%%" comments.  These are where we diverge from the

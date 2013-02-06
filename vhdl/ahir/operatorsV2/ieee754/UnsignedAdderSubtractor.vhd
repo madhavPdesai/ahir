@@ -153,23 +153,22 @@ begin  -- Pipelined
 			   stall => stall,
 			   clk => clk,
 			   reset => reset);
-
-	process(clk)
-	begin
-		if(clk'event and clk = '1') then
-			if(stall = '0') then
-				stage_tags(1) <= stage_tags(0);
-				subtract_op_1 <= subtract_op;
-			end if;
-			if(reset = '1') then
-				stage_active(1) <= '0';
-			elsif stall = '0' then
-				stage_active(1) <= stage_active(0);
-			end if;
-		end if;
-        end process;
-			
   end generate Stage1;
+
+  process(clk)
+  begin
+	if(clk'event and clk = '1') then
+		if(stall = '0') then
+			stage_tags(1) <= stage_tags(0);
+			subtract_op_1 <= subtract_op;
+		end if;
+		if(reset = '1') then
+			stage_active(1) <= '0';
+		elsif stall = '0' then
+			stage_active(1) <= stage_active(0);
+		end if;
+	end if;
+  end process;
 
   -- stage two: calculate the block carries.
   process(clk)	

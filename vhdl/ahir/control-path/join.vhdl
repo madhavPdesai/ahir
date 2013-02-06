@@ -19,7 +19,8 @@ architecture default_arch of join is
   signal place_sigs: BooleanArray(preds'range);
   constant H: integer := preds'high;
   constant L: integer := preds'low;
-  constant BYP: boolean := (preds'length = 1);
+  -- constant BYP: boolean := (preds'length = 1);
+  constant BYP: boolean := false;
 
 begin  -- default_arch
   
@@ -32,16 +33,16 @@ begin  -- default_arch
       bypassgen: if (BYP) generate
 	pI: place_with_bypass
 		generic map(capacity => place_capacity, 
-				marking => 0,
-				name => name & ":" & Convert_To_String(I) )
+				marking => 0)
+				-- name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate bypassgen;
 
       nobypassgen: if (not BYP) generate
 	pI: place
 		generic map(capacity => place_capacity, 
-				marking => 0,
-				name => name & ":" & Convert_To_String(I) )
+				marking => 0)
+				-- name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate nobypassgen;
 

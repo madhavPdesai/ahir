@@ -13,7 +13,8 @@ $pipe out_valid: $uint<8>  $depth 9
 
 $inline $module [add_inline] $in (a: $uint<32> b: $uint<32>) $out (c: $uint<32>) $is
 {
-	c := (a + b)
+	tmp := (a+b)
+	c := tmp
 }
 
 $macro $module [add_macro] $in (a: $uint<32> b: $uint<32>) $out (c: $uint<32>) $is

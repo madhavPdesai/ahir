@@ -7,10 +7,10 @@ use ahir.Types.all;
 use ahir.Subprograms.all;	
 use ahir.Utilities.all;
 	
-library ieee_proposed;	
-use ieee_proposed.math_utility_pkg.all;	
-use ieee_proposed.fixed_pkg.all;	
-use ieee_proposed.float_pkg.all;	
+library aHiR_ieee_proposed;	
+use aHiR_ieee_proposed.math_utility_pkg.all;	
+use aHiR_ieee_proposed.fixed_pkg.all;	
+use aHiR_ieee_proposed.float_pkg.all;	
 
 package FloatOperatorPackage is
 

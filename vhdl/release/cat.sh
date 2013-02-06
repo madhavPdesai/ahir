@@ -1,5 +1,5 @@
 rm -f ahir.vhdl
-rm -f ieee_proposed.vhdl
+rm -f *_ieee_proposed.vhdl
 cat ../ahir/packagesV2/Types.vhd >> ahir.vhdl
 cat ../ahir/packagesV2/Utilities.vhd >> ahir.vhdl
 cat ../ahir/packagesV2/Subprograms.vhd >> ahir.vhdl
@@ -19,7 +19,7 @@ cat ../ahir/control-path/*.vhdl >> ahir.vhdl
 cat ../ahir/operatorsV2/base/*.vhd >> ahir.vhdl
 cat ../ahir/operatorsV2/ieee754/*.vhd >> ahir.vhdl
 cat ../ahir/operatorsV2/functionLibrary/*.vhd >> ahir.vhdl
-cat ../ieee_proposed/trimmed/math_utility_pkg.vhd >> ieee_proposed.vhdl
-cat ../ieee_proposed/trimmed/fixed_float_types_c.vhdl >> ieee_proposed.vhdl
-cat ../ieee_proposed/trimmed/fixed_pkg_c.vhd >> ieee_proposed.vhdl
-cat ../ieee_proposed/trimmed/float_pkg_c.vhd >> ieee_proposed.vhdl
+cat ../aHiR_ieee_proposed/trimmed/math_utility_pkg.vhd >> aHiR_ieee_proposed.vhdl
+cat ../aHiR_ieee_proposed/trimmed/fixed_float_types_c.vhdl >> aHiR_ieee_proposed.vhdl
+cat ../aHiR_ieee_proposed/trimmed/fixed_pkg_c.vhd >> aHiR_ieee_proposed.vhdl
+cat ../aHiR_ieee_proposed/trimmed/float_pkg_c.vhd >> aHiR_ieee_proposed.vhdl

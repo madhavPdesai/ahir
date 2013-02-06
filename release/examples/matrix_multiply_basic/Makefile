@@ -47,7 +47,7 @@ aa2vc: prog.aa $(FUNCTIONLIB)/Aa/fpu.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -I 16 -v -q -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
+	vc2vhdl -O -I 16 -v -q -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
@@ -61,7 +61,7 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 	ghdl --clean
 	ghdl --remove
 	ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl
-	ghdl -i --work=ieee_proposed  $(VHDL_LIB)/ieee_proposed.vhdl
+	ghdl -i --work=aHiR_ieee_proposed  $(VHDL_LIB)/aHiR_ieee_proposed.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Utility_Package.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Vhpi_Package.vhdl
 	ghdl -i --work=work ahir_system_global_package.vhdl

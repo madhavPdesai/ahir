@@ -510,9 +510,10 @@ void AaStatementSequence::Write_VC_Links(string hier_id, ostream& ofile)
     this->_statement_sequence[i]->Write_VC_Links(hier_id, ofile);
 }
   
+// TODO: get rid of this..
 void AaStatementSequence::Write_VC_Control_Path_As_Fork_Block(bool pipe_flag, string region_id, ostream& ofile)
 {
-
+	assert(0);
 }
 
 AaStatement* AaStatementSequence::Get_Next_Statement(AaStatement* stmt)
@@ -4697,8 +4698,13 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 
 	AaStatement* stmt = curr_expr->Get_Associated_Statement();
 	AaAssignmentStatement* root_stmt = NULL;
-	assert(stmt != NULL);
-
+	
+	if(stmt == NULL)
+	{
+		// This can happen if there is a reference to
+		// an interface object.
+	   return;
+	}
 
 	vector<AaStatement*> delayed_versions;
 

@@ -543,13 +543,37 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       for(int idx = 0, fidx = sseq->Get_Statement_Count(); idx < fidx; idx++)
 	{
 	  AaStatement* stmt = sseq->Get_Statement(idx);
-	  sseq->Get_Statement(idx)->Write_VC_Control_Path_Optimized(pipeline_flag, 
-								    visited_elements,
-								    load_store_ordering_map,
-								    pipe_map,
-								    barrier,
-								    ofile);
-	  if((stmt->Is("AaCallStatement") && 
+
+	  if(stmt->Is_Block_Statement())
+	  {
+		if(pipeline_flag)
+		{
+			__T(stmt->Get_VC_Start_Transition_Name());
+			__T(stmt->Get_VC_Completed_Transition_Name());
+			stmt->Write_VC_Control_Path_Optimized(ofile);
+			__F(stmt->Get_VC_Start_Transition_Name(), stmt->Get_VC_Name());
+			__MJ(stmt->Get_VC_Start_Transition_Name(), stmt->Get_VC_Completed_Transition_Name());
+			__J(stmt->Get_VC_Completed_Transition_Name(), stmt->Get_VC_Name());
+		}
+		else
+		{
+			AaRoot::Error("block statement in printing fork block.\n", stmt);
+		}
+          }
+	  else if(stmt->Is_Control_Flow_Statement())
+	  {
+			AaRoot::Error("control-flow statement in printing fork block.\n", stmt);
+	  }
+	  else
+	  {
+	      stmt->Write_VC_Control_Path_Optimized(pipeline_flag, 
+						            visited_elements,
+							    load_store_ordering_map,
+							    pipe_map,
+							    barrier,
+							    ofile);
+	  }
+	  if(stmt->Is_Block_Statement() || (stmt->Is("AaCallStatement") && 
 	      !((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()))->Has_No_Side_Effects())
 	     || stmt->Can_Block())
 	  {
@@ -561,7 +585,7 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		{
 			AaStatement* prev_stmt = sseq->Get_Statement(K);
 			__J(stmt->Get_VC_Start_Transition_Name(), prev_stmt->Get_VC_Completed_Transition_Name());
-	  		if((prev_stmt->Is("AaCallStatement") && 
+	  		if(prev_stmt->Is_Block_Statement() || (prev_stmt->Is("AaCallStatement") && 
 	      			!((AaModule*)(((AaCallStatement*)prev_stmt)->Get_Called_Module()))->Has_No_Side_Effects())
 	     			|| prev_stmt->Can_Block())
 			{

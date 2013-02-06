@@ -1,3 +1,9 @@
+$macro $module [sum_macro] $in (a: $uint<32> b: $uint<32>) $out (c: $uint<32>) $is
+{
+	tmp := (a+b)
+	c := tmp
+}
+
 $module [asum] $in() $out (c: $uint<32> ) $is
 {
 
@@ -9,7 +15,7 @@ $module [asum] $in() $out (c: $uint<32> ) $is
 			$phi R := 0 $on $entry R4 $on $loopback
 			$endmerge
 			R1 := (R + 1)
-			R2 := (R1 + 1)
+			$call sum_macro (R1 1) (R2)
 			R3 := (R2 + 1)
 			R4 := (R3 + 1)
 			NI := (I+1)

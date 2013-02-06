@@ -5,9 +5,9 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Types.all;
 
-library ieee_proposed;
-use ieee_proposed.math_utility_pkg.all;                  
-use ieee_proposed.float_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;                  
+use aHiR_ieee_proposed.float_pkg.all;
 
 
 package BaseComponents is
@@ -540,7 +540,7 @@ package BaseComponents is
             twidth: integer;
             nreqs: integer;
             no_arbitration: Boolean;
-            pipeline_flag : Boolean);
+            pipeline_flag : Boolean := true);
     port (
       -- req/ack follow level protocol
       reqL                 : in  std_logic;

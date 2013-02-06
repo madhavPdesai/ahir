@@ -2,7 +2,7 @@
 -- "math_utility_pkg" package contains types used in the fixed and floating
 -- point packages..
 -- Please see the documentation for the floating point package.
--- This package should be compiled into "ieee_proposed" and used as follows:
+-- This package should be compiled into "aHiR_ieee_proposed" and used as follows:
 --
 --  This verison is designed to work with the VHDL-93 compilers.  Please
 --  note the "%%%" comments.  These are where we diverge from the
@@ -69,11 +69,11 @@ end package fixed_float_types;
 -- --------------------------------------------------------------------
 -- "fixed_pkg_c.vhdl" package contains functions for fixed point math.
 -- Please see the documentation for the fixed point package.
--- This package should be compiled into "ieee_proposed" and used as follows:
+-- This package should be compiled into "aHiR_ieee_proposed" and used as follows:
 -- use ieee.std_logic_1164.all;
 -- use ieee.numeric_std.all;
--- use ieee_proposed.math_utility_pkg.all;
--- use ieee_proposed.fixed_pkg.all;
+-- use aHiR_ieee_proposed.math_utility_pkg.all;
+-- use aHiR_ieee_proposed.fixed_pkg.all;
 --
 --  This verison is designed to work with the VHDL-93 compilers 
 --  synthesis tools.  Please note the "%%%" comments.  These are where we
@@ -89,19 +89,19 @@ use STD.TEXTIO.all;
 library IEEE;
 use IEEE.STD_LOGIC_1164.all;
 use IEEE.NUMERIC_STD.all;
-library IEEE_PROPOSED;
-use IEEE_PROPOSED.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 package fixed_pkg is
 end package fixed_pkg;
 -- --------------------------------------------------------------------
 -- "float_pkg" package contains functions for floating point math.
 -- Please see the documentation for the floating point package.
--- This package should be compiled into "ieee_proposed" and used as follows:
+-- This package should be compiled into "aHiR_ieee_proposed" and used as follows:
 -- use ieee.std_logic_1164.all;
 -- use ieee.numeric_std.all;
--- use ieee_proposed.math_utility_pkg.all;
--- use ieee_proposed.float_pkg.all;
+-- use aHiR_ieee_proposed.math_utility_pkg.all;
+-- use aHiR_ieee_proposed.float_pkg.all;
 --
 --  This verison is designed to work with the VHDL-93 compilers.  Please
 --  note the "%%%" comments.  These are where we diverge from the
@@ -119,8 +119,8 @@ use STD.TEXTIO.all;
 library IEEE;
 use IEEE.STD_LOGIC_1164.all;
 use IEEE.NUMERIC_STD.all;
-library ieee_proposed;
-use ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 package float_pkg is
 -- generic (

@@ -19,7 +19,7 @@ entity OutputDeMuxBase is
 	  twidth: integer := 2;
 	  nreqs: integer := 3;
 	  no_arbitration: Boolean;
-          pipeline_flag: Boolean);
+          pipeline_flag: Boolean := true);
   port (
     -- req/ack follow level protocol
     reqL                 : in  std_logic;
