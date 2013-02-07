@@ -31,12 +31,21 @@ int main(int argc, char* argv[])
 	uint32_t R1 = read_uint32("outpipe");
 	uint32_t R2 = read_uint32("outpipe");
 	uint32_t R3 = read_uint32("outpipe");
+
+   	fprintf(stdout," R1=%u, R2=%u, R3=%u\n", R1,R2,R3);
+        int I;
+	//for(I=0; I < 32; I++)
+	//{
+		//uint32_t tmp = read_uint32("tmppipe");
+   		//fprintf(stdout,"a5reg.%d = %u\n", I, tmp);
+		//
+	//}
 	uint32_t out_stream = read_uint32("outpipe");
 	
 
 	pthread_join(main_t,NULL);
 
-   	fprintf(stdout," R1=%u, R2=%u, R3=%u, stream=%u \n", R1,R2,R3,out_stream);
+   	fprintf(stdout,"stream=%u \n", out_stream);
 
 	return(0);
 }

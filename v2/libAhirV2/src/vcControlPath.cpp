@@ -1485,6 +1485,12 @@ void vcPhiSequencer::Print(ostream& ofile)
 
 void vcPhiSequencer::Print_VHDL(vcControlPath* cp, ostream& ofile)
 {
+  
+  bool parent_is_pipelined_loop_body = (this->Get_Parent()->Is("vcCPPipelinedLoopBody"));
+  int max_iterations_in_flight = 1;
+  if(parent_is_pipelined_loop_body) 
+	max_iterations_in_flight = vcSystem::_max_iterations_in_flight;
+  
   ofile << this->Get_VHDL_Id() << "_block : block -- { " << endl;
   ofile << "signal reqs, selects : BooleanArray(0 to " << _reqs.size()-1 << ");" << endl;
   ofile << "signal enables : BooleanArray(0 to " << _enables.size()-1 << "); -- }" << endl;
@@ -1502,8 +1508,11 @@ void vcPhiSequencer::Print_VHDL(vcControlPath* cp, ostream& ofile)
       ofile << "enables(" << idx << ")  <= " << sig_id << ";" << endl;
     }
 
+  string gen_name = '"' +  this->Get_VHDL_Id() + '"';
   ofile << this->Get_VHDL_Id() << " : phi_sequencer -- { " << endl;;
-  ofile << "generic map (place_capacity => " << _place_capacity << ", nreqs => " << _reqs.size() << ", nenables => "  << _enables.size() << ") " << endl;
+  ofile << "generic map (place_capacity => " << max_iterations_in_flight << ", nreqs => " << _reqs.size() 
+		<< ", nenables => "  << _enables.size() 
+		<< ", name => "  << gen_name << ") " << endl;
   ofile << "port map (selects => selects, reqs => reqs, enables => enables, ack => " << _ack->Get_Exit_Symbol(cp) 
 	<< ", done => " << _done->Get_Exit_Symbol(cp) << ", clk => clk, reset => reset);" << endl;
   ofile << " -- } } " << endl;

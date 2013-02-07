@@ -273,7 +273,11 @@ int main_inner (void)
   write_uint32("outpipe", R3);
 
   for (i = 0; i < 32; ++i)
-    out |= a5reg() << (31 - (i & 31));
+  {
+    uint32_t tmp = a5reg();
+    //write_uint32("tmppipe", tmp);
+    out |= (tmp << (31 - (i & 31)));
+  }
   
   write_uint32("outpipe", out);
 

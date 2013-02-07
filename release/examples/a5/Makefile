@@ -5,6 +5,8 @@ SOCKETLIB_INCLUDE=../../CtestBench/include
 SOCKETLIB_LIB=../../CtestBench/lib
 VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
+#LLVM2AAOPTS=
+LLVM2AAOPTS=-extract_do_while=true
 all: SW HW 
 
 # compile with SW defined.
@@ -21,20 +23,22 @@ HW: c2llvmbc llvmbc2aa aa2vc vc2vhdl vhdlsim
 c2llvmbc: prog.c testbench.c
 	clang -std=gnu89 -I$(IOLIB_INCLUDE) -emit-llvm -c prog.c
 	#llvm-dis prog.o
-	opt -O3	--instnamer prog.o > prog.opt.o
+	opt -O3	--instnamer --loopsimplify prog.o > prog.opt.o
 	llvm-dis prog.opt.o
 
 # llvm byte-code to Aa..
 llvmbc2aa:  prog.opt.o
-	llvm2aa --pipedepths=pipedepths prog.opt.o | vcFormat >  prog.opt.o.aa
+	llvm2aa $(LLVM2AAOPTS) --pipedepths=pipedepths prog.opt.o | vcFormat >  prog.opt.o.aa
 
 # Aa to vC
 aa2vc: prog.opt.o.aa
-	Aa2VC -O -C prog.opt.o.aa | vcFormat > prog.opt.o.aa.vc
+	AaOpt -B prog.opt.o.aa | vcFormat > prog.aa
+	Aa2VC -O -C prog.aa | vcFormat > prog.vc
 
 # vC to VHDL
-vc2vhdl: prog.opt.o.aa.vc
-	vc2vhdl -O -C -e ahir_system -w -s ghdl -t main_inner -f prog.opt.o.aa.vc 
+vc2vhdl: prog.vc
+	vc2vhdl -I 8 -C -e ahir_system -w -s ghdl -t main_inner -f prog.vc
+	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 
@@ -47,9 +51,10 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 	ghdl --clean
 	ghdl --remove
 	ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl
-	ghdl -i --work=ieee_proposed  $(VHDL_LIB)/ieee_proposed.vhdl
+	ghdl -i --work=ahir_ieee_proposed  $(VHDL_LIB)/aHiR_ieee_proposed.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Utility_Package.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Vhpi_Package.vhdl
+	ghdl -i --work=work ahir_system_global_package.vhdl
 	ghdl -i --work=work ahir_system.vhdl
 	ghdl -i --work=work ahir_system_test_bench.vhdl
 	ghdl -m --work=work -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 

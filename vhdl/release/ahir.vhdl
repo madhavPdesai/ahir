@@ -8539,16 +8539,16 @@ begin  -- default_arch
       bypassgen: if (BYP) generate
 	pI: place_with_bypass
 		generic map(capacity => place_capacity, 
-				marking => 0)
-				-- name => name & ":" & Convert_To_String(I) )
+				marking => 0,
+				name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate bypassgen;
 
       nobypassgen: if (not BYP) generate
 	pI: place
 		generic map(capacity => place_capacity, 
-				marking => 0)
-				-- name => name & ":" & Convert_To_String(I) )
+				marking => 0,
+				name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate nobypassgen;
 
@@ -8580,6 +8580,7 @@ end join_with_input;
 architecture default_arch of join_with_input is
   signal symbol_out_sig : BooleanArray(0 downto 0);
   signal place_sigs: BooleanArray(preds'range);
+  signal inp_place_sig: Boolean;
   constant H: integer := preds'high;
   constant L: integer := preds'low;
 begin  -- default_arch
@@ -8589,14 +8590,23 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => place_capacity, marking => 0)
-				-- name => name & ":" & Convert_To_String(I) )
+	pI: place generic map(capacity => place_capacity, marking => 0,
+				 name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;
   
+  inplaceBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+  begin
+	place_pred(0) <= symbol_in;
+	pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
+				 name => name & ":inputplace")
+		port map(place_pred,symbol_out_sig,inp_place_sig,clk,reset);
+  end block;
+
   -- The transition is enabled only when all preds are true.
-  symbol_out_sig(0) <= symbol_in and AndReduce(place_sigs);
+  symbol_out_sig(0) <= inp_place_sig and AndReduce(place_sigs);
   symbol_out <= symbol_out_sig(0);
 end default_arch;
 library ieee;
@@ -8871,16 +8881,16 @@ begin  -- default_arch
       bypassgen: if (BYP) generate
 	pI: place_with_bypass
 		generic map(capacity => place_capacity, 
-				marking => 0)
-				-- name => name & ":" & Convert_To_String(I) )
+				marking => 0,
+				name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate bypassgen;
 
       nobypassgen: if (not BYP) generate
 	pI: place
 		generic map(capacity => place_capacity, 
-				marking => 0)
-				-- name => name & ":" & Convert_To_String(I) )
+				marking => 0,
+				name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate nobypassgen;
     end block;
@@ -8892,8 +8902,8 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= marked_preds(I);
-	mpI: place generic map(capacity => place_capacity, marking => 1)
-				-- name => name & ":marked:" & Convert_To_String(I) )
+	mpI: place generic map(capacity => place_capacity, marking => 1,
+				 name => name & ":marked:" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
     end block;
   end generate mplacegen;
@@ -8925,6 +8935,7 @@ architecture default_arch of marked_join_with_input is
   signal symbol_out_sig : BooleanArray(0 downto 0);
   signal place_sigs: BooleanArray(preds'range);
   signal mplace_sigs: BooleanArray(marked_preds'range);  
+  signal inp_place_sig: Boolean;
   constant H: integer := preds'high;
   constant L: integer := preds'low;
 
@@ -8955,10 +8966,19 @@ begin  -- default_arch
 		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
     end block;
   end generate mplacegen;
+
+  inplaceBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+  begin
+	place_pred(0) <= symbol_in;
+	pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
+				 name => name & ":inputplace")
+		port map(place_pred,symbol_out_sig,inp_place_sig,clk,reset);
+  end block;
   
   -- The transition is enabled only when all preds are true and transition
   -- is reenabled.
-  symbol_out_sig(0) <= symbol_in and AndReduce(place_sigs) and AndReduce(mplace_sigs);
+  symbol_out_sig(0) <= inp_place_sig and AndReduce(place_sigs) and AndReduce(mplace_sigs);
   symbol_out <= symbol_out_sig(0);
 
 end default_arch;
@@ -9022,8 +9042,8 @@ begin  -- Behave
     begin
 	place_pred(0) <= selects(I);
 	place_succ(0) <= select_clear(I);
-	pI: place generic map(capacity => place_capacity, marking => 0)
-		 -- name => name & ":select:" & Convert_To_String(I))
+	pI: place generic map(capacity => place_capacity, marking => 0,
+		  name => name & ":select:" & Convert_To_String(I))
 		port map(place_pred,place_succ,select_token(I),clk,reset);
     end block;
   end generate InPlaces;
@@ -9036,8 +9056,8 @@ begin  -- Behave
     begin
       place_pred(0) <= enables(J);
       place_succ(0) <= enable_clear(J);
-      pRnb: place generic map(capacity => place_capacity, marking => 0)
-		--  name => name & ":enable:" & Convert_To_String(J))
+      pRnb: place generic map(capacity => place_capacity, marking => 0,
+		  name => name & ":enable:" & Convert_To_String(J))
         port map(place_pred,place_succ,enable_token(J),clk,reset);    
     end block;
   end generate EnablePlaces;  
@@ -9065,8 +9085,8 @@ begin  -- Behave
   begin
       place_pred(0) <= ack;
       place_succ(0) <= ack_clear;
-      pack: place generic map(capacity => place_capacity, marking => 1) 
-	--  name => name & ":ack")
+      pack: place generic map(capacity => place_capacity, marking => 1, 
+	  	name => name & ":ack")
         port map(place_pred,place_succ,ack_token,clk,reset);    
   end block;
 
@@ -9167,16 +9187,16 @@ begin  -- default_arch
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
       elsif (backward_reset and (not incoming_token)) then
-        -- assert token_latch > 0 report "in place " & name &  ": number of tokens cannot become negative!" severity error;
-        -- assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
-	--	severity note;
+         assert token_latch > 0 report "in place " & name &  ": number of tokens cannot become negative!" severity error;
+         assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+		severity note;
         token_latch <= token_latch - 1;
       elsif (incoming_token and (not backward_reset)) then
-        -- assert token_latch < capacity report "in place " & name & " number of tokens "
-			-- & Convert_To_String(token_latch+1) & " cannot exceed capacity " 
-			-- & Convert_To_String(capacity) severity error;
-        -- assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
-		-- severity note;
+         assert token_latch < capacity report "in place " & name & " number of tokens "
+			 & Convert_To_String(token_latch+1) & " cannot exceed capacity " 
+			 & Convert_To_String(capacity) severity error;
+         assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+		 severity note;
         token_latch <= token_latch + 1;
       end if;
     end if;
@@ -9247,23 +9267,23 @@ begin  -- default_arch
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
       elsif decr then
-        -- assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
-		-- severity note;
+         assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+		 severity note;
         token_latch <= token_latch - 1;
       elsif incr then
-        -- assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
-		-- severity note;
+         assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+		 severity note;
         token_latch <= token_latch + 1;
       end if;
 
-      -- if((token_latch = (capacity - 1)) and incoming_token and (not backward_reset)) then
-        -- assert false report "in place-with-bypass: " & name & " number of tokens "
-			-- & Convert_To_String(token_latch+1) & " cannot exceed capacity " 
-			-- & Convert_To_String(capacity) severity error;
-      -- end if;
-      -- if((not non_zero) and backward_reset and (not incoming_token)) then
-        -- assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
-      -- end if;
+       if((token_latch = (capacity - 1)) and incoming_token and (not backward_reset)) then
+         assert false report "in place-with-bypass: " & name & " number of tokens "
+			 & Convert_To_String(token_latch+1) & " cannot exceed capacity " 
+			 & Convert_To_String(capacity) severity error;
+       end if;
+       if((not non_zero) and backward_reset and (not incoming_token)) then
+         assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
+       end if;
 
     end if;
   end process latch_token;

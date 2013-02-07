@@ -18,6 +18,7 @@ end join_with_input;
 architecture default_arch of join_with_input is
   signal symbol_out_sig : BooleanArray(0 downto 0);
   signal place_sigs: BooleanArray(preds'range);
+  signal inp_place_sig: Boolean;
   constant H: integer := preds'high;
   constant L: integer := preds'low;
 begin  -- default_arch
@@ -27,13 +28,22 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => place_capacity, marking => 0)
-				-- name => name & ":" & Convert_To_String(I) )
+	pI: place generic map(capacity => place_capacity, marking => 0,
+				 name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
     end block;
   end generate placegen;
   
+  inplaceBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+  begin
+	place_pred(0) <= symbol_in;
+	pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
+				 name => name & ":inputplace")
+		port map(place_pred,symbol_out_sig,inp_place_sig,clk,reset);
+  end block;
+
   -- The transition is enabled only when all preds are true.
-  symbol_out_sig(0) <= symbol_in and AndReduce(place_sigs);
+  symbol_out_sig(0) <= inp_place_sig and AndReduce(place_sigs);
   symbol_out <= symbol_out_sig(0);
 end default_arch;
