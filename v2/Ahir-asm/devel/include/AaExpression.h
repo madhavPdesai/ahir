@@ -333,6 +333,8 @@ class AaObjectReference: public AaExpression
   {
   }
 
+  void Update_Globally_Accessed_Objects(AaStorageObject* sobj);
+
   virtual void Add_Target_Reference(AaRoot* referrer); 
   virtual void Add_Source_Reference(AaRoot* referrer);
   virtual void PrintC(ofstream& ofile, string tab_string);

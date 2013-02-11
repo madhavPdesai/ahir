@@ -367,6 +367,9 @@ bool AaModule::Has_No_Side_Effects()
   if(_shared_memory_spaces.size() > 0)
 	return(false);
 
+  if(_global_objects_that_are_written.size() > 0)
+	return(false);
+
   return(true);
 }
 

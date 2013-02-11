@@ -51,11 +51,24 @@ class AaModule: public AaSeriesBlockStatement
   // modules from which this is called.
   set<AaModule*> _calling_modules;
 
+  // global storage objects read/written from this module.
+  // these will only be set if global storage objects are directly (ie, not through pointers)
+  // accessed by this module. This particular side effect was not being captured
+  // by the existing _shared_memory_spaces code.
+  set<AaStorageObject*> _global_objects_that_are_read;
+  set<AaStorageObject*> _global_objects_that_are_written;
 
  public:
   AaModule(string fname); // Modules have NULL parent (parent is the program)
   ~AaModule();
 
+
+  virtual bool Is_Module() {return(true);}
+
+  void Update_Memory_Space_Info();
+
+  void Add_Written_Global_Object(AaStorageObject* sobj) {_global_objects_that_are_written.insert(sobj);}
+  void Add_Read_Global_Object(AaStorageObject* sobj) {_global_objects_that_are_read.insert(sobj);}
 
   void Set_Print_Prefix(string str) { _print_prefix = str;}
   string Get_Print_Prefix() {return(_print_prefix);}

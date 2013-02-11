@@ -99,6 +99,7 @@ class AaRoot
   virtual bool Is_Foreign_Storage_Object() {return(false); }
   virtual bool Is_Constant() {return(false);}
   virtual bool Is_Interface_Object() {return(false);}
+  virtual bool Is_Module() {return(false);}
 
   virtual bool Is_Expression() {return(false); }
   virtual bool Is_Statement() {return(false); }

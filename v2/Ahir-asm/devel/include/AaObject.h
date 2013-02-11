@@ -100,9 +100,12 @@ class AaInterfaceObject: public AaObject
   // arguments can be input or output
   string _mode; // "in" or "out"
 
+  bool _is_input;
+
   AaStatement* _unique_driver_statement;
  public:
   string Get_Mode() {return(this->_mode);}
+  bool Get_Is_Input() {return(_is_input);}
 
   AaInterfaceObject(AaScope* scope_tpr, string oname, AaType* otype, string mode);
   ~AaInterfaceObject();

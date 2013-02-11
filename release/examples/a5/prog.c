@@ -60,7 +60,7 @@ uint32_t R1;
 uint32_t R2;
 uint32_t R3;
 
-uint32_t a5reg()
+inline uint32_t a5reg()
 {
 
   uint32_t i, out = 0, t1, t2, t3, t4;
@@ -279,6 +279,9 @@ int main_inner (void)
     out |= (tmp << (31 - (i & 31)));
   }
   
+  write_uint32("outpipe", R1);
+  write_uint32("outpipe", R2);
+  write_uint32("outpipe", R3);
   write_uint32("outpipe", out);
 
   return out;

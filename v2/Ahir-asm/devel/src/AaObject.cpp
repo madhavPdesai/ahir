@@ -174,6 +174,10 @@ AaInterfaceObject::AaInterfaceObject(AaScope* parent_tpr,
 {
   this->_mode = mode;
   this->_unique_driver_statement = NULL;
+  if(mode == "in")
+	_is_input = true;
+  else
+	_is_input = false;
 }
 AaInterfaceObject::~AaInterfaceObject() {};
 

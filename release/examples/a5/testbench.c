@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 	uint32_t R2 = read_uint32("outpipe");
 	uint32_t R3 = read_uint32("outpipe");
 
-   	fprintf(stdout," R1=%u, R2=%u, R3=%u\n", R1,R2,R3);
+   	fprintf(stdout,"post-init: R1=%u, R2=%u, R3=%u\n", R1,R2,R3);
         int I;
 	//for(I=0; I < 32; I++)
 	//{
@@ -40,12 +40,16 @@ int main(int argc, char* argv[])
    		//fprintf(stdout,"a5reg.%d = %u\n", I, tmp);
 		//
 	//}
+	R1 = read_uint32("outpipe");
+	R2 = read_uint32("outpipe");
+	R3 = read_uint32("outpipe");
+   	fprintf(stdout,"post-32-ticks: R1=%u, R2=%u, R3=%u\n", R1,R2,R3);
+
 	uint32_t out_stream = read_uint32("outpipe");
+   	fprintf(stdout,"stream=%u \n", out_stream);
 	
 
 	pthread_join(main_t,NULL);
-
-   	fprintf(stdout,"stream=%u \n", out_stream);
 
 	return(0);
 }

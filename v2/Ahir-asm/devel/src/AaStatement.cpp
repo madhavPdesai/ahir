@@ -1040,9 +1040,10 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
   for(unsigned int i = 0; i < outargs.size(); i++)
     {
       outargs[i]->Set_Associated_Statement(this);
+      outargs[i]->Set_Is_Target(true);
+
       this->_output_args.push_back(outargs[i]);
       this->Map_Target(outargs[i]);
-      outargs[i]->Set_Is_Target(true);
     }
 }
 AaCallStatement::~AaCallStatement() {};
