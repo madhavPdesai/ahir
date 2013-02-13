@@ -821,9 +821,15 @@ void vcControlPath::Update_Group_Bypass_Flags()
 	{
 	} 
 
+  	bool is_pipelined = (top->_pipeline_parent != NULL);
+        bool is_true_join = (top->_is_join || top->_is_fork) && (is_pipelined ? 
+			((top->_predecessors.size() > 1) || 
+				((top->_predecessors.size() > 0) && (top->_marked_predecessors.size() > 0))) :
+			(top->_predecessors.size() > 1));
+
 	// if you have already reached the stride,
 	// bypass should be set false.
-	if (top_dist >= vcSystem::_bypass_stride)
+	if ((top_dist >= vcSystem::_bypass_stride) && is_true_join)
 	{
 		top->_bypass_flag = false;
 		bypass_counter = 1;

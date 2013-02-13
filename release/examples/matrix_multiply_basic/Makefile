@@ -42,7 +42,7 @@ llvmbc2aa:  prog.opt.o
 # Aa to vC
 aa2vc: prog.aa $(FUNCTIONLIB)/Aa/fpu.aa
 	AaLinkExtMem prog.aa $(FUNCTIONLIB)/Aa/fpu.aa | vcFormat > prog.linked.aa
-	AaOpt -B prog.linked.aa | vcFormat > prog.linked.opt.aa
+	AaOpt  prog.linked.aa | vcFormat > prog.linked.opt.aa
 	Aa2VC -O -C prog.linked.opt.aa | vcFormat > prog.vc
 
 # vC to VHDL

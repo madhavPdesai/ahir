@@ -32,7 +32,7 @@ llvmbc2aa:  prog.opt.o
 
 # Aa to vC
 aa2vc: prog.opt.o.aa
-	AaOpt -B prog.opt.o.aa | vcFormat > prog.aa
+	AaOpt prog.opt.o.aa | vcFormat > prog.aa
 	Aa2VC -O -C prog.aa | vcFormat > prog.vc
 
 # vC to VHDL
