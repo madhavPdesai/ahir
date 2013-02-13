@@ -327,4 +327,5 @@ struct vcRoot_Compare:public binary_function
   bool operator() (vcRoot*, vcRoot*) const;
 };
 
+
 #endif // vcRoot

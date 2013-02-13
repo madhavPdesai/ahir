@@ -37,7 +37,7 @@ aa2vc: prog.opt.o.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -I 8 -C -e ahir_system -w -s ghdl -t main_inner -f prog.vc
+	vc2vhdl -S 4 -O -I 8 -C -e ahir_system -w -s ghdl -t main_inner -f prog.vc
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
@@ -57,7 +57,7 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 	ghdl -i --work=work ahir_system_global_package.vhdl
 	ghdl -i --work=work ahir_system.vhdl
 	ghdl -i --work=work ahir_system_test_bench.vhdl
-	ghdl -m --work=work -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
+	ghdl -m --work=work -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
 
 clean:
 	rm -f *.o* *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* out_port* testbench_sw testbench_hw ahir_system_test_bench vhpi.log

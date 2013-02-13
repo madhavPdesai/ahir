@@ -49,6 +49,7 @@ class vcSystem: public vcRoot
   static string _top_entity_name;
   static int _max_iterations_in_flight;
 
+  static int _bypass_stride;
 
   vcSystem(string id);
   virtual void Print(ostream& ofile);

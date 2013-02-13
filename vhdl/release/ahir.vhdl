@@ -111,7 +111,7 @@ package body Utilities is
     -- Thanks to: D. Calvet calvet@hep.saclay.cea.fr
     -- modified to support negative values
   function Convert_To_String(val : integer) return STRING is
-	variable result : STRING(11 downto 1) := (others => '0'); -- smallest natural, longest string
+	variable result : STRING(12 downto 1) := (others => '0'); -- smallest natural, longest string
 	variable pos    : NATURAL := 1;
 	variable tmp : integer;
 	variable digit  : NATURAL;
@@ -128,7 +128,7 @@ package body Utilities is
 	    	tmp := tmp / 10;
 	    	result(pos) := character'val(character'pos('0') + digit);
 	    	pos := pos + 1;
-	    	exit when tmp = 0;
+	    	exit when ((tmp = 0) or (pos = (result'high-1)));
 	end loop;
 	
 	if is_negative then
@@ -1837,6 +1837,7 @@ package BaseComponents is
 
   component join is
      generic(place_capacity : integer := 1;
+		bypass: boolean := false;
       		name : string := "anon");
      port (preds      : in   BooleanArray;
     	symbol_out : out  boolean;
@@ -1845,6 +1846,7 @@ package BaseComponents is
   end component;
 
   component join2 
+    generic (bypass : boolean := false);
     port ( pred0, pred1      : in   Boolean;
            symbol_out : out  boolean;
            clk: in std_logic;
@@ -1853,6 +1855,7 @@ package BaseComponents is
 
   component join_with_input is
      generic(place_capacity : integer := 1;
+		bypass: boolean := false;
       		name : string := "anon");
      port (preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
@@ -1885,6 +1888,7 @@ package BaseComponents is
 
   component marked_join is
      generic(place_capacity : integer := 1;
+		bypass: boolean := false;
       		name : string := "anon");
      port (preds      : in   BooleanArray;
            marked_preds      : in   BooleanArray;
@@ -1895,6 +1899,7 @@ package BaseComponents is
 
   component marked_join_with_input is
      generic(place_capacity : integer := 1;
+		bypass: boolean := false;
       		name : string := "anon");
      port (preds      : in   BooleanArray;
            marked_preds      : in   BooleanArray;
@@ -8486,6 +8491,7 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity join2 is
+  generic(bypass : boolean := false);
   port ( pred0, pred1      : in   Boolean;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -8498,6 +8504,7 @@ begin  -- default_arch
 
   preds <= pred0 & pred1;
   baseJoin : join
+    generic map(bypass => bypass)
     port map (preds => preds,
               symbol_out => symbol_out,
               clk => clk,
@@ -8513,7 +8520,7 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity join is
-  generic (place_capacity : integer := 1; name : string := "anon");
+  generic (place_capacity : integer := 1;bypass: boolean := false; name : string := "anon");
   port ( preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -8525,8 +8532,6 @@ architecture default_arch of join is
   signal place_sigs: BooleanArray(preds'range);
   constant H: integer := preds'high;
   constant L: integer := preds'low;
-  -- constant BYP: boolean := (preds'length = 1);
-  constant BYP: boolean := false;
 
 begin  -- default_arch
   
@@ -8536,7 +8541,7 @@ begin  -- default_arch
     begin
 	place_pred(0) <= preds(I);
 
-      bypassgen: if (BYP) generate
+      bypassgen: if bypass generate
 	pI: place_with_bypass
 		generic map(capacity => place_capacity, 
 				marking => 0,
@@ -8544,7 +8549,7 @@ begin  -- default_arch
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate bypassgen;
 
-      nobypassgen: if (not BYP) generate
+      nobypassgen: if (not bypass) generate
 	pI: place
 		generic map(capacity => place_capacity, 
 				marking => 0,
@@ -8569,7 +8574,7 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity join_with_input is
-  generic (place_capacity : integer := 1; name : string := "anon");
+  generic (place_capacity : integer := 1; bypass : boolean := false; name : string := "anon");
   port ( preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
@@ -8585,25 +8590,50 @@ architecture default_arch of join_with_input is
   constant L: integer := preds'low;
 begin  -- default_arch
   
-  placegen: for I in H downto L generate
-    placeBlock: block
-	signal place_pred: BooleanArray(0 downto 0);
+  Byp: if bypass generate 
+    placegen: for I in H downto L generate
+      placeBlock: block
+	  signal place_pred: BooleanArray(0 downto 0);
+      begin
+	  place_pred(0) <= preds(I);
+	  pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
+				   name => name & ":" & Convert_To_String(I) )
+		  port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+      end block;
+    end generate placegen;
+    
+    inplaceBlock: block
+	  signal place_pred: BooleanArray(0 downto 0);
     begin
-	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => place_capacity, marking => 0,
-				 name => name & ":" & Convert_To_String(I) )
-		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+	  place_pred(0) <= symbol_in;
+	  pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
+				   name => name & ":inputplace")
+		  port map(place_pred,symbol_out_sig,inp_place_sig,clk,reset);
     end block;
-  end generate placegen;
-  
-  inplaceBlock: block
-	signal place_pred: BooleanArray(0 downto 0);
-  begin
-	place_pred(0) <= symbol_in;
-	pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
-				 name => name & ":inputplace")
-		port map(place_pred,symbol_out_sig,inp_place_sig,clk,reset);
-  end block;
+  end generate Byp;
+
+  NoByp: if (not bypass) generate 
+    placegen: for I in H downto L generate
+      placeBlock: block
+	  signal place_pred: BooleanArray(0 downto 0);
+      begin
+	  place_pred(0) <= preds(I);
+	  pI: place generic map(capacity => place_capacity, marking => 0,
+				   name => name & ":" & Convert_To_String(I) )
+		  port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+      end block;
+    end generate placegen;
+    
+    inplaceBlock: block
+	  signal place_pred: BooleanArray(0 downto 0);
+    begin
+	  place_pred(0) <= symbol_in;
+	  pI: place generic map(capacity => place_capacity, marking => 0,
+				   name => name & ":inputplace")
+		  port map(place_pred,symbol_out_sig,inp_place_sig,clk,reset);
+    end block;
+  end generate NoByp;
+
 
   -- The transition is enabled only when all preds are true.
   symbol_out_sig(0) <= inp_place_sig and AndReduce(place_sigs);
@@ -8851,7 +8881,7 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity marked_join is
-  generic(place_capacity : integer := 1; name : string := "anon");
+  generic(place_capacity : integer := 1; bypass : boolean := false; name : string := "anon");
   port ( preds      : in   BooleanArray;
          marked_preds : in BooleanArray;
     	symbol_out : out  boolean;
@@ -8868,8 +8898,6 @@ architecture default_arch of marked_join is
 
   constant MH: integer := marked_preds'high;
   constant ML: integer := marked_preds'low;  
-  -- constant BYP: boolean := (preds'length = 1);
-  constant BYP: boolean := false;
 
 begin  -- default_arch
   
@@ -8878,7 +8906,7 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-      bypassgen: if (BYP) generate
+      bypassgen: if (bypass) generate
 	pI: place_with_bypass
 		generic map(capacity => place_capacity, 
 				marking => 0,
@@ -8886,7 +8914,7 @@ begin  -- default_arch
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate bypassgen;
 
-      nobypassgen: if (not BYP) generate
+      nobypassgen: if (not bypass) generate
 	pI: place
 		generic map(capacity => place_capacity, 
 				marking => 0,
@@ -8922,7 +8950,7 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity marked_join_with_input is
-  generic (place_capacity : integer := 1; name : string := "anon");
+  generic (place_capacity : integer := 1; bypass : boolean := false; name : string := "anon");
   port ( preds      : in   BooleanArray;
          marked_preds : in BooleanArray;
     	symbol_in : in  boolean;
@@ -8949,9 +8977,18 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= preds(I);
-	pI: place generic map(capacity => place_capacity, marking => 0)
+        byp: if bypass generate
+	  pI: place_with_bypass generic map(capacity => place_capacity, marking => 0)
 				-- name => name & ":" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+       end generate byp;
+
+        nobyp: if not bypass generate
+	  pI: place generic map(capacity => place_capacity, marking => 0)
+				-- name => name & ":" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+       end generate nobyp;
+
     end block;
   end generate placegen;
 
@@ -9042,8 +9079,8 @@ begin  -- Behave
     begin
 	place_pred(0) <= selects(I);
 	place_succ(0) <= select_clear(I);
-	pI: place generic map(capacity => place_capacity, marking => 0,
-		  name => name & ":select:" & Convert_To_String(I))
+	pI: place generic map(capacity => place_capacity, marking => 0)
+		  -- name => name & ":select:" & Convert_To_String(I))
 		port map(place_pred,place_succ,select_token(I),clk,reset);
     end block;
   end generate InPlaces;
@@ -9056,8 +9093,8 @@ begin  -- Behave
     begin
       place_pred(0) <= enables(J);
       place_succ(0) <= enable_clear(J);
-      pRnb: place generic map(capacity => place_capacity, marking => 0,
-		  name => name & ":enable:" & Convert_To_String(J))
+      pRnb: place generic map(capacity => place_capacity, marking => 0)
+		  -- name => name & ":enable:" & Convert_To_String(J))
         port map(place_pred,place_succ,enable_token(J),clk,reset);    
     end block;
   end generate EnablePlaces;  
@@ -9085,8 +9122,8 @@ begin  -- Behave
   begin
       place_pred(0) <= ack;
       place_succ(0) <= ack_clear;
-      pack: place generic map(capacity => place_capacity, marking => 1, 
-	  	name => name & ":ack")
+      pack: place generic map(capacity => place_capacity, marking => 1)
+	  	-- name => name & ":ack")
         port map(place_pred,place_succ,ack_token,clk,reset);    
   end block;
 

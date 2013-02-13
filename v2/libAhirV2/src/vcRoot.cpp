@@ -192,3 +192,4 @@ void vcRoot::Print_VHDL(ofstream& ofile)
   ostream *outstr = &ofile;
   this->Print_VHDL(*outstr);
 }
+

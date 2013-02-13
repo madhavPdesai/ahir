@@ -750,6 +750,9 @@ class vcCPElementGroup: public vcRoot
   vcCPElement* _associated_cp_function;
   vcCPElement* _associated_cp_region;
 
+
+  bool _bypass_flag;
+
 public:
   vcCPElementGroup():vcRoot()
   {
@@ -772,6 +775,7 @@ public:
     _pipeline_parent = NULL;
     _associated_cp_function = NULL;
     _associated_cp_region = NULL;
+    _bypass_flag = false;
   }
 
   void Set_Group_Index(int64_t idx)
@@ -938,6 +942,8 @@ public:
   {
     return("fin_ack_symbol");
   }
+
+  void Update_Group_Bypass_Flags();
 };
 
 

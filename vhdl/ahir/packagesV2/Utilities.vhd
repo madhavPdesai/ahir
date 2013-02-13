@@ -88,7 +88,7 @@ package body Utilities is
     -- Thanks to: D. Calvet calvet@hep.saclay.cea.fr
     -- modified to support negative values
   function Convert_To_String(val : integer) return STRING is
-	variable result : STRING(11 downto 1) := (others => '0'); -- smallest natural, longest string
+	variable result : STRING(12 downto 1) := (others => '0'); -- smallest natural, longest string
 	variable pos    : NATURAL := 1;
 	variable tmp : integer;
 	variable digit  : NATURAL;
@@ -105,7 +105,7 @@ package body Utilities is
 	    	tmp := tmp / 10;
 	    	result(pos) := character'val(character'pos('0') + digit);
 	    	pos := pos + 1;
-	    	exit when tmp = 0;
+	    	exit when ((tmp = 0) or (pos = (result'high-1)));
 	end loop;
 	
 	if is_negative then

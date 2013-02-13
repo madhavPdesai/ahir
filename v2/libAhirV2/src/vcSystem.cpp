@@ -16,6 +16,11 @@ bool vcSystem::_min_area_flag = false;
 bool vcSystem::_min_clock_period_flag = false;
 bool vcSystem::_enable_logging = false;
 
+// bypass stride.
+// the maximum chain of joins with bypass
+// (to control the clock-period).
+int vcSystem::_bypass_stride = 1;
+
 // uses library?
 bool vcSystem::_uses_function_library = false;
 

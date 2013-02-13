@@ -41,6 +41,7 @@ void Usage_Vc2VHDL()
        <<  " Notes: " << endl
        <<  "   1. alternate form: --min_area" << endl
        <<  "   2. if -a is absent, the goal will be to get the maximum speed (minimize number of cycles needed" << endl;
+  cerr <<  " -S <bypass-stride>:  bypass-stride (increase to reduce clock-cycle count, but note that this will reduce clock frequency" << endl;
   cerr <<  " -q:  will try to produce a VHDL netlist with the minimum clock period (sort of)" << endl
        <<  " Notes: " << endl
        <<  "   1. alternate form: --min_clock_period" << endl
@@ -109,6 +110,7 @@ int main(int argc, char* argv[])
       {"set_as_free_running_top",  required_argument, 0, 'T'},
       {"top_entity_name",  required_argument, 0, 'e'},
       {"loop_pipeline_iteration_limit",  required_argument, 0, 'I'},
+      {"bypass_stride",  required_argument, 0, 'S'},
       {"write_files",  no_argument, 0, 'w'},
       {"vcfile",    required_argument, 0, 'f'},
       {"library",   required_argument, 0, 'L'},
@@ -139,12 +141,13 @@ int main(int argc, char* argv[])
   string opt_string;
   string sim_id;
   int it_limit;
+  int bypass_stride;
 
   vcSystem::_opt_flag = false;
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:T:f:OCs:he:waqDL:vI:",
+		      "t:T:f:OCs:he:waqDL:vI:S:",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -217,6 +220,22 @@ int main(int argc, char* argv[])
 	  	cerr << "Info: -I option selected: iteration limit will be set to " 
 			<< it_limit << "." << endl;
 	  	vcSystem::_max_iterations_in_flight = it_limit;
+	  }
+	  break;
+	case 'S':
+          bypass_stride = atoi(optarg);
+	  if(bypass_stride < 0)
+	  {
+		cerr << "Error: bypass_stride must be > 0 (it is specified as " 
+			<< bypass_stride 
+			<< ")." << endl;
+		vcSystem::_bypass_stride = 1;
+	  }
+	  else
+	  {
+	  	cerr << "Info: -S option selected: bypass stride will be set to " 
+			<< bypass_stride << "." << endl;
+	  	vcSystem::_bypass_stride = bypass_stride;
 	  }
 	  break;
 	case 's':

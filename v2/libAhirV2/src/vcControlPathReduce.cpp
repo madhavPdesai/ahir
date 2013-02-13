@@ -263,6 +263,10 @@ void vcCPElementGroup::Print(ostream& ofile)
     ofile << " output ";
   if(_has_dead_transition)
     ofile << " dead ";
+  if(_bypass_flag)
+    ofile << " bypass ";
+  else
+    ofile << " no-bypass ";
   ofile << endl;
   ofile << "-- predecessors ";
   for(set<vcCPElementGroup*>::iterator iter = _predecessors.begin(), fiter = _predecessors.end();
@@ -334,6 +338,8 @@ void vcCPElementGroup::Print(ostream& ofile)
 // take care of marked predecessors!
 void vcCPElementGroup::Print_VHDL(ostream& ofile)
 {
+
+  string bypass_string = (this->_bypass_flag ?  "true" : "false");
 
   // print out the group into the VHDL file.
   this->Print(ofile);
@@ -461,6 +467,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 	      	ofile << "jI: marked_join_with_input -- {" << endl;
 
 	      ofile << "generic map(place_capacity => " << max_iterations_in_flight << "," << endl
+		<< "bypass => " << bypass_string << "," << endl
 		<< "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl;
 	      ofile << "port map( -- {"
 		    << "preds => predecessors," << endl;
@@ -479,6 +486,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 	      else
 	      	ofile << "jNoI: marked_join -- {" << endl;
 	      ofile << "generic map(place_capacity => " << max_iterations_in_flight << "," << endl
+			<< "bypass => " << bypass_string << "," << endl
 		    << "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl
 		    << "port map( -- {"
 		    << "preds => predecessors," << endl;
@@ -513,7 +521,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 	}
       else
 	{
-		vcSystem::Error("CP-element group " + this->Get_VHDL_Id() + " has no true predecessors.\n");
+		vcSystem::Warning("CP-element group " + this->Get_VHDL_Id() + " has no true predecessors.\n");
 	}
     }
 
@@ -634,6 +642,9 @@ void vcControlPath::Reduce_CPElement_Group_Graph()
       (*iter)->Set_Group_Index(idx);
       idx++;
     }
+
+  //finally, update the bypass entries.
+  this->Update_Group_Bypass_Flags();
 }
 
 
@@ -752,6 +763,141 @@ void vcControlPath::Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to,
   	to->Add_Marked_Predecessor(from);
   }
 }
+
+
+//
+// Do a DFS starting from the entry group.
+// The bypass counter is incremented on every
+// forward step.  Whenever a node is reached,
+// if the bypass counter has reached the max.
+// value, then the bypass flag for the
+// node is set to true.
+//
+// At the end of this routine, each element
+// will have its bypass-flag either set or cleared.
+//
+void vcControlPath::Update_Group_Bypass_Flags()
+{
+
+  map<vcCPElementGroup*,int> distance_map;
+
+
+  deque<vcCPElementGroup*> dfs_queue;
+  set<vcCPElementGroup*>   visited_set;
+  set<vcCPElementGroup*>   on_queue_set;
+
+
+  // start the DFS with all "root" groups.
+  for(set<vcCPElementGroup*, vcRoot_Compare>::iterator iter = this->_cpelement_groups.begin(),
+		fiter = this->_cpelement_groups.end(); iter != fiter; iter++)
+  {
+	
+  	vcCPElementGroup* grp = *iter;
+	if(grp->_predecessors.size() == 0)
+	{
+
+		vcSystem::Info("group " + IntToStr(grp->Get_Group_Index()) + " has no predecessors, set as root of DFS.");
+  		dfs_queue.push_back(grp);
+  		on_queue_set.insert(grp);
+
+  		grp->_bypass_flag = true;
+  		distance_map[grp] = vcSystem::_bypass_stride;
+	}
+  }
+
+  int bypass_counter;
+
+  while(!dfs_queue.empty())
+  {
+	vcCPElementGroup* top = dfs_queue.front();
+	visited_set.insert(top);
+
+	int top_dist = distance_map[top];
+	int bypass_counter = 0;
+	
+	// the bypass flag must be true, otherwise we would
+	// not be here.
+	if(!top->_bypass_flag)
+	{
+	} 
+
+	// if you have already reached the stride,
+	// bypass should be set false.
+	if (top_dist >= vcSystem::_bypass_stride)
+	{
+		top->_bypass_flag = false;
+		bypass_counter = 1;
+		vcSystem::Info("setting bypass = false for group " + IntToStr(top->Get_Group_Index()) + ".");
+	}
+	else
+	// if the unbypassed distance to top is < stride,
+	// then bypass is set to true.
+	{
+		// bypass this node and increase bypass distance.
+		top->_bypass_flag = true;
+		bypass_counter = top_dist + 1;
+		vcSystem::Info("setting bypass = true for group " + IntToStr(top->Get_Group_Index()) + ".");
+	}
+
+        bool all_neighbours_visited = true;
+	for(set<vcCPElementGroup*>::iterator iter = top->_successors.begin(), fiter = top->_successors.end(); iter != fiter; iter++)
+	{
+		vcCPElementGroup* succ = *iter;
+		if(on_queue_set.find(succ) == on_queue_set.end())
+		// break cycles.
+		{
+			bool already_visited = false;
+			if(visited_set.find(succ) != visited_set.end())
+			{
+				// succ has been visited.
+				int old_dist =  distance_map[succ];
+				if(succ->_bypass_flag && (old_dist < bypass_counter))
+				{
+					// if succ has been marked as to be bypassed and
+					// if distance to succ has increased, then
+					// continue from succ.
+					distance_map[succ] = bypass_counter;
+				}
+				else
+				{
+					already_visited = true;
+				}
+			}
+			else
+			// not visited? set distance..
+			{
+				distance_map[succ] = bypass_counter;
+				succ->_bypass_flag = true;
+			}
+	
+			if(!already_visited)
+			// if to be continued..
+			{
+				dfs_queue.push_front(succ);
+				all_neighbours_visited = false;
+			}
+		}
+		else
+		// found a cycle ending at succ.  This implies
+		// that the bypass for succ must be set to false if
+		// it not already set.  We handle this by directly
+		// setting the bypass distance to succ to be the
+		// maximum stride.
+		{
+			vcSystem::Info("found cycle ending at group " + IntToStr(succ->Get_Group_Index()));
+			distance_map[succ] = vcSystem::_bypass_stride;
+		}
+	}
+
+	if(all_neighbours_visited)
+	// pop top.
+	{
+		dfs_queue.pop_front();
+		on_queue_set.erase(top);
+	}
+  }
+}
+
 
 void vcControlPath::Print_Groups(ostream& ofile)
 {
