@@ -26,29 +26,15 @@ float* vec_array = NULL;
 int OMEGA = 1;
 float EPSILON=0.1;
 
-
-float Theta(float x)
-{
-	float ret_val;
-
-	if(x < 0)
-		return(0);
-	else
-		return(1.0);
-}
-
-float diffNorm(int i, int j, int vecsize)
-{
-	int idx;
-	float ret_val = 0.0;
-	for(idx = 0; idx < vecsize; idx++)
-	{
-		float err = fabs(vec_array[(i*vecsize)+idx] - vec_array[(j*vecsize)+idx]);
-		if(ret_val < err)
-			ret_val = err;
-	}
-
-	return(ret_val);
+#define _Theta(x) ( (x < 0) ? 0.0 : 1.0 )
+#define _diffNorm(_x,_y,_vecsize,_ret_val) {\
+	int idx;\
+	_ret_val = 0.0;\
+	for(idx = 0; idx < _vecsize; idx++)\
+	{\
+		float err = fabs(_x[idx] - _y[idx]);\
+		_ret_val = ((_ret_val < err) ? err : _ret_val);\
+	}\
 }
 
 void generateVectors(int vecsize, int numvecs)
@@ -94,7 +80,12 @@ int main(int argc, char* argv[])
 		for(j = i + OMEGA; j < numvecs; j++)
 		{
 			num_pairs += 1.0;
-			total_sum += Theta(EPSILON - diffNorm(i,j,vecsize));
+			float* x = &(vec_array[i*vecsize]);
+			float* y = &(vec_array[j*vecsize]);
+			float dnorm;
+			_diffNorm(x,y,vecsize,dnorm);
+			float diff = EPSILON - dnorm;
+			total_sum += _Theta(diff);
 		}
 	}
 
