@@ -5,7 +5,7 @@
 #include "prog.h"
 
 // PE_ARRAY_DIM must be a power of 2.
-#define PE_ARRAY_DIM   4
+#define PE_ARRAY_DIM   2
 
 // mask
 #define SEL_MASK ~((uint32_t) PE_ARRAY_DIM) 
@@ -34,6 +34,7 @@ uint32_t g_vec_size;
 // number of vectors.
 uint32_t g_num_vecs;
 
+
 void init()
 {
 	int i;
@@ -44,25 +45,31 @@ void init()
 	}
 }
 
+// transmit control information to the left border of the PE array.
 void TxControl(uint32_t g_vec_size,uint32_t g_num_vecs)
 {
 	__WHC(0,0,g_vec_size)
 	__WHC(0,0,g_num_vecs)
 	__WHC(1,0,g_vec_size)
 	__WHC(1,0,g_num_vecs)
-	__WHC(2,0,g_vec_size)
-	__WHC(2,0,g_num_vecs)
-	__WHC(3,0,g_vec_size)
-	__WHC(3,0,g_num_vecs)
-	__WHC(4,0,g_vec_size)
-	__WHC(4,0,g_num_vecs)
 }
 
+// transmit data values to the the left and top borders
+// of the PE array.
 void TxValues()
 {
 	while(1)
 	{
 		uint32_t vec_id = read_uint32("tx_vec_id");
+		if(vec_id == 0xffffffff)
+		{
+			__WHC(0,0,vec_id);
+			__WHC(1,0,vec_id);
+			__WVC(0,0,vec_id);
+			__WVC(0,1,vec_id);
+			continue;
+		}
+
 		float*   vec_ptr = (float*) read_uintptr("tx_vec_ptr");
 
 		int VS = g_vec_size;
@@ -74,22 +81,30 @@ void TxValues()
 			float X = vec_ptr[I];
 			if(vec_id < g_num_vecs - OMEGA)
 			{
-#if PE_ARRAY_DIM==4
-				__WHD(0,0,X)
-				__WHD(1,0,X)
-				__WHD(2,0,X)
-				__WHD(3,0,X)
-#endif
+				if(!(vec_id & SEL_MASK))
+				{
+					__WHC(0,0,vec_id);
+					__WHD(0,0,X)
+				}
+				else
+				{
+					__WVC(1,0,vec_id);
+					__WHD(1,0,X)
+				}
 			}
 
 			if(vec_id >= OMEGA)
 			{
-#if PE_ARRAY_DIM==4
-				__WVD(0,1,X)
-				__WVD(0,2,X)
-				__WVD(0,3,X)
-				__WVD(0,4,X)
-#endif
+				if(!(vec_id & SEL_MASK))
+				{
+					__WVC(0,0,vec_id);
+					__WVD(0,0,X)
+				}
+				else
+				{
+					__WVC(1,0,vec_id);
+					__WVD(0,1,X)
+				}
 			}
 		}
 	}
@@ -99,7 +114,6 @@ void TxValues()
 
 void dispatcher()
 {
-
 	while(1)
 	{
 		g_vec_size      = read_uint8("vec_size_pipe");
@@ -118,6 +132,7 @@ void dispatcher()
 			write_uint32("tx_vec_id", vec_id);
 			write_uintptr("tx_vec_ptr", lptr);
 		}
+		write_uint32("tx_vec_id",0xffffffff);
 	}
 }
 
@@ -125,6 +140,14 @@ void dispatcher()
 // final value back to the base..
 void collector()
 {
+	float v0, v1;
+	while(1)
+	{
+		__RVR(0,0,v0);
+		__RVR(0,1,v1);
+
+		write_float32("result_pipe",fpadd32(v0,v1));
+	}
 }
 
 
