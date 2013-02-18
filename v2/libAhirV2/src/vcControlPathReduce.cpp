@@ -367,7 +367,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
      max_iterations_in_flight = vcSystem::_max_iterations_in_flight;
   }
 
-  if(!(this->_is_join || this->_is_fork))
+  if(!this->_is_join && (this->_marked_predecessors.size() == 0))
     {
       if(this->_has_input_transition)
 	{
