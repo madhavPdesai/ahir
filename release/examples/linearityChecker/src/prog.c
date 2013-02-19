@@ -3,12 +3,8 @@
 #include <Pipes.h>
 #include <stdio.h>
 #include "prog.h"
+#include "pEMacro.h"
 
-// PE_ARRAY_DIM must be a power of 2.
-#define PE_ARRAY_DIM   2
-
-// mask
-#define SEL_MASK ~((uint32_t) PE_ARRAY_DIM) 
 
 // There are N vectors v0, v1 ... vN-1.
 // The vectors x0,x1,...xN-Omega correspond to v0,v1,...,vN-Omega
@@ -16,178 +12,210 @@
 //
 // All differences || xI - yJ || for I<=J need to be computed.
 //
-// The processing elements are indexed as (I,J), 0 <= I,J <= PE_ARRAY_DIM.
-// The element (I,J) will maintain all xP, yQ such that
-// P mod PE_ARRAY_DIM = I and Q mod PE_ARRAY_DIM = J.
-// 
-// Each processing element (I,J) will then compute the differences for pairs
-// XU,YW such that U <= W.
-//
 //
 
-// 32 buffers each with VEC_SIZE entries.
-float vec_buffers[32*VEC_SIZE];
 
-// globals
+// storage for the vectors, divided into 4 blocks.
+float X0[CHUNK_SIZE], X1[CHUNK_SIZE], X2[CHUNK_SIZE], X3[CHUNK_SIZE];
+
 // number of vectors.
 uint32_t g_num_vecs;
 
 
-void init()
-{
-	int i;
-	for(i = 0; i < 1024; i=i+VEC_SIZE)
-	{
-		// load the buffer.
-		write_uintptr("free_buffer_pipe",(uint32_t*) &(vec_buffers[i*VEC_SIZE]));
-	}
-}
-
-// transmit control information to the left border of the PE array.
-void TxHControl(uint32_t val)
-{
-	__WHC(0,0,val);
-	__WHC(1,0,val);
-}
-
-// transmit control information to the top border of the PE array.
-void TxVControl(uint32_t val)
-{
-	__WVC(0,0,val);
-	__WVC(0,1,val);
-}
-// transmit data values to the the left and top borders
-// of the PE array.
-void TxValues()
-{
-	while(1)
-	{
-		// wait to hear from tx_vec_id pipe, to get
-		// a vector index.
-		uint32_t vec_id = read_uint32("tx_vec_id");
-
-		if(vec_id == 0xffffffff)
-		{
-			// if end-code is seen, continue waiting.
-			// but forward end code to PE array
-			// through the borders.
-			TxHControl(vec_id);
-			TxVControl(vec_id);
-			continue;
-		}
-
-
-		// get the pointer to the vector buffer.
-		float*   vec_ptr = (float*) read_uintptr("tx_vec_ptr");
-
-
-		// find row indices which match the vec-index.
-		char sendH0 = 0, sendH1 = 0;
-		if(vec_id < g_num_vecs - OMEGA)
-		{
-			if(!(vec_id & SEL_MASK))
-			{
-				__WHC(0,0,vec_id);
-				sendH0  = 1;
-			}
-			else
-			{
-				sendH1 = 1;
-				__WHC(1,0,vec_id);
-			}
-		}
-
-
-		// find column indices which match the vec-index.
-		char sendV0 = 0, sendV1 = 0;
-		if(vec_id >= OMEGA)
-		{
-			if(!(vec_id & SEL_MASK))
-			{
-				sendV0 = 1;
-				__WVC(0,0,vec_id);
-			}
-			else
-			{
-				sendV1 = 1;
-				__WVC(1,0,vec_id);
-			}
-		}
-
-
-		// forward the vector values to appropriate
-		// rows and columns.
-		int I;
-		for(I=0; I < VEC_SIZE; I++)
-		{
-			// send vec_ptr[I] to all the input pipes inP0x
-			float X = vec_ptr[I];
-			if(sendH0)
-			   __WHD(0,0,X);
-			else if(sendH1)
-			   __WHD(1,0,X);
-
-			if(sendV0)
-			   __WVD(0,0,X);
-			else if(sendV1)
-			   __WVD(0,1,X);
-
-		}
-
-		// free the buffer.
-		write_uintptr("free_buffer_pipe",(uint32_t*) vec_ptr);
-	}
-}
-
-
-
 void dispatcher()
 {
-	init();
-
 	while(1)
 	{
-		// get the number of vectors to be processed.
-		g_num_vecs      = read_uint32("num_vecs_pipe");
-
-		// transmit num_vec information to all the 
-		// PE array borders..
-		TxHControl(g_num_vecs);
-		TxVControl(g_num_vecs);
-		
 		// start reading the vectors 
 		int vec_id, vec_index;
-		for(vec_id = 0; vec_id < g_num_vecs; vec_id++)
+		int Ecount = 0;
+		int chunk_id = 0;
+		int I0=0, I1=0, I2=0, I3=0;
+		for(vec_id = 0; vec_id < NUM_VECS; vec_id++)
 		{
-			float* lptr = read_uintptr("free_buffer_pipe");
 			for(vec_index = 0; vec_index < VEC_SIZE; vec_index++)
 			{
-				*(lptr + vec_index) = read_float32("vec_value_pipe");
-			}
+				float val = read_float32("input_data_pipe");
+				if(Ecount == CHUNK_SIZE)
+				{
+					chunk_id++;
+					Ecount = 0;
+				}
 
-			// send local buffer ptr to value transmit pipe.
-			write_uint32("tx_vec_id", vec_id);
-			write_uintptr("tx_vec_ptr", (uint32_t*) lptr);
+#ifdef SW
+				fprintf(stderr,"Read vector %d, index %d, val=%f, chunk-id %d.\n", vec_id, vec_index, val, chunk_id);
+#endif
+				switch(chunk_id)
+				{
+					case 0:  
+						X0[I0] = val; I0++; break;
+					case 1:
+						X1[I1] = val; I1++; break;
+					case 2:
+						X2[I2] = val; I2++; break;
+					case 3:
+						X3[I3] = val; I3++; break;
+					default:
+						break;
+
+				}
+				Ecount++;
+			}
 		}
-		write_uint32("tx_vec_id",0xffffffff);
+
+		write_uint8("start_dc_00",1);
+		write_uint8("start_dc_01",1);
+		write_uint8("start_dc_02",1);
+		write_uint8("start_dc_03",1);
+		write_uint8("start_dc_11",1);
+		write_uint8("start_dc_12",1);
+		write_uint8("start_dc_13",1);
+		write_uint8("start_dc_22",1);
+		write_uint8("start_dc_23",1);
+		write_uint8("start_dc_33",1);
+
+		uint32_t r00 = read_uint32("result_dc_00");
+		uint32_t r01 = read_uint32("result_dc_01");
+		uint32_t r02 = read_uint32("result_dc_02");
+		uint32_t r03 = read_uint32("result_dc_03");
+		uint32_t r11 = read_uint32("result_dc_11");
+		uint32_t r12 = read_uint32("result_dc_12");
+		uint32_t r13 = read_uint32("result_dc_13");
+		uint32_t r22 = read_uint32("result_dc_22");
+		uint32_t r23 = read_uint32("result_dc_23");
+		uint32_t r33 = read_uint32("result_dc_33");
+
+		uint32_t result =( ((r00 + r01) + (r02 + r03))) + (((r11 + r12) + r13) + (r22 + r23) + r33);
+		write_uint32("final_result_pipe",result);
 	}
 }
 
-// collect the results of the differences and send the
-// final value back to the base..
-void collector()
+#ifdef SW
+inline uint32_t innerLoop(float* X, float* Y, uint32_t vsize, float epsilon)
 {
-	float v0, v1;
+	int K;
+	float err=0.0;
+
+	uint32_t result = 0;
+	for(K=0; K < vsize;K++)
+	{
+		float terr = X[K] - Y[K];
+		float aterr = ((terr < 0)? -terr : terr);
+		err = ((err < aterr) ? aterr : err);
+	}
+	result = ((epsilon < err) ? 1 : 0);
+	return(result);
+}
+#endif
+
+// calculate all pairwise errors.
+void dC00()
+{
+	uint32_t result;
 	while(1)
 	{
-	
-		// wait to hear from the bottom border
-		// result pipes.
-		__RVR(0,0,v0);
-		__RVR(0,1,v1);
-
-		write_float32("result_pipe",fpadd32(v0,v1));
+		uint8_t s = read_uint8("start_dc_00");
+		__CrossProcess(X0,X0,0,result);
+		write_uint32("result_dc_00", result);
 	}
 }
 
 
+void dC01()
+{
+	uint32_t result;
+	while(1)
+	{
+		uint8_t s = read_uint8("start_dc_01");
+		__CrossProcess(X0,X1,CHUNK_SIZE,result);
+		write_uint32("result_dc_01", result);
+	}
+}
+
+void dC02()
+{
+	uint32_t result;
+	while(1)
+	{
+		uint8_t s = read_uint8("start_dc_02");
+		__CrossProcess(X0,X2,2*CHUNK_SIZE,result);
+		write_uint32("result_dc_02", result);
+	}
+}
+
+void dC03()
+{
+	uint32_t result;
+	while(1)
+	{
+		uint8_t s = read_uint8("start_dc_03");
+		__CrossProcess(X0,X3,3*CHUNK_SIZE,result);
+		write_uint32("result_dc_03", result);
+	}
+}
+
+void dC11()
+{
+	uint32_t result;
+	while(1)
+	{
+		uint8_t s = read_uint8("start_dc_11");
+		__CrossProcess(X1,X1,0,result);
+		write_uint32("result_dc_11", result);
+	}
+}
+
+void dC12()
+{
+	uint32_t result;
+	while(1)
+	{
+		uint8_t s = read_uint8("start_dc_12");
+		__CrossProcess(X1,X2,CHUNK_SIZE,result);
+		write_uint32("result_dc_12", result);
+	}
+}
+
+void dC13()
+{
+	uint32_t result;
+	while(1)
+	{
+		uint8_t s = read_uint8("start_dc_13");
+		__CrossProcess(X1,X3,2*CHUNK_SIZE,result);
+		write_uint32("result_dc_13", result);
+	}
+}
+
+void dC22()
+{
+	uint32_t result;
+	while(1)
+	{
+		uint8_t s = read_uint8("start_dc_22");
+		__CrossProcess(X2,X2,0,result);
+		write_uint32("result_dc_22", result);
+	}
+}
+
+void dC23()
+{
+	uint32_t result;
+	while(1)
+	{
+		uint8_t s = read_uint8("start_dc_23");
+		__CrossProcess(X2,X3,CHUNK_SIZE,result);
+		write_uint32("result_dc_23", result);
+	}
+}
+
+void dC33()
+{
+	uint32_t result;
+	while(1)
+	{
+		uint8_t s = read_uint8("start_dc_33");
+		__CrossProcess(X3,X3,0,result);
+		write_uint32("result_dc_33", result);
+	}
+}
