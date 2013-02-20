@@ -796,7 +796,7 @@ void vcControlPath::Update_Group_Bypass_Flags()
 	if(grp->_predecessors.size() == 0)
 	{
 
-		vcSystem::Info("group " + IntToStr(grp->Get_Group_Index()) + " has no predecessors, set as root of DFS.");
+		vcSystem::DebugInfo("group " + IntToStr(grp->Get_Group_Index()) + " has no predecessors, set as root of DFS.");
   		dfs_queue.push_back(grp);
   		on_queue_set.insert(grp);
 
@@ -833,7 +833,7 @@ void vcControlPath::Update_Group_Bypass_Flags()
 	{
 		top->_bypass_flag = false;
 		bypass_counter = 1;
-		vcSystem::Info("setting bypass = false for group " + IntToStr(top->Get_Group_Index()) + ".");
+		vcSystem::DebugInfo("setting bypass = false for group " + IntToStr(top->Get_Group_Index()) + ".");
 	}
 	else
 	// if the unbypassed distance to top is < stride,
@@ -842,7 +842,7 @@ void vcControlPath::Update_Group_Bypass_Flags()
 		// bypass this node and increase bypass distance.
 		top->_bypass_flag = true;
 		bypass_counter = top_dist + 1;
-		vcSystem::Info("setting bypass = true for group " + IntToStr(top->Get_Group_Index()) + ".");
+		vcSystem::DebugInfo("setting bypass = true for group " + IntToStr(top->Get_Group_Index()) + ".");
 	}
 
         bool all_neighbours_visited = true;
@@ -890,7 +890,7 @@ void vcControlPath::Update_Group_Bypass_Flags()
 		// setting the bypass distance to succ to be the
 		// maximum stride.
 		{
-			vcSystem::Info("found cycle ending at group " + IntToStr(succ->Get_Group_Index()));
+			vcSystem::DebugInfo("found cycle ending at group " + IntToStr(succ->Get_Group_Index()));
 			distance_map[succ] = vcSystem::_bypass_stride;
 		}
 	}

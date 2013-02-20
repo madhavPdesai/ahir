@@ -47,6 +47,7 @@ class AaRoot
   static void Error(string err_msg,AaRoot* r); // {_error_flag = true;}
   static void Warning(string err_msg,AaRoot* r); // {_warning_flag = true;}
   static void Info(string err_msg); // {_warning_flag = true;}
+  static void DebugInfo(string err_msg); // {_warning_flag = true;}
   static bool Get_Error_Flag(); // { return _error_flag; }
   static bool Get_Warning_Flag(); // { return _warning_flag; }
   void Set_Line_Number(int n) { this->_line_number = n; }

@@ -8,8 +8,8 @@ VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
 FUNCTIONLIB=../../../v2/functionLibrary/
 all: SW HW 
-#LLVM2AAOPTS=-extract_do_while=true --storageinit=true
-LLVM2AAOPTS=--storageinit=true
+LLVM2AAOPTS=-extract_do_while=true --storageinit=true
+#LLVM2AAOPTS=--storageinit=true
 
 
 PROGDEFS=
@@ -42,7 +42,7 @@ llvmbc2aa:  prog.opt.o
 # Aa to vC
 aa2vc: prog.aa $(FUNCTIONLIB)/Aa/fpu.aa
 	AaLinkExtMem prog.aa $(FUNCTIONLIB)/Aa/fpu.aa | vcFormat > prog.linked.aa
-	AaOpt  prog.linked.aa | vcFormat > prog.linked.opt.aa
+	AaOpt -B prog.linked.aa | vcFormat > prog.linked.opt.aa
 	Aa2VC -O -C prog.linked.opt.aa | vcFormat > prog.vc
 
 # vC to VHDL

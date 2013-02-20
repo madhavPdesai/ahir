@@ -313,6 +313,12 @@ void vcSystem::Info(string err_msg)
   cerr << "Info: " << err_msg << endl;
 }
 
+void vcSystem::DebugInfo(string err_msg)
+{
+  if(vcSystem::_verbose_flag)
+    cerr << "DebugInfo: " << err_msg << endl;
+}
+
 
 bool vcSystem::Get_Error_Flag()
 {

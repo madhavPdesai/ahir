@@ -4524,7 +4524,7 @@ void AaDoWhileStatement::Equalize_Paths_For_Pipelining()
 
 
 	// OK. At this point, you have all the adjacencies.  Now, 
-	AaRoot::Info("Adjacency map in do-while loop body " + this->Get_VC_Name());
+	// AaRoot::Info("Adjacency map in do-while loop body " + this->Get_VC_Name());
 	for(map<AaRoot*,vector<pair<AaRoot*,int> > >::iterator miter = adjacency_map.begin(),
 			fmiter = adjacency_map.end(); miter != fmiter; miter++)
 	{
@@ -4641,10 +4641,10 @@ void AaDoWhileStatement::Find_Longest_Paths(map<AaRoot*, vector< pair<AaRoot*, i
 			}
 			else
 				lp  = curr_dist;
-			AaRoot::Info("longest path to " + v->Get_VC_Name() + " is " + IntToStr(lp));
+			AaRoot::DebugInfo("longest path to " + v->Get_VC_Name() + " is " + IntToStr(lp));
 		}
 		else
-			AaRoot::Info("longest path to NULL is 0");
+			 AaRoot::DebugInfo("longest path to NULL is 0");
 	}
 }
 

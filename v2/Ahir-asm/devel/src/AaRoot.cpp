@@ -64,6 +64,12 @@ void AaRoot::Info(string msg)
   cerr << "Info: " << msg << endl;
 }
 
+void AaRoot::DebugInfo(string msg) 
+{
+  if(AaProgram::_verbose_flag)
+  	cerr << "Info: " << msg << endl;
+}
+
 bool AaRoot::Get_Error_Flag() { return AaRoot::_error_flag; }
 bool AaRoot::Get_Warning_Flag() { return AaRoot::_warning_flag; }
 

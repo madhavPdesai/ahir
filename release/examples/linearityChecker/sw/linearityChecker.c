@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
 	int i,j;
 	if(argc < 5)
 	{
-		fprintf(stderr,"Specify OMEGA, EPSILON, vector-size, number of vectors.\n");
+		fprintf(stderr,"Specify OMEGA, EPSILON, vector-size, number of vectors, number-of-loops.\n");
 		return(1);
 	}
 
@@ -64,6 +64,7 @@ int main(int argc, char* argv[])
         EPSILON = atof(argv[2]);
 	int vecsize = atoi(argv[3]);
 	int numvecs = atoi(argv[4]);
+	int num_loops = atoi(argv[5]);
 
 	if((vecsize < 0) || (numvecs < 0))
 	{
@@ -73,25 +74,29 @@ int main(int argc, char* argv[])
 	
 	generateVectors(vecsize,numvecs);
 
-        float num_pairs = 0.0;	
-	float total_sum = 0.0;
-	for(i = 0; i < (numvecs - OMEGA); i++)
+	while(num_loops > 0)
 	{
-		for(j = i + OMEGA; j < numvecs; j++)
+		float num_pairs = 0.0;	
+		float total_sum = 0.0;
+		for(i = 0; i < (numvecs - OMEGA); i++)
 		{
-			num_pairs += 1.0;
-			float* x = &(vec_array[i*vecsize]);
-			float* y = &(vec_array[j*vecsize]);
-			float dnorm;
-			_diffNorm(x,y,vecsize,dnorm);
-			float diff = EPSILON - dnorm;
-			total_sum += _Theta(diff);
+			for(j = i + OMEGA; j < numvecs; j++)
+			{
+				num_pairs += 1.0;
+				float* x = &(vec_array[i*vecsize]);
+				float* y = &(vec_array[j*vecsize]);
+				float dnorm;
+				_diffNorm(x,y,vecsize,dnorm);
+				float diff = EPSILON - dnorm;
+				total_sum += _Theta(diff);
+			}
 		}
+
+		total_sum = total_sum/num_pairs;
+
+		fprintf(stdout,"Result = %le.\n", total_sum);
+		num_loops--;
 	}
-
-	total_sum = total_sum/num_pairs;
-
-	fprintf(stdout,"Result = %le.\n", total_sum);
 	return(0);
 }
 
