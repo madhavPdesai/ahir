@@ -54,7 +54,7 @@ void generateVectors(int vecsize, int numvecs)
 int main(int argc, char* argv[])
 {
 	int i,j;
-	if(argc < 5)
+	if(argc < 6)
 	{
 		fprintf(stderr,"Specify OMEGA, EPSILON, vector-size, number of vectors, number-of-loops.\n");
 		return(1);

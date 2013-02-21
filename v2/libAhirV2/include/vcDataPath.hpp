@@ -218,6 +218,8 @@ protected:
   vcTransition* Get_Req(int idx) {if(idx >= 0 && idx<_reqs.size()) return(this->_reqs[idx]); else return(NULL);}
   vcTransition* Get_Ack(int idx) {if(idx >= 0 && idx<_acks.size()) return(this->_acks[idx]); else return(NULL);}
 
+  virtual bool Is_Pipelined_Operator() {return(false);}
+
   int Get_Req_Index(vcTransition* t)
   {
     int ret_index = -1;

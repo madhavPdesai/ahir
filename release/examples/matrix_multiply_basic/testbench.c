@@ -10,6 +10,7 @@
 #ifdef SW
 #include <pipeHandler.h>
 #include <Pipes.h>
+#include <pthreadUtils.h>
 #include "prog.h"
 #else
 #include "vhdlCStubs.h"
@@ -26,10 +27,11 @@ void Exit(int sig)
 }
 
 #ifdef SW
-void *mmultiply__(void* fargs)
-{
-    mmultiply();
-}
+DEFINE_THREAD(mmultiply);
+DEFINE_THREAD(mmultiply_LL);
+DEFINE_THREAD(mmultiply_LH);
+DEFINE_THREAD(mmultiply_HH);
+DEFINE_THREAD(mmultiply_HL);
 #endif
 
 void write_matrices()
@@ -97,12 +99,18 @@ int main(int argc, char* argv[])
 	
 #ifdef SW
 	init_pipe_handler();
-#endif
 
+	PTHREAD_DECL(mmultiply);
+	PTHREAD_DECL(mmultiply_LL);
+	PTHREAD_DECL(mmultiply_LH);
+	PTHREAD_DECL(mmultiply_HH);
+	PTHREAD_DECL(mmultiply_HL);
 
-#ifdef SW
-	pthread_t mmultiply_t;
-	pthread_create(&mmultiply_t,NULL,&mmultiply__,NULL);
+	PTHREAD_CREATE(mmultiply);
+	PTHREAD_CREATE(mmultiply_LL);
+	PTHREAD_CREATE(mmultiply_LH);
+	PTHREAD_CREATE(mmultiply_HH);
+	PTHREAD_CREATE(mmultiply_HL);
 #endif
 
 	write_matrices();
@@ -110,23 +118,27 @@ int main(int argc, char* argv[])
 
 
 
- 	fprintf(stdout,"results: \n ");
-        for(i = 0; i < ORDER; i++)
+	fprintf(stdout,"results: \n ");
+	for(i = 0; i < ORDER; i++)
 	{
-        	for(j = 0; j < ORDER; j++)
+		for(j = 0; j < ORDER; j++)
 		{
-                	if(expected_c_matrix[i][j] == c_matrix[i][j])
+			if(expected_c_matrix[i][j] == c_matrix[i][j])
 				fprintf(stdout,"result[%d][%d] = %f\n", i, j, c_matrix[i][j]);
 			else
 				fprintf(stdout,"Error: result[%d][%d] = %f, expected = %f\n", 
-					i, j, c_matrix[i][j], expected_c_matrix[i][j]);
-			
+						i, j, c_matrix[i][j], expected_c_matrix[i][j]);
+
 		}
 	}
- 	fprintf(stdout,"done\n");
+	fprintf(stdout,"done\n");
 
 #ifdef SW
-	pthread_cancel(mmultiply_t);
+	PTHREAD_CANCEL(mmultiply);
+	PTHREAD_CANCEL(mmultiply_LL);
+	PTHREAD_CANCEL(mmultiply_LH);
+	PTHREAD_CANCEL(mmultiply_HH);
+	PTHREAD_CANCEL(mmultiply_HL);
 	close_pipe_handler();
 #endif
 }

@@ -33,6 +33,7 @@ public:
   virtual string Kind() {return("vcOperator");}  
 
   virtual bool Is_Shareable_With(vcDatapathElement* other) {return(false);}
+
   virtual bool Is_Local_To_Datapath()
   {
     return(true);
@@ -328,6 +329,7 @@ public:
   virtual string Kind() {return("vcBinarySplitOperator");}
 
   virtual bool Is_Shareable_With(vcDatapathElement* other);
+  virtual bool Is_Pipelined_Operator();
 
 
   virtual int Get_Number_Of_Input_Wires() { return(2); }

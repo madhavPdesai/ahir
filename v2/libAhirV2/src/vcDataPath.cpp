@@ -484,7 +484,7 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
 	{
 	  bool is_compatible = true;
 
-	  if(!vcSystem::_min_area_flag)
+	  if(!vcSystem::_min_area_flag && !dpe->Is_Pipelined_Operator())
 	    {
 	      for(set<vcDatapathElement*>::iterator dpe_iter = dpe_group[idx].begin();
 		  dpe_iter != dpe_group[idx].end();
@@ -1143,7 +1143,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 {
 
   string group_name;
-  string no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
+  string no_arb_string; 
 
   for(int idx = 0; idx < this->_compatible_split_operator_groups.size(); idx++)
     { // for each operator group.
@@ -1162,11 +1162,13 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       vector<vcWire*> guard_wires;
       vector<bool> guard_complements;
 
+
       // to get the operation id, we need the vc operator as well as the input and output 
       // types. (e.g. + (float float) (float) or + (int int) (int) ?
-      vcType* input_type =   ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())))->Get_Input_Type();
-      vcType* output_type =   ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())))->Get_Output_Type();
-      string vc_op_id = ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())))->Get_Op_Id();
+      vcSplitOperator* lead_op = ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())));
+      vcType* input_type =   lead_op->Get_Input_Type();
+      vcType* output_type =   lead_op->Get_Output_Type();
+      string vc_op_id = lead_op->Get_Op_Id();
       string vhdl_op_id = Get_VHDL_Op_Id(vc_op_id,
 					 input_type,
 					 output_type);
@@ -1174,9 +1176,17 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       string s__id = StripBracketingQuotes(vhdl_op_id);
       group_name = s__id + "_group_" + IntToStr(idx) ;
       
-      // is it a pipelined op..
-      int exp_width, frac_width;
-      bool is_pipelined_float_op = Is_Pipelined_Float_Op(vc_op_id, input_type, output_type, exp_width, frac_width);
+      bool is_pipelined_op = lead_op->Is_Pipelined_Operator();
+
+       // for pipelined ops.
+      if(is_pipelined_op)
+      {
+	no_arb_string = "false";
+      }
+      else
+      {
+	no_arb_string = (vcSystem::_min_area_flag ? "false" : "true");
+      }
 
       // the number of inputs and outputs on each operator in the current group.
       int num_ips = ((vcSplitOperator*)(*(_compatible_split_operator_groups[idx].begin())))->Get_Number_Of_Input_Wires();
@@ -1210,7 +1220,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       bool use_constant = false;
       string const_operand;
       int const_width = 1;
-      if((!is_pipelined_float_op) && (num_ips == 2 && inwires[1]->Is("vcConstantWire")))
+      if((!is_pipelined_op) && (num_ips == 2 && inwires[1]->Is("vcConstantWire")))
 	{
 	  num_ips = 1; // has only one input, we will be using one constant operand.
 	  use_constant = true;
@@ -1292,8 +1302,15 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       // moving all the complexity to the VHDL library.
       // This is probably the right solution, because it decouples
       // vc2vhdl from the VHDL library.
-      if(is_pipelined_float_op)
+      if(is_pipelined_op)
 	{
+	   // for the moment.
+	  assert(input_type == output_type);
+	  assert(input_type->Is_Float_Type() && output_type->Is_Float_Type());
+
+	  int exp_width =  ((vcFloatType*) input_type)->Get_Characteristic_Width();
+          int frac_width =  ((vcFloatType*) input_type)->Get_Mantissa_Width();
+
 	  this->Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
 	  this->Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
 	  this->Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);

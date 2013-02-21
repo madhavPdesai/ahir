@@ -24,6 +24,7 @@ public:
   virtual void Print(ostream& ofile) {assert(0);}
   virtual int Size() { assert(0);}
   virtual bool Is_Int_Type() {return(false);}
+  virtual bool Is_Float_Type() {return(false);}
 
   virtual string Get_VHDL_Type_Name() {return("std_logic_vector(" + IntToStr(this->Size()-1) + " downto 0)");}
 
@@ -104,6 +105,7 @@ public:
   vcFloatType(vcIntType* ctype, vcIntType* mtype);
   void Print(ostream& ofile);
 
+  virtual bool Is_Float_Type() {return(true);}
   virtual string Kind() {return("vcFloatType");}
   virtual int Size() { return(this->Get_Characteristic_Width() + this->Get_Mantissa_Width() + 1);}
 

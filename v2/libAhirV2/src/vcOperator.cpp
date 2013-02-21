@@ -382,6 +382,16 @@ vcBinarySplitOperator::vcBinarySplitOperator(string id, string op_id, vcWire* x,
   z->Connect_Driver(this);
 }
 
+bool vcBinarySplitOperator::Is_Pipelined_Operator()
+{
+  vcType* input_type =   this->Get_Input_Type();
+  vcType* output_type =  this->Get_Output_Type();
+  string vc_op_id = this->Get_Op_Id();
+  int exp_width, frac_width;  // wasted.
+  bool is_pipelined_float_op = Is_Pipelined_Float_Op(vc_op_id, input_type, output_type, exp_width, frac_width);
+
+  return(is_pipelined_float_op);
+}
 
 bool vcBinarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
 {
@@ -406,13 +416,12 @@ bool vcBinarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
 
   // a hack for FP pipelined operators, this is to get around 
   // the fact that constant operands are not treated separately.
-  vcType* input_type =   this->Get_Input_Type();
-  vcType* output_type =  this->Get_Output_Type();
-  string vc_op_id = this->Get_Op_Id();
-  int exp_width, frac_width;  // wasted.
-  bool is_pipelined_float_op = Is_Pipelined_Float_Op(vc_op_id, input_type, output_type, exp_width, frac_width);
-  if(is_pipelined_float_op)
+  // for pipelined operators..
+  bool is_pipelined_op = this->Is_Pipelined_Operator();
+  if(is_pipelined_op)
     {
+      vcType* input_type =   this->Get_Input_Type();
+      vcType* output_type =  this->Get_Output_Type();
 
       // other and this are of the same kind..
       vcBinarySplitOperator* so = (vcBinarySplitOperator*) other;
