@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
+#include <bits/wordsize.h>
 #include <Pipes.h>
 
 #define READ_BURST__(id, width, buf_len, buf) { uint32_t words_read = 0;\
@@ -139,11 +140,20 @@ void write_uintptr(const char *id, uint32_t* data)
 
 void* read_pointer(const char *id)
 {
+#if __WORD_SIZE==32
   return((void*) read_uint32(id));
+#else
+  return((void*) read_uint64(id));
+#endif
 }
+
 void write_pointer(const char *id, void* pdata)
 {
+#if __WORD_SIZE==32
 	write_uint32(id, (uint32_t) pdata);
+#else
+	write_uint64(id, (uint64_t) pdata);
+#endif
 }
 
 float read_float32(const char *id)

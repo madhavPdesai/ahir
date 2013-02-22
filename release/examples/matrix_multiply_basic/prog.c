@@ -103,6 +103,7 @@ void mmultiply()
 	}
 }
 
+#ifdef UNROLLED
 void mmultiply_LL()
 {
 	uint32_t i,j,k;
@@ -363,3 +364,98 @@ void mmultiply_HL()
 	}
 }
 
+#else
+
+void mmultiply_LL()
+{
+	uint32_t i,j,k;
+	while(1)
+	{
+		uint8_t dLL = read_uint8("start_LL");
+		for(i=0; i < HALF_ORDER; i++)
+		{
+			for (j = 0; j < HALF_ORDER; j++)
+			{
+				float v = 0;
+				for(k = 0; k < ORDER; k ++)
+				{ 
+					v += a_matrix_L[i][k]*b_matrix_L[k][j];
+				}
+
+				c_matrix_LL[i][j]  = v;
+			}
+		}
+		write_uint8("done_LL",1);
+	}
+}
+
+void mmultiply_LH()
+{
+	uint32_t i,j,k;
+	while(1)
+	{
+		uint8_t dLH = read_uint8("start_LH");
+		for(i=0; i < HALF_ORDER; i++)
+		{
+			for (j = 0; j < HALF_ORDER; j++)
+			{
+				float v = 0;
+				for(k = 0; k < ORDER; k ++)
+				{ 
+					v += a_matrix_L[i][k]*b_matrix_H[k][j];
+				}
+
+				c_matrix_LH[i][j]  = v;
+			}
+		}
+		write_uint8("done_LH",1);
+	}
+}
+
+void mmultiply_HH()
+{
+	uint32_t i,j,k;
+	while(1)
+	{
+		uint8_t dHH = read_uint8("start_HH");
+		for(i=0; i < HALF_ORDER; i++)
+		{
+			for (j = 0; j < HALF_ORDER; j++)
+			{
+				float v = 0;
+				for(k = 0; k < ORDER; k ++)
+				{ 
+					v += a_matrix_H[i][k]*b_matrix_H[k][j];
+				}
+
+				c_matrix_HH[i][j]  = v;
+			}
+		}
+		write_uint8("done_HH",1);
+	}
+}
+
+void mmultiply_HL()
+{
+	uint32_t i,j,k;
+	while(1)
+	{
+		uint8_t dHL = read_uint8("start_HL");
+		for(i=0; i < HALF_ORDER; i++)
+		{
+			for (j = 0; j < HALF_ORDER; j++)
+			{
+				float v=0;
+				for(k = 0; k < ORDER; k ++)
+				{ 
+					v += a_matrix_H[i][k]*b_matrix_L[k][j];
+				}
+
+				c_matrix_HL[i][j]  = v;
+			}
+		}
+		write_uint8("done_HL",1);
+	}
+}
+
+#endif

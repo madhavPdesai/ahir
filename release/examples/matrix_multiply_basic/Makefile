@@ -12,7 +12,8 @@ LLVM2AAOPTS=-extract_do_while=true --storageinit=true
 #LLVM2AAOPTS=--storageinit=true
 
 
-PROGDEFS=
+PROGDEFS=-DUNROLLED
+#PROGDEFS=
 TOPMODULES=-T mmultiply -T mmultiply_LL -T mmultiply_LH  -T mmultiply_HH -T mmultiply_HL
 
 
@@ -24,7 +25,9 @@ SW: prog.c prog.h testbench.c
 	gcc -g -o testbench_sw prog.o testbench.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
 
 # five steps from C to vhdl simulator.
-HW: c2llvmbc llvmbc2aa  aa2vc  vc2vhdl  vhdlsim
+HW: c2llvmbc llvmbc2aa  aalink aa2vc  vc2vhdl  vhdlsim
+
+AA2VHDL: aa2vc vc2vhdl vhdlsim
 
 # C to llvm byte-code.. use clang.
 c2llvmbc: prog.c prog.h
@@ -37,14 +40,16 @@ llvmbc2aa:  prog.opt.o
 	llvm2aa $(LLVM2AAOPTS)  prog.opt.o | vcFormat >  prog.aa
 
 # Aa to vC
-aa2vc: prog.aa $(FUNCTIONLIB)/Aa/fpu.aa
+aalink: prog.aa $(FUNCTIONLIB)/Aa/fpu.aa
 	AaLinkExtMem prog.aa $(FUNCTIONLIB)/Aa/fpu.aa | vcFormat > prog.linked.aa
 	AaOpt prog.linked.aa | vcFormat > prog.linked.opt.aa
+
+aa2vc: prog.linked.opt.aa
 	Aa2VC -O -C prog.linked.opt.aa | vcFormat > prog.vc
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -S 4 -O -I 16 -v -q -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
+	vc2vhdl -S 4 -O -I 16 -v -q -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl

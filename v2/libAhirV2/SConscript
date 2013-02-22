@@ -4,16 +4,16 @@ env = Environment(ENV = {'PATH' : os.environ['PATH']})
 
 SConscript(['grammar/SConscript'])
 
-env.Append(CPPPATH = './src/:./include:../../antlr2/')
+env.Append(CPPPATH = './src/:./include:/usr/local/include/antlr/')
 
 VariantDir('obj','src',duplicate=0)
 
 env.Library('lib/libVC', Glob('obj/*.cpp'), CCFLAGS='-g ')
-env.Program('bin/vcParse', 'util/vcParseMain.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr-4.0.3' ], LIBPATH=Split('../../antlr2/ ./lib/'))
-env.Program('bin/vcAnalyze', 'util/vcAnalyze.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr-4.0.3' ], LIBPATH=Split('../../antlr2/ ./lib/'))
+env.Program('bin/vcParse', 'util/vcParseMain.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr' ], LIBPATH=Split('/usr/local/lib/ ./lib/'))
+env.Program('bin/vcAnalyze', 'util/vcAnalyze.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr' ], LIBPATH=Split('/usr/local/lib/ ./lib/'))
 env.Program('bin/vcFormat', 'util/vcFormat.cpp',CCFLAGS='-g ', LINKFLAGS='-g ')
 env.Program('bin/vhdlFormat', 'util/vhdlFormat.cpp',CCFLAGS='-g ', LINKFLAGS='-g ')
-env.Program('bin/vc2vhdl', 'util/vc2vhdl.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr-4.0.3' ], LIBPATH=Split('../../antlr2/ ./lib/'))
+env.Program('bin/vc2vhdl', 'util/vc2vhdl.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['VC', 'antlr' ], LIBPATH=Split('/usr/local/lib/ ./lib/'))
 
 
 
