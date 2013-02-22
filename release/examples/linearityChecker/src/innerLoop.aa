@@ -1,0 +1,22 @@
+$macro $module [innerLoop] $in (X: $pointer< $float<8,23> >  Y: $pointer< $float<8,23> > vsize: $uint<32> epsilon: $float<8,23>) 
+	$out(result: $uint<32>) $is
+{
+	$branchblock[run] {
+		$do
+			$merge $entry $loopback
+				$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
+				$phi R := ($bitcast($float<8,23>) _f0.0e+0) $on $entry NR $on $loopback
+			$endmerge
+			NI := (I+1)
+			pA := X[I]
+			pB := Y[I]
+			vx := ->(pA)
+			vy := ->(pB)
+			$call fpsub32 (vx vy) (diff)
+			cdiff := ($bitcast ($float<8,23>) (_h80000000 ^ ($bitcast($uint<32>) diff)))
+			adiff := ( $mux ( diff <= _f0.0e+0 ) cdiff diff )
+			NR := ($mux (R <= adiff ) adiff R)
+		$while (NI < vsize)
+	} (NR => R)
+	result := ($mux (epsilon < R) 1 0)
+}
