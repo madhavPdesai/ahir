@@ -484,7 +484,8 @@ void  Vhpi_Initialize()
 	{
 	  fprintf(stderr,"Error: tried to start server on port %d, failed.. giving up\n",
 		  DEFAULT_SERVER_PORT);
-	  return;
+	  exit(1);
+	  //return;
 	}
     }
 }

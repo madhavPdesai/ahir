@@ -3374,6 +3374,19 @@ void AaUnaryExpression::Print(ostream& ofile)
   ofile << " )";
 }
 
+// TODO:
+//   Unary expressions are to be considered to be of two types.
+//   - pipelined (split)
+//   - unitary (non-split).
+//
+//   Pipelined unary operators have a split protocol 
+//     start-req -> start-ack -> complete-req -> complete-ack.
+//
+//   Unitary unary operators have a simple protocol
+//     req -> ack
+//   (similar to registers).
+//
+//  
 void AaUnaryExpression::Write_VC_Control_Path(ostream& ofile)
 {
   ofile << "// " << this->To_String() << endl;
@@ -3603,6 +3616,19 @@ bool AaBinaryExpression::Is_Trivial()
 
 }
 
+// TODO:
+//   Binary expressions are to be considered to be of two types.
+//   - pipelined (split)
+//   - unitary (non-split).
+//
+//   Pipelined binary operators have a split protocol 
+//     start-req -> start-ack -> complete-req -> complete-ack.
+//
+//   Unitary binary operators have a simple protocol
+//     req -> ack
+//   (similar to registers).
+//
+//  
 void AaBinaryExpression::Write_VC_Control_Path(ostream& ofile)
 {
 

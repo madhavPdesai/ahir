@@ -96,7 +96,8 @@ int start_server()
 	{
 	  fprintf(stderr,"\nError: tried to start the pipeHandler server on port %d, failed.. giving up\n",
 		  DEFAULT_SERVER_PORT);
-	  return(-1);
+	  exit(1);
+	  // return(-1);
 	}
     }
   return(server_socket_id);

@@ -1,0 +1,4 @@
+# cycles needed to compute 64 point dot product = 582.
+# LUTs = 7344
+# Registers = 5911
+# Clock frequency = 199.7Mhz

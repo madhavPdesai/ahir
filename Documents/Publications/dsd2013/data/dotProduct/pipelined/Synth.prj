@@ -1,0 +1,4 @@
+vhdl ahir /home/madhav/ahirgit/ahir/vhdl/release/ahir.vhdl
+vhdl ahir_ieee_proposed /home/madhav/ahirgit/ahir/vhdl/release/aHiR_ieee_proposed.vhdl
+vhdl work ./ahir_system_global_package.vhdl
+vhdl work ./ahir_system.vhdl

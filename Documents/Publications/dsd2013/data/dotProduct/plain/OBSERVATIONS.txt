@@ -1,0 +1,5 @@
+# cycles needed to finish dotProduct = 4071
+# LUTs = 4288
+# Registers = 3799
+# Clock freq = 199.7MHz
+

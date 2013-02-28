@@ -132,8 +132,8 @@ bool vcCPElementGroup::Can_Absorb(vcCPElementGroup* g)
     ret_val = false;
   else if(g->_has_input_transition)
     ret_val = false;
-  // else if(g->_marked_predecessors.size() > 0)
-    // ret_val = false;
+  else if(this->_has_output_transition && (g->_marked_predecessors.size() > 0))
+    ret_val = false;
   else if(this->_pipeline_parent != g->_pipeline_parent)
     ret_val = false;
   else
