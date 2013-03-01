@@ -290,10 +290,13 @@ void vcSystem::Elaborate()
   this->Detach_Unreachable_Modules();
 
   this->Check_Control_Structure();
-  this->Compute_Compatibility_Labels();
-  this->Compute_Maximal_Groups();
-  
 
+  if(!vcSystem::_min_area_flag)
+  {
+  	this->Compute_Compatibility_Labels();
+  }
+
+  this->Compute_Maximal_Groups();
 }
  
 

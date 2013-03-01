@@ -1,1 +1,4 @@
 # cycles needed for 64 point dot product = 1894.
+# LUTs = 4809
+# FFs  = 4378
+# Clock freq. = 199.7MHz

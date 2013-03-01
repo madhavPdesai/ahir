@@ -1,0 +1,4 @@
+# cycles needed to finish 16x16 matrix-multiply = 76800
+# LUTs = 9408
+# FFs  = 8818
+# Clock freq. = 199.7MHz

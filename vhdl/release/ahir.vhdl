@@ -8627,8 +8627,10 @@ begin  -- default_arch
     inplaceBlock: block
 	  signal place_pred: BooleanArray(0 downto 0);
     begin
+	  -- note: input transitions are always bypassed, because they
+	  --       always come with a delay (no need to incur an additional delay for them).
 	  place_pred(0) <= symbol_in;
-	  pI: place generic map(capacity => place_capacity, marking => 0,
+	  pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
 				   name => name & ":inputplace")
 		  port map(place_pred,symbol_out_sig,inp_place_sig,clk,reset);
     end block;

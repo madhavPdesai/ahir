@@ -829,8 +829,11 @@ void vcControlPath::Update_Group_Bypass_Flags()
 
 	// if you have already reached the stride,
 	// bypass should be set false.
-	if ((top_dist >= vcSystem::_bypass_stride) && is_true_join)
+	if (top->_has_input_transition || ((top_dist >= vcSystem::_bypass_stride) && is_true_join))
 	{
+		// if an input transition is present, then there is no need for
+		// a bypass, because the output->input path always has at least
+		// a unit delay.
 		top->_bypass_flag = false;
 		bypass_counter = 1;
 		vcSystem::DebugInfo("setting bypass = false for group " + IntToStr(top->Get_Group_Index()) + ".");

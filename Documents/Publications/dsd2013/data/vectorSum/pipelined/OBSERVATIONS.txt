@@ -1,0 +1,4 @@
+# cycles needed for 64 point vector sum = 1212
+# LUTs = 5247
+# Registers = 4613
+# Clock frequency=163.7MHz

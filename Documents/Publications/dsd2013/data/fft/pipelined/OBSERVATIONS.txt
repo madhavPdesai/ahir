@@ -1,0 +1,5 @@
+# cycles needed to finish single stage of 64 point FFT = 2885
+# LUTs =  23139 
+# Registers = 18632
+# Clock freq = 164.1MHz
+

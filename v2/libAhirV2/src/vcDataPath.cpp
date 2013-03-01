@@ -472,12 +472,24 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
 				       vcDatapathElement* dpe, 
 				       vector<set<vcDatapathElement*> >& dpe_group)
 {
-  pair<vcCompatibilityLabel*, vcCompatibilityLabel*> I1 = this->Get_Label_Interval(cp,dpe);
-
-  if(I1.first == NULL && I1.second == NULL)
-    return;
 
   bool new_group = true;
+  pair<vcCompatibilityLabel*, vcCompatibilityLabel*> I1 = this->Get_Label_Interval(cp,dpe);
+
+  if(!vcSystem::_min_area_flag && (I1.first == NULL && I1.second == NULL))
+  {
+	vcSystem::Error("compatibilty label for DPE " + dpe->Get_Id() + " not computed.\n");
+    	return;
+  }
+	     
+  // for logging purposes.
+  string i1_id = "unknown";
+  string i2_id = "unknown";
+  if(I1.first != NULL)
+	i1_id = I1.first->Get_Id();
+  if(I1.second != NULL)
+	i2_id = I1.second->Get_Id();
+
   for(int idx = 0; idx < dpe_group.size(); idx++)
     {
       if(dpe->Is_Shareable_With(*(dpe_group[idx].begin())))
@@ -509,8 +521,8 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
 	    {
 	      if(vcSystem::_verbose_flag)
 		{
-		  std::cerr << "Info: " << dpe->Get_Id() << " (" << I1.first->Get_Id() 
-			    << ", " << I1.second->Get_Id() << ")  included in " 
+		  std::cerr << "Info: " << dpe->Get_Id() << " (" << i1_id
+			    << ", " << i2_id << ")  included in " 
 			    << dpe->Kind() << " group "
 			    << IntToStr(idx) << endl;
 		}
@@ -524,8 +536,8 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
   if(new_group)
     {
       if(vcSystem::_verbose_flag)
-	std::cerr << "Info: " << dpe->Get_Id() << " (" << I1.first->Get_Id() 
-		  << ", " << I1.second->Get_Id() << ")  included in " 
+	std::cerr << "Info: " << dpe->Get_Id() << " (" << i1_id
+		  << ", " << i2_id << ")  included in " 
 		  << dpe->Kind() << " group "
 		  << IntToStr(dpe_group.size()) << endl;
 

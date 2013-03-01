@@ -2460,7 +2460,6 @@ void vcCPPipelinedLoopBody::Add_Marked_Join_Point(string& join_name, vector<stri
 
 void vcCPPipelinedLoopBody::Add_Marked_Join_Point(vcTransition* jp, vcCPElement* jre)
 {
-  assert(jre->Is_Transition());
 
   if((this->_marked_join_map.find(jp) == this->_marked_join_map.end())
      ||

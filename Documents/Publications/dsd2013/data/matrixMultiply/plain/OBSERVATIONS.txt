@@ -1,0 +1,4 @@
+# number of cycles for inner loop in 16x16 matrix multiply = 161280
+# LUTs = 6323
+# FFs  = 6974
+# Clock freq. = 199.7MHz

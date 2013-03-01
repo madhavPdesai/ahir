@@ -1,0 +1,5 @@
+# cycles needed to finish vectorSum = 3189
+# LUTs = 3777
+# FFs  = 3714
+# Clock Frequency= 277.6MHz
+

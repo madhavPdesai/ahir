@@ -7,7 +7,7 @@
 \usepackage{times}
 \usepackage{url}
 
-\title{On the efficient implementation of loops in hardware}
+\title{On the impact of loop optimizations in the mapping of high-level programs to hardware}
 
 \author{Madhav P. Desai\\
   Indian Institute of Technology -- Bombay, Powai, Mumbai -- 400076, INDIA\\
@@ -50,22 +50,110 @@
   First, we observe that the additional resources needed by this
   mechanism are small.  Further, we observe that this mechanism, when
   combined with static loop unrolling, offers an order-of-magnitude improvement 
-  in performance for common linear-algebra kernels such as matrix multiplication 
-  and inner product computations.  Finally, we observe that static
-  loop unrolling together with dynamic loop pipelining can give us
-  efficient hardware with excellent utilization of the available arithmetic
-  resources in the circuit.
+  in performance for common kernels such as the fast-fourier transform,
+  matrix multiplication and inner product computations.  
+  Finally, we observe that these loop-optimization techniques in
+  yield efficient mappings of single threads to hardware.  %% need more stuff here.
 
 \end{abstract}
 
 \section{Introduction}
 
-
 %% The importance and problem of loops.
+A high-level-synthesis (HLS) compiler takes an algorithm described in
+a high-level programming language (such as C, for example) and produces a circuit
+description (a register-transfer-level description in a hardware
+description language such as VHDL, for example).
+High-level synthesis systems have been available for some time
+now (for example, \cite{pegasus-cash}, \cite{spark-vlsi-paper} and
+commercial tools such as Catapult-C\footnote{\url{http://www.mentor.com/products/esl/high_level_synthesis/}} from Mentor Graphics
+C-to-Silicon\footnote{\url{http://www.cadence.com/products/sd/silicon_compiler/}} from Cadence,
+Synopsys HLS\footnote{\url{http://www.synopsys.com/Tools/SLD/HLS/}} from Synopsys).
+
+The main attraction of such a compiler is a substantial reduction in the design and verification effort.  The
+main concern is the quality of the hardware that is produced.
+For the same starting point, the quality of the hardware produced may be objectively
+measured in terms of factors such as area, energy-consumption and performance (in the
+sense of time required for completion, or in terms of the rate at which the hardware
+finishes the computational tasks).  An {\em internal measure} of the quality of the
+hardware produced is the utilization factor of the major resources in the hardware (that is,
+the utilization factor of expensive resources).  
 
 %% How compilers have handled this problem.
+In this paper, we consider the problem of mapping loops to hardware.  It
+is well known that most compute intensive programs spend a large fraction
+of their time in inner loops.  Thus, the optimization of these loops is
+a primary problem for any optimizing compiler which is targetting
+either a deeply pipelined or parallel processor.  Several loop optimizations
+have been considered in literature, such as loop-unrolling, loop-peeling,
+software-loop-pipelining etc. \cite{wolfe}, \cite{muchnick}, with the intent of
+these optimizations being the extraction of as much
+parallelism as possible from the source program. 
 
 %% Algorithm-to-hardware:  can similar techniques work?
+One expects that any technique which extracts parallelism from
+the source program would also be useful in improving the efficiency
+of hardware generated from that source program.  We consider two
+such loop optimizations:
+\begin{itemize}
+\item {\em Loop-unrolling}, a {\em static} compile-time optimization technique:  
+an inner loop is unrolled by instantiating multiple copies of the loop-body
+while simultaneously reducing the number of loop-iterations.  For example:
+\begin{verbatim}
+for(i=0; i < 8; i++) {
+   x += a[i]*b[i];
+}
+\end{verbatim}
+is transformed to
+\begin{verbatim}
+for(i=0; i < 4; i+=2) {
+   x += a[i]*b[i];
+   x += a[i+1]*b[i+1];
+}
+\end{verbatim}
+This unrolling increases the size of the basic block (that is, the maximal sequence of
+statements without any branches), and provides the possibility of extracting more
+parallelism in the loop.
+\item {Loop-pipelining}, a {dynamic} run-time optimization in hardware:  the hardware
+itself starts executing multiple iterations of the loop in parallel, while respecting
+all dependencies within and across loop iterations.   This is analogous to software
+loop-pipelining, except that software-loop-pipelining is static in nature, and is
+determined at compile time, whereas we are looking at a dynamic technique in which
+the generated hardware itself keeps multiple loop iterations in flight while maintaining
+dependencies within and across loop iterations.
+\end{itemize}
+
+In the remainder of this paper, we will first briefly describe the model of
+the hardware that is produced by our HLS compiler and illustrate how this model
+can incorporate dynamic run-time loop pipelining.  The chief issues here are the
+hardware overhead (area, energy, delay) incurred by the need to provide 
+this run-time support in the hardware generated by the compiler, and
+the corresponding improvement in performance that results from this optimization.
+
+In order to address this issue, we will present a set of observations from
+experiments performed on representative inner loops that occur in 
+some important applications such as the fast-fourier transform, the
+matrix product, vector dot-product, and a digital filtering algorithm.
+These observations report the hardware performance on four different
+loop-optimization choices: with no loop optimization, with static unrolling
+alone, with dynamic loop pipelining alone, and with static unrolling combined with
+dynamic loop pipelining.  Hardware resource utilization and delays are
+computed by synthesizing the generated hardware for an FPGA target.
+
+The observations indicate the following:
+\begin{itemize}
+\item The performance improvement with loop-pipelining alone is in the
+2X-3X range, with a small increase in the hardware resources needed.
+\item The performance improvement with loop-unrolling alone is in the 
+2X range, but substantial hardware overheads are incurred.
+\item The combination of loop-pipelining and loop-unrolling leads
+to a performance improvement between 8-10X, with the hardware overheads
+being similar to those incurred with unrolling alone.
+\end{itemize}
+
+%%
+%% TODO..  so what?
+%% 
 
 \section{Related work}
 
@@ -75,6 +163,24 @@
 
 
 \section{Model of hardware generated by our compiler}
+
+The hardware generated by our compiler consists of three
+cooperating components: the control-path, the data-path and
+the storage system \cite{ahir}
+
+To illustrate the model, we consider a simple example.
+\begin{verbatim}
+float a[1024], b[1024];
+float dotp = 0.0;
+for(i=0; i < 1024; i++)
+{
+   dotp += a[i]*b[i];
+}
+\end{verbatim}
+To compile this code, we use the clang-2.8 \cite{clang} C compiler, 
+which is used to emit LLVM \cite{llvm} byte-code.  The LLVM byte-code
+is transformed through a series of steps by our compiler tools to
+produce the final hardware, which is depicted in Figure \ref{fig:dotp}.
 
 %%
 %%  control path and data-flow
