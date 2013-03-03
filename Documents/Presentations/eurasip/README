@@ -1,0 +1,9 @@
+Use 
+
+latex dsd2010.tex 
+dvipdf dsd2010.dvi
+
+
+to generate pdf
+
+
