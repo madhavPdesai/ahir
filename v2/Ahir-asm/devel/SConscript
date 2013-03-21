@@ -2,15 +2,20 @@ import os
 
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
 
+ANTLR_LIB=os.environ['ANTLR_LIB_PATH']
+ANTLR_INCLUDE=os.environ['ANTLR_INCLUDE_PATH']
+
 SConscript(['grammar/SConscript'])
 SConscript(['docs/SConscript'])
 
-env.Append(CPPPATH = './src/:./include:/user/local/include/antlr/:./grammar/:../../Value/include:/usr/local/boost_1_46_1/')
+env.Append(CPPPATH = './src/:./include:./grammar/:../../Value/include:/usr/local/boost_1_46_1/')
+env.Append(CPPPATH=ANTLR_INCLUDE) 
+
 env.Library('lib/libAa', Glob('src/*.cpp'), CCFLAGS='-g ')
 env.Program('bin/AaOpt', 'util/AaOpt.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa', 'antlr' , 'Value'], LIBPATH=Split('/usr/local/lib/ ./lib/ ../../Value/lib/ '))
 env.Program('bin/Aa2VC', 'util/Aa2VC.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa', 'antlr' , 'Value'], LIBPATH=Split('/usr/local/lib ./lib/ ../../Value/lib/'))
 env.Program('bin/Aa2C', 'util/Aa2C.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa', 'antlr' , 'Value'], LIBPATH=Split('/usr/local/lib/ ./lib/ ../../Value/lib/'))
-env.Program('bin/AaLinkExtMem', 'util/AaLinkExtMem.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa', 'antlr' , 'Value'], LIBPATH=Split('/usr/local/lib/ ./lib/ ../../Value/lib/'))
+env.Program('bin/AaLinkExtMem', 'util/AaLinkExtMem.cpp', CCFLAGS='-g ',LINKFLAGS='-g ', LIBS=['Aa', 'antlr' , 'Value'], LIBPATH=Split('/usr/local/lib/ ./lib/ ../../Value/lib/ ' + ANTLR_LIB))
 
 
 
