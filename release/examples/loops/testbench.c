@@ -10,15 +10,14 @@ void Exit(int sig)
 	exit(0);
 }
 
-uint32_t test_prog(uint32_t a);
+uint32_t test_prog();
 
 int main(int argc, char* argv[])
 {
 	signal(SIGINT,  Exit);
   	signal(SIGTERM, Exit);
 
-	uint32_t a = 19;
-	uint32_t d = test_prog(a);
+	uint32_t d = test_prog();
 
-	fprintf(stdout,"a=%d, d=%d\n",a,d);
+	fprintf(stdout,"d=%d\n",d);
 }

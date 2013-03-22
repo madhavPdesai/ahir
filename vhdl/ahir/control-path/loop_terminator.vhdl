@@ -54,7 +54,12 @@ architecture Behave of loop_terminator is
 begin  -- Behave
 
   -- places to remember loop-continue, loop-terminate, loop-body-exit
-  lc_place : place generic map (
+
+  -- critical place: make it a bypass place in order to
+  -- speed up loop turnaround times.  The clock period
+  -- will not be an issue since the branch ack is 
+  -- registered.
+  lc_place : place_with_bypass generic map (
     capacity => 1,
     marking  => 0,
     name => "loop_terminator:lc_place")
