@@ -5,7 +5,7 @@ SOCKETLIB_INCLUDE=../../CtestBench/include
 SOCKETLIB_LIB=../../CtestBench/lib
 VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
-all: HW 
+all: HW SIM
 
 
 # steps from Aa to vhdl simulator.
@@ -18,7 +18,7 @@ aa2vc: prog.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -C -e ahir_system -w -s ghdl -t test_prog -t test_prog_alt -f prog.vc
+	vc2vhdl -S 256 -O -C -e ahir_system -w -s ghdl -t test_prog -t test_prog_alt -f prog.vc
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
@@ -32,7 +32,7 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 	ghdl --clean
 	ghdl --remove
 	ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl
-	ghdl -i --work=ieee_proposed  $(VHDL_LIB)/ieee_proposed.vhdl
+	ghdl -i --work=ahir_ieee_proposed  $(VHDL_LIB)/aHiR_ieee_proposed.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Utility_Package.vhdl
 	ghdl -i --work=work $(VHDL_VHPI_LIB)/Vhpi_Package.vhdl
 	ghdl -i --work=work ahir_system_global_package.vhdl

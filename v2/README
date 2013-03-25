@@ -1,0 +1,4 @@
+Build procedure
+
+  source build_bashrc 
+  scons

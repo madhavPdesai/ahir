@@ -17,7 +17,7 @@ LLVM2AAOPTS=-extract_do_while=true --storageinit=true
 
 #program defs: unrolled case
 #PROGDEFS=
-PROGDEFS=-DUNROLL
+PROGDEFS=-DUNROLL 
 
 TOPMODULES=-T fft 
 

@@ -1,0 +1,9 @@
+if [ $(uname -m) == 'X86_64' ]; then
+  export ANTLR_LIB_PATH=~/ahirgit/ahir/antlr2/x86_64/lib/
+  export ANTLR_JAR_PATH=~/ahirgit/ahir/antlr2/x86_64/jar/
+  export ANTLR_INCLUDE_PATH=~/ahirgit/ahir/antlr2/x86_64/include/
+else
+  export ANTLR_LIB_PATH=~/ahirgit/ahir/antlr2/i386/lib/
+  export ANTLR_JAR_PATH=~/ahirgit/ahir/antlr2/i386/jar/
+  export ANTLR_INCLUDE_PATH=~/ahirgit/ahir/antlr2/i386/include/
+fi

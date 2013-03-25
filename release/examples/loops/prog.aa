@@ -1,4 +1,4 @@
-$module [test_prog] $in(a: $uint<32>) $out (result: $uint<32>)
+$module [test_prog] $in() $out (result: $uint<32>)
 $is
 {
 	$storage result_var: $uint<32>
@@ -7,9 +7,8 @@ $is
 			$merge $entry $loopback
 				$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
 			$endmerge
-	
-			result := (result + a)
 			NI := (I+1)
 		$while (NI < 10) 
+                result := I
 	}
 }

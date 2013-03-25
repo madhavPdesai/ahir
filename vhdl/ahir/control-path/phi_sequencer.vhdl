@@ -40,7 +40,9 @@ begin  -- Behave
     begin
 	place_pred(0) <= selects(I);
 	place_succ(0) <= select_clear(I);
-	pI: place generic map(capacity => place_capacity, marking => 0)
+
+        -- a bypass place: in order to speed up loop turnaround times.
+	pI: place_with_bypass generic map(capacity => place_capacity, marking => 0)
 		  -- name => name & ":select:" & Convert_To_String(I))
 		port map(place_pred,place_succ,select_token(I),clk,reset);
     end block;
@@ -54,7 +56,7 @@ begin  -- Behave
     begin
       place_pred(0) <= enables(J);
       place_succ(0) <= enable_clear(J);
-      pRnb: place generic map(capacity => place_capacity, marking => 0)
+      pRnb: place_with_bypass generic map(capacity => place_capacity, marking => 0)
 		  -- name => name & ":enable:" & Convert_To_String(J))
         port map(place_pred,place_succ,enable_token(J),clk,reset);    
     end block;
@@ -83,7 +85,7 @@ begin  -- Behave
   begin
       place_pred(0) <= ack;
       place_succ(0) <= ack_clear;
-      pack: place generic map(capacity => place_capacity, marking => 1)
+      pack: place_with_bypass generic map(capacity => place_capacity, marking => 1)
 	  	-- name => name & ":ack")
         port map(place_pred,place_succ,ack_token,clk,reset);    
   end block;
