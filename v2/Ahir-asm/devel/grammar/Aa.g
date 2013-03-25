@@ -57,9 +57,11 @@
 
 
 header "post_include_cpp" {
+#include <string.h>
 }
 
 header "post_include_hpp" {
+#include <string.h>
 #include <AaParserClasses.h>
 #include <antlr/RecognitionException.hpp>
 ANTLR_USING_NAMESPACE(antlr)

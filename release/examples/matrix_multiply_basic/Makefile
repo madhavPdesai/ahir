@@ -12,8 +12,8 @@ LLVM2AAOPTS=-extract_do_while=true --storageinit=true
 #LLVM2AAOPTS=--storageinit=true
 
 
-PROGDEFS=-DUNROLLED
-#PROGDEFS=
+#PROGDEFS=-DUNROLLED
+PROGDEFS=
 TOPMODULES=-T mmultiply -T mmultiply_LL -T mmultiply_LH  -T mmultiply_HH -T mmultiply_HL
 
 

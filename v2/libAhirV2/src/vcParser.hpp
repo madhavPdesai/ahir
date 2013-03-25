@@ -2,7 +2,7 @@
 #define INC_vcParser_hpp_
 
 #include <antlr/config.hpp>
-/* $ANTLR 2.7.7 (2006-11-01): "vc.g" -> "vcParser.hpp"$ */
+/* $ANTLR 2.7.7 (20130311): "vc.g" -> "vcParser.hpp"$ */
 #include <antlr/TokenStream.hpp>
 #include <antlr/TokenBuffer.hpp>
 #include "vcParserTokenTypes.hpp"

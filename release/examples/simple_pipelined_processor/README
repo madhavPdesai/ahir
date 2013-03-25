@@ -15,3 +15,30 @@ Makefile
 	contains builds for bothe the pipelined processor
 	and pipelined processorSuper.  The same testbench
 	is used to test both.
+
+
+Note: another way to write the processor
+
+run()
+{
+	while(1)
+	{
+		init();
+		while(!halt)
+		{
+			while(!exception)
+			{
+				(the inner loop.. it should get auto-pipelined).
+				fetch
+				decode (generate all the instruction predicates)
+				execute (guarded execution)
+
+			        (exception-set-true if intr or halt or etc)
+			}
+		
+			handle-exception.. could be an interrupt or JSR or
+			unhandled instruction or window-ovflow trap or tlb miss
+			etc.
+		}
+	}
+}

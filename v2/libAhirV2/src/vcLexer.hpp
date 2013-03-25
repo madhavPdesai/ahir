@@ -2,7 +2,7 @@
 #define INC_vcLexer_hpp_
 
 #include <antlr/config.hpp>
-/* $ANTLR 2.7.7 (2006-11-01): "vc.g" -> "vcLexer.hpp"$ */
+/* $ANTLR 2.7.7 (20130311): "vc.g" -> "vcLexer.hpp"$ */
 #include <antlr/CommonToken.hpp>
 #include <antlr/InputBuffer.hpp>
 #include <antlr/BitSet.hpp>

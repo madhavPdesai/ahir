@@ -67,7 +67,7 @@ uint16_t read_from_mem(uint16_t mem_addr)
 |* Fetch the next instruction.
 |* After a fetch, the PC points to the next instruction in memory.
 |*------------------------------------------------------------------*/
-void fetch()
+inline void fetch()
 {
   ir = mem[ reg[ PC ] ];
   reg[ PC ]++;
@@ -79,7 +79,7 @@ void fetch()
 |* All values are decoded (all 3 registers, immediate, and offset),
 |* even if they are not needed.
 |*------------------------------------------------------------------*/
-void decode()
+inline void decode()
 {
   op = ir >> 12;          /* get the operation code */
   r1 = (ir >> 8) & 0xF;   /* get the first register */
@@ -94,7 +94,7 @@ void decode()
 /*------------------------------------------------------------------*|
 |* Execute a decoded instruction.
 |*------------------------------------------------------------------*/
-void execute()
+inline void execute()
 {
   /* force register 0 always to be 0 */
   reg[ 0 ] = 0;

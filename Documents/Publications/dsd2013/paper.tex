@@ -6,7 +6,7 @@
 \usepackage{url}
 
 %% revisit the title.
-\title{A dynamic loop pipelining mechanism for the efficient realization of algorithms as hardware}
+\title{Inner loop optimizations in mapping single-threaded programs to hardware}
 
 \author{Madhav P. Desai\\
   Indian Institute of Technology -- Bombay, Powai, Mumbai -- 400076, INDIA\\
@@ -27,20 +27,29 @@
 
   In the context of mapping high-level algorithms to hardware,
   we consider the basic problem of generating an efficient hardware 
-  implementation of a loop.  We describe a control-flow mechanism through
-  which multiple iterations of an arbitrary loop can be dynamically pipelined in
-  the generated hardware,  and study the extent to which this 
-  mechanism affects the properties of the generated hardware.
-  We consider some common loop kernels occurring in fast-fourier transform,
-  matrix multiplication and inner product computations, and
-  observe that this dynamic pipelining mechanism typically results in
-  a doubling of the performance of the hardware.  When 
-  combined with static loop unrolling,  the performance improvement
-  ranges from 6X to 20X across the loop kernels that we have studied.
-  These optimizations do have a hardware overhead, however.  We characterize
-  the performance/cost trade-off using an FPGA target, and find
-  that the loop optimizations not only improve performance, but
-  also the cost/performance ratio of the resulting hardware.
+  implementation of a single threaded program, in particular, that
+  of an inner loop.  
+  We describe a control-flow mechanism through
+  which multiple iterations of an arbitrary inner loop can be made simultaneously
+  active in the generated hardware, thus providing dynamic loop-pipelining
+  capability in hardware.   
+  We study the impact of this loop-pipelining scheme in conjunction with
+  source-level loop-unrolling.
+  In particular, we consider some common loop kernels occurring in fast-fourier transform,
+  matrix multiplication and inner product computations, with the resulting
+  hardware descriptions synthesized to an FPGA target.  We observe
+  that the use of dynamic loop-pipelining mechanism alone typically results in
+  a significant improvements in the performance of the hardware.  If the loop is
+  statically unrolled and if loop-pipelining is applied to the unrolled
+  program, then the performance improvement is still substantial.  When
+  both optimizations are used in conjunction, the improvement in performance
+  ranges from 6X to 20X (in terms of number of clock cycles needed for the computation)
+  across the loop kernels that we have studied.
+  These optimizations do have a hardware overhead, but,
+  in spite of this, we observe that the joint use of these 
+  loop optimizations not only improves performance, but also the 
+  performance/cost ratio of the resulting hardware.
+ 
 
 \end{abstract}
 
@@ -67,47 +76,76 @@ finishes the computational tasks).  An {\em internal measure} of the quality of 
 hardware produced is the utilization factor of the major resources in the hardware (that is,
 the utilization factor of expensive resources).  
 
+In our work, we have developed a set of compiler tools which take a C-description of
+an algorithm (with the only important restrictions being the requirement that
+cycles are not present in the call graph of the source program, and the lack of 
+support for {\bf function} pointers, normal pointers are supported), and produces
+a VHDL description which is provably equivalent to the original program \cite{SameerPhD}.
+Results on the application of this compiler to single-threaded programs show
+that the circuits (when synthesized to VLSI layout) are substantially more
+energy efficient than a processor, but that the performance of the processor
+is usually better than that of the synthesized circuit \cite{dsd2010}.
+If multi-threaded source programs are used as a starting point, the circuits produced 
+are quite competitive with hand-designed RTL \cite{usenix2012}.
+Quantitatively, the results in \cite{dsd2010} and \cite{usenix2012} indicate
+that the gap between the synthesized hardware and modern
+pipelined processors (for single-threaded
+programs) and between the synthesized hardware and hand-crafted hardware (for
+multi-threaded programs) is of the order of 2-3X.  That is, the performance
+of the synthesized hardware needs to improve by 2-3X in order to close
+the respective performance gaps.
+
 %% How compilers have handled this problem.
-In this paper, we consider the problem of mapping loops to hardware.  It
+In this paper, we consider the problem of improving the performance
+of hardware generated from single threaded programs; in
+particular, the problem of mapping loops to hardware.  It
 is well known that most compute intensive programs spend a large fraction
-of their time in inner loops.  Thus, the optimization of these loops is
-a primary problem for any optimizing compiler which is targetting
-either a deeply pipelined or parallel processor.  Several loop optimizations
+of their time in inner loops.  Thus, the optimal implementation
+of such loops is of primary importance, whether the target is
+a processor or hardware.  Such an improvement is essential if
+synthesized hardware is to be performance competitive with
+high performance processors or with hand-crafted hardware.
+
+In the context of compilation to a pipelined processor, 
+several loop optimizations
 have been considered in literature, such as loop-unrolling, loop-peeling,
 software-loop-pipelining etc. \cite{wolfe}, \cite{muchnick}, with the intent of
 these optimizations being the extraction of as much
-parallelism as possible from the source program. 
+parallelism as possible from the single-threaded source program. 
 
 %% Algorithm-to-hardware:  can similar techniques work?
-Several loop-optimization techniques have been explored and
+Similar loop-optimization techniques have been explored and
 reported in the literature related to reconfigurable hardware (for
 example \cite{Weinhardt}, \cite{Cardoso}, \cite{Kastner}).  For instance,
 in the work reported by \cite{Weinhardt},
-the loop optimizations are done in a manner analogous to the static
+loop optimizations are done in a manner analogous to the static
 techniques used in software compilers, in which index 
 expressions which depend on the induction variable
 are analysed to identify dependencies and schedule operations
-in the loop body.  An explicitly timed controller is synthesized
+across iterations of the loop body.  An explicitly timed controller is synthesized
 for the pipeline.  Another approach which works in a similar
 manner is described in \cite{Cardoso}.  These approaches rely on a static analysis of
 the loop, and the cases to which the approach can be applied
-are restricted (but still sufficiently general for most linear
+are restricted (but are still sufficiently general for most linear
 algebra and digital signal processing kernels).
 
-
-In our approach, the hardware model consists of a data-path (which is
-a graph of operators interconnected by wires) and an untimed control-path
-which is modeled as a Petri-net.  This representation allows the implementation
+In our approach, the hardware model is abstracted as
+a virtual circuit which consists of a data-path (a graph of operations 
+interconnected by wires) and a control-path
+which is modeled as a Petri-net.   The operations in the data-path are
+not tightly scheduled, with dependencies being taken care of
+by the control Petri-net (for example: operation $X$ can start only
+after operations $Y,Z$ have finished etc.). This representation allows the implementation
 of loop pipelining by a simple modification to the control Petri-net
-{\em without altering} the data-path.  Thus,
-it is possible to pipeline any loop, even those that do not have 
-explicit induction variables (such as while loops).  
-
+{\em without altering} the data-path.  It is possible to pipeline any loop, 
+even those that do not have explicit induction variables (such as while loops).  
+We will describe this loop-pipelining mechanism in a later section in
+this paper.
 
 The experimental results in this paper are based on the dynamic loop-pipelining
 optimization applied by itself and in conjunction with static loop-unrolling.
-By loop-unrolling, we mean a {\em static} compile-time optimization technique in
-which   an inner loop is unrolled by instantiating multiple copies of the loop-body
+By loop-unrolling, we mean a {\em static} source-level or compile-time optimization technique in
+which  an inner loop is unrolled by instantiating multiple copies of the loop-body
 while simultaneously reducing the number of loop-iterations.  For example:
 \begin{verbatim}
 for(i=0; i < 8; i++) {
@@ -117,13 +155,17 @@ for(i=0; i < 8; i++) {
 is transformed to
 \begin{verbatim}
 for(i=0; i < 4; i+=2) {
+   int i1 = i+1; int i2 = i+2; int i3 = i+3;
    x += a[i]*b[i];
-   x += a[i+1]*b[i+1];
+   x += a[i1]*b[i1];
+   x += a[i2]*b[i2];
+   x += a[i3]*b[i3];
 }
 \end{verbatim}
 This unrolling increases the size of the basic block (that is, the maximal sequence of
 statements without any branches), and provides the possibility of extracting more
-parallelism in the loop.
+parallelism in the loop.  Note that this unrolling can be done manually
+by the programmer, or automatically by an optimizing compiler.
 
 In the remainder of this paper, we will first briefly describe the model of
 the hardware that is produced by our HLS compiler and illustrate how this model
@@ -131,6 +173,8 @@ can incorporate dynamic run-time loop pipelining.  The chief issues here are the
 hardware overhead (area, energy, delay) incurred by the need to provide 
 this run-time support in the hardware generated by the compiler, and
 the corresponding improvement in performance that results from this optimization.
+In the results presented in this paper, the unrolling has been done 
+manually at the source code level.
 
 In order to address this issue, we will present a set of observations from
 experiments performed on representative inner loops that occur in 
@@ -145,7 +189,7 @@ computed by synthesizing and simulating the generated hardware for an FPGA targe
 The observations indicate the following:
 \begin{itemize}
 \item The performance improvement with loop-pipelining applied alone is in the
-2X-3X range.
+2X-3X range. 
 \item The performance improvement with loop-unrolling alone is in the 
 2X range, and with aggressive unrolling (as was tried in the matrix multiplication
 case), the improvement is as high as 10X.
@@ -153,10 +197,18 @@ case), the improvement is as high as 10X.
 to a performance improvement which is at least as high as the
 product of the improvements due to the individual optimizations.  
 For matrix multiplication, this improvement is as large as 20X.
-\item The hardware overheads for implementing these optimizations are substantial,
+\item The hardware overheads for implementing these optimizations are considerable,
 but the cost-to-performance ratio improves substantially in all cases.
 \end{itemize}
+The results indicate that loop-unrolling combined with dynamic loop-pipelining
+can close the performance gap noted above.
 
+For the subsequent discussion, we assume that the inner
+loop which is being optimized consists of a single
+basic block, that is, there are no branching instructions
+in the loop body (no jumps, if constructs, switch constructs etc.).
+If such constructs are present, we assume that they have been
+eliminated using the mechanism of guarded (or predicated) execution.
 
 %%
 %% TODO..  so what?
@@ -186,7 +238,9 @@ generate appropriate sequencing of operations in order to maximize the
 parallelism.
 \item The virtual circuit is then translated to VHDL.  At this point,
 decisions about operator sharing are taken.  Concurrency analysis is
-used if a shared hardware unit needs arbitration.  The generated
+used to determine if a shared hardware unit needs arbitration.  Optimizations
+related to clock-frequency maximization are also carried out here.
+The generated
 VHDL uses a pre-designed library of useful operators ranging from
 multiplexors, arbiters to pipelined floating point arithmetic units.
 \end{enumerate}
@@ -205,9 +259,9 @@ paper, should in principle, make the flow even more competitive.
 %% hls techniques to handle loops?
 
 
-\section{Model of hardware generated by our compiler}
+\section{Model of the virtual circuit generated by our compiler}
 
-The hardware generated by our compiler consists of three
+The virtual circuit generated by our compiler consists of three
 cooperating components: the control-path, the data-path and
 the storage system \cite{ahir}
 
@@ -227,11 +281,86 @@ produce the final hardware, which is depicted in Figure \ref{fig:dotP}.
 \begin{figure*}[ht]
   \centering
   \includegraphics[width=15cm]{dotP.eps}
-  \caption{Control-data-storage hardware model.}
+  \caption{Control-data-storage virtual circuit model.}
   \label{fig:dotP}
 \end{figure*}
-The circuit in Figure \ref{fig:dotP} has three components,
+The virtual circuit in Figure \ref{fig:dotP} has three components,
 described below.
+
+
+\subsection{Data-path}
+%%
+%% Directed hyper-graph.  Nodes are operators
+%% hyper-arcs are wires.  Each operator node
+%% has a split protocol.
+%%
+The data-path is a directed hyper-graph with nodes being
+operations and arcs being nets (shown as ovals).  Each
+net has at most one operation which drives it.  Further, most
+operations have  a split protocol handshake with
+the control-path:  two pairs of request/acknowledge 
+associations (*sr/*sa for sampling the inputs  and *cr/*ca for
+updating the outputs).    The operation samples its inputs
+on receiving the sr request symbol and acknowledges the completion
+of this action by emitting the sa acknowledge symbol.  After receiving
+the cr symbol, the operation will update its output net
+using the newly computed value. The sequencing is required to be
+\begin{verbatim}
+sr -> sa -> cr -> ca
+\end{verbatim}
+Note that an operation can be re-triggered while an earlier
+edition of the operation
+is in progress (this is important if the operation is implemented
+in a pipelined operator).
+
+Some data-path operations (such as the multiplexor
+shown on the top and the decision operation shown at the bottom
+left in Figure \ref{fig:dotP} follow a simpler protocol.  The multiplexor
+has a pair of requests and a single acknowledge, with the condition
+that at most one of the requests is received at any time instant.
+The input corresponding to the request is then sampled and stored
+in the output net of the multiplexor.
+The decision operation has a single request and two acknowledes.  Upon
+receipt of the request symbol, the decision operation checks its input net
+and emits one of the two acknowledges depending on whether the input
+is zero/non-zero.
+
+In Figure \ref{fig:dotP}, the following data-path operations
+are instantiated:
+\begin{verbatim}
+mI, mdotP  multiplexors for I, dotP.
+INCR       increment for I++
+LA         load for a[I]
+LB         load for b[I]
+FMUL       multiply for p=a[I]*b[I]
+FADD       add for dotP += a*b
+CMP EQ     compare for COND=(I==1023)
+D          decision  COND?
+\end{verbatim}
+
+Note that the data-path only shows the operations and their interconnection.
+When the data-path is implemented as hardware, multiple operations may
+be mapped to a single operator depending on cost/performance tradeoffs.  When
+this is done, multiplexing logic has to be introduced in the hardware.  These
+decisions and manipulations are performed in the compiler stage which is
+responsible for transforming the virtual circuit to VHDL.
+
+\subsection{Storage subsystem}
+
+%%
+%% time-stamping scheme, in order completion.
+%%
+The load and store operations in the data-path
+are associated with memory subsystems.  In general, there
+can be multiple disjoint memory subsystems inferred by our
+compiler.  In this particular case, the arrays a[] and b[] 
+are mapped to disjoint memories, due to which the two
+loads are allowed to proceed in parallel (the relaxed consistency
+model is enforced).
+In order to maintain the relaxed consistency model, the
+memory subsystems are designed to use a time-stamping 
+scheme which guarantees first-come-first-served access to
+the same memory location.
 
 \subsection{Control-path}
 %%
@@ -243,8 +372,11 @@ described below.
 %% Petri-net, constructed according to
 %% certain rules.  Req/Ack transitions
 %%
-The hardware model consists of a control-path (shown on the left
-in Figure \ref{fig:dotP}) which is modeled as a Petri-net with
+The control-path in the virtual circuit encodes
+all the sequencing that is necessary for correct
+operation of the assembly.
+The control-path (shown on the left
+in Figure \ref{fig:dotP}) is modeled as a Petri-net with
 a unique entry point and a unique exit point.  The Petri-net
 is constructed using a set of production rules which guarantee
 liveness and safeness \cite{ahir}.  Transitions in the Petri-net
@@ -258,95 +390,35 @@ are registered).  The *sa and *ca symbols are acknowledgements
 from the data-path which indicate that the corresponding requests
 have been served.  
 
-
-\subsection{Data-path}
-%%
-%% Directed hyper-graph.  Nodes are operators
-%% hyper-arcs are wires.  Each operator node
-%% has a split protocol.
-%%
-The data-path is a directed hyper-graph.  The operators
-are shown as boxes and have input and output nets.  Each
-net has at most one element which drives it.  Further, most
-operators have  a split protocol handshake with
-the control-path:  two pairs of request/acknowledge 
-associations (*sr/*sa for sampling the inputs  and *cr/*ca for
-updating the outputs).    The sequencing is required to be
-\begin{verbatim}
-sr -> sa -> cr -> ca
-\end{verbatim}
-
-Some data-path elements (such as the multiplexor
-shown on the top and the decision operator shown at the bottom
-left in Figure \ref{fig:dotP} follow a simpler protocol.  The multiplexor
-has a pair of requests and a single acknowledge, with the condition
-that at most one of the requests is received at any time instant.
-The input corresponding to the request is then sampled and updates
-the output of the multiplexor.
-acknowledge lines.
-The decision element has a single request and two acknowledes.  Upon
-receipt of the request symbol, the decision element checks its input
-and emits one of the two acknowledges depending on whether the input
-is zero/non-zero.
-
-In figure \ref{fig:dotP}, the following data-path elements
-are instantiated:
-\begin{verbatim}
-mI, mdotP  multiplexors for I, dotP.
-INCR       incrementor for I++
-LA         load-operator for a[I]
-LB         load-operator for b[I]
-FMUL       multiplier for p=a[I]*b[I]
-FADD       adder for dotP += a*b
-CMP EQ     comparator COND=I==1023
-D          decision  COND?
-\end{verbatim}
-
-
-\subsection{Storage subsystem}
-
-%%
-%% time-stamping scheme, in order completion.
-%%
-The load (and in general, store) operators in the data-path
-are associated with memory subsystems.  In general, there
-can be multiple disjoint memory subsystems inferred by our
-compiler.  In this particular case, the array a[] and b[] 
-are mapped to disjoint memories, due to which the two
-loads are allowed to proceed in parallel (the relaxed consistency
-model is enforced).
-In order to maintain the relaxed consistency model, the
-memory subsystems are designed to use a time-stamping 
-scheme which guarantees first-come-first-served access to
-the same memory location.
-
-\subsection{Dependency analysis and extraction of parallelism}
-
-Our compiler does a routine dependency analysis and enforces
-the following dependencies between operations in the
-data-path (these dependencies are enforced by the control-path):
+The following classes of dependencies are
+encoded in the control Petri-net:
 \begin{itemize}
-\item RAW: if the wire updated by operation A is used in an
-operation B, the the sample-request to B is generated only
-after the update-acknowledge from A.
-\item WAR: if B writes to a wire which was earlier being read
-by A (in the same loop iteration), then the update-request to B
-can only be generated after the sample-acknowledge from A.
-\item Load-Store ordering: A relaxed consistency model
-is used.  If a load L follows a store S
-and both are associated with the same memory subsystem, then
-sample-start of the load L must begin after sample-acknowledge
-of S (note that the memory subsystem maintains the service order).
-Store-after-load and store-after-store dependencies are
-handled in the same manner.  Successive loads without
-an intervening store are allowed to finish in arbitrary order.
+\item Read-after-write (RAW):  If the result of operator A is used
+as an input to operator B, the sr symbol to B can be emitted only after
+the ca symbol from A has been received.
+\item Write-after-read (WAR): If B writes to a net whose value needs
+to have been used by A earlier, for example as in
+\begin{verbatim}
+a = (b+c) -- operation A reads c
+c = (p*q) -- operation B writes to c
+\end{verbatim}
+where there is a WAR dependency through c,
+ then the cr request to B can be
+issued only after the sa acknowledge from A has been received.
+\item Load-Store ordering:  If P,Q are load/store operations
+to the same memory subsystem, and if at least one of P,Q is a
+store, and if P is supposed to happen before Q,  then the sr request
+to Q must be emitted only after the sa acknowledge from Q
+has been received.  The memory subsystem itself guarantees
+that requests finish in the same order that they were
+initiated.  This takes care of WAR, RAW and WAW memory
+dependencies.
 \end{itemize}
 
 The control-path in \ref{fig:dotP} shows the sequencing
 generated by these rules.  Note that the data-path
-is not party to any sequencing decisions.  The data-path
-elements must adhere to the request/acknowledge protocol
-defined by the control-path.
+is not party to any sequencing decisions (other than
+responding to the request symbols). 
 
 \section{A control-flow mechanism for loop-pipelining}
 
@@ -361,16 +433,325 @@ defined by the control-path.
 Suppose that we want to modify the control-path in order to
 permit the second (and maybe third etc.) iteration of a loop
 to begin while the first iteration is still in progress.  
-The 
+Consider the example of the dot product.  The original
+loop was
+\begin{verbatim}
+float a[1024], b[1024];
+float dotp = 0.0;
+for(i=0; i < 1024; i++)
+{
+   dotp += a[i]*b[i];
+}
+\end{verbatim}
+The {\em fully unrolled} version of this loop would be
+\begin{verbatim}
+float a[1024], b[1024];
+float dotp = 0.0;
+dotp += a[0]*b[0];
+dotp += a[1]*b[1];
+dotp += a[2]*b[2];
+...
+dotp += a[1023]*b[1023];
+\end{verbatim}
+Let $A$ denote the $*$ operation and let $B$ denote the $+$
+operation, $L_a,\ L_b$ denote the loads from $a$ and $b$ respectively.  
+In principle, all the loads can occur simultaneously, and all the multiplies
+can happen simultaneously once the loads complete.  The adds
+would need to be ordered because of the multiply-accumulate nature
+of the code as it is written.  Any ordering of these operations which
+satisfies these dependencies will be termed a {\em fully-unrolled consistent}
+ordering.
+
+In our proposed, loop pipelining scheme, we use the
+following ordering scheme.
+If A is an operation in the loop body,
+denote the
+$k^{th}$ execution of A by $A_k$.  Since each operation
+has  events sr, sa, cr, ca, we denote these by
+$A_k.sr$, $A_k.sa$, $A_k.cr$, $A_k.ca$ respectively. We impose 
+the following dependency rules on operations across
+loop iterations.
+\begin{itemize}
+\item $A_k.sa \rightarrow A_{k+1}.sr$ for all operations A: that is,
+the next execution of A cannot start until the current execution has
+finished sampling the inputs.
+\item $A_k.ca \rightarrow A_{k+1}.cr$ for all operations A: that is,
+the completion of the next execution of A can be initiated only
+after the current execution of A has completed.
+\item If $A \rightarrow B$ is a RAW dependency, then 
+$B_k.sa \rightarrow A_{k+1}.cr$.  That is, until B has
+sampled the result of the current A, the next completion
+of A cannot start.
+\item If $A \rightarrow B$ is a WAR dependency, then
+$B_k.ca \rightarrow A_{k+1}.sr$.  That is, the next
+A cannot start until the current B has completed.
+\item If P, Q are successive load/stores, with at least
+one of them being a store, then 
+$Q_k.sa \rightarrow P_{k+1}.sr$.  That is, the next P
+cannot start until the current Q has acknowledged that it
+has started.
+\end{itemize}
+The mechanism for incorporating RAW and WAR dependencies is
+illustrated in Figure \ref{fig:pipelineMechanism}
+for RAW and WAR dependencies within the loop body.
+The reverse dotted arc is a marked arc (it initially
+carries a single token).
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=7cm]{pipelineMechanism.eps}
+  \caption{Control-path mechanism for handling RAW, WAR dependencies for loop-pipelining.}
+  \label{fig:pipelineMechanism}
+\end{figure}
+
+It is easy to confirm that these additional dependencies ensure
+that the loop execution subject to these dependencies is a
+fully-unrolled consistent ordering.  
+The modified control path is shown in Figure \ref{fig:pipelinedCP}.
+The loop-terminator element has three inputs:  a loop-taken transition,
+a loop-not-taken transition and a loop-body-exit transition.  The loop-taken/not-taken
+pair indicates whether a new iteration is to be started or whether the 
+loop has terminated.  The loop-body-exit
+transition indicates that the body of the loop has finished executing an
+iteration.  The loop-terminator initiates a new iteration as long as the
+number of active iterations is within a specified limit $M$ (usually, we keep
+this limit to $M=8$).  Thus, all the places in the modified control path
+in Figure \ref{fig:pipelinedCP} now must have a capacity of $M$ and the
+cost of implementing each place in the control path goes up by a
+factor of $\log M$.  This is the major additional cost incurred by
+the pipelining mechanism.
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=7cm]{pipelinedCP.eps}
+  \caption{Modified control-path with loop-pipeline dependencies (dotted lines).}
+  \label{fig:pipelinedCP}
+\end{figure}
 
 \section{Experimental Results}
 
-%%
-%% examples: vector add, dot-product, matrix-multiply, linfinity-norm.
-%%
+We considered three examples, the dot product, the fast-fourier-transform,
+and matrix multiplications, each with critical inner loops.  Four 
+configurations were tested in each case: the basic code, the unrolled code,
+the basic code with loop-pipelining and the unrolled code with loop-pipelining.
+In each case, the generated VHDL code was synthesized to a Xilinx Virtex-6
+FPGA and synthesis results were used to estimate the resource usage,
+the clock frequency and the number of cycles required by the inner
+loop.
+
+\section{The dot product}
+
+The basic code (a,b are arrays, dotP is the accumulated dot-product):
+\begin{verbatim}
+for(I=0; I < 64; I++)
+{
+  dotP += a[I]*b[I];
+}
+\end{verbatim}
+
+The unrolled version of the code used:
+\begin{verbatim}
+for(I=0; I < 64; I += 4)
+{
+  I1 = I+1; I2 = I+2; I3 =I+3;
+  dotP += ((a[I]*b[I]) + (a[I1]*b[I1]) 
+           + (a[I2]*b[I2]) + (a[I3]*b[I3]));
+}
+\end{verbatim}
+
 %%
 %%       show results without-unrolling-pipelining, with-unrolling-pipelining, etc.
 %%
+The results are shown in Table \ref{table:dotP}.   The number of clock-cycles
+needed to complete the inner loop, the number of look-up tables needed, the
+ number of flip-flops needed and the post-synthesis clock frequency estimate
+are reported in the table.  The last two rows correspond to the normalized
+performance (time needed by the plain case relative to the optimized case, higher is better),
+and the normalized performance/cost ratio (time/(LUTs+FF)  ratio normalized
+with respect to the plain case, higher is better).
+\begin{table}[htb]
+  \centering
+  \caption{Dot-product results with and without loop-optimizations}
+  \label{table:dotP}
+  \renewcommand\arraystretch{1.2}
+  \setlength{\tabcolsep}{1ex}
+  \begin{tabular}{c|c|c|c|c}
+  \hline
+  & plain & pipelined & unrolled & pipelined  \\
+  &       &           &          & + unrolled\\
+  \hline
+
+Cycles   &    4071  &   1874  &     1894  &     582 \\
+LUTs     &   4288   &   5195  &     4809  &    7344 \\
+FFs      &    3799  &   4345  &     4378  &    5911 \\
+Freq.(MHz)  & 199.7  &    199.7 &      199.7 &    199.7 \\
+Norm. Perf. & 1      &  2.17  & 2.15 & 7 \\
+Norm. Perf/Cost & 1  &  1.83  & 1.89 & 4.27 \\
+\hline
+  \end{tabular}
+\end{table}
+
+From Table \ref{table:dotP}, we see 
+\begin{itemize}
+\item If loop-pipelining is 
+applied to the plain program, performance improves
+by about 2X relative to the non-pipelined, plain case.
+\item If loop-pipelining is applied to the unrolled program,
+performance improves by more than 3X relative to the non-pipelined,
+unrolled case.  
+\item In terms of the performance/cost
+ratio, the pipelined-unrolled version is more than 3X better than
+the plain version.   The normalized performance/cost ratio is 4X
+better when both loop optimizations are used.
+\end{itemize}
+
+
+
+\section{The fast-fourier-transform (FFT)}
+
+A 64 point FFT program (radix two, in-place, twiddle factors computed
+apriori) with the following loop-structure was used:
+\begin{verbatim}
+for(STAGE=0; STAGE < 6; STAGE++)
+{
+  for(BFLY=0; BFLY < 32; BFLY++)
+  {
+    Butterfly(STAGE,BFLY);
+  }
+}
+\end{verbatim} 
+where the function {\bf Butterfly} is inlined and implements
+the radix-two butterfly with index BFLY in stage STAGE using
+the precomputed twiddle factors.
+In the unrolled version, the inner-loop was rewritten as
+\begin{verbatim}
+  for(BFLY=0; BFLY < 32; BFLY += 4)
+  {
+    Butterfly(STAGE,BFLY);
+    Butterfly(STAGE,BFLY+1);
+    Butterfly(STAGE,BFLY+2);
+    Butterfly(STAGE,BFLY+3);
+  }
+\end{verbatim}
+
+The results are shown in Table \ref{table:fft} (the cycle count is for a single
+stage of the FFT).
+\begin{table}[htb]
+  \centering
+  \caption{FFT-results  with and without loop-optimizations}
+  \label{table:fft}
+  \renewcommand\arraystretch{1.2}
+  \setlength{\tabcolsep}{1ex}
+  \begin{tabular}{c|c|c|c|c}
+  \hline
+  & plain & pipelined & unrolled & pipelined  \\
+  &       &           &          & + unrolled\\
+  \hline
+
+Cycles   &    4151  &   2885   &     3110  &     1064 \\
+LUTs     &   12155   &  23139  &     16032  &    37831 \\
+FFs      &    11955  &  18632  &     15299  &    28698 \\
+Freq.(MHz)  & 186.9  &    164.1 &      186.9 &    164.7 \\
+Norm. Perf. & 1      &  1.26  & 1.33 & 3.42 \\
+Norm. Perf/Cost & 1  &  0.73  & 1.02 & 1.24 \\
+\hline
+  \end{tabular}
+\end{table}
+From Table \ref{table:fft}, we see 
+\begin{itemize}
+\item If loop-pipelining is 
+applied to the plain program, performance improves
+by about 1.26X relative to the non-pipelined, plain case.
+\item If loop-pipelining is applied to the unrolled program,
+performance improves by more than 2.5X relative to the non-pipelined,
+unrolled case.  
+\item In terms of the performance/cost
+ratio, the pipelined-unrolled version is only 1.24X better than
+the plain version.   
+\end{itemize}
+The reason for the poorer results in this case is the use of the in-place
+algorithm.  The bottleneck in this case becomes the access to the memory
+subsystem in which the array is stored. 
+
+\section{Matrix multiplication}
+
+The plain triple loop matrix multiplication algorithm was
+used as a starting point.
+\begin{verbatim}
+float a[16]16], b[16][16], c[16][16];
+for(i = 0; i < 16; i++) {
+  for(j=0; j < 16; j++) {
+    float v = 0.0;
+    for(k = 0; k < 16; k++) {
+       v += a[i][k]*b[k][j];
+    }
+    c[i][j] = v;
+  }
+}
+\end{verbatim}
+The unrolled version was aggressively generated so that
+the inner loop simultaneously computes 16 entries of the
+product at a time.
+\begin{verbatim}
+float a[16]16], b[16][16], c[16][16];
+for(i = 0; i < 16; i += 4) {
+  for(j=0; j < 16; j += 4) {
+    float v00 = 0.0, v01 = 0.0,
+          v02 = 0.0, ... v33 = 0.0;
+    for(k = 0; k < 16; k += 4) {
+       v00 += (a[i][k]*b[k][j] 
+             + a[i][k+1]*b[k+1][j]
+             + a[i][k+2]*b[k+2][j]
+             + a[i][k+3]*b[k+3][j]);
+       ...
+       v33 += (a[i+3][k]*b[k][j+3] 
+             + a[i+3][k+1]*b[k+1][j+3]
+             + a[i+3][k+2]*b[k+2][j+3]
+             + a[i+3][k+3]*b[k+3][j+3]);
+    }
+    c[i][j]   = v00;
+    ..
+    c[i+3][j+3] = v33;
+  }
+}
+\end{verbatim}
+
+The observations are shown in Table \ref{table:mmultiply}.
+\begin{table}[htb]
+  \centering
+  \caption{Matrix-multiplication-results  with and without loop-optimizations}
+  \label{table:mmultiply}
+  \renewcommand\arraystretch{1.2}
+  \setlength{\tabcolsep}{1ex}
+  \begin{tabular}{c|c|c|c|c}
+  \hline
+  & plain & pipelined & unrolled & pipelined  \\
+  &       &           &          & + unrolled\\
+  \hline
+
+Cycles   &    161K  &   77K   &     13K  &     7810 \\
+LUTs     &   6323   &  9408  &     14891  &    31744 \\
+FFs      &    6974  &  8818  &     12041  &    21060 \\
+Freq.(MHz)  & 199.7  &   199.7 &   186.1 &    164.1 \\
+Norm. Perf. & 1      &  2.09  & 11.5 & 16.9 \\
+Norm. Perf/Cost & 1  &  1.52  & 5.67 & 4.25 \\
+\hline
+  \end{tabular}
+\end{table}
+From Table \ref{table:fft}, we see 
+\begin{itemize}
+\item If loop-pipelining is 
+applied to the plain program, performance improves
+by about 2X relative to the non-pipelined, plain case.
+\item If loop-pipelining is applied to the unrolled program,
+performance improves by 1.5X relative to the non-pipelined,
+unrolled case.  
+\item In terms of the performance/cost
+ratio, the pipelined-unrolled version is only 4.25X better than
+the plain version.   
+\end{itemize}
+In this instance, the aggressive loop-unrolling shows
+excellent performance.  Loop-pipelining when combined with loop-unrolling,
+gives a 20X improvement in the cycle count.  The normalized
+performance and performance/cost improvements are also substantial.
 
 \section{Conclusion}
 
@@ -383,6 +764,40 @@ The
 %% can get 10X improvement and very high utilization of 
 %% hardware resources.
 %%
+We have considered the problem of optimizing inner loop
+implementations in an algorithm-to-hardware compilation system.
+Two optimizations were considered: static source-level loop
+unrolling and dynamic hardware supported loop-pipelining.
+The loop-pipelining mechanism is implemented by modifying
+the control-flow in the generated hardware (without disturbing
+the data-path).
+
+The data obtained from three common and important inner loop
+kernels is encouraging.  In all three cases, both loop-pipelining
+and loop-unrolling lead to substantial performance gains.  Further,
+using both optimizations together results in multiplicative gains
+and in call cases, leads to hardware which is substantially
+faster and more efficient (in terms of the performance/cost ratio).
+The performance gain is lower if there is a bottleneck in the
+algorithm itself, such as in the FFT case, in which accesses to
+the in-place array reduce the performance gains seen due to
+the loop optimizations.
+
+Loop-unrolling is a common parallelization optimization
+in compilers that target pipelined processors.  Our data indicates
+that such unrolling offers significant benefits (up to an 
+order of magnitude) in an algorithm-to-hardware translation.
+Further, the use of hardware based dynamic loop-pipelining techniques 
+seems to offer a further boost in performance in the synthesis
+of hardware from single-threaded programs.  
+The performance boost provided by the dynamic loop-pipelining
+in hardware seems to indicate that its use,
+especially in conjunction with aggressive loop unrolling can offer 
+a substantial reduction in the gap between 
+the quality of automatically generated hardware and hand crafted 
+hardware implementations of the same algorithm.  This needs
+to be investigated further.
+
 
 \bibliography{ref}
 \bibliographystyle{IEEEtran}
