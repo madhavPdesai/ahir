@@ -33,14 +33,24 @@ void print_buffer(FILE* lfile, uint8_t* burst_payload,int count)
 
 void init_pipe_handler()
 {
-   	log_file = fopen("pipeHandler.log","a");
-        fprintf(log_file,"******* NEW RUN *********\n");
+	init_pipe_handler_with_log(NULL);
+}
+
+void init_pipe_handler_with_log(char* log_file_name)
+{
+	if(log_file_name != NULL)
+   		log_file = fopen("pipeHandler.log","a");
+	else
+		log_file = stderr;
+
+        fprintf(log_file,"\n******* NEW RUN *********\n");
 }
 
 
 void close_pipe_handler()
 {
-	fclose(log_file);
+	if((log_file != NULL) && (log_file != stderr))
+		fclose(log_file);
 }
 
 PipeRec* find_pipe(char* pipe_name)

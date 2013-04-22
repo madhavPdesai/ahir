@@ -103,6 +103,8 @@ struct PipeRec_
 
 // init must be called before using pipehandler
 void init_pipe_handler();
+// init with log-file
+void init_pipe_handler_with_log(char* log_file);
 // close after your app finishes using the pipehandler
 void close_pipe_handler();
 // returns 0 on success, 1 if something went wrong..
