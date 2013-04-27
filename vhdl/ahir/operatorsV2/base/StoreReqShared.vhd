@@ -97,10 +97,10 @@ begin  -- Behave
 
   assert(tag_length >= Ceil_Log2(num_reqs)) report "insufficient tag width" severity error;
 
-  debugCase: if debug_flag generate
-    assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
-      report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
-  end generate debugCase;
+  -- debugCase: if debug_flag generate
+    -- assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
+      -- report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
+  -- end generate debugCase;
   
   imux: InputMuxBase
   	generic map(iwidth => (addr_width+data_width)*num_reqs ,

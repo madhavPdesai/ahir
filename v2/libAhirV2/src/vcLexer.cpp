@@ -1,4 +1,4 @@
-/* $ANTLR 2.7.7 (20130311): "vc.g" -> "vcLexer.cpp"$ */
+/* $ANTLR 2.7.7 (2006-11-01): "vc.g" -> "vcLexer.cpp"$ */
 #include "vcLexer.hpp"
 #include <antlr/CharBuffer.hpp>
 #include <antlr/TokenStreamException.hpp>

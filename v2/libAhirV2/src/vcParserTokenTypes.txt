@@ -1,4 +1,4 @@
-// $ANTLR 2.7.7 (20130311): vc.g -> vcParserTokenTypes.txt$
+// $ANTLR 2.7.7 (2006-11-01): vc.g -> vcParserTokenTypes.txt$
 vcParser    // output token vocab name
 LIFO=4
 PIPE=5

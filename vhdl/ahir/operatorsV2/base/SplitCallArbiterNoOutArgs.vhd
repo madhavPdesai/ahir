@@ -145,7 +145,6 @@ begin
 	for T in 0 to num_reqs-1 loop
          if(pe_call_reqs(T) = '1' and latch_call_data = '1') then
            caller_mtag_reg <= call_tag(((T+1)*caller_tag_length)-1 downto T*caller_tag_length);
-	   exit;
          end if;
         end loop;
        end if;

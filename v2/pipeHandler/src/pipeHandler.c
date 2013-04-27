@@ -15,12 +15,17 @@
 						case 32: PUSH(p,ptr,32); break;\
 						case 64: PUSH(p,ptr,64); break;\
 						default: break; }} 
-FILE* log_file = NULL;
-PipeRec* pipes = NULL;
+static FILE* log_file = NULL;
+static PipeRec* pipes = NULL;
 
-pthread_mutex_t handler_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t handler_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define ___LOCK___  pthread_mutex_lock(&handler_mutex);
 #define ___UNLOCK___  pthread_mutex_unlock(&handler_mutex);
+
+static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define __LOCKLOG__  pthread_mutex_lock(&log_mutex);
+#define __UNLOCKLOG__  pthread_mutex_unlock(&log_mutex);
+
 
 void print_buffer(FILE* lfile, uint8_t* burst_payload,int count)
 {
@@ -38,19 +43,22 @@ void init_pipe_handler()
 
 void init_pipe_handler_with_log(char* log_file_name)
 {
+	pipes = NULL;
 	if(log_file_name != NULL)
    		log_file = fopen("pipeHandler.log","a");
-	else
-		log_file = stderr;
 
-        fprintf(log_file,"\n******* NEW RUN *********\n");
+	if(log_file != NULL)
+        	fprintf(log_file,"\n******* NEW RUN *********\n");
 }
 
 
 void close_pipe_handler()
 {
-	if((log_file != NULL) && (log_file != stderr))
+	if(log_file != NULL)
+ 	{
 		fclose(log_file);
+		log_file = NULL;
+	}
 }
 
 PipeRec* find_pipe(char* pipe_name)
@@ -94,6 +102,9 @@ uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo
   new_p->pipe_name = strdup(pipe_name);
   new_p->pipe_width = pipe_width;
   new_p->pipe_depth = pipe_depth;
+  new_p->number_of_entries = 0;
+  new_p->write_pointer = 0;
+  new_p->read_pointer = 0;
   new_p->buffer.ptr8 = (uint8_t*) malloc(((pipe_depth*pipe_width)/8)*sizeof(uint8_t));
   new_p->lifo_mode = lifo_mode;
 
@@ -102,15 +113,27 @@ uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo
   pipes = new_p;
   ___UNLOCK___
 
-  fprintf(log_file,"\nAdded: %s depth %d width %d lifo_mode %d.", pipe_name,pipe_depth,pipe_width, lifo_mode);
-  fflush(log_file);
+  if(log_file != NULL)
+  {
+    __LOCKLOG__
+    fprintf(log_file,"\nAdded: %s depth %d width %d lifo_mode %d.", pipe_name,pipe_depth,pipe_width, lifo_mode);
+    fflush(log_file);
+    __UNLOCKLOG__
+  }
   return(0);
 }
 
 
 uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requested, void* burst_payload)
 {
-  // fprintf(log_file,"\nInfo: read-request %d word(s) of width %d from pipe %s.\n", number_of_words_requested,width, pipe_name);
+  if(log_file != NULL)
+  {
+    __LOCKLOG__
+   fprintf(log_file,"\nInfo: read-request %d word(s) of width %d from pipe %s.\n", number_of_words_requested,width, pipe_name);
+    __UNLOCKLOG__
+  }
+
+
   uint32_t ret_val = 0;
   PipeRec* p = find_pipe(pipe_name);
   if(p == NULL)
@@ -147,19 +170,31 @@ uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requeste
 		ptr = ptr + (width/8);
 	}
   }
-
   ___UNLOCK___
+
   if(ret_val > 0)
   {
+     if(log_file != NULL)
+     {
+    __LOCKLOG__
   	fprintf(log_file,"\nRead: %s %d word(s) of width %d: ", pipe_name, ret_val,width);
-	print_buffer(log_file,(uint8_t*) burst_payload,ret_val*width/8);
+	print_buffer(log_file,(uint8_t*) burst_payload,ret_val*width/8);  
+    __UNLOCKLOG__
+     }
   }
   return(ret_val);
 }
 
 uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested, void* burst_payload)
 {
-  // fprintf(log_file,"\nInfo: write-request %d word(s) of width %d to pipe %s.\n", number_of_words_requested,width, pipe_name);
+  if(log_file != NULL)
+  {
+    __LOCKLOG__
+  	fprintf(log_file,"\nInfo: write-request %d word(s) of width %d to pipe %s.\n", number_of_words_requested,width, pipe_name);
+    __UNLOCKLOG__
+  }
+
+
   uint32_t ret_val = 0;
   PipeRec* p = find_pipe(pipe_name);
   if(p == NULL)
@@ -197,12 +232,18 @@ uint32_t write_to_pipe(char* pipe_name, int width, int number_of_words_requested
 		ptr = ptr + (width/8);
 	}
   }
-
   ___UNLOCK___
+
   if(ret_val > 0)
   {
+     if(log_file != NULL)
+     {
+    __LOCKLOG__
   	fprintf(log_file,"\nWrote: %s %d word(s) of width %d: ", pipe_name,ret_val,width);
 	print_buffer(log_file,(uint8_t*) burst_payload,ret_val*width/8);
+    __UNLOCKLOG__
+     }
   }
+ 
   return(ret_val);
 }

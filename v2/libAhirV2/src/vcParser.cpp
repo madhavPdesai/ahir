@@ -1,4 +1,4 @@
-/* $ANTLR 2.7.7 (20130311): "vc.g" -> "vcParser.cpp"$ */
+/* $ANTLR 2.7.7 (2006-11-01): "vc.g" -> "vcParser.cpp"$ */
 #include "vcParser.hpp"
 #include <antlr/NoViableAltException.hpp>
 #include <antlr/SemanticException.hpp>

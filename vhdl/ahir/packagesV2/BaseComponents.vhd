@@ -1403,4 +1403,65 @@ package BaseComponents is
   end component;
 
   
+  -----------------------------------------------------------------------------
+  -- temporary stuff.
+  -----------------------------------------------------------------------------
+  component tmpSplitCallArbiter
+    generic(num_reqs: integer;
+	  call_data_width: integer;
+	  return_data_width: integer;
+	  caller_tag_length: integer;
+          callee_tag_length: integer);
+    port ( -- ready/ready handshake on all ports
+      -- ports for the caller
+      call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+      call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+      call_data   : in  std_logic_vector((num_reqs*call_data_width)-1 downto 0);
+      call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+      -- call port connected to the called module
+      call_mreq   : out std_logic;
+      call_mack   : in  std_logic;
+      call_mdata  : out std_logic_vector(call_data_width-1 downto 0);
+      call_mtag   : out std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
+      -- similarly for return, initiated by the caller
+      return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+      return_acks : out std_logic_vector(num_reqs-1 downto 0);
+      return_data : out std_logic_vector((num_reqs*return_data_width)-1 downto 0);
+      return_tag  : out std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+      -- return from function
+      return_mreq : out std_logic;
+      return_mack : in std_logic;
+      return_mdata : in  std_logic_vector(return_data_width-1 downto 0);
+      return_mtag : in  std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
+      clk: in std_logic;
+      reset: in std_logic);
+  end component tmpSplitCallArbiter;
+
+  component tmpSplitCallArbiterNoOutargs
+    generic(num_reqs: integer;
+	  call_data_width: integer;
+	  caller_tag_length: integer;
+          callee_tag_length: integer);
+  port ( -- ready/ready handshake on all ports
+    -- ports for the caller
+    call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+    call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+    call_data   : in  std_logic_vector((num_reqs*call_data_width)-1 downto 0);
+    call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- call port connected to the called module
+    call_mreq   : out std_logic;
+    call_mack   : in  std_logic;
+    call_mdata  : out std_logic_vector(call_data_width-1 downto 0);
+    call_mtag   : out std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
+    -- similarly for return, initiated by the caller
+    return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+    return_acks : out std_logic_vector(num_reqs-1 downto 0);
+    return_tag  : out std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- return from function
+    return_mreq : out std_logic;
+    return_mack : in std_logic;
+    return_mtag : in  std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
+    clk: in std_logic;
+    reset: in std_logic);
+  end component tmpSplitCallArbiterNoOutargs;
 end BaseComponents;

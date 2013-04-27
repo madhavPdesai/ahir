@@ -1,7 +1,7 @@
 #ifndef INC_vcParserTokenTypes_hpp_
 #define INC_vcParserTokenTypes_hpp_
 
-/* $ANTLR 2.7.7 (20130311): "vc.g" -> "vcParserTokenTypes.hpp"$ */
+/* $ANTLR 2.7.7 (2006-11-01): "vc.g" -> "vcParserTokenTypes.hpp"$ */
 
 #ifndef CUSTOM_API
 # define CUSTOM_API

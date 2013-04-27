@@ -3,7 +3,7 @@ run
 -ofn ahir_system_synth
 -ifmt mixed
 -ofmt NGC
--p xc6vlx760-2-ff1760
+-p xc3s5000-fg1156-4
 -top ahir_system
 -write_timing_constraints yes
 -hierarchy_separator _
@@ -22,4 +22,3 @@ run
 -opt_level 2
 -safe_implementation yes
 -iobuf no
--use_new_parser yes

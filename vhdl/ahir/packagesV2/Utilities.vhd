@@ -7,6 +7,7 @@ use ahir.Types.all;
 
 package Utilities is
 
+  function Digit_To_Char(val: integer) return character;
   function Convert_To_String(val : integer) return STRING; -- convert val to string.
   function Convert_SLV_To_String(val : std_logic_vector) return STRING; -- convert val to string.
   function Convert_SLV_To_Hex_String(val : std_logic_vector) return STRING; -- convert val to string.  
@@ -85,6 +86,25 @@ end Utilities;
 
 package body Utilities is
 
+  function Digit_To_Char(val: integer) return character is
+	variable ret_val : character;
+  begin
+	case val is
+		when 0 => ret_val := '0';
+		when 1 => ret_val := '1';
+		when 2 => ret_val := '2';
+		when 3 => ret_val := '3';
+		when 4 => ret_val := '4';
+		when 5 => ret_val := '5';
+		when 6 => ret_val := '6';
+		when 7 => ret_val := '7';
+		when 8 => ret_val := '8';
+		when 9 => ret_val := '9';
+		when others => ret_val := 'X';
+	end case;
+	return(ret_val);
+  end Digit_To_Char;
+
     -- Thanks to: D. Calvet calvet@hep.saclay.cea.fr
     -- modified to support negative values
   function Convert_To_String(val : integer) return STRING is
@@ -103,7 +123,7 @@ package body Utilities is
 	loop
 		digit := abs(tmp MOD 10);
 	    	tmp := tmp / 10;
-	    	result(pos) := character'val(character'pos('0') + digit);
+	    	result(pos) := Digit_To_Char(digit);
 	    	pos := pos + 1;
 	    	exit when ((tmp = 0) or (pos = (result'high-1)));
 	end loop;

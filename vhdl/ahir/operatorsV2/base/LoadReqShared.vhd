@@ -81,10 +81,10 @@ begin  -- Behave
   end generate NoTstampGen;
 
   -- xilinx xst does not like this assertion...
-  DbgAssert: if debug_flag generate
-    assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
-      report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;    
-  end generate DbgAssert;
+  -- DbgAssert: if debug_flag generate
+    -- assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
+      -- report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;    
+  -- end generate DbgAssert;
 
   
   imux: InputMuxBase

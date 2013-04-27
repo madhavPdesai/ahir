@@ -79,18 +79,15 @@ begin
    process(clk,pe_call_reqs,call_state,reset)
         variable nstate: CallStateType;
         variable there_is_a_call : std_logic;
-        variable latch_pe_call_reqs: std_logic;
    begin
 	nstate := call_state;
         there_is_a_call := OrReduce(pe_call_reqs);
 	latch_call_data <= '0';
 	call_mreq <= '0';
-        latch_pe_call_reqs := '0';
 
 	if(call_state = idle) then
 		if(there_is_a_call = '1') then
 			latch_call_data <=  '1';
-        		latch_pe_call_reqs := '1';
 			nstate := busy;
 		end if;
 	elsif (call_state = busy) then
@@ -98,7 +95,6 @@ begin
 		if(call_mack = '1') then
 			if(there_is_a_call = '1') then
 				latch_call_data <=  '1';
-        			latch_pe_call_reqs := '1';
                         else
 				nstate := idle;
 			end if;
@@ -111,9 +107,6 @@ begin
 			pe_call_reqs_reg <= (others => '0');
 		else
 			call_state <= nstate;
-			if(latch_pe_call_reqs = '1') then
-				pe_call_reqs_reg <= pe_call_reqs;
-			end if;
 		end if;
 	end if;
    end process;
@@ -158,14 +151,15 @@ begin
    -- on a successful call, register the tag from the caller
    -- side..
    process(clk)
+	variable tvar : std_logic_vector(caller_tag_length-1 downto 0);
    begin
        if(clk'event and clk = '1') then
 	for T in 0 to num_reqs-1 loop
          if(pe_call_reqs(T) = '1' and latch_call_data = '1') then
-           caller_mtag_reg <= call_tag(((T+1)*caller_tag_length)-1 downto T*caller_tag_length);
-	   exit;
+           tvar := call_tag(((T+1)*caller_tag_length)-1 downto T*caller_tag_length);
          end if;
         end loop;
+	caller_mtag_reg <= tvar;
        end if;
    end process;     
 

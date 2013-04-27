@@ -73,6 +73,7 @@ struct PipeRec_
 #define __FULL(p) (p->number_of_entries ==  p->pipe_depth)
 #define __AVAILABLE(p) (p->pipe_depth  - p->number_of_entries)
 #define INCR(x,p) x = ((x == (p->pipe_depth-1)) ? 0 : x+1)
+#define DECR(x,p) x = ((x == 0) ? (p->pipe_depth - 1) : x-1)
 #define POP(p,x,n) {\
 			if(p->number_of_entries > 0) {\
 				*((uint##n##_t *)x) = p->buffer.ptr##n[p->read_pointer];\
@@ -80,25 +81,22 @@ struct PipeRec_
 				 	INCR(p->read_pointer,p);\
 				else\
 				{\
-					p->write_pointer -= 1;\
-					if(p->write_pointer > 0)\
-						p->read_pointer = p->write_pointer - 1;\
-					else\
-						p->read_pointer =  0;\
+					p->write_pointer = p->read_pointer;\
+				  	DECR(p->read_pointer,p);\
 				}\
 				p->number_of_entries -= 1;\
 		    	}\
                    }
 
 #define PUSH(p,x,n) {\
-		if(p->number_of_entries < p->pipe_width) {\
+		if(p->number_of_entries < p->pipe_depth) {\
 			p->number_of_entries += 1;\
 			p->buffer.ptr##n[p->write_pointer] = *((uint##n##_t *) x);\
-			INCR(p->write_pointer,p); \
 			if(p->lifo_mode)\
 			{\
-				p->read_pointer = p->write_pointer - 1;\
+				p->read_pointer = p->write_pointer;\
 			}\
+			INCR(p->write_pointer,p); \
 		 } }
 
 // init must be called before using pipehandler

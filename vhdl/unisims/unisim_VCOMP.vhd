@@ -27365,4 +27365,11 @@ attribute BOX_TYPE of
 
 -- END COMPONENT
 
+----- component GND_ALT -----
+component GND_ALT
+	port
+	(
+		G : buffer std_logic
+	);
+end component;
 end VCOMPONENTS;

@@ -1,9 +1,15 @@
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include <bits/wordsize.h>
 #include <Pipes.h>
+#include <pthread.h>
+
+static pthread_mutex_t log_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define __LOCKLOG__  pthread_mutex_lock(&log_mutex);
+#define __UNLOCKLOG__  pthread_mutex_unlock(&log_mutex);
 
 #define READ_BURST__(id, width, buf_len, buf) { uint32_t words_read = 0;\
 	while(1)\
@@ -30,6 +36,13 @@ uint64_t read_uint64(const char *id)
 	uint64_t ret_val;
 	uint64_t* buf = &ret_val;
 	READ_BURST__(id, 64, 1, buf);
+
+#ifdef DEBUG
+	__LOCKLOG__
+	fprintf(stderr,"Info:read_uint64: read %s.\n", id);
+	fflush(stderr);
+	__UNLOCKLOG__
+#endif
 	return(ret_val);
 }
 
@@ -37,6 +50,12 @@ void write_uint64(const char *id, uint64_t data)
 {
 	uint64_t* buf = &data;
 	WRITE_BURST__(id, 64, 1, buf);
+#ifdef DEBUG
+	__LOCKLOG__
+	fprintf(stderr,"Info:write_uint64: write %s (%llu)\n", id,data);
+	fflush(stderr);
+	__UNLOCKLOG__
+#endif
 }
 
 
@@ -56,13 +75,37 @@ uint32_t read_uint32(const char *id)
 {
 	uint32_t ret_val;
 	uint32_t* buf = &ret_val;
+#ifdef DEBUG
+	__LOCKLOG__
+	fprintf(stderr,"Info:read_uint32: started read %s.\n", id);
+	fflush(stderr);
+	__UNLOCKLOG__
+#endif
 	READ_BURST__(id, 32, 1, buf);
+#ifdef DEBUG
+	__LOCKLOG__
+	fprintf(stderr,"Info:read_uint32: finished read %s, returned 0x%08x.\n", id, ret_val);
+	fflush(stderr);
+	__UNLOCKLOG__
+#endif
 	return(ret_val);
 }
 void write_uint32(const char *id, uint32_t data)
 {
 	uint32_t* buf = &data;
+#ifdef DEBUG
+	__LOCKLOG__
+	fprintf(stderr,"Info:write_uint32: started write %s (%u)\n", id,data);
+	fflush(stderr);
+	__UNLOCKLOG__
+#endif
 	WRITE_BURST__(id, 32, 1, buf);
+#ifdef DEBUG
+	__LOCKLOG__
+	fprintf(stderr,"Info:write_uint32: finished write %s (%u)\n", id,data);
+	fflush(stderr);
+	__UNLOCKLOG__
+#endif
 }
 
 // from pipe id, receive buf_len uint32_t's..
@@ -82,12 +125,24 @@ uint16_t read_uint16(const char *id)
 	uint16_t ret_val;
 	uint16_t* buf = &ret_val;
 	READ_BURST__(id, 16, 1, buf);
+#ifdef DEBUG
+	__LOCKLOG__
+	fprintf(stderr,"Info:read_uint16: read %s.\n", id);
+	fflush(stderr);
+	__UNLOCKLOG__
+#endif
 	return(ret_val);
 }
 void write_uint16(const char *id, uint16_t data)
 {
 	uint16_t* buf = &data;
 	WRITE_BURST__(id, 16, 1, buf);
+#ifdef DEBUG
+	__LOCKLOG__
+	fprintf(stderr,"Info:write_uint16: write %s (%u)\n", id,data);
+	fflush(stderr);
+	__UNLOCKLOG__
+#endif
 }
 
 // from pipe id, receive buf_len uint16_t's..
@@ -106,13 +161,37 @@ uint8_t read_uint8(const char *id)
 {
 	uint8_t ret_val;
 	uint8_t* buf = &ret_val;
+#ifdef DEBUG
+	__LOCKLOG__
+	fprintf(stderr,"Info:read_uint8: started read %s.\n", id, ret_val);
+	fflush(stderr);
+	__UNLOCKLOG__
+#endif
 	READ_BURST__(id, 8, 1, buf);
+#ifdef DEBUG
+	__LOCKLOG__
+	fprintf(stderr,"Info:read_uint8: finished read %s, returned %x.\n", id, ret_val);
+	fflush(stderr);
+	__UNLOCKLOG__
+#endif
 	return(ret_val);
 }
 void write_uint8(const char *id, uint8_t data)
 {
 	uint8_t* buf = &data;
+#ifdef DEBUG
+	__LOCKLOG__
+	fprintf(stderr,"Info:write_uint8: started write %s (%u)\n", id,data);
+	fflush(stderr);
+	__UNLOCKLOG__
+#endif
 	WRITE_BURST__(id, 8, 1, buf);
+#ifdef DEBUG
+	__LOCKLOG__
+	fprintf(stderr,"Info:write_uint8: finished write %s (%u)\n", id,data);
+	fflush(stderr);
+	__UNLOCKLOG__
+#endif
 }
 
 // from pipe id, receive buf_len uint8_t's..

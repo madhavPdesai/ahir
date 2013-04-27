@@ -30,6 +30,7 @@ use ahir.Types.all;
 
 package Utilities is
 
+  function Digit_To_Char(val: integer) return character;
   function Convert_To_String(val : integer) return STRING; -- convert val to string.
   function Convert_SLV_To_String(val : std_logic_vector) return STRING; -- convert val to string.
   function Convert_SLV_To_Hex_String(val : std_logic_vector) return STRING; -- convert val to string.  
@@ -108,6 +109,25 @@ end Utilities;
 
 package body Utilities is
 
+  function Digit_To_Char(val: integer) return character is
+	variable ret_val : character;
+  begin
+	case val is
+		when 0 => ret_val := '0';
+		when 1 => ret_val := '1';
+		when 2 => ret_val := '2';
+		when 3 => ret_val := '3';
+		when 4 => ret_val := '4';
+		when 5 => ret_val := '5';
+		when 6 => ret_val := '6';
+		when 7 => ret_val := '7';
+		when 8 => ret_val := '8';
+		when 9 => ret_val := '9';
+		when others => ret_val := 'X';
+	end case;
+	return(ret_val);
+  end Digit_To_Char;
+
     -- Thanks to: D. Calvet calvet@hep.saclay.cea.fr
     -- modified to support negative values
   function Convert_To_String(val : integer) return STRING is
@@ -126,7 +146,7 @@ package body Utilities is
 	loop
 		digit := abs(tmp MOD 10);
 	    	tmp := tmp / 10;
-	    	result(pos) := character'val(character'pos('0') + digit);
+	    	result(pos) := Digit_To_Char(digit);
 	    	pos := pos + 1;
 	    	exit when ((tmp = 0) or (pos = (result'high-1)));
 	end loop;
@@ -456,10 +476,10 @@ library ahir;
 use ahir.Types.all;
 use ahir.Utilities.all;
 
-library aHiR_ieee_proposed;
--- use aHiR_ieee_proposed.math_utility_pkg.all;
-use aHiR_ieee_proposed.fixed_pkg.all;
-use aHiR_ieee_proposed.float_pkg.all;
+library ahir_ieee_proposed;
+-- use ahir_ieee_proposed.math_utility_pkg.all;
+use ahir_ieee_proposed.fixed_pkg.all;
+use ahir_ieee_proposed.float_pkg.all;
 
 package Subprograms is
 
@@ -477,7 +497,7 @@ package Subprograms is
   function To_ApInt ( inp : std_logic_vector) return ApInt;
   function To_ApInt ( inp : IStdLogicVector) return ApInt;
 
-  -- already present in float_pkg in aHiR_ieee_proposed
+  -- already present in float_pkg in ahir_ieee_proposed
   --function To_Float ( x                       : std_logic_vector;
   --                    constant exponent_width : integer;
   --                    constant fraction_width : integer)
@@ -1757,9 +1777,9 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Types.all;
 
-library aHiR_ieee_proposed;
-use aHiR_ieee_proposed.math_utility_pkg.all;                  
-use aHiR_ieee_proposed.float_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.math_utility_pkg.all;                  
+use ahir_ieee_proposed.float_pkg.all;
 
 
 package BaseComponents is
@@ -3155,6 +3175,67 @@ package BaseComponents is
   end component;
 
   
+  -----------------------------------------------------------------------------
+  -- temporary stuff.
+  -----------------------------------------------------------------------------
+  component tmpSplitCallArbiter
+    generic(num_reqs: integer;
+	  call_data_width: integer;
+	  return_data_width: integer;
+	  caller_tag_length: integer;
+          callee_tag_length: integer);
+    port ( -- ready/ready handshake on all ports
+      -- ports for the caller
+      call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+      call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+      call_data   : in  std_logic_vector((num_reqs*call_data_width)-1 downto 0);
+      call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+      -- call port connected to the called module
+      call_mreq   : out std_logic;
+      call_mack   : in  std_logic;
+      call_mdata  : out std_logic_vector(call_data_width-1 downto 0);
+      call_mtag   : out std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
+      -- similarly for return, initiated by the caller
+      return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+      return_acks : out std_logic_vector(num_reqs-1 downto 0);
+      return_data : out std_logic_vector((num_reqs*return_data_width)-1 downto 0);
+      return_tag  : out std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+      -- return from function
+      return_mreq : out std_logic;
+      return_mack : in std_logic;
+      return_mdata : in  std_logic_vector(return_data_width-1 downto 0);
+      return_mtag : in  std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
+      clk: in std_logic;
+      reset: in std_logic);
+  end component tmpSplitCallArbiter;
+
+  component tmpSplitCallArbiterNoOutargs
+    generic(num_reqs: integer;
+	  call_data_width: integer;
+	  caller_tag_length: integer;
+          callee_tag_length: integer);
+  port ( -- ready/ready handshake on all ports
+    -- ports for the caller
+    call_reqs   : in  std_logic_vector(num_reqs-1 downto 0);
+    call_acks   : out std_logic_vector(num_reqs-1 downto 0);
+    call_data   : in  std_logic_vector((num_reqs*call_data_width)-1 downto 0);
+    call_tag    : in  std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- call port connected to the called module
+    call_mreq   : out std_logic;
+    call_mack   : in  std_logic;
+    call_mdata  : out std_logic_vector(call_data_width-1 downto 0);
+    call_mtag   : out std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
+    -- similarly for return, initiated by the caller
+    return_reqs : in  std_logic_vector(num_reqs-1 downto 0);
+    return_acks : out std_logic_vector(num_reqs-1 downto 0);
+    return_tag  : out std_logic_vector((num_reqs*caller_tag_length)-1 downto 0);
+    -- return from function
+    return_mreq : out std_logic;
+    return_mack : in std_logic;
+    return_mtag : in  std_logic_vector(callee_tag_length+caller_tag_length-1 downto 0);
+    clk: in std_logic;
+    reset: in std_logic);
+  end component tmpSplitCallArbiterNoOutargs;
 end BaseComponents;
 -- all component declarations necessary for the
 -- vhdl generator
@@ -3175,10 +3256,10 @@ use ahir.Types.all;
 use ahir.Subprograms.all;	
 use ahir.Utilities.all;
 	
-library aHiR_ieee_proposed;	
-use aHiR_ieee_proposed.math_utility_pkg.all;	
-use aHiR_ieee_proposed.fixed_pkg.all;	
-use aHiR_ieee_proposed.float_pkg.all;	
+library ahir_ieee_proposed;	
+use ahir_ieee_proposed.math_utility_pkg.all;	
+use ahir_ieee_proposed.fixed_pkg.all;	
+use ahir_ieee_proposed.float_pkg.all;	
 
 package FloatOperatorPackage is
 
@@ -5013,9 +5094,9 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Types.all;
 
-library aHiR_ieee_proposed;
-use aHiR_ieee_proposed.math_utility_pkg.all;                  
-use aHiR_ieee_proposed.float_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.math_utility_pkg.all;                  
+use ahir_ieee_proposed.float_pkg.all;
 
 
 package functionLibraryComponents is
@@ -8948,6 +9029,84 @@ begin  -- default_arch
   symbol_out <= symbol_out_sig(0);
 
 end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
+library ahir;
+use ahir.Types.all;
+use ahir.subprograms.all;
+use ahir.BaseComponents.all;
+use ahir.utilities.all;
+
+entity marked_join_with_input is
+  generic (place_capacity : integer := 1; bypass : boolean := false; name : string := "anon");
+  port ( preds      : in   BooleanArray;
+         marked_preds : in BooleanArray;
+    	symbol_in : in  boolean;
+    	symbol_out : out  boolean;
+	clk: in std_logic;
+	reset: in std_logic);
+end marked_join_with_input;
+
+architecture default_arch of marked_join_with_input is
+  signal symbol_out_sig : BooleanArray(0 downto 0);
+  signal place_sigs: BooleanArray(preds'range);
+  signal mplace_sigs: BooleanArray(marked_preds'range);  
+  signal inp_place_sig: Boolean;
+  constant H: integer := preds'high;
+  constant L: integer := preds'low;
+
+  constant MH: integer := marked_preds'high;
+  constant ML: integer := marked_preds'low;  
+
+begin  -- default_arch
+  
+  placegen: for I in H downto L generate
+    placeBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+    begin
+	place_pred(0) <= preds(I);
+        byp: if bypass generate
+	  pI: place_with_bypass generic map(capacity => place_capacity, marking => 0)
+				-- name => name & ":" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+       end generate byp;
+
+        nobyp: if not bypass generate
+	  pI: place generic map(capacity => place_capacity, marking => 0)
+				-- name => name & ":" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+       end generate nobyp;
+
+    end block;
+  end generate placegen;
+
+  -- the marked places
+  mplacegen: for I in MH downto ML generate
+    mplaceBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+    begin
+	place_pred(0) <= marked_preds(I);
+	mpI: place generic map(capacity => place_capacity, marking => 1)
+				-- name => name & ":marked:" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
+    end block;
+  end generate mplacegen;
+
+  inplaceBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+  begin
+	place_pred(0) <= symbol_in;
+	pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
+				 name => name & ":inputplace")
+		port map(place_pred,symbol_out_sig,inp_place_sig,clk,reset);
+  end block;
+  
+  -- The transition is enabled only when all preds are true and transition
+  -- is reenabled.
+  symbol_out_sig(0) <= inp_place_sig and AndReduce(place_sigs) and AndReduce(mplace_sigs);
+  symbol_out <= symbol_out_sig(0);
+
+end default_arch;
 library ahir;
 use ahir.Types.all;
 use ahir.subprograms.all;
@@ -9134,6 +9293,7 @@ architecture default_arch of place is
   signal token_sig      : boolean;  -- asynchronously computed value of the token
   signal token_latch    : integer range 0 to capacity;
   
+  constant debug_flag : boolean := false;
 begin  -- default_arch
 
   assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;
@@ -9155,22 +9315,27 @@ begin  -- default_arch
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
       elsif (backward_reset and (not incoming_token)) then
-         assert token_latch > 0 report "in place " & name &  ": number of tokens cannot become negative!" severity error;
-         assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
-		severity note;
+	--if(debug_flag) then
+         --assert token_latch > 0 report "in place " & name &  ": number of tokens cannot become negative!" severity error;
+         --assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+		--severity note;
+        --end if;
         token_latch <= token_latch - 1;
       elsif (incoming_token and (not backward_reset)) then
-         assert token_latch < capacity report "in place " & name & " number of tokens "
-			 & Convert_To_String(token_latch+1) & " cannot exceed capacity " 
-			 & Convert_To_String(capacity) severity error;
-         assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
-		 severity note;
+	--if(debug_flag) then
+         --assert token_latch < capacity report "in place " & name & " number of tokens "
+			 --& Convert_To_String(token_latch+1) & " cannot exceed capacity " 
+			 --& Convert_To_String(capacity) severity error;
+         --assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+		 --severity note;
+	--end if;
         token_latch <= token_latch + 1;
       end if;
     end if;
   end process latch_token;
 
   token <= true when (token_latch > 0) else false;
+
 
 end default_arch;
 library ieee;
@@ -9203,6 +9368,8 @@ architecture default_arch of place_with_bypass is
   signal backward_reset : boolean;      -- true if a succ fires
   signal token_latch    : integer range 0 to capacity;
   signal non_zero       : boolean;
+
+  constant debug_flag : boolean := false;
   
 begin  -- default_arch
 
@@ -9235,12 +9402,16 @@ begin  -- default_arch
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
       elsif decr then
-         assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
-		 severity note;
+	-- if(debug_flag) then
+         -- assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+		 -- severity note;
+	-- end if;
         token_latch <= token_latch - 1;
       elsif incr then
-         assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
-		 severity note;
+	-- if(debug_flag) then
+         -- assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+		 -- severity note;
+	-- end if;
         token_latch <= token_latch + 1;
       end if;
 
@@ -10365,10 +10536,10 @@ begin  -- Behave
   end generate NoTstampGen;
 
   -- xilinx xst does not like this assertion...
-  DbgAssert: if debug_flag generate
-    assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
-      report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;    
-  end generate DbgAssert;
+  -- DbgAssert: if debug_flag generate
+    -- assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
+      -- report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;    
+  -- end generate DbgAssert;
 
   
   imux: InputMuxBase
@@ -11327,7 +11498,7 @@ use ieee.numeric_std.all;
 
 
 entity QueueBase is
-  generic(queue_depth: integer := 2; data_width: integer := 32);
+  generic(queue_depth: integer := 1; data_width: integer := 32);
   port(clk: in std_logic;
        reset: in std_logic;
        data_in: in std_logic_vector(data_width-1 downto 0);
@@ -12382,7 +12553,6 @@ begin
 	for T in 0 to num_reqs-1 loop
          if(pe_call_reqs(T) = '1' and latch_call_data = '1') then
            caller_mtag_reg <= call_tag(((T+1)*caller_tag_length)-1 downto T*caller_tag_length);
-	   exit;
          end if;
         end loop;
        end if;
@@ -12533,18 +12703,15 @@ begin
    process(clk,pe_call_reqs,call_state,reset)
         variable nstate: CallStateType;
         variable there_is_a_call : std_logic;
-        variable latch_pe_call_reqs: std_logic;
    begin
 	nstate := call_state;
         there_is_a_call := OrReduce(pe_call_reqs);
 	latch_call_data <= '0';
 	call_mreq <= '0';
-        latch_pe_call_reqs := '0';
 
 	if(call_state = idle) then
 		if(there_is_a_call = '1') then
 			latch_call_data <=  '1';
-        		latch_pe_call_reqs := '1';
 			nstate := busy;
 		end if;
 	elsif (call_state = busy) then
@@ -12552,7 +12719,6 @@ begin
 		if(call_mack = '1') then
 			if(there_is_a_call = '1') then
 				latch_call_data <=  '1';
-        			latch_pe_call_reqs := '1';
                         else
 				nstate := idle;
 			end if;
@@ -12565,9 +12731,6 @@ begin
 			pe_call_reqs_reg <= (others => '0');
 		else
 			call_state <= nstate;
-			if(latch_pe_call_reqs = '1') then
-				pe_call_reqs_reg <= pe_call_reqs;
-			end if;
 		end if;
 	end if;
    end process;
@@ -12612,14 +12775,15 @@ begin
    -- on a successful call, register the tag from the caller
    -- side..
    process(clk)
+	variable tvar : std_logic_vector(caller_tag_length-1 downto 0);
    begin
        if(clk'event and clk = '1') then
 	for T in 0 to num_reqs-1 loop
          if(pe_call_reqs(T) = '1' and latch_call_data = '1') then
-           caller_mtag_reg <= call_tag(((T+1)*caller_tag_length)-1 downto T*caller_tag_length);
-	   exit;
+           tvar := call_tag(((T+1)*caller_tag_length)-1 downto T*caller_tag_length);
          end if;
         end loop;
+	caller_mtag_reg <= tvar;
        end if;
    end process;     
 
@@ -12862,10 +13026,10 @@ begin  -- Behave
   assert ackL'length = reqL'length report "mismatched req/ack vectors" severity error;
   
 
-  DebugGen: if debug_flag generate 
-    assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
-    report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
-  end generate DebugGen;
+  -- DebugGen: if debug_flag generate 
+    -- assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
+    -- report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
+  -- end generate DebugGen;
   
   imux: InputMuxBase
     generic map(iwidth => iwidth*num_reqs,
@@ -13095,10 +13259,10 @@ begin  -- Behave
 
   assert(tag_length >= Ceil_Log2(num_reqs)) report "insufficient tag width" severity error;
 
-  debugCase: if debug_flag generate
-    assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
-      report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
-  end generate debugCase;
+  -- debugCase: if debug_flag generate
+    -- assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
+      -- report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
+  -- end generate debugCase;
   
   imux: InputMuxBase
   	generic map(iwidth => (addr_width+data_width)*num_reqs ,
@@ -15448,9 +15612,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library aHiR_ieee_proposed;
-use aHiR_ieee_proposed.float_pkg.all;
-use aHiR_ieee_proposed.math_utility_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.float_pkg.all;
+use ahir_ieee_proposed.math_utility_pkg.all;
 
 library ahir;
 use ahir.Subprograms.all;
@@ -15857,8 +16021,8 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
-library aHiR_ieee_proposed;
-use aHiR_ieee_proposed.math_utility_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.math_utility_pkg.all;
 
 entity PipelinedFPOperator is
   generic (
@@ -15913,10 +16077,10 @@ begin  -- Behave
   assert ((operator_id = "ApFloatMul") or (operator_id = "ApFloatAdd") or (operator_id = "ApFloatSub"))
     report "operator_id must be either add or mul or sub" severity error;  
 
-  DebugGen: if debug_flag generate 
-    assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
-    report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
-  end generate DebugGen;
+  -- DebugGen: if debug_flag generate 
+    -- assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
+    -- report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
+  -- end generate DebugGen;
   
   imux: InputMuxBase
     generic map(iwidth => iwidth*num_reqs,
@@ -17456,9 +17620,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library aHiR_ieee_proposed;
-use aHiR_ieee_proposed.float_pkg.all;
-use aHiR_ieee_proposed.math_utility_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.float_pkg.all;
+use ahir_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpadd32 is -- 
@@ -17505,9 +17669,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library aHiR_ieee_proposed;
-use aHiR_ieee_proposed.float_pkg.all;
-use aHiR_ieee_proposed.math_utility_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.float_pkg.all;
+use ahir_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpadd64 is -- 
@@ -17554,9 +17718,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library aHiR_ieee_proposed;
-use aHiR_ieee_proposed.math_utility_pkg.all;
-use aHiR_ieee_proposed.float_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.math_utility_pkg.all;
+use ahir_ieee_proposed.float_pkg.all;
 
 
 entity fpmul32 is -- 
@@ -17602,9 +17766,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library aHiR_ieee_proposed;
-use aHiR_ieee_proposed.math_utility_pkg.all;
-use aHiR_ieee_proposed.float_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.math_utility_pkg.all;
+use ahir_ieee_proposed.float_pkg.all;
 
 
 entity fpmul64 is -- 
@@ -17650,9 +17814,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library aHiR_ieee_proposed;
-use aHiR_ieee_proposed.float_pkg.all;
-use aHiR_ieee_proposed.math_utility_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.float_pkg.all;
+use ahir_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpsub32 is -- 
@@ -17699,9 +17863,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library aHiR_ieee_proposed;
-use aHiR_ieee_proposed.float_pkg.all;
-use aHiR_ieee_proposed.math_utility_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.float_pkg.all;
+use ahir_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpsub64 is -- 
@@ -17748,9 +17912,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library aHiR_ieee_proposed;
-use aHiR_ieee_proposed.float_pkg.all;
-use aHiR_ieee_proposed.math_utility_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.float_pkg.all;
+use ahir_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpu32 is -- 
@@ -17870,9 +18034,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library aHiR_ieee_proposed;
-use aHiR_ieee_proposed.float_pkg.all;
-use aHiR_ieee_proposed.math_utility_pkg.all;
+library ahir_ieee_proposed;
+use ahir_ieee_proposed.float_pkg.all;
+use ahir_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpu64 is -- 

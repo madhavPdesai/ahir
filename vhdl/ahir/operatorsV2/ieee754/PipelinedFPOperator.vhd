@@ -64,10 +64,10 @@ begin  -- Behave
   assert ((operator_id = "ApFloatMul") or (operator_id = "ApFloatAdd") or (operator_id = "ApFloatSub"))
     report "operator_id must be either add or mul or sub" severity error;  
 
-  DebugGen: if debug_flag generate 
-    assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
-    report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
-  end generate DebugGen;
+  -- DebugGen: if debug_flag generate 
+    -- assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
+    -- report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
+  -- end generate DebugGen;
   
   imux: InputMuxBase
     generic map(iwidth => iwidth*num_reqs,
