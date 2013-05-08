@@ -1,0 +1,15 @@
+Run compile.sh
+
+Run
+   ./testDivider <Number of pairs> 
+to test the divider.
+
+Run
+   ./testGCD <number of integers> <scale-factor>
+to test the GCD.  Two files are produced, one with
+the input numbers and one with the result.  To test
+the VHDL, generate these two files by
+   ./testGCD 16 m 
+where m is the desired GCD (e.g. m = 2).
+
+   
