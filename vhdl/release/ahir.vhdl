@@ -476,10 +476,10 @@ library ahir;
 use ahir.Types.all;
 use ahir.Utilities.all;
 
-library ahir_ieee_proposed;
+library aHiR_ieee_proposed;
 -- use ahir_ieee_proposed.math_utility_pkg.all;
-use ahir_ieee_proposed.fixed_pkg.all;
-use ahir_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.fixed_pkg.all;
+use aHiR_ieee_proposed.float_pkg.all;
 
 package Subprograms is
 

@@ -153,5 +153,35 @@ component fpu64 is --
     );
 end component fpu64;
 
+component getClockTime is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      clock_time : out  std_logic_vector(31 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end component getClockTime;
+
+component countDownTimer is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      time_count : in  std_logic_vector(31 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end component countDownTimer;
+
 end package;
 
