@@ -24,11 +24,12 @@ TOPMODULES=-T gcd_daemon
 
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.
-SW: $(SRC)/gcd.c $(SRC)/divider.c $(SRC)/test_gcd.c  $(SRC)/gcd.h $(SRC)/test_gcd.c  $(SRC)/divider.h
+SW: $(SRC)/gcd.c $(SRC)/divider.c $(SRC)/test_gcd.c  $(SRC)/gcd.h $(SRC)/test_gcd.c  $(SRC)/divider.h $(FUNCTIONLIB)/src/timer.c 
 	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include -I$(SRC) $(SRC)/divider.c
 	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include -I$(SRC) $(SRC)/gcd.c
+	gcc -g -c -DSW $(PROGDEFS) -I$(FUNCTIONLIB)/include -I$(SRC) $(FUNCTIONLIB)/src/timer.c
 	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(PTHREADUTILS_INCLUDE) -I$(SRC) $(SRC)/test_gcd.c
-	gcc -g -o testbench_sw divider.o gcd.o test_gcd.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
+	gcc -g -o testbench_sw divider.o gcd.o timer.o test_gcd.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread -lrt
 
 # five steps from C to vhdl simulator.
 HW: c2llvmbc llvmbc2aa  aalink aa2vc  vc2vhdl  vhdlsim
@@ -51,7 +52,7 @@ llvmbc2aa:  divider.opt.o  gcd.opt.o
 
 # Aa to vC
 aalink: divider.aa gcd.aa 
-	AaLinkExtMem gcd.aa divider.aa | vcFormat > prog.linked.aa
+	AaLinkExtMem gcd.aa divider.aa $(FUNCTIONLIB)/Aa/timer.aa | vcFormat > prog.linked.aa
 	AaOpt prog.linked.aa | vcFormat > prog.linked.opt.aa
 
 aa2vc: prog.linked.opt.aa
@@ -59,7 +60,7 @@ aa2vc: prog.linked.opt.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -S 4 -O -I 16 -v -q -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
+	vc2vhdl -S 4 -O -I 16 -v -q -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/timer.list
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl

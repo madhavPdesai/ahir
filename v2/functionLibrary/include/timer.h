@@ -3,5 +3,6 @@
 
 #include <stdint.h>
 void countDownTimer(uint32_t time_count);
+uint32_t getClockTime();
 
 #endif

@@ -477,7 +477,7 @@ use ahir.Types.all;
 use ahir.Utilities.all;
 
 library aHiR_ieee_proposed;
--- use ahir_ieee_proposed.math_utility_pkg.all;
+-- use aHiR_ieee_proposed.math_utility_pkg.all;
 use aHiR_ieee_proposed.fixed_pkg.all;
 use aHiR_ieee_proposed.float_pkg.all;
 
@@ -497,7 +497,7 @@ package Subprograms is
   function To_ApInt ( inp : std_logic_vector) return ApInt;
   function To_ApInt ( inp : IStdLogicVector) return ApInt;
 
-  -- already present in float_pkg in ahir_ieee_proposed
+  -- already present in float_pkg in aHiR_ieee_proposed
   --function To_Float ( x                       : std_logic_vector;
   --                    constant exponent_width : integer;
   --                    constant fraction_width : integer)
@@ -1777,9 +1777,9 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Types.all;
 
-library ahir_ieee_proposed;
-use ahir_ieee_proposed.math_utility_pkg.all;                  
-use ahir_ieee_proposed.float_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;                  
+use aHiR_ieee_proposed.float_pkg.all;
 
 
 package BaseComponents is
@@ -3256,10 +3256,10 @@ use ahir.Types.all;
 use ahir.Subprograms.all;	
 use ahir.Utilities.all;
 	
-library ahir_ieee_proposed;	
-use ahir_ieee_proposed.math_utility_pkg.all;	
-use ahir_ieee_proposed.fixed_pkg.all;	
-use ahir_ieee_proposed.float_pkg.all;	
+library aHiR_ieee_proposed;	
+use aHiR_ieee_proposed.math_utility_pkg.all;	
+use aHiR_ieee_proposed.fixed_pkg.all;	
+use aHiR_ieee_proposed.float_pkg.all;	
 
 package FloatOperatorPackage is
 
@@ -5094,9 +5094,9 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.Types.all;
 
-library ahir_ieee_proposed;
-use ahir_ieee_proposed.math_utility_pkg.all;                  
-use ahir_ieee_proposed.float_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;                  
+use aHiR_ieee_proposed.float_pkg.all;
 
 
 package functionLibraryComponents is
@@ -5241,6 +5241,36 @@ component fpu64 is --
       tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
     );
 end component fpu64;
+
+component getClockTime is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      clock_time : out  std_logic_vector(31 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end component getClockTime;
+
+component countDownTimer is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      time_count : in  std_logic_vector(31 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end component countDownTimer;
 
 end package;
 
@@ -15612,9 +15642,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-library ahir_ieee_proposed;
-use ahir_ieee_proposed.float_pkg.all;
-use ahir_ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 library ahir;
 use ahir.Subprograms.all;
@@ -16021,8 +16051,8 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
-library ahir_ieee_proposed;
-use ahir_ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 entity PipelinedFPOperator is
   generic (
@@ -17616,13 +17646,102 @@ begin  -- Pipelined
 end Pipelined;
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
 library ahir;
 use ahir.BaseComponents.all;
 
-library ahir_ieee_proposed;
-use ahir_ieee_proposed.float_pkg.all;
-use ahir_ieee_proposed.math_utility_pkg.all;
+
+entity countDownTimer is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      time_count : in  std_logic_vector(31 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end entity countDownTimer;
+
+architecture Behave of countDownTimer is
+
+	type TimerState is (idle, busy, waiting, done);
+	signal tstate : TimerState;
+	signal count_sig : unsigned(31 downto 0);
+	signal tag_reg : std_logic_vector(tag_length-1 downto 0);
+
+begin
+
+	process(clk,reset,tstate,count_sig,start_req,fin_req,tag_in)
+		variable next_state: TimerState;
+		variable latch_var, decr_count, latch_otag: boolean;
+	begin
+		next_state := tstate;
+
+		start_ack <= '0';
+		fin_ack <= '0';
+
+		latch_var := false;
+		decr_count := false;
+		latch_otag := false;
+
+		case tstate is 
+			when idle =>
+				start_ack <= '1';
+				if(start_req = '1') then
+					next_state := busy;
+					latch_var  := true;
+				end if;
+			when busy =>
+				decr_count := true;
+				if(count_sig = (others => '0')) then
+					next_state := waiting;
+				end if;
+                        when waiting =>
+				if(fin_req = '1') then
+					next_state := done;
+					latch_otag := true;
+				end if;
+			when done =>
+				fin_ack <= '1';
+				next_state := idle;
+			when others =>
+		end case;
+		if(clk'event  and clk = '1') then
+			if(reset = '1') then
+				tstate <= idle;
+			else
+				tstate <= next_state;	
+			end if;
+
+			if(latch_var) then
+				count_sig <= time_count;
+				tag_reg <= tag_in;
+			elsif(decr_count) then
+				count_sig <= count_sig - 1;
+			end if;
+
+			if(latch_otag) then
+				tag_out <= tag_reg;	
+			end if;
+		end if;
+	end process;
+
+end Struct;
+
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpadd32 is -- 
@@ -17669,9 +17788,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library ahir_ieee_proposed;
-use ahir_ieee_proposed.float_pkg.all;
-use ahir_ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpadd64 is -- 
@@ -17718,9 +17837,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library ahir_ieee_proposed;
-use ahir_ieee_proposed.math_utility_pkg.all;
-use ahir_ieee_proposed.float_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;
+use aHiR_ieee_proposed.float_pkg.all;
 
 
 entity fpmul32 is -- 
@@ -17766,9 +17885,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library ahir_ieee_proposed;
-use ahir_ieee_proposed.math_utility_pkg.all;
-use ahir_ieee_proposed.float_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.math_utility_pkg.all;
+use aHiR_ieee_proposed.float_pkg.all;
 
 
 entity fpmul64 is -- 
@@ -17814,9 +17933,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library ahir_ieee_proposed;
-use ahir_ieee_proposed.float_pkg.all;
-use ahir_ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpsub32 is -- 
@@ -17863,9 +17982,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library ahir_ieee_proposed;
-use ahir_ieee_proposed.float_pkg.all;
-use ahir_ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpsub64 is -- 
@@ -17912,9 +18031,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library ahir_ieee_proposed;
-use ahir_ieee_proposed.float_pkg.all;
-use ahir_ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpu32 is -- 
@@ -18034,9 +18153,9 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-library ahir_ieee_proposed;
-use ahir_ieee_proposed.float_pkg.all;
-use ahir_ieee_proposed.math_utility_pkg.all;
+library aHiR_ieee_proposed;
+use aHiR_ieee_proposed.float_pkg.all;
+use aHiR_ieee_proposed.math_utility_pkg.all;
 
 
 entity fpu64 is -- 
@@ -18146,5 +18265,90 @@ begin
    ret_val_x_x <= data_from_omux(63+tag_length downto tag_length);
    tag_out <= data_from_omux(tag_length-1 downto 0);
 			
+end Struct;
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.BaseComponents.all;
+
+
+entity getClockTime is -- 
+    generic (tag_length : integer);
+    port ( -- 
+      clock_time : out  std_logic_vector(31 downto 0);
+      clk : in std_logic;
+      reset : in std_logic;
+      start_req : in std_logic;
+      start_ack : out std_logic;
+      fin_req : in std_logic;
+      fin_ack   : out std_logic;
+      tag_in: in std_logic_vector(tag_length-1 downto 0);
+      tag_out: out std_logic_vector(tag_length-1 downto 0) -- 
+    );
+end entity getClockTime;
+
+architecture Behave of getClockTime is
+
+	type TimerState is (idle, waiting, done);
+	signal tstate : TimerState;
+	signal count_sig : unsigned(31 downto 0);
+	signal tag_reg : std_logic_vector(tag_length-1 downto 0);
+	signal clock_reg : std_logic_vector(31 downto 0);
+
+begin
+
+	process(clk,reset,tstate,count_sig,start_req,fin_req,tag_in)
+		variable next_state: TimerState;
+		variable latch_var, decr_count, latch_otag: boolean;
+	begin
+		next_state := tstate;
+
+		start_ack <= '0';
+		fin_ack <= '0';
+
+		latch_var := false;
+		decr_count := false;
+		latch_otag := false;
+
+		case tstate is 
+			when idle =>
+				start_ack <= '1';
+				if(start_req = '1') then
+					next_state := waiting;
+					latch_var  := true;
+				end if;
+                        when waiting =>
+				if(fin_req = '1') then
+					next_state := done;
+					latch_otag := true;
+				end if;
+			when done =>
+				fin_ack <= '1';
+				next_state := idle;
+		end case;
+		if(clk'event  and clk = '1') then
+			if(reset = '1') then
+				tstate <= idle;
+				count_sig <= (others => '0');
+			else
+				tstate <= next_state;	
+				count_sig <= count_sig + 1;
+			end if;
+
+			if(latch_var) then
+				tag_reg <= tag_in;
+				clock_reg <= std_logic_vector(count_sig);	
+			end if;
+
+			if(latch_otag) then
+				clock_time <= clock_reg;
+				tag_out <= tag_reg;	
+			end if;
+		end if;
+	end process;
+
 end Struct;
 

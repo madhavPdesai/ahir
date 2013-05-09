@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "divider.h"
 #include "gcd.h"
+#include <timer.h>
 uint16_t N[ORDER];
 
 uint16_t gcd2(uint16_t a, uint16_t b)
@@ -42,7 +43,12 @@ void gcd_daemon()
 		for(i = 0; i < ORDER; i++)
 			N[i] = read_uint16("in_data");
 
+		uint32_t start_time = getClockTime();
 		uint16_t g = gcd();
+		countDownTimer(1024);
+		uint32_t stop_time  = getClockTime();
+
 		write_uint16("out_data",g);
+		write_uint32("elapsed_time", (stop_time - start_time));
 	}
 }

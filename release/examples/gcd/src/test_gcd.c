@@ -69,6 +69,9 @@ int main(int argc, char* argv[])
 	to_string(ostr,g);
 	fprintf(ofile2,"%s\n",ostr);
 
+	uint32_t et = read_uint32("elapsed_time");
+	fprintf(stderr,"Elapsed time = %u.\n", et);
+
 	fclose(ofile1);
 	fclose(ofile2);
 
