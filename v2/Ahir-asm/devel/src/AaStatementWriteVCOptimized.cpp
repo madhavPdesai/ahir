@@ -578,12 +578,18 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	     || stmt->Can_Block())
 	  {
 		barrier = stmt;
+		ofile << "// barrier: " << stmt->To_String() << endl;
 
 		// put dependencies from all prior statements 
 		// to the barrier
 		for(int K = idx-1; K >= 0; K--)
 		{
 			AaStatement* prev_stmt = sseq->Get_Statement(K);
+			
+			// if prev_stmt is a constant, then skip it.
+			if(prev_stmt->Is_Constant())
+				continue;
+
 			__J(stmt->Get_VC_Start_Transition_Name(), prev_stmt->Get_VC_Completed_Transition_Name());
 	  		if(prev_stmt->Is_Block_Statement() || (prev_stmt->Is("AaCallStatement") && 
 	      			!((AaModule*)(((AaCallStatement*)prev_stmt)->Get_Called_Module()))->Has_No_Side_Effects())

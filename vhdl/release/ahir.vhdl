@@ -17651,7 +17651,6 @@ use ieee.numeric_std.all;
 library ahir;
 use ahir.BaseComponents.all;
 
-<<<<<<< Updated upstream
 
 entity countDownTimer is -- 
     generic (tag_length : integer);

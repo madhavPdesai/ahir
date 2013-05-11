@@ -52,7 +52,7 @@ begin
 				end if;
 			when busy =>
 				decr_count := true;
-				if(count_sig = (others => '0')) then
+				if(count_sig = 0) then
 					next_state := waiting;
 				end if;
                         when waiting =>
@@ -73,7 +73,7 @@ begin
 			end if;
 
 			if(latch_var) then
-				count_sig <= time_count;
+				count_sig <= unsigned(time_count);
 				tag_reg <= tag_in;
 			elsif(decr_count) then
 				count_sig <= count_sig - 1;
@@ -85,5 +85,5 @@ begin
 		end if;
 	end process;
 
-end Struct;
+end Behave;
 

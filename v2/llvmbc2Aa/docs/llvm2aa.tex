@@ -43,6 +43,13 @@ pipes in the generated Aa program. The file ``depthfile'' is a list
 of pairs (one pair per line).  The first element of the pair specifies
 a pipe name, and the second, its maximum depth.   The default depth
 of any pipe is $1$.
+\item {\bf -extract\_do\_while=true}: If specified, mark inner loops
+as do-while loops, whose implementation will be
+pipelined.  An inner loop is a basic block whose terminator
+statement has a branch back to the beginning of the basic block. 
+This optimization is suppressed if the inner loop body contains a
+call to the special function {\bf nooptimize}.  If not specified,
+inner loops are not marked as do-while loops.
 \item {\bf llvm2aa} uses the LLVM compiler
 infrastructure to perform LLVM byte-code optimizations.  A large list
 of these optimizations is available through the llvm2aa command-line.

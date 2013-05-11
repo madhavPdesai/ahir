@@ -81,5 +81,5 @@ begin
 		end if;
 	end process;
 
-end Struct;
+end Behave;
 

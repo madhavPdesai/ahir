@@ -1,0 +1,13 @@
+1.  llvm2aa produces switch statements with multiple
+    place statements targeting the same place.
+	-- Solution:  allow multiple place definitions,
+		but handle correctly in Aa2VC.
+
+2.  loop-pipelining control using a macro
+    _Not_To_Be_Pipelined_ 
+
+    This will instantiate a function call to a 
+    special function  in the the llvm-byte-code.
+    The presence of this function call in an inner
+    loop candidate will suppress the pipelining of
+    this inner loop.  

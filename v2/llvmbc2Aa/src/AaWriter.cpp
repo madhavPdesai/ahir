@@ -900,6 +900,18 @@ namespace {
     {
       std::string cname = to_aa(C.getNameStr());
       const llvm::Function* called_function  = C.getCalledFunction();
+
+      // _nooptimize_ is a special function.
+      if(called_function != NULL)
+      { 
+	StringRef fname = called_function->getName();
+	if(fname.equals("loop_pipelining_off"))
+        {
+	        std::cerr << "Info: ignoring call to special function loop_pipelining_off." << std::endl;
+		return;
+	}
+      }
+
       if(called_function == NULL)
 	{
 	  const llvm::Value* called_function_pointer = C.getCalledValue();
@@ -921,6 +933,7 @@ namespace {
 		}
 	    }
 	}
+
 
       if(called_function == NULL)
 	{

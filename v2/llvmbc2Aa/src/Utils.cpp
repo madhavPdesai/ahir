@@ -1034,6 +1034,23 @@ bool Aa::is_do_while_loop(llvm::BasicBlock& BB)
 	if(T->getNumSuccessors() == 0)
 		return(false);
 
+	// nooptimize function called here?  not to be a do-while
+	// loop.
+      	for(llvm::BasicBlock::iterator iiter = BB.begin(),fiter = BB.end(); 
+	  iiter != fiter;  ++iiter)
+	{
+	  if(isa<CallInst>(*iiter))
+	    {
+	      llvm::CallInst& C = static_cast<CallInst&>(*iiter);
+      	      llvm::Function* f  = C.getCalledFunction();
+	      if(f->isDeclaration())
+	      {
+		StringRef name = f->getName();
+		if(name.equals("loop_pipelining_off"))
+			return(false);
+	      }
+            }
+	}
 
 	bool ret_val = false;
 	for (unsigned i = 0, e = T->getNumSuccessors(); i != e; ++i) 
