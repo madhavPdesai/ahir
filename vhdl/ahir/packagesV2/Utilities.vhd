@@ -47,6 +47,7 @@ package Utilities is
     signal sr_ack : in  boolean;
     signal sc_req : in  boolean;
     signal sc_ack : in  boolean;
+    operator_name: in string;
     mem_space_name : in string;
     write_data : in std_logic_vector;
     write_address : in std_logic_vector;    
@@ -354,23 +355,32 @@ package body Utilities is
     signal sr_ack : in  boolean;
     signal sc_req : in  boolean;
     signal sc_ack : in  boolean;
+    operator_name: in string;
     mem_space_name : in string;
     write_data : in std_logic_vector;
     write_address : in std_logic_vector;    
     write_data_name : in string;
     write_address_name: in string) is
-    variable log_count : integer := 0;
+    variable address_in_progress: std_logic_vector(1 to write_address'length);
+    variable data_in_progress: std_logic_vector(1 to write_data'length);
+    variable start_log_count, completed_log_count : integer := 0;
   begin
     if(clk'event and clk = '1') then
       if(sr_ack) then
-        assert false report Convert_To_String(log_count) & ": started MemWrite " & mem_space_name &
-          "[" & write_address_name & " = " & Convert_SLV_To_Hex_String(write_address) & "] <= " &
+	address_in_progress := write_address;
+	data_in_progress := write_data;
+        assert false report operator_name & "(" & Convert_To_String(start_log_count) & ") "
+	  & ": started MemWrite " 
+	  & mem_space_name &
+          "[" & write_address_name & " =" & Convert_SLV_To_Hex_String(write_address) & "] <= " &
           write_data_name & " = " & Convert_SLV_To_Hex_String(write_data) severity note;
+	start_log_count := start_log_count + 1;
       end if;
 
       if(sc_ack) then
-        assert false report Convert_To_String(log_count) & ": completed MemWrite " severity note;
-        log_count := log_count+1;
+        assert false report operator_name & " (" & Convert_To_String(completed_log_count) & ") "
+	& ": completed MemWrite "  & mem_space_name severity note;
+        completed_log_count := completed_log_count+1;
       end if;
     end if;        
   end procedure;
@@ -387,16 +397,23 @@ package body Utilities is
     read_address : in std_logic_vector;    
     read_data_name : in string;
     read_address_name: in string) is
+    variable start_log_count, completed_log_count : integer := 0;
   begin
     if(clk'event and clk = '1') then
       if(lr_ack) then
-        assert false report operator_name & ": started MemRead " & mem_space_name severity note;
+        assert false report operator_name & "(" & Convert_To_String(start_log_count) & ") "
+	  & ": started MemRead " 
+	  & mem_space_name &
+          " address: " & read_address_name & " =" & Convert_SLV_To_Hex_String(read_address) & "] " 
+          severity note;
+	start_log_count := start_log_count + 1;
       end if;
 
       if(lc_ack) then
-        assert false report operator_name & ": completed MemRead " & mem_space_name 
-          & "[" & read_address_name & " = " & Convert_SLV_To_Hex_String(read_address) & "] => " &
+        assert false report operator_name & " (" & Convert_To_String(completed_log_count) & ") "
+	& ": completed MemRead "  & mem_space_name & " data: " &  
           read_data_name & " = " & Convert_SLV_To_Hex_String(read_data) severity note;
+        completed_log_count := completed_log_count+1;
       end if;
     end if;        
     

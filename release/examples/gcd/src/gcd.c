@@ -45,7 +45,7 @@ void gcd_daemon()
 
 		uint32_t start_time = getClockTime();
 		uint16_t g = gcd();
-		countDownTimer(1024);
+		//countDownTimer(1024);
 		uint32_t stop_time  = getClockTime();
 
 		write_uint16("out_data",g);

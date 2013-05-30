@@ -1111,3 +1111,12 @@ void vcModule::Print_VHDL_Pipe_Instances(ostream& ofile)
 	(*piter).second->Print_VHDL_Instance(ofile);
     }
 }
+
+void vcModule::Print_Reduced_CP_As_Dot_File()
+{
+	string cp_file_name = this->Get_VHDL_Id() + "_CP.dot";
+	ofstream cp_file;
+	cp_file.open(cp_file_name.c_str());
+	this->_control_path->Print_Reduced_Control_Path_As_Dot_File(cp_file);
+	cp_file.close();	
+}

@@ -207,6 +207,8 @@ class vcModule: public vcRoot
 
   void Mark_Reachable_Modules(set<vcModule*>& reachable_modules);
   void Delink_From_Modules_And_Memory_Spaces();
+
+  void Print_Reduced_CP_As_Dot_File();
 };
 
 #endif // vcModule

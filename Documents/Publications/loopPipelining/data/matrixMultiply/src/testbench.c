@@ -15,7 +15,9 @@
 #else
 #include "vhdlCStubs.h"
 #endif
+#include <math.h>
 
+#define EPSILON 1.0e-6
 //
 //
 float a_matrix[ORDER][ORDER], b_matrix[ORDER][ORDER], expected_c_matrix[ORDER][ORDER], c_matrix[ORDER][ORDER];
@@ -119,7 +121,8 @@ int main(int argc, char* argv[])
 	{
 		for(j = 0; j < ORDER; j++)
 		{
-			if(expected_c_matrix[i][j] == c_matrix[i][j])
+			float tmp_err = fabs(expected_c_matrix[i][j] - c_matrix[i][j]);
+			if(tmp_err < EPSILON)
 				fprintf(stdout,"result[%d][%d] = %f\n", i, j, c_matrix[i][j]);
 			else
 				fprintf(stdout,"Error: result[%d][%d] = %f, expected = %f\n", 

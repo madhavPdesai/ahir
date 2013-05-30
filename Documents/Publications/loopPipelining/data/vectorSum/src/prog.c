@@ -8,6 +8,10 @@ float A[ORDER];
 float B[ORDER];
 float C[ORDER];
 
+#ifndef SW
+void loop_pipelining_on();
+#endif
+
 void getData()
 {
 	int idx;
@@ -50,8 +54,11 @@ void vectorSum()
 void _vectorSum_()
 {
 	uint8_t I;
-	for(I=0; I < ORDER; I += 4)
+	for(I=0; I < ORDER; I += 8)
 	{
+#ifndef SW
+		loop_pipelining_on();
+#endif
 		uint8_t I1 = I+1; 
 		uint8_t I2 = I+2; 
 		uint8_t I3 = I+3; 
@@ -59,14 +66,24 @@ void _vectorSum_()
 		uint8_t I5 = I+5; 
 		uint8_t I6 = I+6; 
 		uint8_t I7 = I+7; 
-		C[I]  = A[I]+B[I];
-		C[I1] = A[I1]+B[I1];
-		C[I2] = A[I2]+B[I2];
-		C[I3] = A[I3]+B[I3];
-		C[I4] = A[I4]+B[I4];
-		C[I5] = A[I5]+B[I5];
-		C[I6] = A[I6]+B[I6];
-		C[I7] = A[I7]+B[I7];
+
+		float c0  = A[I]+B[I];
+		float c1 = A[I1]+B[I1];
+		float c2 = A[I2]+B[I2];
+		float c3 = A[I3]+B[I3];
+		float c4 = A[I4]+B[I4];
+		float c5 = A[I5]+B[I5];
+		float c6 = A[I6]+B[I6];
+		float c7 = A[I7]+B[I7];
+
+		C[I]  = c0;
+		C[I1] = c1;
+		C[I2] = c2;
+		C[I3] = c3;
+		C[I4] = c4;
+		C[I5] = c5;
+		C[I6] = c6;
+		C[I7] = c7;
 	}
 
 }

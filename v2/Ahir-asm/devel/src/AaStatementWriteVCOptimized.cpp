@@ -648,6 +648,10 @@ Write_VC_Load_Store_Dependencies(bool pipeline_flag, map<string,vector<AaExpress
 				 ostream& ofile)
 {
 
+  bool leading_store_found = false;
+  set<AaExpression*> leading_accesses;
+
+  set<AaExpression*> trailing_accesses;
   ofile << "// load-store dependencies.." << endl;
   // for each memory space, scan the ordered list of 
   // load-stores, and add dependencies as follows
@@ -662,12 +666,50 @@ Write_VC_Load_Store_Dependencies(bool pipeline_flag, map<string,vector<AaExpress
     {
       vector<AaExpression*> active_loads;
       AaExpression* last_store = NULL;
+
+      string mem_space_name = (*iter).first;
+
       for(int idx = 0, fidx = (*iter).second.size(); idx < fidx; idx++)
 	{
 	  AaExpression* expr = (*iter).second[idx];
 
+
+ 	  if(pipeline_flag)
+	  {
+	  	// keep track of the leading and trailing accesses in
+	  	// the sequence..  In the pipeline case, the trailing
+	  	// access set will reenable the leading accesses..
+		// the scheme: scan the list, and create a leading
+		// set of loads (or a singleton store).  At the same
+		// time create a trailing set of loads (or a singleton
+		// store).  It is possible for the leading and trailing
+		// sets to be the same.
+	  	if(expr->Is_Store())
+	  	{
+	      		if(!leading_store_found)
+			{
+				if(leading_accesses.size() == 0)
+					leading_accesses.insert(expr);
+
+				leading_store_found = true;	
+			}
+	
+			trailing_accesses.clear();
+			trailing_accesses.insert(expr);
+	  	}
+	  	else
+	  	{
+			if(!leading_store_found)
+				leading_accesses.insert(expr);
+
+			trailing_accesses.insert(expr);
+	  	}
+	}
+
 	  if(expr->Is_Store())
 	    {
+
+
 	      if(active_loads.size() > 0)
 		{
 		  // dependency between active loads and
@@ -701,6 +743,21 @@ Write_VC_Load_Store_Dependencies(bool pipeline_flag, map<string,vector<AaExpress
 	    {
 	      active_loads.push_back(expr);
 	    }
+	}
+
+	// TODO: in the pipeline case, the last store in the list must
+	//       start before the first load/store in the list.  That is,
+	//       the ring dependency must be enforced.  Other dependencies
+	//       are superfluous!
+	if(pipeline_flag)
+	{
+	      	Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(mem_space_name,
+									leading_accesses,
+									trailing_accesses,
+									ofile);
+      		leading_store_found = false;
+      		leading_accesses.clear();
+      		trailing_accesses.clear();
 	}
     }
 }

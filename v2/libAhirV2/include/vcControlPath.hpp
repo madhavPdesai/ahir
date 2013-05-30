@@ -834,6 +834,12 @@ public:
       return(ret_string);
   }
 
+  virtual string Get_Dot_Id() 
+  { 
+      string ret_string = "e_" + Int64ToStr(this->Get_Group_Index());
+      return(ret_string);
+  }
+
   void Set_Associated_CP_Function(vcCPElement* c) {_associated_cp_function = c;}
   vcCPElement* Get_Associated_CP_Function() {return(_associated_cp_function);}
 
@@ -944,6 +950,8 @@ public:
   }
 
   void Update_Group_Bypass_Flags();
+
+  virtual void Print_Reduced_Control_Path_As_Dot_File(ostream& ofile);
 };
 
 

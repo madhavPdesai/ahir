@@ -70,6 +70,7 @@ package Utilities is
     signal sr_ack : in  boolean;
     signal sc_req : in  boolean;
     signal sc_ack : in  boolean;
+    operator_name: in string;
     mem_space_name : in string;
     write_data : in std_logic_vector;
     write_address : in std_logic_vector;    
@@ -377,23 +378,32 @@ package body Utilities is
     signal sr_ack : in  boolean;
     signal sc_req : in  boolean;
     signal sc_ack : in  boolean;
+    operator_name: in string;
     mem_space_name : in string;
     write_data : in std_logic_vector;
     write_address : in std_logic_vector;    
     write_data_name : in string;
     write_address_name: in string) is
-    variable log_count : integer := 0;
+    variable address_in_progress: std_logic_vector(1 to write_address'length);
+    variable data_in_progress: std_logic_vector(1 to write_data'length);
+    variable start_log_count, completed_log_count : integer := 0;
   begin
     if(clk'event and clk = '1') then
       if(sr_ack) then
-        assert false report Convert_To_String(log_count) & ": started MemWrite " & mem_space_name &
-          "[" & write_address_name & " = " & Convert_SLV_To_Hex_String(write_address) & "] <= " &
+	address_in_progress := write_address;
+	data_in_progress := write_data;
+        assert false report operator_name & "(" & Convert_To_String(start_log_count) & ") "
+	  & ": started MemWrite " 
+	  & mem_space_name &
+          "[" & write_address_name & " =" & Convert_SLV_To_Hex_String(write_address) & "] <= " &
           write_data_name & " = " & Convert_SLV_To_Hex_String(write_data) severity note;
+	start_log_count := start_log_count + 1;
       end if;
 
       if(sc_ack) then
-        assert false report Convert_To_String(log_count) & ": completed MemWrite " severity note;
-        log_count := log_count+1;
+        assert false report operator_name & " (" & Convert_To_String(completed_log_count) & ") "
+	& ": completed MemWrite "  & mem_space_name severity note;
+        completed_log_count := completed_log_count+1;
       end if;
     end if;        
   end procedure;
@@ -410,16 +420,23 @@ package body Utilities is
     read_address : in std_logic_vector;    
     read_data_name : in string;
     read_address_name: in string) is
+    variable start_log_count, completed_log_count : integer := 0;
   begin
     if(clk'event and clk = '1') then
       if(lr_ack) then
-        assert false report operator_name & ": started MemRead " & mem_space_name severity note;
+        assert false report operator_name & "(" & Convert_To_String(start_log_count) & ") "
+	  & ": started MemRead " 
+	  & mem_space_name &
+          " address: " & read_address_name & " =" & Convert_SLV_To_Hex_String(read_address) & "] " 
+          severity note;
+	start_log_count := start_log_count + 1;
       end if;
 
       if(lc_ack) then
-        assert false report operator_name & ": completed MemRead " & mem_space_name 
-          & "[" & read_address_name & " = " & Convert_SLV_To_Hex_String(read_address) & "] => " &
+        assert false report operator_name & " (" & Convert_To_String(completed_log_count) & ") "
+	& ": completed MemRead "  & mem_space_name & " data: " &  
           read_data_name & " = " & Convert_SLV_To_Hex_String(read_data) severity note;
+        completed_log_count := completed_log_count+1;
       end if;
     end if;        
     
@@ -9056,84 +9073,6 @@ begin  -- default_arch
   
   -- The transition is enabled only when all preds are true.
   symbol_out_sig(0) <= AndReduce(place_sigs) and AndReduce(mplace_sigs);
-  symbol_out <= symbol_out_sig(0);
-
-end default_arch;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.Types.all;
-use ahir.subprograms.all;
-use ahir.BaseComponents.all;
-use ahir.utilities.all;
-
-entity marked_join_with_input is
-  generic (place_capacity : integer := 1; bypass : boolean := false; name : string := "anon");
-  port ( preds      : in   BooleanArray;
-         marked_preds : in BooleanArray;
-    	symbol_in : in  boolean;
-    	symbol_out : out  boolean;
-	clk: in std_logic;
-	reset: in std_logic);
-end marked_join_with_input;
-
-architecture default_arch of marked_join_with_input is
-  signal symbol_out_sig : BooleanArray(0 downto 0);
-  signal place_sigs: BooleanArray(preds'range);
-  signal mplace_sigs: BooleanArray(marked_preds'range);  
-  signal inp_place_sig: Boolean;
-  constant H: integer := preds'high;
-  constant L: integer := preds'low;
-
-  constant MH: integer := marked_preds'high;
-  constant ML: integer := marked_preds'low;  
-
-begin  -- default_arch
-  
-  placegen: for I in H downto L generate
-    placeBlock: block
-	signal place_pred: BooleanArray(0 downto 0);
-    begin
-	place_pred(0) <= preds(I);
-        byp: if bypass generate
-	  pI: place_with_bypass generic map(capacity => place_capacity, marking => 0)
-				-- name => name & ":" & Convert_To_String(I) )
-		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
-       end generate byp;
-
-        nobyp: if not bypass generate
-	  pI: place generic map(capacity => place_capacity, marking => 0)
-				-- name => name & ":" & Convert_To_String(I) )
-		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
-       end generate nobyp;
-
-    end block;
-  end generate placegen;
-
-  -- the marked places
-  mplacegen: for I in MH downto ML generate
-    mplaceBlock: block
-	signal place_pred: BooleanArray(0 downto 0);
-    begin
-	place_pred(0) <= marked_preds(I);
-	mpI: place generic map(capacity => place_capacity, marking => 1)
-				-- name => name & ":marked:" & Convert_To_String(I) )
-		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
-    end block;
-  end generate mplacegen;
-
-  inplaceBlock: block
-	signal place_pred: BooleanArray(0 downto 0);
-  begin
-	place_pred(0) <= symbol_in;
-	pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
-				 name => name & ":inputplace")
-		port map(place_pred,symbol_out_sig,inp_place_sig,clk,reset);
-  end block;
-  
-  -- The transition is enabled only when all preds are true and transition
-  -- is reenabled.
-  symbol_out_sig(0) <= inp_place_sig and AndReduce(place_sigs) and AndReduce(mplace_sigs);
   symbol_out <= symbol_out_sig(0);
 
 end default_arch;

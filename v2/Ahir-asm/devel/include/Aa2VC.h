@@ -133,6 +133,10 @@ void Write_VC_Load_Store_Dependency(bool pipeline_flag,
 				    AaExpression* src,
 				    AaExpression* tgt,
 				    ostream& ofile);
+void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
+							set<AaExpression*>& leading_accesses,
+							set<AaExpression*>& trailing_accesses,
+							ostream& ofile);
 
 void Write_VC_Pipe_Dependency(bool pipeline_flag,
 			      AaExpression* src,

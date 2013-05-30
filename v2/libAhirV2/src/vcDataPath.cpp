@@ -1783,30 +1783,31 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 	{
 	  
 	  ofile << "-- logging on!" << endl;
-	  ofile << " process(clk)  begin -- {" 
-		<< " if clk'event and clk = '1' then -- {" << endl;
 	  for(int u = 0; u < addrwires.size(); u++)
 	    {
 
-	      vcTransition* aw = ackR[u];
-	      vcWire* iw = addrwires[u];
-	      vcWire* ow = datawires[u];
+	      vcTransition* srr = reqL[u];
+	      vcTransition* sra = ackL[u];
+	      vcTransition* scr = reqR[u];
+	      vcTransition* sca = ackR[u];
+
+	      vcWire* aw = addrwires[u];
+	      vcWire* dw = datawires[u];
+
 	      
-	      ofile << " if " << aw->Get_DP_To_CP_Symbol() << " then -- {" << endl;
-	      ofile << " assert false report \" WriteMem  " 
-		    <<  ms->Get_VHDL_Id() 
-		    << " address " << iw->Get_VHDL_Id() << " =\" " 
-		    << " & "
-		    << " convert_slv_to_hex_string(" << iw->Get_VHDL_Id() << ")"
-		    << " & "
-		    << " \" data " << ow->Get_VHDL_Id() << " =\" "
-		    << " & "
-		    << " convert_slv_to_hex_string(" << ow->Get_VHDL_Id() << ")"
-		    << " severity note; --}" << endl;
-	      ofile << " end if;" << endl;
+	      ofile << "LogMemWrite(clk, -- { "  << endl
+		    << srr->Get_CP_To_DP_Symbol() << "," << endl
+		    << sra->Get_DP_To_CP_Symbol() << "," << endl
+		    << scr->Get_CP_To_DP_Symbol() << "," << endl
+		    << sca->Get_DP_To_CP_Symbol() << "," << endl
+		    << "\"" << elements[u] << "\"," << endl
+		    << "\"" << ms->Get_VHDL_Id() << "\" ," << endl
+		    << dw->Get_VHDL_Id() << "," << endl
+		    << aw->Get_VHDL_Id() << "," << endl
+		    << "\"" << dw->Get_VHDL_Id() << "\"," << endl
+		    << "\"" << aw->Get_VHDL_Id() << "\" -- } " << endl
+		    << ");" << endl;
 	    }
-	  ofile << " --} " << endl << "end if;" << endl;
-	  ofile << "-- } " << endl << " end process;" << endl;
 	}
 
       // address, data

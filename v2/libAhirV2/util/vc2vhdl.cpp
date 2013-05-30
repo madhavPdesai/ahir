@@ -355,6 +355,10 @@ int main(int argc, char* argv[])
 	  sys_tb_file.close();
 	}
 
+	if(vcSystem::_opt_flag)
+	{
+		test_system.Print_Reduced_Control_Paths_As_Dot_Files();
+	}
 
     }
 

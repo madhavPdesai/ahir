@@ -171,12 +171,20 @@ std::string Aa::get_aa_type_name(IOCode ioc)
 			ret_val = "$float<8,23>";
 			break;
 
+		case READ_FLOAT64:
+			ret_val = "$float<11,52>";
+			break;
+
 		case READ_UINT32:
 			ret_val = "$uint<32>";
 			break;
 
 		case WRITE_FLOAT32:
 			ret_val = "$float<8,23>";
+			break;
+
+		case WRITE_FLOAT64:
+			ret_val = "$float<11,52>";
 			break;
 
 		case WRITE_UINT32:
@@ -251,14 +259,14 @@ std::string Aa::to_aa(std::string x)
 
 bool Aa::is_io_read(IOCode ioc)
 {
-	if(ioc == READ_UINT32 || ioc == READ_FLOAT32 || ioc == READ_UINTPTR || ioc == READ_POINTER || ioc == READ_UINT16 || ioc == READ_UINT8 || ioc == READ_UINT64)
+	if(ioc == READ_UINT32 || ioc == READ_FLOAT32 || ioc == READ_FLOAT64 ||  ioc == READ_UINTPTR || ioc == READ_POINTER || ioc == READ_UINT16 || ioc == READ_UINT8 || ioc == READ_UINT64)
 		return(true);
 	else
 		return(false);
 }
 bool Aa::is_io_write(IOCode ioc)
 {
-	if(ioc == WRITE_UINT32 || ioc == WRITE_FLOAT32 || ioc == WRITE_UINTPTR || ioc == WRITE_POINTER || ioc == WRITE_UINT16 || ioc == WRITE_UINT8 || ioc == WRITE_UINT64)
+	if(ioc == WRITE_UINT32 || ioc == WRITE_FLOAT32  || ioc == WRITE_FLOAT64  || ioc == WRITE_UINTPTR || ioc == WRITE_POINTER || ioc == WRITE_UINT16 || ioc == WRITE_UINT8 || ioc == WRITE_UINT64)
 		return(true);
 	else
 		return(false);
@@ -291,6 +299,8 @@ IOCode Aa::get_io_code(CallInst &C)
 			: (name.equals("write_uint32") ? WRITE_UINT32
 				: (name.equals("read_float32") ? READ_FLOAT32
 					: (name.equals("write_float32") ? WRITE_FLOAT32
+					: (name.equals("read_float64") ? READ_FLOAT64
+					: (name.equals("write_float64") ? WRITE_FLOAT64
 						: (name.equals("write_uintptr") ? WRITE_UINTPTR
 							: (name.equals("read_uintptr") ? READ_UINTPTR
 								: (name.equals("write_pointer") ? WRITE_POINTER
@@ -301,7 +311,7 @@ IOCode Aa::get_io_code(CallInst &C)
 													: (name.equals("read_uint8") ? READ_UINT8
 														: (name.equals("write_uint64") ? WRITE_UINT64
 															: (name.equals("read_uint64") ? READ_UINT64
-																: NOT_IO))))))))))))));
+																: NOT_IO))))))))))))))));
 
 	return ioc;
 }
@@ -1034,8 +1044,9 @@ bool Aa::is_do_while_loop(llvm::BasicBlock& BB)
 	if(T->getNumSuccessors() == 0)
 		return(false);
 
-	// nooptimize function called here?  not to be a do-while
-	// loop.
+	// optimize function must be called here in order
+	// to pipeling this loop.
+	bool opt_fn_found = false; 
       	for(llvm::BasicBlock::iterator iiter = BB.begin(),fiter = BB.end(); 
 	  iiter != fiter;  ++iiter)
 	{
@@ -1046,12 +1057,18 @@ bool Aa::is_do_while_loop(llvm::BasicBlock& BB)
 	      if(f->isDeclaration())
 	      {
 		StringRef name = f->getName();
-		if(name.equals("loop_pipelining_off"))
-			return(false);
+		if(name.equals("loop_pipelining_on"))
+		{
+			opt_fn_found = true;
+			break;
+		}
 	      }
             }
 	}
+	if(!opt_fn_found)
+		return(false);
 
+	// all successors point back to itself..?
 	bool ret_val = false;
 	for (unsigned i = 0, e = T->getNumSuccessors(); i != e; ++i) 
 	{

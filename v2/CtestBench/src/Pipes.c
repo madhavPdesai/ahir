@@ -75,9 +75,23 @@ void write_uint64(const char *id, uint64_t data)
 // from pipe id, receive buf_len uint64_t's..
 void read_uint64_n(const char *id, uint64_t* buf, int buf_len)
 {
-  char buffer[MAX_BUF_SIZE+4];
+  char buffer[MAX_BUF_SIZE+1024];
 
-  assert(buf_len*8 < MAX_BUF_SIZE);
+  if(buf_len*sizeof(uint64_t) > MAX_BUF_SIZE)
+  {
+	fprintf(stderr, 
+		"ERROR: excessive buffer-length in read_uint64_n from pipe %s, read dropped.\n",id);
+	return;
+  }
+
+  int buf_size = (strlen(id) + 25 + buf_len*sizeof(uint64_t)); 
+  if(buf_size > (MAX_BUF_SIZE + 1024))
+  {
+	fprintf(stderr, 
+		"ERROR: buffer overflow due to excessively long pipe-name %s in read_uint64_n, read dropped.\n",id);
+	return;
+  }
+
 
   // send a request packet of the form
   // "piperead.burst <pipe-name> 64 buf_len"
@@ -90,10 +104,25 @@ void read_uint64_n(const char *id, uint64_t* buf, int buf_len)
 // to pipe id, send buf_len uint64_t's...
 void write_uint64_n(const char *id, uint64_t* buf, int buf_len)
 {
-  int send_len = 0;
-  char buffer[MAX_BUF_SIZE+4];
 
-  assert(strlen(id) + 25 + buf_len*sizeof(uint64_t)< MAX_BUF_SIZE+4);
+  if(buf_len*sizeof(uint64_t) > MAX_BUF_SIZE)
+  {
+	fprintf(stderr, 
+		"ERROR: buffer overflow in write_uint64_n to pipe %s, write dropped.\n",id);
+	return;
+  }
+
+  int send_len = 0;
+  char buffer[MAX_BUF_SIZE+1024];
+
+  int buf_size = (strlen(id) + 25 + buf_len*sizeof(uint64_t)); 
+  if(buf_size > (MAX_BUF_SIZE + 1024))
+  {
+	fprintf(stderr, 
+		"ERROR: buffer overflow due to excessively long pipe-name %s in write_uint64_n, write dropped.\n", id);
+	return;
+  }
+
   bzero(buffer,(strlen(id) + 25 +(buf_len*sizeof(uint64_t))));
 
   // send a message with a character string header and a variable length data field.
@@ -124,10 +153,22 @@ void write_uint32(const char *id, uint32_t data)
 // from pipe id, receive buf_len uint32_t's..
 void read_uint32_n(const char *id, uint32_t* buf, int buf_len)
 {
-  char buffer[MAX_BUF_SIZE+4];
+  char buffer[MAX_BUF_SIZE+1024];
 
-  assert(buf_len*sizeof(uint32_t) < MAX_BUF_SIZE);
+  if(buf_len*sizeof(uint32_t) > MAX_BUF_SIZE)
+  {
+	fprintf(stderr, 
+		"ERROR: excessive buffer-length in read_uint32_n from pipe %s, read dropped.\n",id);
+	return;
+  }
 
+  int buf_size = (strlen(id) + 25 + buf_len*sizeof(uint32_t));
+  if(buf_size > MAX_BUF_SIZE+1024)
+  {
+	fprintf(stderr, 
+		"ERROR: pipe-name %s is too long.. read_uint32_n, read dropped.\n", id);
+	return;
+  }
   // send a request packet of the form
   // "piperead.burst <pipe-name> 64 buf_len"
   // receive a packet which has exactly buf_len uint32_t
@@ -140,9 +181,22 @@ void read_uint32_n(const char *id, uint32_t* buf, int buf_len)
 void write_uint32_n(const char *id, uint32_t* buf, int buf_len)
 {
 
-  char buffer[MAX_BUF_SIZE+4];
+  if(buf_len*sizeof(uint32_t) > MAX_BUF_SIZE)
+  {
+	fprintf(stderr, 
+		"ERROR: excessive buffer-length in write_uint32_n to pipe %s, write dropped.\n",id);
+	return;
+  }
 
-  assert(strlen(id) + 25 + buf_len*sizeof(uint32_t)< MAX_BUF_SIZE+4);
+  char buffer[MAX_BUF_SIZE+1024];
+
+  int buf_size = (strlen(id) + 25 + buf_len*sizeof(uint32_t));
+  if(buf_size > MAX_BUF_SIZE+1024)
+  {
+	fprintf(stderr, 
+		"ERROR: pipe-name %s is too long.. write_uint32_n, write dropped.\n", id);
+	return;
+  }
   bzero(buffer,(strlen(id) + 25 +(buf_len*sizeof(uint32_t))));
 
   // prepare message
@@ -173,9 +227,22 @@ void write_uint16(const char *id, uint16_t data)
 // from pipe id, receive buf_len uint16_t's..
 void read_uint16_n(const char *id, uint16_t* buf, int buf_len)
 {
-  char buffer[MAX_BUF_SIZE+4];
+  char buffer[MAX_BUF_SIZE+1024];
 
-  assert(buf_len*sizeof(uint16_t) < MAX_BUF_SIZE);
+  if(buf_len*sizeof(uint16_t) > MAX_BUF_SIZE)
+  {
+	fprintf(stderr, 
+		"ERROR: excessive buffer-length in read_uint16_n to pipe %s, read dropped.\n",id);
+	return;
+  }
+
+  int buf_size = (strlen(id) + 25 + buf_len*sizeof(uint16_t));
+  if(buf_size > MAX_BUF_SIZE+1024)
+  {
+	fprintf(stderr, 
+		"ERROR: pipe-name %s is too long.. read_uint16_n, read dropped.\n", id);
+	return;
+  }
 
   // send a request packet of the form
   // "piperead.burst <pipe-name> 64 buf_len"
@@ -189,13 +256,23 @@ void read_uint16_n(const char *id, uint16_t* buf, int buf_len)
 void write_uint16_n(const char *id, uint16_t* buf, int buf_len)
 {
 
+  if(buf_len*sizeof(uint16_t) > MAX_BUF_SIZE)
+  {
+	fprintf(stderr, 
+		"ERROR: excessive buffer-length in write_uint16_n to pipe %s, write dropped.\n",id);
+	return;
+  }
   int send_len = 0;
-  char buffer[MAX_BUF_SIZE+4];
+  char buffer[MAX_BUF_SIZE+1024];
 
-  assert(strlen(id) + 25 + buf_len*sizeof(uint16_t)< MAX_BUF_SIZE+4);
+  int buf_size = (strlen(id) + 25 + buf_len*sizeof(uint16_t));
+  if(buf_size > MAX_BUF_SIZE+1024)
+  {
+	fprintf(stderr, 
+		"ERROR: pipe-name %s is too long.. write_uint16_n, write dropped.\n", id);
+	return;
+  }
   bzero(buffer,(strlen(id) + 25 +(buf_len*sizeof(uint16_t))));
-
-
 
   // send a message with a character string header and a variable length data field.
   // The data field will start after the end of the character-string, on 
@@ -225,9 +302,22 @@ void write_uint8(const char *id, uint8_t data)
 // from pipe id, receive buf_len uint8_t's..
 void read_uint8_n(const char *id, uint8_t* buf, int buf_len)
 {
-  char buffer[MAX_BUF_SIZE+4];
+  if(buf_len*sizeof(uint8_t) > MAX_BUF_SIZE)
+  {
+	fprintf(stderr, 
+		"ERROR: excessive buffer-length in read_uint8_n to pipe %s, read dropped.\n",id);
+	return;
+  }
+  int buf_size = (strlen(id) + 25 + buf_len*sizeof(uint8_t));
+  if(buf_size > MAX_BUF_SIZE+1024)
+  {
+	fprintf(stderr, 
+		"ERROR: pipe-name %s is too long.. read_uint8_n, read dropped.\n", id);
+	return;
+  }
 
-  assert(buf_len*sizeof(uint8_t) < MAX_BUF_SIZE);
+  char buffer[MAX_BUF_SIZE+1024];
+
 
   // send a request packet of the form
   // "piperead.burst <pipe-name> 64 buf_len"
@@ -241,10 +331,24 @@ void read_uint8_n(const char *id, uint8_t* buf, int buf_len)
 void write_uint8_n(const char *id, uint8_t* buf, int buf_len)
 {
 
-  int send_len = 0;
-  char buffer[MAX_BUF_SIZE+4];
+  if(buf_len*sizeof(uint8_t) > MAX_BUF_SIZE)
+  {
+	fprintf(stderr, 
+		"ERROR: excessive buffer-length in write_uint8_n to pipe %s, write dropped.\n",id);
+	return;
+  }
 
-  assert(strlen(id) + 25 + buf_len*sizeof(uint8_t)< MAX_BUF_SIZE+4);
+  int send_len = 0;
+  char buffer[MAX_BUF_SIZE+1024];
+
+  int buf_size = (strlen(id) + 25 + buf_len*sizeof(uint8_t));
+  if(buf_size > MAX_BUF_SIZE+1024)
+  {
+	fprintf(stderr, 
+		"ERROR: pipe-name %s is too long.. write_uint8_n, write dropped.\n", id);
+	return;
+  }
+
   bzero(buffer,(strlen(id) + 25 +(buf_len*sizeof(uint8_t))));
 
   // send a message with a character string header and a variable length data field.

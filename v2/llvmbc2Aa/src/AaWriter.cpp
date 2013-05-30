@@ -905,9 +905,9 @@ namespace {
       if(called_function != NULL)
       { 
 	StringRef fname = called_function->getName();
-	if(fname.equals("loop_pipelining_off"))
+	if(fname.equals("loop_pipelining_on"))
         {
-	        std::cerr << "Info: ignoring call to special function loop_pipelining_off." << std::endl;
+	        std::cerr << "Info: ignoring call to special function loop_pipelining_on." << std::endl;
 		return;
 	}
       }

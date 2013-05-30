@@ -1079,3 +1079,21 @@ bool vcSystem::Is_Function_Library_Module(string& mod_name)
 	else
 		return(false);
 }
+
+void vcSystem::Print_Reduced_Control_Paths_As_Dot_Files()
+{
+  for(map<string,vcModule*>::iterator moditer = _modules.begin();
+      moditer != _modules.end();
+      moditer++)
+    {
+
+      string mod_name = (*moditer).first;
+      bool is_fn_mod = this->Is_Function_Library_Module(mod_name);
+
+      if(!is_fn_mod)
+	{
+      		cerr << "Info: printing Dot-file of CP for module " << (*moditer).first << endl;
+      		(*moditer).second->Print_Reduced_CP_As_Dot_File();
+	}
+    }
+}

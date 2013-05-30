@@ -1006,3 +1006,59 @@ void vcCPPipelinedLoopBody::Print_VHDL_Transition_Merges(vcControlPath* cp, ostr
 }
 
 
+void vcControlPath::Print_Reduced_Control_Path_As_Dot_File(ostream& ofile)
+{
+  	vcCPElementGroup* entry_grp = _cpelement_to_group_map[this->_entry];
+  	vcCPElementGroup* exit_grp  = _cpelement_to_group_map[this->_exit];
+
+	ofile << "digraph control_path {" << endl;
+	// ofile << "  node [shape = rectangle]; " << endl;
+
+	// two passes: first pass, print all the nodes.	
+  	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+		fiter = _cpelement_groups.end();
+      		iter != fiter;
+      		iter++)
+    	{
+		vcCPElementGroup* grp = *iter;
+
+		if(grp == entry_grp)
+			ofile << "  " << grp->Get_Dot_Id() << ": entry_node " << ": n ;" << endl;
+		else if(grp == exit_grp) 
+			ofile << "  " << grp->Get_Dot_Id() << ": exit_node " << ": s ;" << endl;
+		else		
+			ofile << "  " << grp->Get_Dot_Id() << " [shape = circle];" << endl;
+	}
+
+  	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+		fiter = _cpelement_groups.end();
+      		iter != fiter;
+      		iter++)
+    	{
+		vcCPElementGroup* grp = *iter;
+
+		uint32_t idx;
+		for(set<vcCPElementGroup*>::iterator piter = grp->_predecessors.begin(),
+				fpiter = grp->_predecessors.end();
+				piter != fpiter;
+				piter++)
+		{
+			vcCPElementGroup* pred = *piter;
+			ofile << "  " << pred->Get_Dot_Id() << " -> " << grp->Get_Dot_Id() << ";" << endl;
+		}
+
+		for(set<vcCPElementGroup*>::iterator miter = grp->_marked_predecessors.begin(),
+				fmiter = grp->_marked_predecessors.end();
+				miter != fmiter;
+				miter++)
+		{
+			vcCPElementGroup* pred = *miter;
+			ofile << "  " << pred->Get_Dot_Id() << " -> " << grp->Get_Dot_Id() 
+					<< "[style = dashed]" << ";" << endl;
+		}
+	}
+
+	ofile << "}" << endl;
+}
+
+

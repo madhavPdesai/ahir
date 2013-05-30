@@ -426,23 +426,77 @@ void Write_VC_Load_Store_Dependency(bool pipeline_flag,
 	{
   		ofile << tgt->Get_VC_Start_Transition_Name() << " <-& (" 
 			<< src->Get_VC_Active_Transition_Name() << ")" << endl;
-		if(pipeline_flag)
-		{
-			__MJ(src->Get_VC_Start_Transition_Name(), tgt->Get_VC_Active_Transition_Name());
-		}
+		//if(pipeline_flag)
+		//{
+			//__MJ(src->Get_VC_Start_Transition_Name(), tgt->Get_VC_Active_Transition_Name());
+		//}
 	}
 	else
 	{
   		ofile << tgt->Get_VC_Start_Transition_Name() << " <-& (" 
 			<< src->Get_VC_Completed_Transition_Name() << ")" << endl;
-		if(pipeline_flag)
-		{
-			__MJ(src->Get_VC_Start_Transition_Name(), tgt->Get_VC_Completed_Transition_Name());
-		}
+		//if(pipeline_flag)
+		//{
+			//__MJ(src->Get_VC_Start_Transition_Name(), tgt->Get_VC_Completed_Transition_Name());
+		//}
 	}
    }
 }
 
+void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
+							set<AaExpression*>& leading_accesses,
+							set<AaExpression*>& trailing_accesses,
+							ostream& ofile)
+{
+
+	int ms_index = -1;
+	AaMemorySpace* ms = NULL;
+
+	ofile << "// reenable across ring for memory space " << mem_space_name << endl;
+	
+	if(leading_accesses == trailing_accesses)
+	{
+		ofile << "// leading and trailing sets are the same... no ring dependency" << endl;
+		return;
+	}
+
+	string reenable_trans = "ring_reenable_" + mem_space_name;
+	__T(reenable_trans)
+
+	for(set<AaExpression*>::iterator titer = trailing_accesses.begin(),
+		ftiter = trailing_accesses.end();
+		titer != ftiter;
+		titer++)
+	{
+		int l_ms_index = (*titer)->Get_VC_Memory_Space_Index();
+		if(ms == NULL)
+		{
+			ms_index = l_ms_index;
+			ms = AaProgram::Get_Memory_Space(ms_index);
+		}
+		else
+		{
+			assert(ms_index == l_ms_index);
+		}
+
+		if(ms->Get_Is_Ordered())
+			__J(reenable_trans, (*titer)->Get_VC_Active_Transition_Name())
+		else
+			__J(reenable_trans, (*titer)->Get_VC_Completed_Transition_Name())
+			
+	}
+
+	for(set<AaExpression*>::iterator liter = leading_accesses.begin(),
+		fliter = leading_accesses.end();
+		liter != fliter;
+		liter++)
+	{
+		int l_ms_index = (*liter)->Get_VC_Memory_Space_Index();
+		assert(ms_index == l_ms_index);
+
+		__MJ((*liter)->Get_VC_Start_Transition_Name(), reenable_trans)
+	}
+}
 
 void Write_VC_Pipe_Dependency(bool pipeline_flag, 
 			      AaExpression* src,
