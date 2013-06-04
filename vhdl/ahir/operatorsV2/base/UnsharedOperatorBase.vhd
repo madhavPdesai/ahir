@@ -1,3 +1,9 @@
+-- The unshared operator uses a split protocol.
+--    reqL/ackL  for sampling the inputs
+--    reqR/ackR  for updating the outputs.
+-- The two pairs should be used independently,
+-- that is, there should be NO DEPENDENCY between
+-- ackL and reqR!
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -44,11 +50,12 @@ end UnsharedOperatorBase;
 
 
 architecture Vanilla of UnsharedOperatorBase is
-  signal dataL_reg      : std_logic_vector(iwidth_1 + iwidth_2 - 1 downto 0);  
   signal   result: std_logic_vector(owidth-1 downto 0);
-  signal   state_sig : std_logic;
   constant iwidth : integer := iwidth_1  + iwidth_2;
-  signal   enable_data_reg : std_logic;
+  
+  -- joined req, and joint ack.
+  signal fReq,fAck: boolean;
+ 
 
 begin  -- Behave
 
@@ -56,28 +63,22 @@ begin  -- Behave
   assert((num_inputs = 1) or (num_inputs = 2)) report "either 1 or 2 inputs" severity failure;
 
   -----------------------------------------------------------------------------
-  -- sample the inputs..
+  -- join the two reqs..
   -----------------------------------------------------------------------------
-  process(clk,reset)
-  begin
-    if(clk'event and clk = '1') then
-      if(reset = '1') then
-        ackL <= false;
-      else
-        ackL <= reqL;
-      end if;
+  rJ: join2 generic map (bypass => true)
+		port map(pred0 => reqL, pred1 => reqR, symbol_out => fReq, clk => clk, reset => reset);
 
-      if(reqL) then
-        dataL_reg <= dataL;
-      end if;
-    end if;
-  end process;
   
+  dE: control_delay_element generic map(delay_value  => 1)
+		port map(req => fReq, ack => fAck, clk => clk, reset => reset);
+  
+  -- same ack to both.
+  ackL <= fAck;
+  ackR <= fAck;
 
   -----------------------------------------------------------------------------
   -- combinational block..
   -----------------------------------------------------------------------------
-  
   comb_block: GenericCombinationalOperator
     generic map (
       operator_id                 => operator_id,
@@ -97,7 +98,7 @@ begin  -- Behave
       constant_operand            => constant_operand,
       constant_width              => constant_width,
       use_constant                => use_constant)
-    port map (data_in => dataL_reg, result  => result);
+    port map (data_in => dataL, result  => result);
 
 
   -----------------------------------------------------------------------------
@@ -106,13 +107,7 @@ begin  -- Behave
   process(clk,reset)
   begin
     if(clk'event and clk = '1') then
-      if(reset = '1') then
-        ackR <= false;
-      else
-        ackR <= reqR;
-      end if;
-
-      if(reqR) then
+      if(fReq) then
         dataR <= result;
       end if;
     end if;

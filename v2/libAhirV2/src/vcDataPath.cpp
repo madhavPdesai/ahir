@@ -215,7 +215,37 @@ vcInputWire::vcInputWire(string id, vcType* t): vcWire(id,t)
 vcOutputWire::vcOutputWire(string id, vcType* t): vcWire(id,t)
 {
 }
-
+ 
+void vcDatapathElement::Print_VHDL_Logger(ostream& ofile)
+{
+	string id = this->Get_Id();
+	for(int idx = 0, fidx = _reqs.size(); idx < fidx; idx++)
+	{
+		vcTransition* r = _reqs[idx];
+		if(r != NULL)
+		{
+			ofile << "LogCPEvent(clk, reset, global_clock_cycle_count,";
+			ofile << r->Get_CP_To_DP_Symbol() << ","
+				<< '"' 
+				<< " req" << idx << " " << id
+				<< '"'
+				<< ");" << endl;
+		}
+	}
+	for(int idx = 0, fidx = _acks.size(); idx < fidx; idx++)
+	{
+		vcTransition* a = _acks[idx];
+		if(a != NULL)
+		{
+			ofile << "LogCPEvent(clk, reset, global_clock_cycle_count,";
+			ofile << a->Get_DP_To_CP_Symbol() << ","
+				<< '"' 
+				<< " ack" << idx << " " << id
+				<< '"'
+				<< ");" << endl;
+		}
+	}
+}
 
 vcDataPath::vcDataPath(vcModule* m, string id):vcRoot(id)
 {
@@ -868,6 +898,11 @@ void vcDataPath::Print_VHDL_Phi_Instances(ostream& ofile)
       iter++)
     {
       vcPhi* p = (*iter).second;
+	if(vcSystem::_enable_logging)
+	{
+		p->vcDatapathElement::Print_VHDL_Logger(ofile);
+	}
+
       int odata_width = p->Get_Outwire()->Get_Type()->Size();
       int num_reqs = p->Get_Inwires().size();
       int idata_width = num_reqs*odata_width;
@@ -934,12 +969,14 @@ void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
       iter != _select_map.end();
       iter++)
     {
+      vcSelect* s = (*iter).second;
+      if(vcSystem::_enable_logging)
+		s->vcDatapathElement::Print_VHDL_Logger(ofile);
       
       ofile << "select_block_" << idx << " : block -- { " << endl;
       ofile << "signal req, ack: boolean; --}" << endl;
       ofile << "begin -- { " << endl;
  
-      vcSelect* s = (*iter).second;
 
       if(s->Get_Guard_Wire() != NULL)
       {
@@ -985,6 +1022,8 @@ void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
       iter++)
     {
       vcSlice* s = (*iter).second;
+      if(vcSystem::_enable_logging)
+		s->vcOperator::Print_VHDL_Logger(ofile);
 
       ofile << "slice_block_" << idx << " : block -- { " << endl;
       ofile << "signal req, ack: boolean; --}" << endl;
@@ -1034,6 +1073,8 @@ void vcDataPath::Print_VHDL_Register_Instances(ostream& ofile)
       iter++)
     {
       vcRegister* s = (*iter).second;
+      if(vcSystem::_enable_logging)
+	s->vcOperator::Print_VHDL_Logger(ofile);
 
       ofile << "register_block_" << idx << " : block -- { " << endl;
       ofile << "signal req, ack: boolean; --}" << endl;
@@ -1078,6 +1119,8 @@ void vcDataPath::Print_VHDL_Equivalence_Instances(ostream& ofile)
       iter++)
     {
       vcEquivalence* s = (*iter).second;
+      if(vcSystem::_enable_logging)
+		s->vcOperator::Print_VHDL_Logger(ofile);
       ofile << s->Get_VHDL_Id() << ": Block -- { " << endl;
       ofile << "signal aggregated_sig: std_logic_vector("
 	    << s->_width-1 << " downto 0); --}" << endl;
@@ -1117,6 +1160,8 @@ void vcDataPath::Print_VHDL_Branch_Instances(ostream& ofile)
       iter++)
     {
       vcBranch* s = (*iter).second;
+      if(vcSystem::_enable_logging)
+		s->vcDatapathElement::Print_VHDL_Logger(ofile);
 
       int in_width = 0;
       for(int idx = 0; idx < s->_inwires.size(); idx++)
@@ -1214,6 +1259,8 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	{
 
 	  vcSplitOperator* so = (vcSplitOperator*) (*iter);
+	  if(vcSystem::_enable_logging)
+		so->vcSplitOperator::Print_VHDL_Logger(ofile);
 	  is_unary_operator = Is_Unary_Op(so->Get_Op_Id());
 
 	  elements.push_back(so->Get_VHDL_Id());
@@ -1575,6 +1622,8 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 
 	  assert((*iter)->Is("vcLoad"));
 	  vcLoad* so = (vcLoad*) (*iter);
+	  if(vcSystem::_enable_logging)
+	  	so->vcSplitOperator::Print_VHDL_Logger(ofile);
 
 	  if(ms == NULL)
 	    ms = ((vcLoad*) so)->Get_Memory_Space();
@@ -1650,7 +1699,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 	      vcWire* iw = inwires[u];
 	      vcWire* ow = outwires[u];
 
-	      ofile << "LogMemRead(clk, -- { "  << endl
+	      ofile << "LogMemRead(clk, reset, global_clock_cycle_count,-- { "  << endl
 		    << lrr->Get_CP_To_DP_Symbol() << "," << endl
 		    << lra->Get_DP_To_CP_Symbol() << "," << endl
 		    << lcr->Get_CP_To_DP_Symbol() << "," << endl
@@ -1759,6 +1808,8 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 	{
 	  assert((*iter)->Is("vcStore"));
 	  vcStore* so = (vcStore*) (*iter);
+	  if(vcSystem::_enable_logging)
+	  	so->vcSplitOperator::Print_VHDL_Logger(ofile);
 
 	  if(ms == NULL)
 	    ms = so->Get_Memory_Space();
@@ -1795,7 +1846,7 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 	      vcWire* dw = datawires[u];
 
 	      
-	      ofile << "LogMemWrite(clk, -- { "  << endl
+	      ofile << "LogMemWrite(clk, reset,global_clock_cycle_count,  -- { "  << endl
 		    << srr->Get_CP_To_DP_Symbol() << "," << endl
 		    << sra->Get_DP_To_CP_Symbol() << "," << endl
 		    << scr->Get_CP_To_DP_Symbol() << "," << endl
@@ -1933,6 +1984,8 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 
 	  assert((*iter)->Is("vcInport"));
 	  vcInport* so = (vcInport*) (*iter);
+	  if(vcSystem::_enable_logging)
+	  	so->vcOperator::Print_VHDL_Logger(ofile);
 
 	  if(p == NULL)
 	    p = ((vcInport*) so)->Get_Pipe();
@@ -2069,6 +2122,8 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 
 	  assert((*iter)->Is("vcOutport"));
 	  vcOutport* so = (vcOutport*) (*iter);
+	  if(vcSystem::_enable_logging)
+	  	so->vcOperator::Print_VHDL_Logger(ofile);
 
 	  if(p == NULL)
 	    p = ((vcOutport*) so)->Get_Pipe();
@@ -2259,6 +2314,8 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
 	  assert((*iter)->Is("vcCall"));
 	  vcCall* so = (vcCall*) (*iter);
+	  if(vcSystem::_enable_logging)
+	  	so->vcSplitOperator::Print_VHDL_Logger(ofile);
 
 	  if(called_module == NULL)
 	    called_module = so->Get_Called_Module();

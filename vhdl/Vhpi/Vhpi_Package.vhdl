@@ -26,6 +26,9 @@ package Vhpi_Foreign is
   procedure Vhpi_Get_Port_Value(port_name: in VhpiString; port_value : out VhpiString; port_width : in integer);
   attribute foreign of Vhpi_Get_Port_Value : procedure is "VHPIDIRECT Vhpi_Get_Port_Value";
   
+  procedure Vhpi_Log(message_string: in VhpiString);
+  attribute foreign of Vhpi_Log : procedure is "VHPIDIRECT Vhpi_Log";
+
 end Vhpi_Foreign;
   
 package body Vhpi_Foreign is
@@ -62,6 +65,11 @@ package body Vhpi_Foreign is
   begin
     assert false  report "fatal: this should never be called" severity failure;
   end Vhpi_Get_Port_Value;        
+
+  procedure Vhpi_Log(message_string: in VhpiString) is
+  begin
+    assert false  report "fatal: this should never be called" severity failure;
+  end Vhpi_Log;
 
 end Vhpi_Foreign;
 

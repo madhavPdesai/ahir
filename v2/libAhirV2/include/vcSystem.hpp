@@ -40,7 +40,10 @@ class vcSystem: public vcRoot
   static bool _min_clock_period_flag;
 
   static bool _vhpi_tb_flag;
-  static string _simulator_prefix;
+
+  static string _simulator_link_prefix;
+  static string _simulator_link_library;
+
   static string _tool_name;
   static bool _enable_logging;
 

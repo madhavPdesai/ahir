@@ -5,13 +5,17 @@ SOCKETLIB_INCLUDE=../../CtestBench/include
 SOCKETLIB_LIB=../../CtestBench/lib
 VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
+
 #TOPMODULES=-t init -t dotp_experimental
-#TOPMODULES=-t init -t dotp_pipelined_unrolled -t dotp_nonpipelined_unrolled -t dotp_pipelined -t dotp_nonpipelined
-TOPMODULES=-t init -t dotp_pipelined_unrolled
 #DEFS=-DEXPERIMENTAL
-DEFS=-DPIPELINEDUNROLLED
-#DEFS=-DPIPELINEDUNROLLED -DPIPELINED -DNONPIPELINEDUNROLLED -DNONPIPELINED
-VC2VHDLOPTS=-a -O -C -w -s ghdl -I 8 -S 3
+
+TOPMODULES=-t init -t dotp_pipelined_unrolled -t dotp_nonpipelined_unrolled -t dotp_pipelined -t dotp_nonpipelined
+DEFS=-DPIPELINEDUNROLLED -DPIPELINED -DNONPIPELINEDUNROLLED -DNONPIPELINED
+
+#TOPMODULES=-t init -t dotp_pipelined_unrolled
+#DEFS=-DPIPELINEDUNROLLED
+
+VC2VHDLOPTS=-q -a -O -C -w -s ghdl -I 8 -S 3 -D
 all: HW 
 
 
@@ -20,7 +24,7 @@ HW: aa2vc vc2vhdl  vhdlsim
 
 # Aa to vC
 aa2vc: prog.aa
-	AaOpt -B  prog.aa | vcFormat > prog.opt.aa
+	AaOpt prog.aa | vcFormat > prog.opt.aa
 	Aa2VC -O -C prog.opt.aa | vcFormat > prog.vc
 
 # vC to VHDL
@@ -32,10 +36,13 @@ vc2vhdl: prog.vc
 
 # build testbench and ghdl executable
 # note the use of SOCKETLIB in building the testbench.
-vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h vhdlCStubs.c
-	gcc -c vhdlCStubs.c -I./ -I$(SOCKETLIB_INCLUDE)
-	gcc -c testbench.c $(DEFS) -I./ -I$(SOCKETLIB_INCLUDE)
-	gcc -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLib -lpthread
+vhdlsim: TB GHDL
+TB:  testbench.c vhdlCStubs.h vhdlCStubs.c
+	gcc -g -c vhdlCStubs.c -I./ -I$(SOCKETLIB_INCLUDE)
+	gcc -g -c testbench.c $(DEFS) -I./ -I$(SOCKETLIB_INCLUDE)
+	gcc -g -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLib -lpthread
+
+GHDL:	ahir_system.vhdl ahir_system_test_bench.vhdl 	
 	ghdl --clean
 	ghdl --remove
 	ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl

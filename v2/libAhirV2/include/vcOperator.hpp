@@ -39,7 +39,13 @@ public:
     return(true);
   }
 
+  virtual int Get_Number_Of_Input_Wires() {assert(0);}
+  virtual int Get_Number_Of_Output_Wires() {assert(0);}
 
+  virtual vcWire* Get_Input_Wire(int idx){assert(0);}
+  virtual vcWire* Get_Output_Wire(int idx){assert(0);}
+
+  virtual void Print_VHDL_Logger(ostream& ofile);
   friend class vcDataPath;
 };
 
@@ -54,6 +60,14 @@ public:
   virtual string Kind() {return("vcEquivalence");}    
   virtual void Print(ostream& ofile);
   virtual bool Is_Shareable_With(vcDatapathElement* other) {return(false);}
+
+  virtual int Get_Number_Of_Input_Wires() {return(_inwires.size());}
+  virtual int Get_Number_Of_Output_Wires() {return(_outwires.size());}
+
+  virtual vcWire* Get_Input_Wire(int idx) 
+	{ return(_inwires[idx]);}
+  virtual vcWire* Get_Output_Wire(int idx) 
+	{ return(_outwires[idx]);}
 
   friend class vcDataPath;
 };
@@ -78,11 +92,15 @@ public:
   virtual int Get_Number_Of_Input_Wires() {assert(0);}
   virtual int Get_Number_Of_Output_Wires() {assert(0);}
 
+  virtual vcWire* Get_Input_Wire(int idx) {assert(0);}
+  virtual vcWire* Get_Output_Wire(int idx) {assert(0);}
+
 
   virtual string Get_Op_Id() {assert(0);}
   virtual vcType* Get_Input_Type() {assert(0);}
   virtual vcType* Get_Output_Type() {assert(0);}
 
+  virtual void Print_VHDL_Logger(ostream& ofile);
   friend class vcDataPath;
 };
 
@@ -113,6 +131,10 @@ public:
 
   virtual int Get_Number_Of_Input_Wires() { return(this->_in_wires.size()); }
   virtual int Get_Number_Of_Output_Wires() { return(this->_out_wires.size()); }
+  virtual vcWire* Get_Input_Wire(int idx) 
+	{ return(_in_wires[idx]);}
+  virtual vcWire* Get_Output_Wire(int idx) 
+	{ return(_out_wires[idx]);}
 
   virtual void Append_Inwires(vector<vcWire*>& inwires) 
   {
@@ -174,6 +196,15 @@ public:
     inwires.push_back(_data);
   }
 
+  virtual int Get_Number_Of_Input_Wires() { return(1); }
+  virtual int Get_Number_Of_Output_Wires() { return(0);}
+
+  virtual vcWire* Get_Input_Wire(int idx) 
+	{ if(idx == 0) return(_data); else return(NULL);}
+
+  virtual vcWire* Get_Output_Wire(int idx) 
+	{ return(NULL);}
+
   friend class vcDataPath;
 };
 
@@ -189,6 +220,14 @@ public:
   {
     outwires.push_back(_data);
   }
+
+  virtual int Get_Number_Of_Input_Wires() { return(0); }
+  virtual int Get_Number_Of_Output_Wires() { return(1);}
+
+  virtual vcWire* Get_Output_Wire(int idx) 
+	{ if(idx == 0) return(_data); else return(NULL);}
+  virtual vcWire* Get_Input_Wire(int idx) 
+	{ return(NULL);}
 
   friend class vcDataPath;
 };
@@ -236,6 +275,11 @@ public:
   virtual int Get_Number_Of_Input_Wires() { return(1); }
   virtual int Get_Number_Of_Output_Wires() { return(1);}
 
+  virtual vcWire* Get_Output_Wire(int idx) 
+	{ if(idx == 0) return(_data); else return(NULL);}
+  virtual vcWire* Get_Input_Wire(int idx) 
+	{ if(idx == 0) return(_address); else return(NULL);}
+
   virtual void Append_Inwires(vector<vcWire*>& inwires) 
   {
     inwires.push_back(_address);
@@ -273,6 +317,11 @@ public:
     // nothing.
   }
 
+  virtual vcWire* Get_Output_Wire(int idx) 
+	{ return(NULL);}
+  virtual vcWire* Get_Input_Wire(int idx) 
+	{ if(idx == 0) return(_address); else if(idx == 1) return(_data); else  return(NULL);}
+
   friend class vcDataPath;
 };
 
@@ -292,6 +341,14 @@ public:
   vector<vcWire*>& Get_Inwires() {return(this->_inwires);}
   vcWire* Get_Outwire() {return(this->_outwire);}
   virtual string Kind() {return("vcPhi");}
+
+  virtual int Get_Number_Of_Input_Wires() { return(_inwires.size()); }
+  virtual int Get_Number_Of_Output_Wires() { return(1);}
+
+  virtual vcWire* Get_Input_Wire(int idx) 
+	{ if(idx < _inwires.size()) return(_inwires[idx]); else return(NULL);}
+  virtual vcWire* Get_Output_Wire(int idx) 
+	{ if(idx == 0) return(_outwire); else return(NULL);}
 
   friend class vcDataPath;
 };
@@ -334,6 +391,11 @@ public:
 
   virtual int Get_Number_Of_Input_Wires() { return(2); }
   virtual int Get_Number_Of_Output_Wires() { return(1);}
+
+  virtual vcWire* Get_Input_Wire(int idx) 
+	{ if(idx == 0) return(_x); else if(idx == 1) return(_y); else return (NULL);}
+  virtual vcWire* Get_Output_Wire(int idx) 
+	{ if(idx == 0) return(_z); else return(NULL);}
 
   virtual void Append_Inwires(vector<vcWire*>& inwires) 
   {
@@ -394,6 +456,11 @@ public:
   virtual int Get_Number_Of_Input_Wires() { return(2); }
   virtual int Get_Number_Of_Output_Wires() { return(1);}
 
+  virtual vcWire* Get_Input_Wire(int idx) 
+	{ if(idx == 0) return(_x); else if(idx == 1) return(_y); else return (NULL);}
+  virtual vcWire* Get_Output_Wire(int idx) 
+	{ if(idx == 0) return(_z); else return(NULL);}
+
   virtual void Append_Inwires(vector<vcWire*>& inwires) 
   {
     inwires.push_back(_x);
@@ -439,6 +506,12 @@ public:
 
   virtual int Get_Number_Of_Input_Wires() { return(1); }
   virtual int Get_Number_Of_Output_Wires() { return(1);}
+
+  virtual vcWire* Get_Input_Wire(int idx) 
+	{ if(idx == 0) return(_x); else return(NULL);}
+  virtual vcWire* Get_Output_Wire(int idx) 
+	{ if(idx == 0) return(_z); else return(NULL);}
+
 
   virtual void Append_Inwires(vector<vcWire*>& inwires) 
   {
@@ -486,6 +559,11 @@ public:
   virtual int Get_Number_Of_Input_Wires() { return(1); }
   virtual int Get_Number_Of_Output_Wires() { return(1);}
 
+  virtual vcWire* Get_Input_Wire(int idx) 
+	{ if(idx == 0) return(_x); else return(NULL);}
+  virtual vcWire* Get_Output_Wire(int idx) 
+	{ if(idx == 0) return(_z); else return(NULL);}
+
   virtual void Append_Inwires(vector<vcWire*>& inwires) 
   {
     inwires.push_back(_x);
@@ -519,6 +597,15 @@ public:
   vcSelect(string id, vcWire* sel, vcWire* x, vcWire* y, vcWire* z);
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcSelect");}
+  virtual int Get_Number_Of_Input_Wires() { return(3); }
+  virtual int Get_Number_Of_Output_Wires() { return(1);}
+
+  virtual vcWire* Get_Input_Wire(int idx) 
+	{ if(idx == 0) return(_sel); else if(idx == 1) return(_x); else if (idx ==2)
+			return(_y); else return(NULL);}
+  virtual vcWire* Get_Output_Wire(int idx) 
+	{ if(idx == 0) return(_z); else return(NULL);}
+
   friend class vcDataPath;
 };
 
@@ -535,6 +622,15 @@ public:
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcBranch");}
+
+  virtual int Get_Number_Of_Input_Wires() { return(_inwires.size()); }
+  virtual int Get_Number_Of_Output_Wires() { return(0);}
+
+  virtual vcWire* Get_Input_Wire(int idx) 
+	{ if(idx <  _inwires.size()) return(_inwires[idx]); else return(NULL);}
+  virtual vcWire* Get_Output_Wire(int idx) 
+	{ return(NULL);}
+
   friend class vcDataPath;
 };
 
@@ -547,6 +643,14 @@ public:
   vcRegister(string id, vcWire* din, vcWire* dout);
   virtual string Kind() {return("vcRegister");}
   virtual void Print(ostream& ofile);
+
+  virtual int Get_Number_Of_Input_Wires() { return(1); }
+  virtual int Get_Number_Of_Output_Wires() { return(1);}
+
+  virtual vcWire* Get_Input_Wire(int idx) 
+	{ if(idx == 0) return(_din); else return(NULL);}
+  virtual vcWire* Get_Output_Wire(int idx) 
+	{ if(idx == 0) return(_dout); else return(NULL);}
   friend class vcDataPath;
 };
 
@@ -564,6 +668,14 @@ public:
   vcSlice(string id, vcWire* din, vcWire* dout, int high_index, int low_index);
   virtual string Kind() {return("vcSlice");}
   virtual void Print(ostream& ofile);
+
+  virtual int Get_Number_Of_Input_Wires() { return(1); }
+  virtual int Get_Number_Of_Output_Wires() { return(1);}
+
+  virtual vcWire* Get_Input_Wire(int idx) 
+	{ if(idx == 0) return(_din); else return(NULL);}
+  virtual vcWire* Get_Output_Wire(int idx) 
+	{ if(idx == 0) return(_dout); else return(NULL);}
   friend class vcDataPath;
 };
 

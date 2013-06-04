@@ -72,6 +72,22 @@ class AaRoot
     return(this->Get_VC_Name() + "_completed_");
   }
 
+  virtual string Get_VC_Sample_Start_Transition_Name() {
+    return(this->Get_VC_Name() + "_sample_start_");
+  }
+
+  virtual string Get_VC_Sample_Completed_Transition_Name() {
+    return(this->Get_VC_Name() + "_sample_completed_");
+  }
+
+  virtual string Get_VC_Update_Start_Transition_Name() {
+    return(this->Get_VC_Name() + "_update_start_");
+  }
+
+  virtual string Get_VC_Update_Completed_Transition_Name() {
+    return(this->Get_VC_Name() + "_update_completed_");
+  }
+
   virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements) {
     return(this->Get_VC_Active_Transition_Name());    
   }

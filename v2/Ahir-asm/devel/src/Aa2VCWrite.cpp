@@ -460,7 +460,7 @@ void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
 		return;
 	}
 
-	string reenable_trans = "ring_reenable_" + mem_space_name;
+	string reenable_trans = "ring_reenable_" + Make_VC_Legal(mem_space_name);
 	__T(reenable_trans)
 
 	for(set<AaExpression*>::iterator titer = trailing_accesses.begin(),

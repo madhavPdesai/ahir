@@ -243,12 +243,20 @@ int main(int argc, char* argv[])
 	  if(sim_id == "ghdl")
 	  {
 	     cerr << "Info: -s ghdl option selected: will generate testbench with VHPI link." << endl;
-	     vcSystem::_simulator_prefix = "Vhpi_";
+	     vcSystem::_simulator_link_prefix = "Vhpi_";
+	     vcSystem::_simulator_link_library = "GhdlLink";
 	  }
-	  else 
+	  else if(sim_id == "modelsim") 
           {
 	     cerr << "Info: -s modelsim option selected: will generate testbench with VHPI link." << endl;
+	     vcSystem::_simulator_link_prefix = "Modelsim_FLI_";
+	     vcSystem::_simulator_link_library = "ModelsimLink";
           }
+	  else
+	  {
+		cerr << "Error: unsupported simulator option " << sim_id << endl;
+		return(1);
+	  }
 	  break;
         case 'h':
 	  Usage_Vc2VHDL();

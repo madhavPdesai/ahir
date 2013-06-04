@@ -21,16 +21,11 @@ $module [init] $in() $out () $is
 
 $module [dotp_experimental] $in() $out (c: $float<8,23> ) $is
 {
-	$storage sum: $float<8,23>
-
-	sum := _f0.0e+1
-        sumptr := @(sum)
-
-
 	$branchblock[run] {
 		$do
 			$merge $entry $loopback
 			$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
+			$phi sum := ($bitcast($float<8,23>) _f0.0e+1) $on $entry nsum $on $loopback
 			$endmerge
 			NI := (I+4)
                         I1 := (I+1)
@@ -42,27 +37,22 @@ $module [dotp_experimental] $in() $out (c: $float<8,23> ) $is
 			q  := ->(qqtr)  qq := ->(qqqtr) qqq := ->(qqqqtr) qqqq := ->(qqqqqtr)
 			r  := (p*q) rr := (pp*qq) rrr := (ppp*qqq) rrrr := (pppp*qqqq)
 			rsum := ((r + rr) + (rrr+rrrr))
-			u  := ->(sumptr)
-			v  := (u + rsum)
-			->(sumptr) := v
+                        nsum := (rsum + sum)
 		$while (NI < 16)
 
-	} 
+	} (nsum => sum)
 
 	c := sum
 }
 
 $module [dotp_pipelined_unrolled] $in() $out (c: $float<8,23> ) $is
 {
-	$storage sum: $float<8,23>
-
-	sum := _f0.0e+1
-
 
 	$branchblock[run] {
 		$do
 			$merge $entry $loopback
 			$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
+			$phi sum := ($bitcast($float<8,23>) _f0.0e+1) $on $entry nsum $on $loopback
 			$endmerge
 			NI := (I+4)
                         I1 := (I+1)
@@ -72,24 +62,21 @@ $module [dotp_pipelined_unrolled] $in() $out (c: $float<8,23> ) $is
 			q  := b[I]  qq := b[I1] qqq := b[I2] qqqq := b[I3]
 			r  := (p*q) rr := (pp*qq) rrr := (ppp*qqq) rrrr := (pppp*qqqq)
 			rsum := ((r + rr) + (rrr+rrrr))
-			sum := (sum + rsum)
+			nsum := (sum + rsum)
 		$while (NI < 16)
 
-	} 
+	}  (nsum => sum)
 
 	c := sum
 }
 
 $module [dotp_nonpipelined_unrolled] $in() $out (c: $float<8,23> ) $is
 {
-	$storage sum: $float<8,23>
-
-	sum := _f0.0e+1
-
 
 	$branchblock[run] {
 		$merge $entry loopback
 		$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on loopback
+		$phi sum := ($bitcast($float<8,23>) _f0.0e+1) $on $entry nsum $on loopback
 		$endmerge
 		NI := (I+4)
                 I1 := (I+1)
@@ -99,52 +86,48 @@ $module [dotp_nonpipelined_unrolled] $in() $out (c: $float<8,23> ) $is
 		q  := b[I]  qq := b[I1] qqq := b[I2] qqqq := b[I3]
 		r  := (p*q) rr := (pp*qq) rrr := (ppp*qqq) rrrr := (pppp*qqqq)
 		rsum := ((r + rr) + (rrr+rrrr))
-		sum := (sum + rsum)
+		nsum := (sum + rsum)
 		$if (NI < 16) $then $place [loopback] $endif
-	} 
+	} (nsum => sum)
 
 	c := sum
 }
 
 $module [dotp_pipelined] $in() $out (c: $float<8,23> ) $is
 {
-	$storage sum: $float<8,23>
-
-	sum := _f0.0e+1
 
 	$branchblock[run] {
 	   $do 
 		$merge $entry $loopback
 		$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
+		$phi sum := ($bitcast($float<8,23>) _f0.0e+1) $on $entry nsum $on $loopback
 		$endmerge
 		NI := (I+1)
 		p  := a1[I]
 		q  := b1[I]
 		r  := (p*q)
-		sum := (sum + r)
+		nsum := (sum + r)
            $while (NI < 16) 
-	} 
+	} (nsum => sum)
 
 	c := sum
 }
 
 $module [dotp_nonpipelined] $in() $out (c: $float<8,23> ) $is
 {
-	$storage sum: $float<8,23>
-
-	sum := _f0.0e+1
 
 	$branchblock[run] {
 		$merge $entry loopback
 		$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on loopback
+		$phi sum := ($bitcast($float<8,23>) _f0.0e+1) $on $entry nsum $on loopback
 		$endmerge
 		NI := (I+1)
 		p  := a1[I]
 		q  := b1[I]
 		r  := (p*q)
-		sum := (sum + r)
+		nsum := (sum + r)
 		$if (NI < 16) $then $place [loopback] $endif
-	} 
+	} (nsum => sum)
 
 	c := sum
 }

@@ -289,6 +289,7 @@ protected:
 	}
   }
 
+  virtual void Print_VHDL_Logger(ostream& ofile);
   friend class vcDataPath;
 
 };

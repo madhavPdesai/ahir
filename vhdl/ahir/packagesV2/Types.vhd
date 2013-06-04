@@ -18,6 +18,10 @@ package Types is
 
   constant global_debug_flag: boolean := false;
 
+  constant slv_zero: std_logic_vector(0 downto 0) := "0";
+  constant sl_zero: std_logic := '0';
+  constant slv_one: std_logic_vector(0 downto 0) := "1";
+  constant sl_one: std_logic := '1';
 
 end package Types;
 

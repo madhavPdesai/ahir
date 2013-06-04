@@ -925,7 +925,11 @@ void  Vhpi_Get_Port_Value(char* port_name, char* port_value, int port_width)
 #endif
 }
 
-
+void Vhpi_Log(char* message_string)
+{
+	if(log_file != NULL)
+		fprintf(log_file,"LogInfo: %s.\n", message_string);
+}
 
 #ifdef GHDL
 
@@ -1013,6 +1017,13 @@ void String_To_Modelsim_FLI(mtiVariableIdT vsim_str, char* from_string)
     {
       val[idx] = from_string [idx];
     }
+}
+
+void Modelsim_FLI_Log(mtiVariableIdT vsim_str)
+{
+	char message_buffer[4096];
+  	Modelsim_FLI_To_String(name_buffer,vsim_str);
+	Vhpi_Log(message_buffer);
 }
 
 #endif

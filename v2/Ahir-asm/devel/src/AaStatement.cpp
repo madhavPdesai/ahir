@@ -1635,8 +1635,14 @@ void AaCallStatement::Write_VC_Control_Path(ostream& ofile)
     _input_args[idx]->Write_VC_Control_Path(ofile);
   ofile << "}" << endl;
 
-  ofile << "$T [crr] $T [cra] $T [ccr] $T [cca]" << endl;
-
+  ofile << "||[SplitProtocol] { " << endl;
+  ofile << ";;[Sample] { " << endl;
+  ofile << "$T [crr] $T [cra]" << endl;
+  ofile << "}" << endl;
+  ofile << ";;[Update] { " << endl;
+  ofile << "$T [ccr] $T [cca]" << endl;
+  ofile << "}" << endl;
+	ofile << "}" << endl;
   ofile << "||[out_args] { // output arguments" << endl;
   for(int idx = 0; idx < _output_args.size(); idx++)
     _output_args[idx]->Write_VC_Control_Path_As_Target(ofile);
@@ -1735,11 +1741,13 @@ void AaCallStatement::Write_VC_Links(string hier_id, ostream& ofile)
       _output_args[idx]->Write_VC_Links_As_Target(oh, ofile);
     }
 
-  reqs.push_back(hier_id + "/crr");
-  reqs.push_back(hier_id + "/ccr");
+  string sample_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Sample";
+  string update_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Update";
 
-  acks.push_back(hier_id + "/cra");
-  acks.push_back(hier_id + "/cca");
+  reqs.push_back(sample_region + "/crr");
+  reqs.push_back(update_region + "/ccr");
+  acks.push_back(sample_region + "/cra");
+  acks.push_back(update_region + "/cca");
 
   Write_VC_Link(this->Get_VC_Name() + "_call",reqs,acks,ofile);
 }
@@ -3426,7 +3434,14 @@ void AaSwitchStatement::Write_VC_Control_Path(bool optimize_flag,
       ofile << ";;[condition_" << idx << "] {" << endl;
 
       // one comparison per choice
-      ofile << " $T [rr] $T [ra] $T [cr] $T [ca] " << endl;
+      ofile << "|| [SplitProtocol] { " << endl;
+      ofile << ";; [Sample] {" << endl;
+      ofile << "$T[rr] $T[ra]" << endl;
+      ofile << "}" << endl;
+      ofile << ";; [Update] {" << endl;
+      ofile << "$T [cr] $T [ca] " << endl;
+      ofile << "}" << endl;
+      ofile << "}" << endl;
 
       // one branch operator per choice
       ofile << " $T [cmp] // cmp will trigger choice comparison" << endl;
@@ -3642,10 +3657,10 @@ void AaSwitchStatement::Write_VC_Links(bool optimize_flag,
 
 
       // for the comparison operation.
-      reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "__condition_check__/condition_" + IntToStr(idx) + "/rr");
-      reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "__condition_check__/condition_" + IntToStr(idx) + "/cr");
-      acks.push_back(hier_id + "/" + this->Get_VC_Name() + "__condition_check__/condition_" + IntToStr(idx) + "/ra");
-      acks.push_back(hier_id + "/" + this->Get_VC_Name() + "__condition_check__/condition_" + IntToStr(idx) + "/ca");
+      reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "__condition_check__/condition_" + IntToStr(idx) + "/SplitProtocol/Sample/rr");
+      reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "__condition_check__/condition_" + IntToStr(idx) + "/SplitProtocol/Update/cr");
+      acks.push_back(hier_id + "/" + this->Get_VC_Name() + "__condition_check__/condition_" + IntToStr(idx) + "/SplitProtocol/Sample/ra");
+      acks.push_back(hier_id + "/" + this->Get_VC_Name() + "__condition_check__/condition_" + IntToStr(idx) + "/SplitProtocol/Update/ca");
       Write_VC_Link(this->Get_VC_Name() + "_select_expr_" + IntToStr(idx),reqs,acks,ofile);
       
       reqs.clear();

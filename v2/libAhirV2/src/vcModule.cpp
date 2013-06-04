@@ -613,8 +613,28 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
     {
       (*iter).second->Print_VHDL_Interface_Signal_Declarations(ofile);
     }
+  if(vcSystem::_enable_logging)
+  {
+	ofile << "signal global_clock_cycle_count: integer := 0;" << endl;
+  }
 
   ofile << "-- }" << endl << "begin --  {" << endl;
+
+  if(vcSystem::_enable_logging)
+  {
+	ofile << " ---------------------------------------------------------- " << endl;
+	ofile << "process(clk)  " << endl;
+	ofile << "begin -- { " << endl;
+	ofile << "  if(clk'event and clk = '1') then -- { " << endl;
+	ofile << "    if(reset = '1') then -- { " << endl;
+	ofile << "       global_clock_cycle_count <= 0; --} " << endl;
+	ofile << "    else -- { " << endl;
+	ofile << "       global_clock_cycle_count <= global_clock_cycle_count + 1; -- }" << endl;
+	ofile << "    end if; --} " << endl;
+	ofile << "  end if; --} " << endl;
+	ofile << "end process;" << endl;
+	ofile << " ---------------------------------------------------------- " << endl;
+  }
 
 
   ofile << "-- output port buffering assignments" << endl;
@@ -647,6 +667,21 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
   ofile << "tag_push <= '1' when start_req_symbol else '0'; " << endl;
   ofile << "tag_pop  <= fin_req and fin_ack_sig ; " << endl;
 
+  // logging.
+  if(vcSystem::_enable_logging)
+  {
+	string sreq_symbol_name =  '"'  +  this->Get_VHDL_Id() + " start_req symbol" + '"';
+        ofile << "LogCPEvent(clk,reset,global_clock_cycle_count, start_req_symbol," <<  sreq_symbol_name << ");" << endl;
+	
+	string sack_symbol_name =  '"'  +  this->Get_VHDL_Id() + " start_ack symbol" + '"';
+        ofile << "LogCPEvent(clk,reset,global_clock_cycle_count,  start_ack_symbol," <<  sack_symbol_name << ");" << endl;
+
+	string creq_symbol_name =  '"'  +  this->Get_VHDL_Id() + " fin_req symbol" + '"';
+        ofile << "LogCPEvent(clk,reset,global_clock_cycle_count,  fin_req_symbol," <<  creq_symbol_name << ");" << endl;
+	
+	string cack_symbol_name =  '"'  +  this->Get_VHDL_Id() + " fin_ack symbol" + '"';
+        ofile << "LogCPEvent(clk,reset,global_clock_cycle_count,  fin_ack_symbol," <<  cack_symbol_name << ");" << endl;
+  } 
 
   if(this->_control_path)
     {

@@ -3218,7 +3218,16 @@ void AaTypeCastExpression::Write_VC_Control_Path(ostream& ofile)
       if(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
 	ofile << "$T [req] $T [ack] //  type-conversion.. " << endl;
       else
-	ofile << "$T [rr] $T [ra] $T [cr] $T [ca] //  type-conversion.. " << endl;
+      {
+	ofile << "||[SplitProtocol] {" << endl;
+	ofile << ";;[Sample] {" << endl;
+	ofile << "$T [rr] $T [ra]  " << endl;
+	ofile << "}" << endl;
+	ofile << ";;[Update] {" << endl;
+	ofile << "$T [cr] $T [ca] " << endl;
+	ofile << "}" << endl;
+	ofile << "}" << endl;
+      }
 
       ofile << "}" << endl;
     }
@@ -3330,10 +3339,12 @@ void AaTypeCastExpression::Write_VC_Links(string hier_id, ostream& ofile)
 	}
       else
 	{
-	  reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/rr");
-	  reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/cr");
-	  acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ra");
-	  acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ca");
+ 	  string sample_regn = hier_id  + "/" + this->Get_VC_Name() + "/SplitProtocol/Sample";
+ 	  string update_regn = hier_id  + "/" + this->Get_VC_Name() + "/SplitProtocol/Update";
+	  reqs.push_back( sample_regn + "/rr");
+	  reqs.push_back( update_regn + "/cr");
+	  acks.push_back( sample_regn +  "/ra");
+	  acks.push_back( update_regn + "/ca");
 
 	  Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
 	}
@@ -3374,17 +3385,11 @@ void AaUnaryExpression::Print(ostream& ofile)
   ofile << " )";
 }
 
-// TODO:
-//   Unary expressions are to be considered to be of two types.
-//   - pipelined (split)
-//   - unitary (non-split).
 //
-//   Pipelined unary operators have a split protocol 
-//     start-req -> start-ack -> complete-req -> complete-ack.
-//
-//   Unitary unary operators have a simple protocol
-//     req -> ack
-//   (similar to registers).
+//   unary operators have a split protocol 
+//     start-req -> start-ack 
+//     complete-req -> complete-ack.
+//   both req-ack sequences are started in parallel.
 //
 //  
 void AaUnaryExpression::Write_VC_Control_Path(ostream& ofile)
@@ -3397,7 +3402,15 @@ void AaUnaryExpression::Write_VC_Control_Path(ostream& ofile)
       ofile << ";;[" << this->Get_VC_Name() << "] { // unary expression " << endl;
       this->_rest->Write_VC_Control_Path(ofile);
 
-      ofile << "$T [rr] $T [ra] $T [cr] $T [ca] //(split) unary operation" << endl;
+	ofile << "||[SplitProtocol] { " << endl;
+	ofile << ";;[Sample] { " << endl;
+      	ofile << "$T [rr] $T [ra]" << endl;
+	ofile << "}" << endl;
+	ofile << ";;[Update] { " << endl;
+      	ofile << "$T [cr] $T [ca]" << endl;
+	ofile << "}" << endl;
+	ofile << "}" << endl;
+
       ofile << "}" << endl;
     }
 }
@@ -3490,10 +3503,14 @@ void AaUnaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
       ofile << "// " << this->To_String() << endl;
 
       vector<string> reqs,acks;
-      reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/rr");
-      reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/cr");
-      acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ra");
-      acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ca");
+
+      string sample_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Sample";
+      string update_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Update";
+      reqs.push_back(sample_region + "/rr");
+      reqs.push_back(update_region + "/cr");
+      acks.push_back(sample_region + "/ra");
+      acks.push_back(update_region + "/ca");
+
       Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
     }
 }
@@ -3644,7 +3661,15 @@ void AaBinaryExpression::Write_VC_Control_Path(ostream& ofile)
       this->_second->Write_VC_Control_Path(ofile);
       ofile << "}" << endl;
 
-      ofile << "$T [rr] $T [ra] $T [cr] $T [ca] // (split) binary operation " << endl;
+	ofile << "||[SplitProtocol] { " << endl;
+	ofile << ";;[Sample] { " << endl;
+      	ofile << "$T [rr] $T [ra]" << endl;
+	ofile << "}" << endl;
+	ofile << ";;[Update] { " << endl;
+      	ofile << "$T [cr] $T [ca]" << endl;
+	ofile << "}" << endl;
+	ofile << "}" << endl;
+
       ofile << "}" << endl;
     }
 }
@@ -3733,10 +3758,12 @@ void AaBinaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
       ofile << "// " << this->To_String() << endl;
 
       vector<string> reqs,acks;
-      reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/rr");
-      reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/cr");
-      acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ra");
-      acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ca");
+      string sample_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Sample";
+      string update_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Update";
+      reqs.push_back(sample_region + "/rr");
+      reqs.push_back(update_region + "/cr");
+      acks.push_back(sample_region + "/ra");
+      acks.push_back(update_region + "/ca");
       Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
     }
 }

@@ -8,15 +8,41 @@
 #define __J(x,y) ofile << x << " <-& (" << y << ")" << endl;
 #define __MJ(x,y) ofile << x << " o<-& (" << y << ")" << endl;
 #define __F(x,y) ofile << x << " &-> (" << y << ")" << endl;
-#define __SelfRelease {\
-  __MJ(this->Get_VC_Start_Transition_Name(),this->Get_VC_Active_Transition_Name());\
-  __MJ(this->Get_VC_Active_Transition_Name(),this->Get_VC_Completed_Transition_Name());}
+
 #define __DeclTrans  {\
       __T(this->Get_VC_Start_Transition_Name());\
       __T(this->Get_VC_Active_Transition_Name());  \
       __T(this->Get_VC_Completed_Transition_Name());  \
       __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Start_Transition_Name());\
       __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Active_Transition_Name());}
+#define __SelfRelease {\
+  __MJ(this->Get_VC_Start_Transition_Name(),this->Get_VC_Active_Transition_Name());\
+  __MJ(this->Get_VC_Active_Transition_Name(),this->Get_VC_Completed_Transition_Name());}
+
+#define __DeclTransSplitProtocolPattern  {\
+      __T(this->Get_VC_Start_Transition_Name());\
+      __T(this->Get_VC_Active_Transition_Name());  \
+      __T(this->Get_VC_Completed_Transition_Name());  \
+      __T(this->Get_VC_Sample_Start_Transition_Name());  \
+      __T(this->Get_VC_Sample_Completed_Transition_Name());  \
+      __T(this->Get_VC_Update_Start_Transition_Name());  \
+      __T(this->Get_VC_Update_Completed_Transition_Name());  \
+      __J(this->Get_VC_Sample_Start_Transition_Name(),this->Get_VC_Start_Transition_Name());\
+      __J(this->Get_VC_Update_Start_Transition_Name(),this->Get_VC_Start_Transition_Name());\
+      __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Update_Completed_Transition_Name());\
+      __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Sample_Completed_Transition_Name());}
+
+#define _ConnectSplitProtocolPattern  {\
+      string _sample_regn = this->Get_VC_Name() + "_Sample";\
+      string _update_regn = this->Get_VC_Name() + "_Update";\
+      __F(this->Get_VC_Sample_Start_Transition_Name(), _sample_regn);\
+      __J(this->Get_VC_Sample_Completed_Transition_Name(), _sample_regn);\
+      __F(this->Get_VC_Update_Start_Transition_Name(), _update_regn);\
+      __J(this->Get_VC_Update_Completed_Transition_Name(), update_regn);\
+	}
+#define __SelfReleaseSplitProtocolPattern {\
+  __MJ(this->Get_VC_Sample_Start_Transition_Name(),this->Get_VC_Sample_Completed_Transition_Name());\
+  __MJ(this->Get_VC_Update_Start_Transition_Name(),this->Get_VC_Update_Completed_Transition_Name());}
 
 void Write_VC_Equivalence_Operator(string inst_name,
 				   string input,

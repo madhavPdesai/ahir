@@ -107,7 +107,13 @@ begin
   begin
     active_v := env_rdy and not (pipeline_stall or reset);
     if(clk'event and clk = '1') then
-      stage_full(0) <= active_v;
+
+      if(reset = '1') then
+      	stage_full(0) <= '0';
+      elsif (pipeline_stall = '0') then
+        stage_full(0) <= env_rdy;
+      end if;
+
       if(active_v = '1') then
         tag0 <= tag_in;
         l <= lp;
@@ -233,7 +239,13 @@ begin
 
     active_v := stage_full(0) and not (pipeline_stall or reset);
     if(clk'event and clk = '1') then
-      stage_full(1) <= active_v;
+
+      if(reset = '1') then
+	stage_full(1) <= '0';
+      elsif (pipeline_stall = '0') then
+	stage_full(1) <= stage_full(0);
+      end if;
+
       if(active_v = '1') then
         tag1 <= tag0;
         
@@ -355,7 +367,13 @@ begin
 
     active_v := stage_full(3) and not (pipeline_stall or reset);
     if(clk'event and clk = '1') then
-      stage_full(4) <= active_v;
+
+      if(reset = '1') then
+	stage_full(4) <= '0';
+      elsif (pipeline_stall = '0') then
+	stage_full(4) <= stage_full(3);
+      end if;
+
       if(active_v = '1') then
         tag4 <= raw_tag;
 

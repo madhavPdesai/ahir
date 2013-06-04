@@ -10,12 +10,6 @@ void Exit(int sig)
 	exit(0);
 }
 
-void init();
-float dotp_experimental();
-float dotp_pipelined();
-float dotp_nonpipelined();
-float dotp_pipelined_unrolled();
-float dotp_nonpipelined_unrolled();
 
 int main(int argc, char* argv[])
 {
@@ -24,6 +18,7 @@ int main(int argc, char* argv[])
   	signal(SIGTERM, Exit);
 
 	init();
+	fprintf(stdout,"init completed.\n");
 
 #ifdef EXPERIMENTAL
 	result = dotp_experimental();	
@@ -31,6 +26,7 @@ int main(int argc, char* argv[])
 #endif
 
 #ifdef PIPELINEDUNROLLED
+	fprintf(stdout,"calling dot_pipelined_unrolled.\n", result);
 	result = dotp_pipelined_unrolled();	
 	fprintf(stdout,"pipelined-unrolled result = %f.\n", result);
 #endif

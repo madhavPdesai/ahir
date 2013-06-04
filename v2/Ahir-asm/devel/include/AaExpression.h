@@ -1130,6 +1130,17 @@ class AaUnaryExpression: public AaExpression
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
   virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
+
+  virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
+  {
+	return(this->Get_VC_Update_Start_Transition_Name());
+  } 
+
+  virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
+  {
+	return(this->Get_VC_Update_Start_Transition_Name());
+  } 
+
 };
 
 // 
@@ -1240,6 +1251,16 @@ class AaBinaryExpression: public AaExpression
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
   virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
+
+  virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
+  {
+	return(this->Get_VC_Update_Start_Transition_Name());
+  } 
+
+  virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
+  {
+	return(this->Get_VC_Update_Start_Transition_Name());
+  } 
 
 };
 
