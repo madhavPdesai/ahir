@@ -2307,7 +2307,7 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 			{
 				string prefix = "SplitProtocol/partial_sum_" + IntToStr(idx);
 				string sample_regn = prefix + "_sample";
-				string update_regn = prefix + "_sample";
+				string update_regn = prefix + "_update";
 				reqs.push_back(nhid + "/" + sample_regn + "/rr");
 				reqs.push_back(nhid + "/" + update_regn + "/cr");
 				acks.push_back(nhid + "/" + sample_regn + "/ra");

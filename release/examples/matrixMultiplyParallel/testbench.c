@@ -44,6 +44,7 @@ void write_matrices()
 			write_float32("in_data_pipe",a_matrix[i][j]);
 		}
 	}
+	fprintf(stderr,"Sent a.\n");
 
         for(i = 0; i < ORDER; i++) 
 	{
@@ -52,6 +53,7 @@ void write_matrices()
 			write_float32("in_data_pipe",b_matrix[i][j]);
 		}
 	}
+	fprintf(stderr,"Sent b.\n");
 }
 
 

@@ -1706,10 +1706,10 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 		    << lca->Get_DP_To_CP_Symbol() << "," << endl
 		    << "\"" << elements[u] << "\"," << endl
 		    << "\"" << ms->Get_VHDL_Id() << "\" ," << endl
-		    << ow->Get_VHDL_Id() << "," << endl
-		    << iw->Get_VHDL_Id() << "," << endl
-		    << "\"" << ow->Get_VHDL_Id() << "\"," << endl
-		    << "\"" << iw->Get_VHDL_Id() << "\" -- } " << endl
+		    << ow->Get_VHDL_Signal_Id() << "," << endl
+		    << iw->Get_VHDL_Signal_Id() << "," << endl
+		    << "\"" << ow->Get_VHDL_Signal_Id() << "\"," << endl
+		    << "\"" << iw->Get_VHDL_Signal_Id() << "\" -- } " << endl
 		    << ");" << endl;
 	    }
 	}
@@ -1853,10 +1853,10 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 		    << sca->Get_DP_To_CP_Symbol() << "," << endl
 		    << "\"" << elements[u] << "\"," << endl
 		    << "\"" << ms->Get_VHDL_Id() << "\" ," << endl
-		    << dw->Get_VHDL_Id() << "," << endl
-		    << aw->Get_VHDL_Id() << "," << endl
-		    << "\"" << dw->Get_VHDL_Id() << "\"," << endl
-		    << "\"" << aw->Get_VHDL_Id() << "\" -- } " << endl
+		    << dw->Get_VHDL_Signal_Id() << "," << endl
+		    << aw->Get_VHDL_Signal_Id() << "," << endl
+		    << "\"" << dw->Get_VHDL_Signal_Id() << "\"," << endl
+		    << "\"" << aw->Get_VHDL_Signal_Id() << "\" -- } " << endl
 		    << ");" << endl;
 	    }
 	}
@@ -2050,7 +2050,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 	      ofile << " if " << aw->Get_DP_To_CP_Symbol() << " then -- {" << endl;
 	      ofile << " assert false report \" ReadPipe " 
 		    <<  p->Get_VHDL_Id() 
-		    << " to wire " << ow->Get_VHDL_Id() << " value=\" " 
+		    << " to wire " << ow->Get_VHDL_Signal_Id() << " value=\" " 
 		    << " & "
 		    << " convert_slv_to_hex_string(data_out(" 
 		    << lindex << " downto " << (lindex - (data_width-1)) << ")) "
@@ -2166,9 +2166,9 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 	      ofile << " if " << aw->Get_DP_To_CP_Symbol() << " then -- {" << endl;
 	      ofile << " assert false report \" WritePipe " 
 		    <<  p->Get_VHDL_Id() 
-		    << " from wire " << iw->Get_VHDL_Id() << " value=\" " 
+		    << " from wire " << iw->Get_VHDL_Signal_Id() << " value=\" " 
 		    << " & "
-		    << " convert_slv_to_hex_string(" << iw->Get_VHDL_Id() << ")"
+		    << " convert_slv_to_hex_string(" << iw->Get_VHDL_Signal_Id() << ")"
 		    << " severity note; --}" << endl;
 	      ofile << " end if;" << endl;
 	    }

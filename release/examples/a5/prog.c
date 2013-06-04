@@ -49,6 +49,11 @@
 
 #include "prog.h"
 
+#ifdef SW
+void loop_pipelining_on() {}
+#else
+void loop_pipelining_on();
+#endif 
 uint32_t key[2];
 uint32_t AtoB[4];
 uint32_t BtoA[4];
@@ -164,7 +169,7 @@ inline uint32_t a5reg()
   return t1;
 }
 
-void initreg()
+inline void initreg()
 {
 
   uint8_t i, t1, t2, t3, t4;
@@ -221,6 +226,9 @@ void a5init ()
 
   for (i = 0; i < 64; i++)
     {
+#ifdef LOOPPIPELINE
+	loop_pipelining_on();
+#endif
       keybit = (key[i >> 5] >> (i & 31)) & 1;	/* The i-th bit of the key */
       R1 ^= keybit;
       R2 ^= keybit;
@@ -234,6 +242,9 @@ void a5init ()
 
   for (i = 0; i < 22; i++)
     {
+#ifdef LOOPPIPELINE
+	loop_pipelining_on();
+#endif
       framebit = (frame >> i) & 1;	/* The i-th bit of the frame */
       R1 ^= framebit;
       R2 ^= framebit;
@@ -247,8 +258,12 @@ void a5init ()
    * that there is sufficient avalanche. We re-enable the
    * majority-based clock control rule from now on. */
 
-  for (i = 0; i < 100; i++)
+  for (i = 0; i < 100; i+=2)
     {
+#ifdef LOOPPIPELINE
+	loop_pipelining_on();
+#endif
+      a5reg();
       a5reg();
     }
 }
@@ -272,11 +287,17 @@ int main_inner (void)
   write_uint32("outpipe", R2);
   write_uint32("outpipe", R3);
 
-  for (i = 0; i < 32; ++i)
+  for (i = 0; i < 32; i+=2)
   {
+#ifdef LOOPPIPELINE
+	loop_pipelining_on();
+#endif
     uint32_t tmp = a5reg();
     //write_uint32("tmppipe", tmp);
     out |= (tmp << (31 - (i & 31)));
+    tmp = a5reg();
+    //write_uint32("tmppipe", tmp);
+    out |= (tmp << (31 - ((i+1) & 31)));
   }
   
   write_uint32("outpipe", R1);

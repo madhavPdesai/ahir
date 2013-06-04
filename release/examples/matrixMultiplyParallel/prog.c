@@ -4,6 +4,12 @@
 #include <stdio.h>
 #include "prog.h"
 
+#ifdef SW
+void loop_pipelining_on() {}
+#else
+void loop_pipelining_on();
+#endif
+
 #define HALF_ORDER (ORDER >> 1)
 
 float a_matrix_L[HALF_ORDER][ORDER];
@@ -40,29 +46,42 @@ void send_output()
 void get_input()
 {
 	uint32_t i,j;
-	for(i=0; i < ORDER; i++)
+	for(i=0; i < HALF_ORDER; i++)
 	{
 		for (j = 0; j < ORDER; j++)
 		{
 			float v = read_float32("in_data_pipe");
-			if(i < HALF_ORDER)
-				a_matrix_L[i][j] = v;
-			else
-				a_matrix_H[i-HALF_ORDER][j] = v;
+			a_matrix_L[i][j] = v;
 		}
 	}
+
+	for(i=HALF_ORDER; i < ORDER; i++)
+	{
+		for (j = 0; j < ORDER; j++)
+		{
+			float v = read_float32("in_data_pipe");
+			a_matrix_H[i-HALF_ORDER][j] = v;
+		}
+	}
+
 #ifdef SW
 	fprintf(stderr,"input_module: got a.\n");
 #endif
-	for(i=0; i < ORDER; i++)
+	for(i=0; i < HALF_ORDER; i++)
 	{
 		for (j = 0; j < ORDER; j++)
 		{
 			float v = read_float32("in_data_pipe");
-			if(j < HALF_ORDER)
-				b_matrix_L[i][j] = v;
-			else
-				b_matrix_H[i][j-HALF_ORDER] = v;
+			b_matrix_L[i][j] = v;
+		}
+	}
+
+	for(i=HALF_ORDER; i < ORDER; i++)
+	{
+		for (j = 0; j < ORDER; j++)
+		{
+			float v = read_float32("in_data_pipe");
+			b_matrix_H[i][j-HALF_ORDER] = v;
 		}
 	}
 #ifdef SW
@@ -121,6 +140,8 @@ void mmultiply_LL()
 
 				for(k = 0; k < ORDER; k += 4)
 				{ 
+					loop_pipelining_on();
+
 					uint32_t k1 = k+1; uint32_t k2 = k+2; uint32_t k3 = k+3;
 
 					_baseBlock(i,j,a_matrix_L,b_matrix_L,v00);
@@ -186,6 +207,7 @@ void mmultiply_LH()
 
 				for(k = 0; k < ORDER; k += 4)
 				{ 
+					loop_pipelining_on();
 					uint32_t k1 = k+1; uint32_t k2 = k+2; uint32_t k3 = k+3;
 
 					_baseBlock(i,j,a_matrix_L,b_matrix_H,v00);
@@ -251,6 +273,7 @@ void mmultiply_HH()
 
 				for(k = 0; k < ORDER; k += 4)
 				{ 
+					loop_pipelining_on();
 					uint32_t k1 = k+1; uint32_t k2 = k+2; uint32_t k3 = k+3;
 
 					_baseBlock(i,j,a_matrix_H,b_matrix_H,v00);
@@ -316,6 +339,7 @@ void mmultiply_HL()
 
 				for(k = 0; k < ORDER; k += 4)
 				{ 
+					loop_pipelining_on();
 					uint32_t k1 = k+1; uint32_t k2 = k+2; uint32_t k3 = k+3;
 
 					_baseBlock(i,j,a_matrix_H,b_matrix_L,v00);
@@ -379,6 +403,7 @@ void mmultiply_LL()
 				float v = 0;
 				for(k = 0; k < ORDER; k ++)
 				{ 
+					loop_pipelining_on();
 					v += a_matrix_L[i][k]*b_matrix_L[k][j];
 				}
 
@@ -402,6 +427,7 @@ void mmultiply_LH()
 				float v = 0;
 				for(k = 0; k < ORDER; k ++)
 				{ 
+					loop_pipelining_on();
 					v += a_matrix_L[i][k]*b_matrix_H[k][j];
 				}
 
@@ -425,6 +451,7 @@ void mmultiply_HH()
 				float v = 0;
 				for(k = 0; k < ORDER; k ++)
 				{ 
+					loop_pipelining_on();
 					v += a_matrix_H[i][k]*b_matrix_H[k][j];
 				}
 
@@ -448,6 +475,7 @@ void mmultiply_HL()
 				float v=0;
 				for(k = 0; k < ORDER; k ++)
 				{ 
+					loop_pipelining_on();
 					v += a_matrix_H[i][k]*b_matrix_L[k][j];
 				}
 

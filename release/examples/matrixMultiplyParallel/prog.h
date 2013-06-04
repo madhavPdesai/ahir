@@ -1,4 +1,4 @@
-#define ORDER 6
+#define ORDER 8 // ORDER must be a multiple of 4.
 void mmultiply();
 void mmultiply_LL();
 void mmultiply_LH();

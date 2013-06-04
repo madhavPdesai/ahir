@@ -104,7 +104,7 @@ void vcOperator::Print_VHDL_Logger(ostream& ofile)
 		{
 			if(idx != 0)
 				ofile << " & ";
-			ofile  <<  this->Get_Input_Wire(idx)->Get_VHDL_Id();
+			ofile  <<  this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
 		}
 	}
 	else
@@ -121,7 +121,7 @@ void vcOperator::Print_VHDL_Logger(ostream& ofile)
 		{
 			if(idx != 0)
 				ofile << " & ";
-			ofile  <<  this->Get_Output_Wire(idx)->Get_VHDL_Id();
+			ofile  <<  this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id();
 		}
 	}
 	else
@@ -174,7 +174,7 @@ void vcSplitOperator::Print_VHDL_Logger(ostream& ofile)
 		{
 			if(idx != 0)
 				ofile << " & ";
-			ofile  <<  this->Get_Input_Wire(idx)->Get_VHDL_Id();
+			ofile  <<  this->Get_Input_Wire(idx)->Get_VHDL_Signal_Id();
 		}
 	}
 	else
@@ -191,7 +191,7 @@ void vcSplitOperator::Print_VHDL_Logger(ostream& ofile)
 		{
 			if(idx != 0)
 				ofile << " & ";
-			ofile  <<  this->Get_Output_Wire(idx)->Get_VHDL_Id();
+			ofile  <<  this->Get_Output_Wire(idx)->Get_VHDL_Signal_Id();
 		}
 	}
 	else

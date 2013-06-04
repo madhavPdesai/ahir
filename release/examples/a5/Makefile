@@ -9,6 +9,8 @@ VHDL_VHPI_LIB=../../CtestBench/vhdl
 LLVM2AAOPTS=-extract_do_while=true
 all: SW HW 
 
+PROGDEFS=-DLOOPPIPELINE
+
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.
 SW: prog.c  testbench.c 
@@ -21,7 +23,7 @@ HW: c2llvmbc llvmbc2aa aa2vc vc2vhdl vhdlsim
 
 # C to llvm byte-code.. use clang.
 c2llvmbc: prog.c testbench.c
-	clang -std=gnu89 -I$(IOLIB_INCLUDE) -emit-llvm -c prog.c
+	clang -std=gnu89 $(PROGDEFS) -I$(IOLIB_INCLUDE) -emit-llvm -c prog.c
 	#llvm-dis prog.o
 	opt -O3	--instnamer --loopsimplify prog.o > prog.opt.o
 	llvm-dis prog.opt.o
@@ -37,7 +39,7 @@ aa2vc: prog.opt.o.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -S 4 -O -I 8 -C -e ahir_system -w -s ghdl -t main_inner -f prog.vc
+	vc2vhdl -D -S 4 -O -I 8 -C -e ahir_system -w -s ghdl -t main_inner -f prog.vc
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
@@ -50,10 +52,9 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 	gcc -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLib -lpthread
 	ghdl --clean
 	ghdl --remove
+	ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl
 	ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl
 	ghdl -i --work=ahir_ieee_proposed  $(VHDL_LIB)/aHiR_ieee_proposed.vhdl
-	ghdl -i --work=work $(VHDL_VHPI_LIB)/Utility_Package.vhdl
-	ghdl -i --work=work $(VHDL_VHPI_LIB)/Vhpi_Package.vhdl
 	ghdl -i --work=work ahir_system_global_package.vhdl
 	ghdl -i --work=work ahir_system.vhdl
 	ghdl -i --work=work ahir_system_test_bench.vhdl
