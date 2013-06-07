@@ -258,12 +258,11 @@ void a5init ()
    * that there is sufficient avalanche. We re-enable the
    * majority-based clock control rule from now on. */
 
-  for (i = 0; i < 100; i+=2)
+  for (i = 0; i < 100; i++)
     {
 #ifdef LOOPPIPELINE
 	loop_pipelining_on();
 #endif
-      a5reg();
       a5reg();
     }
 }
@@ -287,7 +286,7 @@ int main_inner (void)
   write_uint32("outpipe", R2);
   write_uint32("outpipe", R3);
 
-  for (i = 0; i < 32; i+=2)
+  for (i = 0; i < 32; i++)
   {
 #ifdef LOOPPIPELINE
 	loop_pipelining_on();
@@ -295,9 +294,6 @@ int main_inner (void)
     uint32_t tmp = a5reg();
     //write_uint32("tmppipe", tmp);
     out |= (tmp << (31 - (i & 31)));
-    tmp = a5reg();
-    //write_uint32("tmppipe", tmp);
-    out |= (tmp << (31 - ((i+1) & 31)));
   }
   
   write_uint32("outpipe", R1);

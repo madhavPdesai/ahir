@@ -10,7 +10,7 @@ use ahir.BaseComponents.all;
 
 entity OutputPortNoData is
   generic(num_reqs: integer;
-	  no_arbitration: boolean);
+	  no_arbitration: boolean := false);
   port (
     req        : in  BooleanArray(num_reqs-1 downto 0);
     ack        : out BooleanArray(num_reqs-1 downto 0);

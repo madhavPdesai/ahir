@@ -10,7 +10,7 @@ use ahir.Utilities.all;
 
 entity InputPortNoData is
   generic (num_reqs: integer;
-	   no_arbitration: boolean);
+	   no_arbitration: boolean := false);
   port (
     -- pulse interface with the data-path
     req        : in  BooleanArray(num_reqs-1 downto 0);

@@ -13,8 +13,8 @@ entity InputMuxBase is
 	   owidth: integer := 10;
 	   twidth: integer := 3;
 	   nreqs: integer := 1;
-	   no_arbitration: Boolean := true;
-	   registered_output: Boolean := false);
+	   no_arbitration: Boolean := false;
+	   registered_output: Boolean := true);
   port (
     -- req/ack follow pulse protocol
     reqL                 : in  BooleanArray(nreqs-1 downto 0);

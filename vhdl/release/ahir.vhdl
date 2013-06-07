@@ -8780,7 +8780,7 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity join2 is
-  generic(bypass : boolean := false);
+  generic(bypass : boolean := true);
   port ( pred0, pred1      : in   Boolean;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -8809,7 +8809,7 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity join is
-  generic (place_capacity : integer := 1;bypass: boolean := false; name : string := "anon");
+  generic (place_capacity : integer := 1;bypass: boolean := true; name : string := "anon");
   port ( preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -8863,7 +8863,7 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity join_with_input is
-  generic (place_capacity : integer := 1; bypass : boolean := false; name : string := "anon");
+  generic (place_capacity : integer := 1; bypass : boolean := true; name : string := "anon");
   port ( preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
@@ -9177,7 +9177,7 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity marked_join is
-  generic(place_capacity : integer := 1; bypass : boolean := false; name : string := "anon");
+  generic(place_capacity : integer := 1; bypass : boolean := true; name : string := "anon");
   port ( preds      : in   BooleanArray;
          marked_preds : in BooleanArray;
     	symbol_out : out  boolean;
@@ -10012,7 +10012,7 @@ use ahir.BaseComponents.all;
 entity InputMuxBaseNoData is
   generic ( twidth: integer;
 	   nreqs: integer;
-	   no_arbitration: Boolean);
+	   no_arbitration: Boolean := false);
   port (
     -- req/ack follow pulse protocol
     reqL                 : in  BooleanArray(nreqs-1 downto 0);
@@ -10102,8 +10102,8 @@ entity InputMuxBase is
 	   owidth: integer := 10;
 	   twidth: integer := 3;
 	   nreqs: integer := 1;
-	   no_arbitration: Boolean := true;
-	   registered_output: Boolean := false);
+	   no_arbitration: Boolean := false;
+	   registered_output: Boolean := true);
   port (
     -- req/ack follow pulse protocol
     reqL                 : in  BooleanArray(nreqs-1 downto 0);
@@ -10261,7 +10261,7 @@ use ahir.Utilities.all;
 entity InputPortLevelNoData is
   
   generic (num_reqs: integer; 
-	no_arbitration: boolean);
+	no_arbitration: boolean := false);
   port (
     -- ready/ready interface with the requesters
     req       : in  std_logic_vector(num_reqs-1 downto 0);
@@ -10310,7 +10310,7 @@ entity InputPortLevel is
   
   generic (num_reqs: integer := 5; 
 	data_width: integer := 8;  
-	no_arbitration: boolean := true);
+	no_arbitration: boolean := false);
   port (
     -- ready/ready interface with the requesters
     req       : in  std_logic_vector(num_reqs-1 downto 0);
@@ -10376,7 +10376,7 @@ use ahir.Utilities.all;
 
 entity InputPortNoData is
   generic (num_reqs: integer;
-	   no_arbitration: boolean);
+	   no_arbitration: boolean := false);
   port (
     -- pulse interface with the data-path
     req        : in  BooleanArray(num_reqs-1 downto 0);
@@ -10436,7 +10436,7 @@ use ahir.Utilities.all;
 entity InputPort is
   generic (num_reqs: integer := 5;
 	   data_width: integer := 8;
-	   no_arbitration: boolean := true);
+	   no_arbitration: boolean := false);
   port (
     -- pulse interface with the data-path
     req        : in  BooleanArray(num_reqs-1 downto 0);
@@ -10540,7 +10540,7 @@ entity LoadCompleteShared is
       data_width: integer := 8;
       tag_length:  integer := 1;
       num_reqs : integer := 1;
-      no_arbitration: boolean := true
+      no_arbitration: boolean := false
     );
   port (
     -- req/ack follow level protocol
@@ -10599,8 +10599,8 @@ entity LoadReqShared is
 	addr_width: integer := 8;
       	num_reqs : integer := 1; -- how many requesters?
 	tag_length: integer := 1;
-	no_arbitration: Boolean := true;
-        min_clock_period: Boolean := false;
+	no_arbitration: Boolean := false;
+        min_clock_period: Boolean := true;
 	time_stamp_width: integer := 0
     );
   port (
@@ -10782,7 +10782,7 @@ use ahir.Utilities.all;
 entity OutputDeMuxBaseNoData is
   generic(twidth: integer;
 	  nreqs: integer;
-	  no_arbitration: Boolean);
+	  no_arbitration: Boolean := false);
   port (
     -- req/ack follow level protocol
     reqL                 : in  std_logic;
@@ -10923,7 +10923,7 @@ entity OutputDeMuxBase is
 	  owidth: integer := 12;
 	  twidth: integer := 2;
 	  nreqs: integer := 3;
-	  no_arbitration: Boolean;
+	  no_arbitration: Boolean := false;
           pipeline_flag: Boolean := true);
   port (
     -- req/ack follow level protocol
@@ -11129,7 +11129,7 @@ use ahir.BaseComponents.all;
 
 entity OutputPortLevelNoData is
   generic(num_reqs: integer;
-	no_arbitration: boolean);
+	no_arbitration: boolean := false);
   port (
     req       : in  std_logic_vector(num_reqs-1 downto 0);
     ack       : out std_logic_vector(num_reqs-1 downto 0);
@@ -11178,7 +11178,7 @@ use ahir.BaseComponents.all;
 entity OutputPortLevel is
   generic(num_reqs: integer;
 	data_width: integer;
-	no_arbitration: boolean);
+	no_arbitration: boolean := true);
   port (
     req       : in  std_logic_vector(num_reqs-1 downto 0);
     ack       : out std_logic_vector(num_reqs-1 downto 0);
@@ -11255,7 +11255,7 @@ use ahir.BaseComponents.all;
 
 entity OutputPortNoData is
   generic(num_reqs: integer;
-	  no_arbitration: boolean);
+	  no_arbitration: boolean := false);
   port (
     req        : in  BooleanArray(num_reqs-1 downto 0);
     ack        : out BooleanArray(num_reqs-1 downto 0);
@@ -11318,7 +11318,7 @@ use ahir.BaseComponents.all;
 entity OutputPort is
   generic(num_reqs: integer;
 	  data_width: integer;
-	  no_arbitration: boolean);
+	  no_arbitration: boolean := false);
   port (
     req        : in  BooleanArray(num_reqs-1 downto 0);
     ack        : out BooleanArray(num_reqs-1 downto 0);
@@ -13118,8 +13118,8 @@ entity SplitOperatorShared is
       constant_operand : std_logic_vector := "0001"; -- constant operand.. (it is always the second operand)
       constant_width: integer := 4;
       use_constant  : boolean := true;
-      no_arbitration: boolean := true;
-      min_clock_period: boolean := false;
+      no_arbitration: boolean := false;
+      min_clock_period: boolean := true;
       num_reqs : integer := 3 -- how many requesters?
     );
   port (
@@ -13308,8 +13308,8 @@ entity StoreReqShared is
 	time_stamp_width : integer;
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
-	no_arbitration: Boolean;
-        min_clock_period: Boolean := false        
+	no_arbitration: Boolean := false;
+        min_clock_period: Boolean := true        
     );
   port (
     -- req/ack follow pulse protocol

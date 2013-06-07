@@ -7,7 +7,7 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity join_with_input is
-  generic (place_capacity : integer := 1; bypass : boolean := false; name : string := "anon");
+  generic (place_capacity : integer := 1; bypass : boolean := true; name : string := "anon");
   port ( preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;

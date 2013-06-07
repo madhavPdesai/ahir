@@ -88,10 +88,13 @@ class AaRoot
     return(this->Get_VC_Name() + "_update_completed_");
   }
 
+  // Note: the base class provides a conservative definition for
+  // the reenable transitions.  This should be modified by
+  // derived classes based on their implementation of the VC 
+  // control schemes.
   virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements) {
     return(this->Get_VC_Active_Transition_Name());    
   }
-
   virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements) {
     return(this->Get_VC_Start_Transition_Name());    
   }

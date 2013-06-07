@@ -16,8 +16,8 @@ entity StoreReqShared is
 	time_stamp_width : integer;
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
-	no_arbitration: Boolean;
-        min_clock_period: Boolean := false        
+	no_arbitration: Boolean := false;
+        min_clock_period: Boolean := true        
     );
   port (
     -- req/ack follow pulse protocol

@@ -18,7 +18,7 @@ entity OutputDeMuxBase is
 	  owidth: integer := 12;
 	  twidth: integer := 2;
 	  nreqs: integer := 3;
-	  no_arbitration: Boolean;
+	  no_arbitration: Boolean := false;
           pipeline_flag: Boolean := true);
   port (
     -- req/ack follow level protocol

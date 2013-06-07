@@ -14,8 +14,8 @@ entity LoadReqShared is
 	addr_width: integer := 8;
       	num_reqs : integer := 1; -- how many requesters?
 	tag_length: integer := 1;
-	no_arbitration: Boolean := true;
-        min_clock_period: Boolean := false;
+	no_arbitration: Boolean := false;
+        min_clock_period: Boolean := true;
 	time_stamp_width: integer := 0
     );
   port (

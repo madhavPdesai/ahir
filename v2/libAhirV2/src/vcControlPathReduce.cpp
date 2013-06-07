@@ -786,6 +786,21 @@ void vcControlPath::Update_Group_Bypass_Flags()
   set<vcCPElementGroup*>   visited_set;
   set<vcCPElementGroup*>   on_queue_set;
 
+  // if we are not looking to minimize the clock period,
+  // then all groups in the control-path will have byass
+  // set to true.  WARNING: this may lead to combinational
+  // cycles if trivial loops are instantiated in the program.
+  if(!vcSystem::_min_clock_period_flag)
+  {
+  	for(set<vcCPElementGroup*, vcRoot_Compare>::iterator iter = this->_cpelement_groups.begin(),
+		fiter = this->_cpelement_groups.end(); iter != fiter; iter++)
+	{
+  		vcCPElementGroup* grp = *iter;
+		grp->_bypass_flag = true;
+	}
+	return;
+  }
+
 
   // start the DFS with all "root" groups.
   for(set<vcCPElementGroup*, vcRoot_Compare>::iterator iter = this->_cpelement_groups.begin(),

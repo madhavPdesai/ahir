@@ -28,8 +28,8 @@ entity SplitOperatorShared is
       constant_operand : std_logic_vector := "0001"; -- constant operand.. (it is always the second operand)
       constant_width: integer := 4;
       use_constant  : boolean := true;
-      no_arbitration: boolean := true;
-      min_clock_period: boolean := false;
+      no_arbitration: boolean := false;
+      min_clock_period: boolean := true;
       num_reqs : integer := 3 -- how many requesters?
     );
   port (

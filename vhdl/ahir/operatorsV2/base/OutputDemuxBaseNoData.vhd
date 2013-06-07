@@ -10,7 +10,7 @@ use ahir.Utilities.all;
 entity OutputDeMuxBaseNoData is
   generic(twidth: integer;
 	  nreqs: integer;
-	  no_arbitration: Boolean);
+	  no_arbitration: Boolean := false);
   port (
     -- req/ack follow level protocol
     reqL                 : in  std_logic;

@@ -11,7 +11,7 @@ use ahir.BaseComponents.all;
 entity InputMuxBaseNoData is
   generic ( twidth: integer;
 	   nreqs: integer;
-	   no_arbitration: Boolean);
+	   no_arbitration: Boolean := false);
   port (
     -- req/ack follow pulse protocol
     reqL                 : in  BooleanArray(nreqs-1 downto 0);

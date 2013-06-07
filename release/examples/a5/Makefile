@@ -9,7 +9,8 @@ VHDL_VHPI_LIB=../../CtestBench/vhdl
 LLVM2AAOPTS=-extract_do_while=true
 all: SW HW 
 
-PROGDEFS=-DLOOPPIPELINE
+#PROGDEFS=-DLOOPPIPELINE
+PROGDEFS=
 
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.

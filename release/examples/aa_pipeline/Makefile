@@ -17,22 +17,26 @@ aa2vc: prog.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -C -e ahir_system -w -s ghdl -T io_module -f prog.vc
+	vc2vhdl -S 256 -O -C -e ahir_system -w -s ghdl -T io_module -f prog.vc
+	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
 
 # build testbench and ghdl executable
 # note the use of SOCKETLIB in building the testbench.
-vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h vhdlCStubs.c
+vhdlsim: TB GHDL
+TB: testbench.c vhdlCStubs.h vhdlCStubs.c
 	gcc -c vhdlCStubs.c -I./ -I$(SOCKETLIB_INCLUDE)
 	gcc -c testbench.c -I./ -I$(SOCKETLIB_INCLUDE)
 	gcc -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLib -lpthread
+
+GHDL: ahir_system.vhdl ahir_system_test_bench.vhdl 
 	ghdl --clean
 	ghdl --remove
+	ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl
 	ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl
-	ghdl -i --work=ieee_proposed  $(VHDL_LIB)/ieee_proposed.vhdl
-	ghdl -i --work=work $(VHDL_VHPI_LIB)/Utility_Package.vhdl
-	ghdl -i --work=work $(VHDL_VHPI_LIB)/Vhpi_Package.vhdl
+	ghdl -i --work=ahir_ieee_proposed  $(VHDL_LIB)/aHiR_ieee_proposed.vhdl
+	ghdl -i --work=work ahir_system_global_package.vhdl
 	ghdl -i --work=work ahir_system.vhdl
 	ghdl -i --work=work ahir_system_test_bench.vhdl
 	ghdl -m --work=work -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 

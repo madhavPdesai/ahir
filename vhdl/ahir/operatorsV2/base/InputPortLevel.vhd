@@ -10,7 +10,7 @@ entity InputPortLevel is
   
   generic (num_reqs: integer := 5; 
 	data_width: integer := 8;  
-	no_arbitration: boolean := true);
+	no_arbitration: boolean := false);
   port (
     -- ready/ready interface with the requesters
     req       : in  std_logic_vector(num_reqs-1 downto 0);

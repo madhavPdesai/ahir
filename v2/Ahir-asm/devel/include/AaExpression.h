@@ -248,7 +248,7 @@ class AaExpression: public AaRoot
     if(this->Is_Constant())
       return("$entry");
     else
-      return(this->Get_VC_Active_Transition_Name());    
+      return(this->Get_VC_Start_Transition_Name());    
 
   }
 
@@ -263,6 +263,7 @@ class AaExpression: public AaRoot
   void Replace_Uses_By(AaExpression* used_expr, AaExpression* replacement);
 
   virtual string Get_Name() {return(this->Get_VC_Name());}
+
 
 };
 
@@ -583,6 +584,7 @@ class AaObjectReference: public AaExpression
   virtual bool Scalar_Types_Only() { return(false);}
   bool Get_Is_Dereferenced() {return(_is_dereferenced);}
   void Set_Is_Dereferenced(bool v);
+
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
@@ -706,6 +708,7 @@ class AaSimpleObjectReference: public AaObjectReference
 
   virtual string Get_Name();
   virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
+
 };
 
 
@@ -826,6 +829,7 @@ class AaArrayObjectReference: public AaObjectReference
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
   virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
+
 };
 
 
@@ -918,6 +922,7 @@ class AaPointerDereferenceExpression: public AaObjectReference
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
   virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
+
 };
 
 
@@ -992,6 +997,7 @@ class AaAddressOfExpression: public AaObjectReference
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
   virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
+
 };
 
 
@@ -1343,6 +1349,7 @@ class AaTernaryExpression: public AaExpression
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
   virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
+
 };
 
 

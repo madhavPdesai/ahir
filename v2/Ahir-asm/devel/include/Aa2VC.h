@@ -9,40 +9,42 @@
 #define __MJ(x,y) ofile << x << " o<-& (" << y << ")" << endl;
 #define __F(x,y) ofile << x << " &-> (" << y << ")" << endl;
 
+#define __ST(u)  u->Get_VC_Start_Transition_Name()
+#define __AT(u)  u->Get_VC_Active_Transition_Name()
+#define __CT(u)  u->Get_VC_Completed_Transition_Name()
+#define __SST(u) u->Get_VC_Sample_Start_Transition_Name()
+#define __SCT(u) u->Get_VC_Sample_Completed_Transition_Name()
+#define __UST(u) u->Get_VC_Update_Start_Transition_Name()
+#define __UCT(u) u->Get_VC_Update_Completed_Transition_Name()
+#define __RST(u) u->Get_VC_Reenable_Sample_Transition_Name()
+#define __RUT(u) u->Get_VC_Reenable_Update_Transition_Name()
+
 #define __DeclTrans  {\
-      __T(this->Get_VC_Start_Transition_Name());\
-      __T(this->Get_VC_Active_Transition_Name());  \
-      __T(this->Get_VC_Completed_Transition_Name());  \
-      __J(this->Get_VC_Active_Transition_Name(),this->Get_VC_Start_Transition_Name());\
-      __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Active_Transition_Name());}
-#define __SelfRelease {\
-  __MJ(this->Get_VC_Start_Transition_Name(),this->Get_VC_Active_Transition_Name());\
-  __MJ(this->Get_VC_Active_Transition_Name(),this->Get_VC_Completed_Transition_Name());}
+	string st = __ST(this);\
+	string at = __AT(this);\
+	string ct = __CT(this);\
+        __T(st); __T(at); __T(ct); }
 
 #define __DeclTransSplitProtocolPattern  {\
-      __T(this->Get_VC_Start_Transition_Name());\
-      __T(this->Get_VC_Active_Transition_Name());  \
-      __T(this->Get_VC_Completed_Transition_Name());  \
-      __T(this->Get_VC_Sample_Start_Transition_Name());  \
-      __T(this->Get_VC_Sample_Completed_Transition_Name());  \
-      __T(this->Get_VC_Update_Start_Transition_Name());  \
-      __T(this->Get_VC_Update_Completed_Transition_Name());  \
-      __J(this->Get_VC_Sample_Start_Transition_Name(),this->Get_VC_Start_Transition_Name());\
-      __J(this->Get_VC_Update_Start_Transition_Name(),this->Get_VC_Start_Transition_Name());\
-      __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Update_Completed_Transition_Name());\
-      __J(this->Get_VC_Completed_Transition_Name(),this->Get_VC_Sample_Completed_Transition_Name());}
+	__T(__ST(this)); __T(__AT(this)); __T(__CT(this));\
+      	__T(__SST(this)); __T(__SCT(this)); __T(__UST(this)); __T(__UCT(this));\
+      	__J(__SST(this),__ST(this));\
+      	__J(__UST(this),__ST(this));\
+      	__J(__CT(this),__UCT(this));\
+      	__J(__CT(this),__SCT(this)); }
 
 #define _ConnectSplitProtocolPattern  {\
       string _sample_regn = this->Get_VC_Name() + "_Sample";\
       string _update_regn = this->Get_VC_Name() + "_Update";\
-      __F(this->Get_VC_Sample_Start_Transition_Name(), _sample_regn);\
-      __J(this->Get_VC_Sample_Completed_Transition_Name(), _sample_regn);\
-      __F(this->Get_VC_Update_Start_Transition_Name(), _update_regn);\
-      __J(this->Get_VC_Update_Completed_Transition_Name(), update_regn);\
+      __F(__SST(this), _sample_regn);\
+      __J(__SCT(this), _sample_regn);\
+      __F(__UST(this), _update_regn);\
+      __J(__UCT(this), _update_regn);\
 	}
+
 #define __SelfReleaseSplitProtocolPattern {\
-  __MJ(this->Get_VC_Sample_Start_Transition_Name(),this->Get_VC_Sample_Completed_Transition_Name());\
-  __MJ(this->Get_VC_Update_Start_Transition_Name(),this->Get_VC_Update_Completed_Transition_Name());}
+  __MJ(__SST(this),__SCT(this));\
+  __MJ(__UST(this),__UCT(this));}
 
 void Write_VC_Equivalence_Operator(string inst_name,
 				   string input,

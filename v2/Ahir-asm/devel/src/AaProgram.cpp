@@ -1264,11 +1264,11 @@ void AaProgram::Print_Global_Storage_Initializer(ostream& ofile)
       miter++)
     {
       AaModule* m = (*miter).second;
-      if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
-	{
-      		if(m->Has_Attribute("initializer"))
+      //if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+	//{
+      if(m->Has_Attribute("initializer"))
 		init_modules.push_back(m);
-	}
+	//}
     }
 
   ofile << "$module [global_storage_initializer_] $in () $out () $is {" << endl;

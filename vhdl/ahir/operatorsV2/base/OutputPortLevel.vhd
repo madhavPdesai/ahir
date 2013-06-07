@@ -11,7 +11,7 @@ use ahir.BaseComponents.all;
 entity OutputPortLevel is
   generic(num_reqs: integer;
 	data_width: integer;
-	no_arbitration: boolean);
+	no_arbitration: boolean := true);
   port (
     req       : in  std_logic_vector(num_reqs-1 downto 0);
     ack       : out std_logic_vector(num_reqs-1 downto 0);

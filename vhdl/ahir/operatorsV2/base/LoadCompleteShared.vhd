@@ -14,7 +14,7 @@ entity LoadCompleteShared is
       data_width: integer := 8;
       tag_length:  integer := 1;
       num_reqs : integer := 1;
-      no_arbitration: boolean := true
+      no_arbitration: boolean := false
     );
   port (
     -- req/ack follow level protocol

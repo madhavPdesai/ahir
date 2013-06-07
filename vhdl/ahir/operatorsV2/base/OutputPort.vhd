@@ -11,7 +11,7 @@ use ahir.BaseComponents.all;
 entity OutputPort is
   generic(num_reqs: integer;
 	  data_width: integer;
-	  no_arbitration: boolean);
+	  no_arbitration: boolean := false);
   port (
     req        : in  BooleanArray(num_reqs-1 downto 0);
     ack        : out BooleanArray(num_reqs-1 downto 0);

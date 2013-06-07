@@ -7,7 +7,7 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity marked_join is
-  generic(place_capacity : integer := 1; bypass : boolean := false; name : string := "anon");
+  generic(place_capacity : integer := 1; bypass : boolean := true; name : string := "anon");
   port ( preds      : in   BooleanArray;
          marked_preds : in BooleanArray;
     	symbol_out : out  boolean;

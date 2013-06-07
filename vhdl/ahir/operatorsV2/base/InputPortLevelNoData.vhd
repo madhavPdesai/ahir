@@ -9,7 +9,7 @@ use ahir.Utilities.all;
 entity InputPortLevelNoData is
   
   generic (num_reqs: integer; 
-	no_arbitration: boolean);
+	no_arbitration: boolean := false);
   port (
     -- ready/ready interface with the requesters
     req       : in  std_logic_vector(num_reqs-1 downto 0);
