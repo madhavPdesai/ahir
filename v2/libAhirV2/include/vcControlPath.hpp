@@ -68,8 +68,31 @@ public:
 	return(false);
   }
 
-  vcCPElement* Get_Successor(int idx) {return(this->_successors[idx]);}
+  vcCPElement* Get_Successor(int idx) {
+	  if(idx < _successors.size() )
+		  return(this->_successors[idx]);
+	  else
+		  return(NULL);
+  }
+  vcCPElement* Get_Predecessor(int idx) {
+	  if(idx < _predecessors.size() )
+		  return(this->_predecessors[idx]);
+	  else 
+		  return(NULL);
+  }
 
+  vcCPElement* Get_Marked_Successor(int idx) {
+	  if(idx < _marked_successors.size() )
+		  return(this->_marked_successors[idx]);
+	  else
+		  return(NULL);
+  }
+  vcCPElement* Get_Marked_Predecessor(int idx) {
+	  if(idx < _marked_predecessors.size() )
+		  return(this->_marked_predecessors[idx]);
+	  else 
+		  return(NULL);
+  }
   virtual string Kind() {return("vcCPElement");}
   virtual void Print(ostream& ofile) {assert(0);}
 
@@ -582,6 +605,8 @@ public:
   virtual void Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp);
 
   virtual bool Check_Structure(); // check that the block is well-formed.
+
+
   virtual void Update_Predecessor_Successor_Links();
   void Bind(string place_name, string region_name, string transition_name, bool input_binding);
   void Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back, string exit_from_loop);
@@ -654,6 +679,8 @@ public:
 					deque<vcCPElement*>& dfs_queue, 
 					set<vcCPElement*>& on_queue_set,
 					vcCPElement* u, vcCPElement* v);
+   void All_Pairs_Longest_Paths(map<vcCPElement*,map<vcCPElement*,int> >& distance_map);
+   virtual void Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map);
 };
 
 class vcCPPipelinedLoopBody: public vcCPForkBlock
@@ -686,6 +713,9 @@ public:
   virtual void Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* m) ;
 
   void Eliminate_Redundant_Dependencies();
+
+  virtual void Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map);
+  virtual void Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map);
 
   void Add_Exported_Input(string internal_id);
   void Add_Exported_Output(string internal_id);
@@ -903,6 +933,7 @@ public:
   void Delete_Compatibility_Label(vcCompatibilityLabel* nl);
 
   virtual bool Check_Structure();
+
   virtual void Print_Structure(ostream& ofile) {this->vcCPSeriesBlock::Print_Structure(ofile);}
   void Print_Compatibility_Labels(ostream& ofile);
 

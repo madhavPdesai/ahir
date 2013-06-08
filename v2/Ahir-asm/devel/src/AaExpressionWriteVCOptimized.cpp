@@ -1190,6 +1190,29 @@ void AaTypeCastExpression::Write_VC_Links_As_Target_Optimized(string hier_id, os
 	assert(0);
 }
 
+string AaTypeCastExpression::Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
+{
+    bool split_protocol = true;
+    if(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
+	split_protocol = false;
+    if(!split_protocol)
+	return(__AT(this));
+    else
+	return(__UST(this));
+
+}
+string AaTypeCastExpression::Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
+{
+    bool split_protocol = true;
+    if(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
+	split_protocol = false;
+
+    if(!split_protocol)
+	return(__ST(this));
+    else
+	return(__SST(this));
+}
+
 void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 		map<string,vector<AaExpression*> >& ls_map,
 		map<string, vector<AaExpression*> >& pipe_map,

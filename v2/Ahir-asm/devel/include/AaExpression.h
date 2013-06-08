@@ -248,7 +248,7 @@ class AaExpression: public AaRoot
     if(this->Is_Constant())
       return("$entry");
     else
-      return(this->Get_VC_Start_Transition_Name());    
+      return(this->Get_VC_Active_Transition_Name());    
 
   }
 
@@ -1065,6 +1065,8 @@ class AaTypeCastExpression: public AaExpression
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
   virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 
+  virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements);
+  virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements);
 };
 
 
@@ -1144,7 +1146,7 @@ class AaUnaryExpression: public AaExpression
 
   virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
   {
-	return(this->Get_VC_Update_Start_Transition_Name());
+	return(this->Get_VC_Sample_Start_Transition_Name());
   } 
 
 };
@@ -1265,7 +1267,7 @@ class AaBinaryExpression: public AaExpression
 
   virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
   {
-	return(this->Get_VC_Update_Start_Transition_Name());
+	return(this->Get_VC_Sample_Start_Transition_Name());
   } 
 
 };

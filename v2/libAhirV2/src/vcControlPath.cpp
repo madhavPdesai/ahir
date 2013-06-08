@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <vcIncludes.hpp>
 #include <vcRoot.hpp>
 #include <vcControlPath.hpp>
@@ -2083,8 +2084,125 @@ void vcCPForkBlock::DFS_Forward_Edge_Action(bool reverse_flag,
 }
 
 
+// Floyd Warshall algorithm... a bit expensive, but ok for reasonable N?
+void vcCPForkBlock::All_Pairs_Longest_Paths(map<vcCPElement*,map<vcCPElement*,int> >& distance_map)
+{
+	vector<vcCPElement*> tmp_vec;
+
+	tmp_vec.push_back(_entry);
+	distance_map[_entry][_entry] = 0;
+
+	tmp_vec.push_back(_exit);
+	distance_map[_exit][_exit] = 0;
+
+	// initialize the self distances.
+	for(int idx = 0; idx < _elements.size(); idx++)
+	{
+		vcCPElement* u = _elements[idx];
+		distance_map[u][u] = 0;
+
+		tmp_vec.push_back(u);
+	}
+
+
+	// initialize the arc distances.
+	for(int idx = 0; idx < tmp_vec.size(); idx++)
+	{
+
+		vcCPElement* u = tmp_vec[idx];
+
+		for(int jdx = 0, fjdx = tmp_vec.size(); jdx < fjdx; jdx++)
+		{
+			vcCPElement* v = tmp_vec[jdx];
+
+			if(u != v)
+				distance_map[u][v] = INT_MIN;
+			
+		}
+
+		for(int vidx = 0, fvidx = u->Get_Number_Of_Successors(); vidx < fvidx; vidx++)
+		{
+			vcCPElement* v = u->Get_Successor(vidx);
+			if(v != NULL)
+			{
+				distance_map[u][v] = 1;
+			}
+		}	
+	}
+
+	// Floyd Warshall triple loop..  This is an N^3 algorithm
+	// Can we afford it?
+	for(int k = 0, fk = tmp_vec.size(); k < fk; k++)
+	{
+		vcCPElement* uk = tmp_vec[k];
+		for(int i = 0, fi = tmp_vec.size(); i < fi; i++)
+		{
+			vcCPElement* ui = tmp_vec[i];
+			for(int j = 0, fj = tmp_vec.size(); j < fj; j++)
+			{
+				vcCPElement* uj = tmp_vec[j];
+
+				int dij = distance_map[ui][uj];
+				int dik = distance_map[ui][uk];
+				int dkj = distance_map[uk][uj];
+
+				int nd;
+				if((dik == INT_MIN) || (dkj == INT_MIN))
+					nd = INT_MIN;
+				else
+					nd = (dik + dkj);
+
+				if(nd > dij)
+				{
+					distance_map[ui][uj] = nd;
+					if((ui == uj) && (nd > 0))
+					{
+						vcSystem::Error("Cycle in Fork-block involving " +
+								ui->Get_Label());
+					}
+				}
+			}
+		}
+	}
+}
+
+
+void vcCPForkBlock::Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map)
+{
+	// for each arc (u,v), check if distance[u][v] > 1.
+	// If so, then arc (u,v) is to be deleted.
+	for(map<vcCPElement*,map<vcCPElement*,int> >::iterator iter = distance_map.begin(),
+			fiter = distance_map.end(); iter != fiter; iter++)
+	{
+		vcCPElement* u = (*iter).first;
+		for(int idx = 0, fidx = u->Get_Number_Of_Successors();
+				idx < fidx; idx++)
+		{
+			vcCPElement* v = u->Get_Successor(idx);
+			if(distance_map[u][v] > 1) 
+			{
+				if(v->Is_Transition())
+				{
+					this->Remove_Join_Point((vcTransition*)v,u);
+					vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
+					+ u->Get_Label());
+				}
+				if(u->Is_Transition())
+				{
+					this->Remove_Fork_Point((vcTransition*)u,v);
+					vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
+							+ v->Get_Label());
+				}
+			}
+		}
+	}
+}
+
+
 void vcCPForkBlock::Eliminate_Redundant_Dependencies()
 {
+	// First get rid of the redundant pairs that the DFS
+	// had discovered.
 	for(int idx = 0; idx < _redundant_pairs.size(); idx++)
 	{
 		vcCPElement* u = _redundant_pairs[idx].first;
@@ -2098,65 +2216,71 @@ void vcCPForkBlock::Eliminate_Redundant_Dependencies()
 		}
 
 		if(v->Is_Transition())
- 		{
+		{
 			this->Remove_Join_Point((vcTransition*)v,u);
 			vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
 					+ u->Get_Label());
 		}
 	}
-	
+
+	// calculate all pairs longest paths.
+	map<vcCPElement*,map<vcCPElement*,int> > distance_map;
+	this->All_Pairs_Longest_Paths(distance_map);
+
+	// Now for each arc, 
+	this->Remove_Redundant_Arcs(distance_map);
 }
 
 
 bool vcCPForkBlock::Check_Structure()
 {
-  bool ret_flag = this->vcCPBlock::Check_Structure();
-  if(ret_flag)
-    {
-      vector<vcCPElement*> reachable_elements;
-      bool cycle_flag = false;
-      int num_visited = 0;
-
-      set<vcCPElement*> visited_set;
-      this->DFS_Order(false, this->_entry, cycle_flag, num_visited, reachable_elements,visited_set);
-      if(num_visited != (this->Number_Of_Elements_Reachable_From_Entry()))
+	bool ret_flag = this->vcCPBlock::Check_Structure();
+	if(ret_flag)
 	{
-	  ret_flag = false;
-          
-          //
-	  // TODO: this needs to be cleaned up a bit.  We should really write
-	  //       a Check_Structure method for the Pipelined-Loop-Body instead
-	  //       of this hack.
-	  //       
-	  //       For pipelined-loop bodies, all elements should be reachable
-	  //       from the multiple entry points to the body.  So multiple DFS
-	  //       searches need to be performed.
-	  //
-	  if(!this->Relaxed_Entry_Reachability_Checking())
-	  	vcSystem::Error("all elements not reachable from entry in fork region " + this->Get_Hierarchical_Id());
-	  else
-	  	vcSystem::Warning("all elements not reachable from entry in region " + this->Get_Hierarchical_Id());
-		
-	  this->Print_Missing_Elements(visited_set);
-	}
+		vector<vcCPElement*> reachable_elements;
+		bool cycle_flag = false;
+		int num_visited = 0;
 
-      if(cycle_flag)
-	{
-	  vcSystem::Error("Cycles present in fork region " + this->Get_Hierarchical_Id());
-	  ret_flag = false;
-	}
+		set<vcCPElement*> visited_set;
+		this->DFS_Order(false, this->_entry, cycle_flag, num_visited, reachable_elements,visited_set);
+		if(num_visited != (this->Number_Of_Elements_Reachable_From_Entry()))
+		{
+			ret_flag = false;
 
-      reachable_elements.clear();
-      num_visited = 0;
+			//
+			// TODO: this needs to be cleaned up a bit.  We should really write
+			//       a Check_Structure method for the Pipelined-Loop-Body instead
+			//       of this hack.
+			//       
+			//       For pipelined-loop bodies, all elements should be reachable
+			//       from the multiple entry points to the body.  So multiple DFS
+			//       searches need to be performed.
+			//
+			if(!this->Relaxed_Entry_Reachability_Checking())
+				vcSystem::Error("all elements not reachable from entry in fork region " + this->Get_Hierarchical_Id());
+			else
+				vcSystem::Warning("all elements not reachable from entry in region " + this->Get_Hierarchical_Id());
 
-      cycle_flag = false;
-      visited_set.clear();
-      this->BFS_Order(true, this->_exit, num_visited, reachable_elements,visited_set);
-      if(num_visited != (this->_elements.size() + 2))
-	{
-	  ret_flag = false;
-	
-          //
+			this->Print_Missing_Elements(visited_set);
+		}
+
+		if(cycle_flag)
+		{
+			vcSystem::Error("Cycles present in fork region " + this->Get_Hierarchical_Id());
+			ret_flag = false;
+		}
+
+		reachable_elements.clear();
+		num_visited = 0;
+
+		cycle_flag = false;
+		visited_set.clear();
+		this->BFS_Order(true, this->_exit, num_visited, reachable_elements,visited_set);
+		if(num_visited != (this->_elements.size() + 2))
+		{
+			ret_flag = false;
+
+			//
 	  // TODO: this needs to be cleaned up a bit.  We should really write
 	  //       a Check_Structure method for the Pipelined-Loop-Body instead
 	  //       of this hack.
@@ -2790,6 +2914,81 @@ bool vcCPPipelinedLoopBody::Check_Structure()
   this->vcCPForkBlock::Check_Structure();
 }
 
+void vcCPPipelinedLoopBody::Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map)
+{
+	// If (v,u) and (w,u) are two reenable arcs
+	// and distance[v][w] > 0, then (v,u) is
+	// redundant.
+	for(map<vcCPElement*,map<vcCPElement*,int> >::iterator iter = distance_map.begin(),
+			fiter = distance_map.end(); iter != fiter; iter++)
+	{
+		vcCPElement* u = (*iter).first;
+		set<vcCPElement*> survivors;
+		set<vcCPElement*> evict_set;
+
+		for(int idx = 0, fidx = u->Get_Number_Of_Marked_Predecessors();
+			idx  < fidx;
+			idx++)
+		{
+			vcCPElement* v = u->Get_Marked_Predecessor(idx);
+			
+			bool insert_v = true;
+			vector<vcCPElement*> del_vec;
+			for(set<vcCPElement*>::iterator niter = survivors.begin(),
+					fniter = survivors.end();
+				niter != fniter;
+				niter++)
+			{
+				bool evict_w = false;
+				vcCPElement* w = *niter;
+				if(distance_map[v][w] > 0)
+				{
+					insert_v = false;
+					break;
+				}
+				else if(distance_map[w][v] > 0)
+					evict_w = true;
+
+				if(evict_w)
+				{
+					del_vec.push_back(w);
+					evict_set.insert(w);
+				}
+			}
+
+			if(del_vec.size() > 0)
+			{
+				for(int J = 0, fJ = del_vec.size(); J < fJ; J++)
+				{
+					survivors.erase(del_vec[J]);
+				}
+				del_vec.clear();
+			}
+
+			if(insert_v)
+				survivors.insert(v);
+			else
+				evict_set.insert(v);
+		}
+
+		for(set<vcCPElement*>::iterator eiter = evict_set.begin(), feiter = evict_set.end();				eiter != feiter;
+			eiter++)
+		{
+			vcCPElement* v = *eiter;
+			u->Remove_Marked_Predecessor(v);
+			v->Remove_Marked_Successor(u);
+			vcSystem::Info("removed redundant marked link: " + u->Get_Label() + " o<-& "
+							+ v->Get_Label());
+		}
+	}
+}
+
+void vcCPPipelinedLoopBody::Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map)
+{
+	this->Remove_Redundant_Reenable_Arcs(distance_map);
+	this->vcCPForkBlock::Remove_Redundant_Arcs(distance_map);
+}
+
 void vcCPPipelinedLoopBody::Update_Predecessor_Successor_Links()
 {
   // the predecessor-successor relations are similar to
@@ -2824,8 +3023,8 @@ void vcCPPipelinedLoopBody::Update_Predecessor_Successor_Links()
 
 void vcCPPipelinedLoopBody::Eliminate_Redundant_Dependencies()
 {
-  // do nothing.. until we understand it a bit better...
-  return;
+
+  this->vcCPForkBlock::Eliminate_Redundant_Dependencies();
 }
 
 
