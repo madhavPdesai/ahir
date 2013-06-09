@@ -5,11 +5,13 @@
 #include <iostream>                  // for std::cout, std::endl
 #include <utility>                   // for std::pair
 #include <algorithm>                 // for std::for_each
+#include <deque>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <boost/graph/connected_components.hpp>
+#include <boost/graph/topological_sort.hpp>
 
 
 using namespace boost;
@@ -137,6 +139,17 @@ class GraphBase
     boost::depth_first_search(this->_bgl_graph, visitor(vis));
 
     return(cycle_found);
+  }
+
+  bool Topological_Sort(vector<void*>& prec_order)
+  {
+    std::deque<Vertex> reverse_prec_order;
+    boost::topological_sort(this->_bgl_graph,std::front_inserter(reverse_prec_order));
+
+    for(int idx = reverse_prec_order.size()-1; idx >= 0; idx--)
+      {
+        prec_order.push_back(this->_bgl_graph[reverse_prec_order[idx] ]._aa_rep);
+      }
   }
 
   void Print(ostream& ofile)

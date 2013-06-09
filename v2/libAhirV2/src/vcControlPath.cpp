@@ -1,4 +1,5 @@
 #include <limits.h>
+#include <BGLWrap.hpp>
 #include <vcIncludes.hpp>
 #include <vcRoot.hpp>
 #include <vcControlPath.hpp>
@@ -2084,82 +2085,92 @@ void vcCPForkBlock::DFS_Forward_Edge_Action(bool reverse_flag,
 }
 
 
-// Floyd Warshall algorithm... a bit expensive, but ok for reasonable N?
 void vcCPForkBlock::All_Pairs_Longest_Paths(map<vcCPElement*,map<vcCPElement*,int> >& distance_map)
 {
-	vector<vcCPElement*> tmp_vec;
 
-	tmp_vec.push_back(_entry);
-	distance_map[_entry][_entry] = 0;
+	// Since we are looking at a Fork-block, the control
+	// graph is guaranteed to be acyclic --> efficient algorithm!
 
-	tmp_vec.push_back(_exit);
-	distance_map[_exit][_exit] = 0;
+	// 
+	// Algorithm runs in O(|E||V|) time.  First perform
+	// a topological sort, and update distances starting
+	// from the sources to the sinks.
+	//
 
-	// initialize the self distances.
+	GraphBase g;
+	vector<vcCPElement*> vertex_vector; // to keep all the vertices.
+
+	// first build a Boost graph.
+	string nname = "null";
+	g.Add_Vertex(NULL);
+	g.Add_Vertex((void*) _entry);
+	g.Add_Vertex((void*) _exit);
+	vertex_vector.push_back(_entry);
+	vertex_vector.push_back(_exit);
+
 	for(int idx = 0; idx < _elements.size(); idx++)
 	{
 		vcCPElement* u = _elements[idx];
-		distance_map[u][u] = 0;
-
-		tmp_vec.push_back(u);
+		g.Add_Vertex((void*) u);
+		vertex_vector.push_back(u);
 	}
 
 
-	// initialize the arc distances.
-	for(int idx = 0; idx < tmp_vec.size(); idx++)
+	for(int idx = 0, fidx = vertex_vector.size(); idx < fidx; idx++)
 	{
+		vcCPElement* u = vertex_vector[idx];
 
-		vcCPElement* u = tmp_vec[idx];
-
-		for(int jdx = 0, fjdx = tmp_vec.size(); jdx < fjdx; jdx++)
+		for(int jdx = 0, fjdx = vertex_vector.size(); jdx < fjdx; jdx++)
 		{
-			vcCPElement* v = tmp_vec[jdx];
-
-			if(u != v)
-				distance_map[u][v] = INT_MIN;
-			
+			vcCPElement* v = vertex_vector[jdx];
+			distance_map[u][v] = 0;
 		}
 
-		for(int vidx = 0, fvidx = u->Get_Number_Of_Successors(); vidx < fvidx; vidx++)
+		// NULL to all source vertices.
+		if(u->Get_Number_Of_Predecessors() == 0)
+			g.Add_Edge(NULL,(void*) u);
+		else
 		{
-			vcCPElement* v = u->Get_Successor(vidx);
-			if(v != NULL)
+			for(int vidx = 0, fvidx = u->Get_Number_Of_Predecessors(); 
+				vidx < fvidx; 
+				vidx++)
 			{
-				distance_map[u][v] = 1;
+				vcCPElement* v = u->Get_Predecessor(vidx);
+				g.Add_Edge(v,u);
 			}
-		}	
+		}
 	}
 
-	// Floyd Warshall triple loop..  This is an N^3 algorithm
-	// Can we afford it?
-	for(int k = 0, fk = tmp_vec.size(); k < fk; k++)
+	// Boost topological sort.
+	vector<void*> precedence_order;
+	g.Topological_Sort(precedence_order);
+
+
+	// start from sources and iterate towards the sinks.
+	// When the algorithm reaches a node, the longest
+	// paths to all higher precedence nodes have already
+	// been calculated.
+	for(int i = precedence_order.size()-1 ; i >= 0; i--) 
 	{
-		vcCPElement* uk = tmp_vec[k];
-		for(int i = 0, fi = tmp_vec.size(); i < fi; i++)
+		vcCPElement* v = ((vcCPElement*) precedence_order[i]);
+		if(v == NULL)
+			continue;
+		for(int vidx = 0, fvidx = v->Get_Number_Of_Predecessors(); 
+			vidx < fvidx; 
+			vidx++)
 		{
-			vcCPElement* ui = tmp_vec[i];
-			for(int j = 0, fj = tmp_vec.size(); j < fj; j++)
+			vcCPElement* u = v->Get_Predecessor(vidx);
+
+			// Update all path lengths to v.
+			for(int q = 0, fq = vertex_vector.size(); q  < fq; q++)
 			{
-				vcCPElement* uj = tmp_vec[j];
-
-				int dij = distance_map[ui][uj];
-				int dik = distance_map[ui][uk];
-				int dkj = distance_map[uk][uj];
-
-				int nd;
-				if((dik == INT_MIN) || (dkj == INT_MIN))
-					nd = INT_MIN;
-				else
-					nd = (dik + dkj);
-
-				if(nd > dij)
+				vcCPElement* w = vertex_vector[q];
+				int dwu = distance_map[w][u];
+				if((dwu > 0) || (w == u))
 				{
-					distance_map[ui][uj] = nd;
-					if((ui == uj) && (nd > 0))
-					{
-						vcSystem::Error("Cycle in Fork-block involving " +
-								ui->Get_Label());
-					}
+					int nd = dwu + 1;
+					if(nd > distance_map[w][v])
+						distance_map[w][v] = nd;
 				}
 			}
 		}
@@ -2316,9 +2327,7 @@ bool vcCPForkBlock::Check_Structure()
     }
 
 
-  if(ret_flag)
-     this->Eliminate_Redundant_Dependencies();
-
+  this->Eliminate_Redundant_Dependencies();
   return(ret_flag);
 }
 

@@ -712,7 +712,7 @@ public:
 
   virtual void Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* m) ;
 
-  void Eliminate_Redundant_Dependencies();
+  virtual void Eliminate_Redundant_Dependencies();
 
   virtual void Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map);
   virtual void Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map);

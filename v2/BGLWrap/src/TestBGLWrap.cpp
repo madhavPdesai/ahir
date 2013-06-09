@@ -14,7 +14,6 @@ int main()
     }
   g.Print(cout);
 
-
   UVertex UV[4];
   UEdge   UE[4];
   UGraphBase ug;
