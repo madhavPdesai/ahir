@@ -498,6 +498,8 @@ public:
 
   void Print(ostream& ofile);
   void Print_VHDL(vcControlPath* cp, ostream& ofile);
+  void Print_Dot_Entry(vcControlPath* cp, ostream& ofile);
+
   virtual void Update_Predecessor_Successor_Links();
 };
 
@@ -556,6 +558,7 @@ public:
 
   void Print(ostream& ofile);
   void Print_VHDL(vcControlPath* cp, ostream& ofile);
+  void Print_Dot_Entry(vcControlPath* cp, ostream& ofile);
 
   virtual void Update_Predecessor_Successor_Links();
 };
@@ -637,6 +640,7 @@ public:
   {
 	return(this->Get_Number_Of_Elements() + 2 - 3);
   }
+  void Print_Terminator_Dot_Entry(vcControlPath* cp, ostream& ofile);
 };
 
 
@@ -703,6 +707,9 @@ public:
 
   void Print_VHDL_Phi_Sequencers(vcControlPath* cp, ostream& ofile);
   void Print_VHDL_Transition_Merges(vcControlPath* cp, ostream& ofile);
+
+  void Print_Phi_Sequencer_Dot_Entries(vcControlPath* cp, ostream& ofile);
+  void Print_Transition_Merge_Dot_Entries(vcControlPath* cp, ostream& ofile);
 
   void Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec);
   void Add_Marked_Join_Point(vcTransition* jp, vcCPElement* jre);

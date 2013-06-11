@@ -1870,9 +1870,10 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 
 		// individual word addresses (in parallel)
 		int nwords = (indices ? scale_factors->back() : (this->Get_Type()->Size() / this->Get_Word_Size()));
+		bool reg_flag = false;
 		if(nwords > 1)
 		{
-
+			reg_flag = true;
 			ofile << "||[" << word_region << "] {" << endl;
 
 			for(int idx = 0; idx < nwords; idx++)
@@ -1889,7 +1890,7 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 		}
 		else
 		{
-			// single word, no operation.. but register it.
+			// single word, no operation.. just rename it!
 			ofile << ";;[" << word_region << "] {" << endl;
 			ofile << "$T [root_register_req] $T [root_register_ack]" << endl;
 			ofile << "}" << endl;
@@ -1901,8 +1902,11 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 
 		if(pipeline_flag)
 		{
-			Write_VC_Reenable_Joins(active_reenable_points, word_addr_calculated,ofile);
-			active_reenable_points.clear();
+			if(reg_flag)
+			{
+				Write_VC_Reenable_Joins(active_reenable_points, word_addr_calculated,ofile);
+				active_reenable_points.clear();
+			}
 		}
 	}
 	else
@@ -2055,11 +2059,11 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 				reg_flag = false;
 				if((*index_vector)[idx]->Get_Type()->Is_Uinteger_Type())
 				{
-					reg_flag = true;
 					ofile << "$T [index_resize_req] $T [index_resize_ack] // resize index to address-width" << endl;
 				}
 				else
 				{
+					reg_flag = true;
 					ofile << "||[SplitProtocol] {" << endl;
 					ofile << ";;[Sample] { " << endl;
 					ofile << "$T [rr] $T [ra]" << endl;

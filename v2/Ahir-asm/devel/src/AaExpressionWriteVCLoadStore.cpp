@@ -663,13 +663,18 @@ void AaObjectReference::Write_VC_Address_Calculation_Data_Path(vector<AaExpressi
 		}
 		else
 		{
-			// write register to obtain word_0 address.
-			Write_VC_Register(this->Get_VC_Name() + "_addr_0",
-					this->Get_VC_Root_Address_Name(),
-					this->Get_VC_Word_Address_Name(0),
+			// rename operation.
+			vector<string> inwires;
+			inwires.push_back(this->Get_VC_Root_Address_Name());
+		
+			vector<string> outwires;
+			outwires.push_back(this->Get_VC_Word_Address_Name(0));
+
+			Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_addr_0",
+					inwires,
+					outwires,
 					this->Get_VC_Guard_String(),
 					ofile);
-
 		}
 	}
 }
@@ -892,16 +897,34 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 					iexpr->Write_VC_Datapath_Instances(NULL,ofile);
 
 					non_constant_indices.push_back(iexpr);
-
-					// resize index.
-					Write_VC_Unary_Operator(__NOP,
-							this->Get_VC_Name() + "_index_" + IntToStr(idx) + "_resize",
-							iexpr->Get_VC_Driver_Name(),
-							iexpr->Get_Type(),
-							iexpr->Get_VC_Name() + "_resized",
-							addr_type,
-							this->Get_VC_Guard_String(),
-							ofile);
+				
+					if((*index_vector)[idx]->Get_Type()->Is_Uinteger_Type())
+					{
+						// trivial processing..  dont waste
+						// a register.
+						vector<string> inputs;
+						inputs.push_back(iexpr->Get_VC_Driver_Name());
+						vector<string> outputs;
+						outputs.push_back(iexpr->Get_VC_Name() + "_resized");
+						Write_VC_Equivalence_Operator(
+								this->Get_VC_Name() + "_index_" + IntToStr(idx) + "_resize",
+								inputs,
+								outputs,
+								this->Get_VC_Guard_String(),
+								ofile);
+					}
+					else
+					{
+						// resize index.
+						Write_VC_Unary_Operator(__NOP,
+								this->Get_VC_Name() + "_index_" + IntToStr(idx) + "_resize",
+								iexpr->Get_VC_Driver_Name(),
+								iexpr->Get_Type(),
+								iexpr->Get_VC_Name() + "_resized",
+								addr_type,
+								this->Get_VC_Guard_String(),
+								ofile);
+					}
 
 					// scale index.
 					if((*scale_factors)[idx] > 1)
@@ -967,12 +990,14 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 				last_sum =  this->Get_VC_Name() + "_index_partial_sum_" + IntToStr(idx);
 			}
 
-			Write_VC_Unary_Operator(__NOP,
-					this->Get_VC_Name() + "_offset_inst",
-					last_sum,
-					addr_type,
-					this->Get_VC_Offset_Name(),
-					addr_type,
+			vector<string> inputs;
+			inputs.push_back(last_sum);
+			vector<string> outputs;
+			outputs.push_back(this->Get_VC_Offset_Name());
+
+			Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_offset_inst",
+					inputs,
+					outputs,
 					this->Get_VC_Guard_String(),
 					ofile);
 		}
@@ -981,7 +1006,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 		if(base_addr < 0)
 		{
 			AaType* base_addr_type = this->Get_Base_Address_Type();
-			if(base_addr_type != addr_type)
+			if(!(base_addr_type->Is_Uinteger_Type() && addr_type->Is_Uinteger_Type()))
 			{
 				Write_VC_Unary_Operator(__NOP,
 						this->Get_VC_Name() + "_base_resize",				  

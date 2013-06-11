@@ -52,7 +52,8 @@ public:
 
 class vcEquivalence: public vcOperator
 {
-  int _width;
+  int _in_width;
+  int _out_width;
   vector<vcWire*> _inwires;
   vector<vcWire*> _outwires;
 public:

@@ -34,10 +34,11 @@ vcEquivalence::vcEquivalence(string id,
 
   if(in_width != out_width)
     {
-      vcSystem::Error("in equivalence operator " + id + ", total input width is not equal to total output width");
+      vcSystem::Warning("in equivalence operator " + id + ", total input width is not equal to total output width.. output will truncate the input..");
     }
 
-  _width = in_width;
+  _in_width = in_width;
+  _out_width = out_width;
 }
 
 void vcEquivalence::Print(ostream& ofile)

@@ -89,6 +89,14 @@ architecture Fair of Request_Priority_Encode_Entity is
   signal reqR_reg_is_non_zero: std_logic;
 begin  -- Behave
 
+   SingleRequester: if num_reqs = 1 generate
+	req_s <= reqR(0);
+	ackR(0) <= ack_s;
+	forward_enable <= reqR;
+   end generate SingleRequester;
+
+ 
+   MultipleRequesters: if num_reqs > 1 generate
    reqR_reg_is_non_zero <= OrReduce(reqR_register);
    req_s <= reqR_reg_is_non_zero;
    forward_enable <= reqR_priority_encoded;
@@ -139,4 +147,5 @@ begin  -- Behave
     end loop;  -- I
   end process;
 
+  end generate MultipleRequesters;
 end Fair;

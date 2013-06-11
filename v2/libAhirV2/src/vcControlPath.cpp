@@ -1522,6 +1522,30 @@ void vcPhiSequencer::Print_VHDL(vcControlPath* cp, ostream& ofile)
 
 }
 
+void vcPhiSequencer::Print_Dot_Entry(vcControlPath* cp, ostream& ofile)
+{
+  string tnode_id = this->Get_VHDL_Id();
+  ofile << "  " << tnode_id << " [shape=rectangle];" << endl;
+	
+  for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
+    {
+      string sel_id = cp->Get_Group(_selects[idx])->Get_Dot_Id();
+      ofile << sel_id << " -> " << tnode_id << ";" << endl;
+
+      string req_id = cp->Get_Group(_reqs[idx])->Get_Dot_Id();
+      ofile << tnode_id << " -> " << req_id << ";" << endl;
+    }
+
+  for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
+    {
+      string en_id = cp->Get_Group(_enables[idx])->Get_Dot_Id();
+      ofile << en_id << " -> " << tnode_id << ";" << endl;
+    }
+
+    ofile << cp->Get_Group(_ack)->Get_Dot_Id() << " -> " << tnode_id << ";" << endl;
+    ofile << tnode_id << " -> " <<  cp->Get_Group(_done)->Get_Dot_Id() << ";" << endl;
+}
+
 void vcPhiSequencer::Update_Predecessor_Successor_Links()
 {
 
@@ -1597,6 +1621,20 @@ void vcTransitionMerge::Print_VHDL(vcControlPath* cp, ostream& ofile)
   ofile << "port map (preds => preds, symbol_out => " << _out_transition->Get_Exit_Symbol(cp) << ");" << endl;
   ofile << " -- } } } " << endl;
   ofile << "end block;" << endl;
+}
+
+void vcTransitionMerge::Print_Dot_Entry(vcControlPath* cp, ostream& ofile)
+{
+  string tnode_id = this->Get_VHDL_Id();
+  ofile << tnode_id << " [shape = rectangle]; " << endl;
+  for(int idx = 0, fidx = _in_transitions.size(); idx < fidx; idx++)
+    {
+      string sig_id = cp->Get_Group(_in_transitions[idx])->Get_Dot_Id();
+      ofile << sig_id << " -> " << tnode_id << ";" << endl;
+    }
+
+  string oid = cp->Get_Group(_out_transition)->Get_Dot_Id();
+  ofile << tnode_id << " -> " << oid << ";" << endl;
 }
 
 void vcTransitionMerge::Update_Predecessor_Successor_Links()

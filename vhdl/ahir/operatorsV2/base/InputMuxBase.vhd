@@ -48,11 +48,20 @@ architecture Behave of InputMuxBase is
   signal ackR_sig                : std_logic;
   signal dataR_sig               : std_logic_vector(owidth-1 downto 0);
   signal tagR_sig                : std_logic_vector(twidth-1 downto 0);
+  signal fair_reqP, fair_ackP    : std_logic_vector(nreqs-1 downto 0);
 
 begin  -- Behave
 
 
   assert(iwidth = owidth*nreqs) report "mismatched i/o widths in InputMuxBase" severity error;
+
+  -----------------------------------------------------------------------------
+  -- "fairify" the level-reqs.
+  -----------------------------------------------------------------------------
+  fairify: NobodyLeftBehind generic map (num_reqs => nreqs)
+		port map (clk => clk, reset => reset, reqIn => reqP, ackOut => ackP,
+					reqOut => fair_reqP, ackIn => fair_ackP);
+
 
   -----------------------------------------------------------------------------
   -- output queue if registered_output is set.
@@ -116,24 +125,15 @@ begin  -- Behave
   -- priority encoding or pass through
   -----------------------------------------------------------------------------
   NoArbitration: if no_arbitration generate
-    fEN <= reqP;
+    fEN <= fair_reqP;
     reqR_sig <= OrReduce(fEN);
-    ackP <= fEN when ackR_sig = '1' else (others => '0');
+    fair_ackP <= fEN when ackR_sig = '1' else (others => '0');
   end generate NoArbitration;
 
   Arbitration: if not no_arbitration generate
-    
-    rpe : Request_Priority_Encode_Entity generic map (
-      num_reqs => reqP'length)
-      port map(
-                          clk => clk,
-                          reset => reset,
-                          reqR => reqP,
-                          ackR => ackP,
-                          forward_enable => fEN,
-                          req_s => reqR_sig,
-                          ack_s => ackR_sig);
-    
+    fEN <= PriorityEncode(fair_reqP);
+    reqR_sig <= OrReduce(fEN);
+    fair_ackP <= fEN when ackR_sig = '1' else (others => '0');
   end generate Arbitration;
 
   -----------------------------------------------------------------------------

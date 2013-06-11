@@ -1122,14 +1122,22 @@ void vcDataPath::Print_VHDL_Equivalence_Instances(ostream& ofile)
       if(vcSystem::_enable_logging)
 		s->vcOperator::Print_VHDL_Logger(ofile);
       ofile << s->Get_VHDL_Id() << ": Block -- { " << endl;
-      ofile << "signal aggregated_sig: std_logic_vector("
-	    << s->_width-1 << " downto 0); --}" << endl;
+      ofile << "signal in_aggregated_sig: std_logic_vector("
+	    << s->_in_width-1 << " downto 0);" << endl;
+      ofile << "signal out_aggregated_sig: std_logic_vector("
+	    << s->_out_width-1 << " downto 0);" << endl;
+      if(s->_out_width > s->_in_width)
+      {
+	ofile << "constant in_pad : std_logic_vector(" << 
+		(s->_out_width-s->_in_width)-1 << " downto 0) := (others => '0');" << endl;
+      }
+      ofile <<  "--}" << endl;
       ofile << "begin -- {" << endl;
       ofile << s->Get_Ack(0)->Get_DP_To_CP_Symbol()  
 	    << " <= "
 	    << s->Get_Req(0)->Get_CP_To_DP_Symbol() 
 	    << ";" << endl;
-      ofile << " aggregated_sig <= ";
+      ofile << " in_aggregated_sig <= ";
       for(int idx = 0; idx < s->_inwires.size(); idx++)
 	{
 	  if(idx > 0)
@@ -1137,11 +1145,24 @@ void vcDataPath::Print_VHDL_Equivalence_Instances(ostream& ofile)
 	  ofile << s->_inwires[idx]->Get_VHDL_Signal_Id();
 	}
       ofile << ";" << endl;
-      int top_index = s->_width-1;
+
+      if(s->_out_width > s->_in_width)
+      {
+	ofile << "out_aggregated_sig <= in_pad & in_aggregated_sig; " << endl;
+      }
+      else if(s->_out_width < s->_in_width)
+      {
+	ofile << "out_aggregated_sig <= in_aggregated_sig(" << s->_out_width-1 << " downto 0);" << endl;
+      }
+      else
+	ofile << "out_aggregated_sig <= in_aggregated_sig;" << endl;
+
+
+      int top_index = s->_out_width-1;
       for(int idx = 0; idx < s->_outwires.size(); idx++)
 	{
 	  ofile << s->_outwires[idx]->Get_VHDL_Signal_Id() 
-		<< " <= aggregated_sig("
+		<< " <= out_aggregated_sig("
 		<< top_index
 		<< " downto "
 		<< (top_index - s->_outwires[idx]->Get_Size())+1

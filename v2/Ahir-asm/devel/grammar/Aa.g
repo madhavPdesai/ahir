@@ -787,6 +787,7 @@ aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement
         { 
             new_dws->Set_Merge_Statement(ms);
             ms->Set_In_Do_While(true);
+	    new_dws->Set_Line_Number(il->getLine());
         }
 
         sseq = aA_Atomic_Statement_Sequence[scope] 

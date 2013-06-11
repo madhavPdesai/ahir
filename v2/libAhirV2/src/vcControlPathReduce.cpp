@@ -201,7 +201,7 @@ void vcCPElementGroup::Add_Element(vcCPElement* cpe)
       this->_has_dead_transition   |= ((vcTransition*)cpe)->Get_Is_Dead();
 
      
-      if((cpe->Get_Number_Of_Predecessors() > 1) || is_pipelined )
+      if((cpe->Get_Number_Of_Predecessors() > 1) || (cpe->Get_Number_Of_Marked_Predecessors() > 0)) 
 	this->_is_join = true;
       if((cpe->Get_Number_Of_Successors() > 1) || (cpe->Get_Number_Of_Marked_Successors() > 0))
 	this->_is_fork = true;
@@ -733,10 +733,20 @@ vcCPElementGroup* vcControlPath::Make_New_Group()
 
 vcCPElementGroup* vcControlPath::Get_Group(vcCPElement* cpe)
 {
+
   vcCPElementGroup* rg = NULL;
-  if(_cpelement_to_group_map.find(cpe) != _cpelement_to_group_map.end())
+  assert(cpe != NULL);
+
+  vcCPElement* eu = NULL; 
+
+  if(cpe->Is_Place() || cpe->Is_Transition())
+	  eu = cpe;
+  else if(cpe->Is_Block())
+	  eu = cpe->Get_Exit_Element();
+
+  if(_cpelement_to_group_map.find(eu) != _cpelement_to_group_map.end())
     {
-      rg = _cpelement_to_group_map[cpe];
+      rg = _cpelement_to_group_map[eu];
     }
   return(rg);
 }
@@ -1008,6 +1018,20 @@ void vcCPSimpleLoopBlock::Print_VHDL_Terminator(vcControlPath* cp, ostream& ofil
 		<< "clk => clk, reset => reset);" << " -- } " << endl;
 }
   
+void vcCPSimpleLoopBlock::Print_Terminator_Dot_Entry(vcControlPath* cp, ostream& ofile)
+{
+	string tnode_id = this->_terminator->Get_VHDL_Id();
+	ofile << "  " << tnode_id << " [shape=rectangle];" << endl;
+	ofile << cp->Get_Group(this->_terminator->_loop_body)->Get_Dot_Id()
+		<< " -> " << tnode_id << ";" << endl;
+	ofile << cp->Get_Group(this->_terminator->_loop_taken)->Get_Dot_Id()
+		<< " -> " << tnode_id << ";" << endl;
+	ofile << cp->Get_Group(this->_terminator->_loop_exit)->Get_Dot_Id()
+		<< " -> " << tnode_id << ";" << endl;
+	ofile << tnode_id << " -> " << cp->Get_Group(this->_terminator->_loop_back)->Get_Dot_Id() << ";" << endl;
+	ofile << tnode_id << " -> " << cp->Get_Group(this->_terminator->_exit_from_loop)->Get_Dot_Id() << ";" << endl;
+}
+
 void vcCPPipelinedLoopBody::Print_VHDL_Phi_Sequencers(vcControlPath* cp, ostream& ofile)
 {
 	for(int idx = 0, fidx = _phi_sequencers.size(); idx < fidx; idx++)
@@ -1020,36 +1044,60 @@ void vcCPPipelinedLoopBody::Print_VHDL_Transition_Merges(vcControlPath* cp, ostr
 		_transition_merges[idx]->Print_VHDL(cp,ofile);
 }
 
+void vcCPPipelinedLoopBody::Print_Phi_Sequencer_Dot_Entries(vcControlPath* cp, ostream& ofile)
+{
+	for(int idx = 0, fidx = _phi_sequencers.size(); idx < fidx; idx++)
+		_phi_sequencers[idx]->Print_Dot_Entry(cp,ofile);
+}
+
+void vcCPPipelinedLoopBody::Print_Transition_Merge_Dot_Entries(vcControlPath* cp, ostream& ofile)
+{
+	for(int idx = 0, fidx = _transition_merges.size(); idx < fidx; idx++)
+		_transition_merges[idx]->Print_Dot_Entry(cp,ofile);
+}
+
 
 void vcControlPath::Print_Reduced_Control_Path_As_Dot_File(ostream& ofile)
 {
-  	vcCPElementGroup* entry_grp = _cpelement_to_group_map[this->_entry];
-  	vcCPElementGroup* exit_grp  = _cpelement_to_group_map[this->_exit];
+	vcCPElementGroup* entry_grp = _cpelement_to_group_map[this->_entry];
+	vcCPElementGroup* exit_grp  = _cpelement_to_group_map[this->_exit];
 
 	ofile << "digraph control_path {" << endl;
 	// ofile << "  node [shape = rectangle]; " << endl;
 
 	// two passes: first pass, print all the nodes.	
-  	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
-		fiter = _cpelement_groups.end();
-      		iter != fiter;
-      		iter++)
-    	{
+	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+			fiter = _cpelement_groups.end();
+			iter != fiter;
+			iter++)
+	{
 		vcCPElementGroup* grp = *iter;
 
 		if(grp == entry_grp)
 			ofile << "  " << grp->Get_Dot_Id() << ": entry_node " << ": n ;" << endl;
 		else if(grp == exit_grp) 
 			ofile << "  " << grp->Get_Dot_Id() << ": exit_node " << ": s ;" << endl;
-		else		
+		else if(grp->_has_input_transition && !grp->_has_output_transition)		
+			ofile << "  " << grp->Get_Dot_Id() << " [shape = triangle];" << endl;
+		else if(grp->_has_output_transition && !grp->_has_input_transition)		
+			ofile << "  " << grp->Get_Dot_Id() << " [shape = invtriangle];" << endl;
+		else if(grp->_has_output_transition && grp->_has_input_transition)		
+			ofile << "  " << grp->Get_Dot_Id() << " [shape = diamond];" << endl;
+		else if(grp->_is_join)
+			ofile << "  " << grp->Get_Dot_Id() << " [shape = invtrapezium];" << endl;
+		else if(grp->_is_fork)
+			ofile << "  " << grp->Get_Dot_Id() << " [shape = trapezium];" << endl;
+		else if(grp->_is_merge || grp->_is_branch)
 			ofile << "  " << grp->Get_Dot_Id() << " [shape = circle];" << endl;
+		else
+			ofile << "  " << grp->Get_Dot_Id() << " [shape = dot];" << endl;
 	}
 
-  	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
-		fiter = _cpelement_groups.end();
-      		iter != fiter;
-      		iter++)
-    	{
+	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+			fiter = _cpelement_groups.end();
+			iter != fiter;
+			iter++)
+	{
 		vcCPElementGroup* grp = *iter;
 
 		uint32_t idx;
@@ -1069,8 +1117,20 @@ void vcControlPath::Print_Reduced_Control_Path_As_Dot_File(ostream& ofile)
 		{
 			vcCPElementGroup* pred = *miter;
 			ofile << "  " << pred->Get_Dot_Id() << " -> " << grp->Get_Dot_Id() 
-					<< "[style = dashed]" << ";" << endl;
+				<< "[style = dashed]" << ";" << endl;
 		}
+	}
+
+	for(set<vcCPSimpleLoopBlock*>::iterator slb_iter = _simple_loop_blocks.begin(), fslb_iter = _simple_loop_blocks.end();
+			slb_iter != fslb_iter;
+			slb_iter++)
+	{
+		vcCPSimpleLoopBlock* slb = *slb_iter;
+		slb->Print_Terminator_Dot_Entry(this,ofile);
+
+		vcCPPipelinedLoopBody* plb = slb->Get_Loop_Body();
+		plb->Print_Phi_Sequencer_Dot_Entries(this,ofile);
+		plb->Print_Transition_Merge_Dot_Entries(this,ofile);
 	}
 
 	ofile << "}" << endl;
