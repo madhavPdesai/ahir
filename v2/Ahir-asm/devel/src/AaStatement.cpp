@@ -1741,8 +1741,8 @@ void AaCallStatement::Write_VC_Links(string hier_id, ostream& ofile)
       _output_args[idx]->Write_VC_Links_As_Target(oh, ofile);
     }
 
-  string sample_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Sample";
-  string update_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Update";
+  string sample_region = hier_id + "/SplitProtocol/Sample";
+  string update_region = hier_id + "/SplitProtocol/Update";
 
   reqs.push_back(sample_region + "/crr");
   reqs.push_back(update_region + "/ccr");

@@ -1572,6 +1572,7 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 	ofile << "}" << endl;
 	__F(__ST(this),this->Get_VC_Complete_Region_Name());
 	__J(__AT(this),this->Get_VC_Complete_Region_Name());
+	__J(__CT(this),__AT(this));
 
 	if(pipeline_flag)
 	{
