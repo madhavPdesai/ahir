@@ -1391,7 +1391,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   
   __F(this->Get_VC_Start_Transition_Name(), enable_transition_name);
   // instantiate phi sequencer.
-  ofile << "$phisequencer ( ";
+  ofile << "$phisequencer [ " << this->Get_VC_Name() << "_phi_seq] ( ";
   ofile << phi_sequencer_triggers << " : ";
   ofile << enable_transition_name << " : " ;
   ofile << ack_transition_name << " ) ( " ;

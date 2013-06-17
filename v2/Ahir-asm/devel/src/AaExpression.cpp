@@ -1361,7 +1361,7 @@ void AaArrayObjectReference::Set_Object(AaRoot* obj)
 		this->Set_Type(obj_type->Get_Element_Type(0,_indices));
 	}
 
-	this->Set_Delay(1);
+	this->Set_Delay(2);
 
 }
 
@@ -2316,7 +2316,7 @@ AaPointerDereferenceExpression::AaPointerDereferenceExpression(AaScope* scope,
   AaProgram::Add_Storage_Dependency_Graph_Vertex(this);
   AaProgram::_pointer_dereferences.insert(this);
 
-  this->Set_Delay(1);
+  this->Set_Delay(2);
 
 }
 
@@ -2793,7 +2793,7 @@ AaAddressOfExpression::AaAddressOfExpression(AaScope* scope, AaObjectReference* 
   _reference_to_object = obj_ref;
   obj_ref->Add_Target(this);
   this->_storage_object = NULL; // filled in during Map Source References.
-  this->Set_Delay(1);
+  this->Set_Delay(2);
 }
 
 

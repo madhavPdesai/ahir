@@ -437,6 +437,11 @@ class vcDataPath: public vcRoot
   void Print_VHDL_Guard_Concatenation(int num_reqs, string guard_vector, vector<vcWire*>& guard_wires, vector<bool>& guard_complements,ostream& ofile);
   void Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, string req_unguarded, string ack_unguarded, string req, string ack, ostream& ofile);
 
+  void Print_VHDL_Regulator_Instance(string inst_id, int num_reqs,  int num_slots,
+			string reqs, string acks,
+			string regulated_reqs, string regulated_acks, 
+			string release_reqs, string release_acks, ostream& ofile);
+
   string Get_VHDL_IOport_Interface_Port_Name(string pipe_id, string pid);
   string Get_VHDL_IOport_Interface_Port_Section(vcPipe* p,
 						string in_or_out,

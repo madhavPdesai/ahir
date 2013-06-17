@@ -1450,23 +1450,24 @@ vcPhiSequencer::vcPhiSequencer(vcCPElement* prnt, string id): vcCPElement(prnt,i
 
 void vcPhiSequencer::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__PHISEQUENCER] <<  " " << vcLexerKeywords[__LPAREN] << " ";
+  ofile << vcLexerKeywords[__PHISEQUENCER] << " " << this->Get_Label() 
+	<<   " " << vcLexerKeywords[__LPAREN] << " ";
   // selects.
   for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
     {
-      ofile << _selects[idx]->Get_Label() << " ";
+      ofile << _selects[idx]->Get_Id() << " ";
     }
 
   ofile << vcLexerKeywords[__COLON] << " : ";
   // enables.
   for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
     {
-      ofile << _enables[idx]->Get_Label() << " ";
+      ofile << _enables[idx]->Get_Id() << " ";
     }
 
   ofile << vcLexerKeywords[__COLON] << " : ";
   // ack
-  ofile << _ack->Get_Label() << " ";
+  ofile << _ack->Get_Id() << " ";
 
 
   ofile << vcLexerKeywords[__RPAREN] << " ";
@@ -1475,12 +1476,12 @@ void vcPhiSequencer::Print(ostream& ofile)
   // reqs.
   for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
     {
-      ofile << _reqs[idx]->Get_Label() << " ";
+      ofile << _reqs[idx]->Get_Id() << " ";
     }
 
   ofile << vcLexerKeywords[__COLON] << " : ";
   // done
-  ofile << _done->Get_Label() << " ";
+  ofile << _done->Get_Id() << " ";
 
   ofile << vcLexerKeywords[__RPAREN] << " " << endl;
 }
@@ -2805,10 +2806,9 @@ void vcCPPipelinedLoopBody::Print_VHDL(ostream& ofile)
   ofile << "-- }" << endl << "end Block; -- " << id << endl;
 }
 
-void vcCPPipelinedLoopBody::Add_Phi_Sequencer(vector<string>& selects, vector<string>& enables, string& ack,
+void vcCPPipelinedLoopBody::Add_Phi_Sequencer(string& phi_id, vector<string>& selects, vector<string>& enables, string& ack,
 					       vector<string>& reqs, string& done)
 {
-	string phi_id = "phi_seq_" + IntToStr(_phi_sequencers.size());
 
 	if(selects.size() != reqs.size())
 	{

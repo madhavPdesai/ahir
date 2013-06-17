@@ -728,7 +728,7 @@ public:
   void Add_Exported_Output(string internal_id);
   void Add_Export(string internal_id, bool input_flag);
 
-  void Add_Phi_Sequencer(vector<string>& selects, vector<string>& enables, string& ack, vector<string>& reqs, string& done);
+  void Add_Phi_Sequencer(string& phi_id, vector<string>& selects, vector<string>& enables, string& ack, vector<string>& reqs, string& done);
   void Add_Transition_Merge(string& tm_id, vector<string>& in_transition, string& out_transition);
 
   // for a pipelined loop block some of the elements are not reachable from

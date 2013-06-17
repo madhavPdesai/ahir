@@ -96,7 +96,7 @@ void vcOperator::Print_VHDL_Logger(ostream& ofile)
 		
 	ofile  << "LogOperator(clk,reset,global_clock_cycle_count,";
 	ofile  << req_id << "," << ack_id << "," << guard_id << "," 
-		<< '"' << this->Get_Id() << '"' 
+		<< '"' << this->Get_Id() << " " << this->Get_Logger_Description() <<  '"' 
 		<< "," ;
 	if(this->Get_Number_Of_Input_Wires() > 0)
 	{

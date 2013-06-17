@@ -88,6 +88,11 @@ begin  -- Behave
             if(lhs_clear = '1') then
               nstate := '0';
             end if;
+
+	    -- to track down some mixup issues!
+	    assert (valid = '0') report "In Outputdemux: stalled request " & Convert_To_String(I)
+			severity warning;
+
           when others => null;
         end case;
 

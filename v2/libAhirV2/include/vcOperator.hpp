@@ -45,6 +45,7 @@ public:
   virtual vcWire* Get_Input_Wire(int idx){assert(0);}
   virtual vcWire* Get_Output_Wire(int idx){assert(0);}
 
+  virtual string Get_Logger_Description() {return ("");}
   virtual void Print_VHDL_Logger(ostream& ofile);
   friend class vcDataPath;
 };
@@ -206,7 +207,9 @@ public:
   virtual vcWire* Get_Output_Wire(int idx) 
 	{ return(NULL);}
 
+  virtual string Get_Logger_Description() {return (" PipeWrite to " + _pipe->Get_Id()); }
   friend class vcDataPath;
+
 };
 
 class vcInport: public vcIOport
@@ -230,6 +233,7 @@ public:
   virtual vcWire* Get_Input_Wire(int idx) 
 	{ return(NULL);}
 
+  virtual string Get_Logger_Description() {return (" PipeRead from " + _pipe->Get_Id()); }
   friend class vcDataPath;
 };
 

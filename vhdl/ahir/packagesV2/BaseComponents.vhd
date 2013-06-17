@@ -173,6 +173,41 @@ package BaseComponents is
           symbol_out : out  boolean);
   end component;
   
+  
+  component access_regulator_base 
+    generic (num_slots: integer := 1);
+    port (
+      -- the req-ack pair being regulated.
+      req   : in Boolean;
+      ack   : out Boolean;
+      -- the regulated versions of req/ack
+      regulated_req : out Boolean;
+      regulated_ack : in Boolean;
+      -- transitions on the next two will
+      -- open up a slot.
+      release_req   : in Boolean;
+      release_ack   : in Boolean;
+      clk   : in  std_logic;
+      reset : in  std_logic);
+  end component;
+
+  component access_regulator 
+    generic (num_reqs : integer := 1; num_slots: integer := 1);
+    port (
+      -- the req-ack pair being regulated.
+      req   : in BooleanArray(num_reqs-1 downto 0);
+      ack   : out BooleanArray(num_reqs-1 downto 0);
+      -- the regulated versions of req/ack
+      regulated_req : out BooleanArray(num_reqs-1 downto 0);
+      regulated_ack : in BooleanArray(num_reqs-1 downto 0);
+      -- transitions on the next two will
+      -- open up a slot.
+      release_req   : in BooleanArray(num_reqs-1 downto 0);
+      release_ack   : in BooleanArray(num_reqs-1 downto 0);
+      clk   : in  std_logic;
+      reset : in  std_logic);
+   end component;
+
   -----------------------------------------------------------------------------
   -- miscellaneous
   -----------------------------------------------------------------------------

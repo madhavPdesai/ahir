@@ -400,7 +400,7 @@ vc_CPLoopTerminate[vcCPSimpleLoopBlock* slb]
 
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPPhiSequencer: PHISEQUENCER LPAREN vc_Identifier+ COLON vcIdentifier+ COLON vcIdentifier RPAREN 
+// vc_CPPhiSequencer: PHISEQUENCER vcLabel LPAREN vc_Identifier+ COLON vcIdentifier+ COLON vcIdentifier RPAREN 
 //                               LPAREN vc_Identifier+ : vc_Identifier RPAREN
 //-----------------------------------------------------------------------------------------------
 vc_CPPhiSequencer[vcCPPipelinedLoopBody* slb] 
@@ -408,12 +408,13 @@ vc_CPPhiSequencer[vcCPPipelinedLoopBody* slb]
     vector<string> selects;
     vector<string> enables;
     vector<string> reqs;
+    string lbl;
     string enable;
     string ack;
     string done;
     string tmp_string;
 }
-:  PHISEQUENCER LPAREN 
+:  PHISEQUENCER lbl = vc_Label LPAREN 
         ( tmp_string = vc_Identifier {selects.push_back(tmp_string);})+
         COLON
         ( tmp_string = vc_Identifier {enables.push_back(tmp_string);})+
@@ -425,7 +426,7 @@ vc_CPPhiSequencer[vcCPPipelinedLoopBody* slb]
         COLON
         done = vc_Identifier
         RPAREN
-   { slb->Add_Phi_Sequencer(selects, enables, ack, reqs, done); }
+   { slb->Add_Phi_Sequencer(lbl, selects, enables, ack, reqs, done); }
 ;
 
 
