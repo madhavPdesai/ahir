@@ -1,0 +1,26 @@
+digraph "test_graph" {
+	node [shape = circle];
+	"input_node" : "inport" : n;
+	"a(0)" [shape = invtriangle]  [label = "nop"] ;
+	"b";
+	subgraph S0 {
+		"inode" : "ip" : n;
+		"a0"; "b0"; 
+		"onode" : "op" : s;
+		"inode" -> "a0";
+		"inode" -> "b0";
+		"a0" -> "onode";
+		"b0" -> "onode";
+	}
+	"c";
+	"d";
+	"output_node" : "outport" : s;
+	"input_node" -> "a(0)" [label = "crit-edge"] [style = dashed];
+	"input_node" -> "b";
+	"a" -> S0;
+	"b" -> S0;
+	S0 -> "c";
+	"c" -> "d";
+	"d" -> "output_node";
+}
+ 

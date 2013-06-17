@@ -1,0 +1,9 @@
+a0_idx    2
+a0_input  2
+a1_idx    2
+a1_input  2
+a2_idx    2
+a2_input  2 
+a2_lock   2
+a3_idx    2
+a3_input  2
