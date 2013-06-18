@@ -1379,8 +1379,8 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 
 	
       // the guards and the regulators..
-      if(num_reqs > 1)
-      {
+      if((num_reqs > 1) || is_pipelined_op)
+	{
 	  this->Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
 	  this->Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
 	  this->Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
@@ -1389,7 +1389,12 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
           if(use_regulator)
 	  {
       	  	this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL_unregulated", "ackL_unregulated", ofile);
-      	  	this->Print_VHDL_Regulator_Instance("accessRegulator", num_reqs,1, "reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", ofile);
+
+		// for the moment keep it 1. we need to check if
+		// there is any advantage in using more slots.
+		int num_slots = (is_pipelined_op ? 1 : 1); 
+		
+      	  	this->Print_VHDL_Regulator_Instance("accessRegulator", num_reqs,num_slots, "reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", ofile);
 	  }
 	  else
 	  {
@@ -1397,7 +1402,38 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	  }
       	  this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", ofile);
 
-      }
+	}
+      else
+	{
+	  // an unshared operator.
+	  if(guard_wires[0] != NULL)
+	    {
+	      ofile << "reqL(0) <= " << reqL[0]->Get_CP_To_DP_Symbol() 
+		    << " when " << guard_wires[0]->Get_VHDL_Id() 
+		    << "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else false;" << endl; 
+	      ofile << ackL[0]->Get_DP_To_CP_Symbol() << " <= ackL(0) " 
+		    << " when " << guard_wires[0]->Get_VHDL_Id()
+		    << "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else " 
+		    << reqL[0]->Get_CP_To_DP_Symbol()  << ";" 
+		    << endl; 
+	      
+	      ofile << "reqR(0) <= " << reqR[0]->Get_CP_To_DP_Symbol() 
+		    << " when " << guard_wires[0]->Get_VHDL_Id() 
+		    << "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else false;" << endl; 
+	      ofile << ackR[0]->Get_DP_To_CP_Symbol() << " <= ackR(0) " 
+		    << " when " << guard_wires[0]->Get_VHDL_Id()
+		    << "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else " 
+		    << reqR[0]->Get_CP_To_DP_Symbol()  << ";" 
+		    << endl; 
+	    }
+	  else
+	    {
+	      ofile << "reqL(0) <= " << reqL[0]->Get_CP_To_DP_Symbol() << ";" << endl;
+	      ofile << "reqR(0) <= " << reqR[0]->Get_CP_To_DP_Symbol() << ";" << endl;
+	      ofile << ackL[0]->Get_DP_To_CP_Symbol() << " <= ackL(0); "  << endl;
+	      ofile << ackR[0]->Get_DP_To_CP_Symbol() << " <= ackR(0); "  << endl;
+	    }
+	}
       
 
       // now the operator instance.
@@ -1469,34 +1505,6 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	    }
 	  else
 	    {
-	      // an unshared operator.
-      		if(guard_wires[0] != NULL)
-      		{
-      			ofile << "reqL(0) <= " << reqL[0]->Get_CP_To_DP_Symbol() 
-				<< " when " << guard_wires[0]->Get_VHDL_Id() 
-				<< "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else false;" << endl; 
-			ofile << ackL[0]->Get_DP_To_CP_Symbol() << " <= ackL(0) " 
-				<< " when " << guard_wires[0]->Get_VHDL_Id()
-				<< "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else " 
- 				<< reqL[0]->Get_CP_To_DP_Symbol()  << ";" 
-				<< endl; 
-
-      			ofile << "reqR(0) <= " << reqR[0]->Get_CP_To_DP_Symbol() 
-				<< " when " << guard_wires[0]->Get_VHDL_Id() 
-				<< "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else false;" << endl; 
-			ofile << ackR[0]->Get_DP_To_CP_Symbol() << " <= ackR(0) " 
-				<< " when " << guard_wires[0]->Get_VHDL_Id()
-				<< "(0) = " << (guard_complements[0] ? "'0'"  : "'1'") << " else " 
- 				<< reqR[0]->Get_CP_To_DP_Symbol()  << ";" 
-				<< endl; 
-		}
-		else
-		{
-			ofile << "reqL(0) <= " << reqL[0]->Get_CP_To_DP_Symbol() << ";" << endl;
-			ofile << "reqR(0) <= " << reqR[0]->Get_CP_To_DP_Symbol() << ";" << endl;
-			ofile << ackL[0]->Get_DP_To_CP_Symbol() << " <= ackL(0); "  << endl;
-			ofile << ackR[0]->Get_DP_To_CP_Symbol() << " <= ackR(0); "  << endl;
-		}
 
 
 	      ofile << "UnsharedOperator: UnsharedOperatorBase -- {" << endl;
@@ -1629,7 +1637,7 @@ void vcDataPath::Print_VHDL_Regulator_Instance(string inst_id, int num_reqs,  in
 			string release_reqs, string release_acks, ostream& ofile)
 {
 	ofile << inst_id << ": access_regulator generic map (num_reqs => " 
-		<< IntToStr(num_reqs) << ", num_slots => " << IntToStr(num_slots) <<", -- {" << endl;
+		<< IntToStr(num_reqs) << ", num_slots => " << IntToStr(num_slots) <<") -- {" << endl;
 	ofile << "port map (req => " << reqs << ", -- {" << endl; 
 	ofile << "ack => " << acks << "," << endl;
 	ofile << "regulated_req => " << regulated_reqs << "," << endl;

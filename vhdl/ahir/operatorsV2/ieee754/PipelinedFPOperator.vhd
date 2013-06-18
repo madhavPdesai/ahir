@@ -178,14 +178,13 @@ begin  -- Behave
   end generate IEEE754xAdd;
 
 
-  odemux: OutputDeMuxBase
+  odemux: OutputDeMuxBaseWithBuffering
     generic map (
   	iwidth => owidth,
   	owidth =>  owidth*num_reqs,
 	twidth =>  tag_length,
 	nreqs  => num_reqs,
-	no_arbitration => no_arbitration,
-        pipeline_flag => true)
+        buffering_per_output => 1)
     port map (
       reqL   => oreq,
       ackL   => oack,

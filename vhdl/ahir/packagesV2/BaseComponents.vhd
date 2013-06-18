@@ -574,7 +574,26 @@ package BaseComponents is
   end component InputMuxBaseNoData;
 
 
-  component OutputDeMuxBase 
+
+  component OutputDeMuxBaseNoData
+    generic(twidth: integer;
+            nreqs: integer;
+            no_arbitration: Boolean);
+    port (
+      -- req/ack follow level protocol
+      reqL                 : in  std_logic;
+      ackL                 : out std_logic;
+      -- tag identifies index to which demux
+      -- should happen
+      tagL                 : in std_logic_vector(twidth-1 downto 0);
+      -- reqR/ackR follow pulse protocol
+      -- and are of length n
+      reqR                : in BooleanArray(nreqs-1 downto 0);
+      ackR                : out  BooleanArray(nreqs-1 downto 0);
+      clk, reset          : in std_logic);
+  end component OutputDeMuxBaseNoData;
+
+  component OutputDeMuxBase
     generic(iwidth: integer;
             owidth: integer;
             twidth: integer;
@@ -597,15 +616,19 @@ package BaseComponents is
       dataR               : out std_logic_vector(owidth-1 downto 0);
       clk, reset          : in std_logic);
   end component OutputDeMuxBase;
+  
 
-  component OutputDeMuxBaseNoData
-    generic(twidth: integer;
+  component OutputDeMuxBaseWithBuffering
+    generic(iwidth: integer;
+            owidth: integer;
+            twidth: integer;
             nreqs: integer;
-            no_arbitration: Boolean);
+            buffering_per_output: integer);
     port (
       -- req/ack follow level protocol
       reqL                 : in  std_logic;
       ackL                 : out std_logic;
+      dataL                : in  std_logic_vector(iwidth-1 downto 0);
       -- tag identifies index to which demux
       -- should happen
       tagL                 : in std_logic_vector(twidth-1 downto 0);
@@ -613,10 +636,24 @@ package BaseComponents is
       -- and are of length n
       reqR                : in BooleanArray(nreqs-1 downto 0);
       ackR                : out  BooleanArray(nreqs-1 downto 0);
+      -- dataR is array(n,m) 
+      dataR               : out std_logic_vector(owidth-1 downto 0);
       clk, reset          : in std_logic);
-  end component OutputDeMuxBaseNoData;
+  end component OutputDeMuxBaseWithBuffering;
+  
 
-
+  component UnloadBuffer 
+    generic (buffer_size: integer := 2; data_width : integer := 32);
+    port (write_req: in std_logic;
+          write_ack: out std_logic;
+          write_data: in std_logic_vector(data_width-1 downto 0);
+          unload_req: in boolean;
+          unload_ack: out boolean;
+          read_data: out std_logic_vector(data_width-1 downto 0);
+          clk : in std_logic;
+          reset: in std_logic);
+  end component UnloadBuffer;
+  
   -----------------------------------------------------------------------------
   -- call arbiters
   -- there are four forms for the four possibilities of the

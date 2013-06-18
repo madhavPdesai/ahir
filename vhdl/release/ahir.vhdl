@@ -2524,7 +2524,26 @@ package BaseComponents is
   end component InputMuxBaseNoData;
 
 
-  component OutputDeMuxBase 
+
+  component OutputDeMuxBaseNoData
+    generic(twidth: integer;
+            nreqs: integer;
+            no_arbitration: Boolean);
+    port (
+      -- req/ack follow level protocol
+      reqL                 : in  std_logic;
+      ackL                 : out std_logic;
+      -- tag identifies index to which demux
+      -- should happen
+      tagL                 : in std_logic_vector(twidth-1 downto 0);
+      -- reqR/ackR follow pulse protocol
+      -- and are of length n
+      reqR                : in BooleanArray(nreqs-1 downto 0);
+      ackR                : out  BooleanArray(nreqs-1 downto 0);
+      clk, reset          : in std_logic);
+  end component OutputDeMuxBaseNoData;
+
+  component OutputDeMuxBase
     generic(iwidth: integer;
             owidth: integer;
             twidth: integer;
@@ -2547,15 +2566,19 @@ package BaseComponents is
       dataR               : out std_logic_vector(owidth-1 downto 0);
       clk, reset          : in std_logic);
   end component OutputDeMuxBase;
+  
 
-  component OutputDeMuxBaseNoData
-    generic(twidth: integer;
+  component OutputDeMuxBaseWithBuffering
+    generic(iwidth: integer;
+            owidth: integer;
+            twidth: integer;
             nreqs: integer;
-            no_arbitration: Boolean);
+            buffering_per_output: integer);
     port (
       -- req/ack follow level protocol
       reqL                 : in  std_logic;
       ackL                 : out std_logic;
+      dataL                : in  std_logic_vector(iwidth-1 downto 0);
       -- tag identifies index to which demux
       -- should happen
       tagL                 : in std_logic_vector(twidth-1 downto 0);
@@ -2563,10 +2586,24 @@ package BaseComponents is
       -- and are of length n
       reqR                : in BooleanArray(nreqs-1 downto 0);
       ackR                : out  BooleanArray(nreqs-1 downto 0);
+      -- dataR is array(n,m) 
+      dataR               : out std_logic_vector(owidth-1 downto 0);
       clk, reset          : in std_logic);
-  end component OutputDeMuxBaseNoData;
+  end component OutputDeMuxBaseWithBuffering;
+  
 
-
+  component UnloadBuffer 
+    generic (buffer_size: integer := 2; data_width : integer := 32);
+    port (write_req: in std_logic;
+          write_ack: out std_logic;
+          write_data: in std_logic_vector(data_width-1 downto 0);
+          unload_req: in boolean;
+          unload_ack: out boolean;
+          read_data: out std_logic_vector(data_width-1 downto 0);
+          clk : in std_logic;
+          reset: in std_logic);
+  end component UnloadBuffer;
+  
   -----------------------------------------------------------------------------
   -- call arbiters
   -- there are four forms for the four possibilities of the
@@ -8764,7 +8801,7 @@ begin  -- default_arch
    -- the next two places manage the slots
    release_req_place_preds(0) <= release_req;
    releaseReqPlace: place 
-	generic map(capacity => 1, marking => num_slots, name => "access_regulator:release_req_place")
+	generic map(capacity => num_slots, marking => num_slots, name => "access_regulator:release_req_place")
 	port map(preds => release_req_place_preds, 
 			succs => release_req_place_succs, 
 			token => release_req_place_token,
@@ -8772,7 +8809,7 @@ begin  -- default_arch
 
    release_ack_place_preds(0) <= release_ack;
    releaseAckPlace: place 
-	generic map(capacity => 1, marking => num_slots, name => "access_regulator:release_ack_place")
+	generic map(capacity => num_slots, marking => num_slots, name => "access_regulator:release_ack_place")
 	port map(preds => release_ack_place_preds, 
 			succs => release_ack_place_succs, 
 			token => release_ack_place_token,
@@ -11288,6 +11325,105 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
+-------------------------------------------------------------------------------
+-- a single level requester on the left, and nreq requesters on the right.
+--
+-- reqR -> ackR can be zero delay.
+-- reqL -> ackL has at least a unit delay
+--
+-- This demux provides buffering for each output.
+-- (potentially useful in loop-pipelining).
+-------------------------------------------------------------------------------
+entity OutputDeMuxBaseWithBuffering is
+  generic(iwidth: integer := 4;
+	  owidth: integer := 12;
+	  twidth: integer := 2;
+	  nreqs: integer := 3;
+	  buffering_per_output: integer := 2);
+  port (
+    -- req/ack follow level protocol
+    reqL                 : in  std_logic;
+    ackL                 : out std_logic;
+    dataL                : in  std_logic_vector(iwidth-1 downto 0);
+    -- tag identifies index to which demux
+    -- should happen
+    tagL                 : in std_logic_vector(twidth-1 downto 0);
+    -- reqR/ackR follow pulse protocol
+    -- and are of length n
+    reqR                : in BooleanArray(nreqs-1 downto 0);
+    ackR                : out  BooleanArray(nreqs-1 downto 0);
+    -- dataR is array(n,m) 
+    dataR               : out std_logic_vector(owidth-1 downto 0);
+    clk, reset          : in std_logic);
+end OutputDeMuxBaseWithBuffering;
+
+architecture Behave of OutputDeMuxBaseWithBuffering is
+  signal ackL_array : std_logic_vector(nreqs-1 downto 0);
+  
+begin  -- Behave
+  assert(owidth = iwidth*nreqs) report "word-length mismatch in output demux" severity failure;
+
+  bufGen: for I in 0 to nreqs-1 generate
+
+    -- purpose: instantiate a buffer
+    BufBlock: block
+      signal write_req,write_ack : std_logic;
+      signal unload_req,unload_ack : boolean;
+      signal buf_data_in, buf_data_out : std_logic_vector(iwidth-1 downto 0);
+
+      signal valid : std_logic;
+      
+    begin  -- block BufBlock
+      ub : UnloadBuffer generic map (
+        buffer_size => buffering_per_output,
+        data_width  => iwidth)
+        port map (
+          write_req  => write_req,
+          write_ack  => write_ack,
+          write_data => buf_data_in,
+          unload_req => unload_req,
+          unload_ack => unload_ack,
+          read_data  => buf_data_out,
+          clk        => clk,
+          reset      => reset);
+
+      
+      ---------------------------------------------------------------------------
+      -- valid true if this I is mentioned in tag
+      ---------------------------------------------------------------------------
+      valid <= '1' when (reqL = '1') and (I = To_Integer(To_Unsigned(tagL))) else '0';
+      write_req <= valid;
+      ackL_array(I) <= write_ack when (valid = '1') else '0';
+
+      -------------------------------------------------------------------------
+      -- dataL goes to each buffer.
+      -------------------------------------------------------------------------
+      buf_data_in <= dataL;
+
+
+      -------------------------------------------------------------------------
+      -- unload side is straightforward
+      -------------------------------------------------------------------------
+      unload_req <= reqR(I);
+      ackR(I) <= unload_ack;
+      dataR(((I+1)*iwidth)-1 downto I*iwidth) <= buf_data_out;
+      
+    end block BufBlock;
+  end generate bufGen;
+
+  -- ack is OrReduced from the Demux combinations.
+  ackL <= OrReduce(ackL_array);
+end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
 entity OutputPortLevelNoData is
   generic(num_reqs: integer;
 	no_arbitration: boolean := false);
@@ -11583,25 +11719,25 @@ begin  -- Behave
   end process;
 
 end Behave;
-	library ieee;
-	use ieee.std_logic_1164.all;
+library ieee;
+use ieee.std_logic_1164.all;
 
-	library ahir;
-	use ahir.Types.all;
-	use ahir.Subprograms.all;
-	use ahir.Utilities.all;
-	use ahir.BaseComponents.all;
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
 
-	entity PipeBase is
-	  
-	  generic (num_reads: integer;
-		   num_writes: integer;
-		   data_width: integer;
-		   lifo_mode: boolean := false;
-		   depth: integer := 1);
-	  port (
-	    read_req       : in  std_logic_vector(num_reads-1 downto 0);
-	    read_ack       : out std_logic_vector(num_reads-1 downto 0);
+entity PipeBase is
+  
+  generic (num_reads: integer;
+           num_writes: integer;
+           data_width: integer;
+           lifo_mode: boolean := false;
+           depth: integer := 1);
+  port (
+    read_req       : in  std_logic_vector(num_reads-1 downto 0);
+    read_ack       : out std_logic_vector(num_reads-1 downto 0);
     read_data      : out std_logic_vector((num_reads*data_width)-1 downto 0);
     write_req       : in  std_logic_vector(num_writes-1 downto 0);
     write_ack       : out std_logic_vector(num_writes-1 downto 0);
@@ -11636,9 +11772,9 @@ begin  -- default_arch
   end generate manyWriters;
 
   singleWriter: if (num_writes = 1) generate
-     pipe_req <= write_req(0);
-     write_ack(0) <= pipe_ack;
-     pipe_data <= write_data;
+    pipe_req <= write_req(0);
+    write_ack(0) <= pipe_ack;
+    pipe_data <= write_data;
   end generate singleWriter;
 
   Shallow: if (depth < 3) and (not lifo_mode) generate
@@ -13969,6 +14105,120 @@ begin
   asynch_data <= synch_data;
   
 end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+entity UnloadBuffer is
+  generic (buffer_size: integer := 2; data_width : integer := 32);
+  port (write_req: in std_logic;
+        write_ack: out std_logic;
+        write_data: in std_logic_vector(data_width-1 downto 0);
+        unload_req: in boolean;
+        unload_ack: out boolean;
+        read_data: out std_logic_vector(data_width-1 downto 0);
+        clk : in std_logic;
+        reset: in std_logic);
+end UnloadBuffer;
+
+architecture default_arch of UnloadBuffer is
+
+  signal pop_req, pop_ack, push_req, push_ack: std_logic_vector(0 downto 0);
+  signal pipe_data_out:  std_logic_vector(data_width-1 downto 0);
+
+  signal output_register : std_logic_vector(data_width-1 downto 0);
+
+  signal unload_req_reg, unload_req_token  : boolean;
+  signal unload_ack_sig : boolean;
+  
+begin  -- default_arch
+
+  -- the input pipe.
+  bufPipe : PipeBase generic map (
+    num_reads  => 1,
+    num_writes => 1,
+    data_width => data_width,
+    lifo_mode  => false,
+    depth      => buffer_size)
+    port map (
+      read_req   => pop_req,
+      read_ack   => pop_ack,
+      read_data  => pipe_data_out,
+      write_req  => push_req,
+      write_ack  => push_ack,
+      write_data => write_data,
+      clk        => clk,
+      reset      => reset);
+  push_req(0) <= write_req;
+  write_ack <= push_ack(0);
+
+  -- unload_req needs to be registered..
+  -- (it behaves like a place)
+  process(clk,reset)
+  begin
+
+    if(clk'event and clk = '1') then
+      if(reset = '1') then
+        unload_req_reg <= false;
+      else
+        if(unload_req) then
+          unload_req_reg <= true;
+        elsif(unload_ack_sig) then
+          unload_req_reg <= false;
+        end if;
+      end if;
+    end if;
+  end process;
+  unload_req_token <= unload_req_reg or unload_req;
+  
+
+  -- the output register handler.
+  process(clk,reset, unload_req, pop_ack)
+    variable load_output : boolean;
+  begin
+
+    -- pop from the pipe if unload_req is true and
+    -- if the pipe has something available.
+    load_output := unload_req_token and (pop_ack(0) = '1');
+
+
+    -- issue the pop to the pipe if it is to be
+    -- unloaded
+    if(load_output) then
+      pop_req(0) <= '1';
+    else
+      pop_req(0) <= '0';
+    end if;
+
+    -- the unload_ack pulse is delayed.
+    if(clk'event and clk  = '1') then
+
+      if(reset = '1') then
+        unload_ack_sig <= false;
+      else
+        if(load_output) then
+          unload_ack_sig <= true;
+        else
+          unload_ack_sig <= false;
+        end if;
+      end if;
+
+
+      if(load_output) then
+        output_register <= pipe_data_out;
+      end if;
+    end if;
+  end process;
+  unload_ack <= unload_ack_sig;
+
+  read_data <= output_register;
+
+end default_arch;
 -- The unshared operator uses a split protocol.
 --    reqL/ackL  for sampling the inputs
 --    reqR/ackR  for updating the outputs.
@@ -16534,14 +16784,13 @@ begin  -- Behave
   end generate IEEE754xAdd;
 
 
-  odemux: OutputDeMuxBase
+  odemux: OutputDeMuxBaseWithBuffering
     generic map (
   	iwidth => owidth,
   	owidth =>  owidth*num_reqs,
 	twidth =>  tag_length,
 	nreqs  => num_reqs,
-	no_arbitration => no_arbitration,
-        pipeline_flag => true)
+        buffering_per_output => 1)
     port map (
       reqL   => oreq,
       ackL   => oack,
