@@ -220,6 +220,8 @@ protected:
 
   virtual bool Is_Pipelined_Operator() {return(false);}
 
+  bool Is_Part_Of_Pipelined_Loop();
+
   int Get_Req_Index(vcTransition* t)
   {
     int ret_index = -1;
@@ -437,10 +439,17 @@ class vcDataPath: public vcRoot
   void Print_VHDL_Guard_Concatenation(int num_reqs, string guard_vector, vector<vcWire*>& guard_wires, vector<bool>& guard_complements,ostream& ofile);
   void Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, string req_unguarded, string ack_unguarded, string req, string ack, ostream& ofile);
 
-  void Print_VHDL_Regulator_Instance(string inst_id, int num_reqs,  int num_slots,
+  void Generate_Buffering_String(vector<vcDatapathElement*>& dpe_elements, string& buf_string);
+  void Print_VHDL_Regulator_Instance(string inst_id, 
+			int num_reqs, 
 			string reqs, string acks,
 			string regulated_reqs, string regulated_acks, 
-			string release_reqs, string release_acks, ostream& ofile);
+			string release_reqs, string release_acks,
+			vector<vcDatapathElement*>& dpe_els,
+			 ostream& ofile);
+   
+  void Generate_Buffering_Constant_Declaration(vector<vcDatapathElement*>& dpe_elements, 
+							string& buffering_string);
 
   string Get_VHDL_IOport_Interface_Port_Name(string pipe_id, string pid);
   string Get_VHDL_IOport_Interface_Port_Section(vcPipe* p,

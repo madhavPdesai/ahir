@@ -10,7 +10,8 @@ use ahir.Utilities.all;
 entity OutputDeMuxBaseNoData is
   generic(twidth: integer;
 	  nreqs: integer;
-	  no_arbitration: Boolean := false);
+	  no_arbitration: Boolean := false;
+	  detailed_buffering_per_output: IntegerArray);
   port (
     -- req/ack follow level protocol
     reqL                 : in  std_logic;
@@ -26,18 +27,22 @@ entity OutputDeMuxBaseNoData is
 end OutputDeMuxBaseNoData;
 
 architecture Behave of OutputDeMuxBaseNoData is
-  
   signal ackL_sig : std_logic_vector(nreqs-1 downto 0);
+
 begin  -- Behave
+
+  assert detailed_buffering_per_output'length = reqR'length report "Mismatch." severity failure;
 
   -----------------------------------------------------------------------------
   -- parallel generate across all requesters
   -----------------------------------------------------------------------------
   PGen: for I in reqR'range generate
     RegFSM: block
+      subtype int7 is integer range 0 to detailed_buffering_per_output(I);
       signal valid: std_logic;
       signal lhs_clear : std_logic;
-      signal rhs_state, lhs_state : std_logic;
+      signal rhs_state : std_logic;
+      signal lhs_state : int7;
     begin  -- block Reg
       
       ---------------------------------------------------------------------------
@@ -46,37 +51,41 @@ begin  -- Behave
       valid <= '1' when (reqL = '1') and (I = To_Integer(To_Unsigned(tagL))) else '0';
 
       ---------------------------------------------------------------------------
-      -- lhs-state machine.
+      -- lhs-state machine.. just a 3 bit counter which counts up everytime
+      -- there is a valid input to this index, and down when the req appears 
+      -- at the receiver end.
       ---------------------------------------------------------------------------
       process(clk,lhs_state, lhs_clear,reset,valid)
-        variable nstate : std_logic;
+        variable nstate : int7;
         variable aL_var : std_logic;
       begin
         nstate := lhs_state;
         aL_var := '0';
         
-        case lhs_state is
-          when '0' =>
+        if(lhs_state < int7'high) then
             if(valid = '1') then
-              nstate := '1';
+              nstate := lhs_state + 1;
               aL_var := '1';
             end if;
-          when '1' =>
-            if(lhs_clear = '1') then
-              nstate := '0';
-            end if;
-          when others => null;
-        end case;
+        end if;
 
-        if(reset = '1') then
-          nstate := '0';
-        end if;        
+        if(nstate > 0) then
+            if(lhs_clear = '1') then
+              nstate := lhs_state-1;
+            end if;
+	end if;
+
 
         ackL_sig(I) <= aL_var;
         
         if(clk'event and clk = '1') then
-          lhs_state <= nstate;
+           if(reset = '1') then
+              nstate := 0;
+	   else
+              lhs_state <= nstate;
+           end if;        
         end if;
+
       end process;
 
       -------------------------------------------------------------------------
@@ -94,7 +103,7 @@ begin  -- Behave
         case rhs_state is
           when '0' =>
             if(reqR(I)) then
-              if(lhs_state = '1') then
+              if(lhs_state > 0) then
                 aR_var := true;
                 lhs_clear_var := '1';
               else
@@ -102,7 +111,7 @@ begin  -- Behave
               end if;
             end if;
           when '1' =>
-            if(lhs_state = '1') then
+            if(lhs_state > 0) then
               lhs_clear_var := '1';
               aR_var := true;
               nstate := '0';

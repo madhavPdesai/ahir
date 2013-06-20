@@ -8,8 +8,8 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity PipeBase is
-  
-  generic (num_reads: integer;
+  generic (name : string;
+	   num_reads: integer;
            num_writes: integer;
            data_width: integer;
            lifo_mode: boolean := false;

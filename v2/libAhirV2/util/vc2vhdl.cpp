@@ -67,8 +67,8 @@ void Usage_Vc2VHDL()
   cerr <<  " alternate form:  --debug" << endl;
   cerr <<  " -v :  lots of information will be printed to stderr during analysis." << endl;
   cerr <<  " alternate form:  --verbose" << endl;
-  cerr <<  " -I :  loop-pipelining limit on iterations in flight (a positive integer..)" << endl;
-  cerr <<  " alternate form:  --loop_pipeline_iteration_limit" << endl;
+  cerr <<  " -I :  number of copies of an operation that can be active in a pipelined loop (a small positive integer.. keep it smaller than 2)" << endl;
+  cerr <<  " alternate form:  --loop_pipeline_buffering_limit" << endl;
   cerr << endl;
   cerr << endl;
   cerr << "example: " << endl
@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
       {"set_as_top",  required_argument, 0, 't'},
       {"set_as_free_running_top",  required_argument, 0, 'T'},
       {"top_entity_name",  required_argument, 0, 'e'},
-      {"loop_pipeline_iteration_limit",  required_argument, 0, 'I'},
+      {"loop_pipeline_buffering_limit",  required_argument, 0, 'I'},
       {"bypass_stride",  required_argument, 0, 'S'},
       {"write_files",  no_argument, 0, 'w'},
       {"vcfile",    required_argument, 0, 'f'},
@@ -211,15 +211,20 @@ int main(int argc, char* argv[])
           it_limit = atoi(optarg);
 	  if(it_limit < 0)
 	  {
-		cerr << "Error: loop-pipelining iteration limit must be > 0 (it is specified as " 
+		cerr << "Error: loop_pipeline_buffering_limit limit must be > 0 (it is specified as " 
 			<< it_limit 
 			<< ")." << endl;
+		it_limit = 2;
 	  }
 	  else
 	  {
-	  	cerr << "Info: -I option selected: iteration limit will be set to " 
+		if(it_limit > 4)
+			it_limit = 4;
+
+	  	cerr << "Info: -I option selected: loop pipeline buffering limit will be set to " 
 			<< it_limit << "." << endl;
-	  	vcSystem::_max_iterations_in_flight = it_limit;
+
+	  	vcSystem::_loop_pipeline_buffering_limit = it_limit;
 	  }
 	  break;
 	case 'S':

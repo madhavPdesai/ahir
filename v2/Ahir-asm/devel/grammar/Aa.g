@@ -768,7 +768,7 @@ aA_If_Statement[AaBranchBlockStatement* scope] returns [AaIfStatement* new_is]
     ;   
 
 //----------------------------------------------------------------------------------------------------------
-//  aA_Do_While_Statement:  DO (aA_Phi_Statement)* aA_Atomic_Statement_Sequence WHILE aA_Expression
+//  aA_Do_While_Statement:  DO UINTEGER (aA_Phi_Statement)* aA_Atomic_Statement_Sequence WHILE aA_Expression
 //----------------------------------------------------------------------------------------------------------
 aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement* new_dws]
 {
@@ -781,12 +781,15 @@ aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement
     set<string,StringCompare> lbl_set;
     lbl_set.insert("$entry");
     lbl_set.insert("$loopback");
+    int pdepth = 1;
 }: 
-     il:DO 
+     il:DO DEPTH did: UINTEGER { pdepth = atoi(did->getText().c_str()); }
         ms = aA_Merge_Statement[scope]
         { 
             new_dws->Set_Merge_Statement(ms);
+	    new_dws->Set_Pipelining_Depth(pdepth);
             ms->Set_In_Do_While(true);
+	   
 	    new_dws->Set_Line_Number(il->getLine());
         }
 
@@ -1478,7 +1481,7 @@ PHI           : "$phi";
 DEPTH         : "$depth";
 ATTRIBUTE     : "$attribute";
 GUARD         : "$guard";
-DO            : "$do";
+DO            : "$dopipeline";
 WHILE         : "$while";
 
 // Special symbols

@@ -364,7 +364,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
   int max_iterations_in_flight = 1;
   if(is_pipelined)
   {
-     max_iterations_in_flight = vcSystem::_max_iterations_in_flight;
+     max_iterations_in_flight = this->_pipeline_parent->Get_Max_Iterations_In_Flight();
   }
 
   if(!this->_is_join && (this->_marked_predecessors.size() == 0))
@@ -1009,7 +1009,7 @@ void vcCPSimpleLoopBlock::Construct_CPElement_Group_Graph_Vertices(vcControlPath
 void vcCPSimpleLoopBlock::Print_VHDL_Terminator(vcControlPath* cp, ostream& ofile)
 {
 	ofile <<  _terminator->Get_VHDL_Id() << ": loop_terminator -- {" << endl;
-	ofile <<  "generic map (max_iterations_in_flight =>" <<  vcSystem::_max_iterations_in_flight << ") " << endl;
+	ofile <<  "generic map (max_iterations_in_flight =>" <<  this->Get_Depth() << ") " << endl;
 	ofile <<  "port map(loop_body_exit => " << _terminator->_loop_body->Get_Exit_Symbol(cp) << ","
 		<< "loop_continue => " << _terminator->_loop_taken->Get_Exit_Symbol(cp) << ","
 		<< "loop_terminate => " << _terminator->_loop_exit->Get_Exit_Symbol(cp) << ","

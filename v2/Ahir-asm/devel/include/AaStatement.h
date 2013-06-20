@@ -1239,7 +1239,11 @@ class AaDoWhileStatement: public AaStatement
   AaMergeStatement* _merge_statement;
   AaStatementSequence* _loop_body_sequence;
 
+  int _pipelining_depth;
  public:
+
+  void Set_Pipelining_Depth(int v) {_pipelining_depth = v;}
+  int Get_Pipelining_Depth() {return(_pipelining_depth);}
 
   void Set_Test_Expression(AaExpression* te) { this->_test_expression = te; }
   void Set_Merge_Statement(AaMergeStatement* ms) { this->_merge_statement = ms; }

@@ -23,5 +23,6 @@ package Types is
   constant slv_one: std_logic_vector(0 downto 0) := "1";
   constant sl_one: std_logic := '1';
 
+  constant loop_pipeline_buffering: integer := 4;
 end package Types;
 

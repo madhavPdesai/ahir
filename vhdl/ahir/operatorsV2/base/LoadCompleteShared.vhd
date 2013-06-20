@@ -11,10 +11,12 @@ use ahir.BaseComponents.all;
 entity LoadCompleteShared is
     generic
     (
+      name : string;
       data_width: integer := 8;
       tag_length:  integer := 1;
       num_reqs : integer := 1;
-      no_arbitration: boolean := false
+      no_arbitration: boolean := false;
+      detailed_buffering_per_output: IntegerArray
     );
   port (
     -- req/ack follow level protocol
@@ -35,14 +37,14 @@ architecture Vanilla of LoadCompleteShared is
 begin  -- Behave
 
 
-  odemux: OutputDeMuxBase
+  odemux: OutputDeMuxBaseWithBuffering
     generic map (
+      name => name & " odemux ",
       iwidth => data_width,
       owidth =>  data_width*num_reqs,
       twidth =>  tag_length,
       nreqs  => num_reqs,
-      no_arbitration => no_arbitration,
-      pipeline_flag => true)
+      detailed_buffering_per_output => detailed_buffering_per_output )  
     port map (
       reqL   => mack,                   -- cross-over (mack from mem-subsystem)
       ackL   => mreq,                   -- cross-over 

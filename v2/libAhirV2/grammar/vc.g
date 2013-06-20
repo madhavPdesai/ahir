@@ -359,15 +359,18 @@ vc_CPBranchBlock[vcCPBlock* cp]
 ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPSimpleLoopBlock: LOOPBLOCK vc_Label LBRACE ... RBRACE (see below)
+// vc_CPSimpleLoopBlock: LOOPBLOCK vc_Label DEPTH UINTEGER LBRACE ... RBRACE (see below)
 //-----------------------------------------------------------------------------------------------
 vc_CPSimpleLoopBlock[vcCPBlock* cp] 
 {
 	string lbl;
 	vcCPSimpleLoopBlock* sb;
 	vcCPElement* cpe;
+	int depth;
 }
-: LOOPBLOCK lbl = vc_Label { sb = new vcCPSimpleLoopBlock(cp,lbl);} LBRACE 
+: LOOPBLOCK lbl = vc_Label { sb = new vcCPSimpleLoopBlock(cp,lbl);} 
+	DEPTH did: UINTEGER {depth = atoi(did->getText().c_str()); sb->Set_Depth(depth); }
+  LBRACE 
         (cpe = vc_CPPlace[sb] {sb->Add_CPElement(cpe);})* // first the places
         vc_CPPipelinedLoopBody[sb] // then the loop body..
         (vc_CPSeriesBlock[sb])+ // then the series blocks to trigger branches and receive acks.
@@ -518,9 +521,9 @@ vc_CPForkBlock[vcCPBlock* cp]
 //-----------------------------------------------------------------------------------------------
 vc_CPPipelinedLoopBody[vcCPBlock* cp] 
 {
-	string lbl;
-	vcCPPipelinedLoopBody* fb;
-	vcCPElement* cpe;
+    string lbl;
+    vcCPPipelinedLoopBody* fb;
+    vcCPElement* cpe;
     string internal_id, external_id;
     bool pipeline_flag = false;
 }
@@ -603,8 +606,8 @@ vc_Datapath[vcSystem* sys,vcModule* m]
     : DATAPATH LBRACE ( vc_Wire_Declaration[sys,dp] | 
             vc_Guarded_Operator_Instantiation[sys,dp] |
             vc_Branch_Instantiation[dp] |
-            vc_Phi_Instantiation[dp] |
-            vc_AttributeSpec[dp])* RBRACE
+            vc_Phi_Instantiation[dp] | vc_AttributeSpec[dp])*
+            RBRACE
  { m->Set_Data_Path(dp);}
 ;
 
@@ -631,6 +634,8 @@ vc_Guarded_Operator_Instantiation[vcSystem* sys, vcDataPath* dp]
 			dpe->Set_Guard_Complement(guard_complement);
 		}
 	}
+
+
 ;
 	
 //-----------------------------------------------------------------------------------------------------------------------------

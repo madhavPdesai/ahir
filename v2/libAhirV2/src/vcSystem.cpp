@@ -44,9 +44,10 @@ string vcSystem::_top_entity_name = "ahir_system";
 
 
 // for loop-pipelining.
-// max iterations in flight.  make it 256 (an 8 bit number).
-// this should be enough for most applications.
-int vcSystem::_max_iterations_in_flight = 256;
+// maximum amount of buffering of a wire inside
+// a pipelined loop.  Expensive, keep it to 
+// less than 3.
+int vcSystem::_loop_pipeline_buffering_limit = 2;
 
 
 vcSystem::vcSystem(string id):vcRoot(id)

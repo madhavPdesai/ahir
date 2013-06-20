@@ -23,6 +23,7 @@ package Types is
   constant slv_one: std_logic_vector(0 downto 0) := "1";
   constant sl_one: std_logic := '1';
 
+  constant loop_pipeline_buffering: integer := 4;
 end package Types;
 
 library ieee;
@@ -2293,6 +2294,7 @@ package BaseComponents is
   component SplitOperatorShared
     generic
       (
+        name : string;
         operator_id   : string;          -- operator id
         input1_is_int : Boolean := true; -- false means float
         input1_characteristic_width : integer := 0; -- characteristic width if input1 is float
@@ -2312,7 +2314,8 @@ package BaseComponents is
         use_constant  : boolean := false;
         no_arbitration: boolean := false;
         min_clock_period: boolean := false;
-        num_reqs : integer  -- how many requesters?
+        num_reqs : integer;  -- how many requesters?
+        detailed_buffering_per_output: IntegerArray
         );
 
     port (
@@ -2417,7 +2420,8 @@ package BaseComponents is
   -----------------------------------------------------------------------------
   component PipeBase 
     
-    generic (num_reads: integer;
+    generic (name : string;
+	     num_reads: integer;
              num_writes: integer;
              data_width: integer;
              lifo_mode: boolean := false;
@@ -2528,7 +2532,8 @@ package BaseComponents is
   component OutputDeMuxBaseNoData
     generic(twidth: integer;
             nreqs: integer;
-            no_arbitration: Boolean);
+            no_arbitration: Boolean;
+	    detailed_buffering_per_output: IntegerArray);
     port (
       -- req/ack follow level protocol
       reqL                 : in  std_logic;
@@ -2569,11 +2574,12 @@ package BaseComponents is
   
 
   component OutputDeMuxBaseWithBuffering
-    generic(iwidth: integer;
+    generic(name : string;
+            iwidth: integer;
             owidth: integer;
             twidth: integer;
-            nreqs: integer;
-            buffering_per_output: integer);
+            nreqs : integer;
+            detailed_buffering_per_output: IntegerArray);
     port (
       -- req/ack follow level protocol
       reqL                 : in  std_logic;
@@ -2593,7 +2599,7 @@ package BaseComponents is
   
 
   component UnloadBuffer 
-    generic (buffer_size: integer := 2; data_width : integer := 32);
+    generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
     port (write_req: in std_logic;
           write_ack: out std_logic;
           write_data: in std_logic_vector(data_width-1 downto 0);
@@ -3155,10 +3161,12 @@ package BaseComponents is
   component LoadCompleteShared
     generic
       (
+        name : string;
         data_width: integer;
         tag_length:  integer;
         num_reqs : integer;
-        no_arbitration: boolean
+        no_arbitration: boolean;
+        detailed_buffering_per_output : IntegerArray
         );
     port (
       -- req/ack follow level protocol
@@ -3176,7 +3184,8 @@ package BaseComponents is
 
   component StoreCompleteShared
     generic (num_reqs: integer;
-             tag_length: integer);
+             tag_length: integer;
+	     detailed_buffering_per_output: IntegerArray);
     port (
       -- in requester array, pulse protocol
       -- more than one requester can be active
@@ -3306,11 +3315,13 @@ package BaseComponents is
 
   component PipelinedFPOperator 
     generic (
+      name : string;
       operator_id : string;
       exponent_width : integer := 8;
       fraction_width : integer := 23;
       no_arbitration: boolean := true;
-      num_reqs : integer := 3 -- how many requesters?
+      num_reqs : integer := 3; -- how many requesters?
+      detailed_buffering_per_output : IntegerArray
       );
     port (
       -- req/ack follow level protocol
@@ -9616,7 +9627,7 @@ architecture default_arch of place is
   signal token_sig      : boolean;  -- asynchronously computed value of the token
   signal token_latch    : integer range 0 to capacity;
   
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := true;
 begin  -- default_arch
 
   assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;
@@ -9638,18 +9649,18 @@ begin  -- default_arch
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
       elsif (backward_reset and (not incoming_token)) then
-	--if(debug_flag) then
-         --assert token_latch > 0 report "in place " & name &  ": number of tokens cannot become negative!" severity error;
+       --if(debug_flag) then
+           --assert token_latch > 0 report "in place " & name &  ": number of tokens cannot become negative!" severity error;
          --assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
-		--severity note;
-        --end if;
+	--severity note;
+       --end if;
         token_latch <= token_latch - 1;
       elsif (incoming_token and (not backward_reset)) then
 	--if(debug_flag) then
-         --assert token_latch < capacity report "in place " & name & " number of tokens "
+          --assert token_latch < capacity report "in place " & name & " number of tokens "
 			 --& Convert_To_String(token_latch+1) & " cannot exceed capacity " 
 			 --& Convert_To_String(capacity) severity error;
-         --assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+          --assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
 		 --severity note;
 	--end if;
         token_latch <= token_latch + 1;
@@ -9692,7 +9703,7 @@ architecture default_arch of place_with_bypass is
   signal token_latch    : integer range 0 to capacity;
   signal non_zero       : boolean;
 
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := true;
   
 begin  -- default_arch
 
@@ -9726,13 +9737,13 @@ begin  -- default_arch
         token_latch <= marking;
       elsif decr then
 	-- if(debug_flag) then
-         -- assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+          -- assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
 		 -- severity note;
 	-- end if;
         token_latch <= token_latch - 1;
       elsif incr then
 	-- if(debug_flag) then
-         -- assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+          -- assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
 		 -- severity note;
 	-- end if;
         token_latch <= token_latch + 1;
@@ -10730,10 +10741,12 @@ use ahir.BaseComponents.all;
 entity LoadCompleteShared is
     generic
     (
+      name : string;
       data_width: integer := 8;
       tag_length:  integer := 1;
       num_reqs : integer := 1;
-      no_arbitration: boolean := false
+      no_arbitration: boolean := false;
+      detailed_buffering_per_output: IntegerArray
     );
   port (
     -- req/ack follow level protocol
@@ -10754,14 +10767,14 @@ architecture Vanilla of LoadCompleteShared is
 begin  -- Behave
 
 
-  odemux: OutputDeMuxBase
+  odemux: OutputDeMuxBaseWithBuffering
     generic map (
+      name => name & " odemux ",
       iwidth => data_width,
       owidth =>  data_width*num_reqs,
       twidth =>  tag_length,
       nreqs  => num_reqs,
-      no_arbitration => no_arbitration,
-      pipeline_flag => true)
+      detailed_buffering_per_output => detailed_buffering_per_output )  
     port map (
       reqL   => mack,                   -- cross-over (mack from mem-subsystem)
       ackL   => mreq,                   -- cross-over 
@@ -10975,7 +10988,8 @@ use ahir.Utilities.all;
 entity OutputDeMuxBaseNoData is
   generic(twidth: integer;
 	  nreqs: integer;
-	  no_arbitration: Boolean := false);
+	  no_arbitration: Boolean := false;
+	  detailed_buffering_per_output: IntegerArray);
   port (
     -- req/ack follow level protocol
     reqL                 : in  std_logic;
@@ -10991,18 +11005,22 @@ entity OutputDeMuxBaseNoData is
 end OutputDeMuxBaseNoData;
 
 architecture Behave of OutputDeMuxBaseNoData is
-  
   signal ackL_sig : std_logic_vector(nreqs-1 downto 0);
+
 begin  -- Behave
+
+  assert detailed_buffering_per_output'length = reqR'length report "Mismatch." severity failure;
 
   -----------------------------------------------------------------------------
   -- parallel generate across all requesters
   -----------------------------------------------------------------------------
   PGen: for I in reqR'range generate
     RegFSM: block
+      subtype int7 is integer range 0 to detailed_buffering_per_output(I);
       signal valid: std_logic;
       signal lhs_clear : std_logic;
-      signal rhs_state, lhs_state : std_logic;
+      signal rhs_state : std_logic;
+      signal lhs_state : int7;
     begin  -- block Reg
       
       ---------------------------------------------------------------------------
@@ -11011,37 +11029,41 @@ begin  -- Behave
       valid <= '1' when (reqL = '1') and (I = To_Integer(To_Unsigned(tagL))) else '0';
 
       ---------------------------------------------------------------------------
-      -- lhs-state machine.
+      -- lhs-state machine.. just a 3 bit counter which counts up everytime
+      -- there is a valid input to this index, and down when the req appears 
+      -- at the receiver end.
       ---------------------------------------------------------------------------
       process(clk,lhs_state, lhs_clear,reset,valid)
-        variable nstate : std_logic;
+        variable nstate : int7;
         variable aL_var : std_logic;
       begin
         nstate := lhs_state;
         aL_var := '0';
         
-        case lhs_state is
-          when '0' =>
+        if(lhs_state < int7'high) then
             if(valid = '1') then
-              nstate := '1';
+              nstate := lhs_state + 1;
               aL_var := '1';
             end if;
-          when '1' =>
-            if(lhs_clear = '1') then
-              nstate := '0';
-            end if;
-          when others => null;
-        end case;
+        end if;
 
-        if(reset = '1') then
-          nstate := '0';
-        end if;        
+        if(nstate > 0) then
+            if(lhs_clear = '1') then
+              nstate := lhs_state-1;
+            end if;
+	end if;
+
 
         ackL_sig(I) <= aL_var;
         
         if(clk'event and clk = '1') then
-          lhs_state <= nstate;
+           if(reset = '1') then
+              nstate := 0;
+	   else
+              lhs_state <= nstate;
+           end if;        
         end if;
+
       end process;
 
       -------------------------------------------------------------------------
@@ -11059,7 +11081,7 @@ begin  -- Behave
         case rhs_state is
           when '0' =>
             if(reqR(I)) then
-              if(lhs_state = '1') then
+              if(lhs_state > 0) then
                 aR_var := true;
                 lhs_clear_var := '1';
               else
@@ -11067,7 +11089,7 @@ begin  -- Behave
               end if;
             end if;
           when '1' =>
-            if(lhs_state = '1') then
+            if(lhs_state > 0) then
               lhs_clear_var := '1';
               aR_var := true;
               nstate := '0';
@@ -11335,11 +11357,12 @@ use ahir.BaseComponents.all;
 -- (potentially useful in loop-pipelining).
 -------------------------------------------------------------------------------
 entity OutputDeMuxBaseWithBuffering is
-  generic(iwidth: integer := 4;
+  generic(name: string;
+          iwidth: integer := 4;
 	  owidth: integer := 12;
 	  twidth: integer := 2;
 	  nreqs: integer := 3;
-	  buffering_per_output: integer := 2);
+	  detailed_buffering_per_output: IntegerArray);
   port (
     -- req/ack follow level protocol
     reqL                 : in  std_logic;
@@ -11359,7 +11382,8 @@ end OutputDeMuxBaseWithBuffering;
 
 architecture Behave of OutputDeMuxBaseWithBuffering is
   signal ackL_array : std_logic_vector(nreqs-1 downto 0);
-  
+  alias buffer_sizes: IntegerArray(detailed_buffering_per_output'length-1 downto 0) is detailed_buffering_per_output;
+
 begin  -- Behave
   assert(owidth = iwidth*nreqs) report "word-length mismatch in output demux" severity failure;
 
@@ -11370,22 +11394,22 @@ begin  -- Behave
       signal write_req,write_ack : std_logic;
       signal unload_req,unload_ack : boolean;
       signal buf_data_in, buf_data_out : std_logic_vector(iwidth-1 downto 0);
-
       signal valid : std_logic;
-      
     begin  -- block BufBlock
-      ub : UnloadBuffer generic map (
-        buffer_size => buffering_per_output,
-        data_width  => iwidth)
-        port map (
-          write_req  => write_req,
-          write_ack  => write_ack,
-          write_data => buf_data_in,
-          unload_req => unload_req,
-          unload_ack => unload_ack,
-          read_data  => buf_data_out,
-          clk        => clk,
-          reset      => reset);
+
+       ub : UnloadBuffer generic map (
+         name => name & " buffer " & Convert_To_String(I),
+         buffer_size => buffer_sizes(I),
+         data_width  => iwidth)
+         port map (
+           write_req  => write_req,
+           write_ack  => write_ack,
+           write_data => buf_data_in,
+           unload_req => unload_req,
+           unload_ack => unload_ack,
+           read_data  => buf_data_out,
+           clk        => clk,
+           reset      => reset);
 
       
       ---------------------------------------------------------------------------
@@ -11729,8 +11753,8 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity PipeBase is
-  
-  generic (num_reads: integer;
+  generic (name : string;
+	   num_reads: integer;
            num_writes: integer;
            data_width: integer;
            lifo_mode: boolean := false;
@@ -13407,6 +13431,7 @@ use ahir.BaseComponents.all;
 entity SplitOperatorShared is
     generic
     (
+      name : string;
       operator_id   : string := "ApIntAdd";          -- operator id
       input1_is_int : Boolean := true; -- false means float
       input1_characteristic_width : integer := 0; -- characteristic width if input1 is float
@@ -13426,7 +13451,8 @@ entity SplitOperatorShared is
       use_constant  : boolean := true;
       no_arbitration: boolean := false;
       min_clock_period: boolean := true;
-      num_reqs : integer := 3 -- how many requesters?
+      num_reqs : integer := 3; -- how many requesters?
+      detailed_buffering_per_output : IntegerArray
     );
   port (
     -- req/ack follow level protocol
@@ -13519,14 +13545,14 @@ begin  -- Behave
       reset => reset);
 
 
-  odemux: OutputDeMuxBase
+  odemux: OutputDeMuxBaseWithBuffering
     generic map (
+        name => name & " odemux ",
   	iwidth => owidth,
   	owidth =>  owidth*num_reqs,
 	twidth =>  tag_length,
 	nreqs  => num_reqs,
-	no_arbitration => no_arbitration,
-        pipeline_flag => true)
+        detailed_buffering_per_output => detailed_buffering_per_output )  
     port map (
       reqL   => oreq,
       ackL   => oack,
@@ -13552,7 +13578,8 @@ use ahir.BaseComponents.all;
 
 entity StoreCompleteShared is
   generic (num_reqs: integer := 3;
-	   tag_length: integer :=  3);
+	   tag_length: integer :=  3;
+	    detailed_buffering_per_output: IntegerArray);
   port (
     -- in requester array, pulse protocol
     -- more than one requester can be active
@@ -13585,6 +13612,7 @@ begin  -- Behave
     generic map (
       twidth =>  tag_length,
       nreqs  => num_reqs,
+      detailed_buffering_per_output => detailed_buffering_per_output,
       no_arbitration => true)
     port map (
       reqL   => mack,                   -- cross-over (mack from mem-subsystem)
@@ -14115,8 +14143,8 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity UnloadBuffer is
-  generic (buffer_size: integer := 2; data_width : integer := 32);
-  port (write_req: in std_logic;
+  generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
+  port ( write_req: in std_logic;
         write_ack: out std_logic;
         write_data: in std_logic_vector(data_width-1 downto 0);
         unload_req: in boolean;
@@ -14133,13 +14161,17 @@ architecture default_arch of UnloadBuffer is
 
   signal output_register : std_logic_vector(data_width-1 downto 0);
 
-  signal unload_req_reg, unload_req_token  : boolean;
+  signal unload_req_reg, unload_req_token, unload_req_clear  : boolean;
   signal unload_ack_sig : boolean;
+
+  type UnloadFsmState is (idle, waiting, ackn);
+  signal fsm_state : UnloadFsmState;
   
 begin  -- default_arch
 
   -- the input pipe.
   bufPipe : PipeBase generic map (
+    name =>  name & " fifo ",
     num_reads  => 1,
     num_writes => 1,
     data_width => data_width,
@@ -14157,64 +14189,53 @@ begin  -- default_arch
   push_req(0) <= write_req;
   write_ack <= push_ack(0);
 
-  -- unload_req needs to be registered..
-  -- (it behaves like a place)
-  process(clk,reset)
-  begin
 
-    if(clk'event and clk = '1') then
-      if(reset = '1') then
-        unload_req_reg <= false;
-      else
-        if(unload_req) then
-          unload_req_reg <= true;
-        elsif(unload_ack_sig) then
-          unload_req_reg <= false;
-        end if;
-      end if;
-    end if;
-  end process;
-  unload_req_token <= unload_req_reg or unload_req;
+  -- FSM
+  process(clk)
+     variable nstate: UnloadFsmState;
+     variable load_reg, ackv: boolean;
+     variable preq : std_logic;
+  begin
+     nstate :=  fsm_state;
+     load_reg := false;
+     preq := '0';
+     ackv := false;
   
+     case fsm_state is
+         when idle => 
+               if(unload_req and (pop_ack(0) = '1')) then
+		    preq := '1';   
+                    nstate := ackn;
+		    load_reg := true;
+               elsif (unload_req) then
+                    nstate := waiting;
+               end if;
+	 when waiting =>
+		preq := '1';
+	        if(pop_ack(0) = '1') then
+		    nstate := ackn;
+		    load_reg := true;
+		end if;
+	 when ackn =>
+		ackv := true;
+		nstate := idle;
+     end case;
+ 
+     unload_ack <= ackv;
+     pop_req(0) <= preq;
 
-  -- the output register handler.
-  process(clk,reset, unload_req, pop_ack)
-    variable load_output : boolean;
-  begin
+     if(clk'event and clk = '1') then
+	if(reset = '1') then
+		fsm_state <= idle;
+	else
+		fsm_state <= nstate;
+	end if;
 
-    -- pop from the pipe if unload_req is true and
-    -- if the pipe has something available.
-    load_output := unload_req_token and (pop_ack(0) = '1');
-
-
-    -- issue the pop to the pipe if it is to be
-    -- unloaded
-    if(load_output) then
-      pop_req(0) <= '1';
-    else
-      pop_req(0) <= '0';
-    end if;
-
-    -- the unload_ack pulse is delayed.
-    if(clk'event and clk  = '1') then
-
-      if(reset = '1') then
-        unload_ack_sig <= false;
-      else
-        if(load_output) then
-          unload_ack_sig <= true;
-        else
-          unload_ack_sig <= false;
+	if(load_reg) then
+           output_register <= pipe_data_out;
         end if;
-      end if;
-
-
-      if(load_output) then
-        output_register <= pipe_data_out;
-      end if;
-    end if;
+     end if;
   end process;
-  unload_ack <= unload_ack_sig;
 
   read_data <= output_register;
 
@@ -16619,11 +16640,13 @@ use aHiR_ieee_proposed.math_utility_pkg.all;
 
 entity PipelinedFPOperator is
   generic (
+      name : string;
       operator_id : string;
       exponent_width : integer := 8;
       fraction_width : integer := 23;
       no_arbitration: boolean := true;
-      num_reqs : integer := 3 -- how many requesters?
+      num_reqs : integer := 3; -- how many requesters?
+      detailed_buffering_per_output: IntegerArray
     );
   port (
     -- req/ack follow level protocol
@@ -16786,11 +16809,12 @@ begin  -- Behave
 
   odemux: OutputDeMuxBaseWithBuffering
     generic map (
+        name => name & " odemux ",
   	iwidth => owidth,
   	owidth =>  owidth*num_reqs,
 	twidth =>  tag_length,
 	nreqs  => num_reqs,
-        buffering_per_output => 1)
+	detailed_buffering_per_output => detailed_buffering_per_output)
     port map (
       reqL   => oreq,
       ackL   => oack,

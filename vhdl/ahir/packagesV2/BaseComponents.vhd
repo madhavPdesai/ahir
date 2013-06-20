@@ -343,6 +343,7 @@ package BaseComponents is
   component SplitOperatorShared
     generic
       (
+        name : string;
         operator_id   : string;          -- operator id
         input1_is_int : Boolean := true; -- false means float
         input1_characteristic_width : integer := 0; -- characteristic width if input1 is float
@@ -362,7 +363,8 @@ package BaseComponents is
         use_constant  : boolean := false;
         no_arbitration: boolean := false;
         min_clock_period: boolean := false;
-        num_reqs : integer  -- how many requesters?
+        num_reqs : integer;  -- how many requesters?
+        detailed_buffering_per_output: IntegerArray
         );
 
     port (
@@ -467,7 +469,8 @@ package BaseComponents is
   -----------------------------------------------------------------------------
   component PipeBase 
     
-    generic (num_reads: integer;
+    generic (name : string;
+	     num_reads: integer;
              num_writes: integer;
              data_width: integer;
              lifo_mode: boolean := false;
@@ -578,7 +581,8 @@ package BaseComponents is
   component OutputDeMuxBaseNoData
     generic(twidth: integer;
             nreqs: integer;
-            no_arbitration: Boolean);
+            no_arbitration: Boolean;
+	    detailed_buffering_per_output: IntegerArray);
     port (
       -- req/ack follow level protocol
       reqL                 : in  std_logic;
@@ -619,11 +623,12 @@ package BaseComponents is
   
 
   component OutputDeMuxBaseWithBuffering
-    generic(iwidth: integer;
+    generic(name : string;
+            iwidth: integer;
             owidth: integer;
             twidth: integer;
-            nreqs: integer;
-            buffering_per_output: integer);
+            nreqs : integer;
+            detailed_buffering_per_output: IntegerArray);
     port (
       -- req/ack follow level protocol
       reqL                 : in  std_logic;
@@ -643,7 +648,7 @@ package BaseComponents is
   
 
   component UnloadBuffer 
-    generic (buffer_size: integer := 2; data_width : integer := 32);
+    generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
     port (write_req: in std_logic;
           write_ack: out std_logic;
           write_data: in std_logic_vector(data_width-1 downto 0);
@@ -1205,10 +1210,12 @@ package BaseComponents is
   component LoadCompleteShared
     generic
       (
+        name : string;
         data_width: integer;
         tag_length:  integer;
         num_reqs : integer;
-        no_arbitration: boolean
+        no_arbitration: boolean;
+        detailed_buffering_per_output : IntegerArray
         );
     port (
       -- req/ack follow level protocol
@@ -1226,7 +1233,8 @@ package BaseComponents is
 
   component StoreCompleteShared
     generic (num_reqs: integer;
-             tag_length: integer);
+             tag_length: integer;
+	     detailed_buffering_per_output: IntegerArray);
     port (
       -- in requester array, pulse protocol
       -- more than one requester can be active
@@ -1356,11 +1364,13 @@ package BaseComponents is
 
   component PipelinedFPOperator 
     generic (
+      name : string;
       operator_id : string;
       exponent_width : integer := 8;
       fraction_width : integer := 23;
       no_arbitration: boolean := true;
-      num_reqs : integer := 3 -- how many requesters?
+      num_reqs : integer := 3; -- how many requesters?
+      detailed_buffering_per_output : IntegerArray
       );
     port (
       -- req/ack follow level protocol

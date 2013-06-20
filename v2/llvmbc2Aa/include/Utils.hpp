@@ -56,6 +56,8 @@ namespace Aa {
   std::string get_aa_value_string(const llvm::Value* val);
   std::string get_aa_constant_string(llvm::Constant *konst);
 
+  unsigned int get_uint32(llvm::Constant* konst);
+
   bool used_only_in_io_calls(llvm::GetElementPtrInst &I);
 
   std::string int_to_str(int a);
@@ -70,7 +72,7 @@ namespace Aa {
   bool is_private_storage_object(llvm::GlobalVariable* gv);
   bool is_zero(llvm::Constant* konst);
 
-  bool is_do_while_loop(llvm::BasicBlock& BB);
+  bool is_do_while_loop(llvm::BasicBlock& BB, int& d);
 }
 
 #endif

@@ -18,11 +18,12 @@ use ahir.BaseComponents.all;
 -- (potentially useful in loop-pipelining).
 -------------------------------------------------------------------------------
 entity OutputDeMuxBaseWithBuffering is
-  generic(iwidth: integer := 4;
+  generic(name: string;
+          iwidth: integer := 4;
 	  owidth: integer := 12;
 	  twidth: integer := 2;
 	  nreqs: integer := 3;
-	  buffering_per_output: integer := 2);
+	  detailed_buffering_per_output: IntegerArray);
   port (
     -- req/ack follow level protocol
     reqL                 : in  std_logic;
@@ -42,7 +43,8 @@ end OutputDeMuxBaseWithBuffering;
 
 architecture Behave of OutputDeMuxBaseWithBuffering is
   signal ackL_array : std_logic_vector(nreqs-1 downto 0);
-  
+  alias buffer_sizes: IntegerArray(detailed_buffering_per_output'length-1 downto 0) is detailed_buffering_per_output;
+
 begin  -- Behave
   assert(owidth = iwidth*nreqs) report "word-length mismatch in output demux" severity failure;
 
@@ -53,22 +55,22 @@ begin  -- Behave
       signal write_req,write_ack : std_logic;
       signal unload_req,unload_ack : boolean;
       signal buf_data_in, buf_data_out : std_logic_vector(iwidth-1 downto 0);
-
       signal valid : std_logic;
-      
     begin  -- block BufBlock
-      ub : UnloadBuffer generic map (
-        buffer_size => buffering_per_output,
-        data_width  => iwidth)
-        port map (
-          write_req  => write_req,
-          write_ack  => write_ack,
-          write_data => buf_data_in,
-          unload_req => unload_req,
-          unload_ack => unload_ack,
-          read_data  => buf_data_out,
-          clk        => clk,
-          reset      => reset);
+
+       ub : UnloadBuffer generic map (
+         name => name & " buffer " & Convert_To_String(I),
+         buffer_size => buffer_sizes(I),
+         data_width  => iwidth)
+         port map (
+           write_req  => write_req,
+           write_ack  => write_ack,
+           write_data => buf_data_in,
+           unload_req => unload_req,
+           unload_ack => unload_ack,
+           read_data  => buf_data_out,
+           clk        => clk,
+           reset      => reset);
 
       
       ---------------------------------------------------------------------------

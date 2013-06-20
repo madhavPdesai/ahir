@@ -13,11 +13,13 @@ use aHiR_ieee_proposed.math_utility_pkg.all;
 
 entity PipelinedFPOperator is
   generic (
+      name : string;
       operator_id : string;
       exponent_width : integer := 8;
       fraction_width : integer := 23;
       no_arbitration: boolean := true;
-      num_reqs : integer := 3 -- how many requesters?
+      num_reqs : integer := 3; -- how many requesters?
+      detailed_buffering_per_output: IntegerArray
     );
   port (
     -- req/ack follow level protocol
@@ -180,11 +182,12 @@ begin  -- Behave
 
   odemux: OutputDeMuxBaseWithBuffering
     generic map (
+        name => name & " odemux ",
   	iwidth => owidth,
   	owidth =>  owidth*num_reqs,
 	twidth =>  tag_length,
 	nreqs  => num_reqs,
-        buffering_per_output => 1)
+	detailed_buffering_per_output => detailed_buffering_per_output)
     port map (
       reqL   => oreq,
       ackL   => oack,

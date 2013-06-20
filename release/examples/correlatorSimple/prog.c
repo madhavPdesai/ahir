@@ -5,9 +5,11 @@
 #include "prog.h"
 
 #ifdef SW
-void loop_pipelining_on() {}
+const int debug_print_on = 1;
+void loop_pipelining_on(uint32_t d) {}
 #else
-void loop_pipelining_on();
+const int debug_print_on = 0;
+void loop_pipelining_on(uint32_t d);
 #endif
 
 #define NUM_VECS_BY_2 (NUM_VECS >> 1)
@@ -95,7 +97,32 @@ void get_input()
 	c1 += (c10 + c11) + (c12 + c13);\
 	c2 += (c20 + c21) + (c22 + c23);\
 	c3 += (c30 + c31) + (c32 + c33);\
-}\
+	\
+	if(debug_print_on)\
+	{\
+		float c00_01 = c00 + c01;\
+		float c02_03 = c02 + c03;\
+		fprintf(stdout,"c00 = %x, c01 = %x, c02 = %x, c03 = %x.\n", \
+			*((uint32_t*) &c00),\
+			*((uint32_t*) &c01),\
+			*((uint32_t*) &c02),\
+			*((uint32_t*) &c03));\
+		fprintf(stdout,"c00 + c01 = %x, c02 + c03 = %x.\n", \
+			*((uint32_t*) &c00_01),\
+			*((uint32_t*) &c02_03));\
+		fprintf(stdout,"c10 = %x, c11 = %x, c12 = %x, c13 = %x.\n", \
+			*((uint32_t*) &c10),\
+			*((uint32_t*) &c11),\
+			*((uint32_t*) &c12),\
+			*((uint32_t*) &c13));\
+		fprintf(stdout,"c0 = %x, c1 = %x, c2 = %x, c3 = %x.\n", \
+			*((uint32_t*) &c0),\
+			*((uint32_t*) &c1),\
+			*((uint32_t*) &c2),\
+			*((uint32_t*) &c3));\
+	}\
+}
+
 
 #define __correlatorBase(rv,cv,bc,bi,nvecs) { int i,j;\
 \
@@ -112,7 +139,7 @@ void get_input()
 \
 			for (j = 0; j < ORDER; j += 4)\
 			{\
-				loop_pipelining_on();\
+				loop_pipelining_on(8);\
 				__innerLoopBody(j,rv,cv);\
 			}\
 \

@@ -4201,6 +4201,7 @@ void AaPlaceStatement::Write_C_Function_Body(ofstream& ofile)
 //---------------------------------------------------------------------
 AaDoWhileStatement::AaDoWhileStatement(AaBranchBlockStatement* scope):AaStatement(scope) 
 {
+  this->_pipelining_depth = 1;
   this->_test_expression = NULL;
   this->_merge_statement = NULL;
   this->_loop_body_sequence = NULL;
@@ -4228,7 +4229,7 @@ void AaDoWhileStatement::Print(ostream& ofile)
   }
 
   ofile << this->Tab();
-  ofile << "$do " << endl;
+  ofile << "$dopipeline $depth" << this->Get_Pipelining_Depth() <<  endl;
   this->_merge_statement->Print(ofile);
   this->_loop_body_sequence->Print(ofile);
   ofile << " $while " ;
@@ -4285,7 +4286,7 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
   string vc_loop_body_id = this->Get_VC_Name() + "_loop_body";
 
   // start the outer region
-  ofile << "<o> [" << this->Get_VC_Name() << "] {" << endl;
+  ofile << "<o> [" << this->Get_VC_Name() << "]  $depth " << this->Get_Pipelining_Depth() << " {" << endl;
 
   // entry and exit places.
   string entry_place_name = this->Get_VC_Name() + "__entry__";

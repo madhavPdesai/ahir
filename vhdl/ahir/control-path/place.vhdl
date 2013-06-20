@@ -29,7 +29,7 @@ architecture default_arch of place is
   signal token_sig      : boolean;  -- asynchronously computed value of the token
   signal token_latch    : integer range 0 to capacity;
   
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := true;
 begin  -- default_arch
 
   assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;
@@ -51,18 +51,18 @@ begin  -- default_arch
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
       elsif (backward_reset and (not incoming_token)) then
-	--if(debug_flag) then
-         --assert token_latch > 0 report "in place " & name &  ": number of tokens cannot become negative!" severity error;
+       --if(debug_flag) then
+           --assert token_latch > 0 report "in place " & name &  ": number of tokens cannot become negative!" severity error;
          --assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
-		--severity note;
-        --end if;
+	--severity note;
+       --end if;
         token_latch <= token_latch - 1;
       elsif (incoming_token and (not backward_reset)) then
 	--if(debug_flag) then
-         --assert token_latch < capacity report "in place " & name & " number of tokens "
+          --assert token_latch < capacity report "in place " & name & " number of tokens "
 			 --& Convert_To_String(token_latch+1) & " cannot exceed capacity " 
 			 --& Convert_To_String(capacity) severity error;
-         --assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+          --assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
 		 --severity note;
 	--end if;
         token_latch <= token_latch + 1;

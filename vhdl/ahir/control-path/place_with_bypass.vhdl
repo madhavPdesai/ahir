@@ -29,7 +29,7 @@ architecture default_arch of place_with_bypass is
   signal token_latch    : integer range 0 to capacity;
   signal non_zero       : boolean;
 
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := true;
   
 begin  -- default_arch
 
@@ -63,13 +63,13 @@ begin  -- default_arch
         token_latch <= marking;
       elsif decr then
 	-- if(debug_flag) then
-         -- assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+          -- assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
 		 -- severity note;
 	-- end if;
         token_latch <= token_latch - 1;
       elsif incr then
 	-- if(debug_flag) then
-         -- assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+          -- assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
 		 -- severity note;
 	-- end if;
         token_latch <= token_latch + 1;

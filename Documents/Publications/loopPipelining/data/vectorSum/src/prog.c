@@ -9,7 +9,7 @@ float B[ORDER];
 float C[ORDER];
 
 #ifndef SW
-void loop_pipelining_on();
+void loop_pipelining_on(uint32_t val);
 #endif
 
 void getData()
@@ -57,7 +57,9 @@ void _vectorSum_()
 	for(I=0; I < ORDER; I += 8)
 	{
 #ifndef SW
-		loop_pipelining_on();
+#ifdef PIPELINE
+		loop_pipelining_on(8);
+#endif
 #endif
 		uint8_t I1 = I+1; 
 		uint8_t I2 = I+2; 
@@ -96,6 +98,11 @@ void _vectorSum_()
 	float result = 0.0;
 	for(I=0; I < ORDER; I ++)
 	{
+#ifndef SW
+#ifdef PIPELINE
+		loop_pipelining_on(8);
+#endif
+#endif
 		C[I] = A[I]+B[I];
 	}
 }

@@ -600,6 +600,8 @@ namespace {
       std::cout << "//begin: basic-block " << bb_name << std::endl;
 
       bool is_do_while = this->Get_Do_While_Flag();
+      int  do_while_p_depth = this->Get_Do_While_Pipelining_Depth();
+
       if(is_do_while)
 	std::cout << "//   this is a do-while loop." << std::endl;
 
@@ -679,7 +681,7 @@ namespace {
 
       if(is_do_while)
       {
-	std::cout << "$do  " << std::endl;
+	std::cout << "$dopipeline $depth " << do_while_p_depth << " " <<  std::endl;
 	std::cout << "$merge $entry $loopback" << std::endl;
 	for(llvm::BasicBlock::iterator iiter = BB.begin(),fiter = BB.end(); 
 	      iiter != fiter;  ++iiter)

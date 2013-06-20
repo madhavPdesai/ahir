@@ -59,6 +59,32 @@ std::string get_string(const APInt &api)
 	return str.str();
 }
 
+unsigned int Aa::get_uint32(llvm::Constant* konst)
+{
+	unsigned int ret_val = 0;
+	if(isa<ConstantInt>(konst))
+	{
+		const ConstantInt *cint = dyn_cast<ConstantInt>(konst);
+		std::string istr =  get_string(cint->getValue());
+		int idx;
+		for(idx = istr.size()-1; idx > 0; idx--)
+		{
+			if((istr[idx] != '0') && (istr[idx] != '1'))
+				break;
+
+			int weight = (istr.size() - idx) - 1;
+			if(istr[idx] == '1')
+				ret_val += (2 << weight);
+		
+			if(weight == 31)
+				break;
+		}
+		
+	}
+	return(ret_val);
+}
+
+
 std::string Aa::get_aa_constant_string(llvm::Constant *konst)
 {
   std::string ret_val = to_aa(konst->getNameStr());
@@ -1029,8 +1055,9 @@ bool Aa::is_zero(llvm::Constant* konst)
 
 // if the terminator contains a branch back to this
 // block itself, then it is a do-while loop.
-bool Aa::is_do_while_loop(llvm::BasicBlock& BB)
+bool Aa::is_do_while_loop(llvm::BasicBlock& BB, int& pipelining_depth)
 {
+	pipelining_depth = 1;
 	llvm::TerminatorInst* T = BB.getTerminator();
 
 	if(isa<llvm::ReturnInst>(T))
@@ -1060,6 +1087,16 @@ bool Aa::is_do_while_loop(llvm::BasicBlock& BB)
 		if(name.equals("loop_pipelining_on"))
 		{
 			opt_fn_found = true;
+			if(C.getNumArgOperands() == 1)
+			{
+				llvm::Value* v = C.getArgOperand(0);	
+				if(isa<Constant>(v))
+				{
+					int pd = get_uint32(dyn_cast<Constant>(v));
+					if(pd > 0)
+						pipelining_depth = pd;
+				}	
+			}
 			break;
 		}
 	      }

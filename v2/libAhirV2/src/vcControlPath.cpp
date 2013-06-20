@@ -260,6 +260,8 @@ vcCPElement::vcCPElement(vcCPElement* parent, string id):vcRoot(id)
   _is_bound_as_output_from_region = false;
 
   _has_null_successor = false;
+
+  this->Set_Pipeline_Parent();
 }
 
 void vcCPElement::Set_Associated_CP_Function(vcCPElement* c)
@@ -600,7 +602,9 @@ void vcTransition::Print_VHDL(ostream& ofile)
   bool parent_is_pipelined_loop_body = (this->Get_Parent()->Is("vcCPPipelinedLoopBody"));
   int max_iterations_in_flight = 1;
   if(parent_is_pipelined_loop_body) 
-	max_iterations_in_flight = vcSystem::_max_iterations_in_flight;
+  {
+	max_iterations_in_flight = ((vcCPPipelinedLoopBody*) (this->Get_Parent()))->Get_Max_Iterations_In_Flight();
+  }
 
 
   // It is a true join if
@@ -1492,7 +1496,9 @@ void vcPhiSequencer::Print_VHDL(vcControlPath* cp, ostream& ofile)
   bool parent_is_pipelined_loop_body = (this->Get_Parent()->Is("vcCPPipelinedLoopBody"));
   int max_iterations_in_flight = 1;
   if(parent_is_pipelined_loop_body) 
-	max_iterations_in_flight = vcSystem::_max_iterations_in_flight;
+  {
+	max_iterations_in_flight = ((vcCPPipelinedLoopBody*) (this->Get_Parent()))->Get_Max_Iterations_In_Flight();
+  }
   
   ofile << this->Get_VHDL_Id() << "_block : block -- { " << endl;
   ofile << "signal reqs, selects : BooleanArray(0 to " << _reqs.size()-1 << ");" << endl;
@@ -1652,6 +1658,7 @@ void vcTransitionMerge::Update_Predecessor_Successor_Links()
 
 vcCPSimpleLoopBlock::vcCPSimpleLoopBlock(vcCPBlock* parent, string id): vcCPBranchBlock(parent,id)
 {
+	this->_depth = 2;  // default value.
 }
 
 vcCPPipelinedLoopBody* vcCPSimpleLoopBlock::Get_Loop_Body()
@@ -1667,7 +1674,8 @@ vcCPPipelinedLoopBody* vcCPSimpleLoopBlock::Get_Loop_Body()
 
 void vcCPSimpleLoopBlock::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__LOOPBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
+  ofile << vcLexerKeywords[__LOOPBLOCK]  << " [" << this->Get_Id() << "] ";
+  ofile  << vcLexerKeywords[__DEPTH]  << this->Get_Depth() <<  " { " << endl;
 
   // print all the normal elements.. This includes the loop-body.
   this->Print_Elements(ofile);
@@ -2594,11 +2602,10 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
 
 vcCPPipelinedLoopBody::vcCPPipelinedLoopBody(vcCPBlock* parent, string id):vcCPForkBlock(parent,id)
 {
-	// for now, keep it at four.  This corresponds to the
-	// standard processing pipeline: fetch execute (two stages) write.
-	// This could be stretched if the number of execute stages is
-	// larger etc.. Aa2VC should figure it out.
-	_max_iterations_in_flight = 4;
+	// for now, kee it user-defined.
+	// Aa2VC should figure it out (ideally)..
+	assert(_parent->Is("vcCPSimpleLoopBlock"));
+	_max_iterations_in_flight = ((vcCPSimpleLoopBlock*)parent)->Get_Depth();;
 }
 
 void vcCPPipelinedLoopBody::Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec)

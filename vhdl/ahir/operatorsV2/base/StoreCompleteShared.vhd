@@ -10,7 +10,8 @@ use ahir.BaseComponents.all;
 
 entity StoreCompleteShared is
   generic (num_reqs: integer := 3;
-	   tag_length: integer :=  3);
+	   tag_length: integer :=  3;
+	    detailed_buffering_per_output: IntegerArray);
   port (
     -- in requester array, pulse protocol
     -- more than one requester can be active
@@ -43,6 +44,7 @@ begin  -- Behave
     generic map (
       twidth =>  tag_length,
       nreqs  => num_reqs,
+      detailed_buffering_per_output => detailed_buffering_per_output,
       no_arbitration => true)
     port map (
       reqL   => mack,                   -- cross-over (mack from mem-subsystem)

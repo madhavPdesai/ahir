@@ -4,6 +4,7 @@
 class vcRoot;
 class vcControlPath;
 class vcCompatibilityLabel;
+class vcCPPipelinedLoopBody;
 class vcCPElement: public vcRoot
 {
 
@@ -30,6 +31,7 @@ protected:
  
   bool _has_null_successor;
 
+  vcCPPipelinedLoopBody* _pipeline_parent;
 public:
 
   vcCPElement(vcCPElement* parent, string id);
@@ -201,6 +203,24 @@ public:
   
   void Set_Has_Null_Successor(bool v) {_has_null_successor = v;}
   bool Get_Has_Null_Successor() {return(_has_null_successor);}
+
+  // return true if some ancestral parent is a pipelined loop body..
+  void  Set_Pipeline_Parent()
+  {
+	vcCPPipelinedLoopBody* retval = NULL;
+	vcCPElement* p = this->Get_Parent();
+	while(p != NULL)
+	{
+		if(p->Is("vcCPPipelinedLoopBody"))
+		{
+			this->_pipeline_parent = (vcCPPipelinedLoopBody*) p;
+			break;
+		}
+		p = p->Get_Parent();
+	}
+  }
+
+  vcCPPipelinedLoopBody* Get_Pipeline_Parent() {return(_pipeline_parent);}
 
 };
 
@@ -593,10 +613,14 @@ class vcCPSimpleLoopBlock: public vcCPBranchBlock
   map<vcPlace*, vcTransition*> _output_bindings;
 
   vcLoopTerminator* _terminator;
+  int _depth;
 
 public:
   vcCPSimpleLoopBlock(vcCPBlock* parent, string id);
   virtual string Kind() {return("vcCPSimpleLoopBlock");}
+
+  void Set_Depth(int d) {_depth = d;}
+  int  Get_Depth() {return(_depth);}
 
   virtual void Print(ostream& ofile);
   virtual void Print_VHDL(ostream& ofile);

@@ -50,7 +50,7 @@ class vcSystem: public vcRoot
   static bool _uses_function_library;
 
   static string _top_entity_name;
-  static int _max_iterations_in_flight;
+  static int _loop_pipeline_buffering_limit;
 
   static int _bypass_stride;
 
