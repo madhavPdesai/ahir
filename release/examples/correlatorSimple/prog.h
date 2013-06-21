@@ -1,4 +1,4 @@
-#define ORDER 32 
+#define ORDER 128 
 #define NUM_VECS 4
 void correlator();
 void slave_0();

@@ -67,17 +67,19 @@ unsigned int Aa::get_uint32(llvm::Constant* konst)
 		const ConstantInt *cint = dyn_cast<ConstantInt>(konst);
 		std::string istr =  get_string(cint->getValue());
 		int idx;
-		for(idx = istr.size()-1; idx > 0; idx--)
+		unsigned int weight = 1;
+		for(idx = istr.size()-1; idx >= 0; idx--)
 		{
 			if((istr[idx] != '0') && (istr[idx] != '1'))
 				break;
 
-			int weight = (istr.size() - idx) - 1;
 			if(istr[idx] == '1')
-				ret_val += (2 << weight);
+				ret_val += weight;
 		
 			if(weight == 31)
 				break;
+
+			weight = weight*2;
 		}
 		
 	}
@@ -1055,9 +1057,10 @@ bool Aa::is_zero(llvm::Constant* konst)
 
 // if the terminator contains a branch back to this
 // block itself, then it is a do-while loop.
-bool Aa::is_do_while_loop(llvm::BasicBlock& BB, int& pipelining_depth)
+bool Aa::is_do_while_loop(llvm::BasicBlock& BB, int& pipelining_depth, int& buffering)
 {
 	pipelining_depth = 1;
+	buffering = 1;
 	llvm::TerminatorInst* T = BB.getTerminator();
 
 	if(isa<llvm::ReturnInst>(T))
@@ -1087,7 +1090,7 @@ bool Aa::is_do_while_loop(llvm::BasicBlock& BB, int& pipelining_depth)
 		if(name.equals("loop_pipelining_on"))
 		{
 			opt_fn_found = true;
-			if(C.getNumArgOperands() == 1)
+			if(C.getNumArgOperands() > 0)
 			{
 				llvm::Value* v = C.getArgOperand(0);	
 				if(isa<Constant>(v))
@@ -1096,6 +1099,16 @@ bool Aa::is_do_while_loop(llvm::BasicBlock& BB, int& pipelining_depth)
 					if(pd > 0)
 						pipelining_depth = pd;
 				}	
+				if(C.getNumArgOperands() > 1)
+				{
+					v = C.getArgOperand(1);	
+					if(isa<Constant>(v))
+					{
+						int bd = get_uint32(dyn_cast<Constant>(v));
+						if(bd > 0)
+							buffering = bd;
+					}
+				}
 			}
 			break;
 		}

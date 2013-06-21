@@ -1675,7 +1675,8 @@ vcCPPipelinedLoopBody* vcCPSimpleLoopBlock::Get_Loop_Body()
 void vcCPSimpleLoopBlock::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__LOOPBLOCK]  << " [" << this->Get_Id() << "] ";
-  ofile  << vcLexerKeywords[__DEPTH]  << this->Get_Depth() <<  " { " << endl;
+  ofile  << vcLexerKeywords[__DEPTH]  << this->Get_Depth() <<  " ";
+  ofile  << vcLexerKeywords[__BUFFERING]  << this->Get_Buffering() <<  " { " << endl;
 
   // print all the normal elements.. This includes the loop-body.
   this->Print_Elements(ofile);

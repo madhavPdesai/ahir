@@ -217,9 +217,11 @@ vcOutputWire::vcOutputWire(string id, vcType* t): vcWire(id,t)
 {
 }
  
-bool vcDatapathElement::Is_Part_Of_Pipelined_Loop()
+bool vcDatapathElement::Is_Part_Of_Pipelined_Loop(int& depth, int& buffering)
 {
 	bool ret_val = false;
+	depth = 1;
+	buffering = 1;
 	vcCPElement* t = NULL;
 	// just check a req or an ack and see if it
 	// is part of a pipelined loop.
@@ -229,9 +231,21 @@ bool vcDatapathElement::Is_Part_Of_Pipelined_Loop()
 		t = this->Get_Ack(0);
 	
 	if(t != NULL)
-		ret_val = (t->Get_Pipeline_Parent() != NULL);	
+	{
+		vcCPPipelinedLoopBody* p  = t->Get_Pipeline_Parent();
+		if(p != NULL)
+		{
+			vcCPElement* pp = p->Get_Parent();
+			if(pp->Is("vcCPSimpleLoopBlock"))
+			{
+				ret_val = true;
+				buffering = ((vcCPSimpleLoopBlock*) pp)->Get_Buffering();
+				depth = ((vcCPSimpleLoopBlock*) pp)->Get_Depth();
+			}
+		}
+	}
+	return(ret_val);
 }
-
 
 void vcDatapathElement::Print_VHDL_Logger(ostream& ofile)
 {
@@ -1673,7 +1687,10 @@ void vcDataPath::Print_VHDL_Regulator_Instance(string inst_id,
 		vcDatapathElement* dpe = dpe_elements[(num_reqs-idx)-1];
 		
 		// needs to get more sophisticated...
-		int num_slots = (dpe->Is_Part_Of_Pipelined_Loop() ? vcSystem::_loop_pipeline_buffering_limit : 1);
+		// right now, the same buffering is used for
+		// operations in a pipelined loop.
+		int depth, num_slots;
+		bool cf = dpe->Is_Part_Of_Pipelined_Loop(depth, num_slots);
 
 		ofile << inst_id_idx << ": access_regulator_base generic map (num_slots => " << IntToStr(num_slots) <<") -- {" << endl;
 		ofile << "port map (req => " << reqs << "(" << idx << "), -- {" << endl; 
@@ -1684,9 +1701,7 @@ void vcDataPath::Print_VHDL_Regulator_Instance(string inst_id,
 		ofile << "release_ack => " << release_acks << "(" << idx << ")," << endl;
 		ofile << "clk => clk, reset => reset); -- }}" << endl;
 	}
-
 }
-
 
 void vcDataPath::Generate_Buffering_Constant_Declaration(vector<vcDatapathElement*>& dpe_elements, 
 							string& buffering_string)
@@ -1701,7 +1716,9 @@ void vcDataPath::Generate_Buffering_Constant_Declaration(vector<vcDatapathElemen
 		vcDatapathElement* dpe = dpe_elements[(num_reqs-idx)-1];
 		
 		// needs to get more sophisticated...
-		int num_slots = (dpe->Is_Part_Of_Pipelined_Loop() ? vcSystem::_loop_pipeline_buffering_limit : 1);
+		int depth, num_slots;
+		bool cf = dpe->Is_Part_Of_Pipelined_Loop(depth,num_slots);
+
 		buf_sizes.push_back(num_slots);
 		max_buf_size = (max_buf_size < num_slots ? num_slots : max_buf_size);
          }
@@ -2622,8 +2639,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
       ofile << " twidth => " << tag_length << ","
 	    << " name => " << '"' << omux_name << '"' << "," << endl
 	    << " nreqs => " << num_reqs << ","
-	    << " detailed_buffering_per_output => buffering_per_output, "
-	    << " no_arbitration => " << no_arb_string << ")"
+	    << " detailed_buffering_per_output => buffering_per_output) "
 	    <<  endl;
       ofile << "port map ( -- {\n reqR => reqR " << ", " <<  endl
 	    << "    ackR => ackR " << ", " <<  endl;

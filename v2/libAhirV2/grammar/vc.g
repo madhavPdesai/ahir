@@ -359,17 +359,18 @@ vc_CPBranchBlock[vcCPBlock* cp]
 ;
 
 //-----------------------------------------------------------------------------------------------
-// vc_CPSimpleLoopBlock: LOOPBLOCK vc_Label DEPTH UINTEGER LBRACE ... RBRACE (see below)
+// vc_CPSimpleLoopBlock: LOOPBLOCK vc_Label DEPTH UINTEGER BUFFERING UINTEGER  LBRACE ... RBRACE (see below)
 //-----------------------------------------------------------------------------------------------
 vc_CPSimpleLoopBlock[vcCPBlock* cp] 
 {
 	string lbl;
 	vcCPSimpleLoopBlock* sb;
 	vcCPElement* cpe;
-	int depth;
+	int depth, buffering;
 }
 : LOOPBLOCK lbl = vc_Label { sb = new vcCPSimpleLoopBlock(cp,lbl);} 
 	DEPTH did: UINTEGER {depth = atoi(did->getText().c_str()); sb->Set_Depth(depth); }
+	BUFFERING bid: UINTEGER {buffering = atoi(bid->getText().c_str()); sb->Set_Buffering(buffering); }
   LBRACE 
         (cpe = vc_CPPlace[sb] {sb->Add_CPElement(cpe);})* // first the places
         vc_CPPipelinedLoopBody[sb] // then the loop body..
@@ -1452,6 +1453,7 @@ AT            : "$at";
 CONSTANT      : "$constant";
 INTERMEDIATE  : "$intermediate";
 DEPTH         : "$depth";
+BUFFERING     : "$buffering";
 GUARD         : "$guard";
 BIND          : "$bind";
 TERMINATE     : "$terminate";

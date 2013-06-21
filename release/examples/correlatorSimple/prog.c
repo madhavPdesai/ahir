@@ -139,7 +139,7 @@ void get_input()
 \
 			for (j = 0; j < ORDER; j += 4)\
 			{\
-				loop_pipelining_on(8);\
+				loop_pipelining_on(3);\
 				__innerLoopBody(j,rv,cv);\
 			}\
 \

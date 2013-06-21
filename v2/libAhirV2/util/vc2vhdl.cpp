@@ -67,7 +67,7 @@ void Usage_Vc2VHDL()
   cerr <<  " alternate form:  --debug" << endl;
   cerr <<  " -v :  lots of information will be printed to stderr during analysis." << endl;
   cerr <<  " alternate form:  --verbose" << endl;
-  cerr <<  " -I :  number of copies of an operation that can be active in a pipelined loop (a small positive integer.. keep it smaller than 2)" << endl;
+  cerr <<  " -I <n>:  deprecated " << endl;
   cerr <<  " alternate form:  --loop_pipeline_buffering_limit" << endl;
   cerr << endl;
   cerr << endl;
@@ -220,11 +220,7 @@ int main(int argc, char* argv[])
 	  {
 		if(it_limit > 4)
 			it_limit = 4;
-
-	  	cerr << "Info: -I option selected: loop pipeline buffering limit will be set to " 
-			<< it_limit << "." << endl;
-
-	  	vcSystem::_loop_pipeline_buffering_limit = it_limit;
+	  	cerr << "Info: -I option is deprecated.. has no effect."  << endl;
 	  }
 	  break;
 	case 'S':

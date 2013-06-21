@@ -782,12 +782,15 @@ aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement
     lbl_set.insert("$entry");
     lbl_set.insert("$loopback");
     int pdepth = 1;
+    int buffering_depth = 1;
 }: 
-     il:DO DEPTH did: UINTEGER { pdepth = atoi(did->getText().c_str()); }
+     il:DO DEPTH did: UINTEGER BUFFERING bid: UINTEGER 
+	{ pdepth = atoi(did->getText().c_str());  buffering_depth = atoi(bid->getText().c_str());}
         ms = aA_Merge_Statement[scope]
         { 
             new_dws->Set_Merge_Statement(ms);
 	    new_dws->Set_Pipelining_Depth(pdepth);
+	    new_dws->Set_Buffering_Depth(buffering_depth);
             ms->Set_In_Do_While(true);
 	   
 	    new_dws->Set_Line_Number(il->getLine());
@@ -1479,6 +1482,7 @@ ASSIGN        : "$assign";
 CALL          : "$call";
 PHI           : "$phi";
 DEPTH         : "$depth";
+BUFFERING     : "$buffering";
 ATTRIBUTE     : "$attribute";
 GUARD         : "$guard";
 DO            : "$dopipeline";

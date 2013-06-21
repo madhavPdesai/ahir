@@ -411,10 +411,12 @@ namespace {
 	  {
 	    bool v = false;
 	    int pipelining_depth = 1;
+	    int buffering_depth = 1;
 	    if(_extract_do_while)
-	    	v = is_do_while_loop(*iter, pipelining_depth);
+	    	v = is_do_while_loop(*iter, pipelining_depth, buffering_depth);
 	    aa_writer->Set_Do_While_Flag(v);
             aa_writer->Set_Do_While_Pipelining_Depth(pipelining_depth);
+            aa_writer->Set_Do_While_Buffering_Depth(buffering_depth);
 	    aa_writer->visit(*iter);
 	    aa_writer->Set_Do_While_Flag(false);
 	  }

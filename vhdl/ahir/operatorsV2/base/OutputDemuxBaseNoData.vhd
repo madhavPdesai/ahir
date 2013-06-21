@@ -8,9 +8,9 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 
 entity OutputDeMuxBaseNoData is
-  generic(twidth: integer;
+  generic(name : string;
+          twidth: integer;
 	  nreqs: integer;
-	  no_arbitration: Boolean := false;
 	  detailed_buffering_per_output: IntegerArray);
   port (
     -- req/ack follow level protocol

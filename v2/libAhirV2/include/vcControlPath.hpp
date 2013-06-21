@@ -207,7 +207,7 @@ public:
   // return true if some ancestral parent is a pipelined loop body..
   void  Set_Pipeline_Parent()
   {
-	vcCPPipelinedLoopBody* retval = NULL;
+	this->_pipeline_parent = NULL;
 	vcCPElement* p = this->Get_Parent();
 	while(p != NULL)
 	{
@@ -614,6 +614,7 @@ class vcCPSimpleLoopBlock: public vcCPBranchBlock
 
   vcLoopTerminator* _terminator;
   int _depth;
+  int _buffering;
 
 public:
   vcCPSimpleLoopBlock(vcCPBlock* parent, string id);
@@ -621,6 +622,9 @@ public:
 
   void Set_Depth(int d) {_depth = d;}
   int  Get_Depth() {return(_depth);}
+
+  void Set_Buffering(int d) {_buffering = d;}
+  int  Get_Buffering() {return(_buffering);}
 
   virtual void Print(ostream& ofile);
   virtual void Print_VHDL(ostream& ofile);

@@ -43,13 +43,6 @@ string vcSystem::_tool_name;
 string vcSystem::_top_entity_name = "ahir_system";
 
 
-// for loop-pipelining.
-// maximum amount of buffering of a wire inside
-// a pipelined loop.  Expensive, keep it to 
-// less than 3.
-int vcSystem::_loop_pipeline_buffering_limit = 2;
-
-
 vcSystem::vcSystem(string id):vcRoot(id)
 {
 }

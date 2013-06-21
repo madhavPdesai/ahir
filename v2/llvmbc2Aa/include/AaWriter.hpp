@@ -29,6 +29,7 @@ namespace Aa {
     bool _do_while_transform_flag;
     bool _do_while_flag;
     int _do_while_pipelining_depth;
+    int _do_while_buffering_depth;
 
     std::map<std::string,std::set<std::string> > bb_predecessor_map;
     std::map<llvm::Value*, std::string> value_name_map;
@@ -51,6 +52,9 @@ namespace Aa {
 
     void Set_Do_While_Pipelining_Depth(int v) {_do_while_pipelining_depth = v;}
     int Get_Do_While_Pipelining_Depth() {return(_do_while_pipelining_depth);}
+
+    void Set_Do_While_Buffering_Depth(int v) {_do_while_buffering_depth = v;}
+    int Get_Do_While_Buffering_Depth() {return(_do_while_buffering_depth);}
 
     void clear() { 
       Set_Return_Flag(false); 

@@ -579,9 +579,9 @@ package BaseComponents is
 
 
   component OutputDeMuxBaseNoData
-    generic(twidth: integer;
+    generic(name : string;
+	    twidth: integer;
             nreqs: integer;
-            no_arbitration: Boolean;
 	    detailed_buffering_per_output: IntegerArray);
     port (
       -- req/ack follow level protocol

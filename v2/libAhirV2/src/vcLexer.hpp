@@ -91,6 +91,7 @@ public:
 	public: void mCONSTANT(bool _createToken);
 	public: void mINTERMEDIATE(bool _createToken);
 	public: void mDEPTH(bool _createToken);
+	public: void mBUFFERING(bool _createToken);
 	public: void mGUARD(bool _createToken);
 	public: void mBIND(bool _createToken);
 	public: void mTERMINATE(bool _createToken);

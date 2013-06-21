@@ -2530,9 +2530,9 @@ package BaseComponents is
 
 
   component OutputDeMuxBaseNoData
-    generic(twidth: integer;
+    generic(name : string;
+	    twidth: integer;
             nreqs: integer;
-            no_arbitration: Boolean;
 	    detailed_buffering_per_output: IntegerArray);
     port (
       -- req/ack follow level protocol
@@ -10986,9 +10986,9 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 
 entity OutputDeMuxBaseNoData is
-  generic(twidth: integer;
+  generic(name : string;
+          twidth: integer;
 	  nreqs: integer;
-	  no_arbitration: Boolean := false;
 	  detailed_buffering_per_output: IntegerArray);
   port (
     -- req/ack follow level protocol
@@ -13610,10 +13610,10 @@ begin  -- Behave
 
   odemux: OutputDemuxBaseNoData
     generic map (
+      name => "anon odemux in StoreComplete",
       twidth =>  tag_length,
       nreqs  => num_reqs,
-      detailed_buffering_per_output => detailed_buffering_per_output,
-      no_arbitration => true)
+      detailed_buffering_per_output => detailed_buffering_per_output)
     port map (
       reqL   => mack,                   -- cross-over (mack from mem-subsystem)
       ackL   => mreq,                   -- cross-over 
