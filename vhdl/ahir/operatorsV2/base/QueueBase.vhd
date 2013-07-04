@@ -34,6 +34,17 @@ architecture behave of QueueBase is
 
 begin  -- SimModel
 
+ --
+ -- 0-depth queue is just a set of wires.
+ --
+ triv: if queue_depth = 0 generate
+	push_ack <= pop_req;
+	pop_ack  <= push_req;
+	data_out <= data_in;
+ end generate triv;
+
+
+ nontriv: if queue_depth > 0 generate 
   push_ack <= '1' when (queue_size < queue_depth) else '0';
   pop_ack  <= '1' when (queue_size > 0) else '0';
 
@@ -95,5 +106,7 @@ begin  -- SimModel
     end if;
     
   end process;
+ end generate nontriv;
+
 
 end behave;

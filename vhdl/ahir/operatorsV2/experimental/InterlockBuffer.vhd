@@ -10,32 +10,66 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
-entity UnloadBuffer is
+entity InterlockBuffer is
   generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
-  port ( write_req: in std_logic;
-        write_ack: out std_logic;
+  port ( write_req: in boolean;
+        write_ack: out boolean;
         write_data: in std_logic_vector(data_width-1 downto 0);
-        unload_req: in boolean;
-        unload_ack: out boolean;
+        read_req: in boolean;
+        read_ack: out boolean;
         read_data: out std_logic_vector(data_width-1 downto 0);
         clk : in std_logic;
         reset: in std_logic);
-end UnloadBuffer;
+end InterlockBuffer;
 
-architecture default_arch of UnloadBuffer is
+architecture default_arch of InterlockBuffer is
 
   signal pop_req, pop_ack, push_req, push_ack: std_logic_vector(0 downto 0);
   signal pipe_data_out:  std_logic_vector(data_width-1 downto 0);
 
   signal output_register : std_logic_vector(data_width-1 downto 0);
 
-  signal unload_req_reg, unload_req_token, unload_req_clear  : boolean;
-  signal unload_ack_sig : boolean;
+  type LoadFsmState is (l_idle, l_busy);
+  signal l_fsm_state : LoadFsmState;
 
   type UnloadFsmState is (idle, waiting, ackn);
   signal fsm_state : UnloadFsmState;
   
 begin  -- default_arch
+
+  -- interlock buffer must have buffer-size > 0
+  assert buffer_size > 0 report " interlock buffer size must be > 0 " severity failure;
+
+  -- write FSM to pipe.
+  process(clk,reset, l_fsm_state, push_ack(0), write_req)
+	variable nstate : LoadFsmState;
+  begin
+	nstate := l_fsm_state;
+	push_req(0) <= '0';
+        write_ack <= false;
+	if(l_fsm_state = l_idle) then
+		if(write_req and push_ack(0) = '1') then
+			push_req(0) <= '1';
+			write_ack <= true;
+		else
+			nstate := l_busy;
+		end if;
+	else
+		push_req(0) <= '1';
+		if(push_ack(0) = '1') then
+			nstate := l_idle;
+			write_ack <= true;
+		end if;
+	end if;
+
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			l_fsm_state <= l_idle;
+		else
+			l_fsm_state <= nstate;
+		end if;
+	end if;
+  end process;
 
   -- the input pipe.
   bufPipe : PipeBase generic map (
@@ -54,12 +88,10 @@ begin  -- default_arch
       write_data => write_data,
       clk        => clk,
       reset      => reset);
-  push_req(0) <= write_req;
-  write_ack <= push_ack(0);
 
 
-  -- FSM
-  process(clk)
+  -- FSM for unloading data..
+  process(clk,fsm_state,read_req,pop_ack,reset)
      variable nstate: UnloadFsmState;
      variable load_reg, ackv: boolean;
      variable preq : std_logic;
@@ -71,11 +103,11 @@ begin  -- default_arch
   
      case fsm_state is
          when idle => 
-               if(unload_req and (pop_ack(0) = '1')) then
+               if(read_req and (pop_ack(0) = '1')) then
 		    preq := '1';   
                     nstate := ackn;
 		    load_reg := true;
-               elsif (unload_req) then
+               elsif (read_req) then
                     nstate := waiting;
                end if;
 	 when waiting =>
@@ -89,7 +121,7 @@ begin  -- default_arch
 		nstate := idle;
      end case;
  
-     unload_ack <= ackv;
+     read_ack <= ackv;
      pop_req(0) <= preq;
 
      if(clk'event and clk = '1') then

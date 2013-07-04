@@ -24,6 +24,7 @@ package Utilities is
   function Ceil_Log2( constant x : integer)  return integer;
 
   function Max (constant x : NaturalArray)    return natural;
+  function Sum (constant x : IntegerArray) return integer;
 
   function Maximum(x,y: integer)   return integer;
   function Minimum(x,y: integer)   return integer;  
@@ -289,6 +290,17 @@ package body Utilities is
       end if;
     end loop;  -- I
     return(max_var);
+  end function;
+
+  function Sum(constant x : IntegerArray)
+    return integer is
+    variable ret_var : integer;
+  begin
+    ret_var := 0;
+    for I in x'low(1) to x'high(1) loop
+      ret_var := x(I) + ret_var;
+    end loop;
+    return(ret_var);
   end function;
 
   function Maximum(x,y: integer)   return integer is
