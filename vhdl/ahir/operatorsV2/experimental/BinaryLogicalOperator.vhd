@@ -17,6 +17,7 @@ use ahir.FloatOperatorPackage.all;
 entity BinaryLogicalOperator is
   generic
     (
+      name  : string;
       operator_id         : string;            -- operator id
       input_width         : integer;           -- input width
       output_width        : integer;           -- the width of the output.
@@ -42,6 +43,9 @@ end BinaryLogicalOperator;
 
 
 architecture Vanilla of BinaryLogicalOperator is
+	constant cZero: std_logic_vector(input_width-1 downto 0) := (others => '0');
+	constant cOne: std_logic_vector(input_width-1 downto 0) := (others => '1');
+
 	signal in_data_1: std_logic_vector(input_width-1 downto 0);
 	signal in_data_1_valid, in_data_1_accept, in_data_1_kill: std_logic;
 
@@ -89,7 +93,7 @@ begin  -- Vanilla
 				 read_data => in_data_2,
 				 kill => in_data_2_kill,
 				 clk => clk, reset => reset);	
-        end generate i22oConst;
+        end generate i2NoConst;
 
 	i2Const: if (input_2_is_constant) generate
 		in_data_2 <=  data_in(input_width-1 downto 0);
@@ -103,12 +107,12 @@ begin  -- Vanilla
 	andGen: if ((operator_id = "ApIntAnd") or (operator_id = "ApIntNand")) generate
 
 		in_data_1_kill <= '1' when ((in_data_1_valid = '0') and (in_data_2_valid = '1') and
-						(in_data_2 = (others => '0'))) else '0';
+						(in_data_2 = cZero)) else '0';
 		in_data_1_accept <=  '1' when ((in_data_1_valid = '1') and (out_data_accept = '1'))
 					else '0';
 
 		in_data_2_kill <= '1' when ((in_data_2_valid = '0') and (in_data_1_valid = '1') and
-						(in_data_1 = (others => '0'))) else '0';
+						(in_data_1 = cZero)) else '0';
 		in_data_2_accept <=  '1' when ((in_data_2_valid = '1') and (out_data_accept = '1'))
 					else '0';
 
@@ -126,12 +130,12 @@ begin  -- Vanilla
 
 	orGen: if ((operator_id = "ApIntOr") or (operator_id = "ApIntNor")) generate
 		in_data_1_kill <= '1' when ((in_data_1_valid = '0') and (in_data_2_valid = '1') and
-						(in_data_2 = (others => '1'))) else '0';
+						(in_data_2 = cOne)) else '0';
 		in_data_1_accept <=  '1' when ((in_data_1_valid = '1') and (out_data_accept = '1'))
 					else '0';
 
 		in_data_2_kill <= '1' when ((in_data_2_valid = '0') and (in_data_1_valid = '1') and
-						(in_data_1 = (others => '1'))) else '0';
+						(in_data_1 = cOne)) else '0';
 		in_data_2_accept <=  '1' when ((in_data_2_valid = '1') and (out_data_accept = '1'))
 					else '0';
 

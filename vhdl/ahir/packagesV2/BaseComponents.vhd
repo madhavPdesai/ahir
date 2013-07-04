@@ -1556,4 +1556,56 @@ package BaseComponents is
     clk: in std_logic;
     reset: in std_logic);
   end component tmpSplitCallArbiterNoOutargs;
+
+  ----------------------------------------------------------------------------------------
+  -- components with per-input buffering
+  ----------------------------------------------------------------------------------------
+  component InputMuxWithBuffering 
+    generic (name: string;
+	   iwidth: integer := 10;
+	   owidth: integer := 10;
+	   twidth: integer := 3;
+	   nreqs: integer := 1;
+	   buffering: integer;
+	   no_arbitration: Boolean := false;
+	   registered_output: Boolean := true);
+    port (
+    -- req/ack follow pulse protocol
+    reqL                 : in  BooleanArray(nreqs-1 downto 0);
+    ackL                 : out BooleanArray(nreqs-1 downto 0);
+    dataL                : in  std_logic_vector(iwidth-1 downto 0);
+    -- output side req/ack level protocol
+    reqR                 : out std_logic;
+    ackR                 : in  std_logic;
+    dataR                : out std_logic_vector(owidth-1 downto 0);
+    -- tag specifies the requester index 
+    tagR                : out std_logic_vector(twidth-1 downto 0);
+    clk, reset          : in std_logic);
+  end component InputMuxWithBuffering;
+
+  component ReceiveBuffer  
+    generic (name: string; buffer_size: integer := 2; data_width : integer := 32; kill_counter_range: integer := 65535);
+    port ( write_req: in boolean;
+         write_ack: out boolean;
+         write_data: in std_logic_vector(data_width-1 downto 0);
+         read_req: in std_logic;
+         read_ack: out std_logic;
+	 kill      : in std_logic;
+         read_data: out std_logic_vector(data_width-1 downto 0);
+         clk : in std_logic;
+         reset: in std_logic);
+  end component ReceiveBuffer;
+
+  component InterlockBuffer 
+    generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
+    port ( write_req: in boolean;
+        write_ack: out boolean;
+        write_data: in std_logic_vector(data_width-1 downto 0);
+        read_req: in boolean;
+        read_ack: out boolean;
+        read_data: out std_logic_vector(data_width-1 downto 0);
+        clk : in std_logic;
+        reset: in std_logic);
+  end component InterlockBuffer;
+
 end BaseComponents;

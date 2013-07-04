@@ -75,7 +75,7 @@ begin  -- Behave
 	assert not (i1_const(I) and i2_const(I)) 
 		report " both inputs to binary operator cannot be constants " severity failure;
 
-        notBothConst: if not (i1_const(I) or i2_const(I) generate
+        notBothConst: if not (i1_const(I) or i2_const(I)) generate
 	  sample_ack_1(I) <= ackL(I);
 	  sample_ack_2(I) <= ackL(I);
   
@@ -129,7 +129,7 @@ begin  -- Behave
       			no_arbitration => false,
       			min_clock_period => true,
       			num_reqs => num_reqs,
-      			detailed_buffering_per_output : detailed_buffering_per_output)
+      			detailed_buffering_per_output => detailed_buffering_per_output)
   		port map (
     				reqL => reqL,
     				ackR => update_ack,

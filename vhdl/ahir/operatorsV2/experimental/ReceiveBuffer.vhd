@@ -30,7 +30,7 @@ architecture default_arch of ReceiveBuffer is
   signal pipe_data_in:  std_logic_vector(data_width-1 downto 0);
 
 
-  signal kill_counter : integer range 0 to kill_counter_range;;
+  signal kill_counter : integer range 0 to kill_counter_range;
   signal kill_counter_incr, kill_counter_decr: boolean;
 
   type RxBufFsmState is (idle, busy);
@@ -114,7 +114,7 @@ begin  -- default_arch
 
   -- kill counter.
   kill_active <= (kill = '1') or (kill_counter > 0);
-  kill_counter_incr <= kill;
+  kill_counter_incr <= (kill = '1');
   process(clk)
   begin
 	if(clk'event and clk = '1') then

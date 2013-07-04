@@ -45,6 +45,7 @@ architecture Behave of InputMuxWithBuffering is
   signal kill_zero: std_logic;
   signal reqR_sig, ackR_sig: std_logic;
   signal dataR_sig: std_logic_vector(owidth-1 downto 0);
+  signal tagR_sig                : std_logic_vector(twidth-1 downto 0);
 
 begin  -- Behave
 

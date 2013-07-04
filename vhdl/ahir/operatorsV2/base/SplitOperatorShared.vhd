@@ -32,7 +32,7 @@ entity SplitOperatorShared is
       no_arbitration: boolean := false;
       min_clock_period: boolean := true;
       num_reqs : integer := 3; -- how many requesters?
-      detailed_buffering_per_output : IntegerArray
+      detailed_buffering_per_output : IntegerArray;
       use_input_buffering: boolean := false
     );
   port (

@@ -5,9 +5,9 @@
 #include "prog.h"
 
 #ifdef SW
-void loop_pipelining_on() {}
+void loop_pipelining_on(uint32_t d, uint32_t b) {}
 #else
-void loop_pipelining_on();
+void loop_pipelining_on(uint32_t d, uint32_t b);
 #endif
 
 
@@ -70,7 +70,7 @@ void mmultiply()
 				float v = 0;
 				for(k = 0; k < ORDER; k ++)
 				{ 
-					loop_pipelining_on();
+					loop_pipelining_on(1,1);
 					v += a_matrix[i][k]*b_matrix[k][j];
 				}
 

@@ -48,7 +48,6 @@ architecture Vanilla of UnarySharedOperator is
 
   signal reqL, ackL: BooleanArray(num_reqs-1 downto 0);
 
-  constant input_width : integer := input_1_width + input_2_width;
 
   signal dataL : std_logic_vector((num_reqs*input_width)-1 downto 0);
 
@@ -86,7 +85,7 @@ begin  -- Behave
       			no_arbitration => false,
       			min_clock_period => true,
       			num_reqs => num_reqs,
-      			detailed_buffering_per_output : detailed_buffering_per_output)
+      			detailed_buffering_per_output => detailed_buffering_per_output)
   		port map (
     				reqL => reqL,
     				ackR => update_ack,

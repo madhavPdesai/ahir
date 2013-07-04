@@ -26,7 +26,7 @@ entity UnaryUnsharedOperator is
       output_characteristic_width : integer := 0;
       output_mantissa_width       : integer := 0;
       output_width        : integer;          -- width of output.
-      output_buffering : integer := 2;
+      output_buffering : integer := 2
       );
   port (
     -- req -> ack follow pulse protocol
@@ -51,14 +51,14 @@ begin  -- Behave
   comb_block: GenericCombinationalOperator
     generic map (
       operator_id                 => operator_id,
-      input1_is_int               => input_1_is_int,
-      input1_characteristic_width => input_1_characteristic_width,
-      input1_mantissa_width       => input_1_mantissa_width,
-      iwidth_1                    => input_1_width,
-      input2_is_int               => input_1_is_int,
-      input2_characteristic_width => input_1_characteristic_width,
-      input2_mantissa_width       => input_1_mantissa_width,
-      iwidth_2                    => input_1_width,
+      input1_is_int               => input_is_int,
+      input1_characteristic_width => input_characteristic_width,
+      input1_mantissa_width       => input_mantissa_width,
+      iwidth_1                    => input_width,
+      input2_is_int               => true,
+      input2_characteristic_width => 0,
+      input2_mantissa_width       => 0,
+      iwidth_2                    => 0,
       num_inputs                  => 1,
       output_is_int               => output_is_int,
       output_characteristic_width => output_characteristic_width,

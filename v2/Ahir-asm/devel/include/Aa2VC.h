@@ -16,8 +16,6 @@
 #define __SCT(u) u->Get_VC_Sample_Completed_Transition_Name()
 #define __UST(u) u->Get_VC_Update_Start_Transition_Name()
 #define __UCT(u) u->Get_VC_Update_Completed_Transition_Name()
-#define __RST(u) u->Get_VC_Reenable_Sample_Transition_Name()
-#define __RUT(u) u->Get_VC_Reenable_Update_Transition_Name()
 
 #define __DeclTrans  {\
 	string st = __ST(this);\

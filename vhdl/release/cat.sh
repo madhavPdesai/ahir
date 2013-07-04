@@ -24,6 +24,7 @@ cat ../ahir/memory_subsystem/unordered/*.vhd >> ahir.vhdl
 cat ../ahir/control-path/*.vhdl >> ahir.vhdl
 cat ../ahir/operatorsV2/base/*.vhd >> ahir.vhdl
 cat ../ahir/operatorsV2/ieee754/*.vhd >> ahir.vhdl
+cat ../ahir/operatorsV2/experimental/*.vhd >> ahir.vhdl
 cat ../ahir/operatorsV2/functionLibrary/*.vhd >> ahir.vhdl
 cat ../aHiR_ieee_proposed/trimmed/math_utility_pkg.vhd >> aHiR_ieee_proposed.vhdl
 cat ../aHiR_ieee_proposed/trimmed/fixed_float_types_c.vhdl >> aHiR_ieee_proposed.vhdl

@@ -1286,7 +1286,7 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
 
 			if(pipeline_flag)
 			{
-				__MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), __AT(this));
+				__MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this));
 
 				// This is not strictly necessary, because
 				// the sources to the expression cannot be
@@ -1383,11 +1383,12 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
 
 		_ConnectSplitProtocolPattern
 
-			if(pipeline_flag)
-			{
-				__MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), this->Get_VC_Active_Transition_Name());
-				__SelfReleaseSplitProtocolPattern
-			}
+		if(pipeline_flag)
+		{
+			__MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
+					__SCT(this));
+			__SelfReleaseSplitProtocolPattern
+		}
 	}
 }
 void AaUnaryExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,

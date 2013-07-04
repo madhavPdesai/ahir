@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;
+use ahir.BaseComponents.all;
 
 entity SelectWithInputBuffers is
   generic(name: string; 
@@ -26,10 +27,11 @@ entity SelectWithInputBuffers is
        ack_z : out boolean;
        z: out std_logic_vector(data_width-1 downto 0);
        clk,reset: in std_logic);
-end SelectExperimental;
+end SelectWithInputBuffers;
 
 
 architecture arch of SelectWithInputBuffers is 
+	constant  cZero : std_logic_vector(data_width-1 downto 0) := (others => '0');
 	signal buffered_x : std_logic_vector(data_width-1 downto 0);
 	signal accept_x, ready_x, kill_x: std_logic;
 
@@ -143,14 +145,14 @@ begin
 	
 	begin
 		obuf_write_req <= '0';
-		obuf_write_data <= (others => '0');
+		obuf_write_data <= cZero;
 		accept_X <= '0';
 		accept_Y <= '0';
 		accept_Sel <= '0';
 		kill_X <= '0';
 		kill_Y <= '0';
 		if(ready_sel = '1') then
-			if(buffered_sel /= (others => '0')) then
+			if(buffered_sel /= cZero) then
 				if(ready_Y = '1') then
 					accept_Sel <= '1';
 					accept_Y <= '1';

@@ -34,7 +34,7 @@ entity BinaryUnsharedOperator is
       output_characteristic_width : integer := 0;
       output_mantissa_width       : integer := 0;
       output_width        : integer;          -- width of output.
-      output_buffering : integer := 2;
+      output_buffering : integer := 2
       );
   port (
     -- req -> ack follow pulse protocol
