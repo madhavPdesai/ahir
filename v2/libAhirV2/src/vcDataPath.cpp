@@ -1678,6 +1678,13 @@ void vcDataPath::Print_VHDL_Regulator_Instance(string inst_id,
 	// redundancy!
 	assert(dpe_elements.size() == num_reqs);
 
+	if(num_reqs == 1)
+	{
+		ofile << regulated_reqs << " <= " << reqs << ";" << endl;
+		ofile << acks << " <= " << regulated_acks << ";" << endl;
+		return;
+	}
+
 	int idx;
         string inst_id_idx;
 	for(idx = 0; idx < num_reqs; idx++)
@@ -1710,13 +1717,30 @@ void vcDataPath::Generate_Buffering_Constant_Declaration(vector<vcDatapathElemen
 	int max_buf_size = 0;
 	int idx;
 
+	int depth, num_slots;
+	
 	int num_reqs = dpe_elements.size();
+
+	// if single request is present, buffering
+	// will be limited to 2.
+        if(num_reqs == 1)
+	{
+	   vcDatapathElement* dpe = dpe_elements[0];
+	   bool cf = dpe->Is_Part_Of_Pipelined_Loop(depth,num_slots);
+	   if(cf) 
+	   	buffering_string = 
+			"constant buffering_per_output : IntegerArray(0 downto 0) := (0 => 2);";
+	   else
+	   	buffering_string = 
+			"constant buffering_per_output : IntegerArray(0 downto 0) := (0 => 1);";
+	   return;
+	}	
+
 	for(idx = 0; idx < num_reqs;  idx++)
 	{
 		vcDatapathElement* dpe = dpe_elements[(num_reqs-idx)-1];
 		
 		// needs to get more sophisticated...
-		int depth, num_slots;
 		bool cf = dpe->Is_Part_Of_Pipelined_Loop(depth,num_slots);
 
 		buf_sizes.push_back(num_slots);

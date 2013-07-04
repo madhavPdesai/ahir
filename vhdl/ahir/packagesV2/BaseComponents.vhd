@@ -372,6 +372,7 @@ package BaseComponents is
         no_arbitration: boolean := false;
         min_clock_period: boolean := false;
         num_reqs : integer;  -- how many requesters?
+        use_input_buffering: boolean;
         detailed_buffering_per_output: IntegerArray
         );
 
@@ -1378,6 +1379,7 @@ package BaseComponents is
       fraction_width : integer := 23;
       no_arbitration: boolean := true;
       num_reqs : integer := 3; -- how many requesters?
+      use_input_buffering: boolean;
       detailed_buffering_per_output : IntegerArray
       );
     port (

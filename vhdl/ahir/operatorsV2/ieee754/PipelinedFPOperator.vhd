@@ -19,6 +19,7 @@ entity PipelinedFPOperator is
       fraction_width : integer := 23;
       no_arbitration: boolean := true;
       num_reqs : integer := 3; -- how many requesters?
+      use_input_buffering: boolean := false;
       detailed_buffering_per_output: IntegerArray
     );
   port (
@@ -70,24 +71,47 @@ begin  -- Behave
     -- assert( (not ((reset = '0') and (clk'event and clk = '1') and no_arbitration)) or Is_At_Most_One_Hot(reqL))
     -- report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
   -- end generate DebugGen;
-  
-  imux: InputMuxBase
-    generic map(iwidth => iwidth*num_reqs,
+  NoInBuffers : if not use_input_buffering generate 
+    imux: InputMuxBase
+      generic map(iwidth => iwidth*num_reqs,
+                  owidth => iwidth, 
+                  twidth => tag_length,
+                  nreqs => num_reqs,
+                  no_arbitration => no_arbitration,
+                  registered_output => true)
+      port map(
+          reqL       => reqL,
+        ackL       => ackL,
+        reqR       => ireq,
+        ackR       => iack,
+        dataL      => dataL,
+        dataR      => idata,
+        tagR       => itag,
+        clk        => clk,
+        reset      => reset);
+   end generate NoInBuffers;
+
+  InBuffers: if use_input_buffering generate
+    imuxWithInputBuf: InputMuxWithBuffering
+      generic map(name => name & " imux " , 
+		iwidth => iwidth*num_reqs,
                 owidth => iwidth, 
                 twidth => tag_length,
                 nreqs => num_reqs,
+		buffering => 2,
                 no_arbitration => no_arbitration,
                 registered_output => true)
-    port map(
-      reqL       => reqL,
-      ackL       => ackL,
-      reqR       => ireq,
-      ackR       => iack,
-      dataL      => dataL,
-      dataR      => idata,
-      tagR       => itag,
-      clk        => clk,
-      reset      => reset);
+      port map(
+        reqL       => reqL,
+        ackL       => ackL,
+        reqR       => ireq,
+        ackR       => iack,
+        dataL      => dataL,
+        dataR      => idata,
+        tagR       => itag,
+        clk        => clk,
+        reset      => reset);
+  end generate InBuffers;
 
   IEEE754xMul:  if operator_id = "ApFloatMul" generate
     useGeneric: if use_generic_multiplier generate
