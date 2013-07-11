@@ -8,7 +8,14 @@ use ahir.BaseComponents.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 
-entity InputPort is
+--
+-- a full-rate input port.  The assumption here
+-- is that a data item is picked up from the
+-- input port for every req pulse.  The production
+-- of a new output data-item is indicated by an
+-- ack pulse.
+--
+entity InputPortFullRate is
   generic (num_reqs: integer := 5;
 	   data_width: integer := 8;
 	   no_arbitration: boolean := false);
@@ -25,14 +32,16 @@ entity InputPort is
 end entity;
 
 
-architecture Base of InputPort is
+architecture Base of InputPortFullRate is
 
   signal reqR, ackR : std_logic_vector(num_reqs-1 downto 0);
   signal fEN: std_logic_vector(num_reqs-1 downto 0);
 
   type   IPWArray is array(integer range <>) of std_logic_vector(data_width-1 downto 0);
-  signal data_reg, data_final: IPWArray(num_reqs-1 downto 0);
+  signal data_reg, data_prereg, data_final: IPWArray(num_reqs-1 downto 0);
   signal demux_data : std_logic_vector((num_reqs*data_width)-1 downto 0);
+
+  signal ack_raw: BooleanArray(num_reqs-1 downto 0);
   
 begin
 
@@ -41,17 +50,15 @@ begin
   -----------------------------------------------------------------------------
   ProTx : for I in 0 to num_reqs-1 generate
 
-    P2L : block
-    begin  -- block P2L
-      p2LInst: Pulse_To_Level_Translate_Entity
+    p2LInst: PulseToLevel
         port map (rL            => req(I),
                   rR            => reqR(I),
-                  aL            => ack(I),
+                  aL            => ack_raw(I),
                   aR            => ackR(I),
                   clk           => clk,
                   reset         => reset);
-
-    end block P2L;
+    cDly: control_delay_element generic map(delay_value => 1)
+			port map(req => ack_raw(I), ack => ack(I), clk => clk, reset => reset);
     
   end generate ProTx;
 
@@ -83,17 +90,19 @@ begin
 
   gen : for I in num_reqs-1 downto 0 generate
 
-    process(clk)
+    process(clk,demux_data)
       variable target: std_logic_vector(data_width-1 downto 0);
     begin
       if(clk'event and clk = '1') then
-        if (ackR(I) = '1') then
-          Extract(demux_data,I,target);
+        if (ack_raw(I)) then
+      	  Extract(demux_data,I,target);
           data_reg(I) <= target;
         end if;
       end if;
     end process;
 
+
+    -- register
     data_final(I) <= data_reg(I);
     
   end generate gen;

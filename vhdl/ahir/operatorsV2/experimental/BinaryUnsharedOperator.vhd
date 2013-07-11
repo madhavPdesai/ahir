@@ -58,7 +58,7 @@ architecture Vanilla of BinaryUnsharedOperator is
 begin  -- Behave
   -----------------------------------------------------------------------------
   -- join the two sample reqs...
-  -- (that is the operation will fire when both appear)
+  -- (that is, the operation will fire when both appear)
   -----------------------------------------------------------------------------
   bothNonConst: if not (input_1_is_constant or input_2_is_constant) generate
     reqJoin: join2 generic map (bypass => true)

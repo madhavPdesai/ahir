@@ -31,6 +31,7 @@ entity BinarySharedOperator is
       output_mantissa_width       : integer := 0;
       output_width        : integer := 4;          -- width of output.
       num_reqs : integer := 3; -- how many requesters?
+      input_buffering: integer := 2;
       detailed_buffering_per_output : IntegerArray
     );
   port (
@@ -129,6 +130,7 @@ begin  -- Behave
       			no_arbitration => false,
       			min_clock_period => true,
       			num_reqs => num_reqs,
+			input_buffering => input_buffering, 
       			detailed_buffering_per_output => detailed_buffering_per_output)
   		port map (
     				reqL => reqL,

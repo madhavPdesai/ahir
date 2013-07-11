@@ -372,7 +372,7 @@ package BaseComponents is
         no_arbitration: boolean := false;
         min_clock_period: boolean := false;
         num_reqs : integer;  -- how many requesters?
-        use_input_buffering: boolean;
+        input_buffering: integer;
         detailed_buffering_per_output: IntegerArray
         );
 
@@ -656,17 +656,6 @@ package BaseComponents is
   end component OutputDeMuxBaseWithBuffering;
   
 
-  component UnloadBuffer 
-    generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
-    port (write_req: in std_logic;
-          write_ack: out std_logic;
-          write_data: in std_logic_vector(data_width-1 downto 0);
-          unload_req: in boolean;
-          unload_ack: out boolean;
-          read_data: out std_logic_vector(data_width-1 downto 0);
-          clk : in std_logic;
-          reset: in std_logic);
-  end component UnloadBuffer;
   
   -----------------------------------------------------------------------------
   -- call arbiters
@@ -1560,6 +1549,285 @@ package BaseComponents is
   ----------------------------------------------------------------------------------------
   -- components with per-input buffering
   ----------------------------------------------------------------------------------------
+  component BinaryLogicalOperator 
+  generic
+    (
+      name  : string;
+      operator_id         : string;            -- operator id
+      input_width         : integer;           -- input width
+      output_width        : integer;           -- the width of the output.
+      input_1_buffer_depth: integer;           -- buffering at input 1.
+      input_2_buffer_depth: integer;           -- buffering at input 2.
+      output_buffer_depth : integer;           -- buffering at output.
+	-- both should never be constants.
+      input_1_is_constant : boolean := false;
+      input_2_is_constant : boolean := false
+      );
+  port (
+    -- input operands.
+    sample_req : in BooleanArray(1 downto 0);  -- sample reqs, one per input.
+    sample_ack : out BooleanArray(1 downto 0); -- sample acks, one per output.
+    data_in      : in  std_logic_vector((2*input_width)-1 downto 0);
+    -- result.
+    update_req : in Boolean;  -- req for output update.
+    update_ack : out Boolean; -- ack for output update.
+    data_out      : out std_logic_vector(output_width-1 downto 0);
+    -- clock, reset.
+    clk, reset : in  std_logic);
+  end component;
+
+
+  component BinarySharedOperator is
+    generic
+    (
+      name : string;
+      operator_id   : string := "ApIntAdd";          -- operator id
+      input_1_is_int : Boolean := true; -- false means float
+      input_1_characteristic_width : integer := 0; -- characteristic width if input1 is float
+      input_1_mantissa_width       : integer := 0; -- mantissa width if input1 is float
+      input_1_width      : integer := 4;    -- width of input1
+      input_1_is_constant : BooleanArray;   -- constant case needs to be handled a bit differently..
+      input_2_is_int : Boolean := true; -- false means float
+      input_2_characteristic_width : integer := 0; -- characteristic width if input2 is float
+      input_2_mantissa_width       : integer := 0; -- mantissa width if input2 is float
+      input_2_width      : integer := 0;    -- width of input2
+      input_2_is_constant : BooleanArray;  -- constant case needs to be handled a bit differently..
+      output_is_int : Boolean := true;  -- false means that the output is a float
+      output_characteristic_width : integer := 0;
+      output_mantissa_width       : integer := 0;
+      output_width        : integer := 4;          -- width of output.
+      num_reqs : integer := 3; -- how many requesters?
+      input_buffering: integer := 2;
+      detailed_buffering_per_output : IntegerArray
+    );
+  port (
+    -- input side.
+    sample_req_1                     : in BooleanArray(num_reqs-1 downto 0);
+    sample_req_2                     : in BooleanArray(num_reqs-1 downto 0);
+    sample_ack_1                     : out BooleanArray(num_reqs-1 downto 0);
+    sample_ack_2                     : out BooleanArray(num_reqs-1 downto 0);
+    -- output side.
+    update_ack                       : out BooleanArray(num_reqs-1 downto 0);
+    update_req                       : in  BooleanArray(num_reqs-1 downto 0);
+    -- input data consists of concatenated pairs of ips
+    data_in_1                    : in std_logic_vector((input_1_width*num_reqs)-1 downto 0);
+    data_in_2                    : in std_logic_vector((input_2_width*num_reqs)-1 downto 0);
+    -- output data consists of concatenated pairs of ops.
+    data_out                    : out std_logic_vector((output_width*num_reqs)-1 downto 0);
+    -- with dataR
+    clk, reset              : in std_logic);
+  end component;
+
+
+  component BinaryUnsharedOperator is
+  generic
+    (
+      name          : string;          -- instance name.
+      operator_id   : string;          -- operator id
+      input_1_is_int : Boolean := true; -- false means float
+      input_1_characteristic_width : integer := 0; -- characteristic width if input1 is float
+      input_1_mantissa_width       : integer := 0; -- mantissa width if input1 is float
+      input_1_width        : integer;    -- width of input1
+      input_1_is_constant  : boolean;
+      input_2_is_int : Boolean := true; -- false means float
+      input_2_characteristic_width : integer := 0; -- characteristic width if input2 is float
+      input_2_mantissa_width       : integer := 0; -- mantissa width if input2 is float
+      input_2_width        : integer;    -- width of input1
+      input_2_is_constant  : boolean;
+      output_is_int : Boolean := true;  -- false means that the output is a float
+      output_characteristic_width : integer := 0;
+      output_mantissa_width       : integer := 0;
+      output_width        : integer;          -- width of output.
+      output_buffering : integer := 2
+      );
+  port (
+    -- req -> ack follow pulse protocol
+    sample_req:  in BooleanArray(1 downto 0);
+    sample_ack:  out BooleanArray(1 downto 0);
+    update_req:  in Boolean;
+    update_ack:  out Boolean;
+    -- operands.
+    dataL      : in  std_logic_vector(input_1_width + input_2_width - 1 downto 0);
+    dataR      : out std_logic_vector(output_width-1 downto 0);
+    clk, reset : in  std_logic);
+  end component;
+
+
+  component LoadReqSharedWithInputBuffers is
+    generic
+    (
+	name : string;
+	addr_width: integer := 8;
+      	num_reqs : integer := 1; -- how many requesters?
+	tag_length: integer := 1;
+	no_arbitration: Boolean := false;
+        min_clock_period: Boolean := true;
+	time_stamp_width: integer := 0
+    );
+    port (
+    -- req/ack follow pulse protocol
+    reqL                     : in BooleanArray(num_reqs-1 downto 0);
+    ackL                     : out BooleanArray(num_reqs-1 downto 0);
+    -- concatenated address corresponding to access
+    dataL                    : in std_logic_vector((addr_width*num_reqs)-1 downto 0);
+    -- address to memory
+    maddr                   : out std_logic_vector((addr_width)-1 downto 0);
+    mtag                    : out std_logic_vector(tag_length+time_stamp_width-1 downto 0);
+
+    mreq                    : out std_logic;
+    mack                    : in std_logic;
+    -- clock, reset (active high)
+    clk, reset              : in std_logic);
+  end component;
+
+  component SelectWithInputBuffers is
+    generic(name: string; 
+	  data_width: integer; 
+	  x_buffering: integer; 
+	  y_buffering: integer; 
+	  sel_buffering: integer;
+          x_is_constant: boolean;
+          y_is_constant: boolean;
+          sel_is_constant: boolean;
+	  z_buffering: integer);
+    port(x,y: in std_logic_vector(data_width-1 downto 0);
+       sel: in std_logic_vector(0 downto 0);
+       req_x: in boolean;
+       ack_x: out boolean;
+       req_y: in boolean;
+       ack_y: out boolean;
+       req_sel: in boolean;
+       ack_sel: out boolean;
+       req_z : in boolean;
+       ack_z : out boolean;
+       z: out std_logic_vector(data_width-1 downto 0);
+       clk,reset: in std_logic);
+  end component;
+
+  component StoreReqSharedWithInputBuffers
+    generic
+    (
+	name : string;
+	addr_width: integer;
+	data_width : integer;
+	time_stamp_width : integer;
+      	num_reqs : integer; -- how many requesters?
+	tag_length: integer;
+	no_arbitration: Boolean := false;
+        min_clock_period: Boolean := true        
+    );
+    port (
+    -- req/ack follow pulse protocol
+    reqL                     : in BooleanArray(num_reqs-1 downto 0);
+    ackL                     : out BooleanArray(num_reqs-1 downto 0);
+    -- address corresponding to access
+    addr                    : in std_logic_vector((addr_width*num_reqs)-1 downto 0);
+    data                    : in std_logic_vector((data_width*num_reqs)-1 downto 0);
+    -- address to memory
+    maddr                   : out std_logic_vector(addr_width-1 downto 0);
+    mdata                   : out std_logic_vector(data_width-1 downto 0);
+    mtag                    : out std_logic_vector(tag_length+time_stamp_width-1 downto 0);
+    mreq                    : out std_logic;
+    mack                    : in std_logic;
+    -- clock, reset (active high)
+    clk, reset              : in std_logic);
+  end component;
+
+  component UnarySharedOperator is
+    generic
+    (
+      name : string;
+      operator_id   : string := "ApIntNot";          -- operator id
+      input_is_int : Boolean := true; -- false means float
+      input_characteristic_width : integer := 0; -- characteristic width if input1 is float
+      input_mantissa_width       : integer := 0; -- mantissa width if input1 is float
+      input_width      : integer := 4;    -- width of input1
+      output_is_int : Boolean := true;  -- false means that the output is a float
+      output_characteristic_width : integer := 0;
+      output_mantissa_width       : integer := 0;
+      output_width        : integer := 4;          -- width of output.
+      num_reqs : integer := 3; -- how many requesters?
+      detailed_buffering_per_output : IntegerArray
+    );
+  port (
+    -- input side.
+    sample_req                     : in BooleanArray(num_reqs-1 downto 0);
+    sample_ack                     : out BooleanArray(num_reqs-1 downto 0);
+    -- output side.
+    update_ack                     : out BooleanArray(num_reqs-1 downto 0);
+    update_req                     : in  BooleanArray(num_reqs-1 downto 0);
+    -- input data consists of concatenated pairs of ips
+    data_in                     : in std_logic_vector((input_width*num_reqs)-1 downto 0);
+    -- output data consists of concatenated pairs of ops.
+    data_out                    : out std_logic_vector((output_width*num_reqs)-1 downto 0);
+    -- with dataR
+    clk, reset                  : in std_logic);
+  end component;
+
+  component UnaryUnsharedOperator 
+    generic
+    (
+      name          : string;          -- instance name.
+      operator_id   : string;          -- operator id
+      input_is_int : Boolean := true; -- false means float
+      input_characteristic_width : integer := 0; -- characteristic width if input1 is float
+      input_mantissa_width       : integer := 0; -- mantissa width if input1 is float
+      input_width        : integer;    -- width of input1
+      input_is_constant  : boolean; 
+      output_is_int : Boolean := true;  -- false means that the output is a float
+      output_characteristic_width : integer := 0;
+      output_mantissa_width       : integer := 0;
+      output_width        : integer;          -- width of output.
+      output_buffering : integer := 2
+      );
+    port (
+    -- req -> ack follow pulse protocol
+    sample_req:  in Boolean;
+    sample_ack:  out Boolean;
+    update_req:  in Boolean;
+    update_ack:  out Boolean;
+    -- operands.
+    dataL      : in  std_logic_vector(input_width - 1 downto 0);
+    dataR      : out std_logic_vector(output_width-1 downto 0);
+    clk, reset : in  std_logic);
+  end component;
+
+  -------------------------------------------------------------------------------------
+  -- full-rate versions of I/O ports
+  -------------------------------------------------------------------------------------
+  component InputPortFullRate 
+    generic (num_reqs: integer := 5;
+	   data_width: integer := 8;
+	   no_arbitration: boolean := false);
+    port (
+    -- pulse interface with the data-path
+    req        : in  BooleanArray(num_reqs-1 downto 0);
+    ack        : out BooleanArray(num_reqs-1 downto 0);
+    data       : out std_logic_vector((num_reqs*data_width)-1 downto 0);
+    -- ready/ready interface with outside world
+    oreq       : out std_logic;
+    oack       : in  std_logic;
+    odata      : in  std_logic_vector(data_width-1 downto 0);
+    clk, reset : in  std_logic);
+  end component;
+
+  component OutputPortFullRate 
+    generic(num_reqs: integer;
+	  data_width: integer;
+	  no_arbitration: boolean := false);
+    port (
+    req        : in  BooleanArray(num_reqs-1 downto 0);
+    ack        : out BooleanArray(num_reqs-1 downto 0);
+    data       : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
+    oreq       : out std_logic;
+    oack       : in  std_logic;
+    odata      : out std_logic_vector(data_width-1 downto 0);
+    clk, reset : in  std_logic);
+  end component;
+
+  ---------------------------------------------------------------------------------
+  -- some useful miscellaneous stuff
+  ---------------------------------------------------------------------------------
   component InputMuxWithBuffering 
     generic (name: string;
 	   iwidth: integer := 10;
@@ -1583,19 +1851,6 @@ package BaseComponents is
     clk, reset          : in std_logic);
   end component InputMuxWithBuffering;
 
-  component ReceiveBuffer  
-    generic (name: string; buffer_size: integer := 2; data_width : integer := 32; kill_counter_range: integer := 65535);
-    port ( write_req: in boolean;
-         write_ack: out boolean;
-         write_data: in std_logic_vector(data_width-1 downto 0);
-         read_req: in std_logic;
-         read_ack: out std_logic;
-	 kill      : in std_logic;
-         read_data: out std_logic_vector(data_width-1 downto 0);
-         clk : in std_logic;
-         reset: in std_logic);
-  end component ReceiveBuffer;
-
   component InterlockBuffer 
     generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
     port ( write_req: in boolean;
@@ -1608,4 +1863,57 @@ package BaseComponents is
         reset: in std_logic);
   end component InterlockBuffer;
 
+  component ReceiveBuffer  is
+    generic (name: string; buffer_size: integer := 2; data_width : integer := 32; kill_counter_range: integer := 65535);
+    port ( write_req: in boolean;
+         write_ack: out boolean;
+         write_data: in std_logic_vector(data_width-1 downto 0);
+         read_req: in std_logic;
+         read_ack: out std_logic;
+	 kill      : in std_logic;
+         read_data: out std_logic_vector(data_width-1 downto 0);
+         clk : in std_logic;
+         reset: in std_logic);
+  end component;
+
+  component PulseToLevel 
+   port( rL : in boolean;
+        rR : out std_logic;
+        aL : out boolean;
+        aR : in std_logic;
+        clk : in std_logic;
+        reset : in std_logic);
+  end component;
+
+  component LevelMux 
+    generic(num_reqs: integer;
+	  data_width: integer;
+	  no_arbitration: boolean := true);
+    port (
+    write_req       : in  std_logic_vector(num_reqs-1 downto 0);
+    write_ack       : out std_logic_vector(num_reqs-1 downto 0);
+    write_data      : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
+    read_req        : in  std_logic;
+    read_ack        : out std_logic;
+    read_data       : out std_logic_vector(data_width-1 downto 0);
+    clk, reset      : in  std_logic);
+  end component;
+
+  component CounterBase generic(data_width : integer);
+	port(clk, reset: in std_logic; count_out: std_logic_vector(data_width-1 downto 0));
+  end component;
+
+  component UnloadBuffer 
+    generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
+    port (write_req: in std_logic;
+          write_ack: out std_logic;
+          write_data: in std_logic_vector(data_width-1 downto 0);
+          unload_req: in boolean;
+          unload_ack: out boolean;
+          read_data: out std_logic_vector(data_width-1 downto 0);
+          clk : in std_logic;
+          reset: in std_logic);
+  end component UnloadBuffer;
+
+ 
 end BaseComponents;

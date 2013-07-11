@@ -8,7 +8,11 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
-entity OutputPort is
+-- uses an aggressive pulse-to-level translation
+-- that allows back-to-back transfers to an output
+-- port.  The combinational paths are a bit longer
+-- but cant have everything..
+entity OutputPortFullRate is
   generic(num_reqs: integer;
 	  data_width: integer;
 	  no_arbitration: boolean := false);
@@ -22,7 +26,7 @@ entity OutputPort is
     clk, reset : in  std_logic);
 end entity;
 
-architecture Base of OutputPort is
+architecture Base of OutputPortFullRate is
 
   signal reqR, ackR : std_logic_vector(num_reqs-1 downto 0);
   signal fEN: std_logic_vector(num_reqs-1 downto 0);
@@ -40,7 +44,7 @@ begin
 
     P2L : block
     begin  -- block P2L
-      p2LInst: Pulse_To_Level_Translate_Entity
+      p2LInst: PulseToLevel
         port map(rL            => req(I),
                  rR            => reqR(I),
                  aL            => ack(I),

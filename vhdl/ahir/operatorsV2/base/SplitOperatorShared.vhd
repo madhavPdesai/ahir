@@ -33,7 +33,7 @@ entity SplitOperatorShared is
       min_clock_period: boolean := true;
       num_reqs : integer := 3; -- how many requesters?
       detailed_buffering_per_output : IntegerArray;
-      use_input_buffering: boolean := false
+      input_buffering: integer := 0
     );
   port (
     -- req/ack follow level protocol
@@ -74,7 +74,7 @@ begin  -- Behave
     -- report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
   -- end generate DebugGen;
   
-  NoInputBuffering: if not use_input_buffering generate 
+  NoInputBuffering: if input_buffering < 1 generate 
     imux: InputMuxBase
       generic map(iwidth => iwidth*num_reqs,
                 owidth => iwidth, 
@@ -94,14 +94,14 @@ begin  -- Behave
         reset      => reset);
   end generate NoInputBuffering;
 
-  YesInputBuffering: if use_input_buffering generate
+  YesInputBuffering: if input_buffering > 0 generate
     imuxWithInputBuf: InputMuxWithBuffering
       generic map(name => name & " imux " , 
 		iwidth => iwidth*num_reqs,
                 owidth => iwidth, 
                 twidth => tag_length,
                 nreqs => num_reqs,
-		buffering => 2,
+		buffering => input_buffering,
                 no_arbitration => no_arbitration,
                 registered_output => true)
       port map(
