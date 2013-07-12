@@ -27,7 +27,7 @@ end entity;
 
 architecture Base of LevelMux is
   
-  type OPWArray is array(integer range <>) of std_logic_vector(odata'range);
+  type OPWArray is array(integer range <>) of std_logic_vector(data_width-1 downto 0);
   signal data_array : OPWArray(num_reqs-1 downto 0);
   signal req_active, ack_sig , fair_reqs, fair_acks : std_logic_vector(num_reqs-1 downto 0);
   
@@ -38,8 +38,8 @@ begin
   -- input arbitration.
   fairify: NobodyLeftBehind generic map(num_reqs => num_reqs)
 		port map(clk => clk, reset => reset,
-				reqIn => req,
-				ackOut => ack,
+				reqIn => write_req,
+				ackOut => write_ack,
 				reqOut => fair_reqs,
 				ackIn => fair_acks);
   
@@ -59,11 +59,11 @@ begin
        ack_sig(I) <= req_active(I) and q_push_ack; 
        fair_acks(I) <= ack_sig(I);
 
-       process(data,req_active(I))
+       process(write_data,req_active(I))
          variable target: std_logic_vector(data_width-1 downto 0);
        begin
           if(req_active(I) = '1') then
-		Extract(data,I,target);
+		Extract(write_data,I,target);
 	  else
 		target := (others => '0');
 	  end if;	

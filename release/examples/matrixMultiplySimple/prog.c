@@ -70,7 +70,7 @@ void mmultiply()
 				float v = 0;
 				for(k = 0; k < ORDER; k ++)
 				{ 
-					loop_pipelining_on(1,1);
+					loop_pipelining_on(4,4);
 					v += a_matrix[i][k]*b_matrix[k][j];
 				}
 

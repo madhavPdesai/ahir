@@ -3,8 +3,9 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 
-entity CounterBase generic(data_width : integer);
-	port(clk, reset: in std_logic; count_out: std_logic_vector(data_width-1 downto 0));
+entity CounterBase is 
+	generic(data_width : integer);
+	port(clk, reset: in std_logic; count_out: out std_logic_vector(data_width-1 downto 0));
 end CounterBase;
 
 

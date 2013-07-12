@@ -1900,7 +1900,7 @@ package BaseComponents is
   end component;
 
   component CounterBase generic(data_width : integer);
-	port(clk, reset: in std_logic; count_out: std_logic_vector(data_width-1 downto 0));
+	port(clk, reset: in std_logic; count_out: out std_logic_vector(data_width-1 downto 0));
   end component;
 
   component UnloadBuffer 

@@ -7,6 +7,7 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
+use ahir.mem_component_pack.all;
 
 --
 -- at the input side, introduce a receive
@@ -56,6 +57,7 @@ architecture Vanilla of LoadReqSharedWithInputBuffers is
   constant registered_output : boolean := true; 
 
   type TagWordArray is array (natural range <>) of unsigned(tag_length-1 downto 0);
+  signal rx_tag_in: TagWordArray(num_reqs-1 downto 0);
 
   constant rx_word_length: integer := addr_width + tag_length + time_stamp_width;
   type RxBufWordArray is array (natural range <>) of std_logic_vector(addr_width + tag_length + time_stamp_width-1 downto 0);
@@ -65,6 +67,8 @@ architecture Vanilla of LoadReqSharedWithInputBuffers is
 
   signal imux_data_in_accept,  imux_data_in_valid: std_logic_vector(num_reqs-1 downto 0);
   signal imux_data_in: std_logic_vector((rx_word_length*num_reqs)-1 downto 0);
+
+  signal imux_data_out_accept,  imux_data_out_valid: std_logic;
   signal imux_data_out: std_logic_vector(rx_word_length-1 downto 0);
   
 begin  -- Behave
@@ -102,7 +106,7 @@ begin  -- Behave
 	rb: ReceiveBuffer generic map(name => name & " RxBuf " & Convert_To_String(I),
 					buffer_size => 2,
 					data_width => rx_word_length,
-					kill_counter_range := 655535)
+					kill_counter_range => 655535)
 		port map(write_req => reqL(I), 
 			 write_ack => ackL(I), 
 			 write_data => rx_data_in(I), 
@@ -113,10 +117,10 @@ begin  -- Behave
 			 clk => clk, 
 			 reset => reset);
 
-  end generate 
+  end generate RxGen;
 
   -- the multiplexor.
-  NonTrivTstamp: if time_stamp_width > 0) generate
+  NonTrivTstamp: if time_stamp_width > 0 generate
   	imux: merge_tree
     	   generic map(g_number_of_inputs => num_reqs,
 		g_data_width => rx_word_length,
