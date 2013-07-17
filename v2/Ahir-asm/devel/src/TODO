@@ -8,4 +8,31 @@ expression on prior expressions (when mapping
 expressions to vc).
 
 
+Conversion to VC model:
+-- For pipelined loops, ALL expressions will
+   need to sample their inputs and in parallel
+   produce their outputs.
+
+-- The reenable arcs for RAW dependencies will
+   need to have marking = 2.
+     a := (b + c)
+     d := (a + e)
+   The expression (a+e) uses a and has a 2-buffer,
+   so (b+c) can be evaluated twice before (a+e)
+   executes.
+
+   (this can be relaxed to 1 if bypasses are added
+    in the VHDL implementations)
+
+-- The reenable arcs for WAR dependencies will be
+   unchanged? No.
+      a := (b + c)
+       etc..
+      b := (d + e)
+   Since in the expression (b+c), the value of
+   b will be buffered, the reenable arc from b := (d+e)
+   to (b+c) can also have initial marking = 2.
+
+  
+
 

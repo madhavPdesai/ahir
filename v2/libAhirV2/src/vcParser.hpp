@@ -229,6 +229,9 @@ public:
 	public: vcType*  vc_PointerType(
 		vcSystem* sys
 	);
+	public: void vc_BufferingSpec(
+		vcSystem* sys
+	);
 public:
 	ANTLR_USE_NAMESPACE(antlr)RefAST getAST()
 	{
@@ -240,10 +243,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 136;
+	static const int NUM_TOKENS = 137;
 #else
 	enum {
-		NUM_TOKENS = 136
+		NUM_TOKENS = 137
 	};
 #endif
 	

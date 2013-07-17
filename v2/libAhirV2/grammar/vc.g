@@ -1322,6 +1322,47 @@ vc_RecordType[vcSystem* sys] returns [vcType* t]
 ;
 
 //----------------------------------------------------------------------------------------------------------
+// vc_BufferingSpec: BUFFERING (IN | OUT) SIMPLE_IDENTIFIER SIMPLE_IDENTIFIER SIMPLE_IDENTIFIER UINTEGER 
+//----------------------------------------------------------------------------------------------------------
+vc_BufferingSpec[vcSystem* sys]
+{
+	string mod_name;
+ 	string dpe_name;
+	string wire_name;
+	int buffering;
+	bool input_flag = true;
+}
+ :
+	BUFFERING mid: SIMPLE_IDENTIFER {mod_name = mid->getText();}
+		  (IN | (OUT {input_flag = false;}))
+		  dpe_id: SIMPLE_IDENTIFIER{dpe_name = dpe_id->getText();}
+		  wire_id: SIMPLE_IDENTIFIER {wire_name = wire_id->getText();}
+		  bid : UINTEGER {buffering = atoi(bid->getText().c_str());}
+		{
+			vcModule* m = sys->Find_Module(mod_name);
+			NOT_FOUND__("Module", m, mod_name, mid);
+			if(m != NULL)
+			{
+				vcDatapathElement* dpe = m->Get_Data_Path()->Find_DPE(dpe_name);
+				NOT_FOUND__("Datapath-element", dpe, dpe_name, dpe_id);
+				if(dpe != NULL)
+				{
+					vcWire* w = m->Get_Data_Path()->Find_Wire(wire_name);
+					NOT_FOUND__("wire", w, wire_name, wire_id);
+					if(w != NULL)
+					{
+						if(input_flag)
+							dpe->Set_Input_Buffering(w,buffering);
+						else
+							dpe->Set_Output_Buffering(w,buffering);
+
+					}
+				}
+			}
+		}
+;
+
+//----------------------------------------------------------------------------------------------------------
 // vc_SysAttributeSpec: ATTRIBUTE (MEMORYSPACE | MODULE) SIMPLE_IDENTIFIER (SIMPLE_IDENTIFIER IMPLIES QUOTED_STRING) 
 //----------------------------------------------------------------------------------------------------------
 vc_SysAttributeSpec[vcSystem* sys]

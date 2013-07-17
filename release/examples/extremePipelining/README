@@ -1,0 +1,14 @@
+In the "old mode", this pipeline runs at
+a cool rate of 1 job every 3 cycles.
+
+The main bottleneck is from the cycle
+
+    source update trig -> source update compl -> target sample trig -> target sample compl
+      ->o  source update trig.
+
+which has a delay of 3 cycles.
+
+By adding buffering to the target sample trig, we can reduce this
+cycle delay to 2 cycles, and by adding a 2-marked reenable this
+can lead to full rate performance.
+

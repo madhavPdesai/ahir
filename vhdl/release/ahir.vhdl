@@ -18721,6 +18721,8 @@ use ahir.FloatOperatorPackage.all;
 --
 -- input_1 uses the higher bits of data_in, and the (1) index of sample-req/ack.
 --
+-- note: if output is determined without needing an input, then that
+--       input is killed..
 entity BinaryLogicalOperator is
   generic
     (
@@ -19956,6 +19958,75 @@ library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+entity PhiWithBuffering is
+  generic (
+    name       : string;
+    num_reqs   : integer;
+    buffering  : integer;
+    data_width : integer);
+  port (
+    sample_req                 : in  BooleanArray(num_reqs-1 downto 0);
+    sample_ack                 : out Boolean;
+    update_req                 : in Boolean;
+    update_ack                 : out Boolean;
+    idata                      : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
+    odata                      : out std_logic_vector(data_width-1 downto 0);
+    clk, reset                 : in std_logic);
+end PhiWithBuffering;
+
+
+-- a single interlock buffer which is written into by
+-- one of num_reqs sources.
+architecture Behave of PhiWithBuffering is
+
+    signal ilb_write_data, mux_data_prereg, mux_data_reg: std_logic_vector(data_width-1 downto 0);
+    signal ilb_write_req : boolean;
+
+begin  -- Behave
+
+  ilb: InterlockBuffer generic map(name => name & " ilb " ,
+				buffer_size => buffering,
+				data_width => data_width)
+		port map(write_req => ilb_write_req,
+			 write_ack => sample_ack,
+			 write_data => ilb_write_data,
+			 read_req => update_req,
+			 read_ack => update_ack,
+			 read_data => odata,
+		         clk => clk,
+		         reset => reset);		
+
+  ilb_write_req <= OrReduce(sample_req);
+  ilb_write_data <= mux_data_prereg when ilb_write_req  else mux_data_reg;
+
+  -- mux with bypassed register.. to keep track of last word that was written
+  -- in
+  -- TODO: this is a bit expensive.. can we do better?
+  process(clk,reset,sample_req,ilb_write_req,idata)
+	variable mux_data : std_logic_vector(odata'length-1 downto 0);
+  begin
+     mux_data := MuxOneHot(idata,sample_req); 
+     mux_data_prereg <= mux_data;
+     if(clk'event and clk = '1') then
+          mux_data_reg <= (others => '0');
+     else
+         if(ilb_write_req) then
+            mux_data_reg <= mux_data;
+	 end if;
+     end if;
+  end process;
+
+end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
 
 --
 -- in pull_mode, rL/aL accepts data which is sent by rR/aR.
@@ -20326,6 +20397,55 @@ begin
 		end if;
 	end process;
 
+end arch;
+
+library ieee;
+use ieee.std_logic_1164.all;
+library ahir;
+use ahir.Types.all;
+use ahir.Utilities.all;
+use ahir.Subprograms.all;
+use ahir.BaseComponents.all;
+
+-- a simple slicing element.
+entity SliceWithBuffering is
+  generic(name: string; 
+	in_data_width : integer; 
+	high_index: integer; 
+	low_index : integer; 
+	buffering : integer);
+  port(din: in std_logic_vector(in_data_width-1 downto 0);
+       dout: out std_logic_vector(high_index-low_index downto 0);
+       sample_req: in boolean;
+       sample_ack: out boolean;
+       update_req: in boolean;
+       update_ack: out boolean;
+       clk,reset: in std_logic);
+end SliceWithBuffering;
+
+
+architecture arch of SliceWithBuffering is
+   signal ilb_data_in: std_logic_vector(high_index-low_index downto 0);
+begin
+
+  assert ((high_index < in_data_width) and (low_index >= 0) and (high_index >= low_index))
+    report "inconsistent slice parameters" severity failure;
+  
+
+  ilb_data_in <= din(high_index downto low_index);
+  ilb: InterlockBuffer 
+		generic map(name => name & " ilb ",
+				buffer_size => buffering,
+				data_width => (high_index - low_index) + 1)
+		port map(write_req => sample_req,
+			 write_ack => sample_ack,
+			 write_data => ilb_data_in,
+			 read_req  => update_req,
+			 read_ack => update_ack,
+			 read_data => dout,
+			 clk => clk, reset => reset);
+
+  
 end arch;
 
 library ieee;

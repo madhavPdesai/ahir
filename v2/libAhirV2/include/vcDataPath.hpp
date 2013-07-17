@@ -206,6 +206,10 @@ protected:
 
   vcWire* _guard_wire;
   bool    _guard_complement;
+
+  map<vcWire*, int> _input_wire_buffering_map;
+  map<vcWire*, int> _output_wire_buffering_map;
+
  public:
   vcDatapathElement(string id):vcRoot(id) {_guard_wire = NULL; _guard_complement = false;}
 
@@ -290,6 +294,32 @@ protected:
 			<< this->Get_Guard_Wire()->Get_Id() 
 			<< vcLexerKeywords[__RPAREN];
 	}
+  }
+
+  void Set_Input_Buffering(vcWire* w, int buffering)
+  {
+	_input_wire_buffering_map[w] = buffering;
+  }
+ 
+  int Get_Input_Buffering(vcWire* w)
+  {
+ 	if(_input_wire_buffering_map.find(w) != _input_wire_buffering_map.end())
+		return(_input_wire_buffering_map[w]);
+	else
+		return(0);
+  }
+
+  void Set_Output_Buffering(vcWire* w, int buffering)
+  {
+	_output_wire_buffering_map[w] = buffering;
+  }
+ 
+  int Get_Output_Buffering(vcWire* w)
+  {
+ 	if(_output_wire_buffering_map.find(w) != _output_wire_buffering_map.end())
+		return(_output_wire_buffering_map[w]);
+	else
+		return(0);
   }
 
   virtual void Print_VHDL_Logger(ostream& ofile);

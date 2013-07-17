@@ -14,6 +14,8 @@ use ahir.FloatOperatorPackage.all;
 --
 -- input_1 uses the higher bits of data_in, and the (1) index of sample-req/ack.
 --
+-- note: if output is determined without needing an input, then that
+--       input is killed..
 entity BinaryLogicalOperator is
   generic
     (
