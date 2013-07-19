@@ -684,6 +684,64 @@ public:
   friend class vcDataPath;
 };
 
+// new operators to support full-rate pipelining..
+class vcSliceWithInputBuffering: public vcSlice
+{
+public:
+  vcSliceWithInputBuffering(string id, vcWire* din, vcWire* dout, int high_index, int low_index):
+     vcSlice(id, din, dout, high_index, low_index) {}
+  virtual string Kind() {return("vcSliceWithInputBuffering");}
+  virtual void Print(ostream& ofile);
+  friend class vcDataPath;
+};
+
+class vcBinaryLogicalOperator: public vcBinarySplitOperator
+{
+ public:
+  vcBinaryLogicalOperator(string id):vcBinarySplitOperator(id) {}
+
+  virtual void Add_Reqs(vector<vcTransition*>& reqs);
+  virtual void Add_Acks(vector<vcTransition*>& acks);
+
+  virtual string Kind() {return("vcBinaryLogicalOperator");}
+  virtual void Print(ostream& ofile);
+  friend class vcDataPath;
+};
+
+class vcSelectWithInputBuffering: public vcSelect
+{
+  public:
+  vcSelectWithInputBuffering(string id, vcWire* sel, vcWire* x, vcWire* y, vcWire* z):
+  	vcSelect(id, sel, x, y, z) {}
+  virtual string Kind() {return("vcSelectWithInputBuffering");}
+  virtual void Print(ostream& ofile);
+  friend class vcDataPath;
+};
+
+class vcPhiWithBuffering: public vcPhi
+{
+
+  public:
+  vcPhiWithBuffering(string id, vector<vcWire*>& inwires, vcWire* outwire):
+   vcPhi(id, inwires, outwire) {}
+
+  virtual string Kind() {return("vcPhiWithBuffering");}
+  virtual void Print(ostream& ofile);
+  friend class vcDataPath;
+};
+
+class vcBinaryOperatorWithInputBuffering: public vcBinarySplitOperator
+{
+public:
+  vcBinaryOperatorWithInputBuffering(string id, string op_id, vcWire* x, vcWire* y, vcWire* z):
+  	vcBinarySplitOperator(id, op_id, x, y, z) {}
+
+  virtual void Add_Reqs(vector<vcTransition*>& reqs);
+  virtual void Add_Acks(vector<vcTransition*>& acks);
+
+  virtual string Kind() {return("vcBinaryOperatorWithInputBuffering");}
+  virtual void Print(ostream& ofile);
+};
 
 string Get_VHDL_Op_Id(string vc_op_id, vcType* in_type, vcType* out_type);
 bool Check_If_Equivalent(vector<vcWire*>& iw1, vector<vcWire*>& iw2);

@@ -136,7 +136,6 @@ void   vcSplitOperator::Add_Reqs(vector<vcTransition*>& reqs)
 {
   assert(reqs.size() == 2);
   this->_reqs = reqs;
-
 }
 
 void vcSplitOperator::Add_Acks(vector<vcTransition*>& acks)
@@ -1005,4 +1004,32 @@ bool Check_If_Equivalent(vector<vcWire*>& iw1, vector<vcWire*>& iw2)
     }
   
   return(ret_val);
+}
+
+void vcBinaryLogicalOperator::Add_Reqs(vector<vcTransition*>& reqs)
+{
+	// one sample-req per input, one update req.
+	assert(reqs.size() == 3);
+	_reqs = reqs;
+}
+
+void vcBinaryLogicalOperator::Add_Acks(vector<vcTransition*>& acks)
+{
+	// one sample-ack per input, one update ack.
+	assert(acks.size() == 3);
+	_acks = acks;
+}
+
+void vcBinaryOperatorWithInputBuffering::Add_Reqs(vector<vcTransition*>& reqs)
+{
+	// one sample-req per input, one update req.
+	assert(reqs.size() == 3);
+	_reqs = reqs;
+}
+
+void vcBinaryOperatorWithInputBuffering::Add_Acks(vector<vcTransition*>& acks)
+{
+	// one sample-ack per input, one update ack.
+	assert(acks.size() == 3);
+	_acks = acks;
 }
