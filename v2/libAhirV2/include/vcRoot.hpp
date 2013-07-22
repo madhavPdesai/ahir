@@ -129,7 +129,9 @@ enum vcLexerKeytags
     __FtoU_ASSIGN_OP ,
     __StoF_ASSIGN_OP ,
     __UtoF_ASSIGN_OP ,
-    __FtoF_ASSIGN_OP
+    __FtoF_ASSIGN_OP ,
+    __DEAD,
+    __HASH
   };
 
 static string vcLexerKeywords[] = 
@@ -260,7 +262,9 @@ static string vcLexerKeywords[] =
       "$U:=$F",
       "$F:=$S",
       "$F:=$U",
-      "$F:=$F"
+      "$F:=$F",
+      "$dead",
+      "#"
   };
 
 string To_VHDL(string x);

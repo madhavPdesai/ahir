@@ -455,6 +455,11 @@ vcBranch* vcDataPath::Find_Branch(string id) {return(__FIND(_branch_map,id));}
 void vcDataPath::Add_Register(vcRegister* p)  {_ADD(_register_map,p->Get_Id(), p);}
 vcRegister* vcDataPath::Find_Register(string id) {return(__FIND(_register_map,id));}
 
+void vcDataPath::Add_Interlock_Buffer(vcInterlockBuffer* p)  
+	{_ADD(_interlock_buffer_map,p->Get_Id(), p);}
+vcInterlockBuffer* vcDataPath::Find_Interlock_Buffer(string id) 
+	{return(__FIND(_interlock_buffer_map,id));}
+
 void vcDataPath::Add_Equivalence(vcEquivalence* p)  {_ADD(_equivalence_map,p->Get_Id(), p);}
 vcEquivalence* vcDataPath::Find_Equivalence(string id) {return(__FIND(_equivalence_map,id));}
 

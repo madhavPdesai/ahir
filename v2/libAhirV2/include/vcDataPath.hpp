@@ -20,6 +20,7 @@ class vcSplitOperator;
 class vcRegister;
 class vcDatapathElement;
 class vcModule;
+class vcInterlockBuffer;
 class vcPipe: public vcRoot
 {
 
@@ -347,6 +348,7 @@ class vcDataPath: public vcRoot
   map<string, vcBranch*> _branch_map;
   map<string, vcRegister*> _register_map;
   map<string, vcEquivalence*> _equivalence_map;
+  map<string, vcInterlockBuffer*> _interlock_buffer_map;
 
   // these operators can be shared..
   map<string, vcSplitOperator*> _split_operator_map;
@@ -405,6 +407,9 @@ class vcDataPath: public vcRoot
 
   void Add_Register(vcRegister* p);
   vcRegister* Find_Register(string id);
+
+  void Add_Interlock_Buffer(vcInterlockBuffer* p);
+  vcInterlockBuffer* Find_Interlock_Buffer(string id);
 
   void Add_Equivalence(vcEquivalence* p);
   vcEquivalence* Find_Equivalence(string id);

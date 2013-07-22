@@ -685,10 +685,21 @@ public:
 };
 
 // new operators to support full-rate pipelining..
-class vcSliceWithInputBuffering: public vcSlice
+class vcInterlockBuffer: public vcRegister
+{
+  public:
+  vcInterlockBuffer(string id, vcWire* x, vcWire* z):
+  	vcRegister(id, x, z) {}
+  virtual string Kind() {return("vcInterlockBuffer");}
+  virtual void Add_Reqs(vector<vcTransition*>& reqs);
+  virtual void Add_Acks(vector<vcTransition*>& acks);
+  virtual void Print(ostream& ofile);
+};
+
+class vcSliceWithBuffering: public vcSlice
 {
 public:
-  vcSliceWithInputBuffering(string id, vcWire* din, vcWire* dout, int high_index, int low_index):
+  vcSliceWithBuffering(string id, vcWire* din, vcWire* dout, int high_index, int low_index):
      vcSlice(id, din, dout, high_index, low_index) {}
   virtual string Kind() {return("vcSliceWithInputBuffering");}
   virtual void Print(ostream& ofile);
@@ -698,7 +709,8 @@ public:
 class vcBinaryLogicalOperator: public vcBinarySplitOperator
 {
  public:
-  vcBinaryLogicalOperator(string id):vcBinarySplitOperator(id) {}
+  vcBinaryLogicalOperator(string id, string op_id, vcWire* x, vcWire* y, vcWire* z):
+     vcBinarySplitOperator(id, op_id, x, y, z) {}
 
   virtual void Add_Reqs(vector<vcTransition*>& reqs);
   virtual void Add_Acks(vector<vcTransition*>& acks);

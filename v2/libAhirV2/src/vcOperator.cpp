@@ -1033,3 +1033,61 @@ void vcBinaryOperatorWithInputBuffering::Add_Acks(vector<vcTransition*>& acks)
 	assert(acks.size() == 3);
 	_acks = acks;
 }
+
+void vcInterlockBuffer::Add_Reqs(vector<vcTransition*>& reqs)
+{
+	assert (reqs.size() == 2);
+	_reqs = reqs;
+}
+
+void vcInterlockBuffer::Add_Acks(vector<vcTransition*>& acks)
+{
+	assert (acks.size() == 2);
+	_acks = acks;
+}
+
+void vcInterlockBuffer::Print(ostream& ofile)
+{
+  ofile << vcLexerKeywords[__HASH] << " ";
+  ofile << vcLexerKeywords[__ASSIGN_OP] << " " << this->Get_Label() << " "
+	<< vcLexerKeywords[__LPAREN] 
+	<< this->_din->Get_Id() << " "
+	<< vcLexerKeywords[__RPAREN] 
+	<< " "
+	<< vcLexerKeywords[__LPAREN] 
+	<< this->_dout->Get_Id()
+	<< vcLexerKeywords[__RPAREN] 
+	<< " ";
+  this->Print_Guard(ofile);
+  ofile << endl;
+}
+
+void vcSliceWithBuffering::Print(ostream& ofile)
+{
+  ofile << vcLexerKeywords[__HASH] << " ";
+  this->vcSlice::Print(ofile);
+}
+
+void vcBinaryLogicalOperator::Print(ostream& ofile)
+{
+  ofile << vcLexerKeywords[__HASH] << " ";
+  this->vcBinarySplitOperator::Print(ofile);
+}
+
+void vcBinaryOperatorWithInputBuffering::Print(ostream& ofile)
+{
+  ofile << vcLexerKeywords[__HASH] << " ";
+  this->vcBinarySplitOperator::Print(ofile);
+}
+
+void vcPhiWithBuffering::Print(ostream& ofile)
+{
+  ofile << vcLexerKeywords[__HASH] << " ";
+  this->vcPhi::Print(ofile);
+}
+
+void vcSelectWithInputBuffering::Print(ostream& ofile)
+{
+  ofile << vcLexerKeywords[__HASH] << " ";
+  this->vcSelect::Print(ofile);
+}

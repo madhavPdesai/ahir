@@ -607,7 +607,9 @@ vc_Datapath[vcSystem* sys,vcModule* m]
     : DATAPATH LBRACE ( vc_Wire_Declaration[sys,dp] | 
             vc_Guarded_Operator_Instantiation[sys,dp] |
             vc_Branch_Instantiation[dp] |
-            vc_Phi_Instantiation[dp] | vc_AttributeSpec[dp])*
+            vc_Phi_Instantiation[dp] | 
+            vc_PhiWithBuffering_Instantiation[dp] | 
+	    vc_AttributeSpec[dp])*
             RBRACE
  { m->Set_Data_Path(dp);}
 ;
@@ -640,7 +642,7 @@ vc_Guarded_Operator_Instantiation[vcSystem* sys, vcDataPath* dp]
 ;
 	
 //-----------------------------------------------------------------------------------------------------------------------------
-// vc_Operator_Instantiation: vc_BinaryOperator_Instantiation | vc_UnaryOperator_Instantiation | vc_Select_Instantiation | vc_Slice_Instantiation | vc_Register_Instantiation
+// vc_Operator_Instantiation: vc_BinaryOperator_Instantiation | vc_UnaryOperator_Instantiation | vc_Select_Instantiation | vc_Slice_Instantiation | vc_Register_Instantiation | vc_SelectWithInputBuffering_Instantiation | vc_SliceWithBuffering_Instantiation | vc_BinaryLogicalOperator_Instantiation | vc_BinaryOperatorWithInput_Buffering_Instantiation | vc_InterlockBuffer_Instantiaion 
 //----------------------------------------------------------------------------------------------------------------------------
 vc_Operator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
 :
@@ -649,7 +651,14 @@ vc_Operator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
         dpe=vc_Select_Instantiation[dp] |
         dpe=vc_Slice_Instantiation[dp] |
         dpe=vc_Register_Instantiation[dp] |
-        dpe=vc_Equivalence_Instantiation[dp] )
+        dpe=vc_Equivalence_Instantiation[dp] | 
+	//  the following are input buffered operators
+        //  will have a separate sample-req for each input.
+        dpe=vc_BinaryLogicalOperator_Instantiation[dp] |
+        dpe=vc_BinaryOperatorWithInputBuffering_Instantiation[dp] |
+        dpe=vc_SelectWithInputBuffering_Instantiation[dp] |
+        dpe=vc_SliceWithBuffering_Instantiation[dp] |
+        dpe=vc_InterlockBuffer_Instantiation[dp] )
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
@@ -717,6 +726,120 @@ vc_BinaryOperator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
 	dpe = (vcDatapathElement*)new_op; }
 ;
 
+//-------------------------------------------------------------------------------------------------------------------------
+// vc_BinaryLogicalOperator_Instantiation: HASH vc_BinaryOp vc_Label LPAREN vc_Identifier vc_Identifier RPAREN
+//                                             LPAREN vc_Identifier RPAREN
+//-------------------------------------------------------------------------------------------------------------------------
+vc_BinaryLogicalOperator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
+{
+  vcBinaryLogicalOperator* new_op = NULL;
+  string id;
+  string op_id;
+  string wid;
+  vcWire* x = NULL;
+  vcWire* y = NULL;
+  vcWire* z = NULL;
+  vcValue* val = NULL;
+}
+:
+ HASH 
+ (
+  (or_id:OR_OP  {op_id = or_id->getText();}) |
+  (and_id:AND_OP  {op_id = and_id->getText();}) |
+  (xor_id:XOR_OP  {op_id = xor_id->getText();}) |
+  (nor_id:NOR_OP  {op_id = nor_id->getText();}) |
+  (nand_id:NAND_OP  {op_id = nand_id->getText();}) |
+  (xnor_id:XNOR_OP  {op_id = xnor_id->getText();}) 
+ )
+ lpid: LPAREN 
+    wid = vc_Identifier 
+     {
+       x = dp->Find_Wire(wid);
+       NOT_FOUND__("wire",x,wid,lpid)
+      }
+    wid = vc_Identifier 
+     {
+       y = dp->Find_Wire(wid); 
+       NOT_FOUND__("wire", y,wid,lpid)
+
+     }
+ RPAREN
+ lpid2: LPAREN
+    wid = vc_Identifier 
+     {
+       z = dp->Find_Wire(wid);
+       NOT_FOUND__("wire", z,wid,lpid2)
+     }
+ RPAREN
+ { 
+   new_op = new vcBinaryLogicalOperator(id,op_id,x,y,z); 
+   dp->Add_Split_Operator(new_op); 
+   dpe = (vcDatapathElement*)new_op; 
+ }
+;
+
+//-------------------------------------------------------------------------------------------------------------------------
+// vc_BinaryOperatorWithInputBuffering_Instantiation: HASH vc_BinaryOp vc_Label LPAREN vc_Identifier vc_Identifier RPAREN
+//                                             LPAREN vc_Identifier RPAREN
+//-------------------------------------------------------------------------------------------------------------------------
+vc_BinaryOperatorWithInputBuffering_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
+{
+  vcBinaryOperatorWithInputBuffering* new_op = NULL;
+  string id;
+  string op_id;
+  string wid;
+  vcWire* x = NULL;
+  vcWire* y = NULL;
+  vcWire* z = NULL;
+  vcValue* val = NULL;
+}
+:
+  HASH 
+  ((plus_id: PLUS_OP {op_id = plus_id->getText();}) |
+  (minus_id: MINUS_OP {op_id = minus_id->getText();}) |
+  (mul_id: MUL_OP {op_id = mul_id->getText();}) |
+  (div_id:DIV_OP {op_id = div_id->getText();}) |
+  (shl_id:SHL_OP  {op_id = shl_id->getText();}) |
+  (shr_id:SHR_OP  {op_id = shr_id->getText();}) |
+  (gt_id:UGT_OP  {op_id = gt_id->getText();}) |
+  (ge_id:UGE_OP  {op_id = ge_id->getText();}) |
+  (eq_id:EQ_OP  {op_id = eq_id->getText();}) |
+  (lt_id:ULT_OP  {op_id = lt_id->getText();}) |
+  (le_id:ULE_OP  {op_id = le_id->getText();}) |
+  (neq_id:NEQ_OP  {op_id = neq_id->getText();}) |
+  (bitsel_id:BITSEL_OP  {op_id = bitsel_id->getText();}) |
+  (concat_id:CONCAT_OP  {op_id = concat_id->getText();}) |
+  (shra_id:SHRA_OP  {op_id = shra_id->getText();}) |
+  (sgt_id:SGT_OP  {op_id = sgt_id->getText();}) |
+  (sge_id:SGE_OP  {op_id = sge_id->getText();}) |
+  (slt_id:SLT_OP  {op_id = slt_id->getText();}) |
+  (sle_id:SLE_OP  {op_id = sle_id->getText();})) id = vc_Label 
+ lpid: LPAREN 
+    wid = vc_Identifier 
+     {
+       x = dp->Find_Wire(wid);
+       NOT_FOUND__("wire",x,wid,lpid)
+      }
+    wid = vc_Identifier 
+     {
+       y = dp->Find_Wire(wid); 
+       NOT_FOUND__("wire", y,wid,lpid)
+
+     }
+ RPAREN
+ lpid2: LPAREN
+    wid = vc_Identifier 
+     {
+       z = dp->Find_Wire(wid);
+       NOT_FOUND__("wire", z,wid,lpid2)
+     }
+ RPAREN
+ { 
+	new_op = new vcBinaryOperatorWithInputBuffering(id,op_id,x,y,z); 
+	dp->Add_Split_Operator(new_op); 
+	dpe = (vcDatapathElement*)new_op; 
+ }
+;
 
 //-------------------------------------------------------------------------------------------------------------------------
 // vc_UnaryOperator_Instantiation: vc_UnaryOp vc_Label LPAREN vc_Identifier RPAREN
@@ -815,6 +938,39 @@ vc_Select_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
  }
 ;
 
+//-------------------------------------------------------------------------------------------------------------------------
+// vc_SelectWithInputBuffering_Instantiation: HASH SELECT_OP vc_Label LPAREN vc_Identifier vc_Identifier vc_Identifier RPAREN
+//                                             LPAREN vc_Identifier RPAREN
+//-------------------------------------------------------------------------------------------------------------------------
+vc_SelectWithInputBuffering_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
+{
+  vcSelectWithInputBuffering* new_op = NULL;
+  string id;
+  string op_id;
+  string wid;
+  vcWire* sel = NULL;
+  vcWire* x = NULL;
+  vcWire* y = NULL;
+  vcWire* z = NULL;
+  vcValue* val = NULL;
+}
+:
+ HASH 
+ sel_id:SELECT_OP id = vc_Label
+ LPAREN 
+    wid = vc_Identifier {sel = dp->Find_Wire(wid); NOT_FOUND__("wire",sel,wid,sel_id) }
+    wid = vc_Identifier {x = dp->Find_Wire(wid); NOT_FOUND__("wire",x,wid,sel_id) }
+    wid = vc_Identifier {y = dp->Find_Wire(wid); NOT_FOUND__("wire",y,wid,sel_id) }
+ RPAREN
+ LPAREN
+    wid = vc_Identifier {z = dp->Find_Wire(wid); NOT_FOUND__("wire",z,wid,sel_id) }
+ RPAREN
+ { 
+	new_op = new vcSelectWithInputBuffering(id,sel,x,y,z); 
+	dp->Add_Select(new_op);   
+	dpe = (vcDatapathElement*) new_op;
+ }
+;
 
 //-------------------------------------------------------------------------------------------------------------------------
 // vc_Slice_Instantiation: SLICE_OP vc_Label LPAREN vc_Identifier UINTEGER UINTEGER RPAREN
@@ -846,6 +1002,37 @@ vc_Slice_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
  }
 ;
 
+//-------------------------------------------------------------------------------------------------------------------------
+// vc_SliceWithBuffering_Instantiation: HASH SLICE_OP vc_Label LPAREN vc_Identifier UINTEGER UINTEGER RPAREN
+//                                             LPAREN vc_Identifier RPAREN
+//-------------------------------------------------------------------------------------------------------------------------
+vc_SliceWithBuffering_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
+{
+  vcSliceWithBuffering* new_op = NULL;
+  string id;
+  string wid;
+  int h, l;
+  vcWire* sel = NULL;
+  vcWire* din = NULL;
+  vcWire* dout = NULL;
+}
+:
+ HASH 
+ slice_id:SLICE_OP id = vc_Label
+ LPAREN 
+        wid = vc_Identifier {din = dp->Find_Wire(wid); NOT_FOUND__("wire",din,wid,slice_id) }
+        hid: UINTEGER { h = atoi(hid->getText().c_str()); }
+        lid: UINTEGER { l = atoi(lid->getText().c_str()); }
+ RPAREN
+ LPAREN
+    wid = vc_Identifier {dout = dp->Find_Wire(wid); NOT_FOUND__("wire",dout,wid,slice_id) }
+ RPAREN
+ { 
+	new_op = new vcSliceWithBuffering(id,din,dout,h,l); dp->Add_Slice(new_op);    
+	dpe = (vcDatapathElement*) new_op;
+ }
+;
+
 
 //-------------------------------------------------------------------------------------------------------------------------
 // vc_Register_Instantiation: ASSIGN_OP vc_Label LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN
@@ -868,6 +1055,31 @@ vc_Register_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
    {  
       new_reg = new vcRegister(id, x, y); dp->Add_Register(new_reg);
 	dpe = (vcDatapathElement*) new_reg;
+   }
+;
+ 
+//-------------------------------------------------------------------------------------------------------------------------
+// vc_InterlockBuffer_Instantiation: HASH ASSIGN_OP vc_Label LPAREN vc_Identifier RPAREN LPAREN vc_Identifier RPAREN
+
+//-------------------------------------------------------------------------------------------------------------------------
+vc_InterlockBuffer_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
+{
+  vcInterlockBuffer* new_reg = NULL;
+  vcWire* x;
+  vcWire* y;
+  string id;
+  string din;
+  string dout;
+}: HASH  as_id: ASSIGN_OP id = vc_Label LPAREN din = vc_Identifier { x = dp->Find_Wire(din); 
+                               NOT_FOUND__("wire",x,din,as_id) }
+                          RPAREN
+                          LPAREN dout = vc_Identifier { y = dp->Find_Wire(dout); 
+                               NOT_FOUND__("wire",y,dout,as_id) }
+                          RPAREN
+   {  
+      new_reg = new vcInterlockBuffer(id, x, y); 
+      dp->Add_Interlock_Buffer(new_reg);
+      dpe = (vcDatapathElement*) new_reg;
    }
 ;
  
@@ -1085,6 +1297,32 @@ vc_Phi_Instantiation[vcDataPath* dp]
          outwire = dp->Find_Wire(id); 
          NOT_FOUND__("wire",outwire,id,p_id);
          phi = new vcPhi(lbl,inwires, outwire); 
+         dp->Add_Phi(phi);
+    }
+  RPAREN
+;
+
+//-------------------------------------------------------------------------------------------------------------------------
+// vc_PhiWithBuffering_Instantiation: HASH PHI vc_Label LPAREN ( vc_Identifier )+ RPAREN LPAREN vc_Identifier RPAREN
+//-------------------------------------------------------------------------------------------------------------------------
+vc_PhiWithBuffering_Instantiation[vcDataPath* dp]
+{
+  string lbl;
+  string id;
+  vcWire* tw;
+  vcWire* outwire;
+  vcPhiWithBuffering* phi;
+  vector<vcWire*> inwires;
+}
+: HASH p_id:PHI lbl = vc_Label LPAREN ( id = vc_Identifier { tw = dp->Find_Wire(id); 
+         NOT_FOUND__("wire",tw,id,p_id);
+         inwires.push_back(tw);})+ RPAREN
+   LPAREN
+   id = vc_Identifier 
+    { 
+         outwire = dp->Find_Wire(id); 
+         NOT_FOUND__("wire",outwire,id,p_id);
+         phi = new vcPhiWithBuffering(lbl,inwires, outwire); 
          dp->Add_Phi(phi);
     }
   RPAREN
@@ -1502,6 +1740,7 @@ PHISEQUENCER  : "$phisequencer";
 TRANSITIONMERGE     : "$transitionmerge";
 
 
+
 // Special symbols
 COLON		 : ':' ; // label separator
 COMMA            : ',' ; // argument-separator, index-separator etc.
@@ -1583,6 +1822,9 @@ FtoF_ASSIGN_OP : "$F:=$F";
 
 // dead transitions..
 DEAD : "$dead";
+
+// input buffering indicator..
+HASH: "#";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

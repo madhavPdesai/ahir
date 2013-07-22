@@ -166,6 +166,9 @@ public:
 	public: void vc_Phi_Instantiation(
 		vcDataPath* dp
 	);
+	public: void vc_PhiWithBuffering_Instantiation(
+		vcDataPath* dp
+	);
 	public: vcDatapathElement*  vc_Operator_Instantiation(
 		vcDataPath* dp
 	);
@@ -194,6 +197,21 @@ public:
 		vcDataPath* dp
 	);
 	public: vcDatapathElement*  vc_Equivalence_Instantiation(
+		vcDataPath* dp
+	);
+	public: vcDatapathElement*  vc_BinaryLogicalOperator_Instantiation(
+		vcDataPath* dp
+	);
+	public: vcDatapathElement*  vc_BinaryOperatorWithInputBuffering_Instantiation(
+		vcDataPath* dp
+	);
+	public: vcDatapathElement*  vc_SelectWithInputBuffering_Instantiation(
+		vcDataPath* dp
+	);
+	public: vcDatapathElement*  vc_SliceWithBuffering_Instantiation(
+		vcDataPath* dp
+	);
+	public: vcDatapathElement*  vc_InterlockBuffer_Instantiation(
 		vcDataPath* dp
 	);
 	public: vcDatapathElement*  vc_Load_Instantiation(
@@ -243,10 +261,10 @@ protected:
 private:
 	static const char* tokenNames[];
 #ifndef NO_STATIC_CONSTS
-	static const int NUM_TOKENS = 137;
+	static const int NUM_TOKENS = 138;
 #else
 	enum {
-		NUM_TOKENS = 137
+		NUM_TOKENS = 138
 	};
 #endif
 	
@@ -312,6 +330,12 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_29;
 	static const unsigned long _tokenSet_30_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_30;
+	static const unsigned long _tokenSet_31_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_31;
+	static const unsigned long _tokenSet_32_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_32;
+	static const unsigned long _tokenSet_33_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_33;
 };
 
 #endif /*INC_vcParser_hpp_*/
