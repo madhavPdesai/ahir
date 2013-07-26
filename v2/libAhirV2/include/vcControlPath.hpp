@@ -283,7 +283,9 @@ enum vcTransitionType
   {
     _IN_TRANSITION,
     _OUT_TRANSITION,
-    _DEAD_TRANSITION
+    _DEAD_TRANSITION,
+    _TIE_HIGH_TRANSITION,
+    _LEFT_OPEN_TRANSITION
   };
 class vcTransition: public vcCPElement
 {
@@ -291,6 +293,8 @@ class vcTransition: public vcCPElement
   bool _is_input;
   bool _is_output;
   bool _is_dead;
+  bool _is_tied_high;
+  bool _is_left_open;
   bool _is_entry_transition;
   bool _is_linked_to_non_local_dpe;
 
@@ -305,6 +309,12 @@ public:
 
   void Set_Is_Dead(bool v) {this->_is_dead = v;}
   bool Get_Is_Dead() {return(this->_is_dead);}
+
+  void Set_Is_Left_Open(bool v) {this->_is_left_open = v;}
+  bool Get_Is_Left_Open() {return(this->_is_left_open);}
+
+  void Set_Is_Tied_High(bool v) {this->_is_tied_high = v;}
+  bool Get_Is_Tied_High() {return(this->_is_tied_high);}
 
   void Set_Is_Entry_Transition(bool v) {this->_is_entry_transition = v;}
   bool Get_Is_Entry_Transition() {return(this->_is_entry_transition);}
@@ -790,11 +800,14 @@ class vcCPElementGroup: public vcRoot
   bool _has_input_transition;
   bool _has_output_transition;
   bool _has_dead_transition;
+  bool _has_tied_high_transition;
+  bool _has_left_open_transition;
 
   bool _is_join;
   bool _is_fork;
   bool _is_merge;
   bool _is_branch;
+
 
   bool _is_cp_entry;
 
@@ -973,6 +986,8 @@ public:
   void Print_Compatibility_Labels(ostream& ofile);
 
   bool Are_Compatible(vcCompatibilityLabel* u, vcCompatibilityLabel* v);
+  bool Are_Compatible(vector<vcCompatibilityLabel*>& l1, vector<vcCompatibilityLabel*>& l2);
+
   bool Lesser(vcCompatibilityLabel* u, vcCompatibilityLabel* v);
   bool Greater(vcCompatibilityLabel* u, vcCompatibilityLabel* v);
 

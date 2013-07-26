@@ -372,7 +372,7 @@ package BaseComponents is
         no_arbitration: boolean := false;
         min_clock_period: boolean := false;
         num_reqs : integer;  -- how many requesters?
-        input_buffering: integer;
+        detailed_buffering_per_input: IntegerArray;
         detailed_buffering_per_output: IntegerArray
         );
 
@@ -1369,6 +1369,7 @@ package BaseComponents is
       no_arbitration: boolean := true;
       num_reqs : integer := 3; -- how many requesters?
       use_input_buffering: boolean;
+      detailed_buffering_per_input : IntegerArray;
       detailed_buffering_per_output : IntegerArray
       );
     port (
@@ -1549,6 +1550,42 @@ package BaseComponents is
   ----------------------------------------------------------------------------------------
   -- components with per-input buffering
   ----------------------------------------------------------------------------------------
+
+  component UnsharedOperatorWithBuffering 
+    generic
+    (
+      name   : string;
+      operator_id   : string;          -- operator id
+      input1_is_int : Boolean := true; -- false means float
+      input1_characteristic_width : integer := 0; -- characteristic width if input1 is float
+      input1_mantissa_width       : integer := 0; -- mantissa width if input1 is float
+      iwidth_1      : integer;    -- width of input1
+      input2_is_int : Boolean := true; -- false means float
+      input2_characteristic_width : integer := 0; -- characteristic width if input2 is float
+      input2_mantissa_width       : integer := 0; -- mantissa width if input2 is float
+      iwidth_2      : integer;    -- width of input2
+      num_inputs    : integer := 2;    -- can be 1 or 2.
+      output_is_int : Boolean := true;  -- false means that the output is a float
+      output_characteristic_width : integer := 0;
+      output_mantissa_width       : integer := 0;
+      owidth        : integer;          -- width of output.
+      constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
+      constant_width : integer;
+      buffering      : integer;
+      use_constant  : boolean := false
+      );
+    port (
+      -- req -> ack follow pulse protocol
+      reqL:  in Boolean;
+      ackL : out Boolean;
+      reqR : in Boolean;
+      ackR:  out Boolean;
+      -- operands.
+      dataL      : in  std_logic_vector(iwidth_1 + iwidth_2 - 1 downto 0);
+      dataR      : out std_logic_vector(owidth-1 downto 0);
+      clk, reset : in  std_logic);
+  end component;
+
   component BinaryLogicalOperator 
   generic
     (
@@ -1662,6 +1699,7 @@ package BaseComponents is
 	tag_length: integer := 1;
 	no_arbitration: Boolean := false;
         min_clock_period: Boolean := true;
+        input_buffering: IntegerArray;
 	time_stamp_width: integer := 0
     );
     port (
@@ -1714,7 +1752,8 @@ package BaseComponents is
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
 	no_arbitration: Boolean := false;
-        min_clock_period: Boolean := true        
+        min_clock_period: Boolean := true;
+        input_buffering: IntegerArray
     );
     port (
     -- req/ack follow pulse protocol
@@ -1796,13 +1835,17 @@ package BaseComponents is
   -- full-rate versions of I/O ports
   -------------------------------------------------------------------------------------
   component InputPortFullRate 
-    generic (num_reqs: integer := 5;
-	   data_width: integer := 8;
+    generic(name : string;
+	   num_reqs: integer;
+	   data_width: integer;
+           output_buffering: IntegerArray;
 	   no_arbitration: boolean := false);
     port (
     -- pulse interface with the data-path
-    req        : in  BooleanArray(num_reqs-1 downto 0);
-    ack        : out BooleanArray(num_reqs-1 downto 0);
+    sample_req        : in  BooleanArray(num_reqs-1 downto 0);
+    sample_ack        : out BooleanArray(num_reqs-1 downto 0);
+    update_req        : in  BooleanArray(num_reqs-1 downto 0);
+    update_ack        : out BooleanArray(num_reqs-1 downto 0);
     data       : out std_logic_vector((num_reqs*data_width)-1 downto 0);
     -- ready/ready interface with outside world
     oreq       : out std_logic;
@@ -1812,7 +1855,8 @@ package BaseComponents is
   end component;
 
   component OutputPortFullRate 
-    generic(num_reqs: integer;
+    generic(name : string;
+	  num_reqs: integer;
 	  data_width: integer;
 	  no_arbitration: boolean := false);
     port (
@@ -1834,7 +1878,7 @@ package BaseComponents is
 	   owidth: integer := 10;
 	   twidth: integer := 3;
 	   nreqs: integer := 1;
-	   buffering: integer;
+	   buffering: IntegerArray;
 	   no_arbitration: Boolean := false;
 	   registered_output: Boolean := true);
     port (
@@ -1881,6 +1925,20 @@ package BaseComponents is
         rR : out std_logic;
         aL : out boolean;
         aR : in std_logic;
+        clk : in std_logic;
+        reset : in std_logic);
+  end component;
+
+  component PulseToLevelHalfInterlockBuffer 
+    generic (name : string; data_width: integer; buffer_size : integer);
+    port( sample_req : in boolean;
+        sample_ack : out boolean;
+        has_room : out std_logic;
+        write_enable : in  std_logic;
+        write_data : in std_logic_vector(data_width-1 downto 0);
+        update_req : in boolean;
+        update_ack : out boolean;
+        read_data : out std_logic_vector(data_width-1 downto 0);
         clk : in std_logic;
         reset : in std_logic);
   end component;

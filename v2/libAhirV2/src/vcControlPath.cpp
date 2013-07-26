@@ -570,7 +570,18 @@ void vcTransition::Print_VHDL(ostream& ofile)
       ofile << this->Get_Exit_Symbol() << " <= false;" << endl;
       return;
   }
-
+  if(this->Get_Is_Tied_High())
+  {
+	// it will never ever fire... tied to true.
+      ofile << this->Get_Exit_Symbol() << " <= true;" << endl;
+      return;
+  }
+  if(this->Get_Is_Left_Open())
+  {
+	// it is only driven, not used.
+      ofile << "-- left open:  " << this->Get_Exit_Symbol()  << endl;
+      return;
+  }
 
   
   // explicit predecessors.. (other than "implicit" ones).
@@ -3397,6 +3408,24 @@ bool vcControlPath::Are_Compatible(vcCompatibilityLabel* u, vcCompatibilityLabel
     return(false);
 }
 
+bool vcControlPath::Are_Compatible(vector<vcCompatibilityLabel*>& l1, vector<vcCompatibilityLabel*>& l2)
+{
+	bool ret_val = true;
+	for(int i = 0, i_f = l1.size() ; i < i_f; i++)
+	{
+		vcCompatibilityLabel* u = l1[i];
+		for(int j = 0, j_f = l1.size() ; j < j_f; j++)
+		{
+			vcCompatibilityLabel* v = l2[i];
+			if(!this->Are_Compatible(u,v))
+			{
+				ret_val = false;
+				break;
+			}
+		}
+	}
+	return(ret_val);
+}
 
 bool vcControlPath::Lesser(vcCompatibilityLabel* u, vcCompatibilityLabel* v)
 {

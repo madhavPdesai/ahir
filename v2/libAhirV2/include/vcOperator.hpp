@@ -103,6 +103,10 @@ public:
   virtual vcType* Get_Output_Type() {assert(0);}
 
   virtual void Print_VHDL_Logger(ostream& ofile);
+
+  virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering) { assert(0);}
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering) { assert(0);};
+
   friend class vcDataPath;
 };
 
@@ -143,11 +147,15 @@ public:
     for(int idx = 0; idx < _in_wires.size(); idx++)
       inwires.push_back(_in_wires[idx]);
   }
+ 
   virtual void Append_Outwires(vector<vcWire*>& outwires) 
   {
     for(int idx = 0; idx < _out_wires.size(); idx++)
       outwires.push_back(_out_wires[idx]);
   }
+
+  virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering);
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering);
 
   virtual bool Is_Local_To_Datapath()
   {
@@ -197,6 +205,17 @@ public:
   {
     inwires.push_back(_data);
   }
+  virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering)
+  {
+	// NOTE: on output ports, there should be no
+	//       buffering, because this would lead
+        //       to augmented pipe storage.
+	inwire_buffering.push_back(0);
+  }
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering)
+  {
+	// nothing..
+  }
 
   virtual int Get_Number_Of_Input_Wires() { return(1); }
   virtual int Get_Number_Of_Output_Wires() { return(0);}
@@ -224,6 +243,7 @@ public:
   {
     outwires.push_back(_data);
   }
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering);
 
   virtual int Get_Number_Of_Input_Wires() { return(0); }
   virtual int Get_Number_Of_Output_Wires() { return(1);}
@@ -232,6 +252,9 @@ public:
 	{ if(idx == 0) return(_data); else return(NULL);}
   virtual vcWire* Get_Input_Wire(int idx) 
 	{ return(NULL);}
+
+  virtual void Add_Reqs(vector<vcTransition*>& reqs);
+  virtual void Add_Acks(vector<vcTransition*>& acks);
 
   virtual string Get_Logger_Description() {return (" PipeRead from " + _pipe->Get_Id()); }
   friend class vcDataPath;
@@ -293,6 +316,8 @@ public:
   {
     outwires.push_back(_data);
   }
+  virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering);
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering);
 
   friend class vcDataPath;
 };
@@ -322,6 +347,12 @@ public:
     // nothing.
   }
 
+  virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering);
+
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering) 
+  {
+    // nothing.
+  }
   virtual vcWire* Get_Output_Wire(int idx) 
 	{ return(NULL);}
   virtual vcWire* Get_Input_Wire(int idx) 
@@ -355,6 +386,7 @@ public:
   virtual vcWire* Get_Output_Wire(int idx) 
 	{ if(idx == 0) return(_outwire); else return(NULL);}
 
+  virtual void Print_VHDL(ostream& ofile);
   friend class vcDataPath;
 };
 
@@ -377,7 +409,7 @@ protected:
 public:
 
   vcBinarySplitOperator(string id, string op_id, vcWire* x, vcWire* y, vcWire* z);
-  string Get_Op_Id() {return(this->_op_id);}
+  virtual string Get_Op_Id() {return(this->_op_id);}
 
   virtual vcType* Get_Input_Type() {return(this->_x->Get_Type());}
 
@@ -411,6 +443,8 @@ public:
   {
     outwires.push_back(_z);
   }
+  virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering);
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering);
 
   vcWire* Get_X() {return(_x);}
   vcWire* Get_Y() {return(_y);}
@@ -420,67 +454,6 @@ public:
   bool Is_Int_Add_Op();
   virtual string Get_Operator_Type() {return(this->Kind() + " (" + this->_op_id + ")");}
 
-  friend class vcDataPath;
-};
-
-// binary operator can also be non-split, that is
-// with a single req/ack pair.
-class vcBinaryOperator: public vcOperator
-{
-protected:
-  string _op_id;
-
-  // two inputs
-  vcWire* _x;
-  vcWire* _y;
-  
-  // single output
-  vcWire* _z;
-
-public:
-
-  vcBinaryOperator(string id, string op_id, vcWire* x, vcWire* y, vcWire* z);
-  string Get_Op_Id() {return(this->_op_id);}
-
-  virtual vcType* Get_Input_Type() {return(this->_x->Get_Type());}
-
-  vcType* Get_X_Input_Type() {return(this->_x->Get_Type());}
-  vcType* Get_Y_Input_Type() {return(this->_y->Get_Type());}
-  virtual vcType* Get_Output_Type() {return(this->_z->Get_Type());}
-
-  virtual void Print(ostream& ofile);
-
-  virtual void Check_Consistency() {assert(0);}
-  virtual string Kind() {return("vcBinaryOperator");}
-
-  virtual bool Is_Shareable_With(vcDatapathElement* other) 
-  { 
-    return(false); 
-  }
-
-  virtual int Get_Number_Of_Input_Wires() { return(2); }
-  virtual int Get_Number_Of_Output_Wires() { return(1);}
-
-  virtual vcWire* Get_Input_Wire(int idx) 
-	{ if(idx == 0) return(_x); else if(idx == 1) return(_y); else return (NULL);}
-  virtual vcWire* Get_Output_Wire(int idx) 
-	{ if(idx == 0) return(_z); else return(NULL);}
-
-  virtual void Append_Inwires(vector<vcWire*>& inwires) 
-  {
-    inwires.push_back(_x);
-    inwires.push_back(_y);
-  }
-  virtual void Append_Outwires(vector<vcWire*>& outwires) 
-  {
-    outwires.push_back(_z);
-  }
-
-  vcWire* Get_X() {return(_x);}
-  vcWire* Get_Y() {return(_y);}
-  vcWire* Get_Z() {return(_z);}
-
-  virtual string Get_Operator_Type() {return(this->Kind() + " (" + this->_op_id + ")");}
   friend class vcDataPath;
 };
 
@@ -526,6 +499,8 @@ public:
   {
     outwires.push_back(_z);
   }
+  virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering);
+  virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering);
 
   virtual vcType* Get_Input_Type() {return(this->_x->Get_Type());}
 
@@ -535,56 +510,6 @@ public:
   friend class vcDataPath;
 };
 
-
-// NOT is the only one of this type
-class vcUnaryOperator: public vcOperator
-{
-protected:
-  string _op_id;
-
-  // single input
-  vcWire* _x;
-  
-  // single output
-  vcWire* _z;
-
-public:
-
-  vcUnaryOperator(string id, string op_id, vcWire* x, vcWire* z);
-  string Get_Op_Id() {return(this->_op_id);}
-
-  virtual bool Is_Shareable_With(vcDatapathElement* other) {return(false);}
-
-  virtual void Print(ostream& ofile);
-  virtual void Check_Consistency() {assert(0);}
-  virtual string Kind() {return("vcUnaryOperator");}
-
-  virtual string Get_Operator_Type() {return(this->Kind() + " (" + this->_op_id + ")");}
-
-  virtual int Get_Number_Of_Input_Wires() { return(1); }
-  virtual int Get_Number_Of_Output_Wires() { return(1);}
-
-  virtual vcWire* Get_Input_Wire(int idx) 
-	{ if(idx == 0) return(_x); else return(NULL);}
-  virtual vcWire* Get_Output_Wire(int idx) 
-	{ if(idx == 0) return(_z); else return(NULL);}
-
-  virtual void Append_Inwires(vector<vcWire*>& inwires) 
-  {
-    inwires.push_back(_x);
-  }
-  virtual void Append_Outwires(vector<vcWire*>& outwires) 
-  {
-    outwires.push_back(_z);
-  }
-
-  virtual vcType* Get_Input_Type() {return(this->_x->Get_Type());}
-
-  vcType* Get_X_Input_Type() {return(this->_x->Get_Type());}
-  virtual vcType* Get_Output_Type() {return(this->_z->Get_Type());}
-
-  friend class vcDataPath;
-};
 
 class vcSelect: public vcOperator
 {
@@ -611,6 +536,7 @@ public:
   virtual vcWire* Get_Output_Wire(int idx) 
 	{ if(idx == 0) return(_z); else return(NULL);}
 
+  virtual void Print_VHDL(ostream& ofile);
   friend class vcDataPath;
 };
 
@@ -648,6 +574,7 @@ public:
   vcRegister(string id, vcWire* din, vcWire* dout);
   virtual string Kind() {return("vcRegister");}
   virtual void Print(ostream& ofile);
+  virtual void Print_VHDL(ostream& ofile);
 
   virtual int Get_Number_Of_Input_Wires() { return(1); }
   virtual int Get_Number_Of_Output_Wires() { return(1);}
@@ -681,6 +608,8 @@ public:
 	{ if(idx == 0) return(_din); else return(NULL);}
   virtual vcWire* Get_Output_Wire(int idx) 
 	{ if(idx == 0) return(_dout); else return(NULL);}
+
+  virtual void Print_VHDL(ostream& ofile);
   friend class vcDataPath;
 };
 
@@ -694,6 +623,7 @@ class vcInterlockBuffer: public vcRegister
   virtual void Add_Reqs(vector<vcTransition*>& reqs);
   virtual void Add_Acks(vector<vcTransition*>& acks);
   virtual void Print(ostream& ofile);
+  virtual void Print_VHDL(ostream& ofile);
 };
 
 class vcSliceWithBuffering: public vcSlice
@@ -703,6 +633,11 @@ public:
      vcSlice(id, din, dout, high_index, low_index) {}
   virtual string Kind() {return("vcSliceWithInputBuffering");}
   virtual void Print(ostream& ofile);
+  virtual void Print_VHDL(ostream& ofile);
+
+  virtual void Add_Reqs(vector<vcTransition*>& reqs);
+  virtual void Add_Acks(vector<vcTransition*>& acks);
+
   friend class vcDataPath;
 };
 
@@ -717,6 +652,7 @@ class vcBinaryLogicalOperator: public vcBinarySplitOperator
 
   virtual string Kind() {return("vcBinaryLogicalOperator");}
   virtual void Print(ostream& ofile);
+  virtual void Print_VHDL(ostream& ofile);
   friend class vcDataPath;
 };
 
@@ -727,6 +663,7 @@ class vcSelectWithInputBuffering: public vcSelect
   	vcSelect(id, sel, x, y, z) {}
   virtual string Kind() {return("vcSelectWithInputBuffering");}
   virtual void Print(ostream& ofile);
+  virtual void Print_VHDL(ostream& ofile);
   friend class vcDataPath;
 };
 

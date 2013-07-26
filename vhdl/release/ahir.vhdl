@@ -2335,7 +2335,7 @@ package BaseComponents is
         no_arbitration: boolean := false;
         min_clock_period: boolean := false;
         num_reqs : integer;  -- how many requesters?
-        input_buffering: integer;
+        detailed_buffering_per_input: IntegerArray;
         detailed_buffering_per_output: IntegerArray
         );
 
@@ -3332,6 +3332,7 @@ package BaseComponents is
       no_arbitration: boolean := true;
       num_reqs : integer := 3; -- how many requesters?
       use_input_buffering: boolean;
+      detailed_buffering_per_input : IntegerArray;
       detailed_buffering_per_output : IntegerArray
       );
     port (
@@ -3512,6 +3513,42 @@ package BaseComponents is
   ----------------------------------------------------------------------------------------
   -- components with per-input buffering
   ----------------------------------------------------------------------------------------
+
+  component UnsharedOperatorWithBuffering 
+    generic
+    (
+      name   : string;
+      operator_id   : string;          -- operator id
+      input1_is_int : Boolean := true; -- false means float
+      input1_characteristic_width : integer := 0; -- characteristic width if input1 is float
+      input1_mantissa_width       : integer := 0; -- mantissa width if input1 is float
+      iwidth_1      : integer;    -- width of input1
+      input2_is_int : Boolean := true; -- false means float
+      input2_characteristic_width : integer := 0; -- characteristic width if input2 is float
+      input2_mantissa_width       : integer := 0; -- mantissa width if input2 is float
+      iwidth_2      : integer;    -- width of input2
+      num_inputs    : integer := 2;    -- can be 1 or 2.
+      output_is_int : Boolean := true;  -- false means that the output is a float
+      output_characteristic_width : integer := 0;
+      output_mantissa_width       : integer := 0;
+      owidth        : integer;          -- width of output.
+      constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
+      constant_width : integer;
+      buffering      : integer;
+      use_constant  : boolean := false
+      );
+    port (
+      -- req -> ack follow pulse protocol
+      reqL:  in Boolean;
+      ackL : out Boolean;
+      reqR : in Boolean;
+      ackR:  out Boolean;
+      -- operands.
+      dataL      : in  std_logic_vector(iwidth_1 + iwidth_2 - 1 downto 0);
+      dataR      : out std_logic_vector(owidth-1 downto 0);
+      clk, reset : in  std_logic);
+  end component;
+
   component BinaryLogicalOperator 
   generic
     (
@@ -3625,6 +3662,7 @@ package BaseComponents is
 	tag_length: integer := 1;
 	no_arbitration: Boolean := false;
         min_clock_period: Boolean := true;
+        input_buffering: IntegerArray;
 	time_stamp_width: integer := 0
     );
     port (
@@ -3677,7 +3715,8 @@ package BaseComponents is
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
 	no_arbitration: Boolean := false;
-        min_clock_period: Boolean := true        
+        min_clock_period: Boolean := true;
+        input_buffering: IntegerArray
     );
     port (
     -- req/ack follow pulse protocol
@@ -3759,13 +3798,17 @@ package BaseComponents is
   -- full-rate versions of I/O ports
   -------------------------------------------------------------------------------------
   component InputPortFullRate 
-    generic (num_reqs: integer := 5;
-	   data_width: integer := 8;
+    generic(name : string;
+	   num_reqs: integer;
+	   data_width: integer;
+           output_buffering: IntegerArray;
 	   no_arbitration: boolean := false);
     port (
     -- pulse interface with the data-path
-    req        : in  BooleanArray(num_reqs-1 downto 0);
-    ack        : out BooleanArray(num_reqs-1 downto 0);
+    sample_req        : in  BooleanArray(num_reqs-1 downto 0);
+    sample_ack        : out BooleanArray(num_reqs-1 downto 0);
+    update_req        : in  BooleanArray(num_reqs-1 downto 0);
+    update_ack        : out BooleanArray(num_reqs-1 downto 0);
     data       : out std_logic_vector((num_reqs*data_width)-1 downto 0);
     -- ready/ready interface with outside world
     oreq       : out std_logic;
@@ -3775,7 +3818,8 @@ package BaseComponents is
   end component;
 
   component OutputPortFullRate 
-    generic(num_reqs: integer;
+    generic(name : string;
+	  num_reqs: integer;
 	  data_width: integer;
 	  no_arbitration: boolean := false);
     port (
@@ -3797,7 +3841,7 @@ package BaseComponents is
 	   owidth: integer := 10;
 	   twidth: integer := 3;
 	   nreqs: integer := 1;
-	   buffering: integer;
+	   buffering: IntegerArray;
 	   no_arbitration: Boolean := false;
 	   registered_output: Boolean := true);
     port (
@@ -3844,6 +3888,20 @@ package BaseComponents is
         rR : out std_logic;
         aL : out boolean;
         aR : in std_logic;
+        clk : in std_logic;
+        reset : in std_logic);
+  end component;
+
+  component PulseToLevelHalfInterlockBuffer 
+    generic (name : string; data_width: integer; buffer_size : integer);
+    port( sample_req : in boolean;
+        sample_ack : out boolean;
+        has_room : out std_logic;
+        write_enable : in  std_logic;
+        write_data : in std_logic_vector(data_width-1 downto 0);
+        update_req : in boolean;
+        update_ack : out boolean;
+        read_data : out std_logic_vector(data_width-1 downto 0);
         clk : in std_logic;
         reset : in std_logic);
   end component;
@@ -13875,8 +13933,9 @@ entity SplitOperatorShared is
       no_arbitration: boolean := false;
       min_clock_period: boolean := true;
       num_reqs : integer := 3; -- how many requesters?
-      detailed_buffering_per_output : IntegerArray;
-      input_buffering: integer := 0
+      detailed_buffering_per_output : IntegerArray := (0 => 0);
+      detailed_buffering_per_input : IntegerArray  := (0 => 0);
+      use_input_buffering: boolean := false
     );
   port (
     -- req/ack follow level protocol
@@ -13917,7 +13976,7 @@ begin  -- Behave
     -- report "in no-arbitration case, at most one request should be hot on clock edge (in SplitOperatorShared)" severity error;
   -- end generate DebugGen;
   
-  NoInputBuffering: if input_buffering < 1 generate 
+  NoInputBuffering: if not use_input_buffering generate 
     imux: InputMuxBase
       generic map(iwidth => iwidth*num_reqs,
                 owidth => iwidth, 
@@ -13937,14 +13996,14 @@ begin  -- Behave
         reset      => reset);
   end generate NoInputBuffering;
 
-  YesInputBuffering: if input_buffering > 0 generate
+  YesInputBuffering: if use_input_buffering generate
     imuxWithInputBuf: InputMuxWithBuffering
       generic map(name => name & " imux " , 
 		iwidth => iwidth*num_reqs,
                 owidth => iwidth, 
                 twidth => tag_length,
                 nreqs => num_reqs,
-		buffering => input_buffering,
+		buffering => detailed_buffering_per_input,
                 no_arbitration => no_arbitration,
                 registered_output => true)
       port map(
@@ -17098,6 +17157,7 @@ entity PipelinedFPOperator is
       no_arbitration: boolean := true;
       num_reqs : integer := 3; -- how many requesters?
       use_input_buffering: boolean := false;
+      detailed_buffering_per_input: IntegerArray;
       detailed_buffering_per_output: IntegerArray
     );
   port (
@@ -17176,7 +17236,7 @@ begin  -- Behave
                 owidth => iwidth, 
                 twidth => tag_length,
                 nreqs => num_reqs,
-		buffering => 2,
+		buffering => detailed_buffering_per_input,
                 no_arbitration => no_arbitration,
                 registered_output => true)
       port map(
@@ -18930,7 +18990,7 @@ entity BinarySharedOperator is
       output_mantissa_width       : integer := 0;
       output_width        : integer := 4;          -- width of output.
       num_reqs : integer := 3; -- how many requesters?
-      input_buffering: integer := 2;
+      detailed_buffering_per_input: IntegerArray;
       detailed_buffering_per_output : IntegerArray
     );
   port (
@@ -19029,7 +19089,7 @@ begin  -- Behave
       			no_arbitration => false,
       			min_clock_period => true,
       			num_reqs => num_reqs,
-			input_buffering => input_buffering, 
+			detailed_buffering_per_input => detailed_buffering_per_input,
       			detailed_buffering_per_output => detailed_buffering_per_output)
   		port map (
     				reqL => reqL,
@@ -19215,7 +19275,7 @@ entity InputMuxWithBuffering is
 	   owidth: integer := 10;
 	   twidth: integer := 3;
 	   nreqs: integer := 1;
-	   buffering: integer;
+	   buffering: IntegerArray;
 	   no_arbitration: Boolean := false;
 	   registered_output: Boolean := true);
   port (
@@ -19248,6 +19308,8 @@ architecture Behave of InputMuxWithBuffering is
   signal dataR_sig: std_logic_vector(owidth-1 downto 0);
   signal tagR_sig                : std_logic_vector(twidth-1 downto 0);
 
+  alias cbuffering: IntegerArray(nreqs-1 downto 0) is buffering;
+
 begin  -- Behave
 
    kill_zero <= '0';
@@ -19268,7 +19330,7 @@ begin  -- Behave
 
 
      rxBuf: ReceiveBuffer generic map(name => name & " receive-buffer " & Convert_To_String(I),
-					buffer_size =>  buffering,
+					buffer_size =>  cbuffering(I),
 					data_width => owidth,
 					kill_counter_range => 1)
 		port map (write_req => reqL(I),
@@ -19381,14 +19443,18 @@ use ahir.Utilities.all;
 -- ack pulse.
 --
 entity InputPortFullRate is
-  generic (num_reqs: integer := 5;
-	   data_width: integer := 8;
+  generic (name : string;
+	   num_reqs: integer;
+	   data_width: integer;
+	   output_buffering: IntegerArray;
 	   no_arbitration: boolean := false);
   port (
     -- pulse interface with the data-path
-    req        : in  BooleanArray(num_reqs-1 downto 0);
-    ack        : out BooleanArray(num_reqs-1 downto 0);
-    data       : out std_logic_vector((num_reqs*data_width)-1 downto 0);
+    sample_req        : in  BooleanArray(num_reqs-1 downto 0);
+    sample_ack        : out BooleanArray(num_reqs-1 downto 0);
+    update_req        : in  BooleanArray(num_reqs-1 downto 0);
+    update_ack        : out BooleanArray(num_reqs-1 downto 0);
+    data              : out std_logic_vector((num_reqs*data_width)-1 downto 0);
     -- ready/ready interface with outside world
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -19399,11 +19465,12 @@ end entity;
 
 architecture Base of InputPortFullRate is
 
-  signal reqR, ackR : std_logic_vector(num_reqs-1 downto 0);
-  signal fEN: std_logic_vector(num_reqs-1 downto 0);
+  alias outBUFs: IntegerArray(num_reqs-1 downto 0) is output_buffering;
+  signal has_room, write_enable : std_logic_vector(num_reqs-1 downto 0);
 
   type   IPWArray is array(integer range <>) of std_logic_vector(data_width-1 downto 0);
-  signal data_reg, data_prereg, data_final: IPWArray(num_reqs-1 downto 0);
+  signal write_data, read_data: IPWArray(num_reqs-1 downto 0);
+
   signal demux_data : std_logic_vector((num_reqs*data_width)-1 downto 0);
 
   signal ack_raw: BooleanArray(num_reqs-1 downto 0);
@@ -19411,19 +19478,23 @@ architecture Base of InputPortFullRate is
 begin
 
   -----------------------------------------------------------------------------
-  -- protocol conversion
+  -- interlock buffer.
   -----------------------------------------------------------------------------
   ProTx : for I in 0 to num_reqs-1 generate
 
-    p2LInst: PulseToLevel
-        port map (rL            => req(I),
-                  rR            => reqR(I),
-                  aL            => ack_raw(I),
-                  aR            => ackR(I),
-                  clk           => clk,
-                  reset         => reset);
-    cDly: control_delay_element generic map(delay_value => 1)
-			port map(req => ack_raw(I), ack => ack(I), clk => clk, reset => reset);
+    p2LInst: PulseToLevelHalfInterlockBuffer
+	generic map(name => name & " buffer " & Convert_To_String(I),
+			data_width => data_width,
+			buffer_size => outBUFs(I))
+        port map (sample_req            => sample_req(I),
+		  sample_ack            => sample_ack(I),
+		  has_room              => has_room(I),
+		  write_enable          => write_enable(I),
+		  write_data            => write_data(I), 
+		  update_req            => update_req(I),
+		  update_ack            => update_ack(I),
+		  read_data                  => read_data(I), 
+	          clk => clk, reset => reset);
     
   end generate ProTx;
 
@@ -19432,8 +19503,8 @@ begin
     data_width     => data_width,
     no_arbitration => no_arbitration)
     port map (
-      req => reqR,
-      ack => ackR,
+      req => has_room,
+      ack => write_enable,
       data => demux_data,
       oreq => oreq,
       odata => odata,
@@ -19444,38 +19515,25 @@ begin
   -----------------------------------------------------------------------------
   -- data handling
   -----------------------------------------------------------------------------
-  process(data_final)
+  process(read_data)
     variable ldata: std_logic_vector((num_reqs*data_width)-1 downto 0);
   begin
     for J in num_reqs-1 downto 0 loop
-      Insert(ldata,J,data_final(J));
+      Insert(ldata,J,read_data(J));
     end loop;
     data <= ldata;
   end process;
 
   gen : for I in num_reqs-1 downto 0 generate
-
-    process(clk,demux_data)
+    process(demux_data)
       variable target: std_logic_vector(data_width-1 downto 0);
     begin
-      if(clk'event and clk = '1') then
-        if (ack_raw(I)) then
-      	  Extract(demux_data,I,target);
-          data_reg(I) <= target;
-        end if;
-      end if;
+      Extract(demux_data,I,target);
+      write_data(I) <= target;
     end process;
-
-
-    -- register
-    data_final(I) <= data_reg(I);
-    
   end generate gen;
 
 end Base;
--- TODO: add bypass path to unload buffer.
---       this will reduce buffering requirements
---       at the output side by a factor of two.
 library ieee;
 use ieee.std_logic_1164.all;
 
@@ -19507,7 +19565,7 @@ architecture default_arch of InterlockBuffer is
   type LoadFsmState is (l_idle, l_busy);
   signal l_fsm_state : LoadFsmState;
 
-  type UnloadFsmState is (idle, waiting, ackn);
+  type UnloadFsmState is (idle, waiting);
   signal fsm_state : UnloadFsmState;
   
 begin  -- default_arch
@@ -19568,11 +19626,10 @@ begin  -- default_arch
   -- FSM for unloading data..
   process(clk,fsm_state,read_req,pop_ack,reset)
      variable nstate: UnloadFsmState;
-     variable load_reg, ackv: boolean;
+     variable ackv: boolean;
      variable preq : std_logic;
   begin
      nstate :=  fsm_state;
-     load_reg := false;
      preq := '0';
      ackv := false;
   
@@ -19580,33 +19637,30 @@ begin  -- default_arch
          when idle => 
                if(read_req and (pop_ack(0) = '1')) then
 		    preq := '1';   
-                    nstate := ackn;
-		    load_reg := true;
+		    ackv := true;
                elsif (read_req) then
                     nstate := waiting;
                end if;
 	 when waiting =>
 		preq := '1';
 	        if(pop_ack(0) = '1') then
-		    nstate := ackn;
-		    load_reg := true;
+		    nstate := idle;
+		    ackv := true;
 		end if;
-	 when ackn =>
-		ackv := true;
-		nstate := idle;
      end case;
  
-     read_ack <= ackv;
      pop_req(0) <= preq;
 
      if(clk'event and clk = '1') then
 	if(reset = '1') then
 		fsm_state <= idle;
+     		read_ack <= false;
 	else
 		fsm_state <= nstate;
+     		read_ack <= ackv;
 	end if;
 
-	if(load_reg) then
+	if(ackv) then
            output_register <= pipe_data_out;
         end if;
      end if;
@@ -19744,6 +19798,7 @@ entity LoadReqSharedWithInputBuffers is
 	tag_length: integer := 1;
 	no_arbitration: Boolean := false;
         min_clock_period: Boolean := true;
+	input_buffering: IntegerArray;
 	time_stamp_width: integer := 0
     );
   port (
@@ -19787,6 +19842,7 @@ architecture Vanilla of LoadReqSharedWithInputBuffers is
   signal imux_data_out_accept,  imux_data_out_valid: std_logic;
   signal imux_data_out: std_logic_vector(rx_word_length-1 downto 0);
   
+  alias IBUFs: IntegerArray(num_reqs-1 downto 0) is input_buffering;
 begin  -- Behave
 
   assert(tag_length >= Ceil_Log2(num_reqs)) report "insufficient tag width" severity error;
@@ -19820,7 +19876,7 @@ begin  -- Behave
   -- receive buffers.
   RxGen: for I in 0 to num_reqs-1 generate
 	rb: ReceiveBuffer generic map(name => name & " RxBuf " & Convert_To_String(I),
-					buffer_size => 2,
+					buffer_size => IBUFs(I),
 					data_width => rx_word_length,
 					kill_counter_range => 655535)
 		port map(write_req => reqL(I), 
@@ -19834,6 +19890,15 @@ begin  -- Behave
 			 reset => reset);
 
   end generate RxGen;
+
+  -- 2D to 1D array conversion.
+  process(rx_data_out)
+  begin
+	for I in 0 to num_reqs-1 loop
+		imux_data_in(((I+1)*rx_word_length)-1 downto (I*rx_word_length))
+			<= rx_data_out(I);
+        end loop;
+  end process;
 
   -- the multiplexor.
   NonTrivTstamp: if time_stamp_width > 0 generate
@@ -20017,6 +20082,206 @@ begin  -- Behave
 	 end if;
      end if;
   end process;
+
+end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+-- 
+--  An interlock with a write interface
+--  triggered by a pulse protocol and completed
+--  by a level protocol.  The read-interface
+--  is entirely regulated by a pulse protocol.
+--
+entity PulseToLevelHalfInterlockBuffer is
+  generic (name : string; data_width: integer; buffer_size : integer);
+  port( sample_req : in boolean;
+        sample_ack : out boolean;
+        has_room : out std_logic;
+        write_enable : in  std_logic;
+        write_data : in std_logic_vector(data_width-1 downto 0);
+        update_req : in boolean;
+        update_ack : out boolean;
+        read_data : out std_logic_vector(data_width-1 downto 0);
+        clk : in std_logic;
+        reset : in std_logic);
+end entity;
+
+architecture Behave of PulseToLevelHalfInterlockBuffer is
+
+  type SampleFsmState is (Idle, WaitForBuf, WaitForWrite);
+  signal buf_write, buf_has_room: std_logic;
+begin  -- Behave
+
+   buf: UnloadBuffer generic map (name => name & " buffer ",
+				data_width => data_width,
+			 	buffer_size => buffer_size)
+		port map(write_req => buf_write,
+                         write_ack => buf_has_room,
+			 write_data => write_data,
+			 unload_req => update_req,
+			 unload_ack => update_ack,
+                         read_data => read_data,
+			 clk => clk, reset => reset);		
+
+
+   -- Sample FSM.  sample_req/ack regulates sampling into buffer.
+   process(clk,sample_fsm_state,reset,buf_has_room,write_enable)
+	variable nstate: SampleFsmState;
+   begin
+	nstate := sample_fsm_state;
+
+	has_room <= '0';
+	buf_write <= '0';
+        sample_ack <= false;
+
+	case sample_fsm_state is
+		when Idle => 
+			if(sample_req and (buf_has_room = '1')) then
+				has_room <= '1';
+				if (write_enable = '1') then
+					buf_write <= '1';
+					sample_ack <= true;
+				end if;
+			elsif(sample_req and (buf_has_room = '0')) then
+				nstate := WaitForBuf;
+			end if;
+		when WaitForBuf =>
+			if(buf_has_room = '1') then
+				has_room <= '1';
+				if (write_enable = '1') then
+					buf_write <= '1';
+					sample_ack <= true;
+					nstate := Idle;
+				else
+					nstate := WaitForWrite;
+				end if;
+			end if;
+		when WaitForWrite =>
+			has_room <= '1';
+			if(write_enable = '1') then
+				buf_write <= '1';
+				sample_ack <= true;
+				nstate := Idle;
+			end if;
+	end case;
+
+
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			sample_fsm_state <= Idle;
+		else	
+			sample_fsm_state <= nstate;
+		end if;
+	end if;
+   end process;
+
+end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+-- 
+--  An interlock with a write interface
+--  triggered by a pulse protocol and completed
+--  by a level protocol.  The read-interface
+--  is entirely regulated by a pulse protocol.
+--
+entity PulseToLevelHalfInterlockBuffer is
+  generic (name : string; data_width: integer; buffer_size : integer);
+  port( sample_req : in boolean;
+        sample_ack : out boolean;
+        has_room : out std_logic;
+        write_enable : in  std_logic;
+        write_data : in std_logic_vector(data_width-1 downto 0);
+        update_req : in boolean;
+        update_ack : out boolean;
+        read_data : out std_logic_vector(data_width-1 downto 0);
+        clk : in std_logic;
+        reset : in std_logic);
+end entity;
+
+architecture Behave of PulseToLevelHalfInterlockBuffer is
+
+  type SampleFsmState is (Idle, WaitForBuf, WaitForWrite);
+  signal buf_write, buf_has_room: std_logic;
+begin  -- Behave
+
+   buf: UnloadBuffer generic map (name => name & " buffer ",
+				data_width => data_width,
+			 	buffer_size => buffer_size)
+		port map(write_req => buf_write,
+                         write_ack => buf_has_room,
+			 write_data => write_data,
+			 unload_req => update_req,
+			 unload_ack => update_ack,
+                         read_data => read_data,
+			 clk => clk, reset => reset);		
+
+
+   -- Sample FSM.  sample_req/ack regulates sampling into buffer.
+   process(clk,sample_fsm_state,reset,buf_has_room,write_enable)
+	variable nstate: SampleFsmState;
+   begin
+	nstate := sample_fsm_state;
+
+	has_room <= '0';
+	buf_write <= '0';
+        sample_ack <= false;
+
+	case sample_fsm_state is
+		when Idle => 
+			if(sample_req and (buf_has_room = '1')) then
+				has_room <= '1';
+				if (write_enable = '1') then
+					buf_write <= '1';
+					sample_ack <= true;
+				end if;
+			elsif(sample_req and (buf_has_room = '0')) then
+				nstate := WaitForBuf;
+			end if;
+		when WaitForBuf =>
+			if(buf_has_room = '1') then
+				has_room <= '1';
+				if (write_enable = '1') then
+					buf_write <= '1';
+					sample_ack <= true;
+					nstate := Idle;
+				else
+					nstate := WaitForWrite;
+				end if;
+			end if;
+		when WaitForWrite =>
+			has_room <= '1';
+			if(write_enable = '1') then
+				buf_write <= '1';
+				sample_ack <= true;
+				nstate := Idle;
+			end if;
+	end case;
+
+
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			sample_fsm_state <= Idle;
+		else	
+			sample_fsm_state <= nstate;
+		end if;
+	end if;
+   end process;
 
 end Behave;
 library ieee;
@@ -20469,7 +20734,8 @@ entity StoreReqSharedWithInputBuffers is
       	num_reqs : integer; -- how many requesters?
 	tag_length: integer;
 	no_arbitration: Boolean := false;
-        min_clock_period: Boolean := true        
+        min_clock_period: Boolean := true;
+	input_buffering: IntegerArray
     );
   port (
     -- req/ack follow pulse protocol
@@ -20513,6 +20779,7 @@ architecture Vanilla of StoreReqSharedWithInputBuffers is
   signal imux_data_out_accept,  imux_data_out_valid: std_logic;
   signal imux_data_out: std_logic_vector(rx_word_length-1 downto 0);
   
+  alias IBUFs: IntegerArray(num_reqs-1 downto 0) is input_buffering;
 begin  -- Behave
   assert(tag_length >= Ceil_Log2(num_reqs)) report "insufficient tag width" severity error;
  
@@ -20547,7 +20814,7 @@ begin  -- Behave
   -- receive buffers.
   RxGen: for I in 0 to num_reqs-1 generate
 	rb: ReceiveBuffer generic map(name => name & " RxBuf " & Convert_To_String(I),
-					buffer_size => 2,
+					buffer_size => IBUFs(I),
 					data_width => rx_word_length,
 					kill_counter_range => 655535)
 		port map(write_req => reqL(I), 
@@ -20792,6 +21059,107 @@ begin  -- Behave
 	update_ack <= update_req;
   end generate constCase;
 
+end Vanilla;
+
+-- The unshared operator uses a split protocol.
+--    reqL/ackL  for sampling the inputs
+--    reqR/ackR  for updating the outputs.
+-- The two pairs should be used independently,
+-- that is, there should be NO DEPENDENCY between
+-- ackL and reqR!
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.OperatorPackage.all;
+use ahir.BaseComponents.all;
+use ahir.FloatOperatorPackage.all;
+
+entity UnsharedOperatorWithBuffering is
+  generic
+    (
+      name   : string;
+      operator_id   : string;          -- operator id
+      input1_is_int : Boolean := true; -- false means float
+      input1_characteristic_width : integer := 0; -- characteristic width if input1 is float
+      input1_mantissa_width       : integer := 0; -- mantissa width if input1 is float
+      iwidth_1      : integer;    -- width of input1
+      input2_is_int : Boolean := true; -- false means float
+      input2_characteristic_width : integer := 0; -- characteristic width if input2 is float
+      input2_mantissa_width       : integer := 0; -- mantissa width if input2 is float
+      iwidth_2      : integer;    -- width of input2
+      num_inputs    : integer := 2;    -- can be 1 or 2.
+      output_is_int : Boolean := true;  -- false means that the output is a float
+      output_characteristic_width : integer := 0;
+      output_mantissa_width       : integer := 0;
+      owidth        : integer;          -- width of output.
+      constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
+      constant_width : integer;
+      buffering      : integer;
+      use_constant  : boolean := false
+      );
+  port (
+    -- req -> ack follow pulse protocol
+    reqL:  in Boolean;
+    ackL : out Boolean;
+    reqR : in Boolean;
+    ackR:  out Boolean;
+    -- operands.
+    dataL      : in  std_logic_vector(iwidth_1 + iwidth_2 - 1 downto 0);
+    dataR      : out std_logic_vector(owidth-1 downto 0);
+    clk, reset : in  std_logic);
+end UnsharedOperatorWithBuffering;
+
+
+architecture Vanilla of UnsharedOperatorWithBuffering is
+  signal   result: std_logic_vector(owidth-1 downto 0);
+  constant iwidth : integer := iwidth_1  + iwidth_2;
+  
+  -- joined req, and joint ack.
+  signal fReq,fAck: boolean;
+ 
+
+begin  -- Behave
+
+  assert((num_inputs = 1) or (num_inputs = 2)) report "either 1 or 2 inputs" severity failure;
+  -----------------------------------------------------------------------------
+  -- combinational block..
+  -----------------------------------------------------------------------------
+  comb_block: GenericCombinationalOperator
+    generic map (
+      operator_id                 => operator_id,
+      input1_is_int               => input1_is_int,
+      input1_characteristic_width => input1_characteristic_width,
+      input1_mantissa_width       => input1_mantissa_width,
+      iwidth_1                    => iwidth_1,
+      input2_is_int               => input2_is_int,
+      input2_characteristic_width => input2_characteristic_width,
+      input2_mantissa_width       => input2_mantissa_width,
+      iwidth_2                    => iwidth_2,
+      num_inputs                  => num_inputs,
+      output_is_int               => output_is_int,
+      output_characteristic_width => output_characteristic_width,
+      output_mantissa_width       => output_mantissa_width,
+      owidth                      => owidth,
+      constant_operand            => constant_operand,
+      constant_width              => constant_width,
+      use_constant                => use_constant)
+    port map (data_in => dataL, result  => result);
+
+
+  -----------------------------------------------------------------------------
+  -- output interlock buffer
+  -----------------------------------------------------------------------------
+  ilb: InterlockBuffer 
+	generic map(name => name & " ilb ",
+			buffer_size => buffering,
+			data_width => owidth)
+	port map(write_req => reqL, write_ack => ackL, write_data => result,
+			read_req => reqR, read_ack => ackR, read_data => dataR,
+				clk => clk, reset => reset);
 end Vanilla;
 
 library ieee;

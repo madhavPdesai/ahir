@@ -155,6 +155,8 @@ public:
 	public: void mUtoF_ASSIGN_OP(bool _createToken);
 	public: void mFtoF_ASSIGN_OP(bool _createToken);
 	public: void mDEAD(bool _createToken);
+	public: void mTIED_HIGH(bool _createToken);
+	public: void mLEFT_OPEN(bool _createToken);
 	public: void mHASH(bool _createToken);
 	public: void mUINTEGER(bool _createToken);
 	protected: void mDIGIT(bool _createToken);

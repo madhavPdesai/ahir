@@ -284,14 +284,19 @@ vc_CPTransition[vcCPElement* p] returns[vcCPElement* cpe]
 { 
    string id;
    bool dead_flag = false;
+   bool tie_high = false;
+   bool leave_open = false;
 }
-: TRANSITION id = vc_Label (DEAD {dead_flag = true;} )?
+: TRANSITION id = vc_Label ( (DEAD {dead_flag = true;} ) | (TIED_HIGH {tie_high = true;})
+		| (LEFT_OPEN {leave_open = true;}) ) ?
   {
     cpe = NULL;
     if(p->Find_CPElement(id) == NULL) 
     {
        cpe = (vcCPElement*) (new vcTransition(p,id));
 	((vcTransition*)cpe)->Set_Is_Dead(dead_flag);
+	((vcTransition*)cpe)->Set_Is_Tied_High(tie_high);
+	((vcTransition*)cpe)->Set_Is_Left_Open(leave_open);
     }
   }
   ;
@@ -773,7 +778,7 @@ vc_BinaryLogicalOperator_Instantiation[vcDataPath* dp] returns[vcDatapathElement
  RPAREN
  { 
    new_op = new vcBinaryLogicalOperator(id,op_id,x,y,z); 
-   dp->Add_Split_Operator(new_op); 
+   dp->Add_Binary_Logical_Operator(new_op); 
    dpe = (vcDatapathElement*)new_op; 
  }
 ;
@@ -1822,6 +1827,8 @@ FtoF_ASSIGN_OP : "$F:=$F";
 
 // dead transitions..
 DEAD : "$dead";
+TIED_HIGH : "$tied_high";
+LEFT_OPEN : "$left_open";
 
 // input buffering indicator..
 HASH: "#";

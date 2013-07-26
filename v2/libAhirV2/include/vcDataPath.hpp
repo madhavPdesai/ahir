@@ -21,6 +21,7 @@ class vcRegister;
 class vcDatapathElement;
 class vcModule;
 class vcInterlockBuffer;
+class vcBinaryLogicalOperator;
 class vcPipe: public vcRoot
 {
 
@@ -307,7 +308,7 @@ protected:
  	if(_input_wire_buffering_map.find(w) != _input_wire_buffering_map.end())
 		return(_input_wire_buffering_map[w]);
 	else
-		return(0);
+		return(1);
   }
 
   void Set_Output_Buffering(vcWire* w, int buffering)
@@ -320,7 +321,7 @@ protected:
  	if(_output_wire_buffering_map.find(w) != _output_wire_buffering_map.end())
 		return(_output_wire_buffering_map[w]);
 	else
-		return(0);
+		return(1);
   }
 
   virtual void Print_VHDL_Logger(ostream& ofile);
@@ -349,6 +350,7 @@ class vcDataPath: public vcRoot
   map<string, vcRegister*> _register_map;
   map<string, vcEquivalence*> _equivalence_map;
   map<string, vcInterlockBuffer*> _interlock_buffer_map;
+  map<string, vcBinaryLogicalOperator*> _binary_logical_operator_map;;
 
   // these operators can be shared..
   map<string, vcSplitOperator*> _split_operator_map;
@@ -411,6 +413,9 @@ class vcDataPath: public vcRoot
   void Add_Interlock_Buffer(vcInterlockBuffer* p);
   vcInterlockBuffer* Find_Interlock_Buffer(string id);
 
+  void Add_Binary_Logical_Operator(vcBinaryLogicalOperator* p);
+  vcBinaryLogicalOperator* Find_Binary_Logical_Operator(string id);
+
   void Add_Equivalence(vcEquivalence* p);
   vcEquivalence* Find_Equivalence(string id);
 
@@ -434,7 +439,8 @@ class vcDataPath: public vcRoot
 
   virtual string Kind() {return("vcDatapath");}
 
-  pair<vcCompatibilityLabel*,vcCompatibilityLabel*> Get_Label_Interval(vcControlPath* cp, vcDatapathElement* dpe);
+
+  void Get_Label_Interval(vcControlPath* cp, vcDatapathElement* dpe, vector<vcCompatibilityLabel*>& ret_vector);
 
   void Compute_Maximal_Groups(vcControlPath* cp);
   void Update_Maximal_Groups(vcControlPath* cp,
@@ -457,6 +463,8 @@ class vcDataPath: public vcRoot
   void Print_VHDL_Select_Instances(ostream& ofile);
   void Print_VHDL_Slice_Instances(ostream& ofile);
   void Print_VHDL_Register_Instances(ostream& ofile);
+  void Print_VHDL_Interlock_Buffer_Instances(ostream& ofile);
+  void Print_VHDL_Binary_Logical_Operator_Instances(ostream& ofile);
   void Print_VHDL_Equivalence_Instances(ostream& ofile);
   void Print_VHDL_Branch_Instances(ostream& ofile);
   void Print_VHDL_Split_Operator_Instances(ostream& ofile);
@@ -475,7 +483,12 @@ class vcDataPath: public vcRoot
   void Print_VHDL_Guard_Concatenation(int num_reqs, string guard_vector, vector<vcWire*>& guard_wires, vector<bool>& guard_complements,ostream& ofile);
   void Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, string req_unguarded, string ack_unguarded, string req, string ack, ostream& ofile);
 
-  void Generate_Buffering_String(vector<vcDatapathElement*>& dpe_elements, string& buf_string);
+
+  void Generate_Buffering_Constant_Declaration(vector<vcDatapathElement*>& dpe_elements, string& buf_string);
+  int Generate_Buffering_String(string const_name, vector<int>& buf_sizes, string& buf_string);
+  int Generate_Pipeline_Slot_Demands(vector<vcDatapathElement*>& dpe_elements,
+				vector<int>& slot_demands);
+
   void Print_VHDL_Regulator_Instance(string inst_id, 
 			int num_reqs, 
 			string reqs, string acks,
@@ -484,8 +497,6 @@ class vcDataPath: public vcRoot
 			vector<vcDatapathElement*>& dpe_els,
 			 ostream& ofile);
    
-  void Generate_Buffering_Constant_Declaration(vector<vcDatapathElement*>& dpe_elements, 
-							string& buffering_string);
 
   string Get_VHDL_IOport_Interface_Port_Name(string pipe_id, string pid);
   string Get_VHDL_IOport_Interface_Port_Section(vcPipe* p,

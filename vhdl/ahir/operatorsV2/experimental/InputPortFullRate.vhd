@@ -16,14 +16,18 @@ use ahir.Utilities.all;
 -- ack pulse.
 --
 entity InputPortFullRate is
-  generic (num_reqs: integer := 5;
-	   data_width: integer := 8;
+  generic (name : string;
+	   num_reqs: integer;
+	   data_width: integer;
+	   output_buffering: IntegerArray;
 	   no_arbitration: boolean := false);
   port (
     -- pulse interface with the data-path
-    req        : in  BooleanArray(num_reqs-1 downto 0);
-    ack        : out BooleanArray(num_reqs-1 downto 0);
-    data       : out std_logic_vector((num_reqs*data_width)-1 downto 0);
+    sample_req        : in  BooleanArray(num_reqs-1 downto 0);
+    sample_ack        : out BooleanArray(num_reqs-1 downto 0);
+    update_req        : in  BooleanArray(num_reqs-1 downto 0);
+    update_ack        : out BooleanArray(num_reqs-1 downto 0);
+    data              : out std_logic_vector((num_reqs*data_width)-1 downto 0);
     -- ready/ready interface with outside world
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -34,11 +38,12 @@ end entity;
 
 architecture Base of InputPortFullRate is
 
-  signal reqR, ackR : std_logic_vector(num_reqs-1 downto 0);
-  signal fEN: std_logic_vector(num_reqs-1 downto 0);
+  alias outBUFs: IntegerArray(num_reqs-1 downto 0) is output_buffering;
+  signal has_room, write_enable : std_logic_vector(num_reqs-1 downto 0);
 
   type   IPWArray is array(integer range <>) of std_logic_vector(data_width-1 downto 0);
-  signal data_reg, data_prereg, data_final: IPWArray(num_reqs-1 downto 0);
+  signal write_data, read_data: IPWArray(num_reqs-1 downto 0);
+
   signal demux_data : std_logic_vector((num_reqs*data_width)-1 downto 0);
 
   signal ack_raw: BooleanArray(num_reqs-1 downto 0);
@@ -46,19 +51,23 @@ architecture Base of InputPortFullRate is
 begin
 
   -----------------------------------------------------------------------------
-  -- protocol conversion
+  -- interlock buffer.
   -----------------------------------------------------------------------------
   ProTx : for I in 0 to num_reqs-1 generate
 
-    p2LInst: PulseToLevel
-        port map (rL            => req(I),
-                  rR            => reqR(I),
-                  aL            => ack_raw(I),
-                  aR            => ackR(I),
-                  clk           => clk,
-                  reset         => reset);
-    cDly: control_delay_element generic map(delay_value => 1)
-			port map(req => ack_raw(I), ack => ack(I), clk => clk, reset => reset);
+    p2LInst: PulseToLevelHalfInterlockBuffer
+	generic map(name => name & " buffer " & Convert_To_String(I),
+			data_width => data_width,
+			buffer_size => outBUFs(I))
+        port map (sample_req            => sample_req(I),
+		  sample_ack            => sample_ack(I),
+		  has_room              => has_room(I),
+		  write_enable          => write_enable(I),
+		  write_data            => write_data(I), 
+		  update_req            => update_req(I),
+		  update_ack            => update_ack(I),
+		  read_data                  => read_data(I), 
+	          clk => clk, reset => reset);
     
   end generate ProTx;
 
@@ -67,8 +76,8 @@ begin
     data_width     => data_width,
     no_arbitration => no_arbitration)
     port map (
-      req => reqR,
-      ack => ackR,
+      req => has_room,
+      ack => write_enable,
       data => demux_data,
       oreq => oreq,
       odata => odata,
@@ -79,32 +88,22 @@ begin
   -----------------------------------------------------------------------------
   -- data handling
   -----------------------------------------------------------------------------
-  process(data_final)
+  process(read_data)
     variable ldata: std_logic_vector((num_reqs*data_width)-1 downto 0);
   begin
     for J in num_reqs-1 downto 0 loop
-      Insert(ldata,J,data_final(J));
+      Insert(ldata,J,read_data(J));
     end loop;
     data <= ldata;
   end process;
 
   gen : for I in num_reqs-1 downto 0 generate
-
-    process(clk,demux_data)
+    process(demux_data)
       variable target: std_logic_vector(data_width-1 downto 0);
     begin
-      if(clk'event and clk = '1') then
-        if (ack_raw(I)) then
-      	  Extract(demux_data,I,target);
-          data_reg(I) <= target;
-        end if;
-      end if;
+      Extract(demux_data,I,target);
+      write_data(I) <= target;
     end process;
-
-
-    -- register
-    data_final(I) <= data_reg(I);
-    
   end generate gen;
 
 end Base;

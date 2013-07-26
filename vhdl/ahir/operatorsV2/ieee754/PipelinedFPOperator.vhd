@@ -20,6 +20,7 @@ entity PipelinedFPOperator is
       no_arbitration: boolean := true;
       num_reqs : integer := 3; -- how many requesters?
       use_input_buffering: boolean := false;
+      detailed_buffering_per_input: IntegerArray;
       detailed_buffering_per_output: IntegerArray
     );
   port (
@@ -98,7 +99,7 @@ begin  -- Behave
                 owidth => iwidth, 
                 twidth => tag_length,
                 nreqs => num_reqs,
-		buffering => 2,
+		buffering => detailed_buffering_per_input,
                 no_arbitration => no_arbitration,
                 registered_output => true)
       port map(

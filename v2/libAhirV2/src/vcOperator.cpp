@@ -250,13 +250,30 @@ void vcLoad::Print(ostream& ofile)
 	<< vcLexerKeywords[__RPAREN] << " ";
   this->Print_Guard(ofile);
   ofile << endl;
-
 }
+  
+void vcLoad::Append_Inwire_Buffering(vector<int>& inwire_buffering)
+{
+	inwire_buffering.push_back(this->Get_Input_Buffering(_address));
+}
+
+void vcLoad::Append_Outwire_Buffering(vector<int>& outwire_buffering)
+{
+	outwire_buffering.push_back(this->Get_Output_Buffering(_data));
+}
+
 vcStore::vcStore(string id, vcMemorySpace* ms, vcWire* addr, vcWire* data):vcLoadStore(id,ms,addr,data) 
 {
   addr->Connect_Receiver(this);
   data->Connect_Receiver(this);
 }
+
+void vcStore::Append_Inwire_Buffering(vector<int>& inwire_buffering)
+{
+	inwire_buffering.push_back(this->Get_Input_Buffering(_address));
+	inwire_buffering.push_back(this->Get_Input_Buffering(_data));
+}
+
 void vcStore::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__STORE] 	<< " "
@@ -316,6 +333,63 @@ void vcPhi::Print(ostream& ofile)
   ofile << endl;
 }
 
+void vcPhi::Print_VHDL(ostream& ofile)
+{
+      int odata_width = this->Get_Outwire()->Get_Type()->Size();
+      int num_reqs = this->Get_Inwires().size();
+      int idata_width = num_reqs*odata_width;
+
+      if((this->Get_Number_Of_Reqs() < num_reqs) ||
+	 (this->Get_Number_Of_Acks() != 1))
+	{
+	  vcSystem::Error("phi operator " + this->Get_Id() + " has inadequate/incorrect req-ack links");
+	  return;
+	}
+
+      ofile << this->Get_VHDL_Id() << ": Block -- phi operator {" << endl;
+      ofile << "signal idata: std_logic_vector(" << idata_width-1 << " downto 0);" << endl;
+      ofile << "signal req: BooleanArray(" << num_reqs-1 << " downto 0);" << endl;
+      ofile << "--}\n begin -- {" << endl;
+      ofile << "idata <= ";
+      for(int idx = 0; idx < this->Get_Inwires().size(); idx++)
+	{
+	  if(idx > 0)
+	    ofile << " & ";
+	  ofile << this->Get_Inwires()[idx]->Get_VHDL_Signal_Id();
+	}
+      ofile << ";" << endl;
+
+      if(this->Get_Number_Of_Reqs() == 1)
+      {
+        ofile << "req(0) <= ";
+	ofile << this->Get_Req(0)->Get_CP_To_DP_Symbol();
+      }
+      else
+      {
+        ofile << "req <= ";
+      	for(int idx = 0; idx < this->Get_Number_Of_Reqs(); idx++)
+	{
+	  if(idx > 0)
+	    ofile << " & ";
+	  ofile << this->Get_Req(idx)->Get_CP_To_DP_Symbol();
+	}
+      }
+      ofile << ";" << endl;
+      
+      ofile << "phi: PhiBase -- {" << endl
+	    << "generic map( -- { " << endl 
+	    << "num_reqs => " << this->Get_Number_Of_Reqs() << "," << endl
+	    << "data_width => " << odata_width << ") -- }"  << endl
+	    << "port map( -- { "<< endl 
+	    << "req => req, " << endl
+	    << "ack => " << this->Get_Ack(0)->Get_DP_To_CP_Symbol()  << "," << endl
+	    << "idata => idata," << endl
+	    << "odata => " << this->Get_Outwire()->Get_VHDL_Signal_Id() << "," << endl
+	    << "clk => clk," << endl
+	    << "reset => reset ); -- }}" << endl;
+      ofile << "-- }\n end Block; -- phi operator " << this->Get_VHDL_Id() << endl;
+}
+
 vcCall::vcCall(string id, vcModule* m, vector<vcWire*>& in_wires, vector<vcWire*> out_wires, bool inline_flag):vcSplitOperator(id)
 {
   _called_module = m;
@@ -329,6 +403,18 @@ vcCall::vcCall(string id, vcModule* m, vector<vcWire*>& in_wires, vector<vcWire*
     _out_wires[idx]->Connect_Driver(this);
 
   _inline_flag = inline_flag;
+}
+
+void vcCall::Append_Inwire_Buffering(vector<int>& inwire_buffering)
+{
+    for(int idx = 0; idx < _in_wires.size(); idx++)
+      inwire_buffering.push_back(this->Get_Input_Buffering(_in_wires[idx]));
+}
+
+void vcCall::Append_Outwire_Buffering(vector<int>& outwire_buffering)
+{
+    for(int idx = 0; idx < _out_wires.size(); idx++)
+      outwire_buffering.push_back(this->Get_Output_Buffering(_out_wires[idx]));
 }
 
 void vcCall::Print(ostream& ofile)
@@ -369,6 +455,23 @@ string vcIOport::Get_Pipe_Id()
 vcInport::vcInport(string id, vcPipe* pipe, vcWire* w):vcIOport(id,pipe,w) 
 {
   w->Connect_Driver(this);
+}
+
+void   vcInport::Add_Reqs(vector<vcTransition*>& reqs)
+{
+  assert(reqs.size() == 2);
+  this->_reqs = reqs;
+}
+
+void vcInport::Add_Acks(vector<vcTransition*>& acks)
+{
+  assert(acks.size() == 2);
+  this->_acks = acks;
+}
+
+void vcInport::Append_Outwire_Buffering(vector<int>& outwire_buffering)
+{
+	outwire_buffering.push_back(this->Get_Output_Buffering(_data));
 }
 
 void vcInport::Print(ostream& ofile)
@@ -414,6 +517,16 @@ bool vcUnarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
 }
 
 
+void vcUnarySplitOperator::Append_Inwire_Buffering(vector<int>& inwire_buffering)
+{
+	inwire_buffering.push_back(this->Get_Input_Buffering(_x));
+}
+
+void vcUnarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_buffering)
+{
+	outwire_buffering.push_back(this->Get_Output_Buffering(_z));
+}
+
 void vcUnarySplitOperator::Print(ostream& ofile)
 {
   ofile << this->_op_id << " " << this->Get_Label() << " "
@@ -429,35 +542,6 @@ void vcUnarySplitOperator::Print(ostream& ofile)
   ofile << endl;
 }
 
-
-vcUnaryOperator::vcUnaryOperator(string id, string op_id, vcWire* x, vcWire* z):vcOperator(id)
-{
-  assert(x != NULL && z != NULL);
-  
-  this->_op_id = op_id;
-
-  this->_x = x;
-  x->Connect_Receiver(this);
-
-  this->_z = z;
-  z->Connect_Driver(this);
-}
-
-
-void vcUnaryOperator::Print(ostream& ofile)
-{
-  ofile << this->_op_id << " " << this->Get_Label() << " "
-	<< vcLexerKeywords[__LPAREN] 
-	<< this->_x->Get_Id() << " "
-	<< vcLexerKeywords[__RPAREN] 
-	<< " "
-	<< vcLexerKeywords[__LPAREN] 
-	<< this->_z->Get_Id()
-	<< vcLexerKeywords[__RPAREN] 
-	<<  " ";
-  this->Print_Guard(ofile);
-  ofile << endl;
-}
 
 
 vcBinarySplitOperator::vcBinarySplitOperator(string id, string op_id, vcWire* x, vcWire* y, vcWire* z):vcSplitOperator(id)
@@ -587,6 +671,16 @@ bool vcBinarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
 }
 
 
+void vcBinarySplitOperator::Append_Inwire_Buffering(vector<int>& inwire_buffering)
+{
+	inwire_buffering.push_back(this->Get_Input_Buffering(_x));
+	inwire_buffering.push_back(this->Get_Input_Buffering(_y));
+}
+
+void vcBinarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_buffering)
+{
+	outwire_buffering.push_back(this->Get_Output_Buffering(_z));
+}
 
 void vcBinarySplitOperator::Print(ostream& ofile)
 {
@@ -600,38 +694,6 @@ void vcBinarySplitOperator::Print(ostream& ofile)
 	<< this->_z->Get_Id()
 	<< vcLexerKeywords[__RPAREN] 
 	<<  " ";
-  this->Print_Guard(ofile);
-  ofile << endl;
-}
-
-vcBinaryOperator::vcBinaryOperator(string id, string op_id, vcWire* x, vcWire* y, vcWire* z):vcOperator(id)
-{
-  assert(x != NULL && y != NULL && z != NULL);
-  
-  this->_op_id = op_id;
-  
-  this->_x = x;
-  x->Connect_Receiver(this);
-
-  this->_y = y;
-  y->Connect_Receiver(this);
-
-  this->_z = z;
-  z->Connect_Driver(this);
-}
-
-void vcBinaryOperator::Print(ostream& ofile)
-{
-  ofile << this->_op_id << " " << this->Get_Label() << " "
-	<< vcLexerKeywords[__LPAREN] 
-	<< this->_x->Get_Id() << " "
-	<< this->_y->Get_Id() << " "
-	<< vcLexerKeywords[__RPAREN] 
-	<< " "
-	<< vcLexerKeywords[__LPAREN] 
-	<< this->_z->Get_Id()
-	<< vcLexerKeywords[__RPAREN] 
-	<< " ";
   this->Print_Guard(ofile);
   ofile << endl;
 }
@@ -669,6 +731,45 @@ void vcSelect::Print(ostream& ofile)
 }
 
 
+void vcSelect::Print_VHDL(ostream& ofile)
+{
+      string block_name = "select_" + this->Get_VHDL_Id() + "_wrap";
+      ofile << block_name << " : block -- { " << endl;
+      ofile << "signal req, ack: boolean; --}" << endl;
+      ofile << "begin -- { " << endl;
+ 
+
+      if(this->Get_Guard_Wire() != NULL)
+      {
+      	ofile << "req <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else false;" << endl; 
+	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack " 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else " 
+ 		<< this->Get_Req(0)->Get_CP_To_DP_Symbol()  << ";" 
+		<< endl; 
+      }
+      else
+      {
+      	ofile << "req <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() << ";" << endl;
+	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack; "  << endl;
+      }
+
+      ofile << this->Get_VHDL_Id() << ": SelectBase generic map(data_width => " << this->_z->Get_Size() << ") -- {" << endl;
+      ofile << " port map( x => " 
+	    << this->_x->Get_VHDL_Signal_Id() 
+	    << ", y => " 
+	    << this->_y->Get_VHDL_Signal_Id() 
+	    << ", sel => " 
+	    << this->_sel->Get_VHDL_Signal_Id() 
+	    << ", z => " << this->_z->Get_VHDL_Signal_Id() 
+	    << ", req => req"
+	    << ", ack => ack"
+	    << ", clk => clk, reset => reset); -- }" << endl;
+
+      ofile << "-- }" << endl << "end block;" << endl;
+}
 
 vcSlice::vcSlice(string id, vcWire* din, vcWire* dout, int high_index, int low_index):vcOperator(id)
 {
@@ -703,6 +804,47 @@ void vcSlice::Print(ostream& ofile)
   ofile << endl;
 }
 
+void vcSlice::Print_VHDL(ostream& ofile)
+{
+      string block_name = "slice_" + this->Get_VHDL_Id() + "_wrap";
+
+      ofile << block_name << " : block -- { " << endl;
+      ofile << "signal req, ack: boolean; --}" << endl;
+      ofile << "begin -- { " << endl;
+ 
+
+      if(this->Get_Guard_Wire() != NULL)
+      {
+      	ofile << "req <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else false;" << endl; 
+	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack " 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else " 
+ 		<< this->Get_Req(0)->Get_CP_To_DP_Symbol()  << ";" 
+		<< endl; 
+      }
+      else
+      {
+      	ofile << "req <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() << ";" << endl;
+	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack; "  << endl;
+      }
+
+      ofile << this->Get_VHDL_Id() << ": SliceBase generic map(in_data_width => "
+	    << this->_din->Get_Size() << ", high_index => " << this->_high_index 
+	    << ", low_index => " << this->_low_index 
+	    << ") -- {" << endl;
+      ofile << " port map( din => " 
+	    << this->_din->Get_VHDL_Signal_Id() 
+	    << ", dout => " 
+	    << this->_dout->Get_VHDL_Signal_Id() 
+	    << ", req => req " 
+	    << ", ack => ack "
+	    << ", clk => clk, reset => reset); -- }" << endl;
+
+      ofile << "-- }" << endl << "end block;" << endl;
+}
+
 vcRegister::vcRegister(string id, vcWire* din, vcWire* dout):vcOperator(id)
 {
   assert(din && dout);
@@ -727,6 +869,42 @@ void vcRegister::Print(ostream& ofile)
 	<< " ";
   this->Print_Guard(ofile);
   ofile << endl;
+}
+
+void vcRegister::Print_VHDL(ostream& ofile)
+{
+      string block_name = "register_" + this->Get_VHDL_Id() + "_wrap";
+      ofile << block_name << " : block -- { " << endl;
+      ofile << "signal req, ack: boolean; --}" << endl;
+      ofile << "begin -- { " << endl;
+ 
+
+      if(this->Get_Guard_Wire() != NULL)
+      {
+      	ofile << "req <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else false;" << endl; 
+	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack " 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else " 
+ 		<< this->Get_Req(0)->Get_CP_To_DP_Symbol()  << ";" 
+		<< endl; 
+      }
+      else
+      {
+      	ofile << "req <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() << ";" << endl;
+	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack; "  << endl;
+      }
+
+      ofile << this->Get_VHDL_Id() << ": RegisterBase --{" << endl
+	    << "generic map(in_data_width => " << this->_din->Get_Size()  << "," 
+	    << "out_data_width => " << this->_dout->Get_Size() << ") "
+	    << endl;
+      ofile << " port map( din => " << this->_din->Get_VHDL_Signal_Id() << "," 
+	    << " dout => " << this->_dout->Get_VHDL_Signal_Id() << ","
+	    << " req => req, " 
+	    << " ack => ack, " << " clk => clk, reset => reset); -- }" << endl;
+      ofile << "-- }" << endl << "end block;" << endl;
 }
 
 vcBranch::vcBranch(string id, vector<vcWire*>& wires): vcDatapathElement(id) 
@@ -1020,6 +1198,93 @@ void vcBinaryLogicalOperator::Add_Acks(vector<vcTransition*>& acks)
 	_acks = acks;
 }
 
+void vcBinaryLogicalOperator::Print_VHDL(ostream& ofile)
+{
+      string block_name = "ble_" + this->Get_VHDL_Id() + "_wrap";
+      ofile << block_name  << " : block -- { " << endl;
+      ofile << "signal sample_req: BooleanArray(1 downto 0);" << endl;
+      ofile << "signal sample_ack: BooleanArray(1 downto 0); --}" << endl;
+      ofile << "signal update_req: Boolean;" << endl;
+      ofile << "signal update_ack: Boolean;" << endl;
+      ofile << "signal data_in: std_logic_vector(" 
+		<< this->_x->Get_Size() + this->_y->Get_Size() - 1
+		<< " downto 0); --}" << endl;
+
+      ofile << "begin -- { " << endl;
+      if(this->Get_Guard_Wire() != NULL)
+      {
+      	ofile << "sample_req(1) <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else false;" << endl; 
+      	ofile << "sample_req(0) <= " << this->Get_Req(1)->Get_CP_To_DP_Symbol() 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else false;" << endl; 
+      	ofile << "update_req <= " << this->Get_Req(2)->Get_CP_To_DP_Symbol() 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else false;" << endl; 
+
+	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= sample_ack(1) " 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else " 
+ 		<< this->Get_Req(0)->Get_CP_To_DP_Symbol()  << ";" 
+		<< endl; 
+
+	ofile << this->Get_Ack(1)->Get_DP_To_CP_Symbol() << " <= sample_ack(0) " 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else " 
+ 		<< this->Get_Req(1)->Get_CP_To_DP_Symbol()  << ";" 
+		<< endl; 
+
+	ofile << this->Get_Ack(2)->Get_DP_To_CP_Symbol() << " <= update_ack " 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else " 
+ 		<< this->Get_Req(2)->Get_CP_To_DP_Symbol()  << ";" 
+		<< endl; 
+      }
+      else
+      {
+
+      	ofile << "sample_req(1) <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() << ";" << endl;
+      	ofile << "sample_req(0) <= " << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
+      	ofile << "update_req <= " << this->Get_Req(2)->Get_CP_To_DP_Symbol() << ";" << endl;
+	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= sample_ack(1); "  << endl;
+	ofile << this->Get_Ack(1)->Get_DP_To_CP_Symbol() << " <= sample_ack(0); "  << endl;
+	ofile << this->Get_Ack(2)->Get_DP_To_CP_Symbol() << " <= update_ack; "  << endl;
+      }
+
+      
+      ofile << " data_in <= " << this->_x->Get_VHDL_Signal_Id() << " & " << this->_y->Get_VHDL_Signal_Id() 
+		<< ";" << endl;
+
+      string data_out_sig = this->_z->Get_VHDL_Signal_Id();
+      string name = '"' + this->Get_VHDL_Id() + '"';
+      ofile << "ble: BinaryLogicalOperator -- { " << endl;
+      ofile << " generic map ( -- { " << endl;
+      ofile << " name => " << name << "," << endl;
+      ofile << " operator_id => " << Get_VHDL_Op_Id(this->Get_Op_Id(),this->_x->Get_Type(),
+				this->_z->Get_Type()) << "," << endl;
+      ofile << " input_width => " << this->_x->Get_Size() << "," << endl;
+      ofile << " output_width => " << this->_z->Get_Size() << "," << endl;
+      ofile << " input_1_buffer_depth => " << this->Get_Input_Buffering(this->_x) << "," << endl;
+      ofile << " input_2_buffer_depth => " << this->Get_Input_Buffering(this->_y) << "," << endl;
+      ofile << " input_1_is_constant => " << (this->_x->Is("vcConstantWire") ? "true" : "false")
+			<< "," << endl;
+      ofile << " input_2_is_constant => " << (this->_y->Is("vcConstantWire") ? "true" : "false")
+			<< "," << endl;
+      ofile << " output_buffer_depth => " << this->Get_Output_Buffering(this->_z) << "" << endl;
+      ofile << " -- } " << endl << ");" << endl;
+      ofile << " port map ( -- { " << endl;
+      ofile << " sample_req => sample_req," << endl;
+      ofile << " sample_ack => sample_req," << endl;
+      ofile << " update_req => update_req," << endl;
+      ofile << " update_ack => update_ack," << endl;
+      ofile << " data_in => data_in," << endl;
+      ofile << " data_out => " << data_out_sig << "," << endl;
+      ofile << " clk => clk, reset => reset" << endl;
+      ofile << " -- } " << endl << ");" << endl;
+      ofile << "-- }" << endl << "end block;" << endl;
+}
+
 void vcBinaryOperatorWithInputBuffering::Add_Reqs(vector<vcTransition*>& reqs)
 {
 	// one sample-req per input, one update req.
@@ -1046,6 +1311,34 @@ void vcInterlockBuffer::Add_Acks(vector<vcTransition*>& acks)
 	_acks = acks;
 }
 
+void vcInterlockBuffer::Print_VHDL(ostream& ofile)
+{
+        string inst_name = this->Get_VHDL_Id();
+        string name = '"' + inst_name + '"';
+
+	int ip_buf = this->Get_Input_Buffering(this->_din);
+	int op_buf = this->Get_Output_Buffering(this->_dout);
+
+        int buf_size = ((ip_buf < op_buf) ? op_buf : ip_buf);
+        int data_width = this->_dout->Get_Size();
+
+        ofile << this->Get_VHDL_Id() << " : InterlockBuffer ";
+	ofile << "generic map ( -- { " << endl;
+        ofile << " name => " << name << "," << endl;
+        ofile << " buffer_size => " << buf_size << "," << endl;
+        ofile << " data_width => " << data_width <<  endl;
+	ofile << " -- }" << endl << ")";
+	ofile << "port map ( -- { " << endl;
+        ofile << " write_req => "   << this->Get_Req(0)->Get_CP_To_DP_Symbol() << "," << endl;
+        ofile << " write_ack => "   << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << "," << endl;
+        ofile << " write_data => "  << this->_din->Get_VHDL_Signal_Id() << "," << endl;
+        ofile << " read_req => "   << this->Get_Req(1)->Get_CP_To_DP_Symbol() << "," << endl;
+        ofile << " read_ack => "   << this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "," << endl;
+        ofile << " read_data => "  << this->_dout->Get_VHDL_Signal_Id() << "," << endl;
+        ofile << " clk => clk, reset => reset" << endl;
+	ofile << " -- }" << endl << ");" << endl;
+}
+
 void vcInterlockBuffer::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__HASH] << " ";
@@ -1061,11 +1354,83 @@ void vcInterlockBuffer::Print(ostream& ofile)
   this->Print_Guard(ofile);
   ofile << endl;
 }
+  
+void vcSliceWithBuffering::Add_Reqs(vector<vcTransition*>& reqs)
+{
+	assert(reqs.size() == 2);
+	_reqs = reqs;
+}
+void vcSliceWithBuffering::Add_Acks(vector<vcTransition*>& acks)
+{
+	assert(acks.size() == 2);
+	_acks = acks;
+}
 
 void vcSliceWithBuffering::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__HASH] << " ";
   this->vcSlice::Print(ofile);
+}
+
+void vcSliceWithBuffering::Print_VHDL(ostream& ofile)
+{
+      string block_name = "slice_" + this->Get_VHDL_Id() + "_wrap";
+      ofile << block_name << " : block -- { " << endl;
+      ofile << "signal sample_req, sample_ack, update_req, update_ack: boolean; --}" << endl;
+      ofile << "begin -- { " << endl;
+ 
+
+      if(this->Get_Guard_Wire() != NULL)
+      {
+      	ofile << "sample_req <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else false;" << endl; 
+
+      	ofile << "update_req <= " << this->Get_Req(1)->Get_CP_To_DP_Symbol() 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else false;" << endl; 
+	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= sample_ack " 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else " 
+ 		<< this->Get_Req(0)->Get_CP_To_DP_Symbol()  << ";" 
+		<< endl; 
+
+	ofile << this->Get_Ack(1)->Get_DP_To_CP_Symbol() << " <= update_ack " 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else " 
+ 		<< this->Get_Req(1)->Get_CP_To_DP_Symbol()  << ";" 
+		<< endl; 
+      }
+      else
+      {
+      	ofile << "sample_req <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() << ";" << endl;
+      	ofile << "update_req <= " << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
+	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= sample_ack; "  << endl;
+	ofile << this->Get_Ack(1)->Get_DP_To_CP_Symbol() << " <= update_ack; "  << endl;
+      }
+
+      string name = '"' + this->Get_VHDL_Id() + '"';
+      int ib = this->Get_Input_Buffering(_din);
+      int ob = this->Get_Output_Buffering(_dout);
+      int bb = ((ib < ob) ? ob : ib);
+
+      ofile << this->Get_VHDL_Id() << ": SliceWithBuffering generic map( name => " << name 
+	    << ", in_data_width => "
+	    << this->_din->Get_Size() << ", high_index => " << this->_high_index 
+	    << ", low_index => " << this->_low_index 
+	    << ", buffering => " << bb
+	    << ") -- {" << endl;
+      ofile << " port map( din => " 
+	    << this->_din->Get_VHDL_Signal_Id() 
+	    << ", dout => " 
+	    << this->_dout->Get_VHDL_Signal_Id() 
+	    << ", sample_req => sample_req " 
+	    << ", update_req => update_req " 
+	    << ", sample_ack => sample_ack "
+	    << ", update_ack => update_ack "
+	    << ", clk => clk, reset => reset); -- }" << endl;
+
+      ofile << "-- }" << endl << "end block;" << endl;
 }
 
 void vcBinaryLogicalOperator::Print(ostream& ofile)
@@ -1091,3 +1456,92 @@ void vcSelectWithInputBuffering::Print(ostream& ofile)
   ofile << vcLexerKeywords[__HASH] << " ";
   this->vcSelect::Print(ofile);
 }
+
+void vcSelectWithInputBuffering::Print_VHDL(ostream& ofile)
+{
+      string block_name = "select_" + this->Get_VHDL_Id() + "_wrap";
+      ofile << block_name << " : block -- { " << endl;
+      ofile << "signal req_x, req_y, req_sel, req_z: boolean;" << endl;
+      ofile << "signal ack_x, ack_y, ack_sel, ack_z: boolean; --}" << endl;
+      ofile << "begin -- { " << endl;
+
+      if(this->Get_Guard_Wire() != NULL)
+      {
+      	ofile << "req_sel <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else false;" << endl; 
+      	ofile << "req_x <= " << this->Get_Req(1)->Get_CP_To_DP_Symbol() 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else false;" << endl; 
+      	ofile << "req_y <= " << this->Get_Req(2)->Get_CP_To_DP_Symbol() 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else false;" << endl; 
+      	ofile << "req_z <= " << this->Get_Req(3)->Get_CP_To_DP_Symbol() 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else false;" << endl; 
+	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack_sel " 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else " 
+ 		<< this->Get_Req(0)->Get_CP_To_DP_Symbol()  << ";" 
+		<< endl; 
+
+	ofile << this->Get_Ack(1)->Get_DP_To_CP_Symbol() << " <= ack_x " 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else " 
+ 		<< this->Get_Req(1)->Get_CP_To_DP_Symbol()  << ";"  << endl;
+
+	ofile << this->Get_Ack(2)->Get_DP_To_CP_Symbol() << " <= ack_y " 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else " 
+ 		<< this->Get_Req(2)->Get_CP_To_DP_Symbol()  << ";"  << endl;
+
+	ofile << this->Get_Ack(3)->Get_DP_To_CP_Symbol() << " <= ack_z " 
+		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
+		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else " 
+ 		<< this->Get_Req(3)->Get_CP_To_DP_Symbol()  << ";"  << endl;
+      }
+      else
+      {
+      	ofile << "req_sel <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() << ";" << endl;
+      	ofile << "req_x <= " << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
+      	ofile << "req_y <= " << this->Get_Req(2)->Get_CP_To_DP_Symbol() << ";" << endl;
+      	ofile << "req_z <= " << this->Get_Req(3)->Get_CP_To_DP_Symbol() << ";" << endl;
+	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack_sel; "  << endl;
+	ofile << this->Get_Ack(1)->Get_DP_To_CP_Symbol() << " <= ack_z; "  << endl;
+	ofile << this->Get_Ack(2)->Get_DP_To_CP_Symbol() << " <= ack_y; "  << endl;
+	ofile << this->Get_Ack(3)->Get_DP_To_CP_Symbol() << " <= ack_z; "  << endl;
+      }
+
+      ofile << this->Get_VHDL_Id() << ": SelectWithInputBuffering generic map(";
+      ofile << " name => " << '"' << this->Get_VHDL_Id() << '"' << "," << endl;
+      ofile << " data_width => " << this->_z->Get_Size() << "," << endl;
+      ofile << " sel_buffering => " << this->Get_Input_Buffering(this->_sel) << "," << endl;
+      ofile << " sel_is_constant => " << (this->_sel->Is("vcConstantWire") ? "true" : "false")  
+			<< "," << endl;
+      ofile << " x_buffering => " << this->Get_Input_Buffering(this->_x) << "," << endl;
+      ofile << " x_is_constant => " << (this->_x->Is("vcConstantWire") ? "true" : "false")  
+			<< "," << endl;
+      ofile << " y_buffering => " << this->Get_Input_Buffering(this->_y) << "," << endl;
+      ofile << " y_is_constant => " << (this->_y->Is("vcConstantWire") ? "true" : "false")  
+			<< "," << endl;
+      ofile << " z_buffering => " << this->Get_Output_Buffering(this->_z) << ") -- {" << endl;
+      ofile << " port map( x => " 
+	    << this->_x->Get_VHDL_Signal_Id() 
+	    << ", y => " 
+	    << this->_y->Get_VHDL_Signal_Id() 
+	    << ", sel => " 
+	    << this->_sel->Get_VHDL_Signal_Id() 
+	    << ", z => " << this->_z->Get_VHDL_Signal_Id() 
+	    << ", req_x => req_x"
+	    << ", req_y => req_y"
+	    << ", req_sel => req_sel"
+	    << ", req_z => req_z"
+	    << ", ack_x => ack_x"
+	    << ", ack_y => ack_y"
+	    << ", ack_sel => ack_sel"
+	    << ", ack_z => ack_z"
+	    << ", clk => clk, reset => reset); -- }" << endl;
+
+      ofile << "-- }" << endl << "end block;" << endl;
+}
+

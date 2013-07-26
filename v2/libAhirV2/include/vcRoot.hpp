@@ -131,6 +131,8 @@ enum vcLexerKeytags
     __UtoF_ASSIGN_OP ,
     __FtoF_ASSIGN_OP ,
     __DEAD,
+    __TIED_HIGH,
+    __LEFT_OPEN,
     __HASH
   };
 
@@ -264,6 +266,8 @@ static string vcLexerKeywords[] =
       "$F:=$U",
       "$F:=$F",
       "$dead",
+      "$tied_high",
+      "$left_open",
       "#"
   };
 

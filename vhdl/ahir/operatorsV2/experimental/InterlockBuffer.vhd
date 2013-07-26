@@ -1,6 +1,3 @@
--- TODO: add bypass path to unload buffer.
---       this will reduce buffering requirements
---       at the output side by a factor of two.
 library ieee;
 use ieee.std_logic_1164.all;
 
@@ -32,7 +29,7 @@ architecture default_arch of InterlockBuffer is
   type LoadFsmState is (l_idle, l_busy);
   signal l_fsm_state : LoadFsmState;
 
-  type UnloadFsmState is (idle, waiting, ackn);
+  type UnloadFsmState is (idle, waiting);
   signal fsm_state : UnloadFsmState;
   
 begin  -- default_arch
@@ -93,11 +90,10 @@ begin  -- default_arch
   -- FSM for unloading data..
   process(clk,fsm_state,read_req,pop_ack,reset)
      variable nstate: UnloadFsmState;
-     variable load_reg, ackv: boolean;
+     variable ackv: boolean;
      variable preq : std_logic;
   begin
      nstate :=  fsm_state;
-     load_reg := false;
      preq := '0';
      ackv := false;
   
@@ -105,33 +101,30 @@ begin  -- default_arch
          when idle => 
                if(read_req and (pop_ack(0) = '1')) then
 		    preq := '1';   
-                    nstate := ackn;
-		    load_reg := true;
+		    ackv := true;
                elsif (read_req) then
                     nstate := waiting;
                end if;
 	 when waiting =>
 		preq := '1';
 	        if(pop_ack(0) = '1') then
-		    nstate := ackn;
-		    load_reg := true;
+		    nstate := idle;
+		    ackv := true;
 		end if;
-	 when ackn =>
-		ackv := true;
-		nstate := idle;
      end case;
  
-     read_ack <= ackv;
      pop_req(0) <= preq;
 
      if(clk'event and clk = '1') then
 	if(reset = '1') then
 		fsm_state <= idle;
+     		read_ack <= false;
 	else
 		fsm_state <= nstate;
+     		read_ack <= ackv;
 	end if;
 
-	if(load_reg) then
+	if(ackv) then
            output_register <= pipe_data_out;
         end if;
      end if;

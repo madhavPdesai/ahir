@@ -14,7 +14,7 @@ entity InputMuxWithBuffering is
 	   owidth: integer := 10;
 	   twidth: integer := 3;
 	   nreqs: integer := 1;
-	   buffering: integer;
+	   buffering: IntegerArray;
 	   no_arbitration: Boolean := false;
 	   registered_output: Boolean := true);
   port (
@@ -47,6 +47,8 @@ architecture Behave of InputMuxWithBuffering is
   signal dataR_sig: std_logic_vector(owidth-1 downto 0);
   signal tagR_sig                : std_logic_vector(twidth-1 downto 0);
 
+  alias cbuffering: IntegerArray(nreqs-1 downto 0) is buffering;
+
 begin  -- Behave
 
    kill_zero <= '0';
@@ -67,7 +69,7 @@ begin  -- Behave
 
 
      rxBuf: ReceiveBuffer generic map(name => name & " receive-buffer " & Convert_To_String(I),
-					buffer_size =>  buffering,
+					buffer_size =>  cbuffering(I),
 					data_width => owidth,
 					kill_counter_range => 1)
 		port map (write_req => reqL(I),

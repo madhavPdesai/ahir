@@ -28,6 +28,7 @@ entity LoadReqSharedWithInputBuffers is
 	tag_length: integer := 1;
 	no_arbitration: Boolean := false;
         min_clock_period: Boolean := true;
+	input_buffering: IntegerArray;
 	time_stamp_width: integer := 0
     );
   port (
@@ -71,6 +72,7 @@ architecture Vanilla of LoadReqSharedWithInputBuffers is
   signal imux_data_out_accept,  imux_data_out_valid: std_logic;
   signal imux_data_out: std_logic_vector(rx_word_length-1 downto 0);
   
+  alias IBUFs: IntegerArray(num_reqs-1 downto 0) is input_buffering;
 begin  -- Behave
 
   assert(tag_length >= Ceil_Log2(num_reqs)) report "insufficient tag width" severity error;
@@ -104,7 +106,7 @@ begin  -- Behave
   -- receive buffers.
   RxGen: for I in 0 to num_reqs-1 generate
 	rb: ReceiveBuffer generic map(name => name & " RxBuf " & Convert_To_String(I),
-					buffer_size => 2,
+					buffer_size => IBUFs(I),
 					data_width => rx_word_length,
 					kill_counter_range => 655535)
 		port map(write_req => reqL(I), 
@@ -118,6 +120,15 @@ begin  -- Behave
 			 reset => reset);
 
   end generate RxGen;
+
+  -- 2D to 1D array conversion.
+  process(rx_data_out)
+  begin
+	for I in 0 to num_reqs-1 loop
+		imux_data_in(((I+1)*rx_word_length)-1 downto (I*rx_word_length))
+			<= rx_data_out(I);
+        end loop;
+  end process;
 
   -- the multiplexor.
   NonTrivTstamp: if time_stamp_width > 0 generate

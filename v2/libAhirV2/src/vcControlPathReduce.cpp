@@ -147,6 +147,10 @@ bool vcCPElementGroup::Can_Absorb(vcCPElementGroup* g)
 	  // there are not too many of them.
 	  if(this->_has_dead_transition || g->_has_dead_transition)
 	    ret_val = false;
+	  if(this->_has_tied_high_transition || g->_has_tied_high_transition)
+	    ret_val = false;
+	  if(this->_has_left_open_transition || g->_has_left_open_transition)
+	    ret_val = false;
 	  // if this is a join, g cannot be a
 	  // place
 	  else if(this->_is_join)
@@ -199,6 +203,8 @@ void vcCPElementGroup::Add_Element(vcCPElement* cpe)
       this->_has_input_transition  |= ((vcTransition*)cpe)->Get_Is_Input();
       this->_has_output_transition |= ((vcTransition*)cpe)->Get_Is_Output();
       this->_has_dead_transition   |= ((vcTransition*)cpe)->Get_Is_Dead();
+      this->_has_tied_high_transition   |= ((vcTransition*)cpe)->Get_Is_Tied_High();
+      this->_has_left_open_transition   |= ((vcTransition*)cpe)->Get_Is_Left_Open();
 
      
       if((cpe->Get_Number_Of_Predecessors() > 1) || (cpe->Get_Number_Of_Marked_Predecessors() > 0)) 
@@ -263,6 +269,10 @@ void vcCPElementGroup::Print(ostream& ofile)
     ofile << " output ";
   if(_has_dead_transition)
     ofile << " dead ";
+  if(_has_tied_high_transition)
+    ofile << " tied-high ";
+  if(_has_left_open_transition)
+    ofile << " left-open ";
   if(_bypass_flag)
     ofile << " bypass ";
   else
@@ -350,6 +360,17 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
       ofile << this->Get_VHDL_Id() << " <= false;" << endl;
       return;
     }
+  else if(this->_has_tied_high_transition)
+    {
+      ofile << this->Get_VHDL_Id() << " <= true;" << endl;
+      return;
+    }
+  else if(this->_has_left_open_transition)
+    {
+      ofile << "-- left open: " << this->Get_VHDL_Id() << endl;
+      return;
+    }
+  
 
 
   // if it is bound to an output of a cp function, dont print anything.
