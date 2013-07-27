@@ -518,6 +518,8 @@ vcTransition::vcTransition(vcCPElement* parent, string id):vcCPElement(parent, i
   _is_input = false;
   _is_output = false;
   _is_dead = false;
+  _is_tied_high = false;
+  _is_left_open = false;
   _is_entry_transition = false;
   _is_linked_to_non_local_dpe = false;
 }

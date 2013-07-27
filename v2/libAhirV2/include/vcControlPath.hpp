@@ -839,6 +839,8 @@ public:
     _has_input_transition = false;
     _has_output_transition = false;
     _has_dead_transition = false;
+    _has_tied_high_transition = false;
+    _has_left_open_transition = false;
     _group_index = -1;
     _is_join = false;
     _is_fork = false;

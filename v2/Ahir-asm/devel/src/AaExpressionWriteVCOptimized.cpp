@@ -187,8 +187,12 @@ void AaSimpleObjectReference::Write_VC_Links_Optimized(string hier_id, ostream& 
 		else if(this->_object->Is("AaPipeObject"))
 		{
 			string inst_name = this->Get_VC_Datapath_Instance_Name();
-			reqs.push_back(hier_id + "/" + this->Get_VC_Complete_Region_Name() + "/req");
-			acks.push_back(hier_id + "/" + this->Get_VC_Complete_Region_Name() + "/ack");
+			string sample_regn = this->Get_VC_Name() + "_Sample";
+			string update_regn = this->Get_VC_Name() + "_Update";
+			reqs.push_back(hier_id + "/" + sample_regn + "/rr");
+			reqs.push_back(hier_id + "/" + update_regn + "/cr");
+			acks.push_back(hier_id + "/" + sample_regn + "/ra");
+			acks.push_back(hier_id + "/" + update_regn + "/ca");
 			Write_VC_Link(inst_name, reqs,acks,ofile);
 		}
 	}
@@ -227,11 +231,10 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 	if(!this->Is_Constant())
 	{
 		ofile << "// " << this->To_String() << endl;
-
-		__DeclTrans
 			// if this is a statement...
 			if(this->_object->Is_Interface_Object())
 			{
+				__DeclTrans
 				ofile << "// reference to interface object" << endl;
 
 				if(barrier != NULL)
@@ -268,6 +271,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 			else if(this->Is_Implicit_Variable_Reference())
 			{
 				ofile << "// implicit reference" << endl;
+				__DeclTrans
 
 				this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
@@ -303,6 +307,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 			else if(this->_object->Is("AaStorageObject"))
 				// complete region name is in Write_VC_Load_Control...
 			{
+				__DeclTrans
 
 				if(barrier != NULL)
 				{
@@ -327,11 +332,12 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 				}
 			}
 		// else if the object being referred to is
-		// a pipe, instantiate a series r-a
-		// chain for the inport operation
+		// a pipe, instantiate a split protocol path
+		// for the inport operation
 			else if(this->_object->Is("AaPipeObject"))
 				// needed to hook up pipe dependencies.
 			{
+				__DeclTransSplitProtocolPattern
 				if(barrier != NULL)
 				{
 					ofile << "// barrier " << endl;
@@ -341,14 +347,17 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 				// the guard dependency..
 				this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
-				ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] { // pipe read" << endl;
-				ofile << "$T [req] $T [ack] " << endl;
+				string sample_regn = this->Get_VC_Name() + "_Sample";
+				string update_regn = this->Get_VC_Name() + "_Update";
+				ofile << ";;[" << sample_regn << "] { // pipe read sample" << endl;
+				ofile << "$T [rr] $T [ra] " << endl;
 				ofile << "}" << endl;
 
-				// complete the chain..
-				__J(__AT(this),__ST(this));
-				__F(__AT(this),this->Get_VC_Complete_Region_Name());
-				__J(__CT(this), this->Get_VC_Complete_Region_Name());
+				ofile << ";;[" << update_regn << "] { // pipe read update" << endl;
+				ofile << "$T [cr] $T [ca] " << endl;
+				ofile << "}" << endl;
+
+				_ConnectSplitProtocolPattern
 
 				// record the pipe!  Introduce pipe related dependencies 
 				// later. TODO
@@ -357,9 +366,8 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 				if(pipeline_flag)
 				{
 					// SelfRelease
-					__MJ(__AT(this),__CT(this));
+					__SelfReleaseSplitProtocolPattern
 				}
-
 			}
 
 		// at the end!

@@ -1,6 +1,3 @@
--- TODO: add bypass path to unload buffer.
---       this will reduce buffering requirements
---       at the output side by a factor of two.
 library ieee;
 use ieee.std_logic_1164.all;
 
@@ -32,8 +29,10 @@ architecture default_arch of UnloadBuffer is
   signal unload_req_reg, unload_req_token, unload_req_clear  : boolean;
   signal unload_ack_sig : boolean;
 
-  type UnloadFsmState is (idle, waiting, ackn);
+  type UnloadFsmState is (idle, waiting);
   signal fsm_state : UnloadFsmState;
+
+  signal load_reg: boolean;
   
 begin  -- default_arch
 
@@ -59,13 +58,12 @@ begin  -- default_arch
 
 
   -- FSM
-  process(clk)
+  process(clk,unload_req, pop_ack)
      variable nstate: UnloadFsmState;
-     variable load_reg, ackv: boolean;
+     variable ackv: boolean;
      variable preq : std_logic;
   begin
      nstate :=  fsm_state;
-     load_reg := false;
      preq := '0';
      ackv := false;
   
@@ -73,24 +71,20 @@ begin  -- default_arch
          when idle => 
                if(unload_req and (pop_ack(0) = '1')) then
 		    preq := '1';   
-                    nstate := ackn;
-		    load_reg := true;
+		    ackv := true;
                elsif (unload_req) then
                     nstate := waiting;
                end if;
 	 when waiting =>
 		preq := '1';
 	        if(pop_ack(0) = '1') then
-		    nstate := ackn;
-		    load_reg := true;
+		    nstate := idle;
+		    ackv := true;
 		end if;
-	 when ackn =>
-		ackv := true;
-		nstate := idle;
      end case;
  
-     unload_ack <= ackv;
      pop_req(0) <= preq;
+     load_reg <= ackv;
 
      if(clk'event and clk = '1') then
 	if(reset = '1') then
@@ -99,12 +93,14 @@ begin  -- default_arch
 		fsm_state <= nstate;
 	end if;
 
-	if(load_reg) then
+	if(ackv) then
            output_register <= pipe_data_out;
         end if;
      end if;
   end process;
 
-  read_data <= output_register;
+  -- bypass.. this adds delay, but prevents a wasted cycle.
+  unload_ack <= load_reg;
+  read_data <= pipe_data_out when load_reg else output_register;
 
 end default_arch;

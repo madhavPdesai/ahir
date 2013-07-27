@@ -167,10 +167,15 @@ class AaExpression: public AaRoot
     return(this->Get_VC_Name() + "_wire");
   }
 
+  virtual string Get_VC_Start_Region_Name()
+  {
+    return(this->Get_VC_Name() + "_start");
+  }
+
   virtual string Get_VC_Request_Region_Name()
   {
     return(this->Get_VC_Name() + "_request");
-  }
+  } 
 
   virtual string Get_VC_Complete_Region_Name()
   {

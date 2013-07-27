@@ -13,7 +13,8 @@ use ahir.BaseComponents.all;
 -- port.  The combinational paths are a bit longer
 -- but cant have everything..
 entity OutputPortFullRate is
-  generic(num_reqs: integer;
+  generic(name : string;
+	  num_reqs: integer;
 	  data_width: integer;
 	  no_arbitration: boolean := false);
   port (

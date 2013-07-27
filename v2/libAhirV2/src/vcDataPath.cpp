@@ -2424,8 +2424,9 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 
       // now the operator instances 
       string group_name = p->Get_VHDL_Id() + "_write_" + IntToStr(idx);
+      string name = '"' + p->Get_VHDL_Id() + '"';
       ofile << group_name << ": OutputPortFullRate -- { " << endl;
-      ofile << "generic map ( data_width => " << data_width << ","
+      ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
 	    << "  num_reqs => " << num_reqs << ","
 	    << "  no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map (--{\n req => req " << ", " <<  endl

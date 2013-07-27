@@ -760,8 +760,6 @@ string AaSimpleObjectReference::Get_VC_Constant_Name()
 
 void AaSimpleObjectReference::Write_VC_Control_Path( ostream& ofile)
 {
-
-
 	if(!this->Is_Constant())
 	{
 
@@ -785,8 +783,13 @@ void AaSimpleObjectReference::Write_VC_Control_Path( ostream& ofile)
 		else if(this->_object->Is("AaPipeObject"))
 		{
 			ofile << "// " << this->To_String() << endl;
-			ofile << ";;[" << this->Get_VC_Name() << "] { // pipe read" << endl;
+			ofile << "||[" << this->Get_VC_Name() << "] { // pipe read" << endl;
+			ofile << ";;[Sample] {" << endl;
 			ofile << "$T [req] $T [ack] " << endl;
+			ofile << "}" << endl;
+			ofile << ";;[Update] { " << endl;
+			ofile << "$T [req] $T [ack] " << endl;
+			ofile << "}" << endl;
 			ofile << "}" << endl;
 		}
 	}
@@ -821,10 +824,15 @@ string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoo
 	{
 
 		if(this->_object->Is("AaStorageObject"))
-			return(this->Get_VC_Active_Transition_Name());
+			return(__AT(this));
 
 		if(this->_object->Is("AaPipeObject"))
-			return(this->Get_VC_Active_Transition_Name());
+		{
+			if(this->Get_Is_Target())
+				return(__AT(this));
+			else
+				return(__SST(this));
+		}
 
 		if(this->_object->Is_Interface_Object())
 		{
@@ -1155,8 +1163,10 @@ void AaSimpleObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
 		else if(this->_object->Is("AaPipeObject"))
 		{
 			string inst_name = this->Get_VC_Datapath_Instance_Name();
-			reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/req");
-			acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/ack");
+			reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/Sample/req");
+			reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/Update/req");
+			acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/Sample/ack");
+			acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/Update/ack");
 			Write_VC_Link(inst_name, reqs,acks,ofile);
 		}
 	}

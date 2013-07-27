@@ -573,6 +573,9 @@ vc_CPMarkedJoin[vcCPPipelinedLoopBody* fb]
 {
 	string lbl,b;
 	vector<string> join_ids;
+//
+// TODO: join markings need to be established here..
+//
 }
 :
 ((lbl = vc_Identifier) | 

@@ -31,6 +31,8 @@ end entity;
 architecture Behave of PulseToLevelHalfInterlockBuffer is
 
   type SampleFsmState is (Idle, WaitForBuf, WaitForWrite);
+  signal sample_fsm_state: SampleFsmState;
+
   signal buf_write, buf_has_room: std_logic;
 begin  -- Behave
 
@@ -47,7 +49,7 @@ begin  -- Behave
 
 
    -- Sample FSM.  sample_req/ack regulates sampling into buffer.
-   process(clk,sample_fsm_state,reset,buf_has_room,write_enable)
+   process(clk,sample_fsm_state,reset,buf_has_room,write_enable,sample_req)
 	variable nstate: SampleFsmState;
    begin
 	nstate := sample_fsm_state;
@@ -63,6 +65,8 @@ begin  -- Behave
 				if (write_enable = '1') then
 					buf_write <= '1';
 					sample_ack <= true;
+				else
+					nstate := WaitForWrite;
 				end if;
 			elsif(sample_req and (buf_has_room = '0')) then
 				nstate := WaitForBuf;

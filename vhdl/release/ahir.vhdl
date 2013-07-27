@@ -14640,9 +14640,6 @@ begin
   asynch_data <= synch_data;
   
 end Behave;
--- TODO: add bypass path to unload buffer.
---       this will reduce buffering requirements
---       at the output side by a factor of two.
 library ieee;
 use ieee.std_logic_1164.all;
 
@@ -14674,8 +14671,10 @@ architecture default_arch of UnloadBuffer is
   signal unload_req_reg, unload_req_token, unload_req_clear  : boolean;
   signal unload_ack_sig : boolean;
 
-  type UnloadFsmState is (idle, waiting, ackn);
+  type UnloadFsmState is (idle, waiting);
   signal fsm_state : UnloadFsmState;
+
+  signal load_reg: boolean;
   
 begin  -- default_arch
 
@@ -14701,13 +14700,12 @@ begin  -- default_arch
 
 
   -- FSM
-  process(clk)
+  process(clk,unload_req, pop_ack)
      variable nstate: UnloadFsmState;
-     variable load_reg, ackv: boolean;
+     variable ackv: boolean;
      variable preq : std_logic;
   begin
      nstate :=  fsm_state;
-     load_reg := false;
      preq := '0';
      ackv := false;
   
@@ -14715,24 +14713,20 @@ begin  -- default_arch
          when idle => 
                if(unload_req and (pop_ack(0) = '1')) then
 		    preq := '1';   
-                    nstate := ackn;
-		    load_reg := true;
+		    ackv := true;
                elsif (unload_req) then
                     nstate := waiting;
                end if;
 	 when waiting =>
 		preq := '1';
 	        if(pop_ack(0) = '1') then
-		    nstate := ackn;
-		    load_reg := true;
+		    nstate := idle;
+		    ackv := true;
 		end if;
-	 when ackn =>
-		ackv := true;
-		nstate := idle;
      end case;
  
-     unload_ack <= ackv;
      pop_req(0) <= preq;
+     load_reg <= ackv;
 
      if(clk'event and clk = '1') then
 	if(reset = '1') then
@@ -14741,13 +14735,15 @@ begin  -- default_arch
 		fsm_state <= nstate;
 	end if;
 
-	if(load_reg) then
+	if(ackv) then
            output_register <= pipe_data_out;
         end if;
      end if;
   end process;
 
-  read_data <= output_register;
+  -- bypass.. this adds delay, but prevents a wasted cycle.
+  unload_ack <= load_reg;
+  read_data <= pipe_data_out when load_reg else output_register;
 
 end default_arch;
 -- The unshared operator uses a split protocol.
@@ -19956,7 +19952,8 @@ use ahir.BaseComponents.all;
 -- port.  The combinational paths are a bit longer
 -- but cant have everything..
 entity OutputPortFullRate is
-  generic(num_reqs: integer;
+  generic(name : string;
+	  num_reqs: integer;
 	  data_width: integer;
 	  no_arbitration: boolean := false);
   port (
@@ -20117,6 +20114,8 @@ end entity;
 architecture Behave of PulseToLevelHalfInterlockBuffer is
 
   type SampleFsmState is (Idle, WaitForBuf, WaitForWrite);
+  signal sample_fsm_state: SampleFsmState;
+
   signal buf_write, buf_has_room: std_logic;
 begin  -- Behave
 
@@ -20133,7 +20132,7 @@ begin  -- Behave
 
 
    -- Sample FSM.  sample_req/ack regulates sampling into buffer.
-   process(clk,sample_fsm_state,reset,buf_has_room,write_enable)
+   process(clk,sample_fsm_state,reset,buf_has_room,write_enable,sample_req)
 	variable nstate: SampleFsmState;
    begin
 	nstate := sample_fsm_state;
@@ -20149,106 +20148,8 @@ begin  -- Behave
 				if (write_enable = '1') then
 					buf_write <= '1';
 					sample_ack <= true;
-				end if;
-			elsif(sample_req and (buf_has_room = '0')) then
-				nstate := WaitForBuf;
-			end if;
-		when WaitForBuf =>
-			if(buf_has_room = '1') then
-				has_room <= '1';
-				if (write_enable = '1') then
-					buf_write <= '1';
-					sample_ack <= true;
-					nstate := Idle;
 				else
 					nstate := WaitForWrite;
-				end if;
-			end if;
-		when WaitForWrite =>
-			has_room <= '1';
-			if(write_enable = '1') then
-				buf_write <= '1';
-				sample_ack <= true;
-				nstate := Idle;
-			end if;
-	end case;
-
-
-	if(clk'event and clk = '1') then
-		if(reset = '1') then
-			sample_fsm_state <= Idle;
-		else	
-			sample_fsm_state <= nstate;
-		end if;
-	end if;
-   end process;
-
-end Behave;
-library ieee;
-use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-
-library ahir;
-use ahir.Types.all;
-use ahir.Subprograms.all;
-use ahir.Utilities.all;
-use ahir.BaseComponents.all;
-
--- 
---  An interlock with a write interface
---  triggered by a pulse protocol and completed
---  by a level protocol.  The read-interface
---  is entirely regulated by a pulse protocol.
---
-entity PulseToLevelHalfInterlockBuffer is
-  generic (name : string; data_width: integer; buffer_size : integer);
-  port( sample_req : in boolean;
-        sample_ack : out boolean;
-        has_room : out std_logic;
-        write_enable : in  std_logic;
-        write_data : in std_logic_vector(data_width-1 downto 0);
-        update_req : in boolean;
-        update_ack : out boolean;
-        read_data : out std_logic_vector(data_width-1 downto 0);
-        clk : in std_logic;
-        reset : in std_logic);
-end entity;
-
-architecture Behave of PulseToLevelHalfInterlockBuffer is
-
-  type SampleFsmState is (Idle, WaitForBuf, WaitForWrite);
-  signal buf_write, buf_has_room: std_logic;
-begin  -- Behave
-
-   buf: UnloadBuffer generic map (name => name & " buffer ",
-				data_width => data_width,
-			 	buffer_size => buffer_size)
-		port map(write_req => buf_write,
-                         write_ack => buf_has_room,
-			 write_data => write_data,
-			 unload_req => update_req,
-			 unload_ack => update_ack,
-                         read_data => read_data,
-			 clk => clk, reset => reset);		
-
-
-   -- Sample FSM.  sample_req/ack regulates sampling into buffer.
-   process(clk,sample_fsm_state,reset,buf_has_room,write_enable)
-	variable nstate: SampleFsmState;
-   begin
-	nstate := sample_fsm_state;
-
-	has_room <= '0';
-	buf_write <= '0';
-        sample_ack <= false;
-
-	case sample_fsm_state is
-		when Idle => 
-			if(sample_req and (buf_has_room = '1')) then
-				has_room <= '1';
-				if (write_enable = '1') then
-					buf_write <= '1';
-					sample_ack <= true;
 				end if;
 			elsif(sample_req and (buf_has_room = '0')) then
 				nstate := WaitForBuf;
