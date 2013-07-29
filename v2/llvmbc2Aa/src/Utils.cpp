@@ -1057,8 +1057,9 @@ bool Aa::is_zero(llvm::Constant* konst)
 
 // if the terminator contains a branch back to this
 // block itself, then it is a do-while loop.
-bool Aa::is_do_while_loop(llvm::BasicBlock& BB, int& pipelining_depth, int& buffering)
+bool Aa::is_do_while_loop(llvm::BasicBlock& BB, int& pipelining_depth, int& buffering, bool& full_rate_flag)
 {
+        full_rate_flag = false;
 	pipelining_depth = 1;
 	buffering = 1;
 	llvm::TerminatorInst* T = BB.getTerminator();
@@ -1107,6 +1108,16 @@ bool Aa::is_do_while_loop(llvm::BasicBlock& BB, int& pipelining_depth, int& buff
 						int bd = get_uint32(dyn_cast<Constant>(v));
 						if(bd > 0)
 							buffering = bd;
+					}
+				}
+				if(C.getNumArgOperands() > 2)
+				{
+					v = C.getArgOperand(2);	
+					if(isa<Constant>(v))
+					{
+						int bd = get_uint32(dyn_cast<Constant>(v));
+						if(bd > 0)
+							full_rate_flag = true;
 					}
 				}
 			}

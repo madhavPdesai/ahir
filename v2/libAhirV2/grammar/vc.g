@@ -372,10 +372,12 @@ vc_CPSimpleLoopBlock[vcCPBlock* cp]
 	vcCPSimpleLoopBlock* sb;
 	vcCPElement* cpe;
 	int depth, buffering;
+ 	bool full_rate_flag = false;
 }
 : LOOPBLOCK lbl = vc_Label { sb = new vcCPSimpleLoopBlock(cp,lbl);} 
 	DEPTH did: UINTEGER {depth = atoi(did->getText().c_str()); sb->Set_Depth(depth); }
 	BUFFERING bid: UINTEGER {buffering = atoi(bid->getText().c_str()); sb->Set_Buffering(buffering); }
+	( FULLRATE {full_rate_flag = true;})?
   LBRACE 
         (cpe = vc_CPPlace[sb] {sb->Add_CPElement(cpe);})* // first the places
         vc_CPPipelinedLoopBody[sb] // then the loop body..
@@ -386,7 +388,7 @@ vc_CPSimpleLoopBlock[vcCPBlock* cp]
         (vc_CPBind[sb])+
         vc_CPLoopTerminate[sb]  
   RBRACE
-        { cp->Add_CPElement(sb); }
+        { cp->Add_CPElement(sb);  sb->Set_Full_Rate_Flag(true);}
 ;
 
 //-----------------------------------------------------------------------------------------------
@@ -1743,6 +1745,7 @@ CONSTANT      : "$constant";
 INTERMEDIATE  : "$intermediate";
 DEPTH         : "$depth";
 BUFFERING     : "$buffering";
+FULLRATE      : "$fullrate";
 GUARD         : "$guard";
 BIND          : "$bind";
 TERMINATE     : "$terminate";

@@ -634,6 +634,7 @@ class vcCPSimpleLoopBlock: public vcCPBranchBlock
   vcLoopTerminator* _terminator;
   int _depth;
   int _buffering;
+  bool _full_rate_flag;
 
 public:
   vcCPSimpleLoopBlock(vcCPBlock* parent, string id);
@@ -644,6 +645,9 @@ public:
 
   void Set_Buffering(int d) {_buffering = d;}
   int  Get_Buffering() {return(_buffering);}
+
+  void Set_Full_Rate_Flag(bool d) {_full_rate_flag = d;}
+  int  Get_Full_Rate_Flag() {return(_full_rate_flag);}
 
   virtual void Print(ostream& ofile);
   virtual void Print_VHDL(ostream& ofile);

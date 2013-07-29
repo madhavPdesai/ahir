@@ -602,6 +602,7 @@ namespace {
       bool is_do_while = this->Get_Do_While_Flag();
       int  do_while_p_depth = this->Get_Do_While_Pipelining_Depth();
       int  do_while_b_depth = this->Get_Do_While_Buffering_Depth();
+      bool full_rate_flag = this->Get_Do_While_Full_Rate_Flag();
 
       if(is_do_while)
 	std::cout << "//   this is a do-while loop." << std::endl;
@@ -684,6 +685,9 @@ namespace {
       {
 	std::cout << "$dopipeline $depth " << do_while_p_depth << " ";
 	std::cout << "$buffering " << do_while_b_depth << " " <<  std::endl;
+        if(full_rate_flag)
+		std::cout << "$fullrate" << std::endl;
+
 	std::cout << "$merge $entry $loopback" << std::endl;
 	for(llvm::BasicBlock::iterator iiter = BB.begin(),fiter = BB.end(); 
 	      iiter != fiter;  ++iiter)

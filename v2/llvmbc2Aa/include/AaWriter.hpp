@@ -30,6 +30,7 @@ namespace Aa {
     bool _do_while_flag;
     int _do_while_pipelining_depth;
     int _do_while_buffering_depth;
+    bool _do_while_full_rate_flag;
 
     std::map<std::string,std::set<std::string> > bb_predecessor_map;
     std::map<llvm::Value*, std::string> value_name_map;
@@ -49,6 +50,9 @@ namespace Aa {
 
     void Set_Do_While_Flag(bool v) {_do_while_flag = v;}
     bool Get_Do_While_Flag() {return(_do_while_flag);}
+
+    void Set_Do_While_Full_Rate_Flag(bool v) {_do_while_full_rate_flag = v;}
+    bool Get_Do_While_Full_Rate_Flag() {return(_do_while_full_rate_flag);}
 
     void Set_Do_While_Pipelining_Depth(int v) {_do_while_pipelining_depth = v;}
     int Get_Do_While_Pipelining_Depth() {return(_do_while_pipelining_depth);}

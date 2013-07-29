@@ -3014,8 +3014,8 @@ bool vcCPPipelinedLoopBody::Check_Structure()
 void vcCPPipelinedLoopBody::Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map)
 {
 	// If (v,u) and (w,u) are two reenable arcs
-	// and distance[v][w] > 0, then (v,u) is
-	// redundant.
+	// and distance[v][w] > 0 and marking(v,u) <= marking(w,u)
+	// then (v,u) is redundant.
 	for(map<vcCPElement*,map<vcCPElement*,int> >::iterator iter = distance_map.begin(),
 			fiter = distance_map.end(); iter != fiter; iter++)
 	{
@@ -3028,6 +3028,7 @@ void vcCPPipelinedLoopBody::Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map<
 			idx++)
 		{
 			vcCPElement* v = u->Get_Marked_Predecessor(idx);
+			int mv = u->Get_Marked_Predecessor_Marking(v);
 			
 			bool insert_v = true;
 			vector<vcCPElement*> del_vec;
@@ -3038,12 +3039,14 @@ void vcCPPipelinedLoopBody::Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map<
 			{
 				bool evict_w = false;
 				vcCPElement* w = *niter;
-				if(distance_map[v][w] > 0)
+				int mw = u->Get_Marked_Predecessor_Marking(w);
+
+				if((distance_map[v][w] > 0) && (mw <= mv))
 				{
 					insert_v = false;
 					break;
 				}
-				else if(distance_map[w][v] > 0)
+				if((distance_map[w][v] > 0) && (mv <= mw))
 					evict_w = true;
 
 				if(evict_w)

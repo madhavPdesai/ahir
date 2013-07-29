@@ -286,14 +286,14 @@ vcDataPath::vcDataPath(vcModule* m, string id):vcRoot(id)
 void vcDataPath::Get_Label_Interval(vcControlPath* cp, vcDatapathElement* dpe, vector<vcCompatibilityLabel*>& ret_vector)
 {
   int i, i_f;
-  for(i = 0, i_f < dpe->Get_Number_Of_Reqs(); i < i_f; i++)
+  for(i = 0, i_f = dpe->Get_Number_Of_Reqs(); i < i_f; i++)
   {
 	vcCPElement* r = dpe->Get_Req(i);
 	assert(r != NULL);
 	     
 	ret_vector.push_back(r->Get_Compatibility_Label());
   }
-  for(i = 0, i_f < dpe->Get_Number_Of_Acks(); i < i_f; i++)
+  for(i = 0, i_f = dpe->Get_Number_Of_Acks(); i < i_f; i++)
   {
 	vcCPElement* a = dpe->Get_Ack(i);
 	assert(a != NULL);
@@ -550,7 +550,9 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
   int idx_of_group_to_which_added = -1;
 
   vector<vcCompatibilityLabel*> labels_1;
-  this->Get_Label_Interval(cp,dpe,labels_1);
+
+  if(!vcSystem::_min_area_flag)
+  	this->Get_Label_Interval(cp,dpe,labels_1);
 
   for(int idx = 0; idx < dpe_group.size(); idx++)
     {
@@ -596,12 +598,17 @@ void vcDataPath::Update_Maximal_Groups(vcControlPath* cp,
 
    if(vcSystem::_verbose_flag)
    {
-	std::cerr << "Info: " << dpe->Get_Id() << " (";
-	for(int i = 0, i_f = labels_1.size(); i < i_f; i++)
+	std::cerr << "Info: " << dpe->Get_Id();
+	if(!vcSystem::_min_area_flag)
 	{
-		std::cerr << " " << labels_1[i]->Get_Id();
+		std::cerr << " (";
+		for(int i = 0, i_f = labels_1.size(); i < i_f; i++)
+		{
+			std::cerr << " " << labels_1[i]->Get_Id();
+		}
+		std::cerr << ") ";
 	}
-	std::cerr << ") included in " 
+	std::cerr << " included in " 
 		  << dpe->Kind() << " group "
 		  << idx_of_group_to_which_added << endl;
    }
