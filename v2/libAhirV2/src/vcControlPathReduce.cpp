@@ -31,7 +31,7 @@ void vcCPElement::Connect_CPElement_Group_Graph(vcControlPath* cp)
       vcCPElementGroup* my_group = cp->Get_Group(this->Get_Entry_Element());
       if(pred_group != NULL && pred_group != my_group)
 	{
-	  cp->Connect_Groups(pred_group,my_group, false);
+	  cp->Connect_Groups(pred_group,my_group, 0);
 	}
     }
   
@@ -49,9 +49,10 @@ void vcCPElement::Connect_CPElement_Group_Graph(vcControlPath* cp)
 
       vcCPElementGroup* succ_group = cp->Get_Group(succ);
       vcCPElementGroup* my_group = cp->Get_Group(this->Get_Exit_Element());
+
       if(succ_group != NULL && succ_group != my_group)
 	{
-	  cp->Connect_Groups(my_group,succ_group, false);
+	  cp->Connect_Groups(my_group,succ_group, 0);
 	}
     }
 
@@ -59,11 +60,14 @@ void vcCPElement::Connect_CPElement_Group_Graph(vcControlPath* cp)
   for(int idx = 0; idx < _marked_predecessors.size() ; idx++)
     {
       vcCPElement* pred = _marked_predecessors[idx]->Get_Exit_Element();
+      int marking = this->Get_Marked_Predecessor_Marking(_marked_predecessors[idx]);
+
       vcCPElementGroup* pred_group = cp->Get_Group(pred);
       vcCPElementGroup* my_group = cp->Get_Group(this->Get_Entry_Element());
+
       if(pred_group != NULL && pred_group != my_group)
 	{
-	  cp->Connect_Groups(pred_group,my_group,true);
+	  cp->Connect_Groups(pred_group,my_group,marking);
 	}
     }
   
@@ -76,12 +80,13 @@ void vcCPElement::Connect_CPElement_Group_Graph(vcControlPath* cp)
 	// it. Sorted out by making the bound transition in
 	// the loop-body as the successor.
       vcCPElement* succ = _marked_successors[idx]->Get_Entry_Element();
+      int marking = this->Get_Marked_Successor_Marking(_marked_successors[idx]);
 
       vcCPElementGroup* succ_group = cp->Get_Group(succ);
       vcCPElementGroup* my_group = cp->Get_Group(this->Get_Exit_Element());
       if(succ_group != NULL && succ_group != my_group)
 	{
-	  cp->Connect_Groups(my_group,succ_group,true);
+	  cp->Connect_Groups(my_group,succ_group,marking);
 	}
     }
 }
@@ -112,6 +117,20 @@ void vcCPBlock::Connect_CPElement_Group_Graph(vcControlPath* cp)
   this->vcCPElement::Connect_CPElement_Group_Graph(cp);
 }
 
+int  vcCPElementGroup::Get_Marked_Successor_Marking(vcCPElementGroup* g)
+{
+	if(_marked_successor_markings.find(g) != _marked_successor_markings.end())
+		return(_marked_successor_markings[g]);
+	else
+		return(-1);
+}
+int  vcCPElementGroup::Get_Marked_Predecessor_Marking(vcCPElementGroup* g)
+{
+	if(_marked_predecessor_markings.find(g) != _marked_predecessor_markings.end())
+		return(_marked_predecessor_markings[g]);
+	else
+		return(-1);
+}
 
 // Can this absorb g (g is a successor of this)?
 bool vcCPElementGroup::Can_Absorb(vcCPElementGroup* g)
@@ -689,10 +708,11 @@ void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole
     {
       // remove part as a predecessor of iter..
       (*iter)->_predecessors.erase(part);
+     
 
       // connect whole to iter..
       if(this->_cpelement_groups.find(*iter) != this->_cpelement_groups.end())
-	this->Connect_Groups(whole,(*iter), false);
+	this->Connect_Groups(whole,(*iter), 0);
 
     }
 
@@ -704,12 +724,14 @@ void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole
     {
       // remove part as a marked predecessor of iter..
       (*iter)->_marked_predecessors.erase(part);
+      (*iter)->_marked_predecessor_markings.erase(part);
 
       // connect whole to iter..
       if(this->_cpelement_groups.find(*iter) != this->_cpelement_groups.end())
       {
+        int marking = part->Get_Marked_Successor_Marking(*iter);
 	if(whole != (*iter)) // avoid self loops since they are redundant.
-		this->Connect_Groups(whole,(*iter), true);
+		this->Connect_Groups(whole,(*iter), marking);
       }
     }
 
@@ -721,12 +743,14 @@ void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole
     {
       // remove part as a marked successor of iter..
       (*iter)->_marked_successors.erase(part);
+      (*iter)->_marked_successor_markings.erase(part);
 
       // connect iter to whole..
       if(this->_cpelement_groups.find(*iter) != this->_cpelement_groups.end())
       {
+        int marking = part->Get_Marked_Predecessor_Marking(*iter);
 	if(whole != (*iter)) // avoid self loops since they are redundant.
-		this->Connect_Groups((*iter), whole, true);
+		this->Connect_Groups((*iter), whole, marking);
       }
     }
 
@@ -781,18 +805,23 @@ void vcControlPath::Add_To_Group(vcCPElement* cpe, vcCPElementGroup* group)
   _cpelement_to_group_map[cpe] = group;
 }
 
-void vcControlPath::Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to, bool marked_flag)
+void vcControlPath::Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to, int marking)
 {
-  if(!marked_flag)
+  if(marking == 0)
   {
   	from->Add_Successor(to);
   	to->Add_Predecessor(from);
   }
-  else
+  else if(marking > 0)
   {
   	from->Add_Marked_Successor(to);
+	from->Set_Marked_Successor_Marking(to,marking);
+
   	to->Add_Marked_Predecessor(from);
+	to->Set_Marked_Predecessor_Marking(from,marking);
   }
+  else
+	assert(0);
 }
 
 

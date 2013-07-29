@@ -573,6 +573,7 @@ vc_CPMarkedJoin[vcCPPipelinedLoopBody* fb]
 {
 	string lbl,b;
 	vector<string> join_ids;
+	vector<int>  join_markings;
 //
 // TODO: join markings need to be established here..
 //
@@ -581,9 +582,10 @@ vc_CPMarkedJoin[vcCPPipelinedLoopBody* fb]
 ((lbl = vc_Identifier) | 
 	(je:ENTRY {lbl = je->getText();}) |
 	(jnull:N_ULL {lbl = jnull->getText();})
-	) MARKEDJOIN  LPAREN (e:ENTRY {join_ids.push_back(e->getText());})?
-(b =  vc_Identifier {join_ids.push_back(b);})* RPAREN
- {fb->Add_Marked_Join_Point(lbl,join_ids);}
+	) MARKEDJOIN  LPAREN (e:ENTRY {join_ids.push_back(e->getText());} 
+                  me:UINTEGER {join_markings.push_back(atoi(me->getText().c_str()));})?
+(b =  vc_Identifier {join_ids.push_back(b);} be:UINTEGER {join_markings.push_back(atoi(be->getText().c_str())); } )* RPAREN
+ {fb->Add_Marked_Join_Point(lbl,join_ids, join_markings);}
 ;
 
 //-----------------------------------------------------------------------------------------------

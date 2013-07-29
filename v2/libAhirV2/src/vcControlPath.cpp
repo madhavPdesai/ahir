@@ -431,6 +431,7 @@ void vcCPElement::Remove_Marked_Successor(vcCPElement* cpe)
 	{
 	  rem_flag = true;
   	  this->_marked_successors.erase(iter);
+	  this->_marked_successor_markings.erase(cpe);
 	  break;
 	}
     }
@@ -462,9 +463,34 @@ void vcCPElement::Remove_Marked_Predecessor(vcCPElement* cpe)
 	{
 	  rem_flag = true;
   	  this->_marked_predecessors.erase(iter);
+	  this->_marked_predecessor_markings.erase(cpe);
 	  break;
 	}
     }
+}
+
+void vcCPElement::Set_Marked_Successor_Marking(vcCPElement* cpe, int m)
+{
+	_marked_successor_markings[cpe] = m;
+}
+int  vcCPElement::Get_Marked_Successor_Marking(vcCPElement* cpe)
+{
+	if(_marked_successor_markings.find(cpe) != _marked_successor_markings.end())
+		return(_marked_successor_markings[cpe]);
+	else
+		return(-1);
+}
+
+void vcCPElement::Set_Marked_Predecessor_Marking(vcCPElement* cpe, int m)
+{
+	_marked_predecessor_markings[cpe] = m;
+}
+int  vcCPElement::Get_Marked_Predecessor_Marking(vcCPElement* cpe)
+{
+	if(_marked_predecessor_markings.find(cpe) != _marked_predecessor_markings.end())
+		return(_marked_predecessor_markings[cpe]);
+	else
+		return(-1);
 }
 
 void vcCPElement::Get_Hierarchical_Ref(vector<string>& ref_vec)
@@ -2622,8 +2648,12 @@ vcCPPipelinedLoopBody::vcCPPipelinedLoopBody(vcCPBlock* parent, string id):vcCPF
 	_max_iterations_in_flight = ((vcCPSimpleLoopBlock*)parent)->Get_Depth();;
 }
 
-void vcCPPipelinedLoopBody::Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec)
+void vcCPPipelinedLoopBody::Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec, vector<int>& join_markings)
 {
+
+  // length of the two should be the same..
+  assert(join_cpe_vec.size() == join_markings.size());
+
   bool null_join = false;
 
   // null marked joins are ignored.
@@ -2646,12 +2676,12 @@ void vcCPPipelinedLoopBody::Add_Marked_Join_Point(string& join_name, vector<stri
 	      return;
 	    }
 	  else
-	    this->Add_Marked_Join_Point((vcTransition*)jp,jre);
+	    this->Add_Marked_Join_Point((vcTransition*)jp,join_markings[idx], jre);
 	}
     }
 }
 
-void vcCPPipelinedLoopBody::Add_Marked_Join_Point(vcTransition* jp, vcCPElement* jre)
+void vcCPPipelinedLoopBody::Add_Marked_Join_Point(vcTransition* jp, int join_marking,  vcCPElement* jre)
 {
 
   if((this->_marked_join_map.find(jp) == this->_marked_join_map.end())
@@ -2660,8 +2690,8 @@ void vcCPPipelinedLoopBody::Add_Marked_Join_Point(vcTransition* jp, vcCPElement*
     {
       this->_marked_join_map[((vcTransition*)jp)].insert(jre);
  
-      jp->Add_Marked_Predecessor(jre);
-      jre->Add_Marked_Successor(jp);
+      jp->Add_Marked_Predecessor(jre); jp->Set_Marked_Predecessor_Marking(jre, join_marking);
+      jre->Add_Marked_Successor(jp); jre->Set_Marked_Successor_Marking(jp, join_marking);
     }
 }
 
@@ -2670,7 +2700,6 @@ void vcCPPipelinedLoopBody::Print(ostream& ofile)
   ofile << vcLexerKeywords[__PIPELINE]  << " [" << this->Get_Id() << "] {" << endl;
 
   this->Print_Elements(ofile);
-
 
   for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _fork_map.begin();
       iter != _fork_map.end();
