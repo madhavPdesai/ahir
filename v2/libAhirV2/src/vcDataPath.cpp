@@ -2572,8 +2572,6 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 	}
       assert(called_module != NULL);
 
-      // string buffering_string;
-      // this->Generate_Buffering_Constant_Declaration(dpe_elements, buffering_string);
 
       string input_buffering_string;
       int max_inbuf = this->Generate_Buffering_String("inBUFs", inwire_buffering, input_buffering_string);
@@ -2650,7 +2648,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
       vcModule* m = this->Get_Parent();
       // now the operator instances 
       string imux_name = ((called_module->Get_In_Arg_Width() > 0) ?
-			  "InputMuxBase" : "InputMuxBaseNoData");
+			  "InputMuxWithBuffering" : "InputMuxBaseNoData");
       bool use_buffering =( (called_module->Get_In_Arg_Width() > 0) ? true : false);
 
       ofile << "CallReq: " << imux_name << " -- {" << endl;
@@ -2663,7 +2661,10 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 	}
 
       if(use_buffering)
+      {
+	  ofile << " name => " << '"' << imux_name << '"' << ","  << endl;
 	  ofile << " buffering => inBUFs,"  << endl;
+      }
 	
       ofile << " twidth => " << tag_length << "," << endl
 	    << " nreqs => " << num_reqs << "," << endl;

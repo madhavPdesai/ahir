@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <Pipes.h>
 #include <stdio.h>
+#include <fpu.h>
 #include "prog.h"
 
 #ifndef SW
@@ -17,7 +18,7 @@ void vectorSum()
 		loop_pipelining_on(16,32);
 #endif
 		float x = read_float32("in_data_pipe");
-		float y = x + x;
+		float y = fpadd32(x,x);
 		write_float32("out_data_pipe",y);
 	}
 }

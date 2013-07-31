@@ -264,6 +264,7 @@ class AaExpression: public AaRoot
       return(this->Get_VC_Start_Transition_Name());    
   }
 
+
   virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement) {assert(0);}
   void Replace_Uses_By(AaExpression* used_expr, AaExpression* replacement);
 

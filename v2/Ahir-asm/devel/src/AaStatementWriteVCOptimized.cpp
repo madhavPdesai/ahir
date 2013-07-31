@@ -249,24 +249,13 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 {
   ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
-
-  // trigger the call after the input arguments
-  // have been computed..
-  string call_trigger = __ST(this);
-  __T(call_trigger);
-  string in_progress = __AT(this);
-  __T(in_progress);
-  string call_completed = this->Get_VC_Name() + "_call_complete";
-  __T(call_completed);
-  string completed = __CT(this);
-  __T(completed);
+  __DeclTransSplitProtocolPattern
 
   // take care of the guard
   if(this->_guard_expression)
     {
       this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
-      __J(__ST(this),__CT(this->_guard_expression));
-
+      __J(__SST(this),__CT(this->_guard_expression));
     }
 
   // first the input arguments... zipping through.
@@ -280,49 +269,30 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       AaExpression* expr = _input_args[idx];
       if(!expr->Is_Constant())
 	{
-	  __J(call_trigger, expr->Get_VC_Completed_Transition_Name());
+	  __J(__ST(this), __CT(expr));
 
       	  if(pipeline_flag)
 	  {
 	    // expression evaluation will be reenabled by activation of the
 	    // call.
-	    __MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), in_progress);
+	    __MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this));
 	  }
 	}
 
     }
 
-	// TODO: we should convert this to a pure split protocol
-	//       as has been done for binary and unary split operators.
-
-
   // the call-trigger will start the call..
-  ofile << ";;[" << this->Get_VC_Name() << "_start] { " 
+  ofile << ";;[" << this->Get_VC_Name() << "_Sample] { " 
 	<< "$T [crr] $T [cra] "
 	<< "} " << endl;
-  __F(call_trigger,this->Get_VC_Name() + "_start");
-  __J(in_progress, this->Get_VC_Name() + "_start");
-
-  // if pipeline-flag, then in-progress will reenable
-  // trigger.
-  if(pipeline_flag)
-    {
-      __MJ(call_trigger, in_progress);
-    }
-
   // the call will eventually complete.
-  ofile << ";;[" << this->Get_VC_Name() << "_complete] { " 
+  ofile << ";;[" << this->Get_VC_Name() << "_Update] { " 
 	<< "$T [ccr] $T [cca] "
 	<< "} " << endl;
-  __F(in_progress,this->Get_VC_Name() + "_complete");
-  __J(call_completed, this->Get_VC_Name() + "_complete");
 
-  // if pipeline-flag, then call_completed will reenable
-  // in-progress.
-  if(pipeline_flag)
-    {
-      __MJ(in_progress, call_completed);
-    }
+  _ConnectSplitProtocolPattern
+
+
 
   // the output arguments.
   bool non_triv_flag = false;
@@ -335,14 +305,14 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       if(!expr->Is_Implicit_Variable_Reference())
 	{
 
-	  __J(__ST(expr),call_completed);
-	  __J(completed, __CT(expr));
+	  __J(__SST(expr),__UCT(this));
+	  __J(__CT(this), __CT(expr));
 
 	  // if pipeline-flag, then expression activation must reenable call
-	  // statement completion.
+	  // statement .
 	  if(pipeline_flag)
 	    {
-	      __MJ(in_progress, __AT(expr));
+	      __MJ(__UST(this), __SCT(expr));
 	    }
 
 	  non_triv_flag = true;
@@ -360,11 +330,11 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	}
     }
 
-  if(!non_triv_flag)
+
+  // if pipeline-flag, then re-enable..
+  if(pipeline_flag)
     {
-      __J(completed,call_completed);
-      if(pipeline_flag)
-	__MJ(call_completed,completed);
+  	__SelfReleaseSplitProtocolPattern
     }
 }
 
@@ -383,12 +353,12 @@ void AaCallStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
   vector<string> reqs;
   vector<string> acks;
 
-  string start_hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Name() + "_start");
+  string start_hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Name() + "_Sample");
   reqs.push_back(start_hier_id + "/crr");
   acks.push_back(start_hier_id + "/cra");
 
 
-  string complete_hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Name() + "_complete");
+  string complete_hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Name() + "_Update");
   reqs.push_back(complete_hier_id + "/ccr");
   acks.push_back(complete_hier_id + "/cca");
 

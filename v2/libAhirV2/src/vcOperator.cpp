@@ -268,10 +268,12 @@ vcStore::vcStore(string id, vcMemorySpace* ms, vcWire* addr, vcWire* data):vcLoa
   data->Connect_Receiver(this);
 }
 
+// max of both inputs.
 void vcStore::Append_Inwire_Buffering(vector<int>& inwire_buffering)
 {
-	inwire_buffering.push_back(this->Get_Input_Buffering(_address));
-	inwire_buffering.push_back(this->Get_Input_Buffering(_data));
+	int ba = this->Get_Input_Buffering(_address);
+	int bd = this->Get_Input_Buffering(_data);
+	inwire_buffering.push_back((ba > bd) ? ba : bd);
 }
 
 void vcStore::Print(ostream& ofile)
@@ -405,16 +407,30 @@ vcCall::vcCall(string id, vcModule* m, vector<vcWire*>& in_wires, vector<vcWire*
   _inline_flag = inline_flag;
 }
 
+// Calls will use a value for the input wire buffering which
+// is the maximum specified across all input wires.
 void vcCall::Append_Inwire_Buffering(vector<int>& inwire_buffering)
 {
+    int max_buf = 0;
     for(int idx = 0; idx < _in_wires.size(); idx++)
-      inwire_buffering.push_back(this->Get_Input_Buffering(_in_wires[idx]));
+    {
+	int U = this->Get_Input_Buffering(_in_wires[idx]);
+	max_buf = ((U > max_buf) ? U : max_buf);
+    }
+    inwire_buffering.push_back(max_buf);
 }
 
+// Calls will use a value for the output wire buffering which
+// is the maximum specified across all output wires.
 void vcCall::Append_Outwire_Buffering(vector<int>& outwire_buffering)
 {
+    int max_buf = 0;
     for(int idx = 0; idx < _out_wires.size(); idx++)
-      outwire_buffering.push_back(this->Get_Output_Buffering(_out_wires[idx]));
+    {
+	int U = this->Get_Output_Buffering(_out_wires[idx]);
+	max_buf = ((U > max_buf) ? U : max_buf);
+    }
+    outwire_buffering.push_back(max_buf);
 }
 
 void vcCall::Print(ostream& ofile)
@@ -671,10 +687,13 @@ bool vcBinarySplitOperator::Is_Shareable_With(vcDatapathElement* other)
 }
 
 
+// shared binary operators will use a value of input buffering
+// which is the maximum specified across all input wires.
 void vcBinarySplitOperator::Append_Inwire_Buffering(vector<int>& inwire_buffering)
 {
-	inwire_buffering.push_back(this->Get_Input_Buffering(_x));
-	inwire_buffering.push_back(this->Get_Input_Buffering(_y));
+	int bx = this->Get_Input_Buffering(_x);
+	int by = this->Get_Input_Buffering(_y);
+	inwire_buffering.push_back((bx > by) ? bx : by);
 }
 
 void vcBinarySplitOperator::Append_Outwire_Buffering(vector<int>& outwire_buffering)

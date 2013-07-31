@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <vcRoot.hpp>
 
 string StripBracketingQuotes(string x)
@@ -191,5 +192,26 @@ void vcRoot::Print_VHDL(ofstream& ofile)
 {
   ostream *outstr = &ofile;
   this->Print_VHDL(*outstr);
+}
+
+int max(vector<int>& vec)
+{
+ 	int ret_val = INT_MIN;
+	for(int I = 0, fI = vec.size(); I < fI; I++)
+	{
+		int U = vec[I];
+		ret_val = ((U > ret_val) ? U : ret_val);
+	}
+	return(ret_val);
+}
+int min(vector<int>& vec)
+{
+ 	int ret_val = INT_MAX;
+	for(int I = 0, fI = vec.size(); I < fI; I++)
+	{
+		int U = vec[I];
+		ret_val = ((U < ret_val) ? U : ret_val);
+	}
+	return(ret_val);
 }
 

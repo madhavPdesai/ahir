@@ -337,5 +337,8 @@ struct vcRoot_Compare:public binary_function
   bool operator() (vcRoot*, vcRoot*) const;
 };
 
+// misc. functions.
+int max(vector<int>& vec);
+int min(vector<int>& vec);
 
 #endif // vcRoot
