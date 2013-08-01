@@ -1241,6 +1241,7 @@ class AaDoWhileStatement: public AaStatement
 
   int _pipelining_depth;
   int _buffering_depth;
+  bool _full_rate_flag;
  public:
 
   void Set_Pipelining_Depth(int v) {_pipelining_depth = v;}
@@ -1249,6 +1250,8 @@ class AaDoWhileStatement: public AaStatement
   void Set_Buffering_Depth(int v) {_buffering_depth = v;}
   int Get_Buffering_Depth() {return(_buffering_depth);}
 
+  void Set_Full_Rate_Flag(bool v) {_full_rate_flag = v;}
+  bool Get_Full_Rate_Flag() {return(_full_rate_flag);}
   void Set_Test_Expression(AaExpression* te) { this->_test_expression = te; }
   void Set_Merge_Statement(AaMergeStatement* ms) { this->_merge_statement = ms; }
   void Set_Loop_Body_Sequence(AaStatementSequence* lbs) { this->_loop_body_sequence = lbs; }

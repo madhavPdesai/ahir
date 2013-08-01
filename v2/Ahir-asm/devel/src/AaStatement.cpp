@@ -4232,6 +4232,9 @@ void AaDoWhileStatement::Print(ostream& ofile)
   ofile << this->Tab();
   ofile << "$dopipeline $depth " << this->Get_Pipelining_Depth();
   ofile << " $buffering " << this->Get_Buffering_Depth() <<  endl;
+  if(this->Get_Full_Rate_Flag())
+  	ofile << " $fullrate " << endl;
+
   this->_merge_statement->Print(ofile);
   this->_loop_body_sequence->Print(ofile);
   ofile << " $while " ;

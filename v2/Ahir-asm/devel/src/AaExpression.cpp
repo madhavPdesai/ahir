@@ -831,7 +831,7 @@ string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoo
 			if(this->Get_Is_Target())
 				return(__AT(this));
 			else
-				return(__SST(this));
+				return(__UST(this));
 		}
 
 		if(this->_object->Is_Interface_Object())

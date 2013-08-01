@@ -783,8 +783,9 @@ aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement
     lbl_set.insert("$loopback");
     int pdepth = 1;
     int buffering_depth = 1;
+    bool full_rate_flag = false;
 }: 
-     il:DO DEPTH did: UINTEGER BUFFERING bid: UINTEGER 
+     il:DO DEPTH did: UINTEGER BUFFERING bid: UINTEGER  (FULLRATE {full_rate_flag = true;})? 
 	{ pdepth = atoi(did->getText().c_str());  buffering_depth = atoi(bid->getText().c_str());}
         ms = aA_Merge_Statement[scope]
         { 
@@ -805,6 +806,7 @@ aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement
 	WHILE test_expression = aA_Expression[scope] 
 	{
 		new_dws->Set_Test_Expression(test_expression);
+		new_dws->Set_Full_Rate_Flag(full_rate_flag);
 	}
     ;   
 
@@ -1483,6 +1485,7 @@ CALL          : "$call";
 PHI           : "$phi";
 DEPTH         : "$depth";
 BUFFERING     : "$buffering";
+FULLRATE      : "$fullrate";
 ATTRIBUTE     : "$attribute";
 GUARD         : "$guard";
 DO            : "$dopipeline";

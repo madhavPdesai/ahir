@@ -19,6 +19,7 @@ void vectorSum()
 #endif
 		float x = read_float32("in_data_pipe");
 		float y = fpadd32(x,x);
+		//float y = x + x;
 		write_float32("out_data_pipe",y);
 	}
 }
