@@ -462,9 +462,55 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 
 }
 
-
-
 // AaArrayObjectReference
+string AaArrayObjectReference::Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements)
+{
+	
+	string base_addr_calc_reenable =  "$null";
+	if(!this->Is_Constant())
+	{
+		if(this->Get_Object_Type()->Is_Pointer_Type())
+			// array expression is a pointer-evaluation expression.
+		{
+			if(!this->_pointer_ref->Is_Constant())
+			{
+			    base_addr_calc_reenable = 
+				this->_pointer_ref->Get_VC_Reenable_Update_Transition_Name(visited_elements);
+
+			}
+			else if(this->_object->Is_Expression())
+			{
+				AaRoot* root = (((AaExpression*)this->_object)->Get_Root_Object());
+				if(root && root->Is_Statement())
+				{
+					if(visited_elements.find(root) != visited_elements.end())
+					{
+					    base_addr_calc_reenable = 
+							((AaStatement*)root)->Get_VC_Reenable_Update_Transition_Name(visited_elements);
+					}
+				}
+			}
+			else if(this->_object->Is_Interface_Object())
+			{
+				AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
+				if(visited_elements.find(root) != visited_elements.end())
+				{
+					base_addr_calc_reenable = ((AaStatement*)root)->Get_VC_Reenable_Update_Transition_Name(visited_elements);
+				}	  
+			}
+			else if(this->_object->Is_Statement())
+			{
+				AaRoot* root = this->_object;
+				if(visited_elements.find(root) != visited_elements.end())
+				{
+					base_addr_calc_reenable = ((AaStatement*)root)->Get_VC_Reenable_Update_Transition_Name(visited_elements);
+				}	  
+			}
+		}
+	}
+	return(base_addr_calc_reenable);
+}
+
 void AaArrayObjectReference::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
 	if(this->Is_Constant())
@@ -707,6 +753,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 
 
+			// TODO: this should be an interlock instead of a register.
 			ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] {" << endl;
 			ofile << "$T [final_reg_req] $T [final_reg_ack]" << endl;
 			ofile << "}" << endl;
@@ -781,6 +828,8 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				// expression has been evaluated.. go to active
 				__J(__AT(this), expr->Get_VC_Completed_Transition_Name());
 
+				// TODO: use split protocol to implement Slice.
+				//       (note that Slice doubles as a register..)
 				ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] {" << endl;
 				ofile << "$T [slice_req] $T [slice_ack]" << endl;
 				ofile << "}" << endl;
@@ -792,7 +841,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				if(pipeline_flag)
 				{
 					// reenable expression when this completes.
-					__MJ(expr->Get_VC_Reenable_Sample_Transition_Name(visited_elements), __CT(this));
+					__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __CT(this));
 					__MJ(__AT(this),__CT(this));
 				}
 			}
@@ -828,11 +877,11 @@ void AaArrayObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pipe
 	{
 		ofile << "// " << this->To_String() << endl;
 		__DeclTrans
-			if(barrier != NULL)
-			{
-				ofile << "// barrier " << endl;
-				__J(__ST(this), __CT(barrier));
-			}
+		if(barrier != NULL)
+		{
+			ofile << "// barrier " << endl;
+			__J(__ST(this), __CT(barrier));
+		}
 
 		this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
@@ -1988,6 +2037,7 @@ void AaObjectReference::Write_VC_Address_Calculation_Links_Optimized(string hier
 
 }
 
+ 
 
 // all operations are triggered immediately when the containing
 // fork-block is entered.  dependencies as indicated..
@@ -2019,6 +2069,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 	if(index_vector)
 		offset_val = this->Evaluate(index_vector,scale_factors, shift_factors);
 	int base_addr = this->Get_Base_Address();
+			    
+        string base_addr_update_reenable = 
+		this->Get_VC_Base_Address_Update_Reenable_Transition(visited_elements);
 
 	// if both are constants.. give up.
 	if(offset_val >= 0 && base_addr >= 0)
@@ -2030,17 +2083,20 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 	bool reg_flag = false;
 
 
-	string indices_scaled = this->Get_VC_Name() + "_indices_scaled";
+	vector<int> non_constant_indices;
+
 	string offset_calculated = this->Get_VC_Name() + "_offset_calculated";
 	string base_address_resized = this->Get_VC_Name() + "_base_address_resized";
 
 	string base_address_calculated = this->Get_VC_Name() + "_base_address_calculated";
 
+	map<int,string> index_chain_reenable_map;
+	map<int,string> index_chain_complete_map;
+
 	// if offset value is < 0, then it is not known at compile time.
 	// calculate it at run time.
 	if(offset_val < 0)
 	{
-		__T(indices_scaled);
 		__T(offset_calculated);
 
 		for(int idx = 0; idx < index_vector->size(); idx++)
@@ -2048,10 +2104,15 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 			// if the index is a constant dont bother to compute it..
 			if(!(*index_vector)[idx]->Is_Constant())
 			{
-				string index_computed = this->Get_VC_Name() + "_index_computed_" + IntToStr(idx);
+				non_constant_indices.push_back(idx);
+
+			        string idx_active_reenable;
+				string idx_active_complete;
+
 				string index_resized = this->Get_VC_Name() + "_index_resized_" + IntToStr(idx);
-				__T(index_computed);
+				string index_scaled = this->Get_VC_Name() + "_index_scaled_" + IntToStr(idx);
 				__T(index_resized);
+				__T(index_scaled);
 
 				num_non_constant++;
 				(*index_vector)[idx]->Write_VC_Control_Path_Optimized(pipeline_flag, 
@@ -2059,82 +2120,134 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 						ls_map,pipe_map,barrier,
 						ofile);
 
-				string index_reenable = ((*index_vector)[idx]->Get_VC_Reenable_Update_Transition_Name(visited_elements));
-				active_reenable_points.insert(index_reenable);
+				index_chain_reenable_map[idx] = ((*index_vector)[idx]->Get_VC_Reenable_Update_Transition_Name(visited_elements));
+				index_chain_complete_map[idx] = (*index_vector)[idx]->Get_VC_Completed_Transition_Name();
 
-				__J(index_computed,(*index_vector)[idx]->Get_VC_Completed_Transition_Name());
+				string idx_resize_regn_name = this->Get_VC_Name() + "_index_resize_" + 
+								IntToStr(idx);
 
-				ofile << ";;[" << this->Get_VC_Name() << "_index_resize_" << idx << "] {" << endl;
-
-				reg_flag = false;
 				if((*index_vector)[idx]->Get_Type()->Is_Uinteger_Type())
 				{
+					ofile << ";;[" << idx_resize_regn_name << "] {" << endl;
 					ofile << "$T [index_resize_req] $T [index_resize_ack] // resize index to address-width" << endl;
+					ofile << "}" << endl;
+
+					__F(index_chain_complete_map[idx],idx_resize_regn_name);
+					__J(index_resized,idx_resize_regn_name);
+					index_chain_complete_map[idx] = index_resized;
 				}
 				else
 				{
-					reg_flag = true;
-					ofile << "||[SplitProtocol] {" << endl;
-					ofile << ";;[Sample] { " << endl;
+			
+					// type conversion to uinteger.
+					// TODO: the sample and update regions
+					//       should be separated to create
+					//       separate sample and update
+					//       reenable points.
+					string idx_resize_sample_start = 
+							idx_resize_regn_name + "_sample_start";
+					string idx_resize_sample_complete = idx_resize_regn_name + "_sample_complete";
+
+					string idx_resize_update_start = idx_resize_regn_name + "_update_start";
+					string idx_resize_update_complete = idx_resize_regn_name + "_update_complete";
+
+					__T(idx_resize_sample_start);
+					__T(idx_resize_sample_complete);
+					__T(idx_resize_update_start);
+					__T(idx_resize_update_complete);
+
+					string idx_resize_sample_regn = idx_resize_regn_name + "_Sample";
+					string idx_resize_update_regn = idx_resize_regn_name + "_Update";
+					ofile << ";;[" << idx_resize_sample_regn << "] { " << endl;
 					ofile << "$T [rr] $T [ra]" << endl;
 					ofile << "}" << endl;
-					ofile << ";;[Update] { " << endl;
+					ofile << ";;[" << idx_resize_update_regn << "] { " << endl;
 					ofile << "$T [cr] $T [ca]" << endl;
 					ofile << "}" << endl;
 					ofile << "}" << endl;
-				}
-				ofile << "}" << endl;
 
-				__F(index_computed,(this->Get_VC_Name() + "_index_resize_" + IntToStr(idx)));
-				__J(index_resized,(this->Get_VC_Name() + "_index_resize_" + IntToStr(idx)));
+					__F(index_chain_complete_map[idx],idx_resize_sample_start);
+					__F(idx_resize_sample_start,idx_resize_sample_regn);
+					__J(idx_resize_sample_complete,idx_resize_sample_regn);
+					__F(idx_resize_update_start, idx_resize_update_regn);
+					__J(idx_resize_update_complete,idx_resize_update_regn);
+					__J(index_resized,idx_resize_update_complete);
+					index_chain_complete_map[idx] = index_resized;
 
-				if(pipeline_flag)
-				{
-					if(reg_flag)
+					if(pipeline_flag)
 					{
-						// successor complete: index_resized..
-						// predecessor sample: index_reenable.
-						__MJ(index_reenable, index_resized);
-						active_reenable_points.erase(index_reenable);
+						// reenable index expression update when
+						// sample-completed.
+						__MJ(index_chain_reenable_map[idx], idx_resize_sample_complete);
+						active_reenable_points.erase(index_chain_reenable_map[idx]);
+						index_chain_reenable_map[idx] = idx_resize_update_start;
+						active_reenable_points.insert(idx_resize_update_start);
 
-						// active reenable:  index_computed.
-						active_reenable_points.insert(index_computed);
+						// TODO: self-release.
 					}
 				}
 
-				reg_flag = false;
-				ofile << ";;[" << this->Get_VC_Name() << "_index_scale_" << idx << "] {" << endl;
+
+
+				string idx_scale_regn_name =
+					this->Get_VC_Name() + "_index_scale_" + IntToStr(idx);
 				if((*scale_factors)[idx] > 1)
 				{
-					ofile << "||[SplitProtocol] { " << endl;
-					ofile << ";;[Sample] { " << endl;
+					string idx_scale_sample_start = 
+							idx_scale_regn_name + "_sample_start";
+					string idx_scale_sample_complete = idx_scale_regn_name + "_sample_complete";
+
+					string idx_scale_update_start = idx_scale_regn_name + "_update_start";
+					string idx_scale_update_complete = idx_scale_regn_name + "_update_complete";
+
+					__T(idx_scale_sample_start);
+					__T(idx_scale_sample_complete);
+					__T(idx_scale_update_start);
+					__T(idx_scale_update_complete);
+
+					string idx_scale_sample_regn = 
+							idx_scale_regn_name + "_Sample";
+					string idx_scale_update_regn = 
+							idx_scale_regn_name + "_Update";
+
+					ofile << ";;" << idx_scale_sample_regn << "] { " << endl;
 					ofile << "$T [rr] $T [ra] " << endl;
 					ofile << "}" << endl;
-					ofile << ";;[Update] { " << endl;
+					ofile << ";;" << idx_scale_update_regn << "] { " << endl;
 					ofile << "$T [cr] $T [ca] " << endl;
 					ofile << "}" << endl;
-					ofile << "}" << endl;
-					reg_flag = true;
-				}
-				else
-					ofile << "$T [scale_rename_req] $T [scale_rename_ack] // rename " << endl;
 
-				ofile << "}" << endl;
+					__F(index_chain_complete_map[idx],idx_scale_sample_start);
+					__F(idx_scale_sample_start,idx_scale_sample_regn);
+					__J(idx_scale_sample_complete,idx_scale_sample_regn);
+					__F(idx_scale_update_start, idx_scale_update_regn);
+					__J(idx_scale_update_complete,idx_scale_update_regn);
+					__J(index_scaled,idx_scale_update_complete);
 
-				__F(index_resized,(this->Get_VC_Name() + "_index_scale_" + IntToStr(idx)));
-				__J(indices_scaled,(this->Get_VC_Name() + "_index_scale_" + IntToStr(idx)));
+					index_chain_complete_map[idx] = index_scaled;
 
-				if(pipeline_flag)
-				{
-					if(reg_flag)
+					if(pipeline_flag)
 					{
 						// successor complete: indices_scaled
 						// predecessor sample: index_resized.
-						__MJ(index_computed, indices_scaled);
-						active_reenable_points.erase(index_computed);
-						active_reenable_points.insert(index_resized);
+						__MJ(index_chain_reenable_map[idx], index_scaled);
+						active_reenable_points.erase(index_chain_reenable_map[idx]);
+						index_chain_reenable_map[idx] = idx_scale_update_start;
+						active_reenable_points.insert(idx_scale_update_start);
+
+						// TODO: self-release.
 					}
 				}
+				else
+				{
+					ofile << ";;[" << idx_scale_regn_name << "] {" << endl;
+					ofile << "$T [scale_rename_req] $T [scale_rename_ack] // rename " << endl;
+					ofile << "}" << endl;
+					__F(index_chain_complete_map[idx],idx_scale_regn_name);
+					__J(index_scaled,idx_scale_regn_name);
+					index_chain_complete_map[idx] = index_scaled;
+				}
+
 			}
 			else
 			{
@@ -2142,19 +2255,32 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 			}
 		}
 
+		// TODO: each addition should be written as a split pair
+		//       of sample and update.  The updates should trigger
+		//       the next sample (forming a chain).
+		
 		// then add them up.
-		ofile << ";;[" << this->Get_VC_Name() << "_add_indices] {" << endl;
-		reg_flag = false;
 		int num_index_adds = (num_non_constant + (const_index_flag ? 1 : 0)) - 1;
+
+		assert(non_constant_indices.size() > 0);
+		string last_sum_complete = index_chain_complete_map[non_constant_indices[0]];
+		string last_sum_reenable = index_chain_reenable_map[non_constant_indices[0]];
+
 		if(index_vector->size() > 1)
 		{
-			ofile << "||[SplitProtocol] { " << endl;
+
 			for(int idx = 1; idx <= num_index_adds; idx++)
 			{
 				reg_flag = true;
 				string prefix = "partial_sum_" + IntToStr(idx);
-				string sample_regn = prefix + "_sample";
-				string update_regn = prefix + "_update";
+
+				string sample_start = prefix + "_sample_start";
+				string sample_complete = prefix + "_sample_complete";
+				string update_start = prefix + "_update_start";
+				string update_complete = prefix + "_update_complete";
+
+				string sample_regn = prefix + "_Sample";
+				string update_regn = prefix + "_Update";
 
 				ofile << ";;[" << sample_regn << "] {"  << endl;
 				ofile << "$T [rr] $T [ra] " << endl;
@@ -2163,28 +2289,74 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 				ofile << ";;[" << update_regn << "] {"  << endl;
 				ofile << "$T [cr] $T [ca] " << endl;
 				ofile << "}" << endl;
+
+				__F(sample_start, sample_regn);
+				__J(sample_complete,sample_regn);
+
+				__F(update_start, update_regn);
+				__J(update_complete,update_regn);
+
+				if(pipeline_flag)
+				{
+						// TODO: self-release.
+				}
+
+				if(idx == 1)
+				{
+					int I0 = non_constant_indices[idx-1];
+					int I1 = non_constant_indices[idx];
+
+					__J(sample_start, index_chain_complete_map[I0]);
+					__J(sample_start, index_chain_complete_map[I1]);
+				
+
+					if(pipeline_flag)
+					{
+						__MJ(index_chain_reenable_map[I0], sample_complete);
+						__MJ(index_chain_reenable_map[I1], sample_complete);
+					}
+				}
+				else
+				{
+					int I1 = non_constant_indices[idx];
+					__J(sample_start, index_chain_complete_map[I1]);
+					__J(sample_start, last_sum_complete);
+					if(pipeline_flag)
+					{	
+						__MJ(index_chain_reenable_map[I1], sample_complete);
+					}
+				}
+
+
+				if(idx == num_index_adds)
+				{
+					__J(offset_calculated, update_complete);
+				}
+
+				last_sum_complete =  update_complete;
+				last_sum_reenable =  update_start;
 			}
-			ofile << "}" << endl;
+
+			active_reenable_points.clear();
+			active_reenable_points.insert(last_sum_reenable);
 		}
 
 
-		// the final index..
+		// the final index.. (simply rename)
+		string final_offset_regn = this->Get_VC_Name() + "_final_offset";
+		ofile << ";;[" <<  final_offset_regn << "] {" << endl;
 		ofile << "$T [final_index_req] $T [final_index_ack] // rename" << endl;
 		ofile << "}" << endl;
-
-		__F(indices_scaled,(this->Get_VC_Name() + "_add_indices"));
-		__J(offset_calculated,(this->Get_VC_Name() + "_add_indices"));
-
-		if(pipeline_flag)
-		{
-			if(reg_flag)
-			{
-				Write_VC_Reenable_Joins(active_reenable_points, offset_calculated,ofile);
-				active_reenable_points.clear();
-				active_reenable_points.insert(indices_scaled);
-			}
-		}
+					
+		
+		__F(last_sum_complete, final_offset_regn);
+                __J(offset_calculated, final_offset_regn);
 	}
+
+	// TODO: rewire the rest of this function.  Will probably
+	//       need base_address_reenable to be passed in to
+	//       this function to complete the reenabling of the
+	//       base-update.
 
 	// at this point you have a final-offset-index.
 	// this needs to be added to a base address, which 
@@ -2204,10 +2376,6 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		__F(base_address_calculated,(this->Get_VC_Name() + "_base_addr_resize"));  
 		__J(base_address_resized,(this->Get_VC_Name() + "_base_addr_resize")); 
 
-		if(pipeline_flag)
-		{
-			// nothing.  the reenabling is taken care of at a higher level.
-		}
 	}
 
 	reg_flag = false;
@@ -2217,34 +2385,58 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		// index was not zero and base was not zero..
 		// we need to add two numbers, at most one of which
 		// can be a constant..
-		ofile << "$T [" << this->Get_VC_Name() << "_base_plus_offset_trigger]" << endl;
-		ofile << "||[" << this->Get_VC_Name() << "_base_plus_offset] {" << endl;
-		ofile << ";;[Sample] { " << endl;
+
+		// TODO: separate sample and update regions to create
+		//       distinct RAW and WAR enable points.
+		string bpo_sample_regn = this->Get_VC_Name() + "_base_plus_offset_sample";
+		string bpo_update_regn = this->Get_VC_Name() + "_base_plus_offset_update";
+
+		// base-plus-offset.
+		// transitions.
+		string bpo_sample_start = this->Get_VC_Name() + "_base_plus_offset_sample_start";
+		string bpo_sample_complete = this->Get_VC_Name() + "_base_plus_offset_sample_complete";
+		string bpo_update_start = this->Get_VC_Name() + "_base_plus_offset_update_start";
+		string bpo_update_complete = this->Get_VC_Name() + "_base_plus_offset_update_complete";
+		__T(bpo_sample_start)
+		__T(bpo_sample_complete)
+		__T(bpo_update_start)
+		__T(bpo_update_complete)
+
+		ofile << ";;[" << bpo_sample_regn << "] { " << endl;
 		ofile << "$T [rr] $T [ra]" << endl;
 		ofile << "}" << endl;
-		ofile << ";;[Update] { " << endl;
+		ofile << ";;[" << bpo_update_regn << "] { " << endl;
 		ofile << "$T [cr] $T [ca]" << endl;
 		ofile << "}" << endl;
-		ofile << "}" << endl;
-
-		__F((this->Get_VC_Name() + "_base_plus_offset_trigger"), (this->Get_VC_Name() + "_base_plus_offset"));
+	
+		__F(bpo_sample_start, bpo_sample_regn)
+		__F(bpo_update_start, bpo_update_regn)
+		__J(bpo_sample_complete, bpo_sample_regn)
+		__J(bpo_update_complete, bpo_update_regn)
 
 
 		if(base_addr < 0)
 		{
-			__F(base_address_resized,(this->Get_VC_Name() + "_base_plus_offset_trigger"));
+			__F(base_address_resized,bpo_sample_start);
 			if(pipeline_flag)
 			{
-				// nothing..
+			    active_reenable_points.insert(base_addr_update_reenable);
 			}
 		}
 		if(offset_val < 0)
 		{
-			__F(offset_calculated,(this->Get_VC_Name() + "_base_plus_offset_trigger"));
+			__F(offset_calculated,bpo_sample_start);
 			if(pipeline_flag)
 			{
-				// nothing.
+				// nothing, because last_sum_reenable is 
+				// already in active_reenable_points.
 			}
+		}
+		__J(root_address_calculated,bpo_update_complete);
+	
+		if(pipeline_flag)
+		{
+			// TODO: self-release
 		}
 	}
 	else 
@@ -2262,6 +2454,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 			if(pipeline_flag)
 			{
 				// nothing.
+			    active_reenable_points.insert(base_addr_update_reenable);
 			}
 		}
 		else
@@ -2269,26 +2462,12 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 			__F(offset_calculated,(this->Get_VC_Name() + "_base_plus_offset"));
 			if(pipeline_flag)
 			{
-				// nothing.
+				// nothing, last sum is already in the 
+				// active_reenable_points set.
 			}
 		}
+		__J(root_address_calculated,(this->Get_VC_Name() + "_base_plus_offset"));
 	}
-
-
-	__J(root_address_calculated,(this->Get_VC_Name() + "_base_plus_offset"));
-	if(pipeline_flag)
-	{
-		if(reg_flag)
-		{
-			// NOTE:  completed of successor must reenable update of predecessor.
-			//        Thus, we just pass the reenable points to the caller who
-			//        can then do whatever is needed.
-			//Write_VC_Reenable_Joins(active_reenable_points, root_address_calculated,ofile);
-			//active_reenable_points.clear();
-			//active_reenable_points.insert(root_address_calculated);
-		}
-	}
-
 }
 
 

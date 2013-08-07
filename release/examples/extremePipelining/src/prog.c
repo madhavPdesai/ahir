@@ -6,7 +6,7 @@
 #include "prog.h"
 
 #ifndef SW
-void loop_pipelining_on(uint32_t val, uint32_t buf);
+void loop_pipelining_on(uint32_t val, uint32_t buf, uint32_t extreme_flag);
 #endif
 
 
@@ -15,7 +15,7 @@ void vectorSum()
 	while(1)
 	{
 #ifndef SW
-		loop_pipelining_on(16,32);
+		loop_pipelining_on(16,32,1);
 #endif
 		float x = read_float32("in_data_pipe");
 		float y = fpadd32(x,x);

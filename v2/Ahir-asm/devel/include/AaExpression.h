@@ -590,6 +590,11 @@ class AaObjectReference: public AaExpression
   virtual bool Scalar_Types_Only() { return(false);}
   bool Get_Is_Dereferenced() {return(_is_dereferenced);}
   void Set_Is_Dereferenced(bool v);
+		
+  virtual string Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements)
+  {
+	assert(0);
+  }
 
 };
 
@@ -836,6 +841,7 @@ class AaArrayObjectReference: public AaObjectReference
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
   virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 
+  virtual string Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements);
 };
 
 
