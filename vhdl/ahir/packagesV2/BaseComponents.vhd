@@ -1230,7 +1230,8 @@ package BaseComponents is
   end component LoadCompleteShared;
 
   component StoreCompleteShared
-    generic (num_reqs: integer;
+    generic (name: string; 
+	     num_reqs: integer;
              tag_length: integer;
 	     detailed_buffering_per_output: IntegerArray);
     port (

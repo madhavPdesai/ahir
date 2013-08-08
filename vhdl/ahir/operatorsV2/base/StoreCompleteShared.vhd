@@ -9,7 +9,7 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity StoreCompleteShared is
-  generic (num_reqs: integer := 3;
+  generic (name : string; num_reqs: integer := 3;
 	   tag_length: integer :=  3;
 	    detailed_buffering_per_output: IntegerArray);
   port (
@@ -42,7 +42,7 @@ begin  -- Behave
 
   odemux: OutputDemuxBaseNoData
     generic map (
-      name => "anon odemux in StoreComplete",
+      name => name & " odemux in StoreComplete",
       twidth =>  tag_length,
       nreqs  => num_reqs,
       detailed_buffering_per_output => detailed_buffering_per_output)

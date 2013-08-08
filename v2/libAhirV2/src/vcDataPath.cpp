@@ -2110,7 +2110,7 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 
       string sr_name = '"' + group_name + " Req " + '"';
       // now the operator instances 
-      ofile << "StoreReq: StoreReqShared -- {" << endl;
+      ofile << "StoreReq: StoreReqSharedWithInputBuffers -- {" << endl;
       ofile << "generic map ( name => " << sr_name << ", addr_width => " << addr_width << "," << endl
 	    << "  data_width => " << data_width << "," << endl
 	    << "  num_reqs => " << num_reqs << "," << endl

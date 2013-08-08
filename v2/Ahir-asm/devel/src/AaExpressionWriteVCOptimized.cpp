@@ -954,6 +954,13 @@ void AaPointerDereferenceExpression::Write_VC_Links_As_Target_Optimized(string h
 			ofile);
 }
 
+string AaPointerDereferenceExpression::Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements)
+{
+	assert(this->_reference_to_object != NULL);
+	string ret_string = this->_reference_to_object->Get_VC_Reenable_Update_Transition_Name(visited_elements);
+	return(ret_string);
+}
+
 void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 		map<string,vector<AaExpression*> >& ls_map,
 		map<string, vector<AaExpression*> >& pipe_map,
@@ -998,10 +1005,11 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeli
 
 		if(pipeline_flag)
 		{
-			// when this expression is active, we may reevaluate
-			// the base address.
-			__MJ(this->_reference_to_object->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-					__AT(this));
+
+			// This dependency is taken care of in the address-calculation chain.
+			// __MJ(this->_reference_to_object->Get_VC_Reenable_Update_Transition_Name(visited_elements),
+					//__AT(this));
+
 			// SelfRelease
 			__MJ(__ST(this),__AT(this));
 			__MJ(__AT(this),__CT(this));
@@ -1732,6 +1740,8 @@ void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag
 	__J(__ST(this),this->Get_VC_Name() + "_word_address_calculated");
 }
 
+// TODO: this needs to be refined and fixed, especially
+//       the reenable to the address calculation chain.
 void AaObjectReference::Write_VC_Load_Store_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 		map<string, vector<AaExpression*> >& ls_map, 
 		map<string, vector<AaExpression*> >& pipe_map,
@@ -1801,7 +1811,6 @@ void AaObjectReference::Write_VC_Load_Store_Control_Path_Optimized(bool pipeline
 		string root_addr_calculated = this->Get_VC_Name() + "_root_address_calculated"; 
 		__MJ(root_addr_calculated,active_trans);
 	}
-
 }
 
 
@@ -2140,10 +2149,10 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 				{
 			
 					// type conversion to uinteger.
-					// TODO: the sample and update regions
-					//       should be separated to create
-					//       separate sample and update
-					//       reenable points.
+					// the sample and update regions
+					// are separated to create
+					// separate sample and update
+					// reenable points.
 					string idx_resize_sample_start = 
 							idx_resize_regn_name + "_sample_start";
 					string idx_resize_sample_complete = idx_resize_regn_name + "_sample_complete";
@@ -2183,7 +2192,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 						index_chain_reenable_map[idx] = idx_resize_update_start;
 						active_reenable_points.insert(idx_resize_update_start);
 
-						// TODO: self-release.
+						// self-release.
+						__MJ(idx_resize_sample_start, idx_resize_sample_complete);
+						__MJ(idx_resize_update_start, idx_resize_update_complete);
 					}
 				}
 
@@ -2235,7 +2246,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 						index_chain_reenable_map[idx] = idx_scale_update_start;
 						active_reenable_points.insert(idx_scale_update_start);
 
-						// TODO: self-release.
+						// self-release.
+						__MJ(idx_scale_sample_start, idx_scale_sample_complete);
+						__MJ(idx_scale_update_start, idx_scale_update_complete);
 					}
 				}
 				else
@@ -2255,8 +2268,8 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 			}
 		}
 
-		// TODO: each addition should be written as a split pair
-		//       of sample and update.  The updates should trigger
+		//       each addition is written as a split pair
+		//       of sample and update.  The updates trigger
 		//       the next sample (forming a chain).
 		
 		// then add them up.
@@ -2298,7 +2311,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 				if(pipeline_flag)
 				{
-						// TODO: self-release.
+					// self-release.
+					__MJ(sample_start, sample_complete);
+					__MJ(update_start, update_complete);
 				}
 
 				if(idx == 1)
@@ -2353,10 +2368,6 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
                 __J(offset_calculated, final_offset_regn);
 	}
 
-	// TODO: rewire the rest of this function.  Will probably
-	//       need base_address_reenable to be passed in to
-	//       this function to complete the reenabling of the
-	//       base-update.
 
 	// at this point you have a final-offset-index.
 	// this needs to be added to a base address, which 
@@ -2369,13 +2380,13 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		// base is not constant, resize it to the required address width..
 		// otherwise, we will just declare the base as a constant
 		// with the required width
-		ofile << ";;[" << this->Get_VC_Name() << "_base_addr_resize] {" << endl;
+		string b_resize_regn = this->Get_VC_Name() + "_base_addr_resize";
+		ofile << ";;[" << b_resize_regn << "] {" << endl;
 		ofile << "$T [base_resize_req] $T [base_resize_ack]" << endl;
 		ofile << "}" << endl;
 
-		__F(base_address_calculated,(this->Get_VC_Name() + "_base_addr_resize"));  
-		__J(base_address_resized,(this->Get_VC_Name() + "_base_addr_resize")); 
-
+		__F(base_address_calculated,b_resize_regn);  
+		__J(base_address_resized,b_resize_regn);
 	}
 
 	reg_flag = false;
@@ -2386,7 +2397,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		// we need to add two numbers, at most one of which
 		// can be a constant..
 
-		// TODO: separate sample and update regions to create
+		// 	separate sample and update regions to create
 		//       distinct RAW and WAR enable points.
 		string bpo_sample_regn = this->Get_VC_Name() + "_base_plus_offset_sample";
 		string bpo_update_regn = this->Get_VC_Name() + "_base_plus_offset_update";
@@ -2436,7 +2447,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 	
 		if(pipeline_flag)
 		{
-			// TODO: self-release
+			// self-release
+			__MJ(bpo_sample_complete, bpo_sample_start);
+			__MJ(bpo_update_complete, bpo_update_start);
 		}
 	}
 	else 
@@ -2501,41 +2514,46 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 			// if the index is a constant dont bother to compute it..
 			if(!(*indices)[idx]->Is_Constant())
 			{
+				string idx_resize_regn_name = this->Get_VC_Name() + "_index_resize_" + 
+								IntToStr(idx);
+
 				num_non_constant++;
 				(*indices)[idx]->Write_VC_Links_Optimized(hier_id,ofile);
 
-				string index_resize =  this->Get_VC_Name() + "_index_resize_" + IntToStr(idx);
-				string hid = Augment_Hier_Id(hier_id,index_resize);
+								IntToStr(idx);
 
 				if((*indices)[idx]->Get_Type()->Is_Uinteger_Type())	      
 				{
-					reqs.push_back(hid + "/index_resize_req");
-					acks.push_back(hid + "/index_resize_ack");
+					reqs.push_back(hier_id + "/" + idx_resize_regn_name  + "/index_resize_req");
+					acks.push_back(hier_id + "/" + idx_resize_regn_name  + "/index_resize_ack");
 				}
 				else
 				{
-					string sample_regn = hid + "/SplitProtocol/Sample";
-					string update_regn = hid + "/SplitProtocol/Update";
-					reqs.push_back(sample_regn + "/rr");
-					acks.push_back(sample_regn + "/ra");
-					reqs.push_back(update_regn + "/cr");
-					acks.push_back(update_regn + "/ca");
+					string idx_resize_sample_regn = idx_resize_regn_name + "_Sample";
+					string idx_resize_update_regn = idx_resize_regn_name + "_Update";
+					reqs.push_back(hier_id + "/" + idx_resize_sample_regn + "/rr");
+					acks.push_back(hier_id + "/" + idx_resize_sample_regn + "/ra");
+					reqs.push_back(hier_id + "/" + idx_resize_update_regn + "/cr");
+					acks.push_back(hier_id + "/" + idx_resize_update_regn + "/ca");
 				}
 				inst_name = this->Get_VC_Name() + "_index_" + IntToStr(idx) + "_resize";
 				Write_VC_Link(inst_name,reqs,acks,ofile);
 				reqs.clear();
 				acks.clear();
 
-				string index_scale =   this->Get_VC_Name() + "_index_scale_" + IntToStr(idx);
-				hid = Augment_Hier_Id(hier_id,index_scale);
+				string idx_scale_regn_name =
+					this->Get_VC_Name() + "_index_scale_" + IntToStr(idx);
 				if((*scale_factors)[idx] > 1)
 				{
-					string sample_regn = hid + "/SplitProtocol/Sample";
-					string update_regn = hid + "/SplitProtocol/Update";
-					reqs.push_back(sample_regn + "/rr");
-					reqs.push_back(update_regn + "/cr");
-					acks.push_back(sample_regn + "/ra");
-					acks.push_back(update_regn + "/ca");
+					string idx_scale_sample_regn = 
+							idx_scale_regn_name + "_Sample";
+					string idx_scale_update_regn = 
+							idx_scale_regn_name + "_Update";
+					reqs.push_back(hier_id + "/" + idx_scale_sample_regn + "/rr");
+					reqs.push_back(hier_id + "/" + idx_scale_update_regn + "/cr");
+					acks.push_back(hier_id + "/" + idx_scale_sample_regn + "/ra");
+					acks.push_back(hier_id + "/" + idx_scale_update_regn + "/ca");
+
 					inst_name = this->Get_VC_Name() + "_index_" + IntToStr(idx) + "_scale";
 					Write_VC_Link(inst_name,reqs,acks,ofile);
 					reqs.clear();
@@ -2543,8 +2561,8 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 				}
 				else
 				{
-					reqs.push_back(hid + "/scale_rename_req");
-					acks.push_back(hid + "/scale_rename_ack");
+					reqs.push_back(hier_id + "/" + idx_scale_regn_name + "/scale_rename_req");
+					acks.push_back(hier_id + "/" + idx_scale_regn_name + "/scale_rename_ack");
 					inst_name = this->Get_VC_Name() + "_index_" + IntToStr(idx) + "_rename";
 					Write_VC_Link(inst_name,reqs,acks,ofile);
 					reqs.clear();
@@ -2563,13 +2581,13 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 			int num_index_adds = (num_non_constant + (const_index_flag ? 1 : 0)) - 1;
 			for(int idx = 1; idx <= num_index_adds; idx++)
 			{
-				string prefix = "SplitProtocol/partial_sum_" + IntToStr(idx);
+				string prefix = "partial_sum_" + IntToStr(idx);
 				string sample_regn = prefix + "_sample";
 				string update_regn = prefix + "_update";
-				reqs.push_back(nhid + "/" + sample_regn + "/rr");
-				reqs.push_back(nhid + "/" + update_regn + "/cr");
-				acks.push_back(nhid + "/" + sample_regn + "/ra");
-				acks.push_back(nhid + "/" + update_regn + "/ca");
+				reqs.push_back(hier_id + "/" + sample_regn + "/rr");
+				reqs.push_back(hier_id + "/" + update_regn + "/cr");
+				acks.push_back(hier_id + "/" + sample_regn + "/ra");
+				acks.push_back(hier_id + "/" + update_regn + "/ca");
 				inst_name= this->Get_VC_Name() + "_index_sum_" + IntToStr(idx);
 				Write_VC_Link(inst_name,reqs,acks,ofile);
 				reqs.clear();
@@ -2579,8 +2597,9 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 
 
 		// the final index..
-		reqs.push_back(nhid + "/final_index_req");
-		acks.push_back(nhid + "/final_index_ack");
+		string final_offset_regn = this->Get_VC_Name() + "_final_offset";
+		reqs.push_back(hier_id + "/" + final_offset_regn + "/final_index_req");
+		acks.push_back(hier_id + "/" + final_offset_regn + "/final_index_ack");
 		inst_name = this->Get_VC_Name() + "_offset_inst";
 		Write_VC_Link(inst_name,reqs,acks,ofile);
 		reqs.clear();
@@ -2594,12 +2613,12 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 	// is either a constant (if _object is a declared storage object)
 	if(base_addr < 0)
 	{
-		string hid = Augment_Hier_Id(hier_id, this->Get_VC_Name() + "_base_addr_resize");
+		string b_resize_regn = this->Get_VC_Name() + "_base_addr_resize";
 		// base is not constant, resize it to the required address width..
 		// otherwise, we will just declare the base as a constant
 		// with the required width
-		reqs.push_back(hid + "/base_resize_req");
-		acks.push_back(hid + "/base_resize_ack");
+		reqs.push_back(hier_id + "/" + b_resize_regn + "/base_resize_req");
+		acks.push_back(hier_id + "/" + b_resize_regn + "/base_resize_ack");
 		inst_name = this->Get_VC_Name() + "_base_resize";
 		Write_VC_Link(inst_name,reqs,acks,ofile);
 		reqs.clear();
@@ -2609,13 +2628,14 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 
 	if(!all_indices_zero && (base_addr != 0))
 	{
-		string hid = Augment_Hier_Id(hier_id, this->Get_VC_Name() + "_base_plus_offset");
+		string bpo_sample_regn = this->Get_VC_Name() + "_base_plus_offset_sample";
+		string bpo_update_regn = this->Get_VC_Name() + "_base_plus_offset_update";
 		// index was not zero and base was not zero..
 		// we need to add two numbers, at most one of which
 		// can be a constant..
 
-		string sample_region = hid + "/Sample";
-		string update_region = hid + "/Update";
+		string sample_region = hier_id + "/" + bpo_sample_regn;
+		string update_region = hier_id + "/" + bpo_update_regn;
 		reqs.push_back(sample_region + "/rr");
 		reqs.push_back(update_region + "/cr");
 		acks.push_back(sample_region + "/ra");

@@ -935,6 +935,7 @@ class AaPointerDereferenceExpression: public AaObjectReference
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
   virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 
+  virtual string Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements);
 };
 
 
