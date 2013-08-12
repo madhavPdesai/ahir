@@ -1009,7 +1009,7 @@ string AaAssignmentStatement::Get_VC_Reenable_Update_Transition_Name(set<AaRoot*
   else
   // if both are implicit, return the start transition of this
   // statement, since this starts the registering process..
-    return(this->Get_VC_Start_Transition_Name());
+    return(__AT(this));
 }
 
 string AaAssignmentStatement::Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)

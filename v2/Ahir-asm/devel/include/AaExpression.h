@@ -564,7 +564,9 @@ class AaObjectReference: public AaExpression
 							   vector<int>* scale_factors,
 					    vector<int>* shift_factors,
 						AaRoot* barrier,
+							   set<string>& active_reenable_points,
 							   ostream& ofile);
+
   void Write_VC_Address_Calculation_Links_Optimized(string hier_id,
 						    vector<AaExpression*>* address_expressions,
 						    vector<int>* scale_factors,

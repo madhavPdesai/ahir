@@ -45,11 +45,13 @@ begin  -- default_arch
 	push_req(0) <= '0';
         write_ack <= false;
 	if(l_fsm_state = l_idle) then
-		if(write_req and push_ack(0) = '1') then
+		if(write_req) then
 			push_req(0) <= '1';
-			write_ack <= true;
-		else
-			nstate := l_busy;
+			if(push_ack(0) = '1') then
+				write_ack <= true;
+			else
+				nstate := l_busy;
+			end if;
 		end if;
 	else
 		push_req(0) <= '1';

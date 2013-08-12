@@ -1456,12 +1456,14 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	    }
 	  else
 	    {
+	      string iname = '"' + group_name + '"';
 	      int bufv = ( (max_inbuf > max_outbuf) ? max_inbuf : max_outbuf);
 	      ofile << "UnsharedOperator: UnsharedOperatorWithBuffering -- {" << endl;
 	      ofile << "generic map ( -- { " ;
 	  
 	      // a ton of generics..
 	      ofile << " operator_id => " << vhdl_op_id << "," << endl  // operator-id
+		    << " name => " << iname << "," << endl
 		    << " input1_is_int => " << (input_type_1->Is_Int_Type() ? "true" : "false") << ", " << endl  // first op is int?
 		    << " input1_characteristic_width => " 
 		    << (input_type_1->Is("vcFloatType") ? ((vcFloatType*)input_type_1)->Get_Characteristic_Width() : 0) << ", " << endl // char 1

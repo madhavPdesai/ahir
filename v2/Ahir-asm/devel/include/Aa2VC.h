@@ -42,6 +42,7 @@
 	}
 
 #define __SelfReleaseSplitProtocolPattern {\
+  ofile << "// self-release" << endl;\
   __MJ(__SST(this),__SCT(this));\
   __MJ(__UST(this),__UCT(this));}
 

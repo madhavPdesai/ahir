@@ -19578,11 +19578,13 @@ begin  -- default_arch
 	push_req(0) <= '0';
         write_ack <= false;
 	if(l_fsm_state = l_idle) then
-		if(write_req and push_ack(0) = '1') then
+		if(write_req) then
 			push_req(0) <= '1';
-			write_ack <= true;
-		else
-			nstate := l_busy;
+			if(push_ack(0) = '1') then
+				write_ack <= true;
+			else
+				nstate := l_busy;
+			end if;
 		end if;
 	else
 		push_req(0) <= '1';
@@ -20730,6 +20732,15 @@ begin  -- Behave
 			 reset => reset);
 
   end generate RxGen;
+
+  -- data for input mux.
+  process(rx_data_out)
+  begin
+	for I in 0 to num_reqs-1 loop
+		imux_data_in(((I+1)*rx_word_length)-1 downto (I*rx_word_length))
+			<= rx_data_out(I);
+	end loop;
+  end process;
 
   -- the multiplexor.
   NonTrivTstamp: if time_stamp_width > 0 generate

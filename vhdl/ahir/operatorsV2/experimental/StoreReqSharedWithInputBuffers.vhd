@@ -114,6 +114,15 @@ begin  -- Behave
 
   end generate RxGen;
 
+  -- data for input mux.
+  process(rx_data_out)
+  begin
+	for I in 0 to num_reqs-1 loop
+		imux_data_in(((I+1)*rx_word_length)-1 downto (I*rx_word_length))
+			<= rx_data_out(I);
+	end loop;
+  end process;
+
   -- the multiplexor.
   NonTrivTstamp: if time_stamp_width > 0 generate
   	imux: merge_tree
