@@ -157,6 +157,16 @@ void Write_VC_Register( string inst_name,
 	<< "(" << target_name << ") " << guard_string << endl;
 }
 
+void Write_VC_Interlock_Buffer( string inst_name, 
+			string src_name, 
+			string target_name,
+                        string guard_string,
+			ostream& ofile)
+{
+  ofile << "# := [" << inst_name << "] " 
+	<< "(" << src_name << ") "
+	<< "(" << target_name << ") " << guard_string << endl;
+}
 void Write_VC_Binary_Operator(AaOperation op, 
 			      string inst_name, 
 			      string src1, 
@@ -424,8 +434,8 @@ void Write_VC_Load_Store_Dependency(bool pipeline_flag,
 
 	if(ms->Get_Is_Ordered())
 	{
-  		ofile << tgt->Get_VC_Start_Transition_Name() << " <-& (" 
-			<< src->Get_VC_Active_Transition_Name() << ")" << endl;
+  		ofile << __SST(tgt) << " <-& (" 
+			<< __SCT(src) << ")" << endl;
 		//if(pipeline_flag)
 		//{
 			//__MJ(src->Get_VC_Start_Transition_Name(), tgt->Get_VC_Active_Transition_Name());
@@ -433,8 +443,8 @@ void Write_VC_Load_Store_Dependency(bool pipeline_flag,
 	}
 	else
 	{
-  		ofile << tgt->Get_VC_Start_Transition_Name() << " <-& (" 
-			<< src->Get_VC_Completed_Transition_Name() << ")" << endl;
+  		ofile << __SST(tgt) << " <-& (" 
+			<< __UCT(src) << ")" << endl;
 		//if(pipeline_flag)
 		//{
 			//__MJ(src->Get_VC_Start_Transition_Name(), tgt->Get_VC_Completed_Transition_Name());
@@ -468,7 +478,8 @@ void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
 		titer != ftiter;
 		titer++)
 	{
-		int l_ms_index = (*titer)->Get_VC_Memory_Space_Index();
+		AaExpression* expr = *titer;
+		int l_ms_index = expr->Get_VC_Memory_Space_Index();
 		if(ms == NULL)
 		{
 			ms_index = l_ms_index;
@@ -480,9 +491,9 @@ void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
 		}
 
 		if(ms->Get_Is_Ordered())
-			__J(reenable_trans, (*titer)->Get_VC_Active_Transition_Name())
+			__J(reenable_trans, __SCT(expr))
 		else
-			__J(reenable_trans, (*titer)->Get_VC_Completed_Transition_Name())
+			__J(reenable_trans, __UCT(expr))
 			
 	}
 
@@ -491,10 +502,11 @@ void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
 		liter != fliter;
 		liter++)
 	{
-		int l_ms_index = (*liter)->Get_VC_Memory_Space_Index();
+		AaExpression* expr = *liter;
+		int l_ms_index = expr->Get_VC_Memory_Space_Index();
 		assert(ms_index == l_ms_index);
 
-		__MJ((*liter)->Get_VC_Start_Transition_Name(), reenable_trans)
+		__MJ(__SST(expr), reenable_trans)
 	}
 }
 
@@ -503,13 +515,13 @@ void Write_VC_Pipe_Dependency(bool pipeline_flag,
 			      AaExpression* tgt,
 			      ostream& ofile)
 {
-  string tgt_start = (tgt->Get_VC_Start_Transition_Name());
-  __J(tgt_start,src->Get_VC_Complete_Region_Name());
+  string tgt_start = __SST(tgt);
+  __J(tgt_start,__UCT(src));
   if(pipeline_flag)
     {
       // src can restart only after target completes.
-      string src_start = (src->Get_VC_Start_Transition_Name());
-      __MJ(src_start, tgt->Get_VC_Complete_Region_Name());
+      string src_start = __SST(src);
+      __MJ(src_start, __UCT(tgt));
     }
 }
 

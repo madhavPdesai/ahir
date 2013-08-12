@@ -88,38 +88,19 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 							    AaRoot* barrier,
 							    ostream& ofile)
 {
-
   if(!this->Is_Constant())
     {
 
       ofile << "// " << this->To_String() << endl;
       ofile << "// " << this->Get_Source_Info() << endl;
 
-      __DeclTrans;
-
-      __J(__AT(this),__ST(this));
-
       // take care of the guard
       if(this->_guard_expression)
 	{
 	  // guard expression calculation
 	  this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
-	  if(!this->_guard_expression->Is_Constant())
-	    {
-	      // dependency between guard-expression calculation and this statement.
-	      __J(__AT(this),__CT(this->_guard_expression));
-
-	      // pipeline_flag?  guard-expression evaluation is reenabled by 
-	      // this statement's completion.
-	      if(pipeline_flag)
-		{
-		  __MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-		       __CT(this));
-		}
-
-	    }
-
 	}
+
 
       // write the source side expressions and their 
       // dependencies..
@@ -129,16 +110,9 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 							 visited_elements,
 							 ls_map,pipe_map, barrier,
 							 ofile);
-	  
-	  // this starts after source completes..
-	  __J(__ST(this),__CT(this->_source));
-
-	  // pipeline flag?  statement should reenable source activation..
-	  if(pipeline_flag)
-	    {
-	      __MJ(_source->Get_VC_Reenable_Update_Transition_Name(visited_elements), __CT(this));
-	    }
 	}
+
+	  
       
 
       this->_target->Write_VC_Control_Path_As_Target_Optimized(pipeline_flag,
@@ -147,53 +121,52 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 							       ofile);
 
 
-      if(!this->_target->Is_Implicit_Variable_Reference())
-	{
-	  __J(__ST(this->_target),__AT(this));
-	  __J(__CT(this), __CT(this->_target));
 
-	  // pipeline_flag?  target should reenable activation of statement.
-	  if(pipeline_flag)
-	    {
-	      __MJ(this->Get_VC_Reenable_Update_Transition_Name(visited_elements), __CT(this->_target));
-	    }
-	}
-      else
-	{
-	  __J(__CT(this), __AT(this));
+	// four cases.
 
-	  // pipeline_flag, trivial target.
-	  if(pipeline_flag)
-	    {
-	      // SelfRelease.. done below.
-	    }
-	}
-
-
-      // WAR dependencies
-      this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
-
+      // if both are implicit, then declare an interlock.
       bool source_is_implicit = _source->Is_Implicit_Variable_Reference();
       bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
+
       if(source_is_implicit && target_is_implicit)
+	// both are implicit.. introduce an interlock.
 	{
-	  ofile <<  ";;[" << this->Get_VC_Name() << "_register] { " << endl;
-	  ofile << "$T [req] $T [ack] // register." << endl;
+	  __DeclTransSplitProtocolPattern
+
+	  ofile <<  ";;[" << this->Get_VC_Name() << "_Sample] { " << endl;
+	  ofile << "$T [req] $T [ack] // interlock-sample." << endl;
 	  ofile << "}" << endl;
+
+	  ofile <<  ";;[" << this->Get_VC_Name() << "_Update] { " << endl;
+	  ofile << "$T [req] $T [ack] // interlock-sample." << endl;
+	  ofile << "}" << endl;
+
+	  __ConnectSplitProtocolPattern
 	  
-	  __F(__ST(this), this->Get_VC_Name() + "_register");
-	  __J(__AT(this), this->Get_VC_Name() + "_register");
-	  __J(__CT(this), __AT(this));
-      
 	   if(pipeline_flag)
 	   {
 		// SelfRelease
-		__MJ(__ST(this),__AT(this));
+		__MJ(this->_source->Get_VC_Reenable_Update_Transition_Name(visited_elements),
+			__SCT(this->_target));
 	   }
 	}
-      
-      if(target_is_implicit)
+      else if(!target_is_implicit)
+	// target is not implicit.. source may or may not be.
 	{
+
+	  // doesn't matter whether source is implicit or not.
+
+	  if(!this->_source->Is_Constant())
+	  {
+	  	__J(__SST(this->_target),__UCT(this->_source));
+
+	  	// pipeline_flag?  target should reenable activation of statement.
+	  	if(pipeline_flag)
+	    	{
+	      		__MJ(this->_source->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
+				__SCT(this->_target));
+	    	}
+	  }
 
 	  AaRoot* root_obj = _target->Get_Root_Object();
 	  if(root_obj == ((AaRoot*) this))
@@ -204,6 +177,17 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	      visited_elements.insert(root_obj);
 	    }
 	}
+      else if(!source_is_implicit)
+	// target is implicit, source not implicit
+	{
+	  if(!this->_source->Is_Constant())
+	  {
+	  	__J(__SST(this->_target),__UCT(this->_source));
+	  }
+	}
+
+      // WAR dependencies
+      this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
     }
 }  
 
@@ -225,11 +209,13 @@ void AaAssignmentStatement::Write_VC_Links_Optimized(string hier_id, ostream& of
 	
       if(source_is_implicit && target_is_implicit)
 	{
-	  hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Name() + "_register");
 	  vector<string> reqs;
 	  vector<string> acks;
-	  reqs.push_back(hier_id + "/req");
-	  acks.push_back(hier_id + "/ack");
+	  reqs.push_back(hier_id + "/Sample/req");
+	  acks.push_back(hier_id + "/Sample/ack");
+	  reqs.push_back(hier_id + "/Update/req");
+	  acks.push_back(hier_id + "/Update/ack");
+
 	  Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
 			reqs, acks, ofile);
 	  reqs.clear();
@@ -249,13 +235,21 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 {
   ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
+
   __DeclTransSplitProtocolPattern
 
   // take care of the guard
   if(this->_guard_expression)
     {
-      this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
-      __J(__SST(this),__CT(this->_guard_expression));
+
+	if(!this->_guard_expression->Is_Constant())
+	{
+      		this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
+      		__J(__SST(this),__UCT(this->_guard_expression));
+		if(pipeline_flag)
+      			__MJ(__UST(this->_guard_expression),__SCT(this))
+			
+	}
     }
 
   // first the input arguments... zipping through.
@@ -269,7 +263,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       AaExpression* expr = _input_args[idx];
       if(!expr->Is_Constant())
 	{
-	  __J(__ST(this), __CT(expr));
+	  __J(__SST(this), __UCT(expr));
 
       	  if(pipeline_flag)
 	  {
@@ -290,7 +284,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	<< "$T [ccr] $T [cca] "
 	<< "} " << endl;
 
-  _ConnectSplitProtocolPattern
+  __ConnectSplitProtocolPattern
 
 
 
@@ -306,7 +300,6 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	{
 
 	  __J(__SST(expr),__UCT(this));
-	  __J(__CT(this), __CT(expr));
 
 	  // if pipeline-flag, then expression activation must reenable call
 	  // statement .
@@ -318,7 +311,6 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  non_triv_flag = true;
 	}
       
-      //expr->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,this->_source,ofile);
 
       AaRoot* root_obj = expr->Get_Root_Object();
       if(root_obj == ((AaRoot*) this))
@@ -529,23 +521,11 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 	  if(stmt->Is_Block_Statement())
 	  {
-		if(pipeline_flag)
-		{
-			__T(stmt->Get_VC_Start_Transition_Name());
-			__T(stmt->Get_VC_Completed_Transition_Name());
-			stmt->Write_VC_Control_Path_Optimized(ofile);
-			__F(stmt->Get_VC_Start_Transition_Name(), stmt->Get_VC_Name());
-			__MJ(stmt->Get_VC_Start_Transition_Name(), stmt->Get_VC_Completed_Transition_Name());
-			__J(stmt->Get_VC_Completed_Transition_Name(), stmt->Get_VC_Name());
-		}
-		else
-		{
-			AaRoot::Error("block statement in printing fork block.\n", stmt);
-		}
+		AaRoot::Error("block statement in printing fork block.\n", stmt);
           }
 	  else if(stmt->Is_Control_Flow_Statement())
 	  {
-			AaRoot::Error("control-flow statement in printing fork block.\n", stmt);
+		AaRoot::Error("control-flow statement in printing fork block.\n", stmt);
 	  }
 	  else
 	  {
@@ -573,7 +553,7 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			if(prev_stmt->Is_Constant())
 				continue;
 
-			__J(stmt->Get_VC_Start_Transition_Name(), prev_stmt->Get_VC_Completed_Transition_Name());
+			__J(__SST(stmt), __UCT(prev_stmt));
 	  		if(prev_stmt->Is_Block_Statement() || (prev_stmt->Is("AaCallStatement") && 
 	      			!((AaModule*)(((AaCallStatement*)prev_stmt)->Get_Called_Module()))->Has_No_Side_Effects())
 	     			|| prev_stmt->Can_Block())
@@ -599,7 +579,7 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
           }
 	  else
 	  {
-	  	__F(condition_expr->Get_VC_Completed_Transition_Name(), "condition_evaluated");
+	  	__F(__UCT(condition_expr), "condition_evaluated");
 	  }
 
 	  __F("condition_evaluated", "$null");
@@ -1355,11 +1335,9 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   __T(enable_transition_name);
 
   // the active, completed and the active transitions
-  __T(this->Get_VC_Start_Transition_Name());
-  __T(this->Get_VC_Active_Transition_Name());
-  __T(this->Get_VC_Completed_Transition_Name());
+  __DeclTransSplitProtocolPattern
   
-  __F(this->Get_VC_Start_Transition_Name(), enable_transition_name);
+
   // instantiate phi sequencer.
   ofile << "$phisequencer [ " << this->Get_VC_Name() << "_phi_seq] ( ";
   ofile << phi_sequencer_triggers << " : ";
@@ -1373,8 +1351,10 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   __F(phi_sequencer_reqs_merged,"$null");
 
   // join to active.
-  __J(this->Get_VC_Active_Transition_Name(), phi_sequencer_done);
-  __J(this->Get_VC_Completed_Transition_Name(), this->Get_VC_Active_Transition_Name());
+  __F(__SST(this), enable_transition_name);
+  __J(__SCT(this), phi_sequencer_done)
+  __J(__UST(this), __SCT(this))
+  __J(__UCT(this), __UST(this))
 
   // take care of the guard
   if(this->_guard_expression)
@@ -1384,14 +1364,14 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       if(!this->_guard_expression->Is_Constant())
 	{
 	  // dependency between guard-expression calculation and this statement.
-	  __J(this->Get_VC_Start_Transition_Name(),this->_guard_expression->Get_VC_Completed_Transition_Name());
+	  __J(__SST(this),__UCT(this->_guard_expression))
 
 	  // pipeline_flag?  guard-expression evaluation is reenabled by 
 	  // this statement's completion.
 	  if(pipeline_flag)
 	    {
 	      __MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-		   this->Get_VC_Completed_Transition_Name());
+		   __SCT(this));
 	    }
 	}
     }
@@ -1407,11 +1387,12 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						       ls_map,pipe_map,barrier,
 						       ofile);
 
-	  __J(this->Get_VC_Start_Transition_Name(), source_expr->Get_VC_Completed_Transition_Name());	      
+	  __J(__SST(this), __UCT(source_expr));
 
 	  if(pipeline_flag)
 	    {
-	      __MJ(source_expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), this->Get_VC_Completed_Transition_Name());		  
+	      __MJ(source_expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
+			__SCT(this));
 	    }
 	}
     }

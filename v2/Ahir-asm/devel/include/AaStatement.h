@@ -172,13 +172,7 @@ class AaStatement: public AaScope
 
   void Write_VC_RAW_Release_Dependencies(AaExpression* expr, set<AaRoot*>& visited_elements);
 
-  //
-  //  the transition which reenables the update of predecessors.
-  //  Essentially, when a statement has sources, the sources 
-  //  can be updated immediately after the statement has saved
-  //  the previous values of the sources. 
-  //
-  virtual string Get_VC_Predecessor_Releasing_Transition_Name()
+  virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
   {
     // these need to be defined for each type of (relevant) statement
     // (the Assignment, Phi and Call statements).
@@ -190,7 +184,7 @@ class AaStatement: public AaScope
   // of this statement (Note that this may be part of the
   // source of an assignment statement).
   //
-  virtual string Get_VC_Re_Enable_Update_Transition_Name()
+  virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
   {
     // these need to be defined for each type of (relevant) statement
     // (the Assignment, Phi and Call statements).
@@ -521,16 +515,6 @@ class AaCallStatement: public AaStatement
 
   virtual void Propagate_Constants();
   virtual string Get_VC_Name() {return("call_stmt_" + Int64ToStr(this->Get_Index()));}
-
-  virtual string Get_VC_Successor_Triggering_Region_Name()
-  {
-    return(this->Get_VC_Name() + "_start");
-  }
-
-  virtual string Get_VC_Predecessor_Releasing_Region_Name()
-  {
-    return(this->Get_VC_Name() + "_complete");
-  }
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
 };
@@ -1073,14 +1057,17 @@ class AaPhiStatement: public AaStatement
   // called only if it appears in a do while loop.
   virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
+  // for now.
   virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
   {
-    return(this->Get_VC_Name() + "_enable_");
+    return(this->Get_VC_Name() + "_enable");
   }
+
   virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
   {
-    return(this->Get_VC_Name() + "_enable_");
+    return(this->Get_VC_Name() + "_enable");
   }
+
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
   friend class AaMergeStatement;
 };

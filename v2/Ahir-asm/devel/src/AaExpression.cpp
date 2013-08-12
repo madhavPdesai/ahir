@@ -824,19 +824,16 @@ string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoo
 	{
 
 		if(this->_object->Is("AaStorageObject"))
-			return(__AT(this));
+			return(__UST(this));
 
 		if(this->_object->Is("AaPipeObject"))
 		{
-			if(this->Get_Is_Target())
-				return(__AT(this));
-			else
-				return(__UST(this));
+			return(__UST(this));
 		}
 
 		if(this->_object->Is_Interface_Object())
 		{
-			AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
+			AaRoot* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
 			if((root != NULL) && (visited_elements.find(root) != visited_elements.end()))
 				return(root->Get_VC_Reenable_Update_Transition_Name(visited_elements));
 			else
@@ -853,8 +850,8 @@ string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoo
 			else
 			{
 				// the expression/statement which sets the value of this implicit variable
-				// is not found in the visited elements.  Return the start transition.
-				return(this->Get_VC_Start_Transition_Name());
+				// is not found in the visited elements.  
+				return("$null");
 			}
 		}
 
@@ -890,10 +887,10 @@ string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoo
 	{
 
 		if(this->_object->Is("AaStorageObject"))
-			return(this->Get_VC_Start_Transition_Name());
+			return(__SST(this));
 
 		if(this->_object->Is("AaPipeObject"))
-			return(this->Get_VC_Start_Transition_Name());
+			return(__SST(this));
 
 		if(this->_object->Is_Interface_Object())
 		{
@@ -901,7 +898,13 @@ string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoo
 			if(io->Get_Is_Input())
 				return("$null");
 			else
-				return(this->Get_VC_Start_Transition_Name());
+			{
+				AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
+				if((root != NULL) && (visited_elements.find(root) != visited_elements.end()))
+					return(root->Get_VC_Reenable_Sample_Transition_Name(visited_elements));
+				else
+					return("$null");
+			}
 		}
 
 		if(this->Is_Implicit_Variable_Reference())
@@ -915,7 +918,7 @@ string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoo
 			{
 				// the expression/statement which sets the value of this implicit variable
 				// is not found in the visited elements.  Return the start transition.
-				return(this->Get_VC_Start_Transition_Name());
+				return("$null");
 			}
 		}
 
@@ -924,13 +927,13 @@ string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoo
 	}
 }
 
-AaRoot* Get_Non_Trivial_Predecessor(set<AaRoot*>& visited_elements);
+AaRoot* Get_Non_Trivial_Predecessor(set<AaRoot*>& visited_elements)
+{
+	assert(0);
+}
 
 void AaSimpleObjectReference::Write_VC_Control_Path_As_Target( ostream& ofile)
 {
-
-
-
 
 	// else, if the object being referred to is 
 	// a storage object, then it is a load operation,
@@ -1765,7 +1768,14 @@ void AaArrayObjectReference::Write_VC_Control_Path( ostream& ofile)
 							       &scale_factors,
 							       &shift_factors,
 							       ofile);
-	  ofile << "$T [final_reg_req] $T [final_reg_ack]" << endl;
+
+	  ofile << "||[Interlock] { " << endl;
+	  ofile << ";;[Sample] {" << endl;
+	  ofile << "$T [req] $T [ack]" << endl;
+	  ofile << "}" << endl;
+	  ofile << ";;[Update] {" << endl;
+	  ofile << "$T [req] $T [ack]" << endl;
+	  ofile << "}" << endl;
 	  ofile << "}" << endl;
 	}
       else if(this->_object->Is_Storage_Object())
@@ -2083,13 +2093,10 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 							ofile);
 
       // final register.
-      Write_VC_Unary_Operator( __NOP,
-			       this->Get_VC_Name() + "_final_reg",
+      Write_VC_Interlock_Buffer( this->Get_VC_Name() + "_final_reg",
 			       this->Get_VC_Root_Address_Name(),
-			       this->Get_Address_Type(this->Get_Index_Vector()),
 			       (target != NULL ? target->Get_VC_Receiver_Name() : 
 				this->Get_VC_Driver_Name()),
-			       this->Get_Type(),
 				this->Get_VC_Guard_String(),
 			       ofile);
 			      
@@ -2203,8 +2210,10 @@ void AaArrayObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
 
       vector<string> reqs;
       vector<string> acks;
-      reqs.push_back(hier_id + "/final_reg_req");
-      acks.push_back(hier_id + "/final_reg_ack");
+      reqs.push_back(hier_id + "/Interlock/Sample/req");
+      reqs.push_back(hier_id + "/Interlock/Update/req");
+      acks.push_back(hier_id + "/Interlock/Sample/ack");
+      acks.push_back(hier_id + "/Interlock/Update/ack");
       Write_VC_Link(this->Get_VC_Name() + "_final_reg",
 		    reqs,
 		    acks,
@@ -2994,7 +3003,14 @@ void AaAddressOfExpression::Write_VC_Control_Path( ostream& ofile)
 							      &shift_factors,
 							      ofile);
 
-      ofile << "$T [final_reg_req] $T [final_reg_ack]" << endl;
+      ofile << "||[Interlock] {" << endl;
+      ofile << ";;[Sample] {" << endl;
+      ofile << "$T [req] $T [ack]" << endl;
+      ofile << "}" << endl;
+      ofile << ";;[Update] {" << endl;
+      ofile << "$T [req] $T [ack]" << endl;
+      ofile << "}" << endl;
+      ofile << "}" << endl;
       ofile << "}" << endl;
 							      
     }
@@ -3106,14 +3122,10 @@ void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, os
       
       AaType* addr_type  = AaProgram::Make_Uinteger_Type(_storage_object->Get_Address_Width());
 
-      Write_VC_Unary_Operator(__NOP,
-			      this->Get_VC_Name() + "_final_reg",
+      Write_VC_Interlock_Buffer( this->Get_VC_Name() + "_final_reg",
 			      obj_ref->Get_VC_Root_Address_Name(),
-			      addr_type,
 			      ((target != NULL) ? target->Get_VC_Driver_Name() :
 			       this->Get_VC_Driver_Name()),
-			      ((target != NULL) ? target->Get_Type() :
-			       this->Get_Type()),
 			       this->Get_VC_Guard_String(),
 			      ofile);
     }
@@ -3146,8 +3158,10 @@ void AaAddressOfExpression::Write_VC_Links(string hier_id, ostream& ofile)
 						       
       vector<string> reqs;
       vector<string> acks;
-      reqs.push_back(hier_id + "/final_reg_req");
-      acks.push_back(hier_id + "/final_reg_ack");
+      reqs.push_back(hier_id + "/Interlock/Sample/req");
+      reqs.push_back(hier_id + "/Interlock/Update/req");
+      acks.push_back(hier_id + "/Interlock/Sample/ack");
+      acks.push_back(hier_id + "/Interlock/Update/ack");
       Write_VC_Link(this->Get_VC_Name() + "_final_reg",
 		    reqs,
 		    acks,
@@ -3225,20 +3239,14 @@ void AaTypeCastExpression::Write_VC_Control_Path(ostream& ofile)
 
       // either it will be a register or a split conversion
       // operator..
-      if(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
-	ofile << "$T [req] $T [ack] //  type-conversion.. " << endl;
-      else
-      {
-	ofile << "||[SplitProtocol] {" << endl;
-	ofile << ";;[Sample] {" << endl;
-	ofile << "$T [rr] $T [ra]  " << endl;
-	ofile << "}" << endl;
-	ofile << ";;[Update] {" << endl;
-	ofile << "$T [cr] $T [ca] " << endl;
-	ofile << "}" << endl;
-	ofile << "}" << endl;
-      }
-
+      ofile << "||[SplitProtocol] {" << endl;
+      ofile << ";;[Sample] {" << endl;
+      ofile << "$T [rr] $T [ra]  " << endl;
+      ofile << "}" << endl;
+      ofile << ";;[Update] {" << endl;
+      ofile << "$T [cr] $T [ca] " << endl;
+      ofile << "}" << endl;
+      ofile << "}" << endl;
       ofile << "}" << endl;
     }
 }
@@ -3302,13 +3310,18 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 {
   if(!this->Is_Constant())
     {
+      bool ilb_flag = false;
+      if(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
+      {
+	ilb_flag = true;
+      }
 
       this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
 
       ofile << "// " << this->To_String() << endl;
-      if(_bit_cast)
+      if(ilb_flag)
 	{
-	  Write_VC_Register(this->Get_VC_Datapath_Instance_Name(),
+	  Write_VC_Interlock_Buffer(this->Get_VC_Datapath_Instance_Name(),
 			    this->_rest->Get_VC_Driver_Name(),
 			    (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name()),
 			    this->Get_VC_Guard_String(),
@@ -3341,23 +3354,14 @@ void AaTypeCastExpression::Write_VC_Links(string hier_id, ostream& ofile)
       
       vector<string> reqs,acks;
 
-      if(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
-	{
-	  reqs.push_back(hier_id + "/" +this->Get_VC_Name() + "/req");
-	  acks.push_back(hier_id + "/" +this->Get_VC_Name() + "/ack");
-	  Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
-	}
-      else
-	{
- 	  string sample_regn = hier_id  + "/" + this->Get_VC_Name() + "/SplitProtocol/Sample";
- 	  string update_regn = hier_id  + "/" + this->Get_VC_Name() + "/SplitProtocol/Update";
-	  reqs.push_back( sample_regn + "/rr");
-	  reqs.push_back( update_regn + "/cr");
-	  acks.push_back( sample_regn +  "/ra");
-	  acks.push_back( update_regn + "/ca");
+      string sample_regn = hier_id  + "/" + this->Get_VC_Name() + "/SplitProtocol/Sample";
+      string update_regn = hier_id  + "/" + this->Get_VC_Name() + "/SplitProtocol/Update";
+      reqs.push_back( sample_regn + "/rr");
+      reqs.push_back( update_regn + "/cr");
+      acks.push_back( sample_regn +  "/ra");
+      acks.push_back( update_regn + "/ca");
 
-	  Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
-	}
+      Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
     }
 }
 

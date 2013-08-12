@@ -836,7 +836,14 @@ void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
       // then you will need to instantiate a register..
       if(_source->Is_Implicit_Variable_Reference() && _target->Is_Implicit_Variable_Reference())
 	{
-	  ofile << "$T [req] $T [ack] // register." << endl;
+	  ofile << "|| [Interlock] {" << endl;
+	  ofile << " ;;[Sample] {" << endl;
+	  ofile << "$T [req] $T [ack]" << endl;
+	  ofile << "}" << endl;
+	  ofile << " ;;[Update] {" << endl;
+	  ofile << "$T [req] $T [ack]" << endl;
+	  ofile << "}" << endl;
+	  ofile << "}" << endl;
 	}
 
       // if target is a pointer then you will need a
@@ -907,13 +914,10 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	    {
 	      // target and source are both implicit.
 	      // instantiate a register..
-	      Write_VC_Unary_Operator(__NOP,
-				      this->_target->Get_VC_Datapath_Instance_Name(),
+	      Write_VC_Interlock_Buffer( this->_target->Get_VC_Datapath_Instance_Name(),
 				      this->_source->Get_VC_Driver_Name(),
-				      this->_source->Get_Type(),
 				      this->_target->Get_VC_Receiver_Name(),
-				      this->_target->Get_Type(),
-			 		this->Get_VC_Guard_String(),
+		 		      this->Get_VC_Guard_String(),
 				      ofile);
 	    }
 	  else
@@ -954,8 +958,10 @@ void AaAssignmentStatement::Write_VC_Links(string hier_id,ostream& ofile)
 	{
 	  if(this->_source->Is_Implicit_Variable_Reference())
 	    {
-	      reqs.push_back(hier_id + "/req");
-	      acks.push_back(hier_id + "/ack");
+	      reqs.push_back(hier_id + "/Sample/req");
+	      reqs.push_back(hier_id + "/Update/req");
+	      acks.push_back(hier_id + "/Sample/ack");
+	      acks.push_back(hier_id + "/Update/ack");
 	      Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
 			    reqs, acks, ofile);
 	      reqs.clear();
@@ -1009,12 +1015,27 @@ string AaAssignmentStatement::Get_VC_Reenable_Update_Transition_Name(set<AaRoot*
   else
   // if both are implicit, return the start transition of this
   // statement, since this starts the registering process..
-    return(__AT(this));
+    return(__UST(this));
 }
 
 string AaAssignmentStatement::Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
 {
-  return(_source->Get_VC_Reenable_Sample_Transition_Name(visited_elements));
+  bool source_is_implicit = _source->Is_Implicit_Variable_Reference();
+  bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
+  if(!target_is_implicit)
+    {
+      return(_target->Get_VC_Reenable_Sample_Transition_Name(visited_elements));
+    }
+  // if target is implicit, but source is not implicit, then
+  // return the reenable update transition for the source.
+  else if (!source_is_implicit)
+    {
+      return(_source->Get_VC_Reenable_Sample_Transition_Name(visited_elements));
+    }
+  else
+  // if both are implicit, return the start transition of this
+  // statement, since this starts the registering process..
+    return(__SST(this));
 }
 
 //---------------------------------------------------------------------

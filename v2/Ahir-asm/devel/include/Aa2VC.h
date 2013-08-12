@@ -10,29 +10,20 @@
 #define __MJ(x,y) ofile << x << " o<-& (" << y <<  " " << 1 << ")" << endl;
 #define __F(x,y) ofile << x << " &-> (" << y << ")" << endl;
 
-#define __ST(u)  u->Get_VC_Start_Transition_Name()
-#define __AT(u)  u->Get_VC_Active_Transition_Name()
-#define __CT(u)  u->Get_VC_Completed_Transition_Name()
 #define __SST(u) u->Get_VC_Sample_Start_Transition_Name()
 #define __SCT(u) u->Get_VC_Sample_Completed_Transition_Name()
 #define __UST(u) u->Get_VC_Update_Start_Transition_Name()
 #define __UCT(u) u->Get_VC_Update_Completed_Transition_Name()
 
-#define __DeclTrans  {\
-	string st = __ST(this);\
-	string at = __AT(this);\
-	string ct = __CT(this);\
-        __T(st); __T(at); __T(ct); }
-
 #define __DeclTransSplitProtocolPattern  {\
-	__T(__ST(this)); __T(__AT(this)); __T(__CT(this));\
-      	__T(__SST(this)); __T(__SCT(this)); __T(__UST(this)); __T(__UCT(this));\
-      	__J(__SST(this),__ST(this));\
-      	__J(__UST(this),__ST(this));\
-      	__J(__CT(this),__UCT(this));\
-      	__J(__CT(this),__SCT(this)); }
+      	__T(__SST(this)); __T(__SCT(this)); __T(__UST(this)); __T(__UCT(this));}
 
-#define _ConnectSplitProtocolPattern  {\
+#define __TrivialConnectSplitProtocolPattern  {\
+      __F(__SST(this), __SCT(this));\
+      __F(__UST(this), __UCT(this));\
+	}
+
+#define __ConnectSplitProtocolPattern  {\
       string _sample_regn = this->Get_VC_Name() + "_Sample";\
       string _update_regn = this->Get_VC_Name() + "_Update";\
       __F(__SST(this), _sample_regn);\
@@ -76,6 +67,11 @@ void Write_VC_Unary_Operator(AaOperation op,
 			     string guard_string,
 			     ostream& ofile);
 void Write_VC_Register( string inst_name, 
+			string src_name, 
+			string target_name,
+			string guard_string,
+			ostream& ofile);
+void Write_VC_Interlock_Buffer( string inst_name, 
 			string src_name, 
 			string target_name,
 			string guard_string,

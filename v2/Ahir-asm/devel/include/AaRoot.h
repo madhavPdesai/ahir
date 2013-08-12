@@ -60,18 +60,6 @@ class AaRoot
 
   virtual string Get_VC_Name() {assert(0);}
 
-  virtual string Get_VC_Start_Transition_Name() {
-    return(this->Get_VC_Name() + "_trigger_");
-  }
-
-  virtual string Get_VC_Active_Transition_Name() {
-    return(this->Get_VC_Name() + "_active_");
-  }
-
-  virtual string Get_VC_Completed_Transition_Name() {
-    return(this->Get_VC_Name() + "_completed_");
-  }
-
   virtual string Get_VC_Sample_Start_Transition_Name() {
     return(this->Get_VC_Name() + "_sample_start_");
   }
@@ -93,12 +81,11 @@ class AaRoot
   // derived classes based on their implementation of the VC 
   // control schemes.
   virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements) {
-    return(this->Get_VC_Active_Transition_Name());    
+    return(this->Get_VC_Update_Start_Transition_Name());    
   }
   virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements) {
-    return(this->Get_VC_Start_Transition_Name());    
+    return(this->Get_VC_Sample_Start_Transition_Name());    
   }
-
 
   virtual AaType* Get_Type() {assert(0);}
   virtual AaValue* Get_Expression_Value() {assert(0);}
