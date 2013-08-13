@@ -927,6 +927,49 @@ string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoo
 	}
 }
 
+// TODO: in these four cases, the case when the target is
+//       an interface object needs to be handled similarly..
+string AaSimpleObjectReference::Get_VC_Sample_Start_Transition_Name()
+{
+	if(this->Get_Is_Target() 
+		&&  (this->Is_Implicit_Variable_Reference() || 
+			this->_object->Is_Interface_Object()))
+		
+		return(__SST(this->Get_Associated_Statement()));
+	else
+		return(this->AaRoot::Get_VC_Sample_Start_Transition_Name());
+}
+
+string AaSimpleObjectReference::Get_VC_Sample_Completed_Transition_Name()
+{
+	if(this->Get_Is_Target() 
+		&&  (this->Is_Implicit_Variable_Reference() || 
+			this->_object->Is_Interface_Object()))
+		return(__SCT(this->Get_Associated_Statement()));
+	else
+		return(this->AaRoot::Get_VC_Sample_Completed_Transition_Name());
+}
+
+string AaSimpleObjectReference::Get_VC_Update_Start_Transition_Name()
+{
+	if(this->Get_Is_Target() 
+		&&  (this->Is_Implicit_Variable_Reference() || 
+			this->_object->Is_Interface_Object()))
+		return(__UST(this->Get_Associated_Statement()));
+	else
+		return(this->AaRoot::Get_VC_Update_Start_Transition_Name());
+}
+
+string AaSimpleObjectReference::Get_VC_Update_Completed_Transition_Name()
+{
+	if(this->Get_Is_Target() 
+		&&  (this->Is_Implicit_Variable_Reference() || 
+			this->_object->Is_Interface_Object()))
+		return(__UCT(this->Get_Associated_Statement()));
+	else
+		return(this->AaRoot::Get_VC_Update_Completed_Transition_Name());
+}
+
 AaRoot* Get_Non_Trivial_Predecessor(set<AaRoot*>& visited_elements)
 {
 	assert(0);

@@ -660,6 +660,7 @@ class AaSimpleObjectReference: public AaObjectReference
 
 
   virtual bool Is_Implicit_Variable_Reference();
+
   virtual AaRoot* Get_Root_Object();
   virtual bool Is_Implicit_Object();
 
@@ -716,6 +717,12 @@ class AaSimpleObjectReference: public AaObjectReference
 
   virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements);
   virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements);
+
+  virtual string Get_VC_Sample_Start_Transition_Name();
+  virtual string Get_VC_Sample_Completed_Transition_Name();
+  virtual string Get_VC_Update_Start_Transition_Name();
+  virtual string Get_VC_Update_Completed_Transition_Name();
+
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
 

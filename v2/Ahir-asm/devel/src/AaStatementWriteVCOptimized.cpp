@@ -180,10 +180,12 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       else if(!source_is_implicit)
 	// target is implicit, source not implicit
 	{
-	  if(!this->_source->Is_Constant())
-	  {
-	  	__J(__SST(this->_target),__UCT(this->_source));
-	  }
+		// no need to to anything, because target
+		// completion is captured by UCT..
+	  //if(!this->_source->Is_Constant())
+	  //{
+	  	//__J(__SST(this->_target),__UCT(this->_source));
+	  //}
 	}
 
       // WAR dependencies

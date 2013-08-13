@@ -1038,6 +1038,86 @@ string AaAssignmentStatement::Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*
     return(__SST(this));
 }
 
+string AaAssignmentStatement::Get_VC_Sample_Start_Transition_Name()
+{
+	bool source_is_implicit = this->_source->Is_Implicit_Variable_Reference();
+	bool target_is_implicit = this->_target->Is_Implicit_Variable_Reference();
+	// TODO: if target is implicit or interface object..
+	if(source_is_implicit && target_is_implicit)
+	{
+		return(this->AaRoot::Get_VC_Sample_Start_Transition_Name());
+		
+	}
+	else if(!target_is_implicit)
+	{
+		return(this->_target->Get_VC_Sample_Start_Transition_Name());
+	}
+	else
+	{
+		return(this->_source->Get_VC_Sample_Start_Transition_Name());
+	}
+}
+
+string AaAssignmentStatement::Get_VC_Sample_Completed_Transition_Name()
+{
+	bool source_is_implicit = this->_source->Is_Implicit_Variable_Reference();
+	bool target_is_implicit = this->_target->Is_Implicit_Variable_Reference();
+	// TODO: if target is implicit or interface object..
+	if(source_is_implicit && target_is_implicit)
+	{
+		return(this->AaRoot::Get_VC_Sample_Completed_Transition_Name());
+		
+	}
+	else if(!target_is_implicit)
+	{
+		return(this->_target->Get_VC_Sample_Completed_Transition_Name());
+	}
+	else
+	{
+		return(this->_source->Get_VC_Sample_Completed_Transition_Name());
+	}
+}
+
+string AaAssignmentStatement::Get_VC_Update_Start_Transition_Name()
+{
+	bool source_is_implicit = this->_source->Is_Implicit_Variable_Reference();
+	bool target_is_implicit = this->_target->Is_Implicit_Variable_Reference();
+	// TODO: if target is implicit or interface object..
+	if(source_is_implicit && target_is_implicit)
+	{
+		return(this->AaRoot::Get_VC_Update_Start_Transition_Name());
+		
+	}
+	else if(!target_is_implicit)
+	{
+		return(this->_target->Get_VC_Update_Start_Transition_Name());
+	}
+	else
+	{
+		return(this->_source->Get_VC_Update_Start_Transition_Name());
+	}
+}
+
+string AaAssignmentStatement::Get_VC_Update_Completed_Transition_Name()
+{
+	bool source_is_implicit = this->_source->Is_Implicit_Variable_Reference();
+	bool target_is_implicit = this->_target->Is_Implicit_Variable_Reference();
+	// TODO: if target is implicit or interface object..
+	if(source_is_implicit && target_is_implicit)
+	{
+		return(this->AaRoot::Get_VC_Update_Completed_Transition_Name());
+		
+	}
+	else if(!target_is_implicit)
+	{
+		return(this->_target->Get_VC_Update_Completed_Transition_Name());
+	}
+	else
+	{
+		return(this->_source->Get_VC_Update_Completed_Transition_Name());
+	}
+}
+
 //---------------------------------------------------------------------
 // AaCallStatement
 //---------------------------------------------------------------------

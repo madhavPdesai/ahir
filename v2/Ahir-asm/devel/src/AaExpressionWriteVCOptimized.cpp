@@ -57,7 +57,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 	string write_trigger_transition_name;
 	if(pstmt->Is("AaAssignmentStatement"))
 		write_trigger_transition_name = 
-			__SST(((AaAssignmentStatement*) pstmt)->Get_Source());
+			__SST(((AaAssignmentStatement*) pstmt));
 	else 
 		write_trigger_transition_name = 
 			__SST(((AaCallStatement*) pstmt));
@@ -99,10 +99,11 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 				//
 				ofile << "// WAR dependency: Read: " << expr->To_String() << " before Write: " << pstmt->To_String() << endl;
 
-				// The target "b = (d+e)" cannot be updated until the statement a := (b+c)
-				// has finished.  This is conservative.
+				// The target "b = (d+e)" cannot be updated until 
+				// the statement a := (b+c) has sampled b..  
+				// This is conservative.
 				__J(write_trigger_transition_name, 
-					__UCT(expr->Get_Associated_Statement()));
+					__SCT(expr->Get_Associated_Statement()));
 
 				// The completion of "b = (d+e)" reenables the
 				// evaluation of "a = (b+c)"
@@ -364,9 +365,12 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 		ostream& ofile)
 {
 
-	if( this->Is_Implicit_Variable_Reference())
+	if(this->Is_Implicit_Variable_Reference() || this->_object->Is_Interface_Object())
 	{
-		ofile << "// " << this->To_String() << endl << "// implicit reference" << endl;
+		if(this->Is_Implicit_Variable_Reference())
+			ofile << "// " << this->To_String() << endl << "// implicit reference" << endl;
+		else
+			ofile << "// " << this->To_String() << endl << "// write to interface object" << endl;
 	}
 	else if(this->_object->Is("AaStorageObject"))
 	{
