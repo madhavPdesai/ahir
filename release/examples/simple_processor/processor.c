@@ -53,7 +53,7 @@ word addr;
 uint8_t halt = 0;
 
 // write-to-mem
-void write_to_mem(uint16_t mem_addr, uint16_t mem_data)
+inline void write_to_mem(uint16_t mem_addr, uint16_t mem_data)
 {
    mem[mem_addr] = mem_data;
 }
@@ -69,7 +69,7 @@ uint16_t read_from_mem(uint16_t mem_addr)
 |*------------------------------------------------------------------*/
 inline void fetch()
 {
-  ir = mem[ reg[ PC ] ];
+  ir = read_from_mem( reg[ PC ] );
   reg[ PC ]++;
 }
  
@@ -196,6 +196,10 @@ inline void execute()
     }
 }
  
+
+#ifndef SW
+void loop_pipelining_on(uint32_t val, uint32_t buf, uint32_t extreme_flag);
+#endif
  
 /*------------------------------------------------------------------*|
 |* Run the CPU until it halts.
@@ -209,6 +213,9 @@ void run()
 
   while( !halt )
     {
+#ifndef SW
+		loop_pipelining_on(16,32,1);
+#endif
       fetch();
       decode();
       execute(); /* includes writeback */

@@ -394,6 +394,8 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 		this->Write_VC_Store_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,NULL,NULL,NULL,barrier,ofile);
 		ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
 
+		__ConnectSplitProtocolPattern;
+
 		if(pipeline_flag)
 		{
 			__SelfReleaseSplitProtocolPattern

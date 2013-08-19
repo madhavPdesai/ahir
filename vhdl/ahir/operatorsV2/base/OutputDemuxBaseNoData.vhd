@@ -69,7 +69,7 @@ begin  -- Behave
             end if;
         end if;
 
-        if(nstate > 0) then
+        if(lhs_state > 0) then
             if(lhs_clear = '1') then
               nstate := lhs_state-1;
             end if;

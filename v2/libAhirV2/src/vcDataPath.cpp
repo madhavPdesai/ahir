@@ -2578,8 +2578,16 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
       string input_buffering_string;
       int max_inbuf = this->Generate_Buffering_String("inBUFs", inwire_buffering, input_buffering_string);
 
+      bool use_out_buffering = ((called_module->Get_Out_Arg_Width() > 0) ? true : false);
       string output_buffering_string;
-      int max_outbuf = this->Generate_Buffering_String("outBUFs", outwire_buffering, output_buffering_string);
+      int max_outbuf;
+
+	// special case.. hack alert.
+      if(use_out_buffering)
+      	max_outbuf  = this->Generate_Buffering_String("outBUFs", outwire_buffering, output_buffering_string);
+      else
+	output_buffering_string =  "constant outBUFs: IntegerArray(" + IntToStr(num_reqs-1) + " downto 0) := (others => 1);";
+
 
       int tag_length = called_module->Get_Caller_Tag_Length();
 
@@ -2651,7 +2659,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
       // now the operator instances 
       string imux_name = ((called_module->Get_In_Arg_Width() > 0) ?
 			  "InputMuxWithBuffering" : "InputMuxBaseNoData");
-      bool use_buffering =( (called_module->Get_In_Arg_Width() > 0) ? true : false);
+      bool use_in_buffering =( (called_module->Get_In_Arg_Width() > 0) ? true : false);
 
       ofile << "CallReq: " << imux_name << " -- {" << endl;
       ofile << "generic map ( ";
@@ -2662,7 +2670,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 		<< " owidth => " << in_width/num_reqs << "," << endl;
 	}
 
-      if(use_buffering)
+      if(use_in_buffering)
       {
 	  ofile << " name => " << '"' << imux_name << '"' << ","  << endl;
 	  ofile << " buffering => inBUFs,"  << endl;
@@ -2703,7 +2711,6 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
       string omux_name = ((called_module->Get_Out_Arg_Width() > 0) ?
 			  "OutputDemuxBaseWithBuffering" : "OutputDemuxBaseNoData");
-      bool use_op_buf = ((called_module->Get_Out_Arg_Width() > 0) ? true : false);
 
       ofile << "CallComplete: " << omux_name << " -- {" << endl;
       ofile << "generic map ( -- {" << endl;
@@ -2712,9 +2719,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 	  ofile << "iwidth => " << out_width/num_reqs << "," << endl
 		<< " owidth => " << out_width << "," << endl; 
 	}
-      if(use_op_buf)
-	    ofile << " detailed_buffering_per_output => outBUFs, " << endl;
-	
+      ofile << " detailed_buffering_per_output => outBUFs, " << endl;
 
       ofile << " twidth => " << tag_length << "," << endl
 	    << " name => " << '"' << omux_name << '"' << "," << endl

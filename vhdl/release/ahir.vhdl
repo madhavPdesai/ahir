@@ -9253,15 +9253,22 @@ begin  -- default_arch
 
 
    -- the next two places manage the slots
+   -- note that the capacity must be num_slots+1, because
+   -- the release request may arrive earlier than the 
+   -- unregulated request.
    release_req_place_preds(0) <= release_req;
    releaseReqPlace: place 
-	generic map(capacity => num_slots, marking => num_slots, name => "access_regulator:release_req_place")
+	generic map(capacity => num_slots+1, marking => num_slots, name => "access_regulator:release_req_place")
 	port map(preds => release_req_place_preds, 
 			succs => release_req_place_succs, 
 			token => release_req_place_token,
 			clk => clk, reset => reset);
 
    release_ack_place_preds(0) <= release_ack;
+
+   -- note that the capacity can be num_slots, because
+   -- the release ack-request should never arrive earlier than the 
+   -- unregulated request.
    releaseAckPlace: place 
 	generic map(capacity => num_slots, marking => num_slots, name => "access_regulator:release_ack_place")
 	port map(preds => release_ack_place_preds, 
@@ -11518,7 +11525,7 @@ begin  -- Behave
             end if;
         end if;
 
-        if(nstate > 0) then
+        if(lhs_state > 0) then
             if(lhs_clear = '1') then
               nstate := lhs_state-1;
             end if;
