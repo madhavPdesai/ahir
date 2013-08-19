@@ -522,6 +522,21 @@ class AaCallStatement: public AaStatement
   virtual string Get_VC_Name() {return("call_stmt_" + Int64ToStr(this->Get_Index()));}
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
+
+  virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
+  {
+    return(this->AaRoot::Get_VC_Reenable_Sample_Transition_Name(visited_elements));
+  }
+
+  //
+  // The transition which enables the update of the results
+  // of this statement (Note that this may be part of the
+  // source of an assignment statement).
+  //
+  virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
+  {
+    return(this->AaRoot::Get_VC_Reenable_Update_Transition_Name(visited_elements));
+  }
 };
 
 
