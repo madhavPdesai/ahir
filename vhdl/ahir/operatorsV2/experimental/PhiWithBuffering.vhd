@@ -36,7 +36,8 @@ begin  -- Behave
 
   ilb: InterlockBuffer generic map(name => name & " ilb " ,
 				buffer_size => buffering,
-				data_width => data_width)
+				in_data_width => data_width,
+				out_data_width => data_width)
 		port map(write_req => ilb_write_req,
 			 write_ack => sample_ack,
 			 write_data => ilb_write_data,

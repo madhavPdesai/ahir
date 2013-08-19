@@ -8,21 +8,25 @@ use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
 entity InterlockBuffer is
-  generic (name: string; buffer_size: integer := 2; data_width : integer := 32);
+  generic (name: string; buffer_size: integer := 2; 
+		in_data_width : integer := 32;
+		out_data_width : integer := 32);
   port ( write_req: in boolean;
         write_ack: out boolean;
-        write_data: in std_logic_vector(data_width-1 downto 0);
+        write_data: in std_logic_vector(in_data_width-1 downto 0);
         read_req: in boolean;
         read_ack: out boolean;
-        read_data: out std_logic_vector(data_width-1 downto 0);
+        read_data: out std_logic_vector(out_data_width-1 downto 0);
         clk : in std_logic;
         reset: in std_logic);
 end InterlockBuffer;
 
 architecture default_arch of InterlockBuffer is
 
+  constant data_width: integer := Minimum(in_data_width,out_data_width);
+
   signal pop_req, pop_ack, push_req, push_ack: std_logic_vector(0 downto 0);
-  signal pipe_data_out:  std_logic_vector(data_width-1 downto 0);
+  signal pipe_data_out, pipe_data_in:  std_logic_vector(data_width-1 downto 0);
 
   signal output_register : std_logic_vector(data_width-1 downto 0);
 
@@ -36,6 +40,43 @@ begin  -- default_arch
 
   -- interlock buffer must have buffer-size > 0
   assert buffer_size > 0 report " interlock buffer size must be > 0 " severity failure;
+
+  bufEqOne: if buffer_size = 1 generate
+	regBlock: block
+  		signal req, ack: boolean;
+	begin
+		reg: RegisterBase 
+			generic map (in_data_width => in_data_width,
+					out_data_width => out_data_width)
+			port map(din => write_data, dout => read_data, req => req,
+					ack => ack, clk => clk, reset => reset);
+
+		jReq: join2 generic map (bypass => true)
+				port map (pred0 => write_req,
+						pred1 => read_req,
+						symbol_out => req,
+						clk => clk, reset => reset);
+
+		write_ack <= ack;
+		read_ack  <= ack;
+	end block;
+  end generate bufEqOne;
+
+  bufGtOne: if buffer_size > 1 generate 
+  inSmaller: if in_data_width <= out_data_width generate
+	pipe_data_in <= write_data;
+
+	process(output_register)
+	begin
+  		read_data <= (others => '0');
+  		read_data(data_width-1 downto 0)  <= output_register;
+	end process;
+  end generate inSmaller;
+
+  outSmaller: if out_data_width < in_data_width generate
+	pipe_data_in <= write_data(data_width-1 downto 0);
+  	read_data  <= output_register;
+  end generate outSmaller;
 
   -- write FSM to pipe.
   process(clk,reset, l_fsm_state, push_ack(0), write_req)
@@ -84,7 +125,7 @@ begin  -- default_arch
       read_data  => pipe_data_out,
       write_req  => push_req,
       write_ack  => push_ack,
-      write_data => write_data,
+      write_data => pipe_data_in,
       clk        => clk,
       reset      => reset);
 
@@ -131,7 +172,7 @@ begin  -- default_arch
         end if;
      end if;
   end process;
+  end generate bufGtOne;
 
-  read_data <= output_register;
 
 end default_arch;

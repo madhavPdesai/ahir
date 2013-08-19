@@ -122,6 +122,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 
 
+
 	// four cases.
 
       // if both are implicit, then declare an interlock.
@@ -141,33 +142,32 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  ofile << "$T [req] $T [ack] // interlock-sample." << endl;
 	  ofile << "}" << endl;
 
+
 	  __ConnectSplitProtocolPattern
-	  
-	   if(pipeline_flag)
-	   {
-		// SelfRelease
-		__MJ(this->_source->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-			__SCT(this->_target));
-	   }
-	}
-      else if(!target_is_implicit)
-	// target is not implicit.. source may or may not be.
-	{
 
-	  // doesn't matter whether source is implicit or not.
-
-	  if(!this->_source->Is_Constant())
+	  __J(__SST(this), __UCT(this->_source));
+	  if(pipeline_flag)
 	  {
-	  	__J(__SST(this->_target),__UCT(this->_source));
-
-	  	// pipeline_flag?  target should reenable activation of statement.
-	  	if(pipeline_flag)
-	    	{
-	      		__MJ(this->_source->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
-				__SCT(this->_target));
-	    	}
+		__MJ(this->_source->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
+			__SCT(this));
 	  }
+	}
 
+      // WAR dependencies
+      this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
+
+      if(!target_is_implicit && !this->_source->Is_Constant())
+      {
+      		__J(__SST(this->_target), __UCT(this->_source));
+		if(pipeline_flag)
+		{
+			__MJ(this->_source->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
+				__SCT(this->_target));
+		}
+      }
+
+      if(target_is_implicit)
+      {
 	  AaRoot* root_obj = _target->Get_Root_Object();
 	  if(root_obj == ((AaRoot*) this))
 	    visited_elements.insert(this);
@@ -176,20 +176,8 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	      visited_elements.insert(this);
 	      visited_elements.insert(root_obj);
 	    }
-	}
-      else if(!source_is_implicit)
-	// target is implicit, source not implicit
-	{
-		// no need to to anything, because target
-		// completion is captured by UCT..
-	  //if(!this->_source->Is_Constant())
-	  //{
-	  	//__J(__SST(this->_target),__UCT(this->_source));
-	  //}
-	}
+      }
 
-      // WAR dependencies
-      this->Write_VC_WAR_Dependencies(pipeline_flag, visited_elements,ofile);
     }
 }  
 
@@ -213,10 +201,10 @@ void AaAssignmentStatement::Write_VC_Links_Optimized(string hier_id, ostream& of
 	{
 	  vector<string> reqs;
 	  vector<string> acks;
-	  reqs.push_back(hier_id + "/Sample/req");
-	  acks.push_back(hier_id + "/Sample/ack");
-	  reqs.push_back(hier_id + "/Update/req");
-	  acks.push_back(hier_id + "/Update/ack");
+	  reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "_Sample/req");
+	  acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_Sample/ack");
+	  reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "_Update/req");
+	  acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_Update/ack");
 
 	  Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
 			reqs, acks, ofile);

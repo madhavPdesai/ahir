@@ -113,7 +113,8 @@ begin  -- Behave
     -----------------------------------------------------------------------------
     ib: InterlockBuffer generic map (name => name & " interlock-buffer ",
 					  buffer_size => output_buffering,
-					  data_width => output_width)
+					  in_data_width => output_width,
+					  out_data_width => output_width)
 		  port map(write_req => fReq, write_ack => fAck,
 				  write_data => result,
 				  read_req => update_req,

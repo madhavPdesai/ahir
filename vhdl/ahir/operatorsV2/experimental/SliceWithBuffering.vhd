@@ -35,7 +35,8 @@ begin
   ilb: InterlockBuffer 
 		generic map(name => name & " ilb ",
 				buffer_size => buffering,
-				data_width => (high_index - low_index) + 1)
+				in_data_width => (high_index - low_index) + 1,
+				out_data_width => (high_index - low_index) + 1)
 		port map(write_req => sample_req,
 			 write_ack => sample_ack,
 			 write_data => ilb_data_in,
