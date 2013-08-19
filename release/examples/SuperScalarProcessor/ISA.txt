@@ -1,0 +1,83 @@
+16-bit instruction.
+
+
+<op-code>
+31-27
+
+
+immediate instructions.
+ldli <reg-id> <immediate-operand>  
+00001  <5-bit> <bottom-16-bits>
+
+ldhi <reg-id> <immediate-operand>
+00010  <5-bit> <bottom-16-bits>
+
+
+arithmetic instructions
+add  <r1> <r2> <r3>
+	r3 = (r1 + r2)
+00011  (5 + 5 + 5 in lower half of instruction word)
+
+sub  <r1> <r2> <r3>
+	r3 = (r1 - r2)
+00100  (5 + 5 + 5 in lower half of instruction word)
+
+mul  <r1> <r2> <r3>
+	r3 = (r1 * r2)
+00101  (5 + 5 + 5 in lower half of instruction word)
+
+cmpgt  <r1> <r2> <r3>
+	r3 = (r1 > r2)
+00110  (5 + 5 + 5 in lower half of instruction word)
+
+cmpeq  <r1> <r2> <r3>
+	r3 = (r1 == r2)
+00111  (5 + 5 + 5 in lower half of instruction word)
+
+cmplt  <r1> <r2> <r3>
+	r3 = (r1 < r2)
+01000  (5 + 5 + 5 in lower half of instruction word)
+
+shl  <r1> <r2> <r3>
+	r3 = (r1 << r2)
+01001  (5 + 5 + 5 in lower half of instruction word)
+
+shr  <r1> <r2> <r3>
+	r3 = (r1 >> r2)
+01010  (5 + 5 + 5 in lower half of instruction word)
+
+
+logical instructions
+and  <r1> <r2> <r3>
+	r3 = (r1 & r2)
+01011  (5 + 5 + 5 in lower half of instruction word)
+
+or  <r1> <r2> <r3>
+	r3 = (r1 | r2)
+01100  (5 + 5 + 5 in lower half of instruction word)
+
+xor  <r1> <r2> <r3>
+	r3 = (r1 ^ r2)
+01101  (5 + 5 + 5 in lower half of instruction word)
+
+
+jumps
+br <r1>
+	branch to address in r1.
+01110  + 5 lower bits to specify r1.
+
+brzero   <r1> <r2>
+	branch to address in r1 if r2 is zero
+01111  + (5 + 5 lower bits to specify r1, r2)
+
+
+
+load/store
+ld <r1> <r2>
+    r2 = mem[r1]
+10000  + (5 + 5 lower bits to specify r1, r2)
+
+sto <r1> <r2>
+    mem[r1] = r2
+10001  + (5 + 5 lower bits to specify r1, r2)
+
