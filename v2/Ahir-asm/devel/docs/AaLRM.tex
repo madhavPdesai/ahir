@@ -259,6 +259,26 @@ $call foo (p q)  (r s t)
 \end{verbatim}
 Here $p,q,r,s,t$ can be expressions.
 
+Complete atomic statements can have a guard predicate
+specified, so that they are executed only if the guard
+predicate is true.  This is specified either by
+\begin{verbatim}
+$guard ( <guard-variable> )  <statement-spec>
+\end{verbatim}
+or 
+\begin{verbatim}
+$guard ( ~ <guard-variable> )  <statement-spec>
+\end{verbatim}
+For example
+\begin{verbatim}
+$guard (sel_add) r := (a + b)
+\end{verbatim}
+or
+\begin{verbatim}
+$guard (~ sel_add) $call afun (a b) (r)
+\end{verbatim}
+
+
 More details of the syntax are provided in 
 Section \ref{sec:Syntax}.
 

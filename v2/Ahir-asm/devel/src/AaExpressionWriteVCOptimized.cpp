@@ -123,6 +123,7 @@ void AaExpression::Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& v
 {
 	if(this->Get_Guard_Expression() != NULL)
 	{
+		ofile << "// Guard dependency" << endl;
 		AaExpression* expr = this->Get_Guard_Expression();
 		if(expr->Is("AaSimpleObjectReference"))
 		{
@@ -131,6 +132,7 @@ void AaExpression::Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& v
 			if(visited_elements.find(root) != visited_elements.end())
 			{
 				__J(__SST(this), __UCT(root));
+				__J(__UST(this), __UCT(root));
 			}
 		}
 		else
@@ -143,6 +145,8 @@ void AaExpression::Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& v
 			// when this completes, the guard can be re-evaluated.
 			__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
 				 __UCT(this));
+			__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
+				 __SCT(this));
 		}
 	}
 }

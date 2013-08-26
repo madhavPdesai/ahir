@@ -6,6 +6,8 @@ SOCKETLIB_LIB=../../CtestBench/lib
 VHDL_LIB=../../vhdl
 VHDL_VHPI_LIB=../../CtestBench/vhdl
 all: SW HW 
+ 
+TOVC: c2llvmbc llvmbc2aa aa2vc 
 
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.
@@ -29,12 +31,12 @@ llvmbc2aa:  processor.opt.o
 	llvm2aa processor.opt.o | vcFormat >  processor.opt.o.aa
 
 # Aa to vC
-aa2vc: processor.opt.o.aa
-	Aa2VC -O -C processor.opt.o.aa | vcFormat > processor.opt.o.aa.vc
+aa2vc: processor.opt.o.aa processorOptimized.aa
+	Aa2VC -O -C processor.opt.o.aa processorOptimized.aa | vcFormat > processor.opt.o.aa.vc
 
 # vC to VHDL
 vc2vhdl: processor.opt.o.aa.vc
-	vc2vhdl -C -e ahir_system -w -s ghdl -t run -t write_to_mem -f processor.opt.o.aa.vc 
+	vc2vhdl -O -C -e ahir_system -a -w -s ghdl -t run -t write_to_mem -f processor.opt.o.aa.vc 
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl

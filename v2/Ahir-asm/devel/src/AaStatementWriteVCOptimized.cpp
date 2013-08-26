@@ -528,7 +528,7 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  }
 	  if(stmt->Is_Block_Statement() || (stmt->Is("AaCallStatement") && 
 	      !((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()))->Has_No_Side_Effects())
-	     || stmt->Can_Block())
+	     || (!pipeline_flag && stmt->Can_Block()))
 	  {
 		barrier = stmt;
 		ofile << "// barrier: " << stmt->To_String() << endl;

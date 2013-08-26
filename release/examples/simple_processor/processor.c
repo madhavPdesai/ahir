@@ -63,6 +63,7 @@ uint16_t read_from_mem(uint16_t mem_addr)
   return  mem[mem_addr];
 }
  
+#ifdef SW
 /*------------------------------------------------------------------*|
 |* Fetch the next instruction.
 |* After a fetch, the PC points to the next instruction in memory.
@@ -94,112 +95,58 @@ inline void decode()
 /*------------------------------------------------------------------*|
 |* Execute a decoded instruction.
 |*------------------------------------------------------------------*/
-inline void execute()
-{
-  /* force register 0 always to be 0 */
-  reg[ 0 ] = 0;
-  switch( op )
-    {
-    case 0:
-      /* halt */
-      /* halt the CPU */
-      halt = 1;
-      return;
- 
-    case 1:
-      /* add r1, r2, r3 */
-      /* add two registers, place in a third register */
-      reg[ r1 ] = reg[ r2 ] + reg[ r3 ];
-      break;
- 
-    case 2:
-      /* sub r1, r2, r3 */
-      /* subtract one register from another, place in a third register */
-      reg[ r1 ] = reg[ r2 ] - reg[ r3 ];
-      break;
- 
-    case 3:
-      /* lw r1, r2, r3 */
-      /* load a word from memory into register */
-      addr = reg[ r2 ] + reg[ r3 ];
-      reg[ r1 ] = mem[ addr ];
-      break;
- 
-    case 4:
-      /* sw r1, r2, r3 */
-      /* store a word from register into memory */
-      addr = reg[ r2 ] + reg[ r3 ];
-      mem[ addr ] = reg[ r1 ];
-      break;
- 
-    case 5:
-      /* lli r1, immediate(8-bit) */
-      /* load low half of register with an immediate value */
-      reg[ r1 ] &= 0xFF00;
-      reg[ r1 ] |= imm;
-      break;
- 
-    case 6:
-      /* lhi r1, immediage(8-bit) */
-      /* load high half of register with an immediate value */
-      reg[ r1 ] &= 0x00FF;
-      reg[ r1 ] |= imm << 8;
-      break;
- 
-    case 7:
-      /* mv r1, r2 */
-      /* copy contents of r2 into r1 */
-      reg[ r1 ] = reg[ r2 ];
-      break;
- 
-    case 8:
-      /* jmp address(16-bit) */
-      /* jump to a 16-bit address */
-      addr = mem[ reg[ PC ] ];
-      reg[ PC ] = addr;
-      break;
- 
-    case 9:
-      /* br r1, offset(8-bit signed) */
-      /* branch to register + offset */
-      reg[ PC ] += reg[ r1 ] + offs;
-      break;
- 
-    case 0xA:
-      /* br r1, offset(8-bit signed) */
-      /* branch by offset if r1 == 0 */
-      if( reg[ r1 ] == 0 )
-        reg[ PC ] += offs;
-      break;
- 
-    case 0xB:
-      /* unused */
-      break;
- 
-    case 0xC:
-      /* unused */
-      break;
- 
-    case 0xD:
-      /* unused */
-      break;
- 
-    case 0xE:
-      /* out r1 */
-      /* display the value of a register */
-      write_uint16("out_port",reg[r1]);
-      break;
- 
-    case 0xF:
-      /* unused */
-      break;
-    }
+#define _execute_ {\
+  reg[ 0 ] = 0;\
+  switch( op )\
+    {\
+    case 0:\
+      halt = 1;\
+      return;\
+    case 1:\
+      reg[ r1 ] = reg[ r2 ] + reg[ r3 ];\
+      break;\
+    case 2:\
+      reg[ r1 ] = reg[ r2 ] - reg[ r3 ];\
+      break;\
+    case 3:\
+      addr = reg[ r2 ] + reg[ r3 ];\
+      reg[ r1 ] = mem[ addr ];\
+      break;\
+    case 4:\
+      addr = reg[ r2 ] + reg[ r3 ];\
+      mem[ addr ] = reg[ r1 ];\
+      break;\
+    case 5:\
+      reg[ r1 ] &= 0xFF00;\
+      reg[ r1 ] |= imm;\
+      break;\
+    case 6:\
+      reg[ r1 ] &= 0x00FF;\
+      reg[ r1 ] |= imm << 8;\
+      break;\
+    case 7:\
+      reg[ r1 ] = reg[ r2 ];\
+      break;\
+    case 8:\
+      addr = mem[ reg[ PC ] ];\
+      reg[ PC ] = addr;\
+      break;\
+    case 9:\
+      reg[ PC ] += reg[ r1 ] + offs;\
+      break;\
+    case 0xA:\
+      if( reg[ r1 ] == 0 )\
+        reg[ PC ] += offs;\
+      break;\
+    case 0xE:\
+      write_uint16("out_port",reg[r1]);\
+      break;\
+    default:\
+      break;\
+    }\
 }
  
 
-#ifndef SW
-void loop_pipelining_on(uint32_t val, uint32_t buf, uint32_t extreme_flag);
-#endif
  
 /*------------------------------------------------------------------*|
 |* Run the CPU until it halts.
@@ -208,19 +155,27 @@ void run()
 {
   int i;
   halt = 0;
-  for(i=0; i < REGS; i++)
-	reg[i] = 0;
+
+  reg[PC] = 0;
+  //for(i=0; i < REGS; i++)
+	//reg[i] = 0;
 
   while( !halt )
     {
-#ifndef SW
-		loop_pipelining_on(16,32,1);
-#endif
+#ifdef SW
+	fprintf(stderr,".");
+#endif 
       fetch();
       decode();
-      execute(); /* includes writeback */
+      _execute_;
     }
+#ifdef SW
+  fprintf(stderr,"\n");
+#endif 
 }
+#else
+void run();
+#endif
  
  
  

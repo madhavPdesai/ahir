@@ -736,6 +736,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
 	}
       else
 	{
+	  ofile << "-- input transition " << endl;
 	  this->Print_DP_To_CP_VHDL_Link(ofile);
 	}
     }
@@ -759,6 +760,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
 	    }
 	  else
 	    {
+	      ofile << "-- input transition " << endl;
 	      if(pred_count == 0)
 	      	vcSystem::Error("input transition " + this->Get_Hierarchical_Id() + " has no predecessor!");
 	      else
@@ -769,6 +771,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
 
   if(this->Get_Is_Output())
     {
+      ofile << "-- output transition " << endl;
       this->Print_CP_To_DP_VHDL_Link(ofile);
     }
   
