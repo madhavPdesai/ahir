@@ -690,7 +690,7 @@ void AaAssignmentStatement::Print(ostream& ofile)
   {
 	guard_string = "$guard (";
 	if(this->_guard_complement)
-		guard_string += " $not ";
+		guard_string += " ~ ";
 	guard_string += this->_guard_expression->To_String();
 	guard_string += ") ";
   }
@@ -1168,7 +1168,7 @@ void AaCallStatement::Print(ostream& ofile)
   {
 	guard_string = "$guard (";
 	if(this->_guard_complement)
-		guard_string += " $not ";
+		guard_string += " ~ ";
 
 	guard_string += this->_guard_expression->To_String();
 	guard_string += ") ";
@@ -1208,7 +1208,7 @@ void AaCallStatement::Print(ostream& ofile)
 	ofile << this->Tab();
 	ofile << "$if (";
 	if(this->_guard_complement)
-		guard_string += " $not ";
+		guard_string += " ~ ";
 	this->_guard_expression->Print(ofile);
 	ofile << ") $then " << endl;
     }
