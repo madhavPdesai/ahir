@@ -84,7 +84,6 @@ $is
 
 	$guard (op14) out_port := r1_val // 6
 
-
 	// WAR dependency from here to reg-reads..
         $guard (updates_r1) new_r_val := ($mux op2 op2_r1 
 				          ($mux op3 op3_r1 
