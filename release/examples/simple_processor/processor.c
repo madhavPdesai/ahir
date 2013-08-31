@@ -96,7 +96,6 @@ inline void decode()
 |* Execute a decoded instruction.
 |*------------------------------------------------------------------*/
 #define _execute_ {\
-  reg[ 0 ] = 0;\
   switch( op )\
     {\
     case 0:\
@@ -167,6 +166,9 @@ void run()
 #endif 
       fetch();
       decode();
+#ifdef SW
+	fprintf(stderr," op = %d ", op);
+#endif 
       _execute_;
     }
 #ifdef SW

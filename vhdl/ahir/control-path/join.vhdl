@@ -7,7 +7,7 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity join is
-  generic (place_capacity : integer := 1;bypass: boolean := true; name : string := "anon");
+  generic (place_capacity : integer := 1;bypass: boolean := true; name : string );
   port ( preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;

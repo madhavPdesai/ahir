@@ -51,7 +51,7 @@ begin  -- default_arch
 			port map(din => write_data, dout => read_data, req => req,
 					ack => ack, clk => clk, reset => reset);
 
-		jReq: join2 generic map (bypass => true)
+		jReq: join2 generic map (bypass => true, name => name & ":join2")
 				port map (pred0 => write_req,
 						pred1 => read_req,
 						symbol_out => req,

@@ -150,6 +150,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  {
 		__MJ(this->_source->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
 			__SCT(this));
+		__SelfReleaseSplitProtocolPattern
 	  }
 	}
 

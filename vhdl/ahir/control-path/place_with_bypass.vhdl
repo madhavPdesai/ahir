@@ -11,7 +11,7 @@ entity place_with_bypass is
   generic (
     capacity: integer := 1;
     marking : integer := 0;
-    name   : string := "anonPlaceWithBypass"
+    name   : string
     );
   port (
     preds : in  BooleanArray;
@@ -62,19 +62,22 @@ begin  -- default_arch
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
       elsif decr then
-	-- if(debug_flag) then
-          -- assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
-		 -- severity note;
-	-- end if;
+
+	 if(debug_flag) then
+           assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+		 severity note;
+	end if;
         token_latch <= token_latch - 1;
+
       elsif incr then
-	-- if(debug_flag) then
-          -- assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
-		 -- severity note;
-	-- end if;
+
+	if(debug_flag) then
+           assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+		  severity note;
+	end if;
+
         token_latch <= token_latch + 1;
       end if;
-
        if((token_latch = capacity) and incoming_token and (not backward_reset)) then
          assert false report "in place-with-bypass: " & name & " number of tokens "
 			 & Convert_To_String(token_latch+1) & " cannot exceed capacity " 
@@ -83,6 +86,7 @@ begin  -- default_arch
        if((not non_zero) and backward_reset and (not incoming_token)) then
          assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
        end if;
+
 
     end if;
   end process latch_token;

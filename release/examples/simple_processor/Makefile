@@ -32,7 +32,7 @@ llvmbc2aa:  processor.opt.o
 
 # AaOpt
 aaopt: processor.opt.o.aa processorOptimized.Aa
-	AaOpt -B processor.opt.o.aa processorOptimized.Aa | vcFormat > processor.aa
+	AaOpt processor.opt.o.aa processorOptimized.Aa | vcFormat > processor.aa
 
 # Aa to vC
 aa2vc: processor.aa

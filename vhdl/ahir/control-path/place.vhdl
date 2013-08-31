@@ -11,7 +11,7 @@ entity place is
   generic (
     capacity: integer := 1;
     marking : integer := 0;
-    name   : string := "anon"
+    name   : string
     );
   port (
     preds : in  BooleanArray;

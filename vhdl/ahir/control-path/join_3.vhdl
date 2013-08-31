@@ -6,7 +6,7 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity join3 is
-  generic(bypass : boolean := true);
+  generic(bypass : boolean := true; name: string);
   port ( pred0, pred1, pred2      : in   Boolean;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -19,7 +19,7 @@ begin  -- default_arch
 
   preds <= pred0 & pred1 & pred2;
   baseJoin : join
-    generic map(bypass => bypass)
+    generic map(bypass => bypass, name => name & ":base")
     port map (preds => preds,
               symbol_out => symbol_out,
               clk => clk,

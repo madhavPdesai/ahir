@@ -1018,7 +1018,7 @@ void vcControlPath::Print_VHDL_Optimized(ostream& ofile)
 
   ofile << "start_ack_symbol <= " << exit_grp->Get_VHDL_Id() << ";" << endl;
 
-  ofile << "finAckJoin: join2 " << endl
+  ofile << "finAckJoin: join2 generic map(name=> \"finAckJoin\" )" << endl
 	<< " port map(pred0 => fin_req_symbol, pred1 =>" << exit_grp->Get_VHDL_Id()
 	<< ", symbol_out => fin_ack_symbol, clk => clk, reset => reset);"
 	<< endl;

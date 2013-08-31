@@ -1983,7 +1983,7 @@ package BaseComponents is
     generic (
       capacity : integer := 1;
       marking : integer := 0;
-      name : string := "anon");
+      name : string);
 
     port (
       preds : in  BooleanArray;
@@ -1997,7 +1997,7 @@ package BaseComponents is
     generic (
       capacity : integer := 1;
       marking : integer := 0;
-      name : string := "anon");
+      name : string );
 
     port (
       preds : in  BooleanArray;
@@ -2049,7 +2049,7 @@ package BaseComponents is
   component join is
      generic(place_capacity : integer := 1;
 		bypass: boolean := false;
-      		name : string := "anon");
+      		name : string );
      port (preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -2057,7 +2057,7 @@ package BaseComponents is
   end component;
 
   component join2 
-    generic (bypass : boolean := false);
+    generic (bypass : boolean := false; name: string);
     port ( pred0, pred1      : in   Boolean;
            symbol_out : out  boolean;
            clk: in std_logic;
@@ -2065,7 +2065,7 @@ package BaseComponents is
   end component;
 
   component join3 
-    generic (bypass : boolean := false);
+    generic (bypass : boolean := false; name: string);
     port ( pred0, pred1, pred2      : in   Boolean;
            symbol_out : out  boolean;
            clk: in std_logic;
@@ -2075,7 +2075,7 @@ package BaseComponents is
   component join_with_input is
      generic(place_capacity : integer := 1;
 		bypass: boolean := false;
-      		name : string := "anon");
+      		name : string );
      port (preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
     	symbol_out : out  boolean;
@@ -9434,7 +9434,7 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity join2 is
-  generic(bypass : boolean := true);
+  generic(bypass : boolean := true; name : string);
   port ( pred0, pred1      : in   Boolean;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -9447,7 +9447,7 @@ begin  -- default_arch
 
   preds <= pred0 & pred1;
   baseJoin : join
-    generic map(bypass => bypass)
+    generic map(bypass => bypass, name => name & ":base")
     port map (preds => preds,
               symbol_out => symbol_out,
               clk => clk,
@@ -9462,7 +9462,7 @@ use ahir.subprograms.all;
 use ahir.BaseComponents.all;
 
 entity join3 is
-  generic(bypass : boolean := true);
+  generic(bypass : boolean := true; name: string);
   port ( pred0, pred1, pred2      : in   Boolean;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -9475,7 +9475,7 @@ begin  -- default_arch
 
   preds <= pred0 & pred1 & pred2;
   baseJoin : join
-    generic map(bypass => bypass)
+    generic map(bypass => bypass, name => name & ":base")
     port map (preds => preds,
               symbol_out => symbol_out,
               clk => clk,
@@ -9491,7 +9491,7 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity join is
-  generic (place_capacity : integer := 1;bypass: boolean := true; name : string := "anon");
+  generic (place_capacity : integer := 1;bypass: boolean := true; name : string );
   port ( preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
@@ -9981,8 +9981,8 @@ begin  -- Behave
 	place_succ(0) <= select_clear(I);
 
         -- a bypass place: in order to speed up loop turnaround times.
-	pI: place_with_bypass generic map(capacity => place_capacity, marking => 0)
-		  -- name => name & ":select:" & Convert_To_String(I))
+	pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
+		   name => name & ":select:" & Convert_To_String(I))
 		port map(place_pred,place_succ,select_token(I),clk,reset);
     end block;
   end generate InPlaces;
@@ -9995,8 +9995,8 @@ begin  -- Behave
     begin
       place_pred(0) <= enables(J);
       place_succ(0) <= enable_clear(J);
-      pRnb: place_with_bypass generic map(capacity => place_capacity, marking => 0)
-		  -- name => name & ":enable:" & Convert_To_String(J))
+      pRnb: place_with_bypass generic map(capacity => place_capacity, marking => 0,
+		  name => name & ":enable:" & Convert_To_String(J))
         port map(place_pred,place_succ,enable_token(J),clk,reset);    
     end block;
   end generate EnablePlaces;  
@@ -10024,8 +10024,8 @@ begin  -- Behave
   begin
       place_pred(0) <= ack;
       place_succ(0) <= ack_clear;
-      pack: place_with_bypass generic map(capacity => place_capacity, marking => 1)
-	  	-- name => name & ":ack")
+      pack: place_with_bypass generic map(capacity => place_capacity, marking => 1,
+	  	 name => name & ":ack")
         port map(place_pred,place_succ,ack_token,clk,reset);    
   end block;
 
@@ -10087,7 +10087,7 @@ entity place is
   generic (
     capacity: integer := 1;
     marking : integer := 0;
-    name   : string := "anon"
+    name   : string
     );
   port (
     preds : in  BooleanArray;
@@ -10163,7 +10163,7 @@ entity place_with_bypass is
   generic (
     capacity: integer := 1;
     marking : integer := 0;
-    name   : string := "anonPlaceWithBypass"
+    name   : string
     );
   port (
     preds : in  BooleanArray;
@@ -10214,19 +10214,22 @@ begin  -- default_arch
       if reset = '1' then            -- asynchronous reset (active high)
         token_latch <= marking;
       elsif decr then
-	-- if(debug_flag) then
-          -- assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
-		 -- severity note;
-	-- end if;
+
+	 if(debug_flag) then
+           assert false report "in place " & name & ": token count decremented from " & Convert_To_String(token_latch) 
+		 severity note;
+	end if;
         token_latch <= token_latch - 1;
+
       elsif incr then
-	-- if(debug_flag) then
-          -- assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
-		 -- severity note;
-	-- end if;
+
+	if(debug_flag) then
+           assert false report "in place " & name & " token count incremented from " & Convert_To_String(token_latch) 
+		  severity note;
+	end if;
+
         token_latch <= token_latch + 1;
       end if;
-
        if((token_latch = capacity) and incoming_token and (not backward_reset)) then
          assert false report "in place-with-bypass: " & name & " number of tokens "
 			 & Convert_To_String(token_latch+1) & " cannot exceed capacity " 
@@ -10235,6 +10238,7 @@ begin  -- default_arch
        if((not non_zero) and backward_reset and (not incoming_token)) then
          assert false report "in place-with-bypass: " & name &  ": number of tokens cannot become negative!" severity error;
        end if;
+
 
     end if;
   end process latch_token;
@@ -19602,7 +19606,7 @@ begin  -- default_arch
 			port map(din => write_data, dout => read_data, req => req,
 					ack => ack, clk => clk, reset => reset);
 
-		jReq: join2 generic map (bypass => true)
+		jReq: join2 generic map (bypass => true, name => name & ":join2")
 				port map (pred0 => write_req,
 						pred1 => read_req,
 						symbol_out => req,
