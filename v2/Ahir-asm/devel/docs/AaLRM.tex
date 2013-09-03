@@ -600,8 +600,17 @@ in hardware, and the amount of buffering per operation will be kept to
 
 Note that it is always possible to describe
 a do-while loop using a branch-block, and this is what should be done
-if loop-pipelining is not desired.
+if loop-pipelining is not desired\footnote{There are still some issues
+with loop-pipelining which are still being sorted out.}.
 
+
+\subsubsection{Issues with loop-pipelining (in progress)}
+
+There is one outstanding issue: loop run-away.  This issue arises
+when an early value is fed back into the loop body which uses delayed
+versions of this early value.  The loop races ahead, priming the
+delayed versions with junk.  The solution is to always feed back the
+most delayed version of a variable.
 
 
 Thus, an \Aa program is constructed as a collection of modules,
