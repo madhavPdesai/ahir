@@ -565,12 +565,12 @@ makes $r$ directly visible as $r$  in the parent scope of the
 branch-block.
 \end{itemize}
 
-\subsection{Pipelinable-loops: the {\bf do-while} construct}
+\subsection{Pipelinable-loops: the {\bf dopipeline-while} construct}
 
 The \Aa language provides a single construct for describing loops.
 The form of the construct is
 \begin{verbatim}
-  $do
+  $dopipeline
      $merge $entry $loopback
        <phi-statements>
      $endmerge
@@ -587,9 +587,22 @@ the entry to the do-while or from the loopback place.
 The downstream tools will always attempt to pipeline the do-while loop by
 starting the next iteration while the current one is still in progress.
 Dependency analysis on values in the loop-body is used to determine the
-extent of loop pipelining.  Note that it is always possible to describe
+extent of loop pipelining.  While doing the pipelining, one can specify
+two parameters as follows
+\begin{verbatim}
+  $dopipeline $depth 8 $buffering 2
+    ...
+  $while ....
+\end{verbatim}
+This specifies that up to 8 iterations of the loops will be kept alive
+in hardware, and the amount of buffering per operation will be kept to
+2.
+
+Note that it is always possible to describe
 a do-while loop using a branch-block, and this is what should be done
 if loop-pipelining is not desired.
+
+
 
 Thus, an \Aa program is constructed as a collection of modules,
 each of which is a sequence of statements.  The use of series,

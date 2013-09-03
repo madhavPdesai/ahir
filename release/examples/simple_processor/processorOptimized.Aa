@@ -15,9 +15,6 @@ $is
 
     $merge $entry $loopback 
 	$phi halt := ($bitcast($uint<1>) 0) $on $entry nhalt $on $loopback
-	$phi written_r_val := ($bitcast($uint<16>) 0) $on $entry new_r_val $on $loopback
-	$phi written_r_index := ($bitcast($uint<16>) 0) $on $entry r1 $on $loopback 
-	$phi written_r_flag  := ($bitcast($uint<1>) 0) $on $entry updates_r1 $on $loopback 
     $endmerge
         
 	// stage 1
@@ -38,9 +35,6 @@ $is
 	// stage 4
   	offs := (($mux (imm > 127) (128 - imm)  imm) - 1)  //3 // get the offset, and subtract 1 because
                                                   // the PC has already moved to next location */
-        bypass_r1 := (written_r_flag & (r1 == written_r_index))
-        bypass_r2 := (written_r_flag & (r2 == written_r_index))
-        bypass_r3 := (written_r_flag & (r3 == written_r_index))
 
 	// stage 5
 	op0 := (op == 0) op1 := (op == 1) op2 := (op == 2) op3 := (op == 3)  
@@ -53,38 +47,27 @@ $is
 	needs_r1 := (((op4 | op9) | (op5 | op10)) | (op6 | op14)) // 4
 	nhalt := ($mux op0 1 0) 
 
-	// stage 7
- 	$guard (needs_r2) r2_val := ($mux bypass_r2 written_r_val reg[r2]) // 5
- 	$guard (needs_r3) r3_val := ($mux bypass_r3 written_r_val reg[r3]) // 5
-	$guard (needs_r1) r1_val := ($mux bypass_r1 written_r_val reg[r1]) // 5
+	// stage 7: register read.
+ 	$guard (needs_r2) r2_val := reg[r2] // 5
+ 	$guard (needs_r3) r3_val := reg[r3] // 5
+	$guard (needs_r1) r1_val := reg[r1] // 5
         branch_case := (op8 | (op9 | op10)) // 3
 
-
 	// stage 8: buffering on op1,op2...
-	$guard (op1)  op1_r1  := (r2_val + r3_val)   // 6
-	$guard (op2)  op2_r1 := (r2_val - r3_val)  // 6
+	$guard (op1)  reg[r1]  := (r2_val + r3_val)   // 6
+	$guard (op2)  reg[r1] := (r2_val - r3_val)  // 6
 	$guard (op3)  op3_addr   := (r2_val + r3_val) // 6
-        $guard (op3)  op3_r1    := mem[op3_addr]  // 7
+        $guard (op3)  reg[r1]    := mem[op3_addr]  // 7
 	$guard (op4)  op4_addr := (r2_val + r3_val) // 6
         $guard (op4)  mem[op4_addr] := r1_val // 7
-	$guard (op5)  op5_r1 := ((r1_val & _hff00)  | imm) // 6
-	$guard (op6)  op6_r1 := ((r1_val & _h00ff) | (imm << 8)) // 6
-	$guard (op7)  op7_r1 := r2_val // 6
+	$guard (op5)  reg[r1] := ((r1_val & _hff00)  | imm) // 6
+	$guard (op6)  reg[r1] := ((r1_val & _h00ff) | (imm << 8)) // 6
+	$guard (op7)  reg[r1] := r2_val // 6
         $guard (~branch_case) pc := enpc // 4
 	$guard (op8)  pc := mem[enpc] // 4
  	$guard (op9)  pc := (enpc + (r1_val + offs)) // 6
 	$guard (op10) pc := ( $mux (r1_val == 0) (enpc + offs) enpc) // 6
 	$guard (op14) out_port := r1_val // 6
-        updates_r1 := ( ( (op1 | op2) | (op3 | op5 ) ) | (op6 | op7 ) ) // 4
-
-	// WAR dependency from here to reg-reads..
-        $guard (updates_r1) new_r_val := ($mux op1 op1_r1 ($mux op2 op2_r1 
-				          	($mux op3 op3_r1 
-					    	($mux op5 op5_r1
-					      	($mux op6 op6_r1 
-							($mux op7 op7_r1 r1_val)))))) // 8
-	
-	$guard (updates_r1) reg[r1] := new_r_val 
 
     $while (halt != 1)
   }
