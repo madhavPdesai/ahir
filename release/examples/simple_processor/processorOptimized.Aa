@@ -11,10 +11,13 @@ $is
   $branchblock [body] 
   {
     pc := 0
-    $dopipeline $depth 32 $buffering 2
+    $dopipeline $depth 4 $buffering 2
 
     $merge $entry $loopback 
 	$phi halt := ($bitcast($uint<1>) 0) $on $entry nhalt $on $loopback
+	$phi write_reg_flag := ($bitcast($uint<1>) 0) $on $entry updates_r1 $on $loopback
+	$phi write_reg_val := ($bitcast($uint<16>) 0) $on $entry new_r1_val $on $loopback
+	$phi write_reg_index := ($bitcast($uint<16>) 0) $on $entry r1 $on $loopback
     $endmerge
         
 	// stage 1
@@ -45,29 +48,46 @@ $is
         needs_r2  := ( ( (op1 | op2) | (op3 | op4 ) ) | op7 )  
 	needs_r3 :=  ( (op1 | op2) | (op3 | op4 ) )  // 4
 	needs_r1 := (((op4 | op9) | (op5 | op10)) | (op6 | op14)) // 4
+	updates_r1 := (( (op1 | op2) | ( op3 | op5) ) | (op6 | op7))
 	nhalt := ($mux op0 1 0) 
+        branch_case := (op8 | (op9 | op10)) 
+
+	bypass_r1 := ((write_reg_flag == 1) & (write_reg_index == r1))
+	bypass_r2 := ((write_reg_flag == 1) & (write_reg_index == r2))
+	bypass_r3 := ((write_reg_flag == 1) & (write_reg_index == r3))
 
 	// stage 7: register read.
- 	$guard (needs_r2) r2_val := reg[r2] // 5
- 	$guard (needs_r3) r3_val := reg[r3] // 5
-	$guard (needs_r1) r1_val := reg[r1] // 5
-        branch_case := (op8 | (op9 | op10)) // 3
+	// write to the read-port pipes... and then read from the result pipes..
+ 	$guard (needs_r2) r2_val := ($mux bypass_r2 write_reg_val reg[r2])
+ 	$guard (needs_r3) r3_val := ($mux bypass_r3 write_reg_val reg[r3])
+	$guard (needs_r1) r1_val := ($mux bypass_r1 write_reg_val reg[r1])
 
 	// stage 8: buffering on op1,op2...
-	$guard (op1)  reg[r1]  := (r2_val + r3_val)   // 6
-	$guard (op2)  reg[r1] := (r2_val - r3_val)  // 6
-	$guard (op3)  op3_addr   := (r2_val + r3_val) // 6
-        $guard (op3)  reg[r1]    := mem[op3_addr]  // 7
+	$guard (op1)  op1_r1 := (r2_val + r3_val)   // 6
+	$guard (op2)  op2_r1 := (r2_val - r3_val)  // 6
+	$guard (op3)  op3_addr  := (r2_val + r3_val) // 6
+        $guard (op3)  op3_r1 := mem[op3_addr]  // 7
 	$guard (op4)  op4_addr := (r2_val + r3_val) // 6
         $guard (op4)  mem[op4_addr] := r1_val // 7
-	$guard (op5)  reg[r1] := ((r1_val & _hff00)  | imm) // 6
-	$guard (op6)  reg[r1] := ((r1_val & _h00ff) | (imm << 8)) // 6
-	$guard (op7)  reg[r1] := r2_val // 6
+	$guard (op5)  op5_r1 := ((r1_val & _hff00)  | imm) // 6
+	$guard (op6)  op6_r1 := ((r1_val & _h00ff) | (imm << 8)) // 6
+	$guard (op7)  op7_r1 := r2_val // 6
         $guard (~branch_case) pc := enpc // 4
 	$guard (op8)  pc := mem[enpc] // 4
  	$guard (op9)  pc := (enpc + (r1_val + offs)) // 6
 	$guard (op10) pc := ( $mux (r1_val == 0) (enpc + offs) enpc) // 6
 	$guard (op14) out_port := r1_val // 6
+
+	// add a write-back stage here.
+	$guard (updates_r1) new_r1_val := ($mux op1 op1_r1 
+						($mux op2 op2_r1 
+						 ($mux op3 op3_r1	
+						  ($mux op5 op5_r1
+						   ($mux op6 op6_r1
+						    ($mux op7 op7_r1 r1_val))))))
+
+	$guard (updates_r1) reg[r1] := new_r1_val
+
 
     $while (halt != 1)
   }

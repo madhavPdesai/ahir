@@ -18,9 +18,11 @@ void vectorSum()
 		loop_pipelining_on(16,32,1);
 #endif
 		float x = read_float32("in_data_pipe");
-		float y = fpadd32(x,x);
-		//float y = x + x;
-		write_float32("out_data_pipe",y);
+		//float y = fpadd32(x,x);
+		//float z = fpmul32(x,y);
+		float y = x + x;
+		float z = x * y;
+		write_float32("out_data_pipe",z);
 	}
 }
 

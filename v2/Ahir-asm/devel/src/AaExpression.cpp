@@ -851,7 +851,7 @@ string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoo
 			{
 				// the expression/statement which sets the value of this implicit variable
 				// is not found in the visited elements.  
-				return("$null");
+				return(__UST(this));
 			}
 		}
 
@@ -918,7 +918,7 @@ string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoo
 			{
 				// the expression/statement which sets the value of this implicit variable
 				// is not found in the visited elements.  Return the start transition.
-				return("$null");
+				return(__SST(this));
 			}
 		}
 
