@@ -369,6 +369,8 @@ class AaAssignmentStatement: public AaStatement
 {
   AaExpression* _target;
   AaExpression* _source;
+
+  int _buffering;
  public:
   AaExpression* Get_Target() {return(this->_target);}
   AaExpression* Get_Source() {return(this->_source);}
@@ -377,6 +379,10 @@ class AaAssignmentStatement: public AaStatement
 
   AaAssignmentStatement(AaScope* scope,AaExpression* target, AaExpression* source, int lineno);
   ~AaAssignmentStatement();
+
+  int Get_Buffering() {return(_buffering);}
+  void Set_Buffering(int b) {_buffering = b;}
+  string Get_VC_Buffering_String();
 
   virtual void Print(ostream& ofile); 
   virtual string Kind() {return("AaAssignmentStatement");}

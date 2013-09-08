@@ -10,6 +10,7 @@ VHDL_VHPI_LIB=$(AHIR_RELEASE)/CtestBench/vhdl
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
 SRC=./src
 all: SW HW 
+TOVC:c2llvmbc llvmbc2aa  aalink aa2vc 
 AA2VHDLSIM: aa2vc  vc2vhdl  vhdlsim
 
 # llvm2aa opts: pipelined case, extract-do-while.

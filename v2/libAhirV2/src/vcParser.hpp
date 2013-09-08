@@ -68,6 +68,9 @@ public:
 	public: void vc_SysAttributeSpec(
 		vcSystem* sys
 	);
+	public: void vc_SysBufferingSpec(
+		vcSystem* sys
+	);
 	public: string  vc_Label();
 	public: void vc_MemorySpaceParams(
 		vcMemorySpace* ms
@@ -169,6 +172,9 @@ public:
 	public: void vc_PhiWithBuffering_Instantiation(
 		vcDataPath* dp
 	);
+	public: void vc_ModuleBufferingSpec(
+		vcModule* m
+	);
 	public: vcDatapathElement*  vc_Operator_Instantiation(
 		vcDataPath* dp
 	);
@@ -245,9 +251,6 @@ public:
 		vcSystem* sys
 	);
 	public: vcType*  vc_PointerType(
-		vcSystem* sys
-	);
-	public: void vc_BufferingSpec(
 		vcSystem* sys
 	);
 public:

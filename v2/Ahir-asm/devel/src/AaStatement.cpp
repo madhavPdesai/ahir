@@ -641,6 +641,7 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
   this->_source = src;
   this->_source->Add_Target(this->_target);
 
+  this->_buffering = 1;
 }
 
 AaAssignmentStatement::~AaAssignmentStatement() {};
@@ -677,6 +678,18 @@ string AaAssignmentStatement::Debug_Info()
   return(ret_string);
 }
 
+
+string AaAssignmentStatement::Get_VC_Buffering_String()
+{
+	string ret_string = "";
+	int buf_val = this->Get_Buffering();
+
+	if(buf_val > 1)
+	{
+		ret_string = "$buffering " + IntToStr(buf_val);
+	}
+	return(ret_string);
+}
 void AaAssignmentStatement::Print(ostream& ofile)
 {
   assert(this->Get_Target()->Get_Type() && this->Get_Source()->Get_Type());
@@ -738,6 +751,10 @@ void AaAssignmentStatement::Print(ostream& ofile)
       ofile << " := ";
       this->Get_Source()->Print(ofile);
     }
+
+  int bufval = this->Get_Buffering();
+  if(bufval > 1)
+	ofile << " $buffering " << bufval;
 
   if(AaProgram::_verbose_flag)
     ofile << endl << Debug_Info();
@@ -912,13 +929,24 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	{
 	  if(this->_source->Is_Implicit_Variable_Reference())
 	    {
+              string dpe_name = this->_target->Get_VC_Datapath_Instance_Name();
+	      string src_name = this->_source->Get_VC_Driver_Name();
+
 	      // target and source are both implicit.
 	      // instantiate a register..
-	      Write_VC_Interlock_Buffer( this->_target->Get_VC_Datapath_Instance_Name(),
-				      this->_source->Get_VC_Driver_Name(),
+	      Write_VC_Interlock_Buffer(dpe_name,
+				      src_name,
 				      this->_target->Get_VC_Receiver_Name(),
 		 		      this->Get_VC_Guard_String(),
 				      ofile);
+
+	      int bufval = this->Get_Buffering();
+	      if(bufval > 1)
+	      {
+		ofile << "$buffering  $in " << dpe_name << " "
+			<< src_name << " "  << bufval << endl;
+			
+	      }
 	    }
 	  else
 	    {
@@ -4786,7 +4814,9 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 	}
 
 	map<AaRoot*,int> slack_map;
-	// TODO
+	set<int> slack_set;
+	map<int, AaAssignmentStatement*> slack_to_stmt_map;
+
 	// Look at all the outarcs of curr.  If there is slack present on the outarc,
 	// calculate the slack for that arc.  Keep track of the maximum, and
 	// add those many delayed versions of curr (you will need to add
@@ -4813,6 +4843,9 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 
 		if(slack > max_slack)
 			max_slack = slack;
+
+		if(slack > 0)
+			slack_set.insert(slack);
 	}
 
 
@@ -4842,27 +4875,30 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 		// if expression is target, then introduce delayed 
 		// statements after the stmt in which it occurs.
 		string root_name = curr_expr->Get_Name();
-		string current_source_name = root_name;
 		string delayed_name;
 		for(int idx =1; idx < max_slack; idx++)
+		for(set<int>::iterator siiter = slack_set.begin(), sfiter = slack_set.end();
+			siiter != sfiter; siiter++)
 		{
-			delayed_name =  root_name + "_" + Int64ToStr(curr_expr->Get_Index()) + "_delayed_" + 
-						IntToStr(idx);
+			int curr_slack = *siiter;
+			delayed_name =  root_name + "_" + Int64ToStr(curr_expr->Get_Index()) + "_delayed_" + IntToStr(curr_slack);
 
 			AaSimpleObjectReference* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
 			new_target->Set_Type(curr_expr->Get_Type());
 
-			AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), current_source_name);
+			AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), root_name);
 			new_src->Set_Type(curr_expr->Get_Type());
 			
 			AaAssignmentStatement* new_stmt = new AaAssignmentStatement(this->Get_Scope(),
 											new_target,
 											new_src,
 											0);
+			new_stmt->Set_Buffering(curr_slack);
+
 			new_stmt->Map_Source_References();
 
 			delayed_versions.push_back(new_stmt);
-			current_source_name = delayed_name;
+			slack_to_stmt_map[curr_slack] = new_stmt;
 		}
 		this->_loop_body_sequence->Insert_Statements_After(stmt,delayed_versions);
 	}
@@ -4881,25 +4917,30 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 							curr_expr,
 							0);
 		delayed_versions.push_back(root_stmt);
-
-		string current_source_name = root_name;
-		for(int idx =1; idx < max_slack; idx++)
+		slack_to_stmt_map[1] = root_stmt;
+		for(set<int>::iterator siiter = slack_set.begin(), sfiter = slack_set.end();
+			siiter != sfiter; siiter++)
 		{
-			string delayed_name =  root_name + "_delayed_" + IntToStr(idx);
-			AaSimpleObjectReference* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
-			new_target->Set_Type(curr_expr->Get_Type());
-			
-			AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), current_source_name);
-			new_src->Set_Type(curr_expr->Get_Type());
-			
-			AaAssignmentStatement* new_stmt = new AaAssignmentStatement(this->Get_Scope(),
-											new_target,
-											new_src,
-											0);
-			new_stmt->Map_Source_References();
-
-			delayed_versions.push_back(new_stmt);
-			current_source_name = delayed_name;
+			int curr_slack = *siiter;
+			if(curr_slack > 1)
+			{
+				string delayed_name =  root_name + "_delayed_" + IntToStr(curr_slack);
+				AaSimpleObjectReference* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
+				new_target->Set_Type(curr_expr->Get_Type());
+				
+				AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), root_name);
+				new_src->Set_Type(curr_expr->Get_Type());
+				
+				AaAssignmentStatement* new_stmt = new AaAssignmentStatement(this->Get_Scope(),
+												new_target,
+												new_src,
+												0);
+				new_stmt->Set_Buffering(curr_slack-1);
+				new_stmt->Map_Source_References();
+	
+				slack_to_stmt_map[curr_slack] = new_stmt;
+				delayed_versions.push_back(new_stmt);
+			}
 		}
 		this->_loop_body_sequence->Insert_Statements_Before(stmt,delayed_versions);
 	}
@@ -4908,8 +4949,6 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 	{
 		AaRoot* nbr = (*iter).first;
 		int slack   = (*iter).second;
-	
-		
 	
                 assert(slack <= max_slack);
 
@@ -4922,7 +4961,7 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 			assert(nbr->Is_Expression());
 			AaExpression* nbr_expr = (AaExpression*) nbr;
 
-			AaAssignmentStatement* rs = (AaAssignmentStatement*) delayed_versions[slack-1];
+			AaAssignmentStatement* rs = (AaAssignmentStatement*) slack_to_stmt_map[slack];
 			nbr_expr->Replace_Uses_By(curr_expr, rs);
 		}
 		else if(!curr_expr->Get_Is_Target())

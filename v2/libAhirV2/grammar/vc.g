@@ -56,6 +56,8 @@ vc_System[vcSystem* sys]
  (vc_Wire_Declaration[sys,NULL])
  |
  (vc_SysAttributeSpec[sys])
+ |
+ (vc_SysBufferingSpec[sys])
  )*
 	;
 
@@ -610,20 +612,20 @@ vc_CPFork[vcCPForkBlock* fb]
 //-----------------------------------------------------------------------------------------------
 // vc_Datapath: DATAPATH LBRACE 
 // (vc_Wire_Declaration | vc_Operator_Instantiation | vc_Branch_Instantiation |  vc_Phi_Instantiation | vc_Call_Instantiation |
-//                vc_LoadStore_Instantiation | vc_IOPort_Instantiation | vc_AttributeSpec[dp] )*  RBRACE
+//                vc_LoadStore_Instantiation | vc_IOPort_Instantiation | vc_AttributeSpec[dp] | vc_ModuleBufferingSpec[m] )*  RBRACE
 //-----------------------------------------------------------------------------------------------
 vc_Datapath[vcSystem* sys,vcModule* m]
 {
 	vcDataPath* dp = new vcDataPath(m,m->Get_Id() + "_DP");
+	m->Set_Data_Path(dp);
 }
     : DATAPATH LBRACE ( vc_Wire_Declaration[sys,dp] | 
             vc_Guarded_Operator_Instantiation[sys,dp] |
             vc_Branch_Instantiation[dp] |
             vc_Phi_Instantiation[dp] | 
             vc_PhiWithBuffering_Instantiation[dp] | 
-	    vc_AttributeSpec[dp])*
+	    vc_AttributeSpec[dp] | vc_ModuleBufferingSpec[m] )*
             RBRACE
- { m->Set_Data_Path(dp);}
 ;
 
 //-----------------------------------------------------------------------------------------------------------------------------
@@ -654,7 +656,7 @@ vc_Guarded_Operator_Instantiation[vcSystem* sys, vcDataPath* dp]
 ;
 	
 //-----------------------------------------------------------------------------------------------------------------------------
-// vc_Operator_Instantiation: vc_BinaryOperator_Instantiation | vc_UnaryOperator_Instantiation | vc_Select_Instantiation | vc_Slice_Instantiation | vc_Register_Instantiation | vc_SelectWithInputBuffering_Instantiation | vc_SliceWithBuffering_Instantiation | vc_BinaryLogicalOperator_Instantiation | vc_BinaryOperatorWithInput_Buffering_Instantiation | vc_InterlockBuffer_Instantiaion 
+// vc_Operator_Instantiation: vc_BinaryOperator_Instantiation | vc_UnaryOperator_Instantiation | vc_Select_Instantiation | vc_Slice_Instantiation | vc_Register_Instantiation | vc_SelectWithInputBuffering_Instantiation | vc_SliceWithBuffering_Instantiation | vc_BinaryLogicalOperator_Instantiation | vc_BinaryOperatorWithInput_Buffering_Instantiation | vc_InterlockBuffer_Instantiation 
 //----------------------------------------------------------------------------------------------------------------------------
 vc_Operator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
 :
@@ -1572,9 +1574,9 @@ vc_RecordType[vcSystem* sys] returns [vcType* t]
 ;
 
 //----------------------------------------------------------------------------------------------------------
-// vc_BufferingSpec: BUFFERING (IN | OUT) SIMPLE_IDENTIFIER SIMPLE_IDENTIFIER SIMPLE_IDENTIFIER UINTEGER 
+// vc_SysBufferingSpec: BUFFERING (IN | OUT) SIMPLE_IDENTIFIER SIMPLE_IDENTIFIER SIMPLE_IDENTIFIER UINTEGER 
 //----------------------------------------------------------------------------------------------------------
-vc_BufferingSpec[vcSystem* sys]
+vc_SysBufferingSpec[vcSystem* sys]
 {
 	string mod_name;
  	string dpe_name;
@@ -1609,6 +1611,40 @@ vc_BufferingSpec[vcSystem* sys]
 					}
 				}
 			}
+		}
+;
+
+//----------------------------------------------------------------------------------------------------------
+// vc_ModuleBufferingSpec: BUFFERING (IN | OUT) SIMPLE_IDENTIFIER SIMPLE_IDENTIFIER UINTEGER 
+//----------------------------------------------------------------------------------------------------------
+vc_ModuleBufferingSpec[vcModule* m]
+{
+ 	string dpe_name;
+	string wire_name;
+	int buffering;
+	bool input_flag = true;
+}
+ :
+	BUFFERING (IN | (OUT {input_flag = false;}))
+		  dpe_id: SIMPLE_IDENTIFIER{dpe_name = dpe_id->getText();}
+		  wire_id: SIMPLE_IDENTIFIER {wire_name = wire_id->getText();}
+		  bid : UINTEGER {buffering = atoi(bid->getText().c_str());}
+		{
+				vcDatapathElement* dpe = m->Get_Data_Path()->Find_DPE(dpe_name);
+				NOT_FOUND__("Datapath-element", dpe, dpe_name, dpe_id);
+				if(dpe != NULL)
+				{
+					vcWire* w = m->Get_Data_Path()->Find_Wire(wire_name);
+					NOT_FOUND__("wire", w, wire_name, wire_id);
+					if(w != NULL)
+					{
+						if(input_flag)
+							dpe->Set_Input_Buffering(w,buffering);
+						else
+							dpe->Set_Output_Buffering(w,buffering);
+
+					}
+				}
 		}
 ;
 

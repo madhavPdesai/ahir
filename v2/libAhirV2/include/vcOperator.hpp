@@ -619,11 +619,14 @@ class vcInterlockBuffer: public vcRegister
   public:
   vcInterlockBuffer(string id, vcWire* x, vcWire* z):
   	vcRegister(id, x, z) {}
+
   virtual string Kind() {return("vcInterlockBuffer");}
   virtual void Add_Reqs(vector<vcTransition*>& reqs);
   virtual void Add_Acks(vector<vcTransition*>& acks);
   virtual void Print(ostream& ofile);
   virtual void Print_VHDL(ostream& ofile);
+
+
 };
 
 class vcSliceWithBuffering: public vcSlice

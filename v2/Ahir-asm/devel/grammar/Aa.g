@@ -269,6 +269,7 @@ aA_Assignment_Statement[AaScope* scope] returns[AaStatement* new_stmt]
             new_stmt = new AaAssignmentStatement(scope,target,source, al->getLine());
             new_stmt->Set_Line_Number(al->getLine());
         }
+	(BUFFERING bid: UINTEGER {int buf_val = atoi(bid->getText().c_str());  ((AaAssignmentStatement*)new_stmt)->Set_Buffering(buf_val);})?
     ;
 
 //-----------------------------------------------------------------------------------------------

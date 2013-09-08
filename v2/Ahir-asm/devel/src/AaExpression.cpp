@@ -2141,7 +2141,7 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 			       (target != NULL ? target->Get_VC_Receiver_Name() : 
 				this->Get_VC_Driver_Name()),
 				this->Get_VC_Guard_String(),
-			       ofile);
+			        ofile);
 			      
     }
   else if(this->_object->Is_Storage_Object())
@@ -3674,7 +3674,7 @@ void AaBinaryExpression::Update_Type()
     }
   else if((t1 != NULL) && (t2 != NULL) && t1->Is("AaFloatType") && t2->Is("AaFloatType"))
 	// float operations will have higher delay!
-	this->Set_Delay(4);
+	this->Set_Delay(10);
   
 }
 
