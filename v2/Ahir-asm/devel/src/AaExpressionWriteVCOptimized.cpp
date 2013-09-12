@@ -441,7 +441,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 		if(pipeline_flag)
 		{
 			// SelfRelease
-			__MJ(__UST(this),__UCT(this), false); // conservative, self-release
+			__MJ(__UST(this),__UCT(this), true); // aggressive, self-release
 		}
 
 
@@ -2137,9 +2137,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 						index_chain_reenable_map[idx] = idx_resize_update_start;
 						active_reenable_points.insert(idx_resize_update_start);
 
-						// self-release. conservative
-						__MJ(idx_resize_sample_start, idx_resize_sample_complete, false);
-						__MJ(idx_resize_update_start, idx_resize_update_complete, false);
+						// self-release. aggressive
+						__MJ(idx_resize_sample_start, idx_resize_sample_complete, true);
+						__MJ(idx_resize_update_start, idx_resize_update_complete, true);
 					}
 				}
 
@@ -2191,9 +2191,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 						index_chain_reenable_map[idx] = idx_scale_update_start;
 						active_reenable_points.insert(idx_scale_update_start);
 
-						// self-release.. conservative
-						__MJ(idx_scale_sample_start, idx_scale_sample_complete, false);
-						__MJ(idx_scale_update_start, idx_scale_update_complete, false);
+						// self-release.. aggressive
+						__MJ(idx_scale_sample_start, idx_scale_sample_complete, true);
+						__MJ(idx_scale_update_start, idx_scale_update_complete, true);
 					}
 				}
 				else
@@ -2256,9 +2256,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 				if(pipeline_flag)
 				{
-					// self-release. conservative
-					__MJ(sample_start, sample_complete, false);
-					__MJ(update_start, update_complete, false);
+					// self-release. aggressive
+					__MJ(sample_start, sample_complete, true);
+					__MJ(update_start, update_complete, true);
 				}
 
 				if(idx == 1)

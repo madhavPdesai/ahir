@@ -4958,83 +4958,45 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 
 	vector<AaStatement*> delayed_versions;
 
+
+	// get here only if it is an implicit variable
+	// reference.
+	assert(curr_expr->Is_Implicit_Variable_Reference());
+
+	// if expression is target, then introduce delayed 
+	// statements after the stmt in which it occurs.
+	string root_name = curr_expr->Get_Name();
+	string delayed_name;
+	for(set<int>::iterator siiter = slack_set.begin(), sfiter = slack_set.end();
+			siiter != sfiter; siiter++)
+	{
+		int curr_slack = *siiter;
+		delayed_name =  root_name + "_" + Int64ToStr(curr_expr->Get_Index()) + "_delayed_" + IntToStr(curr_slack);
+
+		AaSimpleObjectReference* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
+		new_target->Set_Type(curr_expr->Get_Type());
+
+		AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), root_name);
+		new_src->Set_Type(curr_expr->Get_Type());
+
+		AaAssignmentStatement* new_stmt = new AaAssignmentStatement(this->Get_Scope(),
+				new_target,
+				new_src,
+				0);
+		new_stmt->Set_Buffering(curr_slack);
+
+		new_stmt->Map_Source_References();
+
+		delayed_versions.push_back(new_stmt);
+		slack_to_stmt_map[curr_slack] = new_stmt;
+	}
+
 	if(curr_expr->Get_Is_Target())
 	{
-
-		// get here only if it is an implicit variable
-		// reference.
-		assert(curr_expr->Is_Implicit_Variable_Reference());
-
-		// if expression is target, then introduce delayed 
-		// statements after the stmt in which it occurs.
-		string root_name = curr_expr->Get_Name();
-		string delayed_name;
-		for(int idx =1; idx < max_slack; idx++)
-		for(set<int>::iterator siiter = slack_set.begin(), sfiter = slack_set.end();
-			siiter != sfiter; siiter++)
-		{
-			int curr_slack = *siiter;
-			delayed_name =  root_name + "_" + Int64ToStr(curr_expr->Get_Index()) + "_delayed_" + IntToStr(curr_slack);
-
-			AaSimpleObjectReference* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
-			new_target->Set_Type(curr_expr->Get_Type());
-
-			AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), root_name);
-			new_src->Set_Type(curr_expr->Get_Type());
-			
-			AaAssignmentStatement* new_stmt = new AaAssignmentStatement(this->Get_Scope(),
-											new_target,
-											new_src,
-											0);
-			new_stmt->Set_Buffering(curr_slack);
-
-			new_stmt->Map_Source_References();
-
-			delayed_versions.push_back(new_stmt);
-			slack_to_stmt_map[curr_slack] = new_stmt;
-		}
 		this->_loop_body_sequence->Insert_Statements_After(stmt,delayed_versions);
 	}
 	else
 	{
-		// if expression is not a target, then the delayed
-		// statements should be introduced before the statement
-		// in which the expression occurs.
-		string root_name = curr_expr->Get_Name() + "_" + Int64ToStr(curr_expr->Get_Index());
-
-		AaExpression* new_target = new AaSimpleObjectReference(this->Get_Scope(), root_name);
-		new_target->Set_Type(curr_expr->Get_Type());
-
-		root_stmt = new AaAssignmentStatement(this->Get_Scope(),
-							new_target,
-							curr_expr,
-							0);
-		delayed_versions.push_back(root_stmt);
-		slack_to_stmt_map[1] = root_stmt;
-		for(set<int>::iterator siiter = slack_set.begin(), sfiter = slack_set.end();
-			siiter != sfiter; siiter++)
-		{
-			int curr_slack = *siiter;
-			if(curr_slack > 1)
-			{
-				string delayed_name =  root_name + "_delayed_" + IntToStr(curr_slack);
-				AaSimpleObjectReference* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
-				new_target->Set_Type(curr_expr->Get_Type());
-				
-				AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), root_name);
-				new_src->Set_Type(curr_expr->Get_Type());
-				
-				AaAssignmentStatement* new_stmt = new AaAssignmentStatement(this->Get_Scope(),
-												new_target,
-												new_src,
-												0);
-				new_stmt->Set_Buffering(curr_slack-1);
-				new_stmt->Map_Source_References();
-	
-				slack_to_stmt_map[curr_slack] = new_stmt;
-				delayed_versions.push_back(new_stmt);
-			}
-		}
 		this->_loop_body_sequence->Insert_Statements_Before(stmt,delayed_versions);
 	}
 
@@ -5042,14 +5004,14 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 	{
 		AaRoot* nbr = (*iter).first;
 		int slack   = (*iter).second;
-	
-                assert(slack <= max_slack);
+
+		assert(slack <= max_slack);
 
 		// Replace uses of curr_expr in nbr_expr by 
 		// a simple object reference to the appropriately
 		// delayed version.
 		//
- 		if(slack > 0)
+		if(slack > 0)
 		{
 			assert(nbr->Is_Expression());
 			AaExpression* nbr_expr = (AaExpression*) nbr;
