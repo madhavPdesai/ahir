@@ -239,27 +239,68 @@ void AaObjectReference::Write_VC_Load_Store_Data_Path(vector<AaExpression*>* add
 
 	for(int idx = 0; idx < nwords;  idx++)
 	{
+
+		string dpe_name;
+		vector<string> src_names;
+		vector<string> tgt_names;
+			
+		string data_name = this->Get_VC_Name() + "_data_" + IntToStr(idx);
+		string addr_name = this->Get_VC_Word_Address_Name(idx);
+
+
+		bool extreme_pipelining_flag = this->Is_Part_Of_Extreme_Pipeline();
+
 		// load-store operator
 		if(read_or_write == "read")
 		{
+			dpe_name = this->Get_VC_Name() + "_load_" + IntToStr(idx);
+
 			// load
 			Write_VC_Load_Operator(this->Get_VC_Memory_Space_Name(),
-					this->Get_VC_Name() + "_load_" + IntToStr(idx),
-					this->Get_VC_Name() + "_data_" + IntToStr(idx),
-					this->Get_VC_Word_Address_Name(idx),
+					dpe_name,
+					data_name,
+					addr_name,
 					this->Get_VC_Guard_String(),
 					ofile);
 
+			if(extreme_pipelining_flag)
+			{
+				src_names.push_back(addr_name);
+				tgt_names.push_back(data_name);
+			}
 		}
 		else
 		{
+			dpe_name = this->Get_VC_Name() + "_store_" + IntToStr(idx);
+
 			// store
 			Write_VC_Store_Operator(this->Get_VC_Memory_Space_Name(), 
-					this->Get_VC_Name() + "_store_" + IntToStr(idx),
-					this->Get_VC_Name() + "_data_" + IntToStr(idx),
-					this->Get_VC_Word_Address_Name(idx),
+					dpe_name,
+					data_name,
+					addr_name,
 					this->Get_VC_Guard_String(),
 					ofile);
+			// extreme pipelining
+			if(extreme_pipelining_flag)
+			{
+				src_names.push_back(addr_name);
+				src_names.push_back(data_name);
+			}
+		}
+		if(extreme_pipelining_flag)
+		{
+			for(int i = 0, fi = src_names.size(); i < fi; i++)
+			{
+				string src_name = src_names[i];
+				ofile << "$buffering  $in " << dpe_name << " "
+					<< src_name << " 2" << endl;
+			}
+			for(int i = 0, fi = tgt_names.size(); i < fi; i++)
+			{
+				string tgt_name = tgt_names[i];
+				ofile << "$buffering  $out " << dpe_name << " "
+					<< tgt_name << " 2" << endl;
+			}
 		}
 	}
 
@@ -645,20 +686,33 @@ void AaObjectReference::Write_VC_Address_Calculation_Data_Path(vector<AaExpressi
 		{
 			for(int idx = 0;  idx < nwords;    idx++)
 			{
+				string dpe_name = this->Get_VC_Name() + "_addr_" + IntToStr(idx);
+				string src_1_name = this->Get_VC_Root_Address_Name();
+				string src_2_name = this->Get_VC_Word_Offset_Name(idx);
+				string tgt_name = this->Get_VC_Word_Address_Name(idx);
+
 				// write add operator to generate each word address.
 				Write_VC_Binary_Operator(__PLUS,
-						this->Get_VC_Name()
-						+ "_addr_"
-						+ IntToStr(idx),
-						this->Get_VC_Root_Address_Name(),
+						dpe_name,
+						src_1_name,
 						addr_type,
-						this->Get_VC_Word_Offset_Name(idx),
+						src_2_name,
 						addr_type,
-						this->Get_VC_Word_Address_Name(idx),
+						tgt_name,
 						addr_type,
 						this->Get_VC_Guard_String(),
 						ofile
 						);
+				// extreme pipelining.
+				if(this->Is_Part_Of_Extreme_Pipeline())
+				{
+					ofile << "$buffering  $in " << dpe_name << " "
+						<< src_1_name << " 2" << endl;
+					ofile << "$buffering  $in " << dpe_name << " "
+						<< src_2_name << " 2" << endl;
+					ofile << "$buffering  $out " << dpe_name << " "
+						<< tgt_name << " 2" << endl;
+				}
 			}
 		}
 		else
@@ -666,7 +720,7 @@ void AaObjectReference::Write_VC_Address_Calculation_Data_Path(vector<AaExpressi
 			// rename operation.
 			vector<string> inwires;
 			inwires.push_back(this->Get_VC_Root_Address_Name());
-		
+
 			vector<string> outwires;
 			outwires.push_back(this->Get_VC_Word_Address_Name(0));
 
@@ -915,19 +969,37 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 					}
 					else
 					{
+						string dpe_name = this->Get_VC_Name() + "_index_" + IntToStr(idx) + "_resize";
+						string src_name = iexpr->Get_VC_Driver_Name();
+						string tgt_name = iexpr->Get_VC_Name() + "_resized";
+
 						// resize index.
 						Write_VC_Unary_Operator(__NOP,
-								this->Get_VC_Name() + "_index_" + IntToStr(idx) + "_resize",
-								iexpr->Get_VC_Driver_Name(),
+								dpe_name,
+								src_name,
 								iexpr->Get_Type(),
-								iexpr->Get_VC_Name() + "_resized",
+								tgt_name,
 								addr_type,
 								this->Get_VC_Guard_String(),
 								ofile);
+						// extreme pipelining.
+						if(this->Is_Part_Of_Extreme_Pipeline())
+						{
+							ofile << "$buffering  $in " << dpe_name << " "
+								<< src_name << " 2" << endl;
+							ofile << "$buffering  $out " << dpe_name << " "
+								<< tgt_name << " 2" << endl;
+						}
 					}
 
 					// scale index.
 					if((*scale_factors)[idx] > 1)
+					{
+						string dpe_name = this->Get_VC_Name() + "_index_" + IntToStr(idx) + "_scale";
+						string src_1_name = iexpr->Get_VC_Name() + "_resized";
+						string src_2_name = this->Get_VC_Offset_Scale_Factor_Name(idx);
+						string tgt_name = iexpr->Get_VC_Name() + "_scaled";
+
 						Write_VC_Binary_Operator(__MUL,
 								this->Get_VC_Name() + "_index_" + IntToStr(idx) + "_scale",
 								iexpr->Get_VC_Name() + "_resized",
@@ -938,6 +1010,17 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 								addr_type,
 								this->Get_VC_Guard_String(),
 								ofile);
+						// extreme pipelining.
+						if(this->Is_Part_Of_Extreme_Pipeline())
+						{
+							ofile << "$buffering  $in " << dpe_name << " "
+								<< src_1_name << " 2" << endl;
+							ofile << "$buffering  $in " << dpe_name << " "
+								<< src_2_name << " 2" << endl;
+							ofile << "$buffering  $out " << dpe_name << " "
+								<< tgt_name << " 2" << endl;
+						}
+					}
 					else
 					{
 						vector<string> inputs;
@@ -976,18 +1059,34 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 				else
 					expr = non_constant_indices[idx];	      
 
+				string dpe_name = this->Get_VC_Name() + "_index_sum_" + IntToStr(idx);
+				string src_1_name = expr->Get_VC_Name() + "_scaled";
+				string src_2_name = last_sum;
+				string tgt_name = this->Get_VC_Name() + "_index_partial_sum_" + IntToStr(idx);
 
 				Write_VC_Binary_Operator(__PLUS,
-						this->Get_VC_Name() + "_index_sum_" + IntToStr(idx),
-						expr->Get_VC_Name() + "_scaled",
+					  	dpe_name,
+						src_1_name,
 						addr_type,
-						last_sum,
+						src_2_name,
 						addr_type,
-						this->Get_VC_Name() + "_index_partial_sum_" + IntToStr(idx),
+						tgt_name,	
 						addr_type,
 						this->Get_VC_Guard_String(),
 						ofile);
+
 				last_sum =  this->Get_VC_Name() + "_index_partial_sum_" + IntToStr(idx);
+
+				// extreme pipelining.
+				if(this->Is_Part_Of_Extreme_Pipeline())
+				{
+					ofile << "$buffering  $in " << dpe_name << " "
+						<< src_1_name << " 2" << endl;
+					ofile << "$buffering  $in " << dpe_name << " "
+						<< src_2_name << " 2" << endl;
+					ofile << "$buffering  $out " << dpe_name << " "
+						<< tgt_name << " 2" << endl;
+				}
 			}
 
 			vector<string> inputs;
@@ -1008,14 +1107,26 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 			AaType* base_addr_type = this->Get_Base_Address_Type();
 			if(!(base_addr_type->Is_Uinteger_Type() && addr_type->Is_Uinteger_Type()))
 			{
+				string dpe_name = this->Get_VC_Name() + "_base_resize";
+				string src_name = this->Get_VC_Base_Address_Name();
+				string tgt_name = this->Get_VC_Resized_Base_Address_Name();
+
 				Write_VC_Unary_Operator(__NOP,
-						this->Get_VC_Name() + "_base_resize",				  
-						this->Get_VC_Base_Address_Name(),
+						dpe_name,
+						src_name,
 						base_addr_type,
-						this->Get_VC_Resized_Base_Address_Name(),
+						tgt_name,
 						addr_type,
 						this->Get_VC_Guard_String(),
 						ofile);
+				// extreme pipelining.
+				if(this->Is_Part_Of_Extreme_Pipeline())
+				{
+					ofile << "$buffering  $in " << dpe_name << " "
+						<< src_name << " 2" << endl;
+					ofile << "$buffering  $out " << dpe_name << " "
+						<< tgt_name << " 2" << endl;
+				}
 			}
 			else
 			{
@@ -1030,16 +1141,31 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 		// the final sum
 		if((offset_val != 0) && (base_addr != 0))
 		{
+			string dpe_name = this->Get_VC_Name() + "_root_address_inst";
+			string src_1_name = this->Get_VC_Offset_Name();
+			string src_2_name = this->Get_VC_Resized_Base_Address_Name();
+			string tgt_name = this->Get_VC_Root_Address_Name();
+
 			Write_VC_Binary_Operator(__PLUS,
-					this->Get_VC_Name() + "_root_address_inst",
-					this->Get_VC_Offset_Name(),
+					dpe_name,
+					src_1_name,
 					addr_type,
-					this->Get_VC_Resized_Base_Address_Name(),
+					src_2_name,
 					addr_type,
-					this->Get_VC_Root_Address_Name(),
+					tgt_name,
 					addr_type,
 					this->Get_VC_Guard_String(),
 					ofile);
+			// extreme pipelining.
+			if(this->Is_Part_Of_Extreme_Pipeline())
+			{
+				ofile << "$buffering  $in " << dpe_name << " "
+					<< src_1_name << " 2" << endl;
+				ofile << "$buffering  $in " << dpe_name << " "
+					<< src_2_name << " 2" << endl;
+				ofile << "$buffering  $out " << dpe_name << " "
+					<< tgt_name << " 2" << endl;
+			}
 		}
 		else
 		{

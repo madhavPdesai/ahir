@@ -7,7 +7,7 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity marked_join is
-  generic(place_capacity : integer := 1; bypass : boolean := true; name : string := "anon");
+  generic(place_capacity : integer := 1; bypass : boolean := true; name : string := "anon"; marked_marking: IntegerArray);
   port ( preds      : in   BooleanArray;
          marked_preds : in BooleanArray;
     	symbol_out : out  boolean;
@@ -24,6 +24,8 @@ architecture default_arch of marked_join is
 
   constant MH: integer := marked_preds'high;
   constant ML: integer := marked_preds'low;  
+
+  constant mmarking: IntegerArray(MH downto ML) := marked_marking;
 
 begin  -- default_arch
   
@@ -56,7 +58,7 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= marked_preds(I);
-	mpI: place generic map(capacity => place_capacity, marking => 1,
+	mpI: place generic map(capacity => place_capacity, marking => mmarking(I),
 				 name => name & ":marked:" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
     end block;

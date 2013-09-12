@@ -151,7 +151,8 @@ bool vcCPElementGroup::Can_Absorb(vcCPElementGroup* g)
     ret_val = false;
   else if(g->_has_input_transition)
     ret_val = false;
-  else if(this->_has_output_transition && (g->_marked_predecessors.size() > 0))
+  else if(g->_marked_predecessors.size() > 0) // such a transition should not be pulled in because
+						// it will introduce a false wait on "this".
     ret_val = false;
   else if(this->_pipeline_parent != g->_pipeline_parent)
     ret_val = false;
@@ -364,6 +365,29 @@ void vcCPElementGroup::Print(ostream& ofile)
   ofile << "-- }" << endl;
 }
 
+
+string vcCPElementGroup::Generate_Marked_Join_Marking_String()
+{
+	string ret_string ;
+	int N = _marked_predecessors.size();
+	if(N > 0)
+	{
+	    ret_string = "constant markedPredMarking: IntegerArray(" + IntToStr(N-1) + " downto 0) := (";
+	    int C = 0;
+	    for(set<vcCPElementGroup*>::iterator iter = _marked_predecessors.begin(), fiter = _marked_predecessors.end();
+		iter != fiter; iter++)
+	    {
+		    vcCPElementGroup* cpg = *iter;
+		    if(C > 0)
+			    ret_string += ", ";
+		    ret_string += IntToStr(C) + " => " + IntToStr(this->Get_Marked_Predecessor_Marking(cpg));
+		    C++;
+	    }
+	    ret_string += ");";
+	}
+	return(ret_string);
+}
+
 // take care of marked predecessors!
 void vcCPElementGroup::Print_VHDL(ostream& ofile)
 {
@@ -464,15 +488,29 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 			((_predecessors.size() > 1) || 
 				((_predecessors.size() > 0) && (_marked_predecessors.size() > 0))) :
 			(_predecessors.size() > 1));
-      if(is_true_join)
+      if(this->_input_transition != NULL)
+ 	{
+	      ofile << this->Get_VHDL_Id() << " <= ";
+	      ofile <<  _input_transition->Get_DP_To_CP_Symbol() << ";" << endl;
+	}
+      else if(is_true_join)
 	{
 	  bool marked_flag = (_marked_predecessors.size() > 0);
+	  string marked_marking;
+	  if(marked_flag)
+	  {
+		marked_marking = this->Generate_Marked_Join_Marking_String();
+	  }
+
 	  ofile << "cpelement_group_" << this->Get_Group_Index() << " : Block -- { " << endl;
 	  ofile << "signal predecessors: BooleanArray(" 
 		<< _predecessors.size()-1 << " downto 0);" << endl;
           if(marked_flag)
+	  {
 	     ofile << "signal marked_predecessors: BooleanArray(" << _marked_predecessors.size()-1 
 			<< " downto 0);" << endl;
+	     ofile << marked_marking << endl;
+          }
 	  ofile << "-- }" << endl << "begin -- {" << endl;
 	  
           int idx = 0;
@@ -499,127 +537,92 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 	    	}
 
           }
-	  if(this->_input_transition != NULL)
-	    {
-	      if(!marked_flag)
-	      	ofile << "jI: join_with_input -- {" << endl;
-	      else
-	      	ofile << "jI: marked_join_with_input -- {" << endl;
-
-	      ofile << "generic map(place_capacity => " << max_iterations_in_flight << "," << endl
-		<< "bypass => " << bypass_string << "," << endl
-		<< "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl;
-	      ofile << "port map( -- {"
-		    << "preds => predecessors," << endl;
-	      if(marked_flag)
-		 ofile << "marked_preds => marked_predecessors," << endl;
-		
-	      ofile << "symbol_in => " << this->_input_transition->Get_DP_To_CP_Symbol() << "," << endl
-		    << "symbol_out => " << this->Get_VHDL_Id() << "," << endl
-		    << "clk => clk," << endl
-		    << "reset => reset); -- }}" << endl;
-	    }
+	  if(!marked_flag)
+		  ofile << "jNoI: join -- {" << endl;
 	  else
-	    {
-	      if(!marked_flag)
-	      	ofile << "jNoI: join -- {" << endl;
-	      else
-	      	ofile << "jNoI: marked_join -- {" << endl;
-	      ofile << "generic map(place_capacity => " << max_iterations_in_flight << "," << endl
-			<< "bypass => " << bypass_string << "," << endl
-		    << "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl
-		    << "port map( -- {"
-		    << "preds => predecessors," << endl;
-	      if(marked_flag)
-		ofile << "marked_preds => marked_predecessors," << endl;
+		  ofile << "jNoI: marked_join -- {" << endl;
+	  ofile << "generic map(place_capacity => " << max_iterations_in_flight << "," << endl;
+	  if(marked_flag)
+		  ofile << " marked_marking => markedPredMarking, " << endl;
+	  ofile << "bypass => " << bypass_string << "," << endl
+		  << "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl
+		  << "port map( -- {"
+		  << "preds => predecessors," << endl;
+	  if(marked_flag)
+		  ofile << "marked_preds => marked_predecessors," << endl;
 
-	      ofile << "symbol_out => " << this->Get_VHDL_Id() << "," << endl
-		    << "clk => clk," << endl
-		    << "reset => reset); -- }}" << endl;
-	    }
-		  
+	  ofile << "symbol_out => " << this->Get_VHDL_Id() << "," << endl
+		  << "clk => clk," << endl
+		  << "reset => reset); -- }}" << endl;
+
 	  ofile << "-- }" << endl << "end Block;" << endl;
 	}
       else if(_predecessors.size() == 1)
-	{
-	  if(this->_has_input_transition)
-	    {
-	      ofile << this->Get_VHDL_Id() << " <= ";
-	      ofile <<  _input_transition->Get_DP_To_CP_Symbol() << ";" << endl;
-	    }
-	  else
-	    {
+      {
 	      ofile << this->Get_VHDL_Id() << " <= ";	      
 	      ofile << (*(_predecessors.begin()))->Get_VHDL_Id() << ";" << endl;
-	    }
-	}
-      else if(this->_has_input_transition)
-	// some will be dangling.
-	{
-	      ofile << this->Get_VHDL_Id() << " <= ";
-	      ofile <<  _input_transition->Get_DP_To_CP_Symbol() << ";" << endl;
-	}
+      }
       else
-	{
-		vcSystem::Warning("CP-element group " + this->Get_VHDL_Id() + " has no true predecessors.\n");
-	}
+      {
+	      vcSystem::Warning("CP-element group " + this->Get_VHDL_Id() + " has no true predecessors.\n");
+      }
     }
 
-	  
-	  
+
+
   for(int idx = 0, fidx = _output_transitions.size(); idx < fidx; idx++)
-    {
-      this->Print_CP_To_DP_VHDL_Link(idx, ofile);
-    }
+  {
+	  this->Print_CP_To_DP_VHDL_Link(idx, ofile);
+  }
 }
 
 void vcCPElementGroup::Print_DP_To_CP_VHDL_Link(ostream& ofile)
 {
-  string ack_str =  this->Get_VHDL_Id(); 
-  string req_str = this->_input_transition->Get_DP_To_CP_Symbol();
+	string ack_str =  this->Get_VHDL_Id(); 
+	string req_str = this->_input_transition->Get_DP_To_CP_Symbol();
 
-  string delay_str = "0";
-  ofile << this->_input_transition->Get_Exit_Symbol() << "_link_from_dp: control_delay_element -- { "  << endl
-	<< "generic map (delay_value => " << delay_str << ")" << endl
-	<< "port map(clk => clk, reset => reset, req => " << req_str
-	<< ", ack => " << ack_str << "); -- } " << endl;
+	string delay_str = "0";
+	ofile << this->_input_transition->Get_Exit_Symbol() << "_link_from_dp: control_delay_element -- { "  << endl
+		<< "generic map (delay_value => " << delay_str << ")" << endl
+		<< "port map(clk => clk, reset => reset, req => " << req_str
+		<< ", ack => " << ack_str << "); -- } " << endl;
 }
 
 void vcCPElementGroup::Print_CP_To_DP_VHDL_Link(int idx, ostream& ofile)
 {
-  string req_str =  this->Get_VHDL_Id(); 
-  string ack_str = this->_output_transitions[idx]->Get_CP_To_DP_Symbol();
+	string req_str =  this->Get_VHDL_Id(); 
+	string ack_str = this->_output_transitions[idx]->Get_CP_To_DP_Symbol();
 
-  string delay_str = "0";
-  //   if(this->_output_transitions[idx]->Get_Is_Linked_To_Non_Local_Dpe() && vcSystem::_min_clock_period_flag)
-  //     {
-  //       delay_str = "1";
-  //     }
-  //   else
-  //     {
-  //       delay_str = "0";
-  //     }
+	string delay_str = "0";
+	//   if(this->_output_transitions[idx]->Get_Is_Linked_To_Non_Local_Dpe() && vcSystem::_min_clock_period_flag)
+	//     {
+	//       delay_str = "1";
+	//     }
+	//   else
+	//     {
+	//       delay_str = "0";
+	//     }
 
-  ofile << this->_output_transitions[idx]->Get_Exit_Symbol() << "_link_to_dp: control_delay_element -- { "  << endl
-	<< "generic map (delay_value => " << delay_str << ")" << endl
-	<< "port map(clk => clk, reset => reset, req => " << req_str
-	<< ", ack => " << ack_str << "); -- } " << endl;
+	ofile << this->_output_transitions[idx]->Get_Exit_Symbol() << "_link_to_dp: control_delay_element -- { "  << endl
+		<< "generic map (delay_value => " << delay_str << ")" << endl
+		<< "port map(clk => clk, reset => reset, req => " << req_str
+		<< ", ack => " << ack_str << "); -- } " << endl;
 }
 
 void vcControlPath::Construct_Reduced_Group_Graph()
 {
-  this->vcCPBlock::Construct_CPElement_Group_Graph_Vertices(this);
-  this->vcCPBlock::Connect_CPElement_Group_Graph(this);
-  this->Reduce_CPElement_Group_Graph();
+	this->vcCPBlock::Construct_CPElement_Group_Graph_Vertices(this);
+	this->vcCPBlock::Connect_CPElement_Group_Graph(this);
+	this->Reduce_CPElement_Group_Graph();
 }
 
 void vcControlPath::Reduce_CPElement_Group_Graph()
 {
-  cerr << "Info: reducing Control-path " << endl;
-  map<vcCPElementGroup*,vcCPElementGroup*> reduce_map;
-  for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
-	fiter = _cpelement_groups.end();
-      iter != fiter;
+	cerr << "Info: reducing Control-path " << endl;
+	map<vcCPElementGroup*,vcCPElementGroup*> reduce_map;
+	for(set<vcCPElementGroup*,vcRoot_Compare>::iterator iter = _cpelement_groups.begin(), 
+			fiter = _cpelement_groups.end();
+			iter != fiter;
       iter++)
     {
       vcCPElementGroup* g = (*iter);

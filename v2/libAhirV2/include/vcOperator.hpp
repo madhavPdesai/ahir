@@ -207,10 +207,7 @@ public:
   }
   virtual void Append_Inwire_Buffering(vector<int>& inwire_buffering)
   {
-	// NOTE: on output ports, there should be no
-	//       buffering, because this would lead
-        //       to augmented pipe storage.
-	inwire_buffering.push_back(0);
+	inwire_buffering.push_back(this->Get_Input_Buffering(_data));
   }
   virtual void Append_Outwire_Buffering(vector<int>& outwire_buffering)
   {

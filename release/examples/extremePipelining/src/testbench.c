@@ -27,6 +27,7 @@ void Sender()
 	{
 		val[idx] = drand48();
 		expected_result[idx] = (2.0*val[idx])*val[idx];
+		//expected_result[idx] = (2.0*val[idx]);
 	}
 	write_float32_n("in_data_pipe",val,ORDER);
 }

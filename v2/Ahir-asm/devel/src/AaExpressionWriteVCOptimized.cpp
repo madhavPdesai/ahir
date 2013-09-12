@@ -112,7 +112,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 					ofile << "// WAR dependency: release  Read: " << expr->To_String() << " with Write: " << pstmt->To_String() << endl;
 					// expr can get a new value only after this has completed.
 					__MJ(expr->Get_VC_Reenable_Sample_Transition_Name(visited_elements),  
-							__UCT(pstmt));
+							__UCT(pstmt), false); // TODO: conservative, for WAR
 				}
 			}
 		}
@@ -144,9 +144,9 @@ void AaExpression::Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& v
 		{
 			// when this completes, the guard can be re-evaluated.
 			__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-				 __UCT(this));
+				 __UCT(this), false);  // TODO: conservative, for guard.
 			__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-				 __SCT(this));
+				 __SCT(this), false); // TODO: conservative, for guard.
 		}
 	}
 }
@@ -441,7 +441,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 		if(pipeline_flag)
 		{
 			// SelfRelease
-			__MJ(__UST(this),__UCT(this));
+			__MJ(__UST(this),__UCT(this), false); // conservative, self-release
 		}
 
 
@@ -734,7 +734,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 				// Note that the base address calculation reenable
 				// will be part of the active_reenable_points.
-				Write_VC_Reenable_Joins(active_reenable_points,ctrans,ofile);
+				Write_VC_Reenable_Joins(active_reenable_points,ctrans,this->Is_Part_Of_Extreme_Pipeline(), ofile);
 
 				active_reenable_points.clear();
 				active_reenable_points.insert(__UST(this));
@@ -807,8 +807,9 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				if(pipeline_flag)
 				{
 					// reenable expression when this completes.
-					__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __UCT(this));
-					__MJ(__UST(this),__UCT(this));
+					// note: conservative
+					__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __UCT(this), false);
+					__MJ(__UST(this),__UCT(this), false);
 				}
 			}
 			else if(this->_object->Is("AaInterfaceObject"))
@@ -1149,13 +1150,13 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 		{
 			ofile << "// reenables ." << endl;
 			string ctrans = __SCT(this);
-			Write_VC_Reenable_Joins(active_reenable_points, ctrans,ofile);
+			Write_VC_Reenable_Joins(active_reenable_points, ctrans,this->Is_Part_Of_Extreme_Pipeline(), ofile);
 			active_reenable_points.clear();
 
 			// SelfRelease
 			ofile << "// self-release " << endl;
-			__MJ(__SST(this),__SCT(this));
-			__MJ(__UST(this),__UCT(this));
+			__MJ(__SST(this),__SCT(this), false);
+			__MJ(__UST(this),__UCT(this), false);
 		}
 	}
 	else
@@ -1257,7 +1258,7 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
 		if(pipeline_flag)
 		{
 			__MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
-					__SCT(this));
+					__SCT(this), this->Is_Part_Of_Extreme_Pipeline());
 
 			__SelfReleaseSplitProtocolPattern
 		}
@@ -1353,7 +1354,7 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
 		if(pipeline_flag)
 		{
 			__MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
-					__SCT(this));
+					__SCT(this), this->Is_Part_Of_Extreme_Pipeline());
 			__SelfReleaseSplitProtocolPattern
 		}
 	}
@@ -1451,11 +1452,11 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 		{
 			if(!this->_first->Is_Constant())
 				__MJ(this->_first->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-						__SCT(this));
+						__SCT(this), this->Is_Part_Of_Extreme_Pipeline());
 
 			if(!this->_second->Is_Constant())
 				__MJ(this->_second->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-						__SCT(this));
+						__SCT(this), this->Is_Part_Of_Extreme_Pipeline());
 
 			__SelfReleaseSplitProtocolPattern
 		}
@@ -1552,11 +1553,13 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 	{
 		if(!this->_test->Is_Constant())
 			__MJ(this->_test->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
-				__UCT(this));
+				__UCT(this), this->Is_Part_Of_Extreme_Pipeline());
 		if(this->_if_true && !this->_if_true->Is_Constant())
-			__MJ(this->_if_true->Get_VC_Reenable_Update_Transition_Name(visited_elements), 					__UCT(this));
+			__MJ(this->_if_true->Get_VC_Reenable_Update_Transition_Name(visited_elements), 					
+					__UCT(this), this->Is_Part_Of_Extreme_Pipeline());
 		if(this->_if_false && !this->_if_false->Is_Constant())
-			__MJ(this->_if_false->Get_VC_Reenable_Update_Transition_Name(visited_elements), 					__UCT(this));
+			__MJ(this->_if_false->Get_VC_Reenable_Update_Transition_Name(visited_elements), 				
+					__UCT(this), this->Is_Part_Of_Extreme_Pipeline());
 
 		__SelfReleaseSplitProtocolPattern
 	}
@@ -1617,7 +1620,7 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(bool pipeline_flag,
 	{
 		string at = __SCT(this);
 		ofile << "// reenable-joins" << endl;
- 		Write_VC_Reenable_Joins(active_reenables,at,ofile);
+ 		Write_VC_Reenable_Joins(active_reenables,at,this->Is_Part_Of_Extreme_Pipeline(), ofile);
 	}
 }
 
@@ -1661,7 +1664,7 @@ void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag
 		string at = __SCT(this);
 
 		ofile << "// reenable-joins" << endl;
- 		Write_VC_Reenable_Joins(active_reenables, at,ofile);
+ 		Write_VC_Reenable_Joins(active_reenables, at,this->Is_Part_Of_Extreme_Pipeline(), ofile);
 	}
 }
 
@@ -1890,10 +1893,10 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 			if(pipeline_flag)
 			{
 				// self-release..
-				__MJ(sample_start, sample_complete)
-				__MJ(update_start, update_complete)
+				__MJ(sample_start, sample_complete, false)
+				__MJ(update_start, update_complete, false)
 
-				Write_VC_Reenable_Joins(active_reenable_points, word_addr_calculated,ofile);
+				Write_VC_Reenable_Joins(active_reenable_points, word_addr_calculated,this->Is_Part_Of_Extreme_Pipeline(), ofile);
 				active_reenable_points.clear();
 				active_reenable_points.insert(sample_start);
 			}
@@ -2128,14 +2131,15 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 					{
 						// reenable index expression update when
 						// sample-completed.
-						__MJ(index_chain_reenable_map[idx], idx_resize_sample_complete);
+						__MJ(index_chain_reenable_map[idx], idx_resize_sample_complete, 
+								this->Is_Part_Of_Extreme_Pipeline());
 						active_reenable_points.erase(index_chain_reenable_map[idx]);
 						index_chain_reenable_map[idx] = idx_resize_update_start;
 						active_reenable_points.insert(idx_resize_update_start);
 
-						// self-release.
-						__MJ(idx_resize_sample_start, idx_resize_sample_complete);
-						__MJ(idx_resize_update_start, idx_resize_update_complete);
+						// self-release. conservative
+						__MJ(idx_resize_sample_start, idx_resize_sample_complete, false);
+						__MJ(idx_resize_update_start, idx_resize_update_complete, false);
 					}
 				}
 
@@ -2182,14 +2186,14 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 					{
 						// successor complete: indices_scaled
 						// predecessor sample: index_resized.
-						__MJ(index_chain_reenable_map[idx], index_scaled);
+						__MJ(index_chain_reenable_map[idx], index_scaled, this->Is_Part_Of_Extreme_Pipeline());
 						active_reenable_points.erase(index_chain_reenable_map[idx]);
 						index_chain_reenable_map[idx] = idx_scale_update_start;
 						active_reenable_points.insert(idx_scale_update_start);
 
-						// self-release.
-						__MJ(idx_scale_sample_start, idx_scale_sample_complete);
-						__MJ(idx_scale_update_start, idx_scale_update_complete);
+						// self-release.. conservative
+						__MJ(idx_scale_sample_start, idx_scale_sample_complete, false);
+						__MJ(idx_scale_update_start, idx_scale_update_complete, false);
 					}
 				}
 				else
@@ -2252,9 +2256,9 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 				if(pipeline_flag)
 				{
-					// self-release.
-					__MJ(sample_start, sample_complete);
-					__MJ(update_start, update_complete);
+					// self-release. conservative
+					__MJ(sample_start, sample_complete, false);
+					__MJ(update_start, update_complete, false);
 				}
 
 				if(idx == 1)
@@ -2268,8 +2272,8 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 					if(pipeline_flag)
 					{
-						__MJ(index_chain_reenable_map[I0], sample_complete);
-						__MJ(index_chain_reenable_map[I1], sample_complete);
+						__MJ(index_chain_reenable_map[I0], sample_complete, this->Is_Part_Of_Extreme_Pipeline());
+						__MJ(index_chain_reenable_map[I1], sample_complete, this->Is_Part_Of_Extreme_Pipeline());
 					}
 				}
 				else
@@ -2279,7 +2283,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 					__J(sample_start, last_sum_complete);
 					if(pipeline_flag)
 					{	
-						__MJ(index_chain_reenable_map[I1], sample_complete);
+						__MJ(index_chain_reenable_map[I1], sample_complete, this->Is_Part_Of_Extreme_Pipeline());
 					}
 				}
 
@@ -2385,10 +2389,10 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		if(pipeline_flag)
 		{
 			// self-release
-			__MJ(bpo_sample_complete, bpo_sample_start);
-			__MJ(bpo_update_complete, bpo_update_start);
+			__MJ(bpo_sample_complete, bpo_sample_start, false);
+			__MJ(bpo_update_complete, bpo_update_start, false);
 
-			Write_VC_Reenable_Joins(active_reenable_points, bpo_sample_complete, ofile);
+			Write_VC_Reenable_Joins(active_reenable_points, bpo_sample_complete,this->Is_Part_Of_Extreme_Pipeline(),  ofile);
 
 			active_reenable_points.clear();
 			active_reenable_points.insert(bpo_update_start);

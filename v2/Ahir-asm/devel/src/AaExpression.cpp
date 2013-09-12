@@ -29,6 +29,7 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
   this->_does_pipe_access = false;
   this->_associated_statement = NULL;
   this->_is_malformed = false;
+  this->_do_while_parent = NULL;
 }
 AaExpression::~AaExpression() {};
 
@@ -64,6 +65,13 @@ bool AaExpression::Set_Addressed_Object_Representative(AaStorageObject* obj)
   return(new_flag);
 }
 
+
+bool AaExpression::Is_Part_Of_Extreme_Pipeline()
+{
+	AaDoWhileStatement* dws = this->Get_Do_While_Parent();
+	bool ret_val = ((dws != NULL)  && dws->Get_Full_Rate_Flag());
+	return(ret_val);
+}
 
 string AaExpression::Get_VC_Guard_String()
 {
@@ -1141,6 +1149,8 @@ void AaSimpleObjectReference:: Write_VC_Datapath_Instances_As_Target( ostream& o
 {
 	if(!this->Is_Constant()  && !this->Is_Implicit_Variable_Reference())
 	{
+		bool extreme_pipeline_flag = this->Is_Part_Of_Extreme_Pipeline();
+
 		ofile << "// " << this->To_String() << endl;
 		if(this->_object->Is("AaStorageObject"))
 		{
@@ -1162,6 +1172,23 @@ void AaSimpleObjectReference:: Write_VC_Datapath_Instances_As_Target( ostream& o
 					src_name,
 					this->Get_VC_Guard_String(),
 					ofile);
+
+			// extreme pipelining
+			// double buffering at the input side.
+			if(extreme_pipeline_flag)
+			{
+				ofile << " $buffering $in " 
+					<< this->Get_VC_Datapath_Instance_Name() << " "
+					<< src_name
+					<< " 2"  << endl;
+			}
+			else
+			{
+				ofile << " $buffering $in " 
+					<< this->Get_VC_Datapath_Instance_Name() << " "
+					<< src_name
+					<< " 0"  << endl;
+			}
 		}
 	}
 }
@@ -1171,6 +1198,7 @@ void AaSimpleObjectReference:: Write_VC_Datapath_Instances(AaExpression* target,
 
 	if(!this->Is_Constant() && !this->Is_Implicit_Variable_Reference())
 	{
+		bool extreme_pipelining_flag = this->Is_Part_Of_Extreme_Pipeline();
 
 		ofile << "// " << this->To_String() << endl;
 		if(this->_object->Is("AaStorageObject"))
@@ -1183,12 +1211,21 @@ void AaSimpleObjectReference:: Write_VC_Datapath_Instances(AaExpression* target,
 		}
 		else if(this->_object->Is("AaPipeObject"))
 		{
+			string dpe_name = this->Get_VC_Datapath_Instance_Name();
+			string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
+
 			// io write.
 			Write_VC_IO_Input_Port((AaPipeObject*) this->_object,
-					this->Get_VC_Datapath_Instance_Name(),
-					(target != NULL ? target->Get_VC_Driver_Name() : this->Get_VC_Receiver_Name()),
+					dpe_name,
+					tgt_name,
 					this->Get_VC_Guard_String(),
 					ofile);
+
+			//  extreme pipelining
+			if(extreme_pipelining_flag)
+			{
+				ofile << "$buffering $out " << dpe_name << " " << tgt_name << " 2" << endl;
+			}
 		}
 	}
 }
@@ -2136,17 +2173,29 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 							ofile);
 
       // final register.
-      Write_VC_Interlock_Buffer( this->Get_VC_Name() + "_final_reg",
-			       this->Get_VC_Root_Address_Name(),
-			       (target != NULL ? target->Get_VC_Receiver_Name() : 
-				this->Get_VC_Driver_Name()),
+      string dpe_name =  this->Get_VC_Name() + "_final_reg";
+      string src_name = this->Get_VC_Root_Address_Name();
+      string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
+
+      Write_VC_Interlock_Buffer(dpe_name,
+			        src_name,
+				tgt_name,
 				this->Get_VC_Guard_String(),
 			        ofile);
-			      
+
+      //  extreme pipelining.
+      if(this->Is_Part_Of_Extreme_Pipeline())
+	{
+		ofile << "$buffering  $in " << dpe_name << " "
+			<< src_name << " 2" << endl;
+		ofile << "$buffering  $out " << dpe_name << " "
+			<< tgt_name << " 2" << endl;
+	}
+
     }
   else if(this->_object->Is_Storage_Object())
-    {
-      int word_size = this->Get_Word_Size();
+  {
+	  int word_size = this->Get_Word_Size();
       vector<int> scale_factors;
       this->Update_Address_Scaling_Factors(scale_factors,word_size);
 
@@ -2183,6 +2232,12 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 	  Write_VC_IO_Input_Port((AaPipeObject*)(this->_object), pipe_inst,source_wire,
 				  this->Get_VC_Guard_String(),
 					ofile);
+	  // extreme pipelining
+	  if(this->Is_Part_Of_Extreme_Pipeline())
+	  {
+			ofile << "$buffering  $out " << pipe_inst << " "
+				<< source_wire << " 2" << endl;
+	  }
 	}
       else
 	assert(0);
@@ -2200,14 +2255,25 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 	  int high_index = (this->Get_Type()->Size() + offset_value)-1;
 	  int low_index  = offset_value;
 
-	  Write_VC_Slice_Operator(this->Get_VC_Name() + "_slice",
-				  source_wire,
-				  (target != NULL ? target->Get_VC_Receiver_Name() : 
-				   this->Get_VC_Driver_Name()),
+	  string dpe_name = this->Get_VC_Name() + "_slice";
+	  string src_name = source_wire;
+	  string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
+	  
+	  Write_VC_Slice_Operator(dpe_name,
+				  src_name,
+				  tgt_name,
 				  high_index,
 				  low_index,
 				  this->Get_VC_Guard_String(),
 				  ofile);
+	  // extreme pipelining
+	  if(this->Is_Part_Of_Extreme_Pipeline())
+	  {
+			ofile << "$buffering  $in " << dpe_name << " "
+				<< src_name << " 2" << endl;
+			ofile << "$buffering  $out " << dpe_name << " "
+				<< tgt_name << " 2" << endl;
+	  }
 	}
       else
 	{
@@ -3054,7 +3120,7 @@ void AaAddressOfExpression::Write_VC_Control_Path( ostream& ofile)
       ofile << "$T [req] $T [ack]" << endl;
       ofile << "}" << endl;
       ofile << "}" << endl;
-      ofile << "}" << endl;
+      ofile << "}" << endl; 
 							      
     }
 }
@@ -3164,13 +3230,23 @@ void AaAddressOfExpression::Write_VC_Datapath_Instances(AaExpression* target, os
 							  ofile);
       
       AaType* addr_type  = AaProgram::Make_Uinteger_Type(_storage_object->Get_Address_Width());
+      string dpe_name = this->Get_VC_Name() + "_final_reg";
+      string src_name = obj_ref->Get_VC_Root_Address_Name();
+      string tgt_name = ((target != NULL) ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
 
-      Write_VC_Interlock_Buffer( this->Get_VC_Name() + "_final_reg",
-			      obj_ref->Get_VC_Root_Address_Name(),
-			      ((target != NULL) ? target->Get_VC_Driver_Name() :
-			       this->Get_VC_Driver_Name()),
-			       this->Get_VC_Guard_String(),
-			      ofile);
+      Write_VC_Interlock_Buffer(dpe_name,
+				src_name,
+				tgt_name,
+			        this->Get_VC_Guard_String(),
+			        ofile);
+	// extreme pipelining.
+	if(this->Is_Part_Of_Extreme_Pipeline())
+	{
+		ofile << "$buffering  $in " << dpe_name << " "
+			<< src_name << " 2" << endl;
+		ofile << "$buffering  $out " << dpe_name << " "
+			<< tgt_name << " 2" << endl;
+	}
     }
 }
 void AaAddressOfExpression::Write_VC_Links(string hier_id, ostream& ofile)
@@ -3352,60 +3428,72 @@ void AaTypeCastExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostre
 void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
 {
   if(!this->Is_Constant())
-    {
-      bool ilb_flag = false;
-      if(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
-      {
-	ilb_flag = true;
-      }
+  {
+	  bool ilb_flag = false;
+	  if(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
+	  {
+		  ilb_flag = true;
+	  }
 
-      this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
+	  this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
 
-      ofile << "// " << this->To_String() << endl;
-      if(ilb_flag)
-	{
-	  Write_VC_Interlock_Buffer(this->Get_VC_Datapath_Instance_Name(),
-			    this->_rest->Get_VC_Driver_Name(),
-			    (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name()),
-			    this->Get_VC_Guard_String(),
-			    ofile);
-			    
-	}
-      else
-	{
-	  Write_VC_Unary_Operator(__NOP,
-				  this->Get_VC_Datapath_Instance_Name(),
-				  this->_rest->Get_VC_Driver_Name(),
+	  ofile << "// " << this->To_String() << endl;
+	  string dpe_name = this->Get_VC_Datapath_Instance_Name();
+	  string src_name = this->_rest->Get_VC_Driver_Name(); 
+	  string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
+	  if(ilb_flag)
+	  {
+		  Write_VC_Interlock_Buffer(dpe_name,
+				  src_name,
+				  tgt_name,
+				  this->Get_VC_Guard_String(),
+				  ofile);
+
+	  }
+	  else
+	  {
+
+		  Write_VC_Unary_Operator(__NOP,
+				  dpe_name,
+				  src_name,
 				  this->_rest->Get_Type(),
-				  (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name()),
+				  tgt_name,
 				  this->Get_Type(),
 				  this->Get_VC_Guard_String(),
 				  ofile);
-	}
-    }
+	  }
+	  // extreme pipelining.
+	  if(this->Is_Part_Of_Extreme_Pipeline())
+	  {
+		  ofile << "$buffering  $in " << dpe_name << " "
+			  << src_name << " 2" << endl;
+		  ofile << "$buffering  $out " << dpe_name << " "
+			  << tgt_name << " 2" << endl;
+	  }
+  }
 }
 
 void AaTypeCastExpression::Write_VC_Links(string hier_id, ostream& ofile)
 {
-  if(!this->Is_Constant())
-    {
+	if(!this->Is_Constant())
+	{
 
-      this->_rest->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
+		this->_rest->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
 
 
-      ofile << "// " << this->To_String() << endl;
-      
-      vector<string> reqs,acks;
+		ofile << "// " << this->To_String() << endl;
 
-      string sample_regn = hier_id  + "/" + this->Get_VC_Name() + "/SplitProtocol/Sample";
-      string update_regn = hier_id  + "/" + this->Get_VC_Name() + "/SplitProtocol/Update";
-      reqs.push_back( sample_regn + "/rr");
-      reqs.push_back( update_regn + "/cr");
-      acks.push_back( sample_regn +  "/ra");
-      acks.push_back( update_regn + "/ca");
+		vector<string> reqs,acks;
 
-      Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
-    }
+		string sample_regn = hier_id  + "/" + this->Get_VC_Name() + "/SplitProtocol/Sample";
+		string update_regn = hier_id  + "/" + this->Get_VC_Name() + "/SplitProtocol/Update";
+		reqs.push_back( sample_regn + "/rr");
+		reqs.push_back( update_regn + "/cr");
+		acks.push_back( sample_regn +  "/ra");
+		acks.push_back( update_regn + "/ca");
+
+		Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
+	}
 }
 
 void AaTypeCastExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
@@ -3416,30 +3504,30 @@ void AaTypeCastExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot
 
 void AaTypeCastExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
 {
-   this->Replace_Field_Expression(&_rest, used_expr, replacement);
+	this->Replace_Field_Expression(&_rest, used_expr, replacement);
 }
 //---------------------------------------------------------------------
 // AaUnaryExpression
 //---------------------------------------------------------------------
 AaUnaryExpression::AaUnaryExpression(AaScope* parent_tpr,AaOperation op, AaExpression* rest):AaExpression(parent_tpr)
 {
-  this->_operation  = op;
-  this->_rest       = rest;
-  
-  AaProgram::Add_Type_Dependency(this,rest);
-  if(rest)
-    rest->Add_Target(this);
+	this->_operation  = op;
+	this->_rest       = rest;
 
-  this->Set_Delay(1);
+	AaProgram::Add_Type_Dependency(this,rest);
+	if(rest)
+		rest->Add_Target(this);
+
+	this->Set_Delay(1);
 }
 AaUnaryExpression::~AaUnaryExpression() {};
 void AaUnaryExpression::Print(ostream& ofile)
 {
-  ofile << "( ";
-  ofile << Aa_Name(this->Get_Operation());
-  ofile << " ";
-  this->Get_Rest()->Print(ofile);
-  ofile << " )";
+	ofile << "( ";
+	ofile << Aa_Name(this->Get_Operation());
+	ofile << " ";
+	this->Get_Rest()->Print(ofile);
+	ofile << " )";
 }
 
 //
@@ -3537,39 +3625,49 @@ void AaUnaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
 
       ofile << "// " << this->To_String() << endl;
 
+      string dpe_name = this->Get_VC_Datapath_Instance_Name();
+      string src_name = this->_rest->Get_VC_Driver_Name(); 
+      string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
 
       Write_VC_Unary_Operator(this->Get_Operation(),
-			      this->Get_VC_Datapath_Instance_Name(),
-			      this->_rest->Get_VC_Driver_Name(),
-			      this->_rest->Get_Type(),
-			      (target != NULL ? target->Get_VC_Receiver_Name() : 
-			       this->Get_VC_Receiver_Name()),
-			      (target != NULL ? target->Get_Type() : this->Get_Type()),
-			      this->Get_VC_Guard_String(),
-			      ofile);
+		      dpe_name,
+		      src_name,
+		      this->_rest->Get_Type(),
+		      tgt_name,
+		      (target != NULL ? target->Get_Type() : this->Get_Type()),
+		      this->Get_VC_Guard_String(),
+		      ofile);
+      // extreme pipelining.
+      if(this->Is_Part_Of_Extreme_Pipeline())
+      {
+	      ofile << "$buffering  $in " << dpe_name << " "
+		      << src_name << " 2" << endl;
+	      ofile << "$buffering  $out " << dpe_name << " "
+		      << tgt_name << " 2" << endl;
+      }
     }
 
 }
 void AaUnaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
 {
-  if(!this->Is_Constant())
-    {
+	if(!this->Is_Constant())
+	{
 
-      this->_rest->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
+		this->_rest->Write_VC_Links(hier_id + "/" + this->Get_VC_Name(), ofile);
 
-      ofile << "// " << this->To_String() << endl;
+		ofile << "// " << this->To_String() << endl;
 
-      vector<string> reqs,acks;
+		vector<string> reqs,acks;
 
-      string sample_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Sample";
-      string update_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Update";
-      reqs.push_back(sample_region + "/rr");
-      reqs.push_back(update_region + "/cr");
-      acks.push_back(sample_region + "/ra");
-      acks.push_back(update_region + "/ca");
+		string sample_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Sample";
+		string update_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Update";
+		reqs.push_back(sample_region + "/rr");
+		reqs.push_back(update_region + "/cr");
+		acks.push_back(sample_region + "/ra");
+		acks.push_back(update_region + "/ca");
 
-      Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
-    }
+		Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
+	}
 }
 
 void AaUnaryExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
@@ -3580,7 +3678,7 @@ void AaUnaryExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, 
 
 void AaUnaryExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
 {
-   this->Replace_Field_Expression(&_rest, used_expr, replacement);
+	this->Replace_Field_Expression(&_rest, used_expr, replacement);
 }
 
 //---------------------------------------------------------------------
@@ -3588,39 +3686,39 @@ void AaUnaryExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentSta
 //---------------------------------------------------------------------
 AaBinaryExpression::AaBinaryExpression(AaScope* parent_tpr,AaOperation op, AaExpression* first, AaExpression* second):AaExpression(parent_tpr)
 {
-  this->_operation = op;
+	this->_operation = op;
 
-  this->_first = first;
-  if(first)
-    first->Add_Target(this);
-  this->_second = second;
-  if(second)
-    second->Add_Target(this);
+	this->_first = first;
+	if(first)
+		first->Add_Target(this);
+	this->_second = second;
+	if(second)
+		second->Add_Target(this);
 
- 
-  if(Is_Bitsel_Operation(op))
-    { // bitsel: the output is always a single bit
-      // there is no dependence betweem the two 
-      // inputs
-      this->Set_Type(AaProgram::Make_Uinteger_Type(1));
-    }
-  else if(Is_Compare_Operation(op))
-    {
-      this->Set_Type(AaProgram::Make_Uinteger_Type(1));
-      AaProgram::Add_Type_Dependency(first,second);
-    }
-  else if(Is_Shift_Operation(op))
-    {
-      AaProgram::Add_Type_Dependency(first,this);
-      AaProgram::Add_Type_Dependency(first,second);
-    }
-  else if(!Is_Concat_Operation(op))
-    {
-      AaProgram::Add_Type_Dependency(first,this);
-      AaProgram::Add_Type_Dependency(second,this);
-    }
 
-  this->Update_Type();
+	if(Is_Bitsel_Operation(op))
+	{ // bitsel: the output is always a single bit
+		// there is no dependence betweem the two 
+		// inputs
+		this->Set_Type(AaProgram::Make_Uinteger_Type(1));
+	}
+	else if(Is_Compare_Operation(op))
+	{
+		this->Set_Type(AaProgram::Make_Uinteger_Type(1));
+		AaProgram::Add_Type_Dependency(first,second);
+	}
+	else if(Is_Shift_Operation(op))
+	{
+		AaProgram::Add_Type_Dependency(first,this);
+		AaProgram::Add_Type_Dependency(first,second);
+	}
+	else if(!Is_Concat_Operation(op))
+	{
+		AaProgram::Add_Type_Dependency(first,this);
+		AaProgram::Add_Type_Dependency(second,this);
+	}
+
+	this->Update_Type();
 
   this->Set_Delay(1);
 }
@@ -3786,17 +3884,31 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 
       ofile << "// " << this->To_String() << endl;
 
+      string dpe_name = this->Get_VC_Datapath_Instance_Name();
+      string src_1_name = _first->Get_VC_Driver_Name();
+      string src_2_name = _second->Get_VC_Driver_Name();
+      string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
+
       Write_VC_Binary_Operator(this->Get_Operation(),
-			       this->Get_VC_Datapath_Instance_Name(),
-			       _first->Get_VC_Driver_Name(),
-			       _first->Get_Type(),
-			       _second->Get_VC_Driver_Name(),
-			       _second->Get_Type(),
-			       (target != NULL ? target->Get_VC_Receiver_Name() : 
-				this->Get_VC_Receiver_Name()),
-			       (target != NULL ? target->Get_Type() : this->Get_Type()),
+		      dpe_name,
+		      src_1_name,
+		      _first->Get_Type(),
+		      src_2_name,
+		      _second->Get_Type(),
+		      tgt_name,
+		      (target != NULL ? target->Get_Type() : this->Get_Type()),
 				  this->Get_VC_Guard_String(),
 			       ofile);
+      // extreme pipelining.
+      if(this->Is_Part_Of_Extreme_Pipeline())
+      {
+	      ofile << "$buffering  $in " << dpe_name << " "
+		      << src_1_name << " 2" << endl;
+	      ofile << "$buffering  $in " << dpe_name << " "
+		      << src_2_name << " 2" << endl;
+	      ofile << "$buffering  $out " << dpe_name << " "
+		      << tgt_name << " 2" << endl;
+      }
     }
 			  
 }
@@ -4007,17 +4119,35 @@ void AaTernaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostr
 
       ofile << "// " << this->To_String() << endl;
 
-      Write_VC_Select_Operator(this->Get_VC_Datapath_Instance_Name(),
-			       this->_test->Get_VC_Driver_Name(),
+      string dpe_name = this->Get_VC_Datapath_Instance_Name();
+      string src_1_name = _test->Get_VC_Driver_Name();
+      string src_2_name = _if_true->Get_VC_Driver_Name();
+      string src_3_name = _if_false->Get_VC_Driver_Name();
+      string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
+
+      Write_VC_Select_Operator(dpe_name,
+			       src_1_name,
 			       this->_test->Get_Type(),
-			       this->_if_true->Get_VC_Driver_Name(),
+				src_2_name,
 			       this->_if_true->Get_Type(),
-			       this->_if_false->Get_VC_Driver_Name(),
+				src_3_name,
 			       this->_if_false->Get_Type(),
-			       (target != NULL ? target->Get_VC_Driver_Name() : this->Get_VC_Driver_Name()),
+				tgt_name,
 			       (target != NULL ? target->Get_Type() : this->Get_Type()),
 				  this->Get_VC_Guard_String(),
 			       ofile);
+	// extreme pipelining.
+      if(this->Is_Part_Of_Extreme_Pipeline())
+      {
+	      ofile << "$buffering  $in " << dpe_name << " "
+		      << src_1_name << " 2" << endl;
+	      ofile << "$buffering  $in " << dpe_name << " "
+		      << src_2_name << " 2" << endl;
+	      ofile << "$buffering  $in " << dpe_name << " "
+		      << src_3_name << " 2" << endl;
+	      ofile << "$buffering  $out " << dpe_name << " "
+		      << tgt_name << " 2" << endl;
+      }
 			       
     }
 }

@@ -2108,7 +2108,8 @@ package BaseComponents is
   component marked_join is
      generic(place_capacity : integer := 1;
 		bypass: boolean := false;
-      		name : string := "anon");
+      		name : string := "anon";
+		marked_marking: IntegerArray);
      port (preds      : in   BooleanArray;
            marked_preds      : in   BooleanArray;
            symbol_out : out  boolean;
@@ -3822,7 +3823,8 @@ package BaseComponents is
     generic(name : string;
 	  num_reqs: integer;
 	  data_width: integer;
-	  no_arbitration: boolean := false);
+	  no_arbitration: boolean := false;
+	  input_buffering : IntegerArray);
     port (
     req        : in  BooleanArray(num_reqs-1 downto 0);
     ack        : out BooleanArray(num_reqs-1 downto 0);
@@ -9859,7 +9861,7 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity marked_join is
-  generic(place_capacity : integer := 1; bypass : boolean := true; name : string := "anon");
+  generic(place_capacity : integer := 1; bypass : boolean := true; name : string := "anon"; marked_marking: IntegerArray);
   port ( preds      : in   BooleanArray;
          marked_preds : in BooleanArray;
     	symbol_out : out  boolean;
@@ -9876,6 +9878,8 @@ architecture default_arch of marked_join is
 
   constant MH: integer := marked_preds'high;
   constant ML: integer := marked_preds'low;  
+
+  constant mmarking: IntegerArray(MH downto ML) := marked_marking;
 
 begin  -- default_arch
   
@@ -9908,7 +9912,7 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= marked_preds(I);
-	mpI: place generic map(capacity => place_capacity, marking => 1,
+	mpI: place generic map(capacity => place_capacity, marking => mmarking(I),
 				 name => name & ":marked:" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
     end block;
@@ -17174,7 +17178,7 @@ entity PipelinedFPOperator is
       fraction_width : integer := 23;
       no_arbitration: boolean := true;
       num_reqs : integer := 3; -- how many requesters?
-      use_input_buffering: boolean := false;
+      use_input_buffering: boolean := true;
       detailed_buffering_per_input: IntegerArray;
       detailed_buffering_per_output: IntegerArray
     );
@@ -17234,7 +17238,7 @@ begin  -- Behave
                   twidth => tag_length,
                   nreqs => num_reqs,
                   no_arbitration => no_arbitration,
-                  registered_output => true)
+                  registered_output => false)
       port map(
           reqL       => reqL,
         ackL       => ackL,
@@ -17256,7 +17260,7 @@ begin  -- Behave
                 nreqs => num_reqs,
 		buffering => detailed_buffering_per_input,
                 no_arbitration => no_arbitration,
-                registered_output => true)
+                registered_output => false)
       port map(
         reqL       => reqL,
         ackL       => ackL,
@@ -19326,6 +19330,8 @@ architecture Behave of InputMuxWithBuffering is
   signal reqR_sig, ackR_sig: std_logic;
   signal dataR_sig: std_logic_vector(owidth-1 downto 0);
   signal tagR_sig                : std_logic_vector(twidth-1 downto 0);
+  signal oq_data_in : std_logic_vector((twidth + owidth)-1 downto 0);
+  signal oq_data_out : std_logic_vector((twidth + owidth)-1 downto 0);
 
   alias cbuffering: IntegerArray(nreqs-1 downto 0) is buffering;
 
@@ -19418,30 +19424,32 @@ begin  -- Behave
   -- TODO: link the output queue to the input muxing to save
   --       one stage?
   -----------------------------------------------------------------------------
-  OqBlock: block
-     signal oq_data_in : std_logic_vector((twidth + owidth)-1 downto 0);
-     signal oq_data_out : std_logic_vector((twidth + owidth)-1 downto 0);
-  begin  -- block OqBlock
-
-    oq_data_in <= dataR_sig & tagR_sig;
-    dataR <= oq_data_out((twidth+owidth)-1 downto twidth);
-    tagR <= oq_data_out(twidth-1 downto 0);
-
+  ifReg: if registered_output generate
+        
+      oqueue : QueueBase generic map (
+        queue_depth => 2,
+        data_width  => twidth + owidth)
+        port map (
+          clk      => clk,
+          reset    => reset,
+          data_in  => oq_data_in,
+          push_req => reqR_sig,
+          push_ack => ackR_sig,
+          data_out => oq_data_out,
+          pop_ack  => reqR,
+          pop_req  => ackR);
       
-    oqueue : QueueBase generic map (
-      queue_depth => 2,
-      data_width  => twidth + owidth)
-      port map (
-        clk      => clk,
-        reset    => reset,
-        data_in  => oq_data_in,
-        push_req => reqR_sig,
-        push_ack => ackR_sig,
-        data_out => oq_data_out,
-        pop_ack  => reqR,
-        pop_req  => ackR);
-    
-  end block OqBlock;
+  end generate ifReg;
+
+  ifNoReg: if (not registered_output) generate
+     oq_data_out <= oq_data_in;
+     reqR <= reqR_sig;
+     ackR_sig <= ackR;
+  end generate ifNoReg;
+
+  oq_data_in <= dataR_sig & tagR_sig;
+  dataR <= oq_data_out((twidth+owidth)-1 downto twidth);
+  tagR  <= oq_data_out(twidth-1 downto 0);
 
 end Behave;
 library ieee;
@@ -20021,7 +20029,8 @@ entity OutputPortFullRate is
   generic(name : string;
 	  num_reqs: integer;
 	  data_width: integer;
-	  no_arbitration: boolean := false);
+	  no_arbitration: boolean := false;
+	  input_buffering: IntegerArray);
   port (
     req        : in  BooleanArray(num_reqs-1 downto 0);
     ack        : out BooleanArray(num_reqs-1 downto 0);
@@ -20037,30 +20046,60 @@ architecture Base of OutputPortFullRate is
   signal reqR, ackR : std_logic_vector(num_reqs-1 downto 0);
   signal fEN: std_logic_vector(num_reqs-1 downto 0);
 
+
+  signal omux_data_in       : std_logic_vector((num_reqs*data_width)-1 downto 0);
+
   type   OPWArray is array(integer range <>) of std_logic_vector(data_width-1 downto 0);
   signal data_array : OPWArray(num_reqs-1 downto 0);
-
   
+  constant input_buf_sizes: IntegerArray(num_reqs-1 downto 0) :=  input_buffering;
+
+  signal zero_sig: std_logic;
 begin
+
+  zero_sig <= '0';
 
   -----------------------------------------------------------------------------
   -- protocol conversion
   -----------------------------------------------------------------------------
-  ProTx : for I in 0 to num_reqs-1 generate
+  BufGen : for I in 0 to num_reqs-1 generate
+	
+	NoBuf: if(input_buf_sizes(I) = 0) generate
+      		p2LInst: PulseToLevel
+       			port map(rL            => req(I),
+               			rR            => reqR(I),
+               			aL            => ack(I),
+               			aR            => ackR(I),
+               			clk           => clk,
+               			reset         => reset);
+		data_array(I) <= data(((I+1)*data_width)-1 downto (I*data_width));
+	end generate NoBuf;
 
-    P2L : block
-    begin  -- block P2L
-      p2LInst: PulseToLevel
-        port map(rL            => req(I),
-                 rR            => reqR(I),
-                 aL            => ack(I),
-                 aR            => ackR(I),
-                 clk           => clk,
-                 reset         => reset);
+	YesBuf: if(input_buf_sizes(I) > 0) generate
+		rxB: ReceiveBuffer generic map( name => name & " rxBuf " & Convert_To_String(I),
+					buffer_size => input_buf_sizes(I),
+					data_width => data_width,
+					kill_counter_range => 2)
+			port map(write_req => req(I),
+			 write_ack => ack(I),
+			 write_data => data,
+			 -- note: cross-over
+			 read_req =>  ackR(I),
+			 read_ack => reqR(I), 
+			 kill => zero_sig,
+		         read_data => data_array(I),	
+			 clk => clk, reset => reset);
 
-    end block P2L;
-    
-  end generate ProTx;
+	end generate YesBuf;
+  end generate BufGen;
+
+  process(data_array)
+  begin
+	for J in  0 to num_reqs-1 loop
+		omux_data_in(((J+1)*data_width)-1 downto J*data_width) <= data_array(J);
+	end loop;
+  end process;
+
 
   mux : OutputPortLevel generic map (
     num_reqs       => num_reqs,
@@ -20069,7 +20108,7 @@ begin
     port map (
       req   => reqR,
       ack   => ackR,
-      data  => data,
+      data  => omux_data_in,
       oreq  => oreq,
       oack  => oack,
       odata => odata,

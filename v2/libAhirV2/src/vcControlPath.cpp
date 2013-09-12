@@ -592,6 +592,8 @@ void vcTransition::Print(ostream& ofile)
 void vcTransition::Print_VHDL(ostream& ofile)
 {
   bool block_was_used = false;
+  string marked_join_marking;
+
   if(this->Get_Is_Dead())
   {
 	// it will never ever fire... tie it to false.
@@ -657,7 +659,14 @@ void vcTransition::Print_VHDL(ostream& ofile)
 			((explicit_preds.size() > 1) || 
 				((explicit_preds.size() > 0) && (_marked_predecessors.size() > 0))) :
 			(explicit_preds.size() > 1));
-  if(is_true_join)
+
+  if(this->Get_Is_Input())
+  {
+	// input transition? it is supposed to be enabled.. just fire it.
+	ofile << "-- input transition " << endl;
+	this->Print_DP_To_CP_VHDL_Link(ofile);
+  }
+  else if(is_true_join)
     {
       bool marked_join_flag = false;
       block_was_used = true;
@@ -671,6 +680,9 @@ void vcTransition::Print_VHDL(ostream& ofile)
 	marked_join_flag = true;
         ofile << "signal " <<  this->Get_VHDL_Id() << "_marked_predecessors: BooleanArray(" 
 	    << this->Get_Number_Of_Marked_Predecessors()-1 << " downto 0);" << endl;
+
+	string marking_string = this->Generate_Marked_Join_Marking_String();
+	ofile << marking_string << endl;
       }
       ofile << "-- }" << endl << "begin -- {" << endl;
 
@@ -691,105 +703,86 @@ void vcTransition::Print_VHDL(ostream& ofile)
 	   }
       }
 
-      if(this->Get_Is_Input())
-	{
-	  string comp_id = "join_with_input";
-          if(marked_join_flag)
-		comp_id = "marked_join_with_input";
-	  ofile << this->Get_VHDL_Id() << "_join: " << comp_id << "  -- {" << endl
-		<< "generic map(place_capacity => " << max_iterations_in_flight << "," << endl
-		<< "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl
-		<< "port map( -- {"
-		<< "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl;
-          if(marked_join_flag)
-		ofile << "marked_preds => " << this->Get_VHDL_Id() <<  "_marked_predecessors," << endl;
-	  ofile << "symbol_in => " << this->Get_DP_To_CP_Symbol() << "," << endl
-		<< "symbol_out => " << this->Get_Exit_Symbol() << "," << endl
-		<< "clk => clk," << endl
-		<< "reset => reset); -- }}" << endl;
-	}
-      else
-	{
-	  string comp_id = "join";
-          if(marked_join_flag)
-		comp_id = "marked_join";
-	  ofile << this->Get_VHDL_Id() << "_join:" << comp_id << " -- {" << endl
-		<< "generic map(place_capacity => " << max_iterations_in_flight << "," << endl
-		<< "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl
-		<< "port map( -- {"
-		<< "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl;
-          if(marked_join_flag)
-		ofile << "marked_preds => " << this->Get_VHDL_Id() <<  "_marked_predecessors," << endl;
-	  ofile << "symbol_out => " << this->Get_Exit_Symbol() << "," << endl
-		<< "clk => clk," << endl
-		<< "reset => reset); -- }}" << endl;
-	}
+      string comp_id = "join";
+      if(marked_join_flag)
+	      comp_id = "marked_join";
+      ofile << this->Get_VHDL_Id() << "_join:" << comp_id << " -- {" << endl
+	      << "generic map(place_capacity => " << max_iterations_in_flight << "," << endl;
+      if(marked_join_flag)	
+	      ofile << "marked_marking => markedPredMarking," << endl;
+      ofile	<< "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl
+	      << "port map( -- {"
+	      << "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl;
+      if(marked_join_flag)
+	      ofile << "marked_preds => " << this->Get_VHDL_Id() <<  "_marked_predecessors," << endl;
+      ofile << "symbol_out => " << this->Get_Exit_Symbol() << "," << endl
+	      << "clk => clk," << endl
+	      << "reset => reset); -- }}" << endl;
     }
   else if(explicit_preds.size() == 1)
-    // at least one real predecessor..
-    {
-      // if only one predecessor, then direct connection from predecessors(0).
-      if(!this->_is_input)
-	{
+	  // at least one real predecessor..
+  {
 	  vcCPElement* pred = this->Get_Predecessors()[0];
 	  ofile <<  this->Get_Exit_Symbol() << " <= " << pred->Get_Exit_Symbol() << "; -- transition " << this->Get_Hierarchical_Id() << endl;
-	}
-      else
-	{
-	  ofile << "-- input transition " << endl;
-	  this->Print_DP_To_CP_VHDL_Link(ofile);
-	}
-    }
+  }
   else
-	// no explicit preds.. but may have implicit preds..
-    {
-      if(this->Get_Is_Entry_Transition())
-	{
-	  ofile <<  this->Get_Exit_Symbol() << "  <= " << this->Get_Parent()->Get_Start_Symbol() << "; -- transition " << this->Get_Hierarchical_Id() << endl;
-	}
-      else 
-	{
-	  int pred_count = this->Get_Number_Of_Predecessors();
-	  if(!this->Get_Is_Input())
-	    {
-	      if(pred_count == 0)
-              {
-	      	vcSystem::Warning("transition " + this->Get_Hierarchical_Id() + " has no predecessor: tied to false");
-	      	ofile << this->Get_Exit_Symbol() << " <= false;" << endl;	  
-	      }
-	    }
-	  else
-	    {
-	      ofile << "-- input transition " << endl;
-	      if(pred_count == 0)
-	      	vcSystem::Error("input transition " + this->Get_Hierarchical_Id() + " has no predecessor!");
-	      else
-	  	this->Print_DP_To_CP_VHDL_Link(ofile);
-	    }
-	}
-    }
+	  // no explicit preds.. but may have implicit preds..
+  {
+	  if(this->Get_Is_Entry_Transition())
+	  {
+		  ofile <<  this->Get_Exit_Symbol() << "  <= " << this->Get_Parent()->Get_Start_Symbol() << "; -- transition " << this->Get_Hierarchical_Id() << endl;
+	  }
+	  else 
+	  {
+	  	int pred_count = this->Get_Number_Of_Predecessors();
+		if(pred_count == 0)
+	  	{
+			  vcSystem::Warning("transition " + this->Get_Hierarchical_Id() + " has no predecessor: tied to false");
+			  ofile << this->Get_Exit_Symbol() << " <= false;" << endl;	  
+	        }
+	  }
+  }
 
   if(this->Get_Is_Output())
-    {
-      ofile << "-- output transition " << endl;
-      this->Print_CP_To_DP_VHDL_Link(ofile);
-    }
-  
-  if(block_was_used) // block was used...
-    ofile << "-- }" << endl << "end Block; -- non-trivial join transition " << this->Get_Hierarchical_Id() << endl;
+  {
+	  ofile << "-- output transition " << endl;
+	  this->Print_CP_To_DP_VHDL_Link(ofile);
+  }
 
+  if(block_was_used) // block was used...
+	  ofile << "-- }" << endl << "end Block; -- non-trivial join transition " << this->Get_Hierarchical_Id() << endl;
+
+}
+
+string vcTransition::Generate_Marked_Join_Marking_String()
+{
+	string ret_string ;
+	int N = this->Get_Number_Of_Marked_Predecessors();
+	if(N > 0)
+	{
+		ret_string = "constant markedPredMarking: IntegerArray(" + IntToStr(N-1) + " downto 0) := (";
+	    for(int i = 0; i < N; i++)
+	    {
+		    if(i > 0)
+			    ret_string += ", ";
+		    vcCPElement* cpe = this->Get_Marked_Predecessor(i);
+		    ret_string += IntToStr(i) + " => " + IntToStr(this->Get_Marked_Predecessor_Marking(cpe));
+	    }
+	    ret_string += ");";
+	}
+	return(ret_string);
 }
 
 string vcTransition::Get_CP_To_DP_Symbol()
 {
-  string ret_string;
-  for(int idx = 0; idx < _dp_link.size(); idx++)
-    {
-      int req_idx = _dp_link[idx].first->Get_Req_Index(this);
-      if(req_idx >= 0)
+	string ret_string;
+	for(int idx = 0; idx < _dp_link.size(); idx++)
 	{
-	  if(ret_string != "")
-	    ret_string += "_";
+		int req_idx = _dp_link[idx].first->Get_Req_Index(this);
+		if(req_idx >= 0)
+		{
+			if(ret_string != "")
+				ret_string += "_";
 
 	  ret_string += _dp_link[idx].first->Get_Id() + "_" + "req_" + IntToStr(req_idx);
 	}

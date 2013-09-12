@@ -348,6 +348,7 @@ public:
   void Print_DP_To_CP_VHDL_Link(ostream& ofile);
   void Print_CP_To_DP_VHDL_Link(ostream& ofile);
 
+  string Generate_Marked_Join_Marking_String();
 };
 
 class vcPlace: public vcCPElement
@@ -952,6 +953,8 @@ public:
 
   void Set_Associated_CP_Region(vcCPElement* c) {_associated_cp_region = c;}
   vcCPElement* Get_Associated_CP_Region() {return(_associated_cp_region);}
+
+  string Generate_Marked_Join_Marking_String();
 
   friend class vcCPElement;
   friend class vcControlPath;

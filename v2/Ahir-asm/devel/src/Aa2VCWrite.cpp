@@ -506,7 +506,7 @@ void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
 		int l_ms_index = expr->Get_VC_Memory_Space_Index();
 		assert(ms_index == l_ms_index);
 
-		__MJ(__SST(expr), reenable_trans)
+		__MJ(__SST(expr), reenable_trans, false) // TODO: conservative
 	}
 }
 
@@ -521,18 +521,18 @@ void Write_VC_Pipe_Dependency(bool pipeline_flag,
     {
       // src can restart only after target completes.
       string src_start = __SST(src);
-      __MJ(src_start, __UCT(tgt));
+      __MJ(src_start, __UCT(tgt),false); // TODO: conservative
     }
 }
 
-void Write_VC_Reenable_Joins(set<string>& active_reenable_points, string& rel_tran, ostream& ofile)
+void Write_VC_Reenable_Joins(set<string>& active_reenable_points, string& rel_tran, bool extreme_pipelining_flag, ostream& ofile)
 {
 	for(set<string>::iterator siter = active_reenable_points.begin(),
 		fiter = active_reenable_points.end();
 		siter != fiter;
 		siter++)
 	{
-		__MJ((*siter), rel_tran);
+		__MJ((*siter), rel_tran, extreme_pipelining_flag);
 	}
 }
 

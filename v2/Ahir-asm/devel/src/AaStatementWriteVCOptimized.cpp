@@ -149,7 +149,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  if(pipeline_flag)
 	  {
 		__MJ(this->_source->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
-			__SCT(this));
+			__SCT(this),this->Is_Part_Of_Extreme_Pipeline());
 		__SelfReleaseSplitProtocolPattern
 	  }
 	}
@@ -163,7 +163,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		if(pipeline_flag)
 		{
 			__MJ(this->_source->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
-				__SCT(this->_target));
+				__SCT(this->_target), this->Is_Part_Of_Extreme_Pipeline());
 		}
       }
 
@@ -238,7 +238,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       		this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
       		__J(__SST(this),__UCT(this->_guard_expression));
 		if(pipeline_flag)
-      			__MJ(__UST(this->_guard_expression),__SCT(this))
+      			__MJ(__UST(this->_guard_expression),__SCT(this),false)  // TODO: this is overly conservative.
 			
 	}
     }
@@ -260,7 +260,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  {
 	    // expression evaluation will be reenabled by activation of the
 	    // call.
-	    __MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this));
+	    __MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), this->Is_Part_Of_Extreme_Pipeline());
 	  }
 	}
 
@@ -296,7 +296,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  // statement .
 	  if(pipeline_flag)
 	    {
-	      __MJ(__UST(this), __SCT(expr));
+	      __MJ(__UST(this), __SCT(expr), expr->Is_Part_Of_Extreme_Pipeline());
 	    }
 
 	  non_triv_flag = true;
@@ -1362,7 +1362,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  if(pipeline_flag)
 	    {
 	      __MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-		   __SCT(this));
+		   __SCT(this), false); // TODO: this is conservative..
 	    }
 	}
     }
@@ -1383,7 +1383,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  if(pipeline_flag)
 	    {
 	      __MJ(source_expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
-			__SCT(this));
+			__SCT(this), this->Is_Part_Of_Extreme_Pipeline());
 	    }
 	}
     }

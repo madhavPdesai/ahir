@@ -46,6 +46,8 @@ architecture Behave of InputMuxWithBuffering is
   signal reqR_sig, ackR_sig: std_logic;
   signal dataR_sig: std_logic_vector(owidth-1 downto 0);
   signal tagR_sig                : std_logic_vector(twidth-1 downto 0);
+  signal oq_data_in : std_logic_vector((twidth + owidth)-1 downto 0);
+  signal oq_data_out : std_logic_vector((twidth + owidth)-1 downto 0);
 
   alias cbuffering: IntegerArray(nreqs-1 downto 0) is buffering;
 
@@ -138,29 +140,31 @@ begin  -- Behave
   -- TODO: link the output queue to the input muxing to save
   --       one stage?
   -----------------------------------------------------------------------------
-  OqBlock: block
-     signal oq_data_in : std_logic_vector((twidth + owidth)-1 downto 0);
-     signal oq_data_out : std_logic_vector((twidth + owidth)-1 downto 0);
-  begin  -- block OqBlock
-
-    oq_data_in <= dataR_sig & tagR_sig;
-    dataR <= oq_data_out((twidth+owidth)-1 downto twidth);
-    tagR <= oq_data_out(twidth-1 downto 0);
-
+  ifReg: if registered_output generate
+        
+      oqueue : QueueBase generic map (
+        queue_depth => 2,
+        data_width  => twidth + owidth)
+        port map (
+          clk      => clk,
+          reset    => reset,
+          data_in  => oq_data_in,
+          push_req => reqR_sig,
+          push_ack => ackR_sig,
+          data_out => oq_data_out,
+          pop_ack  => reqR,
+          pop_req  => ackR);
       
-    oqueue : QueueBase generic map (
-      queue_depth => 2,
-      data_width  => twidth + owidth)
-      port map (
-        clk      => clk,
-        reset    => reset,
-        data_in  => oq_data_in,
-        push_req => reqR_sig,
-        push_ack => ackR_sig,
-        data_out => oq_data_out,
-        pop_ack  => reqR,
-        pop_req  => ackR);
-    
-  end block OqBlock;
+  end generate ifReg;
+
+  ifNoReg: if (not registered_output) generate
+     oq_data_out <= oq_data_in;
+     reqR <= reqR_sig;
+     ackR_sig <= ackR;
+  end generate ifNoReg;
+
+  oq_data_in <= dataR_sig & tagR_sig;
+  dataR <= oq_data_out((twidth+owidth)-1 downto twidth);
+  tagR  <= oq_data_out(twidth-1 downto 0);
 
 end Behave;

@@ -11,9 +11,16 @@ AaStatement::AaStatement(AaScope* p): AaScope(p)
   _index_in_sequence = -1;
   _guard_expression = NULL;
   _guard_complement = false;
-  
+  _do_while_parent = NULL;
 }
 AaStatement::~AaStatement() {};
+
+bool AaStatement::Is_Part_Of_Extreme_Pipeline()
+{
+	AaDoWhileStatement* dws = this->Get_Do_While_Parent();
+	bool ret_val = ((dws != NULL)  && dws->Get_Full_Rate_Flag());
+	return(ret_val);
+}
 string AaStatement::Tab()
 {
   return(Tab_(this->Get_Tab_Depth()));
@@ -362,6 +369,8 @@ AaStatementSequence::AaStatementSequence(AaScope* scope, vector<AaStatement*>& s
 
       this->_statement_sequence.push_back(stmt);
     }
+ 
+    _do_while_parent = NULL;
 }
 AaStatementSequence::~AaStatementSequence() {}
   
@@ -647,6 +656,13 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
 AaAssignmentStatement::~AaAssignmentStatement() {};
 
 
+void AaAssignmentStatement::Set_Do_While_Parent(AaDoWhileStatement* dws)
+{
+	_do_while_parent = dws;
+	this->_source->Set_Do_While_Parent(dws);
+	this->_target->Set_Do_While_Parent(dws);
+}
+
 string AaAssignmentStatement::Debug_Info()
 {
   string ret_string;
@@ -931,14 +947,19 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 	    {
               string dpe_name = this->_target->Get_VC_Datapath_Instance_Name();
 	      string src_name = this->_source->Get_VC_Driver_Name();
+	      string tgt_name = this->_target->Get_VC_Receiver_Name();
 
 	      // target and source are both implicit.
 	      // instantiate a register..
 	      Write_VC_Interlock_Buffer(dpe_name,
 				      src_name,
-				      this->_target->Get_VC_Receiver_Name(),
+				      tgt_name,
 		 		      this->Get_VC_Guard_String(),
 				      ofile);
+
+
+  	      AaDoWhileStatement* dws = this->Get_Do_While_Parent();
+	      bool extreme_pipelining_flag = ((dws != NULL)  && (dws->Get_Full_Rate_Flag()));
 
 	      int bufval = this->Get_Buffering();
 	      if(bufval > 1)
@@ -946,6 +967,18 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 		ofile << "$buffering  $in " << dpe_name << " "
 			<< src_name << " "  << bufval << endl;
 			
+		if(extreme_pipelining_flag)
+		{
+			ofile << "$buffering  $out " << dpe_name << " "
+				<< tgt_name << " 2" << endl;
+		}
+	      }
+	      else if(extreme_pipelining_flag)
+	      {
+			ofile << "$buffering  $in " << dpe_name << " "
+				<< src_name << " 2" << endl;
+			ofile << "$buffering  $out " << dpe_name << " "
+				<< tgt_name << " 2" << endl;
 	      }
 	    }
 	  else
@@ -1070,7 +1103,7 @@ string AaAssignmentStatement::Get_VC_Sample_Start_Transition_Name()
 {
 	bool source_is_implicit = this->_source->Is_Implicit_Variable_Reference();
 	bool target_is_implicit = this->_target->Is_Implicit_Variable_Reference();
-	// TODO: if target is implicit or interface object..
+	// if target is implicit or interface object..
 	if(source_is_implicit && target_is_implicit)
 	{
 		return(this->AaRoot::Get_VC_Sample_Start_Transition_Name());
@@ -1090,7 +1123,7 @@ string AaAssignmentStatement::Get_VC_Sample_Completed_Transition_Name()
 {
 	bool source_is_implicit = this->_source->Is_Implicit_Variable_Reference();
 	bool target_is_implicit = this->_target->Is_Implicit_Variable_Reference();
-	// TODO: if target is implicit or interface object..
+	//  if target is implicit or interface object..
 	if(source_is_implicit && target_is_implicit)
 	{
 		return(this->AaRoot::Get_VC_Sample_Completed_Transition_Name());
@@ -1110,7 +1143,7 @@ string AaAssignmentStatement::Get_VC_Update_Start_Transition_Name()
 {
 	bool source_is_implicit = this->_source->Is_Implicit_Variable_Reference();
 	bool target_is_implicit = this->_target->Is_Implicit_Variable_Reference();
-	// TODO: if target is implicit or interface object..
+	// if target is implicit or interface object..
 	if(source_is_implicit && target_is_implicit)
 	{
 		return(this->AaRoot::Get_VC_Update_Start_Transition_Name());
@@ -1130,7 +1163,7 @@ string AaAssignmentStatement::Get_VC_Update_Completed_Transition_Name()
 {
 	bool source_is_implicit = this->_source->Is_Implicit_Variable_Reference();
 	bool target_is_implicit = this->_target->Is_Implicit_Variable_Reference();
-	// TODO: if target is implicit or interface object..
+	// if target is implicit or interface object..
 	if(source_is_implicit && target_is_implicit)
 	{
 		return(this->AaRoot::Get_VC_Update_Completed_Transition_Name());
@@ -1177,6 +1210,20 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
 }
 AaCallStatement::~AaCallStatement() {};
   
+void AaCallStatement::Set_Do_While_Parent(AaDoWhileStatement* dws)
+{
+  _do_while_parent = dws;
+  for(unsigned int i = 0; i < _input_args.size(); i++)
+    {
+      _input_args[i]->Set_Do_While_Parent(dws);
+    }
+
+  for(unsigned int i = 0; i < _output_args.size(); i++)
+    {
+      _output_args[i]->Set_Do_While_Parent(dws);
+    }
+}
+
 AaExpression* AaCallStatement::Get_Input_Arg(unsigned int index)
 {
   assert(index < this->Get_Number_Of_Input_Args());
@@ -1840,14 +1887,33 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 					     _output_args[idx]->Get_Type()));
     }
 
-  Write_VC_Call_Operator(this->Get_VC_Name() + "_call",
+  string dpe_name = this->Get_VC_Name() + "_call";
+  Write_VC_Call_Operator(dpe_name,
 			 _function_name,
 			 inargs,
 			 outargs,
 			 this->Get_VC_Guard_String(),
 			 ofile);
 
+  // extreme pipelining.
+  AaDoWhileStatement* dws = this->Get_Do_While_Parent();
+  if((dws != NULL)  && (dws->Get_Full_Rate_Flag()))
+  {
+	for(int i = 0; i < inargs.size(); i++)
+	{
+		string src_name = inargs[i].first;
+		ofile << "$buffering  $in " << dpe_name << " "
+			<< src_name << " 2" << endl;
+	}
+	for(int i = 0; i < outargs.size(); i++)
+	{
+		string tgt_name = outargs[i].first;
+		ofile << "$buffering  $out " << dpe_name << " "
+			<< tgt_name << " 2" << endl;
+	}
+  }
 }
+
 void AaCallStatement::Write_VC_Links(string hier_id, ostream& ofile)
 {
 
@@ -3128,6 +3194,7 @@ void AaPhiStatement::Set_Target(AaObjectReference* tgt)
     }
 }
 
+
 void AaPhiStatement::Add_Source_Pair(string label, AaExpression* expr)
 {
   _merged_labels.insert(label);
@@ -3170,6 +3237,15 @@ void AaPhiStatement::Map_Source_References()
 	    }
 	}
     }
+}
+  
+void AaPhiStatement::Set_Do_While_Parent(AaDoWhileStatement* dws)
+{
+	this->_target->Set_Do_While_Parent(dws);
+      	for(int idx = 0; idx < this->_source_pairs.size(); idx++)
+	{
+	  this->_source_pairs[idx].second->Set_Do_While_Parent(dws);
+	}
 }
 
 void AaPhiStatement::PrintC(ofstream& ofile,string tab_string)
@@ -3274,11 +3350,22 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
       _source_pairs[i].second->Write_VC_Datapath_Instances(NULL,ofile);
     }
 
-  Write_VC_Phi_Operator(this->Get_VC_Name(),
+  string dpe_name = this->Get_VC_Name();
+  string tgt_name = _target->Get_VC_Receiver_Name(); 
+  Write_VC_Phi_Operator(dpe_name,
 			sources,
-			_target->Get_VC_Receiver_Name(),
+			tgt_name,
 			_target->Get_Type(),
 			ofile);
+
+  // in the extreme pipelining case, output buffering
+  // will be kept to 2.
+  AaDoWhileStatement* dws = this->Get_Do_While_Parent();
+  if((dws != NULL)  && (dws->Get_Full_Rate_Flag()))
+  {
+	ofile << "$buffering  $out " << dpe_name << " "
+		<< tgt_name << " 2" << endl;
+  }
 }
 
 
@@ -4337,6 +4424,12 @@ AaDoWhileStatement::AaDoWhileStatement(AaBranchBlockStatement* scope):AaStatemen
   this->_loop_body_sequence = NULL;
 }
 AaDoWhileStatement::~AaDoWhileStatement() {}
+
+void AaDoWhileStatement::Set_Loop_Body_Sequence(AaStatementSequence* lbs) 
+{ 
+	this->_loop_body_sequence = lbs; 
+	lbs->Set_Do_While_Parent(this);
+}
 
 void AaDoWhileStatement::Coalesce_Storage()
 {

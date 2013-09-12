@@ -14,6 +14,7 @@
 class AaStorageObject;
 class AaStatement;
 class AaAssignmentStatement;
+class AaDoWhileStatement;
 class AaExpression: public AaRoot
 {
   // the containing scope of this expression
@@ -22,6 +23,7 @@ class AaExpression: public AaRoot
   bool _is_target;
   bool _does_pipe_access;
   bool _is_malformed;
+
 
  protected:
   // type of the expression
@@ -36,6 +38,10 @@ class AaExpression: public AaRoot
   void Set_Coalesce_Flag(bool v) { _coalesce_flag = v;}
   bool Get_Coalesce_Flag() {return(_coalesce_flag);}
 
+
+  // expression is handled in a different
+  // way if it is part of a do-while statement.
+  AaDoWhileStatement* _do_while_parent;
 
   // the expression, when evaluated at run
   // time, can produce a value.  In the following
@@ -84,6 +90,8 @@ class AaExpression: public AaRoot
   void Set_Is_Malformed(bool v) { _is_malformed = v;}
   bool Get_Is_Malformed() {return(_is_malformed);}
 
+  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws) {_do_while_parent = dws;}
+  AaDoWhileStatement* Get_Do_While_Parent() {return(_do_while_parent);}
 
   void Set_Does_Pipe_Access(bool v) { _does_pipe_access = v; }
   bool Get_Does_Pipe_Access() { return(_does_pipe_access); }
@@ -271,6 +279,7 @@ class AaExpression: public AaRoot
   virtual string Get_Name() {return(this->Get_VC_Name());}
 
 
+  virtual bool Is_Part_Of_Extreme_Pipeline();
 };
 
 
@@ -746,6 +755,15 @@ class AaArrayObjectReference: public AaObjectReference
   vector<AaExpression*>* Get_Index_Vector() {return(&(_indices));}
 
 
+  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws)
+  {
+	_do_while_parent = dws;
+	for(int i = 0, fi = _indices.size(); i < fi; i++)
+		_indices[i]->Set_Do_While_Parent(dws);
+	if(_pointer_ref != NULL)
+		_pointer_ref->Set_Do_While_Parent(dws);
+  }
+
   unsigned int Get_Number_Of_Indices() {return this->_indices.size();}
 
   // note: base object and all elements of index_list become children
@@ -794,7 +812,9 @@ class AaArrayObjectReference: public AaObjectReference
     _associated_statement = stmt;
     for(int idx = 0; idx < _indices.size(); idx++)
       _indices[idx]->Set_Associated_Statement(stmt);
-
+	
+    if(_pointer_ref != NULL)
+	_pointer_ref->Set_Associated_Statement(stmt);
   }
 
   virtual void Write_VC_Control_Path_As_Target( ostream& ofile);
@@ -870,6 +890,11 @@ class AaPointerDereferenceExpression: public AaObjectReference
     return(_reference_to_object);
   }
 
+  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws)
+  {
+	_do_while_parent = dws;
+	_reference_to_object->Set_Do_While_Parent(dws);
+  }
   virtual void Set_Associated_Statement(AaStatement* stmt)
   {
     _associated_statement = stmt;
@@ -964,6 +989,11 @@ class AaAddressOfExpression: public AaObjectReference
     _associated_statement = stmt;
     _reference_to_object->Set_Associated_Statement(stmt);
   }
+  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws)
+  {
+	_do_while_parent = dws;
+	_reference_to_object->Set_Do_While_Parent(dws);
+  }
   virtual bool Is_Load() {return(false);}
   virtual bool Is_Store(){return(false);}
 
@@ -1035,7 +1065,7 @@ class AaTypeCastExpression: public AaExpression
   AaExpression* Get_Rest() {return(this->_rest);}
 
   AaTypeCastExpression(AaScope* scope, AaType* ref_type, AaExpression *rest);
-  ~AaTypeCastExpression();
+	  ~AaTypeCastExpression();
 
   void Set_Bit_Cast(bool v) { _bit_cast = v;}
   virtual void Set_Associated_Statement(AaStatement* stmt)
@@ -1044,6 +1074,11 @@ class AaTypeCastExpression: public AaExpression
     _rest->Set_Associated_Statement(stmt);
   }
 
+  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws)
+  {
+	_do_while_parent = dws;
+	_rest->Set_Do_While_Parent(dws);
+  }
   void Print(ostream& ofile);
   virtual string Kind() {return("AaTypeCastExpression");}
   virtual void Map_Source_References(set<AaRoot*>& source_objects) 
@@ -1126,6 +1161,11 @@ class AaUnaryExpression: public AaExpression
     _associated_statement = stmt;
     _rest->Set_Associated_Statement(stmt);
   }
+  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws)
+  {
+	_do_while_parent = dws;
+	_rest->Set_Do_While_Parent(dws);
+  }
   virtual void Write_VC_Control_Path( ostream& ofile);
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
   {
@@ -1201,6 +1241,12 @@ class AaBinaryExpression: public AaExpression
     _associated_statement = stmt;
     _first->Set_Associated_Statement(stmt);
     _second->Set_Associated_Statement(stmt);
+  }
+  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws)
+  {
+	_do_while_parent = dws;
+	_first->Set_Do_While_Parent(dws);
+	_second->Set_Do_While_Parent(dws);
   }
   virtual void PrintC(ofstream& ofile, string tab_string)
   {
@@ -1323,6 +1369,13 @@ class AaTernaryExpression: public AaExpression
     _test->Set_Associated_Statement(stmt);
     _if_true->Set_Associated_Statement(stmt);
     _if_false->Set_Associated_Statement(stmt);
+  }
+  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws)
+  {
+	_do_while_parent = dws;
+	_test->Set_Do_While_Parent(dws);
+	_if_true->Set_Do_While_Parent(dws);
+	_if_false->Set_Do_While_Parent(dws);
   }
   virtual void PrintC(ofstream& ofile, string tab_string)
   {

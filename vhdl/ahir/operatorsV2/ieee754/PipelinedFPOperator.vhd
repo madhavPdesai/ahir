@@ -19,7 +19,7 @@ entity PipelinedFPOperator is
       fraction_width : integer := 23;
       no_arbitration: boolean := true;
       num_reqs : integer := 3; -- how many requesters?
-      use_input_buffering: boolean := false;
+      use_input_buffering: boolean := true;
       detailed_buffering_per_input: IntegerArray;
       detailed_buffering_per_output: IntegerArray
     );
@@ -79,7 +79,7 @@ begin  -- Behave
                   twidth => tag_length,
                   nreqs => num_reqs,
                   no_arbitration => no_arbitration,
-                  registered_output => true)
+                  registered_output => false)
       port map(
           reqL       => reqL,
         ackL       => ackL,
@@ -101,7 +101,7 @@ begin  -- Behave
                 nreqs => num_reqs,
 		buffering => detailed_buffering_per_input,
                 no_arbitration => no_arbitration,
-                registered_output => true)
+                registered_output => false)
       port map(
         reqL       => reqL,
         ackL       => ackL,

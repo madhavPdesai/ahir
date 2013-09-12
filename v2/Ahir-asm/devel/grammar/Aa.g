@@ -794,7 +794,7 @@ aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement
 	    new_dws->Set_Pipelining_Depth(pdepth);
 	    new_dws->Set_Buffering_Depth(buffering_depth);
             ms->Set_In_Do_While(true);
-	   
+            ms->Set_Do_While_Parent(new_dws);	   
 	    new_dws->Set_Line_Number(il->getLine());
         }
 
@@ -808,6 +808,7 @@ aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement
 	{
 		new_dws->Set_Test_Expression(test_expression);
 		new_dws->Set_Full_Rate_Flag(full_rate_flag);
+		test_expression->Set_Do_While_Parent(new_dws);
 	}
     ;   
 

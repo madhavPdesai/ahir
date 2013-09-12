@@ -11,6 +11,7 @@
 #include <AaObject.h>
 
 class AaPlaceStatement;
+class AaDoWhileStatement;
 
 // *******************************************  STATEMENT etc. ************************************
 // base class for statements
@@ -31,9 +32,14 @@ class AaStatement: public AaScope
   AaSimpleObjectReference* _guard_expression;
   bool _guard_complement;
 
+  AaDoWhileStatement* _do_while_parent;
+
  public:
   AaStatement(AaScope* scope);
   
+  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws) {_do_while_parent = dws;}
+  AaDoWhileStatement* Get_Do_While_Parent() {return(_do_while_parent);}
+
   // add map entries in parent's lookup map for easy access
   virtual void Map_Targets() 
   {
@@ -45,7 +51,9 @@ class AaStatement: public AaScope
   virtual void Set_Guard_Expression(AaSimpleObjectReference* oref)
   {
 	_guard_expression = oref;
+	oref->Set_Associated_Statement(this);
   }
+
   virtual AaExpression* Get_Guard_Expression()
   {
 	return(_guard_expression);
@@ -193,6 +201,7 @@ class AaStatement: public AaScope
 
   virtual string Get_Name() {return(this->Get_VC_Name());}
 
+  virtual bool Is_Part_Of_Extreme_Pipeline();
 
 };
 
@@ -200,6 +209,7 @@ class AaStatement: public AaScope
 class AaStatementSequence: public AaScope
 {
   vector<AaStatement*> _statement_sequence;
+  AaDoWhileStatement* _do_while_parent;
  public:
 
   AaStatementSequence(AaScope* scope, vector<AaStatement*>& statement_sequence);
@@ -224,6 +234,14 @@ class AaStatementSequence: public AaScope
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaStatementSequence");}
+
+  void Set_Do_While_Parent(AaDoWhileStatement* dws)
+  {
+    this->_do_while_parent = dws;
+    for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
+      this->_statement_sequence[i]->Set_Do_While_Parent(dws);
+  }
+
   virtual void Map_Source_References() 
   {
     for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
@@ -380,6 +398,8 @@ class AaAssignmentStatement: public AaStatement
   AaAssignmentStatement(AaScope* scope,AaExpression* target, AaExpression* source, int lineno);
   ~AaAssignmentStatement();
 
+  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws);
+
   int Get_Buffering() {return(_buffering);}
   void Set_Buffering(int b) {_buffering = b;}
   string Get_VC_Buffering_String();
@@ -458,6 +478,7 @@ class AaCallStatement: public AaStatement
   string Get_Function_Name() {return(this->_function_name);}
   void Set_Called_Module(AaRoot* m) { this->_called_module = m; }
   AaRoot* Get_Called_Module() {return(this->_called_module);}
+  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws);
 
   AaCallStatement(AaScope* scope_tpr,
 		  string func_name,
@@ -554,12 +575,20 @@ class AaBlockStatement: public AaStatement
   AaStatementSequence* _statement_sequence;
   map<string,string> _exports;
 
+  
  public:
 
   virtual string Get_Label() { return(this->_label);}
   virtual string Get_Name() {return(this->Get_Label());}
   virtual bool Is_Block_Statement() {return(true);}
   virtual bool Is_Pipelined() {return(false);}
+
+  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws) 
+  { 
+      _do_while_parent = dws;
+      if(_statement_sequence != NULL)
+      	_statement_sequence->Set_Do_While_Parent(dws);
+  }
 
   virtual unsigned int Get_Statement_Count() 
   {
@@ -1037,6 +1066,8 @@ class AaPhiStatement: public AaStatement
   AaObjectReference* Get_Target() {return(_target);}
 
   void Add_Source_Pair(string label, AaExpression* expr);
+
+  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws);
   bool Is_Merged(string label)
   {
     return(_merged_labels.find(label) != _merged_labels.end());
@@ -1267,7 +1298,8 @@ class AaDoWhileStatement: public AaStatement
   bool Get_Full_Rate_Flag() {return(_full_rate_flag);}
   void Set_Test_Expression(AaExpression* te) { this->_test_expression = te; }
   void Set_Merge_Statement(AaMergeStatement* ms) { this->_merge_statement = ms; }
-  void Set_Loop_Body_Sequence(AaStatementSequence* lbs) { this->_loop_body_sequence = lbs; }
+  void Set_Loop_Body_Sequence(AaStatementSequence* lbs);
+
 
   int Get_Number_Of_Loop_Body_Statements()
   {

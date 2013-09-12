@@ -145,7 +145,8 @@ package BaseComponents is
   component marked_join is
      generic(place_capacity : integer := 1;
 		bypass: boolean := false;
-      		name : string := "anon");
+      		name : string := "anon";
+		marked_marking: IntegerArray);
      port (preds      : in   BooleanArray;
            marked_preds      : in   BooleanArray;
            symbol_out : out  boolean;
@@ -1859,7 +1860,8 @@ package BaseComponents is
     generic(name : string;
 	  num_reqs: integer;
 	  data_width: integer;
-	  no_arbitration: boolean := false);
+	  no_arbitration: boolean := false;
+	  input_buffering : IntegerArray);
     port (
     req        : in  BooleanArray(num_reqs-1 downto 0);
     ack        : out BooleanArray(num_reqs-1 downto 0);

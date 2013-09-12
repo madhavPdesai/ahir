@@ -1408,7 +1408,8 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		<< " exponent_width => " << exp_width << "," << endl
 		<< " fraction_width => " << frac_width << ", " << endl
 		<< " no_arbitration => " << no_arb_string << ","  << endl
-		<< " num_reqs => " << num_reqs << ","
+		<< " num_reqs => " << num_reqs << "," << endl
+		<< " use_input_buffering => true," << endl
 		<< " detailed_buffering_per_input => inBUFs," << endl
 		<< " detailed_buffering_per_output => outBUFs -- } \n )" << endl;
 	  ofile << "port map ( reqL => reqL , ackL => ackL, reqR => reqR, ackR => ackR, dataL => data_in, dataR => data_out, clk => clk, reset => reset); -- }" << endl;
@@ -2332,6 +2333,8 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       vector<vcTransition*> req;
       vector<vcTransition*> ack;
       vector<vcWire*> inwires;
+      vector<int> inwire_buffering;
+
       vector<vcWire*> guards;
       vector<bool> guard_complements;
 
@@ -2364,6 +2367,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 
 	  elements.push_back(so->Get_VHDL_Id());
 	  so->Append_Inwires(inwires);
+	  so->Append_Inwire_Buffering(inwire_buffering);
 	  req.push_back(so->Get_Req(0));
 	  ack.push_back(so->Get_Ack(0));
  	  so->Append_Guard(guards, guard_complements);
@@ -2404,6 +2408,9 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 	}
 
 
+      string input_buffering_string;
+      int max_inbuf = this->Generate_Buffering_String("inBUFs", inwire_buffering, input_buffering_string);
+
       // VHDL code for this shared group
       ofile << "-- shared outport operator group (" << idx << ") : " ;
       for(int u = 0; u < elements.size(); u++)
@@ -2420,6 +2427,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       ofile << "signal req_unguarded, ack_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
       ofile << "signal guard_vector : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
 
+      ofile << input_buffering_string << endl;
       ofile << "-- }\n begin -- {" << endl;
 
       // guard related stuff.
@@ -2436,8 +2444,9 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       string name = '"' + p->Get_VHDL_Id() + '"';
       ofile << group_name << ": OutputPortFullRate -- { " << endl;
       ofile << "generic map ( name => " << name << ", data_width => " << data_width << ","
-	    << "  num_reqs => " << num_reqs << ","
-	    << "  no_arbitration => " << no_arb_string << ")" << endl;
+	    << " num_reqs => " << num_reqs << ","
+	    << " input_buffering => inBUFs," 
+	    << " no_arbitration => " << no_arb_string << ")" << endl;
       ofile << "port map (--{\n req => req " << ", " <<  endl
 	    << "    ack => ack " << ", " <<  endl
 	    << "    data => data_in, " << endl
