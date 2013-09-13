@@ -33,9 +33,9 @@
 	}
 
 #define __SelfReleaseSplitProtocolPattern {\
-  ofile << "// self-release: aggressive" << endl;\
-  __MJ(__SST(this),__SCT(this),true);\
-  __MJ(__UST(this),__UCT(this),true);}
+  ofile << "// self-release: " << endl;\
+  __MJ(__SST(this),__SCT(this),false);\
+  __MJ(__UST(this),__UCT(this),false);}
 
 void Write_VC_Equivalence_Operator(string inst_name,
 				   string input,

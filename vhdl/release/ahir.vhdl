@@ -19635,7 +19635,6 @@ begin  -- default_arch
 	buf_write_data <= write_data(data_width-1 downto 0);
   	read_data  <= buf_read_data;
      end generate outSmaller;
-  end generate bufGtOne;
 
   -- write FSM to pipe.
   process(clk,reset, l_fsm_state, buf_write_ack, write_req)
@@ -19685,6 +19684,7 @@ begin  -- default_arch
       clk         => clk,
       reset       => reset);
 
+  end generate bufGtOne;
 
 end default_arch;
 library ieee;
