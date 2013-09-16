@@ -525,14 +525,14 @@ void Write_VC_Pipe_Dependency(bool pipeline_flag,
     }
 }
 
-void Write_VC_Reenable_Joins(set<string>& active_reenable_points, string& rel_tran, bool extreme_pipelining_flag, ostream& ofile)
+void Write_VC_Reenable_Joins(set<string>& active_reenable_points, string& rel_tran, bool bypass_flag, ostream& ofile)
 {
 	for(set<string>::iterator siter = active_reenable_points.begin(),
 		fiter = active_reenable_points.end();
 		siter != fiter;
 		siter++)
 	{
-		__MJ((*siter), rel_tran, extreme_pipelining_flag);
+		__MJ((*siter), rel_tran, bypass_flag);
 	}
 }
 

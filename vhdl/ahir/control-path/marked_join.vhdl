@@ -7,7 +7,7 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity marked_join is
-  generic(place_capacity : integer := 1; bypass : boolean := true; name : string := "anon"; marked_marking: IntegerArray);
+  generic(place_capacity : integer := 1; bypass : boolean := true; name : string := "anon"; marked_predecessor_bypass: BooleanArray);
   port ( preds      : in   BooleanArray;
          marked_preds : in BooleanArray;
     	symbol_out : out  boolean;
@@ -25,7 +25,7 @@ architecture default_arch of marked_join is
   constant MH: integer := marked_preds'high;
   constant ML: integer := marked_preds'low;  
 
-  constant mmarking: IntegerArray(MH downto ML) := marked_marking;
+  constant mbypass: BooleanArray(MH downto ML) := marked_predecessor_bypass;
 
 begin  -- default_arch
   
@@ -38,7 +38,7 @@ begin  -- default_arch
 	pI: place_with_bypass
 		generic map(capacity => place_capacity, 
 				marking => 0,
-				name => name & ":" & Convert_To_String(I) )
+				name => name & ":(bypass):" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate bypassgen;
 
@@ -46,7 +46,7 @@ begin  -- default_arch
 	pI: place
 		generic map(capacity => place_capacity, 
 				marking => 0,
-				name => name & ":" & Convert_To_String(I) )
+				name => name & ":(no-bypass):" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate nobypassgen;
     end block;
@@ -58,9 +58,17 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= marked_preds(I);
-	mpI: place generic map(capacity => place_capacity, marking => mmarking(I),
-				 name => name & ":marked:" & Convert_To_String(I) )
+	bypassGen: if mbypass(I)  generate
+	   mpI: place_with_bypass generic map(capacity => place_capacity, marking => 1, 
+				 name => name & ":marked(bypass):" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
+	end generate bypassGen;
+	NobypassGen: if (not mbypass(I))  generate
+	  mpI: place generic map(capacity => place_capacity, marking => 1, 
+				 name => name & ":marked(no-bypass):" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
+	end generate NobypassGen;
+
     end block;
   end generate mplacegen;
   

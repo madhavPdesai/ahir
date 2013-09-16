@@ -149,7 +149,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  if(pipeline_flag)
 	  {
 		__MJ(this->_source->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
-			__SCT(this),false);
+			__SCT(this),true); // bypass
 		__SelfReleaseSplitProtocolPattern
 	  }
 	}
@@ -162,7 +162,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       		__J(__SST(this->_target), __UCT(this->_source));
 		if(pipeline_flag)
 		{
-			__MJ(this->_source->Get_VC_Reenable_Update_Transition_Name(visited_elements),__SCT(this->_target), false);
+			__MJ(this->_source->Get_VC_Reenable_Update_Transition_Name(visited_elements),__SCT(this->_target), true); // bypass
 		}
       }
 
@@ -238,8 +238,8 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       		__J(__SST(this),__UCT(this->_guard_expression));
 		if(pipeline_flag)
 		{
-      			__MJ(__UST(this->_guard_expression),__SCT(this),false)  // TODO: this is overly conservative.
-      			__MJ(__UST(this->_guard_expression),__UCT(this),false)  // TODO: this is overly conservative.
+      			__MJ(__UST(this->_guard_expression),__SCT(this),true)  // bypass
+      			__MJ(__UST(this->_guard_expression),__UCT(this),true)  // bypass
 		}
 	}
     }
@@ -261,7 +261,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  {
 	    // expression evaluation will be reenabled by activation of the
 	    // call.
-	    __MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), false);
+	    __MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
 	  }
 	}
 
@@ -297,7 +297,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  // statement .
 	  if(pipeline_flag)
 	    {
-	      __MJ(__UST(this), __SCT(expr), false);
+	      __MJ(__UST(this), __SCT(expr), true); // bypass
 	    }
 
 	  non_triv_flag = true;
@@ -1363,7 +1363,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  if(pipeline_flag)
 	    {
 	      __MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-		   __SCT(this), false); // TODO: this is conservative..
+		   __SCT(this), true); // bypass
 	    }
 	}
     }
@@ -1384,7 +1384,7 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  if(pipeline_flag)
 	    {
 	      __MJ(source_expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
-			__SCT(this), false);
+			__SCT(this), true); // bypass
 	    }
 	}
     }

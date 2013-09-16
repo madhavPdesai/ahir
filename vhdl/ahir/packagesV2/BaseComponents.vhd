@@ -146,7 +146,7 @@ package BaseComponents is
      generic(place_capacity : integer := 1;
 		bypass: boolean := false;
       		name : string := "anon";
-		marked_marking: IntegerArray);
+		marked_predecessor_bypass: BooleanArray);
      port (preds      : in   BooleanArray;
            marked_preds      : in   BooleanArray;
            symbol_out : out  boolean;

@@ -15,10 +15,10 @@ protected:
   vector<vcCPElement*> _successors;
 
   vector<vcCPElement*> _marked_predecessors;
-  map<vcCPElement*, int> _marked_predecessor_markings;
+  map<vcCPElement*, int> _marked_predecessor_delays;
 
   vector<vcCPElement*> _marked_successors;
-  map<vcCPElement*, int> _marked_successor_markings;
+  map<vcCPElement*, int> _marked_successor_delays;
 
   vcCompatibilityLabel* _compatibility_label;
 
@@ -49,11 +49,11 @@ public:
   void Remove_Marked_Successor(vcCPElement* cpe);
   void Remove_Marked_Predecessor(vcCPElement* cpe);
 
-  void Set_Marked_Successor_Marking(vcCPElement* cpe, int m);
-  int  Get_Marked_Successor_Marking(vcCPElement* cpe);
+  void Set_Marked_Successor_Delay(vcCPElement* cpe, int m);
+  int  Get_Marked_Successor_Delay(vcCPElement* cpe);
 
-  void Set_Marked_Predecessor_Marking(vcCPElement* cpe, int m);
-  int  Get_Marked_Predecessor_Marking(vcCPElement* cpe);
+  void Set_Marked_Predecessor_Delay(vcCPElement* cpe, int m);
+  int  Get_Marked_Predecessor_Delay(vcCPElement* cpe);
 
   virtual bool Is_Pipeline() { return (false); }
   virtual bool Is_Block() { return (false); }
@@ -348,7 +348,7 @@ public:
   void Print_DP_To_CP_VHDL_Link(ostream& ofile);
   void Print_CP_To_DP_VHDL_Link(ostream& ofile);
 
-  string Generate_Marked_Join_Marking_String();
+  string Generate_Marked_Join_Bypass_String();
 };
 
 class vcPlace: public vcCPElement
@@ -808,8 +808,8 @@ class vcCPElementGroup: public vcRoot
   set<vcCPElementGroup*> _predecessors;
   set<vcCPElementGroup*> _marked_predecessors;
   set<vcCPElementGroup*> _marked_successors;
-  map<vcCPElementGroup*,int> _marked_successor_markings;
-  map<vcCPElementGroup*,int> _marked_predecessor_markings;
+  map<vcCPElementGroup*,int> _marked_successor_delays;
+  map<vcCPElementGroup*,int> _marked_predecessor_delays;
   
   bool _has_transition;
   bool _has_place;
@@ -894,21 +894,21 @@ public:
     _marked_successors.insert(g);
   }
 
-  void Set_Marked_Successor_Marking(vcCPElementGroup* g, int m)
+  void Set_Marked_Successor_Delay(vcCPElementGroup* g, int m)
   {
-    _marked_successor_markings[g] = m;
+    _marked_successor_delays[g] = m;
   }
-  int  Get_Marked_Successor_Marking(vcCPElementGroup* g);
+  int  Get_Marked_Successor_Delay(vcCPElementGroup* g);
 
   void Add_Marked_Predecessor(vcCPElementGroup* g)
   {
     _marked_predecessors.insert(g);
   }
-  int  Get_Marked_Predecessor_Marking(vcCPElementGroup* g);
+  int  Get_Marked_Predecessor_Delay(vcCPElementGroup* g);
 
-  void Set_Marked_Predecessor_Marking(vcCPElementGroup* g, int m)
+  void Set_Marked_Predecessor_Delay(vcCPElementGroup* g, int m)
   {
-    _marked_predecessor_markings[g] = m;
+    _marked_predecessor_delays[g] = m;
   }
 
   int64_t Get_Group_Index() {return(_group_index);}
@@ -954,7 +954,7 @@ public:
   void Set_Associated_CP_Region(vcCPElement* c) {_associated_cp_region = c;}
   vcCPElement* Get_Associated_CP_Region() {return(_associated_cp_region);}
 
-  string Generate_Marked_Join_Marking_String();
+  string Generate_Marked_Join_Bypass_String();
 
   friend class vcCPElement;
   friend class vcControlPath;
@@ -1001,7 +1001,7 @@ public:
   void Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole);
 
   void Add_To_Group(vcCPElement* cpe, vcCPElementGroup* group);
-  void Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to, int marking);
+  void Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to, bool marked_flag, int marked_delay);
   void Print_Groups(ostream& ofile);
 
 

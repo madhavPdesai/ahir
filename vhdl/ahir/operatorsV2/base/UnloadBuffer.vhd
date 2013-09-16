@@ -96,11 +96,12 @@ begin  -- default_arch
 	if(ackv) then
            output_register <= pipe_data_out;
         end if;
+
+	unload_ack <= ackv;
      end if;
   end process;
 
-  -- bypass.. this adds delay, but prevents a wasted cycle.
-  unload_ack <= load_reg;
-  read_data <= pipe_data_out when load_reg else output_register;
+  -- no bypass!
+  read_data <= output_register;
 
 end default_arch;

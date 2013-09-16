@@ -431,7 +431,7 @@ void vcCPElement::Remove_Marked_Successor(vcCPElement* cpe)
 	{
 	  rem_flag = true;
   	  this->_marked_successors.erase(iter);
-	  this->_marked_successor_markings.erase(cpe);
+	  this->_marked_successor_delays.erase(cpe);
 	  break;
 	}
     }
@@ -463,34 +463,35 @@ void vcCPElement::Remove_Marked_Predecessor(vcCPElement* cpe)
 	{
 	  rem_flag = true;
   	  this->_marked_predecessors.erase(iter);
-	  this->_marked_predecessor_markings.erase(cpe);
+	  this->_marked_predecessor_delays.erase(cpe);
 	  break;
 	}
     }
 }
 
-void vcCPElement::Set_Marked_Successor_Marking(vcCPElement* cpe, int m)
+void vcCPElement::Set_Marked_Successor_Delay(vcCPElement* cpe, int m)
 {
-	_marked_successor_markings[cpe] = m;
+	_marked_successor_delays[cpe] = m;
 }
-int  vcCPElement::Get_Marked_Successor_Marking(vcCPElement* cpe)
+int  vcCPElement::Get_Marked_Successor_Delay(vcCPElement* cpe)
 {
-	if(_marked_successor_markings.find(cpe) != _marked_successor_markings.end())
-		return(_marked_successor_markings[cpe]);
+	if(_marked_successor_delays.find(cpe) != _marked_successor_delays.end())
+		return(_marked_successor_delays[cpe]);
 	else
-		return(-1);
+		return(1);
 }
 
-void vcCPElement::Set_Marked_Predecessor_Marking(vcCPElement* cpe, int m)
+void vcCPElement::Set_Marked_Predecessor_Delay(vcCPElement* cpe, int m)
 {
-	_marked_predecessor_markings[cpe] = m;
+	_marked_predecessor_delays[cpe] = m;
 }
-int  vcCPElement::Get_Marked_Predecessor_Marking(vcCPElement* cpe)
+int  vcCPElement::Get_Marked_Predecessor_Delay(vcCPElement* cpe)
 {
-	if(_marked_predecessor_markings.find(cpe) != _marked_predecessor_markings.end())
-		return(_marked_predecessor_markings[cpe]);
+	if(_marked_predecessor_delays.find(cpe) != _marked_predecessor_delays.end())
+		return(_marked_predecessor_delays[cpe]);
 	else
-		return(-1);
+		// default value is 1
+		return(1);
 }
 
 void vcCPElement::Get_Hierarchical_Ref(vector<string>& ref_vec)
@@ -681,7 +682,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
         ofile << "signal " <<  this->Get_VHDL_Id() << "_marked_predecessors: BooleanArray(" 
 	    << this->Get_Number_Of_Marked_Predecessors()-1 << " downto 0);" << endl;
 
-	string marking_string = this->Generate_Marked_Join_Marking_String();
+	string marking_string = this->Generate_Marked_Join_Bypass_String();
 	ofile << marking_string << endl;
       }
       ofile << "-- }" << endl << "begin -- {" << endl;
@@ -709,7 +710,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
       ofile << this->Get_VHDL_Id() << "_join:" << comp_id << " -- {" << endl
 	      << "generic map(place_capacity => " << max_iterations_in_flight << "," << endl;
       if(marked_join_flag)	
-	      ofile << "marked_marking => markedPredMarking," << endl;
+	      ofile << "marked_predecessor_bypass => markedPredBypass," << endl;
       ofile	<< "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl
 	      << "port map( -- {"
 	      << "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl;
@@ -754,19 +755,19 @@ void vcTransition::Print_VHDL(ostream& ofile)
 
 }
 
-string vcTransition::Generate_Marked_Join_Marking_String()
+string vcTransition::Generate_Marked_Join_Bypass_String()
 {
 	string ret_string ;
 	int N = this->Get_Number_Of_Marked_Predecessors();
 	if(N > 0)
 	{
-		ret_string = "constant markedPredMarking: IntegerArray(" + IntToStr(N-1) + " downto 0) := (";
+		ret_string = "constant markedPredBypass: BooleanArray(" + IntToStr(N-1) + " downto 0) := (";
 	    for(int i = 0; i < N; i++)
 	    {
 		    if(i > 0)
 			    ret_string += ", ";
 		    vcCPElement* cpe = this->Get_Marked_Predecessor(i);
-		    ret_string += IntToStr(i) + " => " + IntToStr(this->Get_Marked_Predecessor_Marking(cpe));
+		    ret_string += IntToStr(i) + " => " + ((this->Get_Marked_Predecessor_Delay(cpe) > 0) ? "false" : "true");
 	    }
 	    ret_string += ");";
 	}
@@ -2686,8 +2687,8 @@ void vcCPPipelinedLoopBody::Add_Marked_Join_Point(vcTransition* jp, int join_mar
     {
       this->_marked_join_map[((vcTransition*)jp)].insert(jre);
  
-      jp->Add_Marked_Predecessor(jre); jp->Set_Marked_Predecessor_Marking(jre, join_marking);
-      jre->Add_Marked_Successor(jp); jre->Set_Marked_Successor_Marking(jp, join_marking);
+      jp->Add_Marked_Predecessor(jre); jp->Set_Marked_Predecessor_Delay(jre, join_marking);
+      jre->Add_Marked_Successor(jp); jre->Set_Marked_Successor_Delay(jp, join_marking);
     }
 }
 
@@ -2732,6 +2733,7 @@ void vcCPPipelinedLoopBody::Print(ostream& ofile)
       iter != _marked_join_map.end();
       iter++)
     {
+      vcTransition* u = (*iter).first;
       ofile <<  (*iter).first->Get_Id() << " " << 
 	vcLexerKeywords[__MARKEDJOIN] << " (" ;
       for(set<vcCPElement*>::iterator siter = (*iter).second.begin(), sfiter = (*iter).second.end();
@@ -2739,6 +2741,8 @@ void vcCPPipelinedLoopBody::Print(ostream& ofile)
 	  siter++)
 	{
 	  ofile << " " << (*siter)->Get_Id() << " ";
+	  // print the join delays.
+	  ofile << (*iter).first->Get_Marked_Predecessor_Delay(*siter) << " ";
 	}
       ofile << ")" << endl;
     }
@@ -3024,7 +3028,7 @@ void vcCPPipelinedLoopBody::Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map<
 			idx++)
 		{
 			vcCPElement* v = u->Get_Marked_Predecessor(idx);
-			int mv = u->Get_Marked_Predecessor_Marking(v);
+			int mv = u->Get_Marked_Predecessor_Delay(v);
 			
 			bool insert_v = true;
 			vector<vcCPElement*> del_vec;
@@ -3035,14 +3039,16 @@ void vcCPPipelinedLoopBody::Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map<
 			{
 				bool evict_w = false;
 				vcCPElement* w = *niter;
-				int mw = u->Get_Marked_Predecessor_Marking(w);
+				int mw = u->Get_Marked_Predecessor_Delay(w);
 
-				if((distance_map[v][w] > 0) && (mw <= mv))
+				assert(mv == mw);
+
+				if(distance_map[v][w] > 0)
 				{
 					insert_v = false;
 					break;
 				}
-				if((distance_map[w][v] > 0) && (mv <= mw))
+				if(distance_map[w][v] > 0)
 					evict_w = true;
 
 				if(evict_w)

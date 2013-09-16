@@ -4906,6 +4906,11 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 		return;
 	}
 
+	// continue from here only if it is an implicit variable
+	// reference.
+	if(!curr_expr->Is_Implicit_Variable_Reference())
+		return;
+
 	map<AaRoot*,int> slack_map;
 	set<int> slack_set;
 	map<int, AaAssignmentStatement*> slack_to_stmt_map;
@@ -4959,9 +4964,6 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 	vector<AaStatement*> delayed_versions;
 
 
-	// get here only if it is an implicit variable
-	// reference.
-	assert(curr_expr->Is_Implicit_Variable_Reference());
 
 	// if expression is target, then introduce delayed 
 	// statements after the stmt in which it occurs.

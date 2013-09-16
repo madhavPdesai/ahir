@@ -123,11 +123,15 @@ begin  -- Behave
           nstate := '0';
         end if;        
 
-        ackR(I) <= aR_var;
         lhs_clear <= lhs_clear_var;
         
         if(clk'event and clk = '1') then
           rhs_state <= nstate;
+	  if(reset = '1') then 
+		ackR(I) <= false;
+	  else
+          	ackR(I) <= aR_var;
+	  end if;
         end if;
      end process;
     end block RegFSM;

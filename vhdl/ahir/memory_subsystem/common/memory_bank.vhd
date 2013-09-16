@@ -62,10 +62,10 @@ begin  -- behave
   	process(read_time_stamp,write_time_stamp, read_enable, write_enable)
   	begin
       	if(write_enable = '1' and read_enable = '1') then
-		if(IsGreaterThan(read_time_stamp,write_time_stamp)) then
-        		write_has_priority <=   '1';
+		if(IsGreaterThan(write_time_stamp,read_time_stamp)) then
+        		write_has_priority <=   '0';
 		else
-			write_has_priority <= '0';
+			write_has_priority <= '1';
 		end if;
       	elsif(write_enable = '1') then
 		write_has_priority <= '1';
@@ -79,7 +79,7 @@ begin  -- behave
    end generate Tstampgen;
 
    NoTstampGen: if g_time_stamp_width <= 0 generate
-        write_has_priority <= not read_enable;
+        write_has_priority <= write_enable;
    end generate NoTstampGen;
 
 

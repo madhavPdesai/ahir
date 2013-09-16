@@ -31,7 +31,7 @@ void vcCPElement::Connect_CPElement_Group_Graph(vcControlPath* cp)
       vcCPElementGroup* my_group = cp->Get_Group(this->Get_Entry_Element());
       if(pred_group != NULL && pred_group != my_group)
 	{
-	  cp->Connect_Groups(pred_group,my_group, 0);
+	  cp->Connect_Groups(pred_group,my_group,false, 0);
 	}
     }
   
@@ -52,7 +52,7 @@ void vcCPElement::Connect_CPElement_Group_Graph(vcControlPath* cp)
 
       if(succ_group != NULL && succ_group != my_group)
 	{
-	  cp->Connect_Groups(my_group,succ_group, 0);
+	  cp->Connect_Groups(my_group,succ_group,false, 0);
 	}
     }
 
@@ -60,14 +60,14 @@ void vcCPElement::Connect_CPElement_Group_Graph(vcControlPath* cp)
   for(int idx = 0; idx < _marked_predecessors.size() ; idx++)
     {
       vcCPElement* pred = _marked_predecessors[idx]->Get_Exit_Element();
-      int marking = this->Get_Marked_Predecessor_Marking(_marked_predecessors[idx]);
+      int delay = this->Get_Marked_Predecessor_Delay(_marked_predecessors[idx]);
 
       vcCPElementGroup* pred_group = cp->Get_Group(pred);
       vcCPElementGroup* my_group = cp->Get_Group(this->Get_Entry_Element());
 
       if(pred_group != NULL && pred_group != my_group)
 	{
-	  cp->Connect_Groups(pred_group,my_group,marking);
+	  cp->Connect_Groups(pred_group,my_group,true, delay);
 	}
     }
   
@@ -80,13 +80,13 @@ void vcCPElement::Connect_CPElement_Group_Graph(vcControlPath* cp)
 	// it. Sorted out by making the bound transition in
 	// the loop-body as the successor.
       vcCPElement* succ = _marked_successors[idx]->Get_Entry_Element();
-      int marking = this->Get_Marked_Successor_Marking(_marked_successors[idx]);
+      int delay = this->Get_Marked_Successor_Delay(_marked_successors[idx]);
 
       vcCPElementGroup* succ_group = cp->Get_Group(succ);
       vcCPElementGroup* my_group = cp->Get_Group(this->Get_Exit_Element());
       if(succ_group != NULL && succ_group != my_group)
 	{
-	  cp->Connect_Groups(my_group,succ_group,marking);
+	  cp->Connect_Groups(my_group,succ_group,true, delay);
 	}
     }
 }
@@ -117,17 +117,17 @@ void vcCPBlock::Connect_CPElement_Group_Graph(vcControlPath* cp)
   this->vcCPElement::Connect_CPElement_Group_Graph(cp);
 }
 
-int  vcCPElementGroup::Get_Marked_Successor_Marking(vcCPElementGroup* g)
+int  vcCPElementGroup::Get_Marked_Successor_Delay(vcCPElementGroup* g)
 {
-	if(_marked_successor_markings.find(g) != _marked_successor_markings.end())
-		return(_marked_successor_markings[g]);
+	if(_marked_successor_delays.find(g) != _marked_successor_delays.end())
+		return(_marked_successor_delays[g]);
 	else
 		return(-1);
 }
-int  vcCPElementGroup::Get_Marked_Predecessor_Marking(vcCPElementGroup* g)
+int  vcCPElementGroup::Get_Marked_Predecessor_Delay(vcCPElementGroup* g)
 {
-	if(_marked_predecessor_markings.find(g) != _marked_predecessor_markings.end())
-		return(_marked_predecessor_markings[g]);
+	if(_marked_predecessor_delays.find(g) != _marked_predecessor_delays.end())
+		return(_marked_predecessor_delays[g]);
 	else
 		return(-1);
 }
@@ -366,13 +366,13 @@ void vcCPElementGroup::Print(ostream& ofile)
 }
 
 
-string vcCPElementGroup::Generate_Marked_Join_Marking_String()
+string vcCPElementGroup::Generate_Marked_Join_Bypass_String()
 {
 	string ret_string ;
 	int N = _marked_predecessors.size();
 	if(N > 0)
 	{
-	    ret_string = "constant markedPredMarking: IntegerArray(" + IntToStr(N-1) + " downto 0) := (";
+	    ret_string = "constant markedPredBypass: BooleanArray(" + IntToStr(N-1) + " downto 0) := (";
 	    int C = 0;
 	    for(set<vcCPElementGroup*>::iterator iter = _marked_predecessors.begin(), fiter = _marked_predecessors.end();
 		iter != fiter; iter++)
@@ -380,7 +380,7 @@ string vcCPElementGroup::Generate_Marked_Join_Marking_String()
 		    vcCPElementGroup* cpg = *iter;
 		    if(C > 0)
 			    ret_string += ", ";
-		    ret_string += IntToStr(C) + " => " + IntToStr(this->Get_Marked_Predecessor_Marking(cpg));
+		    ret_string += IntToStr(C) + " => " + ((this->Get_Marked_Predecessor_Delay(cpg) > 0) ? "false" : "true");
 		    C++;
 	    }
 	    ret_string += ");";
@@ -496,10 +496,10 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
       else if(is_true_join)
 	{
 	  bool marked_flag = (_marked_predecessors.size() > 0);
-	  string marked_marking;
+	  string marked_pred_bypass;
 	  if(marked_flag)
 	  {
-		marked_marking = this->Generate_Marked_Join_Marking_String();
+		marked_pred_bypass = this->Generate_Marked_Join_Bypass_String();
 	  }
 
 	  ofile << "cpelement_group_" << this->Get_Group_Index() << " : Block -- { " << endl;
@@ -509,7 +509,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 	  {
 	     ofile << "signal marked_predecessors: BooleanArray(" << _marked_predecessors.size()-1 
 			<< " downto 0);" << endl;
-	     ofile << marked_marking << endl;
+	     ofile << marked_pred_bypass << endl;
           }
 	  ofile << "-- }" << endl << "begin -- {" << endl;
 	  
@@ -543,7 +543,7 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
 		  ofile << "jNoI: marked_join -- {" << endl;
 	  ofile << "generic map(place_capacity => " << max_iterations_in_flight << "," << endl;
 	  if(marked_flag)
-		  ofile << " marked_marking => markedPredMarking, " << endl;
+		  ofile << " marked_predecessor_bypass => markedPredBypass, " << endl;
 	  ofile << "bypass => " << bypass_string << "," << endl
 		  << "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl
 		  << "port map( -- {"
@@ -715,7 +715,7 @@ void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole
 
       // connect whole to iter..
       if(this->_cpelement_groups.find(*iter) != this->_cpelement_groups.end())
-	this->Connect_Groups(whole,(*iter), 0);
+	this->Connect_Groups(whole,(*iter),false, 0);
 
     }
 
@@ -727,14 +727,14 @@ void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole
     {
       // remove part as a marked predecessor of iter..
       (*iter)->_marked_predecessors.erase(part);
-      (*iter)->_marked_predecessor_markings.erase(part);
+      (*iter)->_marked_predecessor_delays.erase(part);
 
       // connect whole to iter..
       if(this->_cpelement_groups.find(*iter) != this->_cpelement_groups.end())
       {
-        int marking = part->Get_Marked_Successor_Marking(*iter);
+        int delay = part->Get_Marked_Successor_Delay(*iter);
 	if(whole != (*iter)) // avoid self loops since they are redundant.
-		this->Connect_Groups(whole,(*iter), marking);
+		this->Connect_Groups(whole,(*iter), true, delay);
       }
     }
 
@@ -746,14 +746,14 @@ void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole
     {
       // remove part as a marked successor of iter..
       (*iter)->_marked_successors.erase(part);
-      (*iter)->_marked_successor_markings.erase(part);
+      (*iter)->_marked_successor_delays.erase(part);
 
       // connect iter to whole..
       if(this->_cpelement_groups.find(*iter) != this->_cpelement_groups.end())
       {
-        int marking = part->Get_Marked_Predecessor_Marking(*iter);
+        int delay = part->Get_Marked_Predecessor_Delay(*iter);
 	if(whole != (*iter)) // avoid self loops since they are redundant.
-		this->Connect_Groups((*iter), whole, marking);
+		this->Connect_Groups((*iter), whole, true, delay);
       }
     }
 
@@ -808,23 +808,23 @@ void vcControlPath::Add_To_Group(vcCPElement* cpe, vcCPElementGroup* group)
   _cpelement_to_group_map[cpe] = group;
 }
 
-void vcControlPath::Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to, int marking)
+void vcControlPath::Connect_Groups(vcCPElementGroup* from, vcCPElementGroup* to, bool marked_flag, int delay)
 {
-  if(marking == 0)
+  if(!marked_flag)
   {
   	from->Add_Successor(to);
   	to->Add_Predecessor(from);
   }
-  else if(marking > 0)
+  else 
   {
+	assert(delay >= 0);
+
   	from->Add_Marked_Successor(to);
-	from->Set_Marked_Successor_Marking(to,marking);
+	from->Set_Marked_Successor_Delay(to,delay);
 
   	to->Add_Marked_Predecessor(from);
-	to->Set_Marked_Predecessor_Marking(from,marking);
+	to->Set_Marked_Predecessor_Delay(from,delay);
   }
-  else
-	assert(0);
 }
 
 

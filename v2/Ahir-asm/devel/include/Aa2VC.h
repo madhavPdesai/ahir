@@ -7,7 +7,7 @@
 #define __Place(x) ofile << "$P[" << x << "] " << endl; 
 #define __J(x,y) ofile << x << " <-& (" << y << ")" << endl;
 // TODO: need to pass an integer to this..
-#define __MJ(x,y,epf) ofile << x << " o<-& (" << y <<  " " << (epf ? 2 : 1) << ")" << endl;
+#define __MJ(x,y,epf) ofile << x << " o<-& (" << y <<  " " << (epf ? 0 : 1) << ")" << endl;
 #define __F(x,y) ofile << x << " &-> (" << y << ")" << endl;
 
 #define __SST(u) u->Get_VC_Sample_Start_Transition_Name()
@@ -35,7 +35,7 @@
 #define __SelfReleaseSplitProtocolPattern {\
   ofile << "// self-release: " << endl;\
   __MJ(__SST(this),__SCT(this),false);\
-  __MJ(__UST(this),__UCT(this),false);}
+  __MJ(__UST(this),__UCT(this),true);}
 
 void Write_VC_Equivalence_Operator(string inst_name,
 				   string input,
@@ -167,7 +167,7 @@ void Write_VC_Pipe_Dependency(bool pipeline_flag,
 			      AaExpression* tgt,
 			      ostream& ofile);
 
-void Write_VC_Reenable_Joins(set<string>& active_reenable_points, string& rel_tran, bool extreme_pipelining_flag, ostream& ofile);
+void Write_VC_Reenable_Joins(set<string>& active_reenable_points, string& rel_tran, bool bypass_flag, ostream& ofile);
 
 void Write_VC_RAW_Release_Deps(AaRoot* succ, set<AaRoot*>& preds);
 

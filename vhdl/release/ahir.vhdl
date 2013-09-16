@@ -2109,7 +2109,7 @@ package BaseComponents is
      generic(place_capacity : integer := 1;
 		bypass: boolean := false;
       		name : string := "anon";
-		marked_marking: IntegerArray);
+		marked_predecessor_bypass: BooleanArray);
      port (preds      : in   BooleanArray;
            marked_preds      : in   BooleanArray;
            symbol_out : out  boolean;
@@ -6389,10 +6389,10 @@ begin  -- behave
   	process(read_time_stamp,write_time_stamp, read_enable, write_enable)
   	begin
       	if(write_enable = '1' and read_enable = '1') then
-		if(IsGreaterThan(read_time_stamp,write_time_stamp)) then
-        		write_has_priority <=   '1';
+		if(IsGreaterThan(write_time_stamp,read_time_stamp)) then
+        		write_has_priority <=   '0';
 		else
-			write_has_priority <= '0';
+			write_has_priority <= '1';
 		end if;
       	elsif(write_enable = '1') then
 		write_has_priority <= '1';
@@ -6406,7 +6406,7 @@ begin  -- behave
    end generate Tstampgen;
 
    NoTstampGen: if g_time_stamp_width <= 0 generate
-        write_has_priority <= not read_enable;
+        write_has_priority <= write_enable;
    end generate NoTstampGen;
 
 
@@ -9861,7 +9861,7 @@ use ahir.BaseComponents.all;
 use ahir.utilities.all;
 
 entity marked_join is
-  generic(place_capacity : integer := 1; bypass : boolean := true; name : string := "anon"; marked_marking: IntegerArray);
+  generic(place_capacity : integer := 1; bypass : boolean := true; name : string := "anon"; marked_predecessor_bypass: BooleanArray);
   port ( preds      : in   BooleanArray;
          marked_preds : in BooleanArray;
     	symbol_out : out  boolean;
@@ -9879,7 +9879,7 @@ architecture default_arch of marked_join is
   constant MH: integer := marked_preds'high;
   constant ML: integer := marked_preds'low;  
 
-  constant mmarking: IntegerArray(MH downto ML) := marked_marking;
+  constant mbypass: BooleanArray(MH downto ML) := marked_predecessor_bypass;
 
 begin  -- default_arch
   
@@ -9892,7 +9892,7 @@ begin  -- default_arch
 	pI: place_with_bypass
 		generic map(capacity => place_capacity, 
 				marking => 0,
-				name => name & ":" & Convert_To_String(I) )
+				name => name & ":(bypass):" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate bypassgen;
 
@@ -9900,7 +9900,7 @@ begin  -- default_arch
 	pI: place
 		generic map(capacity => place_capacity, 
 				marking => 0,
-				name => name & ":" & Convert_To_String(I) )
+				name => name & ":(no-bypass):" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
       end generate nobypassgen;
     end block;
@@ -9912,9 +9912,17 @@ begin  -- default_arch
 	signal place_pred: BooleanArray(0 downto 0);
     begin
 	place_pred(0) <= marked_preds(I);
-	mpI: place generic map(capacity => place_capacity, marking => mmarking(I),
-				 name => name & ":marked:" & Convert_To_String(I) )
+	bypassGen: if mbypass(I)  generate
+	   mpI: place_with_bypass generic map(capacity => place_capacity, marking => 1, 
+				 name => name & ":marked(bypass):" & Convert_To_String(I) )
 		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
+	end generate bypassGen;
+	NobypassGen: if (not mbypass(I))  generate
+	  mpI: place generic map(capacity => place_capacity, marking => 1, 
+				 name => name & ":marked(no-bypass):" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
+	end generate NobypassGen;
+
     end block;
   end generate mplacegen;
   
@@ -11587,11 +11595,15 @@ begin  -- Behave
           nstate := '0';
         end if;        
 
-        ackR(I) <= aR_var;
         lhs_clear <= lhs_clear_var;
         
         if(clk'event and clk = '1') then
           rhs_state <= nstate;
+	  if(reset = '1') then 
+		ackR(I) <= false;
+	  else
+          	ackR(I) <= aR_var;
+	  end if;
         end if;
      end process;
     end block RegFSM;
@@ -14764,12 +14776,13 @@ begin  -- default_arch
 	if(ackv) then
            output_register <= pipe_data_out;
         end if;
+
+	unload_ack <= ackv;
      end if;
   end process;
 
-  -- bypass.. this adds delay, but prevents a wasted cycle.
-  unload_ack <= load_reg;
-  read_data <= pipe_data_out when load_reg else output_register;
+  -- no bypass!
+  read_data <= output_register;
 
 end default_arch;
 -- The unshared operator uses a split protocol.
