@@ -2,6 +2,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
+library std;
+use std.standard.all;
+
 library ahir;
 use ahir.Types.all;
 use ahir.Subprograms.all;

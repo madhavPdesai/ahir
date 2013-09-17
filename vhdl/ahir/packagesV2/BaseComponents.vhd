@@ -373,6 +373,7 @@ package BaseComponents is
         no_arbitration: boolean := false;
         min_clock_period: boolean := false;
         num_reqs : integer;  -- how many requesters?
+	use_input_buffering: boolean;
         detailed_buffering_per_input: IntegerArray;
         detailed_buffering_per_output: IntegerArray
         );

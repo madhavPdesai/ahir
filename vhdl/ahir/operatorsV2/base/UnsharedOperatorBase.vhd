@@ -65,7 +65,7 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   -- join the two reqs..
   -----------------------------------------------------------------------------
-  rJ: join2 generic map (bypass => true)
+  rJ: join2 generic map (name => operator_id & ":join2:", bypass => true)
 		port map(pred0 => reqL, pred1 => reqR, symbol_out => fReq, clk => clk, reset => reset);
 
   

@@ -54,6 +54,8 @@ architecture Vanilla of UnarySharedOperator is
   constant tag_length: integer := Maximum(1,Ceil_Log2(num_reqs));
 
   constant debug_flag : boolean := false;
+
+  constant inbuf: IntegerArray(0 downto 0) := (0 => 0);
   
 begin  -- Behave
 
@@ -85,6 +87,8 @@ begin  -- Behave
       			no_arbitration => false,
       			min_clock_period => true,
       			num_reqs => num_reqs,
+			use_input_buffering => false,
+			detailed_buffering_per_input => inbuf,
       			detailed_buffering_per_output => detailed_buffering_per_output)
   		port map (
     				reqL => reqL,

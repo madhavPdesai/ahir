@@ -1,5 +1,9 @@
+library std;
+use std.standard.all;
+
 library ieee;
 use ieee.std_logic_1164.all;
+
 library ahir;
 use ahir.Types.all;
 use ahir.subprograms.all;

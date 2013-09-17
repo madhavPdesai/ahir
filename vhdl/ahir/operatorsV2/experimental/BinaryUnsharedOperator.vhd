@@ -61,7 +61,7 @@ begin  -- Behave
   -- (that is, the operation will fire when both appear)
   -----------------------------------------------------------------------------
   bothNonConst: if not (input_1_is_constant or input_2_is_constant) generate
-    reqJoin: join2 generic map (bypass => true)
+    reqJoin: join2 generic map (name => name & ":reqJoin:", bypass => true)
 		port map(pred0 => sample_req(0), 
 			pred1 => sample_req(1),
 			symbol_out => fReq, 

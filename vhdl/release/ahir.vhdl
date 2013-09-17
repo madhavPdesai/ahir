@@ -1985,6 +1985,7 @@ package BaseComponents is
         no_arbitration: boolean := false;
         min_clock_period: boolean := false;
         num_reqs : integer;  -- how many requesters?
+	use_input_buffering: boolean;
         detailed_buffering_per_input: IntegerArray;
         detailed_buffering_per_output: IntegerArray
         );
@@ -9697,8 +9698,12 @@ begin  -- Behave
   done <= ack;
 
 end Behave;
+library std;
+use std.standard.all;
+
 library ieee;
 use ieee.std_logic_1164.all;
+
 library ahir;
 use ahir.Types.all;
 use ahir.subprograms.all;
@@ -14501,7 +14506,7 @@ begin  -- Behave
   -----------------------------------------------------------------------------
   -- join the two reqs..
   -----------------------------------------------------------------------------
-  rJ: join2 generic map (name => "unshared-operator-join", bypass => true)
+  rJ: join2 generic map (name => operator_id & ":join2:", bypass => true)
 		port map(pred0 => reqL, pred1 => reqR, symbol_out => fReq, clk => clk, reset => reset);
 
   
@@ -18723,7 +18728,7 @@ begin  -- Behave
 	  sample_ack_1(I) <= ackL(I);
 	  sample_ack_2(I) <= ackL(I);
   
-	  j2:  join2 generic map(name => "generic-binary-join", bypass => true )
+	  j2:  join2 generic map(name => name & ":join2:", bypass => true )
 		  port map (pred0 => sample_req_1(I),
 			    pred1 => sample_req_2(I),
 			    symbol_out => reqL(I),
@@ -18773,6 +18778,7 @@ begin  -- Behave
       			no_arbitration => false,
       			min_clock_period => true,
       			num_reqs => num_reqs,
+			use_input_buffering => true,
 			detailed_buffering_per_input => detailed_buffering_per_input,
       			detailed_buffering_per_output => detailed_buffering_per_output)
   		port map (
@@ -18847,7 +18853,7 @@ begin  -- Behave
   -- (that is, the operation will fire when both appear)
   -----------------------------------------------------------------------------
   bothNonConst: if not (input_1_is_constant or input_2_is_constant) generate
-    reqJoin: join2 generic map (name => "anon", bypass => true)
+    reqJoin: join2 generic map (name => name & ":reqJoin:", bypass => true)
 		port map(pred0 => sample_req(0), 
 			pred1 => sample_req(1),
 			symbol_out => fReq, 
@@ -20553,7 +20559,8 @@ architecture Vanilla of UnarySharedOperator is
   constant tag_length: integer := Maximum(1,Ceil_Log2(num_reqs));
 
   constant debug_flag : boolean := false;
-  constant detailed_buffering_per_input : IntegerArray( (num_reqs-1) downto 0) := (others => '0');
+
+  constant inbuf: IntegerArray(0 downto 0) := (0 => 0);
   
 begin  -- Behave
 
@@ -20585,6 +20592,8 @@ begin  -- Behave
       			no_arbitration => false,
       			min_clock_period => true,
       			num_reqs => num_reqs,
+			use_input_buffering => false,
+			detailed_buffering_per_input => inbuf,
       			detailed_buffering_per_output => detailed_buffering_per_output)
   		port map (
     				reqL => reqL,
@@ -20598,6 +20607,9 @@ end Vanilla;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+
+library std;
+use std.standard.all;
 
 library ahir;
 use ahir.Types.all;

@@ -80,7 +80,7 @@ begin  -- Behave
 	  sample_ack_1(I) <= ackL(I);
 	  sample_ack_2(I) <= ackL(I);
   
-	  j2:  join2 generic map(bypass => true )
+	  j2:  join2 generic map(name => name & ":join2:", bypass => true )
 		  port map (pred0 => sample_req_1(I),
 			    pred1 => sample_req_2(I),
 			    symbol_out => reqL(I),
@@ -130,6 +130,7 @@ begin  -- Behave
       			no_arbitration => false,
       			min_clock_period => true,
       			num_reqs => num_reqs,
+			use_input_buffering => true,
 			detailed_buffering_per_input => detailed_buffering_per_input,
       			detailed_buffering_per_output => detailed_buffering_per_output)
   		port map (
