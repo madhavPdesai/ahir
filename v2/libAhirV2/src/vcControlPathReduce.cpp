@@ -145,9 +145,13 @@ bool vcCPElementGroup::Can_Absorb(vcCPElementGroup* g)
 	ret_val = false;
   else if(this->_is_bound_as_input_to_cp_function)
     ret_val = false;
+  else if(this->_is_delay_element)
+    ret_val = false;
   //else if(this->_is_bound_as_output_from_region)
     //ret_val = false;
   else if(g->_is_bound_as_output_from_cp_function)
+    ret_val = false;
+  else if(g->_is_delay_element)
     ret_val = false;
   else if(g->_has_input_transition)
     ret_val = false;
@@ -219,6 +223,9 @@ void vcCPElementGroup::Add_Element(vcCPElement* cpe)
       if(((vcTransition*)cpe)->Get_Is_Output())
 	_output_transitions.push_back((vcTransition*)cpe);
 
+
+ 	// is delay element?
+      this->_is_delay_element = (((vcTransition*)cpe)->Get_Is_Delay_Element());
 
       this->_has_input_transition  |= ((vcTransition*)cpe)->Get_Is_Input();
       this->_has_output_transition |= ((vcTransition*)cpe)->Get_Is_Output();
@@ -421,6 +428,19 @@ void vcCPElementGroup::Print_VHDL(ostream& ofile)
   {
       ofile << "-- Element group " << this->Get_VHDL_Id() << " is bound as output of CP function." << endl;
       return;
+  }
+
+  if(this->_is_delay_element)
+  {
+	assert(_predecessors.size() == 1);
+	assert(_marked_predecessors.size() == 0);
+        ofile << "-- Element group " << this->Get_VHDL_Id() << " is a control-delay." << endl;
+	ofile << "cp_element_" << this->Get_Group_Index() << "_delay: control_delay_element "
+		<< " generic map(delay_value => 1) " 
+		<< " port map(req => " << (*(_predecessors.begin()))->Get_VHDL_Id()
+		<< ", ack => " << this->Get_VHDL_Id()
+		<< ", clk => clk, reset =>reset);" << endl;
+	return;
   }
 
   bool is_pipelined = (this->_pipeline_parent != NULL);

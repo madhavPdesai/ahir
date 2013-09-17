@@ -13,6 +13,7 @@ all: SW HW
 TOVC:c2llvmbc llvmbc2aa  aalink aa2vc 
 VC2VHDL: vc2vhdl  vhdlsim
 AA2VHDLSIM: aa2vc  vc2vhdl  vhdlsim
+TOVHDL:TOVC vc2vhdl
 
 # llvm2aa opts: pipelined case, extract-do-while.
 #LLVM2AAOPTS=--storageinit=true
@@ -58,7 +59,7 @@ aa2vc: prog.linked.opt.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -D -S 4 -O -I 2 -v -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
+	vc2vhdl -S 4 -O -I 2 -v -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl

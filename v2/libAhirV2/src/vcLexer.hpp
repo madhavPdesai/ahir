@@ -146,6 +146,7 @@ public:
 	public: void mXNOR_OP(bool _createToken);
 	public: void mEQUIVALENCE_OP(bool _createToken);
 	public: void mOPEN(bool _createToken);
+	public: void mDELAY(bool _createToken);
 	public: void mSHRA_OP(bool _createToken);
 	public: void mUtoS_ASSIGN_OP(bool _createToken);
 	public: void mStoS_ASSIGN_OP(bool _createToken);

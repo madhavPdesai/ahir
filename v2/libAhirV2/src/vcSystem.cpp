@@ -1021,6 +1021,8 @@ void vcSystem::Print_VHDL_Pipe_Instances(ostream& ofile)
 void  vcSystem::Print_VHDL_Inclusions(ostream& ofile)
 {
   string sys_package = vcSystem::Get_Sys_Package_Name();
+  ofile << "library std;" << endl << "use std.standard.all;" << endl;
+
   ofile << "library ieee;\n\
 use ieee.std_logic_1164.all;\n			\
 library ahir;\n					\
@@ -1036,6 +1038,13 @@ use ahir.utilities.all;\n";
   {
 	ofile << "use ahir.functionLibraryComponents.all;" << endl;
   }
+
+  if(vcSystem::_enable_logging)
+  {
+  	ofile << "library " << vcSystem::_simulator_link_library << ";"  << endl;
+  	ofile << "use " << vcSystem::_simulator_link_library << ".LogUtilities.all;"  << endl;
+  }
+
   ofile << "library work;" << endl;
   ofile << "use work." << sys_package << ".all;" << endl;
 }

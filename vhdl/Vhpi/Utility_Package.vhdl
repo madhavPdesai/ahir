@@ -25,6 +25,9 @@ package Utility_Package is
   function To_Std_Logic(x: VhpiString) return std_logic; -- string to sl
   function To_String(x: std_logic) return VhpiString; -- string to sl
   function Convert_To_String(val : natural) return STRING; -- convert val to string.
+  function Convert_SLV_To_String(val : std_logic_vector) return STRING; -- convert val to string.
+  function To_Hex_Char (constant val: std_logic_vector)    return character;
+  function Convert_SLV_To_Hex_String(val : std_logic_vector) return STRING; -- convert val to string.  
 
 end package Utility_Package;
 
@@ -123,5 +126,79 @@ package body Utility_Package is
 	return result((pos-1) downto 1);
   end Convert_To_String;
 
+  function Convert_SLV_To_String(val : std_logic_vector) return STRING is
+	alias lval: std_logic_vector(1 to val'length) is val;
+        variable ret_var: string( 1 to lval'length);
+   begin
+        for I in lval'range loop
+                if(lval(I) = '1') then
+			ret_var(I) := '1';
+		elsif (lval(I) = '0') then
+			ret_var(I) := '0';
+		else
+			ret_var(I) := 'X';
+		end if;
+        end loop;
+        return(ret_var);
+   end Convert_SLV_To_String;
+
+  function To_Hex_Char (constant val: std_logic_vector)   return character  is
+    alias lval: std_logic_vector(1 to val'length) is val;
+    variable tvar : std_logic_vector(1 to 4);
+    variable ret_val : character;
+  begin
+    if(lval'length >= 4) then
+      tvar := lval(1 to 4);
+    else
+      tvar := (others => '0');
+      tvar(1 to lval'length) := lval;
+    end if;
+
+    case tvar is
+      when "0000" => ret_val := '0';
+      when "0001" => ret_val := '1';
+      when "0010" => ret_val := '2';                     
+      when "0011" => ret_val := '3';
+      when "0100" => ret_val := '4';
+      when "0101" => ret_val := '5';
+      when "0110" => ret_val := '6';                     
+      when "0111" => ret_val := '7';
+      when "1000" => ret_val := '8';
+      when "1001" => ret_val := '9';
+      when "1010" => ret_val := 'a';                     
+      when "1011" => ret_val := 'b';
+      when "1100" => ret_val := 'c';
+      when "1101" => ret_val := 'd';
+      when "1110" => ret_val := 'e';                     
+      when "1111" => ret_val := 'f';                                                               
+      when others => ret_val := 'f';
+    end case;
+
+    return(ret_val);
+  end To_Hex_Char;
+        
+  function Convert_SLV_To_Hex_String(val : std_logic_vector) return STRING is
+    alias lval: std_logic_vector(val'length downto 1) is val;
+    variable ret_var: string( 1 to Ceiling(lval'length,4));
+    variable hstr  : std_logic_vector(4 downto 1);
+    variable I : integer;
+  begin
+
+    I := 0;
+
+    while I < (lval'length/4) loop
+      hstr := lval(4*(I+1) downto (4*I)+1);
+      ret_var(ret_var'length - I) := To_Hex_Char(hstr);
+      I := (I + 1);
+    end loop;  -- I
+
+    hstr := (others => '0');
+    if(ret_var'length > (lval'length/4)) then
+      hstr((lval'length-((lval'length/4)*4)) downto 1) := lval(lval'length downto (4*(lval'length/4))+1);
+      ret_var(1) := To_Hex_Char(hstr);
+    end if;
+
+    return(ret_var);
+  end Convert_SLV_To_Hex_String;
 end Utility_Package;
 

@@ -421,6 +421,10 @@ void Write_VC_Load_Store_Dependency(bool pipeline_flag,
 {
   int ms_index = src->Get_VC_Memory_Space_Index();
 
+  string delay_trans = src->Get_VC_Name() + "_" + tgt->Get_VC_Name() + "_delay";
+  ofile << "$T [" << delay_trans << "] $delay" << endl;
+
+
   if(ms_index >= 0)
   { 
   	ofile << "// " << src->To_String() << (src->Is_Load() ? "(load)" : "(store)" )
@@ -434,8 +438,8 @@ void Write_VC_Load_Store_Dependency(bool pipeline_flag,
 
 	if(ms->Get_Is_Ordered())
 	{
-  		ofile << __SST(tgt) << " <-& (" 
-			<< __SCT(src) << ")" << endl;
+  		ofile << __SST(tgt) << " <-& (" << delay_trans << ")" << endl;
+  		ofile << delay_trans << " <-& (" << __SCT(src) << ")" << endl;
 		//if(pipeline_flag)
 		//{
 			//__MJ(src->Get_VC_Start_Transition_Name(), tgt->Get_VC_Active_Transition_Name());
@@ -443,8 +447,8 @@ void Write_VC_Load_Store_Dependency(bool pipeline_flag,
 	}
 	else
 	{
-  		ofile << __SST(tgt) << " <-& (" 
-			<< __UCT(src) << ")" << endl;
+  		ofile << __SST(tgt) << " <-& (" << delay_trans << ")" << endl;
+  		ofile << delay_trans << " <-& (" << __UCT(src) << ")" << endl;
 		//if(pipeline_flag)
 		//{
 			//__MJ(src->Get_VC_Start_Transition_Name(), tgt->Get_VC_Completed_Transition_Name());
@@ -506,7 +510,7 @@ void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
 		int l_ms_index = expr->Get_VC_Memory_Space_Index();
 		assert(ms_index == l_ms_index);
 
-		__MJ(__SST(expr), reenable_trans, false) // TODO: conservative
+		__MJ(__SST(expr), reenable_trans, false) // no bypass
 	}
 }
 
@@ -521,7 +525,7 @@ void Write_VC_Pipe_Dependency(bool pipeline_flag,
     {
       // src can restart only after target completes.
       string src_start = __SST(src);
-      __MJ(src_start, __UCT(tgt),false); // TODO: conservative
+      __MJ(src_start, __UCT(tgt),false); // no bypass
     }
 }
 

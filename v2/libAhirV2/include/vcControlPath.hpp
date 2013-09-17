@@ -306,6 +306,7 @@ class vcTransition: public vcCPElement
   bool _is_left_open;
   bool _is_entry_transition;
   bool _is_linked_to_non_local_dpe;
+  bool _is_delay_element;
 
 
 public:
@@ -321,6 +322,9 @@ public:
 
   void Set_Is_Left_Open(bool v) {this->_is_left_open = v;}
   bool Get_Is_Left_Open() {return(this->_is_left_open);}
+
+  void Set_Is_Delay_Element(bool v) {this->_is_delay_element = v;}
+  bool Get_Is_Delay_Element() {return(this->_is_delay_element);}
 
   void Set_Is_Tied_High(bool v) {this->_is_tied_high = v;}
   bool Get_Is_Tied_High() {return(this->_is_tied_high);}
@@ -823,6 +827,7 @@ class vcCPElementGroup: public vcRoot
   bool _is_fork;
   bool _is_merge;
   bool _is_branch;
+  bool _is_delay_element;
 
 
   bool _is_cp_entry;
@@ -864,6 +869,7 @@ public:
     _is_branch = false;
     _input_transition = NULL;
     _is_cp_entry = false;
+    _is_delay_element = false;
     _is_bound_as_input_to_cp_function = false;
     _is_bound_as_output_from_cp_function = false;
     _is_bound_as_input_to_region = false;

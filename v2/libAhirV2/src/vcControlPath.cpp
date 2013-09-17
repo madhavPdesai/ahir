@@ -613,6 +613,19 @@ void vcTransition::Print_VHDL(ostream& ofile)
       ofile << "-- left open:  " << this->Get_Exit_Symbol()  << endl;
       return;
   }
+  if(this->Get_Is_Delay_Element())
+  {
+	assert(this->Get_Number_Of_Predecessors() == 1);
+	assert(this->Get_Number_Of_Marked_Predecessors() == 0);
+
+	vcCPElement* pred = this->Get_Predecessor(0);
+	ofile << this->Get_Exit_Symbol() << "_delay: control_delay_element "
+		<< " generic map(delay_value => 1) " 
+		<< " port map(req => " << pred->Get_Exit_Symbol() 
+		<< ", ack => " << this->Get_Exit_Symbol()
+		<< ", clk => clk, reset =>reset);" << endl;
+	return;
+  }
 
   
   // explicit predecessors.. (other than "implicit" ones).

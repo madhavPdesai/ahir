@@ -25,11 +25,11 @@ begin  -- default_arch
   
 
   trigger_place_pred(0) <= trigger;
-  pTrig: place generic map(capacity => 1, marking => 0)
+  pTrig: place generic map(name => "pipeline-interlock-trigger", capacity => 1, marking => 0)
     port map(trigger_place_pred, symbol_out_sig,trigger_place,clk,reset);
 
   enable_place_pred(0) <= enable;
-  pEnable: place generic map(capacity => 1, marking => 1)
+  pEnable: place generic map(name => "pipeline-interlock-enable", capacity => 1, marking => 1)
     port map(enable_place_pred, symbol_out_sig,enable_place,clk,reset);
   
   symbol_out_sig(0) <= enable_place and trigger_place;

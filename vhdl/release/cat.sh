@@ -4,7 +4,9 @@ rm -f GhdlLink.vhdl
 rm -f ModelsimLink.vhdl
 cat ../Vhpi/Utility_Package.vhdl >> GhdlLink.vhdl
 cat ../Vhpi/Vhpi_Package.vhdl >> GhdlLink.vhdl
+cat ../Vhpi/LogUtilities.vhdl >> GhdlLink.vhdl
 cat ../Vhpi/Utility_Package.vhdl >> ModelsimLink.vhdl
+cat ../Vhpi/LogUtilities.vhdl >> ModelsimLink.vhdl
 cat ../Vhpi/Modelsim*.vhdl >> ModelsimLink.vhdl
 cat ../ahir/packagesV2/Types.vhd >> ahir.vhdl
 cat ../ahir/packagesV2/Utilities.vhd >> ahir.vhdl

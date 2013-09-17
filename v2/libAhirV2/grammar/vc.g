@@ -288,9 +288,10 @@ vc_CPTransition[vcCPElement* p] returns[vcCPElement* cpe]
    bool dead_flag = false;
    bool tie_high = false;
    bool leave_open = false;
+   bool delay_flag = false;
 }
 : TRANSITION id = vc_Label ( (DEAD {dead_flag = true;} ) | (TIED_HIGH {tie_high = true;})
-		| (LEFT_OPEN {leave_open = true;}) ) ?
+		| (LEFT_OPEN {leave_open = true;}) | (DELAY {delay_flag = true;} ) ) ?
   {
     cpe = NULL;
     if(p->Find_CPElement(id) == NULL) 
@@ -299,6 +300,7 @@ vc_CPTransition[vcCPElement* p] returns[vcCPElement* cpe]
 	((vcTransition*)cpe)->Set_Is_Dead(dead_flag);
 	((vcTransition*)cpe)->Set_Is_Tied_High(tie_high);
 	((vcTransition*)cpe)->Set_Is_Left_Open(leave_open);
+	((vcTransition*)cpe)->Set_Is_Delay_Element(delay_flag);
     }
   }
   ;
@@ -1847,6 +1849,7 @@ XNOR_OP          : "~^";
 EQUIVALENCE_OP    : "&/";
 
 OPEN             : "$open";
+DELAY            : "$delay";
 
 // signed version of SHR.
 // lhs and rhs are both considered
