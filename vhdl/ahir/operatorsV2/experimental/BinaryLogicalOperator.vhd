@@ -68,8 +68,8 @@ begin  -- Vanilla
 			port map(write_req => sample_req(1),
 				 write_ack => sample_ack(1),
 			         write_data => data_in((2*input_width)-1 downto input_width),
-				 read_req => in_data_1_valid,
-				 read_ack => in_data_1_accept,
+				 read_req => in_data_1_accept,
+				 read_ack => in_data_1_valid,
 				 read_data => in_data_1,
 				 kill => in_data_1_kill,
 				 clk => clk, reset => reset);	
@@ -90,8 +90,8 @@ begin  -- Vanilla
 			port map(write_req => sample_req(0),
 				 write_ack => sample_ack(0),
 			         write_data => data_in(input_width-1 downto 0),
-				 read_req => in_data_2_valid,
-				 read_ack => in_data_2_accept,
+				 read_req => in_data_2_accept,
+				 read_ack => in_data_2_valid,
 				 read_data => in_data_2,
 				 kill => in_data_2_kill,
 				 clk => clk, reset => reset);	

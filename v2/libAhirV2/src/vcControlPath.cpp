@@ -2291,15 +2291,21 @@ void vcCPForkBlock::Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int>
 			{
 				if(v->Is_Transition())
 				{
-					this->Remove_Join_Point((vcTransition*)v,u);
-					vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
-					+ u->Get_Label());
+					if(!((vcTransition*)v)->Get_Is_Delay_Element())
+					{
+						this->Remove_Join_Point((vcTransition*)v,u);
+						vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
+								+ u->Get_Label());
+					}
 				}
 				if(u->Is_Transition())
 				{
-					this->Remove_Fork_Point((vcTransition*)u,v);
-					vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
-							+ v->Get_Label());
+					if(!((vcTransition*)u)->Get_Is_Delay_Element())
+					{
+						this->Remove_Fork_Point((vcTransition*)u,v);
+						vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
+								+ v->Get_Label());
+					}
 				}
 			}
 		}
@@ -2318,16 +2324,22 @@ void vcCPForkBlock::Eliminate_Redundant_Dependencies()
 
 		if(u->Is_Transition())
 		{
-			this->Remove_Fork_Point((vcTransition*)u,v);
-			vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
-					+ v->Get_Label());
+			if(!((vcTransition*)u)->Get_Is_Delay_Element())
+			{
+				this->Remove_Fork_Point((vcTransition*)u,v);
+				vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
+						+ v->Get_Label());
+			}
 		}
 
 		if(v->Is_Transition())
 		{
-			this->Remove_Join_Point((vcTransition*)v,u);
-			vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
-					+ u->Get_Label());
+			if(!((vcTransition*)v)->Get_Is_Delay_Element())
+			{
+				this->Remove_Join_Point((vcTransition*)v,u);
+				vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
+						+ u->Get_Label());
+			}
 		}
 	}
 
@@ -2389,29 +2401,29 @@ bool vcCPForkBlock::Check_Structure()
 			ret_flag = false;
 
 			//
-	  // TODO: this needs to be cleaned up a bit.  We should really write
-	  //       a Check_Structure method for the Pipelined-Loop-Body instead
-	  //       of this hack.
-	  //
-	  //       For pipelined-loop bodies, all elements should be able to reach
-	  //       the multiple exit points from the body.  So multiple (reverse) DFS
-	  //       searches need to be performed.
-	  //       
-	  if(!this->Relaxed_Entry_Reachability_Checking())
-	  	vcSystem::Error("exit not reachable from every element in fork region " + this->Get_Hierarchical_Id());
-	  else
-	  	vcSystem::Warning("exit not reachable from every element in fork region " + this->Get_Hierarchical_Id());
-	  this->Print_Missing_Elements(visited_set);
-	}
+			// TODO: this needs to be cleaned up a bit.  We should really write
+			//       a Check_Structure method for the Pipelined-Loop-Body instead
+			//       of this hack.
+			//
+			//       For pipelined-loop bodies, all elements should be able to reach
+			//       the multiple exit points from the body.  So multiple (reverse) DFS
+			//       searches need to be performed.
+			//       
+			if(!this->Relaxed_Entry_Reachability_Checking())
+				vcSystem::Error("exit not reachable from every element in fork region " + this->Get_Hierarchical_Id());
+			else
+				vcSystem::Warning("exit not reachable from every element in fork region " + this->Get_Hierarchical_Id());
+			this->Print_Missing_Elements(visited_set);
+		}
 
 
-      for(int idx = 0; idx < _elements.size(); idx++)
-	{
-	  vcCPElement* cpe = this->_elements[idx];
-	  if(!cpe->Is_Transition())
-	    {
-	      if(cpe->Get_Number_Of_Successors() > 1)
+		for(int idx = 0; idx < _elements.size(); idx++)
 		{
+			vcCPElement* cpe = this->_elements[idx];
+			if(!cpe->Is_Transition())
+			{
+				if(cpe->Get_Number_Of_Successors() > 1)
+				{
 		  vcSystem::Error("non-transition cannot be a fork: " + cpe->Get_Hierarchical_Id());
 		}
 	      if(cpe->Get_Number_Of_Predecessors() > 1)

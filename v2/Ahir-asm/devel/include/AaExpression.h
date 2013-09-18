@@ -15,6 +15,7 @@ class AaStorageObject;
 class AaStatement;
 class AaAssignmentStatement;
 class AaDoWhileStatement;
+class AaSimpleObjectReference;
 class AaExpression: public AaRoot
 {
   // the containing scope of this expression
@@ -248,6 +249,7 @@ class AaExpression: public AaRoot
   virtual AaExpression* Get_Guard_Expression();
   virtual bool Get_Guard_Complement();
   virtual void Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& visited_elements, ostream& ofile);
+  virtual void Write_VC_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile);
 
   virtual bool  Is_NOP() {return(false);}
   void Write_VC_RAW_Release_Dependencies(AaExpression* expr, set<AaRoot*>& visited_elements);
@@ -279,6 +281,7 @@ class AaExpression: public AaRoot
   virtual string Get_Name() {return(this->Get_VC_Name());}
 
 
+  virtual bool Is_Part_Of_Pipeline() {return(this->_do_while_parent != NULL);}
   virtual bool Is_Part_Of_Extreme_Pipeline();
 };
 
@@ -1226,6 +1229,15 @@ class AaBinaryExpression: public AaExpression
   AaBinaryExpression(AaScope* scope_tpr, AaOperation operation, AaExpression* first, AaExpression* second);
   ~AaBinaryExpression();
   virtual void Print(ostream& ofile);
+  bool Is_Logical_Operation() 
+	{ 
+	  if((_operation == __OR) || (_operation == __AND)
+			| (_operation == __XOR) | (_operation == __NOR)
+			| (_operation == __NAND) | (_operation == __XNOR))
+		return(true); 
+	  else 
+		return(false);
+	} // AND/OR/XOR/XNOR/NAND/NOR are flagged.
 
   AaOperation Get_Operation() {return(this->_operation);}
   AaExpression* Get_First() {return(this->_first);}
@@ -1337,6 +1349,14 @@ class AaBinaryExpression: public AaExpression
   {
 	return(this->Get_VC_Sample_Start_Transition_Name());
   } 
+
+  virtual void Write_VC_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile);
+  void Write_VC_Links_BLE_Optimized(string hier_id, ostream& ofile);
+  void Write_VC_Control_Path_BLE_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
+		map<string,vector<AaExpression*> >& ls_map,
+		map<string, vector<AaExpression*> >& pipe_map,
+		AaRoot* barrier,
+		ostream& ofile);
 
 };
 

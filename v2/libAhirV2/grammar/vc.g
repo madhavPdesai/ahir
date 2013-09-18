@@ -767,6 +767,7 @@ vc_BinaryLogicalOperator_Instantiation[vcDataPath* dp] returns[vcDatapathElement
   (nand_id:NAND_OP  {op_id = nand_id->getText();}) |
   (xnor_id:XNOR_OP  {op_id = xnor_id->getText();}) 
  )
+ id = vc_Label 
  lpid: LPAREN 
     wid = vc_Identifier 
      {

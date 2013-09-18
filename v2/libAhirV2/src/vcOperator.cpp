@@ -1222,7 +1222,7 @@ void vcBinaryLogicalOperator::Print_VHDL(ostream& ofile)
       string block_name = "ble_" + this->Get_VHDL_Id() + "_wrap";
       ofile << block_name  << " : block -- { " << endl;
       ofile << "signal sample_req: BooleanArray(1 downto 0);" << endl;
-      ofile << "signal sample_ack: BooleanArray(1 downto 0); --}" << endl;
+      ofile << "signal sample_ack: BooleanArray(1 downto 0);" << endl;
       ofile << "signal update_req: Boolean;" << endl;
       ofile << "signal update_ack: Boolean;" << endl;
       ofile << "signal data_in: std_logic_vector(" 
@@ -1291,10 +1291,10 @@ void vcBinaryLogicalOperator::Print_VHDL(ostream& ofile)
       ofile << " input_2_is_constant => " << (this->_y->Is("vcConstantWire") ? "true" : "false")
 			<< "," << endl;
       ofile << " output_buffer_depth => " << this->Get_Output_Buffering(this->_z) << "" << endl;
-      ofile << " -- } " << endl << ");" << endl;
+      ofile << " -- } " << endl << ")" << endl;
       ofile << " port map ( -- { " << endl;
       ofile << " sample_req => sample_req," << endl;
-      ofile << " sample_ack => sample_req," << endl;
+      ofile << " sample_ack => sample_ack," << endl;
       ofile << " update_req => update_req," << endl;
       ofile << " update_ack => update_ack," << endl;
       ofile << " data_in => data_in," << endl;

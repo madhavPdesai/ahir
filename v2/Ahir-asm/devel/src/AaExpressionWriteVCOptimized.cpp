@@ -119,6 +119,16 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 	}
 }
 
+void AaExpression::Write_VC_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile)
+{
+	AaRoot* root = sexpr->Get_Root_Object();
+	if(visited_elements.find(root) != visited_elements.end())
+	{
+		__J(__SST(this), __UCT(root));
+		__J(__UST(this), __UCT(root));
+	}
+}
+
 void AaExpression::Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& visited_elements, ostream& ofile)
 {
 	if(this->Get_Guard_Expression() != NULL)
@@ -127,13 +137,9 @@ void AaExpression::Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& v
 		AaExpression* expr = this->Get_Guard_Expression();
 		if(expr->Is("AaSimpleObjectReference"))
 		{
+
 			AaSimpleObjectReference* sexpr = (AaSimpleObjectReference*) expr;
-			AaRoot* root = sexpr->Get_Root_Object();
-			if(visited_elements.find(root) != visited_elements.end())
-			{
-				__J(__SST(this), __UCT(root));
-				__J(__UST(this), __UCT(root));
-			}
+			this->Write_VC_Forward_Dependency(sexpr,visited_elements,ofile);
 		}
 		else
 		{
@@ -1265,6 +1271,7 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
 
 			__SelfReleaseSplitProtocolPattern
 		}
+		visited_elements.insert(this);
 	}
 
 }
@@ -1360,6 +1367,7 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
 					__SCT(this), true); // bypass
 			__SelfReleaseSplitProtocolPattern
 		}
+		visited_elements.insert(this);
 	}
 }
 void AaUnaryExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
@@ -1380,10 +1388,16 @@ void AaBinaryExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofile
 	if(!this->Is_Constant())
 	{
 
+		ofile << "// " << this->To_String() << endl;
+		if(this->Is_Logical_Operation())
+		{
+			this->Write_VC_Links_BLE_Optimized(hier_id, ofile);
+			return;
+		}
+
 		this->_first->Write_VC_Links_Optimized(hier_id, ofile);
 		this->_second->Write_VC_Links_Optimized(hier_id, ofile);
 
-		ofile << "// " << this->To_String() << endl;
 
 
 		string sample_regn = this->Get_VC_Name() + "_Sample";
@@ -1407,6 +1421,157 @@ void AaBinaryExpression::Write_VC_Links_As_Target_Optimized(string hier_id, ostr
 	assert(0);
 }
 
+void AaBinaryExpression::Write_VC_Links_BLE_Optimized(string hier_id, ostream& ofile)
+{
+	this->_first->Write_VC_Links_Optimized(hier_id, ofile);
+	this->_second->Write_VC_Links_Optimized(hier_id, ofile);
+
+	vector<AaExpression*> srcs;
+	srcs.push_back(this->_first); srcs.push_back(this->_second);
+
+	vector<string> reqs,acks;
+
+	for(int i = 0; i < 2; i++)
+	{
+		AaExpression* src = srcs[i];
+		if(!src->Is_Constant())
+		{
+			string sample_regn = this->Get_VC_Name() + "_sample_" + src->Get_VC_Name();
+			string sample_hier_id = Augment_Hier_Id(hier_id,sample_regn);
+			reqs.push_back(sample_hier_id + "/req");
+			acks.push_back(sample_hier_id + "/ack");
+		
+		}
+		else
+		{
+			string req_name = this->Get_VC_Name() + "_sample_" + src->Get_VC_Name() + "_req";
+			string ack_name = this->Get_VC_Name() + "_sample_" + src->Get_VC_Name() + "_req";
+			reqs.push_back(hier_id + "/" + req_name);
+			acks.push_back(hier_id + "/" + ack_name);
+		}
+	}
+
+	string update_regn = this->Get_VC_Name() + "_Update";
+	string update_hier_id = Augment_Hier_Id(hier_id,update_regn);
+
+	reqs.push_back(update_hier_id + "/req");
+	acks.push_back(update_hier_id + "/ack");
+
+	Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
+}
+
+// version for binary logical operation.
+void AaBinaryExpression::Write_VC_Control_Path_BLE_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
+		map<string,vector<AaExpression*> >& ls_map,
+		map<string, vector<AaExpression*> >& pipe_map,
+		AaRoot* barrier,
+		ostream& ofile)
+{
+	ofile << "// " << this->To_String() << endl;
+	this->_first->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier, ofile);
+	this->_second->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier, ofile);
+	/*
+	   ;;[Sample_s1] {
+	   $T [s1_sr] $T [s1_sc]
+	   }
+	   $T [Sample_s1_start]
+	   $T [Sample_s1_complete]
+	   Sample_s1_start -> Sample_s1
+	   Sample_s1_complete <- Sample_s1
+	   ;;[Sample_s2] {
+	   $T [s2_sr] $T [s2_sc]
+	   }
+	   $T [Sample_s2_start]
+	   $T [Sample_s2_complete]
+	   Sample_s2_start -> Sample_s2
+	   Sample_s2_complete <- Sample_s2
+	   __UCT(s1) -> Sample_s1
+	   __UCT(s2) -> Sample_s2
+	   __UST(s1) o<- (Sample_s1_complete 1)
+	   __UST(s2) o<- (Sample_s2_complete 1)
+
+	   ;;[Update] {
+	   $T[r] $T[a]
+	   }
+	   $T [Update_complete]
+	   Update_complete <- Update
+	   Update_start -> Update
+	   Update_start o<- (Update_complete 0)
+	   */
+	vector<AaExpression*> srcs;
+	srcs.push_back(this->_first); srcs.push_back(this->_second);
+
+	for(int i = 0; i < 2; i++)
+	{
+		AaExpression* src = srcs[i];
+		if(!src->Is_Constant())
+		{
+			__T(__SST_I(this,i));
+			__T(__SCT_I(this,i));
+
+			string sample_region = this->Get_VC_Name() + "_sample_" + src->Get_VC_Name();
+			ofile << ";;[" << sample_region << "] {" << endl;
+			ofile << "$T [req] $T[ack] " << endl;
+			ofile << "}" << endl;
+			string sample_start = sample_region + "_completed";
+			string sample_complete = sample_region + "_completed";
+			__J(__SST_I(this,i), __UCT(src));
+			__F(__SST_I(this,i), sample_region);
+			__J(__SCT_I(this,i), sample_region);
+			if(pipeline_flag)
+			{
+				__MJ(__SST_I(this,i), __SCT_I(this,i),false); // no bypass.	
+			}
+
+		}
+		else
+		{
+			string req_name = this->Get_VC_Name() + "_sample_" + src->Get_VC_Name() + "_req";
+			string ack_name = this->Get_VC_Name() + "_sample_" + src->Get_VC_Name() + "_ack";
+			ofile << "$T [" << req_name << "] $tied_high $T[ " << ack_name << "] $left_open " << endl;
+		}
+	}
+
+	__T(__UST(this));
+	__T(__UCT(this));
+	string update_region = this->Get_VC_Name() + "_Update";
+	ofile << ";;[" << update_region << "] {" << endl;
+	ofile << "$T[req] $T[ack]" << endl;
+	ofile << "}" << endl;
+	__F(__UST(this), update_region);
+	__J(__UCT(this), update_region);
+
+	if(pipeline_flag)
+		__MJ(__UST(this), __UCT(this), true); // bypass
+
+	this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
+	visited_elements.insert(this);
+}
+
+
+void AaBinaryExpression::Write_VC_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile)
+{
+	if(this->Is_Logical_Operation())
+	{
+		AaRoot* root = sexpr->Get_Root_Object();
+		if(visited_elements.find(root) != visited_elements.end())
+		{
+			if(!this->_first->Is_Constant())
+			{
+				__J(__SST_I(this,0),__UCT(root))
+			}
+			if(!this->_second->Is_Constant())
+			{
+				__J(__SST_I(this,1),__UCT(root))
+			}
+		}
+	}
+	else
+	{
+		this->AaExpression::Write_VC_Forward_Dependency(sexpr, visited_elements, ofile);
+	}
+}
+
 void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 		map<string,vector<AaExpression*> >& ls_map,
 		map<string, vector<AaExpression*> >& pipe_map,
@@ -1416,8 +1581,16 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 	if(!this->Is_Constant())
 	{
 
-		ofile << "// " << this->To_String() << endl;
+		if(this->Is_Logical_Operation())
+		{
+			// the completes of the two sources provide upto two triggers
+			// to the binary expression.
+			this->Write_VC_Control_Path_BLE_Optimized(pipeline_flag, visited_elements, ls_map, pipe_map, barrier,ofile);
+			return;
+		}
 
+
+		ofile << "// " << this->To_String() << endl;
 		__DeclTransSplitProtocolPattern;
 
 		if(barrier != NULL)
@@ -1427,7 +1600,6 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 		}
 
 		this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
-
 		this->_first->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier, ofile);
 		this->_second->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier, ofile);
 
@@ -1463,6 +1635,7 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 
 			__SelfReleaseSplitProtocolPattern
 		}
+		visited_elements.insert(this);
 	}
 }
 
@@ -1566,6 +1739,7 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 
 		__SelfReleaseSplitProtocolPattern
 	}
+	visited_elements.insert(this);
 }
 
 void AaTernaryExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,

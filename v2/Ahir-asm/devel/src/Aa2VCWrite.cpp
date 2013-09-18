@@ -176,19 +176,25 @@ void Write_VC_Binary_Operator(AaOperation op,
 			      string target_name,
 			      AaType* target_type,
 			      string guard_string,
+				bool add_hash,
 			      ostream& ofile)
 {
   string op_name;
 
-  if(op == __OR) op_name = "|";
-  else if(op == __AND) op_name = "&";
-  else if(op == __XOR) op_name = "^";
-  else if(op == __NOR) op_name = "~|";
-  else if(op == __NAND) op_name = "~&";
-  else if(op == __XNOR) op_name = "~^";
+  if(add_hash) 
+	op_name = "# ";
+
+  // Logical operations.. add-hash 
+  // if add_hash is true.
+  if(op == __OR) op_name += "|";
+  else if(op == __AND) op_name += "&";
+  else if(op == __XOR) op_name += "^";
+  else if(op == __NOR) op_name += "~|";
+  else if(op == __NAND) op_name += "~&";
+  else if(op == __XNOR) op_name += "~^";
   else if(op == __SHL) op_name = "<<";
-  //\todo: for SHR, if the types of src1,src2 are integer,
-  //       then we use the signed version.
+  //  for SHR, if the types of src1,src2 are integer,
+  //  then we use the signed version.
   else if(op == __SHR)
     {
       if(target_type->Is("AaIntType"))
@@ -203,7 +209,7 @@ void Write_VC_Binary_Operator(AaOperation op,
   else if(op == __EQUAL) op_name = "==";
   else if(op == __NOTEQUAL) op_name = "!=";
   //
-  //\todo: for comparisons, if the types of src1,src2 are integer,
+  // for comparisons, if the types of src1,src2 are integer,
   //       then we use the signed version.
   else if(op == __LESS)
     {

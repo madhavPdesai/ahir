@@ -3807,67 +3807,67 @@ void AaBinaryExpression::Write_VC_Control_Path(ostream& ofile)
   if(!this->Is_Constant())
     {
 
-      ofile << "// " << this->To_String() << endl;
+	    ofile << "// " << this->To_String() << endl;
 
-      ofile << ";;[" << this->Get_VC_Name() << "] { // binary expression " << endl;
+	    ofile << ";;[" << this->Get_VC_Name() << "] { // binary expression " << endl;
 
-      ofile << "||[" << this->Get_VC_Name() << "_inputs] { " << endl;
-      this->_first->Write_VC_Control_Path(ofile);
-      this->_second->Write_VC_Control_Path(ofile);
-      ofile << "}" << endl;
+	    ofile << "||[" << this->Get_VC_Name() << "_inputs] { " << endl;
+	    this->_first->Write_VC_Control_Path(ofile);
+	    this->_second->Write_VC_Control_Path(ofile);
+	    ofile << "}" << endl;
 
-	ofile << "||[SplitProtocol] { " << endl;
-	ofile << ";;[Sample] { " << endl;
-      	ofile << "$T [rr] $T [ra]" << endl;
-	ofile << "}" << endl;
-	ofile << ";;[Update] { " << endl;
-      	ofile << "$T [cr] $T [ca]" << endl;
-	ofile << "}" << endl;
-	ofile << "}" << endl;
+	    ofile << "||[SplitProtocol] { " << endl;
+	    ofile << ";;[Sample] { " << endl;
+	    ofile << "$T [rr] $T [ra]" << endl;
+	    ofile << "}" << endl;
+	    ofile << ";;[Update] { " << endl;
+	    ofile << "$T [cr] $T [ca]" << endl;
+	    ofile << "}" << endl;
+	    ofile << "}" << endl;
 
-      ofile << "}" << endl;
+	    ofile << "}" << endl;
     }
 }
 
 void AaBinaryExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
-  if(this->Is_Constant())
-    {
+	if(this->Is_Constant())
+	{
 
-      ofile << "// " << this->To_String() << endl;
+		ofile << "// " << this->To_String() << endl;
 
 
 
-      Write_VC_Constant_Declaration(this->Get_VC_Constant_Name(),
-				    this->Get_Type(),
-				    this->Get_Expression_Value(),
-				    ofile);
-    }
-  else
-    {
-      this->_first->Write_VC_Constant_Wire_Declarations(ofile);
-      this->_second->Write_VC_Constant_Wire_Declarations(ofile);
-    }
+		Write_VC_Constant_Declaration(this->Get_VC_Constant_Name(),
+				this->Get_Type(),
+				this->Get_Expression_Value(),
+				ofile);
+	}
+	else
+	{
+		this->_first->Write_VC_Constant_Wire_Declarations(ofile);
+		this->_second->Write_VC_Constant_Wire_Declarations(ofile);
+	}
 }
 void AaBinaryExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
 
 
-  if(!this->Is_Constant())
-    {
-      this->_first->Write_VC_Wire_Declarations(false,ofile);
-      this->_second->Write_VC_Wire_Declarations(false, ofile);
-      
-      if(!this->Is_Constant() && !skip_immediate)
+	if(!this->Is_Constant())
 	{
+		this->_first->Write_VC_Wire_Declarations(false,ofile);
+		this->_second->Write_VC_Wire_Declarations(false, ofile);
 
-	  ofile << "// " << this->To_String() << endl;
+		if(!this->Is_Constant() && !skip_immediate)
+		{
 
-	  Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Driver_Name(),
-						 this->Get_Type(),
-						 ofile);
+			ofile << "// " << this->To_String() << endl;
+
+			Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Driver_Name(),
+					this->Get_Type(),
+					ofile);
+		}
 	}
-    }
 
 
 
@@ -3876,36 +3876,41 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 {
 
 
-  if(!this->Is_Constant())
-    {
+	if(!this->Is_Constant())
+	{
 
-      this->_first->Write_VC_Datapath_Instances(NULL,ofile);
-      this->_second->Write_VC_Datapath_Instances(NULL,ofile);
+		this->_first->Write_VC_Datapath_Instances(NULL,ofile);
+		this->_second->Write_VC_Datapath_Instances(NULL,ofile);
 
-      ofile << "// " << this->To_String() << endl;
+		ofile << "// " << this->To_String() << endl;
 
-      string dpe_name = this->Get_VC_Datapath_Instance_Name();
-      string src_1_name = _first->Get_VC_Driver_Name();
-      string src_2_name = _second->Get_VC_Driver_Name();
-      string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
+		string dpe_name = this->Get_VC_Datapath_Instance_Name();
+		string src_1_name = _first->Get_VC_Driver_Name();
+		string src_2_name = _second->Get_VC_Driver_Name();
+		string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
 
-      Write_VC_Binary_Operator(this->Get_Operation(),
-		      dpe_name,
-		      src_1_name,
-		      _first->Get_Type(),
-		      src_2_name,
-		      _second->Get_Type(),
-		      tgt_name,
-		      (target != NULL ? target->Get_Type() : this->Get_Type()),
-				  this->Get_VC_Guard_String(),
-			       ofile);
-      // extreme pipelining.
-      if(this->Is_Part_Of_Extreme_Pipeline())
-      {
-	      ofile << "$buffering  $in " << dpe_name << " "
-		      << src_1_name << " 2" << endl;
-	      ofile << "$buffering  $in " << dpe_name << " "
-		      << src_2_name << " 2" << endl;
+
+		bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag;
+
+		Write_VC_Binary_Operator(this->Get_Operation(),
+				dpe_name,
+				src_1_name,
+				_first->Get_Type(),
+				src_2_name,
+				_second->Get_Type(),
+				tgt_name,
+				(target != NULL ? target->Get_Type() : this->Get_Type()),
+				this->Get_VC_Guard_String(),
+				add_hash,
+				ofile);
+
+		// extreme pipelining.
+		if(this->Is_Part_Of_Extreme_Pipeline())
+		{
+			ofile << "$buffering  $in " << dpe_name << " "
+				<< src_1_name << " 2" << endl;
+			ofile << "$buffering  $in " << dpe_name << " "
+				<< src_2_name << " 2" << endl;
 	      ofile << "$buffering  $out " << dpe_name << " "
 		      << tgt_name << " 2" << endl;
       }
@@ -4021,6 +4026,8 @@ void AaTernaryExpression::Write_VC_Control_Path(ostream& ofile)
   // if _test is constant, print dummy.
   if(!this->Is_Constant())
     {
+
+	// TODO: ternary will be triggered from three points. fork region.
       ofile << ";;[" << this->Get_VC_Name() << "] { // ternary expression: " << endl;
       ofile << "||[" << this->Get_VC_Name() << "_inputs] { " << endl;
       this->_test->Write_VC_Control_Path(ofile);

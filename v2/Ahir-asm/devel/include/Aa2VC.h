@@ -12,6 +12,9 @@
 
 #define __SST(u) u->Get_VC_Sample_Start_Transition_Name()
 #define __SCT(u) u->Get_VC_Sample_Completed_Transition_Name()
+#define __SST_I(u,i) (u->Get_VC_Sample_Start_Transition_Name() + "_" + IntToStr(i))
+#define __SCT_I(u,i) (u->Get_VC_Sample_Completed_Transition_Name() + "_" + IntToStr(i))
+
 #define __UST(u) u->Get_VC_Update_Start_Transition_Name()
 #define __UCT(u) u->Get_VC_Update_Completed_Transition_Name()
 
@@ -85,6 +88,7 @@ void Write_VC_Binary_Operator(AaOperation op,
 			      string target_name,
 			      AaType* target_type,
 			     string guard_string,
+			      bool add_hash,			
 			      ostream& ofile);
 void Write_VC_Call_Operator(string inst_name, 
 			    string module_name, 

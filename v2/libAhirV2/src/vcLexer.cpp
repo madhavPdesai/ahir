@@ -3287,7 +3287,7 @@ void vcLexer::mWHITESPACE(bool _createToken) {
 		case 0xa /* '\n' */ :
 		{
 			match('\n' /* charlit */ );
-#line 1887 "vc.g"
+#line 1888 "vc.g"
 			newline();
 #line 3293 "vcLexer.cpp"
 			break;
@@ -3298,7 +3298,7 @@ void vcLexer::mWHITESPACE(bool _createToken) {
 		}
 		}
 		}
-#line 1888 "vc.g"
+#line 1889 "vc.g"
 		
 			_ttype = ANTLR_USE_NAMESPACE(antlr)Token::SKIP; 
 		
@@ -3337,11 +3337,11 @@ void vcLexer::mSINGLELINECOMMENT(bool _createToken) {
 		_loop468:;
 		} // ( ... )*
 		match('\n' /* charlit */ );
-#line 1896 "vc.g"
+#line 1897 "vc.g"
 		newline();
 #line 3343 "vcLexer.cpp"
 		}
-#line 1898 "vc.g"
+#line 1899 "vc.g"
 		
 			_ttype = ANTLR_USE_NAMESPACE(antlr)Token::SKIP; 
 		

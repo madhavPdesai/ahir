@@ -3822,6 +3822,7 @@ void AaSwitchStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			       expr->Get_VC_Constant_Name() + "_cmp",
 			       expr->Get_Type(),
 			       this->Get_VC_Guard_String(),
+				false,
 			       ofile);
 
       br_input.push_back(pair<string,AaType*>(expr->Get_VC_Constant_Name() + "_cmp",
