@@ -254,8 +254,9 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 {
 	if(!this->Is_Constant())
 	{
-		__DeclTransSplitProtocolPattern
 		ofile << "// " << this->To_String() << endl;
+
+		__DeclTransSplitProtocolPattern
 		// if this is a statement...
 		if(this->_object->Is_Interface_Object())
 		{
@@ -383,6 +384,8 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 		AaRoot* barrier,
 		ostream& ofile)
 {
+		
+        ofile << "// (as target) " << this->To_String() << endl;
 
 	if(this->Is_Implicit_Variable_Reference() || this->_object->Is_Interface_Object())
 	{
@@ -427,7 +430,6 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 	else if(this->_object->Is("AaPipeObject"))
 	{
 		__DeclTransSplitProtocolPattern;
-		ofile << "// " << this->To_String() << endl;
 		if(barrier != NULL)
 		{
 			ofile << "// barrier " << endl;
@@ -672,6 +674,7 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 			if(this->_object->Is_Storage_Object())
 			{
 				// please load the object.
+				ofile << "// pointer-reference " << endl;
 				this->_pointer_ref->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier, ofile);
 				if(!this->_pointer_ref->Is_Constant())
 				{
@@ -1619,6 +1622,7 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 	if(!this->Is_Constant())
 	{
 
+		ofile << "// " << this->To_String() << endl;
 		bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
 		if(add_hash)
 		{
@@ -1629,7 +1633,6 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 		}
 
 
-		ofile << "// " << this->To_String() << endl;
 		__DeclTransSplitProtocolPattern;
 
 		if(barrier != NULL)

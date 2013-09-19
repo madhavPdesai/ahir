@@ -97,6 +97,8 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       // take care of the guard
       if(this->_guard_expression)
 	{
+
+		ofile << "// Guard expression" << endl;
 	  // guard expression calculation
 	  this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
 	}
@@ -106,6 +108,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       // dependencies..
       if(!this->_source->Is_Constant())
 	{
+	  ofile << "// Source expression" << endl;
 	  this->_source->Write_VC_Control_Path_Optimized(pipeline_flag,
 							 visited_elements,
 							 ls_map,pipe_map, barrier,
@@ -115,6 +118,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  
       
 
+      ofile << "// Target expression" << endl;
       this->_target->Write_VC_Control_Path_As_Target_Optimized(pipeline_flag,
 							       visited_elements,
 							       ls_map,pipe_map,barrier,
@@ -132,6 +136,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       if(source_is_implicit && target_is_implicit)
 	// both are implicit.. introduce an interlock.
 	{
+	  ofile << "// Interlock " << endl;
 	  __DeclTransSplitProtocolPattern
 
 	  ofile <<  ";;[" << this->Get_VC_Name() << "_Sample] { " << endl;
@@ -234,6 +239,8 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 	if(!this->_guard_expression->Is_Constant())
 	{
+
+		ofile << "// Guard expression" << endl;
       		this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
       		__J(__SST(this),__UCT(this->_guard_expression));
 		if(pipeline_flag)
@@ -246,7 +253,10 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
   // first the input arguments... zipping through.
   for(int idx = 0; idx < _input_args.size(); idx++)
+  {
+    ofile << "// Call input argument " << idx << endl;
     _input_args[idx]->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
+  }
 
 
   for(int idx = 0; idx < _input_args.size(); idx++)
@@ -286,6 +296,7 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
     {
       AaExpression* expr = _output_args[idx];
 
+      ofile << "// Call output argument " << idx << endl;
       expr->Write_VC_Control_Path_As_Target_Optimized(pipeline_flag,
 						      visited_elements,ls_map,pipe_map,barrier,ofile);
       if(!expr->Is_Implicit_Variable_Reference())

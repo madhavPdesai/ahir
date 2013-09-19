@@ -2,18 +2,9 @@
 $pipe out_port : $uint<16> $depth 1
 $storage mem:$array [64] $of $uint<16>
 
-$storage rfile_0:$array [4] $of $uint<16>
-$storage rfile_1:$array [4] $of $uint<16>
-$storage rfile_2:$array [4] $of $uint<16>
-$storage rfile_3:$array [4] $of $uint<16>
+$storage reg:$array [16] $of $uint<16>
 
 $storage pc: $uint<16>
-$storage npc: $uint<16>
-
-$storage r1_val: $uint<16>
-$storage r2_val: $uint<16>
-$storage r3_val: $uint<16>
-$storage new_r1_val: $uint<16>
 
 $module [run] 
 $in ()
@@ -23,25 +14,12 @@ $is
   	$branchblock [core] 
   	{
 		pc := 0
-		rfile_0[0] := 0 
-		rfile_0[1] := 0 
-		rfile_0[2] := 0 
-		rfile_0[3] := 0 
-
-		rfile_1[0] := 0 
-		rfile_1[1] := 0 
-		rfile_1[2] := 0 
-		rfile_1[3] := 0 
-
-		rfile_2[0] := 0 
-		rfile_2[1] := 0 
-		rfile_2[2] := 0 
-		rfile_2[3] := 0 
-
-		rfile_3[0] := 0 
-		rfile_3[1] := 0 
-		rfile_3[2] := 0 
-		rfile_3[3] := 0 
+		$merge $entry loopback
+			$phi I := ($bitcast ($uint<4>) 0) $on $entry NI  $on loopback
+		$endmerge
+		reg[I] := 0 
+		NI := (I+1)
+		$if (I < 15) $then $place [loopback] $endif
 
     		$dopipeline $depth 4 $buffering 2
 		
@@ -69,33 +47,7 @@ $is
         	op4 := (op == 4) op5 := (op == 5) op6 := (op == 6) op7 := (op ==7)	
         	op8 := (op == 8) op9 := (op == 9) op10 := (op == 10) op14 := (op == 14)	 // 3
 	
-		// stage 6
-        	needs_r2  := ( ( (op1 | op2) | (op3 | op4 ) ) | op7 )  
-		r2_in_file_0 := (((r2 & _b11) == 0) & needs_r2)
-		r2_in_file_1 := (((r2 & _b11) == 1) & needs_r2)
-		r2_in_file_2 := (((r2 & _b11) == 2) & needs_r2)
-		r2_in_file_3 := (((r2 & _b11) == 3) & needs_r2)
-
-		needs_r3 :=  ( (op1 | op2) | (op3 | op4 ) )  // 4
-		r3_in_file_0 := (((r3 & _b11) == 0) & needs_r3)
-		r3_in_file_1 := (((r3 & _b11) == 1) & needs_r3)
-		r3_in_file_2 := (((r3 & _b11) == 2) & needs_r3)
-		r3_in_file_3 := (((r3 & _b11) == 3) & needs_r3)
-
-
-		needs_r1 := (((op4 | op9) | (op5 | op10)) | (op6 | op14)) // 4
-		r1_in_file_0 := (((r1 & _b11) == 0) & needs_r1)
-		r1_in_file_1 := (((r1 & _b11) == 1) & needs_r1)
-		r1_in_file_2 := (((r1 & _b11) == 2) & needs_r1)
-		r1_in_file_3 := (((r1 & _b11) == 3) & needs_r1)
-
-		updates_r1 := (( (op1 | op2) | ( op3 | op5) ) | (op6 | op7))
-		new_r1_in_file_0 := (((r1 & _b11) == 0) & updates_r1)
-		new_r1_in_file_1 := (((r1 & _b11) == 1) & updates_r1)
-		new_r1_in_file_2 := (((r1 & _b11) == 2) & updates_r1)
-		new_r1_in_file_3 := (((r1 & _b11) == 3) & updates_r1)
-		
-		nhalt := ($mux op0 1 0) 
+		nhalt := (op == 0)
         	branch_case := (op8 | (op9 | op10)) 
 
 		// not branch, write to npc
@@ -103,41 +55,21 @@ $is
 	
 		// stage 7: register read.
 		// write to the read-port pipes... and then read from the result pipes..
- 		$guard (r2_in_file_0) r2_val := rfile_0[r2]
- 		$guard (r2_in_file_1) r2_val := rfile_1[r2]
- 		$guard (r2_in_file_2) r2_val := rfile_2[r2]
- 		$guard (r2_in_file_3) r2_val := rfile_3[r2]
-
- 		$guard (r3_in_file_0) r3_val := rfile_0[r3]
- 		$guard (r3_in_file_1) r3_val := rfile_1[r3]
- 		$guard (r3_in_file_2) r3_val := rfile_2[r3]
- 		$guard (r3_in_file_3) r3_val := rfile_3[r3]
-
- 		$guard (r1_in_file_0) r1_val := rfile_0[r1]
- 		$guard (r1_in_file_1) r1_val := rfile_1[r1]
- 		$guard (r1_in_file_2) r1_val := rfile_2[r1]
- 		$guard (r1_in_file_3) r1_val := rfile_3[r1]
-
 		// stage 8: buffering on op1,op2...
-		$guard (op1)  new_r1_val := (r2_val + r3_val)   // 6
-		$guard (op2)  new_r1_val := (r2_val - r3_val)  // 6
-		$guard (op3)  op3_addr  := (r2_val + r3_val) // 6
-        	$guard (op3)  new_r1_val := mem[op3_addr]  // 7
-		$guard (op4)  op4_addr := (r2_val + r3_val) // 6
-        	$guard (op4)  mem[op4_addr] := r1_val // 7
-		$guard (op5)  new_r1_val := ((r1_val & _hff00)  | imm) // 6
-		$guard (op6)  new_r1_val := ((r1_val & _h00ff) | (imm << 8)) // 6
-		$guard (op7)  new_r1_val := r2_val // 6
-		$guard (op14) out_port := r1_val // 6
+		$guard (op1)  reg[r1] := (reg[r2] + reg[r3])   // 6
+		$guard (op2)  reg[r1] := (reg[r2] - reg[r3])  // 6
+		$guard (op3)  op3_addr  := (reg[r2] + reg[r3]) // 6
+        	$guard (op3)  reg[r1] := mem[op3_addr]  // 7
+		$guard (op4)  op4_addr := (reg[r2] + reg[r3]) // 6
+        	$guard (op4)  mem[op4_addr] := reg[r1] // 7
+		$guard (op5)  reg[r1] := ((reg[r1] & _hff00)  | imm) // 6
+		$guard (op6)  reg[r1] := ((reg[r1] & _h00ff) | (imm << 8)) // 6
+		$guard (op7)  reg[r1] := reg[r2] // 6
+		$guard (op14) out_port := reg[r1] // 6
 	
 		$guard (op8)  pc := mem[enpc] // 4
- 		$guard (op9)  pc := (enpc + (r1_val + offs)) // 6
-		$guard (op10) pc := ( $mux (r1_val == 0) (enpc + offs) enpc) // 6
-
- 		$guard (new_r1_in_file_0)  rfile_0[r1] := new_r1_val
- 		$guard (new_r1_in_file_1)  rfile_1[r1] := new_r1_val
- 		$guard (new_r1_in_file_2)  rfile_2[r1] := new_r1_val
- 		$guard (new_r1_in_file_3)  rfile_3[r1] := new_r1_val
+ 		$guard (op9)  pc := (enpc + (reg[r1] + offs)) // 6
+		$guard (op10) pc := ( $mux (reg[r1] == 0) (enpc + offs) enpc) // 6
 
     		$while (halt != 1)
   	}

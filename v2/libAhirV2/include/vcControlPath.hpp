@@ -741,6 +741,9 @@ public:
 					vcCPElement* u, vcCPElement* v);
    void All_Pairs_Longest_Paths(map<vcCPElement*,map<vcCPElement*,int> >& distance_map);
    virtual void Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map);
+
+   virtual void Remove_Isolated_Transitions();
+
 };
 
 class vcCPPipelinedLoopBody: public vcCPForkBlock

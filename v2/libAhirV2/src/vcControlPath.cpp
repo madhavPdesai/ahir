@@ -2354,12 +2354,48 @@ void vcCPForkBlock::Eliminate_Redundant_Dependencies()
 	this->Remove_Redundant_Arcs(distance_map);
 }
 
+void vcCPForkBlock::Remove_Isolated_Transitions()
+{
+	vector<vcCPElement*> kept_elements;
+	for(int idx = 0, fidx = _elements.size(); idx < fidx; idx++)
+	{
+		vcCPElement* cpe = _elements[idx];
+		if(cpe->Is_Transition())
+		{
+			vcTransition* t = (vcTransition*) cpe;
+			if(!t->Get_Is_Input() && !t->Get_Is_Output() && 
+				!t->Get_Is_Linked_To_Non_Local_Dpe() && 
+				!cpe->Get_Is_Bound_As_Input_To_CP_Function() && 
+				!cpe->Get_Is_Bound_As_Output_From_CP_Function() && 
+				!cpe->Get_Is_Bound_As_Output_From_Region() && 
+				(t->Get_Number_Of_Predecessors() == 0) && 
+				(t->Get_Number_Of_Successors() == 0) && 
+				(t->Get_Number_Of_Marked_Predecessors() == 0) && 
+				(t->Get_Number_Of_Marked_Successors() == 0))
+			{
+				vcSystem::Info("Info: transition " + t->Get_Label() + " is isolated, removed.");
+			}
+			else
+				kept_elements.push_back(t);
+		}
+		else
+				kept_elements.push_back(cpe);
+	}
+
+	_elements.clear();
+	for(int idx = 0, fidx = kept_elements.size(); idx < fidx; idx++)
+	{
+		_elements.push_back(kept_elements[idx]);
+	}
+}
 
 bool vcCPForkBlock::Check_Structure()
 {
 	bool ret_flag = this->vcCPBlock::Check_Structure();
+
 	if(ret_flag)
 	{
+
 		vector<vcCPElement*> reachable_elements;
 		bool cycle_flag = false;
 		int num_visited = 0;
@@ -2598,6 +2634,7 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
 {
   this->vcCPBlock::Update_Predecessor_Successor_Links();
 
+  this->Remove_Isolated_Transitions();
   // those that were not covered by explicit fork/join declarations
   vector<vcCPElement*> unforked_elements;
   vector<vcCPElement*> unjoined_elements;
