@@ -1301,7 +1301,7 @@ void vcBinaryLogicalOperator::Print_VHDL(ostream& ofile)
       ofile << " data_out => " << data_out_sig << "," << endl;
       ofile << " clk => clk, reset => reset" << endl;
       ofile << " -- } " << endl << ");" << endl;
-      ofile << "-- }" << endl << "end block;" << endl;
+      ofile << "-- }" << endl << "end block; -- }" << endl;
 }
 
 void vcBinaryOperatorWithInputBuffering::Add_Reqs(vector<vcTransition*>& reqs)

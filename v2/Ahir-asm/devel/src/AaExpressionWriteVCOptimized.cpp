@@ -119,7 +119,7 @@ void AaExpression::Write_VC_WAR_Dependencies(bool pipeline_flag,
 	}
 }
 
-void AaExpression::Write_VC_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile)
+void AaExpression::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile)
 {
 	AaRoot* root = sexpr->Get_Root_Object();
 	if(visited_elements.find(root) != visited_elements.end())
@@ -127,6 +127,16 @@ void AaExpression::Write_VC_Forward_Dependency(AaSimpleObjectReference* sexpr, s
 		__J(__SST(this), __UCT(root));
 		__J(__UST(this), __UCT(root));
 	}
+}
+
+void AaExpression::Write_VC_Guard_Backward_Dependency(AaExpression* expr,
+		set<AaRoot*>& visited_elements, ostream& ofile)
+{
+	// when this completes, the guard can be re-evaluated.
+	__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
+			__UCT(this), true);  // bypass
+	__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
+			__SCT(this), true); // bypass
 }
 
 void AaExpression::Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& visited_elements, ostream& ofile)
@@ -139,7 +149,7 @@ void AaExpression::Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& v
 		{
 
 			AaSimpleObjectReference* sexpr = (AaSimpleObjectReference*) expr;
-			this->Write_VC_Forward_Dependency(sexpr,visited_elements,ofile);
+			this->Write_VC_Guard_Forward_Dependency(sexpr,visited_elements,ofile);
 		}
 		else
 		{
@@ -148,12 +158,11 @@ void AaExpression::Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& v
 
 		if(pipeline_flag)
 		{
-			// when this completes, the guard can be re-evaluated.
-			__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-				 __UCT(this), true);  // bypass
-			__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-				 __SCT(this), true); // bypass
+
+			this->Write_VC_Guard_Backward_Dependency(expr,visited_elements,ofile);
+			
 		}
+
 	}
 }
 
@@ -1389,7 +1398,8 @@ void AaBinaryExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofile
 	{
 
 		ofile << "// " << this->To_String() << endl;
-		if(this->Is_Logical_Operation())
+		bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
+		if(add_hash)
 		{
 			this->Write_VC_Links_BLE_Optimized(hier_id, ofile);
 			return;
@@ -1445,7 +1455,7 @@ void AaBinaryExpression::Write_VC_Links_BLE_Optimized(string hier_id, ostream& o
 		else
 		{
 			string req_name = this->Get_VC_Name() + "_sample_" + src->Get_VC_Name() + "_req";
-			string ack_name = this->Get_VC_Name() + "_sample_" + src->Get_VC_Name() + "_req";
+			string ack_name = this->Get_VC_Name() + "_sample_" + src->Get_VC_Name() + "_ack";
 			reqs.push_back(hier_id + "/" + req_name);
 			acks.push_back(hier_id + "/" + ack_name);
 		}
@@ -1501,6 +1511,9 @@ void AaBinaryExpression::Write_VC_Control_Path_BLE_Optimized(bool pipeline_flag,
 	vector<AaExpression*> srcs;
 	srcs.push_back(this->_first); srcs.push_back(this->_second);
 
+	__T(__UST(this));
+	__T(__UCT(this));
+
 	for(int i = 0; i < 2; i++)
 	{
 		AaExpression* src = srcs[i];
@@ -1518,6 +1531,7 @@ void AaBinaryExpression::Write_VC_Control_Path_BLE_Optimized(bool pipeline_flag,
 			__J(__SST_I(this,i), __UCT(src));
 			__F(__SST_I(this,i), sample_region);
 			__J(__SCT_I(this,i), sample_region);
+			__F(__SCT_I(this,i),"$null");
 			if(pipeline_flag)
 			{
 				__MJ(__SST_I(this,i), __SCT_I(this,i),false); // no bypass.	
@@ -1528,12 +1542,12 @@ void AaBinaryExpression::Write_VC_Control_Path_BLE_Optimized(bool pipeline_flag,
 		{
 			string req_name = this->Get_VC_Name() + "_sample_" + src->Get_VC_Name() + "_req";
 			string ack_name = this->Get_VC_Name() + "_sample_" + src->Get_VC_Name() + "_ack";
-			ofile << "$T [" << req_name << "] $tied_high $T[ " << ack_name << "] $left_open " << endl;
+			ofile << "$T [" << req_name << "] $dead $T[ " << ack_name << "] $left_open " << endl;
+			__F(req_name, "$null");
+			__F(ack_name, "$null");
 		}
 	}
 
-	__T(__UST(this));
-	__T(__UCT(this));
 	string update_region = this->Get_VC_Name() + "_Update";
 	ofile << ";;[" << update_region << "] {" << endl;
 	ofile << "$T[req] $T[ack]" << endl;
@@ -1549,9 +1563,10 @@ void AaBinaryExpression::Write_VC_Control_Path_BLE_Optimized(bool pipeline_flag,
 }
 
 
-void AaBinaryExpression::Write_VC_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile)
+void AaBinaryExpression::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile)
 {
-	if(this->Is_Logical_Operation())
+	bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
+	if(add_hash)
 	{
 		AaRoot* root = sexpr->Get_Root_Object();
 		if(visited_elements.find(root) != visited_elements.end())
@@ -1564,11 +1579,34 @@ void AaBinaryExpression::Write_VC_Forward_Dependency(AaSimpleObjectReference* se
 			{
 				__J(__SST_I(this,1),__UCT(root))
 			}
+			__J(__UST(this), __UCT(root));
 		}
 	}
 	else
 	{
-		this->AaExpression::Write_VC_Forward_Dependency(sexpr, visited_elements, ofile);
+		this->AaExpression::Write_VC_Guard_Forward_Dependency(sexpr, visited_elements, ofile);
+	}
+}
+
+void AaBinaryExpression::Write_VC_Guard_Backward_Dependency(AaExpression* expr, set<AaRoot*>& visited_elements, ostream& ofile)
+{
+	bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
+	if(add_hash)
+	{
+		__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
+			__UCT(this), true);  // bypass
+		if(!this->_first->Is_Constant())
+		{
+			__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT_I(this,0), true); // bypass
+		}
+		if(!this->_second->Is_Constant())
+		{
+			__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT_I(this,1), true); // bypass
+		}
+	}
+	else
+	{
+		this->AaExpression::Write_VC_Guard_Backward_Dependency(expr, visited_elements, ofile);
 	}
 }
 
@@ -1581,7 +1619,8 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 	if(!this->Is_Constant())
 	{
 
-		if(this->Is_Logical_Operation())
+		bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
+		if(add_hash)
 		{
 			// the completes of the two sources provide upto two triggers
 			// to the binary expression.

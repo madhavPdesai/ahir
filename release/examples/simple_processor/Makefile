@@ -8,6 +8,7 @@ VHDL_VHPI_LIB=../../CtestBench/vhdl
 all: SW HW 
  
 TOVC: c2llvmbc llvmbc2aa aaopt aa2vc 
+TOVHDL: TOVC vc2vhdl
 
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.

@@ -31,6 +31,7 @@
       string _update_regn = this->Get_VC_Name() + "_Update";\
       __F(__SST(this), _sample_regn);\
       __J(__SCT(this), _sample_regn);\
+      __F(__SCT(this),"$null");\
       __F(__UST(this), _update_regn);\
       __J(__UCT(this), _update_regn);\
 	}

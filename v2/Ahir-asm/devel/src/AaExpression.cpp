@@ -3889,8 +3889,7 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 		string src_2_name = _second->Get_VC_Driver_Name();
 		string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
 
-
-		bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag;
+		bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
 
 		Write_VC_Binary_Operator(this->Get_Operation(),
 				dpe_name,
@@ -3911,54 +3910,54 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 				<< src_1_name << " 2" << endl;
 			ofile << "$buffering  $in " << dpe_name << " "
 				<< src_2_name << " 2" << endl;
-	      ofile << "$buffering  $out " << dpe_name << " "
-		      << tgt_name << " 2" << endl;
-      }
-    }
-			  
+			ofile << "$buffering  $out " << dpe_name << " "
+				<< tgt_name << " 2" << endl;
+		}
+	}
+
 }
 void AaBinaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
 {
 
-  if(!this->Is_Constant())
-    {
+	if(!this->Is_Constant())
+	{
 
-      string input_hier_id = hier_id + "/"  + this->Get_VC_Name() + "/"
-	+ this->Get_VC_Name() + "_inputs";
+		string input_hier_id = hier_id + "/"  + this->Get_VC_Name() + "/"
+			+ this->Get_VC_Name() + "_inputs";
 
-      this->_first->Write_VC_Links(input_hier_id, ofile);
-      this->_second->Write_VC_Links(input_hier_id, ofile);
+		this->_first->Write_VC_Links(input_hier_id, ofile);
+		this->_second->Write_VC_Links(input_hier_id, ofile);
 
-      ofile << "// " << this->To_String() << endl;
+		ofile << "// " << this->To_String() << endl;
 
-      vector<string> reqs,acks;
-      string sample_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Sample";
-      string update_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Update";
-      reqs.push_back(sample_region + "/rr");
-      reqs.push_back(update_region + "/cr");
-      acks.push_back(sample_region + "/ra");
-      acks.push_back(update_region + "/ca");
-      Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
-    }
+		vector<string> reqs,acks;
+		string sample_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Sample";
+		string update_region = hier_id + "/" + this->Get_VC_Name() + "/SplitProtocol/Update";
+		reqs.push_back(sample_region + "/rr");
+		reqs.push_back(update_region + "/cr");
+		acks.push_back(sample_region + "/ra");
+		acks.push_back(update_region + "/ca");
+		Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),reqs,acks,ofile);
+	}
 }
 
 
 void AaBinaryExpression::Evaluate()
 {
-  if(!_already_evaluated)
-    {
-      _already_evaluated = true;
-      this->_first->Evaluate();
-      this->_second->Evaluate();
-      if(this->_first->Is_Constant() && this->_second->Is_Constant())
-	this->Assign_Expression_Value(Perform_Binary_Operation(this->_operation, 
-							       this->_first->Get_Expression_Value(),
-							       this->_second->Get_Expression_Value()));
-      if(_first->Get_Does_Pipe_Access() || _second->Get_Does_Pipe_Access())
+	if(!_already_evaluated)
 	{
-	  this->Set_Does_Pipe_Access(true);
+		_already_evaluated = true;
+		this->_first->Evaluate();
+		this->_second->Evaluate();
+		if(this->_first->Is_Constant() && this->_second->Is_Constant())
+			this->Assign_Expression_Value(Perform_Binary_Operation(this->_operation, 
+						this->_first->Get_Expression_Value(),
+						this->_second->Get_Expression_Value()));
+		if(_first->Get_Does_Pipe_Access() || _second->Get_Does_Pipe_Access())
+		{
+			this->Set_Does_Pipe_Access(true);
+		}
 	}
-    }
 }
 
 void AaBinaryExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
@@ -3978,37 +3977,37 @@ void AaBinaryExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentSt
 // AaTernaryExpression
 //---------------------------------------------------------------------
 AaTernaryExpression::AaTernaryExpression(AaScope* parent_tpr,
-					 AaExpression* test,
-					 AaExpression* iftrue, 
-					 AaExpression* iffalse):AaExpression(parent_tpr)
+		AaExpression* test,
+		AaExpression* iftrue, 
+		AaExpression* iffalse):AaExpression(parent_tpr)
 {
 
-  assert(test != NULL);
+	assert(test != NULL);
 
-  
-  this->_test = test;
-  test->Add_Target(this);
 
-  if(iftrue)
-    {
-      AaProgram::Add_Type_Dependency(iftrue,this);
-      iftrue->Add_Target(this);
-    }
-  if(iffalse)
-    {
-      AaProgram::Add_Type_Dependency(iffalse,this);
-      iffalse->Add_Target(this);
-    }
+	this->_test = test;
+	test->Add_Target(this);
 
-  this->_if_true = iftrue;
-  this->_if_false = iffalse;
+	if(iftrue)
+	{
+		AaProgram::Add_Type_Dependency(iftrue,this);
+		iftrue->Add_Target(this);
+	}
+	if(iffalse)
+	{
+		AaProgram::Add_Type_Dependency(iffalse,this);
+		iffalse->Add_Target(this);
+	}
 
-  this->Set_Delay(1);
+	this->_if_true = iftrue;
+	this->_if_false = iffalse;
+
+	this->Set_Delay(1);
 }
 AaTernaryExpression::~AaTernaryExpression() {};
 void AaTernaryExpression::Print(ostream& ofile)
 {
-  ofile << "( $mux ";
+	ofile << "( $mux ";
   this->Get_Test()->Print(ofile);
   ofile << " ";
   this->Get_If_True()->Print(ofile);

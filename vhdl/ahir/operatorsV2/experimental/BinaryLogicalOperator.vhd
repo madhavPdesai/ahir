@@ -49,15 +49,20 @@ architecture Vanilla of BinaryLogicalOperator is
 	constant cOne: std_logic_vector(input_width-1 downto 0) := (others => '1');
 
 	signal in_data_1: std_logic_vector(input_width-1 downto 0);
-	signal in_data_1_valid, in_data_1_accept, in_data_1_kill: std_logic;
+	signal in_data_1_valid, in_data_1_accept, in_data_1_kill, in_data_1_zero, in_data_1_one: std_logic;
 
 	signal in_data_2: std_logic_vector(input_width-1 downto 0);
-	signal in_data_2_valid, in_data_2_accept, in_data_2_kill: std_logic;
+	signal in_data_2_valid, in_data_2_accept, in_data_2_kill, in_data_2_zero, in_data_2_one: std_logic;
 
 	signal out_data: std_logic_vector(output_width-1 downto 0);
 	signal out_data_valid, out_data_accept: std_logic;
 
 begin  -- Vanilla
+
+	in_data_1_zero <= '1' when (in_data_1 = cZero) else '0';
+	in_data_1_one <= '1' when (in_data_1 = cOne) else '0';
+	in_data_2_zero <= '1' when (in_data_2 = cZero) else '0';
+	in_data_2_one <= '1' when (in_data_2 = cOne) else '0';
 
         -- receive buffers.
 	i1NoConst: if (not input_1_is_constant) generate
@@ -103,23 +108,22 @@ begin  -- Vanilla
 		in_data_2_kill <= '0';
 		sample_ack(0) <= sample_req(0);
         end generate i2Const;
+
+
+	in_data_1_accept <=  in_data_1_valid and out_data_valid and out_data_accept;
+        in_data_1_kill   <= (not in_data_1_valid) and out_data_valid and out_data_accept;
+
+	in_data_2_accept <=  in_data_2_valid and out_data_valid and out_data_accept;
+        in_data_2_kill   <= (not in_data_2_valid) and out_data_valid and out_data_accept;
         
 	-- the operator itself. operator-id can be ApIntAnd, ApIntOr, ApIntXor, ApIntNor, 
         -- ApIntNand, ApIntXnor.
 	andGen: if ((operator_id = "ApIntAnd") or (operator_id = "ApIntNand")) generate
 
-		in_data_1_kill <= '1' when ((in_data_1_valid = '0') and (in_data_2_valid = '1') and
-						(in_data_2 = cZero)) else '0';
-		in_data_1_accept <=  '1' when ((in_data_1_valid = '1') and (out_data_accept = '1'))
-					else '0';
-
-		in_data_2_kill <= '1' when ((in_data_2_valid = '0') and (in_data_1_valid = '1') and
-						(in_data_1 = cZero)) else '0';
-		in_data_2_accept <=  '1' when ((in_data_2_valid = '1') and (out_data_accept = '1'))
-					else '0';
-
-		out_data_valid <= (in_data_1_valid or in_data_1_kill) and 
-						(in_data_2_valid or in_data_2_kill);
+		-- out-valid = i1valid.i2valid  + i1valid.(i1=0) + i2valid.(i2=0)
+		out_data_valid <= (in_data_1_valid and in_data_2_valid) 
+					or (in_data_1_valid and in_data_1_zero) or
+						(in_data_2_valid and in_data_2_zero);
 
 		andCase: if(operator_id = "ApIntAnd") generate
 			out_data <= (in_data_1 and in_data_2);
@@ -131,18 +135,14 @@ begin  -- Vanilla
         end generate andGen;
 
 	orGen: if ((operator_id = "ApIntOr") or (operator_id = "ApIntNor")) generate
-		in_data_1_kill <= '1' when ((in_data_1_valid = '0') and (in_data_2_valid = '1') and
-						(in_data_2 = cOne)) else '0';
-		in_data_1_accept <=  '1' when ((in_data_1_valid = '1') and (out_data_accept = '1'))
-					else '0';
-
-		in_data_2_kill <= '1' when ((in_data_2_valid = '0') and (in_data_1_valid = '1') and
-						(in_data_1 = cOne)) else '0';
-		in_data_2_accept <=  '1' when ((in_data_2_valid = '1') and (out_data_accept = '1'))
-					else '0';
 
 		out_data_valid <= (in_data_1_valid or in_data_1_kill) and 
 						(in_data_2_valid or in_data_2_kill);
+
+		-- out-valid = i1valid.i2valid  + i1valid.(i1=1) + i2valid.(i2=1)
+		out_data_valid <= (in_data_1_valid and in_data_2_valid) 
+					or (in_data_1_valid and in_data_1_one) or
+						(in_data_2_valid and in_data_2_one);
 
 		orCase: if(operator_id = "ApIntOr") generate
 			out_data <= (in_data_1 or in_data_2);
@@ -155,13 +155,6 @@ begin  -- Vanilla
         end generate orGen;
 
 	xorGen: if ((operator_id = "ApIntXor") or (operator_id = "ApIntXnor")) generate
-		in_data_1_kill <= '0';
-		in_data_1_accept <=  '1' when ((in_data_1_valid = '1') and (out_data_accept = '1'))
-					else '0';
-
-		in_data_2_kill <= '0';
-		in_data_2_accept <=  '1' when ((in_data_2_valid = '1') and (out_data_accept = '1'))
-					else '0';
 
 		out_data_valid <= in_data_1_valid and in_data_2_valid;
 

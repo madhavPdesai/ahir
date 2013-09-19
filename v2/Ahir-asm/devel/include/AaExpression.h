@@ -249,7 +249,8 @@ class AaExpression: public AaRoot
   virtual AaExpression* Get_Guard_Expression();
   virtual bool Get_Guard_Complement();
   virtual void Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& visited_elements, ostream& ofile);
-  virtual void Write_VC_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile);
+  virtual void Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile);
+  virtual void Write_VC_Guard_Backward_Dependency(AaExpression* expr, set<AaRoot*>& visited_elements, ostream& ofile);
 
   virtual bool  Is_NOP() {return(false);}
   void Write_VC_RAW_Release_Dependencies(AaExpression* expr, set<AaRoot*>& visited_elements);
@@ -1350,7 +1351,10 @@ class AaBinaryExpression: public AaExpression
 	return(this->Get_VC_Sample_Start_Transition_Name());
   } 
 
-  virtual void Write_VC_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile);
+  virtual void Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile);
+  virtual void Write_VC_Guard_Backward_Dependency(AaExpression* expr, set<AaRoot*>& visited_elements, ostream& ofile);
+
+
   void Write_VC_Links_BLE_Optimized(string hier_id, ostream& ofile);
   void Write_VC_Control_Path_BLE_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 		map<string,vector<AaExpression*> >& ls_map,

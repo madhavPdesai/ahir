@@ -555,9 +555,6 @@ void vcTransition::Add_DP_Link(vcDatapathElement* dpe,vcTransitionType ltype)
 {
   if(dpe == NULL)
     return;
-
-  if(_is_dead)
-    assert(0);
   
   if(ltype == _IN_TRANSITION)
     _is_input = true;
@@ -598,13 +595,19 @@ void vcTransition::Print_VHDL(ostream& ofile)
   if(this->Get_Is_Dead())
   {
 	// it will never ever fire... tie it to false.
+      ofile << "// Dead. tied low." << endl;
       ofile << this->Get_Exit_Symbol() << " <= false;" << endl;
       return;
   }
   if(this->Get_Is_Tied_High())
   {
 	// it will never ever fire... tied to true.
+      ofile << "// Tied high." << endl;
       ofile << this->Get_Exit_Symbol() << " <= true;" << endl;
+
+	// TODO.. if it is an output transition, it needs to be 
+	// marked.
+
       return;
   }
   if(this->Get_Is_Left_Open())
