@@ -1,10 +1,146 @@
 // Aa code produced by llvm2aa (version 1.0)
 $pipe out_port : $uint<16> $depth 1
+$pipe npc: $uint<16> $depth 4
+
 $storage mem:$array [64] $of $uint<16>
 
-$storage reg:$array [16] $of $uint<16>
+$pipe reg_file_read_port_0_request : $uint<16> $depth 4
+$pipe reg_file_read_port_1_request : $uint<16> $depth 4
+$pipe reg_file_read_port_2_request : $uint<16> $depth 4
 
-$storage pc: $uint<16>
+$pipe reg_file_read_port_0_request_pc : $uint<16> $depth 4
+$pipe reg_file_read_port_1_request_pc : $uint<16> $depth 4
+$pipe reg_file_read_port_2_request_pc : $uint<16> $depth 4
+
+$pipe reg_file_read_port_0_response : $uint<16> $depth 4
+$pipe reg_file_read_port_1_response : $uint<16> $depth 4
+$pipe reg_file_read_port_2_response : $uint<16> $depth 4
+
+$pipe reg_file_write_port_request     : $uint<16> $depth 4
+$pipe reg_file_write_port_request_pc  : $uint<16> $depth 4
+$pipe reg_file_write_port_data : $uint<16> $depth 4
+
+$pipe block_read_request_0: $uint<16> $depth 4
+$pipe block_read_request_1: $uint<16> $depth 4
+$pipe block_read_request_2: $uint<16> $depth 4
+
+$pipe bypass_to_0 : $uint<16> $depth 4
+$pipe bypass_to_1 : $uint<16> $depth 4
+$pipe bypass_to_2 : $uint<16> $depth 4
+
+$pipe bypass_pc_to_0 : $uint<16> $depth 4
+$pipe bypass_pc_to_1 : $uint<16> $depth 4
+$pipe bypass_pc_to_2 : $uint<16> $depth 4
+
+$module [registerFile] $in () $out () $is
+{
+	$storage reg:$array [16] $of $uint<16>
+		
+	$branchblock [init] {
+                $merge $entry loopback
+			$phi I := ($bitcast ($uint<4>) 0) $on $entry NI  $on loopback
+		$endmerge
+		reg[I] := 0 
+		NI := (I+1)
+		$if (I < 15) $then $place [loopback] $endif
+	}
+
+	$parallelblock [Ports] {
+
+		$branchblock[read_port_0]
+		{
+    			$dopipeline $depth 8 $buffering 2
+				$merge $entry $loopback $endmerge
+				block_read_id := block_read_request_0 // always read a value
+				rid := reg_file_read_port_0_request   // wait until rid is non-zero
+				rpc := reg_file_read_port_0_request_pc // pc for instruction requesting read.
+				
+				real_read := (rid != 255)
+
+				write_pending := (block_read_id != 255) // is write-pending?
+				wpc := bypass_pc_to_0
+
+				wmatch := ((write_pending & (rid == block_read_id)) & (wpc != rpc)) 
+				bypass  := (real_read & wmatch)
+				nobypass := (real_read & (~ wmatch))
+
+				$guard (nobypass) reg_file_read_port_0_response := reg[rid] // real-read.
+				$guard (write_pending) written_val := bypass_to_0  // if write-pending get bypassed value
+				$guard (bypass) reg_file_read_port_0_response := written_val // bypassed-read.
+			$while 1
+		}
+		$branchblock[read_port_1]
+		{
+    			$dopipeline $depth 8 $buffering 2
+				$merge $entry $loopback $endmerge
+				block_read_id := block_read_request_1 // always read a value
+				rid := reg_file_read_port_1_request   // wait until rid is non-zero
+				rpc := reg_file_read_port_1_request_pc // pc for instruction requesting read.
+
+				real_read := (rid != 255)
+
+				write_pending := (block_read_id != 255) // is write-pending?
+				wpc := bypass_pc_to_1
+
+				wmatch := ((write_pending & (rid == block_read_id)) & (wpc != rpc)) 
+				bypass  := (real_read & wmatch)
+				nobypass := (real_read & (~ wmatch))
+
+				$guard (nobypass) reg_file_read_port_1_response := reg[rid] // real-read.
+				$guard (write_pending) written_val := bypass_to_1  // if write-pending get bypassed value
+				$guard (bypass) reg_file_read_port_1_response := written_val // bypassed-read.
+
+			$while 1
+		}
+		$branchblock[read_port_2]
+		{
+    			$dopipeline $depth 8 $buffering 2
+				$merge $entry $loopback $endmerge
+				block_read_id := block_read_request_2 // always read a value
+				rid := reg_file_read_port_2_request   // wait until rid is non-zero
+				rpc := reg_file_read_port_2_request_pc // pc for instruction requesting read.
+
+				real_read := (rid != 255)
+
+				write_pending := (block_read_id != 255) // is write-pending?
+				wpc := bypass_pc_to_2
+
+				wmatch := ((write_pending & (rid == block_read_id)) & (wpc != rpc)) 
+				bypass  := (real_read & wmatch)
+				nobypass := (real_read & (~ wmatch))
+
+				$guard (nobypass) reg_file_read_port_2_response := reg[rid] // real-read.
+				$guard (write_pending) written_val := bypass_to_2  // if write-pending get bypassed value
+				$guard (bypass) reg_file_read_port_2_response := written_val // bypassed-read.
+			$while 1
+		}
+		$branchblock[write_port]
+		{
+			$dopipeline $depth 8 $buffering 2
+				$merge $entry $loopback $endmerge
+				write_id := reg_file_write_port_request
+				wpc  := reg_file_write_port_request_pc  
+
+				real_write := (write_id != 255)
+
+				bypass_pc_to_0 :=  wpc
+				bypass_pc_to_1 :=  wpc
+				bypass_pc_to_2 :=  wpc
+
+				$guard (real_write) write_data := reg_file_write_port_data
+				$guard (real_write) reg[write_id] := write_data
+
+				// NOTE: timing could be an issue here?
+				//       the bypass takes place in parallel with the
+				//       write, but that is ok.
+				$guard (real_write) bypass_to_0 :=  write_data
+				$guard (real_write) bypass_to_1 :=  write_data
+				$guard (real_write) bypass_to_2 :=  write_data
+			$while 1
+		}
+	}		
+}
+
 
 $module [run] 
 $in ()
@@ -13,22 +149,21 @@ $is
 {
   	$branchblock [core] 
   	{
-		pc := 0
-		$merge $entry loopback
-			$phi I := ($bitcast ($uint<4>) 0) $on $entry NI  $on loopback
-		$endmerge
-		reg[I] := 0 
-		NI := (I+1)
-		$if (I < 15) $then $place [loopback] $endif
+		npc := 0
 
-    		$dopipeline $depth 4 $buffering 2
+    		$dopipeline $depth 8 $buffering 2
 		
     		$merge $entry $loopback 
 		$phi halt := ($bitcast($uint<1>) 0) $on $entry nhalt $on $loopback
+                $phi ICOUNT := ($bitcast ($uint<16>) 0) $on $entry NICOUNT $on $loopback
     		$endmerge
+
+		pc := npc
+		NICOUNT := (ICOUNT+1)
         	
 		// stage 1
-		ir    := mem[pc] 
+		ir    := mem[pc]  // this is a bottleneck!
+
 		enpc   := (pc + 1) 
 	
 		// stage 3
@@ -51,25 +186,50 @@ $is
         	branch_case := (op8 | (op9 | op10)) 
 
 		// not branch, write to npc
-                $guard (~ branch_case)  pc := enpc
+                $guard (~ branch_case)  npc := enpc
+
+		read_r2 := (((op1 | op2) | (op3 | op4)) | op5)
+		read_r3 := ((op1 | op2) | (op3 | op4))
+		read_r1 := (((op5 | op6) | (op9 | op10)) | (op4 | op14))
+
+		write_r1 := (((op1 | op2) | (op3 | op5)) | (op6 | op7))
 	
+		block_read_request_0 := ($mux write_r1 r1 255)
+		block_read_request_1 := ($mux write_r1 r1 255)
+		block_read_request_2 := ($mux write_r1 r1 255)
+		
 		// stage 7: register read.
-		// write to the read-port pipes... and then read from the result pipes..
-		// stage 8: buffering on op1,op2...
-		$guard (op1)  reg[r1] := (reg[r2] + reg[r3])   // 6
-		$guard (op2)  reg[r1] := (reg[r2] - reg[r3])  // 6
-		$guard (op3)  op3_addr  := (reg[r2] + reg[r3]) // 6
-        	$guard (op3)  reg[r1] := mem[op3_addr]  // 7
-		$guard (op4)  op4_addr := (reg[r2] + reg[r3]) // 6
-        	$guard (op4)  mem[op4_addr] := reg[r1] // 7
-		$guard (op5)  reg[r1] := ((reg[r1] & _hff00)  | imm) // 6
-		$guard (op6)  reg[r1] := ((reg[r1] & _h00ff) | (imm << 8)) // 6
-		$guard (op7)  reg[r1] := reg[r2] // 6
-		$guard (op14) out_port := reg[r1] // 6
+		reg_file_read_port_0_request := ($mux read_r1 r1 255)
+		reg_file_read_port_0_request_pc := pc
+		$guard (read_r1) r1_val := reg_file_read_port_0_response
+
+		reg_file_read_port_1_request := ($mux read_r2 r2 255)
+		reg_file_read_port_1_request_pc := pc
+		$guard (read_r2) r2_val := reg_file_read_port_1_response
+
+		reg_file_read_port_2_request := ($mux read_r3 r3 255)
+		reg_file_read_port_2_request_pc := pc
+		$guard (read_r3) r3_val := reg_file_read_port_2_response
+
+		// write request.
+		reg_file_write_port_request_pc := pc
+		reg_file_write_port_request := ($mux write_r1 r1 255)
 	
-		$guard (op8)  pc := mem[enpc] // 4
- 		$guard (op9)  pc := (enpc + (reg[r1] + offs)) // 6
-		$guard (op10) pc := ( $mux (reg[r1] == 0) (enpc + offs) enpc) // 6
+		// stage 8: write_results..
+		$guard (op1)  reg_file_write_port_data := (r2_val + r3_val)
+		$guard (op2)  reg_file_write_port_data := (r2_val - r3_val)
+		$guard (op3)  op3_addr  := (r2_val + r3_val)
+        	$guard (op3)  reg_file_write_port_data := mem[op3_addr]  // 7
+		$guard (op4)  op4_addr := (r2_val + r3_val)
+        	$guard (op4)  mem[op4_addr] := r1_val // 7
+		$guard (op5)  reg_file_write_port_data := ((r1_val & _hff00)  | imm) // 6
+		$guard (op6)  reg_file_write_port_data := ((r1_val & _h00ff) | (imm << 8)) // 6
+		$guard (op7)  reg_file_write_port_data := r2_val // 6
+		$guard (op14) out_port := r1_val
+	
+		$guard (op8)  npc := mem[enpc] // 4
+ 		$guard (op9)  npc := (enpc + (r1_val + offs)) // 6
+		$guard (op10) npc := ( $mux (r1_val == 0) (enpc + offs) enpc) // 6
 
     		$while (halt != 1)
   	}

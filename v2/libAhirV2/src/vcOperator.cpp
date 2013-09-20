@@ -90,7 +90,7 @@ void vcOperator::Print_VHDL_Logger(ostream& ofile)
 	string guard_id;
 
 	if(this->Get_Guard_Wire() != NULL)
-		guard_id = this->Get_Guard_Wire()->Get_VHDL_Id();
+		guard_id = this->Get_Guard_Wire()->Get_VHDL_Id() + "(0)";
 	else
 		guard_id = "sl_one";
 		
@@ -156,7 +156,7 @@ void vcSplitOperator::Print_VHDL_Logger(ostream& ofile)
 	string guard_id;
 
 	if(this->Get_Guard_Wire() != NULL)
-		guard_id = this->Get_Guard_Wire()->Get_VHDL_Id();
+		guard_id = this->Get_Guard_Wire()->Get_VHDL_Id() + "(0)";
 	else
 		guard_id = "sl_one";
 
@@ -754,19 +754,29 @@ void vcSelect::Print_VHDL(ostream& ofile)
 {
       string block_name = "select_" + this->Get_VHDL_Id() + "_wrap";
       ofile << block_name << " : block -- { " << endl;
+      if(this->Get_Guard_Wire() != NULL)
+	ofile << "signal ack_no_guard: boolean;" << endl;
       ofile << "signal req, ack: boolean; --}" << endl;
       ofile << "begin -- { " << endl;
  
 
       if(this->Get_Guard_Wire() != NULL)
       {
+
+	// req-ack update pair must always a unit delay in order
+	// to avoid zero-delay cycles in the pipelined case.
       	ofile << "req <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() 
 		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
 		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else false;" << endl; 
+	ofile << " ackDelay: control_delay_element generic map(delay_value => 1) "
+		<< " port map(req => " 
+		<< this->Get_Req(0)->Get_CP_To_DP_Symbol() 
+		<< ", ack => ack_no_guard, clk => clk, reset => reset);" << endl;
+
 	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack " 
 		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
 		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else " 
- 		<< this->Get_Req(0)->Get_CP_To_DP_Symbol()  << ";" 
+ 		<< " ack_no_guard "  << ";" 
 		<< endl; 
       }
       else
@@ -828,19 +838,29 @@ void vcSlice::Print_VHDL(ostream& ofile)
       string block_name = "slice_" + this->Get_VHDL_Id() + "_wrap";
 
       ofile << block_name << " : block -- { " << endl;
+      if(this->Get_Guard_Wire() != NULL)
+	ofile << "signal ack_no_guard: boolean;" << endl;
       ofile << "signal req, ack: boolean; --}" << endl;
       ofile << "begin -- { " << endl;
  
 
       if(this->Get_Guard_Wire() != NULL)
       {
+	// req-ack update pair must always a unit delay in order
+	// to avoid zero-delay cycles in the pipelined case.
+	//
       	ofile << "req <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() 
 		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
 		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else false;" << endl; 
+	ofile << " ackDelay: control_delay_element generic map(delay_value => 1) "
+		<< " port map(req => " 
+		<< this->Get_Req(0)->Get_CP_To_DP_Symbol() 
+		<< ", ack => ack_no_guard, clk => clk, reset => reset);" << endl;
+
 	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack " 
 		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
 		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else " 
- 		<< this->Get_Req(0)->Get_CP_To_DP_Symbol()  << ";" 
+ 		<< " ack_no_guard "  << ";" 
 		<< endl; 
       }
       else
@@ -894,6 +914,8 @@ void vcRegister::Print_VHDL(ostream& ofile)
 {
       string block_name = "register_" + this->Get_VHDL_Id() + "_wrap";
       ofile << block_name << " : block -- { " << endl;
+      if(this->Get_Guard_Wire() != NULL)
+	ofile << "signal ack_no_guard: boolean;" << endl;
       ofile << "signal req, ack: boolean; --}" << endl;
       ofile << "begin -- { " << endl;
  
@@ -903,10 +925,14 @@ void vcRegister::Print_VHDL(ostream& ofile)
       	ofile << "req <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() 
 		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
 		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else false;" << endl; 
+	ofile << " ackDelay: control_delay_element generic map(delay_value => 1) "
+		<< " port map(req => " 
+		<< this->Get_Req(0)->Get_CP_To_DP_Symbol() 
+		<< ", ack => ack_no_guard, clk => clk, reset => reset);" << endl;
 	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack " 
 		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
 		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else " 
- 		<< this->Get_Req(0)->Get_CP_To_DP_Symbol()  << ";" 
+ 		<< " ack_no_guard "  << ";" 
 		<< endl; 
       }
       else
@@ -1225,6 +1251,8 @@ void vcBinaryLogicalOperator::Print_VHDL(ostream& ofile)
       ofile << "signal sample_ack: BooleanArray(1 downto 0);" << endl;
       ofile << "signal update_req: Boolean;" << endl;
       ofile << "signal update_ack: Boolean;" << endl;
+      if(this->Get_Guard_Wire() != NULL)
+	ofile << "signal update_ack_no_guard: boolean;" << endl;
       ofile << "signal data_in: std_logic_vector(" 
 		<< this->_x->Get_Size() + this->_y->Get_Size() - 1
 		<< " downto 0); --}" << endl;
@@ -1254,10 +1282,16 @@ void vcBinaryLogicalOperator::Print_VHDL(ostream& ofile)
  		<< this->Get_Req(1)->Get_CP_To_DP_Symbol()  << ";" 
 		<< endl; 
 
+	// req-ack update pair must always a unit delay in order
+	// to avoid zero-delay cycles in the pipelined case.
+	ofile << " ackDelay: control_delay_element generic map(delay_value => 1) "
+		<< " port map(req => " 
+		<< this->Get_Req(2)->Get_CP_To_DP_Symbol() 
+		<< ", ack => update_ack_no_guard, clk => clk, reset => reset);" << endl;
 	ofile << this->Get_Ack(2)->Get_DP_To_CP_Symbol() << " <= update_ack " 
 		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
 		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else " 
- 		<< this->Get_Req(2)->Get_CP_To_DP_Symbol()  << ";" 
+ 		<< " update_ack_no_guard"  << ";" 
 		<< endl; 
       }
       else
@@ -1398,6 +1432,8 @@ void vcSliceWithBuffering::Print_VHDL(ostream& ofile)
 {
       string block_name = "slice_" + this->Get_VHDL_Id() + "_wrap";
       ofile << block_name << " : block -- { " << endl;
+      if(this->Get_Guard_Wire() != NULL)
+	ofile << "signal update_ack_no_guard: boolean;" << endl;
       ofile << "signal sample_req, sample_ack, update_req, update_ack: boolean; --}" << endl;
       ofile << "begin -- { " << endl;
  
@@ -1417,10 +1453,16 @@ void vcSliceWithBuffering::Print_VHDL(ostream& ofile)
  		<< this->Get_Req(0)->Get_CP_To_DP_Symbol()  << ";" 
 		<< endl; 
 
+	// req-ack update pair must always a unit delay in order
+	// to avoid zero-delay cycles in the pipelined case.
+	ofile << " ackDelay: control_delay_element generic map(delay_value => 1) "
+		<< " port map(req => " 
+		<< this->Get_Req(1)->Get_CP_To_DP_Symbol() 
+		<< ", ack => update_ack_no_guard, clk => clk, reset => reset);" << endl;
 	ofile << this->Get_Ack(1)->Get_DP_To_CP_Symbol() << " <= update_ack " 
 		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
 		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1'") << " else " 
- 		<< this->Get_Req(1)->Get_CP_To_DP_Symbol()  << ";" 
+ 		<< " update_ack_no_delay"  << ";" 
 		<< endl; 
       }
       else
@@ -1483,6 +1525,8 @@ void vcSelectWithInputBuffering::Print_VHDL(ostream& ofile)
 {
       string block_name = "select_" + this->Get_VHDL_Id() + "_wrap";
       ofile << block_name << " : block -- { " << endl;
+      if(this->Get_Guard_Wire() != NULL)
+	ofile << "signal update_ack_no_guard: boolean;" << endl;
       ofile << "signal req_x, req_y, req_sel, req_z: boolean;" << endl;
       ofile << "signal ack_x, ack_y, ack_sel, ack_z: boolean; --}" << endl;
       ofile << "begin -- { " << endl;
@@ -1501,6 +1545,7 @@ void vcSelectWithInputBuffering::Print_VHDL(ostream& ofile)
       	ofile << "req_z <= " << this->Get_Req(3)->Get_CP_To_DP_Symbol() 
 		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
 		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else false;" << endl; 
+
 	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack_sel " 
 		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
 		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else " 
@@ -1517,10 +1562,16 @@ void vcSelectWithInputBuffering::Print_VHDL(ostream& ofile)
 		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else " 
  		<< this->Get_Req(2)->Get_CP_To_DP_Symbol()  << ";"  << endl;
 
+	// req-ack update pair must always a unit delay in order
+	// to avoid zero-delay cycles in the pipelined case.
+	ofile << " ackDelay: control_delay_element generic map(delay_value => 1) "
+		<< " port map(req => " 
+		<< this->Get_Req(3)->Get_CP_To_DP_Symbol() 
+		<< ", ack => update_ack_no_guard, clk => clk, reset => reset);" << endl;
 	ofile << this->Get_Ack(3)->Get_DP_To_CP_Symbol() << " <= ack_z " 
 		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
 		<< "(0) = " << (this->Get_Guard_Complement() ? "'0'"  : "'1' ") << " else " 
- 		<< this->Get_Req(3)->Get_CP_To_DP_Symbol()  << ";"  << endl;
+ 		<< "update_ack_no_guard"  << ";"  << endl;
       }
       else
       {

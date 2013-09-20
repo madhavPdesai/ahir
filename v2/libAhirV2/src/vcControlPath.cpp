@@ -549,6 +549,7 @@ vcTransition::vcTransition(vcCPElement* parent, string id):vcCPElement(parent, i
   _is_left_open = false;
   _is_entry_transition = false;
   _is_linked_to_non_local_dpe = false;
+  _is_delay_element = false;
 }
 
 void vcTransition::Add_DP_Link(vcDatapathElement* dpe,vcTransitionType ltype)

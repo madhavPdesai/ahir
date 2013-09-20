@@ -33,6 +33,9 @@ void *run_(void* args)
 	run();
 } 
  
+
+void write_to_mem(uint16_t mem_addr, uint16_t mem_data);
+
 int main()
 {
   int idx; 
@@ -44,15 +47,20 @@ int main()
 	write_to_mem(idx,mem[idx]);
 #endif
 
+#ifdef SW
   pthread_t run_t;
   pthread_create(&run_t,NULL,&run_,NULL);
+#endif
 
   for(idx = 0; idx < 6; idx++)
   {
 	fprintf(stdout,"Program output=%d\n", read_uint16("out_port"));
   }
   
-  pthread_join(run_t,NULL);
+
+#ifdef SW
+  pthread_cancel(run_t);
+#endif
   return(0); 
 }
  

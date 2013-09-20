@@ -238,8 +238,9 @@ void AaSimpleObjectReference::Write_VC_Links_As_Target_Optimized(string hier_id,
 		else if(this->_object->Is("AaPipeObject"))
 		{
 			string inst_name = this->Get_VC_Datapath_Instance_Name();
-			reqs.push_back(hier_id + "/" + this->Get_VC_Complete_Region_Name() + "/pipe_wreq");
-			acks.push_back(hier_id + "/" + this->Get_VC_Complete_Region_Name() + "/pipe_wack");
+			string sample_regn = this->Get_VC_Name() + "_Sample";
+			reqs.push_back(hier_id + "/" + sample_regn + "/pipe_wreq");
+			acks.push_back(hier_id + "/" + sample_regn + "/pipe_wack");
 			Write_VC_Link(inst_name, reqs,acks,ofile);
 		}
 	}
@@ -438,17 +439,18 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 
 		this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
-		ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] { // pipe write ";
+		string sample_regn = this->Get_VC_Name() + "_Sample";
+		ofile << ";;[" << sample_regn << "] { // pipe write ";
 		this->Print(ofile);
 		ofile << endl;
 		ofile << "$T [pipe_wreq] $T [pipe_wack] " << endl;
 		ofile << "}" << endl;
 
 		// connections.
-		__F(__SST(this), __SCT(this));
+		__F(__SST(this), sample_regn);
+		__J(__SCT(this), sample_regn);
 		__F(__SCT(this), __UST(this));
-		__F(__UST(this), this->Get_VC_Complete_Region_Name());
-		__J(__UCT(this), this->Get_VC_Complete_Region_Name());
+		__J(__UCT(this), __UST(this));
 
 		// Note: pipeline release dependencies of this store
 		// will be taken care of at the statement level..
@@ -458,7 +460,7 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 		if(pipeline_flag)
 		{
 			// SelfRelease
-			__MJ(__UST(this),__UCT(this), true); // bypass
+			__MJ(__SST(this),__SCT(this), false); // no bypass
 		}
 
 

@@ -41,7 +41,7 @@ aa2vc: processor.aa
 
 # vC to VHDL
 vc2vhdl: processor.vc
-	vc2vhdl -O -C -e ahir_system -w -s ghdl -t run -t write_to_mem -f processor.vc
+	vc2vhdl -D -O -C -e ahir_system -w -s ghdl -T run -T registerFile -t write_to_mem -f processor.vc
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl

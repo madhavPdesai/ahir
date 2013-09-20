@@ -481,7 +481,8 @@ class vcDataPath: public vcRoot
   void Print_VHDL_Disconcatenate_Ack(string ack_id, vector<vcTransition*>& acks,  ostream& ofile);
 
   void Print_VHDL_Guard_Concatenation(int num_reqs, string guard_vector, vector<vcWire*>& guard_wires, vector<bool>& guard_complements,ostream& ofile);
-  void Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, string req_unguarded, string ack_unguarded, string req, string ack, ostream& ofile);
+  void Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, string req_unguarded, string ack_unguarded, 
+		string req, string ack, bool delay_flag, ostream& ofile);
 
 
   void Generate_Buffering_Constant_Declaration(vector<vcDatapathElement*>& dpe_elements, string& buf_string);
