@@ -1,6 +1,5 @@
 // Aa code produced by llvm2aa (version 1.0)
 $pipe out_port : $uint<16> $depth 1
-$pipe npc: $uint<16> $depth 4
 
 $storage mem:$array [64] $of $uint<16>
 
@@ -31,6 +30,65 @@ $pipe bypass_to_2 : $uint<16> $depth 4
 $pipe bypass_pc_to_0 : $uint<16> $depth 4
 $pipe bypass_pc_to_1 : $uint<16> $depth 4
 $pipe bypass_pc_to_2 : $uint<16> $depth 4
+
+
+$pipe start_ifetch: $uint<8>
+$pipe ir_pipe: $uint<16>  $depth 4
+$pipe next_pc_pipe : $uint<16>
+$pipe pc_pipe : $uint<16> $depth 4
+
+$module [ifetch] $in () $out () $is
+{
+	next_pc_pipe := 0
+
+	sif := start_ifetch
+	
+	$branchblock[core] {
+    		$dopipeline $depth 8 $buffering 2
+			$merge $entry $loopback $endmerge
+			pc_0 := next_pc_pipe
+			pc_1 := (pc_0 + 1)
+			pc_2 := (pc_0 + 2)
+			pc_3 := (pc_0 + 3)
+
+			ir_0 := mem[pc_0]
+			ir_1 := mem[pc_1]
+			ir_2 := mem[pc_2]
+			ir_3 := mem[pc_3]
+	
+			op_0 := (ir_0 >> 12)
+			op_1 := (ir_1 >> 12)
+			op_2 := (ir_2 >> 12)
+			op_3 := (ir_3 >> 12)
+
+
+			br_0 := ((op_0 == 0) | ((op_0 == 8) | ((op_0 == 9) | (op_0 == 10))))
+			br_1 := ((op_0 == 0) | ((op_1 == 8) | ((op_1 == 9) | (op_1 == 10))))
+			br_2 := ((op_0 == 0) | ((op_2 == 8) | ((op_2 == 9) | (op_2 == 10))))
+			br_3 := ((op_0 == 0) | ((op_3 == 8) | ((op_3 == 9) | (op_3 == 10))))
+
+			d_1  := (~ br_0)
+			d_2  := (~ (br_0 | br_1))
+			d_3  := (~ ((br_0 | br_1) | br_2) )
+
+			branch_case := ((br_0 | br_1) | (br_2 | br_3))
+
+
+			ir_pipe := ir_0
+			pc_pipe := pc_0
+			$guard (d_1) ir_pipe := ir_1
+			$guard (d_1) pc_pipe := pc_1
+			$guard (d_2) ir_pipe := ir_2
+			$guard (d_2) pc_pipe := pc_2
+			$guard (d_3) ir_pipe := ir_3
+			$guard (d_3) pc_pipe := pc_3
+
+			$guard (~ branch_case) next_pc_pipe := (pc_0 + 4)
+		$while 1	
+		
+	}
+	
+}
 
 $module [registerFile] $in () $out () $is
 {
@@ -142,14 +200,13 @@ $module [registerFile] $in () $out () $is
 }
 
 
-$module [run] 
+$module [execute] 
 $in ()
 $out ()
 $is 
 {
   	$branchblock [core] 
   	{
-		npc := 0
 
     		$dopipeline $depth 8 $buffering 2
 		
@@ -158,13 +215,13 @@ $is
                 $phi ICOUNT := ($bitcast ($uint<16>) 0) $on $entry NICOUNT $on $loopback
     		$endmerge
 
-		pc := npc
 		NICOUNT := (ICOUNT+1)
         	
 		// stage 1
-		ir    := mem[pc]  // this is a bottleneck!
+		ir    := ir_pipe
+		pc    := pc_pipe
 
-		enpc   := (pc + 1) 
+		enpc  := (pc + 1)
 	
 		// stage 3
   		op := (ir >> 12) // 2
@@ -184,9 +241,6 @@ $is
 	
 		nhalt := (op == 0)
         	branch_case := (op8 | (op9 | op10)) 
-
-		// not branch, write to npc
-                $guard (~ branch_case)  npc := enpc
 
 		read_r2 := (((op1 | op2) | (op3 | op4)) | op5)
 		read_r3 := ((op1 | op2) | (op3 | op4))
@@ -227,9 +281,9 @@ $is
 		$guard (op7)  reg_file_write_port_data := r2_val // 6
 		$guard (op14) out_port := r1_val
 	
-		$guard (op8)  npc := mem[enpc] // 4
- 		$guard (op9)  npc := (enpc + (r1_val + offs)) // 6
-		$guard (op10) npc := ( $mux (r1_val == 0) (enpc + offs) enpc) // 6
+		$guard (op8)  next_pc_pipe := mem[enpc] // 4
+ 		$guard (op9)  next_pc_pipe := (enpc + (r1_val + offs)) // 6
+		$guard (op10) next_pc_pipe := ( $mux (r1_val == 0) (enpc + offs) enpc) // 6
 
     		$while (halt != 1)
   	}

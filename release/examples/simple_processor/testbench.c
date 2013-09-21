@@ -27,11 +27,13 @@ void Exit(int sig)
 	exit(0);
 }
 
+#ifdef SW
 void run(); 
 void *run_(void* args)
 {
 	run();
 } 
+#endif
  
 
 void write_to_mem(uint16_t mem_addr, uint16_t mem_data);
@@ -45,6 +47,8 @@ int main()
   uint16_t mem[7] = {0x5105,0x5201,0xE100,0xA103,0x2112,0x9083,0x0000};
   for(idx = 0; idx < 7; idx++)
 	write_to_mem(idx,mem[idx]);
+
+  write_uint8("start_ifetch",1);
 #endif
 
 #ifdef SW
