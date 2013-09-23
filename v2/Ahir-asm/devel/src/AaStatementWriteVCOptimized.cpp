@@ -9,52 +9,68 @@ void AaStatement::Write_VC_RAW_Release_Dependencies(AaExpression* expr, set<AaRo
   Write_VC_RAW_Release_Deps(((AaRoot*)this),non_triv_preds);
 }
 
+void AaStatement::Write_VC_Synch_Dependency(set<AaRoot*>& visited_elements, bool pipeline_flag, ostream& ofile)
+{
+	if(this->_synch_statements.size() > 0)
+	{
+		for(set<AaStatement*>::iterator siter = _synch_statements.begin(), fiter = _synch_statements.end();
+				siter != fiter; siter++)
+		{
+			AaStatement* stmt = *siter;
+			if(visited_elements.find(stmt) != visited_elements.end())
+			{
+				ofile << "// forced synch" << endl;
+				__J(__SST(this), __UCT(stmt));
+			}
+		}
+	}
+}
 
 // a lot of code repetition, but can it be avoided?
 
 void AaStatementSequence::Write_VC_Control_Path_Optimized(ostream& ofile)
 {
-  for(int idx = 0, fidx = _statement_sequence.size(); idx < fidx; idx++)
-    {
-      _statement_sequence[idx]->Write_VC_Control_Path_Optimized(ofile);
-    }
+	for(int idx = 0, fidx = _statement_sequence.size(); idx < fidx; idx++)
+	{
+		_statement_sequence[idx]->Write_VC_Control_Path_Optimized(ofile);
+	}
 }
 
 
 void AaStatementSequence::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
-  for(int idx = 0, fidx = _statement_sequence.size(); idx < fidx; idx++)
-    {
-      _statement_sequence[idx]->Write_VC_Links_Optimized(hier_id,ofile);
-    }
+	for(int idx = 0, fidx = _statement_sequence.size(); idx < fidx; idx++)
+	{
+		_statement_sequence[idx]->Write_VC_Links_Optimized(hier_id,ofile);
+	}
 }
 
 // AaNullStatement
 void AaNullStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 {
-  this->Write_VC_Control_Path(ofile);
+	this->Write_VC_Control_Path(ofile);
 }
 
 // AaAssignmentStatement
 void AaAssignmentStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 {
-  // this should never be called.
-  assert(0);
+	// this should never be called.
+	assert(0);
 }
 
 void AaAssignmentStatement::Write_VC_WAR_Dependencies(bool pipeline_flag,
-						      set<AaRoot*>& visited_elements,
-						      ostream& ofile)
+		set<AaRoot*>& visited_elements,
+		ostream& ofile)
 {
 
-  if(!this->Is_Constant())
-    {
-      AaExpression* tgt = this->_target;
-      
-      if(tgt->Is_Implicit_Variable_Reference())
-	tgt->Write_VC_WAR_Dependencies(pipeline_flag,
-				       visited_elements,this->_source,ofile);
-    }
+	if(!this->Is_Constant())
+	{
+		AaExpression* tgt = this->_target;
+
+		if(tgt->Is_Implicit_Variable_Reference())
+			tgt->Write_VC_WAR_Dependencies(pipeline_flag,
+					visited_elements,this->_source,ofile);
+	}
 
 }
 
@@ -82,17 +98,18 @@ void AaAssignmentStatement::Write_VC_WAR_Dependencies(bool pipeline_flag,
 //            statement-active -> guard-reenable.
 //            statement-complete -> statement-active (could be redundant).
 void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
-							    set<AaRoot*>& visited_elements,
-							    map<string, vector<AaExpression*> >& ls_map,
-							    map<string, vector<AaExpression*> >& pipe_map,
-							    AaRoot* barrier,
-							    ostream& ofile)
+		set<AaRoot*>& visited_elements,
+		map<string, vector<AaExpression*> >& ls_map,
+		map<string, vector<AaExpression*> >& pipe_map,
+		AaRoot* barrier,
+		ostream& ofile)
 {
-  if(!this->Is_Constant())
-    {
+	if(!this->Is_Constant())
+	{
 
-      ofile << "// " << this->To_String() << endl;
-      ofile << "// " << this->Get_Source_Info() << endl;
+		ofile << "// " << this->To_String() << endl;
+		ofile << "// " << this->Get_Source_Info() << endl;
+
 
       // take care of the guard
       if(this->_guard_expression)
@@ -183,6 +200,9 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	    }
       }
 
+
+      this->Write_VC_Synch_Dependency(visited_elements, pipeline_flag, ofile);
+      visited_elements.insert(this);
     }
 }  
 
@@ -325,6 +345,8 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	}
     }
 
+  this->Write_VC_Synch_Dependency(visited_elements, pipeline_flag, ofile);
+  visited_elements.insert(this);
 
   // if pipeline-flag, then re-enable..
   if(pipeline_flag)

@@ -34,9 +34,42 @@ class AaStatement: public AaScope
 
   AaDoWhileStatement* _do_while_parent;
 
+  // mark
+  string _mark;
+  set<AaStatement*> _synch_statements;
+
+  map<string,AaStatement*> _marked_statement_map;
  public:
   AaStatement(AaScope* scope);
   
+  virtual void Set_Mark(string mid) {_mark = mid;}
+  virtual string Get_Mark() {return(_mark);}
+
+  virtual void Mark_Statement(string mid, AaStatement* stmt)
+  {
+	// TODO: check if stmt exists in block.
+	_marked_statement_map[mid] = stmt;
+  }
+
+  virtual AaStatement* Get_Marked_Statement(string mark)
+  {
+	map<string,AaStatement*>::iterator miter = _marked_statement_map.find(mark);
+	if(miter != _marked_statement_map.end())
+		return((*miter).second);
+	else
+		return(NULL);
+  }
+  virtual void Add_Synch(string syid)
+  {
+	if(this->Get_Scope()->Is_Statement())
+	{
+		AaStatement* ss = (AaStatement*) this->Get_Scope();
+		AaStatement* synch = ss->Get_Marked_Statement(syid);
+		if(synch != NULL)
+			_synch_statements.insert(synch);
+	}	
+  }
+  virtual void Write_VC_Synch_Dependency(set<AaRoot*>& visited_elements, bool pipeline_flag, ostream& ofile);
   virtual void Set_Do_While_Parent(AaDoWhileStatement* dws) {_do_while_parent = dws;}
   AaDoWhileStatement* Get_Do_While_Parent() {return(_do_while_parent);}
 
@@ -428,6 +461,7 @@ class AaAssignmentStatement: public AaStatement
   void Write_VC_WAR_Dependencies(bool pipeline_flag, set<AaRoot*>& visited_elements,
 				 ostream& ofile);
 
+
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
 
@@ -582,6 +616,7 @@ class AaBlockStatement: public AaStatement
   virtual string Get_Name() {return(this->Get_Label());}
   virtual bool Is_Block_Statement() {return(true);}
   virtual bool Is_Pipelined() {return(false);}
+
 
   virtual void Set_Do_While_Parent(AaDoWhileStatement* dws) 
   { 

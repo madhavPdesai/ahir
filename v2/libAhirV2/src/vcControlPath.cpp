@@ -2295,21 +2295,21 @@ void vcCPForkBlock::Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int>
 			{
 				if(v->Is_Transition())
 				{
-					if(!((vcTransition*)v)->Get_Is_Delay_Element())
-					{
+					//if(!((vcTransition*)v)->Get_Is_Delay_Element())
+					//{
 						this->Remove_Join_Point((vcTransition*)v,u);
 						vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
 								+ u->Get_Label());
-					}
+					//}
 				}
 				if(u->Is_Transition())
 				{
-					if(!((vcTransition*)u)->Get_Is_Delay_Element())
-					{
+					//if(!((vcTransition*)u)->Get_Is_Delay_Element())
+					//{
 						this->Remove_Fork_Point((vcTransition*)u,v);
 						vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
 								+ v->Get_Label());
-					}
+					//}
 				}
 			}
 		}
@@ -2328,22 +2328,22 @@ void vcCPForkBlock::Eliminate_Redundant_Dependencies()
 
 		if(u->Is_Transition())
 		{
-			if(!((vcTransition*)u)->Get_Is_Delay_Element())
-			{
+			//if(!((vcTransition*)u)->Get_Is_Delay_Element())
+			//{
 				this->Remove_Fork_Point((vcTransition*)u,v);
 				vcSystem::Info("removed redundant fork point " + u->Get_Label() + " &-> "
 						+ v->Get_Label());
-			}
+			//}
 		}
 
 		if(v->Is_Transition())
 		{
-			if(!((vcTransition*)v)->Get_Is_Delay_Element())
-			{
+			//if(!((vcTransition*)v)->Get_Is_Delay_Element())
+			//{
 				this->Remove_Join_Point((vcTransition*)v,u);
 				vcSystem::Info("removed redundant join point " + v->Get_Label() + " <-& "
 						+ u->Get_Label());
-			}
+			//}
 		}
 	}
 

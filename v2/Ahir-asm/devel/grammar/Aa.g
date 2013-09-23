@@ -234,9 +234,16 @@ aA_Atomic_Statement[AaScope* scope] returns [AaStatement* stmt]
 			stmt->Set_Guard_Expression(oref);
 			stmt->Set_Guard_Complement(not_flag);
 		}
-	}
-	      )
-	)  |
+	}  
+	   (MARK mid: SIMPLE_IDENTIFIER 
+		{
+			stmt->Set_Mark(mid->getText()); 
+			if(scope->Is_Statement())
+				((AaStatement*)scope)->Mark_Statement(mid->getText(), stmt);
+		}
+	   )?
+	   (SYNCH LPAREN (syid: SIMPLE_IDENTIFIER {stmt->Add_Synch(syid->getText());})+ RPAREN )? 
+	))  |
         	stmt = aA_Null_Statement[scope] |
         	stmt = aA_Block_Statement[scope]
     ;
@@ -1559,6 +1566,10 @@ ADDRESS_OF_OP   : "@";
 
 // VOID
 VOID            : "$void";
+
+// mark, synch
+MARK            : "$mark";
+SYNCH           : "$synch";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

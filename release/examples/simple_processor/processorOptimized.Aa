@@ -74,13 +74,13 @@ $module [ifetch] $in () $out () $is
 
 			branch_case := ((br_0 | br_1) | (br_2 | br_3))
 
-			ir_pipe := ir_0
-			pc_pipe := pc_0
-			$guard (d_1) ir_pipe := ir_1
-			$guard (d_1) pc_pipe := pc_1
-			$guard (d_2) ir_pipe := ir_2
-			$guard (d_2) pc_pipe := pc_2
-			$guard (d_3) ir_pipe := ir_3
+			ir_pipe := ir_0 $mark w0
+			pc_pipe := pc_0 $mark ww0
+			$guard (d_1) ir_pipe := ir_1 $mark w1 
+			$guard (d_1) pc_pipe := pc_1 $mark ww1 
+			$guard (d_2) ir_pipe := ir_2 $mark w2 
+			$guard (d_2) pc_pipe := pc_2 $mark ww2
+			$guard (d_3) ir_pipe := ir_3 
 			$guard (d_3) pc_pipe := pc_3
 
 			$guard (~ branch_case) next_pc_pipe := (pc_0 + 4)

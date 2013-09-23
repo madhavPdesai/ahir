@@ -725,6 +725,7 @@ void AaAssignmentStatement::Print(ostream& ofile)
   }
 
 
+
   if(!flag && this->Get_Target()->Is_Foreign_Store() && this->Get_Source()->Is_Foreign_Load())
     {
       AaPointerDereferenceExpression *ptgt = (AaPointerDereferenceExpression*)(this->Get_Target());
@@ -766,41 +767,57 @@ void AaAssignmentStatement::Print(ostream& ofile)
       this->Get_Target()->Print(ofile);
       ofile << " := ";
       this->Get_Source()->Print(ofile);
+
+      if(this->_mark != "")
+	      ofile << " $mark " << _mark << " ";
+
+      if(this->_synch_statements.size() > 0)
+      {
+	      ofile << " $synch (";
+	      for(set<AaStatement*>::iterator siter = _synch_statements.begin(), fiter = _synch_statements.end();
+			      siter != fiter; siter++)
+	      {
+		      ofile << (*siter)->Get_Mark();
+		      ofile << " ";
+	      }
+	      ofile << ")  ";
+      }
+
     }
 
   int bufval = this->Get_Buffering();
   if(bufval > 1)
-	ofile << " $buffering " << bufval;
+	  ofile << " $buffering " << bufval;
 
   if(AaProgram::_verbose_flag)
-    ofile << endl << Debug_Info();
+	  ofile << endl << Debug_Info();
 
   ofile << endl;
 }
 
 void AaAssignmentStatement::Map_Targets()
 {
-  // only one target which can serve as a handle
-  // to this statement
-  if(this->_target->Is_Object_Reference())
-    this->Map_Target((AaObjectReference*)this->Get_Target());
+	// only one target which can serve as a handle
+	// to this statement
+	if(this->_target->Is_Object_Reference())
+		this->Map_Target((AaObjectReference*)this->Get_Target());
 }
 
 void AaAssignmentStatement::Map_Source_References()
 {
-  this->_target->Map_Source_References_As_Target(this->_source_objects);
-  AaProgram::Add_Type_Dependency(this->_target,this->_source);
+	this->_target->Map_Source_References_As_Target(this->_source_objects);
+	AaProgram::Add_Type_Dependency(this->_target,this->_source);
 
-  this->_source->Map_Source_References(this->_source_objects);
+	this->_source->Map_Source_References(this->_source_objects);
 
-  if(this->_guard_expression)
-  {
-	this->_guard_expression->Map_Source_References(this->_source_objects);
-	if(!this->_guard_expression->Is_Implicit_Variable_Reference())
+	if(this->_guard_expression)
 	{
-		AaRoot::Error("guard variable must be implicit (SSA)", this);
+		this->_guard_expression->Map_Source_References(this->_source_objects);
+		if(!this->_guard_expression->Is_Implicit_Variable_Reference())
+		{
+			AaRoot::Error("guard variable must be implicit (SSA)", this);
+		}
 	}
-  }
 
 }
 
@@ -808,44 +825,44 @@ void AaAssignmentStatement::Map_Source_References()
 
 void AaAssignmentStatement::PrintC(ofstream& ofile, string tab_string)
 {
-  ofile << tab_string;
-  this->_target->PrintC(ofile,"");
-  ofile << " = ";
-  this->_source->PrintC(ofile,"");
-  ofile << "; // " << this->Get_Source_Info() << endl;
-  
+	ofile << tab_string;
+	this->_target->PrintC(ofile,"");
+	ofile << " = ";
+	this->_source->PrintC(ofile,"");
+	ofile << "; // " << this->Get_Source_Info() << endl;
+
 }
 
 // return true if one of the sources or targets is a pipe.
 bool AaAssignmentStatement::Can_Block()
 {
-  for(set<AaRoot*>::iterator siter = this->_target_objects.begin();
-      siter != this->_target_objects.end();
-      siter++)
-    {
-      if((*siter)->Is("AaPipeObject"))
-	return(true);
-    }
+	for(set<AaRoot*>::iterator siter = this->_target_objects.begin();
+			siter != this->_target_objects.end();
+			siter++)
+	{
+		if((*siter)->Is("AaPipeObject"))
+			return(true);
+	}
 
-  for(set<AaRoot*>::iterator siter = this->_source_objects.begin();
-      siter != this->_source_objects.end();
-      siter++)
-    {
-      if((*siter)->Is("AaPipeObject"))
-	return(true);
-    }
+	for(set<AaRoot*>::iterator siter = this->_source_objects.begin();
+			siter != this->_source_objects.end();
+			siter++)
+	{
+		if((*siter)->Is("AaPipeObject"))
+			return(true);
+	}
 
-  return(false);
+	return(false);
 }
 
 void AaAssignmentStatement::Write_C_Struct(ofstream& ofile)
 {
-  this->AaStatement::Write_C_Struct(ofile);
-  if((this->_target->Is("AaSimpleObjectReference")) &&
-     (((AaObjectReference*)this->_target)->Get_Object() == this))
-    {
-      ((AaSimpleObjectReference*)(this->_target))->PrintC_Header_Entry(ofile);
-    }
+	this->AaStatement::Write_C_Struct(ofile);
+	if((this->_target->Is("AaSimpleObjectReference")) &&
+			(((AaObjectReference*)this->_target)->Get_Object() == this))
+	{
+		((AaSimpleObjectReference*)(this->_target))->PrintC_Header_Entry(ofile);
+	}
 }
 
 void AaAssignmentStatement::Write_VC_Control_Path(ostream& ofile)
@@ -1438,80 +1455,95 @@ void AaCallStatement::Print(ostream& ofile)
       this->_output_args[i]->Print(ofile);
       ofile << " ";
     }
-  ofile << ")" << endl;
+  ofile << ") ";
 
+  if(this->_mark != "")
+	  ofile << " $mark " << _mark << " ";
+
+  if(this->_synch_statements.size() > 0)
+  {
+	  ofile << " $synch (";
+	  for(set<AaStatement*>::iterator siter = _synch_statements.begin(), fiter = _synch_statements.end();
+			  siter != fiter; siter++)
+	  {
+		  ofile << (*siter)->Get_Mark();
+		  ofile << " ";
+	  }
+	  ofile << ")  ";
+  }
+  ofile << endl;
 }
 
 void AaCallStatement::Map_Source_References()
 {
-  AaModule* called_module = AaProgram::Find_Module(this->_function_name);
-  if(called_module != NULL)
-    {
-      called_module->Increment_Number_Of_Times_Called();
-      this->Set_Called_Module(called_module);
-
-      AaScope* root_scope = this->Get_Root_Scope();
-      assert(root_scope && root_scope->Is("AaModule"));
-      AaModule* caller_module = (AaModule*) root_scope;
-      AaProgram::Add_Call_Pair(caller_module,called_module);
-
-      if(called_module->Get_Number_Of_Input_Arguments() != this->_input_args.size())
+	AaModule* called_module = AaProgram::Find_Module(this->_function_name);
+	if(called_module != NULL)
 	{
-	  AaRoot::Error("incorrect number of input arguments in function call", this );
+		called_module->Increment_Number_Of_Times_Called();
+		this->Set_Called_Module(called_module);
+
+		AaScope* root_scope = this->Get_Root_Scope();
+		assert(root_scope && root_scope->Is("AaModule"));
+		AaModule* caller_module = (AaModule*) root_scope;
+		AaProgram::Add_Call_Pair(caller_module,called_module);
+
+		if(called_module->Get_Number_Of_Input_Arguments() != this->_input_args.size())
+		{
+			AaRoot::Error("incorrect number of input arguments in function call", this );
+		}
+
+
+		if(called_module->Get_Number_Of_Output_Arguments() != this->_output_args.size())
+		{
+			AaRoot::Error("incorrect number of output arguments in function call", this );
+		}
+	}
+	else
+	{
+		AaRoot::Error("module " +  this->_function_name  + " not found!",this);
 	}
 
 
-      if(called_module->Get_Number_Of_Output_Arguments() != this->_output_args.size())
+	for(unsigned int i=0; i < this->_input_args.size(); i++)
 	{
-	  AaRoot::Error("incorrect number of output arguments in function call", this );
+		this->_input_args[i]->Map_Source_References(this->_source_objects);
+		if(called_module != NULL)
+		{
+			// transfer the type of inarg to inargument.
+			this->_input_args[i]->Set_Type(called_module->Get_Input_Argument(i)->Get_Type());
+
+			// inarg -> inargument
+			this->_input_args[i]->Add_Source_Reference(called_module->Get_Input_Argument(i));
+			called_module->Get_Input_Argument(i)->Add_Target_Reference(this->_input_args[i]);
+			called_module->Get_Input_Argument(i)->
+				Set_Addressed_Object_Representative(this->_input_args[i]->Get_Addressed_Object_Representative());
+		}
 	}
-    }
-  else
-    {
-      AaRoot::Error("module " +  this->_function_name  + " not found!",this);
-    }
-
-
-  for(unsigned int i=0; i < this->_input_args.size(); i++)
-    {
-      this->_input_args[i]->Map_Source_References(this->_source_objects);
-      if(called_module != NULL)
+	for(unsigned int i=0; i < this->_output_args.size(); i++)
 	{
-	  // transfer the type of inarg to inargument.
-	  this->_input_args[i]->Set_Type(called_module->Get_Input_Argument(i)->Get_Type());
+		this->_output_args[i]->Map_Source_References_As_Target(this->_source_objects);
+		if(called_module != NULL)
+		{
 
-	  // inarg -> inargument
-	  this->_input_args[i]->Add_Source_Reference(called_module->Get_Input_Argument(i));
-	  called_module->Get_Input_Argument(i)->Add_Target_Reference(this->_input_args[i]);
-	  called_module->Get_Input_Argument(i)->
-	    Set_Addressed_Object_Representative(this->_input_args[i]->Get_Addressed_Object_Representative());
+			// transfer the type of outarg to ioutargument.
+			this->_output_args[i]->Set_Type(called_module->Get_Output_Argument(i)->Get_Type());
+
+			// outarg <- outargument
+			this->_output_args[i]->Add_Target_Reference(called_module->Get_Output_Argument(i));
+			called_module->Get_Output_Argument(i)->Add_Source_Reference(this->_output_args[i]);
+			this->_output_args[i]->
+				Set_Addressed_Object_Representative(called_module->Get_Output_Argument(i)->Get_Addressed_Object_Representative());
+		}
 	}
-    }
-  for(unsigned int i=0; i < this->_output_args.size(); i++)
-    {
-      this->_output_args[i]->Map_Source_References_As_Target(this->_source_objects);
-      if(called_module != NULL)
+
+	if(this->_guard_expression)
 	{
-
-	  // transfer the type of outarg to ioutargument.
-	  this->_output_args[i]->Set_Type(called_module->Get_Output_Argument(i)->Get_Type());
-
-	  // outarg <- outargument
-	  this->_output_args[i]->Add_Target_Reference(called_module->Get_Output_Argument(i));
-	  called_module->Get_Output_Argument(i)->Add_Source_Reference(this->_output_args[i]);
-	  this->_output_args[i]->
-	    Set_Addressed_Object_Representative(called_module->Get_Output_Argument(i)->Get_Addressed_Object_Representative());
+		this->_guard_expression->Map_Source_References(this->_source_objects);
+		if(!this->_guard_expression->Is_Implicit_Variable_Reference())
+		{
+			AaRoot::Error("guard variable must be implicit (SSA)", this);
+		}
 	}
-    }
-
-  if(this->_guard_expression)
-  {
-	this->_guard_expression->Map_Source_References(this->_source_objects);
-	if(!this->_guard_expression->Is_Implicit_Variable_Reference())
-	{
-		AaRoot::Error("guard variable must be implicit (SSA)", this);
-	}
-  }
 }
 
 
@@ -1521,11 +1553,11 @@ void AaCallStatement::Map_Source_References()
 // structure.
 void AaCallStatement::Write_C_Struct(ofstream& ofile)
 {
-  // entry flag, exit flag and
-  // pointer to structure maintaining state of
-  // called function.
-  // the statement needs an entry flag and an exit flag!
-  this->AaStatement::Write_C_Struct(ofile);
+	// entry flag, exit flag and
+	// pointer to structure maintaining state of
+	// called function.
+	// the statement needs an entry flag and an exit flag!
+	this->AaStatement::Write_C_Struct(ofile);
 
   // Targets.
   for(unsigned int i=0; i < this->_output_args.size(); i++)
