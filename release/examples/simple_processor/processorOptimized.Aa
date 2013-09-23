@@ -33,6 +33,7 @@ $pipe bypass_pc_to_2 : $uint<16> $depth 4
 
 
 $pipe start_ifetch: $uint<8>
+$pipe halt_pipe : $uint<8>
 $pipe ir_pipe: $uint<16>  $depth 4
 $pipe next_pc_pipe : $uint<16>
 $pipe pc_pipe : $uint<16> $depth 4
@@ -51,6 +52,7 @@ $module [ifetch] $in () $out () $is
 			pc_2 := (pc_0 + 2)
 			pc_3 := (pc_0 + 3)
 
+			// this should load from ICACHE.
 			ir_0 := mem[pc_0]
 			ir_1 := mem[pc_1]
 			ir_2 := mem[pc_2]
@@ -61,18 +63,16 @@ $module [ifetch] $in () $out () $is
 			op_2 := (ir_2 >> 12)
 			op_3 := (ir_3 >> 12)
 
-
 			br_0 := ((op_0 == 0) | ((op_0 == 8) | ((op_0 == 9) | (op_0 == 10))))
-			br_1 := ((op_0 == 0) | ((op_1 == 8) | ((op_1 == 9) | (op_1 == 10))))
-			br_2 := ((op_0 == 0) | ((op_2 == 8) | ((op_2 == 9) | (op_2 == 10))))
-			br_3 := ((op_0 == 0) | ((op_3 == 8) | ((op_3 == 9) | (op_3 == 10))))
+			br_1 := ((op_1 == 0) | ((op_1 == 8) | ((op_1 == 9) | (op_1 == 10))))
+			br_2 := ((op_2 == 0) | ((op_2 == 8) | ((op_2 == 9) | (op_2 == 10))))
+			br_3 := ((op_3 == 0) | ((op_3 == 8) | ((op_3 == 9) | (op_3 == 10))))
 
 			d_1  := (~ br_0)
 			d_2  := (~ (br_0 | br_1))
 			d_3  := (~ ((br_0 | br_1) | br_2) )
 
 			branch_case := ((br_0 | br_1) | (br_2 | br_3))
-
 
 			ir_pipe := ir_0
 			pc_pipe := pc_0
@@ -84,6 +84,7 @@ $module [ifetch] $in () $out () $is
 			$guard (d_3) pc_pipe := pc_3
 
 			$guard (~ branch_case) next_pc_pipe := (pc_0 + 4)
+
 		$while 1	
 		
 	}
@@ -207,16 +208,10 @@ $is
 {
   	$branchblock [core] 
   	{
-
     		$dopipeline $depth 8 $buffering 2
 		
-    		$merge $entry $loopback 
-		$phi halt := ($bitcast($uint<1>) 0) $on $entry nhalt $on $loopback
-                $phi ICOUNT := ($bitcast ($uint<16>) 0) $on $entry NICOUNT $on $loopback
-    		$endmerge
+    		$merge $entry $loopback $endmerge
 
-		NICOUNT := (ICOUNT+1)
-        	
 		// stage 1
 		ir    := ir_pipe
 		pc    := pc_pipe
@@ -239,7 +234,6 @@ $is
         	op4 := (op == 4) op5 := (op == 5) op6 := (op == 6) op7 := (op ==7)	
         	op8 := (op == 8) op9 := (op == 9) op10 := (op == 10) op14 := (op == 14)	 // 3
 	
-		nhalt := (op == 0)
         	branch_case := (op8 | (op9 | op10)) 
 
 		read_r2 := (((op1 | op2) | (op3 | op4)) | op5)
@@ -270,6 +264,7 @@ $is
 		reg_file_write_port_request := ($mux write_r1 r1 255)
 	
 		// stage 8: write_results..
+		// note: memory load/store from DCACHE.
 		$guard (op1)  reg_file_write_port_data := (r2_val + r3_val)
 		$guard (op2)  reg_file_write_port_data := (r2_val - r3_val)
 		$guard (op3)  op3_addr  := (r2_val + r3_val)
@@ -285,7 +280,10 @@ $is
  		$guard (op9)  next_pc_pipe := (enpc + (r1_val + offs)) // 6
 		$guard (op10) next_pc_pipe := ( $mux (r1_val == 0) (enpc + offs) enpc) // 6
 
-    		$while (halt != 1)
+		// next-pc not updated, halt flagged.
+		$guard (op0) halt_pipe := 1
+
+    		$while 1
   	}
 }
 	

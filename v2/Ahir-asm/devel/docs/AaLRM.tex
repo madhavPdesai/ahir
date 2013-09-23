@@ -579,7 +579,8 @@ The form of the construct is
 \end{verbatim}
 The do-while statement can appear only in branch-blocks.  Control enters
 the do-while from a predecessor in the branch-block, and stays in the
-do-while as long as the condition-expression is false.  The \$loopback
+do-while as long as the condition-expression is false (the test is done
+every time the loop body has finished).  The \$loopback
 place is used to repeat the loop-body.  The leading merge statement
 in the do-while is used to merge the control-flow coming in either from
 the entry to the do-while or from the loopback place.
@@ -598,22 +599,23 @@ This specifies that up to 8 iterations of the loops will be kept alive
 in hardware, and the amount of buffering per operation will be kept to
 2.
 
+Additionally, it is possible to specify that the loop-pipelining
+be done to its extreme possibility, that is, to the maximum possible
+rate that can be achieved.
+\begin{verbatim}
+  $dopipeline $depth 8 $buffering 2
+  $fullrate // specify that extreme pipelining 
+	    // should be attempted.
+    ...
+  $while ....
+\end{verbatim}
+
 Note that it is always possible to describe
 a do-while loop using a branch-block, and this is what should be done
-if loop-pipelining is not desired\footnote{There are still some issues
-with loop-pipelining which are still being sorted out.}.
+if loop-pipelining is not desired.
 
 
-\subsubsection{Issues with loop-pipelining (in progress)}
-
-There is one outstanding issue: loop run-away.  This issue arises
-when an early value is fed back into the loop body which uses delayed
-versions of this early value.  The loop races ahead, priming the
-delayed versions with junk.  The solution is to always feed back the
-most delayed version of a variable.
-
-
-Thus, an \Aa program is constructed as a collection of modules,
+To summarize, an \Aa program is constructed as a collection of modules,
 each of which is a sequence of statements.  The use of series,
 parallel, fork and branch block
 statements enables the programmer to describe a highly concurrent
