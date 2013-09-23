@@ -18616,9 +18616,6 @@ begin  -- Vanilla
 
 	orGen: if ((operator_id = "ApIntOr") or (operator_id = "ApIntNor")) generate
 
-		out_data_valid <= (in_data_1_valid or in_data_1_kill) and 
-						(in_data_2_valid or in_data_2_kill);
-
 		-- out-valid = i1valid.i2valid  + i1valid.(i1=1) + i2valid.(i2=1)
 		out_data_valid <= (in_data_1_valid and in_data_2_valid) 
 					or (in_data_1_valid and in_data_1_one) or
