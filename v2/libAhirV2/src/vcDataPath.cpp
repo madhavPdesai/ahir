@@ -1658,6 +1658,7 @@ int vcDataPath::Generate_Buffering_String(string const_name,
 		if(J > 0)
 			buffering_string += ", ";
 		int bufv = buf_sizes[J];
+		//if(bufv <= 0) bufv = 1;
 		maxbuf = ((bufv > maxbuf) ? bufv : maxbuf);
 		buffering_string += IntToStr((N-J)-1) + " => " + IntToStr(bufv);
 	}
@@ -2345,8 +2346,11 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       // number of requesters.
       int num_reqs = _compatible_outport_groups[idx].size();
 
-      vector<vcTransition*> req;
-      vector<vcTransition*> ack;
+      vector<vcTransition*> sample_req;
+      vector<vcTransition*> sample_ack;
+      vector<vcTransition*> update_req;
+      vector<vcTransition*> update_ack;
+
       vector<vcWire*> inwires;
       vector<int> inwire_buffering;
 
@@ -2383,8 +2387,13 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 	  elements.push_back(so->Get_VHDL_Id());
 	  so->Append_Inwires(inwires);
 	  so->Append_Inwire_Buffering(inwire_buffering);
-	  req.push_back(so->Get_Req(0));
-	  ack.push_back(so->Get_Ack(0));
+
+	  sample_req.push_back(so->Get_Req(0));
+	  sample_ack.push_back(so->Get_Ack(0));
+
+	  update_req.push_back(so->Get_Req(1));
+	  update_ack.push_back(so->Get_Ack(1));
+
  	  so->Append_Guard(guards, guard_complements);
 	}
       assert(p != NULL);
@@ -2406,7 +2415,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 	  for(int u = 0; u < inwires.size(); u++)
 	    {
 
-	      vcTransition* aw = ack[u];
+	      vcTransition* aw = update_ack[u];
 	      vcWire* iw = inwires[u];
 	      
 	      ofile << " if " << aw->Get_DP_To_CP_Symbol() << " then -- {" << endl;
@@ -2438,18 +2447,24 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       // in and out data.
       ofile << "signal data_in: std_logic_vector(" << in_width-1 << " downto 0);" << endl;
       // in and out acks.
-      ofile << "signal req, ack : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
-      ofile << "signal req_unguarded, ack_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal sample_req, sample_ack : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal update_req, update_ack : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal sample_req_unguarded, sample_ack_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal update_req_unguarded, update_ack_unguarded : BooleanArray( " << num_reqs-1 << " downto 0);" << endl;
+
       ofile << "signal guard_vector : std_logic_vector( " << num_reqs-1 << " downto 0);" << endl;
 
       ofile << input_buffering_string << endl;
       ofile << "-- }\n begin -- {" << endl;
 
       // guard related stuff.
-      this->Print_VHDL_Concatenate_Req("req_unguarded",req,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ack_unguarded",ack,ofile);
+      this->Print_VHDL_Concatenate_Req("sample_req_unguarded",sample_req,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("sample_ack_unguarded",sample_ack,ofile);
+      this->Print_VHDL_Concatenate_Req("update_req_unguarded",update_req,ofile);
+      this->Print_VHDL_Disconcatenate_Ack("update_ack_unguarded",update_ack,ofile);
       this->Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guards, guard_complements, ofile);
-      this->Print_VHDL_Guard_Instance("gI", num_reqs,"guard_vector", "req_unguarded", "ack_unguarded", "req", "ack", false, ofile);
+      this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "sample_req_unguarded", "sample_ack_unguarded", "sample_req", "sample_ack", false, ofile);
+      this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "update_req_unguarded", "update_ack_unguarded", "update_req", "update_ack", false, ofile);
 
       // concatenate data_in
       this->Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
@@ -2462,8 +2477,10 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 	    << " num_reqs => " << num_reqs << ","
 	    << " input_buffering => inBUFs," 
 	    << " no_arbitration => " << no_arb_string << ")" << endl;
-      ofile << "port map (--{\n req => req " << ", " <<  endl
-	    << "    ack => ack " << ", " <<  endl
+      ofile << "port map (--{\n sample_req => sample_req " << ", " <<  endl
+	    << "    sample_ack => sample_ack " << ", " <<  endl
+	    << "    update_req => update_req " << ", " <<  endl
+	    << "    update_ack => update_ack " << ", " <<  endl
 	    << "    data => data_in, " << endl
 	    << "    oreq => " 
 	    << this->Get_VHDL_IOport_Interface_Port_Section(p,"out" , "write_req", idx)  << "," << endl

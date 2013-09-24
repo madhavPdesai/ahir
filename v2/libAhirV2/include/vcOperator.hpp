@@ -224,6 +224,8 @@ public:
 	{ return(NULL);}
 
   virtual string Get_Logger_Description() {return (" PipeWrite to " + _pipe->Get_Id()); }
+  virtual void Add_Reqs(vector<vcTransition*>& reqs);
+  virtual void Add_Acks(vector<vcTransition*>& acks);
   friend class vcDataPath;
 
 };

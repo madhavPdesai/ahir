@@ -1012,10 +1012,11 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target( ostream& ofile)
 	else if(this->_object->Is("AaPipeObject"))
 	{
 		ofile << "// " << this->To_String() << endl;
-		ofile << ";;[" << this->Get_VC_Name() << "] { // pipe write ";
-		this->Print(ofile);
-		ofile << endl;
-		ofile << "$T [pipe_wreq] $T [pipe_wack] " << endl;
+		ofile << ";;[" << this->Get_VC_Name() << "_Sample] { // sample-data. " << endl;
+		ofile << "$T [req] $T [req] " << endl;
+		ofile << "}" << endl;
+		ofile << ";;[" << this->Get_VC_Name() << "_Update] { // data to pipe. " << endl;
+		ofile << "$T [req] $T [req] " << endl;
 		ofile << "}" << endl;
 	}
 }
@@ -1270,8 +1271,11 @@ void AaSimpleObjectReference:: Write_VC_Links_As_Target(string hier_id, ostream&
 		else if(this->_object->Is("AaPipeObject"))
 		{
 			string inst_name = this->Get_VC_Datapath_Instance_Name();
-			reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/pipe_wreq");
-			acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/pipe_wack");
+			reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "_Sample/req");
+			acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_Sample/ack");
+			reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "_Update/req");
+			acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_Update/ack");
+
 			Write_VC_Link(inst_name, reqs,acks,ofile);
 		}
 	}

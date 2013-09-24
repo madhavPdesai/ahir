@@ -79,21 +79,25 @@ begin  -- default_arch
 			if(write_req and kill_active) then
 				decr := true;
 				wackv := true;	
-			elsif(write_req and (push_ack(0) = '1') and (not kill_active)) then
-				wackv := true;
+			elsif(write_req and (not kill_active)) then
 				pushreqv := '1';
-			elsif (write_req and (push_ack(0) = '0') and (not kill_active)) then
-				nstate := busy;	
+				if(push_ack(0) = '1') then 
+					wackv := true;
+				else
+					nstate := busy;	
+				end if;
 			end if;
 		when busy => 
-			if(kill = '1') then
+			if(kill_active) then
 				decr := true;
 				wackv := true;
 				nstate := idle;
-			elsif (push_ack(0) = '1') then
-				nstate := idle;
+			else
 				pushreqv := '1';
-				wackv := true;
+				if (push_ack(0) = '1') then
+					nstate := idle;
+					wackv := true;
+				end if;
 			end if;
 	end case;
 

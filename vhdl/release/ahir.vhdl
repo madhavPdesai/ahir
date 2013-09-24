@@ -3477,8 +3477,10 @@ package BaseComponents is
 	  no_arbitration: boolean := false;
 	  input_buffering : IntegerArray);
     port (
-    req        : in  BooleanArray(num_reqs-1 downto 0);
-    ack        : out BooleanArray(num_reqs-1 downto 0);
+    sample_req        : in  BooleanArray(num_reqs-1 downto 0);
+    sample_ack        : out BooleanArray(num_reqs-1 downto 0);
+    update_req        : in  BooleanArray(num_reqs-1 downto 0);
+    update_ack        : out BooleanArray(num_reqs-1 downto 0);
     data       : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -3561,6 +3563,21 @@ package BaseComponents is
         clk : in std_logic;
         reset : in std_logic);
   end component;
+
+  component PulseLevelPulseInterlockBuffer 
+  generic (name : string; data_width: integer; buffer_size : integer);
+  port( write_req : in boolean;
+        write_ack : out boolean;
+        write_data : in std_logic_vector(data_width-1 downto 0);
+        update_req : in boolean;
+        update_ack : out boolean;
+        has_data    : out std_logic;
+        read_enable : in std_logic;
+        read_data : out std_logic_vector(data_width-1 downto 0);
+        clk : in std_logic;
+        reset : in std_logic);
+  end component;
+
 
   component LevelMux 
     generic(num_reqs: integer;
@@ -12051,7 +12068,6 @@ begin  -- default_arch
     read_data <= pipe_data_repeated;
   end generate singleReader;
   
-
 end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
@@ -19662,8 +19678,10 @@ entity OutputPortFullRate is
 	  no_arbitration: boolean := false;
 	  input_buffering: IntegerArray);
   port (
-    req        : in  BooleanArray(num_reqs-1 downto 0);
-    ack        : out BooleanArray(num_reqs-1 downto 0);
+    sample_req        : in  BooleanArray(num_reqs-1 downto 0);
+    sample_ack        : out BooleanArray(num_reqs-1 downto 0);
+    update_req        : in  BooleanArray(num_reqs-1 downto 0);
+    update_ack        : out BooleanArray(num_reqs-1 downto 0);
     data       : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -19674,13 +19692,11 @@ end entity;
 architecture Base of OutputPortFullRate is
 
   signal reqR, ackR : std_logic_vector(num_reqs-1 downto 0);
-  signal fEN: std_logic_vector(num_reqs-1 downto 0);
-
 
   signal omux_data_in       : std_logic_vector((num_reqs*data_width)-1 downto 0);
 
   type   OPWArray is array(integer range <>) of std_logic_vector(data_width-1 downto 0);
-  signal data_array : OPWArray(num_reqs-1 downto 0);
+  signal in_data_array, out_data_array : OPWArray(num_reqs-1 downto 0);
   
   constant input_buf_sizes: IntegerArray(num_reqs-1 downto 0) :=  input_buffering;
 
@@ -19694,39 +19710,29 @@ begin
   -----------------------------------------------------------------------------
   BufGen : for I in 0 to num_reqs-1 generate
 	
-	NoBuf: if(input_buf_sizes(I) = 0) generate
-      		p2LInst: PulseToLevel
-       			port map(rL            => req(I),
-               			rR            => reqR(I),
-               			aL            => ack(I),
-               			aR            => ackR(I),
-               			clk           => clk,
-               			reset         => reset);
-		data_array(I) <= data(((I+1)*data_width)-1 downto (I*data_width));
-	end generate NoBuf;
+	in_data_array(I) <= data(((I+1)*data_width)-1 downto (I*data_width));
 
-	YesBuf: if(input_buf_sizes(I) > 0) generate
-		rxB: ReceiveBuffer generic map( name => name & " rxBuf " & Convert_To_String(I),
-					buffer_size => input_buf_sizes(I),
-					data_width => data_width,
-					kill_counter_range => 2)
-			port map(write_req => req(I),
-			 write_ack => ack(I),
-			 write_data => data,
-			 -- note: cross-over
-			 read_req =>  ackR(I),
-			 read_ack => reqR(I), 
-			 kill => zero_sig,
-		         read_data => data_array(I),	
-			 clk => clk, reset => reset);
+	rxB: PulseLevelPulseInterlockBuffer 
+		generic map( name => name & " rxBuf " & Convert_To_String(I),
+				buffer_size => input_buf_sizes(I),
+				data_width => data_width)
+		port map(write_req => sample_req(I),
+		 write_ack => sample_ack(I),
+		 write_data => in_data_array(I),
+	         update_req => update_req(I),
+		 update_ack => update_ack(I),
+		 -- note: cross-over
+		 read_enable =>  ackR(I),
+		 has_data => reqR(I), 
+	         read_data => out_data_array(I),	
+		 clk => clk, reset => reset);
 
-	end generate YesBuf;
   end generate BufGen;
 
-  process(data_array)
+  process(out_data_array)
   begin
 	for J in  0 to num_reqs-1 loop
-		omux_data_in(((J+1)*data_width)-1 downto J*data_width) <= data_array(J);
+		omux_data_in(((J+1)*data_width)-1 downto J*data_width) <= out_data_array(J);
 	end loop;
   end process;
 
@@ -19815,6 +19821,117 @@ begin  -- Behave
 	 end if;
      end if;
   end process;
+
+end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+-- 
+--  An interlock with a write interface
+--  triggered by a pulse protocol and completed
+--  by a level-pulse protocol.  The read-interface
+--  is partially regulated by a pulse protocol.
+--
+--  sample_req->sample_ack can be zero delay.
+--  update_req->update_ack has unit delay.
+--
+entity PulseLevelPulseInterlockBuffer is
+  generic (name : string; data_width: integer; buffer_size : integer);
+  port( write_req : in boolean;
+        write_ack : out boolean;
+        write_data : in std_logic_vector(data_width-1 downto 0);
+        update_req : in boolean;
+        update_ack : out boolean;
+        has_data    : out std_logic;
+        read_enable : in std_logic;
+        read_data : out std_logic_vector(data_width-1 downto 0);
+        clk : in std_logic;
+        reset : in std_logic);
+end entity;
+
+architecture Behave of PulseLevelPulseInterlockBuffer is
+	signal zero_sig : std_logic;
+	signal rx_has_data, rx_read_enable: std_logic;
+
+	signal rx_read_data : std_logic_vector(data_width-1 downto 0);
+	type UpdateFsmState is (idle, waiting, busy);
+	signal update_fsm_state: UpdateFsmState;
+
+begin  -- Behave
+
+   zero_sig <= '0';
+
+
+   read_data <= rx_read_data;
+
+   Rxbuf: ReceiveBuffer generic map (name => name & " buffer ",
+				data_width => data_width,
+			 	buffer_size => buffer_size,
+				kill_counter_range => 1)
+		port map(write_req => write_req,
+                         write_ack => write_ack,
+			 write_data => write_data,
+			 read_req => rx_read_enable,
+			 read_ack => rx_has_data,
+                         read_data => rx_read_data,
+			 kill => zero_sig,
+			 clk => clk, reset => reset);		
+
+
+   process(clk,reset,update_fsm_state, update_req, rx_has_data, rx_read_data)
+	variable nstate: UpdateFsmState;
+	variable uackv : boolean;
+   begin
+	nstate := update_fsm_state;
+	uackv := false;
+
+	rx_read_enable <= '0';
+	has_data <= '0';
+
+	if(update_fsm_state = idle) then
+		if(update_req and (rx_has_data = '1') and (read_enable = '1')) then
+			rx_read_enable <= '1';
+			has_data <= '1';
+			uackv := true;
+		elsif (update_req and (rx_has_data = '1') and (read_enable = '0')) then
+			nstate := busy;
+			has_data <= '1';	
+		elsif (update_req) then
+			nstate := waiting;
+		end if;
+	elsif (update_fsm_state = waiting) then -- update-req has been seen, waiting for rx-has-data
+		has_data <= rx_has_data;
+		if(read_enable = '1') then
+			rx_read_enable <= '1';
+			nstate := idle;
+			uackv := true;
+		end if;
+        else -- waiting for read-enable.
+		has_data <= '1';
+		if(read_enable = '1') then 
+			nstate := idle;
+			uackv := true;	
+			rx_read_enable <= '1';
+		end if;
+	end if;
+
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			update_fsm_state <= idle;
+			update_ack <= false;
+		else
+			update_fsm_state <= nstate;
+			update_ack <= uackv;
+		end if;
+	end if;
+   end process;
 
 end Behave;
 library ieee;
@@ -20065,21 +20182,25 @@ begin  -- default_arch
 			if(write_req and kill_active) then
 				decr := true;
 				wackv := true;	
-			elsif(write_req and (push_ack(0) = '1') and (not kill_active)) then
-				wackv := true;
+			elsif(write_req and (not kill_active)) then
 				pushreqv := '1';
-			elsif (write_req and (push_ack(0) = '0') and (not kill_active)) then
-				nstate := busy;	
+				if(push_ack(0) = '1') then 
+					wackv := true;
+				else
+					nstate := busy;	
+				end if;
 			end if;
 		when busy => 
-			if(kill = '1') then
+			if(kill_active) then
 				decr := true;
 				wackv := true;
 				nstate := idle;
-			elsif (push_ack(0) = '1') then
-				nstate := idle;
+			else
 				pushreqv := '1';
-				wackv := true;
+				if (push_ack(0) = '1') then
+					nstate := idle;
+					wackv := true;
+				end if;
 			end if;
 	end case;
 

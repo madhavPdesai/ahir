@@ -526,31 +526,21 @@ void Write_VC_Pipe_Dependency(bool pipeline_flag,
 			      ostream& ofile)
 {
   ofile << "// pipe dependency " << endl;
-  if(src->Get_Is_Target())
+  if(src->Get_Is_Target() && tgt->Get_Is_Target())
   {
-	
-	// output port req->ack is 0-delay, so better
-	// to introduce a delay here..
-	string delay_trans = src->Get_VC_Name() + "_" + tgt->Get_VC_Name() + "_delay";
-  	ofile << "$T [" << delay_trans << "] $delay" << endl;
-	__J(delay_trans, __UCT(src));
-	__J(__SST(tgt), delay_trans);
-
-	//if(pipeline_flag)
-	//{
-		//__MJ(__SST(src), __UCT(tgt),false); // no bypass 
-	//}
+  	__J(__UST(tgt), __UCT(src));
+  }
+  else if(!src->Get_Is_Target() && tgt->Get_Is_Target())
+  {
+	__J(__UST(tgt), __SCT(src));
+  }
+  else if(src->Get_Is_Target() && !tgt->Get_Is_Target())
+  {
+	__J(__SST(tgt), __UCT(src));
   }
   else
   {
-	// input port sample-req to sample-ack is
-	// 0-delay, but update-req to update-ack
-	// is not, so no need to introduce delay.
-	__J(__SST(tgt), __UCT(src));
-	//if(pipeline_flag)
-	//{
-      		//__MJ(__SST(src), __UCT(tgt),true); // no bypass
-	//}
+	__J(__SST(tgt), __SCT(src));	
   }
 }
 

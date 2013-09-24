@@ -221,6 +221,7 @@ void AaSimpleObjectReference::Write_VC_Links_Optimized(string hier_id, ostream& 
 		}
 	}
 }
+
 void AaSimpleObjectReference::Write_VC_Links_As_Target_Optimized(string hier_id, ostream& ofile)
 {
 
@@ -238,9 +239,14 @@ void AaSimpleObjectReference::Write_VC_Links_As_Target_Optimized(string hier_id,
 		else if(this->_object->Is("AaPipeObject"))
 		{
 			string inst_name = this->Get_VC_Datapath_Instance_Name();
+
 			string sample_regn = this->Get_VC_Name() + "_Sample";
-			reqs.push_back(hier_id + "/" + sample_regn + "/pipe_wreq");
-			acks.push_back(hier_id + "/" + sample_regn + "/pipe_wack");
+			string update_regn = this->Get_VC_Name() + "_Update";
+
+			reqs.push_back(hier_id + "/" + sample_regn + "/req");
+			reqs.push_back(hier_id + "/" + update_regn + "/req");
+			acks.push_back(hier_id + "/" + sample_regn + "/ack");
+			acks.push_back(hier_id + "/" + update_regn + "/ack");
 			Write_VC_Link(inst_name, reqs,acks,ofile);
 		}
 	}
@@ -440,27 +446,24 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 		this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
 
 		string sample_regn = this->Get_VC_Name() + "_Sample";
-		ofile << ";;[" << sample_regn << "] { // pipe write ";
+		ofile << ";;[" << sample_regn << "] { // pipe write sample-start ";
 		this->Print(ofile);
 		ofile << endl;
-		ofile << "$T [pipe_wreq] $T [pipe_wack] " << endl;
+		ofile << "$T [req] $T [ack] " << endl;
 		ofile << "}" << endl;
 
-		// connections.
-		__F(__SST(this), sample_regn);
-		__J(__SCT(this), sample_regn);
-		__F(__SCT(this), __UST(this));
-		__J(__UCT(this), __UST(this));
+		string update_regn = this->Get_VC_Name() + "_Update";
+		ofile << ";;[" << update_regn << "] { // pipe write update (complete) ";
+		this->Print(ofile);
+		ofile << endl;
+		ofile << "$T [req] $T [ack] " << endl;
+		ofile << "}" << endl;
 
-		// Note: pipeline release dependencies of this store
-		// will be taken care of at the statement level..
-		//
-		// pipe sequence dependencies must be handled
-		// separately.
+		__ConnectSplitProtocolPattern;
+
 		if(pipeline_flag)
 		{
-			// SelfRelease
-			__MJ(__SST(this),__SCT(this), false); // no bypass
+			__SelfReleaseSplitProtocolPattern
 		}
 
 

@@ -765,6 +765,7 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> 
       
       ofile << "// pipe read/write dependencies for pipe " << (*iter).first << endl;
       AaExpression* last_expr = NULL;
+      AaExpression* first_expr = (*iter).second[0];
       for(int idx = 0, fidx = (*iter).second.size(); idx < fidx; idx++)
 	{
 	  AaExpression* expr = (*iter).second[idx];
@@ -772,6 +773,12 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> 
 	    Write_VC_Pipe_Dependency(pipeline_flag, last_expr,expr,ofile);
 	  last_expr = expr;
 	}
+      if(pipeline_flag)
+      {
+	ofile << "// ring dependency in pipeline." << endl;
+	if((first_expr != NULL) && (last_expr != NULL) && (first_expr != last_expr))
+		__MJ(__SST(first_expr), __UCT(last_expr), false); // no bypass.
+      }
     }
 }
 

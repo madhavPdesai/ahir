@@ -130,5 +130,4 @@ begin  -- default_arch
     read_data <= pipe_data_repeated;
   end generate singleReader;
   
-
 end default_arch;

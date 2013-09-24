@@ -19,8 +19,10 @@ entity OutputPortFullRate is
 	  no_arbitration: boolean := false;
 	  input_buffering: IntegerArray);
   port (
-    req        : in  BooleanArray(num_reqs-1 downto 0);
-    ack        : out BooleanArray(num_reqs-1 downto 0);
+    sample_req        : in  BooleanArray(num_reqs-1 downto 0);
+    sample_ack        : out BooleanArray(num_reqs-1 downto 0);
+    update_req        : in  BooleanArray(num_reqs-1 downto 0);
+    update_ack        : out BooleanArray(num_reqs-1 downto 0);
     data       : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -31,13 +33,11 @@ end entity;
 architecture Base of OutputPortFullRate is
 
   signal reqR, ackR : std_logic_vector(num_reqs-1 downto 0);
-  signal fEN: std_logic_vector(num_reqs-1 downto 0);
-
 
   signal omux_data_in       : std_logic_vector((num_reqs*data_width)-1 downto 0);
 
   type   OPWArray is array(integer range <>) of std_logic_vector(data_width-1 downto 0);
-  signal data_array : OPWArray(num_reqs-1 downto 0);
+  signal in_data_array, out_data_array : OPWArray(num_reqs-1 downto 0);
   
   constant input_buf_sizes: IntegerArray(num_reqs-1 downto 0) :=  input_buffering;
 
@@ -51,39 +51,29 @@ begin
   -----------------------------------------------------------------------------
   BufGen : for I in 0 to num_reqs-1 generate
 	
-	NoBuf: if(input_buf_sizes(I) = 0) generate
-      		p2LInst: PulseToLevel
-       			port map(rL            => req(I),
-               			rR            => reqR(I),
-               			aL            => ack(I),
-               			aR            => ackR(I),
-               			clk           => clk,
-               			reset         => reset);
-		data_array(I) <= data(((I+1)*data_width)-1 downto (I*data_width));
-	end generate NoBuf;
+	in_data_array(I) <= data(((I+1)*data_width)-1 downto (I*data_width));
 
-	YesBuf: if(input_buf_sizes(I) > 0) generate
-		rxB: ReceiveBuffer generic map( name => name & " rxBuf " & Convert_To_String(I),
-					buffer_size => input_buf_sizes(I),
-					data_width => data_width,
-					kill_counter_range => 2)
-			port map(write_req => req(I),
-			 write_ack => ack(I),
-			 write_data => data,
-			 -- note: cross-over
-			 read_req =>  ackR(I),
-			 read_ack => reqR(I), 
-			 kill => zero_sig,
-		         read_data => data_array(I),	
-			 clk => clk, reset => reset);
+	rxB: PulseLevelPulseInterlockBuffer 
+		generic map( name => name & " rxBuf " & Convert_To_String(I),
+				buffer_size => input_buf_sizes(I),
+				data_width => data_width)
+		port map(write_req => sample_req(I),
+		 write_ack => sample_ack(I),
+		 write_data => in_data_array(I),
+	         update_req => update_req(I),
+		 update_ack => update_ack(I),
+		 -- note: cross-over
+		 read_enable =>  ackR(I),
+		 has_data => reqR(I), 
+	         read_data => out_data_array(I),	
+		 clk => clk, reset => reset);
 
-	end generate YesBuf;
   end generate BufGen;
 
-  process(data_array)
+  process(out_data_array)
   begin
 	for J in  0 to num_reqs-1 loop
-		omux_data_in(((J+1)*data_width)-1 downto J*data_width) <= data_array(J);
+		omux_data_in(((J+1)*data_width)-1 downto J*data_width) <= out_data_array(J);
 	end loop;
   end process;
 

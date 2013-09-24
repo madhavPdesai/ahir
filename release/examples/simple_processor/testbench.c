@@ -44,9 +44,12 @@ int main()
 
 #ifndef SW
   // In the HW case, will need to initialize the processor memory.
+  uint16_t altmem[11] = {0x5100,0x5200,0x5300,0x1123,0x1123,0x1123,0x1123,0x1123,0x1123,0x1123,0x1123};
   uint16_t mem[7] = {0x5105,0x5201,0xE100,0xA103,0x2112,0x9083,0x0000};
+  for(idx = 0; idx < 11; idx++)
+	write_to_mem(idx,altmem[idx]);
   for(idx = 0; idx < 7; idx++)
-	write_to_mem(idx,mem[idx]);
+	write_to_mem(idx+11,mem[idx]);
 
   write_uint8("start_ifetch",1);
 #endif

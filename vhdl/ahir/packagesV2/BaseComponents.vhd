@@ -1865,8 +1865,10 @@ package BaseComponents is
 	  no_arbitration: boolean := false;
 	  input_buffering : IntegerArray);
     port (
-    req        : in  BooleanArray(num_reqs-1 downto 0);
-    ack        : out BooleanArray(num_reqs-1 downto 0);
+    sample_req        : in  BooleanArray(num_reqs-1 downto 0);
+    sample_ack        : out BooleanArray(num_reqs-1 downto 0);
+    update_req        : in  BooleanArray(num_reqs-1 downto 0);
+    update_ack        : out BooleanArray(num_reqs-1 downto 0);
     data       : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
     oreq       : out std_logic;
     oack       : in  std_logic;
@@ -1949,6 +1951,21 @@ package BaseComponents is
         clk : in std_logic;
         reset : in std_logic);
   end component;
+
+  component PulseLevelPulseInterlockBuffer 
+  generic (name : string; data_width: integer; buffer_size : integer);
+  port( write_req : in boolean;
+        write_ack : out boolean;
+        write_data : in std_logic_vector(data_width-1 downto 0);
+        update_req : in boolean;
+        update_ack : out boolean;
+        has_data    : out std_logic;
+        read_enable : in std_logic;
+        read_data : out std_logic_vector(data_width-1 downto 0);
+        clk : in std_logic;
+        reset : in std_logic);
+  end component;
+
 
   component LevelMux 
     generic(num_reqs: integer;

@@ -512,6 +512,18 @@ void vcOutport::Print(ostream& ofile)
   ofile << endl;
 }
 
+void   vcOutport::Add_Reqs(vector<vcTransition*>& reqs)
+{
+  assert(reqs.size() == 2);
+  this->_reqs = reqs;
+}
+
+void vcOutport::Add_Acks(vector<vcTransition*>& acks)
+{
+  assert(acks.size() == 2);
+  this->_acks = acks;
+}
+
 vcUnarySplitOperator::vcUnarySplitOperator(string id, string op_id, vcWire* x, vcWire* z):vcSplitOperator(id)
 {
   
