@@ -212,11 +212,15 @@ protected:
   map<vcWire*, int> _input_wire_buffering_map;
   map<vcWire*, int> _output_wire_buffering_map;
 
+  bool _flow_through;
  public:
-  vcDatapathElement(string id):vcRoot(id) {_guard_wire = NULL; _guard_complement = false;}
+  vcDatapathElement(string id):vcRoot(id) {_guard_wire = NULL; _guard_complement = false; _flow_through = false;}
 
   virtual void Add_Reqs(vector<vcTransition*>& reqs) {assert(0);}
   virtual void Add_Acks(vector<vcTransition*>& acks) {assert(0);}
+
+  virtual void Set_Flow_Through(bool v) {_flow_through = v;}
+  bool Get_Flow_Through() {return(_flow_through);}
 
   int Get_Number_Of_Reqs() {return(this->_reqs.size());}
   int Get_Number_Of_Acks() {return(this->_acks.size());}

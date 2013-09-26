@@ -28,7 +28,8 @@ entity BinaryLogicalOperator is
       output_buffer_depth : integer;           -- buffering at output.
 	-- both should never be constants.
       input_1_is_constant : boolean := false;
-      input_2_is_constant : boolean := false
+      input_2_is_constant : boolean := false;
+      flow_through: boolean := false
       );
   port (
     -- input operands.
@@ -58,7 +59,31 @@ architecture Vanilla of BinaryLogicalOperator is
 	signal out_data_valid, out_data_accept: std_logic;
 
 begin  -- Vanilla
+	andCase: if(operator_id = "ApIntAnd") generate
+			out_data <= (in_data_1 and in_data_2);
+	end generate andCase;
 
+	nandCase: if(operator_id = "ApIntNand") generate
+		out_data <= not (in_data_1 and in_data_2);
+	end generate nandCase;
+
+	orCase: if(operator_id = "ApIntOr") generate
+		out_data <= (in_data_1 or in_data_2);
+	end generate orCase;
+
+	norCase: if(operator_id = "ApIntNor") generate
+		out_data <= not (in_data_1 or in_data_2);
+	end generate norCase;
+
+	xorCase: if(operator_id = "ApIntXor") generate
+		out_data <= (in_data_1 xor in_data_2);
+	end generate xorCase;
+
+	xnorCase: if(operator_id = "ApIntXnor") generate
+		out_data <= not (in_data_1 xor in_data_2);
+	end generate xnorCase;
+
+    noFlowThrough:  if (not flow_through) generate
 	in_data_1_zero <= '1' when (in_data_1 = cZero) else '0';
 	in_data_1_one <= '1' when (in_data_1 = cOne) else '0';
 	in_data_2_zero <= '1' when (in_data_2 = cZero) else '0';
@@ -125,13 +150,6 @@ begin  -- Vanilla
 					or (in_data_1_valid and in_data_1_zero) or
 						(in_data_2_valid and in_data_2_zero);
 
-		andCase: if(operator_id = "ApIntAnd") generate
-			out_data <= (in_data_1 and in_data_2);
-		end generate andCase;
-
-		nandCase: if(operator_id = "ApIntNand") generate
-			out_data <= not (in_data_1 and in_data_2);
-		end generate nandCase;
         end generate andGen;
 
 	orGen: if ((operator_id = "ApIntOr") or (operator_id = "ApIntNor")) generate
@@ -141,13 +159,6 @@ begin  -- Vanilla
 					or (in_data_1_valid and in_data_1_one) or
 						(in_data_2_valid and in_data_2_one);
 
-		orCase: if(operator_id = "ApIntOr") generate
-			out_data <= (in_data_1 or in_data_2);
-		end generate orCase;
-
-		norCase: if(operator_id = "ApIntNor") generate
-			out_data <= not (in_data_1 or in_data_2);
-		end generate norCase;
 
         end generate orGen;
 
@@ -155,13 +166,6 @@ begin  -- Vanilla
 
 		out_data_valid <= in_data_1_valid and in_data_2_valid;
 
-		xorCase: if(operator_id = "ApIntXor") generate
-			out_data <= (in_data_1 xor in_data_2);
-		end generate xorCase;
-
-		xnorCase: if(operator_id = "ApIntXnor") generate
-			out_data <= not (in_data_1 xor in_data_2);
-		end generate xnorCase;
 
         end generate xorGen;
 
@@ -178,5 +182,22 @@ begin  -- Vanilla
 			 unload_ack => update_ack,
 			 read_data => data_out,
 			 clk => clk, reset => reset); 
+  end generate noFlowThrough;
+
+  flowThrough: if (flow_through) generate
+
+	-- operator is just like a combinational operator.
+	-- All other sequencing must be handled correctly by 
+	-- the control-path.
+
+	update_ack   <= update_req;
+	sample_ack <= sample_req;	
+		
+	in_data_1 <=  data_in((2*input_width)-1 downto input_width);
+	in_data_2 <=  data_in(input_width-1 downto 0);
+
+	data_out <= out_data;
+	
+  end generate flowThrough;
 
 end Vanilla;

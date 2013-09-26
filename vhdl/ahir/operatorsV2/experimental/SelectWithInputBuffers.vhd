@@ -14,7 +14,8 @@ entity SelectWithInputBuffers is
           x_is_constant: boolean;
           y_is_constant: boolean;
           sel_is_constant: boolean;
-	  z_buffering: integer);
+	  z_buffering: integer;
+	  flow_through: boolean := false);
   port(x,y: in std_logic_vector(data_width-1 downto 0);
        sel: in std_logic_vector(0 downto 0);
        req_x: in boolean;
@@ -55,6 +56,7 @@ begin
 	assert not (x_is_constant and y_is_constant and sel_is_constant) 
 		report "all three inputs to select cannot be constants" severity failure;
 
+     noFlowThrough: if (not flow_through) generate
 	nonConstX: if not x_is_constant generate 
 	  rb_x: ReceiveBuffer generic map( name => name & " receive-buffer_x",
 					buffer_size =>  x_buffering,
@@ -179,6 +181,20 @@ begin
 			end if;
 		end if;
 	end process;
+   end generate noFlowThrough;
+
+   flowThrough: if (flow_through) generate
+	--
+	-- all dependencies must be handled in the control-path.
+	-- the operator is just a combinational block.
+	--
+	ack_sel <= req_sel;
+	ack_x <= req_x;
+	ack_y <= req_y;
+	ack_z <= req_z;
+	z <= x when (sel /= cZero) else y;	
+   end generate flowThrough;
+   
 
 end arch;
 

@@ -653,7 +653,7 @@ vc_Guarded_Operator_Instantiation[vcSystem* sys, vcDataPath* dp]
 			dpe->Set_Guard_Complement(guard_complement);
 		}
 	}
-
+ (FLOWTHROUGH {dpe->Set_Flow_Through(true);} )?
 
 ;
 	
@@ -756,6 +756,7 @@ vc_BinaryLogicalOperator_Instantiation[vcDataPath* dp] returns[vcDatapathElement
   vcWire* y = NULL;
   vcWire* z = NULL;
   vcValue* val = NULL;
+  bool flow_through = false;
 }
 :
  HASH 
@@ -1880,6 +1881,9 @@ LEFT_OPEN : "$left_open";
 
 // input buffering indicator..
 HASH: "#";
+
+// flow-through indicator
+FLOWTHROUGH : "$flowthrough";
 
 // data format
 UINTEGER          : DIGIT (DIGIT)*;

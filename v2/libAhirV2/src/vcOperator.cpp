@@ -772,6 +772,8 @@ void vcSelect::Print_VHDL(ostream& ofile)
       ofile << "begin -- { " << endl;
  
 
+      bool flow_through = this->Get_Flow_Through();
+
       if(this->Get_Guard_Wire() != NULL)
       {
 
@@ -797,7 +799,10 @@ void vcSelect::Print_VHDL(ostream& ofile)
 	ofile << this->Get_Ack(0)->Get_DP_To_CP_Symbol() << " <= ack; "  << endl;
       }
 
-      ofile << this->Get_VHDL_Id() << ": SelectBase generic map(data_width => " << this->_z->Get_Size() << ") -- {" << endl;
+      
+      ofile << this->Get_VHDL_Id() << ": SelectBase generic map(data_width => " << this->_z->Get_Size()  << "," 
+		<< "flow_through => " << (flow_through ? "true" : "false") 
+		<< ") -- {" << endl;
       ofile << " port map( x => " 
 	    << this->_x->Get_VHDL_Signal_Id() 
 	    << ", y => " 
@@ -848,6 +853,7 @@ void vcSlice::Print(ostream& ofile)
 void vcSlice::Print_VHDL(ostream& ofile)
 {
       string block_name = "slice_" + this->Get_VHDL_Id() + "_wrap";
+      bool flow_through = this->Get_Flow_Through();
 
       ofile << block_name << " : block -- { " << endl;
       if(this->Get_Guard_Wire() != NULL)
@@ -856,7 +862,7 @@ void vcSlice::Print_VHDL(ostream& ofile)
       ofile << "begin -- { " << endl;
  
 
-      if(this->Get_Guard_Wire() != NULL)
+      if(!flow_through and (this->Get_Guard_Wire() != NULL))
       {
 	// req-ack update pair must always a unit delay in order
 	// to avoid zero-delay cycles in the pipelined case.
@@ -883,7 +889,8 @@ void vcSlice::Print_VHDL(ostream& ofile)
 
       ofile << this->Get_VHDL_Id() << ": SliceBase generic map(in_data_width => "
 	    << this->_din->Get_Size() << ", high_index => " << this->_high_index 
-	    << ", low_index => " << this->_low_index 
+	    << ", low_index => " << this->_low_index  << "," 
+	    << " flow_through => " << (flow_through ? "true" : "false") 
 	    << ") -- {" << endl;
       ofile << " port map( din => " 
 	    << this->_din->Get_VHDL_Signal_Id() 
@@ -1257,6 +1264,7 @@ void vcBinaryLogicalOperator::Add_Acks(vector<vcTransition*>& acks)
 
 void vcBinaryLogicalOperator::Print_VHDL(ostream& ofile)
 {
+      bool flow_through = this->Get_Flow_Through();
       string block_name = "ble_" + this->Get_VHDL_Id() + "_wrap";
       ofile << block_name  << " : block -- { " << endl;
       ofile << "signal sample_req: BooleanArray(1 downto 0);" << endl;
@@ -1270,7 +1278,7 @@ void vcBinaryLogicalOperator::Print_VHDL(ostream& ofile)
 		<< " downto 0); --}" << endl;
 
       ofile << "begin -- { " << endl;
-      if(this->Get_Guard_Wire() != NULL)
+      if((this->Get_Guard_Wire() != NULL) && (!flow_through))
       {
       	ofile << "sample_req(1) <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() 
 		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
@@ -1336,7 +1344,8 @@ void vcBinaryLogicalOperator::Print_VHDL(ostream& ofile)
 			<< "," << endl;
       ofile << " input_2_is_constant => " << (this->_y->Is("vcConstantWire") ? "true" : "false")
 			<< "," << endl;
-      ofile << " output_buffer_depth => " << this->Get_Output_Buffering(this->_z) << "" << endl;
+      ofile << " output_buffer_depth => " << this->Get_Output_Buffering(this->_z) << "," << endl;
+      ofile << " flow_through => " << (flow_through ? "true" : "false") << endl;
       ofile << " -- } " << endl << ")" << endl;
       ofile << " port map ( -- { " << endl;
       ofile << " sample_req => sample_req," << endl;
@@ -1442,6 +1451,7 @@ void vcSliceWithBuffering::Print(ostream& ofile)
 
 void vcSliceWithBuffering::Print_VHDL(ostream& ofile)
 {
+      bool flow_through = this->Get_Flow_Through();
       string block_name = "slice_" + this->Get_VHDL_Id() + "_wrap";
       ofile << block_name << " : block -- { " << endl;
       if(this->Get_Guard_Wire() != NULL)
@@ -1450,7 +1460,7 @@ void vcSliceWithBuffering::Print_VHDL(ostream& ofile)
       ofile << "begin -- { " << endl;
  
 
-      if(this->Get_Guard_Wire() != NULL)
+      if(!flow_through && (this->Get_Guard_Wire() != NULL))
       {
       	ofile << "sample_req <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() 
 		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
@@ -1494,7 +1504,8 @@ void vcSliceWithBuffering::Print_VHDL(ostream& ofile)
 	    << ", in_data_width => "
 	    << this->_din->Get_Size() << ", high_index => " << this->_high_index 
 	    << ", low_index => " << this->_low_index 
-	    << ", buffering => " << bb
+	    << ", buffering => " << bb << ","
+	    << " flow_through => " << (flow_through ? "true" : "false")
 	    << ") -- {" << endl;
       ofile << " port map( din => " 
 	    << this->_din->Get_VHDL_Signal_Id() 
@@ -1536,6 +1547,7 @@ void vcSelectWithInputBuffering::Print(ostream& ofile)
 void vcSelectWithInputBuffering::Print_VHDL(ostream& ofile)
 {
       string block_name = "select_" + this->Get_VHDL_Id() + "_wrap";
+      bool flow_through = this->Get_Flow_Through();
       ofile << block_name << " : block -- { " << endl;
       if(this->Get_Guard_Wire() != NULL)
 	ofile << "signal update_ack_no_guard: boolean;" << endl;
@@ -1543,7 +1555,7 @@ void vcSelectWithInputBuffering::Print_VHDL(ostream& ofile)
       ofile << "signal ack_x, ack_y, ack_sel, ack_z: boolean; --}" << endl;
       ofile << "begin -- { " << endl;
 
-      if(this->Get_Guard_Wire() != NULL)
+      if(!flow_through && (this->Get_Guard_Wire() != NULL))
       {
       	ofile << "req_sel <= " << this->Get_Req(0)->Get_CP_To_DP_Symbol() 
 		<< " when " << this->Get_Guard_Wire()->Get_VHDL_Id() 
@@ -1609,6 +1621,7 @@ void vcSelectWithInputBuffering::Print_VHDL(ostream& ofile)
       ofile << " y_buffering => " << this->Get_Input_Buffering(this->_y) << "," << endl;
       ofile << " y_is_constant => " << (this->_y->Is("vcConstantWire") ? "true" : "false")  
 			<< "," << endl;
+      ofile << " flow_through => " << (flow_through ? "true" : "false") << "," << endl;
       ofile << " z_buffering => " << this->Get_Output_Buffering(this->_z) << ") -- {" << endl;
       ofile << " port map( x => " 
 	    << this->_x->Get_VHDL_Signal_Id() 

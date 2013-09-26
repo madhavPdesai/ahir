@@ -2138,7 +2138,7 @@ package BaseComponents is
   end component;
 
   component SelectBase 
-    generic(data_width: integer);
+    generic(data_width: integer; flow_through: boolean := false);
     port(x,y: in std_logic_vector(data_width-1 downto 0);
          sel: in std_logic_vector(0 downto 0);
          req: in boolean;
@@ -2149,7 +2149,7 @@ package BaseComponents is
 
 
   component Slicebase 
-    generic(in_data_width : integer; high_index: integer; low_index : integer);
+    generic(in_data_width : integer; high_index: integer; low_index : integer; flow_through : boolean := false);
     port(din: in std_logic_vector(in_data_width-1 downto 0);
          dout: out std_logic_vector(high_index-low_index downto 0);
          req: in boolean;
@@ -3188,7 +3188,8 @@ package BaseComponents is
       constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
       constant_width : integer;
       buffering      : integer;
-      use_constant  : boolean := false
+      use_constant  : boolean := false;
+      flow_through : boolean := false
       );
     port (
       -- req -> ack follow pulse protocol
@@ -3214,7 +3215,8 @@ package BaseComponents is
       output_buffer_depth : integer;           -- buffering at output.
 	-- both should never be constants.
       input_1_is_constant : boolean := false;
-      input_2_is_constant : boolean := false
+      input_2_is_constant : boolean := false;
+      flow_through : boolean := false
       );
   port (
     -- input operands.
@@ -3343,7 +3345,8 @@ package BaseComponents is
           x_is_constant: boolean;
           y_is_constant: boolean;
           sel_is_constant: boolean;
-	  z_buffering: integer);
+	  z_buffering: integer;
+	  flow_through: boolean := false);
     port(x,y: in std_logic_vector(data_width-1 downto 0);
        sel: in std_logic_vector(0 downto 0);
        req_x: in boolean;
@@ -12561,7 +12564,7 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 
 entity SelectBase is
-  generic(data_width: integer);
+  generic(data_width: integer; flow_through: boolean := false);
   port(x,y: in std_logic_vector(data_width-1 downto 0);
        sel: in std_logic_vector(0 downto 0);
        req: in boolean;
@@ -12574,24 +12577,32 @@ end SelectBase;
 architecture arch of SelectBase is 
 begin
 
-  process(x,y,sel,req,reset,clk)
-  begin
-    
-    if(clk'event and clk = '1') then
-      if(reset = '1') then
-        ack <= false;
-        z <= (others => '0');
-      elsif(sel(sel'right) = '1' and req = true) then
-        ack <= req;
-        z <= x;
-      elsif(sel(sel'right) = '0' and req = true) then
-        ack <= req;
-        z <= y; 
-      else 
-        ack <= false;
+  noFlowThrough: if (not flow_through) generate
+
+    process(x,y,sel,req,reset,clk)
+    begin
+      
+      if(clk'event and clk = '1') then
+        if(reset = '1') then
+          ack <= false;
+          z <= (others => '0');
+        elsif(sel(sel'right) = '1' and req = true) then
+          ack <= req;
+          z <= x;
+        elsif(sel(sel'right) = '0' and req = true) then
+          ack <= req;
+          z <= y; 
+        else 
+          ack <= false;
+        end if;
       end if;
-    end if;
-  end process;
+    end process;
+  end generate noFlowThrough;
+
+  flowThrough: if flow_through generate
+	ack <= req;
+	z <= x when sel(sel'right) = '1' else y;
+  end generate flowThrough;
 
 end arch;
 
@@ -12604,7 +12615,7 @@ use ahir.Subprograms.all;
 
 -- a simple slicing element.
 entity Slicebase is
-  generic(in_data_width : integer; high_index: integer; low_index : integer; zero_delay : boolean);
+  generic(in_data_width : integer; high_index: integer; low_index : integer; flow_through : boolean := false);
   port(din: in std_logic_vector(in_data_width-1 downto 0);
        dout: out std_logic_vector(high_index-low_index downto 0);
        req: in boolean;
@@ -12620,12 +12631,12 @@ begin
   assert ((high_index < in_data_width) and (low_index >= 0) and (high_index >= low_index))
     report "inconsistent slice parameters" severity failure;
   
-  ZeroDelay: if zero_delay generate
+  flowThrough: if flow_through generate
     ack <= req;
     dout <= din(high_index downto low_index);
-  end generate ZeroDelay;
+  end generate flowThrough;
 
-  NonZeroDelay: if not zero_delay generate
+  noFlowThrough: if not flow_through generate
     process(clk)
       variable ack_var  : boolean;
     begin
@@ -12646,7 +12657,7 @@ begin
         end if;
       end if;
     end process;
-  end generate NonZeroDelay;
+  end generate noFlowThrough;
   
 end arch;
 
@@ -18524,7 +18535,8 @@ entity BinaryLogicalOperator is
       output_buffer_depth : integer;           -- buffering at output.
 	-- both should never be constants.
       input_1_is_constant : boolean := false;
-      input_2_is_constant : boolean := false
+      input_2_is_constant : boolean := false;
+      flow_through: boolean := false
       );
   port (
     -- input operands.
@@ -18554,7 +18566,31 @@ architecture Vanilla of BinaryLogicalOperator is
 	signal out_data_valid, out_data_accept: std_logic;
 
 begin  -- Vanilla
+	andCase: if(operator_id = "ApIntAnd") generate
+			out_data <= (in_data_1 and in_data_2);
+	end generate andCase;
 
+	nandCase: if(operator_id = "ApIntNand") generate
+		out_data <= not (in_data_1 and in_data_2);
+	end generate nandCase;
+
+	orCase: if(operator_id = "ApIntOr") generate
+		out_data <= (in_data_1 or in_data_2);
+	end generate orCase;
+
+	norCase: if(operator_id = "ApIntNor") generate
+		out_data <= not (in_data_1 or in_data_2);
+	end generate norCase;
+
+	xorCase: if(operator_id = "ApIntXor") generate
+		out_data <= (in_data_1 xor in_data_2);
+	end generate xorCase;
+
+	xnorCase: if(operator_id = "ApIntXnor") generate
+		out_data <= not (in_data_1 xor in_data_2);
+	end generate xnorCase;
+
+    noFlowThrough:  if (not flow_through) generate
 	in_data_1_zero <= '1' when (in_data_1 = cZero) else '0';
 	in_data_1_one <= '1' when (in_data_1 = cOne) else '0';
 	in_data_2_zero <= '1' when (in_data_2 = cZero) else '0';
@@ -18621,13 +18657,6 @@ begin  -- Vanilla
 					or (in_data_1_valid and in_data_1_zero) or
 						(in_data_2_valid and in_data_2_zero);
 
-		andCase: if(operator_id = "ApIntAnd") generate
-			out_data <= (in_data_1 and in_data_2);
-		end generate andCase;
-
-		nandCase: if(operator_id = "ApIntNand") generate
-			out_data <= not (in_data_1 and in_data_2);
-		end generate nandCase;
         end generate andGen;
 
 	orGen: if ((operator_id = "ApIntOr") or (operator_id = "ApIntNor")) generate
@@ -18637,13 +18666,6 @@ begin  -- Vanilla
 					or (in_data_1_valid and in_data_1_one) or
 						(in_data_2_valid and in_data_2_one);
 
-		orCase: if(operator_id = "ApIntOr") generate
-			out_data <= (in_data_1 or in_data_2);
-		end generate orCase;
-
-		norCase: if(operator_id = "ApIntNor") generate
-			out_data <= not (in_data_1 or in_data_2);
-		end generate norCase;
 
         end generate orGen;
 
@@ -18651,13 +18673,6 @@ begin  -- Vanilla
 
 		out_data_valid <= in_data_1_valid and in_data_2_valid;
 
-		xorCase: if(operator_id = "ApIntXor") generate
-			out_data <= (in_data_1 xor in_data_2);
-		end generate xorCase;
-
-		xnorCase: if(operator_id = "ApIntXnor") generate
-			out_data <= not (in_data_1 xor in_data_2);
-		end generate xnorCase;
 
         end generate xorGen;
 
@@ -18674,6 +18689,23 @@ begin  -- Vanilla
 			 unload_ack => update_ack,
 			 read_data => data_out,
 			 clk => clk, reset => reset); 
+  end generate noFlowThrough;
+
+  flowThrough: if (flow_through) generate
+
+	-- operator is just like a combinational operator.
+	-- All other sequencing must be handled correctly by 
+	-- the control-path.
+
+	update_ack   <= update_req;
+	sample_ack <= sample_req;	
+		
+	in_data_1 <=  data_in((2*input_width)-1 downto input_width);
+	in_data_2 <=  data_in(input_width-1 downto 0);
+
+	data_out <= out_data;
+	
+  end generate flowThrough;
 
 end Vanilla;
 library ieee;
@@ -18820,6 +18852,7 @@ begin  -- Behave
     				dataR => data_out,
     				clk => clk, reset => reset);
 end Vanilla;
+-- TODO: add bypass generic..
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -20254,7 +20287,8 @@ entity SelectWithInputBuffers is
           x_is_constant: boolean;
           y_is_constant: boolean;
           sel_is_constant: boolean;
-	  z_buffering: integer);
+	  z_buffering: integer;
+	  flow_through: boolean := false);
   port(x,y: in std_logic_vector(data_width-1 downto 0);
        sel: in std_logic_vector(0 downto 0);
        req_x: in boolean;
@@ -20295,6 +20329,7 @@ begin
 	assert not (x_is_constant and y_is_constant and sel_is_constant) 
 		report "all three inputs to select cannot be constants" severity failure;
 
+     noFlowThrough: if (not flow_through) generate
 	nonConstX: if not x_is_constant generate 
 	  rb_x: ReceiveBuffer generic map( name => name & " receive-buffer_x",
 					buffer_size =>  x_buffering,
@@ -20419,6 +20454,20 @@ begin
 			end if;
 		end if;
 	end process;
+   end generate noFlowThrough;
+
+   flowThrough: if (flow_through) generate
+	--
+	-- all dependencies must be handled in the control-path.
+	-- the operator is just a combinational block.
+	--
+	ack_sel <= req_sel;
+	ack_x <= req_x;
+	ack_y <= req_y;
+	ack_z <= req_z;
+	z <= x when (sel /= cZero) else y;	
+   end generate flowThrough;
+   
 
 end arch;
 
@@ -20436,7 +20485,9 @@ entity SliceWithBuffering is
 	in_data_width : integer; 
 	high_index: integer; 
 	low_index : integer; 
-	buffering : integer);
+	buffering : integer;
+	flow_through: boolean := false
+	);
   port(din: in std_logic_vector(in_data_width-1 downto 0);
        dout: out std_logic_vector(high_index-low_index downto 0);
        sample_req: in boolean;
@@ -20454,9 +20505,10 @@ begin
   assert ((high_index < in_data_width) and (low_index >= 0) and (high_index >= low_index))
     report "inconsistent slice parameters" severity failure;
   
+  noFlowThrough: if (not flow_through) generate
 
-  ilb_data_in <= din(high_index downto low_index);
-  ilb: InterlockBuffer 
+    ilb_data_in <= din(high_index downto low_index);
+    ilb: InterlockBuffer 
 		generic map(name => name & " ilb ",
 				buffer_size => buffering,
 				in_data_width => (high_index - low_index) + 1,
@@ -20469,6 +20521,13 @@ begin
 			 read_data => dout,
 			 clk => clk, reset => reset);
 
+  end generate noFlowThrough;
+
+  flowThrough: if flow_through generate
+    dout <= din(high_index downto low_index);
+    sample_ack <= sample_req;
+    update_ack <= update_req;
+  end generate flowThrough;
   
 end arch;
 
@@ -20837,6 +20896,9 @@ begin  -- Behave
 
 end Vanilla;
 
+-- TODO: add bypass generic to create a flow-through
+--       trivial operator (to save clock-cycles!)
+--
 -- The unshared operator uses a split protocol.
 --    reqL/ackL  for sampling the inputs
 --    reqR/ackR  for updating the outputs.
@@ -20875,7 +20937,8 @@ entity UnsharedOperatorWithBuffering is
       constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
       constant_width : integer;
       buffering      : integer;
-      use_constant  : boolean := false
+      use_constant  : boolean := false;
+      flow_through  : boolean := false
       );
   port (
     -- req -> ack follow pulse protocol
@@ -20926,17 +20989,33 @@ begin  -- Behave
     port map (data_in => dataL, result  => result);
 
 
-  -----------------------------------------------------------------------------
-  -- output interlock buffer
-  -----------------------------------------------------------------------------
-  ilb: InterlockBuffer 
-	generic map(name => name & " ilb ",
-			buffer_size => buffering,
-			in_data_width => owidth,
-			out_data_width => owidth)
-	port map(write_req => reqL, write_ack => ackL, write_data => result,
-			read_req => reqR, read_ack => ackR, read_data => dataR,
-				clk => clk, reset => reset);
+  noFlowThrough: if not flow_through generate
+    -----------------------------------------------------------------------------
+    -- output interlock buffer
+    -----------------------------------------------------------------------------
+    ilb: InterlockBuffer 
+	  generic map(name => name & " ilb ",
+			  buffer_size => buffering,
+			  in_data_width => owidth,
+			  out_data_width => owidth)
+	  port map(write_req => reqL, write_ack => ackL, write_data => result,
+			  read_req => reqR, read_ack => ackR, read_data => dataR,
+				  clk => clk, reset => reset);
+  end generate noFlowThrough;
+
+  flowThrough: if flow_through generate
+		-- in the flow-through case, the operator looks just like
+		-- a combinational circuit.  
+                -- NOTE that there is no bypass register for the data.
+                -- Control sequencing must be handled entirely by the
+		-- control-path which uses this operator.
+
+		ackL <= reqL;
+		ackR <= reqR;
+		dataR <= result;
+
+  end generate flowThrough;
+
 end Vanilla;
 
 library ieee;

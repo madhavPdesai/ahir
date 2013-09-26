@@ -30,6 +30,7 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
   this->_associated_statement = NULL;
   this->_is_malformed = false;
   this->_do_while_parent = NULL;
+  this->_is_intermediate = true;
 }
 AaExpression::~AaExpression() {};
 
@@ -1628,7 +1629,7 @@ void AaArrayObjectReference::Evaluate()
 	}
 }
 
-
+  
 void AaArrayObjectReference::Update_Address_Scaling_Factors(vector<int>& scale_factors, int word_size)
 {
 
@@ -2144,6 +2145,32 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances_As_Target(ostream& ofil
 				 ofile);
 }
 
+void AaArrayObjectReference::Collect_Root_Sources(set<AaExpression*>& root_set)
+{
+  if(this->Is_Constant())
+    return;
+
+  if(this->Get_Object_Type()->Is_Pointer_Type())
+	root_set.insert(this);
+  else if(this->_object->Is_Storage_Object())
+	root_set.insert(this);
+  else 
+    {
+      string source_wire;
+      AaType* obj_type =  NULL;
+      if(this->_object->Is_Expression())
+	{
+	  AaExpression* expr =(AaExpression*) (this->_object);
+	  root_set.insert(expr);
+	}
+      else if(this->_object->Is("AaPipeObject"))
+	{
+		// no flow through.
+	    root_set.insert(this);
+	}
+    }
+}
+
 void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
 {
   
@@ -2263,12 +2290,14 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 	  string src_name = source_wire;
 	  string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
 	  
+          bool flow_through = this->Get_Is_Intermediate();
 	  Write_VC_Slice_Operator(dpe_name,
 				  src_name,
 				  tgt_name,
 				  high_index,
 				  low_index,
 				  this->Get_VC_Guard_String(),
+				  flow_through,
 				  ofile);
 	  // extreme pipelining
 	  if(this->Is_Part_Of_Extreme_Pipeline())
@@ -3360,9 +3389,19 @@ void AaTypeCastExpression::Write_VC_Control_Path(ostream& ofile)
       ofile << ";;[" << this->Get_VC_Name() << "] { // type-cast expression" << endl;
       this->_rest->Write_VC_Control_Path(ofile);
 
+      bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+
       // either it will be a register or a split conversion
       // operator..
-      ofile << "||[SplitProtocol] {" << endl;
+      if(not flow_through)
+      {
+      	ofile << "||[SplitProtocol] {" << endl;
+      }
+      else
+      {
+	ofile << "// flow-through" << endl;
+      	ofile << ";;[SplitProtocol] {" << endl;
+      }
       ofile << ";;[Sample] {" << endl;
       ofile << "$T [rr] $T [ra]  " << endl;
       ofile << "}" << endl;
@@ -3429,15 +3468,37 @@ void AaTypeCastExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostre
     }
 }
 
+bool AaTypeCastExpression::Is_Trivial()
+{
+    if(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
+	return(true);
+    else 
+	return(false);
+}
+
+  
+void AaTypeCastExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
+{
+	if(!this->Is_Constant())
+	{
+		if(this->Is_Trivial())
+			_rest->Collect_Root_Sources(root_set);
+		else
+			root_set.insert(this);
+	}
+}
+
 void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
 {
   if(!this->Is_Constant())
   {
 	  bool ilb_flag = false;
-	  if(_bit_cast || Is_Trivial_VC_Type_Conversion(_rest->Get_Type(), this->Get_Type()))
+	  if(this->Is_Trivial())
 	  {
 		  ilb_flag = true;
 	  }
+
+	  bool flow_through = this->Get_Is_Intermediate();
 
 	  this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
 
@@ -3445,7 +3506,8 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 	  string dpe_name = this->Get_VC_Datapath_Instance_Name();
 	  string src_name = this->_rest->Get_VC_Driver_Name(); 
 	  string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
-	  if(ilb_flag)
+
+	  if(ilb_flag & (not flow_through))
 	  {
 		  Write_VC_Interlock_Buffer(dpe_name,
 				  src_name,
@@ -3464,6 +3526,7 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 				  tgt_name,
 				  this->Get_Type(),
 				  this->Get_VC_Guard_String(),
+				  flow_through,
 				  ofile);
 	  }
 	  // extreme pipelining.
@@ -3534,6 +3597,17 @@ void AaUnaryExpression::Print(ostream& ofile)
 	ofile << " )";
 }
 
+void AaUnaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
+{
+	if(!this->Is_Constant())
+	{
+		if(this->Is_Trivial())
+			_rest->Collect_Root_Sources(root_set);
+		else
+			root_set.insert(this);
+	}
+}
+
 //
 //   unary operators have a split protocol 
 //     start-req -> start-ack 
@@ -3548,10 +3622,18 @@ void AaUnaryExpression::Write_VC_Control_Path(ostream& ofile)
 
   if(!this->Is_Constant())
     {
+      bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
       ofile << ";;[" << this->Get_VC_Name() << "] { // unary expression " << endl;
       this->_rest->Write_VC_Control_Path(ofile);
 
-	ofile << "||[SplitProtocol] { " << endl;
+	if(not flow_through)
+		ofile << "||[SplitProtocol] { " << endl;
+	else
+	{
+		ofile << "// flow-through" << endl;
+		ofile << ";;[SplitProtocol] { " << endl;
+	}
+	
 	ofile << ";;[Sample] { " << endl;
       	ofile << "$T [rr] $T [ra]" << endl;
 	ofile << "}" << endl;
@@ -3623,6 +3705,7 @@ void AaUnaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
   if(!this->Is_Constant())
     {
 
+      bool flow_through = this->Get_Is_Intermediate();
 
       this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
 
@@ -3640,6 +3723,7 @@ void AaUnaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
 		      tgt_name,
 		      (target != NULL ? target->Get_Type() : this->Get_Type()),
 		      this->Get_VC_Guard_String(),
+			flow_through,
 		      ofile);
       // extreme pipelining.
       if(this->Is_Part_Of_Extreme_Pipeline())
@@ -3786,10 +3870,31 @@ bool AaBinaryExpression::Is_Trivial()
      this->_operation == __NOR || this->_operation == __NAND ||
      this->_operation == __XOR || this->_operation == __XNOR ||
      this->_operation == __CONCAT || this->_operation == __BITSEL)
+  // some operations are obviously trivial.
     return(true);
   else
-    return(false);
+  {
+	  // shifts with constant-shift-amount are trivial.
+	if(((this->_operation == __SHL) || (this->_operation == __SHR)) && 
+			((this->_second != NULL) && this->_second->Is_Constant()))
+		return(true);
+  	else
+    		return(false);
+  }
+}
 
+void AaBinaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
+{
+	if(!this->Is_Constant())
+	{
+		if(this->Is_Trivial())
+		{
+			_first->Collect_Root_Sources(root_set);
+			_second->Collect_Root_Sources(root_set);
+		}
+		else
+			root_set.insert(this);
+	}
 }
 
 // TODO:
@@ -3820,7 +3925,14 @@ void AaBinaryExpression::Write_VC_Control_Path(ostream& ofile)
 	    this->_second->Write_VC_Control_Path(ofile);
 	    ofile << "}" << endl;
 
-	    ofile << "||[SplitProtocol] { " << endl;
+      	    bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+	    if(not flow_through) 
+	    	ofile << "||[SplitProtocol] { " << endl;
+	    else
+	    {
+		ofile << "// flow-through" << endl;
+	    	ofile << ";;[SplitProtocol] { " << endl;
+            }
 	    ofile << ";;[Sample] { " << endl;
 	    ofile << "$T [rr] $T [ra]" << endl;
 	    ofile << "}" << endl;
@@ -3887,13 +3999,15 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 		this->_second->Write_VC_Datapath_Instances(NULL,ofile);
 
 		ofile << "// " << this->To_String() << endl;
+      		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 
 		string dpe_name = this->Get_VC_Datapath_Instance_Name();
 		string src_1_name = _first->Get_VC_Driver_Name();
 		string src_2_name = _second->Get_VC_Driver_Name();
 		string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
 
-		bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
+		//bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
+		bool add_hash = false; // turn it off, the operator is way too heavy.
 
 		Write_VC_Binary_Operator(this->Get_Operation(),
 				dpe_name,
@@ -3905,6 +4019,7 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 				(target != NULL ? target->Get_Type() : this->Get_Type()),
 				this->Get_VC_Guard_String(),
 				add_hash,
+				flow_through,
 				ofile);
 
 		// extreme pipelining.
@@ -4123,6 +4238,8 @@ void AaTernaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostr
     {
 
 
+      bool flow_through = this->Get_Is_Intermediate();
+
       this->_test->Write_VC_Datapath_Instances(NULL,ofile);
       this->_if_true->Write_VC_Datapath_Instances(NULL,ofile);
       this->_if_false->Write_VC_Datapath_Instances(NULL,ofile);
@@ -4145,6 +4262,7 @@ void AaTernaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostr
 				tgt_name,
 			       (target != NULL ? target->Get_Type() : this->Get_Type()),
 				  this->Get_VC_Guard_String(),
+				flow_through,
 			       ofile);
 	// extreme pipelining.
       if(this->Is_Part_Of_Extreme_Pipeline())
@@ -4203,4 +4321,19 @@ void AaTernaryExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentS
 	this->Replace_Field_Expression(&_test, used_expr, replacement);
 	this->Replace_Field_Expression(&_if_true, used_expr, replacement);
 	this->Replace_Field_Expression(&_if_false, used_expr, replacement);
+}
+
+void AaTernaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
+{
+	if(!this->Is_Constant())
+	{
+		if(this->Is_Trivial())
+		{
+			_test->Collect_Root_Sources(root_set);
+			_if_true->Collect_Root_Sources(root_set);
+			_if_false->Collect_Root_Sources(root_set);
+		}
+		else
+			root_set.insert(this);
+	}
 }

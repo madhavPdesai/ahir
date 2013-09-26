@@ -105,6 +105,7 @@ void Write_VC_Unary_Operator(AaOperation op,
 			     string target_name,
 			     AaType* target_type,
 			     string guard_string,
+			     bool flow_through,
 			     ostream& ofile)
 {
   string op_name;
@@ -140,9 +141,10 @@ void Write_VC_Unary_Operator(AaOperation op,
 	}
     }
 
+  string sflow_through = (flow_through ? " $flowthrough" : "");
   ofile << op_name << " [" << inst_name << "] "
 	<< "(" << src_name << ") "
-	<< "(" << target_name << ")  " << guard_string <<  endl;
+	<< "(" << target_name << ")  " << guard_string << sflow_through << endl;
 }
 
 
@@ -177,6 +179,7 @@ void Write_VC_Binary_Operator(AaOperation op,
 			      AaType* target_type,
 			      string guard_string,
 				bool add_hash,
+				bool flow_through,
 			      ostream& ofile)
 {
   string op_name;
@@ -244,9 +247,10 @@ void Write_VC_Binary_Operator(AaOperation op,
   else
     assert(0);
 
+  string sflow_through = (flow_through ? " $flowthrough" : "");
   ofile << op_name << "[" << inst_name << "]" << " "
 	<< "(" << src1 << " " << src2 << ") "
-	<< "(" << target_name << ") " << guard_string <<  endl;
+	<< "(" << target_name << ") " << guard_string << sflow_through <<  endl;
 }
 
 void Write_VC_Call_Operator(string inst_name, 
@@ -399,11 +403,13 @@ void Write_VC_Select_Operator(string inst_name,
 			      string target_name,
 			      AaType* target_type,
 			    string guard_string,
+				bool flow_through,
 			      ostream& ofile)
 {
+  string sflow_through = (flow_through ? " $flowthrough" : "");
   ofile << "? [" << inst_name << "] " 
 	<< "(" << test_name << " " << if_true_name << " " << if_false_name << ") "
-	<< "(" << target_name << ") " << guard_string <<  endl;
+	<< "(" << target_name << ") " << guard_string <<  sflow_through << endl;
 }
 
 
@@ -413,10 +419,12 @@ void Write_VC_Slice_Operator(string inst_name,
 			     int high_index,
 			     int low_index,
 			    string guard_string,
+				bool flow_through,
 			     ostream& ofile)
 {
+  string sflow_through = (flow_through ? " $flowthrough" : "");
   ofile << "[:] [" << inst_name << "] (" << in_name << " " << high_index << " " << low_index
-	<< ") (" << out_name << ") " << guard_string << endl;
+	<< ") (" << out_name << ") " << guard_string << sflow_through <<  endl;
 }
 
 

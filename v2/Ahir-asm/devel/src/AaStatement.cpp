@@ -636,7 +636,10 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
   assert(tgt); assert(src);
 
   tgt->Set_Associated_Statement(this);
+  tgt->Set_Is_Intermediate(false);
   src->Set_Associated_Statement(this);
+  src->Set_Is_Intermediate(false);
+
 
   this->Set_Line_Number(lineno);
 
@@ -1213,12 +1216,14 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
   for(unsigned int i = 0; i < inargs.size(); i++)
     {
       inargs[i]->Set_Associated_Statement(this);
+      inargs[i]->Set_Is_Intermediate(false);
       this->_input_args.push_back(inargs[i]);
     }
 
   for(unsigned int i = 0; i < outargs.size(); i++)
     {
       outargs[i]->Set_Associated_Statement(this);
+      outargs[i]->Set_Is_Intermediate(false);
       outargs[i]->Set_Is_Target(true);
 
       this->_output_args.push_back(outargs[i]);
@@ -3208,6 +3213,7 @@ void AaPhiStatement::Set_Target(AaObjectReference* tgt)
   this->_target->Set_Is_Target(true);
 
   tgt->Set_Associated_Statement(this);
+  tgt->Set_Is_Intermediate(false);
   this->Map_Target(tgt);
 
   if(!tgt->Is_Implicit_Variable_Reference())
@@ -3232,6 +3238,7 @@ void AaPhiStatement::Add_Source_Pair(string label, AaExpression* expr)
   _merged_labels.insert(label);
 
   expr->Set_Associated_Statement(this);
+  expr->Set_Is_Intermediate(false);
   if(this->_target)
     {
       expr->Add_Target(this->_target);
@@ -3854,6 +3861,7 @@ void AaSwitchStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			       expr->Get_VC_Constant_Name() + "_cmp",
 			       expr->Get_Type(),
 			       this->Get_VC_Guard_String(),
+				false,
 				false,
 			       ofile);
 

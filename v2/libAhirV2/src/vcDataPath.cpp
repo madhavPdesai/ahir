@@ -1335,6 +1335,8 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       if(num_ips == 2)
 	input_type_2 = inwires[1]->Get_Type();
 
+	// used in the unshared case.
+      bool flow_through = lead_op->Get_Flow_Through();
 	
       // the guards and the regulators..
       if((num_reqs > 1) || is_pipelined_op)
@@ -1357,8 +1359,18 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	  this->Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
 	  this->Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
 
-	  this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL", "ackL", false, ofile);
-      	  this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
+	  if(!flow_through)
+	  {
+	  	this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL", "ackL", false, ofile);
+      	  	this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
+	  }
+	  else
+	  {
+		ofile << "reqL <= reqL_unguarded;" << endl;
+		ofile << "reqR <= reqR_unguarded;" << endl;
+		ofile << "ackL_unguarded <= ackL;" << endl;
+		ofile << "ackR_unguarded <= ackR;" << endl;
+	  }
 
 	  /*
 	  if(guard_wires[0] != NULL)
@@ -1497,6 +1509,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		    << " constant_operand => " << const_operand << "," << endl // constant operand?
 		    << " constant_width => " << const_width << "," << endl // constant width
 		    << " buffering  => " << bufv << "," << endl // buffering in operator.
+		    << " flow_through => " << (flow_through ? "true" : "false") << "," << endl
 		    << " use_constant  => " << (use_constant ? "true" : "false") << endl // use constant?
 
 		    << "--} \n ) " << endl; // number of requesters..

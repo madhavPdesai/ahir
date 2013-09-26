@@ -5,7 +5,7 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 
 entity SelectBase is
-  generic(data_width: integer);
+  generic(data_width: integer; flow_through: boolean := false);
   port(x,y: in std_logic_vector(data_width-1 downto 0);
        sel: in std_logic_vector(0 downto 0);
        req: in boolean;
@@ -18,24 +18,32 @@ end SelectBase;
 architecture arch of SelectBase is 
 begin
 
-  process(x,y,sel,req,reset,clk)
-  begin
-    
-    if(clk'event and clk = '1') then
-      if(reset = '1') then
-        ack <= false;
-        z <= (others => '0');
-      elsif(sel(sel'right) = '1' and req = true) then
-        ack <= req;
-        z <= x;
-      elsif(sel(sel'right) = '0' and req = true) then
-        ack <= req;
-        z <= y; 
-      else 
-        ack <= false;
+  noFlowThrough: if (not flow_through) generate
+
+    process(x,y,sel,req,reset,clk)
+    begin
+      
+      if(clk'event and clk = '1') then
+        if(reset = '1') then
+          ack <= false;
+          z <= (others => '0');
+        elsif(sel(sel'right) = '1' and req = true) then
+          ack <= req;
+          z <= x;
+        elsif(sel(sel'right) = '0' and req = true) then
+          ack <= req;
+          z <= y; 
+        else 
+          ack <= false;
+        end if;
       end if;
-    end if;
-  end process;
+    end process;
+  end generate noFlowThrough;
+
+  flowThrough: if flow_through generate
+	ack <= req;
+	z <= x when sel(sel'right) = '1' else y;
+  end generate flowThrough;
 
 end arch;
 

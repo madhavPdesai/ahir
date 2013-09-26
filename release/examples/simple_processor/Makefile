@@ -9,6 +9,7 @@ all: SW HW
  
 TOVC: c2llvmbc llvmbc2aa aaopt aa2vc 
 TOVHDL: TOVC vc2vhdl
+AA2VHDL: aa2vc vc2vhdl
 
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.

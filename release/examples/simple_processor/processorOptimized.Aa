@@ -47,36 +47,36 @@ $module [ifetch] $in () $out () $is
 	$branchblock[core] {
     		$dopipeline $depth 8 $buffering 2
 			$merge $entry $loopback $endmerge
-			pc_0 := next_pc_pipe
-			pc_1 := (pc_0 + 1)
-			pc_2 := (pc_0 + 2)
-			pc_3 := (pc_0 + 3)
+			pc_0 := next_pc_pipe   // 1
+			pc_1 := (pc_0 + 1)     // 2
+			pc_2 := (pc_0 + 2)     // 2
+			pc_3 := (pc_0 + 3)     // 2
 
 			// this should load from ICACHE.
-			ir_0 := mem[pc_0]
-			ir_1 := mem[pc_1]
-			ir_2 := mem[pc_2]
-			ir_3 := mem[pc_3]
+			ir_0 := mem[pc_0]      // 6
+			ir_1 := mem[pc_1]      // 6
+			ir_2 := mem[pc_2]      // 6
+			ir_3 := mem[pc_3]      // 6
 	
-			op_0 := (ir_0 >> 12)
-			op_1 := (ir_1 >> 12)
-			op_2 := (ir_2 >> 12)
-			op_3 := (ir_3 >> 12)
+			op_0 := (ir_0 >> 12)      // 7
+			op_1 := (ir_1 >> 12)      // 7
+			op_2 := (ir_2 >> 12)      // 7
+			op_3 := (ir_3 >> 12)      // 7
 
-			br_0 := ((op_0 == 0) | ((op_0 == 8) | ((op_0 == 9) | (op_0 == 10))))
-			br_1 := ((op_1 == 0) | ((op_1 == 8) | ((op_1 == 9) | (op_1 == 10))))
-			br_2 := ((op_2 == 0) | ((op_2 == 8) | ((op_2 == 9) | (op_2 == 10))))
-			br_3 := ((op_3 == 0) | ((op_3 == 8) | ((op_3 == 9) | (op_3 == 10))))
+			br_0 := ((op_0 == 0) | ((op_0 == 8) | ((op_0 == 9) | (op_0 == 10)))) // 10
+			br_1 := ((op_1 == 0) | ((op_1 == 8) | ((op_1 == 9) | (op_1 == 10)))) // 10
+			br_2 := ((op_2 == 0) | ((op_2 == 8) | ((op_2 == 9) | (op_2 == 10)))) // 10
+			br_3 := ((op_3 == 0) | ((op_3 == 8) | ((op_3 == 9) | (op_3 == 10)))) // 10
 
-			d_1  := (~ br_0)
-			d_2  := (~ (br_0 | br_1))
-			d_3  := (~ ((br_0 | br_1) | br_2) )
+			d_1  := (~ br_0) // 11
+			d_2  := (~ (br_0 | br_1)) // 12
+			d_3  := (~ ((br_0 | br_1) | br_2) ) // 13
 
-			branch_case := ((br_0 | br_1) | (br_2 | br_3))
+			branch_case := ((br_0 | br_1) | (br_2 | br_3)) // 12
 
-			ir_pipe := ir_0 $mark w0
-			pc_pipe := pc_0 $mark ww0
-			$guard (d_1) ir_pipe := ir_1 $mark w1 
+			ir_pipe := ir_0 $mark w0 // 12
+			pc_pipe := pc_0 $mark ww0 // 1
+			$guard (d_1) ir_pipe := ir_1 $mark w1  
 			$guard (d_1) pc_pipe := pc_1 $mark ww1 
 			$guard (d_2) ir_pipe := ir_2 $mark w2 
 			$guard (d_2) pc_pipe := pc_2 $mark ww2
@@ -85,6 +85,7 @@ $module [ifetch] $in () $out () $is
 
 			$guard (~ branch_case) next_pc_pipe := (pc_0 + 4)
 
+			
 		$while 1	
 		
 	}
@@ -209,6 +210,7 @@ $is
   	$branchblock [core] 
   	{
     		$dopipeline $depth 8 $buffering 2
+		$fullrate
 		
     		$merge $entry $loopback $endmerge
 

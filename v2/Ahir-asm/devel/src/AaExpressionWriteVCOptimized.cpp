@@ -24,6 +24,17 @@ void AaExpression::Write_VC_RAW_Release_Dependencies(AaExpression* expr, set<AaR
 	Write_VC_RAW_Release_Deps(((AaRoot*)this),non_triv_preds);
 }
 
+void AaExpression::Write_VC_Update_Reenables(string ctrans, set<AaRoot*>& visited_elements,  ostream& ofile)
+{
+	set<AaExpression*> root_set;
+	this->Collect_Root_Sources(root_set);
+	ofile << "// RAW reenables for " << this->To_String() << endl;
+	for(set<AaExpression*>::iterator iter = root_set.begin(), fiter = root_set.end(); iter != fiter; iter++)
+	{
+		AaExpression* producer = *iter;
+		__MJ(producer->Get_VC_Reenable_Update_Transition_Name(visited_elements), ctrans, true); // bypass.
+	}
+}
 
 // "this" is a Write. If there is an expression expr in
 // visited_elements which uses "this", then we have 
@@ -827,12 +838,22 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 				__F(__UST(this),this->Get_VC_Complete_Region_Name());
 				__J(__UCT(this), this->Get_VC_Complete_Region_Name());
 
+      				bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+                		if(flow_through)
+				{
+					ofile << "// flow-through" << endl;
+					__J(__UST(this), __SCT(this));
+				}
+
 				if(pipeline_flag)
 				{
 					// reenable expression when this completes.
 					// note: conservative
-					__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __UCT(this), true); // bypass
-					__MJ(__UST(this),__UCT(this), true); // bypass
+					// __MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __UCT(this), true); // bypass
+					expr->Write_VC_Update_Reenables(__UCT(this), visited_elements,ofile);
+
+					if(!flow_through)
+						__MJ(__UST(this),__UCT(this), true); // bypass
 				}
 			}
 			else if(this->_object->Is("AaInterfaceObject"))
@@ -1003,7 +1024,10 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeli
 		__J(base_addr_calc,__UCT(this->_reference_to_object));
 		__J(__SST(this),base_addr_calc);
 		if(pipeline_flag)
-			__MJ(this->_reference_to_object->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
+		{
+			//__MJ(this->_reference_to_object->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
+			this->_reference_to_object->Write_VC_Update_Reenables(__SCT(this), visited_elements,ofile);
+		}
 
 	}
 
@@ -1057,7 +1081,10 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(b
 		__J(base_addr_calc,__UCT(this->_reference_to_object));
 		__J(__SST(this),base_addr_calc);
 		if(pipeline_flag)
-			__MJ(this->_reference_to_object->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
+		{
+			this->_reference_to_object->Write_VC_Update_Reenables(__SCT(this), visited_elements,ofile);
+			//__MJ(this->_reference_to_object->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
+		}
 	}
 
 	ls_map[this->Get_VC_Memory_Space_Name()].push_back(this);
@@ -1281,12 +1308,20 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
 
 		__ConnectSplitProtocolPattern;
 
+      		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+                if(flow_through)
+		{
+			ofile << "// flow-through" << endl;
+			__J(__UST(this), __SCT(this));
+		}
+
 		if(pipeline_flag)
 		{
-			__MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
-					__SCT(this), true );  // bypass
+			this->_rest->Write_VC_Update_Reenables(__SCT(this), visited_elements,ofile);
+			// __MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true );  // bypass
 
-			__SelfReleaseSplitProtocolPattern
+			if(!flow_through)
+				__SelfReleaseSplitProtocolPattern
 		}
 		visited_elements.insert(this);
 	}
@@ -1378,11 +1413,20 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
 
 		__ConnectSplitProtocolPattern;
 
+      		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+                if(flow_through)
+		{
+			ofile << "// flow-through" << endl;
+			__J(__UST(this), __SCT(this));
+		}
+
 		if(pipeline_flag)
 		{
-			__MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
-					__SCT(this), true); // bypass
-			__SelfReleaseSplitProtocolPattern
+			this->_rest->Write_VC_Update_Reenables(__SCT(this), visited_elements,ofile);
+			// __MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
+			
+			if(!flow_through)
+				__SelfReleaseSplitProtocolPattern
 		}
 		visited_elements.insert(this);
 	}
@@ -1406,7 +1450,8 @@ void AaBinaryExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofile
 	{
 
 		ofile << "// " << this->To_String() << endl;
-		bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
+		//bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
+		bool add_hash = false; // turn it off.. operator way too heavy..
 		if(add_hash)
 		{
 			this->Write_VC_Links_BLE_Optimized(hier_id, ofile);
@@ -1486,6 +1531,7 @@ void AaBinaryExpression::Write_VC_Control_Path_BLE_Optimized(bool pipeline_flag,
 		ostream& ofile)
 {
 	ofile << "// " << this->To_String() << endl;
+      	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 	this->_first->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier, ofile);
 	this->_second->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier, ofile);
 	/*
@@ -1540,9 +1586,16 @@ void AaBinaryExpression::Write_VC_Control_Path_BLE_Optimized(bool pipeline_flag,
 			__F(__SST_I(this,i), sample_region);
 			__J(__SCT_I(this,i), sample_region);
 			__F(__SCT_I(this,i),"$null");
+	
+                	if(flow_through)
+			{	
+				ofile << "// flow-through" << endl;
+				__J(__UST(this), __SCT_I(this,i));
+			}
 			if(pipeline_flag)
 			{
 				__MJ(__SST_I(this,i), __SCT_I(this,i),false); // no bypass.	
+				src->Write_VC_Update_Reenables(__SCT_I(this,i), visited_elements, ofile);
 			}
 
 		}
@@ -1573,7 +1626,8 @@ void AaBinaryExpression::Write_VC_Control_Path_BLE_Optimized(bool pipeline_flag,
 
 void AaBinaryExpression::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile)
 {
-	bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
+	// bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
+	bool add_hash = false; // turn it off.. operator way too heavy..
 	if(add_hash)
 	{
 		AaRoot* root = sexpr->Get_Root_Object();
@@ -1598,7 +1652,8 @@ void AaBinaryExpression::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReferen
 
 void AaBinaryExpression::Write_VC_Guard_Backward_Dependency(AaExpression* expr, set<AaRoot*>& visited_elements, ostream& ofile)
 {
-	bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
+	//bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
+	bool add_hash = false; // turn it off.. operator way too heavy..
 	if(add_hash)
 	{
 		__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
@@ -1628,7 +1683,8 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 	{
 
 		ofile << "// " << this->To_String() << endl;
-		bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
+		//bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
+		bool add_hash = false; // turn it off.. operator way too heavy..
 		if(add_hash)
 		{
 			// the completes of the two sources provide upto two triggers
@@ -1669,18 +1725,28 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 		ofile << "}" << endl;
 
 		__ConnectSplitProtocolPattern;
-
+      		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		if(flow_through)
+		{
+			ofile << "// flow-through" << endl;
+			__J(__UST(this), __SCT(this));
+		}
 		if(pipeline_flag)
 		{
 			if(!this->_first->Is_Constant())
-				__MJ(this->_first->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-						__SCT(this), true); // bypass
+			{
+				this->_first->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
+				//__MJ(this->_first->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
+			}
 
 			if(!this->_second->Is_Constant())
-				__MJ(this->_second->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-						__SCT(this), true); // bypass
+			{	
+				this->_second->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
+				// __MJ(this->_second->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
+			}
 
-			__SelfReleaseSplitProtocolPattern
+			if(!flow_through)
+				__SelfReleaseSplitProtocolPattern
 		}
 		visited_elements.insert(this);
 	}
@@ -1772,19 +1838,27 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 	__F(__UST(this),this->Get_VC_Complete_Region_Name());
 	__J(__UCT(this),this->Get_VC_Complete_Region_Name());
 
+      	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 	if(pipeline_flag)
 	{
 		if(!this->_test->Is_Constant())
-			__MJ(this->_test->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
-				__UCT(this), true); // bypass
+		{
+			this->_test->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
+			// __MJ(this->_test->Get_VC_Reenable_Update_Transition_Name(visited_elements), __UCT(this), true); // bypass
+		}
 		if(this->_if_true && !this->_if_true->Is_Constant())
-			__MJ(this->_if_true->Get_VC_Reenable_Update_Transition_Name(visited_elements), 					
-					__UCT(this), true); // bypass
+		{
+			this->_if_true->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
+			//__MJ(this->_if_true->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
+		}
 		if(this->_if_false && !this->_if_false->Is_Constant())
-			__MJ(this->_if_false->Get_VC_Reenable_Update_Transition_Name(visited_elements), 				
-					__UCT(this), true); // bypass
+		{
+			this->_if_false->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
+			//__MJ(this->_if_false->Get_VC_Reenable_Update_Transition_Name(visited_elements),	__UCT(this), true); // bypass
+		}
 
-		__SelfReleaseSplitProtocolPattern
+		if(!flow_through)
+			__SelfReleaseSplitProtocolPattern
 	}
 	visited_elements.insert(this);
 }

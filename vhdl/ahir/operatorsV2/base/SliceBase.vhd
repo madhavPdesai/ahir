@@ -7,7 +7,7 @@ use ahir.Subprograms.all;
 
 -- a simple slicing element.
 entity Slicebase is
-  generic(in_data_width : integer; high_index: integer; low_index : integer; zero_delay : boolean);
+  generic(in_data_width : integer; high_index: integer; low_index : integer; flow_through : boolean := false);
   port(din: in std_logic_vector(in_data_width-1 downto 0);
        dout: out std_logic_vector(high_index-low_index downto 0);
        req: in boolean;
@@ -23,12 +23,12 @@ begin
   assert ((high_index < in_data_width) and (low_index >= 0) and (high_index >= low_index))
     report "inconsistent slice parameters" severity failure;
   
-  ZeroDelay: if zero_delay generate
+  flowThrough: if flow_through generate
     ack <= req;
     dout <= din(high_index downto low_index);
-  end generate ZeroDelay;
+  end generate flowThrough;
 
-  NonZeroDelay: if not zero_delay generate
+  noFlowThrough: if not flow_through generate
     process(clk)
       variable ack_var  : boolean;
     begin
@@ -49,7 +49,7 @@ begin
         end if;
       end if;
     end process;
-  end generate NonZeroDelay;
+  end generate noFlowThrough;
   
 end arch;
 

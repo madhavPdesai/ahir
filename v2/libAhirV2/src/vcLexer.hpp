@@ -160,6 +160,7 @@ public:
 	public: void mTIED_HIGH(bool _createToken);
 	public: void mLEFT_OPEN(bool _createToken);
 	public: void mHASH(bool _createToken);
+	public: void mFLOWTHROUGH(bool _createToken);
 	public: void mUINTEGER(bool _createToken);
 	protected: void mDIGIT(bool _createToken);
 	public: void mWHITESPACE(bool _createToken);

@@ -526,7 +526,7 @@ package BaseComponents is
   end component;
 
   component SelectBase 
-    generic(data_width: integer);
+    generic(data_width: integer; flow_through: boolean := false);
     port(x,y: in std_logic_vector(data_width-1 downto 0);
          sel: in std_logic_vector(0 downto 0);
          req: in boolean;
@@ -537,7 +537,7 @@ package BaseComponents is
 
 
   component Slicebase 
-    generic(in_data_width : integer; high_index: integer; low_index : integer);
+    generic(in_data_width : integer; high_index: integer; low_index : integer; flow_through : boolean := false);
     port(din: in std_logic_vector(in_data_width-1 downto 0);
          dout: out std_logic_vector(high_index-low_index downto 0);
          req: in boolean;
@@ -1576,7 +1576,8 @@ package BaseComponents is
       constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
       constant_width : integer;
       buffering      : integer;
-      use_constant  : boolean := false
+      use_constant  : boolean := false;
+      flow_through : boolean := false
       );
     port (
       -- req -> ack follow pulse protocol
@@ -1602,7 +1603,8 @@ package BaseComponents is
       output_buffer_depth : integer;           -- buffering at output.
 	-- both should never be constants.
       input_1_is_constant : boolean := false;
-      input_2_is_constant : boolean := false
+      input_2_is_constant : boolean := false;
+      flow_through : boolean := false
       );
   port (
     -- input operands.
@@ -1731,7 +1733,8 @@ package BaseComponents is
           x_is_constant: boolean;
           y_is_constant: boolean;
           sel_is_constant: boolean;
-	  z_buffering: integer);
+	  z_buffering: integer;
+	  flow_through: boolean := false);
     port(x,y: in std_logic_vector(data_width-1 downto 0);
        sel: in std_logic_vector(0 downto 0);
        req_x: in boolean;

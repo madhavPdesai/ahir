@@ -25,6 +25,8 @@ class AaExpression: public AaRoot
   bool _does_pipe_access;
   bool _is_malformed;
 
+  bool _is_intermediate;
+
 
  protected:
   // type of the expression
@@ -38,6 +40,8 @@ class AaExpression: public AaRoot
   // identification..
   void Set_Coalesce_Flag(bool v) { _coalesce_flag = v;}
   bool Get_Coalesce_Flag() {return(_coalesce_flag);}
+
+
 
 
   // expression is handled in a different
@@ -87,6 +91,11 @@ class AaExpression: public AaRoot
   {
     return(_associated_statement);
   }
+
+  virtual bool Is_Trivial() {return(false);}
+
+  void Set_Is_Intermediate(bool v) {_is_intermediate = v;}
+  bool Get_Is_Intermediate()  {return(_is_intermediate);}
   // malformed if something wrong.. e.g. unknown memory space in pointer deref.
   void Set_Is_Malformed(bool v) { _is_malformed = v;}
   bool Get_Is_Malformed() {return(_is_malformed);}
@@ -284,6 +293,9 @@ class AaExpression: public AaRoot
 
   virtual bool Is_Part_Of_Pipeline() {return(this->_do_while_parent != NULL);}
   virtual bool Is_Part_Of_Extreme_Pipeline();
+
+  virtual void Collect_Root_Sources(set<AaExpression*>& root_set) {if(!this->Is_Constant()) root_set.insert(this);}
+  virtual void Write_VC_Update_Reenables(string ctrans, set<AaRoot*>& visited_elements, ostream& ofile);
 };
 
 
@@ -645,6 +657,7 @@ class AaConstantLiteralReference: public AaObjectReference
   {
     _associated_statement = stmt;
   }
+  virtual void Collect_Root_Sources(set<AaExpression*>& root_set) {};
 };
 
 // simple reference (no array indices)
@@ -875,6 +888,7 @@ class AaArrayObjectReference: public AaObjectReference
   virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 
   virtual string Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements);
+  virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
 };
 
 
@@ -1128,6 +1142,8 @@ class AaTypeCastExpression: public AaExpression
 
   virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements);
   virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements);
+  virtual bool Is_Trivial();
+  virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
 };
 
 
@@ -1215,6 +1231,8 @@ class AaUnaryExpression: public AaExpression
 	return(this->Get_VC_Sample_Start_Transition_Name());
   } 
 
+  virtual bool Is_Trivial() {return(true);}
+  virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
 };
 
 // 
@@ -1312,7 +1330,8 @@ class AaBinaryExpression: public AaExpression
     _second->Get_Leaf_Expression_Set(leaf_expression_set);
   }
 
-  bool Is_Trivial();
+
+  virtual bool Is_Trivial();
   virtual void Evaluate();
   virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
   virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
@@ -1362,6 +1381,7 @@ class AaBinaryExpression: public AaExpression
 		AaRoot* barrier,
 		ostream& ofile);
 
+  virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
 };
 
 // ternary expression: a ? b : c
@@ -1461,6 +1481,8 @@ class AaTernaryExpression: public AaExpression
   {
 	return(this->Get_VC_Update_Start_Transition_Name());
   }
+  virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
+  virtual bool Is_Trivial() {return(this->Get_Is_Intermediate());}
 };
 
 

@@ -69,6 +69,7 @@ void Write_VC_Unary_Operator(AaOperation op,
 			     string target_name,
 			     AaType* target_type,
 			     string guard_string,
+			     bool flow_through,
 			     ostream& ofile);
 void Write_VC_Register( string inst_name, 
 			string src_name, 
@@ -90,6 +91,7 @@ void Write_VC_Binary_Operator(AaOperation op,
 			      AaType* target_type,
 			     string guard_string,
 			      bool add_hash,			
+			     bool flow_through,
 			      ostream& ofile);
 void Write_VC_Call_Operator(string inst_name, 
 			    string module_name, 
@@ -146,6 +148,7 @@ void Write_VC_Select_Operator(string inst_name,
 			      string target_name,
 			      AaType* target_type,
 			     string guard_string,
+			     bool flow_through,
 			      ostream& ofile);
 
 void Write_VC_Slice_Operator(string inst_name,
@@ -154,6 +157,7 @@ void Write_VC_Slice_Operator(string inst_name,
 			     int high_index,
 			     int low_index,
 			     string guard_string,
+			     bool flow_through,
 			     ostream& ofile);
 
 bool Is_Trivial_VC_Type_Conversion(AaType* from, AaType* to);

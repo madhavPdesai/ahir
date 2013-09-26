@@ -1,3 +1,6 @@
+-- TODO: add bypass generic to create a flow-through
+--       trivial operator (to save clock-cycles!)
+--
 -- The unshared operator uses a split protocol.
 --    reqL/ackL  for sampling the inputs
 --    reqR/ackR  for updating the outputs.
@@ -36,7 +39,8 @@ entity UnsharedOperatorWithBuffering is
       constant_operand : std_logic_vector; -- constant operand.. (it is always the second operand)
       constant_width : integer;
       buffering      : integer;
-      use_constant  : boolean := false
+      use_constant  : boolean := false;
+      flow_through  : boolean := false
       );
   port (
     -- req -> ack follow pulse protocol
@@ -87,16 +91,32 @@ begin  -- Behave
     port map (data_in => dataL, result  => result);
 
 
-  -----------------------------------------------------------------------------
-  -- output interlock buffer
-  -----------------------------------------------------------------------------
-  ilb: InterlockBuffer 
-	generic map(name => name & " ilb ",
-			buffer_size => buffering,
-			in_data_width => owidth,
-			out_data_width => owidth)
-	port map(write_req => reqL, write_ack => ackL, write_data => result,
-			read_req => reqR, read_ack => ackR, read_data => dataR,
-				clk => clk, reset => reset);
+  noFlowThrough: if not flow_through generate
+    -----------------------------------------------------------------------------
+    -- output interlock buffer
+    -----------------------------------------------------------------------------
+    ilb: InterlockBuffer 
+	  generic map(name => name & " ilb ",
+			  buffer_size => buffering,
+			  in_data_width => owidth,
+			  out_data_width => owidth)
+	  port map(write_req => reqL, write_ack => ackL, write_data => result,
+			  read_req => reqR, read_ack => ackR, read_data => dataR,
+				  clk => clk, reset => reset);
+  end generate noFlowThrough;
+
+  flowThrough: if flow_through generate
+		-- in the flow-through case, the operator looks just like
+		-- a combinational circuit.  
+                -- NOTE that there is no bypass register for the data.
+                -- Control sequencing must be handled entirely by the
+		-- control-path which uses this operator.
+
+		ackL <= reqL;
+		ackR <= reqR;
+		dataR <= result;
+
+  end generate flowThrough;
+
 end Vanilla;
 

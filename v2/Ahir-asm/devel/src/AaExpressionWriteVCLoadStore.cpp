@@ -702,6 +702,7 @@ void AaObjectReference::Write_VC_Address_Calculation_Data_Path(vector<AaExpressi
 						addr_type,
 						this->Get_VC_Guard_String(),
 						false,
+						false,
 						ofile
 						);
 				// extreme pipelining.
@@ -982,6 +983,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 								tgt_name,
 								addr_type,
 								this->Get_VC_Guard_String(),
+								false,
 								ofile);
 						// extreme pipelining.
 						if(this->Is_Part_Of_Extreme_Pipeline())
@@ -1010,6 +1012,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 								iexpr->Get_VC_Name() + "_scaled",
 								addr_type,
 							 	this->Get_VC_Guard_String(),
+								false,
 								false,
 								ofile);
 						// extreme pipelining.
@@ -1076,6 +1079,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 						addr_type,
 						this->Get_VC_Guard_String(),
 						false,
+						false,
 						ofile);
 
 				last_sum =  this->Get_VC_Name() + "_index_partial_sum_" + IntToStr(idx);
@@ -1121,6 +1125,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 						tgt_name,
 						addr_type,
 						this->Get_VC_Guard_String(),
+						false,
 						ofile);
 				// extreme pipelining.
 				if(this->Is_Part_Of_Extreme_Pipeline())
@@ -1158,6 +1163,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 					tgt_name,
 					addr_type,
 					this->Get_VC_Guard_String(),
+					false,
 					false,
 					ofile);
 			// extreme pipelining.
