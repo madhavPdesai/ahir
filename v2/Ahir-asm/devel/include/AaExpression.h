@@ -94,7 +94,19 @@ class AaExpression: public AaRoot
 
   virtual bool Is_Trivial() {return(false);}
 
-  void Set_Is_Intermediate(bool v) {_is_intermediate = v;}
+  virtual int Get_Delay()
+  {
+	// flow-through operators should have 0 delay.
+	if(this->_is_intermediate && this->Is_Trivial())
+		return(0);
+	else
+		return(this->AaRoot::Get_Delay());
+  }
+
+  void Set_Is_Intermediate(bool v) 
+  {
+	_is_intermediate = v; 
+  }
   bool Get_Is_Intermediate()  {return(_is_intermediate);}
   // malformed if something wrong.. e.g. unknown memory space in pointer deref.
   void Set_Is_Malformed(bool v) { _is_malformed = v;}
@@ -296,6 +308,8 @@ class AaExpression: public AaRoot
 
   virtual void Collect_Root_Sources(set<AaExpression*>& root_set) {if(!this->Is_Constant()) root_set.insert(this);}
   virtual void Write_VC_Update_Reenables(string ctrans, set<AaRoot*>& visited_elements, ostream& ofile);
+
+  virtual AaStatement* Get_Guarded_Statement() {return(NULL);}
 };
 
 
@@ -665,8 +679,12 @@ class AaSimpleObjectReference: public AaObjectReference
 {
 
   set<AaStorageObject*> _addressed_objects;
-
+  AaStatement* _guarded_statement;
  public:
+
+  void Set_Guarded_Statement(AaStatement* stmt) {_guarded_statement = stmt;}
+  virtual AaStatement* Get_Guarded_Statement() {return(_guarded_statement);}
+
   AaSimpleObjectReference(AaScope* scope_tpr, string object_ref_string);
   AaSimpleObjectReference(AaScope* scope_tpr, AaAssignmentStatement* root_object);
 

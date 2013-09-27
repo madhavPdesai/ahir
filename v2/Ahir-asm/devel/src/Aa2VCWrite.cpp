@@ -536,19 +536,29 @@ void Write_VC_Pipe_Dependency(bool pipeline_flag,
   ofile << "// pipe dependency " << endl;
   if(src->Get_Is_Target() && tgt->Get_Is_Target())
   {
-  	__J(__UST(tgt), __UCT(src));
+  	__J(__UST(tgt), __UCT(src)); // no need for delay
   }
   else if(!src->Get_Is_Target() && tgt->Get_Is_Target())
   {
-	__J(__UST(tgt), __SCT(src));
+	// delay is needed, else paths will get too long, also there is no penalty
+	// for the delay.
+  	string delay_trans = src->Get_VC_Name() + "_" + tgt->Get_VC_Name() + "_delay";
+  	ofile << "$T [" << delay_trans << "] $delay" << endl;
+	__J(delay_trans, __SCT(src));
+	__J(__UST(tgt), delay_trans);
   }
   else if(src->Get_Is_Target() && !tgt->Get_Is_Target())
   {
-	__J(__SST(tgt), __UCT(src));
+	__J(__SST(tgt), __UCT(src)); // no need for delay.
   }
   else
   {
-	__J(__SST(tgt), __SCT(src));	
+	// delay is needed, else paths will get too long, also there is no penalty
+	// for the delay.
+  	string delay_trans = src->Get_VC_Name() + "_" + tgt->Get_VC_Name() + "_delay";
+  	ofile << "$T [" << delay_trans << "] $delay" << endl;
+	__J(delay_trans, __SCT(src));
+	__J(__SST(tgt), delay_trans);
   }
 }
 

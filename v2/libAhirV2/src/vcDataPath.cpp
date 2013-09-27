@@ -2477,7 +2477,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       this->Print_VHDL_Disconcatenate_Ack("update_ack_unguarded",update_ack,ofile);
       this->Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guards, guard_complements, ofile);
       this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "sample_req_unguarded", "sample_ack_unguarded", "sample_req", "sample_ack", false, ofile);
-      this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "update_req_unguarded", "update_ack_unguarded", "update_req", "update_ack", false, ofile);
+      this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "update_req_unguarded", "update_ack_unguarded", "update_req", "update_ack", true, ofile);
 
       // concatenate data_in
       this->Print_VHDL_Concatenation(string("data_in"), inwires,ofile);

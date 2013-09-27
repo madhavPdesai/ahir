@@ -611,6 +611,14 @@ void AaStatementSequence::Delete_Statement(AaStatement* stmt)
 	this->Renumber_Statements();
 }
 
+
+void AaStatement::Set_Guard_Expression(AaSimpleObjectReference* oref)
+{
+	_guard_expression = oref;
+	oref->Set_Associated_Statement(this);
+	oref->Set_Guarded_Statement(this);
+}
+
 //---------------------------------------------------------------------
 // AaNullStatement: public AaStatement
 //---------------------------------------------------------------------
@@ -811,6 +819,7 @@ void AaAssignmentStatement::Map_Source_References()
 	this->_target->Map_Source_References_As_Target(this->_source_objects);
 	AaProgram::Add_Type_Dependency(this->_target,this->_source);
 
+
 	this->_source->Map_Source_References(this->_source_objects);
 
 	if(this->_guard_expression)
@@ -821,7 +830,6 @@ void AaAssignmentStatement::Map_Source_References()
 			AaRoot::Error("guard variable must be implicit (SSA)", this);
 		}
 	}
-
 }
 
 
@@ -4952,6 +4960,40 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 	if(!curr_expr->Is_Implicit_Variable_Reference())
 		return;
 
+	if(curr_expr->Get_Guarded_Statement() != NULL)
+	{
+		AaStatement* gstmt = curr_expr->Get_Guarded_Statement();
+		int curr_slack = longest_paths_from_root_map[gstmt] - longest_paths_from_root_map[curr];
+		if (curr_slack > 0)
+		{
+			AaRoot* root_obj = curr_expr->Get_Root_Object();
+			string root_name = curr_expr->Get_Name();
+			string delayed_name =  root_name + "_" + Int64ToStr(curr_expr->Get_Index()) + "_delayed_" + IntToStr(curr_slack);
+
+			AaSimpleObjectReference* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
+			new_target->Set_Type(curr_expr->Get_Type());
+
+			AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), root_name);
+			new_src->Set_Type(curr_expr->Get_Type());
+
+			AaAssignmentStatement* new_stmt = new AaAssignmentStatement(this->Get_Scope(),
+					new_target,
+					new_src,
+					0);
+			new_stmt->Set_Buffering(curr_slack);
+			new_stmt->Map_Source_References();
+
+			AaSimpleObjectReference* new_guard_expr = new AaSimpleObjectReference(this->Get_Scope(), new_stmt);
+			gstmt->Set_Guard_Expression(new_guard_expr);			
+
+			// lost track of curr_expr, but it doesnt matter..
+			vector<AaStatement*> dv;
+			dv.push_back((AaStatement*)new_stmt);
+			this->_loop_body_sequence->Insert_Statements_Before(gstmt, dv);
+		}
+		return;
+	}
+
 	map<AaRoot*,int> slack_map;
 	set<int> slack_set;
 	map<int, AaAssignmentStatement*> slack_to_stmt_map;
@@ -4994,12 +5036,12 @@ void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr,
 
 	AaStatement* stmt = curr_expr->Get_Associated_Statement();
 	AaAssignmentStatement* root_stmt = NULL;
-	
+
 	if(stmt == NULL)
 	{
 		// This can happen if there is a reference to
 		// an interface object.
-	   return;
+		return;
 	}
 
 	vector<AaStatement*> delayed_versions;
@@ -5091,6 +5133,13 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
        	AaExpression* tgt_expression = this->Get_Target();
 	tgt_expression->Update_Adjacency_Map(adjacency_map,visited_elements);
 
+	if(this->_guard_expression != NULL)
+	{
+		this->_guard_expression->Update_Adjacency_Map(adjacency_map, visited_elements);
+		// guard has dependency to statement.
+		__InsMap(adjacency_map, this->_guard_expression, this, 0);
+	}
+
 	int delay = 0;
 	// check if delay not accounted for.
 	if(src_expression->Is_Implicit_Variable_Reference())
@@ -5114,6 +5163,13 @@ void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, in
 		tgt->Update_Adjacency_Map(adjacency_map, visited_elements);
 		int delay = this->_called_module->Get_Delay();
 		__InsMap(adjacency_map,this,tgt,delay);
+	}
+
+	if(this->_guard_expression != NULL)
+	{
+		this->_guard_expression->Update_Adjacency_Map(adjacency_map, visited_elements);
+		// guard has dependency to statement.
+		__InsMap(adjacency_map, this->_guard_expression, this, 0);
 	}
 }
 

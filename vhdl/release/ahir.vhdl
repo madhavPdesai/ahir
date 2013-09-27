@@ -19894,7 +19894,7 @@ architecture Behave of PulseLevelPulseInterlockBuffer is
 	signal rx_has_data, rx_read_enable: std_logic;
 
 	signal rx_read_data : std_logic_vector(data_width-1 downto 0);
-	type UpdateFsmState is (idle, waiting, busy);
+	type UpdateFsmState is (idle, acking, waiting);
 	signal update_fsm_state: UpdateFsmState;
 
 begin  -- Behave
@@ -19918,7 +19918,7 @@ begin  -- Behave
 			 clk => clk, reset => reset);		
 
 
-   process(clk,reset,update_fsm_state, update_req, rx_has_data, rx_read_data)
+   process(clk,reset,update_fsm_state, update_req, rx_has_data, read_enable)
 	variable nstate: UpdateFsmState;
 	variable uackv : boolean;
    begin
@@ -19928,40 +19928,43 @@ begin  -- Behave
 	rx_read_enable <= '0';
 	has_data <= '0';
 
-	if(update_fsm_state = idle) then
-		if(update_req and (rx_has_data = '1') and (read_enable = '1')) then
-			rx_read_enable <= '1';
-			has_data <= '1';
-			uackv := true;
-		elsif (update_req and (rx_has_data = '1') and (read_enable = '0')) then
-			nstate := busy;
-			has_data <= '1';	
-		elsif (update_req) then
-			nstate := waiting;
+        case update_fsm_state is
+	   when idle | acking =>
+		if(update_req) then
+			 if (rx_has_data = '1') then  
+				has_data <= '1';
+				if (read_enable = '1') then
+					rx_read_enable <= '1';
+					nstate := acking;
+				else
+					nstate := waiting;
+				end if;
+			else
+				nstate := waiting;
+			end if;
+		else
+			nstate := idle;
 		end if;
-	elsif (update_fsm_state = waiting) then -- update-req has been seen, waiting for rx-has-data
+		if(update_fsm_state = acking) then
+			uackv := true;
+		end if;
+	   when waiting => -- update-req has been seen, forward rx-has-data, wait until read_enable.
 		has_data <= rx_has_data;
 		if(read_enable = '1') then
 			rx_read_enable <= '1';
 			nstate := idle;
 			uackv := true;
 		end if;
-        else -- waiting for read-enable.
-		has_data <= '1';
-		if(read_enable = '1') then 
-			nstate := idle;
-			uackv := true;	
-			rx_read_enable <= '1';
-		end if;
-	end if;
+	end case;
+			
 
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			update_fsm_state <= idle;
 			update_ack <= false;
 		else
-			update_fsm_state <= nstate;
 			update_ack <= uackv;
+			update_fsm_state <= nstate;
 		end if;
 	end if;
    end process;

@@ -548,7 +548,10 @@ void AaExpression::Replace_Uses_By(AaExpression* used_expr, AaExpression* r_expr
 //---------------------------------------------------------------------
 //AaSimpleObjectReference
 //---------------------------------------------------------------------
-AaSimpleObjectReference::AaSimpleObjectReference(AaScope* parent_tpr, string object_id):AaObjectReference(parent_tpr, object_id) {};
+AaSimpleObjectReference::AaSimpleObjectReference(AaScope* parent_tpr, string object_id):AaObjectReference(parent_tpr, object_id) 
+{
+	_guarded_statement = NULL;
+};
 AaSimpleObjectReference::~AaSimpleObjectReference() {};
 void AaSimpleObjectReference::Set_Object(AaRoot* obj)
 {
@@ -1189,7 +1192,7 @@ void AaSimpleObjectReference:: Write_VC_Datapath_Instances_As_Target( ostream& o
 				ofile << " $buffering $in " 
 					<< this->Get_VC_Datapath_Instance_Name() << " "
 					<< src_name
-					<< " 0"  << endl;
+					<< " 1"  << endl;
 			}
 		}
 	}

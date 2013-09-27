@@ -37,7 +37,7 @@ class AaRoot
 
  public:
   void Set_Delay(int d) {_delay = d;}
-  int Get_Delay() {return(_delay);}
+  virtual int Get_Delay() {return(_delay);}
 
   set<AaRoot*>& Get_Target_References() {return(_target_references);}
   set<AaRoot*>& Get_Source_References() {return(_source_references);}

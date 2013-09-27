@@ -81,11 +81,7 @@ class AaStatement: public AaScope
     assert(0); 
   }
 
-  virtual void Set_Guard_Expression(AaSimpleObjectReference* oref)
-  {
-	_guard_expression = oref;
-	oref->Set_Associated_Statement(this);
-  }
+  virtual void Set_Guard_Expression(AaSimpleObjectReference* oref);
 
   virtual AaExpression* Get_Guard_Expression()
   {
