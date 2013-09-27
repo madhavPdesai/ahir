@@ -19952,18 +19952,16 @@ begin  -- Behave
 		has_data <= rx_has_data;
 		if(read_enable = '1') then
 			rx_read_enable <= '1';
-			nstate := idle;
-			uackv := true;
+			nstate := acking;
 		end if;
 	end case;
 			
+        update_ack <= uackv;
 
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			update_fsm_state <= idle;
-			update_ack <= false;
 		else
-			update_ack <= uackv;
 			update_fsm_state <= nstate;
 		end if;
 	end if;
