@@ -87,14 +87,9 @@ begin  -- behave
   -- have to be coordinated: in one complete cycle, the
   -- following sequence must be followed
   --  enable -> ready -> accept -> ack.
-  process(reset,write_enable,write_has_priority,read_enable,clk, write_tag, read_tag)
+  process(reset,write_enable,write_has_priority,read_enable,clk)
   begin
     if clk'event and clk = '1' then
-
-      -- one cycle delay through memory bank
-      write_tag_out <= write_tag;
-      read_tag_out  <= read_tag;
-      
       if(reset = '1') then
         write_done <= '0';
         read_done <= '0';
@@ -157,6 +152,22 @@ begin  -- behave
              write_bar => read_enable_base,
              clk => clk,
              reset => reset);
+ 
+
+  -- tag-out is updated in parallel with the
+  -- memory access in memory_bank_base.
+  process(clk)
+  begin
+	if(clk'event and clk = '1') then
+		if(enable_sig = '1') then
+			if(read_enable_base = '1') then
+				read_tag_out <= read_tag;
+			else
+				write_tag_out <= write_tag;
+			end if;
+		end if;
+	end if;
+  end process;
   
 end SimModel;
 

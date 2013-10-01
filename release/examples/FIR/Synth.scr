@@ -1,0 +1,25 @@
+run
+-ifn Synth.prj
+-ofn ahir_system_synth
+-ifmt mixed
+-ofmt NGC
+-p xc6vlx760-2-ff1760
+-top ahir_system
+-write_timing_constraints yes
+-hierarchy_separator _
+-bus_delimiter <>
+-fsm_extract no
+-ram_extract yes
+-rom_extract yes
+-resource_sharing yes
+-max_fanout 16
+-register_duplication yes
+-equivalent_register_removal yes
+-optimize_primitives yes
+-iuc yes
+-keep_hierarchy yes
+-opt_mode speed
+-opt_level 2
+-safe_implementation yes
+-iobuf no
+-use_new_parser yes

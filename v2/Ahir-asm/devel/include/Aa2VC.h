@@ -180,4 +180,6 @@ void Write_VC_Reenable_Joins(set<string>& active_reenable_points, string& rel_tr
 
 void Write_VC_RAW_Release_Deps(AaRoot* succ, set<AaRoot*>& preds);
 
+string Get_Op_Ascii_Name(AaOperation op, AaType* src_type, AaType* dest_type);
+
 #endif

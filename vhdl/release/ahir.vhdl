@@ -1796,7 +1796,7 @@ package BaseComponents is
   
   
   component access_regulator_base 
-    generic (num_slots: integer := 1);
+    generic (name : string; num_slots: integer := 1);
     port (
       -- the req-ack pair being regulated.
       req   : in Boolean;
@@ -1813,7 +1813,7 @@ package BaseComponents is
   end component;
 
   component access_regulator 
-    generic (num_reqs : integer := 1; num_slots: integer := 1);
+    generic (name: string; num_reqs : integer := 1; num_slots: integer := 1);
     port (
       -- the req-ack pair being regulated.
       req   : in BooleanArray(num_reqs-1 downto 0);
@@ -6085,14 +6085,9 @@ begin  -- behave
   -- have to be coordinated: in one complete cycle, the
   -- following sequence must be followed
   --  enable -> ready -> accept -> ack.
-  process(reset,write_enable,write_has_priority,read_enable,clk, write_tag, read_tag)
+  process(reset,write_enable,write_has_priority,read_enable,clk)
   begin
     if clk'event and clk = '1' then
-
-      -- one cycle delay through memory bank
-      write_tag_out <= write_tag;
-      read_tag_out  <= read_tag;
-      
       if(reset = '1') then
         write_done <= '0';
         read_done <= '0';
@@ -6155,6 +6150,22 @@ begin  -- behave
              write_bar => read_enable_base,
              clk => clk,
              reset => reset);
+ 
+
+  -- tag-out is updated in parallel with the
+  -- memory access in memory_bank_base.
+  process(clk)
+  begin
+	if(clk'event and clk = '1') then
+		if(enable_sig = '1') then
+			if(read_enable_base = '1') then
+				read_tag_out <= read_tag;
+			else
+				write_tag_out <= write_tag;
+			end if;
+		end if;
+	end if;
+  end process;
   
 end SimModel;
 
@@ -8884,7 +8895,7 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 entity access_regulator_base is
-  generic (num_slots: integer := 1);
+  generic (name : string;  num_slots: integer := 1);
   port (
     -- the req-ack pair being regulated.
     req   : in Boolean;
@@ -8918,7 +8929,7 @@ begin  -- default_arch
 
    req_place_preds(0) <= req;
    reqPlace: place_with_bypass 
-	generic map(capacity => 1, marking => 0, name => "access_regulator:req_place")
+	generic map(capacity => 1, marking => 0, name => name & ":req_place:")
 	port map(preds => req_place_preds, 
 			succs => req_place_succs, 
 			token => req_place_token,
@@ -8931,7 +8942,7 @@ begin  -- default_arch
    -- unregulated request.
    release_req_place_preds(0) <= release_req;
    releaseReqPlace: place 
-	generic map(capacity => num_slots+1, marking => num_slots, name => "access_regulator:release_req_place")
+	generic map(capacity => num_slots+1, marking => num_slots, name => name & ":release_req_place:")
 	port map(preds => release_req_place_preds, 
 			succs => release_req_place_succs, 
 			token => release_req_place_token,
@@ -8942,8 +8953,13 @@ begin  -- default_arch
    -- note that the capacity can be num_slots, because
    -- the release ack-request should never arrive earlier than the 
    -- unregulated request.
+   -- Check: capacity must be num_slots+1 because req->ack
+   --        turnaround from operator can be 0-delay?
+   --
+   -- The token is returned to the place by release-ack.  
+   --  
    releaseAckPlace: place 
-	generic map(capacity => num_slots, marking => num_slots, name => "access_regulator:release_ack_place")
+	generic map(capacity => num_slots, marking => num_slots, name => name & ":release_ack_place:")
 	port map(preds => release_ack_place_preds, 
 			succs => release_ack_place_succs, 
 			token => release_ack_place_token,
@@ -8958,6 +8974,8 @@ begin  -- default_arch
 
 
    -- the req that goes out.
+   -- the req goes out only if a token is present in the req-place, the release-req-place
+   -- and the release-ack place.
    regulated_req <= regulated_req_join;
 
    -- ack from RHS is forwarded to the left.
@@ -8969,11 +8987,12 @@ use ieee.std_logic_1164.all;
 
 library ahir;
 use ahir.Types.all;
+use ahir.Utilities.all;
 use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 
 entity access_regulator is
-  generic (num_reqs : integer := 1; num_slots: integer := 1);
+  generic (name: string; num_reqs : integer := 1; num_slots: integer := 1);
   port (
     -- the req-ack pair being regulated.
     req   : in BooleanArray(num_reqs-1 downto 0);
@@ -8993,7 +9012,7 @@ end access_regulator;
 architecture default_arch of access_regulator is
 begin  -- default_arch
    gen: for I in 0 to num_reqs-1 generate
-	aR: access_regulator_base generic map(num_slots => num_slots)
+	aR: access_regulator_base generic map(name => name & "(" & Convert_To_String(I) & ")", num_slots => num_slots)
 		port map(req => req(I),
 			 ack => ack(I),
 			 regulated_req => regulated_req(I),

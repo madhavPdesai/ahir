@@ -1,0 +1,132 @@
+// Aa code produced by llvm2aa (version 1.0)
+$pipe coeff_pipe : $float<8,23> $depth 1
+$pipe in_data_pipe : $float<8,23> $depth 1
+$pipe sum_flag : $uint<8> $depth 2
+$pipe sum_pipe : $float<8,23> $depth 2
+$storage coeff:$array [32] $of $float<8,23>
+$storage S:$array [32] $of $float<8,23>
+
+$module [fir] 
+$in ()
+$out ()
+$is 
+{
+  $branchblock [body] 
+  {
+    //begin: basic-block bbx_xnph
+    $place [bbx_xnph_bb_1]
+    //begin: basic-block bb_1
+    //   this is a do-while loop.
+    $merge bbx_xnph_bb_1
+    $phi indvar_at_entry :=  ( $cast ($uint<64>) ( $bitcast ($uint<64> ) _b0000000000000000000000000000000000000000000000000000000000000000 ) ) $on bbx_xnph_bb_1 
+    $endmerge
+    $dopipeline $depth 8 $buffering 1 
+    $merge $entry $loopback
+    $phi indvar :=  ( $cast ($uint<64>) indvarx_xnext) $on $loopback indvar_at_entry $on $entry
+    $endmerge
+    scevgep47 := @(S[indvar])
+    scevgep := @(coeff[indvar])
+    iNsTr_3 := coeff_pipe
+    ->(scevgep) := iNsTr_3
+    ->(scevgep47) := ( $bitcast ($float<8,23> ) _f0.000000e+00 ) 
+    indvarx_xnext := (indvar + ( $bitcast ($uint<64> ) _b0000000000000000000000000000000000000000000000000000000000000001 ) )
+    // compare instruction
+    exitcond1 := (indvarx_xnext == ( $bitcast ($uint<64> ) _b0000000000000000000000000000000000000000000000000000000000100000 )  )
+    $while (~exitcond1) 
+
+
+    $dopipeline $depth 8 $buffering 2 
+
+	$merge $entry $loopback
+		$phi inI := ($bitcast ($uint<16>) 0) $on $entry I $on $loopback
+		$phi inN := ($bitcast ($uint<16>) 0) $on $entry N $on $loopback
+	$endmerge
+
+	inIzero := (inI == 0)
+
+	N := ($mux inIzero ($mux (inN == 0) 31 (inN-1)) inN)
+	$guard (inIzero) S[N] := in_data_pipe
+
+	J0 := inI
+	CI0 := ($mux (J0 <= N) (N-J0)   (32-(J0-N)))
+	Y0 := (coeff[CI0]*S[J0])
+
+	J1 := (inI+1)
+	CI1 := ($mux (J1 <= N) (N-J1)   (32-(J1-N)))
+	Y1 := (coeff[CI1]*S[J1])
+
+	J2 := (inI+2)
+	CI2 := ($mux (J2 <= N) (N-J2)   (32-(J2-N)))
+	Y2 := (coeff[CI2]*S[J2])
+
+	J3 := (inI+3)
+	CI3 := ($mux (J3 <= N) (N-J3)   (32-(J3-N)))
+	Y3 := (coeff[CI3]*S[J3])
+
+	J4 := (inI+4)
+	CI4 := ($mux (J4 <= N) (N-J4)   (32-(J4-N)))
+	Y4 := (coeff[CI4]*S[J4])
+
+	J5 := (inI+5)
+	CI5 := ($mux (J5 <= N) (N-J5)   (32-(J5-N)))
+	Y5 := (coeff[CI5]*S[J5])
+
+	J6 := (inI+6)
+	CI6 := ($mux (J6 <= N) (N-J6)   (32-(J6-N)))
+	Y6 := (coeff[CI6]*S[J6])
+
+	J7 := (inI+7)
+	CI7 := ($mux (J7 <= N) (N-J7)   (32-(J7-N)))
+	Y7 := (coeff[CI7]*S[J7])
+
+	J8 := (inI+8)
+	CI8 := ($mux (J8 <= N) (N-J8)   (32-(J8-N)))
+	Y8 := (coeff[CI8]*S[J8])
+
+	J9 := (inI+9)
+	CI9 := ($mux (J9 <= N) (N-J9)   (32-(J9-N)))
+	Y9 := (coeff[CI9]*S[J9])
+
+	J10 := (inI+10)
+	CI10 := ($mux (J10 <= N) (N-J10)   (32-(J10-N)))
+	Y10 := (coeff[CI10]*S[J10])
+
+	J11 := (inI+11)
+	CI11 := ($mux (J11 <= N) (N-J11)   (32-(J11-N)))
+	Y11 := (coeff[CI11]*S[J11])
+
+	J12 := (inI+12)
+	CI12 := ($mux (J12 <= N) (N-J12)   (32-(J12-N)))
+	Y12 := (coeff[CI12]*S[J12])
+
+	J13 := (inI+13)
+	CI13 := ($mux (J13 <= N) (N-J13)   (32-(J13-N)))
+	Y13 := (coeff[CI13]*S[J13])
+
+	J14 := (inI+14)
+	CI14 := ($mux (J14 <= N) (N-J14)   (32-(J14-N)))
+	Y14 := (coeff[CI14]*S[J14])
+
+	J15 := (inI+15)
+	CI15 := ($mux (J15 <= N) (N-J15)   (32-(J15-N)))
+	Y15 := (coeff[CI15]*S[J15])
+
+
+	S0 := ((Y0+Y1)+(Y2+Y3))
+	S1 := ((Y4+Y5)+(Y6+Y7))
+	S2 := ((Y8+Y9)+(Y10+Y11))
+	S3 := ((Y12+Y13)+(Y14+Y15))
+
+	Y := ((S0+S1)+(S2+S3))
+
+	sum_flag := 0
+	sum_pipe := Y
+
+	NI := (inI + 16)
+	NRSTI := (NI < 32)
+	I  := ($mux (NI < 32) NI 0)
+	$guard (~ NRSTI) sum_flag := 1
+
+    $while 1
+  }
+}

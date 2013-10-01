@@ -1347,7 +1347,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	  this->Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
 
 	  this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL_unregulated", "ackL_unregulated", false, ofile);
-	  this->Print_VHDL_Regulator_Instance("accessRegulator", num_reqs,"reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
+	  this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs,"reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
       	  this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 
 	}
@@ -1645,7 +1645,12 @@ void vcDataPath::Print_VHDL_Regulator_Instance(string inst_id,
 		int depth, num_slots;
 		bool cf = dpe->Is_Part_Of_Pipelined_Loop(depth, num_slots);
 
-		ofile << inst_id_idx << ": access_regulator_base generic map (num_slots => " << IntToStr(num_slots) <<") -- {" << endl;
+		ofile << inst_id_idx 
+			<< ": access_regulator_base generic map ("
+			<< "name => " 
+			<< '"' << inst_id_idx  << '"'
+			<< ", num_slots => " 
+			<< IntToStr(num_slots) <<") -- {" << endl;
 		ofile << "port map (req => " << reqs << "(" << idx << "), -- {" << endl; 
 		ofile << "ack => " << acks << "(" << idx << ")," << endl;
 		ofile << "regulated_req => " << regulated_reqs << "(" << idx << ")," << endl;
@@ -1671,7 +1676,6 @@ int vcDataPath::Generate_Buffering_String(string const_name,
 		if(J > 0)
 			buffering_string += ", ";
 		int bufv = buf_sizes[J];
-		//if(bufv <= 0) bufv = 1;
 		maxbuf = ((bufv > maxbuf) ? bufv : maxbuf);
 		buffering_string += IntToStr((N-J)-1) + " => " + IntToStr(bufv);
 	}
@@ -1915,7 +1919,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
       this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL_unregulated", "ackL_unregulated",
 			false,  ofile);
 
-      this->Print_VHDL_Regulator_Instance("accessRegulator", num_reqs, "reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
+      this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs, "reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
 
       this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 	
@@ -2130,7 +2134,7 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
       this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL_unregulated", "ackL_unregulated",
 			false, ofile);
 
-      this->Print_VHDL_Regulator_Instance("accessRegulator", num_reqs, "reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
+      this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs, "reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
 
       this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 
@@ -2698,7 +2702,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 			false, ofile);
 
 
-      this->Print_VHDL_Regulator_Instance("accessRegulator", num_reqs,"reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements,  ofile);
+      this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs,"reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements,  ofile);
 
       this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 

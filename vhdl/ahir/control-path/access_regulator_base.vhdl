@@ -6,7 +6,7 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 entity access_regulator_base is
-  generic (num_slots: integer := 1);
+  generic (name : string;  num_slots: integer := 1);
   port (
     -- the req-ack pair being regulated.
     req   : in Boolean;
@@ -40,7 +40,7 @@ begin  -- default_arch
 
    req_place_preds(0) <= req;
    reqPlace: place_with_bypass 
-	generic map(capacity => 1, marking => 0, name => "access_regulator:req_place")
+	generic map(capacity => 1, marking => 0, name => name & ":req_place:")
 	port map(preds => req_place_preds, 
 			succs => req_place_succs, 
 			token => req_place_token,
@@ -53,7 +53,7 @@ begin  -- default_arch
    -- unregulated request.
    release_req_place_preds(0) <= release_req;
    releaseReqPlace: place 
-	generic map(capacity => num_slots+1, marking => num_slots, name => "access_regulator:release_req_place")
+	generic map(capacity => num_slots+1, marking => num_slots, name => name & ":release_req_place:")
 	port map(preds => release_req_place_preds, 
 			succs => release_req_place_succs, 
 			token => release_req_place_token,
@@ -64,8 +64,13 @@ begin  -- default_arch
    -- note that the capacity can be num_slots, because
    -- the release ack-request should never arrive earlier than the 
    -- unregulated request.
+   -- Check: capacity must be num_slots+1 because req->ack
+   --        turnaround from operator can be 0-delay?
+   --
+   -- The token is returned to the place by release-ack.  
+   --  
    releaseAckPlace: place 
-	generic map(capacity => num_slots, marking => num_slots, name => "access_regulator:release_ack_place")
+	generic map(capacity => num_slots, marking => num_slots, name => name & ":release_ack_place:")
 	port map(preds => release_ack_place_preds, 
 			succs => release_ack_place_succs, 
 			token => release_ack_place_token,
@@ -80,6 +85,8 @@ begin  -- default_arch
 
 
    -- the req that goes out.
+   -- the req goes out only if a token is present in the req-place, the release-req-place
+   -- and the release-ack place.
    regulated_req <= regulated_req_join;
 
    -- ack from RHS is forwarded to the left.

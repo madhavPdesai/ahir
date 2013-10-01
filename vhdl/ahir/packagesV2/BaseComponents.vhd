@@ -184,7 +184,7 @@ package BaseComponents is
   
   
   component access_regulator_base 
-    generic (num_slots: integer := 1);
+    generic (name : string; num_slots: integer := 1);
     port (
       -- the req-ack pair being regulated.
       req   : in Boolean;
@@ -201,7 +201,7 @@ package BaseComponents is
   end component;
 
   component access_regulator 
-    generic (num_reqs : integer := 1; num_slots: integer := 1);
+    generic (name: string; num_reqs : integer := 1; num_slots: integer := 1);
     port (
       -- the req-ack pair being regulated.
       req   : in BooleanArray(num_reqs-1 downto 0);

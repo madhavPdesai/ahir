@@ -3,11 +3,12 @@ use ieee.std_logic_1164.all;
 
 library ahir;
 use ahir.Types.all;
+use ahir.Utilities.all;
 use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 
 entity access_regulator is
-  generic (num_reqs : integer := 1; num_slots: integer := 1);
+  generic (name: string; num_reqs : integer := 1; num_slots: integer := 1);
   port (
     -- the req-ack pair being regulated.
     req   : in BooleanArray(num_reqs-1 downto 0);
@@ -27,7 +28,7 @@ end access_regulator;
 architecture default_arch of access_regulator is
 begin  -- default_arch
    gen: for I in 0 to num_reqs-1 generate
-	aR: access_regulator_base generic map(num_slots => num_slots)
+	aR: access_regulator_base generic map(name => name & "(" & Convert_To_String(I) & ")", num_slots => num_slots)
 		port map(req => req(I),
 			 ack => ack(I),
 			 regulated_req => regulated_req(I),

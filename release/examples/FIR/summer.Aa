@@ -1,0 +1,28 @@
+// hand-optimized Aa code.
+$pipe out_data_pipe : $float<8,23> $depth 1
+$pipe sum_flag : $uint<8> $depth 2
+$pipe sum_pipe : $float<8,23> $depth 2
+$module [summer] 
+$in ()
+$out ()
+$is 
+{
+  $branchblock [body] 
+  {
+    //begin: basic-block bb_0
+    $dopipeline $depth 8 $buffering 1 
+    	$merge $entry $loopback
+    		$phi Y :=  ( $cast ($float<8,23>) ( $bitcast ($float<8,23> ) _f0.000000e+00 ) ) 
+					$on $entry iNsTr_8 $on $loopback 
+    	$endmerge
+    	iNsTr_3 := sum_flag
+    	// compare instruction
+    	iNsTr_4 := (iNsTr_3 == ( $bitcast ($uint<8> ) _b00000000 )  )
+	// if send-flag signals 1, send Y to output.
+    	$guard (~ iNsTr_4) out_data_pipe := Y
+	// if send-flag signals 0, read sum_pipe and accumulate.
+    	$guard ( iNsTr_4 ) iNsTr_7 := sum_pipe
+    	iNsTr_8 := ($mux iNsTr_4 (Y + iNsTr_7) _f0.000000e+00)
+    $while 1
+  }
+}

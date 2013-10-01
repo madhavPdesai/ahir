@@ -1,0 +1,14 @@
+An example of a situation where pipelining gives close to 100%
+efficiency.  However, the inner-most dot-product loop needs to
+be completely unrolled (16-times) in order to achieve this.
+
+A way to break the dot-product accumulator cycle.
+
+   product-stage ==> accumulate stage
+
+The accumulate stage will have a loop cycle-time of
+about 20 cycles (the FP add latency).  Thus, the product
+stage should compute
+    sum (xk.yk)
+and pass it to the accumulate stage.  The product loop
+cycle time should also be 20 cycles.

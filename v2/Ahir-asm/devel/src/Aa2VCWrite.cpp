@@ -574,3 +574,86 @@ void Write_VC_Reenable_Joins(set<string>& active_reenable_points, string& rel_tr
 }
 
 void Write_VC_RAW_Release_Deps(AaRoot* succ, set<AaRoot*>& preds) {assert(0);}
+
+string Get_Op_Ascii_Name(AaOperation op, AaType* src_type, AaType* dest_type)
+{
+	string ret_val;
+	if(op == __NOT)
+		ret_val = "NOT";
+	else if(op == __NOP)
+		ret_val = "NOP";
+	else if(op == __OR) ret_val = "OR";
+	else if(op == __AND) ret_val = "AND";
+	else if(op == __XOR) ret_val = "XOR";
+	else if(op == __NOR) ret_val = "NOR";
+	else if(op == __NAND) ret_val = "NAND";
+	else if(op == __XNOR) ret_val = "XOR";
+	else if(op == __SHL) ret_val = "SHL";
+	//  for SHR, if the types of src1,src2 are integer,
+	//  then we use the signed version.
+	else if(op == __SHR)
+	{
+		if(dest_type->Is("AaIntType"))
+			ret_val = "ASHR";
+		else
+			ret_val = "LSHR";
+	}
+	else if(op == __PLUS) ret_val = "ADD";
+	else if(op == __MINUS) ret_val = "SUB";
+	else if(op == __MUL) ret_val = "MUL";
+	else if(op == __DIV) ret_val = "DIV";
+	else if(op == __EQUAL) ret_val = "EQ";
+	else if(op == __NOTEQUAL) ret_val = "NEQ";
+	//
+	// for comparisons, if the types of src1,src2 are integer,
+	//       then we use the signed version.
+	else if(op == __LESS)
+	{
+		if(src_type->Is("AaIntType") || src_type->Is("AaFloatType"))
+			ret_val = "SLT";
+		else
+			ret_val = "ULT";
+	}
+	else if(op == __LESSEQUAL) 
+	{
+		if(src_type->Is("AaIntType") || src_type->Is("AaFloatType"))
+			ret_val = "SLE";
+		else 
+			ret_val = "ULE";
+	}
+	else if(op == __GREATER)
+	{
+		if(src_type->Is("AaIntType") || src_type->Is("AaFloatType"))
+			ret_val = "SGT";
+		else 
+			ret_val = "UGT";
+	}
+	else if(op == __GREATEREQUAL)
+	{
+		if(src_type->Is("AaIntType") || src_type->Is("AaFloatType"))
+			ret_val = "SGE";
+		else 
+			ret_val = "UGE";
+	}
+	else if(op == __CONCAT) ret_val = "CONCAT";
+	else if(op == __BITSEL) ret_val = "BITSEL";
+	else
+		assert(0);
+
+
+	if(src_type->Is("AaFloatType"))
+		ret_val += "_f" + IntToStr(((AaFloatType*)src_type)->Size());
+	else if(src_type->Is("AaUintType"))
+		ret_val += "_u" + IntToStr(((AaUintType*)src_type)->Size());
+	else if(src_type->Is("AaIntType"))
+		ret_val += "_i" + IntToStr(((AaIntType*)src_type)->Size());
+			
+	if(dest_type->Is("AaFloatType"))
+		ret_val += "_f" + IntToStr(((AaFloatType*)dest_type)->Size());
+	else if(dest_type->Is("AaUintType"))
+		ret_val += "_u" + IntToStr(((AaUintType*)dest_type)->Size());
+	else if(dest_type->Is("AaIntType"))
+		ret_val += "_i" + IntToStr(((AaIntType*)dest_type)->Size());
+
+	return(ret_val);
+}

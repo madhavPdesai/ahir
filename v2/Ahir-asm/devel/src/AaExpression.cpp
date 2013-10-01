@@ -1150,7 +1150,7 @@ void AaSimpleObjectReference::Write_VC_Wire_Declarations_As_Target(ostream& ofil
 	}
 }
 
-void AaSimpleObjectReference:: Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source) 
+void AaSimpleObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& ofile, AaExpression* source) 
 {
 	if(!this->Is_Constant()  && !this->Is_Implicit_Variable_Reference())
 	{
@@ -1198,7 +1198,43 @@ void AaSimpleObjectReference:: Write_VC_Datapath_Instances_As_Target( ostream& o
 	}
 }
 
-void AaSimpleObjectReference:: Write_VC_Datapath_Instances(AaExpression* target,  ostream& ofile) 
+
+string AaSimpleObjectReference::Get_VC_Name()
+{
+	string ret_val;
+        string idx = Int64ToStr(this->Get_Index());
+		
+	if(this->_object->Is("AaStorageObject"))
+	{
+		if(this->Get_Is_Target())
+			ret_val = "STORE";
+		else
+			ret_val = "LOAD";
+		ret_val += "_" + this->_object->Get_VC_Name();
+	}
+	else if(this->_object->Is("AaPipeObject"))
+	{
+		if(this->Get_Is_Target())
+			ret_val = "WPIPE";
+		else
+			ret_val = "RPIPE";
+		ret_val += "_" + this->_object->Get_VC_Name();
+	}
+	else
+	{
+		if(this->Get_Is_Target())
+			ret_val = "W_" + this->Get_Name();
+		else
+			ret_val = "R_" + this->Get_Name();
+	}
+
+		
+	ret_val += "_" + idx;
+
+	return(ret_val);
+}
+
+void AaSimpleObjectReference::Write_VC_Datapath_Instances(AaExpression* target,  ostream& ofile) 
 {
 
 	if(!this->Is_Constant() && !this->Is_Implicit_Variable_Reference())
@@ -1259,7 +1295,7 @@ void AaSimpleObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
 		}
 	}
 }
-void AaSimpleObjectReference:: Write_VC_Links_As_Target(string hier_id, ostream& ofile) 
+void AaSimpleObjectReference::Write_VC_Links_As_Target(string hier_id, ostream& ofile) 
 {
 	if(!this->Is_Constant() && !this->Is_Implicit_Variable_Reference())
 	{
@@ -3600,6 +3636,16 @@ void AaUnaryExpression::Print(ostream& ofile)
 	ofile << " )";
 }
 
+string AaUnaryExpression::Get_VC_Name()
+{
+	string ret_val;
+        string idx = Int64ToStr(this->Get_Index());
+
+	ret_val = Get_Op_Ascii_Name(this->Get_Operation(), _rest->Get_Type(), this->Get_Type());	
+	ret_val += "_" + idx;
+	return(ret_val);
+}
+
 void AaUnaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
 {
 	if(!this->Is_Constant())
@@ -3815,6 +3861,17 @@ AaBinaryExpression::AaBinaryExpression(AaScope* parent_tpr,AaOperation op, AaExp
 }
 
 AaBinaryExpression::~AaBinaryExpression() {};
+
+string AaBinaryExpression::Get_VC_Name()
+{
+	string ret_val;
+        string idx = Int64ToStr(this->Get_Index());
+
+	ret_val = Get_Op_Ascii_Name(this->Get_Operation(), _first->Get_Type(), this->Get_Type());	
+	ret_val += "_" + idx;
+	return(ret_val);
+}
+
 void AaBinaryExpression::Print(ostream& ofile)
 {
   ofile << "(" ;
@@ -4127,6 +4184,17 @@ AaTernaryExpression::AaTernaryExpression(AaScope* parent_tpr,
 	this->Set_Delay(1);
 }
 AaTernaryExpression::~AaTernaryExpression() {};
+
+string AaTernaryExpression::Get_VC_Name()
+{
+	string ret_val;
+        string idx = Int64ToStr(this->Get_Index());
+
+	ret_val = "MUX";
+	ret_val += "_" + idx;
+	return(ret_val);
+}
+
 void AaTernaryExpression::Print(ostream& ofile)
 {
 	ofile << "( $mux ";

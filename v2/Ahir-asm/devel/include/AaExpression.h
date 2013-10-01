@@ -724,7 +724,7 @@ class AaSimpleObjectReference: public AaObjectReference
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
   virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
 
-  string Get_VC_Name() {return("simple_obj_ref_" + Int64ToStr(this->Get_Index()));}
+  string Get_VC_Name();
   virtual void Print_AddressOf_C(ofstream& ofile, string tab_string);
   virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string);
 
@@ -1217,7 +1217,7 @@ class AaUnaryExpression: public AaExpression
   virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
 
-  string Get_VC_Name() {return("unary_" + Int64ToStr(this->Get_Index()));}
+  string Get_VC_Name();
 
   virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
   virtual void Write_VC_Links_As_Target_Optimized(string hier_id, ostream& ofile);
@@ -1356,7 +1356,7 @@ class AaBinaryExpression: public AaExpression
   virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
   virtual void Write_VC_Links(string hier_id, ostream& ofile);
 
-  string Get_VC_Name() {return("binary_" + Int64ToStr(this->Get_Index()));}
+  string Get_VC_Name();
 
   virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
   virtual void Write_VC_Links_As_Target_Optimized(string hier_id, ostream& ofile);
@@ -1466,7 +1466,7 @@ class AaTernaryExpression: public AaExpression
 
   virtual void Evaluate();
 
-  string Get_VC_Name() {return("ternary_" + Int64ToStr(this->Get_Index()));}
+  string Get_VC_Name();
 
   virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
   virtual void Write_VC_Links_As_Target_Optimized(string hier_id, ostream& ofile);

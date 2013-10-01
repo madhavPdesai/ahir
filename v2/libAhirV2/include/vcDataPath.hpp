@@ -322,10 +322,21 @@ protected:
  
   int Get_Output_Buffering(vcWire* w)
   {
+	int D,B;
+	bool cf = this->Is_Part_Of_Pipelined_Loop(D,B);
+	int min_val = (cf ? 2 : 1);
+	int R;
+
  	if(_output_wire_buffering_map.find(w) != _output_wire_buffering_map.end())
-		return(_output_wire_buffering_map[w]);
+	{
+		R = (_output_wire_buffering_map[w]);
+	}
 	else
-		return(1);
+	{
+		R = 1;
+	}
+
+	return ((R < min_val) ? min_val :R);
   }
 
   virtual void Print_VHDL_Logger(ostream& ofile);
