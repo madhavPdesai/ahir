@@ -10,6 +10,7 @@
 #include <AaExpression.h>
 #include <AaObject.h>
 
+class AaStatementSequence;
 class AaPlaceStatement;
 class AaDoWhileStatement;
 
@@ -32,7 +33,7 @@ class AaStatement: public AaScope
   AaSimpleObjectReference* _guard_expression;
   bool _guard_complement;
 
-  AaDoWhileStatement* _do_while_parent;
+  AaStatement* _pipeline_parent;
 
   // mark
   string _mark;
@@ -70,8 +71,8 @@ class AaStatement: public AaScope
 	}	
   }
   virtual void Write_VC_Synch_Dependency(set<AaRoot*>& visited_elements, bool pipeline_flag, ostream& ofile);
-  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws) {_do_while_parent = dws;}
-  AaDoWhileStatement* Get_Do_While_Parent() {return(_do_while_parent);}
+  virtual void Set_Pipeline_Parent(AaStatement* dws) {_pipeline_parent = dws;}
+  AaStatement* Get_Pipeline_Parent() {return(_pipeline_parent);}
 
   // add map entries in parent's lookup map for easy access
   virtual void Map_Targets() 
@@ -232,13 +233,39 @@ class AaStatement: public AaScope
 
   virtual bool Is_Part_Of_Extreme_Pipeline();
 
+  virtual void Set_Pipeline_Depth(int v){assert(0);}
+  virtual int Get_Pipeline_Depth() {assert(0);}
+
+  virtual void Set_Pipeline_Buffering(int v) {assert(0);}
+  virtual int Get_Pipeline_Buffering() {assert(0);}
+
+  virtual void Set_Pipeline_Full_Rate_Flag(bool v) {assert(0);}
+  virtual bool Get_Pipeline_Full_Rate_Flag() {assert(0);}
+
+  void Print_Adjacency_Map( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map);
+  virtual void Equalize_Paths_For_Pipelining();
+  void Find_Longest_Paths(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+		  set<AaRoot*>& visited_elements,
+		  map<AaRoot*, int>& longest_paths_from_root_map);
+  void Add_Delayed_Versions(AaRoot* curr, 
+		  map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+		  map<AaRoot*, int>& longest_paths_from_root_map,
+		  AaStatementSequence* stmt_sequence);
+  virtual void Add_Delayed_Versions( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+		set<AaRoot*>& visited_elements,
+		map<AaRoot*, int>& longest_paths_from_root_map) 
+  {
+	assert(0);
+  }
+  void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
+	{ assert(0);}
 };
 
 // statement sequence (is used in block statements which lead to programs)
 class AaStatementSequence: public AaScope
 {
   vector<AaStatement*> _statement_sequence;
-  AaDoWhileStatement* _do_while_parent;
+  AaStatement* _pipeline_parent;
  public:
 
   AaStatementSequence(AaScope* scope, vector<AaStatement*>& statement_sequence);
@@ -264,11 +291,11 @@ class AaStatementSequence: public AaScope
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaStatementSequence");}
 
-  void Set_Do_While_Parent(AaDoWhileStatement* dws)
+  void Set_Pipeline_Parent(AaStatement* dws)
   {
-    this->_do_while_parent = dws;
+    this->_pipeline_parent = dws;
     for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
-      this->_statement_sequence[i]->Set_Do_While_Parent(dws);
+      this->_statement_sequence[i]->Set_Pipeline_Parent(dws);
   }
 
   virtual void Map_Source_References() 
@@ -427,7 +454,7 @@ class AaAssignmentStatement: public AaStatement
   AaAssignmentStatement(AaScope* scope,AaExpression* target, AaExpression* source, int lineno);
   ~AaAssignmentStatement();
 
-  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws);
+  virtual void Set_Pipeline_Parent(AaStatement* dws);
 
   int Get_Buffering() {return(_buffering);}
   void Set_Buffering(int b) {_buffering = b;}
@@ -508,7 +535,7 @@ class AaCallStatement: public AaStatement
   string Get_Function_Name() {return(this->_function_name);}
   void Set_Called_Module(AaRoot* m) { this->_called_module = m; }
   AaRoot* Get_Called_Module() {return(this->_called_module);}
-  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws);
+  virtual void Set_Pipeline_Parent(AaStatement* dws);
 
   AaCallStatement(AaScope* scope_tpr,
 		  string func_name,
@@ -614,11 +641,11 @@ class AaBlockStatement: public AaStatement
   virtual bool Is_Pipelined() {return(false);}
 
 
-  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws) 
+  virtual void Set_Pipeline_Parent(AaStatement* dws) 
   { 
-      _do_while_parent = dws;
+      _pipeline_parent = dws;
       if(_statement_sequence != NULL)
-      	_statement_sequence->Set_Do_While_Parent(dws);
+      	_statement_sequence->Set_Pipeline_Parent(dws);
   }
 
   virtual unsigned int Get_Statement_Count() 
@@ -746,20 +773,24 @@ class AaBlockStatement: public AaStatement
 
 
   virtual void Write_VC_Control_Path_Optimized(bool pipeline_flag, 
-					       AaExpression* test_expression,
 					       AaStatementSequence* sseq,
-					       vector<AaStatement*>* phi_stmts,
-					       string& region_name,
+					       set<AaRoot*>& visited_elements,
+					       map<string,vector<AaExpression*> >& load_store_dep_map,
+					       map<string,vector<AaExpression*> >& pipe_map,
+					       AaRoot*& trailing_barrier,
 					       ostream& ofile);
+
   virtual void Write_VC_Control_Path_Optimized(AaStatement* stmt,
 					       ostream& ofile);
 
 
   
-  void Write_VC_Load_Store_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> >& load_store_dep_map,
+  void Write_VC_Load_Store_Dependencies(bool pipeline_flag, 
+					map<string,vector<AaExpression*> >& load_store_dep_map,
 					ostream& ofile);
-  void Write_VC_Pipe_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> >& pipe_map,
-					ostream& ofile);
+  void Write_VC_Pipe_Dependencies(bool pipeline_flag, 
+				  map<string,vector<AaExpression*> >& pipe_map,
+				  ostream& ofile);
 
   virtual void Propagate_Constants();
 
@@ -792,7 +823,7 @@ class AaSeriesBlockStatement: public AaBlockStatement
   
   
   void Write_VC_Links_Optimized_Base(string hier_id, ostream& ofile);
-  void Write_VC_Control_Path_Optimized_Base(ostream& ofile);
+  virtual void Write_VC_Control_Path_Optimized_Base(ostream& ofile);
 
 };
 
@@ -1098,7 +1129,7 @@ class AaPhiStatement: public AaStatement
 
   void Add_Source_Pair(string label, AaExpression* expr);
 
-  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws);
+  virtual void Set_Pipeline_Parent(AaStatement* dws);
   bool Is_Merged(string label)
   {
     return(_merged_labels.find(label) != _merged_labels.end());
@@ -1314,19 +1345,20 @@ class AaDoWhileStatement: public AaStatement
   AaMergeStatement* _merge_statement;
   AaStatementSequence* _loop_body_sequence;
 
-  int _pipelining_depth;
-  int _buffering_depth;
-  bool _full_rate_flag;
+  int _pipeline_depth;
+  int _pipeline_buffering;
+  bool _pipeline_full_rate_flag;
  public:
 
-  void Set_Pipelining_Depth(int v) {_pipelining_depth = v;}
-  int Get_Pipelining_Depth() {return(_pipelining_depth);}
+  virtual void Set_Pipeline_Depth(int v) {_pipeline_depth = v;}
+  virtual int Get_Pipeline_Depth() {return(_pipeline_depth);}
 
-  void Set_Buffering_Depth(int v) {_buffering_depth = v;}
-  int Get_Buffering_Depth() {return(_buffering_depth);}
+  virtual void Set_Pipeline_Buffering(int v) {_pipeline_buffering = v;}
+  virtual int Get_Pipeline_Buffering() {return(_pipeline_buffering);}
 
-  void Set_Full_Rate_Flag(bool v) {_full_rate_flag = v;}
-  bool Get_Full_Rate_Flag() {return(_full_rate_flag);}
+  virtual void Set_Pipeline_Full_Rate_Flag(bool v) {_pipeline_full_rate_flag = v;}
+  virtual bool Get_Pipeline_Full_Rate_Flag() {return(_pipeline_full_rate_flag);}
+
   void Set_Test_Expression(AaExpression* te) { this->_test_expression = te; }
   void Set_Merge_Statement(AaMergeStatement* ms) { this->_merge_statement = ms; }
   void Set_Loop_Body_Sequence(AaStatementSequence* lbs);
@@ -1405,16 +1437,13 @@ class AaDoWhileStatement: public AaStatement
 
   virtual void Get_Target_Places(set<AaPlaceStatement*>& target_places); // do nothing.
 
-  // first in-memory transformation.  Add delayed versions
-  // of implicit variables in order to help pipelining.
-  void Equalize_Paths_For_Pipelining();
-
-  void Add_Delayed_Versions(AaRoot* curr, 
-				map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map,
-				map<AaRoot*, int>& longest_paths_from_root_map);
 
    void Find_Longest_Paths( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
 				map<AaRoot*, int>& longest_paths_from_root_map);
+  void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
+  void Add_Delayed_Versions( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+		set<AaRoot*>& visited_elements,
+		map<AaRoot*, int>& longest_paths_from_root_map);
 };
 
 

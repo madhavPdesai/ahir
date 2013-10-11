@@ -1,0 +1,15 @@
+$pipeline $depth 24 $fullrate $module [fpmul] 
+$in (x : $float<8,23> y : $float<8,23> )
+$out (ret_val__ : $float<8,23>)
+$is 
+{
+    ret_val__ := (x * y)
+}
+
+$pipeline $depth 24 $fullrate $module [fpadd] 
+$in (x : $float<8,23> y : $float<8,23> )
+$out (ret_val__ : $float<8,23>)
+$is 
+{
+    ret_val__ := (x + y)
+}

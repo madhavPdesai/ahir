@@ -1,3 +1,6 @@
 $module [global_storage_initializer_] $in () $out () $is {
-$null
+$parallelblock [pb] { 
+$call dividerx_xoptx_xo_storage_initializer_ () () 
+$call gcdx_xoptx_xo_storage_initializer_ () () 
+}
 }

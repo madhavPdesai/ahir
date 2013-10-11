@@ -34,12 +34,14 @@ int main(int argc, char* argv[])
 
    	fprintf(stdout,"post-init: R1=%u, R2=%u, R3=%u\n", R1,R2,R3);
         int I;
+
 	//for(I=0; I < 32; I++)
 	//{
 		//uint32_t tmp = read_uint32("tmppipe");
    		//fprintf(stdout,"a5reg.%d = %u\n", I, tmp);
 		//
 	//}
+
 	R1 = read_uint32("outpipe");
 	R2 = read_uint32("outpipe");
 	R3 = read_uint32("outpipe");

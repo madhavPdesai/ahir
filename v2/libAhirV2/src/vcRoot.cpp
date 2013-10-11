@@ -17,6 +17,7 @@ string StripBracketingQuotes(string x)
 string To_VHDL(string x)
 {
   string ret_string;
+  bool replace_underscore = false;;
   for (int i = 0; i < x.size(); i++)
     {
       if(x[i] == '/' || x[i] == '$')
@@ -25,12 +26,32 @@ string To_VHDL(string x)
 	}
       else
 	{
-	  if((i > 0) && x[i-1] == '_' && x[i] == '_')
-	    ret_string += "x_x";
-	  else if(i == x.size()-1 && x[i] == '_')
-	    ret_string += "_x";
+	  if(x[i] == '_')
+	  {
+		if(replace_underscore)
+		{
+			ret_string += "x_x";
+			replace_underscore = false;
+		}
+		else
+		{ 
+			if(i == (x.size()-1))
+			{
+				ret_string += "_x";
+				replace_underscore = false;
+			}
+			else
+			{
+				ret_string += "_";
+				replace_underscore = true;
+			}
+		}
+          }
 	  else
-	    ret_string += x[i];
+	  {
+		replace_underscore = false;
+	    	ret_string += x[i];
+	  }
 	}
     }
   return(ret_string);
@@ -215,3 +236,78 @@ int min(vector<int>& vec)
 	return(ret_val);
 }
 
+string GenConcatenation(vector<string>& preds)
+{
+  string ret_string;
+  for(int u = 0; u < preds.size(); u++)
+    {
+      if(u > 0)
+	ret_string += " & ";
+      ret_string += preds[u];
+    }
+  return(ret_string);
+}
+
+
+string GenConstString(vector<int>& V)
+{
+  string ret_string = "(";
+  for(int u = 0; u < V.size(); u++)
+    {
+      if(u > 0)
+	ret_string += ",";
+      ret_string += IntToStr(u) + " => " + IntToStr(V[u]);
+    }
+  ret_string += ")";
+  return(ret_string);
+
+}
+
+void Print_VHDL_Join(string join_name,
+		     vector<string>& preds,
+		     vector<int>& pred_markings,
+		     vector<int>& pred_capacities,
+		     vector<int>& pred_delays,
+		     string joined_symbol,
+		     ostream& ofile)
+{
+  ofile << join_name << ": block -- { " << endl
+	<< "constant place_capacities: IntegerArray(0 to " << preds.size()-1 << ") := " << GenConstString(pred_capacities) << ";" << endl
+	<< "constant place_markings: IntegerArray(0 to " << preds.size()-1 << ")  := " << GenConstString(pred_markings) << ";" << endl
+	<< "constant place_delays: IntegerArray(0 to " << preds.size()-1 << ") := " << GenConstString(pred_delays) << ";" << endl
+	<< "constant joinName: string(1 to " << join_name.size() << ") := \"" << join_name << "\"; " << endl;
+  ofile << "signal preds: BooleanArray(1 to " << preds.size() << "); -- }" << endl;
+  ofile << "begin -- { " << endl;
+  if(preds.size() > 1)
+    ofile << "preds <= " << GenConcatenation(preds) << ";" << endl;
+  else
+    ofile << "preds(1) <= " << preds[0] << ";" << endl;
+  ofile << " gj : generic_join generic map(name => joinName, place_capacities => place_capacities, place_markings => place_markings, place_delays => place_delays) -- {"
+	<< endl
+	<< " port map(preds => preds, symbol_out => " << joined_symbol << ", clk => clk, reset => reset); --}}" << endl;
+  ofile << "end block;" << endl;
+}
+
+void Print_VHDL_Simple_Join(string join_name, 
+			    vector<string>& preds, 
+			    string joined_symbol,
+			    int delay,
+			    ostream& ofile)
+{
+
+  ofile << join_name << ": block -- { " << endl;
+  ofile << "signal preds: BooleanArray(0 to " << preds.size()-1 << ");" << endl;
+  ofile << "constant joinName: string(1 to " << join_name.size() << ") := \"" << join_name << "\"; -- }" << endl;
+
+  string bypass_str = ((delay > 0) ? "false" : "true");
+  ofile << "begin -- { " << endl;
+  if(preds.size() > 1)
+    ofile << "preds <= " << GenConcatenation(preds) << ";" << endl;
+  else
+    ofile << "preds(0) <= " << preds[0] << ";" << endl;
+  ofile << " jn : join generic map(name => joinName, place_capacity => 1, bypass => " << bypass_str << ") -- {"
+	<< endl
+	<< " port map(preds => preds, symbol_out => " << joined_symbol << ", clk => clk, reset => reset); --}}" << endl;
+  ofile << "end block;" << endl;
+
+}

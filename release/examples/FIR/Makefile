@@ -50,8 +50,8 @@ llvmbc2aa:  prog.opt.o
 	llvm2aa $(LLVM2AAOPTS)  prog.opt.o | vcFormat >  prog.aa
 
 # Aa to vC
-aalink: fir.Aa summer.Aa
-	AaLinkExtMem fir.Aa summer.Aa| vcFormat > prog.linked.aa
+aalink: $(SRC)/fir.Aa $(SRC)/summer.Aa
+	AaLinkExtMem $(SRC)/fir.Aa $(SRC)/summer.Aa| vcFormat > prog.linked.aa
 	AaOpt -B prog.linked.aa | vcFormat > prog.linked.opt.aa
 
 aa2vc: prog.linked.opt.aa

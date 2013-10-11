@@ -8,6 +8,7 @@
 #include <AaObject.h>
 #include <AaStatement.h>
 #include <AaModule.h>
+#include <Aa2VC.h>
 #include <AaProgram.h>
 
 /***************************************** MODULE   ****************************/
@@ -21,12 +22,16 @@ AaModule::AaModule(string fname): AaSeriesBlockStatement(NULL,fname)
   _inline_flag = false;
   _macro_flag = false;
   _pipeline_flag = false;
+  _pipeline_depth = 1;
+  _pipeline_buffering = 1;
+  _pipeline_full_rate_flag = false;
   
   _writes_to_shared_pipe = false;
   _reads_from_shared_pipe = false;
 
   _number_of_times_called = 0;
   this->Set_Delay(2);
+
 }
 
 void AaModule::Add_Argument(AaInterfaceObject* obj)
@@ -86,6 +91,13 @@ void AaModule::Print(ostream& ofile)
     ofile << "$inline ";
   if(this->Get_Macro_Flag())
     ofile << "$macro ";
+  if(this->Get_Pipeline_Flag())
+  {
+    ofile << "$pipeline $depth " << this->Get_Pipeline_Depth() << " ";
+    ofile << "$buffering " << this->Get_Pipeline_Depth() << " ";
+    if(this->Get_Pipeline_Full_Rate_Flag())
+	ofile << "$fullrate ";
+  }
 
   ofile << "$module [" << this->Get_Label() << "]" << endl;
   ofile << "\t $in (";
@@ -492,7 +504,12 @@ void AaModule::Write_VC_Model(bool opt_flag, ostream& ofile)
     ofile << "$foreign ";
 
   if(this->Get_Pipeline_Flag())
-    ofile << "$pipeline ";
+  {
+    ofile << "$pipeline $depth " << this->Get_Pipeline_Depth() << " ";
+    ofile << "$buffering " << this->Get_Pipeline_Depth() << " ";
+    if(this->Get_Pipeline_Full_Rate_Flag())
+	ofile << "$fullrate ";
+  }
 
   ofile << "$module [" << this->Get_Label() << "] {" << endl;
   if(_input_args.size() > 0)
@@ -561,6 +578,7 @@ void AaModule::Write_VC_Control_Path(bool opt_flag, ostream& ofile)
     {
       this->Write_VC_Control_Path_Optimized_Base(ofile);
     }
+
   ofile << "} // end control-path" << endl;
 }
 
@@ -717,4 +735,118 @@ void AaModule::Write_VHDL_C_Stub_Source(ostream& ofile)
      ofile << "return;" << endl;
    }
   ofile << "}" << endl;
+}
+
+void AaModule::Set_Statement_Sequence(AaStatementSequence* statement_sequence)
+{
+	bool err_flag = false;
+	// check that all statements in the sequence are atomic
+	// ie. either call statements or assignment statements.
+	for(int idx = 0, fidx = statement_sequence->Get_Statement_Count(); idx < fidx; idx++)
+	{
+		AaStatement* s = statement_sequence->Get_Statement(idx);
+		if(this->Is_Pipelined())
+		{
+			if(!(s->Is("AaAssignmentStatement") || s->Is("AaCallStatement") || s->Is("AaNullStatement")))
+			{
+				AaRoot::Error("pipelined module can contain only call/assignment/null statements.", s);
+				err_flag = true;
+			}
+			else
+				s->Set_Pipeline_Parent(this);
+		}
+	}	
+
+	if(err_flag)
+	{
+		AaRoot::Error("Due to errors, module will not be pipelined.", this);
+		this->Set_Pipeline_Flag(false);
+	}
+
+	this->_statement_sequence = statement_sequence;
+}
+
+
+void AaModule::Write_VC_Control_Path_Optimized_Base(ostream& ofile)
+{
+  if(!this->Is_Pipelined())
+    {
+      this->AaSeriesBlockStatement::Write_VC_Control_Path_Optimized_Base(ofile);
+    }
+  else
+    {
+      ofile << "// pipelined module" << endl;
+      string region_name = this->_statement_sequence->Get_VC_Name();
+
+      string exported_outputs;
+      string exported_inputs;
+      string trans_decls;
+      string place_decls;
+      string binding_string;
+
+	// TODO: collect group of inputs and outputs that are actually used
+	// 	 those that are unused will not need really need input buffers! 
+      for(int idx = 0,  fidx = this->Get_Number_Of_Input_Arguments(); 
+	  idx < fidx;
+	  idx++)
+	{
+	  AaInterfaceObject* inobj = this->Get_Input_Argument(idx);
+	  string tname = inobj->Get_VC_Name() + "_update_enable";
+	  exported_outputs += " " + tname + "_out";
+	  place_decls += "$P [" + tname + "] \n";
+	  trans_decls += "$T [" + tname + "] ";
+	  trans_decls += "\n";
+	  trans_decls += "$T [" + tname + "_out] \n";
+	  trans_decls += tname + " &-> (" + tname + "_out)\n";
+	  trans_decls += "$null &-> (" + tname + ")\n";
+	  binding_string += "$bind " + tname + " <= " + region_name + ":" + tname + "_out\n"; 
+	}
+
+      for(int idx = 0,  fidx = this->Get_Number_Of_Output_Arguments(); 
+	  idx < fidx;
+	  idx++)
+	{
+	  AaInterfaceObject* outobj = this->Get_Output_Argument(idx);
+	  string tname = outobj->Get_VC_Name() + "_update_enable";
+	  exported_inputs += " " + tname + "_in";
+	  place_decls += "$P [" + tname + "] \n";
+	  trans_decls += "$T [" + tname + "] \n";
+	  trans_decls += "$T [" + tname + "_in] \n";
+	  trans_decls += "$null &-> (" + tname + ")\n";
+	  trans_decls +=  "$null <-& (" + tname + "_in) \n";
+	  trans_decls += "$null &-> (" + tname + ")\n";
+	  trans_decls += tname + " o<-& (" + tname + "_in  1) \n";
+	  binding_string += "$bind " + tname + " => " + region_name + ":" + tname + "_in\n"; 
+	}
+
+      ofile << ":o:[" << region_name << "] {" << endl;
+      set<AaRoot*> visited_elements;
+      map<string, vector<AaExpression*> > load_store_ordering_map;
+      map<string, vector<AaExpression*> >  pipe_map;
+      AaRoot* tb = NULL;
+
+      // declare the linking (export) transitions.
+      ofile << trans_decls << endl;
+
+      // the main fork-pipeline.
+      this->AaBlockStatement::Write_VC_Control_Path_Optimized(true,
+							      this->_statement_sequence,
+							      visited_elements,
+							      load_store_ordering_map,
+							      pipe_map,
+							      tb,
+							      ofile);
+
+      // load-store and pipe dependencies..
+      this->Write_VC_Load_Store_Dependencies(true, load_store_ordering_map,ofile);
+      this->Write_VC_Pipe_Dependencies(true, pipe_map,ofile);
+      
+      ofile << "}" << endl;
+
+      ofile << "(" << exported_inputs << ")" << endl;
+      ofile << "(" << exported_outputs << ")" << endl;
+
+      ofile << place_decls << endl;
+      ofile << binding_string << endl;
+    }
 }

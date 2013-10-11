@@ -11,14 +11,14 @@ AaStatement::AaStatement(AaScope* p): AaScope(p)
   _index_in_sequence = -1;
   _guard_expression = NULL;
   _guard_complement = false;
-  _do_while_parent = NULL;
+  _pipeline_parent = NULL;
 }
 AaStatement::~AaStatement() {};
 
 bool AaStatement::Is_Part_Of_Extreme_Pipeline()
 {
-	AaDoWhileStatement* dws = this->Get_Do_While_Parent();
-	bool ret_val = ((dws != NULL)  && dws->Get_Full_Rate_Flag());
+	AaStatement* dws = this->Get_Pipeline_Parent();
+	bool ret_val = ((dws != NULL)  && dws->Get_Pipeline_Full_Rate_Flag());
 	return(ret_val);
 }
 string AaStatement::Tab()
@@ -357,6 +357,340 @@ string AaStatement::Get_VC_Guard_String()
 	}
 	return(ret_string);
 }
+void AaStatement::Print_Adjacency_Map( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map)
+{
+	for(map<AaRoot*,vector<pair<AaRoot*,int> > >::iterator miter = adjacency_map.begin(),
+			fmiter = adjacency_map.end(); miter != fmiter; miter++)
+	{
+		AaRoot* tmp  = (*miter).first;
+		if(tmp != NULL)
+			cerr << (*miter).first->To_String() << " (" << (*miter).first->Get_VC_Name() << "): " << endl;
+		else
+			cerr <<  "NULL : " << endl;
+
+		for(int idx = 0, fidx = (*miter).second.size(); idx < fidx; idx++)
+		{
+			cerr << "\t(" << (*miter).second[idx].first->Get_VC_Name() << "," << (*miter).second[idx].second << ")" 
+				<< endl;
+		}
+	}
+}
+
+// Build a weighted statement precedence graph as follows:
+//   1.  A vertex for each expression/statement.
+//   2.  If result of u is used in v  then introduce an edge u -> v.  
+//       The weight of the edge is the estimated delay incurred in executing
+//       statement v in hardware.
+//   3.  For each u, build a longest path tree to
+//       its neighbours.  
+//   4.  For each statement u, find the maximum slack Su on
+//       any path u->v relative to the longest path tree.
+//   5.  For each u, introduce Su delayed versions of u.
+//   6.  For each u: in every v such that u->v, if the slack on u->v
+//       is Suv, then replace the uses of u in v by 
+//       u-delayed-by-Suv.
+//
+void AaStatement::Equalize_Paths_For_Pipelining()
+{
+	// implicit variable references.. which are targets
+	// of statements and the expression that depend on them,
+	// with the estimated delay from the point of generation
+	// to the point of use.
+	map<AaRoot*, vector< pair<AaRoot*, int> > > adjacency_map;
+
+	// set of statements already visited.
+	set<AaRoot*> visited_elements;
+
+	// steps 1,2.
+	//
+	this->Update_Adjacency_Map(adjacency_map, visited_elements);
+
+	// OK. At this point, you have all the adjacencies.  Now, 
+	// AaRoot::Info("Adjacency map in do-while loop body " + this->Get_VC_Name());
+	this->Print_Adjacency_Map(adjacency_map);
+
+	// find the longest paths from the NULL node to all other
+	// vertices.
+	map<AaRoot*, int> longest_paths_from_root_map;
+
+
+	// find longest paths to each element from NULL.	
+	this->Find_Longest_Paths(adjacency_map,visited_elements, longest_paths_from_root_map);
+
+	// Now, for each expression in visited-elements..  introduce delayed
+	// versions of them as needed.
+	this->Add_Delayed_Versions(adjacency_map, visited_elements, longest_paths_from_root_map);
+
+}
+
+
+// find the longest paths.  First do a topological sort
+// and then a straight update.
+void AaStatement::Find_Longest_Paths(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+		set<AaRoot*>& visited_elements,
+		map<AaRoot*, int>& longest_paths_from_root_map)
+{	
+
+	// initialize
+	for(set<AaRoot*>::iterator iter = visited_elements.begin(), fiter = visited_elements.end();
+			iter != fiter; iter++)
+	{
+		longest_paths_from_root_map[*iter] = 0;	
+	}
+
+	// reverse lookup map.
+	map<AaRoot*, vector<pair<AaRoot*,int> > > predecessor_map;
+	AaGraphBase g;
+
+
+	// first build a Boost graph.
+	string nname = "null";
+	g.Add_Vertex(NULL);
+
+	for(map<AaRoot*,int>::iterator miter = longest_paths_from_root_map.begin(),
+			fmiter = longest_paths_from_root_map.end();
+			miter != fmiter;
+			miter++)
+	{
+		AaRoot* it = (*miter).first;
+		g.Add_Vertex(it);
+	}
+
+	for(map<AaRoot*,vector< pair<AaRoot*,int> > >::iterator iter = adjacency_map.begin(), fiter = adjacency_map.end();
+			iter != fiter;
+			iter++)
+	{
+		AaRoot* u = (*iter).first;
+		for(int idx = 0, fidx = (*iter).second.size(); idx < fidx; idx++)
+		{
+			AaRoot* v = (*iter).second[idx].first;
+			int length = (*iter).second[idx].second;
+			g.Add_Edge(u,v);
+
+			predecessor_map[v].push_back(pair<AaRoot*,int>(u,length));
+		}
+	}
+
+	// topological sort.
+	vector<AaRoot*> precedence_order;
+	g.Topological_Sort(precedence_order);
+
+	for(int idx = precedence_order.size()-1, fidx = 0; idx >= fidx; idx--)
+	{
+
+
+		AaRoot* v = precedence_order[idx];
+		int lp = 0;
+
+		if(v != NULL)
+		{
+			int curr_dist = longest_paths_from_root_map[v];
+			int new_dist =0;
+			for(int jdx = 0, fjdx = predecessor_map[v].size(); jdx < fjdx; jdx++)
+			{
+				AaRoot* u = predecessor_map[v][jdx].first;
+
+				int dist_to_u = 0;
+				if(u != NULL)
+				{
+					dist_to_u = longest_paths_from_root_map[u];
+				}
+				int length = predecessor_map[v][jdx].second;
+				int nn = length + dist_to_u;
+				if(nn > new_dist)
+				{	
+					new_dist = nn;
+				}
+			}
+
+			if(new_dist > curr_dist)
+			{
+				lp = new_dist;
+				longest_paths_from_root_map[v] = new_dist;
+			}
+			else
+				lp  = curr_dist;
+			AaRoot::DebugInfo("longest path to " + v->Get_VC_Name() + " is " + IntToStr(lp));
+		}
+		else
+			 AaRoot::DebugInfo("longest path to NULL is 0");
+	}
+}
+
+void AaStatement::Add_Delayed_Versions(AaRoot* curr, 
+		map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+		map<AaRoot*, int>& longest_paths_from_root_map,
+		AaStatementSequence* stmt_sequence)
+{
+	AaExpression* curr_expr = NULL;
+	if(curr->Is_Expression())
+	{
+		curr_expr = (AaExpression*) curr;
+	}
+	else if(curr->Is_Statement())
+	{
+		return;
+	}
+
+	// continue from here only if it is an implicit variable
+	// reference.
+	if(!curr_expr->Is_Implicit_Variable_Reference())
+		return;
+
+	if(curr_expr->Get_Guarded_Statement() != NULL)
+	{
+		AaStatement* gstmt = curr_expr->Get_Guarded_Statement();
+		int curr_slack = longest_paths_from_root_map[gstmt] - longest_paths_from_root_map[curr];
+		if (curr_slack > 0)
+		{
+			AaRoot* root_obj = curr_expr->Get_Root_Object();
+			string root_name = curr_expr->Get_Name();
+			string delayed_name =  root_name + "_" + Int64ToStr(curr_expr->Get_Index()) + "_delayed_" + IntToStr(curr_slack);
+
+			AaSimpleObjectReference* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
+			new_target->Set_Type(curr_expr->Get_Type());
+
+			AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), root_name);
+			new_src->Set_Type(curr_expr->Get_Type());
+
+			AaAssignmentStatement* new_stmt = new AaAssignmentStatement(this->Get_Scope(),
+					new_target,
+					new_src,
+					0);
+			new_stmt->Set_Buffering(curr_slack);
+			new_stmt->Map_Source_References();
+
+			AaSimpleObjectReference* new_guard_expr = new AaSimpleObjectReference(this->Get_Scope(), new_stmt);
+			gstmt->Set_Guard_Expression(new_guard_expr);			
+
+			// lost track of curr_expr, but it doesnt matter..
+			vector<AaStatement*> dv;
+			dv.push_back((AaStatement*)new_stmt);
+			stmt_sequence->Insert_Statements_Before(gstmt, dv);
+		}
+		return;
+	}
+
+	map<AaRoot*,int> slack_map;
+	set<int> slack_set;
+	map<int, AaAssignmentStatement*> slack_to_stmt_map;
+
+	// Look at all the outarcs of curr.  If there is slack present on the outarc,
+	// calculate the slack for that arc.  Keep track of the maximum, and
+	// add those many delayed versions of curr (you will need to add
+	// assignment statements for them).  Then for each outarc, reconnect
+	// from curr to the appropriate delayed version!
+	int max_slack = 0;
+	for(int idx = 0, fidx = adjacency_map[curr].size(); idx < fidx; idx++)
+	{
+		AaRoot* nbr = adjacency_map[curr][idx].first;
+
+		// check for slack only on neighbours which are
+		// expressions.
+		if(nbr->Is_Statement())
+			continue;
+
+		int dist =  adjacency_map[curr][idx].second;
+		int slack = longest_paths_from_root_map[nbr] - (dist + longest_paths_from_root_map[curr]);
+
+
+		if(slack_map.find(nbr) == slack_map.end())
+			slack_map[nbr] = slack;
+		else if(slack_map[nbr] < slack)
+			slack_map[nbr] = slack;
+
+		if(slack > max_slack)
+			max_slack = slack;
+
+		if(slack > 0)
+			slack_set.insert(slack);
+	}
+
+
+	// if the maximum slack is 0, then do nothing..
+	if(max_slack == 0)
+		return;
+
+	AaStatement* stmt = curr_expr->Get_Associated_Statement();
+	AaAssignmentStatement* root_stmt = NULL;
+
+	if(stmt == NULL)
+	{
+		// This can happen if there is a reference to
+		// an interface object.
+		return;
+	}
+
+	vector<AaStatement*> delayed_versions;
+
+
+
+	// if expression is target, then introduce delayed 
+	// statements after the stmt in which it occurs.
+	string root_name = curr_expr->Get_Name();
+	string delayed_name;
+	for(set<int>::iterator siiter = slack_set.begin(), sfiter = slack_set.end();
+			siiter != sfiter; siiter++)
+	{
+		int curr_slack = *siiter;
+		delayed_name =  root_name + "_" + Int64ToStr(curr_expr->Get_Index()) + "_delayed_" + IntToStr(curr_slack);
+
+		AaSimpleObjectReference* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
+		new_target->Set_Type(curr_expr->Get_Type());
+
+		AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), root_name);
+		new_src->Set_Type(curr_expr->Get_Type());
+
+		AaAssignmentStatement* new_stmt = new AaAssignmentStatement(this->Get_Scope(),
+				new_target,
+				new_src,
+				0);
+		new_stmt->Set_Buffering(curr_slack);
+
+		new_stmt->Map_Source_References();
+
+		delayed_versions.push_back(new_stmt);
+		slack_to_stmt_map[curr_slack] = new_stmt;
+	}
+
+	if(curr_expr->Get_Is_Target())
+	{
+		stmt_sequence->Insert_Statements_After(stmt,delayed_versions);
+	}
+	else
+	{
+		stmt_sequence->Insert_Statements_Before(stmt,delayed_versions);
+	}
+
+	for(map<AaRoot*,int>::iterator iter = slack_map.begin(), fiter = slack_map.end(); iter != fiter; iter++)
+	{
+		AaRoot* nbr = (*iter).first;
+		int slack   = (*iter).second;
+
+		assert(slack <= max_slack);
+
+		// Replace uses of curr_expr in nbr_expr by 
+		// a simple object reference to the appropriately
+		// delayed version.
+		//
+		if(slack > 0)
+		{
+			assert(nbr->Is_Expression());
+			AaExpression* nbr_expr = (AaExpression*) nbr;
+
+			AaAssignmentStatement* rs = (AaAssignmentStatement*) slack_to_stmt_map[slack];
+			nbr_expr->Replace_Uses_By(curr_expr, rs);
+		}
+		else if(!curr_expr->Get_Is_Target())
+		{
+			assert(nbr->Is_Expression());
+			AaExpression* nbr_expr = (AaExpression*) nbr;
+
+			nbr_expr->Replace_Uses_By(curr_expr, root_stmt);
+		}
+	}
+}
+
 //---------------------------------------------------------------------
 // AaStatementSequence
 //---------------------------------------------------------------------
@@ -370,7 +704,7 @@ AaStatementSequence::AaStatementSequence(AaScope* scope, vector<AaStatement*>& s
       this->_statement_sequence.push_back(stmt);
     }
  
-    _do_while_parent = NULL;
+    _pipeline_parent = NULL;
 }
 AaStatementSequence::~AaStatementSequence() {}
   
@@ -667,11 +1001,11 @@ AaAssignmentStatement::AaAssignmentStatement(AaScope* parent_tpr, AaExpression* 
 AaAssignmentStatement::~AaAssignmentStatement() {};
 
 
-void AaAssignmentStatement::Set_Do_While_Parent(AaDoWhileStatement* dws)
+void AaAssignmentStatement::Set_Pipeline_Parent(AaStatement* dws)
 {
-	_do_while_parent = dws;
-	this->_source->Set_Do_While_Parent(dws);
-	this->_target->Set_Do_While_Parent(dws);
+	_pipeline_parent = dws;
+	this->_source->Set_Pipeline_Parent(dws);
+	this->_target->Set_Pipeline_Parent(dws);
 }
 
 string AaAssignmentStatement::Debug_Info()
@@ -986,8 +1320,8 @@ void AaAssignmentStatement::Write_VC_Datapath_Instances(ostream& ofile)
 				      ofile);
 
 
-  	      AaDoWhileStatement* dws = this->Get_Do_While_Parent();
-	      bool extreme_pipelining_flag = ((dws != NULL)  && (dws->Get_Full_Rate_Flag()));
+  	      AaStatement* dws = this->Get_Pipeline_Parent();
+	      bool extreme_pipelining_flag = ((dws != NULL)  && (dws->Get_Pipeline_Full_Rate_Flag()));
 
 	      int bufval = this->Get_Buffering();
 	      if(bufval > 1)
@@ -1240,17 +1574,17 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
 }
 AaCallStatement::~AaCallStatement() {};
   
-void AaCallStatement::Set_Do_While_Parent(AaDoWhileStatement* dws)
+void AaCallStatement::Set_Pipeline_Parent(AaStatement* dws)
 {
-  _do_while_parent = dws;
+  _pipeline_parent = dws;
   for(unsigned int i = 0; i < _input_args.size(); i++)
     {
-      _input_args[i]->Set_Do_While_Parent(dws);
+      _input_args[i]->Set_Pipeline_Parent(dws);
     }
 
   for(unsigned int i = 0; i < _output_args.size(); i++)
     {
-      _output_args[i]->Set_Do_While_Parent(dws);
+      _output_args[i]->Set_Pipeline_Parent(dws);
     }
 }
 
@@ -1941,8 +2275,8 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			 ofile);
 
   // extreme pipelining.
-  AaDoWhileStatement* dws = this->Get_Do_While_Parent();
-  if((dws != NULL)  && (dws->Get_Full_Rate_Flag()))
+  AaStatement* dws = this->Get_Pipeline_Parent();
+  if((dws != NULL)  && (dws->Get_Pipeline_Full_Rate_Flag()))
   {
 	for(int i = 0; i < inargs.size(); i++)
 	{
@@ -3286,12 +3620,12 @@ void AaPhiStatement::Map_Source_References()
     }
 }
   
-void AaPhiStatement::Set_Do_While_Parent(AaDoWhileStatement* dws)
+void AaPhiStatement::Set_Pipeline_Parent(AaStatement* dws)
 {
-	this->_target->Set_Do_While_Parent(dws);
+	this->_target->Set_Pipeline_Parent(dws);
       	for(int idx = 0; idx < this->_source_pairs.size(); idx++)
 	{
-	  this->_source_pairs[idx].second->Set_Do_While_Parent(dws);
+	  this->_source_pairs[idx].second->Set_Pipeline_Parent(dws);
 	}
 }
 
@@ -3407,8 +3741,8 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
   // in the extreme pipelining case, output buffering
   // will be kept to 2.
-  AaDoWhileStatement* dws = this->Get_Do_While_Parent();
-  if((dws != NULL)  && (dws->Get_Full_Rate_Flag()))
+  AaStatement* dws = this->Get_Pipeline_Parent();
+  if((dws != NULL)  && (dws->Get_Pipeline_Full_Rate_Flag()))
   {
 	ofile << "$buffering  $out " << dpe_name << " "
 		<< tgt_name << " 2" << endl;
@@ -4466,8 +4800,9 @@ void AaPlaceStatement::Write_C_Function_Body(ofstream& ofile)
 //---------------------------------------------------------------------
 AaDoWhileStatement::AaDoWhileStatement(AaBranchBlockStatement* scope):AaStatement(scope) 
 {
-  this->_pipelining_depth = 1;
-  this->_buffering_depth = 1;
+  this->_pipeline_depth = 1;
+  this->_pipeline_buffering = 1;
+  this->_pipeline_full_rate_flag = false;
   this->_test_expression = NULL;
   this->_merge_statement = NULL;
   this->_loop_body_sequence = NULL;
@@ -4477,7 +4812,7 @@ AaDoWhileStatement::~AaDoWhileStatement() {}
 void AaDoWhileStatement::Set_Loop_Body_Sequence(AaStatementSequence* lbs) 
 { 
 	this->_loop_body_sequence = lbs; 
-	lbs->Set_Do_While_Parent(this);
+	lbs->Set_Pipeline_Parent(this);
 }
 
 void AaDoWhileStatement::Coalesce_Storage()
@@ -4501,9 +4836,9 @@ void AaDoWhileStatement::Print(ostream& ofile)
   }
 
   ofile << this->Tab();
-  ofile << "$dopipeline $depth " << this->Get_Pipelining_Depth();
-  ofile << " $buffering " << this->Get_Buffering_Depth() <<  endl;
-  if(this->Get_Full_Rate_Flag())
+  ofile << "$dopipeline $depth " << this->Get_Pipeline_Depth();
+  ofile << " $buffering " << this->Get_Pipeline_Buffering() <<  endl;
+  if(this->Get_Pipeline_Full_Rate_Flag())
   	ofile << " $fullrate " << endl;
 
   this->_merge_statement->Print(ofile);
@@ -4540,7 +4875,6 @@ void AaDoWhileStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
 
 void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofile)
 {
-
   // in the optimized case, there are two regions in
   // the CP for the dowhile.  An outer loop region
   // and an inner region for the loop-body.
@@ -4562,8 +4896,8 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
   string vc_loop_body_id = this->Get_VC_Name() + "_loop_body";
 
   // start the outer region
-  ofile << "<o> [" << this->Get_VC_Name() << "]  $depth " << this->Get_Pipelining_Depth() 
-	<< " $buffering " << this->Get_Buffering_Depth() << " {" << endl;
+  ofile << "<o> [" << this->Get_VC_Name() << "]  $depth " << this->Get_Pipeline_Depth() 
+	<< " $buffering " << this->Get_Pipeline_Buffering() << " {" << endl;
 
   // entry and exit places.
   string entry_place_name = this->Get_VC_Name() + "__entry__";
@@ -4601,20 +4935,82 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 
 
   AaBlockStatement* pstmt = (AaBlockStatement*) pscope;
-  // Here's where the inner body gets written.
-  // This is a hack which reuses as much code as possible.
-  // perhaps it can be cleaned up later (which means never :-))
+
+  // Now the inner body.
+  ofile << "$pipeline [" << vc_loop_body_id << "] {" << endl;
+
+  // The loop body will be triggered from one of two points
+  // merge these to the entry transition.
+  ofile << "// Pipelined!" << endl;
+
+  __T("back_edge_to_loop_body");
+  __T("first_time_through_loop_body");
+  __T("loop_body_start");
+
+  ofile << "$transitionmerge [entry_tmerge] (back_edge_to_loop_body first_time_through_loop_body) (loop_body_start)" << endl;
+  __J("$entry","loop_body_start");
+
+  set<AaRoot*> visited_elements;
+  map<string, vector<AaExpression*> > load_store_ordering_map;
+  map<string, vector<AaExpression*> >  pipe_map;
+
+  // write the PHI statements.
+  for(unsigned int idx = 0; idx < phi_stmts.size(); idx++)
+    {
+      AaStatement* curr_phi = phi_stmts[idx];
+      curr_phi->Write_VC_Control_Path_Optimized(true,
+						visited_elements,
+						load_store_ordering_map,
+						pipe_map,
+						NULL,
+						ofile);
+    }
+
+
+  // write the Loop-body-sequence
+  AaRoot* trailing_barrier;
   pstmt->Write_VC_Control_Path_Optimized(true, 
-					 this->_test_expression,
 					 _loop_body_sequence,
-					 &phi_stmts,
-					 vc_loop_body_id,
+					 visited_elements,
+					 load_store_ordering_map,
+					 pipe_map,
+					 trailing_barrier,
 					 ofile); 
+
+  // Condition handling.
+  __T("condition_evaluated");
+  AaExpression* condition_expr = this->_test_expression;
+  assert(condition_expr != NULL);
+  condition_expr->Write_VC_Control_Path_Optimized(true,
+						  visited_elements,
+						  load_store_ordering_map,
+						  pipe_map,
+						  trailing_barrier,
+						  ofile);
+  
+  if(condition_expr->Is_Constant())
+    {
+      __F("loop_body_start", "condition_evaluated");
+    }
+  else
+    {
+      __F(__UCT(condition_expr), "condition_evaluated");
+    }
+  
+  __F("condition_evaluated", "$null");
+
+  // dependencies.
+  pstmt->Write_VC_Load_Store_Dependencies(true, load_store_ordering_map,ofile);
+  pstmt->Write_VC_Pipe_Dependencies(true, pipe_map,ofile);
+
+  ofile << "}"; // end of loop-body.
+  //exports
+  ofile << "( first_time_through_loop_body  back_edge_to_loop_body) " << endl;
+  ofile << "( condition_evaluated )" << endl;
 
   //    following the loop body, the branch options (exit/taken)
   ofile << ";; [loop_exit] { $T [ack] } " << endl;
   ofile << ";; [loop_taken] { $T [ack] } " << endl;
-
 
   //    merges.
   ofile << entry_place_name << " <-| ($entry)" << endl;
@@ -4626,7 +5022,7 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
   ofile << exit_place_name << " |-> ($exit)" << endl;
 
   //    the binding of the condition_done to the test expression completion.
-  ofile << "$bind condition_done <= " << vc_loop_body_id << " : condition_evaluated"; 
+  ofile << "$bind condition_done <= " << vc_loop_body_id << " : condition_evaluated" << endl; 
 
   // the binding of the loop-entry contol places to the loop body.
   ofile << "$bind " << entry_place_name << "  => " << vc_loop_body_id << " : first_time_through_loop_body " << endl; 
@@ -4772,34 +5168,8 @@ void AaDoWhileStatement::Get_Target_Places(set<AaPlaceStatement*>& target_places
 }
 
 
-// Build a weighted statement precedence graph as follows:
-//   1.  A vertex for each expression/statement.
-//   2.  If result of u is used in v  then introduce an edge u -> v.  
-//       The weight of the edge is the estimated delay incurred in executing
-//       statement v in hardware.
-//   3.  For each u, build a longest path tree to
-//       its neighbours.  
-//   4.  For each statement u, find the maximum slack Su on
-//       any path u->v relative to the longest path tree.
-//   5.  For each u, introduce Su delayed versions of u.
-//   6.  For each u: in every v such that u->v, if the slack on u->v
-//       is Suv, then replace the uses of u in v by 
-//       u-delayed-by-Suv.
-//
-void AaDoWhileStatement::Equalize_Paths_For_Pipelining()
+void AaDoWhileStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 {
-	// implicit variable references.. which are targets
-	// of statements and the expression that depend on them,
-	// with the estimated delay from the point of generation
-	// to the point of use.
-	map<AaRoot*, vector< pair<AaRoot*, int> > > adjacency_map;
-
-	// set of statements already visited.
-	set<AaRoot*> visited_elements;
-
-	// steps 1,2.
-	//
-	
 	// first put the phi-statements in the visited_statements set..
 	//
   	for(int idx=0, fidx = this->_merge_statement->Get_Statement_Count(); idx < fidx; idx++)
@@ -4814,303 +5184,19 @@ void AaDoWhileStatement::Equalize_Paths_For_Pipelining()
       		AaStatement* curr_stmt = this->_loop_body_sequence->Get_Statement(idx);
 		curr_stmt->Update_Adjacency_Map(adjacency_map, visited_elements);
 	}
-
-
-	// OK. At this point, you have all the adjacencies.  Now, 
-	// AaRoot::Info("Adjacency map in do-while loop body " + this->Get_VC_Name());
-	for(map<AaRoot*,vector<pair<AaRoot*,int> > >::iterator miter = adjacency_map.begin(),
-			fmiter = adjacency_map.end(); miter != fmiter; miter++)
-	{
-		AaRoot* tmp  = (*miter).first;
-		if(tmp != NULL)
-			cerr << (*miter).first->To_String() << " (" << (*miter).first->Get_VC_Name() << "): " << endl;
-		else
-			cerr <<  "NULL : " << endl;
-
-		for(int idx = 0, fidx = (*miter).second.size(); idx < fidx; idx++)
-		{
-			cerr << "\t(" << (*miter).second[idx].first->Get_VC_Name() << "," << (*miter).second[idx].second << ")" 
-			     << endl;
-		}
-	}
-
-	// find the longest paths from the NULL node to all other
-	// vertices.
-	map<AaRoot*, int> longest_paths_from_root_map;
-
-	// find longest paths to each element from NULL.	
-  	for(set<AaRoot*>::iterator iter = visited_elements.begin(), fiter = visited_elements.end();
-		iter != fiter; iter++)
-	{
-		longest_paths_from_root_map[*iter] = 0;	
-        }
-	this->Find_Longest_Paths(adjacency_map,longest_paths_from_root_map);
-
-	// Now, for each expression in visited-elements..  introduce delayed
-	// versions of them as needed.
-  	for(set<AaRoot*>::iterator iter = visited_elements.begin(), fiter = visited_elements.end();
-		iter != fiter; iter++)
-	{
-      		AaRoot* curr = *iter;
-		this->Add_Delayed_Versions(curr, adjacency_map, longest_paths_from_root_map);
-	}
 }
 
-// find the longest paths.  First do a topological sort
-// and then a straight update.
-void AaDoWhileStatement::Find_Longest_Paths(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
-				map<AaRoot*, int>& longest_paths_from_root_map)
-{	
 
-	// reverse lookup map.
-	map<AaRoot*, vector<pair<AaRoot*,int> > > predecessor_map;
-	AaGraphBase g;
-
-
-	// first build a Boost graph.
-	string nname = "null";
-	g.Add_Vertex(NULL);
-
-	for(map<AaRoot*,int>::iterator miter = longest_paths_from_root_map.begin(),
-		fmiter = longest_paths_from_root_map.end();
-		miter != fmiter;
-		miter++)
-	{
-		AaRoot* it = (*miter).first;
-		g.Add_Vertex(it);
-	}
-
-	for(map<AaRoot*,vector< pair<AaRoot*,int> > >::iterator iter = adjacency_map.begin(), fiter = adjacency_map.end();
-		iter != fiter;
-		iter++)
-	{
-		AaRoot* u = (*iter).first;
-		for(int idx = 0, fidx = (*iter).second.size(); idx < fidx; idx++)
-		{
-			AaRoot* v = (*iter).second[idx].first;
-			int length = (*iter).second[idx].second;
-			g.Add_Edge(u,v);
-
-			predecessor_map[v].push_back(pair<AaRoot*,int>(u,length));
-		}
-	}
-
-	// topological sort.
-	vector<AaRoot*> precedence_order;
-	g.Topological_Sort(precedence_order);
-
-	for(int idx = precedence_order.size()-1, fidx = 0; idx >= fidx; idx--)
-	{
-		
-				
-		AaRoot* v = precedence_order[idx];
-		int lp = 0;
-
-		if(v != NULL)
-		{
-			int curr_dist = longest_paths_from_root_map[v];
-			int new_dist =0;
-			for(int jdx = 0, fjdx = predecessor_map[v].size(); jdx < fjdx; jdx++)
-			{
-				AaRoot* u = predecessor_map[v][jdx].first;
-
-				int dist_to_u = 0;
-				if(u != NULL)
-				{
-					dist_to_u = longest_paths_from_root_map[u];
-				}
-				int length = predecessor_map[v][jdx].second;
-				int nn = length + dist_to_u;
-				if(nn > new_dist)
-				{	
-					new_dist = nn;
-				}
-			}
-
-			if(new_dist > curr_dist)
-			{
-				lp = new_dist;
-				longest_paths_from_root_map[v] = new_dist;
-			}
-			else
-				lp  = curr_dist;
-			AaRoot::DebugInfo("longest path to " + v->Get_VC_Name() + " is " + IntToStr(lp));
-		}
-		else
-			 AaRoot::DebugInfo("longest path to NULL is 0");
-	}
-}
-
-void AaDoWhileStatement::Add_Delayed_Versions(AaRoot* curr, 
-		map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+void AaDoWhileStatement::Add_Delayed_Versions( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+		set<AaRoot*>& visited_elements,
 		map<AaRoot*, int>& longest_paths_from_root_map)
 {
-	AaExpression* curr_expr = NULL;
-	if(curr->Is_Expression())
+
+	for(set<AaRoot*>::iterator iter = visited_elements.begin(), fiter = visited_elements.end();
+			iter != fiter; iter++)
 	{
-		curr_expr = (AaExpression*) curr;
-	}
-	else if(curr->Is_Statement())
-	{
-		return;
-	}
-
-	// continue from here only if it is an implicit variable
-	// reference.
-	if(!curr_expr->Is_Implicit_Variable_Reference())
-		return;
-
-	if(curr_expr->Get_Guarded_Statement() != NULL)
-	{
-		AaStatement* gstmt = curr_expr->Get_Guarded_Statement();
-		int curr_slack = longest_paths_from_root_map[gstmt] - longest_paths_from_root_map[curr];
-		if (curr_slack > 0)
-		{
-			AaRoot* root_obj = curr_expr->Get_Root_Object();
-			string root_name = curr_expr->Get_Name();
-			string delayed_name =  root_name + "_" + Int64ToStr(curr_expr->Get_Index()) + "_delayed_" + IntToStr(curr_slack);
-
-			AaSimpleObjectReference* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
-			new_target->Set_Type(curr_expr->Get_Type());
-
-			AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), root_name);
-			new_src->Set_Type(curr_expr->Get_Type());
-
-			AaAssignmentStatement* new_stmt = new AaAssignmentStatement(this->Get_Scope(),
-					new_target,
-					new_src,
-					0);
-			new_stmt->Set_Buffering(curr_slack);
-			new_stmt->Map_Source_References();
-
-			AaSimpleObjectReference* new_guard_expr = new AaSimpleObjectReference(this->Get_Scope(), new_stmt);
-			gstmt->Set_Guard_Expression(new_guard_expr);			
-
-			// lost track of curr_expr, but it doesnt matter..
-			vector<AaStatement*> dv;
-			dv.push_back((AaStatement*)new_stmt);
-			this->_loop_body_sequence->Insert_Statements_Before(gstmt, dv);
-		}
-		return;
-	}
-
-	map<AaRoot*,int> slack_map;
-	set<int> slack_set;
-	map<int, AaAssignmentStatement*> slack_to_stmt_map;
-
-	// Look at all the outarcs of curr.  If there is slack present on the outarc,
-	// calculate the slack for that arc.  Keep track of the maximum, and
-	// add those many delayed versions of curr (you will need to add
-	// assignment statements for them).  Then for each outarc, reconnect
-	// from curr to the appropriate delayed version!
-	int max_slack = 0;
-	for(int idx = 0, fidx = adjacency_map[curr].size(); idx < fidx; idx++)
-	{
-		AaRoot* nbr = adjacency_map[curr][idx].first;
-
-		// check for slack only on neighbours which are
-		// expressions.
-		if(nbr->Is_Statement())
-			continue;
-
-		int dist =  adjacency_map[curr][idx].second;
-		int slack = longest_paths_from_root_map[nbr] - (dist + longest_paths_from_root_map[curr]);
-
-
-		if(slack_map.find(nbr) == slack_map.end())
-			slack_map[nbr] = slack;
-		else if(slack_map[nbr] < slack)
-			slack_map[nbr] = slack;
-
-		if(slack > max_slack)
-			max_slack = slack;
-
-		if(slack > 0)
-			slack_set.insert(slack);
-	}
-
-
-	// if the maximum slack is 0, then do nothing..
-	if(max_slack == 0)
-		return;
-
-	AaStatement* stmt = curr_expr->Get_Associated_Statement();
-	AaAssignmentStatement* root_stmt = NULL;
-
-	if(stmt == NULL)
-	{
-		// This can happen if there is a reference to
-		// an interface object.
-		return;
-	}
-
-	vector<AaStatement*> delayed_versions;
-
-
-
-	// if expression is target, then introduce delayed 
-	// statements after the stmt in which it occurs.
-	string root_name = curr_expr->Get_Name();
-	string delayed_name;
-	for(set<int>::iterator siiter = slack_set.begin(), sfiter = slack_set.end();
-			siiter != sfiter; siiter++)
-	{
-		int curr_slack = *siiter;
-		delayed_name =  root_name + "_" + Int64ToStr(curr_expr->Get_Index()) + "_delayed_" + IntToStr(curr_slack);
-
-		AaSimpleObjectReference* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
-		new_target->Set_Type(curr_expr->Get_Type());
-
-		AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), root_name);
-		new_src->Set_Type(curr_expr->Get_Type());
-
-		AaAssignmentStatement* new_stmt = new AaAssignmentStatement(this->Get_Scope(),
-				new_target,
-				new_src,
-				0);
-		new_stmt->Set_Buffering(curr_slack);
-
-		new_stmt->Map_Source_References();
-
-		delayed_versions.push_back(new_stmt);
-		slack_to_stmt_map[curr_slack] = new_stmt;
-	}
-
-	if(curr_expr->Get_Is_Target())
-	{
-		this->_loop_body_sequence->Insert_Statements_After(stmt,delayed_versions);
-	}
-	else
-	{
-		this->_loop_body_sequence->Insert_Statements_Before(stmt,delayed_versions);
-	}
-
-	for(map<AaRoot*,int>::iterator iter = slack_map.begin(), fiter = slack_map.end(); iter != fiter; iter++)
-	{
-		AaRoot* nbr = (*iter).first;
-		int slack   = (*iter).second;
-
-		assert(slack <= max_slack);
-
-		// Replace uses of curr_expr in nbr_expr by 
-		// a simple object reference to the appropriately
-		// delayed version.
-		//
-		if(slack > 0)
-		{
-			assert(nbr->Is_Expression());
-			AaExpression* nbr_expr = (AaExpression*) nbr;
-
-			AaAssignmentStatement* rs = (AaAssignmentStatement*) slack_to_stmt_map[slack];
-			nbr_expr->Replace_Uses_By(curr_expr, rs);
-		}
-		else if(!curr_expr->Get_Is_Target())
-		{
-			assert(nbr->Is_Expression());
-			AaExpression* nbr_expr = (AaExpression*) nbr;
-
-			nbr_expr->Replace_Uses_By(curr_expr, root_stmt);
-		}
+		AaRoot* curr = *iter;
+		this->AaStatement::Add_Delayed_Versions(curr, adjacency_map, longest_paths_from_root_map, this->_loop_body_sequence);
 	}
 }
 

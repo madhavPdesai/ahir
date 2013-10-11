@@ -467,7 +467,17 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(AaStatement* stmt, ostrea
   tv.push_back(stmt);
   AaStatementSequence* ss = new AaStatementSequence(this,tv);
   string region_name = ss->Get_VC_Name();
-  this->AaBlockStatement::Write_VC_Control_Path_Optimized(false,NULL,ss,NULL,region_name,ofile);
+  set<AaRoot*> visited_elements;
+  map<string, vector<AaExpression*> > load_store_ordering_map;
+  map<string, vector<AaExpression*> >  pipe_map;
+  AaRoot* tb = NULL;
+  ofile << "::[" << region_name << "] {" << endl;
+
+  this->AaBlockStatement::Write_VC_Control_Path_Optimized(false,ss,visited_elements, load_store_ordering_map, pipe_map, tb, ofile);
+  this->Write_VC_Load_Store_Dependencies(false, load_store_ordering_map,ofile);
+  this->Write_VC_Pipe_Dependencies(false, pipe_map,ofile);
+
+  ofile << "}" << endl;
   delete ss;
 }
 
@@ -475,157 +485,69 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(AaStatement* stmt, ostrea
 // sseq consists of linear sequence of simple statements..
 // no control-flow, no block statements.
 void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
-						       AaExpression* condition_expr,
 						       AaStatementSequence* sseq,
-						       vector<AaStatement*>* phi_stmts,
-						       string& region_name,
+						       set<AaRoot*>& visited_elements,
+						       map<string,vector<AaExpression*> >& load_store_ordering_map,
+						       map<string,vector<AaExpression*> >& pipe_map,
+						       AaRoot*& trailing_barrier,
 						       ostream& ofile)
 {
   if(sseq->Get_Statement_Count() == 1 && sseq->Get_Statement(0)->Is_Block_Statement())
     sseq->Get_Statement(0)->Write_VC_Control_Path_Optimized(ofile);
   else
     {
-      string block_type;
-      string block_name;
-
-      if(pipeline_flag)
-	{
-	  block_type = "$pipeline";
-	}
-      else
-	{
-	  block_type = "::";
-	}
-
-      ofile << block_type <<  "[" << region_name << "] {" << endl;
-
-      if(pipeline_flag)
-	{
-	  // The loop body will be triggered from one of two points
-	  // merge these to the entry transition.
-	  ofile << "// Pipelined!" << endl;
-
-	  __T("back_edge_to_loop_body");
-	  __T("first_time_through_loop_body");
-	  __T("loop_body_start");
-
-	  ofile << "$transitionmerge [entry_tmerge] (back_edge_to_loop_body first_time_through_loop_body) (loop_body_start)" << endl;
-	  __J("$entry","loop_body_start");
-	}
-
-      set<AaRoot*> visited_elements;
-      map<string, vector<AaExpression*> > load_store_ordering_map;
-      map<string, vector<AaExpression*> >  pipe_map;
-
-      // if pipeline-flag and non-trivial phi_stmts, then
-      // initialize the visited-elements, and also declare
-      // the phi-statement reenable transitions.
-      if(pipeline_flag && (phi_stmts != NULL))
-	{
-	  if(phi_stmts->size() > 0)
-	    {
-	      for(unsigned int idx = 0; idx < phi_stmts->size(); idx++)
-		{
-		  AaStatement* curr_phi = (*phi_stmts)[idx];
-		  curr_phi->Write_VC_Control_Path_Optimized(pipeline_flag,
-							    visited_elements,
-							    load_store_ordering_map,
-							    pipe_map,
-							    NULL,
-							    ofile);
-		}
-	    }
-	}
-
-      // the sequence itself.  this code will directly instantiate
-      // the marked joins for the phi reenables.
-      AaRoot* barrier = NULL;
+      /////////////////////////////////////////////////  CORE FUNCTIONALITY /////////////////////////////////////////////////////
+      trailing_barrier = NULL;
       for(int idx = 0, fidx = sseq->Get_Statement_Count(); idx < fidx; idx++)
 	{
 	  AaStatement* stmt = sseq->Get_Statement(idx);
 
 	  if(stmt->Is_Block_Statement())
-	  {
-		AaRoot::Error("block statement in printing fork block.\n", stmt);
-          }
+	    {
+	      AaRoot::Error("block statement in printing fork block.\n", stmt);
+	    }
 	  else if(stmt->Is_Control_Flow_Statement())
-	  {
-		AaRoot::Error("control-flow statement in printing fork block.\n", stmt);
-	  }
+	    {
+	      AaRoot::Error("control-flow statement in printing fork block.\n", stmt);
+	    }
 	  else
-	  {
+	    {
 	      stmt->Write_VC_Control_Path_Optimized(pipeline_flag, 
-						            visited_elements,
-							    load_store_ordering_map,
-							    pipe_map,
-							    barrier,
-							    ofile);
-	  }
+						    visited_elements,
+						    load_store_ordering_map,
+						    pipe_map,
+						    trailing_barrier,
+						    ofile);
+	    }
+
 	  if(stmt->Is_Block_Statement() || (stmt->Is("AaCallStatement") && 
-	      !((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()))->Has_No_Side_Effects())
+					    !((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()))->Has_No_Side_Effects())
 	     || (!pipeline_flag && stmt->Can_Block()))
-	  {
-		barrier = stmt;
-		ofile << "// barrier: " << stmt->To_String() << endl;
+	    {
+	      trailing_barrier = stmt;
+	      ofile << "// barrier: " << stmt->To_String() << endl;
 
-		// put dependencies from all prior statements 
-		// to the barrier
-		for(int K = idx-1; K >= 0; K--)
+	      // put dependencies from all prior statements 
+	      // to the barrier
+	      for(int K = idx-1; K >= 0; K--)
 		{
-			AaStatement* prev_stmt = sseq->Get_Statement(K);
+		  AaStatement* prev_stmt = sseq->Get_Statement(K);
 			
-			// if prev_stmt is a constant, then skip it.
-			if(prev_stmt->Is_Constant())
-				continue;
+		  // if prev_stmt is a constant, then skip it.
+		  if(prev_stmt->Is_Constant())
+		    continue;
 
-			__J(__SST(stmt), __UCT(prev_stmt));
-	  		if(prev_stmt->Is_Block_Statement() || (prev_stmt->Is("AaCallStatement") && 
-	      			!((AaModule*)(((AaCallStatement*)prev_stmt)->Get_Called_Module()))->Has_No_Side_Effects())
-	     			|| prev_stmt->Can_Block())
-			{
-				break;
-			}
+		  __J(__SST(stmt), __UCT(prev_stmt));
+		  if(prev_stmt->Is_Block_Statement() || (prev_stmt->Is("AaCallStatement") && 
+							 !((AaModule*)(((AaCallStatement*)prev_stmt)->Get_Called_Module()))->Has_No_Side_Effects())
+		     || prev_stmt->Can_Block())
+		    {
+		      break;
+		    }
 		}
-	  }
+	    }
 	}
-
-      // finally the test expression.
-      if(pipeline_flag)
-	{
-	  __T("condition_evaluated");
-	  assert(condition_expr != NULL);
-	  condition_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
-							  visited_elements,
-							  load_store_ordering_map,pipe_map,barrier,ofile);
-
-	  if(condition_expr->Is_Constant())
-	  {
-	  	__F("loop_body_start", "condition_evaluated");
-          }
-	  else
-	  {
-	  	__F(__UCT(condition_expr), "condition_evaluated");
-	  }
-
-	  __F("condition_evaluated", "$null");
-	}
-
-
-      // dependencies.
-      this->Write_VC_Load_Store_Dependencies(pipeline_flag,load_store_ordering_map,ofile);
-      this->Write_VC_Pipe_Dependencies(pipeline_flag,pipe_map,ofile);
-
-      ofile << "}";
-
-      if(pipeline_flag)
-	{
-	  ofile << "(back_edge_to_loop_body first_time_through_loop_body) // exported inputs" << endl;
-	  ofile << "( condition_evaluated ) // exported outputs" << endl;
-	}
-
-      ofile << " // " << region_name <<  endl;
     }
-
 }
 
 
@@ -840,12 +762,26 @@ void AaSeriesBlockStatement::Write_VC_Control_Path_Optimized_Base(ostream& ofile
 	  if(curr_seq->Get_Statement(0)->Is_Block_Statement())
 	    curr_seq->Get_Statement(0)->Write_VC_Control_Path_Optimized(ofile);
 	  else
-	    this->AaBlockStatement::Write_VC_Control_Path_Optimized(false,
-								    NULL,
-								    curr_seq,
-								    NULL,
-								    block_name,
-								    ofile);
+	    {
+	      // TODO .. rationalize this.
+	      set<AaRoot*> visited_elements;
+	      map<string, vector<AaExpression*> > load_store_ordering_map;
+	      map<string, vector<AaExpression*> >  pipe_map;
+	      AaRoot* tb = NULL;
+	      
+	      string region_name = curr_seq->Get_VC_Name();
+	      ofile << "::[" << region_name << "] {" << endl;
+	      this->AaBlockStatement::Write_VC_Control_Path_Optimized(false,
+								      curr_seq, 
+								      visited_elements,
+								      load_store_ordering_map,
+								      pipe_map,
+								      tb,
+								      ofile);
+	      this->Write_VC_Load_Store_Dependencies(false, load_store_ordering_map,ofile);
+	      this->Write_VC_Pipe_Dependencies(false, pipe_map,ofile);
+	      ofile  << "}" << endl;
+	    }
 	}
       this->Destroy_Maximal_Sequences(linear_segment_vector);
     }
@@ -1078,8 +1014,25 @@ void AaBranchBlockStatement::Write_VC_Control_Path_Optimized(string source_link,
 		    stmt->Write_VC_Control_Path_Optimized(ofile);
 		  else 
 		    {
+		      set<AaRoot*> visited_elements;
+		      map<string, vector<AaExpression*> > load_store_ordering_map;
+		      map<string, vector<AaExpression*> >  pipe_map;
+		      AaRoot* tb = NULL;
+
 		      string region_name = sseq->Get_VC_Name();
-		      this->AaBlockStatement::Write_VC_Control_Path_Optimized(false, NULL, sseq, NULL, region_name, ofile);
+
+		      ofile << "::[" << region_name << "] {" << endl;
+		      this->AaBlockStatement::Write_VC_Control_Path_Optimized(false, 
+									      sseq, 
+									      visited_elements,
+									      load_store_ordering_map,
+									      pipe_map,
+									      tb,
+									      ofile);
+
+		      this->Write_VC_Load_Store_Dependencies(false, load_store_ordering_map,ofile);
+		      this->Write_VC_Pipe_Dependencies(false, pipe_map,ofile);
+		      ofile  << "}" << endl;
 		    }
 		  
 		  // control regulated by __entry__ and __exit__ places..

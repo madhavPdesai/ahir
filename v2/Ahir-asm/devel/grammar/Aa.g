@@ -124,9 +124,17 @@ aA_Module returns [AaModule* new_module]
     bool foreign_flag = false;
     bool inline_flag = false;
     bool pipeline_flag = false;
+    int depth = 1;
+    int buffering = 1;
+    bool full_rate_flag = false;
     bool macro_flag = false;
 }
-    : ((FOREIGN {foreign_flag = true;}) | (PIPELINE {pipeline_flag = true; }) | 
+    : ((FOREIGN {foreign_flag = true;}) | 
+	(PIPELINE {pipeline_flag = true; } 
+		(DEPTH did: UINTEGER {depth = atoi(did->getText().c_str());})? 
+		(BUFFERING bid: UINTEGER {buffering = atoi(did->getText().c_str());})? 
+		(FULLRATE {full_rate_flag = true;})? 
+	) | 
             (INLINE {inline_flag = true;}) | (MACRO {macro_flag = true;}) )? mt: MODULE 
         lbl = aA_Label 
         {
@@ -136,6 +144,13 @@ aA_Module returns [AaModule* new_module]
             new_module->Set_Inline_Flag(inline_flag);
             new_module->Set_Macro_Flag(macro_flag);
             new_module->Set_Pipeline_Flag(pipeline_flag);
+
+	    if(pipeline_flag)
+            {
+		new_module->Set_Pipeline_Depth(depth);
+		new_module->Set_Pipeline_Buffering(buffering);
+		new_module->Set_Pipeline_Full_Rate_Flag(full_rate_flag);
+	    }
 
             new_module->Set_Line_Number(mt->getLine());
         }
@@ -798,10 +813,12 @@ aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement
         ms = aA_Merge_Statement[scope]
         { 
             new_dws->Set_Merge_Statement(ms);
-	    new_dws->Set_Pipelining_Depth(pdepth);
-	    new_dws->Set_Buffering_Depth(buffering_depth);
+
+	    new_dws->Set_Pipeline_Depth(pdepth);
+	    new_dws->Set_Pipeline_Buffering(buffering_depth);
+
             ms->Set_In_Do_While(true);
-            ms->Set_Do_While_Parent(new_dws);	   
+            ms->Set_Pipeline_Parent(new_dws);	   
 	    new_dws->Set_Line_Number(il->getLine());
         }
 
@@ -814,8 +831,8 @@ aA_Do_While_Statement[AaBranchBlockStatement* scope] returns [AaDoWhileStatement
 	WHILE test_expression = aA_Expression[scope] 
 	{
 		new_dws->Set_Test_Expression(test_expression);
-		new_dws->Set_Full_Rate_Flag(full_rate_flag);
-		test_expression->Set_Do_While_Parent(new_dws);
+		new_dws->Set_Pipeline_Full_Rate_Flag(full_rate_flag);
+		test_expression->Set_Pipeline_Parent(new_dws);
 	}
     ;   
 

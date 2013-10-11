@@ -43,11 +43,14 @@ class vcModule: public vcRoot
   map<vcModule*,vector<int> > _call_group_map;
   int _num_calls;
   int _max_number_of_caller_tags_needed;
+  int _pipeline_depth;
+  int _pipeline_buffering;
 
   map<string,vcPipe*> _pipe_map;
   bool _inline;
   bool _foreign_flag; 
   bool _pipeline_flag; 
+  bool _pipeline_full_rate_flag;
 
  public:
   vcModule(vcSystem* sys, string module_name);
@@ -56,9 +59,19 @@ class vcModule: public vcRoot
   virtual void Print(ostream& ofile);
 
   void Set_Foreign_Flag(bool v) {_foreign_flag = v; }
+  bool Get_Foreign_Flag() {return(_foreign_flag);}
   void Set_Pipeline_Flag(bool v) {_pipeline_flag = v; }
+  bool Get_Pipeline_Flag() {return(_pipeline_flag);}
 
-  int Get_Pipeline_Depth();
+  void Set_Pipeline_Depth(int d) {_pipeline_depth = d;}
+  int  Get_Pipeline_Depth() {return(_pipeline_depth);}
+
+  void Set_Pipeline_Buffering(int d) {_pipeline_buffering = d;}
+  int  Get_Pipeline_Buffering() {return(_pipeline_buffering);}
+
+  void Set_Pipeline_Full_Rate_Flag(bool d) {_pipeline_full_rate_flag = d;}
+  int  Get_Pipeline_Full_Rate_Flag() {return(_pipeline_full_rate_flag);}
+
   void Register_Call_Group(vcModule* m, int g_id, int g_size) 
   {
     _call_group_map[m].push_back(g_id); 
@@ -209,6 +222,7 @@ class vcModule: public vcRoot
   void Delink_From_Modules_And_Memory_Spaces();
 
   void Print_Reduced_CP_As_Dot_File();
+  void Print_VHDL_Tag_Logic(ostream& ofile);
 };
 
 #endif // vcModule

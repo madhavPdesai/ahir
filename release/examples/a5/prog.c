@@ -227,7 +227,7 @@ void a5init ()
   for (i = 0; i < 64; i++)
     {
 #ifdef LOOPPIPELINE
-	loop_pipelining_on();
+	loop_pipelining_on(16,1,0);
 #endif
       keybit = (key[i >> 5] >> (i & 31)) & 1;	/* The i-th bit of the key */
       R1 ^= keybit;
@@ -243,7 +243,7 @@ void a5init ()
   for (i = 0; i < 22; i++)
     {
 #ifdef LOOPPIPELINE
-	loop_pipelining_on();
+	loop_pipelining_on(16,1,0);
 #endif
       framebit = (frame >> i) & 1;	/* The i-th bit of the frame */
       R1 ^= framebit;
@@ -261,7 +261,7 @@ void a5init ()
   for (i = 0; i < 100; i++)
     {
 #ifdef LOOPPIPELINE
-	loop_pipelining_on();
+	loop_pipelining_on(16,1,0);
 #endif
       a5reg();
     }
@@ -289,7 +289,7 @@ int main_inner (void)
   for (i = 0; i < 32; i++)
   {
 #ifdef LOOPPIPELINE
-	loop_pipelining_on();
+	loop_pipelining_on(16,1,0);
 #endif
     uint32_t tmp = a5reg();
     //write_uint32("tmppipe", tmp);

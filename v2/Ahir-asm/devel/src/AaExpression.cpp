@@ -29,7 +29,7 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
   this->_does_pipe_access = false;
   this->_associated_statement = NULL;
   this->_is_malformed = false;
-  this->_do_while_parent = NULL;
+  this->_pipeline_parent = NULL;
   this->_is_intermediate = true;
 }
 AaExpression::~AaExpression() {};
@@ -69,8 +69,8 @@ bool AaExpression::Set_Addressed_Object_Representative(AaStorageObject* obj)
 
 bool AaExpression::Is_Part_Of_Extreme_Pipeline()
 {
-	AaDoWhileStatement* dws = this->Get_Do_While_Parent();
-	bool ret_val = ((dws != NULL)  && dws->Get_Full_Rate_Flag());
+	AaStatement* dws = this->Get_Pipeline_Parent();
+	bool ret_val = ((dws != NULL)  && dws->Get_Pipeline_Full_Rate_Flag());
 	return(ret_val);
 }
 
@@ -175,6 +175,16 @@ void AaExpression::Set_Type(AaType* t)
 	   AaRoot::Error(err_msg, this);
 	 }
      }
+ }
+
+  
+ 
+ bool AaExpression::Is_Part_Of_Pipelined_Module()
+ {
+	AaStatement* s = this->Get_Associated_Statement();
+	if(s->Get_Scope() && s->Get_Scope()->Is("AaModule") && ((AaModule*) s->Get_Scope())->Is_Pipelined())
+		return(true);
+	return(false);
  }
 
  string AaExpression::Get_VC_Name()
@@ -849,7 +859,18 @@ string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoo
 			if((root != NULL) && (visited_elements.find(root) != visited_elements.end()))
 				return(root->Get_VC_Reenable_Update_Transition_Name(visited_elements));
 			else
-				return("$null");
+			{
+			
+				bool pm = this->Is_Part_Of_Pipelined_Module();
+				if(pm)
+				{
+					return(this->_object->Get_VC_Name() + "_update_enable");
+				}
+				else
+				{
+					return("$null");
+				}
+			}
 		}
 
 		if(this->Is_Implicit_Variable_Reference())
@@ -915,7 +936,7 @@ string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoo
 				if((root != NULL) && (visited_elements.find(root) != visited_elements.end()))
 					return(root->Get_VC_Reenable_Sample_Transition_Name(visited_elements));
 				else
-					return("$null");
+					return(__SST(this));
 			}
 		}
 
@@ -3920,7 +3941,7 @@ void AaBinaryExpression::Update_Type()
     }
   else if((t1 != NULL) && (t2 != NULL) && t1->Is("AaFloatType") && t2->Is("AaFloatType"))
 	// float operations will have higher delay!
-	this->Set_Delay(10);
+	this->Set_Delay(24);
   
 }
 

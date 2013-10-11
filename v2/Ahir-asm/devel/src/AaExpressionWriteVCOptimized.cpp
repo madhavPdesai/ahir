@@ -295,12 +295,23 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 			{
 				__J(__SST(this), __UCT(root));
 			}	  
+			else
+			{
+				__J(__SST(this), "$entry");
+			}
 
 			// complete the connections.
 			__J(__SCT(this),__SST(this));
 			__J(__UST(this),__SCT(this));
 			__J(__UCT(this),__UST(this));
 
+			bool pm = this->Is_Part_Of_Pipelined_Module();
+			if(pm)
+			{
+				string sample_enable = this->_object->Get_VC_Name() + "_update_enable";
+				__J(__SST(this), sample_enable); // no marking, since sample_enable
+								// will have marked joins.
+			}
 		}
 		else if(this->Is_Implicit_Variable_Reference())
 		{
@@ -318,6 +329,10 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 			{
 				__J(__SST(this), __UCT(root));
 
+			}
+			else
+			{
+				__J(__SST(this), "$entry");
 			}
 
 			// complete the connections.
@@ -407,10 +422,19 @@ void AaSimpleObjectReference::Write_VC_Control_Path_As_Target_Optimized(bool pip
 
 	if(this->Is_Implicit_Variable_Reference() || this->_object->Is_Interface_Object())
 	{
-		if(this->Is_Implicit_Variable_Reference())
-			ofile << "// " << this->To_String() << endl << "// implicit reference" << endl;
-		else
-			ofile << "// " << this->To_String() << endl << "// write to interface object" << endl;
+	  if(!this->_object->Is_Interface_Object())
+	    ofile << "// " << this->To_String() << endl << "// implicit reference" << endl;
+	  else
+	    {
+	      ofile << "// " << this->To_String() << endl << "// write to interface object" << endl;
+	      bool pm = this->Is_Part_Of_Pipelined_Module();
+	      if(pm)
+		{
+		  string update_enable = this->_object->Get_VC_Name() + "_update_enable";
+		  __J(__UST(this), update_enable); // ... note: unmarked, since 
+							// transitions to update_enable will be marked.
+		}
+	    }
 	}
 	else if(this->_object->Is("AaStorageObject"))
 	{

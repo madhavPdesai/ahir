@@ -1697,7 +1697,7 @@ package BaseComponents is
 
   component join is
      generic(place_capacity : integer := 1;
-		bypass: boolean := false;
+		bypass: boolean := true;
       		name : string );
      port (preds      : in   BooleanArray;
     	symbol_out : out  boolean;
@@ -1706,7 +1706,7 @@ package BaseComponents is
   end component;
 
   component join2 
-    generic (bypass : boolean := false; name: string);
+    generic (bypass : boolean := true; name: string);
     port ( pred0, pred1      : in   Boolean;
            symbol_out : out  boolean;
            clk: in std_logic;
@@ -1714,7 +1714,7 @@ package BaseComponents is
   end component;
 
   component join3 
-    generic (bypass : boolean := false; name: string);
+    generic (bypass : boolean := true; name: string);
     port ( pred0, pred1, pred2      : in   Boolean;
            symbol_out : out  boolean;
            clk: in std_logic;
@@ -1727,6 +1727,14 @@ package BaseComponents is
       		name : string );
      port (preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
+    	symbol_out : out  boolean;
+	clk: in std_logic;
+	reset: in std_logic);
+  end component;
+  
+  component  generic_join 
+   generic(name: string; place_capacities: IntegerArray; place_markings: IntegerArray; place_delays: IntegerArray);
+   port ( preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
 	reset: in std_logic);
@@ -1756,7 +1764,7 @@ package BaseComponents is
 
   component marked_join is
      generic(place_capacity : integer := 1;
-		bypass: boolean := false;
+		bypass: boolean := true;
       		name : string := "anon";
 		marked_predecessor_bypass: BooleanArray);
      port (preds      : in   BooleanArray;
@@ -9066,7 +9074,6 @@ end control_delay_element;
 architecture default_arch of control_delay_element is
 
   signal delay_count : integer range 0 to delay_value;
-  signal state_sig : std_logic;
   
 begin  -- default_arch
 
@@ -9077,45 +9084,76 @@ begin  -- default_arch
 
   NonZeroDelay: if delay_value > 0 generate
 
-    process(clk,state_sig,delay_count)
-      variable next_state_sig : std_logic;
-      variable incr_count : Boolean;
-      variable ack_var : Boolean;
-      variable next_delay_var : integer range 0 to delay_value;
-      
-    begin
+   ShiftReg: block
+	signal sr_state: BooleanArray(1 to delay_value);
+   begin
+ 	process(clk)
+	begin
+		if(clk'event and clk = '1') then
+			if(reset = '1') then
+				sr_state <= (others => false);
+			else
+				sr_state(1) <= req;
+				for I in 2 to delay_value loop
+					sr_state(I) <= sr_state(I-1);
+				end loop;
+			end if;
+		end if;
+	end process;
 
-      next_state_sig := state_sig;
-      ack_var := false;
-      next_delay_var := 0;
-      
-        case state_sig is
-          when '0' =>
-            if req  then
-              next_state_sig := '1';
-            end if;
-          when others =>
-            if(delay_count = delay_value-1) then
-              ack_var := true;
-              next_state_sig := '0';
-            else
-              next_delay_var := delay_count + 1;
-            end if;
-        end case;
-
-      ack <= ack_var;
-      if(clk'event and clk = '1') then
-	if(reset = '1') then
-		state_sig <=  '0';
-		delay_count <= 0;
-	else 
-        	state_sig <= next_state_sig;
-        	delay_count <= next_delay_var;
-	end if;
-      end if;
-    end process;
+	ack <= sr_state(delay_value);
+   end block;
 
   end generate NonZeroDelay;
+
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
+library ahir;
+
+use ahir.Types.all;
+use ahir.subprograms.all;
+use ahir.BaseComponents.all;
+use ahir.utilities.all;
+
+entity generic_join is
+  generic(name: string; place_capacities: IntegerArray; place_markings: IntegerArray; place_delays: IntegerArray);
+  port ( preds      : in   BooleanArray;
+    	symbol_out : out  boolean;
+	clk: in std_logic;
+	reset: in std_logic);
+end generic_join;
+
+architecture default_arch of generic_join is
+  signal symbol_out_sig : BooleanArray(0 downto 0);
+  signal place_sigs: BooleanArray(1 to preds'length);
+  constant pmarkings : IntegerArray(1 to preds'length) := place_markings;
+  constant pcapacities: IntegerArray(1 to preds'length) := place_capacities;
+  constant pdelays: IntegerArray(1 to preds'length) := place_delays;
+  alias ppreds : BooleanArray(1 to preds'length) is preds;
+begin  -- default_arch
+
+  assert ((preds'length = place_capacities'length) and (place_capacities'length = place_delays'length)
+		and (place_delays'length = place_markings'length) )
+	report "Mismatch in lengths of marking/capacity arrays." severity failure;
+  
+  placegen: for I in 1 to pmarkings'length generate
+    placeBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+    begin
+      dly: control_delay_element generic map(delay_value => pdelays(I))
+                   port map(req => ppreds(I), ack => place_pred(0), clk => clk, reset => reset);
+      pI: place_with_bypass
+        generic map(capacity => pcapacities(I),
+                    marking => pmarkings(I),
+                    name => name & ":(bypass):" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+    end block;
+  end generate placegen;
+
+  -- The transition is enabled only when all preds are true.
+  symbol_out_sig(0) <= AndReduce(place_sigs);
+  symbol_out <= symbol_out_sig(0);
 
 end default_arch;
 library ieee;
@@ -12157,6 +12195,7 @@ begin  -- Behave
   aL <= true when (pull_mode_state = Ack) else false;
       
 end Behave;
+-- copyright: Madhav Desai
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -14017,7 +14056,7 @@ begin  -- Behave
   
 end Vanilla;
 
--- written by Madhav Desai
+-- copyright: Madhav Desai
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

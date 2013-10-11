@@ -21,13 +21,9 @@ class AaModule: public AaSeriesBlockStatement
   vector<AaInterfaceObject*>  _input_args;
   vector<AaInterfaceObject*>  _output_args;
 
-  bool _foreign_flag;
-  bool _inline_flag;
-  bool _macro_flag;
-  bool _pipeline_flag;
-
-  bool _writes_to_shared_pipe;
-  bool _reads_from_shared_pipe;
+  int  _pipeline_depth;
+  int  _pipeline_buffering;
+  bool _pipeline_full_rate_flag;
 
 
   // memory spaces and pipes accessed by
@@ -58,12 +54,28 @@ class AaModule: public AaSeriesBlockStatement
   set<AaStorageObject*> _global_objects_that_are_read;
   set<AaStorageObject*> _global_objects_that_are_written;
 
+  bool _foreign_flag;
+  bool _inline_flag;
+  bool _macro_flag;
+  bool _pipeline_flag;
+
+  bool _writes_to_shared_pipe;
+  bool _reads_from_shared_pipe;
  public:
   AaModule(string fname); // Modules have NULL parent (parent is the program)
   ~AaModule();
 
 
   virtual bool Is_Module() {return(true);}
+
+  virtual void Set_Pipeline_Depth(int v) {_pipeline_depth = v;}
+  virtual int Get_Pipeline_Depth() {return(_pipeline_depth);}
+
+  virtual void Set_Pipeline_Buffering(int v) {_pipeline_buffering = v;}
+  virtual int Get_Pipeline_Buffering() {return(_pipeline_buffering);}
+
+  virtual void Set_Pipeline_Full_Rate_Flag(bool v) {_pipeline_full_rate_flag = v;}
+  virtual bool Get_Pipeline_Full_Rate_Flag() {return(_pipeline_full_rate_flag);}
 
   void Update_Memory_Space_Info();
 
@@ -102,6 +114,7 @@ class AaModule: public AaSeriesBlockStatement
 
   void Set_Pipeline_Flag(bool ff) { this->_pipeline_flag = ff; }
   bool Get_Pipeline_Flag() {return(this->_pipeline_flag);}
+
   virtual bool Is_Pipelined() {return(_pipeline_flag);}
 
   void Set_Inline_Flag(bool ff);
@@ -215,6 +228,8 @@ class AaModule: public AaSeriesBlockStatement
   void Write_VHDL_C_Stub_Header(ostream& ofile);
   void Write_VHDL_C_Stub_Source(ostream& ofile);
 
+  virtual void Set_Statement_Sequence(AaStatementSequence* statement_sequence);
+  virtual void Write_VC_Control_Path_Optimized_Base(ostream& ofile);
 };
 
 #endif

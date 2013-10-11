@@ -85,7 +85,7 @@ package BaseComponents is
 
   component join is
      generic(place_capacity : integer := 1;
-		bypass: boolean := false;
+		bypass: boolean := true;
       		name : string );
      port (preds      : in   BooleanArray;
     	symbol_out : out  boolean;
@@ -94,7 +94,7 @@ package BaseComponents is
   end component;
 
   component join2 
-    generic (bypass : boolean := false; name: string);
+    generic (bypass : boolean := true; name: string);
     port ( pred0, pred1      : in   Boolean;
            symbol_out : out  boolean;
            clk: in std_logic;
@@ -102,7 +102,7 @@ package BaseComponents is
   end component;
 
   component join3 
-    generic (bypass : boolean := false; name: string);
+    generic (bypass : boolean := true; name: string);
     port ( pred0, pred1, pred2      : in   Boolean;
            symbol_out : out  boolean;
            clk: in std_logic;
@@ -115,6 +115,14 @@ package BaseComponents is
       		name : string );
      port (preds      : in   BooleanArray;
     	symbol_in  : in   boolean;
+    	symbol_out : out  boolean;
+	clk: in std_logic;
+	reset: in std_logic);
+  end component;
+  
+  component  generic_join 
+   generic(name: string; place_capacities: IntegerArray; place_markings: IntegerArray; place_delays: IntegerArray);
+   port ( preds      : in   BooleanArray;
     	symbol_out : out  boolean;
 	clk: in std_logic;
 	reset: in std_logic);
@@ -144,7 +152,7 @@ package BaseComponents is
 
   component marked_join is
      generic(place_capacity : integer := 1;
-		bypass: boolean := false;
+		bypass: boolean := true;
       		name : string := "anon";
 		marked_predecessor_bypass: BooleanArray);
      port (preds      : in   BooleanArray;

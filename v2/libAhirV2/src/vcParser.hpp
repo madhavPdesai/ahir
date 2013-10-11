@@ -91,7 +91,7 @@ public:
 		vcSystem* sys, vcModule* parent
 	);
 	public: void vc_Controlpath(
-		vcSystem* sys, vcModule* m, bool pipeline_flag
+		vcSystem* sys, vcModule* m
 	);
 	public: void vc_Datapath(
 		vcSystem* sys,vcModule* m
@@ -103,13 +103,19 @@ public:
 		vector<string>& ref_vec
 	);
 	public: string  vc_Identifier();
+	public: void vc_CPPipelinedForkBlock(
+		vcCPBlock* cp, vcModule* m
+	);
+	public: vcCPElement*  vc_CPPlace(
+		vcCPElement* p
+	);
+	public: void vc_CPBind(
+		vcCPBlock* cp
+	);
 	public: void vc_CPRegion(
 		vcCPBlock* cp
 	);
 	public: vcCPElement*  vc_CPElement(
-		vcCPElement* p
-	);
-	public: vcCPElement*  vc_CPPlace(
 		vcCPElement* p
 	);
 	public: vcCPElement*  vc_CPTransition(
@@ -139,9 +145,6 @@ public:
 	public: void vc_CPPipelinedLoopBody(
 		vcCPBlock* cp
 	);
-	public: void vc_CPBind(
-		vcCPSimpleLoopBlock* cp
-	);
 	public: void vc_CPLoopTerminate(
 		vcCPSimpleLoopBlock* slb
 	);
@@ -158,7 +161,7 @@ public:
 		vcCPForkBlock* fb
 	);
 	public: void vc_CPMarkedJoin(
-		vcCPPipelinedLoopBody* fb
+		vcCPPipelinedForkBlock* fb
 	);
 	public: void vc_Guarded_Operator_Instantiation(
 		vcSystem* sys, vcDataPath* dp
@@ -339,6 +342,8 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_32;
 	static const unsigned long _tokenSet_33_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_33;
+	static const unsigned long _tokenSet_34_data_[];
+	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_34;
 };
 
 #endif /*INC_vcParser_hpp_*/

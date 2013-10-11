@@ -184,6 +184,7 @@ public:
   virtual void Connect_Driver(vcRoot* d) {assert(0);}
 
   virtual string Kind() {return("vcInputWire");}
+  virtual string Get_VHDL_Signal_Id() { return(this->Get_VHDL_Id() + "_buffer");}
 };
 
 

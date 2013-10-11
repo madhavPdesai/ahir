@@ -18,6 +18,7 @@ vcModule::vcModule(vcSystem* sys, string module_name):vcRoot(module_name)
   this->_max_number_of_caller_tags_needed = 0;
   this->_foreign_flag = false;
   this->_pipeline_flag = false;
+  this->_pipeline_depth = 1;
 }
 
 void vcModule::Set_Data_Path(vcDataPath* dp)
@@ -27,21 +28,6 @@ void vcModule::Set_Data_Path(vcDataPath* dp)
   this->_data_path = dp;
 }
 
-
-int vcModule::Get_Pipeline_Depth()
-{
-  if(_pipeline_flag)
-    {
-      if(this->_control_path)
-	{
-	  return(this->_control_path->Get_Number_Of_Elements());
-	}
-      else
-	return(1);
-    }
-  else 
-    return(1);
-}
 
 void vcModule::Print(ostream& ofile)
 {
@@ -564,6 +550,8 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
   if(this->_foreign_flag)
     return;
 
+  assert(this->_control_path);
+
   ofile << "architecture Default of " << this->Get_VHDL_Id() << " is -- {" << endl;
 
 
@@ -571,13 +559,43 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
   ofile << "-- always true..." << endl;
 
   ofile << "signal " << this->_control_path->Get_Always_True_Symbol() << ": Boolean;" << endl;
-  ofile << "signal start_req_symbol: Boolean;" << endl;
-  ofile << "signal start_ack_symbol: Boolean;" << endl;
-  ofile << "signal fin_req_symbol: Boolean;" << endl;
-  ofile << "signal fin_ack_symbol: Boolean;" << endl;
-  ofile << "signal tag_push, tag_pop: std_logic; " << endl;
-  ofile << "signal start_ack_sig, fin_ack_sig: std_logic; " << endl;
+  ofile << "signal default_zero_sig: std_logic;" << endl;
+  ofile << "signal tag_ub_out, tag_ilock_out: std_logic_vector(tag_length-1 downto 0);" << endl;
+  ofile << "signal tag_push_req, tag_push_ack, tag_pop_req, tag_pop_ack: std_logic;" << endl;
+  ofile << "signal tag_unload_req_symbol, tag_unload_ack_symbol, tag_write_req_symbol, tag_write_ack_symbol: Boolean;" << endl;
+  ofile << "signal tag_ilock_write_req_symbol, tag_ilock_write_ack_symbol, tag_ilock_read_req_symbol, tag_ilock_read_ack_symbol: Boolean;" << endl;
+  ofile << "signal start_req_sig, fin_req_sig, start_ack_sig, fin_ack_sig: std_logic; " << endl;
+  ofile << "signal input_sample_reenable: Boolean;" << endl;
+  // vectors for printing joins etc.
+  vector<string> unload_ack_symbols;
+  unload_ack_symbols.push_back("tag_unload_ack_symbol");
 
+  vector<string> write_ack_symbols;
+  write_ack_symbols.push_back("tag_write_ack_symbol");
+  
+  // input port buffer signals.
+  ofile << "-- input port buffer signals" << endl;
+  for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
+    {
+      vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
+      ofile << "signal " << w->Get_VHDL_Signal_Id() << " : " 
+	    <<  " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
+
+      // unload buffers: one per input,
+      // start-req goes to all, one start-ack per input
+      // final start-ack is AND of all the input start-acks.
+      //
+      // start_req_symbol_ will unload, and join of 
+      // all unload buffer unload acks will be used 
+      // as trigger to CP.
+      ofile << "signal " << w->Get_VHDL_Id() << "_write_req: std_logic;" << endl;
+      ofile << "signal " << w->Get_VHDL_Id() << "_write_ack: std_logic;" << endl;
+      ofile << "signal " << w->Get_VHDL_Id() << "_unload_req_symbol: Boolean;" << endl;
+      ofile << "signal " << w->Get_VHDL_Id() << "_unload_ack_symbol: Boolean;" << endl;
+      ofile << "signal " << w->Get_VHDL_Id() << "_update_enable: Boolean;" << endl;
+
+      unload_ack_symbols.push_back( w->Get_VHDL_Id() + "_unload_ack_symbol");
+    }
 
   // output port buffer signals.
   ofile << "-- output port buffer signals" << endl;
@@ -586,11 +604,28 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
       vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
       ofile << "signal " << w->Get_VHDL_Signal_Id() << " : " 
 	    <<  " std_logic_vector(" << w->Get_Type()->Size()-1 << " downto 0);" << endl;
+
+      // receive buffers: one per output. 
+      // fin-req goes to all, and fin-ack will be and
+      // of individual buffer read-acks.
+      
+      // exit of CP will trigger write to Rxbuffer.
+      // write-acks from RxBuffers will serve as
+      // output update reenables to pipelined body.
+      ofile << "signal " << w->Get_VHDL_Id() << "_write_req_symbol: Boolean;" << endl;
+      ofile << "signal " << w->Get_VHDL_Id() << "_write_ack_symbol: Boolean;" << endl;
+      ofile << "signal " << w->Get_VHDL_Id() << "_read_req: std_logic;" << endl;
+      ofile << "signal " << w->Get_VHDL_Id() << "_read_ack: std_logic;" << endl;
+      ofile << "signal " << w->Get_VHDL_Id() << "_update_enable: Boolean;" << endl;
+      write_ack_symbols.push_back( w->Get_VHDL_Id() + "_write_ack_symbol");
     }
 
   // control-path start symbol
-  if(this->_control_path)
-    ofile << "signal " << this->_control_path->Get_Start_Symbol() << ": Boolean;" << endl;
+  string cp_entry_symbol = this->_control_path->Get_Start_Symbol();
+  string cp_exit_symbol  = this->_control_path->Get_Exit_Symbol();
+
+  ofile << "signal " << cp_entry_symbol << ": Boolean;" << endl;
+  ofile << "signal " << cp_exit_symbol << ": Boolean;" << endl;
 
   // print link signals between CP and DP
   ofile << "-- links between control-path and data-path" << endl;
@@ -637,78 +672,207 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
   }
 
 
-  ofile << "-- output port buffering assignments" << endl;
-  for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
+  ofile << "-- input handling ------------------------------------------------" << endl;
+  string start_ack_rhs = "tag_push_ack";
+  for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
     {
-      vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
-      ofile << w->Get_VHDL_Id() << " <= " << w->Get_VHDL_Signal_Id() << "; "  << endl;
+      vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
+      ofile << "-----  input " << w->Get_VHDL_Id() << " ----------------------" << endl;
+      int buffering = 1;
+      if(this->_pipeline_flag)
+	{
+	  buffering = 2;
+	}
+
+      start_ack_rhs += " AND ";
+
+      // instantiate unload-buffer for each input.
+      ofile << w->Get_VHDL_Id() << "_ub: UnloadBuffer -- { " << endl
+	    << " generic map(name => \"" << w->Get_VHDL_Id() << "\", -- {" << endl
+	    << " buffer_size => " << buffering << "," <<  endl 
+	    << " data_width => " << w->Get_Type()->Size() << ") -- } " << endl;
+      ofile << " port map(write_req => " << w->Get_VHDL_Id() << "_write_req, -- { " << endl
+	    << " write_ack => "  << w->Get_VHDL_Id() << "_write_ack, " << endl
+	    << " write_data => " << w->Get_VHDL_Id() << "," << endl
+	    << " unload_req => "   << w->Get_VHDL_Id() << "_unload_req_symbol, " << endl
+	    << " unload_ack => "   << w->Get_VHDL_Id() << "_unload_ack_symbol, " << endl
+	    << " read_data => " << w->Get_VHDL_Signal_Id()  << "," << endl
+	    << " clk => clk, reset => reset); -- }}" << endl;
+
+      start_ack_rhs += w->Get_VHDL_Id() + "_write_ack";
+      ofile << w->Get_VHDL_Id() << "_write_req <= start_req_sig; " << endl;
+
+      // There are two distinct cases:
+      //    In the pipeline case, 
+      //             the unload_req_symbol is a join with the following predecessors
+      //                  -  marked predecessor: unload_ack_symbol (self-release, 0-delay)
+      //                  -  unmarked predecessor: input_update_enable  (in pipeline case only, 0-delay).
+      //                  -  marked predecessor (with initial marking of pipeline-depth) input_sample_reenable
+      //    The non-pipeline case
+      //             the read_req_symbol is a join with the following predecessors
+      //                  -  marked predecessor: unload_ack_symbol (self-release, 0-delay)
+      //                  -  marked predecessor (with initial marking of 1) input_sample_reenable
+      vector<string> preds;
+      vector<int>    pred_markings;
+      vector<int>    pred_capacities;
+      vector<int>    pred_delays;
+
+
+      if(this->_pipeline_flag)
+	{
+	  preds.push_back(w->Get_VHDL_Id() + "_update_enable");
+	  pred_capacities.push_back(this->Get_Pipeline_Depth());
+	  pred_markings.push_back(0);
+	  pred_delays.push_back(0); // revisit later..
+	}
+
+      preds.push_back(w->Get_VHDL_Id() + "_unload_ack_symbol");
+      pred_markings.push_back(1);
+      pred_capacities.push_back(1);
+      pred_delays.push_back(0);  // revisit later..
+
+      preds.push_back("input_sample_reenable");
+      pred_markings.push_back((this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1));
+      pred_capacities.push_back((this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1));
+      pred_delays.push_back(1);  // revisit later..
+
+      string joined_symbol = w->Get_VHDL_Id() + "_unload_req_symbol";
+      Print_VHDL_Join(w->Get_VHDL_Id() + "_join", 
+		      preds,
+		      pred_markings,
+		      pred_capacities, 
+		      pred_delays, 
+		      joined_symbol,
+		      ofile);
+
     }
   ofile << endl;
 
   string forward_delay = (vcSystem::_min_clock_period_flag ? "1" : "0");
   string backward_delay = (vcSystem::_min_clock_period_flag ? "1" : "0");
+      
+  ofile << "-- join of all unload_ack_symbols.. used to trigger CP." << endl;
+  // All the unload__ack_symbols will join to produce cp_entry_symbol
+  Print_VHDL_Simple_Join(cp_entry_symbol + "_join", unload_ack_symbols, cp_entry_symbol, 0,  ofile);
 
-  ofile << "-- level-to-pulse translation.." << endl;
-  ofile << " l2pStart: level_to_pulse -- {" << endl
-	<< " generic map (forward_delay => " << forward_delay << ","
-	<< " backward_delay => " << backward_delay << ") " << endl
-	<< " port map(clk => clk, reset =>reset, lreq => start_req, lack => start_ack_sig, preq => start_req_symbol, pack => start_ack_symbol); -- }" << endl;
-  ofile << "start_ack <= start_ack_sig; " << endl << endl;
+  ofile << "-- start-req is forwarded when all are ready." << endl;
+  ofile << "start_ack_sig <= " << start_ack_rhs << ";" << endl;
+  ofile << "start_ack <= start_ack_sig; " << endl;
+  ofile << "start_req_sig <= start_req and start_ack_sig;" << endl;
+ 
+  ofile << "-- output handling  -------------------------------------------------------" << endl;
+  string fin_ack_rhs = "tag_pop_ack";
 
-  ofile << " l2pFin: level_to_pulse -- {" << endl
-	<< " generic map (forward_delay => " << forward_delay << ","
-	<< " backward_delay => " << backward_delay << ") " << endl
-	<< " port map(clk => clk, reset =>reset, lreq => fin_req, lack => fin_ack_sig, preq => fin_req_symbol, pack => fin_ack_symbol); -- }" << endl;
-  ofile << "fin_ack <= fin_ack_sig; " << endl << endl;
+  for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
+    {
+      vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
+      ofile << "-----  output " << w->Get_VHDL_Id() << " ----------------------" << endl;
+      int buffering = 1;
+      if(this->_pipeline_flag)
+	{
+	  buffering = 2;
+	}
 
-  // tag passing... tag is registered at each stage in the
-  // pipe-line.
+      fin_ack_rhs += " AND ";
 
-  ofile << "tag_push <= '1' when start_req_symbol else '0'; " << endl;
-  ofile << "tag_pop  <= fin_req and fin_ack_sig ; " << endl;
+
+      // instantiate receive-buffer for each input.
+      ofile << w->Get_VHDL_Id() << "_rxb: ReceiveBuffer -- {" << endl
+	    << " generic map(name => \"" << w->Get_VHDL_Id() << "\", -- {" << endl
+	    << " buffer_size => " << buffering << "," << endl
+	    << " data_width => " << w->Get_Type()->Size() << ", " << endl
+	    << " kill_counter_range => 1) -- }" << endl;
+      ofile << " port map(write_req => " << w->Get_VHDL_Id() << "_write_req_symbol, -- {" << endl
+	    << " write_ack => "  << w->Get_VHDL_Id() << "_write_ack_symbol, " << endl
+	    << " write_data => " << w->Get_VHDL_Signal_Id() << "," << endl
+	    << " read_req => "   << w->Get_VHDL_Id() << "_read_req, " << endl
+	    << " read_ack => "   << w->Get_VHDL_Id() << "_read_ack, " << endl
+	    << " read_data => " << w->Get_VHDL_Id()  << "," << endl
+	    << " kill => default_zero_sig," << endl
+	    << " clk => clk, reset => reset); -- }}" << endl;
+
+      fin_ack_rhs += w->Get_VHDL_Id() + "_read_ack";
+      ofile << w->Get_VHDL_Id() << "_read_req <= fin_req_sig; " << endl;
+
+      // There are two distinct cases.
+      vector<string> preds;
+      vector<int>    pred_markings;
+      vector<int>    pred_capacities;
+      vector<int>    pred_delays;
+
+      //     for each output, the write_req_symbol is a join with 
+      //      - marked predecessor: write_ack_symbol (self-release, 0-delay)
+      //      - unmarked predecessor: cp_exit_symbol
+      //     the write_ack-symbol is not used in any manner except to reenable
+      //     the write_req symbol.
+      preds.push_back(cp_exit_symbol);
+      pred_capacities.push_back(this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1);
+      pred_markings.push_back(0);
+      pred_delays.push_back(0); // revisit later..
+
+      preds.push_back(w->Get_VHDL_Id() + "_write_ack_symbol");
+      pred_markings.push_back(1);
+      pred_capacities.push_back(1);
+      pred_delays.push_back(0);  // revisit later..
+
+
+      string joined_symbol = w->Get_VHDL_Id() + "_write_req_symbol";
+      Print_VHDL_Join(w->Get_VHDL_Id() + "_join", 
+		      preds,
+		      pred_markings,
+		      pred_capacities, 
+		      pred_delays, 
+		      joined_symbol,
+		      ofile);
+
+      if(this->_pipeline_flag)
+	ofile << w->Get_VHDL_Id() + "_update_enable <= " << w->Get_VHDL_Id() + "_write_ack_symbol;" << endl;
+    }
+
+  ofile << endl;
+
+  ofile << "-- join of all output write-ack symbols.. used to reenable input sampling" << endl;
+  // generate input-sample-reenable from join of all write_ack_symbols.
+  Print_VHDL_Simple_Join("input_sample_reenable_join", write_ack_symbols, "input_sample_reenable",1, ofile);
+
+  ofile << "-- fin-req is forwarded when all are ready." << endl;
+  ofile << "fin_ack <= fin_ack_sig; " << endl;
+  ofile << "fin_req_sig <= fin_req and fin_ack_sig;" << endl;
+  ofile << "fin_ack_sig <= " << fin_ack_rhs << ";" << endl;
+
+  // tag queue..
+  ofile << "----- tag-queue --------------------------------------------------" << endl;
+  this->Print_VHDL_Tag_Logic(ofile);
+
 
   // logging.
   if(vcSystem::_enable_logging)
   {
-	string sreq_symbol_name =  '"'  +  this->Get_VHDL_Id() + " start_req symbol" + '"';
-        ofile << "LogCPEvent(clk,reset,global_clock_cycle_count, start_req_symbol," <<  sreq_symbol_name << ");" << endl;
+    ofile << "--- logging ------------------------------------------------------" << endl;
+	string sreq_symbol_name =  '"'  +  this->Get_VHDL_Id() + " cp_entry_symbol " + '"';
+        ofile << "LogCPEvent(clk,reset,global_clock_cycle_count," << cp_entry_symbol << "," <<  sreq_symbol_name << ");" << endl;
 	
-	string sack_symbol_name =  '"'  +  this->Get_VHDL_Id() + " start_ack symbol" + '"';
-        ofile << "LogCPEvent(clk,reset,global_clock_cycle_count,  start_ack_symbol," <<  sack_symbol_name << ");" << endl;
-
-	string creq_symbol_name =  '"'  +  this->Get_VHDL_Id() + " fin_req symbol" + '"';
-        ofile << "LogCPEvent(clk,reset,global_clock_cycle_count,  fin_req_symbol," <<  creq_symbol_name << ");" << endl;
 	
-	string cack_symbol_name =  '"'  +  this->Get_VHDL_Id() + " fin_ack symbol" + '"';
-        ofile << "LogCPEvent(clk,reset,global_clock_cycle_count,  fin_ack_symbol," <<  cack_symbol_name << ");" << endl;
+	string cack_symbol_name =  '"'  +  this->Get_VHDL_Id() + " cp_exit_symbol " + '"';
+        ofile << "LogCPEvent(clk,reset,global_clock_cycle_count," << cp_exit_symbol << ", " <<  cack_symbol_name << ");" << endl;
   } 
 
-  if(this->_control_path)
-    {
-      int tag_queue_depth = (this->_pipeline_flag ? this->_control_path->Get_Number_Of_Elements() + 1 : 2);
-      ofile << "tagQueue: QueueBase generic map(data_width => " << this->Get_Callee_Tag_Length()+this->Get_Caller_Tag_Length()
-	    << ", queue_depth => " << tag_queue_depth << " ) -- {" << endl
-	    << " port map(pop_req => tag_pop, pop_ack => open, "  << endl
-	    << " push_req => tag_push, push_ack => open, " << endl
-	    << " data_out => tag_out, data_in => tag_in, " << endl
-	    << " clk => clk, reset => reset); -- }" << endl;
-      
-      ofile << "-- the control path" << endl;
-      
-      // the always true signal, tied to true..
-      ofile << ((vcCPElement*)(this->_control_path))->Get_Always_True_Symbol() << " <= true; " << endl;
-      
-      if(vcSystem::_opt_flag && !this->_pipeline_flag)
-	this->_control_path->Print_VHDL_Optimized(ofile);
-      else
-	this->_control_path->Print_VHDL(ofile);
-      
-      ofile << endl << endl;
-    }
+  ofile << "-- the control path --------------------------------------------------" << endl;
+  
+  // the always true signal, tied to true..
+  ofile << ((vcCPElement*)(this->_control_path))->Get_Always_True_Symbol() << " <= true; " << endl;
+  ofile << "default_zero_sig <= '0';" << endl;
+  
+  if(vcSystem::_opt_flag)
+    this->_control_path->Print_VHDL_Optimized(ofile);
+  else
+    this->_control_path->Print_VHDL(ofile);
+  
+  ofile << endl << endl;
 
+  assert(this->_data_path != NULL);
   ofile << "-- the data path" << endl;
-  if(this->_data_path)
-    this->_data_path->Print_VHDL(ofile);
+  this->_data_path->Print_VHDL(ofile);
 
   ofile << endl;
 
@@ -724,10 +888,167 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 }
 
 
+void vcModule::Print_VHDL_Tag_Logic(ostream& ofile)
+{
+	int ilock_depth = (this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1);
+  	int rxb_depth = (this->_pipeline_flag ? 2 : 1);
+	int ub_depth =  (this->_pipeline_flag ? 2 : 1);
+
+	ofile << "tag_push_req <= start_req_sig;" << endl;
+	ofile << "tag_pop_req  <= fin_req_sig;"   << endl;
+
+	ofile << "-- write tag to unload-buffer. " << endl;
+	ofile << "tagUB: UnloadBuffer -- { " << endl
+		<< " generic map(name => \"tag-unload-buffer\", -- {" << endl
+		<< " buffer_size => " << ub_depth << "," <<  endl 
+		<< " data_width => tag_length) -- } " << endl;
+	ofile << " port map(write_req => " << "tag_push_req, -- { " << endl
+		<< " write_ack => "  << "tag_push_ack, " << endl
+		<< " write_data => " << "tag_in," << endl
+		<< " unload_req => "   << "tag_unload_req_symbol, " << endl
+		<< " unload_ack => "   << "tag_unload_ack_symbol, " << endl
+		<< " read_data => " << "tag_ub_out," << endl
+		<< " clk => clk, reset => reset); -- }}" << endl;
+
+
+        ofile << "-- tag unload-buffer control logic. " << endl;
+	vector<string> preds;
+	vector<int>    pred_markings;
+	vector<int>    pred_capacities;
+	vector<int>    pred_delays;
+
+
+	preds.push_back("tag_unload_ack_symbol");
+	pred_markings.push_back(1);
+	pred_capacities.push_back(1);
+	pred_delays.push_back(0);  // revisit later..
+
+	preds.push_back("input_sample_reenable");
+	pred_markings.push_back((this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1));
+	pred_capacities.push_back((this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1));
+	pred_delays.push_back(1);  // revisit later..
+
+	string joined_symbol = "tag_unload_req_symbol";
+	Print_VHDL_Join("tag_unload_req_symbol_join", 
+			preds,
+			pred_markings,
+			pred_capacities, 
+			pred_delays, 
+			joined_symbol,
+			ofile);
+
+
+	ofile << "-- interlock buffer for TAG.. to provide required buffering." << endl;
+        ofile << "tagIlock: InterlockBuffer -- { " << endl
+		<< " generic map(name => \"tag-interlock-buffer\", -- {" << endl
+		<< " buffer_size => " << ilock_depth << "," << endl
+		<< " in_data_width => tag_length," << endl
+		<< " out_data_width => tag_length) -- }" << endl;
+	ofile << " port map(write_req => " << "tag_ilock_write_req_symbol, -- {" << endl
+		<< " write_ack => "  << "tag_ilock_write_ack_symbol, " << endl
+		<< " write_data => tag_ub_out," << endl
+		<< " read_req => "   << "tag_ilock_read_req_symbol, " << endl
+		<< " read_ack => "   << "tag_ilock_read_ack_symbol, " << endl
+		<< " read_data => tag_ilock_out, " << endl
+		<< " clk => clk, reset => reset); -- }}" << endl;
+
+	ofile << "-- tag ilock-buffer control logic. " << endl;
+        preds.clear(); pred_capacities.clear(); pred_markings.clear(); pred_delays.clear();
+	string cp_entry_symbol  = this->_control_path->Get_Start_Symbol();
+
+        preds.push_back(cp_entry_symbol);
+	pred_capacities.push_back(this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1);
+	pred_markings.push_back(0);
+	pred_delays.push_back(0); // revisit later..
+
+        preds.push_back("tag_ilock_write_ack_symbol");
+	pred_capacities.push_back(1);
+	pred_markings.push_back(1);
+	pred_delays.push_back(1); // revisit later..
+
+	joined_symbol =  "tag_ilock_write_req_symbol";
+	Print_VHDL_Join(joined_symbol + "_join", 
+			preds,
+			pred_markings,
+			pred_capacities, 
+			pred_delays, 
+			joined_symbol,
+			ofile);
+
+        preds.clear(); pred_capacities.clear(); pred_markings.clear(); pred_delays.clear();
+
+        preds.push_back(cp_entry_symbol);
+	pred_capacities.push_back(this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1);
+	pred_markings.push_back(0);
+	pred_delays.push_back(0); // revisit later..
+
+        preds.push_back("tag_ilock_read_ack_symbol");
+	pred_capacities.push_back(1);
+	pred_markings.push_back(1);
+	pred_delays.push_back(0); // revisit later..
+
+        preds.push_back("tag_write_ack_symbol");
+	pred_capacities.push_back(1);
+	pred_markings.push_back(1);
+	pred_delays.push_back(0); // revisit later..
+
+	joined_symbol =  "tag_ilock_read_req_symbol";
+	Print_VHDL_Join(joined_symbol + "_join", 
+			preds,
+			pred_markings,
+			pred_capacities, 
+			pred_delays, 
+			joined_symbol,
+			ofile);
+
+	ofile << " -- read tag from receiver-buffer. " << endl;
+	ofile << "tagRxb: ReceiveBuffer -- {" << endl
+		<< " generic map(name => \"tag-receive-buffer\", -- {" << endl
+		<< " buffer_size => " << rxb_depth << "," << endl
+		<< " data_width => tag_length," << endl
+		<< " kill_counter_range => 1) -- }" << endl;
+	ofile << " port map(write_req => " << "tag_write_req_symbol, -- {" << endl
+		<< " write_ack => "  << "tag_write_ack_symbol, " << endl
+		<< " write_data => tag_ilock_out," << endl
+		<< " read_req => "   << "tag_pop_req, " << endl
+		<< " read_ack => "   << "tag_pop_ack, " << endl
+		<< " read_data => tag_out, " << endl
+		<< " kill => default_zero_sig," << endl
+		<< " clk => clk, reset => reset); -- }}" << endl;
+
+	ofile << "-- tag receive-buffer control logic. " << endl;
+        preds.clear(); pred_capacities.clear(); pred_markings.clear(); pred_delays.clear();
+	string cp_exit_symbol  = this->_control_path->Get_Exit_Symbol();
+	preds.push_back(cp_exit_symbol);
+	pred_capacities.push_back(this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1);
+	pred_markings.push_back(0);
+	pred_delays.push_back(0); // revisit later..
+
+	preds.push_back("tag_ilock_read_ack_symbol");
+	pred_markings.push_back(0);
+	pred_capacities.push_back(this->_pipeline_flag ? this->Get_Pipeline_Depth() : 1);
+	pred_delays.push_back(0);  // revisit later..
+
+	preds.push_back("tag_write_ack_symbol");
+	pred_markings.push_back(1);
+	pred_capacities.push_back(1);
+	pred_delays.push_back(0);  // revisit later..
+
+
+	joined_symbol =  "tag_write_req_symbol";
+	Print_VHDL_Join("tag_write_req_symbol_join", 
+			preds,
+			pred_markings,
+			pred_capacities, 
+			pred_delays, 
+			joined_symbol,
+			ofile);
+
+}
 
 string vcModule::Get_VHDL_Call_Interface_Port_Name(string pid)
 {
-  return(this->Get_VHDL_Id() + "_" + pid);
+	return(this->Get_VHDL_Id() + "_" + pid);
 }
 
 // given a module, and type of operation,
@@ -738,82 +1059,82 @@ string vcModule::Get_VHDL_Call_Interface_Port_Name(string pid)
 // algorithm: find the position of idx (from the left)
 // Then, calculate the section using the word-size.
 string vcModule::Get_VHDL_Call_Interface_Port_Section(vcModule* m,
-						      string call_or_return,
-						      string pid,
-						      int idx)
+		string call_or_return,
+		string pid,
+		int idx)
 {
-  map<vcModule*,vector<int> >::iterator iter;
-  iter = _call_group_map.find(m);
-  assert(iter != _call_group_map.end());
+	map<vcModule*,vector<int> >::iterator iter;
+	iter = _call_group_map.find(m);
+	assert(iter != _call_group_map.end());
 
 
-  int down_index;
-  // left to right 
-  for(int index = 0; index < (*iter).second.size(); index++)
-    {
-      down_index = ((*iter).second.size()-1) - index; // position from left.
-      if(idx == (*iter).second[index])
-	break;
-      if(index == (*iter).second.size() - 1)
-	assert(0);
-    }
+	int down_index;
+	// left to right 
+	for(int index = 0; index < (*iter).second.size(); index++)
+	{
+		down_index = ((*iter).second.size()-1) - index; // position from left.
+		if(idx == (*iter).second[index])
+			break;
+		if(index == (*iter).second.size() - 1)
+			assert(0);
+	}
 
-  if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))
-    return(this->Get_VHDL_Id() + "_" + pid + "(" + IntToStr(down_index) + ")");
-  else if(pid.find("data") != string::npos)
-    {
-      int word_size;
-      if(call_or_return == "call")
-	word_size = this->Get_In_Arg_Width();
-      else
-	word_size = this->Get_Out_Arg_Width();
+	if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))
+		return(this->Get_VHDL_Id() + "_" + pid + "(" + IntToStr(down_index) + ")");
+	else if(pid.find("data") != string::npos)
+	{
+		int word_size;
+		if(call_or_return == "call")
+			word_size = this->Get_In_Arg_Width();
+		else
+			word_size = this->Get_Out_Arg_Width();
 
-      return(this->Get_VHDL_Id() + "_" + pid + "(" 
-	     + IntToStr(((down_index+1)*word_size)-1) + " downto "
-	     + IntToStr(down_index*word_size) + ")");
-    }
-  else if(pid.find("tag") != string::npos)
-    return(this->Get_VHDL_Id() + "_" + pid + "(" 
-	   + IntToStr(((down_index+1)*this->Get_Caller_Tag_Length())-1) + " downto "
-	   + IntToStr(down_index*this->Get_Caller_Tag_Length()) + ")");
-  else
-    assert(0); // fatal
+		return(this->Get_VHDL_Id() + "_" + pid + "(" 
+				+ IntToStr(((down_index+1)*word_size)-1) + " downto "
+				+ IntToStr(down_index*word_size) + ")");
+	}
+	else if(pid.find("tag") != string::npos)
+		return(this->Get_VHDL_Id() + "_" + pid + "(" 
+				+ IntToStr(((down_index+1)*this->Get_Caller_Tag_Length())-1) + " downto "
+				+ IntToStr(down_index*this->Get_Caller_Tag_Length()) + ")");
+	else
+		assert(0); // fatal
 }
 
 
 void vcModule::Print_VHDL_In_Arg_Disconcatenation(ostream& ofile)
 {
-  string prefix = this->Get_VHDL_Id() + "_";
+	string prefix = this->Get_VHDL_Id() + "_";
 
-  int lindex = this->Get_In_Arg_Width() - 1;
-  for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
-    {
-      vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
-      assert(w != NULL);
-      
-      ofile << prefix << w->Get_VHDL_Id() << " <= " 
-	    << prefix << "in_args(" << lindex << " downto " << ((lindex+1) - w->Get_Size()) << ");" << endl;
-      lindex = lindex - w->Get_Size();
-    }
+	int lindex = this->Get_In_Arg_Width() - 1;
+	for(int idx = 0; idx < _ordered_input_arguments.size(); idx++)
+	{
+		vcWire* w = _input_arguments[_ordered_input_arguments[idx]];
+		assert(w != NULL);
+
+		ofile << prefix << w->Get_VHDL_Id() << " <= " 
+			<< prefix << "in_args(" << lindex << " downto " << ((lindex+1) - w->Get_Size()) << ");" << endl;
+		lindex = lindex - w->Get_Size();
+	}
 }
 
 void vcModule::Print_VHDL_Out_Arg_Concatenation(ostream& ofile)
 {
-  string prefix = this->Get_VHDL_Id() + "_";
+	string prefix = this->Get_VHDL_Id() + "_";
 
-  if(this->Get_Out_Arg_Width() > 0)
-    {
-      ofile << prefix << "out_args <= ";
-      for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
+	if(this->Get_Out_Arg_Width() > 0)
 	{
-	  if(idx > 0)
-	    ofile << "& ";
-	  
-	  vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
-	  assert(w != NULL);
-	  
-	  ofile << prefix << w->Get_VHDL_Id() << " ";
-	}
+		ofile << prefix << "out_args <= ";
+		for(int idx = 0; idx < _ordered_output_arguments.size(); idx++)
+		{
+			if(idx > 0)
+				ofile << "& ";
+
+			vcWire* w = _output_arguments[_ordered_output_arguments[idx]];
+			assert(w != NULL);
+
+			ofile << prefix << w->Get_VHDL_Id() << " ";
+		}
       ofile << ";" << endl;
     }
 }

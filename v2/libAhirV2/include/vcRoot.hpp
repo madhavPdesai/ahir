@@ -22,6 +22,7 @@ enum vcLexerKeytags
     __SERIESBLOCK   	,
     __PARALLELBLOCK 	,
     __FORKBLOCK     	,
+    __PIPELINEDFORKBLOCK,
     __BRANCHBLOCK   	,
     __LOOPBLOCK,
     __OF            	,
@@ -150,11 +151,12 @@ static string vcLexerKeywords[] =
       "$module"		,
       "$foreign"		,
       "$pipeline"		,
-      ";;"		, // series
-      "||"		, // parallel
-      "::"		, // fork-join
-      "<>"		, // branch-merge
-      "<o>"		, // simple-loop
+      ";;"		, // series block
+      "||"		, // parallel block
+      "::"		, // fork-join block
+      ":o:"		, // pipelined-fork-join block
+      "<>"		, // branch-merge block
+      "<o>"		, // simple-loop block
       "$of"		,
       "&->"		,
       "<-&"		,
@@ -340,5 +342,20 @@ struct vcRoot_Compare:public binary_function
 // misc. functions.
 int max(vector<int>& vec);
 int min(vector<int>& vec);
+
+
+void Print_VHDL_Join(string join_name,
+		     vector<string>& preds,
+		     vector<int>& pred_markings,
+		     vector<int>& pred_capacities,
+		     vector<int>& pred_delays,
+		     string joined_symbol,
+		     ostream& ofile);
+
+void Print_VHDL_Simple_Join(string join_name, 
+			    vector<string>& pred_symbols, 
+			    string joined_symbol,
+			    int delay,
+			    ostream& ofile);
 
 #endif // vcRoot

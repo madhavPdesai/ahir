@@ -5,6 +5,7 @@ class vcRoot;
 class vcControlPath;
 class vcCompatibilityLabel;
 class vcCPPipelinedLoopBody;
+class vcCPPipelinedForkBlock;
 class vcCPElement: public vcRoot
 {
 
@@ -33,8 +34,11 @@ protected:
   bool _is_bound_as_output_from_region;
  
   bool _has_null_successor;
+  bool _has_null_predecessor;
 
-  vcCPPipelinedLoopBody* _pipeline_parent;
+  bool _is_left_open;
+
+  vcCPPipelinedForkBlock* _pipeline_parent;
 public:
 
   vcCPElement(vcCPElement* parent, string id);
@@ -59,6 +63,8 @@ public:
   virtual bool Is_Block() { return (false); }
   virtual bool Is_Control_Path() { return (false); }
 
+  void Set_Is_Left_Open(bool v) {this->_is_left_open = v;}
+  bool Get_Is_Left_Open() {return(this->_is_left_open);}
 
   void Get_Explicit_Predecessors(vector<vcCPElement*>& epreds);
   void Get_Explicit_Successors(vector<vcCPElement*>& epreds);
@@ -213,6 +219,9 @@ public:
   void Set_Has_Null_Successor(bool v) {_has_null_successor = v;}
   bool Get_Has_Null_Successor() {return(_has_null_successor);}
 
+  void Set_Has_Null_Predecessor(bool v) {_has_null_predecessor = v;}
+  bool Get_Has_Null_Predecessor() {return(_has_null_predecessor);}
+
   // return true if some ancestral parent is a pipelined loop body..
   void  Set_Pipeline_Parent()
   {
@@ -220,17 +229,19 @@ public:
 	vcCPElement* p = this->Get_Parent();
 	while(p != NULL)
 	{
-		if(p->Is("vcCPPipelinedLoopBody"))
+		if(p->Is("vcCPPipelinedLoopBody") || p->Is("vcCPPipelinedForkBlock"))
 		{
-			this->_pipeline_parent = (vcCPPipelinedLoopBody*) p;
+			this->_pipeline_parent = (vcCPPipelinedForkBlock*) p;
 			break;
 		}
 		p = p->Get_Parent();
 	}
   }
 
-  vcCPPipelinedLoopBody* Get_Pipeline_Parent() {return(_pipeline_parent);}
+  vcCPPipelinedForkBlock* Get_Pipeline_Parent() {return(_pipeline_parent);}
 
+  virtual void Print_VHDL_Bindings(vcControlPath* cp, ostream& ofile) {assert(0);}
+  virtual bool Is_Pipelined() {return(false);}
 };
 
 
@@ -303,7 +314,6 @@ class vcTransition: public vcCPElement
   bool _is_output;
   bool _is_dead;
   bool _is_tied_high;
-  bool _is_left_open;
   bool _is_entry_transition;
   bool _is_linked_to_non_local_dpe;
   bool _is_delay_element;
@@ -320,8 +330,6 @@ public:
   void Set_Is_Dead(bool v) {this->_is_dead = v;}
   bool Get_Is_Dead() {return(this->_is_dead);}
 
-  void Set_Is_Left_Open(bool v) {this->_is_left_open = v;}
-  bool Get_Is_Left_Open() {return(this->_is_left_open);}
 
   void Set_Is_Delay_Element(bool v) {this->_is_delay_element = v;}
   bool Get_Is_Delay_Element() {return(this->_is_delay_element);}
@@ -364,9 +372,11 @@ class vcPlace: public vcCPElement
 
 public:
   vcPlace(vcCPElement* parent, string id, unsigned int init_marking);
+
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("vcPlace");}
   virtual bool Is_Place() {return(true);}
+
 
   virtual void Print_VHDL(ostream& ofile);
   virtual void Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp);
@@ -383,6 +393,9 @@ class vcCPBlock: public vcCPElement
 {
 
 protected:
+  map<vcPlace*, vcTransition*> _input_bindings;
+  map<vcPlace*, vcTransition*> _output_bindings;
+
   map<string, vcCPElement*> _element_map;
   vector<vcCPElement*> _elements;
 
@@ -424,6 +437,7 @@ public:
   virtual void Print_VHDL_Start_Symbol_Assignment(ostream& ofile);
   virtual void Print_VHDL_Exit_Symbol_Assignment(ostream& ofile);
   virtual void Print_VHDL_Signal_Declarations(ostream& ofile);
+  virtual void Print_VHDL_Export_Cleanup(ostream& ofile);
 
   void Print_Missing_Elements(set<vcCPElement*>& visited_set); // print to cerr
   virtual void Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp);
@@ -457,6 +471,9 @@ public:
   virtual bool Relaxed_Entry_Reachability_Checking() {return(false);}
   virtual bool Relaxed_Exit_Reachability_Checking() {return(false);}
 
+  virtual void Bind(string place_name, string region_name, string transition_name, bool input_binding);
+  virtual void Print_VHDL_Bindings(vcControlPath* cp, ostream& ofile);
+  void Update_Binding_Predecessor_Successor_Links();
 };
 
 class vcCPSeriesBlock: public vcCPBlock
@@ -633,31 +650,29 @@ class vcLoopTerminator: public vcCPElement
 class vcCPPipelinedLoopBody;
 class vcCPSimpleLoopBlock: public vcCPBranchBlock
 {
-  map<vcPlace*, vcTransition*> _input_bindings;
-  map<vcPlace*, vcTransition*> _output_bindings;
 
   vcLoopTerminator* _terminator;
-  int _depth;
-  int _buffering;
-  bool _full_rate_flag;
+  int  _pipeline_depth;
+  int  _pipeline_buffering;
+  bool _pipeline_full_rate_flag;
 
 public:
   vcCPSimpleLoopBlock(vcCPBlock* parent, string id);
   virtual string Kind() {return("vcCPSimpleLoopBlock");}
 
-  void Set_Depth(int d) {_depth = d;}
-  int  Get_Depth() {return(_depth);}
+  void Set_Pipeline_Depth(int d) {_pipeline_depth = d;}
+  int  Get_Pipeline_Depth() {return(_pipeline_depth);}
 
-  void Set_Buffering(int d) {_buffering = d;}
-  int  Get_Buffering() {return(_buffering);}
+  void Set_Pipeline_Buffering(int d) {_pipeline_buffering = d;}
+  int  Get_Pipeline_Buffering() {return(_pipeline_buffering);}
 
-  void Set_Full_Rate_Flag(bool d) {_full_rate_flag = d;}
-  int  Get_Full_Rate_Flag() {return(_full_rate_flag);}
+  void Set_Pipeline_Full_Rate_Flag(bool d) {_pipeline_full_rate_flag = d;}
+  int  Get_Pipeline_Full_Rate_Flag() {return(_pipeline_full_rate_flag);}
 
   virtual void Print(ostream& ofile);
   virtual void Print_VHDL(ostream& ofile);
   
-  void Print_VHDL_Loop_Body_Bindings(vcControlPath* cp, ostream& ofile);
+
   void Print_VHDL_Terminator(vcControlPath* cp, ostream& ofile);
   vcCPPipelinedLoopBody* Get_Loop_Body();
 
@@ -667,7 +682,6 @@ public:
 
 
   virtual void Update_Predecessor_Successor_Links();
-  void Bind(string place_name, string region_name, string transition_name, bool input_binding);
   void Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back, string exit_from_loop);
 
 
@@ -746,16 +760,54 @@ public:
 
 };
 
-class vcCPPipelinedLoopBody: public vcCPForkBlock
+
+class vcCPPipelinedForkBlock: public vcCPForkBlock
 {
+protected:
   map<vcTransition*, set<vcCPElement*>, vcRoot_Compare > _marked_join_map;
   set<vcTransition*> _exported_inputs;
   set<vcTransition*> _exported_outputs;
 
+  int _max_iterations_in_flight;
+public: 
+
+  virtual string Kind() {return("vcCPPipelinedForkBlock");}
+  vcCPPipelinedForkBlock(vcCPBlock* parent, string id);
+
+  virtual void Print(ostream& ofile);
+  virtual void Print_VHDL(ostream& ofile);
+
+public:
+  virtual void Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec, vector<int>& join_markings);
+  virtual void Add_Marked_Join_Point(vcTransition* jp, int join_marking, vcCPElement* jre);
+
+  virtual void Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* m) ;
+
+  virtual void Eliminate_Redundant_Dependencies();
+  virtual void Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map);
+  virtual void Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map);
+
+  void Add_Exported_Input(string internal_id);
+  void Add_Exported_Output(string internal_id);
+  void Add_Export(string internal_id, bool input_flag);
+
+  void Set_Max_Iterations_In_Flight(int N) {_max_iterations_in_flight = N;}
+  int Get_Max_Iterations_In_Flight() {return(_max_iterations_in_flight);}
+
+  virtual bool Relaxed_Entry_Reachability_Checking() {return(true);}
+  virtual bool Relaxed_Exit_Reachability_Checking() {return(true);}
+
+  virtual bool Is_Pipelined() {return(true);}
+  virtual void Print_Forks_And_Joins(ostream& ofile);
+  virtual void Print_Exports(ostream& ofile);
+};
+
+class vcCPPipelinedLoopBody: public vcCPPipelinedForkBlock
+{
+
   vector<vcPhiSequencer*> _phi_sequencers;
   vector<vcTransitionMerge*> _transition_merges;
 
-  int _max_iterations_in_flight;
 public:
 
   virtual string Kind() {return("vcCPPipelinedLoopBody");}
@@ -770,22 +822,7 @@ public:
   void Print_Phi_Sequencer_Dot_Entries(vcControlPath* cp, ostream& ofile);
   void Print_Transition_Merge_Dot_Entries(vcControlPath* cp, ostream& ofile);
 
-  void Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec, vector<int>& join_markings);
-  void Add_Marked_Join_Point(vcTransition* jp, int join_marking, vcCPElement* jre);
-
-  virtual bool Check_Structure(); // check that the block is well-formed.
   virtual void Update_Predecessor_Successor_Links();
-
-  virtual void Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* m) ;
-
-  virtual void Eliminate_Redundant_Dependencies();
-
-  virtual void Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map);
-  virtual void Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map);
-
-  void Add_Exported_Input(string internal_id);
-  void Add_Exported_Output(string internal_id);
-  void Add_Export(string internal_id, bool input_flag);
 
   void Add_Phi_Sequencer(string& phi_id, vector<string>& selects, vector<string>& enables, string& ack, vector<string>& reqs, string& done);
   void Add_Transition_Merge(string& tm_id, vector<string>& in_transition, string& out_transition);
@@ -797,14 +834,12 @@ public:
   {
 	return(this->Get_Number_Of_Elements()+2 - (3 + (4*_phi_sequencers.size())));
   }
-  void Set_Max_Iterations_In_Flight(int N) {_max_iterations_in_flight = N;}
-  int Get_Max_Iterations_In_Flight() {return(_max_iterations_in_flight);}
   virtual bool Relaxed_Entry_Reachability_Checking() {return(true);}
   virtual bool Relaxed_Exit_Reachability_Checking() {return(true);}
 };
 
 
-class vcCPPipelinedLoopBody;
+class vcCPPipelinedForkBlock;
 class vcControlPath;
 class vcCPElementGroup: public vcRoot
 {
@@ -831,7 +866,7 @@ class vcCPElementGroup: public vcRoot
   bool _is_merge;
   bool _is_branch;
   bool _is_delay_element;
-
+  bool _is_left_open;
 
   bool _is_cp_entry;
 
@@ -841,13 +876,14 @@ class vcCPElementGroup: public vcRoot
   bool _is_bound_as_input_to_region;
   bool _is_bound_as_output_from_region;
 
+
   vcTransition* _input_transition;
   vector<vcTransition*> _output_transitions;
 
   // if this field is not null, then all
   // elements in the group must belong to
   // the same pipelined loop body.
-  vcCPPipelinedLoopBody* _pipeline_parent;
+  vcCPPipelinedForkBlock* _pipeline_parent;
 
   vcCPElement* _associated_cp_function;
   vcCPElement* _associated_cp_region;
@@ -881,6 +917,7 @@ public:
     _associated_cp_function = NULL;
     _associated_cp_region = NULL;
     _bypass_flag = false;
+    _is_left_open = false;
   }
 
   void Set_Group_Index(int64_t idx)
@@ -971,6 +1008,12 @@ public:
 
 class vcControlPath: public vcCPSeriesBlock
 {
+
+  bool _is_pipelined;
+  int  _pipeline_depth;
+  int  _pipeline_buffering;
+  bool _pipeline_full_rate_flag;
+
 protected:
   set<vcCompatibilityLabel*> _compatibility_label_set;
   vector<vcCPElement*> _bfs_ordered_labels;
@@ -997,6 +1040,18 @@ public:
   vcPlace* Find_Place(vector<string>& hier_ref);
   virtual void Print(ostream& ofile);
 
+  void Set_Is_Pipelined(bool v) {_is_pipelined = v;}
+  bool Get_Is_Pipelined() {return(_is_pipelined);}
+
+  void Set_Pipeline_Depth(int d) {_pipeline_depth = d;}
+  int  Get_Pipeline_Depth() {return(_pipeline_depth);}
+
+  void Set_Pipeline_Buffering(int d) {_pipeline_buffering = d;}
+  int  Get_Pipeline_Buffering() {return(_pipeline_buffering);}
+
+  void Set_Pipeline_Full_Rate_Flag(bool d) {_pipeline_full_rate_flag = d;}
+  int  Get_Pipeline_Full_Rate_Flag() {return(_pipeline_full_rate_flag);}
+
   void Add_Simple_Loop_Block(vcCPSimpleLoopBlock* slb) {_simple_loop_blocks.insert(slb);}
 
   vcCPElementGroup* Make_New_Group();
@@ -1021,7 +1076,6 @@ public:
   vcCompatibilityLabel* Make_Compatibility_Label(string id);
   void Delete_Compatibility_Label(vcCompatibilityLabel* nl);
 
-  virtual bool Check_Structure();
 
   virtual void Print_Structure(ostream& ofile) {this->vcCPSeriesBlock::Print_Structure(ofile);}
   void Print_Compatibility_Labels(ostream& ofile);
@@ -1066,14 +1120,14 @@ public:
     assert(0);
   }
 
-  virtual string Get_Exit_Symbol() 
-  {
-    return("fin_ack_symbol");
-  }
-
   void Update_Group_Bypass_Flags();
 
+  virtual void Print_VHDL_Export_Cleanup(ostream& ofile); // ugly fixups..
   virtual void Print_Reduced_Control_Path_As_Dot_File(ostream& ofile);
+
+  virtual void Update_Predecessor_Successor_Links();
+  virtual bool Check_Structure();
+  void Print_VHDL_Export_Cleanup_Optimized(ostream& ofile);
 };
 
 
@@ -1092,6 +1146,7 @@ public:
   {
     assert(0);
   }
+
 };
 
 struct vcCompatibilityLabel_Compare:public binary_function

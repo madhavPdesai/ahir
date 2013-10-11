@@ -260,7 +260,9 @@ vcCPElement::vcCPElement(vcCPElement* parent, string id):vcRoot(id)
   _is_bound_as_output_from_region = false;
 
   _has_null_successor = false;
+  _has_null_predecessor = false;
 
+  _is_left_open = false;
   this->Set_Pipeline_Parent();
 }
 
@@ -622,6 +624,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
 	assert(this->Get_Number_Of_Predecessors() == 1);
 	assert(this->Get_Number_Of_Marked_Predecessors() == 0);
 
+        ofile << "// Delay element." << endl;
 	vcCPElement* pred = this->Get_Predecessor(0);
 	ofile << this->Get_Exit_Symbol() << "_delay: control_delay_element "
 		<< " generic map(delay_value => 1) " 
@@ -658,13 +661,16 @@ void vcTransition::Print_VHDL(ostream& ofile)
   //  is a pipelined loop body, then we treat the transition as a
   //  join.
   //
-  bool parent_is_pipelined_loop_body = (this->Get_Parent()->Is("vcCPPipelinedLoopBody"));
+  bool parent_is_pipelined_loop_body = this->Get_Parent()->Is_Pipelined();
   int max_iterations_in_flight = 1;
   if(parent_is_pipelined_loop_body) 
   {
-	max_iterations_in_flight = ((vcCPPipelinedLoopBody*) (this->Get_Parent()))->Get_Max_Iterations_In_Flight();
+	max_iterations_in_flight = ((vcCPPipelinedForkBlock*) (this->Get_Parent()))->Get_Max_Iterations_In_Flight();
   }
 
+
+  // 
+  bool has_null_predecessor = this->Get_Has_Null_Predecessor();
 
   // It is a true join if
   //   it has more than one explicit predecessor.
@@ -675,7 +681,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
   //   predecessor.
   bool is_true_join = (parent_is_pipelined_loop_body ? 
 			((explicit_preds.size() > 1) || 
-				((explicit_preds.size() > 0) && (_marked_predecessors.size() > 0))) :
+				((has_null_predecessor || (explicit_preds.size() > 0)) && (_marked_predecessors.size() > 0))) :
 			(explicit_preds.size() > 1));
 
   if(this->Get_Is_Input())
@@ -686,56 +692,86 @@ void vcTransition::Print_VHDL(ostream& ofile)
   }
   else if(is_true_join)
     {
-      bool marked_join_flag = false;
-      block_was_used = true;
+	    if(explicit_preds.size() > 0)
+	    {
+		    bool marked_join_flag = false;
+		    block_was_used = true;
 
-      ofile << this->Get_VHDL_Id() << "_block : Block -- non-trivial join transition " << this->Get_Hierarchical_Id() << " {" <<  endl;
+		    ofile << this->Get_VHDL_Id() << "_block : Block -- non-trivial join transition " << this->Get_Hierarchical_Id() << " {" <<  endl;
 
-      ofile << "signal " <<  this->Get_VHDL_Id() << "_predecessors: BooleanArray(" 
-	    << explicit_preds.size()-1 << " downto 0);" << endl;
-      if(this->Get_Number_Of_Marked_Predecessors() > 0)
-      {
-	marked_join_flag = true;
-        ofile << "signal " <<  this->Get_VHDL_Id() << "_marked_predecessors: BooleanArray(" 
-	    << this->Get_Number_Of_Marked_Predecessors()-1 << " downto 0);" << endl;
+		    ofile << "signal " <<  this->Get_VHDL_Id() << "_predecessors: BooleanArray(" 
+			    << explicit_preds.size()-1 << " downto 0);" << endl;
+		    if(this->Get_Number_Of_Marked_Predecessors() > 0)
+		    {
+			    marked_join_flag = true;
+			    ofile << "signal " <<  this->Get_VHDL_Id() << "_marked_predecessors: BooleanArray(" 
+				    << this->Get_Number_Of_Marked_Predecessors()-1 << " downto 0);" << endl;
 
-	string marking_string = this->Generate_Marked_Join_Bypass_String();
-	ofile << marking_string << endl;
-      }
-      ofile << "-- }" << endl << "begin -- {" << endl;
+			    string marking_string = this->Generate_Marked_Join_Bypass_String();
+			    ofile << marking_string << endl;
+		    }
+		    ofile << "-- }" << endl << "begin -- {" << endl;
 
-      for(int idx = 0; idx < explicit_preds.size(); idx++)
-	{
-	  	vcCPElement* pred = explicit_preds[idx];
-	  	ofile << this->Get_VHDL_Id() << "_predecessors(" << idx << ") <= "
-			<< pred->Get_Exit_Symbol() << ";" << endl;
-	}
+		    for(int idx = 0; idx < explicit_preds.size(); idx++)
+		    {
+			    vcCPElement* pred = explicit_preds[idx];
+			    ofile << this->Get_VHDL_Id() << "_predecessors(" << idx << ") <= "
+				    << pred->Get_Exit_Symbol() << ";" << endl;
+		    }
 
-      if(marked_join_flag)
-      {
-         for(int idx = 0; idx < this->Get_Number_Of_Marked_Predecessors(); idx++)
-	   {
-	     vcCPElement* pred = this->Get_Marked_Predecessors()[idx];
-	     ofile << this->Get_VHDL_Id() << "_marked_predecessors(" << idx << ") <= "
-		   << pred->Get_Exit_Symbol() << ";" << endl;
-	   }
-      }
+		    if(marked_join_flag)
+		    {
+			    for(int idx = 0; idx < this->Get_Number_Of_Marked_Predecessors(); idx++)
+			    {
+				    vcCPElement* pred = this->Get_Marked_Predecessors()[idx];
+				    ofile << this->Get_VHDL_Id() << "_marked_predecessors(" << idx << ") <= "
+					    << pred->Get_Exit_Symbol() << ";" << endl;
+			    }
+		    }
 
-      string comp_id = "join";
-      if(marked_join_flag)
-	      comp_id = "marked_join";
-      ofile << this->Get_VHDL_Id() << "_join:" << comp_id << " -- {" << endl
-	      << "generic map(place_capacity => " << max_iterations_in_flight << "," << endl;
-      if(marked_join_flag)	
-	      ofile << "marked_predecessor_bypass => markedPredBypass," << endl;
-      ofile	<< "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl
-	      << "port map( -- {"
-	      << "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl;
-      if(marked_join_flag)
-	      ofile << "marked_preds => " << this->Get_VHDL_Id() <<  "_marked_predecessors," << endl;
-      ofile << "symbol_out => " << this->Get_Exit_Symbol() << "," << endl
-	      << "clk => clk," << endl
-	      << "reset => reset); -- }}" << endl;
+		    string comp_id = "join";
+		    if(marked_join_flag)
+			    comp_id = "marked_join";
+		    ofile << this->Get_VHDL_Id() << "_join:" << comp_id << " -- {" << endl
+			    << "generic map(place_capacity => " << max_iterations_in_flight << "," << endl;
+		    if(marked_join_flag)	
+			    ofile << "marked_predecessor_bypass => markedPredBypass," << endl;
+		    ofile	<< "name => \" " << this->Get_VHDL_Id() << "_join\")" << endl
+			    << "port map( -- {"
+			    << "preds => " << this->Get_VHDL_Id() <<  "_predecessors," << endl;
+		    if(marked_join_flag)
+			    ofile << "marked_preds => " << this->Get_VHDL_Id() <<  "_marked_predecessors," << endl;
+		    ofile << "symbol_out => " << this->Get_Exit_Symbol() << "," << endl
+			    << "clk => clk," << endl
+			    << "reset => reset); -- }}" << endl;
+	    }
+	    else
+	    {
+		    assert(this->Get_Number_Of_Marked_Predecessors() > 0);
+
+		    string join_name = this->Get_VHDL_Id() + "_join";
+		    vector<string> preds; 
+		    vector<int> pred_markings;
+		    vector<int> pred_capacities;
+		    vector<int> pred_delays;
+		    string joined_symbol = this->Get_Exit_Symbol();
+			    
+		    for(int idx = 0; idx < this->Get_Number_Of_Marked_Predecessors(); idx++)
+		    {
+			    vcCPElement* pred = this->Get_Marked_Predecessors()[idx];
+			    preds.push_back(pred->Get_Exit_Symbol());
+			    pred_markings.push_back(1);
+			    pred_capacities.push_back(1);
+			    pred_delays.push_back(this->Get_Marked_Predecessor_Delay(pred));
+			    Print_VHDL_Join(join_name,
+						preds,
+						pred_markings,
+						pred_capacities,
+						pred_delays,
+						joined_symbol,
+						ofile);
+		    }
+	    }
     }
   else if(explicit_preds.size() == 1)
 	  // at least one real predecessor..
@@ -752,12 +788,13 @@ void vcTransition::Print_VHDL(ostream& ofile)
 	  }
 	  else 
 	  {
-	  	int pred_count = this->Get_Number_Of_Predecessors();
-		if(pred_count == 0)
-	  	{
+		  int pred_count = this->Get_Number_Of_Predecessors();
+		  if(pred_count == 0)
+		  {
 			  vcSystem::Warning("transition " + this->Get_Hierarchical_Id() + " has no predecessor: tied to false");
+			  ofile << "-- transition " << this->Get_Hierarchical_Id() << " has no predecessor: tied to false." << endl;
 			  ofile << this->Get_Exit_Symbol() << " <= false;" << endl;	  
-	        }
+		  }
 	  }
   }
 
@@ -779,14 +816,14 @@ string vcTransition::Generate_Marked_Join_Bypass_String()
 	if(N > 0)
 	{
 		ret_string = "constant markedPredBypass: BooleanArray(" + IntToStr(N-1) + " downto 0) := (";
-	    for(int i = 0; i < N; i++)
-	    {
-		    if(i > 0)
-			    ret_string += ", ";
-		    vcCPElement* cpe = this->Get_Marked_Predecessor(i);
-		    ret_string += IntToStr(i) + " => " + ((this->Get_Marked_Predecessor_Delay(cpe) > 0) ? "false" : "true");
-	    }
-	    ret_string += ");";
+		for(int i = 0; i < N; i++)
+		{
+			if(i > 0)
+				ret_string += ", ";
+			vcCPElement* cpe = this->Get_Marked_Predecessor(i);
+			ret_string += IntToStr(i) + " => " + ((this->Get_Marked_Predecessor_Delay(cpe) > 0) ? "false" : "true");
+		}
+		ret_string += ");";
 	}
 	return(ret_string);
 }
@@ -802,387 +839,481 @@ string vcTransition::Get_CP_To_DP_Symbol()
 			if(ret_string != "")
 				ret_string += "_";
 
-	  ret_string += _dp_link[idx].first->Get_Id() + "_" + "req_" + IntToStr(req_idx);
+			ret_string += _dp_link[idx].first->Get_Id() + "_" + "req_" + IntToStr(req_idx);
+		}
 	}
-    }
-  return(To_VHDL(ret_string));
+	return(To_VHDL(ret_string));
 }
 string vcTransition::Get_DP_To_CP_Symbol()
 {
-  string ret_string;
-  for(int idx = 0; idx < _dp_link.size(); idx++)
-    {
-      int ack_idx = _dp_link[idx].first->Get_Ack_Index(this);
-      if(ack_idx >= 0)
+	string ret_string;
+	for(int idx = 0; idx < _dp_link.size(); idx++)
 	{
-	  if(ret_string != "")
-	    ret_string += "_";
+		int ack_idx = _dp_link[idx].first->Get_Ack_Index(this);
+		if(ack_idx >= 0)
+		{
+			if(ret_string != "")
+				ret_string += "_";
 
-	  ret_string += _dp_link[idx].first->Get_Id() + "_" + "ack_" + IntToStr(ack_idx);
+			ret_string += _dp_link[idx].first->Get_Id() + "_" + "ack_" + IntToStr(ack_idx);
+		}
 	}
-    }
-  return(To_VHDL(ret_string));
+	return(To_VHDL(ret_string));
 }
 
 void vcTransition::Print_DP_To_CP_VHDL_Link(ostream& ofile)
 {
 
-  string delay_str = "0";
-  ofile << this->Get_Exit_Symbol() << "_link_from_dp: control_delay_element -- { "  << endl
-	<< "generic map (delay_value => " << delay_str << ")" << endl
-	<< "port map(clk => clk, reset => reset, req => " << this->Get_DP_To_CP_Symbol()
-	<< ", ack => " << this->Get_Exit_Symbol() << "); -- } " << endl;
+	string delay_str = "0";
+	ofile << this->Get_Exit_Symbol() << "_link_from_dp: control_delay_element -- { "  << endl
+		<< "generic map (delay_value => " << delay_str << ")" << endl
+		<< "port map(clk => clk, reset => reset, req => " << this->Get_DP_To_CP_Symbol()
+		<< ", ack => " << this->Get_Exit_Symbol() << "); -- } " << endl;
 }
 
 void vcTransition::Print_CP_To_DP_VHDL_Link(ostream& ofile)
 {
 
-  //string delay_str = (vcSystem::_min_clock_period_flag ? "1" : "0");
-  // if this is a transition which connects to a "remote" operator
-  // (for example, a call/load/store/io-port, then, if the min_clock_period_flag is
-  // set, insert a cycle delay in the request.
-  string delay_str;
-  // if(vcSystem::_min_clock_period_flag)
-  //delay_str = "1";
-  //else
-  //delay_str = "0";
+	//string delay_str = (vcSystem::_min_clock_period_flag ? "1" : "0");
+	// if this is a transition which connects to a "remote" operator
+	// (for example, a call/load/store/io-port, then, if the min_clock_period_flag is
+	// set, insert a cycle delay in the request.
+	string delay_str;
+	// if(vcSystem::_min_clock_period_flag)
+	//delay_str = "1";
+	//else
+	//delay_str = "0";
 
-  delay_str = "0";
+	delay_str = "0";
 
-  ofile << this->Get_Exit_Symbol() << "_link_to_dp: control_delay_element -- { "  << endl
-	<< "generic map (delay_value => " << delay_str << ")" << endl
-	<< "port map(clk => clk, reset => reset, ack => " << this->Get_CP_To_DP_Symbol()
-	<< ", req => " << this->Get_Exit_Symbol() << "); -- } " << endl;
+	ofile << this->Get_Exit_Symbol() << "_link_to_dp: control_delay_element -- { "  << endl
+		<< "generic map (delay_value => " << delay_str << ")" << endl
+		<< "port map(clk => clk, reset => reset, ack => " << this->Get_CP_To_DP_Symbol()
+		<< ", req => " << this->Get_Exit_Symbol() << "); -- } " << endl;
 }
 
 vcPlace::vcPlace(vcCPElement* parent, string id, unsigned int init_marking):vcCPElement(parent, id)
 {
-  this->_initial_marking = init_marking;
-  this->_is_bound_as_input_to_region = false;
-  this->_is_bound_as_output_from_region = false;
+	this->_initial_marking = init_marking;
+	this->_is_bound_as_input_to_region = false;
+	this->_is_bound_as_output_from_region = false;
 }
 
 void vcPlace::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__PLACE] << " " << this->Get_Label() << endl;
+	ofile << vcLexerKeywords[__PLACE] << " " << this->Get_Label() << endl;
 }
 
 void vcPlace::Print_VHDL(ostream& ofile)
 {
 
-  if(this->_is_bound_as_output_from_region)
-  {
-  	ofile << "-- place " << this->Get_Exit_Symbol() <<  " is bound as output from region, link printed in region to which it is bound. " << endl;
-	return;
-  }
-
-  if(this->_is_bound_as_output_from_cp_function)
-  {
-  	ofile << "-- place " << this->Get_Exit_Symbol() <<  " is bound as output from cp function, link printed as part of function instance. " << endl;
-	return;
-  }
-
-  // 
-  // the place is simply optimized away to a direct connection..
-  //
-  ofile << this->Get_Exit_Symbol() <<  "  <=  ";
-  if(this->Get_Number_Of_Predecessors() > 0)
-    {
-      for(int idx = 0; idx < this->Get_Number_Of_Predecessors(); idx++)
+	if(this->_is_bound_as_output_from_region)
 	{
-	  if(idx > 0)
-	    ofile << " or ";
-	  
-	  ofile <<  this->Get_Predecessors()[idx]->Get_Exit_Symbol();
+		ofile << "-- place " << this->Get_Exit_Symbol() <<  " is bound as output from region, link printed in region to which it is bound. " << endl;
+		return;
 	}
-    }
-  else
-    {
-      vcSystem::Warning("place " + this->Get_Hierarchical_Id() + " has no predecessors... tied to false");
-      ofile << " false ";
-    }
 
-  ofile << "; -- place " << this->Get_Hierarchical_Id() << " (optimized away) " << endl;
+	if(this->_is_bound_as_output_from_cp_function)
+	{
+		ofile << "-- place " << this->Get_Exit_Symbol() <<  " is bound as output from cp function, link printed as part of function instance. " << endl;
+		return;
+	}
+
+	// 
+	// the place is simply optimized away to a direct connection..
+	//
+	if(this->Get_Number_Of_Predecessors() > 0)
+	{
+		ofile << " -- place " << this->Get_Hierarchical_Id() << " " << endl;
+		ofile << this->Get_Exit_Symbol() <<  "  <=  ";
+		for(int idx = 0; idx < this->Get_Number_Of_Predecessors(); idx++)
+		{
+			if(idx > 0)
+				ofile << " or ";
+
+			ofile <<  this->Get_Predecessors()[idx]->Get_Exit_Symbol();
+		}
+		ofile << ";" << endl;
+		return;
+	}
+	else
+	{
+		if(!this->Get_Is_Left_Open())
+		{
+			vcSystem::Warning("place " + this->Get_Hierarchical_Id() + " has no predecessors... tied to false");
+			ofile << " -- place " << this->Get_Hierarchical_Id() << " has no predecessors, will tie it false. " << endl;
+			ofile << this->Get_Exit_Symbol() <<  "  <=  ";
+			ofile << " false; " << endl;
+		}
+		else
+			ofile << " -- place " << this->Get_Hierarchical_Id() << " is left open? " << endl;
+
+		return;
+	}
 }
 
 vcCPBlock::vcCPBlock(vcCPBlock* parent, string id): vcCPElement((vcCPElement*)parent, id)
 {
-  _entry = new vcTransition(this,vcLexerKeywords[__ENTRY]);
-  this->_entry->Set_Is_Entry_Transition(true);
+	_entry = new vcTransition(this,vcLexerKeywords[__ENTRY]);
+	this->_entry->Set_Is_Entry_Transition(true);
 
-  _exit = new vcTransition(this,vcLexerKeywords[__EXIT]);
+	_exit = new vcTransition(this,vcLexerKeywords[__EXIT]);
 }
 
 void vcCPBlock::Add_CPElement(vcCPElement* cpe)
 {
-  if(cpe != NULL)
-    {
-      assert(this->_element_map.find(cpe->Get_Id()) == this->_element_map.end());
-      
-      this->_element_map[cpe->Get_Id()] = cpe;
-      this->_elements.push_back(cpe);
-    }
+	if(cpe != NULL)
+	{
+		assert(this->_element_map.find(cpe->Get_Id()) == this->_element_map.end());
+
+		this->_element_map[cpe->Get_Id()] = cpe;
+		this->_elements.push_back(cpe);
+	}
 }
 
 vcCPElement* vcCPBlock::Find_CPElement(string cname)
 {
-  vcCPElement* ret_cpe = NULL;
-  if(cname == vcLexerKeywords[__ENTRY])
-    ret_cpe = (vcCPElement*) this->_entry;
-  else if(cname == vcLexerKeywords[__EXIT])
-    ret_cpe = (vcCPElement*) this->_exit;
-  else if(this->_element_map.find(cname) != this->_element_map.end())
-    ret_cpe = ((*(this->_element_map.find(cname))).second);
-  return(ret_cpe);
+	vcCPElement* ret_cpe = NULL;
+	if(cname == vcLexerKeywords[__ENTRY])
+		ret_cpe = (vcCPElement*) this->_entry;
+	else if(cname == vcLexerKeywords[__EXIT])
+		ret_cpe = (vcCPElement*) this->_exit;
+	else if(this->_element_map.find(cname) != this->_element_map.end())
+		ret_cpe = ((*(this->_element_map.find(cname))).second);
+	return(ret_cpe);
 }
 
 
 string vcCPBlock::Get_Predecessor_Exit_Symbol()
 {
-  vcCPElement* pred = this->Get_Predecessors()[0];
-  if(this->Get_Parent() && (pred == this->Get_Parent()->Get_Entry_Element()))
-    {
-      return(this->Get_Parent()->Get_Entry_Element()->Get_Exit_Symbol());
-    }
-  else
-    return(pred->Get_Exit_Symbol());
+	vcCPElement* pred = this->Get_Predecessors()[0];
+	if(this->Get_Parent() && (pred == this->Get_Parent()->Get_Entry_Element()))
+	{
+		return(this->Get_Parent()->Get_Entry_Element()->Get_Exit_Symbol());
+	}
+	else
+		return(pred->Get_Exit_Symbol());
 }
 
 string vcCPBlock::Get_Successor_Start_Symbol()
 {
-  vcCPElement* succ = this->Get_Successors()[0];
-  if(this->Get_Parent() && (succ == this->Get_Parent()->Get_Exit_Element()))
-    {
-      if(this->Get_Parent()->Is_Control_Path())
+	vcCPElement* succ = this->Get_Successors()[0];
+	if(this->Get_Parent() && (succ == this->Get_Parent()->Get_Exit_Element()))
 	{
-	  return("fin_ack_symbol");
+		return(this->Get_Parent()->Get_Exit_Element()->Get_Exit_Symbol());
 	}
-      else
-	return(this->Get_Parent()->Get_Exit_Element()->Get_Exit_Symbol());
-    }
-  else
-    return(succ->Get_Start_Symbol());
+	else
+		return(succ->Get_Start_Symbol());
 }
 
 void vcCPBlock::Print_VHDL_Start_Interlock(ostream& ofile)
 {
-  //
-  // this->Get_Start_Symbol is a join of this->Trigger_Place
-  // and this->Enable_Place.
-  //
-
-  ofile << this->Get_Start_Symbol() 
-	<< "_interlock : pipeline_interlock -- { " << endl
-	<< " port map (trigger => " << this->Get_Predecessor_Exit_Symbol() << "," << endl
-	<< "enable => " << this->Get_Successor_Start_Symbol() << ", " << endl
-	<< "symbol_out => " << this->Get_Start_Symbol() << ", " << endl
-	<< " clk => clk, reset => reset); -- }" << endl;
+	assert(0);
 }
 
 void vcCPBlock::Print_VHDL_Start_Symbol_Assignment(ostream& ofile)
 {
-  assert(this->Get_Predecessors().size() == 1);
-
-  if(this->Get_Parent() && this->Get_Parent()->Is_Pipeline())
-    {
-      this->Print_VHDL_Start_Interlock(ofile);
-    }
-  else
-    {
-      ofile << this->Get_Start_Symbol() << " <= " 
-	    << this->Get_Predecessors()[0]->Get_Exit_Symbol() 
-	    << "; -- control passed to block" << endl;
-    }
+	assert(this->Get_Predecessors().size() == 1);
+	ofile << this->Get_Start_Symbol() << " <= "  << this->Get_Predecessors()[0]->Get_Exit_Symbol() 
+		<< "; -- control passed to block" << endl;
 }
 
 void vcCPBlock::Print_VHDL_Exit_Symbol_Assignment(ostream& ofile)
 {
-  ofile << this->Get_Exit_Symbol() << " <= " << this->_exit->Get_Exit_Symbol() << "; -- control passed from block " << endl;
+	ofile << this->Get_Exit_Symbol() << " <= " << this->_exit->Get_Exit_Symbol() << "; -- control passed from block " << endl;
 }
 
 void vcCPBlock::Print_VHDL_Signal_Declarations(ostream& ofile)
 {
-  ofile << "signal " << this->_entry->Get_Exit_Symbol() << ": Boolean;" << endl;
-  ofile << "signal " << this->_exit->Get_Exit_Symbol() << ": Boolean;" << endl;
-  for(int idx = 0; idx < this->_elements.size(); idx++)
-    {
-      if(_elements[idx]->Is_Block())
-	ofile << "signal " << _elements[idx]->Get_Start_Symbol() << " : Boolean;" << endl;
-      ofile << "signal " << _elements[idx]->Get_Exit_Symbol() << " : Boolean;" << endl;
-    }
+	ofile << "signal " << this->_entry->Get_Exit_Symbol() << ": Boolean;" << endl;
+	ofile << "signal " << this->_exit->Get_Exit_Symbol() << ": Boolean;" << endl;
+	for(int idx = 0; idx < this->_elements.size(); idx++)
+	{
+		if(_elements[idx]->Is_Block())
+			ofile << "signal " << _elements[idx]->Get_Start_Symbol() << " : Boolean;" << endl;
+		ofile << "signal " << _elements[idx]->Get_Exit_Symbol() << " : Boolean;" << endl;
+	}
 }
 
 void vcCPBlock::Print_VHDL(ostream& ofile)
 {
-  
-  // Hack alert!
-  string id = (this->Get_Hierarchical_Id() == "" ? "control-path" : this->Get_Hierarchical_Id());
 
-  // declare all exit flags.
-  ofile << this->Get_VHDL_Id() << ": Block -- " << id << " {" << endl;
-  this->Print_VHDL_Signal_Declarations(ofile);
+	// Hack alert!
+	string id = (this->Get_Hierarchical_Id() == "" ? "control-path" : this->Get_Hierarchical_Id());
 
-  ofile << "-- }" << endl << "begin -- {" << endl;
-  this->Print_VHDL_Start_Symbol_Assignment(ofile);
+	// declare all exit flags.
+	ofile << this->Get_VHDL_Id() << ": Block -- " << id << " {" << endl;
+	this->Print_VHDL_Signal_Declarations(ofile);
 
-  this->_entry->Print_VHDL(ofile);
-  for(int idx = 0; idx < this->_elements.size(); idx++)
-    {
-      this->_elements[idx]->Print_VHDL(ofile);
-    }
-  this->_exit->Print_VHDL(ofile);
-  this->Print_VHDL_Exit_Symbol_Assignment(ofile);
+	ofile << "-- }" << endl << "begin -- {" << endl;
+	this->Print_VHDL_Start_Symbol_Assignment(ofile);
 
-  ofile << "-- }" << endl << "end Block; -- " << id << endl;
+	this->_entry->Print_VHDL(ofile);
+	for(int idx = 0; idx < this->_elements.size(); idx++)
+	{
+		this->_elements[idx]->Print_VHDL(ofile);
+	}
+	this->_exit->Print_VHDL(ofile);
+	this->Print_VHDL_Exit_Symbol_Assignment(ofile);
+
+	vcCPElement* prnt = this->Get_Parent();
+	if(prnt != NULL)
+		prnt->Print_VHDL_Bindings(NULL,ofile);
+
+	this->Print_VHDL_Export_Cleanup(ofile);
+	ofile << "-- }" << endl << "end Block; -- " << id << endl;
+}
+
+void vcCPBlock::Print_VHDL_Export_Cleanup(ostream& ofile)
+{
+	// TODO.. this will be non-empty only for
+	// control-paths.. place holder for ugly fixups.
 }
 
 void vcCPBlock::Print_Elements(ostream& ofile)
 {
-  for(int idx = 0; idx < this->_elements.size(); idx++)
-    this->_elements[idx]->Print(ofile);
+	for(int idx = 0; idx < this->_elements.size(); idx++)
+		this->_elements[idx]->Print(ofile);
 }
 
 bool vcCPBlock::Check_Structure() 
 { 
-  bool ret_flag = true;
-  for(int idx = 0; idx < this->_elements.size(); idx++)
-    {
-      ret_flag = (ret_flag && this->_elements[idx]->Check_Structure());
-      if(!ret_flag)
-	break;
-    }
-  return(ret_flag);
+	bool ret_flag = true;
+	for(int idx = 0; idx < this->_elements.size(); idx++)
+	{
+		ret_flag = (ret_flag && this->_elements[idx]->Check_Structure());
+		if(!ret_flag)
+			break;
+	}
+	return(ret_flag);
 }
 
 
 void vcCPBlock::Print_Structure(ostream& ofile)
 {
-  for(int idx = 0; idx < this->_elements.size(); idx++)
-    {
-      this->_elements[idx]->Print_Structure(ofile);
-    }
+	for(int idx = 0; idx < this->_elements.size(); idx++)
+	{
+		this->_elements[idx]->Print_Structure(ofile);
+	}
 
 }
 
 
 void vcCPBlock::BFS_Order(bool reverse_flag, vcCPElement* start_element, int& num_visited, 
-			  vector<vcCPElement*>& bfs_ordered_elements,
-			  set<vcCPElement*>& visited_set)
+		vector<vcCPElement*>& bfs_ordered_elements,
+		set<vcCPElement*>& visited_set)
 {
-  deque<vcCPElement*> bfs_queue;
-  set<vcCPElement*> on_queue_set;
-  bfs_queue.push_back(start_element);
-  on_queue_set.insert(start_element);
-  num_visited = 0;
+	deque<vcCPElement*> bfs_queue;
+	set<vcCPElement*> on_queue_set;
+	bfs_queue.push_back(start_element);
+	on_queue_set.insert(start_element);
+	num_visited = 0;
 
-  while(!bfs_queue.empty())
-    {
-      vcCPElement* top = (bfs_queue.front());
-
-      bfs_queue.pop_front();
-      on_queue_set.erase(top);
-
-      visited_set.insert(top);
-      bfs_ordered_elements.push_back(top);
-
-      num_visited++;
-
-      vector<vcCPElement*>& adj = (reverse_flag ? top->Get_Predecessors() : top->Get_Successors());
-      for(int idx = 0; idx < adj.size(); idx++)
+	while(!bfs_queue.empty())
 	{
-	  vcCPElement* w = adj[idx];
+		vcCPElement* top = (bfs_queue.front());
 
-          // skip if the adjacency is outside the block.	
-          if(w->Get_Parent() != top->Get_Parent())
-		continue;
+		bfs_queue.pop_front();
+		on_queue_set.erase(top);
 
-	  if((on_queue_set.find(w) == on_queue_set.end()) && (visited_set.find(w) == visited_set.end()))
-	    {// push into queue if not already present in the queue and if not already popped from front..
-	      bfs_queue.push_back(w);
-	      on_queue_set.insert(w);
-	    }
+		visited_set.insert(top);
+		bfs_ordered_elements.push_back(top);
+
+		num_visited++;
+
+		vector<vcCPElement*>& adj = (reverse_flag ? top->Get_Predecessors() : top->Get_Successors());
+		for(int idx = 0; idx < adj.size(); idx++)
+		{
+			vcCPElement* w = adj[idx];
+
+			// skip if the adjacency is outside the block.	
+			if(w->Get_Parent() != top->Get_Parent())
+				continue;
+
+			if((on_queue_set.find(w) == on_queue_set.end()) && (visited_set.find(w) == visited_set.end()))
+			{// push into queue if not already present in the queue and if not already popped from front..
+				bfs_queue.push_back(w);
+				on_queue_set.insert(w);
+			}
+		}
 	}
-    }
 }
 
 
 void vcCPBlock::DFS_Order(bool reverse_flag, vcCPElement* start_element, bool& cycle_flag, int& num_visited, 
-			  vector<vcCPElement*>& dfs_ordered_elements,
-			  set<vcCPElement*>& visited_set)
+		vector<vcCPElement*>& dfs_ordered_elements,
+		set<vcCPElement*>& visited_set)
 {
-  set<vcCPElement*> on_queue_set;
-  deque<vcCPElement*> dfs_queue;
-  
-  dfs_queue.push_front(start_element);
-  on_queue_set.insert(start_element);
+	set<vcCPElement*> on_queue_set;
+	deque<vcCPElement*> dfs_queue;
 
-  num_visited = 1;
-  visited_set.insert(start_element);
-  dfs_ordered_elements.push_back(start_element);
+	dfs_queue.push_front(start_element);
+	on_queue_set.insert(start_element);
 
-  while(!dfs_queue.empty())
-    {
-      vcCPElement* top = dfs_queue.front();
-      vector<vcCPElement*>& adj = (reverse_flag ? top->Get_Predecessors() : top->Get_Successors());
-      bool all_neighbours_visited = true;
-      for(int idx = 0; idx < adj.size(); idx++)
+	num_visited = 1;
+	visited_set.insert(start_element);
+	dfs_ordered_elements.push_back(start_element);
+
+	while(!dfs_queue.empty())
 	{
-	  vcCPElement* w = adj[idx];
+		vcCPElement* top = dfs_queue.front();
+		vector<vcCPElement*>& adj = (reverse_flag ? top->Get_Predecessors() : top->Get_Successors());
+		bool all_neighbours_visited = true;
+		for(int idx = 0; idx < adj.size(); idx++)
+		{
+			vcCPElement* w = adj[idx];
 
-          // skip if the adjacency is outside the block.	
-          if(w->Get_Parent() != top->Get_Parent())
-		continue;
+			// skip if the adjacency is outside the block.	
+			if(w->Get_Parent() != top->Get_Parent())
+				continue;
 
-	  if(on_queue_set.find(w) != on_queue_set.end())
-	    {
-	      cycle_flag = true;
-	      this->DFS_Backward_Edge_Action(reverse_flag, dfs_queue, on_queue_set, top, w);
-	    }
-	  else if(visited_set.find(w) == visited_set.end())
-	    {
-	      num_visited++;
-	      this->DFS_Forward_Edge_Action(reverse_flag, dfs_queue, on_queue_set, top, w);
+			if(on_queue_set.find(w) != on_queue_set.end())
+			{
+				cycle_flag = true;
+				this->DFS_Backward_Edge_Action(reverse_flag, dfs_queue, on_queue_set, top, w);
+			}
+			else if(visited_set.find(w) == visited_set.end())
+			{
+				num_visited++;
+				this->DFS_Forward_Edge_Action(reverse_flag, dfs_queue, on_queue_set, top, w);
 
-	      dfs_ordered_elements.push_back(w);
-	      visited_set.insert(w);
-	      dfs_queue.push_front(w);
-	      on_queue_set.insert(w);
-	      all_neighbours_visited = false;
+				dfs_ordered_elements.push_back(w);
+				visited_set.insert(w);
+				dfs_queue.push_front(w);
+				on_queue_set.insert(w);
+				all_neighbours_visited = false;
 
-	      break;
-	    }
+				break;
+			}
+		}
+
+		if(all_neighbours_visited)
+		{
+			dfs_queue.pop_front();
+			on_queue_set.erase(top);
+		}
 	}
-
-      if(all_neighbours_visited)
-	{
-	  dfs_queue.pop_front();
-	  on_queue_set.erase(top);
-	}
-    }
 }
 
 void vcCPBlock::Print_Missing_Elements(set<vcCPElement*>& visited_set)
 {
-  cerr <<"\t un-visited elements" << endl;
-  for(int idx = 0; idx < this->_elements.size(); idx++)
-    {
-      if(visited_set.find(_elements[idx]) == visited_set.end())
-	cerr << "\t" << _elements[idx]->Get_Id() << endl;
-    }
-  if(visited_set.find(_entry) == visited_set.end())
-    cerr << "\t" << _entry->Get_Id() << endl;
-  if(visited_set.find(_exit) == visited_set.end())
-    cerr << "\t" << _exit->Get_Id() << endl;
-  
+	cerr <<"\t un-visited elements" << endl;
+	for(int idx = 0; idx < this->_elements.size(); idx++)
+	{
+		if(visited_set.find(_elements[idx]) == visited_set.end())
+			cerr << "\t" << _elements[idx]->Get_Id() << endl;
+	}
+	if(visited_set.find(_entry) == visited_set.end())
+		cerr << "\t" << _entry->Get_Id() << endl;
+	if(visited_set.find(_exit) == visited_set.end())
+		cerr << "\t" << _exit->Get_Id() << endl;
+
 }
 
 void vcCPBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* cp) {assert(0);}
 void vcCPBlock::Update_Predecessor_Successor_Links() 
 {
-  for(int idx = 0; idx < this->_elements.size(); idx++)
-    {
-      this->_elements[idx]->Update_Predecessor_Successor_Links();
-    }
+	for(int idx = 0; idx < this->_elements.size(); idx++)
+	{
+		this->_elements[idx]->Update_Predecessor_Successor_Links();
+	}
+}
+
+void vcCPBlock::Update_Binding_Predecessor_Successor_Links()
+{
+  // for the bindings.
+  for(map<vcPlace*,vcTransition*>::iterator biter = _output_bindings.begin();
+	biter != _output_bindings.end();
+	biter++)
+  {
+	vcPlace* pl = (*biter).first;
+        vcTransition* tr = (*biter).second;
+	
+	tr->Add_Successor(pl);
+	pl->Add_Predecessor(tr);
+  }
+
+  for(map<vcPlace*,vcTransition*>::iterator biter = _input_bindings.begin();
+	biter != _input_bindings.end();
+	biter++)
+  {
+	vcPlace* pl = (*biter).first;
+        vcTransition* tr = (*biter).second;
+	
+	tr->Add_Predecessor(pl);
+	pl->Add_Successor(tr);
+  }
+}
+  
+void vcCPBlock::Bind(string place_name, string region_name, string transition_name, bool input_binding)
+{
+	vcCPElement* pl = this->Find_CPElement(place_name);
+	if(!((pl != NULL) && (pl->Is_Place())))
+	{
+		vcSystem::Error("did not find place " + place_name + " in simple loop " + this->Get_Id());
+		return;
+	}
+
+	vcCPElement* body = this->Find_CPElement(region_name);
+	if(!((body != NULL) && (body->Is("vcCPPipelinedLoopBody") || body->Is("vcCPPipelinedForkBlock"))))
+	{
+		vcSystem::Error("did not find loop body " + region_name + " in " + this->Get_Id());
+		return;
+	}
+
+
+	vcCPElement* tr = body->Find_CPElement(transition_name);
+	if(!((tr != NULL) && (tr->Is_Transition())))
+	{
+		vcSystem::Error("did not find transition " + transition_name + " in loop body " + region_name);
+		return;
+	}
+
+	if(input_binding)
+	{
+		_input_bindings[((vcPlace*)pl)] = ((vcTransition*)tr);
+		((vcTransition*)tr)->Set_Is_Bound_As_Input_To_Region(true);
+		((vcPlace*)pl)->Set_Is_Bound_As_Input_To_Region(true);
+	}
+	else
+	{
+		_output_bindings[((vcPlace*)pl)] = ((vcTransition*)tr);
+		((vcTransition*)tr)->Set_Is_Bound_As_Output_From_Region(true);
+		((vcPlace*)pl)->Set_Is_Bound_As_Output_From_Region(true);
+	}
+}
+
+void vcCPBlock::Print_VHDL_Bindings(vcControlPath* cp, ostream& ofile)
+{
+	// input bindings.
+	ofile << "-- Input Bindings " << endl;
+	for(map<vcPlace*,vcTransition*>::iterator biter = _input_bindings.begin(), fbiter = _input_bindings.end();
+			biter != fbiter;
+			biter++)
+	{
+		vcPlace* pl = (*biter).first;
+		vcTransition* tr = (*biter).second;
+
+		string pl_id = pl->Get_Exit_Symbol(cp);
+		string tr_id = tr->Get_Exit_Symbol(cp);
+
+		ofile << tr_id << " <= " << pl_id  << ";" << endl;
+	}
+
+	ofile << "-- Output Bindings " << endl;
+	for(map<vcPlace*,vcTransition*>::iterator biter = _output_bindings.begin(), fbiter = _output_bindings.end();
+			biter != fbiter;
+			biter++)
+	{
+		vcPlace* pl = (*biter).first;
+		vcTransition* tr = (*biter).second;
+
+		string pl_id = pl->Get_Exit_Symbol(cp);
+		string tr_id = tr->Get_Exit_Symbol(cp);
+
+		ofile << pl_id << " <= " << tr_id  << ";" << endl;
+	}
+
 }
 
 vcCPSeriesBlock::vcCPSeriesBlock(vcCPBlock* p, string id):vcCPBlock(p, id)
@@ -1192,70 +1323,70 @@ vcCPSeriesBlock::vcCPSeriesBlock(vcCPBlock* p, string id):vcCPBlock(p, id)
 
 void vcCPSeriesBlock::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__SERIESBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
-  this->Print_Elements(ofile);
-  ofile << "\n// end series-block " << this->Get_Id() << endl << "}" << endl;
+	ofile << vcLexerKeywords[__SERIESBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
+	this->Print_Elements(ofile);
+	ofile << "\n// end series-block " << this->Get_Id() << endl << "}" << endl;
 }
 
 
 void vcCPSeriesBlock::Print_Structure(ostream& ofile)
 {
-  string id = this->Get_Hierarchical_Id();
-  if(id == "")
-    id = this->Get_Id();
-  ofile << this->Kind() << " " << id
-	<< " (label = " << this->Get_Compatibility_Label()->Get_Id() 
-	<< ") {" << endl;
-  this->_entry->Print_Successors(ofile);
-  for(int idx = 0; idx < this->_elements.size(); idx++)
-    {
-      this->_elements[idx]->Print_Successors(ofile);
-    }
-  this->_exit->Print_Successors(ofile); 
-  ofile << "}" << endl;
+	string id = this->Get_Hierarchical_Id();
+	if(id == "")
+		id = this->Get_Id();
+	ofile << this->Kind() << " " << id
+		<< " (label = " << this->Get_Compatibility_Label()->Get_Id() 
+		<< ") {" << endl;
+	this->_entry->Print_Successors(ofile);
+	for(int idx = 0; idx < this->_elements.size(); idx++)
+	{
+		this->_elements[idx]->Print_Successors(ofile);
+	}
+	this->_exit->Print_Successors(ofile); 
+	ofile << "}" << endl;
 
-  this->vcCPBlock::Print_Structure(ofile);
+	this->vcCPBlock::Print_Structure(ofile);
 }
 
 
 void vcCPSeriesBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* cp)
 {
-  this->Set_Compatibility_Label(in_label);
+	this->Set_Compatibility_Label(in_label);
 
-  this->_entry->Set_Compatibility_Label(in_label);
-  for(int idx = 0; idx < this->_elements.size(); idx++)
-    this->_elements[idx]->Compute_Compatibility_Labels(in_label,cp);
-  this->_exit->Set_Compatibility_Label(in_label);
+	this->_entry->Set_Compatibility_Label(in_label);
+	for(int idx = 0; idx < this->_elements.size(); idx++)
+		this->_elements[idx]->Compute_Compatibility_Labels(in_label,cp);
+	this->_exit->Set_Compatibility_Label(in_label);
 }
 
 void vcCPSeriesBlock::Update_Predecessor_Successor_Links()
 {
 
-  if(this->_elements.size() > 0)
-    {
-      this->_entry->Add_Successor(this->_elements.front());
-      this->_elements.front()->Add_Predecessor(this->_entry);
-      for(int idx = 0; idx < this->_elements.size(); idx++)
+	if(this->_elements.size() > 0)
 	{
-	  if(idx > 0)
-	    {
-	      this->_elements[idx]->Add_Predecessor(this->_elements[idx-1]);
-	    }
-	  if(idx+1 < this->_elements.size())
-	    {
-	      this->_elements[idx]->Add_Successor(this->_elements[idx+1]);
-	    }
+		this->_entry->Add_Successor(this->_elements.front());
+		this->_elements.front()->Add_Predecessor(this->_entry);
+		for(int idx = 0; idx < this->_elements.size(); idx++)
+		{
+			if(idx > 0)
+			{
+				this->_elements[idx]->Add_Predecessor(this->_elements[idx-1]);
+			}
+			if(idx+1 < this->_elements.size())
+			{
+				this->_elements[idx]->Add_Successor(this->_elements[idx+1]);
+			}
+		}
+		this->_elements.back()->Add_Successor(this->_exit);
+		this->_exit->Add_Predecessor(this->_elements.back());
 	}
-      this->_elements.back()->Add_Successor(this->_exit);
-      this->_exit->Add_Predecessor(this->_elements.back());
-    }
-  else
-    {
-      this->_entry->Add_Successor(this->_exit);
-      this->_exit->Add_Predecessor(this->_entry);
-    }
+	else
+	{
+		this->_entry->Add_Successor(this->_exit);
+		this->_exit->Add_Predecessor(this->_entry);
+	}
 
-  this->vcCPBlock::Update_Predecessor_Successor_Links();
+	this->vcCPBlock::Update_Predecessor_Successor_Links();
 }
 
 vcCPParallelBlock::vcCPParallelBlock(vcCPBlock* p, string id):vcCPBlock(p, id)
@@ -1266,78 +1397,78 @@ vcCPParallelBlock::vcCPParallelBlock(vcCPBlock* p, string id):vcCPBlock(p, id)
 
 void vcCPParallelBlock::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__PARALLELBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
-  this->Print_Elements(ofile);
-  ofile << "\n// end  parallel-block " << this->Get_Id() << endl << "}" << endl;
+	ofile << vcLexerKeywords[__PARALLELBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
+	this->Print_Elements(ofile);
+	ofile << "\n// end  parallel-block " << this->Get_Id() << endl << "}" << endl;
 }
 
 
 void vcCPParallelBlock::Print_Structure(ostream& ofile)
 {
-  string id = (this->Get_Hierarchical_Id());
-  if(id == "")
-    id = this->Get_Id();
+	string id = (this->Get_Hierarchical_Id());
+	if(id == "")
+		id = this->Get_Id();
 
-  ofile << this->Kind() << " "  << id << " (label = " << this->Get_Compatibility_Label()->Get_Id() 
-	<< ") {" << endl;
-  this->_entry->Print_Successors(ofile);
-  for(int idx = 0; idx < this->_elements.size(); idx++)
-    {
-      this->_elements[idx]->Print_Successors(ofile);
-    }
-  this->_exit->Print_Successors(ofile);
-  ofile << "}" << endl;
+	ofile << this->Kind() << " "  << id << " (label = " << this->Get_Compatibility_Label()->Get_Id() 
+		<< ") {" << endl;
+	this->_entry->Print_Successors(ofile);
+	for(int idx = 0; idx < this->_elements.size(); idx++)
+	{
+		this->_elements[idx]->Print_Successors(ofile);
+	}
+	this->_exit->Print_Successors(ofile);
+	ofile << "}" << endl;
 
-  this->vcCPBlock::Print_Structure(ofile);
+	this->vcCPBlock::Print_Structure(ofile);
 }
 
 
 void vcCPParallelBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* cp)
 {
-  this->Set_Compatibility_Label(in_label);
-  this->_entry->Set_Compatibility_Label(in_label);
+	this->Set_Compatibility_Label(in_label);
+	this->_entry->Set_Compatibility_Label(in_label);
 
-  if(this->_elements.size() > 1)
-    {
-      for(int idx = 0; idx < this->_elements.size(); idx++)
+	if(this->_elements.size() > 1)
 	{
-	  string hid = this->Get_Hierarchical_Id();
-	  if(hid == "")
-	    hid = this->Get_Id();
+		for(int idx = 0; idx < this->_elements.size(); idx++)
+		{
+			string hid = this->Get_Hierarchical_Id();
+			if(hid == "")
+				hid = this->Get_Id();
 
-	  string id = cp->Get_Id() + "/" +  hid + "[" + IntToStr(idx) + "]";
-	  vcCompatibilityLabel* nl = cp->Make_Compatibility_Label(id);
+			string id = cp->Get_Id() + "/" +  hid + "[" + IntToStr(idx) + "]";
+			vcCompatibilityLabel* nl = cp->Make_Compatibility_Label(id);
 
-	  pair<vcTransition*,int> p(this->_entry,idx);
-	  nl->Add_In_Arc(in_label,p);
-	  this->_elements[idx]->Compute_Compatibility_Labels(nl,cp);
+			pair<vcTransition*,int> p(this->_entry,idx);
+			nl->Add_In_Arc(in_label,p);
+			this->_elements[idx]->Compute_Compatibility_Labels(nl,cp);
+		}
 	}
-    }
-  else if(this->_elements.size() == 1)
-    this->_elements[0]->Compute_Compatibility_Labels(in_label,cp);
+	else if(this->_elements.size() == 1)
+		this->_elements[0]->Compute_Compatibility_Labels(in_label,cp);
 
-  this->_exit->Set_Compatibility_Label(in_label);
+	this->_exit->Set_Compatibility_Label(in_label);
 }
 
 void vcCPParallelBlock::Update_Predecessor_Successor_Links()
 {
-  if(!this->_elements.empty())
-    {
-      for(int idx = 0; idx < this->_elements.size(); idx++)
+	if(!this->_elements.empty())
 	{
-	  this->_entry->Add_Successor(this->_elements[idx]);
-	  this->_elements[idx]->Add_Predecessor(this->_entry);
+		for(int idx = 0; idx < this->_elements.size(); idx++)
+		{
+			this->_entry->Add_Successor(this->_elements[idx]);
+			this->_elements[idx]->Add_Predecessor(this->_entry);
 
-	  this->_exit->Add_Predecessor(this->_elements[idx]);
-	  this->_elements[idx]->Add_Successor(this->_exit);
+			this->_exit->Add_Predecessor(this->_elements[idx]);
+			this->_elements[idx]->Add_Successor(this->_exit);
+		}
 	}
-    }
-  else
-    {
-      this->_entry->Add_Successor(this->_exit);
-      this->_exit->Add_Predecessor(this->_entry);
-    }
-  this->vcCPBlock::Update_Predecessor_Successor_Links();
+	else
+	{
+		this->_entry->Add_Successor(this->_exit);
+		this->_exit->Add_Predecessor(this->_entry);
+	}
+	this->vcCPBlock::Update_Predecessor_Successor_Links();
 }
 
 
@@ -1347,154 +1478,154 @@ vcCPBranchBlock::vcCPBranchBlock(vcCPBlock* p, string id):vcCPSeriesBlock(p, id)
 
 void vcCPBranchBlock::Add_Branch_Point(string bp_name, vector<string>& choice_cpe_vec)
 {
-  vcCPElement* bp = this->Find_CPElement(bp_name);
-  
-  if(!(bp != NULL && bp->Is("vcPlace")))
-    {
-      if(bp == NULL)
-	vcSystem::Error("branch point " + bp_name + " does not exist"); 
-      else
-	vcSystem::Error("branch point " + bp_name + " is not a place"); 
-      return;
-    }
+	vcCPElement* bp = this->Find_CPElement(bp_name);
 
-  for(int idx = 0; idx < choice_cpe_vec.size(); idx++)
-    {
-      vcCPElement* bre = this->Find_CPElement(choice_cpe_vec[idx]);
-      if(bre == NULL)
+	if(!(bp != NULL && bp->Is("vcPlace")))
 	{
-	  vcSystem::Error("did not find branch choice region " + choice_cpe_vec[idx]); 	  
-	  return;
+		if(bp == NULL)
+			vcSystem::Error("branch point " + bp_name + " does not exist"); 
+		else
+			vcSystem::Error("branch point " + bp_name + " is not a place"); 
+		return;
 	}
-      this->_branch_map[((vcPlace*)bp)].push_back(bre);
-    }
+
+	for(int idx = 0; idx < choice_cpe_vec.size(); idx++)
+	{
+		vcCPElement* bre = this->Find_CPElement(choice_cpe_vec[idx]);
+		if(bre == NULL)
+		{
+			vcSystem::Error("did not find branch choice region " + choice_cpe_vec[idx]); 	  
+			return;
+		}
+		this->_branch_map[((vcPlace*)bp)].push_back(bre);
+	}
 }
 
 void vcCPBranchBlock::Add_Merge_Point(string merge_place, string merge_region)
 {
-  vcCPElement* mp = this->Find_CPElement(merge_place);
-  vcCPElement* mr = this->Find_CPElement(merge_region);
+	vcCPElement* mp = this->Find_CPElement(merge_place);
+	vcCPElement* mr = this->Find_CPElement(merge_region);
 
-  if(mp == NULL)
-    {
-      vcSystem::Error("did not find place " + merge_place);
-      return;
-    }
+	if(mp == NULL)
+	{
+		vcSystem::Error("did not find place " + merge_place);
+		return;
+	}
 
-  if(!mp->Is("vcPlace"))
-    {
-      vcSystem::Error("merge point " + merge_place + " is not a place");
-      return;
-    }
+	if(!mp->Is("vcPlace"))
+	{
+		vcSystem::Error("merge point " + merge_place + " is not a place");
+		return;
+	}
 
-  if(mr == NULL)
-    {
-      vcSystem::Error("merged region " + merge_region + " not found");
-      return;
-    }
+	if(mr == NULL)
+	{
+		vcSystem::Error("merged region " + merge_region + " not found");
+		return;
+	}
 
-  this->_merge_map[(vcPlace*)mp].push_back(mr);
+	this->_merge_map[(vcPlace*)mp].push_back(mr);
 }
 
 void vcCPBranchBlock::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__BRANCHBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
-  this->Print_Elements(ofile);
+	ofile << vcLexerKeywords[__BRANCHBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
+	this->Print_Elements(ofile);
 
-  // now print the branch and merge points.
-  for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = _branch_map.begin();
-      iter != _branch_map.end();
-      iter++)
-    {
-      ofile << (*iter).first->Get_Id() << " " << 
-	vcLexerKeywords[__BRANCH] << " (";
-      for(int idx = 0; idx < (*iter).second.size(); idx++)
+	// now print the branch and merge points.
+	for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = _branch_map.begin();
+			iter != _branch_map.end();
+			iter++)
 	{
-	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
+		ofile << (*iter).first->Get_Id() << " " << 
+			vcLexerKeywords[__BRANCH] << " (";
+		for(int idx = 0; idx < (*iter).second.size(); idx++)
+		{
+			ofile << " " << (*iter).second[idx]->Get_Id() << " ";
+		}
+		ofile << ")" << endl;
 	}
-      ofile << ")" << endl;
-    }
 
-  for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = _merge_map.begin();
-      iter != _merge_map.end();
-      iter++)
-    {
-      ofile << (*iter).first->Get_Id() << " " << vcLexerKeywords[__MERGE] << " (";
-      for(int idx = 0; idx < (*iter).second.size(); idx++)
+	for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = _merge_map.begin();
+			iter != _merge_map.end();
+			iter++)
 	{
-	  ofile << " " << (*iter).second[idx]->Get_Id() << " ";
+		ofile << (*iter).first->Get_Id() << " " << vcLexerKeywords[__MERGE] << " (";
+		for(int idx = 0; idx < (*iter).second.size(); idx++)
+		{
+			ofile << " " << (*iter).second[idx]->Get_Id() << " ";
+		}
+		ofile << ")" << endl;
 	}
-      ofile << ")" << endl;
-    }
-  ofile << "\n// end branch-block " << this->Get_Id() << endl << "}" << endl;
+	ofile << "\n// end branch-block " << this->Get_Id() << endl << "}" << endl;
 }
 
 
 bool vcCPBranchBlock::Check_Structure()
 {
 
-  bool ret_flag = this->vcCPBlock::Check_Structure();
-  if(ret_flag)
-    {
-
-      vector<vcCPElement*> reachable_elements;
-      bool cycle_flag = false;
-      int num_visited = 0;
-
-      set<vcCPElement*> visited_set;
-      this->BFS_Order(false,this->_entry, num_visited, reachable_elements,visited_set);
-      if(num_visited != this->Number_Of_Elements_Reachable_From_Entry())
+	bool ret_flag = this->vcCPBlock::Check_Structure();
+	if(ret_flag)
 	{
-	  vcSystem::Warning("some elements are not reachable from the entry point of branch region " + this->Get_Hierarchical_Id());
-	  this->Print_Missing_Elements(visited_set);
+
+		vector<vcCPElement*> reachable_elements;
+		bool cycle_flag = false;
+		int num_visited = 0;
+
+		set<vcCPElement*> visited_set;
+		this->BFS_Order(false,this->_entry, num_visited, reachable_elements,visited_set);
+		if(num_visited != this->Number_Of_Elements_Reachable_From_Entry())
+		{
+			vcSystem::Warning("some elements are not reachable from the entry point of branch region " + this->Get_Hierarchical_Id());
+			this->Print_Missing_Elements(visited_set);
+		}
+
+		reachable_elements.clear();
+		num_visited = 0;
+		cycle_flag = false;
+		visited_set.clear();
+		this->BFS_Order(true, this->_exit, num_visited, reachable_elements,visited_set);
+		if(num_visited != this->Number_Of_Elements_That_Can_Reach_Exit())
+		{
+			vcSystem::Warning("region exit not reachable from some elements in branch region " + this->Get_Hierarchical_Id());
+			this->Print_Missing_Elements(visited_set);
+		}
 	}
 
-      reachable_elements.clear();
-      num_visited = 0;
-      cycle_flag = false;
-      visited_set.clear();
-      this->BFS_Order(true, this->_exit, num_visited, reachable_elements,visited_set);
-      if(num_visited != this->Number_Of_Elements_That_Can_Reach_Exit())
-	{
-	  vcSystem::Warning("region exit not reachable from some elements in branch region " + this->Get_Hierarchical_Id());
-	  this->Print_Missing_Elements(visited_set);
-	}
-    }
-
-  return(ret_flag);
+	return(ret_flag);
 }
 
 void vcCPBranchBlock::Update_Predecessor_Successor_Links()
 {
-  // branches
-  for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = this->_branch_map.begin();
-      iter != this->_branch_map.end();
-      iter++)
-    {
-      vcPlace* p = (*iter).first;
-      for(int idx = 0; idx < (*iter).second.size(); idx++)
+	// branches
+	for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = this->_branch_map.begin();
+			iter != this->_branch_map.end();
+			iter++)
 	{
-	  vcCPElement* e = (*iter).second[idx];
-	  e->Add_Predecessor(p);
-	  p->Add_Successor(e);
+		vcPlace* p = (*iter).first;
+		for(int idx = 0; idx < (*iter).second.size(); idx++)
+		{
+			vcCPElement* e = (*iter).second[idx];
+			e->Add_Predecessor(p);
+			p->Add_Successor(e);
+		}
 	}
-    }
 
-  // merges
-  for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = this->_merge_map.begin();
-      iter != this->_merge_map.end();
-      iter++)
-    {
-      vcPlace* p = (*iter).first;
-      for(int idx = 0; idx < (*iter).second.size(); idx++)
+	// merges
+	for(map<vcPlace*,vector<vcCPElement*>,vcRoot_Compare>::iterator iter = this->_merge_map.begin();
+			iter != this->_merge_map.end();
+			iter++)
 	{
-	  vcCPElement* e = (*iter).second[idx];
-	  e->Add_Successor(p);
-	  p->Add_Predecessor(e);
+		vcPlace* p = (*iter).first;
+		for(int idx = 0; idx < (*iter).second.size(); idx++)
+		{
+			vcCPElement* e = (*iter).second[idx];
+			e->Add_Successor(p);
+			p->Add_Predecessor(e);
+		}
 	}
-    }
 
-  this->vcCPBlock::Update_Predecessor_Successor_Links();
+	this->vcCPBlock::Update_Predecessor_Successor_Links();
 }
 
 
@@ -1507,111 +1638,111 @@ vcPhiSequencer::vcPhiSequencer(vcCPElement* prnt, string id): vcCPElement(prnt,i
 
 void vcPhiSequencer::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__PHISEQUENCER] << " " << this->Get_Label() 
-	<<   " " << vcLexerKeywords[__LPAREN] << " ";
-  // selects.
-  for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
-    {
-      ofile << _selects[idx]->Get_Id() << " ";
-    }
+	ofile << vcLexerKeywords[__PHISEQUENCER] << " " << this->Get_Label() 
+		<<   " " << vcLexerKeywords[__LPAREN] << " ";
+	// selects.
+	for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
+	{
+		ofile << _selects[idx]->Get_Id() << " ";
+	}
 
-  ofile << vcLexerKeywords[__COLON] << " : ";
-  // enables.
-  for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
-    {
-      ofile << _enables[idx]->Get_Id() << " ";
-    }
+	ofile << vcLexerKeywords[__COLON] << " : ";
+	// enables.
+	for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
+	{
+		ofile << _enables[idx]->Get_Id() << " ";
+	}
 
-  ofile << vcLexerKeywords[__COLON] << " : ";
-  // ack
-  ofile << _ack->Get_Id() << " ";
+	ofile << vcLexerKeywords[__COLON] << " : ";
+	// ack
+	ofile << _ack->Get_Id() << " ";
 
 
-  ofile << vcLexerKeywords[__RPAREN] << " ";
+	ofile << vcLexerKeywords[__RPAREN] << " ";
 
-  ofile << vcLexerKeywords[__LPAREN] << " ";
-  // reqs.
-  for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
-    {
-      ofile << _reqs[idx]->Get_Id() << " ";
-    }
+	ofile << vcLexerKeywords[__LPAREN] << " ";
+	// reqs.
+	for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
+	{
+		ofile << _reqs[idx]->Get_Id() << " ";
+	}
 
-  ofile << vcLexerKeywords[__COLON] << " : ";
-  // done
-  ofile << _done->Get_Id() << " ";
+	ofile << vcLexerKeywords[__COLON] << " : ";
+	// done
+	ofile << _done->Get_Id() << " ";
 
-  ofile << vcLexerKeywords[__RPAREN] << " " << endl;
+	ofile << vcLexerKeywords[__RPAREN] << " " << endl;
 }
 
 void vcPhiSequencer::Print_VHDL(vcControlPath* cp, ostream& ofile)
 {
-  
-  bool parent_is_pipelined_loop_body = (this->Get_Parent()->Is("vcCPPipelinedLoopBody"));
-  int max_iterations_in_flight = 1;
-  if(parent_is_pipelined_loop_body) 
-  {
-	max_iterations_in_flight = ((vcCPPipelinedLoopBody*) (this->Get_Parent()))->Get_Max_Iterations_In_Flight();
-  }
-  
-  ofile << this->Get_VHDL_Id() << "_block : block -- { " << endl;
-  ofile << "signal reqs, selects : BooleanArray(0 to " << _reqs.size()-1 << ");" << endl;
-  ofile << "signal enables : BooleanArray(0 to " << _enables.size()-1 << "); -- }" << endl;
-  ofile << "begin -- { " << endl;
-  for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
-    {
-      string sig_id = _selects[idx]->Get_Exit_Symbol(cp);
-      ofile << "selects(" << idx << ")  <= " << sig_id << ";" << endl;
-      ofile << _reqs[idx]->Get_Exit_Symbol(cp) << " <= reqs(" << idx << ");" << endl;
-    }
 
-  for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
-    {
-      string sig_id = _enables[idx]->Get_Exit_Symbol(cp);
-      ofile << "enables(" << idx << ")  <= " << sig_id << ";" << endl;
-    }
+	bool parent_is_pipelined_loop_body = (this->Get_Parent()->Is("vcCPPipelinedLoopBody"));
+	int max_iterations_in_flight = 1;
+	if(parent_is_pipelined_loop_body) 
+	{
+		max_iterations_in_flight = ((vcCPPipelinedLoopBody*) (this->Get_Parent()))->Get_Max_Iterations_In_Flight();
+	}
 
-  string gen_name = '"' +  this->Get_VHDL_Id() + '"';
-  ofile << this->Get_VHDL_Id() << " : phi_sequencer -- { " << endl;;
-  ofile << "generic map (place_capacity => " << max_iterations_in_flight << ", nreqs => " << _reqs.size() 
+	ofile << this->Get_VHDL_Id() << "_block : block -- { " << endl;
+	ofile << "signal reqs, selects : BooleanArray(0 to " << _reqs.size()-1 << ");" << endl;
+	ofile << "signal enables : BooleanArray(0 to " << _enables.size()-1 << "); -- }" << endl;
+	ofile << "begin -- { " << endl;
+	for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
+	{
+		string sig_id = _selects[idx]->Get_Exit_Symbol(cp);
+		ofile << "selects(" << idx << ")  <= " << sig_id << ";" << endl;
+		ofile << _reqs[idx]->Get_Exit_Symbol(cp) << " <= reqs(" << idx << ");" << endl;
+	}
+
+	for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
+	{
+		string sig_id = _enables[idx]->Get_Exit_Symbol(cp);
+		ofile << "enables(" << idx << ")  <= " << sig_id << ";" << endl;
+	}
+
+	string gen_name = '"' +  this->Get_VHDL_Id() + '"';
+	ofile << this->Get_VHDL_Id() << " : phi_sequencer -- { " << endl;;
+	ofile << "generic map (place_capacity => " << max_iterations_in_flight << ", nreqs => " << _reqs.size() 
 		<< ", nenables => "  << _enables.size() 
 		<< ", name => "  << gen_name << ") " << endl;
-  ofile << "port map (selects => selects, reqs => reqs, enables => enables, ack => " << _ack->Get_Exit_Symbol(cp) 
-	<< ", done => " << _done->Get_Exit_Symbol(cp) << ", clk => clk, reset => reset);" << endl;
-  ofile << " -- } } " << endl;
-  ofile << "end block;" << endl;
+	ofile << "port map (selects => selects, reqs => reqs, enables => enables, ack => " << _ack->Get_Exit_Symbol(cp) 
+		<< ", done => " << _done->Get_Exit_Symbol(cp) << ", clk => clk, reset => reset);" << endl;
+	ofile << " -- } } " << endl;
+	ofile << "end block;" << endl;
 
 }
 
 void vcPhiSequencer::Print_Dot_Entry(vcControlPath* cp, ostream& ofile)
 {
-  string tnode_id = this->Get_VHDL_Id();
-  ofile << "  " << tnode_id << " [shape=rectangle];" << endl;
-	
-  for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
-    {
-      string sel_id = cp->Get_Group(_selects[idx])->Get_Dot_Id();
-      ofile << sel_id << " -> " << tnode_id << ";" << endl;
+	string tnode_id = this->Get_VHDL_Id();
+	ofile << "  " << tnode_id << " [shape=rectangle];" << endl;
 
-      string req_id = cp->Get_Group(_reqs[idx])->Get_Dot_Id();
-      ofile << tnode_id << " -> " << req_id << ";" << endl;
-    }
+	for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
+	{
+		string sel_id = cp->Get_Group(_selects[idx])->Get_Dot_Id();
+		ofile << sel_id << " -> " << tnode_id << ";" << endl;
 
-  for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
-    {
-      string en_id = cp->Get_Group(_enables[idx])->Get_Dot_Id();
-      ofile << en_id << " -> " << tnode_id << ";" << endl;
-    }
+		string req_id = cp->Get_Group(_reqs[idx])->Get_Dot_Id();
+		ofile << tnode_id << " -> " << req_id << ";" << endl;
+	}
 
-    ofile << cp->Get_Group(_ack)->Get_Dot_Id() << " -> " << tnode_id << ";" << endl;
-    ofile << tnode_id << " -> " <<  cp->Get_Group(_done)->Get_Dot_Id() << ";" << endl;
+	for(int idx = 0, fidx = _enables.size(); idx < fidx; idx++)
+	{
+		string en_id = cp->Get_Group(_enables[idx])->Get_Dot_Id();
+		ofile << en_id << " -> " << tnode_id << ";" << endl;
+	}
+
+	ofile << cp->Get_Group(_ack)->Get_Dot_Id() << " -> " << tnode_id << ";" << endl;
+	ofile << tnode_id << " -> " <<  cp->Get_Group(_done)->Get_Dot_Id() << ";" << endl;
 }
 
 void vcPhiSequencer::Update_Predecessor_Successor_Links()
 {
 
-  // predecessor successor relations.
-  // selects -> done, selects -> reqs
-  for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
+	// predecessor successor relations.
+	// selects -> done, selects -> reqs
+	for(int idx = 0, fidx = _selects.size(); idx < fidx; idx++)
   {
      vcTransition* s = _selects[idx];
      s->Add_Successor(_ack);
@@ -1711,7 +1842,7 @@ void vcTransitionMerge::Update_Predecessor_Successor_Links()
 
 vcCPSimpleLoopBlock::vcCPSimpleLoopBlock(vcCPBlock* parent, string id): vcCPBranchBlock(parent,id)
 {
-	this->_depth = 2;  // default value.
+	this->_pipeline_depth = 2;  // default value.
 }
 
 vcCPPipelinedLoopBody* vcCPSimpleLoopBlock::Get_Loop_Body()
@@ -1728,8 +1859,8 @@ vcCPPipelinedLoopBody* vcCPSimpleLoopBlock::Get_Loop_Body()
 void vcCPSimpleLoopBlock::Print(ostream& ofile)
 {
   ofile << vcLexerKeywords[__LOOPBLOCK]  << " [" << this->Get_Id() << "] ";
-  ofile  << vcLexerKeywords[__DEPTH]  << this->Get_Depth() <<  " ";
-  ofile  << vcLexerKeywords[__BUFFERING]  << this->Get_Buffering() <<  " { " << endl;
+  ofile  << vcLexerKeywords[__DEPTH]  << this->Get_Pipeline_Depth() <<  " ";
+  ofile  << vcLexerKeywords[__BUFFERING]  << this->Get_Pipeline_Buffering() <<  " { " << endl;
 
   // print all the normal elements.. This includes the loop-body.
   this->Print_Elements(ofile);
@@ -1823,38 +1954,6 @@ void vcCPSimpleLoopBlock::Print_VHDL(ostream& ofile)
   ofile << "-- }" << endl << "end Block; -- " << id << endl;
 }
 
-void vcCPSimpleLoopBlock::Print_VHDL_Loop_Body_Bindings(vcControlPath* cp, ostream& ofile)
-{
-	// input bindings.
-  ofile << "-- Input Bindings " << endl;
-  for(map<vcPlace*,vcTransition*>::iterator biter = _input_bindings.begin(), fbiter = _input_bindings.end();
-	biter != fbiter;
-	biter++)
-  {
-	vcPlace* pl = (*biter).first;
-	vcTransition* tr = (*biter).second;
-
-	string pl_id = pl->Get_Exit_Symbol(cp);
-	string tr_id = tr->Get_Exit_Symbol(cp);
-
-	ofile << tr_id << " <= " << pl_id  << ";" << endl;
-  }
-
-  ofile << "-- Output Bindings " << endl;
-  for(map<vcPlace*,vcTransition*>::iterator biter = _output_bindings.begin(), fbiter = _output_bindings.end();
-	biter != fbiter;
-	biter++)
-  {
-	vcPlace* pl = (*biter).first;
-	vcTransition* tr = (*biter).second;
-
-	string pl_id = pl->Get_Exit_Symbol(cp);
-	string tr_id = tr->Get_Exit_Symbol(cp);
-
-	ofile << pl_id << " <= " << tr_id  << ";" << endl;
-  }
-	
-}
 
 void vcCPSimpleLoopBlock::Set_Loop_Termination_Information(string loop_exit, string loop_taken, string loop_body, string loop_back, string exit_from_loop)
 {
@@ -1924,70 +2023,11 @@ void vcCPSimpleLoopBlock::Update_Predecessor_Successor_Links()
   _terminator->_loop_body->Add_Successor(_terminator->_exit_from_loop);
   _terminator->_exit_from_loop->Add_Predecessor(_terminator->_loop_body);
 
-  // for the bindings.
-  for(map<vcPlace*,vcTransition*>::iterator biter = _output_bindings.begin();
-	biter != _output_bindings.end();
-	biter++)
-  {
-	vcPlace* pl = (*biter).first;
-        vcTransition* tr = (*biter).second;
-	
-	tr->Add_Successor(pl);
-	pl->Add_Predecessor(tr);
-  }
 
-  for(map<vcPlace*,vcTransition*>::iterator biter = _input_bindings.begin();
-	biter != _input_bindings.end();
-	biter++)
-  {
-	vcPlace* pl = (*biter).first;
-        vcTransition* tr = (*biter).second;
-	
-	tr->Add_Predecessor(pl);
-	pl->Add_Successor(tr);
-  }
-  
+  this->Update_Binding_Predecessor_Successor_Links();
+
 }
 
-void vcCPSimpleLoopBlock::Bind(string place_name, string region_name, string transition_name, bool input_binding)
-{
-  vcCPElement* pl = this->Find_CPElement(place_name);
-  if(!((pl != NULL) && (pl->Is_Place())))
-    {
-      vcSystem::Error("did not find place " + place_name + " in simple loop " + this->Get_Id());
-      return;
-    }
-
-  vcCPElement* body = this->Find_CPElement(region_name);
-  if(!((body != NULL) && (body->Is("vcCPPipelinedLoopBody"))))
-    {
-      vcSystem::Error("did not find loop body " + region_name + " in simple loop " + this->Get_Id());
-      return;
-    }
-
-
-  vcCPElement* tr = body->Find_CPElement(transition_name);
-  if(!((tr != NULL) && (tr->Is_Transition())))
-    {
-      vcSystem::Error("did not find transition " + transition_name + " in loop body " + region_name);
-      return;
-    }
-
-  if(input_binding)
-    {
-      _input_bindings[((vcPlace*)pl)] = ((vcTransition*)tr);
-      ((vcTransition*)tr)->Set_Is_Bound_As_Input_To_Region(true);
-      ((vcPlace*)pl)->Set_Is_Bound_As_Input_To_Region(true);
-    }
-  else
-    {
-      _output_bindings[((vcPlace*)pl)] = ((vcTransition*)tr);
-      ((vcTransition*)tr)->Set_Is_Bound_As_Output_From_Region(true);
-      ((vcPlace*)pl)->Set_Is_Bound_As_Output_From_Region(true);
-    }
-
-  
-}
 
 vcCPForkBlock::vcCPForkBlock(vcCPBlock* p, string id):vcCPParallelBlock(p, id)
 {
@@ -2030,54 +2070,66 @@ void vcCPForkBlock::Remove_Fork_Point(vcTransition* fp, vcCPElement* fre)
 
 void vcCPForkBlock::Add_Fork_Point(string& fork_name, vector<string>& fork_cpe_vec)
 {
-  vcCPElement* fp = this->Find_CPElement(fork_name);
-  if(fp == NULL)
+  vcCPElement* fp = NULL;
+  if(fork_name != "$null")
     {
-      vcSystem::Error("did not find fork point " + fork_name);
+	    fp = this->Find_CPElement(fork_name);
+	    if(fp == NULL)
+	    {
+		    vcSystem::Error("did not find fork point " + fork_name);
+		    return;
+	    }
+	    else if(!fp->Is("vcTransition"))
+	    {
+		    vcSystem::Error("fork point " + fork_name + " is not a transition");
+		    return;
+	    }
+
     }
-  else if(!fp->Is("vcTransition"))
-    {
-      vcSystem::Error("fork point " + fork_name + " is not a transition");
-    }
-  else
-    {
-      for(int idx = 0; idx < fork_cpe_vec.size(); idx++)
-	{
+  for(int idx = 0; idx < fork_cpe_vec.size(); idx++)
+  {
 	  if(fork_cpe_vec[idx] == "$null")
-		fp->Set_Has_Null_Successor(true);
+	  {
+		if(fp != NULL)
+		  fp->Set_Has_Null_Successor(true);
+	  }
 	  else
 	  {
-	  	vcCPElement* fre = this->Find_CPElement(fork_cpe_vec[idx]);
-	  	if(fre == NULL)
-	    	{
-	      	vcSystem::Error("did not find forked region " + fork_cpe_vec[idx]);
-	      	return;
-	    	}
-	  	else 
-	    		this->Add_Fork_Point((vcTransition*)fp, fre);
+		  vcCPElement* fre = this->Find_CPElement(fork_cpe_vec[idx]);
+		  if(fre == NULL)
+		  {
+			  vcSystem::Error("did not find forked region " + fork_cpe_vec[idx]);
+			  return;
+		  }
+		  else 
+		  {
+			if(fp != NULL)
+			  this->Add_Fork_Point((vcTransition*)fp, fre);
+			else
+				fre->Set_Has_Null_Predecessor(true);
+		  }
 	  }
-	}
-    }
+  }
 }
 
 void vcCPForkBlock::Add_Join_Point(vcTransition* jp, vcCPElement* jre)
 {
-  if((this->_join_map.find(jp) == this->_join_map.end())
-     ||
-     (this->_join_map[jp].find(jre) == this->_join_map[jp].end()))
-    {
-      this->_join_map[((vcTransition*)jp)].insert(jre);
-      this->_joined_elements.insert(jre);
-  
-      jp->Add_Predecessor(jre);
-      
-      if(jre->Is_Transition())
+	if((this->_join_map.find(jp) == this->_join_map.end())
+			||
+			(this->_join_map[jp].find(jre) == this->_join_map[jp].end()))
 	{
-	  this->Add_Fork_Point((vcTransition*)jre, jp);
+		this->_join_map[((vcTransition*)jp)].insert(jre);
+		this->_joined_elements.insert(jre);
+
+		jp->Add_Predecessor(jre);
+
+		if(jre->Is_Transition())
+		{
+			this->Add_Fork_Point((vcTransition*)jre, jp);
+		}
+		else
+			jre->Add_Successor(jp);
 	}
-      else
-	jre->Add_Successor(jp);
-    }
 }
 
 void vcCPForkBlock::Remove_Join_Point(vcTransition* jp, vcCPElement* jre)
@@ -2095,34 +2147,48 @@ void vcCPForkBlock::Remove_Join_Point(vcTransition* jp, vcCPElement* jre)
 
 void vcCPForkBlock::Add_Join_Point(string& join_name, vector<string>& join_cpe_vec)
 {
-  bool null_join = false;
-  if(join_name == "$null")
- 	null_join = true;
+	bool null_join = false;
+	if(join_name == "$null")
+		null_join = true;
+
+	vcCPElement* jp = this->Find_CPElement(join_name);
 	
-  vcCPElement* jp = this->Find_CPElement(join_name);
-  if(jp == NULL)
-    vcSystem::Error("did not find fork point " + join_name);
-  else if(!jp->Is("vcTransition"))
-    vcSystem::Error("fork point " + join_name + " is not a transition");
-  else
-    {
-      for(int idx = 0; idx < join_cpe_vec.size(); idx++)
+	if(!null_join && (jp == NULL))
 	{
-	  vcCPElement* jre = this->Find_CPElement(join_cpe_vec[idx]);
-	  if(jre == NULL)
-	    {
-	      vcSystem::Error("did not find joined region " + join_cpe_vec[idx]);
-	      return;
-	    }
-	  else
-            {
-	      if(null_join)
- 		jre->Set_Has_Null_Successor(true);
-	      else
-	        this->Add_Join_Point((vcTransition*)jp,jre);
-	    }
+		vcSystem::Error("did not find join point " + join_name);
+		return;
 	}
-    }
+	else if((jp != NULL) && !jp->Is("vcTransition"))
+	{
+		vcSystem::Error("join point " + join_name + " is not a transition");
+		return;
+	}
+	else
+	{
+		for(int idx = 0; idx < join_cpe_vec.size(); idx++)
+		{
+			if(join_cpe_vec[idx] == "$null")
+			{
+				jp->Set_Has_Null_Predecessor(true);
+				continue; // no need to make the null transitions..
+			}
+
+			vcCPElement* jre = this->Find_CPElement(join_cpe_vec[idx]);
+
+			if(jre == NULL)
+			{
+				vcSystem::Error("did not find joined region " + join_cpe_vec[idx]);
+				return;
+			}
+			else
+			{
+				if(null_join)
+					jre->Set_Has_Null_Successor(true);
+				else
+					this->Add_Join_Point((vcTransition*)jp,jre);
+			}
+		}
+	}
 }
 
 void vcCPForkBlock::Print(ostream& ofile)
@@ -2649,6 +2715,9 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
 				   ((vcTransition*)ele)->Get_Is_Bound_As_Output_From_CP_Function()) )
 	has_implicit_predecessor = true;
 
+      if(ele->Get_Has_Null_Predecessor())
+	has_implicit_predecessor = true;
+
       if(!has_implicit_predecessor)
 	{
 	  if(ele->Get_Predecessors().size() == 0)
@@ -2658,7 +2727,8 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
       
       // all elements if not joined to something inside the block, are joined to exit.
       bool has_implicit_successor = false;
-      if(ele->Is_Transition() && ((vcTransition*)ele)->Get_Is_Bound_As_Input_To_CP_Function() )
+      if(ele->Is_Transition() && ( ((vcTransition*)ele)->Get_Is_Bound_As_Input_To_CP_Function() ||
+					((vcTransition*)ele)->Get_Is_Bound_As_Output_From_Region() ) )
 	has_implicit_successor = true;
 
       if(ele->Get_Has_Null_Successor())
@@ -2703,15 +2773,13 @@ void vcCPForkBlock::Update_Predecessor_Successor_Links()
 }
 
 
-vcCPPipelinedLoopBody::vcCPPipelinedLoopBody(vcCPBlock* parent, string id):vcCPForkBlock(parent,id)
+vcCPPipelinedForkBlock::vcCPPipelinedForkBlock(vcCPBlock* parent, string id): vcCPForkBlock(parent, id)
 {
-	// for now, kee it user-defined.
-	// Aa2VC should figure it out (ideally)..
-	assert(_parent->Is("vcCPSimpleLoopBlock"));
-	_max_iterations_in_flight = ((vcCPSimpleLoopBlock*)parent)->Get_Depth();;
+     _max_iterations_in_flight = 1;
 }
 
-void vcCPPipelinedLoopBody::Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec, vector<int>& join_markings)
+
+void vcCPPipelinedForkBlock::Add_Marked_Join_Point(string& join_name, vector<string>& join_cpe_vec, vector<int>& join_markings)
 {
 
   // length of the two should be the same..
@@ -2744,7 +2812,7 @@ void vcCPPipelinedLoopBody::Add_Marked_Join_Point(string& join_name, vector<stri
     }
 }
 
-void vcCPPipelinedLoopBody::Add_Marked_Join_Point(vcTransition* jp, int join_marking,  vcCPElement* jre)
+void vcCPPipelinedForkBlock::Add_Marked_Join_Point(vcTransition* jp, int join_marking,  vcCPElement* jre)
 {
 
   if((this->_marked_join_map.find(jp) == this->_marked_join_map.end())
@@ -2758,12 +2826,173 @@ void vcCPPipelinedLoopBody::Add_Marked_Join_Point(vcTransition* jp, int join_mar
     }
 }
 
-void vcCPPipelinedLoopBody::Print(ostream& ofile)
+void vcCPPipelinedForkBlock::Print(ostream& ofile)
 {
-  ofile << vcLexerKeywords[__PIPELINE]  << " [" << this->Get_Id() << "] {" << endl;
-
+  ofile << vcLexerKeywords[__PIPELINEDFORKBLOCK]  << " [" << this->Get_Id() << "] {" << endl;
   this->Print_Elements(ofile);
+  this->Print_Forks_And_Joins(ofile);
+  ofile << "}" << endl;
+  this->Print_Exports(ofile);
+}
 
+void vcCPPipelinedForkBlock::Print_VHDL(ostream& ofile)
+{
+  this->vcCPBlock::Print_VHDL(ofile);
+}
+
+
+// same algorithm as in the parallel block case..  All elements
+// are potentially active in parallel (this is a bit conservative)
+void vcCPPipelinedForkBlock::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* cp)
+{
+  this->Set_Compatibility_Label(in_label);
+  this->_entry->Set_Compatibility_Label(in_label);
+
+  if(this->_elements.size() > 1)
+    {
+      for(int idx = 0; idx < this->_elements.size(); idx++)
+	{
+	  string hid = this->Get_Hierarchical_Id();
+	  if(hid == "")
+	    hid = this->Get_Id();
+
+	  string id = cp->Get_Id() + "/" +  hid + "[" + IntToStr(idx) + "]";
+	  vcCompatibilityLabel* nl = cp->Make_Compatibility_Label(id);
+
+	  pair<vcTransition*,int> p(this->_entry,idx);
+	  nl->Add_In_Arc(in_label,p);
+	  this->_elements[idx]->Compute_Compatibility_Labels(nl,cp);
+	}
+    }
+  else if(this->_elements.size() == 1)
+    this->_elements[0]->Compute_Compatibility_Labels(in_label,cp);
+
+  this->_exit->Set_Compatibility_Label(in_label);
+}
+
+
+void vcCPPipelinedForkBlock::Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map)
+{
+	// If (v,u) and (w,u) are two reenable arcs
+	// and distance[v][w] > 0 and marking(v,u) <= marking(w,u)
+	// then (v,u) is redundant.
+	for(map<vcCPElement*,map<vcCPElement*,int> >::iterator iter = distance_map.begin(),
+			fiter = distance_map.end(); iter != fiter; iter++)
+	{
+		vcCPElement* u = (*iter).first;
+		set<vcCPElement*> survivors;
+		set<vcCPElement*> evict_set;
+
+		for(int idx = 0, fidx = u->Get_Number_Of_Marked_Predecessors();
+			idx  < fidx;
+			idx++)
+		{
+			vcCPElement* v = u->Get_Marked_Predecessor(idx);
+			int mv = u->Get_Marked_Predecessor_Delay(v);
+			
+			bool insert_v = true;
+			vector<vcCPElement*> del_vec;
+			for(set<vcCPElement*>::iterator niter = survivors.begin(),
+					fniter = survivors.end();
+				niter != fniter;
+				niter++)
+			{
+				bool evict_w = false;
+				vcCPElement* w = *niter;
+				int mw = u->Get_Marked_Predecessor_Delay(w);
+
+				assert(mv == mw);
+
+				if(distance_map[v][w] > 0)
+				{
+					insert_v = false;
+					break;
+				}
+				if(distance_map[w][v] > 0)
+					evict_w = true;
+
+				if(evict_w)
+				{
+					del_vec.push_back(w);
+					evict_set.insert(w);
+				}
+			}
+
+			if(del_vec.size() > 0)
+			{
+				for(int J = 0, fJ = del_vec.size(); J < fJ; J++)
+				{
+					survivors.erase(del_vec[J]);
+				}
+				del_vec.clear();
+			}
+
+			if(insert_v)
+				survivors.insert(v);
+			else
+				evict_set.insert(v);
+		}
+
+		for(set<vcCPElement*>::iterator eiter = evict_set.begin(), feiter = evict_set.end();				eiter != feiter;
+			eiter++)
+		{
+			vcCPElement* v = *eiter;
+			u->Remove_Marked_Predecessor(v);
+			v->Remove_Marked_Successor(u);
+			vcSystem::Info("removed redundant marked link: " + u->Get_Label() + " o<-& "
+							+ v->Get_Label());
+		}
+	}
+}
+
+void vcCPPipelinedForkBlock::Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map)
+{
+	this->Remove_Redundant_Reenable_Arcs(distance_map);
+	this->vcCPForkBlock::Remove_Redundant_Arcs(distance_map);
+}
+
+void vcCPPipelinedForkBlock::Add_Exported_Input(string internal_id)
+{
+  this->Add_Export(internal_id, true);
+}
+
+
+void vcCPPipelinedForkBlock::Add_Exported_Output(string internal_id)
+{
+  this->Add_Export(internal_id, false);
+}
+
+
+void vcCPPipelinedForkBlock::Add_Export(string internal_id, bool input_flag)
+{
+  vcCPElement* jp = this->Find_CPElement(internal_id);
+  if(jp == NULL)
+  {
+	vcSystem::Error("did not find export transition " + jp->Get_Id());
+	return;
+  }
+  
+  if(!jp->Is_Transition())
+  {
+	vcSystem::Error("export control-element must be a transition: " + jp->Get_Id());
+	return;
+  }
+
+  if(input_flag)
+    _exported_inputs.insert((vcTransition*)jp);
+  else
+    _exported_outputs.insert((vcTransition*)jp);
+
+}
+
+void vcCPPipelinedForkBlock::Eliminate_Redundant_Dependencies()
+{
+
+  this->vcCPForkBlock::Eliminate_Redundant_Dependencies();
+}
+
+void vcCPPipelinedForkBlock::Print_Forks_And_Joins(ostream& ofile)
+{
   for(map<vcTransition*,set<vcCPElement*>,vcRoot_Compare>::iterator iter = _fork_map.begin();
       iter != _fork_map.end();
       iter++)
@@ -2813,72 +3042,61 @@ void vcCPPipelinedLoopBody::Print(ostream& ofile)
       ofile << ")" << endl;
     }
 
+}
+
+void vcCPPipelinedForkBlock::Print_Exports(ostream& ofile)
+{
+  // print mandatory exports.
+  ofile << vcLexerKeywords[__LPAREN] << " ";
+  for(set<vcTransition*>::iterator eiter = _exported_inputs.begin();
+      eiter != _exported_inputs.end();
+      eiter++)
+    {
+      ofile << (*eiter)->Get_Id() << " ";
+    }
+  ofile << vcLexerKeywords[__RPAREN] << endl;
+
+
+  ofile << vcLexerKeywords[__LPAREN] << " ";
+  for(set<vcTransition*>::iterator eiter = _exported_outputs.begin();
+      eiter != _exported_outputs.end();
+      eiter++)
+    {
+      ofile << (*eiter)->Get_Id() << " ";
+    }
+  ofile << vcLexerKeywords[__RPAREN] << endl;
+}
+
+////////////////////  pipelined loop-body.
+vcCPPipelinedLoopBody::vcCPPipelinedLoopBody(vcCPBlock* parent, string id):vcCPPipelinedForkBlock(parent,id)
+{
+	// for now, kee it user-defined.
+	// Aa2VC should figure it out (ideally)..
+	assert(_parent->Is("vcCPSimpleLoopBlock"));
+	_max_iterations_in_flight = ((vcCPSimpleLoopBlock*)parent)->Get_Pipeline_Depth();;
+}
+
+void vcCPPipelinedLoopBody::Print(ostream& ofile)
+{
+  ofile << vcLexerKeywords[__PIPELINE]  << " [" << this->Get_Id() << "] {" << endl;
+  this->Print_Elements(ofile);
+  this->Print_Forks_And_Joins(ofile);
+
   for(int idx = 0, fidx = _phi_sequencers.size(); idx < fidx; idx++)
 	_phi_sequencers[idx]->Print(ofile);
 
   for(int idx = 0, fidx = _transition_merges.size(); idx < fidx; idx++)
 	_transition_merges[idx]->Print(ofile);
 
-  ofile << "\n// end pipeline-block " << this->Get_Id() << endl << "}";
+  ofile << "}" << endl;
 
-  // print mandatory exports.
-  if(_exported_inputs.size() == 0)
-    assert(0);
-  else
-  {
-	ofile << vcLexerKeywords[__LPAREN] << " ";
-	for(set<vcTransition*>::iterator eiter = _exported_inputs.begin();
-		eiter != _exported_inputs.end();
-		eiter++)
-	{
-		ofile << (*eiter)->Get_Id() << " ";
-	}
-	ofile << vcLexerKeywords[__RPAREN] << endl;
-  }
+  assert(_exported_inputs.size() > 0);
+  assert(_exported_outputs.size() > 0);
 
-  if(_exported_outputs.size() == 0)
-    assert(0);
-  else
-  {
-	ofile << vcLexerKeywords[__LPAREN] << " ";
-	for(set<vcTransition*>::iterator eiter = _exported_outputs.begin();
-		eiter != _exported_outputs.end();
-		eiter++)
-	{
-		ofile << (*eiter)->Get_Id() << " ";
-	}
-	ofile << vcLexerKeywords[__RPAREN] << endl;
-  }
+  this->Print_Exports(ofile);
+  ofile << "\n// end pipelined-loop-body " << this->Get_Id() << endl << "}";
 }
 
-// same algorithm as in the parallel block case..  All elements
-// are potentially active in parallel (this is a bit conservative)
-void vcCPPipelinedLoopBody::Compute_Compatibility_Labels(vcCompatibilityLabel* in_label, vcControlPath* cp)
-{
-  this->Set_Compatibility_Label(in_label);
-  this->_entry->Set_Compatibility_Label(in_label);
-
-  if(this->_elements.size() > 1)
-    {
-      for(int idx = 0; idx < this->_elements.size(); idx++)
-	{
-	  string hid = this->Get_Hierarchical_Id();
-	  if(hid == "")
-	    hid = this->Get_Id();
-
-	  string id = cp->Get_Id() + "/" +  hid + "[" + IntToStr(idx) + "]";
-	  vcCompatibilityLabel* nl = cp->Make_Compatibility_Label(id);
-
-	  pair<vcTransition*,int> p(this->_entry,idx);
-	  nl->Add_In_Arc(in_label,p);
-	  this->_elements[idx]->Compute_Compatibility_Labels(nl,cp);
-	}
-    }
-  else if(this->_elements.size() == 1)
-    this->_elements[0]->Compute_Compatibility_Labels(in_label,cp);
-
-  this->_exit->Set_Compatibility_Label(in_label);
-}
 
 void vcCPPipelinedLoopBody::Print_VHDL(ostream& ofile)
 {
@@ -2897,9 +3115,8 @@ void vcCPPipelinedLoopBody::Print_VHDL(ostream& ofile)
   vcCPElement* prnt = this->Get_Parent();
   assert(prnt->Is("vcCPSimpleLoopBlock"));
   vcCPSimpleLoopBlock* prnt_loop = (vcCPSimpleLoopBlock*) prnt;
-  prnt_loop->Print_VHDL_Loop_Body_Bindings(NULL,ofile);
+  prnt_loop->Print_VHDL_Bindings(NULL,ofile);
   
-
   this->_entry->Print_VHDL(ofile);
   for(int idx = 0; idx < this->_elements.size(); idx++)
     {
@@ -3038,144 +3255,13 @@ void vcCPPipelinedLoopBody::Add_Transition_Merge(string& tm_id, vector<string>& 
 	_transition_merges.push_back(new_tm);
 }
 
-void vcCPPipelinedLoopBody::Add_Exported_Input(string internal_id)
-{
-  this->Add_Export(internal_id, true);
-}
-
-
-void vcCPPipelinedLoopBody::Add_Exported_Output(string internal_id)
-{
-  this->Add_Export(internal_id, false);
-}
-
-
-void vcCPPipelinedLoopBody::Add_Export(string internal_id, bool input_flag)
-{
-  vcCPElement* jp = this->Find_CPElement(internal_id);
-  if(jp == NULL)
-  {
-	vcSystem::Error("did not find export transition " + jp->Get_Id());
-	return;
-  }
-  
-  if(!jp->Is_Transition())
-  {
-	vcSystem::Error("export control-element must be a transition: " + jp->Get_Id());
-	return;
-  }
-
-  if(input_flag)
-    _exported_inputs.insert((vcTransition*)jp);
-  else
-    _exported_outputs.insert((vcTransition*)jp);
-
-}
-
-bool vcCPPipelinedLoopBody::Check_Structure()
-{
-  this->vcCPForkBlock::Check_Structure();
-}
-
-void vcCPPipelinedLoopBody::Remove_Redundant_Reenable_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map)
-{
-	// If (v,u) and (w,u) are two reenable arcs
-	// and distance[v][w] > 0 and marking(v,u) <= marking(w,u)
-	// then (v,u) is redundant.
-	for(map<vcCPElement*,map<vcCPElement*,int> >::iterator iter = distance_map.begin(),
-			fiter = distance_map.end(); iter != fiter; iter++)
-	{
-		vcCPElement* u = (*iter).first;
-		set<vcCPElement*> survivors;
-		set<vcCPElement*> evict_set;
-
-		for(int idx = 0, fidx = u->Get_Number_Of_Marked_Predecessors();
-			idx  < fidx;
-			idx++)
-		{
-			vcCPElement* v = u->Get_Marked_Predecessor(idx);
-			int mv = u->Get_Marked_Predecessor_Delay(v);
-			
-			bool insert_v = true;
-			vector<vcCPElement*> del_vec;
-			for(set<vcCPElement*>::iterator niter = survivors.begin(),
-					fniter = survivors.end();
-				niter != fniter;
-				niter++)
-			{
-				bool evict_w = false;
-				vcCPElement* w = *niter;
-				int mw = u->Get_Marked_Predecessor_Delay(w);
-
-				assert(mv == mw);
-
-				if(distance_map[v][w] > 0)
-				{
-					insert_v = false;
-					break;
-				}
-				if(distance_map[w][v] > 0)
-					evict_w = true;
-
-				if(evict_w)
-				{
-					del_vec.push_back(w);
-					evict_set.insert(w);
-				}
-			}
-
-			if(del_vec.size() > 0)
-			{
-				for(int J = 0, fJ = del_vec.size(); J < fJ; J++)
-				{
-					survivors.erase(del_vec[J]);
-				}
-				del_vec.clear();
-			}
-
-			if(insert_v)
-				survivors.insert(v);
-			else
-				evict_set.insert(v);
-		}
-
-		for(set<vcCPElement*>::iterator eiter = evict_set.begin(), feiter = evict_set.end();				eiter != feiter;
-			eiter++)
-		{
-			vcCPElement* v = *eiter;
-			u->Remove_Marked_Predecessor(v);
-			v->Remove_Marked_Successor(u);
-			vcSystem::Info("removed redundant marked link: " + u->Get_Label() + " o<-& "
-							+ v->Get_Label());
-		}
-	}
-}
-
-void vcCPPipelinedLoopBody::Remove_Redundant_Arcs(map<vcCPElement*,map<vcCPElement*,int> >& distance_map)
-{
-	this->Remove_Redundant_Reenable_Arcs(distance_map);
-	this->vcCPForkBlock::Remove_Redundant_Arcs(distance_map);
-}
-
 void vcCPPipelinedLoopBody::Update_Predecessor_Successor_Links()
 {
   // the predecessor-successor relations are similar to
   // those in the fork-block case, except for the addition of
   // the phi-sequencers and transition-merges, which alter
   // it somewhat.
-  this->vcCPForkBlock::Update_Predecessor_Successor_Links();
-
-  // for each successor of entry, put a marked join back to
-  // entry.
-  //for(int idx = 0, fidx = this->_entry->Get_Number_Of_Successors(); idx < fidx; idx++)
-  //{
-	//vcCPElement* cpe = this->_entry->Get_Successor(idx);
-	//if(cpe->Is_Transition())
-	//{
-		//this->_entry->Add_Marked_Predecessor(cpe);
-		//cpe->Add_Marked_Successor(this->_entry);
-	//}
-  //} 
+  this->vcCPPipelinedForkBlock::Update_Predecessor_Successor_Links();
 
   // the phi-sequencers..
   for(int idx = 0, fidx = _phi_sequencers.size(); idx < fidx; idx++)
@@ -3189,16 +3275,19 @@ void vcCPPipelinedLoopBody::Update_Predecessor_Successor_Links()
 }
 
 
-void vcCPPipelinedLoopBody::Eliminate_Redundant_Dependencies()
-{
 
-  this->vcCPForkBlock::Eliminate_Redundant_Dependencies();
-}
 
+//////////////////////////////   control path.
 
 vcControlPath::vcControlPath(string id):vcCPSeriesBlock(NULL, id)
 {
+	_is_pipelined = false;
+	_pipeline_depth = 1;
+	_pipeline_buffering = 1;
+	_pipeline_full_rate_flag = false;
 }
+
+
 
 // some thought here.. named transitions must be unique.
 vcTransition* vcControlPath::Find_Transition(vector<string>& hier_id)
@@ -3232,6 +3321,37 @@ vcPlace* vcControlPath::Find_Place(vector<string>& hier_id)
     return((vcPlace*)cpe);
   else
     return(NULL);
+}
+
+void vcControlPath::Update_Predecessor_Successor_Links()
+{
+	if(this->_is_pipelined)
+	{
+		// ignore places, and attach pipelined-fork region
+		// between this->_entry and this->_exit.
+      		for(int idx = 0; idx < this->_elements.size(); idx++)
+		{
+			vcCPElement* cpe = this->_elements[idx];
+			if(cpe->Is("vcCPPipelinedForkBlock"))
+			{
+				this->_entry->Add_Successor(cpe);
+				cpe->Add_Predecessor(this->_entry);
+				cpe->Add_Successor(this->_exit);
+				this->_exit->Add_Predecessor(cpe);
+			}
+			else if(cpe->Is("vcPlace"))
+			{
+				cpe->Set_Is_Left_Open(true);
+			}
+		}
+
+		this->vcCPBlock::Update_Predecessor_Successor_Links();
+		this->vcCPBlock::Update_Binding_Predecessor_Successor_Links();	
+	}
+	else
+	{
+		this->vcCPSeriesBlock::Update_Predecessor_Successor_Links();
+	}
 }
 
 void vcControlPath::Print(ostream& ofile)
@@ -3563,8 +3683,11 @@ vcCompatibilityLabel* vcControlPath::Make_Compatibility_Label(string id)
 
  bool vcControlPath::Check_Structure()
  {
-   this->vcCPSeriesBlock::Update_Predecessor_Successor_Links();
-   this->vcCPSeriesBlock::Check_Structure();
+   this->Update_Predecessor_Successor_Links();
+
+   if(!this->_is_pipelined)
+   	this->vcCPSeriesBlock::Check_Structure();
+	
    this->Construct_Reduced_Group_Graph();
  }
 
@@ -3604,63 +3727,43 @@ bool vcCompatibilityLabel_Compare::operator() (vcCompatibilityLabel* u, vcCompat
 
 void vcControlPath::Print_VHDL_Start_Symbol_Assignment(ostream& ofile)
 {
-
-
-  if(this->Is_Pipeline())
-    {
-      // interlock will be inside the element.
-      ofile << this->Get_Start_Symbol() << " <= start_req_symbol; " << endl;
-      if (this->_elements.size() > 1)
-	ofile << "start_ack_symbol <= " << this->_elements[1]->Get_Start_Symbol() 
-	      << ";" << endl ;
-      else
-	ofile << "start_ack_symbol <= " << this->_exit->Get_Exit_Symbol()
-	      << ";" << endl;
-	
-    }
-  else
-    {
-
-      // interlock will have to be explicit.
-      ofile << this->Get_Start_Symbol() 
-	<< "_interlock : pipeline_interlock -- { " << endl
-	<< " port map (trigger => start_req_symbol," << endl
-	<< "enable =>  fin_ack_symbol, " << endl
-	<< "symbol_out => " << this->Get_Start_Symbol() << ", " << endl
-	<< " clk => clk, reset => reset); -- }" << endl;
-
-      ofile << "start_ack_symbol <= " << this->_exit->Get_Exit_Symbol()
-	    << ";" << endl;
-    }
+  // nothing to do..
 }
 
 void vcControlPath::Print_VHDL_Exit_Symbol_Assignment(ostream& ofile)
 {
-  // Join fin_req and this->_exit->Get_Exit_Symbol() to produce fin.
-  ofile << this->Get_Exit_Symbol() 
-	<< "_join : Block -- non-trivial join transition " 
-	<< this->Get_Exit_Symbol() << " {" <<  endl;
-  
-  ofile << "signal " <<  this->Get_Exit_Symbol() 
-	<< "_predecessors: BooleanArray(1 downto 0);"  << endl;
-  
-  ofile << "-- }" << endl << "begin -- {" << endl;
-  
-  
-  ofile <<  this->Get_Exit_Symbol() 
-	<< "_predecessors <= " 
-	<< this->_exit->Get_Exit_Symbol() 
-	<< " & fin_req_symbol;"  << endl;
-  
-  ofile << this->Get_Exit_Symbol() << "_join_instance: join -- {" << endl
-	<< "port map( -- {" << endl
-	<< " clk => clk, reset => reset, " << endl
-	<< "preds => " << this->Get_Exit_Symbol() <<  "_predecessors," << endl
-	<< "symbol_out => " << this->Get_Exit_Symbol() << "); -- }}" << endl;
-  
-  ofile << "end block; --}" << endl;
+  ofile << this->Get_Exit_Symbol() <<  " <= " << this->_exit->Get_Exit_Symbol()   << ";" << endl;
 }
 
+void vcControlPath::Print_VHDL_Export_Cleanup(ostream& ofile)
+{
+	// input bindings.
+  ofile << "--  hookup: inputs to control-path " << endl;
+  for(map<vcPlace*,vcTransition*>::iterator biter = _input_bindings.begin(), fbiter = _input_bindings.end();
+	biter != fbiter;
+	biter++)
+  {
+	vcPlace* pl = (*biter).first;
+
+	string pl_id = pl->Get_Exit_Symbol(NULL);
+        string raw_id = To_VHDL(pl->Get_Id());
+
+	ofile << pl_id << " <= " << raw_id  << ";" << endl;
+  }
+
+  ofile << "-- hookup: output from control-path " << endl;
+  for(map<vcPlace*,vcTransition*>::iterator biter = _output_bindings.begin(), fbiter = _output_bindings.end();
+	biter != fbiter;
+	biter++)
+  {
+	vcPlace* pl = (*biter).first;
+
+	string pl_id = pl->Get_Exit_Symbol(NULL);
+        string raw_id = To_VHDL(pl->Get_Id());
+
+	ofile << raw_id << " <= " << pl_id  << ";" << endl;
+  }
+}
 
 void vcControlPathPipelined::Compute_Compatibility_Labels()
 {

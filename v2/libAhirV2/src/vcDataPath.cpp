@@ -232,15 +232,21 @@ bool vcDatapathElement::Is_Part_Of_Pipelined_Loop(int& depth, int& buffering)
 	
 	if(t != NULL)
 	{
-		vcCPPipelinedLoopBody* p  = t->Get_Pipeline_Parent();
+		vcCPPipelinedForkBlock* p  = t->Get_Pipeline_Parent();
 		if(p != NULL)
 		{
 			vcCPElement* pp = p->Get_Parent();
 			if(pp->Is("vcCPSimpleLoopBlock"))
 			{
 				ret_val = true;
-				buffering = ((vcCPSimpleLoopBlock*) pp)->Get_Buffering();
-				depth = ((vcCPSimpleLoopBlock*) pp)->Get_Depth();
+				buffering = ((vcCPSimpleLoopBlock*) pp)->Get_Pipeline_Buffering();
+				depth = ((vcCPSimpleLoopBlock*) pp)->Get_Pipeline_Depth();
+			}
+			else if(pp->Is("vcControlPath"))
+			{
+				ret_val = true;
+				buffering = ((vcControlPath*) pp)->Get_Pipeline_Buffering();
+				depth = ((vcControlPath*) pp)->Get_Pipeline_Depth();
 			}
 		}
 	}

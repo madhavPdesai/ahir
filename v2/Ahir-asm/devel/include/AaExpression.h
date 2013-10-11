@@ -46,7 +46,8 @@ class AaExpression: public AaRoot
 
   // expression is handled in a different
   // way if it is part of a do-while statement.
-  AaDoWhileStatement* _do_while_parent;
+  // or a pipelined module.
+  AaStatement* _pipeline_parent;
 
   // the expression, when evaluated at run
   // time, can produce a value.  In the following
@@ -112,8 +113,8 @@ class AaExpression: public AaRoot
   void Set_Is_Malformed(bool v) { _is_malformed = v;}
   bool Get_Is_Malformed() {return(_is_malformed);}
 
-  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws) {_do_while_parent = dws;}
-  AaDoWhileStatement* Get_Do_While_Parent() {return(_do_while_parent);}
+  virtual void Set_Pipeline_Parent(AaStatement* dws) {_pipeline_parent = dws;}
+  AaStatement* Get_Pipeline_Parent() {return(_pipeline_parent);}
 
   void Set_Does_Pipe_Access(bool v) { _does_pipe_access = v; }
   bool Get_Does_Pipe_Access() { return(_does_pipe_access); }
@@ -303,13 +304,15 @@ class AaExpression: public AaRoot
   virtual string Get_Name() {return(this->Get_VC_Name());}
 
 
-  virtual bool Is_Part_Of_Pipeline() {return(this->_do_while_parent != NULL);}
+  virtual bool Is_Part_Of_Pipeline() {return(this->_pipeline_parent != NULL);}
   virtual bool Is_Part_Of_Extreme_Pipeline();
 
   virtual void Collect_Root_Sources(set<AaExpression*>& root_set) {if(!this->Is_Constant()) root_set.insert(this);}
   virtual void Write_VC_Update_Reenables(string ctrans, set<AaRoot*>& visited_elements, ostream& ofile);
 
   virtual AaStatement* Get_Guarded_Statement() {return(NULL);}
+
+  virtual bool Is_Part_Of_Pipelined_Module(); // TODO: return true if in pipelined module.
 };
 
 
@@ -790,13 +793,13 @@ class AaArrayObjectReference: public AaObjectReference
   vector<AaExpression*>* Get_Index_Vector() {return(&(_indices));}
 
 
-  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws)
+  virtual void Set_Pipeline_Parent(AaStatement* dws)
   {
-	_do_while_parent = dws;
+	_pipeline_parent = dws;
 	for(int i = 0, fi = _indices.size(); i < fi; i++)
-		_indices[i]->Set_Do_While_Parent(dws);
+		_indices[i]->Set_Pipeline_Parent(dws);
 	if(_pointer_ref != NULL)
-		_pointer_ref->Set_Do_While_Parent(dws);
+		_pointer_ref->Set_Pipeline_Parent(dws);
   }
 
   unsigned int Get_Number_Of_Indices() {return this->_indices.size();}
@@ -926,10 +929,10 @@ class AaPointerDereferenceExpression: public AaObjectReference
     return(_reference_to_object);
   }
 
-  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws)
+  virtual void Set_Pipeline_Parent(AaStatement* dws)
   {
-	_do_while_parent = dws;
-	_reference_to_object->Set_Do_While_Parent(dws);
+	_pipeline_parent = dws;
+	_reference_to_object->Set_Pipeline_Parent(dws);
   }
   virtual void Set_Associated_Statement(AaStatement* stmt)
   {
@@ -1025,10 +1028,10 @@ class AaAddressOfExpression: public AaObjectReference
     _associated_statement = stmt;
     _reference_to_object->Set_Associated_Statement(stmt);
   }
-  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws)
+  virtual void Set_Pipeline_Parent(AaStatement* dws)
   {
-	_do_while_parent = dws;
-	_reference_to_object->Set_Do_While_Parent(dws);
+	_pipeline_parent = dws;
+	_reference_to_object->Set_Pipeline_Parent(dws);
   }
   virtual bool Is_Load() {return(false);}
   virtual bool Is_Store(){return(false);}
@@ -1110,10 +1113,10 @@ class AaTypeCastExpression: public AaExpression
     _rest->Set_Associated_Statement(stmt);
   }
 
-  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws)
+  virtual void Set_Pipeline_Parent(AaStatement* dws)
   {
-	_do_while_parent = dws;
-	_rest->Set_Do_While_Parent(dws);
+	_pipeline_parent = dws;
+	_rest->Set_Pipeline_Parent(dws);
   }
   void Print(ostream& ofile);
   virtual string Kind() {return("AaTypeCastExpression");}
@@ -1199,10 +1202,10 @@ class AaUnaryExpression: public AaExpression
     _associated_statement = stmt;
     _rest->Set_Associated_Statement(stmt);
   }
-  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws)
+  virtual void Set_Pipeline_Parent(AaStatement* dws)
   {
-	_do_while_parent = dws;
-	_rest->Set_Do_While_Parent(dws);
+	_pipeline_parent = dws;
+	_rest->Set_Pipeline_Parent(dws);
   }
   virtual void Write_VC_Control_Path( ostream& ofile);
   virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
@@ -1291,153 +1294,153 @@ class AaBinaryExpression: public AaExpression
     _first->Set_Associated_Statement(stmt);
     _second->Set_Associated_Statement(stmt);
   }
-  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws)
+	  virtual void Set_Pipeline_Parent(AaStatement* dws)
+	  {
+		_pipeline_parent = dws;
+		_first->Set_Pipeline_Parent(dws);
+		_second->Set_Pipeline_Parent(dws);
+	  }
+	  virtual void PrintC(ofstream& ofile, string tab_string)
+	  {
+	    if(!Is_Concat_Operation(this->_operation))
+	      {
+		ofile << tab_string 
+		      << C_Name(this->_operation) << "(";
+		this->_first->PrintC(ofile,"");
+		ofile << ", ";
+		this->_second->PrintC(ofile,"");
+		ofile << ")" ;
+	      }
+	    else
+	      {
+		int a_width = ((AaUintType*)(this->Get_Type()))->Get_Width();
+		int c_width;
+		if(a_width <= 8)
+		  c_width = 8;
+		else if(a_width <= 16)
+		  c_width = 16;
+		else if(a_width <= 32)
+		  c_width = 32;
+		else if(a_width <= 64)
+		  c_width = 64;
+		else
+		  assert(0 && "maximum supported length of integer for Aa2C is 64");
+
+		ofile << tab_string 
+		      << C_Name(this->_operation) << "(" << c_width << "_t,";
+		this->_first->PrintC(ofile,"");
+		
+		ofile << ", ";
+		ofile << ((AaUintType*)this->_first->Get_Type())->Get_Width();
+		ofile << ", ";
+		this->_second->PrintC(ofile,"");
+		ofile << ", ";
+		ofile << ((AaUintType*)this->_first->Get_Type())->Get_Width();
+		ofile << ")" ;
+	      }
+	  }
+
+	  virtual void Update_Type();
+
+
+	  virtual void Write_VC_Control_Path( ostream& ofile);
+
+	  virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
+	  {
+	    _first->Get_Leaf_Expression_Set(leaf_expression_set);
+	    _second->Get_Leaf_Expression_Set(leaf_expression_set);
+	  }
+
+
+	  virtual bool Is_Trivial();
+	  virtual void Evaluate();
+	  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
+	  virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
+	  virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
+	  virtual void Write_VC_Links(string hier_id, ostream& ofile);
+
+	  string Get_VC_Name();
+
+	  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
+	  virtual void Write_VC_Links_As_Target_Optimized(string hier_id, ostream& ofile);
+
+	  virtual void Write_VC_Control_Path_Optimized(bool pipeline_flag,
+								 set<AaRoot*>& visited_elements,
+						       map<string,vector<AaExpression*> >& ls_map,
+						       map<string,vector<AaExpression*> >& pipe_map,
+								AaRoot* barrier,
+						       ostream& ofile);
+	  virtual void Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag,
+								 set<AaRoot*>& visited_elements,
+								 map<string,vector<AaExpression*> >& ls_map,
+								 map<string,vector<AaExpression*> >& pipe_map,
+								AaRoot* barrier,
+								 ostream& ofile);
+
+
+	  virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
+	  virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
+
+	  virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
+	  {
+		return(this->Get_VC_Update_Start_Transition_Name());
+	  } 
+
+	  virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
+	  {
+		return(this->Get_VC_Sample_Start_Transition_Name());
+	  } 
+
+	  virtual void Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile);
+	  virtual void Write_VC_Guard_Backward_Dependency(AaExpression* expr, set<AaRoot*>& visited_elements, ostream& ofile);
+
+
+	  void Write_VC_Links_BLE_Optimized(string hier_id, ostream& ofile);
+	  void Write_VC_Control_Path_BLE_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
+			map<string,vector<AaExpression*> >& ls_map,
+			map<string, vector<AaExpression*> >& pipe_map,
+			AaRoot* barrier,
+			ostream& ofile);
+
+	  virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
+	};
+
+	// ternary expression: a ? b : c
+	class AaTernaryExpression: public AaExpression
+	{
+	  AaExpression* _test;
+	  AaExpression* _if_true;
+	  AaExpression* _if_false;
+	 public:
+	  AaTernaryExpression(AaScope* scope_tpr, AaExpression* test,AaExpression* iftrue, AaExpression* iffalse);
+	  ~AaTernaryExpression();
+
+	  virtual void Print(ostream& ofile); 
+
+	  AaExpression*      Get_Test() {return(this->_test);}
+	  AaExpression* Get_If_True() {return(this->_if_true);}
+	  AaExpression* Get_If_False() {return(this->_if_false);}
+	  virtual string Kind() {return("AaTernaryExpression");}
+	  virtual void Map_Source_References(set<AaRoot*>& source_objects) 
+	  {
+	    if(this->_test) this->_test->Map_Source_References(source_objects);
+	    if(this->_if_true) this->_if_true->Map_Source_References(source_objects);
+	    if(this->_if_false) this->_if_false->Map_Source_References(source_objects);
+	  }
+
+	  virtual void Set_Associated_Statement(AaStatement* stmt)
+	  {
+	    _associated_statement = stmt;
+	    _test->Set_Associated_Statement(stmt);
+	    _if_true->Set_Associated_Statement(stmt);
+	    _if_false->Set_Associated_Statement(stmt);
+	  }
+	  virtual void Set_Pipeline_Parent(AaStatement* dws)
   {
-	_do_while_parent = dws;
-	_first->Set_Do_While_Parent(dws);
-	_second->Set_Do_While_Parent(dws);
-  }
-  virtual void PrintC(ofstream& ofile, string tab_string)
-  {
-    if(!Is_Concat_Operation(this->_operation))
-      {
-	ofile << tab_string 
-	      << C_Name(this->_operation) << "(";
-	this->_first->PrintC(ofile,"");
-	ofile << ", ";
-	this->_second->PrintC(ofile,"");
-	ofile << ")" ;
-      }
-    else
-      {
-	int a_width = ((AaUintType*)(this->Get_Type()))->Get_Width();
-	int c_width;
-	if(a_width <= 8)
-	  c_width = 8;
-	else if(a_width <= 16)
-	  c_width = 16;
-	else if(a_width <= 32)
-	  c_width = 32;
-	else if(a_width <= 64)
-	  c_width = 64;
-	else
-	  assert(0 && "maximum supported length of integer for Aa2C is 64");
-
-	ofile << tab_string 
-	      << C_Name(this->_operation) << "(" << c_width << "_t,";
-	this->_first->PrintC(ofile,"");
-	
-	ofile << ", ";
-	ofile << ((AaUintType*)this->_first->Get_Type())->Get_Width();
-	ofile << ", ";
-	this->_second->PrintC(ofile,"");
-	ofile << ", ";
-	ofile << ((AaUintType*)this->_first->Get_Type())->Get_Width();
-	ofile << ")" ;
-      }
-  }
-
-  virtual void Update_Type();
-
-
-  virtual void Write_VC_Control_Path( ostream& ofile);
-
-  virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
-  {
-    _first->Get_Leaf_Expression_Set(leaf_expression_set);
-    _second->Get_Leaf_Expression_Set(leaf_expression_set);
-  }
-
-
-  virtual bool Is_Trivial();
-  virtual void Evaluate();
-  virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);
-  virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
-  virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
-  virtual void Write_VC_Links(string hier_id, ostream& ofile);
-
-  string Get_VC_Name();
-
-  virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
-  virtual void Write_VC_Links_As_Target_Optimized(string hier_id, ostream& ofile);
-
-  virtual void Write_VC_Control_Path_Optimized(bool pipeline_flag,
-							 set<AaRoot*>& visited_elements,
-					       map<string,vector<AaExpression*> >& ls_map,
-					       map<string,vector<AaExpression*> >& pipe_map,
-							AaRoot* barrier,
-					       ostream& ofile);
-  virtual void Write_VC_Control_Path_As_Target_Optimized(bool pipeline_flag,
-							 set<AaRoot*>& visited_elements,
-							 map<string,vector<AaExpression*> >& ls_map,
-							 map<string,vector<AaExpression*> >& pipe_map,
-							AaRoot* barrier,
-							 ostream& ofile);
-
-
-  virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
-  virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
-
-  virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
-  {
-	return(this->Get_VC_Update_Start_Transition_Name());
-  } 
-
-  virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
-  {
-	return(this->Get_VC_Sample_Start_Transition_Name());
-  } 
-
-  virtual void Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile);
-  virtual void Write_VC_Guard_Backward_Dependency(AaExpression* expr, set<AaRoot*>& visited_elements, ostream& ofile);
-
-
-  void Write_VC_Links_BLE_Optimized(string hier_id, ostream& ofile);
-  void Write_VC_Control_Path_BLE_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
-		map<string,vector<AaExpression*> >& ls_map,
-		map<string, vector<AaExpression*> >& pipe_map,
-		AaRoot* barrier,
-		ostream& ofile);
-
-  virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
-};
-
-// ternary expression: a ? b : c
-class AaTernaryExpression: public AaExpression
-{
-  AaExpression* _test;
-  AaExpression* _if_true;
-  AaExpression* _if_false;
- public:
-  AaTernaryExpression(AaScope* scope_tpr, AaExpression* test,AaExpression* iftrue, AaExpression* iffalse);
-  ~AaTernaryExpression();
-
-  virtual void Print(ostream& ofile); 
-
-  AaExpression*      Get_Test() {return(this->_test);}
-  AaExpression* Get_If_True() {return(this->_if_true);}
-  AaExpression* Get_If_False() {return(this->_if_false);}
-  virtual string Kind() {return("AaTernaryExpression");}
-  virtual void Map_Source_References(set<AaRoot*>& source_objects) 
-  {
-    if(this->_test) this->_test->Map_Source_References(source_objects);
-    if(this->_if_true) this->_if_true->Map_Source_References(source_objects);
-    if(this->_if_false) this->_if_false->Map_Source_References(source_objects);
-  }
-
-  virtual void Set_Associated_Statement(AaStatement* stmt)
-  {
-    _associated_statement = stmt;
-    _test->Set_Associated_Statement(stmt);
-    _if_true->Set_Associated_Statement(stmt);
-    _if_false->Set_Associated_Statement(stmt);
-  }
-  virtual void Set_Do_While_Parent(AaDoWhileStatement* dws)
-  {
-	_do_while_parent = dws;
-	_test->Set_Do_While_Parent(dws);
-	_if_true->Set_Do_While_Parent(dws);
-	_if_false->Set_Do_While_Parent(dws);
+	_pipeline_parent = dws;
+	_test->Set_Pipeline_Parent(dws);
+	_if_true->Set_Pipeline_Parent(dws);
+	_if_false->Set_Pipeline_Parent(dws);
   }
   virtual void PrintC(ofstream& ofile, string tab_string)
   {

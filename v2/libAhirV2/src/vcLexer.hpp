@@ -49,6 +49,7 @@ public:
 	public: void mSERIESBLOCK(bool _createToken);
 	public: void mPARALLELBLOCK(bool _createToken);
 	public: void mFORKBLOCK(bool _createToken);
+	public: void mPIPELINEDFORKBLOCK(bool _createToken);
 	public: void mBRANCHBLOCK(bool _createToken);
 	public: void mLOOPBLOCK(bool _createToken);
 	public: void mOF(bool _createToken);
@@ -169,7 +170,6 @@ public:
 	public: void mHEXSTRING(bool _createToken);
 	public: void mQUOTED_STRING(bool _createToken);
 	protected: void mALPHA(bool _createToken);
-	public: void mHIERARCHICAL_IDENTIFIER(bool _createToken);
 	public: void mSIMPLE_IDENTIFIER(bool _createToken);
 private:
 	
@@ -181,12 +181,6 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_2;
 	static const unsigned long _tokenSet_3_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_3;
-	static const unsigned long _tokenSet_4_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_4;
-	static const unsigned long _tokenSet_5_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_5;
-	static const unsigned long _tokenSet_6_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_6;
 };
 
 #endif /*INC_vcLexer_hpp_*/

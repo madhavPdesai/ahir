@@ -133,20 +133,34 @@ vc_Module[vcSystem* sys] returns[vcModule* m]
 	string lbl;
 	m = NULL;
     bool foreign_flag = false;
-    bool pipeline_flag = false;
+	bool pipeline_flag = false;
     vcMemorySpace* ms;
+    int depth = 1;
+    int buffering = 1;
+    bool full_rate_flag = false;
 }
-    : (FOREIGN {foreign_flag = true;})?
+    : ((FOREIGN {foreign_flag = true;}) | 
+	(PIPELINE {pipeline_flag = true;} 
+		(DEPTH did: UINTEGER {depth = atoi(did->getText().c_str());})? 
+		(BUFFERING bid: UINTEGER {buffering = atoi(did->getText().c_str());})? 
+		(FULLRATE {full_rate_flag = true;})? 
+	))?
         MODULE lbl = vc_Label 
         { 
             m = new vcModule(sys,lbl); 
             sys->Add_Module(m); 
             if(foreign_flag) m->Set_Foreign_Flag(true);
+            if(pipeline_flag) { 
+		m->Set_Pipeline_Flag(true); 
+		m->Set_Pipeline_Depth(depth);
+		m->Set_Pipeline_Buffering(buffering);
+		m->Set_Pipeline_Full_Rate_Flag(full_rate_flag);
+	    }
         } 
         LBRACE (vc_Inargs[sys,m])? (vc_Outargs[sys,m])? 
         (ms = vc_MemorySpace[sys,m] {m->Add_Memory_Space(ms);})* 
         (vc_Pipe[NULL,m])*
-        (vc_Controlpath[sys,m,pipeline_flag] { assert(!foreign_flag);})? 
+        (vc_Controlpath[sys,m] { assert(!foreign_flag);})? 
         (vc_Datapath[sys,m] {assert(!foreign_flag);})? 
         (vc_Link[m] {assert(!foreign_flag);})*
         (vc_AttributeSpec[m])* 
@@ -245,15 +259,29 @@ vc_Hierarchical_CP_Ref[vector<string>& ref_vec]
 //-----------------------------------------------------------------------------------------------
 // vc_Controlpath: CONTROLPATH LBRACE (vc_CPRegion)+  vc_AttributeSpec* RBRACE
 //-----------------------------------------------------------------------------------------------
-vc_Controlpath[vcSystem* sys, vcModule* m, bool pipeline_flag]
+vc_Controlpath[vcSystem* sys, vcModule* m]
 {
-	vcControlPath* cp;
-    if(!pipeline_flag) 
-        cp = new vcControlPath(m->Get_Id() + "_CP");
-    else
-        cp = new vcControlPathPipelined(m->Get_Id() + "_CP");
+    vcControlPath* cp;
+    cp = new vcControlPath(m->Get_Id() + "_CP");
+    vcCPElement* cpe;
 }
-: CONTROLPATH  LBRACE (vc_CPRegion[cp])* (vc_AttributeSpec[cp])* RBRACE {m->Set_Control_Path(cp);}
+: CONTROLPATH  LBRACE 
+	( (
+        vc_CPPipelinedForkBlock[cp,m] 
+		{	
+			assert(m->Get_Pipeline_Flag());
+			cp->Set_Is_Pipelined(true);
+			cp->Set_Pipeline_Depth(m->Get_Pipeline_Depth());
+			cp->Set_Pipeline_Buffering(m->Get_Pipeline_Buffering());
+			cp->Set_Pipeline_Full_Rate_Flag(m->Get_Pipeline_Full_Rate_Flag());
+		}
+        (cpe = vc_CPPlace[cp] { cp->Add_CPElement(cpe); })+
+        (vc_CPBind[cp])+
+    ) | 
+	((vc_CPRegion[cp])+ (vc_AttributeSpec[cp])*) )? RBRACE 
+{
+	m->Set_Control_Path(cp);
+}
 ;
 
 //-----------------------------------------------------------------------------------------------
@@ -276,6 +304,7 @@ vc_CPPlace[vcCPElement* p] returns[vcCPElement* cpe]
          if(p->Find_CPElement(id) == NULL) 
               cpe = (vcCPElement*) new vcPlace(p, id,0);
    }
+   (LEFT_OPEN  {cpe->Set_Is_Left_Open(true);})?
 ;
 
 
@@ -379,8 +408,8 @@ vc_CPSimpleLoopBlock[vcCPBlock* cp]
  	bool full_rate_flag = false;
 }
 : LOOPBLOCK lbl = vc_Label { sb = new vcCPSimpleLoopBlock(cp,lbl);} 
-	DEPTH did: UINTEGER {depth = atoi(did->getText().c_str()); sb->Set_Depth(depth); }
-	BUFFERING bid: UINTEGER {buffering = atoi(bid->getText().c_str()); sb->Set_Buffering(buffering); }
+	DEPTH did: UINTEGER {depth = atoi(did->getText().c_str()); sb->Set_Pipeline_Depth(depth); }
+	BUFFERING bid: UINTEGER {buffering = atoi(bid->getText().c_str()); sb->Set_Pipeline_Buffering(buffering); }
 	( FULLRATE {full_rate_flag = true;})?
   LBRACE 
         (cpe = vc_CPPlace[sb] {sb->Add_CPElement(cpe);})* // first the places
@@ -392,7 +421,7 @@ vc_CPSimpleLoopBlock[vcCPBlock* cp]
         (vc_CPBind[sb])+
         vc_CPLoopTerminate[sb]  
   RBRACE
-        { cp->Add_CPElement(sb);  sb->Set_Full_Rate_Flag(true);}
+        { cp->Add_CPElement(sb);  sb->Set_Pipeline_Full_Rate_Flag(true);}
 ;
 
 //-----------------------------------------------------------------------------------------------
@@ -470,7 +499,7 @@ vc_CPTransitionMerge[vcCPPipelinedLoopBody* slb]
 //-----------------------------------------------------------------------------------------------
 // vc_CPBind: BIND vc_Identifier vc_Identifier COLON vc_Identifier;
 //-----------------------------------------------------------------------------------------------
-vc_CPBind[vcCPSimpleLoopBlock* cp]
+vc_CPBind[vcCPBlock* cp]
 {
 	string pl_lbl, rgn_label, rgn_internal_lbl;
     bool input_binding;
@@ -528,6 +557,28 @@ vc_CPForkBlock[vcCPBlock* cp]
 ;
 
 //-----------------------------------------------------------------------------------------------
+// vc_CPPipelinedForkBlock: PIPELINEDFORKBLOCK vc_Label LBRACE (vc_CPFork | vc_CPRegion | vc_CPJoin | vc_CPTransition )+ RBRACE (LPAREN (vc_Identifier  IMPLIES vc_Identifier)+ RPAREN)?
+//-----------------------------------------------------------------------------------------------
+vc_CPPipelinedForkBlock[vcCPBlock* cp, vcModule* m] 
+{
+	string lbl;
+	vcCPPipelinedForkBlock* fb;
+	vcCPElement* cpe;
+    	string internal_id;
+}
+: PIPELINEDFORKBLOCK lbl = vc_Label { fb = new vcCPPipelinedForkBlock(cp,lbl); fb->Set_Max_Iterations_In_Flight(m->Get_Pipeline_Depth());} LBRACE 
+ ((vc_CPRegion[fb]) | 
+ ( vc_CPFork[fb] ) |
+ ( vc_CPJoin[fb] ) | 
+ ( vc_CPMarkedJoin[fb] ) | 
+ ( cpe = vc_CPTransition[fb] { fb->Add_CPElement(cpe);} ) |
+        (vc_AttributeSpec[fb])  )* RBRACE
+{ cp->Add_CPElement(fb);}
+( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Input(internal_id);})* RPAREN ) 
+( LPAREN ( internal_id = vc_Identifier { fb->Add_Exported_Output(internal_id);})* RPAREN ) 
+;
+
+//-----------------------------------------------------------------------------------------------
 // vc_CPPipelinedLoopBody: PIPELINE vc_Label LBRACE (vc_CPFork | vc_CPRegion | vc_CPJoin | vc_CPMarkedJoin | vc_CPTransition )+ 
 //                                            RBRACE (LPAREN vc_Identifier+ RPAREN) (LPAREN vc_Identifier+ RPAREN)
 //-----------------------------------------------------------------------------------------------
@@ -575,7 +626,7 @@ vc_CPJoin[vcCPForkBlock* fb]
 //-----------------------------------------------------------------------------------------------
 // vc_CPMarkedJoin: (vc_Identifier | EXIT | NULL) MARKEDJOIN LPAREN  ENTRY? (vc_Identifier)+  RPAREN
 //-----------------------------------------------------------------------------------------------
-vc_CPMarkedJoin[vcCPPipelinedLoopBody* fb]
+vc_CPMarkedJoin[vcCPPipelinedForkBlock* fb]
 {
 	string lbl,b;
 	vector<string> join_ids;
@@ -604,7 +655,7 @@ vc_CPFork[vcCPForkBlock* fb]
 }
 :
 
-((lbl = vc_Identifier) | (fe:ENTRY {lbl = fe->getText();})) FORK  LPAREN 
+((lbl = vc_Identifier) | (fe:ENTRY {lbl = fe->getText();}) | (N_ULL {lbl = "$null";} )) FORK  LPAREN 
 	(e:EXIT {fork_ids.push_back(e->getText());})?
 	(n:N_ULL {fork_ids.push_back(n->getText());})?
 (b = vc_Identifier {fork_ids.push_back(b);})* RPAREN
@@ -1742,6 +1793,7 @@ PIPELINE      : "$pipeline";
 SERIESBLOCK   : ";;";
 PARALLELBLOCK : "||";
 FORKBLOCK     : "::";
+PIPELINEDFORKBLOCK     : ":o:";
 BRANCHBLOCK   : "<>";
 LOOPBLOCK     : "<o>";
 OF            : "$of";
@@ -1912,7 +1964,7 @@ HEXSTRING    : '_' 'h' (DIGIT | 'a' | 'b' | 'c' | 'd' | 'e' | 'f')+;
 QUOTED_STRING : '"' (ALPHA | DIGIT | '_' | ' ' | '.' | '\t' )* '"';
 
 // Scope-id
-HIERARCHICAL_IDENTIFIER : ':' (SIMPLE_IDENTIFIER)? ':' SIMPLE_IDENTIFIER ;
+// HIERARCHICAL_IDENTIFIER : ':' (SIMPLE_IDENTIFIER)? ':' SIMPLE_IDENTIFIER ;
 
 // Identifiers
 SIMPLE_IDENTIFIER options {testLiterals=true;} : ALPHA (ALPHA | DIGIT | '_')*; 
