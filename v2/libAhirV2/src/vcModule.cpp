@@ -710,8 +710,9 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 			ofile << w->Get_VHDL_Signal_Id() << " <= in_buffer_data_out(" << (H+wsize)-1 << " downto " << H << ");" << endl;
 			H += wsize;
 		}
-		ofile << "in_buffer_data_in(tag_length + " << H-1 << " downto " << H << ") <= tag_in;" << endl;
-		ofile << "tag_ub_out <= in_buffer_data_out(tag_length + " << H-1 << " downto " << H << ");" << endl;
+		string hindex = (H > 0 ? "tag_length + " + IntToStr(H-1) : "tag_length-1");
+		ofile << "in_buffer_data_in(" << hindex << " downto " << H << ") <= tag_in;" << endl;
+		ofile << "tag_ub_out <= in_buffer_data_out(" << hindex <<  " downto " << H << ");" << endl;
 
 		ofile << "in_buffer_write_req <= start_req;" << endl;
 		ofile << "start_ack <= in_buffer_write_ack;" << endl;
@@ -801,8 +802,9 @@ void vcModule::Print_VHDL_Architecture(ostream& ofile)
 			ofile << w->Get_VHDL_Id() << " <= out_buffer_data_out(" << (H+wsize)-1 << " downto " << H << ");" << endl;
 			H += wsize;
 		}
-		ofile << "out_buffer_data_in(tag_length + " << H-1 << " downto " << H << ") <= tag_ilock_out;" << endl;
-		ofile << "tag_out <= out_buffer_data_out(tag_length + " << H-1 << " downto " << H << ");" << endl;
+		string hindex = (H > 0 ? "tag_length + " + IntToStr(H-1) : "tag_length-1");
+		ofile << "out_buffer_data_in(" << hindex << " downto " << H << ") <= tag_ilock_out;" << endl;
+		ofile << "tag_out <= out_buffer_data_out(" << hindex << " downto " << H << ");" << endl;
 
 
 		// There are two distinct cases.

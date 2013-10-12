@@ -28,9 +28,11 @@ namespace Aa {
     bool _consider_all_functions;
     bool _do_while_transform_flag;
     bool _do_while_flag;
-    int _do_while_pipelining_depth;
-    int _do_while_buffering_depth;
+    int  _do_while_pipelining_depth;
+    int  _do_while_buffering_depth;
     bool _do_while_full_rate_flag;
+    bool _guard_flag;
+    std::string _guard_string;
 
     std::map<std::string,std::set<std::string> > bb_predecessor_map;
     std::map<llvm::Value*, std::string> value_name_map;
@@ -59,6 +61,14 @@ namespace Aa {
 
     void Set_Do_While_Buffering_Depth(int v) {_do_while_buffering_depth = v;}
     int Get_Do_While_Buffering_Depth() {return(_do_while_buffering_depth);}
+
+    void Set_Guard_Flag(bool v) {_guard_flag = v;}
+    bool Get_Guard_Flag() {return(_guard_flag);}
+
+    void Set_Guard_String(std::string gs) {_guard_string  = gs;}
+    std::string Get_Guard_String() {return(_guard_string);}
+
+    void Print_Guard();
 
     void clear() { 
       Set_Return_Flag(false); 

@@ -41,7 +41,7 @@ AA2VHDL: aa2vc vc2vhdl vhdlsim
 
 # C to llvm byte-code.. use clang.
 c2llvmbc: $(SRC)/prog.c $(SRC)/prog.h
-	clang -O3 -std=gnu89 $(PROGDEFS)  -I$(SOCKETLIB_INCLUDE) -I$(FUNCTIONLIB)/include -emit-llvm -c $(SRC)/prog.c
+	clang -O1  -std=gnu89 $(PROGDEFS)  -I$(SOCKETLIB_INCLUDE) -I$(FUNCTIONLIB)/include -emit-llvm -c $(SRC)/prog.c
 	opt --indvars --loopsimplify prog.o -o prog.opt.o
 	llvm-dis prog.opt.o
 
@@ -51,7 +51,7 @@ llvmbc2aa:  prog.opt.o
 
 # Aa to vC
 aalink: $(SRC)/fir.Aa $(SRC)/summer.Aa
-	AaLinkExtMem $(SRC)/fir.Aa $(SRC)/summer.Aa| vcFormat > prog.linked.aa
+	AaLinkExtMem $(SRC)/fir.Aa $(SRC)/summer.Aa | vcFormat > prog.linked.aa
 	AaOpt -B prog.linked.aa | vcFormat > prog.linked.opt.aa
 
 aa2vc: prog.linked.opt.aa

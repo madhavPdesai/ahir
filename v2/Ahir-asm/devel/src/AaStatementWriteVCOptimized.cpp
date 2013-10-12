@@ -824,7 +824,10 @@ void AaParallelBlockStatement::Write_VC_Control_Path_Optimized(ostream& ofile)
   for(int idx = 0; idx < sseq->Get_Statement_Count(); idx++)
     {
       AaStatement* stmt = sseq->Get_Statement(idx);
-      this->AaBlockStatement::Write_VC_Control_Path_Optimized(stmt, ofile);
+      if(stmt->Is_Block_Statement())
+	      stmt->Write_VC_Control_Path_Optimized(ofile);
+      else
+	      this->AaBlockStatement::Write_VC_Control_Path_Optimized(stmt,ofile);
     }
   ofile << "}" << endl;
 }
@@ -837,7 +840,14 @@ void AaParallelBlockStatement::Write_VC_Links_Optimized(string hier_id, ostream&
   for(int idx = 0; idx < sseq->Get_Statement_Count(); idx++)
     {
       AaStatement* stmt = sseq->Get_Statement(idx);
-      this->AaBlockStatement::Write_VC_Links_Optimized(hier_id, stmt, ofile);
+      if(stmt->Is_Block_Statement())
+      {
+	      stmt->Write_VC_Links_Optimized(hier_id,ofile);
+      }
+      else
+      {
+	      this->AaBlockStatement::Write_VC_Links_Optimized(hier_id,stmt,ofile);
+      }
     }
 }
 

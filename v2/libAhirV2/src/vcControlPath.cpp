@@ -624,7 +624,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
 	assert(this->Get_Number_Of_Predecessors() == 1);
 	assert(this->Get_Number_Of_Marked_Predecessors() == 0);
 
-        ofile << "// Delay element." << endl;
+        ofile << "-- Delay element." << endl;
 	vcCPElement* pred = this->Get_Predecessor(0);
 	ofile << this->Get_Exit_Symbol() << "_delay: control_delay_element "
 		<< " generic map(delay_value => 1) " 

@@ -6,7 +6,9 @@
 #include "prog.h"
 
 #ifndef SW
-void loop_pipelining_on(uint32_t val, uint32_t buf, uint32_t extreme_flag);
+void __loop_pipelining_on__(uint32_t val, uint32_t buf, uint32_t extreme_flag);
+void __guard__(uint8_t val);
+void __cancel_guards__();
 #endif
 
 float coeff[ORDER];
@@ -16,14 +18,13 @@ float S[ORDER];
 			ci = ( (J <= N) ? (N-J) : (ORDER-(J-N)) );\
 			float C = coeff[ci];\
 			y += (C*S[J]);}
-#ifdef SW
 void fir()
 {
 	int i;
 	for(i = 0; i < ORDER; i++)
 	{
 #ifndef SW
-		loop_pipelining_on(8,1,0);
+		__loop_pipelining_on__(8,1,0);
 #endif
 		coeff[i] = read_float32("coeff_pipe");
 		S[i] = 0;
@@ -41,8 +42,9 @@ void fir()
 			N = ((N == 0) ? (ORDER-1) : (N-1));
 			S[N] = read_float32("in_data_pipe");
 		}
+
 #ifndef SW
-		loop_pipelining_on(8,2,0);
+		__loop_pipelining_on__(8,2,0);
 #endif
 
 		float y0=0, y1=0, y2=0, y3=0, y4=0, y5=0, y6=0, y7=0;
@@ -94,17 +96,15 @@ void fir()
 		}
 	}
 }
-#endif
 
 
-#ifdef SW
 void summer()
 {
 	float Y = 0;
 	while(1)
 	{
 #ifndef SW
-		loop_pipelining_on(8,1,0);
+		__loop_pipelining_on__(8,1,0);
 #endif
 		uint8_t sflag = read_uint8("sum_flag");	
 
@@ -114,8 +114,9 @@ void summer()
 			Y = 0;
 		}
 		else
+		{
 			Y = (Y + read_float32("sum_pipe"));
+		}
 	}
 }
-#endif
 

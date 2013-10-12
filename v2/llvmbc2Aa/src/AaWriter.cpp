@@ -24,6 +24,7 @@ namespace Aa {
     : TD(_TD), AA(_AA), _module_names(mnames), _consider_all_functions(consider_all_functions)
   {
 	_do_while_flag = false;
+	_guard_flag    = false;
   }
 
   void AaWriter::start_program(std::string id)
@@ -552,6 +553,14 @@ namespace Aa {
 	  }
       }
   }
+
+  void AaWriter::Print_Guard()
+  {
+	if(this->Get_Guard_Flag())
+	{
+		std::cout << "$guard (" << this->Get_Guard_String() << ") ";
+	}
+  }
 }
 
 using namespace Aa;
@@ -603,6 +612,8 @@ namespace {
       int  do_while_p_depth = this->Get_Do_While_Pipelining_Depth();
       int  do_while_b_depth = this->Get_Do_While_Buffering_Depth();
       bool full_rate_flag = this->Get_Do_While_Full_Rate_Flag();
+
+      this->Set_Guard_Flag(false);
 
       if(is_do_while)
 	std::cout << "//   this is a do-while loop." << std::endl;
@@ -853,6 +864,8 @@ namespace {
       std::string op1 = prepare_operand(I.getOperand(0));
       std::string op2 = prepare_operand(I.getOperand(1));
 
+      this->Print_Guard();
+
       // if binary operator is shra then need to cast 
       //       the operands to $int!
       if(opcode == Instruction::AShr)
@@ -880,8 +893,11 @@ namespace {
 	{
 	  std::string ret_op = prepare_operand(R.getReturnValue());
 	  if(_num_ret_instructions > 1)
+	  {
+      	    this->Print_Guard();
 	    std::cout << "stored_ret_val__ := " 
 		      << ret_op << std::endl;
+          }
 	  //else
 	  //std::cout << "ret_val__ := " 
 	  //      << ret_op << std::endl;
@@ -895,7 +911,8 @@ namespace {
       std::string iname = to_aa(I.getNameStr());
       const llvm::PointerType* ptr = dyn_cast<PointerType>(I.getType());
       const llvm::Type* el_type = ptr->getElementType();
-      
+
+      this->Print_Guard();
       std::cout << iname << " := @(" << iname << "_alloc)" << std::endl;
     }
 
@@ -913,9 +930,28 @@ namespace {
       if(called_function != NULL)
       { 
 	StringRef fname = called_function->getName();
-	if(fname.equals("loop_pipelining_on"))
+	if(fname.equals("__loop_pipelining_on__"))
         {
-	        std::cerr << "Info: ignoring call to special function loop_pipelining_on." << std::endl;
+	        std::cerr << "Info: ignoring call to special function __loop_pipelining_on__." << std::endl;
+		return;
+	}
+	else if(fname.equals("__guard__"))
+	{
+			
+	    if(C.getNumArgOperands() > 0)
+	    {
+		this->Set_Guard_Flag(true);
+		this->Set_Guard_String(prepare_operand(C.getArgOperand(0)));
+	    }
+	    else
+	    {
+		std::cerr << "Error: special function  __guard__ must have at least one operand." << std::endl;
+            }
+	    return;
+	}
+	else if(fname.equals("__cancel_guards__"))
+	{
+		this->Set_Guard_Flag(false);
 		return;
 	}
       }
@@ -975,6 +1011,8 @@ namespace {
 	      }
 
 	    std::string fname = to_aa(called_function->getNameStr());
+
+      	    this->Print_Guard();
 	    std::cout << "$call " << fname ;
 	    std::cout << " (";
 	    for(int idx = 0; idx < C.getNumArgOperands(); idx++)
@@ -1002,6 +1040,8 @@ namespace {
 	  {
 	    std::string portname = to_aa(locate_portname_for_io_call(C.getArgOperand(0)));
 	    std::string port_type_name = this->pipe_map[portname];
+
+      	    this->Print_Guard();
 
 	    if(is_io_read(ioc))
 	      {
@@ -1076,6 +1116,8 @@ namespace {
       const llvm::Type *dest = C.getDestTy();
       int size = type_width(dest, this->Get_Pointer_Width());
 
+      this->Print_Guard();
+
       llvm::Value *val = C.getOperand(0);
       std::string op_name = prepare_operand(val);
       std::cout << cname << " := " ;
@@ -1097,6 +1139,8 @@ namespace {
 
       llvm::Value *val = C.getOperand(0);
       std::string op_name = prepare_operand(val);
+
+      this->Print_Guard();
 
       std::cout << cname << " := ";
       // cout = ((destType) ((bitcast int) val)) 
@@ -1120,6 +1164,8 @@ namespace {
       llvm::Value *val = C.getOperand(0);
       std::string op_name = prepare_operand(val);
 
+      this->Print_Guard();
+
       std::cout << cname << " := ";
       // cout = (bitcast uint) ((int) val) 
       std::cout << "( $bitcast (" << get_aa_type_name(dest,*_module) << " ) " 
@@ -1139,6 +1185,8 @@ namespace {
       llvm::Value *val = C.getOperand(0);
       std::string op_name = prepare_operand(val);
 
+      this->Print_Guard();
+
       if(isa<BitCastInst>(C))
       	std::cout << cname << " := ($bitcast (" 
 		<< get_aa_type_name(dest,*_module) << ") "  << op_name << ")"
@@ -1153,6 +1201,8 @@ namespace {
     {
       std::string lname = to_aa(L.getNameStr());
       std::cout << "// load " << std::endl;
+
+      this->Print_Guard();
 
       std::cout << lname << " := " ;
       
@@ -1189,6 +1239,8 @@ namespace {
 	  return;
 	}
 
+      this->Print_Guard();
+
       std::string ptr_name  = to_aa(get_name(S.getPointerOperand()));
       std::string data_name = prepare_operand(S.getValueOperand());
       if(is_global)
@@ -1212,6 +1264,7 @@ namespace {
 	}
 
 	std::cout << "// compare instruction" << std::endl;
+        this->Print_Guard();
 
 	std::cout << cname << " := " ;
 
@@ -1294,6 +1347,8 @@ namespace {
       std::string true_name = prepare_operand(S.getTrueValue());
       std::string false_name = prepare_operand(S.getFalseValue());
 
+      this->Print_Guard();
+
       std::cout << sname << " := ( $mux " << sel_name
 		<< " " << true_name
 		<< " " << false_name << ")" << std::endl;
@@ -1304,6 +1359,13 @@ namespace {
       bool is_do_while = this->Get_Do_While_Flag();
       std::string brname = to_aa(br.getNameStr());
       BasicBlock* from_bb = br.getParent();
+
+	if(this->Get_Guard_Flag())
+	{
+		std::cout << "// scope of guard " << this->Get_Guard_String() << " ends at branch point." << std::endl;
+		this->Set_Guard_Flag(false);
+	}
+
 	if(br.isUnconditional())
 	  {
 	    BasicBlock* to_bb = br.getSuccessor(0);
@@ -1355,6 +1417,12 @@ namespace {
       BasicBlock* to_bb = NULL;
 
       bool is_do_while = this->Get_Do_While_Flag();
+
+      if(this->Get_Guard_Flag())
+      {
+	      std::cout << "// scope of guard " << this->Get_Guard_String() << " ends at switch point." << std::endl;
+	      this->Set_Guard_Flag(false);
+      }
 
       std::cout << "$switch " << test_op << std::endl;
       for(int idx=1; idx < I.getNumCases(); idx++)

@@ -1088,7 +1088,7 @@ bool Aa::is_do_while_loop(llvm::BasicBlock& BB, int& pipelining_depth, int& buff
 	      if(f->isDeclaration())
 	      {
 		StringRef name = f->getName();
-		if(name.equals("loop_pipelining_on"))
+		if(name.equals("__loop_pipelining_on__"))
 		{
 			opt_fn_found = true;
 			if(C.getNumArgOperands() > 0)
