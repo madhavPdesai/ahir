@@ -522,6 +522,23 @@ package BaseComponents is
       clk, reset          : in std_logic);
   end component PhiBase;
 
+  
+  component PhiPipelined is
+    generic (
+      name       : string;
+      num_reqs   : integer;
+      buffering  : integer;
+      data_width : integer);
+    port (
+      sample_req                 : in  BooleanArray(num_reqs-1 downto 0);
+      sample_ack                 : out Boolean;
+      update_req                 : in Boolean;
+      update_ack                 : out Boolean;
+      idata                      : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
+      odata                      : out std_logic_vector(data_width-1 downto 0);
+      clk, reset                 : in std_logic);
+  end component;
+
 
   component BranchBase
     generic (

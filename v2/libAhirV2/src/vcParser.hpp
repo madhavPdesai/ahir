@@ -172,7 +172,7 @@ public:
 	public: void vc_Phi_Instantiation(
 		vcDataPath* dp
 	);
-	public: void vc_PhiWithBuffering_Instantiation(
+	public: void vc_PhiPipelined_Instantiation(
 		vcDataPath* dp
 	);
 	public: void vc_ModuleBufferingSpec(

@@ -104,6 +104,7 @@ void Write_VC_Phi_Operator(string inst_name,
 			   vector<pair<string,AaType*> >& sources,
 			   string target,
 			   AaType* target_type,
+			   bool pipeline_flag,
 			   ostream& ofile);
 void Write_VC_Link(string inst_name, vector<string>& reqs, vector<string>& acks,
 		   ostream& ofile);

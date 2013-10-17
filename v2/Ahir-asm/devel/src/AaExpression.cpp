@@ -2350,7 +2350,7 @@ void AaArrayObjectReference::Write_VC_Datapath_Instances(AaExpression* target, o
 	  string src_name = source_wire;
 	  string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
 	  
-          bool flow_through = this->Get_Is_Intermediate();
+	  bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 	  Write_VC_Slice_Operator(dpe_name,
 				  src_name,
 				  tgt_name,
@@ -3558,7 +3558,8 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 		  ilb_flag = true;
 	  }
 
-	  bool flow_through = this->Get_Is_Intermediate();
+      		
+	  bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 
 	  this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
 
@@ -3578,7 +3579,6 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 	  }
 	  else
 	  {
-
 		  Write_VC_Unary_Operator(__NOP,
 				  dpe_name,
 				  src_name,
@@ -3589,6 +3589,7 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 				  flow_through,
 				  ofile);
 	  }
+
 	  // extreme pipelining.
 	  if(this->Is_Part_Of_Extreme_Pipeline())
 	  {
@@ -3775,7 +3776,7 @@ void AaUnaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
   if(!this->Is_Constant())
     {
 
-      bool flow_through = this->Get_Is_Intermediate();
+      bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 
       this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
 
@@ -4328,9 +4329,7 @@ void AaTernaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostr
 {
   if(!this->Is_Constant())
     {
-
-
-      bool flow_through = this->Get_Is_Intermediate();
+      bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 
       this->_test->Write_VC_Datapath_Instances(NULL,ofile);
       this->_if_true->Write_VC_Datapath_Instances(NULL,ofile);

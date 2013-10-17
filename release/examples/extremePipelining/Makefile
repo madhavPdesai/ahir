@@ -10,6 +10,7 @@ VHDL_VHPI_LIB=$(AHIR_RELEASE)/CtestBench/vhdl
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
 SRC=./src
 all: SW HW 
+TOAA:c2llvmbc llvmbc2aa  aalink
 TOVC:c2llvmbc llvmbc2aa  aalink aa2vc 
 VC2VHDL: vc2vhdl  vhdlsim
 AA2VHDLSIM: aa2vc  vc2vhdl  vhdlsim
@@ -20,7 +21,7 @@ TOVHDL:TOVC vc2vhdl
 LLVM2AAOPTS=-extract_do_while=true --storageinit=true -pipedepths=pipedepths.txt
 
 #program defs: no unrolling
-PROGDEFS=-DPIPELINE
+PROGDEFS=-DPIPELINE -DALT
 #PROGDEFS=-DUNROLL
 
 TOPMODULES=-T vectorSum 
@@ -52,14 +53,14 @@ llvmbc2aa:  prog.opt.o
 # Aa to vC
 aalink: prog.aa 
 	AaLinkExtMem prog.aa $(FUNCTIONLIB)/Aa/fpu.aa | vcFormat > prog.linked.aa
-	AaOpt -B prog.linked.aa | vcFormat > prog.linked.opt.aa
+	AaOpt  prog.linked.aa | vcFormat > prog.linked.opt.aa
 
 aa2vc: prog.linked.opt.aa
 	Aa2VC -O -C prog.linked.opt.aa | vcFormat > prog.vc
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -S 4 -O -I 2 -v -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
+	vc2vhdl -O -S 4 -I 2 -v -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl

@@ -126,13 +126,13 @@ void Write_VC_Unary_Operator(AaOperation op,
 	  src_kind = ((src_type->Is("AaFloatType")) ? "F" :
 		       (src_type->Is("AaIntType") ? "S" : "U"));
 
-	  if((target_type == src_type) || ( (dest_kind == "U" && src_kind == "U")))
+	  /*if((target_type == src_type) || ( (dest_kind == "U" && src_kind == "U")))
 	    {
 	      // just register it..
 	      op_name = ":=";
 	    }
-	  else
-	    op_name = "$" + dest_kind + ":=$" + src_kind;
+	  else */
+	  op_name = "$" + dest_kind + ":=$" + src_kind;
 
 	}
       else
@@ -282,8 +282,12 @@ void Write_VC_Phi_Operator(string inst_name,
 			   vector<pair<string,AaType*> >& sources,
 			   string target,
 			   AaType* target_type,
+			   bool pipeline_flag,
 			   ostream& ofile)
 {
+  if(pipeline_flag)
+	ofile << "# ";
+
   ofile << "$phi [" << inst_name << "] " ;
   ofile << "(";
   for(int idx = 0; idx < sources.size(); idx++)

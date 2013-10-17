@@ -111,9 +111,17 @@ bool AaFloatValue::Equals(AaValue* other)
 
 void AaFloatValue::Set_Value(string init_value)
 {
-  assert(init_value.size() > 2 && init_value[0] == '_' && init_value[1] == 'f');
-  Float tmp(_value->_characteristic_width, _value->_mantissa_width, init_value.substr(2));
-  ((Float*)(_value))->Swap(tmp);
+  if(init_value == "0")
+  {
+	  Float tmp(_value->_characteristic_width, _value->_mantissa_width, init_value);
+	  ((Float*)(_value))->Swap(tmp);
+  }
+  else
+  {
+	  assert(init_value.size() > 2 && init_value[0] == '_' && init_value[1] == 'f');
+	  Float tmp(_value->_characteristic_width, _value->_mantissa_width, init_value.substr(2));
+	  ((Float*)(_value))->Swap(tmp);
+  }
 }
 
 void AaFloatValue::Assign(AaType* target_type, AaValue* expr_value)

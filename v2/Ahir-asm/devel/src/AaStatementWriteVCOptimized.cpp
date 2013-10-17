@@ -262,11 +262,14 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 		ofile << "// Guard expression" << endl;
       		this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
+
       		__J(__SST(this),__UCT(this->_guard_expression));
+      		__J(__UST(this),__UCT(this->_guard_expression));
+
 		if(pipeline_flag)
 		{
-      			__MJ(__UST(this->_guard_expression),__SCT(this),true)  // bypass
-      			__MJ(__UST(this->_guard_expression),__UCT(this),true)  // bypass
+      			__MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements),__SCT(this),true)  // bypass
+      			__MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this),true)  // bypass
 		}
 	}
     }
@@ -1277,84 +1280,101 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   if(!ok_flag)
     assert(0);
 
-  ofile << "// PHI statement " << this->Get_VC_Name() << endl;
+  assert(pipeline_flag);
+
+  ofile << "// (pipelined) PHI statement " << this->Get_VC_Name() << endl;
   ofile << "// " << this->To_String() << endl;
 
-  string  phi_sequencer_reqs;
-  string  phi_sequencer_raw_reqs;
-  string  phi_sequencer_reqs_merged;
-  string  phi_sequencer_triggers;
-  string  phi_sequencer_done;
-  
+  // the active, completed and the active transitions
+  string trigger_from_loop_back = this->Get_VC_Name() + "_loopback_trigger";
+  string sample_from_loop_back_from_phi_seq = this->Get_VC_Name() + "_loopback_sample_req_from_phi_seq";
+  string sample_from_loop_back = this->Get_VC_Name() + "_loopback_sample_req";
+  __T(trigger_from_loop_back);
+  __T(sample_from_loop_back_from_phi_seq);
+  __T(sample_from_loop_back);
+  __J(trigger_from_loop_back,"back_edge_to_loop_body");
+  __J(sample_from_loop_back, sample_from_loop_back_from_phi_seq);
 
+  string trigger_from_entry = this->Get_VC_Name() + "_entry_trigger";
+  string sample_from_entry = this->Get_VC_Name() + "_entry_sample_req";
+  string sample_from_entry_from_phi_seq = this->Get_VC_Name() + "_entry_sample_req_from_phi_seq";
+  __T(trigger_from_entry);
+  __T(sample_from_entry_from_phi_seq);
+  __T(sample_from_entry);
+  __J(trigger_from_entry, "first_time_through_loop_body");
+  __J(sample_from_entry, sample_from_entry_from_phi_seq);
+
+
+  __DeclTransSplitProtocolPattern;
+
+  if(pipeline_flag)
+  {
+	__MJ(__UST(this), __UCT(this), true); // bypass.
+	__MJ(__SST(this), __SCT(this), false); // no bypass.
+  }
+
+  string msample_req = this->Get_VC_Name() + "_merged_reqs";
+  string req_merge_name = this->Get_VC_Name() + "_req_merge";
+  __T(msample_req);
+
+  ofile << "$transitionmerge [" << req_merge_name << "] (" 
+	<< sample_from_entry << " " << sample_from_loop_back << ") (" << msample_req << ")" << endl;
+  __F(msample_req, "$null"); // merged the two and tied the merge as open.
+
+  string phi_triggers;
+  string phi_reqs;
+  // the source control paths.
   for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
     {
-      
+      AaExpression* source_expr = _source_pairs[idx].second;
       string trig_place = _source_pairs[idx].first;
-      string root_trig_transition;
 
-      // this transition should have been declared earlier.
-      if(trig_place == "$entry")
-	root_trig_transition = "first_time_through_loop_body";
-      else if(trig_place == "$loopback")
-	root_trig_transition = "back_edge_to_loop_body";
+      if(!source_expr->Is_Constant())
+	{
+	  source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
+						       visited_elements,
+						       ls_map,pipe_map,barrier,
+						       ofile);
+	  __J(__SST(this),__UCT(source_expr));
+	  if(pipeline_flag)
+		__MJ(__UST(source_expr), __SCT(this), true); // bypass.
+        }
+      if(trig_place == "$loopback")
+      {
+	      phi_triggers += trigger_from_loop_back  + " "; 
+	      phi_reqs += sample_from_loop_back_from_phi_seq + " ";
+      }
       else
-	assert(0);
-	
-      string trig_transition_name = this->Get_VC_Name() + "_trigger_from_" + root_trig_transition;
-      string raw_req_name = this->Get_VC_Name() + "_req_" + IntToStr(idx) + "_raw";
-      string req_name = this->Get_VC_Name() + "_req_" + IntToStr(idx);
-      
-      __T(raw_req_name);
-      __T(req_name);
-      __F(raw_req_name, req_name);
-
-      __T(trig_transition_name);
-      __F(root_trig_transition, trig_transition_name);
-      
-      phi_sequencer_raw_reqs += " " + raw_req_name;
-      phi_sequencer_reqs += " " + req_name;
-      phi_sequencer_triggers +=  " " + trig_transition_name;
+      {
+	      phi_triggers +=  trigger_from_entry + " ";
+	      phi_reqs += sample_from_entry_from_phi_seq + " ";
+      }
     }
-  
-  phi_sequencer_reqs_merged = this->Get_VC_Name() + "_phi_sequencer_reqs_merged";
-  __T(phi_sequencer_reqs_merged);
 
-  phi_sequencer_done = this->Get_VC_Name() + "_phi_sequencer_done";
+  string  phi_sequencer_done = this->Get_VC_Name() + "_phi_sequencer_done";
   __T(phi_sequencer_done);
-  
-  string ack_transition_name = this->Get_VC_Name() + "_ack";
-  __T(ack_transition_name);
-  
-  string enable_transition_name = this->Get_VC_Reenable_Sample_Transition_Name(visited_elements);
-  __T(enable_transition_name);
+  __F(phi_sequencer_done, "$null");
 
-  // the active, completed and the active transitions
-  __DeclTransSplitProtocolPattern
-  
 
-  // instantiate phi sequencer.
+  // the control-sequencing for the PHI is too complicated to
+  // model in a normal-fork block. The dirty stuff is hidden
+  // in the phi_sequencer.
   ofile << "$phisequencer [ " << this->Get_VC_Name() << "_phi_seq] ( ";
-  ofile << phi_sequencer_triggers << " : ";
-  ofile << enable_transition_name << " : " ;
-  ofile << ack_transition_name << " ) ( " ;
-  ofile << phi_sequencer_raw_reqs << " : " << phi_sequencer_done << " ) " << endl;
+  ofile << phi_triggers << " : ";
+  ofile << __SST(this) << " : " ;
+  ofile << __SCT(this) << " ) ( " ;
+  ofile << phi_reqs << " : " << phi_sequencer_done << " ) " << endl;
 
-  // instantiate reqs merger.
-  ofile << "$transitionmerge [" << this->Get_VC_Name() << "_req_merger] (" 
-	<< phi_sequencer_reqs << ") (" << phi_sequencer_reqs_merged << ")" << endl;
-  __F(phi_sequencer_reqs_merged,"$null");
-
-  // join to active.
-  __F(__SST(this), enable_transition_name);
-  __J(__SCT(this), phi_sequencer_done)
-  __J(__UST(this), __SCT(this))
-  __J(__UCT(this), __UST(this))
+  // sample-ack from phi must join with condition-evaluated so that
+  // loop-back is delayed until the present PHI has sampled.
+  __J("condition_evaluated", __SCT(this));
 
   // take care of the guard
   if(this->_guard_expression)
     {
+	    cerr <<	"Warning: Guard for PHI statement ignored.., for now.\n";
       // guard expression calculation
+      /*
       this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
       if(!this->_guard_expression->Is_Constant())
 	{
@@ -1369,31 +1389,9 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		   __SCT(this), true); // bypass
 	    }
 	}
+	*/
     }
-
-
-  for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
-    {
-      AaExpression* source_expr = _source_pairs[idx].second;
-      if(!source_expr->Is_Constant())
-	{
-	  source_expr->Write_VC_Control_Path_Optimized(pipeline_flag,
-						       visited_elements,
-						       ls_map,pipe_map,barrier,
-						       ofile);
-
-	  __J(__SST(this), __UCT(source_expr));
-
-	  if(pipeline_flag)
-	    {
-	      __MJ(source_expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
-			__SCT(this), true); // bypass
-	    }
-	}
-    }
-
   visited_elements.insert(this);
-
 }
 
 // called only if it appears in a do-while loop.
@@ -1406,15 +1404,24 @@ void AaPhiStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
   vector<string> reqs;
   vector<string> acks;
 
+  string sample_from_loop_back = this->Get_VC_Name() + "_loopback_sample_req";
+  string sample_from_entry = this->Get_VC_Name() + "_entry_sample_req";
+  string sample_ack = __SCT(this);
+  string update_req = __UST(this);
+  string update_ack = __UCT(this);
+
   for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)
     {
-      string req_name = hier_id + "/" + this->Get_VC_Name() + "_req_" + IntToStr(idx);
-      reqs.push_back(req_name);
+      string trig_place = _source_pairs[idx].first;
+      if(trig_place == "$loopback")
+	reqs.push_back(hier_id + "/" + sample_from_loop_back);
+      else
+	reqs.push_back(hier_id + "/" + sample_from_entry);
     }
+  reqs.push_back(hier_id + "/" + update_req);
+  acks.push_back(hier_id + "/" + sample_ack);
+  acks.push_back(hier_id + "/" + update_ack);
   
-  string ack_transition_name = hier_id + "/" + this->Get_VC_Name() + "_ack";
-  acks.push_back(ack_transition_name);
-
   Write_VC_Link(this->Get_VC_Name(),reqs,acks,ofile);
 
   for(int idx = 0, fidx = _source_pairs.size(); idx < fidx; idx++)

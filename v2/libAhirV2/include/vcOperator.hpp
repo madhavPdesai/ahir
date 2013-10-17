@@ -390,6 +390,19 @@ public:
 };
 
 
+// vcPhiPipelined
+class vcPhiPipelined: public vcPhi
+{
+public:
+  vcPhiPipelined(string id, vector<vcWire*>& inwires, vcWire* outwire);
+  virtual void Print(ostream& ofile);
+  virtual string Kind() {return("vcPhiPipeined");}
+  virtual void Add_Acks(vector<vcTransition*>& acks);
+  virtual void Print_VHDL(ostream& ofile);
+  friend class vcDataPath;
+
+};
+
 //
 // all arithmetic binary operators.
 //
@@ -666,18 +679,6 @@ class vcSelectWithInputBuffering: public vcSelect
   virtual string Kind() {return("vcSelectWithInputBuffering");}
   virtual void Print(ostream& ofile);
   virtual void Print_VHDL(ostream& ofile);
-  friend class vcDataPath;
-};
-
-class vcPhiWithBuffering: public vcPhi
-{
-
-  public:
-  vcPhiWithBuffering(string id, vector<vcWire*>& inwires, vcWire* outwire):
-   vcPhi(id, inwires, outwire) {}
-
-  virtual string Kind() {return("vcPhiWithBuffering");}
-  virtual void Print(ostream& ofile);
   friend class vcDataPath;
 };
 

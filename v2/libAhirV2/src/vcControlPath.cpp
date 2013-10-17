@@ -644,6 +644,7 @@ void vcTransition::Print_VHDL(ostream& ofile)
   if(this->Get_Is_Bound_As_Output_From_CP_Function())
   {
 	assert(explicit_preds.size() == 0);
+	return;
   }
 
   // if the transition is bound as an input to its region,
@@ -1057,8 +1058,6 @@ void vcCPBlock::Print_VHDL(ostream& ofile)
 	this->Print_VHDL_Exit_Symbol_Assignment(ofile);
 
 	vcCPElement* prnt = this->Get_Parent();
-	if(prnt != NULL)
-		prnt->Print_VHDL_Bindings(NULL,ofile);
 
 	this->Print_VHDL_Export_Cleanup(ofile);
 	ofile << "-- }" << endl << "end Block; -- " << id << endl;
@@ -1170,6 +1169,14 @@ void vcCPBlock::DFS_Order(bool reverse_flag, vcCPElement* start_element, bool& c
 			if(on_queue_set.find(w) != on_queue_set.end())
 			{
 				cycle_flag = true;
+				vcSystem::Info("cycle present in fork-block.\n");
+				cerr << "Cycle found in block.\n"; 
+				for(deque<vcCPElement*>::iterator iter = dfs_queue.begin(), fiter = dfs_queue.end();
+						iter != fiter; iter++)
+				{
+					cerr << "\t" << (*iter)->Get_Id() << endl;
+				}
+				cerr << "end-Cycle.\n"; 
 				this->DFS_Backward_Edge_Action(reverse_flag, dfs_queue, on_queue_set, top, w);
 			}
 			else if(visited_set.find(w) == visited_set.end())
@@ -1748,12 +1755,9 @@ void vcPhiSequencer::Update_Predecessor_Successor_Links()
      s->Add_Successor(_ack);
      _done->Add_Predecessor(s);
 
-     for(int jdx = 0, fjdx = _reqs.size(); jdx < fjdx; jdx++)
-     {
-        vcTransition* r = _reqs[idx];
-	s->Add_Successor(r);
-        r->Add_Predecessor(s);
-     }
+     vcTransition* r = _reqs[idx];
+     s->Add_Successor(r);
+     r->Add_Predecessor(s);
   }
 
   // enables -> reqs,
@@ -1765,14 +1769,14 @@ void vcPhiSequencer::Update_Predecessor_Successor_Links()
 
      for(int jdx = 0, fjdx = _reqs.size(); jdx < fjdx; jdx++)
      {
-        vcTransition* r = _reqs[idx];
+        vcTransition* r = _reqs[jdx];
 	s->Add_Successor(r);
         r->Add_Predecessor(s);
      }
   }
 
   // reqs -> acks links are omitted.
-
+  
   // ack -> done
   _ack->Add_Successor(_done);
   _done->Add_Predecessor(_ack);
@@ -1830,6 +1834,10 @@ void vcTransitionMerge::Print_Dot_Entry(vcControlPath* cp, ostream& ofile)
 
 void vcTransitionMerge::Update_Predecessor_Successor_Links()
 {
+  // This is dangerous, because the paths are used in
+  // eliminating redundancies.  These should not
+  // be considered true predecessor->successor relations.
+  /*
   for(int idx = 0, fidx = _in_transitions.size(); idx < fidx; idx++)
     {
       vcTransition* i = _in_transitions[idx];
@@ -1837,6 +1845,7 @@ void vcTransitionMerge::Update_Predecessor_Successor_Links()
       i->Add_Successor(_out_transition);
       _out_transition->Add_Predecessor(i);
     }
+  */
 }
 
 
@@ -2835,6 +2844,13 @@ void vcCPPipelinedForkBlock::Print(ostream& ofile)
   this->Print_Exports(ofile);
 }
 
+void vcCPPipelinedForkBlock::Print_VHDL_Export_Cleanup(ostream& ofile)
+{
+  vcCPElement* prnt = this->Get_Parent();
+  if(prnt != NULL)
+	  prnt->Print_VHDL_Bindings(NULL,ofile);
+}
+
 void vcCPPipelinedForkBlock::Print_VHDL(ostream& ofile)
 {
   this->vcCPBlock::Print_VHDL(ofile);
@@ -3114,8 +3130,7 @@ void vcCPPipelinedLoopBody::Print_VHDL(ostream& ofile)
   // print control transfers from and to places in parent.
   vcCPElement* prnt = this->Get_Parent();
   assert(prnt->Is("vcCPSimpleLoopBlock"));
-  vcCPSimpleLoopBlock* prnt_loop = (vcCPSimpleLoopBlock*) prnt;
-  prnt_loop->Print_VHDL_Bindings(NULL,ofile);
+  prnt->Print_VHDL_Bindings(NULL,ofile);
   
   this->_entry->Print_VHDL(ofile);
   for(int idx = 0; idx < this->_elements.size(); idx++)

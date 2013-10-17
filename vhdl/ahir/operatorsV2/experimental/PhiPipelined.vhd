@@ -8,7 +8,12 @@ use ahir.Subprograms.all;
 use ahir.Utilities.all;
 use ahir.BaseComponents.all;
 
-entity PhiWithBuffering is
+--
+-- Assumptions: 
+--  1.  at most one of the sample_req's is asserted at any time.
+--  2.  between two successive sample-reqs, there must be a sample-ack.
+--
+entity PhiPipelined is
   generic (
     name       : string;
     num_reqs   : integer;
@@ -22,16 +27,18 @@ entity PhiWithBuffering is
     idata                      : in  std_logic_vector((num_reqs*data_width)-1 downto 0);
     odata                      : out std_logic_vector(data_width-1 downto 0);
     clk, reset                 : in std_logic);
-end PhiWithBuffering;
+end PhiPipelined;
 
 
 -- a single interlock buffer which is written into by
 -- one of num_reqs sources.
-architecture Behave of PhiWithBuffering is
+architecture Behave of PhiPipelined is
 
     signal ilb_write_data, mux_data_prereg, mux_data_reg: std_logic_vector(data_width-1 downto 0);
     signal ilb_write_req : boolean;
 
+    signal sample_req_reg: BooleanArray(num_reqs-1 downto 0);
+    signal clear_sample_reg: Boolean;
 begin  -- Behave
 
   ilb: InterlockBuffer generic map(name => name & " ilb " ,

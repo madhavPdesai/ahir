@@ -70,6 +70,7 @@ class AaStatement: public AaScope
 			_synch_statements.insert(synch);
 	}	
   }
+  virtual bool Is_Phi_Statement() {return(false);}
   virtual void Write_VC_Synch_Dependency(set<AaRoot*>& visited_elements, bool pipeline_flag, ostream& ofile);
   virtual void Set_Pipeline_Parent(AaStatement* dws) {_pipeline_parent = dws;}
   AaStatement* Get_Pipeline_Parent() {return(_pipeline_parent);}
@@ -1127,6 +1128,7 @@ class AaPhiStatement: public AaStatement
   void Set_Target(AaObjectReference* tgt);
   AaObjectReference* Get_Target() {return(_target);}
 
+  virtual bool Is_Phi_Statement() {return(true);}
   void Add_Source_Pair(string label, AaExpression* expr);
 
   virtual void Set_Pipeline_Parent(AaStatement* dws);
@@ -1176,16 +1178,17 @@ class AaPhiStatement: public AaStatement
   // called only if it appears in a do while loop.
   virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
-  // for now.
+  
   virtual string Get_VC_Reenable_Update_Transition_Name(set<AaRoot*>& visited_elements)
   {
-    return(this->Get_VC_Name() + "_enable");
+    return(this->Get_VC_Name() + "_update_start_");
   }
 
   virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
   {
-    return(this->Get_VC_Name() + "_enable");
+    return(this->Get_VC_Name() + "_sample_start_");
   }
+ 
 
   virtual void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
   friend class AaMergeStatement;

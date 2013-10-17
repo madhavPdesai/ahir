@@ -1075,60 +1075,6 @@ bool Aa::is_do_while_loop(llvm::BasicBlock& BB, int& pipelining_depth, int& buff
 	if(T->getNumSuccessors() == 0)
 		return(false);
 
-	// optimize function must be called here in order
-	// to pipeling this loop.
-	bool opt_fn_found = false; 
-      	for(llvm::BasicBlock::iterator iiter = BB.begin(),fiter = BB.end(); 
-	  iiter != fiter;  ++iiter)
-	{
-	  if(isa<CallInst>(*iiter))
-	    {
-	      llvm::CallInst& C = static_cast<CallInst&>(*iiter);
-      	      llvm::Function* f  = C.getCalledFunction();
-	      if(f->isDeclaration())
-	      {
-		StringRef name = f->getName();
-		if(name.equals("__loop_pipelining_on__"))
-		{
-			opt_fn_found = true;
-			if(C.getNumArgOperands() > 0)
-			{
-				llvm::Value* v = C.getArgOperand(0);	
-				if(isa<Constant>(v))
-				{
-					int pd = get_uint32(dyn_cast<Constant>(v));
-					if(pd > 0)
-						pipelining_depth = pd;
-				}	
-				if(C.getNumArgOperands() > 1)
-				{
-					v = C.getArgOperand(1);	
-					if(isa<Constant>(v))
-					{
-						int bd = get_uint32(dyn_cast<Constant>(v));
-						if(bd > 0)
-							buffering = bd;
-					}
-				}
-				if(C.getNumArgOperands() > 2)
-				{
-					v = C.getArgOperand(2);	
-					if(isa<Constant>(v))
-					{
-						int bd = get_uint32(dyn_cast<Constant>(v));
-						if(bd > 0)
-							full_rate_flag = true;
-					}
-				}
-			}
-			break;
-		}
-	      }
-            }
-	}
-	if(!opt_fn_found)
-		return(false);
-
 	// all successors point back to itself..?
 	bool ret_val = false;
 	for (unsigned i = 0, e = T->getNumSuccessors(); i != e; ++i) 
@@ -1140,6 +1086,135 @@ bool Aa::is_do_while_loop(llvm::BasicBlock& BB, int& pipelining_depth, int& buff
 			break;
 		}
 	}
-	return(ret_val);
+	if(!ret_val)
+		return(false);
+
+	// optimize function must be called here in order
+	// to pipeling this loop.
+	bool opt_fn_found = get_loop_pipelining_info(BB,pipelining_depth, buffering, full_rate_flag); 
+	return(opt_fn_found);
 }
 
+// if the terminator contains a branch back to this
+// block itself, then it is a do-while loop.
+bool Aa::is_do_while_loop(std::vector<llvm::BasicBlock*>& bb_chain, int& pipelining_depth, int& buffering, bool& full_rate_flag)
+{
+	full_rate_flag = false;
+	pipelining_depth = 1;
+	buffering = 1;
+
+	int S = bb_chain.size();
+	if(S == 1)
+		return(is_do_while_loop(*(bb_chain[0]), pipelining_depth, buffering, full_rate_flag));
+
+	llvm::BasicBlock* lead_bb = bb_chain[0];
+	llvm::BasicBlock* trailing_bb = bb_chain[S-1];
+
+	llvm::TerminatorInst* T = bb_chain[S-1]->getTerminator();
+
+	if(isa<llvm::ReturnInst>(T))
+		return(false);
+
+	// currently, terminator as a switch is
+	// not supported.
+	if(isa<llvm::SwitchInst>(T))
+		return(false);
+
+	if(T->getNumSuccessors() == 0)
+		return(false);
+
+	// all successors point back to itself..?
+	bool ret_val = false;
+	for (unsigned i = 0, e = T->getNumSuccessors(); i != e; ++i) 
+	{
+		llvm::BasicBlock* S = T->getSuccessor(i);
+		if(S == lead_bb)
+		{
+			ret_val = true;
+			break;
+		}
+	}
+	if(!ret_val)
+		return(false);
+
+	// optimize function must be called here in order
+	// to pipeling this loop.
+	bool opt_fn_found = get_loop_pipelining_info(*lead_bb,pipelining_depth, buffering, full_rate_flag); 
+	return(opt_fn_found);
+}
+
+
+
+bool Aa::get_loop_pipelining_info(llvm::BasicBlock& BB,int& pipelining_depth, int& buffering, bool& full_rate_flag)
+{
+	bool opt_fn_found = false;
+
+	for(llvm::BasicBlock::iterator iiter = BB.begin(),fiter = BB.end(); 
+			iiter != fiter;  ++iiter)
+	{
+		if(isa<CallInst>(*iiter))
+		{
+			llvm::CallInst& C = static_cast<CallInst&>(*iiter);
+			llvm::Function* f  = C.getCalledFunction();
+			if(f->isDeclaration())
+			{
+				StringRef name = f->getName();
+				if(name.equals("__loop_pipelining_on__"))
+				{
+					opt_fn_found = true;
+					if(C.getNumArgOperands() > 0)
+					{
+						llvm::Value* v = C.getArgOperand(0);	
+						if(isa<Constant>(v))
+						{
+							int pd = get_uint32(dyn_cast<Constant>(v));
+							if(pd > 0)
+								pipelining_depth = pd;
+						}	
+						if(C.getNumArgOperands() > 1)
+						{
+							v = C.getArgOperand(1);	
+							if(isa<Constant>(v))
+							{
+								int bd = get_uint32(dyn_cast<Constant>(v));
+								if(bd > 0)
+									buffering = bd;
+							}
+						}
+						if(C.getNumArgOperands() > 2)
+						{
+							v = C.getArgOperand(2);	
+							if(isa<Constant>(v))
+							{
+								int bd = get_uint32(dyn_cast<Constant>(v));
+								if(bd > 0)
+									full_rate_flag = true;
+							}
+						}
+					}
+					break;
+				}
+			}
+		}
+	}
+	return(opt_fn_found);
+}
+
+
+llvm::BasicBlock* Aa::have_unique_common_successor(llvm::BasicBlock* u, llvm::BasicBlock* v)
+{
+	llvm::BasicBlock* ret_val = NULL;
+	// u and v must each have a single successor, and 
+	// the successors must be identical.
+
+	llvm::TerminatorInst* tu = u->getTerminator();
+	llvm::TerminatorInst* tv = v->getTerminator();
+
+	if((tu->getNumSuccessors() == 1) && (tv->getNumSuccessors() == 1))
+	{
+		if(tu->getSuccessor(0) == tv->getSuccessor(0))
+			ret_val = tu->getSuccessor(0);
+	}
+
+	return(ret_val);
+}

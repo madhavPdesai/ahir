@@ -392,6 +392,84 @@ void vcPhi::Print_VHDL(ostream& ofile)
       ofile << "-- }\n end Block; -- phi operator " << this->Get_VHDL_Id() << endl;
 }
 
+
+vcPhiPipelined::vcPhiPipelined(string id, vector<vcWire*>& inwires, vcWire* outwire): vcPhi(id,inwires,outwire) 
+{
+}
+
+void vcPhiPipelined::Print(ostream& ofile)
+{
+  ofile << vcLexerKeywords[__HASH] << " ";
+  this->vcPhi::Print(ofile);
+}
+
+void vcPhiPipelined::Add_Acks(vector<vcTransition*>& acks)
+{
+  assert(acks.size() == 2);
+  this->_acks = acks;
+}
+void vcPhiPipelined::Print_VHDL(ostream& ofile)
+{
+      int odata_width = this->Get_Outwire()->Get_Type()->Size();
+      int num_reqs = this->Get_Inwires().size();
+      int idata_width = num_reqs*odata_width;
+      int buffering = 0;
+
+      if((this->Get_Number_Of_Reqs() != (num_reqs+1)) ||
+	 (this->Get_Number_Of_Acks() != 2))
+	{
+	  vcSystem::Error("pipelined-phi operator " + this->Get_Id() + " has inadequate/incorrect req-ack links");
+	  return;
+	}
+
+      assert(this->Get_Number_Of_Output_Wires() ==  1);
+      buffering = this->Get_Output_Buffering(this->Get_Output_Wire(0));
+
+      ofile << this->Get_VHDL_Id() << ": Block -- pipelined-phi operator {" << endl;
+      ofile << "signal idata: std_logic_vector(" << idata_width-1 << " downto 0);" << endl;
+      ofile << "signal sample_req: BooleanArray(" << num_reqs-1 << " downto 0);" << endl;
+      ofile << "signal sample_ack, update_req, update_ack: Boolean;" << endl;
+      ofile << "--}\n begin -- {" << endl;
+      ofile << "idata <= ";
+      for(int idx = 0; idx < this->Get_Number_Of_Input_Wires(); idx++)
+	{
+	  vcWire* w = this->Get_Input_Wire(idx);
+	  if(idx > 0)
+	    ofile << " & ";
+	  ofile << w->Get_VHDL_Signal_Id();
+	  int U = this->Get_Input_Buffering(w);
+	  buffering = ((buffering < U) ? U : buffering); 
+	}
+      ofile << ";" << endl;
+
+      ofile << "sample_req <= ";
+      for(int idx = 0; idx < this->Get_Number_Of_Reqs()-1; idx++)
+      {
+	      if(idx > 0)
+		      ofile << " & ";
+	      ofile << this->Get_Req(idx)->Get_CP_To_DP_Symbol();
+      }
+      ofile << ";" << endl;
+      ofile << "update_req <= " <<  this->Get_Req(this->Get_Number_Of_Reqs()-1)->Get_CP_To_DP_Symbol() << ";" << endl;
+
+      ofile << "phi: PhiPipelined -- {" << endl
+	    << "generic map( -- { " << endl 
+	    << "name => \"" << this->Get_VHDL_Id() << "\"," << endl
+	    << "buffering => " << buffering << "," << endl
+	    << "num_reqs => " << this->Get_Number_Of_Reqs()-1 << "," << endl
+	    << "data_width => " << odata_width << ") -- }"  << endl
+	    << "port map( -- { "<< endl 
+	    << "sample_req => sample_req, " << endl
+	    << "sample_ack => " << this->Get_Ack(0)->Get_DP_To_CP_Symbol()  << "," << endl
+	    << "update_req => update_req," << endl
+	    << "update_ack => " << this->Get_Ack(1)->Get_DP_To_CP_Symbol()  << "," << endl
+	    << "idata => idata," << endl
+	    << "odata => " << this->Get_Outwire()->Get_VHDL_Signal_Id() << "," << endl
+	    << "clk => clk," << endl
+	    << "reset => reset ); -- }}" << endl;
+      ofile << "-- }\n end Block; -- phi operator " << this->Get_VHDL_Id() << endl;
+}
+
 vcCall::vcCall(string id, vcModule* m, vector<vcWire*>& in_wires, vector<vcWire*> out_wires, bool inline_flag):vcSplitOperator(id)
 {
   _called_module = m;
@@ -1532,11 +1610,6 @@ void vcBinaryOperatorWithInputBuffering::Print(ostream& ofile)
   this->vcBinarySplitOperator::Print(ofile);
 }
 
-void vcPhiWithBuffering::Print(ostream& ofile)
-{
-  ofile << vcLexerKeywords[__HASH] << " ";
-  this->vcPhi::Print(ofile);
-}
 
 void vcSelectWithInputBuffering::Print(ostream& ofile)
 {

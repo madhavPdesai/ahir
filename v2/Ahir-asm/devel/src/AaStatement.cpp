@@ -3733,10 +3733,13 @@ void AaPhiStatement::Write_VC_Datapath_Instances(ostream& ofile)
 
   string dpe_name = this->Get_VC_Name();
   string tgt_name = _target->Get_VC_Receiver_Name(); 
+
+  
   Write_VC_Phi_Operator(dpe_name,
 			sources,
 			tgt_name,
 			_target->Get_Type(),
+			this->Get_In_Do_While(), // pipelined case.
 			ofile);
 
   // in the extreme pipelining case, output buffering
@@ -4942,10 +4945,10 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
   // The loop body will be triggered from one of two points
   // merge these to the entry transition.
   ofile << "// Pipelined!" << endl;
-
   __T("back_edge_to_loop_body");
   __T("first_time_through_loop_body");
   __T("loop_body_start");
+  __T("condition_evaluated");
 
   ofile << "$transitionmerge [entry_tmerge] (back_edge_to_loop_body first_time_through_loop_body) (loop_body_start)" << endl;
   __J("$entry","loop_body_start");
@@ -4977,8 +4980,6 @@ void AaDoWhileStatement::Write_VC_Control_Path(bool optimize_flag, ostream& ofil
 					 trailing_barrier,
 					 ofile); 
 
-  // Condition handling.
-  __T("condition_evaluated");
   AaExpression* condition_expr = this->_test_expression;
   assert(condition_expr != NULL);
   condition_expr->Write_VC_Control_Path_Optimized(true,

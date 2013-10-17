@@ -31,14 +31,27 @@ namespace Aa {
     int  _do_while_pipelining_depth;
     int  _do_while_buffering_depth;
     bool _do_while_full_rate_flag;
+
     bool _guard_flag;
-    std::string _guard_string;
+    bool _guard_complement;
+    std::string _guard_variable;
+
+    bool _suppress_leading_merge;
+    bool _suppress_terminator;
+    llvm::BasicBlock* _chain_trailer;
 
     std::map<std::string,std::set<std::string> > bb_predecessor_map;
+    std::map<std::string, llvm::BasicBlock*> bb_name_map;
+
     std::map<llvm::Value*, std::string> value_name_map;
     std::map<std::string,std::string> pipe_map;
     std::set<llvm::GlobalVariable*> global_variables_used_in_initialization;
     std::set<llvm::GlobalVariable*> printed_global_variables;
+
+    std::map<llvm::BasicBlock*, std::vector<llvm::BasicBlock*> > basic_block_chain_map;
+    std::map<llvm::BasicBlock*, llvm::BasicBlock*> chain_representative_map;
+    std::vector<llvm::BasicBlock*> ordered_chain_rep_vector;
+
 
     int _pointer_width;
     void Set_Pointer_Width(int w) { _pointer_width = w; }
@@ -65,8 +78,23 @@ namespace Aa {
     void Set_Guard_Flag(bool v) {_guard_flag = v;}
     bool Get_Guard_Flag() {return(_guard_flag);}
 
-    void Set_Guard_String(std::string gs) {_guard_string  = gs;}
-    std::string Get_Guard_String() {return(_guard_string);}
+    void Set_Guard_Complement(bool v) {_guard_complement = v;}
+    bool Get_Guard_Complement() {return(_guard_complement);}
+
+    void Set_Guard_Variable(std::string gs) {_guard_variable  = gs;}
+    std::string Get_Guard_Variable() {return(_guard_variable);}
+    std::string Get_Guard_String() {
+	if(this->_guard_complement)
+		return( "( ~ " + _guard_variable + " )");
+	else
+		return("(" + _guard_variable + ")");
+    }
+    std::string Get_Guard_RHS_Expression() {
+	if(this->_guard_complement)
+		return( "( ~ " + _guard_variable + " )");
+	else
+		return(_guard_variable);
+   }
 
     void Print_Guard();
 
@@ -85,11 +113,9 @@ namespace Aa {
     void start_program(std::string id);
     void print_storage(llvm::GlobalVariable &G);
 
-    void clear_bb_predecessor_map() {bb_predecessor_map.clear();}
-    void add_bb_predecessor_map_entry(std::string p, std::string q)
-    {
-      bb_predecessor_map[p].insert(q);
-    }
+    void clear_bb_predecessor_map();
+    void add_bb_predecessor_map_entry(llvm::BasicBlock* p, llvm::BasicBlock* q);
+    int  get_number_of_predecessors(llvm::BasicBlock* p);
 
     std::string get_name(llvm::Value* v);
     std::string prepare_operand(llvm::Value* v);
@@ -128,6 +154,8 @@ namespace Aa {
     void write_zero_initializer_recursive(std::string prefix,const llvm::Type* ptr, int depth);
     void write_storage_initializer_statements(std::string& prefix, llvm::Constant* konst, bool skip_zero_initializers);
 
+    void Build_Basic_Block_Chains(llvm::Function& F);
+    virtual void Write_Aa_Code(llvm::BasicBlock* chain_rep, bool extract_do_while_loops) {};
   };
 };
 

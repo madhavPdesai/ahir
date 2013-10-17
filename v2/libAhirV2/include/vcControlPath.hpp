@@ -800,6 +800,7 @@ public:
   virtual bool Is_Pipelined() {return(true);}
   virtual void Print_Forks_And_Joins(ostream& ofile);
   virtual void Print_Exports(ostream& ofile);
+  virtual void Print_VHDL_Export_Cleanup(ostream& ofile);
 };
 
 class vcCPPipelinedLoopBody: public vcCPPipelinedForkBlock

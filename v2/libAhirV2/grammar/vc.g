@@ -676,7 +676,7 @@ vc_Datapath[vcSystem* sys,vcModule* m]
             vc_Guarded_Operator_Instantiation[sys,dp] |
             vc_Branch_Instantiation[dp] |
             vc_Phi_Instantiation[dp] | 
-            vc_PhiWithBuffering_Instantiation[dp] | 
+            vc_PhiPipelined_Instantiation[dp] | 
 	    vc_AttributeSpec[dp] | vc_ModuleBufferingSpec[m] )*
             RBRACE
 ;
@@ -1365,22 +1365,23 @@ vc_Phi_Instantiation[vcDataPath* dp]
     { 
          outwire = dp->Find_Wire(id); 
          NOT_FOUND__("wire",outwire,id,p_id);
-         phi = new vcPhi(lbl,inwires, outwire); 
+	 phi = new vcPhi(lbl,inwires, outwire); 
+
          dp->Add_Phi(phi);
     }
   RPAREN
 ;
 
 //-------------------------------------------------------------------------------------------------------------------------
-// vc_PhiWithBuffering_Instantiation: HASH PHI vc_Label LPAREN ( vc_Identifier )+ RPAREN LPAREN vc_Identifier RPAREN
+// vc_PhiPipelined_Instantiation: HASH PHI vc_Label LPAREN ( vc_Identifier )+ RPAREN LPAREN vc_Identifier RPAREN
 //-------------------------------------------------------------------------------------------------------------------------
-vc_PhiWithBuffering_Instantiation[vcDataPath* dp]
+vc_PhiPipelined_Instantiation[vcDataPath* dp]
 {
   string lbl;
   string id;
   vcWire* tw;
   vcWire* outwire;
-  vcPhiWithBuffering* phi;
+  vcPhiPipelined* phi;
   vector<vcWire*> inwires;
 }
 : HASH p_id:PHI lbl = vc_Label LPAREN ( id = vc_Identifier { tw = dp->Find_Wire(id); 
@@ -1391,7 +1392,7 @@ vc_PhiWithBuffering_Instantiation[vcDataPath* dp]
     { 
          outwire = dp->Find_Wire(id); 
          NOT_FOUND__("wire",outwire,id,p_id);
-         phi = new vcPhiWithBuffering(lbl,inwires, outwire); 
+         phi = new vcPhiPipelined(lbl,inwires, outwire); 
          dp->Add_Phi(phi);
     }
   RPAREN

@@ -355,7 +355,7 @@ namespace {
 	  for (unsigned i = 0, e = T->getNumSuccessors(); i != e; ++i) 
 	    {
 	      BasicBlock *S = T->getSuccessor(i);
-	      aa_writer->add_bb_predecessor_map_entry(to_aa(S->getNameStr()),to_aa(bb->getNameStr()));
+	      aa_writer->add_bb_predecessor_map_entry(S,bb);
 
 	      if (blocks_queued.count(S) != 0)
 		continue;
@@ -365,6 +365,11 @@ namespace {
 	    }
 	}
 
+      if(blocks_queued.size() !=  F.size())
+	{
+		std::cerr << "Error: traversal of basic blocks does not seem to cover all defined blocks in Function " 
+				<< fname << "." << std::endl;
+	}
 
       if(aa_writer->_unique_return_value != NULL)
 	{
@@ -405,6 +410,17 @@ namespace {
 	
 	std::cout << "$branchblock [body] {"  << std::endl;
 
+	// build basic-block chains.
+	aa_writer->Build_Basic_Block_Chains(F);
+
+
+	// generate AA code for all the basic-block chains.
+	for(int J = 0, fJ = aa_writer->ordered_chain_rep_vector.size(); J < fJ; J++)
+	{
+		aa_writer->Write_Aa_Code(aa_writer->ordered_chain_rep_vector[J],_extract_do_while);
+	}
+
+	/*
 	// visit the basic blocks.. this time all instructions
 	// have been named ..
 	for(llvm::Function::iterator iter = F.begin(); iter != F.end(); ++iter)
@@ -414,7 +430,7 @@ namespace {
 	    int buffering_depth = 1;
             bool full_rate_flag = false;
 	    if(_extract_do_while)
-	    	v = is_do_while_loop(*iter, pipelining_depth, buffering_depth, full_rate_flag);
+	    	v = is_do_while_loop(basic_block_chain_map[chain_rep], pipelining_depth, buffering_depth, full_rate_flag);
 	    aa_writer->Set_Do_While_Flag(v);
             aa_writer->Set_Do_While_Full_Rate_Flag(full_rate_flag);
             aa_writer->Set_Do_While_Pipelining_Depth(pipelining_depth);
@@ -422,6 +438,7 @@ namespace {
 	    aa_writer->visit(*iter);
 	    aa_writer->Set_Do_While_Flag(false);
 	  }
+	*/
 	
 	if(aa_writer->Get_Return_Flag())
 	  {
