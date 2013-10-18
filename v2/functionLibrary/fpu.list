@@ -1,8 +1,9 @@
-fpu32
-fpadd32
-fpsub32
-fpmul32
-fpu64
-fpadd64
-fpsub64
-fpmul64
+#mod-name:mod-delay
+fpu32:24
+fpadd32:24
+fpsub32:24
+fpmul32:24
+fpu64:24
+fpadd64:24
+fpsub64:24
+fpmul64:24

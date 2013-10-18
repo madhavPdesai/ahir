@@ -40,6 +40,9 @@ class AaStatement: public AaScope
   set<AaStatement*> _synch_statements;
 
   map<string,AaStatement*> _marked_statement_map;
+
+  int _longest_path;
+
  public:
   AaStatement(AaScope* scope);
   
@@ -245,9 +248,12 @@ class AaStatement: public AaScope
 
   void Print_Adjacency_Map( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map);
   virtual void Equalize_Paths_For_Pipelining();
-  void Find_Longest_Paths(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+  virtual int Find_Longest_Paths(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
 		  set<AaRoot*>& visited_elements,
 		  map<AaRoot*, int>& longest_paths_from_root_map);
+  virtual void Set_Longest_Path(int lp) {_longest_path = lp;}
+  virtual int Get_Longest_Path() {return(_longest_path);}
+
   void Add_Delayed_Versions(AaRoot* curr, 
 		  map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
 		  map<AaRoot*, int>& longest_paths_from_root_map,
@@ -1441,8 +1447,8 @@ class AaDoWhileStatement: public AaStatement
   virtual void Get_Target_Places(set<AaPlaceStatement*>& target_places); // do nothing.
 
 
-   void Find_Longest_Paths( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
-				map<AaRoot*, int>& longest_paths_from_root_map);
+  //int Find_Longest_Paths( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+				//map<AaRoot*, int>& longest_paths_from_root_map);
   void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
   void Add_Delayed_Versions( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
 		set<AaRoot*>& visited_elements,

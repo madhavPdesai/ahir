@@ -19,6 +19,8 @@ vcModule::vcModule(vcSystem* sys, string module_name):vcRoot(module_name)
   this->_foreign_flag = false;
   this->_pipeline_flag = false;
   this->_pipeline_depth = 1;
+  this->_is_function_library_module = false;
+  this->_delay = 2;
 }
 
 void vcModule::Set_Data_Path(vcDataPath* dp)

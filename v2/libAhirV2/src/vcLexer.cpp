@@ -3261,11 +3261,11 @@ void vcLexer::mUINTEGER(bool _createToken) {
 				mDIGIT(false);
 			}
 			else {
-				goto _loop494;
+				goto _loop495;
 			}
 			
 		}
-		_loop494:;
+		_loop495:;
 		} // ( ... )*
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
@@ -3331,7 +3331,7 @@ void vcLexer::mWHITESPACE(bool _createToken) {
 		case 0xa /* '\n' */ :
 		{
 			match('\n' /* charlit */ );
-#line 1945 "vc.g"
+#line 1966 "vc.g"
 			newline();
 #line 3337 "vcLexer.cpp"
 			break;
@@ -3342,7 +3342,7 @@ void vcLexer::mWHITESPACE(bool _createToken) {
 		}
 		}
 		}
-#line 1946 "vc.g"
+#line 1967 "vc.g"
 		
 			_ttype = ANTLR_USE_NAMESPACE(antlr)Token::SKIP; 
 		
@@ -3374,18 +3374,18 @@ void vcLexer::mSINGLELINECOMMENT(bool _createToken) {
 				matchNot('\n' /* charlit */ );
 			}
 			else {
-				goto _loop500;
+				goto _loop501;
 			}
 			
 		}
-		_loop500:;
+		_loop501:;
 		} // ( ... )*
 		match('\n' /* charlit */ );
-#line 1954 "vc.g"
+#line 1975 "vc.g"
 		newline();
 #line 3387 "vcLexer.cpp"
 		}
-#line 1956 "vc.g"
+#line 1977 "vc.g"
 		
 			_ttype = ANTLR_USE_NAMESPACE(antlr)Token::SKIP; 
 		
@@ -3412,7 +3412,7 @@ void vcLexer::mBINARYSTRING(bool _createToken) {
 		match('_' /* charlit */ );
 		match('b' /* charlit */ );
 		{ // ( ... )+
-		int _cnt503=0;
+		int _cnt504=0;
 		for (;;) {
 			switch ( LA(1)) {
 			case 0x30 /* '0' */ :
@@ -3427,12 +3427,12 @@ void vcLexer::mBINARYSTRING(bool _createToken) {
 			}
 			default:
 			{
-				if ( _cnt503>=1 ) { goto _loop503; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
+				if ( _cnt504>=1 ) { goto _loop504; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
 			}
 			}
-			_cnt503++;
+			_cnt504++;
 		}
-		_loop503:;
+		_loop504:;
 		}  // ( ... )+
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
@@ -3456,7 +3456,7 @@ void vcLexer::mHEXSTRING(bool _createToken) {
 		match('_' /* charlit */ );
 		match('h' /* charlit */ );
 		{ // ( ... )+
-		int _cnt506=0;
+		int _cnt507=0;
 		for (;;) {
 			switch ( LA(1)) {
 			case 0x30 /* '0' */ :
@@ -3505,12 +3505,12 @@ void vcLexer::mHEXSTRING(bool _createToken) {
 			}
 			default:
 			{
-				if ( _cnt506>=1 ) { goto _loop506; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
+				if ( _cnt507>=1 ) { goto _loop507; } else {throw ANTLR_USE_NAMESPACE(antlr)NoViableAltForCharException(LA(1), getFilename(), getLine(), getColumn());}
 			}
 			}
-			_cnt506++;
+			_cnt507++;
 		}
-		_loop506:;
+		_loop507:;
 		}  // ( ... )+
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {
@@ -3627,11 +3627,11 @@ void vcLexer::mQUOTED_STRING(bool _createToken) {
 			}
 			default:
 			{
-				goto _loop509;
+				goto _loop510;
 			}
 			}
 		}
-		_loop509:;
+		_loop510:;
 		} // ( ... )*
 		match('\"' /* charlit */ );
 	}
@@ -3819,11 +3819,11 @@ void vcLexer::mSIMPLE_IDENTIFIER(bool _createToken) {
 			}
 			default:
 			{
-				goto _loop512;
+				goto _loop513;
 			}
 			}
 		}
-		_loop512:;
+		_loop513:;
 		} // ( ... )*
 	}
 	catch (ANTLR_USE_NAMESPACE(antlr)RecognitionException& ex) {

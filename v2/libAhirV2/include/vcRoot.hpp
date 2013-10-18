@@ -122,6 +122,7 @@ enum vcLexerKeytags
     __XNOR_OP          ,
     __EQUIVALENCE_OP,
     __OPEN,
+    __DELAY,
     __SHRA_OP,
     __UtoS_ASSIGN_OP , 
     __StoS_ASSIGN_OP , 
@@ -254,6 +255,7 @@ static string vcLexerKeywords[] =
       "~^",
       "&/",
       "$open",
+      "$delay",
       // signed shr
       "$S>>",
       // type-conversions

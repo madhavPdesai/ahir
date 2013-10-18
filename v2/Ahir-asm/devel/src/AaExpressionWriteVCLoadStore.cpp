@@ -302,6 +302,7 @@ void AaObjectReference::Write_VC_Load_Store_Data_Path(vector<AaExpression*>* add
 					<< tgt_name << " 2" << endl;
 			}
 		}
+		ofile << "$delay " << dpe_name << this->Get_Delay() << endl;
 	}
 
 
@@ -715,6 +716,7 @@ void AaObjectReference::Write_VC_Address_Calculation_Data_Path(vector<AaExpressi
 					ofile << "$buffering  $out " << dpe_name << " "
 						<< tgt_name << " 2" << endl;
 				}
+	  		        ofile << "$delay " << dpe_name << " 2" << endl;
 			}
 		}
 		else
@@ -1025,6 +1027,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 							ofile << "$buffering  $out " << dpe_name << " "
 								<< tgt_name << " 2" << endl;
 						}
+	  		        		ofile << "$delay " << dpe_name << " 2" << endl;
 					}
 					else
 					{
@@ -1094,6 +1097,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 					ofile << "$buffering  $out " << dpe_name << " "
 						<< tgt_name << " 2" << endl;
 				}
+	  		        ofile << "$delay " << dpe_name << " 2" << endl;
 			}
 
 			vector<string> inputs;
@@ -1176,6 +1180,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 				ofile << "$buffering  $out " << dpe_name << " "
 					<< tgt_name << " 2" << endl;
 			}
+			ofile << "$delay " << dpe_name << " 2" << endl;
 		}
 		else
 		{

@@ -1513,6 +1513,36 @@ package BaseComponents is
 	      clk: in std_logic; reset: in std_logic);
   end component;
 
+  component SplitGuardInterfaceBase is
+	generic (buffering:integer);
+	port (sr_in: in Boolean;
+	      sa_out: out Boolean;
+	      sr_out: out Boolean;
+	      sa_in: in Boolean;
+	      cr_in: in Boolean;
+	      ca_out: out Boolean;
+	      cr_out: out Boolean;
+	      ca_in: in Boolean;
+	      guard_interface: in std_logic;
+	      clk: in std_logic;
+	      reset: in std_logic);
+  end component;
+
+  component SplitGuardInterface is
+	generic (nreqs: integer; buffering: IntegerArray; use_guards: BooleanArray);
+	port (sr_in: in BooleanArray(nreqs-1 downto 0);
+	      sa_out: out BooleanArray(nreqs-1 downto 0); 
+	      sr_out: out BooleanArray(nreqs-1 downto 0);
+	      sa_in: in BooleanArray(nreqs-1 downto 0); 
+	      cr_in: in BooleanArray(nreqs-1 downto 0);
+	      ca_out: out BooleanArray(nreqs-1 downto 0); 
+	      cr_out: out BooleanArray(nreqs-1 downto 0);
+	      ca_in: in BooleanArray(nreqs-1 downto 0); 
+	      guards: in std_logic_vector(nreqs-1 downto 0);
+	      clk: in std_logic;
+	      reset: in std_logic);
+  end component;
+
   
   -----------------------------------------------------------------------------
   -- temporary stuff.

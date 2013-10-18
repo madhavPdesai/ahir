@@ -285,8 +285,16 @@ int main(int argc, char* argv[])
 
   vcSystem test_system(sys_name);
 
+  for(set<string>::iterator iter = function_libraries.begin();
+		  iter != function_libraries.end();
+		  iter++)
+  {
+	  string tmp = *iter;
+	  test_system.Add_Function_Library(tmp);
+  }
+
   for(int idx = 0; idx < file_list.size(); idx++)
-    {
+  {
 
       string filename = file_list[idx];
       
@@ -315,13 +323,6 @@ int main(int argc, char* argv[])
 	  test_system.Set_As_Ever_Running_Top_Module(*iter);
 	}
 
-      for(set<string>::iterator iter = function_libraries.begin();
-	  iter != function_libraries.end();
-	  iter++)
-	{
-	  string tmp = *iter;
-	  test_system.Add_Function_Library(tmp);
-	}
 
       test_system.Elaborate();
       if(!write_files)

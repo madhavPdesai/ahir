@@ -150,6 +150,15 @@ void vcSystem::Add_Module(vcModule* module)
 {
   assert(this->_modules.find(module->Get_Id()) == this->_modules.end());
   this->_modules[module->Get_Id()] = module;
+
+  string mod_id = module->Get_Id();
+  int D;
+  bool is_lib_mod = this->Is_Function_Library_Module(D,mod_id);
+  if(is_lib_mod)
+  {
+	module->Set_Is_Function_Library_Module(true);
+	module->Set_Delay(D);
+  }
 }
 
 void vcSystem::Add_Constant_Wire(string obj_name, vcValue* v)
@@ -390,8 +399,9 @@ void  vcSystem::Print_VHDL(ostream& ofile)
       moditer++)
     {
 
+      int D;
       string mod_name = (*moditer).first;
-      bool is_fn_mod = this->Is_Function_Library_Module(mod_name);
+      bool is_fn_mod = this->Is_Function_Library_Module(D,mod_name);
 
       if(!is_fn_mod)
 	{
@@ -933,7 +943,8 @@ void vcSystem::Print_VHDL_Architecture(ostream& ofile)
  
       vcModule* m = (*moditer).second;
       string mod_name = (*moditer).first;
-      bool is_function_library_module = this->Is_Function_Library_Module(mod_name);
+      int D;
+      bool is_function_library_module = this->Is_Function_Library_Module(D,mod_name);
 
       ofile << "-- declarations related to module " << m->Get_VHDL_Id() << endl;
 
@@ -1062,14 +1073,35 @@ void vcSystem::Add_Function_Library(string& file_name)
 	{
 	  std::ifstream ifile(file_name.c_str());
 	  if (ifile.is_open()) {
-	    
+	    string delimiter = ":";	    
+
 	    while (ifile.good()) {
 	      std::string line;
 	      std::getline(ifile, line);
               if(line[0] != '#')
 	      {
-	      	std::cerr << "Info: vcSystem::Add_Function_Library: added function library module: " << line << std::endl;
-	      	_function_library_modules.insert(line);
+
+		int M = line.find(delimiter);
+		string mod_name = "";
+
+		int D = 1;
+		if(M != string::npos)
+		{
+			mod_name = line.substr(0, M);
+			line.erase(0, M + delimiter.size());
+			D = atoi(line.c_str());
+		}
+		else if (line.size() > 1)
+			mod_name = line.substr(0,line.find(" "));
+
+		if(mod_name != "")
+		{
+			_function_library_module_map[mod_name] = D;
+
+			std::cerr << "Info: vcSystem::Add_Function_Library: added function library module " 
+				<< mod_name << " with delay " << D << std::endl;
+		}
+
 		vcSystem::_uses_function_library = true;
 	      }
 	    }
@@ -1081,28 +1113,32 @@ void vcSystem::Add_Function_Library(string& file_name)
 
 // return true if mod_name is a function library
 // module, false otherwise.
-bool vcSystem::Is_Function_Library_Module(string& mod_name)
+bool vcSystem::Is_Function_Library_Module(int& delay, string& mod_name)
 {
-	if(_function_library_modules.find(mod_name) != _function_library_modules.end())
+	if(_function_library_module_map.find(mod_name) != _function_library_module_map.end())
+	{
+		delay = _function_library_module_map[mod_name];
 		return(true);
+	}
 	else
 		return(false);
 }
 
 void vcSystem::Print_Reduced_Control_Paths_As_Dot_Files()
 {
-  for(map<string,vcModule*>::iterator moditer = _modules.begin();
-      moditer != _modules.end();
-      moditer++)
-    {
-
-      string mod_name = (*moditer).first;
-      bool is_fn_mod = this->Is_Function_Library_Module(mod_name);
-
-      if(!is_fn_mod)
+	for(map<string,vcModule*>::iterator moditer = _modules.begin();
+			moditer != _modules.end();
+			moditer++)
 	{
-      		cerr << "Info: printing Dot-file of CP for module " << (*moditer).first << endl;
-      		(*moditer).second->Print_Reduced_CP_As_Dot_File();
+
+		string mod_name = (*moditer).first;
+		int D;
+		bool is_fn_mod = this->Is_Function_Library_Module(D,mod_name);
+
+		if(!is_fn_mod)
+		{
+			cerr << "Info: printing Dot-file of CP for module " << (*moditer).first << endl;
+			(*moditer).second->Print_Reduced_CP_As_Dot_File();
+		}
 	}
-    }
 }

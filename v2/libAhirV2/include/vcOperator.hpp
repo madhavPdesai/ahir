@@ -127,6 +127,8 @@ public:
   bool Get_Inline() {return(this->_inline_flag);}
   vcModule* Get_Called_Module() {return(this->_called_module);}
 
+  virtual int Get_Delay();
+
   virtual void Print(ostream& ofile);
 
   virtual string Kind() {return("vcCall");}

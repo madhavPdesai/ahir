@@ -677,7 +677,7 @@ vc_Datapath[vcSystem* sys,vcModule* m]
             vc_Branch_Instantiation[dp] |
             vc_Phi_Instantiation[dp] | 
             vc_PhiPipelined_Instantiation[dp] | 
-	    vc_AttributeSpec[dp] | vc_ModuleBufferingSpec[m] )*
+	    vc_AttributeSpec[dp] | vc_ModuleBufferingSpec[m]  | vc_ModuleDelaySpec[m] )*
             RBRACE
 ;
 
@@ -1700,6 +1700,27 @@ vc_ModuleBufferingSpec[vcModule* m]
 							dpe->Set_Output_Buffering(w,buffering);
 
 					}
+				}
+		}
+;
+
+//----------------------------------------------------------------------------------------------------------
+// vc_ModuleDelaySpec: DELAY SIMPLE_IDENTIFIER UINTEGER 
+//----------------------------------------------------------------------------------------------------------
+vc_ModuleDelaySpec[vcModule* m]
+{
+ 	string dpe_name;
+	int delay = 1;
+}
+ :
+	DELAY dpe_id: SIMPLE_IDENTIFIER{dpe_name = dpe_id->getText();}
+		  bid : UINTEGER {delay = atoi(bid->getText().c_str());}
+		{
+				vcDatapathElement* dpe = m->Get_Data_Path()->Find_DPE(dpe_name);
+				NOT_FOUND__("Datapath-element", dpe, dpe_name, dpe_id);
+				if(dpe != NULL)
+				{
+					dpe->Set_Delay(delay);
 				}
 		}
 ;

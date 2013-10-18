@@ -178,6 +178,9 @@ public:
 	public: void vc_ModuleBufferingSpec(
 		vcModule* m
 	);
+	public: void vc_ModuleDelaySpec(
+		vcModule* m
+	);
 	public: vcDatapathElement*  vc_Operator_Instantiation(
 		vcDataPath* dp
 	);

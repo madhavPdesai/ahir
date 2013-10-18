@@ -213,10 +213,26 @@ protected:
   map<vcWire*, int> _input_wire_buffering_map;
   map<vcWire*, int> _output_wire_buffering_map;
 
+  int  _delay;
   bool _flow_through;
  public:
-  vcDatapathElement(string id):vcRoot(id) {_guard_wire = NULL; _guard_complement = false; _flow_through = false;}
 
+  vcDatapathElement(string id):vcRoot(id) 
+	{
+		_guard_wire = NULL; 
+		_guard_complement = false; 
+		_flow_through = false;
+		_delay = 1;
+	}
+
+  void Set_Delay(int d) {_delay = d;}
+  virtual int Get_Delay() {return(_delay);}
+
+  virtual void Print_Delay(ostream& ofile)
+  {
+	if(_delay > 1)
+		ofile << vcLexerKeywords[__DELAY] << " " << this->Get_Id() <<  " " << _delay << endl;
+  }
   virtual void Add_Reqs(vector<vcTransition*>& reqs) {assert(0);}
   virtual void Add_Acks(vector<vcTransition*>& acks) {assert(0);}
 
@@ -500,11 +516,18 @@ class vcDataPath: public vcRoot
   void Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, string req_unguarded, string ack_unguarded, 
 		string req, string ack, bool delay_flag, ostream& ofile);
 
+  void Print_VHDL_Guard_Instance(string inst_id, int num_reqs, string buffering, string guard_flags, string guards, 
+			string sr_in, string sa_out,  string sr_out, string sa_in,
+			string cr_in, string ca_out,  string cr_out, string ca_in, ostream& ofile);
+
 
   void Generate_Buffering_Constant_Declaration(vector<vcDatapathElement*>& dpe_elements, string& buf_string);
   int Generate_Buffering_String(string const_name, vector<int>& buf_sizes, string& buf_string);
   int Generate_Pipeline_Slot_Demands(vector<vcDatapathElement*>& dpe_elements,
 				vector<int>& slot_demands);
+
+  void Generate_Guard_Constants(string& buffering_const, string& guard_flag_const,
+				 vector<vcDatapathElement*>& ops, vector<vcWire*>& guard_wires);
 
   void Print_VHDL_Regulator_Instance(string inst_id, 
 			int num_reqs, 

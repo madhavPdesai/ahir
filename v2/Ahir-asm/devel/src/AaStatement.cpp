@@ -12,7 +12,9 @@ AaStatement::AaStatement(AaScope* p): AaScope(p)
   _guard_expression = NULL;
   _guard_complement = false;
   _pipeline_parent = NULL;
+  _longest_path    = 2; // default value.
 }
+
 AaStatement::~AaStatement() {};
 
 bool AaStatement::Is_Part_Of_Extreme_Pipeline()
@@ -415,21 +417,23 @@ void AaStatement::Equalize_Paths_For_Pipelining()
 
 
 	// find longest paths to each element from NULL.	
-	this->Find_Longest_Paths(adjacency_map,visited_elements, longest_paths_from_root_map);
+	int longest_path = this->Find_Longest_Paths(adjacency_map,visited_elements, longest_paths_from_root_map);
+	this->Set_Longest_Path(longest_path);
 
 	// Now, for each expression in visited-elements..  introduce delayed
 	// versions of them as needed.
 	this->Add_Delayed_Versions(adjacency_map, visited_elements, longest_paths_from_root_map);
-
 }
 
 
 // find the longest paths.  First do a topological sort
 // and then a straight update.
-void AaStatement::Find_Longest_Paths(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+int AaStatement::Find_Longest_Paths(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
 		set<AaRoot*>& visited_elements,
 		map<AaRoot*, int>& longest_paths_from_root_map)
 {	
+
+	int ret_val = 0;
 
 	// initialize
 	for(set<AaRoot*>::iterator iter = visited_elements.begin(), fiter = visited_elements.end();
@@ -510,11 +514,15 @@ void AaStatement::Find_Longest_Paths(map<AaRoot*, vector< pair<AaRoot*, int> > >
 			}
 			else
 				lp  = curr_dist;
+				
+			ret_val = ((ret_val < lp) ? lp : ret_val);
 			AaRoot::DebugInfo("longest path to " + v->Get_VC_Name() + " is " + IntToStr(lp));
 		}
 		else
 			 AaRoot::DebugInfo("longest path to NULL is 0");
 	}
+
+	return(ret_val);
 }
 
 void AaStatement::Add_Delayed_Versions(AaRoot* curr, 
@@ -2249,6 +2257,7 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
   ofile << "// " << this->To_String() << endl;
   ofile << "// " << this->Get_Source_Info() << endl;
 
+  int delay = ((AaModule*)_called_module)->Get_Longest_Path();
  
   vector<pair<string,AaType*> > inargs, outargs;
 
@@ -2273,6 +2282,8 @@ void AaCallStatement::Write_VC_Datapath_Instances(ostream& ofile)
 			 outargs,
 			 this->Get_VC_Guard_String(),
 			 ofile);
+
+  ofile << "$delay " << dpe_name <<  " " << delay << endl;
 
   // extreme pipelining.
   AaStatement* dws = this->Get_Pipeline_Parent();

@@ -97,6 +97,7 @@ class AaModule: public AaSeriesBlockStatement
   }
 
   void Mark_Reachable_Modules(set<AaModule*>& mset);
+  virtual int Get_Delay() {return(this->Get_Longest_Path());}
 
   void Increment_Number_Of_Times_Called()
   {

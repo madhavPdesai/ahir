@@ -249,105 +249,103 @@ void AaProgram::Print(ostream& ofile)
       ofile << endl;
     }
 
-  for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
-      miter != AaProgram::_modules.end();
-      miter++)
-  {  
-	AaModule* m = (*miter).second;
-	if(!(AaProgram::_print_inlined_functions_in_caller) || 
-		(!m->Get_Inline_Flag() && !m->Get_Macro_Flag()))
-    		m->Print(ofile);
-	else
-	{
-		AaRoot::Info("not printing inlined/macro module " + m->Get_Label());
-	}
+  for(int idx = 0, fidx = AaProgram::_ordered_module_vector.size(); idx < fidx; idx++)
+  {
+	  AaModule* m = ((AaModule*)(AaProgram::_ordered_module_vector[idx]));
+	  if(!(AaProgram::_print_inlined_functions_in_caller) || 
+			  (!m->Get_Inline_Flag() && !m->Get_Macro_Flag()))
+		  m->Print(ofile);
+	  else
+	  {
+		  AaRoot::Info("not printing inlined/macro module " + m->Get_Label());
+	  }
   }
 
   for(std::map<int,set<AaRoot*> >::iterator iter = AaProgram::_storage_eq_class_map.begin();
-      iter != AaProgram::_storage_eq_class_map.end();
-      iter++)
-    {
-      ofile << "// Memory space " << (*iter).first << ": ";
-      for(set<AaRoot*>::iterator siter = (*iter).second.begin();
-	  siter != (*iter).second.end();
-	  siter++)
-	{
-	  if((*siter)->Is("AaStorageObject"))
-	    ofile << ((AaStorageObject*)(*siter))->Get_Hierarchical_Name() << " ";
-	}
-      ofile << endl;
-    }
+		  iter != AaProgram::_storage_eq_class_map.end();
+		  iter++)
+  {
+	  ofile << "// Memory space " << (*iter).first << ": ";
+	  for(set<AaRoot*>::iterator siter = (*iter).second.begin();
+			  siter != (*iter).second.end();
+			  siter++)
+	  {
+		  if((*siter)->Is("AaStorageObject"))
+			  ofile << ((AaStorageObject*)(*siter))->Get_Hierarchical_Name() << " ";
+	  }
+	  ofile << endl;
+  }
 }
 
 
 void AaProgram::Print_Memory_Space_Info()
 {
-  for(std::map<int,set<AaRoot*> >::iterator iter = AaProgram::_storage_eq_class_map.begin();
-      iter != AaProgram::_storage_eq_class_map.end();
-      iter++)
-    {
-      cerr << "Info: Memory space " << (*iter).first << ": ";
-      for(set<AaRoot*>::iterator siter = (*iter).second.begin();
-	  siter != (*iter).second.end();
-	  siter++)
+	for(std::map<int,set<AaRoot*> >::iterator iter = AaProgram::_storage_eq_class_map.begin();
+			iter != AaProgram::_storage_eq_class_map.end();
+			iter++)
 	{
-	  if((*siter)->Is("AaStorageObject"))
-	    cerr << ((AaStorageObject*)(*siter))->Get_Hierarchical_Name() << " ";
+		cerr << "Info: Memory space " << (*iter).first << ": ";
+		for(set<AaRoot*>::iterator siter = (*iter).second.begin();
+				siter != (*iter).second.end();
+				siter++)
+		{
+			if((*siter)->Is("AaStorageObject"))
+				cerr << ((AaStorageObject*)(*siter))->Get_Hierarchical_Name() << " ";
+		}
+		cerr << endl;
 	}
-      cerr << endl;
-    }
 }
 
 void AaProgram::Add_ExtMem_Access_Type(AaType* t)
 {
-  if(t == NULL)
-    return;
+	if(t == NULL)
+		return;
 
-  AaProgram::_extmem_access_types.insert(t);
-  AaProgram::Add_ExtMem_Access_Width(t->Size());
+	AaProgram::_extmem_access_types.insert(t);
+	AaProgram::Add_ExtMem_Access_Width(t->Size());
 }
 
 void AaProgram::Add_Object(AaObject* obj) 
 { 
-  AaObject* prev_obj = AaProgram::Find_Object(obj->Get_Name());
-  if(prev_obj != NULL)
-    {
-      if(prev_obj->Kind() == obj->Kind())
+	AaObject* prev_obj = AaProgram::Find_Object(obj->Get_Name());
+	if(prev_obj != NULL)
 	{
-	  if(prev_obj->Get_Type() == obj->Get_Type())
-	    AaRoot::Warning("redeclaration of " + obj->Get_Name() + " ignored",obj);
-	  else
-	    AaRoot::Error("redeclaration of " + obj->Get_Name() + " with conflicting type",obj);
+		if(prev_obj->Kind() == obj->Kind())
+		{
+			if(prev_obj->Get_Type() == obj->Get_Type())
+				AaRoot::Warning("redeclaration of " + obj->Get_Name() + " ignored",obj);
+			else
+				AaRoot::Error("redeclaration of " + obj->Get_Name() + " with conflicting type",obj);
+		}
+		else
+		{
+			AaRoot::Error("dissimilar declarations of " + obj->Get_Name(),obj);
+		}
+		return;
 	}
-      else
+
+	if(obj->Is("AaStorageObject"))
 	{
-	  AaRoot::Error("dissimilar declarations of " + obj->Get_Name(),obj);
+		if(obj->Get_Name() == AaProgram::_extmem_object_name)
+		{
+			AaRoot::Info("external memory accesses will be assumed to point to internal object "
+					+ obj->Get_Name());
+			AaProgram::_extmem_object = (AaStorageObject*)obj;
+
+		}
+		AaProgram::Add_Storage_Dependency_Graph_Vertex(obj);
 	}
-      return;
-    }
 
-  if(obj->Is("AaStorageObject"))
-    {
-      if(obj->Get_Name() == AaProgram::_extmem_object_name)
-	{
-	  AaRoot::Info("external memory accesses will be assumed to point to internal object "
-		       + obj->Get_Name());
-	  AaProgram::_extmem_object = (AaStorageObject*)obj;
-
-	}
-      AaProgram::Add_Storage_Dependency_Graph_Vertex(obj);
-    }
-
-  AaProgram::_objects[obj->Get_Name()] = obj;
+	AaProgram::_objects[obj->Get_Name()] = obj;
 }
 
 AaObject* AaProgram::Find_Object(string obj_name)
 {
-  AaObject* ret_obj = NULL;
-  std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.find(obj_name);
-  if(miter != AaProgram::_objects.end())
-    ret_obj = (*miter).second;
-  return(ret_obj);
+	AaObject* ret_obj = NULL;
+	std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.find(obj_name);
+	if(miter != AaProgram::_objects.end())
+		ret_obj = (*miter).second;
+	return(ret_obj);
 }
 
 

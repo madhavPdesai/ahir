@@ -3598,6 +3598,7 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 		  ofile << "$buffering  $out " << dpe_name << " "
 			  << tgt_name << " 2" << endl;
 	  }
+	  ofile << "$delay " << dpe_name << " " << this->Get_Delay() << endl;
   }
 }
 
@@ -3804,6 +3805,7 @@ void AaUnaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
 	      ofile << "$buffering  $out " << dpe_name << " "
 		      << tgt_name << " 2" << endl;
       }
+      ofile << "$delay " << dpe_name << " " << this->Get_Delay() << endl;
     }
 
 }
@@ -4114,9 +4116,10 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 			ofile << "$buffering  $out " << dpe_name << " "
 				<< tgt_name << " 2" << endl;
 		}
+		ofile << "$delay " << dpe_name << " " << this->Get_Delay() << endl;
 	}
-
 }
+
 void AaBinaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
 {
 
