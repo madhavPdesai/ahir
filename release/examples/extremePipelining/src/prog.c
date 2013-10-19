@@ -18,7 +18,7 @@ void vectorSum()
 	while(1)
 	{
 #ifndef SW
-		__loop_pipelining_on__(63,1,1);
+		__loop_pipelining_on__(16,1,0);
 #endif
 		float x = read_float32("in_data_pipe");
 		float y, z;

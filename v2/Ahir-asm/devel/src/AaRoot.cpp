@@ -98,6 +98,15 @@ void AaRoot::Add_Source_Reference(AaRoot* referrer)
   this->_source_references.insert(referrer);
 }
 
+  
+void AaRoot::Remove_Target_Reference(AaRoot* referrer)
+{
+	this->_target_references.erase(referrer);
+}
+void AaRoot::Remove_Source_Reference(AaRoot* referrer)
+{
+	this->_source_references.erase(referrer);
+}
 string Make_VC_Legal(string x)
 {
   string ret_string;

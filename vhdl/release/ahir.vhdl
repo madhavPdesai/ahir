@@ -20795,11 +20795,12 @@ begin
 	--   W-Ack-In        _        _           _            1      r_Idle           1 
 	process(clk,cr_in,pop_ack,qdata,ca_in,rhs_state,reset)
 		variable nstate : RhsState;
+		variable ca_out_var : Boolean;
 	begin
 		nstate := rhs_state;
 		pop <= '0';
 		cr_out <= false;
-		ca_out <= false;
+		ca_out_var := false;
 
 		case rhs_state is
 			when r_Idle =>
@@ -20818,12 +20819,12 @@ begin
 							pop <= '1';
 						elsif(qdata(0) = '0') then
 							nstate := r_Idle;
-							ca_out <= true;
+							ca_out_var := true;
 							pop <= '1';
 						elsif((qdata(0) = '1') and ca_in) then
 							nstate := r_Idle;
 							cr_out <= true;
-							ca_out <= true;
+							ca_out_var := true;
 							pop <= '1';
 						end if;
 					end if;
@@ -20836,21 +20837,25 @@ begin
 						pop <= '1';
 					elsif (qdata(0) = '0') then
 						nstate := r_Idle;
-						ca_out <= true;
+						ca_out_var := true;
 						pop <= '1';
 					end if;
 				end if;
 			when r_Wait_On_Ack_In =>
 				if(ca_in) then 
 					nstate := r_Idle;
-					ca_out <= true;
+					ca_out_var := true;
 				end if;
 		end case;
 
 		if(clk'event and clk = '1') then
 			if(reset = '1') then
 				rhs_state <= r_Idle;
+				ca_out <= false;
 			else
+				-- single cycle delay guaranteed between
+				-- cr_in and ca_out.
+				ca_out <= ca_out_var;
 				rhs_state <= nstate;
 			end if;
 		end if;

@@ -112,6 +112,7 @@ class AaStatement: public AaScope
   virtual void Increment_Tab_Depth() { this->_tab_depth += 1; }
 
   virtual bool Is_Statement() { return(true);}
+  virtual bool Is_Call_Statement() {return(false);}
   virtual bool Is_Control_Flow_Statement() {return(false);}
   virtual bool Is_Block_Statement() {return(false);}
 
@@ -266,6 +267,9 @@ class AaStatement: public AaScope
   }
   void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 	{ assert(0);}
+  void Print_Slacks(set<AaRoot*>& visited_elements,
+	map<AaRoot*, vector< pair<AaRoot*, int> > > adjacency_map,
+	map<AaRoot*, int> longest_paths_from_root_map);
 };
 
 // statement sequence (is used in block statements which lead to programs)
@@ -544,6 +548,9 @@ class AaCallStatement: public AaStatement
   AaRoot* Get_Called_Module() {return(this->_called_module);}
   virtual void Set_Pipeline_Parent(AaStatement* dws);
 
+  virtual bool Is_Call_Statement() {return(true);}
+  void Replace_Input_Argument(AaExpression* old_arg, AaSimpleObjectReference* new_arg);
+
   AaCallStatement(AaScope* scope_tpr,
 		  string func_name,
 		  vector<AaExpression*>& inargs, 
@@ -800,8 +807,7 @@ class AaBlockStatement: public AaStatement
 				  ostream& ofile);
 
   virtual void Propagate_Constants();
-
-  void Add_Buffers_For_Pipelining(AaStatementSequence* sseq);
+  void Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
 };
 
 class AaSeriesBlockStatement: public AaBlockStatement
@@ -832,6 +838,9 @@ class AaSeriesBlockStatement: public AaBlockStatement
   void Write_VC_Links_Optimized_Base(string hier_id, ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized_Base(ostream& ofile);
 
+  virtual void Add_Delayed_Versions( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+		set<AaRoot*>& visited_elements,
+		map<AaRoot*, int>& longest_paths_from_root_map);
 };
 
 

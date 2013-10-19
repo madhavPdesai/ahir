@@ -3,7 +3,7 @@ $constant ADDOP: $uint<8> := 0
 $constant SUBOP: $uint<8> := 1
 $constant MULOP: $uint<8> := 2
 
-$module [fpmul32] 
+$pipeline $fullrate $module [fpmul32] 
 $in (L : $float<8,23> R : $float<8,23> )
 $out (ret_val_x_x : $float<8,23>)
 $is 
@@ -11,7 +11,7 @@ $is
     ret_val_x_x := (L * R)
 }
 
-$module [fpadd32] 
+$pipeline $fullrate $module [fpadd32] 
 $in (L : $float<8,23> R : $float<8,23> )
 $out (ret_val_x_x : $float<8,23>)
 $is 
@@ -19,7 +19,7 @@ $is
     ret_val_x_x := (L + R)
 }
 
-$module [fpsub32] 
+$pipeline $fullrate $module [fpsub32] 
 $in (L : $float<8,23> R : $float<8,23> )
 $out (ret_val_x_x : $float<8,23>)
 $is 
@@ -27,35 +27,23 @@ $is
     ret_val_x_x := (L - R)
 }
 
-$module [fpu32] 
+$pipeline $fullrate $module [fpu32] 
 $in (L : $float<8,23> R : $float<8,23> OP_ID : $uint<8> )
 $out (ret_val_x_x : $float<8,23>)
 $is 
 {
-	$branchblock[Sw] {
-		$switch OP_ID 
-			$when ADDOP $then
-    				oadd := (L + R)
-				$place [a]
-			$when SUBOP $then
-    				osub := (L - R)
-				$place [s]
-			$when MULOP $then
-    				omul := (L * R)
-				$place[m]
-			$default 
-				$place[nop]
-		$endswitch
-	
-		$merge a s m nop
-			$phi ret_val_x_x := oadd $on a osub $on s omul $on m  _f0.0e+0 $on nop
-		$endmerge
-	}
+	is_add := (OP_ID == ADDOP)
+	is_sub := (OP_ID == SUBOP)
+	is_mul := (OP_ID == MULOP)
+    	$guard (is_add) oadd := (L + R)
+    	$guard (is_sub) osub := (L - R)
+        $guard (is_mul) omul := (L * R)
+	ret_val_x_x := ($mux is_add oadd ($mux is_sub osub ($mux is_mul omul 0)))
 }
 
 // double precision..
 
-$module [fpmul64] 
+$pipeline $fullrate $module [fpmul64] 
 $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
@@ -63,7 +51,7 @@ $is
     ret_val_x_x := (L * R)
 }
 
-$module [fpadd64] 
+$pipeline $fullrate $module [fpadd64] 
 $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
@@ -71,7 +59,7 @@ $is
     ret_val_x_x := (L + R)
 }
 
-$module [fpsub64] 
+$pipeline $fullrate $module [fpsub64] 
 $in (L : $float<11,52> R : $float<11,52> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
@@ -79,28 +67,16 @@ $is
     ret_val_x_x := (L - R)
 }
 
-$module [fpu64] 
-$in (L : $float<11,52> R : $float<11,52> OP_ID : $uint<11> )
+$pipeline $fullrate $module [fpu64] 
+$in (L : $float<11,52> R : $float<11,52> OP_ID : $uint<8> )
 $out (ret_val_x_x : $float<11,52>)
 $is 
 {
-	$branchblock[Sw] {
-		$switch OP_ID 
-			$when ADDOP $then
-    				oadd := (L + R)
-				$place [a]
-			$when SUBOP $then
-    				osub := (L - R)
-				$place [s]
-			$when MULOP $then
-    				omul := (L * R)
-				$place[m]
-			$default 
-				$place[nop]
-		$endswitch
-	
-		$merge a s m nop
-			$phi ret_val_x_x := oadd $on a osub $on s omul $on m  _f0.0e+0 $on nop
-		$endmerge
-	}
+	is_add := (OP_ID == ADDOP)
+	is_sub := (OP_ID == SUBOP)
+	is_mul := (OP_ID == MULOP)
+    	$guard (is_add) oadd := (L + R)
+    	$guard (is_sub) osub := (L - R)
+        $guard (is_mul) omul := (L * R)
+	ret_val_x_x := ($mux is_add oadd ($mux is_sub osub ($mux is_mul omul 0)))
 }

@@ -420,11 +420,34 @@ void AaStatement::Equalize_Paths_For_Pipelining()
 	int longest_path = this->Find_Longest_Paths(adjacency_map,visited_elements, longest_paths_from_root_map);
 	this->Set_Longest_Path(longest_path);
 
+	this->Print_Slacks(visited_elements, adjacency_map, longest_paths_from_root_map);
+
 	// Now, for each expression in visited-elements..  introduce delayed
 	// versions of them as needed.
 	this->Add_Delayed_Versions(adjacency_map, visited_elements, longest_paths_from_root_map);
 }
 
+
+void AaStatement::Print_Slacks(set<AaRoot*>& visited_elements,
+	map<AaRoot*, vector< pair<AaRoot*, int> > > adjacency_map,
+	map<AaRoot*, int> longest_paths_from_root_map)
+{
+	cerr << "Info: Slacks" << endl;
+	for(set<AaRoot*>::iterator iter = visited_elements.begin(), fiter = visited_elements.end();
+			iter != fiter;
+			iter++)
+	{
+		AaRoot* curr = (*iter);
+		for(int idx = 0, fidx = adjacency_map[curr].size(); idx < fidx; idx++)
+		{
+			AaRoot* nbr = adjacency_map[curr][idx].first;
+			int D = adjacency_map[curr][idx].second;
+			int L = longest_paths_from_root_map[nbr];
+			cerr << curr->Get_VC_Name() << " => " << nbr->Get_VC_Name() << " L=" << L << ", D=" << D << ", Slack=" << (L-D) << endl;
+		}
+	}
+	cerr << "end: Slacks" << endl;
+}
 
 // find the longest paths.  First do a topological sort
 // and then a straight update.
@@ -551,24 +574,31 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 		int curr_slack = longest_paths_from_root_map[gstmt] - longest_paths_from_root_map[curr];
 		if (curr_slack > 0)
 		{
+			AaScope* prnt_scope = this->Get_Scope();
+			if(prnt_scope == NULL) // if null scope, then assignment will be in "this"
+				prnt_scope = this; 
+
 			AaRoot* root_obj = curr_expr->Get_Root_Object();
 			string root_name = curr_expr->Get_Name();
 			string delayed_name =  root_name + "_" + Int64ToStr(curr_expr->Get_Index()) + "_delayed_" + IntToStr(curr_slack);
 
-			AaSimpleObjectReference* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
+			AaSimpleObjectReference* new_target = new AaSimpleObjectReference(prnt_scope, delayed_name);
 			new_target->Set_Type(curr_expr->Get_Type());
 
-			AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), root_name);
+			AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(prnt_scope, root_name);
 			new_src->Set_Type(curr_expr->Get_Type());
 
-			AaAssignmentStatement* new_stmt = new AaAssignmentStatement(this->Get_Scope(),
+
+		      
+
+			AaAssignmentStatement* new_stmt = new AaAssignmentStatement(prnt_scope,
 					new_target,
 					new_src,
 					0);
 			new_stmt->Set_Buffering(curr_slack);
 			new_stmt->Map_Source_References();
 
-			AaSimpleObjectReference* new_guard_expr = new AaSimpleObjectReference(this->Get_Scope(), new_stmt);
+			AaSimpleObjectReference* new_guard_expr = new AaSimpleObjectReference(prnt_scope, new_stmt);
 			gstmt->Set_Guard_Expression(new_guard_expr);			
 
 			// lost track of curr_expr, but it doesnt matter..
@@ -588,6 +618,9 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 	// add those many delayed versions of curr (you will need to add
 	// assignment statements for them).  Then for each outarc, reconnect
 	// from curr to the appropriate delayed version!
+	//
+	// Note: one delayed version is produced for each desired slack.
+	//
 	int max_slack = 0;
 	for(int idx = 0, fidx = adjacency_map[curr].size(); idx < fidx; idx++)
 	{
@@ -596,7 +629,12 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 		// check for slack only on neighbours which are
 		// expressions.
 		if(nbr->Is_Statement())
-			continue;
+		{
+			// Note: if it is a call statement, then
+			// curr_expr must be one of its arguments.
+			if(!nbr->Is_Call_Statement())
+				continue;
+		}
 
 		int dist =  adjacency_map[curr][idx].second;
 		int slack = longest_paths_from_root_map[nbr] - (dist + longest_paths_from_root_map[curr]);
@@ -620,8 +658,6 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 		return;
 
 	AaStatement* stmt = curr_expr->Get_Associated_Statement();
-	AaAssignmentStatement* root_stmt = NULL;
-
 	if(stmt == NULL)
 	{
 		// This can happen if there is a reference to
@@ -632,7 +668,6 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 	vector<AaStatement*> delayed_versions;
 
 
-
 	// if expression is target, then introduce delayed 
 	// statements after the stmt in which it occurs.
 	string root_name = curr_expr->Get_Name();
@@ -640,16 +675,20 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 	for(set<int>::iterator siiter = slack_set.begin(), sfiter = slack_set.end();
 			siiter != sfiter; siiter++)
 	{
+		AaScope* prnt_scope = this->Get_Scope();
+		if(prnt_scope == NULL) // if null scope, then assignment will be in "this"
+			prnt_scope = this; 
+
 		int curr_slack = *siiter;
 		delayed_name =  root_name + "_" + Int64ToStr(curr_expr->Get_Index()) + "_delayed_" + IntToStr(curr_slack);
 
-		AaSimpleObjectReference* new_target = new AaSimpleObjectReference(this->Get_Scope(), delayed_name);
+		AaSimpleObjectReference* new_target = new AaSimpleObjectReference(prnt_scope, delayed_name);
 		new_target->Set_Type(curr_expr->Get_Type());
 
-		AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(this->Get_Scope(), root_name);
+		AaSimpleObjectReference* new_src    = new AaSimpleObjectReference(prnt_scope, root_name);
 		new_src->Set_Type(curr_expr->Get_Type());
 
-		AaAssignmentStatement* new_stmt = new AaAssignmentStatement(this->Get_Scope(),
+		AaAssignmentStatement* new_stmt = new AaAssignmentStatement(prnt_scope,
 				new_target,
 				new_src,
 				0);
@@ -683,18 +722,25 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 		//
 		if(slack > 0)
 		{
-			assert(nbr->Is_Expression());
-			AaExpression* nbr_expr = (AaExpression*) nbr;
-
 			AaAssignmentStatement* rs = (AaAssignmentStatement*) slack_to_stmt_map[slack];
-			nbr_expr->Replace_Uses_By(curr_expr, rs);
-		}
-		else if(!curr_expr->Get_Is_Target())
-		{
-			assert(nbr->Is_Expression());
-			AaExpression* nbr_expr = (AaExpression*) nbr;
+			if(nbr->Is_Expression())
+			{
+				AaExpression* nbr_expr = (AaExpression*) nbr;
+				nbr_expr->Replace_Uses_By(curr_expr, rs);
+			}
+			else if(nbr->Is_Call_Statement())
+			{
+				AaScope* prnt_scope = this->Get_Scope();
+				if(prnt_scope == NULL) // if null scope, then assignment will be in "this"
+					prnt_scope = this; 
 
-			nbr_expr->Replace_Uses_By(curr_expr, root_stmt);
+				AaSimpleObjectReference* new_arg = new AaSimpleObjectReference(prnt_scope, 
+												rs->Get_Target()->Get_Name());
+				new_arg->Set_Type(curr_expr->Get_Type());
+
+				AaCallStatement* cnbr = (AaCallStatement*) nbr;
+				cnbr->Replace_Input_Argument(curr_expr, new_arg);
+			}
 		}
 	}
 }
@@ -1582,89 +1628,114 @@ AaCallStatement::AaCallStatement(AaScope* parent_tpr,
 }
 AaCallStatement::~AaCallStatement() {};
   
+
+void AaCallStatement::Replace_Input_Argument(AaExpression* old_arg, AaSimpleObjectReference* new_arg)
+{
+  for(unsigned int i = 0; i < _input_args.size(); i++)
+  {
+	  AaExpression* arg = _input_args[i];
+
+	  if(arg == old_arg)
+	  {
+		  assert(arg->Is_Implicit_Variable_Reference());
+		  arg->Set_Associated_Statement(NULL);
+		  arg->Remove_Target_Reference(this);
+		  this->Remove_Source_Reference(arg);
+		  this->_source_objects.erase(arg->Get_Object());
+
+		  _input_args[i] = new_arg;
+		  new_arg->Set_Associated_Statement(NULL);
+		  new_arg->Add_Target_Reference(this);
+		  this->Add_Source_Reference(new_arg);
+		  new_arg->Map_Source_References(this->_source_objects);
+		  break;
+	  }
+  }
+}
+
 void AaCallStatement::Set_Pipeline_Parent(AaStatement* dws)
 {
-  _pipeline_parent = dws;
-  for(unsigned int i = 0; i < _input_args.size(); i++)
-    {
-      _input_args[i]->Set_Pipeline_Parent(dws);
-    }
+	_pipeline_parent = dws;
+	for(unsigned int i = 0; i < _input_args.size(); i++)
+	{
+		_input_args[i]->Set_Pipeline_Parent(dws);
+	}
 
-  for(unsigned int i = 0; i < _output_args.size(); i++)
-    {
-      _output_args[i]->Set_Pipeline_Parent(dws);
-    }
+	for(unsigned int i = 0; i < _output_args.size(); i++)
+	{
+		_output_args[i]->Set_Pipeline_Parent(dws);
+	}
 }
 
 AaExpression* AaCallStatement::Get_Input_Arg(unsigned int index)
 {
-  assert(index < this->Get_Number_Of_Input_Args());
-  return(this->_input_args[index]);
+	assert(index < this->Get_Number_Of_Input_Args());
+	return(this->_input_args[index]);
 }
 AaObjectReference* AaCallStatement::Get_Output_Arg(unsigned int index)
 {
-  assert(index < this->Get_Number_Of_Output_Args());
-  return(this->_output_args[index]);
+	assert(index < this->Get_Number_Of_Output_Args());
+	return(this->_output_args[index]);
 }
-  
+
 void AaCallStatement::Print(ostream& ofile)
 {
-  AaModule* cm = (AaModule*) _called_module;
-  string guard_string;
-  if(this->_guard_expression != NULL)
-  {
-	guard_string = "$guard (";
-	if(this->_guard_complement)
-		guard_string += " ~ ";
+	AaModule* cm = (AaModule*) _called_module;
+	string guard_string;
+	if(this->_guard_expression != NULL)
+	{
+		guard_string = "$guard (";
+		if(this->_guard_complement)
+			guard_string += " ~ ";
 
-	guard_string += this->_guard_expression->To_String();
-	guard_string += ") ";
-  }
- 
-  if((cm->Get_Inline_Flag() || cm->Get_Macro_Flag()) && AaProgram::_print_inlined_functions_in_caller)
-  {
+		guard_string += this->_guard_expression->To_String();
+		guard_string += ") ";
+	}
 
-    if(cm->Get_Inline_Flag())
-      cm->Set_Print_Prefix(this->Get_Function_Name() + "_" + Int64ToStr(this->Get_Index()) + "_");
-    else
-      {
-	if(cm->Get_Number_Of_Input_Arguments() > 0) 
-	  {
-	    
-	    for(int arg_index = 0; arg_index < cm->Get_Number_Of_Input_Arguments(); arg_index++)
-	      {	
-		cm->Set_Print_Remap(cm->Get_Input_Argument(arg_index), this->_input_args[arg_index]);
-	      }
-	  }	
-	
-	if(cm->Get_Number_Of_Output_Arguments() > 0)
-	  {
-	    for(int arg_index = 0; arg_index < cm->Get_Number_Of_Output_Arguments(); arg_index++)
-	      {	
-		cm->Set_Print_Remap(cm->Get_Output_Argument(arg_index), this->_output_args[arg_index]);
-	      }
-	    
-	  }
-      }
-  
+	if((cm->Get_Inline_Flag() || cm->Get_Macro_Flag()) && AaProgram::_print_inlined_functions_in_caller)
+	{
 
-    vector<AaSimpleObjectReference*> exports;
+		if(cm->Get_Inline_Flag())
+			cm->Set_Print_Prefix(this->Get_Function_Name() + "_" + Int64ToStr(this->Get_Index()) + "_");
+		else
+		{
+			if(cm->Get_Number_Of_Input_Arguments() > 0) 
+			{
 
-    if(this->_guard_expression)
-    {
-	ofile << this->Tab();
-	ofile << "$if (";
-	if(this->_guard_complement)
-		guard_string += " ~ ";
-	this->_guard_expression->Print(ofile);
-	ofile << ") $then " << endl;
-    }
+				for(int arg_index = 0; arg_index < cm->Get_Number_Of_Input_Arguments(); arg_index++)
+				{	
+					cm->Set_Print_Remap(cm->Get_Input_Argument(arg_index), this->_input_args[arg_index]);
+				}
+			}	
 
-    ofile << "$seriesblock[" << this->Get_Function_Name() << "_" <<  this->Get_Index()
-	  << "] { " << endl;
+			if(cm->Get_Number_Of_Output_Arguments() > 0)
+			{
+				for(int arg_index = 0; arg_index < cm->Get_Number_Of_Output_Arguments(); arg_index++)
+				{	
+					cm->Set_Print_Remap(cm->Get_Output_Argument(arg_index), this->_output_args[arg_index]);
+				}
 
-    if(cm->Get_Inline_Flag())
-      {
+			}
+		}
+
+
+		vector<AaSimpleObjectReference*> exports;
+
+		if(this->_guard_expression)
+		{
+			ofile << this->Tab();
+			ofile << "$if (";
+			if(this->_guard_complement)
+				guard_string += " ~ ";
+			this->_guard_expression->Print(ofile);
+			ofile << ") $then " << endl;
+		}
+
+		ofile << "$seriesblock[" << this->Get_Function_Name() << "_" <<  this->Get_Index()
+			<< "] { " << endl;
+
+		if(cm->Get_Inline_Flag())
+		{
 	if(cm->Get_Number_Of_Input_Arguments() > 0)
 	  {
 	    ofile << "$parallelblock[InArgs] { " << endl;
@@ -2657,6 +2728,14 @@ void AaBlockStatement::Propagate_Constants()
 
 }
 
+void AaBlockStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
+{
+  if(this->_statement_sequence != NULL)
+    for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+      {
+	this->_statement_sequence->Get_Statement(idx)->Update_Adjacency_Map(adjacency_map,visited_elements);
+      }
+}
 //---------------------------------------------------------------------
 // AaSeriesBlockStatement: public AaBlockStatement
 //---------------------------------------------------------------------
@@ -2691,6 +2770,20 @@ void AaSeriesBlockStatement::Write_Exit_Check_Condition(ofstream& ofile)
     ofile << "1";
 }
 
+void AaSeriesBlockStatement::Add_Delayed_Versions( map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, 
+		set<AaRoot*>& visited_elements,
+		map<AaRoot*, int>& longest_paths_from_root_map)
+{
+	if(this->_statement_sequence == NULL)
+		return;
+
+	for(set<AaRoot*>::iterator iter = visited_elements.begin(), fiter = visited_elements.end();
+			iter != fiter; iter++)
+	{
+		AaRoot* curr = *iter;
+		this->AaStatement::Add_Delayed_Versions(curr, adjacency_map, longest_paths_from_root_map, this->_statement_sequence);
+	}
+}
 
 //---------------------------------------------------------------------
 // AaParallelBlockStatement: public AaBlockStatement
@@ -5235,7 +5328,7 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 	{
 		this->_guard_expression->Update_Adjacency_Map(adjacency_map, visited_elements);
 		// guard has dependency to statement.
-		__InsMap(adjacency_map, this->_guard_expression, this, 0);
+		__InsMap(adjacency_map, this->_guard_expression, this, this->_guard_expression->Get_Delay());
 	}
 
 	int delay = 0;
@@ -5243,23 +5336,25 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 	if(src_expression->Is_Implicit_Variable_Reference())
 		delay = 1;
 	// arc from root to tgt_expression.
-	__InsMap(adjacency_map,this,tgt_expression,delay);
+	__InsMap(adjacency_map,this,tgt_expression,src_expression->Get_Delay());
 }
 
 void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 {
+	
+	int delay = this->_called_module->Get_Delay();
 	for(int idx = 0, fidx = _input_args.size(); idx < fidx; idx++)
 	{
 		AaExpression* src = _input_args[idx];
 		src->Update_Adjacency_Map(adjacency_map, visited_elements);
-		__InsMap(adjacency_map,src,this,0);
+		__InsMap(adjacency_map,src,this,src->Get_Delay());
 	}
+
 
 	for(int idx = 0, fidx = _output_args.size(); idx < fidx; idx++)
 	{
 		AaExpression* tgt = _output_args[idx];
 		tgt->Update_Adjacency_Map(adjacency_map, visited_elements);
-		int delay = this->_called_module->Get_Delay();
 		__InsMap(adjacency_map,this,tgt,delay);
 	}
 
@@ -5267,8 +5362,10 @@ void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, in
 	{
 		this->_guard_expression->Update_Adjacency_Map(adjacency_map, visited_elements);
 		// guard has dependency to statement.
-		__InsMap(adjacency_map, this->_guard_expression, this, 0);
+		__InsMap(adjacency_map, this->_guard_expression, this, this->_guard_expression->Get_Delay());
 	}
+	visited_elements.insert(this);
+
 }
 
 

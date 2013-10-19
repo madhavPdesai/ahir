@@ -136,7 +136,9 @@ void AaExpression::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* se
 	if(visited_elements.find(root) != visited_elements.end())
 	{
 		__J(__SST(this), __UCT(root));
-		__J(__UST(this), __UCT(root));
+		// Note: with new SplitGuardInterface
+		// this dependency is no longer necessary.
+		//__J(__UST(this), __UCT(root));
 	}
 }
 
@@ -145,9 +147,11 @@ void AaExpression::Write_VC_Guard_Backward_Dependency(AaExpression* expr,
 {
 	// when this completes, the guard can be re-evaluated.
 	__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-			__UCT(this), true);  // bypass
-	__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
 			__SCT(this), true); // bypass
+	// With new SplitGuardInterface, this depdendency is
+	// no longer necessary.
+	//__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
+			//__UCT(this), true);  // bypass
 }
 
 void AaExpression::Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& visited_elements, ostream& ofile)
@@ -1654,6 +1658,8 @@ void AaBinaryExpression::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReferen
 	bool add_hash = false; // turn it off.. operator way too heavy..
 	if(add_hash)
 	{
+		// dead code.
+		assert(0);
 		AaRoot* root = sexpr->Get_Root_Object();
 		if(visited_elements.find(root) != visited_elements.end())
 		{
@@ -1665,7 +1671,7 @@ void AaBinaryExpression::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReferen
 			{
 				__J(__SST_I(this,1),__UCT(root))
 			}
-			__J(__UST(this), __UCT(root));
+			 __J(__UST(this), __UCT(root));
 		}
 	}
 	else
@@ -1817,7 +1823,6 @@ void AaTernaryExpression::Write_VC_Links_As_Target_Optimized(string hier_id, ost
 	assert(0);
 }
 
-// TODO: convert to split-protocol..
 void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 		map<string,vector<AaExpression*> >& ls_map,
 		map<string, vector<AaExpression*> >& pipe_map,

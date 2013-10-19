@@ -313,6 +313,9 @@ class AaExpression: public AaRoot
   virtual AaStatement* Get_Guarded_Statement() {return(NULL);}
 
   virtual bool Is_Part_Of_Pipelined_Module(); // TODO: return true if in pipelined module.
+
+
+  virtual AaRoot* Get_Object() { assert(0); }
 };
 
 

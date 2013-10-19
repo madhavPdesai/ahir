@@ -116,6 +116,7 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	{
 
 		ofile << "// Guard expression" << endl;
+
 	  // guard expression calculation
 	  this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
 	}
@@ -165,7 +166,18 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  ofile << "}" << endl;
 
 
-	  __ConnectSplitProtocolPattern
+	  __ConnectSplitProtocolPattern;
+
+	  if(this->_guard_expression)
+	   {
+		ofile << "// Guard dependency" << endl;
+		__J(__SST(this), __UCT(this->_guard_expression));
+	        if(pipeline_flag)
+	        {
+			__MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass.
+		}
+	   }
+	
 
 	  __J(__SST(this), __UCT(this->_source));
 	  if(pipeline_flag)
@@ -264,12 +276,16 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       		this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
 
       		__J(__SST(this),__UCT(this->_guard_expression));
-      		__J(__UST(this),__UCT(this->_guard_expression));
+		// NOTE: with new split-guard interface, this
+		// dependency is no longer needed.
+      		//__J(__UST(this),__UCT(this->_guard_expression));
 
 		if(pipeline_flag)
 		{
       			__MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements),__SCT(this),true)  // bypass
-      			__MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this),true)  // bypass
+			// NOTE: with new split-guard interface, this
+			// dependency is no longer needed.
+      			//__MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this),true)  // bypass
 		}
 	}
     }
@@ -418,8 +434,7 @@ void AaBlockStatement::Identify_Maximal_Sequences(AaStatementSequence* sseq,
 	      continue;
 	    }
 
-	  if(this->Is_Pipelined() ||
-	     stmt->Is_Block_Statement()  || 
+	  if( stmt->Is_Block_Statement()  || 
 	     stmt->Is_Control_Flow_Statement() || 
 	     (stmt->Is("AaCallStatement") && 
 	      !((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()))->Has_No_Side_Effects())

@@ -340,124 +340,124 @@ void AaObjectReference::Map_Source_References(set<AaRoot*>& source_objects)
 	AaScope* search_scope = NULL;
 	if(this->Get_Search_Ancestor_Level() > 0)
 	{
-      search_scope = this->Get_Scope()->Get_Ancestor_Scope(this->Get_Search_Ancestor_Level());
-    }
-  else if(this->_hier_ids.size() > 0)
-    search_scope = this->Get_Scope()->Get_Descendant_Scope(this->_hier_ids);
-  else
-    search_scope = this->Get_Scope();
-
-
-  AaRoot* child = NULL;
-  if(search_scope == NULL)
-    {
-      child = AaProgram::Find_Object(this->_object_root_name);
-    }
-  else
-    {
-      child = search_scope->Find_Child(this->_object_root_name);
-    }
-
-  if(child == NULL)
-    {
-      AaRoot::Error("did not find object reference " + this->Get_Object_Ref_String(), this);
-    }
-  else
-    {
-      // child -> obj_ref
-      if(child != this)
-	{
-
-	  if(child->Is("AaPipeObject"))
-	    {
-	      AaScope* root = this->Get_Scope()->Get_Root_Scope();
-	      assert(root->Is("AaModule"));
-	      ((AaPipeObject*)child)->Add_Reader((AaModule*)root);
-	      ((AaModule*)root)->Add_Read_Pipe((AaPipeObject*)child);
-	    }
-
-	  this->Set_Object(child);
-
-	  child->Add_Source_Reference(this);  // child -> this (child is a source of this)
-	  this->Add_Target_Reference(child);  // this <- child (this is a target of child)
-
-	  if(child->Is_Expression())
-	    ((AaExpression*)child)->Add_Target(this);
-
-	  if(child->Is_Object())
-	    {
-	      source_objects.insert(child);
-
-	      if(child->Is("AaStorageObject"))
-		((AaStorageObject*)child)->Set_Is_Read_From(true);
-	    }
+		search_scope = this->Get_Scope()->Get_Ancestor_Scope(this->Get_Search_Ancestor_Level());
 	}
-    }
+	else if(this->_hier_ids.size() > 0)
+		search_scope = this->Get_Scope()->Get_Descendant_Scope(this->_hier_ids);
+	else
+		search_scope = this->Get_Scope();
+
+
+	AaRoot* child = NULL;
+	if(search_scope == NULL)
+	{
+		child = AaProgram::Find_Object(this->_object_root_name);
+	}
+	else
+	{
+		child = search_scope->Find_Child(this->_object_root_name);
+	}
+
+	if(child == NULL)
+	{
+		AaRoot::Error("did not find object reference " + this->Get_Object_Ref_String(), this);
+	}
+	else
+	{
+		// child -> obj_ref
+		if(child != this)
+		{
+
+			if(child->Is("AaPipeObject"))
+			{
+				AaScope* root = this->Get_Scope()->Get_Root_Scope();
+				assert(root->Is("AaModule"));
+				((AaPipeObject*)child)->Add_Reader((AaModule*)root);
+				((AaModule*)root)->Add_Read_Pipe((AaPipeObject*)child);
+			}
+
+			this->Set_Object(child);
+
+			child->Add_Source_Reference(this);  // child -> this (child is a source of this)
+			this->Add_Target_Reference(child);  // this <- child (this is a target of child)
+
+			if(child->Is_Expression())
+				((AaExpression*)child)->Add_Target(this);
+
+			if(child->Is_Object())
+			{
+				source_objects.insert(child);
+
+				if(child->Is("AaStorageObject"))
+					((AaStorageObject*)child)->Set_Is_Read_From(true);
+			}
+		}
+	}
 }
 
 void AaObjectReference::Add_Target_Reference(AaRoot* referrer)
 {
-  this->AaRoot::Add_Target_Reference(referrer);
-  if(referrer->Is("AaInterfaceObject"))
-    {
-      this->Set_Type(((AaInterfaceObject*)referrer)->Get_Type());
-    }
+	this->AaRoot::Add_Target_Reference(referrer);
+	if(referrer->Is("AaInterfaceObject"))
+	{
+		this->Set_Type(((AaInterfaceObject*)referrer)->Get_Type());
+	}
 }
 void AaObjectReference::Add_Source_Reference(AaRoot* referrer)
 {
-  this->AaRoot::Add_Source_Reference(referrer);
-  if(referrer->Is("AaInterfaceObject"))
-    {
-      this->Set_Type(((AaInterfaceObject*)referrer)->Get_Type());
-    }
+	this->AaRoot::Add_Source_Reference(referrer);
+	if(referrer->Is("AaInterfaceObject"))
+	{
+		this->Set_Type(((AaInterfaceObject*)referrer)->Get_Type());
+	}
 }
 
 void AaObjectReference::Set_Is_Dereferenced(bool v) 
 {
-  _is_dereferenced = v;
-  if(this->_object->Is_Object())
-    {
-      ((AaObject*) (this->_object))->Set_Is_Dereferenced(v);
-    }
+	_is_dereferenced = v;
+	if(this->_object->Is_Object())
+	{
+		((AaObject*) (this->_object))->Set_Is_Dereferenced(v);
+	}
 }
 
 void AaObjectReference::PrintC(ofstream& ofile, string tab_string)
 {
-  assert(this->Get_Object());
+	assert(this->Get_Object());
 
-  if(this->Get_Object()->Is_Object())
-    {// this refers to an object
-      if(((AaObject*)(this->Get_Object()))->Get_Scope() != NULL)
-	ofile << ((AaObject*)this->Get_Object())->Get_Scope()->Get_Struct_Dereference();
-    }
-  else if(this->Get_Object()->Is_Statement())
-    {// this refers to a statement
-      ofile << this->Get_Scope()->Get_Struct_Dereference();
-    }
-  else if(this->Get_Object()->Is_Expression())
-    { // this refers to an object reference?
-      ofile << ((AaExpression*)this->Get_Object())->Get_Scope()->Get_Struct_Dereference();
-    }
+	if(this->Get_Object()->Is_Object())
+	{// this refers to an object
+		if(((AaObject*)(this->Get_Object()))->Get_Scope() != NULL)
+			ofile << ((AaObject*)this->Get_Object())->Get_Scope()->Get_Struct_Dereference();
+	}
+	else if(this->Get_Object()->Is_Statement())
+	{// this refers to a statement
+		ofile << this->Get_Scope()->Get_Struct_Dereference();
+	}
+	else if(this->Get_Object()->Is_Expression())
+	{ // this refers to an object reference?
+		ofile << ((AaExpression*)this->Get_Object())->Get_Scope()->Get_Struct_Dereference();
+	}
 }
 
 void AaObjectReference::Evaluate()
 {
-  assert(0); // should never ever be called..
+	assert(0); // should never ever be called..
 }
 
 AaType* AaObjectReference::Get_Address_Type(vector<AaExpression*>* address_expressions)
 {
-  AaType* addr_type = NULL;
-  if(this->_object->Get_Type()->Is_Pointer_Type())
-    {
-      addr_type = this->_object->Get_Type()->Get_Element_Type(0,*address_expressions);
-    }
-  else
-    {
-      assert(this->Get_Address_Width() > 0);
-      addr_type =  AaProgram::Make_Uinteger_Type(this->Get_Address_Width());
-    }
-  return(addr_type);
+	AaType* addr_type = NULL;
+	if(this->_object->Get_Type()->Is_Pointer_Type())
+	{
+		addr_type = this->_object->Get_Type()->Get_Element_Type(0,*address_expressions);
+	}
+	else
+	{
+		assert(this->Get_Address_Width() > 0);
+		addr_type =  AaProgram::Make_Uinteger_Type(this->Get_Address_Width());
+	}
+	return(addr_type);
 }
 
 
@@ -473,7 +473,7 @@ void AaObjectReference::Update_Globally_Accessed_Objects(AaStorageObject* sobj)
 		AaModule* pm = ((AaModule*) root_scope);
 
 		if(sobj->Get_Scope() == NULL)
-		// object defined in global scope? record it in pm.
+			// object defined in global scope? record it in pm.
 		{
 			if(this->Get_Is_Target())
 				pm->Add_Written_Global_Object(sobj);
@@ -860,7 +860,7 @@ string AaSimpleObjectReference::Get_VC_Reenable_Update_Transition_Name(set<AaRoo
 				return(root->Get_VC_Reenable_Update_Transition_Name(visited_elements));
 			else
 			{
-			
+
 				bool pm = this->Is_Part_Of_Pipelined_Module();
 				if(pm)
 				{
@@ -965,9 +965,9 @@ string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoo
 string AaSimpleObjectReference::Get_VC_Sample_Start_Transition_Name()
 {
 	if(this->Get_Is_Target() 
-		&&  (this->Is_Implicit_Variable_Reference() || 
-			this->_object->Is_Interface_Object()))
-		
+			&&  (this->Is_Implicit_Variable_Reference() || 
+				this->_object->Is_Interface_Object()))
+
 		return(__SST(this->Get_Associated_Statement()));
 	else
 		return(this->AaRoot::Get_VC_Sample_Start_Transition_Name());
@@ -976,8 +976,8 @@ string AaSimpleObjectReference::Get_VC_Sample_Start_Transition_Name()
 string AaSimpleObjectReference::Get_VC_Sample_Completed_Transition_Name()
 {
 	if(this->Get_Is_Target() 
-		&&  (this->Is_Implicit_Variable_Reference() || 
-			this->_object->Is_Interface_Object()))
+			&&  (this->Is_Implicit_Variable_Reference() || 
+				this->_object->Is_Interface_Object()))
 		return(__SCT(this->Get_Associated_Statement()));
 	else
 		return(this->AaRoot::Get_VC_Sample_Completed_Transition_Name());
@@ -986,8 +986,8 @@ string AaSimpleObjectReference::Get_VC_Sample_Completed_Transition_Name()
 string AaSimpleObjectReference::Get_VC_Update_Start_Transition_Name()
 {
 	if(this->Get_Is_Target() 
-		&&  (this->Is_Implicit_Variable_Reference() || 
-			this->_object->Is_Interface_Object()))
+			&&  (this->Is_Implicit_Variable_Reference() || 
+				this->_object->Is_Interface_Object()))
 		return(__UST(this->Get_Associated_Statement()));
 	else
 		return(this->AaRoot::Get_VC_Update_Start_Transition_Name());
@@ -996,8 +996,8 @@ string AaSimpleObjectReference::Get_VC_Update_Start_Transition_Name()
 string AaSimpleObjectReference::Get_VC_Update_Completed_Transition_Name()
 {
 	if(this->Get_Is_Target() 
-		&&  (this->Is_Implicit_Variable_Reference() || 
-			this->_object->Is_Interface_Object()))
+			&&  (this->Is_Implicit_Variable_Reference() || 
+				this->_object->Is_Interface_Object()))
 		return(__UCT(this->Get_Associated_Statement()));
 	else
 		return(this->AaRoot::Get_VC_Update_Completed_Transition_Name());
@@ -1223,8 +1223,8 @@ void AaSimpleObjectReference::Write_VC_Datapath_Instances_As_Target( ostream& of
 string AaSimpleObjectReference::Get_VC_Name()
 {
 	string ret_val;
-        string idx = Int64ToStr(this->Get_Index());
-		
+	string idx = Int64ToStr(this->Get_Index());
+
 	if(this->_object->Is("AaStorageObject"))
 	{
 		if(this->Get_Is_Target())
@@ -1249,7 +1249,7 @@ string AaSimpleObjectReference::Get_VC_Name()
 			ret_val = "R_" + this->Get_Name();
 	}
 
-		
+
 	ret_val += "_" + idx;
 
 	return(ret_val);
@@ -2494,13 +2494,13 @@ void AaArrayObjectReference::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRo
 	for(int idx = 0, fidx = _indices.size(); idx < fidx; idx++)
 	{
 		_indices[idx]->Update_Adjacency_Map(adjacency_map,visited_elements);
-		__InsMap(adjacency_map,_indices[idx],this,this->Get_Delay());
+		__InsMap(adjacency_map,_indices[idx],this,_indices[idx]->Get_Delay());
 	}
 
 	if(_pointer_ref)
 	{
 		_pointer_ref->Update_Adjacency_Map(adjacency_map,visited_elements);
-		__InsMap(adjacency_map,_pointer_ref,this,this->Get_Delay());
+		__InsMap(adjacency_map,_pointer_ref,this,_pointer_ref->Get_Delay());
 	}
 }
 
@@ -2821,7 +2821,7 @@ void AaPointerDereferenceExpression::Get_Siblings(set<AaPointerDereferenceExpres
 void AaPointerDereferenceExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 {
 	_reference_to_object->Update_Adjacency_Map(adjacency_map, visited_elements);
-	__InsMap(adjacency_map,_reference_to_object,this,this->Get_Delay());
+	__InsMap(adjacency_map,_reference_to_object,this,_reference_to_object->Get_Delay());
 }
 
 bool AaPointerDereferenceExpression::Is_Foreign_Store()
@@ -3389,7 +3389,7 @@ void AaAddressOfExpression::Write_VC_Links_As_Target(string hier_id, ostream& of
 void AaAddressOfExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 {
 	_reference_to_object->Update_Adjacency_Map(adjacency_map, visited_elements);
-	__InsMap(adjacency_map,_reference_to_object,this,this->Get_Delay());
+	__InsMap(adjacency_map,_reference_to_object,this,_reference_to_object->Get_Delay());
 }
 
 void AaAddressOfExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
@@ -3628,7 +3628,7 @@ void AaTypeCastExpression::Write_VC_Links(string hier_id, ostream& ofile)
 void AaTypeCastExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 {
 	_rest->Update_Adjacency_Map(adjacency_map, visited_elements);
-	__InsMap(adjacency_map,_rest,this,this->Get_Delay());
+	__InsMap(adjacency_map,_rest,this,_rest->Get_Delay());
 }
 
 void AaTypeCastExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
@@ -3834,7 +3834,7 @@ void AaUnaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
 void AaUnaryExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 {
 	_rest->Update_Adjacency_Map(adjacency_map, visited_elements);
-	__InsMap(adjacency_map,_rest,this,this->Get_Delay());
+	__InsMap(adjacency_map,_rest,this,_rest->Get_Delay());
 }
 
 void AaUnaryExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
@@ -4168,8 +4168,8 @@ void AaBinaryExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*,
 {
 	_first->Update_Adjacency_Map(adjacency_map, visited_elements);
 	_second->Update_Adjacency_Map(adjacency_map, visited_elements);
-	__InsMap(adjacency_map,_first,this,this->Get_Delay());
-	__InsMap(adjacency_map,_second,this,this->Get_Delay());
+	__InsMap(adjacency_map,_first,this,_first->Get_Delay());
+	__InsMap(adjacency_map,_second,this,_second->Get_Delay());
 }
 
 void AaBinaryExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
@@ -4231,6 +4231,7 @@ void AaTernaryExpression::Print(ostream& ofile)
   ofile << " ) ";
 }
 
+// TODO: split protocol here...
 void AaTernaryExpression::Write_VC_Control_Path(ostream& ofile)
 {
 
@@ -4405,9 +4406,9 @@ void AaTernaryExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*
 	_test->Update_Adjacency_Map(adjacency_map, visited_elements);
 	_if_true->Update_Adjacency_Map(adjacency_map, visited_elements);
 	_if_false->Update_Adjacency_Map(adjacency_map, visited_elements);
-	__InsMap(adjacency_map,_test,this,this->Get_Delay());
-	__InsMap(adjacency_map,_if_true,this,this->Get_Delay());
-	__InsMap(adjacency_map,_if_false,this,this->Get_Delay());
+	__InsMap(adjacency_map,_test,this,_test->Get_Delay());
+	__InsMap(adjacency_map,_if_true,this,_if_true->Get_Delay());
+	__InsMap(adjacency_map,_if_false,this,_if_false->Get_Delay());
 }
 
 void AaTernaryExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)

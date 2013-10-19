@@ -110,6 +110,7 @@ class AaRoot
 
   virtual bool Is_Expression() {return(false); }
   virtual bool Is_Statement() {return(false); }
+  virtual bool Is_Call_Statement() {return(false); }
 
   // do we really need this? keep it for now
   virtual bool Is(string class_name);
@@ -117,6 +118,8 @@ class AaRoot
 
   virtual void Add_Target_Reference(AaRoot* referrer);
   virtual void Add_Source_Reference(AaRoot* referrer);
+  virtual void Remove_Target_Reference(AaRoot* referrer);
+  virtual void Remove_Source_Reference(AaRoot* referrer);
 
   virtual unsigned int Get_Number_Of_Target_References()
   {

@@ -859,6 +859,7 @@ void vcSelect::Print(ostream& ofile)
 }
 
 
+// TODO: convert this to split protocol?  Is it worth it?
 void vcSelect::Print_VHDL(ostream& ofile)
 {
       string block_name = "select_" + this->Get_VHDL_Id() + "_wrap";
@@ -1030,6 +1031,8 @@ void vcRegister::Print(ostream& ofile)
 
 void vcRegister::Print_VHDL(ostream& ofile)
 {
+	// NOTE: the register is now obsolete, replaced by the InterlockBuffer.
+      assert(0);
       string block_name = "register_" + this->Get_VHDL_Id() + "_wrap";
       ofile << block_name << " : block -- { " << endl;
       if(this->Get_Guard_Wire() != NULL)
@@ -1364,6 +1367,9 @@ void vcBinaryLogicalOperator::Add_Acks(vector<vcTransition*>& acks)
 
 void vcBinaryLogicalOperator::Print_VHDL(ostream& ofile)
 {
+	// NOTE: this operator is not currently in use.
+	//       lets leave the code around for now.
+      assert(0);
       bool flow_through = this->Get_Flow_Through();
       string block_name = "ble_" + this->Get_VHDL_Id() + "_wrap";
       ofile << block_name  << " : block -- { " << endl;
@@ -1487,6 +1493,7 @@ void vcInterlockBuffer::Add_Acks(vector<vcTransition*>& acks)
 
 void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 {
+	// TODO: the guard interface for this operator.
         string inst_name = this->Get_VHDL_Id();
         string name = '"' + inst_name + '"';
 
@@ -1552,6 +1559,7 @@ void vcSliceWithBuffering::Print(ostream& ofile)
 
 void vcSliceWithBuffering::Print_VHDL(ostream& ofile)
 {
+ 	// TODO: split-guard interface for this operator.
       bool flow_through = this->Get_Flow_Through();
       string block_name = "slice_" + this->Get_VHDL_Id() + "_wrap";
       ofile << block_name << " : block -- { " << endl;
@@ -1644,6 +1652,8 @@ void vcSelectWithInputBuffering::Print(ostream& ofile)
 
 void vcSelectWithInputBuffering::Print_VHDL(ostream& ofile)
 {
+
+	// TODO: split guard interface
       string block_name = "select_" + this->Get_VHDL_Id() + "_wrap";
       bool flow_through = this->Get_Flow_Through();
       ofile << block_name << " : block -- { " << endl;
