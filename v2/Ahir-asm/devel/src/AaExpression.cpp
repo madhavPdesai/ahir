@@ -3541,7 +3541,8 @@ void AaTypeCastExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
 {
 	if(!this->Is_Constant())
 	{
-		if(this->Is_Trivial())
+	  	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		if(flow_through)
 			_rest->Collect_Root_Sources(root_set);
 		else
 			root_set.insert(this);
@@ -3673,7 +3674,8 @@ void AaUnaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
 {
 	if(!this->Is_Constant())
 	{
-		if(this->Is_Trivial())
+	  	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		if(flow_through)
 			_rest->Collect_Root_Sources(root_set);
 		else
 			root_set.insert(this);
@@ -3943,9 +3945,14 @@ void AaBinaryExpression::Update_Type()
 	}
     }
   else if((t1 != NULL) && (t2 != NULL) && t1->Is("AaFloatType") && t2->Is("AaFloatType"))
-	// float operations will have higher delay!
-	this->Set_Delay(24);
-  
+  {
+	// float add/sub operations will have higher delay!
+	if((this->_operation == __PLUS)  || (this->_operation == __MINUS)
+			|| (this->_operation == __MUL) || (this->_operation == __DIV))
+		this->Set_Delay(24);
+	else
+		this->Set_Delay(2);
+  }
 }
 
 bool AaBinaryExpression::Is_Trivial()
@@ -3971,7 +3978,8 @@ void AaBinaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
 {
 	if(!this->Is_Constant())
 	{
-		if(this->Is_Trivial())
+	  	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		if(flow_through)
 		{
 			_first->Collect_Root_Sources(root_set);
 			_second->Collect_Root_Sources(root_set);
@@ -4422,7 +4430,8 @@ void AaTernaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
 {
 	if(!this->Is_Constant())
 	{
-		if(this->Is_Trivial())
+	  	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		if(flow_through)
 		{
 			_test->Collect_Root_Sources(root_set);
 			_if_true->Collect_Root_Sources(root_set);

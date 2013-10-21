@@ -1343,13 +1343,11 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
 			__J(__UST(this), __SCT(this));
 		}
 
-		if(pipeline_flag)
+		if(pipeline_flag && !flow_through)
 		{
 			this->_rest->Write_VC_Update_Reenables(__SCT(this), visited_elements,ofile);
 			// __MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true );  // bypass
-
-			if(!flow_through)
-				__SelfReleaseSplitProtocolPattern
+			__SelfReleaseSplitProtocolPattern
 		}
 		visited_elements.insert(this);
 	}
@@ -1448,13 +1446,12 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
 			__J(__UST(this), __SCT(this));
 		}
 
-		if(pipeline_flag)
+		if(pipeline_flag && !flow_through)
 		{
 			this->_rest->Write_VC_Update_Reenables(__SCT(this), visited_elements,ofile);
 			// __MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
 			
-			if(!flow_through)
-				__SelfReleaseSplitProtocolPattern
+			__SelfReleaseSplitProtocolPattern
 		}
 		visited_elements.insert(this);
 	}
@@ -1761,7 +1758,7 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 			ofile << "// flow-through" << endl;
 			__J(__UST(this), __SCT(this));
 		}
-		if(pipeline_flag)
+		if(pipeline_flag && !flow_through)
 		{
 			if(!this->_first->Is_Constant())
 			{
@@ -1775,8 +1772,7 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 				// __MJ(this->_second->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
 			}
 
-			if(!flow_through)
-				__SelfReleaseSplitProtocolPattern
+			__SelfReleaseSplitProtocolPattern
 		}
 		visited_elements.insert(this);
 	}
@@ -1823,6 +1819,9 @@ void AaTernaryExpression::Write_VC_Links_As_Target_Optimized(string hier_id, ost
 	assert(0);
 }
 
+
+// TODO: this needs to be converted to a split protocol to 
+// bring it in line with other expressions..
 void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 		map<string,vector<AaExpression*> >& ls_map,
 		map<string, vector<AaExpression*> >& pipe_map,
@@ -1868,26 +1867,30 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 	__J(__UCT(this),this->Get_VC_Complete_Region_Name());
 
       	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
-	if(pipeline_flag)
+	if(pipeline_flag && !flow_through)
 	{
+
+		// NOTE: once the ternary is converted to a split protocol,
+		//       replace the __UCT below by __SCT.
+		//
 		if(!this->_test->Is_Constant())
 		{
-			this->_test->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
-			// __MJ(this->_test->Get_VC_Reenable_Update_Transition_Name(visited_elements), __UCT(this), true); // bypass
+			this->_test->Write_VC_Update_Reenables(__UCT(this), visited_elements, ofile);
+			 //__MJ(this->_test->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
 		}
 		if(this->_if_true && !this->_if_true->Is_Constant())
 		{
-			this->_if_true->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
+			this->_if_true->Write_VC_Update_Reenables(__UCT(this), visited_elements, ofile);
 			//__MJ(this->_if_true->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
 		}
 		if(this->_if_false && !this->_if_false->Is_Constant())
 		{
-			this->_if_false->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
-			//__MJ(this->_if_false->Get_VC_Reenable_Update_Transition_Name(visited_elements),	__UCT(this), true); // bypass
+			this->_if_false->Write_VC_Update_Reenables(__UCT(this), visited_elements, ofile);
+			//__MJ(this->_if_false->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
 		}
-
-		if(!flow_through)
-			__SelfReleaseSplitProtocolPattern
+		
+		__SelfReleaseSplitProtocolPattern
+		
 	}
 	visited_elements.insert(this);
 }

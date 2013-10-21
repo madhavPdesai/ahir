@@ -13472,7 +13472,8 @@ architecture Struct of SplitCallArbiter is
    signal caller_mtag_reg  : std_logic_vector(caller_tag_length-1 downto 0);
 
    signal fair_call_reqs, fair_call_acks: std_logic_vector(num_reqs-1 downto 0);
-   
+   signal return_mreq_sig : std_logic_vector(num_reqs-1 downto 0); 
+
 begin
   -----------------------------------------------------------------------------
   -- "fairify" the call-reqs.
@@ -13604,49 +13605,67 @@ begin
    end process;
 
    -- always ready to accept return data!
-   return_mreq <= '1';
+   -- Sorry, this is broken..  What if successive returns
+   -- arrive from a pipelined module aimed at the same destination?
+   -- Back-pressure is needed!
+   return_mreq <= OrReduce(return_mreq_sig);
 
    -- return to caller.
    return_acks <= return_acks_sig;
    
    -- incoming data written into appropriate register.
-   RetGen: for I in return_reqs'high downto return_reqs'low generate
+   RetGen: for I in num_reqs-1 downto 0 generate
 
      fsm: block
        signal ack_reg, valid_flag : std_logic;
        signal data_reg : std_logic_vector(return_mdata'length-1 downto 0);
        signal tag_reg  : std_logic_vector(caller_tag_length-1 downto 0);
+       signal return_state : CallStateType;
      begin  -- block fsm
 
        -- valid = '1' implies this index is incoming
        valid_flag <= '1' when return_mack = '1' and (I = To_Integer(To_Unsigned(return_mtag(caller_tag_length+callee_tag_length-1 downto caller_tag_length)))) else '0';
 
        --------------------------------------------------------------------------
-       -- ack ff
+       -- ack FSM
        --------------------------------------------------------------------------
-       -- set if mack_sig is asserted, else clear if return_reqs is asserted
-       -- and register is already set.
-       process(clk)
+       process(clk,return_state,return_reqs(I),valid_flag,reset)
+	variable nstate: CallStateType;
+	variable latch_var: std_logic;
        begin
+
+	 nstate := return_state;
+	 latch_var := '0';
+	 return_acks_sig(I) <= '0';
+
+	 if(return_state = Idle) then
+		if(valid_flag = '1') then
+			latch_var := '1';
+			nstate := Busy;
+		end if;		
+	 else 
+		return_acks_sig(I) <= '1';
+		if((valid_flag = '1') and (return_reqs(I) = '1')) then
+			latch_var := '1';
+		elsif (return_reqs(I) = '1') then
+			nstate := Idle;
+		end if;
+	 end if;
+
+	 return_mreq_sig(I) <= latch_var;
+
          if clk'event and clk= '1' then
            if(reset = '1') then
-             ack_reg <= '0';
-           elsif valid_flag = '1' then
-             ack_reg <= '1';
-           elsif return_reqs(I) = '1' and ack_reg = '1' then
-             ack_reg <= '0';
-           end if;
-
-           -- register data when you send mack
-           if(valid_flag = '1') then
+             return_state <= Idle;
+	   elsif (latch_var = '1') then
              data_reg <= return_mdata;
              tag_reg  <= return_mtag(caller_tag_length-1 downto 0);
+	     return_state <= nstate;
            end if;
          end if;
        end process;
 
        -- pass info out of the generate
-       return_acks_sig(I) <= ack_reg;
        return_data_sig(I) <= data_reg;
        return_tag_sig(I)  <= tag_reg;
 
@@ -20691,6 +20710,8 @@ architecture Behave of SplitGuardInterfaceBase is
 
   type RhsState is (r_Idle, r_Wait_On_Ack_In, r_Wait_On_Queue);
   signal rhs_state: RhsState;
+
+  signal s_counter, c_counter: integer;
 begin
 	qdata_in(0) <= guard_interface;
 
@@ -20723,11 +20744,13 @@ begin
 	------------------------------------------------------------------------------------------
 	process(clk, sr_in, push_ack, guard_interface, sa_in, lhs_state, reset)
 		variable nstate : LhsState;
+		variable next_s_counter: integer;
 	begin
 		nstate 	:= lhs_state;
 		sr_out 	<= false;
 		sa_out 	<= false;
 		push	<= '0';
+ 		next_s_counter := s_counter;
 
 		case lhs_state is
 			when l_Idle => 
@@ -20737,12 +20760,14 @@ begin
 						push   <= '1';
 					elsif ((push_ack = '1') and (guard_interface = '1')) then
 						if sa_in then
-							sr_out 	<= true;
 							sa_out 	<= true;
+							sr_out 	<= true;
+							next_s_counter := (next_s_counter + 1);
 							push 	<= '1';
 						else	
 							nstate 	:= l_Wait_On_Ack_In;
 							sr_out 	<= true;
+							next_s_counter := (next_s_counter + 1);
 							push 	<= '1';
 						end if;
 					elsif (push_ack = '0') then
@@ -20752,9 +20777,16 @@ begin
 			when l_Wait_On_Queue => 
 				if(push_ack  = '1') then
 					if((guard_interface = '1') and sa_in) then
+						nstate := l_Idle;
+						sa_out <= true;
+						sr_out <= true;
+						next_s_counter := (next_s_counter + 1);
+						push <= '1';
+					elsif ((guard_interface = '1') and (not sa_in)) then
 						nstate := l_Wait_On_Ack_In;
 						sr_out <= true;
-						push <= '1';
+						next_s_counter := (next_s_counter + 1);
+						push   <= '1';
 					elsif (guard_interface = '0') then
 						nstate := l_Idle;
 						sa_out <= true;
@@ -20771,8 +20803,10 @@ begin
 		if(clk'event and clk = '1') then
 			if(reset = '1') then
 				lhs_state <= l_Idle;
+				s_counter <= 0;
 			else
 				lhs_state <= nstate;
+				s_counter <= next_s_counter;
 			end if;
 		end if;
 	end process;
@@ -20790,17 +20824,20 @@ begin
 	--   r_Idle          1        1           1            1      r_Idle    1      1       1
 	--   W-Queue         _        0           _            _      W-Queue
 	--   W-Queue         _        1           1            0      W-Ack-In  1              1
+	--   W-Queue         _        1           1            1      r_Idle    0      1       1
 	--   W-Queue         _        1           0            _      r_Idle           1       1
 	--   W-Ack-In        _        _           _            0      W-Ack-In  
 	--   W-Ack-In        _        _           _            1      r_Idle           1 
 	process(clk,cr_in,pop_ack,qdata,ca_in,rhs_state,reset)
 		variable nstate : RhsState;
 		variable ca_out_var : Boolean;
+		variable next_c_counter: integer;
 	begin
 		nstate := rhs_state;
 		pop <= '0';
 		cr_out <= false;
 		ca_out_var := false;
+		next_c_counter := c_counter;
 
 		case rhs_state is
 			when r_Idle =>
@@ -20816,14 +20853,16 @@ begin
 						if((qdata(0) = '1') and (not ca_in)) then
 							nstate := r_Wait_On_Ack_In;
 							cr_out <= true;
-							pop <= '1';
-						elsif(qdata(0) = '0') then
-							nstate := r_Idle;
-							ca_out_var := true;
+							next_c_counter := (next_c_counter + 1);
 							pop <= '1';
 						elsif((qdata(0) = '1') and ca_in) then
 							nstate := r_Idle;
 							cr_out <= true;
+							next_c_counter := (next_c_counter + 1);
+							ca_out_var := true;
+							pop <= '1';
+						elsif(qdata(0) = '0') then
+							nstate := r_Idle;
 							ca_out_var := true;
 							pop <= '1';
 						end if;
@@ -20834,6 +20873,13 @@ begin
 					if((qdata(0) = '1') and (not ca_in)) then
 						nstate := r_Wait_On_Ack_In;
 						cr_out <= true;
+						next_c_counter := (next_c_counter + 1);
+						pop <= '1';
+					elsif ((qdata(0) = '1') and ca_in) then
+						nstate := r_Idle;
+						cr_out <= true;
+						next_c_counter := (next_c_counter + 1);
+						ca_out_var := true;
 						pop <= '1';
 					elsif (qdata(0) = '0') then
 						nstate := r_Idle;
@@ -20852,11 +20898,13 @@ begin
 			if(reset = '1') then
 				rhs_state <= r_Idle;
 				ca_out <= false;
+				c_counter <= 0;
 			else
 				-- single cycle delay guaranteed between
 				-- cr_in and ca_out.
 				ca_out <= ca_out_var;
 				rhs_state <= nstate;
+				c_counter <= next_c_counter;
 			end if;
 		end if;
 	end process;

@@ -45,6 +45,8 @@ architecture Behave of SplitGuardInterfaceBase is
 
   type RhsState is (r_Idle, r_Wait_On_Ack_In, r_Wait_On_Queue);
   signal rhs_state: RhsState;
+
+  signal s_counter, c_counter: integer;
 begin
 	qdata_in(0) <= guard_interface;
 
@@ -77,11 +79,13 @@ begin
 	------------------------------------------------------------------------------------------
 	process(clk, sr_in, push_ack, guard_interface, sa_in, lhs_state, reset)
 		variable nstate : LhsState;
+		variable next_s_counter: integer;
 	begin
 		nstate 	:= lhs_state;
 		sr_out 	<= false;
 		sa_out 	<= false;
 		push	<= '0';
+ 		next_s_counter := s_counter;
 
 		case lhs_state is
 			when l_Idle => 
@@ -91,12 +95,14 @@ begin
 						push   <= '1';
 					elsif ((push_ack = '1') and (guard_interface = '1')) then
 						if sa_in then
-							sr_out 	<= true;
 							sa_out 	<= true;
+							sr_out 	<= true;
+							next_s_counter := (next_s_counter + 1);
 							push 	<= '1';
 						else	
 							nstate 	:= l_Wait_On_Ack_In;
 							sr_out 	<= true;
+							next_s_counter := (next_s_counter + 1);
 							push 	<= '1';
 						end if;
 					elsif (push_ack = '0') then
@@ -106,9 +112,16 @@ begin
 			when l_Wait_On_Queue => 
 				if(push_ack  = '1') then
 					if((guard_interface = '1') and sa_in) then
+						nstate := l_Idle;
+						sa_out <= true;
+						sr_out <= true;
+						next_s_counter := (next_s_counter + 1);
+						push <= '1';
+					elsif ((guard_interface = '1') and (not sa_in)) then
 						nstate := l_Wait_On_Ack_In;
 						sr_out <= true;
-						push <= '1';
+						next_s_counter := (next_s_counter + 1);
+						push   <= '1';
 					elsif (guard_interface = '0') then
 						nstate := l_Idle;
 						sa_out <= true;
@@ -125,8 +138,10 @@ begin
 		if(clk'event and clk = '1') then
 			if(reset = '1') then
 				lhs_state <= l_Idle;
+				s_counter <= 0;
 			else
 				lhs_state <= nstate;
+				s_counter <= next_s_counter;
 			end if;
 		end if;
 	end process;
@@ -144,17 +159,20 @@ begin
 	--   r_Idle          1        1           1            1      r_Idle    1      1       1
 	--   W-Queue         _        0           _            _      W-Queue
 	--   W-Queue         _        1           1            0      W-Ack-In  1              1
+	--   W-Queue         _        1           1            1      r_Idle    0      1       1
 	--   W-Queue         _        1           0            _      r_Idle           1       1
 	--   W-Ack-In        _        _           _            0      W-Ack-In  
 	--   W-Ack-In        _        _           _            1      r_Idle           1 
 	process(clk,cr_in,pop_ack,qdata,ca_in,rhs_state,reset)
 		variable nstate : RhsState;
 		variable ca_out_var : Boolean;
+		variable next_c_counter: integer;
 	begin
 		nstate := rhs_state;
 		pop <= '0';
 		cr_out <= false;
 		ca_out_var := false;
+		next_c_counter := c_counter;
 
 		case rhs_state is
 			when r_Idle =>
@@ -170,14 +188,16 @@ begin
 						if((qdata(0) = '1') and (not ca_in)) then
 							nstate := r_Wait_On_Ack_In;
 							cr_out <= true;
-							pop <= '1';
-						elsif(qdata(0) = '0') then
-							nstate := r_Idle;
-							ca_out_var := true;
+							next_c_counter := (next_c_counter + 1);
 							pop <= '1';
 						elsif((qdata(0) = '1') and ca_in) then
 							nstate := r_Idle;
 							cr_out <= true;
+							next_c_counter := (next_c_counter + 1);
+							ca_out_var := true;
+							pop <= '1';
+						elsif(qdata(0) = '0') then
+							nstate := r_Idle;
 							ca_out_var := true;
 							pop <= '1';
 						end if;
@@ -188,6 +208,13 @@ begin
 					if((qdata(0) = '1') and (not ca_in)) then
 						nstate := r_Wait_On_Ack_In;
 						cr_out <= true;
+						next_c_counter := (next_c_counter + 1);
+						pop <= '1';
+					elsif ((qdata(0) = '1') and ca_in) then
+						nstate := r_Idle;
+						cr_out <= true;
+						next_c_counter := (next_c_counter + 1);
+						ca_out_var := true;
 						pop <= '1';
 					elsif (qdata(0) = '0') then
 						nstate := r_Idle;
@@ -206,11 +233,13 @@ begin
 			if(reset = '1') then
 				rhs_state <= r_Idle;
 				ca_out <= false;
+				c_counter <= 0;
 			else
 				-- single cycle delay guaranteed between
 				-- cr_in and ca_out.
 				ca_out <= ca_out_var;
 				rhs_state <= nstate;
+				c_counter <= next_c_counter;
 			end if;
 		end if;
 	end process;

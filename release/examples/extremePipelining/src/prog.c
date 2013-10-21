@@ -13,17 +13,16 @@ void __loop_pipelining_on__(uint32_t val, uint32_t buf, uint32_t extreme_flag);
 void vectorSum()
 {
 #ifdef ALT
-	uint8_t F = 0;
 #endif
 	while(1)
 	{
 #ifndef SW
-		__loop_pipelining_on__(16,1,0);
+		__loop_pipelining_on__(63,2,1);
 #endif
 		float x = read_float32("in_data_pipe");
 		float y, z;
 #ifdef ALT
-		if(F == 0)
+		if(x > 0.5)
 		{
 			y = fpadd32(x,x);
 			z = fpmul32(x,y);
@@ -35,7 +34,6 @@ void vectorSum()
 			z = x * y;
 #ifdef ALT
 		}
-		F = 1-F;
 #endif
 		write_float32("out_data_pipe",z);
 	}

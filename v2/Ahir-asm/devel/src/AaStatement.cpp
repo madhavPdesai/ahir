@@ -5327,6 +5327,7 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 	if(this->_guard_expression != NULL)
 	{
 		this->_guard_expression->Update_Adjacency_Map(adjacency_map, visited_elements);
+
 		// guard has dependency to statement.
 		__InsMap(adjacency_map, this->_guard_expression, this, this->_guard_expression->Get_Delay());
 	}
@@ -5334,9 +5335,12 @@ void AaAssignmentStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 	int delay = 0;
 	// check if delay not accounted for.
 	if(src_expression->Is_Implicit_Variable_Reference())
-		delay = 1;
+		delay = 2;
+	else
+		delay = src_expression->Get_Delay();
+
 	// arc from root to tgt_expression.
-	__InsMap(adjacency_map,this,tgt_expression,src_expression->Get_Delay());
+	__InsMap(adjacency_map,this,tgt_expression,delay);
 }
 
 void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
@@ -5361,6 +5365,7 @@ void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, in
 	if(this->_guard_expression != NULL)
 	{
 		this->_guard_expression->Update_Adjacency_Map(adjacency_map, visited_elements);
+
 		// guard has dependency to statement.
 		__InsMap(adjacency_map, this->_guard_expression, this, this->_guard_expression->Get_Delay());
 	}
