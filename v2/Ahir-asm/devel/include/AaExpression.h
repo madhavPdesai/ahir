@@ -1500,10 +1500,9 @@ class AaTernaryExpression: public AaExpression
 	{
 		return(this->Get_VC_Update_Start_Transition_Name());
 	}
-	// TODO: change this when ternary is converted to split protocol.
 	virtual string Get_VC_Reenable_Sample_Transition_Name(set<AaRoot*>& visited_elements)
 	{
-		return(this->Get_VC_Update_Start_Transition_Name());
+		return(this->Get_VC_Sample_Start_Transition_Name());
 	}
 	virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
 	virtual bool Is_Trivial() {return(this->Get_Is_Intermediate());}

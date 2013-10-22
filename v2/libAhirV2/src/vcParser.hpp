@@ -211,18 +211,6 @@ public:
 	public: vcDatapathElement*  vc_Equivalence_Instantiation(
 		vcDataPath* dp
 	);
-	public: vcDatapathElement*  vc_BinaryLogicalOperator_Instantiation(
-		vcDataPath* dp
-	);
-	public: vcDatapathElement*  vc_BinaryOperatorWithInputBuffering_Instantiation(
-		vcDataPath* dp
-	);
-	public: vcDatapathElement*  vc_SelectWithInputBuffering_Instantiation(
-		vcDataPath* dp
-	);
-	public: vcDatapathElement*  vc_SliceWithBuffering_Instantiation(
-		vcDataPath* dp
-	);
 	public: vcDatapathElement*  vc_InterlockBuffer_Instantiation(
 		vcDataPath* dp
 	);
@@ -345,8 +333,6 @@ private:
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_32;
 	static const unsigned long _tokenSet_33_data_[];
 	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_33;
-	static const unsigned long _tokenSet_34_data_[];
-	static const ANTLR_USE_NAMESPACE(antlr)BitSet _tokenSet_34;
 };
 
 #endif /*INC_vcParser_hpp_*/

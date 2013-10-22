@@ -7,7 +7,7 @@ use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 
 -- a simple slicing element.
-entity SliceWithBuffering is
+entity SliceSplitProtocol is
   generic(name: string; 
 	in_data_width : integer; 
 	high_index: integer; 
@@ -22,10 +22,10 @@ entity SliceWithBuffering is
        update_req: in boolean;
        update_ack: out boolean;
        clk,reset: in std_logic);
-end SliceWithBuffering;
+end SliceSplitProtocol;
 
 
-architecture arch of SliceWithBuffering is
+architecture arch of SliceSplitProtocol is
    signal ilb_data_in: std_logic_vector(high_index-low_index downto 0);
 begin
 

@@ -1788,8 +1788,6 @@ void AaBinaryExpression::Write_VC_Control_Path_As_Target_Optimized(bool pipeline
 }
 
 
-// AaTernaryExpression: TODO: this needs to conform to the split protocol as
-// well.
 void AaTernaryExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
 	if(!this->Is_Constant())
@@ -1801,10 +1799,13 @@ void AaTernaryExpression::Write_VC_Links_Optimized(string hier_id, ostream& ofil
 
 		ofile << "// " << this->To_String() << endl;
 
-		hier_id = Augment_Hier_Id(hier_id,this->Get_VC_Complete_Region_Name());
+		string sample_regn = this->Get_VC_Start_Region_Name();
+		string update_regn = this->Get_VC_Complete_Region_Name();
 		vector<string> reqs,acks;
-		reqs.push_back(hier_id + "/req");
-		acks.push_back(hier_id + "/ack");
+		reqs.push_back(hier_id + "/" + sample_regn + "/req");
+		reqs.push_back(hier_id + "/" + update_regn + "/req");
+		acks.push_back(hier_id + "/" + sample_regn + "/ack");
+		acks.push_back(hier_id + "/" + update_regn + "/ack");
 
 		Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),
 				reqs,
@@ -1820,8 +1821,6 @@ void AaTernaryExpression::Write_VC_Links_As_Target_Optimized(string hier_id, ost
 }
 
 
-// TODO: this needs to be converted to a split protocol to 
-// bring it in line with other expressions..
 void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 		map<string,vector<AaExpression*> >& ls_map,
 		map<string, vector<AaExpression*> >& pipe_map,
@@ -1858,34 +1857,43 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 	if(this->_if_false && !this->_if_false->Is_Constant())
 		__J(__SST(this),__UCT(this->_if_false));
 
-	ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] { // ternary expression: " << endl;
-	ofile << "$T [req] $T [ack] // select req/ack" << endl;
+	ofile << ";;[" << this->Get_VC_Start_Region_Name() << "] { // ternary expression: " << endl;
+	ofile << "$T [req] $T [ack] // sample req/ack" << endl;
 	ofile << "}" << endl;
-	__F(__SST(this),__SCT(this));
-	__F(__SCT(this),__UST(this));
+	ofile << ";;[" << this->Get_VC_Complete_Region_Name() << "] { // ternary expression: " << endl;
+	ofile << "$T [req] $T [ack] // update req/ack" << endl;
+	ofile << "}" << endl;
+
+	__F(__SST(this),this->Get_VC_Start_Region_Name());
+	__J(__SCT(this),this->Get_VC_Start_Region_Name());
 	__F(__UST(this),this->Get_VC_Complete_Region_Name());
 	__J(__UCT(this),this->Get_VC_Complete_Region_Name());
 
       	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+	if(flow_through)
+	{
+		ofile << "// flow-through" << endl;
+		__J(__UST(this), __SCT(this));
+	}
+	else
+		__F(__SCT(this), "$null");
+
 	if(pipeline_flag && !flow_through)
 	{
 
-		// NOTE: once the ternary is converted to a split protocol,
-		//       replace the __UCT below by __SCT.
-		//
 		if(!this->_test->Is_Constant())
 		{
-			this->_test->Write_VC_Update_Reenables(__UCT(this), visited_elements, ofile);
+			this->_test->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
 			 //__MJ(this->_test->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
 		}
 		if(this->_if_true && !this->_if_true->Is_Constant())
 		{
-			this->_if_true->Write_VC_Update_Reenables(__UCT(this), visited_elements, ofile);
+			this->_if_true->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
 			//__MJ(this->_if_true->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
 		}
 		if(this->_if_false && !this->_if_false->Is_Constant())
 		{
-			this->_if_false->Write_VC_Update_Reenables(__UCT(this), visited_elements, ofile);
+			this->_if_false->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
 			//__MJ(this->_if_false->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
 		}
 		

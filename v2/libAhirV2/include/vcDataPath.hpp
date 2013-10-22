@@ -21,7 +21,6 @@ class vcRegister;
 class vcDatapathElement;
 class vcModule;
 class vcInterlockBuffer;
-class vcBinaryLogicalOperator;
 class vcPipe: public vcRoot
 {
 
@@ -382,7 +381,6 @@ class vcDataPath: public vcRoot
   map<string, vcRegister*> _register_map;
   map<string, vcEquivalence*> _equivalence_map;
   map<string, vcInterlockBuffer*> _interlock_buffer_map;
-  map<string, vcBinaryLogicalOperator*> _binary_logical_operator_map;;
 
   // these operators can be shared..
   map<string, vcSplitOperator*> _split_operator_map;
@@ -445,9 +443,6 @@ class vcDataPath: public vcRoot
   void Add_Interlock_Buffer(vcInterlockBuffer* p);
   vcInterlockBuffer* Find_Interlock_Buffer(string id);
 
-  void Add_Binary_Logical_Operator(vcBinaryLogicalOperator* p);
-  vcBinaryLogicalOperator* Find_Binary_Logical_Operator(string id);
-
   void Add_Equivalence(vcEquivalence* p);
   vcEquivalence* Find_Equivalence(string id);
 
@@ -506,19 +501,6 @@ class vcDataPath: public vcRoot
   void Print_VHDL_Outport_Instances(ostream& ofile);
   void Print_VHDL_Call_Instances(ostream& ofile);
 
-  void Print_VHDL_Concatenation(string target, vector<vcWire*> wires, ostream& ofile);
-  void Print_VHDL_Disconcatenation(string source, int total_width, vector<vcWire*> wires, ostream& ofile);
-
-  void Print_VHDL_Concatenate_Req(string req_id, vector<vcTransition*>& reqs,  ostream& ofile);
-  void Print_VHDL_Disconcatenate_Ack(string ack_id, vector<vcTransition*>& acks,  ostream& ofile);
-
-  void Print_VHDL_Guard_Concatenation(int num_reqs, string guard_vector, vector<vcWire*>& guard_wires, vector<bool>& guard_complements,ostream& ofile);
-  void Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, string req_unguarded, string ack_unguarded, 
-		string req, string ack, bool delay_flag, ostream& ofile);
-
-  void Print_VHDL_Guard_Instance(string inst_id, int num_reqs, string buffering, string guard_flags, string guards, 
-			string sr_in, string sa_out,  string sr_out, string sa_in,
-			string cr_in, string ca_out,  string cr_out, string ca_in, ostream& ofile);
 
 
   void Generate_Buffering_Constant_Declaration(vector<vcDatapathElement*>& dpe_elements, string& buf_string);
@@ -526,8 +508,6 @@ class vcDataPath: public vcRoot
   int Generate_Pipeline_Slot_Demands(vector<vcDatapathElement*>& dpe_elements,
 				vector<int>& slot_demands);
 
-  void Generate_Guard_Constants(string& buffering_const, string& guard_flag_const,
-				 vector<vcDatapathElement*>& ops, vector<vcWire*>& guard_wires);
 
   void Print_VHDL_Regulator_Instance(string inst_id, 
 			int num_reqs, 
@@ -545,4 +525,20 @@ class vcDataPath: public vcRoot
 						int idx);
 
 };
+
+void Generate_Guard_Constants(string& buffering_const, string& guard_flag_const,
+		vector<vcDatapathElement*>& ops, vector<vcWire*>& guard_wires);
+void Print_VHDL_Concatenation(string target, vector<vcWire*> wires, ostream& ofile);
+void Print_VHDL_Disconcatenation(string source, int total_width, vector<vcWire*> wires, ostream& ofile);
+
+void Print_VHDL_Concatenate_Req(string req_id, vector<vcTransition*>& reqs,  ostream& ofile);
+void Print_VHDL_Disconcatenate_Ack(string ack_id, vector<vcTransition*>& acks,  ostream& ofile);
+
+void Print_VHDL_Guard_Concatenation(int num_reqs, string guard_vector, vector<vcWire*>& guard_wires, vector<bool>& guard_complements,ostream& ofile);
+void Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, string req_unguarded, string ack_unguarded, 
+		string req, string ack, bool delay_flag, ostream& ofile);
+
+void Print_VHDL_Guard_Instance(string inst_id, int num_reqs, string buffering, string guard_flags, string guards, 
+		string sr_in, string sa_out,  string sr_out, string sa_in,
+		string cr_in, string ca_out,  string cr_out, string ca_in, ostream& ofile);
 #endif // vcDataPath

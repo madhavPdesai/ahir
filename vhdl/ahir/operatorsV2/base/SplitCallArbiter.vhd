@@ -244,10 +244,12 @@ begin
          if clk'event and clk= '1' then
            if(reset = '1') then
              return_state <= Idle;
-	   elsif (latch_var = '1') then
-             data_reg <= return_mdata;
-             tag_reg  <= return_mtag(caller_tag_length-1 downto 0);
+	   else
 	     return_state <= nstate;
+	     if(latch_var = '1') then
+             	data_reg <= return_mdata;
+             	tag_reg  <= return_mtag(caller_tag_length-1 downto 0);
+	     end if;
            end if;
          end if;
        end process;

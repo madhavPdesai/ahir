@@ -1959,10 +1959,26 @@ void AaArrayObjectReference::Write_VC_Control_Path( ostream& ofile)
 	    }
 	  else if(this->_object->Is("AaPipeObject"))
 	    {
-	      ofile << "$T [pipe_read_req] $T [pipe_read_ack] " << endl;
+	      ofile << "|| [PipeRead] {" <<  endl;
+	      ofile << " ;; [Sample] { " << endl;
+	      ofile << "$T [req] $T [ack] " << endl;
+	      ofile << "}" << endl;
+	      ofile << " ;; [Update] { " << endl;
+	      ofile << "$T [req] $T [ack] " << endl;
+	      ofile << "}" << endl;
+	      ofile << "}" << endl;
 	    }
-	  ofile << "$T [slice_req] $T [slice_ack]" << endl;
-	  ofile << "}" << endl;
+	      ofile << "|| [Slice] {" <<  endl;
+	      ofile << " ;; [Sample] { " << endl;
+	      ofile << "$T [req] $T [ack]" << endl;
+	      ofile << "}" << endl;
+	      ofile << " ;; [Update] { " << endl;
+	      ofile << "$T [req] $T [ack] " << endl;
+	      ofile << "}" << endl;
+	      ofile << "}" << endl;
+
+	      ofile << "}" << endl;
+
 	}
     }
 }
@@ -2453,23 +2469,31 @@ void AaArrayObjectReference::Write_VC_Links(string hier_id, ostream& ofile)
       else if(this->_object->Is("AaPipeObject"))
 	{
 
-	  reqs.push_back(hier_id + "/pipe_read_req");
-	  acks.push_back(hier_id + "/pipe_read_ack");
+	  reqs.push_back(hier_id + "/PipeRead/Sample/req");
+	  reqs.push_back(hier_id + "/PipeRead/Update/req");
+	  acks.push_back(hier_id + "/PipeRead/Sample/ack");
+	  acks.push_back(hier_id + "/PipeRead/Update/ack");
 	  Write_VC_Link(this->Get_VC_Name() + "_pipe_access",
 			reqs,
 			acks,
 			ofile);
 	}
 
-      reqs.push_back(hier_id + "/slice_req");
-      acks.push_back(hier_id + "/slice_ack");
-      Write_VC_Link(this->Get_VC_Name() + "_slice",
-		    reqs,
-		    acks,
-		    ofile);
+	reqs.clear();
+	acks.clear();
+
+	reqs.push_back(hier_id + "/Slice/Sample/req");
+	reqs.push_back(hier_id + "/Slice/Update/req");
+	acks.push_back(hier_id + "/Slice/Sample/ack");
+	acks.push_back(hier_id + "/Slice/Update/ack");
+
+	Write_VC_Link(this->Get_VC_Name() + "_slice",
+			reqs,
+			acks,
+			ofile);
     }
 }
-  
+
 void AaArrayObjectReference::Write_VC_Links_As_Target(string hier_id, ostream& ofile)
 {
   if(this->Is_Constant())
@@ -4239,7 +4263,6 @@ void AaTernaryExpression::Print(ostream& ofile)
   ofile << " ) ";
 }
 
-// TODO: split protocol here...
 void AaTernaryExpression::Write_VC_Control_Path(ostream& ofile)
 {
 
@@ -4250,69 +4273,78 @@ void AaTernaryExpression::Write_VC_Control_Path(ostream& ofile)
   if(!this->Is_Constant())
     {
 
-	// TODO: ternary will be triggered from three points. fork region.
-      ofile << ";;[" << this->Get_VC_Name() << "] { // ternary expression: " << endl;
-      ofile << "||[" << this->Get_VC_Name() << "_inputs] { " << endl;
-      this->_test->Write_VC_Control_Path(ofile);
-      if(this->_if_true)
-	this->_if_true->Write_VC_Control_Path(ofile);
+	    // TODO: ternary will be triggered from three points. fork region.
+	    ofile << ";;[" << this->Get_VC_Name() << "] { // ternary expression: " << endl;
+	    ofile << "||[" << this->Get_VC_Name() << "_inputs] { " << endl;
+	    this->_test->Write_VC_Control_Path(ofile);
+	    if(this->_if_true)
+		    this->_if_true->Write_VC_Control_Path(ofile);
 
-      if(this->_if_false)
-	this->_if_false->Write_VC_Control_Path(ofile);
-      ofile << "}" << endl;
+	    if(this->_if_false)
+		    this->_if_false->Write_VC_Control_Path(ofile);
+	    ofile << "}" << endl;
 
-      ofile << "$T [req] $T [ack] // select req/ack" << endl;
-      ofile << "}" << endl;
+	    ofile << "|| [Mux] { " << endl;
+
+	    ofile << ";; [Sample] {" << endl;
+	    ofile << "$T [req] $T [ack] // select req/ack" << endl;
+	    ofile << "}" << endl;
+	    ofile << ";; [Update] {" << endl;
+	    ofile << "$T [req] $T [ack] // select req/ack" << endl;
+	    ofile << "}" << endl;
+	    ofile << "}" << endl;
+
+	    ofile << "}" << endl;
     }
 }
 
 
 void AaTernaryExpression::Evaluate()
 {
-  if(!_already_evaluated)
-    {
-      _already_evaluated = true;
-      this->_test->Evaluate();
-      this->_if_true->Evaluate();
-      this->_if_false->Evaluate();
-
-      if(this->_test->Is_Constant() && this->_if_true->Is_Constant() && this->_if_false->Is_Constant())
+	if(!_already_evaluated)
 	{
-	  if(this->_test->Get_Expression_Value()->To_Boolean())
-	    this->Assign_Expression_Value(this->_if_true->Get_Expression_Value());
-	  else
-	    this->Assign_Expression_Value(this->_if_false->Get_Expression_Value());
-	}
+		_already_evaluated = true;
+		this->_test->Evaluate();
+		this->_if_true->Evaluate();
+		this->_if_false->Evaluate();
 
-      if( (_test->Get_Does_Pipe_Access()) ||
-	  (_if_true->Get_Does_Pipe_Access()) ||
-	  (_if_false->Get_Does_Pipe_Access()))
-	{
-	  this->Set_Does_Pipe_Access(true);
+		if(this->_test->Is_Constant() && this->_if_true->Is_Constant() && this->_if_false->Is_Constant())
+		{
+			if(this->_test->Get_Expression_Value()->To_Boolean())
+				this->Assign_Expression_Value(this->_if_true->Get_Expression_Value());
+			else
+				this->Assign_Expression_Value(this->_if_false->Get_Expression_Value());
+		}
+
+		if( (_test->Get_Does_Pipe_Access()) ||
+				(_if_true->Get_Does_Pipe_Access()) ||
+				(_if_false->Get_Does_Pipe_Access()))
+		{
+			this->Set_Does_Pipe_Access(true);
+		}
 	}
-    }
 }
 
 
 void AaTernaryExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
 
-  ofile << "// " << this->To_String() << endl;
+	ofile << "// " << this->To_String() << endl;
 
 
-  if(this->Is_Constant())
-    {
-      Write_VC_Constant_Declaration(this->Get_VC_Constant_Name(),
-				    this->Get_Type(),
-				    this->Get_Expression_Value(),
-				    ofile);
-    }
-  else
-    {
-      this->_test->Write_VC_Constant_Wire_Declarations(ofile);
-      this->_if_true->Write_VC_Constant_Wire_Declarations(ofile);
-      this->_if_false->Write_VC_Constant_Wire_Declarations(ofile);
-    }
+	if(this->Is_Constant())
+	{
+		Write_VC_Constant_Declaration(this->Get_VC_Constant_Name(),
+				this->Get_Type(),
+				this->Get_Expression_Value(),
+				ofile);
+	}
+	else
+	{
+		this->_test->Write_VC_Constant_Wire_Declarations(ofile);
+		this->_if_true->Write_VC_Constant_Wire_Declarations(ofile);
+		this->_if_false->Write_VC_Constant_Wire_Declarations(ofile);
+	}
 
 }
 void AaTernaryExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
@@ -4320,34 +4352,34 @@ void AaTernaryExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostrea
 
 
 
-  if(!this->Is_Constant())
-    {
-      this->_test->Write_VC_Wire_Declarations(false,ofile);
-      this->_if_true->Write_VC_Wire_Declarations(false,ofile);
-      this->_if_false->Write_VC_Wire_Declarations(false,ofile);
-    }
+	if(!this->Is_Constant())
+	{
+		this->_test->Write_VC_Wire_Declarations(false,ofile);
+		this->_if_true->Write_VC_Wire_Declarations(false,ofile);
+		this->_if_false->Write_VC_Wire_Declarations(false,ofile);
+	}
 
-  if(!skip_immediate && !this->Is_Constant())
-    {
+	if(!skip_immediate && !this->Is_Constant())
+	{
 
-      ofile << "// " << this->To_String() << endl;
+		ofile << "// " << this->To_String() << endl;
 
-      Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Driver_Name(),
-					     this->Get_Type(),
-					     ofile);
-    }
+		Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Driver_Name(),
+				this->Get_Type(),
+				ofile);
+	}
 }
 void AaTernaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
 {
-  if(!this->Is_Constant())
-    {
-      bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+	if(!this->Is_Constant())
+	{
+		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 
-      this->_test->Write_VC_Datapath_Instances(NULL,ofile);
-      this->_if_true->Write_VC_Datapath_Instances(NULL,ofile);
-      this->_if_false->Write_VC_Datapath_Instances(NULL,ofile);
+		this->_test->Write_VC_Datapath_Instances(NULL,ofile);
+		this->_if_true->Write_VC_Datapath_Instances(NULL,ofile);
+		this->_if_false->Write_VC_Datapath_Instances(NULL,ofile);
 
-      ofile << "// " << this->To_String() << endl;
+		ofile << "// " << this->To_String() << endl;
 
       string dpe_name = this->Get_VC_Datapath_Instance_Name();
       string src_1_name = _test->Get_VC_Driver_Name();
@@ -4397,8 +4429,10 @@ void AaTernaryExpression::Write_VC_Links(string hier_id, ostream& ofile)
       ofile << "// " << this->To_String() << endl;
 
       vector<string> reqs,acks;
-      reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/req");
-      acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/ack");
+      reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/Mux/Sample/req");
+      reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "/Mux/Update/req");
+      acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/Mux/Sample/ack");
+      acks.push_back(hier_id + "/" + this->Get_VC_Name() + "/Mux/Update/ack");
 
       Write_VC_Link(this->Get_VC_Datapath_Instance_Name(),
 		    reqs,

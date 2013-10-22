@@ -560,7 +560,6 @@ package BaseComponents is
          clk,reset: in std_logic);
   end component SelectBase;
 
-
   component Slicebase 
     generic(in_data_width : integer; high_index: integer; low_index : integer; flow_through : boolean := false);
     port(din: in std_logic_vector(in_data_width-1 downto 0);
@@ -570,6 +569,22 @@ package BaseComponents is
          clk,reset: in std_logic);
   end component Slicebase;
 
+  component SliceSplitProtocol is
+    generic(name: string; 
+	in_data_width : integer; 
+	high_index: integer; 
+	low_index : integer; 
+	buffering : integer;
+	flow_through: boolean := false
+	);
+    port(din: in std_logic_vector(in_data_width-1 downto 0);
+       dout: out std_logic_vector(high_index-low_index downto 0);
+       sample_req: in boolean;
+       sample_ack: out boolean;
+       update_req: in boolean;
+       update_ack: out boolean;
+       clk,reset: in std_logic);
+  end component;
 
   -----------------------------------------------------------------------------
   -- mux/demux
@@ -1779,28 +1794,18 @@ package BaseComponents is
     clk, reset              : in std_logic);
   end component;
 
-  component SelectWithInputBuffers is
+  component SelectSplitProtocol is
     generic(name: string; 
 	  data_width: integer; 
-	  x_buffering: integer; 
-	  y_buffering: integer; 
-	  sel_buffering: integer;
-          x_is_constant: boolean;
-          y_is_constant: boolean;
-          sel_is_constant: boolean;
-	  z_buffering: integer;
+	  buffering: integer; 
 	  flow_through: boolean := false);
     port(x,y: in std_logic_vector(data_width-1 downto 0);
        sel: in std_logic_vector(0 downto 0);
-       req_x: in boolean;
-       ack_x: out boolean;
-       req_y: in boolean;
-       ack_y: out boolean;
-       req_sel: in boolean;
-       ack_sel: out boolean;
-       req_z : in boolean;
-       ack_z : out boolean;
-       z: out std_logic_vector(data_width-1 downto 0);
+       z : out std_logic_vector(data_width-1 downto 0);
+       sample_req: in boolean;
+       sample_ack: out boolean;
+       update_req: in boolean;
+       update_ack: out boolean;
        clk,reset: in std_logic);
   end component;
 

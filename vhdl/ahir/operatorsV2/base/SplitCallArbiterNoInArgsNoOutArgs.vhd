@@ -48,6 +48,8 @@ architecture Struct of SplitCallArbiterNoInArgsNoOutArgs is
    signal caller_mtag_reg : std_logic_vector(caller_tag_length-1 downto 0);
 
    signal fair_call_reqs, fair_call_acks: std_logic_vector(num_reqs-1 downto 0);
+   signal return_mreq_sig : std_logic_vector(num_reqs-1 downto 0); 
+
 begin
   -----------------------------------------------------------------------------
   -- "fairify" the call-reqs.
@@ -153,8 +155,7 @@ begin
      return_tag <= lreturn_tag;
    end process;
 
-   -- always ready to accept return data..
-   return_mreq <= '1';
+   return_mreq <= OrReduce(return_mreq_sig);
 
    -- the acks in both directions
    return_acks <= return_acks_sig;
@@ -165,39 +166,53 @@ begin
      fsm: block
        signal ack_reg,  valid_flag : std_logic;
        signal tag_reg : std_logic_vector(caller_tag_length-1 downto 0);
+       signal return_state : CallStateType;
      begin  -- block fsm
 
        -- valid = '1' implies this index is incoming
        valid_flag <= '1' when return_mack = '1' and (I = To_Integer(To_Unsigned(return_mtag(callee_tag_length+caller_tag_length-1 downto caller_tag_length)))) else '0';
 
        --------------------------------------------------------------------------
-       -- ack ff
+       -- ack FSM
        --------------------------------------------------------------------------
-       -- set if valid_flag is asserted, else clear if return_reqs is asserted
-       -- and register is already set.
-       process(clk)
+       process(clk,return_state,return_reqs(I),valid_flag,reset)
+	variable nstate: CallStateType;
+	variable latch_var: std_logic;
        begin
+
+	 nstate := return_state;
+	 latch_var := '0';
+	 return_acks_sig(I) <= '0';
+
+	 if(return_state = Idle) then
+		if(valid_flag = '1') then
+			latch_var := '1';
+			nstate := Busy;
+		end if;		
+	 else 
+		return_acks_sig(I) <= '1';
+		if((valid_flag = '1') and (return_reqs(I) = '1')) then
+			latch_var := '1';
+		elsif (return_reqs(I) = '1') then
+			nstate := Idle;
+		end if;
+	 end if;
+
+	 return_mreq_sig(I) <= latch_var;
+
          if clk'event and clk= '1' then
            if(reset = '1') then
-             ack_reg <= '0';
-           elsif valid_flag = '1' then
-             ack_reg <= '1';
-           elsif return_reqs(I) = '1' and ack_reg = '1' then
-             ack_reg <= '0';
+             return_state <= Idle;
+	   else
+	     return_state <= nstate;
+	     if (latch_var = '1') then
+               tag_reg  <= return_mtag(caller_tag_length-1 downto 0);
+	     end if;
            end if;
-
-           if(valid_flag = '1') then
-		tag_reg <= return_mtag(caller_tag_length-1 downto 0);
-	   end if;
-
          end if;
-
        end process;
 
        -- pass info out of the generate
-       return_acks_sig(I) <= ack_reg;
-
-       -- return tag
        return_tag_sig(I) <= tag_reg;
        
      end block fsm;

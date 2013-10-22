@@ -2172,7 +2172,6 @@ package BaseComponents is
          clk,reset: in std_logic);
   end component SelectBase;
 
-
   component Slicebase 
     generic(in_data_width : integer; high_index: integer; low_index : integer; flow_through : boolean := false);
     port(din: in std_logic_vector(in_data_width-1 downto 0);
@@ -2182,6 +2181,22 @@ package BaseComponents is
          clk,reset: in std_logic);
   end component Slicebase;
 
+  component SliceSplitProtocol is
+    generic(name: string; 
+	in_data_width : integer; 
+	high_index: integer; 
+	low_index : integer; 
+	buffering : integer;
+	flow_through: boolean := false
+	);
+    port(din: in std_logic_vector(in_data_width-1 downto 0);
+       dout: out std_logic_vector(high_index-low_index downto 0);
+       sample_req: in boolean;
+       sample_ack: out boolean;
+       update_req: in boolean;
+       update_ack: out boolean;
+       clk,reset: in std_logic);
+  end component;
 
   -----------------------------------------------------------------------------
   -- mux/demux
@@ -3391,28 +3406,18 @@ package BaseComponents is
     clk, reset              : in std_logic);
   end component;
 
-  component SelectWithInputBuffers is
+  component SelectSplitProtocol is
     generic(name: string; 
 	  data_width: integer; 
-	  x_buffering: integer; 
-	  y_buffering: integer; 
-	  sel_buffering: integer;
-          x_is_constant: boolean;
-          y_is_constant: boolean;
-          sel_is_constant: boolean;
-	  z_buffering: integer;
+	  buffering: integer; 
 	  flow_through: boolean := false);
     port(x,y: in std_logic_vector(data_width-1 downto 0);
        sel: in std_logic_vector(0 downto 0);
-       req_x: in boolean;
-       ack_x: out boolean;
-       req_y: in boolean;
-       ack_y: out boolean;
-       req_sel: in boolean;
-       ack_sel: out boolean;
-       req_z : in boolean;
-       ack_z : out boolean;
-       z: out std_logic_vector(data_width-1 downto 0);
+       z : out std_logic_vector(data_width-1 downto 0);
+       sample_req: in boolean;
+       sample_ack: out boolean;
+       update_req: in boolean;
+       update_ack: out boolean;
        clk,reset: in std_logic);
   end component;
 
@@ -12816,6 +12821,8 @@ architecture Struct of SplitCallArbiterNoInArgsNoOutArgs is
    signal caller_mtag_reg : std_logic_vector(caller_tag_length-1 downto 0);
 
    signal fair_call_reqs, fair_call_acks: std_logic_vector(num_reqs-1 downto 0);
+   signal return_mreq_sig : std_logic_vector(num_reqs-1 downto 0); 
+
 begin
   -----------------------------------------------------------------------------
   -- "fairify" the call-reqs.
@@ -12921,8 +12928,7 @@ begin
      return_tag <= lreturn_tag;
    end process;
 
-   -- always ready to accept return data..
-   return_mreq <= '1';
+   return_mreq <= OrReduce(return_mreq_sig);
 
    -- the acks in both directions
    return_acks <= return_acks_sig;
@@ -12933,39 +12939,53 @@ begin
      fsm: block
        signal ack_reg,  valid_flag : std_logic;
        signal tag_reg : std_logic_vector(caller_tag_length-1 downto 0);
+       signal return_state : CallStateType;
      begin  -- block fsm
 
        -- valid = '1' implies this index is incoming
        valid_flag <= '1' when return_mack = '1' and (I = To_Integer(To_Unsigned(return_mtag(callee_tag_length+caller_tag_length-1 downto caller_tag_length)))) else '0';
 
        --------------------------------------------------------------------------
-       -- ack ff
+       -- ack FSM
        --------------------------------------------------------------------------
-       -- set if valid_flag is asserted, else clear if return_reqs is asserted
-       -- and register is already set.
-       process(clk)
+       process(clk,return_state,return_reqs(I),valid_flag,reset)
+	variable nstate: CallStateType;
+	variable latch_var: std_logic;
        begin
+
+	 nstate := return_state;
+	 latch_var := '0';
+	 return_acks_sig(I) <= '0';
+
+	 if(return_state = Idle) then
+		if(valid_flag = '1') then
+			latch_var := '1';
+			nstate := Busy;
+		end if;		
+	 else 
+		return_acks_sig(I) <= '1';
+		if((valid_flag = '1') and (return_reqs(I) = '1')) then
+			latch_var := '1';
+		elsif (return_reqs(I) = '1') then
+			nstate := Idle;
+		end if;
+	 end if;
+
+	 return_mreq_sig(I) <= latch_var;
+
          if clk'event and clk= '1' then
            if(reset = '1') then
-             ack_reg <= '0';
-           elsif valid_flag = '1' then
-             ack_reg <= '1';
-           elsif return_reqs(I) = '1' and ack_reg = '1' then
-             ack_reg <= '0';
+             return_state <= Idle;
+	   else
+	     return_state <= nstate;
+	     if (latch_var = '1') then
+               tag_reg  <= return_mtag(caller_tag_length-1 downto 0);
+	     end if;
            end if;
-
-           if(valid_flag = '1') then
-		tag_reg <= return_mtag(caller_tag_length-1 downto 0);
-	   end if;
-
          end if;
-
        end process;
 
        -- pass info out of the generate
-       return_acks_sig(I) <= ack_reg;
-
-       -- return tag
        return_tag_sig(I) <= tag_reg;
        
      end block fsm;
@@ -13027,6 +13047,7 @@ architecture Struct of SplitCallArbiterNoInargs is
    signal caller_mtag_reg :  std_logic_vector(caller_tag_length-1 downto 0);
 
    signal fair_call_reqs, fair_call_acks: std_logic_vector(num_reqs-1 downto 0);
+   signal return_mreq_sig : std_logic_vector(num_reqs-1 downto 0); 
 begin
   -----------------------------------------------------------------------------
   -- "fairify" the call-reqs.
@@ -13143,8 +13164,7 @@ begin
      return_tag <= lreturn_tag;
    end process;
 
-   -- always ready to accept return data.
-   return_mreq <= '1';
+   return_mreq <= OrReduce(return_mreq_sig);
 
    -- the acks in both directions
    return_acks <= return_acks_sig;
@@ -13156,42 +13176,60 @@ begin
        signal ack_reg, valid_flag : std_logic;
        signal data_reg : std_logic_vector(return_mdata'length-1 downto 0);
        signal tag_reg : std_logic_vector(caller_tag_length-1 downto 0);
+       signal return_state : CallStateType;
      begin  -- block fsm
 
        -- valid = '1' implies this index is incoming
        valid_flag <= '1' when return_mack = '1' and (I = To_Integer(To_Unsigned(return_mtag(callee_tag_length+caller_tag_length-1 downto caller_tag_length)))) else '0';
 
        --------------------------------------------------------------------------
-       -- ack ff
+       -- ack FSM
        --------------------------------------------------------------------------
-       -- set if valid_flag is asserted, else clear if return_reqs is asserted
-       -- and register is already set.
-       process(clk)
+       process(clk,return_state,return_reqs(I),valid_flag,reset)
+	variable nstate: CallStateType;
+	variable latch_var: std_logic;
        begin
+
+	 nstate := return_state;
+	 latch_var := '0';
+	 return_acks_sig(I) <= '0';
+
+	 if(return_state = Idle) then
+		if(valid_flag = '1') then
+			latch_var := '1';
+			nstate := Busy;
+		end if;		
+	 else 
+		return_acks_sig(I) <= '1';
+		if((valid_flag = '1') and (return_reqs(I) = '1')) then
+			latch_var := '1';
+		elsif (return_reqs(I) = '1') then
+			nstate := Idle;
+		end if;
+	 end if;
+
+	 return_mreq_sig(I) <= latch_var;
+
          if clk'event and clk= '1' then
            if(reset = '1') then
-             ack_reg <= '0';
-           elsif valid_flag = '1' then
-             ack_reg <= '1';
-           elsif return_reqs(I) = '1' and ack_reg = '1' then
-             ack_reg <= '0';
+             return_state <= Idle;
+	   else
+ 	     return_state <= nstate;
+	     if (latch_var = '1') then
+             	data_reg <= return_mdata;
+             	tag_reg  <= return_mtag(caller_tag_length-1 downto 0);
+	     end if;
            end if;
-
-           -- register data when you send mack
-           if(valid_flag = '1') then
-             data_reg <= return_mdata;
-             tag_reg <= return_mtag(caller_tag_length-1 downto 0);
-           end if;
+	  
+	      
          end if;
        end process;
 
        -- pass info out of the generate
-       return_acks_sig(I) <= ack_reg;
        return_data_sig(I) <= data_reg;
        return_tag_sig(I)  <= tag_reg;
        
      end block fsm;
-
      
    end generate RetGen;
 end Struct;
@@ -13251,6 +13289,7 @@ architecture Struct of SplitCallArbiterNoOutArgs is
    signal caller_mtag_reg : std_logic_vector(caller_tag_length-1 downto 0);
    
    signal fair_call_reqs, fair_call_acks: std_logic_vector(num_reqs-1 downto 0);
+   signal return_mreq_sig : std_logic_vector(num_reqs-1 downto 0); 
 begin
 
   -----------------------------------------------------------------------------
@@ -13365,7 +13404,7 @@ begin
    -- always ready to accept return data..
    -- (assumption... that call and return requests from the 
    --  the left will alternate).
-   return_mreq <='1';
+   return_mreq <= OrReduce(return_mreq_sig);
 
    -- the acks in both directions
    return_acks <= return_acks_sig;
@@ -13376,38 +13415,56 @@ begin
      fsm: block
        signal ack_reg, valid_flag : std_logic;
        signal tag_reg  : std_logic_vector(caller_tag_length-1 downto 0);
+       signal return_state : CallStateType;
      begin  -- block fsm
 
        -- valid = '1' implies this index is incoming
        valid_flag <= '1' when return_mack = '1' and (I = To_Integer(To_Unsigned(return_mtag(callee_tag_length+caller_tag_length-1 downto caller_tag_length)))) else '0';
+
        --------------------------------------------------------------------------
-       -- ack ff
+       -- ack FSM
        --------------------------------------------------------------------------
-       -- set if valid_flag is asserted, else clear if return_reqs is asserted
-       -- and register is already set.
-       process(clk)
+       process(clk,return_state,return_reqs(I),valid_flag,reset)
+	variable nstate: CallStateType;
+	variable latch_var: std_logic;
        begin
+
+	 nstate := return_state;
+	 latch_var := '0';
+	 return_acks_sig(I) <= '0';
+
+	 if(return_state = Idle) then
+		if(valid_flag = '1') then
+			latch_var := '1';
+			nstate := Busy;
+		end if;		
+	 else 
+	 	return_acks_sig(I) <= '1';
+		if((valid_flag = '1') and (return_reqs(I) = '1')) then
+			latch_var := '1';
+		elsif (return_reqs(I) = '1') then
+			nstate := Idle;
+		end if;
+	 end if;
+
+	 return_mreq_sig(I) <= latch_var;
+
          if clk'event and clk= '1' then
            if(reset = '1') then
-             ack_reg <= '0';
-           elsif valid_flag = '1' then
-             ack_reg <= '1';
-           elsif return_reqs(I) = '1' and ack_reg = '1' then
-             ack_reg <= '0';
-           end if;
-
-           -- register tag when you send mack
-           if(valid_flag = '1') then
-             tag_reg  <= return_mtag(caller_tag_length-1 downto 0);
+             return_state <= Idle;
+	   else 
+	     return_state <= nstate;
+	     if (latch_var = '1') then
+             	tag_reg  <= return_mtag(caller_tag_length-1 downto 0);
+	     end if;
            end if;
          end if;
        end process;
 
        -- pass info out of the generate
-       return_acks_sig(I) <= ack_reg;
        return_tag_sig(I) <= tag_reg;
-       
      end block fsm;
+
    end generate RetGen;
 
 end Struct;
@@ -13657,10 +13714,12 @@ begin
          if clk'event and clk= '1' then
            if(reset = '1') then
              return_state <= Idle;
-	   elsif (latch_var = '1') then
-             data_reg <= return_mdata;
-             tag_reg  <= return_mtag(caller_tag_length-1 downto 0);
+	   else
 	     return_state <= nstate;
+	     if(latch_var = '1') then
+             	data_reg <= return_mdata;
+             	tag_reg  <= return_mtag(caller_tag_length-1 downto 0);
+	     end if;
            end if;
          end if;
        end process;
@@ -20410,197 +20469,51 @@ use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 
-entity SelectWithInputBuffers is
+entity SelectSplitProtocol is
   generic(name: string; 
 	  data_width: integer; 
-	  x_buffering: integer; 
-	  y_buffering: integer; 
-	  sel_buffering: integer;
-          x_is_constant: boolean;
-          y_is_constant: boolean;
-          sel_is_constant: boolean;
-	  z_buffering: integer;
+	  buffering: integer; 
 	  flow_through: boolean := false);
   port(x,y: in std_logic_vector(data_width-1 downto 0);
        sel: in std_logic_vector(0 downto 0);
-       req_x: in boolean;
-       ack_x: out boolean;
-       req_y: in boolean;
-       ack_y: out boolean;
-       req_sel: in boolean;
-       ack_sel: out boolean;
-       req_z : in boolean;
-       ack_z : out boolean;
-       z: out std_logic_vector(data_width-1 downto 0);
+       z : out std_logic_vector(data_width-1 downto 0);
+       sample_req: in boolean;
+       sample_ack: out boolean;
+       update_req: in boolean;
+       update_ack: out boolean;
        clk,reset: in std_logic);
-end SelectWithInputBuffers;
+end SelectSplitProtocol;
 
 
-architecture arch of SelectWithInputBuffers is 
-	constant  cZero : std_logic_vector(data_width-1 downto 0) := (others => '0');
-	signal buffered_x : std_logic_vector(data_width-1 downto 0);
-	signal accept_x, ready_x, kill_x: std_logic;
-
-
-	signal buffered_y : std_logic_vector(data_width-1 downto 0);
-	signal accept_y, ready_y, kill_y: std_logic;
-
-	signal buffered_sel : std_logic_vector(data_width-1 downto 0);
-	signal accept_sel, ready_sel, kill_sel: std_logic;
-
-	signal obuf_write_data : std_logic_vector(data_width-1 downto 0);
-        signal obuf_write_req, obuf_write_ack: std_logic;
-
+architecture arch of SelectSplitProtocol is 
+   signal ilb_data_in: std_logic_vector(data_width-1 downto 0);
 begin
-	-- slight issue here... some problem cases exist.
-	-- for example: select is constant 1, x is constant.
-        --              select is constant 0, y is constant.
-        --              select, x, y are all constants. 
-	-- In such cases, it is assumed that the select operation
-	-- will be replaced by a constant at a higher level. 
-	assert not (x_is_constant and y_is_constant and sel_is_constant) 
-		report "all three inputs to select cannot be constants" severity failure;
+     ilb_data_in <=  x when (sel(0) = '1') else y;
 
      noFlowThrough: if (not flow_through) generate
-	nonConstX: if not x_is_constant generate 
-	  rb_x: ReceiveBuffer generic map( name => name & " receive-buffer_x",
-					buffer_size =>  x_buffering,
-					data_width => data_width,
-					kill_counter_range => 65535)
-		port map(write_req => req_x,
-			 write_ack => ack_x,
-			 write_data => x,
-		   	 read_req => accept_x,
-			 read_ack => ready_x,
-			 kill => kill_x,
-			 read_data => buffered_x,
-			 clk => clk,
-			 reset => reset);
-        end generate nonConstX;
+    	ilb: InterlockBuffer 
+		generic map(name => name & " ilb ",
+				buffer_size => buffering,
+				in_data_width => data_width,
+				out_data_width => data_width)
+		port map(write_req => sample_req,
+			 write_ack => sample_ack,
+			 write_data => ilb_data_in,
+			 read_req  => update_req,
+			 read_ack => update_ack,
+			 read_data => z,
+			 clk => clk, reset => reset);
+     end generate noFlowThrough;
 
-        constX: if x_is_constant generate
-		buffered_x <= x;
-		ready_x <= '1';
-        end generate constX;
+	-- like a combinational circuit..
+	-- the control path must worry about all
+	-- sequencing issues.
+     flowThrough: if (flow_through) generate
+	z <= ilb_data_in;
+    	sample_ack <= sample_req;
+    	update_ack <= update_req;
 
-        nonConstY: if not y_is_constant generate
-	  rb_y: ReceiveBuffer generic map( name => name & " receive-buffer_y",
-					buffer_size => y_buffering,
-					data_width => data_width,
-					kill_counter_range => 65535)
-		port map(write_req => req_y,
-			 write_ack => ack_y,
-			 write_data => x,
-		   	 read_req => accept_y,
-			 read_ack => ready_y,
-			 kill => kill_y,
-			 read_data => buffered_y,
-			 clk => clk,
-			 reset => reset);
-        end generate nonConstY;
-
-        constY: if y_is_constant generate
-		buffered_y <= y;
-		ready_y <= '1';
-        end generate constY;
- 
-
-	kill_sel <= '0';  -- select can never be killed (well, if x = y, yes, but let it be!).
-        
-        nonConstSel: if not sel_is_constant generate 
-	  rb_sel: ReceiveBuffer generic map( name => name & " receive-buffer_sel",
-					buffer_size => sel_buffering,
-					data_width => data_width,
-					kill_counter_range => 65535)
-		port map(write_req => req_sel,
-			 write_ack => ack_sel,
-			 write_data => x,
-		   	 read_req => accept_sel,
-			 read_ack => ready_sel,
-			 kill => kill_sel,
-			 read_data => buffered_sel,
-			 clk => clk,
-			 reset => reset);
-        end generate nonConstSel;
-
-	
-        constSel: if sel_is_constant generate
-		buffered_sel <= sel;
-		ready_sel <= '1';
-        end generate constSel;
-
-
-        obuf: UnloadBuffer generic map (name => name & " output-buffer for Select ",
-					data_width => data_width,
-					buffer_size => z_buffering)
-		port map(write_req => obuf_write_req,
-			  write_ack => obuf_write_ack,
-			  write_data => obuf_write_data,
-			  unload_req => req_Z,
-			  unload_ack => ack_Z,
-			  read_data => Z,
-			  clk => clk,
-			  reset => reset);
-				
-	-- logic.
-	-- if select is valid and non-zero, and if X is valid, then kill Y
-        -- and sample X into output queue.
-	-- if select is valid and zero, and if Y is valid, then kill X
-        -- and sample Y into output queue.
-	-- 
-	process(ready_sel, ready_x, ready_y, buffered_sel, buffered_x, buffered_y)
-	
-	begin
-		obuf_write_req <= '0';
-		obuf_write_data <= cZero;
-		accept_X <= '0';
-		accept_Y <= '0';
-		accept_Sel <= '0';
-		kill_X <= '0';
-		kill_Y <= '0';
-		if(ready_sel = '1') then
-			if(buffered_sel /= cZero) then
-				if(ready_Y = '1') then
-					accept_Sel <= '1';
-					accept_Y <= '1';
-					obuf_write_req <= '1';
-					obuf_write_data <= buffered_Y;
-					if(ready_X = '1') then
-						accept_X <= '1';
-					else
-						kill_X <= '1';
-					end if;
-				end if;
-			else
-				if(ready_X = '1') then
-					accept_Sel <= '1';
-					accept_X <= '1';
-					obuf_write_req <= '1';
-					obuf_write_data <= buffered_X;
-					if(ready_Y = '1') then
-						accept_Y <= '1';
-					else
-						kill_Y <= '1';
-					end if;
-				end if;
-			end if;
-		end if;
-	end process;
-   end generate noFlowThrough;
-
-   flowThrough: if (flow_through) generate
-	--
-	-- all dependencies must be handled in the control-path.
-	-- the operator is just a combinational block.
-	--
-	ack_sel <= req_sel;
-	ack_x <= req_x;
-	ack_y <= req_y;
-	ack_z <= req_z;
-	z <= x when (sel /= cZero) else y;	
-   end generate flowThrough;
-   
-
+     end generate flowThrough;
 end arch;
 
 library ieee;
@@ -20612,7 +20525,7 @@ use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 
 -- a simple slicing element.
-entity SliceWithBuffering is
+entity SliceSplitProtocol is
   generic(name: string; 
 	in_data_width : integer; 
 	high_index: integer; 
@@ -20627,10 +20540,10 @@ entity SliceWithBuffering is
        update_req: in boolean;
        update_ack: out boolean;
        clk,reset: in std_logic);
-end SliceWithBuffering;
+end SliceSplitProtocol;
 
 
-architecture arch of SliceWithBuffering is
+architecture arch of SliceSplitProtocol is
    signal ilb_data_in: std_logic_vector(high_index-low_index downto 0);
 begin
 

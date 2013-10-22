@@ -468,11 +468,6 @@ void vcDataPath::Add_Interlock_Buffer(vcInterlockBuffer* p)
 vcInterlockBuffer* vcDataPath::Find_Interlock_Buffer(string id) 
 	{return(__FIND(_interlock_buffer_map,id));}
 
-void vcDataPath::Add_Binary_Logical_Operator(vcBinaryLogicalOperator* p)  
-	{_ADD(_binary_logical_operator_map,p->Get_Id(), p);}
-vcBinaryLogicalOperator* vcDataPath::Find_Binary_Logical_Operator(string id) 
-	{return(__FIND(_binary_logical_operator_map,id));}
-
 void vcDataPath::Add_Equivalence(vcEquivalence* p)  {_ADD(_equivalence_map,p->Get_Id(), p);}
 vcEquivalence* vcDataPath::Find_Equivalence(string id) {return(__FIND(_equivalence_map,id));}
 
@@ -920,7 +915,6 @@ void vcDataPath::Print_VHDL(ostream& ofile)
   this->Print_VHDL_Slice_Instances(ofile);  // done.
   this->Print_VHDL_Register_Instances(ofile); // done (no changes)
   this->Print_VHDL_Interlock_Buffer_Instances(ofile); // done.
-  this->Print_VHDL_Binary_Logical_Operator_Instances(ofile); // done
   this->Print_VHDL_Equivalence_Instances(ofile); // done (no changes)
   this->Print_VHDL_Branch_Instances(ofile);  // done (no changes)
   this->Print_VHDL_Split_Operator_Instances(ofile); // done
@@ -965,7 +959,7 @@ void vcDataPath::Print_VHDL_Select_Instances(ostream& ofile)
     {
       vcSelect* s = (*iter).second;
       if(vcSystem::_enable_logging)
-		s->vcDatapathElement::Print_VHDL_Logger(ofile);
+		s->vcSplitOperator::Print_VHDL_Logger(ofile);
 
       s->Print_VHDL(ofile);
       idx++;
@@ -983,7 +977,7 @@ void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
     {
       vcSlice* s = (*iter).second;
       if(vcSystem::_enable_logging)
-		s->vcOperator::Print_VHDL_Logger(ofile);
+		s->vcSplitOperator::Print_VHDL_Logger(ofile);
 
       s->Print_VHDL(ofile);
       idx++;
@@ -1022,20 +1016,6 @@ void vcDataPath::Print_VHDL_Interlock_Buffer_Instances(ostream& ofile)
     }
 }
 
-void vcDataPath::Print_VHDL_Binary_Logical_Operator_Instances(ostream& ofile)
-{
-  for(map<string, vcBinaryLogicalOperator*>::iterator iter = _binary_logical_operator_map.begin();
-      iter != _binary_logical_operator_map.end();
-      iter++)
-    {
-      vcBinaryLogicalOperator* p = (*iter).second;
-      if(vcSystem::_enable_logging)
-      {
-	p->vcDatapathElement::Print_VHDL_Logger(ofile);
-      }
-      p->Print_VHDL(ofile);
-    }
-}
 
 void vcDataPath::Print_VHDL_Equivalence_Instances(ostream& ofile)
 { 
@@ -1259,7 +1239,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 
       string guard_flags;
       string guard_buffering;
-      this->Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guard_wires);
+      Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guard_wires);
 
       // is the second input a constant?
       bool use_constant = false;
@@ -1334,13 +1314,13 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       ofile << "-- }\n begin -- {" << endl;
 
       // concatenate data_in
-      this->Print_VHDL_Concatenation(string("data_in"), concat_in_wires,ofile);
+      Print_VHDL_Concatenation(string("data_in"), concat_in_wires,ofile);
 
       // disconcatenate data_out
-      this->Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
+      Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
 
       	// prepare guard vector.
-      this->Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
+      Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
 
       // input types 
       vcType* input_type_1 = inwires[0]->Get_Type();
@@ -1355,17 +1335,17 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       // the guards and the regulators..
       if((num_reqs > 1) || is_pipelined_op)
 	{
-	  this->Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
-	  this->Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
-	  this->Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
-	  this->Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
+	  Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
+	  Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
+	  Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
+	  Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
 
 	  this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs,"reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
 	/*
 	  this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL_unregulated", "ackL_unregulated", false, ofile);
       	  this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 	*/
-	this->Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+	Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 						"reqL_unguarded", "ackL_unguarded",
 						"reqL_unregulated", "ackL_unregulated",
 						"reqR_unguarded", "ackR_unguarded",
@@ -1375,10 +1355,10 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
       else
 	{
 	  // an unshared operator.
-	  this->Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
-	  this->Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
-	  this->Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
-	  this->Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
+	  Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
+	  Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
+	  Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
+	  Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
 
 	  if(!flow_through)
 	  {
@@ -1386,7 +1366,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 	  	this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL", "ackL", false, ofile);
       	  	this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 		*/
-		this->Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+		Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 						"reqL_unguarded", "ackL_unguarded",
 						"reqL", "ackL",
 						"reqR_unguarded", "ackR_unguarded",
@@ -1556,148 +1536,6 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
     }
 }
 
-void vcDataPath::Print_VHDL_Concatenate_Req(string req_id, vector<vcTransition*>& reqs,  ostream& ofile)
-{
-	
-  for(int rI = 0; rI < reqs.size(); rI++)
-    {
-      ofile << req_id <<  "(" << (reqs.size()-1)-rI << ") <= " 
-	    << reqs[rI]->Get_CP_To_DP_Symbol() << ";" << endl;
-    }
-}
-
-
-void vcDataPath::Print_VHDL_Disconcatenate_Ack(string ack_id, vector<vcTransition*>& acks,  ostream& ofile)
-{
-  // disconcatenate ackL
-  for(int aI = 0; aI < acks.size(); aI++)
-    {
-      if(acks[aI] != NULL)
-	ofile << acks[aI]->Get_DP_To_CP_Symbol() << " <= "
-	      << ack_id << "(" << (acks.size()-1) - aI << ");" << endl;
-    }
-}
-
-
-
-void vcDataPath::Print_VHDL_Concatenation(string target, vector<vcWire*> wires, ostream& ofile)
-{
-  ofile << target << " <= ";
-  for(int u = 0; u < wires.size(); u++)
-    {
-      if(u > 0)
-	ofile << " & ";
-      ofile << wires[u]->Get_VHDL_Signal_Id();
-    }
-  ofile << ";" << endl;
-}
-
-
-
-void vcDataPath::Print_VHDL_Disconcatenation(string source, int total_width, vector<vcWire*> wires, ostream& ofile)
-{
-  int lindex = total_width-1;
-  for(int u = 0; u < wires.size(); u++)
-    {
-      ofile << wires[u]->Get_VHDL_Signal_Id() << " <= " << source << "(";
-      ofile << lindex << " downto " << (lindex - (wires[u]->Get_Size()-1)) << ");" << endl;
-      lindex -= wires[u]->Get_Size();
-    }
-}
-
-void vcDataPath::Print_VHDL_Guard_Concatenation(int num_reqs, string guard_vector, vector<vcWire*>& guard_wires, vector<bool>& guard_complements, ostream& ofile)
-{
-	int idx;
-	for(idx = num_reqs-1; idx >= 0; idx--)
-	{
-		int lidx = (num_reqs - 1) - idx;
-		if(guard_wires[idx] != NULL)
-		{
-			if(guard_complements[idx])
-				ofile << guard_vector << "(" << lidx << ")  <=  not " << guard_wires[idx]->Get_VHDL_Signal_Id() << "(0);" << endl;
-			else
-				ofile << guard_vector << "(" << lidx << ")  <= " << guard_wires[idx]->Get_VHDL_Signal_Id() << "(0);" << endl;
-		}
-		else
-				ofile << guard_vector << "(" << lidx << ")  <=  '1';" << endl;
-
-	}
-}
-
-void vcDataPath::Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, string req_unguarded, string ack_unguarded, string req, string ack, bool delay_flag, ostream& ofile)
-{
-
-	ofile << inst_id << ": GuardInterface generic map(nreqs => " << num_reqs 
-		<< ", delay_flag => " << (delay_flag ? "true" : "false") << ") -- { " << endl
-		<< "port map(reqL => " << req_unguarded << "," << endl
-		<< "ackL => " << ack_unguarded << "," << endl
-		<< "reqR => " << req << "," << endl
-		<< "ackR => " << ack << "," << endl
-		<< "clk => clk, " << endl
-		<< "reset => reset, " << endl
-		<< "guards => " << guards << "); -- }" << endl;
-}
-
-void vcDataPath::Print_VHDL_Guard_Instance(string inst_id, int num_reqs, string buffering, string guard_flags, string guards, 
-			string sr_in, string sa_out,  string sr_out, string sa_in,
-			string cr_in, string ca_out,  string cr_out, string ca_in, ostream& ofile)
-{
-	ofile << inst_id << ": SplitGuardInterface generic map(nreqs => " << num_reqs
-			<< ", buffering => " << buffering << ", use_guards => " << guard_flags
-			<< ") -- {" << endl
-			<< "port map(clk => clk, reset => reset," << endl
-			<< "sr_in => " << sr_in << "," << endl
-			<< "sr_out => " << sr_out << "," << endl
-			<< "sa_in => " << sa_in << "," << endl
-			<< "sa_out => " << sa_out << "," << endl
-			<< "cr_in => " << cr_in << "," << endl
-			<< "cr_out => " << cr_out << "," << endl
-			<< "ca_in => " << ca_in << "," << endl
-			<< "ca_out => " << ca_out << "," << endl
-			<< "guards => " << guards << "); -- }" << endl;
-}
-
-void vcDataPath::Generate_Guard_Constants(string& buffering_const, string& guard_flag_const,
-				 vector<vcDatapathElement*>& ops, vector<vcWire*>& guard_wires)
-{
-	assert(guard_wires.size() == ops.size());
-	int num_reqs = guard_wires.size();
-	int idx;
-
-	// guard flags.
-	guard_flag_const = "constant guardFlags : BooleanArray(0 to " + IntToStr(num_reqs-1) + ") := (";
-	buffering_const  = "constant guardBuffering: IntegerArray(0 to " + IntToStr(num_reqs-1) + ")  := (";
-	for(idx = num_reqs-1; idx >= 0; idx--)
-	{
-		int lidx = (num_reqs - 1) - idx;
-		if(guard_wires[idx] != NULL)
-		{
-			guard_flag_const += IntToStr(lidx) + " => true";
-		}
-		else
-		{
-			guard_flag_const += IntToStr(lidx) + " => false";
-		}
-
-		int D,S,B;
-		vcDatapathElement* dpe = ops[idx];
-		if(dpe->Is_Part_Of_Pipelined_Loop(D,S))
-		{
-			B = dpe->Get_Delay();
-		}
-		else
-		{
-			B = 1;
-		}
-		buffering_const +=  IntToStr(lidx)  + " => " + IntToStr(B);
-		if(idx != 0)
-		{
-			guard_flag_const  += ", ";
-		}
-	}
-	guard_flag_const += ");";
-	buffering_const += ");";
-}
 
 
 void vcDataPath::Print_VHDL_Regulator_Instance(string inst_id, 
@@ -1953,7 +1791,7 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 
       string guard_flags;
       string guard_buffering;
-      this->Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guard_wires);
+      Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guard_wires);
 
       string group_name = "LoadGroup" + IntToStr(idx);
       // make a block
@@ -2003,13 +1841,13 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 	}
 
 
-      this->Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
-      this->Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
+      Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
+      Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
+      Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
+      Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
 
       // prepare guard vector.
-      this->Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
+      Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
 
       this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs, "reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
 
@@ -2018,17 +1856,17 @@ void vcDataPath::Print_VHDL_Load_Instances(ostream& ofile)
 	 false,  ofile);
 	 this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 	 */
-      this->Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+      Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 		      "reqL_unguarded", "ackL_unguarded",
 		      "reqL_unregulated", "ackL_unregulated",
 		      "reqR_unguarded", "ackR_unguarded",
 		      "reqR", "ackR", ofile);
 
       // concatenate data_in
-      this->Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
+      Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
 
       // disconcatenate data_out
-      this->Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
+      Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
 
       vcModule* m = this->Get_Parent();
 
@@ -2209,7 +2047,7 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 
       string guard_flags;
       string guard_buffering;
-      this->Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guard_wires);
+      Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guard_wires);
 
       string group_name = "StoreGroup" + IntToStr(idx);
 
@@ -2231,13 +2069,13 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
 
       ofile << "-- }\n begin -- {" << endl;
 
-      this->Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
-      this->Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
+      Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
+      Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
+      Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
+      Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
 
       // prepare guard vector..
-      this->Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
+      Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
 
 
       this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs, "reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements, ofile);
@@ -2248,15 +2086,15 @@ void vcDataPath::Print_VHDL_Store_Instances(ostream& ofile)
       this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 	*/
 
-      this->Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+      Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 		      "reqL_unguarded", "ackL_unguarded",
 		      "reqL_unregulated", "ackL_unregulated",
 		      "reqR_unguarded", "ackR_unguarded",
 		      "reqR", "ackR", ofile);
 
       // concatenate addr_in and data_in
-      this->Print_VHDL_Concatenation(string("addr_in"), addrwires,ofile);
-      this->Print_VHDL_Concatenation(string("data_in"), datawires,ofile);
+      Print_VHDL_Concatenation(string("addr_in"), addrwires,ofile);
+      Print_VHDL_Concatenation(string("data_in"), datawires,ofile);
 
       vcModule* m = this->Get_Parent();
 
@@ -2396,7 +2234,7 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 
       string guard_flags;
       string guard_buffering;
-      this->Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guards);
+      Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guards);
 
       // make a block
       ofile << "InportGroup" << idx << ": Block -- {" << endl;
@@ -2443,24 +2281,24 @@ void vcDataPath::Print_VHDL_Inport_Instances(ostream& ofile)
 	}
 
       // guard related stuff.
-      this->Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
-      this->Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
-      this->Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guards, guard_complements, ofile);
+      Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
+      Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
+      Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
+      Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
+      Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guards, guard_complements, ofile);
 
 	/*
       this->Print_VHDL_Guard_Instance("gI", num_reqs,"guard_vector", "reqL_unguarded", "ackL_unguarded", "reqL", "ackL", false, ofile);
       this->Print_VHDL_Guard_Instance("gO", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 	*/
-      this->Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+      Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 		      "reqL_unguarded", "ackL_unguarded",
 		      "reqL", "ackL",
 		      "reqR_unguarded", "ackR_unguarded",
 		      "reqR", "ackR", ofile);
 
       // disconcatenate data_out
-      this->Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
+      Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
 
       // now the operator instances 
       string group_name = p->Get_VHDL_Id() + "_read_" + IntToStr(idx);
@@ -2592,7 +2430,7 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
 
       string guard_flags;
       string guard_buffering;
-      this->Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guards);
+      Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guards);
 
       // VHDL code for this shared group
       ofile << "-- shared outport operator group (" << idx << ") : " ;
@@ -2619,23 +2457,23 @@ void vcDataPath::Print_VHDL_Outport_Instances(ostream& ofile)
       ofile << "-- }\n begin -- {" << endl;
 
       // guard related stuff.
-      this->Print_VHDL_Concatenate_Req("sample_req_unguarded",sample_req,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("sample_ack_unguarded",sample_ack,ofile);
-      this->Print_VHDL_Concatenate_Req("update_req_unguarded",update_req,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("update_ack_unguarded",update_ack,ofile);
-      this->Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guards, guard_complements, ofile);
+      Print_VHDL_Concatenate_Req("sample_req_unguarded",sample_req,ofile);
+      Print_VHDL_Disconcatenate_Ack("sample_ack_unguarded",sample_ack,ofile);
+      Print_VHDL_Concatenate_Req("update_req_unguarded",update_req,ofile);
+      Print_VHDL_Disconcatenate_Ack("update_ack_unguarded",update_ack,ofile);
+      Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guards, guard_complements, ofile);
 	/*
       this->Print_VHDL_Guard_Instance("gI0", num_reqs,"guard_vector", "sample_req_unguarded", "sample_ack_unguarded", "sample_req", "sample_ack", false, ofile);
       this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "update_req_unguarded", "update_ack_unguarded", "update_req", "update_ack", true, ofile);
 	*/
-      this->Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+      Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 		      "sample_req_unguarded", "sample_ack_unguarded",
 		      "sample_req", "sample_ack",
 		      "update_req_unguarded", "update_ack_unguarded",
 		      "update_req", "update_ack", ofile);
 
       // concatenate data_in
-      this->Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
+      Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
 
       // now the operator instances 
       string group_name = p->Get_VHDL_Id() + "_write_" + IntToStr(idx);
@@ -2800,7 +2638,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
       string guard_flags;
       string guard_buffering;
-      this->Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guard_wires);
+      Generate_Guard_Constants(guard_buffering, guard_flags, dpe_elements, guard_wires);
 
       int tag_length = called_module->Get_Caller_Tag_Length();
 
@@ -2848,13 +2686,13 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
       ofile << guard_buffering << endl;
       ofile << "-- }\n begin -- {" << endl;
 
-      this->Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
-      this->Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
-      this->Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
+      Print_VHDL_Concatenate_Req("reqL_unguarded",reqL,ofile);
+      Print_VHDL_Disconcatenate_Ack("ackL_unguarded",ackL,ofile);
+      Print_VHDL_Concatenate_Req("reqR_unguarded",reqR,ofile);
+      Print_VHDL_Disconcatenate_Ack("ackR_unguarded",ackR,ofile);
 	
       // prepare guard vector.
-      this->Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
+      Print_VHDL_Guard_Concatenation(num_reqs, "guard_vector", guard_wires, guard_complements, ofile);
 
 
       this->Print_VHDL_Regulator_Instance(group_name + "_accessRegulator", num_reqs,"reqL_unregulated", "ackL_unregulated", "reqL", "ackL", "reqR", "ackR", dpe_elements,  ofile);
@@ -2864,7 +2702,7 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 			false, ofile);
       this->Print_VHDL_Guard_Instance("gI1", num_reqs,"guard_vector", "reqR_unguarded", "ackR_unguarded", "reqR", "ackR", true, ofile);
 	*/
-      this->Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
+      Print_VHDL_Guard_Instance("gI",num_reqs,"guardBuffering","guardFlags","guard_vector",
 		      "reqL_unguarded", "ackL_unguarded",
 		      "reqL_unregulated", "ackL_unregulated",
 		      "reqR_unguarded", "ackR_unguarded",
@@ -2872,11 +2710,11 @@ void vcDataPath::Print_VHDL_Call_Instances(ostream& ofile)
 
       // concatenate data_in
       if(called_module->Get_In_Arg_Width() > 0)
-	this->Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
+	Print_VHDL_Concatenation(string("data_in"), inwires,ofile);
 
       // disconcatenate data_out
       if(called_module->Get_Out_Arg_Width() > 0)
-	this->Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
+	Print_VHDL_Disconcatenation(string("data_out"), out_width, outwires,ofile);
 
       vcModule* m = this->Get_Parent();
       // now the operator instances 
@@ -3213,3 +3051,149 @@ string vcDataPath::Print_VHDL_Call_Interface_Port_Map(string comma, ostream& ofi
     }
   return(comma);
 }
+
+/////////////////////////////////////////  miscellaneous utility functions ///////////////////////////////////////////
+
+void Generate_Guard_Constants(string& buffering_const, string& guard_flag_const,
+				 vector<vcDatapathElement*>& ops, vector<vcWire*>& guard_wires)
+{
+	assert(guard_wires.size() == ops.size());
+	int num_reqs = guard_wires.size();
+	int idx;
+
+	// guard flags.
+	guard_flag_const = "constant guardFlags : BooleanArray(0 to " + IntToStr(num_reqs-1) + ") := (";
+	buffering_const  = "constant guardBuffering: IntegerArray(0 to " + IntToStr(num_reqs-1) + ")  := (";
+	for(idx = num_reqs-1; idx >= 0; idx--)
+	{
+		int lidx = (num_reqs - 1) - idx;
+		if(guard_wires[idx] != NULL)
+		{
+			guard_flag_const += IntToStr(lidx) + " => true";
+		}
+		else
+		{
+			guard_flag_const += IntToStr(lidx) + " => false";
+		}
+
+		int D,S,B;
+		vcDatapathElement* dpe = ops[idx];
+		if(dpe->Is_Part_Of_Pipelined_Loop(D,S))
+		{
+			B = dpe->Get_Delay();
+		}
+		else
+		{
+			B = 1;
+		}
+		buffering_const +=  IntToStr(lidx)  + " => " + IntToStr(B);
+		if(idx != 0)
+		{
+			guard_flag_const  += ", ";
+		}
+	}
+	guard_flag_const += ");";
+	buffering_const += ");";
+}
+
+void Print_VHDL_Concatenate_Req(string req_id, vector<vcTransition*>& reqs,  ostream& ofile)
+{
+	
+  for(int rI = 0; rI < reqs.size(); rI++)
+    {
+      ofile << req_id <<  "(" << (reqs.size()-1)-rI << ") <= " 
+	    << reqs[rI]->Get_CP_To_DP_Symbol() << ";" << endl;
+    }
+}
+
+
+void Print_VHDL_Disconcatenate_Ack(string ack_id, vector<vcTransition*>& acks,  ostream& ofile)
+{
+  // disconcatenate ackL
+  for(int aI = 0; aI < acks.size(); aI++)
+    {
+      if(acks[aI] != NULL)
+	ofile << acks[aI]->Get_DP_To_CP_Symbol() << " <= "
+	      << ack_id << "(" << (acks.size()-1) - aI << ");" << endl;
+    }
+}
+
+
+
+void Print_VHDL_Concatenation(string target, vector<vcWire*> wires, ostream& ofile)
+{
+  ofile << target << " <= ";
+  for(int u = 0; u < wires.size(); u++)
+    {
+      if(u > 0)
+	ofile << " & ";
+      ofile << wires[u]->Get_VHDL_Signal_Id();
+    }
+  ofile << ";" << endl;
+}
+
+
+
+void Print_VHDL_Disconcatenation(string source, int total_width, vector<vcWire*> wires, ostream& ofile)
+{
+  int lindex = total_width-1;
+  for(int u = 0; u < wires.size(); u++)
+    {
+      ofile << wires[u]->Get_VHDL_Signal_Id() << " <= " << source << "(";
+      ofile << lindex << " downto " << (lindex - (wires[u]->Get_Size()-1)) << ");" << endl;
+      lindex -= wires[u]->Get_Size();
+    }
+}
+
+void Print_VHDL_Guard_Concatenation(int num_reqs, string guard_vector, vector<vcWire*>& guard_wires, vector<bool>& guard_complements, ostream& ofile)
+{
+	int idx;
+	for(idx = num_reqs-1; idx >= 0; idx--)
+	{
+		int lidx = (num_reqs - 1) - idx;
+		if(guard_wires[idx] != NULL)
+		{
+			if(guard_complements[idx])
+				ofile << guard_vector << "(" << lidx << ")  <=  not " << guard_wires[idx]->Get_VHDL_Signal_Id() << "(0);" << endl;
+			else
+				ofile << guard_vector << "(" << lidx << ")  <= " << guard_wires[idx]->Get_VHDL_Signal_Id() << "(0);" << endl;
+		}
+		else
+				ofile << guard_vector << "(" << lidx << ")  <=  '1';" << endl;
+
+	}
+}
+
+void Print_VHDL_Guard_Instance(string inst_id, int num_reqs,string guards, string req_unguarded, string ack_unguarded, string req, string ack, bool delay_flag, ostream& ofile)
+{
+
+	ofile << inst_id << ": GuardInterface generic map(nreqs => " << num_reqs 
+		<< ", delay_flag => " << (delay_flag ? "true" : "false") << ") -- { " << endl
+		<< "port map(reqL => " << req_unguarded << "," << endl
+		<< "ackL => " << ack_unguarded << "," << endl
+		<< "reqR => " << req << "," << endl
+		<< "ackR => " << ack << "," << endl
+		<< "clk => clk, " << endl
+		<< "reset => reset, " << endl
+		<< "guards => " << guards << "); -- }" << endl;
+}
+
+void Print_VHDL_Guard_Instance(string inst_id, int num_reqs, string buffering, string guard_flags, string guards, 
+			string sr_in, string sa_out,  string sr_out, string sa_in,
+			string cr_in, string ca_out,  string cr_out, string ca_in, ostream& ofile)
+{
+	ofile << inst_id << ": SplitGuardInterface generic map(nreqs => " << num_reqs
+			<< ", buffering => " << buffering << ", use_guards => " << guard_flags
+			<< ") -- {" << endl
+			<< "port map(clk => clk, reset => reset," << endl
+			<< "sr_in => " << sr_in << "," << endl
+			<< "sr_out => " << sr_out << "," << endl
+			<< "sa_in => " << sa_in << "," << endl
+			<< "sa_out => " << sa_out << "," << endl
+			<< "cr_in => " << cr_in << "," << endl
+			<< "cr_out => " << cr_out << "," << endl
+			<< "ca_in => " << ca_in << "," << endl
+			<< "ca_out => " << ca_out << "," << endl
+			<< "guards => " << guards << "); -- }" << endl;
+}
+

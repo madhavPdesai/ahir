@@ -10,8 +10,8 @@ use ahir.Utilities.all;
 -------------------------------------------------------------------------------
 -- a single level requester on the left, and nreq requesters on the right.
 --
--- reqR -> ackR can be zero delay.
--- reqL -> ackL has at least a unit delay
+-- reqR -> ackR has unit delay if pipeline_flag is true.
+-- reqL -> ackL has at least a unit delay.
 -------------------------------------------------------------------------------
 entity OutputDeMuxBase is
   generic(iwidth: integer := 4;
