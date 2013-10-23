@@ -20892,10 +20892,10 @@ begin
               end generate gCase;
 	   
  	      noG: if not gFlags(I) generate
-		 sr_out <= sr_in;
-		 sa_out <= sa_in;
-		 cr_out <= cr_in;
-		 ca_out <= ca_in;
+		 sr_out(I) <= sr_in(I);
+		 sa_out(I) <= sa_in(I);
+		 cr_out(I) <= cr_in(I);
+		 ca_out(I) <= ca_in(I);
               end generate noG;
         end generate;
 
@@ -21411,12 +21411,10 @@ entity countDownTimer is --
 end entity countDownTimer;
 
 architecture Behave of countDownTimer is
-
-	type TimerState is (idle, busy, waiting, done);
+	type TimerState is (idle, busy, done);
 	signal tstate : TimerState;
 	signal count_sig : unsigned(31 downto 0);
-	signal tag_reg : std_logic_vector(tag_length-1 downto 0);
-
+	signal tag_reg: std_logic_vector(tag_length-1 downto 0);
 begin
 
 	process(clk,reset,tstate,count_sig,start_req,fin_req,tag_in)
@@ -21442,16 +21440,14 @@ begin
 			when busy =>
 				decr_count := true;
 				if(count_sig = 0) then
-					next_state := waiting;
-				end if;
-                        when waiting =>
-				if(fin_req = '1') then
 					next_state := done;
 					latch_otag := true;
 				end if;
 			when done =>
 				fin_ack <= '1';
-				next_state := idle;
+				if(fin_req = '1') then
+					next_state := idle;
+				end if;
 			when others =>
 		end case;
 		if(clk'event  and clk = '1') then
@@ -22035,11 +22031,9 @@ end entity getClockTime;
 
 architecture Behave of getClockTime is
 
-	type TimerState is (idle, waiting, done);
+	type TimerState is (idle, done);
 	signal tstate : TimerState;
 	signal count_sig : unsigned(31 downto 0);
-	signal tag_reg : std_logic_vector(tag_length-1 downto 0);
-	signal clock_reg : std_logic_vector(31 downto 0);
 
 begin
 
@@ -22054,23 +22048,19 @@ begin
 
 		latch_var := false;
 		decr_count := false;
-		latch_otag := false;
 
 		case tstate is 
 			when idle =>
 				start_ack <= '1';
 				if(start_req = '1') then
-					next_state := waiting;
-					latch_var  := true;
-				end if;
-                        when waiting =>
-				if(fin_req = '1') then
 					next_state := done;
-					latch_otag := true;
+					latch_var  := true;
 				end if;
 			when done =>
 				fin_ack <= '1';
-				next_state := idle;
+				if(fin_req = '1') then
+					next_state := idle;
+				end if;
 		end case;
 		if(clk'event  and clk = '1') then
 			if(reset = '1') then
@@ -22082,13 +22072,8 @@ begin
 			end if;
 
 			if(latch_var) then
-				tag_reg <= tag_in;
-				clock_reg <= std_logic_vector(count_sig);	
-			end if;
-
-			if(latch_otag) then
-				clock_time <= clock_reg;
-				tag_out <= tag_reg;	
+				tag_out <= tag_in;
+				clock_time <= std_logic_vector(count_sig);	
 			end if;
 		end if;
 	end process;

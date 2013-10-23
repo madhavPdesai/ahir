@@ -46,10 +46,10 @@ begin
               end generate gCase;
 	   
  	      noG: if not gFlags(I) generate
-		 sr_out <= sr_in;
-		 sa_out <= sa_in;
-		 cr_out <= cr_in;
-		 ca_out <= ca_in;
+		 sr_out(I) <= sr_in(I);
+		 sa_out(I) <= sa_in(I);
+		 cr_out(I) <= cr_in(I);
+		 ca_out(I) <= ca_in(I);
               end generate noG;
         end generate;
 

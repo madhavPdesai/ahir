@@ -33,6 +33,8 @@ SW: $(SRC)/gcd.c $(SRC)/divider.c $(SRC)/test_gcd.c  $(SRC)/gcd.h $(SRC)/test_gc
 
 # five steps from C to vhdl simulator.
 HW: c2llvmbc llvmbc2aa  aalink aa2vc  vc2vhdl  vhdlsim
+TOAA: c2llvmbc llvmbc2aa  aalink
+TOVC: TOAA aa2vc 
 
 AA2VHDL: aa2vc vc2vhdl vhdlsim
 

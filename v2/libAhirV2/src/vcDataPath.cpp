@@ -3090,6 +3090,7 @@ void Generate_Guard_Constants(string& buffering_const, string& guard_flag_const,
 		if(idx != 0)
 		{
 			guard_flag_const  += ", ";
+			buffering_const   += ", ";
 		}
 	}
 	guard_flag_const += ");";

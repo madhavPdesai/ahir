@@ -302,7 +302,7 @@ void AaObjectReference::Write_VC_Load_Store_Data_Path(vector<AaExpression*>* add
 					<< tgt_name << " 2" << endl;
 			}
 		}
-		ofile << "$delay " << dpe_name << this->Get_Delay() << endl;
+		ofile << "$delay " << dpe_name << " " << this->Get_Delay() << endl;
 	}
 
 

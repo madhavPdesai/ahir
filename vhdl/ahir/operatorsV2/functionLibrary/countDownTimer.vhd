@@ -22,12 +22,10 @@ entity countDownTimer is --
 end entity countDownTimer;
 
 architecture Behave of countDownTimer is
-
-	type TimerState is (idle, busy, waiting, done);
+	type TimerState is (idle, busy, done);
 	signal tstate : TimerState;
 	signal count_sig : unsigned(31 downto 0);
-	signal tag_reg : std_logic_vector(tag_length-1 downto 0);
-
+	signal tag_reg: std_logic_vector(tag_length-1 downto 0);
 begin
 
 	process(clk,reset,tstate,count_sig,start_req,fin_req,tag_in)
@@ -53,16 +51,14 @@ begin
 			when busy =>
 				decr_count := true;
 				if(count_sig = 0) then
-					next_state := waiting;
-				end if;
-                        when waiting =>
-				if(fin_req = '1') then
 					next_state := done;
 					latch_otag := true;
 				end if;
 			when done =>
 				fin_ack <= '1';
-				next_state := idle;
+				if(fin_req = '1') then
+					next_state := idle;
+				end if;
 			when others =>
 		end case;
 		if(clk'event  and clk = '1') then

@@ -812,9 +812,14 @@ namespace {
 				{
 					if(isa<PHINode>(*iiter))
 					{
-						if(is_do_while && !_suppress_leading_merge)
+						if(is_do_while)
 						{
-							Write_PHI_Node_At_Do_While_Entry(static_cast<PHINode&>((*iiter)));
+							if(!_suppress_leading_merge)
+								Write_PHI_Node_At_Do_While_Entry(static_cast<PHINode&>((*iiter)));
+						}
+						else
+						{
+							Write_PHI_Node(static_cast<PHINode&>((*iiter)));
 						}
 					}
 				}
@@ -824,9 +829,9 @@ namespace {
 			}
 
 
-			if(is_do_while)
+			if(is_do_while && !_suppress_leading_merge)
 			{
-				if(!_suppress_leading_merge)
+				if(is_do_while)
 				{
 					std::cout << "$dopipeline $depth " << do_while_p_depth << " ";
 					std::cout << "$buffering " << do_while_b_depth << " " <<  std::endl;
@@ -841,18 +846,11 @@ namespace {
 				{
 					if(isa<PHINode>(*iiter))
 					{
-						if(!_suppress_leading_merge)
-							Write_PHI_Node_In_Do_While_Body(static_cast<PHINode&>((*iiter)));
-						else
-							Write_PHI_Node(static_cast<PHINode&>((*iiter)));
-
+						Write_PHI_Node_In_Do_While_Body(static_cast<PHINode&>((*iiter)));
 					}
 				}
 
-				if(!_suppress_leading_merge)
-				{
-					std::cout << "$endmerge" << std::endl;
-				}
+				std::cout << "$endmerge" << std::endl;
 			}
 		}
 
@@ -1742,7 +1740,6 @@ namespace {
 					}
 					else
 					{
-						this->visit(*curr_block);
 						idx++;
 					}
 
