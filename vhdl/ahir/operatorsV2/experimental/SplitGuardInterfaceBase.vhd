@@ -46,6 +46,7 @@ architecture Behave of SplitGuardInterfaceBase is
   type RhsState is (r_Idle, r_Wait_On_Ack_In, r_Wait_On_Queue);
   signal rhs_state: RhsState;
 
+  -- for debug purposes only
   signal s_counter, c_counter: integer;
 
   signal ca_out_d, ca_out_u: Boolean;
@@ -219,8 +220,6 @@ begin
 						cr_out <= true;
 						next_c_counter := (next_c_counter + 1);
 					else
-						cr_out <= true;
-						next_c_counter := (next_c_counter + 1);
 						ca_out_u_var := true;
 						if(cr_in) then
 							nstate := r_Wait_On_Queue;
@@ -235,6 +234,7 @@ begin
 						ca_out_u_var := true;
 						pop <= '1';
 						cr_out <= true;
+						next_c_counter := (next_c_counter + 1);
 					elsif(cr_in and (pop_ack = '1') and (qdata(0) = '0')) then
 						nstate := r_Idle;
 						ca_out_d_var := true;
