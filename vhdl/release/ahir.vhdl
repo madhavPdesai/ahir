@@ -11435,8 +11435,8 @@ use ahir.Utilities.all;
 -------------------------------------------------------------------------------
 -- a single level requester on the left, and nreq requesters on the right.
 --
--- reqR -> ackR can be zero delay.
--- reqL -> ackL has at least a unit delay
+-- reqR -> ackR has unit delay if pipeline_flag is true.
+-- reqL -> ackL has at least a unit delay.
 -------------------------------------------------------------------------------
 entity OutputDeMuxBase is
   generic(iwidth: integer := 4;
@@ -20625,7 +20625,11 @@ architecture Behave of SplitGuardInterfaceBase is
   signal rhs_state: RhsState;
 
   signal s_counter, c_counter: integer;
+
+  signal ca_out_d, ca_out_u: Boolean;
 begin
+	ca_out <= ca_out_d or ca_out_u;
+
 	qdata_in(0) <= guard_interface;
 
 	qI: QueueBase
@@ -20648,10 +20652,16 @@ begin
 	--     l_Idle        1        1          1            0      W-ack-in  1              1
 	--     l_Idle        1        1          1            1      l_Idle    1       1      1
 	--     l_Idle        1        0          _            _      W-Queue   
+	------------------------------------------------------------------------------------------
+        --   Present-state  sr_in  push_ack guard_interface sa_in    Nstate  sr_out  sa_out  push
+	------------------------------------------------------------------------------------------
 	--     W-Queue       _        0          _            _      W-Queue
 	--     W-Queue       _        1          1            1      l_Idle    1       1      1
 	--     W-Queue       _        1          1            0      W-ack-in  1              1
 	--     W-Queue       _        1          0            _      l_Idle            1      1
+	------------------------------------------------------------------------------------------
+        --   Present-state  sr_in  push_ack guard_interface sa_in    Nstate  sr_out  sa_out  push
+	------------------------------------------------------------------------------------------
 	--     W-Ack-In      _        _          _            0      W-ack-in
 	--     W-Ack-In      _        _          _            1      l_Idle            1
 	------------------------------------------------------------------------------------------
@@ -20730,92 +20740,103 @@ begin
         --   Present-state  cr_in  pop_ack      qdata        ca_in    Nstate  cr_out  ca_out  pop
 	------------------------------------------------------------------------------------------
 	--   r_Idle          0        _           _            _      r_Idle
-	--   r_Idle          1        0           _            1       ERROR.
-	--   r_Idle          1        0           _            0      W-Queue
-	--   r_Idle          1        1           1            0      W-Ack-In  1              1
-	--   r_Idle          1        1           0            _      r_Idle           1       1
-	--   r_Idle          1        1           1            1      r_Idle    1      1       1
+	--   r_Idle          1        0           _            _      W-Queue
+	--   r_Idle          1        1           1            _      W-Ack-In  1              1
+	--   r_Idle          1        1           0            _      r_Idle           1d      1
+	------------------------------------------------------------------------------------------
+        --   Present-state  cr_in  pop_ack      qdata        ca_in    Nstate  cr_out  ca_out  pop
+	------------------------------------------------------------------------------------------
 	--   W-Queue         _        0           _            _      W-Queue
-	--   W-Queue         _        1           1            0      W-Ack-In  1              1
-	--   W-Queue         _        1           1            1      r_Idle    0      1       1
-	--   W-Queue         _        1           0            _      r_Idle           1       1
+	--   W-Queue         _        1           1            _      W-Ack-In  1              1
+	--   W-Queue         0        1           0            _      r_Idle           1       1
+	--   W-Queue         1        1           0            _      W-Queue          1       1
+	------------------------------------------------------------------------------------------
+        --   Present-state  cr_in  pop_ack      qdata        ca_in    Nstate  cr_out  ca_out  pop
+	------------------------------------------------------------------------------------------
 	--   W-Ack-In        _        _           _            0      W-Ack-In  
-	--   W-Ack-In        _        _           _            1      r_Idle           1 
+	--   W-Ack-In        1        1           1            1      W-Ack-In  1       1      1
+	--   W-Ack-In        1        1           0            1      r_Idle            1,1d   1
+	--   W-Ack-In        1        0           _            1      W-Queue           1
+	--   W-Ack-In        0        _           _            1      r_Idle            1  
+	------------------------------------------------------------------------------------------
 	process(clk,cr_in,pop_ack,qdata,ca_in,rhs_state,reset)
 		variable nstate : RhsState;
-		variable ca_out_var : Boolean;
+		variable ca_out_u_var : Boolean;
+		variable ca_out_d_var : Boolean;
 		variable next_c_counter: integer;
 	begin
 		nstate := rhs_state;
 		pop <= '0';
 		cr_out <= false;
-		ca_out_var := false;
+		ca_out_u_var := false;
+		ca_out_d_var := false;
 		next_c_counter := c_counter;
 
 		case rhs_state is
 			when r_Idle =>
 				if cr_in then
 					if(pop_ack = '0') then
-						if ca_in then
-							assert false report "ERROR: invalid RHS state transition." severity error;
-							nstate := r_Wait_On_Queue;
-						else
-							nstate := r_Wait_On_Queue;			
-						end if;	
+						nstate := r_Wait_On_Queue;			
 					else
-						if((qdata(0) = '1') and (not ca_in)) then
+						pop <= '1';
+						if(qdata(0) = '1') then
 							nstate := r_Wait_On_Ack_In;
 							cr_out <= true;
 							next_c_counter := (next_c_counter + 1);
-							pop <= '1';
-						elsif((qdata(0) = '1') and ca_in) then
+						else
+							ca_out_d_var := true;
 							nstate := r_Idle;
-							cr_out <= true;
-							next_c_counter := (next_c_counter + 1);
-							ca_out_var := true;
-							pop <= '1';
-						elsif(qdata(0) = '0') then
-							nstate := r_Idle;
-							ca_out_var := true;
-							pop <= '1';
 						end if;
 					end if;
 				end if;
 			when r_Wait_On_Queue =>
 				if(pop_ack = '1') then
-					if((qdata(0) = '1') and (not ca_in)) then
+					pop <= '1';
+					if(qdata(0) = '1') then
 						nstate := r_Wait_On_Ack_In;
 						cr_out <= true;
 						next_c_counter := (next_c_counter + 1);
-						pop <= '1';
-					elsif ((qdata(0) = '1') and ca_in) then
-						nstate := r_Idle;
+					else
 						cr_out <= true;
 						next_c_counter := (next_c_counter + 1);
-						ca_out_var := true;
-						pop <= '1';
-					elsif (qdata(0) = '0') then
-						nstate := r_Idle;
-						ca_out_var := true;
-						pop <= '1';
+						ca_out_u_var := true;
+						if(cr_in) then
+							nstate := r_Wait_On_Queue;
+						else
+							nstate := r_Idle;
+						end if;
 					end if;
 				end if;
 			when r_Wait_On_Ack_In =>
 				if(ca_in) then 
-					nstate := r_Idle;
-					ca_out_var := true;
+					if(cr_in  and (pop_ack = '1') and (qdata(0) = '1')) then
+						ca_out_u_var := true;
+						pop <= '1';
+						cr_out <= true;
+					elsif(cr_in and (pop_ack = '1') and (qdata(0) = '0')) then
+						nstate := r_Idle;
+						ca_out_d_var := true;
+						ca_out_u_var := true;
+						pop <= '1';
+					elsif(cr_in and (pop_ack = '0')) then
+						nstate := r_Wait_On_Queue;
+						ca_out_u_var := true;	
+					elsif(not cr_in) then
+						nstate := r_Idle;
+						ca_out_u_var := true;
+					end if;
 				end if;
 		end case;
+
+		ca_out_u <= ca_out_u_var;
 
 		if(clk'event and clk = '1') then
 			if(reset = '1') then
 				rhs_state <= r_Idle;
-				ca_out <= false;
+				ca_out_d <= false;
 				c_counter <= 0;
 			else
-				-- single cycle delay guaranteed between
-				-- cr_in and ca_out.
-				ca_out <= ca_out_var;
+				ca_out_d <= ca_out_d_var;
 				rhs_state <= nstate;
 				c_counter <= next_c_counter;
 			end if;
