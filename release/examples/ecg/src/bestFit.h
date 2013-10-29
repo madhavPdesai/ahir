@@ -3,7 +3,7 @@
 // for each hermite basis function (for N=0,1,2,3,4,5)
 // we can keep 16 values of sigma.  Should be enough?
 #define NSAMPLES  200
-#define NSIGMAS     6
+#define NSIGMAS     2
 #define MEM_SIZE  (NSAMPLES*NSIGMAS)
 
 
@@ -27,3 +27,5 @@ double dotP4[NSIGMAS];
 double dotP5[NSIGMAS];
 
 double inputData[NSAMPLES];
+
+void bestFit();

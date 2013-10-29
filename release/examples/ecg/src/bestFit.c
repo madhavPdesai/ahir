@@ -5,7 +5,12 @@
 #include <stdio.h>
 #include "bestFit.h"
 
-	
+#ifdef SW
+void __loop_pipelining_on__(int A,int B,int C) {}
+#else
+void __loop_pipelining_on__(int,int,int); 
+#endif	
+
 double best_mse;
 int best_sigma_index ;
 
@@ -16,6 +21,7 @@ void initHF()
 
 	for(idx = 0; idx < NSIGMAS; idx++)
 	{
+		__loop_pipelining_on__(8,1,0);
 		dotP0[idx]  = 0;
 		dotP1[idx]  = 0;
 		dotP2[idx]  = 0;
@@ -26,28 +32,38 @@ void initHF()
 
 	for(idx = 0; idx < M; idx++)
 	{
+		__loop_pipelining_on__(8,1,0);
 		hF0[idx] = read_float64("hermite_function_pipe");
 	}
 	for(idx = 0; idx < M; idx++)
 	{
+		__loop_pipelining_on__(8,1,0);
 		hF1[idx] = read_float64("hermite_function_pipe");
 	}
 	for(idx = 0; idx < M; idx++)
 	{
+		__loop_pipelining_on__(8,1,0);
 		hF2[idx] = read_float64("hermite_function_pipe");
 	}
 	for(idx = 0; idx < M; idx++)
 	{
+		__loop_pipelining_on__(8,1,0);
 		hF3[idx] = read_float64("hermite_function_pipe");
 	}
 	for(idx = 0; idx < M; idx++)
 	{
+		__loop_pipelining_on__(8,1,0);
 		hF4[idx] = read_float64("hermite_function_pipe");
 	}
 	for(idx = 0; idx < M; idx++)
 	{
+		__loop_pipelining_on__(8,1,0);
 		hF5[idx] = read_float64("hermite_function_pipe");
 	}
+
+#ifdef SW
+	fprintf(stderr,"initHF completed.\n");
+#endif
 }
 
 void initFit()
@@ -56,6 +72,7 @@ void initFit()
 
 	for(idx = 0; idx < NSIGMAS; idx++)
 	{
+		__loop_pipelining_on__(8,1,0);
 		dotP0[idx]  = 0;
 		dotP1[idx]  = 0;
 		dotP2[idx]  = 0;
@@ -72,24 +89,26 @@ void initFit()
 // the inner product computation.
 // 
 // 
-#define  __InnerProduct__(I0, x) {\
-	int SI;\
-	for(SI = 0; SI < NSIGMAS; SI++)\
-	{\
-		int I = I0 + (SI*NSIGMAS);\
-		double p0 = (x*hF0[I]);\
-		dotP0[SI] += p0;\
-		double p1 = (x*hF1[I]);\
-		dotP1[SI] += p1;\
-		double p2 = (x*hF2[I]);\
-		dotP2[SI] += p2;\
-		double p3 = (x*hF3[I]);\
-		dotP3[SI] += p3;\
-		double p4 = (x*hF4[I]);\
-		dotP4[SI] += p4;\
-		double p5 = (x*hF5[I]);\
-		dotP5[SI] += p5;\
-	}}
+inline void  __InnerProduct__(int I0, double x) {
+	int SI;
+	for(SI = 0; SI < NSIGMAS; SI++)
+	{
+		__loop_pipelining_on__(8,1,0);
+		int I = I0 + (SI*NSAMPLES);
+		double p0 = (x*hF0[I]);
+		dotP0[SI] += p0;
+		double p1 = (x*hF1[I]);
+		dotP1[SI] += p1;
+		double p2 = (x*hF2[I]);
+		dotP2[SI] += p2;
+		double p3 = (x*hF3[I]);
+		dotP3[SI] += p3;
+		double p4 = (x*hF4[I]);
+		dotP4[SI] += p4;
+		double p5 = (x*hF5[I]);
+		dotP5[SI] += p5;
+	}
+}
 
 
 // receive a sample frame and compute the
@@ -102,6 +121,7 @@ void RxAndComputeInnerProducts()
 	{
 		double x = read_float64("sample_data_pipe");
 		inputData[I] = x;
+
 		// note: the sample interval will about 
 		// 1ms.  Assuming a clock of 100MHz, this
 		// means that the inner-product loop below
@@ -109,6 +129,17 @@ void RxAndComputeInnerProducts()
 		// to be critical.
 		__InnerProduct__(I,x);
 	}
+#ifdef SW
+	for(I = 0; I < NSIGMAS; I++)
+	{
+		fprintf(stderr,"Dot-product for sigma-index %d, HF-0, is %f.\n", I, dotP0[I]);
+		fprintf(stderr,"Dot-product for sigma-index %d, HF-1, is %f.\n", I, dotP1[I]);
+		fprintf(stderr,"Dot-product for sigma-index %d, HF-2, is %f.\n", I, dotP2[I]);
+		fprintf(stderr,"Dot-product for sigma-index %d, HF-3, is %f.\n", I, dotP3[I]);
+		fprintf(stderr,"Dot-product for sigma-index %d, HF-4, is %f.\n", I, dotP4[I]);
+		fprintf(stderr,"Dot-product for sigma-index %d, HF-5, is %f.\n", I, dotP5[I]);
+	}
+#endif
 }
 
 
@@ -147,6 +178,7 @@ void computeMSE()
 
 		for(I = 0; I < NSAMPLES; I++)
 		{
+			__loop_pipelining_on__(8,1,0);
 			double p0 = (s0*hF0[I+Offset]);
 			double p1 = (s1*hF1[I+Offset]);
 			double p2 = (s2*hF2[I+Offset]);
@@ -156,8 +188,14 @@ void computeMSE()
 
 			double diff = (inputData[I] - 
 					((p0+p1) + (p2+p3) + (p4 + p5)));
+
+			//fprintf(stderr,"inputData[%d] = %f, Diff (%d,%d) = %f.\n",I, inputData[I], SI,I, diff);
 			err += (diff * diff);
 		}
+
+#ifdef SW
+		fprintf(stdout," Error for %d-th sigma is %f.\n", SI, err);
+#endif
 
 		if(err <  best_mse)
 		{
