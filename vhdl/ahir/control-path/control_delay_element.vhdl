@@ -28,7 +28,7 @@ begin  -- default_arch
   NonZeroDelay: if delay_value > 0 generate
 
    ShiftReg: block
-	signal sr_state: BooleanArray(1 to delay_value);
+	signal sr_state: BooleanArray(0 to delay_value);
    begin
  	process(clk)
 	begin
@@ -36,8 +36,8 @@ begin  -- default_arch
 			if(reset = '1') then
 				sr_state <= (others => false);
 			else
-				sr_state(1) <= req;
-				for I in 2 to delay_value loop
+				sr_state(0) <= req;
+				for I in 1 to delay_value loop
 					sr_state(I) <= sr_state(I-1);
 				end loop;
 			end if;
