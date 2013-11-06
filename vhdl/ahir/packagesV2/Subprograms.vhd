@@ -21,6 +21,11 @@ package Subprograms is
   function To_BooleanArray( inp: std_logic_vector) return BooleanArray;
   function To_Std_Logic ( x : boolean)   return std_logic;
 
+  function To_Bit(x: std_logic) return bit;
+  function To_Bit_Vector(x: std_logic_vector) return bit_vector;
+  function To_Std_Logic(x: bit) return std_logic;
+  function To_Std_Logic_Vector(x: bit_vector) return std_logic_vector;
+
   function To_ApInt ( inp : boolean) return ApInt;
   function To_ApInt ( inp : signed) return ApInt;
   function To_Apint ( inp : unsigned) return ApInt;
@@ -211,6 +216,61 @@ package body Subprograms is
       return('0');
     end if;
   end To_Std_Logic;
+
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function To_Bit(x: std_logic) return bit is
+	variable ret_var : bit;
+  begin
+	if(x = '1') then 
+		ret_var := '1';
+	else
+		ret_var := '0';
+	end if;
+	return(ret_var);
+  end To_Bit;
+
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function To_Bit_Vector(x: std_logic_vector) return bit_vector is
+    alias lx : std_logic_vector(1 to x'length) is x;
+    variable ret_var : bit_vector(1 to x'length);
+  begin
+    for I in 1 to x'length loop
+      ret_var(I) := To_Bit(lx(I));
+    end loop;  -- I
+    return(ret_var);
+  end To_Bit_Vector;
+
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function To_Std_Logic(x: bit) return std_logic
+	variable ret_var : std_logic;
+  begin
+	if(x = '1') then 
+		ret_var := '1';
+	else
+		ret_var := '0';
+	end if;
+	return(ret_var);
+  end To_Std_Logic;
+
+  -----------------------------------------------------------------------------
+
+  -----------------------------------------------------------------------------
+  function To_Std_Logic_Vector(x: bit_vector) return std_logic_vector is
+    alias lx : bit_vector(1 to x'length) is x;
+    variable ret_var : std_logic_vector(1 to x'length);
+  begin
+    for I in 1 to x'length loop
+      ret_var(I) := To_Std_Logic(lx(I));
+    end loop;  -- I
+    return(ret_var);
+  end To_Std_Logic_Vector;
+
 
   -----------------------------------------------------------------------------
 

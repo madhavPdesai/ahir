@@ -1,1 +1,5 @@
 run cat.sh to generate ahir.vhdl and ieee_proposed.vhdl
+
+run catForImage.sh to generate ahirForImage.vhdl, which
+uses an IMAGE MIRAGE memory model for use with
+the IMAGE simulation accelerator. 
