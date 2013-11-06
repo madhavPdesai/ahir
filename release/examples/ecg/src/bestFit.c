@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <Pipes.h>
 #include <stdio.h>
+#include <timer.h>
 #include "bestFit.h"
 
 #ifdef SW
@@ -128,6 +129,8 @@ void RxAndComputeInnerProducts()
 		// should finish in 100K cycles.  not likely
 		// to be critical.
 		__InnerProduct__(I,x);
+
+		write_uint32("logger_pipe", I);
 	}
 #ifdef SW
 	for(I = 0; I < NSIGMAS; I++)
@@ -197,6 +200,8 @@ void computeMSE()
 		fprintf(stdout," Error for %d-th sigma is %f.\n", SI, err);
 #endif
 
+		write_uint32("logger_pipe", SI);
+
 		if(err <  best_mse)
 		{
 			best_mse = err;
@@ -212,6 +217,7 @@ void bestFit()
 	while(1)
 	{
 	
+		uint32_t start_time = getClockTime();
 		// read in the samples one by one.
 		// for each sample, simultaneously calculate
 		// the incremental inner product across all the hF polynomials.
@@ -231,6 +237,11 @@ void bestFit()
 		write_float64("fit_coefficient_pipe", dotP4[SI]);
 		write_float64("fit_coefficient_pipe", dotP5[SI]);
 
+		uint32_t end_time = getClockTime();
+
+		write_uint32("elapsed_time_pipe", (end_time - start_time));
+
 		initFit();
+
 	}
 }

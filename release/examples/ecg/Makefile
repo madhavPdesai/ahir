@@ -31,11 +31,12 @@ TOPMODULES=-T bestFit
 
 # compile with SW defined.
 # note the use of IOLIB in building the testbench.
-SW: $(SRC)/hermite.c $(SRC)/bestFit.c $(SRC)/testBestFit.c $(SRC)/hermite.h $(SRC)/bestFit.h
+SW: $(SRC)/hermite.c $(SRC)/bestFit.c $(SRC)/testBestFit.c $(SRC)/hermite.h $(SRC)/bestFit.h  $(FUNCTIONLIB)/src/timer.c 
 	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include -I$(SRC) $(SRC)/hermite.c
 	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include -I$(SRC) $(SRC)/bestFit.c
+	gcc -g -c -DSW $(PROGDEFS) -I$(FUNCTIONLIB)/include -I$(SRC) $(FUNCTIONLIB)/src/timer.c
 	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(PTHREADUTILS_INCLUDE) -I$(SRC) $(SRC)/testBestFit.c
-	gcc  -o testbench_sw hermite.o bestFit.o testBestFit.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread -lm
+	gcc  -o testbench_sw hermite.o bestFit.o timer.o testBestFit.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread -lm -lrt
 
 # five steps from C to vhdl simulator.
 HW: c2llvmbc llvmbc2aa  aalink aa2vc  vc2vhdl  vhdlsim
@@ -53,8 +54,8 @@ llvmbc2aa:  bestFit.opt.o
 	llvm2aa $(LLVM2AAOPTS)  bestFit.opt.o | vcFormat >  bestFit.aa
 
 # Aa to vC
-aalink:  bestFit.aa
-	AaLinkExtMem bestFit.aa | vcFormat > prog.linked.aa
+aalink:  bestFit.aa $(FUNCTIONLIB)/Aa/timer.aa
+	AaLinkExtMem bestFit.aa $(FUNCTIONLIB)/Aa/timer.aa | vcFormat > prog.linked.aa
 	AaOpt -B prog.linked.aa | vcFormat > prog.linked.opt.aa
 
 aa2vc: prog.linked.opt.aa
@@ -62,7 +63,7 @@ aa2vc: prog.linked.opt.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -O -S 4 -I 2 -v -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
+	vc2vhdl -O -S 4 -I 2 -v -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/timer.list
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl

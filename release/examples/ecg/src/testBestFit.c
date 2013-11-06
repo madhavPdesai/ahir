@@ -31,6 +31,15 @@ void Exit(int sig)
 	exit(0);
 }
 
+void Logger()
+{
+	while(1)
+	{
+		uint32_t log_val = read_uint32("logger_pipe");
+		fprintf(stderr,"Logged-value:  %d.\n", log_val);
+	}
+}
+
 
 void calculateReferenceFit()
 {
@@ -168,6 +177,7 @@ void Sender()
 #ifdef SW
 DEFINE_THREAD(bestFit)
 #endif
+DEFINE_THREAD(Logger)
 
 int main(int argc, char* argv[])
 {
@@ -175,6 +185,9 @@ int main(int argc, char* argv[])
 	int I;
 	signal(SIGINT,  Exit);
 	signal(SIGTERM, Exit);
+
+	PTHREAD_DECL(Logger);
+	PTHREAD_CREATE(Logger);
 
 #ifdef SW
 	init_pipe_handler();
@@ -204,6 +217,9 @@ int main(int argc, char* argv[])
 	double p4 = read_float64("fit_coefficient_pipe");
 	double p5 = read_float64("fit_coefficient_pipe");
 	fprintf(stdout, "Fit coefficients = %le, %le, %le, %le, %le, %le.\n", p0,p1,p2,p3,p4,p5);
+
+	uint32_t elapsed_time = read_uint32("elapsed_time_pipe");
+	fprintf(stdout,"Elapsed time = %d.\n", elapsed_time);
 
 #ifdef SW
 	PTHREAD_CANCEL(bestFit);
