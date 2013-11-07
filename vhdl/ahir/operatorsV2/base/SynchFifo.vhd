@@ -9,7 +9,7 @@ use ahir.Subprograms.all;
 use ahir.BaseComponents.all;
 
 entity SynchFifo is
-  generic(queue_depth: integer := 3; data_width: integer := 72);
+  generic(name: string := "anon"; queue_depth: integer := 3; data_width: integer := 72);
   port(clk: in std_logic;
        reset: in std_logic;
        data_in: in std_logic_vector(data_width-1 downto 0);
@@ -46,6 +46,7 @@ architecture behave of SynchFifo is
 begin  -- SimModel
 
   assert(queue_depth > 2) report "Synch FIFO depth must be greater than 2" severity failure;
+  assert (queue_size < queue_depth) report "Queue " & name & " is full." severity note;
 
   
   -- single process

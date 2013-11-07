@@ -58,7 +58,8 @@ begin  -- default_arch
 
   Shallow: if (depth < 3) and (not lifo_mode) generate
 
-    queue : QueueBase generic map (
+    queue : QueueBase generic map (	
+      name => name & ":Queue:",	
       queue_depth => depth,
       data_width       => data_width)
       port map (
@@ -76,6 +77,7 @@ begin  -- default_arch
   DeepFifo: if (depth > 2) and (not lifo_mode) generate
     
     queue : SynchFifo generic map (
+      name => name & ":Queue:", 
       queue_depth => depth,
       data_width       => data_width)
       port map (
@@ -93,6 +95,7 @@ begin  -- default_arch
 
   Lifo: if lifo_mode generate
     stack : SynchLifo generic map (
+      name => name & ":LIFO:",
       queue_depth => depth,
       data_width       => data_width)
       port map (

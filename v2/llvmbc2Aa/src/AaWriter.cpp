@@ -816,6 +816,8 @@ namespace {
 						{
 							if(!_suppress_leading_merge)
 								Write_PHI_Node_At_Do_While_Entry(static_cast<PHINode&>((*iiter)));
+							else
+								Write_PHI_Node(static_cast<PHINode&>((*iiter)));
 						}
 						else
 						{

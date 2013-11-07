@@ -24,11 +24,26 @@ begin  -- default_arch
     ack <= req;
   end generate ZeroDelay;
 
+  UnitDelay: if delay_value = 1 generate
 
-  NonZeroDelay: if delay_value > 0 generate
+	process(clk)
+        begin
+		if(clk'event and clk = '1') then 
+			if(reset = '1') then
+				ack <= false;
+			else	
+				ack <= req;
+			end if;
+		end if;
+	end process;
+
+  end generate UnitDelay;
+
+
+  DelayGTOne: if delay_value > 1 generate
 
    ShiftReg: block
-	signal sr_state: BooleanArray(0 to delay_value);
+	signal sr_state: BooleanArray(0 to delay_value-1);
    begin
  	process(clk)
 	begin
@@ -37,16 +52,14 @@ begin  -- default_arch
 				sr_state <= (others => false);
 			else
 				sr_state(0) <= req;
-				for I in 1 to delay_value loop
+				for I in 1 to delay_value-1 loop
 					sr_state(I) <= sr_state(I-1);
 				end loop;
 			end if;
 		end if;
 	end process;
-
-	ack <= sr_state(delay_value);
+	ack <= sr_state(delay_value-1);
    end block;
-
-  end generate NonZeroDelay;
+  end generate DelayGTOne;
 
 end default_arch;
