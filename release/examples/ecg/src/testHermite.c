@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <math.h>
 #include <hermite.h>
+#include <bestFit.h>
 
 
 // generate orthogonal basis functions
@@ -25,14 +27,18 @@ int main(int argc, char* argv[])
 		fprintf(stderr," sigma must be > 0.\n");
 		sigma = 1.0;
 	}
+
+	double hf[NSAMPLES];	
+	normalizedHermiteBasisFunction(N, sigma, hf);	
 	int idx;
-	for(idx = 0; idx < 200; idx++)
+	double norm_squared = 0.0;
+	for(idx = 0; idx < NSAMPLES; idx++)
 	{
-		double X = -0.1 + (idx * 0.001);
-		double oF = hermiteBasisFunction(N,sigma,X);	
-		double pF = hermitePolynomial(N,X);	
-		fprintf(stdout, "%d %f %le %le %le \n", N, sigma, X, oF, pF);
+		double oF = hf[idx];
+		fprintf(stdout, "%le \n", oF);
+		norm_squared += (oF*oF);
 	}
+	fprintf(stderr,"Norm is %f.\n", sqrt(norm_squared));
 
 	return(0);
 }

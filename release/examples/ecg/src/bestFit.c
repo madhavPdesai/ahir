@@ -63,7 +63,7 @@ void initHF()
 	}
 
 #ifdef SW
-	fprintf(stderr,"initHF completed.\n");
+	fprintf(stderr,"HW: initHF completed.\n");
 #endif
 }
 
@@ -130,18 +130,20 @@ void RxAndComputeInnerProducts()
 		// to be critical.
 		__InnerProduct__(I,x);
 
-		write_uint32("logger_pipe", I);
+		//write_uint32("logger_pipe", I);
 	}
 #ifdef SW
+#ifdef DEBUG
 	for(I = 0; I < NSIGMAS; I++)
 	{
-		fprintf(stderr,"Dot-product for sigma-index %d, HF-0, is %f.\n", I, dotP0[I]);
-		fprintf(stderr,"Dot-product for sigma-index %d, HF-1, is %f.\n", I, dotP1[I]);
-		fprintf(stderr,"Dot-product for sigma-index %d, HF-2, is %f.\n", I, dotP2[I]);
-		fprintf(stderr,"Dot-product for sigma-index %d, HF-3, is %f.\n", I, dotP3[I]);
-		fprintf(stderr,"Dot-product for sigma-index %d, HF-4, is %f.\n", I, dotP4[I]);
-		fprintf(stderr,"Dot-product for sigma-index %d, HF-5, is %f.\n", I, dotP5[I]);
+		fprintf(stderr,"HW: Dot-product for sigma-index %d, HF-0, is %f.\n", I, dotP0[I]);
+		fprintf(stderr,"HW: Dot-product for sigma-index %d, HF-1, is %f.\n", I, dotP1[I]);
+		fprintf(stderr,"HW: Dot-product for sigma-index %d, HF-2, is %f.\n", I, dotP2[I]);
+		fprintf(stderr,"HW: Dot-product for sigma-index %d, HF-3, is %f.\n", I, dotP3[I]);
+		fprintf(stderr,"HW: Dot-product for sigma-index %d, HF-4, is %f.\n", I, dotP4[I]);
+		fprintf(stderr,"HW: Dot-product for sigma-index %d, HF-5, is %f.\n", I, dotP5[I]);
 	}
+#endif
 #endif
 }
 
@@ -197,10 +199,10 @@ void computeMSE()
 		}
 
 #ifdef SW
-		fprintf(stdout," Error for %d-th sigma is %f.\n", SI, err);
+		fprintf(stdout,"HW: Error for %d-th sigma is %f.\n", SI, err);
 #endif
 
-		write_uint32("logger_pipe", SI);
+		//write_uint32("logger_pipe", SI);
 
 		if(err <  best_mse)
 		{

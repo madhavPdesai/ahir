@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <hermite.h>
+#include <bestFit.h>
 
 
 // N = order
@@ -35,8 +36,7 @@ double nFactor(int N)
 
 double basisScaleFactor(int N, double sigma, double x)
 {
-	double ret_val = 1.0;
-	double exp_factor  = pow(M_E, -(pow(x,2.0)/ (2.0 * pow (sigma, 2.0))));
+	double exp_factor  = pow(M_E, -(pow(x/sigma,2.0)/ 2.0));
 	double denom_1 = 1.0/sqrt(sigma * sqrt(M_PI));
 	double denom_2 = nFactor(N);
 	return(exp_factor * denom_1 * denom_2);
@@ -44,8 +44,26 @@ double basisScaleFactor(int N, double sigma, double x)
 
 double hermiteBasisFunction(int N, double sigma, double x)
 {
-	double ret_val = basisScaleFactor(N,sigma,x) *  hermitePolynomial(N,x);
+	double ret_val = basisScaleFactor(N,sigma,x) *  hermitePolynomial(N,x/sigma);
 	return(ret_val);
 }
 
+void normalizedHermiteBasisFunction(int N, double sigma, double* nhf)
+{
+	double norm_sq = 0.0;
+	int idx;
+	for(idx	= 0; idx < NSAMPLES; idx++)
+	{
+		double X = ((idx - (NSAMPLES/2)) * 0.001);
+		double oF = hermiteBasisFunction(N,sigma,X);
+		nhf[idx] = oF;
+		norm_sq += oF * oF;
+	}
+	
+	double norm = sqrt(norm_sq);
+	for(idx	= 0; idx < NSAMPLES; idx++)
+	{
+		nhf[idx] /= norm;
+	}
+}
 

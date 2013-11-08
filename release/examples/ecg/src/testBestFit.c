@@ -12,8 +12,8 @@
 #include "vhdlCStubs.h"
 #endif
 
-#define MIN_SIGMA  0.025
-#define MAX_SIGMA  0.05
+#define MIN_SIGMA  0.003
+#define MAX_SIGMA  0.004
 
 double _hF0[MEM_SIZE];
 double _hF1[MEM_SIZE];
@@ -56,7 +56,7 @@ void calculateReferenceFit()
 		double dp3 = 0;
 		double dp4 = 0;
 		double dp5 = 0;
-		int offset = SI*NSIGMAS;	
+		int offset = SI*NSAMPLES;	
 		for(idx = 0; idx < NSAMPLES; idx++)
 		{
 			int J = idx + offset;
@@ -67,6 +67,13 @@ void calculateReferenceFit()
 			dp4 += samples[idx] * _hF4[J];
 			dp5 += samples[idx] * _hF5[J];
 		}
+
+		//fprintf(stderr,"SW: Dot-product for sigma-index %d, HF-0, is %f.\n", SI, dp0);
+		//fprintf(stderr,"SW: Dot-product for sigma-index %d, HF-1, is %f.\n", SI, dp1);
+		//fprintf(stderr,"SW: Dot-product for sigma-index %d, HF-2, is %f.\n", SI, dp2);
+		//fprintf(stderr,"SW: Dot-product for sigma-index %d, HF-3, is %f.\n", SI, dp3);
+		//fprintf(stderr,"SW: Dot-product for sigma-index %d, HF-4, is %f.\n", SI, dp4);
+		//fprintf(stderr,"SW: Dot-product for sigma-index %d, HF-5, is %f.\n", SI, dp5);
 
 		// Calculate error for this sigma.
 		double err = 0.0;
@@ -92,84 +99,54 @@ void calculateReferenceFit()
 			best_index = SI;
 		}
 	}
-	fprintf(stdout,"Reference best-fit: sigma-index = %d, MMSE = %f.\n", best_index, mmse);
+	fprintf(stdout,"SW: Reference best-fit: sigma-index = %d, MMSE = %f.\n", best_index, mmse);
 }
+
+#define __HF__(N,SI,hhf) {\
+		int idx;\
+		double hF[NSAMPLES];\
+		double sigma = MIN_SIGMA + SI*((MAX_SIGMA-MIN_SIGMA)/NSIGMAS);\
+		normalizedHermiteBasisFunction(N,sigma,hF);\
+		for(idx	= 0; idx < NSAMPLES; idx++)\
+		{\
+			double oF = hF[idx];\
+			write_float64("hermite_function_pipe",oF);\
+			hhf[idx + (SI*NSAMPLES)] = oF;\
+		}}
+	
 
 void Sender()
 {
 	double sigma;
 	int SI, idx;
-
 	for(SI = 0; SI < NSIGMAS; SI++)
 	{
-		sigma = MIN_SIGMA + SI*((MAX_SIGMA-MIN_SIGMA)/NSIGMAS);
-		for(idx	= 0; idx < NSAMPLES; idx++)
-		{
-			double X = -0.1 + (idx * 0.001);
-			double oF = hermiteBasisFunction(0,sigma,X);
-			write_float64("hermite_function_pipe",oF);
-			_hF0[idx + (SI*NSAMPLES)] = oF;
-		}
+		__HF__(0,SI,_hF0);
 	}
 	fprintf(stderr," Sent hF0.\n");
 	for(SI = 0; SI < NSIGMAS; SI++)
 	{
-		sigma = MIN_SIGMA + SI*((MAX_SIGMA-MIN_SIGMA)/NSIGMAS);
-		for(idx	= 0; idx < NSAMPLES; idx++)
-		{
-			double X = -0.1 + (idx * 0.001);
-			double oF = hermiteBasisFunction(1,sigma,X);
-			write_float64("hermite_function_pipe",oF);
-			_hF1[idx + (SI*NSAMPLES)] = oF;
-		}
+		__HF__(1,SI,_hF1);
 	}
 	fprintf(stderr," Sent hF1.\n");
 	for(SI = 0; SI < NSIGMAS; SI++)
 	{
-		sigma = MIN_SIGMA + SI*((MAX_SIGMA-MIN_SIGMA)/NSIGMAS);
-		for(idx	= 0; idx < NSAMPLES; idx++)
-		{
-			double X = -0.1 + (idx * 0.001);
-			double oF = hermiteBasisFunction(2,sigma,X);
-			write_float64("hermite_function_pipe",oF);
-			_hF2[idx + (SI*NSAMPLES)] = oF;
-		}
+		__HF__(2,SI,_hF2);
 	}
 	fprintf(stderr," Sent hF2.\n");
 	for(SI = 0; SI < NSIGMAS; SI++)
 	{
-		sigma = MIN_SIGMA + SI*((MAX_SIGMA-MIN_SIGMA)/NSIGMAS);
-		for(idx	= 0; idx < NSAMPLES; idx++)
-		{
-			double X = -0.1 + (idx * 0.001);
-			double oF = hermiteBasisFunction(3,sigma,X);
-			write_float64("hermite_function_pipe",oF);
-			_hF3[idx + (SI*NSAMPLES)] = oF;
-		}
+		__HF__(3,SI,_hF3);
 	}
 	fprintf(stderr," Sent hF3.\n");
 	for(SI = 0; SI < NSIGMAS; SI++)
 	{
-		sigma = MIN_SIGMA + SI*((MAX_SIGMA-MIN_SIGMA)/NSIGMAS);
-		for(idx	= 0; idx < NSAMPLES; idx++)
-		{
-			double X = -0.1 + (idx * 0.001);
-			double oF = hermiteBasisFunction(4,sigma,X);
-			write_float64("hermite_function_pipe",oF);
-			_hF4[idx + (SI*NSAMPLES)] = oF;
-		}
+		__HF__(4,SI,_hF4);
 	}
 	fprintf(stderr," Sent hF4.\n");
 	for(SI = 0; SI < NSIGMAS; SI++)
 	{
-		sigma = MIN_SIGMA + SI*((MAX_SIGMA-MIN_SIGMA)/NSIGMAS);
-		for(idx	= 0; idx < NSAMPLES; idx++)
-		{
-			double X = -0.1 + (idx * 0.001);
-			double oF = hermiteBasisFunction(5,sigma,X);
-			write_float64("hermite_function_pipe",oF);
-			_hF5[idx + (SI*NSAMPLES)] = oF;
-		}
+		__HF__(5,SI,_hF5);
 	}
 	fprintf(stderr," Sent hF5.\n");
 }
@@ -183,6 +160,20 @@ int main(int argc, char* argv[])
 {
 	float result;
 	int I;
+
+	if(argc < 2)
+	{
+		fprintf(stderr,"Supply data set file.\n");
+		return(1);
+	}
+
+	FILE* fp = fopen(argv[1],"r");
+	if(fp == NULL)
+	{
+		fprintf(stderr,"Could not open data set file %s.\n", argv[1]);
+		return(1);
+	}
+
 	signal(SIGINT,  Exit);
 	signal(SIGTERM, Exit);
 
@@ -199,11 +190,13 @@ int main(int argc, char* argv[])
 	srand48(819);
 	for(I = 0; I < NSAMPLES; I++)
 	{
-		double X = drand48();
+		double X;
+		fscanf(fp, "%le", &X);
 		write_float64("sample_data_pipe", X);
 		samples[I] = X;
 	}
 	fprintf(stderr," Sent samples.\n");
+	fclose(fp);
 
 	calculateReferenceFit();
 

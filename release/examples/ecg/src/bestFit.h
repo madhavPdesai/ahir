@@ -2,8 +2,8 @@
 // Lets assume it is padded to 256.  Thus, 
 // for each hermite basis function (for N=0,1,2,3,4,5)
 // we can keep 16 values of sigma.  Should be enough?
-#define NSAMPLES  200
-#define NSIGMAS     2
+#define NSAMPLES  144
+#define NSIGMAS     10
 #define MEM_SIZE  (NSAMPLES*NSIGMAS)
 
 
