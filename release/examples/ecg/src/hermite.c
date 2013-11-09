@@ -54,7 +54,7 @@ void normalizedHermiteBasisFunction(int N, double sigma, double* nhf)
 	int idx;
 	for(idx	= 0; idx < NSAMPLES; idx++)
 	{
-		double X = ((idx - (NSAMPLES/2)) * 0.001);
+		double X = ((idx - (NSAMPLES/2)) * SAMPLING_INTERVAL);
 		double oF = hermiteBasisFunction(N,sigma,X);
 		nhf[idx] = oF;
 		norm_sq += oF * oF;

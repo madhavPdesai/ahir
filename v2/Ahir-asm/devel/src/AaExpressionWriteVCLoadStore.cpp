@@ -1116,7 +1116,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 			vector<string> outputs;
 			outputs.push_back(this->Get_VC_Non_Constant_Index_Sum_Name());
 
-			Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_non_constant_index_sum",
+			Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_non_const_index_sum_rename",
 					inputs,
 					outputs,
 					this->Get_VC_Guard_String(),
@@ -1349,7 +1349,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Links(string hier_id,
 		// the final index..
 		reqs.push_back(nhid + "/final_index_req");
 		acks.push_back(nhid + "/final_index_ack");
-		inst_name = this->Get_VC_Name() + "_offset_inst";
+		inst_name = this->Get_VC_Name() + "_non_const_index_sum_rename";
 		Write_VC_Link(inst_name,reqs,acks,ofile);
 		reqs.clear();
 		acks.clear();

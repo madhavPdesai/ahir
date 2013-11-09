@@ -5,6 +5,7 @@
 #define NSAMPLES  144
 #define NSIGMAS     10
 #define MEM_SIZE  (NSAMPLES*NSIGMAS)
+#define SAMPLING_INTERVAL 0.001
 
 
 // globals: the stored hermite Functions.

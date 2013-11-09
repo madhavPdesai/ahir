@@ -2672,10 +2672,10 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
  			string sample_regn = prefix + "_Sample";
  			string update_regn = prefix + "_Update";
 			ofile << ";;[" <<  sample_regn << "] { " << endl;
-			ofile << " req ack " << endl;
+			ofile << " $T [req] $T [ack] " << endl;
 			ofile << "}" << endl;
 			ofile << ";;[" <<  update_regn << "] { " << endl;
-			ofile << " req ack " << endl;
+			ofile << " $T [req] $T [ack] " << endl;
 			ofile << "}" << endl;
 
 			__F(index_sum_calculated, sample_regn);
@@ -2922,10 +2922,10 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 
 
 		// the final index..
-		string final_offset_regn = this->Get_VC_Name() + "_final_offset";
-		reqs.push_back(hier_id + "/" + final_offset_regn + "/final_index_req");
-		acks.push_back(hier_id + "/" + final_offset_regn + "/final_index_ack");
-		inst_name = this->Get_VC_Name() + "_offset_inst";
+		string non_constant_index_sum_regn = this->Get_VC_Name() + "_non_constant_index_sum_regn";
+		reqs.push_back(hier_id + "/" + non_constant_index_sum_regn + "/req");
+		acks.push_back(hier_id + "/" + non_constant_index_sum_regn + "/ack");
+		inst_name = this->Get_VC_Name() + "_non_const_index_sum_rename";
 		Write_VC_Link(inst_name,reqs,acks,ofile);
 		reqs.clear();
 		acks.clear();
@@ -2945,6 +2945,9 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 			acks.push_back(hier_id + "/" + update_regn + "/ack");
 
 			Write_VC_Link(inst_name,reqs,acks,ofile);
+
+			reqs.clear();
+			acks.clear();
 		}
 	}
 
