@@ -21,15 +21,44 @@ architecture ImageMirage of base_bank is
 	signal clk_bit, wr_bar_bit, enable_bit: bit;
 	signal addr_bit: bit_vector(g_addr_width-1 downto 0);
 	signal din_bit, dout_bit: bit_vector(g_data_width-1 downto 0);
-begin  
 
+begin  
 	clk_bit <= '1' when clk = '1' else '0';
 	wr_bar_bit <= '1' when writebar = '1' else '0';
 	enable_bit <= '1' when enable = '1' else '0';
 
-	din_bit <= To_Bit_Vector(datain);
-        dataout <= To_Std_Logic_Vector(dout_bit);
-	addr_bit <= To_Bit_Vector(addrin);
+        process(datain)
+        begin 
+		for I in g_data_width-1 downto 0 loop
+			if(datain(I) = '1') then
+				din_bit(I) <= '1';
+			else
+				din_bit(I) <= '0';
+			end if;
+		end loop;
+	end process;
+
+	process(dout_bit)
+	begin
+		for I in g_data_width-1 downto 0 loop
+			if(dout_bit(I) = '1') then
+        			dataout(I) <= '1';
+			else
+        			dataout(I) <= '0';
+			end if;
+		end loop;
+	end process;
+
+        process(addrin)
+        begin 
+		for I in g_addr_width-1 downto 0 loop
+			if(addrin(I) = '1') then
+				addr_bit(I) <= '1';
+			else
+				addr_bit(I) <= '0';
+			end if;
+		end loop;
+	end process;
 	
   	bank: PL_Mirage_SyncWSyncR_RAM_1Port 
 			generic map(address_width => g_addr_width,

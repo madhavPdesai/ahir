@@ -540,6 +540,7 @@ class AaObjectReference: public AaExpression
 
 		virtual string Get_VC_Offset_Name();
 		virtual string Get_VC_Offset_Constant_Part_Name();
+		virtual string Get_VC_Non_Constant_Index_Sum_Name();
 		virtual string Get_VC_Root_Address_Name();
 		virtual string Get_VC_Word_Offset_Name(int idx);
 		virtual string Get_VC_Offset_Scale_Factor_Name(int idx);

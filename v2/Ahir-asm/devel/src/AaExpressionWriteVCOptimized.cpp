@@ -521,7 +521,7 @@ string AaArrayObjectReference::Get_VC_Base_Address_Update_Reenable_Transition(se
 		if(this->Get_Object_Type()->Is_Pointer_Type())
 			// array expression is a pointer-evaluation expression.
 		{
-			if(!this->_pointer_ref->Is_Constant())
+			if((this->_pointer_ref  != NULL) && !this->_pointer_ref->Is_Constant())
 			{
 				base_addr_calc_reenable = 
 					this->_pointer_ref->Get_VC_Reenable_Update_Transition_Name(visited_elements);
@@ -581,6 +581,7 @@ void AaArrayObjectReference::Write_VC_Links_Optimized(string hier_id, ostream& o
 		{
 			// the object needs to be loaded..  
 			// do the needful..
+			assert(this->_pointer_ref != NULL);
 			this->_pointer_ref->Write_VC_Links_Optimized(hier_id,ofile);
 		}
 
@@ -2369,6 +2370,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 	vector<int> non_constant_indices;
 
+	string index_sum_calculated = this->Get_VC_Name() + "_index_sum_calculated";
 	string offset_calculated = this->Get_VC_Name() + "_offset_calculated";
 	string base_address_resized = this->Get_VC_Name() + "_base_address_resized";
 
@@ -2555,25 +2557,31 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		//       of sample and update.  The updates trigger
 		//       the next sample (forming a chain).
 		
-		// then add them up.
-		int num_index_adds = (num_non_constant + (const_index_flag ? 1 : 0)) - 1;
+		// then add them up.. Note that if there is one non-constant
+		// and at least one constant, then an adder will still be needed.
+		int num_index_adds = (num_non_constant  - 1);
 
 		assert(non_constant_indices.size() > 0);
+
 		string last_sum_complete = index_chain_complete_map[non_constant_indices[0]];
 		string last_sum_reenable = index_chain_reenable_map[non_constant_indices[0]];
 
-		if(index_vector->size() > 1)
+		if(num_index_adds > 0)
 		{
-
 			for(int idx = 1; idx <= num_index_adds; idx++)
 			{
 				reg_flag = true;
-				string prefix = "partial_sum_" + IntToStr(idx);
+				string prefix = this->Get_VC_Name() + "_partial_sum_" + IntToStr(idx);
 
 				string sample_start = prefix + "_sample_start";
 				string sample_complete = prefix + "_sample_complete";
 				string update_start = prefix + "_update_start";
 				string update_complete = prefix + "_update_complete";
+
+				__T(sample_start);
+				__T(sample_complete);
+				__T(update_start);
+				__T(update_complete);
 
 				string sample_regn = prefix + "_Sample";
 				string update_regn = prefix + "_Update";
@@ -2635,20 +2643,59 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 				last_sum_reenable =  update_start;
 			}
 
-			active_reenable_points.clear();
-			active_reenable_points.insert(last_sum_reenable);
 		}
+		active_reenable_points.clear();
+		active_reenable_points.insert(last_sum_reenable);
 
+		__T(index_sum_calculated);
 
-		// the final index.. (simply rename)
-		string final_offset_regn = this->Get_VC_Name() + "_final_offset";
-		ofile << ";;[" <<  final_offset_regn << "] {" << endl;
-		ofile << "$T [final_index_req] $T [final_index_ack] // rename" << endl;
+		// the final index sum.. 
+		string non_constant_index_sum_regn = this->Get_VC_Name() + "_non_constant_index_sum_regn";
+		ofile << ";;[" <<  non_constant_index_sum_regn << "] {" << endl;
+		ofile << "$T [req] $T [ack] // rename" << endl;
 		ofile << "}" << endl;
-					
+		__F(last_sum_complete, non_constant_index_sum_regn);
+		__J(index_sum_calculated, non_constant_index_sum_regn);
+
+		if(const_index_flag)
+		{
+			// add the constant index sum to the non-constant
+			// index sum.
+			string prefix = this->Get_VC_Name() + "_final_index_sum_regn";
+ 			string sample_complete = prefix + "_sample_complete";
+ 			string update_start = prefix + "_update_start";
+
+			__T(sample_complete);
+			__T(update_start);
+			
+
+ 			string sample_regn = prefix + "_Sample";
+ 			string update_regn = prefix + "_Update";
+			ofile << ";;[" <<  sample_regn << "] { " << endl;
+			ofile << " req ack " << endl;
+			ofile << "}" << endl;
+			ofile << ";;[" <<  update_regn << "] { " << endl;
+			ofile << " req ack " << endl;
+			ofile << "}" << endl;
+
+			__F(index_sum_calculated, sample_regn);
+			__J(sample_complete, sample_regn);
+
+			__F(update_start, update_regn);
+			__J(offset_calculated, update_regn);
+
+			if(pipeline_flag)
+			{
+				__MJ(last_sum_reenable, sample_complete, false); // no bypass.
+				__MJ(update_start, offset_calculated, true); // bypass.
+			}
 		
-		__F(last_sum_complete, final_offset_regn);
-                __J(offset_calculated, final_offset_regn);
+			active_reenable_points.clear();
+			active_reenable_points.insert(update_start);
+		}
+		else
+			__J(offset_calculated, index_sum_calculated);
+
 	}
 
 
@@ -2854,13 +2901,12 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 
 
 		// then add them up.
-		string nhid = Augment_Hier_Id(hier_id, this->Get_VC_Name() + "_add_indices");
-		if(indices->size() > 1)
+		int num_index_adds = (num_non_constant - 1);
+		if(num_index_adds > 0)
 		{
-			int num_index_adds = (num_non_constant + (const_index_flag ? 1 : 0)) - 1;
 			for(int idx = 1; idx <= num_index_adds; idx++)
 			{
-				string prefix = "partial_sum_" + IntToStr(idx);
+				string prefix = this->Get_VC_Name() + "_partial_sum_" + IntToStr(idx);
 				string sample_regn = prefix + "_sample";
 				string update_regn = prefix + "_update";
 				reqs.push_back(hier_id + "/" + sample_regn + "/rr");
@@ -2883,6 +2929,23 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 		Write_VC_Link(inst_name,reqs,acks,ofile);
 		reqs.clear();
 		acks.clear();
+
+		if(const_index_flag)
+		{
+			string prefix = this->Get_VC_Name() + "_final_index_sum_regn";
+ 			string sample_regn = prefix + "_Sample";
+ 			string update_regn = prefix + "_Update";
+
+			inst_name = this->Get_VC_Name() + "_final_index_add";
+
+			reqs.push_back(hier_id + "/" + sample_regn + "/req");
+			reqs.push_back(hier_id + "/" + update_regn + "/req");
+
+			acks.push_back(hier_id + "/" + sample_regn + "/ack");
+			acks.push_back(hier_id + "/" + update_regn + "/ack");
+
+			Write_VC_Link(inst_name,reqs,acks,ofile);
+		}
 	}
 
 	// back to hier_id.
