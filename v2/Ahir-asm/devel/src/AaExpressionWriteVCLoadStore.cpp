@@ -579,8 +579,7 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Wires(vector<AaExpress
 
 
 		// partial sums..
-		int num_to_be_added = (non_constant_indices.size() > 0 ? 
-				non_constant_indices.size() + (const_flag ? 1 : 0) : 0);
+		int num_to_be_added = (non_constant_indices.size()  - 1);
 		if(num_to_be_added > 1)
 		{
 			for(int idx = 1; idx < num_to_be_added; idx++)
@@ -591,6 +590,11 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Wires(vector<AaExpress
 						ofile);
 			}
 		}
+
+		// 
+		Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Non_Constant_Index_Sum_Name(),
+				addr_type,
+				ofile);
 
 		// the final offset is an equivalence of the last partial sum
 		Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Offset_Name(),
@@ -870,12 +874,12 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Control_Path(vector<Aa
 		}
 		ofile << "}" << endl;
 
+		int num_index_adds = (num_non_constant - 1);
 		// then add them up.
 		ofile << ";;[add_indices] {" << endl;
-		if(index_vector->size() > 1)
+		if(num_index_adds > 0)
 		{
 			ofile << "||[SplitProtocol] { " << endl;
-			int num_index_adds = (num_non_constant + (const_index_flag ? 1 : 0)) - 1;
 			for(int idx = 1; idx <= num_index_adds; idx++)
 			{
 				string sample_region = "partial_sum_" + IntToStr(idx) + "_sample";
@@ -892,6 +896,21 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Control_Path(vector<Aa
 
 		// the final index..
 		ofile << "$T [final_index_req] $T [final_index_ack] // rename" << endl;
+
+		if(const_index_flag)
+		{
+			// sum the non-constant and constant contributions.
+			ofile << "||[ConstNonConstIndexAdd] { " << endl;
+				string sample_region = "Sample";
+				string update_region = "Update";
+				ofile << ";;[" << sample_region << "] {" << endl;
+				ofile << "$T [rr] $T [ra]" << endl;
+				ofile << "}" << endl;
+				ofile << ";;[" << sample_region << "] {" << endl;
+				ofile << "$T [cr] $T [ca]" << endl;
+				ofile << "}" << endl;
+			ofile << "}" << endl;
+		}
 		ofile << "}" << endl;
 	}
 
@@ -1050,22 +1069,14 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 
 
 			string last_sum;
-
-			if(const_index_flag)
-				last_sum = this->Get_VC_Offset_Constant_Part_Name();
-			else 
-				last_sum = non_constant_indices[0]->Get_VC_Name() + "_scaled";
+			last_sum = non_constant_indices[0]->Get_VC_Name() + "_scaled";
 
 			// add indices.. chain of adders.
-			int num_index_adds = (non_constant_indices.size() + (const_index_flag ? 1 : 0)) - 1;
+			int num_index_adds = (non_constant_indices.size() - 1);
 			for(int idx = 1; idx <= num_index_adds; idx++)
 			{
-
 				AaExpression* expr;
-				if(const_index_flag)
-					expr = non_constant_indices[idx-1];	      
-				else
-					expr = non_constant_indices[idx];	      
+				expr = non_constant_indices[idx];	      
 
 				string dpe_name = this->Get_VC_Name() + "_index_sum_" + IntToStr(idx);
 				string src_1_name = expr->Get_VC_Name() + "_scaled";
@@ -1103,13 +1114,47 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 			vector<string> inputs;
 			inputs.push_back(last_sum);
 			vector<string> outputs;
-			outputs.push_back(this->Get_VC_Offset_Name());
+			outputs.push_back(this->Get_VC_Non_Constant_Index_Sum_Name());
 
-			Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_offset_inst",
+			Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_non_constant_index_sum",
 					inputs,
 					outputs,
 					this->Get_VC_Guard_String(),
 					ofile);
+
+			if(const_index_flag)
+			{
+				string dpe_name = this->Get_VC_Name() + "_final_index_add";
+				string src_1_name = this->Get_VC_Non_Constant_Index_Sum_Name();
+				string src_2_name = this->Get_VC_Offset_Constant_Part_Name();
+				string tgt_name = this->Get_VC_Offset_Name();
+				
+				// instantiate adder that will add the non-constant
+				// index sum and the constant part of the indices.
+				Write_VC_Binary_Operator(__PLUS,
+					dpe_name,
+					src_1_name,
+					addr_type,
+					src_2_name,
+					addr_type,
+					tgt_name,
+					addr_type,
+					this->Get_VC_Guard_String(),
+					false,
+					false,
+					ofile);
+
+				if(this->Is_Part_Of_Extreme_Pipeline())
+				{
+					ofile << "$buffering  $in " << dpe_name << " "
+						<< src_1_name << " 2" << endl;
+					ofile << "$buffering  $in " << dpe_name << " "
+						<< src_2_name << " 2" << endl;
+					ofile << "$buffering  $out " << dpe_name << " "
+						<< tgt_name << " 2" << endl;
+				}
+	  		        ofile << "$delay " << dpe_name << " 2" << endl;
+			}
 		}
 
 
@@ -1282,9 +1327,9 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Links(string hier_id,
 
 		// then add them up.
 		nhid = Augment_Hier_Id(hier_id, "add_indices");
-		if(indices->size() > 1)
+		int num_index_adds = (num_non_constant - 1);
+		if(num_index_adds > 0)
 		{
-			int num_index_adds = (num_non_constant + (const_index_flag ? 1 : 0)) - 1;
 			for(int idx = 1; idx <= num_index_adds; idx++)
 			{
 				string sample_region = nhid + "/SplitProtocol/partial_sum_" + IntToStr(idx) + "_sample";
@@ -1308,6 +1353,19 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Links(string hier_id,
 		Write_VC_Link(inst_name,reqs,acks,ofile);
 		reqs.clear();
 		acks.clear();
+
+		if(const_index_flag)
+		{
+			nhid = Augment_Hier_Id(hier_id,"ConstNonConstIndexAdd");
+			inst_name = this->Get_VC_Name() + "_final_index_add";
+			reqs.push_back(nhid + "/Sample/rr");
+			reqs.push_back(nhid + "/Update/cr");
+			acks.push_back(nhid + "/Sample/ra");
+			acks.push_back(nhid + "/Update/ca");
+			Write_VC_Link(inst_name,reqs,acks,ofile);
+			reqs.clear();
+			acks.clear();
+		}
 	}
 
 	// back to hier_id.
@@ -1472,6 +1530,10 @@ string AaObjectReference::Get_VC_Offset_Name()
 string AaObjectReference::Get_VC_Offset_Constant_Part_Name()
 {
 	return(this->Get_VC_Name() + "_constant_part_of_offset");
+}
+string AaObjectReference::Get_VC_Non_Constant_Index_Sum_Name()
+{
+	return(this->Get_VC_Name() + "_non_constant_index_sum");
 }
 string AaObjectReference::Get_VC_Root_Address_Name()
 {
