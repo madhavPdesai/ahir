@@ -895,7 +895,7 @@ void vcSelect::Print_VHDL(ostream& ofile)
         	ofile <<  this->Get_Ack(0)->Get_DP_To_CP_Symbol() << "<= sample_ack_ug(0);" << endl;
         	ofile << " update_req_ug(0) <= "   << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
         	ofile <<  this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "<= update_ack_ug(0);" << endl;
-		ofile << " guard_vector(0) " << this->_guard_wire->Get_VHDL_Signal_Id() << ";" << endl; 
+		ofile << " guard_vector(0) <= " << this->_guard_wire->Get_VHDL_Signal_Id() << "(0);" << endl; 
       }
       else
       {
@@ -1014,7 +1014,7 @@ void vcSlice::Print_VHDL(ostream& ofile)
         	ofile <<  this->Get_Ack(0)->Get_DP_To_CP_Symbol() << "<= sample_ack_ug(0);" << endl;
         	ofile << " update_req_ug(0) <= "   << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
         	ofile <<  this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "<= update_ack_ug(0);" << endl;
-		ofile << " guard_vector(0) " << this->_guard_wire->Get_VHDL_Signal_Id() << ";" << endl; 
+		ofile << " guard_vector(0) <= " << this->_guard_wire->Get_VHDL_Signal_Id() << "(0);" << endl; 
       }
       else
       {
@@ -1452,7 +1452,7 @@ void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 		ofile <<  this->Get_Ack(0)->Get_DP_To_CP_Symbol() << "<= wack_ug(0);" << endl;
 		ofile << " rreq_ug(0) <= "   << this->Get_Req(1)->Get_CP_To_DP_Symbol() << ";" << endl;
 		ofile <<  this->Get_Ack(1)->Get_DP_To_CP_Symbol() << "<= rack_ug(0);" << endl;
-		ofile << " guard_vector(0) " << this->_guard_wire->Get_VHDL_Signal_Id() << ";" << endl; 
+		ofile << " guard_vector(0) <= " << this->_guard_wire->Get_VHDL_Signal_Id() << "(0);" << endl; 
 	}
 	else
 	{
