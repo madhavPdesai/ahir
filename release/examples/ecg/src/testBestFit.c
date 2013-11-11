@@ -187,7 +187,6 @@ int main(int argc, char* argv[])
 #endif
 
 	Sender();
-	srand48(819);
 	for(I = 0; I < NSAMPLES; I++)
 	{
 		double X;

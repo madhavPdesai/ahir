@@ -3062,8 +3062,8 @@ void Generate_Guard_Constants(string& buffering_const, string& guard_flag_const,
 	int idx;
 
 	// guard flags.
-	guard_flag_const = "constant guardFlags : BooleanArray(0 to " + IntToStr(num_reqs-1) + ") := (";
-	buffering_const  = "constant guardBuffering: IntegerArray(0 to " + IntToStr(num_reqs-1) + ")  := (";
+	guard_flag_const = "constant guardFlags : BooleanArray(" + IntToStr(num_reqs-1) + " downto 0) := (";
+	buffering_const  = "constant guardBuffering: IntegerArray(" + IntToStr(num_reqs-1) + " downto 0)  := (";
 	for(idx = num_reqs-1; idx >= 0; idx--)
 	{
 		int lidx = (num_reqs - 1) - idx;
