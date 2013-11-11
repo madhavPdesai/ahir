@@ -591,10 +591,6 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Wires(vector<AaExpress
 			}
 		}
 
-		// 
-		Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Non_Constant_Index_Sum_Name(),
-				addr_type,
-				ofile);
 
 		// the final offset is an equivalence of the last partial sum
 		Write_VC_Intermediate_Wire_Declaration(this->Get_VC_Offset_Name(),
@@ -894,12 +890,10 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Control_Path(vector<Aa
 			ofile << "}" << endl;
 		}
 
-		// the final index..
-		ofile << "$T [final_index_req] $T [final_index_ack] // rename" << endl;
 
 		if(const_index_flag)
 		{
-			// sum the non-constant and constant contributions.
+			// sum the non-constant and constant contributions to get the offset.
 			ofile << "||[ConstNonConstIndexAdd] { " << endl;
 				string sample_region = "Sample";
 				string update_region = "Update";
@@ -910,6 +904,11 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Control_Path(vector<Aa
 				ofile << "$T [cr] $T [ca]" << endl;
 				ofile << "}" << endl;
 			ofile << "}" << endl;
+		}
+		else
+		{
+			// the offset..
+			ofile << "$T [final_index_req] $T [final_index_ack] // rename" << endl;
 		}
 		ofile << "}" << endl;
 	}
@@ -1111,21 +1110,10 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 	  		        ofile << "$delay " << dpe_name << " 2" << endl;
 			}
 
-			vector<string> inputs;
-			inputs.push_back(last_sum);
-			vector<string> outputs;
-			outputs.push_back(this->Get_VC_Non_Constant_Index_Sum_Name());
-
-			Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_non_const_index_sum_rename",
-					inputs,
-					outputs,
-					this->Get_VC_Guard_String(),
-					ofile);
-
 			if(const_index_flag)
 			{
-				string dpe_name = this->Get_VC_Name() + "_final_index_add";
-				string src_1_name = this->Get_VC_Non_Constant_Index_Sum_Name();
+				string dpe_name = this->Get_VC_Name() + "_index_offset";
+				string src_1_name = last_sum;
 				string src_2_name = this->Get_VC_Offset_Constant_Part_Name();
 				string tgt_name = this->Get_VC_Offset_Name();
 				
@@ -1154,6 +1142,19 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Data_Path(vector<AaExp
 						<< tgt_name << " 2" << endl;
 				}
 	  		        ofile << "$delay " << dpe_name << " 2" << endl;
+			}
+			else
+			{
+				vector<string> inputs;
+				inputs.push_back(last_sum);
+				vector<string> outputs;
+				outputs.push_back(this->Get_VC_Offset_Name());
+
+				Write_VC_Equivalence_Operator(this->Get_VC_Name() + "_index_offset",
+						inputs,
+						outputs,
+						this->Get_VC_Guard_String(),
+						ofile);
 			}
 		}
 
@@ -1346,13 +1347,6 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Links(string hier_id,
 		}
 
 
-		// the final index..
-		reqs.push_back(nhid + "/final_index_req");
-		acks.push_back(nhid + "/final_index_ack");
-		inst_name = this->Get_VC_Name() + "_non_const_index_sum_rename";
-		Write_VC_Link(inst_name,reqs,acks,ofile);
-		reqs.clear();
-		acks.clear();
 
 		if(const_index_flag)
 		{
@@ -1362,6 +1356,16 @@ void AaObjectReference::Write_VC_Root_Address_Calculation_Links(string hier_id,
 			reqs.push_back(nhid + "/Update/cr");
 			acks.push_back(nhid + "/Sample/ra");
 			acks.push_back(nhid + "/Update/ca");
+			Write_VC_Link(inst_name,reqs,acks,ofile);
+			reqs.clear();
+			acks.clear();
+		}
+		else
+		{
+			// the final index..
+			reqs.push_back(nhid + "/final_index_req");
+			acks.push_back(nhid + "/final_index_ack");
+			inst_name = this->Get_VC_Name() + "_index_offset";
 			Write_VC_Link(inst_name,reqs,acks,ofile);
 			reqs.clear();
 			acks.clear();

@@ -2647,16 +2647,6 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		active_reenable_points.clear();
 		active_reenable_points.insert(last_sum_reenable);
 
-		__T(index_sum_calculated);
-
-		// the final index sum.. 
-		string non_constant_index_sum_regn = this->Get_VC_Name() + "_non_constant_index_sum_regn";
-		ofile << ";;[" <<  non_constant_index_sum_regn << "] {" << endl;
-		ofile << "$T [req] $T [ack] // rename" << endl;
-		ofile << "}" << endl;
-		__F(last_sum_complete, non_constant_index_sum_regn);
-		__J(index_sum_calculated, non_constant_index_sum_regn);
-
 		if(const_index_flag)
 		{
 			// add the constant index sum to the non-constant
@@ -2678,7 +2668,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 			ofile << " $T [req] $T [ack] " << endl;
 			ofile << "}" << endl;
 
-			__F(index_sum_calculated, sample_regn);
+			__F(last_sum_complete, sample_regn);
 			__J(sample_complete, sample_regn);
 
 			__F(update_start, update_regn);
@@ -2694,8 +2684,15 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 			active_reenable_points.insert(update_start);
 		}
 		else
-			__J(offset_calculated, index_sum_calculated);
-
+		{
+			// the final index sum.. 
+			string non_constant_index_sum_regn = this->Get_VC_Name() + "_final_index_sum_regn";
+			ofile << ";;[" <<  non_constant_index_sum_regn << "] {" << endl;
+			ofile << "$T [req] $T [ack] // rename" << endl;
+			ofile << "}" << endl;
+			__F(last_sum_complete, non_constant_index_sum_regn);
+			__J(offset_calculated, non_constant_index_sum_regn);
+		}
 	}
 
 
@@ -2920,23 +2917,13 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 			}
 		}
 
-
-		// the final index..
-		string non_constant_index_sum_regn = this->Get_VC_Name() + "_non_constant_index_sum_regn";
-		reqs.push_back(hier_id + "/" + non_constant_index_sum_regn + "/req");
-		acks.push_back(hier_id + "/" + non_constant_index_sum_regn + "/ack");
-		inst_name = this->Get_VC_Name() + "_non_const_index_sum_rename";
-		Write_VC_Link(inst_name,reqs,acks,ofile);
-		reqs.clear();
-		acks.clear();
-
 		if(const_index_flag)
 		{
 			string prefix = this->Get_VC_Name() + "_final_index_sum_regn";
  			string sample_regn = prefix + "_Sample";
  			string update_regn = prefix + "_Update";
 
-			inst_name = this->Get_VC_Name() + "_final_index_add";
+			inst_name = this->Get_VC_Name() + "_index_offset";
 
 			reqs.push_back(hier_id + "/" + sample_regn + "/req");
 			reqs.push_back(hier_id + "/" + update_regn + "/req");
@@ -2946,6 +2933,17 @@ Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
 
 			Write_VC_Link(inst_name,reqs,acks,ofile);
 
+			reqs.clear();
+			acks.clear();
+		}
+		else
+		{
+			// the final index..
+			string non_constant_index_sum_regn = this->Get_VC_Name() + "_final_index_sum_regn";
+			reqs.push_back(hier_id + "/" + non_constant_index_sum_regn + "/req");
+			acks.push_back(hier_id + "/" + non_constant_index_sum_regn + "/ack");
+			inst_name = this->Get_VC_Name() + "_index_offset";
+			Write_VC_Link(inst_name,reqs,acks,ofile);
 			reqs.clear();
 			acks.clear();
 		}
