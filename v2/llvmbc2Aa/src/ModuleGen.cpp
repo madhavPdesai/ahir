@@ -328,18 +328,14 @@ namespace {
 
       while (!queue.empty()) 
 	{
-	  BasicBlock *bb = queue.front();
+	  BasicBlock *curr_block = queue.front();
 	  queue.pop_front();
 	  
-	  curr_block = bb;
+	  std::cerr << "Info: traversal: visited block " << curr_block->getNameStr() <<  std::endl;
 
-	  aa_writer->name_all_instructions(*bb,iidx);
+	  aa_writer->name_all_instructions(*curr_block,iidx);
 	  
-	  TerminatorInst *T = bb->getTerminator();
-	  if(T->getNumSuccessors() == 0)
-	    {
-	    }
-
+	  TerminatorInst *T = curr_block->getTerminator();
 	  if(isa<llvm::ReturnInst>(T))
 	    {
 	      aa_writer->_num_ret_instructions++;
@@ -352,23 +348,35 @@ namespace {
 		aa_writer->_unique_return_value = NULL;
 	    }
 
-	  for (unsigned i = 0, e = T->getNumSuccessors(); i != e; ++i) 
+	  for (unsigned int i = 0, e = T->getNumSuccessors(); i < e; ++i) 
 	    {
 	      BasicBlock *S = T->getSuccessor(i);
-	      aa_writer->add_bb_predecessor_map_entry(S,bb);
 
-	      if (blocks_queued.count(S) != 0)
-		continue;
+	      // std::cerr << "Info: block " << curr_block->getNameStr() << "  -> " << S->getNameStr() << std::endl;
+	      aa_writer->add_bb_predecessor_map_entry(S,curr_block);
 
-	      queue.push_back(S);
-	      blocks_queued.insert(S);
+	      if (blocks_queued.count(S) == 0)
+	      {
+		      queue.push_back(S);
+		      blocks_queued.insert(S);
+	      }
 	    }
 	}
 
       if(blocks_queued.size() !=  F.size())
 	{
-		std::cerr << "Error: traversal of basic blocks does not seem to cover all defined blocks in Function " 
+		std::cerr << "Warning: traversal of basic blocks covers " << blocks_queued.size() 
+				<< "  blocks, and does not seem to cover all the defined blocks ("
+				<< F.size() << ") in Function " 
 				<< fname << "." << std::endl;
+		std::cerr << " Blocks traversed " << std::endl;
+		for(std::set<llvm::BasicBlock*>::iterator siter = blocks_queued.begin();
+				siter != blocks_queued.end(); 
+				siter++)
+		{
+			llvm::BasicBlock* bb = *siter;
+			std::cerr << " block " << bb->getNameStr() << std::endl;
+		}
 	}
 
       if(aa_writer->_unique_return_value != NULL)

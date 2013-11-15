@@ -593,7 +593,6 @@ void AaArrayObjectReference::Write_VC_Links_Optimized(string hier_id, ostream& o
 				&shift_factors,
 				ofile);
 
-		hier_id = Augment_Hier_Id(hier_id, this->Get_VC_Complete_Region_Name());
 		vector<string> reqs;
 		vector<string> acks;
 		reqs.push_back(hier_id + "/" + this->Get_VC_Request_Region_Name() + "/req");

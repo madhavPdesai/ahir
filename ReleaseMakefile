@@ -42,6 +42,8 @@ Release:
 	# copy the VHDL files
 	cp $(VHDL)/release/*.vhdl $(RELEASE)/vhdl/
 	cp $(VHDL)/unisims/*.vhd* $(RELEASE)/vhdl/
+	cp $(VHDL)/unisims/*.cf $(RELEASE)/vhdl/
+	cp $(VHDL)/unisims/*.o $(RELEASE)/vhdl/
 	#cp $(VHDL)/simprims/*.vhd* $(RELEASE)/vhdl/
 	# copy the function library
 	rm -rf $(RELEASE)/functionLibrary

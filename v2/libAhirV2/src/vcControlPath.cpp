@@ -598,14 +598,14 @@ void vcTransition::Print_VHDL(ostream& ofile)
   if(this->Get_Is_Dead())
   {
 	// it will never ever fire... tie it to false.
-      ofile << "// Dead. tied low." << endl;
+      ofile << "-- Dead. tied low." << endl;
       ofile << this->Get_Exit_Symbol() << " <= false;" << endl;
       return;
   }
   if(this->Get_Is_Tied_High())
   {
 	// it will never ever fire... tied to true.
-      ofile << "// Tied high." << endl;
+      ofile << "-- Tied high." << endl;
       ofile << this->Get_Exit_Symbol() << " <= true;" << endl;
 
 	// TODO.. if it is an output transition, it needs to be 

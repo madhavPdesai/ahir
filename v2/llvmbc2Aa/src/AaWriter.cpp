@@ -1578,7 +1578,7 @@ namespace {
 						std::cout <<  get_name(from_bb) << "_" << get_name(to_bb) << "_taken := " 
 								<<  this->Get_Guard_RHS_Expression() << std::endl;
 					else
-						std::cout <<  get_name(from_bb) << "_" << get_name(to_bb) << "_taken := _b1" << std::endl;
+						std::cout <<  get_name(from_bb) << "_" << get_name(to_bb) << "_taken := ($bitcast($uint<1>) _b1)" << std::endl;
 
 					this->Set_Guard_Flag(false);
 					this->Set_Guard_Complement(false);
