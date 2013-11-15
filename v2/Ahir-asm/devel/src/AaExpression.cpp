@@ -555,6 +555,37 @@ void AaExpression::Replace_Uses_By(AaExpression* used_expr, AaExpression* r_expr
 	}
 }
 
+void AaExpression::Update_Guard_Adjacency(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
+{
+	AaExpression* ge = this->Get_Guard_Expression();
+	if((ge != NULL) && (ge->Is("AaSimpleObjectReference")))
+	{
+		AaSimpleObjectReference* sexpr = (AaSimpleObjectReference*) ge;
+		AaRoot* root = sexpr->Get_Root_Object();
+		if(visited_elements.find(root) != visited_elements.end())
+		{
+				AaExpression* root_target = NULL;
+				if(root->Is("AaAssignmentStatement"))
+				{
+					root_target = ((AaAssignmentStatement*)root)->Get_Target();		
+				}
+				else if(root->Is("AaPhiStatement"))
+				{
+					root_target = ((AaPhiStatement*)root)->Get_Target();		
+				}
+				else if(root->Is("AaCallStatement"))
+				{
+					root_target = ((AaCallStatement*)root)->Get_Implicit_Target(sexpr->Get_Object_Root_Name());
+				}
+				else
+					assert(0);
+
+				assert(root_target != NULL);
+				__InsMap(adjacency_map,root_target,this,ge->Get_Delay());
+		}
+	}
+}
+
 //---------------------------------------------------------------------
 //AaSimpleObjectReference
 //---------------------------------------------------------------------
@@ -1388,6 +1419,7 @@ void AaSimpleObjectReference::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaR
 			__InsMap(adjacency_map,tmp,this,0);
 			visited_elements.insert(this);
 		}
+		//this->Update_Guard_Adjacency(adjacency_map,visited_elements);
 	}
 	else 
 	{
@@ -2526,6 +2558,7 @@ void AaArrayObjectReference::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRo
 		_pointer_ref->Update_Adjacency_Map(adjacency_map,visited_elements);
 		__InsMap(adjacency_map,_pointer_ref,this,_pointer_ref->Get_Delay());
 	}
+	this->Update_Guard_Adjacency(adjacency_map,visited_elements);
 }
 
 
@@ -2846,6 +2879,7 @@ void AaPointerDereferenceExpression::Update_Adjacency_Map(map<AaRoot*, vector< p
 {
 	_reference_to_object->Update_Adjacency_Map(adjacency_map, visited_elements);
 	__InsMap(adjacency_map,_reference_to_object,this,_reference_to_object->Get_Delay());
+	this->Update_Guard_Adjacency(adjacency_map,visited_elements);
 }
 
 bool AaPointerDereferenceExpression::Is_Foreign_Store()
@@ -3414,6 +3448,7 @@ void AaAddressOfExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoo
 {
 	_reference_to_object->Update_Adjacency_Map(adjacency_map, visited_elements);
 	__InsMap(adjacency_map,_reference_to_object,this,_reference_to_object->Get_Delay());
+	this->Update_Guard_Adjacency(adjacency_map,visited_elements);
 }
 
 void AaAddressOfExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
@@ -3654,6 +3689,7 @@ void AaTypeCastExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot
 {
 	_rest->Update_Adjacency_Map(adjacency_map, visited_elements);
 	__InsMap(adjacency_map,_rest,this,_rest->Get_Delay());
+	this->Update_Guard_Adjacency(adjacency_map,visited_elements);
 }
 
 void AaTypeCastExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
@@ -3861,6 +3897,7 @@ void AaUnaryExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, 
 {
 	_rest->Update_Adjacency_Map(adjacency_map, visited_elements);
 	__InsMap(adjacency_map,_rest,this,_rest->Get_Delay());
+	this->Update_Guard_Adjacency(adjacency_map,visited_elements);
 }
 
 void AaUnaryExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
@@ -4202,6 +4239,7 @@ void AaBinaryExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*,
 	_second->Update_Adjacency_Map(adjacency_map, visited_elements);
 	__InsMap(adjacency_map,_first,this,_first->Get_Delay());
 	__InsMap(adjacency_map,_second,this,_second->Get_Delay());
+	this->Update_Guard_Adjacency(adjacency_map,visited_elements);
 }
 
 void AaBinaryExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
@@ -4451,6 +4489,7 @@ void AaTernaryExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*
 	__InsMap(adjacency_map,_test,this,_test->Get_Delay());
 	__InsMap(adjacency_map,_if_true,this,_if_true->Get_Delay());
 	__InsMap(adjacency_map,_if_false,this,_if_false->Get_Delay());
+	this->Update_Guard_Adjacency(adjacency_map,visited_elements);
 }
 
 void AaTernaryExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)

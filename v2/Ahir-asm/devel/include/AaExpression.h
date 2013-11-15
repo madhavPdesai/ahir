@@ -315,6 +315,7 @@ class AaExpression: public AaRoot
 	virtual bool Is_Part_Of_Pipelined_Module(); // TODO: return true if in pipelined module.
 
 
+	virtual void Update_Guard_Adjacency(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
 	virtual AaRoot* Get_Object() { assert(0); }
 };
 

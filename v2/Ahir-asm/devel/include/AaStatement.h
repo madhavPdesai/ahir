@@ -112,6 +112,7 @@ class AaStatement: public AaScope
   virtual void Increment_Tab_Depth() { this->_tab_depth += 1; }
 
   virtual bool Is_Statement() { return(true);}
+  virtual bool Is_Assignment_Statement() { return(false);}
   virtual bool Is_Call_Statement() {return(false);}
   virtual bool Is_Control_Flow_Statement() {return(false);}
   virtual bool Is_Block_Statement() {return(false);}
@@ -465,6 +466,7 @@ class AaAssignmentStatement: public AaStatement
   AaAssignmentStatement(AaScope* scope,AaExpression* target, AaExpression* source, int lineno);
   ~AaAssignmentStatement();
 
+  virtual bool Is_Assignment_Statement() { return(true);}
   virtual void Set_Pipeline_Parent(AaStatement* dws);
 
   int Get_Buffering() {return(_buffering);}
@@ -485,6 +487,8 @@ class AaAssignmentStatement: public AaStatement
  
   string Get_Target_Name() {return(this->_target->Get_Name());}
 
+
+  void Replace_Source_Expression(AaExpression* old_arg, AaSimpleObjectReference* new_arg);
 
   // return true if one of the sources or targets is a pipe.
   virtual bool Can_Block();

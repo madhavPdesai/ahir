@@ -632,7 +632,7 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 		{
 			// Note: if it is a call statement, then
 			// curr_expr must be one of its arguments.
-			if(!nbr->Is_Call_Statement())
+			if(!nbr->Is_Assignment_Statement() && !nbr->Is_Call_Statement())
 				continue;
 		}
 
@@ -733,13 +733,24 @@ void AaStatement::Add_Delayed_Versions(AaRoot* curr,
 				AaScope* prnt_scope = this->Get_Scope();
 				if(prnt_scope == NULL) // if null scope, then assignment will be in "this"
 					prnt_scope = this; 
-
 				AaSimpleObjectReference* new_arg = new AaSimpleObjectReference(prnt_scope, 
 												rs->Get_Target()->Get_Name());
 				new_arg->Set_Type(curr_expr->Get_Type());
 
 				AaCallStatement* cnbr = (AaCallStatement*) nbr;
 				cnbr->Replace_Input_Argument(curr_expr, new_arg);
+			}
+			else if(nbr->Is_Assignment_Statement())
+			{
+				AaScope* prnt_scope = this->Get_Scope();
+				if(prnt_scope == NULL) // if null scope, then assignment will be in "this"
+					prnt_scope = this; 
+				AaSimpleObjectReference* new_arg = new AaSimpleObjectReference(prnt_scope, 
+												rs->Get_Target()->Get_Name());
+				new_arg->Set_Type(curr_expr->Get_Type());
+
+				AaAssignmentStatement* astmt = ((AaAssignmentStatement*) nbr);
+				astmt->Replace_Source_Expression(curr_expr, new_arg);
 			}
 		}
 	}
@@ -1595,6 +1606,23 @@ string AaAssignmentStatement::Get_VC_Update_Completed_Transition_Name()
 	}
 }
 
+void AaAssignmentStatement::Replace_Source_Expression(AaExpression* old_arg, AaSimpleObjectReference* new_arg)
+{
+	  if(this->_source == old_arg)
+	  {
+		  assert(old_arg->Is_Implicit_Variable_Reference());
+		  old_arg->Set_Associated_Statement(NULL);
+		  old_arg->Remove_Target_Reference(this);
+		  this->Remove_Source_Reference(old_arg);
+		  this->_source_objects.erase(old_arg->Get_Object());
+
+		  this->_source = new_arg;
+		  new_arg->Set_Associated_Statement(this);
+		  new_arg->Add_Target_Reference(this);
+		  this->Add_Source_Reference(new_arg);
+		  new_arg->Map_Source_References(this->_source_objects);
+	  }
+}
 //---------------------------------------------------------------------
 // AaCallStatement
 //---------------------------------------------------------------------
@@ -1644,7 +1672,7 @@ void AaCallStatement::Replace_Input_Argument(AaExpression* old_arg, AaSimpleObje
 		  this->_source_objects.erase(arg->Get_Object());
 
 		  _input_args[i] = new_arg;
-		  new_arg->Set_Associated_Statement(NULL);
+		  new_arg->Set_Associated_Statement(this);
 		  new_arg->Add_Target_Reference(this);
 		  this->Add_Source_Reference(new_arg);
 		  new_arg->Map_Source_References(this->_source_objects);
@@ -5307,6 +5335,7 @@ void AaDoWhileStatement::Add_Delayed_Versions( map<AaRoot*, vector< pair<AaRoot*
 
 void AaPhiStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements)
 {
+	// delays start from phi-statements.. so no need for sources.
        	AaExpression* tgt_expression = this->Get_Target();
 	__InsMap(adjacency_map,NULL,this,0);
 	__InsMap(adjacency_map,this,tgt_expression,1);
@@ -5370,7 +5399,6 @@ void AaCallStatement::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, in
 		__InsMap(adjacency_map, this->_guard_expression, this, this->_guard_expression->Get_Delay());
 	}
 	visited_elements.insert(this);
-
 }
 
 

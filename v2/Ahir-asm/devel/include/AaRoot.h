@@ -110,6 +110,7 @@ class AaRoot
 
   virtual bool Is_Expression() {return(false); }
   virtual bool Is_Statement() {return(false); }
+  virtual bool Is_Assignment_Statement() {return(false); }
   virtual bool Is_Call_Statement() {return(false); }
 
   // do we really need this? keep it for now

@@ -12,8 +12,8 @@
 #include "vhdlCStubs.h"
 #endif
 
-#define MIN_SIGMA  0.003
-#define MAX_SIGMA  0.004
+#define MIN_SIGMA  0.003*(1000.0/360.0)
+#define MAX_SIGMA  0.004*(1000.0/360.0)
 
 double _hF0[MEM_SIZE];
 double _hF1[MEM_SIZE];
