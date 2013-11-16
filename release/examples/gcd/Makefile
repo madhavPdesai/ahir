@@ -35,6 +35,7 @@ SW: $(SRC)/gcd.c $(SRC)/divider.c $(SRC)/test_gcd.c  $(SRC)/gcd.h $(SRC)/test_gc
 HW: c2llvmbc llvmbc2aa  aalink aa2vc  vc2vhdl  vhdlsim
 TOAA: c2llvmbc llvmbc2aa  aalink
 TOVC: TOAA aa2vc 
+TOVHDL: TOVC vc2vhdl
 
 AA2VHDL: aa2vc vc2vhdl vhdlsim
 
@@ -61,8 +62,9 @@ aa2vc: prog.linked.opt.aa
 	Aa2VC -O -C prog.linked.opt.aa | vcFormat > prog.vc
 
 # vC to VHDL
+SIMULATOR=-s modelsim
 vc2vhdl: prog.vc
-	vc2vhdl -D -S 4 -O -I 16 -v -q -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/timer.list
+	vc2vhdl -D -S 4 -O -I 16 -v -q -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/timer.list $(SIMULATOR)
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl

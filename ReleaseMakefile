@@ -80,6 +80,8 @@ Clean:
 	rm -f $(RELEASE)/CtestBench/vhdl/*.vhd*
 	# rm the VHDL files
 	rm -f $(RELEASE)/vhdl/*.vhd*
+	rm -f $(RELEASE)/vhdl/*.cf
+	rm -f $(RELEASE)/vhdl/*.o
 	# rm the function library
 	rm -rf $(RELEASE)/functionLibrary
 	# rm the doc files

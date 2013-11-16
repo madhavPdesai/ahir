@@ -25,7 +25,7 @@ LLVM2AAOPTS=-extract_do_while=true --storageinit=true -pipedepths=pipedepths.txt
 PROGDEFS=-DPIPELINE -DALT
 #PROGDEFS=-DUNROLL
 
-TOPMODULES=-T vectorSum 
+TOPMODULES=-T Daemon 
 
 
 # compile with SW defined.
@@ -41,26 +41,26 @@ HW: c2llvmbc llvmbc2aa  aalink aa2vc  vc2vhdl  vhdlsim
 AA2VHDL: aa2vc vc2vhdl vhdlsim
 
 # C to llvm byte-code.. use clang.
-c2llvmbc: $(SRC)/prog.c $(SRC)/prog.h
-	clang -O3 -std=gnu89 $(PROGDEFS)  -I$(SOCKETLIB_INCLUDE) -I$(FUNCTIONLIB)/include -emit-llvm -c $(SRC)/prog.c
-	opt --indvars --loopsimplify prog.o -o prog.opt.o
-	llvm-dis prog.opt.o
+c2llvmbc: $(SRC)/aes.c $(SRC)/aes.h
+	clang -O3 -std=gnu89 $(PROGDEFS)  -I$(SOCKETLIB_INCLUDE) -I$(FUNCTIONLIB)/include -emit-llvm -c $(SRC)/aes.c
+	opt --indvars --loopsimplify aes.o -o aes.opt.o
+	llvm-dis aes.opt.o
 
 # llvm byte-code to Aa..
-llvmbc2aa:  prog.opt.o 
-	llvm2aa $(LLVM2AAOPTS)  prog.opt.o | vcFormat >  prog.aa
+llvmbc2aa:  aes.opt.o 
+	llvm2aa $(LLVM2AAOPTS)  aes.opt.o | vcFormat >  aes.aa
 
 # Aa to vC
-aalink: prog.aa 
-	AaLinkExtMem prog.aa $(FUNCTIONLIB)/Aa/fpu.aa | vcFormat > prog.linked.aa
-	AaOpt -B prog.linked.aa | vcFormat > prog.linked.opt.aa
+aalink: aes.aa 
+	AaLinkExtMem -I 1024 -E mempool aes.aa | vcFormat > aes.linked.aa
+	AaOpt -I mempool -B aes.linked.aa | vcFormat > aes.linked.opt.aa
 
-aa2vc: prog.linked.opt.aa
-	Aa2VC -O -C prog.linked.opt.aa | vcFormat > prog.vc
+aa2vc: aes.linked.opt.aa
+	Aa2VC -r Daemon -O -C aes.linked.opt.aa | vcFormat > aes.vc
 
 # vC to VHDL
-vc2vhdl: prog.vc
-	vc2vhdl -O -S 4 -I 2 -v -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
+vc2vhdl: aes.vc
+	vc2vhdl -O -S 4 -I 2 -v -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f aes.vc 
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl
