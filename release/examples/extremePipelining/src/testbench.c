@@ -65,6 +65,6 @@ int main(int argc, char* argv[])
 #ifdef SW
 	close_pipe_handler();
 	PTHREAD_CANCEL(vectorSum);
-	return(0);
 #endif
+	return(0);
 }
