@@ -1481,6 +1481,7 @@ void vcDataPath::Print_VHDL_Split_Operator_Instances(ostream& ofile)
 		    << " no_arbitration => " << no_arb_string << "," << endl
 		    << " min_clock_period => " << (vcSystem::_min_clock_period_flag ? "true" : "false") << "," << endl
 		    << " num_reqs => " << num_reqs << "," << endl
+		    << " use_input_buffering => true," << endl
 		    << " detailed_buffering_per_input => inBUFs," << endl
 		    << " detailed_buffering_per_output => outBUFs --} \n )" << endl; // number of requesters..
 	      ofile << "port map ( reqL => reqL , ackL => ackL, reqR => reqR, ackR => ackR, dataL => data_in, dataR => data_out, clk => clk, reset => reset); -- }" << endl;
