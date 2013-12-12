@@ -566,14 +566,19 @@ void Write_VC_Pipe_Dependency(bool pipeline_flag,
   }
 }
 
-void Write_VC_Reenable_Joins(set<string>& active_reenable_points, string& rel_tran, bool bypass_flag, ostream& ofile)
+void Write_VC_Reenable_Joins(set<string>& active_reenable_points, 
+				map<string, bool>& active_reenable_bypass_flags, string& rel_tran, 
+				bool force_bypass_flag, ostream& ofile)
 {
 	for(set<string>::iterator siter = active_reenable_points.begin(),
 		fiter = active_reenable_points.end();
 		siter != fiter;
 		siter++)
 	{
-		__MJ((*siter), rel_tran, bypass_flag);
+		assert(active_reenable_bypass_flags.find(*siter) != active_reenable_bypass_flags.end());
+	
+		bool bypass_this = (force_bypass_flag || active_reenable_bypass_flags[(*siter)]);
+		__MJ((*siter), rel_tran, bypass_this);
 	}
 }
 

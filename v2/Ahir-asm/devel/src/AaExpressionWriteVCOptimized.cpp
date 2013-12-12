@@ -24,7 +24,7 @@ void AaExpression::Write_VC_RAW_Release_Dependencies(AaExpression* expr, set<AaR
 	Write_VC_RAW_Release_Deps(((AaRoot*)this),non_triv_preds);
 }
 
-void AaExpression::Write_VC_Update_Reenables(string ctrans, set<AaRoot*>& visited_elements,  ostream& ofile)
+void AaExpression::Write_VC_Update_Reenables(string ctrans, bool bypass_if_true,  set<AaRoot*>& visited_elements,  ostream& ofile)
 {
 	set<AaExpression*> root_set;
 	this->Collect_Root_Sources(root_set);
@@ -32,7 +32,9 @@ void AaExpression::Write_VC_Update_Reenables(string ctrans, set<AaRoot*>& visite
 	for(set<AaExpression*>::iterator iter = root_set.begin(), fiter = root_set.end(); iter != fiter; iter++)
 	{
 		AaExpression* producer = *iter;
-		__MJ(producer->Get_VC_Reenable_Update_Transition_Name(visited_elements), ctrans, true); // bypass.
+		bool bypass = (bypass_if_true || producer->Update_Protocol_Has_Delay(visited_elements));
+		
+		__MJ(producer->Get_VC_Reenable_Update_Transition_Name(visited_elements), ctrans, bypass);
 	}
 }
 
@@ -146,8 +148,8 @@ void AaExpression::Write_VC_Guard_Backward_Dependency(AaExpression* expr,
 		set<AaRoot*>& visited_elements, ostream& ofile)
 {
 	// when this completes, the guard can be re-evaluated.
-	__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-			__SCT(this), true); // bypass
+	expr->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
+
 	// With new SplitGuardInterface, this depdendency is
 	// no longer necessary.
 	//__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
@@ -560,6 +562,53 @@ string AaArrayObjectReference::Get_VC_Base_Address_Update_Reenable_Transition(se
 	return(base_addr_calc_reenable);
 }
 
+bool AaArrayObjectReference::Base_Address_Update_Protocol_Has_Delay(set<AaRoot*>& visited_elements)
+{
+
+	bool ret_val =  false;
+	if(!this->Is_Constant())
+	{
+		if(this->Get_Object_Type()->Is_Pointer_Type())
+			// array expression is a pointer-evaluation expression.
+		{
+			if((this->_pointer_ref  != NULL) && !this->_pointer_ref->Is_Constant())
+			{
+				ret_val = 
+					this->_pointer_ref->Update_Protocol_Has_Delay(visited_elements);
+
+			}
+			else if(this->_object->Is_Expression())
+			{
+				AaRoot* root = (((AaExpression*)this->_object)->Get_Root_Object());
+				if(root && root->Is_Statement())
+				{
+					if(visited_elements.find(root) != visited_elements.end())
+					{
+						ret_val = true;
+					}
+				}
+			}
+			else if(this->_object->Is_Interface_Object())
+			{
+				AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
+				if(visited_elements.find(root) != visited_elements.end())
+				{
+					ret_val = true;
+				}	  
+			}
+			else if(this->_object->Is_Statement())
+			{
+				AaRoot* root = this->_object;
+				if(visited_elements.find(root) != visited_elements.end())
+				{
+					ret_val = true;
+				}	  
+			}
+		}
+	}
+	return(ret_val);
+}
+
 void AaArrayObjectReference::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
 	if(this->Is_Constant())
@@ -761,12 +810,14 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 			// this will link to complete region.
 			set<string> active_reenable_points;
+			map<string,bool> active_reenable_bypass_flags;
 			this->Write_VC_Root_Address_Calculation_Control_Path_Optimized(pipeline_flag, visited_elements,
 					ls_map,
 					pipe_map,
 					&_indices,
 					&scale_factors, &shift_factors,
 					active_reenable_points,
+					active_reenable_bypass_flags,
 					barrier,
 					ofile);
 
@@ -796,7 +847,9 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 				// Note that the base address calculation reenable
 				// will be part of the active_reenable_points.
-				Write_VC_Reenable_Joins(active_reenable_points,ctrans,true, ofile); // bypass
+				Write_VC_Reenable_Joins(active_reenable_points,
+							active_reenable_bypass_flags, 
+							ctrans,false, ofile); // do not force bypass, decide based on active bypass flags..
 
 				active_reenable_points.clear();
 				active_reenable_points.insert(__UST(this));
@@ -878,7 +931,9 @@ void AaArrayObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 					// reenable expression when this completes.
 					// note: conservative
 					// __MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __UCT(this), true); // bypass
-					expr->Write_VC_Update_Reenables(__UCT(this), visited_elements,ofile);
+					expr->Write_VC_Update_Reenables(__UCT(this), 
+						(!flow_through),
+						visited_elements,ofile);
 
 					if(!flow_through)
 						__MJ(__UST(this),__UCT(this), true); // bypass
@@ -1007,6 +1062,14 @@ string AaPointerDereferenceExpression::Get_VC_Base_Address_Update_Reenable_Trans
 	return(ret_string);
 }
 
+bool AaPointerDereferenceExpression::Base_Address_Update_Protocol_Has_Delay(set<AaRoot*>& visited_elements)
+{
+	assert(this->_reference_to_object != NULL);
+	bool ret_val = this->_reference_to_object->Update_Protocol_Has_Delay(visited_elements);
+	return(ret_val);
+	
+}
+
 void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<AaRoot*>& visited_elements,
 		map<string,vector<AaExpression*> >& ls_map,
 		map<string, vector<AaExpression*> >& pipe_map,
@@ -1054,7 +1117,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_Optimized(bool pipeli
 		if(pipeline_flag)
 		{
 			//__MJ(this->_reference_to_object->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
-			this->_reference_to_object->Write_VC_Update_Reenables(__SCT(this), visited_elements,ofile);
+			this->_reference_to_object->Write_VC_Update_Reenables(__SCT(this), false, visited_elements,ofile);
 		}
 
 	}
@@ -1110,7 +1173,7 @@ void AaPointerDereferenceExpression::Write_VC_Control_Path_As_Target_Optimized(b
 		__J(__SST(this),base_addr_calc);
 		if(pipeline_flag)
 		{
-			this->_reference_to_object->Write_VC_Update_Reenables(__SCT(this), visited_elements,ofile);
+			this->_reference_to_object->Write_VC_Update_Reenables(__SCT(this), false, visited_elements,ofile);
 			//__MJ(this->_reference_to_object->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
 		}
 	}
@@ -1203,11 +1266,13 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 		// root address calculation will include all dependencies with 
 		// this etc..
 		set<string> active_reenable_points;
+		map<string,bool> active_reenable_bypass_flags;
 		obj_ref->Write_VC_Root_Address_Calculation_Control_Path_Optimized(pipeline_flag, visited_elements,
 				ls_map,pipe_map,
 				obj_ref->Get_Index_Vector(),
 				&scale_factors, &shift_factors,
 				active_reenable_points,
+				active_reenable_bypass_flags,
 				barrier,
 				ofile);
 
@@ -1231,7 +1296,9 @@ void AaAddressOfExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
 		{
 			ofile << "// reenables ." << endl;
 			string ctrans = __SCT(this);
-			Write_VC_Reenable_Joins(active_reenable_points, ctrans,true, ofile); // bypass
+			Write_VC_Reenable_Joins(active_reenable_points,
+					active_reenable_bypass_flags, 
+					ctrans,false, ofile); // do not force bypass, decide based on active bypass flags
 			active_reenable_points.clear();
 
 			// SelfRelease
@@ -1345,7 +1412,7 @@ void AaTypeCastExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, s
 
 		if(pipeline_flag && !flow_through)
 		{
-			this->_rest->Write_VC_Update_Reenables(__SCT(this), visited_elements,ofile);
+			this->_rest->Write_VC_Update_Reenables(__SCT(this), false, visited_elements,ofile);
 			// __MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true );  // bypass
 			__SelfReleaseSplitProtocolPattern
 		}
@@ -1448,7 +1515,7 @@ void AaUnaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set<
 
 		if(pipeline_flag && !flow_through)
 		{
-			this->_rest->Write_VC_Update_Reenables(__SCT(this), visited_elements,ofile);
+			this->_rest->Write_VC_Update_Reenables(__SCT(this), false,  visited_elements,ofile);
 			// __MJ(this->_rest->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
 			
 			__SelfReleaseSplitProtocolPattern
@@ -1555,126 +1622,13 @@ void AaBinaryExpression::Write_VC_Control_Path_BLE_Optimized(bool pipeline_flag,
 		AaRoot* barrier,
 		ostream& ofile)
 {
-	ofile << "// " << this->To_String() << endl;
-      	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
-	this->_first->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier, ofile);
-	this->_second->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier, ofile);
-	/*
-	   ;;[Sample_s1] {
-	   $T [s1_sr] $T [s1_sc]
-	   }
-	   $T [Sample_s1_start]
-	   $T [Sample_s1_complete]
-	   Sample_s1_start -> Sample_s1
-	   Sample_s1_complete <- Sample_s1
-	   ;;[Sample_s2] {
-	   $T [s2_sr] $T [s2_sc]
-	   }
-	   $T [Sample_s2_start]
-	   $T [Sample_s2_complete]
-	   Sample_s2_start -> Sample_s2
-	   Sample_s2_complete <- Sample_s2
-	   __UCT(s1) -> Sample_s1
-	   __UCT(s2) -> Sample_s2
-	   __UST(s1) o<- (Sample_s1_complete 1)
-	   __UST(s2) o<- (Sample_s2_complete 1)
-
-	   ;;[Update] {
-	   $T[r] $T[a]
-	   }
-	   $T [Update_complete]
-	   Update_complete <- Update
-	   Update_start -> Update
-	   Update_start o<- (Update_complete 0)
-	   */
-	vector<AaExpression*> srcs;
-	srcs.push_back(this->_first); srcs.push_back(this->_second);
-
-	__T(__UST(this));
-	__T(__UCT(this));
-
-	for(int i = 0; i < 2; i++)
-	{
-		AaExpression* src = srcs[i];
-		if(!src->Is_Constant())
-		{
-			__T(__SST_I(this,i));
-			__T(__SCT_I(this,i));
-
-			string sample_region = this->Get_VC_Name() + "_sample_" + src->Get_VC_Name();
-			ofile << ";;[" << sample_region << "] {" << endl;
-			ofile << "$T [req] $T[ack] " << endl;
-			ofile << "}" << endl;
-			string sample_start = sample_region + "_completed";
-			string sample_complete = sample_region + "_completed";
-			__J(__SST_I(this,i), __UCT(src));
-			__F(__SST_I(this,i), sample_region);
-			__J(__SCT_I(this,i), sample_region);
-			__F(__SCT_I(this,i),"$null");
-	
-                	if(flow_through)
-			{	
-				ofile << "// flow-through" << endl;
-				__J(__UST(this), __SCT_I(this,i));
-			}
-			if(pipeline_flag)
-			{
-				__MJ(__SST_I(this,i), __SCT_I(this,i),false); // no bypass.	
-				src->Write_VC_Update_Reenables(__SCT_I(this,i), visited_elements, ofile);
-			}
-
-		}
-		else
-		{
-			string req_name = this->Get_VC_Name() + "_sample_" + src->Get_VC_Name() + "_req";
-			string ack_name = this->Get_VC_Name() + "_sample_" + src->Get_VC_Name() + "_ack";
-			ofile << "$T [" << req_name << "] $dead $T[ " << ack_name << "] $left_open " << endl;
-			__F(req_name, "$null");
-			__F(ack_name, "$null");
-		}
-	}
-
-	string update_region = this->Get_VC_Name() + "_Update";
-	ofile << ";;[" << update_region << "] {" << endl;
-	ofile << "$T[req] $T[ack]" << endl;
-	ofile << "}" << endl;
-	__F(__UST(this), update_region);
-	__J(__UCT(this), update_region);
-
-	if(pipeline_flag)
-		__MJ(__UST(this), __UCT(this), true); // bypass
-
-	this->Write_VC_Guard_Dependency(pipeline_flag, visited_elements,ofile);
-	visited_elements.insert(this);
+	assert(0); // DEAD CODE: TODO: get rid of it..
 }
 
 
 void AaBinaryExpression::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* sexpr, set<AaRoot*>& visited_elements, ostream& ofile)
 {
-	// bool add_hash = this->Is_Logical_Operation() && AaProgram::_optimize_flag && this->Is_Part_Of_Pipeline();
-	bool add_hash = false; // turn it off.. operator way too heavy..
-	if(add_hash)
-	{
-		// dead code.
-		assert(0);
-		AaRoot* root = sexpr->Get_Root_Object();
-		if(visited_elements.find(root) != visited_elements.end())
-		{
-			if(!this->_first->Is_Constant())
-			{
-				__J(__SST_I(this,0),__UCT(root))
-			}
-			if(!this->_second->Is_Constant())
-			{
-				__J(__SST_I(this,1),__UCT(root))
-			}
-			 __J(__UST(this), __UCT(root));
-		}
-	}
-	else
-	{
-		this->AaExpression::Write_VC_Guard_Forward_Dependency(sexpr, visited_elements, ofile);
-	}
+	this->AaExpression::Write_VC_Guard_Forward_Dependency(sexpr, visited_elements, ofile);
 }
 
 void AaBinaryExpression::Write_VC_Guard_Backward_Dependency(AaExpression* expr, set<AaRoot*>& visited_elements, ostream& ofile)
@@ -1683,15 +1637,17 @@ void AaBinaryExpression::Write_VC_Guard_Backward_Dependency(AaExpression* expr, 
 	bool add_hash = false; // turn it off.. operator way too heavy..
 	if(add_hash)
 	{
+		assert(0);
 		__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-			__UCT(this), true);  // bypass
+			__UCT(this), expr->Update_Protocol_Has_Delay(visited_elements));  // bypass
+
 		if(!this->_first->Is_Constant())
 		{
-			__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT_I(this,0), true); // bypass
+			__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT_I(this,0), expr->Update_Protocol_Has_Delay(visited_elements)); // bypass
 		}
 		if(!this->_second->Is_Constant())
 		{
-			__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT_I(this,1), true); // bypass
+			__MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT_I(this,1), expr->Update_Protocol_Has_Delay(visited_elements)); // bypass
 		}
 	}
 	else
@@ -1762,13 +1718,13 @@ void AaBinaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, set
 		{
 			if(!this->_first->Is_Constant())
 			{
-				this->_first->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
+				this->_first->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
 				//__MJ(this->_first->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
 			}
 
 			if(!this->_second->Is_Constant())
 			{	
-				this->_second->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
+				this->_second->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
 				// __MJ(this->_second->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
 			}
 
@@ -1883,17 +1839,17 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 
 		if(!this->_test->Is_Constant())
 		{
-			this->_test->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
+			this->_test->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
 			 //__MJ(this->_test->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
 		}
 		if(this->_if_true && !this->_if_true->Is_Constant())
 		{
-			this->_if_true->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
+			this->_if_true->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
 			//__MJ(this->_if_true->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
 		}
 		if(this->_if_false && !this->_if_false->Is_Constant())
 		{
-			this->_if_false->Write_VC_Update_Reenables(__SCT(this), visited_elements, ofile);
+			this->_if_false->Write_VC_Update_Reenables(__SCT(this), false, visited_elements, ofile);
 			//__MJ(this->_if_false->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this), true); // bypass
 		}
 		
@@ -1925,6 +1881,7 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(bool pipeline_flag,
 		ostream& ofile)
 {
 	set<string> active_reenables;
+	map<string,bool> active_reenable_bypass_flags;
 	// address calculation
 	// 1. compute agross = base + (offset*scale-factor)
 	// 2. in parallel, compute aI = agross + I
@@ -1938,6 +1895,7 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(bool pipeline_flag,
 			shift_factors, 
 			barrier,
 			active_reenables,
+			active_reenable_bypass_flags,
 			ofile);
 
 	// load operations
@@ -1958,7 +1916,7 @@ void AaObjectReference::Write_VC_Load_Control_Path_Optimized(bool pipeline_flag,
 	{
 		string at = __SCT(this);
 		ofile << "// reenable-joins" << endl;
- 		Write_VC_Reenable_Joins(active_reenables,at,true, ofile); // bypass
+ 		Write_VC_Reenable_Joins(active_reenables, active_reenable_bypass_flags, at,false, ofile); // do not force bypass, decide based on active bypass flags
 	}
 }
 
@@ -1972,6 +1930,7 @@ void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag
 		ostream& ofile)
 {
 	set<string> active_reenables;
+	map<string,bool> active_reenable_bypass_flags;
 
 	// address calculation
 	// 1. compute agross = base + (offset*scale-factor)
@@ -1984,6 +1943,7 @@ void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag
 			shift_factors, 
 			barrier,
 			active_reenables,
+			active_reenable_bypass_flags,
 			ofile);
 
 	//    in parallel, store
@@ -2002,7 +1962,7 @@ void AaObjectReference::Write_VC_Store_Control_Path_Optimized(bool pipeline_flag
 		string at = __SCT(this);
 
 		ofile << "// reenable-joins" << endl;
- 		Write_VC_Reenable_Joins(active_reenables, at,true, ofile); // bypass
+ 		Write_VC_Reenable_Joins(active_reenables, active_reenable_bypass_flags,  at,false, ofile); // do not force bypass, decide based on active bypass flags..
 	}
 }
 
@@ -2164,6 +2124,7 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 		vector<int>* shift_factors,
 		AaRoot* barrier,
 		set<string>& active_reenable_points,
+		map<string, bool>& active_reenable_bypass_flags,
 		ostream& ofile)
 {
 	int offset_val = 0;
@@ -2188,6 +2149,7 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 				scale_factors,
 				shift_factors,
 				active_reenable_points,
+				active_reenable_bypass_flags,
 				barrier,
 				ofile);
 
@@ -2234,9 +2196,10 @@ Write_VC_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set<AaRo
 				__MJ(sample_start, sample_complete, false) // no bypass
 				__MJ(update_start, update_complete, true)  // bypass
 
-				Write_VC_Reenable_Joins(active_reenable_points, word_addr_calculated,true, ofile); // bypass
+				Write_VC_Reenable_Joins(active_reenable_points, active_reenable_bypass_flags,  word_addr_calculated, false,  ofile); // do not force bypass, decide based on active bypass flags.
 				active_reenable_points.clear();
-				active_reenable_points.insert(sample_start);
+				active_reenable_points.insert(update_start);
+				active_reenable_bypass_flags[update_start] =  true;
 			}
 		}
 		else
@@ -2335,6 +2298,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		vector<int>* scale_factors,
 		vector<int>* shift_factors,
 		set<string>& active_reenable_points,
+		map<string,bool>& active_reenable_bypass_flags,
 		AaRoot* barrier,
 		ostream& ofile)
 {
@@ -2355,10 +2319,14 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
         string base_addr_update_reenable = 
 		this->Get_VC_Base_Address_Update_Reenable_Transition(visited_elements);
+	bool base_addr_update_reenable_bypass = this->Base_Address_Update_Protocol_Has_Delay(visited_elements);
 	if(pipeline_flag)
 	{
 	    if(base_addr < 0)
+	    {
 	    	active_reenable_points.insert(base_addr_update_reenable);
+		active_reenable_bypass_flags[base_addr_update_reenable] =  base_addr_update_reenable_bypass;
+	    }
 	}
 
 	bool all_indices_zero = (offset_val == 0);
@@ -2405,11 +2373,16 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 						ls_map,pipe_map,barrier,
 						ofile);
 
+				bool ivec_update_delay = (*index_vector)[idx]->Update_Protocol_Has_Delay(visited_elements);
+
 				string idx_reenable = ((*index_vector)[idx]->Get_VC_Reenable_Update_Transition_Name(visited_elements));
 				index_chain_reenable_map[idx] = idx_reenable;
 
 				if(pipeline_flag)
+				{
 					active_reenable_points.insert(idx_reenable);
+					active_reenable_bypass_flags[idx_reenable] = ivec_update_delay;
+				}
 
 				index_chain_complete_map[idx] = __UCT((*index_vector)[idx]);
 
@@ -2475,6 +2448,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 						active_reenable_points.erase(index_chain_reenable_map[idx]);
 						index_chain_reenable_map[idx] = idx_resize_update_start;
 						active_reenable_points.insert(idx_resize_update_start);
+						active_reenable_bypass_flags[idx_resize_update_start] = true;
 
 						// self-release. 
 						__MJ(idx_resize_sample_start, idx_resize_sample_complete, false); // no bypass
@@ -2529,6 +2503,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 						active_reenable_points.erase(index_chain_reenable_map[idx]);
 						index_chain_reenable_map[idx] = idx_scale_update_start;
 						active_reenable_points.insert(idx_scale_update_start);
+						active_reenable_bypass_flags[idx_scale_update_start] = true;
 
 						// self-release.. 
 						__MJ(idx_scale_sample_start, idx_scale_sample_complete, false); // bypass
@@ -2564,11 +2539,13 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 
 		string last_sum_complete = index_chain_complete_map[non_constant_indices[0]];
 		string last_sum_reenable = index_chain_reenable_map[non_constant_indices[0]];
+		bool ls_reenable_flag = active_reenable_bypass_flags[last_sum_reenable];
 
 		if(num_index_adds > 0)
 		{
 			for(int idx = 1; idx <= num_index_adds; idx++)
 			{
+				ls_reenable_flag = true;
 				reg_flag = true;
 				string prefix = this->Get_VC_Name() + "_partial_sum_" + IntToStr(idx);
 
@@ -2645,6 +2622,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		}
 		active_reenable_points.clear();
 		active_reenable_points.insert(last_sum_reenable);
+		active_reenable_bypass_flags[last_sum_reenable] = ls_reenable_flag;
 
 		if(const_index_flag)
 		{
@@ -2681,6 +2659,7 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		
 			active_reenable_points.clear();
 			active_reenable_points.insert(update_start);
+			active_reenable_bypass_flags[update_start] = true;
 		}
 		else
 		{
@@ -2773,10 +2752,11 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 			__MJ(bpo_sample_complete, bpo_sample_start, false); // no bypass
 			__MJ(bpo_update_complete, bpo_update_start, true); // bypass
 
-			Write_VC_Reenable_Joins(active_reenable_points, bpo_sample_complete,true,  ofile); // bypass
+			Write_VC_Reenable_Joins(active_reenable_points, active_reenable_bypass_flags, bpo_sample_complete,false,  ofile); // do not force bypass, decide based on active bypass flags..
 
 			active_reenable_points.clear();
 			active_reenable_points.insert(bpo_update_start);
+			active_reenable_bypass_flags[bpo_update_start] = true;
 		}
 	}
 	else 

@@ -33,32 +33,32 @@ void initHF()
 
 	for(idx = 0; idx < M; idx++)
 	{
-		__loop_pipelining_on__(8,1,0);
+		__loop_pipelining_on__(8,1,1);
 		hF0[idx] = read_float64("hermite_function_pipe");
 	}
 	for(idx = 0; idx < M; idx++)
 	{
-		__loop_pipelining_on__(8,1,0);
+		__loop_pipelining_on__(8,1,1);
 		hF1[idx] = read_float64("hermite_function_pipe");
 	}
 	for(idx = 0; idx < M; idx++)
 	{
-		__loop_pipelining_on__(8,1,0);
+		__loop_pipelining_on__(8,1,1);
 		hF2[idx] = read_float64("hermite_function_pipe");
 	}
 	for(idx = 0; idx < M; idx++)
 	{
-		__loop_pipelining_on__(8,1,0);
+		__loop_pipelining_on__(8,1,1);
 		hF3[idx] = read_float64("hermite_function_pipe");
 	}
 	for(idx = 0; idx < M; idx++)
 	{
-		__loop_pipelining_on__(8,1,0);
+		__loop_pipelining_on__(8,1,1);
 		hF4[idx] = read_float64("hermite_function_pipe");
 	}
 	for(idx = 0; idx < M; idx++)
 	{
-		__loop_pipelining_on__(8,1,0);
+		__loop_pipelining_on__(8,1,1);
 		hF5[idx] = read_float64("hermite_function_pipe");
 	}
 
@@ -73,7 +73,7 @@ void initFit()
 
 	for(idx = 0; idx < NSIGMAS; idx++)
 	{
-		__loop_pipelining_on__(8,1,0);
+		__loop_pipelining_on__(8,1,1);
 		dotP0[idx]  = 0;
 		dotP1[idx]  = 0;
 		dotP2[idx]  = 0;
@@ -90,6 +90,7 @@ void initFit()
 // the inner product computation.
 // 
 // 
+// time taken: approx NSIGMAS*12 
 inline void  __InnerProduct__(int I0, double x) {
 	int SI;
 	for(SI = 0; SI < NSIGMAS; SI++)
@@ -115,6 +116,8 @@ inline void  __InnerProduct__(int I0, double x) {
 // receive a sample frame and compute the
 // inner products with all the hF basis
 // polynomials.
+//
+// Time taken= NSIGMAS*NSAMPLES*12 = (6 * 144 * 12 = 10K cycles).
 void RxAndComputeInnerProducts()
 {
 	int I;
@@ -159,6 +162,7 @@ void RxAndComputeInnerProducts()
 //  Keep track of the smallest mse and the
 //  corresponding sigma index.
 //
+// Approx. time taken = NSIGMAS*NSAMPLES*12 = 10K
 void computeMSE()
 {
 	int I;
@@ -181,6 +185,7 @@ void computeMSE()
 
 		int Offset = (SI * NSAMPLES);
 
+		// time taken = NSAMPLES*12
 		for(I = 0; I < NSAMPLES; I++)
 		{
 			__loop_pipelining_on__(8,1,0);
@@ -243,7 +248,9 @@ void bestFit()
 
 		write_uint32("elapsed_time_pipe", (end_time - start_time));
 
+		// should take about 20K cycles to get here.
+		// If 1 cycle = 10ns, then this is about 200K ns
+		// which is 200usec.
 		initFit();
-
 	}
 }

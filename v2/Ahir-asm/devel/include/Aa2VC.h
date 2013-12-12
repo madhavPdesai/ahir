@@ -177,7 +177,9 @@ void Write_VC_Pipe_Dependency(bool pipeline_flag,
 			      AaExpression* tgt,
 			      ostream& ofile);
 
-void Write_VC_Reenable_Joins(set<string>& active_reenable_points, string& rel_tran, bool bypass_flag, ostream& ofile);
+void Write_VC_Reenable_Joins(set<string>& active_reenable_points,
+				map<string,bool>& active_reenable_bypass_flags, 
+				 string& rel_tran, bool force_bypass_flag, ostream& ofile);
 
 void Write_VC_RAW_Release_Deps(AaRoot* succ, set<AaRoot*>& preds);
 

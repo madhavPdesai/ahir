@@ -308,7 +308,7 @@ class AaExpression: public AaRoot
 	virtual bool Is_Part_Of_Extreme_Pipeline();
 
 	virtual void Collect_Root_Sources(set<AaExpression*>& root_set) {if(!this->Is_Constant()) root_set.insert(this);}
-	virtual void Write_VC_Update_Reenables(string ctrans, set<AaRoot*>& visited_elements, ostream& ofile);
+	virtual void Write_VC_Update_Reenables(string ctrans, bool bypass_if_true,  set<AaRoot*>& visited_elements, ostream& ofile);
 
 	virtual AaStatement* Get_Guarded_Statement() {return(NULL);}
 
@@ -317,6 +317,8 @@ class AaExpression: public AaRoot
 
 	virtual void Update_Guard_Adjacency(map<AaRoot*, vector< pair<AaRoot*, int> > >& adjacency_map, set<AaRoot*>& visited_elements);
 	virtual AaRoot* Get_Object() { assert(0); }
+
+	virtual bool Update_Protocol_Has_Delay(set<AaRoot*>& visited_elements) {return(true);}
 };
 
 
@@ -612,6 +614,7 @@ class AaObjectReference: public AaExpression
 				vector<int>* shift_factors,
 				AaRoot* barrier,
 				set<string>& active_reenable_points,
+				map<string,bool>& active_reenable_bypass_flags,
 				ostream& ofile);
 
 		void Write_VC_Address_Calculation_Links_Optimized(string hier_id,
@@ -627,7 +630,8 @@ class AaObjectReference: public AaExpression
 				vector<AaExpression*>* indices,
 				vector<int>* scale_factors,
 				vector<int>* shift_factors,
-				set<string>& reenable_points,
+				set<string>& active_reenable_points,
+				map<string,bool>& active_reenable_bypass_flags,
 				AaRoot* barrier,
 				ostream& ofile);
 		void Write_VC_Root_Address_Calculation_Links_Optimized(string hier_id,
@@ -645,6 +649,10 @@ class AaObjectReference: public AaExpression
 			assert(0);
 		}
 
+	virtual bool Base_Address_Update_Protocol_Has_Delay(set<AaRoot*>& visited_elements)
+	{
+		assert(0);
+	}
 };
 
 // simple reference to a constant string (must be integer or real scalar or array)
@@ -781,6 +789,7 @@ class AaSimpleObjectReference: public AaObjectReference
 	virtual string Get_Name();
 	virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 
+	virtual bool Update_Protocol_Has_Delay(set<AaRoot*>& visited_elements);
 };
 
 
@@ -915,6 +924,7 @@ class AaArrayObjectReference: public AaObjectReference
 
 	virtual string Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements);
 	virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
+	virtual bool Base_Address_Update_Protocol_Has_Delay(set<AaRoot*>& visited_elements);
 };
 
 
@@ -1014,6 +1024,7 @@ class AaPointerDereferenceExpression: public AaObjectReference
 	virtual void Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement);
 
 	virtual string Get_VC_Base_Address_Update_Reenable_Transition(set<AaRoot*>& visited_elements);
+	virtual bool Base_Address_Update_Protocol_Has_Delay(set<AaRoot*>& visited_elements);
 };
 
 

@@ -174,7 +174,8 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		__J(__SST(this), __UCT(this->_guard_expression));
 	        if(pipeline_flag)
 	        {
-			__MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass.
+			this->_guard_expression->Write_VC_Update_Reenables(__SCT(this), false,
+						visited_elements, ofile);
 		}
 	   }
 	
@@ -182,8 +183,8 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  __J(__SST(this), __UCT(this->_source));
 	  if(pipeline_flag)
 	  {
-		__MJ(this->_source->Get_VC_Reenable_Update_Transition_Name(visited_elements), 
-			__SCT(this),true); // bypass
+		this->_source->Write_VC_Update_Reenables(__SCT(this), false,
+						visited_elements, ofile);
 		__SelfReleaseSplitProtocolPattern
 	  }
 	}
@@ -196,7 +197,8 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       		__J(__SST(this->_target), __UCT(this->_source));
 		if(pipeline_flag)
 		{
-			__MJ(this->_source->Get_VC_Reenable_Update_Transition_Name(visited_elements),__SCT(this->_target), true); // bypass
+			this->_source->Write_VC_Update_Reenables(__SCT(this->_target), false,
+						visited_elements, ofile);
 		}
       }
 
@@ -276,16 +278,11 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       		this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
 
       		__J(__SST(this),__UCT(this->_guard_expression));
-		// NOTE: with new split-guard interface, this
-		// dependency is no longer needed.
-      		//__J(__UST(this),__UCT(this->_guard_expression));
 
 		if(pipeline_flag)
 		{
-      			__MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements),__SCT(this),true)  // bypass
-			// NOTE: with new split-guard interface, this
-			// dependency is no longer needed.
-      			//__MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements),__UCT(this),true)  // bypass
+			this->_guard_expression->Write_VC_Update_Reenables(__SCT(this), false,
+						visited_elements, ofile);
 		}
 	}
     }
@@ -310,7 +307,8 @@ void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  {
 	    // expression evaluation will be reenabled by activation of the
 	    // call.
-	    __MJ(expr->Get_VC_Reenable_Update_Transition_Name(visited_elements), __SCT(this), true); // bypass
+	   expr->Write_VC_Update_Reenables(__SCT(this), false,
+						visited_elements, ofile);
 	  }
 	}
 
@@ -1352,7 +1350,10 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 						       ofile);
 	  __J(__SST(this),__UCT(source_expr));
 	  if(pipeline_flag)
-		__MJ(__UST(source_expr), __SCT(this), true); // bypass.
+	  {
+		source_expr->Write_VC_Update_Reenables(__SCT(this), false,
+						visited_elements, ofile);
+	  }
         }
       if(trig_place == "$loopback")
       {
@@ -1387,24 +1388,8 @@ void AaPhiStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
   // take care of the guard
   if(this->_guard_expression)
     {
-	    cerr <<	"Warning: Guard for PHI statement ignored.., for now.\n";
-      // guard expression calculation
-      /*
-      this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
-      if(!this->_guard_expression->Is_Constant())
-	{
-	  // dependency between guard-expression calculation and this statement.
-	  __J(__SST(this),__UCT(this->_guard_expression))
-
-	  // pipeline_flag?  guard-expression evaluation is reenabled by 
-	  // this statement's completion.
-	  if(pipeline_flag)
-	    {
-	      __MJ(this->_guard_expression->Get_VC_Reenable_Update_Transition_Name(visited_elements),
-		   __SCT(this), true); // bypass
-	    }
-	}
-	*/
+		// For the moment, PHI statements cannot have guards.
+	    AaRoot::Error("Guards for PHI statements are not permitted.", this);
     }
   visited_elements.insert(this);
 }

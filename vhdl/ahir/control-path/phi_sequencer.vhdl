@@ -85,7 +85,7 @@ begin  -- Behave
   begin
       place_pred(0) <= ack;
       place_succ(0) <= ack_clear;
-      pack: place_with_bypass generic map(capacity => place_capacity, marking => 1,
+      pack: place generic map(capacity => place_capacity, marking => 1,
 	  	 name => name & ":ack")
         port map(place_pred,place_succ,ack_token,clk,reset);    
   end block;

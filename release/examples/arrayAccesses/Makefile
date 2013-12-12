@@ -38,8 +38,8 @@ llvmbc2aa:  prog.opt.o
 	llvm2aa $(LLVM2AAOPTS)  prog.opt.o | vcFormat >  prog.aa
 
 # Aa to vC
-aalink: prog.aa $(FUNCTIONLIB)/Aa/fpu.aa
-	AaLinkExtMem prog.aa $(FUNCTIONLIB)/Aa/fpu.aa | vcFormat > prog.linked.aa
+aalink: prog.aa 
+	AaLinkExtMem prog.aa | vcFormat > prog.linked.aa
 	AaOpt prog.linked.aa | vcFormat > prog.linked.opt.aa
 
 aa2vc: prog.linked.opt.aa
@@ -47,7 +47,7 @@ aa2vc: prog.linked.opt.aa
 
 # vC to VHDL
 vc2vhdl: prog.vc
-	vc2vhdl -S 4 -O -I 16 -v -q -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/fpu.list
+	vc2vhdl -S 4 -O -I 16 -v -q -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc 
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl
 	vhdlFormat < ahir_system.unformatted_vhdl > ahir_system.vhdl
 	vhdlFormat < ahir_system_test_bench.unformatted_vhdl > ahir_system_test_bench.vhdl

@@ -991,6 +991,71 @@ string AaSimpleObjectReference::Get_VC_Reenable_Sample_Transition_Name(set<AaRoo
 	}
 }
 
+// Return true if this expression has a non-trivial
+// update req->ack, with a unit delay inserted.
+bool AaSimpleObjectReference::Update_Protocol_Has_Delay(set<AaRoot*>& visited_elements)
+{
+	if(this->Is_Constant())
+	{
+		return(false);
+	}
+	else 
+		// either it is an access to a storage object, pipe,
+		// implicit variable or interface object.
+		//
+		// In the pipe/storage case, simply reenable the active
+		// transition 
+		//
+		// In the implicit variable case, reenable the
+		// active transition of the statement defining the
+		// variable, if it exists in visited elements
+		//
+		// In the interface object case, if the unique
+		// driver to the interface object exists in visited elements
+		// use the active of that driver statement.
+		//
+	{
+
+		if(this->_object->Is("AaStorageObject"))
+			return(true);
+
+		if(this->_object->Is("AaPipeObject"))
+			return(true);
+
+		if(this->_object->Is_Interface_Object())
+		{
+			AaInterfaceObject* io = (AaInterfaceObject*) (this->_object);
+			if(io->Get_Is_Input())
+				return(false);
+			else
+			{
+				AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
+				if((root != NULL) && (visited_elements.find(root) != visited_elements.end()))
+					return(true);
+				else
+					return(false);
+			}
+		}
+
+		if(this->Is_Implicit_Variable_Reference())
+		{
+			AaRoot* root = this->Get_Root_Object();
+			if(visited_elements.find(root) != visited_elements.end())
+			{
+				return(true);
+			}
+			else
+			{
+				return(false);
+			}
+		}
+
+		// you should never get here.
+		assert(0 && "unknown variety of simple-object-reference");
+	}
+}
+
+
 // TODO: in these four cases, the case when the target is
 //       an interface object needs to be handled similarly..
 string AaSimpleObjectReference::Get_VC_Sample_Start_Transition_Name()
