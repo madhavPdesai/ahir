@@ -12,6 +12,8 @@ void __loop_pipelining_on__(uint32_t val, uint32_t buf, uint32_t extreme_flag);
 
 void vectorSum()
 {
+
+       float Threshold = 0.5;
 #ifdef ALT
 #endif
 	while(1)
@@ -22,7 +24,7 @@ void vectorSum()
 		float x = read_float32("in_data_pipe");
 		float y, z;
 #ifdef ALT
-		if(x > 0.5)
+		if(x > Threshold)
 		{
 			y = fpadd32(x,x);
 			z = fpmul32(x,y);

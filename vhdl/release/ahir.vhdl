@@ -10365,18 +10365,27 @@ begin  -- Behave
       -- the resize operation is to be treated specially, since
       -- there are two different conversions..
       ResizeFloat: if (operator_id = "ApFloatResize") generate
-        process(data_in)
-          variable op1: std_logic_vector(iwidth_1-1 downto 0);
-          variable   result_var: std_logic_vector(owidth-1 downto 0);                
-        begin
-          op1 := data_in;
-          result_var := (others => '0');
-          ApFloatResize_proc(To_Float(op1, input1_characteristic_width, input1_mantissa_width),
-                             output_characteristic_width,
-                             output_mantissa_width,
-                             result_var);
-          result <= result_var;
-        end process;        
+
+        Trivial: if ((output_mantissa_width = input1_mantissa_width) and
+			(output_characteristic_width = input1_characteristic_width)) generate
+		result <= data_in;
+	end generate Trivial;
+
+        NonTrivial: if ((output_mantissa_width /= input1_mantissa_width) or
+			(output_characteristic_width /= input1_characteristic_width)) generate
+          process(data_in)
+            variable op1: std_logic_vector(iwidth_1-1 downto 0);
+            variable   result_var: std_logic_vector(owidth-1 downto 0);                
+          begin
+            op1 := data_in;
+            result_var := (others => '0');
+            ApFloatResize_proc(To_Float(op1, input1_characteristic_width, input1_mantissa_width),
+                               output_characteristic_width,
+                               output_mantissa_width,
+                               result_var);
+            result <= result_var;
+          end process;        
+	end generate NonTrivial;
       end generate ResizeFloat;
 
       NotResizeFloat: if (operator_id /= "ApFloatResize") generate
