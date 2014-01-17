@@ -1832,7 +1832,9 @@ void AaTernaryExpression::Write_VC_Control_Path_Optimized(bool pipeline_flag, se
 		__J(__UST(this), __SCT(this));
 	}
 	else
+	{
 		__F(__SCT(this), "$null");
+	}
 
 	if(pipeline_flag && !flow_through)
 	{
