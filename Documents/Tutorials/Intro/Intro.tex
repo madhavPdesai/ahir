@@ -1,0 +1,157 @@
+\documentclass{beamer}
+\usepackage{epsfig}
+\title{An introduction to the AHIR-v2 tool-set}
+\author{Madhav P. Desai}
+\begin{document}
+\maketitle
+
+
+
+\frame[containsverbatim]{\frametitle{The purpose of the toolset}
+
+\begin{itemize}
+\item Aid in the design and implementation of complex systems (in hardware).
+\item Describe the algorithm (behaviour) of the system using high-level
+languages (currently C), and migrate the algorithm to a hardware
+implementation.
+\end{itemize}
+}
+
+
+\frame[containsverbatim]{\frametitle{For example}
+Design a circuit that takes two inputs, computes the maximum of
+the two and returns the maximum.
+\begin{verbatim}
+uint32_t maxOfTwo(uint32_t a, uint32_t b)
+{
+  uint32_t c = ((a > b) ? a : b);
+}
+\end{verbatim}
+}
+
+
+\frame[containsverbatim]{\frametitle{Lets write a test-program to check this code}
+\begin{verbatim}
+uint32_t maxOfTwo(uint32_t, uint32_t);
+int main(int argc, char* argv[])
+{
+  if(argc < 3)
+  {
+     printf(stderr, "%s <uint32_t> <uint32_t>\n", argv[0]);
+     return(1);
+  }
+  uint32_t c = maxOfTwo(atoi(argv[1]), atoi(argv[2]));
+  printf(stdout,"Result = %d.\n", c);
+  return(0);
+}
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{We compile and run it}
+
+Go to ex1/ and check it out.
+
+}
+
+
+\frame[containsverbatim]{\frametitle{Conversion to hardware}
+
+The AHIR-v2 flow translates the code to hardware in four steps:
+\begin{enumerate}
+\item The source C code is compiled using the open-source compiler
+{\bf clang} (we version 2.8), which produces byte-code in {\bf llvm}
+format.
+\item We take the {\bf llvm} bytecode and translate it to our internal
+representation called {\bf Aa}.  This is done by a utility called {\bf llvm2aa}.
+\item Multiple {\bf Aa} files can be linked using an {\bf Aa} linker
+tool called {\bf AaLinkExtMem}.
+\item The linked {\bf Aa} code is then converted to a virtual circuit using
+a {\bf vC} representation.  This is done using a utility called {\bf aa2vc}.
+\item Finally, the {\bf vC} code is converted to VHDL which can then
+be simulated or synthesized.  This conversion is done using a utility
+called {\bf vc2vhdl}.
+\end{enumerate}
+At each stage, various optimizations are carried out.
+}
+
+\frame[containsverbatim]{\frametitle{Lets see what happens}
+
+Go back to ex1/ and check it out.
+
+}
+
+
+\frame[containsverbatim]{\frametitle{Validating the VHDL}
+
+\begin{itemize}
+\item In order to test the VHDL, we will use the same program
+that was used to test the original C code.
+\item Two processes are started: one executing the test-program
+and the other executing a VHDL simulator which simulates the
+generated VHDL.  The two processes communicate through sockets.
+\item There is no need to write a new test-bench!
+\end{itemize}
+}
+
+
+\frame[containsverbatim]{\frametitle{Lets take a look}
+Go back to examples/ex1 and check it out.
+}
+
+\frame[containsverbatim]{\frametitle{Lets make it a  little more interesting}
+\begin{verbatim}
+void maxDaemon()
+{
+  while(1)
+  {
+       uint32_t a = read_uint32("in_data");
+       uint32_t b = read_uint32("in_data");
+       c = ((a > b) ? a : b);
+       write_uint32("out_data", c);
+  }
+}
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{The testbench for the Daemon}
+\begin{verbatim}
+int main(int argc, char* argv[])
+{
+  uint32_t a, b, c;
+  while(1)
+  {
+     scanf("%d", &a);
+     scanf("%d", &b);
+     write_uint32("in_data", a);
+     write_uint32("in_data", b);
+     c = read_uint32("out_data");
+     printf(stdout,"Result = %d.\n", c);
+  }
+  return(0);
+}
+\end{verbatim}
+}
+
+
+\frame[containsverbatim]{\frametitle{The testbench for the Daemon}
+Lets check out the software and the hardware generated from it. 
+Go to ex2/.
+}
+
+
+
+\frame[containsverbatim]{\frametitle{Installing AHIR-v2}
+
+\begin{itemize}
+\item You will need to install llvm-2.8, clang-2.8, the BOOST graph library.
+\item You can download the source code from gitHub.
+\item Go to the v2/ folder in the git repository.  You will need to
+source ``build\_bashrc'', and then type ``scons'' to build the executables.
+You can then make a release by going back to the root of the git repository
+and then typing ``make -f ReleaseMakeFile''.  This populates the Release
+directory with binaries, examples etc. which should be enough to get you
+going.
+\end{itemize}
+}
+
+\end{document}
