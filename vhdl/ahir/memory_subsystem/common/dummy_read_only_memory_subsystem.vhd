@@ -53,29 +53,28 @@ end entity dummy_read_only_memory_subsystem;
 architecture Default of dummy_read_only_memory_subsystem is
 begin
 
-     lc_data_out <= (others => '0');
-     lc_ack_out <= (others => '1');
+     gen: for I in 0 to num_loads-1 generate
+	lr_ack_out(I) <= lr_req_in(I);
 
-     -- ack after one tick..
-     process(clock)
-     begin
-	if(clock'event and clock = '1') then
-		if(reset = '1') then
-			lr_ack_out <= (others => '0');
-		else
-			for I in 0 to num_loads-1 loop
-				if(lr_req_in(I) = '1') then
-					lc_tag_out(((I+1)*tag_width)-1 downto I*tag_width) 
-						<= 
-						lr_tag_in(((I+1)*tag_width)-1 downto I*tag_width);
-					lr_ack_out(I) <= '1';
-				else
-					lr_ack_out(I) <= '0';
+	fsm: block
+		signal busy : std_logic;
+	begin
+		lc_ack_out(I) <= busy;
+
+		process(clock)
+		begin
+			if(clock'event and clock = '1') then
+				if(reset = '1') then 
+				elsif (lr_req_in(I) = '1') then
+					busy <= '1';
+					lc_tag_out <= lr_tag_in;
+				elsif (lc_req_in(I) = '1') then
+					busy <= '0';
 				end if;
-			end loop;
-		end if;
-	end if;
-     end process;
+			end if;
+		end process;
+	end block;
+     end generate gen;
 
 end Default;
 

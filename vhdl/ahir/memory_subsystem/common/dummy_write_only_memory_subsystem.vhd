@@ -53,29 +53,29 @@ end entity dummy_write_only_memory_subsystem;
 architecture Default of dummy_write_only_memory_subsystem is
 begin
 
-     -- you are always done..
-     sc_ack_out <= (others => '1');
 
-     -- ack after one tick..
-     process(clock)
-     begin
-	if(clock'event and clock = '1') then
-		if(reset = '1') then
-			sr_ack_out <= (others => '0');
-		else
-			for I in 0 to num_stores-1 loop
-				if(sr_req_in(I) = '1') then
-					sc_tag_out(((I+1)*tag_width)-1 downto I*tag_width) 
-						<= 
-						sr_tag_in(((I+1)*tag_width)-1 downto I*tag_width);
-					sr_ack_out(I) <= '1';
-				else
-					sr_ack_out(I) <= '0';
+     gen: for I in 0 to num_stores-1 generate
+	sr_ack_out(I) <= sr_req_in(I);
+
+	fsm: block
+		signal busy : std_logic;
+	begin
+		sc_ack_out(I) <= busy;
+
+		process(clock)
+		begin
+			if(clock'event and clock = '1') then
+				if(reset = '1') then 
+				elsif (sr_req_in(I) = '1') then
+					busy <= '1';
+					sc_tag_out <= sr_tag_in;
+				elsif (sc_req_in(I) = '1') then
+					busy <= '0';
 				end if;
-			end loop;
-		end if;
-	end if;
-     end process;
+			end if;
+		end process;
+	end block;
+     end generate gen;
 
 end Default;
 
