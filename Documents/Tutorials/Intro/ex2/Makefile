@@ -10,8 +10,8 @@ VHDL_VHPI_LIB=$(AHIR_RELEASE)/CtestBench/vhdl
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
 SRC=./src
 all: SW HW 
-TOAA:c2llvmbc llvmbc2aa  aalink
-TOVC:c2llvmbc llvmbc2aa  aalink aa2vc 
+TOAA:c2llvmbc llvmbc2aa  
+TOVC:c2llvmbc llvmbc2aa  aa2vc 
 VC2VHDL: vc2vhdl  vhdlsim
 AA2VHDLSIM: aa2vc  vc2vhdl  vhdlsim
 TOVHDL:TOVC vc2vhdl
