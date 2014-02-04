@@ -126,13 +126,13 @@ void Write_VC_Unary_Operator(AaOperation op,
 	  src_kind = ((src_type->Is("AaFloatType")) ? "F" :
 		       (src_type->Is("AaIntType") ? "S" : "U"));
 
-	  /*if((target_type == src_type) || ( (dest_kind == "U" && src_kind == "U")))
+	  if((target_type == src_type) || ( (dest_kind == "U" && src_kind == "U")))
 	    {
-	      // just register it..
-	      op_name = ":=";
+	      // just an interlock-buffer.
+	      op_name = "# :=";
 	    }
-	  else */
-	  op_name = "$" + dest_kind + ":=$" + src_kind;
+	  else 
+	    op_name = "$" + dest_kind + ":=$" + src_kind;
 
 	}
       else
