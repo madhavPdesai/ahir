@@ -436,7 +436,7 @@ void AaBlockStatement::Identify_Maximal_Sequences(AaStatementSequence* sseq,
 	     stmt->Is_Control_Flow_Statement() || 
 	     (stmt->Is("AaCallStatement") && 
 	      !((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()))->Has_No_Side_Effects())
-	     || stmt->Can_Block())
+	     || stmt->Can_Block(false))
 	    {
 	      if(linear_segment.size() == 0)
 		{
@@ -538,7 +538,7 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
 	  if(stmt->Is_Block_Statement() || (stmt->Is("AaCallStatement") && 
 					    !((AaModule*)(((AaCallStatement*)stmt)->Get_Called_Module()))->Has_No_Side_Effects())
-	     || (!pipeline_flag && stmt->Can_Block()))
+	     || stmt->Can_Block(pipeline_flag))
 	    {
 	      trailing_barrier = stmt;
 	      ofile << "// barrier: " << stmt->To_String() << endl;
@@ -556,7 +556,7 @@ void AaBlockStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 		  __J(__SST(stmt), __UCT(prev_stmt));
 		  if(prev_stmt->Is_Block_Statement() || (prev_stmt->Is("AaCallStatement") && 
 							 !((AaModule*)(((AaCallStatement*)prev_stmt)->Get_Called_Module()))->Has_No_Side_Effects())
-		     || prev_stmt->Can_Block())
+		     || prev_stmt->Can_Block(pipeline_flag))
 		    {
 		      break;
 		    }

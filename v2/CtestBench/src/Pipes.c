@@ -52,6 +52,22 @@ uint8_t register_pipe(const char* id, int pipe_depth, int pipe_width, int lifo_m
   
 }
 
+uint8_t register_port(const char* id, int pipe_width, int is_input)
+{
+  uint8_t ret_val;
+  char buffer[MAX_BUF_SIZE];
+  char* ss;
+  sprintf(buffer,"registerpipe.flag %s %d %d", id, pipe_width, is_input);
+
+  send_packet_and_wait_for_response(buffer,strlen(buffer),"localhost",9999);
+#ifdef DEBUG
+  fprintf(stderr,"Info: in register_port, received %s\n", buffer);
+#endif
+  ret_val = get_uint8_t(buffer,&ss);
+  return(ret_val);
+  
+}
+
 uint64_t read_uint64(const char *id)
 {
   uint64_t ret_val;
@@ -363,7 +379,6 @@ void write_uint8_n(const char *id, uint8_t* buf, int buf_len)
 uint32_t* read_uintptr(const char *id)
 {
 	return((uint32_t*) read_pointer(id));
-
 }
 
 void write_uintptr(const char *id, uint32_t* data)

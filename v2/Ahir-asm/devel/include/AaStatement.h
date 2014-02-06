@@ -160,7 +160,7 @@ class AaStatement: public AaScope
   virtual string Get_C_Function_Name() { return(this->Get_C_Name() + "_"); }
   virtual string Get_C_Wrap_Function_Name() { return(this->Get_C_Name()); }
   
-  virtual bool Can_Block() { assert(0); }
+  virtual bool Can_Block(bool pipeline_flag) { assert(0); }
   virtual void Write_Pipe_Condition_Check(ofstream& ofile , string tab_string);
   virtual void Write_Pipe_Read_Condition_Check(ofstream& ofile , string tab_string);
   virtual void Write_Pipe_Write_Condition_Check(ofstream& ofile , string tab_string);
@@ -443,7 +443,7 @@ class AaNullStatement: public AaStatement
     return("_null_line_" +   IntToStr(this->Get_Line_Number()));
   }
 
-  virtual bool Can_Block() { return(false); }
+  virtual bool Can_Block(bool pipeline_flag) { return(false); }
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
 
@@ -491,7 +491,7 @@ class AaAssignmentStatement: public AaStatement
   void Replace_Source_Expression(AaExpression* old_arg, AaSimpleObjectReference* new_arg);
 
   // return true if one of the sources or targets is a pipe.
-  virtual bool Can_Block();
+  virtual bool Can_Block(bool pipeline_flag);
   virtual void PrintC(ofstream& ofile, string tab_string);
 
 
@@ -580,8 +580,12 @@ class AaCallStatement: public AaStatement
   // body
   virtual void Write_C_Function_Body(ofstream& ofile);
 
+  //
   // return true if one of the sources or targets is a pipe.
-  virtual bool Can_Block();
+  // (if pipeline_flag is true, then the pipe must also be marked
+  //  as an explicit synch pipe).
+  // 
+  virtual bool Can_Block(bool pipeline_flag);
 
   virtual string Get_C_Name()
   {
@@ -754,7 +758,7 @@ class AaBlockStatement: public AaStatement
   }
 
   // return true if one of the sources or targets is a pipe.
-  virtual bool Can_Block() { return (true); }
+  virtual bool Can_Block(bool pipeline_flag) { return (true); }
 
 
 

@@ -72,84 +72,131 @@ void vcPipe::Print_VHDL_Instance(ostream& ofile)
 
   int num_reads = this->Get_Pipe_Read_Count();
   int num_writes = this->Get_Pipe_Write_Count();
-     
-  if(num_reads > 0 || num_writes > 0)
-    {
-      num_reads = MAX(num_reads,1);
-      num_writes = MAX(num_writes,1);
 
-      ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
-      ofile << "generic map( -- { " << endl;
-      ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
-      ofile << "num_reads => " << num_reads << "," << endl;
-      ofile << "num_writes => " << num_writes << "," << endl;
-      ofile << "data_width => " << pipe_width << "," << endl;
-      ofile << "lifo_mode => " << (this->Get_Lifo_Mode() ? "true" : "false") << "," << endl;
-      ofile << "depth => " << pipe_depth << " --}\n)" << endl;
-      ofile << "port map( -- { " << endl;
-      ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 
-	    << "read_ack => " << pipe_id << "_pipe_read_ack," << endl 
-	    << "read_data => "<< pipe_id << "_pipe_read_data," << endl 
-	    << "write_req => " << pipe_id << "_pipe_write_req," << endl 
-	    << "write_ack => " << pipe_id << "_pipe_write_ack," << endl 
-	    << "write_data => "<< pipe_id << "_pipe_write_data," << endl 
-	    << "clk => clk,"
-	    << "reset => reset -- }\n ); -- }" << endl;
-    }
+  if(num_reads > 0 || num_writes > 0)
+  {
+	// avert impossibility..
+	assert(!this->Get_Port() || (this->Get_In_Flag() || this->Get_Out_Flag()));
+
+	  // the pipe may be used in one of three modes.
+	  // - as an in-flag to pipe converter.
+	  //     (pulse_mode implies that input pulses are held
+	  //      until sampled by the reader).
+	  // - as a pipe to out-flag converter
+	  //     (pulse mode implies that a single output pulse
+	  //      is created by each successful writer).
+	  // - as a normal pipe with read and write interfaces.
+	  if(this->Get_Port() && this->Get_In_Flag())
+	  {
+		  assert(num_writes == 0);
+		  ofile << pipe_id << "_InPort: SystemInPort -- {" << endl;
+		  ofile << "generic map( -- { " << endl;
+		  ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
+		  ofile << "num_reads => " << num_reads << "," << endl;
+		  ofile << "in_data_width => " << (this->Get_Signal() ? 1 : pipe_width) << "," << endl;
+		  ofile << "out_data_width => " << pipe_depth << " --}\n)" << endl;
+		  ofile << "port map( -- { " << endl;
+		  ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 
+			  << "read_ack => " << pipe_id << "_pipe_read_ack," << endl 
+			  << "read_data => "<< pipe_id << "_pipe_read_data," << endl 
+			  << "in_data => "<< pipe_id << "," << endl 
+			  << "clk => clk,"
+			  << "reset => reset -- }\n ); -- }" << endl;
+	  }
+	  else if(this->Get_Out_Flag() && this->Get_Port())
+	  { 
+		  assert(num_reads == 0);
+		  ofile << pipe_id << "_OutPort: SystemOutPort -- {" << endl;
+		  ofile << "generic map( -- { " << endl;
+		  ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
+		  ofile << "num_writes => " << num_writes << "," << endl;
+		  ofile << "out_data_width => " << (this->Get_Signal() ? 1 : pipe_width) << "," << endl;
+		  ofile << "in_data_width => " << pipe_width << " --} ) \n" << endl;
+		  ofile << "port map( -- { " << endl;
+		  ofile << "write_req => " << pipe_id << "_pipe_write_req," << endl 
+			  << "write_ack => " << pipe_id << "_pipe_write_ack," << endl 
+			  << "write_data => "<< pipe_id << "_pipe_write_data," << endl 
+			  << "out_data => "<< pipe_id << "," << endl 
+			  << "clk => clk,"
+			  << "reset => reset -- }\n ); -- }" << endl;
+	  }
+	  else
+	  {
+		  num_reads = MAX(num_reads,1);
+		  num_writes = MAX(num_writes,1);
+		  ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
+		  ofile << "generic map( -- { " << endl;
+		  ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
+		  ofile << "num_reads => " << num_reads << "," << endl;
+		  ofile << "num_writes => " << num_writes << "," << endl;
+		  ofile << "data_width => " << pipe_width << "," << endl;
+		  ofile << "lifo_mode => " << (this->Get_Lifo_Mode() ? "true" : "false") << "," << endl;
+		  ofile << "depth => " << pipe_depth << " --}\n)" << endl;
+		  ofile << "port map( -- { " << endl;
+		  ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 
+			  << "read_ack => " << pipe_id << "_pipe_read_ack," << endl 
+			  << "read_data => "<< pipe_id << "_pipe_read_data," << endl 
+			  << "write_req => " << pipe_id << "_pipe_write_req," << endl 
+			  << "write_ack => " << pipe_id << "_pipe_write_ack," << endl 
+			  << "write_data => "<< pipe_id << "_pipe_write_data," << endl 
+			  << "clk => clk,"
+			  << "reset => reset -- }\n ); -- }" << endl;
+	  }
+  }
   else
-    {
-      vcSystem::Warning("pipe " + pipe_id + " not used in the system, ignored");
-    }
+  {
+	  vcSystem::Warning("pipe " + pipe_id + " not used in the system, ignored");
+  }
 }
 
 bool vcPipe::Get_Pipe_Module_Section(vcModule* caller_module, 
-				     string read_or_write, 
-				     int& hindex, 
-				     int& lindex)
+		string read_or_write, 
+		int& hindex, 
+		int& lindex)
 {
-  
-  bool ret_val = false;
-  hindex = 
-    ((read_or_write == "read") ? this->Get_Pipe_Read_Count()-1 :
-     this->Get_Pipe_Write_Count() -1);
 
-  
-  map<vcModule*, vector<int> >::iterator iter, fiter;
- 
-  if(read_or_write == "read")
-    {
-      iter = this->_pipe_read_map.begin();
-      fiter = this->_pipe_read_map.end();
-    }
-  else
-    {
-      iter = this->_pipe_write_map.begin();
-      fiter = this->_pipe_write_map.end();
-    }
+	bool ret_val = false;
+	hindex = 
+		((read_or_write == "read") ? this->Get_Pipe_Read_Count()-1 :
+		 this->Get_Pipe_Write_Count() -1);
 
-  for(; iter != fiter; iter++ )
-    {
-      if(caller_module == (*iter).first)
+
+	map<vcModule*, vector<int> >::iterator iter, fiter;
+
+	if(read_or_write == "read")
 	{
-	  lindex = (hindex + 1) - (*iter).second.size();
-	  ret_val = true;
-	  break;
+		iter = this->_pipe_read_map.begin();
+		fiter = this->_pipe_read_map.end();
 	}
-      else
+	else
 	{
-	  hindex -= (*iter).second.size();
+		iter = this->_pipe_write_map.begin();
+		fiter = this->_pipe_write_map.end();
 	}
-    }
-  return(ret_val);
+
+	for(; iter != fiter; iter++ )
+	{
+		if(caller_module == (*iter).first)
+		{
+			lindex = (hindex + 1) - (*iter).second.size();
+			ret_val = true;
+			break;
+		}
+		else
+		{
+			hindex -= (*iter).second.size();
+		}
+	}
+	return(ret_val);
 }
 
 string vcPipe::Get_Pipe_Aggregate_Section(string pid, 
-					  int hindex, 
-					  int lindex) 
+		int hindex, 
+		int lindex) 
 {
-    
-  int data_width;
-  string ret_string = this->Get_VHDL_Pipe_Interface_Port_Name(pid);
+
+	int data_width;
+	string ret_string = this->Get_VHDL_Pipe_Interface_Port_Name(pid);
     
   // find data_width.
   if((pid.find("req") != string::npos) || (pid.find("ack") != string::npos))

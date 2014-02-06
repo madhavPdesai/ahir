@@ -126,13 +126,13 @@ void Write_VC_Unary_Operator(AaOperation op,
 	  src_kind = ((src_type->Is("AaFloatType")) ? "F" :
 		       (src_type->Is("AaIntType") ? "S" : "U"));
 
-	  /*if((target_type == src_type) || ( (dest_kind == "U" && src_kind == "U")))
+	  if((target_type == src_type) || ( (dest_kind == "U" && src_kind == "U")))
 	    {
-	      // just register it..
-	      op_name = ":=";
+	      // just an interlock-buffer.
+	      op_name = "# :=";
 	    }
-	  else */
-	  op_name = "$" + dest_kind + ":=$" + src_kind;
+	  else 
+	    op_name = "$" + dest_kind + ":=$" + src_kind;
 
 	}
       else
@@ -353,13 +353,29 @@ void Write_VC_Intermediate_Wire_Declaration(string name, AaType* type, ostream& 
 }
 
 
-void Write_VC_Pipe_Declaration(string name, int width,int depth, bool lifo_mode, ostream& ofile)
+void Write_VC_Pipe_Declaration(string name, int width,int depth, bool lifo_mode, 
+			bool port, bool in_flag, bool out_flag, bool signal_flag,  ostream& ofile)
 {
   if(lifo_mode)
 	ofile << "$lifo ";
   
-  ofile << "$pipe [" << name << "] " << width << " " << "$depth " << depth << endl;
+  ofile << "$pipe [" << name << "] " << width << " " << "$depth " << depth << " ";
+
+  if(in_flag)
+	  ofile << "$in  ";
+  else if(out_flag)
+	ofile << "$out  ";
+
+  if(port)
+	ofile << "$port ";
+
+
+  if(signal_flag)
+	  ofile << "$signal ";
+
+  ofile << endl;
 }
+ 
 
 void Write_VC_Memory_Space_Declaration(string space_name, string obj_name, AaType* type, ostream& ofile)
 {

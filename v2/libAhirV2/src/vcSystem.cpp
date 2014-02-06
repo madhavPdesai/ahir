@@ -137,13 +137,19 @@ int vcSystem::Get_Pipe_Depth(string pipe_id)
   assert(_pipe_map.find(pipe_id) != _pipe_map.end());
   return(_pipe_map[pipe_id]->Get_Depth());
 }
-void vcSystem::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode) 
+void vcSystem::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode,bool port_flag,  bool in_flag, bool out_flag, 
+					bool signal_flag) 
 {
   assert(_pipe_map.find(pipe_id) == _pipe_map.end());
   assert(width > 0);
   assert(depth > 0);
 
-  _pipe_map[pipe_id] = new vcPipe(NULL, pipe_id, width, depth, lifo_mode);
+  vcPipe* np = new vcPipe(NULL, pipe_id, width, depth, lifo_mode);
+  _pipe_map[pipe_id] = np;
+  np->Set_Port(port_flag);
+  np->Set_In_Flag(in_flag);
+  np->Set_Out_Flag(out_flag);
+  np->Set_Signal(signal_flag);
 }
 
 void vcSystem::Add_Module(vcModule* module)
@@ -851,10 +857,20 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 	{
 	  // input pipe
 	  ofile << semi_colon << endl;
+	  if(p->Get_Port() && p->Get_In_Flag())
+	  {
+		if(p->Get_Signal())
+		  ofile << pipe_id << ": in std_logic_vector(0 downto 0)";
+		else
+		  ofile << pipe_id << ": in std_logic_vector(" << pipe_width-1 << " downto 0)";
+          }
+	  else
+	  {
+		  ofile << pipe_id << "_pipe_write_data: in std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+		  ofile << pipe_id << "_pipe_write_req : in std_logic_vector(0 downto 0);" << endl;
+		  ofile << pipe_id << "_pipe_write_ack : out std_logic_vector(0 downto 0)";
+	  }
 	  semi_colon = ";";
-	  ofile << pipe_id << "_pipe_write_data: in std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-	  ofile << pipe_id << "_pipe_write_req : in std_logic_vector(0 downto 0);" << endl;
-	  ofile << pipe_id << "_pipe_write_ack : out std_logic_vector(0 downto 0)";
 	}
 
 
@@ -862,10 +878,20 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 	{
 	  // output
 	  ofile << semi_colon << endl;
+	  if(p->Get_Port() && p->Get_Out_Flag())
+	  {
+		if(p->Get_Signal())
+		  ofile << pipe_id << ": out std_logic_vector(0 downto 0)";
+		else
+		  ofile << pipe_id << ": out std_logic_vector(" << pipe_width-1 << " downto 0)";
+          }
+	  else
+	  {
+		  ofile << pipe_id << "_pipe_read_data: out std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+		  ofile << pipe_id << "_pipe_read_req : in std_logic_vector(0 downto 0);" << endl;
+		  ofile << pipe_id << "_pipe_read_ack : out std_logic_vector(0 downto 0)";
+          }
 	  semi_colon = ";";
-	  ofile << pipe_id << "_pipe_read_data: out std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-	  ofile << pipe_id << "_pipe_read_req : in std_logic_vector(0 downto 0);" << endl;
-	  ofile << pipe_id << "_pipe_read_ack : out std_logic_vector(0 downto 0)";
 	}
     }
 

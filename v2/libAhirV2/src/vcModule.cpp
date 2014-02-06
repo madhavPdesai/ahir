@@ -1360,13 +1360,19 @@ vcPipe* vcModule::Find_Pipe(string pipe_id)
 	return(ret_pipe);
 }
 
-void vcModule::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode) 
+void vcModule::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode, bool port_flag, bool in_flag, bool out_flag, bool signal_flag) 
 {
 	assert(_pipe_map.find(pipe_id) == _pipe_map.end());
 	assert(width > 0);
 	assert(depth > 0);
 
-	_pipe_map[pipe_id] = new vcPipe(this, pipe_id, width, depth, lifo_mode);
+	vcPipe* np =  new vcPipe(this, pipe_id, width, depth, lifo_mode);
+	_pipe_map[pipe_id] = np;
+
+        np->Set_Port(port_flag);
+        np->Set_In_Flag(in_flag);
+	np->Set_Out_Flag(out_flag);
+	np->Set_Signal(signal_flag);
 }
 
 void vcModule::Print_VHDL_Pipe_Signals(ostream& ofile)

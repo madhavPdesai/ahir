@@ -319,7 +319,13 @@ AaPipeObject::AaPipeObject(AaScope* parent_tpr, string oname, AaType* otype):AaO
 {
   _depth = 1;
   _lifo_mode = false;
+  _port = false;
+  _in_mode = false;
+  _out_mode = false;
+  _signal = false;
+  _synch  = false;
 };
+
 AaPipeObject::~AaPipeObject() {};
 void AaPipeObject::Print(ostream& ofile)
 {
@@ -329,9 +335,45 @@ void AaPipeObject::Print(ostream& ofile)
   ofile << "$pipe ";
   this->AaObject::Print(ofile);
   ofile << " $depth " << this->Get_Depth() << " ";
+  if(_in_mode)
+	  ofile << " $in ";
+  else if(_out_mode)
+	  ofile << " $out ";
+
+  if(_port)
+	  ofile << " $port ";
+
+
+  if(_signal)
+	  ofile << " $signal ";
+
+  if(_synch)
+	  ofile << " $synch ";
+
   ofile << endl << "// can point into ";
   Print_Storage_Object_Set(this->Get_Addressed_Objects(),ofile);
   ofile << endl;
+}
+
+   
+void AaPipeObject::Add_Reader(AaModule* m) 
+{
+	if(this->Get_Out_Mode())
+	{
+		AaRoot::Error("pipe " + this->Get_Name() + " is marked as an out-flag.. cannot be read from.", this);
+		return;
+	}
+	_reader_modules.insert(m);
+}
+
+void AaPipeObject::Add_Writer(AaModule* m) 
+{
+	if(this->Get_In_Mode())
+	{
+		AaRoot::Error("pipe " + this->Get_Name() + " is marked as an in-flag.. cannot be written into.", this);
+		return;
+	}
+	_writer_modules.insert(m);
 }
 
 //
@@ -350,6 +392,10 @@ void AaPipeObject::Write_VC_Model(ostream& ofile)
 			    this->_type->Size(),
 			    this->Get_Depth(),
 			    this->Get_Lifo_Mode(),
+			    this->Get_Port(),
+			    this->Get_In_Mode(),
+			    this->Get_Out_Mode(),
+			    this->Get_Signal(),
 			    ofile);
 }
 

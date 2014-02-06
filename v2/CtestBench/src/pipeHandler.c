@@ -492,6 +492,20 @@ void parse_and_add_job(char* receive_buffer, int client_sock, char* payload, int
       uint8_t status = (p != NULL);
       ack_and_close_connection(client_sock,status);
     }
+  else if(strcmp(type_of_request,"registerpipe.flag") == 0)
+    {
+      int depth = 1;
+
+      char* width_string = strtok_r(NULL," ",&save_ptr);
+      assert(width_string != NULL);
+      int width = atoi(width_string);
+
+      PipeRec* p = add_pipe(pipe_name,depth,width,0);
+      uint8_t status = (p != NULL);
+
+      p->is_port = 1;
+      ack_and_close_connection(client_sock,status);
+    }
   else if(strcmp(type_of_request,"piperead.single") == 0)
     {
       char* num_inputs = strtok_r(NULL, " ", &save_ptr);

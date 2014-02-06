@@ -16,6 +16,7 @@ struct PipeRec_
   int number_of_entries;
 
   int lifo_mode;
+  int is_port;
 
   PipeRec* next;
   union
@@ -69,13 +70,16 @@ struct PipeRec_
     }
 
 
-#define __EMPTY(p) (p->number_of_entries == 0)
-#define __FULL(p) (p->number_of_entries ==  p->pipe_depth)
-#define __AVAILABLE(p) (p->pipe_depth  - p->number_of_entries)
+#define __EMPTY(p) (p->is_port ? 0 : (p->number_of_entries == 0))
+#define __FULL(p) (p->is_port ? 0 : (p->number_of_entries ==  p->pipe_depth))
+#define __AVAILABLE(p) (p->is_port ? 1 : (p->pipe_depth  - p->number_of_entries))
 #define INCR(x,p) x = ((x == (p->pipe_depth-1)) ? 0 : x+1)
 #define DECR(x,p) x = ((x == 0) ? (p->pipe_depth - 1) : x-1)
 #define POP(p,x,n) {\
-			if(p->number_of_entries > 0) {\
+			if(p->is_port) {\
+				*((uint##n##_t *)x) = p->buffer.ptr##n[0];\
+			}\
+			else if(p->number_of_entries > 0) {\
 				*((uint##n##_t *)x) = p->buffer.ptr##n[p->read_pointer];\
 				if(!p->lifo_mode)\
 				 	INCR(p->read_pointer,p);\
@@ -89,7 +93,10 @@ struct PipeRec_
                    }
 
 #define PUSH(p,x,n) {\
-		if(p->number_of_entries < p->pipe_depth) {\
+                if(p->is_port) {\
+			p->buffer.ptr##n[0] = *((uint##n##_t *) x);\
+		}\
+		else if(p->number_of_entries < p->pipe_depth) {\
 			p->number_of_entries += 1;\
 			p->buffer.ptr##n[p->write_pointer] = *((uint##n##_t *) x);\
 			if(p->lifo_mode)\
@@ -107,6 +114,8 @@ void init_pipe_handler_with_log(char* log_file);
 void close_pipe_handler();
 // returns 0 on success, 1 if something went wrong..
 uint32_t register_pipe(char* pipe_name, int pipe_depth, int pipe_width, int lifo_mode);
+// return 0 on success, 1 if something went wrong.
+uint32_t register_port(char* id, int pipe_width, int is_input);
 // returns the number of words successfully read from the pipe into burst_payload.
 uint32_t read_from_pipe(char* pipe_name, int width, int number_of_words_requested, void* burst_payload);
 // returns the number of words successfully written to the pipe from burst_payload.

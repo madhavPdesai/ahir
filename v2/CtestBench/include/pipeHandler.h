@@ -16,6 +16,9 @@ struct PipeRec_
   int number_of_entries;
 
   int lifo_mode;
+  int is_input;
+  int is_port;
+  int is_pulse;
 
   PipeRec* next;
   union
@@ -111,7 +114,10 @@ void killPipeHandler();
 #define __FULL(p) (p->number_of_entries ==  p->pipe_depth)
 #define INCR(x,p) x = ((x == (p->pipe_depth-1)) ? 0 : x+1)
 #define POP(p,x,n) {\
-			if(p->number_of_entries > 0) {\
+			if(p->is_port) {\
+				*x = p->buffer.ptr##n[0];\
+                        }\
+			else if(p->number_of_entries > 0) {\
 				*x = p->buffer.ptr##n[p->read_pointer];\
 				if(!p->lifo_mode)\
 				 	INCR(p->read_pointer,p);\
@@ -128,7 +134,10 @@ void killPipeHandler();
                    }
 
 #define PUSH(p,x,n) {\
-		if(p->number_of_entries < p->pipe_width) {\
+		if(p->is_port) {\
+			p->buffer.ptr##n[0] = x;\
+                }\
+		else if(p->number_of_entries < p->pipe_width) {\
 			p->number_of_entries += 1;\
 			p->buffer.ptr##n[p->write_pointer] = x;\
 			INCR(p->write_pointer,p); \

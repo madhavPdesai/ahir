@@ -36,7 +36,12 @@ class vcPipe: public vcRoot
   map<vcModule*, vector<int> > _pipe_write_map;
   int _pipe_write_count;
   bool _lifo_mode;
+  bool _port;
+  bool _in_flag;
+  bool _out_flag;
+  bool _signal;
 public:
+
   
   vcPipe(vcModule* parent, string id, int w, int d, bool lifo_mode):vcRoot(id)
   {
@@ -46,7 +51,23 @@ public:
     _pipe_read_count = 0;
     _pipe_write_count = 0;
     _lifo_mode = lifo_mode;
+    _port = false;
+    _in_flag = false;
+    _out_flag = false;
+    _signal = false;
   }
+
+  void Set_Port(bool v) { _port = v; }
+  bool Get_Port() {return(_port);}
+
+  void Set_In_Flag(bool v) { _in_flag = v; }
+  bool Get_In_Flag() {return(_in_flag);}
+
+  void Set_Out_Flag(bool v) { _out_flag = v; }
+  bool Get_Out_Flag() {return(_out_flag);}
+
+  void Set_Signal(bool v) { _signal = v; }
+  bool Get_Signal() {return(_signal);}
 
   vcModule* Get_Parent() {return(_parent);}
   int Get_Width() { return(this->_width);}
@@ -76,7 +97,19 @@ public:
     ofile << vcLexerKeywords[__PIPE] 
 	  << " [" << this->Get_Id() << "] " 
 	  << this->Get_Width() << " " <<
-      vcLexerKeywords[__DEPTH] << " " << this->Get_Depth() << endl;
+      vcLexerKeywords[__DEPTH] << " " << this->Get_Depth() << " ";
+
+    if(_port)
+    	ofile << vcLexerKeywords[__PORT]  << " ";
+
+    if(_in_flag)
+    	ofile << vcLexerKeywords[__IN]  << " ";
+    else if(_out_flag)
+    	ofile << vcLexerKeywords[__OUT]  << " ";
+
+    if(_signal)
+	    ofile << vcLexerKeywords[__SIGNAL]  << " ";
+    ofile << endl;
   }
 
 

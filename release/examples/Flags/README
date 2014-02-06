@@ -1,0 +1,6 @@
+Flags provide an asynchronous mechanism 
+to read/write data from the environment.
+
+This is useful in constructing reactive
+hardware which samples/modifies its environment.
+(sort of like ports in a micro-controller).

@@ -87,6 +87,7 @@ public:
 	public: void mIOPORT(bool _createToken);
 	public: void mPIPE(bool _createToken);
 	public: void mLIFO(bool _createToken);
+	public: void mSIGNAL(bool _createToken);
 	public: void mFROM(bool _createToken);
 	public: void mAT(bool _createToken);
 	public: void mCONSTANT(bool _createToken);

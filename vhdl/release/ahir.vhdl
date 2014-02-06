@@ -54,7 +54,9 @@ package Utilities is
   function All_Entries_Same ( x : NaturalArray) return boolean;
   function Is_At_Most_One_Hot(x: BooleanArray) return Boolean;
 
+
   function Reverse(x: unsigned) return unsigned;
+  procedure TruncateOrPad(signal rhs: out std_logic_vector; signal lhs : in std_logic_vector);
   
 end Utilities;
 
@@ -306,6 +308,14 @@ package body Utilities is
 	end loop;
 	return(ret_var);
   end function Reverse;
+
+  procedure TruncateOrPad(signal rhs: out std_logic_vector; signal lhs : in std_logic_vector) is
+	alias arhs : std_logic_vector(rhs'length downto 1) is rhs;
+	alias alhs : std_logic_vector(lhs'length downto 1) is lhs;
+        constant L : integer := Minimum(rhs'length, lhs'length);
+  begin
+	alhs(L downto 1) <= arhs(L downto 1);
+  end procedure TruncateOrPad;
 
 end Utilities;
 library ieee;
@@ -3690,6 +3700,34 @@ package BaseComponents is
           reset: in std_logic);
   end component UnloadBuffer;
 
+  -----------------------------------------------------------------------------------------
+  --  System Ports
+  -----------------------------------------------------------------------------------------
+  component SystemInPort 
+   generic (name : string;
+	    num_reads: integer;
+	    in_data_width: integer;
+            out_data_width : integer); 
+   port (read_req : in std_logic_vector(0 downto 0);
+         read_ack : out std_logic_vector(0 downto 0);
+         read_data: out std_logic_vector(out_data_width-1 downto 0);
+         in_data  : in std_logic_vector(in_data_width-1 downto 0);
+	 clk : in std_logic;
+	 reset : in std_logic);
+  end component;
+
+  component SystemOutPort 
+   generic (name : string;
+	    num_writes: integer;
+	    in_data_width: integer;
+            out_data_width : integer); 
+   port (write_req : in std_logic_vector(0 downto 0);
+         write_ack : out std_logic_vector(0 downto 0);
+         write_data: in std_logic_vector(in_data_width-1 downto 0);
+         out_data  : out std_logic_vector(out_data_width-1 downto 0);
+	 clk : in std_logic;
+	 reset : in std_logic);
+  end component;
  
 end BaseComponents;
 -- all component declarations necessary for the
@@ -21110,6 +21148,108 @@ begin  -- Behave
   mtag <= imux_data_out(tag_length+time_stamp_width-1 downto 0);
 
 end Vanilla;
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+-- 
+--  whatever appears at in_data is
+--  read by whoever wishes to read it.
+--
+--
+entity SystemInPort is
+   generic (name : string;
+	    num_reads: integer;
+	    in_data_width: integer;
+            out_data_width : integer); 
+   port (read_req : in std_logic_vector(0 downto 0);
+         read_ack : out std_logic_vector(0 downto 0);
+         read_data: out std_logic_vector(out_data_width-1 downto 0);
+         in_data  : in std_logic_vector(in_data_width-1 downto 0);
+	 clk : in std_logic;
+	 reset : in std_logic);
+end entity;
+
+architecture Mixed of SystemInPort is
+    signal data_reg: std_logic_vector(in_data_width-1 downto 0);
+begin
+    read_ack <= (others => '1');
+
+    process(clk)
+    begin
+	if(clk'event and clk = '1') then
+		if(reset = '1') then
+			data_reg <= (others => '0');
+		else
+			data_reg <= in_data;
+		end if;
+	end if;
+    end process;
+
+    TruncateOrPad(data_reg, read_data); 
+end Mixed;
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+--
+-- Last successful write wins.
+--
+entity SystemOutPort is
+   generic (name : string;
+	    num_writes: integer;
+	    in_data_width: integer;
+            out_data_width : integer); 
+   port (write_req : in std_logic_vector(0 downto 0);
+         write_ack : out std_logic_vector(0 downto 0);
+         write_data: in std_logic_vector(in_data_width-1 downto 0);
+         out_data  : out std_logic_vector(out_data_width-1 downto 0);
+	 clk : in std_logic;
+	 reset : in std_logic);
+end entity;
+
+architecture Mixed of SystemOutPort is
+    signal read_req, read_req: std_logic_vector(0 downto 0);
+    signal pipe_data_in, pipe_data_out: std_logic_vector(out_data_width-1 downto 0);
+    
+begin
+
+    TruncateOrPad(write_data,pipe_data_in);
+    read_req(0) <= '1';
+
+    process(clk)
+    begin
+	if(clk'event and clk = '1') then
+		if(read_ack(0) = '1') then
+			out_data <= pipe_data_out;
+		end if;
+	end if;
+    end process;
+
+    opipe: PipeBase generic map(name => name & " opipe", num_reads => 1,
+					num_writes => num_writes, data_width => out_data_width,
+						lifo_mode = false, depth => 1)
+		port map(read_req => read_req, read_ack => read_ack,
+				read_data => pipe_data_out,
+					write_req => write_req, write_ack => write_ack,
+						write_data => pipe_data_in,
+							clk => clk, reset => reset);
+
+end Mixed;
 
 library ieee;
 use ieee.std_logic_1164.all;
