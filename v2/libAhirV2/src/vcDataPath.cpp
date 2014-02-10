@@ -20,109 +20,118 @@ void vcPipe::Print_VHDL_Pipe_Port_Signals(ostream& ofile)
      
   if(num_reads > 0 && num_writes ==  0)
     {
-      ofile << "-- write to pipe " << pipe_id << endl;
-      ofile << "signal " 
-	    << pipe_id 
-	    << "_pipe_write_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-      ofile << "signal " << pipe_id << "_pipe_write_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
-      ofile << "signal " << pipe_id << "_pipe_write_ack : std_logic_vector(0 downto 0);" << endl;
+	    ofile << "-- write to pipe " << pipe_id << endl;
+	    ofile << "signal " 
+		    << pipe_id 
+		    << "_pipe_write_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+	    ofile << "signal " << pipe_id << "_pipe_write_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
+	    ofile << "signal " << pipe_id << "_pipe_write_ack : std_logic_vector(0 downto 0);" << endl;
+	    if(this->Get_Port())
+	    {
+		    ofile << "signal " 
+			    << pipe_id 
+			    << ": std_logic_vector(" << (this->Get_Signal() ? 0 : (pipe_width-1)) << " downto 0);" << endl;
+	    }
     }
 
   if(num_writes > 0 && num_reads == 0)
-    {
-      ofile << "-- read from pipe " << pipe_id << endl;
-      ofile << "signal "
-	    << pipe_id << "_pipe_read_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-      ofile << "signal " << pipe_id << "_pipe_read_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
-      ofile << "signal " << pipe_id << "_pipe_read_ack : std_logic_vector(0 downto 0);" << endl;
-    }
+  {
+	  ofile << "-- read from pipe " << pipe_id << endl;
+		  ofile << "signal "
+			  << pipe_id << "_pipe_read_data: std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+		  ofile << "signal " << pipe_id << "_pipe_read_req : std_logic_vector(0 downto 0) := (others => '0');" << endl;
+		  ofile << "signal " << pipe_id << "_pipe_read_ack : std_logic_vector(0 downto 0);" << endl;
+	  if(this->Get_Port())
+		  ofile << "signal " << pipe_id << ": std_logic_vector(" << (this->Get_Signal() ? 0 : (pipe_width-1)) << " downto 0);" << endl;
+  }
 }
 
 
 void vcPipe::Print_VHDL_Pipe_Signals(ostream& ofile)
 {
-  string pipe_id = this->Get_Id();
-  int pipe_width = this->Get_Width();
-      
-  int num_reads = this->Get_Pipe_Read_Count();
-  int num_writes = this->Get_Pipe_Write_Count();
-     
-  if(num_writes >  0)
-    {
-      ofile << "-- aggregate signals for write to pipe " << pipe_id << endl;
-      ofile << "signal " << pipe_id << "_pipe_write_data: std_logic_vector(" << (num_writes*pipe_width)-1 << " downto 0);" << endl;
-      ofile << "signal " << pipe_id << "_pipe_write_req: std_logic_vector(" << num_writes-1 << " downto 0);" << endl;
-      ofile << "signal " << pipe_id << "_pipe_write_ack: std_logic_vector(" << num_writes-1 << " downto 0);" << endl;
-    }
+	string pipe_id = this->Get_Id();
+	int pipe_width = this->Get_Width();
 
-  if(num_reads > 0)
-    {
-      ofile << "-- aggregate signals for read from pipe " << pipe_id << endl;
-      ofile << "signal " << pipe_id << "_pipe_read_data: std_logic_vector(" << (num_reads*pipe_width)-1 << " downto 0);" << endl;
-      ofile << "signal " << pipe_id << "_pipe_read_req: std_logic_vector(" << num_reads-1 << " downto 0);" << endl;
-      ofile << "signal " << pipe_id << "_pipe_read_ack: std_logic_vector(" << num_reads-1 << " downto 0);" << endl;
-    }
+	int num_reads = this->Get_Pipe_Read_Count();
+	int num_writes = this->Get_Pipe_Write_Count();
+
+	if(num_writes >  0)
+	{
+		ofile << "-- aggregate signals for write to pipe " << pipe_id << endl;
+		ofile << "signal " << pipe_id << "_pipe_write_data: std_logic_vector(" << (num_writes*pipe_width)-1 << " downto 0);" << endl;
+		ofile << "signal " << pipe_id << "_pipe_write_req: std_logic_vector(" << num_writes-1 << " downto 0);" << endl;
+		ofile << "signal " << pipe_id << "_pipe_write_ack: std_logic_vector(" << num_writes-1 << " downto 0);" << endl;
+	}
+
+	if(num_reads > 0)
+	{
+		ofile << "-- aggregate signals for read from pipe " << pipe_id << endl;
+		ofile << "signal " << pipe_id << "_pipe_read_data: std_logic_vector(" << (num_reads*pipe_width)-1 << " downto 0);" << endl;
+		ofile << "signal " << pipe_id << "_pipe_read_req: std_logic_vector(" << num_reads-1 << " downto 0);" << endl;
+		ofile << "signal " << pipe_id << "_pipe_read_ack: std_logic_vector(" << num_reads-1 << " downto 0);" << endl;
+	}
+
 }
 
 void vcPipe::Print_VHDL_Instance(ostream& ofile)
 {
-  string pipe_id = To_VHDL(this->Get_Id());
-  int pipe_width = this->Get_Width();
-  int pipe_depth = this->Get_Depth();
+	string pipe_id = To_VHDL(this->Get_Id());
+	int pipe_width = this->Get_Width();
+	int pipe_depth = this->Get_Depth();
 
-  int num_reads = this->Get_Pipe_Read_Count();
-  int num_writes = this->Get_Pipe_Write_Count();
+	int num_reads = this->Get_Pipe_Read_Count();
+	int num_writes = this->Get_Pipe_Write_Count();
 
-  if(num_reads > 0 || num_writes > 0)
-  {
-	// avert impossibility..
-	assert(!this->Get_Port() || (this->Get_In_Flag() || this->Get_Out_Flag()));
+	if(num_reads > 0 || num_writes > 0)
+	{
+		// avert impossibility..
+		assert(!this->Get_Port() || (this->Get_In_Flag() || this->Get_Out_Flag()));
 
-	  // the pipe may be used in one of three modes.
-	  // - as an in-flag to pipe converter.
-	  //     (pulse_mode implies that input pulses are held
-	  //      until sampled by the reader).
-	  // - as a pipe to out-flag converter
-	  //     (pulse mode implies that a single output pulse
-	  //      is created by each successful writer).
-	  // - as a normal pipe with read and write interfaces.
-	  if(this->Get_Port() && this->Get_In_Flag())
-	  {
-		  assert(num_writes == 0);
-		  ofile << pipe_id << "_InPort: SystemInPort -- {" << endl;
-		  ofile << "generic map( -- { " << endl;
-		  ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
-		  ofile << "num_reads => " << num_reads << "," << endl;
-		  ofile << "in_data_width => " << (this->Get_Signal() ? 1 : pipe_width) << "," << endl;
-		  ofile << "out_data_width => " << pipe_depth << " --}\n)" << endl;
-		  ofile << "port map( -- { " << endl;
-		  ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 
-			  << "read_ack => " << pipe_id << "_pipe_read_ack," << endl 
-			  << "read_data => "<< pipe_id << "_pipe_read_data," << endl 
-			  << "in_data => "<< pipe_id << "," << endl 
-			  << "clk => clk,"
-			  << "reset => reset -- }\n ); -- }" << endl;
-	  }
-	  else if(this->Get_Out_Flag() && this->Get_Port())
-	  { 
-		  assert(num_reads == 0);
-		  ofile << pipe_id << "_OutPort: SystemOutPort -- {" << endl;
-		  ofile << "generic map( -- { " << endl;
-		  ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
-		  ofile << "num_writes => " << num_writes << "," << endl;
-		  ofile << "out_data_width => " << (this->Get_Signal() ? 1 : pipe_width) << "," << endl;
-		  ofile << "in_data_width => " << pipe_width << " --} ) \n" << endl;
-		  ofile << "port map( -- { " << endl;
-		  ofile << "write_req => " << pipe_id << "_pipe_write_req," << endl 
-			  << "write_ack => " << pipe_id << "_pipe_write_ack," << endl 
-			  << "write_data => "<< pipe_id << "_pipe_write_data," << endl 
-			  << "out_data => "<< pipe_id << "," << endl 
-			  << "clk => clk,"
-			  << "reset => reset -- }\n ); -- }" << endl;
-	  }
-	  else
-	  {
-		  num_reads = MAX(num_reads,1);
+		// the pipe may be used in one of three modes.
+		// - as an in-flag to pipe converter.
+		//     (pulse_mode implies that input pulses are held
+		//      until sampled by the reader).
+		// - as a pipe to out-flag converter
+		//     (pulse mode implies that a single output pulse
+		//      is created by each successful writer).
+		// - as a normal pipe with read and write interfaces.
+		if(this->Get_Port() && this->Get_In_Flag())
+		{
+			assert(num_writes == 0);
+			ofile << pipe_id << "_InPort: SystemInPort -- {" << endl;
+			ofile << "generic map( -- { " << endl;
+			ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
+			ofile << "num_reads => " << num_reads << "," << endl;
+			ofile << "in_data_width => " << (this->Get_Signal() ? 1 : pipe_width) << "," << endl;
+			ofile << "out_data_width => " << pipe_width << " --}\n)" << endl;
+			ofile << "port map( -- { " << endl;
+			ofile << "read_req => " << pipe_id << "_pipe_read_req," << endl 
+				<< "read_ack => " << pipe_id << "_pipe_read_ack," << endl 
+				<< "read_data => "<< pipe_id << "_pipe_read_data," << endl 
+				<< "in_data => "<< pipe_id << "," << endl 
+				<< "clk => clk,"
+				<< "reset => reset -- }\n ); -- }" << endl;
+		}
+		else if(this->Get_Out_Flag() && this->Get_Port())
+		{ 
+			assert(num_reads == 0);
+			ofile << pipe_id << "_OutPort: SystemOutPort -- {" << endl;
+			ofile << "generic map( -- { " << endl;
+			ofile << "name => " << '"' << "pipe " << pipe_id << '"' << "," << endl;
+			ofile << "num_writes => " << num_writes << "," << endl;
+			ofile << "out_data_width => " << (this->Get_Signal() ? 1 : pipe_width) << "," << endl;
+			ofile << "in_data_width => " << pipe_width << " --} ) \n" << endl;
+			ofile << "port map( -- { " << endl;
+			ofile << "write_req => " << pipe_id << "_pipe_write_req," << endl 
+				<< "write_ack => " << pipe_id << "_pipe_write_ack," << endl 
+				<< "write_data => "<< pipe_id << "_pipe_write_data," << endl 
+				<< "out_data => "<< pipe_id << "," << endl 
+				<< "clk => clk,"
+				<< "reset => reset -- }\n ); -- }" << endl;
+		}
+		else
+		{
+			num_reads = MAX(num_reads,1);
 		  num_writes = MAX(num_writes,1);
 		  ofile << pipe_id << "_Pipe: PipeBase -- {" << endl;
 		  ofile << "generic map( -- { " << endl;

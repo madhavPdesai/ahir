@@ -29,6 +29,8 @@ SConstruct
 
 src
 	the source
+	TODO: is pipeHandler really needed anymore?
+
 
 examples
 	three testcases

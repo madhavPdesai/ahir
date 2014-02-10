@@ -56,7 +56,7 @@ package Utilities is
 
 
   function Reverse(x: unsigned) return unsigned;
-  procedure TruncateOrPad(signal rhs: out std_logic_vector; signal lhs : in std_logic_vector);
+  procedure TruncateOrPad(signal rhs: in std_logic_vector; signal lhs : out std_logic_vector);
   
 end Utilities;
 
@@ -309,7 +309,7 @@ package body Utilities is
 	return(ret_var);
   end function Reverse;
 
-  procedure TruncateOrPad(signal rhs: out std_logic_vector; signal lhs : in std_logic_vector) is
+  procedure TruncateOrPad(signal rhs: in std_logic_vector; signal lhs : out std_logic_vector) is
 	alias arhs : std_logic_vector(rhs'length downto 1) is rhs;
 	alias alhs : std_logic_vector(lhs'length downto 1) is lhs;
         constant L : integer := Minimum(rhs'length, lhs'length);
@@ -21223,7 +21223,7 @@ entity SystemOutPort is
 end entity;
 
 architecture Mixed of SystemOutPort is
-    signal read_req, read_req: std_logic_vector(0 downto 0);
+    signal read_req, read_ack: std_logic_vector(0 downto 0);
     signal pipe_data_in, pipe_data_out: std_logic_vector(out_data_width-1 downto 0);
     
 begin
@@ -21242,7 +21242,7 @@ begin
 
     opipe: PipeBase generic map(name => name & " opipe", num_reads => 1,
 					num_writes => num_writes, data_width => out_data_width,
-						lifo_mode = false, depth => 1)
+						lifo_mode => false, depth => 1)
 		port map(read_req => read_req, read_ack => read_ack,
 				read_data => pipe_data_out,
 					write_req => write_req, write_ack => write_ack,

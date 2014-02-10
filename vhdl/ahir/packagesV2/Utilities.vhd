@@ -28,7 +28,7 @@ package Utilities is
 
 
   function Reverse(x: unsigned) return unsigned;
-  procedure TruncateOrPad(signal rhs: out std_logic_vector; signal lhs : in std_logic_vector);
+  procedure TruncateOrPad(signal rhs: in std_logic_vector; signal lhs : out std_logic_vector);
   
 end Utilities;
 
@@ -281,7 +281,7 @@ package body Utilities is
 	return(ret_var);
   end function Reverse;
 
-  procedure TruncateOrPad(signal rhs: out std_logic_vector; signal lhs : in std_logic_vector) is
+  procedure TruncateOrPad(signal rhs: in std_logic_vector; signal lhs : out std_logic_vector) is
 	alias arhs : std_logic_vector(rhs'length downto 1) is rhs;
 	alias alhs : std_logic_vector(lhs'length downto 1) is lhs;
         constant L : integer := Minimum(rhs'length, lhs'length);
