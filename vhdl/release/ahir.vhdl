@@ -9779,6 +9779,84 @@ begin  -- default_arch
   symbol_out <= symbol_out_sig(0);
 
 end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
+library ahir;
+use ahir.Types.all;
+use ahir.subprograms.all;
+use ahir.BaseComponents.all;
+use ahir.utilities.all;
+
+entity marked_join_with_input is
+  generic (place_capacity : integer := 1; bypass : boolean := false; name : string := "anon");
+  port ( preds      : in   BooleanArray;
+         marked_preds : in BooleanArray;
+    	symbol_in : in  boolean;
+    	symbol_out : out  boolean;
+	clk: in std_logic;
+	reset: in std_logic);
+end marked_join_with_input;
+
+architecture default_arch of marked_join_with_input is
+  signal symbol_out_sig : BooleanArray(0 downto 0);
+  signal place_sigs: BooleanArray(preds'range);
+  signal mplace_sigs: BooleanArray(marked_preds'range);  
+  signal inp_place_sig: Boolean;
+  constant H: integer := preds'high;
+  constant L: integer := preds'low;
+
+  constant MH: integer := marked_preds'high;
+  constant ML: integer := marked_preds'low;  
+
+begin  -- default_arch
+  
+  placegen: for I in H downto L generate
+    placeBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+    begin
+	place_pred(0) <= preds(I);
+        byp: if bypass generate
+	  pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
+				 name => name & ":byp:" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+       end generate byp;
+
+        nobyp: if not bypass generate
+	  pI: place generic map(capacity => place_capacity, marking => 0,
+				 name => name & ":nobyp:" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+       end generate nobyp;
+
+    end block;
+  end generate placegen;
+
+  -- the marked places
+  mplacegen: for I in MH downto ML generate
+    mplaceBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+    begin
+	place_pred(0) <= marked_preds(I);
+	mpI: place generic map(capacity => place_capacity, marking => 1,
+				 name => name & ":marked:" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
+    end block;
+  end generate mplacegen;
+
+  inplaceBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+  begin
+	place_pred(0) <= symbol_in;
+	pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
+				 name => name & ":inputplace")
+		port map(place_pred,symbol_out_sig,inp_place_sig,clk,reset);
+  end block;
+  
+  -- The transition is enabled only when all preds are true and transition
+  -- is reenabled.
+  symbol_out_sig(0) <= inp_place_sig and AndReduce(place_sigs) and AndReduce(mplace_sigs);
+  symbol_out <= symbol_out_sig(0);
+
+end default_arch;
 library ahir;
 use ahir.Types.all;
 use ahir.subprograms.all;
@@ -9969,7 +10047,7 @@ architecture default_arch of place is
   signal token_sig      : boolean;  -- asynchronously computed value of the token
   signal token_latch    : integer range 0 to capacity;
   
-  constant debug_flag : boolean := true;
+  constant debug_flag : boolean := false;
 begin  -- default_arch
 
   assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;
@@ -10045,7 +10123,7 @@ architecture default_arch of place_with_bypass is
   signal token_latch    : integer range 0 to capacity;
   signal non_zero       : boolean;
 
-  constant debug_flag : boolean := true;
+  constant debug_flag : boolean := false;
   
 begin  -- default_arch
 
@@ -11764,7 +11842,7 @@ end OutputDeMuxBaseWithBuffering;
 
 architecture Behave of OutputDeMuxBaseWithBuffering is
   signal ackL_array : std_logic_vector(nreqs-1 downto 0);
-  alias buffer_sizes: IntegerArray(detailed_buffering_per_output'length-1 downto 0) is detailed_buffering_per_output;
+  --alias buffer_sizes: IntegerArray(detailed_buffering_per_output'length-1 downto 0) is detailed_buffering_per_output;
 
 begin  -- Behave
   assert(owidth = iwidth*nreqs) report "word-length mismatch in output demux" severity failure;
@@ -11781,7 +11859,7 @@ begin  -- Behave
 
        ub : UnloadBuffer generic map (
          name => name & " buffer " & Convert_To_String(I),
-         buffer_size => buffer_sizes(I),
+         buffer_size => detailed_buffering_per_output(I),
          data_width  => iwidth)
          port map (
            write_req  => write_req,
@@ -19330,7 +19408,7 @@ architecture Behave of InputMuxWithBuffering is
   signal oq_data_in : std_logic_vector((twidth + owidth)-1 downto 0);
   signal oq_data_out : std_logic_vector((twidth + owidth)-1 downto 0);
 
-  alias cbuffering: IntegerArray(nreqs-1 downto 0) is buffering;
+  --alias cbuffering: IntegerArray(nreqs-1 downto 0) is buffering;
 
 begin  -- Behave
 
@@ -19352,7 +19430,7 @@ begin  -- Behave
 
 
      rxBuf: ReceiveBuffer generic map(name => name & " receive-buffer " & Convert_To_String(I),
-					buffer_size =>  cbuffering(I),
+					buffer_size =>  buffering(I),
 					data_width => owidth,
 					kill_counter_range => 1)
 		port map (write_req => reqL(I),
@@ -19489,7 +19567,7 @@ end entity;
 
 architecture Base of InputPortFullRate is
 
-  alias outBUFs: IntegerArray(num_reqs-1 downto 0) is output_buffering;
+  --alias outBUFs: IntegerArray(num_reqs-1 downto 0) is output_buffering;
   signal has_room, write_enable : std_logic_vector(num_reqs-1 downto 0);
 
   type   IPWArray is array(integer range <>) of std_logic_vector(data_width-1 downto 0);
@@ -19509,7 +19587,7 @@ begin
     p2LInst: PulseToLevelHalfInterlockBuffer
 	generic map(name => name & " buffer " & Convert_To_String(I),
 			data_width => data_width,
-			buffer_size => outBUFs(I))
+			buffer_size => output_buffering(I))
         port map (sample_req            => sample_req(I),
 		  sample_ack            => sample_ack(I),
 		  has_room              => has_room(I),
@@ -19857,7 +19935,7 @@ architecture Vanilla of LoadReqSharedWithInputBuffers is
   signal imux_data_out_accept,  imux_data_out_valid: std_logic;
   signal imux_data_out: std_logic_vector(rx_word_length-1 downto 0);
   
-  alias IBUFs: IntegerArray(num_reqs-1 downto 0) is input_buffering;
+  --alias IBUFs: IntegerArray(num_reqs-1 downto 0) is input_buffering;
 begin  -- Behave
 
   assert(tag_length >= Ceil_Log2(num_reqs)) report "insufficient tag width" severity error;
@@ -19891,7 +19969,7 @@ begin  -- Behave
   -- receive buffers.
   RxGen: for I in 0 to num_reqs-1 generate
 	rb: ReceiveBuffer generic map(name => name & " RxBuf " & Convert_To_String(I),
-					buffer_size => IBUFs(I),
+					buffer_size => input_buffering(I),
 					data_width => rx_word_length,
 					kill_counter_range => 655535)
 		port map(write_req => reqL(I), 
@@ -21049,7 +21127,7 @@ architecture Vanilla of StoreReqSharedWithInputBuffers is
   signal imux_data_out_accept,  imux_data_out_valid: std_logic;
   signal imux_data_out: std_logic_vector(rx_word_length-1 downto 0);
   
-  alias IBUFs: IntegerArray(num_reqs-1 downto 0) is input_buffering;
+  -- alias IBUFs: IntegerArray(num_reqs-1 downto 0) is input_buffering;
 begin  -- Behave
   assert(tag_length >= Ceil_Log2(num_reqs)) report "insufficient tag width" severity error;
  
@@ -21084,7 +21162,7 @@ begin  -- Behave
   -- receive buffers.
   RxGen: for I in 0 to num_reqs-1 generate
 	rb: ReceiveBuffer generic map(name => name & " RxBuf " & Convert_To_String(I),
-					buffer_size => IBUFs(I),
+					buffer_size => input_buffering(I),
 					data_width => rx_word_length,
 					kill_counter_range => 655535)
 		port map(write_req => reqL(I), 

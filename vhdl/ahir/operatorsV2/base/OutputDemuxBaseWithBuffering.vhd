@@ -43,7 +43,7 @@ end OutputDeMuxBaseWithBuffering;
 
 architecture Behave of OutputDeMuxBaseWithBuffering is
   signal ackL_array : std_logic_vector(nreqs-1 downto 0);
-  alias buffer_sizes: IntegerArray(detailed_buffering_per_output'length-1 downto 0) is detailed_buffering_per_output;
+  --alias buffer_sizes: IntegerArray(detailed_buffering_per_output'length-1 downto 0) is detailed_buffering_per_output;
 
 begin  -- Behave
   assert(owidth = iwidth*nreqs) report "word-length mismatch in output demux" severity failure;
@@ -60,7 +60,7 @@ begin  -- Behave
 
        ub : UnloadBuffer generic map (
          name => name & " buffer " & Convert_To_String(I),
-         buffer_size => buffer_sizes(I),
+         buffer_size => detailed_buffering_per_output(I),
          data_width  => iwidth)
          port map (
            write_req  => write_req,
