@@ -634,13 +634,19 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 
       if(num_reads > 0 && num_writes ==  0)
       {
-	ofile << pipe_id << "_pipe_write_ack(0) <= '1';" << endl;
-	ofile << "TruncateOrPad(" << pipe_id << "_pipe_write_data," << pipe_id << ");" << endl;	
+	if(p->Get_Port())
+	{
+		ofile << pipe_id << "_pipe_write_ack(0) <= '1';" << endl;
+		ofile << "TruncateOrPad(" << pipe_id << "_pipe_write_data," << pipe_id << ");" << endl;	
+	}
       }
       else if(num_writes > 0 && num_reads == 0)
       {
-	ofile << pipe_id << "_pipe_read_ack(0) <= '1';" << endl;
-	ofile << "TruncateOrPad(" << pipe_id << ", " << pipe_id << "_pipe_read_data);" << endl;	
+	if(p->Get_Port())
+	{
+		ofile << pipe_id << "_pipe_read_ack(0) <= '1';" << endl;
+		ofile << "TruncateOrPad(" << pipe_id << ", " << pipe_id << "_pipe_read_data);" << endl;	
+	}
       }
 
       ofile << "process" << endl;

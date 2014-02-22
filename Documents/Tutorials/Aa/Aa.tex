@@ -1,0 +1,300 @@
+\documentclass{beamer}
+\usepackage{epsfig}
+\title{An introduction to the {\bf Aa} language}
+\author{Madhav P. Desai}
+\begin{document}
+\maketitle
+
+
+
+\frame[containsverbatim]{\frametitle{The {\bf Aa} language}
+
+\begin{itemize}
+\item Serves as an intermediate representation in the AHIR-V2 flow.
+\item Control-flow (imperative) language with support for parallelism
+and branching.
+\end{itemize}
+}
+
+
+\frame[containsverbatim]{\frametitle{A simple program in {\bf Aa}}
+\begin{verbatim}
+$module [maxOfTwo] $in (a: $uint<32> b:$uint<32>)
+   $out (c: $uint<32>) $is
+{
+   c := ( $mux (a > b) a b )
+}
+\end{verbatim}
+}
+
+
+\frame[containsverbatim]{\frametitle{Program-structure in {\bf Aa} }
+\begin{verbatim}
+aA_Program :=  ( aA_Module | 
+                 aA_Object_Declaration | 
+                 aA_Named_Type_Declaration)*
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{A module}
+\begin{verbatim}
+aA_Module := $module [identifier]
+                $in ( aA_Module_Args) 
+                $out (aA_Module_Args) 
+{
+        aA_Object_Declaration*
+        aA_Atomic_Statement_Sequence
+}
+\end{verbatim}
+}
+
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Types}
+
+{\bf Aa} provides a comprehensive set of types.
+\begin{itemize}
+\item {\em Unsigned integers} 
+\begin{verbatim}
+$uint<1>, $uint<32> etc.
+\end{verbatim}
+\item {\em Signed integers}   
+\begin{verbatim}
+$int<1>, $int<32> etc.
+\end{verbatim}
+\item {\em Sized floats}      
+\begin{verbatim} 
+$float<8,32>, $float<11,52>
+\end{verbatim}
+\item {\em Pointers} : 
+\begin{verbatim}
+$pointer<$uint<32>> etc..
+\end{verbatim}
+\item {\em Arrays}:  
+\begin{verbatim}
+$array[32][4] $of $uint<32> etc.
+\end{verbatim}
+\item {\em Records}: 
+\begin{verbatim}
+$record $uint<32> $uint<1>
+\end{verbatim}
+\item {\em Named Records}: 
+\begin{verbatim}
+$record [MyRec] $pointer<MyRec>) $uint<32>
+\end{verbatim}
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Objects}
+\begin{itemize}
+\item Storage objects:
+\begin{verbatim}
+$storage A: $array [1024] $of $uint<32>
+\end{verbatim}
+\item Constant objects:
+\begin{verbatim}
+$constant A: $uint<4> := _b0011
+$constant B: $uint<32> := _hf0f0f0f0
+$constant C: $float<8,23> := _f2.3465e+0
+\end{verbatim}
+\item Pipe objects:
+\begin{verbatim}
+$pipe A: $uint<32> $depth 4
+$lifo $pipe B: $uint<8> $depth 8
+\end{verbatim}
+\item Implicit Variables:  these are defined by
+statements:
+\begin{verbatim}
+a := (A + B)
+\end{verbatim}
+They are also called {\em static-single-assignment}
+or SSA variables.
+\end{itemize}
+}
+
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Expressions}
+\begin{itemize}
+\item Constants: 
+\begin{verbatim}
+_b00011
+_habf1
+\end{verbatim}
+\item Simple references:
+\begin{verbatim}
+a
+\end{verbatim}
+\item Array references:
+\begin{verbatim}
+a[0][1] 
+a[(I+1)][J][K] 
+\end{verbatim}
+\item Unary expressions:
+\begin{verbatim}
+(<op> expr)
+e.g.  (~ a)
+\end{verbatim}
+\item Binary expressions:
+\begin{verbatim}
+(a <op> B)
+<op> can be +,-,*,/,<<,>>,|,&,~|,~&,^,~^
+            ==,!=,>,>=,<,<=
+\end{verbatim}
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} More Expressions}
+\begin{itemize}
+\item Ternary expressions:
+\begin{verbatim}
+($mux <test-expr> <if-expr> <else-expr> )
+e.g.  ($mux (a > 0) (b+1) (b-1))
+\end{verbatim}
+\item Concatenation expression:
+\begin{verbatim}
+(a && b)
+\end{verbatim}
+\item Bit-select expression:
+\begin{verbatim}
+(a [] I)
+\end{verbatim}
+\item Address-of expression:
+\begin{verbatim}
+@(a)
+@(a[I])
+\end{verbatim}
+\item Pointer-dereference expression:
+\begin{verbatim}
+->(ptr)
+\end{verbatim}
+If it appears on the left-hand-side, it is
+a store, else it is a load.
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Statements}
+\begin{itemize}
+\item {\em Atomic} statements.
+\item {\em non-Atomic} statements.
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{Atomic {\bf Aa} Statements}
+\begin{itemize}
+\item {\em Simple} statements.
+\item {\em Block} statements.
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Atomic Simple Statements}
+\begin{itemize}
+\item Assignment statements:
+\begin{verbatim}
+target-expression := source_expression
+e.g.
+a := (b + c)
+\end{verbatim}
+\item Call statements:
+\begin{verbatim}
+$call fpadd32 (A B) (C)
+\end{verbatim}
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Atomic Block Statements}
+\begin{itemize}
+\item Series-block statements.
+\item Parallel-block statements.
+\item Branch-block statements.
+\item Fork-block statements.
+\end{itemize}
+}
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Series Block Statements}
+\begin{verbatim}
+$seriesblock [SB] {
+   $storage a: $uint<32>
+   a := (b + c)
+   d := (a + e)
+} (d => D)
+\end{verbatim}
+
+Control-flow is sequential: statements are executed in order, token
+leaves statement after last statement finishes.  
+\vspace{0.5cm}
+A module body is also a series-block.
+}
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Parallel Block Statements}
+\begin{verbatim}
+$parallelblock [PB] {
+   a := (b + c)
+   p := (q + r)
+}
+\end{verbatim}
+Control-flow: both statements started in parallel,  token leaves
+statement after both statements have finished.
+}
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Branch Block Statements}
+\begin{verbatim}
+$branchblock [BB] {
+   $merge $entry loopback
+       $phi I := ($bitcast($uint<32>) 0) $on $entry
+                    NI $on loopback
+   $endmerge
+   a[I] := (b[I] + c[I])
+   NI := (I+1)
+   $if (NI < 16) $then 
+      $place [loopback] 
+   $endif
+}
+\end{verbatim}
+Control-flow:  sequential, but control flow is altered by
+merge, place, if and switch statements.
+}
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Fork Block Statements}
+\begin{verbatim}
+$forkblock [FB] {
+   $seriesblock [S1] { ... }
+   $seriesblock [S2] { ... }
+  
+   $join S1 S2 $fork
+      $seriesblock [S3] { ... }
+      $seriesblock [S4] { ... }
+   $endjoin
+ 
+   $join S3 S4 $endjoin
+}
+\end{verbatim}
+Control-flow:  all statements will start in parallel, join-forks
+will trigger new statements etc.  Token exits block when all statements
+finish.
+}
+
+\frame[containsverbatim]{\frametitle{{\bf Aa} Do-While Statements}
+These are not atomic, and can occur only inside a branch-block.
+\begin{verbatim}
+$do
+   $merge $entry $loopback
+        $phi I := ($bitcast ($uint<32>) 0) 
+                      $on $entry
+                   NI $on $loopback
+   $endmerge
+   a[I] := (b[I] + c[I])
+   NI   := (I+1)
+$while (I < 16)
+\end{verbatim}
+Control-flow:  sequential, controlled by the condition check.  The
+places \$entry and \$loopback are implicitly defined.  When control
+enters the do-while, the token gets placed in \$entry and when
+control loops-back from the condition check, the token gets placed
+in \$loopback.
+}
+
+
+\frame[containsverbatim]{\frametitle{Getting to hardware starting from an {\bf Aa} Program}
+}
+
+
+\end{document}

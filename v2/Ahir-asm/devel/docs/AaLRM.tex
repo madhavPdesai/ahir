@@ -15,8 +15,7 @@
 {\bf Aa} is a programming language for the 
 description of algorithms.   The control-flow
 in an \Aa program corresponds to a petri net
-of a specific class (the type-2 petri-net as
-introduced in \cite{ref:SameerPhD}).  
+of a specific class.
 The data-flow is constructed using static
 single-assignment variables (which can be assigned to only once),
 storage objects, messaging pipes and constants.
@@ -168,6 +167,22 @@ For example
 $pipe myfifo: $uint<32> $depth 16 // 16-slot queue
 $lifo $pipe mystack: $uint<32> $depth 4 // 4-slot stack
 \end{verbatim}
+Pipe variable declarations can also be appended by
+the following keywords:
+\begin{verbatim}
+   ($in | $out)? ($port)? ($signal)? 
+\end{verbatim}
+These additional keywords mean the following things:
+\begin{itemize}
+\item Inclusion of ``\$in'' (respectively ``\$out'') means
+that the pipe is a read-only (respectively write-only) object.
+\item The ``\$port'' keyword means that the pipe is meant to
+be connected to the outside world {\em without} any handshake,
+such as for example in an asynchronous interface to the outside
+world.
+\item The ``\$signal'' keyword means that the interface to
+the external world is a single bit.
+\end{itemize}
 \item {\bf Constant} variables declared at
 the program scope are globally visible and have
 initial values which can never be altered in the program.
