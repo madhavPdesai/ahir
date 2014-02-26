@@ -38,7 +38,7 @@ end entity;
 
 architecture Base of InputPortFullRate is
 
-  alias outBUFs: IntegerArray(num_reqs-1 downto 0) is output_buffering;
+  --alias outBUFs: IntegerArray(num_reqs-1 downto 0) is output_buffering;
   signal has_room, write_enable : std_logic_vector(num_reqs-1 downto 0);
 
   type   IPWArray is array(integer range <>) of std_logic_vector(data_width-1 downto 0);
@@ -58,7 +58,7 @@ begin
     p2LInst: PulseToLevelHalfInterlockBuffer
 	generic map(name => name & " buffer " & Convert_To_String(I),
 			data_width => data_width,
-			buffer_size => outBUFs(I))
+			buffer_size => output_buffering(I))
         port map (sample_req            => sample_req(I),
 		  sample_ack            => sample_ack(I),
 		  has_room              => has_room(I),

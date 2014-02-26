@@ -270,6 +270,12 @@ class AaPipeObject: public AaObject
 
   int _depth;
   bool _lifo_mode;
+
+  bool _in_mode;
+  bool _out_mode;
+  bool _signal;
+  bool _port;
+  bool _synch;
  public:
 
   
@@ -281,6 +287,22 @@ class AaPipeObject: public AaObject
 
   void Set_Lifo_Mode(bool v) { _lifo_mode = v; }
   bool Get_Lifo_Mode() {return(_lifo_mode);}
+
+  void Set_In_Mode(bool v) { _in_mode = v; }
+  bool Get_In_Mode() {return(_in_mode);}
+
+  void Set_Out_Mode(bool v) { _out_mode = v; }
+  bool Get_Out_Mode() {return(_out_mode);}
+
+
+  void Set_Signal(bool v) { _signal = v; }
+  bool Get_Signal() {return(_signal);}
+
+  void Set_Port(bool v) { _port = v; }
+  bool Get_Port() {return(_port);}
+
+  void Set_Synch(bool v) { _synch = v; }
+  bool Get_Synch() {return(_synch);}
 
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaPipeObject");}
@@ -306,8 +328,8 @@ class AaPipeObject: public AaObject
    virtual void Write_VC_Model(ostream& ofile);
    virtual string Get_VC_Name();
 
-   void Add_Reader(AaModule* m) {_reader_modules.insert(m);}
-   void Add_Writer(AaModule* m) {_writer_modules.insert(m);}
+   void Add_Reader(AaModule* m);
+   void Add_Writer(AaModule* m);
 
    virtual bool Is_Pipe_Object() {return(true); }
 

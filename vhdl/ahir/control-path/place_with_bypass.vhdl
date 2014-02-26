@@ -29,7 +29,7 @@ architecture default_arch of place_with_bypass is
   signal token_latch    : integer range 0 to capacity;
   signal non_zero       : boolean;
 
-  constant debug_flag : boolean := true;
+  constant debug_flag : boolean := false;
   
 begin  -- default_arch
 

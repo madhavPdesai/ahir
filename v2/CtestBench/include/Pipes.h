@@ -43,5 +43,6 @@ void read_float64_n(const char *id, double* buf, int buf_len);
 void write_float64_n(const char *id, double* buf, int buf_len);
 
 uint8_t register_pipe(const char* id, int pipe_depth, int pipe_width, int lifo_mode);
+uint8_t register_port(const char* id, int pipe_width, int is_input);
 
 #endif

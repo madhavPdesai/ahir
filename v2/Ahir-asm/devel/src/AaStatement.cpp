@@ -1244,22 +1244,28 @@ void AaAssignmentStatement::PrintC(ofstream& ofile, string tab_string)
 }
 
 // return true if one of the sources or targets is a pipe.
-bool AaAssignmentStatement::Can_Block()
+bool AaAssignmentStatement::Can_Block(bool pipeline_flag)
 {
 	for(set<AaRoot*>::iterator siter = this->_target_objects.begin();
 			siter != this->_target_objects.end();
 			siter++)
 	{
-		if((*siter)->Is("AaPipeObject"))
-			return(true);
+	    if((*siter)->Is("AaPipeObject"))
+	    {
+		    if(!pipeline_flag || ((AaPipeObject*)(*siter))->Get_Synch())
+			    return(true);
+	    }
 	}
 
 	for(set<AaRoot*>::iterator siter = this->_source_objects.begin();
 			siter != this->_source_objects.end();
 			siter++)
 	{
-		if((*siter)->Is("AaPipeObject"))
-			return(true);
+	    if((*siter)->Is("AaPipeObject"))
+	    {
+		    if(!pipeline_flag || ((AaPipeObject*)(*siter))->Get_Synch())
+			    return(true);
+	    }
 	}
 
 	return(false);
@@ -2164,22 +2170,28 @@ void AaCallStatement::Write_C_Function_Body(ofstream& ofile)
 }
 
 // return true if one of the sources or targets is a pipe.
-bool AaCallStatement::Can_Block()
+bool AaCallStatement::Can_Block(bool pipeline_flag)
 {
   for(set<AaRoot*>::iterator siter = this->_target_objects.begin();
       siter != this->_target_objects.end();
       siter++)
-    {
-      if((*siter)->Is("AaPipeObject"))
-	return(true);
-    }
+  {
+	  if((*siter)->Is("AaPipeObject"))
+	  {
+		  if(!pipeline_flag || ((AaPipeObject*)(*siter))->Get_Synch())
+			  return(true);
+	  }
+  }
 
   for(set<AaRoot*>::iterator siter = this->_source_objects.begin();
-      siter != this->_source_objects.end();
+		  siter != this->_source_objects.end();
       siter++)
     {
-      if((*siter)->Is("AaPipeObject"))
-	return(true);
+	    if((*siter)->Is("AaPipeObject"))
+	    {
+		    if(!pipeline_flag || ((AaPipeObject*)(*siter))->Get_Synch())
+			    return(true);
+	    }
     }
 
   return(false);
@@ -3151,7 +3163,7 @@ void AaBranchBlockStatement::Identify_Inner_Loops(AaStatementSequence* sseq,
 	     		next_stmt->Is_Control_Flow_Statement() || 
 	     		(next_stmt->Is("AaCallStatement") && 
 		 		!((AaModule*)(((AaCallStatement*)next_stmt)->Get_Called_Module()))->Has_No_Side_Effects())
-	     		|| next_stmt->Can_Block())
+	     		|| next_stmt->Can_Block(false))
 		{
 			break;
 		}

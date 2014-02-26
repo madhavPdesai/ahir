@@ -313,7 +313,24 @@ void AaProgram::Add_Object(AaObject* obj)
 		if(prev_obj->Kind() == obj->Kind())
 		{
 			if(prev_obj->Get_Type() == obj->Get_Type())
-				AaRoot::Warning("redeclaration of " + obj->Get_Name() + " ignored",obj);
+			{
+				if(prev_obj->Is("AaPipeObject"))
+				{
+					AaRoot::Info("re-declaration of pipe: " + obj->Get_Name() + ", parameters updated.");
+					AaPipeObject* pp = (AaPipeObject*)prev_obj;
+					AaPipeObject* po = (AaPipeObject*)obj;
+					pp->Set_In_Mode(po->Get_In_Mode());
+					pp->Set_Out_Mode(po->Get_Out_Mode());
+					pp->Set_Signal(po->Get_Signal());
+					pp->Set_Port(po->Get_Port());
+					pp->Set_Depth(po->Get_Depth());
+					
+				}
+				else
+				{
+					AaRoot::Warning("redeclaration of " + obj->Get_Name() + " ignored",obj);
+				}
+			}
 			else
 				AaRoot::Error("redeclaration of " + obj->Get_Name() + " with conflicting type",obj);
 		}

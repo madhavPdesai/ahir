@@ -137,13 +137,19 @@ int vcSystem::Get_Pipe_Depth(string pipe_id)
   assert(_pipe_map.find(pipe_id) != _pipe_map.end());
   return(_pipe_map[pipe_id]->Get_Depth());
 }
-void vcSystem::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode) 
+void vcSystem::Add_Pipe(string pipe_id, int width, int depth, bool lifo_mode,bool port_flag,  bool in_flag, bool out_flag, 
+					bool signal_flag) 
 {
   assert(_pipe_map.find(pipe_id) == _pipe_map.end());
   assert(width > 0);
   assert(depth > 0);
 
-  _pipe_map[pipe_id] = new vcPipe(NULL, pipe_id, width, depth, lifo_mode);
+  vcPipe* np = new vcPipe(NULL, pipe_id, width, depth, lifo_mode);
+  _pipe_map[pipe_id] = np;
+  np->Set_Port(port_flag);
+  np->Set_In_Flag(in_flag);
+  np->Set_Out_Flag(out_flag);
+  np->Set_Signal(signal_flag);
 }
 
 void vcSystem::Add_Module(vcModule* module)
@@ -626,6 +632,23 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
       if(num_reads > 0 && num_writes > 0)
 	continue;
 
+      if(num_reads > 0 && num_writes ==  0)
+      {
+	if(p->Get_Port())
+	{
+		ofile << pipe_id << "_pipe_write_ack(0) <= '1';" << endl;
+		ofile << "TruncateOrPad(" << pipe_id << "_pipe_write_data," << pipe_id << ");" << endl;	
+	}
+      }
+      else if(num_writes > 0 && num_reads == 0)
+      {
+	if(p->Get_Port())
+	{
+		ofile << pipe_id << "_pipe_read_ack(0) <= '1';" << endl;
+		ofile << "TruncateOrPad(" << pipe_id << ", " << pipe_id << "_pipe_read_data);" << endl;	
+	}
+      }
+
       ofile << "process" << endl;
       ofile << "variable val_string, obj_ref: VhpiString;" << endl;
       ofile << "begin --{" << endl;
@@ -637,54 +660,55 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
       // read the inputs from the outside...
       if(num_reads > 0 && num_writes ==  0)
 	{
-	  ofile << "obj_ref := Pack_String_To_Vhpi_String("
-		<< '"' << pipe_id << " req" << '"' << ");" << endl;
-	  ofile << vcSystem::_simulator_link_prefix << "Get_Port_Value(obj_ref,val_string,1);" << endl;
-	  ofile << pipe_id  << "_pipe_write_req <= Unpack_String(val_string,1);" << endl;
-	  
-	  ofile << "obj_ref := Pack_String_To_Vhpi_String("
-		<< '"' << pipe_id << " 0" << '"' << ");" << endl;
-	  ofile << vcSystem::_simulator_link_prefix << "Get_Port_Value(obj_ref,val_string," << pipe_width << ");" << endl;
-	      
-	  string arg_name = pipe_id + "_pipe_write_data";
-	  ofile << arg_name << " <= Unpack_String(val_string," << pipe_width << ");" << endl;
+		ofile << "obj_ref := Pack_String_To_Vhpi_String("
+			<< '"' << pipe_id << " req" << '"' << ");" << endl;
+		ofile << vcSystem::_simulator_link_prefix << "Get_Port_Value(obj_ref,val_string,1);" << endl;
+		ofile << pipe_id  << "_pipe_write_req <= Unpack_String(val_string,1);" << endl;
+
+		ofile << "obj_ref := Pack_String_To_Vhpi_String("
+			<< '"' << pipe_id << " 0" << '"' << ");" << endl;
+		ofile << vcSystem::_simulator_link_prefix << "Get_Port_Value(obj_ref,val_string," << 
+			(p->Get_Signal() ? 1 : pipe_width) << ");" << endl;
+
+
+		string arg_name = pipe_id + "_pipe_write_data";
+		ofile << arg_name << " <= Unpack_String(val_string," << (p->Get_Signal() ? 1 : pipe_width) << ");" << endl;
 	}
       else if(num_reads == 0 && num_writes >  0)
-	{
-	  ofile << "obj_ref := Pack_String_To_Vhpi_String("
-		<< '"' << pipe_id << " req" << '"' << ");" << endl;
-	  ofile << vcSystem::_simulator_link_prefix << "Get_Port_Value(obj_ref,val_string,1);" << endl;
-	  ofile << pipe_id  << "_pipe_read_req <= Unpack_String(val_string,1);" << endl;
-	}
+      {
+
+	      ofile << "obj_ref := Pack_String_To_Vhpi_String("
+		      << '"' << pipe_id << " req" << '"' << ");" << endl;
+	      ofile << vcSystem::_simulator_link_prefix << "Get_Port_Value(obj_ref,val_string,1);" << endl;
+	      ofile << pipe_id  << "_pipe_read_req <= Unpack_String(val_string,1);" << endl;
+      }
 
 
-    
+
       ofile << "wait until clk = '1';" << endl;
       if(num_reads > 0 && num_writes ==  0)
-	{
-	  ofile << "obj_ref := Pack_String_To_Vhpi_String("
-		<< '"' << pipe_id << " ack" << '"' << ");" << endl;
-	  ofile << "val_string := Pack_SLV_To_Vhpi_String(" << pipe_id << "_pipe_write_ack" << ");" << endl;
-	  ofile << vcSystem::_simulator_link_prefix << "Set_Port_Value(obj_ref,val_string,1);" << endl;
-	}
+      {
+	      ofile << "obj_ref := Pack_String_To_Vhpi_String("
+		      << '"' << pipe_id << " ack" << '"' << ");" << endl;
+	      ofile << "val_string := Pack_SLV_To_Vhpi_String(" << pipe_id << "_pipe_write_ack" << ");" << endl;
+	      ofile << vcSystem::_simulator_link_prefix << "Set_Port_Value(obj_ref,val_string,1);" << endl;
+      }
       else if(num_reads == 0 && num_writes >  0)
-	{
-	  ofile << "obj_ref := Pack_String_To_Vhpi_String("
-		<< '"' << pipe_id << " ack" << '"' << ");" << endl;
-	  ofile << "val_string := Pack_SLV_To_Vhpi_String(" << pipe_id << "_pipe_read_ack" << ");" << endl;
-	  ofile << vcSystem::_simulator_link_prefix << "Set_Port_Value(obj_ref,val_string,1);" << endl;
+      {
+	      ofile << "obj_ref := Pack_String_To_Vhpi_String("
+		      << '"' << pipe_id << " ack" << '"' << ");" << endl;
+	      ofile << "val_string := Pack_SLV_To_Vhpi_String(" << pipe_id << "_pipe_read_ack" << ");" << endl;
+	      ofile << vcSystem::_simulator_link_prefix << "Set_Port_Value(obj_ref,val_string,1);" << endl;
 
-	  ofile << "obj_ref := Pack_String_To_Vhpi_String("
-		<< '"' << pipe_id << " " << 0 << '"' << ");" << endl;
-	  string arg_name = pipe_id + "_pipe_read_data";
-	  ofile << "val_string := Pack_SLV_To_Vhpi_String(" << arg_name << ");" << endl;
-	  ofile << vcSystem::_simulator_link_prefix << "Set_Port_Value(obj_ref,val_string," << pipe_width << ");" << endl;
-	}
-
+	      ofile << "obj_ref := Pack_String_To_Vhpi_String("
+		      << '"' << pipe_id << " " << 0 << '"' << ");" << endl;
+	      string arg_name = pipe_id + "_pipe_read_data";
+	      ofile << "val_string := Pack_SLV_To_Vhpi_String(" << arg_name << ");" << endl;
+	      ofile << vcSystem::_simulator_link_prefix << "Set_Port_Value(obj_ref,val_string," << pipe_width << ");" << endl;
+      }
 
       ofile << "-- }" << endl << "end loop;" << endl;
       ofile << "--}" << endl << "end process;" << endl << endl;
-     
     }
 
   this->Print_VHDL_Instance(ofile);
@@ -693,142 +717,156 @@ void vcSystem::Print_VHDL_Vhpi_Test_Bench(ostream& ofile)
 
 void vcSystem::Print_VHDL_Instance(ostream& ofile)
 {
-  ofile << this->Get_VHDL_Id() << "_instance: " << this->Get_VHDL_Id() << " -- {" << endl;
-  ofile << "port map ( -- {" << endl;
-  string comma;
-  comma = this->Print_VHDL_Instance_Port_Map(comma,ofile);
-  ofile << "); -- }}" << endl;
-  
+	ofile << this->Get_VHDL_Id() << "_instance: " << this->Get_VHDL_Id() << " -- {" << endl;
+	ofile << "port map ( -- {" << endl;
+	string comma;
+	comma = this->Print_VHDL_Instance_Port_Map(comma,ofile);
+	ofile << "); -- }}" << endl;
+
 }
 
 string vcSystem::Print_VHDL_Instance_Port_Map(string comma, ostream& ofile)
 {
-  for(set<vcModule*,vcRoot_Compare>::iterator iter = _top_module_set.begin();
-      iter != _top_module_set.end();
-      iter++)
-    {
-      if(!this->Is_An_Ever_Running_Top_Module(*iter))
-      	comma = (*iter)->Print_VHDL_System_Instance_Port_Map(comma, ofile);
-    }
+	for(set<vcModule*,vcRoot_Compare>::iterator iter = _top_module_set.begin();
+			iter != _top_module_set.end();
+			iter++)
+	{
+		if(!this->Is_An_Ever_Running_Top_Module(*iter))
+			comma = (*iter)->Print_VHDL_System_Instance_Port_Map(comma, ofile);
+	}
 
-  ofile << comma << endl << "clk => clk," << endl;
-  ofile << "reset => reset";
-  comma = ",";
-  comma = this->Print_VHDL_System_Instance_Pipe_Port_Map(comma,ofile);
-  return(comma);
+	ofile << comma << endl << "clk => clk," << endl;
+	ofile << "reset => reset";
+	comma = ",";
+	comma = this->Print_VHDL_System_Instance_Pipe_Port_Map(comma,ofile);
+	return(comma);
 }
 
 string vcSystem::Print_VHDL_System_Instance_Pipe_Port_Map(string comma, ostream& ofile)
 {
-  for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
-      pipe_iter != _pipe_map.end();
-      pipe_iter++)
-    {
-      vcPipe* p = (*pipe_iter).second;
-      string pipe_id = (*pipe_iter).first;
-      int pipe_width = p->Get_Width();
-      
-      int num_reads = p->Get_Pipe_Read_Count();
-      int num_writes = p->Get_Pipe_Write_Count();
-     
-      if(num_reads > 0 && num_writes ==  0)
+	for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
+			pipe_iter != _pipe_map.end();
+			pipe_iter++)
 	{
-	  // input pipe
-	  ofile << comma << endl;
-	  comma = ",";
-	  ofile << pipe_id << "_pipe_write_data " 
-		<< " => "
-		<< pipe_id << "_pipe_write_data, "  << endl;
+		vcPipe* p = (*pipe_iter).second;
+		string pipe_id = (*pipe_iter).first;
+		int pipe_width = p->Get_Width();
 
-	  ofile << pipe_id << "_pipe_write_req "
-		<< " => "
-		<< pipe_id 
-		<< "_pipe_write_req, " << endl;
-	  ofile << pipe_id 
-		<< "_pipe_write_ack "
-		<< " => "
-		<< pipe_id << "_pipe_write_ack";
-	  
+		int num_reads = p->Get_Pipe_Read_Count();
+		int num_writes = p->Get_Pipe_Write_Count();
+
+		if(num_reads > 0 && num_writes ==  0)
+		{
+			// input pipe
+			ofile << comma << endl;
+			comma = ",";
+			if(!p->Get_Port())
+			{
+				ofile << pipe_id << "_pipe_write_data " 
+					<< " => "
+					<< pipe_id << "_pipe_write_data, "  << endl;
+
+				ofile << pipe_id << "_pipe_write_req "
+					<< " => "
+					<< pipe_id 
+					<< "_pipe_write_req, " << endl;
+				ofile << pipe_id 
+					<< "_pipe_write_ack "
+					<< " => "
+					<< pipe_id << "_pipe_write_ack";
+			}
+			else
+			{
+				ofile << pipe_id << " => " << pipe_id;
+			}
+
+		}
+
+
+		if(num_writes > 0 && num_reads == 0)
+		{
+			// output
+			ofile << comma << endl;
+			comma = ",";
+			if(!p->Get_Port())
+			{
+			ofile << pipe_id << "_pipe_read_data "
+				<< " => "
+				<< pipe_id << "_pipe_read_data, " << endl;
+			ofile << pipe_id << "_pipe_read_req " 
+				<< " => " 
+				<< pipe_id << "_pipe_read_req, "  << endl;
+			ofile << pipe_id << "_pipe_read_ack "
+				<< " => "
+				<< pipe_id << "_pipe_read_ack ";
+			}
+			else
+			{
+				ofile << pipe_id << " => " << pipe_id;
+			}
+		}
 	}
-
-
-      if(num_writes > 0 && num_reads == 0)
-	{
-	  // output
-	  ofile << comma << endl;
-	  comma = ",";
-	  ofile << pipe_id << "_pipe_read_data "
-		<< " => "
-		<< pipe_id << "_pipe_read_data, " << endl;
-	  ofile << pipe_id << "_pipe_read_req " 
-		<< " => " 
-		<< pipe_id << "_pipe_read_req, "  << endl;
-	  ofile << pipe_id << "_pipe_read_ack "
-		<< " => "
-		<< pipe_id << "_pipe_read_ack ";
-	}
-    }
-  return(comma);
+	return(comma);
 }
 
 void vcSystem::Print_VHDL_Test_Bench_Signals(ostream& ofile)
 {
-  ofile << "signal clk: std_logic := '0';" << endl;
-  ofile << "signal reset: std_logic := '1';" << endl;
-  for(set<vcModule*,vcRoot_Compare>::iterator iter = _top_module_set.begin();
-      iter != _top_module_set.end();
-      iter++)
-    {
-      (*iter)->Print_VHDL_System_Argument_Signals(ofile);
-    }
+	ofile << "signal clk: std_logic := '0';" << endl;
+	ofile << "signal reset: std_logic := '1';" << endl;
+	for(set<vcModule*,vcRoot_Compare>::iterator iter = _top_module_set.begin();
+			iter != _top_module_set.end();
+			iter++)
+	{
+		(*iter)->Print_VHDL_System_Argument_Signals(ofile);
+	}
 
-  this->Print_VHDL_Pipe_Port_Signals(ofile);
+	this->Print_VHDL_Pipe_Port_Signals(ofile);
 }
 
 void vcSystem::Print_VHDL_Component(ostream& ofile)
 {
-  ofile << "component " << this->Get_VHDL_Id() << " is -- { " << endl;
-  string semi_colon;
-  semi_colon = this->Print_VHDL_System_Ports(semi_colon, ofile);
-  ofile << "-- }\n end component;" << endl;
-  
+	ofile << "component " << this->Get_VHDL_Id() << " is -- { " << endl;
+	string semi_colon;
+	semi_colon = this->Print_VHDL_System_Ports(semi_colon, ofile);
+	ofile << "-- }\n end component;" << endl;
+
 }
 
 string vcSystem::Print_VHDL_System_Ports(string semi_colon, ostream& ofile)
 {
-  ofile << "port (-- {";
-  for(set<vcModule*,vcRoot_Compare>::iterator iter = _top_module_set.begin();
-      iter != _top_module_set.end();
-      iter++)
-    {
-	if(!this->Is_An_Ever_Running_Top_Module(*iter))
-      		semi_colon = (*iter)->Print_VHDL_System_Argument_Ports(semi_colon, ofile);
-    }
+	ofile << "port (-- {";
+	for(set<vcModule*,vcRoot_Compare>::iterator iter = _top_module_set.begin();
+			iter != _top_module_set.end();
+			iter++)
+	{
+		if(!this->Is_An_Ever_Running_Top_Module(*iter))
+			semi_colon = (*iter)->Print_VHDL_System_Argument_Ports(semi_colon, ofile);
+	}
 
-  ofile << semi_colon << endl << "clk : in std_logic;" << endl;
-  ofile << "reset : in std_logic";
-  semi_colon = ";" ;
-  this->Print_VHDL_Pipe_Ports(semi_colon,ofile);
-  ofile << "); -- }" << endl;
-  return(semi_colon);
+	ofile << semi_colon << endl << "clk : in std_logic;" << endl;
+	ofile << "reset : in std_logic";
+	semi_colon = ";" ;
+	this->Print_VHDL_Pipe_Ports(semi_colon,ofile);
+	ofile << "); -- }" << endl;
+	return(semi_colon);
 }
 
 void vcSystem::Print_VHDL_Entity(ostream& ofile)
 {
-  ofile << "entity " << this->Get_VHDL_Id() << " is  -- system {" << endl;
-  string semi_colon;
-  semi_colon = this->Print_VHDL_System_Ports(semi_colon, ofile);
-  ofile << "-- }\n end entity; " << endl;
+	ofile << "entity " << this->Get_VHDL_Id() << " is  -- system {" << endl;
+	string semi_colon;
+	semi_colon = this->Print_VHDL_System_Ports(semi_colon, ofile);
+	ofile << "-- }\n end entity; " << endl;
 }
 
 void vcSystem::Print_VHDL_Pipe_Port_Signals(ostream& ofile)
 {
-  for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
-      pipe_iter != _pipe_map.end();
-      pipe_iter++)
-    {
-      vcPipe* p =(*pipe_iter).second;
-      p->Print_VHDL_Pipe_Port_Signals(ofile);
+	for(map<string, vcPipe*>::iterator pipe_iter = _pipe_map.begin();
+			pipe_iter != _pipe_map.end();
+			pipe_iter++)
+	{
+		vcPipe* p =(*pipe_iter).second;
+		p->Print_VHDL_Pipe_Port_Signals(ofile);
 
     }
 }
@@ -851,10 +889,20 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 	{
 	  // input pipe
 	  ofile << semi_colon << endl;
+	  if(p->Get_Port() && p->Get_In_Flag())
+	  {
+		if(p->Get_Signal())
+		  ofile << pipe_id << ": in std_logic_vector(0 downto 0)";
+		else
+		  ofile << pipe_id << ": in std_logic_vector(" << pipe_width-1 << " downto 0)";
+          }
+	  else
+	  {
+		  ofile << pipe_id << "_pipe_write_data: in std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+		  ofile << pipe_id << "_pipe_write_req : in std_logic_vector(0 downto 0);" << endl;
+		  ofile << pipe_id << "_pipe_write_ack : out std_logic_vector(0 downto 0)";
+	  }
 	  semi_colon = ";";
-	  ofile << pipe_id << "_pipe_write_data: in std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-	  ofile << pipe_id << "_pipe_write_req : in std_logic_vector(0 downto 0);" << endl;
-	  ofile << pipe_id << "_pipe_write_ack : out std_logic_vector(0 downto 0)";
 	}
 
 
@@ -862,10 +910,20 @@ string vcSystem::Print_VHDL_Pipe_Ports(string semi_colon, ostream& ofile)
 	{
 	  // output
 	  ofile << semi_colon << endl;
+	  if(p->Get_Port() && p->Get_Out_Flag())
+	  {
+		if(p->Get_Signal())
+		  ofile << pipe_id << ": out std_logic_vector(0 downto 0)";
+		else
+		  ofile << pipe_id << ": out std_logic_vector(" << pipe_width-1 << " downto 0)";
+          }
+	  else
+	  {
+		  ofile << pipe_id << "_pipe_read_data: out std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
+		  ofile << pipe_id << "_pipe_read_req : in std_logic_vector(0 downto 0);" << endl;
+		  ofile << pipe_id << "_pipe_read_ack : out std_logic_vector(0 downto 0)";
+          }
 	  semi_colon = ";";
-	  ofile << pipe_id << "_pipe_read_data: out std_logic_vector(" << pipe_width-1 << " downto 0);" << endl;
-	  ofile << pipe_id << "_pipe_read_req : in std_logic_vector(0 downto 0);" << endl;
-	  ofile << pipe_id << "_pipe_read_ack : out std_logic_vector(0 downto 0)";
 	}
     }
 

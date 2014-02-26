@@ -29,7 +29,7 @@ architecture default_arch of place is
   signal token_sig      : boolean;  -- asynchronously computed value of the token
   signal token_latch    : integer range 0 to capacity;
   
-  constant debug_flag : boolean := true;
+  constant debug_flag : boolean := false;
 begin  -- default_arch
 
   assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;

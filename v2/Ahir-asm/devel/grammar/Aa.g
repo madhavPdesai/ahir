@@ -1121,7 +1121,10 @@ aA_Pipe_Object_Declaration[AaScope* scope] returns [AaObject* obj]
             AaType* otype = NULL;
             AaConstantLiteralReference* initial_value = NULL;
             int pipe_depth = 1;
+
 	    bool lifo_flag = false;
+	    bool in_mode = false;
+	    bool out_mode = false;
         }
         : (LIFO { lifo_flag = true; })? 
 		(st:PIPE aA_Object_Declaration_Base[scope,oname,otype,initial_value]) 
@@ -1135,7 +1138,10 @@ aA_Pipe_Object_Declaration[AaScope* scope] returns [AaObject* obj]
             obj->Set_Line_Number(st->getLine());
 	    ((AaPipeObject*)obj)->Set_Lifo_Mode(lifo_flag);
         }
-
+		(IN {((AaPipeObject*)obj)->Set_In_Mode(true);} | OUT {((AaPipeObject*)obj)->Set_Out_Mode(true);})? 
+		(PORT  {((AaPipeObject*)obj)->Set_Port(true);})?
+		(SIGNAL {((AaPipeObject*)obj)->Set_Signal(true);})?
+		(SYNCH {((AaPipeObject*)obj)->Set_Synch(true);})?
         ;
 
 //----------------------------------------------------------------------------------------------------------
@@ -1479,6 +1485,8 @@ STORAGE       : "$storage";
 REGISTER      : "$register";
 PIPE          : "$pipe";
 LIFO          : "$lifo";
+PORT          : "$port";
+SIGNAL        : "$signal";
 CONSTANT      : "$constant";
 SERIESBLOCK   : "$seriesblock";
 PARALLELBLOCK : "$parallelblock";

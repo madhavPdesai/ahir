@@ -64,7 +64,7 @@ architecture Vanilla of StoreReqSharedWithInputBuffers is
   signal imux_data_out_accept,  imux_data_out_valid: std_logic;
   signal imux_data_out: std_logic_vector(rx_word_length-1 downto 0);
   
-  alias IBUFs: IntegerArray(num_reqs-1 downto 0) is input_buffering;
+  -- alias IBUFs: IntegerArray(num_reqs-1 downto 0) is input_buffering;
 begin  -- Behave
   assert(tag_length >= Ceil_Log2(num_reqs)) report "insufficient tag width" severity error;
  
@@ -99,7 +99,7 @@ begin  -- Behave
   -- receive buffers.
   RxGen: for I in 0 to num_reqs-1 generate
 	rb: ReceiveBuffer generic map(name => name & " RxBuf " & Convert_To_String(I),
-					buffer_size => IBUFs(I),
+					buffer_size => input_buffering(I),
 					data_width => rx_word_length,
 					kill_counter_range => 655535)
 		port map(write_req => reqL(I), 

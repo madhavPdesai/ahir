@@ -12,17 +12,9 @@
 
 void maxDaemon();
 
-#ifdef SW
-DEFINE_THREAD(maxDaemon)
-#endif
 
 int main(int argc, char* argv[])
 {
-#ifdef SW
-	init_pipe_handler_with_log("pipelog.txt");
-	PTHREAD_DECL(maxDaemon);   // declare the Daemon thread.
-	PTHREAD_CREATE(maxDaemon); // start the Daemon..
-#endif
 	while(1)
 	{
 		uint32_t a, b;
@@ -37,10 +29,6 @@ int main(int argc, char* argv[])
 			break;
 	}
 
-#ifdef SW
-	close_pipe_handler();
-	PTHREAD_CANCEL(maxDaemon);
-#endif
 	return(0);
 }
 

@@ -26,7 +26,9 @@ package Utilities is
   function All_Entries_Same ( x : NaturalArray) return boolean;
   function Is_At_Most_One_Hot(x: BooleanArray) return Boolean;
 
+
   function Reverse(x: unsigned) return unsigned;
+  procedure TruncateOrPad(signal rhs: in std_logic_vector; signal lhs : out std_logic_vector);
   
 end Utilities;
 
@@ -278,5 +280,13 @@ package body Utilities is
 	end loop;
 	return(ret_var);
   end function Reverse;
+
+  procedure TruncateOrPad(signal rhs: in std_logic_vector; signal lhs : out std_logic_vector) is
+	alias arhs : std_logic_vector(rhs'length downto 1) is rhs;
+	alias alhs : std_logic_vector(lhs'length downto 1) is lhs;
+        constant L : integer := Minimum(rhs'length, lhs'length);
+  begin
+	alhs(L downto 1) <= arhs(L downto 1);
+  end procedure TruncateOrPad;
 
 end Utilities;

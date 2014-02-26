@@ -49,7 +49,7 @@ architecture Behave of InputMuxWithBuffering is
   signal oq_data_in : std_logic_vector((twidth + owidth)-1 downto 0);
   signal oq_data_out : std_logic_vector((twidth + owidth)-1 downto 0);
 
-  alias cbuffering: IntegerArray(nreqs-1 downto 0) is buffering;
+  --alias cbuffering: IntegerArray(nreqs-1 downto 0) is buffering;
 
 begin  -- Behave
 
@@ -71,7 +71,7 @@ begin  -- Behave
 
 
      rxBuf: ReceiveBuffer generic map(name => name & " receive-buffer " & Convert_To_String(I),
-					buffer_size =>  cbuffering(I),
+					buffer_size =>  buffering(I),
 					data_width => owidth,
 					kill_counter_range => 1)
 		port map (write_req => reqL(I),
