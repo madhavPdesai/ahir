@@ -10,7 +10,8 @@ use ahir.BaseComponents.all;
 entity InterlockBuffer is
   generic (name: string; buffer_size: integer := 2; 
 		in_data_width : integer := 32;
-		out_data_width : integer := 32);
+		out_data_width : integer := 32;
+		flow_through: boolean := false);
   port (write_req: in boolean;
         write_ack: out boolean;
         write_data: in std_logic_vector(in_data_width-1 downto 0);
@@ -35,6 +36,14 @@ begin  -- default_arch
 
   -- interlock buffer must have buffer-size > 0
   assert buffer_size > 0 report " interlock buffer size must be > 0 " severity failure;
+ 
+  flowThrough: if flow_through generate
+		write_ack <= write_req;
+		read_ack <= read_req;
+		read_data <= write_data;
+  end generate flowThrough;
+
+  NoFlowThrough: if (not flow_through) generate
 
   bufEqOne: if buffer_size = 1 generate
 	regBlock: block
@@ -122,5 +131,6 @@ begin  -- default_arch
       reset       => reset);
 
   end generate bufGtOne;
+  end generate NoFlowThrough;
 
 end default_arch;

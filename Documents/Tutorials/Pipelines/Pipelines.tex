@@ -1,0 +1,86 @@
+\documentclass{beamer}
+\usepackage{epsfig}
+\title{Describing Pipelines}
+\author{Madhav P. Desai}
+\begin{document}
+\maketitle
+
+
+
+\frame[containsverbatim]{\frametitle{Two ways of describing pipelines}
+
+\begin{itemize}
+\item with distinct threads.
+\item by pipelining a loop.
+\end{itemize}
+}
+
+
+\frame[containsverbatim]{\frametitle{An example}
+\begin{itemize}
+\item We want to compute $d(k) = (a(k)+b(k)) \times c(k)$ for a sequence of 
+numbers. 
+\item The system should accept a sequence of numbers $\{a(k),b(k),c(k)\}$
+and produce the sequence $\{ d(k) \}$.
+\end{itemize}
+}
+
+
+\frame[containsverbatim]{\frametitle{As separate threads}
+\begin{verbatim}
+void Stage_0()
+{
+  while(1)
+  {
+    float a = read_float32("a_pipe");
+    float b = read_float32("b_pipe");
+    float c = read_float32("c_pipe");
+    write_float32("c_forward_pipe", c);
+    write_float32("s0_result", a+b);
+  }
+}
+void Stage_1()
+{
+  while(1)
+  {
+    float c = read_float32("c_forward_pipe");
+    float aSb = read_float32("s0_result");
+    write_float32("d_pipe", aSb * c);
+  }
+}
+\end{verbatim}
+}
+
+\frame[containsverbatim]{\frametitle{In a single loop}
+\begin{verbatim}
+void Daemon()
+{
+  while(1)
+  {
+    float a = read_float32("a_pipe");
+    float b = read_float32("b_pipe");
+    float c = read_float32("c_pipe");
+    write_float32("d_pipe", (a+b)*c);
+  }
+}
+\end{verbatim}
+}
+
+
+\frame[containsverbatim]{\frametitle{Loop Pipelining}
+\begin{itemize}
+\item Loop pipelining involves executing multiple iterations of a
+loop at the same time.
+\item While doing this, all dependencies must be taken care of.
+\begin{itemize}
+\item Operation order.
+\item Data dependency.
+\item Memory accesses.
+\item Pipe accesses.
+\end{itemize}
+\end{itemize}
+}
+
+\frame[containsverbatim]{ \frametitle{Example}
+}
+\end{document}

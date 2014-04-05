@@ -1,0 +1,3 @@
+An example to illustrate EXTREME pipelining... 
+ie.  Loop pipelining that generates one iteration per cycle.
+

@@ -1968,7 +1968,8 @@ package BaseComponents is
   component InterlockBuffer 
     generic (name: string; buffer_size: integer := 2; 
 		in_data_width : integer := 32;
-		out_data_width : integer := 32);
+		out_data_width : integer := 32;
+		flow_through: boolean := false);
     port ( write_req: in boolean;
         write_ack: out boolean;
         write_data: in std_logic_vector(in_data_width-1 downto 0);

@@ -1478,11 +1478,13 @@ void vcInterlockBuffer::Print_VHDL(ostream& ofile)
 
 	int in_data_width = this->_din->Get_Size();
 	int out_data_width = this->_dout->Get_Size();
+        bool flow_through = this->Get_Flow_Through();
 
 	ofile << this->Get_VHDL_Id() << " : InterlockBuffer ";
 	ofile << "generic map ( -- { " << endl;
 	ofile << " name => " << name << "," << endl;
 	ofile << " buffer_size => " << buf_size << "," << endl;
+ 	ofile << " flow_through => " <<  (flow_through ? " true " : " false ") << "," << endl;
 	ofile << " in_data_width => " << in_data_width << "," << endl;
 	ofile << " out_data_width => " << out_data_width <<  endl;
 	ofile << " -- }" << endl << ")";

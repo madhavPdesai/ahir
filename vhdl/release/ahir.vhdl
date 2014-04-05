@@ -3608,7 +3608,8 @@ package BaseComponents is
   component InterlockBuffer 
     generic (name: string; buffer_size: integer := 2; 
 		in_data_width : integer := 32;
-		out_data_width : integer := 32);
+		out_data_width : integer := 32;
+		flow_through: boolean := false);
     port ( write_req: in boolean;
         write_ack: out boolean;
         write_data: in std_logic_vector(in_data_width-1 downto 0);
@@ -9776,84 +9777,6 @@ begin  -- default_arch
   
   -- The transition is enabled only when all preds are true.
   symbol_out_sig(0) <= AndReduce(place_sigs) and AndReduce(mplace_sigs);
-  symbol_out <= symbol_out_sig(0);
-
-end default_arch;
-library ieee;
-use ieee.std_logic_1164.all;
-library ahir;
-use ahir.Types.all;
-use ahir.subprograms.all;
-use ahir.BaseComponents.all;
-use ahir.utilities.all;
-
-entity marked_join_with_input is
-  generic (place_capacity : integer := 1; bypass : boolean := false; name : string := "anon");
-  port ( preds      : in   BooleanArray;
-         marked_preds : in BooleanArray;
-    	symbol_in : in  boolean;
-    	symbol_out : out  boolean;
-	clk: in std_logic;
-	reset: in std_logic);
-end marked_join_with_input;
-
-architecture default_arch of marked_join_with_input is
-  signal symbol_out_sig : BooleanArray(0 downto 0);
-  signal place_sigs: BooleanArray(preds'range);
-  signal mplace_sigs: BooleanArray(marked_preds'range);  
-  signal inp_place_sig: Boolean;
-  constant H: integer := preds'high;
-  constant L: integer := preds'low;
-
-  constant MH: integer := marked_preds'high;
-  constant ML: integer := marked_preds'low;  
-
-begin  -- default_arch
-  
-  placegen: for I in H downto L generate
-    placeBlock: block
-	signal place_pred: BooleanArray(0 downto 0);
-    begin
-	place_pred(0) <= preds(I);
-        byp: if bypass generate
-	  pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
-				 name => name & ":byp:" & Convert_To_String(I) )
-		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
-       end generate byp;
-
-        nobyp: if not bypass generate
-	  pI: place generic map(capacity => place_capacity, marking => 0,
-				 name => name & ":nobyp:" & Convert_To_String(I) )
-		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
-       end generate nobyp;
-
-    end block;
-  end generate placegen;
-
-  -- the marked places
-  mplacegen: for I in MH downto ML generate
-    mplaceBlock: block
-	signal place_pred: BooleanArray(0 downto 0);
-    begin
-	place_pred(0) <= marked_preds(I);
-	mpI: place generic map(capacity => place_capacity, marking => 1,
-				 name => name & ":marked:" & Convert_To_String(I) )
-		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
-    end block;
-  end generate mplacegen;
-
-  inplaceBlock: block
-	signal place_pred: BooleanArray(0 downto 0);
-  begin
-	place_pred(0) <= symbol_in;
-	pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
-				 name => name & ":inputplace")
-		port map(place_pred,symbol_out_sig,inp_place_sig,clk,reset);
-  end block;
-  
-  -- The transition is enabled only when all preds are true and transition
-  -- is reenabled.
-  symbol_out_sig(0) <= inp_place_sig and AndReduce(place_sigs) and AndReduce(mplace_sigs);
   symbol_out <= symbol_out_sig(0);
 
 end default_arch;
@@ -19648,7 +19571,8 @@ use ahir.BaseComponents.all;
 entity InterlockBuffer is
   generic (name: string; buffer_size: integer := 2; 
 		in_data_width : integer := 32;
-		out_data_width : integer := 32);
+		out_data_width : integer := 32;
+		flow_through: boolean := false);
   port (write_req: in boolean;
         write_ack: out boolean;
         write_data: in std_logic_vector(in_data_width-1 downto 0);
@@ -19673,6 +19597,14 @@ begin  -- default_arch
 
   -- interlock buffer must have buffer-size > 0
   assert buffer_size > 0 report " interlock buffer size must be > 0 " severity failure;
+ 
+  flowThrough: if flow_through generate
+		write_ack <= write_req;
+		read_ack <= read_req;
+		read_data <= write_data;
+  end generate flowThrough;
+
+  NoFlowThrough: if (not flow_through) generate
 
   bufEqOne: if buffer_size = 1 generate
 	regBlock: block
@@ -19760,6 +19692,7 @@ begin  -- default_arch
       reset       => reset);
 
   end generate bufGtOne;
+  end generate NoFlowThrough;
 
 end default_arch;
 library ieee;
@@ -21061,6 +20994,51 @@ begin
         end generate;
 
 end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+-- brief description:
+--  as the name indicates, a squash-shift-register
+--  provides an implementation of a pipeline.
+entity SquashShiftRegister is
+  generic (name : string;
+	   data_width: integer;
+           depth: integer := 1);
+  port (
+    read_req       : in  std_logic;
+    read_ack       : out std_logic;
+    read_data      : out std_logic_vector(data_width-1 downto 0);
+    write_req       : in  std_logic;
+    write_ack       : out std_logic;
+    write_data      : in std_logic_vector(data_width-1 downto 0);
+    clk, reset : in  std_logic);
+  
+end SquashShiftRegister;
+
+architecture default_arch of SquashShiftRegister is
+
+  signal stage_full: std_logic_vector(0 to depth);
+
+  type SSRArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
+  signal stage_data : SSRArray(0 to depth);
+  
+begin  -- default_arch
+
+    -- shift-right if there is a bubble 
+    -- anywhere in the shift-register,
+    -- and if the write-signal is active.
+    --
+    -- stall stage I if I+1 is not ready to
+    -- accept.
+    -- etc.. etc..  TODO.
+
+end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
