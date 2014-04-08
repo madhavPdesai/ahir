@@ -650,11 +650,15 @@ bool AaSimpleObjectReference::Set_Addressed_Object_Representative(AaStorageObjec
 	//  if(this->_is_dereferenced)
 	//{
 
-	if(this->Get_Addressed_Object_Representative())
+	if(this->Get_Addressed_Object_Representative() && (obj != this->Get_Addressed_Object_Representative()))
+	{
 		AaProgram::Add_Storage_Dependency(obj,this->Get_Addressed_Object_Representative());
+	}
 
 	//    }
+		
 	this->AaExpression::Set_Addressed_Object_Representative(obj);
+
 }
 
 void AaSimpleObjectReference::Set_Type(AaType* t)

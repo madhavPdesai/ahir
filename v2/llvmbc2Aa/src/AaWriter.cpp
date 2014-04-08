@@ -567,6 +567,9 @@ namespace Aa {
 	}
 
 
+	//
+	// Note: do the chaining only if the leading basic block is
+	//       a do-while block.
 	void AaWriter::Build_Basic_Block_Chains(llvm::Function& F)
 	{
 		basic_block_chain_map.clear();
@@ -590,6 +593,13 @@ namespace Aa {
 			{
 				ordered_chain_rep_vector.push_back(curr_block);
 
+				// if curr_block is not a do-while loop, then look
+				// try to build longer chains, otherwise, leave it
+				// as a singleton chain.
+				int pD, buffRing; bool fRflag; // sacrificial :(
+                                bool leader_is_do_while_loop = is_do_while_loop(*curr_block, pD,buffRing,fRflag);
+				
+
 				// build the longest chain that you can starting with this
 				// element.
 				llvm::BasicBlock* tail_block = curr_block;
@@ -602,6 +612,13 @@ namespace Aa {
 					unchained_blocks.erase(tail_block);
 					chain_representative_map[tail_block] = curr_block;
 					basic_block_chain_map[curr_block].push_back(tail_block);
+
+					// dont go on if the leader is a do-while-loop
+					if(!leader_is_do_while_loop)
+					{
+						tail_block = NULL;
+						break;
+					}
 
 					llvm::TerminatorInst* T = tail_block->getTerminator();
 
@@ -1643,8 +1660,10 @@ namespace {
 			int buffering_depth = 1;
 			bool full_rate_flag = false;
 
+			
 			if(extract_do_while_flag)
 				v = is_do_while_loop(basic_block_chain_map[chain_rep], pipelining_depth, buffering_depth, full_rate_flag);
+
 			this->Set_Do_While_Flag(v);
 			this->Set_Do_While_Full_Rate_Flag(full_rate_flag);
 			this->Set_Do_While_Pipelining_Depth(pipelining_depth);

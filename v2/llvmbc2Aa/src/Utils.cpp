@@ -1090,7 +1090,7 @@ bool Aa::is_do_while_loop(llvm::BasicBlock& BB, int& pipelining_depth, int& buff
 		return(false);
 
 	// optimize function must be called here in order
-	// to pipeling this loop.
+	// to pipeline this loop.
 	bool opt_fn_found = get_loop_pipelining_info(BB,pipelining_depth, buffering, full_rate_flag); 
 	return(opt_fn_found);
 }
