@@ -42,10 +42,12 @@ bool AaObject::Set_Addressed_Object_Representative(AaStorageObject* obj)
       //      to remove this conservativeness.
       //      if(this->_is_dereferenced)
       //{
-      if(this->Get_Addressed_Object_Representative())
+      if(this->Get_Addressed_Object_Representative() && (obj != this->Get_Addressed_Object_Representative()))
+      {
 	AaProgram::Add_Storage_Dependency(obj,this->Get_Addressed_Object_Representative());
+      }
       //}
-
+        
       this->_addressed_objects.insert(obj);
 
       if(this->_addressed_object_representative == NULL)

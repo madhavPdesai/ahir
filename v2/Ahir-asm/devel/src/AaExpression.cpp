@@ -110,29 +110,34 @@ void AaExpression::Propagate_Addressed_Object_Representative(AaStorageObject* ob
     {
       this->Set_Coalesce_Flag(true);
 
+      bool continue_propagating = (obj == NULL) || (obj != this->Get_Addressed_Object_Representative());
       this->Set_Addressed_Object_Representative(obj);
+
       if(AaProgram::_verbose_flag)
 	AaRoot::Info("coalescing: propagating " + (obj ? obj->Get_Name() : "null") + " from expression " + this->To_String() +
 		 this->Get_Source_Info());
 
       // propagate to all that are targets of this expression.
-      for(set<AaExpression*>::iterator iter = _targets.begin();
-	  iter != _targets.end();
-	  iter++)
-	{
-	  (*(iter))->Propagate_Addressed_Object_Representative(obj, this);
-	}
-      
-      // propagate to all objects that use this 
-      // expression as a source.
-      for(set<AaRoot*>::iterator iter = _source_references.begin();
-	  iter != _source_references.end();
-	  iter++)
-	{
-	  if((*iter)->Is_Object())
-	    ((AaObject*)(*iter))->Propagate_Addressed_Object_Representative(obj, this);
-	  
-	}
+      if(continue_propagating)
+      {
+	      for(set<AaExpression*>::iterator iter = _targets.begin();
+			      iter != _targets.end();
+			      iter++)
+	      {
+		      (*(iter))->Propagate_Addressed_Object_Representative(obj, this);
+	      }
+
+	      // propagate to all objects that use this 
+	      // expression as a source.
+	      for(set<AaRoot*>::iterator iter = _source_references.begin();
+			      iter != _source_references.end();
+			      iter++)
+	      {
+		      if((*iter)->Is_Object())
+			      ((AaObject*)(*iter))->Propagate_Addressed_Object_Representative(obj, this);
+
+	      }
+      }
 
       this->Set_Coalesce_Flag(false);
     }
@@ -140,86 +145,86 @@ void AaExpression::Propagate_Addressed_Object_Representative(AaStorageObject* ob
 
 void AaExpression::Set_Type(AaType* t)
 {
-  if(this->_type == NULL)
-    {
-      if(this->Scalar_Types_Only() && !t->Is_Scalar_Type())
+	if(this->_type == NULL)
 	{
-	  AaRoot::Error("expression " + this->To_String() + " type must be a scalar", this);
-	}
-      else
-	{
-	  this->_type = t;
-	  
-	  // all expressions of which this is the target may need
-	  // to recompute their types.
-	  for(set<AaExpression*>::iterator siter = this->_targets.begin();
-	      siter != this->_targets.end();
-	      siter++)
-	    {
-	      AaExpression* ref = *siter;
-	      ref->Update_Type();
-	    }
-	}
-    }
-   else
-     {
-       if(t != this->_type)
-	 {
-	   string err_msg = "type of expression ";
-	   this->Print(err_msg);
-	   err_msg += " is ambiguous, is it  ";
-	   this->_type->Print(err_msg);
-	   err_msg += " or ";
-	   t->Print(err_msg);
-	   err_msg += " ? ";
-	   AaRoot::Error(err_msg, this);
-	 }
-     }
- }
+		if(this->Scalar_Types_Only() && !t->Is_Scalar_Type())
+		{
+			AaRoot::Error("expression " + this->To_String() + " type must be a scalar", this);
+		}
+		else
+		{
+			this->_type = t;
 
-  
- 
- bool AaExpression::Is_Part_Of_Pipelined_Module()
- {
+			// all expressions of which this is the target may need
+			// to recompute their types.
+			for(set<AaExpression*>::iterator siter = this->_targets.begin();
+					siter != this->_targets.end();
+					siter++)
+			{
+				AaExpression* ref = *siter;
+				ref->Update_Type();
+			}
+		}
+	}
+	else
+	{
+		if(t != this->_type)
+		{
+			string err_msg = "type of expression ";
+			this->Print(err_msg);
+			err_msg += " is ambiguous, is it  ";
+			this->_type->Print(err_msg);
+			err_msg += " or ";
+			t->Print(err_msg);
+			err_msg += " ? ";
+			AaRoot::Error(err_msg, this);
+		}
+	}
+}
+
+
+
+bool AaExpression::Is_Part_Of_Pipelined_Module()
+{
 	AaStatement* s = this->Get_Associated_Statement();
 	if(s->Get_Scope() && s->Get_Scope()->Is("AaModule") && ((AaModule*) s->Get_Scope())->Is_Pipelined())
 		return(true);
 	return(false);
- }
+}
 
- string AaExpression::Get_VC_Name()
- {
-   string ret_string = "expr_" + Int64ToStr(this->Get_Index());
-   return(ret_string);
- }
+string AaExpression::Get_VC_Name()
+{
+	string ret_string = "expr_" + Int64ToStr(this->Get_Index());
+	return(ret_string);
+}
 
- void AaExpression::Write_VC_Control_Path(ostream& ofile)
- {
-   ofile << "// " << this->To_String() << endl;
+void AaExpression::Write_VC_Control_Path(ostream& ofile)
+{
+	ofile << "// " << this->To_String() << endl;
 
-   ofile << ";;[" << this->Get_VC_Name() << "] {"
-	 << "$T [dummy] " << endl
-	 << "}" << endl;
- }
+	ofile << ";;[" << this->Get_VC_Name() << "] {"
+		<< "$T [dummy] " << endl
+		<< "}" << endl;
+}
 
 void AaExpression::Assign_Expression_Value(AaValue* expr_value)
 {
-  AaValue* nv = Make_Aa_Value(this->Get_Scope(),this->Get_Type());
-  nv->Assign(this->Get_Type(),expr_value);
-  _expression_value = nv;
+	AaValue* nv = Make_Aa_Value(this->Get_Scope(),this->Get_Type());
+	nv->Assign(this->Get_Type(),expr_value);
+	_expression_value = nv;
 }
 
 bool AaExpression::Used_Only_In_Address_Of_Expression()
 {
-  bool ret_val = false;
-  if(this->_targets.size() == 1)
-    {
-      // has a unique target
-      AaExpression* expr =*(this->_targets.begin());
-      if(expr->Get_Is_Target())
-	ret_val = false;
-      else if(expr->Is("AaAddressOfExpression"))
-	ret_val = true;
+	bool ret_val = false;
+	if(this->_targets.size() == 1)
+	{
+		// has a unique target
+		AaExpression* expr =*(this->_targets.begin());
+		if(expr->Get_Is_Target())
+			ret_val = false;
+		else if(expr->Is("AaAddressOfExpression"))
+			ret_val = true;
       else
 	ret_val = expr->Used_Only_In_Address_Of_Expression();
     }
@@ -2802,7 +2807,8 @@ void AaPointerDereferenceExpression::Propagate_Addressed_Object_Representative(A
       // but only if it is from the reference.
       if((this->Get_Addressed_Object_Representative()) != NULL && (obj != NULL) && from_ref)
 	{
-	  AaProgram::Add_Storage_Dependency(obj,this->Get_Addressed_Object_Representative());
+	  if(obj != this->Get_Addressed_Object_Representative())
+		  AaProgram::Add_Storage_Dependency(obj,this->Get_Addressed_Object_Representative());
 	}
 
       if(from_ref && obj != NULL)
@@ -3239,7 +3245,6 @@ void AaAddressOfExpression::Propagate_Addressed_Object_Representative(AaStorageO
   // @(p) always propagates forward, because
   // _storage_object may have an updated 
   // representative..
-  this->Set_Addressed_Object_Representative(this->_storage_object);
   if(AaProgram::_verbose_flag)
     AaRoot::Info("coalescing: propagating " + (obj ? obj->Get_Name() : "null") + " from expression " + this->To_String()
 		 + this->Get_Source_Info());
