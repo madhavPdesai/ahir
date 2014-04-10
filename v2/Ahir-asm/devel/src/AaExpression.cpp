@@ -1602,6 +1602,8 @@ void AaArrayObjectReference::Set_Object(AaRoot* obj)
 			_pointer_ref = new AaSimpleObjectReference(this->Get_Scope(), ((AaObject*)obj)->Get_Name());
 			_pointer_ref->Set_Object(obj);
 			_pointer_ref->Add_Target(this);
+
+			_pointer_ref->Set_Associated_Statement(this->Get_Associated_Statement());
 		}
 
 		if(obj->Is_Pipe_Object())
