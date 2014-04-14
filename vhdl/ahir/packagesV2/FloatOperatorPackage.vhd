@@ -311,7 +311,7 @@ package body FloatOperatorPackage is
                                       constant exponent_width : in integer;
                                       constant fraction_width : in integer;                                      
                                       result : out std_logic_vector) is	
-    variable result_var : std_logic_vector(exponent_width+fraction_width downto 0);	
+    variable result_var : std_logic_vector(result'length-1 downto 0);	
   begin
     result_var:= (others => '0');
     if id = "ApFloatToApIntSigned" then					

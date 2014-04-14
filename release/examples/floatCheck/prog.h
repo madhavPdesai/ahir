@@ -6,3 +6,4 @@ float dotProduct(float x0, float y0, float x1, float y1, float x2, float y2, flo
 uint8_t fpcmpgt(float x, float y);
 uint8_t fpcmplt(float x, float y);
 uint8_t fpcmpeq(float x, float y);
+int32_t fp2int(float);
