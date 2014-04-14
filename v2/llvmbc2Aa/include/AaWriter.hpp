@@ -119,6 +119,7 @@ namespace Aa {
 
     std::string get_name(llvm::Value* v);
     std::string prepare_operand(llvm::Value* v);
+    std::string prepare_operand(llvm::Value* v, const llvm::Type* t);
 
     void name_all_instructions(llvm::BasicBlock &BB, int& iidx);
 

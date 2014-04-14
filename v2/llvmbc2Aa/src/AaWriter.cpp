@@ -189,6 +189,21 @@ namespace Aa {
 		}
 	}
 
+	std::string AaWriter::prepare_operand(llvm::Value* v, const llvm::Type* t)
+	{
+		static int ptr_index = 0;
+		if(isa<PointerType>(t) && isa<GlobalVariable>(v))
+		{
+			std::string vname = to_aa(get_name(v));
+			std::string ret_string = vname + "_ptr_" + int_to_str(ptr_index);
+			std::cout << ret_string <<  " := @(" << vname << ")" << std::endl;
+			ptr_index++;
+			return(ret_string);
+		}
+		else
+			return(prepare_operand(v));
+	}
+
 	std::string AaWriter::get_name(llvm::Value* v)
 	{
 		std::string ret_string;
@@ -1176,7 +1191,7 @@ namespace {
 
 				for(int idx = 0; idx < C.getNumArgOperands(); idx++)
 				{
-					argument_names.push_back(prepare_operand(C.getArgOperand(idx)));
+					argument_names.push_back(prepare_operand(C.getArgOperand(idx), argument_types[idx]));
 				}
 
 				std::string fname = to_aa(called_function->getNameStr());
