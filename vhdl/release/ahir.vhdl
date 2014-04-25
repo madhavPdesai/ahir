@@ -3709,9 +3709,9 @@ package BaseComponents is
 	    num_reads: integer;
 	    in_data_width: integer;
             out_data_width : integer); 
-   port (read_req : in std_logic_vector(0 downto 0);
-         read_ack : out std_logic_vector(0 downto 0);
-         read_data: out std_logic_vector(out_data_width-1 downto 0);
+   port (read_req : in std_logic_vector(num_reads-1 downto 0);
+         read_ack : out std_logic_vector(num_reads-1 downto 0);
+         read_data: out std_logic_vector((num_reads*out_data_width)-1 downto 0);
          in_data  : in std_logic_vector(in_data_width-1 downto 0);
 	 clk : in std_logic;
 	 reset : in std_logic);
@@ -3722,9 +3722,9 @@ package BaseComponents is
 	    num_writes: integer;
 	    in_data_width: integer;
             out_data_width : integer); 
-   port (write_req : in std_logic_vector(0 downto 0);
-         write_ack : out std_logic_vector(0 downto 0);
-         write_data: in std_logic_vector(in_data_width-1 downto 0);
+   port (write_req : in std_logic_vector(num_writes-1 downto 0);
+         write_ack : out std_logic_vector(num_writes-1 downto 0);
+         write_data: in std_logic_vector((num_writes*in_data_width)-1 downto 0);
          out_data  : out std_logic_vector(out_data_width-1 downto 0);
 	 clk : in std_logic;
 	 reset : in std_logic);
@@ -9777,6 +9777,84 @@ begin  -- default_arch
   
   -- The transition is enabled only when all preds are true.
   symbol_out_sig(0) <= AndReduce(place_sigs) and AndReduce(mplace_sigs);
+  symbol_out <= symbol_out_sig(0);
+
+end default_arch;
+library ieee;
+use ieee.std_logic_1164.all;
+library ahir;
+use ahir.Types.all;
+use ahir.subprograms.all;
+use ahir.BaseComponents.all;
+use ahir.utilities.all;
+
+entity marked_join_with_input is
+  generic (place_capacity : integer := 1; bypass : boolean := false; name : string := "anon");
+  port ( preds      : in   BooleanArray;
+         marked_preds : in BooleanArray;
+    	symbol_in : in  boolean;
+    	symbol_out : out  boolean;
+	clk: in std_logic;
+	reset: in std_logic);
+end marked_join_with_input;
+
+architecture default_arch of marked_join_with_input is
+  signal symbol_out_sig : BooleanArray(0 downto 0);
+  signal place_sigs: BooleanArray(preds'range);
+  signal mplace_sigs: BooleanArray(marked_preds'range);  
+  signal inp_place_sig: Boolean;
+  constant H: integer := preds'high;
+  constant L: integer := preds'low;
+
+  constant MH: integer := marked_preds'high;
+  constant ML: integer := marked_preds'low;  
+
+begin  -- default_arch
+  
+  placegen: for I in H downto L generate
+    placeBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+    begin
+	place_pred(0) <= preds(I);
+        byp: if bypass generate
+	  pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
+				 name => name & ":byp:" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+       end generate byp;
+
+        nobyp: if not bypass generate
+	  pI: place generic map(capacity => place_capacity, marking => 0,
+				 name => name & ":nobyp:" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,place_sigs(I),clk,reset);
+       end generate nobyp;
+
+    end block;
+  end generate placegen;
+
+  -- the marked places
+  mplacegen: for I in MH downto ML generate
+    mplaceBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+    begin
+	place_pred(0) <= marked_preds(I);
+	mpI: place generic map(capacity => place_capacity, marking => 1,
+				 name => name & ":marked:" & Convert_To_String(I) )
+		port map(place_pred,symbol_out_sig,mplace_sigs(I),clk,reset);
+    end block;
+  end generate mplacegen;
+
+  inplaceBlock: block
+	signal place_pred: BooleanArray(0 downto 0);
+  begin
+	place_pred(0) <= symbol_in;
+	pI: place_with_bypass generic map(capacity => place_capacity, marking => 0,
+				 name => name & ":inputplace")
+		port map(place_pred,symbol_out_sig,inp_place_sig,clk,reset);
+  end block;
+  
+  -- The transition is enabled only when all preds are true and transition
+  -- is reenabled.
+  symbol_out_sig(0) <= inp_place_sig and AndReduce(place_sigs) and AndReduce(mplace_sigs);
   symbol_out <= symbol_out_sig(0);
 
 end default_arch;
@@ -20996,51 +21074,6 @@ begin
 end Behave;
 library ieee;
 use ieee.std_logic_1164.all;
-
-library ahir;
-use ahir.Types.all;
-use ahir.Subprograms.all;
-use ahir.Utilities.all;
-use ahir.BaseComponents.all;
-
--- brief description:
---  as the name indicates, a squash-shift-register
---  provides an implementation of a pipeline.
-entity SquashShiftRegister is
-  generic (name : string;
-	   data_width: integer;
-           depth: integer := 1);
-  port (
-    read_req       : in  std_logic;
-    read_ack       : out std_logic;
-    read_data      : out std_logic_vector(data_width-1 downto 0);
-    write_req       : in  std_logic;
-    write_ack       : out std_logic;
-    write_data      : in std_logic_vector(data_width-1 downto 0);
-    clk, reset : in  std_logic);
-  
-end SquashShiftRegister;
-
-architecture default_arch of SquashShiftRegister is
-
-  signal stage_full: std_logic_vector(0 to depth);
-
-  type SSRArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
-  signal stage_data : SSRArray(0 to depth);
-  
-begin  -- default_arch
-
-    -- shift-right if there is a bubble 
-    -- anywhere in the shift-register,
-    -- and if the write-signal is active.
-    --
-    -- stall stage I if I+1 is not ready to
-    -- accept.
-    -- etc.. etc..  TODO.
-
-end default_arch;
-library ieee;
-use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
@@ -21225,31 +21258,46 @@ entity SystemInPort is
 	    num_reads: integer;
 	    in_data_width: integer;
             out_data_width : integer); 
-   port (read_req : in std_logic_vector(0 downto 0);
-         read_ack : out std_logic_vector(0 downto 0);
-         read_data: out std_logic_vector(out_data_width-1 downto 0);
+   port (read_req : in std_logic_vector(num_reads-1 downto 0);
+         read_ack : out std_logic_vector(num_reads-1 downto 0);
+         read_data: out std_logic_vector((num_reads*out_data_width)-1 downto 0);
          in_data  : in std_logic_vector(in_data_width-1 downto 0);
 	 clk : in std_logic;
 	 reset : in std_logic);
 end entity;
 
 architecture Mixed of SystemInPort is
-    signal data_reg: std_logic_vector(in_data_width-1 downto 0);
+
+    constant min_width : integer := Minimum(in_data_width, out_data_width);
+    signal data_reg, tr_p_in_data: std_logic_vector(min_width-1 downto 0);
+    signal tr_data : std_logic_vector(out_data_width-1 downto 0);
 begin
     read_ack <= (others => '1');
 
+    -- stored data will be of minimum width.
+    TruncateOrPad(in_data, tr_p_in_data); 
     process(clk)
     begin
 	if(clk'event and clk = '1') then
 		if(reset = '1') then
 			data_reg <= (others => '0');
 		else
-			data_reg <= in_data;
+			data_reg <= tr_p_in_data;
 		end if;
 	end if;
     end process;
 
-    TruncateOrPad(data_reg, read_data); 
+
+    -- pad out data_reg..
+    TruncateOrPad(data_reg, tr_data);
+
+    -- padded data is broadcast to all readers.
+    process(tr_data)
+    begin
+	for I in 0 to num_reads-1 loop
+		read_data(((I+1)*out_data_width)-1 downto I*out_data_width) <= tr_data;
+	end loop;
+    end process;
 end Mixed;
 
 library ieee;
@@ -21270,34 +21318,49 @@ entity SystemOutPort is
 	    num_writes: integer;
 	    in_data_width: integer;
             out_data_width : integer); 
-   port (write_req : in std_logic_vector(0 downto 0);
-         write_ack : out std_logic_vector(0 downto 0);
-         write_data: in std_logic_vector(in_data_width-1 downto 0);
+   port (write_req : in std_logic_vector(num_writes-1 downto 0);
+         write_ack : out std_logic_vector(num_writes-1 downto 0);
+         write_data: in std_logic_vector((num_writes*in_data_width)-1 downto 0);
          out_data  : out std_logic_vector(out_data_width-1 downto 0);
 	 clk : in std_logic;
 	 reset : in std_logic);
 end entity;
 
 architecture Mixed of SystemOutPort is
+    constant min_width : integer := Minimum(in_data_width, out_data_width);
+    
     signal read_req, read_ack: std_logic_vector(0 downto 0);
-    signal pipe_data_in, pipe_data_out: std_logic_vector(out_data_width-1 downto 0);
+    signal pipe_data_in: std_logic_vector((num_writes*min_width)-1 downto 0);
+    signal pipe_data_out: std_logic_vector(min_width-1 downto 0);
+    signal out_reg: std_logic_vector(min_width-1 downto 0);
     
 begin
 
-    TruncateOrPad(write_data,pipe_data_in);
+    -- keep only the necessary bits of write_data.
+    wPadTrunc: for I in 0 to num_writes-1 generate
+		-- signal arguments.
+	TruncateOrPad(write_data(((I+1)*in_data_width)-1 downto I*in_data_width), 
+					pipe_data_in((I+1)*min_width-1 downto I*min_width));
+    end generate wPadTrunc;
+
     read_req(0) <= '1';
 
+    -- data coming from pipe..
     process(clk)
     begin
 	if(clk'event and clk = '1') then
 		if(read_ack(0) = '1') then
-			out_data <= pipe_data_out;
+			out_reg <= pipe_data_out;
 		end if;
 	end if;
     end process;
+    TruncateOrPad(out_reg, out_data);
 
+    --
+    -- pipe.. to provide interlock so only one writer succeeds at a time.
+    --
     opipe: PipeBase generic map(name => name & " opipe", num_reads => 1,
-					num_writes => num_writes, data_width => out_data_width,
+					num_writes => num_writes, data_width => min_width,
 						lifo_mode => false, depth => 1)
 		port map(read_req => read_req, read_ack => read_ack,
 				read_data => pipe_data_out,

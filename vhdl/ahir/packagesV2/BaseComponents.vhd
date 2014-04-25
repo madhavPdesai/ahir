@@ -2069,9 +2069,9 @@ package BaseComponents is
 	    num_reads: integer;
 	    in_data_width: integer;
             out_data_width : integer); 
-   port (read_req : in std_logic_vector(0 downto 0);
-         read_ack : out std_logic_vector(0 downto 0);
-         read_data: out std_logic_vector(out_data_width-1 downto 0);
+   port (read_req : in std_logic_vector(num_reads-1 downto 0);
+         read_ack : out std_logic_vector(num_reads-1 downto 0);
+         read_data: out std_logic_vector((num_reads*out_data_width)-1 downto 0);
          in_data  : in std_logic_vector(in_data_width-1 downto 0);
 	 clk : in std_logic;
 	 reset : in std_logic);
@@ -2082,9 +2082,9 @@ package BaseComponents is
 	    num_writes: integer;
 	    in_data_width: integer;
             out_data_width : integer); 
-   port (write_req : in std_logic_vector(0 downto 0);
-         write_ack : out std_logic_vector(0 downto 0);
-         write_data: in std_logic_vector(in_data_width-1 downto 0);
+   port (write_req : in std_logic_vector(num_writes-1 downto 0);
+         write_ack : out std_logic_vector(num_writes-1 downto 0);
+         write_data: in std_logic_vector((num_writes*in_data_width)-1 downto 0);
          out_data  : out std_logic_vector(out_data_width-1 downto 0);
 	 clk : in std_logic;
 	 reset : in std_logic);
