@@ -1,12 +1,20 @@
-These files are downloaded from -- http://www.vhdl.org/fphdl/
+Contents.
 
-These files are to be compiled into library ieee_proposed.
-They have been tested and are working fine with Xilinx ISE 11.3 
-and Modelsim SE 6.5b
+original/ 
+  ieee_proposed libray.
+  These files have been downloaded from -- http://www.vhdl.org/fphdl/
 
-However, we will use the versions in trimmed/ which have
-been edited to get rid of useless functions.  The trimmed/
-files seem to work better with simulation and synthesis tools.
+  These files are to be compiled into library ieee_proposed.
+  They have been tested and are working fine with Xilinx ISE 11.3 
+  and Modelsim SE 6.5b
 
-Note: the files in trimmed will be compiled into library
-aHiR_ieee_proposed.
+  We will not be using this library in ahirv2.
+
+
+trimmed/ 
+  However, we will use the versions in trimmed/ which have
+  been edited to get rid of useless functions.  The trimmed/
+  files seem to work better with simulation and synthesis tools.
+
+  Note: the files in trimmed will be compiled into library
+  aHiR_ieee_proposed.

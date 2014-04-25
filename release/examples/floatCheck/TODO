@@ -1,0 +1,3 @@
+The float->int conversion seems to be 
+broken in the sense that it is rounding
+up the float instead of truncating it.

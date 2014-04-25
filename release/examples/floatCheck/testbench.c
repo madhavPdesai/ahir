@@ -71,6 +71,32 @@ int main(int argc, char* argv[])
 		Y = drand48() * scale_factor;
 		scale_factor = 1.1 * scale_factor;
 
+#ifdef TOINT
+
+		int32_t iY = fp2int(Y);
+		int32_t eiY = (int32_t) Y;
+		if(iY != eiY)
+		{
+			fprintf(stdout,"Error: (int32_t) %f = %d, expected %d.\n", Y,iY,eiY);
+			err_flag = 1;
+		}
+		else
+		{
+			fprintf(stdout,"Info: (int32_t) %f = %d.\n", Y,iY);
+		}
+
+		uint32_t uiY = fp2uint(Y);
+		uint32_t ueiY = (uint32_t) Y;
+		if(uiY != ueiY)
+		{
+			fprintf(stdout,"Error: (uint32_t) %f = %u, expected %u.\n", Y,uiY,ueiY);
+			err_flag = 1;
+		}
+		else
+		{
+			fprintf(stdout,"Info: (uint32_t) %f = %u.\n", Y,uiY);
+		}
+#endif
 
 #ifdef MUL
 		hZ = fpmul(X,Y);

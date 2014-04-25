@@ -5,6 +5,16 @@
 #include <fpu.h>
 
 
+int32_t fp2int(float x)
+{
+	return((int32_t) x);
+}
+
+uint32_t fp2uint(float x)
+{
+	return((uint32_t) x);
+}
+
 float fpincr(float x)
 {
 	return(x + 1.0);

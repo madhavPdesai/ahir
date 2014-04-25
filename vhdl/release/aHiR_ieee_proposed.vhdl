@@ -132,6 +132,10 @@ package float_pkg is
   -- are "round_zero" (truncation), "round_inf" (round up), and
   -- "round_neginf" (round down)
   constant float_round_style    : round_type := round_nearest;
+
+  -- for conversions to int, use truncate. (MPD)
+  constant float_int_conversion_round_style    : round_type := round_zero;
+
   -- Denormal numbers (very small numbers near zero) true or false
   constant float_denormalize    : BOOLEAN    := true;
   -- Turns on NAN processing (invalid numbers and overflow) true of false
@@ -491,7 +495,7 @@ package float_pkg is
   function to_unsigned (
     arg                  : UNRESOLVED_float;  -- floating point input
     constant size        : NATURAL;     -- length of output
-    constant round_style : round_type := float_round_style;  -- rounding option
+    constant round_style : round_type := float_int_conversion_round_style;  -- rounding option
     constant check_error : BOOLEAN    := float_check_error)  -- check for errors
     return UNSIGNED;
 
@@ -499,7 +503,7 @@ package float_pkg is
   function to_signed (
     arg                  : UNRESOLVED_float;  -- floating point input
     constant size        : NATURAL;     -- length of output
-    constant round_style : round_type := float_round_style;  -- rounding option
+    constant round_style : round_type := float_int_conversion_round_style;  -- rounding option
     constant check_error : BOOLEAN    := float_check_error)  -- check for errors
     return SIGNED;
 
@@ -509,7 +513,7 @@ package float_pkg is
   function to_unsigned (
     arg                  : UNRESOLVED_float;  -- floating point input
     size_res             : UNSIGNED;
-    constant round_style : round_type := float_round_style;  -- rounding option
+    constant round_style : round_type := float_int_conversion_round_style;  -- rounding option
     constant check_error : BOOLEAN    := float_check_error)  -- check for errors
     return UNSIGNED;
 
@@ -517,7 +521,7 @@ package float_pkg is
   function to_signed (
     arg                  : UNRESOLVED_float;  -- floating point input
     size_res             : SIGNED;
-    constant round_style : round_type := float_round_style;  -- rounding option
+    constant round_style : round_type := float_int_conversion_round_style;  -- rounding option
     constant check_error : BOOLEAN    := float_check_error)  -- check for errors
     return SIGNED;
 
@@ -532,7 +536,7 @@ package float_pkg is
   -- float to integer
   function to_integer (
     arg                  : UNRESOLVED_float;  -- floating point input
-    constant round_style : round_type := float_round_style;  -- rounding option
+    constant round_style : round_type := float_int_conversion_round_style;  -- rounding option
     constant check_error : BOOLEAN    := float_check_error)  -- check for errors
     return INTEGER;
 
@@ -3104,7 +3108,7 @@ package body float_pkg is
   -- to_integer (float)
   function to_integer (
     arg                  : UNRESOLVED_float;   -- floating point input
-    constant round_style : round_type := float_round_style;  -- rounding option
+    constant round_style : round_type := float_int_conversion_round_style;  -- rounding option
     constant check_error : BOOLEAN    := float_check_error)  -- check for errors
     return INTEGER is
     variable validfp : valid_fpstate;   -- Valid FP state
@@ -3178,7 +3182,7 @@ package body float_pkg is
   function to_unsigned (
     arg                  : UNRESOLVED_float;  -- floating point input
     constant size        : NATURAL;     -- length of output
-    constant round_style : round_type := float_round_style;  -- rounding option
+    constant round_style : round_type := float_int_conversion_round_style;  -- rounding option
     constant check_error : BOOLEAN    := float_check_error)  -- check for errors
     return UNSIGNED is
     variable validfp : valid_fpstate;   -- Valid FP state
@@ -3209,7 +3213,7 @@ package body float_pkg is
   function to_signed (
     arg                  : UNRESOLVED_float;  -- floating point input
     constant size        : NATURAL;     -- length of output
-    constant round_style : round_type := float_round_style;  -- rounding option
+    constant round_style : round_type := float_int_conversion_round_style;  -- rounding option
     constant check_error : BOOLEAN    := float_check_error)  -- check for errors
     return SIGNED is
     variable sign    : STD_ULOGIC;      -- true if negative
@@ -3263,7 +3267,7 @@ package body float_pkg is
   function to_unsigned (
     arg                  : UNRESOLVED_float;  -- floating point input
     size_res             : UNSIGNED;
-    constant round_style : round_type := float_round_style;  -- rounding option
+    constant round_style : round_type := float_int_conversion_round_style;  -- rounding option
     constant check_error : BOOLEAN    := float_check_error)  -- check for errors
     return UNSIGNED is
     variable result : UNSIGNED (size_res'range);
@@ -3284,7 +3288,7 @@ package body float_pkg is
   function to_signed (
     arg                  : UNRESOLVED_float;  -- floating point input
     size_res             : SIGNED;
-    constant round_style : round_type := float_round_style;  -- rounding option
+    constant round_style : round_type := float_int_conversion_round_style;  -- rounding option
     constant check_error : BOOLEAN    := float_check_error)  -- check for errors
     return SIGNED is
     variable result : SIGNED (size_res'range);

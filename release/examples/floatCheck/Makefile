@@ -8,14 +8,14 @@ VHDL_VHPI_LIB=../../CtestBench/vhdl
 FUNCTIONLIB=../../../v2/functionLibrary/
 #DEFS= -DADD -DMUL -DDOT -DCMP
 #DEFS= -DADD
-DEFS= -DADD -DMUL -DSUB
+DEFS= -DADD -DMUL -DSUB -DTOINT
 #DEFS= -DCMP
 #DEFS=-DBUG
 
 
 #TOPMODULES=-t fpmul -t fpadd -t dotProduct -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
 #TOPMODULES= -t fpadd
-TOPMODULES= -t fpadd -t fpmul -t fpsub -t fpincr
+TOPMODULES= -t fpadd -t fpmul -t fpsub -t fpincr -t fp2int -t fp2uint
 #TOPMODULES= -t fpsub
 #TOPMODULES= -t fpcmplt -t fpcmpgt -t fpcmpeq -t fpsub
 
