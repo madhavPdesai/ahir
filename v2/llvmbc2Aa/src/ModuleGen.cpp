@@ -25,6 +25,8 @@ using namespace llvm;
 using namespace Aa;
 
 
+extern bool _global_error_flag;
+
 namespace {
 
   struct ModuleGenPass : public ModulePass {
@@ -181,6 +183,7 @@ namespace {
       AA = &getAnalysis<AliasAnalysis>();
     
       aa_writer = AaWriter_New(TD, AA, module_names,_consider_all_functions);  
+      aa_writer->setErrorFlag(false);
       aa_writer->Set_Module(&M);
       aa_writer->Set_Pointer_Width(_pointer_width);
 
@@ -277,6 +280,11 @@ namespace {
 			<< std::endl;
 	    }
 	}
+
+
+
+      if(aa_writer->getErrorFlag())
+	_global_error_flag = true;
 
       return false; // we didn't touch anything
     }

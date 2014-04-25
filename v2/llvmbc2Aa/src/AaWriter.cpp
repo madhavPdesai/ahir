@@ -155,6 +155,7 @@ namespace Aa {
 		else 
 		{
 			std::cerr << "Error: unsupported instruction " << std::endl;
+			this->setErrorFlag(true);
 			I.dump();
 			std::cerr << std::endl;
 		}
@@ -279,6 +280,7 @@ namespace Aa {
 			if(old_type_name != type_name)
 			{
 				std::cerr << "Error: conflicting types for pipe " << portname << std::endl;
+				this->setErrorFlag(true);
 			}
 		}
 	}
@@ -346,6 +348,7 @@ namespace Aa {
 		if(obj_name == "")
 		{
 			std::cerr << "Error: could not find name of storage object" << std::endl;
+			this->setErrorFlag(true);
 			obj_name = "UNKNOWN_STORAGE_OBJECT";
 		}
 
@@ -519,6 +522,7 @@ namespace Aa {
 			std::cerr << "Error: constant must be one of int/fp/array/struct/vector/aggregate-zero/pointer-null" 
 				<< std::endl;
 			std::cout << prefix << " := UNSUPPORTED_CONSTANT" << std::endl;
+			this->setErrorFlag(true);
 		}
 	}
 
@@ -1045,6 +1049,7 @@ namespace {
 			{
 				std::cerr << "Error: do-while loop PHI " << phi_name << " does not depend on entry to loop." << std::endl;  
 				std::cout << phi_name << " := " << phi_name << "_at_entry" << std::endl;
+				this->setErrorFlag(true);
 			}
 			else
 			{
@@ -1177,7 +1182,12 @@ namespace {
 			if(called_function == NULL)
 			{
 				std::cerr << "Error: unsupported indirect function call instruction " << cname << std::endl;  
+				std::cout << "// ERROR: UNSUPPORTED INDIRECT FUNCTION CALL " << cname << std::endl;
+				this->setErrorFlag(true);
+				return;
 			}
+				
+			std::string fname = to_aa(called_function->getNameStr());
 
 			const llvm::Type* called_function_return_type = called_function->getReturnType();
 			std::string ret_type_name = get_aa_type_name(called_function_return_type,*_module);
@@ -1200,12 +1210,19 @@ namespace {
 					argument_types.push_back((*args).getType());
 				}
 
+				if(C.getNumArgOperands() != argument_types.size())
+				{
+					std::cerr << "Error: argument mismatch for function " << fname 
+						<< " : did you forget the declaration?" << std::endl;
+					this->setErrorFlag(true);
+					return;
+				}
+
 				for(int idx = 0; idx < C.getNumArgOperands(); idx++)
 				{
 					argument_names.push_back(prepare_operand(C.getArgOperand(idx), argument_types[idx]));
 				}
 
-				std::string fname = to_aa(called_function->getNameStr());
 
 				this->Print_Guard();
 				std::cout << "$call " << fname ;
@@ -1269,6 +1286,8 @@ namespace {
 							<< std::endl;
 						std::cout << to_aa(C.getNameStr()) <<  " := " <<  get_zero_value(C.getType())
 							<< std::endl;
+						this->setErrorFlag(true);
+						return;
 					}
 
 				}
@@ -1299,6 +1318,7 @@ namespace {
 						C.dump();
 						std::cout << "// ERROR: io-write ignored, because it is not possible to id the pipe" 
 							<< std::endl;
+						return;
 					}
 				}
 			}
@@ -1456,6 +1476,7 @@ namespace {
 			if((op1 == "") | (op2 == ""))
 			{
 				std::cerr << "Error: anonymous operand in compare instruction " << cname << 			std::endl;
+				this->setErrorFlag(true);
 			}
 
 			std::cout << "// compare instruction" << std::endl;
@@ -1532,6 +1553,7 @@ namespace {
 			else
 			{
 				std::cerr << "Error: unsupported compare operation" << std::endl;
+				this->setErrorFlag(true);
 			}
 		}
 
@@ -1608,6 +1630,7 @@ namespace {
 						else
 						{
 							std::cerr << "Error: Do-while terminator for " << get_name(from_bb) << " has garbled terminator?" << std::endl;
+							this->setErrorFlag(true);
 						}
 					}
 				}
@@ -1634,6 +1657,7 @@ namespace {
 						if(cond_name  != this->Get_Guard_Variable())
 						{
 							std::cerr << "Error: unexpected guard expression in if.. ignored.\n";
+							this->setErrorFlag(true);
 						}
 					}
 
@@ -1726,6 +1750,7 @@ namespace {
 							std::cerr << "Error: in basic block chain " << to_aa(chain_rep->getNameStr() )
 								<< ", branch termination without two successors in the chain."
 								<< std::endl;	
+							this->setErrorFlag(true);
 							return;
 						}
 						llvm::BranchInst* br = dyn_cast<llvm::BranchInst>(T);

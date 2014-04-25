@@ -96,6 +96,10 @@ namespace Aa {
 		return(_guard_variable);
    }
 
+    bool _error_flag;
+    void setErrorFlag(bool v) {_error_flag = v;}
+    bool getErrorFlag() {return(_error_flag);}
+
     void Print_Guard();
 
     void clear() { 
@@ -157,6 +161,8 @@ namespace Aa {
 
     void Build_Basic_Block_Chains(llvm::Function& F);
     virtual void Write_Aa_Code(llvm::BasicBlock* chain_rep, bool extract_do_while_loops) {};
+
+
   };
 };
 

@@ -23,6 +23,8 @@
 #include <sstream>
 #include <iostream>
 
+bool _global_error_flag;
+
 using namespace llvm;
 
 namespace Aa {
@@ -69,6 +71,9 @@ int main(int argc, char **argv)
 {
 
   signal(SIGSEGV, Handle_Segfault);
+
+
+  _global_error_flag = false;
 
   std::cout << "// Aa code produced by llvm2aa (version 1.0)" << std::endl;
   cl::ParseCommandLineOptions(argc, argv,
@@ -161,6 +166,10 @@ int main(int argc, char **argv)
       }
     
     Passes.run(M);
+
+    if(_global_error_flag)
+	return(1);
+
     return 0;
 }
 

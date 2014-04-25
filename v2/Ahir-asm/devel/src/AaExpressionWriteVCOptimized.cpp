@@ -2751,14 +2751,14 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 		if(pipeline_flag)
 		{
 			// self-release
-			__MJ(bpo_sample_complete, bpo_sample_start, false); // no bypass
-			__MJ(bpo_update_complete, bpo_update_start, true); // bypass
+		  __MJ(bpo_sample_start, bpo_sample_complete, false); // no bypass
+		  __MJ(bpo_update_start, bpo_update_complete, true); // bypass
 
-			Write_VC_Reenable_Joins(active_reenable_points, active_reenable_bypass_flags, bpo_sample_complete,false,  ofile); // do not force bypass, decide based on active bypass flags..
-
-			active_reenable_points.clear();
-			active_reenable_points.insert(bpo_update_start);
-			active_reenable_bypass_flags[bpo_update_start] = true;
+		  Write_VC_Reenable_Joins(active_reenable_points, active_reenable_bypass_flags, bpo_sample_complete,false,  ofile); // do not force bypass, decide based on active bypass flags..
+		  
+		  active_reenable_points.clear();
+		  active_reenable_points.insert(bpo_update_start);
+		  active_reenable_bypass_flags[bpo_update_start] = true;
 		}
 	}
 	else 
