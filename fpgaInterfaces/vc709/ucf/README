@@ -1,0 +1,4 @@
+template ucf files for ml605. Note that
+the ucf file may need to be edited based
+on the timing/clocking of the design being mapped to 
+ml605.

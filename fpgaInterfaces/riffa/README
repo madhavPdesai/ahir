@@ -1,0 +1,7 @@
+The RIFFA related stuff. Note that RIFFA license
+is BSD.
+
+distribution/
+	the RIFF distribution and builds.
+docs
+	a tutorial on the use of RIFFA.
