@@ -1,0 +1,14 @@
+ 
+
+NET "sys_clk_c" TNM_NET = "SYSCLK" ;
+NET "core*/pcie_clocking_i/clk_125" TNM_NET = "CLK_125" ;
+NET "core*/pcie_clocking_i/clk_100" TNM_NET = "CLK_100" ;
+NET "core*/pcie_clocking_i/clk_250" TNM_NET = "CLK_250" ;
+
+
+
+TIMESPEC "TS_SYSCLK"  = PERIOD "SYSCLK" 250 MHz HIGH 50 %;
+TIMESPEC "TS_CLK_125"  = PERIOD "CLK_125" TS_SYSCLK/2;
+TIMESPEC "TS_CLK_100"  = PERIOD "CLK_100" 100 MHz HIGH 50 %;
+TIMESPEC "TS_CLK_250" = PERIOD "CLK_250" TS_SYSCLK*1 HIGH 50 %;
+

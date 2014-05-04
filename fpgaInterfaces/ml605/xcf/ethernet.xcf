@@ -1,0 +1,9 @@
+
+
+NET "GTX_CLK" TNM_NET = "ref_gtx_clk";
+NET "GMII_RX_CLK" TNM_NET = "phy_clk_rx";
+NET "REFCLK" TNM_NET  = "clk_ref_clk";
+ 
+TIMESPEC "TS_ref_gtx_clk" = PERIOD "ref_gtx_clk" 8 ns HIGH 50 %;
+TIMESPEC "TS_phy_clk_rx" = PERIOD "phy_clk_rx" 7.5 ns HIGH 50 %;
+TIMESPEC "TS_clk_ref_clk" = PERIOD "clk_ref_clk" 5 ns HIGH 50%; 
