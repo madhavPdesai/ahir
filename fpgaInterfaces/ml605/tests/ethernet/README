@@ -1,2 +1,5 @@
 a test to check ethernet accessibility
 and performance.
+
+root user required to access ethernet 
+interface eth0
