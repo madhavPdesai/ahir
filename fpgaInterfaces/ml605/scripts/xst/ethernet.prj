@@ -1,0 +1,21 @@
+#ahir and ahir_ieee_proposed libraries
+vhdl ahir /home/ahir/ahir/release/vhdl/ahir.vhdl
+vhdl ahir_ieee_proposed /home/ahir/ahir/release/vhdl/aHiR_ieee_proposed.vhdl
+
+
+#ethernet
+#top module
+vhdl work ../topModules/v6_emac_v1_6_example_design.vhd
+
+#source
+vhdl work ../ipcore_dir/v6_emac_v1_6/source/v6_emac_v1_6.vhd
+vhdl work ../ipcore_dir/v6_emac_v1_6/source/physical/gmii_if.vhd
+vhdl work ../ipcore_dir/v6_emac_v1_6/source/v6_emac_v1_6_block.vhd
+vhdl work ../ipcore_dir/v6_emac_v1_6/source/client/fifo/tx_client_fifo_8.vhd
+vhdl work ../ipcore_dir/v6_emac_v1_6/source/client/fifo/rx_client_fifo_8.vhd
+vhdl work ../ipcore_dir/v6_emac_v1_6/source/client/fifo/eth_fifo_8.vhd
+vhdl work ../ipcore_dir/v6_emac_v1_6/source/v6_emac_v1_6_locallink.vhd
+
+#clocking
+
+vhdl work ../ipcore_dir/clk_wiz_v3_6.vhd

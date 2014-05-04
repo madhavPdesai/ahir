@@ -1,0 +1,95 @@
+#PCIE
+
+#ahir and ahir_ieee_proposed libraries
+vhdl ahir /home/ahir/ahir/release/vhdl/ahir.vhdl
+vhdl ahir_ieee_proposed /home/ahir/ahir/release/vhdl/aHiR_ieee_proposed.vhdl
+
+#Riffa top & adapter
+verilog work ../topModules/riffa_top_v6_pcie_v2_5.v
+verilog work ../topModules/riffa_adapter_v6_pcie_v2_5.v
+
+#Source 
+
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/axi_basic_tx_pipeline.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_port_writer.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/pcie_bram_top_v6.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/rx_port_channel_gate.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/sync_fifo.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/pcie_bram_v6.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/cross_domain_signal.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/axi_basic_rx_pipeline.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/interrupt.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/sg_list_reader_128.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/axi_basic_top.vhd 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/gtx_tx_sync_rate_v6.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/demux_1_to_n.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/rx_engine_128.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/rx_engine_64.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/axi_basic_tx.vhd 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/axi_basic_rx.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_engine_upper_128.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_engine_formatter_32.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/gtx_wrapper_v6.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/rx_engine_32.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_port_buffer_128.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_engine_selector.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/ram_2clk_1w_1r.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/rx_engine_req.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/gtx_rx_valid_filter_v6.vhd 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/pcie_pipe_v6.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/fifo_packer_32.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_engine_lower_64.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/sg_list_reader_64.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/gtx_drp_chanalign_fix_3752_v6.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_port_channel_gate_64.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/channel_32.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/rx_port_reader.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/pcie_clocking_v6.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_port_64.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/rx_port_128.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/rx_port_requester_mux.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_port_128.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/sg_list_reader_32.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/ram_1clk_1w_1r.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_engine_32.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/pcie_pipe_misc_v6.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_port_monitor_32.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/common_functions.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/fifo_packer_64.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/pcie_gtx_v6.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/riffa_endpoint.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_engine_upper_64.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/rx_port_32.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_engine_formatter_128.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_port_32.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/pcie_pipe_lane_v6.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_port_buffer_64.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_engine_128.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/channel_128.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/async_fifo.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/pcie_2_0_v6.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_port_monitor_128.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/channel_64.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_engine_lower_32.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/pcie_brams_v6.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/interrupt_controller.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/sg_list_requester.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_port_monitor_64.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_engine_upper_32.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/riffa_endpoint_128.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/syncff.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/axi_basic_tx_thrtl_ctl.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/riffa_endpoint_64.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/axi_basic_rx_null_gen.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/riffa_endpoint_32.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_port_channel_gate_128.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/pcie_reset_delay_v6.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_engine_formatter_64.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_engine_lower_128.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_port_buffer_32.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/v6_pcie_v2_5.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_engine_64.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/rx_port_64.v 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/tx_port_channel_gate_32.v 
+vhdl work ../ipcore_dir/v6_pcie_v2_5/source/pcie_upconfig_fix_3451_v6.vhd 
+verilog work ../ipcore_dir/v6_pcie_v2_5/source/fifo_packer_128.v 
