@@ -3,6 +3,10 @@
 // Developed for testing scope of streaming applications
 // using RIFFA over PCIe.
 
+// H/W operates on down_clk
+// frequency of down_clk can be controlled by parameter 'pcie_usr_clk_div' in riffa_top_v6_pcie_v2_5.v
+// pcie_usr_clk_div must be an integer
+// frequnecy = (1000/pcie_usr_clk) MHz
 module chnl_tester #(
 	parameter C_PCI_DATA_WIDTH = 9'd32,
 	parameter C_NUM_CHNL = 4'd1
@@ -37,27 +41,28 @@ reg [31:0] rLen=0;
 reg [31:0] rCount=0;
 reg rState=0;
 reg [31:0] tCount=0;
+reg [31:0] tCount_next = 0;
 reg tState=0;
-reg [C_PCI_DATA_WIDTH-1:0] tData={C_PCI_DATA_WIDTH{1'b0}};
+//reg [C_PCI_DATA_WIDTH-1:0] tData={C_PCI_DATA_WIDTH{1'b0}};
 wire flag;
 wire flag2;
 
-assign CHNL_RX_CLK = CLK;
+assign CHNL_RX_CLK = down_clk;
 assign CHNL_RX_ACK = (rState == 1'd1);
 assign CHNL_RX_DATA_REN = ((rState == 1'd1) && (flag2==1));
 
-assign CHNL_TX_CLK = CLK;
+assign CHNL_TX_CLK = down_clk;
 assign CHNL_TX = (tState == 1'd1);
 assign CHNL_TX_LAST = 1'd1;
 assign CHNL_TX_LEN = rLen; // in words
 assign CHNL_TX_OFF = 0;
-assign CHNL_TX_DATA = tData;
+assign CHNL_TX_DATA = rData;
 assign CHNL_TX_DATA_VALID = ((flag == 1) && (tState == 1'd1));
 assign flag = (tCount < rCount); 
-assign flag2 = (tCount >= rCount-(C_PCI_DATA_WIDTH/32)) || (rCount == 0); 
+assign flag2 = (tCount_next >= rCount); 
 
 //Rx state machine
-always @(posedge CLK or posedge RST) begin
+always @(posedge down_clk or posedge RST) begin
 	if (RST) begin
 		rLen <= #1 0;
 		rCount <= #1 0;
@@ -94,26 +99,29 @@ end
 
 
 //Tx state machine
-always @(posedge CLK or posedge RST) begin
+always @(posedge down_clk or posedge RST) begin
 	if (RST) begin
 		tCount <= #1 0;
+		tCount_next <= #1 0;
 		tState <= #1 0;
-		tData <= #1 0;
+	//	tData <= #1 0;
 	end
 	else begin 
 	   case (tState)
 		1'd0: begin // Prepare for TX
 			tCount <= #1 0;
+			tCount_next <= #1 (C_PCI_DATA_WIDTH/32);
 			if (rState == 1) begin
 				tState <= #1 1'd1;
 			end
 		end
 
 		1'd1: begin // Start TX after Rx has received atleast 1 value
-			tData <= #1 rData;
+		//	tData <= #1 rData;
 			if (CHNL_TX_DATA_REN & flag) begin	
-				tCount <= #1 tCount + (C_PCI_DATA_WIDTH/32);
-				if (tCount >= rLen)
+				tCount <= tCount_next;
+				tCount_next <= #1 tCount_next + (C_PCI_DATA_WIDTH/32);
+				if (tCount_next > rLen)
 					tState <= #1 1'd0;
 			end
 		end

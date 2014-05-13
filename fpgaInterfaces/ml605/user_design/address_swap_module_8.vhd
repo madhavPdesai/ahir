@@ -72,7 +72,8 @@ use ieee.std_logic_1164.all;
 
 entity address_swap_module_8 is
    port (
-      rx_ll_clock         : in  std_logic; -- Input CLK from TRIMAC Reciever
+      rx_usr_clock	  : in  std_logic;
+      rx_gtx_clock	  : in  std_logic;
       rx_ll_reset         : in  std_logic; -- Synchronous reset signal
       rx_ll_data_in       : in  std_logic_vector(7 downto 0); -- Input data
       rx_ll_sof_in_n      : in  std_logic; -- Input start of frame
@@ -96,7 +97,7 @@ architecture arch1 of address_swap_module_8 is
    signal data_sr5         : std_logic_vector(7 downto 0);  -- data after 6 cycle delay
    signal mux_out          : std_logic_vector(7 downto 0);  -- data to output register
    signal rx_enable        : std_logic;
-
+   signal rx_ll_clock	   : std_logic;
    --FSM type and signals
    type state_type is (wait_sf,
                        bypass_sa1,
@@ -131,7 +132,12 @@ begin -- arch1
    --Clock enable signal enable_data_sr allows destination address to be stored
    --in shift register while the source address is being transmitted.
    ----------------------------------------------------------------------------
-
+-- ll_clk_i will be used for clocking local link interface. 
+-- frequency can be changed by changing the parameter 'eth_usr_clk_div' in v6_emac_v1_6_example_design.vhd.
+-- eth_usr_clk_div must be integer
+-- frequency = (1000/eth_usr_clk_div) MHz 
+-- rx_ll_clock should be same as ll_clk_i. 
+   rx_ll_clock <= rx_usr_clock;
    rx_ll_dst_rdy_out_n <= rx_ll_dst_rdy_in_n;    
    data_sr_p : process(rx_ll_clock)
    begin
