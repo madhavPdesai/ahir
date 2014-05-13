@@ -51,4 +51,5 @@ run
 -use_sync_reset Auto
 -iob Auto
 -equivalent_register_removal YES
+-resource_sharing no
 -slice_utilization_ratio_maxmargin 5

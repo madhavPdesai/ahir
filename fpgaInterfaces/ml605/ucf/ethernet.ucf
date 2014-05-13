@@ -99,6 +99,10 @@ NET "REFCLK" TNM_NET  = "clk_ref_clk";
 TIMEGRP "ref_clk" = "clk_ref_clk";
 TIMESPEC "TS_ref_clk" = PERIOD "ref_clk" 5 ns HIGH 50 %;
 
+# CLOCKING SOURCE FOR USER H/W
+#NET "usr_clk" TNM_NET = "clk_usr_clk";
+#TIMEGRP "v6_emac_v1_6_usr_clk" = "clk_usr_clk";
+#TIMESPEC "TS_usr_clk" = PERIOD "v6_emac_v1_6_usr_clk" 8 ns HIGH 50 %;
 ###############################################################################
 # PHYSICAL INTERFACE CONSTRAINTS
 # The following constraints are necessary for proper operation, and are tuned
@@ -154,15 +158,6 @@ INST "*gmii?GMII_TX_ER"   IOB = true;
 #   Please refer to the Virtex-6 FPGA Embedded Tri-Mode Ethernet MAC
 #   User Guide for additional details. *
 
-# Locate the GMII physical interface pins
-#INST "GMII_TXD<?>" LOC = "BANK33";
-#INST "GMII_TX_EN"  LOC = "BANK33";
-#INST "GMII_TX_ER"  LOC = "BANK33";
-#INST "GMII_TX_CLK" LOC = "BANK33";
-#INST "GMII_RXD<?>" LOC = "BANK33";
-#INST "GMII_RX_DV"  LOC = "BANK33";
-#INST "GMII_RX_ER"  LOC = "BANK33";
-#INST "GMII_RX_CLK" LOC = "AP11";
 
 INST "GMII_TXD<0>" LOC = "AM11";
 INST "GMII_TXD<1>" LOC = "AL11";

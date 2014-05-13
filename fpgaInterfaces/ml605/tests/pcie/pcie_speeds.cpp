@@ -90,6 +90,11 @@ int main( int argc, const char** argv )
 	pthread_t sender; 
 	pthread_t receiver; 
 
+	if (argc<2)
+	{
+		fprintf(stderr, "supply fpga number. Format ./tb <index>\n");
+		return 1;
+	}
 	fpga = fpga_open(atoi(argv[1]));
     	if(fpga == NULL)
     	{

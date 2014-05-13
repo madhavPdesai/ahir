@@ -17,7 +17,7 @@ $oplist = "${xstdir}${l}flFinal.prj";
 $bothXST = "${xstdir}${l}both.prj";
 $ethXST = "${xstdir}${l}ethernet.prj";
 $pcieXST = "${xstdir}${l}pcie.prj";
-$userDirec = "$dir${l}..${l}user";
+$userDirec = "$dir${l}..${l}user_design";
 $XST_SCR = "${xstdir}${l}both.scr";
 $NGDBUILD_UCF = "${dir}${l}..${l}ucf${l}both.ucf";
 $fileType = "vhdl";
@@ -108,7 +108,7 @@ $BITGEN_OPTIONS   = "-w -f bitgen.ut";
 &run_ngdbuild;
 &run_map;
 &run_par;
-&run_trce;
+#&run_trce;
 &run_bitgen;
 print ("\n bitfile succesfully generated\n\n");
 
@@ -131,7 +131,7 @@ sub run_synthesis
 {
   print ("\nStarting synthesis\n");
   $status = 0;
-  $status = system("xst -ifn $XST_SCR -intstyle silent");
+  $status = system("xst -ifn $XST_SCR -intstyle ise");
   if($status != 0)
   {
     print ("ERROR: Synthesis produced errors. \nTerminating any further execution of script\n");
@@ -146,7 +146,7 @@ sub run_ngdbuild
 {
   print ("\nStarting NGDBUILD\n");
 
-  $command = "ngdbuild $NGDBUILD_OPTIONS -uc $NGDBUILD_UCF -sd ${dir}${l}..${l}..${l}..${l} ${dir}${l}results${l}design.ngc";
+  $command = "ngdbuild $NGDBUILD_OPTIONS -uc $NGDBUILD_UCF -sd ${dir} ${dir}${l}results${l}design.ngc";
   print ("$command\n");
   $status = 0;
   $status = system ("$command");
