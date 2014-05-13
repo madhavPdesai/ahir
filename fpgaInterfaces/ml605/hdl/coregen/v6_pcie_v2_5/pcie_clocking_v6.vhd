@@ -69,7 +69,8 @@ entity pcie_clocking_v6 is
       CAP_LINK_WIDTH                               : integer := 8;		-- 1 - x1 , 2 - x2 , 4 - x4 , 8 - x8
       CAP_LINK_SPEED                               : integer := 1;		-- 1 - Gen1 , 2 - Gen2
       REF_CLK_FREQ                                 : integer := 0;		-- 0 - 100 MHz , 1 - 125 MHz , 2 - 250 MHz
-      USER_CLK_FREQ                                : integer := 3		-- 0 - 31.25 MHz , 1 - 62.5 MHz , 2 - 125 MHz , 3 - 250 MHz , 4 - 500Mhz
+      USER_CLK_FREQ                                : integer := 3;		-- 0 - 31.25 MHz , 1 - 62.5 MHz , 2 - 125 MHz , 3 - 250 MHz , 4 - 500Mhz
+      usr_clk_div				   : integer := 10
       
    );
    port (
@@ -153,7 +154,6 @@ architecture v6_pcie of pcie_clocking_v6 is
 
    constant mmcm_clock0_div                        : real := 4.0;
    constant mmcm_clock1_div                        : integer := 8;
-   constant mmcm_clock4_div			   : integer := 10;
 
    constant TCQ : integer := 1;
   
@@ -189,7 +189,7 @@ architecture v6_pcie of pcie_clocking_v6 is
    signal clk_500                                  : std_logic;
    signal clk_250                                  : std_logic;
    signal clk_125                                  : std_logic;
-   signal clk_100                                  : std_logic;
+   signal clkout4                                  : std_logic;
    signal user_clk_prebuf                          : std_logic;
    signal sel_lnk_rate_d                           : std_logic;
    signal reg_clock_locked                         : std_logic_vector(1 downto 0) := "11";
@@ -200,7 +200,6 @@ architecture v6_pcie of pcie_clocking_v6 is
    signal user_clk_v6pcie4                             : std_logic;
    signal block_clk_v6pcie0                            : std_logic;
    signal drp_clk_v6pcie1                              : std_logic;
-   signal clk_100_v6pcie4			       : std_logic;
 
   signal clock_locked_int : std_logic;
 
@@ -213,7 +212,6 @@ begin
    drp_clk <= drp_clk_v6pcie1;
    clock_locked <= clock_locked_int;
    clock_locked_int <= (not(reg_clock_locked(1))) and mmcm_locked;
-   down_clk <= clk_100_v6pcie4;
 
    -- MMCM Reset
      mmcm_reset <= '0';
@@ -374,7 +372,7 @@ begin
    -- sys_clk BUFG. 
    sys_clk_bufg_i : BUFG port map ( O => sys_clk_bufg_v6pcie3, I => sys_clk );
   
-   down_clk_bufg_i : BUFG port map ( O => clk_100_v6pcie4, I => clk_100 ); 
+   down_clk_bufg_i : BUFG port map ( O => down_clk, I => clkout4 ); 
    mmcm_adv_i : MMCM_ADV
       generic map (
          -- 5 for 100 MHz , 4 for 125 MHz , 2 for 250 MHz
@@ -393,7 +391,7 @@ begin
          CLKOUT2_PHASE     => 0.0,
          CLKOUT3_DIVIDE    => mmcm_clock3_div,
          CLKOUT3_PHASE     => 0.0,
-	 CLKOUT4_DIVIDE	   => mmcm_clock4_div,
+	 CLKOUT4_DIVIDE	   => usr_clk_div,
 	 CLKOUT4_PHASE	   => 0.0
       )
       port map (
@@ -402,7 +400,7 @@ begin
          clkout1       => clk_125,              -- 125 MHz for pipe_clk
          clkout2       => user_clk_prebuf,      -- user clk
          clkout3       => clk_500,
-         clkout4       => clk_100,
+         clkout4       => clkout4,
          clkout5       => open,
          clkout6       => open,
          do            => open,

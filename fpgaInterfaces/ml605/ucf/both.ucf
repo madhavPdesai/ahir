@@ -80,9 +80,9 @@ INST "*v6_emac" LOC = "TEMAC_X0Y0";
 NET "RESET"		LOC = G26;   # centre push-button
 INST SYSCLK_N LOC = H9 ;
 INST SYSCLK_P LOC = J9 ;
-NET SYSCLK_P TNM_NET = sysclk;
-TIMEGRP sysclk_grp = sysclk;
-TIMESPEC TS_sysclk = PERIOD sysclk_grp 5 ns HIGH 50 %;
+NET SYSCLK_P TNM_NET = sysclk_eth;
+TIMEGRP sysclk_eth_grp = sysclk_eth;
+TIMESPEC TS_sysclk_eth = PERIOD sysclk_eth_grp 5 ns HIGH 50 %;
 NET "PHY_RESET" LOC = "AH13";
 
 
@@ -101,6 +101,10 @@ NET "v6_emac_inst/REFCLK" TNM_NET  = "clk_ref_clk";
 TIMEGRP "ref_clk" = "clk_ref_clk";
 TIMESPEC "TS_ref_clk" = PERIOD "ref_clk" 5 ns HIGH 50 %;
 
+# CLOCKING SOURCE FOR USER H/W ON ETHERNET
+NET "v6_emac_inst/usr_clk" TNM_NET = "clk_usr_eth";
+TIMEGRP "v6_emac_v1_6_usr_clk" = "clk_usr_eth";
+TIMESPEC "TS_usr_clk_eth" = PERIOD "v6_emac_v1_6_usr_clk" 8 ns HIGH 50 %;
 ###############################################################################
 # PHYSICAL INTERFACE CONSTRAINTS
 # The following constraints are necessary for proper operation, and are tuned
@@ -321,17 +325,17 @@ INST "riffa_pcie_inst/core*/pcie_clocking_i/mmcm_adv_i" LOC = MMCM_ADV_X0Y7;
 # Timing requirements and related constraints.
 #
 
-NET "riffa_pcie_inst/sys_clk_c" TNM_NET = "SYSCLK" ;
+NET "riffa_pcie_inst/sys_clk_c" TNM_NET = "SYSCLK_PCIE" ;
 NET "riffa_pcie_inst/core*/pcie_clocking_i/clk_125" TNM_NET = "CLK_125" ;
-NET "riffa_pcie_inst/core*/pcie_clocking_i/clk_100" TNM_NET = "CLK_100" ;
+NET "riffa_pcie_inst/core*/pcie_clocking_i/clkout4" TNM_NET = "CLK_USR_PCIE" ;
 NET "riffa_pcie_inst/core*/TxOutClk_bufg" TNM_NET = "TXOUTCLKBUFG";
 NET "riffa_pcie_inst/core*/pcie_clocking_i/clk_250" TNM_NET = "CLK_250" ;
 
-TIMESPEC "TS_SYSCLK"  = PERIOD "SYSCLK" 250 MHz HIGH 50 % ;
-TIMESPEC "TS_CLK_125"  = PERIOD "CLK_125" TS_SYSCLK/2 HIGH 50 % PRIORITY 100 ;
-TIMESPEC "TS_CLK_100"  = PERIOD "CLK_100" 100 MHz HIGH 50 % PRIORITY 100 ;
+TIMESPEC "TS_SYSCLK_PCIE"  = PERIOD "SYSCLK_PCIE" 250 MHz HIGH 50 % ;
+TIMESPEC "TS_CLK_125"  = PERIOD "CLK_125" TS_SYSCLK_PCIE/2 HIGH 50 % PRIORITY 100 ;
+TIMESPEC "TS_CLK_USR_PCIE"  = PERIOD "CLK_USR_PCIE" 100 MHz HIGH 50 % PRIORITY 100 ;
 TIMESPEC "TS_TXOUTCLKBUFG"  = PERIOD "TXOUTCLKBUFG" 250 MHz HIGH 50 % PRIORITY 100 ;
-TIMESPEC "TS_CLK_250" = PERIOD "CLK_250" TS_SYSCLK*1 HIGH 50 % PRIORITY 1;
+TIMESPEC "TS_CLK_250" = PERIOD "CLK_250" TS_SYSCLK_PCIE*1 HIGH 50 % PRIORITY 1;
 
 
 PIN "riffa_pcie_inst/core*/trn_reset_n_int_i.CLR" TIG ;

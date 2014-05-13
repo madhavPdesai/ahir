@@ -24,7 +24,7 @@ using namespace std;
 #define MY_DEST_MAC5 0xba
  
 #define DEFAULT_IF "eth0"
-#define BUF_SIZ 256
+#define BUF_SIZ 512 
 #define DATA_SIZ 128
 
 
@@ -36,6 +36,7 @@ int numPacks = 4096;
 
 void * sender_fxn( void * ) 
 {
+	while(!beginSend){;} 
 	int sockfd;
 	// ifreq - interface request for ioctl commands in net/if.h
 	// ifr name and union (one of addr, dest_addr, broad_addr, data, value)
@@ -43,17 +44,18 @@ void * sender_fxn( void * )
 	struct ifreq if_mac;
 	int tx_len = 0;
 	unsigned char sendbuf[BUF_SIZ];
+	unsigned char recvbuf[BUF_SIZ];
 	struct ether_header *eh = (struct ether_header *) sendbuf;
 	struct iphdr *iph = (struct iphdr *) (sendbuf + sizeof(struct ether_header));
 	struct sockaddr_ll socket_address;
 	char ifName[IFNAMSIZ]; //16
-	GET_TIME_INIT(2);
+	GET_TIME_INIT(4);
 	/* Get interface name */
 	strcpy(ifName, DEFAULT_IF);
 	 
 	/* Open RAW socket to send on */
 	// sockfd is the file descriptor for new socket//
-	if ((sockfd = socket(AF_PACKET, SOCK_RAW, IPPROTO_IP)) == -1) 
+	if ((sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) == -1) 
 	{
 		perror("socket");
 	}
@@ -113,34 +115,36 @@ void * sender_fxn( void * )
 	GET_TIME_VAL(0);
 	for (index=0; index<numPacks; index++){ 	
 	/* Send packet */
-	while(!beginSend){;} 
+//	while(!beginSend){;} 
 		sendBytes = sendto(sockfd, sendbuf, tx_len, 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll));
 	      	if (sendBytes==-1){
 			printf("error in transmission\n");
 			exit(1);
 	      	}
-		beginSend = 0;
+//		beginSend = 0;
 	}
 	GET_TIME_VAL(1);
-	printf("\nsending bw: %f MB/s %fms\n", (BUF_SIZ-12)*numPacks*1000/((TIME_VAL_TO_MS(1) - TIME_VAL_TO_MS(0))*1024*1024), (TIME_VAL_TO_MS(1) - TIME_VAL_TO_MS(0)) );
-	//print last packet for data verification 
-	printf("last packet sent was (all chars in hex) : \n");
-	for (index=0; index<tx_len; index++)
+	double dataSent = (BUF_SIZ-12)*numPacks;
+	double timeTaken = (TIME_VAL_TO_MS(1)-TIME_VAL_TO_MS(0));
+	printf("sending %f bytes data bw: %f MB/s in %fms \n", dataSent, (dataSent*1000)/(timeTaken*1024*1024), TIME_VAL_TO_MS(1)-TIME_VAL_TO_MS(0));
+	for (index=0; index<sendBytes; index++)
 	{
 		printf("%02x ", sendbuf[index]);
 	}
-	printf("\n\n");
+	printf("\n");
 }
 
 
 void * receiver_fxn( void * ) {
 
 	struct sockaddr_in si_other, si_myself;
-	int s, i, slen=sizeof(si_other);
+	int s, i;
+	socklen_t slen=sizeof(si_other);
 	unsigned char recvbuf[BUF_SIZ];
 	int numbytes;
 	int index;
-	GET_TIME_INIT(2);
+//	GET_TIME_INIT(2);
+	GET_TIME_INIT(4);
 	
 	if ((s=socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL)))==-1)
 	{
@@ -151,28 +155,28 @@ void * receiver_fxn( void * ) {
 	
 	listen(s, 1); // 1 specifies the length of queue (queue of number of devices trying to connect to that socket//
 	beginSend = 1;
-	GET_TIME_VAL(0);
+	GET_TIME_VAL(2);
 	for (index=0; index<numPacks; index++) 
 	{
+		numbytes = recvfrom(s, (char *)recvbuf, BUF_SIZ, 0, NULL, NULL);
 		numbytes = recvfrom(s, (char *)recvbuf, BUF_SIZ, 0, NULL, NULL);
 	  	if (numbytes==-1)
 		{
 	    		printf("error in receive\n");
 	    		exit(1);
 	  	}
-	  	while(beginSend){;}
-	  	beginSend = 1;
+//	  	beginSend = 1;
 	} 
-	GET_TIME_VAL(1);	
+	GET_TIME_VAL(3);	
 	close(s);
-	printf("receiving bw: %f MB/s %fms\n", (BUF_SIZ-12)*numPacks*1000/((TIME_VAL_TO_MS(1) - TIME_VAL_TO_MS(0))*1024*1024), (TIME_VAL_TO_MS(1) - TIME_VAL_TO_MS(0)));
-	//print last packet for data verification 
-	printf("last packet sent was (all chars in hex) : \n");
+	double dataSent = (BUF_SIZ-12)*numPacks;
+	double timeTaken = (TIME_VAL_TO_MS(3)-TIME_VAL_TO_MS(2));
+	printf("receiving %f bytes data bw: %f MB/s in %fms \n", dataSent, (dataSent*1000)/(timeTaken*1024*1024), TIME_VAL_TO_MS(3)-TIME_VAL_TO_MS(2));
 	for (index=0; index<numbytes; index++)
 	{
 		printf("%02x ", recvbuf[index]);
 	}
-	printf("\n\n");
+	printf("\n");
 }
 
 

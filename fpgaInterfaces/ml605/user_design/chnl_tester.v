@@ -4,10 +4,12 @@
 // using RIFFA over PCIe.
 
 module chnl_tester #(
-	parameter C_PCI_DATA_WIDTH = 9'd32
+	parameter C_PCI_DATA_WIDTH = 9'd32,
+	parameter C_NUM_CHNL = 4'd1
 )
 (
 	input CLK,
+	input down_clk,
 	input RST,
 	output CHNL_RX_CLK, 
 	input CHNL_RX, 

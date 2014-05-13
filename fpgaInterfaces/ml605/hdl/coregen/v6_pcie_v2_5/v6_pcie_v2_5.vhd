@@ -65,6 +65,7 @@ use unisim.vcomponents.all;
 
 entity v6_pcie_v2_5 is
    generic (
+   usr_clk_div					: integer := 10;
    PCIE_DRP_ENABLE                              : boolean := FALSE;
    ALLOW_X8_GEN2                                : boolean := FALSE;
    BAR0                                         : bit_vector := X"FFFFFC00";
@@ -586,7 +587,8 @@ architecture v6_pcie of v6_pcie_v2_5 is
       CAP_LINK_WIDTH : integer;
       CAP_LINK_SPEED : integer;
       REF_CLK_FREQ   : integer;
-      USER_CLK_FREQ  : integer);
+      USER_CLK_FREQ  : integer;
+      usr_clk_div    : integer);
     port (
       sys_clk       : in  std_logic;
       gt_pll_lock   : in  std_logic;
@@ -1261,7 +1263,6 @@ architecture v6_pcie of v6_pcie_v2_5 is
    signal pl_sel_link_width_int                       : std_logic_vector(1 downto 0);
 
    signal LINK_STATUS_SLOT_CLOCK_CONFIG_lstatus       : std_logic;
-   signal clk_100				      : std_logic;
 begin
    -- Drive referenced outputs
    user_clk_out           <= user_clk;
@@ -1276,7 +1277,6 @@ begin
    cfg_pmcsr_powerstate   <= cfg_pmcsr_powerstate_int;
    cfg_to_turnoff_int     <= cfg_msg_received_pme_to;
    cfg_to_turnoff         <= cfg_to_turnoff_int;
-   down_clk		  <= clk_100;
    -- Invert outputs
    tx_err_drop            <= not(trn_terr_drop_n);
    cfg_rd_wr_done         <= not(cfg_rd_wr_done_n);
@@ -1590,7 +1590,8 @@ begin
          CAP_LINK_WIDTH  => LINK_CAP_MAX_LINK_WIDTH_int,
          CAP_LINK_SPEED  => LINK_CAP_MAX_LINK_SPEED_int,
          REF_CLK_FREQ    => REF_CLK_FREQ,
-         USER_CLK_FREQ   => USER_CLK_FREQ
+         USER_CLK_FREQ   => USER_CLK_FREQ,
+	 usr_clk_div	 => usr_clk_div
       )
       port map (
          sys_clk        => TxOutClk,
@@ -1602,7 +1603,7 @@ begin
          user_clk       => user_clk,
          block_clk      => open,
          drp_clk        => drp_clk,
-	 down_clk	=> clk_100,
+	 down_clk	=> down_clk,
          clock_locked   => clock_locked
       );
 

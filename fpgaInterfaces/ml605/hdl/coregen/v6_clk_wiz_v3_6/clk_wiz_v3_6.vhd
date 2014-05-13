@@ -73,6 +73,9 @@ library unisim;
 use unisim.vcomponents.all;
 
 entity clk_wiz_v3_6 is
+generic (
+	usr_clk_div	: integer := 8
+);
 port
  (-- Clock in ports
   CLK_IN1_P         : in     std_logic;
@@ -80,6 +83,7 @@ port
   -- Clock out ports
   CLK_OUT1          : out    std_logic;
   CLK_OUT2          : out    std_logic;
+  CLK_OUT3	    : out    std_logic;
   -- Status and control signals
   RESET             : in     std_logic;
   LOCKED            : out    std_logic
@@ -99,7 +103,7 @@ architecture xilinx of clk_wiz_v3_6 is
   signal clkout0b_unused  : std_logic;
   signal clkout1          : std_logic;
   signal clkout1b_unused  : std_logic;
-  signal clkout2_unused   : std_logic;
+  signal clkout2	  : std_logic;
   signal clkout2b_unused  : std_logic;
   signal clkout3_unused   : std_logic;
   signal clkout3b_unused  : std_logic;
@@ -151,7 +155,12 @@ begin
     CLKOUT1_DUTY_CYCLE   => 0.500,
     CLKOUT1_USE_FINE_PS  => FALSE,
     CLKIN1_PERIOD        => 5.000,
-    REF_JITTER1          => 0.010)
+    REF_JITTER1          => 0.010,
+    CLKOUT2_DIVIDE	 => usr_clk_div,
+    CLKOUT2_PHASE	 => 0.000,
+    CLKOUT2_DUTY_CYCLE	 => 0.500,
+    CLKOUT2_USE_FINE_PS  => FALSE
+)
   port map
     -- Output clocks
    (CLKFBOUT            => clkfbout,
@@ -160,7 +169,7 @@ begin
     CLKOUT0B            => clkout0b_unused,
     CLKOUT1             => clkout1,
     CLKOUT1B            => clkout1b_unused,
-    CLKOUT2             => clkout2_unused,
+    CLKOUT2             => clkout2,
     CLKOUT2B            => clkout2b_unused,
     CLKOUT3             => clkout3_unused,
     CLKOUT3B            => clkout3b_unused,
@@ -213,4 +222,8 @@ begin
    (O   => CLK_OUT2,
     I   => clkout1);
 
+  clkout3_buf : BUFG
+  port map
+   (O   => CLK_OUT3,
+    I   => clkout2);
 end xilinx;
