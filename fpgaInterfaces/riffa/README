@@ -5,3 +5,6 @@ distribution/
 	the RIFF distribution and builds.
 docs
 	a tutorial on the use of RIFFA.
+
+We credit Matthew Jacobsen, UC San Diego 
+for developing RIFFA v2.0.2 which is used here.
