@@ -109,6 +109,7 @@ use ieee.std_logic_1164.all;
 -- Entity declaration for the example design
 -------------------------------------------------------------------------------
 
+-- clock frequency of user hardware design = (1000/eth_usr_clk_div) MHz
 entity v6_emac_v1_6_example_design is
    generic (
 	eth_usr_clk_div	: integer := 8 

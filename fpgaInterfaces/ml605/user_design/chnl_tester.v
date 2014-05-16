@@ -6,7 +6,7 @@
 // H/W operates on down_clk
 // frequency of down_clk can be controlled by parameter 'pcie_usr_clk_div' in riffa_top_v6_pcie_v2_5.v
 // pcie_usr_clk_div must be an integer
-// frequnecy = (1000/pcie_usr_clk) MHz
+// frequnecy = (1000/pcie_usr_clk_div) MHz
 module chnl_tester #(
 	parameter C_PCI_DATA_WIDTH = 9'd32,
 	parameter C_NUM_CHNL = 4'd1
@@ -132,3 +132,4 @@ end
 
 
 endmodule
+
