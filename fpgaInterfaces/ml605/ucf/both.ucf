@@ -102,7 +102,7 @@ TIMEGRP "ref_clk" = "clk_ref_clk";
 TIMESPEC "TS_ref_clk" = PERIOD "ref_clk" 5 ns HIGH 50 %;
 
 # CLOCKING SOURCE FOR USER H/W ON ETHERNET
-NET "v6_emac_inst/usr_clk" TNM_NET = "clk_usr_eth";
+NET "v6_emac_inst/usr_clk_prebuf" TNM_NET = "clk_usr_eth";
 TIMEGRP "v6_emac_v1_6_usr_clk" = "clk_usr_eth";
 TIMESPEC "TS_usr_clk_eth" = PERIOD "v6_emac_v1_6_usr_clk" 8 ns HIGH 50 %;
 ###############################################################################
