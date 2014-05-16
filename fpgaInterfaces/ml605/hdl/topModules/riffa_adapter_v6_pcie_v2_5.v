@@ -359,33 +359,74 @@ riffa_endpoint #(
 // do the same. You should feel free to manually instantiate
 // your custom IP cores here and remove the code below.
 
-		chnl_tester #(
-			.C_PCI_DATA_WIDTH(C_DATA_WIDTH),
-			.C_NUM_CHNL(C_NUM_CHNL)
-		) hw_instance (
+//////////////////////////////////////////////
+// Shown below is an instantiation for having 
+// different replicas of hardware units on different
+// channels
+//////////////////////////////////////////////
+genvar i;
+generate
+	for (i = 0; i < C_NUM_CHNL; i = i + 1) begin : test_channels
+		chnl_tester #(C_DATA_WIDTH) module1 (
 			.CLK(user_clk),
-			.down_clk(down_clk),
 			.RST(riffa_reset),	// riffa_reset includes riffa_endpoint resets
-			.CHNL_RX_CLK(chnl_rx_clk), 
-			.CHNL_RX(chnl_rx), 
-			.CHNL_RX_ACK(chnl_rx_ack), 
-			.CHNL_RX_LAST(chnl_rx_last), 
-			.CHNL_RX_LEN(chnl_rx_len), 
-			.CHNL_RX_OFF(chnl_rx_off), 
-			.CHNL_RX_DATA(chnl_rx_data), 
-			.CHNL_RX_DATA_VALID(chnl_rx_data_valid), 
-			.CHNL_RX_DATA_REN(chnl_rx_data_ren),
+			// Rx interface
+			.CHNL_RX_CLK(chnl_rx_clk[i]), 
+			.CHNL_RX(chnl_rx[i]), 
+			.CHNL_RX_ACK(chnl_rx_ack[i]), 
+			.CHNL_RX_LAST(chnl_rx_last[i]), 
+			.CHNL_RX_LEN(chnl_rx_len[32*i +:32]), 
+			.CHNL_RX_OFF(chnl_rx_off[31*i +:31]), 
+			.CHNL_RX_DATA(chnl_rx_data[C_DATA_WIDTH*i +:C_DATA_WIDTH]), 
+			.CHNL_RX_DATA_VALID(chnl_rx_data_valid[i]), 
+			.CHNL_RX_DATA_REN(chnl_rx_data_ren[i]),
 			// Tx interface
-			.CHNL_TX_CLK(chnl_tx_clk), 
-			.CHNL_TX(chnl_tx), 
-			.CHNL_TX_ACK(chnl_tx_ack), 
-			.CHNL_TX_LAST(chnl_tx_last), 
-			.CHNL_TX_LEN(chnl_tx_len), 
-			.CHNL_TX_OFF(chnl_tx_off), 
-			.CHNL_TX_DATA(chnl_tx_data), 
-			.CHNL_TX_DATA_VALID(chnl_tx_data_valid), 
-			.CHNL_TX_DATA_REN(chnl_tx_data_ren)
+			.CHNL_TX_CLK(chnl_tx_clk[i]), 
+			.CHNL_TX(chnl_tx[i]), 
+			.CHNL_TX_ACK(chnl_tx_ack[i]), 
+			.CHNL_TX_LAST(chnl_tx_last[i]), 
+			.CHNL_TX_LEN(chnl_tx_len[32*i +:32]), 
+			.CHNL_TX_OFF(chnl_tx_off[31*i +:31]), 
+			.CHNL_TX_DATA(chnl_tx_data[C_DATA_WIDTH*i +:C_DATA_WIDTH]), 
+			.CHNL_TX_DATA_VALID(chnl_tx_data_valid[i]), 
+			.CHNL_TX_DATA_REN(chnl_tx_data_ren[i])
 		);	
+	end
+endgenerate
+
+//////////////////////////////////////////////
+/// Shown below is an instantiation for having 
+// one hardware unit listening and transmitting
+// on all the channels
+//////////////////////////////////////////////
+
+//		chnl_tester #(
+//			.C_PCI_DATA_WIDTH(C_DATA_WIDTH),
+//			.C_NUM_CHNL(C_NUM_CHNL)
+//		) hw_instance (
+//			.CLK(user_clk),
+//			.down_clk(down_clk),
+//			.RST(riffa_reset),	// riffa_reset includes riffa_endpoint resets
+//			.CHNL_RX_CLK(chnl_rx_clk), 
+//			.CHNL_RX(chnl_rx), 
+//			.CHNL_RX_ACK(chnl_rx_ack), 
+//			.CHNL_RX_LAST(chnl_rx_last), 
+//			.CHNL_RX_LEN(chnl_rx_len), 
+//			.CHNL_RX_OFF(chnl_rx_off), 
+//			.CHNL_RX_DATA(chnl_rx_data), 
+//			.CHNL_RX_DATA_VALID(chnl_rx_data_valid), 
+//			.CHNL_RX_DATA_REN(chnl_rx_data_ren),
+//			// Tx interface
+//			.CHNL_TX_CLK(chnl_tx_clk), 
+//			.CHNL_TX(chnl_tx), 
+//			.CHNL_TX_ACK(chnl_tx_ack), 
+//			.CHNL_TX_LAST(chnl_tx_last), 
+//			.CHNL_TX_LEN(chnl_tx_len), 
+//			.CHNL_TX_OFF(chnl_tx_off), 
+//			.CHNL_TX_DATA(chnl_tx_data), 
+//			.CHNL_TX_DATA_VALID(chnl_tx_data_valid), 
+//			.CHNL_TX_DATA_REN(chnl_tx_data_ren)
+//		);	
 
 ////////////////////////////////////
 // END USER CODE
