@@ -1,1 +1,37 @@
 contents..
+
+	hdl - all HDLs other than the User Logic Block.
+	      Mostly invariant but some parameters for
+	      clock frequency and number of pcie channels
+	      need to be set.
+	      Visit hdl/README for more details.
+
+	scripts - has the bitfile generation scripts. Will also 
+		contain the resulting netlists, bitfile and
+		timing reports.
+		Visit scripts/README for more details.
+
+	tests - has S/W testbenches for testing example designs
+		provided with the package. Also has HDLs for 
+		these designs which help in evaluating speed
+		performance of the interfaces.
+		Visit tests/README for more details.
+
+	ucf - User Constraints File for xilinx map and P&R tools.
+	      Necessary changes should be made in user clock constraints
+	      according to the desired frequency.
+	      Visit ucf/README for more details.
+
+	xcf - Constraints file for Xilinx Synthesis Tool.
+	      Necessary changes should be made in user clock constraints
+	      according to the desired frequency.
+	      Visit xcf/README for more details.
+	
+	user_design - put HDLs for user logic here. Top entity
+		      should be same as that specified in examples.
+		      Should not create any other unnecessary file
+		      in this directory.
+		      Mixed verilog and vhdl format is supported.
+		      Hierarchial designing supported. User can put
+		      multiple files in here. Scripts will pick up
+		      automatically.

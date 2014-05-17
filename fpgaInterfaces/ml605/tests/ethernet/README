@@ -1,6 +1,11 @@
 must be root to access eth0 port
 
-### bugs : ethernet also sniffs on sent packets. Was not being taken into account.
+ethernet_speeds.cpp sends and sniffs raw packets.
+Will output the last packet sent and last packet 
+received; and transmission and reception speeds.
+User can confirm that the test example design 
+on ml605 board swaps the source and destination 
+addresses on the packets.
 
-Status : Fixed
-	 listening to both the packets now i.e num_recv_packets = 2*num_sent_packets
+To check speed performance vs size of data, number of packets 
+can be changed in the cpp file by changing "numPacks" variable

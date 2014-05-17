@@ -1,1 +1,40 @@
-fixed vhdl files for use in the ml605.
+vhdl files for use in the ml605.
+Directory structure as follows
+
+INVARIANTS(These files are not to be modified) :
+
+	ahir - ahir vhdl library
+	
+	ahir_ieee_proposed - aHiR_ieee_proposed vhdl library
+
+	coregen - xilinx core files for pcie endpoint device,
+		  ethernet mac and clocking wizard
+
+	riffa_hdl - riffa verilog source files and an 
+		    hdl interface between riffa fifo and ahir_system		
+
+
+
+VARIANTS(To be changed as per user's requirements) :
+
+topModules (has 4 files)
+
+	FWtop.vhd - just instantiates pcie and ethernet
+		    top modules when both are implemented. 
+		    No changes needed
+
+	riffa_top_v6_pcie_v2_5.v - top level pcie wrapper.
+				   Specify frequency for user clock
+				   using pcie_usr_clk_div parameter
+
+	riffa_adapter_v6_pcie_v2_5.v - riffa_app wrapper. Specify 
+					number of channels using 
+					C_NUM_CHNL parameter. 
+					User Design is instantiated here.
+					Change according to channel usage
+					Default mode for test loopback application
+
+	v6_emac_v1_6_example_design.vhd - top level ethernet wrapper. 
+					 Specify frequency for user clock 
+					 using eth_usr_clk_div parameter.
+					 User Design is instantiated here.

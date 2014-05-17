@@ -1,2 +1,49 @@
-synthesis and other scripts specific 
-to the board.
+bitfile generation scripts specific 
+to the board ml605.
+
+To run type,
+		xilperl compile.pl
+in console.
+
+Asks for the desired interface for user design 
+implementation.
+Type 1 for using ethernet, 2 for pcie and
+3 if both of them are required.
+
+Will generate bitfile if no error is produced.
+If any error is there, will report the failed 
+process.
+
+
+DIRECTORY STRUCTURE :
+	
+	xst - Has synthesis options and file lists.
+		Present before compilation
+
+	results - will be generated post compilation.
+		Will have netlists after each process and
+		bitfile.
+
+	reports - will be generated post compilation.
+		 will have the XST Report. Useful for 
+		 analyzing pre P&R timing and device utilization
+
+	_xmsgs - Will be generated post compilation. 
+		xml extension files. Warnings and INFOs from
+		synthesizer, NGDbuild, Xilinx Map, P&R tools and bitgen	
+
+
+
+SCRIPT FUNCTIONS :
+6 functions. Can be commented or uncommented as per required
+extent of compilation.
+
+	run_synthesis - XST synthesis
+	run_ngdbuild - Xilinx Native database generator
+	run_map - map design on the board
+	run_par - placement & routing on ml605
+	run_trce - post par timing report generator
+	run_bitgen - bitfile generator
+
+All functions use the outputs of their predecessors 
+and will fail without those outputs.

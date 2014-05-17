@@ -2,3 +2,24 @@ template ucf files for ml605. Note that
 the ucf file may need to be edited based
 on the timing/clocking of the design being mapped to 
 ml605.
+
+
+	both.ucf - edit "TS_usr_clk_eth" timing spec
+		   according to user clock on design 
+		   using ethernet for communication.
+
+		   edit "TS_CLK_USR_PCIE" timing spec
+		   according to user clock on design 
+		   using pcie for communication.
+
+  
+
+	pcie.ucf - edit "TS_CLK_USR" timing spec
+		   according to user clock on design 
+		   using pcie for communication.
+
+
+
+	ethernet.ucf - edit "TS_usr_clk" timing spec
+			according to user clock on design
+			using ethernet for communication. 

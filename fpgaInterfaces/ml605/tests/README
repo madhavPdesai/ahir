@@ -1,1 +1,37 @@
 set of tests to be used to check the board.
+
+These tests are meant to be run with the default  
+example designs provided with the package.
+For convenience, these example hdls are also stored
+in each of the test directories.
+
+To run the tests, compile and load the 
+corresponding bitfile on ml605 first. For PCIe,
+a reboot is also required.
+
+
+	ethernet - has a cpp file, a timer.h and a makefile.
+		   To run, use the following commands :
+			
+				make
+				./tb
+
+		   It will report the speed on Tx and Rx side
+		   achieved during communication using ethernet
+
+	
+
+	pcie - has a cpp file, a timer.h and a makefile.
+		To run, use the following commands :
+			
+				make
+				./tb <fpga_id>
+
+		It will report the speed on Tx and Rx side
+		achieved during duplex communication using pcie.
+		*fpga_id is 0 by default. Depends on how many 
+		number of fpga cards you have on pcie buses of 
+		host machine.
+
+
+	dram_tester - yet to be added.

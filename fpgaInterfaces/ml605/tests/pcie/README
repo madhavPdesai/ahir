@@ -1,2 +1,14 @@
 a test to check latency and bandwidth across
-pcie.
+pcie in duplex mode communication.
+
+Generates random double precision floating point 
+numbers and sends them towards ml605 on riffa channels.
+The receiving thread listens on loopbacked numbers.
+
+Prints first 10 DWORDS sent and received for user to 
+verify correct functioning of the example design; 
+and transmission and reception speeds.
+
+To check speed performance vs data size, number of words
+can be changed in the cpp file by changing "numWords" variable.
+"numWords" must be even in this case.

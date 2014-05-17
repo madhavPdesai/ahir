@@ -25,7 +25,6 @@ void * sender_fxn(void *)
 	{
 		sendbuf[i] = i*2 + i%10;
 	}
-	cout << "reached here in TX" << endl;
 	int sent;
 	while(!beginRecv);
 	beginSend = 1;	
@@ -60,7 +59,6 @@ void * receiver_fxn(void *)
 		recvbuf[i] = 0;
 	}
 	int rc;
-	cout << "reached here in rx" << endl;
 	beginRecv = 1;
 	while (!beginSend){;};
 	// Create the receive buffer
