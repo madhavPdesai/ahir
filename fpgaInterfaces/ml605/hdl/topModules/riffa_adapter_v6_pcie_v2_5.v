@@ -369,6 +369,7 @@ generate
 	for (i = 0; i < C_NUM_CHNL; i = i + 1) begin : test_channels
 		chnl_tester #(C_DATA_WIDTH) module1 (
 			.CLK(user_clk),
+			.down_clk(down_clk),
 			.RST(riffa_reset),	// riffa_reset includes riffa_endpoint resets
 			// Rx interface
 			.CHNL_RX_CLK(chnl_rx_clk[i]), 

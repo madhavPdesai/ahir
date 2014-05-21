@@ -179,7 +179,7 @@ module riffa_top_v6_pcie_v2_5 # (
 
   wire                                        sys_clk_c;
   wire                                        sys_reset_n_c;
-  wire					      clk_100;
+  wire					      down_clk;
   //-------------------------------------------------------
 
 IBUFDS_GTXE1 refclk_ibuf (.O(sys_clk_c), .ODIV2(), .I(sys_clk_p), .IB(sys_clk_n), .CEB(1'b0));
@@ -240,7 +240,7 @@ v6_pcie_v2_5 #(.usr_clk_div(pcie_usr_clk_div))
 
   // Common
   .user_clk_out( user_clk ),
-  .down_clk (clk_100),
+  .down_clk (down_clk),
   .user_reset_out( user_reset_int1 ),
   .user_lnk_up( user_lnk_up_int1 ),
 
@@ -366,7 +366,7 @@ pcie_app_v6  #(
 
   // Common
   .user_clk( user_clk ),
-  .down_clk( clk_100 ),
+  .down_clk( down_clk ),
   .user_reset( user_reset_int1 ),
   .user_lnk_up( user_lnk_up_int1 ),
 
