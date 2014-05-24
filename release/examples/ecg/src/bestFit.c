@@ -136,7 +136,6 @@ void RxAndComputeInnerProducts()
 		//write_uint32("logger_pipe", I);
 	}
 #ifdef SW
-#ifdef DEBUG
 	for(I = 0; I < NSIGMAS; I++)
 	{
 		fprintf(stderr,"HW: Dot-product for sigma-index %d, HF-0, is %f.\n", I, dotP0[I]);
@@ -146,7 +145,6 @@ void RxAndComputeInnerProducts()
 		fprintf(stderr,"HW: Dot-product for sigma-index %d, HF-4, is %f.\n", I, dotP4[I]);
 		fprintf(stderr,"HW: Dot-product for sigma-index %d, HF-5, is %f.\n", I, dotP5[I]);
 	}
-#endif
 #endif
 }
 
@@ -171,7 +169,6 @@ void computeMSE()
 	best_sigma_index = -1;
 
 	int SI;
-	double projection[NSAMPLES];
 	for(SI = 0; SI < NSIGMAS; SI++)
 	{
 		double err = 0.0;
