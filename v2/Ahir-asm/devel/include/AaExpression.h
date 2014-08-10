@@ -740,7 +740,7 @@ class AaSimpleObjectReference: public AaObjectReference
 	virtual void Write_VC_Links(string hier_id, ostream& ofile);
 	virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
 
-	string Get_VC_Name();
+	virtual string Get_VC_Name();
 	virtual void Print_AddressOf_C(ofstream& ofile, string tab_string);
 	virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string);
 
@@ -879,7 +879,7 @@ class AaArrayObjectReference: public AaObjectReference
 	virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
 	virtual void Write_VC_Links(string hier_id, ostream& ofile);
 	virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
-	string Get_VC_Name() {return("array_obj_ref_" + Int64ToStr(this->Get_Index()));}
+	virtual string Get_VC_Name() {return("array_obj_ref_" + Int64ToStr(this->Get_Index()));}
 	virtual void Print_AddressOf_C(ofstream& ofile, string tab_string);
 	virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string);
 	void Print_Indexed_C(AaType* t, int start_id, vector<AaExpression*>* indices, ofstream& ofile);
@@ -1068,7 +1068,7 @@ class AaAddressOfExpression: public AaObjectReference
 	virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
 	virtual void Write_VC_Links(string hier_id, ostream& ofile);
 	virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
-	string Get_VC_Name() {return("addr_of_" + Int64ToStr(this->Get_Index()));}
+	virtual string Get_VC_Name() {return("addr_of_" + Int64ToStr(this->Get_Index()));}
 
 	virtual void Evaluate();
 
@@ -1109,20 +1109,32 @@ class AaAddressOfExpression: public AaObjectReference
 
 
 // type cast expression (is unary)
+// there are three possible ways of using this
+//   1. type conversion from value to value (e.g. float -> int)
+//   2. bit-cast
+//   3. bit-cast with slice.
+//
 class AaTypeCastExpression: public AaExpression
 {
+	protected:
+
 	AaType* _to_type;
 	AaExpression* _rest;
 	bool _bit_cast;
+
+
 	public:
 
 	AaType* Get_To_Type() {return(this->_to_type);}
 	AaExpression* Get_Rest() {return(this->_rest);}
 
+	// plain type-cast.
 	AaTypeCastExpression(AaScope* scope, AaType* ref_type, AaExpression *rest);
 	~AaTypeCastExpression();
 
+
 	void Set_Bit_Cast(bool v) { _bit_cast = v;}
+   	bool Get_Bit_Cast() { return(_bit_cast); }
 	virtual void Set_Associated_Statement(AaStatement* stmt)
 	{
 		_associated_statement = stmt;
@@ -1155,7 +1167,7 @@ class AaTypeCastExpression: public AaExpression
 	virtual void Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile);
 	virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
 	virtual void Write_VC_Links(string hier_id, ostream& ofile);
-	string Get_VC_Name() {return("type_cast_" + Int64ToStr(this->Get_Index()));}
+	virtual string Get_VC_Name() {return("type_cast_" + Int64ToStr(this->Get_Index()));}
 
 	virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 	virtual void Write_VC_Links_As_Target_Optimized(string hier_id, ostream& ofile);
@@ -1183,6 +1195,25 @@ class AaTypeCastExpression: public AaExpression
 	virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
 };
 
+class AaSliceExpression: public AaTypeCastExpression
+{
+	int  _low_index;
+	public:
+
+	AaSliceExpression(AaScope* scope, AaType* to_type, int low_index, AaExpression *rest);
+	virtual string Kind() {return("AaSliceExpression");}
+
+	virtual void Evaluate();
+	void Print(ostream& ofile);
+
+	virtual bool Is_Trivial() {return(true);}
+	virtual string Get_VC_Name() {return("slice_" + Int64ToStr(this->Get_Index()));}
+	virtual void PrintC(ofstream& ofile, string tab_string)
+	{
+      		AaRoot::Error("slice not supported in Aa2C", this);
+	}
+	virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
+};
 
 
 //
@@ -1191,6 +1222,7 @@ class AaTypeCastExpression: public AaExpression
 //
 class AaUnaryExpression: public AaExpression
 {
+	protected:
 	AaOperation _operation;
 	AaExpression* _rest;
 	public:
@@ -1236,7 +1268,7 @@ class AaUnaryExpression: public AaExpression
 	virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
 	virtual void Write_VC_Links(string hier_id, ostream& ofile);
 
-	string Get_VC_Name();
+	virtual string Get_VC_Name();
 
 	virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 	virtual void Write_VC_Links_As_Target_Optimized(string hier_id, ostream& ofile);
@@ -1272,6 +1304,24 @@ class AaUnaryExpression: public AaExpression
 	virtual void Collect_Root_Sources(set<AaExpression*>& root_set);
 };
 
+class AaBitmapExpression: public AaUnaryExpression
+{
+	vector<pair<int,int> > _bitmap_vector;
+	public:
+
+	virtual string Kind() {return("AaBitmapExpression");}
+	virtual void Evaluate();
+	AaBitmapExpression(AaScope* scope, map<int,int>& bitmap, AaExpression *rest);
+	virtual bool Is_Trivial() {return(true);}
+	void Print(ostream& ofile);
+	virtual void PrintC(ofstream& ofile, string tab_string)
+	{
+      		AaRoot::Error("bitmap not supported in Aa2C", this);
+	}
+	virtual string Get_VC_Name() {return("bitmap_" + Int64ToStr(this->Get_Index()));}
+	virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
+
+};
 // 
 // binary expression: q + r
 //

@@ -945,8 +945,22 @@ aA_Unary_Expression[AaScope* scope] returns [AaExpression* expr]
     bool bit_cast = false;
 }   
     :   
+	(expr = aA_Not_Expression[scope]) | (expr = aA_Cast_Expression[scope])
+			| (expr = aA_Slice_Expression[scope]) 
+			| (expr = aA_Bitmap_Expression[scope])
+;
+
+ 
+aA_Not_Expression[AaScope* scope] returns [AaExpression* expr]
+{       
+    AaOperation op;
+    AaExpression* rest = NULL;
+    AaType* to_type = NULL;
+    expr = NULL;
+    bool bit_cast = false;
+}   :
+
         lpid: LPAREN 
-        (
             (
                 (NOT {op = __NOT;})
                 (rest = aA_Expression[scope])
@@ -954,20 +968,76 @@ aA_Unary_Expression[AaScope* scope] returns [AaExpression* expr]
                     expr = new AaUnaryExpression(scope,op,rest); 
                 } 
              )   
-                |
+	RPAREN
+        {
+            if(expr) expr->Set_Line_Number(lpid->getLine());
+        }
+ ;
+
+aA_Cast_Expression[AaScope* scope] returns [AaExpression* expr]
+{       
+    AaExpression* rest = NULL;
+    AaType* to_type = NULL;
+    expr = NULL;
+    bool bit_cast = false;
+}:
+        lpid: LPAREN 
             (
                 (CAST | (BITCAST {bit_cast = true;}))
 
                 LPAREN ((to_type = aA_Type_Reference[scope])  | (to_type = aA_Named_Type_Reference[scope]) )  RPAREN
                 (rest = aA_Expression[scope] )
-                {   
-                    expr = new AaTypeCastExpression(scope,to_type,rest);
-                    ((AaTypeCastExpression*)expr)->Set_Bit_Cast(bit_cast);
-                }
             )
-        )
+	RPAREN
+        {
+	    expr = new AaTypeCastExpression(scope,to_type,rest);
+            ((AaTypeCastExpression*)expr)->Set_Bit_Cast(bit_cast);
+            if(expr) expr->Set_Line_Number(lpid->getLine());
+        }
+;
+
+
+aA_Slice_Expression[AaScope* scope] returns [AaExpression* expr]
+{       
+    AaExpression* rest = NULL;
+}:
+        lpid: LPAREN 
+		SLICE rest=aA_Expression[scope] hid:UINTEGER lid:UINTEGER
+		{
+			pair<int,int> slice;
+			slice.first = atoi(hid->getText().c_str());
+			slice.second = atoi(lid->getText().c_str());
+
+			if(slice.first < slice.second)
+			{
+				AaRoot::Error("Slice specification error: high-index < low-index. line " 
+							+ IntToStr(hid->getLine()), NULL);
+			}
+		}
         RPAREN
         {
+	    int tw = (slice.first - slice.second) + 1;
+	    AaType* t = AaProgram::Make_Uinteger_Type(tw);
+	    expr = new AaSliceExpression(scope, t, slice.second, rest);
+            if(expr) expr->Set_Line_Number(lpid->getLine());
+        }
+;
+
+aA_Bitmap_Expression[AaScope* scope] returns [AaExpression* expr]
+{       
+    AaExpression* rest = NULL;
+    map<int,int>  destination_map;
+}:
+        lpid: LPAREN BITMAP 
+		rest=aA_Expression[scope] (sid:UINTEGER tid:UINTEGER
+		{
+			int src = atoi(sid->getText().c_str());
+			int tgt = atoi(tid->getText().c_str());
+			destination_map[tgt] = src;
+		})+
+	RPAREN
+        {
+	    expr = new AaBitmapExpression(scope, destination_map, rest);
             if(expr) expr->Set_Line_Number(lpid->getLine());
         }
 ;
@@ -1019,7 +1089,7 @@ aA_Ternary_Expression[AaScope* scope] returns [AaExpression* expr]
 ;   
 
 //----------------------------------------------------------------------------------------------------------
-// aA_Binary_Op : OR | AND | NOR | NAND | XOR | XNOR | SHL | SHR | PLUS | MINUS | DIV | MUL | EQUAL | NOTEQUAL | LESS | LESSEQUAL | GREATER | GREATEREQUAL 
+// aA_Binary_Op : OR | AND | NOR | NAND | XOR | XNOR | SHL | SHR | ROL | ROR | PLUS | MINUS | DIV | MUL | EQUAL | NOTEQUAL | LESS | LESSEQUAL | GREATER | GREATEREQUAL 
 //----------------------------------------------------------------------------------------------------------
 aA_Binary_Op returns [AaOperation op] : 
         ( id_or:OR {op = __OR;}) |
@@ -1030,6 +1100,8 @@ aA_Binary_Op returns [AaOperation op] :
         ( id_xnor:XNOR { op = __XNOR;}) | 
         ( id_shl:SHL { op = __SHL;}) |
         ( id_shr:SHR { op = __SHR;}) | 
+        ( id_rol:ROL { op = __ROL;}) | 
+        ( id_ror:ROR { op = __ROR;}) | 
         ( id_plus:PLUS { op = __PLUS;}) | 
         ( id_minus:MINUS { op = __MINUS;}) | 
         ( id_div:DIV { op = __DIV;}) | 
@@ -1324,21 +1396,24 @@ aA_Named_Record_Type_Declaration[AaScope* scope] returns [AaType* ref_type]
 //----------------------------------------------------------------------------------------------------------
 aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
 {
-    string full_name;
-    bool array_flag = false;
-    vector<AaExpression*> indices;
-    AaExpression* index_expr;
+    string prefix_name;
     vector<string> hier_ids;
     unsigned int search_ancestor_level = 0;
     string root_name;
 }
     : 
-        (
+     (prefix_name = aA_Object_Reference_Prefix[hier_ids, search_ancestor_level])?
+     (obj_ref = aA_Object_Reference_Base[prefix_name, hier_ids, search_ancestor_level, scope])
+;
+
+
+aA_Object_Reference_Prefix[vector<string>& hier_ids, unsigned int& search_ancestor_level] returns [string prefix_name]
+:
             (
                     (
-                        PERCENT {full_name += '%';} id:SIMPLE_IDENTIFIER 
+                        PERCENT {prefix_name += '%';} id:SIMPLE_IDENTIFIER 
                         {
-                            full_name += id->getText();
+                            prefix_name += id->getText();
                             hier_ids.push_back(id->getText());
                         }
                     )* 
@@ -1346,23 +1421,38 @@ aA_Object_Reference[AaScope* scope] returns [AaObjectReference* obj_ref]
                     (
                         cid: UP
                         {
-                            full_name += cid->getText();
+                            prefix_name += cid->getText();
                             search_ancestor_level++;
                         } 
                     )+ 
             )
             COLON  
                     {
-                        full_name += ':';
+                        prefix_name += ':';
                     }
-        )?
+;
+
+aA_Object_Reference_Base[string prefix_name, vector<string>& hier_ids, unsigned int search_ancestor_level, AaScope* scope] returns [AaObjectReference* obj_ref]
+{
+    string full_name = prefix_name;
+
+    bool array_flag = false;
+    bool slice_flag = false;
+
+    vector<AaExpression*> indices;
+    pair<int,int> slice;
+
+    AaExpression* index_expr;
+    string root_name;
+}:
         (sid:SIMPLE_IDENTIFIER {full_name += sid->getText(); root_name = sid->getText(); })
-        (LBRACKET index_expr = aA_Expression[scope]  RBRACKET
-            {
-                array_flag = true; 
-                indices.push_back(index_expr); 
-            }
-        )*
+        (
+			LBRACKET index_expr = aA_Expression[scope]  RBRACKET
+            		{
+                		array_flag = true; 
+                		indices.push_back(index_expr); 
+            		}
+       	)*
         {
             if(array_flag)
                 obj_ref = new AaArrayObjectReference(scope,full_name,indices);
@@ -1524,6 +1614,8 @@ ATTRIBUTE     : "$attribute";
 GUARD         : "$guard";
 DO            : "$dopipeline";
 WHILE         : "$while";
+SLICE         : "$slice";
+BITMAP        : "$bitmap";
 
 // Special symbols
 COLON		 : ':' ; // label separator
@@ -1542,6 +1634,8 @@ GREATEREQUAL     : ">="; // greater-than-or-equal
 IMPLIES          : "=>"; 
 SHL              : "<<"; // shift-left
 SHR              : ">>"; // shift-right
+ROL              : "<o<" ; // rotate-left.
+ROR              : ">o>" ;  // rotate-right
 LBRACE           : '{' ; // scope open
 RBRACE           : '}' ; // scope close
 LBRACKET         : '[' ; // array index marker

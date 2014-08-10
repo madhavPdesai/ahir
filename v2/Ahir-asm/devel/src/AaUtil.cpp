@@ -103,6 +103,12 @@ string C_Name(AaOperation op)
     case __SHR:
       ret_string = "__SHR";
       break;
+    case __ROL:
+      ret_string = "__ROL";
+      break;
+    case __ROR:
+      ret_string = "__ROR";
+      break;
     case __PLUS:
       ret_string = "__PLUS";
       break;
@@ -176,6 +182,12 @@ string Aa_Name(AaOperation op)
       break;
     case __SHR:
       ret_string = ">>";
+      break;
+    case __ROL:
+      ret_string = "<o<";
+      break;
+    case __ROR:
+      ret_string = ">o>";
       break;
     case __PLUS:
       ret_string = "+";

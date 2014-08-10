@@ -844,6 +844,7 @@ class vcCPPipelinedForkBlock;
 class vcControlPath;
 class vcCPElementGroup: public vcRoot
 {
+  vcControlPath* _cp;
   int64_t _group_index;
   set<vcCPElement*> _elements;
 
@@ -893,8 +894,9 @@ class vcCPElementGroup: public vcRoot
   bool _bypass_flag;
 
 public:
-  vcCPElementGroup():vcRoot()
+  vcCPElementGroup(vcControlPath* cp):vcRoot()
   {
+    _cp = cp;
     _has_transition = false;
     _has_place = false;
     _has_input_transition = false;
@@ -983,11 +985,7 @@ public:
   void Print_DP_To_CP_VHDL_Link(ostream& ofile);
   void Print_CP_To_DP_VHDL_Link(int idx, ostream& ofile);
 
-  virtual string Get_VHDL_Id() 
-  { 
-      string ret_string = "cp_elements(" + Int64ToStr(this->Get_Group_Index()) + ")"; 
-      return(ret_string);
-  }
+  virtual string Get_VHDL_Id();
 
   virtual string Get_Dot_Id() 
   { 
@@ -1009,7 +1007,6 @@ public:
 
 class vcControlPath: public vcCPSeriesBlock
 {
-
   bool _is_pipelined;
   int  _pipeline_depth;
   int  _pipeline_buffering;
@@ -1129,6 +1126,7 @@ public:
   virtual void Update_Predecessor_Successor_Links();
   virtual bool Check_Structure();
   void Print_VHDL_Export_Cleanup_Optimized(ostream& ofile);
+
 };
 
 
@@ -1147,6 +1145,7 @@ public:
   {
     assert(0);
   }
+
 
 };
 

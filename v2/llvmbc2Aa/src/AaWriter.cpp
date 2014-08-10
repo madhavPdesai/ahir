@@ -9,8 +9,10 @@
 #include <iostream>
 #include <deque>
 
+#include "BasicBlockChain.hpp"
 #include "AaWriter.hpp" 
 #include "Utils.hpp"
+
 
 using namespace llvm;
 
@@ -28,7 +30,7 @@ namespace Aa {
 		_guard_complement = false;
 		_suppress_leading_merge = false;
 		_suppress_terminator = false;
-		_chain_trailer = NULL;
+		_active_dag = NULL;
 	}
 
 	void AaWriter::start_program(std::string id)
@@ -589,6 +591,13 @@ namespace Aa {
 	//
 	// Note: do the chaining only if the leading basic block is
 	//       a do-while block.
+	//
+	// Algorithm:  Start with a vector containing all blocks
+	//             in the function.  At the same time, keep
+	//             track of a set of unchained-blocks (initially empty).
+	// 	BROKEN!  To be redone!
+	//
+	//
 	void AaWriter::Build_Basic_Block_Chains(llvm::Function& F)
 	{
 		basic_block_chain_map.clear();
@@ -616,7 +625,7 @@ namespace Aa {
 				// try to build longer chains, otherwise, leave it
 				// as a singleton chain.
 				int pD, buffRing; bool fRflag; // sacrificial :(
-                                bool leader_is_do_while_loop = is_do_while_loop(*curr_block, pD,buffRing,fRflag);
+                                bool leader_is_do_while_loop = is_marked_as_a_do_while_loop(*curr_block, pD,buffRing,fRflag);
 				
 
 				// build the longest chain that you can starting with this
@@ -705,14 +714,21 @@ namespace Aa {
 	void AaWriter::clear_bb_predecessor_map() 
 	{	
 		bb_predecessor_map.clear();
+		basic_block_predecessor_map.clear();
 		bb_name_map.clear();
 	}
 
+	// q is a predecessor of p.  
 	void AaWriter::add_bb_predecessor_map_entry(llvm::BasicBlock* p, llvm::BasicBlock* q)
 	{
+		// using strings.
 		bb_predecessor_map[to_aa(p->getNameStr())].insert(to_aa(q->getNameStr()));
+
+		// using pointers.
+		basic_block_predecessor_map[p].push_back(q);
 	}
 
+        
 	int  AaWriter::get_number_of_predecessors(llvm::BasicBlock* p)
 	{ 
 		std::string pname = to_aa(p->getNameStr());
@@ -720,6 +736,23 @@ namespace Aa {
 			return(bb_predecessor_map[pname].size());
 		else
 			return(0);
+	}
+    
+	void AaWriter::get_predecessors(llvm::BasicBlock* bb, std::vector<llvm::BasicBlock*>& preds)
+	{
+		preds.clear();
+		preds = basic_block_predecessor_map[bb];
+	}
+
+    	void AaWriter::get_predecessors(std::string& bb, std::vector<std::string>& preds)
+	{
+		preds.clear();
+		for(std::set<std::string>::iterator iter = bb_predecessor_map[bb].begin(),
+				fiter = bb_predecessor_map[bb].end();
+			iter != fiter; iter++)
+		{
+			preds.push_back(*iter);
+		}
 	}
 }
 
@@ -825,17 +858,16 @@ namespace {
 							siter != this->bb_predecessor_map[bb_name].end();
 							siter++)
 					{
-						std::string other_name = to_aa(*siter);
+						std::string other_name = *siter;
+						llvm::BasicBlock* other_bb = this->bb_name_map[other_name];
 
-						bool self_match = (other_name == bb_name)
-							|| 
-							((_chain_trailer != NULL) &&
-							 (other_name == to_aa(_chain_trailer->getNameStr())));
-
+						bool self_match = ((other_name == bb_name) || 
+									(_active_dag->_loopbacks.find(other_bb) != 
+										_active_dag->_loopbacks.end()));
 
 						if( !self_match || !is_do_while)
 						{
-							std::cout << " " << to_aa(*siter) << "_" << to_aa(bb_name);
+							std::cout << " " << to_aa(other_name) << "_" << to_aa(bb_name);
 						}
 					}
 
@@ -853,11 +885,13 @@ namespace {
 							if(!_suppress_leading_merge)
 								Write_PHI_Node_At_Do_While_Entry(static_cast<PHINode&>((*iiter)));
 							else
-								Write_PHI_Node(static_cast<PHINode&>((*iiter)));
+								// write PHI as a mux.
+								Write_PHI_Node(static_cast<PHINode&>((*iiter)), true);
 						}
 						else
 						{
-							Write_PHI_Node(static_cast<PHINode&>((*iiter)));
+							// write PHI in the usual way.
+							Write_PHI_Node(static_cast<PHINode&>((*iiter)), false);
 						}
 					}
 				}
@@ -892,7 +926,7 @@ namespace {
 			}
 		}
 
-		void Write_PHI_Node(llvm::PHINode& pnode) 
+		void Write_PHI_Node(llvm::PHINode& pnode, bool mux_flag) 
 		{
 			std::string phi_name = to_aa(pnode.getNameStr());
 			std::vector<std::string> source_ops;
@@ -927,7 +961,7 @@ namespace {
 			}
 
 			BasicBlock* parent = pnode.getParent();
-			if(!_suppress_leading_merge)
+			if(!mux_flag)
 			{
 				std::cout << "$phi " << phi_name << " :=  ";
 				for (unsigned i = 0; i < real_sources; i++) 
@@ -944,7 +978,7 @@ namespace {
 			}
 			else
 			{
-				std::string trailer_string = "($cast (" + ret_type_name + ") 0)";
+				std::string trailer_string = "($bitcast (" + ret_type_name + ") 0)";
 				std::cout << phi_name << " := ";
 				for (unsigned i = 0; i < real_sources; i++) 
 				{
@@ -955,13 +989,14 @@ namespace {
 
 					std::cout <<  get_name(inbb) << "_" << get_name(parent) << "_taken ";
 
-					std::cout << "( $cast (" << get_aa_type_name(inval->getType(),*_module) 
+					std::cout << "( $bitcast (" << get_aa_type_name(inval->getType(),*_module) 
 						<< ") " << source_op << ") ";
 					trailer_string += ")";
 				}
 				std::cout << trailer_string << std::endl;
 			}
 		}
+
 
 		void Write_PHI_Node_At_Do_While_Entry(llvm::PHINode& pnode)
 		{
@@ -984,7 +1019,8 @@ namespace {
 				BasicBlock *inbb = pnode.getIncomingBlock(i);
 				if(bb_set.find(inbb) == bb_set.end())
 				{
-					if((inbb != parent) && (inbb != _chain_trailer))
+					if((inbb != parent) && (_active_dag->_loopbacks.find(inbb) == 
+									_active_dag->_loopbacks.end()))
 					{
 						bb_set.insert(inbb);
 
@@ -1035,7 +1071,8 @@ namespace {
 			for (unsigned i = 0; i < num_sources; i++) 
 			{
 				BasicBlock *inbb = pnode.getIncomingBlock(i);
-				if((inbb == parent) || (inbb == _chain_trailer))
+				if((inbb == parent) || (_active_dag->_loopbacks.find(inbb) != 
+									_active_dag->_loopbacks.end()))
 				{
 					llvm::Value *inval = pnode.getIncomingValue(i);
 					source_op = prepare_operand(inval);
@@ -1635,39 +1672,6 @@ namespace {
 					}
 				}
 			}
-			else
-			{
-				if(br.isUnconditional())
-				{
-					BasicBlock* to_bb = br.getSuccessor(0);
-					if(this->Get_Guard_Flag())
-						std::cout <<  get_name(from_bb) << "_" << get_name(to_bb) << "_taken := " 
-								<<  this->Get_Guard_RHS_Expression() << std::endl;
-					else
-						std::cout <<  get_name(from_bb) << "_" << get_name(to_bb) << "_taken := ($bitcast($uint<1>) _b1)" << std::endl;
-
-					this->Set_Guard_Flag(false);
-					this->Set_Guard_Complement(false);
-				}
-				else
-				{
-					std::string cond_name = prepare_operand(br.getCondition());
-					if(this->Get_Guard_Flag())
-					{
-						if(cond_name  != this->Get_Guard_Variable())
-						{
-							std::cerr << "Error: unexpected guard expression in if.. ignored.\n";
-							this->setErrorFlag(true);
-						}
-					}
-
-					BasicBlock* dest0 = br.getSuccessor(0);
-					BasicBlock* dest1 = br.getSuccessor(1);
-
-					std::cout << get_name(from_bb) << "_" << get_name(dest0) << "_taken := " << cond_name << std::endl;
-					std::cout << get_name(from_bb) << "_" << get_name(dest1) << "_taken := ( ~ " << cond_name << " )" << std::endl;
-				}
-			}
 		}
 
 		void visitSwitchInst(llvm::SwitchInst &I) 
@@ -1703,131 +1707,6 @@ namespace {
 		}
 
 
-		void Write_Aa_Code(llvm::BasicBlock* chain_rep, bool extract_do_while_flag)
-		{
-			bool v = false;
-			int pipelining_depth = 1;
-			int buffering_depth = 1;
-			bool full_rate_flag = false;
-
-			
-			if(extract_do_while_flag)
-				v = is_do_while_loop(basic_block_chain_map[chain_rep], pipelining_depth, buffering_depth, full_rate_flag);
-
-			this->Set_Do_While_Flag(v);
-			this->Set_Do_While_Full_Rate_Flag(full_rate_flag);
-			this->Set_Do_While_Pipelining_Depth(pipelining_depth);
-			this->Set_Do_While_Buffering_Depth(buffering_depth);
-
-			// visit the blocks from beginning to end.. 
-			// turn on leading merge printing only for the lead-block.
-			// turn on terminator printing only for the tail-block
-			int idx = 0;
-			int fidx = basic_block_chain_map[chain_rep].size();
-			_chain_trailer = basic_block_chain_map[chain_rep][fidx-1];
-			while(idx < fidx)
-			{
-				llvm::BasicBlock* curr_block = basic_block_chain_map[chain_rep][idx];
-				_suppress_leading_merge = true;
-				_suppress_terminator = true;
-				if(idx == 0)
-				{
-					_suppress_leading_merge = false;
-				}
-				if(idx == (fidx-1))
-				{
-					_suppress_terminator = false;
-				}
-
-				llvm::TerminatorInst* T = curr_block->getTerminator();
-				if((T->getNumSuccessors() == 2) && (isa<llvm::BranchInst>(T)))
-				{
-					this->visit(*curr_block);
-					if(_suppress_terminator == true)
-					{
-						if(idx > (fidx -3))
-						{
-							std::cerr << "Error: in basic block chain " << to_aa(chain_rep->getNameStr() )
-								<< ", branch termination without two successors in the chain."
-								<< std::endl;	
-							this->setErrorFlag(true);
-							return;
-						}
-						llvm::BranchInst* br = dyn_cast<llvm::BranchInst>(T);
-						std::string cond_name = prepare_operand(br->getCondition());
-
-						if(this->Get_Do_While_Flag())
-						{
-							this->Set_Guard_Flag(true);
-							this->Set_Guard_Variable(cond_name) ;
-							this->Set_Guard_Complement(false);
-						}
-						else
-						{
-							std::cout << "$if " << cond_name << " $then "  << std::endl;
-						}
-
-						_suppress_leading_merge = true;
-
-						idx++;
-						llvm::BasicBlock* then_block = basic_block_chain_map[chain_rep][idx];
-						if(idx == (fidx-1))
-						{
-							_suppress_terminator = false;
-						}
-						this->visit(*then_block);
-
-
-						if(this->Get_Do_While_Flag()) 
-						{
-							this->Set_Guard_Flag(true);
-							this->Set_Guard_Variable(cond_name) ;
-							this->Set_Guard_Complement(true);
-						}	
-						else
-						{
-							std::cout << "$else " << std::endl;
-						}
-
-
-						idx++;
-						llvm::BasicBlock* else_block = basic_block_chain_map[chain_rep][idx];
-						if(idx == (fidx-1))
-						{
-							_suppress_terminator = false;
-						}
-						this->visit(*else_block);
-
-
-						if(this->Get_Do_While_Flag())
-						{
-							this->Set_Guard_Flag(false);
-						}
-						else
-						{
-							std::cout << "$endif " << std::endl;	
-						}
-
-						idx++;
-					}
-					else
-					{
-						idx++;
-					}
-
-				}
-				else
-				{
-					this->visit(*curr_block);
-					idx++;
-				}
-			}
-
-			_chain_trailer = NULL;
-			_suppress_leading_merge = false;
-			_suppress_terminator = false;
-			this->Set_Do_While_Flag(false);
-		}
 	};
 }
 

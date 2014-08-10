@@ -13,6 +13,8 @@ enum AaOperation
     __XNOR,
     __SHL,
     __SHR,
+    __ROR,
+    __ROL,
     __PLUS,
     __MINUS,
     __MUL,
@@ -25,7 +27,8 @@ enum AaOperation
     __GREATEREQUAL,
     __CONCAT,
     __BITSEL,
-    __NOP
+    __NOP,
+    __BITMAP
   };
 
 

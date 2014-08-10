@@ -3,11 +3,7 @@
 	-- Solution:  allow multiple place definitions,
 		but handle correctly in Aa2VC.
 
-2.  loop-pipelining control using a macro
-    _Not_To_Be_Pipelined_ 
+2.  nan support in floating point number parsing. (llvm2aa)
 
-    This will instantiate a function call to a 
-    special function  in the the llvm-byte-code.
-    The presence of this function call in an inner
-    loop candidate will suppress the pipelining of
-    this inner loop.  
+3.  pipe operation sequencing is overly conservative. can
+    tighten it a bit.

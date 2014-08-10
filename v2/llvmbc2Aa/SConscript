@@ -10,5 +10,8 @@ VariantDir('obj','src',duplicate=0)
 source_files = Glob('obj/*.cpp')
 
 local.Append(CPPPATH = './include')
+local.Append(CPPPATH = '../BGLWrap/include')
+local.Append(CPPPATH = '/usr/local/boost_1_46_1/')
+local.Append(LIBS = 'm')
 local.Program('bin/llvm2aa', source_files, CCFLAGS = '-g')
 

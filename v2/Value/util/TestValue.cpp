@@ -4,8 +4,10 @@ using namespace _base_value_;
 
 int main()
 {
-  Unsigned b(4,"_b1111");
-  Unsigned a(4,"_b0000");
+  Unsigned b(4,"_b0010");
+  cout <<  "b = " << b.To_String() << endl;
+  Unsigned a(4,"_b0011");
+  cout <<  "a = " << a.To_String() << endl;
 
   cout << "Word-size is " << __WORD_SIZE__ << endl;
   cout << a.To_String() << " a" << endl << b.To_String() << " b" << endl;
@@ -76,6 +78,7 @@ int main()
 
   Float c(8,23,"2.5");
   Float d(8,23,"5.0");
+ 
 
   c.Add(d);
   cout << c.To_String() << endl;
@@ -89,6 +92,32 @@ int main()
   Float e(11,52,"247.5");
   c.Assign(e);
   cout << c.To_String() << endl;
+
+  Float f(11,52,"_b10101001");
+  cout << f.To_String() << endl;
+  fprintf(stdout,"expected a9, got %llx\n", (uint64_t) *((uint64_t*) &(f.data._double_value)));
+
+  Float g(8,23, "_ha9");
+  cout << g.To_String() << endl;
+  fprintf(stdout,"expected a9, got %x\n", (uint32_t) *((uint32_t*) &(g.data._float_value)));
+
+
+   // bitcast.
+   Unsigned ug(32);
+   g.Bit_Cast_Into(ug);
+   cout << "bitcast " << g.To_String() << " = " << ug.To_String() << endl;
+
+   Unsigned sug(8);
+   sug.Slice(ug, 31, 24);
+   cout << "slice " << ug.To_String() << "[31:24] = " << sug.To_String() << endl;
+
+
+   Unsigned psug(8);
+   vector<pair<int,int> > tp;
+   tp.push_back(pair<int,int>(7,0));
+   tp.push_back(pair<int,int>(0,7));
+   psug.Bitmap(sug,tp);
+   cout << "permute 7 <-> 0 " << sug.To_String() << " = " << psug.To_String() << endl;
 
   return(1);
 }

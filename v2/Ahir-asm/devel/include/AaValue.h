@@ -23,6 +23,8 @@ class AaValue: public AaRoot
 
   ~AaValue();
 
+
+  virtual int Get_Width();
   virtual string Get_Value_String() {assert(0);}
   virtual AaScope* Get_Scope() {return this->_scope;}
   virtual string Kind() {return("AaValue");}
@@ -50,26 +52,12 @@ class AaValue: public AaRoot
 
   virtual Value* Get_Value() {assert(0);}
 
+  virtual void Flatten(vector<AaValue*>& fvalues) {fvalues.push_back(this);}
+
   friend AaValue* Make_Aa_Value(AaScope* scope, AaType* t);
   friend AaValue* Make_Aa_Value(AaScope* scope, AaType* t, vector<string>& literals);
 };
 
-
-class AaStringValue: public AaValue
-{
- public:
-  string _value;
-
-  string Get_Value_String() {return(this->_value);}
-
-  AaStringValue(AaScope* scope, string value);
-  ~AaStringValue();
-  virtual void Print(ostream& ofile);
-  virtual string Kind() {return("AaStringValue");}
-
-  virtual bool Is_StringValue() {return(true);}
-  virtual bool Equals(AaValue* other); // todo
-};
 
 class AaUintValue: public AaValue
 {
@@ -172,6 +160,12 @@ class AaArrayValue: public AaValue
   vector<AaValue*> _value_vector;
 
 
+  virtual void Flatten(vector<AaValue*>& fvalues) 
+  {
+	for(int idx = 0, fidx = _value_vector.size(); idx < fidx; idx++)
+		fvalues.push_back(_value_vector[idx]);
+  }
+
   AaArrayValue(AaScope* s, AaArrayType* at);
   AaArrayValue(AaScope* s, AaArrayType* at,  vector<string>& init_values);
 
@@ -212,6 +206,12 @@ class AaRecordValue: public AaValue
 {
  public:
   vector<AaValue*> _value_vector;
+
+  virtual void Flatten(vector<AaValue*>& fvalues) 
+  {
+	for(int idx = 0, fidx = _value_vector.size(); idx < fidx; idx++)
+		fvalues.push_back(_value_vector[idx]);
+  }
 
   virtual bool Is_RecordValue() {return(true);}
   virtual unsigned int Eat(unsigned int init_id, vector<string>& init_vals);
@@ -255,6 +255,11 @@ AaValue* Make_Aa_Value(AaScope* scope, AaType* t);
 AaValue* Make_Aa_Value(AaScope* scope, AaType* t, vector<string>& literals);
 AaValue* Perform_Unary_Operation(AaOperation op, AaValue* v);
 AaValue* Perform_Binary_Operation(AaOperation op, AaValue* u, AaValue* v);
+
+// slicing, bit-permutations.. useful stuff.
+AaValue* Perform_Slice_Operation(AaValue* v, int hi, int li);
+AaValue* Perform_Bitmap_Operation(AaValue* v, vector<pair<int,int> >& bitmap_vector);
+
 // try to pack val into a binary string with size bits.
 // 
 string To_VC_String(unsigned int val, unsigned int size);

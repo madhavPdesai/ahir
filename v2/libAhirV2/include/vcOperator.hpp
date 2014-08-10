@@ -622,6 +622,33 @@ public:
   friend class vcDataPath;
 };
 
+
+//
+// permutation: a useful operator in bit-level logic.
+//
+class vcPermutation: public vcSplitOperator
+{
+	vector<pair<int,int> > _permutation;
+	vcWire* _din;
+	vcWire* _dout;
+
+	public:
+  	vcPermutation(string id, vcWire* din, vcWire* dout, vector<pair<int,int> >& bmapv);
+  	virtual string Kind() {return("vcPermutation");}
+  	virtual void Print(ostream& ofile);
+
+  	virtual int Get_Number_Of_Input_Wires() { return(1); }
+  	virtual int Get_Number_Of_Output_Wires() { return(1);}
+
+  	virtual vcWire* Get_Input_Wire(int idx) 
+		{ if(idx == 0) return(_din); else return(NULL);}
+  	virtual vcWire* Get_Output_Wire(int idx) 
+		{ if(idx == 0) return(_dout); else return(NULL);}
+
+  	virtual void Print_VHDL(ostream& ofile);
+  	friend class vcDataPath;
+};
+
 // new operator to support full-rate pipelining..
 class vcInterlockBuffer: public vcRegister
 {

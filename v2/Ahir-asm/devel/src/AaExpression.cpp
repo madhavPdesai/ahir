@@ -1035,7 +1035,10 @@ bool AaSimpleObjectReference::Update_Protocol_Has_Delay(set<AaRoot*>& visited_el
 		{
 			AaInterfaceObject* io = (AaInterfaceObject*) (this->_object);
 			if(io->Get_Is_Input())
-				return(false);
+				// this needs to be false? else a 
+				// combinational cycle is produced.
+				// TODO: why?
+				return(true);
 			else
 			{
 				AaStatement* root = ((AaInterfaceObject*)(this->_object))->Get_Unique_Driver_Statement();
@@ -3734,7 +3737,8 @@ void AaTypeCastExpression::Write_VC_Datapath_Instances(AaExpression* target, ost
 		  ofile << "$buffering  $out " << dpe_name << " "
 			  << tgt_name << " 2" << endl;
 	  }
-	  ofile << "$delay " << dpe_name << " " << this->Get_Delay() << endl;
+	  int delay = (flow_through ? 0 : this->Get_Delay());
+	  ofile << "$delay " << dpe_name << " " << delay << endl;
   }
 }
 
@@ -3772,6 +3776,88 @@ void AaTypeCastExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignment
 {
 	this->Replace_Field_Expression(&_rest, used_expr, replacement);
 }
+
+//---------------------------------------------------------------------
+// AaSliceExpression
+//---------------------------------------------------------------------
+AaSliceExpression::AaSliceExpression(AaScope* scope, AaType* to_type, int low_index, AaExpression *rest):
+	AaTypeCastExpression(scope,to_type,rest)
+{
+	_low_index = low_index;
+}
+
+void AaSliceExpression::Evaluate()
+{
+  if(!_already_evaluated)
+    {
+      _already_evaluated = true;
+
+      if(this->_rest->Get_Type() == NULL)
+	this->_rest->Set_Type(this->Get_To_Type());
+
+      this->_rest->Evaluate();
+      if(this->_rest->Is_Constant())
+      {
+	int hi = this->_low_index + this->Get_Type()->Size() - 1;
+
+	this->Assign_Expression_Value(Perform_Slice_Operation(this->_rest->Get_Expression_Value(), hi,
+									this->_low_index));
+      }
+
+      if(_rest->Get_Does_Pipe_Access())
+	{
+	  this->Set_Does_Pipe_Access(true);
+	}
+    }
+
+}
+	
+//
+// same as bit-cast, but the casting operation is a bit different.
+//
+void AaSliceExpression::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
+{
+  if(!this->Is_Constant())
+  {
+	  bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+
+	  this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
+
+	  ofile << "// " << this->To_String() << endl;
+	  string dpe_name = this->Get_VC_Datapath_Instance_Name();
+	  string src_name = this->_rest->Get_VC_Driver_Name(); 
+	  string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
+
+	  int high_index = this->Get_Type()->Size() + this->_low_index - 1;
+	  Write_VC_Slice_Operator(dpe_name,
+				  src_name,
+				  tgt_name,
+				  high_index,
+				  this->_low_index,
+				  this->Get_VC_Guard_String(),
+				  flow_through,
+				  ofile);
+
+	  // extreme pipelining.
+	  if(this->Is_Part_Of_Extreme_Pipeline())
+	  {
+		  ofile << "$buffering  $in " << dpe_name << " "
+			  << src_name << " 2" << endl;
+		  ofile << "$buffering  $out " << dpe_name << " "
+			  << tgt_name << " 2" << endl;
+	  }
+	  int delay = (flow_through ? 0 : this->Get_Delay());
+	  ofile << "$delay " << dpe_name << " " << delay << endl;
+  }
+}
+
+void AaSliceExpression::Print(ostream& ofile)
+{
+	ofile << "( $slice ";
+	this->_rest->Print(ofile);
+	ofile << " " << this->Get_Type()->Size() + this->_low_index - 1 << " " << this->_low_index << " ) ";
+}
+
 //---------------------------------------------------------------------
 // AaUnaryExpression
 //---------------------------------------------------------------------
@@ -3780,7 +3866,10 @@ AaUnaryExpression::AaUnaryExpression(AaScope* parent_tpr,AaOperation op, AaExpre
 	this->_operation  = op;
 	this->_rest       = rest;
 
+	// type of result is the same as the type of
+	// the operand.
 	AaProgram::Add_Type_Dependency(this,rest);
+
 	if(rest)
 		rest->Add_Target(this);
 
@@ -3943,7 +4032,8 @@ void AaUnaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostrea
 	      ofile << "$buffering  $out " << dpe_name << " "
 		      << tgt_name << " 2" << endl;
       }
-      ofile << "$delay " << dpe_name << " " << this->Get_Delay() << endl;
+      int delay = (flow_through ? 0 : this->Get_Delay());
+      ofile << "$delay " << dpe_name << " " << delay << endl;
     }
 
 }
@@ -3979,6 +4069,81 @@ void AaUnaryExpression::Update_Adjacency_Map(map<AaRoot*, vector< pair<AaRoot*, 
 void AaUnaryExpression::Replace_Uses_By(AaExpression* used_expr, AaAssignmentStatement* replacement)
 {
 	this->Replace_Field_Expression(&_rest, used_expr, replacement);
+}
+
+//---------------------------------------------------------------------
+// AaBitmapExpression
+//---------------------------------------------------------------------
+AaBitmapExpression::AaBitmapExpression(AaScope* scope, map<int,int>& bitmap, AaExpression *rest):
+	AaUnaryExpression(scope, __BITMAP, rest)
+{
+	for(map<int,int>::iterator iter = bitmap.begin(), fiter = bitmap.end(); iter != fiter; iter++)
+	{	
+		_bitmap_vector.push_back(pair<int,int>((*iter).second, (*iter).first));	
+	}	
+}
+
+void AaBitmapExpression::Evaluate()
+{
+  if(!_already_evaluated)
+    {
+      _already_evaluated = true;
+      this->_rest->Evaluate();
+      if(this->_rest->Is_Constant())
+	this->Assign_Expression_Value(Perform_Bitmap_Operation(this->_rest->Get_Expression_Value(), this->_bitmap_vector));
+      if(_rest->Get_Does_Pipe_Access())
+	{
+	  this->Set_Does_Pipe_Access(true);
+	}
+    }
+}
+
+void AaBitmapExpression::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
+{
+  if(!this->Is_Constant())
+    {
+
+      this->_rest->Write_VC_Datapath_Instances(NULL,ofile);
+
+
+      ofile << "// " << this->To_String() << endl;
+      bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+
+      string dpe_name = this->Get_VC_Datapath_Instance_Name();
+      string src_name = this->_rest->Get_VC_Driver_Name(); 
+      string tgt_name = (target != NULL ? target->Get_VC_Receiver_Name() : this->Get_VC_Receiver_Name());
+
+      Write_VC_Bitmap_Operator(dpe_name,
+		      src_name,
+		      tgt_name,
+		      this->Get_Type(),
+		      this->_bitmap_vector,
+		      this->Get_VC_Guard_String(),
+		      flow_through,
+		      ofile);
+
+      // extreme pipelining.
+      if(this->Is_Part_Of_Extreme_Pipeline())
+      {
+	      ofile << "$buffering  $in " << dpe_name << " "
+		      << src_name << " 2" << endl;
+	      ofile << "$buffering  $out " << dpe_name << " "
+		      << tgt_name << " 2" << endl;
+      }
+      int delay = (flow_through ? 0 : this->Get_Delay());
+      ofile << "$delay " << dpe_name << " " << delay << endl;
+    }
+}
+
+void AaBitmapExpression::Print(ostream& ofile)
+{
+	ofile << "( $bitmap ";
+	this->_rest->Print(ofile);
+	for(int idx = 0, fidx = _bitmap_vector.size(); idx < fidx; idx++)
+	{
+		ofile << " " <<  _bitmap_vector[idx].first << " " << _bitmap_vector[idx].second << " ";
+	}
+	ofile << " ) ";
 }
 
 //---------------------------------------------------------------------
@@ -4096,7 +4261,7 @@ bool AaBinaryExpression::Is_Trivial()
 {
   if(this->_operation == __OR || this->_operation == __AND ||
      this->_operation == __NOR || this->_operation == __NAND ||
-     this->_operation == __XOR || this->_operation == __XNOR ||
+     this->_operation == __XOR || this->_operation == __XNOR || 
      this->_operation == __CONCAT || this->_operation == __BITSEL)
   // some operations are obviously trivial.
     return(true);
@@ -4106,7 +4271,10 @@ bool AaBinaryExpression::Is_Trivial()
 	if(((this->_operation == __SHL) || (this->_operation == __SHR)) && 
 			((this->_second != NULL) && this->_second->Is_Constant()))
 		return(true);
-  	else
+  	else if(((this->_operation == __ROL) || (this->_operation == __ROR)) && 
+			((this->_second != NULL) && this->_second->Is_Constant()))
+		return(true);
+	else
     		return(false);
   }
 }
@@ -4230,6 +4398,7 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 		ofile << "// " << this->To_String() << endl;
       		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 
+
 		string dpe_name = this->Get_VC_Datapath_Instance_Name();
 		string src_1_name = _first->Get_VC_Driver_Name();
 		string src_2_name = _second->Get_VC_Driver_Name();
@@ -4261,7 +4430,8 @@ void AaBinaryExpression::Write_VC_Datapath_Instances(AaExpression* target, ostre
 			ofile << "$buffering  $out " << dpe_name << " "
 				<< tgt_name << " 2" << endl;
 		}
-		ofile << "$delay " << dpe_name << " " << this->Get_Delay() << endl;
+		int delay = (flow_through ? 0 : this->Get_Delay());
+		ofile << "$delay " << dpe_name << " " << delay << endl;
 	}
 }
 

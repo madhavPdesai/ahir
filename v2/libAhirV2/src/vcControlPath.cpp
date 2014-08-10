@@ -764,14 +764,15 @@ void vcTransition::Print_VHDL(ostream& ofile)
 			    pred_markings.push_back(1);
 			    pred_capacities.push_back(1);
 			    pred_delays.push_back(this->Get_Marked_Predecessor_Delay(pred));
-			    Print_VHDL_Join(join_name,
-						preds,
-						pred_markings,
-						pred_capacities,
-						pred_delays,
-						joined_symbol,
-						ofile);
 		    }
+
+		    Print_VHDL_Join(join_name,
+				    preds,
+				    pred_markings,
+				    pred_capacities,
+				    pred_delays,
+				    joined_symbol,
+				    ofile);
 	    }
     }
   else if(explicit_preds.size() == 1)

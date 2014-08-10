@@ -12,6 +12,7 @@ class vcLoad;
 class vcStore;
 class vcSelect;
 class vcSlice;
+class vcPermutation;
 class vcBranch;
 class vcInport;
 class vcOutport;
@@ -351,6 +352,12 @@ protected:
 	}
   }
 
+  virtual void Print_Flow_Through(ostream& ofile) 
+  {
+	if(this->Get_Flow_Through())
+		ofile << " $flowthrough ";
+  }
+
   void Set_Input_Buffering(vcWire* w, int buffering)
   {
 	_input_wire_buffering_map[w] = buffering;
@@ -410,6 +417,7 @@ class vcDataPath: public vcRoot
   map<string, vcWire*> _wire_map;
   map<string, vcSelect*> _select_map;
   map<string, vcSlice*> _slice_map;
+  map<string, vcPermutation*> _permutation_map;
   map<string, vcBranch*> _branch_map;
   map<string, vcRegister*> _register_map;
   map<string, vcEquivalence*> _equivalence_map;
@@ -467,6 +475,9 @@ class vcDataPath: public vcRoot
   void Add_Slice(vcSlice* p);
   vcSlice* Find_Slice(string id);
 
+  void Add_Permutation(vcPermutation* p);
+  vcPermutation* Find_Permutation(string id);
+
   void Add_Branch(vcBranch* p);
   vcBranch* Find_Branch(string id);
 
@@ -522,6 +533,7 @@ class vcDataPath: public vcRoot
   void Print_VHDL_Phi_Instances(ostream& ofile);
   void Print_VHDL_Select_Instances(ostream& ofile);
   void Print_VHDL_Slice_Instances(ostream& ofile);
+  void Print_VHDL_Permutation_Instances(ostream& ofile);
   void Print_VHDL_Register_Instances(ostream& ofile);
   void Print_VHDL_Interlock_Buffer_Instances(ostream& ofile);
   void Print_VHDL_Binary_Logical_Operator_Instances(ostream& ofile);

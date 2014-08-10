@@ -12,6 +12,7 @@ using namespace std;
 #include <fstream>
 #include <iostream>
 #include <getopt.h>
+#include <stdint.h>
 #include <string>
 #include <set>
 #include <list>
@@ -40,6 +41,7 @@ namespace _base_value_
 
   class Float;
   class Signed;
+  class Unsigned;
 
   class Value
   {
@@ -53,8 +55,13 @@ namespace _base_value_
     virtual float To_Float() {assert(0);}
     virtual double To_Double() {assert(0);}
     virtual bool To_Boolean(){assert(0);}
-    virtual bool Bit_Cast(Value& other) {assert(0);}
 
+    // bit-cast this into other.
+    virtual void Bit_Cast_Into(Unsigned& other) {assert(0);}
+    virtual int Bit_Width() {assert(0);}
+
+    void Slice(Unsigned& other, int hi, int li) { assert(0); }
+    void Bitmap(Unsigned& other, vector<pair<int,int> >& bitmap_vector) { assert(0); }
     virtual string Kind() {return("Value");}
 
   };
@@ -79,10 +86,12 @@ namespace _base_value_
     // e.g. "_b1010"
     Unsigned(int width, string initial_value);
     Unsigned(const Unsigned&);
+   
 
     virtual string Kind() {return("Unsigned");}
 
     int Width() {return(_width);}
+    virtual int Bit_Width() {return(_width);}
     int Array_Size()
     {
       int ret_val = _width/__WORD_SIZE__;
@@ -96,8 +105,6 @@ namespace _base_value_
     virtual bool Is_Negative() {return(false);}
     virtual bool To_Boolean();
 
-    // bit other into this.
-    virtual bool Bit_Cast(Value& other) {assert(0);}
     virtual UWord AtoI(string ival);
     virtual void Initialize_From_Binary_String(string& init_value);
 
@@ -158,6 +165,14 @@ namespace _base_value_
     {
     }
 
+    // bit-cast this into other.
+    virtual void Bit_Cast_Into(Unsigned& other);
+    void Reset_And_Clear(int width);
+    void Set_Bit_Field(int idx, UWord bf);
+
+    void Slice(Unsigned& other, int hi, int li);
+    void Bitmap(Unsigned& other, vector<pair<int,int> >& bitmap_vector);
+
   };
 
 
@@ -204,6 +219,7 @@ namespace _base_value_
     bool Less_Equal(Signed&);
 
     virtual void Sign_Extend();
+
   };
 
 
@@ -237,6 +253,10 @@ namespace _base_value_
       else
 	return((float) (this->data._double_value));
     }
+
+    virtual int Bit_Width() 
+	{ if(Is_float32()) return(32); else return(64); }
+
     virtual double To_Double()
     {
       if(Is_float32())
@@ -287,10 +307,9 @@ namespace _base_value_
     virtual string To_String();
     virtual string To_C_String();
 
-    void Bit_Cast(Unsigned& other);
+    virtual void Bit_Cast_Into(Unsigned& other);
  
   };
-
 
   string Hex_To_Binary(string& init_value);
 

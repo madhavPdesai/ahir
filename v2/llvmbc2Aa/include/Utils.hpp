@@ -72,12 +72,13 @@ namespace Aa {
   bool is_private_storage_object(llvm::GlobalVariable* gv);
   bool is_zero(llvm::Constant* konst);
 
-  bool is_do_while_loop(llvm::BasicBlock& BB, int& pd, int& bd, bool& frflag);
-  bool is_do_while_loop(std::vector<llvm::BasicBlock*>& bb_chain, int& pd, int& bd, bool& frflag);
-  
+  bool is_marked_as_a_do_while_loop(llvm::BasicBlock& BB, int& pd, int& bd, bool& frflag);
   bool get_loop_pipelining_info(llvm::BasicBlock& BB,int& pipelining_depth, int& buffering, bool& full_rate_flag);
 
   llvm::BasicBlock* have_unique_common_successor(llvm::BasicBlock* u, llvm::BasicBlock* v);
+
+  bool has_bb_successor(llvm::BasicBlock* succ, llvm::BasicBlock* bb);
+  void write_reduction_expression(std::vector<std::string>& names, std::string op, std::ostream& ofile);
   
 }
 

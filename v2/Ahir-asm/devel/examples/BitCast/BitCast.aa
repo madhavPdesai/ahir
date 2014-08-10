@@ -4,5 +4,9 @@ $module [sum_mod]
     $out (b: $uint<10>)
 $is
 {
-	b := ($bitcast ($uint<10>) a)
+	b := ($bitcast ($uint<10>) (a + 10))
+        f := ($bitcast($float<8,23>) _habcdef001)
+        h := ($bitcast($float<8,23>) _h00010001)
+        g := (f + _h00010001)
+       
 }

@@ -513,6 +513,9 @@ vcSelect* vcDataPath::Find_Select(string id) {return(__FIND(_select_map,id));}
 void vcDataPath::Add_Slice(vcSlice* p)   {_ADD(_slice_map,p->Get_Id(), p);}
 vcSlice* vcDataPath::Find_Slice(string id) {return(__FIND(_slice_map,id));}
 
+void vcDataPath::Add_Permutation(vcPermutation* p)   {_ADD(_permutation_map,p->Get_Id(), p);}
+vcPermutation* vcDataPath::Find_Permutation(string id) {return(__FIND(_permutation_map,id));}
+
 void vcDataPath::Add_Branch(vcBranch* p)  {_ADD(_branch_map,p->Get_Id(), p);}
 vcBranch* vcDataPath::Find_Branch(string id) {return(__FIND(_branch_map,id));}
 
@@ -969,6 +972,7 @@ void vcDataPath::Print_VHDL(ostream& ofile)
   this->Print_VHDL_Phi_Instances(ofile); // done
   this->Print_VHDL_Select_Instances(ofile); // done
   this->Print_VHDL_Slice_Instances(ofile);  // done.
+  this->Print_VHDL_Permutation_Instances(ofile);  // done.
   this->Print_VHDL_Register_Instances(ofile); // done (no changes)
   this->Print_VHDL_Interlock_Buffer_Instances(ofile); // done.
   this->Print_VHDL_Equivalence_Instances(ofile); // done (no changes)
@@ -1032,6 +1036,23 @@ void vcDataPath::Print_VHDL_Slice_Instances(ostream& ofile)
       iter++)
     {
       vcSlice* s = (*iter).second;
+      if(vcSystem::_enable_logging)
+		s->vcSplitOperator::Print_VHDL_Logger(ofile);
+
+      s->Print_VHDL(ofile);
+      idx++;
+    }
+}
+
+void vcDataPath::Print_VHDL_Permutation_Instances(ostream& ofile)
+{ 
+  int idx = 0;
+
+  for(map<string, vcPermutation*>::iterator iter = _permutation_map.begin();
+      iter != _permutation_map.end();
+      iter++)
+    {
+      vcPermutation* s = (*iter).second;
       if(vcSystem::_enable_logging)
 		s->vcSplitOperator::Print_VHDL_Logger(ofile);
 

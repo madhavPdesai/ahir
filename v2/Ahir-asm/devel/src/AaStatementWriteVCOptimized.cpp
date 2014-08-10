@@ -708,14 +708,16 @@ Write_VC_Pipe_Dependencies(bool pipeline_flag, map<string,vector<AaExpression*> 
 	{
 	  AaExpression* expr = (*iter).second[idx];
 	  if(last_expr != NULL)
-	    Write_VC_Pipe_Dependency(pipeline_flag, last_expr,expr,ofile);
+	    Write_VC_Pipe_Dependency(pipeline_flag, last_expr,expr,false,ofile );
 	  last_expr = expr;
 	}
       if(pipeline_flag)
       {
 	ofile << "// ring dependency in pipeline." << endl;
+	// if last-expression is 
 	if((first_expr != NULL) && (last_expr != NULL) && (first_expr != last_expr))
-		__MJ(__SST(first_expr), __UCT(last_expr), false); // no bypass.
+	    Write_VC_Pipe_Dependency(pipeline_flag, last_expr,first_expr,true, ofile);
+		// __MJ(__SST(first_expr), __UCT(last_expr), false); // no bypass.
       }
     }
 }

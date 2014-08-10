@@ -314,7 +314,11 @@ void AaSimpleObjectReference::Write_VC_Control_Path_Optimized(bool pipeline_flag
 			bool pm = this->Is_Part_Of_Pipelined_Module();
 			if(pm)
 			{
-				string sample_enable = this->_object->Get_VC_Name() + "_update_enable";
+				//string sample_enable = this->_object->Get_VC_Name() + "_update_enable";
+				//
+				// entry will be triggered on availability of input arguments.
+				//
+				string sample_enable = "$entry";
 				__J(__SST(this), sample_enable); // no marking, since sample_enable
 								// will have marked joins.
 			}

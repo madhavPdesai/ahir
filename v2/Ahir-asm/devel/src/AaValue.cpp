@@ -17,22 +17,12 @@ using namespace std;
 // AaValue
 AaValue::AaValue(AaScope* parent, AaType* t):AaRoot() {this->_scope = parent;_type = t;}
 AaValue::~AaValue() {};
-
-//AaStringValue
-AaStringValue::AaStringValue(AaScope* parent, string value): AaValue(parent,NULL) 
+int AaValue::Get_Width() 
 {
-  this->_value = value;
-};
-AaStringValue::~AaStringValue() {};
-void AaStringValue::Print(ostream& ofile) 
-{
-  ofile << this->Get_Value_String(); 
+	assert(_type != NULL);
+	return(_type->Size());
 }
-bool AaStringValue::Equals(AaValue* other)
-{
-  return(other->Is("AaStringValue") && (other->Get_Value_String() == this->Get_Value_String()));
 
-}
 AaUintValue::AaUintValue(AaScope* s, int w):AaValue(s,AaProgram::Make_Integer_Type((unsigned int) w))
 {
   _value = NULL;
@@ -118,9 +108,17 @@ void AaFloatValue::Set_Value(string init_value)
   }
   else
   {
-	  assert(init_value.size() > 2 && init_value[0] == '_' && init_value[1] == 'f');
-	  Float tmp(_value->_characteristic_width, _value->_mantissa_width, init_value.substr(2));
-	  ((Float*)(_value))->Swap(tmp);
+	  assert(init_value.size() > 2 && init_value[0] == '_');
+	  if(init_value[1] == 'f')
+	  { 
+	  	Float tmp(_value->_characteristic_width, _value->_mantissa_width, init_value.substr(2));
+	  	((Float*)(_value))->Swap(tmp);
+	  }
+	  else 
+	  {
+	  	Float tmp(_value->_characteristic_width, _value->_mantissa_width, init_value);
+	  	((Float*)(_value))->Swap(tmp);
+	  }
   }
 }
 
@@ -147,9 +145,9 @@ void AaFloatValue::Assign(AaType* target_type, AaValue* expr_value)
 string AaFloatValue::To_VC_String()
 {
   int w = this->Get_Type()->Size();
-  Unsigned tmp = Signed(w);
+  Unsigned tmp(w);
 
-  ((Float*)this->Get_Value())->Bit_Cast(tmp);
+  ((Float*)this->Get_Value())->Bit_Cast_Into(tmp);
   return("_b" + tmp.To_String());
 }
 
@@ -463,6 +461,14 @@ AaValue* Perform_Binary_Operation(AaOperation op, AaValue* u, AaValue* v)
 	  irvv->Shift_Right(vv->To_Integer());
 	  return(irv);
 	}
+      else if(op == __ROL)
+	{ 
+	  irvv->Rotate_Left(vv->To_Integer()); return(irv);
+	}
+      else if(op == __ROR)
+	{ 
+	  irvv->Rotate_Right(vv->To_Integer()); return(irv);
+	}
       else if(op == __PLUS)
 	{ 
 	  irvv->Add(*vv); return(irv);
@@ -582,6 +588,52 @@ AaValue* Perform_Binary_Operation(AaOperation op, AaValue* u, AaValue* v)
 	}
     }
   return(NULL);
+}
+
+// local function.
+void Flatten_And_Produce_Unsigned(Unsigned& fv, vector<AaValue*>& flat_vals)
+{
+	fv.Reset_And_Clear(flat_vals[0]->Get_Width());
+	flat_vals[0]->Get_Value()->Bit_Cast_Into(fv);
+	for(int idx = 1, fidx = flat_vals.size(); idx < fidx; idx++)
+	{
+	
+		Value* v = flat_vals[idx]->Get_Value();
+		Unsigned nfv;
+		v->Bit_Cast_Into(nfv);
+		fv.Concatenate(nfv);
+	}	
+}
+
+// always produces a uint.
+AaValue* Perform_Slice_Operation(AaValue* v, int hi, int li)
+{
+	vector<AaValue*> flat_vals;
+	v->Flatten(flat_vals);
+
+	Unsigned fv;
+	Flatten_And_Produce_Unsigned(fv, flat_vals);
+
+	AaType* t = AaProgram::Make_Uinteger_Type((hi-li)+1);
+	AaValue* ret_val = Make_Aa_Value(NULL, t);
+	ret_val->Get_Value()->Slice(fv, hi, li);
+	return(ret_val);
+}
+
+// always produces a uint.
+AaValue* Perform_Bitmap_Operation(AaValue* v, vector<pair<int,int> >& bitmap_vector)
+{
+	vector<AaValue*> flat_vals;
+	v->Flatten(flat_vals);
+
+	Unsigned fv;
+	Flatten_And_Produce_Unsigned(fv, flat_vals);
+
+	AaType* t = AaProgram::Make_Uinteger_Type(fv.Bit_Width());
+	AaValue* ret_val = Make_Aa_Value(NULL, t);
+	ret_val->Get_Value()->Bitmap(fv, bitmap_vector);
+	return(ret_val);
+	
 }
 
 string To_VC_String(unsigned int val, unsigned int size)

@@ -2,6 +2,7 @@
 #define __CLASSNAMES_HPP__
 
 namespace Aa {
+  class BasicBlockChain;
   class AaWriter;
 };
 

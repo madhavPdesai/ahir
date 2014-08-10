@@ -1,42 +1,114 @@
-// pipe-declarations for block %sum_mod
-// file BitCast.aa, line 2
+// Virtual circuit produced from Aa description by Aa2VC 
 $module [sum_mod] 
 {
   $in a:$int<10>
+  // can point into  foreign( $void )
   $out b:$int<10>
+  // can point into  foreign( $void )
+  // pipe-declarations for block %sum_mod
+  //  file BitCast.aa, line 2
   $CP 
   {
     // begin control-path 
-    // 	b := ($bitcast ($uint<10>) a )
-    // file BitCast.aa, line 7
-    ;;[assign_stmt_8] // file BitCast.aa, line 7
+    // 	b := ($bitcast ($uint<10>) (a + 10 ) )
+    //  file BitCast.aa, line 7
+    ;;[assign_stmt_10] //  file BitCast.aa, line 7
     {
-      // ($bitcast ($uint<10>) a )
-      ;;[type_cast_7] 
+      // ($bitcast ($uint<10>) (a + 10 ) )
+      ;;[type_cast_9] 
       {
         // type-cast expression
-        $T [req] $T [ack] //  type-conversion.. 
+        // (a + 10 )
+        ;;[ADD_i10_i10_8] 
+        {
+          // binary expression 
+          ||[ADD_i10_i10_8_inputs] 
+          {
+          }
+          ||[SplitProtocol] 
+          {
+            ;;[Sample] 
+            {
+              $T [rr] $T [ra]
+            }
+            ;;[Update] 
+            {
+              $T [cr] $T [ca]
+            }
+          }
+        }
+        ||[SplitProtocol] 
+        {
+          ;;[Sample] 
+          {
+            $T [rr] $T [ra]  
+          }
+          ;;[Update] 
+          {
+            $T [cr] $T [ca] 
+          }
+        }
       }
     }
-    // end assignment statement assign_stmt_8
+    // end assignment statement assign_stmt_10
+    // 	f := ($bitcast ($float<8,23>) _habcdef001  )
+    //  file BitCast.aa, line 8
+    ;;[assign_stmt_15] //  file BitCast.aa, line 8
+    {
+      $T [dummy] // assignment evaluates to a constant 
+    }
+    // end assignment statement assign_stmt_15
+    // 	h := ($bitcast ($float<8,23>) _h00010001  )
+    //  file BitCast.aa, line 9
+    ;;[assign_stmt_19] //  file BitCast.aa, line 9
+    {
+      $T [dummy] // assignment evaluates to a constant 
+    }
+    // end assignment statement assign_stmt_19
+    // 	g := (f + _h00010001 )
+    //  file BitCast.aa, line 10
+    ;;[assign_stmt_24] //  file BitCast.aa, line 10
+    {
+      $T [dummy] // assignment evaluates to a constant 
+    }
+    // end assignment statement assign_stmt_24
   }
   // end control-path
   $DP 
   {
     // begin data-path 
     // constant-object-declarations for block %sum_mod
-    // file BitCast.aa, line 2
-    // 	b := ($bitcast ($uint<10>) a )
-    // file BitCast.aa, line 7
+    //  file BitCast.aa, line 2
+    // 10 
+    $constant $W[expr_7_wire_constant] : $int<10> := _b0000001010// 10
+    // 	f := ($bitcast ($float<8,23>) _habcdef001  )
+    //  file BitCast.aa, line 8
+    $constant $W[f_15] : $float<8,23> := _b10111100110111101111000000000001 // -2.721405e-02
+    // 	h := ($bitcast ($float<8,23>) _h00010001  )
+    //  file BitCast.aa, line 9
+    $constant $W[h_19] : $float<8,23> := _b00000000000000010000000000000001 // 9.183690e-41
+    // 	g := (f + _h00010001 )
+    //  file BitCast.aa, line 10
+    $constant $W[g_24] : $float<8,23> := _b10111100110111101111000000000001 // -2.721405e-02
+    // 	b := ($bitcast ($uint<10>) (a + 10 ) )
+    //  file BitCast.aa, line 7
+    // (a + 10 )
+    $intermediate $W[ADD_i10_i10_8_wire] : $int<10>
     // b
-    // 	b := ($bitcast ($uint<10>) a )
-    // file BitCast.aa, line 7
-    // ($bitcast ($uint<10>) a )
-    := [type_cast_7_inst] (a) (b)
+    // 	b := ($bitcast ($uint<10>) (a + 10 ) )
+    //  file BitCast.aa, line 7
+    // (a + 10 )
+    +[ADD_i10_i10_8_inst] (a expr_7_wire_constant) (ADD_i10_i10_8_wire) 
+    $delay ADD_i10_i10_8_inst 1
+    // ($bitcast ($uint<10>) (a + 10 ) )
+    # := [type_cast_9_inst] (ADD_i10_i10_8_wire) (b) 
+    $delay type_cast_9_inst 1
   }
   // end data-path
-  // 	b := ($bitcast ($uint<10>) a )
-  // file BitCast.aa, line 7
-  // ($bitcast ($uint<10>) a )
-  type_cast_7_inst <=> (assign_stmt_8/type_cast_7/req) (assign_stmt_8/type_cast_7/ack)
+  // 	b := ($bitcast ($uint<10>) (a + 10 ) )
+  //  file BitCast.aa, line 7
+  // (a + 10 )
+  ADD_i10_i10_8_inst <=> (assign_stmt_10/type_cast_9/ADD_i10_i10_8/SplitProtocol/Sample/rr assign_stmt_10/type_cast_9/ADD_i10_i10_8/SplitProtocol/Update/cr) (assign_stmt_10/type_cast_9/ADD_i10_i10_8/SplitProtocol/Sample/ra assign_stmt_10/type_cast_9/ADD_i10_i10_8/SplitProtocol/Update/ca)
+  // ($bitcast ($uint<10>) (a + 10 ) )
+  type_cast_9_inst <=> (assign_stmt_10/type_cast_9/SplitProtocol/Sample/rr assign_stmt_10/type_cast_9/SplitProtocol/Update/cr) (assign_stmt_10/type_cast_9/SplitProtocol/Sample/ra assign_stmt_10/type_cast_9/SplitProtocol/Update/ca)
 }

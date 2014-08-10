@@ -14,9 +14,11 @@ float mul(float a, float b)
 int main()
 {
   float c = mul(5.3,2.5);
+  float d = 1.0/0.0;
+  float e = mul(c,d);
 
 #ifdef RUN
-  printf("%f\n",c);
+  printf("%f %f %f\n",c, d, e);
 #endif
 
   if(c == (5.3*2.5))

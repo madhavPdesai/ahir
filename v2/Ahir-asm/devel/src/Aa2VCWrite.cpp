@@ -109,6 +109,7 @@ void Write_VC_Unary_Operator(AaOperation op,
 			     ostream& ofile)
 {
   string op_name;
+  string slice_string;
   if(op == __NOT)
     {
       op_name = "~";
@@ -128,8 +129,8 @@ void Write_VC_Unary_Operator(AaOperation op,
 
 	  if((target_type == src_type) || ( (dest_kind == "U" && src_kind == "U")))
 	    {
-	      // just an interlock-buffer.
-	      op_name = "# :=";
+	      	// just an interlock-buffer.
+	      	op_name = "# :=";
 	    }
 	  else 
 	    op_name = "$" + dest_kind + ":=$" + src_kind;
@@ -143,10 +144,31 @@ void Write_VC_Unary_Operator(AaOperation op,
 
   string sflow_through = (flow_through ? " $flowthrough" : "");
   ofile << op_name << " [" << inst_name << "] "
-	<< "(" << src_name << ") "
+	<< "(" << src_name <<  ") "
 	<< "(" << target_name << ")  " << guard_string << sflow_through << endl;
 }
 
+
+void Write_VC_Bitmap_Operator(string inst_name, 
+			      string src_name, 
+			      string target_name,
+			      AaType* src_type,
+			      vector<pair<int,int> >& bmapv,
+			      string guard_string,
+			      bool flow_through,
+			      ostream& ofile)
+{
+	ofile << ":X= [" << inst_name << "] ";
+	ofile << "( " << src_name << " ";
+	for(int idx = 0, fidx = bmapv.size(); idx < fidx; idx++)
+	{
+		ofile << bmapv[idx].first << " " << bmapv[idx].second << " ";
+	}
+	ofile << ") ";
+	ofile << "(" << target_name << ")" ;
+  	string sflow_through = (flow_through ? " $flowthrough" : "");
+	ofile << " " << guard_string << " " << sflow_through << endl;
+}
 
 void Write_VC_Register( string inst_name, 
 			string src_name, 
@@ -205,6 +227,8 @@ void Write_VC_Binary_Operator(AaOperation op,
       else
 	op_name = ">>";
     }
+  else if(op == __ROR) op_name = ">o>";
+  else if(op == __ROL) op_name = "<o<";
   else if(op == __PLUS) op_name = "+";
   else if(op == __MINUS) op_name = "-";
   else if(op == __MUL) op_name = "*";
@@ -529,7 +553,10 @@ void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
 		}
 
 		if(ms->Get_Is_Ordered())
+		{
+			ofile << "// ordered memory-subsystem." << endl;
 			__J(reenable_trans, __SCT(expr))
+		}
 		else
 			__J(reenable_trans, __UCT(expr))
 			
@@ -551,34 +578,59 @@ void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
 void Write_VC_Pipe_Dependency(bool pipeline_flag, 
 			      AaExpression* src,
 			      AaExpression* tgt,
+			      bool mark_flag,
 			      ostream& ofile)
 {
   ofile << "// pipe dependency " << endl;
   if(src->Get_Is_Target() && tgt->Get_Is_Target())
   {
-  	__J(__UST(tgt), __UCT(src)); // no need for delay
+	if(mark_flag)
+	{
+  		__MJ(__UST(tgt), __UCT(src), true); // bypass
+	}
+	else
+  		__J(__UST(tgt), __UCT(src)); // no need for delay
   }
   else if(!src->Get_Is_Target() && tgt->Get_Is_Target())
   {
 	// delay is needed, else paths will get too long, also there is no penalty
 	// for the delay.
-  	string delay_trans = src->Get_VC_Name() + "_" + tgt->Get_VC_Name() + "_delay";
-  	ofile << "$T [" << delay_trans << "] $delay" << endl;
-	__J(delay_trans, __SCT(src));
-	__J(__UST(tgt), delay_trans);
+	if(mark_flag)
+	{
+  		__MJ(__UST(tgt), __SCT(src), false); // no-bypass
+	}
+	else
+	{
+  		string delay_trans = src->Get_VC_Name() + "_" + tgt->Get_VC_Name() + "_delay";
+  		ofile << "$T [" << delay_trans << "] $delay" << endl;
+		__J(delay_trans, __SCT(src));
+		__J(__UST(tgt), delay_trans);
+	}
   }
   else if(src->Get_Is_Target() && !tgt->Get_Is_Target())
   {
-	__J(__SST(tgt), __UCT(src)); // no need for delay.
+	if(mark_flag)
+	{
+		__MJ(__SST(tgt), __UCT(src), true); // bypass
+	}
+	else
+		__J(__SST(tgt), __UCT(src)); // no need for delay.
   }
   else
   {
-	// delay is needed, else paths will get too long, also there is no penalty
-	// for the delay.
-  	string delay_trans = src->Get_VC_Name() + "_" + tgt->Get_VC_Name() + "_delay";
-  	ofile << "$T [" << delay_trans << "] $delay" << endl;
-	__J(delay_trans, __SCT(src));
-	__J(__SST(tgt), delay_trans);
+	if(mark_flag)
+	{
+		__MJ(__SST(tgt), __SCT(src), false); // no-bypass
+	}
+	else
+	{
+		// delay is needed, else paths will get too long, also there is no penalty
+		// for the delay.
+  		string delay_trans = src->Get_VC_Name() + "_" + tgt->Get_VC_Name() + "_delay";
+  		ofile << "$T [" << delay_trans << "] $delay" << endl;
+		__J(delay_trans, __SCT(src));
+		__J(__SST(tgt), delay_trans);
+	}
   }
 }
 
@@ -623,6 +675,8 @@ string Get_Op_Ascii_Name(AaOperation op, AaType* src_type, AaType* dest_type)
 		else
 			ret_val = "LSHR";
 	}
+	else if(op == __ROL) ret_val = "ROL";
+	else if(op == __ROR) ret_val = "ROR";
 	else if(op == __PLUS) ret_val = "ADD";
 	else if(op == __MINUS) ret_val = "SUB";
 	else if(op == __MUL) ret_val = "MUL";
@@ -662,6 +716,7 @@ string Get_Op_Ascii_Name(AaOperation op, AaType* src_type, AaType* dest_type)
 	}
 	else if(op == __CONCAT) ret_val = "CONCAT";
 	else if(op == __BITSEL) ret_val = "BITSEL";
+	else if(op == __BITMAP) ret_val = "BITMAP";
 	else
 		assert(0);
 

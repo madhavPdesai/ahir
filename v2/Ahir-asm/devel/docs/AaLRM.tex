@@ -821,6 +821,8 @@ Expressions in \Aa fall into the following classes
 \item Pointer de-reference expressions.
 \item Address-of expressions.
 \item Unary expressions.
+\item Slice expressions.
+\item Bitmap (bit permutation) expressions.
 \item Binary expressions.
 \item Ternary expressions.
 \end{itemize}
@@ -1030,6 +1032,42 @@ usual way.
 The parentheses around a unary expression are
 {\bf required}.
 
+\subsection{Slice expressions}
+
+Slice expressions can be used to extract a contiguous
+bit-field from a value.  They have the
+following syntax:
+\begin{verbatim}
+LPAREN $slice <expression> <high-index> <low-index> RPAREN
+\end{verbatim}
+where high-index and low-index are constant non-negative
+integers.  The result of executing the expression is
+an unsigned integer whose width is $(high-index - low-index)+1$.
+The value produced by expression may be of any type, but
+for the slicing, it is flattened in the natural manner
+(see the notes about aggregate types).  All bit-vectors
+are assumed to indexed as $HIGH$ dowto $LOW$.
+
+For example
+\begin{verbatim}
+( $slice ($bitcast ($uint<16>) _h1234) 8 4) = _h3
+\end{verbatim}
+
+\subsection{Bitmap expressions}
+
+These expressions can be used to express bit permutations
+in a word.  The syntax is as follows
+\begin{verbatim}
+LPAREN $bitmap <expression> ( <from-index> <to-index> )+ RPAREN
+\end{verbatim}
+The flattened bit-vector value of expression is permuted according
+to the information provided by the $(from,to)$ pairs (result(to) = source(from)).
+
+For example
+\begin{verbatim}
+( $slice ($bitcast ($uint<4>) _h3) 0 3 1 2 2 1 3 0 ) = _he
+\end{verbatim}
+
 
 \subsection{Binary expressions}
 
@@ -1047,6 +1085,8 @@ MUL               *
 DIV               / 
 SHL               <<
 SHR               >> 
+ROL               <o<
+ROR               >o> 
 
 // bit-wise logical operators
 NOT               ~     

@@ -3,6 +3,7 @@
 #include <vcControlPath.hpp>
 #include <vcDataPath.hpp>
 #include <vcSystem.hpp>
+#include <vcModule.hpp>
 
 
 void vcPlace::Construct_CPElement_Group_Graph_Vertices(vcControlPath* cp)
@@ -115,6 +116,14 @@ void vcCPBlock::Connect_CPElement_Group_Graph(vcControlPath* cp)
   // connect this block to it's predecessors
   // and successors.
   this->vcCPElement::Connect_CPElement_Group_Graph(cp);
+}
+
+  
+string vcCPElementGroup::Get_VHDL_Id()
+{
+      string prefix = this->_cp->Get_VHDL_Id() + "_elements";
+      string ret_string = prefix + "(" + Int64ToStr(this->Get_Group_Index()) + ")"; 
+      return(ret_string);
 }
 
 int  vcCPElementGroup::Get_Marked_Successor_Delay(vcCPElementGroup* g)
@@ -767,7 +776,7 @@ void vcControlPath::Merge_Groups(vcCPElementGroup* part, vcCPElementGroup* whole
 
 vcCPElementGroup* vcControlPath::Make_New_Group()
 {
-  vcCPElementGroup* ng = new vcCPElementGroup();
+  vcCPElementGroup* ng = new vcCPElementGroup(this);
   this->_cpelement_groups.insert(ng);
   return(ng);
 }
@@ -997,7 +1006,8 @@ void vcControlPath::Print_VHDL_Optimized(ostream& ofile)
   string id = "control-path";
 
   ofile << this->Get_VHDL_Id() << ": Block -- " << id << " {" << endl;
-  ofile << "signal cp_elements: BooleanArray("	
+  string prefix = this->Get_VHDL_Id() + "_elements";
+  ofile << "signal " << prefix << ": BooleanArray("	
 	<< _cpelement_groups.size()-1 
 	<< " downto 0);" << endl;
   ofile << "-- }" << endl << "begin -- {" << endl;

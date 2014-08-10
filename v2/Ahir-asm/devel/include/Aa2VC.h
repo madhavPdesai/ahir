@@ -71,11 +71,22 @@ void Write_VC_Unary_Operator(AaOperation op,
 			     string guard_string,
 			     bool flow_through,
 			     ostream& ofile);
+
+void Write_VC_Bitmap_Operator(string inst_name, 
+			      string src_name, 
+			      string target_name,
+			      AaType* src_type,
+			      vector<pair<int,int> >& bmapv,
+			      string guard_string,
+			      bool flow_through,
+			      ostream& ofile);
+
 void Write_VC_Register( string inst_name, 
 			string src_name, 
 			string target_name,
 			string guard_string,
 			ostream& ofile);
+
 void Write_VC_Interlock_Buffer( string inst_name, 
 			string src_name, 
 			string target_name,
@@ -175,6 +186,7 @@ void Write_VC_Load_Store_Loop_Pipeline_Ring_Dependency(string& mem_space_name,
 void Write_VC_Pipe_Dependency(bool pipeline_flag,
 			      AaExpression* src,
 			      AaExpression* tgt,
+			      bool mark_flag,
 			      ostream& ofile);
 
 void Write_VC_Reenable_Joins(set<string>& active_reenable_points,

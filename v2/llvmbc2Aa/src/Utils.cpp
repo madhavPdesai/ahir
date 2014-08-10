@@ -12,7 +12,9 @@
 #include "Utils.hpp"
 #include <stdio.h>
 #include <limits.h>
+#include <math.h>
 
+using namespace std;
 using namespace llvm;
 using namespace Aa;
 
@@ -121,23 +123,36 @@ std::string Aa::get_aa_constant_string(llvm::Constant *konst)
   else if(isa<ConstantFP>(konst))
     {
       const ConstantFP *fkonst = dyn_cast<ConstantFP>(konst);
+      bool is_normal_fp = true;
 
       // fix this.  this should be a binary string..
       char buffer[1024];
       if(type->isFloatTy())
 	{
-	  sprintf(buffer,"%e",fkonst->getValueAPF().convertToFloat());
+	  float fval = fkonst->getValueAPF().convertToFloat();
+          
+          is_normal_fp = (fpclassify(fval) == FP_NORMAL);
+          if(is_normal_fp) // if it is not a nan/inf, then keep it as a float.
+	  	sprintf(buffer,"_f%e",fval);
+	  else // else, print it as a hex number and prepend _h.
+		sprintf(buffer,"_h%x", ((uint32_t) *((uint32_t*)&fval)));
+		
 	}
       else if(type->isDoubleTy())
 	{
-	  sprintf(buffer,"%e",fkonst->getValueAPF().convertToDouble());
+	  double dval = fkonst->getValueAPF().convertToDouble();
+          is_normal_fp = (fpclassify(dval) == FP_NORMAL);
+	  if(is_normal_fp)// if it is not a nan/inf, then keep it as a float.
+	  	sprintf(buffer,"_f%e",dval);
+          else // else, print it as a hex number and prepend _h.
+		sprintf(buffer,"_h%llx", ((uint64_t) *((uint64_t*)&dval)));
 	}
       else
 	{
 	  std::cerr << "Error: unsupported floating point type (only float and double are allowed)"
 		    << std::endl;
 	}
-      ret_val = "_f" + std::string(buffer);
+      ret_val = std::string(buffer);
     }
   else if(isa<ConstantArray>(konst) || isa<ConstantStruct>(konst) || isa<ConstantVector>(konst))
     {
@@ -1055,9 +1070,7 @@ bool Aa::is_zero(llvm::Constant* konst)
 }
 
 
-// if the terminator contains a branch back to this
-// block itself, then it is a do-while loop.
-bool Aa::is_do_while_loop(llvm::BasicBlock& BB, int& pipelining_depth, int& buffering, bool& full_rate_flag)
+bool Aa::is_marked_as_a_do_while_loop(llvm::BasicBlock& BB, int& pipelining_depth, int& buffering, bool& full_rate_flag)
 {
         full_rate_flag = false;
 	pipelining_depth = 1;
@@ -1067,82 +1080,18 @@ bool Aa::is_do_while_loop(llvm::BasicBlock& BB, int& pipelining_depth, int& buff
 	if(isa<llvm::ReturnInst>(T))
 		return(false);
 
-	// currently, terminator as a switch is
-	// not supported.
 	if(isa<llvm::SwitchInst>(T))
 		return(false);
 
 	if(T->getNumSuccessors() == 0)
 		return(false);
 
-	// all successors point back to itself..?
-	bool ret_val = false;
-	for (unsigned i = 0, e = T->getNumSuccessors(); i != e; ++i) 
-	{
-		llvm::BasicBlock* S = T->getSuccessor(i);
-		if(S == T->getParent())
-		{
-			ret_val = true;
-			break;
-		}
-	}
-	if(!ret_val)
-		return(false);
 
 	// optimize function must be called here in order
 	// to pipeline this loop.
 	bool opt_fn_found = get_loop_pipelining_info(BB,pipelining_depth, buffering, full_rate_flag); 
 	return(opt_fn_found);
 }
-
-// if the terminator contains a branch back to this
-// block itself, then it is a do-while loop.
-bool Aa::is_do_while_loop(std::vector<llvm::BasicBlock*>& bb_chain, int& pipelining_depth, int& buffering, bool& full_rate_flag)
-{
-	full_rate_flag = false;
-	pipelining_depth = 1;
-	buffering = 1;
-
-	int S = bb_chain.size();
-	if(S == 1)
-		return(is_do_while_loop(*(bb_chain[0]), pipelining_depth, buffering, full_rate_flag));
-
-	llvm::BasicBlock* lead_bb = bb_chain[0];
-	llvm::BasicBlock* trailing_bb = bb_chain[S-1];
-
-	llvm::TerminatorInst* T = bb_chain[S-1]->getTerminator();
-
-	if(isa<llvm::ReturnInst>(T))
-		return(false);
-
-	// currently, terminator as a switch is
-	// not supported.
-	if(isa<llvm::SwitchInst>(T))
-		return(false);
-
-	if(T->getNumSuccessors() == 0)
-		return(false);
-
-	// all successors point back to itself..?
-	bool ret_val = false;
-	for (unsigned i = 0, e = T->getNumSuccessors(); i != e; ++i) 
-	{
-		llvm::BasicBlock* S = T->getSuccessor(i);
-		if(S == lead_bb)
-		{
-			ret_val = true;
-			break;
-		}
-	}
-	if(!ret_val)
-		return(false);
-
-	// optimize function must be called here in order
-	// to pipeling this loop.
-	bool opt_fn_found = get_loop_pipelining_info(*lead_bb,pipelining_depth, buffering, full_rate_flag); 
-	return(opt_fn_found);
-}
-
 
 
 bool Aa::get_loop_pipelining_info(llvm::BasicBlock& BB,int& pipelining_depth, int& buffering, bool& full_rate_flag)
@@ -1217,4 +1166,56 @@ llvm::BasicBlock* Aa::have_unique_common_successor(llvm::BasicBlock* u, llvm::Ba
 	}
 
 	return(ret_val);
+}
+
+
+// return true if bb can branch to succ, else false.
+bool Aa::has_bb_successor(llvm::BasicBlock* succ, llvm::BasicBlock* bb)
+{
+	bool ret_val = false;
+	int I, fI;
+	for(I = 0, fI = bb->getTerminator()->getNumSuccessors(); I < fI; I++)
+	{
+		if(bb->getTerminator()->getSuccessor(I) == succ)
+		{
+			ret_val = true;
+			break;
+		}
+	}
+	return(ret_val);	
+}
+  
+void Aa::write_reduction_expression(std::vector<std::string>& names, std::string op, ostream& ofile)
+{
+	if(names.size() == 1)
+		ofile << names[0];
+	else 
+	{
+				
+		ofile << "(";
+		int lp_count = 1;
+		int J = 0;
+		int fJ = names.size();
+		while(J < fJ)
+		{
+			if(J == (fJ - 2))
+			{
+				ofile << names[J] + " " + op + " " + names[J+1];
+				J += 2;
+			}
+			else if(J < fJ-2)
+			{
+				ofile << names[J] + " " + op + " " + "( ";
+				J++;
+				lp_count++;
+			}
+		}
+
+		while(lp_count > 0)
+		{
+			std::cout << " )" ;
+			lp_count--;
+		}
+
+	}	
 }

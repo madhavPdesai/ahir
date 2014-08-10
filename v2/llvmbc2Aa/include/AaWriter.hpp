@@ -36,12 +36,25 @@ namespace Aa {
     bool _guard_complement;
     std::string _guard_variable;
 
+
+    // flags for controlling how a
+    // basic block is to be printed.
     bool _suppress_leading_merge;
     bool _suppress_terminator;
-    llvm::BasicBlock* _chain_trailer;
+    BasicBlockChainDAG* _active_dag;
 
+
+    // kept as strings.. a hack.
     std::map<std::string,std::set<std::string> > bb_predecessor_map;
     std::map<std::string, llvm::BasicBlock*> bb_name_map;
+
+    // kept as pointers..  
+    std::map<llvm::BasicBlock*,std::vector<llvm::BasicBlock*> > basic_block_predecessor_map;
+
+
+    // get predecessors.
+    void get_predecessors(llvm::BasicBlock* bb, std::vector<llvm::BasicBlock*>& preds);
+    void get_predecessors(std::string& bb, std::vector<std::string>& preds);
 
     std::map<llvm::Value*, std::string> value_name_map;
     std::map<std::string,std::string> pipe_map;
@@ -52,6 +65,7 @@ namespace Aa {
     std::map<llvm::BasicBlock*, llvm::BasicBlock*> chain_representative_map;
     std::vector<llvm::BasicBlock*> ordered_chain_rep_vector;
 
+    std::vector<BasicBlockChainDAG*> _bb_chain_dag_vector;
 
     int _pointer_width;
     void Set_Pointer_Width(int w) { _pointer_width = w; }
@@ -84,17 +98,17 @@ namespace Aa {
     void Set_Guard_Variable(std::string gs) {_guard_variable  = gs;}
     std::string Get_Guard_Variable() {return(_guard_variable);}
     std::string Get_Guard_String() {
-	if(this->_guard_complement)
-		return( "( ~ " + _guard_variable + " )");
-	else
-		return("(" + _guard_variable + ")");
+	    if(this->_guard_complement)
+		    return( "( ~ " + _guard_variable + " )");
+	    else
+		    return("(" + _guard_variable + ")");
     }
     std::string Get_Guard_RHS_Expression() {
-	if(this->_guard_complement)
-		return( "( ~ " + _guard_variable + " )");
-	else
-		return(_guard_variable);
-   }
+	    if(this->_guard_complement)
+		    return( "( ~ " + _guard_variable + " )");
+	    else
+		    return(_guard_variable);
+    }
 
     bool _error_flag;
     void setErrorFlag(bool v) {_error_flag = v;}
@@ -103,15 +117,15 @@ namespace Aa {
     void Print_Guard();
 
     void clear() { 
-      Set_Return_Flag(false); 
-      clear_bb_predecessor_map(); 
-      value_name_map.clear();
+	    Set_Return_Flag(false); 
+	    clear_bb_predecessor_map(); 
+	    value_name_map.clear();
     }
 
     void Collect_Pipes(llvm::Function& F);
     void Add_Pipe(std::string pname, std::string aa_type_name);
     void Print_Pipe_Declarations(std::ostream& ofile, std::map<std::string, int>& pipe_depths,
-					std::set<std::string>& lifo_pipe_set);
+		    std::set<std::string>& lifo_pipe_set);
     bool Is_Pipe(std::string port_name);
 
     void start_program(std::string id);
@@ -130,7 +144,7 @@ namespace Aa {
     virtual void initialise_with_function(llvm::Function &F) = 0;
     virtual void finalise_function() = 0;
 
-    virtual void Write_PHI_Node(llvm::PHINode& pnode) {};
+    virtual void Write_PHI_Node(llvm::PHINode& pnode, bool mux_flag) {};
     virtual void Write_PHI_Node_At_Do_While_Entry(llvm::PHINode& pnode) {};
     virtual void Write_PHI_Node_In_Do_While_Body(llvm::PHINode& pnode) {};
 
@@ -160,7 +174,10 @@ namespace Aa {
     void write_storage_initializer_statements(std::string& prefix, llvm::Constant* konst, bool skip_zero_initializers);
 
     void Build_Basic_Block_Chains(llvm::Function& F);
-    virtual void Write_Aa_Code(llvm::BasicBlock* chain_rep, bool extract_do_while_loops) {};
+    virtual void Write_Aa_Code(BasicBlockChainDAG* chain_dag, bool extract_do_while_flag);
+
+    // in progress..  5/6/2014. MPD.
+    void Build_Basic_Block_Chain_DAGs(llvm::Function& F);
 
 
   };

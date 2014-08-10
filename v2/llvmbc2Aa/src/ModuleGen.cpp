@@ -13,6 +13,7 @@
 #include <set>
 #include <iostream>
 #include <fstream>
+#include "BasicBlockChain.hpp"
 #include "AaWriter.hpp"
 #include "Utils.hpp"
 
@@ -426,14 +427,14 @@ namespace {
 	
 	std::cout << "$branchblock [body] {"  << std::endl;
 
-	// build basic-block chains.
-	aa_writer->Build_Basic_Block_Chains(F);
+	// build basic-block chain dags.
+	aa_writer->Build_Basic_Block_Chain_DAGs(F);
 
 
 	// generate AA code for all the basic-block chains.
-	for(int J = 0, fJ = aa_writer->ordered_chain_rep_vector.size(); J < fJ; J++)
+	for(int J = 0, fJ = aa_writer->_bb_chain_dag_vector.size(); J < fJ; J++)
 	{
-		aa_writer->Write_Aa_Code(aa_writer->ordered_chain_rep_vector[J],_extract_do_while);
+		aa_writer->Write_Aa_Code(aa_writer->_bb_chain_dag_vector[J],_extract_do_while);
 	}
 
 	/*

@@ -283,8 +283,7 @@ vc_Controlpath[vcSystem* sys, vcModule* m]
 			cp->Set_Pipeline_Full_Rate_Flag(m->Get_Pipeline_Full_Rate_Flag());
 		}
         (cpe = vc_CPPlace[cp] { cp->Add_CPElement(cpe); })+
-        (vc_CPBind[cp])+
-    ) | 
+        (vc_CPBind[cp])+ ) | 
 	((vc_CPRegion[cp])+ (vc_AttributeSpec[cp])*) )? RBRACE 
 {
 	m->Set_Control_Path(cp);
@@ -726,6 +725,7 @@ vc_Operator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
         dpe=vc_Slice_Instantiation[dp] |
         dpe=vc_Register_Instantiation[dp] |
         dpe=vc_Equivalence_Instantiation[dp] | 
+        dpe=vc_Bitmap_Instantiation[dp] | 
         dpe=vc_InterlockBuffer_Instantiation[dp] )
 ;
 
@@ -751,6 +751,8 @@ vc_BinaryOperator_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
   (div_id:DIV_OP {op_id = div_id->getText();}) |
   (shl_id:SHL_OP  {op_id = shl_id->getText();}) |
   (shr_id:SHR_OP  {op_id = shr_id->getText();}) |
+  (rol_id:ROL_OP  {op_id = rol_id->getText();}) |
+  (ror_id:ROR_OP  {op_id = ror_id->getText();}) |
   (gt_id:UGT_OP  {op_id = gt_id->getText();}) |
   (ge_id:UGE_OP  {op_id = ge_id->getText();}) |
   (eq_id:EQ_OP  {op_id = eq_id->getText();}) |
@@ -917,6 +919,37 @@ vc_Slice_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
  RPAREN
  { 
 	new_op = new vcSlice(id,din,dout,h,l); dp->Add_Slice(new_op);    
+	dpe = (vcDatapathElement*) new_op;
+ }
+;
+
+
+//-------------------------------------------------------------------------------------------------------------------------
+// vc_Bitmap_Instantiation: PERMUTE_OP vc_Label LPAREN vc_Identifier (UINTEGER UINTEGER)+ RPAREN
+//                                             LPAREN vc_Identifier RPAREN
+//-------------------------------------------------------------------------------------------------------------------------
+vc_Bitmap_Instantiation[vcDataPath* dp] returns[vcDatapathElement* dpe]
+{
+  vcPermutation* new_op = NULL;
+  string id;
+  string wid;
+  vector<pair<int,int> > bmapv;
+  vcWire* din = NULL;
+  vcWire* dout = NULL;
+  int s,t;
+}
+:
+ permute_id:PERMUTE_OP id = vc_Label
+ LPAREN 
+        wid = vc_Identifier {din = dp->Find_Wire(wid); NOT_FOUND__("wire",din,wid,permute_id) }
+        ( tid: UINTEGER { t = atoi(tid->getText().c_str()); }
+        	sid: UINTEGER { s = atoi(sid->getText().c_str()); bmapv.push_back(pair<int,int>(t,s)); } )+
+ RPAREN
+ LPAREN
+    wid = vc_Identifier {dout = dp->Find_Wire(wid); NOT_FOUND__("wire",dout,wid,permute_id) }
+ RPAREN
+ { 
+	new_op = new vcPermutation(id,din,dout,bmapv); dp->Add_Permutation(new_op);    
 	dpe = (vcDatapathElement*) new_op;
  }
 ;
@@ -1715,6 +1748,8 @@ MUL_OP           : "*";
 DIV_OP           : '/'; // note: character literal
 SHL_OP           : "<<";
 SHR_OP           : ">>";
+ROL_OP           : "<o<";
+ROR_OP           : ">o>";
 SGT_OP           : "$S>$S";
 SGE_OP           : "$S>=$S";
 EQ_OP            : "==";
@@ -1740,6 +1775,7 @@ XOR_OP           : "^";
 NOR_OP           : "~|";
 NAND_OP          : "~&";
 XNOR_OP          : "~^";
+PERMUTE_OP       : ":X=" ;
 
 
 EQUIVALENCE_OP    : "&/";
