@@ -1,0 +1,467 @@
+; ModuleID = 'prog.opt.o'
+target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32"
+target triple = "i386-pc-linux-gnu"
+
+@.str = private constant [12 x i8] c"result_pipe\00"
+@c_matrix = common global [16 x [16 x float]] zeroinitializer, align 4
+@.str1 = private constant [13 x i8] c"in_data_pipe\00"
+@a_matrix = common global [16 x [16 x float]] zeroinitializer, align 4
+@b_matrix = common global [16 x [16 x float]] zeroinitializer, align 4
+
+define void @send_output() nounwind {
+bb.nph4:
+  br label %bb.nph
+
+bb.nph:                                           ; preds = %._crit_edge, %bb.nph4
+  %storemerge3 = phi i32 [ 0, %bb.nph4 ], [ %3, %._crit_edge ]
+  br label %0
+
+; <label>:0                                       ; preds = %0, %bb.nph
+  %storemerge12 = phi i32 [ 0, %bb.nph ], [ %2, %0 ]
+  %scevgep = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %storemerge3, i32 %storemerge12
+  %1 = load float* %scevgep, align 4
+  tail call void @write_float32(i8* getelementptr inbounds ([12 x i8]* @.str, i32 0, i32 0), float %1) nounwind
+  %2 = add i32 %storemerge12, 1
+  %exitcond8 = icmp eq i32 %2, 16
+  br i1 %exitcond8, label %._crit_edge, label %0
+
+._crit_edge:                                      ; preds = %0
+  %3 = add i32 %storemerge3, 1
+  %exitcond = icmp eq i32 %3, 16
+  br i1 %exitcond, label %._crit_edge5, label %bb.nph
+
+._crit_edge5:                                     ; preds = %._crit_edge
+  ret void
+}
+
+declare void @write_float32(i8*, float)
+
+define void @get_input() nounwind {
+bb.nph14:
+  br label %bb.nph11
+
+bb.nph11:                                         ; preds = %._crit_edge12, %bb.nph14
+  %storemerge13 = phi i32 [ 0, %bb.nph14 ], [ %3, %._crit_edge12 ]
+  br label %0
+
+; <label>:0                                       ; preds = %0, %bb.nph11
+  %storemerge310 = phi i32 [ 0, %bb.nph11 ], [ %2, %0 ]
+  %scevgep18 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %storemerge13, i32 %storemerge310
+  %1 = tail call float @read_float32(i8* getelementptr inbounds ([13 x i8]* @.str1, i32 0, i32 0)) nounwind
+  store float %1, float* %scevgep18, align 4
+  %2 = add i32 %storemerge310, 1
+  %exitcond24 = icmp eq i32 %2, 16
+  br i1 %exitcond24, label %._crit_edge12, label %0
+
+._crit_edge12:                                    ; preds = %0
+  %3 = add i32 %storemerge13, 1
+  %exitcond26 = icmp eq i32 %3, 16
+  br i1 %exitcond26, label %bb.nph.preheader, label %bb.nph11
+
+bb.nph.preheader:                                 ; preds = %._crit_edge12
+  br label %bb.nph
+
+bb.nph:                                           ; preds = %._crit_edge, %bb.nph.preheader
+  %storemerge16 = phi i32 [ %7, %._crit_edge ], [ 0, %bb.nph.preheader ]
+  br label %4
+
+; <label>:4                                       ; preds = %4, %bb.nph
+  %storemerge24 = phi i32 [ 0, %bb.nph ], [ %6, %4 ]
+  %scevgep = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %storemerge16, i32 %storemerge24
+  %5 = tail call float @read_float32(i8* getelementptr inbounds ([13 x i8]* @.str1, i32 0, i32 0)) nounwind
+  store float %5, float* %scevgep, align 4
+  %6 = add i32 %storemerge24, 1
+  %exitcond21 = icmp eq i32 %6, 16
+  br i1 %exitcond21, label %._crit_edge, label %4
+
+._crit_edge:                                      ; preds = %4
+  %7 = add i32 %storemerge16, 1
+  %exitcond = icmp eq i32 %7, 16
+  br i1 %exitcond, label %._crit_edge8, label %bb.nph
+
+._crit_edge8:                                     ; preds = %._crit_edge
+  ret void
+}
+
+declare float @read_float32(i8*)
+
+define void @mmultiply() noreturn nounwind {
+; <label>:0
+  br label %bb.nph11.i
+
+bb.nph11.i.loopexit:                              ; preds = %._crit_edge.i4
+  br label %bb.nph11.i.backedge
+
+bb.nph11.i:                                       ; preds = %bb.nph11.i.backedge, %0
+  %storemerge13.i = phi i32 [ 0, %0 ], [ %storemerge13.i.be, %bb.nph11.i.backedge ]
+  br label %1
+
+; <label>:1                                       ; preds = %1, %bb.nph11.i
+  %storemerge310.i = phi i32 [ 0, %bb.nph11.i ], [ %3, %1 ]
+  %scevgep18.i = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %storemerge13.i, i32 %storemerge310.i
+  %2 = tail call float @read_float32(i8* getelementptr inbounds ([13 x i8]* @.str1, i32 0, i32 0)) nounwind
+  store float %2, float* %scevgep18.i, align 4
+  %3 = add i32 %storemerge310.i, 1
+  %exitcond9 = icmp eq i32 %3, 16
+  br i1 %exitcond9, label %._crit_edge12.i, label %1
+
+._crit_edge12.i:                                  ; preds = %1
+  %4 = add i32 %storemerge13.i, 1
+  %exitcond19.i = icmp eq i32 %4, 16
+  br i1 %exitcond19.i, label %bb.nph.i.preheader, label %bb.nph11.i.backedge
+
+bb.nph11.i.backedge:                              ; preds = %._crit_edge12.i, %bb.nph11.i.loopexit
+  %storemerge13.i.be = phi i32 [ %4, %._crit_edge12.i ], [ 0, %bb.nph11.i.loopexit ]
+  br label %bb.nph11.i
+
+bb.nph.i.preheader:                               ; preds = %._crit_edge12.i
+  br label %bb.nph.i
+
+bb.nph.i:                                         ; preds = %._crit_edge.i, %bb.nph.i.preheader
+  %storemerge16.i = phi i32 [ %8, %._crit_edge.i ], [ 0, %bb.nph.i.preheader ]
+  br label %5
+
+; <label>:5                                       ; preds = %5, %bb.nph.i
+  %storemerge24.i = phi i32 [ 0, %bb.nph.i ], [ %7, %5 ]
+  %scevgep.i = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %storemerge16.i, i32 %storemerge24.i
+  %6 = tail call float @read_float32(i8* getelementptr inbounds ([13 x i8]* @.str1, i32 0, i32 0)) nounwind
+  store float %6, float* %scevgep.i, align 4
+  %7 = add i32 %storemerge24.i, 1
+  %exitcond10 = icmp eq i32 %7, 16
+  br i1 %exitcond10, label %._crit_edge.i, label %5
+
+._crit_edge.i:                                    ; preds = %5
+  %8 = add i32 %storemerge16.i, 1
+  %exitcond = icmp eq i32 %8, 16
+  br i1 %exitcond, label %get_input.exit, label %bb.nph.i
+
+get_input.exit:                                   ; preds = %._crit_edge.i
+  tail call void @mmultiply_base()
+  br label %bb.nph.i1
+
+bb.nph.i1:                                        ; preds = %._crit_edge.i4, %get_input.exit
+  %storemerge3.i = phi i32 [ 0, %get_input.exit ], [ %12, %._crit_edge.i4 ]
+  br label %9
+
+; <label>:9                                       ; preds = %9, %bb.nph.i1
+  %storemerge12.i = phi i32 [ 0, %bb.nph.i1 ], [ %11, %9 ]
+  %scevgep.i2 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %storemerge3.i, i32 %storemerge12.i
+  %10 = load float* %scevgep.i2, align 4
+  tail call void @write_float32(i8* getelementptr inbounds ([12 x i8]* @.str, i32 0, i32 0), float %10) nounwind
+  %11 = add i32 %storemerge12.i, 1
+  %exitcond11 = icmp eq i32 %11, 16
+  br i1 %exitcond11, label %._crit_edge.i4, label %9
+
+._crit_edge.i4:                                   ; preds = %9
+  %12 = add i32 %storemerge3.i, 1
+  %exitcond12 = icmp eq i32 %12, 16
+  br i1 %exitcond12, label %bb.nph11.i.loopexit, label %bb.nph.i1
+}
+
+define void @mmultiply_base() nounwind {
+bb.nph39:
+  br label %bb.nph36
+
+bb.nph36:                                         ; preds = %._crit_edge37, %bb.nph39
+  %indvar60 = phi i32 [ 0, %bb.nph39 ], [ %indvar.next61, %._crit_edge37 ]
+  %tmp311 = mul i32 %indvar60, 4
+  %tmp318 = add i32 %tmp311, 3
+  %tmp324 = add i32 %tmp311, 2
+  %tmp329 = add i32 %tmp311, 1
+  br label %bb.nph
+
+bb.nph:                                           ; preds = %._crit_edge, %bb.nph36
+  %indvar56 = phi i32 [ 0, %bb.nph36 ], [ %indvar.next57, %._crit_edge ]
+  %tmp312 = mul i32 %indvar56, 4
+  %scevgep134 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp311, i32 %tmp312
+  %tmp314 = add i32 %tmp312, 3
+  %scevgep146 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp311, i32 %tmp314
+  %tmp316 = add i32 %tmp312, 2
+  %scevgep142 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp311, i32 %tmp316
+  %scevgep129 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp318, i32 %tmp312
+  %scevgep143 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp318, i32 %tmp314
+  %scevgep139 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp318, i32 %tmp316
+  %tmp322 = add i32 %tmp312, 1
+  %scevgep135 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp318, i32 %tmp322
+  %scevgep131 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp324, i32 %tmp312
+  %scevgep144 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp324, i32 %tmp314
+  %scevgep140 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp324, i32 %tmp316
+  %scevgep136 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp324, i32 %tmp322
+  %scevgep133 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp329, i32 %tmp312
+  %scevgep145 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp329, i32 %tmp314
+  %scevgep141 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp329, i32 %tmp316
+  %scevgep137 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp329, i32 %tmp322
+  %scevgep138 = getelementptr [16 x [16 x float]]* @c_matrix, i32 0, i32 %tmp311, i32 %tmp322
+  %tmp268 = mul i32 %indvar56, 4
+  %tmp275 = add i32 %tmp268, 1
+  %tmp280 = add i32 %tmp268, 2
+  %tmp285 = add i32 %tmp268, 3
+  br label %0
+
+; <label>:0                                       ; preds = %0, %bb.nph
+  %indvar = phi i32 [ 0, %bb.nph ], [ %indvar.next, %0 ]
+  %v33.018 = phi float [ 0.000000e+00, %bb.nph ], [ %160, %0 ]
+  %v32.017 = phi float [ 0.000000e+00, %bb.nph ], [ %152, %0 ]
+  %v31.016 = phi float [ 0.000000e+00, %bb.nph ], [ %144, %0 ]
+  %v30.015 = phi float [ 0.000000e+00, %bb.nph ], [ %136, %0 ]
+  %v23.014 = phi float [ 0.000000e+00, %bb.nph ], [ %124, %0 ]
+  %v22.013 = phi float [ 0.000000e+00, %bb.nph ], [ %116, %0 ]
+  %v21.012 = phi float [ 0.000000e+00, %bb.nph ], [ %108, %0 ]
+  %v20.011 = phi float [ 0.000000e+00, %bb.nph ], [ %100, %0 ]
+  %v13.010 = phi float [ 0.000000e+00, %bb.nph ], [ %88, %0 ]
+  %v00.09 = phi float [ 0.000000e+00, %bb.nph ], [ %16, %0 ]
+  %v01.08 = phi float [ 0.000000e+00, %bb.nph ], [ %28, %0 ]
+  %v02.07 = phi float [ 0.000000e+00, %bb.nph ], [ %40, %0 ]
+  %v03.06 = phi float [ 0.000000e+00, %bb.nph ], [ %52, %0 ]
+  %v10.05 = phi float [ 0.000000e+00, %bb.nph ], [ %64, %0 ]
+  %v11.04 = phi float [ 0.000000e+00, %bb.nph ], [ %72, %0 ]
+  %v12.03 = phi float [ 0.000000e+00, %bb.nph ], [ %80, %0 ]
+  %tmp335 = mul i32 %indvar, 4
+  %scevgep74 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp311, i32 %tmp335
+  %tmp337 = add i32 %tmp335, 3
+  %scevgep101 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp311, i32 %tmp337
+  %tmp339 = add i32 %tmp335, 2
+  %scevgep92 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp311, i32 %tmp339
+  %scevgep64 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp318, i32 %tmp335
+  %scevgep95 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp318, i32 %tmp337
+  %scevgep86 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp318, i32 %tmp339
+  %tmp344 = add i32 %tmp335, 1
+  %scevgep77 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp318, i32 %tmp344
+  %scevgep71 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp324, i32 %tmp335
+  %scevgep99 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp324, i32 %tmp337
+  %scevgep90 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp324, i32 %tmp339
+  %scevgep81 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp324, i32 %tmp344
+  %scevgep73 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp329, i32 %tmp335
+  %scevgep100 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp329, i32 %tmp337
+  %scevgep91 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp329, i32 %tmp339
+  %scevgep82 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp329, i32 %tmp344
+  %scevgep83 = getelementptr [16 x [16 x float]]* @a_matrix, i32 0, i32 %tmp311, i32 %tmp344
+  %tmp266 = mul i32 %indvar, 4
+  %tmp267 = add i32 %tmp266, 3
+  %scevgep98 = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp267, i32 %tmp268
+  %tmp270 = add i32 %tmp266, 2
+  %scevgep89 = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp270, i32 %tmp268
+  %tmp272 = add i32 %tmp266, 1
+  %scevgep80 = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp272, i32 %tmp268
+  %scevgep69 = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp266, i32 %tmp268
+  %scevgep97 = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp267, i32 %tmp275
+  %scevgep88 = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp270, i32 %tmp275
+  %scevgep79 = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp272, i32 %tmp275
+  %scevgep68 = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp266, i32 %tmp275
+  %scevgep96 = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp267, i32 %tmp280
+  %scevgep87 = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp270, i32 %tmp280
+  %scevgep78 = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp272, i32 %tmp280
+  %scevgep66 = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp266, i32 %tmp280
+  %scevgep94 = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp267, i32 %tmp285
+  %scevgep85 = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp270, i32 %tmp285
+  %scevgep76 = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp272, i32 %tmp285
+  %scevgep = getelementptr [16 x [16 x float]]* @b_matrix, i32 0, i32 %tmp266, i32 %tmp285
+  %1 = load float* %scevgep74, align 4
+  %2 = load float* %scevgep69, align 4
+  %3 = load float* %scevgep83, align 4
+  %4 = load float* %scevgep80, align 4
+  %5 = load float* %scevgep92, align 4
+  %6 = load float* %scevgep89, align 4
+  %7 = load float* %scevgep101, align 4
+  %8 = load float* %scevgep98, align 4
+  %9 = fmul float %1, %2
+  %10 = fmul float %3, %4
+  %11 = fadd float %9, %10
+  %12 = fmul float %5, %6
+  %13 = fmul float %7, %8
+  %14 = fadd float %12, %13
+  %15 = fadd float %11, %14
+  %16 = fadd float %v00.09, %15
+  %17 = load float* %scevgep68, align 4
+  %18 = load float* %scevgep79, align 4
+  %19 = load float* %scevgep88, align 4
+  %20 = load float* %scevgep97, align 4
+  %21 = fmul float %1, %17
+  %22 = fmul float %3, %18
+  %23 = fadd float %21, %22
+  %24 = fmul float %5, %19
+  %25 = fmul float %7, %20
+  %26 = fadd float %24, %25
+  %27 = fadd float %23, %26
+  %28 = fadd float %v01.08, %27
+  %29 = load float* %scevgep66, align 4
+  %30 = load float* %scevgep78, align 4
+  %31 = load float* %scevgep87, align 4
+  %32 = load float* %scevgep96, align 4
+  %33 = fmul float %1, %29
+  %34 = fmul float %3, %30
+  %35 = fadd float %33, %34
+  %36 = fmul float %5, %31
+  %37 = fmul float %7, %32
+  %38 = fadd float %36, %37
+  %39 = fadd float %35, %38
+  %40 = fadd float %v02.07, %39
+  %41 = load float* %scevgep, align 4
+  %42 = load float* %scevgep76, align 4
+  %43 = load float* %scevgep85, align 4
+  %44 = load float* %scevgep94, align 4
+  %45 = fmul float %1, %41
+  %46 = fmul float %3, %42
+  %47 = fadd float %45, %46
+  %48 = fmul float %5, %43
+  %49 = fmul float %7, %44
+  %50 = fadd float %48, %49
+  %51 = fadd float %47, %50
+  %52 = fadd float %v03.06, %51
+  %53 = load float* %scevgep73, align 4
+  %54 = load float* %scevgep82, align 4
+  %55 = load float* %scevgep91, align 4
+  %56 = load float* %scevgep100, align 4
+  %57 = fmul float %53, %2
+  %58 = fmul float %54, %4
+  %59 = fadd float %57, %58
+  %60 = fmul float %55, %6
+  %61 = fmul float %56, %8
+  %62 = fadd float %60, %61
+  %63 = fadd float %59, %62
+  %64 = fadd float %v10.05, %63
+  %65 = fmul float %53, %17
+  %66 = fmul float %54, %18
+  %67 = fadd float %65, %66
+  %68 = fmul float %55, %19
+  %69 = fmul float %56, %20
+  %70 = fadd float %68, %69
+  %71 = fadd float %67, %70
+  %72 = fadd float %v11.04, %71
+  %73 = fmul float %53, %29
+  %74 = fmul float %54, %30
+  %75 = fadd float %73, %74
+  %76 = fmul float %55, %31
+  %77 = fmul float %56, %32
+  %78 = fadd float %76, %77
+  %79 = fadd float %75, %78
+  %80 = fadd float %v12.03, %79
+  %81 = fmul float %53, %41
+  %82 = fmul float %54, %42
+  %83 = fadd float %81, %82
+  %84 = fmul float %55, %43
+  %85 = fmul float %56, %44
+  %86 = fadd float %84, %85
+  %87 = fadd float %83, %86
+  %88 = fadd float %v13.010, %87
+  %89 = load float* %scevgep71, align 4
+  %90 = load float* %scevgep81, align 4
+  %91 = load float* %scevgep90, align 4
+  %92 = load float* %scevgep99, align 4
+  %93 = fmul float %89, %2
+  %94 = fmul float %90, %4
+  %95 = fadd float %93, %94
+  %96 = fmul float %91, %6
+  %97 = fmul float %92, %8
+  %98 = fadd float %96, %97
+  %99 = fadd float %95, %98
+  %100 = fadd float %v20.011, %99
+  %101 = fmul float %89, %17
+  %102 = fmul float %90, %18
+  %103 = fadd float %101, %102
+  %104 = fmul float %91, %19
+  %105 = fmul float %92, %20
+  %106 = fadd float %104, %105
+  %107 = fadd float %103, %106
+  %108 = fadd float %v21.012, %107
+  %109 = fmul float %89, %29
+  %110 = fmul float %90, %30
+  %111 = fadd float %109, %110
+  %112 = fmul float %91, %31
+  %113 = fmul float %92, %32
+  %114 = fadd float %112, %113
+  %115 = fadd float %111, %114
+  %116 = fadd float %v22.013, %115
+  %117 = fmul float %89, %41
+  %118 = fmul float %90, %42
+  %119 = fadd float %117, %118
+  %120 = fmul float %91, %43
+  %121 = fmul float %92, %44
+  %122 = fadd float %120, %121
+  %123 = fadd float %119, %122
+  %124 = fadd float %v23.014, %123
+  %125 = load float* %scevgep64, align 4
+  %126 = load float* %scevgep77, align 4
+  %127 = load float* %scevgep86, align 4
+  %128 = load float* %scevgep95, align 4
+  %129 = fmul float %125, %2
+  %130 = fmul float %126, %4
+  %131 = fadd float %129, %130
+  %132 = fmul float %127, %6
+  %133 = fmul float %128, %8
+  %134 = fadd float %132, %133
+  %135 = fadd float %131, %134
+  %136 = fadd float %v30.015, %135
+  %137 = fmul float %125, %17
+  %138 = fmul float %126, %18
+  %139 = fadd float %137, %138
+  %140 = fmul float %127, %19
+  %141 = fmul float %128, %20
+  %142 = fadd float %140, %141
+  %143 = fadd float %139, %142
+  %144 = fadd float %v31.016, %143
+  %145 = fmul float %125, %29
+  %146 = fmul float %126, %30
+  %147 = fadd float %145, %146
+  %148 = fmul float %127, %31
+  %149 = fmul float %128, %32
+  %150 = fadd float %148, %149
+  %151 = fadd float %147, %150
+  %152 = fadd float %v32.017, %151
+  %153 = fmul float %125, %41
+  %154 = fmul float %126, %42
+  %155 = fadd float %153, %154
+  %156 = fmul float %127, %43
+  %157 = fmul float %128, %44
+  %158 = fadd float %156, %157
+  %159 = fadd float %155, %158
+  %160 = fadd float %v33.018, %159
+  %indvar.next = add i32 %indvar, 1
+  %exitcond222 = icmp eq i32 %indvar.next, 4
+  br i1 %exitcond222, label %._crit_edge, label %0
+
+._crit_edge:                                      ; preds = %0
+  %.lcssa221 = phi float [ %160, %0 ]
+  %.lcssa220 = phi float [ %152, %0 ]
+  %.lcssa219 = phi float [ %144, %0 ]
+  %.lcssa218 = phi float [ %136, %0 ]
+  %.lcssa217 = phi float [ %124, %0 ]
+  %.lcssa216 = phi float [ %116, %0 ]
+  %.lcssa215 = phi float [ %108, %0 ]
+  %.lcssa214 = phi float [ %100, %0 ]
+  %.lcssa213 = phi float [ %88, %0 ]
+  %.lcssa212 = phi float [ %80, %0 ]
+  %.lcssa211 = phi float [ %72, %0 ]
+  %.lcssa210 = phi float [ %64, %0 ]
+  %.lcssa209 = phi float [ %52, %0 ]
+  %.lcssa208 = phi float [ %40, %0 ]
+  %.lcssa207 = phi float [ %28, %0 ]
+  %.lcssa = phi float [ %16, %0 ]
+  store float %.lcssa, float* %scevgep134, align 4
+  store float %.lcssa207, float* %scevgep138, align 4
+  store float %.lcssa208, float* %scevgep142, align 4
+  store float %.lcssa209, float* %scevgep146, align 4
+  store float %.lcssa210, float* %scevgep133, align 4
+  store float %.lcssa211, float* %scevgep137, align 4
+  store float %.lcssa212, float* %scevgep141, align 4
+  store float %.lcssa213, float* %scevgep145, align 4
+  store float %.lcssa214, float* %scevgep131, align 4
+  store float %.lcssa215, float* %scevgep136, align 4
+  store float %.lcssa216, float* %scevgep140, align 4
+  store float %.lcssa217, float* %scevgep144, align 4
+  store float %.lcssa218, float* %scevgep129, align 4
+  store float %.lcssa219, float* %scevgep135, align 4
+  store float %.lcssa220, float* %scevgep139, align 4
+  store float %.lcssa221, float* %scevgep143, align 4
+  %indvar.next57 = add i32 %indvar56, 1
+  %exitcond = icmp eq i32 %indvar.next57, 4
+  br i1 %exitcond, label %._crit_edge37, label %bb.nph
+
+._crit_edge37:                                    ; preds = %._crit_edge
+  %indvar.next61 = add i32 %indvar60, 1
+  %exitcond310 = icmp eq i32 %indvar.next61, 4
+  br i1 %exitcond310, label %._crit_edge40, label %bb.nph36
+
+._crit_edge40:                                    ; preds = %._crit_edge37
+  ret void
+}

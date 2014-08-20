@@ -1,0 +1,287 @@
+$storage  A : $array[64] $of $float<8,23> // memory space index = 0  base address = 0  word size = 32
+// can point into 
+$constant  ADDOP : $uint<8>:= 0  
+$storage  B : $array[64] $of $float<8,23> // memory space index = 1  base address = 0  word size = 32
+// can point into 
+$storage  C : $array[64] $of $float<8,23> // memory space index = 2  base address = 0  word size = 32
+// can point into 
+$constant  MULOP : $uint<8>:= 2  
+$constant  SUBOP : $uint<8>:= 1  
+$pipe  in_data_pipe : $float<8,23>  $depth 1 
+// can point into 
+$pipe  out_data_pipe : $float<8,23>  $depth 1 
+// can point into 
+$module [fpadd32]
+$in ( L : $float<8,23>   R : $float<8,23>  )
+$out ( ret_val_x_x : $float<8,23>  )
+$is
+{
+  ret_val_x_x := (L + R)
+}
+$module [fpadd64]
+$in ( L : $float<11,52>   R : $float<11,52>  )
+$out ( ret_val_x_x : $float<11,52>  )
+$is
+{
+  ret_val_x_x := (L + R)
+}
+$module [fpmul32]
+$in ( L : $float<8,23>   R : $float<8,23>  )
+$out ( ret_val_x_x : $float<8,23>  )
+$is
+{
+  ret_val_x_x := (L * R)
+}
+$module [fpmul64]
+$in ( L : $float<11,52>   R : $float<11,52>  )
+$out ( ret_val_x_x : $float<11,52>  )
+$is
+{
+  ret_val_x_x := (L * R)
+}
+$module [fpsub32]
+$in ( L : $float<8,23>   R : $float<8,23>  )
+$out ( ret_val_x_x : $float<8,23>  )
+$is
+{
+  ret_val_x_x := (L - R)
+}
+$module [fpsub64]
+$in ( L : $float<11,52>   R : $float<11,52>  )
+$out ( ret_val_x_x : $float<11,52>  )
+$is
+{
+  ret_val_x_x := (L - R)
+}
+$module [fpu32]
+$in ( L : $float<8,23>   R : $float<8,23>   OP_ID : $uint<8>  )
+$out ( ret_val_x_x : $float<8,23>  )
+$is
+{
+  $branchblock [Sw]
+  {
+    $switch OP_ID
+    $when ADDOP $then 
+    oadd := (L + R)
+    $place[a]
+    $when SUBOP $then 
+    osub := (L - R)
+    $place[s]
+    $when MULOP $then 
+    omul := (L * R)
+    $place[m]
+    $default 
+    $place[nop]
+    $endswitch 
+    $merge a s m nop 
+    $phi ret_val_x_x := 			  oadd $on a			  osub $on s			  omul $on m			  _f0.0e+0 $on nop // type of target is $float<8,23>
+    $endmerge
+  }
+}
+$module [fpu64]
+$in ( L : $float<11,52>   R : $float<11,52>   OP_ID : $uint<11>  )
+$out ( ret_val_x_x : $float<11,52>  )
+$is
+{
+  $branchblock [Sw]
+  {
+    $switch OP_ID
+    $when ADDOP $then 
+    oadd := (L + R)
+    $place[a]
+    $when SUBOP $then 
+    osub := (L - R)
+    $place[s]
+    $when MULOP $then 
+    omul := (L * R)
+    $place[m]
+    $default 
+    $place[nop]
+    $endswitch 
+    $merge a s m nop 
+    $phi ret_val_x_x := 			  oadd $on a			  osub $on s			  omul $on m			  _f0.0e+0 $on nop // type of target is $float<11,52>
+    $endmerge
+  }
+}
+$module [getData]
+$in ()
+$out ()
+$is
+{
+  $branchblock [body]
+  {
+    $place[bbx_xnph_bb_1]
+    $merge bb_1_bb_1 bbx_xnph_bb_1 
+    $phi idxx_x01 := 			  ($cast ($uint<32>) ($bitcast ($uint<32>) _b00000000000000000000000000000000  ) ) $on bbx_xnph_bb_1			  ($cast ($uint<32>) iNsTr_5 ) $on bb_1_bb_1 // type of target is $uint<32>
+    $endmerge
+    scevgep2 := @(B[idxx_x01])
+    scevgep := @(A[idxx_x01])
+    iNsTr_2 := in_data_pipe
+    ->(scevgep) := iNsTr_2
+    ->(scevgep2) := iNsTr_2
+    iNsTr_5 := (idxx_x01 + ($bitcast ($uint<32>) _b00000000000000000000000000000001  ))
+    exitcond1 := (iNsTr_5 == ($bitcast ($uint<32>) _b00000000000000000000000001000000  ))
+    $if exitcond1 $then 
+    $place[bb_1_xx_x_crit_edge]
+    $else 
+    $place[bb_1_bb_1]
+    $endif
+    $merge bb_1_xx_x_crit_edge 
+    $endmerge
+    $place[return__]
+    $merge return__ 
+    $endmerge
+  }
+}
+$module [global_storage_initializer_]
+$in ()
+$out ()
+$is
+{
+  $parallelblock[pb]
+  {
+    $call progx_xoptx_xo_storage_initializer_ () ()
+  }
+}
+$module [progx_xoptx_xo_storage_initializer_]
+$in ()
+$out ()
+$is
+{
+  $null
+  $attribute initializer 
+}
+$module [sendResult]
+$in ()
+$out ()
+$is
+{
+  $branchblock [body]
+  {
+    $place[bbx_xnph_bb_1]
+    $merge bb_1_bb_1 bbx_xnph_bb_1 
+    $phi idxx_x01 := 			  ($cast ($uint<32>) ($bitcast ($uint<32>) _b00000000000000000000000000000000  ) ) $on bbx_xnph_bb_1			  ($cast ($uint<32>) iNsTr_4 ) $on bb_1_bb_1 // type of target is $uint<32>
+    $endmerge
+    scevgep := @(C[idxx_x01])
+    iNsTr_1 := ->(scevgep)
+    out_data_pipe := iNsTr_1
+    iNsTr_4 := (idxx_x01 + ($bitcast ($uint<32>) _b00000000000000000000000000000001  ))
+    exitcond1 := (iNsTr_4 == ($bitcast ($uint<32>) _b00000000000000000000000001000000  ))
+    $if exitcond1 $then 
+    $place[bb_1_xx_x_crit_edge]
+    $else 
+    $place[bb_1_bb_1]
+    $endif
+    $merge bb_1_xx_x_crit_edge 
+    $endmerge
+    $place[return__]
+    $merge return__ 
+    $endmerge
+  }
+}
+$module [vectorSum]
+$in ()
+$out ()
+$is
+{
+  $branchblock [body]
+  {
+    $place[bb_0_sendResultx_xexit]
+    $merge x_vectorSum_x_xexit_sendResultx_xexitx_xloopexit 
+    $endmerge
+    $place[sendResultx_xexitx_xloopexit_sendResultx_xexitx_xbackedge]
+    $merge bb_0_sendResultx_xexit sendResultx_xexitx_xbackedge_sendResultx_xexit 
+    $phi idxx_x01x_xi := 			  ($cast ($uint<32>) ($bitcast ($uint<32>) _b00000000000000000000000000000000  ) ) $on bb_0_sendResultx_xexit			  ($cast ($uint<32>) idxx_x01x_xix_xbe ) $on sendResultx_xexitx_xbackedge_sendResultx_xexit // type of target is $uint<32>
+    $endmerge
+    scevgepx_xi := @(A[idxx_x01x_xi])
+    scevgep2x_xi := @(B[idxx_x01x_xi])
+    iNsTr_2 := in_data_pipe
+    ->(scevgepx_xi) := iNsTr_2
+    ->(scevgep2x_xi) := iNsTr_2
+    iNsTr_5 := (idxx_x01x_xi + ($bitcast ($uint<32>) _b00000000000000000000000000000001  ))
+    exitcondx_xi := (iNsTr_5 == ($bitcast ($uint<32>) _b00000000000000000000000001000000  ))
+    $if exitcondx_xi $then 
+    $place[sendResultx_xexit_getDatax_xexitx_xpreheader]
+    $else 
+    $place[sendResultx_xexit_sendResultx_xexitx_xbackedge]
+    $endif
+    $merge sendResultx_xexit_sendResultx_xexitx_xbackedge sendResultx_xexitx_xloopexit_sendResultx_xexitx_xbackedge 
+    $phi idxx_x01x_xix_xbe := 			  ($cast ($uint<32>) iNsTr_5 ) $on sendResultx_xexit_sendResultx_xexitx_xbackedge			  ($cast ($uint<32>) ($bitcast ($uint<32>) _b00000000000000000000000000000000  ) ) $on sendResultx_xexitx_xloopexit_sendResultx_xexitx_xbackedge // type of target is $uint<32>
+    $endmerge
+    $place[sendResultx_xexitx_xbackedge_sendResultx_xexit]
+    $merge sendResultx_xexit_getDatax_xexitx_xpreheader 
+    $endmerge
+    $place[getDatax_xexitx_xpreheader_getDatax_xexit]
+    $merge getDatax_xexitx_xpreheader_getDatax_xexit 
+    $phi indvarx_xi_at_entry := 			  ($cast ($uint<32>) ($bitcast ($uint<32>) _b00000000000000000000000000000000  ) ) $on getDatax_xexitx_xpreheader_getDatax_xexit // type of target is $uint<32>
+    $endmerge
+    $dopipeline $depth16
+    $merge $entry $loopback 
+    $phi indvarx_xi := 			  ($cast ($uint<32>) indvarx_xnextx_xi ) $on $loopback			  indvarx_xi_at_entry $on $entry // type of target is $uint<32>
+    $endmerge
+    scevgepx_xi1 := @(A[indvarx_xi])
+    scevgep2x_xi2 := @(B[indvarx_xi])
+    scevgep3x_xi := @(C[indvarx_xi])
+    iNsTr_10 := ->(scevgepx_xi1)
+    iNsTr_11 := ->(scevgep2x_xi2)
+    iNsTr_12 := (iNsTr_10 + iNsTr_11)
+    ->(scevgep3x_xi) := iNsTr_12
+    indvarx_xnextx_xi := (indvarx_xi + ($bitcast ($uint<32>) _b00000000000000000000000000000001  ))
+    exitcond1 := (indvarx_xnextx_xi == ($bitcast ($uint<32>) _b00000000000000000000000001000000  ))
+    $while ( ~ exitcond1 )
+    $place[getDatax_xexit_x_vectorSum_x_xexitx_xloopexit]
+    $merge getDatax_xexit_x_vectorSum_x_xexitx_xloopexit 
+    $endmerge
+    $place[x_vectorSum_x_xexitx_xloopexit_x_vectorSum_x_xexit]
+    $merge x_vectorSum_x_xexit_x_vectorSum_x_xexit x_vectorSum_x_xexitx_xloopexit_x_vectorSum_x_xexit 
+    $phi idxx_x01x_xi4 := 			  ($cast ($uint<32>) iNsTr_19 ) $on x_vectorSum_x_xexit_x_vectorSum_x_xexit			  ($cast ($uint<32>) ($bitcast ($uint<32>) _b00000000000000000000000000000000  ) ) $on x_vectorSum_x_xexitx_xloopexit_x_vectorSum_x_xexit // type of target is $uint<32>
+    $endmerge
+    scevgepx_xi5 := @(C[idxx_x01x_xi4])
+    iNsTr_16 := ->(scevgepx_xi5)
+    out_data_pipe := iNsTr_16
+    iNsTr_19 := (idxx_x01x_xi4 + ($bitcast ($uint<32>) _b00000000000000000000000000000001  ))
+    exitcond := (iNsTr_19 == ($bitcast ($uint<32>) _b00000000000000000000000001000000  ))
+    $if exitcond $then 
+    $place[x_vectorSum_x_xexit_sendResultx_xexitx_xloopexit]
+    $else 
+    $place[x_vectorSum_x_xexit_x_vectorSum_x_xexit]
+    $endif
+  }
+}
+$module [x_vectorSum_]
+$in ()
+$out ()
+$is
+{
+  $branchblock [body]
+  {
+    $place[bbx_xnph_bb_1]
+    $merge bbx_xnph_bb_1 
+    $phi indvar_at_entry := 			  ($cast ($uint<32>) ($bitcast ($uint<32>) _b00000000000000000000000000000000  ) ) $on bbx_xnph_bb_1 // type of target is $uint<32>
+    $endmerge
+    $dopipeline $depth16
+    $merge $entry $loopback 
+    $phi indvar := 			  ($cast ($uint<32>) indvarx_xnext ) $on $loopback			  indvar_at_entry $on $entry // type of target is $uint<32>
+    $endmerge
+    scevgep3 := @(C[indvar])
+    scevgep2 := @(B[indvar])
+    scevgep := @(A[indvar])
+    iNsTr_2 := ->(scevgep)
+    iNsTr_3 := ->(scevgep2)
+    iNsTr_4 := (iNsTr_2 + iNsTr_3)
+    ->(scevgep3) := iNsTr_4
+    indvarx_xnext := (indvar + ($bitcast ($uint<32>) _b00000000000000000000000000000001  ))
+    exitcond1 := (indvarx_xnext == ($bitcast ($uint<32>) _b00000000000000000000000001000000  ))
+    $while ( ~ exitcond1 )
+    $place[bb_1_xx_x_crit_edge]
+    $merge bb_1_xx_x_crit_edge 
+    $endmerge
+    $place[return__]
+    $merge return__ 
+    $endmerge
+  }
+}
+// Memory space 0: A 
+// Memory space 1: B 
+// Memory space 2: C 
+// Memory space 3: 

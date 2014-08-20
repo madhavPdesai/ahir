@@ -1,0 +1,502 @@
+$storage  A : $array[64] $of $float<8,23> // memory space index = 0  base address = 0  word size = 32
+// can point into 
+$constant  ADDOP : $uint<8>:= 0  
+$storage  B : $array[64] $of $float<8,23> // memory space index = 1  base address = 0  word size = 32
+// can point into 
+$storage  C : $array[64] $of $float<8,23> // memory space index = 2  base address = 0  word size = 32
+// can point into 
+$constant  MULOP : $uint<8>:= 2  
+$constant  SUBOP : $uint<8>:= 1  
+$pipe  in_data_pipe : $float<8,23>  $depth 1 
+// can point into 
+$pipe  out_data_pipe : $float<8,23>  $depth 1 
+// can point into 
+$module [fpadd32]
+$in ( L : $float<8,23>   R : $float<8,23>  )
+$out ( ret_val_x_x : $float<8,23>  )
+$is
+{
+  ret_val_x_x := (L + R)
+}
+$module [fpadd64]
+$in ( L : $float<11,52>   R : $float<11,52>  )
+$out ( ret_val_x_x : $float<11,52>  )
+$is
+{
+  ret_val_x_x := (L + R)
+}
+$module [fpmul32]
+$in ( L : $float<8,23>   R : $float<8,23>  )
+$out ( ret_val_x_x : $float<8,23>  )
+$is
+{
+  ret_val_x_x := (L * R)
+}
+$module [fpmul64]
+$in ( L : $float<11,52>   R : $float<11,52>  )
+$out ( ret_val_x_x : $float<11,52>  )
+$is
+{
+  ret_val_x_x := (L * R)
+}
+$module [fpsub32]
+$in ( L : $float<8,23>   R : $float<8,23>  )
+$out ( ret_val_x_x : $float<8,23>  )
+$is
+{
+  ret_val_x_x := (L - R)
+}
+$module [fpsub64]
+$in ( L : $float<11,52>   R : $float<11,52>  )
+$out ( ret_val_x_x : $float<11,52>  )
+$is
+{
+  ret_val_x_x := (L - R)
+}
+$module [fpu32]
+$in ( L : $float<8,23>   R : $float<8,23>   OP_ID : $uint<8>  )
+$out ( ret_val_x_x : $float<8,23>  )
+$is
+{
+  $branchblock [Sw]
+  {
+    $switch OP_ID
+    $when ADDOP $then 
+    oadd := (L + R)
+    $place[a]
+    $when SUBOP $then 
+    osub := (L - R)
+    $place[s]
+    $when MULOP $then 
+    omul := (L * R)
+    $place[m]
+    $default 
+    $place[nop]
+    $endswitch 
+    $merge a s m nop 
+    $phi ret_val_x_x := 			  oadd $on a			  osub $on s			  omul $on m			  _f0.0e+0 $on nop // type of target is $float<8,23>
+    $endmerge
+  }
+}
+$module [fpu64]
+$in ( L : $float<11,52>   R : $float<11,52>   OP_ID : $uint<11>  )
+$out ( ret_val_x_x : $float<11,52>  )
+$is
+{
+  $branchblock [Sw]
+  {
+    $switch OP_ID
+    $when ADDOP $then 
+    oadd := (L + R)
+    $place[a]
+    $when SUBOP $then 
+    osub := (L - R)
+    $place[s]
+    $when MULOP $then 
+    omul := (L * R)
+    $place[m]
+    $default 
+    $place[nop]
+    $endswitch 
+    $merge a s m nop 
+    $phi ret_val_x_x := 			  oadd $on a			  osub $on s			  omul $on m			  _f0.0e+0 $on nop // type of target is $float<11,52>
+    $endmerge
+  }
+}
+$module [getData]
+$in ()
+$out ()
+$is
+{
+  $branchblock [body]
+  {
+    $storage  idx_alloc : $uint<32> // memory space index = 3  base address = 0  word size = 32
+    // can point into 
+    $storage  val_alloc : $float<8,23> // memory space index = 4  base address = 0  word size = 32
+    // can point into 
+    idx := @(idx_alloc)
+    val := @(val_alloc)
+    ->(idx) := ($bitcast ($uint<32>) _b00000000000000000000000000000000  )
+    $place[bb_0_bb_1]
+    $merge bb_0_bb_1 bb_3_bb_1 
+    $endmerge
+    iNsTr_2 := ->(idx)
+    iNsTr_3 := (($bitcast ($int<32>) iNsTr_2 ) < ($bitcast ($int<32>) ($bitcast ($uint<32>) _b00000000000000000000000001000000  ) ))
+    $if iNsTr_3 $then 
+    $place[bb_1_bb_2]
+    $else 
+    $place[bb_1_bb_4]
+    $endif
+    $merge bb_1_bb_2 
+    $endmerge
+    iNsTr_6 := in_data_pipe
+    ->(val) := iNsTr_6
+    iNsTr_8 := ->(val)
+    iNsTr_9 := ->(idx)
+    iNsTr_10 := @(A[iNsTr_9])
+    ->(iNsTr_10) := iNsTr_8
+    iNsTr_12 := ->(val)
+    iNsTr_13 := ->(idx)
+    iNsTr_14 := @(B[iNsTr_13])
+    ->(iNsTr_14) := iNsTr_12
+    $place[bb_2_bb_3]
+    $merge bb_2_bb_3 
+    $endmerge
+    iNsTr_18 := ->(idx)
+    iNsTr_19 := (iNsTr_18 + ($bitcast ($uint<32>) _b00000000000000000000000000000001  ))
+    ->(idx) := iNsTr_19
+    $place[bb_3_bb_1]
+    $merge bb_1_bb_4 
+    $endmerge
+    $place[return__]
+    $merge return__ 
+    $endmerge
+  }
+}
+$module [global_storage_initializer_]
+$in ()
+$out ()
+$is
+{
+  $parallelblock[pb]
+  {
+    $call progx_xoptx_xo_storage_initializer_ () ()
+  }
+}
+$module [progx_xoptx_xo_storage_initializer_]
+$in ()
+$out ()
+$is
+{
+  $null
+  $attribute initializer 
+}
+$module [sendResult]
+$in ()
+$out ()
+$is
+{
+  $branchblock [body]
+  {
+    $storage  idx_alloc : $uint<32> // memory space index = 5  base address = 0  word size = 32
+    // can point into 
+    $storage  val_alloc : $float<8,23> // memory space index = 6  base address = 0  word size = 32
+    // can point into 
+    idx := @(idx_alloc)
+    val := @(val_alloc)
+    ->(idx) := ($bitcast ($uint<32>) _b00000000000000000000000000000000  )
+    $place[bb_0_bb_1]
+    $merge bb_0_bb_1 bb_3_bb_1 
+    $endmerge
+    iNsTr_2 := ->(idx)
+    iNsTr_3 := (($bitcast ($int<32>) iNsTr_2 ) < ($bitcast ($int<32>) ($bitcast ($uint<32>) _b00000000000000000000000001000000  ) ))
+    $if iNsTr_3 $then 
+    $place[bb_1_bb_2]
+    $else 
+    $place[bb_1_bb_4]
+    $endif
+    $merge bb_1_bb_2 
+    $endmerge
+    iNsTr_5 := ->(idx)
+    iNsTr_6 := @(C[iNsTr_5])
+    iNsTr_7 := ->(iNsTr_6)
+    ->(val) := iNsTr_7
+    iNsTr_9 := ->(val)
+    out_data_pipe := iNsTr_9
+    $place[bb_2_bb_3]
+    $merge bb_2_bb_3 
+    $endmerge
+    iNsTr_14 := ->(idx)
+    iNsTr_15 := (iNsTr_14 + ($bitcast ($uint<32>) _b00000000000000000000000000000001  ))
+    ->(idx) := iNsTr_15
+    $place[bb_3_bb_1]
+    $merge bb_1_bb_4 
+    $endmerge
+    $place[return__]
+    $merge return__ 
+    $endmerge
+  }
+}
+$module [vectorSum]
+$in ()
+$out ()
+$is
+{
+  $branchblock [body]
+  {
+    $place[bb_0_bb_1]
+    $merge bb_0_bb_1 bb_1_bb_1 
+    $endmerge
+    $call getData () ()
+    $call x_vectorSum_ () ()
+    $call sendResult () ()
+    $place[bb_1_bb_1]
+    $place[return__]
+    $merge return__ 
+    $endmerge
+  }
+}
+$module [x_vectorSum_]
+$in ()
+$out ()
+$is
+{
+  $branchblock [body]
+  {
+    $storage  I_alloc : $uint<8> // memory space index = 7  base address = 0  word size = 8
+    // can point into 
+    $storage  I1_alloc : $uint<8> // memory space index = 8  base address = 0  word size = 8
+    // can point into 
+    $storage  I2_alloc : $uint<8> // memory space index = 9  base address = 0  word size = 8
+    // can point into 
+    $storage  I3_alloc : $uint<8> // memory space index = 10  base address = 0  word size = 8
+    // can point into 
+    $storage  I4_alloc : $uint<8> // memory space index = 11  base address = 0  word size = 8
+    // can point into 
+    $storage  I5_alloc : $uint<8> // memory space index = 12  base address = 0  word size = 8
+    // can point into 
+    $storage  I6_alloc : $uint<8> // memory space index = 13  base address = 0  word size = 8
+    // can point into 
+    $storage  I7_alloc : $uint<8> // memory space index = 14  base address = 0  word size = 8
+    // can point into 
+    $storage  c0_alloc : $float<8,23> // memory space index = 15  base address = 0  word size = 32
+    // can point into 
+    $storage  c1_alloc : $float<8,23> // memory space index = 16  base address = 0  word size = 32
+    // can point into 
+    $storage  c2_alloc : $float<8,23> // memory space index = 17  base address = 0  word size = 32
+    // can point into 
+    $storage  c3_alloc : $float<8,23> // memory space index = 18  base address = 0  word size = 32
+    // can point into 
+    $storage  c4_alloc : $float<8,23> // memory space index = 19  base address = 0  word size = 32
+    // can point into 
+    $storage  c5_alloc : $float<8,23> // memory space index = 20  base address = 0  word size = 32
+    // can point into 
+    $storage  c6_alloc : $float<8,23> // memory space index = 21  base address = 0  word size = 32
+    // can point into 
+    $storage  c7_alloc : $float<8,23> // memory space index = 22  base address = 0  word size = 32
+    // can point into 
+    I := @(I_alloc)
+    I1 := @(I1_alloc)
+    I2 := @(I2_alloc)
+    I3 := @(I3_alloc)
+    I4 := @(I4_alloc)
+    I5 := @(I5_alloc)
+    I6 := @(I6_alloc)
+    I7 := @(I7_alloc)
+    c0 := @(c0_alloc)
+    c1 := @(c1_alloc)
+    c2 := @(c2_alloc)
+    c3 := @(c3_alloc)
+    c4 := @(c4_alloc)
+    c5 := @(c5_alloc)
+    c6 := @(c6_alloc)
+    c7 := @(c7_alloc)
+    ->(I) := ($bitcast ($uint<8>) _b00000000  )
+    $place[bb_0_bb_1]
+    $merge bb_0_bb_1 bb_3_bb_1 
+    $endmerge
+    iNsTr_2 := ->(I)
+    iNsTr_3 := ($cast ($uint<32>) iNsTr_2 )
+    iNsTr_4 := (($bitcast ($int<32>) iNsTr_3 ) < ($bitcast ($int<32>) ($bitcast ($uint<32>) _b00000000000000000000000001000000  ) ))
+    $if iNsTr_4 $then 
+    $place[bb_1_bb_2]
+    $else 
+    $place[bb_1_bb_4]
+    $endif
+    $merge bb_1_bb_2 
+    $endmerge
+    iNsTr_7 := ->(I)
+    iNsTr_8 := ($cast ($uint<32>) iNsTr_7 )
+    iNsTr_9 := (iNsTr_8 + ($bitcast ($uint<32>) _b00000000000000000000000000000001  ))
+    iNsTr_10 := ($cast ($uint<8>) iNsTr_9 )
+    ->(I1) := iNsTr_10
+    iNsTr_12 := ->(I)
+    iNsTr_13 := ($cast ($uint<32>) iNsTr_12 )
+    iNsTr_14 := (iNsTr_13 + ($bitcast ($uint<32>) _b00000000000000000000000000000010  ))
+    iNsTr_15 := ($cast ($uint<8>) iNsTr_14 )
+    ->(I2) := iNsTr_15
+    iNsTr_17 := ->(I)
+    iNsTr_18 := ($cast ($uint<32>) iNsTr_17 )
+    iNsTr_19 := (iNsTr_18 + ($bitcast ($uint<32>) _b00000000000000000000000000000011  ))
+    iNsTr_20 := ($cast ($uint<8>) iNsTr_19 )
+    ->(I3) := iNsTr_20
+    iNsTr_22 := ->(I)
+    iNsTr_23 := ($cast ($uint<32>) iNsTr_22 )
+    iNsTr_24 := (iNsTr_23 + ($bitcast ($uint<32>) _b00000000000000000000000000000100  ))
+    iNsTr_25 := ($cast ($uint<8>) iNsTr_24 )
+    ->(I4) := iNsTr_25
+    iNsTr_27 := ->(I)
+    iNsTr_28 := ($cast ($uint<32>) iNsTr_27 )
+    iNsTr_29 := (iNsTr_28 + ($bitcast ($uint<32>) _b00000000000000000000000000000101  ))
+    iNsTr_30 := ($cast ($uint<8>) iNsTr_29 )
+    ->(I5) := iNsTr_30
+    iNsTr_32 := ->(I)
+    iNsTr_33 := ($cast ($uint<32>) iNsTr_32 )
+    iNsTr_34 := (iNsTr_33 + ($bitcast ($uint<32>) _b00000000000000000000000000000110  ))
+    iNsTr_35 := ($cast ($uint<8>) iNsTr_34 )
+    ->(I6) := iNsTr_35
+    iNsTr_37 := ->(I)
+    iNsTr_38 := ($cast ($uint<32>) iNsTr_37 )
+    iNsTr_39 := (iNsTr_38 + ($bitcast ($uint<32>) _b00000000000000000000000000000111  ))
+    iNsTr_40 := ($cast ($uint<8>) iNsTr_39 )
+    ->(I7) := iNsTr_40
+    iNsTr_42 := ->(I)
+    iNsTr_43 := ($cast ($uint<32>) iNsTr_42 )
+    iNsTr_44 := @(A[iNsTr_43])
+    iNsTr_45 := ->(iNsTr_44)
+    iNsTr_46 := ->(I)
+    iNsTr_47 := ($cast ($uint<32>) iNsTr_46 )
+    iNsTr_48 := @(B[iNsTr_47])
+    iNsTr_49 := ->(iNsTr_48)
+    iNsTr_50 := (iNsTr_45 + iNsTr_49)
+    ->(c0) := iNsTr_50
+    iNsTr_52 := ->(I1)
+    iNsTr_53 := ($cast ($uint<32>) iNsTr_52 )
+    iNsTr_54 := @(A[iNsTr_53])
+    iNsTr_55 := ->(iNsTr_54)
+    iNsTr_56 := ->(I1)
+    iNsTr_57 := ($cast ($uint<32>) iNsTr_56 )
+    iNsTr_58 := @(B[iNsTr_57])
+    iNsTr_59 := ->(iNsTr_58)
+    iNsTr_60 := (iNsTr_55 + iNsTr_59)
+    ->(c1) := iNsTr_60
+    iNsTr_62 := ->(I2)
+    iNsTr_63 := ($cast ($uint<32>) iNsTr_62 )
+    iNsTr_64 := @(A[iNsTr_63])
+    iNsTr_65 := ->(iNsTr_64)
+    iNsTr_66 := ->(I2)
+    iNsTr_67 := ($cast ($uint<32>) iNsTr_66 )
+    iNsTr_68 := @(B[iNsTr_67])
+    iNsTr_69 := ->(iNsTr_68)
+    iNsTr_70 := (iNsTr_65 + iNsTr_69)
+    ->(c2) := iNsTr_70
+    iNsTr_72 := ->(I3)
+    iNsTr_73 := ($cast ($uint<32>) iNsTr_72 )
+    iNsTr_74 := @(A[iNsTr_73])
+    iNsTr_75 := ->(iNsTr_74)
+    iNsTr_76 := ->(I3)
+    iNsTr_77 := ($cast ($uint<32>) iNsTr_76 )
+    iNsTr_78 := @(B[iNsTr_77])
+    iNsTr_79 := ->(iNsTr_78)
+    iNsTr_80 := (iNsTr_75 + iNsTr_79)
+    ->(c3) := iNsTr_80
+    iNsTr_82 := ->(I4)
+    iNsTr_83 := ($cast ($uint<32>) iNsTr_82 )
+    iNsTr_84 := @(A[iNsTr_83])
+    iNsTr_85 := ->(iNsTr_84)
+    iNsTr_86 := ->(I4)
+    iNsTr_87 := ($cast ($uint<32>) iNsTr_86 )
+    iNsTr_88 := @(B[iNsTr_87])
+    iNsTr_89 := ->(iNsTr_88)
+    iNsTr_90 := (iNsTr_85 + iNsTr_89)
+    ->(c4) := iNsTr_90
+    iNsTr_92 := ->(I5)
+    iNsTr_93 := ($cast ($uint<32>) iNsTr_92 )
+    iNsTr_94 := @(A[iNsTr_93])
+    iNsTr_95 := ->(iNsTr_94)
+    iNsTr_96 := ->(I5)
+    iNsTr_97 := ($cast ($uint<32>) iNsTr_96 )
+    iNsTr_98 := @(B[iNsTr_97])
+    iNsTr_99 := ->(iNsTr_98)
+    iNsTr_100 := (iNsTr_95 + iNsTr_99)
+    ->(c5) := iNsTr_100
+    iNsTr_102 := ->(I6)
+    iNsTr_103 := ($cast ($uint<32>) iNsTr_102 )
+    iNsTr_104 := @(A[iNsTr_103])
+    iNsTr_105 := ->(iNsTr_104)
+    iNsTr_106 := ->(I6)
+    iNsTr_107 := ($cast ($uint<32>) iNsTr_106 )
+    iNsTr_108 := @(B[iNsTr_107])
+    iNsTr_109 := ->(iNsTr_108)
+    iNsTr_110 := (iNsTr_105 + iNsTr_109)
+    ->(c6) := iNsTr_110
+    iNsTr_112 := ->(I7)
+    iNsTr_113 := ($cast ($uint<32>) iNsTr_112 )
+    iNsTr_114 := @(A[iNsTr_113])
+    iNsTr_115 := ->(iNsTr_114)
+    iNsTr_116 := ->(I7)
+    iNsTr_117 := ($cast ($uint<32>) iNsTr_116 )
+    iNsTr_118 := @(B[iNsTr_117])
+    iNsTr_119 := ->(iNsTr_118)
+    iNsTr_120 := (iNsTr_115 + iNsTr_119)
+    ->(c7) := iNsTr_120
+    iNsTr_122 := ->(c0)
+    iNsTr_123 := ->(I)
+    iNsTr_124 := ($cast ($uint<32>) iNsTr_123 )
+    iNsTr_125 := @(C[iNsTr_124])
+    ->(iNsTr_125) := iNsTr_122
+    iNsTr_127 := ->(c1)
+    iNsTr_128 := ->(I1)
+    iNsTr_129 := ($cast ($uint<32>) iNsTr_128 )
+    iNsTr_130 := @(C[iNsTr_129])
+    ->(iNsTr_130) := iNsTr_127
+    iNsTr_132 := ->(c2)
+    iNsTr_133 := ->(I2)
+    iNsTr_134 := ($cast ($uint<32>) iNsTr_133 )
+    iNsTr_135 := @(C[iNsTr_134])
+    ->(iNsTr_135) := iNsTr_132
+    iNsTr_137 := ->(c3)
+    iNsTr_138 := ->(I3)
+    iNsTr_139 := ($cast ($uint<32>) iNsTr_138 )
+    iNsTr_140 := @(C[iNsTr_139])
+    ->(iNsTr_140) := iNsTr_137
+    iNsTr_142 := ->(c4)
+    iNsTr_143 := ->(I4)
+    iNsTr_144 := ($cast ($uint<32>) iNsTr_143 )
+    iNsTr_145 := @(C[iNsTr_144])
+    ->(iNsTr_145) := iNsTr_142
+    iNsTr_147 := ->(c5)
+    iNsTr_148 := ->(I5)
+    iNsTr_149 := ($cast ($uint<32>) iNsTr_148 )
+    iNsTr_150 := @(C[iNsTr_149])
+    ->(iNsTr_150) := iNsTr_147
+    iNsTr_152 := ->(c6)
+    iNsTr_153 := ->(I6)
+    iNsTr_154 := ($cast ($uint<32>) iNsTr_153 )
+    iNsTr_155 := @(C[iNsTr_154])
+    ->(iNsTr_155) := iNsTr_152
+    iNsTr_157 := ->(c7)
+    iNsTr_158 := ->(I7)
+    iNsTr_159 := ($cast ($uint<32>) iNsTr_158 )
+    iNsTr_160 := @(C[iNsTr_159])
+    ->(iNsTr_160) := iNsTr_157
+    $place[bb_2_bb_3]
+    $merge bb_2_bb_3 
+    $endmerge
+    iNsTr_164 := ->(I)
+    iNsTr_165 := ($cast ($uint<32>) iNsTr_164 )
+    iNsTr_166 := (iNsTr_165 + ($bitcast ($uint<32>) _b00000000000000000000000000001000  ))
+    iNsTr_167 := ($cast ($uint<8>) iNsTr_166 )
+    ->(I) := iNsTr_167
+    $place[bb_3_bb_1]
+    $merge bb_1_bb_4 
+    $endmerge
+    $place[return__]
+    $merge return__ 
+    $endmerge
+  }
+}
+// Memory space 0: A 
+// Memory space 1: B 
+// Memory space 2: C 
+// Memory space 3: %getData%body:idx_alloc 
+// Memory space 4: %getData%body:val_alloc 
+// Memory space 5: %sendResult%body:idx_alloc 
+// Memory space 6: %sendResult%body:val_alloc 
+// Memory space 7: %x_vectorSum_%body:I_alloc 
+// Memory space 8: %x_vectorSum_%body:I1_alloc 
+// Memory space 9: %x_vectorSum_%body:I2_alloc 
+// Memory space 10: %x_vectorSum_%body:I3_alloc 
+// Memory space 11: %x_vectorSum_%body:I4_alloc 
+// Memory space 12: %x_vectorSum_%body:I5_alloc 
+// Memory space 13: %x_vectorSum_%body:I6_alloc 
+// Memory space 14: %x_vectorSum_%body:I7_alloc 
+// Memory space 15: %x_vectorSum_%body:c0_alloc 
+// Memory space 16: %x_vectorSum_%body:c1_alloc 
+// Memory space 17: %x_vectorSum_%body:c2_alloc 
+// Memory space 18: %x_vectorSum_%body:c3_alloc 
+// Memory space 19: %x_vectorSum_%body:c4_alloc 
+// Memory space 20: %x_vectorSum_%body:c5_alloc 
+// Memory space 21: %x_vectorSum_%body:c6_alloc 
+// Memory space 22: %x_vectorSum_%body:c7_alloc 
+// Memory space 23: 

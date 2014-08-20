@@ -1,0 +1,4004 @@
+// Virtual circuit produced from Aa description by Aa2VC 
+// $pipe  in_data_pipe : $float<8,23>  $depth 2 
+// can point into 
+// in scope  top-level
+$pipe [in_data_pipe] 32 $depth 2 
+// $pipe  out_data_pipe : $float<8,23>  $depth 2 
+// can point into 
+// in scope  top-level
+$pipe [out_data_pipe] 32 $depth 2 
+$constant $W[ADDOP] : $int<8> := _b00000000// 0
+$constant $W[MULOP] : $int<8> := _b00000010// 2
+$constant $W[SUBOP] : $int<8> := _b00000001// 1
+$pipeline $depth 1 $buffering 1 $fullrate $module [fpadd32] 
+{
+  $in L:$float<8,23>
+  // can point into  foreign( $void )
+  R:$float<8,23>
+  // can point into  foreign( $void )
+  $out ret_val_x_x:$float<8,23>
+  // can point into  foreign( $void )
+  // pipe-declarations for block %fpadd32
+  //  file prog.linked.opt.aa, line 8
+  $CP 
+  {
+    // begin control-path 
+    // pipelined module
+    :o:[assign_stmt_22] 
+    {
+      $T [L_update_enable] 
+      $T [L_update_enable_out] 
+      L_update_enable &-> (L_update_enable_out)
+      $null &-> (L_update_enable)
+      $T [R_update_enable] 
+      $T [R_update_enable_out] 
+      R_update_enable &-> (R_update_enable_out)
+      $null &-> (R_update_enable)
+      $T [ret_val_x_x_update_enable] 
+      $T [ret_val_x_x_update_enable_in] 
+      $null &-> (ret_val_x_x_update_enable)
+      $null <-& (ret_val_x_x_update_enable_in) 
+      $null &-> (ret_val_x_x_update_enable)
+      ret_val_x_x_update_enable o<-& (ret_val_x_x_update_enable_in  0) 
+      // 	ret_val_x_x := (L + R)
+      //  file prog.linked.opt.aa, line 13
+      // Source expression
+      // (L + R)
+      $T[ADD_f32_f32_21_sample_start_] 
+      $T[ADD_f32_f32_21_sample_completed_] 
+      $T[ADD_f32_f32_21_update_start_] 
+      $T[ADD_f32_f32_21_update_completed_] 
+      // L
+      $T[R_L_19_sample_start_] 
+      $T[R_L_19_sample_completed_] 
+      $T[R_L_19_update_start_] 
+      $T[R_L_19_update_completed_] 
+      // reference to interface object
+      R_L_19_sample_start_ <-& ($entry)
+      R_L_19_sample_completed_ <-& (R_L_19_sample_start_)
+      R_L_19_update_start_ <-& (R_L_19_sample_completed_)
+      R_L_19_update_completed_ <-& (R_L_19_update_start_)
+      R_L_19_sample_start_ <-& (L_update_enable)
+      // R
+      $T[R_R_20_sample_start_] 
+      $T[R_R_20_sample_completed_] 
+      $T[R_R_20_update_start_] 
+      $T[R_R_20_update_completed_] 
+      // reference to interface object
+      R_R_20_sample_start_ <-& ($entry)
+      R_R_20_sample_completed_ <-& (R_R_20_sample_start_)
+      R_R_20_update_start_ <-& (R_R_20_sample_completed_)
+      R_R_20_update_completed_ <-& (R_R_20_update_start_)
+      R_R_20_sample_start_ <-& (R_update_enable)
+      ADD_f32_f32_21_sample_start_ <-& (R_L_19_update_completed_)
+      ADD_f32_f32_21_sample_start_ <-& (R_R_20_update_completed_)
+      ;;[ADD_f32_f32_21_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[ADD_f32_f32_21_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      ADD_f32_f32_21_sample_start_ &-> (ADD_f32_f32_21_Sample)
+      ADD_f32_f32_21_sample_completed_ <-& (ADD_f32_f32_21_Sample)
+      ADD_f32_f32_21_sample_completed_ &-> ($null)
+      ADD_f32_f32_21_update_start_ &-> (ADD_f32_f32_21_Update)
+      ADD_f32_f32_21_update_completed_ <-& (ADD_f32_f32_21_Update)
+      // RAW reenables for L
+      L_update_enable o<-& (ADD_f32_f32_21_sample_completed_ 1)
+      // RAW reenables for R
+      R_update_enable o<-& (ADD_f32_f32_21_sample_completed_ 1)
+      // self-release: 
+      ADD_f32_f32_21_sample_start_ o<-& (ADD_f32_f32_21_sample_completed_ 1)
+      ADD_f32_f32_21_update_start_ o<-& (ADD_f32_f32_21_update_completed_ 0)
+      // Target expression
+      // (as target) ret_val_x_x
+      // ret_val_x_x
+      // write to interface object
+      ADD_f32_f32_21_update_start_ <-& (ret_val_x_x_update_enable)
+      // load-store dependencies..
+    }
+    ( ret_val_x_x_update_enable_in)
+    ( L_update_enable_out R_update_enable_out)
+    $P [L_update_enable] 
+    $P [R_update_enable] 
+    $P [ret_val_x_x_update_enable] 
+    $bind L_update_enable <= assign_stmt_22:L_update_enable_out
+    $bind R_update_enable <= assign_stmt_22:R_update_enable_out
+    $bind ret_val_x_x_update_enable => assign_stmt_22:ret_val_x_x_update_enable_in
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %fpadd32
+    //  file prog.linked.opt.aa, line 8
+    // 	ret_val_x_x := (L + R)
+    //  file prog.linked.opt.aa, line 13
+    // ret_val_x_x
+    // 	ret_val_x_x := (L + R)
+    //  file prog.linked.opt.aa, line 13
+    // (L + R)
+    +[ADD_f32_f32_21_inst] (L R) (ret_val_x_x) 
+    $buffering  $in ADD_f32_f32_21_inst L 2
+    $buffering  $in ADD_f32_f32_21_inst R 2
+    $buffering  $out ADD_f32_f32_21_inst ret_val_x_x 2
+    $delay ADD_f32_f32_21_inst 24
+  }
+  // end data-path
+  // 	ret_val_x_x := (L + R)
+  //  file prog.linked.opt.aa, line 13
+  // (L + R)
+  ADD_f32_f32_21_inst <=> (assign_stmt_22/ADD_f32_f32_21_Sample/rr assign_stmt_22/ADD_f32_f32_21_Update/cr) (assign_stmt_22/ADD_f32_f32_21_Sample/ra assign_stmt_22/ADD_f32_f32_21_Update/ca)
+}
+$pipeline $depth 1 $buffering 1 $fullrate $module [fpadd64] 
+{
+  $in L:$float<11,52>
+  // can point into  foreign( $void )
+  R:$float<11,52>
+  // can point into  foreign( $void )
+  $out ret_val_x_x:$float<11,52>
+  // can point into  foreign( $void )
+  // pipe-declarations for block %fpadd64
+  //  file prog.linked.opt.aa, line 15
+  $CP 
+  {
+    // begin control-path 
+    // pipelined module
+    :o:[assign_stmt_33] 
+    {
+      $T [L_update_enable] 
+      $T [L_update_enable_out] 
+      L_update_enable &-> (L_update_enable_out)
+      $null &-> (L_update_enable)
+      $T [R_update_enable] 
+      $T [R_update_enable_out] 
+      R_update_enable &-> (R_update_enable_out)
+      $null &-> (R_update_enable)
+      $T [ret_val_x_x_update_enable] 
+      $T [ret_val_x_x_update_enable_in] 
+      $null &-> (ret_val_x_x_update_enable)
+      $null <-& (ret_val_x_x_update_enable_in) 
+      $null &-> (ret_val_x_x_update_enable)
+      ret_val_x_x_update_enable o<-& (ret_val_x_x_update_enable_in  0) 
+      // 	ret_val_x_x := (L + R)
+      //  file prog.linked.opt.aa, line 20
+      // Source expression
+      // (L + R)
+      $T[ADD_f64_f64_32_sample_start_] 
+      $T[ADD_f64_f64_32_sample_completed_] 
+      $T[ADD_f64_f64_32_update_start_] 
+      $T[ADD_f64_f64_32_update_completed_] 
+      // L
+      $T[R_L_30_sample_start_] 
+      $T[R_L_30_sample_completed_] 
+      $T[R_L_30_update_start_] 
+      $T[R_L_30_update_completed_] 
+      // reference to interface object
+      R_L_30_sample_start_ <-& ($entry)
+      R_L_30_sample_completed_ <-& (R_L_30_sample_start_)
+      R_L_30_update_start_ <-& (R_L_30_sample_completed_)
+      R_L_30_update_completed_ <-& (R_L_30_update_start_)
+      R_L_30_sample_start_ <-& (L_update_enable)
+      // R
+      $T[R_R_31_sample_start_] 
+      $T[R_R_31_sample_completed_] 
+      $T[R_R_31_update_start_] 
+      $T[R_R_31_update_completed_] 
+      // reference to interface object
+      R_R_31_sample_start_ <-& ($entry)
+      R_R_31_sample_completed_ <-& (R_R_31_sample_start_)
+      R_R_31_update_start_ <-& (R_R_31_sample_completed_)
+      R_R_31_update_completed_ <-& (R_R_31_update_start_)
+      R_R_31_sample_start_ <-& (R_update_enable)
+      ADD_f64_f64_32_sample_start_ <-& (R_L_30_update_completed_)
+      ADD_f64_f64_32_sample_start_ <-& (R_R_31_update_completed_)
+      ;;[ADD_f64_f64_32_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[ADD_f64_f64_32_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      ADD_f64_f64_32_sample_start_ &-> (ADD_f64_f64_32_Sample)
+      ADD_f64_f64_32_sample_completed_ <-& (ADD_f64_f64_32_Sample)
+      ADD_f64_f64_32_sample_completed_ &-> ($null)
+      ADD_f64_f64_32_update_start_ &-> (ADD_f64_f64_32_Update)
+      ADD_f64_f64_32_update_completed_ <-& (ADD_f64_f64_32_Update)
+      // RAW reenables for L
+      L_update_enable o<-& (ADD_f64_f64_32_sample_completed_ 1)
+      // RAW reenables for R
+      R_update_enable o<-& (ADD_f64_f64_32_sample_completed_ 1)
+      // self-release: 
+      ADD_f64_f64_32_sample_start_ o<-& (ADD_f64_f64_32_sample_completed_ 1)
+      ADD_f64_f64_32_update_start_ o<-& (ADD_f64_f64_32_update_completed_ 0)
+      // Target expression
+      // (as target) ret_val_x_x
+      // ret_val_x_x
+      // write to interface object
+      ADD_f64_f64_32_update_start_ <-& (ret_val_x_x_update_enable)
+      // load-store dependencies..
+    }
+    ( ret_val_x_x_update_enable_in)
+    ( L_update_enable_out R_update_enable_out)
+    $P [L_update_enable] 
+    $P [R_update_enable] 
+    $P [ret_val_x_x_update_enable] 
+    $bind L_update_enable <= assign_stmt_33:L_update_enable_out
+    $bind R_update_enable <= assign_stmt_33:R_update_enable_out
+    $bind ret_val_x_x_update_enable => assign_stmt_33:ret_val_x_x_update_enable_in
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %fpadd64
+    //  file prog.linked.opt.aa, line 15
+    // 	ret_val_x_x := (L + R)
+    //  file prog.linked.opt.aa, line 20
+    // ret_val_x_x
+    // 	ret_val_x_x := (L + R)
+    //  file prog.linked.opt.aa, line 20
+    // (L + R)
+    +[ADD_f64_f64_32_inst] (L R) (ret_val_x_x) 
+    $buffering  $in ADD_f64_f64_32_inst L 2
+    $buffering  $in ADD_f64_f64_32_inst R 2
+    $buffering  $out ADD_f64_f64_32_inst ret_val_x_x 2
+    $delay ADD_f64_f64_32_inst 24
+  }
+  // end data-path
+  // 	ret_val_x_x := (L + R)
+  //  file prog.linked.opt.aa, line 20
+  // (L + R)
+  ADD_f64_f64_32_inst <=> (assign_stmt_33/ADD_f64_f64_32_Sample/rr assign_stmt_33/ADD_f64_f64_32_Update/cr) (assign_stmt_33/ADD_f64_f64_32_Sample/ra assign_stmt_33/ADD_f64_f64_32_Update/ca)
+}
+$pipeline $depth 1 $buffering 1 $fullrate $module [fpmul32] 
+{
+  $in L:$float<8,23>
+  // can point into  foreign( $void )
+  R:$float<8,23>
+  // can point into  foreign( $void )
+  $out ret_val_x_x:$float<8,23>
+  // can point into  foreign( $void )
+  // pipe-declarations for block %fpmul32
+  //  file prog.linked.opt.aa, line 22
+  $CP 
+  {
+    // begin control-path 
+    // pipelined module
+    :o:[assign_stmt_43] 
+    {
+      $T [L_update_enable] 
+      $T [L_update_enable_out] 
+      L_update_enable &-> (L_update_enable_out)
+      $null &-> (L_update_enable)
+      $T [R_update_enable] 
+      $T [R_update_enable_out] 
+      R_update_enable &-> (R_update_enable_out)
+      $null &-> (R_update_enable)
+      $T [ret_val_x_x_update_enable] 
+      $T [ret_val_x_x_update_enable_in] 
+      $null &-> (ret_val_x_x_update_enable)
+      $null <-& (ret_val_x_x_update_enable_in) 
+      $null &-> (ret_val_x_x_update_enable)
+      ret_val_x_x_update_enable o<-& (ret_val_x_x_update_enable_in  0) 
+      // 	ret_val_x_x := (L * R)
+      //  file prog.linked.opt.aa, line 27
+      // Source expression
+      // (L * R)
+      $T[MUL_f32_f32_42_sample_start_] 
+      $T[MUL_f32_f32_42_sample_completed_] 
+      $T[MUL_f32_f32_42_update_start_] 
+      $T[MUL_f32_f32_42_update_completed_] 
+      // L
+      $T[R_L_40_sample_start_] 
+      $T[R_L_40_sample_completed_] 
+      $T[R_L_40_update_start_] 
+      $T[R_L_40_update_completed_] 
+      // reference to interface object
+      R_L_40_sample_start_ <-& ($entry)
+      R_L_40_sample_completed_ <-& (R_L_40_sample_start_)
+      R_L_40_update_start_ <-& (R_L_40_sample_completed_)
+      R_L_40_update_completed_ <-& (R_L_40_update_start_)
+      R_L_40_sample_start_ <-& (L_update_enable)
+      // R
+      $T[R_R_41_sample_start_] 
+      $T[R_R_41_sample_completed_] 
+      $T[R_R_41_update_start_] 
+      $T[R_R_41_update_completed_] 
+      // reference to interface object
+      R_R_41_sample_start_ <-& ($entry)
+      R_R_41_sample_completed_ <-& (R_R_41_sample_start_)
+      R_R_41_update_start_ <-& (R_R_41_sample_completed_)
+      R_R_41_update_completed_ <-& (R_R_41_update_start_)
+      R_R_41_sample_start_ <-& (R_update_enable)
+      MUL_f32_f32_42_sample_start_ <-& (R_L_40_update_completed_)
+      MUL_f32_f32_42_sample_start_ <-& (R_R_41_update_completed_)
+      ;;[MUL_f32_f32_42_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[MUL_f32_f32_42_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      MUL_f32_f32_42_sample_start_ &-> (MUL_f32_f32_42_Sample)
+      MUL_f32_f32_42_sample_completed_ <-& (MUL_f32_f32_42_Sample)
+      MUL_f32_f32_42_sample_completed_ &-> ($null)
+      MUL_f32_f32_42_update_start_ &-> (MUL_f32_f32_42_Update)
+      MUL_f32_f32_42_update_completed_ <-& (MUL_f32_f32_42_Update)
+      // RAW reenables for L
+      L_update_enable o<-& (MUL_f32_f32_42_sample_completed_ 1)
+      // RAW reenables for R
+      R_update_enable o<-& (MUL_f32_f32_42_sample_completed_ 1)
+      // self-release: 
+      MUL_f32_f32_42_sample_start_ o<-& (MUL_f32_f32_42_sample_completed_ 1)
+      MUL_f32_f32_42_update_start_ o<-& (MUL_f32_f32_42_update_completed_ 0)
+      // Target expression
+      // (as target) ret_val_x_x
+      // ret_val_x_x
+      // write to interface object
+      MUL_f32_f32_42_update_start_ <-& (ret_val_x_x_update_enable)
+      // load-store dependencies..
+    }
+    ( ret_val_x_x_update_enable_in)
+    ( L_update_enable_out R_update_enable_out)
+    $P [L_update_enable] 
+    $P [R_update_enable] 
+    $P [ret_val_x_x_update_enable] 
+    $bind L_update_enable <= assign_stmt_43:L_update_enable_out
+    $bind R_update_enable <= assign_stmt_43:R_update_enable_out
+    $bind ret_val_x_x_update_enable => assign_stmt_43:ret_val_x_x_update_enable_in
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %fpmul32
+    //  file prog.linked.opt.aa, line 22
+    // 	ret_val_x_x := (L * R)
+    //  file prog.linked.opt.aa, line 27
+    // ret_val_x_x
+    // 	ret_val_x_x := (L * R)
+    //  file prog.linked.opt.aa, line 27
+    // (L * R)
+    *[MUL_f32_f32_42_inst] (L R) (ret_val_x_x) 
+    $buffering  $in MUL_f32_f32_42_inst L 2
+    $buffering  $in MUL_f32_f32_42_inst R 2
+    $buffering  $out MUL_f32_f32_42_inst ret_val_x_x 2
+    $delay MUL_f32_f32_42_inst 24
+  }
+  // end data-path
+  // 	ret_val_x_x := (L * R)
+  //  file prog.linked.opt.aa, line 27
+  // (L * R)
+  MUL_f32_f32_42_inst <=> (assign_stmt_43/MUL_f32_f32_42_Sample/rr assign_stmt_43/MUL_f32_f32_42_Update/cr) (assign_stmt_43/MUL_f32_f32_42_Sample/ra assign_stmt_43/MUL_f32_f32_42_Update/ca)
+}
+$pipeline $depth 1 $buffering 1 $fullrate $module [fpmul64] 
+{
+  $in L:$float<11,52>
+  // can point into  foreign( $void )
+  R:$float<11,52>
+  // can point into  foreign( $void )
+  $out ret_val_x_x:$float<11,52>
+  // can point into  foreign( $void )
+  // pipe-declarations for block %fpmul64
+  //  file prog.linked.opt.aa, line 29
+  $CP 
+  {
+    // begin control-path 
+    // pipelined module
+    :o:[assign_stmt_53] 
+    {
+      $T [L_update_enable] 
+      $T [L_update_enable_out] 
+      L_update_enable &-> (L_update_enable_out)
+      $null &-> (L_update_enable)
+      $T [R_update_enable] 
+      $T [R_update_enable_out] 
+      R_update_enable &-> (R_update_enable_out)
+      $null &-> (R_update_enable)
+      $T [ret_val_x_x_update_enable] 
+      $T [ret_val_x_x_update_enable_in] 
+      $null &-> (ret_val_x_x_update_enable)
+      $null <-& (ret_val_x_x_update_enable_in) 
+      $null &-> (ret_val_x_x_update_enable)
+      ret_val_x_x_update_enable o<-& (ret_val_x_x_update_enable_in  0) 
+      // 	ret_val_x_x := (L * R)
+      //  file prog.linked.opt.aa, line 34
+      // Source expression
+      // (L * R)
+      $T[MUL_f64_f64_52_sample_start_] 
+      $T[MUL_f64_f64_52_sample_completed_] 
+      $T[MUL_f64_f64_52_update_start_] 
+      $T[MUL_f64_f64_52_update_completed_] 
+      // L
+      $T[R_L_50_sample_start_] 
+      $T[R_L_50_sample_completed_] 
+      $T[R_L_50_update_start_] 
+      $T[R_L_50_update_completed_] 
+      // reference to interface object
+      R_L_50_sample_start_ <-& ($entry)
+      R_L_50_sample_completed_ <-& (R_L_50_sample_start_)
+      R_L_50_update_start_ <-& (R_L_50_sample_completed_)
+      R_L_50_update_completed_ <-& (R_L_50_update_start_)
+      R_L_50_sample_start_ <-& (L_update_enable)
+      // R
+      $T[R_R_51_sample_start_] 
+      $T[R_R_51_sample_completed_] 
+      $T[R_R_51_update_start_] 
+      $T[R_R_51_update_completed_] 
+      // reference to interface object
+      R_R_51_sample_start_ <-& ($entry)
+      R_R_51_sample_completed_ <-& (R_R_51_sample_start_)
+      R_R_51_update_start_ <-& (R_R_51_sample_completed_)
+      R_R_51_update_completed_ <-& (R_R_51_update_start_)
+      R_R_51_sample_start_ <-& (R_update_enable)
+      MUL_f64_f64_52_sample_start_ <-& (R_L_50_update_completed_)
+      MUL_f64_f64_52_sample_start_ <-& (R_R_51_update_completed_)
+      ;;[MUL_f64_f64_52_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[MUL_f64_f64_52_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      MUL_f64_f64_52_sample_start_ &-> (MUL_f64_f64_52_Sample)
+      MUL_f64_f64_52_sample_completed_ <-& (MUL_f64_f64_52_Sample)
+      MUL_f64_f64_52_sample_completed_ &-> ($null)
+      MUL_f64_f64_52_update_start_ &-> (MUL_f64_f64_52_Update)
+      MUL_f64_f64_52_update_completed_ <-& (MUL_f64_f64_52_Update)
+      // RAW reenables for L
+      L_update_enable o<-& (MUL_f64_f64_52_sample_completed_ 1)
+      // RAW reenables for R
+      R_update_enable o<-& (MUL_f64_f64_52_sample_completed_ 1)
+      // self-release: 
+      MUL_f64_f64_52_sample_start_ o<-& (MUL_f64_f64_52_sample_completed_ 1)
+      MUL_f64_f64_52_update_start_ o<-& (MUL_f64_f64_52_update_completed_ 0)
+      // Target expression
+      // (as target) ret_val_x_x
+      // ret_val_x_x
+      // write to interface object
+      MUL_f64_f64_52_update_start_ <-& (ret_val_x_x_update_enable)
+      // load-store dependencies..
+    }
+    ( ret_val_x_x_update_enable_in)
+    ( L_update_enable_out R_update_enable_out)
+    $P [L_update_enable] 
+    $P [R_update_enable] 
+    $P [ret_val_x_x_update_enable] 
+    $bind L_update_enable <= assign_stmt_53:L_update_enable_out
+    $bind R_update_enable <= assign_stmt_53:R_update_enable_out
+    $bind ret_val_x_x_update_enable => assign_stmt_53:ret_val_x_x_update_enable_in
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %fpmul64
+    //  file prog.linked.opt.aa, line 29
+    // 	ret_val_x_x := (L * R)
+    //  file prog.linked.opt.aa, line 34
+    // ret_val_x_x
+    // 	ret_val_x_x := (L * R)
+    //  file prog.linked.opt.aa, line 34
+    // (L * R)
+    *[MUL_f64_f64_52_inst] (L R) (ret_val_x_x) 
+    $buffering  $in MUL_f64_f64_52_inst L 2
+    $buffering  $in MUL_f64_f64_52_inst R 2
+    $buffering  $out MUL_f64_f64_52_inst ret_val_x_x 2
+    $delay MUL_f64_f64_52_inst 24
+  }
+  // end data-path
+  // 	ret_val_x_x := (L * R)
+  //  file prog.linked.opt.aa, line 34
+  // (L * R)
+  MUL_f64_f64_52_inst <=> (assign_stmt_53/MUL_f64_f64_52_Sample/rr assign_stmt_53/MUL_f64_f64_52_Update/cr) (assign_stmt_53/MUL_f64_f64_52_Sample/ra assign_stmt_53/MUL_f64_f64_52_Update/ca)
+}
+$pipeline $depth 1 $buffering 1 $fullrate $module [fpsub32] 
+{
+  $in L:$float<8,23>
+  // can point into  foreign( $void )
+  R:$float<8,23>
+  // can point into  foreign( $void )
+  $out ret_val_x_x:$float<8,23>
+  // can point into  foreign( $void )
+  // pipe-declarations for block %fpsub32
+  //  file prog.linked.opt.aa, line 36
+  $CP 
+  {
+    // begin control-path 
+    // pipelined module
+    :o:[assign_stmt_63] 
+    {
+      $T [L_update_enable] 
+      $T [L_update_enable_out] 
+      L_update_enable &-> (L_update_enable_out)
+      $null &-> (L_update_enable)
+      $T [R_update_enable] 
+      $T [R_update_enable_out] 
+      R_update_enable &-> (R_update_enable_out)
+      $null &-> (R_update_enable)
+      $T [ret_val_x_x_update_enable] 
+      $T [ret_val_x_x_update_enable_in] 
+      $null &-> (ret_val_x_x_update_enable)
+      $null <-& (ret_val_x_x_update_enable_in) 
+      $null &-> (ret_val_x_x_update_enable)
+      ret_val_x_x_update_enable o<-& (ret_val_x_x_update_enable_in  0) 
+      // 	ret_val_x_x := (L - R)
+      //  file prog.linked.opt.aa, line 41
+      // Source expression
+      // (L - R)
+      $T[SUB_f32_f32_62_sample_start_] 
+      $T[SUB_f32_f32_62_sample_completed_] 
+      $T[SUB_f32_f32_62_update_start_] 
+      $T[SUB_f32_f32_62_update_completed_] 
+      // L
+      $T[R_L_60_sample_start_] 
+      $T[R_L_60_sample_completed_] 
+      $T[R_L_60_update_start_] 
+      $T[R_L_60_update_completed_] 
+      // reference to interface object
+      R_L_60_sample_start_ <-& ($entry)
+      R_L_60_sample_completed_ <-& (R_L_60_sample_start_)
+      R_L_60_update_start_ <-& (R_L_60_sample_completed_)
+      R_L_60_update_completed_ <-& (R_L_60_update_start_)
+      R_L_60_sample_start_ <-& (L_update_enable)
+      // R
+      $T[R_R_61_sample_start_] 
+      $T[R_R_61_sample_completed_] 
+      $T[R_R_61_update_start_] 
+      $T[R_R_61_update_completed_] 
+      // reference to interface object
+      R_R_61_sample_start_ <-& ($entry)
+      R_R_61_sample_completed_ <-& (R_R_61_sample_start_)
+      R_R_61_update_start_ <-& (R_R_61_sample_completed_)
+      R_R_61_update_completed_ <-& (R_R_61_update_start_)
+      R_R_61_sample_start_ <-& (R_update_enable)
+      SUB_f32_f32_62_sample_start_ <-& (R_L_60_update_completed_)
+      SUB_f32_f32_62_sample_start_ <-& (R_R_61_update_completed_)
+      ;;[SUB_f32_f32_62_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[SUB_f32_f32_62_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      SUB_f32_f32_62_sample_start_ &-> (SUB_f32_f32_62_Sample)
+      SUB_f32_f32_62_sample_completed_ <-& (SUB_f32_f32_62_Sample)
+      SUB_f32_f32_62_sample_completed_ &-> ($null)
+      SUB_f32_f32_62_update_start_ &-> (SUB_f32_f32_62_Update)
+      SUB_f32_f32_62_update_completed_ <-& (SUB_f32_f32_62_Update)
+      // RAW reenables for L
+      L_update_enable o<-& (SUB_f32_f32_62_sample_completed_ 1)
+      // RAW reenables for R
+      R_update_enable o<-& (SUB_f32_f32_62_sample_completed_ 1)
+      // self-release: 
+      SUB_f32_f32_62_sample_start_ o<-& (SUB_f32_f32_62_sample_completed_ 1)
+      SUB_f32_f32_62_update_start_ o<-& (SUB_f32_f32_62_update_completed_ 0)
+      // Target expression
+      // (as target) ret_val_x_x
+      // ret_val_x_x
+      // write to interface object
+      SUB_f32_f32_62_update_start_ <-& (ret_val_x_x_update_enable)
+      // load-store dependencies..
+    }
+    ( ret_val_x_x_update_enable_in)
+    ( L_update_enable_out R_update_enable_out)
+    $P [L_update_enable] 
+    $P [R_update_enable] 
+    $P [ret_val_x_x_update_enable] 
+    $bind L_update_enable <= assign_stmt_63:L_update_enable_out
+    $bind R_update_enable <= assign_stmt_63:R_update_enable_out
+    $bind ret_val_x_x_update_enable => assign_stmt_63:ret_val_x_x_update_enable_in
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %fpsub32
+    //  file prog.linked.opt.aa, line 36
+    // 	ret_val_x_x := (L - R)
+    //  file prog.linked.opt.aa, line 41
+    // ret_val_x_x
+    // 	ret_val_x_x := (L - R)
+    //  file prog.linked.opt.aa, line 41
+    // (L - R)
+    -[SUB_f32_f32_62_inst] (L R) (ret_val_x_x) 
+    $buffering  $in SUB_f32_f32_62_inst L 2
+    $buffering  $in SUB_f32_f32_62_inst R 2
+    $buffering  $out SUB_f32_f32_62_inst ret_val_x_x 2
+    $delay SUB_f32_f32_62_inst 24
+  }
+  // end data-path
+  // 	ret_val_x_x := (L - R)
+  //  file prog.linked.opt.aa, line 41
+  // (L - R)
+  SUB_f32_f32_62_inst <=> (assign_stmt_63/SUB_f32_f32_62_Sample/rr assign_stmt_63/SUB_f32_f32_62_Update/cr) (assign_stmt_63/SUB_f32_f32_62_Sample/ra assign_stmt_63/SUB_f32_f32_62_Update/ca)
+}
+$pipeline $depth 1 $buffering 1 $fullrate $module [fpsub64] 
+{
+  $in L:$float<11,52>
+  // can point into  foreign( $void )
+  R:$float<11,52>
+  // can point into  foreign( $void )
+  $out ret_val_x_x:$float<11,52>
+  // can point into  foreign( $void )
+  // pipe-declarations for block %fpsub64
+  //  file prog.linked.opt.aa, line 43
+  $CP 
+  {
+    // begin control-path 
+    // pipelined module
+    :o:[assign_stmt_73] 
+    {
+      $T [L_update_enable] 
+      $T [L_update_enable_out] 
+      L_update_enable &-> (L_update_enable_out)
+      $null &-> (L_update_enable)
+      $T [R_update_enable] 
+      $T [R_update_enable_out] 
+      R_update_enable &-> (R_update_enable_out)
+      $null &-> (R_update_enable)
+      $T [ret_val_x_x_update_enable] 
+      $T [ret_val_x_x_update_enable_in] 
+      $null &-> (ret_val_x_x_update_enable)
+      $null <-& (ret_val_x_x_update_enable_in) 
+      $null &-> (ret_val_x_x_update_enable)
+      ret_val_x_x_update_enable o<-& (ret_val_x_x_update_enable_in  0) 
+      // 	ret_val_x_x := (L - R)
+      //  file prog.linked.opt.aa, line 48
+      // Source expression
+      // (L - R)
+      $T[SUB_f64_f64_72_sample_start_] 
+      $T[SUB_f64_f64_72_sample_completed_] 
+      $T[SUB_f64_f64_72_update_start_] 
+      $T[SUB_f64_f64_72_update_completed_] 
+      // L
+      $T[R_L_70_sample_start_] 
+      $T[R_L_70_sample_completed_] 
+      $T[R_L_70_update_start_] 
+      $T[R_L_70_update_completed_] 
+      // reference to interface object
+      R_L_70_sample_start_ <-& ($entry)
+      R_L_70_sample_completed_ <-& (R_L_70_sample_start_)
+      R_L_70_update_start_ <-& (R_L_70_sample_completed_)
+      R_L_70_update_completed_ <-& (R_L_70_update_start_)
+      R_L_70_sample_start_ <-& (L_update_enable)
+      // R
+      $T[R_R_71_sample_start_] 
+      $T[R_R_71_sample_completed_] 
+      $T[R_R_71_update_start_] 
+      $T[R_R_71_update_completed_] 
+      // reference to interface object
+      R_R_71_sample_start_ <-& ($entry)
+      R_R_71_sample_completed_ <-& (R_R_71_sample_start_)
+      R_R_71_update_start_ <-& (R_R_71_sample_completed_)
+      R_R_71_update_completed_ <-& (R_R_71_update_start_)
+      R_R_71_sample_start_ <-& (R_update_enable)
+      SUB_f64_f64_72_sample_start_ <-& (R_L_70_update_completed_)
+      SUB_f64_f64_72_sample_start_ <-& (R_R_71_update_completed_)
+      ;;[SUB_f64_f64_72_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[SUB_f64_f64_72_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      SUB_f64_f64_72_sample_start_ &-> (SUB_f64_f64_72_Sample)
+      SUB_f64_f64_72_sample_completed_ <-& (SUB_f64_f64_72_Sample)
+      SUB_f64_f64_72_sample_completed_ &-> ($null)
+      SUB_f64_f64_72_update_start_ &-> (SUB_f64_f64_72_Update)
+      SUB_f64_f64_72_update_completed_ <-& (SUB_f64_f64_72_Update)
+      // RAW reenables for L
+      L_update_enable o<-& (SUB_f64_f64_72_sample_completed_ 1)
+      // RAW reenables for R
+      R_update_enable o<-& (SUB_f64_f64_72_sample_completed_ 1)
+      // self-release: 
+      SUB_f64_f64_72_sample_start_ o<-& (SUB_f64_f64_72_sample_completed_ 1)
+      SUB_f64_f64_72_update_start_ o<-& (SUB_f64_f64_72_update_completed_ 0)
+      // Target expression
+      // (as target) ret_val_x_x
+      // ret_val_x_x
+      // write to interface object
+      SUB_f64_f64_72_update_start_ <-& (ret_val_x_x_update_enable)
+      // load-store dependencies..
+    }
+    ( ret_val_x_x_update_enable_in)
+    ( L_update_enable_out R_update_enable_out)
+    $P [L_update_enable] 
+    $P [R_update_enable] 
+    $P [ret_val_x_x_update_enable] 
+    $bind L_update_enable <= assign_stmt_73:L_update_enable_out
+    $bind R_update_enable <= assign_stmt_73:R_update_enable_out
+    $bind ret_val_x_x_update_enable => assign_stmt_73:ret_val_x_x_update_enable_in
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %fpsub64
+    //  file prog.linked.opt.aa, line 43
+    // 	ret_val_x_x := (L - R)
+    //  file prog.linked.opt.aa, line 48
+    // ret_val_x_x
+    // 	ret_val_x_x := (L - R)
+    //  file prog.linked.opt.aa, line 48
+    // (L - R)
+    -[SUB_f64_f64_72_inst] (L R) (ret_val_x_x) 
+    $buffering  $in SUB_f64_f64_72_inst L 2
+    $buffering  $in SUB_f64_f64_72_inst R 2
+    $buffering  $out SUB_f64_f64_72_inst ret_val_x_x 2
+    $delay SUB_f64_f64_72_inst 24
+  }
+  // end data-path
+  // 	ret_val_x_x := (L - R)
+  //  file prog.linked.opt.aa, line 48
+  // (L - R)
+  SUB_f64_f64_72_inst <=> (assign_stmt_73/SUB_f64_f64_72_Sample/rr assign_stmt_73/SUB_f64_f64_72_Update/cr) (assign_stmt_73/SUB_f64_f64_72_Sample/ra assign_stmt_73/SUB_f64_f64_72_Update/ca)
+}
+$pipeline $depth 1 $buffering 1 $fullrate $module [fpu32] 
+{
+  $in L:$float<8,23>
+  // can point into  foreign( $void )
+  R:$float<8,23>
+  // can point into  foreign( $void )
+  OP_ID:$int<8>
+  // can point into  foreign( $void )
+  $out ret_val_x_x:$float<8,23>
+  // can point into  foreign( $void )
+  // pipe-declarations for block %fpu32
+  //  file prog.linked.opt.aa, line 50
+  $CP 
+  {
+    // begin control-path 
+    // pipelined module
+    :o:[assign_stmt_82_to_assign_stmt_161] 
+    {
+      $T [L_update_enable] 
+      $T [L_update_enable_out] 
+      L_update_enable &-> (L_update_enable_out)
+      $null &-> (L_update_enable)
+      $T [R_update_enable] 
+      $T [R_update_enable_out] 
+      R_update_enable &-> (R_update_enable_out)
+      $null &-> (R_update_enable)
+      $T [OP_ID_update_enable] 
+      $T [OP_ID_update_enable_out] 
+      OP_ID_update_enable &-> (OP_ID_update_enable_out)
+      $null &-> (OP_ID_update_enable)
+      $T [ret_val_x_x_update_enable] 
+      $T [ret_val_x_x_update_enable_in] 
+      $null &-> (ret_val_x_x_update_enable)
+      $null <-& (ret_val_x_x_update_enable_in) 
+      $null &-> (ret_val_x_x_update_enable)
+      ret_val_x_x_update_enable o<-& (ret_val_x_x_update_enable_in  0) 
+      // 	OP_ID_81_delayed_1 := OP_ID
+      //  file prog.linked.opt.aa, line 55
+      // Source expression
+      // OP_ID
+      $T[R_OP_ID_81_sample_start_] 
+      $T[R_OP_ID_81_sample_completed_] 
+      $T[R_OP_ID_81_update_start_] 
+      $T[R_OP_ID_81_update_completed_] 
+      // reference to interface object
+      R_OP_ID_81_sample_start_ <-& ($entry)
+      R_OP_ID_81_sample_completed_ <-& (R_OP_ID_81_sample_start_)
+      R_OP_ID_81_update_start_ <-& (R_OP_ID_81_sample_completed_)
+      R_OP_ID_81_update_completed_ <-& (R_OP_ID_81_update_start_)
+      R_OP_ID_81_sample_start_ <-& (OP_ID_update_enable)
+      // Target expression
+      // (as target) OP_ID_81_delayed_1
+      // OP_ID_81_delayed_1
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_82_sample_start_] 
+      $T[assign_stmt_82_sample_completed_] 
+      $T[assign_stmt_82_update_start_] 
+      $T[assign_stmt_82_update_completed_] 
+      ;;[assign_stmt_82_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_82_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_82_sample_start_ &-> (assign_stmt_82_Sample)
+      assign_stmt_82_sample_completed_ <-& (assign_stmt_82_Sample)
+      assign_stmt_82_sample_completed_ &-> ($null)
+      assign_stmt_82_update_start_ &-> (assign_stmt_82_Update)
+      assign_stmt_82_update_completed_ <-& (assign_stmt_82_Update)
+      assign_stmt_82_sample_start_ <-& (R_OP_ID_81_update_completed_)
+      // RAW reenables for OP_ID
+      OP_ID_update_enable o<-& (assign_stmt_82_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_82_sample_start_ o<-& (assign_stmt_82_sample_completed_ 1)
+      assign_stmt_82_update_start_ o<-& (assign_stmt_82_update_completed_ 0)
+      // 	is_add := (OP_ID_81_delayed_1 == ADDOP)
+      //  file prog.linked.opt.aa, line 56
+      // Source expression
+      // (OP_ID_81_delayed_1 == ADDOP)
+      $T[EQ_u8_u1_86_sample_start_] 
+      $T[EQ_u8_u1_86_sample_completed_] 
+      $T[EQ_u8_u1_86_update_start_] 
+      $T[EQ_u8_u1_86_update_completed_] 
+      // OP_ID_81_delayed_1
+      $T[R_OP_ID_81_delayed_1_84_sample_start_] 
+      $T[R_OP_ID_81_delayed_1_84_sample_completed_] 
+      $T[R_OP_ID_81_delayed_1_84_update_start_] 
+      $T[R_OP_ID_81_delayed_1_84_update_completed_] 
+      // implicit reference
+      R_OP_ID_81_delayed_1_84_sample_start_ <-& (assign_stmt_82_update_completed_)
+      R_OP_ID_81_delayed_1_84_sample_completed_ <-& (R_OP_ID_81_delayed_1_84_sample_start_)
+      R_OP_ID_81_delayed_1_84_update_start_ <-& (R_OP_ID_81_delayed_1_84_sample_completed_)
+      R_OP_ID_81_delayed_1_84_update_completed_ <-& (R_OP_ID_81_delayed_1_84_update_start_)
+      EQ_u8_u1_86_sample_start_ <-& (R_OP_ID_81_delayed_1_84_update_completed_)
+      ;;[EQ_u8_u1_86_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[EQ_u8_u1_86_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      EQ_u8_u1_86_sample_start_ &-> (EQ_u8_u1_86_Sample)
+      EQ_u8_u1_86_sample_completed_ <-& (EQ_u8_u1_86_Sample)
+      EQ_u8_u1_86_sample_completed_ &-> ($null)
+      EQ_u8_u1_86_update_start_ &-> (EQ_u8_u1_86_Update)
+      EQ_u8_u1_86_update_completed_ <-& (EQ_u8_u1_86_Update)
+      // RAW reenables for OP_ID_81_delayed_1
+      assign_stmt_82_update_start_ o<-& (EQ_u8_u1_86_sample_completed_ 0)
+      // self-release: 
+      EQ_u8_u1_86_sample_start_ o<-& (EQ_u8_u1_86_sample_completed_ 1)
+      EQ_u8_u1_86_update_start_ o<-& (EQ_u8_u1_86_update_completed_ 0)
+      // Target expression
+      // (as target) is_add
+      // is_add
+      // implicit reference
+      // 	OP_ID_87_delayed_1 := OP_ID
+      //  file prog.linked.opt.aa, line 57
+      // Source expression
+      // OP_ID
+      $T[R_OP_ID_90_sample_start_] 
+      $T[R_OP_ID_90_sample_completed_] 
+      $T[R_OP_ID_90_update_start_] 
+      $T[R_OP_ID_90_update_completed_] 
+      // reference to interface object
+      R_OP_ID_90_sample_start_ <-& ($entry)
+      R_OP_ID_90_sample_completed_ <-& (R_OP_ID_90_sample_start_)
+      R_OP_ID_90_update_start_ <-& (R_OP_ID_90_sample_completed_)
+      R_OP_ID_90_update_completed_ <-& (R_OP_ID_90_update_start_)
+      R_OP_ID_90_sample_start_ <-& (OP_ID_update_enable)
+      // Target expression
+      // (as target) OP_ID_87_delayed_1
+      // OP_ID_87_delayed_1
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_91_sample_start_] 
+      $T[assign_stmt_91_sample_completed_] 
+      $T[assign_stmt_91_update_start_] 
+      $T[assign_stmt_91_update_completed_] 
+      ;;[assign_stmt_91_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_91_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_91_sample_start_ &-> (assign_stmt_91_Sample)
+      assign_stmt_91_sample_completed_ <-& (assign_stmt_91_Sample)
+      assign_stmt_91_sample_completed_ &-> ($null)
+      assign_stmt_91_update_start_ &-> (assign_stmt_91_Update)
+      assign_stmt_91_update_completed_ <-& (assign_stmt_91_Update)
+      assign_stmt_91_sample_start_ <-& (R_OP_ID_90_update_completed_)
+      // RAW reenables for OP_ID
+      OP_ID_update_enable o<-& (assign_stmt_91_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_91_sample_start_ o<-& (assign_stmt_91_sample_completed_ 1)
+      assign_stmt_91_update_start_ o<-& (assign_stmt_91_update_completed_ 0)
+      // 	is_sub := (OP_ID_87_delayed_1 == SUBOP)
+      //  file prog.linked.opt.aa, line 58
+      // Source expression
+      // (OP_ID_87_delayed_1 == SUBOP)
+      $T[EQ_u8_u1_95_sample_start_] 
+      $T[EQ_u8_u1_95_sample_completed_] 
+      $T[EQ_u8_u1_95_update_start_] 
+      $T[EQ_u8_u1_95_update_completed_] 
+      // OP_ID_87_delayed_1
+      $T[R_OP_ID_87_delayed_1_93_sample_start_] 
+      $T[R_OP_ID_87_delayed_1_93_sample_completed_] 
+      $T[R_OP_ID_87_delayed_1_93_update_start_] 
+      $T[R_OP_ID_87_delayed_1_93_update_completed_] 
+      // implicit reference
+      R_OP_ID_87_delayed_1_93_sample_start_ <-& (assign_stmt_91_update_completed_)
+      R_OP_ID_87_delayed_1_93_sample_completed_ <-& (R_OP_ID_87_delayed_1_93_sample_start_)
+      R_OP_ID_87_delayed_1_93_update_start_ <-& (R_OP_ID_87_delayed_1_93_sample_completed_)
+      R_OP_ID_87_delayed_1_93_update_completed_ <-& (R_OP_ID_87_delayed_1_93_update_start_)
+      EQ_u8_u1_95_sample_start_ <-& (R_OP_ID_87_delayed_1_93_update_completed_)
+      ;;[EQ_u8_u1_95_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[EQ_u8_u1_95_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      EQ_u8_u1_95_sample_start_ &-> (EQ_u8_u1_95_Sample)
+      EQ_u8_u1_95_sample_completed_ <-& (EQ_u8_u1_95_Sample)
+      EQ_u8_u1_95_sample_completed_ &-> ($null)
+      EQ_u8_u1_95_update_start_ &-> (EQ_u8_u1_95_Update)
+      EQ_u8_u1_95_update_completed_ <-& (EQ_u8_u1_95_Update)
+      // RAW reenables for OP_ID_87_delayed_1
+      assign_stmt_91_update_start_ o<-& (EQ_u8_u1_95_sample_completed_ 0)
+      // self-release: 
+      EQ_u8_u1_95_sample_start_ o<-& (EQ_u8_u1_95_sample_completed_ 1)
+      EQ_u8_u1_95_update_start_ o<-& (EQ_u8_u1_95_update_completed_ 0)
+      // Target expression
+      // (as target) is_sub
+      // is_sub
+      // implicit reference
+      // 	OP_ID_92_delayed_1 := OP_ID
+      //  file prog.linked.opt.aa, line 59
+      // Source expression
+      // OP_ID
+      $T[R_OP_ID_98_sample_start_] 
+      $T[R_OP_ID_98_sample_completed_] 
+      $T[R_OP_ID_98_update_start_] 
+      $T[R_OP_ID_98_update_completed_] 
+      // reference to interface object
+      R_OP_ID_98_sample_start_ <-& ($entry)
+      R_OP_ID_98_sample_completed_ <-& (R_OP_ID_98_sample_start_)
+      R_OP_ID_98_update_start_ <-& (R_OP_ID_98_sample_completed_)
+      R_OP_ID_98_update_completed_ <-& (R_OP_ID_98_update_start_)
+      R_OP_ID_98_sample_start_ <-& (OP_ID_update_enable)
+      // Target expression
+      // (as target) OP_ID_92_delayed_1
+      // OP_ID_92_delayed_1
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_99_sample_start_] 
+      $T[assign_stmt_99_sample_completed_] 
+      $T[assign_stmt_99_update_start_] 
+      $T[assign_stmt_99_update_completed_] 
+      ;;[assign_stmt_99_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_99_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_99_sample_start_ &-> (assign_stmt_99_Sample)
+      assign_stmt_99_sample_completed_ <-& (assign_stmt_99_Sample)
+      assign_stmt_99_sample_completed_ &-> ($null)
+      assign_stmt_99_update_start_ &-> (assign_stmt_99_Update)
+      assign_stmt_99_update_completed_ <-& (assign_stmt_99_Update)
+      assign_stmt_99_sample_start_ <-& (R_OP_ID_98_update_completed_)
+      // RAW reenables for OP_ID
+      OP_ID_update_enable o<-& (assign_stmt_99_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_99_sample_start_ o<-& (assign_stmt_99_sample_completed_ 1)
+      assign_stmt_99_update_start_ o<-& (assign_stmt_99_update_completed_ 0)
+      // 	is_mul := (OP_ID_92_delayed_1 == MULOP)
+      //  file prog.linked.opt.aa, line 60
+      // Source expression
+      // (OP_ID_92_delayed_1 == MULOP)
+      $T[EQ_u8_u1_103_sample_start_] 
+      $T[EQ_u8_u1_103_sample_completed_] 
+      $T[EQ_u8_u1_103_update_start_] 
+      $T[EQ_u8_u1_103_update_completed_] 
+      // OP_ID_92_delayed_1
+      $T[R_OP_ID_92_delayed_1_101_sample_start_] 
+      $T[R_OP_ID_92_delayed_1_101_sample_completed_] 
+      $T[R_OP_ID_92_delayed_1_101_update_start_] 
+      $T[R_OP_ID_92_delayed_1_101_update_completed_] 
+      // implicit reference
+      R_OP_ID_92_delayed_1_101_sample_start_ <-& (assign_stmt_99_update_completed_)
+      R_OP_ID_92_delayed_1_101_sample_completed_ <-& (R_OP_ID_92_delayed_1_101_sample_start_)
+      R_OP_ID_92_delayed_1_101_update_start_ <-& (R_OP_ID_92_delayed_1_101_sample_completed_)
+      R_OP_ID_92_delayed_1_101_update_completed_ <-& (R_OP_ID_92_delayed_1_101_update_start_)
+      EQ_u8_u1_103_sample_start_ <-& (R_OP_ID_92_delayed_1_101_update_completed_)
+      ;;[EQ_u8_u1_103_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[EQ_u8_u1_103_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      EQ_u8_u1_103_sample_start_ &-> (EQ_u8_u1_103_Sample)
+      EQ_u8_u1_103_sample_completed_ <-& (EQ_u8_u1_103_Sample)
+      EQ_u8_u1_103_sample_completed_ &-> ($null)
+      EQ_u8_u1_103_update_start_ &-> (EQ_u8_u1_103_Update)
+      EQ_u8_u1_103_update_completed_ <-& (EQ_u8_u1_103_Update)
+      // RAW reenables for OP_ID_92_delayed_1
+      assign_stmt_99_update_start_ o<-& (EQ_u8_u1_103_sample_completed_ 0)
+      // self-release: 
+      EQ_u8_u1_103_sample_start_ o<-& (EQ_u8_u1_103_sample_completed_ 1)
+      EQ_u8_u1_103_update_start_ o<-& (EQ_u8_u1_103_update_completed_ 0)
+      // Target expression
+      // (as target) is_mul
+      // is_mul
+      // implicit reference
+      // 	L_97_delayed_2 := L $buffering 2
+      //  file prog.linked.opt.aa, line 61
+      // Source expression
+      // L
+      $T[R_L_106_sample_start_] 
+      $T[R_L_106_sample_completed_] 
+      $T[R_L_106_update_start_] 
+      $T[R_L_106_update_completed_] 
+      // reference to interface object
+      R_L_106_sample_start_ <-& ($entry)
+      R_L_106_sample_completed_ <-& (R_L_106_sample_start_)
+      R_L_106_update_start_ <-& (R_L_106_sample_completed_)
+      R_L_106_update_completed_ <-& (R_L_106_update_start_)
+      R_L_106_sample_start_ <-& (L_update_enable)
+      // Target expression
+      // (as target) L_97_delayed_2
+      // L_97_delayed_2
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_107_sample_start_] 
+      $T[assign_stmt_107_sample_completed_] 
+      $T[assign_stmt_107_update_start_] 
+      $T[assign_stmt_107_update_completed_] 
+      ;;[assign_stmt_107_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_107_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_107_sample_start_ &-> (assign_stmt_107_Sample)
+      assign_stmt_107_sample_completed_ <-& (assign_stmt_107_Sample)
+      assign_stmt_107_sample_completed_ &-> ($null)
+      assign_stmt_107_update_start_ &-> (assign_stmt_107_Update)
+      assign_stmt_107_update_completed_ <-& (assign_stmt_107_Update)
+      assign_stmt_107_sample_start_ <-& (R_L_106_update_completed_)
+      // RAW reenables for L
+      L_update_enable o<-& (assign_stmt_107_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_107_sample_start_ o<-& (assign_stmt_107_sample_completed_ 1)
+      assign_stmt_107_update_start_ o<-& (assign_stmt_107_update_completed_ 0)
+      // 	R_98_delayed_2 := R $buffering 2
+      //  file prog.linked.opt.aa, line 62
+      // Source expression
+      // R
+      $T[R_R_109_sample_start_] 
+      $T[R_R_109_sample_completed_] 
+      $T[R_R_109_update_start_] 
+      $T[R_R_109_update_completed_] 
+      // reference to interface object
+      R_R_109_sample_start_ <-& ($entry)
+      R_R_109_sample_completed_ <-& (R_R_109_sample_start_)
+      R_R_109_update_start_ <-& (R_R_109_sample_completed_)
+      R_R_109_update_completed_ <-& (R_R_109_update_start_)
+      R_R_109_sample_start_ <-& (R_update_enable)
+      // Target expression
+      // (as target) R_98_delayed_2
+      // R_98_delayed_2
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_110_sample_start_] 
+      $T[assign_stmt_110_sample_completed_] 
+      $T[assign_stmt_110_update_start_] 
+      $T[assign_stmt_110_update_completed_] 
+      ;;[assign_stmt_110_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_110_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_110_sample_start_ &-> (assign_stmt_110_Sample)
+      assign_stmt_110_sample_completed_ <-& (assign_stmt_110_Sample)
+      assign_stmt_110_sample_completed_ &-> ($null)
+      assign_stmt_110_update_start_ &-> (assign_stmt_110_Update)
+      assign_stmt_110_update_completed_ <-& (assign_stmt_110_Update)
+      assign_stmt_110_sample_start_ <-& (R_R_109_update_completed_)
+      // RAW reenables for R
+      R_update_enable o<-& (assign_stmt_110_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_110_sample_start_ o<-& (assign_stmt_110_sample_completed_ 1)
+      assign_stmt_110_update_start_ o<-& (assign_stmt_110_update_completed_ 0)
+      // 	$guard (is_add) oadd := (L_97_delayed_2 + R_98_delayed_2)
+      //  file prog.linked.opt.aa, line 63
+      // Guard expression
+      // is_add
+      $T[R_is_add_116_sample_start_] 
+      $T[R_is_add_116_sample_completed_] 
+      $T[R_is_add_116_update_start_] 
+      $T[R_is_add_116_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_is_add_116_sample_start_ <-& (EQ_u8_u1_86_update_completed_)
+      // RAW reenables for is_add
+      EQ_u8_u1_86_update_start_ o<-& (R_is_add_116_sample_completed_ 0)
+      R_is_add_116_sample_start_ <-& (EQ_u8_u1_86_update_completed_)
+      R_is_add_116_sample_completed_ <-& (R_is_add_116_sample_start_)
+      R_is_add_116_update_start_ <-& (R_is_add_116_sample_completed_)
+      R_is_add_116_update_completed_ <-& (R_is_add_116_update_start_)
+      // Source expression
+      // (L_97_delayed_2 + R_98_delayed_2)
+      $T[ADD_f32_f32_114_sample_start_] 
+      $T[ADD_f32_f32_114_sample_completed_] 
+      $T[ADD_f32_f32_114_update_start_] 
+      $T[ADD_f32_f32_114_update_completed_] 
+      // Guard dependency
+      ADD_f32_f32_114_sample_start_ <-& (EQ_u8_u1_86_update_completed_)
+      // RAW reenables for is_add
+      EQ_u8_u1_86_update_start_ o<-& (ADD_f32_f32_114_sample_completed_ 0)
+      // L_97_delayed_2
+      $T[R_L_97_delayed_2_112_sample_start_] 
+      $T[R_L_97_delayed_2_112_sample_completed_] 
+      $T[R_L_97_delayed_2_112_update_start_] 
+      $T[R_L_97_delayed_2_112_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_L_97_delayed_2_112_sample_start_ <-& (EQ_u8_u1_86_update_completed_)
+      // RAW reenables for is_add
+      EQ_u8_u1_86_update_start_ o<-& (R_L_97_delayed_2_112_sample_completed_ 0)
+      R_L_97_delayed_2_112_sample_start_ <-& (assign_stmt_107_update_completed_)
+      R_L_97_delayed_2_112_sample_completed_ <-& (R_L_97_delayed_2_112_sample_start_)
+      R_L_97_delayed_2_112_update_start_ <-& (R_L_97_delayed_2_112_sample_completed_)
+      R_L_97_delayed_2_112_update_completed_ <-& (R_L_97_delayed_2_112_update_start_)
+      // R_98_delayed_2
+      $T[R_R_98_delayed_2_113_sample_start_] 
+      $T[R_R_98_delayed_2_113_sample_completed_] 
+      $T[R_R_98_delayed_2_113_update_start_] 
+      $T[R_R_98_delayed_2_113_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_R_98_delayed_2_113_sample_start_ <-& (EQ_u8_u1_86_update_completed_)
+      // RAW reenables for is_add
+      EQ_u8_u1_86_update_start_ o<-& (R_R_98_delayed_2_113_sample_completed_ 0)
+      R_R_98_delayed_2_113_sample_start_ <-& (assign_stmt_110_update_completed_)
+      R_R_98_delayed_2_113_sample_completed_ <-& (R_R_98_delayed_2_113_sample_start_)
+      R_R_98_delayed_2_113_update_start_ <-& (R_R_98_delayed_2_113_sample_completed_)
+      R_R_98_delayed_2_113_update_completed_ <-& (R_R_98_delayed_2_113_update_start_)
+      ADD_f32_f32_114_sample_start_ <-& (R_L_97_delayed_2_112_update_completed_)
+      ADD_f32_f32_114_sample_start_ <-& (R_R_98_delayed_2_113_update_completed_)
+      ;;[ADD_f32_f32_114_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[ADD_f32_f32_114_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      ADD_f32_f32_114_sample_start_ &-> (ADD_f32_f32_114_Sample)
+      ADD_f32_f32_114_sample_completed_ <-& (ADD_f32_f32_114_Sample)
+      ADD_f32_f32_114_sample_completed_ &-> ($null)
+      ADD_f32_f32_114_update_start_ &-> (ADD_f32_f32_114_Update)
+      ADD_f32_f32_114_update_completed_ <-& (ADD_f32_f32_114_Update)
+      // RAW reenables for L_97_delayed_2
+      assign_stmt_107_update_start_ o<-& (ADD_f32_f32_114_sample_completed_ 0)
+      // RAW reenables for R_98_delayed_2
+      assign_stmt_110_update_start_ o<-& (ADD_f32_f32_114_sample_completed_ 0)
+      // self-release: 
+      ADD_f32_f32_114_sample_start_ o<-& (ADD_f32_f32_114_sample_completed_ 1)
+      ADD_f32_f32_114_update_start_ o<-& (ADD_f32_f32_114_update_completed_ 0)
+      // Target expression
+      // (as target) oadd
+      // oadd
+      // implicit reference
+      // 	L_103_delayed_2 := L $buffering 2
+      //  file prog.linked.opt.aa, line 64
+      // Source expression
+      // L
+      $T[R_L_118_sample_start_] 
+      $T[R_L_118_sample_completed_] 
+      $T[R_L_118_update_start_] 
+      $T[R_L_118_update_completed_] 
+      // reference to interface object
+      R_L_118_sample_start_ <-& ($entry)
+      R_L_118_sample_completed_ <-& (R_L_118_sample_start_)
+      R_L_118_update_start_ <-& (R_L_118_sample_completed_)
+      R_L_118_update_completed_ <-& (R_L_118_update_start_)
+      R_L_118_sample_start_ <-& (L_update_enable)
+      // Target expression
+      // (as target) L_103_delayed_2
+      // L_103_delayed_2
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_119_sample_start_] 
+      $T[assign_stmt_119_sample_completed_] 
+      $T[assign_stmt_119_update_start_] 
+      $T[assign_stmt_119_update_completed_] 
+      ;;[assign_stmt_119_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_119_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_119_sample_start_ &-> (assign_stmt_119_Sample)
+      assign_stmt_119_sample_completed_ <-& (assign_stmt_119_Sample)
+      assign_stmt_119_sample_completed_ &-> ($null)
+      assign_stmt_119_update_start_ &-> (assign_stmt_119_Update)
+      assign_stmt_119_update_completed_ <-& (assign_stmt_119_Update)
+      assign_stmt_119_sample_start_ <-& (R_L_118_update_completed_)
+      // RAW reenables for L
+      L_update_enable o<-& (assign_stmt_119_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_119_sample_start_ o<-& (assign_stmt_119_sample_completed_ 1)
+      assign_stmt_119_update_start_ o<-& (assign_stmt_119_update_completed_ 0)
+      // 	R_104_delayed_2 := R $buffering 2
+      //  file prog.linked.opt.aa, line 65
+      // Source expression
+      // R
+      $T[R_R_121_sample_start_] 
+      $T[R_R_121_sample_completed_] 
+      $T[R_R_121_update_start_] 
+      $T[R_R_121_update_completed_] 
+      // reference to interface object
+      R_R_121_sample_start_ <-& ($entry)
+      R_R_121_sample_completed_ <-& (R_R_121_sample_start_)
+      R_R_121_update_start_ <-& (R_R_121_sample_completed_)
+      R_R_121_update_completed_ <-& (R_R_121_update_start_)
+      R_R_121_sample_start_ <-& (R_update_enable)
+      // Target expression
+      // (as target) R_104_delayed_2
+      // R_104_delayed_2
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_122_sample_start_] 
+      $T[assign_stmt_122_sample_completed_] 
+      $T[assign_stmt_122_update_start_] 
+      $T[assign_stmt_122_update_completed_] 
+      ;;[assign_stmt_122_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_122_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_122_sample_start_ &-> (assign_stmt_122_Sample)
+      assign_stmt_122_sample_completed_ <-& (assign_stmt_122_Sample)
+      assign_stmt_122_sample_completed_ &-> ($null)
+      assign_stmt_122_update_start_ &-> (assign_stmt_122_Update)
+      assign_stmt_122_update_completed_ <-& (assign_stmt_122_Update)
+      assign_stmt_122_sample_start_ <-& (R_R_121_update_completed_)
+      // RAW reenables for R
+      R_update_enable o<-& (assign_stmt_122_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_122_sample_start_ o<-& (assign_stmt_122_sample_completed_ 1)
+      assign_stmt_122_update_start_ o<-& (assign_stmt_122_update_completed_ 0)
+      // 	$guard (is_sub) osub := (L_103_delayed_2 - R_104_delayed_2)
+      //  file prog.linked.opt.aa, line 66
+      // Guard expression
+      // is_sub
+      $T[R_is_sub_128_sample_start_] 
+      $T[R_is_sub_128_sample_completed_] 
+      $T[R_is_sub_128_update_start_] 
+      $T[R_is_sub_128_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_is_sub_128_sample_start_ <-& (EQ_u8_u1_95_update_completed_)
+      // RAW reenables for is_sub
+      EQ_u8_u1_95_update_start_ o<-& (R_is_sub_128_sample_completed_ 0)
+      R_is_sub_128_sample_start_ <-& (EQ_u8_u1_95_update_completed_)
+      R_is_sub_128_sample_completed_ <-& (R_is_sub_128_sample_start_)
+      R_is_sub_128_update_start_ <-& (R_is_sub_128_sample_completed_)
+      R_is_sub_128_update_completed_ <-& (R_is_sub_128_update_start_)
+      // Source expression
+      // (L_103_delayed_2 - R_104_delayed_2)
+      $T[SUB_f32_f32_126_sample_start_] 
+      $T[SUB_f32_f32_126_sample_completed_] 
+      $T[SUB_f32_f32_126_update_start_] 
+      $T[SUB_f32_f32_126_update_completed_] 
+      // Guard dependency
+      SUB_f32_f32_126_sample_start_ <-& (EQ_u8_u1_95_update_completed_)
+      // RAW reenables for is_sub
+      EQ_u8_u1_95_update_start_ o<-& (SUB_f32_f32_126_sample_completed_ 0)
+      // L_103_delayed_2
+      $T[R_L_103_delayed_2_124_sample_start_] 
+      $T[R_L_103_delayed_2_124_sample_completed_] 
+      $T[R_L_103_delayed_2_124_update_start_] 
+      $T[R_L_103_delayed_2_124_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_L_103_delayed_2_124_sample_start_ <-& (EQ_u8_u1_95_update_completed_)
+      // RAW reenables for is_sub
+      EQ_u8_u1_95_update_start_ o<-& (R_L_103_delayed_2_124_sample_completed_ 0)
+      R_L_103_delayed_2_124_sample_start_ <-& (assign_stmt_119_update_completed_)
+      R_L_103_delayed_2_124_sample_completed_ <-& (R_L_103_delayed_2_124_sample_start_)
+      R_L_103_delayed_2_124_update_start_ <-& (R_L_103_delayed_2_124_sample_completed_)
+      R_L_103_delayed_2_124_update_completed_ <-& (R_L_103_delayed_2_124_update_start_)
+      // R_104_delayed_2
+      $T[R_R_104_delayed_2_125_sample_start_] 
+      $T[R_R_104_delayed_2_125_sample_completed_] 
+      $T[R_R_104_delayed_2_125_update_start_] 
+      $T[R_R_104_delayed_2_125_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_R_104_delayed_2_125_sample_start_ <-& (EQ_u8_u1_95_update_completed_)
+      // RAW reenables for is_sub
+      EQ_u8_u1_95_update_start_ o<-& (R_R_104_delayed_2_125_sample_completed_ 0)
+      R_R_104_delayed_2_125_sample_start_ <-& (assign_stmt_122_update_completed_)
+      R_R_104_delayed_2_125_sample_completed_ <-& (R_R_104_delayed_2_125_sample_start_)
+      R_R_104_delayed_2_125_update_start_ <-& (R_R_104_delayed_2_125_sample_completed_)
+      R_R_104_delayed_2_125_update_completed_ <-& (R_R_104_delayed_2_125_update_start_)
+      SUB_f32_f32_126_sample_start_ <-& (R_L_103_delayed_2_124_update_completed_)
+      SUB_f32_f32_126_sample_start_ <-& (R_R_104_delayed_2_125_update_completed_)
+      ;;[SUB_f32_f32_126_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[SUB_f32_f32_126_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      SUB_f32_f32_126_sample_start_ &-> (SUB_f32_f32_126_Sample)
+      SUB_f32_f32_126_sample_completed_ <-& (SUB_f32_f32_126_Sample)
+      SUB_f32_f32_126_sample_completed_ &-> ($null)
+      SUB_f32_f32_126_update_start_ &-> (SUB_f32_f32_126_Update)
+      SUB_f32_f32_126_update_completed_ <-& (SUB_f32_f32_126_Update)
+      // RAW reenables for L_103_delayed_2
+      assign_stmt_119_update_start_ o<-& (SUB_f32_f32_126_sample_completed_ 0)
+      // RAW reenables for R_104_delayed_2
+      assign_stmt_122_update_start_ o<-& (SUB_f32_f32_126_sample_completed_ 0)
+      // self-release: 
+      SUB_f32_f32_126_sample_start_ o<-& (SUB_f32_f32_126_sample_completed_ 1)
+      SUB_f32_f32_126_update_start_ o<-& (SUB_f32_f32_126_update_completed_ 0)
+      // Target expression
+      // (as target) osub
+      // osub
+      // implicit reference
+      // 	L_109_delayed_2 := L $buffering 2
+      //  file prog.linked.opt.aa, line 67
+      // Source expression
+      // L
+      $T[R_L_130_sample_start_] 
+      $T[R_L_130_sample_completed_] 
+      $T[R_L_130_update_start_] 
+      $T[R_L_130_update_completed_] 
+      // reference to interface object
+      R_L_130_sample_start_ <-& ($entry)
+      R_L_130_sample_completed_ <-& (R_L_130_sample_start_)
+      R_L_130_update_start_ <-& (R_L_130_sample_completed_)
+      R_L_130_update_completed_ <-& (R_L_130_update_start_)
+      R_L_130_sample_start_ <-& (L_update_enable)
+      // Target expression
+      // (as target) L_109_delayed_2
+      // L_109_delayed_2
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_131_sample_start_] 
+      $T[assign_stmt_131_sample_completed_] 
+      $T[assign_stmt_131_update_start_] 
+      $T[assign_stmt_131_update_completed_] 
+      ;;[assign_stmt_131_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_131_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_131_sample_start_ &-> (assign_stmt_131_Sample)
+      assign_stmt_131_sample_completed_ <-& (assign_stmt_131_Sample)
+      assign_stmt_131_sample_completed_ &-> ($null)
+      assign_stmt_131_update_start_ &-> (assign_stmt_131_Update)
+      assign_stmt_131_update_completed_ <-& (assign_stmt_131_Update)
+      assign_stmt_131_sample_start_ <-& (R_L_130_update_completed_)
+      // RAW reenables for L
+      L_update_enable o<-& (assign_stmt_131_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_131_sample_start_ o<-& (assign_stmt_131_sample_completed_ 1)
+      assign_stmt_131_update_start_ o<-& (assign_stmt_131_update_completed_ 0)
+      // 	R_110_delayed_2 := R $buffering 2
+      //  file prog.linked.opt.aa, line 68
+      // Source expression
+      // R
+      $T[R_R_133_sample_start_] 
+      $T[R_R_133_sample_completed_] 
+      $T[R_R_133_update_start_] 
+      $T[R_R_133_update_completed_] 
+      // reference to interface object
+      R_R_133_sample_start_ <-& ($entry)
+      R_R_133_sample_completed_ <-& (R_R_133_sample_start_)
+      R_R_133_update_start_ <-& (R_R_133_sample_completed_)
+      R_R_133_update_completed_ <-& (R_R_133_update_start_)
+      R_R_133_sample_start_ <-& (R_update_enable)
+      // Target expression
+      // (as target) R_110_delayed_2
+      // R_110_delayed_2
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_134_sample_start_] 
+      $T[assign_stmt_134_sample_completed_] 
+      $T[assign_stmt_134_update_start_] 
+      $T[assign_stmt_134_update_completed_] 
+      ;;[assign_stmt_134_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_134_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_134_sample_start_ &-> (assign_stmt_134_Sample)
+      assign_stmt_134_sample_completed_ <-& (assign_stmt_134_Sample)
+      assign_stmt_134_sample_completed_ &-> ($null)
+      assign_stmt_134_update_start_ &-> (assign_stmt_134_Update)
+      assign_stmt_134_update_completed_ <-& (assign_stmt_134_Update)
+      assign_stmt_134_sample_start_ <-& (R_R_133_update_completed_)
+      // RAW reenables for R
+      R_update_enable o<-& (assign_stmt_134_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_134_sample_start_ o<-& (assign_stmt_134_sample_completed_ 1)
+      assign_stmt_134_update_start_ o<-& (assign_stmt_134_update_completed_ 0)
+      // 	$guard (is_mul) omul := (L_109_delayed_2 * R_110_delayed_2)
+      //  file prog.linked.opt.aa, line 69
+      // Guard expression
+      // is_mul
+      $T[R_is_mul_140_sample_start_] 
+      $T[R_is_mul_140_sample_completed_] 
+      $T[R_is_mul_140_update_start_] 
+      $T[R_is_mul_140_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_is_mul_140_sample_start_ <-& (EQ_u8_u1_103_update_completed_)
+      // RAW reenables for is_mul
+      EQ_u8_u1_103_update_start_ o<-& (R_is_mul_140_sample_completed_ 0)
+      R_is_mul_140_sample_start_ <-& (EQ_u8_u1_103_update_completed_)
+      R_is_mul_140_sample_completed_ <-& (R_is_mul_140_sample_start_)
+      R_is_mul_140_update_start_ <-& (R_is_mul_140_sample_completed_)
+      R_is_mul_140_update_completed_ <-& (R_is_mul_140_update_start_)
+      // Source expression
+      // (L_109_delayed_2 * R_110_delayed_2)
+      $T[MUL_f32_f32_138_sample_start_] 
+      $T[MUL_f32_f32_138_sample_completed_] 
+      $T[MUL_f32_f32_138_update_start_] 
+      $T[MUL_f32_f32_138_update_completed_] 
+      // Guard dependency
+      MUL_f32_f32_138_sample_start_ <-& (EQ_u8_u1_103_update_completed_)
+      // RAW reenables for is_mul
+      EQ_u8_u1_103_update_start_ o<-& (MUL_f32_f32_138_sample_completed_ 0)
+      // L_109_delayed_2
+      $T[R_L_109_delayed_2_136_sample_start_] 
+      $T[R_L_109_delayed_2_136_sample_completed_] 
+      $T[R_L_109_delayed_2_136_update_start_] 
+      $T[R_L_109_delayed_2_136_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_L_109_delayed_2_136_sample_start_ <-& (EQ_u8_u1_103_update_completed_)
+      // RAW reenables for is_mul
+      EQ_u8_u1_103_update_start_ o<-& (R_L_109_delayed_2_136_sample_completed_ 0)
+      R_L_109_delayed_2_136_sample_start_ <-& (assign_stmt_131_update_completed_)
+      R_L_109_delayed_2_136_sample_completed_ <-& (R_L_109_delayed_2_136_sample_start_)
+      R_L_109_delayed_2_136_update_start_ <-& (R_L_109_delayed_2_136_sample_completed_)
+      R_L_109_delayed_2_136_update_completed_ <-& (R_L_109_delayed_2_136_update_start_)
+      // R_110_delayed_2
+      $T[R_R_110_delayed_2_137_sample_start_] 
+      $T[R_R_110_delayed_2_137_sample_completed_] 
+      $T[R_R_110_delayed_2_137_update_start_] 
+      $T[R_R_110_delayed_2_137_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_R_110_delayed_2_137_sample_start_ <-& (EQ_u8_u1_103_update_completed_)
+      // RAW reenables for is_mul
+      EQ_u8_u1_103_update_start_ o<-& (R_R_110_delayed_2_137_sample_completed_ 0)
+      R_R_110_delayed_2_137_sample_start_ <-& (assign_stmt_134_update_completed_)
+      R_R_110_delayed_2_137_sample_completed_ <-& (R_R_110_delayed_2_137_sample_start_)
+      R_R_110_delayed_2_137_update_start_ <-& (R_R_110_delayed_2_137_sample_completed_)
+      R_R_110_delayed_2_137_update_completed_ <-& (R_R_110_delayed_2_137_update_start_)
+      MUL_f32_f32_138_sample_start_ <-& (R_L_109_delayed_2_136_update_completed_)
+      MUL_f32_f32_138_sample_start_ <-& (R_R_110_delayed_2_137_update_completed_)
+      ;;[MUL_f32_f32_138_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[MUL_f32_f32_138_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      MUL_f32_f32_138_sample_start_ &-> (MUL_f32_f32_138_Sample)
+      MUL_f32_f32_138_sample_completed_ <-& (MUL_f32_f32_138_Sample)
+      MUL_f32_f32_138_sample_completed_ &-> ($null)
+      MUL_f32_f32_138_update_start_ &-> (MUL_f32_f32_138_Update)
+      MUL_f32_f32_138_update_completed_ <-& (MUL_f32_f32_138_Update)
+      // RAW reenables for L_109_delayed_2
+      assign_stmt_131_update_start_ o<-& (MUL_f32_f32_138_sample_completed_ 0)
+      // RAW reenables for R_110_delayed_2
+      assign_stmt_134_update_start_ o<-& (MUL_f32_f32_138_sample_completed_ 0)
+      // self-release: 
+      MUL_f32_f32_138_sample_start_ o<-& (MUL_f32_f32_138_sample_completed_ 1)
+      MUL_f32_f32_138_update_start_ o<-& (MUL_f32_f32_138_update_completed_ 0)
+      // Target expression
+      // (as target) omul
+      // omul
+      // implicit reference
+      // 	is_add_115_delayed_24 := is_add $buffering 24
+      //  file prog.linked.opt.aa, line 70
+      // Source expression
+      // is_add
+      $T[R_is_add_142_sample_start_] 
+      $T[R_is_add_142_sample_completed_] 
+      $T[R_is_add_142_update_start_] 
+      $T[R_is_add_142_update_completed_] 
+      // implicit reference
+      R_is_add_142_sample_start_ <-& (EQ_u8_u1_86_update_completed_)
+      R_is_add_142_sample_completed_ <-& (R_is_add_142_sample_start_)
+      R_is_add_142_update_start_ <-& (R_is_add_142_sample_completed_)
+      R_is_add_142_update_completed_ <-& (R_is_add_142_update_start_)
+      // Target expression
+      // (as target) is_add_115_delayed_24
+      // is_add_115_delayed_24
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_143_sample_start_] 
+      $T[assign_stmt_143_sample_completed_] 
+      $T[assign_stmt_143_update_start_] 
+      $T[assign_stmt_143_update_completed_] 
+      ;;[assign_stmt_143_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_143_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_143_sample_start_ &-> (assign_stmt_143_Sample)
+      assign_stmt_143_sample_completed_ <-& (assign_stmt_143_Sample)
+      assign_stmt_143_sample_completed_ &-> ($null)
+      assign_stmt_143_update_start_ &-> (assign_stmt_143_Update)
+      assign_stmt_143_update_completed_ <-& (assign_stmt_143_Update)
+      assign_stmt_143_sample_start_ <-& (R_is_add_142_update_completed_)
+      // RAW reenables for is_add
+      EQ_u8_u1_86_update_start_ o<-& (assign_stmt_143_sample_completed_ 0)
+      // self-release: 
+      assign_stmt_143_sample_start_ o<-& (assign_stmt_143_sample_completed_ 1)
+      assign_stmt_143_update_start_ o<-& (assign_stmt_143_update_completed_ 0)
+      // 	is_sub_117_delayed_24 := is_sub $buffering 24
+      //  file prog.linked.opt.aa, line 71
+      // Source expression
+      // is_sub
+      $T[R_is_sub_145_sample_start_] 
+      $T[R_is_sub_145_sample_completed_] 
+      $T[R_is_sub_145_update_start_] 
+      $T[R_is_sub_145_update_completed_] 
+      // implicit reference
+      R_is_sub_145_sample_start_ <-& (EQ_u8_u1_95_update_completed_)
+      R_is_sub_145_sample_completed_ <-& (R_is_sub_145_sample_start_)
+      R_is_sub_145_update_start_ <-& (R_is_sub_145_sample_completed_)
+      R_is_sub_145_update_completed_ <-& (R_is_sub_145_update_start_)
+      // Target expression
+      // (as target) is_sub_117_delayed_24
+      // is_sub_117_delayed_24
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_146_sample_start_] 
+      $T[assign_stmt_146_sample_completed_] 
+      $T[assign_stmt_146_update_start_] 
+      $T[assign_stmt_146_update_completed_] 
+      ;;[assign_stmt_146_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_146_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_146_sample_start_ &-> (assign_stmt_146_Sample)
+      assign_stmt_146_sample_completed_ <-& (assign_stmt_146_Sample)
+      assign_stmt_146_sample_completed_ &-> ($null)
+      assign_stmt_146_update_start_ &-> (assign_stmt_146_Update)
+      assign_stmt_146_update_completed_ <-& (assign_stmt_146_Update)
+      assign_stmt_146_sample_start_ <-& (R_is_sub_145_update_completed_)
+      // RAW reenables for is_sub
+      EQ_u8_u1_95_update_start_ o<-& (assign_stmt_146_sample_completed_ 0)
+      // self-release: 
+      assign_stmt_146_sample_start_ o<-& (assign_stmt_146_sample_completed_ 1)
+      assign_stmt_146_update_start_ o<-& (assign_stmt_146_update_completed_ 0)
+      // 	is_mul_119_delayed_24 := is_mul $buffering 24
+      //  file prog.linked.opt.aa, line 72
+      // Source expression
+      // is_mul
+      $T[R_is_mul_148_sample_start_] 
+      $T[R_is_mul_148_sample_completed_] 
+      $T[R_is_mul_148_update_start_] 
+      $T[R_is_mul_148_update_completed_] 
+      // implicit reference
+      R_is_mul_148_sample_start_ <-& (EQ_u8_u1_103_update_completed_)
+      R_is_mul_148_sample_completed_ <-& (R_is_mul_148_sample_start_)
+      R_is_mul_148_update_start_ <-& (R_is_mul_148_sample_completed_)
+      R_is_mul_148_update_completed_ <-& (R_is_mul_148_update_start_)
+      // Target expression
+      // (as target) is_mul_119_delayed_24
+      // is_mul_119_delayed_24
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_149_sample_start_] 
+      $T[assign_stmt_149_sample_completed_] 
+      $T[assign_stmt_149_update_start_] 
+      $T[assign_stmt_149_update_completed_] 
+      ;;[assign_stmt_149_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_149_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_149_sample_start_ &-> (assign_stmt_149_Sample)
+      assign_stmt_149_sample_completed_ <-& (assign_stmt_149_Sample)
+      assign_stmt_149_sample_completed_ &-> ($null)
+      assign_stmt_149_update_start_ &-> (assign_stmt_149_Update)
+      assign_stmt_149_update_completed_ <-& (assign_stmt_149_Update)
+      assign_stmt_149_sample_start_ <-& (R_is_mul_148_update_completed_)
+      // RAW reenables for is_mul
+      EQ_u8_u1_103_update_start_ o<-& (assign_stmt_149_sample_completed_ 0)
+      // self-release: 
+      assign_stmt_149_sample_start_ o<-& (assign_stmt_149_sample_completed_ 1)
+      assign_stmt_149_update_start_ o<-& (assign_stmt_149_update_completed_ 0)
+      // 	ret_val_x_x := ( $mux is_add_115_delayed_24 oadd  ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  )  ) 
+      //  file prog.linked.opt.aa, line 73
+      // Source expression
+      // ( $mux is_add_115_delayed_24 oadd  ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  )  ) 
+      $T[MUX_160_sample_start_] 
+      $T[MUX_160_sample_completed_] 
+      $T[MUX_160_update_start_] 
+      $T[MUX_160_update_completed_] 
+      // is_add_115_delayed_24
+      $T[R_is_add_115_delayed_24_151_sample_start_] 
+      $T[R_is_add_115_delayed_24_151_sample_completed_] 
+      $T[R_is_add_115_delayed_24_151_update_start_] 
+      $T[R_is_add_115_delayed_24_151_update_completed_] 
+      // implicit reference
+      R_is_add_115_delayed_24_151_sample_start_ <-& (assign_stmt_143_update_completed_)
+      R_is_add_115_delayed_24_151_sample_completed_ <-& (R_is_add_115_delayed_24_151_sample_start_)
+      R_is_add_115_delayed_24_151_update_start_ <-& (R_is_add_115_delayed_24_151_sample_completed_)
+      R_is_add_115_delayed_24_151_update_completed_ <-& (R_is_add_115_delayed_24_151_update_start_)
+      // oadd
+      $T[R_oadd_152_sample_start_] 
+      $T[R_oadd_152_sample_completed_] 
+      $T[R_oadd_152_update_start_] 
+      $T[R_oadd_152_update_completed_] 
+      // implicit reference
+      R_oadd_152_sample_start_ <-& (ADD_f32_f32_114_update_completed_)
+      R_oadd_152_sample_completed_ <-& (R_oadd_152_sample_start_)
+      R_oadd_152_update_start_ <-& (R_oadd_152_sample_completed_)
+      R_oadd_152_update_completed_ <-& (R_oadd_152_update_start_)
+      // ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  ) 
+      $T[MUX_159_sample_start_] 
+      $T[MUX_159_sample_completed_] 
+      $T[MUX_159_update_start_] 
+      $T[MUX_159_update_completed_] 
+      // is_sub_117_delayed_24
+      $T[R_is_sub_117_delayed_24_153_sample_start_] 
+      $T[R_is_sub_117_delayed_24_153_sample_completed_] 
+      $T[R_is_sub_117_delayed_24_153_update_start_] 
+      $T[R_is_sub_117_delayed_24_153_update_completed_] 
+      // implicit reference
+      R_is_sub_117_delayed_24_153_sample_start_ <-& (assign_stmt_146_update_completed_)
+      R_is_sub_117_delayed_24_153_sample_completed_ <-& (R_is_sub_117_delayed_24_153_sample_start_)
+      R_is_sub_117_delayed_24_153_update_start_ <-& (R_is_sub_117_delayed_24_153_sample_completed_)
+      R_is_sub_117_delayed_24_153_update_completed_ <-& (R_is_sub_117_delayed_24_153_update_start_)
+      // osub
+      $T[R_osub_154_sample_start_] 
+      $T[R_osub_154_sample_completed_] 
+      $T[R_osub_154_update_start_] 
+      $T[R_osub_154_update_completed_] 
+      // implicit reference
+      R_osub_154_sample_start_ <-& (SUB_f32_f32_126_update_completed_)
+      R_osub_154_sample_completed_ <-& (R_osub_154_sample_start_)
+      R_osub_154_update_start_ <-& (R_osub_154_sample_completed_)
+      R_osub_154_update_completed_ <-& (R_osub_154_update_start_)
+      // ( $mux is_mul_119_delayed_24 omul  0  ) 
+      $T[MUX_158_sample_start_] 
+      $T[MUX_158_sample_completed_] 
+      $T[MUX_158_update_start_] 
+      $T[MUX_158_update_completed_] 
+      // is_mul_119_delayed_24
+      $T[R_is_mul_119_delayed_24_155_sample_start_] 
+      $T[R_is_mul_119_delayed_24_155_sample_completed_] 
+      $T[R_is_mul_119_delayed_24_155_update_start_] 
+      $T[R_is_mul_119_delayed_24_155_update_completed_] 
+      // implicit reference
+      R_is_mul_119_delayed_24_155_sample_start_ <-& (assign_stmt_149_update_completed_)
+      R_is_mul_119_delayed_24_155_sample_completed_ <-& (R_is_mul_119_delayed_24_155_sample_start_)
+      R_is_mul_119_delayed_24_155_update_start_ <-& (R_is_mul_119_delayed_24_155_sample_completed_)
+      R_is_mul_119_delayed_24_155_update_completed_ <-& (R_is_mul_119_delayed_24_155_update_start_)
+      // omul
+      $T[R_omul_156_sample_start_] 
+      $T[R_omul_156_sample_completed_] 
+      $T[R_omul_156_update_start_] 
+      $T[R_omul_156_update_completed_] 
+      // implicit reference
+      R_omul_156_sample_start_ <-& (MUL_f32_f32_138_update_completed_)
+      R_omul_156_sample_completed_ <-& (R_omul_156_sample_start_)
+      R_omul_156_update_start_ <-& (R_omul_156_sample_completed_)
+      R_omul_156_update_completed_ <-& (R_omul_156_update_start_)
+      MUX_158_sample_start_ <-& (R_is_mul_119_delayed_24_155_update_completed_)
+      MUX_158_sample_start_ <-& (R_omul_156_update_completed_)
+      ;;[MUX_158_start] 
+      {
+        // ternary expression: 
+        $T [req] $T [ack] // sample req/ack
+      }
+      ;;[MUX_158_complete] 
+      {
+        // ternary expression: 
+        $T [req] $T [ack] // update req/ack
+      }
+      MUX_158_sample_start_ &-> (MUX_158_start)
+      MUX_158_sample_completed_ <-& (MUX_158_start)
+      MUX_158_update_start_ &-> (MUX_158_complete)
+      MUX_158_update_completed_ <-& (MUX_158_complete)
+      // flow-through
+      MUX_158_update_start_ <-& (MUX_158_sample_completed_)
+      MUX_159_sample_start_ <-& (R_is_sub_117_delayed_24_153_update_completed_)
+      MUX_159_sample_start_ <-& (R_osub_154_update_completed_)
+      MUX_159_sample_start_ <-& (MUX_158_update_completed_)
+      ;;[MUX_159_start] 
+      {
+        // ternary expression: 
+        $T [req] $T [ack] // sample req/ack
+      }
+      ;;[MUX_159_complete] 
+      {
+        // ternary expression: 
+        $T [req] $T [ack] // update req/ack
+      }
+      MUX_159_sample_start_ &-> (MUX_159_start)
+      MUX_159_sample_completed_ <-& (MUX_159_start)
+      MUX_159_update_start_ &-> (MUX_159_complete)
+      MUX_159_update_completed_ <-& (MUX_159_complete)
+      // flow-through
+      MUX_159_update_start_ <-& (MUX_159_sample_completed_)
+      MUX_160_sample_start_ <-& (R_is_add_115_delayed_24_151_update_completed_)
+      MUX_160_sample_start_ <-& (R_oadd_152_update_completed_)
+      MUX_160_sample_start_ <-& (MUX_159_update_completed_)
+      ;;[MUX_160_start] 
+      {
+        // ternary expression: 
+        $T [req] $T [ack] // sample req/ack
+      }
+      ;;[MUX_160_complete] 
+      {
+        // ternary expression: 
+        $T [req] $T [ack] // update req/ack
+      }
+      MUX_160_sample_start_ &-> (MUX_160_start)
+      MUX_160_sample_completed_ <-& (MUX_160_start)
+      MUX_160_update_start_ &-> (MUX_160_complete)
+      MUX_160_update_completed_ <-& (MUX_160_complete)
+      MUX_160_sample_completed_ &-> ($null)
+      // RAW reenables for is_add_115_delayed_24
+      assign_stmt_143_update_start_ o<-& (MUX_160_sample_completed_ 0)
+      // RAW reenables for oadd
+      ADD_f32_f32_114_update_start_ o<-& (MUX_160_sample_completed_ 0)
+      // RAW reenables for ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  ) 
+      SUB_f32_f32_126_update_start_ o<-& (MUX_160_sample_completed_ 0)
+      assign_stmt_149_update_start_ o<-& (MUX_160_sample_completed_ 0)
+      MUL_f32_f32_138_update_start_ o<-& (MUX_160_sample_completed_ 0)
+      assign_stmt_146_update_start_ o<-& (MUX_160_sample_completed_ 0)
+      // self-release: 
+      MUX_160_sample_start_ o<-& (MUX_160_sample_completed_ 1)
+      MUX_160_update_start_ o<-& (MUX_160_update_completed_ 0)
+      // Target expression
+      // (as target) ret_val_x_x
+      // ret_val_x_x
+      // write to interface object
+      MUX_160_update_start_ <-& (ret_val_x_x_update_enable)
+      // load-store dependencies..
+    }
+    ( ret_val_x_x_update_enable_in)
+    ( L_update_enable_out R_update_enable_out OP_ID_update_enable_out)
+    $P [L_update_enable] 
+    $P [R_update_enable] 
+    $P [OP_ID_update_enable] 
+    $P [ret_val_x_x_update_enable] 
+    $bind L_update_enable <= assign_stmt_82_to_assign_stmt_161:L_update_enable_out
+    $bind R_update_enable <= assign_stmt_82_to_assign_stmt_161:R_update_enable_out
+    $bind OP_ID_update_enable <= assign_stmt_82_to_assign_stmt_161:OP_ID_update_enable_out
+    $bind ret_val_x_x_update_enable => assign_stmt_82_to_assign_stmt_161:ret_val_x_x_update_enable_in
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %fpu32
+    //  file prog.linked.opt.aa, line 50
+    // ADDOP
+    $constant $W[R_ADDOP_85_wire_constant] : $int<8> := _b00000000// 0
+    // SUBOP
+    $constant $W[R_SUBOP_94_wire_constant] : $int<8> := _b00000001// 1
+    // MULOP
+    $constant $W[R_MULOP_102_wire_constant] : $int<8> := _b00000010// 2
+    // ( $mux is_add_115_delayed_24 oadd  ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  )  ) 
+    // ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  ) 
+    // ( $mux is_mul_119_delayed_24 omul  0  ) 
+    // 0 
+    $constant $W[expr_157_wire_constant] : $float<8,23> := _b00000000000000000000000000000000// 0.000000e+00
+    // 	OP_ID_81_delayed_1 := OP_ID
+    //  file prog.linked.opt.aa, line 55
+    // OP_ID_81_delayed_1
+    $W[OP_ID_81_delayed_1_82] : $int<8>
+    // 	is_add := (OP_ID_81_delayed_1 == ADDOP)
+    //  file prog.linked.opt.aa, line 56
+    // is_add
+    $W[is_add_88] : $int<1>
+    // 	OP_ID_87_delayed_1 := OP_ID
+    //  file prog.linked.opt.aa, line 57
+    // OP_ID_87_delayed_1
+    $W[OP_ID_87_delayed_1_91] : $int<8>
+    // 	is_sub := (OP_ID_87_delayed_1 == SUBOP)
+    //  file prog.linked.opt.aa, line 58
+    // is_sub
+    $W[is_sub_96] : $int<1>
+    // 	OP_ID_92_delayed_1 := OP_ID
+    //  file prog.linked.opt.aa, line 59
+    // OP_ID_92_delayed_1
+    $W[OP_ID_92_delayed_1_99] : $int<8>
+    // 	is_mul := (OP_ID_92_delayed_1 == MULOP)
+    //  file prog.linked.opt.aa, line 60
+    // is_mul
+    $W[is_mul_104] : $int<1>
+    // 	L_97_delayed_2 := L $buffering 2
+    //  file prog.linked.opt.aa, line 61
+    // L_97_delayed_2
+    $W[L_97_delayed_2_107] : $float<8,23>
+    // 	R_98_delayed_2 := R $buffering 2
+    //  file prog.linked.opt.aa, line 62
+    // R_98_delayed_2
+    $W[R_98_delayed_2_110] : $float<8,23>
+    // 	$guard (is_add) oadd := (L_97_delayed_2 + R_98_delayed_2)
+    //  file prog.linked.opt.aa, line 63
+    // oadd
+    $W[oadd_115] : $float<8,23>
+    // 	L_103_delayed_2 := L $buffering 2
+    //  file prog.linked.opt.aa, line 64
+    // L_103_delayed_2
+    $W[L_103_delayed_2_119] : $float<8,23>
+    // 	R_104_delayed_2 := R $buffering 2
+    //  file prog.linked.opt.aa, line 65
+    // R_104_delayed_2
+    $W[R_104_delayed_2_122] : $float<8,23>
+    // 	$guard (is_sub) osub := (L_103_delayed_2 - R_104_delayed_2)
+    //  file prog.linked.opt.aa, line 66
+    // osub
+    $W[osub_127] : $float<8,23>
+    // 	L_109_delayed_2 := L $buffering 2
+    //  file prog.linked.opt.aa, line 67
+    // L_109_delayed_2
+    $W[L_109_delayed_2_131] : $float<8,23>
+    // 	R_110_delayed_2 := R $buffering 2
+    //  file prog.linked.opt.aa, line 68
+    // R_110_delayed_2
+    $W[R_110_delayed_2_134] : $float<8,23>
+    // 	$guard (is_mul) omul := (L_109_delayed_2 * R_110_delayed_2)
+    //  file prog.linked.opt.aa, line 69
+    // omul
+    $W[omul_139] : $float<8,23>
+    // 	is_add_115_delayed_24 := is_add $buffering 24
+    //  file prog.linked.opt.aa, line 70
+    // is_add_115_delayed_24
+    $W[is_add_115_delayed_24_143] : $int<1>
+    // 	is_sub_117_delayed_24 := is_sub $buffering 24
+    //  file prog.linked.opt.aa, line 71
+    // is_sub_117_delayed_24
+    $W[is_sub_117_delayed_24_146] : $int<1>
+    // 	is_mul_119_delayed_24 := is_mul $buffering 24
+    //  file prog.linked.opt.aa, line 72
+    // is_mul_119_delayed_24
+    $W[is_mul_119_delayed_24_149] : $int<1>
+    // 	ret_val_x_x := ( $mux is_add_115_delayed_24 oadd  ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  )  ) 
+    //  file prog.linked.opt.aa, line 73
+    // ( $mux is_mul_119_delayed_24 omul  0  ) 
+    $intermediate $W[MUX_158_wire] : $float<8,23>
+    // ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  ) 
+    $intermediate $W[MUX_159_wire] : $float<8,23>
+    // ret_val_x_x
+    // 	OP_ID_81_delayed_1 := OP_ID
+    //  file prog.linked.opt.aa, line 55
+    # := [W_OP_ID_81_delayed_1_80_inst] (OP_ID) (OP_ID_81_delayed_1_82) 
+    $buffering  $in W_OP_ID_81_delayed_1_80_inst OP_ID 2
+    $buffering  $out W_OP_ID_81_delayed_1_80_inst OP_ID_81_delayed_1_82 2
+    // 	is_add := (OP_ID_81_delayed_1 == ADDOP)
+    //  file prog.linked.opt.aa, line 56
+    // (OP_ID_81_delayed_1 == ADDOP)
+    ==[EQ_u8_u1_86_inst] (OP_ID_81_delayed_1_82 R_ADDOP_85_wire_constant) (is_add_88) 
+    $buffering  $in EQ_u8_u1_86_inst OP_ID_81_delayed_1_82 2
+    $buffering  $in EQ_u8_u1_86_inst R_ADDOP_85_wire_constant 2
+    $buffering  $out EQ_u8_u1_86_inst is_add_88 2
+    $delay EQ_u8_u1_86_inst 1
+    // 	OP_ID_87_delayed_1 := OP_ID
+    //  file prog.linked.opt.aa, line 57
+    # := [W_OP_ID_87_delayed_1_89_inst] (OP_ID) (OP_ID_87_delayed_1_91) 
+    $buffering  $in W_OP_ID_87_delayed_1_89_inst OP_ID 2
+    $buffering  $out W_OP_ID_87_delayed_1_89_inst OP_ID_87_delayed_1_91 2
+    // 	is_sub := (OP_ID_87_delayed_1 == SUBOP)
+    //  file prog.linked.opt.aa, line 58
+    // (OP_ID_87_delayed_1 == SUBOP)
+    ==[EQ_u8_u1_95_inst] (OP_ID_87_delayed_1_91 R_SUBOP_94_wire_constant) (is_sub_96) 
+    $buffering  $in EQ_u8_u1_95_inst OP_ID_87_delayed_1_91 2
+    $buffering  $in EQ_u8_u1_95_inst R_SUBOP_94_wire_constant 2
+    $buffering  $out EQ_u8_u1_95_inst is_sub_96 2
+    $delay EQ_u8_u1_95_inst 1
+    // 	OP_ID_92_delayed_1 := OP_ID
+    //  file prog.linked.opt.aa, line 59
+    # := [W_OP_ID_92_delayed_1_97_inst] (OP_ID) (OP_ID_92_delayed_1_99) 
+    $buffering  $in W_OP_ID_92_delayed_1_97_inst OP_ID 2
+    $buffering  $out W_OP_ID_92_delayed_1_97_inst OP_ID_92_delayed_1_99 2
+    // 	is_mul := (OP_ID_92_delayed_1 == MULOP)
+    //  file prog.linked.opt.aa, line 60
+    // (OP_ID_92_delayed_1 == MULOP)
+    ==[EQ_u8_u1_103_inst] (OP_ID_92_delayed_1_99 R_MULOP_102_wire_constant) (is_mul_104) 
+    $buffering  $in EQ_u8_u1_103_inst OP_ID_92_delayed_1_99 2
+    $buffering  $in EQ_u8_u1_103_inst R_MULOP_102_wire_constant 2
+    $buffering  $out EQ_u8_u1_103_inst is_mul_104 2
+    $delay EQ_u8_u1_103_inst 1
+    // 	L_97_delayed_2 := L $buffering 2
+    //  file prog.linked.opt.aa, line 61
+    # := [W_L_97_delayed_2_105_inst] (L) (L_97_delayed_2_107) 
+    $buffering  $in W_L_97_delayed_2_105_inst L 2
+    $buffering  $out W_L_97_delayed_2_105_inst L_97_delayed_2_107 2
+    // 	R_98_delayed_2 := R $buffering 2
+    //  file prog.linked.opt.aa, line 62
+    # := [W_R_98_delayed_2_108_inst] (R) (R_98_delayed_2_110) 
+    $buffering  $in W_R_98_delayed_2_108_inst R 2
+    $buffering  $out W_R_98_delayed_2_108_inst R_98_delayed_2_110 2
+    // 	$guard (is_add) oadd := (L_97_delayed_2 + R_98_delayed_2)
+    //  file prog.linked.opt.aa, line 63
+    // (L_97_delayed_2 + R_98_delayed_2)
+    +[ADD_f32_f32_114_inst] (L_97_delayed_2_107 R_98_delayed_2_110) (oadd_115) $guard ( is_add_88 ) 
+    $buffering  $in ADD_f32_f32_114_inst L_97_delayed_2_107 2
+    $buffering  $in ADD_f32_f32_114_inst R_98_delayed_2_110 2
+    $buffering  $out ADD_f32_f32_114_inst oadd_115 2
+    $delay ADD_f32_f32_114_inst 24
+    // 	L_103_delayed_2 := L $buffering 2
+    //  file prog.linked.opt.aa, line 64
+    # := [W_L_103_delayed_2_117_inst] (L) (L_103_delayed_2_119) 
+    $buffering  $in W_L_103_delayed_2_117_inst L 2
+    $buffering  $out W_L_103_delayed_2_117_inst L_103_delayed_2_119 2
+    // 	R_104_delayed_2 := R $buffering 2
+    //  file prog.linked.opt.aa, line 65
+    # := [W_R_104_delayed_2_120_inst] (R) (R_104_delayed_2_122) 
+    $buffering  $in W_R_104_delayed_2_120_inst R 2
+    $buffering  $out W_R_104_delayed_2_120_inst R_104_delayed_2_122 2
+    // 	$guard (is_sub) osub := (L_103_delayed_2 - R_104_delayed_2)
+    //  file prog.linked.opt.aa, line 66
+    // (L_103_delayed_2 - R_104_delayed_2)
+    -[SUB_f32_f32_126_inst] (L_103_delayed_2_119 R_104_delayed_2_122) (osub_127) $guard ( is_sub_96 ) 
+    $buffering  $in SUB_f32_f32_126_inst L_103_delayed_2_119 2
+    $buffering  $in SUB_f32_f32_126_inst R_104_delayed_2_122 2
+    $buffering  $out SUB_f32_f32_126_inst osub_127 2
+    $delay SUB_f32_f32_126_inst 24
+    // 	L_109_delayed_2 := L $buffering 2
+    //  file prog.linked.opt.aa, line 67
+    # := [W_L_109_delayed_2_129_inst] (L) (L_109_delayed_2_131) 
+    $buffering  $in W_L_109_delayed_2_129_inst L 2
+    $buffering  $out W_L_109_delayed_2_129_inst L_109_delayed_2_131 2
+    // 	R_110_delayed_2 := R $buffering 2
+    //  file prog.linked.opt.aa, line 68
+    # := [W_R_110_delayed_2_132_inst] (R) (R_110_delayed_2_134) 
+    $buffering  $in W_R_110_delayed_2_132_inst R 2
+    $buffering  $out W_R_110_delayed_2_132_inst R_110_delayed_2_134 2
+    // 	$guard (is_mul) omul := (L_109_delayed_2 * R_110_delayed_2)
+    //  file prog.linked.opt.aa, line 69
+    // (L_109_delayed_2 * R_110_delayed_2)
+    *[MUL_f32_f32_138_inst] (L_109_delayed_2_131 R_110_delayed_2_134) (omul_139) $guard ( is_mul_104 ) 
+    $buffering  $in MUL_f32_f32_138_inst L_109_delayed_2_131 2
+    $buffering  $in MUL_f32_f32_138_inst R_110_delayed_2_134 2
+    $buffering  $out MUL_f32_f32_138_inst omul_139 2
+    $delay MUL_f32_f32_138_inst 24
+    // 	is_add_115_delayed_24 := is_add $buffering 24
+    //  file prog.linked.opt.aa, line 70
+    # := [W_is_add_115_delayed_24_141_inst] (is_add_88) (is_add_115_delayed_24_143) 
+    $buffering  $in W_is_add_115_delayed_24_141_inst is_add_88 24
+    $buffering  $out W_is_add_115_delayed_24_141_inst is_add_115_delayed_24_143 2
+    // 	is_sub_117_delayed_24 := is_sub $buffering 24
+    //  file prog.linked.opt.aa, line 71
+    # := [W_is_sub_117_delayed_24_144_inst] (is_sub_96) (is_sub_117_delayed_24_146) 
+    $buffering  $in W_is_sub_117_delayed_24_144_inst is_sub_96 24
+    $buffering  $out W_is_sub_117_delayed_24_144_inst is_sub_117_delayed_24_146 2
+    // 	is_mul_119_delayed_24 := is_mul $buffering 24
+    //  file prog.linked.opt.aa, line 72
+    # := [W_is_mul_119_delayed_24_147_inst] (is_mul_104) (is_mul_119_delayed_24_149) 
+    $buffering  $in W_is_mul_119_delayed_24_147_inst is_mul_104 24
+    $buffering  $out W_is_mul_119_delayed_24_147_inst is_mul_119_delayed_24_149 2
+    // 	ret_val_x_x := ( $mux is_add_115_delayed_24 oadd  ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  )  ) 
+    //  file prog.linked.opt.aa, line 73
+    // ( $mux is_mul_119_delayed_24 omul  0  ) 
+    ? [MUX_158_inst] (is_mul_119_delayed_24_149 omul_139 expr_157_wire_constant) (MUX_158_wire)  $flowthrough
+    $buffering  $in MUX_158_inst is_mul_119_delayed_24_149 2
+    $buffering  $in MUX_158_inst omul_139 2
+    $buffering  $in MUX_158_inst expr_157_wire_constant 2
+    $buffering  $out MUX_158_inst MUX_158_wire 2
+    // ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  ) 
+    ? [MUX_159_inst] (is_sub_117_delayed_24_146 osub_127 MUX_158_wire) (MUX_159_wire)  $flowthrough
+    $buffering  $in MUX_159_inst is_sub_117_delayed_24_146 2
+    $buffering  $in MUX_159_inst osub_127 2
+    $buffering  $in MUX_159_inst MUX_158_wire 2
+    $buffering  $out MUX_159_inst MUX_159_wire 2
+    // ( $mux is_add_115_delayed_24 oadd  ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  )  ) 
+    ? [MUX_160_inst] (is_add_115_delayed_24_143 oadd_115 MUX_159_wire) (ret_val_x_x) 
+    $buffering  $in MUX_160_inst is_add_115_delayed_24_143 2
+    $buffering  $in MUX_160_inst oadd_115 2
+    $buffering  $in MUX_160_inst MUX_159_wire 2
+    $buffering  $out MUX_160_inst ret_val_x_x 2
+  }
+  // end data-path
+  // 	OP_ID_81_delayed_1 := OP_ID
+  //  file prog.linked.opt.aa, line 55
+  W_OP_ID_81_delayed_1_80_inst <=> (assign_stmt_82_to_assign_stmt_161/assign_stmt_82_Sample/req assign_stmt_82_to_assign_stmt_161/assign_stmt_82_Update/req) (assign_stmt_82_to_assign_stmt_161/assign_stmt_82_Sample/ack assign_stmt_82_to_assign_stmt_161/assign_stmt_82_Update/ack)
+  // 	is_add := (OP_ID_81_delayed_1 == ADDOP)
+  //  file prog.linked.opt.aa, line 56
+  // (OP_ID_81_delayed_1 == ADDOP)
+  EQ_u8_u1_86_inst <=> (assign_stmt_82_to_assign_stmt_161/EQ_u8_u1_86_Sample/rr assign_stmt_82_to_assign_stmt_161/EQ_u8_u1_86_Update/cr) (assign_stmt_82_to_assign_stmt_161/EQ_u8_u1_86_Sample/ra assign_stmt_82_to_assign_stmt_161/EQ_u8_u1_86_Update/ca)
+  // 	OP_ID_87_delayed_1 := OP_ID
+  //  file prog.linked.opt.aa, line 57
+  W_OP_ID_87_delayed_1_89_inst <=> (assign_stmt_82_to_assign_stmt_161/assign_stmt_91_Sample/req assign_stmt_82_to_assign_stmt_161/assign_stmt_91_Update/req) (assign_stmt_82_to_assign_stmt_161/assign_stmt_91_Sample/ack assign_stmt_82_to_assign_stmt_161/assign_stmt_91_Update/ack)
+  // 	is_sub := (OP_ID_87_delayed_1 == SUBOP)
+  //  file prog.linked.opt.aa, line 58
+  // (OP_ID_87_delayed_1 == SUBOP)
+  EQ_u8_u1_95_inst <=> (assign_stmt_82_to_assign_stmt_161/EQ_u8_u1_95_Sample/rr assign_stmt_82_to_assign_stmt_161/EQ_u8_u1_95_Update/cr) (assign_stmt_82_to_assign_stmt_161/EQ_u8_u1_95_Sample/ra assign_stmt_82_to_assign_stmt_161/EQ_u8_u1_95_Update/ca)
+  // 	OP_ID_92_delayed_1 := OP_ID
+  //  file prog.linked.opt.aa, line 59
+  W_OP_ID_92_delayed_1_97_inst <=> (assign_stmt_82_to_assign_stmt_161/assign_stmt_99_Sample/req assign_stmt_82_to_assign_stmt_161/assign_stmt_99_Update/req) (assign_stmt_82_to_assign_stmt_161/assign_stmt_99_Sample/ack assign_stmt_82_to_assign_stmt_161/assign_stmt_99_Update/ack)
+  // 	is_mul := (OP_ID_92_delayed_1 == MULOP)
+  //  file prog.linked.opt.aa, line 60
+  // (OP_ID_92_delayed_1 == MULOP)
+  EQ_u8_u1_103_inst <=> (assign_stmt_82_to_assign_stmt_161/EQ_u8_u1_103_Sample/rr assign_stmt_82_to_assign_stmt_161/EQ_u8_u1_103_Update/cr) (assign_stmt_82_to_assign_stmt_161/EQ_u8_u1_103_Sample/ra assign_stmt_82_to_assign_stmt_161/EQ_u8_u1_103_Update/ca)
+  // 	L_97_delayed_2 := L $buffering 2
+  //  file prog.linked.opt.aa, line 61
+  W_L_97_delayed_2_105_inst <=> (assign_stmt_82_to_assign_stmt_161/assign_stmt_107_Sample/req assign_stmt_82_to_assign_stmt_161/assign_stmt_107_Update/req) (assign_stmt_82_to_assign_stmt_161/assign_stmt_107_Sample/ack assign_stmt_82_to_assign_stmt_161/assign_stmt_107_Update/ack)
+  // 	R_98_delayed_2 := R $buffering 2
+  //  file prog.linked.opt.aa, line 62
+  W_R_98_delayed_2_108_inst <=> (assign_stmt_82_to_assign_stmt_161/assign_stmt_110_Sample/req assign_stmt_82_to_assign_stmt_161/assign_stmt_110_Update/req) (assign_stmt_82_to_assign_stmt_161/assign_stmt_110_Sample/ack assign_stmt_82_to_assign_stmt_161/assign_stmt_110_Update/ack)
+  // 	$guard (is_add) oadd := (L_97_delayed_2 + R_98_delayed_2)
+  //  file prog.linked.opt.aa, line 63
+  // (L_97_delayed_2 + R_98_delayed_2)
+  ADD_f32_f32_114_inst <=> (assign_stmt_82_to_assign_stmt_161/ADD_f32_f32_114_Sample/rr assign_stmt_82_to_assign_stmt_161/ADD_f32_f32_114_Update/cr) (assign_stmt_82_to_assign_stmt_161/ADD_f32_f32_114_Sample/ra assign_stmt_82_to_assign_stmt_161/ADD_f32_f32_114_Update/ca)
+  // 	L_103_delayed_2 := L $buffering 2
+  //  file prog.linked.opt.aa, line 64
+  W_L_103_delayed_2_117_inst <=> (assign_stmt_82_to_assign_stmt_161/assign_stmt_119_Sample/req assign_stmt_82_to_assign_stmt_161/assign_stmt_119_Update/req) (assign_stmt_82_to_assign_stmt_161/assign_stmt_119_Sample/ack assign_stmt_82_to_assign_stmt_161/assign_stmt_119_Update/ack)
+  // 	R_104_delayed_2 := R $buffering 2
+  //  file prog.linked.opt.aa, line 65
+  W_R_104_delayed_2_120_inst <=> (assign_stmt_82_to_assign_stmt_161/assign_stmt_122_Sample/req assign_stmt_82_to_assign_stmt_161/assign_stmt_122_Update/req) (assign_stmt_82_to_assign_stmt_161/assign_stmt_122_Sample/ack assign_stmt_82_to_assign_stmt_161/assign_stmt_122_Update/ack)
+  // 	$guard (is_sub) osub := (L_103_delayed_2 - R_104_delayed_2)
+  //  file prog.linked.opt.aa, line 66
+  // (L_103_delayed_2 - R_104_delayed_2)
+  SUB_f32_f32_126_inst <=> (assign_stmt_82_to_assign_stmt_161/SUB_f32_f32_126_Sample/rr assign_stmt_82_to_assign_stmt_161/SUB_f32_f32_126_Update/cr) (assign_stmt_82_to_assign_stmt_161/SUB_f32_f32_126_Sample/ra assign_stmt_82_to_assign_stmt_161/SUB_f32_f32_126_Update/ca)
+  // 	L_109_delayed_2 := L $buffering 2
+  //  file prog.linked.opt.aa, line 67
+  W_L_109_delayed_2_129_inst <=> (assign_stmt_82_to_assign_stmt_161/assign_stmt_131_Sample/req assign_stmt_82_to_assign_stmt_161/assign_stmt_131_Update/req) (assign_stmt_82_to_assign_stmt_161/assign_stmt_131_Sample/ack assign_stmt_82_to_assign_stmt_161/assign_stmt_131_Update/ack)
+  // 	R_110_delayed_2 := R $buffering 2
+  //  file prog.linked.opt.aa, line 68
+  W_R_110_delayed_2_132_inst <=> (assign_stmt_82_to_assign_stmt_161/assign_stmt_134_Sample/req assign_stmt_82_to_assign_stmt_161/assign_stmt_134_Update/req) (assign_stmt_82_to_assign_stmt_161/assign_stmt_134_Sample/ack assign_stmt_82_to_assign_stmt_161/assign_stmt_134_Update/ack)
+  // 	$guard (is_mul) omul := (L_109_delayed_2 * R_110_delayed_2)
+  //  file prog.linked.opt.aa, line 69
+  // (L_109_delayed_2 * R_110_delayed_2)
+  MUL_f32_f32_138_inst <=> (assign_stmt_82_to_assign_stmt_161/MUL_f32_f32_138_Sample/rr assign_stmt_82_to_assign_stmt_161/MUL_f32_f32_138_Update/cr) (assign_stmt_82_to_assign_stmt_161/MUL_f32_f32_138_Sample/ra assign_stmt_82_to_assign_stmt_161/MUL_f32_f32_138_Update/ca)
+  // 	is_add_115_delayed_24 := is_add $buffering 24
+  //  file prog.linked.opt.aa, line 70
+  W_is_add_115_delayed_24_141_inst <=> (assign_stmt_82_to_assign_stmt_161/assign_stmt_143_Sample/req assign_stmt_82_to_assign_stmt_161/assign_stmt_143_Update/req) (assign_stmt_82_to_assign_stmt_161/assign_stmt_143_Sample/ack assign_stmt_82_to_assign_stmt_161/assign_stmt_143_Update/ack)
+  // 	is_sub_117_delayed_24 := is_sub $buffering 24
+  //  file prog.linked.opt.aa, line 71
+  W_is_sub_117_delayed_24_144_inst <=> (assign_stmt_82_to_assign_stmt_161/assign_stmt_146_Sample/req assign_stmt_82_to_assign_stmt_161/assign_stmt_146_Update/req) (assign_stmt_82_to_assign_stmt_161/assign_stmt_146_Sample/ack assign_stmt_82_to_assign_stmt_161/assign_stmt_146_Update/ack)
+  // 	is_mul_119_delayed_24 := is_mul $buffering 24
+  //  file prog.linked.opt.aa, line 72
+  W_is_mul_119_delayed_24_147_inst <=> (assign_stmt_82_to_assign_stmt_161/assign_stmt_149_Sample/req assign_stmt_82_to_assign_stmt_161/assign_stmt_149_Update/req) (assign_stmt_82_to_assign_stmt_161/assign_stmt_149_Sample/ack assign_stmt_82_to_assign_stmt_161/assign_stmt_149_Update/ack)
+  // 	ret_val_x_x := ( $mux is_add_115_delayed_24 oadd  ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  )  ) 
+  //  file prog.linked.opt.aa, line 73
+  // ( $mux is_mul_119_delayed_24 omul  0  ) 
+  MUX_158_inst <=> (assign_stmt_82_to_assign_stmt_161/MUX_158_start/req assign_stmt_82_to_assign_stmt_161/MUX_158_complete/req) (assign_stmt_82_to_assign_stmt_161/MUX_158_start/ack assign_stmt_82_to_assign_stmt_161/MUX_158_complete/ack)
+  // ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  ) 
+  MUX_159_inst <=> (assign_stmt_82_to_assign_stmt_161/MUX_159_start/req assign_stmt_82_to_assign_stmt_161/MUX_159_complete/req) (assign_stmt_82_to_assign_stmt_161/MUX_159_start/ack assign_stmt_82_to_assign_stmt_161/MUX_159_complete/ack)
+  // ( $mux is_add_115_delayed_24 oadd  ( $mux is_sub_117_delayed_24 osub  ( $mux is_mul_119_delayed_24 omul  0  )  )  ) 
+  MUX_160_inst <=> (assign_stmt_82_to_assign_stmt_161/MUX_160_start/req assign_stmt_82_to_assign_stmt_161/MUX_160_complete/req) (assign_stmt_82_to_assign_stmt_161/MUX_160_start/ack assign_stmt_82_to_assign_stmt_161/MUX_160_complete/ack)
+}
+$pipeline $depth 1 $buffering 1 $fullrate $module [fpu64] 
+{
+  $in L:$float<11,52>
+  // can point into  foreign( $void )
+  R:$float<11,52>
+  // can point into  foreign( $void )
+  OP_ID:$int<8>
+  // can point into  foreign( $void )
+  $out ret_val_x_x:$float<11,52>
+  // can point into  foreign( $void )
+  // pipe-declarations for block %fpu64
+  //  file prog.linked.opt.aa, line 75
+  $CP 
+  {
+    // begin control-path 
+    // pipelined module
+    :o:[assign_stmt_170_to_assign_stmt_248] 
+    {
+      $T [L_update_enable] 
+      $T [L_update_enable_out] 
+      L_update_enable &-> (L_update_enable_out)
+      $null &-> (L_update_enable)
+      $T [R_update_enable] 
+      $T [R_update_enable_out] 
+      R_update_enable &-> (R_update_enable_out)
+      $null &-> (R_update_enable)
+      $T [OP_ID_update_enable] 
+      $T [OP_ID_update_enable_out] 
+      OP_ID_update_enable &-> (OP_ID_update_enable_out)
+      $null &-> (OP_ID_update_enable)
+      $T [ret_val_x_x_update_enable] 
+      $T [ret_val_x_x_update_enable_in] 
+      $null &-> (ret_val_x_x_update_enable)
+      $null <-& (ret_val_x_x_update_enable_in) 
+      $null &-> (ret_val_x_x_update_enable)
+      ret_val_x_x_update_enable o<-& (ret_val_x_x_update_enable_in  0) 
+      // 	OP_ID_133_delayed_1 := OP_ID
+      //  file prog.linked.opt.aa, line 80
+      // Source expression
+      // OP_ID
+      $T[R_OP_ID_169_sample_start_] 
+      $T[R_OP_ID_169_sample_completed_] 
+      $T[R_OP_ID_169_update_start_] 
+      $T[R_OP_ID_169_update_completed_] 
+      // reference to interface object
+      R_OP_ID_169_sample_start_ <-& ($entry)
+      R_OP_ID_169_sample_completed_ <-& (R_OP_ID_169_sample_start_)
+      R_OP_ID_169_update_start_ <-& (R_OP_ID_169_sample_completed_)
+      R_OP_ID_169_update_completed_ <-& (R_OP_ID_169_update_start_)
+      R_OP_ID_169_sample_start_ <-& (OP_ID_update_enable)
+      // Target expression
+      // (as target) OP_ID_133_delayed_1
+      // OP_ID_133_delayed_1
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_170_sample_start_] 
+      $T[assign_stmt_170_sample_completed_] 
+      $T[assign_stmt_170_update_start_] 
+      $T[assign_stmt_170_update_completed_] 
+      ;;[assign_stmt_170_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_170_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_170_sample_start_ &-> (assign_stmt_170_Sample)
+      assign_stmt_170_sample_completed_ <-& (assign_stmt_170_Sample)
+      assign_stmt_170_sample_completed_ &-> ($null)
+      assign_stmt_170_update_start_ &-> (assign_stmt_170_Update)
+      assign_stmt_170_update_completed_ <-& (assign_stmt_170_Update)
+      assign_stmt_170_sample_start_ <-& (R_OP_ID_169_update_completed_)
+      // RAW reenables for OP_ID
+      OP_ID_update_enable o<-& (assign_stmt_170_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_170_sample_start_ o<-& (assign_stmt_170_sample_completed_ 1)
+      assign_stmt_170_update_start_ o<-& (assign_stmt_170_update_completed_ 0)
+      // 	is_add := (OP_ID_133_delayed_1 == ADDOP)
+      //  file prog.linked.opt.aa, line 81
+      // Source expression
+      // (OP_ID_133_delayed_1 == ADDOP)
+      $T[EQ_u8_u1_174_sample_start_] 
+      $T[EQ_u8_u1_174_sample_completed_] 
+      $T[EQ_u8_u1_174_update_start_] 
+      $T[EQ_u8_u1_174_update_completed_] 
+      // OP_ID_133_delayed_1
+      $T[R_OP_ID_133_delayed_1_172_sample_start_] 
+      $T[R_OP_ID_133_delayed_1_172_sample_completed_] 
+      $T[R_OP_ID_133_delayed_1_172_update_start_] 
+      $T[R_OP_ID_133_delayed_1_172_update_completed_] 
+      // implicit reference
+      R_OP_ID_133_delayed_1_172_sample_start_ <-& (assign_stmt_170_update_completed_)
+      R_OP_ID_133_delayed_1_172_sample_completed_ <-& (R_OP_ID_133_delayed_1_172_sample_start_)
+      R_OP_ID_133_delayed_1_172_update_start_ <-& (R_OP_ID_133_delayed_1_172_sample_completed_)
+      R_OP_ID_133_delayed_1_172_update_completed_ <-& (R_OP_ID_133_delayed_1_172_update_start_)
+      EQ_u8_u1_174_sample_start_ <-& (R_OP_ID_133_delayed_1_172_update_completed_)
+      ;;[EQ_u8_u1_174_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[EQ_u8_u1_174_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      EQ_u8_u1_174_sample_start_ &-> (EQ_u8_u1_174_Sample)
+      EQ_u8_u1_174_sample_completed_ <-& (EQ_u8_u1_174_Sample)
+      EQ_u8_u1_174_sample_completed_ &-> ($null)
+      EQ_u8_u1_174_update_start_ &-> (EQ_u8_u1_174_Update)
+      EQ_u8_u1_174_update_completed_ <-& (EQ_u8_u1_174_Update)
+      // RAW reenables for OP_ID_133_delayed_1
+      assign_stmt_170_update_start_ o<-& (EQ_u8_u1_174_sample_completed_ 0)
+      // self-release: 
+      EQ_u8_u1_174_sample_start_ o<-& (EQ_u8_u1_174_sample_completed_ 1)
+      EQ_u8_u1_174_update_start_ o<-& (EQ_u8_u1_174_update_completed_ 0)
+      // Target expression
+      // (as target) is_add
+      // is_add
+      // implicit reference
+      // 	OP_ID_138_delayed_1 := OP_ID
+      //  file prog.linked.opt.aa, line 82
+      // Source expression
+      // OP_ID
+      $T[R_OP_ID_177_sample_start_] 
+      $T[R_OP_ID_177_sample_completed_] 
+      $T[R_OP_ID_177_update_start_] 
+      $T[R_OP_ID_177_update_completed_] 
+      // reference to interface object
+      R_OP_ID_177_sample_start_ <-& ($entry)
+      R_OP_ID_177_sample_completed_ <-& (R_OP_ID_177_sample_start_)
+      R_OP_ID_177_update_start_ <-& (R_OP_ID_177_sample_completed_)
+      R_OP_ID_177_update_completed_ <-& (R_OP_ID_177_update_start_)
+      R_OP_ID_177_sample_start_ <-& (OP_ID_update_enable)
+      // Target expression
+      // (as target) OP_ID_138_delayed_1
+      // OP_ID_138_delayed_1
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_178_sample_start_] 
+      $T[assign_stmt_178_sample_completed_] 
+      $T[assign_stmt_178_update_start_] 
+      $T[assign_stmt_178_update_completed_] 
+      ;;[assign_stmt_178_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_178_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_178_sample_start_ &-> (assign_stmt_178_Sample)
+      assign_stmt_178_sample_completed_ <-& (assign_stmt_178_Sample)
+      assign_stmt_178_sample_completed_ &-> ($null)
+      assign_stmt_178_update_start_ &-> (assign_stmt_178_Update)
+      assign_stmt_178_update_completed_ <-& (assign_stmt_178_Update)
+      assign_stmt_178_sample_start_ <-& (R_OP_ID_177_update_completed_)
+      // RAW reenables for OP_ID
+      OP_ID_update_enable o<-& (assign_stmt_178_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_178_sample_start_ o<-& (assign_stmt_178_sample_completed_ 1)
+      assign_stmt_178_update_start_ o<-& (assign_stmt_178_update_completed_ 0)
+      // 	is_sub := (OP_ID_138_delayed_1 == SUBOP)
+      //  file prog.linked.opt.aa, line 83
+      // Source expression
+      // (OP_ID_138_delayed_1 == SUBOP)
+      $T[EQ_u8_u1_182_sample_start_] 
+      $T[EQ_u8_u1_182_sample_completed_] 
+      $T[EQ_u8_u1_182_update_start_] 
+      $T[EQ_u8_u1_182_update_completed_] 
+      // OP_ID_138_delayed_1
+      $T[R_OP_ID_138_delayed_1_180_sample_start_] 
+      $T[R_OP_ID_138_delayed_1_180_sample_completed_] 
+      $T[R_OP_ID_138_delayed_1_180_update_start_] 
+      $T[R_OP_ID_138_delayed_1_180_update_completed_] 
+      // implicit reference
+      R_OP_ID_138_delayed_1_180_sample_start_ <-& (assign_stmt_178_update_completed_)
+      R_OP_ID_138_delayed_1_180_sample_completed_ <-& (R_OP_ID_138_delayed_1_180_sample_start_)
+      R_OP_ID_138_delayed_1_180_update_start_ <-& (R_OP_ID_138_delayed_1_180_sample_completed_)
+      R_OP_ID_138_delayed_1_180_update_completed_ <-& (R_OP_ID_138_delayed_1_180_update_start_)
+      EQ_u8_u1_182_sample_start_ <-& (R_OP_ID_138_delayed_1_180_update_completed_)
+      ;;[EQ_u8_u1_182_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[EQ_u8_u1_182_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      EQ_u8_u1_182_sample_start_ &-> (EQ_u8_u1_182_Sample)
+      EQ_u8_u1_182_sample_completed_ <-& (EQ_u8_u1_182_Sample)
+      EQ_u8_u1_182_sample_completed_ &-> ($null)
+      EQ_u8_u1_182_update_start_ &-> (EQ_u8_u1_182_Update)
+      EQ_u8_u1_182_update_completed_ <-& (EQ_u8_u1_182_Update)
+      // RAW reenables for OP_ID_138_delayed_1
+      assign_stmt_178_update_start_ o<-& (EQ_u8_u1_182_sample_completed_ 0)
+      // self-release: 
+      EQ_u8_u1_182_sample_start_ o<-& (EQ_u8_u1_182_sample_completed_ 1)
+      EQ_u8_u1_182_update_start_ o<-& (EQ_u8_u1_182_update_completed_ 0)
+      // Target expression
+      // (as target) is_sub
+      // is_sub
+      // implicit reference
+      // 	OP_ID_143_delayed_1 := OP_ID
+      //  file prog.linked.opt.aa, line 84
+      // Source expression
+      // OP_ID
+      $T[R_OP_ID_185_sample_start_] 
+      $T[R_OP_ID_185_sample_completed_] 
+      $T[R_OP_ID_185_update_start_] 
+      $T[R_OP_ID_185_update_completed_] 
+      // reference to interface object
+      R_OP_ID_185_sample_start_ <-& ($entry)
+      R_OP_ID_185_sample_completed_ <-& (R_OP_ID_185_sample_start_)
+      R_OP_ID_185_update_start_ <-& (R_OP_ID_185_sample_completed_)
+      R_OP_ID_185_update_completed_ <-& (R_OP_ID_185_update_start_)
+      R_OP_ID_185_sample_start_ <-& (OP_ID_update_enable)
+      // Target expression
+      // (as target) OP_ID_143_delayed_1
+      // OP_ID_143_delayed_1
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_186_sample_start_] 
+      $T[assign_stmt_186_sample_completed_] 
+      $T[assign_stmt_186_update_start_] 
+      $T[assign_stmt_186_update_completed_] 
+      ;;[assign_stmt_186_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_186_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_186_sample_start_ &-> (assign_stmt_186_Sample)
+      assign_stmt_186_sample_completed_ <-& (assign_stmt_186_Sample)
+      assign_stmt_186_sample_completed_ &-> ($null)
+      assign_stmt_186_update_start_ &-> (assign_stmt_186_Update)
+      assign_stmt_186_update_completed_ <-& (assign_stmt_186_Update)
+      assign_stmt_186_sample_start_ <-& (R_OP_ID_185_update_completed_)
+      // RAW reenables for OP_ID
+      OP_ID_update_enable o<-& (assign_stmt_186_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_186_sample_start_ o<-& (assign_stmt_186_sample_completed_ 1)
+      assign_stmt_186_update_start_ o<-& (assign_stmt_186_update_completed_ 0)
+      // 	is_mul := (OP_ID_143_delayed_1 == MULOP)
+      //  file prog.linked.opt.aa, line 85
+      // Source expression
+      // (OP_ID_143_delayed_1 == MULOP)
+      $T[EQ_u8_u1_190_sample_start_] 
+      $T[EQ_u8_u1_190_sample_completed_] 
+      $T[EQ_u8_u1_190_update_start_] 
+      $T[EQ_u8_u1_190_update_completed_] 
+      // OP_ID_143_delayed_1
+      $T[R_OP_ID_143_delayed_1_188_sample_start_] 
+      $T[R_OP_ID_143_delayed_1_188_sample_completed_] 
+      $T[R_OP_ID_143_delayed_1_188_update_start_] 
+      $T[R_OP_ID_143_delayed_1_188_update_completed_] 
+      // implicit reference
+      R_OP_ID_143_delayed_1_188_sample_start_ <-& (assign_stmt_186_update_completed_)
+      R_OP_ID_143_delayed_1_188_sample_completed_ <-& (R_OP_ID_143_delayed_1_188_sample_start_)
+      R_OP_ID_143_delayed_1_188_update_start_ <-& (R_OP_ID_143_delayed_1_188_sample_completed_)
+      R_OP_ID_143_delayed_1_188_update_completed_ <-& (R_OP_ID_143_delayed_1_188_update_start_)
+      EQ_u8_u1_190_sample_start_ <-& (R_OP_ID_143_delayed_1_188_update_completed_)
+      ;;[EQ_u8_u1_190_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[EQ_u8_u1_190_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      EQ_u8_u1_190_sample_start_ &-> (EQ_u8_u1_190_Sample)
+      EQ_u8_u1_190_sample_completed_ <-& (EQ_u8_u1_190_Sample)
+      EQ_u8_u1_190_sample_completed_ &-> ($null)
+      EQ_u8_u1_190_update_start_ &-> (EQ_u8_u1_190_Update)
+      EQ_u8_u1_190_update_completed_ <-& (EQ_u8_u1_190_Update)
+      // RAW reenables for OP_ID_143_delayed_1
+      assign_stmt_186_update_start_ o<-& (EQ_u8_u1_190_sample_completed_ 0)
+      // self-release: 
+      EQ_u8_u1_190_sample_start_ o<-& (EQ_u8_u1_190_sample_completed_ 1)
+      EQ_u8_u1_190_update_start_ o<-& (EQ_u8_u1_190_update_completed_ 0)
+      // Target expression
+      // (as target) is_mul
+      // is_mul
+      // implicit reference
+      // 	L_148_delayed_2 := L $buffering 2
+      //  file prog.linked.opt.aa, line 86
+      // Source expression
+      // L
+      $T[R_L_193_sample_start_] 
+      $T[R_L_193_sample_completed_] 
+      $T[R_L_193_update_start_] 
+      $T[R_L_193_update_completed_] 
+      // reference to interface object
+      R_L_193_sample_start_ <-& ($entry)
+      R_L_193_sample_completed_ <-& (R_L_193_sample_start_)
+      R_L_193_update_start_ <-& (R_L_193_sample_completed_)
+      R_L_193_update_completed_ <-& (R_L_193_update_start_)
+      R_L_193_sample_start_ <-& (L_update_enable)
+      // Target expression
+      // (as target) L_148_delayed_2
+      // L_148_delayed_2
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_194_sample_start_] 
+      $T[assign_stmt_194_sample_completed_] 
+      $T[assign_stmt_194_update_start_] 
+      $T[assign_stmt_194_update_completed_] 
+      ;;[assign_stmt_194_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_194_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_194_sample_start_ &-> (assign_stmt_194_Sample)
+      assign_stmt_194_sample_completed_ <-& (assign_stmt_194_Sample)
+      assign_stmt_194_sample_completed_ &-> ($null)
+      assign_stmt_194_update_start_ &-> (assign_stmt_194_Update)
+      assign_stmt_194_update_completed_ <-& (assign_stmt_194_Update)
+      assign_stmt_194_sample_start_ <-& (R_L_193_update_completed_)
+      // RAW reenables for L
+      L_update_enable o<-& (assign_stmt_194_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_194_sample_start_ o<-& (assign_stmt_194_sample_completed_ 1)
+      assign_stmt_194_update_start_ o<-& (assign_stmt_194_update_completed_ 0)
+      // 	R_149_delayed_2 := R $buffering 2
+      //  file prog.linked.opt.aa, line 87
+      // Source expression
+      // R
+      $T[R_R_196_sample_start_] 
+      $T[R_R_196_sample_completed_] 
+      $T[R_R_196_update_start_] 
+      $T[R_R_196_update_completed_] 
+      // reference to interface object
+      R_R_196_sample_start_ <-& ($entry)
+      R_R_196_sample_completed_ <-& (R_R_196_sample_start_)
+      R_R_196_update_start_ <-& (R_R_196_sample_completed_)
+      R_R_196_update_completed_ <-& (R_R_196_update_start_)
+      R_R_196_sample_start_ <-& (R_update_enable)
+      // Target expression
+      // (as target) R_149_delayed_2
+      // R_149_delayed_2
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_197_sample_start_] 
+      $T[assign_stmt_197_sample_completed_] 
+      $T[assign_stmt_197_update_start_] 
+      $T[assign_stmt_197_update_completed_] 
+      ;;[assign_stmt_197_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_197_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_197_sample_start_ &-> (assign_stmt_197_Sample)
+      assign_stmt_197_sample_completed_ <-& (assign_stmt_197_Sample)
+      assign_stmt_197_sample_completed_ &-> ($null)
+      assign_stmt_197_update_start_ &-> (assign_stmt_197_Update)
+      assign_stmt_197_update_completed_ <-& (assign_stmt_197_Update)
+      assign_stmt_197_sample_start_ <-& (R_R_196_update_completed_)
+      // RAW reenables for R
+      R_update_enable o<-& (assign_stmt_197_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_197_sample_start_ o<-& (assign_stmt_197_sample_completed_ 1)
+      assign_stmt_197_update_start_ o<-& (assign_stmt_197_update_completed_ 0)
+      // 	$guard (is_add) oadd := (L_148_delayed_2 + R_149_delayed_2)
+      //  file prog.linked.opt.aa, line 88
+      // Guard expression
+      // is_add
+      $T[R_is_add_203_sample_start_] 
+      $T[R_is_add_203_sample_completed_] 
+      $T[R_is_add_203_update_start_] 
+      $T[R_is_add_203_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_is_add_203_sample_start_ <-& (EQ_u8_u1_174_update_completed_)
+      // RAW reenables for is_add
+      EQ_u8_u1_174_update_start_ o<-& (R_is_add_203_sample_completed_ 0)
+      R_is_add_203_sample_start_ <-& (EQ_u8_u1_174_update_completed_)
+      R_is_add_203_sample_completed_ <-& (R_is_add_203_sample_start_)
+      R_is_add_203_update_start_ <-& (R_is_add_203_sample_completed_)
+      R_is_add_203_update_completed_ <-& (R_is_add_203_update_start_)
+      // Source expression
+      // (L_148_delayed_2 + R_149_delayed_2)
+      $T[ADD_f64_f64_201_sample_start_] 
+      $T[ADD_f64_f64_201_sample_completed_] 
+      $T[ADD_f64_f64_201_update_start_] 
+      $T[ADD_f64_f64_201_update_completed_] 
+      // Guard dependency
+      ADD_f64_f64_201_sample_start_ <-& (EQ_u8_u1_174_update_completed_)
+      // RAW reenables for is_add
+      EQ_u8_u1_174_update_start_ o<-& (ADD_f64_f64_201_sample_completed_ 0)
+      // L_148_delayed_2
+      $T[R_L_148_delayed_2_199_sample_start_] 
+      $T[R_L_148_delayed_2_199_sample_completed_] 
+      $T[R_L_148_delayed_2_199_update_start_] 
+      $T[R_L_148_delayed_2_199_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_L_148_delayed_2_199_sample_start_ <-& (EQ_u8_u1_174_update_completed_)
+      // RAW reenables for is_add
+      EQ_u8_u1_174_update_start_ o<-& (R_L_148_delayed_2_199_sample_completed_ 0)
+      R_L_148_delayed_2_199_sample_start_ <-& (assign_stmt_194_update_completed_)
+      R_L_148_delayed_2_199_sample_completed_ <-& (R_L_148_delayed_2_199_sample_start_)
+      R_L_148_delayed_2_199_update_start_ <-& (R_L_148_delayed_2_199_sample_completed_)
+      R_L_148_delayed_2_199_update_completed_ <-& (R_L_148_delayed_2_199_update_start_)
+      // R_149_delayed_2
+      $T[R_R_149_delayed_2_200_sample_start_] 
+      $T[R_R_149_delayed_2_200_sample_completed_] 
+      $T[R_R_149_delayed_2_200_update_start_] 
+      $T[R_R_149_delayed_2_200_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_R_149_delayed_2_200_sample_start_ <-& (EQ_u8_u1_174_update_completed_)
+      // RAW reenables for is_add
+      EQ_u8_u1_174_update_start_ o<-& (R_R_149_delayed_2_200_sample_completed_ 0)
+      R_R_149_delayed_2_200_sample_start_ <-& (assign_stmt_197_update_completed_)
+      R_R_149_delayed_2_200_sample_completed_ <-& (R_R_149_delayed_2_200_sample_start_)
+      R_R_149_delayed_2_200_update_start_ <-& (R_R_149_delayed_2_200_sample_completed_)
+      R_R_149_delayed_2_200_update_completed_ <-& (R_R_149_delayed_2_200_update_start_)
+      ADD_f64_f64_201_sample_start_ <-& (R_L_148_delayed_2_199_update_completed_)
+      ADD_f64_f64_201_sample_start_ <-& (R_R_149_delayed_2_200_update_completed_)
+      ;;[ADD_f64_f64_201_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[ADD_f64_f64_201_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      ADD_f64_f64_201_sample_start_ &-> (ADD_f64_f64_201_Sample)
+      ADD_f64_f64_201_sample_completed_ <-& (ADD_f64_f64_201_Sample)
+      ADD_f64_f64_201_sample_completed_ &-> ($null)
+      ADD_f64_f64_201_update_start_ &-> (ADD_f64_f64_201_Update)
+      ADD_f64_f64_201_update_completed_ <-& (ADD_f64_f64_201_Update)
+      // RAW reenables for L_148_delayed_2
+      assign_stmt_194_update_start_ o<-& (ADD_f64_f64_201_sample_completed_ 0)
+      // RAW reenables for R_149_delayed_2
+      assign_stmt_197_update_start_ o<-& (ADD_f64_f64_201_sample_completed_ 0)
+      // self-release: 
+      ADD_f64_f64_201_sample_start_ o<-& (ADD_f64_f64_201_sample_completed_ 1)
+      ADD_f64_f64_201_update_start_ o<-& (ADD_f64_f64_201_update_completed_ 0)
+      // Target expression
+      // (as target) oadd
+      // oadd
+      // implicit reference
+      // 	L_154_delayed_2 := L $buffering 2
+      //  file prog.linked.opt.aa, line 89
+      // Source expression
+      // L
+      $T[R_L_205_sample_start_] 
+      $T[R_L_205_sample_completed_] 
+      $T[R_L_205_update_start_] 
+      $T[R_L_205_update_completed_] 
+      // reference to interface object
+      R_L_205_sample_start_ <-& ($entry)
+      R_L_205_sample_completed_ <-& (R_L_205_sample_start_)
+      R_L_205_update_start_ <-& (R_L_205_sample_completed_)
+      R_L_205_update_completed_ <-& (R_L_205_update_start_)
+      R_L_205_sample_start_ <-& (L_update_enable)
+      // Target expression
+      // (as target) L_154_delayed_2
+      // L_154_delayed_2
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_206_sample_start_] 
+      $T[assign_stmt_206_sample_completed_] 
+      $T[assign_stmt_206_update_start_] 
+      $T[assign_stmt_206_update_completed_] 
+      ;;[assign_stmt_206_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_206_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_206_sample_start_ &-> (assign_stmt_206_Sample)
+      assign_stmt_206_sample_completed_ <-& (assign_stmt_206_Sample)
+      assign_stmt_206_sample_completed_ &-> ($null)
+      assign_stmt_206_update_start_ &-> (assign_stmt_206_Update)
+      assign_stmt_206_update_completed_ <-& (assign_stmt_206_Update)
+      assign_stmt_206_sample_start_ <-& (R_L_205_update_completed_)
+      // RAW reenables for L
+      L_update_enable o<-& (assign_stmt_206_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_206_sample_start_ o<-& (assign_stmt_206_sample_completed_ 1)
+      assign_stmt_206_update_start_ o<-& (assign_stmt_206_update_completed_ 0)
+      // 	R_155_delayed_2 := R $buffering 2
+      //  file prog.linked.opt.aa, line 90
+      // Source expression
+      // R
+      $T[R_R_208_sample_start_] 
+      $T[R_R_208_sample_completed_] 
+      $T[R_R_208_update_start_] 
+      $T[R_R_208_update_completed_] 
+      // reference to interface object
+      R_R_208_sample_start_ <-& ($entry)
+      R_R_208_sample_completed_ <-& (R_R_208_sample_start_)
+      R_R_208_update_start_ <-& (R_R_208_sample_completed_)
+      R_R_208_update_completed_ <-& (R_R_208_update_start_)
+      R_R_208_sample_start_ <-& (R_update_enable)
+      // Target expression
+      // (as target) R_155_delayed_2
+      // R_155_delayed_2
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_209_sample_start_] 
+      $T[assign_stmt_209_sample_completed_] 
+      $T[assign_stmt_209_update_start_] 
+      $T[assign_stmt_209_update_completed_] 
+      ;;[assign_stmt_209_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_209_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_209_sample_start_ &-> (assign_stmt_209_Sample)
+      assign_stmt_209_sample_completed_ <-& (assign_stmt_209_Sample)
+      assign_stmt_209_sample_completed_ &-> ($null)
+      assign_stmt_209_update_start_ &-> (assign_stmt_209_Update)
+      assign_stmt_209_update_completed_ <-& (assign_stmt_209_Update)
+      assign_stmt_209_sample_start_ <-& (R_R_208_update_completed_)
+      // RAW reenables for R
+      R_update_enable o<-& (assign_stmt_209_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_209_sample_start_ o<-& (assign_stmt_209_sample_completed_ 1)
+      assign_stmt_209_update_start_ o<-& (assign_stmt_209_update_completed_ 0)
+      // 	$guard (is_sub) osub := (L_154_delayed_2 - R_155_delayed_2)
+      //  file prog.linked.opt.aa, line 91
+      // Guard expression
+      // is_sub
+      $T[R_is_sub_215_sample_start_] 
+      $T[R_is_sub_215_sample_completed_] 
+      $T[R_is_sub_215_update_start_] 
+      $T[R_is_sub_215_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_is_sub_215_sample_start_ <-& (EQ_u8_u1_182_update_completed_)
+      // RAW reenables for is_sub
+      EQ_u8_u1_182_update_start_ o<-& (R_is_sub_215_sample_completed_ 0)
+      R_is_sub_215_sample_start_ <-& (EQ_u8_u1_182_update_completed_)
+      R_is_sub_215_sample_completed_ <-& (R_is_sub_215_sample_start_)
+      R_is_sub_215_update_start_ <-& (R_is_sub_215_sample_completed_)
+      R_is_sub_215_update_completed_ <-& (R_is_sub_215_update_start_)
+      // Source expression
+      // (L_154_delayed_2 - R_155_delayed_2)
+      $T[SUB_f64_f64_213_sample_start_] 
+      $T[SUB_f64_f64_213_sample_completed_] 
+      $T[SUB_f64_f64_213_update_start_] 
+      $T[SUB_f64_f64_213_update_completed_] 
+      // Guard dependency
+      SUB_f64_f64_213_sample_start_ <-& (EQ_u8_u1_182_update_completed_)
+      // RAW reenables for is_sub
+      EQ_u8_u1_182_update_start_ o<-& (SUB_f64_f64_213_sample_completed_ 0)
+      // L_154_delayed_2
+      $T[R_L_154_delayed_2_211_sample_start_] 
+      $T[R_L_154_delayed_2_211_sample_completed_] 
+      $T[R_L_154_delayed_2_211_update_start_] 
+      $T[R_L_154_delayed_2_211_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_L_154_delayed_2_211_sample_start_ <-& (EQ_u8_u1_182_update_completed_)
+      // RAW reenables for is_sub
+      EQ_u8_u1_182_update_start_ o<-& (R_L_154_delayed_2_211_sample_completed_ 0)
+      R_L_154_delayed_2_211_sample_start_ <-& (assign_stmt_206_update_completed_)
+      R_L_154_delayed_2_211_sample_completed_ <-& (R_L_154_delayed_2_211_sample_start_)
+      R_L_154_delayed_2_211_update_start_ <-& (R_L_154_delayed_2_211_sample_completed_)
+      R_L_154_delayed_2_211_update_completed_ <-& (R_L_154_delayed_2_211_update_start_)
+      // R_155_delayed_2
+      $T[R_R_155_delayed_2_212_sample_start_] 
+      $T[R_R_155_delayed_2_212_sample_completed_] 
+      $T[R_R_155_delayed_2_212_update_start_] 
+      $T[R_R_155_delayed_2_212_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_R_155_delayed_2_212_sample_start_ <-& (EQ_u8_u1_182_update_completed_)
+      // RAW reenables for is_sub
+      EQ_u8_u1_182_update_start_ o<-& (R_R_155_delayed_2_212_sample_completed_ 0)
+      R_R_155_delayed_2_212_sample_start_ <-& (assign_stmt_209_update_completed_)
+      R_R_155_delayed_2_212_sample_completed_ <-& (R_R_155_delayed_2_212_sample_start_)
+      R_R_155_delayed_2_212_update_start_ <-& (R_R_155_delayed_2_212_sample_completed_)
+      R_R_155_delayed_2_212_update_completed_ <-& (R_R_155_delayed_2_212_update_start_)
+      SUB_f64_f64_213_sample_start_ <-& (R_L_154_delayed_2_211_update_completed_)
+      SUB_f64_f64_213_sample_start_ <-& (R_R_155_delayed_2_212_update_completed_)
+      ;;[SUB_f64_f64_213_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[SUB_f64_f64_213_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      SUB_f64_f64_213_sample_start_ &-> (SUB_f64_f64_213_Sample)
+      SUB_f64_f64_213_sample_completed_ <-& (SUB_f64_f64_213_Sample)
+      SUB_f64_f64_213_sample_completed_ &-> ($null)
+      SUB_f64_f64_213_update_start_ &-> (SUB_f64_f64_213_Update)
+      SUB_f64_f64_213_update_completed_ <-& (SUB_f64_f64_213_Update)
+      // RAW reenables for L_154_delayed_2
+      assign_stmt_206_update_start_ o<-& (SUB_f64_f64_213_sample_completed_ 0)
+      // RAW reenables for R_155_delayed_2
+      assign_stmt_209_update_start_ o<-& (SUB_f64_f64_213_sample_completed_ 0)
+      // self-release: 
+      SUB_f64_f64_213_sample_start_ o<-& (SUB_f64_f64_213_sample_completed_ 1)
+      SUB_f64_f64_213_update_start_ o<-& (SUB_f64_f64_213_update_completed_ 0)
+      // Target expression
+      // (as target) osub
+      // osub
+      // implicit reference
+      // 	L_160_delayed_2 := L $buffering 2
+      //  file prog.linked.opt.aa, line 92
+      // Source expression
+      // L
+      $T[R_L_217_sample_start_] 
+      $T[R_L_217_sample_completed_] 
+      $T[R_L_217_update_start_] 
+      $T[R_L_217_update_completed_] 
+      // reference to interface object
+      R_L_217_sample_start_ <-& ($entry)
+      R_L_217_sample_completed_ <-& (R_L_217_sample_start_)
+      R_L_217_update_start_ <-& (R_L_217_sample_completed_)
+      R_L_217_update_completed_ <-& (R_L_217_update_start_)
+      R_L_217_sample_start_ <-& (L_update_enable)
+      // Target expression
+      // (as target) L_160_delayed_2
+      // L_160_delayed_2
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_218_sample_start_] 
+      $T[assign_stmt_218_sample_completed_] 
+      $T[assign_stmt_218_update_start_] 
+      $T[assign_stmt_218_update_completed_] 
+      ;;[assign_stmt_218_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_218_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_218_sample_start_ &-> (assign_stmt_218_Sample)
+      assign_stmt_218_sample_completed_ <-& (assign_stmt_218_Sample)
+      assign_stmt_218_sample_completed_ &-> ($null)
+      assign_stmt_218_update_start_ &-> (assign_stmt_218_Update)
+      assign_stmt_218_update_completed_ <-& (assign_stmt_218_Update)
+      assign_stmt_218_sample_start_ <-& (R_L_217_update_completed_)
+      // RAW reenables for L
+      L_update_enable o<-& (assign_stmt_218_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_218_sample_start_ o<-& (assign_stmt_218_sample_completed_ 1)
+      assign_stmt_218_update_start_ o<-& (assign_stmt_218_update_completed_ 0)
+      // 	R_161_delayed_2 := R $buffering 2
+      //  file prog.linked.opt.aa, line 93
+      // Source expression
+      // R
+      $T[R_R_220_sample_start_] 
+      $T[R_R_220_sample_completed_] 
+      $T[R_R_220_update_start_] 
+      $T[R_R_220_update_completed_] 
+      // reference to interface object
+      R_R_220_sample_start_ <-& ($entry)
+      R_R_220_sample_completed_ <-& (R_R_220_sample_start_)
+      R_R_220_update_start_ <-& (R_R_220_sample_completed_)
+      R_R_220_update_completed_ <-& (R_R_220_update_start_)
+      R_R_220_sample_start_ <-& (R_update_enable)
+      // Target expression
+      // (as target) R_161_delayed_2
+      // R_161_delayed_2
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_221_sample_start_] 
+      $T[assign_stmt_221_sample_completed_] 
+      $T[assign_stmt_221_update_start_] 
+      $T[assign_stmt_221_update_completed_] 
+      ;;[assign_stmt_221_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_221_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_221_sample_start_ &-> (assign_stmt_221_Sample)
+      assign_stmt_221_sample_completed_ <-& (assign_stmt_221_Sample)
+      assign_stmt_221_sample_completed_ &-> ($null)
+      assign_stmt_221_update_start_ &-> (assign_stmt_221_Update)
+      assign_stmt_221_update_completed_ <-& (assign_stmt_221_Update)
+      assign_stmt_221_sample_start_ <-& (R_R_220_update_completed_)
+      // RAW reenables for R
+      R_update_enable o<-& (assign_stmt_221_sample_completed_ 1)
+      // self-release: 
+      assign_stmt_221_sample_start_ o<-& (assign_stmt_221_sample_completed_ 1)
+      assign_stmt_221_update_start_ o<-& (assign_stmt_221_update_completed_ 0)
+      // 	$guard (is_mul) omul := (L_160_delayed_2 * R_161_delayed_2)
+      //  file prog.linked.opt.aa, line 94
+      // Guard expression
+      // is_mul
+      $T[R_is_mul_227_sample_start_] 
+      $T[R_is_mul_227_sample_completed_] 
+      $T[R_is_mul_227_update_start_] 
+      $T[R_is_mul_227_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_is_mul_227_sample_start_ <-& (EQ_u8_u1_190_update_completed_)
+      // RAW reenables for is_mul
+      EQ_u8_u1_190_update_start_ o<-& (R_is_mul_227_sample_completed_ 0)
+      R_is_mul_227_sample_start_ <-& (EQ_u8_u1_190_update_completed_)
+      R_is_mul_227_sample_completed_ <-& (R_is_mul_227_sample_start_)
+      R_is_mul_227_update_start_ <-& (R_is_mul_227_sample_completed_)
+      R_is_mul_227_update_completed_ <-& (R_is_mul_227_update_start_)
+      // Source expression
+      // (L_160_delayed_2 * R_161_delayed_2)
+      $T[MUL_f64_f64_225_sample_start_] 
+      $T[MUL_f64_f64_225_sample_completed_] 
+      $T[MUL_f64_f64_225_update_start_] 
+      $T[MUL_f64_f64_225_update_completed_] 
+      // Guard dependency
+      MUL_f64_f64_225_sample_start_ <-& (EQ_u8_u1_190_update_completed_)
+      // RAW reenables for is_mul
+      EQ_u8_u1_190_update_start_ o<-& (MUL_f64_f64_225_sample_completed_ 0)
+      // L_160_delayed_2
+      $T[R_L_160_delayed_2_223_sample_start_] 
+      $T[R_L_160_delayed_2_223_sample_completed_] 
+      $T[R_L_160_delayed_2_223_update_start_] 
+      $T[R_L_160_delayed_2_223_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_L_160_delayed_2_223_sample_start_ <-& (EQ_u8_u1_190_update_completed_)
+      // RAW reenables for is_mul
+      EQ_u8_u1_190_update_start_ o<-& (R_L_160_delayed_2_223_sample_completed_ 0)
+      R_L_160_delayed_2_223_sample_start_ <-& (assign_stmt_218_update_completed_)
+      R_L_160_delayed_2_223_sample_completed_ <-& (R_L_160_delayed_2_223_sample_start_)
+      R_L_160_delayed_2_223_update_start_ <-& (R_L_160_delayed_2_223_sample_completed_)
+      R_L_160_delayed_2_223_update_completed_ <-& (R_L_160_delayed_2_223_update_start_)
+      // R_161_delayed_2
+      $T[R_R_161_delayed_2_224_sample_start_] 
+      $T[R_R_161_delayed_2_224_sample_completed_] 
+      $T[R_R_161_delayed_2_224_update_start_] 
+      $T[R_R_161_delayed_2_224_update_completed_] 
+      // implicit reference
+      // Guard dependency
+      R_R_161_delayed_2_224_sample_start_ <-& (EQ_u8_u1_190_update_completed_)
+      // RAW reenables for is_mul
+      EQ_u8_u1_190_update_start_ o<-& (R_R_161_delayed_2_224_sample_completed_ 0)
+      R_R_161_delayed_2_224_sample_start_ <-& (assign_stmt_221_update_completed_)
+      R_R_161_delayed_2_224_sample_completed_ <-& (R_R_161_delayed_2_224_sample_start_)
+      R_R_161_delayed_2_224_update_start_ <-& (R_R_161_delayed_2_224_sample_completed_)
+      R_R_161_delayed_2_224_update_completed_ <-& (R_R_161_delayed_2_224_update_start_)
+      MUL_f64_f64_225_sample_start_ <-& (R_L_160_delayed_2_223_update_completed_)
+      MUL_f64_f64_225_sample_start_ <-& (R_R_161_delayed_2_224_update_completed_)
+      ;;[MUL_f64_f64_225_Sample] 
+      {
+        // binary expression 
+        $T [rr] $T [ra]  // (split) binary operation 
+      }
+      ;;[MUL_f64_f64_225_Update] 
+      {
+        // binary expression 
+        $T [cr] $T [ca] // (split) binary operation 
+      }
+      MUL_f64_f64_225_sample_start_ &-> (MUL_f64_f64_225_Sample)
+      MUL_f64_f64_225_sample_completed_ <-& (MUL_f64_f64_225_Sample)
+      MUL_f64_f64_225_sample_completed_ &-> ($null)
+      MUL_f64_f64_225_update_start_ &-> (MUL_f64_f64_225_Update)
+      MUL_f64_f64_225_update_completed_ <-& (MUL_f64_f64_225_Update)
+      // RAW reenables for L_160_delayed_2
+      assign_stmt_218_update_start_ o<-& (MUL_f64_f64_225_sample_completed_ 0)
+      // RAW reenables for R_161_delayed_2
+      assign_stmt_221_update_start_ o<-& (MUL_f64_f64_225_sample_completed_ 0)
+      // self-release: 
+      MUL_f64_f64_225_sample_start_ o<-& (MUL_f64_f64_225_sample_completed_ 1)
+      MUL_f64_f64_225_update_start_ o<-& (MUL_f64_f64_225_update_completed_ 0)
+      // Target expression
+      // (as target) omul
+      // omul
+      // implicit reference
+      // 	is_add_166_delayed_24 := is_add $buffering 24
+      //  file prog.linked.opt.aa, line 95
+      // Source expression
+      // is_add
+      $T[R_is_add_229_sample_start_] 
+      $T[R_is_add_229_sample_completed_] 
+      $T[R_is_add_229_update_start_] 
+      $T[R_is_add_229_update_completed_] 
+      // implicit reference
+      R_is_add_229_sample_start_ <-& (EQ_u8_u1_174_update_completed_)
+      R_is_add_229_sample_completed_ <-& (R_is_add_229_sample_start_)
+      R_is_add_229_update_start_ <-& (R_is_add_229_sample_completed_)
+      R_is_add_229_update_completed_ <-& (R_is_add_229_update_start_)
+      // Target expression
+      // (as target) is_add_166_delayed_24
+      // is_add_166_delayed_24
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_230_sample_start_] 
+      $T[assign_stmt_230_sample_completed_] 
+      $T[assign_stmt_230_update_start_] 
+      $T[assign_stmt_230_update_completed_] 
+      ;;[assign_stmt_230_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_230_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_230_sample_start_ &-> (assign_stmt_230_Sample)
+      assign_stmt_230_sample_completed_ <-& (assign_stmt_230_Sample)
+      assign_stmt_230_sample_completed_ &-> ($null)
+      assign_stmt_230_update_start_ &-> (assign_stmt_230_Update)
+      assign_stmt_230_update_completed_ <-& (assign_stmt_230_Update)
+      assign_stmt_230_sample_start_ <-& (R_is_add_229_update_completed_)
+      // RAW reenables for is_add
+      EQ_u8_u1_174_update_start_ o<-& (assign_stmt_230_sample_completed_ 0)
+      // self-release: 
+      assign_stmt_230_sample_start_ o<-& (assign_stmt_230_sample_completed_ 1)
+      assign_stmt_230_update_start_ o<-& (assign_stmt_230_update_completed_ 0)
+      // 	is_sub_168_delayed_24 := is_sub $buffering 24
+      //  file prog.linked.opt.aa, line 96
+      // Source expression
+      // is_sub
+      $T[R_is_sub_232_sample_start_] 
+      $T[R_is_sub_232_sample_completed_] 
+      $T[R_is_sub_232_update_start_] 
+      $T[R_is_sub_232_update_completed_] 
+      // implicit reference
+      R_is_sub_232_sample_start_ <-& (EQ_u8_u1_182_update_completed_)
+      R_is_sub_232_sample_completed_ <-& (R_is_sub_232_sample_start_)
+      R_is_sub_232_update_start_ <-& (R_is_sub_232_sample_completed_)
+      R_is_sub_232_update_completed_ <-& (R_is_sub_232_update_start_)
+      // Target expression
+      // (as target) is_sub_168_delayed_24
+      // is_sub_168_delayed_24
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_233_sample_start_] 
+      $T[assign_stmt_233_sample_completed_] 
+      $T[assign_stmt_233_update_start_] 
+      $T[assign_stmt_233_update_completed_] 
+      ;;[assign_stmt_233_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_233_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_233_sample_start_ &-> (assign_stmt_233_Sample)
+      assign_stmt_233_sample_completed_ <-& (assign_stmt_233_Sample)
+      assign_stmt_233_sample_completed_ &-> ($null)
+      assign_stmt_233_update_start_ &-> (assign_stmt_233_Update)
+      assign_stmt_233_update_completed_ <-& (assign_stmt_233_Update)
+      assign_stmt_233_sample_start_ <-& (R_is_sub_232_update_completed_)
+      // RAW reenables for is_sub
+      EQ_u8_u1_182_update_start_ o<-& (assign_stmt_233_sample_completed_ 0)
+      // self-release: 
+      assign_stmt_233_sample_start_ o<-& (assign_stmt_233_sample_completed_ 1)
+      assign_stmt_233_update_start_ o<-& (assign_stmt_233_update_completed_ 0)
+      // 	is_mul_170_delayed_24 := is_mul $buffering 24
+      //  file prog.linked.opt.aa, line 97
+      // Source expression
+      // is_mul
+      $T[R_is_mul_235_sample_start_] 
+      $T[R_is_mul_235_sample_completed_] 
+      $T[R_is_mul_235_update_start_] 
+      $T[R_is_mul_235_update_completed_] 
+      // implicit reference
+      R_is_mul_235_sample_start_ <-& (EQ_u8_u1_190_update_completed_)
+      R_is_mul_235_sample_completed_ <-& (R_is_mul_235_sample_start_)
+      R_is_mul_235_update_start_ <-& (R_is_mul_235_sample_completed_)
+      R_is_mul_235_update_completed_ <-& (R_is_mul_235_update_start_)
+      // Target expression
+      // (as target) is_mul_170_delayed_24
+      // is_mul_170_delayed_24
+      // implicit reference
+      // Interlock 
+      $T[assign_stmt_236_sample_start_] 
+      $T[assign_stmt_236_sample_completed_] 
+      $T[assign_stmt_236_update_start_] 
+      $T[assign_stmt_236_update_completed_] 
+      ;;[assign_stmt_236_Sample] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      ;;[assign_stmt_236_Update] 
+      {
+        $T [req] $T [ack] // interlock-sample.
+      }
+      assign_stmt_236_sample_start_ &-> (assign_stmt_236_Sample)
+      assign_stmt_236_sample_completed_ <-& (assign_stmt_236_Sample)
+      assign_stmt_236_sample_completed_ &-> ($null)
+      assign_stmt_236_update_start_ &-> (assign_stmt_236_Update)
+      assign_stmt_236_update_completed_ <-& (assign_stmt_236_Update)
+      assign_stmt_236_sample_start_ <-& (R_is_mul_235_update_completed_)
+      // RAW reenables for is_mul
+      EQ_u8_u1_190_update_start_ o<-& (assign_stmt_236_sample_completed_ 0)
+      // self-release: 
+      assign_stmt_236_sample_start_ o<-& (assign_stmt_236_sample_completed_ 1)
+      assign_stmt_236_update_start_ o<-& (assign_stmt_236_update_completed_ 0)
+      // 	ret_val_x_x := ( $mux is_add_166_delayed_24 oadd  ( $mux is_sub_168_delayed_24 osub  ( $mux is_mul_170_delayed_24 omul  0  )  )  ) 
+      //  file prog.linked.opt.aa, line 98
+      // Source expression
+      // ( $mux is_add_166_delayed_24 oadd  ( $mux is_sub_168_delayed_24 osub  ( $mux is_mul_170_delayed_24 omul  0  )  )  ) 
+      $T[MUX_247_sample_start_] 
+      $T[MUX_247_sample_completed_] 
+      $T[MUX_247_update_start_] 
+      $T[MUX_247_update_completed_] 
+      // is_add_166_delayed_24
+      $T[R_is_add_166_delayed_24_238_sample_start_] 
+      $T[R_is_add_166_delayed_24_238_sample_completed_] 
+      $T[R_is_add_166_delayed_24_238_update_start_] 
+      $T[R_is_add_166_delayed_24_238_update_completed_] 
+      // implicit reference
+      R_is_add_166_delayed_24_238_sample_start_ <-& (assign_stmt_230_update_completed_)
+      R_is_add_166_delayed_24_238_sample_completed_ <-& (R_is_add_166_delayed_24_238_sample_start_)
+      R_is_add_166_delayed_24_238_update_start_ <-& (R_is_add_166_delayed_24_238_sample_completed_)
+      R_is_add_166_delayed_24_238_update_completed_ <-& (R_is_add_166_delayed_24_238_update_start_)
+      // oadd
+      $T[R_oadd_239_sample_start_] 
+      $T[R_oadd_239_sample_completed_] 
+      $T[R_oadd_239_update_start_] 
+      $T[R_oadd_239_update_completed_] 
+      // implicit reference
+      R_oadd_239_sample_start_ <-& (ADD_f64_f64_201_update_completed_)
+      R_oadd_239_sample_completed_ <-& (R_oadd_239_sample_start_)
+      R_oadd_239_update_start_ <-& (R_oadd_239_sample_completed_)
+      R_oadd_239_update_completed_ <-& (R_oadd_239_update_start_)
+      // ( $mux is_sub_168_delayed_24 osub  ( $mux is_mul_170_delayed_24 omul  0  )  ) 
+      $T[MUX_246_sample_start_] 
+      $T[MUX_246_sample_completed_] 
+      $T[MUX_246_update_start_] 
+      $T[MUX_246_update_completed_] 
+      // is_sub_168_delayed_24
+      $T[R_is_sub_168_delayed_24_240_sample_start_] 
+      $T[R_is_sub_168_delayed_24_240_sample_completed_] 
+      $T[R_is_sub_168_delayed_24_240_update_start_] 
+      $T[R_is_sub_168_delayed_24_240_update_completed_] 
+      // implicit reference
+      R_is_sub_168_delayed_24_240_sample_start_ <-& (assign_stmt_233_update_completed_)
+      R_is_sub_168_delayed_24_240_sample_completed_ <-& (R_is_sub_168_delayed_24_240_sample_start_)
+      R_is_sub_168_delayed_24_240_update_start_ <-& (R_is_sub_168_delayed_24_240_sample_completed_)
+      R_is_sub_168_delayed_24_240_update_completed_ <-& (R_is_sub_168_delayed_24_240_update_start_)
+      // osub
+      $T[R_osub_241_sample_start_] 
+      $T[R_osub_241_sample_completed_] 
+      $T[R_osub_241_update_start_] 
+      $T[R_osub_241_update_completed_] 
+      // implicit reference
+      R_osub_241_sample_start_ <-& (SUB_f64_f64_213_update_completed_)
+      R_osub_241_sample_completed_ <-& (R_osub_241_sample_start_)
+      R_osub_241_update_start_ <-& (R_osub_241_sample_completed_)
+      R_osub_241_update_completed_ <-& (R_osub_241_update_start_)
+      // ( $mux is_mul_170_delayed_24 omul  0  ) 
+      $T[MUX_245_sample_start_] 
+      $T[MUX_245_sample_completed_] 
+      $T[MUX_245_update_start_] 
+      $T[MUX_245_update_completed_] 
+      // is_mul_170_delayed_24
+      $T[R_is_mul_170_delayed_24_242_sample_start_] 
+      $T[R_is_mul_170_delayed_24_242_sample_completed_] 
+      $T[R_is_mul_170_delayed_24_242_update_start_] 
+      $T[R_is_mul_170_delayed_24_242_update_completed_] 
+      // implicit reference
+      R_is_mul_170_delayed_24_242_sample_start_ <-& (assign_stmt_236_update_completed_)
+      R_is_mul_170_delayed_24_242_sample_completed_ <-& (R_is_mul_170_delayed_24_242_sample_start_)
+      R_is_mul_170_delayed_24_242_update_start_ <-& (R_is_mul_170_delayed_24_242_sample_completed_)
+      R_is_mul_170_delayed_24_242_update_completed_ <-& (R_is_mul_170_delayed_24_242_update_start_)
+      // omul
+      $T[R_omul_243_sample_start_] 
+      $T[R_omul_243_sample_completed_] 
+      $T[R_omul_243_update_start_] 
+      $T[R_omul_243_update_completed_] 
+      // implicit reference
+      R_omul_243_sample_start_ <-& (MUL_f64_f64_225_update_completed_)
+      R_omul_243_sample_completed_ <-& (R_omul_243_sample_start_)
+      R_omul_243_update_start_ <-& (R_omul_243_sample_completed_)
+      R_omul_243_update_completed_ <-& (R_omul_243_update_start_)
+      MUX_245_sample_start_ <-& (R_is_mul_170_delayed_24_242_update_completed_)
+      MUX_245_sample_start_ <-& (R_omul_243_update_completed_)
+      ;;[MUX_245_start] 
+      {
+        // ternary expression: 
+        $T [req] $T [ack] // sample req/ack
+      }
+      ;;[MUX_245_complete] 
+      {
+        // ternary expression: 
+        $T [req] $T [ack] // update req/ack
+      }
+      MUX_245_sample_start_ &-> (MUX_245_start)
+      MUX_245_sample_completed_ <-& (MUX_245_start)
+      MUX_245_update_start_ &-> (MUX_245_complete)
+      MUX_245_update_completed_ <-& (MUX_245_complete)
+      // flow-through
+      MUX_245_update_start_ <-& (MUX_245_sample_completed_)
+      MUX_246_sample_start_ <-& (R_is_sub_168_delayed_24_240_update_completed_)
+      MUX_246_sample_start_ <-& (R_osub_241_update_completed_)
+      MUX_246_sample_start_ <-& (MUX_245_update_completed_)
+      ;;[MUX_246_start] 
+      {
+        // ternary expression: 
+        $T [req] $T [ack] // sample req/ack
+      }
+      ;;[MUX_246_complete] 
+      {
+        // ternary expression: 
+        $T [req] $T [ack] // update req/ack
+      }
+      MUX_246_sample_start_ &-> (MUX_246_start)
+      MUX_246_sample_completed_ <-& (MUX_246_start)
+      MUX_246_update_start_ &-> (MUX_246_complete)
+      MUX_246_update_completed_ <-& (MUX_246_complete)
+      // flow-through
+      MUX_246_update_start_ <-& (MUX_246_sample_completed_)
+      MUX_247_sample_start_ <-& (R_is_add_166_delayed_24_238_update_completed_)
+      MUX_247_sample_start_ <-& (R_oadd_239_update_completed_)
+      MUX_247_sample_start_ <-& (MUX_246_update_completed_)
+      ;;[MUX_247_start] 
+      {
+        // ternary expression: 
+        $T [req] $T [ack] // sample req/ack
+      }
+      ;;[MUX_247_complete] 
+      {
+        // ternary expression: 
+        $T [req] $T [ack] // update req/ack
+      }
+      MUX_247_sample_start_ &-> (MUX_247_start)
+      MUX_247_sample_completed_ <-& (MUX_247_start)
+      MUX_247_update_start_ &-> (MUX_247_complete)
+      MUX_247_update_completed_ <-& (MUX_247_complete)
+      MUX_247_sample_completed_ &-> ($null)
+      // RAW reenables for is_add_166_delayed_24
+      assign_stmt_230_update_start_ o<-& (MUX_247_sample_completed_ 0)
+      // RAW reenables for oadd
+      ADD_f64_f64_201_update_start_ o<-& (MUX_247_sample_completed_ 0)
+      // RAW reenables for ( $mux is_sub_168_delayed_24 osub  ( $mux is_mul_170_delayed_24 omul  0  )  ) 
+      assign_stmt_233_update_start_ o<-& (MUX_247_sample_completed_ 0)
+      SUB_f64_f64_213_update_start_ o<-& (MUX_247_sample_completed_ 0)
+      assign_stmt_236_update_start_ o<-& (MUX_247_sample_completed_ 0)
+      MUL_f64_f64_225_update_start_ o<-& (MUX_247_sample_completed_ 0)
+      // self-release: 
+      MUX_247_sample_start_ o<-& (MUX_247_sample_completed_ 1)
+      MUX_247_update_start_ o<-& (MUX_247_update_completed_ 0)
+      // Target expression
+      // (as target) ret_val_x_x
+      // ret_val_x_x
+      // write to interface object
+      MUX_247_update_start_ <-& (ret_val_x_x_update_enable)
+      // load-store dependencies..
+    }
+    ( ret_val_x_x_update_enable_in)
+    ( L_update_enable_out R_update_enable_out OP_ID_update_enable_out)
+    $P [L_update_enable] 
+    $P [R_update_enable] 
+    $P [OP_ID_update_enable] 
+    $P [ret_val_x_x_update_enable] 
+    $bind L_update_enable <= assign_stmt_170_to_assign_stmt_248:L_update_enable_out
+    $bind R_update_enable <= assign_stmt_170_to_assign_stmt_248:R_update_enable_out
+    $bind OP_ID_update_enable <= assign_stmt_170_to_assign_stmt_248:OP_ID_update_enable_out
+    $bind ret_val_x_x_update_enable => assign_stmt_170_to_assign_stmt_248:ret_val_x_x_update_enable_in
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %fpu64
+    //  file prog.linked.opt.aa, line 75
+    // ADDOP
+    $constant $W[R_ADDOP_173_wire_constant] : $int<8> := _b00000000// 0
+    // SUBOP
+    $constant $W[R_SUBOP_181_wire_constant] : $int<8> := _b00000001// 1
+    // MULOP
+    $constant $W[R_MULOP_189_wire_constant] : $int<8> := _b00000010// 2
+    // ( $mux is_add_166_delayed_24 oadd  ( $mux is_sub_168_delayed_24 osub  ( $mux is_mul_170_delayed_24 omul  0  )  )  ) 
+    // ( $mux is_sub_168_delayed_24 osub  ( $mux is_mul_170_delayed_24 omul  0  )  ) 
+    // ( $mux is_mul_170_delayed_24 omul  0  ) 
+    // 0 
+    $constant $W[expr_244_wire_constant] : $float<11,52> := _b0000000000000000000000000000000000000000000000000000000000000000// 0.000000e+00
+    // 	OP_ID_133_delayed_1 := OP_ID
+    //  file prog.linked.opt.aa, line 80
+    // OP_ID_133_delayed_1
+    $W[OP_ID_133_delayed_1_170] : $int<8>
+    // 	is_add := (OP_ID_133_delayed_1 == ADDOP)
+    //  file prog.linked.opt.aa, line 81
+    // is_add
+    $W[is_add_175] : $int<1>
+    // 	OP_ID_138_delayed_1 := OP_ID
+    //  file prog.linked.opt.aa, line 82
+    // OP_ID_138_delayed_1
+    $W[OP_ID_138_delayed_1_178] : $int<8>
+    // 	is_sub := (OP_ID_138_delayed_1 == SUBOP)
+    //  file prog.linked.opt.aa, line 83
+    // is_sub
+    $W[is_sub_183] : $int<1>
+    // 	OP_ID_143_delayed_1 := OP_ID
+    //  file prog.linked.opt.aa, line 84
+    // OP_ID_143_delayed_1
+    $W[OP_ID_143_delayed_1_186] : $int<8>
+    // 	is_mul := (OP_ID_143_delayed_1 == MULOP)
+    //  file prog.linked.opt.aa, line 85
+    // is_mul
+    $W[is_mul_191] : $int<1>
+    // 	L_148_delayed_2 := L $buffering 2
+    //  file prog.linked.opt.aa, line 86
+    // L_148_delayed_2
+    $W[L_148_delayed_2_194] : $float<11,52>
+    // 	R_149_delayed_2 := R $buffering 2
+    //  file prog.linked.opt.aa, line 87
+    // R_149_delayed_2
+    $W[R_149_delayed_2_197] : $float<11,52>
+    // 	$guard (is_add) oadd := (L_148_delayed_2 + R_149_delayed_2)
+    //  file prog.linked.opt.aa, line 88
+    // oadd
+    $W[oadd_202] : $float<11,52>
+    // 	L_154_delayed_2 := L $buffering 2
+    //  file prog.linked.opt.aa, line 89
+    // L_154_delayed_2
+    $W[L_154_delayed_2_206] : $float<11,52>
+    // 	R_155_delayed_2 := R $buffering 2
+    //  file prog.linked.opt.aa, line 90
+    // R_155_delayed_2
+    $W[R_155_delayed_2_209] : $float<11,52>
+    // 	$guard (is_sub) osub := (L_154_delayed_2 - R_155_delayed_2)
+    //  file prog.linked.opt.aa, line 91
+    // osub
+    $W[osub_214] : $float<11,52>
+    // 	L_160_delayed_2 := L $buffering 2
+    //  file prog.linked.opt.aa, line 92
+    // L_160_delayed_2
+    $W[L_160_delayed_2_218] : $float<11,52>
+    // 	R_161_delayed_2 := R $buffering 2
+    //  file prog.linked.opt.aa, line 93
+    // R_161_delayed_2
+    $W[R_161_delayed_2_221] : $float<11,52>
+    // 	$guard (is_mul) omul := (L_160_delayed_2 * R_161_delayed_2)
+    //  file prog.linked.opt.aa, line 94
+    // omul
+    $W[omul_226] : $float<11,52>
+    // 	is_add_166_delayed_24 := is_add $buffering 24
+    //  file prog.linked.opt.aa, line 95
+    // is_add_166_delayed_24
+    $W[is_add_166_delayed_24_230] : $int<1>
+    // 	is_sub_168_delayed_24 := is_sub $buffering 24
+    //  file prog.linked.opt.aa, line 96
+    // is_sub_168_delayed_24
+    $W[is_sub_168_delayed_24_233] : $int<1>
+    // 	is_mul_170_delayed_24 := is_mul $buffering 24
+    //  file prog.linked.opt.aa, line 97
+    // is_mul_170_delayed_24
+    $W[is_mul_170_delayed_24_236] : $int<1>
+    // 	ret_val_x_x := ( $mux is_add_166_delayed_24 oadd  ( $mux is_sub_168_delayed_24 osub  ( $mux is_mul_170_delayed_24 omul  0  )  )  ) 
+    //  file prog.linked.opt.aa, line 98
+    // ( $mux is_mul_170_delayed_24 omul  0  ) 
+    $intermediate $W[MUX_245_wire] : $float<11,52>
+    // ( $mux is_sub_168_delayed_24 osub  ( $mux is_mul_170_delayed_24 omul  0  )  ) 
+    $intermediate $W[MUX_246_wire] : $float<11,52>
+    // ret_val_x_x
+    // 	OP_ID_133_delayed_1 := OP_ID
+    //  file prog.linked.opt.aa, line 80
+    # := [W_OP_ID_133_delayed_1_168_inst] (OP_ID) (OP_ID_133_delayed_1_170) 
+    $buffering  $in W_OP_ID_133_delayed_1_168_inst OP_ID 2
+    $buffering  $out W_OP_ID_133_delayed_1_168_inst OP_ID_133_delayed_1_170 2
+    // 	is_add := (OP_ID_133_delayed_1 == ADDOP)
+    //  file prog.linked.opt.aa, line 81
+    // (OP_ID_133_delayed_1 == ADDOP)
+    ==[EQ_u8_u1_174_inst] (OP_ID_133_delayed_1_170 R_ADDOP_173_wire_constant) (is_add_175) 
+    $buffering  $in EQ_u8_u1_174_inst OP_ID_133_delayed_1_170 2
+    $buffering  $in EQ_u8_u1_174_inst R_ADDOP_173_wire_constant 2
+    $buffering  $out EQ_u8_u1_174_inst is_add_175 2
+    $delay EQ_u8_u1_174_inst 1
+    // 	OP_ID_138_delayed_1 := OP_ID
+    //  file prog.linked.opt.aa, line 82
+    # := [W_OP_ID_138_delayed_1_176_inst] (OP_ID) (OP_ID_138_delayed_1_178) 
+    $buffering  $in W_OP_ID_138_delayed_1_176_inst OP_ID 2
+    $buffering  $out W_OP_ID_138_delayed_1_176_inst OP_ID_138_delayed_1_178 2
+    // 	is_sub := (OP_ID_138_delayed_1 == SUBOP)
+    //  file prog.linked.opt.aa, line 83
+    // (OP_ID_138_delayed_1 == SUBOP)
+    ==[EQ_u8_u1_182_inst] (OP_ID_138_delayed_1_178 R_SUBOP_181_wire_constant) (is_sub_183) 
+    $buffering  $in EQ_u8_u1_182_inst OP_ID_138_delayed_1_178 2
+    $buffering  $in EQ_u8_u1_182_inst R_SUBOP_181_wire_constant 2
+    $buffering  $out EQ_u8_u1_182_inst is_sub_183 2
+    $delay EQ_u8_u1_182_inst 1
+    // 	OP_ID_143_delayed_1 := OP_ID
+    //  file prog.linked.opt.aa, line 84
+    # := [W_OP_ID_143_delayed_1_184_inst] (OP_ID) (OP_ID_143_delayed_1_186) 
+    $buffering  $in W_OP_ID_143_delayed_1_184_inst OP_ID 2
+    $buffering  $out W_OP_ID_143_delayed_1_184_inst OP_ID_143_delayed_1_186 2
+    // 	is_mul := (OP_ID_143_delayed_1 == MULOP)
+    //  file prog.linked.opt.aa, line 85
+    // (OP_ID_143_delayed_1 == MULOP)
+    ==[EQ_u8_u1_190_inst] (OP_ID_143_delayed_1_186 R_MULOP_189_wire_constant) (is_mul_191) 
+    $buffering  $in EQ_u8_u1_190_inst OP_ID_143_delayed_1_186 2
+    $buffering  $in EQ_u8_u1_190_inst R_MULOP_189_wire_constant 2
+    $buffering  $out EQ_u8_u1_190_inst is_mul_191 2
+    $delay EQ_u8_u1_190_inst 1
+    // 	L_148_delayed_2 := L $buffering 2
+    //  file prog.linked.opt.aa, line 86
+    # := [W_L_148_delayed_2_192_inst] (L) (L_148_delayed_2_194) 
+    $buffering  $in W_L_148_delayed_2_192_inst L 2
+    $buffering  $out W_L_148_delayed_2_192_inst L_148_delayed_2_194 2
+    // 	R_149_delayed_2 := R $buffering 2
+    //  file prog.linked.opt.aa, line 87
+    # := [W_R_149_delayed_2_195_inst] (R) (R_149_delayed_2_197) 
+    $buffering  $in W_R_149_delayed_2_195_inst R 2
+    $buffering  $out W_R_149_delayed_2_195_inst R_149_delayed_2_197 2
+    // 	$guard (is_add) oadd := (L_148_delayed_2 + R_149_delayed_2)
+    //  file prog.linked.opt.aa, line 88
+    // (L_148_delayed_2 + R_149_delayed_2)
+    +[ADD_f64_f64_201_inst] (L_148_delayed_2_194 R_149_delayed_2_197) (oadd_202) $guard ( is_add_175 ) 
+    $buffering  $in ADD_f64_f64_201_inst L_148_delayed_2_194 2
+    $buffering  $in ADD_f64_f64_201_inst R_149_delayed_2_197 2
+    $buffering  $out ADD_f64_f64_201_inst oadd_202 2
+    $delay ADD_f64_f64_201_inst 24
+    // 	L_154_delayed_2 := L $buffering 2
+    //  file prog.linked.opt.aa, line 89
+    # := [W_L_154_delayed_2_204_inst] (L) (L_154_delayed_2_206) 
+    $buffering  $in W_L_154_delayed_2_204_inst L 2
+    $buffering  $out W_L_154_delayed_2_204_inst L_154_delayed_2_206 2
+    // 	R_155_delayed_2 := R $buffering 2
+    //  file prog.linked.opt.aa, line 90
+    # := [W_R_155_delayed_2_207_inst] (R) (R_155_delayed_2_209) 
+    $buffering  $in W_R_155_delayed_2_207_inst R 2
+    $buffering  $out W_R_155_delayed_2_207_inst R_155_delayed_2_209 2
+    // 	$guard (is_sub) osub := (L_154_delayed_2 - R_155_delayed_2)
+    //  file prog.linked.opt.aa, line 91
+    // (L_154_delayed_2 - R_155_delayed_2)
+    -[SUB_f64_f64_213_inst] (L_154_delayed_2_206 R_155_delayed_2_209) (osub_214) $guard ( is_sub_183 ) 
+    $buffering  $in SUB_f64_f64_213_inst L_154_delayed_2_206 2
+    $buffering  $in SUB_f64_f64_213_inst R_155_delayed_2_209 2
+    $buffering  $out SUB_f64_f64_213_inst osub_214 2
+    $delay SUB_f64_f64_213_inst 24
+    // 	L_160_delayed_2 := L $buffering 2
+    //  file prog.linked.opt.aa, line 92
+    # := [W_L_160_delayed_2_216_inst] (L) (L_160_delayed_2_218) 
+    $buffering  $in W_L_160_delayed_2_216_inst L 2
+    $buffering  $out W_L_160_delayed_2_216_inst L_160_delayed_2_218 2
+    // 	R_161_delayed_2 := R $buffering 2
+    //  file prog.linked.opt.aa, line 93
+    # := [W_R_161_delayed_2_219_inst] (R) (R_161_delayed_2_221) 
+    $buffering  $in W_R_161_delayed_2_219_inst R 2
+    $buffering  $out W_R_161_delayed_2_219_inst R_161_delayed_2_221 2
+    // 	$guard (is_mul) omul := (L_160_delayed_2 * R_161_delayed_2)
+    //  file prog.linked.opt.aa, line 94
+    // (L_160_delayed_2 * R_161_delayed_2)
+    *[MUL_f64_f64_225_inst] (L_160_delayed_2_218 R_161_delayed_2_221) (omul_226) $guard ( is_mul_191 ) 
+    $buffering  $in MUL_f64_f64_225_inst L_160_delayed_2_218 2
+    $buffering  $in MUL_f64_f64_225_inst R_161_delayed_2_221 2
+    $buffering  $out MUL_f64_f64_225_inst omul_226 2
+    $delay MUL_f64_f64_225_inst 24
+    // 	is_add_166_delayed_24 := is_add $buffering 24
+    //  file prog.linked.opt.aa, line 95
+    # := [W_is_add_166_delayed_24_228_inst] (is_add_175) (is_add_166_delayed_24_230) 
+    $buffering  $in W_is_add_166_delayed_24_228_inst is_add_175 24
+    $buffering  $out W_is_add_166_delayed_24_228_inst is_add_166_delayed_24_230 2
+    // 	is_sub_168_delayed_24 := is_sub $buffering 24
+    //  file prog.linked.opt.aa, line 96
+    # := [W_is_sub_168_delayed_24_231_inst] (is_sub_183) (is_sub_168_delayed_24_233) 
+    $buffering  $in W_is_sub_168_delayed_24_231_inst is_sub_183 24
+    $buffering  $out W_is_sub_168_delayed_24_231_inst is_sub_168_delayed_24_233 2
+    // 	is_mul_170_delayed_24 := is_mul $buffering 24
+    //  file prog.linked.opt.aa, line 97
+    # := [W_is_mul_170_delayed_24_234_inst] (is_mul_191) (is_mul_170_delayed_24_236) 
+    $buffering  $in W_is_mul_170_delayed_24_234_inst is_mul_191 24
+    $buffering  $out W_is_mul_170_delayed_24_234_inst is_mul_170_delayed_24_236 2
+    // 	ret_val_x_x := ( $mux is_add_166_delayed_24 oadd  ( $mux is_sub_168_delayed_24 osub  ( $mux is_mul_170_delayed_24 omul  0  )  )  ) 
+    //  file prog.linked.opt.aa, line 98
+    // ( $mux is_mul_170_delayed_24 omul  0  ) 
+    ? [MUX_245_inst] (is_mul_170_delayed_24_236 omul_226 expr_244_wire_constant) (MUX_245_wire)  $flowthrough
+    $buffering  $in MUX_245_inst is_mul_170_delayed_24_236 2
+    $buffering  $in MUX_245_inst omul_226 2
+    $buffering  $in MUX_245_inst expr_244_wire_constant 2
+    $buffering  $out MUX_245_inst MUX_245_wire 2
+    // ( $mux is_sub_168_delayed_24 osub  ( $mux is_mul_170_delayed_24 omul  0  )  ) 
+    ? [MUX_246_inst] (is_sub_168_delayed_24_233 osub_214 MUX_245_wire) (MUX_246_wire)  $flowthrough
+    $buffering  $in MUX_246_inst is_sub_168_delayed_24_233 2
+    $buffering  $in MUX_246_inst osub_214 2
+    $buffering  $in MUX_246_inst MUX_245_wire 2
+    $buffering  $out MUX_246_inst MUX_246_wire 2
+    // ( $mux is_add_166_delayed_24 oadd  ( $mux is_sub_168_delayed_24 osub  ( $mux is_mul_170_delayed_24 omul  0  )  )  ) 
+    ? [MUX_247_inst] (is_add_166_delayed_24_230 oadd_202 MUX_246_wire) (ret_val_x_x) 
+    $buffering  $in MUX_247_inst is_add_166_delayed_24_230 2
+    $buffering  $in MUX_247_inst oadd_202 2
+    $buffering  $in MUX_247_inst MUX_246_wire 2
+    $buffering  $out MUX_247_inst ret_val_x_x 2
+  }
+  // end data-path
+  // 	OP_ID_133_delayed_1 := OP_ID
+  //  file prog.linked.opt.aa, line 80
+  W_OP_ID_133_delayed_1_168_inst <=> (assign_stmt_170_to_assign_stmt_248/assign_stmt_170_Sample/req assign_stmt_170_to_assign_stmt_248/assign_stmt_170_Update/req) (assign_stmt_170_to_assign_stmt_248/assign_stmt_170_Sample/ack assign_stmt_170_to_assign_stmt_248/assign_stmt_170_Update/ack)
+  // 	is_add := (OP_ID_133_delayed_1 == ADDOP)
+  //  file prog.linked.opt.aa, line 81
+  // (OP_ID_133_delayed_1 == ADDOP)
+  EQ_u8_u1_174_inst <=> (assign_stmt_170_to_assign_stmt_248/EQ_u8_u1_174_Sample/rr assign_stmt_170_to_assign_stmt_248/EQ_u8_u1_174_Update/cr) (assign_stmt_170_to_assign_stmt_248/EQ_u8_u1_174_Sample/ra assign_stmt_170_to_assign_stmt_248/EQ_u8_u1_174_Update/ca)
+  // 	OP_ID_138_delayed_1 := OP_ID
+  //  file prog.linked.opt.aa, line 82
+  W_OP_ID_138_delayed_1_176_inst <=> (assign_stmt_170_to_assign_stmt_248/assign_stmt_178_Sample/req assign_stmt_170_to_assign_stmt_248/assign_stmt_178_Update/req) (assign_stmt_170_to_assign_stmt_248/assign_stmt_178_Sample/ack assign_stmt_170_to_assign_stmt_248/assign_stmt_178_Update/ack)
+  // 	is_sub := (OP_ID_138_delayed_1 == SUBOP)
+  //  file prog.linked.opt.aa, line 83
+  // (OP_ID_138_delayed_1 == SUBOP)
+  EQ_u8_u1_182_inst <=> (assign_stmt_170_to_assign_stmt_248/EQ_u8_u1_182_Sample/rr assign_stmt_170_to_assign_stmt_248/EQ_u8_u1_182_Update/cr) (assign_stmt_170_to_assign_stmt_248/EQ_u8_u1_182_Sample/ra assign_stmt_170_to_assign_stmt_248/EQ_u8_u1_182_Update/ca)
+  // 	OP_ID_143_delayed_1 := OP_ID
+  //  file prog.linked.opt.aa, line 84
+  W_OP_ID_143_delayed_1_184_inst <=> (assign_stmt_170_to_assign_stmt_248/assign_stmt_186_Sample/req assign_stmt_170_to_assign_stmt_248/assign_stmt_186_Update/req) (assign_stmt_170_to_assign_stmt_248/assign_stmt_186_Sample/ack assign_stmt_170_to_assign_stmt_248/assign_stmt_186_Update/ack)
+  // 	is_mul := (OP_ID_143_delayed_1 == MULOP)
+  //  file prog.linked.opt.aa, line 85
+  // (OP_ID_143_delayed_1 == MULOP)
+  EQ_u8_u1_190_inst <=> (assign_stmt_170_to_assign_stmt_248/EQ_u8_u1_190_Sample/rr assign_stmt_170_to_assign_stmt_248/EQ_u8_u1_190_Update/cr) (assign_stmt_170_to_assign_stmt_248/EQ_u8_u1_190_Sample/ra assign_stmt_170_to_assign_stmt_248/EQ_u8_u1_190_Update/ca)
+  // 	L_148_delayed_2 := L $buffering 2
+  //  file prog.linked.opt.aa, line 86
+  W_L_148_delayed_2_192_inst <=> (assign_stmt_170_to_assign_stmt_248/assign_stmt_194_Sample/req assign_stmt_170_to_assign_stmt_248/assign_stmt_194_Update/req) (assign_stmt_170_to_assign_stmt_248/assign_stmt_194_Sample/ack assign_stmt_170_to_assign_stmt_248/assign_stmt_194_Update/ack)
+  // 	R_149_delayed_2 := R $buffering 2
+  //  file prog.linked.opt.aa, line 87
+  W_R_149_delayed_2_195_inst <=> (assign_stmt_170_to_assign_stmt_248/assign_stmt_197_Sample/req assign_stmt_170_to_assign_stmt_248/assign_stmt_197_Update/req) (assign_stmt_170_to_assign_stmt_248/assign_stmt_197_Sample/ack assign_stmt_170_to_assign_stmt_248/assign_stmt_197_Update/ack)
+  // 	$guard (is_add) oadd := (L_148_delayed_2 + R_149_delayed_2)
+  //  file prog.linked.opt.aa, line 88
+  // (L_148_delayed_2 + R_149_delayed_2)
+  ADD_f64_f64_201_inst <=> (assign_stmt_170_to_assign_stmt_248/ADD_f64_f64_201_Sample/rr assign_stmt_170_to_assign_stmt_248/ADD_f64_f64_201_Update/cr) (assign_stmt_170_to_assign_stmt_248/ADD_f64_f64_201_Sample/ra assign_stmt_170_to_assign_stmt_248/ADD_f64_f64_201_Update/ca)
+  // 	L_154_delayed_2 := L $buffering 2
+  //  file prog.linked.opt.aa, line 89
+  W_L_154_delayed_2_204_inst <=> (assign_stmt_170_to_assign_stmt_248/assign_stmt_206_Sample/req assign_stmt_170_to_assign_stmt_248/assign_stmt_206_Update/req) (assign_stmt_170_to_assign_stmt_248/assign_stmt_206_Sample/ack assign_stmt_170_to_assign_stmt_248/assign_stmt_206_Update/ack)
+  // 	R_155_delayed_2 := R $buffering 2
+  //  file prog.linked.opt.aa, line 90
+  W_R_155_delayed_2_207_inst <=> (assign_stmt_170_to_assign_stmt_248/assign_stmt_209_Sample/req assign_stmt_170_to_assign_stmt_248/assign_stmt_209_Update/req) (assign_stmt_170_to_assign_stmt_248/assign_stmt_209_Sample/ack assign_stmt_170_to_assign_stmt_248/assign_stmt_209_Update/ack)
+  // 	$guard (is_sub) osub := (L_154_delayed_2 - R_155_delayed_2)
+  //  file prog.linked.opt.aa, line 91
+  // (L_154_delayed_2 - R_155_delayed_2)
+  SUB_f64_f64_213_inst <=> (assign_stmt_170_to_assign_stmt_248/SUB_f64_f64_213_Sample/rr assign_stmt_170_to_assign_stmt_248/SUB_f64_f64_213_Update/cr) (assign_stmt_170_to_assign_stmt_248/SUB_f64_f64_213_Sample/ra assign_stmt_170_to_assign_stmt_248/SUB_f64_f64_213_Update/ca)
+  // 	L_160_delayed_2 := L $buffering 2
+  //  file prog.linked.opt.aa, line 92
+  W_L_160_delayed_2_216_inst <=> (assign_stmt_170_to_assign_stmt_248/assign_stmt_218_Sample/req assign_stmt_170_to_assign_stmt_248/assign_stmt_218_Update/req) (assign_stmt_170_to_assign_stmt_248/assign_stmt_218_Sample/ack assign_stmt_170_to_assign_stmt_248/assign_stmt_218_Update/ack)
+  // 	R_161_delayed_2 := R $buffering 2
+  //  file prog.linked.opt.aa, line 93
+  W_R_161_delayed_2_219_inst <=> (assign_stmt_170_to_assign_stmt_248/assign_stmt_221_Sample/req assign_stmt_170_to_assign_stmt_248/assign_stmt_221_Update/req) (assign_stmt_170_to_assign_stmt_248/assign_stmt_221_Sample/ack assign_stmt_170_to_assign_stmt_248/assign_stmt_221_Update/ack)
+  // 	$guard (is_mul) omul := (L_160_delayed_2 * R_161_delayed_2)
+  //  file prog.linked.opt.aa, line 94
+  // (L_160_delayed_2 * R_161_delayed_2)
+  MUL_f64_f64_225_inst <=> (assign_stmt_170_to_assign_stmt_248/MUL_f64_f64_225_Sample/rr assign_stmt_170_to_assign_stmt_248/MUL_f64_f64_225_Update/cr) (assign_stmt_170_to_assign_stmt_248/MUL_f64_f64_225_Sample/ra assign_stmt_170_to_assign_stmt_248/MUL_f64_f64_225_Update/ca)
+  // 	is_add_166_delayed_24 := is_add $buffering 24
+  //  file prog.linked.opt.aa, line 95
+  W_is_add_166_delayed_24_228_inst <=> (assign_stmt_170_to_assign_stmt_248/assign_stmt_230_Sample/req assign_stmt_170_to_assign_stmt_248/assign_stmt_230_Update/req) (assign_stmt_170_to_assign_stmt_248/assign_stmt_230_Sample/ack assign_stmt_170_to_assign_stmt_248/assign_stmt_230_Update/ack)
+  // 	is_sub_168_delayed_24 := is_sub $buffering 24
+  //  file prog.linked.opt.aa, line 96
+  W_is_sub_168_delayed_24_231_inst <=> (assign_stmt_170_to_assign_stmt_248/assign_stmt_233_Sample/req assign_stmt_170_to_assign_stmt_248/assign_stmt_233_Update/req) (assign_stmt_170_to_assign_stmt_248/assign_stmt_233_Sample/ack assign_stmt_170_to_assign_stmt_248/assign_stmt_233_Update/ack)
+  // 	is_mul_170_delayed_24 := is_mul $buffering 24
+  //  file prog.linked.opt.aa, line 97
+  W_is_mul_170_delayed_24_234_inst <=> (assign_stmt_170_to_assign_stmt_248/assign_stmt_236_Sample/req assign_stmt_170_to_assign_stmt_248/assign_stmt_236_Update/req) (assign_stmt_170_to_assign_stmt_248/assign_stmt_236_Sample/ack assign_stmt_170_to_assign_stmt_248/assign_stmt_236_Update/ack)
+  // 	ret_val_x_x := ( $mux is_add_166_delayed_24 oadd  ( $mux is_sub_168_delayed_24 osub  ( $mux is_mul_170_delayed_24 omul  0  )  )  ) 
+  //  file prog.linked.opt.aa, line 98
+  // ( $mux is_mul_170_delayed_24 omul  0  ) 
+  MUX_245_inst <=> (assign_stmt_170_to_assign_stmt_248/MUX_245_start/req assign_stmt_170_to_assign_stmt_248/MUX_245_complete/req) (assign_stmt_170_to_assign_stmt_248/MUX_245_start/ack assign_stmt_170_to_assign_stmt_248/MUX_245_complete/ack)
+  // ( $mux is_sub_168_delayed_24 osub  ( $mux is_mul_170_delayed_24 omul  0  )  ) 
+  MUX_246_inst <=> (assign_stmt_170_to_assign_stmt_248/MUX_246_start/req assign_stmt_170_to_assign_stmt_248/MUX_246_complete/req) (assign_stmt_170_to_assign_stmt_248/MUX_246_start/ack assign_stmt_170_to_assign_stmt_248/MUX_246_complete/ack)
+  // ( $mux is_add_166_delayed_24 oadd  ( $mux is_sub_168_delayed_24 osub  ( $mux is_mul_170_delayed_24 omul  0  )  )  ) 
+  MUX_247_inst <=> (assign_stmt_170_to_assign_stmt_248/MUX_247_start/req assign_stmt_170_to_assign_stmt_248/MUX_247_complete/req) (assign_stmt_170_to_assign_stmt_248/MUX_247_start/ack assign_stmt_170_to_assign_stmt_248/MUX_247_complete/ack)
+}
+$module [progx_xoptx_xo_storage_initializer_] 
+{
+  // pipe-declarations for block %progx_xoptx_xo_storage_initializer_
+  //  file prog.linked.opt.aa, line 100
+  $CP 
+  {
+    // begin control-path 
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %progx_xoptx_xo_storage_initializer_
+    //  file prog.linked.opt.aa, line 100
+  }
+  // end data-path
+}
+$module [global_storage_initializer_] 
+{
+  // pipe-declarations for block %global_storage_initializer_
+  //  file prog.linked.opt.aa, line 108
+  // pipe-declarations for block %global_storage_initializer_%pb
+  //  file prog.linked.opt.aa, line 113
+  $CP 
+  {
+    // begin control-path 
+    ||[parallel_block_stmt_254] 
+    {
+      ::[call_stmt_255] 
+      {
+        // 		$call progx_xoptx_xo_storage_initializer_ () () 
+        //  file prog.linked.opt.aa, line 115
+        $T[call_stmt_255_sample_start_] 
+        $T[call_stmt_255_sample_completed_] 
+        $T[call_stmt_255_update_start_] 
+        $T[call_stmt_255_update_completed_] 
+        ;;[call_stmt_255_Sample] 
+        {
+          $T [crr] $T [cra] 
+        }
+        ;;[call_stmt_255_Update] 
+        {
+          $T [ccr] $T [cca] 
+        }
+        call_stmt_255_sample_start_ &-> (call_stmt_255_Sample)
+        call_stmt_255_sample_completed_ <-& (call_stmt_255_Sample)
+        call_stmt_255_sample_completed_ &-> ($null)
+        call_stmt_255_update_start_ &-> (call_stmt_255_Update)
+        call_stmt_255_update_completed_ <-& (call_stmt_255_Update)
+        // load-store dependencies..
+      }
+    }
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %global_storage_initializer_%pb
+    //  file prog.linked.opt.aa, line 113
+    // constant-object-declarations for block %global_storage_initializer_
+    //  file prog.linked.opt.aa, line 108
+    // constant-declarations for block %global_storage_initializer_%pb
+    //  file prog.linked.opt.aa, line 113
+    // 		$call progx_xoptx_xo_storage_initializer_ () () 
+    //  file prog.linked.opt.aa, line 115
+    // block %global_storage_initializer_%pb
+    //  file prog.linked.opt.aa, line 113
+    // 		$call progx_xoptx_xo_storage_initializer_ () () 
+    //  file prog.linked.opt.aa, line 115
+    // datapath-instances for block %global_storage_initializer_%pb
+    //  file prog.linked.opt.aa, line 113
+    // 		$call progx_xoptx_xo_storage_initializer_ () () 
+    //  file prog.linked.opt.aa, line 115
+    $call [call_stmt_255_call] $module progx_xoptx_xo_storage_initializer_() () 
+    $delay call_stmt_255_call 2
+  }
+  // end data-path
+  // 		$call progx_xoptx_xo_storage_initializer_ () () 
+  //  file prog.linked.opt.aa, line 115
+  call_stmt_255_call <=> (parallel_block_stmt_254/call_stmt_255/call_stmt_255_Sample/crr parallel_block_stmt_254/call_stmt_255/call_stmt_255_Update/ccr) (parallel_block_stmt_254/call_stmt_255/call_stmt_255_Sample/cra parallel_block_stmt_254/call_stmt_255/call_stmt_255_Update/cca)
+}
+$module [vectorSum] 
+{
+  // pipe-declarations for block %vectorSum
+  //  file prog.linked.opt.aa, line 118
+  // pipe-declarations for block %vectorSum%body
+  //  file prog.linked.opt.aa, line 123
+  // pipe-declarations for block %vectorSum%body%
+  //  file prog.linked.opt.aa, line 126
+  $CP 
+  {
+    // begin control-path 
+    <>[branch_block_stmt_259] // Branch Block  file prog.linked.opt.aa, line 123
+    {
+      $P [branch_block_stmt_259__entry__]
+      branch_block_stmt_259__entry__ <-| ($entry)
+      $P [branch_block_stmt_259__exit__]
+      branch_block_stmt_259__exit__ |-> ($exit)
+      $P [bb_0_bb_1]
+      $P [merge_stmt_261__exit__] 
+      $P [do_while_stmt_262__entry__] 
+      $P [do_while_stmt_262__exit__] 
+      // do-while-statement  
+      //  file prog.linked.opt.aa, line 128
+      <o> [do_while_stmt_262]  $depth 63 $buffering 2 
+      {
+        $P[do_while_stmt_262__entry__] 
+        $P[do_while_stmt_262__exit__] 
+        $P[loop_back] 
+        $P[condition_done] 
+        $P[loop_body_done] 
+        $pipeline [do_while_stmt_262_loop_body] 
+        {
+          // Pipelined!
+          $T[back_edge_to_loop_body] 
+          $T[first_time_through_loop_body] 
+          $T[loop_body_start] 
+          $T[condition_evaluated] 
+          $transitionmerge [entry_tmerge] (back_edge_to_loop_body first_time_through_loop_body) (loop_body_start)
+          $entry <-& (loop_body_start)
+          // 			iNsTr_3 := in_data_pipe
+          //  file prog.linked.opt.aa, line 132
+          // Source expression
+          // in_data_pipe
+          $T[RPIPE_in_data_pipe_265_sample_start_] 
+          $T[RPIPE_in_data_pipe_265_sample_completed_] 
+          $T[RPIPE_in_data_pipe_265_update_start_] 
+          $T[RPIPE_in_data_pipe_265_update_completed_] 
+          ;;[RPIPE_in_data_pipe_265_Sample] 
+          {
+            // pipe read sample
+            $T [rr] $T [ra] 
+          }
+          ;;[RPIPE_in_data_pipe_265_Update] 
+          {
+            // pipe read update
+            $T [cr] $T [ca] 
+          }
+          RPIPE_in_data_pipe_265_sample_start_ &-> (RPIPE_in_data_pipe_265_Sample)
+          RPIPE_in_data_pipe_265_sample_completed_ <-& (RPIPE_in_data_pipe_265_Sample)
+          RPIPE_in_data_pipe_265_sample_completed_ &-> ($null)
+          RPIPE_in_data_pipe_265_update_start_ &-> (RPIPE_in_data_pipe_265_Update)
+          RPIPE_in_data_pipe_265_update_completed_ <-& (RPIPE_in_data_pipe_265_Update)
+          // self-release: 
+          RPIPE_in_data_pipe_265_sample_start_ o<-& (RPIPE_in_data_pipe_265_sample_completed_ 1)
+          RPIPE_in_data_pipe_265_update_start_ o<-& (RPIPE_in_data_pipe_265_update_completed_ 0)
+          // Target expression
+          // (as target) iNsTr_3
+          // iNsTr_3
+          // implicit reference
+          // 			iNsTr_4 := (iNsTr_3 + iNsTr_3)
+          //  file prog.linked.opt.aa, line 133
+          // Source expression
+          // (iNsTr_3 + iNsTr_3)
+          $T[ADD_f32_f32_270_sample_start_] 
+          $T[ADD_f32_f32_270_sample_completed_] 
+          $T[ADD_f32_f32_270_update_start_] 
+          $T[ADD_f32_f32_270_update_completed_] 
+          // iNsTr_3
+          $T[R_iNsTr_3_268_sample_start_] 
+          $T[R_iNsTr_3_268_sample_completed_] 
+          $T[R_iNsTr_3_268_update_start_] 
+          $T[R_iNsTr_3_268_update_completed_] 
+          // implicit reference
+          R_iNsTr_3_268_sample_start_ <-& (RPIPE_in_data_pipe_265_update_completed_)
+          R_iNsTr_3_268_sample_completed_ <-& (R_iNsTr_3_268_sample_start_)
+          R_iNsTr_3_268_update_start_ <-& (R_iNsTr_3_268_sample_completed_)
+          R_iNsTr_3_268_update_completed_ <-& (R_iNsTr_3_268_update_start_)
+          // iNsTr_3
+          $T[R_iNsTr_3_269_sample_start_] 
+          $T[R_iNsTr_3_269_sample_completed_] 
+          $T[R_iNsTr_3_269_update_start_] 
+          $T[R_iNsTr_3_269_update_completed_] 
+          // implicit reference
+          R_iNsTr_3_269_sample_start_ <-& (RPIPE_in_data_pipe_265_update_completed_)
+          R_iNsTr_3_269_sample_completed_ <-& (R_iNsTr_3_269_sample_start_)
+          R_iNsTr_3_269_update_start_ <-& (R_iNsTr_3_269_sample_completed_)
+          R_iNsTr_3_269_update_completed_ <-& (R_iNsTr_3_269_update_start_)
+          ADD_f32_f32_270_sample_start_ <-& (R_iNsTr_3_268_update_completed_)
+          ADD_f32_f32_270_sample_start_ <-& (R_iNsTr_3_269_update_completed_)
+          ;;[ADD_f32_f32_270_Sample] 
+          {
+            // binary expression 
+            $T [rr] $T [ra]  // (split) binary operation 
+          }
+          ;;[ADD_f32_f32_270_Update] 
+          {
+            // binary expression 
+            $T [cr] $T [ca] // (split) binary operation 
+          }
+          ADD_f32_f32_270_sample_start_ &-> (ADD_f32_f32_270_Sample)
+          ADD_f32_f32_270_sample_completed_ <-& (ADD_f32_f32_270_Sample)
+          ADD_f32_f32_270_sample_completed_ &-> ($null)
+          ADD_f32_f32_270_update_start_ &-> (ADD_f32_f32_270_Update)
+          ADD_f32_f32_270_update_completed_ <-& (ADD_f32_f32_270_Update)
+          // RAW reenables for iNsTr_3
+          RPIPE_in_data_pipe_265_update_start_ o<-& (ADD_f32_f32_270_sample_completed_ 0)
+          // RAW reenables for iNsTr_3
+          RPIPE_in_data_pipe_265_update_start_ o<-& (ADD_f32_f32_270_sample_completed_ 0)
+          // self-release: 
+          ADD_f32_f32_270_sample_start_ o<-& (ADD_f32_f32_270_sample_completed_ 1)
+          ADD_f32_f32_270_update_start_ o<-& (ADD_f32_f32_270_update_completed_ 0)
+          // Target expression
+          // (as target) iNsTr_4
+          // iNsTr_4
+          // implicit reference
+          // 			iNsTr_3_201_delayed_24 := iNsTr_3 $buffering 24
+          //  file prog.linked.opt.aa, line 134
+          // Source expression
+          // iNsTr_3
+          $T[R_iNsTr_3_273_sample_start_] 
+          $T[R_iNsTr_3_273_sample_completed_] 
+          $T[R_iNsTr_3_273_update_start_] 
+          $T[R_iNsTr_3_273_update_completed_] 
+          // implicit reference
+          R_iNsTr_3_273_sample_start_ <-& (RPIPE_in_data_pipe_265_update_completed_)
+          R_iNsTr_3_273_sample_completed_ <-& (R_iNsTr_3_273_sample_start_)
+          R_iNsTr_3_273_update_start_ <-& (R_iNsTr_3_273_sample_completed_)
+          R_iNsTr_3_273_update_completed_ <-& (R_iNsTr_3_273_update_start_)
+          // Target expression
+          // (as target) iNsTr_3_201_delayed_24
+          // iNsTr_3_201_delayed_24
+          // implicit reference
+          // Interlock 
+          $T[assign_stmt_274_sample_start_] 
+          $T[assign_stmt_274_sample_completed_] 
+          $T[assign_stmt_274_update_start_] 
+          $T[assign_stmt_274_update_completed_] 
+          ;;[assign_stmt_274_Sample] 
+          {
+            $T [req] $T [ack] // interlock-sample.
+          }
+          ;;[assign_stmt_274_Update] 
+          {
+            $T [req] $T [ack] // interlock-sample.
+          }
+          assign_stmt_274_sample_start_ &-> (assign_stmt_274_Sample)
+          assign_stmt_274_sample_completed_ <-& (assign_stmt_274_Sample)
+          assign_stmt_274_sample_completed_ &-> ($null)
+          assign_stmt_274_update_start_ &-> (assign_stmt_274_Update)
+          assign_stmt_274_update_completed_ <-& (assign_stmt_274_Update)
+          assign_stmt_274_sample_start_ <-& (R_iNsTr_3_273_update_completed_)
+          // RAW reenables for iNsTr_3
+          RPIPE_in_data_pipe_265_update_start_ o<-& (assign_stmt_274_sample_completed_ 0)
+          // self-release: 
+          assign_stmt_274_sample_start_ o<-& (assign_stmt_274_sample_completed_ 1)
+          assign_stmt_274_update_start_ o<-& (assign_stmt_274_update_completed_ 0)
+          // 			iNsTr_5 := (iNsTr_3_201_delayed_24 * iNsTr_4)
+          //  file prog.linked.opt.aa, line 135
+          // Source expression
+          // (iNsTr_3_201_delayed_24 * iNsTr_4)
+          $T[MUL_f32_f32_278_sample_start_] 
+          $T[MUL_f32_f32_278_sample_completed_] 
+          $T[MUL_f32_f32_278_update_start_] 
+          $T[MUL_f32_f32_278_update_completed_] 
+          // iNsTr_3_201_delayed_24
+          $T[R_iNsTr_3_201_delayed_24_276_sample_start_] 
+          $T[R_iNsTr_3_201_delayed_24_276_sample_completed_] 
+          $T[R_iNsTr_3_201_delayed_24_276_update_start_] 
+          $T[R_iNsTr_3_201_delayed_24_276_update_completed_] 
+          // implicit reference
+          R_iNsTr_3_201_delayed_24_276_sample_start_ <-& (assign_stmt_274_update_completed_)
+          R_iNsTr_3_201_delayed_24_276_sample_completed_ <-& (R_iNsTr_3_201_delayed_24_276_sample_start_)
+          R_iNsTr_3_201_delayed_24_276_update_start_ <-& (R_iNsTr_3_201_delayed_24_276_sample_completed_)
+          R_iNsTr_3_201_delayed_24_276_update_completed_ <-& (R_iNsTr_3_201_delayed_24_276_update_start_)
+          // iNsTr_4
+          $T[R_iNsTr_4_277_sample_start_] 
+          $T[R_iNsTr_4_277_sample_completed_] 
+          $T[R_iNsTr_4_277_update_start_] 
+          $T[R_iNsTr_4_277_update_completed_] 
+          // implicit reference
+          R_iNsTr_4_277_sample_start_ <-& (ADD_f32_f32_270_update_completed_)
+          R_iNsTr_4_277_sample_completed_ <-& (R_iNsTr_4_277_sample_start_)
+          R_iNsTr_4_277_update_start_ <-& (R_iNsTr_4_277_sample_completed_)
+          R_iNsTr_4_277_update_completed_ <-& (R_iNsTr_4_277_update_start_)
+          MUL_f32_f32_278_sample_start_ <-& (R_iNsTr_3_201_delayed_24_276_update_completed_)
+          MUL_f32_f32_278_sample_start_ <-& (R_iNsTr_4_277_update_completed_)
+          ;;[MUL_f32_f32_278_Sample] 
+          {
+            // binary expression 
+            $T [rr] $T [ra]  // (split) binary operation 
+          }
+          ;;[MUL_f32_f32_278_Update] 
+          {
+            // binary expression 
+            $T [cr] $T [ca] // (split) binary operation 
+          }
+          MUL_f32_f32_278_sample_start_ &-> (MUL_f32_f32_278_Sample)
+          MUL_f32_f32_278_sample_completed_ <-& (MUL_f32_f32_278_Sample)
+          MUL_f32_f32_278_sample_completed_ &-> ($null)
+          MUL_f32_f32_278_update_start_ &-> (MUL_f32_f32_278_Update)
+          MUL_f32_f32_278_update_completed_ <-& (MUL_f32_f32_278_Update)
+          // RAW reenables for iNsTr_3_201_delayed_24
+          assign_stmt_274_update_start_ o<-& (MUL_f32_f32_278_sample_completed_ 0)
+          // RAW reenables for iNsTr_4
+          ADD_f32_f32_270_update_start_ o<-& (MUL_f32_f32_278_sample_completed_ 0)
+          // self-release: 
+          MUL_f32_f32_278_sample_start_ o<-& (MUL_f32_f32_278_sample_completed_ 1)
+          MUL_f32_f32_278_update_start_ o<-& (MUL_f32_f32_278_update_completed_ 0)
+          // Target expression
+          // (as target) iNsTr_5
+          // iNsTr_5
+          // implicit reference
+          // 			out_data_pipe := iNsTr_5
+          //  file prog.linked.opt.aa, line 136
+          // Source expression
+          // iNsTr_5
+          $T[R_iNsTr_5_281_sample_start_] 
+          $T[R_iNsTr_5_281_sample_completed_] 
+          $T[R_iNsTr_5_281_update_start_] 
+          $T[R_iNsTr_5_281_update_completed_] 
+          // implicit reference
+          R_iNsTr_5_281_sample_start_ <-& (MUL_f32_f32_278_update_completed_)
+          R_iNsTr_5_281_sample_completed_ <-& (R_iNsTr_5_281_sample_start_)
+          R_iNsTr_5_281_update_start_ <-& (R_iNsTr_5_281_sample_completed_)
+          R_iNsTr_5_281_update_completed_ <-& (R_iNsTr_5_281_update_start_)
+          // Target expression
+          // (as target) out_data_pipe
+          $T[WPIPE_out_data_pipe_280_sample_start_] 
+          $T[WPIPE_out_data_pipe_280_sample_completed_] 
+          $T[WPIPE_out_data_pipe_280_update_start_] 
+          $T[WPIPE_out_data_pipe_280_update_completed_] 
+          ;;[WPIPE_out_data_pipe_280_Sample] 
+          {
+            // pipe write sample-start out_data_pipe
+            $T [req] $T [ack] 
+          }
+          ;;[WPIPE_out_data_pipe_280_Update] 
+          {
+            // pipe write update (complete) out_data_pipe
+            $T [req] $T [ack] 
+          }
+          WPIPE_out_data_pipe_280_sample_start_ &-> (WPIPE_out_data_pipe_280_Sample)
+          WPIPE_out_data_pipe_280_sample_completed_ <-& (WPIPE_out_data_pipe_280_Sample)
+          WPIPE_out_data_pipe_280_sample_completed_ &-> ($null)
+          WPIPE_out_data_pipe_280_update_start_ &-> (WPIPE_out_data_pipe_280_Update)
+          WPIPE_out_data_pipe_280_update_completed_ <-& (WPIPE_out_data_pipe_280_Update)
+          // self-release: 
+          WPIPE_out_data_pipe_280_sample_start_ o<-& (WPIPE_out_data_pipe_280_sample_completed_ 1)
+          WPIPE_out_data_pipe_280_update_start_ o<-& (WPIPE_out_data_pipe_280_update_completed_ 0)
+          WPIPE_out_data_pipe_280_sample_start_ <-& (R_iNsTr_5_281_update_completed_)
+          // RAW reenables for iNsTr_5
+          MUL_f32_f32_278_update_start_ o<-& (WPIPE_out_data_pipe_280_sample_completed_ 0)
+          loop_body_start &-> (condition_evaluated)
+          condition_evaluated &-> ($null)
+          // load-store dependencies..
+          // pipe read/write dependencies for pipe in_data_pipe
+          // ring dependency in pipeline.
+          // pipe read/write dependencies for pipe out_data_pipe
+          // ring dependency in pipeline.
+        }
+        ( first_time_through_loop_body  back_edge_to_loop_body) 
+        ( condition_evaluated )
+        ;; [loop_exit] 
+        {
+          $T [ack] 
+        }
+        ;; [loop_taken] 
+        {
+          $T [ack] 
+        }
+        do_while_stmt_262__entry__ <-| ($entry)
+        loop_body_done <-| ( do_while_stmt_262_loop_body ) 
+        condition_done |-> (loop_exit loop_taken)
+        do_while_stmt_262__exit__ |-> ($exit)
+        $bind condition_done <= do_while_stmt_262_loop_body : condition_evaluated
+        $bind do_while_stmt_262__entry__  => do_while_stmt_262_loop_body : first_time_through_loop_body 
+        $bind loop_back  => do_while_stmt_262_loop_body : back_edge_to_loop_body 
+        $terminate (loop_exit loop_taken loop_body_done) (loop_back do_while_stmt_262__exit__)
+      }
+      do_while_stmt_262__entry__ |-> (do_while_stmt_262)
+      do_while_stmt_262__exit__ <-| (do_while_stmt_262)
+      // control-path for merge  
+      //  file prog.linked.opt.aa, line 126
+      //---------------------   merge statement  file prog.linked.opt.aa, line 126  --------------------------
+      ||[bb_0_bb_1_PhiReq] 
+      {
+        // no phi statements in merge..
+      }
+      bb_0_bb_1 |-> (bb_0_bb_1_PhiReq)
+      $P [merge_stmt_261_PhiReqMerge] 
+      merge_stmt_261_PhiReqMerge <-| ( bb_0_bb_1_PhiReq )
+      ||[merge_stmt_261_PhiAck] 
+      {
+        $T [dummy] 
+      }
+      merge_stmt_261_PhiReqMerge |-> (merge_stmt_261_PhiAck)
+      merge_stmt_261__exit__  <-| (merge_stmt_261_PhiAck)
+      //---------------------  end of merge statement  file prog.linked.opt.aa, line 126  --------------------------
+      bb_0_bb_1 <-| (branch_block_stmt_259__entry__)
+      do_while_stmt_262__entry__ <-| (merge_stmt_261__exit__)
+      do_while_stmt_262__exit__ |-> (branch_block_stmt_259__exit__)
+    }
+  }
+  // end control-path
+  $DP 
+  {
+    // begin data-path 
+    // constant-object-declarations for block %vectorSum%body%
+    //  file prog.linked.opt.aa, line 126
+    // constant-object-declarations for block %vectorSum%body%
+    //  file prog.linked.opt.aa, line 130
+    // constant-object-declarations for block %vectorSum%body
+    //  file prog.linked.opt.aa, line 123
+    // constant-object-declarations for block %vectorSum
+    //  file prog.linked.opt.aa, line 118
+    // constant-declarations for block %vectorSum%body
+    //  file prog.linked.opt.aa, line 123
+    // constant-declarations for block %vectorSum%body%
+    //  file prog.linked.opt.aa, line 126
+    // do-while statement  
+    //  file prog.linked.opt.aa, line 128
+    // 1 
+    $constant $W[expr_284_wire_constant] : $int<1> := _b1// 1
+    // constant-declarations for block %vectorSum%body%
+    //  file prog.linked.opt.aa, line 130
+    // block %vectorSum%body
+    //  file prog.linked.opt.aa, line 123
+    // do-while statement  
+    //  file prog.linked.opt.aa, line 128
+    // 			iNsTr_3 := in_data_pipe
+    //  file prog.linked.opt.aa, line 132
+    // iNsTr_3
+    $W[iNsTr_3_266] : $float<8,23>
+    // 			iNsTr_4 := (iNsTr_3 + iNsTr_3)
+    //  file prog.linked.opt.aa, line 133
+    // iNsTr_4
+    $W[iNsTr_4_271] : $float<8,23>
+    // 			iNsTr_3_201_delayed_24 := iNsTr_3 $buffering 24
+    //  file prog.linked.opt.aa, line 134
+    // iNsTr_3_201_delayed_24
+    $W[iNsTr_3_201_delayed_24_274] : $float<8,23>
+    // 			iNsTr_5 := (iNsTr_3_201_delayed_24 * iNsTr_4)
+    //  file prog.linked.opt.aa, line 135
+    // iNsTr_5
+    $W[iNsTr_5_279] : $float<8,23>
+    // 			out_data_pipe := iNsTr_5
+    //  file prog.linked.opt.aa, line 136
+    // out_data_pipe
+    // datapath-instances for block %vectorSum%body
+    //  file prog.linked.opt.aa, line 123
+    // datapath-instances for do-while  
+    //  file prog.linked.opt.aa, line 128
+    ==0? [do_while_stmt_262_branch] (expr_284_wire_constant)
+    // 			iNsTr_3 := in_data_pipe
+    //  file prog.linked.opt.aa, line 132
+    // in_data_pipe
+    $ioport $in [RPIPE_in_data_pipe_265_inst] (in_data_pipe) (iNsTr_3_266) 
+    $buffering $out RPIPE_in_data_pipe_265_inst iNsTr_3_266 2
+    // 			iNsTr_4 := (iNsTr_3 + iNsTr_3)
+    //  file prog.linked.opt.aa, line 133
+    // (iNsTr_3 + iNsTr_3)
+    +[ADD_f32_f32_270_inst] (iNsTr_3_266 iNsTr_3_266) (iNsTr_4_271) 
+    $buffering  $in ADD_f32_f32_270_inst iNsTr_3_266 2
+    $buffering  $in ADD_f32_f32_270_inst iNsTr_3_266 2
+    $buffering  $out ADD_f32_f32_270_inst iNsTr_4_271 2
+    $delay ADD_f32_f32_270_inst 24
+    // 			iNsTr_3_201_delayed_24 := iNsTr_3 $buffering 24
+    //  file prog.linked.opt.aa, line 134
+    # := [W_iNsTr_3_201_delayed_24_272_inst] (iNsTr_3_266) (iNsTr_3_201_delayed_24_274) 
+    $buffering  $in W_iNsTr_3_201_delayed_24_272_inst iNsTr_3_266 24
+    $buffering  $out W_iNsTr_3_201_delayed_24_272_inst iNsTr_3_201_delayed_24_274 2
+    // 			iNsTr_5 := (iNsTr_3_201_delayed_24 * iNsTr_4)
+    //  file prog.linked.opt.aa, line 135
+    // (iNsTr_3_201_delayed_24 * iNsTr_4)
+    *[MUL_f32_f32_278_inst] (iNsTr_3_201_delayed_24_274 iNsTr_4_271) (iNsTr_5_279) 
+    $buffering  $in MUL_f32_f32_278_inst iNsTr_3_201_delayed_24_274 2
+    $buffering  $in MUL_f32_f32_278_inst iNsTr_4_271 2
+    $buffering  $out MUL_f32_f32_278_inst iNsTr_5_279 2
+    $delay MUL_f32_f32_278_inst 24
+    // 			out_data_pipe := iNsTr_5
+    //  file prog.linked.opt.aa, line 136
+    // out_data_pipe
+    $ioport $out [WPIPE_out_data_pipe_280_inst]  (iNsTr_5_279) (out_data_pipe) 
+    $buffering $in WPIPE_out_data_pipe_280_inst iNsTr_5_279 2
+  }
+  // end data-path
+  // CP-DP links for merge  
+  //  file prog.linked.opt.aa, line 126
+  // CP-DP links for do-while  do_while_stmt_262
+  //  file prog.linked.opt.aa, line 128
+  // 			iNsTr_3 := in_data_pipe
+  //  file prog.linked.opt.aa, line 132
+  // in_data_pipe
+  RPIPE_in_data_pipe_265_inst <=> (branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/RPIPE_in_data_pipe_265_Sample/rr branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/RPIPE_in_data_pipe_265_Update/cr) (branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/RPIPE_in_data_pipe_265_Sample/ra branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/RPIPE_in_data_pipe_265_Update/ca)
+  // 			iNsTr_4 := (iNsTr_3 + iNsTr_3)
+  //  file prog.linked.opt.aa, line 133
+  // (iNsTr_3 + iNsTr_3)
+  ADD_f32_f32_270_inst <=> (branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/ADD_f32_f32_270_Sample/rr branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/ADD_f32_f32_270_Update/cr) (branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/ADD_f32_f32_270_Sample/ra branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/ADD_f32_f32_270_Update/ca)
+  // 			iNsTr_3_201_delayed_24 := iNsTr_3 $buffering 24
+  //  file prog.linked.opt.aa, line 134
+  W_iNsTr_3_201_delayed_24_272_inst <=> (branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_Sample/req branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_Update/req) (branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_Sample/ack branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/assign_stmt_274_Update/ack)
+  // 			iNsTr_5 := (iNsTr_3_201_delayed_24 * iNsTr_4)
+  //  file prog.linked.opt.aa, line 135
+  // (iNsTr_3_201_delayed_24 * iNsTr_4)
+  MUL_f32_f32_278_inst <=> (branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/MUL_f32_f32_278_Sample/rr branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/MUL_f32_f32_278_Update/cr) (branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/MUL_f32_f32_278_Sample/ra branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/MUL_f32_f32_278_Update/ca)
+  // 			out_data_pipe := iNsTr_5
+  //  file prog.linked.opt.aa, line 136
+  // out_data_pipe
+  WPIPE_out_data_pipe_280_inst <=> (branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/WPIPE_out_data_pipe_280_Sample/req branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/WPIPE_out_data_pipe_280_Update/req) (branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/WPIPE_out_data_pipe_280_Sample/ack branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/WPIPE_out_data_pipe_280_Update/ack)
+  do_while_stmt_262_branch <=> (branch_block_stmt_259/do_while_stmt_262/do_while_stmt_262_loop_body/condition_evaluated) (branch_block_stmt_259/do_while_stmt_262/loop_exit/ack branch_block_stmt_259/do_while_stmt_262/loop_taken/ack)
+}

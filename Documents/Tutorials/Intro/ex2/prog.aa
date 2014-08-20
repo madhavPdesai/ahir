@@ -1,0 +1,24 @@
+// Aa code produced by llvm2aa (version 1.0)
+$pipe in_data : $uint<32> $depth 1
+$pipe out_data : $uint<32> $depth 1
+$module [maxDaemon] 
+$in ()
+$out ()
+$is 
+{
+  $branchblock [body] 
+  {
+    //begin: basic-block bb_0
+    $place [bb_0_bb_1]
+    //begin: basic-block bb_1
+    $merge bb_0_bb_1 bb_1_bb_1
+    $endmerge
+    iNsTr_2 := in_data
+    iNsTr_4 := in_data
+    // compare instruction
+    iNsTr_5 := (iNsTr_2 > iNsTr_4 )
+    iNsTr_6 := ( $mux iNsTr_5 iNsTr_2 iNsTr_4)
+    out_data := iNsTr_6
+    $place [bb_1_bb_1]
+  }
+}

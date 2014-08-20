@@ -1,0 +1,21 @@
+digraph control_path {
+  e_0: entry_node : n ;
+  e_1: exit_node : s ;
+  e_2 [shape = diamond];
+  e_3 [shape = diamond];
+  e_4 [shape = diamond];
+  e_5 [shape = diamond];
+  e_6 [shape = diamond];
+  e_7 [shape = triangle];
+  e_8 [shape = circle];
+  e_9 [shape = invtriangle];
+  e_9 -> e_2;
+  e_2 -> e_3;
+  e_3 -> e_4;
+  e_4 -> e_5;
+  e_5 -> e_6;
+  e_6 -> e_7;
+  e_0 -> e_8;
+  e_7 -> e_8;
+  e_8 -> e_9;
+}

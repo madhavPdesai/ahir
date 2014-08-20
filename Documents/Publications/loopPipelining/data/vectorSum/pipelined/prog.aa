@@ -1,0 +1,181 @@
+// Aa code produced by llvm2aa (version 1.0)
+$pipe in_data_pipe : $float<8,23> $depth 1
+$pipe out_data_pipe : $float<8,23> $depth 1
+$storage A:$array [64] $of $float<8,23>
+$storage B:$array [64] $of $float<8,23>
+$storage C:$array [64] $of $float<8,23>
+$module [progx_xoptx_xo_storage_initializer_] $in () $out () $is 
+{
+  $null
+  $attribute initializer
+}
+$module [getData] 
+$in ()
+$out ()
+$is 
+{
+  $branchblock [body] 
+  {
+    //begin: basic-block bbx_xnph
+    $place [bbx_xnph_bb_1]
+    //begin: basic-block bb_1
+    $merge bb_1_bb_1 bbx_xnph_bb_1
+    $phi idxx_x01 :=  ( $cast ($uint<32>) ( $bitcast ($uint<32> ) _b00000000000000000000000000000000 ) ) $on bbx_xnph_bb_1 ( $cast ($uint<32>) iNsTr_5) $on bb_1_bb_1 
+    $endmerge
+    scevgep2 := @(B[idxx_x01])
+    scevgep := @(A[idxx_x01])
+    iNsTr_2 := in_data_pipe
+    ->(scevgep) := iNsTr_2
+    ->(scevgep2) := iNsTr_2
+    iNsTr_5 := (idxx_x01 + ( $bitcast ($uint<32> ) _b00000000000000000000000000000001 ) )
+    // compare instruction
+    exitcond1 := (iNsTr_5 == ( $bitcast ($uint<32> ) _b00000000000000000000000001000000 )  )
+    $if exitcond1 $then  $place [bb_1_xx_x_crit_edge] $else $place [bb_1_bb_1] $endif 
+    //begin: basic-block xx_x_crit_edge
+    $merge bb_1_xx_x_crit_edge
+    $endmerge
+    $place [return__]
+    $merge return__ $endmerge
+  }
+}
+$module [sendResult] 
+$in ()
+$out ()
+$is 
+{
+  $branchblock [body] 
+  {
+    //begin: basic-block bbx_xnph
+    $place [bbx_xnph_bb_1]
+    //begin: basic-block bb_1
+    $merge bb_1_bb_1 bbx_xnph_bb_1
+    $phi idxx_x01 :=  ( $cast ($uint<32>) ( $bitcast ($uint<32> ) _b00000000000000000000000000000000 ) ) $on bbx_xnph_bb_1 ( $cast ($uint<32>) iNsTr_4) $on bb_1_bb_1 
+    $endmerge
+    scevgep := @(C[idxx_x01])
+    // load 
+    iNsTr_1 := ->(scevgep) 
+    out_data_pipe := iNsTr_1
+    iNsTr_4 := (idxx_x01 + ( $bitcast ($uint<32> ) _b00000000000000000000000000000001 ) )
+    // compare instruction
+    exitcond1 := (iNsTr_4 == ( $bitcast ($uint<32> ) _b00000000000000000000000001000000 )  )
+    $if exitcond1 $then  $place [bb_1_xx_x_crit_edge] $else $place [bb_1_bb_1] $endif 
+    //begin: basic-block xx_x_crit_edge
+    $merge bb_1_xx_x_crit_edge
+    $endmerge
+    $place [return__]
+    $merge return__ $endmerge
+  }
+}
+$module [vectorSum] 
+$in ()
+$out ()
+$is 
+{
+  $branchblock [body] 
+  {
+    //begin: basic-block bb_0
+    $place [bb_0_sendResultx_xexit]
+    //begin: basic-block sendResultx_xexitx_xloopexit
+    $merge x_vectorSum_x_xexit_sendResultx_xexitx_xloopexit
+    $endmerge
+    $place [sendResultx_xexitx_xloopexit_sendResultx_xexitx_xbackedge]
+    //begin: basic-block sendResultx_xexit
+    $merge bb_0_sendResultx_xexit sendResultx_xexitx_xbackedge_sendResultx_xexit
+    $phi idxx_x01x_xi :=  ( $cast ($uint<32>) ( $bitcast ($uint<32> ) _b00000000000000000000000000000000 ) ) $on bb_0_sendResultx_xexit ( $cast ($uint<32>) idxx_x01x_xix_xbe) $on sendResultx_xexitx_xbackedge_sendResultx_xexit 
+    $endmerge
+    scevgepx_xi := @(A[idxx_x01x_xi])
+    scevgep2x_xi := @(B[idxx_x01x_xi])
+    iNsTr_2 := in_data_pipe
+    ->(scevgepx_xi) := iNsTr_2
+    ->(scevgep2x_xi) := iNsTr_2
+    iNsTr_5 := (idxx_x01x_xi + ( $bitcast ($uint<32> ) _b00000000000000000000000000000001 ) )
+    // compare instruction
+    exitcondx_xi := (iNsTr_5 == ( $bitcast ($uint<32> ) _b00000000000000000000000001000000 )  )
+    $if exitcondx_xi $then  $place [sendResultx_xexit_getDatax_xexitx_xpreheader] $else $place [sendResultx_xexit_sendResultx_xexitx_xbackedge] $endif 
+    //begin: basic-block sendResultx_xexitx_xbackedge
+    $merge sendResultx_xexit_sendResultx_xexitx_xbackedge sendResultx_xexitx_xloopexit_sendResultx_xexitx_xbackedge
+    $phi idxx_x01x_xix_xbe :=  ( $cast ($uint<32>) iNsTr_5) $on sendResultx_xexit_sendResultx_xexitx_xbackedge ( $cast ($uint<32>) ( $bitcast ($uint<32> ) _b00000000000000000000000000000000 ) ) $on sendResultx_xexitx_xloopexit_sendResultx_xexitx_xbackedge 
+    $endmerge
+    $place [sendResultx_xexitx_xbackedge_sendResultx_xexit]
+    //begin: basic-block getDatax_xexitx_xpreheader
+    $merge sendResultx_xexit_getDatax_xexitx_xpreheader
+    $endmerge
+    $place [getDatax_xexitx_xpreheader_getDatax_xexit]
+    //begin: basic-block getDatax_xexit
+    //   this is a do-while loop.
+    $merge getDatax_xexitx_xpreheader_getDatax_xexit
+    $phi indvarx_xi_at_entry :=  ( $cast ($uint<32>) ( $bitcast ($uint<32> ) _b00000000000000000000000000000000 ) ) $on getDatax_xexitx_xpreheader_getDatax_xexit 
+    $endmerge
+    $dopipeline $depth 16 
+    $merge $entry $loopback
+    $phi indvarx_xi :=  ( $cast ($uint<32>) indvarx_xnextx_xi) $on $loopback indvarx_xi_at_entry $on $entry
+    $endmerge
+    scevgepx_xi1 := @(A[indvarx_xi])
+    scevgep2x_xi2 := @(B[indvarx_xi])
+    scevgep3x_xi := @(C[indvarx_xi])
+    // load 
+    iNsTr_10 := ->(scevgepx_xi1) 
+    // load 
+    iNsTr_11 := ->(scevgep2x_xi2) 
+    iNsTr_12 := (iNsTr_10 + iNsTr_11)
+    ->(scevgep3x_xi) := iNsTr_12
+    indvarx_xnextx_xi := (indvarx_xi + ( $bitcast ($uint<32> ) _b00000000000000000000000000000001 ) )
+    // compare instruction
+    exitcond1 := (indvarx_xnextx_xi == ( $bitcast ($uint<32> ) _b00000000000000000000000001000000 )  )
+    $while (~exitcond1) 
+    $place [getDatax_xexit_x_vectorSum_x_xexitx_xloopexit] //begin: basic-block x_vectorSum_x_xexitx_xloopexit
+    $merge getDatax_xexit_x_vectorSum_x_xexitx_xloopexit
+    $endmerge
+    $place [x_vectorSum_x_xexitx_xloopexit_x_vectorSum_x_xexit]
+    //begin: basic-block x_vectorSum_x_xexit
+    $merge x_vectorSum_x_xexit_x_vectorSum_x_xexit x_vectorSum_x_xexitx_xloopexit_x_vectorSum_x_xexit
+    $phi idxx_x01x_xi4 :=  ( $cast ($uint<32>) iNsTr_19) $on x_vectorSum_x_xexit_x_vectorSum_x_xexit ( $cast ($uint<32>) ( $bitcast ($uint<32> ) _b00000000000000000000000000000000 ) ) $on x_vectorSum_x_xexitx_xloopexit_x_vectorSum_x_xexit 
+    $endmerge
+    scevgepx_xi5 := @(C[idxx_x01x_xi4])
+    // load 
+    iNsTr_16 := ->(scevgepx_xi5) 
+    out_data_pipe := iNsTr_16
+    iNsTr_19 := (idxx_x01x_xi4 + ( $bitcast ($uint<32> ) _b00000000000000000000000000000001 ) )
+    // compare instruction
+    exitcond := (iNsTr_19 == ( $bitcast ($uint<32> ) _b00000000000000000000000001000000 )  )
+    $if exitcond $then  $place [x_vectorSum_x_xexit_sendResultx_xexitx_xloopexit] $else $place [x_vectorSum_x_xexit_x_vectorSum_x_xexit] $endif 
+  }
+}
+$module [x_vectorSum_] 
+$in ()
+$out ()
+$is 
+{
+  $branchblock [body] 
+  {
+    //begin: basic-block bbx_xnph
+    $place [bbx_xnph_bb_1]
+    //begin: basic-block bb_1
+    //   this is a do-while loop.
+    $merge bbx_xnph_bb_1
+    $phi indvar_at_entry :=  ( $cast ($uint<32>) ( $bitcast ($uint<32> ) _b00000000000000000000000000000000 ) ) $on bbx_xnph_bb_1 
+    $endmerge
+    $dopipeline $depth 16 
+    $merge $entry $loopback
+    $phi indvar :=  ( $cast ($uint<32>) indvarx_xnext) $on $loopback indvar_at_entry $on $entry
+    $endmerge
+    scevgep3 := @(C[indvar])
+    scevgep2 := @(B[indvar])
+    scevgep := @(A[indvar])
+    // load 
+    iNsTr_2 := ->(scevgep) 
+    // load 
+    iNsTr_3 := ->(scevgep2) 
+    iNsTr_4 := (iNsTr_2 + iNsTr_3)
+    ->(scevgep3) := iNsTr_4
+    indvarx_xnext := (indvar + ( $bitcast ($uint<32> ) _b00000000000000000000000000000001 ) )
+    // compare instruction
+    exitcond1 := (indvarx_xnext == ( $bitcast ($uint<32> ) _b00000000000000000000000001000000 )  )
+    $while (~exitcond1) 
+    $place [bb_1_xx_x_crit_edge] //begin: basic-block xx_x_crit_edge
+    $merge bb_1_xx_x_crit_edge
+    $endmerge
+    $place [return__]
+    $merge return__ $endmerge
+  }
+}
