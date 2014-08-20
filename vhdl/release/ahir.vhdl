@@ -4097,6 +4097,8 @@ package OperatorPackage is
   procedure ApIntSHL_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntLSHR_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntASHR_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
+  procedure ApIntROL_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
+  procedure ApIntROR_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntEq_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntNe_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntUgt_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
@@ -4204,6 +4206,18 @@ package body OperatorPackage is
   begin
      result := To_SLV(shift_right(to_signed(l), to_integer(to_unsigned(Ceil_Log2(l'length)+1,r)))); 
   end ApIntASHR_proc; 				
+  ---------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  procedure ApIntROL_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
+  begin
+    result := To_SLV(to_unsigned(l) rol to_integer(to_unsigned(Ceil_Log2(l'length)+1, r)));
+  end ApIntROL_proc; 				
+  ---------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  procedure ApIntROR_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
+  begin
+    result := To_SLV(to_unsigned(l) ror to_integer(to_unsigned(Ceil_Log2(l'length)+1, r)));
+  end ApIntROR_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
   procedure ApIntEq_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
@@ -4339,6 +4353,10 @@ package body OperatorPackage is
       ApIntLSHR_proc(x, y, result_var);
     elsif id = "ApIntASHR" then					
       ApIntASHR_proc(x, y, result_var);
+    elsif id = "ApIntROL" then					
+      ApIntROL_proc(x, y, result_var);
+    elsif id = "ApIntROR" then					
+      ApIntROR_proc(x, y, result_var);
     elsif id = "ApIntEq" then					
       ApIntEq_proc(x, y, result_var);
     elsif id = "ApIntNe" then					
@@ -14725,11 +14743,13 @@ begin  -- default_arch
 		    preq := '1';   
 		    ackv := true;
                elsif (unload_req) then
+		    -- desire to unload, but nothing present.
                     nstate := waiting;
                end if;
 	 when waiting =>
 		preq := '1';
 	        if(pop_ack(0) = '1') then
+		    -- ack the unload-req.
 		    nstate := idle;
 		    ackv := true;
 		end if;
@@ -14741,6 +14761,7 @@ begin  -- default_arch
      if(clk'event and clk = '1') then
 	if(reset = '1') then
 		fsm_state <= idle;
+		unload_ack <= false;
 	else
 		fsm_state <= nstate;
 	end if;
@@ -20994,6 +21015,51 @@ begin
         end generate;
 
 end Behave;
+library ieee;
+use ieee.std_logic_1164.all;
+
+library ahir;
+use ahir.Types.all;
+use ahir.Subprograms.all;
+use ahir.Utilities.all;
+use ahir.BaseComponents.all;
+
+-- brief description:
+--  as the name indicates, a squash-shift-register
+--  provides an implementation of a pipeline.
+entity SquashShiftRegister is
+  generic (name : string;
+	   data_width: integer;
+           depth: integer := 1);
+  port (
+    read_req       : in  std_logic;
+    read_ack       : out std_logic;
+    read_data      : out std_logic_vector(data_width-1 downto 0);
+    write_req       : in  std_logic;
+    write_ack       : out std_logic;
+    write_data      : in std_logic_vector(data_width-1 downto 0);
+    clk, reset : in  std_logic);
+  
+end SquashShiftRegister;
+
+architecture default_arch of SquashShiftRegister is
+
+  signal stage_full: std_logic_vector(0 to depth);
+
+  type SSRArray is array (natural range <>) of std_logic_vector(data_width-1 downto 0);
+  signal stage_data : SSRArray(0 to depth);
+  
+begin  -- default_arch
+
+    -- shift-right if there is a bubble 
+    -- anywhere in the shift-register,
+    -- and if the write-signal is active.
+    --
+    -- stall stage I if I+1 is not ready to
+    -- accept.
+    -- etc.. etc..  TODO.
+
+end default_arch;
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

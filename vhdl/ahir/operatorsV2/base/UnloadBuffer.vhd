@@ -73,11 +73,13 @@ begin  -- default_arch
 		    preq := '1';   
 		    ackv := true;
                elsif (unload_req) then
+		    -- desire to unload, but nothing present.
                     nstate := waiting;
                end if;
 	 when waiting =>
 		preq := '1';
 	        if(pop_ack(0) = '1') then
+		    -- ack the unload-req.
 		    nstate := idle;
 		    ackv := true;
 		end if;
@@ -89,6 +91,7 @@ begin  -- default_arch
      if(clk'event and clk = '1') then
 	if(reset = '1') then
 		fsm_state <= idle;
+		unload_ack <= false;
 	else
 		fsm_state <= nstate;
 	end if;

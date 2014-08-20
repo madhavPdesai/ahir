@@ -21,6 +21,8 @@ package OperatorPackage is
   procedure ApIntSHL_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntLSHR_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntASHR_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
+  procedure ApIntROL_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
+  procedure ApIntROR_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntEq_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntNe_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
   procedure ApIntUgt_proc(l: in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector);
@@ -128,6 +130,18 @@ package body OperatorPackage is
   begin
      result := To_SLV(shift_right(to_signed(l), to_integer(to_unsigned(Ceil_Log2(l'length)+1,r)))); 
   end ApIntASHR_proc; 				
+  ---------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  procedure ApIntROL_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
+  begin
+    result := To_SLV(to_unsigned(l) rol to_integer(to_unsigned(Ceil_Log2(l'length)+1, r)));
+  end ApIntROL_proc; 				
+  ---------------------------------------------------------------------
+  -----------------------------------------------------------------------------
+  procedure ApIntROR_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
+  begin
+    result := To_SLV(to_unsigned(l) ror to_integer(to_unsigned(Ceil_Log2(l'length)+1, r)));
+  end ApIntROR_proc; 				
   ---------------------------------------------------------------------
   -----------------------------------------------------------------------------
   procedure ApIntEq_proc (l : in std_logic_vector; r : in std_logic_vector; result : out std_logic_vector) is					
@@ -263,6 +277,10 @@ package body OperatorPackage is
       ApIntLSHR_proc(x, y, result_var);
     elsif id = "ApIntASHR" then					
       ApIntASHR_proc(x, y, result_var);
+    elsif id = "ApIntROL" then					
+      ApIntROL_proc(x, y, result_var);
+    elsif id = "ApIntROR" then					
+      ApIntROR_proc(x, y, result_var);
     elsif id = "ApIntEq" then					
       ApIntEq_proc(x, y, result_var);
     elsif id = "ApIntNe" then					
