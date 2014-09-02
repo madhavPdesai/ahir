@@ -2492,10 +2492,7 @@ bool vcCPForkBlock::Check_Structure()
 			//       from the multiple entry points to the body.  So multiple DFS
 			//       searches need to be performed.
 			//
-			if(!this->Relaxed_Entry_Reachability_Checking())
-				vcSystem::Error("all elements not reachable from entry in fork region " + this->Get_Hierarchical_Id());
-			else
-				vcSystem::Warning("all elements not reachable from entry in region " + this->Get_Hierarchical_Id());
+			vcSystem::Warning("all elements not reachable from entry in region " + this->Get_Hierarchical_Id());
 
 			this->Print_Missing_Elements(visited_set);
 		}
@@ -2525,10 +2522,7 @@ bool vcCPForkBlock::Check_Structure()
 			//       the multiple exit points from the body.  So multiple (reverse) DFS
 			//       searches need to be performed.
 			//       
-			if(!this->Relaxed_Entry_Reachability_Checking())
-				vcSystem::Error("exit not reachable from every element in fork region " + this->Get_Hierarchical_Id());
-			else
-				vcSystem::Warning("exit not reachable from every element in fork region " + this->Get_Hierarchical_Id());
+			vcSystem::Warning("exit not reachable from every element in region " + this->Get_Hierarchical_Id());
 			this->Print_Missing_Elements(visited_set);
 		}
 
