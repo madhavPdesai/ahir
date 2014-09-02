@@ -21,13 +21,11 @@
 
 \section{What is AhirV2?}
 
-AhirV2 is a set of tools 
-\begin{itemize}
-\item which can convert a C/C++ progam to  an equivalent hardware
-implementation (described in VHDL).
-\item which provide an algorithmic approach to the design of 
-hardware.
-\end{itemize}
+AhirV2 is a set of tools which can convert a C 
+description of a system to  an equivalent hardware
+implementation (described in VHDL).  Using these tools,
+it is possible to take an algorithmic approach to 
+the design of  hardware.
 
 The flow of transformations is illustrated in Figure \ref{fig:AhirFlow}.
 \begin{figure}
@@ -39,26 +37,27 @@ The flow of transformations is illustrated in Figure \ref{fig:AhirFlow}.
 \end{figure}
 
 \begin{itemize}
-\item Given a high-level C/C++ program, we rely on
+\item Given a high-level C, we rely on
 an LLVM (www.llvm.org) compatible compiler such as clang (www.clang.org)
-or dragon-egg (dragonegg.llvm.org) to produce LLVM byte code.
+to produce LLVM byte code.
 Currently, the AhirV2 flow uses LLVM byte code as a starting point.
 \item The LLVM byte-code program is compiled
 to an intermediate assembly form.  AhirV2
 introduces an intermediate assembly language
 \Aa  which serves as a target for sequential
-programming languages (such as C/C++) as
+programming languages (such as C) as
 well as for parallel programming languages.
 An \Aa program consists of modules (analogous
-to sub-programs in C/C++) which can call each 
+to sub-programs in C) which can call each 
 other, and can communicate through storage objects
 as well as through pipes (first-in-first-out buffers).
 \item From the \Aa description, a virtual
 circuit (described in a virtual circuit
 description language \vC) is generated.
-The chief optimization carried out at this
-step is the decomposition of the system memory
-into disjoint spaces based on usage
+The chief optimizations carried out at this
+step are dependency based operation
+ordering, dynamic loop-pipelining and decomposition of the system memory
+into disjoint spaces based on static pointer
 analysis (this considerably improves the
 available memory bandwidth and reduces
 system cost).  A \vC description also
@@ -86,18 +85,18 @@ elements and memory elements.
 \end{itemize}
 
 Thus, to generate hardware using the AhirV2 flow,
-it is possible to start at C/C++, at the \Aa level
+it is possible to start at the C-level, at the \Aa level
 at the \vC level or at the VHDL level (or a combination
 of all these levels).  Starting at a higher level is
 easier for the programmer, but using lower level representations
-will probably lead to more efficient hardware.
-Typically, if we start from C/C++, circuits
+will usually lead to more efficient hardware.
+Typically, if we start from C, circuits
 produced by the AhirV2 flow are upto two orders of
 magnitude more energy-efficient than
 a processor \cite{ref:dsd2010}.  
 
 Currently, there are only two restrictions in mapping
-a C/C++ program to VHDL using the AhirV2 flow:
+a C program to VHDL using the AhirV2 flow:
 \begin{itemize}
 \item No recursion, no cycles in the call-graph of the original
 program.
@@ -398,8 +397,9 @@ void bar()
    }
 }
 \end{verbatim}
-In this example, the read/write functions are assumed
-to use named pipes for inter-process communication.
+In this example, the read/write functions are provided
+as part of a {\em pipeHandler} library which is bundled with
+the AhirV2 distribution.
 
 The two functions can be compiled into separate processes
 or can be used in threads in a multi-threaded program (using pthreads, for
@@ -700,7 +700,7 @@ The other tools in the chain are described below.
 This tool takes LLVM byte code and converts it into an
 \Aa file.
 \begin{verbatim}
-llvm2aa [-modules=<listfile>] [-storageinit] bytecode.o > bytecode.aa
+llvm2aa options bytecode.o > bytecode.aa
 \end{verbatim}
 The generated \Aa code is sent to {\bf stdout} and all informational
 messages are sent to {\bf stderr}.  On success, the tool returns 0.
@@ -713,8 +713,23 @@ listed in the text-file listfile. If absent, all functions
 are converted.
 \item {\bf -storageinit} :  Storage objects in the llvm bytecode
 are explicitly initialized in the generated \Aa code.   An initializer
-routine {\bf global\_storage\_initializer\_} is instantiated in
+routine named
+\begin{verbatim}
+    global_storage_initializer
+\end{verbatim}
+is instantiated in
 the \Aa code for this purpose.
+\item {\bf -pipedepths=filename} : Specifies a file which contains
+the depths of pipes which are part of the generated \Aa code.
+\item {\bf -extract\_do\_while} : Innermost loops which are marked
+using a call to the special function 
+\begin{verbatim}
+    _loop_pipelining_on_
+\end{verbatim}
+are extracted as pipelined do-while loops.  This is necessary
+for automatic parallelization of inner loops in the 
+generated hardware (substantial performance benefits can be
+realized).
 \end{itemize}
 
 \subsection{{\bf AaLinkExtMem}}
@@ -728,7 +743,7 @@ or it is assumed to be internal and assumed to consist of
 a memory object (an array of bytes).  External pointer dereferences
 are handled as if they are directed at this memory object.
 \begin{verbatim}
-AaLinkExtMem [-I n] [-E obj-name] bytecode.o > bytecode.aa
+AaLinkExtMem options file1.aa file2.aa ...  > linked.aa
 \end{verbatim}
 The generated \Aa code is sent to {\bf stdout} and all informational
 messages are sent to {\bf stderr}.  On success, the tool returns 0.
@@ -758,12 +773,38 @@ function which is named {\bf global\_storage\_initializer\_}.
 This global initializer calls all the memory initializers in
 the programs being linked.
 
+\subsection{{\bf AaOpt}}
+
+The optimization utility {\bf AaOpt} takes an \Aa program (list of
+\Aa files) and produces an optimized version of the source program.
+\begin{verbatim}
+AaOpt options file1.aa file2.aa ... > optimized.aa
+\end{verbatim}
+The optimized \Aa code is printed to {\bf stdout}.  On success, 
+the tool returns a 0 (else a non-zero).  Macro and inlined
+function calls in the source code are substituted in place
+in the optimized code.
+
+The options:
+\begin{itemize}
+\item {\bf -r module-name} (optional) : specifies a root module in the
+system.  Multiple root modules can be specified.  All dead code (which
+is not reachable from a root module) is eliminated.
+\item {\bf -I extmem-object} (optional) : similar to AaLinkExtMem,
+this option specifies the name of the extmem-object in the
+source \Aa files.
+\item {-B} (optional) : if specified, add buffering to balance pipelined
+loops so that loop performance is not bottlenecked by inadequate
+buffering.
+\end{itemize}
+
+
 \subsection{{\bf Aa2VC}}
 
 This tool takes a list of \Aa programs and converts them
 to a \vC description. 
 \begin{verbatim}
-Aa2VC [-O] [-C] [-I obj-name] file1.aa file2.aa ...  > result.vc
+Aa2VC options file1.aa file2.aa ...  > result.vc
 \end{verbatim}
 The generated \vC code is sent to {\bf stdout} and all informational
 messages are sent to {\bf stderr}.  On success the tool returns 0.
@@ -776,6 +817,15 @@ by doing dependency analysis.
 is not called from within the system.  These stubs can be used to
 interface to a VHDL simulator (or even drive hardware) to verify
 the VHDL code generated by downstream tools.
+\item {\bf -U} : memory subsystems will be unordered (that is,
+will not guarantee in-order completion of accesses).  This
+leads to a simpler memory subsystem, but more conservative
+control flow.  The default is that all memory subsystems
+are ordered (will complete read/write requests in the order that
+they are accepted).
+\item {\bf -r root-module} (optional): specifies a root module.
+Code which is not accessible from a root-module is considered
+as dead code and is ignored.
 \item {\bf -I obj-name} : if specified, all external memory references
 are considered as being directed at the storage object named obj-name.
 If not specified, then the tool will throw an error if it finds
@@ -788,7 +838,7 @@ storage objects declared inside the \Aa program.
 Takes a collection of \vC descriptions and converts them to
 an AHIR system described in VHDL.
 \begin{verbatim}
-vc2vhdl [-O] [-C] [-a] [-e <entity-name] [-w]\
+vc2vhdl [-O] [-C] [-q] [-a] [-e <entity-name] [-w]\
          -t/-T foo [-t/-T bar -t/-T bar2 ...]\
          -f file1.vc -f file2.vc ...  > system.vhdl
 \end{verbatim}
@@ -812,7 +862,7 @@ The control ports for these modules are
 {\bf not visible} at the interface of the generated AHIR system.
 In the AHIR system, these modules are started on reset
 and are run forever (restarted after they finish, forever).
-\item {\bf -f} : specifies the \vC files to be analyzed. 
+\item {\bf -f file-name} : specifies the \vC files to be analyzed. 
 Multiple \vC files may be specified.  An object must be
 defined before it is used, so the \vC files must be 
 specified in the correct order.
@@ -833,9 +883,21 @@ result in a slower (usually by 2X) system, but will
 also reduce the area (usually by 0.5X).  If not specified,
 two operations will be mapped to the same
 operator  only if it can be proved that they cannot be active simultaneously.
+\item {\bf -q } : if specified, do aggressive register insertion
+to minimize the clock period.
+\item {\bf -S bypass-stride } : by specifying the bypass stride
+(an integer $\geq 1$),
+the user can trade-off clock cycles versus clock period.  
+The lowest clock period will be obtained for -S 1.   
 \item {\bf -e top-entity-name} : The generated top-level VHDL entity
 corresponding to the AHIR system is named top-entity-name.  The default
 is test\_system.
+\item {-L function-library} : AhirV2 provides some built in operator
+functions which can be called from your code.  These are organized
+as function libraries and this option specifies a function library
+to look into when generating VHDL.  For example {\em -L fpu} gives
+access to the floating point library which provides some useful
+built in functions (e.g. fpalu32, fpalu64 etc.).
 \item {\bf -w} :  If specified, the VHDL system and test-bench are
 generated as separate unformatted VHDL files.  You will need to
 format these using the vhdlFormat command.

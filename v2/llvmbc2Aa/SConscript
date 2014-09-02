@@ -4,14 +4,17 @@ SConscript(['docs/SConscript'])
 
 local = env.Clone()
 
-local.ParseConfig('llvm-config --cxxflags --ldflags --libs bitreader bitwriter instrumentation scalaropts ipo')
+local.ParseConfig('llvm-config --cxxflags --libs core bitreader bitwriter instrumentation scalaropts ipo --ldflags' )
 
 VariantDir('obj','src',duplicate=0)
 source_files = Glob('obj/*.cpp')
 
 local.Append(CPPPATH = './include')
 local.Append(CPPPATH = '../BGLWrap/include')
-local.Append(CPPPATH = '/usr/local/boost_1_46_1/')
+
+# add boost-install path if necessary
+# local.Append(CPPPATH = '/usr/local/boost_1_46_1/')
 local.Append(LIBS = 'm')
+local.Append(LIBS = 'dl')
 local.Program('bin/llvm2aa', source_files, CCFLAGS = '-g')
 

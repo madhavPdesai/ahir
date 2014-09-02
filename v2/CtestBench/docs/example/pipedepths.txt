@@ -1,0 +1,2 @@
+in_data 10
+out_data 10 lifo

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <pthreadUtils.h>
 
 #ifdef SW
 #include <Pipes.h>
@@ -18,22 +19,9 @@ void Exit(int sig)
 	exit(0);
 }
 
-void *accumulate_(void* fargs)
-{
-   accumulate();
-}
-
-void *write_pipe_(void* a)
-{
-   write_uint32_n("in_data",(uint32_t*)a, 10);
-}
-
-
-void* pipeHandler__(void* a)
-{
-	pipeHandler();
-}
-
+#ifdef SW
+DEFINE_THREAD(accumulate)
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -44,18 +32,11 @@ int main(int argc, char* argv[])
         int i;
 
 #ifdef SW
+	PTHREAD_DECL(accumulate)
+	PTHREAD_CREATE(accumulate)
 
-	// in the "software" case, we start a pipe-handler
-	// to manage the pipes..  Earlier, we were using named
-	// pipes, which were very flaky and difficult to debug.
-	// the pipeHandler generates a log file (pipeHandler.log)
-	// which is very useful for figuring out what happened.
-	// one can also use gdb to trace activity.
-	pthread_t phandler_t;
-	pthread_create(&phandler_t,NULL,&pipeHandler__,NULL);
+	init_pipe_handler();
 
-	usleep(100);
-	
 	// register FIFO
 	register_pipe("in_data",10,32,0);
 
@@ -80,18 +61,9 @@ int main(int argc, char* argv[])
 		data_in[i] = i;
 	}
 
-
-#ifdef SW
-	pthread_t acc_t;
-	pthread_create(&acc_t,NULL,&accumulate_,NULL);
-#endif
-
 	// write 10 things to in_data, it has enough room..
         write_uint32_n("in_data",(uint32_t*)data_in, 10);
 
-
-        usleep(1000);
-   
 	// read back 10 things from out_data..
 	read_uint32_n("out_data",(uint32_t*)data_out, 10);
 
@@ -106,7 +78,6 @@ int main(int argc, char* argv[])
 	fprintf(stdout,"Sum 1 is %d\n",get_sum(1));
 
 #ifdef SW
-	pthread_cancel(acc_t);
-	killPipeHandler();
+	close_pipe_handler();
 #endif
 }
