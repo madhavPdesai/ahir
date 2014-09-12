@@ -2,6 +2,44 @@
 using namespace std;
 using namespace _base_value_;
 
+void __extract_uint32(string float_value, uint32_t& val)
+{
+        val = 0;
+        int I; uint32_t J = 0;
+        string raw_string;
+        if(float_value[1] == 'b')
+                raw_string = float_value;
+        else if(float_value[1] == 'h')
+                raw_string = Hex_To_Binary(float_value);
+        for(I = raw_string.length()-1; I >= 0; I--)
+        {
+                if(raw_string[I] == '1')
+                        val = val | (1 << J);
+                J++;
+                if(J==32) break;
+        }
+}
+
+void __extract_uint64(string float_value, uint64_t& val)
+{
+        val = 0;
+        int I; uint64_t J = 0;
+        string raw_string;
+        if(float_value[1] == 'b')
+                raw_string = float_value;
+        else if(float_value[1] == 'h')
+                raw_string = Hex_To_Binary(float_value);
+        for(I = raw_string.length()-1; I >= 0; I--)
+        {
+                if(raw_string[I] == '1')
+                        val = val | (1 << J);
+                J++;    
+                if(J==64)
+                        break;
+                             
+	}
+}
+
 #define __extract_uint__(N,float_value, val) {\
 	val = 0;\
 	uint32_t I; uint32_t J = 0;\
@@ -810,7 +848,7 @@ Float::Float(int characteristic_width, int mantissa_width, string float_value):V
 		{
 			float ext_val = 0.0;
 			uint32_t* ptr = (uint32_t*) &ext_val;
-			__extract_uint__(32, float_value, *ptr);
+			__extract_uint32(float_value, *ptr);
 			this->data._float_value = ext_val;
 		}
 
@@ -825,7 +863,7 @@ Float::Float(int characteristic_width, int mantissa_width, string float_value):V
 		{
 			double ext_val = 0.0;
 			uint64_t* ptr = (uint64_t*) &ext_val;
-			__extract_uint__(64,float_value, *ptr);
+			__extract_uint64(float_value, *ptr);
 			this->data._double_value = ext_val;
 		}
 	}

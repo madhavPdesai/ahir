@@ -101,6 +101,10 @@ int main()
   cout << g.To_String() << endl;
   fprintf(stdout,"expected a9, got %x\n", (uint32_t) *((uint32_t*) &(g.data._float_value)));
 
+  Float h(8,23, "_b0");
+  cout << h.To_String() << endl;
+  fprintf(stdout,"expected 0, got %x\n", (uint32_t) *((uint32_t*) &(h.data._float_value)));
+
 
    // bitcast.
    Unsigned ug(32);
