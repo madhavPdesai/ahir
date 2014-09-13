@@ -1,3 +1,6 @@
+package GlobalConstants is
+    constant global_debug_flag: boolean := false;
+end package GlobalConstants;
 library ieee;
 use ieee.std_logic_1164.all;
 
@@ -15,8 +18,6 @@ package Types is
 
   type StdLogicArray2D is array (integer range <>,integer range <>) of std_logic;
   type IStdLogicVector is array (integer range <>) of std_logic; -- note: integer range
-
-  constant global_debug_flag: boolean := false;
 
   constant slv_zero: std_logic_vector(0 downto 0) := "0";
   constant sl_zero: std_logic := '0';
@@ -9961,6 +9962,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
@@ -9988,7 +9990,7 @@ architecture default_arch of place is
   signal token_sig      : boolean;  -- asynchronously computed value of the token
   signal token_latch    : integer range 0 to capacity;
   
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := global_debug_flag;
 begin  -- default_arch
 
   assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;
@@ -10037,6 +10039,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
@@ -10064,7 +10067,7 @@ architecture default_arch of place_with_bypass is
   signal token_latch    : integer range 0 to capacity;
   signal non_zero       : boolean;
 
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := global_debug_flag;
   
 begin  -- default_arch
 
@@ -13930,6 +13933,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
@@ -13991,7 +13995,7 @@ architecture Vanilla of SplitOperatorShared is
   signal itag,otag : std_logic_vector(tag_length-1 downto 0);
   signal ireq,iack, oreq, oack: std_logic;
 
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := global_debug_flag;
   
 begin  -- Behave
   assert ackL'length = reqL'length report "mismatched req/ack vectors" severity error;
@@ -14162,6 +14166,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
@@ -14203,7 +14208,7 @@ architecture Vanilla of StoreReqShared is
   signal idata: std_logic_vector(((addr_width+data_width)*num_reqs)-1 downto 0);
   signal odata: std_logic_vector((addr_width+data_width)-1 downto 0);
 
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := global_debug_flag;
 --  constant registered_output: boolean := min_clock_period and (time_stamp_width = 0);
 
   -- must register..  ack implies that address has been sampled.
@@ -17168,6 +17173,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
@@ -17213,7 +17219,7 @@ architecture Vanilla of PipelinedFPOperator is
   signal itag,otag : std_logic_vector(tag_length-1 downto 0);
   signal ireq,iack, oreq, oack: std_logic;
 
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := global_debug_flag;
 
   signal idata: std_logic_vector(iwidth-1 downto 0);
   signal odata: std_logic_vector(owidth-1 downto 0);
@@ -18676,6 +18682,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Utilities.all;
 
 
@@ -18717,7 +18724,7 @@ architecture Pipelined of UnsignedShifter is
   signal stage_active : std_logic_vector(0 to pipe_depth);
 
   
-  constant debug_flag: boolean := true;
+  constant debug_flag: boolean := global_debug_flag;
 begin  -- Pipelined
 
   Debug: if debug_flag  generate
@@ -19001,6 +19008,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
@@ -19062,7 +19070,7 @@ architecture Vanilla of BinarySharedOperator is
   signal itag,otag : std_logic_vector(tag_length-1 downto 0);
   signal ireq,iack, oreq, oack: std_logic;
 
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := global_debug_flag;
   alias i1_const: BooleanArray(num_reqs-1 downto 0) is input_1_is_constant;
   alias i2_const: BooleanArray(num_reqs-1 downto 0) is input_2_is_constant;
   
@@ -19820,6 +19828,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
@@ -19869,7 +19878,7 @@ architecture Vanilla of LoadReqSharedWithInputBuffers is
   constant iwidth: integer := addr_width*num_reqs;
   constant owidth: integer := addr_width;
 
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := global_debug_flag;
 
   -- must register..  ack implies that address has been sampled.
   constant registered_output : boolean := true; 
@@ -21065,6 +21074,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
@@ -21106,7 +21116,7 @@ architecture Vanilla of StoreReqSharedWithInputBuffers is
   constant iwidth: integer := addr_width*num_reqs;
   constant owidth: integer := addr_width;
 
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := global_debug_flag;
 
   -- must register..  ack implies that address has been sampled.
   constant registered_output : boolean := true; 
@@ -21363,6 +21373,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
@@ -21413,7 +21424,7 @@ architecture Vanilla of UnarySharedOperator is
 
   constant tag_length: integer := Maximum(1,Ceil_Log2(num_reqs));
 
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := global_debug_flag;
 
   constant inbuf: IntegerArray(0 downto 0) := (0 => 0);
   
