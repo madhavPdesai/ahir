@@ -2,6 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
@@ -29,7 +30,7 @@ architecture default_arch of place is
   signal token_sig      : boolean;  -- asynchronously computed value of the token
   signal token_latch    : integer range 0 to capacity;
   
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := global_debug_flag;
 begin  -- default_arch
 
   assert capacity > 0 report "in place " & name & ": place must have capacity > 1." severity error;

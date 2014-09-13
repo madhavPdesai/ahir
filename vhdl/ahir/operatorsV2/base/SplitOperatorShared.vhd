@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
@@ -64,7 +65,7 @@ architecture Vanilla of SplitOperatorShared is
   signal itag,otag : std_logic_vector(tag_length-1 downto 0);
   signal ireq,iack, oreq, oack: std_logic;
 
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := global_debug_flag;
   
 begin  -- Behave
   assert ackL'length = reqL'length report "mismatched req/ack vectors" severity error;

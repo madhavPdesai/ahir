@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
@@ -44,7 +45,7 @@ architecture Vanilla of StoreReqShared is
   signal idata: std_logic_vector(((addr_width+data_width)*num_reqs)-1 downto 0);
   signal odata: std_logic_vector((addr_width+data_width)-1 downto 0);
 
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := global_debug_flag;
 --  constant registered_output: boolean := min_clock_period and (time_stamp_width = 0);
 
   -- must register..  ack implies that address has been sampled.

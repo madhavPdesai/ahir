@@ -13,6 +13,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Utilities.all;
 
 
@@ -54,7 +55,7 @@ architecture Pipelined of UnsignedShifter is
   signal stage_active : std_logic_vector(0 to pipe_depth);
 
   
-  constant debug_flag: boolean := true;
+  constant debug_flag: boolean := global_debug_flag;
 begin  -- Pipelined
 
   Debug: if debug_flag  generate

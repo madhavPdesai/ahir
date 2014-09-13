@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
@@ -53,7 +54,7 @@ architecture Vanilla of UnarySharedOperator is
 
   constant tag_length: integer := Maximum(1,Ceil_Log2(num_reqs));
 
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := global_debug_flag;
 
   constant inbuf: IntegerArray(0 downto 0) := (0 => 0);
   

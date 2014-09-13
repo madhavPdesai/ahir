@@ -3,6 +3,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library ahir;
+use ahir.GlobalConstants.all;
 use ahir.Types.all;
 use ahir.Subprograms.all;
 use ahir.Utilities.all;
@@ -44,7 +45,7 @@ architecture Vanilla of StoreReqSharedWithInputBuffers is
   constant iwidth: integer := addr_width*num_reqs;
   constant owidth: integer := addr_width;
 
-  constant debug_flag : boolean := false;
+  constant debug_flag : boolean := global_debug_flag;
 
   -- must register..  ack implies that address has been sampled.
   constant registered_output : boolean := true; 
