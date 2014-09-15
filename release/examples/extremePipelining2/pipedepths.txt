@@ -1,0 +1,4 @@
+op_pipe 2
+x_pipe 2
+y_pipe 2
+z_pipe 2

@@ -142,6 +142,10 @@ void AaExpression::Write_VC_Guard_Forward_Dependency(AaSimpleObjectReference* se
 		// this dependency is no longer necessary.
 		//__J(__UST(this), __UCT(root));
 	}
+	else
+	{
+		ofile << "// root " << root->Get_VC_Name() << " of guard-expression " << sexpr->Get_VC_Name() << " not in visited elements." << endl;
+	}
 }
 
 void AaExpression::Write_VC_Guard_Backward_Dependency(AaExpression* expr,
@@ -160,26 +164,29 @@ void AaExpression::Write_VC_Guard_Dependency(bool pipeline_flag, set<AaRoot*>& v
 {
 	if(this->Get_Guard_Expression() != NULL)
 	{
-		ofile << "// Guard dependency" << endl;
 		AaExpression* expr = this->Get_Guard_Expression();
-		if(expr->Is("AaSimpleObjectReference"))
+		if(!expr->Is_Constant() && (expr != this))
 		{
+			ofile << "// Guard dependency for expression " << this->Get_VC_Name() << " with guard " <<
+				expr->Get_VC_Name() <<  endl;
+			if(expr->Is("AaSimpleObjectReference"))
+			{
 
-			AaSimpleObjectReference* sexpr = (AaSimpleObjectReference*) expr;
-			this->Write_VC_Guard_Forward_Dependency(sexpr,visited_elements,ofile);
+				AaSimpleObjectReference* sexpr = (AaSimpleObjectReference*) expr;
+				this->Write_VC_Guard_Forward_Dependency(sexpr,visited_elements,ofile);
+			}
+			else
+			{
+				AaRoot::Error("guard expression must be an implicit variable reference.\n",this);
+			}
+
+			if(pipeline_flag)
+			{
+
+				this->Write_VC_Guard_Backward_Dependency(expr,visited_elements,ofile);
+
+			}
 		}
-		else
-		{
-			AaRoot::Error("guard expression must be an implicit variable reference.\n",this);
-		}
-
-		if(pipeline_flag)
-		{
-
-			this->Write_VC_Guard_Backward_Dependency(expr,visited_elements,ofile);
-			
-		}
-
 	}
 }
 

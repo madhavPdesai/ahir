@@ -1483,6 +1483,8 @@ void AaAssignmentStatement::Propagate_Constants()
 {
   this->_source->Evaluate();
   this->_target->Evaluate();
+  if(this->_guard_expression)
+	this->_guard_expression->Evaluate();
   if(this->_source->Is_Constant() && this->_target->Is_Implicit_Variable_Reference())
     {
       this->_target->Assign_Expression_Value(this->_source->Get_Expression_Value());
@@ -2455,6 +2457,9 @@ void AaCallStatement::Propagate_Constants()
     {
       _input_args[idx]->Evaluate();
     }
+
+ if(this->_guard_expression)
+	this->_guard_expression->Evaluate();
 }
 
 //---------------------------------------------------------------------

@@ -114,11 +114,16 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
       // take care of the guard
       if(this->_guard_expression)
 	{
-
-		ofile << "// Guard expression" << endl;
-
-	  // guard expression calculation
-	  this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
+	  if(this->_guard_expression->Is_Constant())
+	  {
+       	  	ofile << "// Guard expression is a constant" << endl;
+	  }
+	  else
+	  {
+	  	// guard expression calculation
+       	  	ofile << "// Guard expression " << endl;
+	  	this->_guard_expression->Write_VC_Control_Path_Optimized(pipeline_flag, visited_elements,ls_map,pipe_map,barrier,ofile);
+	  }
 	}
 
 
@@ -169,23 +174,27 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 	  __ConnectSplitProtocolPattern;
 
 	  if(this->_guard_expression)
-	   {
-		ofile << "// Guard dependency" << endl;
-		__J(__SST(this), __UCT(this->_guard_expression));
-	        if(pipeline_flag)
-	        {
-			this->_guard_expression->Write_VC_Update_Reenables(__SCT(this), false,
-						visited_elements, ofile);
-		}
-	   }
-	
+	  {
+		  if(!this->_guard_expression->Is_Constant())
+		  {
+			  ofile << "// Guard dependency" << endl;
+			  __J(__SST(this), __UCT(this->_guard_expression));
+			  if(pipeline_flag)
+			  {
+				  this->_guard_expression->Write_VC_Update_Reenables(__SCT(this), false,
+						  visited_elements, ofile);
+			  }
+		  }
+
+	  }
+
 
 	  __J(__SST(this), __UCT(this->_source));
 	  if(pipeline_flag)
 	  {
-		this->_source->Write_VC_Update_Reenables(__SCT(this), false,
-						visited_elements, ofile);
-		__SelfReleaseSplitProtocolPattern
+		  this->_source->Write_VC_Update_Reenables(__SCT(this), false,
+				  visited_elements, ofile);
+		  __SelfReleaseSplitProtocolPattern
 	  }
 	}
 
@@ -194,78 +203,78 @@ void AaAssignmentStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag,
 
       if(!target_is_implicit && !this->_source->Is_Constant())
       {
-      		__J(__SST(this->_target), __UCT(this->_source));
-		if(pipeline_flag)
-		{
-			this->_source->Write_VC_Update_Reenables(__SCT(this->_target), false,
-						visited_elements, ofile);
-		}
+	      __J(__SST(this->_target), __UCT(this->_source));
+	      if(pipeline_flag)
+	      {
+		      this->_source->Write_VC_Update_Reenables(__SCT(this->_target), false,
+				      visited_elements, ofile);
+	      }
       }
 
       if(target_is_implicit)
       {
-	  AaRoot* root_obj = _target->Get_Root_Object();
-	  if(root_obj == ((AaRoot*) this))
-	    visited_elements.insert(this);
-	  else if ((root_obj != NULL) && root_obj->Is_Interface_Object())
-	    {
-	      visited_elements.insert(this);
-	      visited_elements.insert(root_obj);
-	    }
+	      AaRoot* root_obj = _target->Get_Root_Object();
+	      if(root_obj == ((AaRoot*) this))
+		      visited_elements.insert(this);
+	      else if ((root_obj != NULL) && root_obj->Is_Interface_Object())
+	      {
+		      visited_elements.insert(this);
+		      visited_elements.insert(root_obj);
+	      }
       }
 
 
       this->Write_VC_Synch_Dependency(visited_elements, pipeline_flag, ofile);
       visited_elements.insert(this);
-    }
+	}
 }  
 
 
 // note: hier-id is already assumed to have been set-up
 void AaAssignmentStatement::Write_VC_Links_Optimized(string hier_id, ostream& ofile)
 {
-  if(!this->Is_Constant())
-    {
-      ofile << "// " << this->To_String() << endl;
-      ofile << "// " << this->Get_Source_Info() << endl;
-
-      this->_source->Write_VC_Links_Optimized(hier_id,
-					      ofile);
-      this->_target->Write_VC_Links_As_Target_Optimized(hier_id,
-							ofile);
-      bool source_is_implicit = _source->Is_Implicit_Variable_Reference();
-      bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
-	
-      if(source_is_implicit && target_is_implicit)
+	if(!this->Is_Constant())
 	{
-	  vector<string> reqs;
-	  vector<string> acks;
-	  reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "_Sample/req");
-	  acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_Sample/ack");
-	  reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "_Update/req");
-	  acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_Update/ack");
+		ofile << "// " << this->To_String() << endl;
+		ofile << "// " << this->Get_Source_Info() << endl;
 
-	  Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
-			reqs, acks, ofile);
-	  reqs.clear();
-	  acks.clear();
+		this->_source->Write_VC_Links_Optimized(hier_id,
+				ofile);
+		this->_target->Write_VC_Links_As_Target_Optimized(hier_id,
+				ofile);
+		bool source_is_implicit = _source->Is_Implicit_Variable_Reference();
+		bool target_is_implicit = _target->Is_Implicit_Variable_Reference();
+
+		if(source_is_implicit && target_is_implicit)
+		{
+			vector<string> reqs;
+			vector<string> acks;
+			reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "_Sample/req");
+			acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_Sample/ack");
+			reqs.push_back(hier_id + "/" + this->Get_VC_Name() + "_Update/req");
+			acks.push_back(hier_id + "/" + this->Get_VC_Name() + "_Update/ack");
+
+			Write_VC_Link(this->_target->Get_VC_Datapath_Instance_Name(),
+					reqs, acks, ofile);
+			reqs.clear();
+			acks.clear();
+		}
 	}
-    }
 }
 
 
 // AaCallStatement
 void AaCallStatement::Write_VC_Control_Path_Optimized(bool pipeline_flag, 
-						      set<AaRoot*>& visited_elements,
-						      map<string, vector<AaExpression*> >& ls_map,
-						      map<string, vector<AaExpression*> >& pipe_map,
-						      AaRoot* barrier,
-						      ostream& ofile)
+		set<AaRoot*>& visited_elements,
+		map<string, vector<AaExpression*> >& ls_map,
+		map<string, vector<AaExpression*> >& pipe_map,
+		AaRoot* barrier,
+		ostream& ofile)
 {
-  ofile << "// " << this->To_String() << endl;
-  ofile << "// " << this->Get_Source_Info() << endl;
+	ofile << "// " << this->To_String() << endl;
+	ofile << "// " << this->Get_Source_Info() << endl;
 
-  __DeclTransSplitProtocolPattern
+	__DeclTransSplitProtocolPattern
 
   // take care of the guard
   if(this->_guard_expression)
