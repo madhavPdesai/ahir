@@ -2492,10 +2492,10 @@ Write_VC_Root_Address_Calculation_Control_Path_Optimized(bool pipeline_flag, set
 					string idx_scale_update_regn = 
 							idx_scale_regn_name + "_Update";
 
-					ofile << ";;" << idx_scale_sample_regn << "] { " << endl;
+					ofile << ";;[" << idx_scale_sample_regn << "] { " << endl;
 					ofile << "$T [rr] $T [ra] " << endl;
 					ofile << "}" << endl;
-					ofile << ";;" << idx_scale_update_regn << "] { " << endl;
+					ofile << ";;[" << idx_scale_update_regn << "] { " << endl;
 					ofile << "$T [cr] $T [ca] " << endl;
 					ofile << "}" << endl;
 
