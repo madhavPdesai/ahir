@@ -64,10 +64,10 @@ architecture Default of maxOfTwo is --
   -- links between control-path and data-path
   signal UGT_u32_u1_9_inst_req_0 : boolean;
   signal UGT_u32_u1_9_inst_ack_0 : boolean;
-  signal UGT_u32_u1_9_inst_req_1 : boolean;
-  signal UGT_u32_u1_9_inst_ack_1 : boolean;
   signal MUX_16_inst_req_0 : boolean;
   signal MUX_16_inst_ack_0 : boolean;
+  signal UGT_u32_u1_9_inst_req_1 : boolean;
+  signal UGT_u32_u1_9_inst_ack_1 : boolean;
   signal MUX_16_inst_req_1 : boolean;
   signal MUX_16_inst_ack_1 : boolean;
   -- 
@@ -180,17 +180,17 @@ begin --
   always_true_symbol <= true; 
   default_zero_sig <= '0';
   maxOfTwo_CP_0: Block -- control-path 
-    signal cp_elements: BooleanArray(13 downto 0);
+    signal maxOfTwo_CP_0_elements: BooleanArray(13 downto 0);
     -- 
   begin -- 
-    cp_elements(0) <= maxOfTwo_CP_0_start;
-    maxOfTwo_CP_0_symbol <= cp_elements(13);
+    maxOfTwo_CP_0_elements(0) <= maxOfTwo_CP_0_start;
+    maxOfTwo_CP_0_symbol <= maxOfTwo_CP_0_elements(13);
     -- CP-element group 0 transition  place  bypass 
     -- predecessors 
     -- successors 1 
     -- members (4) 
-      -- 	$entry
       -- 	branch_block_stmt_5/$entry
+      -- 	$entry
       -- 	branch_block_stmt_5/branch_block_stmt_5__entry__
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17__entry__
       -- 
@@ -200,7 +200,7 @@ begin --
     -- members (1) 
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/$entry
       -- 
-    cp_elements(1) <= cp_elements(0);
+    maxOfTwo_CP_0_elements(1) <= maxOfTwo_CP_0_elements(0);
     -- CP-element group 2 join  transition  output  bypass 
     -- predecessors 4 5 
     -- successors 6 
@@ -216,13 +216,13 @@ begin --
       constant joinName: string(1 to 18) := "cp_element_group_2"; 
       signal preds: BooleanArray(1 to 2); -- 
     begin -- 
-      preds <= cp_elements(4) & cp_elements(5);
+      preds <= maxOfTwo_CP_0_elements(4) & maxOfTwo_CP_0_elements(5);
       gj : generic_join generic map(name => joinName, place_capacities => place_capacities, place_markings => place_markings, place_delays => place_delays) -- 
-        port map(preds => preds, symbol_out => cp_elements(2), clk => clk, reset => reset); --
+        port map(preds => preds, symbol_out => maxOfTwo_CP_0_elements(2), clk => clk, reset => reset); --
     end block;
     rr_30_symbol_link_to_dp: control_delay_element -- 
       generic map (delay_value => 0)
-      port map(clk => clk, reset => reset, req => cp_elements(2), ack => UGT_u32_u1_9_inst_req_0); -- 
+      port map(clk => clk, reset => reset, req => maxOfTwo_CP_0_elements(2), ack => UGT_u32_u1_9_inst_req_0); -- 
     -- CP-element group 3 transition  output  bypass 
     -- predecessors 1 
     -- successors 7 
@@ -231,10 +231,10 @@ begin --
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/UGT_u32_u1_9_Update/$entry
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/UGT_u32_u1_9_Update/cr
       -- 
-    cp_elements(3) <= cp_elements(1);
+    maxOfTwo_CP_0_elements(3) <= maxOfTwo_CP_0_elements(1);
     cr_35_symbol_link_to_dp: control_delay_element -- 
       generic map (delay_value => 0)
-      port map(clk => clk, reset => reset, req => cp_elements(3), ack => UGT_u32_u1_9_inst_req_1); -- 
+      port map(clk => clk, reset => reset, req => maxOfTwo_CP_0_elements(3), ack => UGT_u32_u1_9_inst_req_1); -- 
     -- CP-element group 4 transition  bypass 
     -- predecessors 1 
     -- successors 2 
@@ -244,7 +244,7 @@ begin --
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/R_a_7_update_start_
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/R_a_7_update_completed_
       -- 
-    cp_elements(4) <= cp_elements(1);
+    maxOfTwo_CP_0_elements(4) <= maxOfTwo_CP_0_elements(1);
     -- CP-element group 5 transition  bypass 
     -- predecessors 1 
     -- successors 2 
@@ -254,7 +254,7 @@ begin --
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/R_b_8_update_start_
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/R_b_8_update_completed_
       -- 
-    cp_elements(5) <= cp_elements(1);
+    maxOfTwo_CP_0_elements(5) <= maxOfTwo_CP_0_elements(1);
     -- CP-element group 6 transition  input  bypass 
     -- predecessors 2 
     -- successors 
@@ -265,7 +265,7 @@ begin --
       -- 
     ra_31_symbol_link_from_dp: control_delay_element -- 
       generic map (delay_value => 0)
-      port map(clk => clk, reset => reset, req => UGT_u32_u1_9_inst_ack_0, ack => cp_elements(6)); -- 
+      port map(clk => clk, reset => reset, req => UGT_u32_u1_9_inst_ack_0, ack => maxOfTwo_CP_0_elements(6)); -- 
     -- CP-element group 7 transition  input  bypass 
     -- predecessors 3 
     -- successors 8 
@@ -280,7 +280,7 @@ begin --
       -- 
     ca_36_symbol_link_from_dp: control_delay_element -- 
       generic map (delay_value => 0)
-      port map(clk => clk, reset => reset, req => UGT_u32_u1_9_inst_ack_1, ack => cp_elements(7)); -- 
+      port map(clk => clk, reset => reset, req => UGT_u32_u1_9_inst_ack_1, ack => maxOfTwo_CP_0_elements(7)); -- 
     -- CP-element group 8 join  transition  output  bypass 
     -- predecessors 7 10 11 
     -- successors 12 
@@ -296,25 +296,25 @@ begin --
       constant joinName: string(1 to 18) := "cp_element_group_8"; 
       signal preds: BooleanArray(1 to 3); -- 
     begin -- 
-      preds <= cp_elements(7) & cp_elements(10) & cp_elements(11);
+      preds <= maxOfTwo_CP_0_elements(7) & maxOfTwo_CP_0_elements(10) & maxOfTwo_CP_0_elements(11);
       gj : generic_join generic map(name => joinName, place_capacities => place_capacities, place_markings => place_markings, place_delays => place_delays) -- 
-        port map(preds => preds, symbol_out => cp_elements(8), clk => clk, reset => reset); --
+        port map(preds => preds, symbol_out => maxOfTwo_CP_0_elements(8), clk => clk, reset => reset); --
     end block;
     req_56_symbol_link_to_dp: control_delay_element -- 
       generic map (delay_value => 0)
-      port map(clk => clk, reset => reset, req => cp_elements(8), ack => MUX_16_inst_req_0); -- 
+      port map(clk => clk, reset => reset, req => maxOfTwo_CP_0_elements(8), ack => MUX_16_inst_req_0); -- 
     -- CP-element group 9 transition  output  bypass 
     -- predecessors 1 
     -- successors 13 
     -- members (3) 
+      -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/MUX_16_update_start_
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/MUX_16_complete/$entry
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/MUX_16_complete/req
-      -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/MUX_16_update_start_
       -- 
-    cp_elements(9) <= cp_elements(1);
+    maxOfTwo_CP_0_elements(9) <= maxOfTwo_CP_0_elements(1);
     req_61_symbol_link_to_dp: control_delay_element -- 
       generic map (delay_value => 0)
-      port map(clk => clk, reset => reset, req => cp_elements(9), ack => MUX_16_inst_req_1); -- 
+      port map(clk => clk, reset => reset, req => maxOfTwo_CP_0_elements(9), ack => MUX_16_inst_req_1); -- 
     -- CP-element group 10 transition  bypass 
     -- predecessors 1 
     -- successors 8 
@@ -324,7 +324,7 @@ begin --
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/R_a_14_update_start_
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/R_a_14_update_completed_
       -- 
-    cp_elements(10) <= cp_elements(1);
+    maxOfTwo_CP_0_elements(10) <= maxOfTwo_CP_0_elements(1);
     -- CP-element group 11 transition  bypass 
     -- predecessors 1 
     -- successors 8 
@@ -334,7 +334,7 @@ begin --
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/R_b_15_update_start_
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/R_b_15_update_completed_
       -- 
-    cp_elements(11) <= cp_elements(1);
+    maxOfTwo_CP_0_elements(11) <= maxOfTwo_CP_0_elements(1);
     -- CP-element group 12 transition  input  bypass 
     -- predecessors 8 
     -- successors 
@@ -345,23 +345,23 @@ begin --
       -- 
     ack_57_symbol_link_from_dp: control_delay_element -- 
       generic map (delay_value => 0)
-      port map(clk => clk, reset => reset, req => MUX_16_inst_ack_0, ack => cp_elements(12)); -- 
+      port map(clk => clk, reset => reset, req => MUX_16_inst_ack_0, ack => maxOfTwo_CP_0_elements(12)); -- 
     -- CP-element group 13 transition  place  input  bypass 
     -- predecessors 9 
     -- successors 
     -- members (16) 
-      -- 	$exit
       -- 	branch_block_stmt_5/$exit
+      -- 	$exit
       -- 	branch_block_stmt_5/merge_stmt_19__exit__
       -- 	branch_block_stmt_5/branch_block_stmt_5__exit__
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17__exit__
       -- 	branch_block_stmt_5/return__
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/$exit
+      -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/MUX_16_update_completed_
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/MUX_16_complete/$exit
       -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/MUX_16_complete/ack
       -- 	branch_block_stmt_5/return___PhiReq/$entry
       -- 	branch_block_stmt_5/return___PhiReq/$exit
-      -- 	branch_block_stmt_5/assign_stmt_11_to_assign_stmt_17/MUX_16_update_completed_
       -- 	branch_block_stmt_5/merge_stmt_19_PhiReqMerge
       -- 	branch_block_stmt_5/merge_stmt_19_PhiAck/$entry
       -- 	branch_block_stmt_5/merge_stmt_19_PhiAck/$exit
@@ -369,7 +369,7 @@ begin --
       -- 
     ack_62_symbol_link_from_dp: control_delay_element -- 
       generic map (delay_value => 0)
-      port map(clk => clk, reset => reset, req => MUX_16_inst_ack_1, ack => cp_elements(13)); -- 
+      port map(clk => clk, reset => reset, req => MUX_16_inst_ack_1, ack => maxOfTwo_CP_0_elements(13)); -- 
     --  hookup: inputs to control-path 
     -- hookup: output from control-path 
     -- 

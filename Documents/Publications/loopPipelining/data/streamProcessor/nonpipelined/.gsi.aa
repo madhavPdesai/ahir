@@ -1,0 +1,5 @@
+$module [global_storage_initializer_] $in () $out () $is {
+$parallelblock [pb] { 
+$call progx_xoptx_xo_storage_initializer_ () () 
+}
+}

@@ -8,7 +8,7 @@
 %% revisit the title.
 \title{Inner loop optimizations in mapping single-threaded programs to hardware}
 
-\author{Author's name Suppressed for Blind Review}
+\author{Madhav P. Desai\\ Department of Electrical Engineering\\ IIT Bombay, Mumbai, India\\ madhav@ee.iitb.ac.in}
 \newtheorem{definition}{Definition}[section]
 \newtheorem{theorem}{Theorem}[section]
 
@@ -27,20 +27,23 @@
   we consider the basic problem of generating an efficient hardware 
   implementation of a single threaded program, in particular, that
   of an inner loop.  
-  We describe a control-flow mechanism through
-  which multiple iterations of an arbitrary inner loop can be made simultaneously
-  active in the generated hardware, thus providing dynamic loop-pipelining
-  capability in hardware.   
+  We describe a control-flow mechanism which provides dynamic loop-pipelining
+  capability in hardware, so that multiple iterations of an arbitrary inner loop 
+  can be made simultaneously active in the generated hardware, 
   We study the impact of this loop-pipelining scheme in conjunction with
-  source-level loop-unrolling.
-  In particular, we consider some common loop kernels occurring in fast-fourier transform,
-  matrix multiplication and inner product computations, with the resulting
-  hardware descriptions synthesized to an FPGA target.  We observe
+  source-level loop-unrolling.  
+  In particular, we apply this technique to some common loop kernels: regular kernels
+  such as the  fast-fourier transform and matrix multiplication, as well
+  as an example of an inner loop whose body has branching.
+  The resulting hardware descriptions are synthesized to an FPGA target,
+  and then characterized for performance and resource utilization.  
+  We observe
   that the use of dynamic loop-pipelining mechanism alone typically results in
-  a significant improvements in the performance of the hardware.  If the loop is
+  a significant improvements in the performance of the hardware.  
+  If the loop is
   statically unrolled and if loop-pipelining is applied to the unrolled
-  program, then the performance improvement is still substantial.  When
-  both optimizations are used in conjunction, the improvement in performance
+  program, then the performance improvement is still substantial.  
+  When dynamic loop pipelining is used in conjunction with static loop unrolling, the improvement in performance
   ranges from 6X to 20X (in terms of number of clock cycles needed for the computation)
   across the loop kernels that we have studied.
   These optimizations do have a hardware overhead, but,
@@ -53,56 +56,57 @@
 
 \section{Introduction}
 
-%% The importance and problem of loops.
-A high-level-synthesis (HLS) compiler takes an algorithm described in
-a high-level programming language (such as C, for example) and produces a circuit
-description (a register-transfer-level description in a hardware
-description language such as VHDL, for example).
-High-level synthesis systems have been available for some time
-now (for example, \cite{pegasus-cash}, \cite{spark-vlsi-paper} and
-commercial tools such as Catapult-C\footnote{\url{http://www.mentor.com/products/esl/high_level_synthesis/}} from Mentor Graphics
-C-to-Silicon\footnote{\url{http://www.cadence.com/products/sd/silicon_compiler/}} from Cadence,
-Synopsys HLS\footnote{\url{http://www.synopsys.com/Tools/SLD/HLS/}} from Synopsys).
-
-The main attraction of such a compiler is a substantial reduction in 
-the design and verification effort.  The
-main concern is the quality of the hardware that is produced.
-For the same starting point, the quality of the hardware produced may be objectively
-measured in terms of factors such as area, energy-consumption and performance (in the
-sense of time required for completion, or in terms of the rate at which the hardware
-finishes the computational tasks).  An {\em internal measure} of the quality of the
-hardware produced is the utilization factor of the major resources in the hardware (that is,
-the utilization factor of expensive resources).  
-
-In our work, we have developed a set of compiler tools which take a C-description of
-an algorithm (with the only important restrictions being the requirement that
-cycles are not present in the call graph of the source program, and the lack of 
-support for {\bf function} pointers, normal pointers are supported), and produces
-a VHDL description which is provably equivalent to the original program \cite{SameerPhD}.
-Results on the application of this compiler to single-threaded programs show
-that the circuits (when synthesized to VLSI layout) are substantially more
-energy efficient than a processor, but that the performance of the processor
-is usually better than that of the synthesized circuit \cite{ahirDsd2010}.
-If multi-threaded source programs are used as a starting point, the circuits produced 
-are quite competitive with hand-designed RTL \cite{ahirUsenix2012}.
-Quantitatively, the results in \cite{ahirDsd2010} and \cite{ahirUsenix2012} indicate
-that the gap between the synthesized hardware and modern
-pipelined processors (for single-threaded
-programs) and between the synthesized hardware and hand-crafted hardware (for
-multi-threaded programs) is of the order of 2-3X.  That is, the performance
-of the synthesized hardware needs to improve by 2-3X in order to close
-the respective performance gaps.
-
 %% How compilers have handled this problem.
-In this paper, we consider the problem of improving the performance
+We consider the problem of improving the performance
 of hardware generated from single threaded programs; in
-particular, the problem of mapping loops to hardware.  It
+particular, the important problem of mapping loops to hardware.  It
 is well known that most compute intensive programs spend a large fraction
 of their time in inner loops.  Thus, the optimal implementation
 of such loops is of primary importance, whether the target is
 a processor or hardware.  Such an improvement is essential if
 synthesized hardware is to be performance competitive with
 high performance processors or with hand-crafted hardware.
+
+%% The importance and problem of loops.
+% A high-level-synthesis (HLS) compiler takes an algorithm described in
+% a high-level programming language (such as C, for example) and produces a circuit
+% description (a register-transfer-level description in a hardware
+% description language such as VHDL, for example).
+% High-level synthesis systems have been available for some time
+% now (for example, \cite{pegasus-cash}, \cite{spark-vlsi-paper} and
+% commercial tools such as Catapult-C\footnote{\url{http://www.mentor.com/products/esl/high_level_synthesis/}} from Mentor Graphics
+% C-to-Silicon\footnote{\url{http://www.cadence.com/products/sd/silicon_compiler/}} from Cadence,
+% Synopsys HLS\footnote{\url{http://www.synopsys.com/Tools/SLD/HLS/}} from Synopsys).
+
+% The main attraction of such a compiler is a substantial reduction in 
+% the design and verification effort.  The
+% main concern is the quality of the hardware that is produced.
+% For the same starting point, the quality of the hardware produced may be objectively
+% measured in terms of factors such as area, energy-consumption and performance (in the
+% sense of time required for completion, or in terms of the rate at which the hardware
+% finishes the computational tasks).  An {\em internal measure} of the quality of the
+% hardware produced is the utilization factor of the major resources in the hardware (that is,
+% the utilization factor of expensive resources).  
+
+% In our work, we have developed a set of compiler tools which take a C-description of
+% an algorithm (with the only important restrictions being the requirement that
+% cycles are not present in the call graph of the source program, and the lack of 
+% support for {\bf function} pointers, normal pointers are supported), and produces
+% a VHDL description which is provably equivalent to the original program \cite{SameerPhD}.
+% Results on the application of this compiler to single-threaded programs show
+% that the circuits (when synthesized to VLSI layout) are substantially more
+% energy efficient than a processor, but that the performance of the processor
+% is usually better than that of the synthesized circuit \cite{ahirDsd2010}.
+% If multi-threaded source programs are used as a starting point, the circuits produced 
+% are quite competitive with hand-designed RTL \cite{ahirUsenix2012}.
+% Quantitatively, the results in \cite{ahirDsd2010} and \cite{ahirUsenix2012} indicate
+% that the gap between the synthesized hardware and modern
+% pipelined processors (for single-threaded
+% programs) and between the synthesized hardware and hand-crafted hardware (for
+% multi-threaded programs) is of the order of 2-3X.  That is, the performance
+% of the synthesized hardware needs to improve by 2-3X in order to close
+% the respective performance gaps.
+
 
 In the context of compilation to a pipelined processor, 
 several loop optimizations
@@ -187,7 +191,9 @@ computed by synthesizing and simulating the generated hardware for an FPGA targe
 The observations indicate the following:
 \begin{itemize}
 \item The performance improvement with loop-pipelining applied alone is in the
-2X-3X range. 
+2X-8X range.   This improvement is observed both in the case of an inner
+loop whose body is a single basic block, as well as in the case when the
+inner loop body has branches.
 \item The performance improvement with loop-unrolling alone is in the 
 2X range, and with aggressive unrolling (as was tried in the matrix multiplication
 case), the improvement is as high as 10X.
@@ -201,12 +207,6 @@ but the cost-to-performance ratio improves substantially in all cases.
 The results indicate that loop-unrolling combined with dynamic loop-pipelining
 can close the performance gap noted above.
 
-For the subsequent discussion, we assume that the inner
-loop which is being optimized consists of a single
-basic block, that is, there are no branching instructions
-in the loop body (no jumps, if constructs, switch constructs etc.).
-If such constructs are present, we assume that they have been
-eliminated using the mechanism of guarded (or predicated) execution.
 
 %%
 %% TODO..  so what?
@@ -214,7 +214,10 @@ eliminated using the mechanism of guarded (or predicated) execution.
 
 \section{A note on our compiler flow}
 
-We give a brief description of our compiler flow.  The
+The dynamic pipelining mechanism described in this paper
+is implemented in a compiler flow which takes 
+a C program and produces an equivalent VHDL description.
+We give a brief description of this compiler flow.  The
 details are not relevant to this paper, and the interested
 reader can find them in \cite{ahirDsd2010}.
 
@@ -244,17 +247,8 @@ multiplexors, arbiters to pipelined floating point arithmetic units.
 \end{enumerate}
 
 The compiler flow has been characterized over a wide variety
-of applications \cite{ahirDsd2010}.   The XXXX\footnote{name suppressed for blind review.} tool-chain \cite{ahirUsenix2012} 
-uses this compiler flow to map modular network appliances written in C++ to
-an FPGA platform, and achieved about half the
-performance possible using equivalent hand designed hardware.  
-Thus,  the flow can be applied to ``real'' software
-to produce competitive results.  The optimizations indicated in this
-paper, should in principle, make the flow even more competitive.
+of applications \cite{ahirDsd2010}, \cite{ahirUsenix2012}.
 
-%% compiler techniques.
-
-%% hls techniques to handle loops?
 
 
 \section{Model of the virtual circuit generated by our compiler}
@@ -364,10 +358,10 @@ scheme which guarantees first-come-first-served access to
 the same memory location.
 
 \subsection{Control-path}
+
 %%
 %%  control path and data-flow
 %%
-
 
 %% 
 %% Petri-net, constructed according to
@@ -421,7 +415,14 @@ generated by these rules.  Note that the data-path
 is not party to any sequencing decisions (other than
 responding to the request symbols). 
 
-\section{A control-flow mechanism for loop-pipelining}
+\section{A control-flow mechanism for dynamic loop-pipelining}
+
+For the subsequent discussion, we assume that the inner
+loop which is being optimized consists of a single
+basic block, that is, there are no branching instructions
+in the loop body (no jumps, if constructs, switch constructs etc.).
+If such constructs are present, these are first eliminated
+using the mechanism of guarded (that is, predicated) execution.
 
 %%
 %% reenable rules.
@@ -460,7 +461,7 @@ In principle, all the loads can occur simultaneously, and all the multiplies
 can happen simultaneously once the loads complete.  The adds
 would need to be ordered because of the multiply-accumulate nature
 of the code as it is written.  Any ordering of these operations which
-satisfies these dependencies will be termed a {\em fully-unrolled consistent}
+satisfies these dependencies will be termed a {\em loop-consistent}
 ordering.
 
 In our dynamic loop pipelining scheme, we use the
@@ -506,7 +507,7 @@ carries a single token).
 
 It is easy to confirm that these additional dependencies ensure
 that the loop execution subject to these dependencies is a
-fully-unrolled consistent ordering.  
+loop-consistent ordering.  
 The modified control path is shown in Figure \ref{fig:pipelinedCP}.
 The loop-terminator element has three inputs:  a loop-taken transition,
 a loop-not-taken transition and a loop-body-exit transition.  The loop-taken/not-taken
@@ -529,7 +530,9 @@ the pipelining mechanism.
 
 \section{Experimental Results}
 
-We considered three examples, the dot product, the fast-fourier-transform,
+We considered four examples:
+\begin{itemize}
+\item Three examples where the loop body was a single basic block: the dot product, the fast-fourier-transform,
 and matrix multiplications, each with critical inner loops.  Four 
 configurations were tested in each case: the basic code, the unrolled code,
 the basic code with loop-pipelining and the unrolled code with loop-pipelining.
@@ -537,6 +540,11 @@ In each case, the generated VHDL code was synthesized to a Xilinx Virtex-6
 FPGA and synthesis results were used to estimate the resource usage,
 the clock frequency and the number of cycles required by the inner
 loop.
+\item One example where the loop body exhibits branching: a stream processor kernel which
+operates on a stream of numbers and performs operations on the stream depending on
+an op-code stream.  This example illustrates that the dynamic loop-pipelining mechanism
+is effective in complex loop bodies as well.
+\end{itemize}
 
 \section{The dot product}
 
@@ -754,6 +762,76 @@ excellent performance.  Loop-pipelining when combined with loop-unrolling,
 gives a 20X improvement in the cycle count.  The normalized
 performance and performance/cost improvements are also substantial.
 
+\section{A stream processor}
+
+The following loop was used to test a situation in
+which the loop body has branching.  
+\begin{verbatim}
+while(1)
+{
+  float x = read_float32("x_pipe");
+  float y = read_float32("y_pipe");
+  uint8_t op_code = read_uint8("op_pipe");
+
+  float result = 0;
+  if(op_code == 0)
+    result = x*y;
+  else if(op_code == 1)
+    result = x+y;
+  else if(op_code == 2)
+    result = (x*x) - (y*y);
+  else if(op_code == 3)
+    result = (x + y) * (x + y);
+  else
+    result = 0;
+  write_float32("z_pipe",result);
+}
+\end{verbatim}
+In this loop, $x,y$ and $op\_code$ are read from
+three input streams.  Depending on the value of
+$op\_code$, a result is calculated and written out
+to an output stream.
+
+In order to pipeline this loop, the conditional
+statements are first eliminated using guards.   This
+is done by calculating the predicates 
+\begin{verbatim}
+(op_code == 0)
+(op_code == 1)
+(op_code == 2)
+(op_code == 3)
+\end{verbatim}
+and using these predicates to guard the execution of
+the statements which depend on these conditions.  This
+is done automatically in our compiler.
+
+The observations are shown in Table \ref{table:streamProcessor}.
+The time reported is that needed to process 16 elements from
+the streams (that is, to complete 16 iterations of the loop).
+\begin{table}[htb]
+  \centering
+  \caption{Stream processor inner loop observations: pipelined versus non-pipelined}
+  \label{table:streamProcessor}
+  \renewcommand\arraystretch{1.2}
+  \setlength{\tabcolsep}{1ex}
+  \begin{tabular}{c|c|c}
+  \hline
+  & plain & pipelined \\
+  \hline
+
+Cycles   &    2913  &   334  \\
+LUTs     &    4603  &  12501  \\
+FFs      &    4248  &  8808  \\
+Freq.(MHz)  & 184.9  &   103.9 \\
+Norm. Perf. & 1      &  4.86 \\
+Norm. Perf/Cost & 1  &  2.01  \\
+\hline
+  \end{tabular}
+\end{table}
+
+We observe a 4X improvement in performance and a 2X improvement
+in the performance/cost ratio.
+
 \section{Conclusion}
 
 %%
@@ -773,8 +851,10 @@ The loop-pipelining mechanism is implemented by modifying
 the control-flow in the generated hardware (without disturbing
 the data-path).
 
-The data obtained from three common and important inner loop
-kernels is encouraging.  In all three cases, both loop-pipelining
+The data obtained from four inner loop
+kernels is encouraging. The first three  were examples in
+which the inner loop body consisted of a single basic 
+block. In these cases, both loop-pipelining
 and loop-unrolling lead to substantial performance gains.  Further,
 using both optimizations together results in multiplicative gains
 and in call cases, leads to hardware which is substantially
@@ -783,14 +863,14 @@ The performance gain is lower if there is a bottleneck in the
 algorithm itself, such as in the FFT case, in which accesses to
 the in-place array reduce the performance gains seen due to
 the loop optimizations.
+In the fourth inner loop kernel, we considered a loop body
+which had branching.  In this case, considerable performance
+and performance/cost gains were observed when loop pipelining
+was enabled.
 
-Loop-unrolling is a common parallelization optimization
-in compilers that target pipelined processors.  Our data indicates
-that such unrolling offers significant benefits (up to an 
-order of magnitude) in an algorithm-to-hardware translation.
-Further, the use of hardware based dynamic loop-pipelining techniques 
-seems to offer a further boost in performance in the synthesis
-of hardware from single-threaded programs.  
+Thus, the use of hardware based dynamic loop-pipelining techniques 
+offers a significant boost in performance in 
+hardware synthesized from single-threaded programs.  
 The performance boost provided by the dynamic loop-pipelining
 in hardware seems to indicate that its use,
 especially in conjunction with aggressive loop unrolling can offer 
