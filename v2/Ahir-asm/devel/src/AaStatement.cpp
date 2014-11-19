@@ -4961,6 +4961,13 @@ AaDoWhileStatement::AaDoWhileStatement(AaBranchBlockStatement* scope):AaStatemen
 }
 AaDoWhileStatement::~AaDoWhileStatement() {}
 
+  
+void AaDoWhileStatement::Set_Test_Expression(AaExpression* te) 
+{ 
+	this->_test_expression = te;  
+	te->Set_Associated_Statement(this);
+}
+
 void AaDoWhileStatement::Set_Loop_Body_Sequence(AaStatementSequence* lbs) 
 { 
 	this->_loop_body_sequence = lbs; 

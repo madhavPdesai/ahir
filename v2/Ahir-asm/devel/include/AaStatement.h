@@ -1036,10 +1036,13 @@ class AaPlaceStatement: public AaStatement
 
   void Write_VC_Control_Path(ostream& ofile)
   {
+    // nothing.. places will be printed from the enclosing
+    // scope.
     ofile << "$P [" << this->Get_VC_Name() << "]" << endl;
   }
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile)
   {
+   // nothing.. places will be printed from the enclosing scope..
     ofile << "$P [" << this->Get_VC_Name() << "]" << endl;
   }
 
@@ -1385,7 +1388,7 @@ class AaDoWhileStatement: public AaStatement
   virtual void Set_Pipeline_Full_Rate_Flag(bool v) {_pipeline_full_rate_flag = v;}
   virtual bool Get_Pipeline_Full_Rate_Flag() {return(_pipeline_full_rate_flag);}
 
-  void Set_Test_Expression(AaExpression* te) { this->_test_expression = te; }
+  void Set_Test_Expression(AaExpression* te);
   void Set_Merge_Statement(AaMergeStatement* ms) { this->_merge_statement = ms; }
   void Set_Loop_Body_Sequence(AaStatementSequence* lbs);
 

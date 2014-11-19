@@ -1,0 +1,7 @@
+fpu.aa
+	fpu.  also present in VHDL form
+timer.aa
+	timer. also present in VHDL form.
+
+llvm_intrinsics.aa
+	llvm-intrinsics.  present only in Aa form.

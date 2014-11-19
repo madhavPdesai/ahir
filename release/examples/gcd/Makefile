@@ -62,7 +62,7 @@ aa2vc: prog.linked.opt.aa
 	Aa2VC -O -C prog.linked.opt.aa | vcFormat > prog.vc
 
 # vC to VHDL
-SIMULATOR=-s modelsim
+SIMULATOR=-s ghdl
 vc2vhdl: prog.vc
 	vc2vhdl -D -S 4 -O -I 16 -v -q -a -C -e ahir_system -w -s ghdl $(TOPMODULES) -f prog.vc -L $(FUNCTIONLIB)/timer.list $(SIMULATOR)
 	vhdlFormat < ahir_system_global_package.unformatted_vhdl > ahir_system_global_package.vhdl

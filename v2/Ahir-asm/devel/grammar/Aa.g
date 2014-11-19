@@ -1375,6 +1375,8 @@ aA_Record_Type_Reference[AaScope* scope] returns [AaType* ref_type]
 aA_Named_Record_Type_Declaration[AaScope* scope] returns [AaType* ref_type]
 {
 	AaRecordType* rt;
+        bool already_declared = false;
+	int element_index = 0;
 	AaType* et;
         string id;
 }: rid:RECORD id = aA_Label 
@@ -1382,11 +1384,24 @@ aA_Named_Record_Type_Declaration[AaScope* scope] returns [AaType* ref_type]
           rt = AaProgram::Make_Named_Record_Type(id);
           if(rt->Get_Number_Of_Elements() > 0)
           { 
-             AaRoot::Error("named record type " + id + " redeclared on line " + IntToStr(rid->getLine()),
+             AaRoot::Warning("named record type " + id + " redeclared on line " + IntToStr(rid->getLine()),
                            NULL);
+	     already_declared = true;
           }
       } 
-      (LESS ((et = aA_Type_Reference[scope]) | (et = aA_Named_Type_Reference[scope])) {rt->Add_Element_Type(et);} GREATER)*
+      (LESS ((et = aA_Type_Reference[scope]) | (et = aA_Named_Type_Reference[scope])) 
+	{
+		if(!already_declared)
+			rt->Add_Element_Type(et);
+		else
+		{
+			// check if element type is consistent
+			if(rt->Get_Element_Type(element_index) != et)
+                        	AaRoot::Error(" inconsistent re-declaration of named record type on line " + IntToStr(rid->getLine()), NULL);
+				
+		}
+		element_index++;
+	} GREATER)*
 ;
 
 
