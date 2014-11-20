@@ -3,7 +3,7 @@ $is
 {
 	$storage result_var: $uint<32>
 	$branchblock[loop] {
-		$do
+		$dopipeline $depth 4 $buffering 1
 			$merge $entry $loopback
 				$phi I := ($bitcast($uint<32>) 0) $on $entry NI $on $loopback
 			$endmerge

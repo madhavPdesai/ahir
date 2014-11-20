@@ -8,7 +8,7 @@ VHDL_LIB=$(AHIR_RELEASE)/vhdl
 VHDL_VHPI_LIB=$(AHIR_RELEASE)/CtestBench/vhdl
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
 SRC=./src
-all: SW HW 
+all: HW 
 TOAA:c2llvmbc llvmbc2aa  aalink
 TOVC:c2llvmbc llvmbc2aa  aalink aa2vc 
 VC2VHDL: vc2vhdl  vhdlsim
@@ -24,16 +24,8 @@ LLVM2AAOPTS=-extract_do_while=true --storageinit=true -pipedepths=pipedepths.txt
 PROGDEFS=-DPIPELINE -DALT
 #PROGDEFS=-DUNROLL
 
-TOPMODULES=-T vectorSum 
+TOPMODULES=-T runDaemon 
 
-
-# compile with SW defined.
-# note the use of IOLIB in building the testbench.
-SW: $(SRC)/prog.c $(SRC)/prog.h $(SRC)/testbench.c 
-	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include -I$(SRC) $(SRC)/prog.c
-	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(PTHREADUTILS_INCLUDE) -I$(SRC) $(SRC)/testbench.c
-	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include  $(DEFS)  $(FUNCTIONLIB)/src/fpu.c
-	gcc -g -o testbench_sw prog.o fpu.o testbench.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
 
 # five steps from C to vhdl simulator.
 HW: c2llvmbc llvmbc2aa  aalink aa2vc  vc2vhdl  vhdlsim
@@ -41,7 +33,7 @@ HW: c2llvmbc llvmbc2aa  aalink aa2vc  vc2vhdl  vhdlsim
 AA2VHDL: aa2vc vc2vhdl vhdlsim
 
 # C to llvm byte-code.. use clang.
-c2llvmbc: $(SRC)/prog.c $(SRC)/prog.h
+c2llvmbc: $(SRC)/prog.c 
 	clang -O3 -std=gnu89 $(PROGDEFS)  -I$(SOCKETLIB_INCLUDE) -I$(FUNCTIONLIB)/include -emit-llvm -c $(SRC)/prog.c
 	opt --indvars --loopsimplify prog.o -o prog.opt.o
 	llvm-dis prog.opt.o
@@ -52,11 +44,11 @@ llvmbc2aa:  prog.opt.o
 
 # Aa to vC
 aalink: prog.aa 
-	AaLinkExtMem prog.aa $(FUNCTIONLIB)/Aa/fpu.aa | vcFormat > prog.linked.aa
-	AaOpt -B prog.linked.aa | vcFormat > prog.linked.opt.aa
+	AaLinkExtMem -I 1 -E mempool   prog.aa $(FUNCTIONLIB)/Aa/llvm_intrinsics.aa | vcFormat > prog.linked.aa
+	AaOpt -I mempool -B prog.linked.aa | vcFormat > prog.linked.opt.aa
 
 aa2vc: prog.linked.opt.aa
-	Aa2VC -O -C prog.linked.opt.aa | vcFormat > prog.vc
+	Aa2VC -I mempool -O -C prog.linked.opt.aa | vcFormat > prog.vc
 
 # vC to VHDL
 vc2vhdl: prog.vc
@@ -74,8 +66,8 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl $(SRC)/testbench.c vhdlCSt
 	ghdl --clean
 	ghdl --remove
 	ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl
-	ghdl -i --work=aHiR_ieee_proposed  $(VHDL_LIB)/aHiR_ieee_proposed.vhdl
 	ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl
+	ghdl -i --work=aHiR_ieee_proposed  $(VHDL_LIB)/aHiR_ieee_proposed.vhdl
 	ghdl -i --work=work ahir_system_global_package.vhdl
 	ghdl -i --work=work ahir_system.vhdl
 	ghdl -i --work=work ahir_system_test_bench.vhdl

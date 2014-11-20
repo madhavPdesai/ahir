@@ -31,14 +31,13 @@ vhdlsim: ahir_system.vhdl ahir_system_test_bench.vhdl testbench.c vhdlCStubs.h v
 	gcc -o testbench_hw testbench.o vhdlCStubs.o  -L$(SOCKETLIB_LIB) -lSocketLib -lpthread
 	ghdl --clean
 	ghdl --remove
+	ghdl -i --work=GhdlLink  $(VHDL_LIB)/GhdlLink.vhdl
 	ghdl -i --work=ahir  $(VHDL_LIB)/ahir.vhdl
 	ghdl -i --work=ahir_ieee_proposed  $(VHDL_LIB)/aHiR_ieee_proposed.vhdl
-	ghdl -i --work=work $(VHDL_VHPI_LIB)/Utility_Package.vhdl
-	ghdl -i --work=work $(VHDL_VHPI_LIB)/Vhpi_Package.vhdl
 	ghdl -i --work=work ahir_system_global_package.vhdl
 	ghdl -i --work=work ahir_system.vhdl
 	ghdl -i --work=work ahir_system_test_bench.vhdl
-	ghdl -m --work=work -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
+	ghdl -e --work=work -Wc,-g -Wl,-L$(SOCKETLIB_LIB) -Wl,-lVhpi ahir_system_test_bench 
 
 clean:
 	rm -f *.o *.vc *.cf *.*vhdl vhdlCStubs.* *.vcd in_data* testbench_hw ahir_system_test_bench vhpi.log

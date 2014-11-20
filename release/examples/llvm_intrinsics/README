@@ -1,0 +1,8 @@
+A test for the llvm-intrinsics implemented in Aa.
+  llvm_memcpy_u*
+  llvm_memmove_u*
+  llvm_memset_u*
+
+Where * = 8/16/32/64.
+This test only checks u32
+

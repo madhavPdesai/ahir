@@ -88,6 +88,7 @@ $is
                         ->(pdest) := ->(psrc)
 		    $while (Nlen  > 0)
                 $else
+                    llen := (len - 1)
 		    $dopipeline $depth 8 $buffering 1
 			$merge  $entry $loopback
 				$phi NNlen := ($bitcast ($uint<32>) 0) $on $entry (NNlen+1) $on $loopback 
@@ -95,7 +96,7 @@ $is
                         ppdest :=  dest[NNlen]
                         ppsrc  :=  src[NNlen]
                         ->(ppdest) := ->(ppsrc)
-		    $while (Nlen  < len)
+		    $while (NNlen  < llen)
                 $endif
 	}
 }
@@ -120,6 +121,7 @@ $is
                         ->(pdest) := ->(psrc)
 		    $while (Nlen  > 0)
                 $else
+                    llen := (len - 1 )
 		    $dopipeline $depth 8 $buffering 1
 			$merge  $entry $loopback
 				$phi NNlen := ($bitcast ($uint<32>) 0) $on $entry (NNlen+1) $on $loopback 
@@ -127,7 +129,7 @@ $is
                         ppdest :=  dest[NNlen]
                         ppsrc  :=  src[NNlen]
                         ->(ppdest) := ->(ppsrc)
-		    $while (Nlen  < len)
+		    $while (NNlen  < llen)
                 $endif
 	}
 }
@@ -151,6 +153,7 @@ $is
                         ->(pdest) := ->(psrc)
 		    $while (Nlen  > 0)
                 $else
+                    llen := (len - 1 ) 
 		    $dopipeline $depth 8 $buffering 1
 			$merge  $entry $loopback
 				$phi NNlen := ($bitcast ($uint<32>) 0) $on $entry (NNlen+1) $on $loopback 
@@ -158,7 +161,7 @@ $is
                         ppdest :=  dest[NNlen]
                         ppsrc  :=  src[NNlen]
                         ->(ppdest) := ->(ppsrc)
-		    $while (Nlen  < len)
+		    $while (NNlen  < llen)
                 $endif
 	}
 }
@@ -182,6 +185,7 @@ $is
                         ->(pdest) := ->(psrc)
 		    $while (Nlen  > 0)
                 $else
+                    llen := (len - 1 ) 
 		    $dopipeline $depth 8 $buffering 1
 			$merge  $entry $loopback
 				$phi NNlen := ($bitcast ($uint<32>) 0) $on $entry (NNlen+1) $on $loopback 
@@ -189,14 +193,14 @@ $is
                         ppdest :=  dest[NNlen]
                         ppsrc  :=  src[NNlen]
                         ->(ppdest) := ->(ppsrc)
-		    $while (Nlen  < len)
+		    $while (NNlen  < llen)
                 $endif
 	}
 }
 
 
 // memset.
-$module [llvm_memset_8] 
+$module [llvm_memset_u8] 
 $in (dest: $pointer<$uint<8> > val :$uint<8> len: $uint<32> )
 $out ()
 $is 
@@ -212,7 +216,7 @@ $is
 	}
 }
 
-$module [llvm_memset_16] 
+$module [llvm_memset_u16] 
 $in (dest: $pointer<$uint<16> > val :$uint<16> len: $uint<32> )
 $out ()
 $is 
@@ -228,7 +232,7 @@ $is
 	}
 }
 
-$module [llvm_memset_32] 
+$module [llvm_memset_u32] 
 $in (dest: $pointer<$uint<32> > val :$uint<32> len: $uint<32> )
 $out ()
 $is 
@@ -244,7 +248,7 @@ $is
 	}
 }
 
-$module [llvm_memset_64] 
+$module [llvm_memset_u64] 
 $in (dest: $pointer<$uint<64> > val :$uint<64> len: $uint<32> )
 $out ()
 $is 
