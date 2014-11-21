@@ -8,7 +8,7 @@ VHDL_LIB=$(AHIR_RELEASE)/vhdl
 VHDL_VHPI_LIB=$(AHIR_RELEASE)/CtestBench/vhdl
 FUNCTIONLIB=$(AHIR_RELEASE)/functionLibrary/
 SRC=./src
-all: HW 
+all: SW HW 
 TOAA:c2llvmbc llvmbc2aa  aalink
 TOVC:c2llvmbc llvmbc2aa  aalink aa2vc 
 VC2VHDL: vc2vhdl  vhdlsim
@@ -26,7 +26,12 @@ PROGDEFS=-DPIPELINE -DALT
 
 TOPMODULES=-T runDaemon 
 
-
+SW: $(SRC)/prog.c $(SRC)/testbench.c
+	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include -I$(SRC) $(SRC)/prog.c
+	gcc -g -c -DSW $(PROGDEFS) -I$(PIPEHANDLER_INCLUDE) -I$(PTHREADUTILS_INCLUDE) -I$(SRC) $(SRC)/testbench.c
+	gcc -c -DSW -I$(PIPEHANDLER_INCLUDE) -I$(FUNCTIONLIB)/include  $(DEFS)  $(FUNCTIONLIB)/src/llvm_intrinsics.c
+	gcc -g -o testbench_sw prog.o llvm_intrinsics.o testbench.o -L$(PIPEHANDLER_LIB) -lPipeHandler -lpthread
+	
 # five steps from C to vhdl simulator.
 HW: c2llvmbc llvmbc2aa  aalink aa2vc  vc2vhdl  vhdlsim
 

@@ -1219,3 +1219,15 @@ void Aa::write_reduction_expression(std::vector<std::string>& names, std::string
 
 	}	
 }
+		
+int Aa::get_integer_element_width(const llvm::SequentialType* ptr_type)
+{
+	int width = -1;
+	const llvm::Type* ele_type = ptr_type->getElementType();
+	if(isa<llvm::IntegerType>(ele_type))
+	{
+		const llvm::IntegerType* integer_type = dyn_cast<llvm::IntegerType>(ele_type);
+		width = integer_type->getBitWidth();
+	}
+	return(width);
+}

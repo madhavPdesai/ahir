@@ -79,6 +79,8 @@ namespace Aa {
 
   bool has_bb_successor(llvm::BasicBlock* succ, llvm::BasicBlock* bb);
   void write_reduction_expression(std::vector<std::string>& names, std::string op, std::ostream& ofile);
+
+  int get_integer_element_width(const llvm::SequentialType* ptr_type);
   
 }
 

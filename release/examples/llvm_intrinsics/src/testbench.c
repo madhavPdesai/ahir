@@ -3,15 +3,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#ifdef SW
 #include <Pipes.h>
 #include <pipeHandler.h>
+#ifdef SW
+#include <pthreadUtils.h>
 #else
 #include "vhdlCStubs.h"
 #endif
 
+#ifdef SW
+DEFINE_THREAD(runDaemon)
+#endif
+
 int main(int argc, char* argv[])
 {
+
+#ifdef SW
+PTHREAD_DECL(runDaemon)
+PTHREAD_CREATE(runDaemon)
+#endif
 
 	uint32_t idx;
 	for(idx = 0; idx < 16; idx++)

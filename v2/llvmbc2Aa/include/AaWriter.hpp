@@ -10,6 +10,9 @@
 namespace llvm {
   class TargetData;
   class AliasAnalysis;
+  class IntrinsicInst;
+  class MemSetInst;
+  class MemTransferInst;
 };
 
 
@@ -35,6 +38,9 @@ namespace Aa {
     bool _guard_flag;
     bool _guard_complement;
     std::string _guard_variable;
+
+    // storage objects.
+    std::set<llvm::Value*> _storage_objects;
 
 
     // flags for controlling how a
@@ -166,6 +172,8 @@ namespace Aa {
     virtual void visitBranchInst(llvm::BranchInst &I) { visitInstruction(I); }
     virtual void visitSwitchInst(llvm::SwitchInst &I) { visitInstruction(I); }
 
+	
+    bool is_storage_object(llvm::Value* S);
     void write_storage_object(llvm::GlobalVariable *G,
 			      std::vector<std::string>& init_obj_vector,
 			      bool create_initializers,
@@ -176,9 +184,12 @@ namespace Aa {
     void Build_Basic_Block_Chains(llvm::Function& F);
     virtual void Write_Aa_Code(BasicBlockChainDAG* chain_dag, bool extract_do_while_flag);
 
-    // in progress..  5/6/2014. MPD.
     void Build_Basic_Block_Chain_DAGs(llvm::Function& F);
 
+	// intrinsics.	
+    void handleIntrinsicInst(llvm::IntrinsicInst &I);
+    void handleMemSet(llvm::MemSetInst& I);
+    void handleMemTransfer(llvm::MemTransferInst& I);
 
   };
 };

@@ -5,6 +5,7 @@
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/CFG.h>
 #include <llvm/Type.h>
+#include <llvm/IntrinsicInst.h>
 
 #include <iostream>
 #include <deque>
@@ -324,6 +325,11 @@ namespace Aa {
 		}
 	}
 
+	bool AaWriter::is_storage_object(llvm::Value* S)
+	{
+		return(_storage_objects.find(S) != _storage_objects.end());
+	}
+
 	// the next three (write_storage_*) were moved from Utils.cpp to AaWriter.cpp
 	// to make use of AaWriter functions such as get_name..
 	void AaWriter::write_storage_object(llvm::GlobalVariable *G, 
@@ -331,6 +337,8 @@ namespace Aa {
 			bool create_initializer,
 			bool skip_zero_initializers)
 	{
+
+		_storage_objects.insert(G);	
 
 		// if already printed, return
 		if(printed_global_variables.find(G) != printed_global_variables.end())
@@ -1179,6 +1187,18 @@ namespace {
 
 		void visitCallInst(CallInst &C)
 		{
+			//
+			// replace llvm-intrinsics by "our" versions.
+			// at present, only memset,memmove and memcpy
+			// are supported.
+			// 	
+			if(isa<llvm::IntrinsicInst>(&C))
+			{
+				llvm::IntrinsicInst& iI = static_cast<llvm::IntrinsicInst&>(C);
+				handleIntrinsicInst(iI);
+				return;
+			}
+
 			std::string cname = to_aa(C.getNameStr());
 			const llvm::Function* called_function  = C.getCalledFunction();
 
@@ -1428,25 +1448,48 @@ namespace {
 		void visitCastInst(CastInst& C)
 		{
 			// TODO: i/o port stuff..
+			bool address_of_used = false;
 			std::string cname = to_aa(C.getNameStr());
 
 			const llvm::Type *dest = C.getDestTy();
+			if(dest->isPointerTy())
+			{
+				llvm::Value* src = C.getOperand(0);
+				
+				if(is_storage_object(src))
+				{
+					this->Print_Guard();
+					std::cerr << "Info: found storage object cast to pointer.. will write it as @" << std::endl;
+					std::cout << "// found storage object cast to pointer.. will write it as @" << std::endl;
+					std::cout << cname << "_raw := @(" << prepare_operand(src) << ")" << std::endl;
+					address_of_used = true;
+				}
+			}
 
 			int size = type_width(dest, this->Get_Pointer_Width());
 
-			llvm::Value *val = C.getOperand(0);
-			std::string op_name = prepare_operand(val);
-
 			this->Print_Guard();
+			std::string op_name;
+			if(address_of_used)
+				op_name = cname + "_raw";
+			else
+			{
+				llvm::Value *val = C.getOperand(0);
+				op_name = prepare_operand(val);
+			}	
 
 			if(isa<BitCastInst>(C))
+			{
 				std::cout << cname << " := ($bitcast (" 
 					<< get_aa_type_name(dest,*_module) << ") "  << op_name << ")"
 					<< std::endl;
+			}
 			else
+			{
 				std::cout << cname << " := ($cast (" 
 					<< get_aa_type_name(dest,*_module) << ") "  << op_name << ")"
 					<< std::endl;
+			}
 		}
 
 		void visitLoadInst(LoadInst &L)
@@ -1706,6 +1749,122 @@ namespace {
 			std::cout << "$endswitch" << std::endl;
 		}
 
+
+		void handleIntrinsicInst(llvm::IntrinsicInst &I)
+		{
+			// At present only mem intrinsics are supported.
+			if(isa<llvm::MemIntrinsic>(&I))
+			{
+				if(isa<llvm::MemSetInst>(&I))
+				{
+					llvm::MemSetInst& mI = static_cast<llvm::MemSetInst&>(I);
+					handleMemSet(mI);
+				}
+				else if(isa<llvm::MemTransferInst>(&I))
+				{
+					llvm::MemTransferInst& mI = static_cast<llvm::MemTransferInst&>(I);
+					handleMemTransfer(mI);
+				}
+				else
+				{
+					std::cerr << "Error: unsupported mem-intrinsic." << std::endl;
+					std::cout << "// ERROR: Unsupported mem-intrinsic." << std::endl;
+				}
+			}
+			else
+			{
+				std::cerr << "Error: only mem-intrinsics are supported." << std::endl;
+				std::cout << "// ERROR: Unsupported intrinsic instruction." << std::endl;
+			}
+		}
+
+		void handleMemSet(llvm::MemSetInst& I)
+		{
+			if(I.getNumArgOperands() > 2)
+			{
+				llvm::Value* memptr = I.getArgOperand(0);
+				llvm::Value* val    = I.getArgOperand(1);
+				llvm::Value* len    = I.getArgOperand(2);	
+
+
+				const llvm::Type* memptr_type = memptr->getType();
+				if(memptr_type->isPointerTy())
+				{
+					const llvm::SequentialType* ptr_type = dyn_cast<llvm::SequentialType>(memptr->getType());
+					int width = get_integer_element_width(ptr_type);
+					if(width > 0)
+					{
+						std::cout << "$call llvm_memset_u" << width;
+						std::cout << " ( " << prepare_operand(memptr) << " " << prepare_operand(val) << " "
+							<< "($bitcast ($uint<32>) " << prepare_operand(len) 
+							<< ")) () " << std::endl;
+
+					}
+					else
+					{
+						std::cerr << "Error: memset pointer argument does not point to an integer" << std::endl;
+					}
+				}
+				else
+				{
+					std::cerr << "Error: memset first argument not of pointer type" << std::endl;
+				}	
+
+			}
+			else
+			{
+				std::cerr << "Error: insufficient arguments for memset intrinsic." << std::endl;
+				std::cout << "// ERROR: insufficient arguments for memset intrinsic instruction." << std::endl;
+			}
+		}
+
+		// memcpy and memmove.. very similar
+		void handleMemTransfer(llvm::MemTransferInst& I)
+		{
+			if(I.getNumArgOperands() > 3)
+			{
+				llvm::Value* destptr = I.getArgOperand(0);
+				llvm::Value* srcptr  = I.getArgOperand(1);
+				llvm::Value* len     = I.getArgOperand(2);	
+
+
+				std::string fn_prefix;
+				if(isa<llvm::MemCpyInst>(&I))
+					fn_prefix = "llvm_memcpy_u";
+				else
+					fn_prefix = "llvm_memmove_u";
+
+				const llvm::Type* memptr_type = destptr->getType();
+				if(memptr_type->isPointerTy())
+				{
+
+					const llvm::PointerType* ptr_type = dyn_cast<llvm::PointerType>(memptr_type);
+					int width = get_integer_element_width(ptr_type);
+					if(width > 0)
+					{
+						std::cout << "$call " << fn_prefix <<  width;
+						std::cout << " ( " << prepare_operand(destptr) << " " << prepare_operand(srcptr) << " "
+							<< "($bitcast ($uint<32>) " << prepare_operand(len) 
+							<< ")) () " << std::endl;
+
+					}
+					else
+					{
+						std::cerr << "Error: mem-transfer pointer argument does not point to an integer" << std::endl;
+					}
+				}
+				else
+				{
+					std::cerr << "Error: mem-transfer first argument not of pointer type" << std::endl;
+				}	
+
+			}
+			else
+			{
+				std::cerr << "Error: insufficient arguments for memcpy intrinsic." << std::endl;
+				std::cout << "// ERROR: insufficient arguments for memcpy intrinsic instruction." << std::endl;
+			}
+		}
 
 	};
 }
