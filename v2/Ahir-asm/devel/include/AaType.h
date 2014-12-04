@@ -476,6 +476,12 @@ class AaRecordType: public AaType
       return("Struct_" + Int64ToStr(this->Get_Index()));
     }  
     
+
+    virtual string CBaseName()
+    {
+	return(this->CName());
+    }
+
     virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
     virtual int Get_Start_Bit_Offset(int start_index, vector<AaExpression*>& indices);
     int Get_Start_Bit_Offset(AaExpression* expr);
