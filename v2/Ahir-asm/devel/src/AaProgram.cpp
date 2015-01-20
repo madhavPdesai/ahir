@@ -1061,7 +1061,7 @@ void AaProgram::Write_C_Model()
       //
       // These are global in the source file.
       //
-      (*miter).second->PrintC(source_file,"");
+      (*miter).second->PrintC(source_file);
     }
 
   for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
@@ -1077,8 +1077,8 @@ void AaProgram::Write_C_Model()
       		//   - as a function.
       		//       The function form will define a function interface 
       		//       and will in turn use the macro internally.
-      		(*miter).second->Write_Header(header_file);
-      		(*miter).second->Write_Source(source_file);
+      		(*miter).second->Write_C_Header(header_file);
+      		(*miter).second->Write_C_Source(source_file);
 	}
     }
 }

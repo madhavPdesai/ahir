@@ -135,12 +135,6 @@ class AaStatement: public AaScope
   virtual string Get_C_Wrap_Function_Name() { return(this->Get_C_Name()); }
   
   virtual bool Can_Block(bool pipeline_flag) { assert(0); }
-  virtual void Write_Pipe_Condition_Check(ofstream& ofile , string tab_string);
-  virtual void Write_Pipe_Read_Condition_Check(ofstream& ofile , string tab_string);
-  virtual void Write_Pipe_Write_Condition_Check(ofstream& ofile , string tab_string);
-  virtual void Write_Pipe_Condition_Update(ofstream& ofile, string tab_string);
-  virtual void Write_Pipe_Read_Condition_Update(ofstream& ofile , string tab_string);
-  virtual void Write_Pipe_Write_Condition_Update(ofstream& ofile , string tab_string);
   virtual void Write_VC_Constant_Declarations(ostream& ofile) {};
 
   
@@ -643,7 +637,7 @@ class AaBlockStatement: public AaStatement
   {
     for(unsigned int i = 0; i < this->_objects.size(); i++)
       {
-	this->_objects[i]->Write_C_Declaration(ofile);
+	this->_objects[i]->PrintC_Declaration(ofile);
       }
   }
   virtual void PrintC(ofstream& ofile)
@@ -676,8 +670,6 @@ class AaBlockStatement: public AaStatement
   virtual void Map_Source_References();
 
 
-  virtual void Write_Statement_Invocations(ofstream& ofile) {assert(0);}
-
 
   virtual string Get_C_Name()
   {
@@ -692,7 +684,6 @@ class AaBlockStatement: public AaStatement
 
 
 
-  virtual void Write_Entry_Condition(ofstream& ofile);
 
   virtual void Write_VC_Constant_Declarations(ostream& ofile);
   virtual void Write_VC_Pipe_Declarations(ostream& ofile);  
@@ -756,10 +747,6 @@ class AaSeriesBlockStatement: public AaBlockStatement
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaSeriesBlockStatement");}
 
-  // series block stitches control-flow in a slightly different way.
-  virtual void Write_Entry_Transfer_Code(ofstream& ofile);
-  virtual void Write_Statement_Invocations(ofstream& ofile);
-  virtual void Write_Exit_Check_Condition(ofstream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile)
   {
@@ -791,10 +778,6 @@ class AaParallelBlockStatement: public AaBlockStatement
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaParallelBlockStatement");}
 
-  // inherits the C function stuff from block statement.
-  virtual void Write_Entry_Transfer_Code(ofstream& ofile);
-  virtual void Write_Statement_Invocations(ofstream& ofile);
-  virtual void Write_Exit_Check_Condition(ofstream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile)
   {
@@ -1183,7 +1166,6 @@ class AaIfStatement: public AaStatement
   AaStatementSequence* _else_sequence;
  public:
 
-  virtual void PrintC(ofstream& ofile);
 
   void Set_Test_Expression(AaExpression* te) { this->_test_expression = te; }
   void Set_If_Sequence(AaStatementSequence* is) { this->_if_sequence = is; }
@@ -1206,6 +1188,7 @@ class AaIfStatement: public AaStatement
   AaIfStatement(AaBranchBlockStatement* scope);
   ~AaIfStatement();
   virtual void Print(ostream& ofile);
+  virtual void PrintC(ofstream& ofile);
   virtual string Kind() {return("AaIfStatement");}
   virtual void Map_Source_References()
   {
@@ -1225,7 +1208,6 @@ class AaIfStatement: public AaStatement
   {
     return("_if_line_" +   IntToStr(this->Get_Line_Number()));
   }
-  virtual void PrintC(ofstream& ofile); // TODO
 
   virtual bool Is_Control_Flow_Statement() {return(true);}
 
@@ -1314,10 +1296,6 @@ class AaDoWhileStatement: public AaStatement
   virtual void Coalesce_Storage();
 
 
-  virtual string Get_C_Name()
-  {
-    return("_do_while_line_" +   IntToStr(this->Get_Line_Number()));
-  }
   void PrintC(ofstream& ofile); // todo.
 
   virtual bool Is_Control_Flow_Statement() {return(true);}

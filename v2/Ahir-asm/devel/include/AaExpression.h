@@ -145,7 +145,7 @@ class AaExpression: public AaRoot
 	virtual bool Is_Expression() {return(true); }
 	virtual bool Is_Object_Reference() {return(false);}
 
-        virtual void C_Reference_String() {return (this->Get_VC_Name());}
+        virtual string C_Reference_String() {return (this->Get_VC_Name());}
         virtual void PrintC( ofstream& ofile) {assert(0);}
         virtual void PrintC_Declaration(ofstream& ofile);
 
@@ -746,7 +746,6 @@ class AaSimpleObjectReference: public AaObjectReference
 	virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
 
 	virtual string Get_VC_Name();
-	virtual void Print_AddressOf_C(ofstream& ofile);
 
 	virtual void Update_Type();
 
@@ -851,7 +850,9 @@ class AaArrayObjectReference: public AaObjectReference
 
 	virtual void PrintC_Declaration( ofstream& ofile);
 	virtual void PrintC( ofstream& ofile);
-	void C_Index_String(AaType* t, int start_id, vector<AaExpression*>* indices, ofstream& ofile);
+        virtual string C_Reference_String(); // todo
+	string C_Index_String(AaType* t, int start_id, vector<AaExpression*>* indices);
+       
 
 	void Update_Address_Scaling_Factors(vector<int>& scale_factors,int word_size);
 	void Update_Address_Shift_Factors(vector<int>& shift_factors,int word_size);
@@ -1217,7 +1218,6 @@ class AaSliceExpression: public AaTypeCastExpression
 	virtual bool Is_Trivial() {return(true);}
 	virtual string Get_VC_Name() {return("slice_" + Int64ToStr(this->Get_Index()));}
 	virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
-	virtual void PrintC(ofstream& ofile);
 };
 
 

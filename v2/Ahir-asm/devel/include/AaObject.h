@@ -51,7 +51,6 @@ class AaObject: public AaRoot
 
   // C related stuff.
   virtual string C_Reference_String();
-  virtual string C_Value_String();
   virtual void PrintC_Declaration(ofstream& ofile);
   virtual void PrintC(ofstream& ofile);
 

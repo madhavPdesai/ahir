@@ -12,6 +12,7 @@ using namespace std;
 #include <AaModule.h>
 #include <AaProgram.h>
 #include <Aa2VC.h>
+#include <Aa2C.h>
 
 
 /*****************************************  OBJECT  ****************************/
@@ -154,10 +155,12 @@ void AaObject::PrintC_Declaration(ofstream& ofile)
 
 	if(_value != NULL)
 	{
+		this->_value->Evaluate();
 		// initialization of object...
-		Print_C_Assignment_To_Constant(this->C_Reference_String(), this->Get_Type(), this->_value, ofile);
+		Print_C_Assignment_To_Constant(this->C_Reference_String(), this->Get_Type(), this->_value->_expression_value, ofile);
 	}
 }
+void AaObject::PrintC(ofstream& ofile) {}
 
 void AaObject::Write_VC_Model(ostream& ofile)
 {

@@ -12,6 +12,7 @@ using namespace std;
 #include <AaModule.h>
 #include <AaProgram.h>
 #include <Aa2VC.h>
+#include <Aa2C.h>
 
 /***************************************** EXPRESSION  ****************************/
 //---------------------------------------------------------------------
@@ -493,15 +494,12 @@ AaConstantLiteralReference::AaConstantLiteralReference(AaScope* parent_tpr,
 AaConstantLiteralReference::~AaConstantLiteralReference() {};
 
 
-void AaConstantLiteralReference::PrintC_Declaration(ofstream& ofile)
+void AaConstantLiteralReference::PrintC(ofstream& ofile)
 {
 	this->Evaluate();
-	this->PrintC_Declaration(ofile);
-        Print_C_Assignment_To_Constant(this->C_Reference_String(), this->Get_Type(), this->_value, ofile);
+        Print_C_Assignment_To_Constant(this->C_Reference_String(), this->Get_Type(), this->_expression_value, ofile);
 }
-void AaConstantLiteralReference::PrintC( ofstream& ofile)
-{
-}
+
 
 void AaConstantLiteralReference::Write_VC_Control_Path( ostream& ofile)
 {
@@ -1915,7 +1913,7 @@ void AaArrayObjectReference::PrintC_Declaration(ofstream& ofile)
 
   if(this->_object->Is_Expression())
   {
-	(AaExpression* (this->_object))->PrintC_Declaration(ofile);
+	((AaExpression*) (this->_object))->PrintC_Declaration(ofile);
   }
   for(int i = 0, imax = _indices.size(); i < imax; i++)
   {
@@ -1929,7 +1927,7 @@ void AaArrayObjectReference::PrintC(ofstream& ofile)
 
   if(this->_object->Is_Expression())
   {
-	(AaExpression* (this->_object))->PrintC(ofile);
+	((AaExpression*) (this->_object))->PrintC(ofile);
   }
   for(int i = 0, imax = _indices.size(); i < imax; i++)
   {
@@ -1940,6 +1938,7 @@ void AaArrayObjectReference::PrintC(ofstream& ofile)
 
 string AaArrayObjectReference::C_Index_String(AaType* t, int start_id, vector<AaExpression*>* indices)
 {
+  string ret_string;
   AaType* curr_type = t;
   
   while(start_id < indices->size())
@@ -1966,6 +1965,8 @@ string AaArrayObjectReference::C_Index_String(AaType* t, int start_id, vector<Aa
 	}
       start_id++;
     }
+
+    return(ret_string);
 }
 
 
@@ -2680,9 +2681,8 @@ void AaPointerDereferenceExpression::Print(ostream& ofile)
 void AaPointerDereferenceExpression::PrintC(ofstream& ofile)
 {
   this->_reference_to_object->PrintC(ofile);
-
   this->PrintC_Declaration(ofile);
-  Print_C_Assignment(this->C_Reference_String, "*" + this->_reference_to_object->C_Reference_String(),
+  Print_C_Assignment(this->C_Reference_String(), "*" + this->_reference_to_object->C_Reference_String(),
 				this->Get_Type(), ofile); 
 }
 
@@ -3535,7 +3535,7 @@ void AaTypeCastExpression::Print(ostream& ofile)
   ofile << " )";
 }
 
-void AaTypeCastExpression::PrintC(ostream& ofile)
+void AaTypeCastExpression::PrintC(ofstream& ofile)
 {
 	this->_rest->PrintC(ofile);
 	this->PrintC_Declaration(ofile);
@@ -3829,7 +3829,7 @@ void AaSliceExpression::Print(ostream& ofile)
 	ofile << " " << this->Get_Type()->Size() + this->_low_index - 1 << " " << this->_low_index << " ) ";
 }
 
-void AaSliceExpression::PrintC(ostream& ofile)
+void AaSliceExpression::PrintC(ofstream& ofile)
 {
 	this->_rest->PrintC(ofile);
 	this->PrintC_Declaration(ofile);
@@ -3867,7 +3867,7 @@ void AaUnaryExpression::Print(ostream& ofile)
 	this->Get_Rest()->Print(ofile);
 	ofile << " )";
 }
-void AaUnaryExpression::PrintC(ostream& ofile)
+void AaUnaryExpression::PrintC(ofstream& ofile)
 {
 	this->_rest->PrintC(ofile);
 	this->PrintC_Declaration(ofile);
@@ -4142,7 +4142,7 @@ void AaBitmapExpression::Print(ostream& ofile)
 	ofile << " ) ";
 }
 
-void AaBitmapExpression::PrintC(ostream& ofile)
+void AaBitmapExpression::PrintC(ofstream& ofile)
 {
 	// not supported for now... until its utility is clearer :-)
 	AaRoot::Error("Bitmap operation not supported in Aa2C." , this);

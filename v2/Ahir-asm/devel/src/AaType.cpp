@@ -40,22 +40,6 @@ void AaUintType::Print(ostream& ofile)
   ofile << "$uint<" << this->Get_Width() << ">";
 }
 
-string AaUintType::CBaseName();
-{
-	if(_width <= 8)
-		return("uint8_t");
-	else if(_width <= 16)
-		return("uint16_t");
-	else if(_width <= 32)
-		return("uint32_t");
-	else if(_width <= 64)
-		return("uint64_t");
-	else
-	{
-		AaRoot::Error("Aa2C supports integer types to a max-width = 64.", this);
-		return("uint_UNSUPPORTED");
-	}
-}
 
 //---------------------------------------------------------------------
 // AaIntType
@@ -65,22 +49,6 @@ AaIntType::~AaIntType() {};
 void AaIntType::Print(ostream& ofile)
 {
 	ofile << "$int<" << this->Get_Width() << ">";
-}
-string AaIntType::CBaseName();
-{
-	if(_width <= 8)
-		return("int8_t");
-	else if(_width <= 16)
-		return("int16_t");
-	else if(_width <= 32)
-		return("int32_t");
-	else if(_width <= 64)
-		return("int64_t");
-	else
-	{
-		AaRoot::Error("Aa2C supports integer types to a max-width = 64.", this);
-		return("uint_UNSUPPORTED");
-	}
 }
 
 //---------------------------------------------------------------------

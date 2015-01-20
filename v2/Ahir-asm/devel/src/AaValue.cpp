@@ -59,7 +59,7 @@ bool AaUintValue::Equals(AaValue* other)
 	 ((Unsigned*)(_value))->Equal(*((Unsigned*)(other->Get_Value()))));
 }
 
-AaUintValue::Fill_Byte_Array(uint8_t* v_array, uint32_t v_width)
+void AaUintValue::Fill_Byte_Array(uint8_t* v_array, uint32_t v_width)
 {
 	_value->Fill_Byte_Array(v_array,v_width);
 }

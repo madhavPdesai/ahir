@@ -37,7 +37,7 @@ class AaType: public AaRoot
   //
   // Print C declaration.  Blank unless specified by derived class.
   //
-  virtual string PrintC_Declaration(ofstream& ofile) {}
+  virtual void PrintC_Declaration(ofstream& ofile) {}
 
   virtual void Write_VC_Model(ostream& ofile) { assert(0);}
   virtual bool Is_Integer_Type() {return(false);}
@@ -102,6 +102,8 @@ class AaVoidType: public AaType
 	virtual string Kind() {return("AaVoidType");}
 	virtual string CDim() {return("");}
 
+	virtual string C_Base_Name() { return("void");}
+
 };
 
 class AaScalarType: public AaType
@@ -138,7 +140,7 @@ class AaUintType: public AaScalarType
   }
 
   // print nothing.  sized_uint is provided by C library.
-  virtual string PrintC_Declaration(ofstream& ofile) {}
+  virtual void PrintC_Declaration(ofstream& ofile) {}
   
   virtual int Size() {return(this->_width);}
   virtual int Get_Data_Width() {return(this->Size());}
@@ -174,7 +176,7 @@ class AaIntType: public AaUintType
   {
 	return("sized_int");
   } 
-  virtual string PrintC_Declaration(ofstream& ofile)
+  virtual void PrintC_Declaration(ofstream& ofile)
   {
 	// do nothing.  sized_int is provided by C library.
   }
@@ -201,7 +203,7 @@ class AaPointerType: public AaUintType
   {
     return(this->_ref_type->C_Name() + "*" );
   } 
-  virtual string PrintC_Declaration(ofstream& ofile)
+  virtual void PrintC_Declaration(ofstream& ofile)
   {
 	//
 	// pointer types are a bit of a problem in C because the
@@ -480,11 +482,8 @@ class AaRecordType: public AaType
       return("Struct_" + Int64ToStr(this->Get_Index()));
     }  
 
-    virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
-    virtual int Get_Start_Bit_Offset(int start_index, vector<AaExpression*>& indices);
-    int Get_Start_Bit_Offset(AaExpression* expr);
     
-    void PrintC_Declaration(ofstream& ofile)
+    virtual void PrintC_Declaration(ofstream& ofile)
     {
       ofile << "typedef struct __" << this->C_Name() << " { " << endl;
       for(int idx = 0; idx < this->_element_types.size(); idx++)
@@ -494,7 +493,7 @@ class AaRecordType: public AaType
 	  if(t->Is_Array_Type())
 	    {
 	      AaArrayType* at = (AaArrayType*) t;
-	      ofile << at->CBaseName() << " "
+	      ofile << at->C_Base_Name() << " "
 		    << "f_" << IntToStr(idx)
 		    <<  at->C_Dimension_String() << ";" << endl;
 	    }
