@@ -168,220 +168,99 @@ void AaModule::Map_Source_References()
 }
 
 
-void AaModule::Write_Header(ofstream& ofile)
+void AaModule::Write_C_Header(ofstream& ofile)
 {
-  
 
-  ofile << "typedef struct " << this->Get_Structure_Name() << "__ {" << endl;
-  for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
-    {
-      this->_input_args[i]->PrintC(ofile,"\t");
-    }
-  for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
-    {
-      this->_output_args[i]->PrintC(ofile,"\t");
-    }
-  
-  if(!this->Get_Foreign_Flag())
-    {      
-      // print objects
-      this->PrintC_Objects(ofile,"\t");
-      
-      // print statement sequence
-      if(this->_statement_sequence != NULL)
+	ofile << "void " 
+		<< this->Get_C_Wrap_Function_Name() 
+		<< "(";
+	bool first_one = true;
+	for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
 	{
-	  this->_statement_sequence->Write_C_Struct(ofile);
+		if(!first_one)
+			ofile << ", ";
+		first_one = false;
+		ofile << this->_input_args[i]->Get_Type()->CName();
 	}
-      
-    }      
-  
-  // bit fields at the end whenever possible...
-  ofile << "\tunsigned " << this->Get_Entry_Name() << " : 1;" << endl;
-  ofile << "\tunsigned " << this->Get_In_Progress_Name() << " : 1;" << endl;
-  ofile << "\tunsigned " << this->Get_Exit_Name() << " : 1;" << endl;
-  
-  ofile << "} "
-	<< this->Get_Structure_Name() 
-	<< ";" 
-	<< endl;
-
-  if(!this->Get_Foreign_Flag())
-    {
-      // two function declarations associated with this statement.
-      ofile << this->Get_Structure_Name() << "* " 
-	    << this->Get_C_Function_Name() 
-	    << "(" 
-	    << this->Get_Structure_Name()
-	    << "*);" 
-	    << endl;
-    }
-
-  
-  ofile << "int " 
-	<< this->Get_C_Wrap_Function_Name() 
-	<< "(";
-  bool first_one = true;
-  for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
-    {
-      if(!first_one)
-	ofile << ", ";
-      first_one = false;
-      ofile << this->_input_args[i]->Get_Type()->CName();
-    }
-  for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
-    {
-      if(!first_one)
-	ofile << ", ";
-      first_one = false;
-      ofile << this->_output_args[i]->Get_Type()->CName();
-      ofile << "* ";
-    }
-  ofile << ");" 
-	<< endl;
+	for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+	{
+		if(!first_one)
+			ofile << ", ";
+		first_one = false;
+		ofile << this->_output_args[i]->Get_Type()->CName();
+		ofile << "* ";
+	}
+	ofile << ");" << endl;
 }
 
-void AaModule::Write_Source(ofstream& ofile)
+void AaModule::Write_C_Source(ofstream& ofile)
 {
-
-  if(!this->Get_Foreign_Flag())
-    {
-      // print the two functions corresponding to AaModule
-      // first the outer function.
-      ofile << "int " 
-	    << this->Get_C_Wrap_Function_Name() 
-	    << "(";
-      bool first_one = true;
-      for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
+	if(!this->Get_Foreign_Flag())
 	{
-	  if(!first_one)
-	    ofile << ", ";
-	  first_one = false;
-	  ofile << this->_input_args[i]->Get_Type()->CName();
-	  ofile << " " << this->_input_args[i]->Get_Name();
+		ofile << "void " 
+			<< this->Get_C_Wrap_Function_Name() 
+			<< "(";
+		bool first_one = true;
+		for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
+		{
+			if(!first_one)
+				ofile << ", ";
+			first_one = false;
+			ofile << this->_input_args[i]->Get_Type()->CName();
+			ofile << " " << this->_input_args[i]->Get_Name();
+		}
+		for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+		{
+			if(!first_one)
+				ofile << ", ";
+			first_one = false;
+			ofile << this->_output_args[i]->Get_Type()->CName();
+			ofile << "* ";
+			ofile << " " << this->_output_args[i]->Get_Name();
+		}
+		ofile << ")" << endl;
+		ofile << "{" << endl;
+		this->Write_C_Object_Declarations(ofile);
+		this->Write_Statement_Invocations(ofile);
+		ofile << "}" << endl;
 	}
-      for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
-	{
-	  if(!first_one)
-	    ofile << ", ";
-	  first_one = false;
-	  ofile << this->_output_args[i]->Get_Type()->CName();
-	  ofile << "* ";
-	  ofile << " " << this->_output_args[i]->Get_Name();
-	}
-      ofile << ")" << endl;
-      ofile << "{" << endl;
-      ofile << this->Get_Structure_Name() << "* "
-	    << AaProgram::Get_Top_Struct_Variable_Name()
-	    << " = "
-	    << "(" << this->Get_Structure_Name() << "*) calloc(1,sizeof(" 
-	    << this->Get_Structure_Name() << "));" << endl;
-      ofile << this->Get_Entry_Name_Ref() << " = 1;" <<  endl;
-      for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
-	{
-	  ofile << "\t" << AaProgram::Get_Top_Struct_Variable_Name()
-		<< "->" << this->_input_args[i]->Get_Name() << " = " 
-		<< this->_input_args[i]->Get_Name() << ";" << endl;
-	}
-      
-      ofile << "\twhile(!" << this->Get_Exit_Name_Ref() << ") " << endl;
-      ofile << "\t{ " << endl;
-      ofile << "\t\t" << AaProgram::Get_Top_Struct_Variable_Name() 
-	    << " = " << this->Get_C_Function_Name() 
-	    << "(" 
-	    << AaProgram::Get_Top_Struct_Variable_Name() 
-	    << ");" << endl;
-      ofile << "\t} " << endl;
-      for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
-	{
-	  ofile << "\t*" << this->_output_args[i]->Get_Name() 
-		<< "= "
-		<< AaProgram::Get_Top_Struct_Variable_Name() 
-		<< "->" << this->_output_args[i]->Get_Name() << ";" << endl;
-	}
-      
-      ofile << "cfree(" << AaProgram::Get_Top_Struct_Variable_Name() << ");" << endl;
-      ofile << "return AASUCCESS; " << endl;
-      ofile << "}" << endl;
-      
-      
-      // now the inner function.
-      // two function declarations associated with this statement.
-      ofile << this->Get_Structure_Name() << "* " 
-	    << this->Get_C_Function_Name() 
-	    << "(" 
-	    << this->Get_Structure_Name()
-	    << "* "
-	    << AaProgram::Get_Top_Struct_Variable_Name()
-	    << ")" 
-	    << endl;
-      ofile << "{" << endl;
-      
-      ofile << "if (" << this->Get_Entry_Name_Ref() <<") {" << endl;
-      ofile << this->Get_Entry_Name_Ref() << " = 0;" << endl;
-      ofile << this->Get_In_Progress_Name_Ref() <<" = 1;" << endl;
-      
-      this->Write_Object_Initializations(ofile);
-      this->Write_Entry_Transfer_Code(ofile);
-      
-      ofile << "}" << endl;
-
-      ofile << "if (" 
-	    <<  this->Get_In_Progress_Name_Ref() << ") {"  << endl;
-      this->Write_Statement_Invocations(ofile);
-
-      
-      ofile << "if (";
-      this->Write_Exit_Check_Condition(ofile);
-      ofile << ") {" << endl;
-      this->Write_Cleanup_Code(ofile);
-      
-      ofile << this->Get_In_Progress_Name_Ref() <<" = 0;" << endl;
-      ofile << this->Get_Exit_Name_Ref() << " = 1;" << endl;
-      
-      ofile << "} " << endl;
-      ofile << "}" << endl;;
-
-      ofile << "return "<< AaProgram::Get_Top_Struct_Variable_Name() << ";" << endl;
-      ofile << "}" << endl;
-    }
-
 }
 
 void AaModule::Propagate_Constants()
 {
-  if(this->_statement_sequence)
-    this->_statement_sequence->Propagate_Constants();
+	if(this->_statement_sequence)
+		this->_statement_sequence->Propagate_Constants();
 }
 
 
 void AaModule::Mark_Reachable_Modules(set<AaModule*>& reachable_modules)
 {
-  if(reachable_modules.find(this) == reachable_modules.end())
-    {
-      AaRoot::Info("module " + this->Get_Label() + " is reachable from a specified root module.");
-      reachable_modules.insert(this);
-      for(set<AaModule*>::iterator citer = _called_modules.begin(), fciter = _called_modules.end();
-	  citer != fciter;
-	  citer++)
+	if(reachable_modules.find(this) == reachable_modules.end())
 	{
-	  (*citer)->Mark_Reachable_Modules(reachable_modules);
+		AaRoot::Info("module " + this->Get_Label() + " is reachable from a specified root module.");
+		reachable_modules.insert(this);
+		for(set<AaModule*>::iterator citer = _called_modules.begin(), fciter = _called_modules.end();
+				citer != fciter;
+				citer++)
+		{
+			(*citer)->Mark_Reachable_Modules(reachable_modules);
+		}
 	}
-    }
 }
 
 
 bool AaModule::Has_No_Side_Effects()
 {
-  if(this->Get_Foreign_Flag())
-    return(true);
+	if(this->Get_Foreign_Flag())
+		return(true);
 
-  if(_reads_from_shared_pipe)
-	return(false);
- 
-  if(_writes_to_shared_pipe)
-	return(false);
+	if(_reads_from_shared_pipe)
+		return(false);
 
-  if(_shared_memory_spaces.size() > 0)
+	if(_writes_to_shared_pipe)
+		return(false);
+
+	if(_shared_memory_spaces.size() > 0)
 	return(false);
 
   if(_global_objects_that_are_written.size() > 0)
@@ -854,4 +733,9 @@ void AaModule::Write_VC_Control_Path_Optimized_Base(ostream& ofile)
       ofile << place_decls << endl;
       ofile << binding_string << endl;
     }
+}
+
+bool AaModule::Can_Block(bool pipeline_flag)
+{
+	return(this->AaSeriesBlockStatement::Can_Block(pipeline_flag));
 }

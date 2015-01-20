@@ -119,6 +119,7 @@ class AaModule: public AaSeriesBlockStatement
   virtual bool Is_Pipelined() {return(_pipeline_flag);}
 
   void Set_Inline_Flag(bool ff);
+  virtual bool Can_Block(bool pipeline_flag);
 
   bool Get_Inline_Flag() {return(this->_inline_flag);}
 
@@ -177,9 +178,12 @@ class AaModule: public AaSeriesBlockStatement
   virtual void Map_Source_References();
 
   void Set_Foreign_Object_Representatives();
-  string Get_Structure_Name() { return(this->Get_Label() + "_State"); }
-  void Write_Header(ofstream& ofile);
-  void Write_Source(ofstream& ofile);
+
+  //
+  // Aa2C support.
+  //
+  void Write_C_Header(ofstream& ofile);
+  void Write_C_Source(ofstream& ofile);
 
   void Write_VC_Model(ostream& ofile);
   void Write_VC_Model(bool opt_flag, ostream& ofile);

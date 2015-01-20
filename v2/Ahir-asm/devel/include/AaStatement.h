@@ -105,6 +105,7 @@ class AaStatement: public AaScope
   virtual string Get_VC_Guard_String();
 
   virtual void Map_Target(AaObjectReference* obj_ref);
+
   virtual string Tab();
 
   virtual void Set_Tab_Depth(unsigned int td) { this->_tab_depth = td; }
@@ -128,36 +129,9 @@ class AaStatement: public AaScope
   virtual string Kind() {return("AaStatement");}
   virtual void Map_Source_References() { assert(0);}
 
-  virtual void Write_C_Struct(ofstream& ofile);
-  virtual void Write_C_Struct_Extra(ofstream& ofile) {}
-  virtual void Write_C_Function_Header(ofstream& ofile);
-  virtual void Write_C_Function_Body(ofstream& ofile);
-
   virtual string Get_C_Name() {assert(0); }
 
-
-  virtual string Get_Entry_Name() { return(this->Get_C_Name() + "_entry"); }
-  virtual string Get_In_Progress_Name() { return(this->Get_C_Name() + "_in_progress"); }
-  virtual string Get_Exit_Name() { return(this->Get_C_Name() + "_exit"); }
-
-  virtual string Get_Entry_Name_Ref() 
-  {
-    return(this->Get_Struct_Dereference() + this->Get_Entry_Name());
-  }
-
-  virtual string Get_In_Progress_Name_Ref() 
-  {
-    return(this->Get_Struct_Dereference() + this->Get_In_Progress_Name());
-  }
-
-  virtual string Get_Exit_Name_Ref() 
-  {
-    return(this->Get_Struct_Dereference() + this->Get_Exit_Name());
-  }
-
-
-  virtual string Get_Structure_Name() { return("_" + this->Get_C_Name()); }
-  virtual string Get_C_Function_Name() { return(this->Get_C_Name() + "_"); }
+  virtual string Get_C_Macro_Name() { return("_" + this->Get_C_Name() + "_"); }
   virtual string Get_C_Wrap_Function_Name() { return(this->Get_C_Name()); }
   
   virtual bool Can_Block(bool pipeline_flag) { assert(0); }
@@ -169,7 +143,8 @@ class AaStatement: public AaScope
   virtual void Write_Pipe_Write_Condition_Update(ofstream& ofile , string tab_string);
   virtual void Write_VC_Constant_Declarations(ostream& ofile) {};
 
-  virtual void PrintC(ofstream& ofile, string tab_string) { assert(0); }
+  
+  virtual void PrintC(ofstream& ofile) { assert(0); }
 
   virtual string Get_Line_Directive()
   {
@@ -283,6 +258,12 @@ class AaStatementSequence: public AaScope
   AaStatementSequence(AaScope* scope, vector<AaStatement*>& statement_sequence);
   ~AaStatementSequence();
 
+  virtual void PrintC(ofstream& ofile)
+  {
+	for(int i = 0, imax = _statement_sequence.size(); i < imax; i++)
+		_statement_sequence[i]->PrintC(ofile);
+  }
+
   unsigned int Get_Statement_Count() { return this->_statement_sequence.size(); }
   AaStatement* Get_Statement(unsigned int indx) 
   { 
@@ -326,35 +307,10 @@ class AaStatementSequence: public AaScope
       this->_statement_sequence[i]->Increment_Tab_Depth();
   }
 
-  virtual void Write_C_Struct(ofstream& ofile)
-  {
-    for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
-      this->_statement_sequence[i]->Write_C_Struct(ofile);
-  }
-
-  virtual void Write_C_Function_Body(ofstream& ofile)
-  {
-    for(unsigned int i = 0; i < this->_statement_sequence.size(); i++)
-      this->_statement_sequence[i]->Write_C_Function_Body(ofile);
-  }
-
   virtual void Get_Target_Places(set<AaPlaceStatement*>& target_places);
-
-  virtual void  Write_Parallel_Entry_Transfer_Code(ofstream& ofile);
-  virtual void  Write_Series_Entry_Transfer_Code(ofstream& ofile);
-
-  virtual void Write_Parallel_Statement_Invocations(ofstream& ofile);
-  virtual void Write_Series_Statement_Invocations(ofstream& ofile);
-
-  virtual void  Write_Parallel_Exit_Check_Condition(ofstream& ofile);
-  virtual void  Write_Series_Exit_Check_Condition(ofstream& ofile);
-
-  virtual void Write_Clear_Exit_Flags_Code(ostream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile); 
   void Write_VC_Control_Path_Optimized(ostream& ofile);
-
-
 
   virtual void Write_VC_Pipe_Declarations(ostream& ofile);
   virtual void Write_VC_Memory_Space_Declarations(ostream& ofile);
@@ -434,9 +390,9 @@ class AaNullStatement: public AaStatement
   virtual string Kind() {return("AaNullStatement");}
   virtual void Map_Source_References() {} // do nothing
 
-  virtual void PrintC(ofstream& ofile, string tab_string)
+  virtual void PrintC(ofstream& ofile)
   {
-    ofile <<  tab_string << ";" << endl;
+    ofile <<  "null;" << endl;
   }
   virtual string Get_C_Name()
   {
@@ -492,10 +448,10 @@ class AaAssignmentStatement: public AaStatement
 
   // return true if one of the sources or targets is a pipe.
   virtual bool Can_Block(bool pipeline_flag);
-  virtual void PrintC(ofstream& ofile, string tab_string);
+
+  virtual void PrintC(ofstream& ofile);
 
 
-  virtual void Write_C_Struct(ofstream& ofile);
   void Write_VC_WAR_Dependencies(bool pipeline_flag, set<AaRoot*>& visited_elements,
 				 ostream& ofile);
 
@@ -574,14 +530,10 @@ class AaCallStatement: public AaStatement
 
   AaSimpleObjectReference* Get_Implicit_Target(string tgt_name);
 
-  // structure.
-  virtual void Write_C_Struct(ofstream& ofile);
-
-  // body
-  virtual void Write_C_Function_Body(ofstream& ofile);
-
   //
   // return true if one of the sources or targets is a pipe.
+  // or if the called module can block.
+  //
   // (if pipeline_flag is true, then the pipe must also be marked
   //  as an explicit synch pipe).
   // 
@@ -592,21 +544,8 @@ class AaCallStatement: public AaStatement
     return("_call_line_" +   IntToStr(this->Get_Line_Number()));
   }
 
-  virtual string Get_Called_Function_Struct_Pointer()
-  {
-    return(this->Get_C_Name() + "_called_fn_struct");
-  }
+  virtual void PrintC(ofstream& ofile);
 
-  virtual string Get_Called_Function_Struct_Pointer_Ref()
-  {
-    return(this->Get_Struct_Dereference() + this->Get_Called_Function_Struct_Pointer());
-  }
-
-  virtual string Get_Called_Module_Struct_Name();
-
-  virtual void PrintC(ofstream& ofile, string tab_string);
-  virtual void Write_Inarg_Copy_Code(ofstream& ofile,string tab_string);
-  virtual void Write_Outarg_Copy_Code(ofstream& ofile,string tab_string);
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile)
   {
@@ -699,24 +638,25 @@ class AaBlockStatement: public AaStatement
 	  }
       }
   }
-  virtual void PrintC_Objects(ofstream &ofile,string tab_string)
-  {
-    if(this->_objects.size() > 0)
-      {
-	for(unsigned int i = 0; i < this->_objects.size(); i++)
-	  {
-	    this->_objects[i]->PrintC(ofile,tab_string);
-	  }
-      }
-  }
 
-  virtual void Write_Object_Initializations(ofstream& ofile)
+  virtual void Write_C_Object_Declarations(ofstream& ofile)
   {
     for(unsigned int i = 0; i < this->_objects.size(); i++)
       {
-	this->_objects[i]->Write_Initialization(ofile);
+	this->_objects[i]->Write_C_Declaration(ofile);
       }
   }
+  virtual void PrintC(ofstream& ofile)
+  {
+    ofile << "{" << endl;
+    this->Write_C_Object_Declarations(ofile);
+    if(this->_statement_sequence != NULL)
+    {
+	this->_statement_sequence->PrintC(ofile);
+    }
+    ofile << "}" << endl;
+  }
+
   virtual void Print_Statement_Sequence(ostream& ofile)
   {
     if(this->_statement_sequence != NULL)
@@ -735,30 +675,20 @@ class AaBlockStatement: public AaStatement
   virtual string Kind() {return("AaBlockStatement");}
   virtual void Map_Source_References();
 
-  // the block statement can be blocked, so there
-  // will certainly be a structure contributed
-  // by this.
-  virtual void Write_C_Struct(ofstream& ofile);
 
-  virtual void Write_Entry_Transfer_Code(ofstream& ofile) {assert(0);}
   virtual void Write_Statement_Invocations(ofstream& ofile) {assert(0);}
-  virtual void Write_Exit_Check_Condition(ofstream& ofile) {assert(0);}
-  virtual void Write_Cleanup_Code(ofstream& ofile) 
-  {
-    if(this->_statement_sequence)
-      this->_statement_sequence->Write_Clear_Exit_Flags_Code(ofile);
-  }
 
-  // the block statement is always encased in a function!
-  virtual void Write_C_Function_Body(ofstream& ofile);
 
   virtual string Get_C_Name()
   {
     return(this->Get_Label());
   }
 
-  // return true if one of the sources or targets is a pipe.
-  virtual bool Can_Block(bool pipeline_flag) { return (true); }
+  //
+  // return true if one of the constituent statements
+  // can block.
+  //
+  virtual bool Can_Block(bool pipeline_flag);
 
 
 
@@ -843,6 +773,7 @@ class AaSeriesBlockStatement: public AaBlockStatement
   virtual string Get_VC_Name() {return ("series_block_stmt_" + Int64ToStr(this->Get_Index()));}
   
   
+  virtual bool Can_Block(bool pipeline_flag);
   void Write_VC_Links_Optimized_Base(string hier_id, ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized_Base(ostream& ofile);
 
@@ -922,8 +853,6 @@ class AaBranchBlockStatement: public AaSeriesBlockStatement
     return(_merged_places.find(place_name) != _merged_places.end());
   }
 
-  virtual void Write_C_Struct_Extra(ofstream& ofile);
-
   virtual void Write_VC_Control_Path(ostream& ofile);
   void Write_VC_Control_Path(string source_link,
 			     AaStatementSequence* sseq,
@@ -959,17 +888,6 @@ class AaJoinForkStatement: public AaParallelBlockStatement
   ~AaJoinForkStatement();
   virtual string Kind() {return("AaJoinForkStatement");}
   virtual void Map_Source_References();
-  virtual void Write_Entry_Transfer_Code(ofstream& ofile);
-
-  virtual string Get_C_Name()
-  {
-    return("_join_line_" +   IntToStr(this->Get_Line_Number()));
-  }
-
-  virtual string Get_Struct_Dereference()
-  {
-    return(this->Get_Scope()->Get_Struct_Dereference());
-  }
 
 
   virtual void Write_VC_Control_Path(ostream& ofile);
@@ -1009,19 +927,15 @@ class AaPlaceStatement: public AaStatement
   virtual void Map_Source_References() {} // do nothing
 
   virtual bool Is_Control_Flow_Statement() {return(true);}
-  virtual string Get_C_Name()
+
+  virtual string C_Reference_String()
   {
     return("_place_line_" +   IntToStr(this->Get_Line_Number()));
   }
-  // cannot block, but will contribute a flag to the
-  // structure and will also contribute a line of code
-  // to the function body
-  virtual void Write_C_Struct(ofstream& ofile); 
-  virtual void Write_C_Function_Body(ofstream& ofile) ;
 
-  virtual string Get_Struct_Dereference()
+  virtual void PrintC(ofstream& ofile)
   {
-    return(this->Get_Scope()->Get_Struct_Dereference());
+	ofile << "goto " << this->C_Reference_String() << ";" << endl;
   }
 
   virtual void Err_Check()
@@ -1103,27 +1017,13 @@ class AaMergeStatement: public AaSeriesBlockStatement
 
   virtual void Map_Source_References();
 
-  virtual string Get_C_Name()
+  virtual string C_Reference_String()
   {
     return("_merge_line_" +   IntToStr(this->Get_Line_Number()));
   }
 
-  virtual void Write_Entry_Condition(ofstream& ofile);
-  virtual void Write_Cleanup_Code(ofstream& ofile);
-  virtual void Write_Entry_Transfer_Code(ofstream& ofile);
 
-  void Write_C_Struct(ofstream& ofile);
-
-  virtual string Get_Struct_Dereference()
-  {
-    return(this->Get_Scope()->Get_Struct_Dereference());
-  }
-
-  virtual string Get_Merge_From_Entry() { return(this->Get_C_Name() + "_from_entry"); }
-  virtual string Get_Merge_From_Entry_Ref() 
-  {
-    return(this->Get_Struct_Dereference() +  this->Get_Merge_From_Entry());
-  }
+  virtual void PrintC(ofstream& ofile) ;
 
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
@@ -1171,8 +1071,7 @@ class AaPhiStatement: public AaStatement
   {
     return("_phi_line_" +   IntToStr(this->Get_Line_Number()));
   }
-  virtual void PrintC(ofstream& ofile, string tab_string);
-  void Write_C_Struct(ofstream& ofile);
+  virtual void PrintC(ofstream& ofile);  
 
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
@@ -1249,21 +1148,10 @@ class AaSwitchStatement: public AaStatement
   virtual void Map_Source_References();
 
 
-  virtual string Get_C_Name()
-  {
-    return("_switch_line_" +   IntToStr(this->Get_Line_Number()));
-  }
 
+  virtual void PrintC(ofstream& ofile);
 
   virtual bool Is_Control_Flow_Statement() {return(true);}
-
-  virtual void Write_C_Struct(ofstream& ofile);
-  virtual void Write_C_Function_Body(ofstream& ofile);
-
-  virtual string Get_Struct_Dereference()
-  {
-    return(this->Get_Scope()->Get_Struct_Dereference());
-  }
 
 
   virtual void Write_VC_Control_Path(ostream& ofile);
@@ -1294,6 +1182,8 @@ class AaIfStatement: public AaStatement
   AaStatementSequence* _if_sequence;
   AaStatementSequence* _else_sequence;
  public:
+
+  virtual void PrintC(ofstream& ofile);
 
   void Set_Test_Expression(AaExpression* te) { this->_test_expression = te; }
   void Set_If_Sequence(AaStatementSequence* is) { this->_if_sequence = is; }
@@ -1335,16 +1225,10 @@ class AaIfStatement: public AaStatement
   {
     return("_if_line_" +   IntToStr(this->Get_Line_Number()));
   }
+  virtual void PrintC(ofstream& ofile); // TODO
 
   virtual bool Is_Control_Flow_Statement() {return(true);}
 
-  virtual void Write_C_Struct(ofstream& ofile);
-  virtual void Write_C_Function_Body(ofstream& ofile);
-
-  virtual string Get_Struct_Dereference()
-  {
-    return(this->Get_Scope()->Get_Struct_Dereference());
-  }
 
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
@@ -1434,17 +1318,11 @@ class AaDoWhileStatement: public AaStatement
   {
     return("_do_while_line_" +   IntToStr(this->Get_Line_Number()));
   }
+  void PrintC(ofstream& ofile); // todo.
 
   virtual bool Is_Control_Flow_Statement() {return(true);}
 
   virtual void Write_VC_Constant_Declarations(ostream& ofile);
-  virtual void Write_C_Struct(ofstream& ofile);
-  virtual void Write_C_Function_Body(ofstream& ofile);
-
-  virtual string Get_Struct_Dereference()
-  {
-    return(this->Get_Scope()->Get_Struct_Dereference());
-  }
 
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);

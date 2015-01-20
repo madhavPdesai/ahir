@@ -41,6 +41,7 @@ class AaValue: public AaRoot
 
   virtual bool Equals(AaValue* other) {return(false);}
   virtual int To_Integer() {assert(0);}
+  virtual void Fill_Byte_Array(uint8_t* byte_array, uint32_t array_size) {assert(0);}
   virtual bool To_Boolean() {assert(0);}
   virtual void Assign(AaType* t, AaValue* v) {assert(0);}
 
@@ -105,6 +106,8 @@ class AaUintValue: public AaValue
   {
     return(IntToStr(this->To_Integer()));
   }
+
+  virtual void Fill_Byte_Array(uint8_t* byte_array, uint32_t array_size);
 };
 
 class AaIntValue: public AaUintValue

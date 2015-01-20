@@ -58,8 +58,20 @@ class AaRoot
   AaRoot();
   ~AaRoot(); 
 
-  virtual string Get_VC_Name() {assert(0);}
+  // C related stuff.
+  // return string by which this node is referred to in the C code.
+  virtual string C_Reference_String() {assert(0);}
+  //
+  // print C code for this node.
+  //
+  virtual void  PrintC(ofstream& ofile) {assert(0);}
+  // 
+  // print C declaration for this node.
+  virtual void  PrintC_Declaration(ofstream& ofile) {assert(0);}
 
+
+  // VC related stuff.
+  virtual string Get_VC_Name() {assert(0);}
   virtual string Get_VC_Sample_Start_Transition_Name() {
     return(this->Get_VC_Name() + "_sample_start_");
   }
@@ -165,6 +177,9 @@ class AaRoot
 	// do nothing.
   }
 
+
+  virtual string C_Address() { assert(0); }
+  virtual string C_Value()   { assert(0); }
   
 };
 

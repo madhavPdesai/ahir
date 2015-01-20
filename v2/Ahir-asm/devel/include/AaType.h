@@ -19,11 +19,25 @@ class AaType: public AaRoot
   AaType(AaScope* parent);
   ~AaType();
   virtual string Kind() {return("AaType");}
-  virtual string CName() {assert(0);}
-  virtual string CBaseName() {assert(0);}
-  virtual string CDim() {assert(0);}
   virtual int Size() {assert(0);}
   virtual void Fill_LAU_Set(set<int>& s) {s.insert(this->Size());}
+
+  // C related stuff.
+  //
+  // base-name: e.g. for array types, base-name
+  // is the element-type.
+  //
+  virtual string C_Base_Name() {assert(0);}
+  // name by which this type is referred to.
+  virtual string C_Name() {return(this->C_Base_Name());}
+  //
+  // dimension string, for array types.
+  //
+  virtual string C_Dimension_String() {}
+  //
+  // Print C declaration.  Blank unless specified by derived class.
+  //
+  virtual string PrintC_Declaration(ofstream& ofile) {}
 
   virtual void Write_VC_Model(ostream& ofile) { assert(0);}
   virtual bool Is_Integer_Type() {return(false);}
@@ -103,7 +117,6 @@ class AaScalarType: public AaType
 
 class AaUintType: public AaScalarType
 {
-
  protected:
   // width > 0
   unsigned int _width;
@@ -114,26 +127,19 @@ class AaUintType: public AaScalarType
   AaUintType(AaScope* scope, unsigned int width);
   ~AaUintType();
   void Print(ostream& ofile);
+  virtual bool Is_A_Valid_C_Type()  {return(false);}
 
   virtual string Kind() {return("AaUintType");}
-  virtual string CName() 
+   
+  // C related stuff.
+  virtual string C_Base_Name()
   {
-    return("uint_" + IntToStr(this->Get_Width()));
+	return("sized_uint");
   }
-  virtual string CBaseName() 
-  {
-    int width;
-    int raw_width = this->Get_Width();
-    if(raw_width <= 8)
-      width = 8;
-    else if(raw_width <= 16)
-      width = 16;
-    else if(raw_width <= 32)
-      width = 32;
-    else
-      width = 64;
-    return("uint" + IntToStr(width) + "_t");
-  }
+
+  // print nothing.  sized_uint is provided by C library.
+  virtual string PrintC_Declaration(ofstream& ofile) {}
+  
   virtual int Size() {return(this->_width);}
   virtual int Get_Data_Width() {return(this->Size());}
 
@@ -157,29 +163,23 @@ class AaIntType: public AaUintType
   // gets width from Uint
 
  public:
+
   AaIntType(AaScope* scope,unsigned int width);
   ~AaIntType();
   void Print(ostream& ofile);
   virtual string Kind() {return("AaIntType");}
-  virtual string CName() 
+
+  // C related stuff
+  virtual string C_Base_Name() 
   {
-    return("int_" + IntToStr(this->Get_Width()));
+	return("sized_int");
+  } 
+  virtual string PrintC_Declaration(ofstream& ofile)
+  {
+	// do nothing.  sized_int is provided by C library.
   }
 
-  virtual string CBaseName() 
-  {
-    int width;
-    int raw_width = this->Get_Width();
-    if(raw_width <= 8)
-      width = 8;
-    else if(raw_width <= 16)
-      width = 16;
-    else if(raw_width <= 32)
-      width = 32;
-    else
-      width = 64;
-    return("int" + IntToStr(width) + "_t");
-  }
+  virtual bool Is_A_Valid_C_Type()  {return(false);}
 
   virtual bool Is_Uinteger_Type() {return(false);}
 };
@@ -196,15 +196,19 @@ class AaPointerType: public AaUintType
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaPointerType");}
 
-  virtual string CName()
+  // C related stuff.
+  virtual string C_Base_Name() 
   {
-    return(_ref_type->CName() + "*");
-  }
-
-  virtual string CBaseName() 
+    return(this->_ref_type->C_Name() + "*" );
+  } 
+  virtual string PrintC_Declaration(ofstream& ofile)
   {
-    return(this->_ref_type->CBaseName() + "*");
-  }
+	//
+	// pointer types are a bit of a problem in C because the
+	// dimensions are attached to the object ^%*(@
+	//
+	ofile << "typedef " << this->C_Name() << " " << _ref_type->C_Name() << "*;" << endl;
+  } 
 
 
   AaType* Get_Ref_Type() {return(this->_ref_type);}
@@ -236,21 +240,19 @@ class AaFloatType : public AaScalarType
   void Print(ostream& ofile);
   virtual string Kind() {return("AaFloatType");}
 
-  virtual string CName()
-  {
-    return(string("float_") + IntToStr(this->_characteristic) +  "_" + IntToStr(this->_mantissa));
-  }
   
-  virtual string CBaseName() 
+  virtual string C_Base_Name() 
   {
-    if(this->Size() == 32)
-      return("float");
-    else
-      return("double");
+    	if(this->Size() == 32)
+      		return("float");
+    	else if(this->Size() == 64)
+    	  	return("double");
+	else
+		assert(0);
   }
-
+  virtual void PrintC_Declaration(ofstream& ofile) {} // built-in C types, no need to declare.
+  
   virtual int Size() {return(this->_characteristic + this->_mantissa + 1);}
-
   virtual void Write_VC_Model(ostream& ofile) 
   { 
     ofile << "$float<" << _characteristic << "," << _mantissa << ">";
@@ -291,18 +293,21 @@ class AaArrayType: public AaType
   unsigned int Get_Dimension(unsigned int dim_id);
   void Print(ostream& ofile);
   virtual string Kind() {return("AaArrayType");}
-  virtual string CName()
+  virtual string C_Name()
   {
-    string ret_string =  this->Get_Element_Type()->CName();
+    string ret_string =  this->Get_Element_Type()->C_Base_Name();
+    for(unsigned int i=0; i < this->Get_Number_Of_Dimensions(); i++)
+	ret_string += "*";
     return(ret_string);
   }
 
-  virtual string CBaseName()
+  virtual string C_Base_Name()
   {
-    string ret_string =  this->Get_Element_Type()->CBaseName();
+    string ret_string =  this->Get_Element_Type()->C_Name();
     return(ret_string);
   }
-  virtual string CDim() 
+
+  virtual string C_Dimension_String() 
   {
     string ret_string =  "";
     for(unsigned int i=0; i < this->Get_Number_Of_Dimensions(); i++)
@@ -365,7 +370,6 @@ class AaRecordType: public AaType
   vector<AaType*> _element_types;
  public:
   virtual bool Is_Record_Type() {return(true);}
-
 
   AaRecordType(AaScope* s, vector<AaType*>& element_types):AaType(s)
     {
@@ -471,18 +475,13 @@ class AaRecordType: public AaType
       return(this->Get_Element_Type(idx)->Get_Data_Width());
     }
     
-    virtual string CName() 
+    virtual string C_Base_Name() 
     {
       return("Struct_" + Int64ToStr(this->Get_Index()));
     }  
-    
-    virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
-    virtual int Get_Start_Bit_Offset(int start_index, vector<AaExpression*>& indices);
-    int Get_Start_Bit_Offset(AaExpression* expr);
-    
-    void PrintC_Declaration(ofstream& ofile)
+    virtual void PrintC_Declaration(ofstream& ofile)
     {
-      ofile << "typedef struct __" << CName() << " { " << endl;
+      ofile << "typedef struct __" << this->C_Name() << " { " << endl;
       for(int idx = 0; idx < this->_element_types.size(); idx++)
 	{
 	  AaType* t = this->_element_types[idx];
@@ -492,16 +491,21 @@ class AaRecordType: public AaType
 	      AaArrayType* at = (AaArrayType*) t;
 	      ofile << at->CBaseName() << " "
 		    << "f_" << IntToStr(idx)
-		    <<  at->CDim() << ";" << endl;
+		    <<  at->C_Dimension_String() << ";" << endl;
 	    }
 	  else
 	    {
-	      ofile << t->CName() << " ";
+	      ofile << t->C_Name() << " ";
 	      ofile << "f_" << IntToStr(idx) << ";" << endl;
 	    }
 	}
-      ofile << "} " << CName() << ";" << endl;
+      ofile << "} " << C_Name() << ";" << endl;
     }
+    
+    virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
+    virtual int Get_Start_Bit_Offset(int start_index, vector<AaExpression*>& indices);
+    int Get_Start_Bit_Offset(AaExpression* expr);
+    
 };
 
 

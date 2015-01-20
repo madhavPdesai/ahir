@@ -145,7 +145,9 @@ class AaExpression: public AaRoot
 	virtual bool Is_Expression() {return(true); }
 	virtual bool Is_Object_Reference() {return(false);}
 
-	virtual void PrintC(ofstream& ofile, string tab_string) { assert(0); }
+        virtual void C_Reference_String() {return (this->Get_VC_Name());}
+        virtual void PrintC( ofstream& ofile) {assert(0);}
+        virtual void PrintC_Declaration(ofstream& ofile);
 
 	virtual AaRoot* Get_Root_Object() {return(NULL);}
 	virtual void Update_Type() {};
@@ -153,6 +155,7 @@ class AaExpression: public AaRoot
 	virtual void Add_Target(AaExpression* expr) {this->_targets.insert(expr);}
 	virtual void Remove_Target(AaExpression* expr) {this->_targets.erase(expr);}
 
+	virtual string Get_C_Name() {return(this->Get_VC_Name());}
 	virtual string Get_VC_Name();
 
 	virtual void Write_VC_Control_Path( ostream& ofile);
@@ -392,12 +395,11 @@ class AaObjectReference: public AaExpression
 
 		virtual void Add_Target_Reference(AaRoot* referrer); 
 		virtual void Add_Source_Reference(AaRoot* referrer);
-		virtual void PrintC(ofstream& ofile, string tab_string);
+        	virtual void PrintC( ofstream& ofile) {assert(0);}
 		virtual bool Is_Object_Reference() {return(true);}
 
 		virtual void Evaluate();
-		void PrintAddressOfC(ofstream& ofile, string tab_string) {}
-		virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string) {}
+		void PrintAddressOfC(ofstream& ofile) {}
 
 		virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr);
 
@@ -671,7 +673,7 @@ class AaConstantLiteralReference: public AaObjectReference
 
 	virtual string Kind() {return("AaConstantLiteralReference");}
 	virtual void Map_Source_References(set<AaRoot*>& source_objects) {} // do nothing
-	virtual void PrintC(ofstream& ofile, string tab_string);
+	virtual void PrintC( ofstream& ofile);
 	virtual void Write_VC_Control_Path( ostream& ofile);
 
 
@@ -688,6 +690,7 @@ class AaConstantLiteralReference: public AaObjectReference
 		_associated_statement = stmt;
 	}
 	virtual void Collect_Root_Sources(set<AaExpression*>& root_set) {};
+	virtual string Get_VC_Name() {return("konst_" + Int64ToStr(this->Get_Index()));}
 };
 
 // simple reference (no array indices)
@@ -708,8 +711,10 @@ class AaSimpleObjectReference: public AaObjectReference
 	virtual string Kind() {return("AaSimpleObjectReference");}
 	virtual void Set_Object(AaRoot* obj);
 	virtual void Print(ostream& ofile);
-	virtual void PrintC(ofstream& ofile, string tab_string);
-	virtual void PrintC_Header_Entry(ofstream& ofile);
+
+        virtual string C_Reference_String();
+	virtual void PrintC_Declaration( ofstream& ofile);
+	virtual void PrintC( ofstream& ofile);
 
 	virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
 
@@ -741,8 +746,7 @@ class AaSimpleObjectReference: public AaObjectReference
 	virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
 
 	virtual string Get_VC_Name();
-	virtual void Print_AddressOf_C(ofstream& ofile, string tab_string);
-	virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string);
+	virtual void Print_AddressOf_C(ofstream& ofile);
 
 	virtual void Update_Type();
 
@@ -845,7 +849,9 @@ class AaArrayObjectReference: public AaObjectReference
 	virtual void Map_Source_References(set<AaRoot*>& source_objects); // important
 	virtual void Map_Source_References_As_Target(set<AaRoot*>& source_objects);
 
-	virtual void PrintC(ofstream& ofile, string tab_string);
+	virtual void PrintC_Declaration( ofstream& ofile);
+	virtual void PrintC( ofstream& ofile);
+	void C_Index_String(AaType* t, int start_id, vector<AaExpression*>* indices, ofstream& ofile);
 
 	void Update_Address_Scaling_Factors(vector<int>& scale_factors,int word_size);
 	void Update_Address_Shift_Factors(vector<int>& shift_factors,int word_size);
@@ -880,9 +886,7 @@ class AaArrayObjectReference: public AaObjectReference
 	virtual void Write_VC_Links(string hier_id, ostream& ofile);
 	virtual void Write_VC_Links_As_Target(string hier_id, ostream& ofile);
 	virtual string Get_VC_Name() {return("array_obj_ref_" + Int64ToStr(this->Get_Index()));}
-	virtual void Print_AddressOf_C(ofstream& ofile, string tab_string);
-	virtual void Print_BaseStructRef_C(ofstream& ofile, string tab_string);
-	void Print_Indexed_C(AaType* t, int start_id, vector<AaExpression*>* indices, ofstream& ofile);
+
 
 	virtual void Set_Type(AaType* t);
 	virtual void Update_Type();
@@ -965,7 +969,8 @@ class AaPointerDereferenceExpression: public AaObjectReference
 	virtual bool Is_Foreign_Load();
 
 	virtual void Print(ostream& ofile);
-	virtual void PrintC(ofstream& ofile, string tab_string);
+
+	virtual void PrintC( ofstream& ofile);
 
 	virtual void Evaluate();
 	virtual void Propagate_Addressed_Object_Representative(AaStorageObject* obj, AaRoot* from_expr);
@@ -1037,7 +1042,8 @@ class AaAddressOfExpression: public AaObjectReference
 	AaAddressOfExpression(AaScope* scope, AaObjectReference* obj_ref);
 
 	virtual void Print(ostream& ofile);
-	virtual void PrintC(ofstream& ofile, string tab_string);
+
+	virtual void PrintC(ofstream& ofile);
 
 	virtual void Set_Associated_Statement(AaStatement* stmt)
 	{
@@ -1147,13 +1153,14 @@ class AaTypeCastExpression: public AaExpression
 		_rest->Set_Pipeline_Parent(dws);
 	}
 	void Print(ostream& ofile);
+	virtual void PrintC( ofstream& ofile);
+
 	virtual string Kind() {return("AaTypeCastExpression");}
 	virtual void Map_Source_References(set<AaRoot*>& source_objects) 
 	{
 		if(this->_rest) 
 			this->_rest->Map_Source_References(source_objects);
 	}
-	virtual void PrintC(ofstream& ofile, string tab_string);
 
 	virtual void Write_VC_Control_Path( ostream& ofile);
 	virtual void Get_Leaf_Expression_Set(set<AaExpression*>& leaf_expression_set)
@@ -1205,14 +1212,12 @@ class AaSliceExpression: public AaTypeCastExpression
 
 	virtual void Evaluate();
 	void Print(ostream& ofile);
+	virtual void PrintC( ofstream& ofile);
 
 	virtual bool Is_Trivial() {return(true);}
 	virtual string Get_VC_Name() {return("slice_" + Int64ToStr(this->Get_Index()));}
-	virtual void PrintC(ofstream& ofile, string tab_string)
-	{
-      		AaRoot::Error("slice not supported in Aa2C", this);
-	}
 	virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
+	virtual void PrintC(ofstream& ofile);
 };
 
 
@@ -1238,12 +1243,8 @@ class AaUnaryExpression: public AaExpression
 		if(this->_rest) 
 			this->_rest->Map_Source_References(source_objects);
 	}
-	virtual void PrintC(ofstream& ofile, string tab_string)
-	{
-		ofile << tab_string << C_Name(this->_operation) << "(";
-		this->_rest->PrintC(ofile,"");
-		ofile << ") ";
-	}
+
+	virtual void PrintC(ofstream& ofile);
 
 	virtual void Set_Associated_Statement(AaStatement* stmt)
 	{
@@ -1314,10 +1315,7 @@ class AaBitmapExpression: public AaUnaryExpression
 	AaBitmapExpression(AaScope* scope, map<int,int>& bitmap, AaExpression *rest);
 	virtual bool Is_Trivial() {return(true);}
 	void Print(ostream& ofile);
-	virtual void PrintC(ofstream& ofile, string tab_string)
-	{
-      		AaRoot::Error("bitmap not supported in Aa2C", this);
-	}
+	virtual void PrintC(ofstream& ofile);
 	virtual string Get_VC_Name() {return("bitmap_" + Int64ToStr(this->Get_Index()));}
 	virtual void Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile);
 
@@ -1335,6 +1333,7 @@ class AaBinaryExpression: public AaExpression
 	AaBinaryExpression(AaScope* scope_tpr, AaOperation operation, AaExpression* first, AaExpression* second);
 	~AaBinaryExpression();
 	virtual void Print(ostream& ofile);
+	virtual void PrintC(ofstream& ofile);
 	bool Is_Logical_Operation() 
 	{ 
 		if((_operation == __OR) || (_operation == __AND)
@@ -1365,45 +1364,6 @@ class AaBinaryExpression: public AaExpression
 		_pipeline_parent = dws;
 		_first->Set_Pipeline_Parent(dws);
 		_second->Set_Pipeline_Parent(dws);
-	}
-	virtual void PrintC(ofstream& ofile, string tab_string)
-	{
-		if(!Is_Concat_Operation(this->_operation))
-		{
-			ofile << tab_string 
-				<< C_Name(this->_operation) << "(";
-			this->_first->PrintC(ofile,"");
-			ofile << ", ";
-			this->_second->PrintC(ofile,"");
-			ofile << ")" ;
-		}
-		else
-		{
-			int a_width = ((AaUintType*)(this->Get_Type()))->Get_Width();
-			int c_width;
-			if(a_width <= 8)
-				c_width = 8;
-			else if(a_width <= 16)
-				c_width = 16;
-			else if(a_width <= 32)
-				c_width = 32;
-			else if(a_width <= 64)
-				c_width = 64;
-			else
-				assert(0 && "maximum supported length of integer for Aa2C is 64");
-
-			ofile << tab_string 
-				<< C_Name(this->_operation) << "(" << c_width << "_t,";
-			this->_first->PrintC(ofile,"");
-
-			ofile << ", ";
-			ofile << ((AaUintType*)this->_first->Get_Type())->Get_Width();
-			ofile << ", ";
-			this->_second->PrintC(ofile,"");
-			ofile << ", ";
-			ofile << ((AaUintType*)this->_first->Get_Type())->Get_Width();
-			ofile << ")" ;
-		}
 	}
 
 	virtual void Update_Type();
@@ -1508,17 +1468,7 @@ class AaTernaryExpression: public AaExpression
 		_if_true->Set_Pipeline_Parent(dws);
 		_if_false->Set_Pipeline_Parent(dws);
 	}
-	virtual void PrintC(ofstream& ofile, string tab_string)
-	{
-		ofile << tab_string ;
-		ofile << "( (";
-		this->_test->PrintC(ofile,tab_string);
-		ofile << ") ? (";
-		this->_if_true->PrintC(ofile,tab_string);
-		ofile << ") : (";
-		this->_if_false->PrintC(ofile,tab_string);
-		ofile << ") )";
-	}
+	virtual void PrintC( ofstream& ofile);
 
 	virtual void Write_VC_Control_Path( ostream& ofile);
 	virtual void Write_VC_Constant_Wire_Declarations(ostream& ofile);

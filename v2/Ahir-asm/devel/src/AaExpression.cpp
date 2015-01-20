@@ -32,6 +32,7 @@ AaExpression::AaExpression(AaScope* parent_tpr):AaRoot()
   this->_pipeline_parent = NULL;
   this->_is_intermediate = true;
 }
+
 AaExpression::~AaExpression() {};
 
 bool AaExpression::Set_Addressed_Object_Representative(AaStorageObject* obj)
@@ -72,6 +73,12 @@ bool AaExpression::Is_Part_Of_Extreme_Pipeline()
 	AaStatement* dws = this->Get_Pipeline_Parent();
 	bool ret_val = ((dws != NULL)  && dws->Get_Pipeline_Full_Rate_Flag());
 	return(ret_val);
+}
+
+
+void AaExpression::PrintC_Declaration(ofstream& ofile)
+{
+	ofile << this->Get_Type()->C_Name() << " " << this->C_Reference_String() << ";" << endl;
 }
 
 string AaExpression::Get_VC_Guard_String()
@@ -426,24 +433,6 @@ void AaObjectReference::Set_Is_Dereferenced(bool v)
 	}
 }
 
-void AaObjectReference::PrintC(ofstream& ofile, string tab_string)
-{
-	assert(this->Get_Object());
-
-	if(this->Get_Object()->Is_Object())
-	{// this refers to an object
-		if(((AaObject*)(this->Get_Object()))->Get_Scope() != NULL)
-			ofile << ((AaObject*)this->Get_Object())->Get_Scope()->Get_Struct_Dereference();
-	}
-	else if(this->Get_Object()->Is_Statement())
-	{// this refers to a statement
-		ofile << this->Get_Scope()->Get_Struct_Dereference();
-	}
-	else if(this->Get_Object()->Is_Expression())
-	{ // this refers to an object reference?
-		ofile << ((AaExpression*)this->Get_Object())->Get_Scope()->Get_Struct_Dereference();
-	}
-}
 
 void AaObjectReference::Evaluate()
 {
@@ -502,20 +491,16 @@ AaConstantLiteralReference::AaConstantLiteralReference(AaScope* parent_tpr,
 
 };
 AaConstantLiteralReference::~AaConstantLiteralReference() {};
-void AaConstantLiteralReference::PrintC(ofstream& ofile, string tab_string)
+
+
+void AaConstantLiteralReference::PrintC_Declaration(ofstream& ofile)
 {
 	this->Evaluate();
-	ofile << tab_string;
-	if(this->Get_Scalar_Flag())
-	{
-		assert(this->_literals.size() == 1);
-		ofile << this->Get_Expression_Value()->To_C_String() << " ";
-	}
-	else
-	{ 
-		assert(this->_literals.size() > 0);
-		ofile << this->Get_Expression_Value()->To_C_String() << " ";
-	}
+	this->PrintC_Declaration(ofile);
+        Print_C_Assignment_To_Constant(this->C_Reference_String(), this->Get_Type(), this->_value, ofile);
+}
+void AaConstantLiteralReference::PrintC( ofstream& ofile)
+{
 }
 
 void AaConstantLiteralReference::Write_VC_Control_Path( ostream& ofile)
@@ -694,48 +679,58 @@ void AaSimpleObjectReference::Print(ostream& ofile)
 		ofile << this->Get_Object_Ref_String();
 }
 
-void AaSimpleObjectReference::PrintC_Header_Entry(ofstream& ofile)
+        
+//
+//
+//
+string AaSimpleObjectReference::C_Reference_String()
 {
-	AaType* t = this->Get_Type();
-	if(t->Is_Pointer_Type())
+	if(this->Is_Implicit_Variable_Reference() ||
+		(this->Get_Object() && this->Get_Object()->Is_Storage_Object()))
 	{
-
-		AaType* rt = ((AaPointerType*)t)->Get_Ref_Type();
-		ofile << rt->CName() << " (*";
-		ofile << this->Get_Object_Root_Name() << ")";
-		ofile << rt->CDim();
-		ofile << ";" << endl;
+		return(this->Get_Object()->C_Reference_String());
 	}
 	else
 	{
-		ofile << t->CName() 
-			<< " " 
-			<< this->Get_Object_Root_Name()
-			<< t->CDim();
-		ofile << ";" << endl;
-
+		return(this->Get_VC_Name());
 	}
 }
 
-void AaSimpleObjectReference::Print_AddressOf_C(ofstream& ofile, string tab_string)
+void AaSimpleObjectReference::PrintC_Declaration(ofstream& ofile)
 {
-	ofile << "(&(";
-	this->AaObjectReference::PrintC(ofile,tab_string);
-	ofile << this->Get_Object_Root_Name() << "))";
+	if(this->Get_Is_Target() && this->Is_Implicit_Variable_Reference())
+	{
+		Print_C_Declaration(this->C_Reference_String(), this->Get_Type(),ofile);
+	}
+	else if(this->Get_Object()->Is_Pipe_Object())
+	{
+		Print_C_Declaration(this->C_Reference_String(), this->Get_Type(),ofile);
+	}
 }
 
-void AaSimpleObjectReference::Print_BaseStructRef_C(ofstream& ofile, string tab_string)
+//
+// print something only if there is something interesting to print.
+//
+void AaSimpleObjectReference::PrintC(ofstream& ofile)
 {
-	ofile << "(";
-	this->AaObjectReference::PrintC(ofile,tab_string);
-	ofile << this->Get_Object_Root_Name() << ")";
-
-}
-void AaSimpleObjectReference::PrintC(ofstream& ofile, string tab_string)
-{
-	this->Print_BaseStructRef_C(ofile,tab_string);
-	if(!this->Get_Type()->Is_Pointer_Type())
-		ofile << ".__val";
+	if(this->Get_Object()->Is_Pipe_Object())
+	{
+		if(this->Get_Is_Target())
+		{
+			// access the pipe..
+			Print_C_Pipe_Read(this->C_Reference_String(),  
+					  this->Get_Type(), 
+					  (AaPipeObject*) this->Get_Object(), 
+					  ofile);
+		}
+		else
+		{
+			Print_C_Pipe_Write(this->C_Reference_String(),  
+					  this->Get_Type(), 
+					  (AaPipeObject*) this->Get_Object(), 
+					  ofile);
+		}
+	}	
 }
 
 string AaSimpleObjectReference::Get_VC_Driver_Name()
@@ -1887,54 +1882,63 @@ void AaArrayObjectReference::Update_Address_Shift_Factors(vector<int>& shift_fac
     }
 }
 
-
-void AaArrayObjectReference::PrintC(ofstream& ofile, string tab_string)
+string AaArrayObjectReference::C_Reference_String()
 {
-  assert(this->_object && this->_object->Get_Type());
+
+  string ret_string;
+   
   if(this->_object->Get_Type()->Is_Pointer_Type())
     {
       AaType* t  = this->_object->Get_Type();
-
-      ofile << "&(*(";
-      this->AaObjectReference::PrintC(ofile,"");
-      ofile << this->Get_Object_Root_Name() << " ";
-      ofile << " + " ;
-
-      _indices[0]->PrintC(ofile,"");
-
-      ofile << ")";
-      
+      ret_string += "(*(";
+      ret_string += this->Get_Object()->C_Reference_String();
+      ret_string += " + " ;
+      ret_string += _indices[0]->C_Reference_String();
+      ret_string += "))";
       AaType* rt = ((AaPointerType*)t)->Get_Ref_Type();
-      this->Print_Indexed_C(rt,1,&_indices,ofile);
-      ofile << ")";
+      ret_string += this->C_Index_String(rt,1,&_indices);
+      ret_string += ")";
     }
   else
     {
-      ofile << "(";
-      this->AaObjectReference::PrintC(ofile,"");
-      ofile << this->Get_Object_Root_Name();
-      this->Print_Indexed_C(this->_object->Get_Type(),0,&_indices,ofile);
-      ofile << ").__val";
+      ret_string += "(";
+      ret_string += this->Get_Object()->C_Reference_String();
+      ret_string += this->C_Index_String(this->_object->Get_Type(),0,&_indices);
+      ret_string += ")";
     }
-
+    return(ret_string);
 }
 
-
-void AaArrayObjectReference::Print_AddressOf_C(ofstream& ofile, string tab_string)
+void AaArrayObjectReference::PrintC_Declaration(ofstream& ofile)
 {
-  ofile << "(&(";
-  this->AaObjectReference::PrintC(ofile,tab_string);
-  ofile << this->Get_Object_Root_Name();
-  for(unsigned int i = 0; i < this->Get_Number_Of_Indices(); i++)
-    {
-      ofile << "[";
-      this->Get_Array_Index(i)->PrintC(ofile,"");
-      ofile << "]";
-    }
-  ofile << "))";
+  assert(this->_object && this->_object->Get_Type());
+
+  if(this->_object->Is_Expression())
+  {
+	(AaExpression* (this->_object))->PrintC_Declaration(ofile);
+  }
+  for(int i = 0, imax = _indices.size(); i < imax; i++)
+  {
+	_indices[i]->PrintC_Declaration(ofile);
+  }
 }
 
-void AaArrayObjectReference::Print_Indexed_C(AaType* t, int start_id, vector<AaExpression*>* indices, ofstream& ofile)
+void AaArrayObjectReference::PrintC(ofstream& ofile)
+{
+  assert(this->_object && this->_object->Get_Type());
+
+  if(this->_object->Is_Expression())
+  {
+	(AaExpression* (this->_object))->PrintC(ofile);
+  }
+  for(int i = 0, imax = _indices.size(); i < imax; i++)
+  {
+	_indices[i]->PrintC(ofile);
+  }
+}
+
+
+string AaArrayObjectReference::C_Index_String(AaType* t, int start_id, vector<AaExpression*>* indices)
 {
   AaType* curr_type = t;
   
@@ -1944,16 +1948,16 @@ void AaArrayObjectReference::Print_Indexed_C(AaType* t, int start_id, vector<AaE
 
       if(curr_type->Is("AaArrayType"))
 	{
-	  ofile << "[";
-	  (*indices)[start_id]->PrintC(ofile,"");
-	  ofile << "]";
+	  ret_string += "[";
+	  ret_string += (*indices)[start_id]->C_Value();
+	  ret_string += "]";
 	  curr_type = ((AaArrayType*)curr_type)->Get_Element_Type(0);
 	}
       else if(curr_type->Is("AaRecordType"))
 	{
 	  assert((*indices)[start_id]->Is_Constant());
 	  int idx = ((*indices)[start_id]->Get_Expression_Value()->To_Integer());
-	  ofile << ".f_" << IntToStr(idx);
+	  ret_string +=  ".f_" + IntToStr(idx);
 	  curr_type = ((AaRecordType*)curr_type)->Get_Element_Type(idx);
 	}
       else
@@ -1964,19 +1968,6 @@ void AaArrayObjectReference::Print_Indexed_C(AaType* t, int start_id, vector<AaE
     }
 }
 
-void AaArrayObjectReference::Print_BaseStructRef_C(ofstream& ofile, string tab_string)
-{
-  ofile << "(";
-  this->AaObjectReference::PrintC(ofile,tab_string);
-  ofile << this->Get_Object_Root_Name();
-  for(unsigned int i = 0; i < this->Get_Number_Of_Indices(); i++)
-    {
-      ofile << "[";
-      this->Get_Array_Index(i)->PrintC(ofile,"");
-      ofile << "]";
-    }
-  ofile << ")";
-}
 
 // TODO: most cases seem to be ok.  However,
 // if object A has type array of pointer to array of pointers,
@@ -2685,17 +2676,14 @@ void AaPointerDereferenceExpression::Print(ostream& ofile)
   this->_reference_to_object->Print(ofile);
   ofile << ")";
 }
-  
-void AaPointerDereferenceExpression::PrintC(ofstream& ofile, string tab_string)
+ 
+void AaPointerDereferenceExpression::PrintC(ofstream& ofile)
 {
-  ofile << "(" << this->_reference_to_object->Get_Type()->CPointerDereference();
-  this->_reference_to_object->Print_BaseStructRef_C(ofile,tab_string);
-  ofile << ")";
-  if(this->_reference_to_object->Get_Type()->Is_Pointer_Type())
-    {
-      if(!(((AaPointerType*)(_reference_to_object->Get_Type()))->Get_Ref_Type()->Is_Pointer_Type()))
-	ofile << ".__val ";
-    }
+  this->_reference_to_object->PrintC(ofile);
+
+  this->PrintC_Declaration(ofile);
+  Print_C_Assignment(this->C_Reference_String, "*" + this->_reference_to_object->C_Reference_String(),
+				this->Get_Type(), ofile); 
 }
 
 void AaPointerDereferenceExpression::Map_Source_References(set<AaRoot*>& source_objects)
@@ -3167,30 +3155,14 @@ void AaAddressOfExpression::Print(ostream& ofile)
     }
 }
 
-
-void AaAddressOfExpression::PrintC(ofstream& ofile, string tab_string)
+void AaAddressOfExpression::PrintC(ofstream& ofile)
 {
-  ofile << "(&(";
-  if(this->_reference_to_object->Is("AaArrayObjectReference"))
-    {
-      AaArrayObjectReference* obj_ref = ((AaArrayObjectReference*)(this->_reference_to_object));
-      obj_ref->AaObjectReference::PrintC(ofile,"");
-      ofile << obj_ref->Get_Object_Root_Name();
-      obj_ref->Print_Indexed_C(obj_ref->Get_Object()->Get_Type(),0,obj_ref->Get_Index_Vector(),ofile);
-    }
-  else if(this->_reference_to_object->Is("AaSimpleObjectReference"))
-    {
-      AaSimpleObjectReference* obj_ref = ((AaSimpleObjectReference*)(this->_reference_to_object));
-      obj_ref->AaObjectReference::PrintC(ofile,"");
-      ofile << obj_ref->Get_Object_Root_Name();
-    }
-  else
-    {
-      assert(0);
-    }
-
-  ofile << ")) " << endl;
+	this->_reference_to_object->PrintC(ofile);
+	this->PrintC_Declaration(ofile);
+	ofile << this->C_Reference_String() << " = ";
+	ofile << "&(" << this->_reference_to_object->C_Reference_String() << ");" << endl;
 }
+
 
 
 void AaAddressOfExpression::Map_Source_References(set<AaRoot*>& source_objects)
@@ -3563,17 +3535,15 @@ void AaTypeCastExpression::Print(ostream& ofile)
   ofile << " )";
 }
 
-
-void AaTypeCastExpression::PrintC(ofstream& ofile, string tab_string)
+void AaTypeCastExpression::PrintC(ostream& ofile)
 {
-  if(this->_bit_cast)
-    {
-      AaRoot::Error("bit-cast not supported in Aa2C", this);
-    }
-
-  ofile << tab_string << "(" << "(" << this->_to_type->CBaseName() << ") ";
-  this->_rest->PrintC(ofile,"");
-  ofile << ")";
+	this->_rest->PrintC(ofile);
+	this->PrintC_Declaration(ofile);
+	Print_C_Type_Cast_Operation(this->_rest->C_Reference_String(),
+				this->_rest->Get_Type(), 
+				this->C_Reference_String(),
+				this->Get_Type(),
+				ofile);
 }
 
 
@@ -3811,7 +3781,8 @@ void AaSliceExpression::Evaluate()
     }
 
 }
-	
+
+
 //
 // same as bit-cast, but the casting operation is a bit different.
 //
@@ -3858,6 +3829,18 @@ void AaSliceExpression::Print(ostream& ofile)
 	ofile << " " << this->Get_Type()->Size() + this->_low_index - 1 << " " << this->_low_index << " ) ";
 }
 
+void AaSliceExpression::PrintC(ostream& ofile)
+{
+	this->_rest->PrintC(ofile);
+	this->PrintC_Declaration(ofile);
+	Print_C_Slice_Operation(this->_rest->C_Reference_String(), 
+				this->_rest->Get_Type(),
+				this->_low_index, 
+				this->C_Reference_String(),
+				this->Get_Type(), 
+				ofile);
+}
+
 //---------------------------------------------------------------------
 // AaUnaryExpression
 //---------------------------------------------------------------------
@@ -3884,11 +3867,23 @@ void AaUnaryExpression::Print(ostream& ofile)
 	this->Get_Rest()->Print(ofile);
 	ofile << " )";
 }
+void AaUnaryExpression::PrintC(ostream& ofile)
+{
+	this->_rest->PrintC(ofile);
+	this->PrintC_Declaration(ofile);
+	Print_C_Unary_Operation(this->_rest->C_Reference_String(), 
+				this->_rest->Get_Type(), 
+				this->C_Reference_String(),
+				this->Get_Type(),
+				this->Get_Operation(),
+				ofile);
+}
+
 
 string AaUnaryExpression::Get_VC_Name()
 {
 	string ret_val;
-        string idx = Int64ToStr(this->Get_Index());
+	string idx = Int64ToStr(this->Get_Index());
 
 	ret_val = Get_Op_Ascii_Name(this->Get_Operation(), _rest->Get_Type(), this->Get_Type());	
 	ret_val += "_" + idx;
@@ -3899,7 +3894,7 @@ void AaUnaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
 {
 	if(!this->Is_Constant())
 	{
-	  	bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
 		if(flow_through)
 			_rest->Collect_Root_Sources(root_set);
 		else
@@ -3916,70 +3911,70 @@ void AaUnaryExpression::Collect_Root_Sources(set<AaExpression*>& root_set)
 //  
 void AaUnaryExpression::Write_VC_Control_Path(ostream& ofile)
 {
-  ofile << "// " << this->To_String() << endl;
-  
+	ofile << "// " << this->To_String() << endl;
 
-  if(!this->Is_Constant())
-    {
-      bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
-      ofile << ";;[" << this->Get_VC_Name() << "] { // unary expression " << endl;
-      this->_rest->Write_VC_Control_Path(ofile);
 
-	if(not flow_through)
-		ofile << "||[SplitProtocol] { " << endl;
-	else
+	if(!this->Is_Constant())
 	{
-		ofile << "// flow-through" << endl;
-		ofile << ";;[SplitProtocol] { " << endl;
-	}
-	
-	ofile << ";;[Sample] { " << endl;
-      	ofile << "$T [rr] $T [ra]" << endl;
-	ofile << "}" << endl;
-	ofile << ";;[Update] { " << endl;
-      	ofile << "$T [cr] $T [ca]" << endl;
-	ofile << "}" << endl;
-	ofile << "}" << endl;
+		bool flow_through = (this->Is_Trivial() && this->Get_Is_Intermediate());
+		ofile << ";;[" << this->Get_VC_Name() << "] { // unary expression " << endl;
+		this->_rest->Write_VC_Control_Path(ofile);
 
-      ofile << "}" << endl;
-    }
+		if(not flow_through)
+			ofile << "||[SplitProtocol] { " << endl;
+		else
+		{
+			ofile << "// flow-through" << endl;
+			ofile << ";;[SplitProtocol] { " << endl;
+		}
+
+		ofile << ";;[Sample] { " << endl;
+		ofile << "$T [rr] $T [ra]" << endl;
+		ofile << "}" << endl;
+		ofile << ";;[Update] { " << endl;
+		ofile << "$T [cr] $T [ca]" << endl;
+		ofile << "}" << endl;
+		ofile << "}" << endl;
+
+		ofile << "}" << endl;
+	}
 }
 
 
 void AaUnaryExpression::Evaluate()
 {
-  if(!_already_evaluated)
-    {
-      _already_evaluated = true;
-      this->_rest->Evaluate();
-      if(this->_rest->Is_Constant())
-	this->Assign_Expression_Value(Perform_Unary_Operation(this->_operation, 
-							      this->_rest->Get_Expression_Value()));
-      if(_rest->Get_Does_Pipe_Access())
+	if(!_already_evaluated)
 	{
-	  this->Set_Does_Pipe_Access(true);
+		_already_evaluated = true;
+		this->_rest->Evaluate();
+		if(this->_rest->Is_Constant())
+			this->Assign_Expression_Value(Perform_Unary_Operation(this->_operation, 
+						this->_rest->Get_Expression_Value()));
+		if(_rest->Get_Does_Pipe_Access())
+		{
+			this->Set_Does_Pipe_Access(true);
+		}
 	}
-    }
 }
 
 void AaUnaryExpression::Write_VC_Constant_Wire_Declarations(ostream& ofile)
 {
-  if(this->Is_Constant())
-    {
+	if(this->Is_Constant())
+	{
 
-      ofile << "// " << this->To_String() << endl;
+		ofile << "// " << this->To_String() << endl;
 
-      Write_VC_Constant_Declaration(this->Get_VC_Constant_Name(),
-				    this->Get_Type(),
-				    this->Get_Expression_Value(),
-				    ofile);
-    }
-  else
-    this->_rest->Write_VC_Constant_Wire_Declarations(ofile);
+		Write_VC_Constant_Declaration(this->Get_VC_Constant_Name(),
+				this->Get_Type(),
+				this->Get_Expression_Value(),
+				ofile);
+	}
+	else
+		this->_rest->Write_VC_Constant_Wire_Declarations(ofile);
 }
 void AaUnaryExpression::Write_VC_Wire_Declarations(bool skip_immediate, ostream& ofile)
 {
-  if(!this->Is_Constant())
+	if(!this->Is_Constant())
     {
 
       this->_rest->Write_VC_Wire_Declarations(false,ofile);
@@ -4098,6 +4093,7 @@ void AaBitmapExpression::Evaluate()
     }
 }
 
+
 void AaBitmapExpression::Write_VC_Datapath_Instances(AaExpression* target, ostream& ofile)
 {
   if(!this->Is_Constant())
@@ -4144,6 +4140,13 @@ void AaBitmapExpression::Print(ostream& ofile)
 		ofile << " " <<  _bitmap_vector[idx].first << " " << _bitmap_vector[idx].second << " ";
 	}
 	ofile << " ) ";
+}
+
+void AaBitmapExpression::PrintC(ostream& ofile)
+{
+	// not supported for now... until its utility is clearer :-)
+	AaRoot::Error("Bitmap operation not supported in Aa2C." , this);
+	assert(0);
 }
 
 //---------------------------------------------------------------------
@@ -4209,6 +4212,24 @@ void AaBinaryExpression::Print(ostream& ofile)
   ofile << " ";
   this->Get_Second()->Print(ofile);
   ofile << ")";
+}
+
+
+void AaBinaryExpression::PrintC(ofstream& ofile)
+{
+
+	this->_first->PrintC(ofile);
+	this->_second->PrintC(ofile);
+
+	this->PrintC_Declaration(ofile);
+	Print_C_Binary_Operation(this->_first->C_Reference_String(), 
+				 this->_first->Get_Type(),
+				 this->_second->C_Reference_String(),
+				 this->_second->Get_Type(),
+				 this->C_Reference_String(),
+				 this->Get_Type(), 
+				 this->Get_Operation(), 
+				 ofile);
 }
 
 void AaBinaryExpression::Update_Type()
@@ -4545,6 +4566,24 @@ void AaTernaryExpression::Print(ostream& ofile)
   ofile << "  ";
   this->Get_If_False()->Print(ofile);
   ofile << " ) ";
+}
+
+void AaTernaryExpression::PrintC(ofstream& ofile)
+{
+	this->_test->PrintC(ofile);
+	this->_if_true->PrintC(ofile);
+	this->_if_false->PrintC(ofile);
+
+	this->PrintC_Declaration(ofile);
+	Print_C_Ternary_Operation(this->_test->C_Reference_String(),
+				  this->_test->Get_Type(),
+				  this->_if_true->C_Reference_String(), 
+				  this->_if_true->Get_Type(),
+				  this->_if_false->C_Reference_String(), 
+				  this->_if_false->Get_Type(),
+				  this->C_Reference_String(), 
+				  this->Get_Type(),
+				  ofile);
 }
 
 void AaTernaryExpression::Write_VC_Control_Path(ostream& ofile)

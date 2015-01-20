@@ -1058,7 +1058,9 @@ void AaProgram::Write_C_Model()
       miter != AaProgram::_objects.end();
       miter++)
     {
-      // these are global in the source file
+      //
+      // These are global in the source file.
+      //
       (*miter).second->PrintC(source_file,"");
     }
 
@@ -1069,6 +1071,12 @@ void AaProgram::Write_C_Model()
 	AaModule* m = (*miter).second;
 	if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
 	{
+      		// Each module is printed in two parts:
+      		//   - as a macro
+      		//       The macro can faithfully reproduce an Aa function.
+      		//   - as a function.
+      		//       The function form will define a function interface 
+      		//       and will in turn use the macro internally.
       		(*miter).second->Write_Header(header_file);
       		(*miter).second->Write_Source(source_file);
 	}

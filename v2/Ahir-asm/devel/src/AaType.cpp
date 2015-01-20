@@ -40,6 +40,23 @@ void AaUintType::Print(ostream& ofile)
   ofile << "$uint<" << this->Get_Width() << ">";
 }
 
+string AaUintType::CBaseName();
+{
+	if(_width <= 8)
+		return("uint8_t");
+	else if(_width <= 16)
+		return("uint16_t");
+	else if(_width <= 32)
+		return("uint32_t");
+	else if(_width <= 64)
+		return("uint64_t");
+	else
+	{
+		AaRoot::Error("Aa2C supports integer types to a max-width = 64.", this);
+		return("uint_UNSUPPORTED");
+	}
+}
+
 //---------------------------------------------------------------------
 // AaIntType
 //---------------------------------------------------------------------
@@ -47,7 +64,23 @@ AaIntType::AaIntType(AaScope* p, unsigned int width):AaUintType(p, width) {};
 AaIntType::~AaIntType() {};
 void AaIntType::Print(ostream& ofile)
 {
-  ofile << "$int<" << this->Get_Width() << ">";
+	ofile << "$int<" << this->Get_Width() << ">";
+}
+string AaIntType::CBaseName();
+{
+	if(_width <= 8)
+		return("int8_t");
+	else if(_width <= 16)
+		return("int16_t");
+	else if(_width <= 32)
+		return("int32_t");
+	else if(_width <= 64)
+		return("int64_t");
+	else
+	{
+		AaRoot::Error("Aa2C supports integer types to a max-width = 64.", this);
+		return("uint_UNSUPPORTED");
+	}
 }
 
 //---------------------------------------------------------------------
@@ -55,32 +88,32 @@ void AaIntType::Print(ostream& ofile)
 //---------------------------------------------------------------------
 AaPointerType::AaPointerType(AaScope* p, AaType* ref_type): AaUintType(p,AaProgram::_pointer_width) 
 {
-  _ref_type = ref_type;
+	_ref_type = ref_type;
 };
 
 AaPointerType::~AaPointerType() {};
 void AaPointerType::Print(ostream& ofile)
 {
-  ofile << "$pointer< ";
-  _ref_type->Print(ofile);
-  ofile << " >";
+	ofile << "$pointer< ";
+	_ref_type->Print(ofile);
+	ofile << " >";
 }
 
 AaType* AaPointerType::Get_Element_Type(int start_idx, vector<AaExpression*>& indices)
 {
-  AaType* ref_type = this->Get_Ref_Type();
-  start_idx++;
-  if(start_idx < indices.size())
-    {
-      ref_type = (ref_type->Get_Element_Type(start_idx,indices));
-    }
-  return(AaProgram::Make_Pointer_Type(ref_type));
+	AaType* ref_type = this->Get_Ref_Type();
+	start_idx++;
+	if(start_idx < indices.size())
+	{
+		ref_type = (ref_type->Get_Element_Type(start_idx,indices));
+	}
+	return(AaProgram::Make_Pointer_Type(ref_type));
 }
 
 void AaPointerType::Write_VC_Model(ostream& ofile)
 { 
-  
-  ofile << "$int<" << AaProgram::_pointer_width << "> " ;
+
+	ofile << "$int<" << AaProgram::_pointer_width << "> " ;
 }
 
 
@@ -89,13 +122,13 @@ void AaPointerType::Write_VC_Model(ostream& ofile)
 //---------------------------------------------------------------------
 AaFloatType::AaFloatType(AaScope* p, unsigned int characteristic, unsigned int mantissa):AaScalarType(p)
 {
-  this->_characteristic = characteristic;
-  this->_mantissa = mantissa;
+	this->_characteristic = characteristic;
+	this->_mantissa = mantissa;
 }
 AaFloatType::~AaFloatType() {};
 void AaFloatType::Print(ostream& ofile)
 {
-  ofile << "$float<" << this->Get_Characteristic() << "," << this->Get_Mantissa() << ">";
+	ofile << "$float<" << this->Get_Characteristic() << "," << this->Get_Mantissa() << ">";
 }
 
 //---------------------------------------------------------------------
@@ -103,27 +136,27 @@ void AaFloatType::Print(ostream& ofile)
 //---------------------------------------------------------------------
 AaArrayType::AaArrayType(AaScope* p, AaType* stype, vector<unsigned int>& dimensions): AaType(p) 
 {
-  for(unsigned int i = 0; i < dimensions.size(); i++)
-    this->_dimension.push_back(dimensions[i]);
+	for(unsigned int i = 0; i < dimensions.size(); i++)
+		this->_dimension.push_back(dimensions[i]);
 
-  this->_element_type = stype;
+	this->_element_type = stype;
 }
 
 AaArrayType::~AaArrayType() {};
 unsigned int AaArrayType::Get_Dimension(unsigned int dim_id)
 {
-  unsigned int ret_value = 0;
-  if(dim_id >= 0 && dim_id <= this->_dimension.size())
-    {
-      ret_value = this->_dimension[dim_id];
-    }
-  return(ret_value);
+	unsigned int ret_value = 0;
+	if(dim_id >= 0 && dim_id <= this->_dimension.size())
+	{
+		ret_value = this->_dimension[dim_id];
+	}
+	return(ret_value);
 }
 void AaArrayType::Print(ostream& ofile)
 {
-  ofile << "$array";
-  for(unsigned int i = 0; i < this->Get_Number_Of_Dimensions(); i++)
-    ofile << "[" << this->Get_Dimension(i) << "]";
+	ofile << "$array";
+	for(unsigned int i = 0; i < this->Get_Number_Of_Dimensions(); i++)
+		ofile << "[" << this->Get_Dimension(i) << "]";
   ofile << " $of ";
   this->Get_Element_Type()->Print(ofile);
 }

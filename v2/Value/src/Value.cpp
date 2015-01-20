@@ -95,6 +95,29 @@ void Unsigned::Reset_And_Clear(int n)
 		this->_bit_field[idx] = 0;
 }
 
+//
+// essentially convert the UWord array to a byte-array.
+//
+void Unsigned::Fill_Byte_Array(uint8_t* v_array, uint32_t v_array_size)
+{
+	uint32_t this_array_size = this->Array_Size();
+	uint32_t v_j = 0;
+	for(int i = 0, imax = this_array_size; i < imax; i++)
+	{
+		UWord cword = this->_bit_field[i];
+		for(int j = 0; j < sizeof(UWord); j++)
+		{
+			v_array[v_j] = (uint8_t) (cword >> (8*j));
+			v_j++;
+
+			if(v_j == v_array_size)
+				break;
+		}
+		if(v_j == v_array_size)
+			break;
+	}
+}
+
 
 
 void Unsigned::Slice(Unsigned& other, int hi, int li)
@@ -647,6 +670,11 @@ void Signed::Sign_Extend()
 	bool sign_bit = this->Get_Bit(_width-1);
 	for(int idx = __WORD_SIZE__-1; idx >= _width; idx--)
 		this->Set_Bit(idx,sign_bit);
+}
+
+void Signed::Fill_Byte_Array(uint8_t* v_array, uint32_t v_array_size) 
+{
+	this->Unsigned::Fill_Byte_Array(v_array,v_array_size);
 }
 
 string Signed::To_String()

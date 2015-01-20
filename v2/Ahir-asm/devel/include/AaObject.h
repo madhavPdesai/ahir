@@ -37,6 +37,7 @@ class AaObject: public AaRoot
   virtual string Get_Name() {return(this->_name);}
   virtual string Get_Hierarchical_Name();
   virtual string Get_VC_Name() {return(this->_name);}
+  virtual string Get_C_Name() {return(this->_name);}
 
   virtual AaScope* Get_Scope() {return(this->_scope);}
   virtual string Tab();
@@ -48,25 +49,12 @@ class AaObject: public AaRoot
   virtual string Kind() {return("AaObject");}
   virtual bool Is_Object() {return(true); }
 
-  virtual void PrintC(ofstream& ofile, string tab_string);
+  // C related stuff.
+  virtual string C_Reference_String();
+  virtual string C_Value_String();
+  virtual void PrintC_Declaration(ofstream& ofile);
+  virtual void PrintC(ofstream& ofile);
 
-  virtual string CRef()
-  {
-    if(this->Get_Scope())
-      return(this->Get_Scope()->Get_Struct_Dereference() + this->Get_Name() + ".__val");
-    else
-      return(this->Get_Name() + ".__val");
-  }
-
-  virtual void Write_Initialization(ofstream& ofile)
-  {
-    if(this->_value)
-      {
-	ofile << this->CRef() << " = ";
-	this->_value->PrintC(ofile,"");
-	ofile << ";" << endl;
-      }
-  }
 
   virtual void Write_VC_Model(ostream& ofile);
 
@@ -305,6 +293,15 @@ class AaPipeObject: public AaObject
   bool Get_Synch() {return(_synch);}
 
   virtual void Print(ostream& ofile);
+
+  //
+  // C related stuff.  Pipes are not declared
+  // in C. references to pipes are replaced by 
+  // calls to special functions write_*, read_*
+  // 
+  virtual void PrintC_Declaration(ofstream& ofile) {}
+  virtual void PrintC(ofstream& ofile) {}
+
   virtual string Kind() {return("AaPipeObject");}
   virtual string Get_Valid_Flag_Name() { return(this->Get_Name() + "_valid__");}
   virtual string Get_Valid_Flag_Name_Ref() 
@@ -315,15 +312,6 @@ class AaPipeObject: public AaObject
       return(this->Get_Scope()->Get_Struct_Dereference() + this->Get_Valid_Flag_Name());
   }
 
-  virtual void PrintC(ofstream& ofile, string tab_string)
-  {
-    this->AaObject::PrintC(ofile,tab_string);
-    ofile << tab_string 
-	  << "unsigned int " 
-	  << this->Get_Valid_Flag_Name() 
-	  << " : 1; " 
-	  << endl;
-  }
 
    virtual void Write_VC_Model(ostream& ofile);
    virtual string Get_VC_Name();
