@@ -479,7 +479,12 @@ class AaRecordType: public AaType
     {
       return("Struct_" + Int64ToStr(this->Get_Index()));
     }  
-    virtual void PrintC_Declaration(ofstream& ofile)
+
+    virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
+    virtual int Get_Start_Bit_Offset(int start_index, vector<AaExpression*>& indices);
+    int Get_Start_Bit_Offset(AaExpression* expr);
+    
+    void PrintC_Declaration(ofstream& ofile)
     {
       ofile << "typedef struct __" << this->C_Name() << " { " << endl;
       for(int idx = 0; idx < this->_element_types.size(); idx++)
