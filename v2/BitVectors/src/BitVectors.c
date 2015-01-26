@@ -169,9 +169,23 @@ void bit_vector_assign_bit_vector(bit_vector* src, bit_vector* dest)
 	}
 }
 
+void bit_vector_clear(bit_vector* s)
+{
+	uint32_t asize = __array_size(s);
+	uint32_t i;
+	for(i = 0; i < asize; i++)
+		__set_byte(s,i,0);
+}
 
+void bit_vector_set(bit_vector* s)
+{
+	uint32_t asize = __array_size(s);
+	uint32_t i;
+	for(i = 0; i < asize; i++)
+		__set_byte(s,i,0xff);
+}
 
-// bit-wise operations
+// ------------------            bit-wise operations
 void bit_vector_or(bit_vector* r, bit_vector* s, bit_vector* t)
 {
 	assert(r->width == s->width); assert(s->width == t->width);
@@ -365,21 +379,36 @@ void bit_vector_concatenate(bit_vector* f, bit_vector* s, bit_vector* result)
 	}
 	for(J = 0; J < f->width; J++)
 	{
-		bit_vector_set_bit(result,J,bit_vector_get_bit(f,J+s->width));	
+		bit_vector_set_bit(result,J + s->width,bit_vector_get_bit(f,J));	
 	}
 }
 
+// slice src starting from low_index upwards to fill dest.
 void bit_vector_slice(bit_vector* src, bit_vector* dest, uint32_t low_index)
 {
-	assert((src->width-low_index) == dest->width);
+	// src should have enough width..  
+	// src->width-1 >= low_index + dest->width  - 1.
+	assert(src->width >= low_index + dest->width);
 
 	int J;
-	for(J = low_index; J < src->width; J++)
+	uint32_t high_index =  low_index + dest->width - 1;
+	for(J = low_index; J < high_index; J++)
 	{
 		bit_vector_set_bit(dest, J-low_index, bit_vector_get_bit(src,J));
 	}
 }
 
+// insert src into dest starting at low_index.
+void bit_vector_insert(bit_vector* src, bit_vector* dest, uint32_t low_index)
+{
+	assert(dest->width >= low_index + src->width);
+
+	int J;
+	for(J = 0; J < src->width; J++)
+	{
+		bit_vector_set_bit(dest, J+low_index, bit_vector_get_bit(src,J));
+	}
+}
 
 // -----------------------   shifts and rotates. -------------------------------
 void bit_vector_shift_right(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)

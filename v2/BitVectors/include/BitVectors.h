@@ -28,8 +28,8 @@ typedef struct _bit_vector_ {
 } bit_vector;
 
 
-#define __declare_bit_vector(x,w) {bit_vector x; init_bit_vector(x,w);}
-#define __declare_bit_vector(x,w)  {bit_vector x; init_bit_vector(x,w);}
+#define __declare_bit_vector(x,w) bit_vector x; init_bit_vector(&x,w);
+#define __declare_bit_vector(x,w)  bit_vector x; init_bit_vector(&x,w);
 uint32_t  __array_size(bit_vector* x);
 void      __set_byte(bit_vector* x, uint32_t byte_index, uint8_t v);
 uint8_t   __get_byte(bit_vector* x, uint32_t byte_index);
@@ -55,6 +55,8 @@ void uint64_to_bit_vector(uint8_t signed_flag, uint64_t v, bit_vector* t);
 // ------            assignments  -------------------------------------
 void bit_vector_assign_bit_vector(bit_vector* src, bit_vector* dest);
 void bit_vector_assign_uint64(uint8_t signed_flag, bit_vector* s, uint64_t u);
+void bit_vector_clear(bit_vector* s); // clear all bits.
+void bit_vector_set(bit_vector* s);   // set all bits to 1.
 
 
 //  --------------  bitwise operations -----------------------------------
@@ -84,6 +86,7 @@ uint8_t bit_vector_get_bit(bit_vector* f, uint32_t bit_index);
 void  bit_vector_bitsel(bit_vector* f,bit_vector* s,bit_vector* result);
 void  bit_vector_concatenate(bit_vector* f, bit_vector* s,  bit_vector* result);
 void  bit_vector_slice(bit_vector* src, bit_vector* dest, uint32_t low_index);
+void  bit_vector_insert(bit_vector* src, bit_vector* dest, uint32_t low_index);
 
 //
 // shifts and rotates.. note that shift_right uses signed_flag for differentiating
