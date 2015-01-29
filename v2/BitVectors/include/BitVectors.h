@@ -40,6 +40,7 @@ void free_bit_vector(bit_vector* t);
 void print_bit_vector(bit_vector* t, FILE* ofile);
 
 
+
 // ---------------         initialization, int conversions ------------------------
 //  note: we will provide conversions only to uint64.  Conversions to
 //        other types can be taken care of by C.
@@ -102,6 +103,7 @@ void bit_vector_rotate_right(bit_vector* r,  bit_vector* s, bit_vector* t);
 #define IS_EQUAL        0
 #define IS_GREATER      1
 #define IS_LESS         2
+uint8_t uint64_compare(uint8_t signed_flag, uint64_t a, uint64_t b, uint64_t width);
 uint8_t bit_vector_compare(uint8_t signed_flag, bit_vector* r, bit_vector* s);
 void bit_vector_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t);
 void bit_vector_less(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t);

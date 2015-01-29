@@ -92,7 +92,9 @@ int check_concatenate(uint64_t bit_width)
 
 
 	bit_vector_assign_uint64(0,&a,0xf0);
+	uint64_t aval = bit_vector_to_uint64(0,&a);
 	bit_vector_assign_uint64(0,&b,0x0f);
+	uint64_t bval = bit_vector_to_uint64(0,&b);
 
 	bit_vector_concatenate(&a,&b,&e);
 
@@ -114,14 +116,128 @@ int check_concatenate(uint64_t bit_width)
 }
 
 
-void check_shifts(uint64_t bit_width)
+int check_shifts(uint64_t bit_width)
 {
-	// TODO.
+
+	int ret_val = 0;	
+
+	__declare_bit_vector(a,bit_width);
+	bit_vector_set(&a);
+
+	__declare_bit_vector(b,bit_width);
+	bit_vector_clear(&b);
+
+	__declare_bit_vector(ab, 2*bit_width);
+	bit_vector_concatenate(&a, &b, &ab);
+
+	__declare_bit_vector(e,bit_width);
+	bit_vector_assign_uint64(0,&e, bit_width);
+
+	__declare_bit_vector(all_ones,bit_width);
+	bit_vector_set(&all_ones);
+
+	__declare_bit_vector(all_zeros,bit_width);
+	bit_vector_clear(&all_zeros);
+
+	__declare_bit_vector(rsa_ab,2*bit_width);
+	__declare_bit_vector(rsl_ab,2*bit_width);
+	__declare_bit_vector(ls_ab,2*bit_width);
+
+
+	__declare_bit_vector(tmp,bit_width);
+
+	// rsa_ab should have all 1's in the lower half.
+	//               all 1's in the upper half.
+	bit_vector_shift_right(1, &ab, &e, &rsa_ab); 
+	bit_vector_slice(&rsa_ab,&tmp,0);
+	if(bit_vector_compare(0,&tmp,&all_ones) != 0)	
+	{
+		ret_val = 1;
+		fprintf(stderr,"Error: shift-right-arithmetic for bit-width %llu, lower half mismatch\n", bit_width);
+	}
+	bit_vector_slice(&rsa_ab,&tmp,bit_width);
+	if(bit_vector_compare(0,&tmp,&all_ones) != 0)	
+	{
+		ret_val = 1;
+		fprintf(stderr,"Error: shift-right-arithmetic for bit-width %llu, upper half mismatch\n", bit_width);
+	}
+
+
+
+	// rsl_ab should have all 1's in the lower half
+	//  and all 0's in the upper half.
+	bit_vector_shift_right(0, &ab, &e, &rsl_ab); 
+	bit_vector_slice(&rsl_ab,&tmp,0);
+	if(bit_vector_compare(0,&tmp,&all_ones) != 0)	
+	{
+		ret_val = 1;
+		fprintf(stderr,"Error: shift-right-logical for bit-width %llu, lower half mismatch\n", bit_width);
+	}
+	bit_vector_slice(&rsl_ab,&tmp,bit_width);
+	if(bit_vector_compare(0,&tmp,&all_zeros) != 0)	
+	{
+		ret_val = 1;
+		fprintf(stderr,"Error: shift-right-logical for bit-width %llu, upper half mismatch\n", bit_width);
+	}
+
+
+
+	// ls_ab should be full of zeros.
+	bit_vector_shift_left (&ab, &e, &ls_ab); 
+	bit_vector_slice(&ls_ab,&tmp,0);
+	if(bit_vector_compare(0,&tmp,&all_zeros) != 0)	
+	{
+		ret_val = 1;
+		fprintf(stderr,"Error: shift-left for bit-width %llu, lower half mismatch\n", bit_width);
+	}
+	bit_vector_slice(&rsl_ab,&tmp,bit_width);
+	if(bit_vector_compare(0,&tmp,&all_zeros) != 0)	
+	{
+		ret_val = 1;
+		fprintf(stderr,"Error: shift-left for bit-width %llu, upper half mismatch\n", bit_width);
+	}
+
+	return(ret_val);
 }
 
-void check_compares(uint64_t bit_width)
+int check_compares(uint64_t A, uint64_t B, uint64_t bit_width)
 {
-	// TODO.
+
+	int64_t sA = A;
+	int64_t sB = B;
+	uint8_t ret_val = 0;
+	bit_vector a,b;
+	init_bit_vector(&a, bit_width);
+	init_bit_vector(&b, bit_width);
+
+	bit_vector_assign_uint64(0,&a,A);
+	bit_vector_assign_uint64(0,&b,B);
+
+
+	bit_vector sa,sb;
+	init_bit_vector(&sa, bit_width);
+	init_bit_vector(&sb, bit_width);
+
+	bit_vector_assign_uint64(1,&sa,sA);
+	bit_vector_assign_uint64(1,&sb,sB);
+
+	uint8_t cmp_result = bit_vector_compare(0,&a,&b);
+	uint8_t ucmp = uint64_compare(0,A,B,bit_width);
+	if(cmp_result != ucmp)
+	{
+		ret_val = 1;
+		fprintf(stderr,"Error: unsigned compare mismatch for A=%llu, B=%llu, bit_width=%llu\n",A,B,bit_width);
+	}
+
+	cmp_result = bit_vector_compare(1,&sa,&sb);
+	uint8_t scmp = uint64_compare(1,A,B,bit_width);
+	if(cmp_result != scmp)
+	{
+		ret_val = 1;
+		fprintf(stderr,"Error: signed compare mismatch for A=%lld, B=%lld, bit_width=%llu\n",sA,sB,bit_width);
+	}
+
+	return(ret_val);
 }
 
 
@@ -175,18 +291,23 @@ int check_if_tests_passed(uint64_t def_size)
 	bit_vector_minus(&(a),&(b),&(c));
 	check_error(&c, A, B, "(A-B)", (A-B), &ret_val, def_size);
 
-	bit_vector_mul(&(a),&(b),&(c));
-	check_error(&c, Atrunc, Btrunc, "(A*B)", (Atrunc*Btrunc), &ret_val, def_size);
-
-	if(Btrunc != 0)
+	if(def_size <= 64)
 	{
-		bit_vector_div(&(a),&(b),&(c));
-		check_error(&c, Atrunc, Btrunc, "(A/B)", (Atrunc/Btrunc), &ret_val, def_size);
+		bit_vector_mul(&(a),&(b),&(c));
+		check_error(&c, Atrunc, Btrunc, "(A*B)", (Atrunc*Btrunc), &ret_val, def_size);
+
+		if(Btrunc != 0)
+		{
+			bit_vector_div(&(a),&(b),&(c));
+			check_error(&c, Atrunc, Btrunc, "(A/B)", (Atrunc/Btrunc), &ret_val, def_size);
+		}
 	}
 
 
 	ret_val = check_bitsel(def_size) || ret_val;
 	ret_val = check_concatenate(def_size) || ret_val;
+	ret_val = check_shifts(def_size) || ret_val;
+	ret_val = check_compares(truncate_uint64(A,def_size),truncate_uint64(B,def_size),def_size) || ret_val;
 
 	return(ret_val);
 }
@@ -198,6 +319,7 @@ int check_if_tests_passed(uint64_t def_size)
 int main(int argc, char* argv[])
 {
 
+	srand(119);
 
 
 	int fail_count = 0;
@@ -222,10 +344,10 @@ int main(int argc, char* argv[])
 	}
 
 	if(fail_count > 0)
-	    fprintf(stderr,"Error: tests failed for %d bit-widths.\n", fail_count);
+		fprintf(stderr,"Error: tests failed for %d bit-widths.\n", fail_count);
 	else
-	    fprintf(stderr,"Info: tests passed for all bit-widths.\n");
-		
+		fprintf(stderr,"Info: tests passed for all bit-widths.\n");
+
 	return(fail_count);
 }
 

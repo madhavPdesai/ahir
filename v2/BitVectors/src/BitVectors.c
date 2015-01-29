@@ -5,7 +5,7 @@
 // ---------------  local functions --------------------------------------
 uint64_t unpack_bit_vector_into_uint64(uint8_t signed_flag, bit_vector* bv)
 {
-	uint64_t word;
+	uint64_t word = 0;
 	uint8_t neg_flag = 0;
 	if(signed_flag && __sign_bit(bv)) // negative number.
 	{
@@ -125,7 +125,21 @@ uint8_t   __get_byte(bit_vector* x, uint32_t byte_index)
 
 uint8_t   __sign_bit(bit_vector* x) 
 {
-	if(__get_byte(x,x->width/8) & (0x1 << (x->width % 8)))
+	//
+	// the location of the  most-significant byte.
+	//
+	uint32_t byte_position = (x->width-1)/8;
+
+
+	//
+	// position of the sign-bit in the
+	// MSByte.
+	//
+	uint32_t offset = (x->width - 1) % 8;
+	uint8_t bit_pos_mask = (0x1 << offset);
+
+	// check the bit.
+	if(__get_byte(x,byte_position) & bit_pos_mask)
 		return(1);
 	else
 		return(0);
@@ -340,7 +354,7 @@ void bit_vector_set_bit(bit_vector* f, uint32_t bp, uint8_t bv)
 	if (bp < f->width)
 	{
 		uint64_t byte_id = bp/8;
-		uint64_t byte_mask = (bv ? (0x1 <<  (bp%8)) : ~(0x1 << (bp%8)));
+		uint64_t byte_mask = (bv ? (((uint64_t) 0x1) <<  (bp%8)) : ~(((uint64_t) 0x1) << (bp%8)));
 		if(bv)
 			__set_byte(f,byte_id, (__get_byte(f,byte_id) | byte_mask));
 		else
@@ -353,7 +367,7 @@ uint8_t bit_vector_get_bit(bit_vector* f, uint32_t bp)
 	if (bp < f->width)
 	{
 		uint64_t byte_id = bp/8;
-		uint64_t byte_mask = (0x1 <<  (bp%8));
+		uint64_t byte_mask = (((uint64_t) 0x1) <<  (bp%8));
 		if(__get_byte(f,byte_id) & byte_mask)
 			ret_val = 1;
 	}
@@ -392,7 +406,7 @@ void bit_vector_slice(bit_vector* src, bit_vector* dest, uint32_t low_index)
 
 	int J;
 	uint32_t high_index =  low_index + dest->width - 1;
-	for(J = low_index; J < high_index; J++)
+	for(J = low_index; J <= high_index; J++)
 	{
 		bit_vector_set_bit(dest, J-low_index, bit_vector_get_bit(src,J));
 	}
@@ -479,23 +493,149 @@ void bit_vector_rotate_right(bit_vector* r, bit_vector* s, bit_vector* t)
 
 // --------------------    comparisons -------------------------------------
 // returns 0 if equal, 1 if r > s, 2 if r < s.
+uint8_t uint64_compare(uint8_t signed_flag, uint64_t a, uint64_t b, uint64_t width)
+{
+	if(width > 64)
+		width = 64;
+	
+	// signs.
+	uint8_t sa = (signed_flag ? ((a & (((uint64_t) 0x1) << width-1)) != 0) : 0);
+	uint8_t sb = (signed_flag ? ((b & (((uint64_t) 0x1) << width-1)) != 0) : 0);
+
+	if(sa && !sb)
+		return(IS_LESS);
+	else if(!sa && sb)
+		return(IS_GREATER);
+
+	// sign-extend.
+	// 
+	uint64_t sign_extend_mask = (0xffffffffffffffff  << width);
+	if(sa)
+	{
+		a = a | sign_extend_mask;
+	}
+	if(sb)
+	{
+		b = b | sign_extend_mask;
+	}
+
+
+	if(a == b)
+		return(IS_EQUAL);
+	else if(a < b)
+	{
+		if(sa && sb)
+			return(IS_GREATER);
+		else
+			return(IS_LESS);
+	}
+	else
+	{
+		if(sa && sb)
+			return(IS_LESS);
+		else
+			return(IS_GREATER);
+	}
+}
+
+// returns 0 if equal, 1 if r > s, 2 if r < s.
 uint8_t bit_vector_compare(uint8_t signed_flag, bit_vector* r, bit_vector* s)
 {
+	// raw comparison only between bit-vectors of 
+	// equal length.
+	assert(r->width == s->width);
+
+	// raw comparison.
+	int i;
+	uint8_t re = 1;
+	uint8_t rg = 0;
+	uint8_t rl = 0;
+
+	uint8_t sr = (signed_flag ? __sign_bit(r) : 0);
+	uint8_t ss = (signed_flag ? __sign_bit(s) : 0);
+
+	if(sr && !ss)
+	{ // r is negative and s is positive
+		return(IS_LESS);
+	}
+	else if(!sr && ss)
+	{// r is positive, s is negative.
+		return(IS_GREATER);
+	}
+	
+	
+	// both signs are the same.
+	for(i = r->width-1; i >= 0; i--)
+	{
+		uint8_t rb = bit_vector_get_bit(r,i); 
+		uint8_t sb = bit_vector_get_bit(s,i); 
+		if(re && (rb && !sb))
+		{
+			re = 0;
+			rg = 1;
+			break;
+		}
+		else if(re && (!rb && sb))
+		{
+			re = 0;
+			rl = 1;
+			break;
+		}
+	}
+
+
+	if(sr && ss)
+	{ // both negative.. swap rl, rg.
+		uint8_t tmp = rg;
+		rg = rl;
+		rl = rg;
+	}
+
+	if(re)
+		return(IS_EQUAL);
+	else if(rg) 
+		return(IS_GREATER);
+	else
+		return(IS_LESS);
 }
+
 void bit_vector_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)
 {
+	uint64_t tval = 0;
+	if(bit_vector_compare(signed_flag,r,s) == IS_EQUAL)
+		tval = 1;
+	bit_vector_assign_uint64(0,t,tval);
+		
 }
 void bit_vector_less(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)
 {
+	uint64_t tval = 0;
+	if(bit_vector_compare(signed_flag,r,s) == IS_LESS)
+		tval = 1;
+	bit_vector_assign_uint64(0,t,tval);
 }
 void bit_vector_less_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)
 {
+	uint64_t tval = 0;
+	uint8_t cmp_result = bit_vector_compare(signed_flag,r,s);
+	if((cmp_result == IS_LESS) || (cmp_result == IS_EQUAL))
+		tval = 1;
+	bit_vector_assign_uint64(0,t,tval);
 }
 void bit_vector_greater(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)
 {
+	uint64_t tval = 0;
+	if(bit_vector_compare(signed_flag,r,s) == IS_GREATER)
+		tval = 1;
+	bit_vector_assign_uint64(0,t,tval);
 }
 void bit_vector_greater_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t)
 {
+	uint64_t tval = 0;
+	uint8_t cmp_result = bit_vector_compare(signed_flag,r,s);
+	if((cmp_result == IS_GREATER) || (cmp_result == IS_EQUAL))
+		tval = 1;
+	bit_vector_assign_uint64(0,t,tval);
 }
 
 

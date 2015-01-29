@@ -1,8 +1,8 @@
 import os
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
 env.Append(CPPPATH = './src/:./include/')
-env.Library('lib/libSizedIntegers', Glob('src/*.c'), CCFLAGS='-g ')
-#env.Program('bin/TestValue','util/TestValue.cpp',CCFLAGS='-g',LINKFLAGS='-g', LIBS=['Value'], LIBPATH=['./lib'])
+env.Library('lib/libBitVectors', Glob('src/*.c'), CCFLAGS='-g ')
+env.Program('bin/test_bit_vectors','util/test_bit_vectors.c',CCFLAGS='-g',LINKFLAGS='-g', LIBS=['BitVectors'], LIBPATH=['./lib'])
 
 
 
