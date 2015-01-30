@@ -167,63 +167,266 @@ void AaModule::Map_Source_References()
   this->AaBlockStatement::Map_Source_References();
 }
 
+bool AaModule::Can_Have_Native_C_Interface()
+{
+ //
+  // if all argument types are legal, then
+  // declare the outer wrap function.
+  //
+  bool all_types_native = true;
+  for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
+    {
+      if(!(this->_input_args[i]->Get_Type()->Is_A_Native_C_Type()))
+	{
+	  all_types_native = false;
+	  break;
+	}
+    }
+  if(all_types_native)
+    {
+      for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
+	{
+	  if(!(this->_output_args[i]->Get_Type()->Is_A_Native_C_Type()))
+	    {
+	      all_types_native = false;
+	      break;
+	    }
+	}
+    }
+  return(all_types_native);
+}
 
 void AaModule::Write_C_Header(ofstream& ofile)
 {
+ 
+  bool all_types_native = this->Can_Have_Native_C_Interface();
 
-	ofile << "void " 
-		<< this->Get_C_Wrap_Function_Name() 
-		<< "(";
-	bool first_one = true;
-	for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
+  if(all_types_native)
+    {
+      ofile << "void " 
+	    << this->Get_C_Outer_Wrap_Function_Name() 
+	    << "(";
+      bool first_one = true;
+      for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
 	{
-		if(!first_one)
-			ofile << ", ";
-		first_one = false;
-		ofile << this->_input_args[i]->Get_Type()->C_Name();
+	  if(!first_one)
+	    ofile << ", ";
+	  first_one = false;
+      
+	  //
+	  // all arguments are passed as pointers..
+	  //
+	  ofile << this->_input_args[i]->Get_Type()->Native_C_Name();
 	}
-	for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+      for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
 	{
-		if(!first_one)
-			ofile << ", ";
-		first_one = false;
-		ofile << this->_output_args[i]->Get_Type()->C_Name();
-		ofile << "* ";
+	  if(!first_one)
+	    ofile << ", ";
+	  first_one = false;
+	  ofile << this->_output_args[i]->Get_Type()->Native_C_Name();
+	  ofile << "* ";
 	}
-	ofile << ");" << endl;
+      ofile << ");" << endl;
+    }
+
+
+  //
+  // then declare the inner wrap function.
+  //
+  ofile << "void " 
+	<< this->Get_C_Inner_Wrap_Function_Name() 
+	<< "(";
+  bool first_one = true;
+  for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
+    {
+      if(!first_one)
+	ofile << ", ";
+      first_one = false;
+      
+      //
+      // all arguments are passed as pointers..
+      //
+      ofile << this->_input_args[i]->Get_Type()->C_Name() << "*";
+    }
+  for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+    {
+      if(!first_one)
+	ofile << ", ";
+      first_one = false;
+      ofile << this->_output_args[i]->Get_Type()->C_Name();
+      ofile << "* ";
+	}
+  ofile << ");" << endl;
 }
 
 void AaModule::Write_C_Source(ofstream& ofile)
 {
-	if(!this->Get_Foreign_Flag())
+  if(this->Get_Foreign_Flag())
+    return;
+
+
+  // outer wrap function if all argument types are "native"
+  bool all_types_native = this->Can_Have_Native_C_Interface();
+  if(all_types_native)
+    {
+      ofile << "void " 
+	    << this->Get_C_Outer_Wrap_Function_Name() 
+	    << "(";
+      bool first_one = true;
+      for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
 	{
-		ofile << "void " 
-			<< this->Get_C_Wrap_Function_Name() 
-			<< "(";
-		bool first_one = true;
-		for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
-		{
-			if(!first_one)
-				ofile << ", ";
-			first_one = false;
-			ofile << this->_input_args[i]->Get_Type()->C_Name();
-			ofile << " " << this->_input_args[i]->Get_Name();
-		}
-		for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
-		{
-			if(!first_one)
-				ofile << ", ";
-			first_one = false;
-			ofile << this->_output_args[i]->Get_Type()->C_Name();
-			ofile << "* ";
-			ofile << " " << this->_output_args[i]->Get_Name();
-		}
-		ofile << ")" << endl;
-		ofile << "{" << endl;
-		this->Write_C_Object_Declarations(ofile);
-		this->_statement_sequence->PrintC(ofile);
-		ofile << "}" << endl;
+	  if(!first_one)
+	    ofile << ", ";
+	  first_one = false;
+      
+	  //
+	  // all arguments are passed as pointers..
+	  //
+	  ofile << this->_input_args[i]->Get_Type()->Native_C_Name();
 	}
+      for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+	{
+	  if(!first_one)
+	    ofile << ", ";
+	  first_one = false;
+	  ofile << this->_output_args[i]->Get_Type()->Native_C_Name();
+	  ofile << "* ";
+	}
+      ofile << ")" << endl;
+
+      ofile << "{" << endl;
+      //
+      // TODO: Uint/int <-> BitVector conversions
+      //       object <-> pointer conversions
+      //       call inner wrap function.
+      //
+      for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
+	{
+	  AaType* t = this->_input_args[i]->Get_Type();
+	  string o_name =  this->_input_args[i]->Get_C_Name();
+	  string n_name = "__" + o_name;
+
+	  if(t->Is_Uinteger_Type() || t->Is_Integer_Type())
+	    {
+	      ofile << "__declare_bit_vector(__" << n_name << ", " << t->Size() << ");" << endl;
+	      ofile << "bit_vector_assign_uint64(0, &" << n_name << ", " << o_name << ");" << endl;
+	    }
+	  else
+	    {
+	      ofile << t->Native_C_Name() << " " << n_name << " = " << o_name << ";" << endl;
+	    }
+	}
+
+
+      for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+	{
+	  AaType* t = this->_output_args[i]->Get_Type();
+	  string o_name =  this->_output_args[i]->Get_C_Name();
+	  string n_name = "__" + o_name;
+
+	  if(t->Is_Uinteger_Type() || t->Is_Integer_Type())
+	    {
+	      ofile << "__declare_bit_vector(__" << n_name << ", " << t->Size() << ");" << endl;
+	    }
+	  else
+	    {
+	      ofile << t->Native_C_Name() << " " << n_name << ";" << endl;
+	    }
+	}
+
+
+      // call inner function.
+      ofile << this->Get_C_Inner_Wrap_Function_Name() 
+	    << "(";
+      first_one = true;;
+      for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
+	{
+	  AaType* t = this->_input_args[i]->Get_Type();
+	  string o_name =  this->_input_args[i]->Get_C_Name();
+	  string n_name = "__" + o_name;
+	  if(!first_one)
+	    {
+	      ofile << ", ";
+	    }
+	  ofile << " &" << n_name;
+	  first_one = false;
+	}
+
+      for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+	{
+	  AaType* t = this->_output_args[i]->Get_Type();
+	  string o_name =  this->_output_args[i]->Get_C_Name();
+	  string n_name = "__" + o_name;
+	  if(!first_one)
+	    {
+	      ofile << ", ";
+	    }
+	  ofile << " &" << n_name;
+	  first_one = false;
+	}
+      
+      ofile << ");" << endl;
+
+      // get the outputs in order.
+      for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+	{
+	  AaType* t = this->_output_args[i]->Get_Type();
+	  string o_name =  this->_output_args[i]->Get_C_Name();
+	  string n_name = "__" + o_name;
+
+	  if(t->Is_Uinteger_Type() || t->Is_Integer_Type())
+	    {
+	      ofile << o_name << " =  bit_vector_to_uint64(" 
+		    << (t->Is_Integer_Type() ? 1 : 0)
+		    << ", &" << n_name << ");" << endl;
+	    }
+	  else
+	    {
+	      ofile << o_name << " = " << n_name << ";" << endl;
+	    }
+	}
+
+
+      ofile << "}" << endl;
+      ofile << endl << endl;
+    }
+
+
+  // inner wrap function.
+  ofile << "void " 
+	<< this->Get_C_Inner_Wrap_Function_Name() 
+	<< "(";
+  bool first_one = true;
+  for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
+    {
+      if(!first_one)
+	ofile << ", ";
+      first_one = false;
+      ofile << this->_input_args[i]->Get_Type()->C_Name();
+      ofile << "* p" << this->_input_args[i]->Get_Name();
+    }
+  for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+    {
+      if(!first_one)
+	ofile << ", ";
+      first_one = false;
+      ofile << this->_output_args[i]->Get_Type()->C_Name();
+      ofile << "* ";
+      ofile << " p" << this->_output_args[i]->Get_Name();
+    }
+  ofile << ")" << endl;
+  ofile << "{" << endl;
+  //
+  // TODO: pointer-interface <-> declare i/o objects
+  //       print input side conversions.
+  //
+
+  this->Write_C_Object_Declarations(ofile);
+  this->_statement_sequence->PrintC(ofile);
+
+  // TODO pointer interface <-> output side conversions
+
+  ofile << "}" << endl;
 }
 
 void AaModule::Propagate_Constants()

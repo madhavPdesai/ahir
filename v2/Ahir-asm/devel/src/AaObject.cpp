@@ -137,21 +137,8 @@ string AaObject::C_Reference_String()
 void AaObject::PrintC_Declaration(ofstream& ofile)
 {
 	AaType* t = this->Get_Type();
-	if(!t->Is_Pointer_Type())
-	{
-		ofile <<  this->Get_Type()->C_Base_Name() 
-			<< " " 
-			<< this->C_Reference_String()
-			<< this->Get_Type()->C_Dimension_String();
-		ofile << ";" << endl;
-	}
-	else
-	{
-		ofile << t->C_Name() 
-			<< " " 
-			<< this->C_Reference_String();
-		ofile << ";" << endl;
-	}
+	Print_C_Declaration(this->C_Reference_String(), t, ofile);
+
 
 	if(_value != NULL)
 	{
@@ -160,6 +147,7 @@ void AaObject::PrintC_Declaration(ofstream& ofile)
 		Print_C_Assignment_To_Constant(this->C_Reference_String(), this->Get_Type(), this->_value->_expression_value, ofile);
 	}
 }
+
 void AaObject::PrintC(ofstream& ofile) {}
 
 void AaObject::Write_VC_Model(ostream& ofile)

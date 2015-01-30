@@ -144,7 +144,7 @@ uint8_t   __sign_bit(bit_vector* x)
 	else
 		return(0);
 }
-// ----------------   initialization, integer conversions --------------------
+// ----------------   initialization, conversions to C types.  --------------------
 uint64_t  bit_vector_to_uint64(uint8_t signed_flag, bit_vector* t)
 {
 	uint64_t rv = 0;
@@ -160,28 +160,96 @@ uint64_t  bit_vector_to_uint64(uint8_t signed_flag, bit_vector* t)
 	return(rv);
 }
 
-void uint64_to_bit_vector(uint8_t signed_flag, uint64_t v, bit_vector* t)
+float     bit_vector_to_float(uint8_t signed_flag, bit_vector* t)
 {
-	pack_uint64_into_bit_vector(signed_flag, v,t);
+  float rv = 0;
+  if(signed_flag)
+    {
+      int64_t v = bit_vector_to_uint64(signed_flag, t);
+      rv =  v;
+    }
+  else
+    {
+      uint64_t v = bit_vector_to_uint64(signed_flag, t);
+      rv =  v;
+    }
+}
+
+double    bit_vector_to_double(uint8_t signed_flag, bit_vector* t)
+{
+  double rv = 0;
+  if(signed_flag)
+    {
+      int64_t v = bit_vector_to_uint64(signed_flag, t);
+      rv =  v;
+    }
+  else
+    {
+      uint64_t v = bit_vector_to_uint64(signed_flag, t);
+      rv =  v;
+    }
 }
 
 
-
 // ----------                assignments -----------------------------
+void bit_vector_assign_bit_vector(uint8_t signed_flag, bit_vector* src, bit_vector* dest)
+{
+	uint32_t min_width = __min(__array_size(src), __array_size(dest));
+	uint32_t J;
+	uint8_t neg_flag = 0;
+
+	bit_vector_clear(dest);
+
+	for(J=0; J < min_width; J++)
+	{
+	  uint8_t tb = __get_byte(src,J);
+	  __set_byte(dest,J, tb);
+	}
+
+	if(signed_flag && __sign_bit(src))
+	  {
+	    // sign-extend in dest.
+	    int I;
+	    for(I = src->width; I <= dest->width; I++)
+	      {
+		bit_vector_set_bit(dest, I, 1);
+	      }
+	  }
+}
+
 void bit_vector_assign_uint64(uint8_t signed_flag, bit_vector* s, uint64_t u)
 {
 	pack_uint64_into_bit_vector(signed_flag, u, s);
 }
-
-void bit_vector_assign_bit_vector(bit_vector* src, bit_vector* dest)
+// type conversion as in C
+void bit_vector_assign_float(uint8_t signed_flag, bit_vector* s, float f)
 {
-	uint32_t min_width = __min(__array_size(src), __array_size(dest));
-	uint32_t J;
-	for(J=0; J < min_width; J++)
-	{
-		__set_byte(dest,J, __get_byte(src,J));
-	}
+  if(signed_flag)
+    {
+      int64_t v = f;
+      pack_uint64_into_bit_vector(signed_flag, v, s);
+    }
+  else
+    {
+      uint64_t v = f;
+      pack_uint64_into_bit_vector(signed_flag, v, s);
+    }
 }
+void bit_vector_assign_double(uint8_t signed_flag, bit_vector* s, double d)
+{
+ if(signed_flag)
+    {
+      int64_t v = d;
+      pack_uint64_into_bit_vector(signed_flag, v, s);
+    }
+  else
+    {
+      uint64_t v = d;
+      pack_uint64_into_bit_vector(signed_flag, v,s );
+    }
+}
+
+
 
 void bit_vector_clear(bit_vector* s)
 {

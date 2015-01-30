@@ -79,7 +79,7 @@ bool AaExpression::Is_Part_Of_Extreme_Pipeline()
 
 void AaExpression::PrintC_Declaration(ofstream& ofile)
 {
-	ofile << this->Get_Type()->C_Name() << " " << this->C_Reference_String() << ";" << endl;
+  Print_C_Declaration(this->C_Reference_String(), this->Get_Type(), ofile);
 }
 
 string AaExpression::Get_VC_Guard_String()
@@ -686,7 +686,7 @@ string AaSimpleObjectReference::C_Reference_String()
 	if(this->Is_Implicit_Variable_Reference() ||
 		(this->Get_Object() && this->Get_Object()->Is_Storage_Object()))
 	{
-		return(this->Get_Object()->C_Reference_String());
+		return(this->Get_Object_Ref_String());
 	}
 	else
 	{
@@ -2678,10 +2678,15 @@ void AaPointerDereferenceExpression::Print(ostream& ofile)
   ofile << ")";
 }
  
+void AaPointerDereferenceExpression::PrintC_Declaration(ofstream& ofile)
+{
+  this->_reference_to_object->PrintC_Declaration(ofile);
+  this->AaExpression::PrintC_Declaration(ofile);
+}
+
 void AaPointerDereferenceExpression::PrintC(ofstream& ofile)
 {
   this->_reference_to_object->PrintC(ofile);
-  this->PrintC_Declaration(ofile);
   Print_C_Assignment(this->C_Reference_String(), "*" + this->_reference_to_object->C_Reference_String(),
 				this->Get_Type(), ofile); 
 }
@@ -3155,6 +3160,12 @@ void AaAddressOfExpression::Print(ostream& ofile)
     }
 }
 
+void AaAddressOfExpression::PrintC_Declaration(ofstream& ofile)
+{
+  this->_reference_to_object->PrintC_Declaration(ofile);
+  this->AaExpression::PrintC_Declaration(ofile);
+}
+
 void AaAddressOfExpression::PrintC(ofstream& ofile)
 {
 	this->_reference_to_object->PrintC(ofile);
@@ -3535,10 +3546,15 @@ void AaTypeCastExpression::Print(ostream& ofile)
   ofile << " )";
 }
 
+void AaTypeCastExpression::PrintC_Declaration(ofstream& ofile)
+{
+  this->_rest->PrintC_Declaration(ofile);
+  this->AaExpression::PrintC_Declaration(ofile);
+}
+
 void AaTypeCastExpression::PrintC(ofstream& ofile)
 {
 	this->_rest->PrintC(ofile);
-	this->PrintC_Declaration(ofile);
 	Print_C_Type_Cast_Operation(this->_rest->C_Reference_String(),
 				this->_rest->Get_Type(), 
 				this->C_Reference_String(),
@@ -3867,10 +3883,16 @@ void AaUnaryExpression::Print(ostream& ofile)
 	this->Get_Rest()->Print(ofile);
 	ofile << " )";
 }
+
+void AaUnaryExpression::PrintC_Declaration(ofstream& ofile)
+{
+  this->_rest->PrintC_Declaration(ofile);
+  this->AaExpression::PrintC_Declaration(ofile);
+}
+
 void AaUnaryExpression::PrintC(ofstream& ofile)
 {
 	this->_rest->PrintC(ofile);
-	this->PrintC_Declaration(ofile);
 	Print_C_Unary_Operation(this->_rest->C_Reference_String(), 
 				this->_rest->Get_Type(), 
 				this->C_Reference_String(),
@@ -4214,6 +4236,12 @@ void AaBinaryExpression::Print(ostream& ofile)
   ofile << ")";
 }
 
+void AaBinaryExpression::PrintC_Declaration(ofstream& ofile)
+{
+	this->_first->PrintC_Declaration(ofile);
+	this->_second->PrintC_Declaration(ofile);
+	this->AaExpression::PrintC_Declaration(ofile);
+}
 
 void AaBinaryExpression::PrintC(ofstream& ofile)
 {
@@ -4221,7 +4249,7 @@ void AaBinaryExpression::PrintC(ofstream& ofile)
 	this->_first->PrintC(ofile);
 	this->_second->PrintC(ofile);
 
-	this->PrintC_Declaration(ofile);
+
 	Print_C_Binary_Operation(this->_first->C_Reference_String(), 
 				 this->_first->Get_Type(),
 				 this->_second->C_Reference_String(),
@@ -4566,6 +4594,15 @@ void AaTernaryExpression::Print(ostream& ofile)
   ofile << "  ";
   this->Get_If_False()->Print(ofile);
   ofile << " ) ";
+}
+
+void AaTernaryExpression::PrintC_Declaration(ofstream& ofile)
+{
+	this->_test->PrintC_Declaration(ofile);
+	this->_if_true->PrintC_Declaration(ofile);
+	this->_if_false->PrintC_Declaration(ofile);
+
+	this->AaExpression::PrintC_Declaration(ofile);
 }
 
 void AaTernaryExpression::PrintC(ofstream& ofile)

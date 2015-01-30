@@ -1809,7 +1809,7 @@ void AaCallStatement::PrintC(ofstream& ofile)
 	this->_output_args[i]->PrintC_Declaration(ofile);
 
       bool first_one = true;
-      ofile << ((AaModule*)this->Get_Called_Module())->Get_C_Wrap_Function_Name() // foreign function
+      ofile << ((AaModule*)this->Get_Called_Module())->Get_C_Inner_Wrap_Function_Name()
 	    << "(" << endl;
       for(unsigned int i=0; i < this->_input_args.size(); i++)
 	{

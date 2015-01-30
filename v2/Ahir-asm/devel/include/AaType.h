@@ -52,7 +52,10 @@ class AaType: public AaRoot
   }
 
   virtual bool Is_Scalar_Type() {return (Is_Integer_Type() || Is_Float_Type());}
-  
+
+  virtual bool Is_A_Native_C_Type() {return(false);}
+  virtual string Native_C_Name() {assert(0);}
+
   virtual string Get_VC_Name() {assert(0);}
   virtual int Number_Of_Elements() {return(1);}
 
@@ -129,17 +132,24 @@ class AaUintType: public AaScalarType
   AaUintType(AaScope* scope, unsigned int width);
   ~AaUintType();
   void Print(ostream& ofile);
-  virtual bool Is_A_Valid_C_Type()  {return(false);}
-
   virtual string Kind() {return("AaUintType");}
    
   // C related stuff.
   virtual string C_Base_Name()
   {
-	return("sized_uint");
+	return("BitVector");
   }
 
-  // print nothing.  sized_uint is provided by C library.
+  virtual bool Is_A_Native_C_Type() 
+  {
+    return( (_width == 8) || (_width == 16) || (_width == 32) || (_width == 64));
+  }
+  virtual string Native_C_Name() 
+  {
+    return("uint" + IntToStr(_width) + "_t");
+  }
+
+  // print nothing.  BitVector is provided by C library.
   virtual void PrintC_Declaration(ofstream& ofile) {}
   
   virtual int Size() {return(this->_width);}
@@ -174,14 +184,17 @@ class AaIntType: public AaUintType
   // C related stuff
   virtual string C_Base_Name() 
   {
-	return("sized_int");
+	return("BitVector");
   } 
   virtual void PrintC_Declaration(ofstream& ofile)
   {
 	// do nothing.  sized_int is provided by C library.
   }
 
-  virtual bool Is_A_Valid_C_Type()  {return(false);}
+  virtual string Native_C_Name() 
+  {
+    return("int" + IntToStr(_width) + "_t");
+  }
 
   virtual bool Is_Uinteger_Type() {return(false);}
 };
@@ -203,6 +216,7 @@ class AaPointerType: public AaUintType
   {
     return(this->_ref_type->C_Name() + "*" );
   } 
+
   virtual void PrintC_Declaration(ofstream& ofile)
   {
 	//
@@ -270,6 +284,21 @@ class AaFloatType : public AaScalarType
   virtual bool Is_Integer_Type() {return(false);}
   virtual bool Is_Uinteger_Type() {return(false);}
   virtual bool Is_Float_Type() {return(true);}
+  virtual bool Is_A_Native_C_Type() 
+  {
+    return( ((_characteristic == 8) && (_mantissa == 23)) ||
+	    ((_characteristic == 11) && (_mantissa == 52)));
+  }
+  virtual string Native_C_Name() 
+  {
+    if(this->Size() == 32)
+      return("float");
+    else if(this->Size() == 64)
+      return("double");
+    else 
+      assert(0);
+  }
+
 };
 
 class AaArrayType: public AaType
@@ -309,6 +338,7 @@ class AaArrayType: public AaType
     return(ret_string);
   }
 
+
   virtual string C_Dimension_String() 
   {
     string ret_string =  "";
@@ -316,6 +346,7 @@ class AaArrayType: public AaType
       ret_string +=  "[" + IntToStr(this->_dimension[i]) + "]";
     return(ret_string);
   }
+
 
   virtual int Size() 
   {

@@ -1038,7 +1038,7 @@ void AaProgram::Write_C_Model()
   source_file.open(source.c_str());
 
 
-  header_file << "#include <Aa2C.h>" << endl;
+  header_file << "#include <BitVectors.h>" << endl;
   // declare all the record types that you have encountered.
 
   source_file << "#include <" << header << ">" << endl;

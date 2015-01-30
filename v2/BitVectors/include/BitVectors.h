@@ -46,16 +46,18 @@ void print_bit_vector(bit_vector* t, FILE* ofile);
 //        other types can be taken care of by C.
 //
 uint64_t  bit_vector_to_uint64(uint8_t signed_flag, bit_vector* t);
-
-//
-// convert to bit-vector.. 
-//
-void uint64_to_bit_vector(uint8_t signed_flag, uint64_t v, bit_vector* t);
+float     bit_vector_to_float(uint8_t signed_flag, bit_vector* t);
+double    bit_vector_to_double(uint8_t signed_flag, bit_vector* t);
 
 
 // ------            assignments  -------------------------------------
-void bit_vector_assign_bit_vector(bit_vector* src, bit_vector* dest);
+void bit_vector_assign_bit_vector(uint8_t signed_flag, bit_vector* src, bit_vector* dest);
 void bit_vector_assign_uint64(uint8_t signed_flag, bit_vector* s, uint64_t u);
+
+// type conversion as in C
+void bit_vector_assign_float(uint8_t signed_flag, bit_vector* s, float f);
+void bit_vector_assign_double(uint8_t signed_flag, bit_vector* s, double d);
+
 void bit_vector_clear(bit_vector* s); // clear all bits.
 void bit_vector_set(bit_vector* s);   // set all bits to 1.
 
@@ -106,6 +108,7 @@ void bit_vector_rotate_right(bit_vector* r,  bit_vector* s, bit_vector* t);
 uint8_t uint64_compare(uint8_t signed_flag, uint64_t a, uint64_t b, uint64_t width);
 uint8_t bit_vector_compare(uint8_t signed_flag, bit_vector* r, bit_vector* s);
 void bit_vector_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t);
+void bit_vector_not_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t);
 void bit_vector_less(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t);
 void bit_vector_less_equal(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t);
 void bit_vector_greater(uint8_t signed_flag, bit_vector* r, bit_vector* s, bit_vector* t);

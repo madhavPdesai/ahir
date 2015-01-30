@@ -184,6 +184,7 @@ class AaModule: public AaSeriesBlockStatement
   //
   void Write_C_Header(ofstream& ofile);
   void Write_C_Source(ofstream& ofile);
+  bool Can_Have_Native_C_Interface();
 
   void Write_VC_Model(ostream& ofile);
   void Write_VC_Model(bool opt_flag, ostream& ofile);

@@ -713,8 +713,10 @@ class AaSimpleObjectReference: public AaObjectReference
 	virtual void Print(ostream& ofile);
 
         virtual string C_Reference_String();
+
 	virtual void PrintC_Declaration( ofstream& ofile);
 	virtual void PrintC( ofstream& ofile);
+
 
 	virtual bool Set_Addressed_Object_Representative(AaStorageObject* obj);
 
@@ -850,6 +852,7 @@ class AaArrayObjectReference: public AaObjectReference
 
 	virtual void PrintC_Declaration( ofstream& ofile);
 	virtual void PrintC( ofstream& ofile);
+
         virtual string C_Reference_String(); // todo
 	string C_Index_String(AaType* t, int start_id, vector<AaExpression*>* indices);
        
@@ -971,6 +974,7 @@ class AaPointerDereferenceExpression: public AaObjectReference
 
 	virtual void Print(ostream& ofile);
 
+	virtual void PrintC_Declaration( ofstream& ofile);
 	virtual void PrintC( ofstream& ofile);
 
 	virtual void Evaluate();
@@ -1044,6 +1048,7 @@ class AaAddressOfExpression: public AaObjectReference
 
 	virtual void Print(ostream& ofile);
 
+	virtual void PrintC_Declaration( ofstream& ofile);
 	virtual void PrintC(ofstream& ofile);
 
 	virtual void Set_Associated_Statement(AaStatement* stmt)
@@ -1154,6 +1159,8 @@ class AaTypeCastExpression: public AaExpression
 		_rest->Set_Pipeline_Parent(dws);
 	}
 	void Print(ostream& ofile);
+
+	virtual void PrintC_Declaration( ofstream& ofile);
 	virtual void PrintC( ofstream& ofile);
 
 	virtual string Kind() {return("AaTypeCastExpression");}
@@ -1213,6 +1220,10 @@ class AaSliceExpression: public AaTypeCastExpression
 
 	virtual void Evaluate();
 	void Print(ostream& ofile);
+
+	// print c declaration same as in generic expression.
+
+
 	virtual void PrintC( ofstream& ofile);
 
 	virtual bool Is_Trivial() {return(true);}
@@ -1244,6 +1255,7 @@ class AaUnaryExpression: public AaExpression
 			this->_rest->Map_Source_References(source_objects);
 	}
 
+	virtual void PrintC_Declaration( ofstream& ofile);
 	virtual void PrintC(ofstream& ofile);
 
 	virtual void Set_Associated_Statement(AaStatement* stmt)
@@ -1333,6 +1345,7 @@ class AaBinaryExpression: public AaExpression
 	AaBinaryExpression(AaScope* scope_tpr, AaOperation operation, AaExpression* first, AaExpression* second);
 	~AaBinaryExpression();
 	virtual void Print(ostream& ofile);
+	virtual void PrintC_Declaration( ofstream& ofile);
 	virtual void PrintC(ofstream& ofile);
 	bool Is_Logical_Operation() 
 	{ 
@@ -1468,6 +1481,8 @@ class AaTernaryExpression: public AaExpression
 		_if_true->Set_Pipeline_Parent(dws);
 		_if_false->Set_Pipeline_Parent(dws);
 	}
+
+	virtual void PrintC_Declaration( ofstream& ofile);
 	virtual void PrintC( ofstream& ofile);
 
 	virtual void Write_VC_Control_Path( ostream& ofile);

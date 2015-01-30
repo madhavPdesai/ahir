@@ -131,8 +131,8 @@ class AaStatement: public AaScope
 
   virtual string Get_C_Name() {assert(0); }
 
-  virtual string Get_C_Macro_Name() { return("_" + this->Get_C_Name() + "_"); }
-  virtual string Get_C_Wrap_Function_Name() { return(this->Get_C_Name()); }
+  virtual string Get_C_Inner_Wrap_Function_Name() { return("_" + this->Get_C_Name() + "_"); }
+  virtual string Get_C_Outer_Wrap_Function_Name() { return(this->Get_C_Name()); }
   
   virtual bool Can_Block(bool pipeline_flag) { assert(0); }
   virtual void Write_VC_Constant_Declarations(ostream& ofile) {};
@@ -433,6 +433,10 @@ class AaAssignmentStatement: public AaStatement
   virtual string Get_C_Name()
   {
     return("_assign_line_" +   IntToStr(this->Get_Line_Number()));
+  }
+  virtual string C_Reference_String()
+  {
+	return(this->Get_Target()->C_Reference_String());
   }
  
   string Get_Target_Name() {return(this->_target->Get_Name());}
