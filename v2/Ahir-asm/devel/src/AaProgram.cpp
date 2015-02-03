@@ -1041,6 +1041,7 @@ void AaProgram::Write_C_Model()
   header_file << "#include <BitVectors.h>" << endl;
   // declare all the record types that you have encountered.
 
+  source_file << "#include <Pipes.h>" << endl;
   source_file << "#include <" << header << ">" << endl;
   for(std::map<string,AaType*,StringCompare>::iterator miter = AaProgram::_type_map.begin();
       miter != AaProgram::_type_map.end();
@@ -1053,7 +1054,7 @@ void AaProgram::Write_C_Model()
 	}
     }
   
-
+  header_file << "// object initialization " << endl;
   for(std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.begin();
       miter != AaProgram::_objects.end();
       miter++)
@@ -1061,8 +1062,24 @@ void AaProgram::Write_C_Model()
       //
       // These are global in the source file.
       //
-      (*miter).second->PrintC(source_file);
+	if((*miter).second->Is_Storage_Object())
+      		((AaStorageObject*) (*miter).second)->PrintC_Global_Declaration(source_file);
     }
+   header_file << "void __init_aa_globals__(); " << endl;
+   source_file << "void __init_aa_globals__() " << endl; 
+   source_file << "{" << endl;
+  for(std::map<string,AaObject*,StringCompare>::iterator miter = AaProgram::_objects.begin();
+      miter != AaProgram::_objects.end();
+      miter++)
+    {
+      //
+      // These are global in the source file.
+      //
+	if((*miter).second->Is_Storage_Object())
+      		((AaStorageObject*) (*miter).second)->PrintC_Global_Initialization(source_file);
+    }
+   source_file << "}" << endl;
+	
 
   for(std::map<string,AaModule*,StringCompare>::iterator miter = AaProgram::_modules.begin();
       miter != AaProgram::_modules.end();

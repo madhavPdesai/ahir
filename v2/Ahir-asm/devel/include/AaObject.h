@@ -112,6 +112,10 @@ class AaInterfaceObject: public AaObject
     return(_unique_driver_statement);
   }
   
+  virtual void PrintC_Declaration(ofstream& ofile)
+  {
+	// will be declared explicitly..
+  }
 };
 
 class AaConstantObject: public AaObject
@@ -216,6 +220,9 @@ class AaStorageObject: public AaObject
     {
       return(_access_widths);
     }
+
+   void PrintC_Global_Declaration(ofstream& ofile);
+   void PrintC_Global_Initialization(ofstream& ofile);
 };
 
 

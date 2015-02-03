@@ -577,7 +577,7 @@ uint8_t uint64_compare(uint8_t signed_flag, uint64_t a, uint64_t b, uint64_t wid
 
 	// sign-extend.
 	// 
-	uint64_t sign_extend_mask = (0xffffffffffffffff  << width);
+	uint64_t sign_extend_mask = (((int64_t ) -1)  << width);
 	if(sa)
 	{
 		a = a | sign_extend_mask;

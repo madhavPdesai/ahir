@@ -78,6 +78,8 @@ class AaStatement: public AaScope
   virtual void Set_Pipeline_Parent(AaStatement* dws) {_pipeline_parent = dws;}
   AaStatement* Get_Pipeline_Parent() {return(_pipeline_parent);}
 
+  // return implicit target with supplied name, NULL if none found.
+  virtual AaSimpleObjectReference* Get_Implicit_Target(string tgt_name) {assert(0);}
   // add map entries in parent's lookup map for easy access
   virtual void Map_Targets() 
   {
@@ -427,6 +429,7 @@ class AaAssignmentStatement: public AaStatement
   virtual string Kind() {return("AaAssignmentStatement");}
   virtual void Map_Source_References();
 
+  virtual AaSimpleObjectReference* Get_Implicit_Target(string tgt_name);
 
   virtual string Debug_Info();
 
@@ -526,7 +529,7 @@ class AaCallStatement: public AaStatement
 
   //  virtual void Map_Targets();
 
-  AaSimpleObjectReference* Get_Implicit_Target(string tgt_name);
+  virtual AaSimpleObjectReference* Get_Implicit_Target(string tgt_name);
 
   //
   // return true if one of the sources or targets is a pipe.
@@ -644,16 +647,7 @@ class AaBlockStatement: public AaStatement
 	this->_objects[i]->PrintC_Declaration(ofile);
       }
   }
-  virtual void PrintC(ofstream& ofile)
-  {
-    ofile << "{" << endl;
-    this->Write_C_Object_Declarations(ofile);
-    if(this->_statement_sequence != NULL)
-    {
-	this->_statement_sequence->PrintC(ofile);
-    }
-    ofile << "}" << endl;
-  }
+  virtual void PrintC(ofstream& ofile);
 
   virtual void Print_Statement_Sequence(ostream& ofile)
   {
@@ -1053,6 +1047,9 @@ class AaPhiStatement: public AaStatement
   virtual void Print(ostream& ofile);
   virtual string Kind() {return("AaPhiStatement");}
   virtual void Map_Source_References();
+
+  virtual AaSimpleObjectReference* Get_Implicit_Target(string tgt_name);
+
 
   virtual string Get_C_Name()
   {

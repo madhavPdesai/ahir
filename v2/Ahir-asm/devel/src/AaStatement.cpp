@@ -972,9 +972,24 @@ void AaAssignmentStatement::Map_Source_References()
 }
 
 
+AaSimpleObjectReference* AaAssignmentStatement::Get_Implicit_Target(string tgt_name)
+{
+	AaSimpleObjectReference* ret = NULL;
+	AaExpression* oarg = this->_target;
+	if(oarg->Is("AaSimpleObjectReference"))
+	{
+		string oarg_name = ((AaSimpleObjectReference*)oarg)->Get_Object_Root_Name();
+		if(oarg_name == tgt_name)
+		{
+			ret = (AaSimpleObjectReference*) oarg;
+		}
+	}	
+	return(ret);
+}
 
 void AaAssignmentStatement::PrintC(ofstream& ofile)
 {
+	ofile << "// " << this->To_String();
 	ofile << "// " << this->Get_Source_Info() << endl;
 	this->_source->PrintC_Declaration(ofile);
 	this->_source->PrintC(ofile);
@@ -1800,6 +1815,8 @@ bool AaCallStatement::Can_Block(bool pipeline_flag)
 
 void AaCallStatement::PrintC(ofstream& ofile)
 {
+	ofile << "// " << this->To_String();
+	ofile << "// " << this->Get_Source_Info() << endl;
       for(unsigned int i=0; i < this->_input_args.size(); i++)
       {
 	this->_input_args[i]->PrintC_Declaration(ofile);
@@ -1810,24 +1827,24 @@ void AaCallStatement::PrintC(ofstream& ofile)
 
       bool first_one = true;
       ofile << ((AaModule*)this->Get_Called_Module())->Get_C_Inner_Wrap_Function_Name()
-	    << "(" << endl;
+	    << "(";
       for(unsigned int i=0; i < this->_input_args.size(); i++)
 	{
 	  if(!first_one)
-	    ofile << "," << endl;
-	  ofile << this->_input_args[i]->C_Reference_String();
+	    ofile << ", ";
+	  ofile << " &(" << this->_input_args[i]->C_Reference_String() << ")";
 	  first_one = false;
 	}
 
       for(unsigned int i=0; i < this->_output_args.size(); i++)
 	{
 	  if(!first_one)
-	    ofile << "," << endl;
-	  ofile << "&";
-	  ofile << this->_output_args[i]->C_Reference_String();
+	    ofile << ", ";
+	  ofile << "&(";
+	  ofile << this->_output_args[i]->C_Reference_String() << ")";
 	  first_one = false;
 	}
-      ofile << endl << "); //  " << this->Get_Source_Info() << endl;
+      ofile <<  ");  " << endl;
 
       // pass results to output expressions.
       for(unsigned int i=0; i < this->_output_args.size(); i++)
@@ -2091,10 +2108,89 @@ void AaBlockStatement::Print(ostream& ofile)
     }
 }
 
+void AaBlockStatement::PrintC(ofstream& ofile)
+{
+	map<string, AaType*> export_type_map;
+
+	// setup export type map.
+	for(map<string,string>::iterator iter = _exports.begin(), fiter = _exports.end();
+		iter != fiter; iter++)
+	{
+		string internal_name = (*iter).first;		
+		string exported_name = (*iter).second;
+		
+		if(internal_name == exported_name)
+		{
+			AaRoot::Error("Sorry! Aa2C does not support exports with the same identifier as the block variable name "
+					+ internal_name + " => " + exported_name , 
+						this);
+			
+		}
+		AaRoot* iroot = this->Find_Child(internal_name);
+		AaType* iroot_type = NULL;
+
+		if(iroot == NULL)
+		{
+			AaRoot::Error("unresolved export " + internal_name + " => " + exported_name, this);
+		}
+		else
+		// we need to get the type of iroot.
+		{
+			if(iroot->Is_Expression())
+			{	
+				iroot_type = ((AaExpression*) iroot)->Get_Type();
+			}
+			else if(iroot->Is_Statement())
+			{
+				// if this is a call statement, we need
+				AaSimpleObjectReference* st = ((AaStatement*) iroot)->Get_Implicit_Target(internal_name);
+				if(st != NULL)
+					iroot_type = st->Get_Type();
+			}
+			else if(iroot->Is_Object())
+			{
+				iroot_type = ((AaObject*) iroot)->Get_Type();
+			}
+		}
+
+		if(iroot_type != NULL)
+			export_type_map[exported_name] = iroot_type;
+	}
+	// declare the objects which need to be exported.
+	for(map<string,AaType*>::iterator iter = export_type_map.begin(), fiter = export_type_map.end();
+		iter != fiter; iter++)
+	{
+		Print_C_Declaration((*iter).first, (*iter).second, ofile);
+	}
+
+	ofile << "{" << endl;
+	this->Write_C_Object_Declarations(ofile);
+	if(this->_statement_sequence != NULL)
+	{
+		this->_statement_sequence->PrintC(ofile);
+	}
+
+	// ship exports out of the block
+	for(map<string,string>::iterator iter = _exports.begin(), fiter = _exports.end();
+		iter != fiter; iter++)
+	{
+		string internal_name = (*iter).first;		
+		string exported_name = (*iter).second;
+		AaType* exp_type = NULL;
+		map<string,AaType*>::iterator titer = export_type_map.find(exported_name);
+		if(titer != export_type_map.end())
+		{	
+			exp_type = (*titer).second;
+			Print_C_Assignment(exported_name, internal_name, exp_type, ofile);
+		}
+	}
+	ofile << "}" << endl;
+}
+
 void AaBlockStatement::Map_Source_References()
 {
-  if(this->_statement_sequence)
-    this->_statement_sequence->Map_Source_References();
+	if(this->_statement_sequence)
+		this->_statement_sequence->Map_Source_References();
 }
 
 // Can the execution of the block be blocked?
@@ -2110,7 +2206,7 @@ bool AaBlockStatement::Can_Block(bool pipeline_flag)
 		{	
 			return(true);
 		}
-		
+
 	}	
 	return(false);
 }
@@ -2120,63 +2216,63 @@ bool AaBlockStatement::Can_Block(bool pipeline_flag)
 void AaBlockStatement::Write_VC_Constant_Declarations(ostream& ofile)
 {
 
-  if(this->_statement_sequence != NULL)
-    for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
-      {
-	this->_statement_sequence->Get_Statement(idx)->Write_VC_Constant_Declarations(ofile);
-      }
+	if(this->_statement_sequence != NULL)
+		for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+		{
+			this->_statement_sequence->Get_Statement(idx)->Write_VC_Constant_Declarations(ofile);
+		}
 
-  ofile << "// constant-object-declarations for block " << this->Get_Hierarchical_Name() << endl;
-  ofile << "// " << this->Get_Source_Info() << endl;
-  for(int idx = 0; idx < _objects.size(); idx++)
-    {
-      if(_objects[idx]->Is("AaConstantObject"))
+	ofile << "// constant-object-declarations for block " << this->Get_Hierarchical_Name() << endl;
+	ofile << "// " << this->Get_Source_Info() << endl;
+	for(int idx = 0; idx < _objects.size(); idx++)
 	{
-	  _objects[idx]->Write_VC_Model(ofile);
+		if(_objects[idx]->Is("AaConstantObject"))
+		{
+			_objects[idx]->Write_VC_Model(ofile);
+		}
+		else if(_objects[idx]->Is("AaStorageObject"))
+		{
+			((AaStorageObject*)(_objects[idx]))->Write_VC_Load_Store_Constants(ofile);
+		}
 	}
-      else if(_objects[idx]->Is("AaStorageObject"))
-	{
-	  ((AaStorageObject*)(_objects[idx]))->Write_VC_Load_Store_Constants(ofile);
-	}
-    }
 }
 void AaBlockStatement::Write_VC_Pipe_Declarations(ostream& ofile)
 {
-  ofile << "// pipe-declarations for block " << this->Get_Hierarchical_Name() << endl;
-  ofile << "// " << this->Get_Source_Info() << endl;
+	ofile << "// pipe-declarations for block " << this->Get_Hierarchical_Name() << endl;
+	ofile << "// " << this->Get_Source_Info() << endl;
 
-  for(int idx = 0; idx < _objects.size(); idx++)
-    {
-      if(_objects[idx]->Is("AaPipeObject"))
-	((AaPipeObject*)(_objects[idx]))->Write_VC_Model(ofile);
-    }
+	for(int idx = 0; idx < _objects.size(); idx++)
+	{
+		if(_objects[idx]->Is("AaPipeObject"))
+			((AaPipeObject*)(_objects[idx]))->Write_VC_Model(ofile);
+	}
 
-  if(this->_statement_sequence != NULL)
-    for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
-      {
-	this->_statement_sequence->Get_Statement(idx)->Write_VC_Pipe_Declarations(ofile);
-      }
+	if(this->_statement_sequence != NULL)
+		for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+		{
+			this->_statement_sequence->Get_Statement(idx)->Write_VC_Pipe_Declarations(ofile);
+		}
 }
- 
+
 void AaBlockStatement::Write_VC_Memory_Space_Declarations(ostream& ofile)
 {
 
-  ofile << "// memory-space-declarations for block " << this->Get_Hierarchical_Name() << endl;
-  ofile << "// " << this->Get_Source_Info() << endl;
+	ofile << "// memory-space-declarations for block " << this->Get_Hierarchical_Name() << endl;
+	ofile << "// " << this->Get_Source_Info() << endl;
 
-  for(int idx = 0; idx < _objects.size(); idx++)
-    {
-      if(_objects[idx]->Is("AaStorageObject"))
+	for(int idx = 0; idx < _objects.size(); idx++)
 	{
-	  ((AaStorageObject*)(_objects[idx]))->Write_VC_Model(ofile);
+		if(_objects[idx]->Is("AaStorageObject"))
+		{
+			((AaStorageObject*)(_objects[idx]))->Write_VC_Model(ofile);
+		}
 	}
-    }
-  
-  if(this->_statement_sequence != NULL)
-    for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
-      {
-	this->_statement_sequence->Get_Statement(idx)->Write_VC_Memory_Space_Declarations(ofile);
-      }
+
+	if(this->_statement_sequence != NULL)
+		for(int idx = 0; idx < this->_statement_sequence->Get_Statement_Count(); idx++)
+		{
+			this->_statement_sequence->Get_Statement(idx)->Write_VC_Memory_Space_Declarations(ofile);
+		}
 }
 
 void AaBlockStatement::Write_VC_Constant_Wire_Declarations(ostream& ofile)
@@ -2781,6 +2877,7 @@ void AaMergeStatement::Print(ostream& ofile)
 void AaMergeStatement::PrintC(ofstream& ofile)
 {
  
+  ofile << "// merge: " << this->Get_Source_Info() << endl;
   string run_block_name = this->Get_VC_Name() + "_run";
   string entry_flag_name = this->Get_VC_Name() + "_entry_flag";
   ofile << "uint8_t " << entry_flag_name << ";" << endl;
@@ -3179,6 +3276,21 @@ void AaPhiStatement::Map_Source_References()
     }
 }
   
+AaSimpleObjectReference* AaPhiStatement::Get_Implicit_Target(string tgt_name)
+{
+	AaSimpleObjectReference* ret = NULL;
+	AaExpression* oarg = this->_target;
+	if(oarg->Is("AaSimpleObjectReference"))
+	{
+		string oarg_name = ((AaSimpleObjectReference*)oarg)->Get_Object_Root_Name();
+		if(oarg_name == tgt_name)
+		{
+			ret = (AaSimpleObjectReference*) oarg;
+		}
+	}	
+	return(ret);
+}
+
 void AaPhiStatement::Set_Pipeline_Parent(AaStatement* dws)
 {
 	this->_target->Set_Pipeline_Parent(dws);
@@ -3191,6 +3303,8 @@ void AaPhiStatement::Set_Pipeline_Parent(AaStatement* dws)
 void AaPhiStatement::PrintC(ofstream& ofile)
 {
 
+        ofile << "// " << this->To_String();
+        ofile << "// " << this->Get_Source_Info() << endl;
 	AaExpression* default_src = NULL;
 	for(unsigned int i=0; i < this->_source_pairs.size(); i++)
 	{
@@ -3447,6 +3561,7 @@ void AaSwitchStatement::PrintC(ofstream& ofile)
   // 
   //
   ofile << "// switch statement " << endl;
+  ofile << "// " << this->Get_Source_Info() << endl;
   this->_select_expression->PrintC_Declaration(ofile);
   this->_select_expression->PrintC(ofile);
   for(unsigned int i=0; i < this->_choice_pairs.size(); i++)
@@ -3903,6 +4018,7 @@ void AaIfStatement::Print(ostream& ofile)
 void AaIfStatement::PrintC(ofstream& ofile)
 {
   ofile << "// if statement " << endl;
+  ofile << "// " << this->Get_Source_Info() << endl;
   this->_test_expression->PrintC_Declaration(ofile);
   this->_test_expression->PrintC(ofile);
   ofile << "if (";
@@ -4240,6 +4356,7 @@ void AaDoWhileStatement::Print(ostream& ofile)
 
 void AaDoWhileStatement::PrintC(ofstream& ofile)
 {
+    ofile << "// do-while:  " << this->Get_Source_Info() << endl;
     assert(this->_test_expression);
 
     this->_test_expression->PrintC_Declaration(ofile);

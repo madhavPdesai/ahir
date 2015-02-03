@@ -698,11 +698,16 @@ void AaSimpleObjectReference::PrintC_Declaration(ofstream& ofile)
 {
 	if(this->Get_Is_Target() && this->Is_Implicit_Variable_Reference())
 	{
-		Print_C_Declaration(this->C_Reference_String(), this->Get_Type(),ofile);
+		if(!this->Get_Object()->Is_Object())
+			Print_C_Declaration(this->C_Reference_String(), this->Get_Type(),ofile);
 	}
 	else if(this->Get_Object()->Is_Pipe_Object())
 	{
 		Print_C_Declaration(this->C_Reference_String(), this->Get_Type(),ofile);
+	}
+	else
+	{
+		// nothing..  will be declared elsewhere...
 	}
 }
 
@@ -715,15 +720,15 @@ void AaSimpleObjectReference::PrintC(ofstream& ofile)
 	{
 		if(this->Get_Is_Target())
 		{
-			// access the pipe..
-			Print_C_Pipe_Read(this->C_Reference_String(),  
+			Print_C_Pipe_Write(this->C_Reference_String(),  
 					  this->Get_Type(), 
 					  (AaPipeObject*) this->Get_Object(), 
 					  ofile);
 		}
 		else
 		{
-			Print_C_Pipe_Write(this->C_Reference_String(),  
+			// access the pipe..
+			Print_C_Pipe_Read(this->C_Reference_String(),  
 					  this->Get_Type(), 
 					  (AaPipeObject*) this->Get_Object(), 
 					  ofile);

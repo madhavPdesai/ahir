@@ -9,6 +9,7 @@
 #include <AaStatement.h>
 #include <AaModule.h>
 #include <Aa2VC.h>
+#include <Aa2C.h>
 #include <AaProgram.h>
 
 /***************************************** MODULE   ****************************/
@@ -184,7 +185,7 @@ bool AaModule::Can_Have_Native_C_Interface()
     }
   if(all_types_native)
     {
-      for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
+      for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
 	{
 	  if(!(this->_output_args[i]->Get_Type()->Is_A_Native_C_Type()))
 	    {
@@ -283,6 +284,7 @@ void AaModule::Write_C_Source(ofstream& ofile)
 	  // all arguments are passed as pointers..
 	  //
 	  ofile << this->_input_args[i]->Get_Type()->Native_C_Name();
+	  ofile << " " << this->_input_args[i]->Get_C_Name() << " ";
 	}
       for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
 	{
@@ -291,24 +293,22 @@ void AaModule::Write_C_Source(ofstream& ofile)
 	  first_one = false;
 	  ofile << this->_output_args[i]->Get_Type()->Native_C_Name();
 	  ofile << "* ";
+	  ofile << " " << this->_output_args[i]->Get_C_Name() << " ";
 	}
       ofile << ")" << endl;
 
       ofile << "{" << endl;
-      //
-      // TODO: Uint/int <-> BitVector conversions
-      //       object <-> pointer conversions
-      //       call inner wrap function.
-      //
+
+	// set up and call inner function.
       for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
 	{
 	  AaType* t = this->_input_args[i]->Get_Type();
 	  string o_name =  this->_input_args[i]->Get_C_Name();
 	  string n_name = "__" + o_name;
 
-	  if(t->Is_Uinteger_Type() || t->Is_Integer_Type())
+	  if(t->Is_Integer_Type())
 	    {
-	      ofile << "__declare_bit_vector(__" << n_name << ", " << t->Size() << ");" << endl;
+	      ofile << "__declare_bit_vector(" << n_name << ", " << t->Size() << ");" << endl;
 	      ofile << "bit_vector_assign_uint64(0, &" << n_name << ", " << o_name << ");" << endl;
 	    }
 	  else
@@ -324,9 +324,9 @@ void AaModule::Write_C_Source(ofstream& ofile)
 	  string o_name =  this->_output_args[i]->Get_C_Name();
 	  string n_name = "__" + o_name;
 
-	  if(t->Is_Uinteger_Type() || t->Is_Integer_Type())
+	  if(t->Is_Integer_Type())
 	    {
-	      ofile << "__declare_bit_vector(__" << n_name << ", " << t->Size() << ");" << endl;
+	      ofile << "__declare_bit_vector(" << n_name << ", " << t->Size() << ");" << endl;
 	    }
 	  else
 	    {
@@ -374,15 +374,15 @@ void AaModule::Write_C_Source(ofstream& ofile)
 	  string o_name =  this->_output_args[i]->Get_C_Name();
 	  string n_name = "__" + o_name;
 
-	  if(t->Is_Uinteger_Type() || t->Is_Integer_Type())
+	  if(t->Is_Integer_Type())
 	    {
-	      ofile << o_name << " =  bit_vector_to_uint64(" 
-		    << (t->Is_Integer_Type() ? 1 : 0)
+	      ofile << " *" << o_name << " =  bit_vector_to_uint64(" 
+		    << (!t->Is_Uinteger_Type() ? 1 : 0)
 		    << ", &" << n_name << ");" << endl;
 	    }
 	  else
 	    {
-	      ofile << o_name << " = " << n_name << ";" << endl;
+	      ofile << " *" << o_name << " = " << n_name << ";" << endl;
 	    }
 	}
 
@@ -403,7 +403,7 @@ void AaModule::Write_C_Source(ofstream& ofile)
 	ofile << ", ";
       first_one = false;
       ofile << this->_input_args[i]->Get_Type()->C_Name();
-      ofile << "* p" << this->_input_args[i]->Get_Name();
+      ofile << "* __p" << this->_input_args[i]->Get_Name();
     }
   for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
     {
@@ -412,19 +412,39 @@ void AaModule::Write_C_Source(ofstream& ofile)
       first_one = false;
       ofile << this->_output_args[i]->Get_Type()->C_Name();
       ofile << "* ";
-      ofile << " p" << this->_output_args[i]->Get_Name();
+      ofile << " __p" << this->_output_args[i]->Get_Name();
     }
   ofile << ")" << endl;
   ofile << "{" << endl;
   //
-  // TODO: pointer-interface <-> declare i/o objects
-  //       print input side conversions.
+  // pointer-interface <-> declare i/o objects
+  // print input side conversions.
   //
+  for(unsigned int i = 0 ; i < this->_input_args.size(); i++)
+    {
+	string o_name =  this->_input_args[i]->Get_C_Name();
+	string n_name = "__p" + o_name;
+	Print_C_Declaration(o_name, this->_input_args[i]->Get_Type(), ofile);
+	Print_C_Assignment(o_name, "(*" + n_name + ")", this->_input_args[i]->Get_Type(), ofile);
+    }
+  for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+    {
+	string o_name =  this->_output_args[i]->Get_C_Name();
+	string n_name = "__p" + o_name;
+	Print_C_Declaration(o_name, this->_output_args[i]->Get_Type(), ofile);
+    }
 
   this->Write_C_Object_Declarations(ofile);
   this->_statement_sequence->PrintC(ofile);
 
   // TODO pointer interface <-> output side conversions
+   ofile << "// output side transfers..." << endl;
+  for(unsigned int i = 0 ; i < this->_output_args.size(); i++)
+    {
+	string o_name =  this->_output_args[i]->Get_C_Name();
+	string n_name = "__p" + o_name;
+	Print_C_Assignment("(*" + n_name + ")", o_name,  this->_input_args[i]->Get_Type(), ofile);
+    }
 
   ofile << "}" << endl;
 }

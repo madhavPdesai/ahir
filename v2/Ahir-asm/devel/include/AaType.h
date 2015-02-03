@@ -137,7 +137,7 @@ class AaUintType: public AaScalarType
   // C related stuff.
   virtual string C_Base_Name()
   {
-	return("BitVector");
+	return("bit_vector");
   }
 
   virtual bool Is_A_Native_C_Type() 
@@ -149,7 +149,7 @@ class AaUintType: public AaScalarType
     return("uint" + IntToStr(_width) + "_t");
   }
 
-  // print nothing.  BitVector is provided by C library.
+  // print nothing.  bit_vector is provided by C library.
   virtual void PrintC_Declaration(ofstream& ofile) {}
   
   virtual int Size() {return(this->_width);}
@@ -184,7 +184,7 @@ class AaIntType: public AaUintType
   // C related stuff
   virtual string C_Base_Name() 
   {
-	return("BitVector");
+	return("bit_vector");
   } 
   virtual void PrintC_Declaration(ofstream& ofile)
   {
