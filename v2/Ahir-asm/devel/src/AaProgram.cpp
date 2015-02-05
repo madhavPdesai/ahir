@@ -1086,7 +1086,7 @@ void AaProgram::Write_C_Model()
       miter++)
     {
 	AaModule* m = (*miter).second;
-	if(AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end())
+	if(!m->Get_Foreign_Flag() && (AaProgram::_reachable_modules.find(m) != AaProgram::_reachable_modules.end()))
 	{
       		// Each module is printed in two parts:
       		//   - as a macro

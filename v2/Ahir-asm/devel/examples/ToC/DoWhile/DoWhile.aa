@@ -1,0 +1,15 @@
+$pipe in_data: $uint<32>
+$pipe out_data: $uint<32>
+
+$module [Daemon] $in () $out () $is
+{
+	$branchblock[main] {
+		$dopipeline
+		$depth 8
+		$buffering 1
+		$merge $entry $loopback $endmerge
+			x := in_data
+			out_data := (x * x)
+		$while 1
+	}
+}

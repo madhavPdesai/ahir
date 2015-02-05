@@ -19,6 +19,8 @@ void Print_C_Global_Declaration(string obj_name, AaType* obj_type, ofstream& ofi
 void Print_C_Assignment_To_Constant(string tgt_c_ref, AaType* tgt_type, AaValue* v, ofstream& ofile);
 void Print_C_Assignment(string tgt, string src, AaType* t, ofstream& ofile);
 void Print_C_Value_Expression(string cref, AaType* t, ofstream& ofile);
+			
+void Print_C_Uint64_To_BitVector_Assignment(string src, string dest, AaType* t, ofstream& ofile); 
 
 void Print_C_Pipe_Read(string tgt, AaType* tgt_type, AaPipeObject* p, ofstream& ofile);
 void Print_C_Pipe_Write(string src, AaType* src_type, AaPipeObject* p, ofstream& ofile);

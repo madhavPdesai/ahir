@@ -5,9 +5,8 @@
 // the main program which calls the shift register
 int main(int argc, char* argv[])
 {
-	uint_10 a,b,c;
-
-	a.__val = 5;
+	uint16_t a,b,c;
+	a = 5;
 	shiftregister(a,&b);
 
 	return(1);
@@ -16,17 +15,17 @@ int main(int argc, char* argv[])
 
 // two foreign functions used by
 // the shift-register
-int Print(uint_10 a)
+int Print(uint16_t a)
 {
-   printf("out: %d \n", a.__val);
+   printf("out: %d \n", a);
    return(0);
 }
 
-int Read(uint_10 *a)
+int Read(uint16_t *a)
 {
   static count=0;
-  a->__val = count;
-  printf("in: %d \n", a->__val);
+  a = count;
+  printf("in: %d \n", a);
   count++;	
 
   if(count == 1025)

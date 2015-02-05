@@ -51,7 +51,7 @@ class AaType: public AaRoot
     return(Is_Array_Type() || Is_Record_Type());
   }
 
-  virtual bool Is_Scalar_Type() {return (Is_Integer_Type() || Is_Float_Type());}
+  virtual bool Is_Scalar_Type() {return (Is_Pointer_Type() || Is_Integer_Type() || Is_Float_Type());}
 
   virtual bool Is_A_Native_C_Type() {return(false);}
   virtual string Native_C_Name() {assert(0);}
@@ -235,7 +235,11 @@ class AaPointerType: public AaUintType
   {
     return(this->AaUintType::Get_VC_Name());
   }
+
   virtual bool Is_Pointer_Type() {return(true);}
+  virtual bool Is_Integer_Type() {return(false);}
+  virtual bool Is_Uinteger_Type() {return(false);}
+
   virtual AaType* Get_Element_Type(int start_idx, vector<AaExpression*>& indices);
 };
 

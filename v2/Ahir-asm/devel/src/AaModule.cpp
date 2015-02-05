@@ -435,6 +435,7 @@ void AaModule::Write_C_Source(ofstream& ofile)
     }
 
   this->Write_C_Object_Declarations(ofile);
+  this->_statement_sequence->PrintC_Implicit_Declarations(ofile);
   this->_statement_sequence->PrintC(ofile);
 
   // TODO pointer interface <-> output side conversions

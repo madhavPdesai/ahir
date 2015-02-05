@@ -2,22 +2,28 @@
 // pipes are used extensively, and foreign
 // modules are used to read and print.
 $module [shiftregister]
-	$in(a: $uint<10>)
-	$out(b: $uint<10>)
+	$in(a: $uint<16>)
+	$out(b: $uint<16>)
 $is
 {
-	$pipe inpipe: $uint<10>
-	$pipe outpipe: $uint<10>
+	$pipe inpipe: $uint<16>
+	$pipe outpipe: $uint<16>
 
 	$parallelblock[p1]
 	{
-		$pipe midpipe: $uint<10>
+		$pipe midpipe: $uint<16>
 
-		$branchblock[reader] {
+		//
+		// For Aa2C, the order is important!
+		// This example will hang in Aa2C (in the current implementation)
+		//
+		//
+		$branchblock[writer]
+		{
 			$merge $entry loopback $endmerge
-
-			// data goes out from here.
-			$call Print(outpipe)()
+	
+			// data comes in from here.
+			$call Read () (inpipe)
 			$place [loopback]
 		}
 		$branchblock[b1]
@@ -32,23 +38,22 @@ $is
 			outpipe := midpipe
 			$place [loopback]
 		}
-		$branchblock[writer]
-		{
+		$branchblock[reader] {
 			$merge $entry loopback $endmerge
-	
-			// data comes in from here.
-			$call Read () (inpipe)
+
+			// data goes out from here.
+			$call Print(outpipe)()
 			$place [loopback]
 		}
 	}
-	$call Print(%p1:b) ()
+	$call Print(5) ()
 }
 
 $foreign $module [Print] 
-	$in (a: $uint<10>)
+	$in (a: $uint<16>)
 	$out ()
 
 $foreign $module [Read] 
 	$in ()
-	$out (result: $uint<10>)
+	$out (result: $uint<16>)
 

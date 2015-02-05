@@ -1,376 +1,143 @@
+#include <Pipes.h>
 #include <aa_c_model.h>
-uint_32 u;
-uint_32 v;
-int
-increment (uint_32 incr_a, uint_32 * incr_b)
+bit_vector u;
+bit_vector v;
+void __init_aa_globals__() 
 {
-  increment_State *__top =
-    (increment_State *) calloc (1, sizeof (increment_State));
-  __top->increment_entry = 1;
-  __top->incr_a = incr_a;
-  while (!__top->increment_exit)
-    {
-      __top = increment_ (__top);
-    }
-  *incr_b = __top->incr_b;
-  cfree (__top);
-  return AASUCCESS;
+init_bit_vector(&u, 32);
+init_bit_vector(&v, 32);
+}
+void increment(uint32_t incr_a , uint32_t*  incr_b )
+{
+__declare_bit_vector(__incr_a, 32);
+bit_vector_assign_uint64(0, &__incr_a, incr_a);
+__declare_bit_vector(__incr_b, 32);
+_increment_( &__incr_a,  &__incr_b);
+ *incr_b =  bit_vector_to_uint64(0, &__incr_b);
 }
 
-increment_State *
-increment_ (increment_State * __top)
+
+void _increment_(bit_vector* __pincr_a, bit_vector*  __pincr_b)
 {
-  if (__top->increment_entry)
-    {
-      __top->increment_entry = 0;
-      __top->increment_in_progress = 1;
-      __top->increment_entry = 0;
-      __top->increment_in_progress = 1;
-      __top->_assign_line_12_entry = 1;
-    }
-  if (__top->increment_in_progress)
-    {
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_12
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_12_entry)
-	{
-	  if (1)
-	    {
-	      (__top->incr_t1) = ((uint_32 *) (__top->incr_a).__val);	// file Pointers.aa, line 12
-	      __top->_assign_line_12_entry = 0;
-	      __top->_assign_line_12_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_12
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_12_exit)
-	{
-	  __top->_assign_line_12_exit = 0;
-	  __top->_assign_line_13_entry = 1;
-	}
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_13
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_13_entry)
-	{
-	  if (1)
-	    {
-	      (__top->incr_temp).__val = (*(__top->incr_t1)).__val;	// file Pointers.aa, line 13
-	      __top->_assign_line_13_entry = 0;
-	      __top->_assign_line_13_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_13
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_13_exit)
-	{
-	  __top->_assign_line_13_exit = 0;
-	  __top->_assign_line_14_entry = 1;
-	}
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_14
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_14_entry)
-	{
-	  if (1)
-	    {
-	      (*(__top->incr_t1)).__val = __PLUS ((__top->incr_temp).__val, 1);	// file Pointers.aa, line 14
-	      __top->_assign_line_14_entry = 0;
-	      __top->_assign_line_14_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_14
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_14_exit)
-	{
-	  __top->_assign_line_14_exit = 0;
-	  __top->_assign_line_15_entry = 1;
-	}
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_15
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_15_entry)
-	{
-	  if (1)
-	    {
-	      (__top->incr_b).__val = (*(__top->incr_t1)).__val;	// file Pointers.aa, line 15
-	      __top->_assign_line_15_entry = 0;
-	      __top->_assign_line_15_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_15
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_15_exit)
-	{
-	  __top->_assign_line_12_exit = 0;
-	  __top->_assign_line_13_exit = 0;
-	  __top->_assign_line_14_exit = 0;
-	  __top->_assign_line_15_exit = 0;
-	  __top->increment_in_progress = 0;
-	  __top->increment_exit = 1;
-	}
-    }
-  return __top;
+__declare_bit_vector(incr_a,32);
+bit_vector_assign_bit_vector(0, &((*__pincr_a)), &(incr_a));
+__declare_bit_vector(incr_b,32);
+__declare_bit_vector(incr_temp,32);
+// implicit declarations for assignment:  file Pointers.aa, line 11
+bit_vector* incr_t1;
+// 	incr_t1 := ($cast ($pointer< $uint<32> >) incr_a )
+//  file Pointers.aa, line 11
+bit_vector* type_cast_13;
+type_cast_13 = (bit_vector**)  bit_vector_to_uint64(0, &(incr_a));
+memcpy( &incr_t1, &type_cast_13, sizeof(incr_t1));
+// 	incr_temp := ->(incr_t1)
+//  file Pointers.aa, line 12
+__declare_bit_vector(ptr_deref_17,32);
+bit_vector_assign_bit_vector(0, &(*incr_t1), &(ptr_deref_17));
+bit_vector_assign_bit_vector(0, &(ptr_deref_17), &(incr_temp));
+// 	->(incr_t1) := (incr_temp + 1 )
+//  file Pointers.aa, line 13
+__declare_bit_vector(konst_22,32);
+__declare_bit_vector(ADD_u32_u32_23,32);
+konst_22.val.byte_array[0] = 1;
+konst_22.val.byte_array[1] = 0;
+konst_22.val.byte_array[2] = 0;
+konst_22.val.byte_array[3] = 0;
+bit_vector_plus( &(incr_temp), &(konst_22), &(ADD_u32_u32_23));
+__declare_bit_vector(ptr_deref_20,32);
+bit_vector_assign_bit_vector(0, &(ADD_u32_u32_23), &(ptr_deref_20));
+// 	incr_b := ->(incr_t1)
+//  file Pointers.aa, line 14
+__declare_bit_vector(ptr_deref_27,32);
+bit_vector_assign_bit_vector(0, &(*incr_t1), &(ptr_deref_27));
+bit_vector_assign_bit_vector(0, &(ptr_deref_27), &(incr_b));
+// output side transfers...
+bit_vector_assign_bit_vector(0, &(incr_b), &((*__pincr_b)));
+}
+void passpointer(uint32_t a , uint32_t*  b )
+{
+__declare_bit_vector(__a, 32);
+bit_vector_assign_uint64(0, &__a, a);
+__declare_bit_vector(__b, 32);
+_passpointer_( &__a,  &__b);
+ *b =  bit_vector_to_uint64(0, &__b);
 }
 
-int
-passpointer (uint_32 a, uint_32 * b)
-{
-  passpointer_State *__top =
-    (passpointer_State *) calloc (1, sizeof (passpointer_State));
-  __top->passpointer_entry = 1;
-  __top->a = a;
-  while (!__top->passpointer_exit)
-    {
-      __top = passpointer_ (__top);
-    }
-  *b = __top->b;
-  cfree (__top);
-  return AASUCCESS;
-}
 
-passpointer_State *
-passpointer_ (passpointer_State * __top)
+void _passpointer_(bit_vector* __pa, bit_vector*  __pb)
 {
-  if (__top->passpointer_entry)
-    {
-      __top->passpointer_entry = 0;
-      __top->passpointer_in_progress = 1;
-      __top->passpointer_entry = 0;
-      __top->passpointer_in_progress = 1;
-      __top->_assign_line_23_entry = 1;
-    }
-  if (__top->passpointer_in_progress)
-    {
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_23
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_23_entry)
-	{
-	  if (1)
-	    {
-	      (u).__val = (__top->a).__val;	// file Pointers.aa, line 23
-	      __top->_assign_line_23_entry = 0;
-	      __top->_assign_line_23_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_23
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_23_exit)
-	{
-	  __top->_assign_line_23_exit = 0;
-	  __top->_assign_line_24_entry = 1;
-	}
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_24
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_24_entry)
-	{
-	  if (1)
-	    {
-	      (v).__val = (__top->a).__val;	// file Pointers.aa, line 24
-	      __top->_assign_line_24_entry = 0;
-	      __top->_assign_line_24_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_24
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_24_exit)
-	{
-	  __top->_assign_line_24_exit = 0;
-	  __top->_assign_line_25_entry = 1;
-	}
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_25
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_25_entry)
-	{
-	  if (1)
-	    {
-	      (__top->pu) = (&(u));	// file Pointers.aa, line 25
-	      __top->_assign_line_25_entry = 0;
-	      __top->_assign_line_25_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_25
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_25_exit)
-	{
-	  __top->_assign_line_25_exit = 0;
-	  __top->_assign_line_26_entry = 1;
-	}
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_26
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_26_entry)
-	{
-	  if (1)
-	    {
-	      (__top->pv) = (&(v));	// file Pointers.aa, line 26
-	      __top->_assign_line_26_entry = 0;
-	      __top->_assign_line_26_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_26
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_26_exit)
-	{
-	  __top->_assign_line_26_exit = 0;
-	  __top->_assign_line_27_entry = 1;
-	}
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_27
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_27_entry)
-	{
-	  if (1)
-	    {
-	      (__top->t).__val = (*(__top->pu)).__val;	// file Pointers.aa, line 27
-	      __top->_assign_line_27_entry = 0;
-	      __top->_assign_line_27_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_27
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_27_exit)
-	{
-	  __top->_assign_line_27_exit = 0;
-	  __top->_assign_line_28_entry = 1;
-	}
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_28
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_28_entry)
-	{
-	  if (1)
-	    {
-	      (__top->s).__val = (*(__top->pv)).__val;	// file Pointers.aa, line 28
-	      __top->_assign_line_28_entry = 0;
-	      __top->_assign_line_28_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_28
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_28_exit)
-	{
-	  __top->_assign_line_28_exit = 0;
-	  __top->_assign_line_29_entry = 1;
-	}
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_29
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_29_entry)
-	{
-	  if (1)
-	    {
-	      (__top->t1).__val = ((__GREATER ((__top->a).__val, 0)) ? ((__top->s).__val) : ((__top->t).__val));	// file Pointers.aa, line 29
-	      __top->_assign_line_29_entry = 0;
-	      __top->_assign_line_29_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_29
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_29_exit)
-	{
-	  __top->_assign_line_29_exit = 0;
-	  __top->_assign_line_30_entry = 1;
-	}
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_30
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_30_entry)
-	{
-	  if (1)
-	    {
-	      (__top->q).__val = ((uint32_t) (__top->t1).__val);	// file Pointers.aa, line 30
-	      __top->_assign_line_30_entry = 0;
-	      __top->_assign_line_30_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_30
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_30_exit)
-	{
-	  __top->_assign_line_30_exit = 0;
-	  __top->_call_line_31_entry = 1;
-	}
-// -------------------------------------------------------------------------------------------
-// Begin Statement _call_line_31
-// -------------------------------------------------------------------------------------------
-      if (__top->_call_line_31_entry)
-	{
-	  if (__top->_call_line_31_called_fn_struct == NULL)
-	    {
-	      __top->_call_line_31_called_fn_struct =
-		(increment_State *) calloc (1, sizeof (increment_State));
-// reset entry flag and set in progress flag
-	      __top->_call_line_31_entry = 0;
-	      __top->_call_line_31_in_progress = 1;
-	    }			// allocation of pointer to called function
-	}			// entry into this call statement
-      if (__top->_call_line_31_in_progress)
-	{
-	  if (!__top->_call_line_31_called_fn_struct->increment_entry
-	      && !__top->_call_line_31_called_fn_struct->
-	      increment_in_progress)
-	    {			// entry and in_progress flags not set?
-	      if (1)
-		{		// check if pipes can be read from
-		  __top->_call_line_31_called_fn_struct->incr_a.__val =
-		    (__top->q).__val;
-		  __top->_call_line_31_called_fn_struct->increment_entry = 1;
-		}		// arguments copied to call structure
-	    }			// called function had entry flag set
-	  if (__top->_call_line_31_called_fn_struct->increment_entry
-	      || __top->_call_line_31_called_fn_struct->increment_in_progress)
-	    {			// called function still in progress
-// call the function
-	      __top->_call_line_31_called_fn_struct = increment_ (__top->_call_line_31_called_fn_struct);	// file Pointers.aa, line 31
-	    }			// called function was in progress 
-	  if (__top->_call_line_31_called_fn_struct->increment_exit)
-	    {
-	      if (1)
-		{
-		  (__top->b).__val =
-		    __top->_call_line_31_called_fn_struct->incr_b.__val;
-		  cfree (__top->_call_line_31_called_fn_struct);
-		  __top->_call_line_31_called_fn_struct = NULL;
-// reset in progress flag and set exit flag
-		  __top->_call_line_31_exit = 1;
-		  __top->_call_line_31_in_progress = 0;
-		}		// ok to copy outputs to destinations?
-	    }			// called function had finishes?
-	}			// statement was in progress
-// -------------------------------------------------------------------------------------------
-// End Statement _call_line_31
-// -------------------------------------------------------------------------------------------
-      if (__top->_call_line_31_exit)
-	{
-	  __top->_assign_line_23_exit = 0;
-	  __top->_assign_line_24_exit = 0;
-	  __top->_assign_line_25_exit = 0;
-	  __top->_assign_line_26_exit = 0;
-	  __top->_assign_line_27_exit = 0;
-	  __top->_assign_line_28_exit = 0;
-	  __top->_assign_line_29_exit = 0;
-	  __top->_assign_line_30_exit = 0;
-	  __top->_call_line_31_exit = 0;
-	  __top->passpointer_in_progress = 0;
-	  __top->passpointer_exit = 1;
-	}
-    }
-  return __top;
+__declare_bit_vector(a,32);
+bit_vector_assign_bit_vector(0, &((*__pa)), &(a));
+__declare_bit_vector(b,32);
+// implicit declarations for assignment:  file Pointers.aa, line 24
+bit_vector* pu;
+// implicit declarations for assignment:  file Pointers.aa, line 25
+bit_vector* pv;
+// implicit declarations for assignment:  file Pointers.aa, line 26
+__declare_bit_vector(t,32);
+// implicit declarations for assignment:  file Pointers.aa, line 27
+__declare_bit_vector(s,32);
+// implicit declarations for assignment:  file Pointers.aa, line 28
+__declare_bit_vector(t1,32);
+// implicit declarations for assignment:  file Pointers.aa, line 29
+__declare_bit_vector(q,32);
+// 	u := a
+//  file Pointers.aa, line 22
+bit_vector_assign_bit_vector(0, &(a), &(u));
+// 	v := a
+//  file Pointers.aa, line 23
+bit_vector_assign_bit_vector(0, &(a), &(v));
+// 	pu := @(u)
+//  file Pointers.aa, line 24
+bit_vector* addr_of_41;
+bit_vector* addr_of_41;
+addr_of_41 = &(u);
+memcpy( &pu, &addr_of_41, sizeof(pu));
+// 	pv := @(v)
+//  file Pointers.aa, line 25
+bit_vector* addr_of_45;
+bit_vector* addr_of_45;
+addr_of_45 = &(v);
+memcpy( &pv, &addr_of_45, sizeof(pv));
+// 	t := ->(pu)
+//  file Pointers.aa, line 26
+__declare_bit_vector(ptr_deref_49,32);
+bit_vector_assign_bit_vector(0, &(*pu), &(ptr_deref_49));
+bit_vector_assign_bit_vector(0, &(ptr_deref_49), &(t));
+// 	s := ->(pv)
+//  file Pointers.aa, line 27
+__declare_bit_vector(ptr_deref_53,32);
+bit_vector_assign_bit_vector(0, &(*pv), &(ptr_deref_53));
+bit_vector_assign_bit_vector(0, &(ptr_deref_53), &(s));
+// 	t1 := ( $mux (a > 0 ) s  t ) 
+//  file Pointers.aa, line 28
+__declare_bit_vector(konst_57,32);
+__declare_bit_vector(UGT_u32_u1_58,1);
+__declare_bit_vector(MUX_62,32);
+konst_57.val.byte_array[0] = 0;
+konst_57.val.byte_array[1] = 0;
+konst_57.val.byte_array[2] = 0;
+konst_57.val.byte_array[3] = 0;
+bit_vector_greater(0, &(a), &(konst_57), &(UGT_u32_u1_58));
+__declare_bit_vector(konst_57,32);
+__declare_bit_vector(UGT_u32_u1_58,1);
+__declare_bit_vector(MUX_62,32);
+if(bit_vector_to_uint64(0,UGT_u32_u1_58){
+bit_vector_assign_bit_vector(0, &(s), &(MUX_62));
+}
+else
+{
+bit_vector_assign_bit_vector(0, &(t), &(MUX_62));
+}
+bit_vector_assign_bit_vector(0, &(MUX_62), &(t1));
+// 	q := ($cast ($uint<32>) t1 )
+//  file Pointers.aa, line 29
+__declare_bit_vector(type_cast_66,32);
+bit_vector_assign_bit_vector(0, &(t1), &(type_cast_66));
+bit_vector_assign_bit_vector(0, &(type_cast_66), &(q));
+// 	$call increment (q ) (b ) 
+//  file Pointers.aa, line 30
+_increment_( &(q), &(b));  
+// output side transfers...
+bit_vector_assign_bit_vector(0, &(b), &((*__pb)));
 }

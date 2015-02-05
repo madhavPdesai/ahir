@@ -683,8 +683,32 @@ void AaSimpleObjectReference::Print(ostream& ofile)
 //
 string AaSimpleObjectReference::C_Reference_String()
 {
-	if(this->Is_Implicit_Variable_Reference() ||
-		(this->Get_Object() && this->Get_Object()->Is_Storage_Object()))
+	if(this->Is_Implicit_Variable_Reference())
+	{
+		
+		AaRoot* obj = this->Get_Object();
+		AaRoot* root_obj = this->Get_Root_Object();
+		assert(obj != NULL);
+
+		// 
+		// if this refers to an export of 
+		// something else, then the exported
+		// version is given an extension
+		//
+		if(root_obj->Is_Statement() && obj->Is("AaSimpleObjectReference"))
+		{
+			string this_obj_str = this->Get_Object_Ref_String();
+			string obj_str  = ((AaSimpleObjectReference*) obj)->Get_Object_Ref_String();
+
+			if(this->Get_Scope() == ((AaSimpleObjectReference*)obj)->Get_Scope())
+				return(obj_str);
+			else
+				return(this_obj_str + "__" + obj_str);
+		}
+		else
+			return(this->Get_Object_Ref_String());
+	}
+	else if(this->Get_Object() && this->Get_Object()->Is_Storage_Object())
 	{
 		return(this->Get_Object_Ref_String());
 	}

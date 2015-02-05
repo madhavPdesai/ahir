@@ -69,7 +69,7 @@ void Print_C_Assignment_To_Constant(string tgt_c_ref, AaType* tgt_type, AaValue*
       int i;
       for(i = 0; i < nbytes; i++)
 	{
-	  ofile <<  tgt_c_ref << ".val.byte_array[" << i << "] = " << b_array[i] << ";" << endl;
+	  ofile <<  tgt_c_ref << ".val.byte_array[" << i << "] = " << ((int) b_array[i]) << ";" << endl;
 	}
       
       delete [] b_array;
@@ -96,10 +96,16 @@ void Print_C_Value_Expression(string cref, AaType* t, ofstream& ofile)
 {
   if(t->Is_Integer_Type())
     {
-      ofile << "bit_vector_to_uint64(" << (!t->Is_Uinteger_Type() ? 1 : 0) << ", cref ) " << endl;
+      ofile << "bit_vector_to_uint64(" << (!t->Is_Uinteger_Type() ? 1 : 0) << ", &" << cref << ") " ;
     }
   else
     ofile << cref << " ";
+}
+
+void Print_C_Uint64_To_BitVector_Assignment(string src, string dest, AaType* t, ofstream& ofile) 
+{
+	ofile << "bit_vector_assign_uint64(" << (!t->Is_Uinteger_Type() ? 1 : 0) << ", &"
+		<< dest << ", "  << src << ");" << endl;
 }
 
 void Print_C_Pipe_Read(string tgt, AaType* tgt_type, AaPipeObject* p, ofstream& ofile)

@@ -62,6 +62,16 @@ int main(int argc, char* argv[])
 	}
     }
       
+  if(AaProgram::_keep_extmem_inside)
+    {
+      if(AaProgram::_extmem_object_name == "")
+	{
+	  AaProgram::_extmem_object_name = "extmem_pool__";
+	  cerr << "Warning: external memory object name in program not specified, will be named " 
+	       << AaProgram::_extmem_object_name << endl;
+	}
+      AaProgram::Make_Extmem_Object();
+    }
 
   for(int i = optind; i < argc; i++)
     {

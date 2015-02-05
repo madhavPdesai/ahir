@@ -134,6 +134,7 @@ string AaObject::C_Reference_String()
 	return(this->Get_Name());
 }
 
+
 void AaObject::PrintC_Declaration(ofstream& ofile)
 {
 	AaType* t = this->Get_Type();

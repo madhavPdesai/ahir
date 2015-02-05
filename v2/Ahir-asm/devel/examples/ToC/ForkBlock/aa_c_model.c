@@ -1,217 +1,84 @@
+#include <Pipes.h>
 #include <aa_c_model.h>
-int
-sum_mod (uint_10 a, uint_10 b, uint_10 c, uint_10 d, uint_10 * result)
+void
+__init_aa_globals__ ()
 {
-  sum_mod_State *__top = (sum_mod_State *) calloc (1, sizeof (sum_mod_State));
-  __top->sum_mod_entry = 1;
-  __top->a = a;
-  __top->b = b;
-  __top->c = c;
-  __top->d = d;
-  while (!__top->sum_mod_exit)
-    {
-      __top = sum_mod_ (__top);
-    }
-  *result = __top->result;
-  cfree (__top);
-  return AASUCCESS;
 }
 
-sum_mod_State *
-sum_mod_ (sum_mod_State * __top)
+void
+sum_mod (uint16_t a, uint16_t b, uint16_t c, uint16_t d, uint16_t * result)
 {
-  if (__top->sum_mod_entry)
+  __declare_bit_vector (__a, 16);
+  bit_vector_assign_uint64 (0, &__a, a);
+  __declare_bit_vector (__b, 16);
+  bit_vector_assign_uint64 (0, &__b, b);
+  __declare_bit_vector (__c, 16);
+  bit_vector_assign_uint64 (0, &__c, c);
+  __declare_bit_vector (__d, 16);
+  bit_vector_assign_uint64 (0, &__d, d);
+  __declare_bit_vector (__result, 16);
+  _sum_mod_ (&__a, &__b, &__c, &__d, &__result);
+  *result = bit_vector_to_uint64 (0, &__result);
+}
+
+
+void
+_sum_mod_ (bit_vector * __pa, bit_vector * __pb, bit_vector * __pc,
+	   bit_vector * __pd, bit_vector * __presult)
+{
+  __declare_bit_vector (a, 16);
+  bit_vector_assign_bit_vector (0, &((*__pa)), &(a));
+  __declare_bit_vector (b, 16);
+  bit_vector_assign_bit_vector (0, &((*__pb)), &(b));
+  __declare_bit_vector (c, 16);
+  bit_vector_assign_bit_vector (0, &((*__pc)), &(c));
+  __declare_bit_vector (d, 16);
+  bit_vector_assign_bit_vector (0, &((*__pd)), &(d));
+  __declare_bit_vector (result, 16);
+  __declare_bit_vector (sexp, 16);
+  __declare_bit_vector (texp, 16);
+  {
+// implicit declarations for assignment:  file ForkBlock.aa, line 12
+    __declare_bit_vector (s_27, 16);
+// implicit declarations for assignment:  file ForkBlock.aa, line 13
+    __declare_bit_vector (t_32, 16);
+    __declare_bit_vector (qexp, 16);
     {
-      __top->sum_mod_entry = 0;
-      __top->sum_mod_in_progress = 1;
-      __top->sum_mod_entry = 0;
-      __top->sum_mod_in_progress = 1;
-      __top->p.p_entry = 1;
+// implicit declarations for assignment:  file ForkBlock.aa, line 8
+      __declare_bit_vector (q_13, 16);
+//                      q := (a * d)
+//  file ForkBlock.aa, line 8
+      __declare_bit_vector (MUL_u16_u16_12, 16);
+      bit_vector_mul (&(a), &(d), &(MUL_u16_u16_12));
+      bit_vector_assign_bit_vector (0, &(MUL_u16_u16_12), &(q_13));
     }
-  if (__top->sum_mod_in_progress)
+    __declare_bit_vector (rexp, 16);
     {
-// -------------------------------------------------------------------------------------------
-// Begin Block p
-// -------------------------------------------------------------------------------------------
-      if (__top->p.p_entry)
-	{
-	  __top->p.p_entry = 0;
-	  __top->p.p_in_progress = 1;
-	  __top->p.s1.s1_entry = 1;
-	  __top->p.s2.s2_entry = 1;
-	  __top->p._join_line_11_entry = 1;
-	}
-      if (__top->p.p_in_progress)
-	{
-// -------------------------------------------------------------------------------------------
-// Begin Block s1
-// -------------------------------------------------------------------------------------------
-	  if (__top->p.s1.s1_entry)
-	    {
-	      __top->p.s1.s1_entry = 0;
-	      __top->p.s1.s1_in_progress = 1;
-	      __top->p.s1._assign_line_8_entry = 1;
-	    }
-	  if (__top->p.s1.s1_in_progress)
-	    {
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_8
-// -------------------------------------------------------------------------------------------
-	      if (__top->p.s1._assign_line_8_entry)
-		{
-		  if (1)
-		    {
-		      (__top->p.s1.q).__val = __PLUS ((__top->a).__val, (__top->b).__val);	//  file ForkBlock.aa, line 8
-		      __top->p.s1._assign_line_8_entry = 0;
-		      __top->p.s1._assign_line_8_exit = 1;
-		    }
-		}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_8
-// -------------------------------------------------------------------------------------------
-	      if (__top->p.s1._assign_line_8_exit)
-		{
-		  __top->p.s1._assign_line_8_exit = 0;
-		  __top->p.s1.s1_in_progress = 0;
-		  __top->p.s1.s1_exit = 1;
-		}
-	    }
-// -------------------------------------------------------------------------------------------
-// End Block s1
-// -------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------
-// Begin Block s2
-// -------------------------------------------------------------------------------------------
-	  if (__top->p.s2.s2_entry)
-	    {
-	      __top->p.s2.s2_entry = 0;
-	      __top->p.s2.s2_in_progress = 1;
-	      __top->p.s2._assign_line_9_entry = 1;
-	    }
-	  if (__top->p.s2.s2_in_progress)
-	    {
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_9
-// -------------------------------------------------------------------------------------------
-	      if (__top->p.s2._assign_line_9_entry)
-		{
-		  if (1)
-		    {
-		      (__top->p.s2.r).__val = __PLUS ((__top->c).__val, (__top->d).__val);	//  file ForkBlock.aa, line 9
-		      __top->p.s2._assign_line_9_entry = 0;
-		      __top->p.s2._assign_line_9_exit = 1;
-		    }
-		}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_9
-// -------------------------------------------------------------------------------------------
-	      if (__top->p.s2._assign_line_9_exit)
-		{
-		  __top->p.s2._assign_line_9_exit = 0;
-		  __top->p.s2.s2_in_progress = 0;
-		  __top->p.s2.s2_exit = 1;
-		}
-	    }
-// -------------------------------------------------------------------------------------------
-// End Block s2
-// -------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------
-// Begin Block _join_line_11
-// -------------------------------------------------------------------------------------------
-	  if (__top->p._join_line_11_entry)
-	    {
-	      if (1 && __top->p.s1.s1_exit && __top->p.s2.s2_exit)
-		{
-		  __top->p._join_line_11_entry = 0;
-		  __top->p._join_line_11_in_progress = 1;
-		  __top->p._assign_line_12_entry = 1;
-		  __top->p._assign_line_13_entry = 1;
-		}
-	    }
-	  if (__top->p._join_line_11_in_progress)
-	    {
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_12
-// -------------------------------------------------------------------------------------------
-	      if (__top->p._assign_line_12_entry)
-		{
-		  if (1)
-		    {
-		      (__top->p.s).__val = __MINUS ((__top->p.s1.q).__val, (__top->p.s2.r).__val);	//  file ForkBlock.aa, line 12
-		      __top->p._assign_line_12_entry = 0;
-		      __top->p._assign_line_12_exit = 1;
-		    }
-		}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_12
-// -------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_13
-// -------------------------------------------------------------------------------------------
-	      if (__top->p._assign_line_13_entry)
-		{
-		  if (1)
-		    {
-		      (__top->p.t).__val = __PLUS ((__top->p.s1.q).__val, (__top->p.s2.r).__val);	//  file ForkBlock.aa, line 13
-		      __top->p._assign_line_13_entry = 0;
-		      __top->p._assign_line_13_exit = 1;
-		    }
-		}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_13
-// -------------------------------------------------------------------------------------------
-	      if ((1 && __top->p._assign_line_13_exit
-		   && __top->p._assign_line_12_exit))
-		{
-		  __top->p._assign_line_12_exit = 0;
-		  __top->p._assign_line_13_exit = 0;
-		  __top->p._join_line_11_in_progress = 0;
-		  __top->p._join_line_11_exit = 1;
-		}
-	    }
-// -------------------------------------------------------------------------------------------
-// End Block _join_line_11
-// -------------------------------------------------------------------------------------------
-	  if ((1 && __top->p._join_line_11_exit && __top->p.s2.s2_exit
-	       && __top->p.s1.s1_exit))
-	    {
-	      __top->p.s1.s1_exit = 0;
-	      __top->p.s2.s2_exit = 0;
-	      __top->p._join_line_11_exit = 0;
-	      __top->p.p_in_progress = 0;
-	      __top->p.p_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Block p
-// -------------------------------------------------------------------------------------------
-      if (__top->p.p_exit)
-	{
-	  __top->p.p_exit = 0;
-	  __top->_assign_line_16_entry = 1;
-	}
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_16
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_16_entry)
-	{
-	  if (1)
-	    {
-	      (__top->result).__val = __PLUS ((__top->p.s).__val, (__top->p.t).__val);	//  file ForkBlock.aa, line 16
-	      __top->_assign_line_16_entry = 0;
-	      __top->_assign_line_16_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_16
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_16_exit)
-	{
-	  __top->p.p_exit = 0;
-	  __top->_assign_line_16_exit = 0;
-	  __top->sum_mod_in_progress = 0;
-	  __top->sum_mod_exit = 1;
-	}
+// implicit declarations for assignment:  file ForkBlock.aa, line 9
+      __declare_bit_vector (r_20, 16);
+//                      r := (b * c)
+//  file ForkBlock.aa, line 9
+      __declare_bit_vector (MUL_u16_u16_19, 16);
+      bit_vector_mul (&(b), &(c), &(MUL_u16_u16_19));
+      bit_vector_assign_bit_vector (0, &(MUL_u16_u16_19), &(r_20));
     }
-  return __top;
+// join-fork statement :  file ForkBlock.aa, line 11
+//              s := (qexp - rexp)
+//  file ForkBlock.aa, line 12
+    __declare_bit_vector (SUB_u16_u16_26, 16);
+    bit_vector_minus (&(qexp_13), &(rexp_20), &(SUB_u16_u16_26));
+    bit_vector_assign_bit_vector (0, &(SUB_u16_u16_26), &(s_27));
+//              t := (qexp + rexp)
+//  file ForkBlock.aa, line 13
+    __declare_bit_vector (ADD_u16_u16_31, 16);
+    bit_vector_plus (&(qexp_13), &(rexp_20), &(ADD_u16_u16_31));
+    bit_vector_assign_bit_vector (0, &(ADD_u16_u16_31), &(t_32));
+  }
+//      result := (sexp + texp)
+//  file ForkBlock.aa, line 18
+  __declare_bit_vector (ADD_u16_u16_38, 16);
+  bit_vector_plus (&(sexp_27), &(texp_32), &(ADD_u16_u16_38));
+  bit_vector_assign_bit_vector (0, &(ADD_u16_u16_38), &(result));
+// output side transfers...
+  bit_vector_assign_bit_vector (0, &(result), &((*__presult)));
 }

@@ -13,6 +13,7 @@
 class AaStatementSequence;
 class AaPlaceStatement;
 class AaDoWhileStatement;
+class AaModule;
 
 // *******************************************  STATEMENT etc. ************************************
 // base class for statements
@@ -141,6 +142,7 @@ class AaStatement: public AaScope
 
   
   virtual void PrintC(ofstream& ofile) { assert(0); }
+  virtual void PrintC_Implicit_Declarations(ofstream& ofile) { }
 
   virtual string Get_Line_Directive()
   {
@@ -258,6 +260,11 @@ class AaStatementSequence: public AaScope
   {
 	for(int i = 0, imax = _statement_sequence.size(); i < imax; i++)
 		_statement_sequence[i]->PrintC(ofile);
+  }
+  virtual void PrintC_Implicit_Declarations(ofstream& ofile)
+  {
+	for(int i = 0, imax = _statement_sequence.size(); i < imax; i++)
+		_statement_sequence[i]->PrintC_Implicit_Declarations(ofile);
   }
 
   unsigned int Get_Statement_Count() { return this->_statement_sequence.size(); }
@@ -388,7 +395,7 @@ class AaNullStatement: public AaStatement
 
   virtual void PrintC(ofstream& ofile)
   {
-    ofile <<  "null;" << endl;
+    ofile <<  ";" << endl;
   }
   virtual string Get_C_Name()
   {
@@ -451,6 +458,7 @@ class AaAssignmentStatement: public AaStatement
   virtual bool Can_Block(bool pipeline_flag);
 
   virtual void PrintC(ofstream& ofile);
+  virtual void PrintC_Implicit_Declarations(ofstream& ofile);
 
 
   void Write_VC_WAR_Dependencies(bool pipeline_flag, set<AaRoot*>& visited_elements,
@@ -498,15 +506,15 @@ class AaCallStatement: public AaStatement
 {
 
   string _function_name;
-  AaRoot* _called_module;
+  AaModule* _called_module;
   vector<AaExpression*> _input_args;
   vector<AaObjectReference*> _output_args;
  public:
   unsigned int Get_Number_Of_Input_Args() {return(this->_input_args.size());}
   unsigned int Get_Number_Of_Output_Args() {return(this->_output_args.size());}
   string Get_Function_Name() {return(this->_function_name);}
-  void Set_Called_Module(AaRoot* m) { this->_called_module = m; }
-  AaRoot* Get_Called_Module() {return(this->_called_module);}
+  void Set_Called_Module(AaModule* m) { this->_called_module = m; }
+  AaModule* Get_Called_Module() {return(this->_called_module);}
   virtual void Set_Pipeline_Parent(AaStatement* dws);
 
   virtual bool Is_Call_Statement() {return(true);}
@@ -545,7 +553,9 @@ class AaCallStatement: public AaStatement
     return("_call_line_" +   IntToStr(this->Get_Line_Number()));
   }
 
+  void PrintC_Call_To_Foreign_Module(ofstream& ofile);
   virtual void PrintC(ofstream& ofile);
+  virtual void PrintC_Implicit_Declarations(ofstream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile)
@@ -878,7 +888,12 @@ class AaJoinForkStatement: public AaParallelBlockStatement
   virtual void Write_VC_Links_Optimized(string hier_id, ostream& ofile);
 
   virtual string Get_VC_Name() {return("join_fork_stmt_" + Int64ToStr(this->Get_Index()));}
+  virtual void PrintC(ofstream& ofile);
 
+  virtual void PrintC_Implicit_Declarations(ofstream& ofile) 
+  { 
+	this->_statement_sequence->PrintC_Implicit_Declarations(ofile);
+  }
 };
 
 
@@ -897,7 +912,7 @@ class AaPlaceStatement: public AaStatement
   }
 
   virtual string Get_Place_Name() { return(this->Get_Label()); }
-  virtual string Get_Place_Name_Ref() {return(this->Get_Struct_Dereference() + this->Get_Place_Name()); }
+  virtual string C_Reference_String();
 
   virtual void Print(ostream& ofile) 
   { 
@@ -908,11 +923,6 @@ class AaPlaceStatement: public AaStatement
   virtual void Map_Source_References() {} // do nothing
 
   virtual bool Is_Control_Flow_Statement() {return(true);}
-
-  virtual string C_Reference_String()
-  {
-    return("_place_line_" +   IntToStr(this->Get_Line_Number()));
-  }
 
   virtual void PrintC(ofstream& ofile)
   {
@@ -1005,6 +1015,11 @@ class AaMergeStatement: public AaSeriesBlockStatement
 
 
   virtual void PrintC(ofstream& ofile) ;
+  virtual void PrintC_Implicit_Declarations(ofstream& ofile) 
+  { 
+	if(this->_statement_sequence)
+		this->_statement_sequence->PrintC_Implicit_Declarations(ofile);
+  }
 
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
@@ -1056,6 +1071,7 @@ class AaPhiStatement: public AaStatement
     return("_phi_line_" +   IntToStr(this->Get_Line_Number()));
   }
   virtual void PrintC(ofstream& ofile);  
+  virtual void PrintC_Implicit_Declarations(ofstream& ofile);
 
   virtual void Write_VC_Control_Path(ostream& ofile);
   virtual void Write_VC_Control_Path_Optimized(ostream& ofile);
@@ -1134,6 +1150,13 @@ class AaSwitchStatement: public AaStatement
 
 
   virtual void PrintC(ofstream& ofile);
+  virtual void PrintC_Implicit_Declarations(ofstream& ofile) 
+  { 
+	for(int i = 0, imax = _choice_pairs.size(); i < imax; i++)
+	{
+		_choice_pairs[i].second->PrintC_Implicit_Declarations(ofile);
+	}
+  }
 
   virtual bool Is_Control_Flow_Statement() {return(true);}
 
@@ -1190,6 +1213,13 @@ class AaIfStatement: public AaStatement
   ~AaIfStatement();
   virtual void Print(ostream& ofile);
   virtual void PrintC(ofstream& ofile);
+  virtual void PrintC_Implicit_Declarations(ofstream& ofile) 
+  { 
+	  if(_if_sequence)
+		  this->_if_sequence->PrintC_Implicit_Declarations(ofile);
+	  if(_else_sequence)
+		  this->_else_sequence->PrintC_Implicit_Declarations(ofile);
+  }
   virtual string Kind() {return("AaIfStatement");}
   virtual void Map_Source_References()
   {
@@ -1292,6 +1322,13 @@ class AaDoWhileStatement: public AaStatement
     	this->_merge_statement->Map_Source_References();
     if(this->_loop_body_sequence)
       this->_loop_body_sequence->Map_Source_References();
+  }
+
+  virtual void PrintC_Implicit_Declarations(ofstream& ofile) 
+  { 
+	this->_merge_statement->PrintC_Implicit_Declarations(ofile);
+	if(this->_loop_body_sequence)
+		this->_loop_body_sequence->PrintC_Implicit_Declarations(ofile);
   }
 
   virtual void Coalesce_Storage();

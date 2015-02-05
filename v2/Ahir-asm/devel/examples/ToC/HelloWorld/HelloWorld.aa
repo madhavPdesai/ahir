@@ -23,8 +23,8 @@ $is
         $parallelblock[Race] {
 	    q := (a + b)
             r := (q + b)
-        } (r => rexp)
-        TM := ($bitcast ($uint<32>) (rexp && b))
+        } (r => r)
+        TM := ($bitcast ($uint<32>) (r && b))
         M  := ($bitcast ($uint<20>) TM)
         c := M
 }
