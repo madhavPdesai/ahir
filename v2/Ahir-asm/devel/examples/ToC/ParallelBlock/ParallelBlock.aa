@@ -1,12 +1,12 @@
 // a simple example illustrating the use of a parallel block.
 $module [sum_mod]
-    $in (a: $uint<10> b: $uint<10> c: $uint<10> d: $uint<10>)
-    $out (result: $uint<10>)
+    $in (a: $uint<16> b: $uint<16> c: $uint<16> d: $uint<16>)
+    $out (result: $uint<16>)
 $is
 {
 	$parallelblock[p] {
 		q := (a + b)
 		r := (c + d)
-	}
-	result := (%p:q + %p:r)
+	} (q => q r => r)
+	result := (q + r)
 }

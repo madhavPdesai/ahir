@@ -1976,8 +1976,9 @@ string AaArrayObjectReference::C_Index_String(AaType* t, int start_id, vector<Aa
 
       if(curr_type->Is("AaArrayType"))
 	{
+	  AaExpression* iexp = (*indices)[start_id];
 	  ret_string += "[";
-	  ret_string += (*indices)[start_id]->C_Value();
+	  ret_string += C_Value_Expression(iexp->C_Reference_String(), iexp->Get_Type());
 	  ret_string += "]";
 	  curr_type = ((AaArrayType*)curr_type)->Get_Element_Type(0);
 	}

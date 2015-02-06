@@ -24,6 +24,7 @@ int main(int argc, char* argv[])
 	signal(SIGINT,  Exit);
   	signal(SIGTERM, Exit);
 
+	__init_aa_globals__();
 	init_pipe_handler();
 
 	PTHREAD_DECL(Daemon);

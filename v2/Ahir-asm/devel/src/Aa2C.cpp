@@ -57,6 +57,89 @@ void Print_C_Global_Declaration(string obj_name, AaType* t, ofstream& ofile)
     }
 }
 
+void Print_C_Global_Initialization(string obj_name, AaType* obj_type, ofstream& ofile)
+{
+	if(obj_type->Is_Integer_Type())
+	{	
+		ofile << "init_bit_vector(&(" << obj_name << "), " << obj_type->Size() << ");" << endl;
+	}
+	else if(obj_type->Is_Array_Type())
+	{
+		AaArrayType* at = ((AaArrayType*)obj_type);
+		AaType* et = at->Get_Element_Type();
+
+		// 
+		// TODO: initialize the bit-vector 
+		//       elements..
+		//
+		//
+		// iterate over the different values to check
+		//
+		vector<int> element_indexing;
+		for(int D = 0, Dmax = at->Get_Number_Of_Dimensions(); D < Dmax; D++)
+		{
+			element_indexing.push_back(0);
+		}
+				
+		
+		while(1)
+		{
+			string cref_prefix = obj_name;
+			for(int D = 0, Dmax = at->Get_Number_Of_Dimensions();D < Dmax;  D++)
+			{
+				cref_prefix += "[" + IntToStr(element_indexing[D]) + "]";
+			}
+
+			Print_C_Global_Initialization(cref_prefix, et, ofile);
+
+			bool maximal_element_reached = true;
+			for(int D = 0, Dmax = at->Get_Number_Of_Dimensions(); D < Dmax; D++)
+			{
+				if(element_indexing[D] < at->Get_Dimension(D)-1)
+				{
+					maximal_element_reached = false;
+					break;
+				}
+			}	
+
+
+			if(maximal_element_reached)
+				break;
+				
+			// increment.
+			if(!maximal_element_reached)
+			{
+				bool carry = true;
+				for(int D = 0, Dmax = at->Get_Number_Of_Dimensions(); D < Dmax; D++)
+				{
+					if(carry)
+					{
+						element_indexing[D] = element_indexing[D] + 1;
+						if( element_indexing[D] == at->Get_Dimension(D))
+						{
+							carry = true;
+							element_indexing[D] = 0;
+						}
+						else
+							carry = false;
+					}
+				}
+				
+			}
+		}	
+	}
+	else if(obj_type->Is_Record_Type())
+	{
+		AaRecordType* rt = ((AaRecordType*) obj_type);
+		for(int D = 0, Dmax = rt->Get_Number_Of_Elements(); D < Dmax; D++)
+		{
+			string cref_prefix = obj_name + ".f_" + IntToStr(D);
+			AaType* et = rt->Get_Element_Type(D);
+			Print_C_Global_Initialization(cref_prefix, et, ofile);
+		}
+	}
+}
+
 void Print_C_Assignment_To_Constant(string tgt_c_ref, AaType* tgt_type, AaValue* v, ofstream& ofile)
 {
   if(tgt_type->Is_Integer_Type())
@@ -92,14 +175,22 @@ void Print_C_Assignment(string tgt, string src, AaType* t, ofstream& ofile)
     }
 
 }
-void Print_C_Value_Expression(string cref, AaType* t, ofstream& ofile)
+
+string C_Value_Expression(string cref, AaType* t)
 {
+  string ret_string;
   if(t->Is_Integer_Type())
     {
-      ofile << "bit_vector_to_uint64(" << (!t->Is_Uinteger_Type() ? 1 : 0) << ", &" << cref << ") " ;
+      ret_string  = string("bit_vector_to_uint64(") + (!t->Is_Uinteger_Type() ? "1" : "0") + ", &" + cref + ")" ;
     }
   else
-    ofile << cref << " ";
+    ret_string = cref;
+
+  return(ret_string);
+}
+void Print_C_Value_Expression(string cref, AaType* t, ofstream& ofile)
+{
+	ofile << C_Value_Expression(cref,t);
 }
 
 void Print_C_Uint64_To_BitVector_Assignment(string src, string dest, AaType* t, ofstream& ofile) 

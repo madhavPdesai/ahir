@@ -1,116 +1,65 @@
+#include <Pipes.h>
 #include <aa_c_model.h>
-int
-sum_mod (uint_10 a, uint_10 b, uint_10 c, uint_10 d, uint_10 * result)
+void
+__init_aa_globals__ ()
 {
-  sum_mod_State *__top = (sum_mod_State *) calloc (1, sizeof (sum_mod_State));
-  __top->sum_mod_entry = 1;
-  __top->a = a;
-  __top->b = b;
-  __top->c = c;
-  __top->d = d;
-  while (!__top->sum_mod_exit)
-    {
-      __top = sum_mod_ (__top);
-    }
-  *result = __top->result;
-  cfree (__top);
-  return AASUCCESS;
 }
 
-sum_mod_State *
-sum_mod_ (sum_mod_State * __top)
+void
+sum_mod (uint16_t a, uint16_t b, uint16_t c, uint16_t d, uint16_t * result)
 {
-  if (__top->sum_mod_entry)
-    {
-      __top->sum_mod_entry = 0;
-      __top->sum_mod_in_progress = 1;
-      __top->sum_mod_entry = 0;
-      __top->sum_mod_in_progress = 1;
-      __top->p.p_entry = 1;
-    }
-  if (__top->sum_mod_in_progress)
-    {
-// -------------------------------------------------------------------------------------------
-// Begin Block p
-// -------------------------------------------------------------------------------------------
-      if (__top->p.p_entry)
-	{
-	  __top->p.p_entry = 0;
-	  __top->p.p_in_progress = 1;
-	  __top->p._assign_line_8_entry = 1;
-	  __top->p._assign_line_9_entry = 1;
-	}
-      if (__top->p.p_in_progress)
-	{
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_8
-// -------------------------------------------------------------------------------------------
-	  if (__top->p._assign_line_8_entry)
-	    {
-	      if (1)
-		{
-		  (__top->p.q).__val = __PLUS ((__top->a).__val, (__top->b).__val);	//  file ParallelBlock.aa, line 8
-		  __top->p._assign_line_8_entry = 0;
-		  __top->p._assign_line_8_exit = 1;
-		}
-	    }
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_8
-// -------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_9
-// -------------------------------------------------------------------------------------------
-	  if (__top->p._assign_line_9_entry)
-	    {
-	      if (1)
-		{
-		  (__top->p.r).__val = __PLUS ((__top->c).__val, (__top->d).__val);	//  file ParallelBlock.aa, line 9
-		  __top->p._assign_line_9_entry = 0;
-		  __top->p._assign_line_9_exit = 1;
-		}
-	    }
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_9
-// -------------------------------------------------------------------------------------------
-	  if ((1 && __top->p._assign_line_9_exit
-	       && __top->p._assign_line_8_exit))
-	    {
-	      __top->p._assign_line_8_exit = 0;
-	      __top->p._assign_line_9_exit = 0;
-	      __top->p.p_in_progress = 0;
-	      __top->p.p_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Block p
-// -------------------------------------------------------------------------------------------
-      if (__top->p.p_exit)
-	{
-	  __top->p.p_exit = 0;
-	  __top->_assign_line_11_entry = 1;
-	}
-// -------------------------------------------------------------------------------------------
-// Begin Statement _assign_line_11
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_11_entry)
-	{
-	  if (1)
-	    {
-	      (__top->result).__val = __PLUS ((__top->p.q).__val, (__top->p.r).__val);	//  file ParallelBlock.aa, line 11
-	      __top->_assign_line_11_entry = 0;
-	      __top->_assign_line_11_exit = 1;
-	    }
-	}
-// -------------------------------------------------------------------------------------------
-// End Statement _assign_line_11
-// -------------------------------------------------------------------------------------------
-      if (__top->_assign_line_11_exit)
-	{
-	  __top->p.p_exit = 0;
-	  __top->_assign_line_11_exit = 0;
-	  __top->sum_mod_in_progress = 0;
-	  __top->sum_mod_exit = 1;
-	}
-    }
-  return __top;
+  __declare_bit_vector (__a, 16);
+  bit_vector_assign_uint64 (0, &__a, a);
+  __declare_bit_vector (__b, 16);
+  bit_vector_assign_uint64 (0, &__b, b);
+  __declare_bit_vector (__c, 16);
+  bit_vector_assign_uint64 (0, &__c, c);
+  __declare_bit_vector (__d, 16);
+  bit_vector_assign_uint64 (0, &__d, d);
+  __declare_bit_vector (__result, 16);
+  _sum_mod_ (&__a, &__b, &__c, &__d, &__result);
+  *result = bit_vector_to_uint64 (0, &__result);
+}
+
+
+void
+_sum_mod_ (bit_vector * __pa, bit_vector * __pb, bit_vector * __pc,
+	   bit_vector * __pd, bit_vector * __presult)
+{
+  __declare_bit_vector (a, 16);
+  bit_vector_assign_bit_vector (0, &((*__pa)), &(a));
+  __declare_bit_vector (b, 16);
+  bit_vector_assign_bit_vector (0, &((*__pb)), &(b));
+  __declare_bit_vector (c, 16);
+  bit_vector_assign_bit_vector (0, &((*__pc)), &(c));
+  __declare_bit_vector (d, 16);
+  bit_vector_assign_bit_vector (0, &((*__pd)), &(d));
+  __declare_bit_vector (result, 16);
+  __declare_bit_vector (q__q, 16);
+  __declare_bit_vector (r__r, 16);
+  {
+// implicit declarations for assignment:  file ParallelBlock.aa, line 8
+    __declare_bit_vector (q, 16);
+// implicit declarations for assignment:  file ParallelBlock.aa, line 9
+    __declare_bit_vector (r, 16);
+//              q := (a + b)
+//  file ParallelBlock.aa, line 8
+    __declare_bit_vector (ADD_u16_u16_11, 16);
+    bit_vector_plus (&(a), &(b), &(ADD_u16_u16_11));
+    bit_vector_assign_bit_vector (0, &(ADD_u16_u16_11), &(q));
+//              r := (c + d)
+//  file ParallelBlock.aa, line 9
+    __declare_bit_vector (ADD_u16_u16_16, 16);
+    bit_vector_plus (&(c), &(d), &(ADD_u16_u16_16));
+    bit_vector_assign_bit_vector (0, &(ADD_u16_u16_16), &(r));
+    bit_vector_assign_bit_vector (0, &(q), &(q__q));
+    bit_vector_assign_bit_vector (0, &(r), &(r__r));
+  }
+//      result := (q + r)
+//  file ParallelBlock.aa, line 11
+  __declare_bit_vector (ADD_u16_u16_22, 16);
+  bit_vector_plus (&(q__q), &(r__r), &(ADD_u16_u16_22));
+  bit_vector_assign_bit_vector (0, &(ADD_u16_u16_22), &(result));
+// output side transfers...
+  bit_vector_assign_bit_vector (0, &(result), &((*__presult)));
 }

@@ -1,4 +1,4 @@
-../../../bin/Aa2C ParallelBlock.aa
+../../../bin/Aa2C SeriesBlock.aa
 indent aa_c_model.c
 indent aa_c_model.h
 gcc -g -c -I../../../../../BitVectors/include -I../../../../../pipeHandler/include  -I./ aa_c_model.c

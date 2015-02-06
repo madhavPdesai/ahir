@@ -304,17 +304,14 @@ void AaStorageObject::PrintC_Global_Declaration(ofstream& ofile)
 
 void AaStorageObject::PrintC_Global_Initialization(ofstream& ofile)
 {
-	if(this->Get_Type()->Is_Integer_Type())
-	{	
-		ofile << "init_bit_vector(&" << this->C_Reference_String() << ", " << this->Get_Type()->Size() << ");" << endl;
-	}
+	AaType* t = this->Get_Type();
+	Print_C_Global_Initialization(this->C_Reference_String(), t, ofile);
 	if(_value != NULL)
 	{
 		this->_value->Evaluate();
 		// initialization of object...
 		Print_C_Assignment_To_Constant(this->C_Reference_String(), this->Get_Type(), this->_value->_expression_value, ofile);
 	}
-
 }
 
 //---------------------------------------------------------------------

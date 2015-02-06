@@ -16,8 +16,10 @@ class AaPipeObject;
 		
 void Print_C_Declaration(string obj_name, AaType* obj_type, ofstream& ofile);
 void Print_C_Global_Declaration(string obj_name, AaType* obj_type, ofstream& ofile);
+void Print_C_Global_Initialization(string obj_name, AaType* obj_type, ofstream& ofile);
 void Print_C_Assignment_To_Constant(string tgt_c_ref, AaType* tgt_type, AaValue* v, ofstream& ofile);
 void Print_C_Assignment(string tgt, string src, AaType* t, ofstream& ofile);
+string C_Value_Expression(string cref, AaType* t);
 void Print_C_Value_Expression(string cref, AaType* t, ofstream& ofile);
 			
 void Print_C_Uint64_To_BitVector_Assignment(string src, string dest, AaType* t, ofstream& ofile); 
