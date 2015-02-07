@@ -49,7 +49,7 @@ Release:
 	rm -rf $(RELEASE)/functionLibrary
 	cp -r $(FUNCTIONLIB) $(RELEASE)/
 	# copy the documents..
-	#cp ./Documents/AhirV2/AhirV2.pdf $(RELEASE)/docs/pdf/
+	cp ./Documents/AhirV2/AhirV2.pdf $(RELEASE)/docs/pdf/Overview.pdf
 	cp $(AA)/docs/*.pdf $(RELEASE)/docs/pdf/
 	cp $(AA)/docs/*.html $(RELEASE)/docs/html/
 	cp $(LLVM2AA)/docs/llvm2aa.pdf $(RELEASE)/docs/pdf/

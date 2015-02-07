@@ -727,7 +727,7 @@ using a call to the special function
     _loop_pipelining_on_
 \end{verbatim}
 are extracted as pipelined do-while loops.  This is necessary
-for automatic parallelization of inner loops in the 
+for automatic cross-iteration parallelization of inner loops in the 
 generated hardware (substantial performance benefits can be
 realized).
 \end{itemize}
@@ -913,6 +913,59 @@ can be mapped to the same physical operator without the need for
 arbitration.  It also instantiates separate memory subsystems for
 the disjoint memory spaces (in practice many of the memory spaces
 are small and are converted to register banks).
+
+
+\subsection{{\bf Aa2C}: convert an {\bf Aa} description into a {\bf C} program}
+
+The AhirV2 flow offers considerable flexibility to a system designer.
+For example, it is possible to write code directly in {\bf Aa} in order
+to get more optimal implementations (relative to those obtained 
+starting from {\bf C}).  In such cases, if we wish to simulate
+the {\bf Aa} description, we would use the {\bf Aa2C} utility to
+convert the {\bf Aa} code to ANSI {\bf C}, and then compile it
+in the usual way.
+
+The {\bf Aa2C} program can be summarized as
+\begin{verbatim}
+Aa2C [-I <ext-mem-object>] <aa-file> (<aa-file>)*
+\end{verbatim}
+The only option is:
+\begin{itemize}
+\item {\bf -I <ext-mem-object>}:  the same behaviour as in {\bf Aa2VC}.
+\end{itemize}
+The remaining arguments are {\bf Aa} files which will be linked and
+converted to {\bf C} code.  Two outputs files are created:
+\begin{itemize}
+\item aa\_c\_model.h :  a header file declaring functions in the generated
+source code.
+\item aa\_c\_model.c : a source file containing function definitions
+corresponding to the {\bf Aa} modules.
+\end{itemize}
+
+External calls into the generated {\bf C} code must have the
+form:
+\begin{verbatim}
+void foo ( Ctype_1 in_1, Ctype_2 in_2, Ctype_3* out_1, Ctype_4* out_2);
+\end{verbatim}
+where Ctype is either a float or double or (int/uint)(64/32/16/8)\_t type.
+You can then link your external code with the generated {\bf C} code
+in the usual way.
+
+\subsubsection{Restrictions in using {\bf Aa2C}}
+
+The current implementation of {\bf Aa2C} produces un-threaded code.
+Thus, if you have a parallel block in your {\bf Aa} code, the
+statements in the parallel block are serialized in the resulting
+{\bf C} program.  This can result in the generated {\bf C} program
+potentially hanging (if one of the statements in the parallel
+block runs for-ever).   Another situation is when two
+concurrent blocks in the {\bf Aa} program are writing and reading
+from the same pipe.  In such a case, the serialized code may
+get dead-locked.  You need to be careful that your {\bf Aa} code
+does not have such situations (the simplest option is
+to not use parallel blocks in the {\bf Aa} code!).
+
+This issue will be fixed in a future release of {\bf Aa2C}.
 
 \subsection{Miscellaneous: {\bf vcFormat} and {\bf vhdlFormat}}
 
