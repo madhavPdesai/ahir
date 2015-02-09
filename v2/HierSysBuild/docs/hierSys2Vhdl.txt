@@ -1,0 +1,64 @@
+hierSys2Vhdl [hierarchical-system-description-file-name]+
+
+AUTHOR
+  	Madhav Desai.
+
+SYNOPSYS
+	The hierSys2Vhdl utility is intended to assemble 
+	a system out of sub-systems which interact through
+        FIFO (or pipe) interfaces.  
+
+ARGUMENTS
+
+       The only arguments are files specified in the 
+       hierarchical system format, which is a simple 
+       way of describing a system hierarchy.
+
+       For e.g.
+
+	$system Left 
+		$ipipe A 16
+		$opipe TMP 16
+	{
+	}
+	
+	$system Right 
+		$ipipe TMP 16
+		$opipe B 16
+	{
+	}
+	
+	$system Top 
+		$ipipe a 16 
+        	$opipe b 16
+	{
+        	$pipe tmp 16
+        	$compinst i0  Left   A => a TMP => tmp
+        	$compinst i1  Right  TMP => tmp B => b
+	}
+	
+
+       This describes a system whose top-level is
+       Top,  which contains two instances of systems
+       (component instances i0 and i1 of Left and
+        Right respectively).  The connections are
+       through pipe interfaces.
+
+       Left and Right are considered leaf-level
+       systems whose entity/architecture descriptions
+       are assumed to exist somewhere.  In this
+       case, hierSys2Vhdl will generate VHDL
+       code (entity/architecture) for Top.  In 
+       general, entity/architecture pairs are generated
+       for all systems which have component instances,
+       while those that do not are considered as leaf
+       systems.
+
+OUTPUTS
+	
+       The utility generates a single file stream on
+       stdout.  This is a VHDL description which 
+       contains a component declaration package
+       named HierSysComponentPackage, followed
+       by entity/architecture pairs for all non-leaf
+       systems.

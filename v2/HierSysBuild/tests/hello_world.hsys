@@ -1,0 +1,20 @@
+$system Left 
+	$ipipe A 16
+	$opipe TMP 16
+{
+}
+
+$system Right 
+	$ipipe TMP 16
+	$opipe B 16
+{
+}
+
+$system Top 
+	$ipipe a 16 
+        $opipe b 16
+{
+        $pipe tmp 16
+        $compinst i0  Left   A => a TMP => tmp
+        $compinst i1  Right  TMP => tmp B => b
+}

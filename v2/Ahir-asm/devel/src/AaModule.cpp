@@ -723,7 +723,7 @@ void AaModule::Write_VHDL_C_Stub_Prefix(ostream& ofile)
    }
  else if(this->Get_Number_Of_Output_Arguments() == 1)
    {
-     ret_type = this->Get_Output_Argument(0)->Get_Type()->C_Base_Name();
+     ret_type = this->Get_Output_Argument(0)->Get_Type()->Native_C_Name();
    }
  else
    {
@@ -737,7 +737,7 @@ void AaModule::Write_VHDL_C_Stub_Prefix(ostream& ofile)
    {
      ofile << comma;
      
-     ofile << this->Get_Input_Argument(idx)->Get_Type()->C_Base_Name()
+     ofile << this->Get_Input_Argument(idx)->Get_Type()->Native_C_Name()
 	   << " " << this->Get_Input_Argument(idx)->Get_Name();
      
      comma = ",";
@@ -749,7 +749,7 @@ void AaModule::Write_VHDL_C_Stub_Prefix(ostream& ofile)
        {
 	 ofile << comma;
 	 
-	 ofile << this->Get_Output_Argument(idx)->Get_Type()->C_Base_Name()
+	 ofile << this->Get_Output_Argument(idx)->Get_Type()->Native_C_Name()
 	       << "* " << this->Get_Output_Argument(idx)->Get_Name();
 	 
 	 comma = ",";
@@ -760,12 +760,17 @@ void AaModule::Write_VHDL_C_Stub_Prefix(ostream& ofile)
 
 void AaModule::Write_VHDL_C_Stub_Header(ostream& ofile)
 {
+  
+ if (!this->Can_Have_Native_C_Interface())
+	return;
   this->Write_VHDL_C_Stub_Prefix(ofile);
   ofile << ";" << endl;
 }
 
 void AaModule::Write_VHDL_C_Stub_Source(ostream& ofile)
 {
+ if (!this->Can_Have_Native_C_Interface())
+	return;
   this->Write_VHDL_C_Stub_Prefix(ofile);
   ofile << endl << "{" << endl;
   
@@ -778,7 +783,7 @@ void AaModule::Write_VHDL_C_Stub_Source(ostream& ofile)
     {
       AaType* t = this->Get_Input_Argument(idx)->Get_Type();
       if(!t->Is_Pointer_Type())
-	ofile << "append_" << this->Get_Input_Argument(idx)->Get_Type()->C_Base_Name() 
+	ofile << "append_" << this->Get_Input_Argument(idx)->Get_Type()->Native_C_Name() 
 	      << "(buffer," <<  this->Get_Input_Argument(idx)->Get_Name() << "); ADD_SPACE__(buffer);" << endl;
       else
 	{
@@ -806,18 +811,18 @@ void AaModule::Write_VHDL_C_Stub_Source(ostream& ofile)
      AaType* ret_type = this->Get_Output_Argument(0)->Get_Type();
      if(!ret_type->Is_Pointer_Type())
        {
-	 ofile << ret_type->C_Base_Name() 
+	 ofile << ret_type->Native_C_Name() 
 	       << " "
 	       << this->Get_Output_Argument(0)->Get_Name() << " = " ;
-	 ofile << "get_" << ret_type->C_Base_Name() << "(buffer,&ss);" << endl;
+	 ofile << "get_" << ret_type->Native_C_Name() << "(buffer,&ss);" << endl;
 	 ofile << "return(" << this->Get_Output_Argument(0)->Get_Name() << ");" << endl;
        }
      else
        {
-	 ofile << ret_type->C_Base_Name() 
+	 ofile << ret_type->Native_C_Name() 
 	       << " "
 	       << this->Get_Output_Argument(0)->Get_Name() << " = (" 
-	       << ret_type->C_Base_Name() << ") ";
+	       << ret_type->Native_C_Name() << ") ";
 	 ofile << "get_uint32_t(buffer,&ss);" << endl;
 	 ofile << "return(" << this->Get_Output_Argument(0)->Get_Name() << ");" << endl;
        }
@@ -830,12 +835,12 @@ void AaModule::Write_VHDL_C_Stub_Source(ostream& ofile)
 	 if(!ret_type->Is_Pointer_Type())
 	   {
 	     ofile << "*" << this->Get_Output_Argument(idx)->Get_Name() << " = " ;
-	     ofile << "get_" << ret_type->C_Base_Name() << "(buffer,&ss);" << endl;
+	     ofile << "get_" << ret_type->Native_C_Name() << "(buffer,&ss);" << endl;
 	   }
 	 else
 	   {
 	     ofile << "*" << this->Get_Output_Argument(idx)->Get_Name() << " = (" 
-		   << ret_type->C_Base_Name() << ") " ;
+		   << ret_type->Native_C_Name() << ") " ;
 	     ofile << "get_uint32_t(buffer,&ss);" << endl;
 	   }
        }
