@@ -34,6 +34,7 @@ int vcSystem::_register_bank_threshold = 0;
 // standard simulator will be GHDL
 string vcSystem::_simulator_link_prefix = "Vhpi_";
 string vcSystem::_simulator_link_library = "GhdlLink";
+string vcSystem::_vhdl_work_library = "work";
 
 // For Modelsim, this should be 
 // string vcSystem::_simulator_link_prefix = "Modelsim_FLI_";
@@ -1114,8 +1115,8 @@ use ahir.utilities.all;\n";
   	ofile << "use " << vcSystem::_simulator_link_library << ".LogUtilities.all;"  << endl;
   }
 
-  ofile << "library work;" << endl;
-  ofile << "use work." << sys_package << ".all;" << endl;
+  ofile << "library " << vcSystem::_vhdl_work_library << ";" << endl;
+  ofile << "use " << vcSystem::_vhdl_work_library << "." << sys_package << ".all;" << endl;
 }
 
 

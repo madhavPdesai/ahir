@@ -1,10 +1,13 @@
 $system Left 
+$library LLIB
 	$ipipe A 16
 	$opipe TMP 16
 {
 }
 
 $system Right 
+$library RLIB
+
 	$ipipe TMP 16
 	$opipe B 16
 {

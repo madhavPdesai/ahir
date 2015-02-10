@@ -44,6 +44,7 @@ class vcSystem: public vcRoot
 
   static string _simulator_link_prefix;
   static string _simulator_link_library;
+  static string _vhdl_work_library;
 
   static string _tool_name;
   static bool _enable_logging;

@@ -5,6 +5,19 @@
 
 using namespace std;
 
+// command-line parsing
+extern int optind;
+extern char *optarg;
+int opt;
+int option_index = 0;
+
+
+struct option long_options[] = {
+    {"relaxed-component-visibility", 0, 0, 0},
+    {"depend", required_argument, 0, 0},
+    {0, 0, 0, 0}
+};
+
 void Handle_Segfault(int signal)
 {
   cerr << "Error: in vcAnalyze: segmentation fault! giving up!!" << endl;
@@ -15,7 +28,7 @@ void Usage_hierSys2Vhdl()
 {
   cerr << "brief description: reads hierarchical system description and produces VHDL, " << endl;
   cerr << "Usage: " << endl;
-  cerr << "hierSys2Vhdl <file-name> " << endl;
+  cerr << "hierSys2Vhdl [-s <ghdl/modelsim>]  <file-name> " << endl;
 }
 
 
@@ -58,6 +71,10 @@ int main(int argc, char* argv[])
 {
 
   int ret_val = 0;
+  string opt_string;
+
+  string sim_link_library = "GhdlLink";
+  string sim_link_prefix = "Vhpi_";
   
 
   signal(SIGSEGV, Handle_Segfault);
@@ -68,45 +85,77 @@ int main(int argc, char* argv[])
       	exit(1);
     }
 
+  while ((opt = getopt_long(argc, argv, "s:", long_options, &option_index)) != -1) {
+	switch(opt) {
+		case 's': 
+			opt_string = optarg;
+			if(opt_string == "modelsim")  {
+				sim_link_prefix = "Modelsim_FLI_";
+				sim_link_library = "ModelsimLink";
+			}
+			break;
+		default: cerr << "Error: unknown option " << opt << endl; ret_val = 1; break;
+	}
+    }
 
-  string filename = argv[1];
+  if(ret_val) return(ret_val);
+
   vector<hierSystem*> sys_vec;
-  ret_val = Parse(filename, sys_vec);
-  if(ret_val)
-  {
-	cerr << "Error: in parsing " << endl;
-	return(ret_val);
+  for(int I = optind;  I < argc; I++) {
+  	string filename = argv[I];
+  	int pstat = Parse(filename, sys_vec);
+  	if(pstat) {
+		cerr << "Error: in parsing file " << filename << endl;
+		ret_val = 1;
+	}
   }
       
+  if(ret_val) return(ret_val);
 
-  for(int I = 0, fI = sys_vec.size(); I < fI; I++)
-  {
+  for(int I = 0, fI = sys_vec.size(); I < fI; I++) {
 	hierSystem* sys = sys_vec[I];
-	if(sys->Get_Error() || sys->Check_For_Errors())
-	{
+	if(sys->Get_Error() || sys->Check_For_Errors()) {
 		cerr << "Error: in building system " << sys->Get_Id() << endl;
 		ret_val = 1;	
 	}
-	else
-		sys->Print(cerr);
+	else sys->Print(cerr);
   }
 
 
-  if(ret_val == 0)
-  {
-	cout << "package HierSysComponentPackage is --{ " << endl;
+
+  if(ret_val == 0) {
+  	hierSystem* top_sys = sys_vec.back();
+  	string vhdl_file_name = top_sys->Get_Id() + ".vhdl";
+  	ofstream vhdl_file;
+  	vhdl_file.open(vhdl_file_name.c_str());
+
+	vhdl_file << "library ieee;" << endl;
+	vhdl_file << "use ieee.std_logic_1164.all;" << endl;
+	vhdl_file << "package HierSysComponentPackage is --{ " << endl;
 	for(int I = 0, fI = sys_vec.size(); I < fI; I++)
 	{
 		hierSystem* sys = sys_vec[I];
-		sys->Print_Vhdl_Component_Declaration(cout);
+		sys->Print_Vhdl_Component_Declaration(vhdl_file);
 	}
-	cout << "--}" << endl <<"end package;" << endl;
-	cout << endl << endl;
+	vhdl_file << "--}" << endl <<"end package;" << endl;
+	vhdl_file << endl << endl;
+	
 	for(int I = 0, fI = sys_vec.size(); I < fI; I++)
 	{
 		hierSystem* sys = sys_vec[I];
-		sys->Print_Vhdl_Entity_Architecture(cout);
+		sys->Print_Vhdl_Entity_Architecture(vhdl_file);
 	}
+	vhdl_file.close();
+
+  	string vhdl_testbench_file_name = top_sys->Get_Id() + "_test_bench.vhdl";
+	ofstream vhdl_tb_file; 
+	vhdl_tb_file.open(vhdl_testbench_file_name.c_str());
+	vhdl_tb_file << "library ieee;" << endl;
+	vhdl_tb_file << "use ieee.std_logic_1164.all;" << endl;
+	vhdl_tb_file << "library work;" <<endl;
+	vhdl_tb_file << "use work.HierSysComponentPackage.all;" << endl;
+	top_sys->Print_Vhdl_Test_Bench(sim_link_library, sim_link_prefix, vhdl_tb_file);
+	vhdl_tb_file.close();
   }
 
 

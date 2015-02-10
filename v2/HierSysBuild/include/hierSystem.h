@@ -60,6 +60,7 @@ class hierSystemInstance: public hierRoot
 		_base_system = base_sys; 
 	}
 
+
 	hierSystem* Get_Parent() {return(_parent);}
 	hierSystem* Get_Base_System() {return(_base_system);}
 	void Add_Port_Mapping(string formal, string actual);
@@ -88,6 +89,7 @@ class hierSystemInstance: public hierRoot
 class hierSystem: public hierRoot
 {
 	bool _error;
+        string _library;
 	hierSystem* _parent;
 	map<string, int> _in_pipes;
 	map<string, int> _out_pipes;
@@ -101,7 +103,12 @@ class hierSystem: public hierRoot
 public:
 	hierSystem(string id) :hierRoot(id)
 	{
+		_library = "work";
 	}
+
+        bool Is_Leaf() {return(_child_map.size() == 0);}
+	void Set_Library(string s) {_library = s;}
+	string Get_Library() {return(_library);}
 
 	int Get_Pipe_Width(map<string, int>& pmap, string pipe_id)
 	{
@@ -271,6 +278,8 @@ public:
 	void Print_Vhdl_Port_Declarations(ostream& ofile);
 	void Print_Vhdl_Component_Declaration(ostream& ofile);
 	void Print_Vhdl_Entity_Architecture(ostream& ofile);
+	void Print_Vhdl_Test_Bench(string sim_link_lib, string sim_link_prefix, ostream& ofile); // in progress.
+	void Print_Vhdl_Instance_In_Testbench(string inst_name, ostream& ofile);
 };
 
 #endif

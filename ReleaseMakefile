@@ -1,6 +1,7 @@
 AA=./v2/Ahir-asm/devel
 VC=./v2/libAhirV2
 LLVM2AA=./v2/llvmbc2Aa/
+HIERSYSBUILD=./v2/HierSysBuild/
 RELEASE=./release
 IOLIB=./v2/iolib/
 PIPEHANDLER=./v2/pipeHandler/
@@ -27,6 +28,7 @@ Release:
 	cp $(VC)/bin/vcParse $(RELEASE)/bin/
 	cp $(VC)/bin/vhdlFormat $(RELEASE)/bin/
 	cp $(LLVM2AA)/bin/llvm2aa $(RELEASE)/bin/
+	cp $(HIERSYSBUILD)/bin/hierSys2Vhdl $(RELEASE)/bin/
 	# copy the IOLIB
 	cp $(IOLIB)/*.h $(RELEASE)/iolib/include/
 	cp $(IOLIB)/libio.a $(RELEASE)/iolib/lib/
@@ -65,6 +67,7 @@ Clean:
 	rm -f $(RELEASE)/bin/vc*
 	rm -f $(RELEASE)/bin/vhdlFormat
 	rm -f $(RELEASE)/bin/llvm2aa
+	rm -f $(RELEASE)/bin/hierSys2Vhdl
 	# rm the IOLIB
 	rm -f $(RELEASE)/iolib/include/*.h
 	rm -f $(RELEASE)/iolib/lib/*.a

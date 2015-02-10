@@ -67,6 +67,8 @@ void Usage_Vc2VHDL()
   cerr <<  " alternate form:  --debug" << endl;
   cerr <<  " -v :  lots of information will be printed to stderr during analysis." << endl;
   cerr <<  " alternate form:  --verbose" << endl;
+  cerr <<  " -W <VHDL-work-library> : the generated VHDL will be kept in library VHDL-work-library." << endl;
+  cerr <<  "     The default work library is work." << endl;
   cerr <<  " -I <n>:  deprecated " << endl;
   cerr <<  " alternate form:  --loop_pipeline_buffering_limit" << endl;
   cerr << endl;
@@ -114,6 +116,7 @@ int main(int argc, char* argv[])
       {"write_files",  no_argument, 0, 'w'},
       {"vcfile",    required_argument, 0, 'f'},
       {"library",   required_argument, 0, 'L'},
+      {"work_library",   required_argument, 0, 'W'},
       {"verbose",  no_argument, 0, 'v'},
       {0, 0, 0, 0}
     };
@@ -140,6 +143,7 @@ int main(int argc, char* argv[])
   string mod_name;
   string opt_string;
   string sim_id;
+  string work_library = "work";
   int it_limit;
   int bypass_stride;
 
@@ -147,7 +151,7 @@ int main(int argc, char* argv[])
   while ((opt = 
 	  getopt_long(argc, 
 		      argv, 
-		      "t:T:f:OCs:he:waqDL:vI:S:",
+		      "t:T:f:OCs:he:waqDL:vI:S:W:",
 		      long_options, &option_index)) != -1)
     {
       switch (opt)
@@ -206,6 +210,10 @@ int main(int argc, char* argv[])
 	case 'v':
 	  vcSystem::_verbose_flag = true;
 	  cerr << "Info: -v option selected: lots of info will be printed to stderr." << endl;
+	  break;
+	case 'W':
+	  vcSystem::_vhdl_work_library = string(optarg);
+	  cerr << "Info: -W option selected: generated VHDL will be in library " << vcSystem::_vhdl_work_library << endl;
 	  break;
 	case 'I':
           it_limit = atoi(optarg);

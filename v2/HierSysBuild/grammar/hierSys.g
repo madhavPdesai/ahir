@@ -64,6 +64,8 @@ hier_System[vector<hierSystem*>& sys_vector]  returns [hierSystem* sys]
 		sys = new hierSystem(sysid->getText());
 	}
 
+        (LIBRARY libid: SIMPLE_IDENTIFIER {sys->Set_Library(libid->getText());})?
+
 	(INPIPE
 		( sidi: SIMPLE_IDENTIFIER  uidi: UINTEGER 
 			{
@@ -159,6 +161,7 @@ INPIPE: "$ipipe";
 OUTPIPE: "$opipe";
 INTERNALPIPE: "$pipe";
 INSTANCE: "$compinst";
+LIBRARY: "$library";
 
 
 // language keywords (all start with $)
