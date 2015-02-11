@@ -10,7 +10,7 @@ SYNOPSYS
 
 ARGUMENTS
 
-       The only arguments are files specified in the 
+       The only arguments are files describing a netlist in the 
        hierarchical system format, which is a simple 
        way of describing a system hierarchy.
 
@@ -20,12 +20,14 @@ ARGUMENTS
 		$ipipe A 16
 		$opipe TMP 16
 	{
+		// empty, leaf module
 	}
 	
 	$system Right 
 		$ipipe TMP 16
 		$opipe B 16
 	{
+		// empty, leaf module.
 	}
 	
 	$system Top 
@@ -33,6 +35,8 @@ ARGUMENTS
         	$opipe b 16
 	{
         	$pipe tmp 16
+	
+		// instances of systems with port map.
         	$compinst i0  Left   A => a TMP => tmp
         	$compinst i1  Right  TMP => tmp B => b
 	}
@@ -54,6 +58,14 @@ ARGUMENTS
        while those that do not are considered as leaf
        systems.
 
+RESTRICTIONS
+
+       The systems should be specified from leaves to
+       the root.
+
+       The last system specified is considered to be the
+       root, for which the top-level VHDL file is generated.
+
 OUTPUTS
 	
        The utility generates a single file stream on
@@ -62,3 +74,8 @@ OUTPUTS
        named HierSysComponentPackage, followed
        by entity/architecture pairs for all non-leaf
        systems.
+
+RETURN VALUES
+
+	Returns 0 on success, non-zero on failure.
+

@@ -28,7 +28,9 @@ void Usage_hierSys2Vhdl()
 {
   cerr << "brief description: reads hierarchical system description and produces VHDL, " << endl;
   cerr << "Usage: " << endl;
-  cerr << "hierSys2Vhdl [-s <ghdl/modelsim>]  <file-name> " << endl;
+  cerr << "hierSys2Vhdl [-s <ghdl/modelsim>]  <file-name> (<file-name>)* " << endl;
+  cerr << "Options: " << endl;
+  cerr << "   -s ghdl or -s modelsim:  specifies the simulator for which the test-bench should be generated." << endl;
 }
 
 
