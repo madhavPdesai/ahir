@@ -1542,7 +1542,7 @@ aA_Integer_Literal_Reference[string& full_name, vector<string>& literals, unsign
    (hidv:HEXADECIMAL
                  { 
                        line_number = hidv->getLine();
-                       literals.push_back(hidv->getText()); 
+                       literals.push_back(hidv->getText());
                        full_name += hidv->getText() + " ";
                  }))
 ;
@@ -1709,7 +1709,7 @@ SYNCH           : "$synch";
 UINTEGER          : DIGIT (DIGIT)*;
 FLOATCONST : "_f" ('-')? DIGIT '.' (DIGIT)+ 'e' ('+' | '-') (DIGIT)+;
 BINARY : "_b"  ('0' | '1')+ ;
-HEXADECIMAL: "_h" (DIGIT | ('a' | 'b' | 'c' | 'd' | 'e' | 'f'))+ ;
+HEXADECIMAL: "_h" (DIGIT | ('a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F' ))+ ;
 
 
 // White spaces (only "\n" is newline)
